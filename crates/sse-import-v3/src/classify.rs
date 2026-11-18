@@ -26,7 +26,8 @@ pub fn starmap_class(k: &str) -> Class {
         "systems" => Structural,
         "id" | "name" | "description" | "gmNotes" | "routes" | "activeJourneys"
         | "adriftConstructs" | "temporal" | "rulePackOverrides" | "travellerMetadata"
-        | "importedSubsectors" | "distanceUnit" | "unitIsPrefix" => Authored,
+        | "importedSubsectors" | "distanceUnit" | "unitIsPrefix" | "coiCategories" | "poiPacks"
+        | "reasonsConfig" => Authored,
         "mapMode"
         | "invertDisplay"
         | "scale"
@@ -138,7 +139,7 @@ pub fn body_class(k: &str) -> Class {
         // AI prompt notes, for Minerva
         "seedText" | "style" | "length" | "lastPrompt" | "aiContext" => Authored,
         "overrides" | "anomalies" => Impossible,
-        "ui_parentId" | "image" | "apparentColorHex" => Presentation,
+        "ui_parentId" | "image" => Presentation,
         "autopilotStuckReason" | "placementHealCount" => Dropped,
         "temperatureK"
         | "temperatureRangeK"
@@ -176,6 +177,7 @@ pub fn body_class(k: &str) -> Class {
         | "receivedFrac"
         | "occluders"
         | "apparentColor"
+        | "apparentColorHex"
         | "surfaceSpectrum"
         | "vegetation"
         | "oblateness"
