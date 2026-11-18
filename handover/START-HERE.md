@@ -1,6 +1,6 @@
 # START HERE
 
-Last updated: 18 Nov 2026, after F1 (and the kernel track's G0). Milestone M1 complete (K0 documents with Alex for review). Milestone 2 running as parallel tracks.
+Last updated: 18 Nov 2026, after F6 (and the kernel track's G0). Milestone M1 complete (K0 documents with Alex for review). Milestone 2 running as parallel tracks.
 
 ## Where we are
 Milestone M1 "Proven core" = packages K0 to K6 (build plan section 3/4).
@@ -20,6 +20,7 @@ Milestone M1 "Proven core" = packages K0 to K6 (build plan section 3/4).
 | F0 inheritance, stars, life lines, formation history | done | packages/F0.md |
 | F1 disc and material bands | done | packages/F1.md |
 | F2 Classic Accrete block | next on the physics track (System Lab source on Alex's PC) | |
+| F6 early worlds and hand-off | done (ahead of F2 to F5; reads a plain `Protoplanet`) | packages/F6.md |
 | K7 envelopes, partitioning, resolve, feasibility | done (kernel track) | packages/K7.md |
 | K8 rules, classification, sifters, significance | done (kernel track) | packages/K8.md |
 | K9 disclosure tiers, data views, scene building | done (kernel track) | packages/K9.md |

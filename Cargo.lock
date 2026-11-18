@@ -550,9 +550,12 @@ version = "0.1.0"
 dependencies = [
  "serde",
  "serde_json",
+ "sse-atoms",
  "sse-chronicle",
  "sse-core",
  "sse-cosmos",
+ "sse-flow",
+ "sse-pack",
  "sse-resolve",
 ]
 
