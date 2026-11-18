@@ -23,6 +23,7 @@ proptest = "1"
 sse-core = { path = "crates/sse-core" }
 sse-chronicle = { path = "crates/sse-chronicle" }
 sse-flow = { path = "crates/sse-flow" }
+sse-pack = { path = "crates/sse-pack" }
 
 [profile.release]
 opt-level = 3
