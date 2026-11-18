@@ -71,7 +71,7 @@ Kernel track integration points (K7 to K10):
 Each track keeps to its own crates and folders. Integration points are listed at the end of each package log. UI work stays in `packages/ui-contract`, `packages/skins`, `packages/chart-grammar`, `packages/views`, `packages/shell`, `tests/ui`; it does not touch `/crates`, and a missing kernel op is reported in the package log.
 
 ## How to resume
-1. Read `/CLAUDE.md`, then this file, then the log of the last package.
+1. Read `/CLAUDE.md`, then this file, then the log of the last package. Any view or renderer package also follows `rendering-rules.md` (no precision jiggle: local orbits, nested frames, camera-relative numbers).
 2. `cargo test --workspace` must pass before you change anything.
 3. Take the first package marked "next"; write its log in `packages/` as you go (evidence packet format: build plan section 2).
 4. At the end of a package: `scripts/check.sh`, update this table, re-sync `design/`, commit as FrunkQ, push.

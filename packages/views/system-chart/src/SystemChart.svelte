@@ -21,9 +21,11 @@
   const narrow = $derived(w < 700);
   const cx = $derived(w * (narrow ? 0.5 : Number(params.centre_x)));
   const cy = $derived(h * 0.5);
-  const orbiting = $derived(scene.subjects.filter((s) => s.orbit).sort((a, b) => a.orbit!.a_au - b.orbit!.a_au));
-  const bands = $derived(scene.subjects.filter((s) => s.band_au));
   const star = $derived(scene.subjects.find((s) => s.kind === "star" && !s.orbit));
+  // Orbits are local to their parent (handover/rendering-rules.md): this chart is the star's frame, so it
+  // draws only the star's own children. A moon's orbit is about its planet and belongs to that planet's frame.
+  const orbiting = $derived(scene.subjects.filter((s) => s.orbit && (!s.parent || s.parent === star?.address)).sort((a, b) => a.orbit!.a_au - b.orbit!.a_au));
+  const bands = $derived(scene.subjects.filter((s) => s.band_au));
   const scale = $derived(
     fitScale(
       [...orbiting.map((s) => s.orbit!.a_au), ...bands.flatMap((b) => b.band_au!)],
