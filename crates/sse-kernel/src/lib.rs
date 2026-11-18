@@ -348,6 +348,19 @@ impl Kernel {
                                 ),
                             }
                         }
+                        // Each flow's own golden cases (H5.5) run here too, so an
+                        // edited flow whose cases no longer hold is refused with
+                        // the failing case named, not loaded to drift silently.
+                        if problems.is_empty() {
+                            for (id, f) in &flows {
+                                for m in f.run_tests(&cx) {
+                                    problems.push(format!(
+                                        "{} (flow {id}): test {m}",
+                                        stack.flows[id].pack
+                                    ));
+                                }
+                            }
+                        }
                         if !problems.is_empty() {
                             let issues: Vec<sse_pack::StackIssue> = problems
                                 .iter()
@@ -708,16 +721,28 @@ impl Kernel {
                 scope,
                 data_view,
                 at_s,
+                observe,
             } => {
                 let scope: Address = scope
                     .parse()
                     .map_err(|e| err("bad_address", format!("{e}")))?;
-                let setup = self.observe.setup.as_ref().ok_or_else(|| {
-                    err(
-                        "no_data_views",
-                        "the pack stack defines no data views (provides.other.observe)",
-                    )
-                })?;
+                let draft = match observe {
+                    None => None,
+                    Some(v) => Some(
+                        sse_observe::ObserveSetup::from_stack(&[("draft".into(), v)])
+                            .map_err(|e| err("bad_observe", e))?
+                            .ok_or_else(|| err("bad_observe", "the draft setup is empty"))?,
+                    ),
+                };
+                let setup = draft
+                    .as_ref()
+                    .or(self.observe.setup.as_ref())
+                    .ok_or_else(|| {
+                        err(
+                            "no_data_views",
+                            "the pack stack defines no data views (provides.other.observe)",
+                        )
+                    })?;
                 let u = self
                     .universe
                     .as_ref()
@@ -783,6 +808,51 @@ impl Kernel {
                     scene_hash: scene.hash().hex(),
                     scene: serde_json::to_value(&scene).expect("scenes are plain data"),
                 }
+            }
+            Request::Atoms { ids } => {
+                let port = |p: &sse_flow::Port| {
+                    serde_json::json!({
+                        "name": p.name, "kind": p.kind, "dim": p.dim.to_string(), "valid": p.valid,
+                    })
+                };
+                let mut atoms = Vec::new();
+                let mut missing = Vec::new();
+                let want: Option<std::collections::BTreeSet<&str>> =
+                    ids.as_ref().map(|v| v.iter().map(String::as_str).collect());
+                let mut decls: Vec<&sse_flow::AtomDecl> = self.atoms.decls().collect();
+                decls.sort_by(|a, b| a.id.cmp(&b.id));
+                for d in decls {
+                    if want.as_ref().is_some_and(|w| !w.contains(d.id.as_str())) {
+                        continue;
+                    }
+                    atoms.push(serde_json::json!({
+                        "id": d.id,
+                        "version": d.version,
+                        "inputs": d.inputs.iter().map(port).collect::<Vec<_>>(),
+                        "outputs": d.outputs.iter().map(port).collect::<Vec<_>>(),
+                        "params": d.params.iter().map(|p| serde_json::json!({
+                            "name": p.name, "dim": p.dim.to_string(), "default": p.default,
+                            "range": p.range, "description": p.description,
+                        })).collect::<Vec<_>>(),
+                        "cost_class": d.cost_class,
+                        "references": d.references,
+                        "explain": d.explain,
+                    }));
+                }
+                if let Some(w) = &want {
+                    for id in w {
+                        if !atoms.iter().any(|a| a["id"] == *id) {
+                            missing.push(*id);
+                        }
+                    }
+                }
+                if !missing.is_empty() {
+                    return Err(err(
+                        "unknown_atom",
+                        format!("no atom {}", missing.join(", ")),
+                    ));
+                }
+                Response::Atoms { atoms }
             }
             Request::ScanToggle {
                 address,
