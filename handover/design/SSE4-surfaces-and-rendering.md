@@ -70,9 +70,16 @@ The body already has a dated history in the chronicle (impacts, volcanic epochs,
 
 **Alien mechanisms** ship as pack atoms that plug into stages 1 to 4, each with its research citation, for example: heat-pipe volcanism (Io), episodic global resurfacing (Venus), ice-shell chaos terrain and cryovolcanism (Europa, Enceladus), methane rain, rivers and dunes (Titan), convecting nitrogen ice plains (Pluto's Sputnik Planitia), global contraction scarps (Mercury), sublimation terrain (Mars's south polar "Swiss cheese"). A physics pack can add more, including fictional ones, tagged as such.
 
-### 3.3 Real bodies
+### 3.3 Real bodies and the real universe **[decided 18 Nov: real data fetched dynamically wherever it exists]**
 
-For the Milky Way pack's real Solar System, the atlas uses measured elevation where it exists: Mars MOLA (463 m), Moon LOLA (118 m) and others, which are NASA products distributed through USGS and PDS and generally public domain as US government works (confirm each before bundling). Deterministic amplification fills below their resolution, tagged as fill. Measured tiles are pins, exactly like catalogue stars in H10.
+Whenever a campaign sits in the real Milky Way, real measurements are pulled in on demand and override the procedural guess, the way catalogue stars do in H10. Procedural generation only fills what is not known, and the fill is tagged as such.
+
+- **What is fetched:** stars (Gaia DR3 and bright-star lists), known exoplanets with measured orbits, masses and radii (NASA Exoplanet Archive), and Solar System surfaces: elevation (Mars MOLA 463 m, Moon LOLA 118 m and others from USGS and PDS, generally public domain as US government works) and imagery where licences allow. Confirm each source's terms before use.
+- **How it fits the model:** every measured value is a **pin** that claims from the cloud's budget first, so a real star or planet is never duplicated by the fill. A known exoplanet with only mass and orbit measured keeps those values and gets its unknowns (surface, atmosphere, history) resolved procedurally around them, consistent with the measured facts.
+- **How it is fetched:** through SSE4's own Cloudflare Worker and R2 cache, not straight from the agencies. That gives CORS, rate limiting, tiling into the address scheme and one stable endpoint. Devices cache what they have seen.
+- **Determinism:** the run manifest (H5.6) pins the version of each catalogue used, so a campaign resolves the same way for every peer and in the future. Upgrading to a new catalogue release is an explicit GM action that shows what changed.
+- **Offline:** without a connection, already-cached real data is used and the rest falls back to procedural, with the edge shown (H14).
+- Below a measurement's resolution, deterministic amplification adds detail, tagged as fill.
 
 ### 3.4 Determinism, cost and the fact floor
 
@@ -173,11 +180,13 @@ MIT and Apache-2.0 code can be included in an Apache-2.0 project with notices ke
 
 ## 8. Open questions, each with a recommendation
 
+**Alex accepted all eight recommendations on 18 Nov**, with question 5 widened as shown.
+
 1. **Renderer base.** Three.js `WebGPURenderer` with TSL, own planet layer on top (cube-sphere level of detail, camera-relative rendering, reversed depth). Babylon.js is the fallback choice. Not CesiumJS, not raw WebGPU from Rust (one more Rust surface, slower to iterate, worse for community view plug-ins).
 2. **Fact floor.** About 100 m globally on demand and about 10 m in landing zones and base sites, configurable per pack; everything finer is decoration and never affects play.
 3. **When is the atlas resolved?** At `surveyed` disclosure or on GM demand, globally at level 0, with refinement only where someone looks or lands. Players before `surveyed` see the `scanned` view (albedo, rough relief) generated from level 0 with detail withheld.
 4. **History depth for the surface.** Run the full tectonic and erosion history for worlds that are surveyed; for unsurveyed worlds use a cheap regime-based sketch so the globe still looks right from orbit.
-5. **Real Solar System data.** Use public-domain DEMs as pins with procedural fill below their resolution, in the Milky Way pack only.
+5. **Real-universe data.** **[decided 18 Nov]** Fetch real catalogues and measurements dynamically wherever they exist (stars, exoplanets, Solar System elevation and imagery) as pins, with procedural fill only for the unknown; versions pinned in the run manifest (section 3.3).
 6. **Photoreal target.** Aim for parity with Space Engine in stills on every GPU device and close in real time on WebGPU desktops; give phones the full stylised range and good `gpu-basic` globes rather than chase real-time photoreal there.
 7. **Shared recipes with code.** Data-only by default; code-bearing recipes opt-in per device and never pushed to players.
 8. **GM-rendered video for players.** Not in the first release.
@@ -215,5 +224,6 @@ MIT and Apache-2.0 code can be included in an Apache-2.0 project with notices ke
 - [Large-scale terrain authoring through interactive erosion simulation (Schott et al. 2023)](https://h-schott.github.io/publications/uplift/publi_uplift.html) and [StreamPowerErosion code (MIT)](https://github.com/H-Schott/StreamPowerErosion)
 - [Cosmos Journeyer (AGPL-3.0)](https://github.com/BarthPaleologue/CosmosJourneyer)
 - [TerrainView7: full-scale planet rendering in WebGPU](https://dev.to/the_lone_engineer/terrainview7-full-scale-planet-rendering-in-webgpu-emscripten-now-with-precomputed-atmospheric-18ik) and [Open world in the browser, part 22: clouds and meshlets](https://app.cinevva.com/blog/2026-05-07-open-world-browser-part-22-clouds-and-meshlets)
+- [NASA Exoplanet Archive](https://exoplanetarchive.ipac.caltech.edu)
 - [Mars MGS MOLA DEM 463 m (USGS)](https://astrogeology.usgs.gov/search/map/mars_mgs_mola_dem_463m) and [Moon LRO LOLA DEM 118 m (USGS)](https://astrogeology.usgs.gov/search/map/moon_lro_lola_dem_118m)
 - [WebSplatter: Gaussian splatting across devices via WebGPU (2026)](https://arxiv.org/abs/2602.03207v1) (background on cross-device GPU variability)

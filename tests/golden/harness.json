@@ -3,8 +3,10 @@
   "math_cases": 10000,
   "encoding_cases": 10000,
   "sha_cases": 1000,
+  "draw_cases": 10000,
   "encoding_failures": 0,
   "digests": {
+    "draws.keyed": "dc0ec4a5346f6140151cf620904f503ac88694c85703cc6daaf674562261f991",
     "encoding.cbor": "cc1b332c822918485aafaa0944df4b6b7097a1744b1be80db5bc978a2f14edce",
     "hash.sha256": "cd6f296887d9ad51b4457530c140c8b63318dd754b98aba353045846e6e038d9",
     "math.acos": "f9617351408b819d45a8e52268d66e1f440a699565acfa7319a13d113a3a49e7",
@@ -38,5 +40,5 @@
     "math.tan": "fe5565a00f1e9266774a6e935fc1cfeedc4036831100200da9939c5fc8f68cde",
     "math.tanh": "59b478249db72f9771218e6ac147f8474d6a88cb9e8991994c9c8cc5a2c9a98e"
   },
-  "overall": "d25a698f5eb532d8582f42d4f651fc208b9e4005a860185af53a4f48db8019d0"
+  "overall": "e4f8ea73efa212294dc175b80b29b54b165643f8734c34b74281635a36d110a6"
 }

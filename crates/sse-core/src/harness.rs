@@ -17,6 +17,7 @@ pub const HARNESS_VERSION: &str = "sse.harness.v1";
 pub const MATH_CASES: u32 = 10_000;
 pub const ENCODING_CASES: u32 = 10_000;
 pub const SHA_CASES: u32 = 1_000;
+pub const DRAW_CASES: u32 = 10_000;
 
 /// SplitMix64: integer-only, used only to make test inputs.
 struct Mix(u64);
@@ -121,6 +122,7 @@ pub struct HarnessReport {
     pub math_cases: u32,
     pub encoding_cases: u32,
     pub sha_cases: u32,
+    pub draw_cases: u32,
     /// Per-category digests (hex SHA-256).
     pub digests: BTreeMap<String, String>,
     /// Encoding round-trip failures; must be 0.
@@ -235,6 +237,26 @@ pub fn run() -> HarnessReport {
     }
     digests.insert("hash.sha256".into(), sha.finish().hex());
 
+    // --- keyed draws (added in K2) ---
+    let mut dr = Hasher::new(&format!("{HARNESS_VERSION}/draws"));
+    let seed = crate::draw::Seed::from_text("sse4 harness");
+    let streams = ["planets.count.v1", "stars.mass.v1", "moons.orbit.v2"]
+        .map(|s| crate::draw::Stream::new(s).unwrap());
+    let root = crate::address::Address::universe("harness").unwrap();
+    for i in 0..DRAW_CASES as u64 {
+        let a = root
+            .child("sys", i % 97)
+            .unwrap()
+            .child("body", i % 13)
+            .unwrap();
+        let d = crate::draw::Draws::new(seed, a, streams[(i % 3) as usize].clone());
+        dr.update(&d.u64(i).to_be_bytes())
+            .update(&bits(d.unit(i)).to_be_bytes())
+            .update(&bits(d.normal(i)).to_be_bytes())
+            .update(&d.below(i, 1 + i).to_be_bytes());
+    }
+    digests.insert("draws.keyed".into(), dr.finish().hex());
+
     let mut all = Hasher::new(&format!("{HARNESS_VERSION}/overall"));
     for (k, v) in &digests {
         all.update(k.as_bytes())
@@ -247,6 +269,7 @@ pub fn run() -> HarnessReport {
         math_cases: MATH_CASES,
         encoding_cases: ENCODING_CASES,
         sha_cases: SHA_CASES,
+        draw_cases: DRAW_CASES,
         digests,
         encoding_failures: failures,
         overall: all.finish().hex(),
@@ -258,8 +281,8 @@ pub fn report_json(r: &HarnessReport) -> String {
     let mut s = String::from("{\n");
     s += &format!("  \"version\": \"{}\",\n", r.version);
     s += &format!(
-        "  \"math_cases\": {},\n  \"encoding_cases\": {},\n  \"sha_cases\": {},\n",
-        r.math_cases, r.encoding_cases, r.sha_cases
+        "  \"math_cases\": {},\n  \"encoding_cases\": {},\n  \"sha_cases\": {},\n  \"draw_cases\": {},\n",
+        r.math_cases, r.encoding_cases, r.sha_cases, r.draw_cases
     );
     s += &format!("  \"encoding_failures\": {},\n", r.encoding_failures);
     s += "  \"digests\": {\n";
@@ -279,6 +302,6 @@ mod tests {
         let r = super::run();
         assert_eq!(r.encoding_failures, 0);
         let golden = include_str!("../../../tests/golden/harness.json");
-        assert_eq!(super::report_json(&r), golden, "harness digests changed; if intended, regenerate with `cargo run -p sse-cli -- harness > tests/golden/harness.json` and record why");
+        assert!(super::report_json(&r) == golden, "harness digests changed; if intended, regenerate with `cargo run -p sse-cli -- harness > tests/golden/harness.json` and record why");
     }
 }

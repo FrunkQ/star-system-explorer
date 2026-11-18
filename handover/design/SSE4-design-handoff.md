@@ -54,7 +54,7 @@ Out of scope for the first release: the exobiology suite and the galaxy evolutio
 | Packs | Layered and stackable: game-system packs, universe packs, physics packs. "Traveller in Star Wars with magic" must work. |
 | Classification | Extendable rules in packs, not code. |
 | Time | First-class. Look ahead to a fate and optionally move system time there. Top use case: ageing the Solar System. Deep-time ageing is a GM edit function for capable hardware. |
-| Universe | Deterministic from Big Bang to heat death, no particle simulation. Real catalogue stars only when building the Milky Way. Edits change a patch going forward. |
+| Universe | Deterministic from Big Bang to heat death, no particle simulation. Real catalogues and measurements only in the real Milky Way, fetched dynamically there as pins (18 Nov). Edits change a patch going forward. |
 | Sky | Every view's background should be the likely real sky for that place and time (section 10). |
 | Agents | Tars (support, allowed to be funny), Orac (designer/builder), Minerva (describing and storytelling). Bring your own key. Reuse the Ovid agent system. |
 | Devices | Each device shows its optimal version. Some views need GPU filters. |
@@ -543,13 +543,15 @@ All long calls are cancellable and report progress in work units.
 
 Alex asked whether every image can have the likely real background: charted stars and galaxies plus a deterministic sprinkling up to the density that patch should have. **Yes, and it falls out of the cloud model.**
 
-1. **Charted objects** come only from a universe pack that carries a catalogue **[decided: real stars only when building the Milky Way]**. Practical sources: Gaia DR3 for stars (a magnitude-limited subset, tiled by sky cell and distance so only what is needed is fetched), a bright-star list for names, and a galaxy catalogue such as 2MRS or OpenNGC for the extragalactic sky. Licences are permissive with attribution; confirm each before bundling.
+1. **Charted objects** are real data fetched on demand wherever a campaign sits in the real universe **[decided 18 Nov, widening the earlier ruling: real data applies only in the real Milky Way and its surroundings, but there it is pulled in dynamically rather than only bundled in a pack]**. The Milky Way universe pack declares *which* catalogues and versions apply; the data itself comes as tiles through SSE4's own Worker and R2 cache (`SSE4-surfaces-and-rendering.md` 3.3 is the authority). Practical sources: Gaia DR3 for stars (a magnitude-limited subset, tiled by sky cell and distance so only what is needed is fetched), a bright-star list for names, and a galaxy catalogue such as 2MRS or OpenNGC for the extragalactic sky. Licences are permissive with attribution; confirm each before bundling. The same route brings in known exoplanets with their measured orbits, masses and radii (NASA Exoplanet Archive) and Solar System elevation and imagery (MOLA, LOLA and others). Every measured value is a pin with evidence `catalogued`; anything unmeasured about a real object is resolved around the measured facts and tagged as fill. Catalogue versions are pinned in the run manifest, so every peer and every later replay resolves the same way; moving to a newer release is an explicit GM action that shows what changed. Offline, cached real data is used and the rest falls back to procedural with the edge shown.
 2. **Deterministic fill**: every patch already has an envelope with stellar density, mass function, ages and dust. The fill generates only the stars the catalogue is known to miss (fainter than its completeness limit at that distance, or outside its volume). Same no-double-counting rule as any resolve: catalogue entries are pins that claim from the budget first.
 3. **Far field**: beyond the range where individual stars matter, the galaxy's own model (disc, bulge, dust lanes) is integrated along sight lines from the observer's position to give the band of the galaxy, and the tier above supplies other galaxies and, at the top, the foam.
 4. **Rendering**: baked to a cube map per vantage point and epoch, in a worker or on the GPU, then reused. Inside one system the background does not change measurably; it is rebaked when the vantage moves between systems or time moves far enough for stars to drift. Proper motion over deep time comes free because resolved stars carry velocities.
 5. A star seen in the sky is the same object you can travel to: sky points carry addresses, so clicking one in the Sky view can open its chart.
 
 Cost and risk: catalogue tiles are the only large download (tens of megabytes for a naked-eye-plus sky, more for telescope depth; serve from R2, cache locally). Filaments as glossy 3D foam use the same far-field path with simple maths **[decided]**.
+
+**Renderer and borrowed code [decided 18 Nov]**: the renderer is rebuilt on three.js with WebGPU (WebGL2 fallback). Shaders and techniques are ported from OpenSpace (MIT) and Gaia Sky (MPL-2.0); the applications themselves are not ported. Files derived from Gaia Sky stay as separate files under MPL with their headers, alongside the Apache-2.0 code, and both are credited in NOTICE.
 
 ---
 

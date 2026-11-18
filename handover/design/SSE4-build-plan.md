@@ -132,6 +132,7 @@ Tracks can run in parallel once their dependencies are met. `needs` lists packag
 |---|---|---|---|
 | X1 | Cloudflare deployment, V4 subdomain, signalling worker | V4 | fresh device loads player app from the web and joins a session |
 | X2 | Explorers site: V4 entries beside V3 with labels; publish and fetch manifests and packs | K5 | publish, fetch, hash verified |
+| X5 | Real-data service (H10, surfaces-and-rendering 3.3): Worker and R2 tile cache for Gaia stars, exoplanet archive, Solar System elevation and imagery; address-scheme tiling; catalogue versions pinned in the run manifest; device cache; offline fallback with the edge shown; licence and attribution register | K5, G7 | two peers with the same manifest get identical pins; a known exoplanet keeps measured values and resolves the rest as tagged fill; no real star is duplicated by the fill; changing catalogue version is an explicit action with a diff; offline run shows the edge |
 | X3 | Base content: default presentation pack, a generic game-system pack, Traveller pack, Milky Way pack | K5, G7 | pack validation; Traveller codes from rules only |
 | X4 | Documentation and learning content: every atom's three lenses written, in-app glossary | P1 onward | coverage report: no atom without lenses |
 
@@ -148,7 +149,7 @@ Tracks can run in parallel once their dependencies are met. `needs` lists packag
 | M6b Surfaces | S0 to S7, R1 to R4, V11 | chart a world's terrain, ask why a range is there, watch continents drift, land on it in several styles |
 | M7 Galaxy | K7, G1 to G6, U6, V9 | chart a galaxy, ink a merger, find a home, survey a patch |
 | M6c Ground detail (later) | S9 to S13 | watch a layered canyon cut over millions of years; find a sea arch on approach; walk through alien forest; place landmarks and ruins; chart a country with borders and roads |
-| M8 Whole universe | G7, G8, V7, L2, L2b, S8, T4, X2, X3 | real Milky Way skies; coupled living planets; share on the explorers site |
+| M8 Whole universe | G7, G8, V7, L2, L2b, S8, T4, X2, X3, X5 | real Milky Way skies; coupled living planets; share on the explorers site |
 
 M6 and M7 are independent of each other and of M5 after M2, so they can run in parallel.
 
