@@ -15,7 +15,7 @@ Milestone M1 "Proven core" = packages K0 to K6 (build plan section 3/4).
 | K6 kernel API, worker, TS client, cancellation, cost classes, tiers | done | packages/K6.md |
 | K0 V3 / Ovid / Evolution Lab source reading | done, Alex reviewing docs/v3-parity.md, v3-save-fields.md, ovid-agents.md, evolab-reuse.md | packages/K0.md |
 | P1 atom library, first wave | done; heat-producing elements and reference links added | packages/P1.md, packages/P1-heat.md |
-| P3 V3 importer | built; real-save check pending on Alex's PC | packages/P3.md |
+| P3 V3 importer | built; run on 3 real saves on Alex's PC, one difference open (P3.md) | packages/P3.md |
 | P4 regions and features on worlds | done | packages/P4.md |
 | F0 inheritance, stars, life lines, formation history | done | packages/F0.md |
 | F1 disc and material bands | done | packages/F1.md |

@@ -695,7 +695,16 @@ impl Importer {
         let field = format!("orbit.{k}");
         match k {
             "hostMu" => {
-                self.diff(a, n, &field, v3, G * hm, 1e-3, "G × host mass");
+                let v4 = G * hm;
+                // V3 orbits carry hostMu in m³/s² (orbits.ts). A value that matches in
+                // km³/s² is a V3 data slip (the real Lunar Gateway, 18 Nov 2026): V4
+                // recomputes it, so say so in the report rather than leave it unexplained.
+                let via = if ((v3 * 1e9 - v4) / v4).abs() <= 1e-3 {
+                    "G × host mass; V3 value is in km³/s², a V3 data slip (V3 uses m³/s²)"
+                } else {
+                    "G × host mass"
+                };
+                self.diff(a, n, &field, v3, v4, 1e-3, via);
                 true
             }
             "n_rad_per_s" => {

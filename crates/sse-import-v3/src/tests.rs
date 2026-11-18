@@ -209,3 +209,43 @@ fn colours_true_colour_is_derived_and_tag_categories_are_kept() {
     assert!(!r.presentation.contains_key("apparentColorHex"));
     assert_eq!(r.derived_not_compared.get("apparentColorHex"), Some(&1));
 }
+
+/// Real V3.0 saves (18 Nov 2026): a host GM stored in km³/s² is named as a V3
+/// slip, and fields V3.1's types do not list are classified, not unknown.
+#[test]
+fn real_save_findings_are_explained_and_classified() {
+    let text = fixture().replace(
+        r#""hostId": "earth", "t0": 0, "hostMu": 3.986004418e14"#,
+        r#""hostId": "earth", "t0": 0, "hostMu": 398600.4418"#,
+    );
+    let text = text.replace(
+        r#""placementHealCount": 3"#,
+        r#""placementHealCount": 3, "isNameUserDefined": true, "areas": [], "icon_type": "x",
+           "habitabilityScore": 0.9, "tidalHeatK": 1.0, "radiationOutput": 1.0"#,
+    );
+    let im = import_json(&text, "v3-synthetic-sol").unwrap();
+    let mu = im
+        .report
+        .differences
+        .iter()
+        .find(|d| d.field == "orbit.hostMu" && d.name == "Moon")
+        .unwrap();
+    assert!(!mu.within);
+    assert!(mu.via.contains("km³/s²"), "{mu:?}");
+    let earth_mu = im
+        .report
+        .differences
+        .iter()
+        .find(|d| d.field == "orbit.hostMu" && d.name == "Earth")
+        .unwrap();
+    assert_eq!(earth_mu.via, "G × host mass");
+    // Only the fixture's deliberate unknown field is left.
+    assert_eq!(
+        im.report.unclassified.keys().collect::<Vec<_>>(),
+        vec!["aFieldV3NeverHad"]
+    );
+    assert_eq!(
+        im.report.derived_not_compared.get("habitabilityScore"),
+        Some(&1)
+    );
+}
