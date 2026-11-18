@@ -5,7 +5,7 @@ Date 17 Nov 2026. Audience: a coordinating session planning the work, and the bu
 ## 0. Read in this order
 
 1. `SSE4-design-handoff.md` : the architecture, contracts, decisions. The authority.
-2. `SSE4-galaxy-design.md`, `SSE4-life-design.md` and `SSE4-surface-design.md` : the domain designs in detail. `SSE4-surfaces-and-rendering.md` is the research report on browser photorealism, hardware scaling and software choices; it is the authority for rendering and must be read before any R or V package.
+2. `SSE4-galaxy-design.md`, `SSE4-life-design.md`, `SSE4-surface-design.md`, `SSE4-classification-design.md` and `SSE4-system-formation-design.md` : the domain designs in detail. `SSE4-surfaces-and-rendering.md` is the research report on browser photorealism, hardware scaling and software choices; it is the authority for rendering and must be read before any R or V package.
 3. The "SSE4 mockups" canvas : every screen. Chart room board is the reference for the GM look.
 4. "SSE4 decisions for Alex" : the reasoning trail, if a decision seems odd.
 5. On Alex's machine under `C:\Development`: the V3 source (for parity and import), `ovid-next` (agent system to reuse), `evolution-lab` and `evolution-lab-design` (contracts, UI components, experiments).
@@ -65,7 +65,7 @@ Tracks can run in parallel once their dependencies are met. `needs` lists packag
 | Id | Package | Needs | Acceptance checks |
 |---|---|---|---|
 | P1 | Atom library, first wave: star properties from mass, age, metallicity (table lookup); orbits; planet bulk; insolation; equilibrium and surface temperature; atmosphere basics; interior shells; tides | K4 | each atom has golden cases from cited sources; Solar System fixture values within stated tolerance |
-| P2 | System formation from a patch envelope (G8.4) using fixture envelope G0 | P1, K7 | population checks on 10,000 systems: planet occurrence trends with metallicity and stellar mass go the right way; determinism |
+| P2 | System formation: now track F, stages F0 to F10 exactly as `SSE4-system-formation-design.md` section 8, one package each. Includes porting SSE 3's Accrete (System Lab) as the Classic block | P1, K7 | as listed there |
 | P3 | V3 importer (one-way) | K0, P1 | a set of real V3 systems (Alex supplies, kept outside the repo) import; derived values match V3 or each difference is explained in a report |
 | P4 | Regions, layers, features on, in and above worlds: plates, oceans, sub-surface oceans, biomes, settlements, aerostats | P1 | Tarn fixture reproduces the Strata mockup's stack |
 | P5 | Second wave atoms as issues arise, each by the issue-spec-test-code rule | P1 | per atom |
@@ -117,6 +117,8 @@ Tracks can run in parallel once their dependencies are met. `needs` lists packag
 
 ### L: life suite. Stages L0, L1a, L1b, L1c, L1d, L2, L2b exactly as life document section 14, one package each. L0 needs K10 and P4; L1a needs P1; L2 needs T1.
 
+### C: classification. Stages C1 to C5 exactly as `SSE4-classification-design.md` section 12, one package each. C1 needs K5 and P1; C3 needs K8 and L0; C4 needs U3 and A2; C5 needs G5. The Traveller pack's codes (X3a) are schemes in this machinery, so X3a needs C1 and X3b needs C3.
+
 ### A: agents
 
 | Id | Package | Needs | Acceptance checks |
@@ -145,14 +147,14 @@ Tracks can run in parallel once their dependencies are met. `needs` lists packag
 | Milestone | Packages | Alex can |
 |---|---|---|
 | M1 Proven core | K0 to K6 | see identical hashes on his devices; read the parity documents |
-| M2 One system | P1, P3, P4, U1, U2, G0, P2 | import a V3 system, edit it on the chart, ask why |
-| M3 Open physics | K5, U3, K8, X3 (generic pack) | change physics in the flow editor; stack packs |
+| M2 One system | P1, P3, P4, U1, U2, G0, F0 to F2, F6, C1, C2 | import a V3 system, edit it on the chart, ask why |
+| M3 Open physics | K5, U3, K8, X3 (generic pack), C3, C4, F3 to F5, F9, F10 | change physics in the flow editor; stack packs |
 | M4 Players | K9, V1 to V6, U5, U9, X1 | run a session with themed player screens and the Scanned button |
-| M5 Time and travel | T1 to T3, U4, V8, U8, A1 to A4 | age the Solar System; plot courses; agents on his own key |
+| M5 Time and travel | T1 to T3, U4, V8, U8, A1 to A4, F7 | age the Solar System; plot courses; agents on his own key |
 | M5b Traveller table | X3a to X3d, V12 | import a subsector from Travellermap onto a hex map, open any world as a full system with its impossible values marked, plan a jump with real jump shadows, hand players a UWP sheet |
 | M6 Living worlds | K10, L0 to L1d, U7 | open any world's biosphere and history |
 | M6b Surfaces | S0 to S7, R1 to R4, V11 | chart a world's terrain, ask why a range is there, watch continents drift, land on it in several styles |
-| M7 Galaxy | K7, G1 to G6, U6, V9 | chart a galaxy, ink a merger, find a home, survey a patch |
+| M7 Galaxy | K7, G1 to G6, U6, V9, C5, F8 | chart a galaxy, ink a merger, find a home, survey a patch |
 | M6c Ground detail (later) | S9 to S13 | watch a layered canyon cut over millions of years; find a sea arch on approach; walk through alien forest; place landmarks and ruins; chart a country with borders and roads |
 | M8 Whole universe | G7, G8, V7, L2, L2b, S8, T4, X2, X3, X5 | real Milky Way skies; coupled living planets; share on the explorers site |
 

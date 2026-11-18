@@ -320,5 +320,40 @@
  },
  {
   "op": "nonsense"
+ },
+ {
+  "op": "load_stack",
+  "packs": [
+   "$pack:base-physics"
+  ]
+ },
+ {
+  "op": "derive",
+  "flow": "sse.base.star-main-sequence",
+  "inputs": {
+   "mass": {
+    "value": 1,
+    "unit": "m_sun"
+   },
+   "age": {
+    "value": 4.57,
+    "unit": "gyr"
+   }
+  }
+ },
+ {
+  "op": "explain",
+  "flow": "sse.base.star-main-sequence",
+  "inputs": {
+   "mass": {
+    "value": 1,
+    "unit": "m_sun"
+   },
+   "age": {
+    "value": 4.57,
+    "unit": "gyr"
+   }
+  },
+  "kind": "star.effective_temperature"
  }
 ]

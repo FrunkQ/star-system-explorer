@@ -12,3 +12,4 @@ path = "src/main.rs"
 
 [dependencies]
 sse-core.workspace = true
+sse-import-v3.workspace = true

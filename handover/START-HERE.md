@@ -1,6 +1,6 @@
 # START HERE
 
-Last updated: 18 Nov 2026, after K0. Milestone M1 complete, pending Alex's review of the K0 documents.
+Last updated: 18 Nov 2026, after P4. Milestone M1 complete (K0 documents with Alex for review). Milestone 2 running as parallel tracks.
 
 ## Where we are
 Milestone M1 "Proven core" = packages K0 to K6 (build plan section 3/4).
@@ -14,7 +14,20 @@ Milestone M1 "Proven core" = packages K0 to K6 (build plan section 3/4).
 | K5 packs, stacks, one-publisher, fictional labels | done | packages/K5.md |
 | K6 kernel API, worker, TS client, cancellation, cost classes, tiers | done | packages/K6.md |
 | K0 V3 / Ovid / Evolution Lab source reading | done, Alex reviewing docs/v3-parity.md, v3-save-fields.md, ovid-agents.md, evolab-reuse.md | packages/K0.md |
-| M2 "One system": P1, P3, P4, U1, U2, G0, P2 (build plan section 4) | next, starting with P1 atom library | |
+| P1 atom library, first wave | done | packages/P1.md |
+| P3 V3 importer | built; real-save check pending on Alex's PC | packages/P3.md |
+| P4 regions and features on worlds | done | packages/P4.md |
+
+## Parallel tracks (18 Nov, Alex: build in parallel, integrate later)
+| Track | Packages | Branch |
+|---|---|---|
+| Physics | P1, P3, P4 | `claude/project-thread-h9y77o` (this file) |
+| Kernel | K7 to K10 | its own branch from the M1 state; see that thread |
+| Chart room shell | U1 | its own branch from the M1 state; see that thread |
+
+The kernel now registers the real atom library and loads the base-physics pack (see P1 log, integration notes): kernel track, rebase over it.
+
+Each track keeps to its own crates and folders. Integration points are listed at the end of each package log.
 
 ## How to resume
 1. Read `/CLAUDE.md`, then this file, then the log of the last package.

@@ -1,0 +1,63 @@
+{
+  "format": "sse.flow/1",
+  "id": "sse.base.orbit-basics",
+  "version": "0.1.0",
+  "hook": "orbit.basics",
+  "inputs": [
+    { "name": "host_mass", "kind": "orbit.host_mass" },
+    { "name": "body_mass", "kind": "body.mass" },
+    { "name": "semi_major_axis", "kind": "orbit.semi_major_axis" },
+    { "name": "eccentricity", "kind": "orbit.eccentricity" }
+  ],
+  "nodes": [
+    { "id": "mt", "atom": "sse.orbit.total_mass" },
+    { "id": "per", "atom": "sse.orbit.period" },
+    { "id": "aps", "atom": "sse.orbit.apsides" },
+    { "id": "hill", "atom": "sse.orbit.hill_radius" }
+  ],
+  "wires": [
+    { "from": "in.host_mass", "to": "mt.host_mass" },
+    { "from": "in.body_mass", "to": "mt.body_mass" },
+    { "from": "in.semi_major_axis", "to": "per.semi_major_axis" },
+    { "from": "mt.total_mass", "to": "per.total_mass" },
+    { "from": "in.semi_major_axis", "to": "aps.semi_major_axis" },
+    { "from": "in.eccentricity", "to": "aps.eccentricity" },
+    { "from": "in.semi_major_axis", "to": "hill.semi_major_axis" },
+    { "from": "in.eccentricity", "to": "hill.eccentricity" },
+    { "from": "in.body_mass", "to": "hill.body_mass" },
+    { "from": "in.host_mass", "to": "hill.host_mass" }
+  ],
+  "publishes": [
+    { "kind": "orbit.total_mass", "from": "mt.total_mass" },
+    { "kind": "orbit.period", "from": "per.period" },
+    { "kind": "orbit.periapsis", "from": "aps.periapsis" },
+    { "kind": "orbit.apoapsis", "from": "aps.apoapsis" },
+    { "kind": "body.hill_radius", "from": "hill.hill_radius" }
+  ],
+  "tests": [
+    {
+      "name": "Earth (NASA fact sheet: 365.256 d, perihelion 147.095e6 km, aphelion 152.100e6 km)",
+      "inputs": {
+        "host_mass": { "value": 1.0, "unit": "m_sun" }, "body_mass": { "value": 5.9722e24, "unit": "kg" },
+        "semi_major_axis": { "value": 149.598e6, "unit": "km" }, "eccentricity": { "value": 0.0167, "unit": "one" }
+      },
+      "expect": {
+        "orbit.period": { "value": 365.256, "unit": "day", "tol": 0.02 },
+        "orbit.periapsis": { "value": 147.095e6, "unit": "km", "tol": 0.03e6 },
+        "orbit.apoapsis": { "value": 152.100e6, "unit": "km", "tol": 0.03e6 }
+      }
+    },
+    {
+      "name": "Jupiter (NASA fact sheet: 4332.589 d, perihelion 740.595e6 km, aphelion 816.363e6 km)",
+      "inputs": {
+        "host_mass": { "value": 1.0, "unit": "m_sun" }, "body_mass": { "value": 1.0, "unit": "m_jupiter" },
+        "semi_major_axis": { "value": 778.479e6, "unit": "km" }, "eccentricity": { "value": 0.0487, "unit": "one" }
+      },
+      "expect": {
+        "orbit.period": { "value": 4332.589, "unit": "day", "tol": 4.0 },
+        "orbit.periapsis": { "value": 740.595e6, "unit": "km", "tol": 0.2e6 },
+        "orbit.apoapsis": { "value": 816.363e6, "unit": "km", "tol": 0.2e6 }
+      }
+    }
+  ]
+}

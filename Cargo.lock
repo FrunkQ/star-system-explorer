@@ -482,6 +482,16 @@ dependencies = [
 ]
 
 [[package]]
+name = "sse-atoms"
+version = "0.1.0"
+dependencies = [
+ "serde_json",
+ "sse-core",
+ "sse-flow",
+ "sse-pack",
+]
+
+[[package]]
 name = "sse-chronicle"
 version = "0.1.0"
 dependencies = [
@@ -496,6 +506,7 @@ name = "sse-cli"
 version = "0.1.0"
 dependencies = [
  "sse-core",
+ "sse-import-v3",
 ]
 
 [[package]]
@@ -521,11 +532,24 @@ dependencies = [
 ]
 
 [[package]]
+name = "sse-import-v3"
+version = "0.1.0"
+dependencies = [
+ "serde",
+ "serde_json",
+ "sse-atoms",
+ "sse-chronicle",
+ "sse-core",
+ "sse-flow",
+]
+
+[[package]]
 name = "sse-kernel"
 version = "0.1.0"
 dependencies = [
  "serde",
  "serde_json",
+ "sse-atoms",
  "sse-chronicle",
  "sse-core",
  "sse-flow",
@@ -605,6 +629,17 @@ dependencies = [
  "sse-sift",
  "sse-suite",
  "wasm-bindgen",
+]
+
+[[package]]
+name = "sse-world"
+version = "0.1.0"
+dependencies = [
+ "serde",
+ "serde_json",
+ "sse-atoms",
+ "sse-core",
+ "sse-flow",
 ]
 
 [[package]]

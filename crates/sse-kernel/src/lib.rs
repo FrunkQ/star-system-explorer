@@ -82,10 +82,21 @@ fn bench_unit(i: u32) -> f64 {
     ea
 }
 
+/// The toy atoms (contract fixtures) plus the real library (`sse-atoms`, P1),
+/// so `load_stack` can take `packs/base-physics/pack.json`. Ids never clash:
+/// `toy.*` against `sse.*`.
+fn kernel_atoms() -> sse_flow::AtomRegistry {
+    let mut r = sse_flow::toy::registry();
+    for a in sse_atoms::atoms() {
+        r.insert(a);
+    }
+    r
+}
+
 impl Kernel {
     pub fn new() -> Self {
         Kernel {
-            atoms: sse_flow::toy::registry(),
+            atoms: kernel_atoms(),
             stack: None,
             universe: None,
             jobs: BTreeMap::new(),
