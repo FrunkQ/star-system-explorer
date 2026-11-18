@@ -532,6 +532,17 @@ dependencies = [
 ]
 
 [[package]]
+name = "sse-formation"
+version = "0.1.0"
+dependencies = [
+ "serde",
+ "serde_json",
+ "sse-chronicle",
+ "sse-core",
+ "sse-resolve",
+]
+
+[[package]]
 name = "sse-import-v3"
 version = "0.1.0"
 dependencies = [
@@ -558,6 +569,17 @@ dependencies = [
 ]
 
 [[package]]
+name = "sse-observe"
+version = "0.1.0"
+dependencies = [
+ "serde",
+ "serde_json",
+ "sse-chronicle",
+ "sse-core",
+ "sse-flow",
+]
+
+[[package]]
 name = "sse-pack"
 version = "0.1.0"
 dependencies = [
@@ -569,11 +591,55 @@ dependencies = [
 ]
 
 [[package]]
+name = "sse-resolve"
+version = "0.1.0"
+dependencies = [
+ "libm",
+ "proptest",
+ "serde",
+ "serde_json",
+ "sse-chronicle",
+ "sse-core",
+ "sse-flow",
+]
+
+[[package]]
+name = "sse-sift"
+version = "0.1.0"
+dependencies = [
+ "proptest",
+ "serde",
+ "serde_json",
+ "sse-chronicle",
+ "sse-core",
+ "sse-flow",
+ "sse-pack",
+ "sse-resolve",
+]
+
+[[package]]
+name = "sse-suite"
+version = "0.1.0"
+dependencies = [
+ "serde",
+ "serde_json",
+ "sse-chronicle",
+ "sse-core",
+ "sse-flow",
+]
+
+[[package]]
 name = "sse-wasm"
 version = "0.1.0"
 dependencies = [
+ "serde_json",
  "sse-core",
+ "sse-formation",
  "sse-kernel",
+ "sse-observe",
+ "sse-resolve",
+ "sse-sift",
+ "sse-suite",
  "wasm-bindgen",
 ]
 

@@ -1,0 +1,49 @@
+{
+  "_source": "SSE4 mockups canvas, board PlayerData (Kestrel system, Tarn before and after one tap of Scanned). Values in SI.",
+  "disclosure": {
+    "fields": {
+      "name": "obvious", "kind": "obvious", "size_class": "obvious", "colour": "obvious", "spectral": "obvious",
+      "orbit.*": "scanned", "mass_kg": "scanned", "atmosphere.*": "scanned", "surface.*": "scanned",
+      "ocean.*": "scanned", "hazards": "scanned", "luminosity_w": "scanned",
+      "interior.*": "surveyed", "resources": "surveyed", "settlements.*": "surveyed",
+      "gm.*": "secret", "story.*": "secret"
+    },
+    "tags": { "habitable": "scanned", "port": "scanned", "hazard": "scanned", "garden": "scanned", "ancient-ruins": "secret" }
+  },
+  "views": [
+    { "id": "long-range", "label": "Long-range sensors", "description": "Exists, rough size and colour",
+      "show_tiers": ["obvious"], "tags": { "mode": "none" }, "unknown_style": "placeholder" },
+    { "id": "scanned", "label": "Scanned", "description": "Orbit, mass, air, temperature, hazards",
+      "show_tiers": ["obvious", "scanned"], "tags": { "mode": "listed", "list": ["hazard", "habitable", "port"] },
+      "overrides": [ { "target": { "kind": "field", "id": "surface.temp_mean_k" }, "show": true, "precision": { "as": "band", "step": 10.0, "half_width": 10.0 } } ],
+      "unknown_style": "placeholder" },
+    { "id": "survey", "label": "Survey on file", "description": "Adds interiors, resources, settlements",
+      "show_tiers": ["obvious", "scanned", "surveyed"], "tags": { "mode": "all" }, "unknown_style": "placeholder" },
+    { "id": "rumour", "label": "Rumour only", "description": "Name and one story line, no numbers",
+      "show_tiers": [], "tags": { "mode": "none" },
+      "overrides": [ { "target": { "kind": "field", "id": "name" }, "show": true }, { "target": { "kind": "field", "id": "story.rumour" }, "show": true } ],
+      "unknown_style": "omit" }
+  ],
+  "campaign": { "default_view": "long-range", "before": "long-range", "after": "scanned" },
+  "resolved": {
+    "u:kestrel/sys:0": { "name": "Kestrel", "kind": "star", "spectral": "K1V", "luminosity_w": 1.53e26 },
+    "u:kestrel/sys:0/body:3": {
+      "name": "Tarn", "kind": "planetary-body", "size_class": "terrestrial", "colour": "blue-white",
+      "orbit.semi_major_axis_m": 94246658541.0, "orbit.period_s": 18489600.0,
+      "atmosphere.composition": "N2-O2", "atmosphere.pressure_pa": 130000.0,
+      "surface.class": "temperate", "surface.temp_mean_k": 281.0, "ocean.fraction": 0.71,
+      "hazards": ["storm belt", "tides"], "interior.core_fraction": 0.32, "resources": "rare earths",
+      "resolve.tier": "body"
+    },
+    "u:kestrel/sys:0/body:3/body:0": { "name": "Tarn a", "kind": "moon", "size_class": "small", "mass_kg": 7.3e22 },
+    "u:kestrel/sys:0/body:5": { "name": "Vault", "kind": "planetary-body", "size_class": "giant", "colour": "banded ochre", "mass_kg": 1.2e27,
+      "story.rumour": "Miners say the third moon sings on the comms." }
+  },
+  "authored": {
+    "u:kestrel/sys:0/body:3": { "mass_kg": 6.56942e24, "settlements.count": 3, "gm.notes": "Pirate cache under the north pole." }
+  },
+  "tags": {
+    "u:kestrel/sys:0/body:3": ["ancient-ruins", "garden", "habitable", "hazard", "port"]
+  },
+  "grants": { "u:kestrel/sys:0/body:5": "rumour" }
+}

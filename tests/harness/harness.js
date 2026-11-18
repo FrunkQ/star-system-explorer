@@ -1,4 +1,4 @@
-import init, { harness_run } from "./pkg/sse_wasm.js";
+import init, { harness_run, engines_run } from "./pkg/sse_wasm.js";
 
 const $ = (id) => document.getElementById(id);
 $("ua").textContent = navigator.userAgent;
@@ -23,8 +23,23 @@ async function main() {
   $("copy").onclick = () => navigator.clipboard?.writeText(
     `SSE4 harness ${report.version}: ${pass ? "PASS" : "FAIL"}\noverall ${report.overall}\n${$("kverdict").textContent}\n${navigator.userAgent}`);
   document.body.dataset.overall = report.overall;
+  const epass = await enginesCheck();
   const kpass = await kernelCheck();
-  document.body.dataset.result = pass && kpass ? "pass" : "fail";
+  document.body.dataset.result = pass && epass && kpass ? "pass" : "fail";
+}
+
+// K7 to K10: resolve, sift, observe and suite scenarios against native digests.
+async function enginesCheck() {
+  const golden = await (await fetch("./pkg/engines.json", { cache: "no-store" })).json();
+  const got = JSON.parse(engines_run());
+  const keys = Object.keys(golden);
+  const bad = keys.filter((k) => JSON.stringify(got[k]) !== JSON.stringify(golden[k]));
+  const v = $("everdict");
+  if (v) {
+    v.textContent = bad.length ? `FAIL: engine scenarios differ: ${bad.join(", ")}` : `PASS: engine scenarios (${keys.join(", ")}) identical to native`;
+    v.className = "verdict " + (bad.length ? "bad" : "ok");
+  }
+  return bad.length === 0;
 }
 
 async function kernelCheck() {

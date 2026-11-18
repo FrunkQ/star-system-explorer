@@ -1,0 +1,37 @@
+{
+  "audience": "everyone",
+  "scope": "u:kestrel/sys:0",
+  "subjects": [
+    { "address": "u:kestrel/sys:0", "view": "long-range", "tags": [],
+      "facts": [
+        { "field": "kind", "value": "star" },
+        { "field": "luminosity_w", "placeholder": "not yet scanned" },
+        { "field": "name", "value": "Kestrel" },
+        { "field": "spectral", "value": "K1V" } ] },
+    { "address": "u:kestrel/sys:0/body:3", "view": "long-range", "tags": [],
+      "facts": [
+        { "field": "atmosphere.composition", "placeholder": "not yet scanned" },
+        { "field": "atmosphere.pressure_pa", "placeholder": "not yet scanned" },
+        { "field": "colour", "value": "blue-white" },
+        { "field": "hazards", "placeholder": "not yet scanned" },
+        { "field": "kind", "value": "planetary-body" },
+        { "field": "mass_kg", "placeholder": "not yet scanned" },
+        { "field": "name", "value": "Tarn" },
+        { "field": "ocean.fraction", "placeholder": "not yet scanned" },
+        { "field": "orbit.period_s", "placeholder": "not yet scanned" },
+        { "field": "orbit.semi_major_axis_m", "placeholder": "not yet scanned" },
+        { "field": "size_class", "value": "terrestrial" },
+        { "field": "surface.class", "placeholder": "not yet scanned" },
+        { "field": "surface.temp_mean_k", "placeholder": "not yet scanned" } ] },
+    { "address": "u:kestrel/sys:0/body:3/body:0", "view": "long-range", "tags": [],
+      "facts": [
+        { "field": "kind", "value": "moon" },
+        { "field": "mass_kg", "placeholder": "not yet scanned" },
+        { "field": "name", "value": "Tarn a" },
+        { "field": "size_class", "value": "small" } ] },
+    { "address": "u:kestrel/sys:0/body:5", "view": "rumour", "tags": [],
+      "facts": [
+        { "field": "name", "value": "Vault" },
+        { "field": "story.rumour", "value": "Miners say the third moon sings on the comms." } ] }
+  ]
+}

@@ -1,6 +1,6 @@
 # START HERE
 
-Last updated: 18 Nov 2026, after P4 (physics track) and U0 to U3 (UI track). Milestone M1 complete (K0 documents with Alex for review). Milestone 2 running as parallel tracks.
+Last updated: 18 Nov 2026, after P4, K10 and F0 (physics and kernel tracks) and U0 to U3 (UI track). Milestone M1 complete (K0 documents with Alex for review). Milestone 2 running as parallel tracks.
 
 ## Where we are
 Milestone M1 "Proven core" = packages K0 to K6 (build plan section 3/4).
@@ -17,6 +17,12 @@ Milestone M1 "Proven core" = packages K0 to K6 (build plan section 3/4).
 | P1 atom library, first wave | done | packages/P1.md |
 | P3 V3 importer | built; real-save check pending on Alex's PC | packages/P3.md |
 | P4 regions and features on worlds | done | packages/P4.md |
+| F0 inheritance, stars, life lines, formation history | done | packages/F0.md |
+| F1 disc and material bands | next on the physics track | |
+| K7 envelopes, partitioning, resolve, feasibility | done (kernel track) | packages/K7.md |
+| K8 rules, classification, sifters, significance | done (kernel track) | packages/K8.md |
+| K9 disclosure tiers, data views, scene building | done (kernel track) | packages/K9.md |
+| K10 suite socket and coordinator | done (kernel track) | packages/K10.md |
 | U0 one client API, every edit an intent (rule for all U packages) | done | packages/U0.md |
 | U1 shell, chart room and night chart tokens, chart grammar | done, screenshots in packages/U1-screens/ for Alex | packages/U1.md |
 | U2 system chart editor | done: real base-physics values, drag and typed edits, undo, why | packages/U2.md |
@@ -26,11 +32,17 @@ Milestone M1 "Proven core" = packages K0 to K6 (build plan section 3/4).
 ## Parallel tracks (18 Nov, Alex: build in parallel, integrate later)
 | Track | Packages | Branch |
 |---|---|---|
-| Physics | P1, P3, P4 | `claude/project-thread-h9y77o` |
-| Kernel | K7 to K10 | its own branch from the M1 state; see that thread |
-| Chart room shell | U0 to U3, then U4 | `claude/project-thread-adgixl`, PR #2 into the physics branch |
+| Physics | P1, P3, P4, then F0 to F2 and F6 | `claude/project-thread-h9y77o` (this file) |
+| Kernel | K7 to K10, done | `claude/project-thread-dzkz4p` (PR #1 into the physics branch; physics branch merged in at 00db0e7) |
+| Chart room shell | U0 to U3, then U4 | `claude/project-thread-adgixl`, PR #2 into the physics branch (kept merged up to date with it) |
 
-The kernel now registers the real atom library and loads the base-physics pack (see P1 log, integration notes): kernel track, rebase over it.
+The kernel now registers the real atom library and loads the base-physics pack (see P1 log, integration notes). The kernel track has merged that in.
+
+Kernel track integration points (K7 to K10):
+- New crates only: `sse-resolve`, `sse-sift`, `sse-observe`, `sse-suite` (path dependencies; root `Cargo.toml` untouched). No K1 to K6 interface changed.
+- Shared files touched: `crates/sse-wasm` (adds `engines_run()`), `scripts/build-harness.sh`, `tests/harness/{harness.js,index.html,run-node.mjs,run-browsers.mjs}` (the harness now also checks the four engine golden scenarios in Node and every browser).
+- Not yet in the kernel message API (H9.1): `resolve`, `query_feasible`, `sift`, `subscribe`. Wire them when the first consumer needs them (U2 for resolve and scenes, U5/V1 for data views, U8 for sift); each engine already has a pure function and a cost class (`ops()`) ready.
+- Pack content keys these engines read: `provides.other.rules`, `.axes`, `.classes`, `.sifters` (K8). Data views and disclosure maps are plain serde types (K9); a pack key for them is for U5 to choose.
 
 Each track keeps to its own crates and folders. Integration points are listed at the end of each package log. UI work stays in `packages/ui-contract`, `packages/skins`, `packages/chart-grammar`, `packages/views`, `packages/shell`, `tests/ui`; it does not touch `/crates`, and a missing kernel op is reported in the package log.
 

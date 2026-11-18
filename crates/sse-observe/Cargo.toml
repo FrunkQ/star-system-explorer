@@ -1,0 +1,14 @@
+[package]
+name = "sse-observe"
+description = "SSE4 OBSERVE engine: disclosure tiers, player data views, grants, scene building"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+authors.workspace = true
+
+[dependencies]
+sse-core.workspace = true
+sse-chronicle.workspace = true
+sse-flow.workspace = true
+serde.workspace = true
+serde_json.workspace = true

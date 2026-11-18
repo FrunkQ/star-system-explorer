@@ -1,0 +1,20 @@
+{
+ "format": "sse.formation-envelope/1",
+ "name": "Solar neighbourhood stand-in (until G0's default patch envelope lands)",
+ "now_gyr": 13.8,
+ "feh": {"type": "normal", "mean": -0.05, "sd": 0.2, "lo": -1.0, "hi": 0.45},
+ "age_gyr": {"type": "uniform", "lo": 0.05, "hi": 10.0},
+ "c_o": {"type": "normal", "mean": 0.47, "sd": 0.07, "lo": 0.2, "hi": 1.0},
+ "mg_si": {"type": "normal", "mean": 1.02, "sd": 0.17, "lo": 0.5, "hi": 2.0},
+ "al26_rel": {"type": "log-normal", "median": 0.3, "sigma_dex": 0.6},
+ "cluster_members": {"type": "power-law", "alpha": 2.0, "lo": 30.0, "hi": 30000.0},
+ "fuv_g0": {"type": "log-normal", "median": 1000.0, "sigma_dex": 0.8},
+ "references": [
+  "[Fe/H]: Casagrande et al. 2011, A&A 530, A138 (Geneva-Copenhagen survey re-analysis: mean -0.05, spread about 0.2 dex)",
+  "Ages: roughly flat star formation history of the thin disc over 10 Gyr (Binney, Dehnen and Bertelli 2000, MNRAS 318, 658)",
+  "C/O 0.47 and Mg/Si 1.02 with their spreads: Brewer and Fischer 2016, ApJ 831, 20",
+  "26Al: Lichtenberg et al. 2016, Icarus 274, 350 (enrichment spread; the Solar System sits high in it)",
+  "Cluster members: embedded-cluster mass function dN/dM ~ M^-2 (Lada and Lada 2003, ARA&A 41, 57)",
+  "FUV field at discs: Fatuzzo and Adams 2008, ApJ 675, 1361 (median about 1000 G0, broad)"
+ ]
+}

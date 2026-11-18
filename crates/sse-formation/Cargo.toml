@@ -1,0 +1,14 @@
+[package]
+name = "sse-formation"
+description = "SSE4 system formation suite (track F): inheritance, stars and life lines, disc and bands, growth, early worlds"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+authors.workspace = true
+
+[dependencies]
+sse-core.workspace = true
+sse-chronicle.workspace = true
+sse-resolve = { path = "../sse-resolve" }
+serde.workspace = true
+serde_json.workspace = true
