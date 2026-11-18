@@ -1,0 +1,304 @@
+{
+ "format": "sse.pack/1",
+ "id": "sse.base-life",
+ "version": "0.1.0",
+ "kind": [
+  "base-physics"
+ ],
+ "kernel_range": "^0.1",
+ "licence": "Apache-2.0",
+ "provides": {
+  "other": {
+   "about": "Life suite sockets (L0): the default habitat kinds of the life design section 2, as rules over world stacks. No life model.",
+   "habitat_rules": [
+    {
+     "id": "ocean-sunlit",
+     "habitat": "ocean-sunlit",
+     "from": "shell",
+     "kinds": [
+      "ocean"
+     ],
+     "place": {
+      "at": "top",
+      "depth_m": 200
+     },
+     "medium": "liquid",
+     "phase": "liquid",
+     "solvent": "water",
+     "channels": [
+      "light",
+      "disequilibrium"
+     ],
+     "about": "The top 200 m of an open ocean, where sunlight reaches."
+    },
+    {
+     "id": "ocean-interior",
+     "habitat": "ocean-interior",
+     "from": "shell",
+     "kinds": [
+      "ocean"
+     ],
+     "place": {
+      "at": "below_top",
+      "depth_m": 200
+     },
+     "medium": "liquid",
+     "phase": "liquid",
+     "solvent": "water",
+     "channels": [
+      "oxidant"
+     ],
+     "about": "The dark water column below the sunlit layer."
+    },
+    {
+     "id": "sea-floor",
+     "habitat": "sea-floor",
+     "from": "shell",
+     "kinds": [
+      "ocean",
+      "sub_ice_ocean"
+     ],
+     "place": {
+      "at": "under_bottom",
+      "depth_m": 100
+     },
+     "medium": "liquid",
+     "phase": "solid+liquid",
+     "solvent": "water",
+     "channels": [],
+     "chemical_from_below": [
+      "heat",
+      "vents"
+     ],
+     "needs_below": [
+      "crust",
+      "mantle",
+      "rock"
+     ],
+     "embedded": true,
+     "about": "Sediment and rock at the bottom of an ocean, with hydrothermal vents where the interior is warm."
+    },
+    {
+     "id": "under-ice-ocean",
+     "habitat": "under-ice-ocean",
+     "from": "shell",
+     "kinds": [
+      "sub_ice_ocean"
+     ],
+     "place": {
+      "at": "all"
+     },
+     "medium": "liquid",
+     "phase": "liquid",
+     "solvent": "water",
+     "channels": [
+      "oxidant"
+     ],
+     "chemical_from_below": [
+      "heat",
+      "vents"
+     ],
+     "about": "An ocean sealed under an ice shell."
+    },
+    {
+     "id": "land-surface",
+     "habitat": "land-surface",
+     "from": "region",
+     "kinds": [
+      "land",
+      "biome",
+      "climate_band"
+     ],
+     "place": {
+      "at": "on_top",
+      "up_m": 10
+     },
+     "medium": "surface",
+     "phase": "solid+gas",
+     "solvent": "water",
+     "channels": [
+      "light"
+     ],
+     "about": "Exposed ground and the air just above it, by climate band."
+    },
+    {
+     "id": "soil",
+     "habitat": "soil",
+     "from": "region",
+     "kinds": [
+      "land",
+      "biome",
+      "climate_band"
+     ],
+     "place": {
+      "at": "under",
+      "from_m": 0,
+      "to_m": 10
+     },
+     "medium": "subsurface",
+     "phase": "solid+liquid",
+     "solvent": "water",
+     "channels": [
+      "chemical"
+     ],
+     "about": "Soils and shallow crust, the top 10 m."
+    },
+    {
+     "id": "deep-crust",
+     "habitat": "deep-crust",
+     "from": "shell",
+     "kinds": [
+      "crust"
+     ],
+     "place": {
+      "at": "under",
+      "from_m": 10,
+      "to_m": 5000
+     },
+     "medium": "subsurface",
+     "phase": "solid+liquid",
+     "solvent": "water",
+     "channels": [
+      "chemical",
+      "radiogenic"
+     ],
+     "needs_property": "pore_water_fraction",
+     "about": "Water-bearing rock down to 5 km (the deep biosphere)."
+    },
+    {
+     "id": "cloud-deck-region",
+     "habitat": "cloud-deck",
+     "from": "region",
+     "kinds": [
+      "cloud_deck"
+     ],
+     "place": {
+      "at": "all"
+     },
+     "medium": "cloud",
+     "phase": "gas+liquid",
+     "solvent": "water",
+     "channels": [
+      "light"
+     ],
+     "about": "A cloud layer at a temperate pressure level."
+    },
+    {
+     "id": "cloud-deck-shell",
+     "habitat": "cloud-deck",
+     "from": "shell",
+     "kinds": [
+      "cloud_deck"
+     ],
+     "place": {
+      "at": "all"
+     },
+     "medium": "cloud",
+     "phase": "gas+liquid",
+     "solvent": "water",
+     "channels": [
+      "light"
+     ],
+     "about": "A cloud layer at a temperate pressure level."
+    },
+    {
+     "id": "hydrocarbon-sea",
+     "habitat": "hydrocarbon-lake",
+     "from": "region",
+     "kinds": [
+      "hydrocarbon_lake",
+      "hydrocarbon_sea"
+     ],
+     "place": {
+      "at": "all"
+     },
+     "medium": "liquid",
+     "phase": "liquid",
+     "solvent": "methane-ethane",
+     "channels": [
+      "chemical"
+     ],
+     "about": "Lakes and seas of liquid methane and ethane."
+    },
+    {
+     "id": "hydrocarbon-pool",
+     "habitat": "hydrocarbon-lake",
+     "from": "feature",
+     "kinds": [
+      "hydrocarbon_lake"
+     ],
+     "place": {
+      "at": "around",
+      "half_m": 50
+     },
+     "medium": "liquid",
+     "phase": "liquid",
+     "solvent": "methane-ethane",
+     "channels": [
+      "chemical"
+     ],
+     "about": "A single hydrocarbon lake."
+    },
+    {
+     "id": "lake",
+     "habitat": "lake",
+     "from": "feature",
+     "kinds": [
+      "lake"
+     ],
+     "place": {
+      "at": "around",
+      "half_m": 50
+     },
+     "medium": "liquid",
+     "phase": "liquid",
+     "solvent": "water",
+     "channels": [
+      "light"
+     ],
+     "about": "A lake of water."
+    },
+    {
+     "id": "terminator",
+     "habitat": "terminator-zone",
+     "from": "region",
+     "kinds": [
+      "terminator"
+     ],
+     "place": {
+      "at": "on_top",
+      "up_m": 10
+     },
+     "medium": "surface",
+     "phase": "solid+gas",
+     "solvent": "water",
+     "channels": [
+      "light"
+     ],
+     "about": "The twilight ring of a tidally locked world."
+    },
+    {
+     "id": "cave",
+     "habitat": "cave",
+     "from": "feature",
+     "kinds": [
+      "cave",
+      "lava_tube"
+     ],
+     "place": {
+      "at": "around",
+      "half_m": 50
+     },
+     "medium": "subsurface",
+     "phase": "solid+gas",
+     "solvent": "water",
+     "channels": [
+      "chemical"
+     ],
+     "embedded": true,
+     "about": "Caves and lava tubes: shelter from radiation and cold."
+    }
+   ]
+  }
+ }
+}

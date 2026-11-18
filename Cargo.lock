@@ -588,6 +588,19 @@ dependencies = [
 ]
 
 [[package]]
+name = "sse-life"
+version = "0.1.0"
+dependencies = [
+ "serde",
+ "serde_json",
+ "sse-chronicle",
+ "sse-core",
+ "sse-pack",
+ "sse-suite",
+ "sse-world",
+]
+
+[[package]]
 name = "sse-observe"
 version = "0.1.0"
 dependencies = [
@@ -656,6 +669,7 @@ dependencies = [
  "sse-cosmos",
  "sse-formation",
  "sse-kernel",
+ "sse-life",
  "sse-observe",
  "sse-resolve",
  "sse-sift",
