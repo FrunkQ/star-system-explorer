@@ -1,0 +1,128 @@
+[
+  {
+    "bodies": [
+      {
+        "a_au": 4.039764404296875,
+        "earth_mass": 239.6447116967532,
+        "gas_giant": true,
+        "id": "nucleus-047",
+        "ledger_entries": 36
+      },
+      {
+        "a_au": 7.1575164794921875,
+        "earth_mass": 336.78495822867416,
+        "gas_giant": true,
+        "id": "nucleus-009",
+        "ledger_entries": 34
+      },
+      {
+        "a_au": 17.226409912109375,
+        "earth_mass": 32.93902742613635,
+        "gas_giant": true,
+        "id": "nucleus-010",
+        "ledger_entries": 8
+      }
+    ],
+    "digest": "a29d7c52840fac0c4c5b4d96a6abace61a4b77b6066a3c4e4fe95cc385aab279",
+    "iterations": 100,
+    "seed": "golden-system-lab-solar"
+  },
+  {
+    "bodies": [
+      {
+        "a_au": 2.7614593505859375,
+        "earth_mass": 33.49756980563303,
+        "gas_giant": true,
+        "id": "nucleus-067",
+        "ledger_entries": 41
+      },
+      {
+        "a_au": 5.974894508727049,
+        "earth_mass": 577.1401576033614,
+        "gas_giant": true,
+        "id": "collision-002",
+        "ledger_entries": 2
+      },
+      {
+        "a_au": 9.659576416015625,
+        "earth_mass": 372.1017958981375,
+        "gas_giant": true,
+        "id": "nucleus-009",
+        "ledger_entries": 32
+      },
+      {
+        "a_au": 17.830657958984375,
+        "earth_mass": 64.13522718423546,
+        "gas_giant": true,
+        "id": "nucleus-013",
+        "ledger_entries": 36
+      },
+      {
+        "a_au": 44.647783342419736,
+        "earth_mass": 0.38445395483121864,
+        "gas_giant": true,
+        "id": "collision-001",
+        "ledger_entries": 2
+      }
+    ],
+    "digest": "8b85614a8078491ec60d1f6520bdadb78b273441cfb7923767db577eb77c2a8a",
+    "iterations": 100,
+    "seed": "u:f0/sys:1"
+  },
+  {
+    "bodies": [
+      {
+        "a_au": 2.0046234130859375,
+        "earth_mass": 3.615471664515628,
+        "gas_giant": true,
+        "id": "nucleus-019",
+        "ledger_entries": 6
+      },
+      {
+        "a_au": 7.2784423828125,
+        "earth_mass": 123.67019214853265,
+        "gas_giant": true,
+        "id": "nucleus-012",
+        "ledger_entries": 7
+      }
+    ],
+    "digest": "e971515d26fd10923a22ca47a4f57265a83fd105cce8e83f87b5da379a8bc11a",
+    "iterations": 100,
+    "seed": "u:f0/sys:2"
+  },
+  {
+    "bodies": [
+      {
+        "a_au": 5.2356719970703125,
+        "earth_mass": 222.18170092578615,
+        "gas_giant": true,
+        "id": "nucleus-081",
+        "ledger_entries": 37
+      },
+      {
+        "a_au": 12.227249145507812,
+        "earth_mass": 247.39721115874403,
+        "gas_giant": true,
+        "id": "nucleus-044",
+        "ledger_entries": 33
+      },
+      {
+        "a_au": 18.98193359375,
+        "earth_mass": 31.593019489308958,
+        "gas_giant": true,
+        "id": "nucleus-007",
+        "ledger_entries": 38
+      },
+      {
+        "a_au": 45.90544111394962,
+        "earth_mass": 0.31386419936640136,
+        "gas_giant": true,
+        "id": "collision-001",
+        "ledger_entries": 2
+      }
+    ],
+    "digest": "15bd73c04a6fafa1e42097d3d6df3bed2e1acce9db59f02da2d179d27c400c39",
+    "iterations": 100,
+    "seed": "u:f0/sys:3"
+  }
+]

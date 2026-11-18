@@ -140,3 +140,35 @@ pub fn early_golden() -> serde_json::Value {
         .collect();
     serde_json::to_value(out).expect("serialisable")
 }
+
+/// F2 golden: the Classic Accrete block on System Lab's default solar request
+/// and on SSE4 seeds, summarised (bodies, masses, ledger sizes).
+pub fn accrete_golden() -> serde_json::Value {
+    use crate::accrete::{run, Controls, Request};
+    let mut out = vec![];
+    for (seed, mass, l) in [
+        ("golden-system-lab-solar", 1.0, 1.0),
+        ("u:f0/sys:1", 1.0, 1.0),
+        ("u:f0/sys:2", 0.8, 0.35),
+        ("u:f0/sys:3", 0.31, 0.015),
+    ] {
+        let r = run(&Request {
+            master_seed: seed.into(),
+            star_mass: mass,
+            star_luminosity: l,
+            controls: Controls::DEFAULT,
+        })
+        .expect("valid request");
+        let text = serde_json::to_string(&r).expect("serialisable");
+        out.push(serde_json::json!({
+            "seed": seed,
+            "iterations": r.iterations,
+            "bodies": r.bodies.iter().map(|b| serde_json::json!({
+                "id": b.id, "a_au": b.a_au, "earth_mass": b.earth_mass(), "gas_giant": b.gas_giant,
+                "ledger_entries": b.ledger.entries.len(),
+            })).collect::<Vec<_>>(),
+            "digest": sse_core::ContentHash::of(&text).expect("hash").hex(),
+        }));
+    }
+    serde_json::Value::Array(out)
+}
