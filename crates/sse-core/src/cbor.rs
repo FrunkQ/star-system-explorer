@@ -393,9 +393,21 @@ impl serde::Serialize for Value {
     }
 }
 
+/// Below this size JavaScript writes an integral number as plain digits.
+const JSON_INT_LIMIT: f64 = 1e21;
+
 impl<'de> serde::Deserialize<'de> for Value {
     fn deserialize<D: serde::Deserializer<'de>>(d: D) -> Result<Self, D::Error> {
-        struct V;
+        // JSON (any human-readable format) has one number type, and the
+        // kernel's clients are JavaScript: `JSON.stringify(281.0)` is "281".
+        // So a JSON number decodes by its value, exactly as JavaScript would
+        // write it: integral and below 1e21 in size (where JavaScript stops
+        // writing digits) is an integer, anything else a float. "281",
+        // "281.0" and "2.81e2" are then one value with one hash on every
+        // client. Binary CBOR keeps the two types as encoded.
+        struct V {
+            json: bool,
+        }
         impl<'de> serde::de::Visitor<'de> for V {
             type Value = Value;
             fn expecting(&self, f: &mut fmt::Formatter) -> fmt::Result {
@@ -429,6 +441,9 @@ impl<'de> serde::Deserialize<'de> for Value {
                 if f.is_nan() {
                     return Err(E::custom("NaN is not a value"));
                 }
+                if self.json && f.is_finite() && f.fract() == 0.0 && f.abs() < JSON_INT_LIMIT {
+                    return Ok(Value::Int(f as i128));
+                }
                 Ok(Value::Float(f))
             }
             fn visit_str<E>(self, t: &str) -> Result<Value, E> {
@@ -460,13 +475,39 @@ impl<'de> serde::Deserialize<'de> for Value {
                 Ok(Value::Map(m))
             }
         }
-        d.deserialize_any(V)
+        let json = d.is_human_readable();
+        d.deserialize_any(V { json })
     }
 }
 
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn json_numbers_decode_by_value_as_javascript_writes_them() {
+        let j = |t: &str| serde_json::from_str::<Value>(t).unwrap();
+        for t in ["281", "281.0", "2.81e2", "2.810e+2"] {
+            assert_eq!(j(t), Value::Int(281), "{t}");
+        }
+        assert_eq!(j("-0.0"), Value::Int(0));
+        assert_eq!(j("0.5"), Value::Float(0.5));
+        assert_eq!(j("1e21"), Value::Float(1e21));
+        assert_eq!(j("1e+21"), Value::Float(1e21));
+        assert!(matches!(j("123456789012345678901"), Value::Int(_)));
+        assert_eq!(j("1.2e20"), Value::Int(120000000000000000000));
+        assert_eq!(j("1.9e27"), Value::Float(1.9e27));
+        // Exact parse (float_roundtrip): the shortest text round-trips.
+        assert_eq!(j("1.2e27"), Value::Float(1.2e27));
+        assert_eq!(serde_json::to_string(&j("1.2e27")).unwrap(), "1.2e+27");
+        // Binary CBOR keeps the encoded type.
+        let b = encode(&Value::Float(281.0)).unwrap();
+        assert_eq!(decode(&b).unwrap(), Value::Float(281.0));
+        assert_eq!(
+            from_value::<Value>(&Value::Float(281.0)).unwrap(),
+            Value::Float(281.0)
+        );
+    }
 
     fn rt(v: Value) {
         let b = encode(&v).unwrap();

@@ -256,3 +256,36 @@ fn as_js(v: &serde_json::Value) -> serde_json::Value {
         other => other.clone(),
     }
 }
+
+/// Cross-track number rule (packages/numbers.md): the same value written as
+/// JavaScript writes it ("281") or as Rust and Python write it ("281.0",
+/// "2.81e2") is one fact with one event id and one state hash; a float
+/// stays a float; and an inexact-parse case ("1.2e27") is exact.
+#[test]
+fn number_spellings_hash_identically() {
+    let run = |text: &str| -> (String, String) {
+        let mut k = crate::Kernel::new();
+        k.handle_json(r#"{"op":"open_universe","id":"n","seed":"numbers"}"#);
+        let r: serde_json::Value = serde_json::from_str(&k.handle_json(&format!(
+            r#"{{"op":"set_authored","edit":{{"address":"u:n/sys:0","field":"x","value":{text},"occurred_at_s":0}}}}"#
+        )))
+        .unwrap();
+        (
+            r["event_id"].as_str().unwrap().into(),
+            r["state_hash"].as_str().unwrap().into(),
+        )
+    };
+    let int = run("281");
+    // Pinned: packages/kernel-client/test/contract.test.ts expects the same
+    // state hash through the worker.
+    assert_eq!(
+        int.1,
+        "c0b8445be888aeca4bbf63634feec6907958eafb1b4155030629cc71442d3dee"
+    );
+    for t in ["281.0", "2.81e2", "2.810E+2"] {
+        assert_eq!(run(t), int, "{t}");
+    }
+    assert_ne!(run("281.5"), int);
+    assert_eq!(run("1.2e27"), run("1.20e+27"));
+    assert_eq!(run("1.2e27"), run("1200000000000000000000000000"));
+}

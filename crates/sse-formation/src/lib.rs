@@ -5,6 +5,7 @@
 #![forbid(unsafe_code)]
 
 pub mod disc;
+pub mod early;
 pub mod history;
 pub mod hurley;
 pub mod inherit;
@@ -16,6 +17,8 @@ pub use history::{FormationError, FormationHistory, Manifest};
 pub use inherit::{Inheritance, InheritancePins, PatchEnvelope};
 pub use lifeline::{LifeLine, Phase, StarState};
 
+#[cfg(test)]
+mod early_tests;
 #[cfg(test)]
 mod tests;
 
