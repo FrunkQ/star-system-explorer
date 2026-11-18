@@ -37,8 +37,11 @@ pinned maths, encoding and draw cases and every kernel API call through a Web
 Worker, and says PASS when this browser matches the native results. Open it
 on each of your devices.
 
-To deploy it as a static site, run `scripts/build-harness.sh` and publish the
-folder `tests/harness/` as it stands (no server code; any static host works).
+To deploy it as a static site, run `npm run build` (writes `dist/`; installs Rust
+and wasm-bindgen first if the machine lacks them) and publish `dist/` on any
+static host. Cloudflare Workers Builds: build command `npm run build`, deploy
+command `npx wrangler deploy` (`wrangler.jsonc` serves `dist/` as static assets),
+non-production branch command `npx wrangler versions upload`.
 
 ## Checks
 
