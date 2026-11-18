@@ -1,0 +1,14 @@
+[package]
+name = "sse-wasm"
+description = "SSE4 kernel WebAssembly surface (wasm-bindgen)"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+authors.workspace = true
+
+[lib]
+crate-type = ["cdylib", "rlib"]
+
+[dependencies]
+sse-core.workspace = true
+wasm-bindgen = "=0.2.130"

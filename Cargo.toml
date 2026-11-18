@@ -1,0 +1,28 @@
+[workspace]
+resolver = "2"
+members = ["crates/*"]
+
+[workspace.package]
+version = "0.1.0"
+edition = "2021"
+license = "Apache-2.0"
+authors = ["FrunkQ"]
+repository = "https://github.com/FrunkQ/star-system-explorer"
+rust-version = "1.97"
+
+[workspace.dependencies]
+# libm is THE pinned maths library (H3). Exact version on purpose: a change here
+# can change bits, which changes golden hashes. Bump only with an ADR.
+libm = "=0.2.16"
+sha2 = "0.11"
+ciborium = "0.2.2"
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
+semver = { version = "1", features = ["serde"] }
+proptest = "1"
+sse-core = { path = "crates/sse-core" }
+
+[profile.release]
+opt-level = 3
+lto = true
+codegen-units = 1

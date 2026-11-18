@@ -1,0 +1,7 @@
+/target
+node_modules/
+/tests/harness/pkg/
+/packages/*/dist/
+/packages/kernel-client/wasm/
+*.log
+.DS_Store

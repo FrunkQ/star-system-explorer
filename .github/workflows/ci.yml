@@ -1,0 +1,53 @@
+name: ci
+on:
+  push:
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+  rust:
+    name: rust (${{ matrix.os }})
+    strategy:
+      fail-fast: false
+      matrix:
+        # x86-64 Linux, arm64 macOS, x86-64 Windows: native golden hashes must agree.
+        os: [ubuntu-latest, macos-latest, windows-latest]
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v4
+      - run: rustup show
+      - if: matrix.os == 'ubuntu-latest'
+        run: cargo fmt --all --check
+      - if: matrix.os == 'ubuntu-latest'
+        run: cargo clippy --workspace --all-targets -- -D warnings
+      - run: cargo test --workspace
+      - run: cargo run -q -p sse-cli --release -- harness
+
+  wasm:
+    name: wasm (node + browsers)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with: { node-version: 22 }
+      - run: rustup show
+      - run: cargo install wasm-bindgen-cli --version 0.2.130 --locked
+      - run: scripts/build-harness.sh
+      - run: node tests/harness/run-node.mjs
+      - run: npm install --no-save playwright@1.63.0 && npx playwright install --with-deps chromium firefox webkit
+      - run: node tests/harness/run-browsers.mjs chromium firefox webkit
+      - uses: actions/upload-pages-artifact@v3
+        with: { path: tests/harness }
+
+  # Publishes the harness page so it can be opened on phones and tablets.
+  # Needs GitHub Pages enabled with source "GitHub Actions" (repo Settings, Pages).
+  pages:
+    if: github.event_name == 'push'
+    needs: wasm
+    runs-on: ubuntu-latest
+    permissions: { pages: write, id-token: write }
+    environment: { name: github-pages, url: "${{ steps.deploy.outputs.page_url }}" }
+    continue-on-error: true
+    steps:
+      - id: deploy
+        uses: actions/deploy-pages@v4

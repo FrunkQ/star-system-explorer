@@ -1,0 +1,14 @@
+[package]
+name = "sse-cli"
+description = "SSE4 native tool: harness, golden checks, pack validation"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+authors.workspace = true
+
+[[bin]]
+name = "sse"
+path = "src/main.rs"
+
+[dependencies]
+sse-core.workspace = true

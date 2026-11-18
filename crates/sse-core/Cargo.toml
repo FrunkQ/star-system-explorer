@@ -1,0 +1,17 @@
+[package]
+name = "sse-core"
+description = "SSE4 substrate: canonical encoding, content hashes, pinned maths, addresses, quantities, keyed draws"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+authors.workspace = true
+
+[dependencies]
+libm.workspace = true
+sha2.workspace = true
+ciborium.workspace = true
+serde.workspace = true
+
+[dev-dependencies]
+proptest.workspace = true
+serde_json.workspace = true

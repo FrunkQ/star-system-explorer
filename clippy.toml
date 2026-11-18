@@ -1,0 +1,22 @@
+# Deterministic paths must use sse_core::math (pinned libm), never the
+# platform's own transcendental functions. See docs/adr/0002.
+disallowed-methods = [
+  { path = "f64::sin", reason = "use sse_core::math" }, { path = "f64::cos", reason = "use sse_core::math" },
+  { path = "f64::tan", reason = "use sse_core::math" }, { path = "f64::asin", reason = "use sse_core::math" },
+  { path = "f64::acos", reason = "use sse_core::math" }, { path = "f64::atan", reason = "use sse_core::math" },
+  { path = "f64::atan2", reason = "use sse_core::math" }, { path = "f64::exp", reason = "use sse_core::math" },
+  { path = "f64::exp2", reason = "use sse_core::math" }, { path = "f64::exp_m1", reason = "use sse_core::math" },
+  { path = "f64::ln", reason = "use sse_core::math" }, { path = "f64::log", reason = "use sse_core::math" },
+  { path = "f64::log2", reason = "use sse_core::math" }, { path = "f64::log10", reason = "use sse_core::math" },
+  { path = "f64::ln_1p", reason = "use sse_core::math" }, { path = "f64::powf", reason = "use sse_core::math" },
+  { path = "f64::powi", reason = "use sse_core::math" }, { path = "f64::cbrt", reason = "use sse_core::math" },
+  { path = "f64::hypot", reason = "use sse_core::math" }, { path = "f64::sinh", reason = "use sse_core::math" },
+  { path = "f64::cosh", reason = "use sse_core::math" }, { path = "f64::tanh", reason = "use sse_core::math" },
+  { path = "f64::mul_add", reason = "no fused multiply-add in deterministic code" },
+  { path = "std::time::Instant::now", reason = "no wall clock in the kernel" },
+  { path = "std::time::SystemTime::now", reason = "no wall clock in the kernel" },
+]
+disallowed-types = [
+  { path = "std::collections::HashMap", reason = "unordered iteration; use BTreeMap" },
+  { path = "std::collections::HashSet", reason = "unordered iteration; use BTreeSet" },
+]
