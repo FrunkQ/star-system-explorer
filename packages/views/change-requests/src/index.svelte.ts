@@ -7,7 +7,7 @@ export const changeRequests: ViewModule = {
   version: "0.1.0",
   tiers: ["text"],
   inputs: [{ quantity_kinds: [] }],
-  params: [],
+  params: [{ name: "show_closed", type: "boolean", default: true, group: "content", meaning: "List declined and superseded requests under Closed.", promoted: true }],
   intents: [{ kind: "adopt_physics", meaning: "Adopt or withdraw a change request: the campaign pack is rebuilt and the stack reloaded." }],
   mount(el, ctx, scene) {
     const props = $state({ ctx, scene, params: ctx.params });

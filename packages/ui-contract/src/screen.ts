@@ -2,6 +2,8 @@
 // curated layout (H8.8) whose areas hold view modules.
 import type { Json } from "./json.ts";
 import { resolveParams, type TopicQuery, type ViewModule } from "./view.ts";
+import { checkStyle, COSTS, settingsCost, TIER_RUNS_UP_TO, type StyleDoc } from "./style.ts";
+import type { ParamSpec } from "./view.ts";
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 type AnyView = ViewModule<any, any>;
@@ -12,6 +14,8 @@ export interface ScreenItem {
   params?: Record<string, Json>;
   /** What this item shows (H8.3 `bind`): only these subjects or kinds of the scene; absent shows the whole scene. */
   bind?: TopicQuery;
+  /** A style document for this item's view (H8.9); the item's own params go on top. */
+  style?: string;
 }
 
 export interface ScreenDoc {
@@ -48,9 +52,10 @@ export interface CheckedScreen {
 /**
  * Validate a screen against the registry of view modules; nothing mounts
  * unless all of it is valid. `dataViews`, when given, are the data views the
- * campaign offers, and a screen naming another is refused.
+ * campaign offers, and a screen naming another is refused. `styles` are the
+ * style documents items may name, checked for the device tier they will run on.
  */
-export function checkScreen(doc: ScreenDoc, registry: readonly AnyView[], dataViews?: readonly string[]): { ok: true; screen: CheckedScreen } | { ok: false; errors: string[] } {
+export function checkScreen(doc: ScreenDoc, registry: readonly AnyView[], dataViews?: readonly string[], styles?: { registry: readonly StyleDoc[]; tier: string }): { ok: true; screen: CheckedScreen } | { ok: false; errors: string[] } {
   const errors: string[] = [];
   if (!doc || typeof doc !== "object") return { ok: false, errors: ["not a screen document"] };
   if (doc.schema !== "sse.screen/1") errors.push(`unknown screen schema ${doc.schema}`);
@@ -70,7 +75,20 @@ export function checkScreen(doc: ScreenDoc, registry: readonly AnyView[], dataVi
     if (areas && !areas.includes(item.area)) errors.push(`layout ${doc.layout} has no area ${item.area}`);
     if (used.has(item.area)) errors.push(`area ${item.area} is used twice`);
     used.add(item.area);
-    const r = resolveParams(module.params, item.params);
+    let r: { params: Record<string, Json>; errors: string[] };
+    if (item.style) {
+      const sd = styles?.registry.find((d) => d.id === item.style);
+      if (!sd) r = { params: {}, errors: [`no style ${item.style}`] };
+      else if (sd.view !== item.view) r = { params: {}, errors: [`style ${item.style} is for ${sd.view}`] };
+      else {
+        const c = checkStyle(item.style, styles!.registry, registry, styles!.tier, item.params ?? {});
+        r = c.ok ? { params: c.params, errors: [] } : { params: {}, errors: c.errors.map((e) => `style ${item.style}: ${e}`) };
+      }
+    } else {
+      r = resolveParams(module.params, item.params);
+      const over = styles ? overBudget(module.params, r.params, styles.tier) : null;
+      if (over) r.errors.push(over);
+    }
     errors.push(...r.errors.map((e) => `${item.view}: ${e}`));
     const bad = item.bind ? checkBind(item.bind) : null;
     if (bad) errors.push(`${item.view}: bind ${bad}`);
@@ -97,4 +115,10 @@ export function boundScene<S extends { scope: string; subjects: { address: strin
     (bind.addresses ?? []).some((a) => s.address === a || s.address.startsWith(`${a}/`)) ||
     (bind.kinds ?? []).includes(kind(s));
   return { ...scene, subjects: scene.subjects.filter(keep) };
+}
+
+function overBudget(specs: readonly ParamSpec[], params: Record<string, Json>, tier: string): string | null {
+  const c = settingsCost(specs, params);
+  const limit = TIER_RUNS_UP_TO[tier];
+  return limit && COSTS.indexOf(c.cost) > COSTS.indexOf(limit) ? `over budget: ${c.by.join(", ")} cost ${c.cost}, and a ${tier} device runs up to ${limit}` : null;
 }

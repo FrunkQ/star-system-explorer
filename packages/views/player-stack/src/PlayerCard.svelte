@@ -12,20 +12,21 @@
   const order = $derived((ctx.params.fields as string[]) ?? []);
   const shown = $derived.by(() => {
     if (!subject) return [];
-    const facts = subject.facts.filter((f) => f.field !== "name" && (ctx.params.unknown !== false || f.placeholder === undefined));
+    const only = ctx.params.only_fields === true && order.length > 0;
+    const facts = subject.facts.filter((f) => f.field !== "name" && (ctx.params.unknown !== false || f.placeholder === undefined) && (!only || order.includes(f.field)));
     const rank = (f: string) => (order.includes(f) ? order.indexOf(f) : order.length);
     return [...facts].sort((a, b) => rank(a.field) - rank(b.field)).map((f) => ({ f, d: describeFact(ctx.vocab, f) }));
   });
   const moons = $derived(subject ? childrenOf(scene, subject.address) : []);
 </script>
 
-<article class="pcard" aria-label={subject ? subjectName(subject) : "No subject"}>
+<article class="pcard" class:compact={ctx.params.density === "compact"} aria-label={subject ? subjectName(subject) : "No subject"}>
   {#if subject}
     <header>
       <h2>{subjectName(subject)}</h2>
-      <span class="view">{subject.view.replace(/-/g, " ")}</span>
+      {#if ctx.params.show_view !== false}<span class="view">{subject.view.replace(/-/g, " ")}</span>{/if}
     </header>
-    {#if subject.tags.length}
+    {#if subject.tags.length && ctx.params.show_tags !== false}
       <ul class="tags" aria-label="Tags">{#each subject.tags as t (t)}<li>{ctx.vocab.tags?.[t] ?? t}</li>{/each}</ul>
     {/if}
     <dl>
@@ -36,7 +37,7 @@
         </div>
       {/each}
     </dl>
-    {#if moons.length}
+    {#if moons.length && ctx.params.show_moons !== false}
       <p class="moons">Moons: {#each moons as m, i (m.address)}{i ? ", " : ""}<button type="button" onclick={() => ctx.select(m.address)}>{subjectName(m)}</button>{/each}</p>
     {/if}
   {:else}
@@ -111,6 +112,13 @@
     letter-spacing: var(--sse-label-tracking);
     text-transform: var(--sse-label-case);
     padding: 0 8px;
+  }
+  .compact dl {
+    padding: 2px 0;
+  }
+  .compact .row {
+    padding-top: 1px;
+    padding-bottom: 1px;
   }
   dl {
     margin: 0;

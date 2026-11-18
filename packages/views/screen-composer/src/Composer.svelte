@@ -10,6 +10,7 @@
     LAYOUT_AREAS,
     checkPlayerScene,
     checkScreen,
+    promotedOf,
     observeOf,
     packSummary,
     type Json,
@@ -19,7 +20,7 @@
     type ViewContext,
     type Vocab,
   } from "../../../ui-contract/src/index.ts";
-  import { Stamp } from "../../../chart-grammar/src/index.ts";
+  import { Settings, Stamp } from "../../../chart-grammar/src/index.ts";
   import { PLAYER_STACK, ScreenRuntime } from "../../player-stack/src/index.ts";
 
   import { untrack } from "svelte";
@@ -132,8 +133,24 @@
   });
 
   let sensor = $state<"before" | "after">("after");
-  const checked = $derived(doc ? checkScreen(doc, PLAYER_STACK, dataViews) : null);
-  const oracChecked = $derived(orac ? checkScreen(orac.r.screen, PLAYER_STACK, dataViews) : null);
+  // Style documents items may name, checked for this device's tier (H8.9).
+  const styleSet = $derived(ctx.styles ? { registry: ctx.styles.registry(), tier: ctx.styles.tier() } : undefined);
+  const checked = $derived(doc ? checkScreen(doc, PLAYER_STACK, dataViews, styleSet) : null);
+  const oracChecked = $derived(orac ? checkScreen(orac.r.screen, PLAYER_STACK, dataViews, styleSet) : null);
+  const stylesFor = (view: string) => (styleSet?.registry ?? []).filter((d) => d.view === view);
+  const promotedFor = (view: string, style?: string) => {
+    const m = PLAYER_STACK.find((x) => x.id === view);
+    return m ? promotedOf(m, styleSet?.registry.find((d) => d.id === style)) : [];
+  };
+  function setStyle(i: number, id: string) {
+    const it = doc!.items[i]!;
+    if (id) it.style = id;
+    else delete it.style;
+  }
+  function setPromoted(i: number, name: string, value: Json) {
+    const it = doc!.items[i]!;
+    it.params = { ...(it.params ?? {}), [name]: value };
+  }
   const areas = $derived(doc ? (LAYOUT_AREAS[doc.layout] ?? []) : []);
   const freeArea = $derived(areas.find((a) => !doc?.items.some((i) => i.area === a)));
   let showDoc = $state(false);
@@ -264,6 +281,18 @@
                 {#each areas as a (a)}<option value={a}>{a}</option>{/each}
               </select>
             </label>
+            <label>Style
+              <select value={it.style ?? ""} disabled={!editable} onchange={(e) => setStyle(i, e.currentTarget.value)}>
+                <option value="">view defaults</option>
+                {#each stylesFor(it.view) as d (d.id)}<option value={d.id}>{d.name}</option>{/each}
+              </select>
+            </label>
+            {#if promotedFor(it.view, it.style).length}
+              <details class="ipro">
+                <summary>Settings</summary>
+                <Settings specs={promotedFor(it.view, it.style)} values={it.params ?? {}} disabled={!editable} onchange={(n, v) => setPromoted(i, n, v)} idPrefix="c{i}" />
+              </details>
+            {/if}
             {#if it.bind}<span class="bind k">shows {[...(it.bind.addresses ?? []), ...(it.bind.kinds ?? [])].join(", ")}</span>{/if}
             <label class="pl">Parameters
               <input value={JSON.stringify(it.params ?? {})} disabled={!editable} onchange={(e) => setParams(i, e.currentTarget.value)} spellcheck="false" autocomplete="off" aria-invalid={paramErrors[i] ? "true" : undefined} />
@@ -493,6 +522,16 @@
     padding: 12px;
     border: var(--sse-line) dashed var(--sse-ink-muted);
     background: var(--sse-ground);
+  }
+  .ipro {
+    flex-basis: 100%;
+    font-size: 13px;
+  }
+  .ipro summary {
+    min-height: 32px;
+    display: flex;
+    align-items: center;
+    cursor: pointer;
   }
   .items li {
     display: flex;

@@ -7,7 +7,10 @@ export const timeRuler: ViewModule = {
   version: "0.1.0",
   tiers: ["text", "canvas"],
   inputs: [{ event_kinds: ["*"] }],
-  params: [{ name: "scene_events", type: "boolean", default: true, meaning: "Show the scene's history and futures, not only edits.", promoted: true }],
+  params: [
+    { name: "scene_events", type: "boolean", default: true, group: "content", meaning: "Show the scene's history and futures, not only edits.", promoted: true },
+    { name: "edits", type: "boolean", default: true, group: "content", meaning: "Show the GM's authored edits from the chronicle.", promoted: true },
+  ],
   intents: [],
   mount(el, ctx, scene) {
     const props = $state({ ctx, scene, params: ctx.params });

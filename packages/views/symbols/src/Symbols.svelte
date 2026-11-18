@@ -173,7 +173,7 @@
     <h2 id="sym-preview">Key and themes</h2>
     <div class="k">Key for this chart</div>
     <Legend entries={legend} prefix="syk" note={marker.collapse} label="Key for this chart" />
-    {#if previews.length}
+    {#if previews.length && params.previews !== false}
       <div class="k">Under every theme</div>
       <p class="muted">The same symbols drawn by each theme, with its own rule where it cannot carry a channel.</p>
       {#each previews as t (t.id)}

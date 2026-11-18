@@ -22,7 +22,7 @@
   } from "../../../ui-contract/src/index.ts";
   import { Card, Stamp } from "../../../chart-grammar/src/index.ts";
 
-  let { ctx, scene }: { ctx: ViewContext; scene: SystemScene; params: Record<string, Json> } = $props();
+  let { ctx, scene, params }: { ctx: ViewContext; scene: SystemScene; params: Record<string, Json> } = $props();
   const ws = $derived(ctx.workspace);
   const session = $derived(ctx.session);
 
@@ -162,7 +162,7 @@
       </ul>
     {/if}
 
-    {#if closed.length}
+    {#if closed.length && params.show_closed !== false}
       <details>
         <summary>Closed ({closed.length})</summary>
         <ul class="list">{#each closed as r (r.id)}<li class="held"><span class="t">{r.title}</span><span class="edits">{r.status}</span></li>{/each}</ul>

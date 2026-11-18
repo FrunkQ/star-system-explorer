@@ -1,0 +1,14 @@
+{
+  "schema": "sse.screen/1",
+  "id": "sse.workspace.gm.styles",
+  "label": "Styles",
+  "audience": "gm",
+  "layout": "chart-room",
+  "theme": "chart-room",
+  "symbology": "sse.symbology.diagrammatic",
+  "vocab": "physics",
+  "items": [
+    { "view": "sse.view.styles", "area": "chart" },
+    { "view": "sse.view.time-ruler", "area": "ruler" }
+  ]
+}

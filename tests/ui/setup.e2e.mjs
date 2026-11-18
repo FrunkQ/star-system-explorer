@@ -95,7 +95,7 @@ try {
     await comp.locator("[data-view='sse.view.card'] article").waitFor();
     assert.equal(await comp.locator(".preview [data-view]").count(), 6, "the Bridge screen's six items drawn");
     // A bad parameter is caught by the screen checker, not drawn.
-    const firstParams = comp.locator(".items li").nth(2).locator("input");
+    const firstParams = comp.locator(".items li").nth(2).locator(".pl input");
     await firstParams.fill('{"style": "dial"}');
     await firstParams.press("Enter");
     await comp.locator(".problems").getByText(/style: must be one of/).waitFor();

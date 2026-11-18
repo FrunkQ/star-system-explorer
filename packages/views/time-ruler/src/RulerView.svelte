@@ -13,7 +13,7 @@
 
   const events = $derived<RulerEvent[]>([
     ...(params.scene_events ? scene.events : []),
-    ...history.map((e) => ({ id: e.id, at_yr: e.at_yr, label: `Authored edit (${e.subject.join(", ")})`, tone: "authored" as const })),
+    ...(params.edits === false ? [] : history).map((e) => ({ id: e.id, at_yr: e.at_yr, label: `Authored edit (${e.subject.join(", ")})`, tone: "authored" as const })),
   ]);
 </script>
 

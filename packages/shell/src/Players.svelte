@@ -20,6 +20,7 @@
   import { FilterChain, Segmented } from "../../chart-grammar/src/index.ts";
   import vocabDoc from "./documents/vocab.plain.json";
   import { SHIPPED } from "./symbols.svelte.ts";
+  import { allStyles } from "./styles.svelte.ts";
   import guideVocabDoc from "./documents/vocab.guide.json";
   import { loadPref, savePref } from "./prefs.ts";
 
@@ -63,7 +64,7 @@
       session = s;
       const doc = await loadScreen();
       const views = observeOf(s.stack().base)?.setup.views.map((v) => v.id);
-      checked = checkScreen(doc, PLAYER_STACK, views);
+      checked = checkScreen(doc, PLAYER_STACK, views, { registry: allStyles(), tier: s.device()?.tier ?? "standard" });
       screenDoc = doc;
       await refresh();
     })

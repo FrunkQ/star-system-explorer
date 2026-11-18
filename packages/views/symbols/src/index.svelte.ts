@@ -7,7 +7,10 @@ export const symbols: ViewModule = {
   version: "0.1.0",
   tiers: ["text"],
   inputs: [{ quantity_kinds: [] }],
-  params: [{ name: "all_classes", type: "boolean", default: false, meaning: "List every class the classification pack knows, not only those on the chart." }],
+  params: [
+    { name: "all_classes", type: "boolean", default: false, group: "content", meaning: "List every class the classification pack knows, not only those on the chart.", promoted: true },
+    { name: "previews", type: "boolean", default: true, group: "content", meaning: "Show the key under every shipped theme.", promoted: true },
+  ],
   intents: [],
   mount(el, ctx, scene) {
     const props = $state({ ctx, scene, params: ctx.params });

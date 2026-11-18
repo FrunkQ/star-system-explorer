@@ -15,6 +15,9 @@
   import screensDoc from "./documents/screens.gm.json";
   import dataDoc from "./documents/dataviews.gm.json";
   import symbolsDoc from "./documents/symbols.gm.json";
+  import stylesScreenDoc from "./documents/styles.gm.json";
+  import { createStyles } from "./styles.svelte.ts";
+  import { PLAYER_STACK } from "../../views/player-stack/src/index.ts";
   import oracDoc from "./documents/orac.requests.json";
   import sceneDoc from "./documents/kestrel.scene.json";
   import derivationsDoc from "./documents/derivations.base.json";
@@ -34,7 +37,7 @@
   let scene = $state<SystemScene>(base);
 
   // Each screen document is checked before anything mounts; the GM switches between them.
-  const SCREENS: Record<string, ScreenDoc> = { system: workspaceDoc as unknown as ScreenDoc, physics: physicsDoc as unknown as ScreenDoc, packs: packsDoc as unknown as ScreenDoc, screens: screensDoc as unknown as ScreenDoc, data: dataDoc as unknown as ScreenDoc, symbols: symbolsDoc as unknown as ScreenDoc };
+  const SCREENS: Record<string, ScreenDoc> = { system: workspaceDoc as unknown as ScreenDoc, physics: physicsDoc as unknown as ScreenDoc, packs: packsDoc as unknown as ScreenDoc, screens: screensDoc as unknown as ScreenDoc, data: dataDoc as unknown as ScreenDoc, symbols: symbolsDoc as unknown as ScreenDoc, styles: stylesScreenDoc as unknown as ScreenDoc };
   const checks = Object.fromEntries(Object.entries(SCREENS).map(([k, d]) => [k, checkScreen(d, REGISTRY)]));
   const badScreens = Object.values(checks).flatMap((c) => (c.ok ? [] : c.errors));
   const screen = $derived.by((): CheckedScreen | null => {
@@ -56,6 +59,8 @@
   });
 
   let session = $state<ViewSession | null>(null);
+  // Style documents (H8.9): checked for this device's measured tier.
+  const styleHost = createStyles(() => [...REGISTRY, ...PLAYER_STACK] as never, () => session?.device()?.tier ?? "standard");
   let failure = $state<string | null>(null);
   let status = $state({ kernel: "", tier: "", hash: "", stack: "", campaign: false });
   async function loadPacks(): Promise<unknown[]> {
@@ -104,7 +109,7 @@
   }
 
   function view(node: HTMLElement, m: { module: ViewModule; params: Record<string, Json> }) {
-    const h = m.module.mount(node, { session: session!, workspace: ws, params: m.params, mark: (s) => symbols.marker().mark(subjectOf(s)), symbology: symbols }, scene);
+    const h = m.module.mount(node, { session: session!, workspace: ws, params: m.params, mark: (s) => symbols.marker().mark(subjectOf(s)), symbology: symbols, styles: styleHost }, scene);
     handles.push(h);
     return {
       destroy: () => {
@@ -172,6 +177,7 @@
           { value: "screens", label: "Screens" },
           { value: "data", label: "Player data" },
           { value: "symbols", label: "Symbols" },
+          { value: "styles", label: "Styles" },
           { value: "packs", label: "Packs" },
         ]}
         onchange={(v) => (ws.screen = v)}

@@ -31,7 +31,15 @@ export interface ParamSpec {
   unit?: string;
   /** Shown as a plain control to people; everything else is for Orac or the raw document. */
   promoted?: boolean;
+  /**
+   * What the setting costs the device when it is engaged (H8.9): a boolean
+   * when true, a number when above its default, text or a list when not the
+   * default. Enums give a cost per option in `cost_options` instead.
+   */
   cost?: Cost;
+  cost_options?: Record<string, Cost>;
+  /** Where the setting sits in the full list Orac and the raw document see: what is shown, how it looks, how it behaves. */
+  group?: "content" | "look" | "behaviour";
 }
 
 /** One applied change, kept so it can be undone by a further, opposite intent. */
@@ -80,6 +88,19 @@ export interface ViewContext {
   mark(subject: SceneSubject): Mark;
   /** The symbols in force, their legend and (on the symbols screen) the choice of grammar. */
   symbology?: import("./symbology.ts").SymbologyHost;
+  /** Style documents (H8.9) this shell knows, the device tier they are checked for, and a way to keep an edited one. */
+  styles?: StylesHost;
+}
+
+/** What a shell offers views about style documents. Presentation only: kept on the device, never in the universe. */
+export interface StylesHost {
+  registry(): readonly import("./style.ts").StyleDoc[];
+  /** This device's measured tier (basic, standard, capable). */
+  tier(): string;
+  /** Every view this shell can mount, GM and player, with its schema. */
+  views(): readonly ViewModule<unknown, unknown>[];
+  /** Keep an edited style (replaces one with the same id); null removes every kept style. */
+  keep(doc: import("./style.ts").StyleDoc | null): void;
 }
 
 /**

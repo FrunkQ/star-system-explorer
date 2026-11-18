@@ -30,7 +30,22 @@
   const cy = $derived(h / 2);
   const scale = $derived(fitScale(placed.map((b) => b.a!), 26, Math.max(60, Math.min(w, h) / 2 - 18)));
   // Phase angles are not player data; bodies are spread evenly by order so labels never collide.
-  const angle = (i: number) => 20 + i * (300 / Math.max(1, placed.length));
+  // With `animate` on, bodies drift round their orbits (presentation only; still under reduced motion).
+  let drift = $state(0);
+  $effect(() => {
+    if (ctx.params.animate !== true || (typeof matchMedia === "function" && matchMedia("(prefers-reduced-motion: reduce)").matches)) return;
+    let raf = 0;
+    const tick = () => {
+      drift = (drift + 0.15) % 360;
+      raf = requestAnimationFrame(tick);
+    };
+    raf = requestAnimationFrame(tick);
+    return () => cancelAnimationFrame(raf);
+  });
+  const angle = (i: number) => 20 + i * (300 / Math.max(1, placed.length)) + drift / (1 + i);
+  const showNames = $derived(ctx.params.labels !== false);
+  const fontPx = $derived(Number(ctx.params.label_size ?? 15));
+  const markScale = $derived(Number(ctx.params.mark_scale ?? 1));
   const sel = $derived(ctx.selection());
 
   function key(e: KeyboardEvent, address: string) {
@@ -41,7 +56,7 @@
   }
 </script>
 
-<div class="pchart" bind:clientWidth={w} bind:clientHeight={h}>
+<div class="pchart" bind:clientWidth={w} bind:clientHeight={h} style="--label-px: {fontPx}px" data-animate={ctx.params.animate === true}>
   <svg width={w} height={h} role="group" aria-label="Chart of {star ? subjectName(star) : 'the system'}">
     {#if ctx.mark}<HatchDefs prefix="pc" />{/if}
     {#each placed as b, i (b.s.address)}
@@ -61,11 +76,11 @@
         <circle cx={x} cy={y} r="14" class="hit" />
         {#if ctx.mark}
           {@const m = ctx.mark(b.s)}
-          <Mark mark={{ ...m, size: Math.max(4, Math.min(8, m.size)) }} cx={x} cy={y} prefix="pc" />
-          <text x={x + 12} y={y - 10}>{b.name}</text>
+          <Mark mark={{ ...m, size: Math.max(4, Math.min(8, m.size)) * markScale }} cx={x} cy={y} prefix="pc" />
+          {#if showNames}<text x={x + 12 * markScale} y={y - 10 * markScale}>{b.name}</text>{/if}
         {:else}
-          <circle cx={x} cy={y} r="6" class="dot" />
-          <text x={x + 10} y={y - 9}>{b.name}</text>
+          <circle cx={x} cy={y} r={6 * markScale} class="dot" />
+          {#if showNames}<text x={x + 10 * markScale} y={y - 9 * markScale}>{b.name}</text>{/if}
         {/if}
       </g>
     {/each}
@@ -73,14 +88,14 @@
       <g class="body star" class:sel={sel === star.address} role="button" tabindex="0" aria-pressed={sel === star.address} aria-label={subjectName(star)} onclick={() => ctx.select(star.address)} onkeydown={(e) => key(e, star.address)}>
         <circle {cx} {cy} r="16" class="hit" />
         <circle {cx} {cy} r="9" class="sun" />
-        <text x={cx + 13} y={cy + 22}>{subjectName(star)}</text>
+        {#if showNames}<text x={cx + 13} y={cy + 22}>{subjectName(star)}</text>{/if}
       </g>
     {/if}
-    {#if placed.length}
+    {#if placed.length && ctx.params.show_scale !== false}
       <text class="scale" x="10" y={h - 10}>log scale · {scale.inner_au.toPrecision(2)} to {scale.outer_au.toPrecision(2)} AU</text>
     {/if}
   </svg>
-  {#if unplaced.length}
+  {#if unplaced.length && ctx.params.show_unplaced !== false}
     <div class="unplaced" aria-label="Position not known">
       <span class="k">{wordsFor(ctx.vocab, field).label}: not known</span>
       {#each unplaced as b (b.s.address)}
@@ -129,7 +144,7 @@
     fill: var(--sse-ink);
     font-family: var(--sse-title-font);
     font-style: var(--sse-title-style);
-    font-size: 15px;
+    font-size: var(--label-px, 15px);
   }
   .body.sel .dot {
     fill: var(--sse-accent);

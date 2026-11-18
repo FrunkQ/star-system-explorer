@@ -10,14 +10,18 @@
 
   let { ctx, scene }: { ctx: PlayerContext; scene: PlayerScene } = $props();
   const subject = $derived(focusOf(scene, ctx.selection()));
-  const lines = $derived(subject ? subject.facts.map((f) => sentence(ctx.vocab, subject, f)).filter((x): x is string => !!x) : []);
-  const story = $derived(subject ? subject.facts.filter((f) => f.field.startsWith("story.") && typeof f.value === "string") : []);
+  const max = $derived(Number(ctx.params.max_sentences ?? 0));
+  const lines = $derived.by(() => {
+    const all = subject ? subject.facts.map((f) => sentence(ctx.vocab, subject, f)).filter((x): x is string => !!x) : [];
+    return max > 0 ? all.slice(0, max) : all;
+  });
+  const story = $derived(subject && ctx.params.show_story !== false ? subject.facts.filter((f) => f.field.startsWith("story.") && typeof f.value === "string") : []);
   const kind = $derived(subject ? subject.facts.find((f) => f.field === "kind") : undefined);
 </script>
 
-<article class="ptext" aria-label="About {subject ? subjectName(subject) : 'nothing'}">
+<article class="ptext size-{String(ctx.params.size ?? "normal")}" aria-label="About {subject ? subjectName(subject) : 'nothing'}">
   {#if subject}
-    <h2>{subjectName(subject)}{#if kind}<span class="k">&nbsp;· {describeFact(ctx.vocab, kind).text}</span>{/if}</h2>
+    {#if ctx.params.show_heading !== false}<h2>{subjectName(subject)}{#if kind}<span class="k">&nbsp;· {describeFact(ctx.vocab, kind).text}</span>{/if}</h2>{/if}
     <p>{lines.join(" ") || "Nothing more is known."}</p>
     {#each story as s (s.field)}<blockquote>{String(s.value)}</blockquote>{/each}
   {/if}
@@ -31,6 +35,12 @@
     font-family: var(--sse-font-display);
     font-size: 17px;
     line-height: 1.55;
+  }
+  .size-small {
+    font-size: 15px;
+  }
+  .size-large {
+    font-size: 21px;
   }
   h2 {
     margin: 0 0 6px;
