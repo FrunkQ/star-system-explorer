@@ -17,8 +17,9 @@ export type { ViewModule, ViewContext, PlayerContext, ViewHandle, ParamSpec, Tie
 export { commitEdit, undoEdit, redoEdit } from "./edit.ts";
 export { checkScreen, LAYOUT_AREAS } from "./screen.ts";
 export type { ScreenDoc, ScreenItem, CheckedScreen } from "./screen.ts";
-export { markFor } from "./mark.ts";
-export type { Mark, Binding, Symbology, Channel } from "./mark.ts";
+export { subjectOf, playerSubjectOf } from "./mark.ts";
+export { resolveSymbology, markerFor, legendFor, sameLook, checkSymbology, CHANNELS, PATTERNS, BODY_SHAPES } from "./symbology.ts";
+export type { Mark, Binding, Channel, Shape, Pattern, Scale, SymbologyDoc, Marker, LegendEntry, MarkSubject, ThemeCapability, SymbologyHost } from "./symbology.ts";
 export type { SystemScene, SceneSubject, SceneFact, SceneEvent, FactSource } from "./scene.ts";
 export { describeFact, wordsFor, fact, subjectName, parentOf, sentence, checkPlayerScene } from "./player-scene.ts";
 export type { PlayerScene, PlayerSubject, PlayerFact, Vocab, FieldWords, FactText } from "./player-scene.ts";

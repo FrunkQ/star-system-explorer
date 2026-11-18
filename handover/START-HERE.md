@@ -1,6 +1,6 @@
 # START HERE
 
-Last updated: 18 Nov 2026, after F6 and G0 (physics and kernel tracks) and U0 to U3, V1, U5, V2 (UI track). Milestone M1 complete (K0 documents with Alex for review). Milestone 2 running as parallel tracks.
+Last updated: 18 Nov 2026, after F6 and G0 (physics and kernel tracks) and U0 to U3, V1, U5, V2, V12 (UI track). Milestone M1 complete (K0 documents with Alex for review). Milestone 2 running as parallel tracks.
 
 ## Where we are
 Milestone M1 "Proven core" = packages K0 to K6 (build plan section 3/4).
@@ -33,6 +33,7 @@ Milestone M1 "Proven core" = packages K0 to K6 (build plan section 3/4).
 | V1 view contract, player scenes, Chart, Card, Table, Text, Readout | done (scenes from K9 fixtures until the kernel serves a scene op) | packages/V1.md |
 | U5 packs screen, data views screen, screens composer | done; player page and composer on live kernel scenes | packages/U5.md |
 | V2 themes: tokens, frame parts, filter chains, six player themes | done | packages/V2.md |
+| V12 symbology: diagrammatic and colour-coded grammars, mixing, key, Symbols screen | done except V3 colour import (needs V3's colour table); colours are placeholders | packages/V12.md |
 | G0 default Milky-Way-like patch envelope | done (kernel track) | packages/G0.md |
 | Kernel API additions: stack adopt, manifest, scene, scan_toggle | done (kernel track) | packages/K6-additions.md |
 | Numbers: exact float parse, JSON numbers decode by value (cross-track) | done (kernel track); other tracks merge and re-baseline | packages/numbers.md |
@@ -44,7 +45,7 @@ Milestone M1 "Proven core" = packages K0 to K6 (build plan section 3/4).
 |---|---|---|
 | Physics | P1, P3, P4, then F0 to F2 and F6 | `claude/project-thread-h9y77o` (this file) |
 | Kernel | K7 to K10, G0, C1 and the U3 gaps done; C2 next | `claude/project-thread-dzkz4p` (PR #1 into the physics branch; physics branch merged in at 638f241) |
-| Chart room shell and player views | U0 to U3, V1, U5, V2 done; next V12 symbology (U4 waits for T2) | `claude/project-thread-adgixl`, PR #2 into the physics branch (kept merged up to date with it) |
+| Chart room shell and player views | U0 to U3, V1, U5, V2, V12 done; next per coordinator (U4 waits for T2) | `claude/project-thread-adgixl`, PR #2 into the physics branch (kept merged up to date with it) |
 
 The kernel now registers the real atom library and loads the base-physics pack (see P1 log, integration notes). The kernel track has merged that in.
 

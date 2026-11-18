@@ -18,3 +18,5 @@ export { radius, distanceAt, fitScale, polar } from "./scale.ts";
 export type { RadialScale } from "./scale.ts";
 export { STAMP_LABELS, HONESTY, stampLabel } from "./stamps.ts";
 export { default as FilterChain } from "./FilterChain.svelte";
+export { default as Legend } from "./Legend.svelte";
+export { markExtent } from "./extent.ts";

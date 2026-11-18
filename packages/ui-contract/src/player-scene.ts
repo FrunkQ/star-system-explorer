@@ -44,6 +44,8 @@ export interface FieldWords {
   sentence?: string;
   /** Sentence when the value is not given; `{name}` and `{placeholder}` are filled in. */
   unknown?: string;
+  /** Words for coded text values ("planet/ocean" reads "ocean world"). */
+  values?: Record<string, string>;
 }
 
 /** A vocabulary layer: words for fields, kinds and tags. Pack data (`sse.vocab/0`). */
@@ -103,7 +105,7 @@ export function describeFact(vocab: Vocab, f: PlayerFact): FactText {
   if (Array.isArray(v)) return { state: "value", label, text: v.map(String).join(", ") };
   if (typeof v === "string") {
     if (f.field === "kind") return { state: "value", label, text: vocab.kinds?.[v] ?? v.replace(/-/g, " ") };
-    return { state: "value", label, text: v };
+    return { state: "value", label, text: w.values?.[v] ?? v };
   }
   return { state: "value", label, text: v === null || v === undefined ? "" : JSON.stringify(v) };
 }

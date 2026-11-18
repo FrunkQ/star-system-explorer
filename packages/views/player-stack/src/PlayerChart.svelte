@@ -8,6 +8,8 @@
   import { fact, subjectName, wordsFor, type PlayerContext, type PlayerScene } from "../../../ui-contract/src/index.ts";
   import { fitScale, radius, polar } from "../../../chart-grammar/src/scale.ts";
   import { topLevel } from "./pick.ts";
+  import HatchDefs from "../../../chart-grammar/src/HatchDefs.svelte";
+  import Mark from "../../../chart-grammar/src/Mark.svelte";
 
   let { ctx, scene }: { ctx: PlayerContext; scene: PlayerScene } = $props();
   const AU = 1.495978707e11;
@@ -41,6 +43,7 @@
 
 <div class="pchart" bind:clientWidth={w} bind:clientHeight={h}>
   <svg width={w} height={h} role="group" aria-label="Chart of {star ? subjectName(star) : 'the system'}">
+    {#if ctx.mark}<HatchDefs prefix="pc" />{/if}
     {#each placed as b, i (b.s.address)}
       {@const r = radius(b.a!, scale)}
       {@const [x, y] = polar(cx, cy, r, angle(i))}
@@ -56,8 +59,14 @@
         onkeydown={(e) => key(e, b.s.address)}
       >
         <circle cx={x} cy={y} r="14" class="hit" />
-        <circle cx={x} cy={y} r="6" class="dot" />
-        <text x={x + 10} y={y - 9}>{b.name}</text>
+        {#if ctx.mark}
+          {@const m = ctx.mark(b.s)}
+          <Mark mark={{ ...m, size: Math.max(4, Math.min(8, m.size)) }} cx={x} cy={y} prefix="pc" />
+          <text x={x + 12} y={y - 10}>{b.name}</text>
+        {:else}
+          <circle cx={x} cy={y} r="6" class="dot" />
+          <text x={x + 10} y={y - 9}>{b.name}</text>
+        {/if}
       </g>
     {/each}
     {#if star}

@@ -76,6 +76,8 @@ export interface ViewContext {
   workspace: Workspace;
   params: Record<string, Json>;
   mark(subject: SceneSubject): Mark;
+  /** The symbols in force, their legend and (on the symbols screen) the choice of grammar. */
+  symbology?: import("./symbology.ts").SymbologyHost;
 }
 
 /**
@@ -91,6 +93,8 @@ export interface PlayerContext {
   select(address: string | null): void;
   /** Ask for something (an intent); the host sends it through its seat. Absent on read-only screens. */
   send?(intent: import("./intent.ts").Intent): Promise<unknown>;
+  /** Marks for player subjects, from the screen's symbology under its theme (absent: views draw plain discs). */
+  mark?(subject: import("./player-scene.ts").PlayerSubject): Mark;
 }
 
 export interface ViewHandle<S = SystemScene> {

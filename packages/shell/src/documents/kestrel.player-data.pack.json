@@ -19,6 +19,7 @@
       "colour": "obvious",
       "spectral": "obvious",
       "orbit.*": "scanned",
+      "class": "scanned",
       "mass_kg": "scanned",
       "atmosphere.*": "scanned",
       "surface.*": "scanned",

@@ -220,7 +220,7 @@
      "unit": "K",
      "digits": 3,
      "except_tags": [
-      "class:gas"
+      "class:planet/gas-giant"
      ]
     }
    ]

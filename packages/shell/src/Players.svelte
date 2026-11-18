@@ -6,7 +6,7 @@
   taps Scanned for the body in focus. V3 turns this into the screens runtime.
 -->
 <script lang="ts">
-  import { checkPlayerScene, checkScreen, enterFacts, gmSeat, subjectName, type AuthoredFacts, type PlayerContext, type PlayerScene, type ScreenDoc, type Vocab, type ViewHandle, type ViewSession } from "../../ui-contract/src/index.ts";
+  import { checkPlayerScene, checkScreen, enterFacts, gmSeat, markerFor, playerSubjectOf, subjectName, type AuthoredFacts, type PlayerContext, type PlayerScene, type ScreenDoc, type Vocab, type ViewHandle, type ViewSession } from "../../ui-contract/src/index.ts";
   import { openBrowserSession } from "../../ui-contract/src/host-browser.ts";
   import { focusOf } from "../../views/player-stack/src/pick.ts";
   import stackDoc from "./documents/stack.json";
@@ -17,6 +17,7 @@
   import { FilterChain, Segmented } from "../../chart-grammar/src/index.ts";
   import screenDoc from "./documents/players.screen.json";
   import vocabDoc from "./documents/vocab.plain.json";
+  import { SHIPPED } from "./symbols.svelte.ts";
   import guideVocabDoc from "./documents/vocab.guide.json";
   import { loadPref, savePref } from "./prefs.ts";
 
@@ -69,6 +70,11 @@
   const themeDoc = $derived(PLAYER_THEMES.find((t) => t.id === theme)!);
   const vocabId = $derived(themeDoc.vocab && VOCABS[themeDoc.vocab] ? themeDoc.vocab : screenDoc.vocab in VOCABS ? screenDoc.vocab : "plain");
   const vocab = $derived(VOCABS[vocabId]!);
+  // Symbols are the player's choice, apart from the theme; the theme says what it can carry.
+  const savedSym = loadPref("player-symbology");
+  let symbology = $state(SHIPPED.some((d) => d.id === savedSym) ? savedSym! : SHIPPED.some((d) => d.id === screenDoc.symbology) ? screenDoc.symbology : SHIPPED[0]!.id);
+  const marker = $derived(markerFor(symbology, SHIPPED, themeDoc));
+  $effect(() => savePref("player-symbology", symbology));
   // Screen effects follow the viewer: no motion when asked, none at all for more contrast or when switched off.
   const media = (q: string) => typeof matchMedia === "function" && matchMedia(q).matches;
   let effects = $state(loadPref("effects") !== "off");
@@ -90,7 +96,7 @@
   });
 
   function view(node: HTMLElement, m: { module: (typeof PLAYER_STACK)[number]; params: PlayerContext["params"] }) {
-    const ctx: PlayerContext = { params: m.params, vocab, selection: () => selection, select: (a) => (selection = a) };
+    const ctx: PlayerContext = { params: m.params, vocab, selection: () => selection, select: (a) => (selection = a), mark: (s) => marker.mark(playerSubjectOf(s)) };
     const h = m.module.mount(node, ctx, scene!);
     handles.push(h);
     return { destroy: () => (handles.splice(handles.indexOf(h), 1), h.dispose()) };
@@ -114,6 +120,9 @@
     />
     <label class="pick">Theme
       <select bind:value={theme} title={themeDoc.description}>{#each PLAYER_THEMES as t (t.id)}<option value={t.id}>{t.name}</option>{/each}</select>
+    </label>
+    <label class="pick">Symbols
+      <select bind:value={symbology}>{#each SHIPPED as d (d.id)}<option value={d.id}>{d.name}</option>{/each}</select>
     </label>
     {#if themeDoc.filters?.length}<label class="pick"><input type="checkbox" bind:checked={effects} /> Screen effects</label>{/if}
   </header>

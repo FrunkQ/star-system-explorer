@@ -3,7 +3,8 @@ import assert from "node:assert/strict";
 import { encodeRequest } from "../src/json.ts";
 import { checkScreen, type ScreenDoc } from "../src/screen.ts";
 import { resolveParams, type ViewModule } from "../src/view.ts";
-import { markFor, type Symbology } from "../src/mark.ts";
+import { subjectOf } from "../src/mark.ts";
+import { markerFor, type SymbologyDoc } from "../src/symbology.ts";
 import { secondsToYears, yearsToSeconds } from "../src/intent.ts";
 import { within } from "../src/seat.ts";
 
@@ -55,15 +56,16 @@ test("screens mount only when every item is valid", () => {
 });
 
 test("marks come from the symbology document, not the view", () => {
-  const sym: Symbology = {
-    id: "s", name: "s",
+  const sym: SymbologyDoc = {
+    schema: "sse.symbology/1", id: "s", name: "s",
     bindings: [
-      { applies_to: "planet", channel: "fill_pattern", from: "tag:class:", table: { ocean: "band" }, fallback: "solid" },
-      { applies_to: "star", channel: "shape", from: "kind", table: { star: "star" }, fallback: "disc" },
+      { applies_to: "planet", channel: "fill_pattern", from: "class", scale: { table: { "planet/ocean": "band" } }, fallback: "solid" },
+      { applies_to: "star", channel: "shape", from: "kind", scale: { table: { star: "star" } }, fallback: "disc" },
     ],
   };
-  const p = { address: "u:x/b:1", kind: "planet", label: "P", facts: [], stamps: [], tags: ["class:ocean"] };
-  assert.equal(markFor(p, sym).fill_pattern, "band");
-  assert.equal(markFor({ ...p, tags: ["class:rock"] }, sym).fill_pattern, "solid");
-  assert.equal(markFor({ ...p, kind: "star" }, sym).shape, "star");
+  const m = markerFor("s", [sym], { supports: { colours: "full", patterns: true, shapes: true } });
+  const p = { address: "u:x/b:1", kind: "planet", label: "P", facts: [], stamps: [], tags: ["class:planet/ocean"] };
+  assert.equal(m.mark(subjectOf(p)).fill_pattern, "band");
+  assert.equal(m.mark(subjectOf({ ...p, tags: ["class:planet/barren"] })).fill_pattern, "solid");
+  assert.equal(m.mark(subjectOf({ ...p, kind: "star" })).shape, "star");
 });

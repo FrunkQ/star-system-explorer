@@ -5,7 +5,7 @@
   "audience": "gm",
   "layout": "chart-room",
   "theme": "chart-room",
-  "symbology": "sse.symbology.diagrammatic-stub",
+  "symbology": "sse.symbology.diagrammatic",
   "vocab": "physics",
   "items": [
     { "view": "sse.view.flow-editor", "area": "chart", "params": { "flow": "sse.base.planet-climate" } },

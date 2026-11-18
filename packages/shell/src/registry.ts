@@ -9,5 +9,6 @@ import { changeRequests } from "../../views/change-requests/src/index.ts";
 import { packStack } from "../../views/pack-stack/src/index.ts";
 import { screenComposer } from "../../views/screen-composer/src/index.ts";
 import { dataViews } from "../../views/data-views/src/index.ts";
+import { symbols } from "../../views/symbols/src/index.ts";
 
-export const REGISTRY: readonly ViewModule[] = [systemChart, bodyCard, timeRuler, flowEditor, changeRequests, packStack, screenComposer, dataViews];
+export const REGISTRY: readonly ViewModule[] = [systemChart, bodyCard, timeRuler, flowEditor, changeRequests, packStack, screenComposer, dataViews, symbols];

@@ -5,7 +5,7 @@
   "audience": "gm",
   "layout": "chart-room",
   "theme": "chart-room",
-  "symbology": "sse.symbology.diagrammatic-stub",
+  "symbology": "sse.symbology.diagrammatic",
   "vocab": "physics",
   "items": [
     { "view": "sse.view.pack-stack", "area": "chart", "params": { "samples": ["packs/samples/warm-worlds.json"] } },

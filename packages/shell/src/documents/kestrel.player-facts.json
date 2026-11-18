@@ -45,6 +45,11 @@
   },
   {
    "address": "u:kestrel/sys:1/body:3",
+   "field": "class",
+   "value": "planet/ocean"
+  },
+  {
+   "address": "u:kestrel/sys:1/body:3",
    "field": "colour",
    "value": "blue-white"
   },
@@ -140,6 +145,11 @@
    "address": "u:kestrel/sys:1/body:4",
    "field": "size_class",
    "value": "giant"
+  },
+  {
+   "address": "u:kestrel/sys:1/body:4",
+   "field": "class",
+   "value": "planet/gas-giant"
   },
   {
    "address": "u:kestrel/sys:1/body:4",

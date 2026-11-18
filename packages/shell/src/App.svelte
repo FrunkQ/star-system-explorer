@@ -4,36 +4,37 @@
   kernel only through the session, the same client API a player app uses.
 -->
 <script lang="ts">
-  import { applyEdits, enterFacts, type AuthoredFacts, checkScreen, deriveScene, gmSeat, markFor, redoEdit, undoEdit, type CheckedScreen, type DerivationDoc, type ScreenDoc, type Symbology, type SystemScene, type ViewHandle, type ViewModule, type ViewSession } from "../../ui-contract/src/index.ts";
+  import { applyEdits, enterFacts, type AuthoredFacts, checkScreen, deriveScene, gmSeat, redoEdit, subjectOf, undoEdit, type CheckedScreen, type DerivationDoc, type ScreenDoc, type SystemScene, type ViewHandle, type ViewModule, type ViewSession } from "../../ui-contract/src/index.ts";
   import { openBrowserSession } from "../../ui-contract/src/host-browser.ts";
   import { themeCss, THEMES } from "../../skins/chart-room/src/index.ts";
+  import { ALL_THEMES } from "../../skins/player/src/index.ts";
   import { Segmented, ToolButton, formatYears } from "../../chart-grammar/src/index.ts";
   import workspaceDoc from "./documents/workspace.gm.json";
   import physicsDoc from "./documents/physics.gm.json";
   import packsDoc from "./documents/packs.gm.json";
   import screensDoc from "./documents/screens.gm.json";
   import dataDoc from "./documents/dataviews.gm.json";
+  import symbolsDoc from "./documents/symbols.gm.json";
   import oracDoc from "./documents/orac.requests.json";
   import sceneDoc from "./documents/kestrel.scene.json";
-  import symbologyDoc from "./documents/diagrammatic.stub.json";
   import derivationsDoc from "./documents/derivations.base.json";
   import stackDoc from "./documents/stack.json";
   import factsDoc from "./documents/kestrel.player-facts.json";
   import { REGISTRY } from "./registry.ts";
   import { createWorkspace } from "./workspace.svelte.ts";
   import { loadPref, savePref } from "./prefs.ts";
+  import { createSymbols } from "./symbols.svelte.ts";
   import type { ChangeRequest, Json } from "../../ui-contract/src/index.ts";
 
   const base = sceneDoc as unknown as SystemScene;
   const derivations = derivationsDoc as unknown as DerivationDoc;
-  const symbology = symbologyDoc as unknown as Symbology;
   const ws = createWorkspace(base.now_yr);
   // Orac is not connected yet (A2): its sample requests come from a fixture document.
   for (const r of (oracDoc as unknown as { requests: ChangeRequest[] }).requests) ws.fileRequest(r);
   let scene = $state<SystemScene>(base);
 
   // Each screen document is checked before anything mounts; the GM switches between them.
-  const SCREENS: Record<string, ScreenDoc> = { system: workspaceDoc as unknown as ScreenDoc, physics: physicsDoc as unknown as ScreenDoc, packs: packsDoc as unknown as ScreenDoc, screens: screensDoc as unknown as ScreenDoc, data: dataDoc as unknown as ScreenDoc };
+  const SCREENS: Record<string, ScreenDoc> = { system: workspaceDoc as unknown as ScreenDoc, physics: physicsDoc as unknown as ScreenDoc, packs: packsDoc as unknown as ScreenDoc, screens: screensDoc as unknown as ScreenDoc, data: dataDoc as unknown as ScreenDoc, symbols: symbolsDoc as unknown as ScreenDoc };
   const checks = Object.fromEntries(Object.entries(SCREENS).map(([k, d]) => [k, checkScreen(d, REGISTRY)]));
   const badScreens = Object.values(checks).flatMap((c) => (c.ok ? [] : c.errors));
   const screen = $derived.by((): CheckedScreen | null => {
@@ -43,6 +44,9 @@
   const mountFor = (area: string) => screen?.mounts.find((m) => m.area === area);
 
   let theme = $state(loadPref("theme") === "night-chart" ? "night-chart" : "chart-room");
+  // Symbols are chosen apart from the theme (H8.4A); the theme only says what it can carry.
+  const previews = ALL_THEMES.map((t) => ({ id: t.id, name: t.name, style: themeCss(t.id, ALL_THEMES), capability: t }));
+  const symbols = createSymbols((workspaceDoc as unknown as ScreenDoc).symbology, () => THEMES.find((t) => t.id === theme) ?? THEMES[0]!, () => previews);
   $effect(() => {
     const root = document.documentElement;
     root.setAttribute("style", themeCss(theme));
@@ -100,7 +104,7 @@
   }
 
   function view(node: HTMLElement, m: { module: ViewModule; params: Record<string, Json> }) {
-    const h = m.module.mount(node, { session: session!, workspace: ws, params: m.params, mark: (s) => markFor(s, symbology) }, scene);
+    const h = m.module.mount(node, { session: session!, workspace: ws, params: m.params, mark: (s) => symbols.marker().mark(subjectOf(s)), symbology: symbols }, scene);
     handles.push(h);
     return {
       destroy: () => {
@@ -167,6 +171,7 @@
           { value: "physics", label: "Physics", key: "P" },
           { value: "screens", label: "Screens" },
           { value: "data", label: "Player data" },
+          { value: "symbols", label: "Symbols" },
           { value: "packs", label: "Packs" },
         ]}
         onchange={(v) => (ws.screen = v)}

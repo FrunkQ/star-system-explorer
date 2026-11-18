@@ -147,7 +147,7 @@
     "resolved"
    ],
    "tags": [
-    "class:rock",
+    "class:planet/barren",
     "size:small"
    ],
    "prose": "Scorched and tide-locked. It moved inward early, clearing the inner disc."
@@ -245,7 +245,7 @@
     "resolved"
    ],
    "tags": [
-    "class:desert",
+    "class:planet/desert",
     "size:small"
    ],
    "prose": "Dust plains and a thin, failing atmosphere."
@@ -361,7 +361,7 @@
     "resolved"
    ],
    "tags": [
-    "class:ocean",
+    "class:planet/ocean",
     "size:medium"
    ],
    "prose": "Cold seas under a thick sky. Nine plates, still moving. Three cities on the equatorial shelf, one aerostat over the storm belt."
@@ -451,9 +451,9 @@
     "resolved"
    ],
    "tags": [
-    "class:gas",
+    "class:planet/gas-giant",
     "size:large",
-    "rings:yes"
+    "class:planet/ringed"
    ],
    "prose": "Banded and storm-scarred, with a family of icy moons."
   },
@@ -550,7 +550,7 @@
     "resolved"
    ],
    "tags": [
-    "class:ice",
+    "class:planet/ice",
     "size:medium"
    ],
    "prose": "A frozen shell over a dark sea, far out where the light is thin."

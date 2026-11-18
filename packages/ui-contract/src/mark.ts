@@ -1,53 +1,23 @@
-// Marks (H8.4A). A view asks "mark for this object" and draws what comes
-// back; it never decides by itself what a planet class looks like. This is a
-// minimal, table-driven evaluator of a symbology document; V12 replaces it
-// with the full symbology engine (mixing, legend, theme capability rules).
+// Marks for the GM's system scene (H8.4A). The engine is symbology.ts; this
+// adapts a scene subject to what a symbology reads: its kind, its classes
+// (tags "class:<C1 class id>", base first) and its other tags.
 import type { SceneSubject } from "./scene.ts";
+import type { MarkSubject } from "./symbology.ts";
+import type { PlayerSubject } from "./player-scene.ts";
 
-export type Channel = "shape" | "fill_pattern" | "size" | "tone" | "outline";
+export type { Mark } from "./symbology.ts";
 
-export interface Mark {
-  shape: "disc" | "ring" | "star" | "diamond" | "square";
-  fill_pattern: "solid" | "hollow" | "hatch" | "stipple" | "band" | "cross";
-  /** Radius in chart pixels before zoom. */
-  size: number;
-  tone: "ink" | "muted" | "accent";
-  outline: "none" | "thin" | "double";
+export function subjectOf(s: Pick<SceneSubject, "kind" | "tags">): MarkSubject {
+  return { kind: s.kind, classes: s.tags.filter((t) => t.startsWith("class:")).map((t) => t.slice(6)), tags: s.tags };
 }
 
-export interface Binding {
-  applies_to: string;
-  channel: Channel;
-  /** "kind", or "tag:<prefix>" to take the value of the subject's first tag with that prefix. */
-  from: string;
-  table: Record<string, string | number>;
-  fallback: string | number;
-}
-
-export interface Symbology {
-  id: string;
-  name: string;
-  bindings: Binding[];
-}
-
-const BASE: Mark = { shape: "disc", fill_pattern: "solid", size: 4, tone: "ink", outline: "none" };
-
-function source(s: SceneSubject, from: string): string | undefined {
-  if (from === "kind") return s.kind;
-  if (from.startsWith("tag:")) {
-    const prefix = from.slice(4);
-    const t = s.tags.find((x) => x.startsWith(prefix));
-    return t?.slice(prefix.length);
-  }
-  return undefined;
-}
-
-export function markFor(s: SceneSubject, sym: Symbology): Mark {
-  const m: Record<string, string | number> = { ...BASE };
-  for (const b of sym.bindings) {
-    if (b.applies_to !== "*" && b.applies_to !== s.kind) continue;
-    const v = source(s, b.from);
-    m[b.channel] = v !== undefined && v in b.table ? b.table[v]! : b.fallback;
-  }
-  return m as unknown as Mark;
+/** A player subject as a symbology reads it: kind and classes come from facts the audience was given. */
+export function playerSubjectOf(s: PlayerSubject): MarkSubject {
+  const fact = (f: string) => s.facts.find((x) => x.field === f)?.value;
+  const k = String(fact("kind") ?? "");
+  const kind = k === "planetary-body" ? "planet" : k;
+  const c = fact("class");
+  const classes = Array.isArray(c) ? c.map(String) : c === undefined || c === null ? [] : [String(c)];
+  const size = fact("size_class");
+  return { kind, classes, tags: [...s.tags, ...(typeof size === "string" ? [`size:${size}`] : [])] };
 }

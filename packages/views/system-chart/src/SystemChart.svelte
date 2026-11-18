@@ -5,8 +5,8 @@
   places them.
 -->
 <script lang="ts">
-  import { commitEdit, sig, type Json, type SceneSubject, type SystemScene, type ViewContext } from "../../../ui-contract/src/index.ts";
-  import { ChartGround, HatchDefs, Hatch, Ink, Mark, Stamp, SurveyGrid, distanceAt, fitScale, polar, radius } from "../../../chart-grammar/src/index.ts";
+  import { commitEdit, legendFor, sig, subjectOf, type Json, type SceneSubject, type SystemScene, type ViewContext } from "../../../ui-contract/src/index.ts";
+  import { ChartGround, HatchDefs, Hatch, Ink, Legend, Mark, Stamp, markExtent, SurveyGrid, distanceAt, fitScale, polar, radius } from "../../../chart-grammar/src/index.ts";
 
   let { ctx, scene, params }: { ctx: ViewContext; scene: SystemScene; params: Record<string, Json> } = $props();
 
@@ -39,6 +39,14 @@
   const decades = $derived([0.1, 1, 10, 100].filter((a) => a > scale.inner_au && a < scene.surveyed_to_au));
 
   const label = (s: SceneSubject) => s.label;
+  // The key is generated from the symbology for the bodies on this chart.
+  const key = $derived.by(() => {
+    const host = ctx.symbology;
+    if (!host) return null;
+    const m = host.marker();
+    const doc = host.registry().find((d) => d.id === m.id);
+    return { entries: legendFor(m, { present: scene.subjects.map(subjectOf), names: host.names(), order: Array.isArray(doc?.legend) ? doc.legend : [] }), note: m.collapse, name: doc?.name ?? m.id };
+  });
 
   // Dragging a body along its radius moves its orbit; the edit is an intent
   // sent when the drag ends. The scale is frozen during the drag.
@@ -178,7 +186,7 @@
           >
             <circle class="hit" cx={x} cy={y} r={Math.max(22, m.size + 12)} />
             <Mark mark={m} cx={x} cy={y} {prefix} />
-            {#if sel}<circle class="sel" cx={x} cy={y} r={m.size * (m.shape === "star" ? 3.8 : 2) + 6} />{/if}
+            {#if sel}<circle class="sel" cx={x} cy={y} r={Math.max(markExtent(m) + 4, m.size * 2 + 6)} />{/if}
             {#if drag?.address === s.address}
               <text class="dragv" x={x + m.size + 9} y={y + m.size + 16}>{drag.a_au} AU</text>
             {/if}
@@ -194,6 +202,12 @@
       <div class="legend">
         {#if scene.fixture}<Stamp kind="fixture" title="The sample system's inputs are fixture data; every derived value comes from the kernel's base-physics pack." />{/if}
         <span>Distances on a log scale</span>
+        {#if key?.entries.length}
+          <details class="key">
+            <summary>Key · {key.name}</summary>
+            <div class="key-body"><Legend entries={key.entries} prefix="sck" note={key.note} label="Key to the chart's marks" /></div>
+          </details>
+        {/if}
         {#if params.unsurveyed_hatch}<span>Hatched: unsurveyed beyond {scene.surveyed_to_au} AU</span>{/if}
       </div>
       <div class="zoom" role="group" aria-label="Zoom">
@@ -301,6 +315,20 @@
     gap: 8px 14px;
     font-size: 12px;
     color: var(--sse-ink-muted);
+  }
+  .key summary {
+    cursor: pointer;
+    color: var(--sse-ink);
+  }
+  .key[open] .key-body {
+    position: absolute;
+    left: 0;
+    bottom: calc(100% + 6px);
+    width: min(360px, calc(100vw - 48px));
+    padding: 10px 12px;
+    background: var(--sse-panel-ground);
+    border: var(--sse-frame-width) solid var(--sse-frame-line);
+    box-shadow: var(--sse-frame-shadow);
   }
   .zoom {
     position: absolute;

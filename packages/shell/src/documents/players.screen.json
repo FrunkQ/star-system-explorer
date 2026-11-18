@@ -5,7 +5,7 @@
   "audience": "players",
   "layout": "grid",
   "theme": "chart-room",
-  "symbology": "sse.symbology.diagrammatic-stub",
+  "symbology": "sse.symbology.diagrammatic",
   "vocab": "plain",
   "items": [
     { "view": "sse.view.chart", "area": "a" },
