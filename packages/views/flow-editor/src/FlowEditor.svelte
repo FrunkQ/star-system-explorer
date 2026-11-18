@@ -24,7 +24,7 @@
     type SystemScene,
     type ViewContext,
   } from "../../../ui-contract/src/index.ts";
-  import { Lenses, Stamp } from "../../../chart-grammar/src/index.ts";
+  import { Lenses, References, Stamp } from "../../../chart-grammar/src/index.ts";
 
   let { ctx, scene, params }: { ctx: ViewContext; scene: SystemScene; params: Record<string, Json> } = $props();
   const ws = $derived(ctx.workspace);
@@ -282,7 +282,7 @@
         {#if explained}
           <p class="formula">{explained.formula_display}</p>
           <Lenses text={explained.lenses} bind:lens />
-          {#if explained.references.length}<p class="refs">{explained.references.join(" · ")}</p>{/if}
+          {#if explained.references.length}<References refs={explained.references} inline />{/if}
         {:else if !doc.publishes.some((p) => p.from.split(".")[0] === node.id)}
           <p class="muted">This node publishes nothing directly; its values feed the nodes after it.</p>
         {:else}
@@ -521,11 +521,6 @@
     margin: 6px 0 0;
     font-family: var(--sse-font-display);
     font-size: 18px;
-  }
-  .refs {
-    margin: 4px 0 0;
-    font-size: 12px;
-    color: var(--sse-ink-muted);
   }
   @media (max-width: 760px) {
     .editor {

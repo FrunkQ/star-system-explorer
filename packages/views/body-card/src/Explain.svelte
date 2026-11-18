@@ -5,7 +5,7 @@
 -->
 <script lang="ts">
   import type { DeriveRef, Explanation, ViewSession } from "../../../ui-contract/src/index.ts";
-  import { Lenses, Stamp } from "../../../chart-grammar/src/index.ts";
+  import { Lenses, References, Stamp } from "../../../chart-grammar/src/index.ts";
 
   let {
     session,
@@ -95,7 +95,7 @@
       <p class="flowlink"><button type="button" class="link" onclick={() => onopenflow(e.publisher.node ?? "")}>Open the flow</button> <span class="src">{e.publisher.flow} · node {e.publisher.node}</span></p>
     {/if}
     {#if e.references.length}
-      <ul class="refs">{#each e.references as r (r)}<li>{r}</li>{/each}</ul>
+      <References refs={e.references} />
     {/if}
   {/if}
 </div>
@@ -207,11 +207,5 @@
   .muted {
     color: var(--sse-ink-muted);
     margin: 6px 0;
-  }
-  .refs {
-    margin: 6px 0 0;
-    padding-left: 16px;
-    font-size: 12px;
-    color: var(--sse-ink-muted);
   }
 </style>

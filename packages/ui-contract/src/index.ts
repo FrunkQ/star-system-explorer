@@ -31,3 +31,5 @@ export { packSummary, previewStack, stackPacks, checkPackDoc } from "./packs-edi
 export type { PackSummary, ValueChange, StackPreview } from "./packs-edit.ts";
 export { observeOf, checkSetup, playerDataPack, setupChanges, applySetup, enterFacts, ladderOf, PLAYER_DATA_PACK, DEFAULT_LADDER } from "./data-views.ts";
 export type { DataView, ObserveSetup, Override, TagMode, UnknownStyle, AuthoredFacts } from "./data-views.ts";
+export { showReference } from "./reference.ts";
+export type { ReferenceIn, ShownReference } from "./reference.ts";

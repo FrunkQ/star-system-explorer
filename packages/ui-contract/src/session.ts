@@ -54,7 +54,8 @@ export interface Explanation {
   lenses: { curious?: string; science?: string; engine?: string };
   inputs: { port: string; quantity: string; source: string; value: { value: number; dim: number[] }; explanation_ref: string | null }[];
   params: Record<string, number>;
-  references: string[];
+  /** Text, or text with an optional DOI or URL (see reference.ts). */
+  references: import("./reference.ts").ReferenceIn[];
   validity: string;
   out_of_range: string[];
   publisher: Record<string, string>;

@@ -21,3 +21,4 @@ export { default as FilterChain } from "./FilterChain.svelte";
 export { default as Legend } from "./Legend.svelte";
 export { markExtent } from "./extent.ts";
 export { default as Settings } from "./Settings.svelte";
+export { default as References } from "./References.svelte";
