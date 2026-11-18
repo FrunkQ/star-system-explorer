@@ -21,7 +21,7 @@ export interface TopicQuery {
 /** One setting, described for Orac first: name, type, range, default, unit, meaning, cost. */
 export interface ParamSpec {
   name: string;
-  type: "number" | "integer" | "boolean" | "enum" | "string";
+  type: "number" | "integer" | "boolean" | "enum" | "string" | "list";
   default: Json;
   meaning: string;
   range?: [number, number];
@@ -78,19 +78,41 @@ export interface ViewContext {
   mark(subject: SceneSubject): Mark;
 }
 
-export interface ViewHandle {
-  update(scene: SystemScene): void;
+/**
+ * What a player view gets (H8.1): its parameters, a selection shared with the
+ * other views of its screen, and a way to send intents. No session, no
+ * workspace: a player view sees only the scene built for its audience.
+ */
+export interface PlayerContext {
+  params: Record<string, Json>;
+  /** The screen's vocabulary layer: words and units for fields. */
+  vocab: import("./player-scene.ts").Vocab;
+  selection(): string | null;
+  select(address: string | null): void;
+  /** Ask for something (an intent); the host sends it through its seat. Absent on read-only screens. */
+  send?(intent: import("./intent.ts").Intent): Promise<unknown>;
+}
+
+export interface ViewHandle<S = SystemScene> {
+  update(scene: S): void;
   dispose(): void;
 }
 
-export interface ViewModule {
+/**
+ * One contract for every view (H8.1). `S` is the scene description it draws
+ * (the GM's system scene, or a player scene built after the data-view
+ * filter); `C` is what the host gives it.
+ */
+export interface ViewModule<S = SystemScene, C = ViewContext> {
   id: string;
   version: string;
   tiers: Tier[];
   inputs: TopicQuery[];
   params: ParamSpec[];
   intents?: IntentSchema[];
-  mount(el: HTMLElement, ctx: ViewContext, scene: SystemScene): ViewHandle;
+  /** Which scene description it draws: "system" (GM) or "player" (K9 scenes). */
+  scene?: "system" | "player";
+  mount(el: HTMLElement, ctx: C, scene: S): ViewHandle<S>;
 }
 
 /** Fill defaults and reject anything outside the schema. */
@@ -114,6 +136,8 @@ function checkParam(s: ParamSpec, v: Json): string | null {
       return typeof v === "boolean" ? null : "must be true or false";
     case "string":
       return typeof v === "string" ? null : "must be text";
+    case "list":
+      return Array.isArray(v) && v.every((x) => typeof x === "string" || typeof x === "number") ? null : "must be a list of names or numbers";
     case "enum":
       return typeof v === "string" && (s.options ?? []).includes(v) ? null : `must be one of ${(s.options ?? []).join(", ")}`;
     case "number":

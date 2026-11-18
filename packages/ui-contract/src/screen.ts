@@ -3,6 +3,9 @@
 import type { Json } from "./json.ts";
 import { resolveParams, type ViewModule } from "./view.ts";
 
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+type AnyView = ViewModule<any, any>;
+
 export interface ScreenItem {
   view: string;
   area: string;
@@ -24,7 +27,7 @@ export interface ScreenDoc {
 /** Areas each layout offers. */
 export const LAYOUT_AREAS: Record<ScreenDoc["layout"], string[]> = {
   "chart-room": ["chart", "card", "ruler"],
-  grid: ["a", "b", "c", "d"],
+  grid: ["a", "b", "c", "d", "e", "f"],
   flow: ["main"],
   stack: ["main"],
   page: ["main"],
@@ -32,11 +35,11 @@ export const LAYOUT_AREAS: Record<ScreenDoc["layout"], string[]> = {
 
 export interface CheckedScreen {
   doc: ScreenDoc;
-  mounts: { module: ViewModule; area: string; params: Record<string, Json> }[];
+  mounts: { module: AnyView; area: string; params: Record<string, Json> }[];
 }
 
 /** Validate a screen against the registry of view modules; nothing mounts unless all of it is valid. */
-export function checkScreen(doc: ScreenDoc, registry: readonly ViewModule[]): { ok: true; screen: CheckedScreen } | { ok: false; errors: string[] } {
+export function checkScreen(doc: ScreenDoc, registry: readonly AnyView[]): { ok: true; screen: CheckedScreen } | { ok: false; errors: string[] } {
   const errors: string[] = [];
   if (doc.schema !== "sse.screen/1") errors.push(`unknown screen schema ${doc.schema}`);
   const areas = LAYOUT_AREAS[doc.layout];

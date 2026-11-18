@@ -1,6 +1,6 @@
 # START HERE
 
-Last updated: 18 Nov 2026, after P4, K10 and F0 (physics and kernel tracks) and U0 to U3 (UI track). Milestone M1 complete (K0 documents with Alex for review). Milestone 2 running as parallel tracks.
+Last updated: 18 Nov 2026, after P4, K10 and F0 (physics and kernel tracks) and U0 to U3, V1 (UI track). Milestone M1 complete (K0 documents with Alex for review). Milestone 2 running as parallel tracks.
 
 ## Where we are
 Milestone M1 "Proven core" = packages K0 to K6 (build plan section 3/4).
@@ -27,14 +27,16 @@ Milestone M1 "Proven core" = packages K0 to K6 (build plan section 3/4).
 | U1 shell, chart room and night chart tokens, chart grammar | done, screenshots in packages/U1-screens/ for Alex | packages/U1.md |
 | U2 system chart editor | done: real base-physics values, drag and typed edits, undo, why | packages/U2.md |
 | U3 flow editor, explain lenses, change requests | done: real flows, kernel-validated drafts, adopt, badge; kernel gaps listed in the log | packages/U3.md |
-| U4 time ruler with history, branches, look-ahead | next on the UI track (needs T2) | |
+| U4 time ruler with history, branches, look-ahead | waits for T2 | |
+| V1 view contract, player scenes, Chart, Card, Table, Text, Readout | done (scenes from K9 fixtures until the kernel serves a scene op) | packages/V1.md |
+| U5 packs screen, data views screen, screens composer | next on the UI track | |
 
 ## Parallel tracks (18 Nov, Alex: build in parallel, integrate later)
 | Track | Packages | Branch |
 |---|---|---|
 | Physics | P1, P3, P4, then F0 to F2 and F6 | `claude/project-thread-h9y77o` (this file) |
 | Kernel | K7 to K10, done | `claude/project-thread-dzkz4p` (PR #1 into the physics branch; physics branch merged in at 00db0e7) |
-| Chart room shell | U0 to U3, then U4 | `claude/project-thread-adgixl`, PR #2 into the physics branch (kept merged up to date with it) |
+| Chart room shell and player views | U0 to U3, V1, then U5 (U4 waits for T2) | `claude/project-thread-adgixl`, PR #2 into the physics branch (kept merged up to date with it) |
 
 The kernel now registers the real atom library and loads the base-physics pack (see P1 log, integration notes). The kernel track has merged that in.
 
