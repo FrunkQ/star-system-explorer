@@ -133,7 +133,11 @@ Tracks can run in parallel once their dependencies are met. `needs` lists packag
 | X1 | Cloudflare deployment, V4 subdomain, signalling worker | V4 | fresh device loads player app from the web and joins a session |
 | X2 | Explorers site: V4 entries beside V3 with labels; publish and fetch manifests and packs | K5 | publish, fetch, hash verified |
 | X5 | Real-data service (H10, surfaces-and-rendering 3.3): Worker and R2 tile cache for Gaia stars, exoplanet archive, Solar System elevation and imagery; address-scheme tiling; catalogue versions pinned in the run manifest; device cache; offline fallback with the edge shown; licence and attribution register | K5, G7 | two peers with the same manifest get identical pins; a known exoplanet keeps measured values and resolves the rest as tagged fill; no real star is duplicated by the fill; changing catalogue version is an explicit action with a diff; offline run shows the edge |
-| X3 | Base content: default presentation pack, a generic game-system pack, Traveller pack, Milky Way pack | K5, G7 | pack validation; Traveller codes from rules only |
+| X3 | Base content: default presentation pack, a generic game-system pack, Milky Way pack | K5, G7 | pack validation |
+| X3a | Traveller pack, rules (H7A parts 1, 8, 9): UWP, PBG, trade codes, zones, bases from classification rules; units, calendar, vocabulary; lenses, reports, sifters | K5, U9 | codes come from rules only; every digit answers why; world to UWP to world keeps every digit |
+| X3b | UWP to system (H7A part 2): codes as pins and constraints, constrained resolve, `traveller-generated` tag, impossible values kept and marked, "make physically sound" change request, seeded subsector rolls | X3a, K8 | reference UWP set resolves with every code honoured; impossible cases tagged with reasons, none altered; same seed gives same subsector on every device |
+| X3c | Hex map view in the core stack, configured by the pack; importers and exporters: UWP lines, SEC, T5 tab-delimited, sector XML, Travellermap fetch (H7A parts 3, 4) | V1, V12, X3b | a reference subsector imports, displays and exports back to an equivalent file; import is undoable; hex view works with a non-Traveller configuration |
+| X3d | Gas mixes, sensors and the knowledge ladder, constructs, jump-era fictional physics pack with jump shadows and refuelling (H7A parts 5, 6, 7), ported from V3's tables | X3a, T3, V5 | jump shadow fixtures match hand calculation; sensor rule moves a body up the ladder at the right range and time; everything downstream of the physics pack carries the fictional label; removing the bundle leaves a valid campaign |
 | X4 | Documentation and learning content: every atom's three lenses written, in-app glossary | P1 onward | coverage report: no atom without lenses |
 
 ## 4. Milestones (each is a usable thing Alex can try)
@@ -145,6 +149,7 @@ Tracks can run in parallel once their dependencies are met. `needs` lists packag
 | M3 Open physics | K5, U3, K8, X3 (generic pack) | change physics in the flow editor; stack packs |
 | M4 Players | K9, V1 to V6, U5, U9, X1 | run a session with themed player screens and the Scanned button |
 | M5 Time and travel | T1 to T3, U4, V8, U8, A1 to A4 | age the Solar System; plot courses; agents on his own key |
+| M5b Traveller table | X3a to X3d, V12 | import a subsector from Travellermap onto a hex map, open any world as a full system with its impossible values marked, plan a jump with real jump shadows, hand players a UWP sheet |
 | M6 Living worlds | K10, L0 to L1d, U7 | open any world's biosphere and history |
 | M6b Surfaces | S0 to S7, R1 to R4, V11 | chart a world's terrain, ask why a range is there, watch continents drift, land on it in several styles |
 | M7 Galaxy | K7, G1 to G6, U6, V9 | chart a galaxy, ink a merger, find a home, survey a patch |

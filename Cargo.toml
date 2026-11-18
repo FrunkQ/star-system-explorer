@@ -22,6 +22,7 @@ semver = { version = "1", features = ["serde"] }
 proptest = "1"
 sse-core = { path = "crates/sse-core" }
 sse-chronicle = { path = "crates/sse-chronicle" }
+sse-flow = { path = "crates/sse-flow" }
 
 [profile.release]
 opt-level = 3

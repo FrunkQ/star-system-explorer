@@ -1,0 +1,15 @@
+[package]
+name = "sse-flow"
+description = "SSE4 flows: atom declarations, flow documents, validation, scheduler, solve nodes, explain traces"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+authors.workspace = true
+
+[dependencies]
+sse-core.workspace = true
+serde.workspace = true
+serde_json.workspace = true
+
+[dev-dependencies]
+proptest.workspace = true

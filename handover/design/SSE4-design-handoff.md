@@ -333,6 +333,48 @@ Stacking rules: later layers override earlier ones by id; an override must be ex
 
 **Vocabulary layers**: one fact set, three wordings, chosen per view: **physics** (exact), **plain** (ordinary description), **story** (evocative, may use explicit analogy, never contradicts the facts).
 
+### 7A. The Traveller pack: the first game-system pack **[decided 18 Nov: Traveller first; other systems are left for their communities to build on the same pattern]**
+
+This is also the worked example of what a game-system pack is. It carries over what V3 already does for Traveller and rebuilds it on the pack machinery. I have not read the V3 source: for every item marked **(V3)**, the build session must read V3's tables and behaviour and port them, not reinvent them.
+
+**It is a bundle of five parts**, installed together and stackable separately:
+
+| Part | Kind | Contents |
+|---|---|---|
+| Rules | game-system pack | UWP and extended codes, trade codes, travel zones, bases, units, calendar, vocabulary, sensors, data-view ladder, lenses, reports, sifters |
+| Jump-era physics | physics pack flagged `fictional` | jump drive, reactionless manoeuvre drive, gravitics, fuel rules |
+| Presentation | presentation pack | hex map as the default map, symbology for starports, bases and zones, a console theme, handout screens |
+| Constructs | library | stock ships, starports and bases as templates |
+| Importers and exporters | converter code in `/converters`, not in the pack (packs stay declarative) | UWP lines, sector files, Travellermap |
+
+Published setting data (the official sectors) is **not bundled**. Users fetch it themselves through the importer.
+
+**1. Codes from physics (world to UWP).** Classification rules (section 7) read stored facts and publish: the UWP digits (starport, size, atmosphere, hydrographics, population, government, law, tech), trade codes, travel zone, bases, the PBG digits (population multiplier, belts, gas giants), and allegiance. Size comes from diameter, atmosphere from pressure and composition, hydrographics from ocean cover, population and the social digits from the technosphere facts or GM authoring. Every digit answers "why" through explain mode like any derived value, and digits update when the world changes or ages. Rule tables are data, so an edition is a table set (see licensing below).
+
+**2. Systems from codes (UWP to star system) (V3).** The reverse direction, which V3 users rely on. A UWP line, with PBG and stellar data when present, becomes a set of **pins and constraints** on the system's envelope: size digit to a diameter range, atmosphere digit to a pressure range and a gas-mix class, hydrographics to an ocean fraction band, PBG to the count of belts and gas giants, stellar data to the stars. RESOLVE then builds the rest of the system around them (orbits, the main world's position, moons, other worlds), choosing the most physically consistent arrangement that honours the codes.
+- Everything created this way carries the source tag **`traveller-generated`**, and each value keeps its evidence label. Where a code cannot be squared with physics (a tiny world holding a dense atmosphere, a water world outside any plausible zone), the code wins, the value is recorded as `authored-impossible`, and the GM view shows the honesty mark with the reason. Nothing is silently "fixed". **[Alex: tagged Traveller-created, to account for the dodgy physics]**
+- A GM can ask for the opposite at any time: "make this physically sound" proposes the smallest changes to the codes that remove the impossible marks, as an Orac change request.
+- Random generation by the book (roll a subsector) is the same path with the dice replaced by keyed draws, so a generated subsector is reproducible from its seed.
+
+**3. Hex map as the default map (V3).** The **Hex map** is a view in the core stack (it is code, so it cannot live in a pack); the Traveller pack makes it the default map and configures it: one hex is one parsec, subsector 8 by 10, sector 32 by 40, hex numbering in the usual four-digit form, world glyphs for starport class, gas giant, bases, zone rings and allegiance borders, jump and trade routes, and jump-range highlighting from the selected ship. Other packs can use the same view with different hex sizes and glyphs. It follows symbology (8.4A) and lenses (8.6) like any view.
+- Flat maps and a 3D galaxy: an imported hex position is an authored 2D position. The pack places each system on a plane with a small deterministic offset in the third axis so the Sky and 3D views still work, tagged as authored. A campaign can instead project a real 3D patch onto hexes for a "Traveller-style map of a physical region".
+
+**4. Importers and exporters (V3).** UWP lines pasted or typed; sector and subsector files in the common community formats (legacy SEC, tab-delimited T5 second survey columns, sector metadata XML); and the **Travellermap importer (V3's importer agent)**: pick a sector or subsector by name, fetch it through that site's public API on the user's request, map it through part 2, and report what was imported, what was impossible and what was guessed. Orac assists only with irregular lines and never invents data silently. Export writes the same formats from any campaign, including poster-ready data for a subsector. Import is a set of authored events, so it can be undone and replayed.
+
+**5. Gas mixes (V3).** Named atmosphere presets as composition and pressure envelopes, one or more per atmosphere code: standard, thin, dense, very thin, trace, each tainted variant with a named taint (low oxygen, high oxygen, pollutants, biologicals, sulphur compounds, radioactivity, particulates), exotic, corrosive, insidious, and the unusual cases. Each lists what a traveller needs (filter mask, compressor, vacc suit, protective suit) as a derived tag. They are ordinary pack data that the atmosphere flows consume, so a preset is a starting point the physics then carries forward. Port V3's list.
+
+**6. Sensors and what players can know (V3).** Range bands as distances, sensor kinds (visual, thermal, electromagnetic, active radar and lidar, neutrino, densitometer and the like, per the rule table), and for each kind and band what it reveals. This plugs straight into player data views: the pack ships a ladder (long-range, scanned, surveyed, detailed survey) and a rule that moves a body up the ladder when a ship with the right sensors is in range for long enough. Charts can draw the range rings. Port V3's ranges.
+
+**7. Ships, drives and travel.** Stock ships and other constructs as templates **(V3 has standard constructs)**: tonnage in displacement tons, manoeuvre rating in g, jump rating, fuel, sensors fitted, crew and passengers, cargo. NAV uses the manoeuvre rating for real transit times inside a system. The fictional physics pack adds: jump of N parsecs taking about a week with the rule's variation drawn deterministically; the 100-diameter limit as a real geometric constraint computed from actual bodies, so stars and gas giants cast jump shadows and the astrogation console shows where a ship can safely jump from and arrive; fuel per jump, gas giant skimming and water refuelling with real orbits and times. Starports by class, highports, naval and scout bases are station templates with services derived from class and tech level.
+
+**8. Units, calendar and words.** Parsecs, displacement tons, g, credits, tech and law levels, the Imperial day-year date form as a calendar definition over the campaign clock, and a vocabulary layer that words reports in the game's terms.
+
+**9. Lenses, reports, sifters.** Lenses: Trade (codes and routes), Political (allegiance), Travel zones, Starports and bases, Jump range. Reports and handouts: the UWP line, a world data sheet, a subsector listing, a library-data entry Minerva writes from the facts, a pre-jump briefing. Sifters: mains (chains of worlds one jump apart), choke points, worlds whose codes hide an interesting contradiction, good refuelling stops, red-zone candidates.
+
+**Licensing and naming [open, Alex to rule].** Traveller is a trademark of Far Future Enterprises and the published sectors are their setting. Safe default: ship the rule tables in the form published under an open licence (the Cepheus Engine reference document), describe the pack as compatible with Traveller under the owner's fair-use policy with its required notice, never bundle official sector data, and treat Travellermap fetches as the user's own request with that site's attribution. Edition differences (Classic, Mongoose, T5) are alternative table sets inside the same pack.
+
+**Stages** are X3a to X3d in the build plan. Evidence in brief: codes round-trip (world to UWP to world keeps every digit); a reference subsector imports with every impossible value tagged and none silently altered; the same seed rolls the same subsector on every device; jump shadows match hand-calculated cases; removing the pack leaves a valid campaign with the physical facts intact.
+
 ---
 
 ## 8. Views, screens and skins
@@ -745,7 +787,7 @@ Each phase ends with evidence, not a demo. Do not start a phase on top of an unp
 
 **Phase 6. Open up.** Suite socket exercised by a second, external suite, explorers site with V3/V4 labels, converters, pack sharing, signing if wanted.
 
-V3 parity items to check off against the V3 codebase (the coding session should read `C:\Development` on Alex's machine for V3 and Ovid Next; I worked from Alex's capture of V3 and the Discord history, not the V3 source): generation, editing, reports, transit and autopilot (replaced by NAV), player sharing, skins, importers and exporters.
+V3 parity items to check off against the V3 codebase (the coding session should read `C:\Development` on Alex's machine for V3 and Ovid Next; I worked from Alex's capture of V3 and the Discord history, not the V3 source): generation, editing, reports, transit and autopilot (replaced by NAV), player sharing, skins, importers and exporters. Sample V3 saves for the import tests come from the Explorers site **[Alex, 18 Nov]**. Traveller features to carry over are listed in 7A. Alex will set up the V4 subdomain as soon as the repo has code and a documented install and run command, so the README must give install, run and build commands from the first milestone.
 
 ---
 

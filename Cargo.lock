@@ -501,6 +501,16 @@ dependencies = [
 ]
 
 [[package]]
+name = "sse-flow"
+version = "0.1.0"
+dependencies = [
+ "proptest",
+ "serde",
+ "serde_json",
+ "sse-core",
+]
+
+[[package]]
 name = "sse-wasm"
 version = "0.1.0"
 dependencies = [
