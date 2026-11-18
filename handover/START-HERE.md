@@ -1,6 +1,6 @@
 # START HERE
 
-Last updated: 18 Nov 2026, after K6.
+Last updated: 18 Nov 2026, after K0. Milestone M1 complete, pending Alex's review of the K0 documents.
 
 ## Where we are
 Milestone M1 "Proven core" = packages K0 to K6 (build plan section 3/4).
@@ -13,7 +13,8 @@ Milestone M1 "Proven core" = packages K0 to K6 (build plan section 3/4).
 | K4 flows, validation, scheduler, solve, explain | done | packages/K4.md |
 | K5 packs, stacks, one-publisher, fictional labels | done | packages/K5.md |
 | K6 kernel API, worker, TS client, cancellation, cost classes, tiers | done | packages/K6.md |
-| K0 V3 / Ovid / Evolution Lab source reading (needs Alex's PC, C:\Development) | next | |
+| K0 V3 / Ovid / Evolution Lab source reading | done, Alex reviewing docs/v3-parity.md, v3-save-fields.md, ovid-agents.md, evolab-reuse.md | packages/K0.md |
+| M2 "One system": P1, P3, P4, U1, U2, G0, P2 (build plan section 4) | next, starting with P1 atom library | |
 
 ## How to resume
 1. Read `/CLAUDE.md`, then this file, then the log of the last package.
