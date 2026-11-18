@@ -27,6 +27,7 @@ sse-pack = { path = "crates/sse-pack" }
 sse-atoms = { path = "crates/sse-atoms" }
 sse-import-v3 = { path = "crates/sse-import-v3" }
 sse-world = { path = "crates/sse-world" }
+sse-formation = { path = "crates/sse-formation" }
 sse-kernel = { path = "crates/sse-kernel" }
 
 [profile.release]

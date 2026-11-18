@@ -17,6 +17,7 @@ pub fn engines_run() -> String {
         "sift": sse_sift::scenario::golden(),
         "observe": sse_observe::scenario::golden(),
         "suite": sse_suite::scenario::golden(),
+        "formation": sse_formation::scenario::golden(),
     })
     .to_string()
 }

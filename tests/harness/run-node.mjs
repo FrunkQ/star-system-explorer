@@ -11,7 +11,7 @@ const ok = r.overall === g.overall && r.encoding_failures === 0;
 console.log(`node ${process.version}: ${ok ? "PASS" : "FAIL"} overall ${r.overall}`);
 // K7 to K10 engine scenarios against their native golden files.
 const e = JSON.parse(engines_run());
-const bad = ["resolve", "sift", "observe", "suite"].filter(
+const bad = ["resolve", "sift", "observe", "suite", "formation"].filter(
   (k) => JSON.stringify(e[k]) !== JSON.stringify(JSON.parse(readFileSync(join(here, `../golden/${k}.json`), "utf8"))));
-console.log(`node engines: ${bad.length ? "FAIL " + bad.join(", ") : "PASS resolve, sift, observe, suite"}`);
+console.log(`node engines: ${bad.length ? "FAIL " + bad.join(", ") : "PASS resolve, sift, observe, suite, formation"}`);
 process.exit(ok && !bad.length ? 0 : 1);
