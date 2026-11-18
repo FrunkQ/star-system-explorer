@@ -4,6 +4,7 @@
 //! and life lines (stage 2), the FormationHistory record with time slices.
 #![forbid(unsafe_code)]
 
+pub mod accrete;
 pub mod disc;
 pub mod early;
 pub mod history;
@@ -17,6 +18,8 @@ pub use history::{FormationError, FormationHistory, Manifest};
 pub use inherit::{Inheritance, InheritancePins, PatchEnvelope};
 pub use lifeline::{LifeLine, Phase, StarState};
 
+#[cfg(test)]
+mod accrete_tests;
 #[cfg(test)]
 mod early_tests;
 #[cfg(test)]
