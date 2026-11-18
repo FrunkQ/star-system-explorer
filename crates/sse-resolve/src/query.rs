@@ -87,6 +87,19 @@ fn expected_count(env: &Envelope) -> f64 {
         CountSpec::Fixed { n } => *n as f64,
         CountSpec::Poisson { mean } => *mean,
         CountSpec::Uniform { lo, hi } => (*lo + *hi) as f64 / 2.0,
+        CountSpec::Fill { budget, dist, unit } => {
+            let left = env.budgets.get(budget).map_or(0.0, |b| b.amount as f64)
+                - env
+                    .pins
+                    .iter()
+                    .map(|p| *p.claims.get(budget).unwrap_or(&0) as f64)
+                    .sum::<f64>();
+            // Pins took their budget already; they do not also reduce the count.
+            return match dist.mean() {
+                Some(mu) if mu > 0.0 => (left / unit / mu).max(0.0),
+                _ => 0.0,
+            };
+        }
     };
     if env.pins_count_toward {
         (mean - env.pins.len() as f64).max(0.0)

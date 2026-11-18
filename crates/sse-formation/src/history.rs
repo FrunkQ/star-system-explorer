@@ -30,21 +30,53 @@ pub struct Manifest {
     pub version: String,
     pub seed: String,
     pub system: Address,
-    pub envelope: PatchEnvelope,
+    pub source: Source,
     #[serde(default)]
     pub inherit_pins: InheritancePins,
     #[serde(default)]
     pub star_pins: StarPins,
 }
 
+/// Where stage 1 comes from.
+#[derive(Clone, PartialEq, Debug, Serialize, Deserialize)]
+#[serde(tag = "type", rename_all = "kebab-case")]
+pub enum Source {
+    /// Drawn here from a patch envelope (the stand-in fixture, or a GM's own).
+    Envelope { envelope: Box<PatchEnvelope> },
+    /// Resolved by the cosmos suite (G0 onward): the system's birth facts, read
+    /// at universe time `now_gyr`.
+    Birth {
+        birth: sse_cosmos::SystemBirth,
+        now_gyr: f64,
+    },
+}
+
 impl Manifest {
+    /// A system drawn from a patch envelope.
     pub fn new(seed: &str, system: Address, envelope: PatchEnvelope) -> Self {
+        Self::with_source(
+            seed,
+            system,
+            Source::Envelope {
+                envelope: Box::new(envelope),
+            },
+        )
+    }
+    /// A system the cosmos suite resolved (its address is the birth's).
+    pub fn from_birth(seed: &str, birth: sse_cosmos::SystemBirth, now_gyr: f64) -> Self {
+        Self::with_source(
+            seed,
+            birth.address.clone(),
+            Source::Birth { birth, now_gyr },
+        )
+    }
+    fn with_source(seed: &str, system: Address, source: Source) -> Self {
         Manifest {
             suite: SUITE.into(),
             version: SUITE_VERSION.into(),
             seed: seed.into(),
             system,
-            envelope,
+            source,
             inherit_pins: InheritancePins::default(),
             star_pins: StarPins::default(),
         }
@@ -70,6 +102,10 @@ pub enum How {
     },
     Authored,
     Reconstructed,
+    /// Handed over by another suite, with its own evidence there.
+    Inherited {
+        from: String,
+    },
 }
 
 #[derive(Clone, PartialEq, Debug, Serialize, Deserialize)]
@@ -150,6 +186,9 @@ pub fn slice_times(stars: &[Star], now: f64, horizon: f64) -> Vec<f64> {
 /// First age (Myr) at which `life`'s radius exceeds `limit` solar radii, by
 /// bisection on the pure life line (fixed 60 steps, so identical everywhere).
 fn first_overflow(fits: &Fits, life: &LifeLine, limit: f64) -> Option<f64> {
+    if life.is_substellar() {
+        return None;
+    }
     let r = |t: f64| life.state_at(fits, t).radius;
     // Search the phases where radius grows: main sequence to the end of the giants.
     let (mut lo, mut hi) = (life.t_zams, life.t_end - 1e-9 * life.t_end);
@@ -171,23 +210,32 @@ fn first_overflow(fits: &Fits, life: &LifeLine, limit: f64) -> Option<f64> {
 }
 
 const AU_IN_RSUN: f64 = 215.032;
+/// Metal range of the Hurley fits.
+pub const Z_FITS: (f64, f64) = (1.0e-4, 0.03);
 
 impl FormationHistory {
     /// Stages 1 and 2 (F0). Later stages add to the record.
     pub fn form(manifest: Manifest) -> Result<Self, FormationError> {
         let seed = Seed::from_text(&manifest.seed);
-        let inh = manifest
-            .envelope
-            .inherit(&seed, &manifest.system, &manifest.inherit_pins);
-        if !(1.0e-4..=0.03).contains(&inh.z) {
-            return Err(FormationError(format!(
-                "metal fraction Z = {:.2e} ([Fe/H] {:.2}) is outside the stellar fits (1e-4 to 0.03)",
-                inh.z, inh.feh
-            )));
-        }
-        let fits = Fits::new(inh.z);
-        let stars = form_stars(&fits, &seed, &manifest.system, &manifest.star_pins)
-            .map_err(|e| FormationError(e.0))?;
+        let inh = match &manifest.source {
+            Source::Envelope { envelope } => {
+                envelope.inherit(&seed, &manifest.system, &manifest.inherit_pins)
+            }
+            Source::Birth { birth, now_gyr } => Inheritance::from_birth(birth, *now_gyr),
+        };
+        // The stellar fits cover Z = 1e-4 to 0.03. Outside, the nearest edge is
+        // used and the evidence says so (metal-rich thin-disc and the most
+        // metal-poor halo stars).
+        let fits_z = inh.z.clamp(Z_FITS.0, Z_FITS.1);
+        let fits = Fits::new(fits_z);
+        let stars = form_stars(
+            &fits,
+            &seed,
+            &manifest.system,
+            &manifest.star_pins,
+            inh.system_mass,
+        )
+        .map_err(|e| FormationError(e.0))?;
         let now = inh.age_gyr * 1000.0;
         let last_end = stars.iter().map(|s| s.life.t_end).fold(0.0, f64::max);
         let horizon = (last_end + 1000.0).min(20_000.0).max(now);
@@ -196,6 +244,18 @@ impl FormationHistory {
         for s in &stars {
             let a = &s.address;
             let l = &s.life;
+            if l.is_substellar() {
+                events.push(ev(
+                    0.0,
+                    "brown_dwarf.born",
+                    a,
+                    format!(
+                        "{:.3} solar-mass brown dwarf forms: too light ever to burn hydrogen",
+                        s.mass
+                    ),
+                ));
+                continue;
+            }
             events.push(ev(
                 0.0,
                 "star.born",
@@ -274,33 +334,70 @@ impl FormationHistory {
             .collect();
 
         let mut evidence = BTreeMap::new();
+        if fits_z != inh.z {
+            evidence.insert(
+                "stars.metallicity_for_fits".to_string(),
+                How::Calculated {
+                    source: format!(
+                        "Z = {:.2e} is outside the Hurley fits (1e-4 to 0.03): stars use Z = {fits_z:.2e}, the nearest edge",
+                        inh.z
+                    ),
+                },
+            );
+        }
         let drawn = |d: &sse_resolve::Distribution| How::Drawn {
             distribution: serde_json::to_string(d).expect("json"),
             spread: "see distribution".into(),
         };
-        let e = &manifest.envelope;
-        let p = &manifest.inherit_pins;
-        for (k, d, pin) in [
-            ("inheritance.feh", &e.feh, p.feh),
-            ("inheritance.age_gyr", &e.age_gyr, p.age_gyr),
-            ("inheritance.c_o", &e.c_o, p.c_o),
-            ("inheritance.mg_si", &e.mg_si, p.mg_si),
-            ("inheritance.al26_rel", &e.al26_rel, p.al26_rel),
-            (
-                "inheritance.cluster_members",
-                &e.cluster_members,
-                p.cluster_members,
-            ),
-            ("inheritance.fuv_g0", &e.fuv_g0, p.fuv_g0),
-        ] {
-            evidence.insert(
-                k.to_string(),
-                if pin.is_some() {
-                    How::Authored
-                } else {
-                    drawn(d)
-                },
-            );
+        match &manifest.source {
+            Source::Envelope { envelope: e } => {
+                let p = &manifest.inherit_pins;
+                for (k, d, pin) in [
+                    ("inheritance.feh", &e.feh, p.feh),
+                    ("inheritance.age_gyr", &e.age_gyr, p.age_gyr),
+                    ("inheritance.c_o", &e.c_o, p.c_o),
+                    ("inheritance.mg_si", &e.mg_si, p.mg_si),
+                    ("inheritance.al26_rel", &e.al26_rel, p.al26_rel),
+                    (
+                        "inheritance.cluster_members",
+                        &e.cluster_members,
+                        p.cluster_members,
+                    ),
+                    ("inheritance.fuv_g0", &e.fuv_g0, p.fuv_g0),
+                ] {
+                    evidence.insert(
+                        k.to_string(),
+                        if pin.is_some() {
+                            How::Authored
+                        } else {
+                            drawn(d)
+                        },
+                    );
+                }
+            }
+            Source::Birth { .. } => {
+                for k in [
+                    "feh",
+                    "alpha_fe",
+                    "age_gyr",
+                    "c_o",
+                    "mg_si",
+                    "al26_rel",
+                    "r_process_rel",
+                    "k40_rel",
+                    "cluster_members",
+                    "fuv_g0",
+                    "system_mass",
+                ] {
+                    evidence.insert(
+                        format!("inheritance.{k}"),
+                        How::Inherited {
+                            from: "resolved by the cosmos suite (G0 patch and cohort envelopes)"
+                                .into(),
+                        },
+                    );
+                }
+            }
         }
         for (i, s) in stars.iter().enumerate() {
             let k = format!("stars.{i}");
@@ -376,7 +473,7 @@ impl FormationHistory {
     }
 
     pub fn fits(&self) -> Fits {
-        Fits::new(self.inheritance.z)
+        Fits::new(self.inheritance.z.clamp(Z_FITS.0, Z_FITS.1))
     }
 
     pub fn hash(&self) -> ContentHash {

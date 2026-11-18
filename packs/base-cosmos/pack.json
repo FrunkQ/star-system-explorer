@@ -1,0 +1,68 @@
+{
+  "format": "sse.pack/1",
+  "id": "sse.base-cosmos",
+  "version": "0.1.0",
+  "kind": ["base-physics"],
+  "kernel_range": "^0.1",
+  "licence": "Apache-2.0",
+  "provides": {
+    "other": {
+      "patch_model": {
+        "id": "milky-way-like.v1",
+        "about": "Default patch envelope (galaxy design 7 and 12, stage G0): a Milky-Way-like disc so systems can be formed before any galaxy exists. Closed-form; every number is a pack default with its source. Arms, bar, local texture and events arrive with G4 and G6.",
+        "now_gyr": 13.8,
+        "galaxy_start_gyr": 0.8,
+        "sun_radius_kpc": 8.2,
+        "sources": {
+          "sun_radius_kpc": "Bland-Hawthorn and Gerhard 2016, ARA&A 54, 529",
+          "densities": "local systems about 0.08 per cubic parsec (RECONS 10 pc census, Henry et al. 2018); thick to thin 0.12 and halo to thin 0.005 at the midplane (Juric et al. 2008)",
+          "scale_lengths": "thin 2.6 kpc, thick 2.0 kpc; thin 300 pc and thick 900 pc scale heights (Juric et al. 2008; Bland-Hawthorn and Gerhard 2016)",
+          "halo": "power-law index 2.8 and flattening 0.64 (Juric et al. 2008)",
+          "imf": "Kroupa 2001, stars only (0.08 to 150 solar masses)",
+          "enrichment": "ISM [Fe/H] rises as log10 of 1 - exp(-t/tau); present-day gradient -0.06 dex per kpc (Genovali et al. 2014)",
+          "alpha_fe": "high-alpha plateau with a knee about 1 Gyr after the first stars, from the delay of type Ia supernovae (Matteucci and Francois 1989)",
+          "c_o": "solar C/O 0.55 (Asplund et al. 2009), rising with [Fe/H] (Nissen et al. 2014)",
+          "mg_si": "solar Mg/Si 1.2 by number (Asplund et al. 2009); stellar spread from Adibekyan et al. 2015",
+          "cluster": "embedded cluster masses dN/dM proportional to M^-2 from 10 to 1e5 solar masses (Lada and Lada 2003), so per star proportional to M^-1",
+          "fuv": "birth-cluster far-ultraviolet field, median about 1000 G0 (Fatuzzo and Adams 2008)",
+          "al26": "rough: most systems are born with less Al-26 than the Sun had (Gounelle 2015; Lichtenberg et al. 2016). Labelled rough",
+          "sfr": "Milky Way star formation 1.65 solar masses per year (Licquia and Newman 2015)",
+          "ia": "type Ia delay-time distribution proportional to 1/t from 40 Myr, 1.3e-3 per solar mass formed (Maoz and Mannucci 2012)",
+          "velocity": "velocity dispersion proportional to age^0.35, about 50 km/s at 10 Gyr (Holmberg et al. 2009)",
+          "rocky": "[Fe/H] about -1 as the floor for rocky planets (Johnson and Li 2012)",
+          "sterilising": "a supernova within 8 pc can strip an ozone layer (Gehrels et al. 2003)"
+        },
+        "imf": { "type": "broken-power-law", "edges": [0.08, 0.5, 150.0], "alphas": [1.3, 2.3] },
+        "cc_sn_min_mass": 8.0,
+        "enrichment": { "feh_now_at_sun": 0.0, "gradient_dex_per_kpc": -0.06, "tau_gyr": 6.0, "floor": -4.0 },
+        "alpha_fe": { "plateau": 0.3, "now": 0.0, "knee_gyr": 1.0 },
+        "c_o": { "solar": 0.55, "dex_per_feh": 0.3, "sd": 0.07 },
+        "mg_si": { "mean": 1.2, "sd": 0.15 },
+        "k40": { "sigma_dex": 0.1 },
+        "al26": { "median": 0.3, "sigma_dex": 0.7 },
+        "cluster": { "alpha": 1.0, "lo_msun": 10.0, "hi_msun": 100000.0 },
+        "fuv": { "median_g0": 1000.0, "sigma_dex": 0.7 },
+        "sfr": { "galaxy_msun_per_yr": 1.65, "scale_length_kpc": 2.6, "young_scale_height_pc": 100.0 },
+        "ia": { "per_msun": 0.0013, "min_delay_gyr": 0.04 },
+        "velocity": { "sigma_at_10gyr_kms": 50.0, "power": 0.35, "halo_kms": 150.0 },
+        "rocky_feh": -1.0,
+        "sterilising_pc": 8.0,
+        "encounter_pc": 1.0,
+        "populations": [
+          { "name": "thin", "geometry": "disc", "density_pc3": 0.0712, "scale_length_kpc": 2.6, "scale_height_pc": 300.0 },
+          { "name": "thick", "geometry": "disc", "density_pc3": 0.00855, "scale_length_kpc": 2.0, "scale_height_pc": 900.0 },
+          { "name": "halo", "geometry": "halo", "density_pc3": 0.000356, "power": 2.8, "flattening": 0.64 }
+        ],
+        "cohorts": [
+          { "population": "halo", "from_gyr": 0.8, "to_gyr": 1.8, "share": 1.0, "feh_fixed": -1.5, "feh_sd": 0.5, "alpha_fixed": 0.3, "r_sigma_dex": 0.5 },
+          { "population": "thick", "from_gyr": 1.8, "to_gyr": 5.8, "share": 1.0, "feh_offset": -0.2, "feh_sd": 0.2, "r_sigma_dex": 0.25 },
+          { "population": "thin", "from_gyr": 5.8, "to_gyr": 7.8, "share": 2.0, "feh_sd": 0.15, "r_sigma_dex": 0.15 },
+          { "population": "thin", "from_gyr": 7.8, "to_gyr": 9.8, "share": 2.0, "feh_sd": 0.15, "r_sigma_dex": 0.15 },
+          { "population": "thin", "from_gyr": 9.8, "to_gyr": 11.8, "share": 2.0, "feh_sd": 0.15, "r_sigma_dex": 0.15 },
+          { "population": "thin", "from_gyr": 11.8, "to_gyr": 12.8, "share": 1.0, "feh_sd": 0.15, "r_sigma_dex": 0.15 },
+          { "population": "thin", "from_gyr": 12.8, "to_gyr": 13.8, "share": 1.0, "feh_sd": 0.15, "r_sigma_dex": 0.15 }
+        ]
+      }
+    }
+  }
+}

@@ -10,5 +10,6 @@ authors.workspace = true
 sse-core.workspace = true
 sse-chronicle.workspace = true
 sse-resolve = { path = "../sse-resolve" }
+sse-cosmos = { path = "../sse-cosmos" }
 serde.workspace = true
 serde_json.workspace = true

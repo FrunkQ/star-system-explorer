@@ -28,7 +28,7 @@ async function main() {
   document.body.dataset.result = pass && epass && kpass ? "pass" : "fail";
 }
 
-// K7 to K10: resolve, sift, observe and suite scenarios against native digests.
+// K7 to K10 and G0: resolve, sift, observe, suite and cosmos scenarios against native digests.
 async function enginesCheck() {
   const golden = await (await fetch("./pkg/engines.json", { cache: "no-store" })).json();
   const got = JSON.parse(engines_run());

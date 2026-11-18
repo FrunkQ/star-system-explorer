@@ -1,4 +1,4 @@
-use crate::history::{FormationHistory, Manifest};
+use crate::history::{FormationHistory, How, Manifest};
 use crate::hurley::Fits;
 use crate::inherit::InheritancePins;
 use crate::lifeline::{white_dwarf_mass, LifeLine, Phase};
@@ -89,10 +89,22 @@ fn remnants_follow_the_initial_final_mass_relation() {
     let f = Fits::new(0.02);
     assert_eq!(LifeLine::new(&f, 12.0).unwrap().remnant, Phase::NeutronStar);
     assert_eq!(LifeLine::new(&f, 40.0).unwrap().remnant, Phase::BlackHole);
-    assert!(LifeLine::new(&f, 0.05)
+    let bd = LifeLine::new(&f, 0.05).unwrap();
+    assert_eq!(bd.state_at(&f, 1000.0).phase, Phase::BrownDwarf);
+    // Burrows et al. 2001: a 0.05 solar-mass brown dwarf at 1 Gyr is near 4e-5 L_sun
+    // and about 1500 K, and it keeps cooling.
+    let s = bd.state_at(&f, 1000.0);
+    close(s.luminosity, 4.0e-5, 1e-9, "brown dwarf L at 1 Gyr");
+    assert!(
+        (1200.0..1900.0).contains(&s.teff),
+        "brown dwarf Teff {}",
+        s.teff
+    );
+    assert!(bd.state_at(&f, 5000.0).luminosity < s.luminosity);
+    assert!(LifeLine::new(&f, 0.005)
         .unwrap_err()
         .0
-        .contains("brown dwarf"));
+        .contains("planetary-mass"));
     // A white dwarf fades: ten times dimmer over a few Gyr of cooling.
     let sun = LifeLine::new(&f, 1.0).unwrap();
     let (a, b) = (
@@ -200,19 +212,19 @@ fn budgets_and_records_close() {
 
 #[test]
 fn populations_match_their_sources() {
-    // Kroupa 2001 on 0.1 to 100: 72.9 percent of stars are below 0.5 solar masses.
+    // Kroupa 2001 on 0.08 to 100: 76.1 percent of stars are below 0.5 solar masses.
     let n = 4000;
     let below = (0..n)
         .filter(|i| kroupa_quantile((*i as f64 + 0.5) / n as f64) < 0.5)
         .count();
     close(
         below as f64 / n as f64,
-        0.729,
+        0.7607,
         0.01,
         "IMF fraction below 0.5",
     );
     assert!(
-        (kroupa_quantile(0.0) - 0.1).abs() < 1e-12
+        (kroupa_quantile(0.0) - 0.08).abs() < 1e-12
             && (kroupa_quantile(1.0 - 1e-15) - 100.0).abs() < 1e-6
     );
     // Multiplicity of Sun-like primaries over many drawn systems (Duchene and Kraus 2013: 44 percent).
@@ -271,14 +283,76 @@ fn close_pairs_get_dated_mass_transfer() {
 }
 
 #[test]
-fn out_of_range_is_refused_with_a_reason() {
+fn metals_outside_the_fits_use_the_nearest_edge_and_say_so() {
     let mut m = sun_manifest();
     m.inherit_pins.feh = Some(-3.0);
-    let e = FormationHistory::form(m).unwrap_err();
-    assert!(e.0.contains("outside the stellar fits"), "{}", e.0);
+    let h = FormationHistory::form(m).unwrap();
+    let How::Calculated { source } = &h.evidence["stars.metallicity_for_fits"] else {
+        panic!()
+    };
+    assert!(source.contains("nearest edge"), "{source}");
+    assert_eq!(h.fits().z, 1.0e-4);
 }
 
 #[test]
 fn golden_digest() {
     crate::golden::check("formation.json", &crate::scenario::golden());
+}
+
+#[test]
+fn forms_every_system_of_the_g0_solar_patch() {
+    // G0's acceptance check: system generation runs from its envelope fixture.
+    let all = crate::scenario::solar_patch();
+    assert!(all.len() > 250, "{} systems", all.len());
+    let (mut formed, mut wd, mut refusals) = (
+        0usize,
+        0usize,
+        std::collections::BTreeMap::<String, usize>::new(),
+    );
+    for h in &all {
+        match h {
+            Ok(h) => {
+                formed += 1;
+                // The cloud core's mass is shared exactly among its stars.
+                let Some(total) = h.inheritance.system_mass else {
+                    panic!("birth mass kept")
+                };
+                close(
+                    h.budgets.stellar_mass,
+                    total,
+                    1e-12,
+                    "stars share the core mass",
+                );
+                let now = h.state_at(h.inheritance.age_gyr * 1000.0);
+                if now.iter().any(|s| s.phase == Phase::WhiteDwarf) {
+                    wd += 1;
+                }
+            }
+            Err(e) => {
+                let key = if e.0.contains("planetary-mass") {
+                    "planetary mass"
+                } else {
+                    "other"
+                };
+                *refusals.entry(key.to_string()).or_default() += 1;
+            }
+        }
+    }
+    // G0's cores are all stars or brown dwarfs: every system forms.
+    assert!(refusals.is_empty(), "{refusals:?}");
+    assert_eq!(formed, all.len());
+    // Remnants: about 6 to 8 percent of nearby systems hold a white dwarf
+    // (Hollands et al. 2018, 20 pc sample); the sketch giant phases allow a wide band.
+    let f = wd as f64 / formed as f64;
+    assert!(
+        (0.02..0.2).contains(&f),
+        "white dwarf fraction {f} ({wd} of {formed})"
+    );
+    // Same patch twice: identical histories.
+    let again = crate::scenario::solar_patch();
+    assert!(all.iter().zip(&again).all(|(a, b)| match (a, b) {
+        (Ok(a), Ok(b)) => a.hash() == b.hash(),
+        (Err(a), Err(b)) => a == b,
+        _ => false,
+    }));
 }

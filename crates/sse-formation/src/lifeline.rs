@@ -13,8 +13,11 @@ use sse_core::math as m;
 pub const TEFF_SUN: f64 = 5772.0;
 /// Chandrasekhar mass used by the white-dwarf radius law (HPT00).
 pub const M_CH: f64 = 1.44;
-/// Fits cover 0.1 to 100 solar masses.
-pub const MASS_RANGE: (f64, f64) = (0.1, 100.0);
+/// Stars: the hydrogen-burning limit (about 0.075, Chabrier et al. 2000) to
+/// 100. HPT00 fit 0.1 to 100; 0.08 to 0.1 is a short, labelled extrapolation.
+pub const MASS_RANGE: (f64, f64) = (0.08, 100.0);
+/// Brown dwarfs: the deuterium-burning limit (13 Jupiter masses) up to the stars.
+pub const BROWN_DWARF_MIN: f64 = 0.0124;
 
 #[derive(Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Debug, Serialize, Deserialize)]
 #[serde(rename_all = "kebab-case")]
@@ -23,6 +26,8 @@ pub enum Phase {
     MainSequence,
     HertzsprungGap,
     Giant,
+    /// Below the hydrogen-burning limit: never a main-sequence star.
+    BrownDwarf,
     WhiteDwarf,
     NeutronStar,
     BlackHole,
@@ -41,6 +46,7 @@ impl Phase {
             Phase::MainSequence => "main sequence",
             Phase::HertzsprungGap => "subgiant",
             Phase::Giant => "giant",
+            Phase::BrownDwarf => "brown dwarf",
             Phase::WhiteDwarf => "white dwarf",
             Phase::NeutronStar => "neutron star",
             Phase::BlackHole => "black hole",
@@ -124,9 +130,12 @@ pub struct OutOfRange(pub String);
 
 impl LifeLine {
     pub fn new(fits: &Fits, mass: f64) -> Result<Self, OutOfRange> {
+        if (BROWN_DWARF_MIN..MASS_RANGE.0).contains(&mass) {
+            return Ok(Self::brown_dwarf(fits, mass));
+        }
         if !(MASS_RANGE.0..=MASS_RANGE.1).contains(&mass) {
             return Err(OutOfRange(format!(
-                "{mass} solar masses is outside the stellar fits (0.1 to 100); below 0.1 it is a brown dwarf"
+                "{mass} solar masses is outside the stars and brown dwarfs (0.0124 to 100); a planetary-mass object is placed by later stages"
             )));
         }
         let (l_zams, r_zams) = (fits.l_zams(mass), fits.r_zams(mass));
@@ -174,13 +183,39 @@ impl LifeLine {
         })
     }
 
+    fn brown_dwarf(fits: &Fits, mass: f64) -> Self {
+        let never = f64::MAX;
+        LifeLine {
+            initial_mass: mass,
+            z: fits.z,
+            t_zams: never,
+            t_tms: never,
+            t_bgb: never,
+            t_end: never,
+            remnant: Phase::BrownDwarf,
+            remnant_mass: mass,
+            l_zams: 0.0,
+            r_zams: 0.1,
+            l_tms: 0.0,
+            r_tms: 0.1,
+            l_bgb: 0.0,
+            l_tip: 0.0,
+        }
+    }
+
+    pub fn is_substellar(&self) -> bool {
+        self.remnant == Phase::BrownDwarf
+    }
+
     /// Phase boundaries from birth, Myr: where things change fast.
     pub fn boundaries(&self) -> [f64; 4] {
         [self.t_zams, self.t_tms, self.t_bgb, self.t_end]
     }
 
     pub fn phase_at(&self, t: f64) -> Phase {
-        if t < self.t_zams {
+        if self.is_substellar() {
+            Phase::BrownDwarf
+        } else if t < self.t_zams {
             Phase::PreMainSequence
         } else if t < self.t_tms {
             Phase::MainSequence
@@ -219,6 +254,13 @@ impl LifeLine {
                 let l = self.l_bgb * m::pow(self.l_tip / self.l_bgb, tau);
                 let r = fits.r_gb(mass, l).max(self.r_tms);
                 (l, r, Level::Sketch, mass)
+            }
+            Phase::BrownDwarf => {
+                // Burrows et al. 2001 (Rev. Mod. Phys. 73, 719) eq. 3: cooling
+                // with age; radius about 0.1 R_sun (sketch).
+                let gyr = (t / 1000.0).max(0.001);
+                let l = 4.0e-5 * m::pow(gyr, -1.3) * m::pow(mass / 0.05, 2.64);
+                (l, 0.1, Level::Sketch, mass)
             }
             Phase::WhiteDwarf => {
                 // HPT00 eqs. 90-91: Mestel cooling, A = 4 for carbon-oxygen;

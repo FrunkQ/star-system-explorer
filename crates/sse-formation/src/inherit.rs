@@ -55,6 +55,50 @@ pub struct Inheritance {
     pub al26_rel: f64,
     pub cluster_members: f64,
     pub fuv_g0: f64,
+    /// [alpha/Fe], dex (0 from the stand-in envelope).
+    #[serde(default)]
+    pub alpha_fe: f64,
+    /// r-process and potassium-40 relative to the Sun's at birth (1 from the stand-in).
+    #[serde(default = "one")]
+    pub r_process_rel: f64,
+    #[serde(default = "one")]
+    pub k40_rel: f64,
+    /// Total stellar mass of the cloud core when the patch fixed it (G0), solar masses.
+    #[serde(default)]
+    pub system_mass: Option<f64>,
+    #[serde(default)]
+    pub population: Option<String>,
+}
+
+fn one() -> f64 {
+    1.0
+}
+
+/// Mean stellar mass of a Kroupa 2001 cluster on 0.1 to 100 solar masses, used
+/// to turn a cluster mass into a member count.
+pub const MEAN_STAR_MASS: f64 = 0.6;
+
+impl Inheritance {
+    /// Stage 1 from a system the galaxy suite resolved (G0's `SystemBirth`).
+    /// `now_gyr` is the universe time the history is read up to.
+    pub fn from_birth(b: &sse_cosmos::SystemBirth, now_gyr: f64) -> Self {
+        Inheritance {
+            feh: b.feh,
+            z: 0.02 * m::pow(10.0, b.feh),
+            age_gyr: b.age_gyr(now_gyr),
+            born_gyr: b.birth_gyr,
+            c_o: b.c_o,
+            mg_si: b.mg_si,
+            al26_rel: b.al26_rel,
+            cluster_members: m::round(b.cluster_mass_msun / MEAN_STAR_MASS).max(1.0),
+            fuv_g0: b.cluster_fuv_g0,
+            alpha_fe: b.alpha_fe,
+            r_process_rel: b.r_process_rel,
+            k40_rel: b.k40_rel,
+            system_mass: Some(b.mass_msun),
+            population: Some(b.population.clone()),
+        }
+    }
 }
 
 /// Values the caller fixes instead of drawing (a GM's pins, the Solar System).
@@ -123,6 +167,11 @@ impl PatchEnvelope {
             al26_rel: pick(4, &self.al26_rel, pins.al26_rel),
             cluster_members: m::round(pick(5, &self.cluster_members, pins.cluster_members)),
             fuv_g0: pick(6, &self.fuv_g0, pins.fuv_g0),
+            alpha_fe: 0.0,
+            r_process_rel: 1.0,
+            k40_rel: 1.0,
+            system_mass: None,
+            population: None,
         }
     }
 }

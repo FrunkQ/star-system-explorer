@@ -522,6 +522,19 @@ dependencies = [
 ]
 
 [[package]]
+name = "sse-cosmos"
+version = "0.1.0"
+dependencies = [
+ "serde",
+ "serde_json",
+ "sse-chronicle",
+ "sse-core",
+ "sse-flow",
+ "sse-pack",
+ "sse-resolve",
+]
+
+[[package]]
 name = "sse-flow"
 version = "0.1.0"
 dependencies = [
@@ -539,6 +552,7 @@ dependencies = [
  "serde_json",
  "sse-chronicle",
  "sse-core",
+ "sse-cosmos",
  "sse-resolve",
 ]
 
@@ -634,6 +648,7 @@ version = "0.1.0"
 dependencies = [
  "serde_json",
  "sse-core",
+ "sse-cosmos",
  "sse-formation",
  "sse-kernel",
  "sse-observe",
