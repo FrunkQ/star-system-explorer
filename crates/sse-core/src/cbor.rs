@@ -357,6 +357,113 @@ pub fn from_canonical<T: serde::de::DeserializeOwned>(b: &[u8]) -> Result<T, Cbo
     from_value(&decode(b)?)
 }
 
+impl serde::Serialize for Value {
+    fn serialize<S: serde::Serializer>(&self, s: S) -> Result<S::Ok, S::Error> {
+        use serde::ser::{SerializeMap, SerializeSeq};
+        match self {
+            Value::Null => s.serialize_unit(),
+            Value::Bool(b) => s.serialize_bool(*b),
+            Value::Int(i) => {
+                if let Ok(x) = i64::try_from(*i) {
+                    s.serialize_i64(x)
+                } else if let Ok(x) = u64::try_from(*i) {
+                    s.serialize_u64(x)
+                } else {
+                    s.serialize_i128(*i)
+                }
+            }
+            Value::Float(f) => s.serialize_f64(*f),
+            Value::Bytes(b) => s.serialize_bytes(b),
+            Value::Text(t) => s.serialize_str(t),
+            Value::Array(a) => {
+                let mut q = s.serialize_seq(Some(a.len()))?;
+                for x in a {
+                    q.serialize_element(x)?;
+                }
+                q.end()
+            }
+            Value::Map(m) => {
+                let mut q = s.serialize_map(Some(m.len()))?;
+                for (k, v) in m {
+                    q.serialize_entry(k, v)?;
+                }
+                q.end()
+            }
+        }
+    }
+}
+
+impl<'de> serde::Deserialize<'de> for Value {
+    fn deserialize<D: serde::Deserializer<'de>>(d: D) -> Result<Self, D::Error> {
+        struct V;
+        impl<'de> serde::de::Visitor<'de> for V {
+            type Value = Value;
+            fn expecting(&self, f: &mut fmt::Formatter) -> fmt::Result {
+                f.write_str("a canonical SSE value")
+            }
+            fn visit_unit<E>(self) -> Result<Value, E> {
+                Ok(Value::Null)
+            }
+            fn visit_none<E>(self) -> Result<Value, E> {
+                Ok(Value::Null)
+            }
+            fn visit_some<D2: serde::Deserializer<'de>>(self, d: D2) -> Result<Value, D2::Error> {
+                serde::Deserialize::deserialize(d)
+            }
+            fn visit_bool<E>(self, b: bool) -> Result<Value, E> {
+                Ok(Value::Bool(b))
+            }
+            fn visit_i64<E>(self, i: i64) -> Result<Value, E> {
+                Ok(Value::Int(i as i128))
+            }
+            fn visit_u64<E>(self, i: u64) -> Result<Value, E> {
+                Ok(Value::Int(i as i128))
+            }
+            fn visit_i128<E: serde::de::Error>(self, i: i128) -> Result<Value, E> {
+                if !(INT_MIN..=INT_MAX).contains(&i) {
+                    return Err(E::custom("integer out of range"));
+                }
+                Ok(Value::Int(i))
+            }
+            fn visit_f64<E: serde::de::Error>(self, f: f64) -> Result<Value, E> {
+                if f.is_nan() {
+                    return Err(E::custom("NaN is not a value"));
+                }
+                Ok(Value::Float(f))
+            }
+            fn visit_str<E>(self, t: &str) -> Result<Value, E> {
+                Ok(Value::Text(t.to_owned()))
+            }
+            fn visit_string<E>(self, t: String) -> Result<Value, E> {
+                Ok(Value::Text(t))
+            }
+            fn visit_bytes<E>(self, b: &[u8]) -> Result<Value, E> {
+                Ok(Value::Bytes(b.to_vec()))
+            }
+            fn visit_byte_buf<E>(self, b: Vec<u8>) -> Result<Value, E> {
+                Ok(Value::Bytes(b))
+            }
+            fn visit_seq<A: serde::de::SeqAccess<'de>>(self, mut a: A) -> Result<Value, A::Error> {
+                let mut v = Vec::new();
+                while let Some(x) = a.next_element()? {
+                    v.push(x);
+                }
+                Ok(Value::Array(v))
+            }
+            fn visit_map<A: serde::de::MapAccess<'de>>(self, mut a: A) -> Result<Value, A::Error> {
+                let mut m = BTreeMap::new();
+                while let Some((k, v)) = a.next_entry::<String, Value>()? {
+                    if m.insert(k, v).is_some() {
+                        return Err(serde::de::Error::custom("duplicate key"));
+                    }
+                }
+                Ok(Value::Map(m))
+            }
+        }
+        d.deserialize_any(V)
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -477,5 +584,27 @@ mod tests {
         let b = to_canonical(&s).unwrap();
         assert_eq!(from_canonical::<S>(&b).unwrap(), s);
         assert_eq!(to_canonical(&f64::NAN), Err(CborError::NaN));
+    }
+
+    #[test]
+    fn value_is_serde_through_cbor_and_json() {
+        let mut m = BTreeMap::new();
+        m.insert("big".to_string(), Value::Int(INT_MAX));
+        m.insert("neg".to_string(), Value::Int(INT_MIN));
+        m.insert("f".to_string(), Value::Float(-0.0));
+        m.insert(
+            "a".to_string(),
+            Value::Array(vec![
+                Value::Null,
+                Value::Bool(true),
+                Value::Text("星".into()),
+            ]),
+        );
+        let v = Value::Map(m);
+        assert_eq!(
+            from_canonical::<Value>(&to_canonical(&v).unwrap()).unwrap(),
+            v
+        );
+        assert_eq!(to_value(&v).unwrap(), v);
     }
 }

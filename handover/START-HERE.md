@@ -1,6 +1,6 @@
 # START HERE
 
-Last updated: 18 Nov 2026, after K2.
+Last updated: 18 Nov 2026, after K3.
 
 ## Where we are
 Milestone M1 "Proven core" = packages K0 to K6 (build plan section 3/4).
@@ -9,8 +9,8 @@ Milestone M1 "Proven core" = packages K0 to K6 (build plan section 3/4).
 |---|---|---|
 | K1 workspace, encoding, hashes, maths, harness | done | packages/K1.md |
 | K2 addresses, quantities, units, keyed draws | done | packages/K2.md |
-| K3 chronicle, stores, checkpoints, branches, manifest | next | |
-| K4 flows, validation, scheduler, solve, explain | todo | |
+| K3 chronicle, stores, checkpoints, branches, manifest | done | packages/K3.md |
+| K4 flows, validation, scheduler, solve, explain | next | |
 | K5 packs, stacks, one-publisher, fictional labels | todo | |
 | K6 kernel API, worker, TS client, cancellation, cost classes, tiers | todo | |
 | K0 V3 / Ovid / Evolution Lab source reading (needs Alex's PC, C:\Development) | todo, done last | |

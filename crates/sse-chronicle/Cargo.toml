@@ -1,0 +1,15 @@
+[package]
+name = "sse-chronicle"
+description = "SSE4 chronicle: events, stores, checkpoints, branches, run manifests"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+authors.workspace = true
+
+[dependencies]
+sse-core.workspace = true
+serde.workspace = true
+
+[dev-dependencies]
+proptest.workspace = true
+serde_json.workspace = true

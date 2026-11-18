@@ -472,6 +472,16 @@ dependencies = [
 ]
 
 [[package]]
+name = "sse-chronicle"
+version = "0.1.0"
+dependencies = [
+ "proptest",
+ "serde",
+ "serde_json",
+ "sse-core",
+]
+
+[[package]]
 name = "sse-cli"
 version = "0.1.0"
 dependencies = [
