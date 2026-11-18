@@ -26,6 +26,107 @@ struct Universe {
     seed: Seed,
     chronicle: Chronicle,
     branches: BTreeMap<String, ContentHash>,
+    /// The pack stack the universe runs on now (bottom to top).
+    packs: Vec<sse_chronicle::PackRef>,
+}
+
+/// Event kind for a pack stack change in an open universe.
+pub const STACK_ADOPT: &str = "stack.adopt";
+
+fn pack_refs(s: &ResolvedStack) -> Vec<sse_chronicle::PackRef> {
+    s.packs
+        .iter()
+        .map(|(id, v, h)| sse_chronicle::PackRef {
+            id: id.clone(),
+            version: v.clone(),
+            content_hash: *h,
+        })
+        .collect()
+}
+
+/// Data views, disclosure and tag rules from a pack stack.
+fn load_observe(ms: &[sse_pack::PackManifest]) -> Result<Observe, Vec<String>> {
+    let mut found = Vec::new();
+    for p in ms {
+        if let Some(v) = p.provides.other.get("observe") {
+            let j = serde_json::to_value(v).map_err(|e| vec![format!("{}: observe: {e}", p.id)])?;
+            found.push((p.id.clone(), j));
+        }
+    }
+    let setup = sse_observe::ObserveSetup::from_stack(&found).map_err(|e| vec![e])?;
+    let rules = sse_sift::load(ms)?.rules;
+    Ok(Observe { setup, rules })
+}
+
+/// Field prefix for an authored tag: `tag.<name>` = true puts the tag on the
+/// subject (false or absent: not tagged). Taken out of the facts before a
+/// scene is built, so it never shows as a fact.
+pub const TAG_FIELD: &str = "tag.";
+
+impl Universe {
+    fn manifest(&self) -> RunManifest {
+        RunManifest::new(
+            self.seed,
+            KERNEL_VERSION,
+            self.packs.clone(),
+            self.chronicle.authored_hash(),
+        )
+    }
+
+    /// Record that the universe now runs on `stack`: an authored event at the
+    /// root (the GM's choice), whose facts name the stack hash and every pack
+    /// by id, version and content hash. Re-adopting the same stack records
+    /// nothing.
+    fn adopt(&mut self, stack: &ResolvedStack) -> Result<Option<StackAdopted>, Response> {
+        let packs = pack_refs(stack);
+        if packs == self.packs {
+            return Ok(None);
+        }
+        let mut f = BTreeMap::new();
+        f.insert("stack.hash".to_string(), Value::Text(stack.hash.hex()));
+        f.insert(
+            "stack.packs".to_string(),
+            Value::Array(
+                packs
+                    .iter()
+                    .map(|p| {
+                        Value::Text(format!("{}@{}#{}", p.id, p.version, p.content_hash.hex()))
+                    })
+                    .collect(),
+            ),
+        );
+        let mut set = BTreeMap::new();
+        set.insert(self.root.clone(), f);
+        let e = Event::new(EventBody {
+            kind: STACK_ADOPT.into(),
+            subject: vec![self.root.clone()],
+            occurred_at: UniverseTime::ORIGIN,
+            activated_at: UniverseTime::ORIGIN,
+            recognised_at: self.chronicle.next_stamp(),
+            causes: vec![],
+            payload: Payload {
+                set,
+                ..Default::default()
+            },
+            evidence: Evidence::Authored,
+            publisher: Publisher::new("gm", "stack", "1"),
+        })
+        .map_err(|e| err("bad_event", format!("{e}")))?;
+        let id = self
+            .chronicle
+            .append(e)
+            .map_err(|e| err("chronicle", format!("{e}")))?;
+        self.packs = packs;
+        Ok(Some(StackAdopted {
+            event_id: id.hex(),
+            state_hash: self
+                .chronicle
+                .state_at(UniverseTime::seconds(i64::MAX))
+                .hash()
+                .hex(),
+            manifest_id: self.manifest().id().hex(),
+        }))
+    }
 }
 
 struct Job {
@@ -34,9 +135,18 @@ struct Job {
     hasher: Hasher,
 }
 
+/// What the stack says about observation: data views and disclosure
+/// (`provides.other.observe`) and the rule pack's tags (`provides.other.rules`).
+#[derive(Default)]
+struct Observe {
+    setup: Option<sse_observe::ObserveSetup>,
+    rules: sse_sift::RuleSet,
+}
+
 pub struct Kernel {
     atoms: sse_flow::AtomRegistry,
     stack: Option<(ResolvedStack, BTreeMap<String, Flow>)>,
+    observe: Observe,
     universe: Option<Universe>,
     jobs: BTreeMap<u32, Job>,
     next_job: u32,
@@ -98,6 +208,7 @@ impl Kernel {
         Kernel {
             atoms: kernel_atoms(),
             stack: None,
+            observe: Observe::default(),
             universe: None,
             jobs: BTreeMap::new(),
             next_job: 1,
@@ -250,13 +361,35 @@ impl Kernel {
                                 issues: problems,
                             });
                         }
+                        let observe = match load_observe(&ms) {
+                            Ok(o) => o,
+                            Err(problems) => {
+                                let issues: Vec<sse_pack::StackIssue> = problems
+                                    .iter()
+                                    .map(|m| sse_pack::StackIssue {
+                                        pack: "observe".into(),
+                                        message: m.clone(),
+                                    })
+                                    .collect();
+                                return Ok(Response::StackRejected {
+                                    report: sse_pack::report(&issues),
+                                    issues: problems,
+                                });
+                            }
+                        };
+                        let adopted = match self.universe.as_mut() {
+                            Some(u) => u.adopt(&stack)?,
+                            None => None,
+                        };
                         let r = Response::StackLoaded {
                             stack_hash: stack.hash.hex(),
                             flows: flows.keys().cloned().collect(),
                             publishers: stack.publishers.len() as u32,
                             fictional_kinds: stack.fictional_kinds.iter().cloned().collect(),
+                            adopted,
                         };
                         self.stack = Some((stack, flows));
+                        self.observe = observe;
                         r
                     }
                 }
@@ -269,28 +402,20 @@ impl Kernel {
                 let packs = self
                     .stack
                     .as_ref()
-                    .map(|(s, _)| {
-                        s.packs
-                            .iter()
-                            .map(|(id, v, h)| sse_chronicle::PackRef {
-                                id: id.clone(),
-                                version: v.clone(),
-                                content_hash: *h,
-                            })
-                            .collect()
-                    })
+                    .map(|(s, _)| pack_refs(s))
                     .unwrap_or_default();
-                let manifest =
-                    RunManifest::new(seed, KERNEL_VERSION, packs, chronicle.authored_hash());
-                self.universe = Some(Universe {
+                let u = Universe {
                     root: root.clone(),
                     seed,
                     chronicle,
                     branches: BTreeMap::new(),
-                });
+                    packs,
+                };
+                let manifest_id = u.manifest().id().hex();
+                self.universe = Some(u);
                 Response::UniverseOpened {
                     root: root.to_string(),
-                    manifest_id: manifest.id().hex(),
+                    manifest_id,
                 }
             }
             Request::SetAuthored { edit } => {
@@ -577,6 +702,140 @@ impl Kernel {
                     .remove(&job)
                     .ok_or_else(|| err("unknown_job", format!("no job {job}")))?;
                 Response::JobCancelled { job }
+            }
+            Request::Scene {
+                audience,
+                scope,
+                data_view,
+                at_s,
+            } => {
+                let scope: Address = scope
+                    .parse()
+                    .map_err(|e| err("bad_address", format!("{e}")))?;
+                let setup = self.observe.setup.as_ref().ok_or_else(|| {
+                    err(
+                        "no_data_views",
+                        "the pack stack defines no data views (provides.other.observe)",
+                    )
+                })?;
+                let u = self
+                    .universe
+                    .as_ref()
+                    .ok_or_else(|| err("no_universe", "open a universe first"))?;
+                let mut state = u.chronicle.state_at(UniverseTime::seconds(at_s));
+                // Authored tags out of the facts; rule tags from the stack.
+                let mut tags: BTreeMap<Address, std::collections::BTreeSet<String>> =
+                    BTreeMap::new();
+                for (a, f) in state.facts.iter_mut() {
+                    let keys: Vec<String> = f
+                        .keys()
+                        .filter(|k| k.starts_with(TAG_FIELD))
+                        .cloned()
+                        .collect();
+                    for k in keys {
+                        if f.remove(&k) == Some(Value::Bool(true)) {
+                            tags.entry(a.clone())
+                                .or_default()
+                                .insert(k[TAG_FIELD.len()..].to_string());
+                        }
+                    }
+                }
+                for (a, f) in &state.facts {
+                    let subject = sse_sift::Subject {
+                        address: Some(a.clone()),
+                        facts: f.clone(),
+                        parent: a
+                            .parent()
+                            .and_then(|p| state.facts.get(&p).cloned())
+                            .unwrap_or_default(),
+                        now_s: at_s,
+                        ..Default::default()
+                    };
+                    for t in self
+                        .observe
+                        .rules
+                        .apply(&subject, &BTreeMap::new())
+                        .into_keys()
+                    {
+                        tags.entry(a.clone()).or_default().insert(t);
+                    }
+                }
+                state.facts.retain(|_, f| !f.is_empty());
+                let fictional = self
+                    .stack
+                    .as_ref()
+                    .map(|(s, _)| s.fictional_kinds.iter().cloned().collect())
+                    .unwrap_or_default();
+                let views = setup.views_by_id();
+                let inp = sse_observe::SceneInput {
+                    state: &state,
+                    chronicle: Some(&u.chronicle),
+                    tags: &tags,
+                    fictional: &fictional,
+                    disclosure: &setup.disclosure,
+                    views: &views,
+                    campaign: &setup.campaign,
+                };
+                let scene =
+                    sse_observe::build_scene_through(&inp, &audience, &scope, data_view.as_deref())
+                        .map_err(|e| err("bad_data_view", e))?;
+                Response::Scene {
+                    scene_hash: scene.hash().hex(),
+                    scene: serde_json::to_value(&scene).expect("scenes are plain data"),
+                }
+            }
+            Request::ScanToggle {
+                address,
+                audience,
+                at_s,
+            } => {
+                let a: Address = address
+                    .parse()
+                    .map_err(|e| err("bad_address", format!("{e}")))?;
+                let campaign = self
+                    .observe
+                    .setup
+                    .as_ref()
+                    .ok_or_else(|| {
+                        err(
+                            "no_data_views",
+                            "the pack stack defines no data views (provides.other.observe)",
+                        )
+                    })?
+                    .campaign
+                    .clone();
+                let u = self.universe()?;
+                if !u.root.contains(&a) {
+                    return Err(err(
+                        "bad_address",
+                        format!("{a} is not in universe {}", u.root),
+                    ));
+                }
+                let (id, view) = sse_observe::scan_toggle(
+                    &mut u.chronicle,
+                    &a,
+                    &audience,
+                    &campaign,
+                    UniverseTime::seconds(at_s),
+                    &Publisher::new("gm", "scan", "1"),
+                )
+                .map_err(|e| err("chronicle", format!("{e}")))?;
+                Response::ScanToggled {
+                    event_id: id.hex(),
+                    view,
+                    state_hash: u
+                        .chronicle
+                        .state_at(UniverseTime::seconds(i64::MAX))
+                        .hash()
+                        .hex(),
+                }
+            }
+            Request::Manifest => {
+                let m = self.universe()?.manifest();
+                Response::Manifest {
+                    manifest: serde_json::to_value(&m).expect("manifest is plain data"),
+                    manifest_id: m.id().hex(),
+                }
             }
         })
     }

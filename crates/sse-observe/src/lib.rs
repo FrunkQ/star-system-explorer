@@ -10,11 +10,15 @@
 //! - **Scenes**: plain data built from state after the filter, the only thing views see.
 #![forbid(unsafe_code)]
 
+pub mod pack;
 pub mod scenario;
 pub mod scene;
 pub mod view;
 
-pub use scene::{build_scene, diff, Scene, SceneDelta, SceneFact, SceneInput, SceneSubject};
+pub use pack::ObserveSetup;
+pub use scene::{
+    build_scene, build_scene_through, diff, Scene, SceneDelta, SceneFact, SceneInput, SceneSubject,
+};
 pub use view::{
     effective_view, scan_toggle, withheld, Campaign, DataView, Disclosure, Ladder, Override,
     Precision, TagMode, Target, UnknownStyle, EVERYONE,

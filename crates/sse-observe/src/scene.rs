@@ -221,10 +221,32 @@ fn subject(inp: &SceneInput, a: &Address, v: &DataView) -> Option<SceneSubject> 
 /// `audience == "gm"` gives the GM's all-knowledge scene with honesty marks.
 /// Subjects come in address order; facts in field order.
 pub fn build_scene(inp: &SceneInput, audience: &str, scope: &Address) -> Result<Scene, String> {
+    build_scene_through(inp, audience, scope, None)
+}
+
+/// As `build_scene`, but with `lens` set every subject is shown through that
+/// one data view, whatever the grants say (the GM looking through a player
+/// lens, or a preview of what a view would show).
+pub fn build_scene_through(
+    inp: &SceneInput,
+    audience: &str,
+    scope: &Address,
+    lens: Option<&str>,
+) -> Result<Scene, String> {
     let gm = gm_view(inp.disclosure);
+    let forced = match lens {
+        Some(id) => Some(
+            inp.views
+                .get(id)
+                .ok_or_else(|| format!("data view {id:?} is not defined"))?,
+        ),
+        None => None,
+    };
     let mut subjects = Vec::new();
     for a in inp.state.facts.keys().filter(|a| scope.contains(a)) {
-        let v = if audience == GM {
+        let v = if let Some(f) = forced {
+            f
+        } else if audience == GM {
             &gm
         } else {
             let id = effective_view(inp.state, a, audience, inp.campaign);

@@ -3,10 +3,20 @@ import type { Cost } from "./Cost";
 import type { DerivedValue } from "./DerivedValue";
 import type { EventSummary } from "./EventSummary";
 import type { OpInfo } from "./OpInfo";
+import type { StackAdopted } from "./StackAdopted";
 import type { TierDef } from "./TierDef";
 
-export type Response = { "type": "hello", kernel_version: string, protocol: string, harness_version: string, draw_algorithm: string, ops: Array<OpInfo>, tiers: Array<TierDef>, } | { "type": "stack_loaded", stack_hash: string, flows: Array<string>, publishers: number, fictional_kinds: Array<string>, } | { "type": "stack_rejected", report: string, issues: Array<string>, } | { "type": "universe_opened", root: string, manifest_id: string, } | { "type": "authored", event_id: string, affected: Array<string>, state_hash: string, } | { "type": "history", events: Array<EventSummary>, } | { "type": "state_hash", hash: string, } | { "type": "derived", values: { [key in string]: DerivedValue }, work_units: number, } | { "type": "explanation", explanation: unknown, fictional: boolean, } | { "type": "drawn", 
+export type Response = { "type": "hello", kernel_version: string, protocol: string, harness_version: string, draw_algorithm: string, ops: Array<OpInfo>, tiers: Array<TierDef>, } | { "type": "stack_loaded", stack_hash: string, flows: Array<string>, publishers: number, fictional_kinds: Array<string>, 
+/**
+ * Set when a universe is open and the stack changed: the change is
+ * chronicled, so it moves the state hash and replays.
+ */
+adopted?: StackAdopted, } | { "type": "stack_rejected", report: string, issues: Array<string>, } | { "type": "universe_opened", root: string, manifest_id: string, } | { "type": "authored", event_id: string, affected: Array<string>, state_hash: string, } | { "type": "history", events: Array<EventSummary>, } | { "type": "state_hash", hash: string, } | { "type": "derived", values: { [key in string]: DerivedValue }, work_units: number, } | { "type": "explanation", explanation: unknown, fictional: boolean, } | { "type": "drawn", 
 /**
  * The raw u64 as 16 hex digits (JSON numbers cannot hold it exactly).
  */
-hex: string, unit: number, } | { "type": "branch_opened", branch: string, } | { "type": "committed", event_id: string, state_hash: string, } | { "type": "discarded", branch: string, } | { "type": "job_started", job: number, total_units: number, cost: Cost, } | { "type": "job_progress", job: number, done_units: number, total_units: number, } | { "type": "job_done", job: number, done_units: number, result: unknown, } | { "type": "job_cancelled", job: number, } | { "type": "error", code: string, message: string, };
+hex: string, unit: number, } | { "type": "branch_opened", branch: string, } | { "type": "committed", event_id: string, state_hash: string, } | { "type": "discarded", branch: string, } | { "type": "job_started", job: number, total_units: number, cost: Cost, } | { "type": "job_progress", job: number, done_units: number, total_units: number, } | { "type": "job_done", job: number, done_units: number, result: unknown, } | { "type": "job_cancelled", job: number, } | { "type": "manifest", manifest: unknown, manifest_id: string, } | { "type": "scene", scene: unknown, scene_hash: string, } | { "type": "scan_toggled", event_id: string, 
+/**
+ * The view now in force for the audience at that address.
+ */
+view: string, state_hash: string, } | { "type": "error", code: string, message: string, };

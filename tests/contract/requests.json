@@ -355,5 +355,439 @@
    }
   },
   "kind": "star.effective_temperature"
+ },
+ {
+  "op": "manifest"
+ },
+ {
+  "op": "load_stack",
+  "packs": [
+   "$pack:base-physics"
+  ]
+ },
+ {
+  "op": "history",
+  "address": "u:tarn"
+ },
+ {
+  "op": "load_stack",
+  "packs": [
+   "$pack:base-toy"
+  ]
+ },
+ {
+  "op": "manifest"
+ },
+ {
+  "op": "load_stack",
+  "packs": [
+   "$pack:tarn-observe"
+  ]
+ },
+ {
+  "op": "open_universe",
+  "id": "kestrel",
+  "seed": "kestrel"
+ },
+ {
+  "op": "set_authored",
+  "edit": {
+   "address": "u:kestrel/sys:0",
+   "field": "name",
+   "value": "Kestrel",
+   "occurred_at_s": 0
+  }
+ },
+ {
+  "op": "set_authored",
+  "edit": {
+   "address": "u:kestrel/sys:0",
+   "field": "kind",
+   "value": "star",
+   "occurred_at_s": 0
+  }
+ },
+ {
+  "op": "set_authored",
+  "edit": {
+   "address": "u:kestrel/sys:0",
+   "field": "spectral",
+   "value": "K1V",
+   "occurred_at_s": 0
+  }
+ },
+ {
+  "op": "set_authored",
+  "edit": {
+   "address": "u:kestrel/sys:0",
+   "field": "luminosity_w",
+   "value": 1.53e+26,
+   "occurred_at_s": 0
+  }
+ },
+ {
+  "op": "set_authored",
+  "edit": {
+   "address": "u:kestrel/sys:0/body:3",
+   "field": "name",
+   "value": "Tarn",
+   "occurred_at_s": 0
+  }
+ },
+ {
+  "op": "set_authored",
+  "edit": {
+   "address": "u:kestrel/sys:0/body:3",
+   "field": "kind",
+   "value": "planetary-body",
+   "occurred_at_s": 0
+  }
+ },
+ {
+  "op": "set_authored",
+  "edit": {
+   "address": "u:kestrel/sys:0/body:3",
+   "field": "size_class",
+   "value": "terrestrial",
+   "occurred_at_s": 0
+  }
+ },
+ {
+  "op": "set_authored",
+  "edit": {
+   "address": "u:kestrel/sys:0/body:3",
+   "field": "colour",
+   "value": "blue-white",
+   "occurred_at_s": 0
+  }
+ },
+ {
+  "op": "set_authored",
+  "edit": {
+   "address": "u:kestrel/sys:0/body:3",
+   "field": "orbit.semi_major_axis_m",
+   "value": 94246658541,
+   "occurred_at_s": 0
+  }
+ },
+ {
+  "op": "set_authored",
+  "edit": {
+   "address": "u:kestrel/sys:0/body:3",
+   "field": "orbit.period_s",
+   "value": 18489600,
+   "occurred_at_s": 0
+  }
+ },
+ {
+  "op": "set_authored",
+  "edit": {
+   "address": "u:kestrel/sys:0/body:3",
+   "field": "atmosphere.composition",
+   "value": "N2-O2",
+   "occurred_at_s": 0
+  }
+ },
+ {
+  "op": "set_authored",
+  "edit": {
+   "address": "u:kestrel/sys:0/body:3",
+   "field": "atmosphere.pressure_pa",
+   "value": 130000,
+   "occurred_at_s": 0
+  }
+ },
+ {
+  "op": "set_authored",
+  "edit": {
+   "address": "u:kestrel/sys:0/body:3",
+   "field": "surface.class",
+   "value": "temperate",
+   "occurred_at_s": 0
+  }
+ },
+ {
+  "op": "set_authored",
+  "edit": {
+   "address": "u:kestrel/sys:0/body:3",
+   "field": "surface.temp_mean_k",
+   "value": 281,
+   "occurred_at_s": 0
+  }
+ },
+ {
+  "op": "set_authored",
+  "edit": {
+   "address": "u:kestrel/sys:0/body:3",
+   "field": "ocean.fraction",
+   "value": 0.71,
+   "occurred_at_s": 0
+  }
+ },
+ {
+  "op": "set_authored",
+  "edit": {
+   "address": "u:kestrel/sys:0/body:3",
+   "field": "hazards",
+   "value": [
+    "storm belt",
+    "tides"
+   ],
+   "occurred_at_s": 0
+  }
+ },
+ {
+  "op": "set_authored",
+  "edit": {
+   "address": "u:kestrel/sys:0/body:3",
+   "field": "interior.core_fraction",
+   "value": 0.32,
+   "occurred_at_s": 0
+  }
+ },
+ {
+  "op": "set_authored",
+  "edit": {
+   "address": "u:kestrel/sys:0/body:3",
+   "field": "resources",
+   "value": "rare earths",
+   "occurred_at_s": 0
+  }
+ },
+ {
+  "op": "set_authored",
+  "edit": {
+   "address": "u:kestrel/sys:0/body:3",
+   "field": "resolve.tier",
+   "value": "body",
+   "occurred_at_s": 0
+  }
+ },
+ {
+  "op": "set_authored",
+  "edit": {
+   "address": "u:kestrel/sys:0/body:3/body:0",
+   "field": "name",
+   "value": "Tarn a",
+   "occurred_at_s": 0
+  }
+ },
+ {
+  "op": "set_authored",
+  "edit": {
+   "address": "u:kestrel/sys:0/body:3/body:0",
+   "field": "kind",
+   "value": "moon",
+   "occurred_at_s": 0
+  }
+ },
+ {
+  "op": "set_authored",
+  "edit": {
+   "address": "u:kestrel/sys:0/body:3/body:0",
+   "field": "size_class",
+   "value": "small",
+   "occurred_at_s": 0
+  }
+ },
+ {
+  "op": "set_authored",
+  "edit": {
+   "address": "u:kestrel/sys:0/body:3/body:0",
+   "field": "mass_kg",
+   "value": 7.3e+22,
+   "occurred_at_s": 0
+  }
+ },
+ {
+  "op": "set_authored",
+  "edit": {
+   "address": "u:kestrel/sys:0/body:5",
+   "field": "name",
+   "value": "Vault",
+   "occurred_at_s": 0
+  }
+ },
+ {
+  "op": "set_authored",
+  "edit": {
+   "address": "u:kestrel/sys:0/body:5",
+   "field": "kind",
+   "value": "planetary-body",
+   "occurred_at_s": 0
+  }
+ },
+ {
+  "op": "set_authored",
+  "edit": {
+   "address": "u:kestrel/sys:0/body:5",
+   "field": "size_class",
+   "value": "giant",
+   "occurred_at_s": 0
+  }
+ },
+ {
+  "op": "set_authored",
+  "edit": {
+   "address": "u:kestrel/sys:0/body:5",
+   "field": "colour",
+   "value": "banded ochre",
+   "occurred_at_s": 0
+  }
+ },
+ {
+  "op": "set_authored",
+  "edit": {
+   "address": "u:kestrel/sys:0/body:5",
+   "field": "mass_kg",
+   "value": 1.9e+27,
+   "occurred_at_s": 0
+  }
+ },
+ {
+  "op": "set_authored",
+  "edit": {
+   "address": "u:kestrel/sys:0/body:5",
+   "field": "story.rumour",
+   "value": "Miners say the third moon sings on the comms.",
+   "occurred_at_s": 0
+  }
+ },
+ {
+  "op": "set_authored",
+  "edit": {
+   "address": "u:kestrel/sys:0/body:3",
+   "field": "mass_kg",
+   "value": 6.56942e+24,
+   "occurred_at_s": 0
+  }
+ },
+ {
+  "op": "set_authored",
+  "edit": {
+   "address": "u:kestrel/sys:0/body:3",
+   "field": "settlements.count",
+   "value": 3,
+   "occurred_at_s": 0
+  }
+ },
+ {
+  "op": "set_authored",
+  "edit": {
+   "address": "u:kestrel/sys:0/body:3",
+   "field": "gm.notes",
+   "value": "Pirate cache under the north pole.",
+   "occurred_at_s": 0
+  }
+ },
+ {
+  "op": "set_authored",
+  "edit": {
+   "address": "u:kestrel/sys:0/body:3",
+   "field": "tag.ancient-ruins",
+   "value": true,
+   "occurred_at_s": 0
+  }
+ },
+ {
+  "op": "set_authored",
+  "edit": {
+   "address": "u:kestrel/sys:0/body:3",
+   "field": "tag.garden",
+   "value": true,
+   "occurred_at_s": 0
+  }
+ },
+ {
+  "op": "set_authored",
+  "edit": {
+   "address": "u:kestrel/sys:0/body:3",
+   "field": "tag.habitable",
+   "value": true,
+   "occurred_at_s": 0
+  }
+ },
+ {
+  "op": "set_authored",
+  "edit": {
+   "address": "u:kestrel/sys:0/body:3",
+   "field": "tag.hazard",
+   "value": true,
+   "occurred_at_s": 0
+  }
+ },
+ {
+  "op": "set_authored",
+  "edit": {
+   "address": "u:kestrel/sys:0/body:3",
+   "field": "tag.port",
+   "value": true,
+   "occurred_at_s": 0
+  }
+ },
+ {
+  "op": "set_authored",
+  "edit": {
+   "address": "u:kestrel/sys:0/body:5",
+   "field": "observe.view",
+   "value": "rumour",
+   "occurred_at_s": 0
+  }
+ },
+ {
+  "op": "scene",
+  "audience": "everyone",
+  "scope": "u:kestrel/sys:0",
+  "at_s": 145480536000000000
+ },
+ {
+  "op": "scan_toggle",
+  "address": "u:kestrel/sys:0/body:3",
+  "audience": "everyone",
+  "at_s": 145480536000000000
+ },
+ {
+  "op": "scene",
+  "audience": "everyone",
+  "scope": "u:kestrel/sys:0",
+  "at_s": 145480536000000000
+ },
+ {
+  "op": "scene",
+  "audience": "gm",
+  "scope": "u:kestrel/sys:0",
+  "at_s": 145480536000000000
+ },
+ {
+  "op": "scene",
+  "audience": "gm",
+  "scope": "u:kestrel/sys:0",
+  "data_view": "survey",
+  "at_s": 145480536000000000
+ },
+ {
+  "op": "scan_toggle",
+  "address": "u:kestrel/sys:0/body:3",
+  "audience": "everyone",
+  "at_s": 145480536000000000
+ },
+ {
+  "op": "scene",
+  "audience": "everyone",
+  "scope": "u:kestrel/sys:0",
+  "at_s": 145480536000000000
+ },
+ {
+  "op": "scene",
+  "audience": "everyone",
+  "scope": "u:kestrel/sys:0",
+  "data_view": "x-ray",
+  "at_s": 145480536000000000
+ },
+ {
+  "op": "scan_toggle",
+  "address": "u:elsewhere/sys:0",
+  "audience": "everyone",
+  "at_s": 145480536000000000
  }
 ]

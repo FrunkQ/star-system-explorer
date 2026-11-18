@@ -179,6 +179,28 @@ pub enum Request {
     CancelJob {
         job: u32,
     },
+    /// The open universe's run manifest as it stands now (H5.6): the stack
+    /// it runs on and the authored chronicle hash.
+    Manifest,
+    /// A scene (H6.7, H8.1): what `audience` has been shown of everything at
+    /// or under `scope` at `at_s`, after the campaign's data views. `gm` is
+    /// the GM seat. `data_view` shows every subject through that one view
+    /// (a lens or a preview) instead of the grants.
+    Scene {
+        audience: String,
+        scope: String,
+        #[serde(default)]
+        #[ts(optional)]
+        data_view: Option<String>,
+        at_s: i64,
+    },
+    /// The Scanned button: flip `address` between the campaign's before and
+    /// after views for `audience`. Chronicled; pressing again undoes. GM only.
+    ScanToggle {
+        address: String,
+        audience: String,
+        at_s: i64,
+    },
 }
 
 impl Request {
@@ -201,6 +223,9 @@ impl Request {
             Request::StartJob { .. } => "start_job",
             Request::StepJob { .. } => "step_job",
             Request::CancelJob { .. } => "cancel_job",
+            Request::Manifest => "manifest",
+            Request::Scene { .. } => "scene",
+            Request::ScanToggle { .. } => "scan_toggle",
         }
     }
 }
@@ -247,6 +272,13 @@ pub fn ops() -> Vec<OpInfo> {
             "budget bounds the work per call, so a step never blocks for long",
         ),
         o("cancel_job", Cost::Trivial, none),
+        o("manifest", Cost::Trivial, none),
+        o(
+            "scene",
+            Cost::Light,
+            "linear in the facts within the scope; any device builds its own scenes",
+        ),
+        o("scan_toggle", Cost::Trivial, "GM machine only in a session"),
     ]
 }
 
@@ -290,6 +322,11 @@ pub enum Response {
         flows: Vec<String>,
         publishers: u32,
         fictional_kinds: Vec<String>,
+        /// Set when a universe is open and the stack changed: the change is
+        /// chronicled, so it moves the state hash and replays.
+        #[serde(default, skip_serializing_if = "Option::is_none")]
+        #[ts(optional)]
+        adopted: Option<StackAdopted>,
     },
     StackRejected {
         report: String,
@@ -353,10 +390,36 @@ pub enum Response {
     JobCancelled {
         job: u32,
     },
+    Manifest {
+        #[ts(type = "unknown")]
+        manifest: serde_json::Value,
+        manifest_id: String,
+    },
+    /// The sse-observe `Scene`, unchanged in shape.
+    Scene {
+        #[ts(type = "unknown")]
+        scene: serde_json::Value,
+        scene_hash: String,
+    },
+    ScanToggled {
+        event_id: String,
+        /// The view now in force for the audience at that address.
+        view: String,
+        state_hash: String,
+    },
     Error {
         code: String,
         message: String,
     },
+}
+
+/// A pack stack change recorded in the open universe.
+#[derive(Clone, PartialEq, Debug, Serialize, Deserialize, TS)]
+#[ts(export)]
+pub struct StackAdopted {
+    pub event_id: String,
+    pub state_hash: String,
+    pub manifest_id: String,
 }
 
 pub const PROTOCOL: &str = "sse.kernel/1";
