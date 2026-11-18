@@ -25,7 +25,7 @@ test("significant figures", () => {
 test("derived facts come from the kernel and answer why", async () => {
   const k = nodeKernel();
   try {
-    const s = await Session.open(k.client, gmSeat(), scene.universe, [pack]);
+    const s = await Session.open(k.client, gmSeat(), scene.universe, [pack], k.scratch);
     assert.ok(s.flows().includes("sse.base.planet-climate"));
     const d = await deriveScene(s, scene, doc);
     const tarn = d.subjects.find((x) => x.address === TARN)!;

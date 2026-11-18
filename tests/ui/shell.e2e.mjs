@@ -14,6 +14,9 @@ import { createRequire } from "node:module";
 import { Session } from "../../packages/ui-contract/src/session.ts";
 import { tableSeat } from "../../packages/ui-contract/src/seat.ts";
 import { nodeKernel } from "../../packages/ui-contract/test/node-kernel.ts";
+import { enterFacts } from "../../packages/ui-contract/src/data-views.ts";
+import { readFileSync } from "node:fs";
+const doc = (p) => JSON.parse(readFileSync(new URL(`../../${p}`, import.meta.url), "utf8"));
 
 // Playwright is installed outside the lockfile (CI: npm install --no-save), as for the harness.
 const { chromium, firefox, webkit } = createRequire(import.meta.url)("playwright");
@@ -32,7 +35,10 @@ await new Promise((r) => setTimeout(r, 400));
 async function playerEvent() {
   const k = nodeKernel();
   const seat = { ...tableSeat(), id: "helm", label: "Helm", may_send: ["set_value"], auto_approve: [{ intent: "set_value", scope: ["u:kestrel/sys:1"] }] };
-  const s = await Session.open(k.client, seat, { id: "kestrel", seed: "kestrel reach campaign" });
+  const packs = [doc("packs/base-physics/pack.json"), doc("packages/shell/src/documents/kestrel.player-data.pack.json")];
+  const s = await Session.open(k.client, seat, { id: "kestrel", seed: "kestrel reach campaign" }, packs);
+  // The campaign opens with the GM's recorded player-facing facts, as the shell does.
+  assert.equal(await enterFacts(s, doc("packages/shell/src/documents/kestrel.player-facts.json")), null);
   const r = await s.send({ kind: "set_value", address: TARN, field: "mass_earth", value: 0.9, at_yr: NOW });
   await k.close();
   assert.equal(r.status, "applied");
@@ -62,6 +68,9 @@ try {
     page.on("pageerror", (e) => errors.push(e.message));
     await page.goto(url);
     await page.waitForSelector("[data-state-hash]:not([data-state-hash=''])", { timeout: 20000 });
+    // The campaign opens with its recorded player-facing facts, inked at year 0; count edits after them.
+    await page.waitForFunction(() => document.querySelectorAll("[data-event-id]").length > 0);
+    const opening = await page.locator("[data-event-id]").count();
     const tabsToTarn = await tabTo(page, () => document.activeElement?.getAttribute("aria-label")?.startsWith("Tarn"));
     await page.keyboard.press("Enter");
     await page.waitForSelector("section[aria-label='Tarn']");
@@ -69,7 +78,7 @@ try {
     await page.keyboard.press(process.platform === "darwin" ? "Meta+A" : "Control+A");
     await page.keyboard.type("0.9");
     await page.keyboard.press("Enter");
-    const inked = await page.waitForSelector("[data-event-id]", { timeout: 10000 });
+    const inked = await page.waitForSelector(`[data-event-id='${expected.event_id}']`, { timeout: 10000 });
     const eventId = await inked.getAttribute("data-event-id");
     await page.waitForFunction((h) => document.querySelector("[data-state-hash]")?.getAttribute("data-state-hash") === h, expected.state_hash, { timeout: 5000 });
     assert.equal(eventId, expected.event_id, "GM edit and auto-approved player intent give the same event");
@@ -97,7 +106,7 @@ try {
     await page.mouse.down();
     for (let k = 1; k <= 10; k++) await page.mouse.move(tx + ((tx - sx) * 0.35 * k) / 10, ty + ((ty - sy) * 0.35 * k) / 10);
     await page.mouse.up();
-    await page.waitForFunction(() => document.querySelectorAll("[data-event-id]").length >= 2, null, { timeout: 5000 });
+    await page.waitForFunction(() => (n) => document.querySelectorAll("[data-event-id]").length >= n + 2, opening, { timeout: 5000 });
     await page.waitForFunction((s0) => {
       const f = [...document.querySelectorAll("section[aria-label='Tarn'] .field")].find((x) => /^surface/i.test(x.textContent.trim()));
       return f && parseFloat(f.textContent.replace(/^\D+/, "")) < s0;
@@ -111,7 +120,7 @@ try {
     await page.keyboard.press("Control+Shift+z");
     await orbitIs(`${orbitDragged} AU`);
     const events = await page.locator("[data-event-id]").count();
-    assert.equal(events, 4, "mass edit, drag, undo and redo are four inked events");
+    assert.equal(events - opening, 4, "mass edit, drag, undo and redo are four inked events");
     await card.locator(".field").filter({ hasText: /^surface/i }).getByRole("button", { name: /why/i }).click();
     const why = page.locator("[role=region][aria-label^='Why']");
     await why.locator(".formula").waitFor();
@@ -152,7 +161,8 @@ try {
     await page.waitForFunction(() => /campaign/.test(document.querySelector("[data-stack-hash]")?.textContent ?? ""));
     await page.waitForFunction((b) => (document.querySelector("[data-kind='planet.surface_temperature'] .val")?.textContent ?? "").trim() !== b, chipBefore);
     const chipAfter = (await surfChip.innerText()).trim();
-    assert.equal(await page.getAttribute("[data-state-hash]", "data-state-hash"), hashBeforePhysics, "physics adoption is not an authored edit");
+    // Adopting physics is chronicled (a stack.adopt event), so the state hash moves.
+    await page.waitForFunction((h) => document.querySelector("[data-state-hash]")?.getAttribute("data-state-hash") !== h, hashBeforePhysics);
     await page.evaluate(() => document.activeElement instanceof HTMLElement && document.activeElement.blur());
     await page.keyboard.press("p");
     await page.locator("[role=button][aria-label^='Tarn']").click();

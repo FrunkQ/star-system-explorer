@@ -44,7 +44,7 @@ test("a campaign pack replaces the base flow explicitly and diffs cleanly", () =
 test("open a real flow, change a parameter, see diff and badge", async () => {
   const k = nodeKernel();
   try {
-    const s = await Session.open(k.client, gmSeat(), scene.universe, [pack]);
+    const s = await Session.open(k.client, gmSeat(), scene.universe, [pack], k.scratch);
     const ws = plainWorkspace(scene.now_yr);
     const shipped = await deriveScene(s, scene, doc);
     const tarn0 = shipped.subjects.find((x) => x.address === TARN)!;
@@ -80,7 +80,7 @@ test("open a real flow, change a parameter, see diff and badge", async () => {
     assert.equal((await adoptRequest(s, ws, bad.id)).status, "refused");
     assert.equal(s.stack().campaign, null);
 
-    // Adopt: one intent; the stack changes, the chronicle does not; values are badged.
+    // Adopt: one intent, chronicled as one stack.adopt event; values are badged.
     draftParam(s, ws, CLIMATE, "teq", "redistribution", 0.5);
     const r = await adoptRequest(s, ws, draftId(CLIMATE));
     assert.equal(r.status, "applied");
@@ -88,7 +88,8 @@ test("open a real flow, change a parameter, see diff and badge", async () => {
     assert.equal(ws.requests.find((x) => x.id === draftId(CLIMATE)), undefined, "the next edit starts a new draft");
     assert.notEqual(s.stack().hash, stack0);
     assert.equal(s.flowDoc(CLIMATE)!.pack, CAMPAIGN_PACK);
-    assert.equal(await s.stateHash(), hash0, "physics is not an authored event (kernel gap, see U3 log)");
+    assert.notEqual(await s.stateHash(), hash0, "adopting physics is chronicled");
+    assert.equal(r.status === "applied" && (await s.history(s.universe.root)).some((e) => e.id === r.event_id && e.kind === "stack.adopt"), true);
     const changed = await deriveScene(s, scene, doc);
     const tarn1 = changed.subjects.find((x) => x.address === TARN)!;
     const surf1 = tarn1.facts.find((f) => f.field === "surface_k")!;
@@ -119,12 +120,12 @@ test("players cannot change the physics: their request waits for the GM", async 
   const k = nodeKernel();
   try {
     const seat = { ...tableSeat(), may_send: ["adopt_physics" as const], auto_approve: [{ intent: "adopt_physics" as const, scope: ["u:kestrel"] }] };
-    const s = await Session.open(k.client, seat, scene.universe, [pack]);
+    const s = await Session.open(k.client, seat, scene.universe, [pack], k.scratch);
     const c = packFor([pack], [{ flow: CLIMATE, edits: [{ node: "teq", param: "redistribution", before: 0.25, after: 0.5 }] }]);
     const r = await s.send({ kind: "adopt_physics", pack: c as never, requests: ["x"] });
     assert.equal(r.status, "pending");
     assert.equal(s.stack().campaign, null);
-    assert.equal((await Session.open(k.client, tableSeat(), scene.universe, [pack]).then((t) => t.send({ kind: "adopt_physics", pack: null, requests: [] }))).status, "refused");
+    assert.equal((await Session.open(k.client, tableSeat(), scene.universe, [pack], k.scratch).then((t) => t.send({ kind: "adopt_physics", pack: null, requests: [] }))).status, "refused");
   } finally {
     await k.close();
   }
@@ -133,7 +134,7 @@ test("players cannot change the physics: their request waits for the GM", async 
 test("Orac's sample requests are valid and say they are samples", async () => {
   const k = nodeKernel();
   try {
-    const s = await Session.open(k.client, gmSeat(), scene.universe, [pack]);
+    const s = await Session.open(k.client, gmSeat(), scene.universe, [pack], k.scratch);
     const ws = plainWorkspace(scene.now_yr);
     const { requests } = json("packages/shell/src/documents/orac.requests.json");
     for (const r of requests) {

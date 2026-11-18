@@ -35,7 +35,7 @@ test("pack summaries and schema checks", () => {
 test("add a fictional pack: preview, stack, labels, remove", async () => {
   const k = nodeKernel();
   try {
-    const s = await Session.open(k.client, gmSeat(), scene.universe, [base]);
+    const s = await Session.open(k.client, gmSeat(), scene.universe, [base], k.scratch);
     const ws = plainWorkspace(scene.now_yr);
     const shipped = await deriveScene(s, scene, doc);
     const hash0 = s.stack().hash;
@@ -43,14 +43,15 @@ test("add a fictional pack: preview, stack, labels, remove", async () => {
 
     const p = await previewStack(s, shipped, [warm]);
     assert.ok(p.ok, p.problems.join("; "));
-    assert.equal(s.stack().hash, hash0, "a preview restores the stack");
+    assert.equal(s.stack().hash, hash0, "a preview leaves the stack in force");
+    assert.equal(await s.stateHash(), state0, "a preview runs on the scratch kernel and chronicles nothing");
     const tarn = p.changes.filter((c) => c.address === TARN);
     assert.ok(tarn.some((c) => c.field === "surface_k" && c.fictional), JSON.stringify(tarn));
     assert.ok(!p.changes.some((c) => c.label.startsWith("Luminosity")), "the star's flow is untouched");
 
     assert.equal((await stackPacks(s, ws, [warm])).status, "applied");
     assert.deepEqual(s.stack().added.map((x) => x.id), ["sample.warm-worlds"]);
-    assert.equal(await s.stateHash(), state0);
+    assert.notEqual(await s.stateHash(), state0, "stacking a pack is chronicled");
     const now = await deriveScene(s, scene, doc);
     const t = now.subjects.find((x) => x.address === TARN)!;
     assert.ok(t.stamps.includes("fictional"));

@@ -5,12 +5,13 @@
 import type { KernelClient } from "../../kernel-client/src/index.ts";
 import { encodeRequest } from "./json.ts";
 import { checkIntent, intentToRequest, secondsToYears, yearsToSeconds, type Intent } from "./intent.ts";
-import { decide, type Seat } from "./seat.ts";
+import { audienceOf, decide, type Seat } from "./seat.ts";
 import { providerOf, type FlowDoc, type PackDoc } from "./physics.ts";
+import type { PlayerScene } from "./player-scene.ts";
 
 export type IntentResult =
-  /** For adopt_physics, `event_id` is "stack:" and the new stack hash: the kernel does not yet chronicle stack changes. */
-  | { status: "applied"; event_id: string; state_hash: string; affected: string[] }
+  /** For a stack change the kernel chronicles a `stack.adopt` event; `view` is the data view a scan_toggle left in force. */
+  | { status: "applied"; event_id: string; state_hash: string; affected: string[]; view?: string | null }
   | { status: "pending"; intent: Intent }
   | { status: "refused"; reason: string }
   | { status: "error"; code: string; message: string };
@@ -93,6 +94,20 @@ export interface ViewSession {
    * out stays as it is in force.
    */
   trial<T>(candidate: StackCandidate, probe: (s: Probe) => Promise<T>): Promise<TrialResult<T>>;
+  /**
+   * What an audience is shown of everything under `scope` (K9 scene). A GM
+   * seat may ask for any audience and may look through any data view; any
+   * other seat gets only its own audience.
+   */
+  scene(scope: string, opts?: SceneOptions): Promise<{ ok: true; scene: PlayerScene; hash: string } | { ok: false; message: string }>;
+}
+
+export interface SceneOptions {
+  /** Whose knowledge; defaults to the seat's own ("gm" for the GM seat). */
+  audience?: string;
+  /** Show every subject through this data view, whatever the grants say (a lens or a preview). */
+  data_view?: string;
+  at_yr?: number;
 }
 
 export interface StackInfo {
@@ -119,6 +134,9 @@ type Raw = { type: string; [k: string]: unknown };
 
 export class Session implements ViewSession {
   readonly #client: KernelClient;
+  /** A second kernel with no universe open, for trials: loading a candidate stack there chronicles nothing. */
+  readonly #scratch: (() => KernelClient) | undefined;
+  #scratchClient: KernelClient | undefined;
   readonly #pending: Intent[] = [];
   #flows: string[] = [];
   #opening: PackDoc[] = [];
@@ -130,14 +148,19 @@ export class Session implements ViewSession {
   readonly seat: Readonly<Seat>;
   readonly universe: Readonly<{ id: string; seed: string; root: string }>;
 
-  private constructor(client: KernelClient, seat: Seat, universe: { id: string; seed: string; root: string }) {
+  private constructor(client: KernelClient, seat: Seat, universe: { id: string; seed: string; root: string }, scratch?: () => KernelClient) {
     this.#client = client;
+    this.#scratch = scratch;
     this.seat = Object.freeze({ ...seat });
     this.universe = Object.freeze(universe);
   }
 
-  /** Open a universe on a kernel and hand back a session for one seat. */
-  static async open(client: KernelClient, seat: Seat, universe: { id: string; seed: string }, packs: unknown[] = []): Promise<Session> {
+  /**
+   * Open a universe on a kernel and hand back a session for one seat.
+   * `scratch` makes a second kernel (started on first use) where trials load
+   * candidate stacks, since a stack loaded into the open universe is chronicled.
+   */
+  static async open(client: KernelClient, seat: Seat, universe: { id: string; seed: string }, packs: unknown[] = [], scratch?: () => KernelClient): Promise<Session> {
     let flows: string[] = [];
     let hash = "";
     if (packs.length) {
@@ -148,7 +171,7 @@ export class Session implements ViewSession {
     }
     const r = await call(client, { op: "open_universe", id: universe.id, seed: universe.seed });
     if (r.type !== "universe_opened") throw new Error(`kernel would not open the universe: ${JSON.stringify(r)}`);
-    const s = new Session(client, seat, { ...universe, root: String(r.root) });
+    const s = new Session(client, seat, { ...universe, root: String(r.root) }, scratch);
     s.#flows = flows;
     s.#opening = structuredClone(packs) as PackDoc[];
     s.#stackHash = hash;
@@ -185,16 +208,17 @@ export class Session implements ViewSession {
   }
 
   trial<T>(candidate: StackCandidate, probe: (s: Probe) => Promise<T>): Promise<TrialResult<T>> {
-    const restore = this.#packs();
+    if (!this.#scratch) return Promise.reject(new Error("this session has no scratch kernel for trials"));
+    const client = (this.#scratchClient ??= this.#scratch());
     const added = candidate.added ?? this.#added;
     const campaign = candidate.campaign === undefined ? this.#campaign : candidate.campaign;
+    const packs = this.#packs(added, campaign);
+    // Serial too, so trials never interleave on the scratch kernel.
     return this.#serial(async () => {
-      const st = await call(this.#client, { op: "load_stack", packs: this.#packs(added, campaign) });
+      const st = await call(client, { op: "load_stack", packs });
       if (st.type !== "stack_loaded") {
         return { ok: false as const, report: String(st.report ?? st.message ?? ""), issues: (st.issues as string[] | undefined) ?? [] };
       }
-      // Inside the queue: the probe's calls go straight to the kernel, under the candidate stack.
-      const client = this.#client;
       const info: StackInfo = { base: structuredClone([...this.#opening, ...added]), added: structuredClone([...added]), campaign: structuredClone(campaign), hash: String(st.stack_hash) };
       const p: Probe = {
         stack: () => info,
@@ -203,13 +227,20 @@ export class Session implements ViewSession {
           return r.type === "derived" ? { ok: true as const, values: r.values as Record<string, Derived> } : { ok: false as const, message: String(r.message ?? JSON.stringify(r)) };
         },
       };
-      try {
-        return { ok: true as const, stack_hash: String(st.stack_hash), result: await probe(p) };
-      } finally {
-        const back = await call(this.#client, { op: "load_stack", packs: restore });
-        if (back.type !== "stack_loaded") throw new Error("could not restore the pack stack after a trial");
-      }
+      return { ok: true as const, stack_hash: String(st.stack_hash), result: await probe(p) };
     });
+  }
+
+  async scene(scope: string, opts: SceneOptions = {}) {
+    const own = audienceOf(this.seat);
+    const audience = opts.audience ?? own;
+    if (this.seat.authority !== "gm" && (audience !== own || opts.data_view !== undefined)) {
+      return { ok: false as const, message: `seat ${this.seat.label} sees only its own audience` };
+    }
+    const at_s = opts.at_yr === undefined ? 9_223_372_036_854_775_807n : yearsToSeconds(opts.at_yr);
+    const r = await this.#call({ op: "scene", audience, scope, ...(opts.data_view ? { data_view: opts.data_view } : {}), at_s });
+    if (r.type === "scene") return { ok: true as const, scene: r.scene as PlayerScene, hash: String(r.scene_hash) };
+    return { ok: false as const, message: String(r.message ?? JSON.stringify(r)) };
   }
 
   async derive(ref: DeriveRef) {
@@ -240,8 +271,12 @@ export class Session implements ViewSession {
       else this.#added = structuredClone(intent.packs) as unknown as PackDoc[];
       this.#flows = r.flows as string[];
       this.#stackHash = String(r.stack_hash);
+      const adopted = r.adopted as { event_id: string; state_hash: string } | undefined;
+      if (adopted) return { status: "applied", event_id: adopted.event_id, state_hash: adopted.state_hash, affected: [this.universe.root] };
       return { status: "applied", event_id: `stack:${this.#stackHash}`, state_hash: await this.stateHash(), affected: [] };
     }
+    if (intent.kind === "scan_toggle" && r.type === "scan_toggled")
+      return { status: "applied", event_id: String(r.event_id), state_hash: String(r.state_hash), affected: [intent.address], view: (r.view as string | null) ?? null };
     if (r.type === "authored")
       return { status: "applied", event_id: String(r.event_id), state_hash: String(r.state_hash), affected: r.affected as string[] };
     if (r.type === "error") return { status: "error", code: String(r.code), message: String(r.message) };

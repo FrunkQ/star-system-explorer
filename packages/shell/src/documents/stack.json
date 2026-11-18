@@ -1,1 +1,1 @@
-{ "schema": "sse.stack/0", "packs": ["packs/base-physics.json"] }
+{"schema": "sse.stack/0", "packs": ["packs/base-physics.json", "packs/kestrel-player-data.json"]}

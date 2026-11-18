@@ -1,12 +1,16 @@
 <!--
-  Player screen host (V1 preview). Mounts the player view stack from a screen
-  document onto a scene built for the "everyone" audience. Until the kernel
-  exposes K9's scene op, the scenes are K9's own verified outputs for Kestrel
-  before and after one press of Scanned, and the page says so. V3 turns this
-  into the general screens runtime; V4 brings scenes over the session.
+  Player screen host (V1, live since U5). Mounts the player view stack from a
+  screen document onto the kernel's scene for the "everyone" audience. With no
+  network yet (V4), the page hosts its own kernel with the campaign's stack and
+  recorded facts, and its Scanned control stands in for the GM's button: it
+  taps Scanned for the body in focus. V3 turns this into the screens runtime.
 -->
 <script lang="ts">
-  import { checkPlayerScene, checkScreen, subjectName, type PlayerContext, type PlayerScene, type ScreenDoc, type Vocab, type ViewHandle } from "../../ui-contract/src/index.ts";
+  import { checkPlayerScene, checkScreen, enterFacts, gmSeat, subjectName, type AuthoredFacts, type PlayerContext, type PlayerScene, type ScreenDoc, type Vocab, type ViewHandle, type ViewSession } from "../../ui-contract/src/index.ts";
+  import { openBrowserSession } from "../../ui-contract/src/host-browser.ts";
+  import { focusOf } from "../../views/player-stack/src/pick.ts";
+  import stackDoc from "./documents/stack.json";
+  import factsDoc from "./documents/kestrel.player-facts.json";
   import { PLAYER_STACK } from "../../views/player-stack/src/index.ts";
   import { themeCss, THEMES } from "../../skins/chart-room/src/index.ts";
   import { Segmented } from "../../chart-grammar/src/index.ts";
@@ -17,19 +21,46 @@
   const vocab = vocabDoc as unknown as Vocab;
   const checked = checkScreen(screenDoc as unknown as ScreenDoc, PLAYER_STACK);
 
-  // Scenes are data fetched like any other (scenes/ is filled at build from K9's verified outputs).
-  let scenes = $state<Record<string, PlayerScene> | null>(null);
+  const facts = factsDoc as unknown as AuthoredFacts;
+  const AUDIENCE = "everyone";
+  let session: ViewSession | null = null;
+  let scene = $state<PlayerScene | null>(null);
+  let sceneHash = $state("");
   let sceneErrors = $state<string[]>([]);
-  Promise.all(["before", "after"].map(async (k) => [k, await (await fetch(new URL(`scenes/tarn-${k}.json`, document.baseURI))).json()] as const))
-    .then((pairs) => {
-      sceneErrors = pairs.map(([, s]) => checkPlayerScene(s)).filter((e): e is string => !!e);
-      scenes = Object.fromEntries(pairs);
+  async function refresh() {
+    const r = await session!.scene(facts.scope, { audience: AUDIENCE });
+    if (!r.ok) return void (sceneErrors = [r.message]);
+    const bad = checkPlayerScene(r.scene);
+    sceneErrors = bad ? [bad] : [];
+    scene = r.scene;
+    sceneHash = r.hash;
+  }
+  Promise.all(stackDoc.packs.map(async (p) => (await fetch(new URL(p, document.baseURI))).json()))
+    .then((packs) => openBrowserSession({ base: document.baseURI, seat: gmSeat(), universe: facts.universe, packs }))
+    .then(async (s) => {
+      const bad = await enterFacts(s, facts);
+      if (bad) throw new Error(`recorded facts refused: ${JSON.stringify(bad)}`);
+      session = s;
+      await refresh();
     })
     .catch((e) => (sceneErrors = [String(e)]));
 
-  let which = $state<"before" | "after">("before");
-  const scene = $derived(scenes?.[which]);
   let selection = $state<string | null>(null);
+  // The Scanned control acts on the body in focus; the kernel says which view each tap left in force.
+  const target = $derived(scene ? focusOf(scene, selection) : undefined);
+  let scanned = $state<Record<string, boolean>>({});
+  const which = $derived(target && scanned[target.address] ? "after" : "before");
+  let busy = false;
+  async function setSensor(v: "before" | "after") {
+    if (!session || !target || busy || (v === "after") === !!scanned[target.address]) return;
+    busy = true;
+    const address = target.address;
+    const r = await session.send({ kind: "scan_toggle", address, audience: AUDIENCE, at_yr: facts.at_yr });
+    if (r.status === "applied") scanned = { ...scanned, [address]: !scanned[address] };
+    else sceneErrors = [JSON.stringify(r)];
+    await refresh();
+    busy = false;
+  }
   let theme = $state(loadPref("theme") === "night-chart" ? "night-chart" : "chart-room");
   $effect(() => {
     const root = document.documentElement;
@@ -51,7 +82,7 @@
     handles.push(h);
     return { destroy: () => (handles.splice(handles.indexOf(h), 1), h.dispose()) };
   }
-  const star = $derived(scene?.subjects.find((s) => s.address === scene.scope));
+  const star = $derived(scene ? scene.subjects.find((s) => s.address === scene!.scope) : undefined);
 </script>
 
 <div class="page">
@@ -66,7 +97,7 @@
         { value: "before", label: "Long range" },
         { value: "after", label: "Scanned" },
       ]}
-      onchange={(v) => (which = v)}
+      onchange={(v) => setSensor(v)}
     />
     <Segmented
       label="Theme"
@@ -89,7 +120,7 @@
       {/each}
     </main>
   {/if}
-  <footer class="status">Scene: K9 scene builder output for Kestrel (fixture until the kernel's scene op is wired) · the Scanned control stands in for the GM's button</footer>
+  <footer class="status">Scene: live from the kernel for the {AUDIENCE} audience{sceneHash ? ` · scene ${sceneHash.slice(0, 10)}` : ""} · the Scanned control stands in for the GM's button and taps it for {target ? subjectName(target) : "the body in focus"}</footer>
 </div>
 
 <style>

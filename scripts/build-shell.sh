@@ -13,11 +13,10 @@ cp packages/kernel-client/dist/kernel-client/src/*.js packages/shell/public/kern
 cp packages/kernel-client/wasm/sse_wasm.js packages/kernel-client/wasm/sse_wasm_bg.wasm packages/shell/public/kernel/
 rm -rf packages/shell/public/packs && mkdir -p packages/shell/public/packs
 cp packs/base-physics/pack.json packages/shell/public/packs/base-physics.json
+cp packages/shell/src/documents/kestrel.player-data.pack.json packages/shell/public/packs/kestrel-player-data.json
 mkdir -p packages/shell/public/packs/samples
 cp packages/shell/src/documents/sample.warm-worlds.pack.json packages/shell/public/packs/samples/warm-worlds.json
-# Player scenes: K9's verified scene-builder outputs, until the kernel serves the scene op.
-rm -rf packages/shell/public/scenes && mkdir -p packages/shell/public/scenes
-cp tests/fixtures/observe/tarn-before.json tests/fixtures/observe/tarn-after.json packages/shell/public/scenes/
+rm -rf packages/shell/public/scenes
 # Documents the screens composer edits and previews (U5).
 rm -rf packages/shell/public/documents && mkdir -p packages/shell/public/documents
 cp packages/shell/src/documents/players.screen.json packages/shell/src/documents/vocab.plain.json packages/shell/src/documents/orac.screen-request.json packages/shell/public/documents/

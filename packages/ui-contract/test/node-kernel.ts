@@ -5,10 +5,17 @@ import { KernelClient, type Port } from "../../kernel-client/src/index.ts";
 
 const root = new URL("../../../", import.meta.url);
 
-export function nodeKernel(): { client: KernelClient; close: () => Promise<number> } {
-  const worker = new Worker(new URL("packages/kernel-client/src/worker.ts", root));
-  const port: Port = { postMessage: (m) => worker.postMessage(m), onMessage: (cb) => worker.on("message", cb) };
+/** A kernel, plus `scratch`, which starts a second one for trials (Session.open's scratch). */
+export function nodeKernel(): { client: KernelClient; scratch: () => KernelClient; close: () => Promise<number> } {
+  const workers: Worker[] = [];
   const jsUrl = new URL("packages/kernel-client/wasm/sse_wasm.js", root).href;
   const wasmBytes = readFileSync(new URL("packages/kernel-client/wasm/sse_wasm_bg.wasm", root));
-  return { client: new KernelClient(port, { jsUrl, wasmBytes }), close: () => worker.terminate() };
+  const start = () => {
+    const worker = new Worker(new URL("packages/kernel-client/src/worker.ts", root));
+    workers.push(worker);
+    const port: Port = { postMessage: (m) => worker.postMessage(m), onMessage: (cb) => worker.on("message", cb) };
+    return new KernelClient(port, { jsUrl, wasmBytes });
+  };
+  const client = start();
+  return { client, scratch: start, close: async () => (await Promise.all(workers.map((w) => w.terminate())))[0]! };
 }

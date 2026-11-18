@@ -1,8 +1,8 @@
 // V1 acceptance in a real browser, against the built shell's player page
 // (scripts/build-shell.sh first). Usage:
 //   node tests/ui/players.e2e.mjs [chromium firefox webkit] [--screens <dir>]
-// Checks: the five player views draw K9's Kestrel scenes before and after
-// Scanned; unknown facts keep their placeholders; selection is shared; the
+// Checks: the five player views draw the kernel's live scenes for the
+// everyone audience before and after the GM's Scanned tap (stand-in control); unknown facts keep their placeholders; selection is shared; the
 // table sorts; keyboard reaches the chart; no sideways scroll on a phone.
 import { spawn } from "node:child_process";
 import { mkdirSync } from "node:fs";
@@ -29,6 +29,7 @@ try {
     await page.goto(url);
     const card = page.locator("[data-view='sse.view.card'] article");
     await card.waitFor();
+    assert.match(await text(page.locator("footer.status")), /live from the kernel for the everyone audience · scene [0-9a-f]{10}/);
     assert.equal(await card.getAttribute("aria-label"), "Tarn", "the first body is in focus");
     assert.equal(await text(card.locator("[data-field='mass_kg'] dd")), "not yet scanned");
     const unplaced = page.locator("[aria-label='Position not known']");

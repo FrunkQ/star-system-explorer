@@ -10,6 +10,7 @@
     LAYOUT_AREAS,
     checkPlayerScene,
     checkScreen,
+    observeOf,
     packSummary,
     type Json,
     type PlayerScene,
@@ -24,7 +25,7 @@
 
   import { untrack } from "svelte";
 
-  let { ctx, params }: { ctx: ViewContext; scene: SystemScene; params: Record<string, Json> } = $props();
+  let { ctx, scene: system, params }: { ctx: ViewContext; scene: SystemScene; params: Record<string, Json> } = $props();
   // Read once: the documents a composer opens are fixed when it mounts.
   const P = untrack(() => params);
   const ws = $derived(ctx.workspace);
@@ -47,18 +48,34 @@
   let orac = $state<{ r: Orac; status: "open" | "accepted" | "declined" } | null>(null);
   let failure = $state<string | null>(null);
   const get = async (u: string) => (await fetch(new URL(u, document.baseURI))).json();
-  Promise.all([get(String(P.screen)), get(String(P.vocab)), ...(P.scenes as string[]).map(get), P.orac ? get(String(P.orac)) : null])
-    .then(([d, v, ...rest]) => {
-      const o = rest.pop();
+  Promise.all([get(String(P.screen)), get(String(P.vocab)), P.orac ? get(String(P.orac)) : null])
+    .then(([d, v, o]) => {
       doc = d;
       vocab = v;
-      const ss = rest as PlayerScene[];
-      const bad = ss.map(checkPlayerScene).find(Boolean);
-      if (bad) failure = bad;
-      scenes = { before: ss[0]!, after: ss[1] ?? ss[0]! };
       if (o) orac = { r: o.request, status: "open" };
     })
     .catch((e) => (failure = String(e)));
+
+  // Live scenes from the kernel: the audience seen through the campaign's
+  // before and after views (the two sides of the Scanned button). Read only.
+  const audience = String(P.audience ?? "everyone");
+  const pair = $derived.by(() => {
+    void ws.revision;
+    return observeOf(ctx.session.stack().base)?.setup.campaign ?? null;
+  });
+  $effect(() => {
+    const p = pair;
+    const scope = system.system;
+    if (!p) return void (failure = "No pack in the stack says what players can learn (provides.other.observe).");
+    Promise.all([p.before, p.after].map((v) => ctx.session.scene(scope, { audience, data_view: v }))).then((rs) => {
+      const bad = rs.find((r) => !r.ok);
+      if (bad && !bad.ok) return void (failure = bad.message);
+      const [b, a] = rs.map((r) => (r.ok ? r.scene : null)) as PlayerScene[];
+      const wrong = [b, a].map((x) => checkPlayerScene(x!)).find(Boolean);
+      if (wrong) failure = wrong;
+      scenes = { before: b!, after: a! };
+    });
+  });
 
   let sensor = $state<"before" | "after">("after");
   const checked = $derived(doc ? checkScreen(doc, PLAYER_STACK) : null);

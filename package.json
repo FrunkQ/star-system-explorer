@@ -15,6 +15,7 @@
     "packages/views/change-requests",
     "packages/views/player-stack",
     "packages/views/pack-stack",
+    "packages/views/data-views",
     "packages/views/screen-composer",
     "packages/shell"
   ],

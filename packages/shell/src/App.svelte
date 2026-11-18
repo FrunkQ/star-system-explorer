@@ -4,7 +4,7 @@
   kernel only through the session, the same client API a player app uses.
 -->
 <script lang="ts">
-  import { applyEdits, checkScreen, deriveScene, gmSeat, markFor, redoEdit, undoEdit, type CheckedScreen, type DerivationDoc, type ScreenDoc, type Symbology, type SystemScene, type ViewHandle, type ViewModule, type ViewSession } from "../../ui-contract/src/index.ts";
+  import { applyEdits, enterFacts, type AuthoredFacts, checkScreen, deriveScene, gmSeat, markFor, redoEdit, undoEdit, type CheckedScreen, type DerivationDoc, type ScreenDoc, type Symbology, type SystemScene, type ViewHandle, type ViewModule, type ViewSession } from "../../ui-contract/src/index.ts";
   import { openBrowserSession } from "../../ui-contract/src/host-browser.ts";
   import { themeCss, THEMES } from "../../skins/chart-room/src/index.ts";
   import { Segmented, ToolButton, formatYears } from "../../chart-grammar/src/index.ts";
@@ -12,11 +12,13 @@
   import physicsDoc from "./documents/physics.gm.json";
   import packsDoc from "./documents/packs.gm.json";
   import screensDoc from "./documents/screens.gm.json";
+  import dataDoc from "./documents/dataviews.gm.json";
   import oracDoc from "./documents/orac.requests.json";
   import sceneDoc from "./documents/kestrel.scene.json";
   import symbologyDoc from "./documents/diagrammatic.stub.json";
   import derivationsDoc from "./documents/derivations.base.json";
   import stackDoc from "./documents/stack.json";
+  import factsDoc from "./documents/kestrel.player-facts.json";
   import { REGISTRY } from "./registry.ts";
   import { createWorkspace } from "./workspace.svelte.ts";
   import { loadPref, savePref } from "./prefs.ts";
@@ -31,7 +33,7 @@
   let scene = $state<SystemScene>(base);
 
   // Each screen document is checked before anything mounts; the GM switches between them.
-  const SCREENS: Record<string, ScreenDoc> = { system: workspaceDoc as unknown as ScreenDoc, physics: physicsDoc as unknown as ScreenDoc, packs: packsDoc as unknown as ScreenDoc, screens: screensDoc as unknown as ScreenDoc };
+  const SCREENS: Record<string, ScreenDoc> = { system: workspaceDoc as unknown as ScreenDoc, physics: physicsDoc as unknown as ScreenDoc, packs: packsDoc as unknown as ScreenDoc, screens: screensDoc as unknown as ScreenDoc, data: dataDoc as unknown as ScreenDoc };
   const checks = Object.fromEntries(Object.entries(SCREENS).map(([k, d]) => [k, checkScreen(d, REGISTRY)]));
   const badScreens = Object.values(checks).flatMap((c) => (c.ok ? [] : c.errors));
   const screen = $derived.by((): CheckedScreen | null => {
@@ -59,6 +61,9 @@
   loadPacks()
     .then((packs) => openBrowserSession({ base: document.baseURI, seat: gmSeat(), universe: base.universe, packs }))
     .then(async (s) => {
+      // The player-facing facts the GM has recorded, entered when the campaign opens.
+      const bad = await enterFacts(s, factsDoc as unknown as AuthoredFacts);
+      if (bad) throw new Error(`recorded facts refused: ${JSON.stringify(bad)}`);
       scene = await deriveScene(s, { ...base, now_yr: ws.now_yr }, derivations);
       session = s;
       status = { kernel: await s.kernelVersion(), tier: s.device()?.tier ?? "unmeasured", hash: await s.stateHash(), stack: s.stack().hash, campaign: false };
@@ -161,6 +166,7 @@
           { value: "system", label: "Chart", key: "P" },
           { value: "physics", label: "Physics", key: "P" },
           { value: "screens", label: "Screens" },
+          { value: "data", label: "Player data" },
           { value: "packs", label: "Packs" },
         ]}
         onchange={(v) => (ws.screen = v)}

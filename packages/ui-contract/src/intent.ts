@@ -21,11 +21,17 @@ export type Intent =
    * screen), bottom to top. The campaign's own physics pack stays on top.
    * Only a seat with GM authority applies it.
    */
-  | { kind: "stack_packs"; packs: Json[] };
+  | { kind: "stack_packs"; packs: Json[] }
+  /**
+   * The GM's Scanned button: give `audience` the next data view up for one
+   * subject, or take it back on a second tap (K9 scan_toggle, chronicled as
+   * an observe.grant). Only a seat with GM authority applies it.
+   */
+  | { kind: "scan_toggle"; address: string; audience: string; at_yr: number };
 
 export type IntentKind = Intent["kind"];
 
-export const INTENT_KINDS: readonly IntentKind[] = ["set_value", "adopt_physics", "stack_packs"];
+export const INTENT_KINDS: readonly IntentKind[] = ["set_value", "adopt_physics", "stack_packs", "scan_toggle"];
 
 /** Machine-readable description of an intent a view may send (H8.1 `intents`). */
 export interface IntentSchema {
@@ -64,9 +70,15 @@ export function checkIntent(i: Intent): string | null {
     if (p.format !== "sse.pack/1") return "physics pack must be sse.pack/1";
     return null;
   }
+  if (i.kind === "scan_toggle") {
+    if (!i.address.startsWith("u:")) return "address must start with u:";
+    if (!/^[a-z0-9][a-z0-9._-]*$/.test(i.audience)) return "audience must be a lower-case name";
+    if (!Number.isFinite(i.at_yr)) return "time must be finite";
+    return null;
+  }
   if (i.kind !== "set_value") return `unknown intent kind ${(i as { kind: string }).kind}`;
   if (!i.address.startsWith("u:")) return "address must start with u:";
-  if (!/^[a-z][a-z0-9_.]*$/.test(i.field)) return "field must be a lower-case name";
+  if (!/^[a-z][a-z0-9_.-]*$/.test(i.field)) return "field must be a lower-case name";
   if (!Number.isFinite(i.at_yr)) return "time must be finite";
   return null;
 }
@@ -80,6 +92,7 @@ export function intentToRequest(i: Intent, stack: { opening: readonly unknown[];
   const top = (c: unknown) => (c === null || c === undefined ? [] : [c]);
   if (i.kind === "adopt_physics") return { op: "load_stack" as const, packs: [...stack.opening, ...stack.added, ...top(i.pack)] };
   if (i.kind === "stack_packs") return { op: "load_stack" as const, packs: [...stack.opening, ...i.packs, ...top(stack.campaign)] };
+  if (i.kind === "scan_toggle") return { op: "scan_toggle" as const, address: i.address, audience: i.audience, at_s: yearsToSeconds(i.at_yr) };
   return {
     op: "set_authored" as const,
     edit: {

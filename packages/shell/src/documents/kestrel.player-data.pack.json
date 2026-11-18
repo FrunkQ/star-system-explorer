@@ -1,0 +1,136 @@
+{
+ "format": "sse.pack/1",
+ "id": "kestrel.player-data",
+ "version": "0.1.0",
+ "kind": [
+  "game-system"
+ ],
+ "kernel_range": "^0.1",
+ "licence": "Apache-2.0",
+ "description": "What players can learn about the Kestrel Reach worlds, and when: the disclosure map and the campaign's data views.",
+ "provides": {
+  "other": {
+   "observe": {
+    "disclosure": {
+     "fields": {
+      "name": "obvious",
+      "kind": "obvious",
+      "size_class": "obvious",
+      "colour": "obvious",
+      "spectral": "obvious",
+      "orbit.*": "scanned",
+      "mass_kg": "scanned",
+      "atmosphere.*": "scanned",
+      "surface.*": "scanned",
+      "ocean.*": "scanned",
+      "hazards": "scanned",
+      "luminosity_w": "scanned",
+      "interior.*": "surveyed",
+      "resources": "surveyed",
+      "settlements.*": "surveyed",
+      "gm.*": "secret",
+      "story.*": "secret"
+     },
+     "tags": {
+      "habitable": "scanned",
+      "port": "scanned",
+      "hazard": "scanned",
+      "garden": "scanned",
+      "ancient-ruins": "secret"
+     }
+    },
+    "views": [
+     {
+      "id": "long-range",
+      "label": "Long-range sensors",
+      "description": "Exists, rough size and colour",
+      "show_tiers": [
+       "obvious"
+      ],
+      "tags": {
+       "mode": "none"
+      },
+      "unknown_style": "placeholder"
+     },
+     {
+      "id": "scanned",
+      "label": "Scanned",
+      "description": "Orbit, mass, air, temperature, hazards",
+      "show_tiers": [
+       "obvious",
+       "scanned"
+      ],
+      "tags": {
+       "mode": "listed",
+       "list": [
+        "hazard",
+        "habitable",
+        "port"
+       ]
+      },
+      "overrides": [
+       {
+        "target": {
+         "kind": "field",
+         "id": "surface.temp_mean_k"
+        },
+        "show": true,
+        "precision": {
+         "as": "band",
+         "step": 10,
+         "half_width": 10
+        }
+       }
+      ],
+      "unknown_style": "placeholder"
+     },
+     {
+      "id": "survey",
+      "label": "Survey on file",
+      "description": "Adds interiors, resources, settlements",
+      "show_tiers": [
+       "obvious",
+       "scanned",
+       "surveyed"
+      ],
+      "tags": {
+       "mode": "all"
+      },
+      "unknown_style": "placeholder"
+     },
+     {
+      "id": "rumour",
+      "label": "Rumour only",
+      "description": "Name and one story line, no numbers",
+      "show_tiers": [],
+      "tags": {
+       "mode": "none"
+      },
+      "overrides": [
+       {
+        "target": {
+         "kind": "field",
+         "id": "name"
+        },
+        "show": true
+       },
+       {
+        "target": {
+         "kind": "field",
+         "id": "story.rumour"
+        },
+        "show": true
+       }
+      ],
+      "unknown_style": "omit"
+     }
+    ],
+    "campaign": {
+     "default_view": "long-range",
+     "before": "long-range",
+     "after": "scanned"
+    }
+   }
+  }
+ }
+}

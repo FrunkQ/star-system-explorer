@@ -3,6 +3,9 @@
 //   node tests/ui/setup.e2e.mjs [chromium firefox webkit] [--screens <dir>]
 // Packs (PackSetup board): the live stack, Check stack, a sample fictional
 // pack previewed value by value, accepted, and its labels on the card.
+// Player data (PlayerData board): the live scene for everyone, an edited
+// disclosure applied and put back, a look through another view, and the
+// GM's Scanned button.
 // Screens (Compose board): the view stack, a player screen drawn live from
 // its document, an invalid parameter caught, Orac's sample screen request
 // validated and accepted.
@@ -38,7 +41,7 @@ try {
     const packs = page.locator("[role=region][aria-label=Packs]");
     await packs.getByRole("button", { name: "Check stack" }).click();
     await packs.locator(".verdict").getByText("Validated").waitFor();
-    assert.deepEqual(await packs.locator("[data-pack]").evaluateAll((els) => els.map((e) => e.dataset.pack)), ["sse.base-physics"]);
+    assert.deepEqual(await packs.locator("[data-pack]").evaluateAll((els) => els.map((e) => e.dataset.pack)), ["kestrel.player-data", "sse.base-physics"]);
     await packs.getByRole("button", { name: "Try the sample pack" }).click();
     const proposal = packs.locator("[aria-label=Proposal]");
     await proposal.getByText("Validated").waitFor();
@@ -47,13 +50,39 @@ try {
     if (screens && name === "chromium") (mkdirSync(screens, { recursive: true }), await page.screenshot({ path: `${screens}/packs-desktop.png` }));
     await proposal.getByRole("button", { name: "Accept" }).click();
     await page.waitForFunction(() => [...document.querySelectorAll("[data-pack]")].some((e) => e.dataset.pack === "sample.warm-worlds"));
-    assert.equal(await page.getAttribute("[data-state-hash]", "data-state-hash"), stateHash, "stacking packs is not an authored edit");
+    await page.waitForFunction((h) => document.querySelector("[data-state-hash]")?.getAttribute("data-state-hash") !== h, stateHash);
     await screenBtn("Chart").click();
     await page.locator("[role=button][aria-label^='Tarn']").click();
     const tarn = page.locator("section[aria-label='Tarn']");
     await tarn.locator(".stamp", { hasText: "Fictional" }).waitFor();
     const surface = squash(await tarn.locator(".field").filter({ hasText: /^surface/i }).locator("label").innerText());
     assert.match(surface, /fictional/i);
+
+    // Player data.
+    await screenBtn("Player data").click();
+    const dv = page.locator("[role=region][aria-label='Player data']");
+    const pcard = dv.locator("[data-view='sse.view.card'] article");
+    const massOf = async () => squash(await pcard.locator("[data-field='mass_kg'] dd").innerText());
+    await pcard.waitFor();
+    assert.equal(await pcard.getAttribute("aria-label"), "Tarn");
+    assert.equal(await massOf(), "not yet scanned");
+    const beforeData = await page.getAttribute("[data-state-hash]", "data-state-hash");
+    await dv.locator("details.disc summary").click();
+    await dv.getByLabel("Tier of mass_kg").selectOption("obvious");
+    await dv.getByText("1 unapplied: mass_kg scanned to obvious.").waitFor();
+    await dv.getByRole("button", { name: "Apply to the campaign" }).click();
+    await page.waitForFunction(() => /Earth/.test(document.querySelector("[aria-label='Player data'] [data-field='mass_kg'] dd")?.textContent ?? ""));
+    const massApplied = await massOf();
+    await page.waitForFunction((h) => document.querySelector("[data-state-hash]")?.getAttribute("data-state-hash") !== h, beforeData);
+    if (screens && name === "chromium") (await dv.evaluate((e) => e.scrollTo(0, 0)), await page.screenshot({ path: `${screens}/data-views-desktop.png` }));
+    await dv.getByRole("button", { name: "Put back" }).click();
+    await page.waitForFunction(() => /not yet scanned/.test(document.querySelector("[aria-label='Player data'] [data-field='mass_kg'] dd")?.textContent ?? ""));
+    await dv.getByLabel("Through").selectOption({ label: "Survey on file" });
+    await page.waitForFunction(() => /rare earths/.test(document.querySelector("[aria-label='Player data'] [data-field='resources'] dd")?.textContent ?? ""));
+    await dv.getByLabel("Through").selectOption({ label: "their own grants" });
+    await dv.getByRole("button", { name: "Scanned button: Tarn" }).click();
+    await dv.getByText("Tarn: now through scanned.").waitFor();
+    await page.waitForFunction(() => /270 to 290 K/.test(document.querySelector("[aria-label='Player data'] [data-field='surface.temp_mean_k'] dd")?.textContent ?? ""));
 
     // Screens.
     await screenBtn("Screens").click();
@@ -79,6 +108,7 @@ try {
     assert.match(await comp.locator("pre.doc").innerText(), /"id": "sse.screen.players.bridge-approach"/);
     await browser.close();
     assert.deepEqual(errors, [], "no page errors");
+    console.log(`U5 ${name}: data views: mass applied as obvious reads "${massApplied}", put back, survey and Scanned checked`);
     console.log(`U5 ${name}: packs preview ${rows.length} rows, e.g. ${rows.find((r) => r.startsWith("Tarn · surface"))}; card "${surface}"`);
     console.log(`PASS ${name}`);
   }

@@ -31,7 +31,7 @@ Milestone M1 "Proven core" = packages K0 to K6 (build plan section 3/4).
 | U3 flow editor, explain lenses, change requests | done: real flows, kernel-validated drafts, adopt, badge; kernel gaps listed in the log | packages/U3.md |
 | U4 time ruler with history, branches, look-ahead | waits for T2 | |
 | V1 view contract, player scenes, Chart, Card, Table, Text, Readout | done (scenes from K9 fixtures until the kernel serves a scene op) | packages/V1.md |
-| U5 packs screen, screens composer | done; data views screen waits for the kernel `scene` op | packages/U5.md |
+| U5 packs screen, data views screen, screens composer | done; player page and composer on live kernel scenes | packages/U5.md |
 | G0 default Milky-Way-like patch envelope | done (kernel track) | packages/G0.md |
 | Kernel API additions: stack adopt, manifest, scene, scan_toggle | done (kernel track) | packages/K6-additions.md |
 | Numbers: exact float parse, JSON numbers decode by value (cross-track) | done (kernel track); other tracks merge and re-baseline | packages/numbers.md |
@@ -42,7 +42,7 @@ Milestone M1 "Proven core" = packages K0 to K6 (build plan section 3/4).
 |---|---|---|
 | Physics | P1, P3, P4, then F0 to F2 and F6 | `claude/project-thread-h9y77o` (this file) |
 | Kernel | K7 to K10 and G0 done; C1, C2 next | `claude/project-thread-dzkz4p` (PR #1 into the physics branch; physics branch merged in at 638f241) |
-| Chart room shell and player views | U0 to U3, V1, U5 done; next V2 themes or U5 data views once `scene` lands (U4 waits for T2) | `claude/project-thread-adgixl`, PR #2 into the physics branch (kept merged up to date with it) |
+| Chart room shell and player views | U0 to U3, V1, U5 done; next V2 themes (U4 waits for T2) | `claude/project-thread-adgixl`, PR #2 into the physics branch (kept merged up to date with it) |
 
 The kernel now registers the real atom library and loads the base-physics pack (see P1 log, integration notes). The kernel track has merged that in.
 

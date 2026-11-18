@@ -10,7 +10,7 @@ export const screenComposer: ViewModule = {
   params: [
     { name: "screen", type: "string", default: "documents/players.screen.json", meaning: "Screen document to open (URL)." },
     { name: "vocab", type: "string", default: "documents/vocab.plain.json", meaning: "Vocabulary layer for the preview (URL)." },
-    { name: "scenes", type: "list", default: ["scenes/tarn-before.json", "scenes/tarn-after.json"], meaning: "Player scenes to preview on: before and after a scan (URLs)." },
+    { name: "audience", type: "string", default: "everyone", meaning: "Whose knowledge the preview shows, through the campaign's before and after views." },
     { name: "orac", type: "string", default: "", meaning: "A screen change request to offer (URL); empty for none." },
   ],
   mount(el, ctx, scene) {
