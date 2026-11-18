@@ -1,0 +1,39 @@
+{
+  "address": "u:k7/patch:3:1a2f",
+  "tier": "patch",
+  "epoch": { "s": 435000000000000000 },
+  "child_kind": "sys",
+  "budgets": {
+    "gas": { "amount": 40000000000000, "quantum": 1e24, "dim": [0, 1, 0, 0, 0, 0, 0], "group": "mass" },
+    "metals": { "amount": 560000000000, "quantum": 1e24, "dim": [0, 1, 0, 0, 0, 0, 0], "group": "mass" },
+    "spin": { "amount": 9000000000000, "quantum": 1e40, "dim": [2, 1, -1, 0, 0, 0, 0], "group": "spin" }
+  },
+  "count": { "type": "poisson", "mean": 14 },
+  "partition": { "method": "flat", "weights": { "type": "drawn", "dist": { "type": "power-law", "alpha": 2.35, "lo": 0.08, "hi": 60 } } },
+  "fields": {
+    "metallicity": { "from": "draw", "dist": { "type": "normal", "mean": 0.0, "sd": 0.2, "lo": -1.0, "hi": 0.5 } },
+    "multiplicity": { "from": "draw", "dist": { "type": "choice", "options": [["single", 0.55], ["binary", 0.35], ["triple", 0.1]] } }
+  },
+  "life": {
+    "born": { "type": "uniform", "lo": 0, "hi": 400000000000000000 },
+    "lifetime": { "type": "log-normal", "median": 300000000000000000, "sigma_dex": 0.5 }
+  },
+  "legacies": { "supernovae_ii": 3, "supernovae_ia": 1 },
+  "pins": [
+    { "address": "u:k7/patch:3:1a2f/sys:cat-4471", "claims": { "gas": 2000000000000, "metals": 30000000000 }, "facts": { "metallicity": 0.12, "name": "Kestrel" }, "evidence": "catalogued" },
+    { "address": "u:k7/patch:3:1a2f/sys:@1", "claims": { "gas": 900000000000 }, "facts": { "name": "Haven" }, "evidence": "authored" }
+  ],
+  "uncertainty": { "metallicity": 0.2 },
+  "child": {
+    "tier": "system",
+    "child_kind": "body",
+    "count": { "type": "poisson", "mean": 6 },
+    "partition": { "method": "tree", "jitter": 0.6 },
+    "budgets": ["gas", "metals"],
+    "fields": {
+      "orbit_au": { "from": "draw", "dist": { "type": "log-normal", "median": 1.5, "sigma_dex": 0.6 } },
+      "kind": { "from": "draw", "dist": { "type": "choice", "options": [["rocky", 0.5], ["ice", 0.2], ["giant", 0.3]] } },
+      "metallicity": { "from": "inherit", "field": "metallicity" }
+    }
+  }
+}
