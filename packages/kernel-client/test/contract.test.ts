@@ -65,3 +65,23 @@ test("capability tier and visible edges", async () => {
   assert.ok(info.ops.every((o) => ["trivial", "light", "medium", "heavy"].includes(o.cost)));
   await worker.terminate();
 });
+
+test("number spellings give one hash through the worker (281, 281.0, 2.81e2)", async () => {
+  const { client, worker } = nodeClient();
+  const hashes: string[] = [];
+  // Raw text, because JSON.stringify would already turn 281.0 into 281.
+  for (const [i, text] of ["281", "281.0", "2.81e2", "1.2e27", "1.2e+27"].entries()) {
+    await client.callRaw(`{"op":"open_universe","id":"n","seed":"numbers"}`);
+    const r = JSON.parse(await client.callRaw(
+      `{"op":"set_authored","edit":{"address":"u:n/sys:0","field":"x","value":${text},"occurred_at_s":0}}`));
+    assert.equal(r.type, "authored", `${text} (${i})`);
+    hashes.push(r.state_hash);
+  }
+  // The native kernel's hash for 281 (crates/sse-kernel number_spellings_hash_identically).
+  assert.equal(hashes[0], "c0b8445be888aeca4bbf63634feec6907958eafb1b4155030629cc71442d3dee");
+  assert.equal(hashes[1], hashes[0]);
+  assert.equal(hashes[2], hashes[0]);
+  assert.equal(hashes[4], hashes[3]);
+  assert.notEqual(hashes[3], hashes[0]);
+  await worker.terminate();
+});
