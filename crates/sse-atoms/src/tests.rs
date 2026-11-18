@@ -73,7 +73,7 @@ fn every_atom_is_cited_explained_and_versioned() {
         }
     }
     assert_eq!(
-        n, 27,
+        n, 31,
         "first-wave atom count changed: update handover/packages/P1.md"
     );
 }
@@ -375,6 +375,43 @@ fn locking_time_formula() {
     // The Moon at today's distance locks in tens of millions of years.
     let yr = t / JULIAN_YEAR;
     assert!(yr > 1e6 && yr < 1e9, "Moon locking time {yr} yr");
+}
+
+// ---- layers ----------------------------------------------------------------
+
+#[test]
+fn brine_freezing_points() {
+    let f = |w: f64| run("sse.ocean.brine_freezing_point", &[w])[0];
+    close(f(0.0), 273.15, 1e-15, "pure water");
+    // Seawater (35 g/kg) freezes at -1.92 °C (UNESCO 1983); it is not pure NaCl,
+    // so this NaCl model is checked to 15 percent of the depression.
+    let d = 273.15 - f(0.035);
+    assert!((d - 1.92).abs() < 0.15 * 1.92, "seawater depression {d}");
+    // 10 percent NaCl freezes near -6.6 °C (CRC Handbook, aqueous NaCl).
+    let d10 = 273.15 - f(0.10);
+    assert!((d10 - 6.6).abs() < 0.1 * 6.6, "10% NaCl depression {d10}");
+}
+
+#[test]
+fn ice_shell_conduction() {
+    // Europa-like: 100 K surface, base at 270 K, 0.05 W/m² gives about 13 km,
+    // inside the 10 to 30 km range of conductive models (Ojakangas and Stevenson 1989).
+    let d = run("sse.heat.ice_shell_thickness", &[0.05, 100.0, 270.0])[0];
+    close(d, 651.0 / 0.05 * m::ln(2.7), 1e-12, "formula");
+    assert!(d > 1e4 && d < 3e4);
+    let q = run("sse.heat.ice_shell_heat_flow", &[d, 100.0, 270.0])[0];
+    close(q, 0.05, 1e-12, "round trip");
+}
+
+#[test]
+fn hydrostatic_pressure_of_deep_water() {
+    // 10.9 km of seawater (1025 kg/m³ at the surface) in the Mariana Trench: about
+    // 1.086e8 Pa measured (Bartlett 2009); compression is inside the 3 percent.
+    let p = run(
+        "sse.interior.hydrostatic_pressure",
+        &[1025.0, 9.81, 10_900.0],
+    )[0];
+    close(p, 1.086e8, 0.03, "Challenger Deep");
 }
 
 // ---- the base-physics pack ----------------------------------------------

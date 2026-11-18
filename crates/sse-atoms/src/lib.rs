@@ -6,6 +6,7 @@
 
 pub mod climate;
 pub mod common;
+pub mod layers;
 pub mod orbit;
 pub mod planet;
 pub mod star;
@@ -24,6 +25,7 @@ pub fn registry() -> AtomRegistry {
         .chain(planet::atoms())
         .chain(climate::atoms())
         .chain(tides::atoms())
+        .chain(layers::atoms())
     {
         r.insert(a);
     }
@@ -156,6 +158,29 @@ pub const KIND_DESCRIPTIONS: &[(&str, &str)] = &[
         "tides.locking_time",
         "time to despin to synchronous rotation",
     ),
+    (
+        "ocean.salinity_mass_fraction",
+        "dissolved salt as a fraction of the brine's mass",
+    ),
+    (
+        "ocean.freezing_point",
+        "temperature at which the brine starts to freeze",
+    ),
+    (
+        "layer.thickness",
+        "thickness of a layer, or depth within it",
+    ),
+    ("layer.top_temperature", "temperature at the top of a layer"),
+    (
+        "layer.base_temperature",
+        "temperature at the base of a layer",
+    ),
+    (
+        "layer.conductive_heat_flow",
+        "heat flow conducted through a layer",
+    ),
+    ("layer.density", "mean density of a layer"),
+    ("layer.pressure_increase", "pressure added across a layer"),
 ];
 
 /// Quantity kinds for the base-physics pack, from the atoms' port kinds.

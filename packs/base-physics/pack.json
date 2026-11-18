@@ -1084,6 +1084,118 @@
         "range": null
       },
       {
+        "description": "temperature at the base of a layer",
+        "dim": [
+          0,
+          0,
+          0,
+          0,
+          1,
+          0,
+          0
+        ],
+        "id": "layer.base_temperature",
+        "range": null
+      },
+      {
+        "description": "heat flow conducted through a layer",
+        "dim": [
+          0,
+          1,
+          -3,
+          0,
+          0,
+          0,
+          0
+        ],
+        "id": "layer.conductive_heat_flow",
+        "range": null
+      },
+      {
+        "description": "mean density of a layer",
+        "dim": [
+          -3,
+          1,
+          0,
+          0,
+          0,
+          0,
+          0
+        ],
+        "id": "layer.density",
+        "range": null
+      },
+      {
+        "description": "pressure added across a layer",
+        "dim": [
+          -1,
+          1,
+          -2,
+          0,
+          0,
+          0,
+          0
+        ],
+        "id": "layer.pressure_increase",
+        "range": null
+      },
+      {
+        "description": "thickness of a layer, or depth within it",
+        "dim": [
+          1,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0
+        ],
+        "id": "layer.thickness",
+        "range": null
+      },
+      {
+        "description": "temperature at the top of a layer",
+        "dim": [
+          0,
+          0,
+          0,
+          0,
+          1,
+          0,
+          0
+        ],
+        "id": "layer.top_temperature",
+        "range": null
+      },
+      {
+        "description": "temperature at which the brine starts to freeze",
+        "dim": [
+          0,
+          0,
+          0,
+          0,
+          1,
+          0,
+          0
+        ],
+        "id": "ocean.freezing_point",
+        "range": null
+      },
+      {
+        "description": "dissolved salt as a fraction of the brine's mass",
+        "dim": [
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0
+        ],
+        "id": "ocean.salinity_mass_fraction",
+        "range": null
+      },
+      {
         "description": "farthest distance from the host",
         "dim": [
           1,
