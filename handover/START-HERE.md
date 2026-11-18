@@ -1,6 +1,6 @@
 # START HERE
 
-Last updated: 18 Nov 2026, after P1, P3 (physics track) and U0, U1 (UI track). Milestone M1 complete (K0 documents with Alex for review). Milestone 2 running as parallel tracks.
+Last updated: 18 Nov 2026, after P4 (physics track) and U0, U1 (UI track); U2 in progress. Milestone M1 complete (K0 documents with Alex for review). Milestone 2 running as parallel tracks.
 
 ## Where we are
 Milestone M1 "Proven core" = packages K0 to K6 (build plan section 3/4).
@@ -16,10 +16,10 @@ Milestone M1 "Proven core" = packages K0 to K6 (build plan section 3/4).
 | K0 V3 / Ovid / Evolution Lab source reading | done, Alex reviewing docs/v3-parity.md, v3-save-fields.md, ovid-agents.md, evolab-reuse.md | packages/K0.md |
 | P1 atom library, first wave | done | packages/P1.md |
 | P3 V3 importer | built; real-save check pending on Alex's PC | packages/P3.md |
-| P4 regions and features on worlds | next on the physics track | |
+| P4 regions and features on worlds | done | packages/P4.md |
 | U0 one client API, every edit an intent (rule for all U packages) | done | packages/U0.md |
 | U1 shell, chart room and night chart tokens, chart grammar | done, screenshots in packages/U1-screens/ for Alex | packages/U1.md |
-| U2 system chart editor | next on the UI track (P1 has landed) | |
+| U2 system chart editor | in progress on the UI track | |
 
 ## Parallel tracks (18 Nov, Alex: build in parallel, integrate later)
 | Track | Packages | Branch |

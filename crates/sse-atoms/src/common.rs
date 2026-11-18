@@ -98,4 +98,6 @@ pub mod dims {
     use sse_core::Dimension as D;
     /// s^-1 (angular rate, mean motion).
     pub const RATE: D = D([0, 0, -1, 0, 0, 0, 0]);
+    /// kg mol^-1.
+    pub const MOLAR_MASS: D = D([0, 1, 0, 0, 0, -1, 0]);
 }
