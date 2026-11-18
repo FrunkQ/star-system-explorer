@@ -1,0 +1,40 @@
+{
+  "audience": "everyone",
+  "scope": "u:kestrel/sys:0",
+  "subjects": [
+    { "address": "u:kestrel/sys:0", "view": "long-range", "tags": [],
+      "facts": [
+        { "field": "kind", "value": "star" },
+        { "field": "luminosity_w", "placeholder": "not yet scanned" },
+        { "field": "name", "value": "Kestrel" },
+        { "field": "spectral", "value": "K1V" } ] },
+    { "address": "u:kestrel/sys:0/body:3", "view": "scanned", "tags": ["habitable", "hazard", "port"],
+      "facts": [
+        { "field": "atmosphere.composition", "value": "N2-O2" },
+        { "field": "atmosphere.pressure_pa", "value": 130000.0 },
+        { "field": "colour", "value": "blue-white" },
+        { "field": "hazards", "value": ["storm belt", "tides"] },
+        { "field": "interior.core_fraction", "placeholder": "survey required" },
+        { "field": "kind", "value": "planetary-body" },
+        { "field": "mass_kg", "value": 6.56942e24 },
+        { "field": "name", "value": "Tarn" },
+        { "field": "ocean.fraction", "value": 0.71 },
+        { "field": "orbit.period_s", "value": 18489600.0 },
+        { "field": "orbit.semi_major_axis_m", "value": 94246658541.0 },
+        { "field": "resources", "placeholder": "survey required" },
+        { "field": "settlements.count", "placeholder": "survey required" },
+        { "field": "size_class", "value": "terrestrial" },
+        { "field": "surface.class", "value": "temperate" },
+        { "field": "surface.temp_mean_k", "band": [270.0, 290.0] } ] },
+    { "address": "u:kestrel/sys:0/body:3/body:0", "view": "scanned", "tags": [],
+      "facts": [
+        { "field": "kind", "value": "moon" },
+        { "field": "mass_kg", "value": 7.3e22 },
+        { "field": "name", "value": "Tarn a" },
+        { "field": "size_class", "value": "small" } ] },
+    { "address": "u:kestrel/sys:0/body:5", "view": "rumour", "tags": [],
+      "facts": [
+        { "field": "name", "value": "Vault" },
+        { "field": "story.rumour", "value": "Miners say the third moon sings on the comms." } ] }
+  ]
+}

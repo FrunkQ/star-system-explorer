@@ -534,6 +534,17 @@ dependencies = [
 ]
 
 [[package]]
+name = "sse-observe"
+version = "0.1.0"
+dependencies = [
+ "serde",
+ "serde_json",
+ "sse-chronicle",
+ "sse-core",
+ "sse-flow",
+]
+
+[[package]]
 name = "sse-pack"
 version = "0.1.0"
 dependencies = [
