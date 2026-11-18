@@ -1,0 +1,15 @@
+[package]
+name = "sse-atoms"
+description = "SSE4 physics atom library: compiled operators with declarations, citations and golden tests"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+authors.workspace = true
+
+[dependencies]
+sse-core.workspace = true
+sse-flow.workspace = true
+serde_json.workspace = true
+
+[dev-dependencies]
+sse-pack.workspace = true

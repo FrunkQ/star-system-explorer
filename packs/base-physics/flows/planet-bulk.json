@@ -1,0 +1,57 @@
+{
+  "format": "sse.flow/1",
+  "id": "sse.base.planet-bulk",
+  "version": "0.1.0",
+  "hook": "planet.bulk",
+  "inputs": [
+    { "name": "mass", "kind": "body.mass" },
+    { "name": "radius", "kind": "body.radius" }
+  ],
+  "nodes": [
+    { "id": "rho", "atom": "sse.planet.bulk_density" },
+    { "id": "g", "atom": "sse.planet.surface_gravity" },
+    { "id": "esc", "atom": "sse.planet.escape_velocity" }
+  ],
+  "wires": [
+    { "from": "in.mass", "to": "rho.mass" },
+    { "from": "in.radius", "to": "rho.radius" },
+    { "from": "in.mass", "to": "g.mass" },
+    { "from": "in.radius", "to": "g.radius" },
+    { "from": "in.mass", "to": "esc.mass" },
+    { "from": "in.radius", "to": "esc.radius" }
+  ],
+  "publishes": [
+    { "kind": "body.bulk_density", "from": "rho.density" },
+    { "kind": "body.surface_gravity", "from": "g.g" },
+    { "kind": "body.escape_velocity", "from": "esc.v_esc" }
+  ],
+  "tests": [
+    {
+      "name": "Earth (NASA fact sheet)",
+      "inputs": { "mass": { "value": 5.9722e24, "unit": "kg" }, "radius": { "value": 6371.0, "unit": "km" } },
+      "expect": {
+        "body.bulk_density": { "value": 5.513, "unit": "g_cm3", "tol": 0.01 },
+        "body.surface_gravity": { "value": 9.82, "unit": "m_s2", "tol": 0.03 },
+        "body.escape_velocity": { "value": 11.186, "unit": "km_s", "tol": 0.02 }
+      }
+    },
+    {
+      "name": "Mars (NASA fact sheet)",
+      "inputs": { "mass": { "value": 0.64169e24, "unit": "kg" }, "radius": { "value": 3389.5, "unit": "km" } },
+      "expect": {
+        "body.bulk_density": { "value": 3.934, "unit": "g_cm3", "tol": 0.01 },
+        "body.surface_gravity": { "value": 3.727, "unit": "m_s2", "tol": 0.02 },
+        "body.escape_velocity": { "value": 5.027, "unit": "km_s", "tol": 0.01 }
+      }
+    },
+    {
+      "name": "Moon (NASA fact sheet)",
+      "inputs": { "mass": { "value": 0.07346e24, "unit": "kg" }, "radius": { "value": 1737.4, "unit": "km" } },
+      "expect": {
+        "body.bulk_density": { "value": 3.344, "unit": "g_cm3", "tol": 0.01 },
+        "body.surface_gravity": { "value": 1.624, "unit": "m_s2", "tol": 0.01 },
+        "body.escape_velocity": { "value": 2.38, "unit": "km_s", "tol": 0.01 }
+      }
+    }
+  ]
+}
