@@ -9,7 +9,7 @@ use crate::*;
 use proptest::prelude::*;
 use sse_chronicle::{Chronicle, Publisher, UniverseTime};
 use sse_core::cbor::Value;
-use sse_core::{ContentHash, Seed};
+use sse_core::Seed;
 use std::collections::BTreeMap;
 
 fn fixture() -> Envelope {
@@ -479,24 +479,9 @@ fn queries_mutate_nothing_until_a_pick_is_committed() {
     );
 }
 
-/// Native golden digest; CI runs it on Linux, macOS and Windows.
+/// Golden digest (tests/golden/resolve.json). The same function runs in
+/// the browser harness (sse-wasm `engines_run`), so this is cross-device.
 #[test]
 fn golden_digest() {
-    let env = fixture();
-    let mut c = Chronicle::new();
-    for r in refs(&env) {
-        let rec = resolve_recorded(&mut c, &seed(), &env, &r, &publisher()).unwrap();
-        let sys = rec.envelope.unwrap();
-        for b in refs(&sys) {
-            resolve_recorded(&mut c, &seed(), &sys, &b, &publisher()).unwrap();
-        }
-    }
-    let outlook =
-        ContentHash::of(&serde_json::to_string(&location_first(&env).unwrap()).unwrap()).unwrap();
-    let got = serde_json::json!({
-        "resolve_tree_state": c.state_at(UniverseTime::ORIGIN).hash().hex(),
-        "events": c.len(),
-        "outlook": outlook.hex(),
-    });
-    crate::golden::check("resolve.json", &got);
+    crate::golden::check("resolve.json", &crate::scenario::golden());
 }

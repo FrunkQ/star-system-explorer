@@ -4,113 +4,12 @@
 
 use crate::scene::GM;
 use crate::*;
-use sse_chronicle::{
-    kinds, Chronicle, Event, EventBody, Evidence, Payload, Publisher, UniverseTime,
-};
+use sse_chronicle::{kinds, Event, EventBody, Evidence, Payload, UniverseTime};
 use sse_core::cbor::Value;
 use sse_core::Address;
-use std::collections::{BTreeMap, BTreeSet};
+use std::collections::BTreeSet;
 
-#[derive(serde::Deserialize)]
-struct World {
-    disclosure: Disclosure,
-    views: Vec<DataView>,
-    campaign: Campaign,
-    resolved: BTreeMap<Address, BTreeMap<String, Value>>,
-    authored: BTreeMap<Address, BTreeMap<String, Value>>,
-    tags: BTreeMap<Address, BTreeSet<String>>,
-    grants: BTreeMap<Address, String>,
-}
-
-fn read<T: serde::de::DeserializeOwned>(name: &str) -> T {
-    let p = format!(
-        "{}/../../tests/fixtures/observe/{name}",
-        env!("CARGO_MANIFEST_DIR")
-    );
-    serde_json::from_str(&std::fs::read_to_string(p).unwrap()).unwrap()
-}
-
-fn gm() -> Publisher {
-    Publisher::new("test.gm", "session", "1")
-}
-
-fn put(c: &mut Chronicle, kind: &str, ev: Evidence, a: &Address, f: BTreeMap<String, Value>) {
-    let e = Event::new(EventBody {
-        kind: kind.into(),
-        subject: vec![a.clone()],
-        occurred_at: UniverseTime::ORIGIN,
-        activated_at: UniverseTime::ORIGIN,
-        recognised_at: c.next_stamp(),
-        causes: vec![],
-        payload: Payload {
-            set: [(a.clone(), f)].into(),
-            ..Default::default()
-        },
-        evidence: ev,
-        publisher: gm(),
-    })
-    .unwrap();
-    c.append(e).unwrap();
-}
-
-struct Fx {
-    w: World,
-    views: BTreeMap<String, DataView>,
-    c: Chronicle,
-    now: UniverseTime,
-}
-
-fn setup() -> Fx {
-    let w: World = read("tarn-world.json");
-    let mut c = Chronicle::new();
-    for (a, f) in &w.resolved {
-        put(&mut c, kinds::RESOLVE, Evidence::Resolved, a, f.clone());
-    }
-    for (a, f) in &w.authored {
-        put(
-            &mut c,
-            kinds::AUTHORED_SET,
-            Evidence::Authored,
-            a,
-            f.clone(),
-        );
-    }
-    for (a, v) in &w.grants {
-        put(
-            &mut c,
-            kinds::OBSERVE_GRANT,
-            Evidence::Authored,
-            a,
-            [("observe.view".to_string(), Value::Text(v.clone()))].into(),
-        );
-    }
-    let views = w.views.iter().map(|v| (v.id.clone(), v.clone())).collect();
-    Fx {
-        w,
-        views,
-        c,
-        now: UniverseTime::years(4_610_000_000),
-    }
-}
-
-fn scene(fx: &Fx, audience: &str) -> Scene {
-    let state = fx.c.state_at(fx.now);
-    let fictional = BTreeSet::new();
-    let inp = SceneInput {
-        state: &state,
-        chronicle: Some(&fx.c),
-        tags: &fx.w.tags,
-        fictional: &fictional,
-        disclosure: &fx.w.disclosure,
-        views: &fx.views,
-        campaign: &fx.w.campaign,
-    };
-    build_scene(&inp, audience, &"u:kestrel/sys:0".parse().unwrap()).unwrap()
-}
-
-fn tarn() -> Address {
-    "u:kestrel/sys:0/body:3".parse().unwrap()
-}
+use crate::scenario::{gm, put, read, scene, setup, tarn};
 
 /// Acceptance: Tarn before and after one tap of Scanned, against the
 /// hand-written fixtures taken from the PlayerData mockup board.
@@ -332,17 +231,10 @@ fn audiences_are_separate_and_own_grants_beat_inherited() {
         .contains("\"nope\" is not defined"));
 }
 
+/// Golden digest; the same function runs in the browser harness.
 #[test]
 fn golden_digest() {
-    let mut fx = setup();
-    let before = scene(&fx, EVERYONE).hash();
-    let campaign = fx.w.campaign.clone();
-    scan_toggle(&mut fx.c, &tarn(), EVERYONE, &campaign, fx.now, &gm()).unwrap();
-    let got = serde_json::json!({
-        "tarn_before": before.hex(),
-        "tarn_after": scene(&fx, EVERYONE).hash().hex(),
-        "gm": scene(&fx, GM).hash().hex(),
-    });
+    let got = crate::scenario::golden();
     let path = format!(
         "{}/../../tests/golden/observe.json",
         env!("CARGO_MANIFEST_DIR")

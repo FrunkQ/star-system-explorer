@@ -597,8 +597,13 @@ dependencies = [
 name = "sse-wasm"
 version = "0.1.0"
 dependencies = [
+ "serde_json",
  "sse-core",
  "sse-kernel",
+ "sse-observe",
+ "sse-resolve",
+ "sse-sift",
+ "sse-suite",
  "wasm-bindgen",
 ]
 

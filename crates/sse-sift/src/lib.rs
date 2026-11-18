@@ -7,6 +7,7 @@ pub mod classify;
 pub mod pack;
 pub mod predicate;
 pub mod rules;
+pub mod scenario;
 pub mod sifter;
 
 pub use classify::{Atlas, Axis, Bound, Class, ClassFit, ClassKind, Label, Scale};

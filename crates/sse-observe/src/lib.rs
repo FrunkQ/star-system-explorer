@@ -10,6 +10,7 @@
 //! - **Scenes**: plain data built from state after the filter, the only thing views see.
 #![forbid(unsafe_code)]
 
+pub mod scenario;
 pub mod scene;
 pub mod view;
 

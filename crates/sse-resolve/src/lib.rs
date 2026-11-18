@@ -10,6 +10,7 @@ pub mod envelope;
 pub mod partition;
 pub mod query;
 pub mod resolve;
+pub mod scenario;
 
 pub use dist::{Distribution, Sample};
 pub use envelope::{

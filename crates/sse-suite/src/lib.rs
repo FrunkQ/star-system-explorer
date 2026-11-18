@@ -14,6 +14,7 @@
 #![forbid(unsafe_code)]
 
 mod coordinator;
+pub mod scenario;
 mod socket;
 
 pub use coordinator::{replay_state, Coordinator, CoordinatorError, RunReport, Violation};

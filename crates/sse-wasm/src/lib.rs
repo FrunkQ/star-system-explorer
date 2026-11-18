@@ -8,6 +8,19 @@ pub fn harness_run() -> String {
     sse_core::harness::report_json(&sse_core::harness::run())
 }
 
+/// Run the K7 to K10 engine golden scenarios (resolve, sift, observe,
+/// suite); returns their digests as JSON text, keyed like tests/golden/*.json.
+#[wasm_bindgen]
+pub fn engines_run() -> String {
+    serde_json::json!({
+        "resolve": sse_resolve::scenario::golden(),
+        "sift": sse_sift::scenario::golden(),
+        "observe": sse_observe::scenario::golden(),
+        "suite": sse_suite::scenario::golden(),
+    })
+    .to_string()
+}
+
 /// The kernel behind the worker boundary: JSON request in, JSON response out.
 #[wasm_bindgen]
 pub struct Kernel(sse_kernel::Kernel);

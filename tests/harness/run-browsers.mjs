@@ -26,7 +26,7 @@ for (const name of wanted) {
   const page = await browser.newPage();
   await page.goto(url);
   await page.waitForFunction(() => document.body.dataset.result, null, { timeout: 120000 });
-  const [result, overall, kernel] = await page.evaluate(() => [document.body.dataset.result, document.body.dataset.overall, document.getElementById("kverdict")?.textContent]);
+  const [result, overall, kernel] = await page.evaluate(() => [document.body.dataset.result, document.body.dataset.overall, document.getElementById("everdict")?.textContent + "\n  " + document.getElementById("kverdict")?.textContent]);
   console.log(`${name} ${browser.version()}: ${result.toUpperCase()} overall ${overall}\n  ${kernel}`);
   if (process.env.SHOT) await page.setViewportSize({ width: 390, height: 900 }), await page.screenshot({ path: process.env.SHOT, fullPage: true });
   ran++; if (result !== "pass") failed++;
