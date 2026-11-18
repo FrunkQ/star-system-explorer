@@ -23,6 +23,7 @@ pub fn engines_run() -> String {
         "life": sse_life::scenario::golden(),
         "place": sse_place::scenario::golden(),
         "formation-accrete": sse_formation::scenario::accrete_golden(),
+        "formation-accrete-dole": sse_formation::scenario::accrete_dole_golden(),
         "formation-growth": sse_formation::scenario::growth_golden(),
         "formation-upheaval": sse_formation::scenario::upheaval_golden(),
         "formation-leftovers": sse_formation::scenario::leftovers_golden(),

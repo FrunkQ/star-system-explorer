@@ -157,6 +157,7 @@ pub fn accrete_golden() -> serde_json::Value {
             star_mass: mass,
             star_luminosity: l,
             controls: Controls::DEFAULT,
+            rule: crate::accrete::Rule::SystemLab,
         })
         .expect("valid request");
         let text = serde_json::to_string(&r).expect("serialisable");
@@ -273,6 +274,29 @@ pub fn leftovers_golden() -> serde_json::Value {
             })).collect::<Vec<_>>(),
             "moons": l.moons.iter().map(|mo| serde_json::json!({
                 "address": mo.address.to_string(), "origin": mo.origin, "diameter_km": mo.diameter_km,
+            })).collect::<Vec<_>>(),
+            "digest": sse_core::ContentHash::of(&text).expect("hash").hex(),
+        }));
+    }
+    serde_json::Value::Array(out)
+}
+
+/// F2 corrected rule (`accrete-dole1970-v1`) golden: G0's solar-patch systems,
+/// each driven by its own inheritance.
+pub fn accrete_dole_golden() -> serde_json::Value {
+    let mut out = vec![];
+    for (i, h) in solar_patch().into_iter().enumerate().take(8) {
+        let Ok(h) = h else { continue };
+        let req = crate::accrete::Request::from_history(&h, &format!("dole-golden-{i}"));
+        let r = crate::accrete::run(&req).expect("valid request");
+        let text = serde_json::to_string(&r).expect("serialisable");
+        out.push(serde_json::json!({
+            "system": h.manifest.system.to_string(),
+            "feh": h.inheritance.feh,
+            "star_mass": req.star_mass,
+            "dust_a": req.controls.A,
+            "bodies": r.bodies.iter().map(|b| serde_json::json!({
+                "a_au": b.a_au, "earth_mass": b.earth_mass(), "gas_giant": b.gas_giant,
             })).collect::<Vec<_>>(),
             "digest": sse_core::ContentHash::of(&text).expect("hash").hex(),
         }));

@@ -1,0 +1,314 @@
+[
+  {
+    "bodies": [
+      {
+        "a_au": 0.19660345961942916,
+        "earth_mass": 5.573946906925381e-6,
+        "gas_giant": false
+      },
+      {
+        "a_au": 0.45731053552354095,
+        "earth_mass": 0.0002027993055611154,
+        "gas_giant": false
+      },
+      {
+        "a_au": 1.1302059243303515,
+        "earth_mass": 0.0010722259786049959,
+        "gas_giant": false
+      },
+      {
+        "a_au": 3.193729575729264,
+        "earth_mass": 0.00540278496781519,
+        "gas_giant": false
+      },
+      {
+        "a_au": 6.369789369320387,
+        "earth_mass": 0.002469555742738497,
+        "gas_giant": false
+      },
+      {
+        "a_au": 11.917549059051929,
+        "earth_mass": 0.0020233089872611337,
+        "gas_giant": false
+      },
+      {
+        "a_au": 21.85020337457192,
+        "earth_mass": 0.0015146504017436164,
+        "gas_giant": false
+      }
+    ],
+    "digest": "f44cdeaf13781af0a3b150d9f12b70038ab51d8bfe2956701a98424a7d9e73b1",
+    "dust_a": 5.7894018164657485e-6,
+    "feh": -2.0337321901480894,
+    "star_mass": 0.174,
+    "system": "u:g0/patch:9:solar/cohort:0/sys:0"
+  },
+  {
+    "bodies": [
+      {
+        "a_au": 0.23941913557141162,
+        "earth_mass": 0.00009834482647346235,
+        "gas_giant": false
+      },
+      {
+        "a_au": 0.6732205876199772,
+        "earth_mass": 0.0009423734557204031,
+        "gas_giant": false
+      },
+      {
+        "a_au": 1.9704511845466075,
+        "earth_mass": 0.00674730961873672,
+        "gas_giant": false
+      },
+      {
+        "a_au": 5.220206418559191,
+        "earth_mass": 0.01150807291786191,
+        "gas_giant": false
+      },
+      {
+        "a_au": 15.802471806261211,
+        "earth_mass": 0.009738021226527394,
+        "gas_giant": false
+      }
+    ],
+    "digest": "a1ed78ffeda58dc3f9374594bf9d69679ab09566437612f696410968541d7b0b",
+    "dust_a": 0.000011911725433732441,
+    "feh": -1.6792978307679491,
+    "star_mass": 0.144,
+    "system": "u:g0/patch:9:solar/cohort:0/sys:1"
+  },
+  {
+    "bodies": [
+      {
+        "a_au": 0.20897731401764352,
+        "earth_mass": 0.0001616165726162547,
+        "gas_giant": false
+      },
+      {
+        "a_au": 0.3458035779203317,
+        "earth_mass": 0.004174566364527865,
+        "gas_giant": false
+      },
+      {
+        "a_au": 0.90455278474628,
+        "earth_mass": 0.03029612213174966,
+        "gas_giant": false
+      },
+      {
+        "a_au": 2.8036973233823113,
+        "earth_mass": 0.2772682956464578,
+        "gas_giant": false
+      },
+      {
+        "a_au": 13.3098920049381,
+        "earth_mass": 0.16413669698665742,
+        "gas_giant": false
+      },
+      {
+        "a_au": 27.496529295941944,
+        "earth_mass": 0.009034633199632817,
+        "gas_giant": false
+      }
+    ],
+    "digest": "c94b8d328eba16a092cd102215dbe8fe3a76bb0cab57a0d17b72248a50ab1bf0",
+    "dust_a": 0.00010037458061223232,
+    "feh": -0.7909655705420947,
+    "star_mass": 0.171,
+    "system": "u:g0/patch:9:solar/cohort:1/sys:0"
+  },
+  {
+    "bodies": [
+      {
+        "a_au": 0.24729500437132618,
+        "earth_mass": 0.009625194551618307,
+        "gas_giant": false
+      },
+      {
+        "a_au": 0.8581411190603365,
+        "earth_mass": 0.15533426413723425,
+        "gas_giant": false
+      },
+      {
+        "a_au": 1.598672474602328,
+        "earth_mass": 0.005265216214314752,
+        "gas_giant": false
+      },
+      {
+        "a_au": 2.900467369533695,
+        "earth_mass": 0.6722435513358072,
+        "gas_giant": false
+      },
+      {
+        "a_au": 5.623258708220585,
+        "earth_mass": 0.6152968881218652,
+        "gas_giant": false
+      },
+      {
+        "a_au": 12.09375823326577,
+        "earth_mass": 0.5809581946007422,
+        "gas_giant": false
+      },
+      {
+        "a_au": 25.90170990286621,
+        "earth_mass": 0.14429462869740844,
+        "gas_giant": false
+      }
+    ],
+    "digest": "48103413dacb8169e682954b5cb512d8c6a79c2c60cdb573511598e1a92fa58c",
+    "dust_a": 0.0002734390204421789,
+    "feh": -0.43292568264606723,
+    "star_mass": 0.244,
+    "system": "u:g0/patch:9:solar/cohort:1/sys:1"
+  },
+  {
+    "bodies": [
+      {
+        "a_au": 0.27122303889211424,
+        "earth_mass": 0.007635559753109958,
+        "gas_giant": false
+      },
+      {
+        "a_au": 0.6381317317231782,
+        "earth_mass": 0.013749037293924451,
+        "gas_giant": false
+      },
+      {
+        "a_au": 1.4057759785365345,
+        "earth_mass": 0.24470821836963352,
+        "gas_giant": false
+      },
+      {
+        "a_au": 3.1885340020112074,
+        "earth_mass": 0.333752375469997,
+        "gas_giant": false
+      },
+      {
+        "a_au": 8.777482499672724,
+        "earth_mass": 0.6101566900901885,
+        "gas_giant": false
+      },
+      {
+        "a_au": 21.363180837995206,
+        "earth_mass": 0.14388882148385407,
+        "gas_giant": false
+      }
+    ],
+    "digest": "e6fe29b411d2fca34db8c5d21c96f4093d67040912fbf8ded3b56e293db46459",
+    "dust_a": 0.00020818521700498305,
+    "feh": -0.3723332603851571,
+    "star_mass": 0.10700000000000001,
+    "system": "u:g0/patch:9:solar/cohort:1/sys:2"
+  },
+  {
+    "bodies": [
+      {
+        "a_au": 0.5210065905232921,
+        "earth_mass": 0.006307921936260249,
+        "gas_giant": false
+      },
+      {
+        "a_au": 1.1908527752011497,
+        "earth_mass": 1.9293254531455868,
+        "gas_giant": true
+      },
+      {
+        "a_au": 4.514816706083338,
+        "earth_mass": 107.86428899641407,
+        "gas_giant": true
+      },
+      {
+        "a_au": 15.21155815888773,
+        "earth_mass": 87.94180246652105,
+        "gas_giant": true
+      },
+      {
+        "a_au": 34.75739371956776,
+        "earth_mass": 0.6148640671543242,
+        "gas_giant": true
+      }
+    ],
+    "digest": "6557f9f449c7dd30f6933fe282af56cfe57e76393527efcb2f24055e166f151d",
+    "dust_a": 0.00083615531195054,
+    "feh": -0.3873901701503015,
+    "star_mass": 1.8499999999999999,
+    "system": "u:g0/patch:9:solar/cohort:1/sys:3"
+  },
+  {
+    "bodies": [
+      {
+        "a_au": 0.17146401516880708,
+        "earth_mass": 0.0007424044899128746,
+        "gas_giant": false
+      },
+      {
+        "a_au": 0.28701662849723997,
+        "earth_mass": 0.011726495884725798,
+        "gas_giant": false
+      },
+      {
+        "a_au": 0.5054242862324034,
+        "earth_mass": 0.009986653748012164,
+        "gas_giant": false
+      },
+      {
+        "a_au": 1.2267773269427809,
+        "earth_mass": 0.3238034370982849,
+        "gas_giant": false
+      },
+      {
+        "a_au": 2.862790283823892,
+        "earth_mass": 0.438286868720988,
+        "gas_giant": false
+      },
+      {
+        "a_au": 5.939765919664092,
+        "earth_mass": 0.8209934367307506,
+        "gas_giant": false
+      },
+      {
+        "a_au": 17.228693788446105,
+        "earth_mass": 0.4302882589597552,
+        "gas_giant": false
+      }
+    ],
+    "digest": "b28abc199716bc8a417ebe4d32b25231f831aec4f160e69e98098d1ce6b200d5",
+    "dust_a": 0.00028939373857671247,
+    "feh": -0.2541927517408437,
+    "star_mass": 0.12000000000000001,
+    "system": "u:g0/patch:9:solar/cohort:1/sys:4"
+  },
+  {
+    "bodies": [
+      {
+        "a_au": 0.36183141333227975,
+        "earth_mass": 0.005084036683082025,
+        "gas_giant": false
+      },
+      {
+        "a_au": 1.040178288114035,
+        "earth_mass": 0.03472547933508155,
+        "gas_giant": false
+      },
+      {
+        "a_au": 2.594160697066982,
+        "earth_mass": 0.08951927062209124,
+        "gas_giant": false
+      },
+      {
+        "a_au": 7.59571918948405,
+        "earth_mass": 0.29063482609827257,
+        "gas_giant": false
+      },
+      {
+        "a_au": 24.607829478253077,
+        "earth_mass": 0.03554944046709522,
+        "gas_giant": false
+      }
+    ],
+    "digest": "9b7bd7b9bb33d6d5c1ea012c88704054fd094b37d57c7b6804387eb1d89ebaed",
+    "dust_a": 0.00008526789222444626,
+    "feh": -0.9043373989425976,
+    "star_mass": 0.20800000000000002,
+    "system": "u:g0/patch:9:solar/cohort:1/sys:5"
+  }
+]
