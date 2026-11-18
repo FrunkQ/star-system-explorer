@@ -289,3 +289,46 @@ fn number_spellings_hash_identically() {
     assert_eq!(run("1.2e27"), run("1.20e+27"));
     assert_eq!(run("1.2e27"), run("1200000000000000000000000000"));
 }
+
+/// Numbers change (cross-track): a whole-valued physical input, however it is
+/// spelled, reaches the atoms as the same float, through flow inputs and
+/// through pack flow parameters.
+#[test]
+fn whole_valued_physical_inputs_reach_the_atoms() {
+    let pack_text = std::fs::read_to_string(root().join("packs/base-physics/pack.json")).unwrap();
+    let derive = |pack: &str, req: &str| -> String {
+        let mut k = crate::Kernel::new();
+        let r = k.handle_json(&format!(r#"{{"op":"load_stack","packs":[{pack}]}}"#));
+        assert!(r.contains("stack_loaded"), "{r}");
+        k.handle_json(req)
+    };
+    let bulk = |m: &str, r: &str| {
+        format!(
+            r#"{{"op":"derive","flow":"sse.base.planet-bulk","inputs":{{"mass":{{"value":{m},"unit":"m_earth"}},"radius":{{"value":{r},"unit":"km"}}}}}}"#
+        )
+    };
+    let a = derive(&pack_text, &bulk("1", "6371"));
+    assert!(a.contains("body.surface_gravity"), "{a}");
+    for (m, r) in [("1.0", "6371.0"), ("1e0", "6.371e3"), ("1.0E+0", "6371")] {
+        assert_eq!(derive(&pack_text, &bulk(m, r)), a, "{m} {r}");
+    }
+    // The pack itself with its whole-valued floats written as JavaScript writes
+    // them (1.0 as 1) is the same stack: same manifest, every golden case passes.
+    let js = pack_text.replace("\"value\": 1.0", "\"value\": 1");
+    assert_ne!(js, pack_text);
+    let manifest = |pack: &str| derive(pack, r#"{"op":"manifest"}"#);
+    assert_eq!(manifest(&js), manifest(&pack_text));
+    let pack = sse_pack::PackManifest::from_json(&js).unwrap();
+    let stack = sse_pack::resolve(&[pack], "0.1.0").unwrap();
+    let atoms = crate::kernel_atoms();
+    let cx = sse_flow::Context {
+        atoms: &atoms,
+        kinds: &stack.kinds,
+        units: &stack.units,
+    };
+    for f in stack.flows.values() {
+        let flow = sse_flow::Flow::compile(f.doc.clone(), &cx).unwrap();
+        let fails = flow.run_tests(&cx);
+        assert!(fails.is_empty(), "{}: {fails:?}", f.doc.id);
+    }
+}
