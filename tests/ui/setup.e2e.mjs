@@ -70,6 +70,9 @@ try {
     await dv.locator("details.disc summary").click();
     await dv.getByLabel("Tier of mass_kg").selectOption("obvious");
     await dv.getByText("1 unapplied: mass_kg scanned to obvious.").waitFor();
+    // The draft is previewed before it is applied (scene with a draft observe setup; nothing recorded).
+    await page.waitForFunction(() => /Earth/.test(document.querySelector("[aria-label='Player data'] [data-field='mass_kg'] dd")?.textContent ?? ""));
+    assert.equal(await page.getAttribute("[data-state-hash]", "data-state-hash"), beforeData, "a draft preview records nothing");
     await dv.getByRole("button", { name: "Apply to the campaign" }).click();
     await page.waitForFunction(() => /Earth/.test(document.querySelector("[aria-label='Player data'] [data-field='mass_kg'] dd")?.textContent ?? ""));
     const massApplied = await massOf();

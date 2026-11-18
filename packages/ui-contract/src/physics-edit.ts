@@ -3,7 +3,7 @@
 // nothing else, so the flow editor and the change-request panel cannot
 // diverge, and Orac's requests (A2) go through the same path as the GM's.
 import type { Workspace } from "./view.ts";
-import type { DeriveRef, Derived, IntentResult, ViewSession } from "./session.ts";
+import type { DeriveRef, Derived, IntentResult, Probe, ViewSession } from "./session.ts";
 import type { SystemScene } from "./scene.ts";
 import { checkRequest, packFor, type ChangeRequest, type PackDoc } from "./physics.ts";
 
@@ -42,6 +42,66 @@ export function candidateFor(session: ViewSession, ws: Workspace, r: ChangeReque
   return packFor(base, r ? [...keep, r] : keep);
 }
 
+/** One flow test whose expected value a campaign change moved. */
+export interface MovedTest {
+  flow: string;
+  test: string;
+  kind: string;
+  /** Expected values in the test's own unit. */
+  before: number;
+  after: number;
+}
+
+const UNIT_SI: Record<string, number> = { one: 1, k: 1, w: 1, w_m2: 1, m_s2: 1, km: 1e3, km_s: 1e3, g_cm3: 1e3, day: 86400, gyr: 3.15576e16, l_sun: 3.828e26, r_sun: 6.957e8 };
+
+type FlowTest = { name: string; inputs: Record<string, { value: number; unit?: string }>; expect: Record<string, { value: number; unit?: string; tol: number }> };
+
+/**
+ * A campaign pack with the tests of its edited flows re-baselined. The
+ * kernel runs every flow's golden cases when a stack loads, and a flow the
+ * campaign deliberately changed no longer meets the real-world references
+ * its base flow was tested against. So each case keeps its inputs and
+ * tolerance, takes the edited flow's own value as expected (converted to the
+ * test's unit by the base flow's ratio), and says in its name what it was.
+ * Both derivations run on the scratch kernel; nothing is chronicled.
+ */
+export async function rebaselined(session: ViewSession, pack: PackDoc | null): Promise<{ pack: PackDoc | null; moved: MovedTest[] }> {
+  if (!pack?.provides?.flows?.length) return { pack, moved: [] };
+  const flows = pack.provides.flows;
+  const cases = flows.flatMap((f) => ((f as { tests?: FlowTest[] }).tests ?? []).map((t) => ({ flow: f.id, t })));
+  if (!cases.length) return { pack, moved: [] };
+  const derive = async (p: Probe) => Promise.all(cases.map(({ flow, t }) => p.derive({ flow, inputs: t.inputs as DeriveRef["inputs"] })));
+  const base = await session.trial({ campaign: null }, derive);
+  const stripped = structuredClone(pack);
+  for (const f of stripped.provides!.flows!) delete (f as { tests?: unknown }).tests;
+  const edited = await session.trial({ campaign: stripped }, derive);
+  if (!base.ok || !edited.ok) return { pack, moved: [] }; // the real load reports why
+  const out = structuredClone(pack);
+  const moved: MovedTest[] = [];
+  cases.forEach(({ flow, t }, i) => {
+    const b = base.result[i]!;
+    const e = edited.result[i]!;
+    if (!b.ok || !e.ok) return;
+    const doc = out.provides!.flows!.find((f) => f.id === flow) as unknown as { tests: FlowTest[] };
+    const tc = doc.tests.find((x) => x.name === t.name)!;
+    const was: string[] = [];
+    for (const [kind, exp] of Object.entries(tc.expect)) {
+      const bv = b.values[kind]?.value;
+      const ev = e.values[kind]?.value;
+      if (bv === undefined || ev === undefined || bv === 0) continue;
+      // SI per unit for the units flow tests use; otherwise the base flow's own ratio.
+      const si = exp.unit ? UNIT_SI[exp.unit] : 1;
+      const after = si ? ev / si : (ev * exp.value) / bv;
+      if (Math.abs(after - exp.value) <= exp.tol) continue;
+      moved.push({ flow, test: t.name, kind, before: exp.value, after });
+      was.push(`${kind} ${exp.value}`);
+      exp.value = Number(after.toPrecision(12));
+    }
+    if (was.length) tc.name = `${t.name} [campaign change: re-baselined; reference was ${was.join(", ")}]`;
+  });
+  return { pack: out, moved };
+}
+
 export interface Preview {
   ok: boolean;
   /** Schema or kernel validation problems; a request with any never reaches Accept. */
@@ -60,6 +120,7 @@ export async function previewRequest(session: ViewSession, ws: Workspace, r: Cha
   } catch (e) {
     return { ok: false, problems: [String((e as Error).message)], values: [] };
   }
+  pack = (await rebaselined(session, pack)).pack;
   const t = await session.trial({ campaign: pack }, async (p) => (ref ? p.derive(ref) : null));
   if (!t.ok) return { ok: false, problems: (t.issues.length ? t.issues : [t.report]).map(readable), values: [] };
   if (!ref || !t.result) return { ok: true, problems: [], values: [] };
@@ -77,6 +138,7 @@ async function adoptSet(session: ViewSession, ws: Workspace, set: ChangeRequest[
   } catch (e) {
     return { status: "refused", reason: String((e as Error).message) };
   }
+  pack = (await rebaselined(session, pack)).pack;
   return session.send({ kind: "adopt_physics", pack: pack as never, requests: set.map((x) => x.id) });
 }
 

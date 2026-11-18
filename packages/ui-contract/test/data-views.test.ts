@@ -56,6 +56,9 @@ test("scenes per audience, the Scanned button, and an applied disclosure change"
     assert.equal(checkSetup(next), null);
     assert.deepEqual(setupChanges(cur.setup, next), ["mass_kg scanned to obvious"]);
     const state0 = await s.stateHash();
+    const draft = await s.scene(facts.scope, { audience: "everyone", observe: next });
+    assert.ok(draft.ok && typeof fact(draft.scene, TARN, "mass_kg")?.value === "number", "a draft previews before it is applied");
+    assert.equal(await s.stateHash(), state0, "a draft preview records nothing");
     const ws = plainWorkspace(0);
     assert.equal((await applySetup(s, ws, next)).status, "applied");
     assert.notEqual(await s.stateHash(), state0);

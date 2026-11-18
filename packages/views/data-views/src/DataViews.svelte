@@ -126,10 +126,13 @@
   let through = $state<string>("");
   let preview = $state<PlayerScene | null>(null);
   let previewError = $state<string | null>(null);
+  // With unapplied changes, the preview is built from the draft (the kernel records nothing).
+  const draftSetup = $derived(draft && changes.length && !problem ? ($state.snapshot(draft) as ObserveSetup) : null);
   $effect(() => {
     void ws.revision;
     const v = through;
-    session.scene(system.system, { audience, ...(v ? { data_view: v } : {}) }).then((r) => {
+    const observe = draftSetup;
+    session.scene(system.system, { audience, ...(v ? { data_view: v } : {}), ...(observe ? { observe } : {}) }).then((r) => {
       previewError = r.ok ? null : r.message;
       if (r.ok) preview = r.scene;
     });
@@ -258,7 +261,7 @@
 
     <section class="preview" aria-label="Preview">
       <div class="phead">
-        <div class="k">What {audience} sees now</div>
+        <div class="k">{draftSetup ? `What ${audience} would see` : `What ${audience} sees now`}</div>
         <label>Through
           <select bind:value={through}><option value="">their own grants</option>{#each applied.setup.views as v (v.id)}<option value={v.id}>{v.label}</option>{/each}</select>
         </label>
@@ -271,7 +274,7 @@
           <div class="scan"><button type="button" class="btn" onclick={scan}>Scanned button: {(subjects.find((s) => s.address === focus) ?? subjects[0]) ? subjectName((subjects.find((s) => s.address === focus) ?? subjects[0])!) : "…"}</button></div>
           {#if scanNote}<p class="note" role="status">{scanNote}</p>{/if}
         {/if}
-        <p class="muted">Live from the kernel. The preview shows the campaign as applied; apply a draft to see it here.</p>
+        <p class="muted">Live from the kernel. {draftSetup ? "Showing your unapplied draft: players do not see it until you apply it." : "Showing the campaign as applied."}</p>
       {:else}<p class="muted" aria-busy="true">Asking the kernel…</p>{/if}
     </section>
   {/if}

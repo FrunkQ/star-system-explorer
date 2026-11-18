@@ -107,6 +107,8 @@ export interface SceneOptions {
   audience?: string;
   /** Show every subject through this data view, whatever the grants say (a lens or a preview). */
   data_view?: string;
+  /** A draft data-view setup (`provides.other.observe`) to build with instead of the stack's. Records nothing. */
+  observe?: unknown;
   at_yr?: number;
 }
 
@@ -234,11 +236,11 @@ export class Session implements ViewSession {
   async scene(scope: string, opts: SceneOptions = {}) {
     const own = audienceOf(this.seat);
     const audience = opts.audience ?? own;
-    if (this.seat.authority !== "gm" && (audience !== own || opts.data_view !== undefined)) {
+    if (this.seat.authority !== "gm" && (audience !== own || opts.data_view !== undefined || opts.observe !== undefined)) {
       return { ok: false as const, message: `seat ${this.seat.label} sees only its own audience` };
     }
     const at_s = opts.at_yr === undefined ? 9_223_372_036_854_775_807n : yearsToSeconds(opts.at_yr);
-    const r = await this.#call({ op: "scene", audience, scope, ...(opts.data_view ? { data_view: opts.data_view } : {}), at_s });
+    const r = await this.#call({ op: "scene", audience, scope, ...(opts.data_view ? { data_view: opts.data_view } : {}), ...(opts.observe ? { observe: opts.observe } : {}), at_s });
     if (r.type === "scene") return { ok: true as const, scene: r.scene as PlayerScene, hash: String(r.scene_hash) };
     return { ok: false as const, message: String(r.message ?? JSON.stringify(r)) };
   }

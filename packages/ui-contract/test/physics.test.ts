@@ -88,6 +88,9 @@ test("open a real flow, change a parameter, see diff and badge", async () => {
     assert.equal(ws.requests.find((x) => x.id === draftId(CLIMATE)), undefined, "the next edit starts a new draft");
     assert.notEqual(s.stack().hash, stack0);
     assert.equal(s.flowDoc(CLIMATE)!.pack, CAMPAIGN_PACK);
+    // The kernel runs each flow's cases at load: the edited flow's cases are re-baselined, and say from what.
+    const cases = (s.flowDoc(CLIMATE)!.doc as { tests?: { name: string }[] }).tests ?? [];
+    assert.ok(cases.length && cases.some((c) => /re-baselined; reference was planet.equilibrium_temperature 254/.test(c.name)), cases.map((c) => c.name).join(" | "));
     assert.notEqual(await s.stateHash(), hash0, "adopting physics is chronicled");
     assert.equal(r.status === "applied" && (await s.history(s.universe.root)).some((e) => e.id === r.event_id && e.kind === "stack.adopt"), true);
     const changed = await deriveScene(s, scene, doc);
