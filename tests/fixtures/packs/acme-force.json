@@ -1,0 +1,74 @@
+{
+ "format": "sse.pack/1",
+ "id": "acme.force",
+ "version": "1.0.0",
+ "kind": [
+  "physics"
+ ],
+ "kernel_range": "^0.1",
+ "licence": "Apache-2.0",
+ "fictional": true,
+ "requires": [
+  {
+   "id": "sse.base-toy",
+   "range": "^0.1"
+  }
+ ],
+ "provides": {
+  "quantity_kinds": [
+   {
+    "id": "planet.force_temperature",
+    "dim": [
+     0,
+     0,
+     0,
+     0,
+     1,
+     0,
+     0
+    ],
+    "description": "how hot the Force runs here"
+   }
+  ],
+  "flows": [
+   {
+    "format": "sse.flow/1",
+    "id": "acme.force-heat",
+    "version": "1.0.0",
+    "hook": "planet.force",
+    "inputs": [
+     {
+      "name": "flux",
+      "kind": "planet.insolation"
+     },
+     {
+      "name": "albedo",
+      "kind": "planet.bond_albedo"
+     }
+    ],
+    "nodes": [
+     {
+      "id": "t",
+      "atom": "toy.equilibrium_temperature"
+     }
+    ],
+    "wires": [
+     {
+      "from": "in.flux",
+      "to": "t.flux"
+     },
+     {
+      "from": "in.albedo",
+      "to": "t.albedo"
+     }
+    ],
+    "publishes": [
+     {
+      "kind": "planet.force_temperature",
+      "from": "t.teq"
+     }
+    ]
+   }
+  ]
+ }
+}

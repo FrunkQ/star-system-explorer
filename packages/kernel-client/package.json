@@ -1,0 +1,9 @@
+{
+  "name": "@sse/kernel-client",
+  "version": "0.1.0",
+  "private": true,
+  "license": "Apache-2.0",
+  "type": "module",
+  "description": "Typed client for the SSE4 kernel running in a Web Worker (or a Node worker thread).",
+  "exports": { ".": "./src/index.ts" }
+}

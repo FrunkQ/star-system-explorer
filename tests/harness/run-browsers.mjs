@@ -8,7 +8,7 @@ import { createRequire } from "node:module";
 const require = createRequire(import.meta.url);
 const pw = require("playwright");
 const root = dirname(fileURLToPath(import.meta.url));
-const types = { ".html": "text/html", ".js": "text/javascript", ".wasm": "application/wasm", ".json": "application/json" };
+const types = { ".html": "text/html", ".js": "text/javascript", ".wasm": "application/wasm", ".json": "application/json", ".jsonl": "text/plain" };
 const server = createServer(async (req, res) => {
   const p = normalize(join(root, decodeURIComponent(new URL(req.url, "http://x").pathname)));
   const file = p.endsWith("/") ? join(p, "index.html") : p;
@@ -26,8 +26,9 @@ for (const name of wanted) {
   const page = await browser.newPage();
   await page.goto(url);
   await page.waitForFunction(() => document.body.dataset.result, null, { timeout: 120000 });
-  const [result, overall] = await page.evaluate(() => [document.body.dataset.result, document.body.dataset.overall]);
-  console.log(`${name} ${browser.version()}: ${result.toUpperCase()} overall ${overall}`);
+  const [result, overall, kernel] = await page.evaluate(() => [document.body.dataset.result, document.body.dataset.overall, document.getElementById("kverdict")?.textContent]);
+  console.log(`${name} ${browser.version()}: ${result.toUpperCase()} overall ${overall}\n  ${kernel}`);
+  if (process.env.SHOT) await page.setViewportSize({ width: 390, height: 900 }), await page.screenshot({ path: process.env.SHOT, fullPage: true });
   ran++; if (result !== "pass") failed++;
   await browser.close();
 }

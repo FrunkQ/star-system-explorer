@@ -48,6 +48,7 @@ impl<'de> Deserialize<'de> for ContentHash {
 }
 
 /// Incremental hasher with domain separation.
+#[derive(Clone)]
 pub struct Hasher(Sha256);
 impl Hasher {
     pub fn new(domain: &str) -> Self {

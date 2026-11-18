@@ -11,4 +11,5 @@ crate-type = ["cdylib", "rlib"]
 
 [dependencies]
 sse-core.workspace = true
+sse-kernel.workspace = true
 wasm-bindgen = "=0.2.130"

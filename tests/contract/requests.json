@@ -1,0 +1,324 @@
+[
+ {
+  "op": "hello"
+ },
+ {
+  "op": "derive",
+  "flow": "toy.star-and-planet",
+  "inputs": {
+   "star_mass": {
+    "value": 1,
+    "unit": "m_sun"
+   },
+   "distance": {
+    "value": 1,
+    "unit": "au"
+   },
+   "albedo": {
+    "value": 0.3
+   },
+   "planet_mass": {
+    "value": 1,
+    "unit": "m_earth"
+   },
+   "planet_radius": {
+    "value": 1,
+    "unit": "r_earth",
+    "source": "resolved"
+   }
+  }
+ },
+ {
+  "op": "load_stack",
+  "packs": [
+   "$pack:base-toy",
+   "$pack:acme-rival"
+  ]
+ },
+ {
+  "op": "load_stack",
+  "packs": [
+   "$pack:base-toy",
+   "$pack:acme-force"
+  ]
+ },
+ {
+  "op": "derive",
+  "flow": "toy.star-and-planet",
+  "inputs": {
+   "star_mass": {
+    "value": 1,
+    "unit": "m_sun"
+   },
+   "distance": {
+    "value": 1,
+    "unit": "au"
+   },
+   "albedo": {
+    "value": 0.3
+   },
+   "planet_mass": {
+    "value": 1,
+    "unit": "m_earth"
+   },
+   "planet_radius": {
+    "value": 1,
+    "unit": "r_earth",
+    "source": "resolved"
+   }
+  }
+ },
+ {
+  "op": "derive",
+  "flow": "acme.force-heat",
+  "inputs": {
+   "flux": {
+    "value": 1361
+   },
+   "albedo": {
+    "value": 0.3
+   }
+  }
+ },
+ {
+  "op": "explain",
+  "flow": "toy.star-and-planet",
+  "inputs": {
+   "star_mass": {
+    "value": 1,
+    "unit": "m_sun"
+   },
+   "distance": {
+    "value": 1,
+    "unit": "au"
+   },
+   "albedo": {
+    "value": 0.3
+   },
+   "planet_mass": {
+    "value": 1,
+    "unit": "m_earth"
+   },
+   "planet_radius": {
+    "value": 1,
+    "unit": "r_earth",
+    "source": "resolved"
+   }
+  },
+  "kind": "planet.surface_temperature"
+ },
+ {
+  "op": "explain",
+  "flow": "toy.star-and-planet",
+  "inputs": {
+   "star_mass": {
+    "value": 1,
+    "unit": "m_sun"
+   },
+   "distance": {
+    "value": 1,
+    "unit": "au"
+   },
+   "albedo": {
+    "value": 0.3
+   },
+   "planet_mass": {
+    "value": 1,
+    "unit": "m_earth"
+   },
+   "planet_radius": {
+    "value": 1,
+    "unit": "r_earth",
+    "source": "resolved"
+   }
+  },
+  "kind": "sun.flux"
+ },
+ {
+  "op": "state_hash",
+  "at_s": 0
+ },
+ {
+  "op": "open_universe",
+  "id": "tarn",
+  "seed": "tarn campaign"
+ },
+ {
+  "op": "draw",
+  "address": "u:tarn/sys:7",
+  "stream": "planets.count.v1",
+  "counter": 0
+ },
+ {
+  "op": "draw",
+  "address": "u:tarn/sys:7",
+  "stream": "planets.count",
+  "counter": 0
+ },
+ {
+  "op": "set_authored",
+  "edit": {
+   "address": "u:tarn/sys:7/body:3",
+   "field": "name",
+   "value": "Tarn",
+   "occurred_at_s": 100
+  }
+ },
+ {
+  "op": "set_authored",
+  "edit": {
+   "address": "u:tarn/sys:7/body:3",
+   "field": "albedo",
+   "value": 0.31,
+   "occurred_at_s": 200
+  }
+ },
+ {
+  "op": "set_authored",
+  "edit": {
+   "address": "u:tarn/sys:7/body:@1",
+   "field": "kind",
+   "value": "station",
+   "occurred_at_s": 150,
+   "impossible": true
+  }
+ },
+ {
+  "op": "set_authored",
+  "edit": {
+   "address": "u:other/sys:1",
+   "field": "x",
+   "value": 1,
+   "occurred_at_s": 0
+  }
+ },
+ {
+  "op": "history",
+  "address": "u:tarn/sys:7/body:3"
+ },
+ {
+  "op": "state_hash",
+  "at_s": 150
+ },
+ {
+  "op": "state_hash",
+  "at_s": 1000
+ },
+ {
+  "op": "state_hash",
+  "scope": "u:tarn/sys:7/body:3",
+  "at_s": 1000
+ },
+ {
+  "op": "branch",
+  "label": "what if"
+ },
+ {
+  "op": "branch_set",
+  "branch": "$branch",
+  "edit": {
+   "address": "u:tarn/sys:7/body:3",
+   "field": "albedo",
+   "value": 0.9,
+   "occurred_at_s": 5000
+  }
+ },
+ {
+  "op": "branch_state_hash",
+  "branch": "$branch",
+  "at_s": 10000
+ },
+ {
+  "op": "discard",
+  "branch": "$branch"
+ },
+ {
+  "op": "state_hash",
+  "at_s": 10000
+ },
+ {
+  "op": "branch",
+  "label": "age it"
+ },
+ {
+  "op": "branch_set",
+  "branch": "$branch",
+  "edit": {
+   "address": "u:tarn/sys:7/body:3",
+   "field": "albedo",
+   "value": 0.5,
+   "occurred_at_s": 6000
+  }
+ },
+ {
+  "op": "commit",
+  "branch": "$branch",
+  "at_s": 6000
+ },
+ {
+  "op": "discard",
+  "branch": "$branch"
+ },
+ {
+  "op": "state_hash",
+  "at_s": 10000
+ },
+ {
+  "op": "start_job",
+  "job": {
+   "kind": "benchmark",
+   "units": 5000
+  }
+ },
+ {
+  "op": "step_job",
+  "job": 1,
+  "budget": 2000
+ },
+ {
+  "op": "step_job",
+  "job": 1,
+  "budget": 2000
+ },
+ {
+  "op": "step_job",
+  "job": 1,
+  "budget": 2000
+ },
+ {
+  "op": "step_job",
+  "job": 1,
+  "budget": 1
+ },
+ {
+  "op": "start_job",
+  "job": {
+   "kind": "benchmark",
+   "units": 5000
+  }
+ },
+ {
+  "op": "step_job",
+  "job": 2,
+  "budget": 100
+ },
+ {
+  "op": "cancel_job",
+  "job": 2
+ },
+ {
+  "op": "step_job",
+  "job": 2,
+  "budget": 100
+ },
+ {
+  "op": "start_job",
+  "job": {
+   "kind": "benchmark",
+   "units": 0
+  }
+ },
+ {
+  "op": "nonsense"
+ }
+]

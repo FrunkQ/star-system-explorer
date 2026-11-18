@@ -21,6 +21,9 @@ jobs:
       - if: matrix.os == 'ubuntu-latest'
         run: cargo clippy --workspace --all-targets -- -D warnings
       - run: cargo test --workspace
+      - if: matrix.os == 'ubuntu-latest'
+        name: generated TypeScript types are committed and current
+        run: git diff --exit-code packages/contracts/src/generated
       - run: cargo run -q -p sse-cli --release -- harness
 
   wasm:
@@ -32,8 +35,11 @@ jobs:
         with: { node-version: 22 }
       - run: rustup show
       - run: cargo install wasm-bindgen-cli --version 0.2.130 --locked
+      - run: npm ci
       - run: scripts/build-harness.sh
+      - run: npm run typecheck
       - run: node tests/harness/run-node.mjs
+      - run: npm test
       - run: npm install --no-save playwright@1.63.0 && npx playwright install --with-deps chromium firefox webkit
       - run: node tests/harness/run-browsers.mjs chromium firefox webkit
       - uses: actions/upload-pages-artifact@v3

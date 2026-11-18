@@ -1,0 +1,17 @@
+{
+  "name": "sse4",
+  "private": true,
+  "license": "Apache-2.0",
+  "workspaces": ["packages/contracts", "packages/kernel-client"],
+  "scripts": {
+    "build:wasm": "scripts/build-wasm.sh",
+    "build": "scripts/build-wasm.sh && tsc -p packages/kernel-client",
+    "typecheck": "tsc -p packages/kernel-client --noEmit",
+    "test": "node --test packages/kernel-client/test/*.test.ts",
+    "harness": "scripts/build-harness.sh && node scripts/serve.mjs tests/harness"
+  },
+  "devDependencies": {
+    "typescript": "5.9.3",
+    "@types/node": "22.20.5"
+  }
+}

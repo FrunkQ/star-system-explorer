@@ -10,19 +10,44 @@ Status: early build. Milestone 1 ("proven core") is in progress.
 
 | Path | What |
 |---|---|
-| `crates/` | Rust kernel (deterministic): `sse-core` substrate, and later chronicle, flows, packs, kernel API, wasm surface, CLI |
+| `crates/` | Rust kernel (deterministic): `sse-core` substrate, `sse-chronicle`, `sse-flow`, `sse-pack`, `sse-kernel` (message API), `sse-wasm`, `sse-cli` |
 | `packages/` | TypeScript: contracts (generated types), kernel client, apps |
 | `tests/golden/` | golden hashes that every device must reproduce |
 | `tests/harness/` | cross-device hash check page (open in any browser) |
 | `docs/adr/` | architecture decision records |
 | `handover/` | build handover: design copies and progress log. Temporary; delete when no longer wanted |
 
+## Install and run
+
+Needs Rust (via rustup; the pinned toolchain installs itself), Node 22 or later, and once:
+
+```
+cargo install wasm-bindgen-cli --version 0.2.130 --locked
+```
+
+Then, from the repo root:
+
+```
+npm install
+npm run harness        # builds everything and serves http://localhost:8080/
+```
+
+That page is what exists to run today: the cross-device check. It runs the
+pinned maths, encoding and draw cases and every kernel API call through a Web
+Worker, and says PASS when this browser matches the native results. Open it
+on each of your devices.
+
+To deploy it as a static site, run `scripts/build-harness.sh` and publish the
+folder `tests/harness/` as it stands (no server code; any static host works).
+
 ## Checks
 
 ```
 cargo test --workspace                       # unit, property and golden tests
 cargo run -p sse-cli --release -- harness    # print the cross-device digests
+scripts/check.sh                             # fmt, clippy, all Rust tests
 scripts/build-harness.sh && node tests/harness/run-node.mjs
+npm test                                     # kernel contract through a Node worker
 node tests/harness/run-browsers.mjs          # needs Playwright browsers
 ```
 
