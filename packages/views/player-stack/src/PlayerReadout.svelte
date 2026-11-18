@@ -44,44 +44,52 @@
 <style>
   .readout {
     padding: 12px 16px;
-    border: var(--sse-line) solid var(--sse-ink);
-    background: var(--sse-ground-raised);
-    color: var(--sse-ink);
+    background: var(--sse-panel-ground);
+    border: var(--sse-frame-width) solid var(--sse-frame-line);
+    border-radius: var(--sse-frame-radius);
+    box-shadow: var(--sse-frame-shadow);
+    color: var(--sse-panel-ink);
+    text-shadow: var(--sse-text-glow);
     font-family: var(--sse-font-body);
   }
   .cap {
     display: flex;
     justify-content: space-between;
     gap: 8px;
+    padding-left: calc(var(--sse-cap-end) * 0.5);
+    border-left: calc(var(--sse-cap-end) * 0.5) solid var(--sse-cap-end-colour);
     font-size: 11px;
-    letter-spacing: 0.1em;
-    text-transform: uppercase;
-    color: var(--sse-ink-muted);
+    text-transform: var(--sse-label-case);
+    letter-spacing: var(--sse-label-tracking);
+    color: var(--sse-panel-muted);
   }
   .who {
-    font-family: var(--sse-font-display);
-    font-style: italic;
+    font-family: var(--sse-title-font);
+    font-style: var(--sse-title-style);
     text-transform: none;
     letter-spacing: 0;
     font-size: 13px;
   }
   .big {
     margin-top: 4px;
-    font-family: var(--sse-font-mono);
+    font-family: var(--sse-value-font);
+    color: var(--sse-value-ink);
     font-size: 28px;
     line-height: 1.2;
   }
   .big.unknown {
-    font-family: var(--sse-font-display);
-    font-style: italic;
+    font-family: var(--sse-title-font);
+    font-style: var(--sse-unknown-style);
     font-size: 18px;
-    color: var(--sse-ink-muted);
+    color: var(--sse-panel-muted);
   }
   .gauge {
     position: relative;
     height: 10px;
     margin-top: 8px;
-    border: var(--sse-line) solid var(--sse-ink);
+    overflow: hidden;
+    border: var(--sse-line) solid var(--sse-panel-ink);
+    border-radius: var(--sse-tag-radius);
   }
   .fill {
     position: absolute;
@@ -91,9 +99,9 @@
   .ends {
     display: flex;
     justify-content: space-between;
-    font-family: var(--sse-font-mono);
+    font-family: var(--sse-value-font);
     font-size: 11px;
-    color: var(--sse-ink-muted);
+    color: var(--sse-panel-muted);
   }
   .lamp {
     display: flex;
@@ -105,15 +113,16 @@
     width: 18px;
     height: 18px;
     border-radius: 50%;
-    border: var(--sse-line) solid var(--sse-ink);
-    background: var(--sse-ground);
+    border: var(--sse-line) solid var(--sse-panel-ink);
+    background: var(--sse-panel-ground);
   }
   .bulb.lit {
     background: var(--sse-accent);
-    box-shadow: 0 0 0 3px var(--sse-ground-raised), 0 0 0 4px var(--sse-accent);
+    box-shadow: 0 0 0 3px var(--sse-panel-ground), 0 0 0 4px var(--sse-accent);
   }
   .state {
-    font-family: var(--sse-font-mono);
+    font-family: var(--sse-value-font);
+    color: var(--sse-value-ink);
     font-size: 14px;
     text-transform: uppercase;
   }

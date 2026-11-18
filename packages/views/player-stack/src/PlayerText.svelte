@@ -27,12 +27,16 @@
   .ptext {
     padding: 14px 18px;
     color: var(--sse-ink);
+    text-shadow: var(--sse-text-glow);
     font-family: var(--sse-font-display);
     font-size: 17px;
     line-height: 1.55;
   }
   h2 {
     margin: 0 0 6px;
+    font-family: var(--sse-title-font);
+    font-style: var(--sse-title-style);
+    text-transform: var(--sse-title-case);
     font-size: 22px;
     font-weight: 600;
   }

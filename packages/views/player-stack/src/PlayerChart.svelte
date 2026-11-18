@@ -87,9 +87,10 @@
     width: 100%;
     height: 100%;
     min-height: 240px;
-    background: var(--sse-ground);
+    background: var(--sse-chart-ground);
     color: var(--sse-ink);
     font-family: var(--sse-font-body);
+    filter: drop-shadow(var(--sse-text-glow));
   }
   svg {
     position: absolute;
@@ -117,7 +118,8 @@
   }
   .body text {
     fill: var(--sse-ink);
-    font-family: var(--sse-font-display);
+    font-family: var(--sse-title-font);
+    font-style: var(--sse-title-style);
     font-size: 15px;
   }
   .body.sel .dot {
@@ -146,16 +148,16 @@
   }
   .k {
     font-size: 11px;
-    letter-spacing: 0.08em;
-    text-transform: uppercase;
+    letter-spacing: var(--sse-label-tracking);
+    text-transform: var(--sse-label-case);
     color: var(--sse-ink-muted);
   }
   .unplaced button {
     min-height: 32px;
     border: var(--sse-line) dashed var(--sse-ink-muted);
-    background: var(--sse-ground);
+    background: var(--sse-chart-ground);
     color: var(--sse-ink);
-    font-family: var(--sse-font-display);
+    font-family: var(--sse-title-font);
     font-size: 15px;
     padding: 0 10px;
     cursor: pointer;

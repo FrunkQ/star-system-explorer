@@ -4,7 +4,9 @@
 // properties `--sse-<name>`.
 export interface TokenSpec {
   name: string;
-  type: "colour" | "length" | "font" | "number" | "shadow";
+  type: "colour" | "length" | "font" | "number" | "shadow" | "keyword";
+  /** For keywords: the values a theme may set. */
+  options?: readonly string[];
   meaning: string;
   promoted?: boolean;
   /** For colours that carry text: the token they sit on, checked for contrast. */
@@ -37,4 +39,38 @@ export const TOKENS: readonly TokenSpec[] = [
   { name: "card-shadow", type: "shadow", meaning: "Hard offset shadow that lifts a card off the chart.", promoted: true },
   { name: "radius", type: "length", meaning: "Corner radius of frames; 0 is the chart look." },
   { name: "grid-step", type: "number", meaning: "Survey grid spacing in chart pixels.", promoted: true },
+
+  // Frame parts (V2): the named pieces every view is built from. A view says
+  // "this is a panel, this is its cap, this is a label"; the theme decides
+  // what each looks like, so one view can be a chart card, a lit deck panel
+  // or a phosphor readout without knowing which.
+  { name: "panel-ground", type: "colour", meaning: "Fill of a panel (a card, a table, a readout).", promoted: true },
+  { name: "panel-ink", type: "colour", meaning: "Text and lines inside a panel.", text_on: ["panel-ground"] },
+  { name: "panel-muted", type: "colour", meaning: "Secondary text inside a panel: labels, captions, unknowns.", text_on: ["panel-ground"] },
+  { name: "frame-line", type: "colour", meaning: "Colour of a panel's outline. Decorative: a panel is also set apart by its fill and shadow, so no contrast rule." },
+  { name: "frame-width", type: "length", meaning: "Weight of a panel's outline; 0 for none." },
+  { name: "frame-radius", type: "length", meaning: "Corner radius of panels." },
+  { name: "frame-shadow", type: "shadow", meaning: "What lifts a panel off the ground: a hard offset, a soft blur or a glow." },
+  { name: "cap-ground", type: "colour", meaning: "Fill of a panel's cap, the strip that carries its title." },
+  { name: "cap-ink", type: "colour", meaning: "Title text on the cap.", text_on: ["cap-ground"] },
+  { name: "cap-rule", type: "colour", meaning: "Line between the cap and the panel body." },
+  { name: "cap-end", type: "length", meaning: "Width of the solid block that ends a cap at its left; 0 for none." },
+  { name: "cap-end-colour", type: "colour", meaning: "Colour of the cap's end block." },
+  { name: "cap-end-radius", type: "length", meaning: "Rounding of the cap's end block (a pill when large)." },
+  { name: "title-font", type: "font", meaning: "Font of panel titles and names." },
+  { name: "title-style", type: "keyword", options: ["normal", "italic"], meaning: "Slant of titles." },
+  { name: "title-case", type: "keyword", options: ["none", "uppercase", "capitalize"], meaning: "Case of titles." },
+  { name: "title-size", type: "length", meaning: "Size of a panel title." },
+  { name: "label-case", type: "keyword", options: ["none", "uppercase", "lowercase"], meaning: "Case of field labels and captions." },
+  { name: "label-tracking", type: "length", meaning: "Letter spacing of field labels." },
+  { name: "value-font", type: "font", meaning: "Font of values and numbers." },
+  { name: "value-ink", type: "colour", meaning: "Colour of values.", text_on: ["panel-ground"] },
+  { name: "unknown-style", type: "keyword", options: ["normal", "italic"], meaning: "Slant of a placeholder for an unknown fact." },
+  { name: "row-rule", type: "colour", meaning: "Divider between rows of facts." },
+  { name: "row-rule-style", type: "keyword", options: ["solid", "dotted", "dashed", "none"], meaning: "Style of row dividers." },
+  { name: "tag-ground", type: "colour", meaning: "Fill of a tag chip." },
+  { name: "tag-ink", type: "colour", meaning: "Text of a tag chip.", text_on: ["tag-ground"] },
+  { name: "tag-radius", type: "length", meaning: "Rounding of tag chips." },
+  { name: "text-glow", type: "shadow", meaning: "Glow around text (phosphor screens); none for print." },
+  { name: "chart-ground", type: "colour", meaning: "Ground behind an orbital chart drawing." },
 ];

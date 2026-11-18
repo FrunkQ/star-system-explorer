@@ -46,33 +46,53 @@
 
 <style>
   .pcard {
-    background: var(--sse-ground-raised);
-    border: var(--sse-line) solid var(--sse-ink);
-    border-radius: var(--sse-radius);
-    box-shadow: var(--sse-card-shadow);
-    color: var(--sse-ink);
+    background: var(--sse-panel-ground);
+    border: var(--sse-frame-width) solid var(--sse-frame-line);
+    border-radius: var(--sse-frame-radius);
+    box-shadow: var(--sse-frame-shadow);
+    color: var(--sse-panel-ink);
+    text-shadow: var(--sse-text-glow);
+    overflow: hidden;
     font-family: var(--sse-font-body);
   }
+  /* The cap: the frame part that carries a panel's title. */
   header {
     display: flex;
     justify-content: space-between;
     align-items: baseline;
     gap: 10px;
     padding: 14px 18px 8px;
-    border-bottom: var(--sse-line) solid var(--sse-ink);
+    background: var(--sse-cap-ground);
+    color: var(--sse-cap-ink);
+    border-bottom: var(--sse-line) solid var(--sse-cap-rule);
+  }
+  header::before {
+    content: "";
+    flex: 0 0 var(--sse-cap-end);
+    align-self: stretch;
+    margin-right: calc(var(--sse-cap-end) * 0.2 - 10px);
+    border-radius: var(--sse-cap-end-radius);
+    background: var(--sse-cap-end-colour);
   }
   h2 {
+    flex: 1;
     margin: 0;
-    font-family: var(--sse-font-display);
-    font-size: 24px;
+    font-family: var(--sse-title-font);
+    font-size: var(--sse-title-size);
+    font-style: var(--sse-title-style);
+    text-transform: var(--sse-title-case);
     font-weight: 600;
   }
-  .view,
+  .view {
+    font-size: 11px;
+    text-transform: var(--sse-label-case);
+    letter-spacing: var(--sse-label-tracking);
+  }
   dt {
     font-size: 11px;
-    letter-spacing: 0.1em;
-    text-transform: uppercase;
-    color: var(--sse-ink-muted);
+    text-transform: var(--sse-label-case);
+    letter-spacing: var(--sse-label-tracking);
+    color: var(--sse-panel-muted);
   }
   .tags {
     display: flex;
@@ -83,12 +103,14 @@
     list-style: none;
   }
   .tags li {
-    border: var(--sse-line) solid var(--sse-accent-ink);
-    color: var(--sse-accent-ink);
+    border: var(--sse-line) solid var(--sse-tag-ink);
+    border-radius: var(--sse-tag-radius);
+    background: var(--sse-tag-ground);
+    color: var(--sse-tag-ink);
     font-size: 11px;
-    letter-spacing: 0.08em;
-    text-transform: uppercase;
-    padding: 0 6px;
+    letter-spacing: var(--sse-label-tracking);
+    text-transform: var(--sse-label-case);
+    padding: 0 8px;
   }
   dl {
     margin: 0;
@@ -100,18 +122,19 @@
     align-items: baseline;
     gap: 12px;
     padding: 6px 18px;
-    border-bottom: var(--sse-line) dotted var(--sse-rule);
+    border-bottom: var(--sse-line) var(--sse-row-rule-style) var(--sse-row-rule);
   }
   dd {
     margin: 0;
     text-align: right;
-    font-family: var(--sse-font-mono);
+    font-family: var(--sse-value-font);
+    color: var(--sse-value-ink);
     font-size: 14px;
   }
   .unknown dd {
-    font-family: var(--sse-font-display);
-    font-style: italic;
-    color: var(--sse-ink-muted);
+    font-family: var(--sse-title-font);
+    font-style: var(--sse-unknown-style);
+    color: var(--sse-panel-muted);
   }
   .marks {
     color: var(--sse-accent-ink);

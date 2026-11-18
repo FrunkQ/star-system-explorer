@@ -17,3 +17,4 @@ export type { Tick, RulerEvent } from "./ruler.ts";
 export { radius, distanceAt, fitScale, polar } from "./scale.ts";
 export type { RadialScale } from "./scale.ts";
 export { STAMP_LABELS, HONESTY, stampLabel } from "./stamps.ts";
+export { default as FilterChain } from "./FilterChain.svelte";

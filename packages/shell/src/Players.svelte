@@ -12,13 +12,16 @@
   import stackDoc from "./documents/stack.json";
   import factsDoc from "./documents/kestrel.player-facts.json";
   import { PLAYER_STACK } from "../../views/player-stack/src/index.ts";
-  import { themeCss, THEMES } from "../../skins/chart-room/src/index.ts";
-  import { Segmented } from "../../chart-grammar/src/index.ts";
+  import { themeCss } from "../../skins/chart-room/src/index.ts";
+  import { ALL_THEMES, PLAYER_THEMES, filterLayers } from "../../skins/player/src/index.ts";
+  import { FilterChain, Segmented } from "../../chart-grammar/src/index.ts";
   import screenDoc from "./documents/players.screen.json";
   import vocabDoc from "./documents/vocab.plain.json";
+  import guideVocabDoc from "./documents/vocab.guide.json";
   import { loadPref, savePref } from "./prefs.ts";
 
-  const vocab = vocabDoc as unknown as Vocab;
+  // A theme names its vocabulary layer (H8.4); the screen's is the fallback.
+  const VOCABS: Record<string, Vocab> = { plain: vocabDoc as unknown as Vocab, guide: guideVocabDoc as unknown as Vocab };
   const checked = checkScreen(screenDoc as unknown as ScreenDoc, PLAYER_STACK);
 
   const facts = factsDoc as unknown as AuthoredFacts;
@@ -61,13 +64,23 @@
     await refresh();
     busy = false;
   }
-  let theme = $state(loadPref("theme") === "night-chart" ? "night-chart" : "chart-room");
+  const saved = loadPref("player-theme");
+  let theme = $state(PLAYER_THEMES.some((t) => t.id === saved) ? saved! : "chart");
+  const themeDoc = $derived(PLAYER_THEMES.find((t) => t.id === theme)!);
+  const vocabId = $derived(themeDoc.vocab && VOCABS[themeDoc.vocab] ? themeDoc.vocab : screenDoc.vocab in VOCABS ? screenDoc.vocab : "plain");
+  const vocab = $derived(VOCABS[vocabId]!);
+  // Screen effects follow the viewer: no motion when asked, none at all for more contrast or when switched off.
+  const media = (q: string) => typeof matchMedia === "function" && matchMedia(q).matches;
+  let effects = $state(loadPref("effects") !== "off");
+  const layers = $derived(filterLayers(themeDoc.filters, { reducedMotion: media("(prefers-reduced-motion: reduce)"), off: !effects || media("(prefers-contrast: more)") }));
+  const rootFx = $derived(layers.map((l) => l.root).join(" "));
   $effect(() => {
     const root = document.documentElement;
-    root.setAttribute("style", themeCss(theme));
-    root.style.colorScheme = THEMES.find((t) => t.id === theme)?.mode ?? "light";
+    root.setAttribute("style", themeCss(theme, ALL_THEMES));
+    root.style.colorScheme = themeDoc.mode;
     root.dataset.theme = theme;
-    savePref("theme", theme);
+    savePref("player-theme", theme);
+    savePref("effects", effects ? "on" : "off");
   });
 
   const handles: ViewHandle<PlayerScene>[] = [];
@@ -85,7 +98,7 @@
   const star = $derived(scene ? scene.subjects.find((s) => s.address === scene!.scope) : undefined);
 </script>
 
-<div class="page">
+<div class="page" style={rootFx}>
   <header class="bar">
     <h1>{star ? subjectName(star) : "System"}</h1>
     <span class="kicker">{screenDoc.label} · audience {scene?.audience ?? "…"}</span>
@@ -99,29 +112,27 @@
       ]}
       onchange={(v) => setSensor(v)}
     />
-    <Segmented
-      label="Theme"
-      value={theme}
-      options={[
-        { value: "chart-room", label: "Chart" },
-        { value: "night-chart", label: "Night" },
-      ]}
-      onchange={(v) => (theme = v)}
-    />
+    <label class="pick">Theme
+      <select bind:value={theme} title={themeDoc.description}>{#each PLAYER_THEMES as t (t.id)}<option value={t.id}>{t.name}</option>{/each}</select>
+    </label>
+    {#if themeDoc.filters?.length}<label class="pick"><input type="checkbox" bind:checked={effects} /> Screen effects</label>{/if}
   </header>
   {#if !checked.ok || sceneErrors.length}
     <main class="problem" role="alert"><h2>This screen cannot be shown</h2><ul>{#each [...(checked.ok ? [] : checked.errors), ...sceneErrors] as e (e)}<li>{e}</li>{/each}</ul></main>
   {:else if !scene}
     <main class="problem" aria-busy="true"><p>Waiting for the scene…</p></main>
   {:else}
-    <main class="grid">
-      {#each checked.screen.mounts as m (m.area)}
-        <section class="area area-{m.area}" data-view={m.module.id}><div class="fill" use:view={m}></div></section>
-      {/each}
-    </main>
+    {#key vocabId}
+      <main class="grid">
+        {#each checked.screen.mounts as m (m.area)}
+          <section class="area area-{m.area}" data-view={m.module.id}><div class="fill" use:view={m}></div></section>
+        {/each}
+      </main>
+    {/key}
   {/if}
   <footer class="status">Scene: live from the kernel for the {AUDIENCE} audience{sceneHash ? ` · scene ${sceneHash.slice(0, 10)}` : ""} · the Scanned control stands in for the GM's button and taps it for {target ? subjectName(target) : "the body in focus"}</footer>
 </div>
+<FilterChain {layers} />
 
 <style>
   :global(html, body) {
@@ -162,6 +173,22 @@
   .spacer {
     flex: 1;
   }
+  .pick {
+    display: flex;
+    gap: 8px;
+    align-items: center;
+    min-height: 40px;
+    font-size: 13px;
+  }
+  .pick select {
+    min-height: 40px;
+    padding: 0 8px;
+    border: var(--sse-line) solid var(--sse-ink);
+    border-radius: var(--sse-radius);
+    background: var(--sse-ground-raised);
+    color: var(--sse-ink);
+    font: inherit;
+  }
   .grid {
     display: grid;
     gap: 20px;
@@ -175,7 +202,7 @@
       "f f f";
     align-items: start;
   }
-  .area-a { grid-area: a; height: 460px; border: var(--sse-line) solid var(--sse-ink); }
+  .area-a { grid-area: a; height: 460px; overflow: hidden; border: var(--sse-frame-width) solid var(--sse-frame-line); border-radius: var(--sse-frame-radius); box-shadow: var(--sse-frame-shadow); }
   .area-b { grid-area: b; }
   .area-c { grid-area: c; }
   .area-d { grid-area: d; }

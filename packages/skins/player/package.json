@@ -1,0 +1,9 @@
+{
+  "name": "@sse/skin-player",
+  "version": "0.1.0",
+  "private": true,
+  "license": "Apache-2.0",
+  "type": "module",
+  "description": "The shipped player themes (V2): Chart, Paper, Deck panels, Phosphor, Clean glass, Field guide. Original designs in a genre's spirit with generic names. Tokens, frame parts and filter chains only; no encoding of facts (that is symbology).",
+  "exports": { ".": "./src/index.ts" }
+}

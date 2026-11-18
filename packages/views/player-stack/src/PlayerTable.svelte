@@ -68,9 +68,12 @@
 <style>
   .wrap {
     overflow-x: auto;
-    border: var(--sse-line) solid var(--sse-ink);
-    background: var(--sse-ground-raised);
-    color: var(--sse-ink);
+    background: var(--sse-panel-ground);
+    border: var(--sse-frame-width) solid var(--sse-frame-line);
+    border-radius: var(--sse-frame-radius);
+    box-shadow: var(--sse-frame-shadow);
+    color: var(--sse-panel-ink);
+    text-shadow: var(--sse-text-glow);
     font-family: var(--sse-font-body);
   }
   table {
@@ -80,47 +83,55 @@
   caption {
     text-align: left;
     padding: 10px 12px 6px;
-    font-family: var(--sse-font-display);
+    background: var(--sse-cap-ground);
+    color: var(--sse-cap-ink);
+    border-left: var(--sse-cap-end) solid var(--sse-cap-end-colour);
+    font-family: var(--sse-title-font);
+    font-style: var(--sse-title-style);
+    text-transform: var(--sse-title-case);
     font-size: 18px;
   }
   th,
   td {
     padding: 6px 12px;
-    border-top: var(--sse-line) solid var(--sse-rule);
+    border-top: var(--sse-line) var(--sse-row-rule-style) var(--sse-row-rule);
     text-align: left;
     vertical-align: baseline;
     white-space: nowrap;
   }
   thead th {
-    border-top: var(--sse-line) solid var(--sse-ink);
-    border-bottom: var(--sse-line) solid var(--sse-ink);
+    border-top: var(--sse-line) solid var(--sse-cap-rule);
+    border-bottom: var(--sse-line) solid var(--sse-cap-rule);
   }
   thead button {
     border: 0;
     background: none;
     padding: 4px 0;
-    color: var(--sse-ink-muted);
+    color: var(--sse-panel-muted);
     font-family: var(--sse-font-body);
     font-size: 11px;
-    letter-spacing: 0.08em;
-    text-transform: uppercase;
+    letter-spacing: var(--sse-label-tracking);
+    text-transform: var(--sse-label-case);
+    text-shadow: inherit;
     cursor: pointer;
   }
   td {
-    font-family: var(--sse-font-mono);
+    font-family: var(--sse-value-font);
+    color: var(--sse-value-ink);
     font-size: 13px;
   }
   td.unknown {
-    font-family: var(--sse-font-display);
-    font-style: italic;
-    color: var(--sse-ink-muted);
+    font-family: var(--sse-title-font);
+    font-style: var(--sse-unknown-style);
+    color: var(--sse-panel-muted);
   }
   .name {
     border: 0;
     background: none;
     padding: 4px 0;
-    color: var(--sse-ink);
-    font-family: var(--sse-font-display);
+    color: var(--sse-panel-ink);
+    font-family: var(--sse-title-font);
+    text-shadow: inherit;
     font-size: 15px;
     cursor: pointer;
   }
