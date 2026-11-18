@@ -7,6 +7,7 @@
 pub mod accrete;
 pub mod disc;
 pub mod early;
+pub mod growth;
 pub mod history;
 pub mod hurley;
 pub mod inherit;
@@ -22,6 +23,8 @@ pub use lifeline::{LifeLine, Phase, StarState};
 mod accrete_tests;
 #[cfg(test)]
 mod early_tests;
+#[cfg(test)]
+mod growth_tests;
 #[cfg(test)]
 mod tests;
 

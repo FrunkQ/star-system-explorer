@@ -24,6 +24,7 @@ pub fn engines_run() -> String {
         "place": sse_place::scenario::golden(),
         "time": sse_time::scenario::golden(),
         "formation-accrete": sse_formation::scenario::accrete_golden(),
+        "formation-growth": sse_formation::scenario::growth_golden(),
         "cosmos": sse_cosmos::scenario::golden(),
     })
     .to_string()

@@ -34,3 +34,8 @@ sse-kernel = { path = "crates/sse-kernel" }
 opt-level = 3
 lto = true
 codegen-units = 1
+
+# The formation suite's population tests run 10,000 systems; optimise it in
+# test builds too (same IEEE arithmetic, no fast-math, so results are unchanged).
+[profile.dev.package.sse-formation]
+opt-level = 2
