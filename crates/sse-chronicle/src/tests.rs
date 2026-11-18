@@ -197,3 +197,31 @@ fn golden_state_hash() {
         "08a0bc876658e735cd957ddbb72afbe5b9b87dc4ce39064c01267b40c9314443"
     );
 }
+
+#[test]
+fn branch_from_an_empty_chronicle() {
+    // T2 found this: appending to a branch cut before any event underflowed.
+    let mut c = Chronicle::new();
+    let b = c.branch("look");
+    let e = Event::new(EventBody {
+        kind: kinds::AUTHORED_SET.into(),
+        subject: vec!["u:t".parse::<sse_core::Address>().unwrap()],
+        occurred_at: UniverseTime::ORIGIN,
+        activated_at: UniverseTime::ORIGIN,
+        recognised_at: c.next_stamp(),
+        causes: vec![],
+        payload: Payload::default(),
+        evidence: Evidence::Authored,
+        publisher: Publisher::new("t", "t", "1"),
+    })
+    .unwrap();
+    c.branch_append(&b, e).unwrap();
+    c.commit(
+        &b,
+        UniverseTime::ORIGIN,
+        vec!["u:t".parse().unwrap()],
+        Publisher::new("t", "t", "1"),
+    )
+    .unwrap();
+    assert_eq!(c.len(), 2);
+}

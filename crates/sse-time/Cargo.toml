@@ -1,0 +1,15 @@
+[package]
+name = "sse-time"
+description = "SSE4 time (T1, T2): epoch stepping, the ageing star, secular orbits, a fixed-step symplectic integrator for detailed windows, branch look-ahead and commit"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+authors.workspace = true
+
+[dependencies]
+sse-core.workspace = true
+sse-chronicle.workspace = true
+sse-pack.workspace = true
+sse-formation = { path = "../sse-formation" }
+serde.workspace = true
+serde_json.workspace = true
