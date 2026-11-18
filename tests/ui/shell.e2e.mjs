@@ -46,6 +46,7 @@ async function tabTo(page, test, max = 60) {
 }
 
 const results = [];
+let u2 = null;
 const expected = await playerEvent();
 try {
   for (const name of engines) {
@@ -70,6 +71,55 @@ try {
     await page.waitForFunction((h) => document.querySelector("[data-state-hash]")?.getAttribute("data-state-hash") === h, expected.state_hash, { timeout: 5000 });
     assert.equal(eventId, expected.event_id, "GM edit and auto-approved player intent give the same event");
     assert.match(await page.locator("section[aria-label='Tarn']").innerText(), /MASS\s*·\s*SET[\s\S]*0\.9/i);
+
+    // U2: derived values follow edits; drag an orbit; undo and redo; why?
+    const card = page.locator("section[aria-label='Tarn']");
+    // A field's shown value, whether typed (input) or read-only (output).
+    const fieldStartsWith = (prefix) =>
+      page.evaluate((p) => {
+        const f = [...document.querySelectorAll("section[aria-label='Tarn'] .field")].find((x) => x.querySelector("label")?.textContent.trim().toLowerCase().startsWith(p.toLowerCase()));
+        const v = f?.querySelector("input, output");
+        return v ? (v.value ?? v.textContent).trim() : "";
+      }, prefix);
+    await page.waitForFunction(() => /0\.9\b/.test(document.querySelector("section[aria-label='Tarn']")?.textContent ?? ""));
+    const gravityAfterMass = await fieldStartsWith("Gravity");
+    assert.notEqual(gravityAfterMass, "0.908 g", "gravity re-derived after the mass edit");
+    const surface0 = parseFloat(await fieldStartsWith("Surface"));
+    const tarn = page.locator("[role=button][aria-label^='Tarn'] circle.hit");
+    const star = page.locator("[role=button][aria-label^='Kestrel'] circle.hit");
+    const tb = await tarn.boundingBox();
+    const sb = await star.boundingBox();
+    const [tx, ty, sx, sy] = [tb.x + tb.width / 2, tb.y + tb.height / 2, sb.x + sb.width / 2, sb.y + sb.height / 2];
+    await page.mouse.move(tx, ty);
+    await page.mouse.down();
+    for (let k = 1; k <= 10; k++) await page.mouse.move(tx + ((tx - sx) * 0.35 * k) / 10, ty + ((ty - sy) * 0.35 * k) / 10);
+    await page.mouse.up();
+    await page.waitForFunction(() => document.querySelectorAll("[data-event-id]").length >= 2, null, { timeout: 5000 });
+    await page.waitForFunction((s0) => {
+      const f = [...document.querySelectorAll("section[aria-label='Tarn'] .field")].find((x) => /^surface/i.test(x.textContent.trim()));
+      return f && parseFloat(f.textContent.replace(/^\D+/, "")) < s0;
+    }, surface0, { timeout: 5000 });
+    const orbitDragged = parseFloat(await fieldStartsWith("Orbit"));
+    assert.ok(orbitDragged > 0.52, `dragged orbit ${orbitDragged} AU`);
+    const surface1 = parseFloat(await fieldStartsWith("Surface"));
+    await page.keyboard.press("Control+z");
+    const orbitIs = (want) => page.waitForFunction((w) => [...document.querySelectorAll("section[aria-label='Tarn'] input")].some((i) => i.value === w), want, { timeout: 5000 });
+    await orbitIs("0.52 AU");
+    await page.keyboard.press("Control+Shift+z");
+    await orbitIs(`${orbitDragged} AU`);
+    const events = await page.locator("[data-event-id]").count();
+    assert.equal(events, 4, "mass edit, drag, undo and redo are four inked events");
+    await card.locator(".field").filter({ hasText: /^surface/i }).getByRole("button", { name: /why/i }).click();
+    const why = page.locator("[role=region][aria-label^='Why']");
+    await why.locator(".formula").waitFor();
+    const formula = await why.locator(".formula").innerText();
+    await why.getByRole("tab", { name: "Science" }).click();
+    const science = await why.locator("[role=tabpanel]").innerText();
+    await why.getByRole("button", { name: "why?" }).first().click();
+    await page.waitForFunction(() => document.querySelectorAll("[aria-label='Explanation trail'] button").length === 2);
+    const trail = await why.locator("[aria-label='Explanation trail']").innerText();
+    u2 = { gravityAfterMass, orbitDragged, surface: [surface0, surface1], formula, science: science.slice(0, 60), trail: trail.replace(/\s+/g, " ") };
+    await why.getByRole("button", { name: "Close the explanation" }).click();
 
     // Ruler by keyboard.
     await page.keyboard.press("Escape");
@@ -114,6 +164,10 @@ try {
           assert.ok(w <= 390, `phone layout scrolls sideways (${w}px)`);
           assert.ok(await p.locator("[role=slider]").isVisible(), "ruler visible on phone");
         }
+        if (form === "desktop") {
+          await p.locator("section[aria-label='Tarn'] .field").filter({ hasText: /^surface/i }).getByRole("button", { name: /why/i }).click();
+          await p.locator("[role=region][aria-label^='Why'] .formula").waitFor();
+        }
         if (screens && name === "chromium") {
           mkdirSync(screens, { recursive: true });
           await p.waitForTimeout(300);
@@ -124,7 +178,8 @@ try {
     }
     await browser.close();
     assert.deepEqual(errors, [], "no page errors");
-    results.push({ engine: name, tabsToTarn, tabsToMass, eventId, phoneWidth: phone });
+    results.push({ engine: name, tabsToTarn, tabsToMass, eventId, phoneWidth: phone, u2 });
+    console.log(`U2 ${name}: ${JSON.stringify(u2)}`);
     console.log(`PASS ${name}: Tarn reached in ${tabsToTarn} tabs, Mass in ${tabsToMass}; event ${eventId.slice(0, 12)} matches the player seat; phone width ${JSON.stringify(phone)}`);
   }
 } finally {

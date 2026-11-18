@@ -31,6 +31,15 @@ export interface ParamSpec {
   cost?: Cost;
 }
 
+/** One applied change, kept so it can be undone by a further, opposite intent. */
+export interface AppliedEdit {
+  address: string;
+  field: string;
+  before: { value: Json; display: string };
+  after: { value: Json; display: string };
+  event_id: string;
+}
+
 /** Shared, reactive state of one workspace: what is selected, what time it is, what mode. */
 export interface Workspace {
   selection: string | null;
@@ -40,9 +49,13 @@ export interface Workspace {
   applied: Record<string, { value: Json; display: string; event_id: string }>;
   /** Bumped whenever an intent is applied, so views can refresh history. */
   revision: number;
+  /** Edits that can be undone, newest last; undone edits that can be redone. */
+  undo: AppliedEdit[];
+  redo: AppliedEdit[];
   select(address: string | null): void;
   setTime(yr: number): void;
-  noteApplied(address: string, field: string, value: Json, display: string, event_id: string): void;
+  /** Record an applied edit. `as` says whether it is a new edit (clears redo), an undo or a redo. */
+  noteApplied(edit: AppliedEdit, as?: "edit" | "undo" | "redo"): void;
 }
 
 export interface ViewContext {

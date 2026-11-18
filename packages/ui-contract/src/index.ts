@@ -5,9 +5,12 @@ export { YEAR_S, INTENT_KINDS, checkIntent, yearsToSeconds, secondsToYears } fro
 export type { Intent, IntentKind, IntentSchema } from "./intent.ts";
 export { decide, gmSeat, tableSeat, within } from "./seat.ts";
 export type { Seat, AutoApprove, Decision } from "./seat.ts";
-export type { ViewSession, IntentResult, HistoryEvent, DeviceEdge } from "./session.ts";
+export type { ViewSession, IntentResult, HistoryEvent, DeviceEdge, DeriveRef, InputValue, Derived, Explanation } from "./session.ts";
+export { deriveScene, applyEdits, sig } from "./derivation.ts";
+export type { DerivationDoc, DerivationRule, InputBinding, OutputBinding } from "./derivation.ts";
 export { resolveParams } from "./view.ts";
-export type { ViewModule, ViewContext, ViewHandle, ParamSpec, Tier, TopicQuery, Workspace } from "./view.ts";
+export type { ViewModule, ViewContext, ViewHandle, ParamSpec, Tier, TopicQuery, Workspace, AppliedEdit } from "./view.ts";
+export { commitEdit, undoEdit, redoEdit } from "./edit.ts";
 export { checkScreen, LAYOUT_AREAS } from "./screen.ts";
 export type { ScreenDoc, ScreenItem, CheckedScreen } from "./screen.ts";
 export { markFor } from "./mark.ts";

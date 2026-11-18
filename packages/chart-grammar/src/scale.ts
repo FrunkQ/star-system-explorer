@@ -16,6 +16,13 @@ export function radius(a_au: number, s: RadialScale): number {
   return s.r_min + t * (s.r_max - s.r_min);
 }
 
+/** Inverse of `radius`: the distance in AU drawn at a chart radius. */
+export function distanceAt(r: number, s: RadialScale): number {
+  const lo = Math.log(s.inner_au);
+  const hi = Math.log(s.outer_au);
+  return Math.exp(lo + ((r - s.r_min) / (s.r_max - s.r_min)) * (hi - lo));
+}
+
 /** Choose inner and outer bounds that fit a set of orbits with a margin. */
 export function fitScale(distances_au: number[], r_min: number, r_max: number): RadialScale {
   const d = distances_au.filter((x) => x > 0);

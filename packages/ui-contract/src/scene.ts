@@ -3,6 +3,7 @@
 // the shell loads a fixture in this shape, labelled as a fixture. Views draw
 // only from a scene and never compute physics.
 import type { Json } from "./json.ts";
+import type { DeriveRef } from "./session.ts";
 
 export type FactSource = "authored" | "derived" | "resolved" | "fixture";
 
@@ -15,6 +16,11 @@ export interface SceneFact {
   display: string;
   editable: boolean;
   source: FactSource;
+  /** Where "why?" goes for a derived value: the flow, its inputs and the quantity kind. */
+  why?: DeriveRef & { kind: string };
+  /** Kernel validity label for a derived value ("in-range", "out-of-range", ...). */
+  validity?: string;
+  fictional?: boolean;
 }
 
 export interface SceneSubject {

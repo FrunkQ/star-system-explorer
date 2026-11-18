@@ -1,6 +1,6 @@
 // The workspace state shared by the views of one screen. Reactive, so a
 // selection made on the chart reaches the card and the ruler.
-import type { Json, Workspace } from "../../ui-contract/src/index.ts";
+import type { AppliedEdit, Workspace } from "../../ui-contract/src/index.ts";
 
 export function createWorkspace(now_yr: number): Workspace {
   const ws: Workspace = $state({
@@ -9,14 +9,21 @@ export function createWorkspace(now_yr: number): Workspace {
     mode: "edit",
     applied: {},
     revision: 0,
+    undo: [],
+    redo: [],
     select(address: string | null) {
       ws.selection = address;
     },
     setTime(yr: number) {
       ws.now_yr = yr;
     },
-    noteApplied(address: string, field: string, value: Json, display: string, event_id: string) {
-      ws.applied[`${address}#${field}`] = { value, display, event_id };
+    noteApplied(e: AppliedEdit, as: "edit" | "undo" | "redo" = "edit") {
+      ws.applied[`${e.address}#${e.field}`] = { value: e.after.value, display: e.after.display, event_id: e.event_id };
+      if (as === "edit") {
+        ws.undo.push(e);
+        ws.redo = [];
+      } else if (as === "undo") ws.redo.push(e);
+      else ws.undo.push(e);
       ws.revision += 1;
     },
   });

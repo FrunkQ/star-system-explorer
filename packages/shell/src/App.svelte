@@ -4,21 +4,25 @@
   kernel only through the session, the same client API a player app uses.
 -->
 <script lang="ts">
-  import { checkScreen, gmSeat, markFor, type CheckedScreen, type ScreenDoc, type Symbology, type SystemScene, type ViewModule, type ViewSession } from "../../ui-contract/src/index.ts";
+  import { applyEdits, checkScreen, deriveScene, gmSeat, markFor, redoEdit, undoEdit, type CheckedScreen, type DerivationDoc, type ScreenDoc, type Symbology, type SystemScene, type ViewHandle, type ViewModule, type ViewSession } from "../../ui-contract/src/index.ts";
   import { openBrowserSession } from "../../ui-contract/src/host-browser.ts";
   import { themeCss, THEMES } from "../../skins/chart-room/src/index.ts";
   import { Segmented, ToolButton, formatYears } from "../../chart-grammar/src/index.ts";
   import workspaceDoc from "./documents/workspace.gm.json";
   import sceneDoc from "./documents/kestrel.scene.json";
   import symbologyDoc from "./documents/diagrammatic.stub.json";
+  import derivationsDoc from "./documents/derivations.base.json";
+  import stackDoc from "./documents/stack.json";
   import { REGISTRY } from "./registry.ts";
   import { createWorkspace } from "./workspace.svelte.ts";
   import { loadPref, savePref } from "./prefs.ts";
   import type { Json } from "../../ui-contract/src/index.ts";
 
-  const scene = sceneDoc as unknown as SystemScene;
+  const base = sceneDoc as unknown as SystemScene;
+  const derivations = derivationsDoc as unknown as DerivationDoc;
   const symbology = symbologyDoc as unknown as Symbology;
-  const ws = createWorkspace(scene.now_yr);
+  const ws = createWorkspace(base.now_yr);
+  let scene = $state<SystemScene>(base);
 
   const checked = checkScreen(workspaceDoc as unknown as ScreenDoc, REGISTRY);
   const screen: CheckedScreen | null = checked.ok ? checked.screen : null;
@@ -36,26 +40,61 @@
   let session = $state<ViewSession | null>(null);
   let failure = $state<string | null>(null);
   let status = $state({ kernel: "", tier: "", hash: "" });
-  openBrowserSession({ base: document.baseURI, seat: gmSeat(), universe: scene.universe })
+  async function loadPacks(): Promise<unknown[]> {
+    return Promise.all(stackDoc.packs.map(async (p) => (await fetch(new URL(p, document.baseURI))).json()));
+  }
+
+  loadPacks()
+    .then((packs) => openBrowserSession({ base: document.baseURI, seat: gmSeat(), universe: base.universe, packs }))
     .then(async (s) => {
+      scene = await deriveScene(s, { ...base, now_yr: ws.now_yr }, derivations);
       session = s;
       status = { kernel: await s.kernelVersion(), tier: s.device()?.tier ?? "unmeasured", hash: await s.stateHash() };
     })
     .catch((e) => (failure = String(e)));
 
+  // Scenes come from the kernel's derivations over the authored values; any
+  // edit or a move of the ruler re-derives (K9 moves this into the kernel).
+  let generation = 0;
   $effect(() => {
     void ws.revision;
+    const now = ws.now_yr;
+    const applied = { ...ws.applied };
     const s = session;
-    if (s) s.stateHash().then((h) => (status = { ...status, hash: h }));
+    if (!s) return;
+    const g = ++generation;
+    s.stateHash().then((h) => (status = { ...status, hash: h }));
+    deriveScene(s, applyEdits({ ...base, now_yr: now }, applied), derivations).then((next) => {
+      if (g === generation) scene = next;
+    });
   });
+
+  const handles: ViewHandle[] = [];
+  $effect(() => {
+    const s = scene;
+    for (const h of handles) h.update(s);
+  });
+
+  let undoNote = $state<string | null>(null);
+  async function undo(back: boolean) {
+    if (!session) return;
+    const r = await (back ? undoEdit(session, ws) : redoEdit(session, ws));
+    undoNote = r === null ? (back ? "Nothing to undo." : "Nothing to redo.") : r.status === "applied" ? null : "Could not change it back.";
+  }
 
   function view(node: HTMLElement, m: { module: ViewModule; params: Record<string, Json> }) {
     const h = m.module.mount(node, { session: session!, workspace: ws, params: m.params, mark: (s) => markFor(s, symbology) }, scene);
-    return { destroy: () => h.dispose() };
+    handles.push(h);
+    return {
+      destroy: () => {
+        handles.splice(handles.indexOf(h), 1);
+        h.dispose();
+      },
+    };
   }
 
   let help: HTMLDialogElement | undefined = $state();
-  const bodies = scene.subjects.filter((s) => s.kind === "star" || s.orbit).sort((a, b) => (a.orbit?.a_au ?? 0) - (b.orbit?.a_au ?? 0));
+  const bodies = base.subjects.filter((s) => s.kind === "star" || s.orbit).sort((a, b) => (a.orbit?.a_au ?? 0) - (b.orbit?.a_au ?? 0));
   function cycle(by: number) {
     const i = bodies.findIndex((b) => b.address === ws.selection);
     ws.select(bodies[(i + by + bodies.length) % bodies.length]!.address);
@@ -63,7 +102,18 @@
 
   function onkeydown(e: KeyboardEvent) {
     const t = e.target as HTMLElement;
-    if (t.closest("input, textarea, select, dialog") || e.ctrlKey || e.metaKey || e.altKey) return;
+    if (t.closest("input, textarea, select, dialog")) return;
+    if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === "z") {
+      e.preventDefault();
+      void undo(!e.shiftKey);
+      return;
+    }
+    if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === "y") {
+      e.preventDefault();
+      void undo(false);
+      return;
+    }
+    if (e.ctrlKey || e.metaKey || e.altKey) return;
     const keys: Record<string, () => void> = {
       e: () => (ws.mode = "edit"),
       v: () => (ws.mode = "view"),
@@ -132,8 +182,11 @@
       <div class="area-chart">{#if mountFor("chart")}<div class="fill" use:view={mountFor("chart")!}></div>{/if}</div>
       <nav class="tools" aria-label="Tools">
         <ToolButton label="Select" icon="M5 3l14 8-6 2-2 6z" pressed={true} />
+        <ToolButton label="Undo" icon="M9 14L4 9l5-5M4 9h11a5 5 0 0 1 0 10h-3" keyhint="Control+Z" disabled={ws.undo.length === 0 || ws.mode !== "edit"} onclick={() => undo(true)} />
+        <ToolButton label="Redo" icon="M15 14l5-5-5-5M20 9H9a5 5 0 0 0 0 10h3" keyhint="Control+Shift+Z" disabled={ws.redo.length === 0 || ws.mode !== "edit"} onclick={() => undo(false)} />
         <ToolButton label="Keyboard shortcuts" icon="M3 7h18v10H3zM7 11h1M11 11h1M15 11h2M7 14h10" keyhint="?" onclick={() => help?.showModal()} />
       </nav>
+      {#if undoNote}<p class="undo-note" role="status">{undoNote}</p>{/if}
       <aside class="area-card" aria-label="Selected body">{#if mountFor("card")}<div use:view={mountFor("card")!}></div>{/if}</aside>
     </main>
     <footer class="area-ruler" aria-label="Time">{#if mountFor("ruler")}<div class="fill" use:view={mountFor("ruler")!}></div>{/if}</footer>
@@ -155,7 +208,10 @@
     <dt>Esc</dt><dd>Put a typed value back, or clear the selection</dd>
     <dt>[ and ]</dt><dd>Previous or next body</dd>
     <dt>C, T</dt><dd>Go to the chart, go to the time ruler</dd>
-    <dt>Page Up, Page Down, Home, End</dt><dd>Larger steps on the ruler</dd>
+    <dt>Page Up, Page Down, Home, End</dt><dd>On the ruler, larger steps</dd>
+    <dt>Drag a body, or Page Up, Page Down on it</dt><dd>Move its orbit out or in (edit mode)</dd>
+    <dt>Ctrl+Z, Ctrl+Shift+Z</dt><dd>Undo, redo (each is a new correction on the chart's history)</dd>
+    <dt>why?</dt><dd>On any value: where it came from, in three lenses</dd>
     <dt>E, V</dt><dd>Edit or view</dd>
     <dt>N</dt><dd>Chart room or Night chart</dd>
   </dl>
@@ -232,12 +288,20 @@
     flex-direction: column;
     gap: 6px;
   }
+  .undo-note {
+    position: absolute;
+    left: 88px;
+    top: 24px;
+    margin: 0;
+    font-size: 13px;
+    color: var(--sse-ink-muted);
+  }
   .area-card {
     position: absolute;
     right: 24px;
     top: 24px;
     width: 380px;
-    max-height: calc(100% - 48px);
+    max-height: calc(100% - 110px);
     overflow: auto;
     padding: 0 6px 6px 0;
   }
@@ -344,7 +408,15 @@
     .area-chart .fill {
       position: absolute;
     }
-    .area-card {
+    .undo-note {
+    position: absolute;
+    left: 88px;
+    top: 24px;
+    margin: 0;
+    font-size: 13px;
+    color: var(--sse-ink-muted);
+  }
+  .area-card {
       position: static;
       width: auto;
       max-height: none;

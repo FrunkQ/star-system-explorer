@@ -7,10 +7,10 @@ import { Session } from "./session.ts";
 import type { Seat } from "./seat.ts";
 import type { ViewSession } from "./session.ts";
 
-export async function openBrowserSession(opts: { base: string; seat: Seat; universe: { id: string; seed: string } }): Promise<ViewSession> {
+export async function openBrowserSession(opts: { base: string; seat: Seat; universe: { id: string; seed: string }; packs?: unknown[] }): Promise<ViewSession> {
   const worker = new Worker(new URL("kernel/worker.js", opts.base), { type: "module" });
   const client = new KernelClient(browserPort(worker), { jsUrl: new URL("kernel/sse_wasm.js", opts.base).href });
-  const session = await Session.open(client, opts.seat, opts.universe);
+  const session = await Session.open(client, opts.seat, opts.universe, opts.packs ?? []);
   await client.measure();
   return session;
 }

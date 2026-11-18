@@ -13,5 +13,7 @@ Status: accepted (U0, U1).
 - `markFor` (`ui-contract/src/mark.ts`) is a minimal table evaluator of a symbology document so no view hard-codes an encoding (H8.4A). V12 replaces it with the full symbology engine; the shell's `diagrammatic.stub.json` is placeholder data, not V3's class table.
 - View packages live under `packages/views/*` now (H15 layout). V1 formalises the contract further (scene subscriptions, tiers probe); the mount signature here passes the scene directly.
 
+- U2: derived values come from the kernel through `derivation.ts` and a derivation document (which flow serves which object, which facts feed which inputs). It is interim scene building, replaced by K9; it never computes physics, only scales units for display.
+
 ## Consequences
 Player apps (V-track) reuse the session and views unchanged. A co-GM or a sensors seat with `auto_approve` scopes works with no new path. Anything a GM tool needs from the kernel must be added to the session, where the player app gets it too.

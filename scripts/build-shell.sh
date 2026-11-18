@@ -11,5 +11,7 @@ rm -rf packages/shell/public/kernel
 mkdir -p packages/shell/public/kernel
 cp packages/kernel-client/dist/kernel-client/src/*.js packages/shell/public/kernel/
 cp packages/kernel-client/wasm/sse_wasm.js packages/kernel-client/wasm/sse_wasm_bg.wasm packages/shell/public/kernel/
+rm -rf packages/shell/public/packs && mkdir -p packages/shell/public/packs
+cp packs/base-physics/pack.json packages/shell/public/packs/base-physics.json
 npx vite build --config packages/shell/vite.config.ts --logLevel warn
 echo "shell ready in packages/shell/dist/ (serve it over http, e.g. npm run shell)"

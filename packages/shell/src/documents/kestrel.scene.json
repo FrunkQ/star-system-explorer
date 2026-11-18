@@ -7,7 +7,7 @@
  },
  "system": "u:kestrel/sys:1",
  "title": "Kestrel",
- "subtitle": "Kestrel Reach · K2 V",
+ "subtitle": "Kestrel Reach · K dwarf",
  "now_yr": 4610000000,
  "span_yr": [
   0,
@@ -19,7 +19,7 @@
    "address": "u:kestrel/sys:1/body:0",
    "kind": "star",
    "label": "Kestrel",
-   "subtitle": "K2 V main-sequence star",
+   "subtitle": "K-type main-sequence star",
    "facts": [
     {
      "field": "name",
@@ -32,27 +32,9 @@
     {
      "field": "mass_sun",
      "label": "Mass",
-     "value": 0.78,
+     "value": 0.82,
      "unit": "M☉",
-     "display": "0.78 M☉",
-     "editable": true,
-     "source": "fixture"
-    },
-    {
-     "field": "luminosity_sun",
-     "label": "Luminosity",
-     "value": 0.34,
-     "unit": "L☉",
-     "display": "0.34 L☉",
-     "editable": true,
-     "source": "fixture"
-    },
-    {
-     "field": "teff_k",
-     "label": "Surface",
-     "value": 4980,
-     "unit": "K",
-     "display": "4980 K",
+     "display": "0.82 M☉",
      "editable": true,
      "source": "fixture"
     },
@@ -70,7 +52,7 @@
     "resolved"
    ],
    "tags": [],
-   "prose": "An orange dwarf, steady and long-lived. It will stay on the main sequence for billions of years yet."
+   "prose": "An orange dwarf, steady and long-lived: its main-sequence life runs to tens of billions of years."
   },
   {
    "address": "u:kestrel/sys:1/body:1",
@@ -88,6 +70,23 @@
      "label": "Name",
      "value": "Ember",
      "display": "Ember",
+     "editable": true,
+     "source": "fixture"
+    },
+    {
+     "field": "a_au",
+     "label": "Orbit",
+     "value": 0.21,
+     "unit": "AU",
+     "display": "0.21 AU",
+     "editable": true,
+     "source": "fixture"
+    },
+    {
+     "field": "eccentricity",
+     "label": "Eccentricity",
+     "value": 0.01,
+     "display": "0.01",
      "editable": true,
      "source": "fixture"
     },
@@ -126,6 +125,22 @@
      "display": "1180 h",
      "editable": true,
      "source": "fixture"
+    },
+    {
+     "field": "albedo",
+     "label": "Albedo",
+     "value": 0.12,
+     "display": "0.12",
+     "editable": true,
+     "source": "fixture"
+    },
+    {
+     "field": "optical_depth",
+     "label": "Greenhouse τ",
+     "value": 0.0,
+     "display": "0.0",
+     "editable": true,
+     "source": "fixture"
     }
    ],
    "stamps": [
@@ -153,6 +168,23 @@
      "label": "Name",
      "value": "Sable",
      "display": "Sable",
+     "editable": true,
+     "source": "fixture"
+    },
+    {
+     "field": "a_au",
+     "label": "Orbit",
+     "value": 0.38,
+     "unit": "AU",
+     "display": "0.38 AU",
+     "editable": true,
+     "source": "fixture"
+    },
+    {
+     "field": "eccentricity",
+     "label": "Eccentricity",
+     "value": 0.07,
+     "display": "0.07",
      "editable": true,
      "source": "fixture"
     },
@@ -191,6 +223,22 @@
      "display": "96 h",
      "editable": true,
      "source": "fixture"
+    },
+    {
+     "field": "albedo",
+     "label": "Albedo",
+     "value": 0.25,
+     "display": "0.25",
+     "editable": true,
+     "source": "fixture"
+    },
+    {
+     "field": "optical_depth",
+     "label": "Greenhouse τ",
+     "value": 0.1,
+     "display": "0.1",
+     "editable": true,
+     "source": "fixture"
     }
    ],
    "stamps": [
@@ -209,7 +257,7 @@
    "subtitle": "III · temperate ocean world",
    "parent": "u:kestrel/sys:1/body:0",
    "orbit": {
-    "a_au": 0.63,
+    "a_au": 0.52,
     "phase_deg": 40
    },
    "facts": [
@@ -218,6 +266,23 @@
      "label": "Name",
      "value": "Tarn",
      "display": "Tarn",
+     "editable": true,
+     "source": "fixture"
+    },
+    {
+     "field": "a_au",
+     "label": "Orbit",
+     "value": 0.52,
+     "unit": "AU",
+     "display": "0.52 AU",
+     "editable": true,
+     "source": "fixture"
+    },
+    {
+     "field": "eccentricity",
+     "label": "Eccentricity",
+     "value": 0.04,
+     "display": "0.04",
      "editable": true,
      "source": "fixture"
     },
@@ -274,6 +339,22 @@
      "display": "38 μT",
      "editable": true,
      "source": "fixture"
+    },
+    {
+     "field": "albedo",
+     "label": "Albedo",
+     "value": 0.3,
+     "display": "0.3",
+     "editable": true,
+     "source": "fixture"
+    },
+    {
+     "field": "optical_depth",
+     "label": "Greenhouse τ",
+     "value": 1.1,
+     "display": "1.1",
+     "editable": true,
+     "source": "fixture"
     }
    ],
    "stamps": [
@@ -301,6 +382,23 @@
      "label": "Name",
      "value": "Vault",
      "display": "Vault",
+     "editable": true,
+     "source": "fixture"
+    },
+    {
+     "field": "a_au",
+     "label": "Orbit",
+     "value": 3.1,
+     "unit": "AU",
+     "display": "3.1 AU",
+     "editable": true,
+     "source": "fixture"
+    },
+    {
+     "field": "eccentricity",
+     "label": "Eccentricity",
+     "value": 0.05,
+     "display": "0.05",
      "editable": true,
      "source": "fixture"
     },
@@ -339,6 +437,14 @@
      "display": "11.8 h",
      "editable": true,
      "source": "fixture"
+    },
+    {
+     "field": "albedo",
+     "label": "Albedo",
+     "value": 0.34,
+     "display": "0.34",
+     "editable": true,
+     "source": "fixture"
     }
    ],
    "stamps": [
@@ -367,6 +473,23 @@
      "label": "Name",
      "value": "Hollow",
      "display": "Hollow",
+     "editable": true,
+     "source": "fixture"
+    },
+    {
+     "field": "a_au",
+     "label": "Orbit",
+     "value": 9.4,
+     "unit": "AU",
+     "display": "9.4 AU",
+     "editable": true,
+     "source": "fixture"
+    },
+    {
+     "field": "eccentricity",
+     "label": "Eccentricity",
+     "value": 0.12,
+     "display": "0.12",
      "editable": true,
      "source": "fixture"
     },
@@ -405,6 +528,22 @@
      "display": "19.2 h",
      "editable": true,
      "source": "fixture"
+    },
+    {
+     "field": "albedo",
+     "label": "Albedo",
+     "value": 0.6,
+     "display": "0.6",
+     "editable": true,
+     "source": "fixture"
+    },
+    {
+     "field": "optical_depth",
+     "label": "Greenhouse τ",
+     "value": 0.0,
+     "display": "0.0",
+     "editable": true,
+     "source": "fixture"
     }
    ],
    "stamps": [
@@ -421,8 +560,8 @@
    "kind": "zone",
    "label": "Temperate zone",
    "band_au": [
-    0.52,
-    0.86
+    0.42,
+    0.74
    ],
    "facts": [],
    "stamps": [

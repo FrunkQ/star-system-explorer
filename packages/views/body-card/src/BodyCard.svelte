@@ -1,37 +1,35 @@
 <!--
-  Body card view: the selected subject's facts, typed in place. A typed value
-  becomes a set_value intent through the session, like any other seat's.
+  Body card view: the selected subject's facts, typed in place. Typed values
+  become set_value intents through the session, like any other seat's;
+  derived values are read-only and open the kernel's explanation.
 -->
 <script lang="ts">
-  import type { Json, SceneFact, SystemScene, ViewContext } from "../../../ui-contract/src/index.ts";
+  import { commitEdit, type Json, type SceneFact, type SystemScene, type ViewContext } from "../../../ui-contract/src/index.ts";
   import { Card, CardField, Stamp } from "../../../chart-grammar/src/index.ts";
   import { parseFact } from "./parse.ts";
+  import Explain from "./Explain.svelte";
 
   let { ctx, scene, params }: { ctx: ViewContext; scene: SystemScene; params: Record<string, Json> } = $props();
 
   const ws = $derived(ctx.workspace);
   const subject = $derived(scene.subjects.find((s) => s.address === ws.selection));
-  const applied = (f: SceneFact) => (subject ? ws.applied[`${subject.address}#${f.field}`] : undefined);
-  const title = $derived.by(() => {
-    if (!subject) return "";
-    const n = ws.applied[`${subject.address}#name`];
-    return n ? String(n.value) : subject.label;
-  });
   const shown = $derived(subject ? subject.facts.filter((f) => f.field !== "name" || ws.mode === "edit") : []);
-  const authoredHere = $derived(subject ? Object.keys(ws.applied).some((k) => k.startsWith(`${subject.address}#`)) : false);
-  const stamps = $derived(subject ? [...new Set([...subject.stamps, ...(authoredHere ? ["authored"] : [])])] : []);
   let why = $state<string | null>(null);
   let note = $state<string | null>(null);
+  $effect(() => {
+    void ws.selection;
+    why = null;
+    note = null;
+  });
 
   async function commit(f: SceneFact, text: string): Promise<string | null> {
     if (!subject) return null;
     const p = parseFact(f, text);
     if (!p.ok) return p.message;
-    const r = await ctx.session.send({ kind: "set_value", address: subject.address, field: f.field, value: p.value, at_yr: ws.now_yr });
+    const r = await commitEdit(ctx.session, ws, { address: subject.address, field: f.field, value: p.value, display: p.display, before: { value: f.value, display: f.display } });
     switch (r.status) {
       case "applied":
-        ws.noteApplied(subject.address, f.field, p.value, p.display, r.event_id);
-        note = `Inked at ${scene.title} ${fmt(ws.now_yr)} as event ${r.event_id.slice(0, 8)}`;
+        note = `Inked at ${(ws.now_yr / 1e9).toFixed(2)} Gyr as event ${r.event_id.slice(0, 8)}`;
         return null;
       case "pending":
         return "Sent to the GM to approve.";
@@ -41,34 +39,38 @@
         return `The kernel refused this: ${r.message}`;
     }
   }
-  const fmt = (yr: number) => `${(yr / 1e9).toFixed(2)} Gyr`;
+
+  function whyText(f: SceneFact): string {
+    if (f.source === "authored") return "you set it. It feeds every value derived from it.";
+    if (f.source === "fixture") return "it comes from the sample system's fixture data, not from physics. Set it to make it yours.";
+    return `its source is ${f.source}.`;
+  }
 </script>
 
 <div class="wrap">
   {#if subject}
-    <Card title={title} subtitle={subject.subtitle}>
-      {#if params.stamps && stamps.length}
-        <div class="stamps">{#each stamps as k (k)}<Stamp kind={k} />{/each}</div>
+    <Card title={subject.label} subtitle={subject.subtitle}>
+      {#if params.stamps && subject.stamps.length}
+        <div class="stamps">{#each subject.stamps as k (k)}<Stamp kind={k} />{/each}</div>
       {/if}
       <div class="grid" style="--cols: {Number(params.columns)}">
         {#each shown as f (f.field)}
-          {@const a = applied(f)}
           <CardField
             label={f.label}
-            display={a ? a.display : f.display}
-            set={!!a || f.source === "authored"}
+            display={f.display}
+            set={f.source === "authored"}
+            derived={f.source === "derived"}
+            flagged={f.validity !== undefined && f.validity !== "in-range"}
             editable={f.editable && ws.mode === "edit"}
             oncommit={(t) => commit(f, t)}
             onwhy={f.field === "name" ? undefined : () => (why = why === f.field ? null : f.field)}
           />
           {#if why === f.field}
-            <p class="why" role="note">
-              Why {f.label.toLowerCase()} is {a ? a.display : f.display}: {a
-                ? "you set it."
-                : f.source === "fixture"
-                  ? "it comes from the fixture scene, not from physics. Explanations open here once the physics library is in (U2)."
-                  : `its source is ${f.source}.`}
-            </p>
+            {#if f.why}
+              <Explain session={ctx.session} why={f.why} label={f.label} onclose={() => (why = null)} />
+            {:else}
+              <p class="why" role="note">Why {f.label.toLowerCase()} is {f.display}: {whyText(f)}</p>
+            {/if}
           {/if}
         {/each}
       </div>
@@ -77,7 +79,7 @@
     </Card>
   {:else}
     <Card title="Nothing selected">
-      <p class="prose">Pick a body on the chart, or press Tab to reach the chart and Enter to choose. The card shows its facts here, and in edit mode you type new values where they are shown.</p>
+      <p class="prose">Pick a body on the chart, or press Tab to reach the chart and Enter to choose. The card shows its facts here; in edit mode you type new values where they are shown, and drag a body to move its orbit.</p>
     </Card>
   {/if}
 </div>
@@ -92,7 +94,6 @@
   .grid {
     display: grid;
     grid-template-columns: repeat(var(--cols), minmax(0, 1fr));
-    border-top: 0;
   }
   .grid > :global(.field) {
     border-bottom: var(--sse-line) solid var(--sse-rule);

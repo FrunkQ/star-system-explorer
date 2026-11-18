@@ -8,6 +8,7 @@ export const STAMP_LABELS: Record<string, string> = {
   "one-plausible-future": "One plausible future",
   unsurveyed: "Unsurveyed",
   fixture: "Fixture data",
+  "out-of-range": "Out of range",
 };
 
 export const HONESTY = new Set(["authored", "impossible", "fictional"]);

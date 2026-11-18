@@ -21,6 +21,43 @@ export interface HistoryEvent {
   subject: string[];
 }
 
+/** One input to a derivation, as the kernel takes it (H5.2 quantities with units). */
+export interface InputValue {
+  value: number;
+  unit?: string;
+  source?: "catalogued" | "resolved" | "derived" | "authored" | "authored-impossible";
+}
+
+/** What to derive: a flow and its inputs. Also the address of a "why?". */
+export interface DeriveRef {
+  flow: string;
+  inputs: Record<string, InputValue>;
+}
+
+export interface Derived {
+  /** SI value. */
+  value: number;
+  dim: string;
+  validity: string;
+  fictional: boolean;
+  publisher: string;
+}
+
+/** The kernel's explanation bundle (H6.5), as shown by a "why?". */
+export interface Explanation {
+  subject: string;
+  value: { value: number; dim: number[] };
+  formula_display: string;
+  lenses: { curious?: string; science?: string; engine?: string };
+  inputs: { port: string; quantity: string; source: string; value: { value: number; dim: number[] }; explanation_ref: string | null }[];
+  params: Record<string, number>;
+  references: string[];
+  validity: string;
+  out_of_range: string[];
+  publisher: Record<string, string>;
+  fictional: boolean;
+}
+
 export interface DeviceEdge {
   tier: string;
   unitsPerSecond: number;
@@ -34,6 +71,12 @@ export interface ViewSession {
   history(address: string): Promise<HistoryEvent[]>;
   stateHash(at_yr?: number): Promise<string>;
   kernelVersion(): Promise<string>;
+  /** Derived values of a flow (read only; no event). */
+  derive(ref: DeriveRef): Promise<{ ok: true; values: Record<string, Derived> } | { ok: false; message: string }>;
+  /** Why one derived quantity has its value. */
+  explain(ref: DeriveRef, kind: string): Promise<{ ok: true; explanation: Explanation } | { ok: false; message: string }>;
+  /** Flows the loaded pack stack offers. */
+  flows(): readonly string[];
   device(): DeviceEdge | undefined;
   /** Intents waiting for the GM (V5 carries them; here they wait locally). */
   pending(): readonly Intent[];
@@ -44,6 +87,7 @@ type Raw = { type: string; [k: string]: unknown };
 export class Session implements ViewSession {
   readonly #client: KernelClient;
   readonly #pending: Intent[] = [];
+  #flows: string[] = [];
   readonly seat: Readonly<Seat>;
   readonly universe: Readonly<{ id: string; seed: string; root: string }>;
 
@@ -54,10 +98,34 @@ export class Session implements ViewSession {
   }
 
   /** Open a universe on a kernel and hand back a session for one seat. */
-  static async open(client: KernelClient, seat: Seat, universe: { id: string; seed: string }): Promise<Session> {
+  static async open(client: KernelClient, seat: Seat, universe: { id: string; seed: string }, packs: unknown[] = []): Promise<Session> {
+    let flows: string[] = [];
+    if (packs.length) {
+      const st = await call(client, { op: "load_stack", packs });
+      if (st.type !== "stack_loaded") throw new Error(`kernel rejected the pack stack: ${String(st.report ?? st.message ?? JSON.stringify(st))}`);
+      flows = st.flows as string[];
+    }
     const r = await call(client, { op: "open_universe", id: universe.id, seed: universe.seed });
     if (r.type !== "universe_opened") throw new Error(`kernel would not open the universe: ${JSON.stringify(r)}`);
-    return new Session(client, seat, { ...universe, root: String(r.root) });
+    const s = new Session(client, seat, { ...universe, root: String(r.root) });
+    s.#flows = flows;
+    return s;
+  }
+
+  flows(): readonly string[] {
+    return [...this.#flows];
+  }
+
+  async derive(ref: DeriveRef) {
+    const r = await call(this.#client, { op: "derive", flow: ref.flow, inputs: ref.inputs });
+    if (r.type === "derived") return { ok: true as const, values: r.values as Record<string, Derived> };
+    return { ok: false as const, message: String(r.message ?? JSON.stringify(r)) };
+  }
+
+  async explain(ref: DeriveRef, kind: string) {
+    const r = await call(this.#client, { op: "explain", flow: ref.flow, inputs: ref.inputs, kind });
+    if (r.type === "explanation") return { ok: true as const, explanation: { ...(r.explanation as Explanation), fictional: Boolean(r.fictional) } };
+    return { ok: false as const, message: String(r.message ?? JSON.stringify(r)) };
   }
 
   async send(intent: Intent): Promise<IntentResult> {

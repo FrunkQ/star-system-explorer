@@ -6,7 +6,8 @@
     pressed,
     onclick,
     keyhint,
-  }: { label: string; icon: string; pressed?: boolean; onclick?: () => void; keyhint?: string } = $props();
+    disabled = false,
+  }: { label: string; icon: string; pressed?: boolean; onclick?: () => void; keyhint?: string; disabled?: boolean } = $props();
 </script>
 
 <button
@@ -17,6 +18,7 @@
   aria-keyshortcuts={keyhint}
   title={keyhint ? `${label} (${keyhint})` : label}
   {onclick}
+  {disabled}
 >
   <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" aria-hidden="true"><path d={icon} /></svg>
 </button>
@@ -38,7 +40,13 @@
     background: var(--sse-ink);
     color: var(--sse-on-ink);
   }
-  .tool:hover {
+  .tool:disabled {
+    color: var(--sse-ink-faint);
+    border-color: var(--sse-ink-faint);
+    cursor: default;
+    box-shadow: none;
+  }
+  .tool:hover:not(:disabled) {
     box-shadow: 2px 2px 0 var(--sse-ink);
   }
 </style>

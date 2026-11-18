@@ -9,6 +9,8 @@
     display,
     editable = false,
     set = false,
+    derived = false,
+    flagged = false,
     oncommit,
     onwhy,
   }: {
@@ -17,6 +19,10 @@
     editable?: boolean;
     /** The value was set by an author (shown in the accent). */
     set?: boolean;
+    /** The value was derived by the kernel (shown with a small mark). */
+    derived?: boolean;
+    /** The kernel flagged the value (outside an atom's validity range). */
+    flagged?: boolean;
     oncommit?: (text: string) => Promise<string | null>;
     onwhy?: () => void;
   } = $props();
@@ -49,7 +55,7 @@
 
 <div class="field">
   <div class="head">
-    <label for={id} class="k" class:set>{label}{#if set}<span class="mark">&nbsp;· set</span>{/if}</label>
+    <label for={id} class="k" class:set>{label}{#if set}<span class="mark">&nbsp;· set</span>{:else if derived}<span class="drv">&nbsp;· derived</span>{/if}{#if flagged}<span class="mark">&nbsp;· out of range</span>{/if}</label>
     {#if onwhy}
       <button type="button" class="why" onclick={onwhy} aria-label="Why {label.toLowerCase()}?">why?</button>
     {/if}
@@ -99,6 +105,12 @@
     justify-content: space-between;
     gap: 6px;
     min-height: 24px;
+  }
+  .drv {
+    color: var(--sse-ink-muted);
+    text-transform: none;
+    letter-spacing: 0;
+    font-style: italic;
   }
   .row {
     display: flex;

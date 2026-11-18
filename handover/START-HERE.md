@@ -1,6 +1,6 @@
 # START HERE
 
-Last updated: 18 Nov 2026, after P4 (physics track) and U0, U1 (UI track); U2 in progress. Milestone M1 complete (K0 documents with Alex for review). Milestone 2 running as parallel tracks.
+Last updated: 18 Nov 2026, after P4 (physics track) and U0, U1 (UI track); U2 done. Milestone M1 complete (K0 documents with Alex for review). Milestone 2 running as parallel tracks.
 
 ## Where we are
 Milestone M1 "Proven core" = packages K0 to K6 (build plan section 3/4).
@@ -19,14 +19,15 @@ Milestone M1 "Proven core" = packages K0 to K6 (build plan section 3/4).
 | P4 regions and features on worlds | done | packages/P4.md |
 | U0 one client API, every edit an intent (rule for all U packages) | done | packages/U0.md |
 | U1 shell, chart room and night chart tokens, chart grammar | done, screenshots in packages/U1-screens/ for Alex | packages/U1.md |
-| U2 system chart editor | in progress on the UI track | |
+| U2 system chart editor | done: real base-physics values, drag and typed edits, undo, why | packages/U2.md |
+| U3 flow editor and explain mode | next on the UI track | |
 
 ## Parallel tracks (18 Nov, Alex: build in parallel, integrate later)
 | Track | Packages | Branch |
 |---|---|---|
 | Physics | P1, P3, P4 | `claude/project-thread-h9y77o` |
 | Kernel | K7 to K10 | its own branch from the M1 state; see that thread |
-| Chart room shell | U0, U1, then U2 | `claude/project-thread-adgixl`, PR #2 into the physics branch |
+| Chart room shell | U0, U1, U2, then U3 | `claude/project-thread-adgixl`, PR #2 into the physics branch |
 
 The kernel now registers the real atom library and loads the base-physics pack (see P1 log, integration notes): kernel track, rebase over it.
 

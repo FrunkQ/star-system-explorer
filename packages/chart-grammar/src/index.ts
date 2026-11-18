@@ -13,6 +13,6 @@ export { default as ToolButton } from "./ToolButton.svelte";
 export { default as Segmented } from "./Segmented.svelte";
 export { formatYears, ticks, niceStep, fraction, keyStep } from "./ruler.ts";
 export type { Tick, RulerEvent } from "./ruler.ts";
-export { radius, fitScale, polar } from "./scale.ts";
+export { radius, distanceAt, fitScale, polar } from "./scale.ts";
 export type { RadialScale } from "./scale.ts";
 export { STAMP_LABELS, HONESTY, stampLabel } from "./stamps.ts";

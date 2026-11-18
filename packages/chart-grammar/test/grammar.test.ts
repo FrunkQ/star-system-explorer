@@ -1,7 +1,7 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
 import { formatYears, fraction, keyStep, niceStep, ticks } from "../src/ruler.ts";
-import { fitScale, polar, radius } from "../src/scale.ts";
+import { distanceAt, fitScale, polar, radius } from "../src/scale.ts";
 
 test("years read the way the chart writes them", () => {
   assert.equal(formatYears(4_610_000_000), "4.61 Gyr");
@@ -34,6 +34,7 @@ test("log-radial scale is monotone and fits its orbits", () => {
   const rs = [0.2, 0.63, 1.4, 5, 30].map((a) => radius(a, s));
   assert.ok(rs.every((r, i) => i === 0 || r > rs[i - 1]!));
   assert.ok(rs[0]! > 20 && rs[4]! < 400);
+  for (const a of [0.2, 1.4, 30]) assert.ok(Math.abs(distanceAt(radius(a, s), s) - a) < 1e-9 * a);
   const [x, y] = polar(0, 0, 10, 90);
   assert.ok(Math.abs(x) < 1e-9 && Math.abs(y + 10) < 1e-9);
 });
