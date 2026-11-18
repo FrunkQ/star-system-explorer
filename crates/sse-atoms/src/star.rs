@@ -15,11 +15,11 @@ pub const M_SUN: f64 = GM_SUN / G;
 /// The Sun's age, 4.57 Gyr (Bonanno, Schlattl and Paternò 2002), in seconds.
 pub const SUN_AGE: f64 = 4.57e9 * JULIAN_YEAR;
 
-const EKER: &str = "Eker, Z. et al. 2018, MNRAS 479, 5491: interrelated main-sequence mass-luminosity, mass-radius and mass-effective temperature relations (six-piece MLR, table 4)";
-const DK91: &str = "Demircan, O. and Kahraman, G. 1991, Ap&SS 181, 313: stellar mass-luminosity and mass-radius relations";
+const EKER: &str = "Eker, Z. et al. 2018, MNRAS 479, 5491: interrelated main-sequence mass-luminosity, mass-radius and mass-effective temperature relations (six-piece MLR, table 4) https://ui.adsabs.harvard.edu/abs/2018MNRAS.479.5491E";
+const DK91: &str = "Demircan, O. and Kahraman, G. 1991, Ap&SS 181, 313: stellar mass-luminosity and mass-radius relations https://ui.adsabs.harvard.edu/abs/1991Ap%26SS.181..313D";
 const GOUGH: &str =
-    "Gough, D. O. 1981, Solar Physics 74, 21: solar interior structure and luminosity variations";
-const HKT: &str = "Hansen, C. J., Kawaler, S. D. and Trimble, V. 2004, Stellar Interiors, 2nd edn, Springer, section 1.4 (main-sequence lifetime scaling)";
+    "Gough, D. O. 1981, Solar Physics 74, 21: solar interior structure and luminosity variations. doi:10.1007/BF00151270";
+const HKT: &str = "Hansen, C. J., Kawaler, S. D. and Trimble, V. 2004, Stellar Interiors, 2nd edn, Springer, section 1.4 (main-sequence lifetime scaling). doi:10.1007/978-1-4419-9110-2";
 
 /// Eker et al. 2018 six-piece mass-luminosity relation, (upper mass bound in
 /// M☉, slope, intercept) for log L = a log M + b.
@@ -96,7 +96,7 @@ pub fn atoms() -> Vec<Box<dyn Atom>> {
             outputs: vec![port("teff", "star.effective_temperature", D::TEMPERATURE, None)],
             params: vec![],
             cost: CostClass::Trivial,
-            references: &["Stefan-Boltzmann law; definition of effective temperature, e.g. Carroll, B. W. and Ostlie, D. A. 2017, An Introduction to Modern Astrophysics, 2nd edn, eq. 3.17"],
+            references: &["Stefan-Boltzmann law; definition of effective temperature, e.g. Carroll, B. W. and Ostlie, D. A. 2017, An Introduction to Modern Astrophysics, 2nd edn, Cambridge University Press, eq. 3.17. doi:10.1017/9781108380980"],
             curious: "How hot a star's surface is follows from how much light leaves how much surface.",
             science: "Effective temperature is the temperature of a black body with the star's radius and luminosity. It defines the surface temperature rather than measuring it.",
             formula: "T_eff = (L / (4π R² σ))^¼",

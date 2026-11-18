@@ -753,7 +753,7 @@ pub struct Explanation {
     pub validity: Validity,
     pub out_of_range: Vec<String>,
     pub lenses: Lenses,
-    pub references: Vec<String>,
+    pub references: Vec<crate::decl::Reference>,
 }
 
 impl Evaluation<'_> {
