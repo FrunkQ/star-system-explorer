@@ -16,6 +16,8 @@ export interface TopicQuery {
   addresses?: string[];
   quantity_kinds?: string[];
   event_kinds?: string[];
+  /** Subject kinds, as the scene's `kind` fact gives them (player scenes). */
+  kinds?: string[];
 }
 
 /** One setting, described for Orac first: name, type, range, default, unit, meaning, cost. */
@@ -116,6 +118,8 @@ export interface ViewModule<S = SystemScene, C = ViewContext> {
   intents?: IntentSchema[];
   /** Which scene description it draws: "system" (GM) or "player" (K9 scenes). */
   scene?: "system" | "player";
+  /** "fill": the view sizes itself to a box the screen gives it a height for (a chart); "content" (default): it grows with what it shows. */
+  box?: "fill" | "content";
   mount(el: HTMLElement, ctx: C, scene: S): ViewHandle<S>;
 }
 

@@ -8,7 +8,9 @@
 // GM's Scanned button.
 // Screens (Compose board): the view stack, a player screen drawn live from
 // its document, an invalid parameter caught, Orac's sample screen request
-// validated and accepted.
+// validated and accepted. V3: screens opened from the campaign's documents
+// and from a file, a bad one refused, and a composed screen handed to the
+// players page, which also loads a report by name.
 import { spawn } from "node:child_process";
 import { mkdirSync } from "node:fs";
 import assert from "node:assert/strict";
@@ -109,6 +111,32 @@ try {
     assert.equal(await comp.locator(".preview [data-view]").count(), 4);
     await comp.getByRole("button", { name: "Show document" }).click();
     assert.match(await comp.locator("pre.doc").innerText(), /"id": "sse.screen.players.bridge-approach"/);
+    // V3: the board's screen loads from its document. The campaign's survey report (page layout, through the survey view, items bound to Tarn).
+    await comp.getByLabel("Open a campaign screen").selectOption({ label: "players.survey.screen.json" });
+    await comp.getByRole("heading", { name: "Tarn survey report" }).waitFor();
+    await comp.locator(".preview [data-layout='page']").waitFor();
+    assert.equal(await comp.locator(".preview [data-view]").count(), 3, "the report's three items");
+    assert.match(await comp.locator(".preview [data-view='sse.view.text']").innerText(), /Tarn/);
+    assert.doesNotMatch(await comp.locator(".preview [data-view='sse.view.text']").innerText(), /Vault/, "bound to Tarn only");
+    assert.match(await comp.locator(".preview [data-field='interior.core_fraction']").innerText(), /\d/, "seen through the survey view");
+    // A document opened from a file; a broken one is refused with reasons.
+    const fileDoc = { schema: "sse.screen/1", id: "sse.screen.players.flow-test", label: "Tiles", audience: "players", layout: "flow", theme: "chart", symbology: "sse.symbology.diagrammatic", vocab: "plain", items: [{ view: "sse.view.card", area: "1" }, { view: "sse.view.readout", area: "2", params: { field: "mass_kg" } }] };
+    await comp.locator("input[type=file]").setInputFiles({ name: "tiles.json", mimeType: "application/json", buffer: Buffer.from(JSON.stringify(fileDoc)) });
+    await comp.getByRole("heading", { name: "Tiles" }).waitFor();
+    await comp.locator(".preview [data-layout='flow']").waitFor();
+    await comp.locator("input[type=file]").setInputFiles({ name: "bad.json", mimeType: "application/json", buffer: Buffer.from(JSON.stringify({ ...fileDoc, label: "Bad", data_view: "spies" })) });
+    await comp.locator(".problems").getByText(/no data view spies/).waitFor();
+    // Handed to the players page, which loads it from the document.
+    await comp.locator("input[type=file]").setInputFiles({ name: "tiles.json", mimeType: "application/json", buffer: Buffer.from(JSON.stringify(fileDoc)) });
+    const [pp] = await Promise.all([page.context().waitForEvent("page"), comp.getByRole("button", { name: "Show on the players page" }).click()]);
+    await pp.locator("[data-screen-id='sse.screen.players.flow-test'][data-layout='flow']").waitFor();
+    assert.equal(await pp.locator("[data-screen-id] [data-view]").count(), 2);
+    const report = await browser.newPage({ viewport: { width: 1280, height: 900 } });
+    report.on("pageerror", (e) => errors.push(e.message));
+    await report.goto(`${url}players.html?screen=players.survey.screen.json`);
+    await report.locator("[data-screen-id='sse.screen.players.tarn-survey'][data-layout='page']").waitFor();
+    assert.match(await report.locator(".kicker").innerText(), /seen through survey/i);
+    if (screens && name === "chromium") await report.screenshot({ path: `${screens}/report-desktop.png`, fullPage: true });
     await browser.close();
     assert.deepEqual(errors, [], "no page errors");
     console.log(`U5 ${name}: data views: mass applied as obvious reads "${massApplied}", put back, survey and Scanned checked`);

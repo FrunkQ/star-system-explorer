@@ -1,21 +1,23 @@
 <!--
   Player screen host (V1, live since U5). Mounts the player view stack from a
-  screen document onto the kernel's scene for the "everyone" audience. With no
-  network yet (V4), the page hosts its own kernel with the campaign's stack and
-  recorded facts, and its Scanned control stands in for the GM's button: it
-  taps Scanned for the body in focus. V3 turns this into the screens runtime.
+  screen document onto the kernel's scene for the "everyone" audience, through
+  the screens runtime (V3). The document is loaded when the page opens:
+  `?screen=<file>` names one in documents/, `?screen=composed` takes the one
+  the composer handed over on this device, and the Bridge is the default.
+  With no network yet (V4), the page hosts its own kernel with the campaign's
+  stack and recorded facts, and its Scanned control stands in for the GM's
+  button: it taps Scanned for the body in focus.
 -->
 <script lang="ts">
-  import { checkPlayerScene, checkScreen, enterFacts, gmSeat, markerFor, playerSubjectOf, subjectName, type AuthoredFacts, type PlayerContext, type PlayerScene, type ScreenDoc, type Vocab, type ViewHandle, type ViewSession } from "../../ui-contract/src/index.ts";
+  import { checkPlayerScene, checkScreen, enterFacts, gmSeat, markerFor, observeOf, playerSubjectOf, subjectName, type AuthoredFacts, type CheckedScreen, type PlayerScene, type ScreenDoc, type Vocab, type ViewSession } from "../../ui-contract/src/index.ts";
   import { openBrowserSession } from "../../ui-contract/src/host-browser.ts";
   import { focusOf } from "../../views/player-stack/src/pick.ts";
   import stackDoc from "./documents/stack.json";
   import factsDoc from "./documents/kestrel.player-facts.json";
-  import { PLAYER_STACK } from "../../views/player-stack/src/index.ts";
+  import { PLAYER_STACK, ScreenRuntime } from "../../views/player-stack/src/index.ts";
   import { themeCss } from "../../skins/chart-room/src/index.ts";
   import { ALL_THEMES, PLAYER_THEMES, filterLayers } from "../../skins/player/src/index.ts";
   import { FilterChain, Segmented } from "../../chart-grammar/src/index.ts";
-  import screenDoc from "./documents/players.screen.json";
   import vocabDoc from "./documents/vocab.plain.json";
   import { SHIPPED } from "./symbols.svelte.ts";
   import guideVocabDoc from "./documents/vocab.guide.json";
@@ -23,7 +25,21 @@
 
   // A theme names its vocabulary layer (H8.4); the screen's is the fallback.
   const VOCABS: Record<string, Vocab> = { plain: vocabDoc as unknown as Vocab, guide: guideVocabDoc as unknown as Vocab };
-  const checked = checkScreen(screenDoc as unknown as ScreenDoc, PLAYER_STACK);
+  // The screen document, loaded at runtime and checked against the view stack and the campaign's data views.
+  const asked = new URLSearchParams(location.search).get("screen");
+  let screenDoc = $state<ScreenDoc | null>(null);
+  let checked = $state<{ ok: true; screen: CheckedScreen } | { ok: false; errors: string[] } | null>(null);
+  async function loadScreen(): Promise<ScreenDoc> {
+    if (asked === "composed") {
+      const raw = loadPref("composed-screen");
+      if (!raw) throw new Error("No screen has been handed over from the composer on this device.");
+      return JSON.parse(raw) as ScreenDoc;
+    }
+    const file = asked && /^[a-z0-9._-]+\.json$/i.test(asked) ? asked : "players.screen.json";
+    const r = await fetch(new URL(`documents/${file}`, document.baseURI));
+    if (!r.ok) throw new Error(`No screen document ${file}.`);
+    return (await r.json()) as ScreenDoc;
+  }
 
   const facts = factsDoc as unknown as AuthoredFacts;
   const AUDIENCE = "everyone";
@@ -32,7 +48,7 @@
   let sceneHash = $state("");
   let sceneErrors = $state<string[]>([]);
   async function refresh() {
-    const r = await session!.scene(facts.scope, { audience: AUDIENCE });
+    const r = await session!.scene(facts.scope, { audience: AUDIENCE, ...(screenDoc?.data_view ? { data_view: screenDoc.data_view } : {}) });
     if (!r.ok) return void (sceneErrors = [r.message]);
     const bad = checkPlayerScene(r.scene);
     sceneErrors = bad ? [bad] : [];
@@ -45,6 +61,10 @@
       const bad = await enterFacts(s, facts);
       if (bad) throw new Error(`recorded facts refused: ${JSON.stringify(bad)}`);
       session = s;
+      const doc = await loadScreen();
+      const views = observeOf(s.stack().base)?.setup.views.map((v) => v.id);
+      checked = checkScreen(doc, PLAYER_STACK, views);
+      screenDoc = doc;
       await refresh();
     })
     .catch((e) => (sceneErrors = [String(e)]));
@@ -68,11 +88,11 @@
   const saved = loadPref("player-theme");
   let theme = $state(PLAYER_THEMES.some((t) => t.id === saved) ? saved! : "chart");
   const themeDoc = $derived(PLAYER_THEMES.find((t) => t.id === theme)!);
-  const vocabId = $derived(themeDoc.vocab && VOCABS[themeDoc.vocab] ? themeDoc.vocab : screenDoc.vocab in VOCABS ? screenDoc.vocab : "plain");
+  const vocabId = $derived(themeDoc.vocab && VOCABS[themeDoc.vocab] ? themeDoc.vocab : screenDoc && screenDoc.vocab in VOCABS ? screenDoc.vocab : "plain");
   const vocab = $derived(VOCABS[vocabId]!);
   // Symbols are the player's choice, apart from the theme; the theme says what it can carry.
   const savedSym = loadPref("player-symbology");
-  let symbology = $state(SHIPPED.some((d) => d.id === savedSym) ? savedSym! : SHIPPED.some((d) => d.id === screenDoc.symbology) ? screenDoc.symbology : SHIPPED[0]!.id);
+  let symbology = $state(SHIPPED.some((d) => d.id === savedSym) ? savedSym! : SHIPPED[0]!.id);
   const marker = $derived(markerFor(symbology, SHIPPED, themeDoc));
   $effect(() => savePref("player-symbology", symbology));
   // Screen effects follow the viewer: no motion when asked, none at all for more contrast or when switched off.
@@ -89,26 +109,16 @@
     savePref("effects", effects ? "on" : "off");
   });
 
-  const handles: ViewHandle<PlayerScene>[] = [];
-  $effect(() => {
-    const s = scene;
-    if (s) for (const h of handles) h.update(s);
-  });
-
-  function view(node: HTMLElement, m: { module: (typeof PLAYER_STACK)[number]; params: PlayerContext["params"] }) {
-    const ctx: PlayerContext = { params: m.params, vocab, selection: () => selection, select: (a) => (selection = a), mark: (s) => marker.mark(playerSubjectOf(s)) };
-    const h = m.module.mount(node, ctx, scene!);
-    handles.push(h);
-    return { destroy: () => (handles.splice(handles.indexOf(h), 1), h.dispose()) };
-  }
+  const mark = (x: PlayerScene["subjects"][number]) => marker.mark(playerSubjectOf(x));
   const star = $derived(scene ? scene.subjects.find((s) => s.address === scene!.scope) : undefined);
 </script>
 
 <div class="page" style={rootFx}>
   <header class="bar">
     <h1>{star ? subjectName(star) : "System"}</h1>
-    <span class="kicker">{screenDoc.label} · audience {scene?.audience ?? "…"}</span>
+    <span class="kicker">{screenDoc?.label ?? "…"}{screenDoc?.data_view ? ` · seen through ${screenDoc.data_view}` : ""} · audience {scene?.audience ?? "…"}</span>
     <span class="spacer"></span>
+    {#if !screenDoc?.data_view}
     <Segmented
       label="Sensor data"
       value={which}
@@ -118,6 +128,7 @@
       ]}
       onchange={(v) => setSensor(v)}
     />
+    {/if}
     <label class="pick">Theme
       <select bind:value={theme} title={themeDoc.description}>{#each PLAYER_THEMES as t (t.id)}<option value={t.id}>{t.name}</option>{/each}</select>
     </label>
@@ -126,20 +137,16 @@
     </label>
     {#if themeDoc.filters?.length}<label class="pick"><input type="checkbox" bind:checked={effects} /> Screen effects</label>{/if}
   </header>
-  {#if !checked.ok || sceneErrors.length}
-    <main class="problem" role="alert"><h2>This screen cannot be shown</h2><ul>{#each [...(checked.ok ? [] : checked.errors), ...sceneErrors] as e (e)}<li>{e}</li>{/each}</ul></main>
-  {:else if !scene}
+  {#if (checked && !checked.ok) || sceneErrors.length}
+    <main class="problem" role="alert"><h2>This screen cannot be shown</h2><ul>{#each [...(checked && !checked.ok ? checked.errors : []), ...sceneErrors] as e (e)}<li>{e}</li>{/each}</ul></main>
+  {:else if !scene || !checked?.ok}
     <main class="problem" aria-busy="true"><p>Waiting for the scene…</p></main>
   {:else}
     {#key vocabId}
-      <main class="grid">
-        {#each checked.screen.mounts as m (m.area)}
-          <section class="area area-{m.area}" data-view={m.module.id}><div class="fill" use:view={m}></div></section>
-        {/each}
-      </main>
+      <main class="grid"><ScreenRuntime screen={checked.screen} {scene} {vocab} {mark} bind:selection /></main>
     {/key}
   {/if}
-  <footer class="status">Scene: live from the kernel for the {AUDIENCE} audience{sceneHash ? ` · scene ${sceneHash.slice(0, 10)}` : ""} · the Scanned control stands in for the GM's button and taps it for {target ? subjectName(target) : "the body in focus"}</footer>
+  <footer class="status">Scene: live from the kernel for the {AUDIENCE} audience{sceneHash ? ` · scene ${sceneHash.slice(0, 10)}` : ""} {screenDoc?.data_view ? ` · fixed to the ${screenDoc.data_view} view by the screen document` : ` · the Scanned control stands in for the GM's button and taps it for ${target ? subjectName(target) : "the body in focus"}`}</footer>
 </div>
 <FilterChain {layers} />
 
@@ -199,26 +206,7 @@
     font: inherit;
   }
   .grid {
-    display: grid;
-    gap: 20px;
     padding: 20px 24px;
-    grid-template-columns: minmax(0, 1.4fr) minmax(0, 1fr) minmax(0, 1fr);
-    grid-template-areas:
-      "a a b"
-      "a a b"
-      "c d b"
-      "e e e"
-      "f f f";
-    align-items: start;
-  }
-  .area-a { grid-area: a; height: 460px; overflow: hidden; border: var(--sse-frame-width) solid var(--sse-frame-line); border-radius: var(--sse-frame-radius); box-shadow: var(--sse-frame-shadow); }
-  .area-b { grid-area: b; }
-  .area-c { grid-area: c; }
-  .area-d { grid-area: d; }
-  .area-e { grid-area: e; }
-  .area-f { grid-area: f; }
-  .area-a .fill {
-    height: 100%;
   }
   .status {
     padding: 8px 24px;
@@ -235,13 +223,7 @@
       padding: 10px 12px;
     }
     .grid {
-      grid-template-columns: minmax(0, 1fr);
-      grid-template-areas: "a" "b" "c" "d" "e" "f";
       padding: 12px;
-      gap: 14px;
-    }
-    .area-a {
-      height: 320px;
     }
   }
 </style>

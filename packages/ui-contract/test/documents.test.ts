@@ -69,3 +69,27 @@ test("marks come from the symbology document, not the view", () => {
   assert.equal(m.mark(subjectOf({ ...p, tags: ["class:planet/barren"] })).fill_pattern, "solid");
   assert.equal(m.mark(subjectOf({ ...p, kind: "star" })).shape, "star");
 });
+
+test("V3: a screen names its data view and binds items to subjects", async () => {
+  const { checkScreen, boundScene } = await import("../src/screen.ts");
+  const view = (id: string) => ({ id, version: "0", tiers: ["text" as const], inputs: [], params: [], mount: () => ({ update() {}, dispose() {} }) });
+  const doc = { schema: "sse.screen/1" as const, id: "s", label: "S", audience: "players" as const, layout: "page" as const, theme: "paper", symbology: "x", vocab: "plain" as const, items: [{ view: "a", area: "1", bind: { addresses: ["u:k/sys:1/body:3"] } }, { view: "b", area: "2" }] };
+  const ok = checkScreen(doc, [view("a"), view("b")], ["survey"]);
+  assert.equal(ok.ok, true);
+  assert.equal(checkScreen({ ...doc, data_view: "survey" }, [view("a"), view("b")], ["survey"]).ok, true);
+  const bad = checkScreen({ ...doc, data_view: "spies" }, [view("a"), view("b")], ["survey"]);
+  assert.ok(!bad.ok && bad.errors.some((e) => /no data view spies/.test(e)));
+  const badBind = checkScreen({ ...doc, items: [{ view: "a", area: "1", bind: { planets: ["x"] } as never }] }, [view("a")]);
+  assert.ok(!badBind.ok && /unknown key planets/.test(badBind.errors[0]!));
+  const notADoc = checkScreen({ schema: "sse.screen/1" } as never, [view("a")]);
+  assert.equal(notADoc.ok, false);
+  const scene = { audience: "everyone", scope: "u:k/sys:1", subjects: [
+    { address: "u:k/sys:1", view: "v", tags: [], facts: [{ field: "kind", value: "star" }] },
+    { address: "u:k/sys:1/body:3", view: "v", tags: [], facts: [{ field: "kind", value: "planetary-body" }] },
+    { address: "u:k/sys:1/body:3/body:0", view: "v", tags: [], facts: [{ field: "kind", value: "moon" }] },
+    { address: "u:k/sys:1/body:4", view: "v", tags: [], facts: [{ field: "kind", value: "planetary-body" }] },
+  ] };
+  assert.deepEqual(boundScene(scene, { addresses: ["u:k/sys:1/body:3"] }).subjects.map((s) => s.address), ["u:k/sys:1", "u:k/sys:1/body:3", "u:k/sys:1/body:3/body:0"]);
+  assert.deepEqual(boundScene(scene, { kinds: ["moon"] }).subjects.map((s) => s.address), ["u:k/sys:1", "u:k/sys:1/body:3/body:0"]);
+  assert.equal(boundScene(scene, undefined), scene);
+});

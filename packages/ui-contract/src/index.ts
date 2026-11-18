@@ -15,7 +15,7 @@ export type { DerivationDoc, DerivationRule, InputBinding, OutputBinding } from 
 export { resolveParams } from "./view.ts";
 export type { ViewModule, ViewContext, PlayerContext, ViewHandle, ParamSpec, Tier, TopicQuery, Workspace, AppliedEdit } from "./view.ts";
 export { commitEdit, undoEdit, redoEdit } from "./edit.ts";
-export { checkScreen, LAYOUT_AREAS } from "./screen.ts";
+export { checkScreen, boundScene, LAYOUT_AREAS } from "./screen.ts";
 export type { ScreenDoc, ScreenItem, CheckedScreen } from "./screen.ts";
 export { subjectOf, playerSubjectOf } from "./mark.ts";
 export { resolveSymbology, markerFor, legendFor, sameLook, checkSymbology, CHANNELS, PATTERNS, BODY_SHAPES } from "./symbology.ts";

@@ -16,6 +16,7 @@ export const playerChart: PlayerView = {
   id: "sse.view.chart",
   version: "0.1.0",
   scene: "player",
+  box: "fill",
   tiers: ["canvas", "text"],
   inputs: scenes,
   params: [{ name: "distance_field", type: "string", default: "orbit.semi_major_axis_m", meaning: "Field that places a body radially (SI metres)." }],
