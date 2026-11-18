@@ -299,6 +299,17 @@ example("air/dense", "illustrative: Earth at 2 bar", like(earth, atmosphere__sur
 example("air/very-dense", "illustrative: Earth at 5 bar", like(earth, atmosphere__surface_pressure=5e5))
 example("gas-giant/water-clouds", "Jupiter", facts["Jupiter"], "out")
 
+# Cross-references (C3): what another suite or the author must settle before
+# a body can be placed in the class. "life:<capability>" asks the life suite;
+# "authored:<what>" can only be an authored intervention.
+for cid, needs in [
+    ("air/nitrogen-oxygen", ["life:oxygenic_photosynthesis"]),
+    ("physical/living", ["life:any"]),
+    ("physical/inhabited", ["authored:settlement"]),
+    ("physical/terraformed", ["authored:terraforming"]),
+]:
+    by_id[cid]["needs"] = needs
+
 missing = [c["id"] for c in CLASSES if not any(e["expect"] == "in" for e in c.get("examples", []))]
 assert not missing, f"classes with no example: {missing}"
 

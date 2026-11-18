@@ -1,6 +1,6 @@
 {
   "atlas": "834746585375598c6feb09e178a91326fcf0f889a2a2430975c45ff30f54830b",
-  "base_atlas": "ff2051fd0f1e92d9d3403f596a825781370f24929d144cc937d32a8f7517a3fa",
+  "base_atlas": "88ee636f6cb3c3e20f64db4336cb2883f1677829e56c597faf0c22f3dc65efe7",
   "base_solar_system": [
     [
       "Mercury",
@@ -536,13 +536,13 @@
       63115200000000000,
       "surface/temperate-ocean",
       "surface/hot-desert",
-      "376b72f2854ca89c9be29f33ecb0aa3226e0d164dfa181d07f8919deb25cafc9"
+      "54f4b52dce7b68f52d114a25ca3b56539b77f37387e5bceae736ba26bf8b9ef1"
     ],
     [
       94672800000000000,
       "surface/hot-desert",
       "surface/molten",
-      "5361677195e7923c25a52d2057ea13223edd2d7c94890486b19364ec141594ab"
+      "766e8074c5c935dc39d632a9685f077c131b84e22025c8e54f8eeb1cd1446415"
     ]
   ],
   "chronicle_head": "67bacc2e51f79aee7c26171300a7540a22a822cb13376fc6033c3a1d029432e2",

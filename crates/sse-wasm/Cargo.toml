@@ -16,6 +16,7 @@ sse-kernel.workspace = true
 sse-resolve = { path = "../sse-resolve" }
 sse-sift = { path = "../sse-sift" }
 sse-life = { path = "../sse-life" }
+sse-place = { path = "../sse-place" }
 sse-observe = { path = "../sse-observe" }
 sse-suite = { path = "../sse-suite" }
 sse-formation = { path = "../sse-formation" }

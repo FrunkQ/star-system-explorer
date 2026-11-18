@@ -623,6 +623,22 @@ dependencies = [
 ]
 
 [[package]]
+name = "sse-place"
+version = "0.1.0"
+dependencies = [
+ "serde",
+ "serde_json",
+ "sse-atoms",
+ "sse-chronicle",
+ "sse-core",
+ "sse-flow",
+ "sse-life",
+ "sse-pack",
+ "sse-sift",
+ "sse-world",
+]
+
+[[package]]
 name = "sse-resolve"
 version = "0.1.0"
 dependencies = [
@@ -671,6 +687,7 @@ dependencies = [
  "sse-kernel",
  "sse-life",
  "sse-observe",
+ "sse-place",
  "sse-resolve",
  "sse-sift",
  "sse-suite",

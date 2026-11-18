@@ -4355,6 +4355,9 @@
        },
        "expect": "in"
       }
+     ],
+     "needs": [
+      "life:any"
      ]
     },
     {
@@ -4438,6 +4441,9 @@
        },
        "expect": "in"
       }
+     ],
+     "needs": [
+      "authored:settlement"
      ]
     },
     {
@@ -4515,6 +4521,9 @@
        },
        "expect": "in"
       }
+     ],
+     "needs": [
+      "authored:terraforming"
      ]
     },
     {
@@ -7193,6 +7202,9 @@
        },
        "expect": "in"
       }
+     ],
+     "needs": [
+      "life:oxygenic_photosynthesis"
      ]
     },
     {

@@ -1,0 +1,121 @@
+{
+  "cases": [
+    {
+      "a_au": 1.0360712214424612,
+      "blocking": [],
+      "class": "surface/temperate-ocean",
+      "fit": 1.0,
+      "hash": "e25703639da99d8cd2f03749b725b8850e745255b84a665bcc35138800e3967b",
+      "interventions": [],
+      "label": "surface/temperate-ocean",
+      "outcome": "placed",
+      "system": "sun"
+    },
+    {
+      "a_au": 31.407563396532744,
+      "blocking": [
+        "the class needs an orbit at 0.32 to 12 au, outside the requested 30 to 40 au",
+        "surface liquid is none here; the class needs it in its core",
+        "surface liquid cover is 0.000 here; the class needs it in its core (change by 0.100)",
+        "mean surface temperature is 63.796 here; the class needs it in its core (change by 196.204)"
+      ],
+      "class": "surface/temperate-ocean",
+      "fit": 0.0,
+      "hash": "e85aba19c09c716d923b673f5c2d7119a610389df3df0db332db954b30ace872",
+      "interventions": [],
+      "label": "surface/cold-desert",
+      "outcome": "closest_here",
+      "system": "sun"
+    },
+    {
+      "a_au": 18.879178765295634,
+      "blocking": [],
+      "class": "gas-giant/ammonia-clouds",
+      "fit": 1.0,
+      "hash": "af813bfb16298b27ccb43330117c48625c550140bf38a7989a6c7c908c9da541",
+      "interventions": [],
+      "label": "gas-giant/ammonia-clouds",
+      "outcome": "placed",
+      "system": "sun"
+    },
+    {
+      "a_au": 2.1742613750986854,
+      "blocking": [],
+      "class": "surface/cold-desert",
+      "fit": 1.0,
+      "hash": "31815e9b2db869b649d78a51a78686507b3ad0ccbaf81c10468648e88940fd4a",
+      "interventions": [],
+      "label": "surface/cold-desert",
+      "outcome": "placed",
+      "system": "k-dwarf"
+    },
+    {
+      "a_au": 0.3498324697888096,
+      "blocking": [],
+      "class": "water-rich",
+      "fit": 1.0,
+      "hash": "05d36bb55b126bce31e4e83ec0eef729536919b95645f2c03ba32daaa0ad4848",
+      "interventions": [],
+      "label": "water-rich",
+      "outcome": "placed",
+      "system": "k-dwarf"
+    },
+    {
+      "a_au": 0.6741417508838223,
+      "blocking": [],
+      "class": "surface/airless",
+      "fit": 1.0,
+      "hash": "3d222056fd510529d13177ea1cac227193a3a0f839d6be8f417d53c5a54dac3c",
+      "interventions": [],
+      "label": "surface/airless",
+      "outcome": "placed",
+      "system": "m-dwarf"
+    },
+    {
+      "a_au": 0.31849708700343987,
+      "blocking": [],
+      "class": "habitable/pressure-suit",
+      "fit": 1.0,
+      "hash": "2bac3cc2fa27c77ea4fa4611991ff72194ea8d5aba469618a88b26f46f433372",
+      "interventions": [],
+      "label": "habitable/pressure-suit",
+      "outcome": "placed",
+      "system": "m-dwarf"
+    },
+    {
+      "a_au": 2.926208969349532,
+      "blocking": [],
+      "class": "surface/hot-greenhouse",
+      "fit": 1.0,
+      "hash": "d81719b710ff4f43b080aea6d22182f7faf5eea892803ad5279ac7beaf032a7d",
+      "interventions": [],
+      "label": "surface/hot-greenhouse",
+      "outcome": "placed",
+      "system": "f-star"
+    },
+    {
+      "a_au": 32.52734383274828,
+      "blocking": [],
+      "class": "air/carbon-dioxide",
+      "fit": 1.0,
+      "hash": "6ccdd046f34dbd357052a65d887851fcc83b452b4ea68c9d268b23872bbf9abd",
+      "interventions": [],
+      "label": "air/carbon-dioxide",
+      "outcome": "placed",
+      "system": "f-star"
+    },
+    {
+      "a_au": 1.0381767938469133,
+      "blocking": [],
+      "class": "habitable/shirt-sleeve",
+      "fit": 1.0,
+      "hash": "3878e8cb5fccf1728db3f00d7bd97b1dca573ee2a8332dc25572a72923d34fda",
+      "interventions": [
+        "seed oxygenic_photosynthesis life (air/nitrogen-oxygen needs it; the life suite says: no life model installed)"
+      ],
+      "label": "habitable/shirt-sleeve",
+      "outcome": "needs_help",
+      "system": "sun"
+    }
+  ]
+}
