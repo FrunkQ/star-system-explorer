@@ -49,6 +49,14 @@ pub enum Distribution {
         lo: f64,
         hi: f64,
     },
+    /// A continuous broken power law: `p(x) ∝ x^-alphas[i]` on
+    /// `[edges[i], edges[i+1]]`, joined without a jump (the Kroupa 2001
+    /// initial mass function is three pieces). `0 < edges` ascending,
+    /// `alphas.len() == edges.len() - 1`.
+    BrokenPowerLaw {
+        edges: Vec<f64>,
+        alphas: Vec<f64>,
+    },
     /// A labelled category with relative weights.
     Choice {
         options: Vec<(String, f64)>,
@@ -160,6 +168,20 @@ impl Distribution {
             {
                 bad("power law needs 0 < lo < hi")
             }
+            Distribution::BrokenPowerLaw { edges, alphas } => {
+                if alphas.is_empty()
+                    || edges.len() != alphas.len() + 1
+                    || !fin(edges)
+                    || !fin(alphas)
+                    || edges[0] <= 0.0
+                    || edges.windows(2).any(|w| w[0] >= w[1])
+                {
+                    return bad(
+                        "broken power law needs ascending edges > 0 and one alpha per piece",
+                    );
+                }
+                Ok(())
+            }
             Distribution::Choice { options }
                 if options.is_empty()
                     || options.iter().any(|(_, w)| !w.is_finite() || *w < 0.0)
@@ -198,6 +220,9 @@ impl Distribution {
             )),
             Distribution::PowerLaw { alpha, lo, hi } => {
                 Sample::Num(power_law_quantile(*alpha, *lo, *hi, u))
+            }
+            Distribution::BrokenPowerLaw { edges, alphas } => {
+                Sample::Num(broken_quantile(edges, alphas, u))
             }
             Distribution::Choice { options } => {
                 let total: f64 = options.iter().map(|(_, w)| w).sum();
@@ -255,6 +280,7 @@ impl Distribution {
                     power_law_cdf(*alpha, *lo, *hi, x)
                 }
             }
+            Distribution::BrokenPowerLaw { edges, alphas } => broken_cdf(edges, alphas, x),
             Distribution::Choice { .. } => return None,
             Distribution::Poisson { mean } => {
                 if x < 0.0 {
@@ -326,6 +352,14 @@ impl Distribution {
                 let norm = power_law_integral(-a, *lo, *hi);
                 power_law_integral(1.0 - a, *lo, *hi) / norm
             }
+            Distribution::BrokenPowerLaw { edges, alphas } => {
+                let pieces = broken_pieces(edges, alphas);
+                let mass: f64 = pieces
+                    .iter()
+                    .map(|(c, a, lo, hi)| c * power_law_integral(1.0 - a, *lo, *hi))
+                    .sum();
+                mass / pieces.iter().map(|p| p.0 * p_int(p)).sum::<f64>()
+            }
             Distribution::Choice { .. } => return None,
             Distribution::Poisson { mean } => *mean,
         })
@@ -339,6 +373,55 @@ fn power_law_integral(k: f64, lo: f64, hi: f64) -> f64 {
     } else {
         (m::pow(hi, k + 1.0) - m::pow(lo, k + 1.0)) / (k + 1.0)
     }
+}
+
+/// Pieces of a continuous broken power law: (coefficient, alpha, lo, hi),
+/// coefficients chosen so the density has no jump at the edges.
+fn broken_pieces(edges: &[f64], alphas: &[f64]) -> Vec<(f64, f64, f64, f64)> {
+    let mut c = 1.0;
+    let mut out = Vec::with_capacity(alphas.len());
+    for (i, a) in alphas.iter().enumerate() {
+        if i > 0 {
+            // c_i x^-a_i = c_{i-1} x^-a_{i-1} at x = edges[i].
+            c *= m::pow(edges[i], a - alphas[i - 1]);
+        }
+        out.push((c, *a, edges[i], edges[i + 1]));
+    }
+    out
+}
+fn p_int(p: &(f64, f64, f64, f64)) -> f64 {
+    power_law_integral(-p.1, p.2, p.3)
+}
+fn broken_cdf(edges: &[f64], alphas: &[f64], x: f64) -> f64 {
+    let pieces = broken_pieces(edges, alphas);
+    let total: f64 = pieces.iter().map(|p| p.0 * p_int(p)).sum();
+    if x <= edges[0] {
+        return 0.0;
+    }
+    let mut acc = 0.0;
+    for p in &pieces {
+        if x >= p.3 {
+            acc += p.0 * p_int(p);
+        } else {
+            acc += p.0 * power_law_integral(-p.1, p.2, x);
+            break;
+        }
+    }
+    (acc / total).clamp(0.0, 1.0)
+}
+fn broken_quantile(edges: &[f64], alphas: &[f64], u: f64) -> f64 {
+    let pieces = broken_pieces(edges, alphas);
+    let w: Vec<f64> = pieces.iter().map(|p| p.0 * p_int(p)).collect();
+    let total: f64 = w.iter().sum();
+    let mut target = u * total;
+    for (p, wi) in pieces.iter().zip(&w) {
+        if target < *wi {
+            return power_law_quantile(p.1, p.2, p.3, target / wi);
+        }
+        target -= wi;
+    }
+    let last = pieces.last().expect("validated");
+    last.3
 }
 
 fn power_law_cdf(alpha: f64, lo: f64, hi: f64, x: f64) -> f64 {

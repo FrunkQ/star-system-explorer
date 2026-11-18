@@ -29,9 +29,27 @@ fn default_group() -> String {
 #[derive(Clone, PartialEq, Debug, Serialize, Deserialize)]
 #[serde(tag = "type", rename_all = "kebab-case")]
 pub enum CountSpec {
-    Fixed { n: u64 },
-    Poisson { mean: f64 },
-    Uniform { lo: u64, hi: u64 },
+    Fixed {
+        n: u64,
+    },
+    Poisson {
+        mean: f64,
+    },
+    Uniform {
+        lo: u64,
+        hi: u64,
+    },
+    /// Draw children from `dist` until the next one would not fit in
+    /// `budget` (in its minor units: `unit` per unit of `dist`). Each child's
+    /// share of that budget is its own draw, so the drawn distribution comes
+    /// through exactly (an initial mass function: no star is rescaled because
+    /// a rare big one is missing). What is left is residue, under one draw.
+    /// The partition is not used; other budgets follow these shares.
+    Fill {
+        budget: String,
+        dist: Distribution,
+        unit: f64,
+    },
 }
 
 /// The weights a budget is split by.
@@ -44,6 +62,10 @@ pub enum Weights {
     Exponential,
     /// Weights drawn from a distribution (a mass function, say).
     Drawn { dist: Distribution },
+    /// Weights given by index, for children whose shares a model computes
+    /// (birth cohorts by star formation history). Needs a fixed count of the
+    /// same length.
+    Given { weights: Vec<f64> },
 }
 
 /// Flat splits compute every child's weight (exact Hamilton apportionment);
@@ -234,6 +256,23 @@ fn check_count(c: &CountSpec) -> Result<(), EnvelopeError> {
             Err(EnvelopeError::BadCount("poisson mean must be >= 0".into()))
         }
         CountSpec::Uniform { lo, hi } if lo > hi => Err(EnvelopeError::BadCount("lo > hi".into())),
+        CountSpec::Fill { dist, unit, .. } => {
+            dist.validate().map_err(|e| EnvelopeError::BadCount(e.0))?;
+            let positive = match dist {
+                Distribution::PowerLaw { .. }
+                | Distribution::BrokenPowerLaw { .. }
+                | Distribution::LogNormal { .. } => true,
+                Distribution::Uniform { lo, .. } => *lo > 0.0,
+                Distribution::Fixed { value } => *value > 0.0,
+                _ => false,
+            };
+            if !positive || !(unit.is_finite() && *unit > 0.0) {
+                return Err(EnvelopeError::BadCount(
+                    "fill needs a positive numeric distribution and unit > 0".into(),
+                ));
+            }
+            Ok(())
+        }
         _ => Ok(()),
     }
 }
@@ -255,6 +294,11 @@ fn check_partition(p: &PartitionSpec) -> Result<(), EnvelopeError> {
             }
             Ok(())
         }
+        PartitionSpec::Flat {
+            weights: Weights::Given { weights },
+        } if weights.iter().any(|w| !w.is_finite() || *w < 0.0) => Err(
+            EnvelopeError::BadPartition("given weights must be finite and >= 0".into()),
+        ),
         _ => Ok(()),
     }
 }
@@ -298,7 +342,28 @@ impl Envelope {
             }
         }
         check_count(&self.count)?;
+        if let CountSpec::Fill { budget, .. } = &self.count {
+            if !self.budgets.contains_key(budget) {
+                return Err(EnvelopeError::BadCount(format!(
+                    "fill names unknown budget {budget}"
+                )));
+            }
+        }
         check_partition(&self.partition)?;
+        if let PartitionSpec::Flat {
+            weights: Weights::Given { weights },
+        } = &self.partition
+        {
+            if self.count
+                != (CountSpec::Fixed {
+                    n: weights.len() as u64,
+                })
+            {
+                return Err(EnvelopeError::BadPartition(
+                    "given weights need a fixed count of the same length".into(),
+                ));
+            }
+        }
         check_fields(&self.fields)?;
         if let Some(l) = &self.life {
             for (n, d) in [("life.born", &l.born), ("life.lifetime", &l.lifetime)] {

@@ -1,0 +1,1386 @@
+{
+  "about": "G0 envelope fixture: the default Milky-Way-like patch at the Sun's radius now (16 pc leaf), its conditions, and its cohort envelopes. Regenerate with SSE_BLESS=1 cargo test -p sse-cosmos.",
+  "cohorts": [
+    {
+      "address": "u:g0/patch:9:solar/cohort:0",
+      "budgets": {
+        "birth_mass": {
+          "amount": 854,
+          "dim": [
+            0,
+            1,
+            0,
+            0,
+            0,
+            0,
+            0
+          ],
+          "group": "mass",
+          "quantum": 1.98841e+27
+        }
+      },
+      "child": null,
+      "child_kind": "sys",
+      "count": {
+        "budget": "birth_mass",
+        "dist": {
+          "alphas": [
+            1.3,
+            2.3
+          ],
+          "edges": [
+            0.08,
+            0.5,
+            150.0
+          ],
+          "type": "broken-power-law"
+        },
+        "type": "fill",
+        "unit": 1000.0
+      },
+      "epoch": {
+        "ns": 0,
+        "s": 435494880000000000
+      },
+      "facts": {
+        "cohort.alpha_fe_mean": 0.3,
+        "cohort.feh_mean": -1.5,
+        "cohort.from_gyr": 0.8,
+        "cohort.population": "halo",
+        "cohort.sigma_kms": 150.0,
+        "cohort.to_gyr": 1.8
+      },
+      "fields": {
+        "al26_rel": {
+          "dist": {
+            "median": 0.3,
+            "sigma_dex": 0.7,
+            "type": "log-normal"
+          },
+          "from": "draw",
+          "version": 1
+        },
+        "alpha_fe": {
+          "dist": {
+            "hi": 0.6,
+            "lo": -0.2,
+            "mean": 0.3,
+            "sd": 0.05,
+            "type": "normal"
+          },
+          "from": "draw",
+          "version": 1
+        },
+        "birth_time_s": {
+          "dist": {
+            "hi": 5.680368e+16,
+            "lo": 2.524608e+16,
+            "type": "uniform"
+          },
+          "from": "draw",
+          "version": 1
+        },
+        "c_o": {
+          "dist": {
+            "hi": 1.5,
+            "lo": 0.1,
+            "mean": 0.19514736408,
+            "sd": 0.07,
+            "type": "normal"
+          },
+          "from": "draw",
+          "version": 1
+        },
+        "cluster_fuv_g0": {
+          "dist": {
+            "median": 1000.0,
+            "sigma_dex": 0.7,
+            "type": "log-normal"
+          },
+          "from": "draw",
+          "version": 1
+        },
+        "cluster_mass_msun": {
+          "dist": {
+            "alpha": 1.0,
+            "hi": 100000.0,
+            "lo": 10.0,
+            "type": "power-law"
+          },
+          "from": "draw",
+          "version": 1
+        },
+        "feh": {
+          "dist": {
+            "hi": 0.7,
+            "lo": -4.0,
+            "mean": -1.5,
+            "sd": 0.5,
+            "type": "normal"
+          },
+          "from": "draw",
+          "version": 1
+        },
+        "k40_rel": {
+          "dist": {
+            "median": 1.0,
+            "sigma_dex": 0.1,
+            "type": "log-normal"
+          },
+          "from": "draw",
+          "version": 1
+        },
+        "mg_si": {
+          "dist": {
+            "hi": 2.0,
+            "lo": 0.5,
+            "mean": 1.2,
+            "sd": 0.15,
+            "type": "normal"
+          },
+          "from": "draw",
+          "version": 1
+        },
+        "population": {
+          "field": "cohort.population",
+          "from": "inherit"
+        },
+        "r_process_rel": {
+          "dist": {
+            "median": 1.0,
+            "sigma_dex": 0.5,
+            "type": "log-normal"
+          },
+          "from": "draw",
+          "version": 1
+        }
+      },
+      "legacies": {},
+      "life": null,
+      "partition": {
+        "method": "flat",
+        "weights": {
+          "type": "exponential"
+        }
+      },
+      "pins": [],
+      "pins_count_toward": true,
+      "tier": "cohort",
+      "uncertainty": {
+        "al26_rel": 0.7,
+        "feh": 0.5
+      }
+    },
+    {
+      "address": "u:g0/patch:9:solar/cohort:1",
+      "budgets": {
+        "birth_mass": {
+          "amount": 20069,
+          "dim": [
+            0,
+            1,
+            0,
+            0,
+            0,
+            0,
+            0
+          ],
+          "group": "mass",
+          "quantum": 1.98841e+27
+        }
+      },
+      "child": null,
+      "child_kind": "sys",
+      "count": {
+        "budget": "birth_mass",
+        "dist": {
+          "alphas": [
+            1.3,
+            2.3
+          ],
+          "edges": [
+            0.08,
+            0.5,
+            150.0
+          ],
+          "type": "broken-power-law"
+        },
+        "type": "fill",
+        "unit": 1000.0
+      },
+      "epoch": {
+        "ns": 0,
+        "s": 435494880000000000
+      },
+      "facts": {
+        "cohort.alpha_fe_mean": 0.17150479769,
+        "cohort.feh_mean": -0.55224880732,
+        "cohort.from_gyr": 1.8,
+        "cohort.population": "thick",
+        "cohort.sigma_kms": 50.0,
+        "cohort.to_gyr": 5.8
+      },
+      "fields": {
+        "al26_rel": {
+          "dist": {
+            "median": 0.3,
+            "sigma_dex": 0.7,
+            "type": "log-normal"
+          },
+          "from": "draw",
+          "version": 1
+        },
+        "alpha_fe": {
+          "dist": {
+            "hi": 0.6,
+            "lo": -0.2,
+            "mean": 0.17150479769,
+            "sd": 0.05,
+            "type": "normal"
+          },
+          "from": "draw",
+          "version": 1
+        },
+        "birth_time_s": {
+          "dist": {
+            "hi": 1.8303408e+17,
+            "lo": 5.680368e+16,
+            "type": "uniform"
+          },
+          "from": "draw",
+          "version": 1
+        },
+        "c_o": {
+          "dist": {
+            "hi": 1.5,
+            "lo": 0.1,
+            "mean": 0.3755675381,
+            "sd": 0.07,
+            "type": "normal"
+          },
+          "from": "draw",
+          "version": 1
+        },
+        "cluster_fuv_g0": {
+          "dist": {
+            "median": 1000.0,
+            "sigma_dex": 0.7,
+            "type": "log-normal"
+          },
+          "from": "draw",
+          "version": 1
+        },
+        "cluster_mass_msun": {
+          "dist": {
+            "alpha": 1.0,
+            "hi": 100000.0,
+            "lo": 10.0,
+            "type": "power-law"
+          },
+          "from": "draw",
+          "version": 1
+        },
+        "feh": {
+          "dist": {
+            "hi": 0.7,
+            "lo": -4.0,
+            "mean": -0.55224880732,
+            "sd": 0.2,
+            "type": "normal"
+          },
+          "from": "draw",
+          "version": 1
+        },
+        "k40_rel": {
+          "dist": {
+            "median": 1.0,
+            "sigma_dex": 0.1,
+            "type": "log-normal"
+          },
+          "from": "draw",
+          "version": 1
+        },
+        "mg_si": {
+          "dist": {
+            "hi": 2.0,
+            "lo": 0.5,
+            "mean": 1.2,
+            "sd": 0.15,
+            "type": "normal"
+          },
+          "from": "draw",
+          "version": 1
+        },
+        "population": {
+          "field": "cohort.population",
+          "from": "inherit"
+        },
+        "r_process_rel": {
+          "dist": {
+            "median": 1.0,
+            "sigma_dex": 0.25,
+            "type": "log-normal"
+          },
+          "from": "draw",
+          "version": 1
+        }
+      },
+      "legacies": {},
+      "life": null,
+      "partition": {
+        "method": "flat",
+        "weights": {
+          "type": "exponential"
+        }
+      },
+      "pins": [],
+      "pins_count_toward": true,
+      "tier": "cohort",
+      "uncertainty": {
+        "al26_rel": 0.7,
+        "feh": 0.2
+      }
+    },
+    {
+      "address": "u:g0/patch:9:solar/cohort:2",
+      "budgets": {
+        "birth_mass": {
+          "amount": 39965,
+          "dim": [
+            0,
+            1,
+            0,
+            0,
+            0,
+            0,
+            0
+          ],
+          "group": "mass",
+          "quantum": 1.98841e+27
+        }
+      },
+      "child": null,
+      "child_kind": "sys",
+      "count": {
+        "budget": "birth_mass",
+        "dist": {
+          "alphas": [
+            1.3,
+            2.3
+          ],
+          "edges": [
+            0.08,
+            0.5,
+            150.0
+          ],
+          "type": "broken-power-law"
+        },
+        "type": "fill",
+        "unit": 1000.0
+      },
+      "epoch": {
+        "ns": 0,
+        "s": 435494880000000000
+      },
+      "facts": {
+        "cohort.alpha_fe_mean": 0.090433351362,
+        "cohort.feh_mean": -0.14635978909,
+        "cohort.from_gyr": 5.8,
+        "cohort.population": "thin",
+        "cohort.sigma_kms": 44.13207203,
+        "cohort.to_gyr": 7.8
+      },
+      "fields": {
+        "al26_rel": {
+          "dist": {
+            "median": 0.3,
+            "sigma_dex": 0.7,
+            "type": "log-normal"
+          },
+          "from": "draw",
+          "version": 1
+        },
+        "alpha_fe": {
+          "dist": {
+            "hi": 0.6,
+            "lo": -0.2,
+            "mean": 0.090433351362,
+            "sd": 0.05,
+            "type": "normal"
+          },
+          "from": "draw",
+          "version": 1
+        },
+        "birth_time_s": {
+          "dist": {
+            "hi": 2.4614928e+17,
+            "lo": 1.8303408e+17,
+            "type": "uniform"
+          },
+          "from": "draw",
+          "version": 1
+        },
+        "c_o": {
+          "dist": {
+            "hi": 1.5,
+            "lo": 0.1,
+            "mean": 0.49711257905,
+            "sd": 0.07,
+            "type": "normal"
+          },
+          "from": "draw",
+          "version": 1
+        },
+        "cluster_fuv_g0": {
+          "dist": {
+            "median": 1000.0,
+            "sigma_dex": 0.7,
+            "type": "log-normal"
+          },
+          "from": "draw",
+          "version": 1
+        },
+        "cluster_mass_msun": {
+          "dist": {
+            "alpha": 1.0,
+            "hi": 100000.0,
+            "lo": 10.0,
+            "type": "power-law"
+          },
+          "from": "draw",
+          "version": 1
+        },
+        "feh": {
+          "dist": {
+            "hi": 0.7,
+            "lo": -4.0,
+            "mean": -0.14635978909,
+            "sd": 0.15,
+            "type": "normal"
+          },
+          "from": "draw",
+          "version": 1
+        },
+        "k40_rel": {
+          "dist": {
+            "median": 1.0,
+            "sigma_dex": 0.1,
+            "type": "log-normal"
+          },
+          "from": "draw",
+          "version": 1
+        },
+        "mg_si": {
+          "dist": {
+            "hi": 2.0,
+            "lo": 0.5,
+            "mean": 1.2,
+            "sd": 0.15,
+            "type": "normal"
+          },
+          "from": "draw",
+          "version": 1
+        },
+        "population": {
+          "field": "cohort.population",
+          "from": "inherit"
+        },
+        "r_process_rel": {
+          "dist": {
+            "median": 1.0,
+            "sigma_dex": 0.15,
+            "type": "log-normal"
+          },
+          "from": "draw",
+          "version": 1
+        }
+      },
+      "legacies": {},
+      "life": null,
+      "partition": {
+        "method": "flat",
+        "weights": {
+          "type": "exponential"
+        }
+      },
+      "pins": [],
+      "pins_count_toward": true,
+      "tier": "cohort",
+      "uncertainty": {
+        "al26_rel": 0.7,
+        "feh": 0.15
+      }
+    },
+    {
+      "address": "u:g0/patch:9:solar/cohort:3",
+      "budgets": {
+        "birth_mass": {
+          "amount": 39965,
+          "dim": [
+            0,
+            1,
+            0,
+            0,
+            0,
+            0,
+            0
+          ],
+          "group": "mass",
+          "quantum": 1.98841e+27
+        }
+      },
+      "child": null,
+      "child_kind": "sys",
+      "count": {
+        "budget": "birth_mass",
+        "dist": {
+          "alphas": [
+            1.3,
+            2.3
+          ],
+          "edges": [
+            0.08,
+            0.5,
+            150.0
+          ],
+          "type": "broken-power-law"
+        },
+        "type": "fill",
+        "unit": 1000.0
+      },
+      "epoch": {
+        "ns": 0,
+        "s": 435494880000000000
+      },
+      "facts": {
+        "cohort.alpha_fe_mean": 0.056785661015,
+        "cohort.feh_mean": -0.080044236829,
+        "cohort.from_gyr": 7.8,
+        "cohort.population": "thin",
+        "cohort.sigma_kms": 39.229204895,
+        "cohort.to_gyr": 9.8
+      },
+      "fields": {
+        "al26_rel": {
+          "dist": {
+            "median": 0.3,
+            "sigma_dex": 0.7,
+            "type": "log-normal"
+          },
+          "from": "draw",
+          "version": 1
+        },
+        "alpha_fe": {
+          "dist": {
+            "hi": 0.6,
+            "lo": -0.2,
+            "mean": 0.056785661015,
+            "sd": 0.05,
+            "type": "normal"
+          },
+          "from": "draw",
+          "version": 1
+        },
+        "birth_time_s": {
+          "dist": {
+            "hi": 3.0926448e+17,
+            "lo": 2.4614928e+17,
+            "type": "uniform"
+          },
+          "from": "draw",
+          "version": 1
+        },
+        "c_o": {
+          "dist": {
+            "hi": 1.5,
+            "lo": 0.1,
+            "mean": 0.52041453583,
+            "sd": 0.07,
+            "type": "normal"
+          },
+          "from": "draw",
+          "version": 1
+        },
+        "cluster_fuv_g0": {
+          "dist": {
+            "median": 1000.0,
+            "sigma_dex": 0.7,
+            "type": "log-normal"
+          },
+          "from": "draw",
+          "version": 1
+        },
+        "cluster_mass_msun": {
+          "dist": {
+            "alpha": 1.0,
+            "hi": 100000.0,
+            "lo": 10.0,
+            "type": "power-law"
+          },
+          "from": "draw",
+          "version": 1
+        },
+        "feh": {
+          "dist": {
+            "hi": 0.7,
+            "lo": -4.0,
+            "mean": -0.080044236829,
+            "sd": 0.15,
+            "type": "normal"
+          },
+          "from": "draw",
+          "version": 1
+        },
+        "k40_rel": {
+          "dist": {
+            "median": 1.0,
+            "sigma_dex": 0.1,
+            "type": "log-normal"
+          },
+          "from": "draw",
+          "version": 1
+        },
+        "mg_si": {
+          "dist": {
+            "hi": 2.0,
+            "lo": 0.5,
+            "mean": 1.2,
+            "sd": 0.15,
+            "type": "normal"
+          },
+          "from": "draw",
+          "version": 1
+        },
+        "population": {
+          "field": "cohort.population",
+          "from": "inherit"
+        },
+        "r_process_rel": {
+          "dist": {
+            "median": 1.0,
+            "sigma_dex": 0.15,
+            "type": "log-normal"
+          },
+          "from": "draw",
+          "version": 1
+        }
+      },
+      "legacies": {},
+      "life": null,
+      "partition": {
+        "method": "flat",
+        "weights": {
+          "type": "exponential"
+        }
+      },
+      "pins": [],
+      "pins_count_toward": true,
+      "tier": "cohort",
+      "uncertainty": {
+        "al26_rel": 0.7,
+        "feh": 0.15
+      }
+    },
+    {
+      "address": "u:g0/patch:9:solar/cohort:4",
+      "budgets": {
+        "birth_mass": {
+          "amount": 39965,
+          "dim": [
+            0,
+            1,
+            0,
+            0,
+            0,
+            0,
+            0
+          ],
+          "group": "mass",
+          "quantum": 1.98841e+27
+        }
+      },
+      "child": null,
+      "child_kind": "sys",
+      "count": {
+        "budget": "birth_mass",
+        "dist": {
+          "alphas": [
+            1.3,
+            2.3
+          ],
+          "edges": [
+            0.08,
+            0.5,
+            150.0
+          ],
+          "type": "broken-power-law"
+        },
+        "type": "fill",
+        "unit": 1000.0
+      },
+      "epoch": {
+        "ns": 0,
+        "s": 435494880000000000
+      },
+      "facts": {
+        "cohort.alpha_fe_mean": 0.030686484749,
+        "cohort.feh_mean": -0.03807224007,
+        "cohort.from_gyr": 9.8,
+        "cohort.population": "thin",
+        "cohort.sigma_kms": 32.806692162,
+        "cohort.to_gyr": 11.8
+      },
+      "fields": {
+        "al26_rel": {
+          "dist": {
+            "median": 0.3,
+            "sigma_dex": 0.7,
+            "type": "log-normal"
+          },
+          "from": "draw",
+          "version": 1
+        },
+        "alpha_fe": {
+          "dist": {
+            "hi": 0.6,
+            "lo": -0.2,
+            "mean": 0.030686484749,
+            "sd": 0.05,
+            "type": "normal"
+          },
+          "from": "draw",
+          "version": 1
+        },
+        "birth_time_s": {
+          "dist": {
+            "hi": 3.7237968e+17,
+            "lo": 3.0926448e+17,
+            "type": "uniform"
+          },
+          "from": "draw",
+          "version": 1
+        },
+        "c_o": {
+          "dist": {
+            "hi": 1.5,
+            "lo": 0.1,
+            "mean": 0.53572389469,
+            "sd": 0.07,
+            "type": "normal"
+          },
+          "from": "draw",
+          "version": 1
+        },
+        "cluster_fuv_g0": {
+          "dist": {
+            "median": 1000.0,
+            "sigma_dex": 0.7,
+            "type": "log-normal"
+          },
+          "from": "draw",
+          "version": 1
+        },
+        "cluster_mass_msun": {
+          "dist": {
+            "alpha": 1.0,
+            "hi": 100000.0,
+            "lo": 10.0,
+            "type": "power-law"
+          },
+          "from": "draw",
+          "version": 1
+        },
+        "feh": {
+          "dist": {
+            "hi": 0.7,
+            "lo": -4.0,
+            "mean": -0.03807224007,
+            "sd": 0.15,
+            "type": "normal"
+          },
+          "from": "draw",
+          "version": 1
+        },
+        "k40_rel": {
+          "dist": {
+            "median": 1.0,
+            "sigma_dex": 0.1,
+            "type": "log-normal"
+          },
+          "from": "draw",
+          "version": 1
+        },
+        "mg_si": {
+          "dist": {
+            "hi": 2.0,
+            "lo": 0.5,
+            "mean": 1.2,
+            "sd": 0.15,
+            "type": "normal"
+          },
+          "from": "draw",
+          "version": 1
+        },
+        "population": {
+          "field": "cohort.population",
+          "from": "inherit"
+        },
+        "r_process_rel": {
+          "dist": {
+            "median": 1.0,
+            "sigma_dex": 0.15,
+            "type": "log-normal"
+          },
+          "from": "draw",
+          "version": 1
+        }
+      },
+      "legacies": {},
+      "life": null,
+      "partition": {
+        "method": "flat",
+        "weights": {
+          "type": "exponential"
+        }
+      },
+      "pins": [],
+      "pins_count_toward": true,
+      "tier": "cohort",
+      "uncertainty": {
+        "al26_rel": 0.7,
+        "feh": 0.15
+      }
+    },
+    {
+      "address": "u:g0/patch:9:solar/cohort:5",
+      "budgets": {
+        "birth_mass": {
+          "amount": 19982,
+          "dim": [
+            0,
+            1,
+            0,
+            0,
+            0,
+            0,
+            0
+          ],
+          "group": "mass",
+          "quantum": 1.98841e+27
+        }
+      },
+      "child": null,
+      "child_kind": "sys",
+      "count": {
+        "budget": "birth_mass",
+        "dist": {
+          "alphas": [
+            1.3,
+            2.3
+          ],
+          "edges": [
+            0.08,
+            0.5,
+            150.0
+          ],
+          "type": "broken-power-law"
+        },
+        "type": "fill",
+        "unit": 1000.0
+      },
+      "epoch": {
+        "ns": 0,
+        "s": 435494880000000000
+      },
+      "facts": {
+        "cohort.alpha_fe_mean": 0.014339735995,
+        "cohort.feh_mean": -0.016259791263,
+        "cohort.from_gyr": 11.8,
+        "cohort.population": "thin",
+        "cohort.sigma_kms": 25.739608975,
+        "cohort.to_gyr": 12.8
+      },
+      "fields": {
+        "al26_rel": {
+          "dist": {
+            "median": 0.3,
+            "sigma_dex": 0.7,
+            "type": "log-normal"
+          },
+          "from": "draw",
+          "version": 1
+        },
+        "alpha_fe": {
+          "dist": {
+            "hi": 0.6,
+            "lo": -0.2,
+            "mean": 0.014339735995,
+            "sd": 0.05,
+            "type": "normal"
+          },
+          "from": "draw",
+          "version": 1
+        },
+        "birth_time_s": {
+          "dist": {
+            "hi": 4.0393728e+17,
+            "lo": 3.7237968e+17,
+            "type": "uniform"
+          },
+          "from": "draw",
+          "version": 1
+        },
+        "c_o": {
+          "dist": {
+            "hi": 1.5,
+            "lo": 0.1,
+            "mean": 0.54385703681,
+            "sd": 0.07,
+            "type": "normal"
+          },
+          "from": "draw",
+          "version": 1
+        },
+        "cluster_fuv_g0": {
+          "dist": {
+            "median": 1000.0,
+            "sigma_dex": 0.7,
+            "type": "log-normal"
+          },
+          "from": "draw",
+          "version": 1
+        },
+        "cluster_mass_msun": {
+          "dist": {
+            "alpha": 1.0,
+            "hi": 100000.0,
+            "lo": 10.0,
+            "type": "power-law"
+          },
+          "from": "draw",
+          "version": 1
+        },
+        "feh": {
+          "dist": {
+            "hi": 0.7,
+            "lo": -4.0,
+            "mean": -0.016259791263,
+            "sd": 0.15,
+            "type": "normal"
+          },
+          "from": "draw",
+          "version": 1
+        },
+        "k40_rel": {
+          "dist": {
+            "median": 1.0,
+            "sigma_dex": 0.1,
+            "type": "log-normal"
+          },
+          "from": "draw",
+          "version": 1
+        },
+        "mg_si": {
+          "dist": {
+            "hi": 2.0,
+            "lo": 0.5,
+            "mean": 1.2,
+            "sd": 0.15,
+            "type": "normal"
+          },
+          "from": "draw",
+          "version": 1
+        },
+        "population": {
+          "field": "cohort.population",
+          "from": "inherit"
+        },
+        "r_process_rel": {
+          "dist": {
+            "median": 1.0,
+            "sigma_dex": 0.15,
+            "type": "log-normal"
+          },
+          "from": "draw",
+          "version": 1
+        }
+      },
+      "legacies": {},
+      "life": null,
+      "partition": {
+        "method": "flat",
+        "weights": {
+          "type": "exponential"
+        }
+      },
+      "pins": [],
+      "pins_count_toward": true,
+      "tier": "cohort",
+      "uncertainty": {
+        "al26_rel": 0.7,
+        "feh": 0.15
+      }
+    },
+    {
+      "address": "u:g0/patch:9:solar/cohort:6",
+      "budgets": {
+        "birth_mass": {
+          "amount": 19982,
+          "dim": [
+            0,
+            1,
+            0,
+            0,
+            0,
+            0,
+            0
+          ],
+          "group": "mass",
+          "quantum": 1.98841e+27
+        }
+      },
+      "child": null,
+      "child_kind": "sys",
+      "count": {
+        "budget": "birth_mass",
+        "dist": {
+          "alphas": [
+            1.3,
+            2.3
+          ],
+          "edges": [
+            0.08,
+            0.5,
+            150.0
+          ],
+          "type": "broken-power-law"
+        },
+        "type": "fill",
+        "unit": 1000.0
+      },
+      "epoch": {
+        "ns": 0,
+        "s": 435494880000000000
+      },
+      "facts": {
+        "cohort.alpha_fe_mean": 0.004587308483,
+        "cohort.feh_mean": -0.0049107327085,
+        "cohort.from_gyr": 12.8,
+        "cohort.population": "thin",
+        "cohort.sigma_kms": 17.52304216,
+        "cohort.to_gyr": 13.8
+      },
+      "fields": {
+        "al26_rel": {
+          "dist": {
+            "median": 0.3,
+            "sigma_dex": 0.7,
+            "type": "log-normal"
+          },
+          "from": "draw",
+          "version": 1
+        },
+        "alpha_fe": {
+          "dist": {
+            "hi": 0.6,
+            "lo": -0.2,
+            "mean": 0.004587308483,
+            "sd": 0.05,
+            "type": "normal"
+          },
+          "from": "draw",
+          "version": 1
+        },
+        "birth_time_s": {
+          "dist": {
+            "hi": 4.3549488e+17,
+            "lo": 4.0393728e+17,
+            "type": "uniform"
+          },
+          "from": "draw",
+          "version": 1
+        },
+        "c_o": {
+          "dist": {
+            "hi": 1.5,
+            "lo": 0.1,
+            "mean": 0.54813744319,
+            "sd": 0.07,
+            "type": "normal"
+          },
+          "from": "draw",
+          "version": 1
+        },
+        "cluster_fuv_g0": {
+          "dist": {
+            "median": 1000.0,
+            "sigma_dex": 0.7,
+            "type": "log-normal"
+          },
+          "from": "draw",
+          "version": 1
+        },
+        "cluster_mass_msun": {
+          "dist": {
+            "alpha": 1.0,
+            "hi": 100000.0,
+            "lo": 10.0,
+            "type": "power-law"
+          },
+          "from": "draw",
+          "version": 1
+        },
+        "feh": {
+          "dist": {
+            "hi": 0.7,
+            "lo": -4.0,
+            "mean": -0.0049107327085,
+            "sd": 0.15,
+            "type": "normal"
+          },
+          "from": "draw",
+          "version": 1
+        },
+        "k40_rel": {
+          "dist": {
+            "median": 1.0,
+            "sigma_dex": 0.1,
+            "type": "log-normal"
+          },
+          "from": "draw",
+          "version": 1
+        },
+        "mg_si": {
+          "dist": {
+            "hi": 2.0,
+            "lo": 0.5,
+            "mean": 1.2,
+            "sd": 0.15,
+            "type": "normal"
+          },
+          "from": "draw",
+          "version": 1
+        },
+        "population": {
+          "field": "cohort.population",
+          "from": "inherit"
+        },
+        "r_process_rel": {
+          "dist": {
+            "median": 1.0,
+            "sigma_dex": 0.15,
+            "type": "log-normal"
+          },
+          "from": "draw",
+          "version": 1
+        }
+      },
+      "legacies": {},
+      "life": null,
+      "partition": {
+        "method": "flat",
+        "weights": {
+          "type": "exponential"
+        }
+      },
+      "pins": [],
+      "pins_count_toward": true,
+      "tier": "cohort",
+      "uncertainty": {
+        "al26_rel": 0.7,
+        "feh": 0.15
+      }
+    }
+  ],
+  "conditions": {
+    "alpha_fe_ism": 0.0,
+    "cc_sn_gyr_pc3": 0.00007381997765,
+    "cc_sn_per_msun": 0.0108743524,
+    "cc_sn_so_far_pc3": 0.00047995232297,
+    "cohorts": [
+      {
+        "alpha_fe_mean": 0.3,
+        "density_pc3": 0.0003559927616,
+        "feh_mean": -1.5,
+        "feh_sd": 0.5,
+        "from_gyr": 0.8,
+        "index": 0,
+        "population": "halo",
+        "r_sigma_dex": 0.5,
+        "sigma_kms": 150.0,
+        "to_gyr": 1.8
+      },
+      {
+        "alpha_fe_mean": 0.17150479769,
+        "density_pc3": 0.0083620955597,
+        "feh_mean": -0.55224880732,
+        "feh_sd": 0.2,
+        "from_gyr": 1.8,
+        "index": 1,
+        "population": "thick",
+        "r_sigma_dex": 0.25,
+        "sigma_kms": 50.0,
+        "to_gyr": 5.8
+      },
+      {
+        "alpha_fe_mean": 0.090433351362,
+        "density_pc3": 0.016652024334,
+        "feh_mean": -0.14635978909,
+        "feh_sd": 0.15,
+        "from_gyr": 5.8,
+        "index": 2,
+        "population": "thin",
+        "r_sigma_dex": 0.15,
+        "sigma_kms": 44.13207203,
+        "to_gyr": 7.8
+      },
+      {
+        "alpha_fe_mean": 0.056785661015,
+        "density_pc3": 0.016652024334,
+        "feh_mean": -0.080044236829,
+        "feh_sd": 0.15,
+        "from_gyr": 7.8,
+        "index": 3,
+        "population": "thin",
+        "r_sigma_dex": 0.15,
+        "sigma_kms": 39.229204895,
+        "to_gyr": 9.8
+      },
+      {
+        "alpha_fe_mean": 0.030686484749,
+        "density_pc3": 0.016652024334,
+        "feh_mean": -0.03807224007,
+        "feh_sd": 0.15,
+        "from_gyr": 9.8,
+        "index": 4,
+        "population": "thin",
+        "r_sigma_dex": 0.15,
+        "sigma_kms": 32.806692162,
+        "to_gyr": 11.8
+      },
+      {
+        "alpha_fe_mean": 0.014339735995,
+        "density_pc3": 0.0083260121668,
+        "feh_mean": -0.016259791263,
+        "feh_sd": 0.15,
+        "from_gyr": 11.8,
+        "index": 5,
+        "population": "thin",
+        "r_sigma_dex": 0.15,
+        "sigma_kms": 25.739608975,
+        "to_gyr": 12.8
+      },
+      {
+        "alpha_fe_mean": 0.004587308483,
+        "density_pc3": 0.0083260121668,
+        "feh_mean": -0.0049107327085,
+        "feh_sd": 0.15,
+        "from_gyr": 12.8,
+        "index": 6,
+        "population": "thin",
+        "r_sigma_dex": 0.15,
+        "sigma_kms": 17.52304216,
+        "to_gyr": 13.8
+      }
+    ],
+    "density_pc3": {
+      "halo": 0.0003559927616,
+      "thick": 0.0083620955597,
+      "thin": 0.066608097334
+    },
+    "encounters_per_myr": 12.325500134,
+    "expected_systems": 308.53605645,
+    "feh_ism": 0.0,
+    "ia_sn_gyr_pc3": 6.0721241792e-6,
+    "ia_sn_so_far_pc3": 0.000044477057754,
+    "mean_birth_mass_msun": 0.58593402595,
+    "model": "milky-way-like.v1",
+    "rocky_metals_for_gyr": 12.44372749,
+    "sfr_msun_gyr_pc3": 0.0067884481697,
+    "site": {
+      "epoch": {
+        "ns": 0,
+        "s": 435494880000000000
+      },
+      "r_kpc": 8.2,
+      "size_pc": 16.0,
+      "z_pc": 20.0
+    },
+    "sterilising_sn_per_gyr": 0.17134144183,
+    "systems_per_pc3": 0.075326185657
+  },
+  "patch": {
+    "address": "u:g0/patch:9:solar",
+    "budgets": {
+      "birth_mass": {
+        "amount": 180782,
+        "dim": [
+          0,
+          1,
+          0,
+          0,
+          0,
+          0,
+          0
+        ],
+        "group": "mass",
+        "quantum": 1.98841e+27
+      }
+    },
+    "child": null,
+    "child_kind": "cohort",
+    "count": {
+      "n": 7,
+      "type": "fixed"
+    },
+    "epoch": {
+      "ns": 0,
+      "s": 435494880000000000
+    },
+    "facts": {
+      "patch.alpha_fe_ism": 0.0,
+      "patch.cc_sn_gyr_pc3": 0.00007381997765,
+      "patch.encounters_per_myr": 12.325500134,
+      "patch.feh_ism": 0.0,
+      "patch.ia_sn_gyr_pc3": 6.0721241792e-6,
+      "patch.model": "milky-way-like.v1",
+      "patch.r_kpc": 8.2,
+      "patch.rocky_metals_for_gyr": 12.44372749,
+      "patch.sfr_msun_gyr_pc3": 0.0067884481697,
+      "patch.size_pc": 16.0,
+      "patch.sterilising_sn_per_gyr": 0.17134144183,
+      "patch.systems_per_pc3": 0.075326185657,
+      "patch.z_pc": 20.0
+    },
+    "fields": {},
+    "legacies": {
+      "supernovae_cc": 1.9658847149,
+      "supernovae_ia": 0.18217802856
+    },
+    "life": null,
+    "partition": {
+      "method": "flat",
+      "weights": {
+        "type": "given",
+        "weights": [
+          0.0003559927616,
+          0.0083620955597,
+          0.016652024334,
+          0.016652024334,
+          0.016652024334,
+          0.0083260121668,
+          0.0083260121668
+        ]
+      }
+    },
+    "pins": [],
+    "pins_count_toward": true,
+    "tier": "patch",
+    "uncertainty": {
+      "patch.encounters_per_myr": 0.3,
+      "patch.feh_ism": 0.1,
+      "patch.sterilising_sn_per_gyr": 0.5
+    }
+  },
+  "seed": "g0"
+}
