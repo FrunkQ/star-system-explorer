@@ -1,0 +1,11 @@
+{
+  "id": "sse.symbology.diagrammatic-stub",
+  "name": "Diagrammatic (stub until V12)",
+  "bindings": [
+    { "applies_to": "star", "channel": "shape", "from": "kind", "table": { "star": "star" }, "fallback": "disc" },
+    { "applies_to": "star", "channel": "size", "from": "kind", "table": { "star": 7 }, "fallback": 7 },
+    { "applies_to": "planet", "channel": "fill_pattern", "from": "tag:class:", "table": { "rock": "solid", "ocean": "band", "ice": "hollow", "gas": "stipple", "desert": "hatch" }, "fallback": "solid" },
+    { "applies_to": "planet", "channel": "size", "from": "tag:size:", "table": { "small": 3.5, "medium": 5, "large": 8 }, "fallback": 4 },
+    { "applies_to": "planet", "channel": "shape", "from": "tag:rings:", "table": { "yes": "ring" }, "fallback": "disc" }
+  ]
+}

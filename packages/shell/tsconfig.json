@@ -1,0 +1,26 @@
+{
+  "compilerOptions": {
+    "target": "ES2022",
+    "module": "ESNext",
+    "moduleResolution": "bundler",
+    "lib": ["ES2022", "DOM", "DOM.Iterable"],
+    "types": [],
+    "strict": true,
+    "noUncheckedIndexedAccess": true,
+    "allowImportingTsExtensions": true,
+    "verbatimModuleSyntax": true,
+    "resolveJsonModule": true,
+    "noEmit": true,
+    "skipLibCheck": true
+  },
+  "include": [
+    "src/**/*.ts",
+    "src/**/*.svelte",
+    "../views/*/src/**/*.ts",
+    "../views/*/src/**/*.svelte",
+    "../chart-grammar/src/**/*.ts",
+    "../chart-grammar/src/**/*.svelte",
+    "../ui-contract/src/**/*.ts",
+    "../skins/*/src/**/*.ts"
+  ]
+}

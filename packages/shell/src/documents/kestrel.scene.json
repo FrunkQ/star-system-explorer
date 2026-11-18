@@ -1,0 +1,477 @@
+{
+ "schema": "sse.scene.system/0",
+ "fixture": true,
+ "universe": {
+  "id": "kestrel",
+  "seed": "kestrel reach campaign"
+ },
+ "system": "u:kestrel/sys:1",
+ "title": "Kestrel",
+ "subtitle": "Kestrel Reach · K2 V",
+ "now_yr": 4610000000,
+ "span_yr": [
+  0,
+  10000000000
+ ],
+ "surveyed_to_au": 24,
+ "subjects": [
+  {
+   "address": "u:kestrel/sys:1/body:0",
+   "kind": "star",
+   "label": "Kestrel",
+   "subtitle": "K2 V main-sequence star",
+   "facts": [
+    {
+     "field": "name",
+     "label": "Name",
+     "value": "Kestrel",
+     "display": "Kestrel",
+     "editable": true,
+     "source": "fixture"
+    },
+    {
+     "field": "mass_sun",
+     "label": "Mass",
+     "value": 0.78,
+     "unit": "M☉",
+     "display": "0.78 M☉",
+     "editable": true,
+     "source": "fixture"
+    },
+    {
+     "field": "luminosity_sun",
+     "label": "Luminosity",
+     "value": 0.34,
+     "unit": "L☉",
+     "display": "0.34 L☉",
+     "editable": true,
+     "source": "fixture"
+    },
+    {
+     "field": "teff_k",
+     "label": "Surface",
+     "value": 4980,
+     "unit": "K",
+     "display": "4980 K",
+     "editable": true,
+     "source": "fixture"
+    },
+    {
+     "field": "metallicity",
+     "label": "[Fe/H]",
+     "value": -0.08,
+     "unit": "dex",
+     "display": "−0.08 dex",
+     "editable": true,
+     "source": "fixture"
+    }
+   ],
+   "stamps": [
+    "resolved"
+   ],
+   "tags": [],
+   "prose": "An orange dwarf, steady and long-lived. It will stay on the main sequence for billions of years yet."
+  },
+  {
+   "address": "u:kestrel/sys:1/body:1",
+   "kind": "planet",
+   "label": "Ember",
+   "subtitle": "I · hot rock",
+   "parent": "u:kestrel/sys:1/body:0",
+   "orbit": {
+    "a_au": 0.21,
+    "phase_deg": 54
+   },
+   "facts": [
+    {
+     "field": "name",
+     "label": "Name",
+     "value": "Ember",
+     "display": "Ember",
+     "editable": true,
+     "source": "fixture"
+    },
+    {
+     "field": "mass_earth",
+     "label": "Mass",
+     "value": 0.31,
+     "unit": "M⊕",
+     "display": "0.31 M⊕",
+     "editable": true,
+     "source": "fixture"
+    },
+    {
+     "field": "radius_earth",
+     "label": "Radius",
+     "value": 0.68,
+     "unit": "R⊕",
+     "display": "0.68 R⊕",
+     "editable": true,
+     "source": "fixture"
+    },
+    {
+     "field": "surface_k",
+     "label": "Surface",
+     "value": 612,
+     "unit": "K",
+     "display": "612 K",
+     "editable": true,
+     "source": "fixture"
+    },
+    {
+     "field": "day_h",
+     "label": "Day",
+     "value": 1180,
+     "unit": "h",
+     "display": "1180 h",
+     "editable": true,
+     "source": "fixture"
+    }
+   ],
+   "stamps": [
+    "resolved"
+   ],
+   "tags": [
+    "class:rock",
+    "size:small"
+   ],
+   "prose": "Scorched and tide-locked. It moved inward early, clearing the inner disc."
+  },
+  {
+   "address": "u:kestrel/sys:1/body:2",
+   "kind": "planet",
+   "label": "Sable",
+   "subtitle": "II · dry world",
+   "parent": "u:kestrel/sys:1/body:0",
+   "orbit": {
+    "a_au": 0.38,
+    "phase_deg": 212
+   },
+   "facts": [
+    {
+     "field": "name",
+     "label": "Name",
+     "value": "Sable",
+     "display": "Sable",
+     "editable": true,
+     "source": "fixture"
+    },
+    {
+     "field": "mass_earth",
+     "label": "Mass",
+     "value": 0.52,
+     "unit": "M⊕",
+     "display": "0.52 M⊕",
+     "editable": true,
+     "source": "fixture"
+    },
+    {
+     "field": "radius_earth",
+     "label": "Radius",
+     "value": 0.81,
+     "unit": "R⊕",
+     "display": "0.81 R⊕",
+     "editable": true,
+     "source": "fixture"
+    },
+    {
+     "field": "surface_k",
+     "label": "Surface",
+     "value": 344,
+     "unit": "K",
+     "display": "344 K",
+     "editable": true,
+     "source": "fixture"
+    },
+    {
+     "field": "day_h",
+     "label": "Day",
+     "value": 96,
+     "unit": "h",
+     "display": "96 h",
+     "editable": true,
+     "source": "fixture"
+    }
+   ],
+   "stamps": [
+    "resolved"
+   ],
+   "tags": [
+    "class:desert",
+    "size:small"
+   ],
+   "prose": "Dust plains and a thin, failing atmosphere."
+  },
+  {
+   "address": "u:kestrel/sys:1/body:3",
+   "kind": "planet",
+   "label": "Tarn",
+   "subtitle": "III · temperate ocean world",
+   "parent": "u:kestrel/sys:1/body:0",
+   "orbit": {
+    "a_au": 0.63,
+    "phase_deg": 40
+   },
+   "facts": [
+    {
+     "field": "name",
+     "label": "Name",
+     "value": "Tarn",
+     "display": "Tarn",
+     "editable": true,
+     "source": "fixture"
+    },
+    {
+     "field": "mass_earth",
+     "label": "Mass",
+     "value": 0.82,
+     "unit": "M⊕",
+     "display": "0.82 M⊕",
+     "editable": true,
+     "source": "authored"
+    },
+    {
+     "field": "radius_earth",
+     "label": "Radius",
+     "value": 0.95,
+     "unit": "R⊕",
+     "display": "0.95 R⊕",
+     "editable": true,
+     "source": "fixture"
+    },
+    {
+     "field": "gravity_g",
+     "label": "Gravity",
+     "value": 0.91,
+     "unit": "g",
+     "display": "0.91 g",
+     "editable": false,
+     "source": "fixture"
+    },
+    {
+     "field": "surface_k",
+     "label": "Surface",
+     "value": 281,
+     "unit": "K",
+     "display": "281 K",
+     "editable": true,
+     "source": "fixture"
+    },
+    {
+     "field": "day_h",
+     "label": "Day",
+     "value": 31.4,
+     "unit": "h",
+     "display": "31.4 h",
+     "editable": true,
+     "source": "fixture"
+    },
+    {
+     "field": "field_ut",
+     "label": "Field",
+     "value": 38,
+     "unit": "μT",
+     "display": "38 μT",
+     "editable": true,
+     "source": "fixture"
+    }
+   ],
+   "stamps": [
+    "resolved"
+   ],
+   "tags": [
+    "class:ocean",
+    "size:medium"
+   ],
+   "prose": "Cold seas under a thick sky. Nine plates, still moving. Three cities on the equatorial shelf, one aerostat over the storm belt."
+  },
+  {
+   "address": "u:kestrel/sys:1/body:4",
+   "kind": "planet",
+   "label": "Vault",
+   "subtitle": "IV · gas giant",
+   "parent": "u:kestrel/sys:1/body:0",
+   "orbit": {
+    "a_au": 3.1,
+    "phase_deg": 158
+   },
+   "facts": [
+    {
+     "field": "name",
+     "label": "Name",
+     "value": "Vault",
+     "display": "Vault",
+     "editable": true,
+     "source": "fixture"
+    },
+    {
+     "field": "mass_earth",
+     "label": "Mass",
+     "value": 212,
+     "unit": "M⊕",
+     "display": "212 M⊕",
+     "editable": true,
+     "source": "fixture"
+    },
+    {
+     "field": "radius_earth",
+     "label": "Radius",
+     "value": 11.2,
+     "unit": "R⊕",
+     "display": "11.2 R⊕",
+     "editable": true,
+     "source": "fixture"
+    },
+    {
+     "field": "surface_k",
+     "label": "Cloud tops",
+     "value": 118,
+     "unit": "K",
+     "display": "118 K",
+     "editable": true,
+     "source": "fixture"
+    },
+    {
+     "field": "day_h",
+     "label": "Day",
+     "value": 11.8,
+     "unit": "h",
+     "display": "11.8 h",
+     "editable": true,
+     "source": "fixture"
+    }
+   ],
+   "stamps": [
+    "resolved"
+   ],
+   "tags": [
+    "class:gas",
+    "size:large",
+    "rings:yes"
+   ],
+   "prose": "Banded and storm-scarred, with a family of icy moons."
+  },
+  {
+   "address": "u:kestrel/sys:1/body:5",
+   "kind": "planet",
+   "label": "Hollow",
+   "subtitle": "V · ice world",
+   "parent": "u:kestrel/sys:1/body:0",
+   "orbit": {
+    "a_au": 9.4,
+    "phase_deg": -32
+   },
+   "facts": [
+    {
+     "field": "name",
+     "label": "Name",
+     "value": "Hollow",
+     "display": "Hollow",
+     "editable": true,
+     "source": "fixture"
+    },
+    {
+     "field": "mass_earth",
+     "label": "Mass",
+     "value": 2.4,
+     "unit": "M⊕",
+     "display": "2.4 M⊕",
+     "editable": true,
+     "source": "fixture"
+    },
+    {
+     "field": "radius_earth",
+     "label": "Radius",
+     "value": 1.6,
+     "unit": "R⊕",
+     "display": "1.6 R⊕",
+     "editable": true,
+     "source": "fixture"
+    },
+    {
+     "field": "surface_k",
+     "label": "Surface",
+     "value": 61,
+     "unit": "K",
+     "display": "61 K",
+     "editable": true,
+     "source": "fixture"
+    },
+    {
+     "field": "day_h",
+     "label": "Day",
+     "value": 19.2,
+     "unit": "h",
+     "display": "19.2 h",
+     "editable": true,
+     "source": "fixture"
+    }
+   ],
+   "stamps": [
+    "resolved"
+   ],
+   "tags": [
+    "class:ice",
+    "size:medium"
+   ],
+   "prose": "A frozen shell over a dark sea, far out where the light is thin."
+  },
+  {
+   "address": "u:kestrel/sys:1/zone:temperate",
+   "kind": "zone",
+   "label": "Temperate zone",
+   "band_au": [
+    0.52,
+    0.86
+   ],
+   "facts": [],
+   "stamps": [
+    "resolved"
+   ],
+   "tags": []
+  },
+  {
+   "address": "u:kestrel/sys:1/belt:grit",
+   "kind": "belt",
+   "label": "Grit belt",
+   "band_au": [
+    1.4,
+    1.9
+   ],
+   "facts": [
+    {
+     "field": "name",
+     "label": "Name",
+     "value": "Grit belt",
+     "display": "Grit belt",
+     "editable": true,
+     "source": "fixture"
+    }
+   ],
+   "stamps": [
+    "resolved"
+   ],
+   "tags": []
+  }
+ ],
+ "events": [
+  {
+   "id": "ev-ember-migrates",
+   "at_yr": 200000000,
+   "label": "Ember migrates",
+   "tone": "past"
+  },
+  {
+   "id": "ev-oceans-form",
+   "at_yr": 3000000000,
+   "label": "Oceans form on Tarn",
+   "tone": "past"
+  },
+  {
+   "id": "ev-belt-collision",
+   "at_yr": 6800000000,
+   "label": "Grit belt collision (one plausible future)",
+   "tone": "future"
+  }
+ ]
+}

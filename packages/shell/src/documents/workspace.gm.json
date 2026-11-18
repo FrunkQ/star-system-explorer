@@ -1,0 +1,15 @@
+{
+  "schema": "sse.screen/1",
+  "id": "sse.workspace.gm",
+  "label": "Chart room",
+  "audience": "gm",
+  "layout": "chart-room",
+  "theme": "chart-room",
+  "symbology": "sse.symbology.diagrammatic-stub",
+  "vocab": "physics",
+  "items": [
+    { "view": "sse.view.system-chart", "area": "chart", "params": { "labels": "all", "unsurveyed_hatch": true } },
+    { "view": "sse.view.body-card", "area": "card", "params": { "columns": 2 } },
+    { "view": "sse.view.time-ruler", "area": "ruler" }
+  ]
+}
