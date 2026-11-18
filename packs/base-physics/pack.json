@@ -635,6 +635,384 @@
       },
       {
         "format": "sse.flow/1",
+        "hook": "planet.heat",
+        "id": "sse.base.planet-heat",
+        "inputs": [
+          {
+            "kind": "body.age",
+            "name": "age"
+          },
+          {
+            "kind": "body.mass",
+            "name": "mass"
+          },
+          {
+            "kind": "interior.core_mass_fraction",
+            "name": "core_mass_fraction"
+          },
+          {
+            "kind": "body.radius",
+            "name": "radius"
+          },
+          {
+            "kind": "inheritance.k40_rel",
+            "name": "k40_rel"
+          },
+          {
+            "kind": "inheritance.r_process_rel",
+            "name": "r_process_rel"
+          }
+        ],
+        "nodes": [
+          {
+            "atom": "sse.heat.mantle_mass",
+            "id": "mantle"
+          },
+          {
+            "atom": "sse.heat.radiogenic_heating",
+            "id": "heating"
+          },
+          {
+            "atom": "sse.heat.radiogenic_power",
+            "id": "power"
+          },
+          {
+            "atom": "sse.heat.surface_heat_flow",
+            "id": "flow"
+          },
+          {
+            "atom": "sse.heat.active_geology_lifetime",
+            "id": "life"
+          }
+        ],
+        "publishes": [
+          {
+            "from": "power.power",
+            "kind": "interior.radiogenic_power"
+          },
+          {
+            "from": "flow.flow",
+            "kind": "interior.radiogenic_heat_flow"
+          },
+          {
+            "from": "life.lifetime",
+            "kind": "interior.active_geology_lifetime"
+          }
+        ],
+        "tests": [
+          {
+            "expect": {
+              "interior.active_geology_lifetime": {
+                "tol": 1.0,
+                "unit": "gyr",
+                "value": 10.3
+              },
+              "interior.radiogenic_heat_flow": {
+                "tol": 0.005,
+                "unit": "w_m2",
+                "value": 0.039
+              },
+              "interior.radiogenic_power": {
+                "tol": 3000000000000.0,
+                "unit": "w",
+                "value": 20000000000000.0
+              }
+            },
+            "inputs": {
+              "age": {
+                "unit": "gyr",
+                "value": 4.567
+              },
+              "core_mass_fraction": {
+                "unit": "one",
+                "value": 0.325
+              },
+              "k40_rel": {
+                "unit": "one",
+                "value": 1.0
+              },
+              "mass": {
+                "unit": "m_earth",
+                "value": 1.0
+              },
+              "r_process_rel": {
+                "unit": "one",
+                "value": 1.0
+              },
+              "radius": {
+                "unit": "km",
+                "value": 6371.0
+              }
+            },
+            "name": "Earth today (KamLAND 2011: U and Th about 20 TW; mantle plus crust radiogenic total about 20 TW, McDonough and Sun 1995)"
+          },
+          {
+            "expect": {
+              "interior.active_geology_lifetime": {
+                "tol": 0.4,
+                "unit": "gyr",
+                "value": 3.9
+              }
+            },
+            "inputs": {
+              "age": {
+                "unit": "gyr",
+                "value": 4.567
+              },
+              "core_mass_fraction": {
+                "unit": "one",
+                "value": 0.24
+              },
+              "k40_rel": {
+                "unit": "one",
+                "value": 1.0
+              },
+              "mass": {
+                "unit": "m_earth",
+                "value": 0.107
+              },
+              "r_process_rel": {
+                "unit": "one",
+                "value": 1.0
+              },
+              "radius": {
+                "unit": "km",
+                "value": 3389.5
+              }
+            },
+            "name": "Mars: widespread volcanism ends about 0.5 to 1 Gyr ago (Frank et al. 2014 calibration)"
+          },
+          {
+            "expect": {
+              "interior.active_geology_lifetime": {
+                "tol": 0.5,
+                "unit": "gyr",
+                "value": 1.9
+              }
+            },
+            "inputs": {
+              "age": {
+                "unit": "gyr",
+                "value": 4.567
+              },
+              "core_mass_fraction": {
+                "unit": "one",
+                "value": 0.02
+              },
+              "k40_rel": {
+                "unit": "one",
+                "value": 1.0
+              },
+              "mass": {
+                "unit": "m_earth",
+                "value": 0.0123
+              },
+              "r_process_rel": {
+                "unit": "one",
+                "value": 1.0
+              },
+              "radius": {
+                "unit": "km",
+                "value": 1737.4
+              }
+            },
+            "name": "Moon: mare volcanism mostly over in its first 2 Gyr"
+          },
+          {
+            "expect": {
+              "interior.active_geology_lifetime": {
+                "tol": 1.5,
+                "unit": "gyr",
+                "value": 19.4
+              }
+            },
+            "inputs": {
+              "age": {
+                "unit": "gyr",
+                "value": 4.567
+              },
+              "core_mass_fraction": {
+                "unit": "one",
+                "value": 0.325
+              },
+              "k40_rel": {
+                "unit": "one",
+                "value": 1.0
+              },
+              "mass": {
+                "unit": "m_earth",
+                "value": 1.0
+              },
+              "r_process_rel": {
+                "unit": "one",
+                "value": 2.0
+              },
+              "radius": {
+                "unit": "km",
+                "value": 6371.0
+              }
+            },
+            "name": "Earth around a thorium-rich star (Unterborn et al. 2015: twice the r-process, active far longer)"
+          }
+        ],
+        "version": "0.1.0",
+        "wires": [
+          {
+            "from": "in.mass",
+            "to": "mantle.mass"
+          },
+          {
+            "from": "in.core_mass_fraction",
+            "to": "mantle.core_mass_fraction"
+          },
+          {
+            "from": "in.age",
+            "to": "heating.age"
+          },
+          {
+            "from": "in.k40_rel",
+            "to": "heating.k40_rel"
+          },
+          {
+            "from": "in.r_process_rel",
+            "to": "heating.r_process_rel"
+          },
+          {
+            "from": "heating.heating",
+            "to": "power.heating"
+          },
+          {
+            "from": "mantle.mantle_mass",
+            "to": "power.mantle_mass"
+          },
+          {
+            "from": "power.power",
+            "to": "flow.power"
+          },
+          {
+            "from": "in.radius",
+            "to": "flow.radius"
+          },
+          {
+            "from": "in.k40_rel",
+            "to": "life.k40_rel"
+          },
+          {
+            "from": "in.r_process_rel",
+            "to": "life.r_process_rel"
+          },
+          {
+            "from": "mantle.mantle_mass",
+            "to": "life.mantle_mass"
+          },
+          {
+            "from": "in.radius",
+            "to": "life.radius"
+          }
+        ]
+      },
+      {
+        "format": "sse.flow/1",
+        "hook": "planetesimal.water",
+        "id": "sse.base.planetesimal-water",
+        "inputs": [
+          {
+            "kind": "inheritance.al26_rel",
+            "name": "al26_rel"
+          },
+          {
+            "kind": "planetesimal.formation_time",
+            "name": "formation_time"
+          }
+        ],
+        "nodes": [
+          {
+            "atom": "sse.heat.al26_planetesimal_heating",
+            "id": "al26"
+          }
+        ],
+        "publishes": [
+          {
+            "from": "al26.water_kept",
+            "kind": "planetesimal.water_kept_fraction"
+          }
+        ],
+        "tests": [
+          {
+            "expect": {
+              "planetesimal.water_kept_fraction": {
+                "tol": 0.001,
+                "unit": "one",
+                "value": 0.1
+              }
+            },
+            "inputs": {
+              "al26_rel": {
+                "unit": "one",
+                "value": 1.0
+              },
+              "formation_time": {
+                "unit": "myr",
+                "value": 0.3
+              }
+            },
+            "name": "Iron-meteorite parent body, formed within 0.5 Myr: melted and dry (Grimm and McSween 1993)"
+          },
+          {
+            "expect": {
+              "planetesimal.water_kept_fraction": {
+                "tol": 0.001,
+                "unit": "one",
+                "value": 1.0
+              }
+            },
+            "inputs": {
+              "al26_rel": {
+                "unit": "one",
+                "value": 1.0
+              },
+              "formation_time": {
+                "unit": "myr",
+                "value": 3.0
+              }
+            },
+            "name": "Carbonaceous chondrite parent body, formed after 3 Myr: kept its water"
+          },
+          {
+            "expect": {
+              "planetesimal.water_kept_fraction": {
+                "tol": 0.001,
+                "unit": "one",
+                "value": 1.0
+              }
+            },
+            "inputs": {
+              "al26_rel": {
+                "unit": "one",
+                "value": 0.0
+              },
+              "formation_time": {
+                "unit": "myr",
+                "value": 0.3
+              }
+            },
+            "name": "Same early body around a star with no Al-26: wet (Lichtenberg et al. 2019)"
+          }
+        ],
+        "version": "0.1.0",
+        "wires": [
+          {
+            "from": "in.al26_rel",
+            "to": "al26.al26_rel"
+          },
+          {
+            "from": "in.formation_time",
+            "to": "al26.formation_time"
+          }
+        ]
+      },
+      {
+        "format": "sse.flow/1",
         "hook": "star.main_sequence",
         "id": "sse.base.star-main-sequence",
         "inputs": [
@@ -941,6 +1319,20 @@
         "range": null
       },
       {
+        "description": "time since the body formed",
+        "dim": [
+          0,
+          0,
+          1,
+          0,
+          0,
+          0,
+          0
+        ],
+        "id": "body.age",
+        "range": null
+      },
+      {
         "description": "mean density",
         "dim": [
           -3,
@@ -1053,6 +1445,62 @@
         "range": null
       },
       {
+        "description": "aluminium-26 at the star's birth relative to the Sun's birth cloud",
+        "dim": [
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0
+        ],
+        "id": "inheritance.al26_rel",
+        "range": null
+      },
+      {
+        "description": "potassium-40 at the star's birth relative to the Sun's birth cloud",
+        "dim": [
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0
+        ],
+        "id": "inheritance.k40_rel",
+        "range": null
+      },
+      {
+        "description": "r-process elements (uranium, thorium) relative to the Sun's birth cloud",
+        "dim": [
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0
+        ],
+        "id": "inheritance.r_process_rel",
+        "range": null
+      },
+      {
+        "description": "age at which radiogenic heat flow falls too low for volcanism and plate motion",
+        "dim": [
+          0,
+          0,
+          1,
+          0,
+          0,
+          0,
+          0
+        ],
+        "id": "interior.active_geology_lifetime",
+        "range": null
+      },
+      {
         "description": "fraction of the mass in the iron core",
         "dim": [
           0,
@@ -1081,6 +1529,62 @@
           0
         ],
         "id": "interior.core_radius",
+        "range": null
+      },
+      {
+        "description": "mass of the silicate mantle and crust",
+        "dim": [
+          0,
+          1,
+          0,
+          0,
+          0,
+          0,
+          0
+        ],
+        "id": "interior.mantle_mass",
+        "range": null
+      },
+      {
+        "description": "radiogenic heat per square metre of surface",
+        "dim": [
+          0,
+          1,
+          -3,
+          0,
+          0,
+          0,
+          0
+        ],
+        "id": "interior.radiogenic_heat_flow",
+        "range": null
+      },
+      {
+        "description": "heat released by radioactive decay per kg of silicate",
+        "dim": [
+          2,
+          0,
+          -3,
+          0,
+          0,
+          0,
+          0
+        ],
+        "id": "interior.radiogenic_heating",
+        "range": null
+      },
+      {
+        "description": "total heat released by radioactive decay in the interior",
+        "dim": [
+          2,
+          1,
+          -3,
+          0,
+          0,
+          0,
+          0
+        ],
+        "id": "interior.radiogenic_power",
         "range": null
       },
       {
@@ -1410,6 +1914,51 @@
         ],
         "id": "planet.surface_temperature",
         "range": null
+      },
+      {
+        "description": "aluminium-26 energy per kg released after formation",
+        "dim": [
+          2,
+          0,
+          -2,
+          0,
+          0,
+          0,
+          0
+        ],
+        "id": "planetesimal.al26_energy",
+        "range": null
+      },
+      {
+        "description": "time after the first solids (CAIs) that a planetesimal formed",
+        "dim": [
+          0,
+          0,
+          1,
+          0,
+          0,
+          0,
+          0
+        ],
+        "id": "planetesimal.formation_time",
+        "range": null
+      },
+      {
+        "description": "share of a planetesimal's water that survives aluminium-26 heating",
+        "dim": [
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0
+        ],
+        "id": "planetesimal.water_kept_fraction",
+        "range": [
+          0.0,
+          1.0
+        ]
       },
       {
         "description": "mean density of a satellite",

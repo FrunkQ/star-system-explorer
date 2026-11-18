@@ -6,6 +6,7 @@
 
 pub mod climate;
 pub mod common;
+pub mod heat;
 pub mod layers;
 pub mod orbit;
 pub mod planet;
@@ -26,6 +27,7 @@ pub fn atoms() -> Vec<Box<dyn sse_flow::Atom>> {
         .chain(climate::atoms())
         .chain(tides::atoms())
         .chain(layers::atoms())
+        .chain(heat::atoms())
         .collect()
 }
 
@@ -108,6 +110,51 @@ pub const KIND_DESCRIPTIONS: &[(&str, &str)] = &[
         "fraction of the mass in the iron core",
     ),
     ("interior.core_radius", "radius of the iron core"),
+    ("body.age", "time since the body formed"),
+    (
+        "inheritance.k40_rel",
+        "potassium-40 at the star's birth relative to the Sun's birth cloud",
+    ),
+    (
+        "inheritance.r_process_rel",
+        "r-process elements (uranium, thorium) relative to the Sun's birth cloud",
+    ),
+    (
+        "inheritance.al26_rel",
+        "aluminium-26 at the star's birth relative to the Sun's birth cloud",
+    ),
+    (
+        "interior.mantle_mass",
+        "mass of the silicate mantle and crust",
+    ),
+    (
+        "interior.radiogenic_heating",
+        "heat released by radioactive decay per kg of silicate",
+    ),
+    (
+        "interior.radiogenic_power",
+        "total heat released by radioactive decay in the interior",
+    ),
+    (
+        "interior.radiogenic_heat_flow",
+        "radiogenic heat per square metre of surface",
+    ),
+    (
+        "interior.active_geology_lifetime",
+        "age at which radiogenic heat flow falls too low for volcanism and plate motion",
+    ),
+    (
+        "planetesimal.formation_time",
+        "time after the first solids (CAIs) that a planetesimal formed",
+    ),
+    (
+        "planetesimal.al26_energy",
+        "aluminium-26 energy per kg released after formation",
+    ),
+    (
+        "planetesimal.water_kept_fraction",
+        "share of a planetesimal's water that survives aluminium-26 heating",
+    ),
     ("planet.insolation", "stellar flux arriving at the planet"),
     (
         "planet.bond_albedo",
@@ -212,6 +259,7 @@ fn range_of(kind: &str, _dim: Dimension) -> Option<(f64, f64)> {
         "orbit.eccentricity" => Some((0.0, 1.0)),
         "planet.bond_albedo" => Some((0.0, 1.0)),
         "interior.core_mass_fraction" => Some((0.0, 1.0)),
+        "planetesimal.water_kept_fraction" => Some((0.0, 1.0)),
         _ => None,
     }
 }

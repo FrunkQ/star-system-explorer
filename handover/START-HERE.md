@@ -1,6 +1,6 @@
 # START HERE
 
-Last updated: 18 Nov 2026, after F3 (physics track), C3 (kernel track) and U0 to U3, V1, U5, V2, V12, V3, V11 (UI track). Milestone M1 complete (K0 documents with Alex for review). Milestone 2 running as parallel tracks.
+Last updated: 18 Nov 2026, after F5 (physics track), C3 (kernel track) and U0 to U3, V1, U5, V2, V12, V3, V11 (UI track); live site v4.starsystemx.com. Milestone M1 complete (K0 documents with Alex for review). Milestone 2 running as parallel tracks.
 
 ## Where we are
 Milestone M1 "Proven core" = packages K0 to K6 (build plan section 3/4).
@@ -14,14 +14,15 @@ Milestone M1 "Proven core" = packages K0 to K6 (build plan section 3/4).
 | K5 packs, stacks, one-publisher, fictional labels | done | packages/K5.md |
 | K6 kernel API, worker, TS client, cancellation, cost classes, tiers | done | packages/K6.md |
 | K0 V3 / Ovid / Evolution Lab source reading | done, Alex reviewing docs/v3-parity.md, v3-save-fields.md, ovid-agents.md, evolab-reuse.md | packages/K0.md |
-| P1 atom library, first wave | done | packages/P1.md |
-| P3 V3 importer | built; real-save check pending on Alex's PC | packages/P3.md |
+| P1 atom library, first wave | done; heat-producing elements and reference links added | packages/P1.md, packages/P1-heat.md |
+| P3 V3 importer | built; run on 3 real saves on Alex's PC, one difference open (P3.md) | packages/P3.md |
 | P4 regions and features on worlds | done | packages/P4.md |
 | F0 inheritance, stars, life lines, formation history | done | packages/F0.md |
 | F1 disc and material bands | done | packages/F1.md |
 | F2 Classic Accrete block | done; **Alex to confirm**: System Lab (GPL-3.0, his code) ported under Apache-2.0 on his 17 Nov ruling, with credit (F2.md, Source) | packages/F2.md |
 | F3 modern growth block | done | packages/F3.md |
-| F4 violent phase, F5 leftovers | next on the physics track | |
+| F4 violent phase and upheavals | done | packages/F4.md |
+| F5 leftovers: belts, Oort cloud, Trojans, moons, rings | done | packages/F5.md |
 | F6 early worlds and hand-off | done (ahead of F2 to F5; reads a plain `Protoplanet`) | packages/F6.md |
 | K7 envelopes, partitioning, resolve, feasibility | done (kernel track) | packages/K7.md |
 | K8 rules, classification, sifters, significance | done (kernel track) | packages/K8.md |
@@ -49,7 +50,7 @@ Milestone M1 "Proven core" = packages K0 to K6 (build plan section 3/4).
 ## Parallel tracks (18 Nov, Alex: build in parallel, integrate later)
 | Track | Packages | Branch |
 |---|---|---|
-| Physics | P1, P3, P4, F0 to F3 and F6 done; F4, F5 next; F7 not started | `claude/project-thread-h9y77o` (this file) |
+| Physics | P1, P3, P4, F0 to F6 done; F7 to F10 not started (F9 needs C3, F7 needs T1) | `claude/project-thread-h9y77o` (this file) |
 | Kernel | K7 to K10, G0, C1 to C3, L0 and the U3 gaps done; nothing queued | `claude/project-thread-dzkz4p` (PR #1 into the physics branch; physics branch merged in at 788aea1) |
 | Chart room shell and player views | U0 to U3, V1, U5, V2, V12, V3, V11 done; stopped for Alex before V4 peer-to-peer (U4 waits for T2) | `claude/project-thread-adgixl`, PR #2 into the physics branch (kept merged up to date with it) |
 
@@ -69,6 +70,12 @@ Kernel track integration points (K7 to K10):
 - Pack content keys these engines read: `provides.other.rules`, `.axes`, `.classes`, `.sifters` (K8). Data views and disclosure maps are plain serde types (K9); a pack key for them is for U5 to choose.
 
 Each track keeps to its own crates and folders. Integration points are listed at the end of each package log. UI work stays in `packages/ui-contract`, `packages/skins`, `packages/chart-grammar`, `packages/views`, `packages/shell`, `tests/ui`; it does not touch `/crates`, and a missing kernel op is reported in the package log.
+
+## Deployment
+https://v4.starsystemx.com: Cloudflare Worker `star-system-explorer` (Workers Builds, set up by Alex 18 Nov 2026).
+Build `npm run build` (scripts/build-site.sh, writes dist/), deploy `npx wrangler deploy` (wrangler.jsonc),
+production branch `claude/project-thread-h9y77o` until `main` exists; other branches get preview versions.
+The site is the GM shell (chart room) at `/`, the players page at `/players.html` and the cross-device check page at `/harness/` (the UI track's branch builds this; production gets it when PR #2 merges).
 
 ## How to resume
 1. Read `/CLAUDE.md`, then this file, then the log of the last package. Any view or renderer package also follows `rendering-rules.md` (no precision jiggle: local orbits, nested frames, camera-relative numbers).

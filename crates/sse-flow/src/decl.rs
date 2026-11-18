@@ -64,7 +64,7 @@ pub struct AtomDecl {
     pub cost_class: CostClass,
     /// Citations. Real physics atoms must have at least one (P1 rule).
     #[serde(default)]
-    pub references: Vec<String>,
+    pub references: Vec<Reference>,
     pub explain: ExplainText,
 }
 
@@ -110,5 +110,83 @@ impl AtomRegistry {
     }
     pub fn decls(&self) -> impl Iterator<Item = &AtomDecl> {
         self.atoms.values().map(|a| a.decl())
+    }
+}
+
+/// A citation: readable text plus, where one exists, a DOI and a link, so an
+/// explain panel can send a reader to the paper. Serialised as
+/// `{ text, doi?, url? }`; a bare string is accepted on read.
+#[derive(Clone, PartialEq, Eq, Debug, Serialize)]
+pub struct Reference {
+    pub text: String,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub doi: Option<String>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub url: Option<String>,
+}
+
+impl Reference {
+    /// Split a citation written as `"<text>. doi:<doi>"` or `"<text>. <https url>"`.
+    /// A DOI also gets its resolver link. Text with neither stays as it is.
+    pub fn parse(s: &str) -> Self {
+        let s = s.trim();
+        if let Some(i) = s.rfind(" doi:") {
+            let doi = s[i + 5..].trim().to_string();
+            return Reference {
+                text: s[..i].trim().to_string(),
+                url: Some(format!("https://doi.org/{doi}")),
+                doi: Some(doi),
+            };
+        }
+        if let Some(i) = s.rfind(" https://") {
+            return Reference {
+                text: s[..i].trim().to_string(),
+                doi: None,
+                url: Some(s[i + 1..].trim().to_string()),
+            };
+        }
+        Reference {
+            text: s.to_string(),
+            doi: None,
+            url: None,
+        }
+    }
+
+    /// True when a reader can follow the citation to its source.
+    pub fn linked(&self) -> bool {
+        self.doi.is_some() || self.url.is_some()
+    }
+}
+
+impl From<&str> for Reference {
+    fn from(s: &str) -> Self {
+        Reference::parse(s)
+    }
+}
+
+impl<'de> Deserialize<'de> for Reference {
+    fn deserialize<D: serde::Deserializer<'de>>(d: D) -> Result<Self, D::Error> {
+        #[derive(Deserialize)]
+        struct Full {
+            text: String,
+            #[serde(default)]
+            doi: Option<String>,
+            #[serde(default)]
+            url: Option<String>,
+        }
+        #[derive(Deserialize)]
+        #[serde(untagged)]
+        enum Either {
+            Text(String),
+            Full(Full),
+        }
+        Ok(match Either::deserialize(d)? {
+            Either::Text(s) => Reference::parse(&s),
+            Either::Full(f) => Reference {
+                text: f.text,
+                doi: f.doi,
+                url: f.url,
+            },
+        })
     }
 }

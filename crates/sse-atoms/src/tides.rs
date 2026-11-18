@@ -6,9 +6,9 @@ use sse_core::quantity::consts::*;
 use sse_core::Dimension as D;
 use sse_flow::{Atom, CostClass};
 
-const PCR: &str = "Peale, S. J., Cassen, P. and Reynolds, R. T. 1979, Science 203, 892: melting of Io by tidal dissipation";
-const SEGATZ: &str = "Segatz, M., Spohn, T., Ross, M. N. and Schubert, G. 1988, Icarus 75, 187: tidal dissipation in Io";
-const GLADMAN: &str = "Gladman, B. et al. 1996, Icarus 122, 166: synchronous locking of tidally evolving satellites, eq. 9";
+const PCR: &str = "Peale, S. J., Cassen, P. and Reynolds, R. T. 1979, Science 203, 892: melting of Io by tidal dissipation. doi:10.1126/science.203.4383.892";
+const SEGATZ: &str = "Segatz, M., Spohn, T., Ross, M. N. and Schubert, G. 1988, Icarus 75, 187: tidal dissipation in Io https://ui.adsabs.harvard.edu/abs/1988Icar...75..187S";
+const GLADMAN: &str = "Gladman, B. et al. 1996, Icarus 122, 166: synchronous locking of tidally evolving satellites, eq. 9 https://ui.adsabs.harvard.edu/abs/1996Icar..122..166G";
 
 pub fn atoms() -> Vec<Box<dyn Atom>> {
     vec![
@@ -30,7 +30,7 @@ pub fn atoms() -> Vec<Box<dyn Atom>> {
                 "tidal response: Love number k2 over quality factor Q (Io 0.015, Lainey et al. 2009)",
             )],
             cost: CostClass::Trivial,
-            references: &[PCR, SEGATZ, "Lainey, V. et al. 2009, Nature 459, 957 (Io's k2/Q)"],
+            references: &[PCR, SEGATZ, "Lainey, V. et al. 2009, Nature 459, 957 (Io's k2/Q). doi:10.1038/nature08108"],
             curious: "A moon on a slightly oval orbit is squeezed and relaxed every lap, and the flexing heats it. It makes Io the most volcanic place known.",
             science: "Heating of a synchronously rotating satellite by its eccentricity tide, for small e. Power scales as the fifth power of the satellite's radius and falls as distance to the power -7.5, so it is sensitive to everything.",
             formula: "Ė = (21/2) (k2/Q) G M² R⁵ n e² / a⁶, n = √(G M / a³)",

@@ -50,6 +50,41 @@ fn every_atom_is_cited_explained_and_versioned() {
         n += 1;
         assert!(d.id.starts_with("sse."), "{}", d.id);
         assert!(!d.references.is_empty(), "{} has no citation", d.id);
+        // Readers follow a citation to its source (Alex, 18 Nov): every atom
+        // needs at least one reference with a DOI or link, except those whose
+        // only sources are textbooks without one (listed, so new ones are seen).
+        const TEXTBOOK_ONLY: &[&str] = &["sse.ocean.brine_freezing_point"];
+        assert!(
+            d.references.iter().any(|r| r.linked()) || TEXTBOOK_ONLY.contains(&d.id.as_str()),
+            "{} has no reference with a DOI or link",
+            d.id
+        );
+        for r in &d.references {
+            if let Some(doi) = &r.doi {
+                assert!(
+                    doi.starts_with("10.") && doi.contains('/'),
+                    "{}: DOI {doi}",
+                    d.id
+                );
+                assert_eq!(
+                    r.url.as_deref(),
+                    Some(format!("https://doi.org/{doi}").as_str())
+                );
+            }
+            if let Some(u) = &r.url {
+                assert!(
+                    u.starts_with("https://") && !u.contains(' '),
+                    "{}: link {u}",
+                    d.id
+                );
+            }
+            assert!(
+                !r.text.contains("doi:") && !r.text.contains("https://"),
+                "{}: {}",
+                d.id,
+                r.text
+            );
+        }
         assert!(
             !d.explain.curious.is_empty(),
             "{} has no curious lens",
@@ -73,7 +108,7 @@ fn every_atom_is_cited_explained_and_versioned() {
         }
     }
     assert_eq!(
-        n, 31,
+        n, 37,
         "first-wave atom count changed: update handover/packages/P1.md"
     );
 }
@@ -484,4 +519,69 @@ fn base_physics_pack_resolves_and_every_flow_passes_its_golden_cases() {
         assert!(fails.is_empty(), "{}:\n{}", f.doc.id, fails.join("\n"));
     }
     assert!(cases >= 10, "Solar System fixture has {cases} cases");
+}
+
+/// Heat-producing elements: Earth's budget, the decay history and Al-26.
+#[test]
+fn radiogenic_heat_budget() {
+    let gyr = 1e9 * sse_core::quantity::consts::JULIAN_YEAR;
+    let myr = 1e-3 * gyr;
+    // Bulk silicate Earth today: about 4.9e-12 W/kg (Turcotte and Schubert 2014, table 4.2).
+    let h = run("sse.heat.radiogenic_heating", &[4.567 * gyr, 1.0, 1.0])[0];
+    close(h, 4.91e-12, 0.01, "BSE heating today");
+    // At formation it was several times higher (about 4 to 5 times; Frank et al. 2014, fig. 3).
+    let h0 = run("sse.heat.radiogenic_heating", &[0.0, 1.0, 1.0])[0];
+    assert!((3.5..5.5).contains(&(h0 / h)), "H(0)/H(now) {}", h0 / h);
+    // No K-40 at birth removes about a sixth of today's heat.
+    let no_k = run("sse.heat.radiogenic_heating", &[4.567 * gyr, 0.0, 1.0])[0];
+    close(no_k / h, 0.833, 0.01, "share without K-40");
+    let mantle = run("sse.heat.mantle_mass", &[M_EARTH, 0.325])[0];
+    let p = run("sse.heat.radiogenic_power", &[h, mantle])[0];
+    close(p, 2.0e13, 0.05, "Earth radiogenic power");
+    let q = run("sse.heat.surface_heat_flow", &[p, 6.371e6])[0];
+    close(q, 0.0388, 0.02, "Earth radiogenic heat flow");
+    let life = |r: f64, mass: f64, cmf: f64, radius: f64| {
+        let mm = run("sse.heat.mantle_mass", &[mass, cmf])[0];
+        run("sse.heat.active_geology_lifetime", &[1.0, r, mm, radius])[0] / gyr
+    };
+    let earth = life(1.0, M_EARTH, 0.325, 6.371e6);
+    let mars = life(1.0, 0.107 * M_EARTH, 0.24, 3.3895e6);
+    let moon = life(1.0, 0.0123 * M_EARTH, 0.02, 1.7374e6);
+    assert!(earth > 8.0, "Earth lifetime {earth}");
+    assert!((3.5..4.3).contains(&mars), "Mars lifetime {mars}");
+    assert!(moon < 2.5, "Moon lifetime {moon}");
+    assert!(
+        life(2.0, M_EARTH, 0.325, 6.371e6) > 1.5 * earth,
+        "thorium-rich"
+    );
+    // Al-26: about 5.3 MJ/kg at time zero, a factor e per 1.034 Myr.
+    let e0 = run("sse.heat.al26_planetesimal_heating", &[1.0, 0.0]);
+    close(e0[0], 5.26e6, 0.01, "Al-26 energy at CAI time");
+    assert_eq!(e0[1], 0.1);
+    let e3 = run("sse.heat.al26_planetesimal_heating", &[1.0, 3.0 * myr]);
+    assert_eq!(e3[1], 1.0);
+    let mid = run("sse.heat.al26_planetesimal_heating", &[1.0, 1.5 * myr])[1];
+    assert!(mid > 0.1 && mid < 1.0, "partly dried {mid}");
+}
+
+#[test]
+fn references_serialise_as_text_doi_and_link() {
+    let r = sse_flow::Reference::parse("A. 2001, J 1, 2: title. doi:10.1000/xyz");
+    assert_eq!(
+        serde_json::to_string(&r).unwrap(),
+        r#"{"text":"A. 2001, J 1, 2: title.","doi":"10.1000/xyz","url":"https://doi.org/10.1000/xyz"}"#
+    );
+    let back: sse_flow::Reference =
+        serde_json::from_str(&serde_json::to_string(&r).unwrap()).unwrap();
+    assert_eq!(back, r);
+    let bare: sse_flow::Reference = serde_json::from_str(r#""a textbook""#).unwrap();
+    assert_eq!(
+        serde_json::to_string(&bare).unwrap(),
+        r#"{"text":"a textbook"}"#
+    );
+    let ads = sse_flow::Reference::parse(
+        "B 1996, Icarus 122 https://ui.adsabs.harvard.edu/abs/1996Icar..122..166G",
+    );
+    assert_eq!(ads.doi, None);
+    assert_eq!(ads.text, "B 1996, Icarus 122");
 }

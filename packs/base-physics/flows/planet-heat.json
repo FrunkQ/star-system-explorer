@@ -1,0 +1,89 @@
+{
+  "format": "sse.flow/1",
+  "id": "sse.base.planet-heat",
+  "version": "0.1.0",
+  "hook": "planet.heat",
+  "inputs": [
+    { "name": "age", "kind": "body.age" },
+    { "name": "mass", "kind": "body.mass" },
+    { "name": "core_mass_fraction", "kind": "interior.core_mass_fraction" },
+    { "name": "radius", "kind": "body.radius" },
+    { "name": "k40_rel", "kind": "inheritance.k40_rel" },
+    { "name": "r_process_rel", "kind": "inheritance.r_process_rel" }
+  ],
+  "nodes": [
+    { "id": "mantle", "atom": "sse.heat.mantle_mass" },
+    { "id": "heating", "atom": "sse.heat.radiogenic_heating" },
+    { "id": "power", "atom": "sse.heat.radiogenic_power" },
+    { "id": "flow", "atom": "sse.heat.surface_heat_flow" },
+    { "id": "life", "atom": "sse.heat.active_geology_lifetime" }
+  ],
+  "wires": [
+    { "from": "in.mass", "to": "mantle.mass" },
+    { "from": "in.core_mass_fraction", "to": "mantle.core_mass_fraction" },
+    { "from": "in.age", "to": "heating.age" },
+    { "from": "in.k40_rel", "to": "heating.k40_rel" },
+    { "from": "in.r_process_rel", "to": "heating.r_process_rel" },
+    { "from": "heating.heating", "to": "power.heating" },
+    { "from": "mantle.mantle_mass", "to": "power.mantle_mass" },
+    { "from": "power.power", "to": "flow.power" },
+    { "from": "in.radius", "to": "flow.radius" },
+    { "from": "in.k40_rel", "to": "life.k40_rel" },
+    { "from": "in.r_process_rel", "to": "life.r_process_rel" },
+    { "from": "mantle.mantle_mass", "to": "life.mantle_mass" },
+    { "from": "in.radius", "to": "life.radius" }
+  ],
+  "publishes": [
+    { "kind": "interior.radiogenic_power", "from": "power.power" },
+    { "kind": "interior.radiogenic_heat_flow", "from": "flow.flow" },
+    { "kind": "interior.active_geology_lifetime", "from": "life.lifetime" }
+  ],
+  "tests": [
+    {
+      "name": "Earth today (KamLAND 2011: U and Th about 20 TW; mantle plus crust radiogenic total about 20 TW, McDonough and Sun 1995)",
+      "inputs": {
+        "age": { "value": 4.567, "unit": "gyr" }, "mass": { "value": 1.0, "unit": "m_earth" },
+        "core_mass_fraction": { "value": 0.325, "unit": "one" }, "radius": { "value": 6371.0, "unit": "km" },
+        "k40_rel": { "value": 1.0, "unit": "one" }, "r_process_rel": { "value": 1.0, "unit": "one" }
+      },
+      "expect": {
+        "interior.radiogenic_power": { "value": 2.0e13, "unit": "w", "tol": 0.3e13 },
+        "interior.radiogenic_heat_flow": { "value": 0.039, "unit": "w_m2", "tol": 0.005 },
+        "interior.active_geology_lifetime": { "value": 10.3, "unit": "gyr", "tol": 1.0 }
+      }
+    },
+    {
+      "name": "Mars: widespread volcanism ends about 0.5 to 1 Gyr ago (Frank et al. 2014 calibration)",
+      "inputs": {
+        "age": { "value": 4.567, "unit": "gyr" }, "mass": { "value": 0.107, "unit": "m_earth" },
+        "core_mass_fraction": { "value": 0.24, "unit": "one" }, "radius": { "value": 3389.5, "unit": "km" },
+        "k40_rel": { "value": 1.0, "unit": "one" }, "r_process_rel": { "value": 1.0, "unit": "one" }
+      },
+      "expect": {
+        "interior.active_geology_lifetime": { "value": 3.9, "unit": "gyr", "tol": 0.4 }
+      }
+    },
+    {
+      "name": "Moon: mare volcanism mostly over in its first 2 Gyr",
+      "inputs": {
+        "age": { "value": 4.567, "unit": "gyr" }, "mass": { "value": 0.0123, "unit": "m_earth" },
+        "core_mass_fraction": { "value": 0.02, "unit": "one" }, "radius": { "value": 1737.4, "unit": "km" },
+        "k40_rel": { "value": 1.0, "unit": "one" }, "r_process_rel": { "value": 1.0, "unit": "one" }
+      },
+      "expect": {
+        "interior.active_geology_lifetime": { "value": 1.9, "unit": "gyr", "tol": 0.5 }
+      }
+    },
+    {
+      "name": "Earth around a thorium-rich star (Unterborn et al. 2015: twice the r-process, active far longer)",
+      "inputs": {
+        "age": { "value": 4.567, "unit": "gyr" }, "mass": { "value": 1.0, "unit": "m_earth" },
+        "core_mass_fraction": { "value": 0.325, "unit": "one" }, "radius": { "value": 6371.0, "unit": "km" },
+        "k40_rel": { "value": 1.0, "unit": "one" }, "r_process_rel": { "value": 2.0, "unit": "one" }
+      },
+      "expect": {
+        "interior.active_geology_lifetime": { "value": 19.4, "unit": "gyr", "tol": 1.5 }
+      }
+    }
+  ]
+}

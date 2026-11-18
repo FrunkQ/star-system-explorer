@@ -72,7 +72,11 @@ impl Def {
                 outputs: self.outputs,
                 params: self.params,
                 cost_class: self.cost,
-                references: self.references.iter().map(|s| s.to_string()).collect(),
+                references: self
+                    .references
+                    .iter()
+                    .map(|s| sse_flow::Reference::parse(s))
+                    .collect(),
                 explain: sse_flow::decl::ExplainText {
                     curious: self.curious.into(),
                     science: self.science.into(),
@@ -100,4 +104,8 @@ pub mod dims {
     pub const RATE: D = D([0, 0, -1, 0, 0, 0, 0]);
     /// kg mol^-1.
     pub const MOLAR_MASS: D = D([0, 1, 0, 0, 0, -1, 0]);
+    /// W kg^-1 (heating per unit mass).
+    pub const SPECIFIC_POWER: D = D([2, 0, -3, 0, 0, 0, 0]);
+    /// J kg^-1 (energy per unit mass).
+    pub const SPECIFIC_ENERGY: D = D([2, 0, -2, 0, 0, 0, 0]);
 }

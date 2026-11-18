@@ -7,7 +7,7 @@ use sse_core::Dimension as D;
 use sse_flow::{Atom, AtomError, CostClass};
 
 const MD: &str =
-    "Murray, C. D. and Dermott, S. F. 1999, Solar System Dynamics, Cambridge University Press";
+    "Murray, C. D. and Dermott, S. F. 1999, Solar System Dynamics, Cambridge University Press. doi:10.1017/CBO9781139174817";
 
 /// Fixed Newton iteration count for Kepler's equation: the deterministic
 /// stopping rule. 30 steps converge to machine precision for e < 0.99 from the
@@ -169,7 +169,7 @@ pub fn atoms() -> Vec<Box<dyn Atom>> {
             outputs: vec![port("hill_radius", "body.hill_radius", D::LENGTH, None)],
             params: vec![],
             cost: CostClass::Trivial,
-            references: &[MD, "Hamilton, D. P. and Burns, J. A. 1992, Icarus 96, 43 (periapsis form)"],
+            references: &[MD, "Hamilton, D. P. and Burns, J. A. 1992, Icarus 96, 43 (periapsis form) https://ui.adsabs.harvard.edu/abs/1992Icar...96...43H"],
             curious: "Around every world is a bubble where its own gravity beats its star's. Moons have to live well inside it.",
             science: "Hill sphere radius at periapsis, for a body much lighter than its host. Prograde moons are long-term stable out to roughly a third to a half of it.",
             formula: "r_H = a (1 - e) (m / 3M)^⅓",

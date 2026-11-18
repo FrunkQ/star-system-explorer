@@ -10,10 +10,10 @@ pub const M_EARTH: f64 = GM_EARTH / G;
 const M_JUPITER: f64 = GM_JUPITER / G;
 const M_SUN: f64 = GM_SUN / G;
 
-const CK17: &str = "Chen, J. and Kipping, D. 2017, ApJ 834, 17: probabilistic forecasting of the masses and radii of other worlds (mean relation, table 1)";
-const ZENG16: &str = "Zeng, L., Sasselov, D. D. and Jacobsen, S. B. 2016, ApJ 819, 127: mass-radius relation for rocky planets based on PREM, eq. 8";
-const ZJ17: &str = "Zeng, L. and Jacobsen, S. B. 2017, ApJ 837, 164: a simple analytical model for rocky planet interiors (core radius fraction about the square root of core mass fraction)";
-const NEWTON: &str = "Newtonian gravity for a spherical body, e.g. de Pater, I. and Lissauer, J. J. 2015, Planetary Sciences, 2nd edn, Cambridge University Press, chapter 2";
+const CK17: &str = "Chen, J. and Kipping, D. 2017, ApJ 834, 17: probabilistic forecasting of the masses and radii of other worlds (mean relation, table 1). doi:10.3847/1538-4357/834/1/17";
+const ZENG16: &str = "Zeng, L., Sasselov, D. D. and Jacobsen, S. B. 2016, ApJ 819, 127: mass-radius relation for rocky planets based on PREM, eq. 8. doi:10.3847/0004-637X/819/2/127";
+const ZJ17: &str = "Zeng, L. and Jacobsen, S. B. 2017, ApJ 837, 164: a simple analytical model for rocky planet interiors (core radius fraction about the square root of core mass fraction) https://ui.adsabs.harvard.edu/abs/2017ApJ...837..164Z";
+const NEWTON: &str = "Newtonian gravity for a spherical body, e.g. de Pater, I. and Lissauer, J. J. 2015, Planetary Sciences, 2nd edn, Cambridge University Press, chapter 2. doi:10.1017/CBO9781316165270";
 
 /// Chen and Kipping 2017 mean relation: (upper mass bound in M⊕, exponent).
 /// R = 1.008 R⊕ at 1 M⊕ (the paper's Terran constant); the other segments'

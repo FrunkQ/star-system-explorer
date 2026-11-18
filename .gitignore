@@ -6,3 +6,6 @@ node_modules/
 *.log
 .DS_Store
 /packages/shell/public/
+/dist/
+/.tools/
+/.wrangler/

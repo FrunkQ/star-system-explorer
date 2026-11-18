@@ -37,6 +37,8 @@ Classes:
 | `temporal` | A | Calendars and the time anchor; mapped onto V4 seconds from the origin. |
 | `playerPresets`, `playerAssets`, `contentCredits`, `coverAssetId`, `mapBackground` | P | Player views and assets. Presets map to the nearest V4 default view and theme. |
 | `rulePackOverrides` | A | Into the GM's own pack. |
+| `coiCategories[]`: `id`, `label`, `color`, `textColor`, `single`, `enabled`, `required`, `tags[]` | A | Tag categories the GM changed from V3's shipped set (V3.1 writes only those; see `v3-colours.md`). Per-tag colours are not in the save. Into the campaign's tag categories. |
+| `poiPacks[]`, `reasonsConfig` | A | GM-made points-of-interest packs and reasons-to-visit settings, written only when the GM made some. |
 | `travellerMetadata`, `importedSubsectors` | A | Into the Traveller pack's records (X3a). |
 | `appVersion`, `baseMapVersion`, `baseMapUpgradeDeclined`, `baseMapUpgradeDismissed`, `keptCopyForVersion`, `broadcastId`, `gridCenterId` | X | V3 bookkeeping. `appVersion` goes in the report header. |
 | `generationEngine` | X | Dead in V3 already. |
@@ -81,14 +83,14 @@ CelestialBody, authored or catalogued (A, or C when its tags show a real-sky imp
   `atmosphere0`
 - stars: `temperatureK`, `flareActivity`, `isSelfLuminous`, `selfLuminousTeffK`, `internalLuminositySolar`
 - traveller block: `traveller` (UWP and the rest), into the Traveller pack (X3a)
-- art: `image`, `apparentColorHex` when hand-picked (P)
+- art: `image` (P). `apparentColorHex` is the derived true colour (D, below; a GM pick lives in `overrides`)
 
 CelestialBody, derived (D, recomputed and compared): `temperatureRangeK`, `temperatureProfile`, `surfaceTempK`,
 `equilibriumTempK`, `pressureBar`, `densityGcm3`, `calculatedGravity_ms2`, `distanceToHost_km`, `orbitalBoundaries`,
 `albedo`, `albedoBreakdown`, `gasThermalInflation`, `radiogenicHeatK`, `internalHeatK`, `magneticFieldGauss`,
 `magnetic_field`, `magnetosphere`, `astrosphereAu`, `geoActivity`, `irradiationDose`, `orbitalRadiation`,
 `surfaceRadiation`, `totalIncidentFlux` (and min, max), `starlightFlux`, `photonRadiation`, `particleRadiation`,
-`radiationShieldingAtmo`, `radiationShieldingMag`, `starlightDimming`, `receivedFrac`, `occluders`, `apparentColor`,
+`radiationShieldingAtmo`, `radiationShieldingMag`, `starlightDimming`, `receivedFrac`, `occluders`, `apparentColor`, `apparentColorHex`,
 `surfaceSpectrum`, `vegetation`, `oblateness`, `tidallyLocked`, `starTidallyLocked`, `beltInnerEdgeRadii`,
 `habitabilityBreakdown` (`factors`, `surfaceScore`, `modifiers`, `finalScore`, `tier`), `classification` when not
 pinned, `auroraEmitters`, `typicalForClass`.

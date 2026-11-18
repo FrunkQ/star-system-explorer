@@ -179,3 +179,73 @@ fn refuses_what_is_not_a_v3_save() {
     assert!(import_json("{\"systems\": 3}", "x").is_err());
     assert!(import_json("{\"systems\": [], \"bundleFormat\": \"one\"}", "x").is_err());
 }
+
+#[test]
+fn colours_true_colour_is_derived_and_tag_categories_are_kept() {
+    let mut v: Json = serde_json::from_str(&fixture()).unwrap();
+    v["coiCategories"] = serde_json::json!([{
+        "id": "owner", "label": "Faction", "color": "#aa3300", "textColor": "#ffffff",
+        "single": true, "enabled": true, "required": true,
+        "tags": [{"key": "owner/empire", "label": "Empire"}]
+    }]);
+    let earth = v["systems"][0]["system"]["nodes"]
+        .as_array_mut()
+        .unwrap()
+        .iter_mut()
+        .find(|n| n["name"] == "Earth")
+        .unwrap();
+    earth["apparentColorHex"] = "#4a6fa5".into();
+    let im = import_json(&v.to_string(), "v3-synthetic-sol").unwrap();
+    let r = &im.report;
+    // The GM's tag categories, with their colours, arrive as authored campaign facts.
+    let cats = fact(&im, "u:v3-synthetic-sol", "v3.coiCategories");
+    assert_eq!(cats.evidence, Evidence::Authored);
+    assert_eq!(cats.value[0]["color"], "#aa3300");
+    assert_eq!(cats.value[0]["textColor"], "#ffffff");
+    assert!(!r.unclassified.contains_key("coiCategories"));
+    // V3's true colour is derived: V4 recomputes it, so it is not a fact and not presentation.
+    let e: Address = "u:v3-synthetic-sol/sys:@1/body:@2".parse().unwrap();
+    assert!(!im.facts[&e].contains_key("v3.apparentColorHex"));
+    assert!(!r.presentation.contains_key("apparentColorHex"));
+    assert_eq!(r.derived_not_compared.get("apparentColorHex"), Some(&1));
+}
+
+/// Real V3.0 saves (18 Nov 2026): a host GM stored in km³/s² is named as a V3
+/// slip, and fields V3.1's types do not list are classified, not unknown.
+#[test]
+fn real_save_findings_are_explained_and_classified() {
+    let text = fixture().replace(
+        r#""hostId": "earth", "t0": 0, "hostMu": 3.986004418e14"#,
+        r#""hostId": "earth", "t0": 0, "hostMu": 398600.4418"#,
+    );
+    let text = text.replace(
+        r#""placementHealCount": 3"#,
+        r#""placementHealCount": 3, "isNameUserDefined": true, "areas": [], "icon_type": "x",
+           "habitabilityScore": 0.9, "tidalHeatK": 1.0, "radiationOutput": 1.0"#,
+    );
+    let im = import_json(&text, "v3-synthetic-sol").unwrap();
+    let mu = im
+        .report
+        .differences
+        .iter()
+        .find(|d| d.field == "orbit.hostMu" && d.name == "Moon")
+        .unwrap();
+    assert!(!mu.within);
+    assert!(mu.via.contains("km³/s²"), "{mu:?}");
+    let earth_mu = im
+        .report
+        .differences
+        .iter()
+        .find(|d| d.field == "orbit.hostMu" && d.name == "Earth")
+        .unwrap();
+    assert_eq!(earth_mu.via, "G × host mass");
+    // Only the fixture's deliberate unknown field is left.
+    assert_eq!(
+        im.report.unclassified.keys().collect::<Vec<_>>(),
+        vec!["aFieldV3NeverHad"]
+    );
+    assert_eq!(
+        im.report.derived_not_compared.get("habitabilityScore"),
+        Some(&1)
+    );
+}

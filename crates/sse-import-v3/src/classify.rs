@@ -26,7 +26,8 @@ pub fn starmap_class(k: &str) -> Class {
         "systems" => Structural,
         "id" | "name" | "description" | "gmNotes" | "routes" | "activeJourneys"
         | "adriftConstructs" | "temporal" | "rulePackOverrides" | "travellerMetadata"
-        | "importedSubsectors" | "distanceUnit" | "unitIsPrefix" => Authored,
+        | "importedSubsectors" | "distanceUnit" | "unitIsPrefix" | "coiCategories" | "poiPacks"
+        | "reasonsConfig" => Authored,
         "mapMode"
         | "invertDisplay"
         | "scale"
@@ -49,7 +50,10 @@ pub fn starmap_class(k: &str) -> Class {
         | "keptCopyForVersion"
         | "broadcastId"
         | "gridCenterId"
-        | "generationEngine" => Dropped,
+        | "generationEngine"
+        // V3.0 bundle bookkeeping (seen in real 3.0.262 starmaps, 18 Nov 2026)
+        | "exportMode"
+        | "revision" => Dropped,
         _ => Unknown,
     }
 }
@@ -59,7 +63,9 @@ pub fn system_class(k: &str) -> Class {
     match k {
         "nodes" => Structural,
         "id" | "name" | "seed" | "epochT0" | "age_Gyr" | "ageEstimated" | "ageBandGyr" | "tags"
-        | "notes" | "gmNotes" | "credits" => Authored,
+        | "notes" | "gmNotes" | "credits"
+        // GM flag: the system was hand-edited (real Procyon export, 18 Nov 2026)
+        | "isManuallyEdited" => Authored,
         "visualScalingMultiplier" | "toytownFactor" => Presentation,
         "rulePackId" | "rulePackVersion" | "bundleFormat" | "appVersion" => Dropped,
         _ => Unknown,
@@ -137,8 +143,14 @@ pub fn body_class(k: &str) -> Class {
         | "aerobrake_limit_kms" => Authored,
         // AI prompt notes, for Minerva
         "seedText" | "style" | "length" | "lastPrompt" | "aiContext" => Authored,
+        // Seen in real V3.0 saves (18 Nov 2026), not in V3.1 types.ts:
+        // GM-drawn areas and a renamed-by-GM flag; construct class; a star's output
+        // in L☉ and a star's field, both written by the star editor (types.ts says
+        // star fields are authored input, planet fields derived; kept either way).
+        "areas" | "isNameUserDefined" | "class" | "radiationOutput" | "magneticField" => Authored,
+        "icon_color" | "icon_type" | "color" => Presentation,
         "overrides" | "anomalies" => Impossible,
-        "ui_parentId" | "image" | "apparentColorHex" => Presentation,
+        "ui_parentId" | "image" => Presentation,
         "autopilotStuckReason" | "placementHealCount" => Dropped,
         "temperatureK"
         | "temperatureRangeK"
@@ -176,6 +188,7 @@ pub fn body_class(k: &str) -> Class {
         | "receivedFrac"
         | "occluders"
         | "apparentColor"
+        | "apparentColorHex"
         | "surfaceSpectrum"
         | "vegetation"
         | "oblateness"
@@ -186,7 +199,24 @@ pub fn body_class(k: &str) -> Class {
         | "classification"
         | "auroraEmitters"
         | "typicalForClass"
-        | "effectiveMassKg" => Derived,
+        | "effectiveMassKg"
+        // Seen in real V3.0 saves (18 Nov 2026): all computed by V3's processor.
+        | "calculatedRotationPeriod_s"
+        | "equilibriumTempMinK"
+        | "equilibriumTempMaxK"
+        | "greenhouseTempK"
+        | "tidalHeatK"
+        | "habitabilityScore"
+        | "orbital_period_days"
+        | "stellarRadiation"
+        | "stellarRadiationMin"
+        | "stellarRadiationMax"
+        | "surfaceRadiationMin"
+        | "surfaceRadiationMax"
+        | "loDeltaVBudget_ms"
+        | "aerobrakeLandBudget_ms"
+        | "propulsiveLandBudget_ms"
+        | "starCategory" => Derived,
         _ => Unknown,
     }
 }

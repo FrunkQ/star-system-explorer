@@ -24,7 +24,7 @@
   ],
   "scripts": {
     "build:wasm": "scripts/build-wasm.sh",
-    "build": "scripts/build-wasm.sh && tsc -p packages/kernel-client",
+    "build": "scripts/build-site.sh",
     "typecheck": "tsc -p packages/kernel-client --noEmit",
     "test": "node --test packages/kernel-client/test/*.test.ts",
     "harness": "scripts/build-harness.sh && node scripts/serve.mjs tests/harness",
@@ -32,7 +32,8 @@
     "ui:check": "svelte-check --workspace packages/shell --tsconfig ./tsconfig.json --fail-on-warnings",
     "ui:build": "scripts/build-shell.sh",
     "ui:e2e": "node tests/ui/shell.e2e.mjs && node tests/ui/players.e2e.mjs && node tests/ui/setup.e2e.mjs && node tests/ui/themes.e2e.mjs && node tests/ui/symbols.e2e.mjs && node tests/ui/styles.e2e.mjs",
-    "shell": "scripts/build-shell.sh && node scripts/serve.mjs packages/shell/dist 8081"
+    "shell": "scripts/build-shell.sh && node scripts/serve.mjs packages/shell/dist 8081",
+    "build:client": "scripts/build-wasm.sh && tsc -p packages/kernel-client"
   },
   "devDependencies": {
     "typescript": "5.9.3",

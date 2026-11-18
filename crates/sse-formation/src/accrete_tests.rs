@@ -44,6 +44,7 @@ fn request(c: &Case) -> Request {
         star_mass: c.mass_kg / SOLAR_MASS_KG,
         star_luminosity: c.luminosity,
         controls: c.controls,
+        rule: Rule::SystemLab,
     }
 }
 
@@ -183,4 +184,121 @@ fn refuses_controls_outside_system_labs_ranges() {
 #[test]
 fn accrete_golden() {
     crate::golden::check("formation-accrete.json", &crate::scenario::accrete_golden());
+}
+
+fn dole(seed: &str, mass: f64, feh: f64) -> Run {
+    let metals = sse_core::math::pow(10.0, feh);
+    run(&Request {
+        master_seed: seed.into(),
+        star_mass: mass,
+        star_luminosity: 1.0,
+        controls: Controls {
+            A: DOLE_A * sse_core::math::sqrt(mass) * metals,
+            K: DOLE_K / metals,
+            ..Controls::DEFAULT
+        },
+        rule: Rule::Dole1970,
+    })
+    .unwrap()
+}
+
+#[test]
+fn corrected_rule_makes_rocky_inner_planets_and_giants_further_out() {
+    // System Lab's rule gives the Sun three giants and no rocky planets (known difference 2);
+    // Dole's own reach gives the familiar Accrete systems: small rocky worlds inside, giants outside.
+    let (mut rocky_inner, mut giants, mut runs) = (0, 0, 0);
+    for k in 0..40 {
+        let r = dole(&format!("dole-{k}"), 1.0, 0.0);
+        assert_eq!(r.rule_version, RULE_DOLE);
+        runs += 1;
+        rocky_inner += r
+            .bodies
+            .iter()
+            .filter(|b| b.a_au < 2.0 && !b.gas_giant)
+            .count();
+        giants += r.bodies.iter().filter(|b| b.gas_giant).count();
+        for b in &r.bodies {
+            let mut total = 0.0;
+            for e in &b.ledger.entries {
+                total += match e {
+                    Entry::Seed { mass } | Entry::Merged { mass, .. } => *mass,
+                    Entry::Sweep { mass, .. } => *mass,
+                };
+            }
+            assert_eq!(total, b.mass, "ledger sums bit for bit");
+        }
+    }
+    let solar_lab = run(&Request {
+        master_seed: "dole-0".into(),
+        star_mass: 1.0,
+        star_luminosity: 1.0,
+        controls: Controls::DEFAULT,
+        rule: Rule::SystemLab,
+    })
+    .unwrap();
+    assert_eq!(solar_lab.rule_version, RULE_VERSION);
+    eprintln!("Dole 1970 rule, 40 Sun runs: {rocky_inner} rocky inside 2 AU, {giants} giants");
+    let lab_rocky: usize = (0..40)
+        .map(|k| {
+            run(&Request {
+                master_seed: format!("dole-{k}"),
+                star_mass: 1.0,
+                star_luminosity: 1.0,
+                controls: Controls::DEFAULT,
+                rule: Rule::SystemLab,
+            })
+            .unwrap()
+            .bodies
+            .iter()
+            .filter(|b| b.a_au < 2.0 && !b.gas_giant)
+            .count()
+        })
+        .sum();
+    eprintln!("System Lab rule, same seeds: {lab_rocky} rocky inside 2 AU");
+    assert!(
+        rocky_inner as f64 / runs as f64 >= 1.0,
+        "rocky inner planets per run {rocky_inner}/{runs}"
+    );
+    assert!(
+        rocky_inner > 2 * lab_rocky.max(1),
+        "corrected {rocky_inner} against System Lab {lab_rocky}"
+    );
+    assert!(
+        giants as f64 / runs as f64 >= 1.0,
+        "giants per run {giants}/{runs}"
+    );
+}
+
+#[test]
+fn corrected_rule_follows_the_inheritance() {
+    // More metals in the patch: more dust, so more planet mass (same nuclei, same draws).
+    let mass = |r: &Run| r.bodies.iter().map(|b| b.earth_mass()).sum::<f64>();
+    let (mut rich, mut poor) = (0.0, 0.0);
+    for k in 0..20 {
+        rich += mass(&dole(&format!("z-{k}"), 1.0, 0.3));
+        poor += mass(&dole(&format!("z-{k}"), 1.0, -0.5));
+    }
+    assert!(rich > 2.0 * poor, "rich {rich} poor {poor}");
+    // From G0: every solar-patch system's request carries its own [Fe/H] and star.
+    for h in crate::scenario::solar_patch().into_iter().flatten().take(8) {
+        let req = Request::from_history(&h, "g0");
+        let want = DOLE_A
+            * sse_core::math::sqrt(h.stars[0].mass)
+            * sse_core::math::pow(10.0, h.inheritance.feh);
+        assert_eq!(req.controls.A, want);
+        assert_eq!(req.star_mass, h.stars[0].mass);
+        assert_eq!(req.rule, Rule::Dole1970);
+        let r = run(&req).unwrap();
+        // The hand-off reads the same system's disc bands, which F1 built from the same inheritance.
+        let p = protoplanets(&r, &h.manifest.system, Some(&h.disc));
+        assert_eq!(p.len(), r.bodies.len());
+    }
+}
+
+#[test]
+fn dole_golden() {
+    crate::golden::check(
+        "formation-accrete-dole.json",
+        &crate::scenario::accrete_dole_golden(),
+    );
 }

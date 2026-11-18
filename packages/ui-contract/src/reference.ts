@@ -1,6 +1,6 @@
 // A block reference as a "why?" panel shows it (H6.5). The kernel sends each
-// reference as text, or (once the physics track adds them) as an object with
-// an optional DOI or URL. A DOI becomes a https://doi.org link, a URL a link,
+// reference as `{ text, doi?, url? }` (P1, crates/sse-flow decl.rs; older
+// documents send plain text). A DOI becomes a https://doi.org link, a URL a link,
 // and anything else stays plain text. Only http(s) links are ever made.
 export type ReferenceIn = string | { text?: string; citation?: string; label?: string; title?: string; doi?: string | null; url?: string | null };
 

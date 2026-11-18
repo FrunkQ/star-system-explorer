@@ -1,0 +1,37 @@
+{
+  "format": "sse.flow/1",
+  "id": "sse.base.planetesimal-water",
+  "version": "0.1.0",
+  "hook": "planetesimal.water",
+  "inputs": [
+    { "name": "al26_rel", "kind": "inheritance.al26_rel" },
+    { "name": "formation_time", "kind": "planetesimal.formation_time" }
+  ],
+  "nodes": [
+    { "id": "al26", "atom": "sse.heat.al26_planetesimal_heating" }
+  ],
+  "wires": [
+    { "from": "in.al26_rel", "to": "al26.al26_rel" },
+    { "from": "in.formation_time", "to": "al26.formation_time" }
+  ],
+  "publishes": [
+    { "kind": "planetesimal.water_kept_fraction", "from": "al26.water_kept" }
+  ],
+  "tests": [
+    {
+      "name": "Iron-meteorite parent body, formed within 0.5 Myr: melted and dry (Grimm and McSween 1993)",
+      "inputs": { "al26_rel": { "value": 1.0, "unit": "one" }, "formation_time": { "value": 0.3, "unit": "myr" } },
+      "expect": { "planetesimal.water_kept_fraction": { "value": 0.1, "unit": "one", "tol": 0.001 } }
+    },
+    {
+      "name": "Carbonaceous chondrite parent body, formed after 3 Myr: kept its water",
+      "inputs": { "al26_rel": { "value": 1.0, "unit": "one" }, "formation_time": { "value": 3.0, "unit": "myr" } },
+      "expect": { "planetesimal.water_kept_fraction": { "value": 1.0, "unit": "one", "tol": 0.001 } }
+    },
+    {
+      "name": "Same early body around a star with no Al-26: wet (Lichtenberg et al. 2019)",
+      "inputs": { "al26_rel": { "value": 0.0, "unit": "one" }, "formation_time": { "value": 0.3, "unit": "myr" } },
+      "expect": { "planetesimal.water_kept_fraction": { "value": 1.0, "unit": "one", "tol": 0.001 } }
+    }
+  ]
+}

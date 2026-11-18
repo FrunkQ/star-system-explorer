@@ -23,8 +23,10 @@ const TARN = "u:kestrel/sys:1/body:3";
 
 test("pack summaries and schema checks", () => {
   const b = packSummary(base);
-  assert.equal(b.flows.length, 5);
-  assert.equal(b.quantity_kinds, 53);
+  // The summary counts what the base pack holds (it grows as physics packages add flows).
+  assert.equal(b.flows.length, (base as { provides: { flows: unknown[] } }).provides.flows.length);
+  assert.ok(b.flows.length >= 7, "P1's heat flows are in the base pack");
+  assert.ok(b.quantity_kinds >= 53);
   assert.equal(packSummary(warm).fictional, true);
   assert.deepEqual(packSummary(warm).replaces, ["sse.base.planet-climate from sse.base-physics ^0.1.0"]);
   assert.equal(checkPackDoc(warm, ["sse.base-physics"]), null);

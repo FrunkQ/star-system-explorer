@@ -6,9 +6,9 @@ use sse_core::quantity::consts::*;
 use sse_core::Dimension as D;
 use sse_flow::{Atom, CostClass};
 
-const CK: &str = "Catling, D. C. and Kasting, J. F. 2017, Atmospheric Evolution on Inhabited and Lifeless Worlds, Cambridge University Press, chapters 2 and 4";
+const CK: &str = "Catling, D. C. and Kasting, J. F. 2017, Atmospheric Evolution on Inhabited and Lifeless Worlds, Cambridge University Press, chapters 2 and 4. doi:10.1017/9781139020558";
 const SEAGER: &str = "Seager, S. 2010, Exoplanet Atmospheres, Princeton University Press, section 3.1 (heat redistribution factor)";
-const PIERRE: &str = "Pierrehumbert, R. T. 2010, Principles of Planetary Climate, Cambridge University Press, sections 2.7 and 8.7";
+const PIERRE: &str = "Pierrehumbert, R. T. 2010, Principles of Planetary Climate, Cambridge University Press, sections 2.7 and 8.7. doi:10.1017/CBO9780511780783";
 
 pub fn atoms() -> Vec<Box<dyn Atom>> {
     let temp = |name: &str, kind: &str| port(name, kind, D::TEMPERATURE, None);
