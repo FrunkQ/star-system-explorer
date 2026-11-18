@@ -558,6 +558,20 @@ dependencies = [
 ]
 
 [[package]]
+name = "sse-sift"
+version = "0.1.0"
+dependencies = [
+ "proptest",
+ "serde",
+ "serde_json",
+ "sse-chronicle",
+ "sse-core",
+ "sse-flow",
+ "sse-pack",
+ "sse-resolve",
+]
+
+[[package]]
 name = "sse-wasm"
 version = "0.1.0"
 dependencies = [

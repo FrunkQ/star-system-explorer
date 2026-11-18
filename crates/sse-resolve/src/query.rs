@@ -154,7 +154,7 @@ pub fn location_first(env: &Envelope) -> Result<Outlook, EnvelopeError> {
     })
 }
 
-fn value_matches(v: &Value, c: &Criterion) -> bool {
+pub fn value_matches(v: &Value, c: &Criterion) -> bool {
     match v {
         Value::Text(t) => c.min.is_none() && c.max.is_none() && c.is.as_deref() == Some(t.as_str()),
         Value::Float(_) | Value::Int(_) => {
@@ -170,9 +170,10 @@ fn value_matches(v: &Value, c: &Criterion) -> bool {
     }
 }
 
-/// Probability that one generated child of `env` meets `c`, with the reason
+/// Probability that one generated child of `env` meets `c` (used for rarity by
+/// sifters), with the reason
 /// when it cannot.
-fn criterion_probability(env: &Envelope, c: &Criterion) -> (f64, Option<String>) {
+pub fn criterion_probability(env: &Envelope, c: &Criterion) -> (f64, Option<String>) {
     match env.fields.get(&c.field) {
         None => (
             0.0,

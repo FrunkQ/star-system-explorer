@@ -1,0 +1,19 @@
+[package]
+name = "sse-sift"
+description = "SSE4 SIFT engine: rule predicates, tags with hysteresis, region classification, sifters, significance"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+authors.workspace = true
+
+[dependencies]
+sse-core.workspace = true
+sse-chronicle.workspace = true
+sse-flow.workspace = true
+sse-pack.workspace = true
+sse-resolve = { path = "../sse-resolve" }
+serde.workspace = true
+serde_json.workspace = true
+
+[dev-dependencies]
+proptest.workspace = true

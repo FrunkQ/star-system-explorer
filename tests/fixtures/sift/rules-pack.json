@@ -1,0 +1,56 @@
+{
+  "format": "sse.pack/1",
+  "id": "test.sift-rules",
+  "version": "0.1.0",
+  "kind": ["game-system"],
+  "kernel_range": "^0.1",
+  "licence": "Apache-2.0",
+  "provides": {
+    "other": {
+      "rules": [
+        { "id": "habitable.v1", "tag": "habitable", "applies_to": ["body"],
+          "when": { "if": "all", "of": [
+            { "if": "range", "field": "surface_temp_k", "min": 273, "max": 310, "margin": 5 },
+            { "if": "range", "field": "pressure_bar", "min": 0.5, "max": 5, "margin": 0.2 },
+            { "if": "is", "field": "has_ocean", "value": true } ] } },
+        { "id": "garden.v1", "tag": "garden", "applies_to": ["body"],
+          "when": { "if": "all", "of": [ { "if": "tag", "tag": "habitable" }, { "if": "range", "field": "o2_bar", "min": 0.15 } ] } },
+        { "id": "roche.v1", "tag": "roche-danger", "applies_to": ["body"],
+          "when": { "if": "compare", "left": "orbit_m", "op": "lt", "right": "parent.roche_m", "factor": 1.2, "margin": 0.05 } },
+        { "id": "port.v1", "tag": "port", "when": { "if": "is", "field": "port", "value": true } }
+      ],
+      "axes": [
+        ["temp", { "field": "surface_temp_k", "scale": "linear", "span": [0, 1000], "label": "surface temperature" }],
+        ["pressure", { "field": "pressure_bar", "scale": "log", "span": [0.001, 1000], "label": "surface pressure" }],
+        ["ocean", { "field": "ocean_fraction", "scale": "fraction", "span": [0, 1], "label": "ocean cover" }],
+        ["locked", { "field": "tidally_locked", "scale": "flag", "label": "tidally locked" }]
+      ],
+      "classes": [
+        { "id": "world", "scheme": "test", "kind": "base", "region": [ { "axis": "pressure", "core": [0, 1000], "fringe": [0, 1000] } ] },
+        { "id": "world/temperate", "parent": "world", "scheme": "test", "kind": "base", "region": [ { "axis": "temp", "core": [260, 310], "fringe": [230, 340] } ] },
+        { "id": "world/hot", "parent": "world", "scheme": "test", "kind": "base", "region": [ { "axis": "temp", "core": [312, 400], "fringe": [300, 420] } ] },
+        { "id": "world/frozen", "parent": "world", "scheme": "test", "kind": "base", "region": [ { "axis": "temp", "core": [0, 230], "fringe": [0, 260] } ] },
+        { "id": "world/temperate/ocean", "parent": "world/temperate", "scheme": "test", "kind": "base", "region": [ { "axis": "ocean", "core": [0.5, 1.0], "fringe": [0.3, 1.0] } ] },
+        { "id": "locked", "scheme": "test", "kind": "modifier", "region": [ { "axis": "locked", "is": true } ] }
+      ],
+      "sifters": [
+        { "id": "moon-in-roche", "label": "a moon inside the Roche danger zone", "applies_to": ["body"],
+          "pattern": { "match": "facts", "when": { "if": "tag", "tag": "roche-danger" } },
+          "significance": { "persistence": { "from": "fixed", "s": 1.26e15 }, "reach": { "from": "fixed", "n": 2 }, "reversibility": 0.1 } },
+        { "id": "day-is-year", "label": "a world whose day equals its year", "applies_to": ["body"],
+          "pattern": { "match": "facts", "when": { "if": "near", "a": "day_s", "b": "year_s", "tolerance": 0.02 } },
+          "significance": { "persistence": { "from": "fixed", "s": 3.0e16 }, "reach": { "from": "fixed", "n": 1 }, "reversibility": 0.0 } },
+        { "id": "star-dies-soon", "label": "this star dies within a billion years", "applies_to": ["sys"],
+          "pattern": { "match": "facts", "when": { "if": "within", "field": "life.ends_s", "from_s": 0, "to_s": 31557600000000000 } },
+          "significance": { "persistence": { "from": "life-remaining" }, "reach": { "from": "descendants" }, "reversibility": 0.0 } },
+        { "id": "metal-rich", "label": "unusually metal-rich for its patch", "applies_to": ["sys"],
+          "pattern": { "match": "facts", "when": { "if": "range", "field": "metallicity", "min": 0.2 } },
+          "significance": { "persistence": { "from": "fixed", "s": 3.0e17 }, "reach": { "from": "descendants" }, "reversibility": 0.0,
+            "rarity": [ { "field": "metallicity", "min": 0.2 } ] } },
+        { "id": "players-learned", "label": "the players learned something", "applies_to": [],
+          "pattern": { "match": "event", "kind": "observe.grant" },
+          "significance": { "persistence": { "from": "fixed", "s": 0 }, "reach": { "from": "fixed", "n": 1 }, "reversibility": 1.0 } }
+      ]
+    }
+  }
+}
