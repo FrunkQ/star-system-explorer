@@ -4,6 +4,7 @@
 //! and life lines (stage 2), the FormationHistory record with time slices.
 #![forbid(unsafe_code)]
 
+pub mod disc;
 pub mod history;
 pub mod hurley;
 pub mod inherit;

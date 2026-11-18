@@ -45,8 +45,51 @@ pub struct BudgetSplit {
     pub residue: u64,
 }
 
+/// Most children one fill may draw; beyond it the rest is residue.
+pub const FILL_CAP: usize = 1 << 22;
+
+/// A fill's draws, in the budget's minor units, stopping before the first
+/// that does not fit in what pins left.
+pub(crate) fn fill_draws(seed: &Seed, env: &Envelope, work: &mut Work) -> Option<Vec<u64>> {
+    let CountSpec::Fill { budget, dist, unit } = &env.count else {
+        return None;
+    };
+    let b = env.budgets.get(budget)?;
+    let pinned: u128 = env
+        .pins
+        .iter()
+        .map(|p| *p.claims.get(budget).unwrap_or(&0) as u128)
+        .sum();
+    let remainder = (b.amount as u128).saturating_sub(pinned) as u64;
+    let d = Draws::new(
+        *seed,
+        env.address.clone(),
+        stream(&format!("resolve.fill.{budget}.v1")),
+    );
+    let mut out = Vec::new();
+    let mut used = 0u64;
+    while out.len() < FILL_CAP {
+        work.add(1);
+        let x = match dist.quantile(open_unit(&d, out.len() as u64)) {
+            Sample::Num(x) => x,
+            Sample::Int(k) => k as f64,
+            Sample::Cat(_) => 0.0,
+        };
+        let v = (m::round(x * unit).max(1.0)) as u64;
+        if used.saturating_add(v) > remainder {
+            break;
+        }
+        used += v;
+        out.push(v);
+    }
+    Some(out)
+}
+
 /// Number of generated (not pinned) children.
 pub fn generated_count(seed: &Seed, env: &Envelope, work: &mut Work) -> u64 {
+    if let Some(f) = fill_draws(seed, env, work) {
+        return f.len() as u64;
+    }
     let d = Draws::new(*seed, env.address.clone(), stream("resolve.count.v1"));
     work.add(1);
     let n = match &env.count {
@@ -58,6 +101,7 @@ pub fn generated_count(seed: &Seed, env: &Envelope, work: &mut Work) -> u64 {
             }
         }
         CountSpec::Uniform { lo, hi } => lo + d.below(0, hi - lo + 1),
+        CountSpec::Fill { .. } => unreachable!("handled above"),
     };
     if env.pins_count_toward {
         n.saturating_sub(env.pins.len() as u64)
@@ -105,6 +149,7 @@ fn flat_weights(
 ) -> Vec<u64> {
     let raw: Vec<f64> = match weights {
         Weights::Equal => vec![1.0; n as usize],
+        Weights::Given { weights } => weights.iter().take(n as usize).cloned().collect(),
         Weights::Exponential | Weights::Drawn { .. } => {
             let d = Draws::new(
                 *seed,
@@ -122,7 +167,7 @@ fn flat_weights(
                             Sample::Int(k) => k as f64,
                             Sample::Cat(_) => 0.0,
                         },
-                        Weights::Equal => unreachable!(),
+                        Weights::Equal | Weights::Given { .. } => unreachable!(),
                     }
                 })
                 .collect()
@@ -166,6 +211,30 @@ fn apportion(amount: u64, w: &[u64]) -> Vec<u64> {
         base[*i] += 1;
     }
     base
+}
+
+/// Shares under a fill: the fill budget takes each draw as drawn; every other
+/// budget is apportioned exactly in proportion to those draws.
+fn fill_shares(
+    env: &Envelope,
+    splits: &BTreeMap<String, BudgetSplit>,
+    f: &[u64],
+) -> Vec<BTreeMap<String, u64>> {
+    let CountSpec::Fill { budget, .. } = &env.count else {
+        unreachable!()
+    };
+    let mut per: Vec<BTreeMap<String, u64>> = vec![BTreeMap::new(); f.len()];
+    for id in env.budgets.keys() {
+        let col: Vec<u64> = if id == budget {
+            f.to_vec()
+        } else {
+            apportion(splits[id].remainder, f)
+        };
+        for (i, v) in col.into_iter().enumerate() {
+            per[i].insert(id.clone(), v);
+        }
+    }
+    per
 }
 
 /// One child's share of one budget by tree halving. Costs log2(n) draws.
@@ -220,6 +289,9 @@ pub fn shares_for(
     index: u64,
     work: &mut Work,
 ) -> BTreeMap<String, u64> {
+    if let Some(f) = fill_draws(seed, env, work) {
+        return fill_shares(env, splits, &f).swap_remove(index as usize);
+    }
     let mut out = BTreeMap::new();
     let mut flat_cache: BTreeMap<String, Vec<u64>> = BTreeMap::new();
     for (id, b) in &env.budgets {
@@ -248,6 +320,9 @@ pub fn all_shares(
     n: u64,
     work: &mut Work,
 ) -> Vec<BTreeMap<String, u64>> {
+    if let Some(f) = fill_draws(seed, env, work) {
+        return fill_shares(env, splits, &f);
+    }
     let mut per: Vec<BTreeMap<String, u64>> = vec![BTreeMap::new(); n as usize];
     for (id, b) in &env.budgets {
         let rem = splits[id].remainder;

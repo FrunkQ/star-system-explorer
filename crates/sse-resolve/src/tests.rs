@@ -485,3 +485,139 @@ fn queries_mutate_nothing_until_a_pick_is_committed() {
 fn golden_digest() {
     crate::golden::check("resolve.json", &crate::scenario::golden());
 }
+
+/// G0 additions: a continuous broken power law (the Kroupa IMF) and
+/// model-given split weights.
+#[test]
+fn broken_power_law_is_continuous_and_inverts() {
+    let d = Distribution::BrokenPowerLaw {
+        edges: vec![0.01, 0.08, 0.5, 150.0],
+        alphas: vec![0.3, 1.3, 2.3],
+    };
+    d.validate().unwrap();
+    for i in 1..1000 {
+        let u = i as f64 / 1000.0;
+        let Sample::Num(x) = d.quantile(u) else {
+            panic!()
+        };
+        assert!((d.cdf(x).unwrap() - u).abs() < 1e-9, "{u} {x}");
+    }
+    // Density has no jump at 0.5: the cdf slope either side agrees.
+    let h = 1e-7;
+    let left = (d.cdf(0.5).unwrap() - d.cdf(0.5 - h).unwrap()) / h;
+    let right = (d.cdf(0.5 + h).unwrap() - d.cdf(0.5).unwrap()) / h;
+    assert!((left / right - 1.0).abs() < 1e-4, "{left} {right}");
+    // One piece is the ordinary power law.
+    let one = Distribution::BrokenPowerLaw {
+        edges: vec![0.1, 10.0],
+        alphas: vec![2.35],
+    };
+    let pl = Distribution::PowerLaw {
+        alpha: 2.35,
+        lo: 0.1,
+        hi: 10.0,
+    };
+    assert!((one.mean().unwrap() - pl.mean().unwrap()).abs() < 1e-12);
+    let bad = Distribution::BrokenPowerLaw {
+        edges: vec![0.1, 0.05],
+        alphas: vec![1.0],
+    };
+    assert!(bad.validate().is_err());
+}
+
+#[test]
+fn given_weights_split_exactly() {
+    let mut env = fixture();
+    env.pins.clear();
+    env.child = None;
+    env.count = CountSpec::Fixed { n: 3 };
+    env.partition = PartitionSpec::Flat {
+        weights: Weights::Given {
+            weights: vec![1.0, 2.0, 1.0],
+        },
+    };
+    env.validate().unwrap();
+    let all = resolve_all(&seed(), &env).unwrap();
+    let gas: Vec<u64> = all.iter().map(|r| int(&r.facts, "budget.gas")).collect();
+    assert_eq!(gas.iter().sum::<u64>(), env.budgets["gas"].amount);
+    assert_eq!(
+        gas,
+        vec![10_000_000_000_000, 20_000_000_000_000, 10_000_000_000_000]
+    );
+    env.count = CountSpec::Fixed { n: 2 };
+    assert!(env.validate().is_err());
+}
+
+/// G0 addition: fill a budget with draws. Shares are the draws themselves
+/// (the mass function comes through unscaled), the budget closes exactly
+/// with a residue under one draw, and children still resolve one at a time.
+#[test]
+fn fill_count_keeps_the_distribution_and_closes() {
+    let imf = Distribution::BrokenPowerLaw {
+        edges: vec![0.08, 0.5, 150.0],
+        alphas: vec![1.3, 2.3],
+    };
+    let mut env = fixture();
+    env.child = None;
+    env.budgets.remove("spin");
+    env.budgets.get_mut("gas").unwrap().amount = 5_000_000; // 5,000 solar masses in 1e-3 units
+    env.pins[0].claims.insert("gas".into(), 2000);
+    env.pins[1].claims.insert("gas".into(), 900);
+    env.count = CountSpec::Fill {
+        budget: "gas".into(),
+        dist: imf.clone(),
+        unit: 1000.0,
+    };
+    env.validate().unwrap();
+    let kids = children(&seed(), &env).unwrap();
+    let all = resolve_all(&seed(), &env).unwrap();
+    let pins: Vec<&Resolved> = all
+        .iter()
+        .filter(|r| matches!(r.child, ChildRef::Pinned(_)))
+        .collect();
+    let gen: Vec<&Resolved> = all
+        .iter()
+        .filter(|r| matches!(r.child, ChildRef::Generated(_)))
+        .collect();
+    assert_eq!(gen.len() as u64, kids.generated);
+    let g = &kids.splits["gas"];
+    let sum = |rs: &[&Resolved], k: &str| rs.iter().map(|r| int(&r.facts, k)).sum::<u64>();
+    assert_eq!(
+        sum(&gen, "budget.gas") + sum(&pins, "budget.gas") + g.residue,
+        5_000_000
+    );
+    // Under one draw left over (the next draw would not have fitted).
+    assert!(g.residue < 150_000, "{}", g.residue);
+    // Metals follow gas exactly.
+    assert_eq!(
+        sum(&gen, "budget.metals") + sum(&pins, "budget.metals"),
+        env.budgets["metals"].amount
+    );
+    // The shares are the drawn masses: their distribution is the IMF's.
+    let want = 1.0 - imf.cdf(1.0).unwrap();
+    let got = gen
+        .iter()
+        .filter(|r| int(&r.facts, "budget.gas") > 1000)
+        .count() as f64
+        / gen.len() as f64;
+    let se = (want * (1.0 - want) / gen.len() as f64).sqrt();
+    assert!((got - want).abs() < 4.0 * se, "{got} {want}");
+    // One child alone resolves to the same facts.
+    for r in gen.iter().step_by(997) {
+        assert_eq!(resolve(&seed(), &env, &r.child).unwrap().facts, r.facts);
+    }
+    // The outlook's expected count is budget over mean draw.
+    let o = crate::query::location_first(&env).unwrap();
+    let expect = (5_000_000.0 - 2_900.0) / 1000.0 / imf.mean().unwrap();
+    assert!(
+        (o.expected_generated - expect).abs() < 1e-6,
+        "{}",
+        o.expected_generated
+    );
+    env.count = CountSpec::Fill {
+        budget: "nope".into(),
+        dist: imf,
+        unit: 1000.0,
+    };
+    assert!(env.validate().is_err());
+}

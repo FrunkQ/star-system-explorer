@@ -61,10 +61,17 @@ pub fn children(seed: &Seed, env: &Envelope) -> Result<Children, EnvelopeError> 
     env.validate()?;
     let mut w = Work::default();
     let generated = partition::generated_count(seed, env, &mut w);
+    let mut splits = partition::budget_splits(env, generated);
+    if let (crate::envelope::CountSpec::Fill { budget, .. }, Some(f)) =
+        (&env.count, partition::fill_draws(seed, env, &mut w))
+    {
+        let s = splits.get_mut(budget).expect("validated");
+        s.residue = s.remainder - f.iter().sum::<u64>();
+    }
     Ok(Children {
         pins: env.pins.iter().map(|p| p.address.clone()).collect(),
         generated,
-        splits: partition::budget_splits(env, generated),
+        splits,
     })
 }
 

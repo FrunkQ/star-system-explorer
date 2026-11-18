@@ -18,5 +18,6 @@ sse-sift = { path = "../sse-sift" }
 sse-observe = { path = "../sse-observe" }
 sse-suite = { path = "../sse-suite" }
 sse-formation = { path = "../sse-formation" }
+sse-cosmos = { path = "../sse-cosmos" }
 serde_json.workspace = true
 wasm-bindgen = "=0.2.130"

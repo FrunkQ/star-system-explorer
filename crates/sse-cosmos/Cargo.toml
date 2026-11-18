@@ -1,0 +1,16 @@
+[package]
+name = "sse-cosmos"
+description = "SSE4 cosmos suite: the default Milky-Way-like patch envelope (G0), later cosmology to stars"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+authors.workspace = true
+
+[dependencies]
+sse-core.workspace = true
+sse-chronicle.workspace = true
+sse-flow.workspace = true
+sse-pack.workspace = true
+sse-resolve = { path = "../sse-resolve" }
+serde.workspace = true
+serde_json.workspace = true
