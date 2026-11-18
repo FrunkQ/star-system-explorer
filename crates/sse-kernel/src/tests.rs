@@ -90,3 +90,17 @@ fn contract_behaviours() {
     assert_eq!(l[38]["code"], "unknown_job");
     assert_eq!(l[40]["code"], "bad_request");
 }
+
+/// The contract loads the real base-physics pack from a fixture copy (both
+/// runners read `tests/fixtures/packs/`). The copy must be the pack itself.
+/// After re-blessing the pack: `cp packs/base-physics/pack.json tests/fixtures/packs/base-physics.json`.
+#[test]
+fn base_physics_fixture_is_the_real_pack() {
+    let real = std::fs::read_to_string(root().join("packs/base-physics/pack.json")).unwrap();
+    let copy =
+        std::fs::read_to_string(root().join("tests/fixtures/packs/base-physics.json")).unwrap();
+    assert!(
+        real == copy,
+        "tests/fixtures/packs/base-physics.json is stale: cp packs/base-physics/pack.json tests/fixtures/packs/base-physics.json"
+    );
+}

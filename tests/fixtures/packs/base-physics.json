@@ -1,0 +1,1557 @@
+{
+  "format": "sse.pack/1",
+  "id": "sse.base-physics",
+  "kernel_range": "^0.1",
+  "kind": [
+    "base-physics"
+  ],
+  "licence": "Apache-2.0",
+  "provides": {
+    "flows": [
+      {
+        "format": "sse.flow/1",
+        "hook": "moon.tides",
+        "id": "sse.base.moon-tides",
+        "inputs": [
+          {
+            "kind": "orbit.host_mass",
+            "name": "host_mass"
+          },
+          {
+            "kind": "body.radius",
+            "name": "radius"
+          },
+          {
+            "kind": "orbit.semi_major_axis",
+            "name": "semi_major_axis"
+          },
+          {
+            "kind": "orbit.eccentricity",
+            "name": "eccentricity"
+          }
+        ],
+        "nodes": [
+          {
+            "atom": "sse.tides.eccentricity_heating",
+            "id": "heat",
+            "params": {
+              "k2_over_q": 0.015
+            }
+          }
+        ],
+        "publishes": [
+          {
+            "from": "heat.power",
+            "kind": "tides.heating_power"
+          }
+        ],
+        "tests": [
+          {
+            "expect": {
+              "tides.heating_power": {
+                "tol": 19000000000000.0,
+                "unit": "w",
+                "value": 93000000000000.0
+              }
+            },
+            "inputs": {
+              "eccentricity": {
+                "unit": "one",
+                "value": 0.0041
+              },
+              "host_mass": {
+                "unit": "m_jupiter",
+                "value": 1.0
+              },
+              "radius": {
+                "unit": "km",
+                "value": 1821.6
+              },
+              "semi_major_axis": {
+                "unit": "km",
+                "value": 421700.0
+              }
+            },
+            "name": "Io (Lainey et al. 2009: observed (0.93 ± 0.19) × 10¹⁴ W with k2/Q 0.015)"
+          }
+        ],
+        "version": "0.1.0",
+        "wires": [
+          {
+            "from": "in.host_mass",
+            "to": "heat.host_mass"
+          },
+          {
+            "from": "in.radius",
+            "to": "heat.radius"
+          },
+          {
+            "from": "in.semi_major_axis",
+            "to": "heat.semi_major_axis"
+          },
+          {
+            "from": "in.eccentricity",
+            "to": "heat.eccentricity"
+          }
+        ]
+      },
+      {
+        "format": "sse.flow/1",
+        "hook": "orbit.basics",
+        "id": "sse.base.orbit-basics",
+        "inputs": [
+          {
+            "kind": "orbit.host_mass",
+            "name": "host_mass"
+          },
+          {
+            "kind": "body.mass",
+            "name": "body_mass"
+          },
+          {
+            "kind": "orbit.semi_major_axis",
+            "name": "semi_major_axis"
+          },
+          {
+            "kind": "orbit.eccentricity",
+            "name": "eccentricity"
+          }
+        ],
+        "nodes": [
+          {
+            "atom": "sse.orbit.total_mass",
+            "id": "mt"
+          },
+          {
+            "atom": "sse.orbit.period",
+            "id": "per"
+          },
+          {
+            "atom": "sse.orbit.apsides",
+            "id": "aps"
+          },
+          {
+            "atom": "sse.orbit.hill_radius",
+            "id": "hill"
+          }
+        ],
+        "publishes": [
+          {
+            "from": "mt.total_mass",
+            "kind": "orbit.total_mass"
+          },
+          {
+            "from": "per.period",
+            "kind": "orbit.period"
+          },
+          {
+            "from": "aps.periapsis",
+            "kind": "orbit.periapsis"
+          },
+          {
+            "from": "aps.apoapsis",
+            "kind": "orbit.apoapsis"
+          },
+          {
+            "from": "hill.hill_radius",
+            "kind": "body.hill_radius"
+          }
+        ],
+        "tests": [
+          {
+            "expect": {
+              "orbit.apoapsis": {
+                "tol": 30000.0,
+                "unit": "km",
+                "value": 152100000.0
+              },
+              "orbit.periapsis": {
+                "tol": 30000.0,
+                "unit": "km",
+                "value": 147095000.0
+              },
+              "orbit.period": {
+                "tol": 0.02,
+                "unit": "day",
+                "value": 365.256
+              }
+            },
+            "inputs": {
+              "body_mass": {
+                "unit": "kg",
+                "value": 5.9722e+24
+              },
+              "eccentricity": {
+                "unit": "one",
+                "value": 0.0167
+              },
+              "host_mass": {
+                "unit": "m_sun",
+                "value": 1.0
+              },
+              "semi_major_axis": {
+                "unit": "km",
+                "value": 149598000.0
+              }
+            },
+            "name": "Earth (NASA fact sheet: 365.256 d, perihelion 147.095e6 km, aphelion 152.100e6 km)"
+          },
+          {
+            "expect": {
+              "orbit.apoapsis": {
+                "tol": 200000.0,
+                "unit": "km",
+                "value": 816363000.0
+              },
+              "orbit.periapsis": {
+                "tol": 200000.0,
+                "unit": "km",
+                "value": 740595000.0
+              },
+              "orbit.period": {
+                "tol": 4.0,
+                "unit": "day",
+                "value": 4332.589
+              }
+            },
+            "inputs": {
+              "body_mass": {
+                "unit": "m_jupiter",
+                "value": 1.0
+              },
+              "eccentricity": {
+                "unit": "one",
+                "value": 0.0487
+              },
+              "host_mass": {
+                "unit": "m_sun",
+                "value": 1.0
+              },
+              "semi_major_axis": {
+                "unit": "km",
+                "value": 778479000.0
+              }
+            },
+            "name": "Jupiter (NASA fact sheet: 4332.589 d, perihelion 740.595e6 km, aphelion 816.363e6 km)"
+          }
+        ],
+        "version": "0.1.0",
+        "wires": [
+          {
+            "from": "in.host_mass",
+            "to": "mt.host_mass"
+          },
+          {
+            "from": "in.body_mass",
+            "to": "mt.body_mass"
+          },
+          {
+            "from": "in.semi_major_axis",
+            "to": "per.semi_major_axis"
+          },
+          {
+            "from": "mt.total_mass",
+            "to": "per.total_mass"
+          },
+          {
+            "from": "in.semi_major_axis",
+            "to": "aps.semi_major_axis"
+          },
+          {
+            "from": "in.eccentricity",
+            "to": "aps.eccentricity"
+          },
+          {
+            "from": "in.semi_major_axis",
+            "to": "hill.semi_major_axis"
+          },
+          {
+            "from": "in.eccentricity",
+            "to": "hill.eccentricity"
+          },
+          {
+            "from": "in.body_mass",
+            "to": "hill.body_mass"
+          },
+          {
+            "from": "in.host_mass",
+            "to": "hill.host_mass"
+          }
+        ]
+      },
+      {
+        "format": "sse.flow/1",
+        "hook": "planet.bulk",
+        "id": "sse.base.planet-bulk",
+        "inputs": [
+          {
+            "kind": "body.mass",
+            "name": "mass"
+          },
+          {
+            "kind": "body.radius",
+            "name": "radius"
+          }
+        ],
+        "nodes": [
+          {
+            "atom": "sse.planet.bulk_density",
+            "id": "rho"
+          },
+          {
+            "atom": "sse.planet.surface_gravity",
+            "id": "g"
+          },
+          {
+            "atom": "sse.planet.escape_velocity",
+            "id": "esc"
+          }
+        ],
+        "publishes": [
+          {
+            "from": "rho.density",
+            "kind": "body.bulk_density"
+          },
+          {
+            "from": "g.g",
+            "kind": "body.surface_gravity"
+          },
+          {
+            "from": "esc.v_esc",
+            "kind": "body.escape_velocity"
+          }
+        ],
+        "tests": [
+          {
+            "expect": {
+              "body.bulk_density": {
+                "tol": 0.01,
+                "unit": "g_cm3",
+                "value": 5.513
+              },
+              "body.escape_velocity": {
+                "tol": 0.02,
+                "unit": "km_s",
+                "value": 11.186
+              },
+              "body.surface_gravity": {
+                "tol": 0.03,
+                "unit": "m_s2",
+                "value": 9.82
+              }
+            },
+            "inputs": {
+              "mass": {
+                "unit": "kg",
+                "value": 5.9722e+24
+              },
+              "radius": {
+                "unit": "km",
+                "value": 6371.0
+              }
+            },
+            "name": "Earth (NASA fact sheet)"
+          },
+          {
+            "expect": {
+              "body.bulk_density": {
+                "tol": 0.01,
+                "unit": "g_cm3",
+                "value": 3.934
+              },
+              "body.escape_velocity": {
+                "tol": 0.01,
+                "unit": "km_s",
+                "value": 5.027
+              },
+              "body.surface_gravity": {
+                "tol": 0.02,
+                "unit": "m_s2",
+                "value": 3.727
+              }
+            },
+            "inputs": {
+              "mass": {
+                "unit": "kg",
+                "value": 6.4169e+23
+              },
+              "radius": {
+                "unit": "km",
+                "value": 3389.5
+              }
+            },
+            "name": "Mars (NASA fact sheet)"
+          },
+          {
+            "expect": {
+              "body.bulk_density": {
+                "tol": 0.01,
+                "unit": "g_cm3",
+                "value": 3.344
+              },
+              "body.escape_velocity": {
+                "tol": 0.01,
+                "unit": "km_s",
+                "value": 2.38
+              },
+              "body.surface_gravity": {
+                "tol": 0.01,
+                "unit": "m_s2",
+                "value": 1.624
+              }
+            },
+            "inputs": {
+              "mass": {
+                "unit": "kg",
+                "value": 7.346e+22
+              },
+              "radius": {
+                "unit": "km",
+                "value": 1737.4
+              }
+            },
+            "name": "Moon (NASA fact sheet)"
+          }
+        ],
+        "version": "0.1.0",
+        "wires": [
+          {
+            "from": "in.mass",
+            "to": "rho.mass"
+          },
+          {
+            "from": "in.radius",
+            "to": "rho.radius"
+          },
+          {
+            "from": "in.mass",
+            "to": "g.mass"
+          },
+          {
+            "from": "in.radius",
+            "to": "g.radius"
+          },
+          {
+            "from": "in.mass",
+            "to": "esc.mass"
+          },
+          {
+            "from": "in.radius",
+            "to": "esc.radius"
+          }
+        ]
+      },
+      {
+        "format": "sse.flow/1",
+        "hook": "planet.climate",
+        "id": "sse.base.planet-climate",
+        "inputs": [
+          {
+            "kind": "star.luminosity",
+            "name": "luminosity"
+          },
+          {
+            "kind": "orbit.semi_major_axis",
+            "name": "distance"
+          },
+          {
+            "kind": "planet.bond_albedo",
+            "name": "albedo"
+          },
+          {
+            "kind": "atmosphere.infrared_optical_depth",
+            "name": "optical_depth"
+          }
+        ],
+        "nodes": [
+          {
+            "atom": "sse.climate.insolation",
+            "id": "sun"
+          },
+          {
+            "atom": "sse.climate.equilibrium_temperature",
+            "id": "teq",
+            "params": {
+              "redistribution": 0.25
+            }
+          },
+          {
+            "atom": "sse.climate.grey_surface_temperature",
+            "id": "surf"
+          }
+        ],
+        "publishes": [
+          {
+            "from": "sun.flux",
+            "kind": "planet.insolation"
+          },
+          {
+            "from": "teq.teq",
+            "kind": "planet.equilibrium_temperature"
+          },
+          {
+            "from": "surf.surface",
+            "kind": "planet.surface_temperature"
+          }
+        ],
+        "tests": [
+          {
+            "expect": {
+              "planet.equilibrium_temperature": {
+                "tol": 0.6,
+                "unit": "k",
+                "value": 254.0
+              },
+              "planet.insolation": {
+                "tol": 1.5,
+                "unit": "w_m2",
+                "value": 1361.0
+              },
+              "planet.surface_temperature": {
+                "tol": 1.5,
+                "unit": "k",
+                "value": 288.0
+              }
+            },
+            "inputs": {
+              "albedo": {
+                "unit": "one",
+                "value": 0.306
+              },
+              "distance": {
+                "unit": "au",
+                "value": 1.0
+              },
+              "luminosity": {
+                "unit": "l_sun",
+                "value": 1.0
+              },
+              "optical_depth": {
+                "unit": "one",
+                "value": 0.83
+              }
+            },
+            "name": "Earth: S 1361 W/m², black body 254.0 K (NASA fact sheet), mean surface 288 K with τ 0.83"
+          },
+          {
+            "expect": {
+              "planet.equilibrium_temperature": {
+                "tol": 0.6,
+                "unit": "k",
+                "value": 209.8
+              },
+              "planet.insolation": {
+                "tol": 1.0,
+                "unit": "w_m2",
+                "value": 586.2
+              },
+              "planet.surface_temperature": {
+                "tol": 0.6,
+                "unit": "k",
+                "value": 209.8
+              }
+            },
+            "inputs": {
+              "albedo": {
+                "unit": "one",
+                "value": 0.25
+              },
+              "distance": {
+                "unit": "au",
+                "value": 1.523679
+              },
+              "luminosity": {
+                "unit": "l_sun",
+                "value": 1.0
+              },
+              "optical_depth": {
+                "unit": "one",
+                "value": 0.0
+              }
+            },
+            "name": "Mars: S 586.2 W/m², black body 209.8 K (NASA fact sheet); thin air, τ 0"
+          },
+          {
+            "expect": {
+              "planet.equilibrium_temperature": {
+                "tol": 0.6,
+                "unit": "k",
+                "value": 226.6
+              },
+              "planet.insolation": {
+                "tol": 3.0,
+                "unit": "w_m2",
+                "value": 2601.3
+              }
+            },
+            "inputs": {
+              "albedo": {
+                "unit": "one",
+                "value": 0.77
+              },
+              "distance": {
+                "unit": "au",
+                "value": 0.723332
+              },
+              "luminosity": {
+                "unit": "l_sun",
+                "value": 1.0
+              },
+              "optical_depth": {
+                "unit": "one",
+                "value": 0.0
+              }
+            },
+            "name": "Venus: S 2601.3 W/m², black body 226.6 K (NASA fact sheet)"
+          }
+        ],
+        "version": "0.1.0",
+        "wires": [
+          {
+            "from": "in.luminosity",
+            "to": "sun.luminosity"
+          },
+          {
+            "from": "in.distance",
+            "to": "sun.distance"
+          },
+          {
+            "from": "sun.flux",
+            "to": "teq.flux"
+          },
+          {
+            "from": "in.albedo",
+            "to": "teq.albedo"
+          },
+          {
+            "from": "teq.teq",
+            "to": "surf.teq"
+          },
+          {
+            "from": "in.optical_depth",
+            "to": "surf.optical_depth"
+          }
+        ]
+      },
+      {
+        "format": "sse.flow/1",
+        "hook": "star.main_sequence",
+        "id": "sse.base.star-main-sequence",
+        "inputs": [
+          {
+            "kind": "star.mass",
+            "name": "mass"
+          },
+          {
+            "kind": "star.age",
+            "name": "age"
+          }
+        ],
+        "nodes": [
+          {
+            "atom": "sse.star.ms_luminosity",
+            "id": "lum"
+          },
+          {
+            "atom": "sse.star.ms_radius",
+            "id": "rad"
+          },
+          {
+            "atom": "sse.star.effective_temperature",
+            "id": "teff"
+          },
+          {
+            "atom": "sse.star.ms_lifetime",
+            "id": "life"
+          },
+          {
+            "atom": "sse.star.ms_luminosity_at_age",
+            "id": "now"
+          }
+        ],
+        "publishes": [
+          {
+            "from": "lum.luminosity",
+            "kind": "star.luminosity"
+          },
+          {
+            "from": "rad.radius",
+            "kind": "star.radius"
+          },
+          {
+            "from": "teff.teff",
+            "kind": "star.effective_temperature"
+          },
+          {
+            "from": "life.lifetime",
+            "kind": "star.main_sequence_lifetime"
+          },
+          {
+            "from": "now.luminosity",
+            "kind": "star.luminosity_at_age"
+          }
+        ],
+        "tests": [
+          {
+            "expect": {
+              "star.effective_temperature": {
+                "tol": 200.0,
+                "unit": "k",
+                "value": 5772.0
+              },
+              "star.luminosity": {
+                "tol": 0.03,
+                "unit": "l_sun",
+                "value": 1.0
+              },
+              "star.luminosity_at_age": {
+                "tol": 0.03,
+                "unit": "l_sun",
+                "value": 1.0
+              },
+              "star.main_sequence_lifetime": {
+                "tol": 0.3,
+                "unit": "gyr",
+                "value": 10.0
+              },
+              "star.radius": {
+                "tol": 0.07,
+                "unit": "r_sun",
+                "value": 1.0
+              }
+            },
+            "inputs": {
+              "age": {
+                "unit": "gyr",
+                "value": 4.57
+              },
+              "mass": {
+                "unit": "m_sun",
+                "value": 1.0
+              }
+            },
+            "name": "Sun at 4.57 Gyr (IAU 2015 B3 nominal values; tolerances are the empirical relations' scatter)"
+          },
+          {
+            "expect": {
+              "star.luminosity": {
+                "tol": 5.0,
+                "unit": "l_sun",
+                "value": 25.4
+              },
+              "star.radius": {
+                "tol": 0.3,
+                "unit": "r_sun",
+                "value": 1.711
+              }
+            },
+            "inputs": {
+              "age": {
+                "unit": "gyr",
+                "value": 0.24
+              },
+              "mass": {
+                "unit": "m_sun",
+                "value": 2.063
+              }
+            },
+            "name": "Sirius A, 2.06 M☉, 0.24 Gyr (Liebert et al. 2005; Bond et al. 2017: L 25.4 L☉, R 1.71 R☉). The radius relation is for a typical-age star; young Sirius is 14 percent smaller, a known limit of the first wave"
+          }
+        ],
+        "version": "0.1.0",
+        "wires": [
+          {
+            "from": "in.mass",
+            "to": "lum.mass"
+          },
+          {
+            "from": "in.mass",
+            "to": "rad.mass"
+          },
+          {
+            "from": "lum.luminosity",
+            "to": "teff.luminosity"
+          },
+          {
+            "from": "rad.radius",
+            "to": "teff.radius"
+          },
+          {
+            "from": "in.mass",
+            "to": "life.mass"
+          },
+          {
+            "from": "lum.luminosity",
+            "to": "life.luminosity"
+          },
+          {
+            "from": "lum.luminosity",
+            "to": "now.typical"
+          },
+          {
+            "from": "in.age",
+            "to": "now.age"
+          },
+          {
+            "from": "life.lifetime",
+            "to": "now.lifetime"
+          }
+        ]
+      }
+    ],
+    "quantity_kinds": [
+      {
+        "description": "distance from the centre to the exobase",
+        "dim": [
+          1,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0
+        ],
+        "id": "atmosphere.exobase_radius",
+        "range": null
+      },
+      {
+        "description": "temperature at the exobase",
+        "dim": [
+          0,
+          0,
+          0,
+          0,
+          1,
+          0,
+          0
+        ],
+        "id": "atmosphere.exobase_temperature",
+        "range": null
+      },
+      {
+        "description": "grey infrared optical depth of the atmosphere",
+        "dim": [
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0
+        ],
+        "id": "atmosphere.infrared_optical_depth",
+        "range": null
+      },
+      {
+        "description": "Jeans escape parameter at the exobase",
+        "dim": [
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0
+        ],
+        "id": "atmosphere.jeans_parameter",
+        "range": null
+      },
+      {
+        "description": "total mass of the atmosphere",
+        "dim": [
+          0,
+          1,
+          0,
+          0,
+          0,
+          0,
+          0
+        ],
+        "id": "atmosphere.mass",
+        "range": null
+      },
+      {
+        "description": "mean molecular weight in atomic mass units",
+        "dim": [
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0
+        ],
+        "id": "atmosphere.mean_molecular_weight",
+        "range": null
+      },
+      {
+        "description": "mass of an escaping particle in atomic mass units",
+        "dim": [
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0
+        ],
+        "id": "atmosphere.particle_mass_amu",
+        "range": null
+      },
+      {
+        "description": "height over which pressure falls by a factor e",
+        "dim": [
+          1,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0
+        ],
+        "id": "atmosphere.scale_height",
+        "range": null
+      },
+      {
+        "description": "atmospheric pressure at the surface",
+        "dim": [
+          -1,
+          1,
+          -2,
+          0,
+          0,
+          0,
+          0
+        ],
+        "id": "atmosphere.surface_pressure",
+        "range": null
+      },
+      {
+        "description": "temperature of an atmospheric layer",
+        "dim": [
+          0,
+          0,
+          0,
+          0,
+          1,
+          0,
+          0
+        ],
+        "id": "atmosphere.temperature",
+        "range": null
+      },
+      {
+        "description": "mean density",
+        "dim": [
+          -3,
+          1,
+          0,
+          0,
+          0,
+          0,
+          0
+        ],
+        "id": "body.bulk_density",
+        "range": null
+      },
+      {
+        "description": "escape velocity from the surface",
+        "dim": [
+          1,
+          0,
+          -1,
+          0,
+          0,
+          0,
+          0
+        ],
+        "id": "body.escape_velocity",
+        "range": null
+      },
+      {
+        "description": "Hill sphere radius at periapsis",
+        "dim": [
+          1,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0
+        ],
+        "id": "body.hill_radius",
+        "range": null
+      },
+      {
+        "description": "spin angular rate before tidal despinning",
+        "dim": [
+          0,
+          0,
+          -1,
+          0,
+          0,
+          0,
+          0
+        ],
+        "id": "body.initial_spin_rate",
+        "range": null
+      },
+      {
+        "description": "mass of a planet, moon or minor body",
+        "dim": [
+          0,
+          1,
+          0,
+          0,
+          0,
+          0,
+          0
+        ],
+        "id": "body.mass",
+        "range": null
+      },
+      {
+        "description": "volumetric mean radius of a planet, moon or minor body",
+        "dim": [
+          1,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0
+        ],
+        "id": "body.radius",
+        "range": null
+      },
+      {
+        "description": "distance inside which a satellite held by its own gravity is torn apart",
+        "dim": [
+          1,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0
+        ],
+        "id": "body.roche_limit",
+        "range": null
+      },
+      {
+        "description": "gravitational acceleration at the surface, ignoring rotation",
+        "dim": [
+          1,
+          0,
+          -2,
+          0,
+          0,
+          0,
+          0
+        ],
+        "id": "body.surface_gravity",
+        "range": null
+      },
+      {
+        "description": "fraction of the mass in the iron core",
+        "dim": [
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0
+        ],
+        "id": "interior.core_mass_fraction",
+        "range": [
+          0.0,
+          1.0
+        ]
+      },
+      {
+        "description": "radius of the iron core",
+        "dim": [
+          1,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0
+        ],
+        "id": "interior.core_radius",
+        "range": null
+      },
+      {
+        "description": "temperature at the base of a layer",
+        "dim": [
+          0,
+          0,
+          0,
+          0,
+          1,
+          0,
+          0
+        ],
+        "id": "layer.base_temperature",
+        "range": null
+      },
+      {
+        "description": "heat flow conducted through a layer",
+        "dim": [
+          0,
+          1,
+          -3,
+          0,
+          0,
+          0,
+          0
+        ],
+        "id": "layer.conductive_heat_flow",
+        "range": null
+      },
+      {
+        "description": "mean density of a layer",
+        "dim": [
+          -3,
+          1,
+          0,
+          0,
+          0,
+          0,
+          0
+        ],
+        "id": "layer.density",
+        "range": null
+      },
+      {
+        "description": "pressure added across a layer",
+        "dim": [
+          -1,
+          1,
+          -2,
+          0,
+          0,
+          0,
+          0
+        ],
+        "id": "layer.pressure_increase",
+        "range": null
+      },
+      {
+        "description": "thickness of a layer, or depth within it",
+        "dim": [
+          1,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0
+        ],
+        "id": "layer.thickness",
+        "range": null
+      },
+      {
+        "description": "temperature at the top of a layer",
+        "dim": [
+          0,
+          0,
+          0,
+          0,
+          1,
+          0,
+          0
+        ],
+        "id": "layer.top_temperature",
+        "range": null
+      },
+      {
+        "description": "temperature at which the brine starts to freeze",
+        "dim": [
+          0,
+          0,
+          0,
+          0,
+          1,
+          0,
+          0
+        ],
+        "id": "ocean.freezing_point",
+        "range": null
+      },
+      {
+        "description": "dissolved salt as a fraction of the brine's mass",
+        "dim": [
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0
+        ],
+        "id": "ocean.salinity_mass_fraction",
+        "range": null
+      },
+      {
+        "description": "farthest distance from the host",
+        "dim": [
+          1,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0
+        ],
+        "id": "orbit.apoapsis",
+        "range": null
+      },
+      {
+        "description": "eccentric anomaly in radians",
+        "dim": [
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0
+        ],
+        "id": "orbit.eccentric_anomaly",
+        "range": null
+      },
+      {
+        "description": "orbital eccentricity, 0 for a circle",
+        "dim": [
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0
+        ],
+        "id": "orbit.eccentricity",
+        "range": [
+          0.0,
+          1.0
+        ]
+      },
+      {
+        "description": "mass of the body being orbited",
+        "dim": [
+          0,
+          1,
+          0,
+          0,
+          0,
+          0,
+          0
+        ],
+        "id": "orbit.host_mass",
+        "range": null
+      },
+      {
+        "description": "mean anomaly in radians: the share of the period elapsed since periapsis, times 2π",
+        "dim": [
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0
+        ],
+        "id": "orbit.mean_anomaly",
+        "range": null
+      },
+      {
+        "description": "closest distance to the host",
+        "dim": [
+          1,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0
+        ],
+        "id": "orbit.periapsis",
+        "range": null
+      },
+      {
+        "description": "sidereal orbital period",
+        "dim": [
+          0,
+          0,
+          1,
+          0,
+          0,
+          0,
+          0
+        ],
+        "id": "orbit.period",
+        "range": null
+      },
+      {
+        "description": "current distance from the host as a fraction of the semi-major axis",
+        "dim": [
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0
+        ],
+        "id": "orbit.radius_fraction",
+        "range": null
+      },
+      {
+        "description": "semi-major axis of an orbit",
+        "dim": [
+          1,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0
+        ],
+        "id": "orbit.semi_major_axis",
+        "range": null
+      },
+      {
+        "description": "sum of the two masses in a two-body orbit",
+        "dim": [
+          0,
+          1,
+          0,
+          0,
+          0,
+          0,
+          0
+        ],
+        "id": "orbit.total_mass",
+        "range": null
+      },
+      {
+        "description": "true anomaly in radians: angle from periapsis seen from the host",
+        "dim": [
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0
+        ],
+        "id": "orbit.true_anomaly",
+        "range": null
+      },
+      {
+        "description": "fraction of all incoming starlight reflected",
+        "dim": [
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0
+        ],
+        "id": "planet.bond_albedo",
+        "range": [
+          0.0,
+          1.0
+        ]
+      },
+      {
+        "description": "temperature of a bare black body absorbing the same light",
+        "dim": [
+          0,
+          0,
+          0,
+          0,
+          1,
+          0,
+          0
+        ],
+        "id": "planet.equilibrium_temperature",
+        "range": null
+      },
+      {
+        "description": "stellar flux arriving at the planet",
+        "dim": [
+          0,
+          1,
+          -3,
+          0,
+          0,
+          0,
+          0
+        ],
+        "id": "planet.insolation",
+        "range": null
+      },
+      {
+        "description": "global mean surface temperature",
+        "dim": [
+          0,
+          0,
+          0,
+          0,
+          1,
+          0,
+          0
+        ],
+        "id": "planet.surface_temperature",
+        "range": null
+      },
+      {
+        "description": "mean density of a satellite",
+        "dim": [
+          -3,
+          1,
+          0,
+          0,
+          0,
+          0,
+          0
+        ],
+        "id": "satellite.bulk_density",
+        "range": null
+      },
+      {
+        "description": "time since the star reached the main sequence",
+        "dim": [
+          0,
+          0,
+          1,
+          0,
+          0,
+          0,
+          0
+        ],
+        "id": "star.age",
+        "range": null
+      },
+      {
+        "description": "effective (black-body) surface temperature of a star",
+        "dim": [
+          0,
+          0,
+          0,
+          0,
+          1,
+          0,
+          0
+        ],
+        "id": "star.effective_temperature",
+        "range": null
+      },
+      {
+        "description": "bolometric luminosity, typical for the star's mass on the main sequence",
+        "dim": [
+          2,
+          1,
+          -3,
+          0,
+          0,
+          0,
+          0
+        ],
+        "id": "star.luminosity",
+        "range": null
+      },
+      {
+        "description": "bolometric luminosity at the star's present age",
+        "dim": [
+          2,
+          1,
+          -3,
+          0,
+          0,
+          0,
+          0
+        ],
+        "id": "star.luminosity_at_age",
+        "range": null
+      },
+      {
+        "description": "time a star spends on the main sequence",
+        "dim": [
+          0,
+          0,
+          1,
+          0,
+          0,
+          0,
+          0
+        ],
+        "id": "star.main_sequence_lifetime",
+        "range": null
+      },
+      {
+        "description": "mass of a star",
+        "dim": [
+          0,
+          1,
+          0,
+          0,
+          0,
+          0,
+          0
+        ],
+        "id": "star.mass",
+        "range": null
+      },
+      {
+        "description": "photospheric radius of a star",
+        "dim": [
+          1,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0
+        ],
+        "id": "star.radius",
+        "range": null
+      },
+      {
+        "description": "tidal heating power",
+        "dim": [
+          2,
+          1,
+          -3,
+          0,
+          0,
+          0,
+          0
+        ],
+        "id": "tides.heating_power",
+        "range": null
+      },
+      {
+        "description": "time to despin to synchronous rotation",
+        "dim": [
+          0,
+          0,
+          1,
+          0,
+          0,
+          0,
+          0
+        ],
+        "id": "tides.locking_time",
+        "range": null
+      }
+    ]
+  },
+  "version": "0.1.0"
+}
