@@ -1,0 +1,582 @@
+{
+  "envelope": {
+    "address": "u:sol/sys:0/body:8",
+    "biomass_class": "sparse",
+    "capabilities": {
+      "methanogenesis": 0.3
+    },
+    "complexity": {
+      "guilds": 3.0
+    },
+    "energy_budget_w": 1000000000.0,
+    "epoch": {
+      "ns": 0,
+      "s": 1
+    },
+    "evidence": "plausible_reconstruction",
+    "fluxes": [
+      {
+        "field": "atmosphere.pp.ch4",
+        "rate": 1e-12
+      }
+    ],
+    "inputs": "65c592802ab0bd85bfbdebe86f1dbe0a62c90a07536ff951d632930dd62a6a66",
+    "origin_time": {
+      "quantiles": [
+        [
+          0.1,
+          1e+16
+        ],
+        [
+          0.5,
+          3e+16
+        ]
+      ]
+    },
+    "p_present": 0.4,
+    "signatures": {
+      "ch4": 0.01
+    },
+    "uncertainty": "sample"
+  },
+  "feasibility": {
+    "answer": false,
+    "reason": "no light reaches the ocean"
+  },
+  "graph": {
+    "body": "u:sol/sys:0/body:8",
+    "habitats": [
+      {
+        "address": "u:sol/sys:0/body:8/shell:@ocean/habitat:@sea-floor",
+        "bottom_m": -120100.0,
+        "embedded": true,
+        "footprint": {
+          "type": "global"
+        },
+        "kind": "sea-floor",
+        "profile": {
+          "area_m2": 29833376128685.19,
+          "energy": {
+            "available": [
+              "chemical"
+            ],
+            "chemical_w_m2": null,
+            "light_peak_nm": null,
+            "light_w_m2": null,
+            "radiogenic_w_m2": null,
+            "tidal_w_m2": null
+          },
+          "events": [],
+          "habitat": "u:sol/sys:0/body:8/shell:@ocean/habitat:@sea-floor",
+          "kind": "sea-floor",
+          "materials": {},
+          "medium": "liquid",
+          "missing": [
+            "persistence_s",
+            "chemical_w_m2"
+          ],
+          "persistence_s": null,
+          "phase": "solid+liquid",
+          "pressure_pa": {
+            "hi": 140000000.0,
+            "lo": 24000000.0
+          },
+          "properties": {
+            "salinity": 0.03
+          },
+          "radiation_dose_msv_yr": 0.0,
+          "shielding_kg_m2": null,
+          "solvent": "water",
+          "temperature_k": {
+            "hi": 273.0,
+            "lo": 273.0
+          },
+          "temperature_swing_k": null,
+          "volume_m3": 2608477654551496.0
+        },
+        "rule": "sea-floor",
+        "source": "ocean",
+        "top_m": -120000.0
+      },
+      {
+        "address": "u:sol/sys:0/body:8/shell:@ocean/habitat:@under-ice-ocean",
+        "bottom_m": -120000.0,
+        "embedded": false,
+        "footprint": {
+          "type": "global"
+        },
+        "kind": "under-ice-ocean",
+        "profile": {
+          "area_m2": 29833376128685.19,
+          "energy": {
+            "available": [
+              "chemical",
+              "oxidant"
+            ],
+            "chemical_w_m2": null,
+            "light_peak_nm": null,
+            "light_w_m2": null,
+            "radiogenic_w_m2": null,
+            "tidal_w_m2": null
+          },
+          "events": [],
+          "habitat": "u:sol/sys:0/body:8/shell:@ocean/habitat:@under-ice-ocean",
+          "kind": "under-ice-ocean",
+          "materials": {},
+          "medium": "liquid",
+          "missing": [
+            "persistence_s",
+            "chemical_w_m2"
+          ],
+          "persistence_s": null,
+          "phase": "liquid",
+          "pressure_pa": {
+            "hi": 140000000.0,
+            "lo": 24000000.0
+          },
+          "properties": {
+            "salinity": 0.03
+          },
+          "radiation_dose_msv_yr": 0.0,
+          "shielding_kg_m2": null,
+          "solvent": "water",
+          "temperature_k": {
+            "hi": 273.0,
+            "lo": 273.0
+          },
+          "temperature_swing_k": null,
+          "volume_m3": 2.7939037646472586e+18
+        },
+        "rule": "under-ice-ocean",
+        "source": "ocean",
+        "top_m": -20000.0
+      }
+    ],
+    "links": [
+      {
+        "a": "u:sol/sys:0/body:8/shell:@ocean/habitat:@sea-floor",
+        "b": "u:sol/sys:0/body:8/shell:@ocean/habitat:@under-ice-ocean",
+        "certain": true,
+        "contact": "vertical",
+        "rate_per_s": null
+      }
+    ]
+  },
+  "profile": {
+    "area_m2": 29833376128685.19,
+    "energy": {
+      "available": [
+        "chemical"
+      ],
+      "chemical_w_m2": null,
+      "light_peak_nm": null,
+      "light_w_m2": null,
+      "radiogenic_w_m2": null,
+      "tidal_w_m2": null
+    },
+    "events": [],
+    "habitat": "u:sol/sys:0/body:8/shell:@ocean/habitat:@sea-floor",
+    "kind": "sea-floor",
+    "materials": {},
+    "medium": "liquid",
+    "missing": [
+      "persistence_s",
+      "chemical_w_m2"
+    ],
+    "persistence_s": null,
+    "phase": "solid+liquid",
+    "pressure_pa": {
+      "hi": 140000000.0,
+      "lo": 24000000.0
+    },
+    "properties": {
+      "salinity": 0.03
+    },
+    "radiation_dose_msv_yr": 0.0,
+    "shielding_kg_m2": null,
+    "solvent": "water",
+    "temperature_k": {
+      "hi": 273.0,
+      "lo": 273.0
+    },
+    "temperature_swing_k": null,
+    "volume_m3": 2608477654551496.0
+  },
+  "query": {
+    "address": "u:sol/sys:0/body:8",
+    "capabilities": [
+      "photosynthesis"
+    ],
+    "epoch": {
+      "ns": 0,
+      "s": 3
+    }
+  },
+  "resolved": {
+    "address": "u:sol/sys:0/body:8",
+    "evidence": "plausible_reconstruction",
+    "guilds": [
+      {
+        "biomass_kg": 1000000000000.0,
+        "capabilities": [
+          "methanogenesis"
+        ],
+        "habitats": {
+          "u:sol/sys:0/body:8/shell:@ocean/habitat:@under-ice-ocean": 1.0
+        },
+        "id": "vent-methanogens",
+        "name": "vent methanogens",
+        "since": {
+          "ns": 0,
+          "s": 2
+        }
+      }
+    ],
+    "relations": [
+      {
+        "from": "vent-methanogens",
+        "kind": "habitat",
+        "to": "sea-floor"
+      }
+    ]
+  },
+  "rules": [
+    {
+      "about": "The top 200 m of an open ocean, where sunlight reaches.",
+      "channels": [
+        "light",
+        "disequilibrium"
+      ],
+      "chemical_from_below": [],
+      "embedded": false,
+      "from": "shell",
+      "habitat": "ocean-sunlit",
+      "id": "ocean-sunlit",
+      "kinds": [
+        "ocean"
+      ],
+      "medium": "liquid",
+      "needs_below": [],
+      "needs_property": null,
+      "phase": "liquid",
+      "place": {
+        "at": "top",
+        "depth_m": 200.0
+      },
+      "solvent": "water"
+    },
+    {
+      "about": "The dark water column below the sunlit layer.",
+      "channels": [
+        "oxidant"
+      ],
+      "chemical_from_below": [],
+      "embedded": false,
+      "from": "shell",
+      "habitat": "ocean-interior",
+      "id": "ocean-interior",
+      "kinds": [
+        "ocean"
+      ],
+      "medium": "liquid",
+      "needs_below": [],
+      "needs_property": null,
+      "phase": "liquid",
+      "place": {
+        "at": "below_top",
+        "depth_m": 200.0
+      },
+      "solvent": "water"
+    },
+    {
+      "about": "Sediment and rock at the bottom of an ocean, with hydrothermal vents where the interior is warm.",
+      "channels": [],
+      "chemical_from_below": [
+        "heat",
+        "vents"
+      ],
+      "embedded": true,
+      "from": "shell",
+      "habitat": "sea-floor",
+      "id": "sea-floor",
+      "kinds": [
+        "ocean",
+        "sub_ice_ocean"
+      ],
+      "medium": "liquid",
+      "needs_below": [
+        "crust",
+        "mantle",
+        "rock"
+      ],
+      "needs_property": null,
+      "phase": "solid+liquid",
+      "place": {
+        "at": "under_bottom",
+        "depth_m": 100.0
+      },
+      "solvent": "water"
+    },
+    {
+      "about": "An ocean sealed under an ice shell.",
+      "channels": [
+        "oxidant"
+      ],
+      "chemical_from_below": [
+        "heat",
+        "vents"
+      ],
+      "embedded": false,
+      "from": "shell",
+      "habitat": "under-ice-ocean",
+      "id": "under-ice-ocean",
+      "kinds": [
+        "sub_ice_ocean"
+      ],
+      "medium": "liquid",
+      "needs_below": [],
+      "needs_property": null,
+      "phase": "liquid",
+      "place": {
+        "at": "all"
+      },
+      "solvent": "water"
+    },
+    {
+      "about": "Exposed ground and the air just above it, by climate band.",
+      "channels": [
+        "light"
+      ],
+      "chemical_from_below": [],
+      "embedded": false,
+      "from": "region",
+      "habitat": "land-surface",
+      "id": "land-surface",
+      "kinds": [
+        "land",
+        "biome",
+        "climate_band"
+      ],
+      "medium": "surface",
+      "needs_below": [],
+      "needs_property": null,
+      "phase": "solid+gas",
+      "place": {
+        "at": "on_top",
+        "up_m": 10.0
+      },
+      "solvent": "water"
+    },
+    {
+      "about": "Soils and shallow crust, the top 10 m.",
+      "channels": [
+        "chemical"
+      ],
+      "chemical_from_below": [],
+      "embedded": false,
+      "from": "region",
+      "habitat": "soil",
+      "id": "soil",
+      "kinds": [
+        "land",
+        "biome",
+        "climate_band"
+      ],
+      "medium": "subsurface",
+      "needs_below": [],
+      "needs_property": null,
+      "phase": "solid+liquid",
+      "place": {
+        "at": "under",
+        "from_m": 0.0,
+        "to_m": 10.0
+      },
+      "solvent": "water"
+    },
+    {
+      "about": "Water-bearing rock down to 5 km (the deep biosphere).",
+      "channels": [
+        "chemical",
+        "radiogenic"
+      ],
+      "chemical_from_below": [],
+      "embedded": false,
+      "from": "shell",
+      "habitat": "deep-crust",
+      "id": "deep-crust",
+      "kinds": [
+        "crust"
+      ],
+      "medium": "subsurface",
+      "needs_below": [],
+      "needs_property": "pore_water_fraction",
+      "phase": "solid+liquid",
+      "place": {
+        "at": "under",
+        "from_m": 10.0,
+        "to_m": 5000.0
+      },
+      "solvent": "water"
+    },
+    {
+      "about": "A cloud layer at a temperate pressure level.",
+      "channels": [
+        "light"
+      ],
+      "chemical_from_below": [],
+      "embedded": false,
+      "from": "region",
+      "habitat": "cloud-deck",
+      "id": "cloud-deck-region",
+      "kinds": [
+        "cloud_deck"
+      ],
+      "medium": "cloud",
+      "needs_below": [],
+      "needs_property": null,
+      "phase": "gas+liquid",
+      "place": {
+        "at": "all"
+      },
+      "solvent": "water"
+    },
+    {
+      "about": "A cloud layer at a temperate pressure level.",
+      "channels": [
+        "light"
+      ],
+      "chemical_from_below": [],
+      "embedded": false,
+      "from": "shell",
+      "habitat": "cloud-deck",
+      "id": "cloud-deck-shell",
+      "kinds": [
+        "cloud_deck"
+      ],
+      "medium": "cloud",
+      "needs_below": [],
+      "needs_property": null,
+      "phase": "gas+liquid",
+      "place": {
+        "at": "all"
+      },
+      "solvent": "water"
+    },
+    {
+      "about": "Lakes and seas of liquid methane and ethane.",
+      "channels": [
+        "chemical"
+      ],
+      "chemical_from_below": [],
+      "embedded": false,
+      "from": "region",
+      "habitat": "hydrocarbon-lake",
+      "id": "hydrocarbon-sea",
+      "kinds": [
+        "hydrocarbon_lake",
+        "hydrocarbon_sea"
+      ],
+      "medium": "liquid",
+      "needs_below": [],
+      "needs_property": null,
+      "phase": "liquid",
+      "place": {
+        "at": "all"
+      },
+      "solvent": "methane-ethane"
+    },
+    {
+      "about": "A single hydrocarbon lake.",
+      "channels": [
+        "chemical"
+      ],
+      "chemical_from_below": [],
+      "embedded": false,
+      "from": "feature",
+      "habitat": "hydrocarbon-lake",
+      "id": "hydrocarbon-pool",
+      "kinds": [
+        "hydrocarbon_lake"
+      ],
+      "medium": "liquid",
+      "needs_below": [],
+      "needs_property": null,
+      "phase": "liquid",
+      "place": {
+        "at": "around",
+        "half_m": 50.0
+      },
+      "solvent": "methane-ethane"
+    },
+    {
+      "about": "A lake of water.",
+      "channels": [
+        "light"
+      ],
+      "chemical_from_below": [],
+      "embedded": false,
+      "from": "feature",
+      "habitat": "lake",
+      "id": "lake",
+      "kinds": [
+        "lake"
+      ],
+      "medium": "liquid",
+      "needs_below": [],
+      "needs_property": null,
+      "phase": "liquid",
+      "place": {
+        "at": "around",
+        "half_m": 50.0
+      },
+      "solvent": "water"
+    },
+    {
+      "about": "The twilight ring of a tidally locked world.",
+      "channels": [
+        "light"
+      ],
+      "chemical_from_below": [],
+      "embedded": false,
+      "from": "region",
+      "habitat": "terminator-zone",
+      "id": "terminator",
+      "kinds": [
+        "terminator"
+      ],
+      "medium": "surface",
+      "needs_below": [],
+      "needs_property": null,
+      "phase": "solid+gas",
+      "place": {
+        "at": "on_top",
+        "up_m": 10.0
+      },
+      "solvent": "water"
+    },
+    {
+      "about": "Caves and lava tubes: shelter from radiation and cold.",
+      "channels": [
+        "chemical"
+      ],
+      "chemical_from_below": [],
+      "embedded": true,
+      "from": "feature",
+      "habitat": "cave",
+      "id": "cave",
+      "kinds": [
+        "cave",
+        "lava_tube"
+      ],
+      "medium": "subsurface",
+      "needs_below": [],
+      "needs_property": null,
+      "phase": "solid+gas",
+      "place": {
+        "at": "around",
+        "half_m": 50.0
+      },
+      "solvent": "water"
+    }
+  ]
+}

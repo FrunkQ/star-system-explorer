@@ -1,0 +1,19 @@
+[package]
+name = "sse-place"
+description = "SSE4 reverse placement (C3): put a world of a requested class into a system by searching over causes run through the real flows"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+authors.workspace = true
+
+[dependencies]
+sse-core.workspace = true
+sse-chronicle.workspace = true
+sse-flow.workspace = true
+sse-pack.workspace = true
+sse-atoms.workspace = true
+sse-world.workspace = true
+sse-sift = { path = "../sse-sift" }
+sse-life = { path = "../sse-life" }
+serde.workspace = true
+serde_json.workspace = true

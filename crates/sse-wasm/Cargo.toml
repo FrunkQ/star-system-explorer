@@ -15,6 +15,8 @@ sse-kernel.workspace = true
 # K7 to K10 engines: their golden scenarios run in the browser harness.
 sse-resolve = { path = "../sse-resolve" }
 sse-sift = { path = "../sse-sift" }
+sse-life = { path = "../sse-life" }
+sse-place = { path = "../sse-place" }
 sse-observe = { path = "../sse-observe" }
 sse-suite = { path = "../sse-suite" }
 sse-formation = { path = "../sse-formation" }

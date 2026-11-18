@@ -1,0 +1,92 @@
+{
+ "format": "sse.world-stack/1",
+ "body": "u:sol/sys:0/body:4",
+ "name": "Mars today",
+ "radius_m": 3389500.0,
+ "sources": "Mean surface pressure 610 Pa and 150 to 300 K range (NASA Mars fact sheet); surface dose about 230 mSv/yr (Hassler et al. 2014, MSL RAD); Arsia Mons cave skylights (Cushing et al. 2007).",
+ "shells": [
+  {
+   "key": "atmosphere",
+   "kind": "atmosphere",
+   "name": "Atmosphere",
+   "top_m": 80000.0,
+   "bottom_m": 0.0,
+   "properties": {
+    "pressure_pa": 610.0,
+    "temperature_k": 210.0
+   }
+  },
+  {
+   "key": "crust",
+   "kind": "crust",
+   "name": "Crust",
+   "top_m": 0.0,
+   "bottom_m": -50000.0,
+   "properties": {
+    "pore_water_fraction": 0.001,
+    "temperature_min_k": 210.0,
+    "temperature_max_k": 330.0
+   }
+  },
+  {
+   "key": "mantle",
+   "kind": "mantle",
+   "name": "Mantle",
+   "top_m": -50000.0,
+   "bottom_m": -1560000.0
+  },
+  {
+   "key": "core",
+   "kind": "core",
+   "name": "Core",
+   "top_m": -1560000.0,
+   "bottom_m": -3389500.0
+  }
+ ],
+ "regions": [
+  {
+   "key": "surface",
+   "kind": "land",
+   "name": "Surface",
+   "on": "crust",
+   "extent": {
+    "type": "global"
+   },
+   "properties": {
+    "temperature_min_k": 150.0,
+    "temperature_max_k": 300.0,
+    "pressure_pa": 610.0,
+    "radiation_dose_msv_yr": 230.0
+   }
+  },
+  {
+   "key": "north-cap",
+   "kind": "ice_sheet",
+   "name": "North polar cap",
+   "on": "crust",
+   "extent": {
+    "type": "cap",
+    "from_lat_deg": 80.0
+   }
+  },
+  {
+   "key": "south-cap",
+   "kind": "ice_sheet",
+   "name": "South polar cap",
+   "on": "crust",
+   "extent": {
+    "type": "cap",
+    "from_lat_deg": -80.0
+   }
+  }
+ ],
+ "features": [
+  {
+   "key": "arsia-cave",
+   "kind": "lava_tube",
+   "name": "Arsia Mons skylight cave",
+   "in": "surface",
+   "altitude_m": -50.0
+  }
+ ]
+}

@@ -172,3 +172,36 @@ pub fn accrete_golden() -> serde_json::Value {
     }
     serde_json::Value::Array(out)
 }
+
+/// F3 golden: the modern growth block on six Sun-like discs.
+pub fn growth_golden() -> serde_json::Value {
+    let seed = sse_core::Seed::from_text("f3-golden");
+    let fits = Fits::new(0.02);
+    let mut out = vec![];
+    for n in 0..6u64 {
+        let sys = system(n);
+        let disc = crate::disc::Disc::new(crate::disc::disc_params(
+            &seed,
+            &sys,
+            1.0,
+            fits.l_zams(1.0),
+            0.0,
+            0.0,
+            0.55,
+            300.0,
+            None,
+        ));
+        let g = crate::growth::grow(&seed, &sys, &disc);
+        let text = serde_json::to_string(&g).expect("serialisable");
+        out.push(serde_json::json!({
+            "system": n,
+            "bodies": g.bodies.iter().map(|b| serde_json::json!({
+                "id": b.id, "a_au": b.a_au, "solid_earth": b.solid_earth(), "gas_earth": b.gas_earth(),
+            })).collect::<Vec<_>>(),
+            "chains": g.chains().len(),
+            "events": g.events.len(),
+            "digest": sse_core::ContentHash::of(&text).expect("hash").hex(),
+        }));
+    }
+    serde_json::Value::Array(out)
+}

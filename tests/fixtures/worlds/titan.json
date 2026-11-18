@@ -1,0 +1,100 @@
+{
+ "format": "sse.world-stack/1",
+ "body": "u:sol/sys:0/body:12",
+ "name": "Titan today",
+ "radius_m": 2574700.0,
+ "sources": "Surface 94 K and 1.467 bar (Fulchignoni et al. 2005, Huygens HASI); Kraken Mare about 5e11 m2 and Ligeia Mare about 1.3e11 m2 (Hayes 2016); internal ocean under 50 to 100 km of ice above high-pressure ice (Iess et al. 2012; Sotin et al. 2021).",
+ "shells": [
+  {
+   "key": "atmosphere",
+   "kind": "atmosphere",
+   "name": "Atmosphere",
+   "top_m": 600000.0,
+   "bottom_m": 0.0,
+   "properties": {
+    "pressure_pa": 146700.0,
+    "temperature_k": 94.0
+   }
+  },
+  {
+   "key": "ice",
+   "kind": "ice_shell",
+   "name": "Ice shell",
+   "top_m": 0.0,
+   "bottom_m": -100000.0,
+   "properties": {
+    "temperature_k": 94.0
+   }
+  },
+  {
+   "key": "ocean",
+   "kind": "sub_ice_ocean",
+   "name": "Ammonia-water ocean",
+   "top_m": -100000.0,
+   "bottom_m": -400000.0,
+   "properties": {
+    "temperature_k": 270.0
+   }
+  },
+  {
+   "key": "hp-ice",
+   "kind": "high_pressure_ice",
+   "name": "High-pressure ice",
+   "top_m": -400000.0,
+   "bottom_m": -1000000.0
+  },
+  {
+   "key": "core",
+   "kind": "core",
+   "name": "Rock core",
+   "top_m": -1000000.0,
+   "bottom_m": -2574700.0
+  }
+ ],
+ "regions": [
+  {
+   "key": "kraken",
+   "kind": "hydrocarbon_sea",
+   "name": "Kraken Mare",
+   "on": "ice",
+   "extent": {
+    "type": "unmapped"
+   },
+   "top_m": 0.0,
+   "bottom_m": -300.0,
+   "properties": {
+    "area_fraction": 0.006,
+    "temperature_k": 92.0,
+    "pressure_pa": 146700.0
+   }
+  },
+  {
+   "key": "ligeia",
+   "kind": "hydrocarbon_sea",
+   "name": "Ligeia Mare",
+   "on": "ice",
+   "extent": {
+    "type": "unmapped"
+   },
+   "top_m": 0.0,
+   "bottom_m": -160.0,
+   "properties": {
+    "area_fraction": 0.0015,
+    "temperature_k": 92.0,
+    "pressure_pa": 146700.0
+   }
+  },
+  {
+   "key": "dunes",
+   "kind": "dune_field",
+   "name": "Equatorial dune fields",
+   "on": "ice",
+   "extent": {
+    "type": "band",
+    "min_lat_deg": -30.0,
+    "max_lat_deg": 30.0
+   }
+  }
+ ],
+ "features": []
+}

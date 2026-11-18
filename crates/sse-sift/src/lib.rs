@@ -30,6 +30,8 @@ pub fn ops() -> Vec<(&'static str, CostClass, &'static str)> {
 }
 
 #[cfg(test)]
+mod base_atlas_tests;
+#[cfg(test)]
 mod classic_tests;
 #[cfg(test)]
 mod tests;

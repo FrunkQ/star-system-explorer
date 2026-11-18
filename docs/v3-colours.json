@@ -1,0 +1,123 @@
+{
+  "source": {
+    "credit": "Alex (FrunkQ), Star System Explorer 3",
+    "repo": "FrunkQ/star-system-generator",
+    "branch": "beta",
+    "commit": "53dd177",
+    "version": "3.1.80",
+    "files": [
+      "src/lib/rendering/colors.ts",
+      "src/lib/styles/tokens.css",
+      "src/lib/styles/paletteStore.ts",
+      "src/lib/styles/skinStore.ts",
+      "src/routes/palette/+page.svelte",
+      "src/lib/tags/tagDefaults.ts",
+      "src/lib/tags/tagCategories.ts",
+      "src/lib/constructs/coi.ts",
+      "src/lib/io/saveRegistries.ts",
+      "src/lib/types.ts"
+    ]
+  },
+  "stars": [
+    { "key": "O", "token": "--star-o", "hex": "#9bb0ff" },
+    { "key": "B", "token": "--star-b", "hex": "#aabfff" },
+    { "key": "A", "token": "--star-a", "hex": "#cad8ff" },
+    { "key": "F", "token": "--star-f", "hex": "#f8f7ff" },
+    { "key": "G", "token": "--star-g", "hex": "#fff4ea" },
+    { "key": "K", "token": "--star-k", "hex": "#ffd2a1" },
+    { "key": "M", "token": "--star-m", "hex": "#ffc46f" },
+    { "key": "L", "token": "--star-l", "hex": "#8a4a4a" },
+    { "key": "T", "token": "--star-t", "hex": "#4a2a2a" },
+    { "key": "Y", "token": "--star-y", "hex": "#2a1a1a" },
+    { "key": "brown-dwarf", "token": "--body-brown-dwarf", "hex": "#5d4037" },
+    { "key": "WD", "token": "--star-wd", "hex": "#f0f0f0" },
+    { "key": "NS", "token": "--star-ns", "hex": "#c0c0ff" },
+    { "key": "magnetar", "token": "--star-magnetar", "hex": "#800080" },
+    { "key": "BH", "token": "--star-bh", "hex": "#000000", "also": ["BH_active"] },
+    { "key": "red-giant", "token": "--star-red-giant", "hex": "#ffc46f",
+      "rule": "coloured by temperature: K colour if T >= 3700 K, else M colour",
+      "note": "tokens.css default is #8b0000; colors.ts uses the temperature rule" },
+    { "key": "default", "token": null, "hex": "#ffffff" }
+  ],
+  "bodies": [
+    { "key": "terrestrial", "token": "--body-terrestrial", "hex": "#cc6600" },
+    { "key": "gasGiant", "token": "--body-gas-giant", "hex": "#cc0000" },
+    { "key": "iceGiant", "token": "--body-ice-giant", "hex": "#add8e6" },
+    { "key": "brownDwarf", "token": "--body-brown-dwarf", "hex": "#5d4037" },
+    { "key": "habitable", "token": "--body-habitable", "hex": "#007bff" },
+    { "key": "biosphere", "token": "--body-biosphere", "hex": "#00ff00" },
+    { "key": "belt", "token": "--body-belt", "hex": "#888888" },
+    { "key": "construct", "token": "--body-construct", "hex": "#ffd24d" }
+  ],
+  "classColourPriority": [
+    "star: by spectral key (stars table)",
+    "belt",
+    "tag habitability/earth-like or habitability/human: habitable",
+    "has biosphere: biosphere",
+    "classes contain brown-dwarf: brownDwarf",
+    "classes contain ice-giant: iceGiant",
+    "classes contain gas-giant: gasGiant",
+    "otherwise: terrestrial"
+  ],
+  "trueColourMode": "getPlanetColor uses the body's derived apparentColorHex when true-colour mode is on and the node is not an override; otherwise the class colour",
+  "constructs": "construct icon_color, falling back to --body-construct",
+  "domainTokens": {
+    "field":       { "--field-cage": "#b48ad6", "--field-belt": "#d9b8f0", "--field-anomalous": "var(--star-magnetar)", "--field-faint": "#6f5a86" },
+    "zones":       { "habitable": "#00ff00", "kill": "#b40000", "danger": "#c86400", "roche": "#b40000", "rock-line": "#a52a2a", "soot-line": "#696969", "frost-line": "#add8e6", "co2-ice": "#ffffff", "co-ice": "#0000ff" },
+    "orbit":       { "surface": "#5a5a5a", "low": "#3b82f6", "mid": "#10b981", "high": "#a855f7", "geo": "#facc15" },
+    "hazardRamp":  ["#4ade80", "#84cc16", "#eab308", "#f97316", "#ef4444", "#7f1d1d"],
+    "temperature": { "cold": "#60a5fa", "habitable": "#4ade80", "warm": "#fb923c", "hot": "#ef4444" },
+    "habitabilityTier": { "earthlike": "#10b981", "human": "#f59e0b", "alien": "#8b5cf6", "none": "#ef4444" },
+    "dataProvenance": { "fixed": "#ff3e00", "derived": "#007bff" }
+  },
+  "paletteScreen": {
+    "route": "/palette (titled Appearance)",
+    "chromeGroups": ["Surfaces", "Text", "Accent", "Semantic"],
+    "domainGroups": ["Body types", "Star spectral class", "Zone bands", "Orbital placement", "Hazard ramp", "Temperature band", "Habitability tier", "Data provenance"]
+  },
+  "storage": {
+    "inSave": false,
+    "paletteOverrides": { "where": "localStorage", "key": "sse-palette-overrides", "shape": "{ token: hex }", "applied": "inline CSS variables on :root" },
+    "skins": {
+      "where": "localStorage",
+      "keys": { "sse-skin": "chosen skin id", "sse-custom-skins": "CustomSkin[] { id, name, base, tokens }", "sse-float-skin": "floating window skin" },
+      "builtIn": ["modern", "classic", "colourblind (Clarity, Okabe-Ito)", "nebula", "daylight", "terminal"]
+    }
+  },
+  "tagColours": {
+    "rule": "a tag's own color/textColor beats its category's",
+    "localStore": { "key": "tag-categories", "also": ["tag-rules-enabled", "poi-seed-v2-done"] },
+    "inSave": {
+      "key": "coiCategories",
+      "what": "only categories that differ from the pristine shipped set (coiForStarmap); absent when none",
+      "shape": "CoICategory { id, label, color?, textColor?, single?, enabled?, required?, tags: CoITag { key, label, ... } }",
+      "note": "CoITag has no colour field, so per-tag colours are NOT in the save; on load the GM's local per-tag colours are kept"
+    },
+    "defaultCategories": [
+      { "id": "status", "color": "#5a7d8c" },
+      { "id": "owner", "color": "#3f6fb0" },
+      { "id": "purpose", "color": "#2f9e8f" },
+      { "id": "resource", "color": "#d4a843", "textColor": "#000000" },
+      { "id": "universe", "color": "#7a6a9a" },
+      { "id": "class", "color": "#8a6fc0" },
+      { "id": "drive", "color": "#c07f3f" },
+      { "id": "disposition", "color": "#b05050" },
+      { "id": "tech", "color": "#6a6f7a" },
+      { "id": "anomaly", "color": "#a05fd0" }
+    ],
+    "defaultPoiCategories": [
+      { "id": "resource", "color": "#d4a843", "textColor": "#1a1206" },
+      { "id": "science", "color": "#5a9fd0", "textColor": "#04121c" },
+      { "id": "frontier", "color": "#6fae8f", "textColor": "#06160f" },
+      { "id": "intrigue", "color": "#b07ad0", "textColor": "#160a1c" }
+    ]
+  },
+  "perObjectColoursInSave": [
+    { "field": "FluidLayer.colorHex", "class": "authored" },
+    { "field": "life layer colorHex", "class": "authored (GM input, never re-derived)" },
+    { "field": "Biosphere.colorHex / lightHex", "class": "authored" },
+    { "field": "apparentColorHex, apparentColor", "class": "derived true colour; recompute in V4" },
+    { "field": "construct icon_color", "class": "authored" },
+    { "field": "engine exhaust_color_hex", "class": "authored pack data" }
+  ]
+}

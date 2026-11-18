@@ -1,0 +1,45 @@
+{
+ "format": "sse.pack/1",
+ "id": "sse.base-place",
+ "version": "0.1.0",
+ "kind": ["base-physics"],
+ "kernel_range": "^0.1",
+ "licence": "Apache-2.0",
+ "provides": {
+  "other": {
+   "about": "Reverse placement settings (C3, classification design section 7): search counts, the rough links between flows that no flow publishes yet, and priors for causes a class leaves free.",
+   "placement": {
+    "candidates": 48,
+    "refine_steps": 24,
+    "keep": 4,
+    "full_fit": 1.0,
+    "optical_depth_k": 0.836,
+    "optical_depth_n": 1.13,
+    "shoreline_v0_m_s": 6170.0,
+    "dose_free_msv_yr": 330.0,
+    "dose_attenuation_g_cm2": 44.0,
+    "dose_ground_msv_yr": 2.4,
+    "mutual_hill": 10.0,
+    "slot_au": [0.01, 100.0],
+    "priors": {
+     "mass_me": [0.05, 5.0],
+     "metal": [0.15, 0.4],
+     "ice": [0.0, 0.1],
+     "gas": [0.0, 0.004],
+     "carbon": [0.0, 0.0],
+     "pressure_bar": [0.0001, 100.0],
+     "water": [0.0, 1.0],
+     "ecc": [0.0, 0.1],
+     "albedo": [0.05, 0.8]
+    },
+    "sources": {
+     "optical_depth": "rough: one power law in surface pressure fitted through Earth (0.84 at 1 bar) and Venus (about 140 at 92 bar) for the grey greenhouse of sse.climate.grey_surface_temperature; it also gives Mars and Titan within a few kelvin. Replaced when an atmosphere flow publishes the optical depth",
+     "shoreline": "Zahnle and Catling 2017, ApJ 843, 122: the cosmic shoreline, insolation proportional to escape velocity to the fourth; v0 fitted so Mars sits on the line",
+     "dose": "rough: free-space galactic cosmic rays about 660 mSv/yr (Zeitlin et al. 2013, MSL cruise), halved by the planet below, attenuated with a 44 g/cm2 length so Mars's 16 g/cm2 gives its 230 mSv/yr (Hassler et al. 2014), plus 2.4 mSv/yr from the ground (UNSCEAR 2008)",
+     "stability": "10 mutual Hill radii, a conservative spacing for systems lasting billions of years (Chambers, Wetherill and Boss 1996)",
+     "water": "liquid water between 273.15 K and the Clausius-Clapeyron boiling point, above the triple-point pressure"
+    }
+   }
+  }
+ }
+}

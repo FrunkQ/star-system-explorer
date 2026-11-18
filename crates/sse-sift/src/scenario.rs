@@ -170,6 +170,16 @@ pub fn classic_atlas() -> crate::Atlas {
         .expect("classic pack loads")
         .atlas
 }
+/// SSE4's shipped atlas (C2): physical, surface, air, habitability.
+pub fn base_atlas_pack() -> PackManifest {
+    PackManifest::from_json(include_str!("../../../packs/base-atlas/pack.json"))
+        .expect("base atlas pack")
+}
+pub fn base_atlas() -> crate::Atlas {
+    crate::pack::load(&[base_atlas_pack()])
+        .expect("base atlas loads")
+        .atlas
+}
 fn solar() -> serde_json::Value {
     serde_json::from_str(include_str!(
         "../../../tests/fixtures/classify/solar-system.json"
@@ -234,6 +244,8 @@ pub fn warming_earth() -> (Chronicle, Address, Vec<UniverseTime>) {
         Value::Float(0.0),
     );
     authored(&mut ch, &a, 2, "hydrosphere.coverage", Value::Float(0.0));
+    authored(&mut ch, &a, 2, "surface.liquid_fraction", Value::Float(0.0));
+    authored(&mut ch, &a, 2, "surface.liquid", Value::Text("none".into()));
     authored(
         &mut ch,
         &a,
@@ -269,7 +281,33 @@ pub fn classify_golden() -> serde_json::Value {
         .collect();
     let (mut ch, a, times) = warming_earth();
     let rl = crate::relabel::record(&mut ch, &atlas, "sse3-classic", &a, &times).expect("relabel");
+    // C2: the base atlas over the same bodies, and the warming Earth's
+    // surface relabels on a fresh copy of the chronicle.
+    let base = base_atlas();
+    let schemes = ["physical", "surface", "air", "habitability"];
+    let base_labels: Vec<serde_json::Value> = solar()["bodies"]
+        .as_array()
+        .expect("bodies")
+        .iter()
+        .map(|b| {
+            let s = Subject::new(body_facts(&b["facts"]));
+            let ls: Vec<serde_json::Value> = schemes
+                .iter()
+                .map(|sc| {
+                    let l = base.label(sc, &s, None);
+                    serde_json::json!([l.base, l.modifiers, l.fit])
+                })
+                .collect();
+            serde_json::json!([b["name"], ls])
+        })
+        .collect();
+    let (mut ch2, a2, times2) = warming_earth();
+    let surface =
+        crate::relabel::record(&mut ch2, &base, "surface", &a2, &times2).expect("relabel");
     serde_json::json!({
+        "base_atlas": base.content_hash().hex(),
+        "base_solar_system": base_labels,
+        "base_surface_relabels": surface.iter().map(|r| serde_json::json!([r.at.s, r.from, r.to, r.event.hex()])).collect::<Vec<_>>(),
         "atlas": atlas.content_hash().hex(),
         "solar_system": labels,
         "relabels": rl.iter().map(|r| serde_json::json!([r.at.s, r.from, r.to, r.event.hex()])).collect::<Vec<_>>(),

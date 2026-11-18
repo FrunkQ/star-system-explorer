@@ -1,0 +1,181 @@
+{
+ "format": "sse.world-stack/1",
+ "body": "u:sol/sys:0/body:2",
+ "name": "Earth today",
+ "radius_m": 6371000.0,
+ "sources": "PREM (Dziewonski and Anderson 1981); ocean mean depth 3688 m (Charette and Smith 2010); surface dose 2.4 mSv/yr (UNSCEAR 2008); deep biosphere to about 5 km (Magnabosco et al. 2018); Movile Cave, Romania (Sarbu et al. 1996).",
+ "shells": [
+  {
+   "key": "atmosphere",
+   "kind": "atmosphere",
+   "name": "Atmosphere",
+   "top_m": 100000.0,
+   "bottom_m": 0.0,
+   "properties": {
+    "pressure_pa": 101325.0,
+    "temperature_k": 288.0
+   }
+  },
+  {
+   "key": "ocean",
+   "kind": "ocean",
+   "name": "World ocean",
+   "top_m": 0.0,
+   "bottom_m": -3688.0,
+   "within": "ocean-basins",
+   "properties": {
+    "temperature_min_k": 271.0,
+    "temperature_max_k": 303.0,
+    "pressure_min_pa": 101325.0,
+    "pressure_max_pa": 38000000.0,
+    "salinity": 0.035,
+    "light_w_m2": 185.0,
+    "light_peak_nm": 500.0,
+    "persistence_s": 1.262304e+17
+   }
+  },
+  {
+   "key": "crust",
+   "kind": "crust",
+   "name": "Crust",
+   "top_m": 0.0,
+   "bottom_m": -35000.0,
+   "properties": {
+    "pore_water_fraction": 0.01,
+    "temperature_min_k": 288.0,
+    "temperature_max_k": 395.0
+   }
+  },
+  {
+   "key": "mantle",
+   "kind": "mantle",
+   "name": "Mantle",
+   "top_m": -35000.0,
+   "bottom_m": -2891000.0,
+   "provides": [
+    "heat"
+   ]
+  },
+  {
+   "key": "outer-core",
+   "kind": "core",
+   "name": "Outer core",
+   "top_m": -2891000.0,
+   "bottom_m": -5150000.0,
+   "provides": [
+    "dynamo",
+    "heat"
+   ]
+  },
+  {
+   "key": "inner-core",
+   "kind": "core",
+   "name": "Inner core",
+   "top_m": -5150000.0,
+   "bottom_m": -6371000.0
+  }
+ ],
+ "regions": [
+  {
+   "key": "ocean-basins",
+   "kind": "ocean_basin",
+   "name": "Ocean basins",
+   "on": "crust",
+   "extent": {
+    "type": "unmapped"
+   },
+   "properties": {
+    "area_fraction": 0.71
+   }
+  },
+  {
+   "key": "tropics",
+   "kind": "climate_band",
+   "name": "Tropics",
+   "on": "crust",
+   "extent": {
+    "type": "band",
+    "min_lat_deg": -23.4,
+    "max_lat_deg": 23.4
+   },
+   "properties": {
+    "temperature_k": 299.0,
+    "cover_fraction": 0.25,
+    "radiation_dose_msv_yr": 2.4,
+    "pressure_pa": 101325.0
+   }
+  },
+  {
+   "key": "north-temperate",
+   "kind": "climate_band",
+   "name": "Northern temperate lands",
+   "on": "crust",
+   "extent": {
+    "type": "band",
+    "min_lat_deg": 23.4,
+    "max_lat_deg": 66.6
+   },
+   "properties": {
+    "temperature_k": 284.0,
+    "cover_fraction": 0.45,
+    "radiation_dose_msv_yr": 2.4,
+    "pressure_pa": 101325.0
+   }
+  },
+  {
+   "key": "south-temperate",
+   "kind": "climate_band",
+   "name": "Southern temperate lands",
+   "on": "crust",
+   "extent": {
+    "type": "band",
+    "min_lat_deg": -66.6,
+    "max_lat_deg": -23.4
+   },
+   "properties": {
+    "temperature_k": 284.0,
+    "cover_fraction": 0.1,
+    "radiation_dose_msv_yr": 2.4,
+    "pressure_pa": 101325.0
+   }
+  },
+  {
+   "key": "arctic",
+   "kind": "climate_band",
+   "name": "Arctic lands",
+   "on": "crust",
+   "extent": {
+    "type": "cap",
+    "from_lat_deg": 66.6
+   },
+   "properties": {
+    "temperature_k": 262.0,
+    "cover_fraction": 0.3,
+    "radiation_dose_msv_yr": 2.4,
+    "pressure_pa": 101325.0
+   }
+  },
+  {
+   "key": "antarctica",
+   "kind": "ice_sheet",
+   "name": "Antarctic ice sheet",
+   "on": "crust",
+   "extent": {
+    "type": "cap",
+    "from_lat_deg": -66.6
+   }
+  }
+ ],
+ "features": [
+  {
+   "key": "movile",
+   "kind": "cave",
+   "name": "Movile Cave",
+   "in": "north-temperate",
+   "altitude_m": -20.0,
+   "properties": {
+    "temperature_k": 294.0
+   }
+  }
+ ]
+}
