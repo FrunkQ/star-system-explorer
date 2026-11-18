@@ -4,6 +4,7 @@
 //! pins, suite version). The time ruler reads stored slices and interpolates
 //! between them; it never recomputes. Any slice reproduces from the manifest.
 
+use crate::disc::*;
 use crate::hurley::Fits;
 use crate::inherit::{Inheritance, InheritancePins, PatchEnvelope};
 use crate::lifeline::{Level, LifeLine, Phase, StarState};
@@ -128,6 +129,9 @@ pub struct HistoryEvent {
 pub struct Slice {
     pub t_myr: f64,
     pub stars: Vec<StarState>,
+    /// The gas disc while it lasts (stage 3).
+    #[serde(default)]
+    pub disc: Option<DiscSlice>,
 }
 
 #[derive(Clone, PartialEq, Debug, Serialize, Deserialize)]
@@ -144,6 +148,8 @@ pub struct FormationHistory {
     pub inheritance: Inheritance,
     pub budgets: Budgets,
     pub stars: Vec<Star>,
+    /// Stage 3: the disc, its bands and its ledger.
+    pub disc: Disc,
     pub events: Vec<HistoryEvent>,
     pub slices: Vec<Slice>,
     /// Per value path: how it was worked out.
@@ -156,8 +162,8 @@ pub struct FormationError(pub String);
 
 /// Slice times, Myr from birth: dense through the first 300 Myr, then every
 /// 250 Myr to the horizon, plus every phase boundary and "now".
-pub fn slice_times(stars: &[Star], now: f64, horizon: f64) -> Vec<f64> {
-    let mut t = vec![0.0, 0.1, 0.3, 1.0, 3.0];
+pub fn slice_times(stars: &[Star], now: f64, horizon: f64, disc_end: f64) -> Vec<f64> {
+    let mut t = vec![0.0, 0.1, 0.2, 0.3, 0.5, 1.0, 2.0, 3.0, 5.0, disc_end];
     let mut x = 10.0;
     while x <= 300.0 {
         t.push(x);
@@ -325,11 +331,63 @@ impl FormationHistory {
                 .then(x.subject.to_string().cmp(&y.subject.to_string()))
         });
 
-        let slices = slice_times(&stars, now, horizon)
+        // Stage 3: the disc round the primary, or round a close pair.
+        let companion = stars
+            .get(1)
+            .and_then(|s| s.orbit.as_ref())
+            .map(|o| (o.semi_major_axis_au, o.eccentricity));
+        let cb = companion.is_some_and(|(a, _)| a < 2.0);
+        let (host_m, host_l) = if cb {
+            (
+                stars[0].mass + stars[1].mass,
+                stars[0].life.l_zams + stars[1].life.l_zams,
+            )
+        } else {
+            (stars[0].mass, stars[0].life.l_zams.max(1.0e-4))
+        };
+        let disc = Disc::new(disc_params(
+            &seed,
+            &manifest.system,
+            host_m,
+            host_l,
+            inh.feh,
+            inh.alpha_fe,
+            inh.c_o,
+            inh.fuv_g0,
+            companion,
+        ));
+        let water = LINES
+            .iter()
+            .position(|l| l.0 == "water")
+            .expect("water line");
+        let end = disc.slice(disc.t_disperse);
+        events.push(ev(0.0, "disc.forms", &manifest.system, format!(
+            "a disc of {:.3} solar masses of gas and dust settles round the {}; water ice freezes out beyond {:.1} AU",
+            disc.params.mass0,
+            if cb { "pair" } else { "star" },
+            disc.slice(0.0).lines[water]
+        )));
+        events.push(ev(
+            disc.t_disperse,
+            "disc.clears",
+            &manifest.system,
+            format!(
+                "the gas disc clears after {:.1} Myr; the water ice line had crept in to {:.1} AU",
+                disc.t_disperse, end.lines[water]
+            ),
+        ));
+        events.sort_by(|x, y| {
+            x.t_myr
+                .total_cmp(&y.t_myr)
+                .then(x.subject.to_string().cmp(&y.subject.to_string()))
+        });
+
+        let slices = slice_times(&stars, now, horizon, disc.t_disperse)
             .into_iter()
             .map(|t| Slice {
                 t_myr: t,
                 stars: stars.iter().map(|s| s.life.state_at(&fits, t)).collect(),
+                disc: (t < disc.t_disperse).then(|| disc.slice(t)),
             })
             .collect();
 
@@ -433,7 +491,35 @@ impl FormationHistory {
                 );
             }
         }
+        for (k, src) in [
+            ("disc.structure", REF_HARTMANN),
+            ("disc.temperature", REF_NAKAMOTO),
+            ("disc.lines", REF_OBERG),
+            ("disc.mix", REF_LODDERS),
+            ("disc.lifetime", REF_OWEN),
+        ] {
+            evidence.insert(k.into(), How::Calculated { source: src.into() });
+        }
+        evidence.insert(
+            "disc.mass0".into(),
+            How::Drawn {
+                distribution: "log-normal, median 0.03 of the star, 0.4 dex, capped at 0.15".into(),
+                spread: REF_ANDREWS.into(),
+            },
+        );
+        evidence.insert(
+            "disc.rc0".into(),
+            How::Drawn {
+                distribution: "log-normal, median 30 AU, 0.3 dex, truncated by a companion".into(),
+                spread: REF_ANDREWS.into(),
+            },
+        );
         let levels = vec![
+            StageLevel {
+                stage: "3 disc and material bands".into(),
+                level: Level::Standard,
+                block: "similarity-solution viscous disc, irradiated and accretion-heated, photoevaporative clearing".into(),
+            },
             StageLevel {
                 stage: "1 inheritance".into(),
                 level: Level::Standard,
@@ -465,6 +551,7 @@ impl FormationHistory {
             manifest_hash,
             inheritance: inh,
             stars,
+            disc,
             events,
             slices,
             evidence,
