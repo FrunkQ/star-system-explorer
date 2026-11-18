@@ -1,0 +1,36 @@
+{
+  "format": "sse.flow/1",
+  "id": "sse.base.moon-tides",
+  "version": "0.1.0",
+  "hook": "moon.tides",
+  "inputs": [
+    { "name": "host_mass", "kind": "orbit.host_mass" },
+    { "name": "radius", "kind": "body.radius" },
+    { "name": "semi_major_axis", "kind": "orbit.semi_major_axis" },
+    { "name": "eccentricity", "kind": "orbit.eccentricity" }
+  ],
+  "nodes": [
+    { "id": "heat", "atom": "sse.tides.eccentricity_heating", "params": { "k2_over_q": 0.015 } }
+  ],
+  "wires": [
+    { "from": "in.host_mass", "to": "heat.host_mass" },
+    { "from": "in.radius", "to": "heat.radius" },
+    { "from": "in.semi_major_axis", "to": "heat.semi_major_axis" },
+    { "from": "in.eccentricity", "to": "heat.eccentricity" }
+  ],
+  "publishes": [
+    { "kind": "tides.heating_power", "from": "heat.power" }
+  ],
+  "tests": [
+    {
+      "name": "Io (Lainey et al. 2009: observed (0.93 ± 0.19) × 10¹⁴ W with k2/Q 0.015)",
+      "inputs": {
+        "host_mass": { "value": 1.0, "unit": "m_jupiter" }, "radius": { "value": 1821.6, "unit": "km" },
+        "semi_major_axis": { "value": 421700.0, "unit": "km" }, "eccentricity": { "value": 0.0041, "unit": "one" }
+      },
+      "expect": {
+        "tides.heating_power": { "value": 0.93e14, "unit": "w", "tol": 0.19e14 }
+      }
+    }
+  ]
+}

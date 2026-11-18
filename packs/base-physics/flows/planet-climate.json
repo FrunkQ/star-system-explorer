@@ -1,0 +1,67 @@
+{
+  "format": "sse.flow/1",
+  "id": "sse.base.planet-climate",
+  "version": "0.1.0",
+  "hook": "planet.climate",
+  "inputs": [
+    { "name": "luminosity", "kind": "star.luminosity" },
+    { "name": "distance", "kind": "orbit.semi_major_axis" },
+    { "name": "albedo", "kind": "planet.bond_albedo" },
+    { "name": "optical_depth", "kind": "atmosphere.infrared_optical_depth" }
+  ],
+  "nodes": [
+    { "id": "sun", "atom": "sse.climate.insolation" },
+    { "id": "teq", "atom": "sse.climate.equilibrium_temperature", "params": { "redistribution": 0.25 } },
+    { "id": "surf", "atom": "sse.climate.grey_surface_temperature" }
+  ],
+  "wires": [
+    { "from": "in.luminosity", "to": "sun.luminosity" },
+    { "from": "in.distance", "to": "sun.distance" },
+    { "from": "sun.flux", "to": "teq.flux" },
+    { "from": "in.albedo", "to": "teq.albedo" },
+    { "from": "teq.teq", "to": "surf.teq" },
+    { "from": "in.optical_depth", "to": "surf.optical_depth" }
+  ],
+  "publishes": [
+    { "kind": "planet.insolation", "from": "sun.flux" },
+    { "kind": "planet.equilibrium_temperature", "from": "teq.teq" },
+    { "kind": "planet.surface_temperature", "from": "surf.surface" }
+  ],
+  "tests": [
+    {
+      "name": "Earth: S 1361 W/m², black body 254.0 K (NASA fact sheet), mean surface 288 K with τ 0.83",
+      "inputs": {
+        "luminosity": { "value": 1.0, "unit": "l_sun" }, "distance": { "value": 1.0, "unit": "au" },
+        "albedo": { "value": 0.306, "unit": "one" }, "optical_depth": { "value": 0.83, "unit": "one" }
+      },
+      "expect": {
+        "planet.insolation": { "value": 1361.0, "unit": "w_m2", "tol": 1.5 },
+        "planet.equilibrium_temperature": { "value": 254.0, "unit": "k", "tol": 0.6 },
+        "planet.surface_temperature": { "value": 288.0, "unit": "k", "tol": 1.5 }
+      }
+    },
+    {
+      "name": "Mars: S 586.2 W/m², black body 209.8 K (NASA fact sheet); thin air, τ 0",
+      "inputs": {
+        "luminosity": { "value": 1.0, "unit": "l_sun" }, "distance": { "value": 1.523679, "unit": "au" },
+        "albedo": { "value": 0.25, "unit": "one" }, "optical_depth": { "value": 0.0, "unit": "one" }
+      },
+      "expect": {
+        "planet.insolation": { "value": 586.2, "unit": "w_m2", "tol": 1.0 },
+        "planet.equilibrium_temperature": { "value": 209.8, "unit": "k", "tol": 0.6 },
+        "planet.surface_temperature": { "value": 209.8, "unit": "k", "tol": 0.6 }
+      }
+    },
+    {
+      "name": "Venus: S 2601.3 W/m², black body 226.6 K (NASA fact sheet)",
+      "inputs": {
+        "luminosity": { "value": 1.0, "unit": "l_sun" }, "distance": { "value": 0.723332, "unit": "au" },
+        "albedo": { "value": 0.77, "unit": "one" }, "optical_depth": { "value": 0.0, "unit": "one" }
+      },
+      "expect": {
+        "planet.insolation": { "value": 2601.3, "unit": "w_m2", "tol": 3.0 },
+        "planet.equilibrium_temperature": { "value": 226.6, "unit": "k", "tol": 0.6 }
+      }
+    }
+  ]
+}
