@@ -17,16 +17,21 @@ use sse_flow::AtomRegistry;
 use std::collections::BTreeMap;
 
 /// Every first-wave atom.
-pub fn registry() -> AtomRegistry {
-    let mut r = AtomRegistry::default();
-    for a in star::atoms()
+/// Every atom in the library, for callers that merge it into another registry.
+pub fn atoms() -> Vec<Box<dyn sse_flow::Atom>> {
+    star::atoms()
         .into_iter()
         .chain(orbit::atoms())
         .chain(planet::atoms())
         .chain(climate::atoms())
         .chain(tides::atoms())
         .chain(layers::atoms())
-    {
+        .collect()
+}
+
+pub fn registry() -> AtomRegistry {
+    let mut r = AtomRegistry::default();
+    for a in atoms() {
         r.insert(a);
     }
     r

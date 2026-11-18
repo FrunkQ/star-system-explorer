@@ -25,6 +25,8 @@ Milestone M1 "Proven core" = packages K0 to K6 (build plan section 3/4).
 | Kernel | K7 to K10 | its own branch from the M1 state; see that thread |
 | Chart room shell | U1 | its own branch from the M1 state; see that thread |
 
+The kernel now registers the real atom library and loads the base-physics pack (see P1 log, integration notes): kernel track, rebase over it.
+
 Each track keeps to its own crates and folders. Integration points are listed at the end of each package log.
 
 ## How to resume
