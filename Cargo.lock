@@ -577,7 +577,9 @@ dependencies = [
  "sse-chronicle",
  "sse-core",
  "sse-flow",
+ "sse-observe",
  "sse-pack",
+ "sse-sift",
  "ts-rs",
 ]
 

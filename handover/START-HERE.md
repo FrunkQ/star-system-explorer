@@ -24,6 +24,7 @@ Milestone M1 "Proven core" = packages K0 to K6 (build plan section 3/4).
 | K9 disclosure tiers, data views, scene building | done (kernel track) | packages/K9.md |
 | K10 suite socket and coordinator | done (kernel track) | packages/K10.md |
 | G0 default Milky-Way-like patch envelope | done (kernel track) | packages/G0.md |
+| Kernel API additions: stack adopt, manifest, scene, scan_toggle | done (kernel track) | packages/K6-additions.md |
 | C1, C2 classification | next (kernel track) | |
 
 ## Parallel tracks (18 Nov, Alex: build in parallel, integrate later)
@@ -38,6 +39,7 @@ The kernel now registers the real atom library and loads the base-physics pack (
 Kernel track integration points (K7 to K10):
 - New crates only: `sse-resolve`, `sse-sift`, `sse-observe`, `sse-suite` (path dependencies; root `Cargo.toml` untouched). No K1 to K6 interface changed.
 - Shared files touched: `crates/sse-wasm` (adds `engines_run()`), `scripts/build-harness.sh`, `tests/harness/{harness.js,index.html,run-node.mjs,run-browsers.mjs}` (the harness now also checks the four engine golden scenarios in Node and every browser).
+- Kernel API additions (log `packages/K6-additions.md`): `stack.adopt` events when a stack is loaded into an open universe, plus `manifest`, `scene` and `scan_toggle` ops, and the `provides.other.observe` pack key.
 - Not yet in the kernel message API (H9.1): `resolve`, `query_feasible`, `sift`, `subscribe`. Wire them when the first consumer needs them (U2 for resolve and scenes, U5/V1 for data views, U8 for sift); each engine already has a pure function and a cost class (`ops()`) ready.
 - G0 (`sse-cosmos`, pack `packs/base-cosmos`): the default patch envelope F0 starts from (`SystemBirth`, fixture `tests/fixtures/cosmos/solar-patch.json`). It added three things to K7: broken power laws, given weights, and `CountSpec::Fill`. G0's log has a determinism note on JSON floats that applies to every track.
 - Pack content keys these engines read: `provides.other.rules`, `.axes`, `.classes`, `.sifters` (K8). Data views and disclosure maps are plain serde types (K9); a pack key for them is for U5 to choose.
