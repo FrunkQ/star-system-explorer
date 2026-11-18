@@ -393,18 +393,20 @@ impl serde::Serialize for Value {
     }
 }
 
-/// Below this size JavaScript writes an integral number as plain digits.
-const JSON_INT_LIMIT: f64 = 1e21;
+/// Integral JSON numbers below 2^63 in size are integers (the i64 range,
+/// which typed fields such as times in seconds need); from there on a JSON
+/// number is a float however it is spelled, so it always decodes the same
+/// way and always writes back as JSON.
+const JSON_INT_LIMIT: f64 = 9223372036854775808.0;
 
 impl<'de> serde::Deserialize<'de> for Value {
     fn deserialize<D: serde::Deserializer<'de>>(d: D) -> Result<Self, D::Error> {
         // JSON (any human-readable format) has one number type, and the
         // kernel's clients are JavaScript: `JSON.stringify(281.0)` is "281".
-        // So a JSON number decodes by its value, exactly as JavaScript would
-        // write it: integral and below 1e21 in size (where JavaScript stops
-        // writing digits) is an integer, anything else a float. "281",
-        // "281.0" and "2.81e2" are then one value with one hash on every
-        // client. Binary CBOR keeps the two types as encoded.
+        // So a JSON number decodes by its value alone, never by spelling:
+        // integral and below 2^63 in size is an integer, anything else a
+        // float. "281", "281.0" and "2.81e2" are then one value with one
+        // hash on every client. Binary CBOR keeps the two types as encoded.
         struct V {
             json: bool,
         }
@@ -426,9 +428,15 @@ impl<'de> serde::Deserialize<'de> for Value {
                 Ok(Value::Bool(b))
             }
             fn visit_i64<E>(self, i: i64) -> Result<Value, E> {
+                if self.json && i == i64::MIN {
+                    return Ok(Value::Float(i as f64));
+                }
                 Ok(Value::Int(i as i128))
             }
             fn visit_u64<E>(self, i: u64) -> Result<Value, E> {
+                if self.json && i > i64::MAX as u64 {
+                    return Ok(Value::Float(i as f64));
+                }
                 Ok(Value::Int(i as i128))
             }
             fn visit_i128<E: serde::de::Error>(self, i: i128) -> Result<Value, E> {
@@ -492,11 +500,24 @@ mod tests {
         }
         assert_eq!(j("-0.0"), Value::Int(0));
         assert_eq!(j("0.5"), Value::Float(0.5));
-        assert_eq!(j("1e21"), Value::Float(1e21));
-        assert_eq!(j("1e+21"), Value::Float(1e21));
-        assert!(matches!(j("123456789012345678901"), Value::Int(_)));
-        assert_eq!(j("1.2e20"), Value::Int(120000000000000000000));
+        // Integers up to the i64 range, in any spelling; beyond it, floats.
+        assert_eq!(j("31557600000000000"), Value::Int(31557600000000000));
+        assert_eq!(j("3.15576e16"), Value::Int(31557600000000000));
+        assert_eq!(j("9223372036854775807"), Value::Int(9223372036854775807));
+        for t in [
+            "9223372036854775808",
+            "9.223372036854775808e18",
+            "-9223372036854775808",
+        ] {
+            assert!(matches!(j(t), Value::Float(_)), "{t}");
+        }
+        assert_eq!(j("22693600000000000000"), j("2.26936e19"));
+        assert_eq!(j("123456789012345678901"), j("1.2345678901234568e20"));
         assert_eq!(j("1.9e27"), Value::Float(1.9e27));
+        // Whatever JSON decodes, writes back as JSON.
+        for t in ["22693600000000000000", "1e300", "-12", "0.1"] {
+            assert!(serde_json::to_string(&j(t)).is_ok(), "{t}");
+        }
         // Exact parse (float_roundtrip): the shortest text round-trips.
         assert_eq!(j("1.2e27"), Value::Float(1.2e27));
         assert_eq!(serde_json::to_string(&j("1.2e27")).unwrap(), "1.2e+27");
