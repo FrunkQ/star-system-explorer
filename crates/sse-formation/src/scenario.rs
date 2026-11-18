@@ -2,6 +2,7 @@
 //! fixture set of systems formed from the stand-in envelope.
 
 use crate::history::{FormationHistory, Manifest};
+use crate::hurley::Fits;
 use crate::inherit::PatchEnvelope;
 use sse_core::Address;
 
@@ -37,5 +38,105 @@ pub fn golden() -> serde_json::Value {
             Err(e) => serde_json::json!({ "system": n, "refused": e.0 }),
         });
     }
-    serde_json::json!({ "systems": out })
+    serde_json::json!({ "systems": out, "solar_patch": solar_patch_digest() })
+}
+
+/// Every system of G0's solar patch (the Sun's neighbourhood now), formed
+/// from its birth facts. Returns the histories in patch order, refusals as
+/// `Err` with their reasons.
+pub fn solar_patch() -> Vec<Result<FormationHistory, crate::FormationError>> {
+    use sse_cosmos::{form_patch, PatchModel, Site, SystemBirth};
+    let model = PatchModel::milky_way_like();
+    let site = Site::solar(&model);
+    let mut c = sse_chronicle::Chronicle::new();
+    let formed = form_patch(
+        &mut c,
+        &sse_cosmos::scenario::seed(),
+        &model,
+        sse_cosmos::scenario::address(),
+        &site,
+    )
+    .expect("the G0 fixture patch forms");
+    formed
+        .systems
+        .iter()
+        .map(|(a, r)| {
+            let birth = SystemBirth::from_facts(a, &r.facts).expect("G0 systems carry birth facts");
+            FormationHistory::form(Manifest::from_birth("g0", birth, site.epoch_gyr()))
+        })
+        .collect()
+}
+
+/// Digest of the solar patch's formation: counts and one hash over all histories.
+pub fn solar_patch_digest() -> serde_json::Value {
+    let all = solar_patch();
+    let mut text = String::new();
+    let (mut ok, mut refused, mut multiple, mut wd, mut bd) = (0, 0, 0, 0, 0);
+    for h in &all {
+        match h {
+            Ok(h) => {
+                ok += 1;
+                let now = h.state_at(h.inheritance.age_gyr * 1000.0);
+                multiple += usize::from(h.stars.len() > 1);
+                wd += usize::from(now.iter().any(|s| s.phase == crate::Phase::WhiteDwarf));
+                bd += usize::from(now[0].phase == crate::Phase::BrownDwarf);
+                text.push_str(&h.hash().hex());
+            }
+            Err(e) => {
+                refused += 1;
+                text.push_str(&e.0);
+            }
+        }
+        text.push('\n');
+    }
+    serde_json::json!({
+        "formed": ok,
+        "refused": refused,
+        "multiple": multiple,
+        "with_white_dwarf_now": wd,
+        "brown_dwarf_primaries": bd,
+        "digest": sse_core::ContentHash::of(&text).expect("hash").hex(),
+    })
+}
+
+/// F6 reference worlds round the Sun. A world of `mass` Earth masses with solar-mix solids from inside the water
+/// line (`wet` adds water-ice band material as a mass fraction).
+pub fn world(n: u64, mass: f64, a_au: f64, wet: f64, gas: f64) -> crate::early::Protoplanet {
+    // Metal to rock in the solar mix; carbon at bulk Earth's 730 ppm
+    // (McDonough 2003, Treatise on Geochemistry 2, 547).
+    let x = crate::disc::mix(0.0, 0.0, 0.55);
+    let carbon = 7.3e-4;
+    let mut by = [0.0; 6];
+    by[0] = mass * (1.0 - wet) * (1.0 - carbon) * x[0] / (x[0] + x[1]);
+    by[1] = mass * (1.0 - wet) * (1.0 - carbon) * x[1] / (x[0] + x[1]);
+    by[2] = mass * (1.0 - wet) * carbon;
+    by[3] = mass * wet;
+    crate::early::Protoplanet {
+        address: system(1).child("body", n).expect("valid"),
+        mass,
+        a_au,
+        e: 0.02,
+        formed_myr: 50.0,
+        by_group: by,
+        gas,
+    }
+}
+
+/// F6 golden: Earth, Venus, Mars, a stripped and a kept 5 Earth-mass world, a water world.
+pub fn early_golden() -> serde_json::Value {
+    let f = Fits::new(0.02);
+    let l = crate::lifeline::LifeLine::new(&f, 1.0).expect("the Sun");
+    let worlds = [
+        world(3, 1.0, 1.0, 0.001, 0.0),
+        world(2, 0.815, 0.723, 0.001, 0.0),
+        world(4, 0.107, 1.524, 0.001, 0.0),
+        world(1, 5.0, 0.05, 0.0, 0.15),
+        world(5, 5.0, 0.5, 0.0, 0.15),
+        world(6, 2.0, 1.2, 0.5, 0.0),
+    ];
+    let out: Vec<_> = worlds
+        .iter()
+        .map(|p| crate::early::early_life(p, &f, &l))
+        .collect();
+    serde_json::to_value(out).expect("serialisable")
 }

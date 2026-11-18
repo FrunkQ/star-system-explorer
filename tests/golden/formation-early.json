@@ -1,0 +1,536 @@
+[
+  {
+    "address": "u:f0/sys:1/body:3",
+    "co2_bar": 215.8715094068301,
+    "core_mass_fraction": 0.3392827710105658,
+    "desiccated": false,
+    "early_insolation": 0.6977165691451518,
+    "envelope": "none",
+    "envelope_fraction": 0.0,
+    "facts": [
+      {
+        "kind": "body.mass",
+        "read_by": "base-physics flows, surface (S), life (L)",
+        "unit": "kg",
+        "value": 5.9722e+24
+      },
+      {
+        "kind": "body.radius",
+        "read_by": "base-physics flows, surface (S)",
+        "unit": "m",
+        "value": 6366221.707931172
+      },
+      {
+        "kind": "orbit.semi_major_axis",
+        "read_by": "base-physics flows, climate",
+        "unit": "m",
+        "value": 149597870700.0
+      },
+      {
+        "kind": "orbit.eccentricity",
+        "read_by": "base-physics flows, climate",
+        "unit": "one",
+        "value": 0.02
+      },
+      {
+        "kind": "interior.core_mass_fraction",
+        "read_by": "surface (S) interior model",
+        "unit": "one",
+        "value": 0.3392827710105658
+      },
+      {
+        "kind": "interior.water_mass_fraction",
+        "read_by": "surface (S), life (L)",
+        "unit": "one",
+        "value": 0.001
+      },
+      {
+        "kind": "atmosphere.h2_envelope_fraction",
+        "read_by": "climate, surface (S)",
+        "unit": "one",
+        "value": 0.0
+      },
+      {
+        "kind": "early.magma_ocean_end",
+        "read_by": "surface (S) first crust, life (L) earliest habitable date",
+        "unit": "s",
+        "value": 1704110400000000.0
+      },
+      {
+        "kind": "early.surface_water",
+        "read_by": "climate, surface (S) oceans, life (L)",
+        "unit": "kg",
+        "value": 4.18054e+21
+      },
+      {
+        "kind": "early.co2_partial_pressure",
+        "read_by": "climate, surface (S) carbonate cycle",
+        "unit": "pa",
+        "value": 21587150.94068301
+      },
+      {
+        "kind": "early.desiccated",
+        "read_by": "climate, life (L)",
+        "unit": "one",
+        "value": 0.0
+      },
+      {
+        "kind": "early.insolation",
+        "read_by": "climate",
+        "unit": "w_m2",
+        "value": 949.5922506065516
+      }
+    ],
+    "magma_ocean_end_myr": 54.0,
+    "mass_earth": 1.0,
+    "radius": 0.9992499933968251,
+    "solid_radius": 0.9992499933968251,
+    "surface_water_oceans": 2.9861,
+    "water_fraction": 0.001
+  },
+  {
+    "address": "u:f0/sys:1/body:2",
+    "co2_bar": 178.87777082370502,
+    "core_mass_fraction": 0.33928277101056586,
+    "desiccated": true,
+    "early_insolation": 1.3347577217739053,
+    "envelope": "none",
+    "envelope_fraction": 0.0,
+    "facts": [
+      {
+        "kind": "body.mass",
+        "read_by": "base-physics flows, surface (S), life (L)",
+        "unit": "kg",
+        "value": 4.867343e+24
+      },
+      {
+        "kind": "body.radius",
+        "read_by": "base-physics flows, surface (S)",
+        "unit": "m",
+        "value": 6023796.64201534
+      },
+      {
+        "kind": "orbit.semi_major_axis",
+        "read_by": "base-physics flows, climate",
+        "unit": "m",
+        "value": 108159260516.09999
+      },
+      {
+        "kind": "orbit.eccentricity",
+        "read_by": "base-physics flows, climate",
+        "unit": "one",
+        "value": 0.02
+      },
+      {
+        "kind": "interior.core_mass_fraction",
+        "read_by": "surface (S) interior model",
+        "unit": "one",
+        "value": 0.33928277101056586
+      },
+      {
+        "kind": "interior.water_mass_fraction",
+        "read_by": "surface (S), life (L)",
+        "unit": "one",
+        "value": 0.001
+      },
+      {
+        "kind": "atmosphere.h2_envelope_fraction",
+        "read_by": "climate, surface (S)",
+        "unit": "one",
+        "value": 0.0
+      },
+      {
+        "kind": "early.magma_ocean_end",
+        "read_by": "surface (S) first crust, life (L) earliest habitable date",
+        "unit": "s",
+        "value": 4733640000000000.0
+      },
+      {
+        "kind": "early.surface_water",
+        "read_by": "climate, surface (S) oceans, life (L)",
+        "unit": "kg",
+        "value": 0.0
+      },
+      {
+        "kind": "early.co2_partial_pressure",
+        "read_by": "climate, surface (S) carbonate cycle",
+        "unit": "pa",
+        "value": 17887777.0823705
+      },
+      {
+        "kind": "early.desiccated",
+        "read_by": "climate, life (L)",
+        "unit": "one",
+        "value": 1.0
+      },
+      {
+        "kind": "early.insolation",
+        "read_by": "climate",
+        "unit": "w_m2",
+        "value": 1816.6052593342852
+      }
+    ],
+    "magma_ocean_end_myr": 150.0,
+    "mass_earth": 0.815,
+    "radius": 0.9455025336705917,
+    "solid_radius": 0.9455025336705917,
+    "surface_water_oceans": 0.0,
+    "water_fraction": 0.001
+  },
+  {
+    "address": "u:f0/sys:1/body:4",
+    "co2_bar": 27.687115887276736,
+    "core_mass_fraction": 0.3392827710105658,
+    "desiccated": false,
+    "early_insolation": 0.3004063458612987,
+    "envelope": "none",
+    "envelope_fraction": 0.0,
+    "facts": [
+      {
+        "kind": "body.mass",
+        "read_by": "base-physics flows, surface (S), life (L)",
+        "unit": "kg",
+        "value": 6.390254e+23
+      },
+      {
+        "kind": "body.radius",
+        "read_by": "base-physics flows, surface (S)",
+        "unit": "m",
+        "value": 3479790.1176269418
+      },
+      {
+        "kind": "orbit.semi_major_axis",
+        "read_by": "base-physics flows, climate",
+        "unit": "m",
+        "value": 227987154946.80002
+      },
+      {
+        "kind": "orbit.eccentricity",
+        "read_by": "base-physics flows, climate",
+        "unit": "one",
+        "value": 0.02
+      },
+      {
+        "kind": "interior.core_mass_fraction",
+        "read_by": "surface (S) interior model",
+        "unit": "one",
+        "value": 0.3392827710105658
+      },
+      {
+        "kind": "interior.water_mass_fraction",
+        "read_by": "surface (S), life (L)",
+        "unit": "one",
+        "value": 0.001
+      },
+      {
+        "kind": "atmosphere.h2_envelope_fraction",
+        "read_by": "climate, surface (S)",
+        "unit": "one",
+        "value": 0.0
+      },
+      {
+        "kind": "early.magma_ocean_end",
+        "read_by": "surface (S) first crust, life (L) earliest habitable date",
+        "unit": "s",
+        "value": 1704110400000000.0
+      },
+      {
+        "kind": "early.surface_water",
+        "read_by": "climate, surface (S) oceans, life (L)",
+        "unit": "kg",
+        "value": 4.4731778e+20
+      },
+      {
+        "kind": "early.co2_partial_pressure",
+        "read_by": "climate, surface (S) carbonate cycle",
+        "unit": "pa",
+        "value": 2768711.5887276735
+      },
+      {
+        "kind": "early.desiccated",
+        "read_by": "climate, life (L)",
+        "unit": "one",
+        "value": 0.0
+      },
+      {
+        "kind": "early.insolation",
+        "read_by": "climate",
+        "unit": "w_m2",
+        "value": 408.85303671722755
+      }
+    ],
+    "magma_ocean_end_myr": 54.0,
+    "mass_earth": 0.107,
+    "radius": 0.5461921390090946,
+    "solid_radius": 0.5461921390090946,
+    "surface_water_oceans": 0.3195127,
+    "water_fraction": 0.001
+  },
+  {
+    "address": "u:f0/sys:1/body:1",
+    "co2_bar": 950.4277747481506,
+    "core_mass_fraction": 0.3396226415094339,
+    "desiccated": true,
+    "early_insolation": 279.08662765806065,
+    "envelope": "stripped",
+    "envelope_fraction": 0.0,
+    "facts": [
+      {
+        "kind": "body.mass",
+        "read_by": "base-physics flows, surface (S), life (L)",
+        "unit": "kg",
+        "value": 3.0756830000000004e+25
+      },
+      {
+        "kind": "body.radius",
+        "read_by": "base-physics flows, surface (S)",
+        "unit": "m",
+        "value": 9829794.5636972
+      },
+      {
+        "kind": "orbit.semi_major_axis",
+        "read_by": "base-physics flows, climate",
+        "unit": "m",
+        "value": 7479893535.0
+      },
+      {
+        "kind": "orbit.eccentricity",
+        "read_by": "base-physics flows, climate",
+        "unit": "one",
+        "value": 0.02
+      },
+      {
+        "kind": "interior.core_mass_fraction",
+        "read_by": "surface (S) interior model",
+        "unit": "one",
+        "value": 0.3396226415094339
+      },
+      {
+        "kind": "interior.water_mass_fraction",
+        "read_by": "surface (S), life (L)",
+        "unit": "one",
+        "value": 0.0
+      },
+      {
+        "kind": "atmosphere.h2_envelope_fraction",
+        "read_by": "climate, surface (S)",
+        "unit": "one",
+        "value": 0.0
+      },
+      {
+        "kind": "early.magma_ocean_end",
+        "read_by": "surface (S) first crust, life (L) earliest habitable date",
+        "unit": "s",
+        "value": 4733640000000000.0
+      },
+      {
+        "kind": "early.surface_water",
+        "read_by": "climate, surface (S) oceans, life (L)",
+        "unit": "kg",
+        "value": 0.0
+      },
+      {
+        "kind": "early.co2_partial_pressure",
+        "read_by": "climate, surface (S) carbonate cycle",
+        "unit": "pa",
+        "value": 95042777.47481506
+      },
+      {
+        "kind": "early.desiccated",
+        "read_by": "climate, life (L)",
+        "unit": "one",
+        "value": 1.0
+      },
+      {
+        "kind": "early.insolation",
+        "read_by": "climate",
+        "unit": "w_m2",
+        "value": 379836.90024262056
+      }
+    ],
+    "magma_ocean_end_myr": 150.0,
+    "mass_earth": 5.15,
+    "radius": 1.5428966510276565,
+    "solid_radius": 1.5428966510276565,
+    "surface_water_oceans": 0.0,
+    "water_fraction": 0.0
+  },
+  {
+    "address": "u:f0/sys:1/body:5",
+    "co2_bar": 950.4277747481506,
+    "core_mass_fraction": 0.3396226415094339,
+    "desiccated": false,
+    "early_insolation": 2.790866276580607,
+    "envelope": "kept",
+    "envelope_fraction": 0.028604835451202203,
+    "facts": [
+      {
+        "kind": "body.mass",
+        "read_by": "base-physics flows, surface (S), life (L)",
+        "unit": "kg",
+        "value": 3.0756830000000004e+25
+      },
+      {
+        "kind": "body.radius",
+        "read_by": "base-physics flows, surface (S)",
+        "unit": "m",
+        "value": 16873652.96447934
+      },
+      {
+        "kind": "orbit.semi_major_axis",
+        "read_by": "base-physics flows, climate",
+        "unit": "m",
+        "value": 74798935350.0
+      },
+      {
+        "kind": "orbit.eccentricity",
+        "read_by": "base-physics flows, climate",
+        "unit": "one",
+        "value": 0.02
+      },
+      {
+        "kind": "interior.core_mass_fraction",
+        "read_by": "surface (S) interior model",
+        "unit": "one",
+        "value": 0.3396226415094339
+      },
+      {
+        "kind": "interior.water_mass_fraction",
+        "read_by": "surface (S), life (L)",
+        "unit": "one",
+        "value": 0.0
+      },
+      {
+        "kind": "atmosphere.h2_envelope_fraction",
+        "read_by": "climate, surface (S)",
+        "unit": "one",
+        "value": 0.028604835451202203
+      },
+      {
+        "kind": "early.magma_ocean_end",
+        "read_by": "surface (S) first crust, life (L) earliest habitable date",
+        "unit": "s",
+        "value": 1704110400000000.0
+      },
+      {
+        "kind": "early.surface_water",
+        "read_by": "climate, surface (S) oceans, life (L)",
+        "unit": "kg",
+        "value": 0.0
+      },
+      {
+        "kind": "early.co2_partial_pressure",
+        "read_by": "climate, surface (S) carbonate cycle",
+        "unit": "pa",
+        "value": 95042777.47481506
+      },
+      {
+        "kind": "early.desiccated",
+        "read_by": "climate, life (L)",
+        "unit": "one",
+        "value": 0.0
+      },
+      {
+        "kind": "early.insolation",
+        "read_by": "climate",
+        "unit": "w_m2",
+        "value": 3798.3690024262064
+      }
+    ],
+    "magma_ocean_end_myr": 54.0,
+    "mass_earth": 5.15,
+    "radius": 2.6485093336178527,
+    "solid_radius": 1.5428966510276565,
+    "surface_water_oceans": 0.0,
+    "water_fraction": 0.0
+  },
+  {
+    "address": "u:f0/sys:1/body:6",
+    "co2_bar": 72.88294622748062,
+    "core_mass_fraction": 0.16981132075471697,
+    "desiccated": false,
+    "early_insolation": 0.48452539523968874,
+    "envelope": "none",
+    "envelope_fraction": 0.0,
+    "facts": [
+      {
+        "kind": "body.mass",
+        "read_by": "base-physics flows, surface (S), life (L)",
+        "unit": "kg",
+        "value": 1.19444e+25
+      },
+      {
+        "kind": "body.radius",
+        "read_by": "base-physics flows, surface (S)",
+        "unit": "m",
+        "value": 9934367.871900344
+      },
+      {
+        "kind": "orbit.semi_major_axis",
+        "read_by": "base-physics flows, climate",
+        "unit": "m",
+        "value": 179517444840.0
+      },
+      {
+        "kind": "orbit.eccentricity",
+        "read_by": "base-physics flows, climate",
+        "unit": "one",
+        "value": 0.02
+      },
+      {
+        "kind": "interior.core_mass_fraction",
+        "read_by": "surface (S) interior model",
+        "unit": "one",
+        "value": 0.16981132075471697
+      },
+      {
+        "kind": "interior.water_mass_fraction",
+        "read_by": "surface (S), life (L)",
+        "unit": "one",
+        "value": 0.5
+      },
+      {
+        "kind": "atmosphere.h2_envelope_fraction",
+        "read_by": "climate, surface (S)",
+        "unit": "one",
+        "value": 0.0
+      },
+      {
+        "kind": "early.magma_ocean_end",
+        "read_by": "surface (S) first crust, life (L) earliest habitable date",
+        "unit": "s",
+        "value": 1704110400000000.0
+      },
+      {
+        "kind": "early.surface_water",
+        "read_by": "climate, surface (S) oceans, life (L)",
+        "unit": "kg",
+        "value": 4.18054e+24
+      },
+      {
+        "kind": "early.co2_partial_pressure",
+        "read_by": "climate, surface (S) carbonate cycle",
+        "unit": "pa",
+        "value": 7288294.622748061
+      },
+      {
+        "kind": "early.desiccated",
+        "read_by": "climate, life (L)",
+        "unit": "one",
+        "value": 0.0
+      },
+      {
+        "kind": "early.insolation",
+        "read_by": "climate",
+        "unit": "w_m2",
+        "value": 659.4390629212164
+      }
+    ],
+    "magma_ocean_end_myr": 54.0,
+    "mass_earth": 2.0,
+    "radius": 1.5593106061686304,
+    "solid_radius": 1.5593106061686304,
+    "surface_water_oceans": 2986.1,
+    "water_fraction": 0.5
+  }
+]

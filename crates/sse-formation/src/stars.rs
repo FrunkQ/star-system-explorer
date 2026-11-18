@@ -160,18 +160,49 @@ pub fn form_stars(
     seed: &Seed,
     system: &Address,
     pins: &StarPins,
+    system_mass: Option<f64>,
 ) -> Result<Vec<Star>, crate::lifeline::OutOfRange> {
     let d = StarDraws::new(seed, system);
-    let primary = pins.primary_mass.unwrap_or_else(|| kroupa_quantile(d.u(0)));
-    let count = pins.count.unwrap_or_else(|| {
-        if d.u(1) >= multiplicity_fraction(primary) {
+    let ratio = |i: u64| 0.1 + 0.9 * d.u(100 * i);
+    let drawn_count = |m: f64| {
+        if d.u(1) >= multiplicity_fraction(m) {
             1
         } else if d.u(2) < 8.0 / 44.0 {
             3
         } else {
             2
         }
-    });
+    };
+    // A fixed cloud-core mass (G0) is shared by its stars: primary M / (1 + sum q).
+    // Companions that would fall below the fits' 0.1 solar masses are dropped
+    // (they would be brown dwarfs, which F5 places as substellar objects).
+    let (primary, count, masses) = match (pins.primary_mass, system_mass) {
+        (None, Some(total)) => {
+            if total < MASS_RANGE.0 {
+                return Err(crate::lifeline::OutOfRange(format!(
+                    "the cloud core holds {total:.3} solar masses, below the 0.1 of the smallest star: a brown dwarf system"
+                )));
+            }
+            let mut n = pins.count.unwrap_or_else(|| drawn_count(total)).clamp(1, 3) as u64;
+            loop {
+                let qsum: f64 = (1..n).map(ratio).sum();
+                let p = total / (1.0 + qsum);
+                if n == 1 || (1..n).all(|i| ratio(i) * p >= MASS_RANGE.0) {
+                    break (p, n, (1..n).map(|i| ratio(i) * p).collect::<Vec<_>>());
+                }
+                n -= 1;
+            }
+        }
+        _ => {
+            let p = pins.primary_mass.unwrap_or_else(|| kroupa_quantile(d.u(0)));
+            let n = pins.count.unwrap_or_else(|| drawn_count(p)).clamp(1, 3) as u64;
+            (
+                p,
+                n,
+                (1..n).map(|i| (ratio(i) * p).max(MASS_RANGE.0)).collect(),
+            )
+        }
+    };
     let mut stars = vec![Star {
         address: system.child("star", 0).expect("valid"),
         mass: primary,
@@ -180,11 +211,9 @@ pub fn form_stars(
     }];
     let mut inner_mass = primary;
     let mut inner_a = 0.0_f64;
-    for i in 1..count.clamp(1, 3) as u64 {
-        // Flat mass ratio against the primary, 0.1 to 1 (Raghavan 2010), kept
-        // inside the fits.
-        let q = 0.1 + 0.9 * d.u(100 * i);
-        let mass = (q * primary).max(MASS_RANGE.0);
+    for i in 1..count {
+        // Flat mass ratio against the primary, 0.1 to 1 (Raghavan 2010).
+        let mass = masses[i as usize - 1];
         let total = inner_mass + mass;
         // Outer orbit of a triple: periastron beyond about 3 inner separations
         // (Mardling and Aarseth 2001, order of magnitude).
