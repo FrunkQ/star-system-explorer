@@ -14,6 +14,7 @@ pub mod inherit;
 pub mod lifeline;
 pub mod scenario;
 pub mod stars;
+pub mod violent;
 
 pub use history::{FormationError, FormationHistory, Manifest};
 pub use inherit::{Inheritance, InheritancePins, PatchEnvelope};
@@ -27,6 +28,8 @@ mod early_tests;
 mod growth_tests;
 #[cfg(test)]
 mod tests;
+#[cfg(test)]
+mod violent_tests;
 
 pub(crate) mod golden {
     /// Compare with `tests/golden/<name>`; `SSE_BLESS=1` rewrites it.

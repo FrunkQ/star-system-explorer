@@ -205,3 +205,38 @@ pub fn growth_golden() -> serde_json::Value {
     }
     serde_json::Value::Array(out)
 }
+
+/// F4 golden: the violent phase on the six F3 golden systems.
+pub fn upheaval_golden() -> serde_json::Value {
+    let seed = sse_core::Seed::from_text("f3-golden");
+    let fits = Fits::new(0.02);
+    let mut out = vec![];
+    for n in 0..6u64 {
+        let sys = system(n);
+        let disc = crate::disc::Disc::new(crate::disc::disc_params(
+            &seed,
+            &sys,
+            1.0,
+            fits.l_zams(1.0),
+            0.0,
+            0.0,
+            0.55,
+            300.0,
+            None,
+        ));
+        let g = crate::growth::grow(&seed, &sys, &disc);
+        let u = crate::violent::upheave(&seed, &sys, &disc, &g);
+        let text = serde_json::to_string(&u).expect("serialisable");
+        out.push(serde_json::json!({
+            "system": n,
+            "break_myr": u.break_myr,
+            "worlds": u.worlds.iter().map(|w| serde_json::json!({
+                "id": w.id, "a_au": w.a_au, "e": w.e, "mass_earth": w.mass_earth(), "impacts": w.impacts,
+            })).collect::<Vec<_>>(),
+            "rogues": u.rogues.iter().map(|r| r.address.to_string()).collect::<Vec<_>>(),
+            "events": u.events.len(),
+            "digest": sse_core::ContentHash::of(&text).expect("hash").hex(),
+        }));
+    }
+    serde_json::Value::Array(out)
+}
