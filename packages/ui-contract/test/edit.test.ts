@@ -5,21 +5,8 @@ import assert from "node:assert/strict";
 import { Session } from "../src/session.ts";
 import { gmSeat } from "../src/seat.ts";
 import { commitEdit, redoEdit, undoEdit } from "../src/edit.ts";
-import type { AppliedEdit, Workspace } from "../src/view.ts";
+import { plainWorkspace } from "./workspace.ts";
 import { nodeKernel } from "./node-kernel.ts";
-
-function plainWorkspace(): Workspace {
-  const ws: Workspace = {
-    selection: null, now_yr: 4_610_000_000, mode: "edit", applied: {}, revision: 0, undo: [], redo: [],
-    select: () => {}, setTime: () => {},
-    noteApplied(e: AppliedEdit, as = "edit") {
-      ws.applied[`${e.address}#${e.field}`] = { value: e.after.value, display: e.after.display, event_id: e.event_id };
-      if (as === "edit") { ws.undo.push(e); ws.redo = []; } else if (as === "undo") ws.redo.push(e); else ws.undo.push(e);
-      ws.revision++;
-    },
-  };
-  return ws;
-}
 
 test("edit, undo, redo: each an event; values follow", async () => {
   const k = nodeKernel();

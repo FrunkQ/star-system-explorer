@@ -1,7 +1,9 @@
 // U0 and U1 acceptance in a real browser, against the built shell
 // (scripts/build-shell.sh first). Usage:
 //   node tests/ui/shell.e2e.mjs [chromium firefox webkit] [--screens <dir>]
-// Checks: keyboard-only selection and editing; the edit inked through the GM
+// Checks: keyboard-only selection and editing; U3: open a flow from a why,
+// change a parameter, an invalid value never reaches Adopt, diff and effect,
+// adopt, badge on the card; the edit inked through the GM
 // seat equals the same intent from an auto-approved player seat (event id and
 // state hash); ruler keyboard steps; mode and theme keys; phone layout has no
 // sideways scroll; screenshots at desktop and phone widths in both modes.
@@ -47,6 +49,7 @@ async function tabTo(page, test, max = 60) {
 
 const results = [];
 let u2 = null;
+let u3 = null;
 const expected = await playerEvent();
 try {
   for (const name of engines) {
@@ -119,7 +122,45 @@ try {
     await page.waitForFunction(() => document.querySelectorAll("[aria-label='Explanation trail'] button").length === 2);
     const trail = await why.locator("[aria-label='Explanation trail']").innerText();
     u2 = { gravityAfterMass, orbitDragged, surface: [surface0, surface1], formula, science: science.slice(0, 60), trail: trail.replace(/\s+/g, " ") };
-    await why.getByRole("button", { name: "Close the explanation" }).click();
+
+    // U3: open the flow from the why, change a parameter, see the diff, adopt, see the badge.
+    const hashBeforePhysics = await page.getAttribute("[data-state-hash]", "data-state-hash");
+    await why.getByRole("button", { name: "Open the flow" }).click();
+    const editor = page.locator("section[aria-label='Flow editor']");
+    await editor.waitFor();
+    assert.equal(await editor.getByRole("button", { name: /^Node teq/ }).getAttribute("aria-pressed"), "true", "opened at the node that published the value");
+    const surfChip = editor.locator("[data-kind='planet.surface_temperature'] .val");
+    await page.waitForFunction(() => /\d/.test(document.querySelector("[data-kind='planet.surface_temperature'] .val")?.textContent ?? ""));
+    const chipBefore = (await surfChip.innerText()).trim();
+    await editor.locator("[aria-label^='Explain node']").getByRole("tab", { name: "Engine" }).click();
+    const engineLens = await editor.locator("[aria-label^='Explain node'] [role=tabpanel]").innerText();
+    assert.match(engineLens, /redistribution=2\.5e-1/, "engine lens names the parameter in force");
+    const param = editor.locator("#p-teq-redistribution");
+    await param.fill("7");
+    await param.press("Enter");
+    const request = page.locator(".area-card [role=region][aria-label^='Request']");
+    await request.getByText("Rejected").waitFor();
+    assert.ok(await request.getByRole("button", { name: "Adopt" }).isDisabled(), "an invalid change never reaches Adopt");
+    await param.fill("0.5");
+    await param.press("Enter");
+    await request.getByText("Validated").waitFor();
+    const diff = (await request.locator("table.diff tbody").innerText()).replace(/\s+/g, " ").trim();
+    assert.equal(diff, "teq.redistribution 0.25 0.5");
+    const effect = (await request.locator("table.effect tr.moved").allInnerTexts()).map((t) => t.replace(/\s+/g, " ").trim());
+    assert.ok(effect.some((t) => t.startsWith("surface temperature")), `effect rows: ${effect}`);
+    await request.getByRole("button", { name: "Adopt" }).click();
+    await page.waitForFunction(() => /campaign/.test(document.querySelector("[data-stack-hash]")?.textContent ?? ""));
+    await page.waitForFunction((b) => (document.querySelector("[data-kind='planet.surface_temperature'] .val")?.textContent ?? "").trim() !== b, chipBefore);
+    const chipAfter = (await surfChip.innerText()).trim();
+    assert.equal(await page.getAttribute("[data-state-hash]", "data-state-hash"), hashBeforePhysics, "physics adoption is not an authored edit");
+    await page.evaluate(() => document.activeElement instanceof HTMLElement && document.activeElement.blur());
+    await page.keyboard.press("p");
+    await page.locator("[role=button][aria-label^='Tarn']").click();
+    const tarnCard = page.locator("section[aria-label='Tarn']");
+    await tarnCard.locator(".stamp", { hasText: "Changed physics" }).waitFor();
+    const surfaceLabel = await tarnCard.locator(".field").filter({ hasText: /^surface/i }).locator("label").innerText();
+    assert.match(surfaceLabel, /changed physics/i);
+    u3 = { chipBefore, chipAfter, diff, effect, badge: surfaceLabel.replace(/\s+/g, " ") };
 
     // Ruler by keyboard.
     await page.keyboard.press("Escape");
@@ -173,13 +214,30 @@ try {
           await p.waitForTimeout(300);
           await p.screenshot({ path: `${screens}/${theme}-${form}.png`, fullPage: form === "phone" });
         }
+        // The physics screen with a draft change, at both widths.
+        await (form === "phone" ? p.getByRole("button", { name: "Show the physics" }) : p.getByRole("group", { name: "Screen" }).getByRole("button", { name: "Physics" })).click();
+        const ed = p.locator("section[aria-label='Flow editor']");
+        await ed.waitFor();
+        await ed.getByRole("button", { name: /^Node teq/ }).click();
+        await ed.locator("#p-teq-redistribution").fill("0.5");
+        await ed.locator("#p-teq-redistribution").press("Enter");
+        await p.locator(".area-card").getByText("Validated").waitFor();
+        if (form === "phone") {
+          const w = await p.evaluate(() => document.scrollingElement.scrollWidth);
+          assert.ok(w <= 390, `physics screen scrolls sideways on a phone (${w}px)`);
+        }
+        if (screens && name === "chromium") {
+          await p.waitForTimeout(300);
+          await p.screenshot({ path: `${screens}/${theme}-physics-${form}.png`, fullPage: form === "phone" });
+        }
         await ctx.close();
       }
     }
     await browser.close();
     assert.deepEqual(errors, [], "no page errors");
-    results.push({ engine: name, tabsToTarn, tabsToMass, eventId, phoneWidth: phone, u2 });
+    results.push({ engine: name, tabsToTarn, tabsToMass, eventId, phoneWidth: phone, u2, u3 });
     console.log(`U2 ${name}: ${JSON.stringify(u2)}`);
+    console.log(`U3 ${name}: ${JSON.stringify(u3)}`);
     console.log(`PASS ${name}: Tarn reached in ${tabsToTarn} tabs, Mass in ${tabsToMass}; event ${eventId.slice(0, 12)} matches the player seat; phone width ${JSON.stringify(phone)}`);
   }
 } finally {

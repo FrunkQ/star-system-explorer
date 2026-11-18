@@ -6,7 +6,8 @@ import type { Cost } from "../../contracts/src/index.ts";
 import type { IntentSchema } from "./intent.ts";
 import type { Mark } from "./mark.ts";
 import type { SceneSubject, SystemScene } from "./scene.ts";
-import type { ViewSession } from "./session.ts";
+import type { DeriveRef, ViewSession } from "./session.ts";
+import type { ChangeRequest } from "./physics.ts";
 import type { Json } from "./json.ts";
 
 export type Tier = "still" | "gpu-high" | "gpu-basic" | "canvas" | "text";
@@ -52,7 +53,19 @@ export interface Workspace {
   /** Edits that can be undone, newest last; undone edits that can be redone. */
   undo: AppliedEdit[];
   redo: AppliedEdit[];
+  /** The screen document in front of the GM ("system", "physics", ...). */
+  screen: string;
+  /** The flow on the bench in the flow editor, with the values it was opened for. */
+  bench: { flow: string; node?: string; ref?: DeriveRef; label?: string } | null;
+  /** Physics change requests: drafts, adopted, declined. */
+  requests: ChangeRequest[];
   select(address: string | null): void;
+  /** Put a flow on the bench and show the physics screen. */
+  openFlow(flow: string, from?: { node?: string; ref?: DeriveRef; label?: string }): void;
+  /** Add a request, or replace the one with the same id. */
+  fileRequest(r: ChangeRequest): void;
+  /** The physics in force changed: re-derive everything. */
+  notePhysics(): void;
   setTime(yr: number): void;
   /** Record an applied edit. `as` says whether it is a new edit (clears redo), an undo or a redo. */
   noteApplied(edit: AppliedEdit, as?: "edit" | "undo" | "redo"): void;

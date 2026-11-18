@@ -5,9 +5,15 @@
 -->
 <script lang="ts">
   import type { DeriveRef, Explanation, ViewSession } from "../../../ui-contract/src/index.ts";
-  import { Stamp } from "../../../chart-grammar/src/index.ts";
+  import { Lenses, Stamp } from "../../../chart-grammar/src/index.ts";
 
-  let { session, why, label, onclose }: { session: ViewSession; why: DeriveRef & { kind: string }; label: string; onclose: () => void } = $props();
+  let {
+    session,
+    why,
+    label,
+    onclose,
+    onopenflow,
+  }: { session: ViewSession; why: DeriveRef & { kind: string }; label: string; onclose: () => void; onopenflow?: (node: string) => void } = $props();
 
   let trail = $state<{ ref: string; label: string }[]>([]);
   let lens = $state<"curious" | "science" | "engine">("curious");
@@ -30,6 +36,11 @@
       .map((p, i) => (p === 0 ? "" : p === 1 ? SI[i] : `${SI[i]}^${p}`))
       .filter(Boolean)
       .join(" ");
+  /** The campaign pack that publishes this flow, when it is not a base pack. */
+  const changedBy = (flow: string | undefined) => {
+    const p = flow ? session.flowDoc(flow)?.pack : undefined;
+    return p && !session.stack().base.some((b) => b.id === p) ? p : null;
+  };
   const pretty = (q: string) => q.replace(/[._]/g, " ");
 </script>
 
@@ -56,13 +67,9 @@
     <div class="stamps">
       {#if e.validity !== "in-range"}<Stamp kind="out-of-range" title={e.out_of_range.join("; ")} />{/if}
       {#if e.fictional}<Stamp kind="fictional" />{/if}
+      {#if changedBy(e.publisher.flow)}<Stamp kind="changed-physics" title="Published by {changedBy(e.publisher.flow)}, not the base physics" />{/if}
     </div>
-    <div class="lenses" role="tablist" aria-label="Lens">
-      {#each [["curious", "Curious"], ["science", "Science"], ["engine", "Engine"]] as [id, name] (id)}
-        <button type="button" role="tab" aria-selected={lens === id} onclick={() => (lens = id as typeof lens)}>{name}</button>
-      {/each}
-    </div>
-    <div class="lens" role="tabpanel">{e.lenses[lens] ?? "This lens is not written for this atom yet."}</div>
+    <Lenses text={e.lenses} bind:lens />
     <table>
       <caption>Inputs</caption>
       <tbody>
@@ -83,6 +90,9 @@
     </table>
     {#if Object.keys(e.params).length}
       <p class="muted">Parameters: {Object.entries(e.params).map(([k, v]) => `${k} = ${v}`).join(", ")}</p>
+    {/if}
+    {#if onopenflow}
+      <p class="flowlink"><button type="button" class="link" onclick={() => onopenflow(e.publisher.node ?? "")}>Open the flow</button> <span class="src">{e.publisher.flow} · node {e.publisher.node}</span></p>
     {/if}
     {#if e.references.length}
       <ul class="refs">{#each e.references as r (r)}<li>{r}</li>{/each}</ul>
@@ -121,8 +131,7 @@
   }
   .crumb,
   .link,
-  .close,
-  .lenses button {
+  .close {
     border: 0;
     background: transparent;
     color: var(--sse-ink);
@@ -159,24 +168,8 @@
     display: flex;
     gap: 6px;
   }
-  .lenses {
-    display: flex;
-    border-bottom: var(--sse-line) solid var(--sse-rule);
-    margin-top: 6px;
-  }
-  .lenses button {
-    padding: 0 10px;
-    font-size: 12px;
-    color: var(--sse-ink-muted);
-  }
-  .lenses button[aria-selected="true"] {
-    color: var(--sse-ink);
-    box-shadow: inset 0 -2px 0 var(--sse-accent);
-  }
-  .lens {
-    margin: 8px 0;
-    font-family: var(--sse-font-display);
-    font-size: 15px;
+  .flowlink {
+    margin: 6px 0;
   }
   table {
     width: 100%;

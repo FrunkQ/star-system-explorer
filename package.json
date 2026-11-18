@@ -11,6 +11,8 @@
     "packages/views/system-chart",
     "packages/views/body-card",
     "packages/views/time-ruler",
+    "packages/views/flow-editor",
+    "packages/views/change-requests",
     "packages/shell"
   ],
   "scripts": {

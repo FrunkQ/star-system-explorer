@@ -6,8 +6,10 @@ import type { KernelClient } from "../../kernel-client/src/index.ts";
 import { encodeRequest } from "./json.ts";
 import { checkIntent, intentToRequest, secondsToYears, yearsToSeconds, type Intent } from "./intent.ts";
 import { decide, type Seat } from "./seat.ts";
+import { providerOf, type FlowDoc, type PackDoc } from "./physics.ts";
 
 export type IntentResult =
+  /** For adopt_physics, `event_id` is "stack:" and the new stack hash: the kernel does not yet chronicle stack changes. */
   | { status: "applied"; event_id: string; state_hash: string; affected: string[] }
   | { status: "pending"; intent: Intent }
   | { status: "refused"; reason: string }
@@ -80,7 +82,28 @@ export interface ViewSession {
   device(): DeviceEdge | undefined;
   /** Intents waiting for the GM (V5 carries them; here they wait locally). */
   pending(): readonly Intent[];
+  /** The packs in force, bottom to top, and the hash the kernel gave the stack. */
+  stack(): StackInfo;
+  /** The flow document the stack uses for `flow` and the pack that provides it. */
+  flowDoc(flow: string): { doc: FlowDoc; pack: string } | undefined;
+  /**
+   * Try a candidate campaign pack without adopting it: the kernel validates
+   * the stack it would make and derives each ref under it, then the stack in
+   * force is restored. Read only; nothing is chronicled.
+   */
+  trial(pack: PackDoc | null, refs: DeriveRef[]): Promise<TrialResult>;
 }
+
+export interface StackInfo {
+  base: readonly PackDoc[];
+  /** The campaign's own physics pack over the base, if one is adopted. */
+  campaign: PackDoc | null;
+  hash: string;
+}
+
+export type TrialResult =
+  | { ok: true; stack_hash: string; results: ({ ok: true; values: Record<string, Derived> } | { ok: false; message: string })[] }
+  | { ok: false; report: string; issues: string[] };
 
 type Raw = { type: string; [k: string]: unknown };
 
@@ -88,6 +111,11 @@ export class Session implements ViewSession {
   readonly #client: KernelClient;
   readonly #pending: Intent[] = [];
   #flows: string[] = [];
+  #base: PackDoc[] = [];
+  #campaign: PackDoc | null = null;
+  #stackHash = "";
+  /** Requests run one after another, so a trial's temporary stack is never seen by another call. */
+  #queue: Promise<unknown> = Promise.resolve();
   readonly seat: Readonly<Seat>;
   readonly universe: Readonly<{ id: string; seed: string; root: string }>;
 
@@ -100,30 +128,75 @@ export class Session implements ViewSession {
   /** Open a universe on a kernel and hand back a session for one seat. */
   static async open(client: KernelClient, seat: Seat, universe: { id: string; seed: string }, packs: unknown[] = []): Promise<Session> {
     let flows: string[] = [];
+    let hash = "";
     if (packs.length) {
       const st = await call(client, { op: "load_stack", packs });
       if (st.type !== "stack_loaded") throw new Error(`kernel rejected the pack stack: ${String(st.report ?? st.message ?? JSON.stringify(st))}`);
       flows = st.flows as string[];
+      hash = String(st.stack_hash);
     }
     const r = await call(client, { op: "open_universe", id: universe.id, seed: universe.seed });
     if (r.type !== "universe_opened") throw new Error(`kernel would not open the universe: ${JSON.stringify(r)}`);
     const s = new Session(client, seat, { ...universe, root: String(r.root) });
     s.#flows = flows;
+    s.#base = structuredClone(packs) as PackDoc[];
+    s.#stackHash = hash;
     return s;
+  }
+
+  /** Run `f` after every request already queued, and before any queued after it. */
+  #serial<T>(f: () => Promise<T>): Promise<T> {
+    const next = this.#queue.then(f, f);
+    this.#queue = next.catch(() => undefined);
+    return next;
+  }
+
+  #call(request: unknown): Promise<Raw> {
+    return this.#serial(() => call(this.#client, request));
   }
 
   flows(): readonly string[] {
     return [...this.#flows];
   }
 
+  stack(): StackInfo {
+    return { base: structuredClone(this.#base), campaign: structuredClone(this.#campaign), hash: this.#stackHash };
+  }
+
+  flowDoc(flow: string) {
+    const p = providerOf(this.#campaign ? [...this.#base, this.#campaign] : this.#base, flow);
+    return p ? { doc: structuredClone(p.doc), pack: p.pack.id } : undefined;
+  }
+
+  trial(pack: PackDoc | null, refs: DeriveRef[]): Promise<TrialResult> {
+    const restore = this.#campaign ? [...this.#base, this.#campaign] : this.#base;
+    return this.#serial(async () => {
+      const st = await call(this.#client, { op: "load_stack", packs: pack ? [...this.#base, pack] : this.#base });
+      if (st.type !== "stack_loaded") {
+        return { ok: false as const, report: String(st.report ?? st.message ?? ""), issues: (st.issues as string[] | undefined) ?? [] };
+      }
+      try {
+        const results = [];
+        for (const ref of refs) {
+          const r = await call(this.#client, { op: "derive", flow: ref.flow, inputs: ref.inputs });
+          results.push(r.type === "derived" ? { ok: true as const, values: r.values as Record<string, Derived> } : { ok: false as const, message: String(r.message ?? JSON.stringify(r)) });
+        }
+        return { ok: true as const, stack_hash: String(st.stack_hash), results };
+      } finally {
+        const back = await call(this.#client, { op: "load_stack", packs: restore });
+        if (back.type !== "stack_loaded") throw new Error("could not restore the pack stack after a trial");
+      }
+    });
+  }
+
   async derive(ref: DeriveRef) {
-    const r = await call(this.#client, { op: "derive", flow: ref.flow, inputs: ref.inputs });
+    const r = await this.#call({ op: "derive", flow: ref.flow, inputs: ref.inputs });
     if (r.type === "derived") return { ok: true as const, values: r.values as Record<string, Derived> };
     return { ok: false as const, message: String(r.message ?? JSON.stringify(r)) };
   }
 
   async explain(ref: DeriveRef, kind: string) {
-    const r = await call(this.#client, { op: "explain", flow: ref.flow, inputs: ref.inputs, kind });
+    const r = await this.#call({ op: "explain", flow: ref.flow, inputs: ref.inputs, kind });
     if (r.type === "explanation") return { ok: true as const, explanation: { ...(r.explanation as Explanation), fictional: Boolean(r.fictional) } };
     return { ok: false as const, message: String(r.message ?? JSON.stringify(r)) };
   }
@@ -137,7 +210,14 @@ export class Session implements ViewSession {
       this.#pending.push(intent);
       return { status: "pending", intent };
     }
-    const r = await call(this.#client, intentToRequest(intent));
+    const r = await this.#call(intentToRequest(intent, this.#base));
+    if (intent.kind === "adopt_physics") {
+      if (r.type !== "stack_loaded") return { status: "refused", reason: String(r.report ?? r.message ?? JSON.stringify(r)) };
+      this.#campaign = intent.pack === null ? null : (structuredClone(intent.pack) as unknown as PackDoc);
+      this.#flows = r.flows as string[];
+      this.#stackHash = String(r.stack_hash);
+      return { status: "applied", event_id: `stack:${this.#stackHash}`, state_hash: await this.stateHash(), affected: [] };
+    }
     if (r.type === "authored")
       return { status: "applied", event_id: String(r.event_id), state_hash: String(r.state_hash), affected: r.affected as string[] };
     if (r.type === "error") return { status: "error", code: String(r.code), message: String(r.message) };
@@ -145,7 +225,7 @@ export class Session implements ViewSession {
   }
 
   async history(address: string): Promise<HistoryEvent[]> {
-    const r = await call(this.#client, { op: "history", address });
+    const r = await this.#call({ op: "history", address });
     if (r.type !== "history") return [];
     return (r.events as { id: string; kind: string; occurred_at_s: number; evidence: string; subject: string[] }[]).map((e) => ({
       id: e.id,
@@ -158,7 +238,7 @@ export class Session implements ViewSession {
 
   async stateHash(at_yr?: number): Promise<string> {
     const at_s = at_yr === undefined ? 9_223_372_036_854_775_807n : yearsToSeconds(at_yr);
-    const r = await call(this.#client, { op: "state_hash", at_s });
+    const r = await this.#call({ op: "state_hash", at_s });
     return r.type === "state_hash" ? String(r.hash) : "";
   }
 

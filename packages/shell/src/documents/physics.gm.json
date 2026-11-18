@@ -1,0 +1,15 @@
+{
+  "schema": "sse.screen/1",
+  "id": "sse.workspace.gm.physics",
+  "label": "Physics",
+  "audience": "gm",
+  "layout": "chart-room",
+  "theme": "chart-room",
+  "symbology": "sse.symbology.diagrammatic-stub",
+  "vocab": "physics",
+  "items": [
+    { "view": "sse.view.flow-editor", "area": "chart", "params": { "flow": "sse.base.planet-climate" } },
+    { "view": "sse.view.change-requests", "area": "card" },
+    { "view": "sse.view.time-ruler", "area": "ruler" }
+  ]
+}

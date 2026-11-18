@@ -9,6 +9,8 @@
   import { themeCss, THEMES } from "../../skins/chart-room/src/index.ts";
   import { Segmented, ToolButton, formatYears } from "../../chart-grammar/src/index.ts";
   import workspaceDoc from "./documents/workspace.gm.json";
+  import physicsDoc from "./documents/physics.gm.json";
+  import oracDoc from "./documents/orac.requests.json";
   import sceneDoc from "./documents/kestrel.scene.json";
   import symbologyDoc from "./documents/diagrammatic.stub.json";
   import derivationsDoc from "./documents/derivations.base.json";
@@ -16,16 +18,24 @@
   import { REGISTRY } from "./registry.ts";
   import { createWorkspace } from "./workspace.svelte.ts";
   import { loadPref, savePref } from "./prefs.ts";
-  import type { Json } from "../../ui-contract/src/index.ts";
+  import type { ChangeRequest, Json } from "../../ui-contract/src/index.ts";
 
   const base = sceneDoc as unknown as SystemScene;
   const derivations = derivationsDoc as unknown as DerivationDoc;
   const symbology = symbologyDoc as unknown as Symbology;
   const ws = createWorkspace(base.now_yr);
+  // Orac is not connected yet (A2): its sample requests come from a fixture document.
+  for (const r of (oracDoc as unknown as { requests: ChangeRequest[] }).requests) ws.fileRequest(r);
   let scene = $state<SystemScene>(base);
 
-  const checked = checkScreen(workspaceDoc as unknown as ScreenDoc, REGISTRY);
-  const screen: CheckedScreen | null = checked.ok ? checked.screen : null;
+  // Each screen document is checked before anything mounts; the GM switches between them.
+  const SCREENS: Record<string, ScreenDoc> = { system: workspaceDoc as unknown as ScreenDoc, physics: physicsDoc as unknown as ScreenDoc };
+  const checks = Object.fromEntries(Object.entries(SCREENS).map(([k, d]) => [k, checkScreen(d, REGISTRY)]));
+  const badScreens = Object.values(checks).flatMap((c) => (c.ok ? [] : c.errors));
+  const screen = $derived.by((): CheckedScreen | null => {
+    const c = checks[ws.screen] ?? checks.system!;
+    return c.ok && !badScreens.length ? c.screen : null;
+  });
   const mountFor = (area: string) => screen?.mounts.find((m) => m.area === area);
 
   let theme = $state(loadPref("theme") === "night-chart" ? "night-chart" : "chart-room");
@@ -39,7 +49,7 @@
 
   let session = $state<ViewSession | null>(null);
   let failure = $state<string | null>(null);
-  let status = $state({ kernel: "", tier: "", hash: "" });
+  let status = $state({ kernel: "", tier: "", hash: "", stack: "", campaign: false });
   async function loadPacks(): Promise<unknown[]> {
     return Promise.all(stackDoc.packs.map(async (p) => (await fetch(new URL(p, document.baseURI))).json()));
   }
@@ -49,7 +59,7 @@
     .then(async (s) => {
       scene = await deriveScene(s, { ...base, now_yr: ws.now_yr }, derivations);
       session = s;
-      status = { kernel: await s.kernelVersion(), tier: s.device()?.tier ?? "unmeasured", hash: await s.stateHash() };
+      status = { kernel: await s.kernelVersion(), tier: s.device()?.tier ?? "unmeasured", hash: await s.stateHash(), stack: s.stack().hash, campaign: false };
     })
     .catch((e) => (failure = String(e)));
 
@@ -63,7 +73,7 @@
     const s = session;
     if (!s) return;
     const g = ++generation;
-    s.stateHash().then((h) => (status = { ...status, hash: h }));
+    s.stateHash().then((h) => (status = { ...status, hash: h, stack: s.stack().hash, campaign: s.stack().campaign !== null }));
     deriveScene(s, applyEdits({ ...base, now_yr: now }, applied), derivations).then((next) => {
       if (g === generation) scene = next;
     });
@@ -116,6 +126,7 @@
     if (e.ctrlKey || e.metaKey || e.altKey) return;
     const keys: Record<string, () => void> = {
       e: () => (ws.mode = "edit"),
+      p: () => (ws.screen = ws.screen === "physics" ? "system" : "physics"),
       v: () => (ws.mode = "view"),
       n: () => (theme = theme === "chart-room" ? "night-chart" : "chart-room"),
       t: () => document.querySelector<HTMLElement>("[role=slider]")?.focus(),
@@ -140,6 +151,20 @@
     <h1 class="title">{scene.title}</h1>
     <div class="kicker">{scene.subtitle} · {formatYears(ws.now_yr)}</div>
     <div class="spacer"></div>
+    <div class="screens">
+      <Segmented
+        label="Screen"
+        value={ws.screen}
+        options={[
+          { value: "system", label: "Chart", key: "P" },
+          { value: "physics", label: "Physics", key: "P" },
+        ]}
+        onchange={(v) => (ws.screen = v)}
+      />
+    </div>
+    <button type="button" class="compact" aria-label={ws.screen === "physics" ? "Show the chart" : "Show the physics"} aria-pressed={ws.screen === "physics"} onclick={() => (ws.screen = ws.screen === "physics" ? "system" : "physics")}>
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" aria-hidden="true"><circle cx="5" cy="7" r="2" /><circle cx="19" cy="7" r="2" /><circle cx="12" cy="17" r="2" /><path d="M7 7h10M6 9l5 6M18 9l-5 6" /></svg>
+    </button>
     <Segmented
       label="Mode"
       value={ws.mode}
@@ -160,7 +185,7 @@
         onchange={(v) => (theme = v)}
       />
     </div>
-    <button type="button" class="night" aria-label="Switch between Chart room and Night chart" onclick={() => (theme = theme === "chart-room" ? "night-chart" : "chart-room")}>
+    <button type="button" class="night compact" aria-label="Switch between Chart room and Night chart" onclick={() => (theme = theme === "chart-room" ? "night-chart" : "chart-room")}>
       <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" aria-hidden="true"><path d="M20 14.5A8 8 0 0 1 9.5 4a8 8 0 1 0 10.5 10.5z" /></svg>
     </button>
   </header>
@@ -168,7 +193,7 @@
   {#if !screen}
     <main class="problem">
       <h2>The workspace document is not valid</h2>
-      <ul>{#each checked.ok ? [] : checked.errors as e (e)}<li>{e}</li>{/each}</ul>
+      <ul>{#each badScreens as e (e)}<li>{e}</li>{/each}</ul>
     </main>
   {:else if failure}
     <main class="problem" role="alert">
@@ -178,7 +203,8 @@
   {:else if !session}
     <main class="problem" aria-busy="true"><p>Opening the chart…</p></main>
   {:else}
-    <main class="stage">
+    {#key ws.screen}
+    <main class="stage" data-screen={ws.screen}>
       <div class="area-chart">{#if mountFor("chart")}<div class="fill" use:view={mountFor("chart")!}></div>{/if}</div>
       <nav class="tools" aria-label="Tools">
         <ToolButton label="Select" icon="M5 3l14 8-6 2-2 6z" pressed={true} />
@@ -187,14 +213,16 @@
         <ToolButton label="Keyboard shortcuts" icon="M3 7h18v10H3zM7 11h1M11 11h1M15 11h2M7 14h10" keyhint="?" onclick={() => help?.showModal()} />
       </nav>
       {#if undoNote}<p class="undo-note" role="status">{undoNote}</p>{/if}
-      <aside class="area-card" aria-label="Selected body">{#if mountFor("card")}<div use:view={mountFor("card")!}></div>{/if}</aside>
+      <aside class="area-card" aria-label={ws.screen === "physics" ? "Change requests" : "Selected body"}>{#if mountFor("card")}<div use:view={mountFor("card")!}></div>{/if}</aside>
     </main>
     <footer class="area-ruler" aria-label="Time">{#if mountFor("ruler")}<div class="fill" use:view={mountFor("ruler")!}></div>{/if}</footer>
+    {/key}
     <div class="status" aria-label="Session">
       <span>Seat: {session.seat.label}</span>
       <span>kernel {status.kernel}</span>
       <span title="Measured capability tier of this device">tier {status.tier}</span>
       <span title="State hash: {status.hash}" data-state-hash={status.hash}>state {status.hash.slice(0, 10)}</span>
+      <span title="Pack stack hash: {status.stack}" data-stack-hash={status.stack}>physics {status.campaign ? "campaign" : "base"} {status.stack.slice(0, 8)}</span>
     </div>
   {/if}
 </div>
@@ -211,7 +239,8 @@
     <dt>Page Up, Page Down, Home, End</dt><dd>On the ruler, larger steps</dd>
     <dt>Drag a body, or Page Up, Page Down on it</dt><dd>Move its orbit out or in (edit mode)</dd>
     <dt>Ctrl+Z, Ctrl+Shift+Z</dt><dd>Undo, redo (each is a new correction on the chart's history)</dd>
-    <dt>why?</dt><dd>On any value: where it came from, in three lenses</dd>
+    <dt>why?</dt><dd>On any value: where it came from, in three lenses; "Open the flow" puts its physics on the bench</dd>
+    <dt>P</dt><dd>Chart or Physics: the flow editor and change requests</dd>
     <dt>E, V</dt><dd>Edit or view</dd>
     <dt>N</dt><dd>Chart room or Night chart</dd>
   </dl>
@@ -263,7 +292,7 @@
   .spacer {
     flex: 1;
   }
-  .night {
+  .compact {
     display: none;
   }
   .stage {
@@ -384,10 +413,11 @@
     }
     .kicker,
     .themes,
+    .screens,
     .tools {
       display: none;
     }
-    .night {
+    .compact {
       display: flex;
       align-items: center;
       justify-content: center;
@@ -396,6 +426,10 @@
       border: var(--sse-line) solid var(--sse-ink);
       background: transparent;
       color: var(--sse-ink);
+    }
+    .compact[aria-pressed="true"] {
+      background: var(--sse-ink);
+      color: var(--sse-on-ink);
     }
     .stage {
       display: contents;
@@ -407,6 +441,13 @@
     }
     .area-chart .fill {
       position: absolute;
+    }
+    /* The flow editor flows with the page on a phone instead of sitting in a fixed window. */
+    .stage[data-screen="physics"] .area-chart {
+      height: auto;
+    }
+    .stage[data-screen="physics"] .area-chart .fill {
+      position: relative;
     }
     .undo-note {
     position: absolute;

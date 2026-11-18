@@ -5,7 +5,11 @@ export { YEAR_S, INTENT_KINDS, checkIntent, yearsToSeconds, secondsToYears } fro
 export type { Intent, IntentKind, IntentSchema } from "./intent.ts";
 export { decide, gmSeat, tableSeat, within } from "./seat.ts";
 export type { Seat, AutoApprove, Decision } from "./seat.ts";
-export type { ViewSession, IntentResult, HistoryEvent, DeviceEdge, DeriveRef, InputValue, Derived, Explanation } from "./session.ts";
+export type { ViewSession, IntentResult, HistoryEvent, DeviceEdge, DeriveRef, InputValue, Derived, Explanation, StackInfo, TrialResult } from "./session.ts";
+export { CAMPAIGN_PACK, flowParams, editFlow, diffFlow, providerOf, campaignPack, packFor, checkRequest, flowColumns, paramText, siText } from "./physics.ts";
+export { draftId, adopted, draftParam, candidateFor, previewRequest, adoptRequest, withdrawRequest, declineRequest, benchRef } from "./physics-edit.ts";
+export type { Preview } from "./physics-edit.ts";
+export type { FlowDoc, PackDoc, ParamEdit, ChangeRequest, RequestStatus } from "./physics.ts";
 export { deriveScene, applyEdits, sig } from "./derivation.ts";
 export type { DerivationDoc, DerivationRule, InputBinding, OutputBinding } from "./derivation.ts";
 export { resolveParams } from "./view.ts";

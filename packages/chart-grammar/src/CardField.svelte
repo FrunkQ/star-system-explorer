@@ -11,6 +11,7 @@
     set = false,
     derived = false,
     flagged = false,
+    changed = false,
     oncommit,
     onwhy,
   }: {
@@ -23,6 +24,8 @@
     derived?: boolean;
     /** The kernel flagged the value (outside an atom's validity range). */
     flagged?: boolean;
+    /** Published by the campaign's own physics, not the base packs. */
+    changed?: boolean;
     oncommit?: (text: string) => Promise<string | null>;
     onwhy?: () => void;
   } = $props();
@@ -55,7 +58,7 @@
 
 <div class="field">
   <div class="head">
-    <label for={id} class="k" class:set>{label}{#if set}<span class="mark">&nbsp;· set</span>{:else if derived}<span class="drv">&nbsp;· derived</span>{/if}{#if flagged}<span class="mark">&nbsp;· out of range</span>{/if}</label>
+    <label for={id} class="k" class:set>{label}{#if set}<span class="mark">&nbsp;· set</span>{:else if derived}<span class="drv">&nbsp;· derived</span>{/if}{#if flagged}<span class="mark">&nbsp;· out of range</span>{/if}{#if changed}<span class="mark chg">&nbsp;· changed physics</span>{/if}</label>
     {#if onwhy}
       <button type="button" class="why" onclick={onwhy} aria-label="Why {label.toLowerCase()}?">why?</button>
     {/if}

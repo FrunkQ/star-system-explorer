@@ -37,6 +37,8 @@ export function within(inner: string, outer: string): boolean {
 export function decide(seat: Seat, intent: Intent): Decision {
   if (!seat.may_send.includes(intent.kind)) return { action: "refuse", reason: `seat ${seat.label} may not send ${intent.kind}` };
   if (seat.authority === "gm") return { action: "apply" };
+  // Physics changes are never auto-approved: they go to the GM (H8.8).
+  if (intent.kind === "adopt_physics") return { action: "ask_gm" };
   const ok = (seat.auto_approve ?? []).some((a) => a.intent === intent.kind && a.scope.some((s) => within(intent.address, s)));
   return ok ? { action: "apply" } : { action: "ask_gm" };
 }

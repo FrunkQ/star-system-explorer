@@ -61,13 +61,14 @@
             set={f.source === "authored"}
             derived={f.source === "derived"}
             flagged={f.validity !== undefined && f.validity !== "in-range"}
+            changed={f.changed}
             editable={f.editable && ws.mode === "edit"}
             oncommit={(t) => commit(f, t)}
             onwhy={f.field === "name" ? undefined : () => (why = why === f.field ? null : f.field)}
           />
           {#if why === f.field}
             {#if f.why}
-              <Explain session={ctx.session} why={f.why} label={f.label} onclose={() => (why = null)} />
+              <Explain session={ctx.session} why={f.why} label={f.label} onclose={() => (why = null)} onopenflow={ws.mode === "edit" && ctx.session.seat.authority === "gm" ? (node) => ws.openFlow(f.why!.flow, { node, ref: { flow: f.why!.flow, inputs: f.why!.inputs }, label: `${subject.label} · ${f.label.toLowerCase()}` }) : undefined} />
             {:else}
               <p class="why" role="note">Why {f.label.toLowerCase()} is {f.display}: {whyText(f)}</p>
             {/if}

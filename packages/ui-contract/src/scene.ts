@@ -21,6 +21,10 @@ export interface SceneFact {
   /** Kernel validity label for a derived value ("in-range", "out-of-range", ...). */
   validity?: string;
   fictional?: boolean;
+  /** Pack, flow and version that published a derived value ("pack/flow@version"). */
+  publisher?: string;
+  /** Published by the campaign's own physics, not the base packs: badged "changed physics". */
+  changed?: boolean;
 }
 
 export interface SceneSubject {
