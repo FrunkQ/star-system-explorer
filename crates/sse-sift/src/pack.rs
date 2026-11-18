@@ -1,7 +1,7 @@
 //! Rules, atlases and sifters as pack content (`provides.other.rules`,
-//! `.classes`, `.axes`, `.sifters`), stacked bottom to top.
+//! `.classes`, `.axes`, `.schemes`, `.sifters`), stacked bottom to top.
 
-use crate::classify::{Atlas, Axis, Class};
+use crate::classify::{Atlas, Axis, Class, Scheme};
 use crate::rules::{Rule, RuleSet};
 use crate::sifter::Sifter;
 use sse_core::cbor::Value;
@@ -51,6 +51,13 @@ pub fn load(stack: &[PackManifest]) -> Result<SiftContent, Vec<String>> {
             Ok(xs) => xs.into_iter().for_each(|(id, a)| {
                 claim("axis", &id, &p.id, &mut errs);
                 out.atlas.axes.insert(id, a);
+            }),
+            Err(e) => errs.push(e),
+        }
+        match take::<Scheme>(p, "schemes") {
+            Ok(ss) => ss.into_iter().for_each(|sc| {
+                claim("scheme", &sc.id, &p.id, &mut errs);
+                out.atlas.schemes.insert(sc.id.clone(), sc);
             }),
             Err(e) => errs.push(e),
         }

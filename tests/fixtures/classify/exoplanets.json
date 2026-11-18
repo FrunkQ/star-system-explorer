@@ -1,0 +1,378 @@
+{
+ "about": "Reference exoplanets: well-measured mass and radius (NASA Exoplanet Archive, rounded), equilibrium temperature, and interior makeup from the cited interior-structure readings, also rounded. `expect` is what the published description suggests (any listed class is acceptable).",
+ "bodies": [
+  {
+   "name": "HD 189733 b",
+   "description": "Hot Jupiter (Bouchy et al. 2005); silicate haze, deep blue (Evans et al. 2013).",
+   "facts": {
+    "name": "HD 189733 b",
+    "body.mass": 2.1448312587999997e+27,
+    "body.radius": 80696169.07,
+    "body.bulk_density": 974.5500659420583,
+    "planet.equilibrium_temperature": 1200,
+    "planet.surface_temperature": 1200,
+    "makeup.metal": 0,
+    "makeup.rock": 0.05,
+    "makeup.ice": 0.05,
+    "makeup.gas": 0.9,
+    "makeup.carbon": 0,
+    "orbit.host_kind": "star",
+    "body.surface_gravity": 21.953480432964195
+   },
+   "expect": {
+    "physical": [
+     "gas-giant/alkali-clouds",
+     "gas-giant/silicate-clouds"
+    ]
+   }
+  },
+  {
+   "name": "HD 209458 b",
+   "description": "Inflated hot Jupiter, the first transiting exoplanet (Charbonneau et al. 2000).",
+   "facts": {
+    "name": "HD 209458 b",
+    "body.mass": 1.3096757243999997e+27,
+    "body.radius": 98549303.82,
+    "body.bulk_density": 326.7178584334736,
+    "planet.equilibrium_temperature": 1450,
+    "planet.surface_temperature": 1450,
+    "makeup.metal": 0,
+    "makeup.rock": 0.05,
+    "makeup.ice": 0.05,
+    "makeup.gas": 0.9,
+    "makeup.carbon": 0,
+    "orbit.host_kind": "star",
+    "body.surface_gravity": 8.988200322191865
+   },
+   "expect": {
+    "physical": [
+     "gas-giant/silicate-clouds"
+    ],
+    "modifiers": [
+     "physical/puffed"
+    ]
+   }
+  },
+  {
+   "name": "WASP-12 b",
+   "description": "Ultra-hot, inflated Jupiter being tidally stripped (Hebb et al. 2009).",
+   "facts": {
+    "name": "WASP-12 b",
+    "body.mass": 2.7901787172e+27,
+    "body.radius": 135683824.1,
+    "body.bulk_density": 266.6966583213412,
+    "planet.equilibrium_temperature": 2580,
+    "planet.surface_temperature": 2580,
+    "makeup.metal": 0,
+    "makeup.rock": 0.05,
+    "makeup.ice": 0.05,
+    "makeup.gas": 0.9,
+    "makeup.carbon": 0,
+    "orbit.host_kind": "star",
+    "body.surface_gravity": 10.101641647422948
+   },
+   "expect": {
+    "physical": [
+     "gas-giant/ultra-hot"
+    ],
+    "modifiers": [
+     "physical/puffed"
+    ]
+   }
+  },
+  {
+   "name": "KELT-9 b",
+   "description": "Hottest known giant, dayside above 4,000 K (Gaudi et al. 2017).",
+   "facts": {
+    "name": "KELT-9 b",
+    "body.mass": 5.4664725888e+27,
+    "body.radius": 134969698.70999998,
+    "body.bulk_density": 530.8454721771675,
+    "planet.equilibrium_temperature": 4050,
+    "planet.surface_temperature": 4050,
+    "makeup.metal": 0,
+    "makeup.rock": 0.05,
+    "makeup.ice": 0.05,
+    "makeup.gas": 0.9,
+    "makeup.carbon": 0,
+    "orbit.host_kind": "star",
+    "body.surface_gravity": 20.00095370259475
+   },
+   "expect": {
+    "physical": [
+     "gas-giant/ultra-hot"
+    ]
+   }
+  },
+  {
+   "name": "WASP-107 b",
+   "description": "Super-puff: Neptune mass, Jupiter size (Anderson et al. 2017; Piaulet et al. 2021).",
+   "facts": {
+    "name": "WASP-107 b",
+    "body.mass": 1.82146e+26,
+    "body.radius": 67127786.66,
+    "body.bulk_density": 143.77468766851504,
+    "planet.equilibrium_temperature": 740,
+    "planet.surface_temperature": 740,
+    "makeup.metal": 0,
+    "makeup.rock": 0.05,
+    "makeup.ice": 0.1,
+    "makeup.gas": 0.85,
+    "makeup.carbon": 0,
+    "orbit.host_kind": "star",
+    "body.surface_gravity": 2.6942076775888846
+   },
+   "expect": {
+    "physical": [
+     "gas-giant/cloudless"
+    ],
+    "modifiers": [
+     "physical/puffed"
+    ]
+   }
+  },
+  {
+   "name": "Kepler-16 b",
+   "description": "Cold Saturn-mass planet circling two stars (Doyle et al. 2011).",
+   "facts": {
+    "name": "Kepler-16 b",
+    "body.mass": 6.3206089308e+26,
+    "body.radius": 53845054.405999996,
+    "body.bulk_density": 966.6989304026713,
+    "planet.equilibrium_temperature": 190,
+    "planet.surface_temperature": 190,
+    "makeup.metal": 0,
+    "makeup.rock": 0.1,
+    "makeup.ice": 0.1,
+    "makeup.gas": 0.8,
+    "makeup.carbon": 0,
+    "orbit.host_kind": "binary",
+    "body.surface_gravity": 14.530593953591632
+   },
+   "expect": {
+    "physical": [
+     "gas-giant/water-clouds"
+    ]
+   }
+  },
+  {
+   "name": "Gliese 229 B",
+   "description": "Brown dwarf, the first one imaged (Nakajima et al. 1995), a close binary (Xuan et al. 2024).",
+   "facts": {
+    "name": "Gliese 229 B",
+    "body.mass": 1.328656532e+29,
+    "body.radius": 71412539.0,
+    "body.bulk_density": 87108.208544099,
+    "planet.equilibrium_temperature": 900,
+    "planet.surface_temperature": 900,
+    "makeup.metal": 0,
+    "makeup.rock": 0,
+    "makeup.ice": 0,
+    "makeup.gas": 1,
+    "makeup.carbon": 0,
+    "orbit.host_kind": "star",
+    "body.surface_gravity": 1736.5203022474682
+   },
+   "expect": {
+    "physical": [
+     "brown-dwarf"
+    ]
+   }
+  },
+  {
+   "name": "GJ 436 b",
+   "description": "Hot Neptune with an escaping hydrogen tail (Butler et al. 2004; Ehrenreich et al. 2015).",
+   "facts": {
+    "name": "GJ 436 b",
+    "body.mass": 1.319812e+26,
+    "body.radius": 26567070.0,
+    "body.bulk_density": 1680.547803359714,
+    "planet.equilibrium_temperature": 690,
+    "planet.surface_temperature": 690,
+    "makeup.metal": 0,
+    "makeup.rock": 0.2,
+    "makeup.ice": 0.6,
+    "makeup.gas": 0.2,
+    "makeup.carbon": 0,
+    "orbit.host_kind": "star",
+    "body.surface_gravity": 12.463523569633503
+   },
+   "expect": {
+    "physical": [
+     "ice-giant"
+    ]
+   }
+  },
+  {
+   "name": "GJ 1214 b",
+   "description": "Sub-Neptune with a hazy, metal-rich atmosphere (Charbonneau et al. 2009; Kempton et al. 2023).",
+   "facts": {
+    "name": "GJ 1214 b",
+    "body.mass": 4.879124e+25,
+    "body.radius": 17456540.0,
+    "body.bulk_density": 2189.9647772981766,
+    "planet.equilibrium_temperature": 596,
+    "planet.surface_temperature": 596,
+    "makeup.metal": 0.1,
+    "makeup.rock": 0.5,
+    "makeup.ice": 0.35,
+    "makeup.gas": 0.05,
+    "makeup.carbon": 0,
+    "orbit.host_kind": "star",
+    "body.surface_gravity": 10.671896544834565
+   },
+   "expect": {
+    "physical": [
+     "sub-neptune"
+    ]
+   }
+  },
+  {
+   "name": "K2-18 b",
+   "description": "Temperate sub-Neptune; a hycean (ocean under hydrogen) world is one proposed reading (Madhusudhan et al. 2023).",
+   "facts": {
+    "name": "K2-18 b",
+    "body.mass": 5.153836000000001e+25,
+    "body.radius": 16628310.0,
+    "body.bulk_density": 2676.4309012681465,
+    "planet.equilibrium_temperature": 255,
+    "planet.surface_temperature": 290,
+    "makeup.metal": 0.1,
+    "makeup.rock": 0.4,
+    "makeup.ice": 0.49,
+    "makeup.gas": 0.01,
+    "makeup.carbon": 0,
+    "orbit.host_kind": "star",
+    "body.surface_gravity": 12.423685720996463,
+    "surface.liquid": "water",
+    "surface.liquid_fraction": 1,
+    "surface.ice_fraction": 0,
+    "atmosphere.surface_pressure": 10000000.0
+   },
+   "expect": {
+    "physical": [
+     "sub-neptune"
+    ],
+    "surface": [
+     "surface/hycean"
+    ]
+   }
+  },
+  {
+   "name": "Kepler-10 b",
+   "description": "Hot rocky super-Earth, likely a lava world (Batalha et al. 2011).",
+   "facts": {
+    "name": "Kepler-10 b",
+    "body.mass": 1.946872e+25,
+    "body.radius": 9365370.0,
+    "body.bulk_density": 5658.904405855081,
+    "planet.equilibrium_temperature": 2170,
+    "planet.surface_temperature": 2170,
+    "makeup.metal": 0.3,
+    "makeup.rock": 0.7,
+    "makeup.ice": 0,
+    "makeup.gas": 0,
+    "makeup.carbon": 0,
+    "orbit.host_kind": "star",
+    "body.surface_gravity": 14.794612892776158,
+    "atmosphere.surface_pressure": 0,
+    "atmosphere.main": "none"
+   },
+   "expect": {
+    "physical": [
+     "rocky"
+    ],
+    "surface": [
+     "surface/molten"
+    ]
+   }
+  },
+  {
+   "name": "55 Cancri e",
+   "description": "Rocky lava world with a secondary atmosphere (Demory et al. 2016; Hu et al. 2024).",
+   "facts": {
+    "name": "55 Cancri e",
+    "body.mass": 4.7776e+25,
+    "body.radius": 11977480.0,
+    "body.bulk_density": 6638.702406981113,
+    "planet.equilibrium_temperature": 1950,
+    "planet.surface_temperature": 2000,
+    "makeup.metal": 0.3,
+    "makeup.rock": 0.7,
+    "makeup.ice": 0,
+    "makeup.gas": 0,
+    "makeup.carbon": 0,
+    "orbit.host_kind": "star",
+    "body.surface_gravity": 22.19703485740154,
+    "atmosphere.surface_pressure": 100000.0,
+    "atmosphere.main": "co2"
+   },
+   "expect": {
+    "physical": [
+     "rocky"
+    ],
+    "surface": [
+     "surface/molten"
+    ]
+   }
+  },
+  {
+   "name": "TRAPPIST-1 b",
+   "description": "Rocky, no thick atmosphere seen by JWST (Greene et al. 2023).",
+   "facts": {
+    "name": "TRAPPIST-1 b",
+    "body.mass": 8.181640000000001e+24,
+    "body.radius": 7135520.000000001,
+    "body.bulk_density": 5376.916112427112,
+    "planet.equilibrium_temperature": 400,
+    "planet.surface_temperature": 500,
+    "makeup.metal": 0.3,
+    "makeup.rock": 0.7,
+    "makeup.ice": 0,
+    "makeup.gas": 0,
+    "makeup.carbon": 0,
+    "orbit.host_kind": "star",
+    "body.surface_gravity": 10.710387834821427,
+    "atmosphere.surface_pressure": 0,
+    "atmosphere.main": "none",
+    "spin.star_locked": true,
+    "surface.ice_fraction": 0
+   },
+   "expect": {
+    "physical": [
+     "rocky"
+    ],
+    "surface": [
+     "surface/airless"
+    ],
+    "modifiers": [
+     "physical/tidally-locked"
+    ]
+   }
+  },
+  {
+   "name": "Kepler-138 d",
+   "description": "Volatile-rich, possibly a water world (Piaulet et al. 2023).",
+   "facts": {
+    "name": "Kepler-138 d",
+    "body.mass": 1.25412e+25,
+    "body.radius": 9620210.0,
+    "body.bulk_density": 3363.2195172106726,
+    "planet.equilibrium_temperature": 350,
+    "planet.surface_temperature": 350,
+    "makeup.metal": 0.1,
+    "makeup.rock": 0.4,
+    "makeup.ice": 0.5,
+    "makeup.gas": 0,
+    "makeup.carbon": 0,
+    "orbit.host_kind": "star",
+    "body.surface_gravity": 9.032044647164598
+   },
+   "expect": {
+    "physical": [
+     "water-rich"
+    ]
+   }
+  }
+ ]
+}

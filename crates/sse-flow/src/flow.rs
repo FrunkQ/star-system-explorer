@@ -273,10 +273,17 @@ impl Flow {
                     Some((i, p)) => match param_si(cx.units, v, p.dim) {
                         Err(e) => err(&format!("{}.{k}", n.id), e),
                         Ok(x) => {
-                            if !x.is_finite() || p.range.is_some_and(|(lo, hi)| x < lo || x > hi) {
+                            if !x.is_finite() {
                                 err(
                                     &format!("{}.{k}", n.id),
-                                    format!("value {x} outside allowed range {:?}", p.range),
+                                    format!("value {x} is not a finite number"),
+                                );
+                            } else if let Some((lo, hi)) =
+                                p.range.filter(|(lo, hi)| x < *lo || x > *hi)
+                            {
+                                err(
+                                    &format!("{}.{k}", n.id),
+                                    format!("value {x} is outside the allowed range {lo} to {hi}"),
                                 );
                             }
                             params[i] = x;

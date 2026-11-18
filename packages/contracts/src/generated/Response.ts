@@ -15,7 +15,7 @@ adopted?: StackAdopted, } | { "type": "stack_rejected", report: string, issues: 
 /**
  * The raw u64 as 16 hex digits (JSON numbers cannot hold it exactly).
  */
-hex: string, unit: number, } | { "type": "branch_opened", branch: string, } | { "type": "committed", event_id: string, state_hash: string, } | { "type": "discarded", branch: string, } | { "type": "job_started", job: number, total_units: number, cost: Cost, } | { "type": "job_progress", job: number, done_units: number, total_units: number, } | { "type": "job_done", job: number, done_units: number, result: unknown, } | { "type": "job_cancelled", job: number, } | { "type": "manifest", manifest: unknown, manifest_id: string, } | { "type": "scene", scene: unknown, scene_hash: string, } | { "type": "scan_toggled", event_id: string, 
+hex: string, unit: number, } | { "type": "branch_opened", branch: string, } | { "type": "committed", event_id: string, state_hash: string, } | { "type": "discarded", branch: string, } | { "type": "job_started", job: number, total_units: number, cost: Cost, } | { "type": "job_progress", job: number, done_units: number, total_units: number, } | { "type": "job_done", job: number, done_units: number, result: unknown, } | { "type": "job_cancelled", job: number, } | { "type": "manifest", manifest: unknown, manifest_id: string, } | { "type": "scene", scene: unknown, scene_hash: string, } | { "type": "atoms", atoms: unknown[], } | { "type": "scan_toggled", event_id: string, 
 /**
  * The view now in force for the audience at that address.
  */

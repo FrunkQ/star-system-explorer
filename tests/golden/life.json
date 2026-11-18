@@ -1,0 +1,85 @@
+{
+  "worlds": {
+    "earth": {
+      "hash": "c5c3c43a67cb2ed43b560495218124db939d8e2bd5665efd82505c1d304be735",
+      "summary": [
+        "ocean/ocean-sunlit 0 to -200 m",
+        "ocean/ocean-interior -200 to -3688 m",
+        "ocean/sea-floor -3688 to -3788 m",
+        "crust/deep-crust -10 to -5000 m",
+        "tropics/land-surface 10 to 0 m",
+        "tropics/soil 0 to -10 m",
+        "north-temperate/land-surface 10 to 0 m",
+        "north-temperate/soil 0 to -10 m",
+        "south-temperate/land-surface 10 to 0 m",
+        "south-temperate/soil 0 to -10 m",
+        "arctic/land-surface 10 to 0 m",
+        "arctic/soil 0 to -10 m",
+        "movile/cave 30 to -70 m",
+        "ocean/ocean-sunlit -- ocean/ocean-interior (Vertical)",
+        "ocean/ocean-sunlit -- tropics/land-surface (Vertical, guessed)",
+        "ocean/ocean-sunlit -- north-temperate/land-surface (Vertical, guessed)",
+        "ocean/ocean-sunlit -- south-temperate/land-surface (Vertical, guessed)",
+        "ocean/ocean-sunlit -- arctic/land-surface (Vertical, guessed)",
+        "ocean/ocean-interior -- ocean/sea-floor (Vertical)",
+        "ocean/sea-floor -- crust/deep-crust (Embedded)",
+        "crust/deep-crust -- tropics/soil (Vertical)",
+        "crust/deep-crust -- north-temperate/soil (Vertical)",
+        "crust/deep-crust -- south-temperate/soil (Vertical)",
+        "crust/deep-crust -- arctic/soil (Vertical)",
+        "crust/deep-crust -- movile/cave (Embedded)",
+        "tropics/land-surface -- tropics/soil (Vertical)",
+        "tropics/land-surface -- north-temperate/land-surface (Lateral)",
+        "tropics/land-surface -- south-temperate/land-surface (Lateral)",
+        "tropics/soil -- north-temperate/soil (Lateral)",
+        "tropics/soil -- south-temperate/soil (Lateral)",
+        "north-temperate/land-surface -- north-temperate/soil (Vertical)",
+        "north-temperate/land-surface -- arctic/land-surface (Lateral)",
+        "north-temperate/land-surface -- movile/cave (Embedded)",
+        "north-temperate/soil -- arctic/soil (Lateral)",
+        "north-temperate/soil -- movile/cave (Embedded)",
+        "south-temperate/land-surface -- south-temperate/soil (Vertical)",
+        "arctic/land-surface -- arctic/soil (Vertical)"
+      ]
+    },
+    "europa": {
+      "hash": "65c592802ab0bd85bfbdebe86f1dbe0a62c90a07536ff951d632930dd62a6a66",
+      "summary": [
+        "ocean/sea-floor -120000 to -120100 m",
+        "ocean/under-ice-ocean -20000 to -120000 m",
+        "ocean/sea-floor -- ocean/under-ice-ocean (Vertical)"
+      ]
+    },
+    "mars": {
+      "hash": "d9d0ddce7f2986903c625c2fe254e5ebd540da397375f86acdaa889a03fd66cf",
+      "summary": [
+        "crust/deep-crust -10 to -5000 m",
+        "surface/land-surface 10 to 0 m",
+        "surface/soil 0 to -10 m",
+        "arsia-cave/cave 0 to -100 m",
+        "crust/deep-crust -- surface/soil (Vertical)",
+        "crust/deep-crust -- arsia-cave/cave (Embedded)",
+        "surface/land-surface -- surface/soil (Vertical)",
+        "surface/land-surface -- arsia-cave/cave (Vertical)",
+        "surface/soil -- arsia-cave/cave (Embedded)"
+      ]
+    },
+    "titan": {
+      "hash": "de56352396e60575e3a829f5d8b345fd15b2354d85645e0bba023912ea4bbffd",
+      "summary": [
+        "ocean/under-ice-ocean -100000 to -400000 m",
+        "kraken/hydrocarbon-lake 0 to -300 m",
+        "ligeia/hydrocarbon-lake 0 to -160 m"
+      ]
+    },
+    "venus": {
+      "hash": "ff4b7d6f913af13ad322c9c0ca85f28c6e93bc71c723c118611c7dbbd139e617",
+      "summary": [
+        "clouds/cloud-deck 62000 to 48000 m",
+        "plains/land-surface 10 to 0 m",
+        "plains/soil 0 to -10 m",
+        "plains/land-surface -- plains/soil (Vertical)"
+      ]
+    }
+  }
+}

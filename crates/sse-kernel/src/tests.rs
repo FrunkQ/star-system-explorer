@@ -140,6 +140,36 @@ fn contract_behaviours() {
     assert_eq!(l[95], l[89], "a second tap undoes");
     assert_eq!(l[96]["code"], "bad_data_view");
     assert_eq!(l[97]["code"], "bad_address");
+    // Draft observe setup (preview before Apply): a different scene, and
+    // nothing recorded, so the stack's scene and the state hash are unchanged.
+    assert!(l[99]["scene"]["subjects"]
+        .as_array()
+        .unwrap()
+        .iter()
+        .any(|s| s["view"] == "scanned"));
+    assert_ne!(l[99], l[95]);
+    assert_eq!(l[100], l[95]);
+    assert_eq!(l[101], l[98]);
+    assert_eq!(l[102]["code"], "bad_observe");
+    // Atom descriptions (U3 gap 2): ports with kinds and readable dimensions, parameters with ranges.
+    let atom = &l[103]["atoms"][0];
+    assert_eq!(atom["id"], "toy.luminosity_from_mass");
+    assert_eq!(atom["outputs"][0]["kind"], "star.luminosity");
+    assert!(atom["params"][0]["range"].is_array() && atom["params"][0]["description"].is_string());
+    assert_eq!(l[104]["code"], "unknown_atom");
+    // Flow tests at load_stack (gap 5) and readable validation text (gap 3).
+    assert!(l[105]["issues"][0]
+        .as_str()
+        .unwrap()
+        .contains("test sun and earth: planet.surface_temperature"));
+    let range = l[106]["issues"][0].as_str().unwrap();
+    assert!(
+        range.contains("lum.exponent: value 99 is outside the allowed range 1 to 6")
+            && !range.contains("Some(")
+    );
+    // Explain a node that publishes nothing (gap 4), by node.port.
+    assert_eq!(l[108]["type"], "explanation");
+    assert_eq!(l[109]["code"], "unknown_kind");
 }
 
 fn send(k: &mut crate::Kernel, req: serde_json::Value) -> serde_json::Value {

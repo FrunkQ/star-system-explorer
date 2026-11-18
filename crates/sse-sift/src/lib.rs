@@ -3,9 +3,11 @@
 //! Generic: suites and packs supply the rules, atlases and sifters as data.
 #![forbid(unsafe_code)]
 
+pub mod classic;
 pub mod classify;
 pub mod pack;
 pub mod predicate;
+pub mod relabel;
 pub mod rules;
 pub mod scenario;
 pub mod sifter;
@@ -27,6 +29,10 @@ pub fn ops() -> Vec<(&'static str, CostClass, &'static str)> {
     ]
 }
 
+#[cfg(test)]
+mod base_atlas_tests;
+#[cfg(test)]
+mod classic_tests;
 #[cfg(test)]
 mod tests;
 

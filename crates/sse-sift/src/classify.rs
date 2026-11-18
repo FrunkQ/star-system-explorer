@@ -23,6 +23,8 @@ pub enum Scale {
     Flag,
 }
 
+/// One registered axis (classification design section 3): a quantity the
+/// kernel publishes, read for classification on a scale.
 #[derive(Clone, PartialEq, Debug, Serialize, Deserialize)]
 pub struct Axis {
     /// Fact name the axis reads.
@@ -33,6 +35,40 @@ pub struct Axis {
     pub span: Option<(f64, f64)>,
     #[serde(default)]
     pub label: String,
+    /// Unit of the axis value as classes write it (after `divide_by`).
+    #[serde(default, skip_serializing_if = "String::is_empty")]
+    pub unit: String,
+    /// The fact is divided by this to give the axis value (a unit change,
+    /// e.g. kg to Earth masses).
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub divide_by: Option<f64>,
+    /// Value used when the fact is absent. Only for schemes that must
+    /// reproduce an older classifier's defaults (SSE 3 classic); "absent is
+    /// not typical" otherwise.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub missing: Option<Value>,
+    /// Body kinds the axis applies to (empty: any).
+    #[serde(default, skip_serializing_if = "Vec::is_empty")]
+    pub applies_to: Vec<String>,
+    #[serde(default, skip_serializing_if = "String::is_empty")]
+    pub explain_ref: String,
+    /// No flow publishes this fact yet: it is read as authored or imported.
+    #[serde(default, skip_serializing_if = "std::ops::Not::not")]
+    pub provisional: bool,
+}
+
+impl Axis {
+    /// The subject's value on this axis.
+    pub fn value(&self, s: &Subject) -> Option<Value> {
+        let v = s
+            .get(&self.field)
+            .cloned()
+            .or_else(|| self.missing.clone())?;
+        match (self.divide_by, as_num(&v)) {
+            (Some(d), Some(x)) => Some(Value::Float(x / d)),
+            _ => Some(v),
+        }
+    }
 }
 
 #[derive(Clone, PartialEq, Debug, Serialize, Deserialize)]
@@ -60,6 +96,89 @@ pub enum ClassKind {
     Modifier,
 }
 
+#[derive(Clone, Copy, PartialEq, Eq, Debug, Default, Serialize, Deserialize)]
+#[serde(rename_all = "kebab-case")]
+pub enum Meaning {
+    /// May drive generation and gates.
+    #[default]
+    Identity,
+    /// Only changes how a thing reads or draws.
+    Flourish,
+}
+
+#[derive(Clone, Copy, PartialEq, Eq, Debug, Default, Serialize, Deserialize)]
+#[serde(rename_all = "kebab-case")]
+pub enum EvidenceKind {
+    #[default]
+    Science,
+    Speculative,
+    Fictional,
+}
+
+#[derive(Clone, PartialEq, Debug, Default, Serialize, Deserialize)]
+pub struct Names {
+    #[serde(default)]
+    pub physics: String,
+    #[serde(default)]
+    pub plain: String,
+    #[serde(default)]
+    pub story: String,
+}
+
+/// Where members usually sit: for placing and generating, never for recognising.
+#[derive(Clone, PartialEq, Debug, Serialize, Deserialize)]
+pub struct Typical {
+    pub axis: String,
+    pub centre: f64,
+    pub spread: f64,
+}
+
+#[derive(Clone, PartialEq, Debug, Serialize, Deserialize)]
+pub struct Image {
+    pub file: String,
+    #[serde(default)]
+    pub licence: String,
+    #[serde(default)]
+    pub credit: String,
+}
+
+#[derive(Clone, PartialEq, Debug, Default, Serialize, Deserialize)]
+pub struct Look {
+    #[serde(default, skip_serializing_if = "String::is_empty")]
+    pub mark: String,
+    #[serde(default, skip_serializing_if = "String::is_empty")]
+    pub colour: String,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub image: Option<Image>,
+}
+
+#[derive(Clone, PartialEq, Debug, Default, Serialize, Deserialize)]
+pub struct Learn {
+    #[serde(default)]
+    pub summary: String,
+    #[serde(default, skip_serializing_if = "String::is_empty")]
+    pub explain_ref: String,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub link: Option<String>,
+}
+
+#[derive(Clone, Copy, PartialEq, Eq, Debug, Serialize, Deserialize)]
+#[serde(rename_all = "kebab-case")]
+pub enum Expect {
+    In,
+    Out,
+}
+
+/// A known world that must (or must not) match: the class's own test.
+#[derive(Clone, PartialEq, Debug, Serialize, Deserialize)]
+pub struct Example {
+    pub name: String,
+    pub values: BTreeMap<String, Value>,
+    pub expect: Expect,
+}
+
+/// One class record (classification design section 4). Everything a
+/// picker, generator, symbol, image, explanation or test needs reads this.
 #[derive(Clone, PartialEq, Debug, Serialize, Deserialize)]
 pub struct Class {
     pub id: String,
@@ -73,15 +192,117 @@ pub struct Class {
     /// Least fit to count (base: below it the body is unclassified; modifier: added at or above). Default 0.6, as SSE 3.
     #[serde(default = "point_six")]
     pub threshold: f64,
+    #[serde(default, skip_serializing_if = "is_default")]
+    pub names: Names,
+    #[serde(default, skip_serializing_if = "is_default")]
+    pub meaning: Meaning,
+    /// Preconditions: failing one rules the class out, passing earns nothing (SSE 3 `gate`).
+    #[serde(default, skip_serializing_if = "Vec::is_empty")]
+    pub gate: Vec<Bound>,
+    /// Score weight (classic scoring); 1 by default.
+    #[serde(default = "one", skip_serializing_if = "is_one")]
+    pub weight: f64,
+    #[serde(default, skip_serializing_if = "Vec::is_empty")]
+    pub typical: Vec<Typical>,
+    /// Cross-references: class ids or conditions another suite settles (C3).
+    #[serde(default, skip_serializing_if = "Vec::is_empty")]
+    pub needs: Vec<String>,
+    /// 0..1, the GM's exotic dial.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub rarity: Option<f64>,
+    /// Conditions under which generation may aim for this class (SSE 3 `formation`).
+    #[serde(default, skip_serializing_if = "Vec::is_empty")]
+    pub generate: Vec<Bound>,
+    #[serde(default, skip_serializing_if = "is_default")]
+    pub look: Look,
+    #[serde(default, skip_serializing_if = "is_default")]
+    pub learn: Learn,
+    #[serde(default, skip_serializing_if = "Vec::is_empty")]
+    pub examples: Vec<Example>,
+    #[serde(default, skip_serializing_if = "String::is_empty")]
+    pub source: String,
+    #[serde(default, skip_serializing_if = "String::is_empty")]
+    pub notes: String,
+    #[serde(default, skip_serializing_if = "is_default")]
+    pub evidence: EvidenceKind,
 }
 fn point_six() -> f64 {
     0.6
+}
+impl Class {
+    /// The same class with these bounds (tests and builders).
+    pub fn with_region(mut self, region: Vec<Bound>) -> Self {
+        self.region = region;
+        self
+    }
+}
+fn one() -> f64 {
+    1.0
+}
+fn is_one(x: &f64) -> bool {
+    *x == 1.0
+}
+fn is_default<T: Default + PartialEq>(t: &T) -> bool {
+    *t == T::default()
+}
+
+#[derive(Clone, Copy, PartialEq, Eq, Debug, Default, Serialize, Deserialize)]
+#[serde(rename_all = "kebab-case")]
+pub enum Scoring {
+    /// Lowest per-axis fit; deepest, then fittest, then smallest region (section 5).
+    #[default]
+    Region,
+    /// SSE 3's fingerprint scoring, reproduced exactly (`classic.rs`).
+    Classic,
+}
+
+/// What a scheme says when nothing fits (SSE 3's last resort, made explicit).
+#[derive(Clone, PartialEq, Debug, Serialize, Deserialize)]
+pub struct Fallback {
+    pub axis: String,
+    pub above: f64,
+    pub high: String,
+    pub low: String,
+    pub unknown: String,
+}
+
+/// One atlas answering one question (section 6). A body gets one base label per scheme.
+#[derive(Clone, PartialEq, Debug, Serialize, Deserialize)]
+pub struct Scheme {
+    pub id: String,
+    #[serde(default)]
+    pub question: String,
+    #[serde(default)]
+    pub scoring: Scoring,
+    /// Classic: relative soft-edge tolerance (SSE 3: 0.15).
+    #[serde(default = "point_one_five")]
+    pub tolerance: f64,
+    /// Classic: most classes on a body, base included (SSE 3 `maxClasses`).
+    #[serde(default = "four")]
+    pub max_classes: usize,
+    /// Classic: a runner-up within this share of the winner is borderline (SSE 3: 0.9).
+    #[serde(default = "point_nine")]
+    pub borderline: f64,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub fallback: Option<Fallback>,
+}
+fn point_one_five() -> f64 {
+    0.15
+}
+fn four() -> usize {
+    4
+}
+fn point_nine() -> f64 {
+    0.9
 }
 
 #[derive(Clone, PartialEq, Debug, Default, Serialize, Deserialize)]
 pub struct Atlas {
     pub axes: BTreeMap<String, Axis>,
     pub classes: Vec<Class>,
+    /// Schemes by id; a scheme with no record scores by region.
+    #[serde(default)]
+    pub schemes: BTreeMap<String, Scheme>,
     /// Margin a new base class must beat the held one by (stickiness).
     #[serde(default = "point_one")]
     pub sticky_margin: f64,
@@ -122,6 +343,9 @@ pub struct Label {
     pub nearest: Vec<ClassFit>,
     /// True when the held label was kept by stickiness although another class fits better.
     pub kept_by_stickiness: bool,
+    /// Classic scoring only: SSE 3's own output and working.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub classic: Option<crate::classic::ClassicWorking>,
 }
 
 #[derive(Clone, Debug, PartialEq)]
@@ -132,7 +356,7 @@ impl std::fmt::Display for AtlasError {
     }
 }
 
-fn bound_axis(b: &Bound) -> &str {
+pub(crate) fn bound_axis(b: &Bound) -> &str {
     match b {
         Bound::Numeric { axis, .. } | Bound::AnyOf { axis, .. } | Bound::Flag { axis, .. } => axis,
     }
@@ -159,6 +383,20 @@ impl Atlas {
             if self.ancestry(&c.id).len() > self.classes.len() {
                 return Err(AtlasError(format!("class {} has a parent cycle", c.id)));
             }
+            if let Some(sc) = self.schemes.get(&c.scheme) {
+                if sc.scoring == Scoring::Classic && c.region.is_empty() {
+                    return Err(AtlasError(format!("class {} has no bands", c.id)));
+                }
+            }
+            for b in c.gate.iter().chain(&c.generate) {
+                if !self.axes.contains_key(bound_axis(b)) {
+                    return Err(AtlasError(format!(
+                        "class {} uses unknown axis {}",
+                        c.id,
+                        bound_axis(b)
+                    )));
+                }
+            }
             for b in &c.region {
                 let a = bound_axis(b);
                 if !self.axes.contains_key(a) {
@@ -174,15 +412,28 @@ impl Atlas {
                 }
             }
         }
+        for (id, sc) in &self.schemes {
+            if *id != sc.id {
+                return Err(AtlasError(format!("scheme {id} is filed under another id")));
+            }
+            if let Some(f) = &sc.fallback {
+                if !self.axes.contains_key(&f.axis) {
+                    return Err(AtlasError(format!(
+                        "scheme {id}: fallback uses unknown axis {}",
+                        f.axis
+                    )));
+                }
+            }
+        }
         Ok(())
     }
 
-    fn class(&self, id: &str) -> Option<&Class> {
+    pub(crate) fn class(&self, id: &str) -> Option<&Class> {
         self.classes.iter().find(|c| c.id == id)
     }
 
     /// The class and its ancestors, nearest first (bounded against cycles).
-    fn ancestry(&self, id: &str) -> Vec<&Class> {
+    pub(crate) fn ancestry(&self, id: &str) -> Vec<&Class> {
         let mut out = Vec::new();
         let mut cur = self.class(id);
         while let Some(c) = cur {
@@ -205,7 +456,7 @@ impl Atlas {
     fn axis_fit(&self, b: &Bound, s: &Subject) -> AxisFit {
         let a = bound_axis(b).to_string();
         let axis = &self.axes[&a];
-        let value = s.get(&axis.field).cloned();
+        let value = axis.value(s);
         match b {
             Bound::Numeric { core, fringe, .. } => {
                 let Some(x) = value.as_ref().and_then(as_num) else {
@@ -270,9 +521,10 @@ impl Atlas {
     pub fn fit(&self, class: &str, s: &Subject) -> Option<ClassFit> {
         let chain = self.ancestry(class);
         let c = *chain.first()?;
+        // Gates count like region bounds: failing one rules the class out.
         let mut axes: Vec<AxisFit> = chain
             .iter()
-            .flat_map(|k| k.region.iter())
+            .flat_map(|k| k.region.iter().chain(&k.gate))
             .map(|b| self.axis_fit(b, s))
             .collect();
         axes.sort_by(|a, b| a.axis.cmp(&b.axis).then(a.fit.total_cmp(&b.fit)));
@@ -319,6 +571,13 @@ impl Atlas {
 
     /// Label a subject in one scheme. `held` is the base label it had before.
     pub fn label(&self, scheme: &str, s: &Subject, held: Option<&str>) -> Label {
+        if let Some(sc) = self
+            .schemes
+            .get(scheme)
+            .filter(|sc| sc.scoring == Scoring::Classic)
+        {
+            return crate::classic::label(self, sc, s);
+        }
         let mut fits: Vec<(ClassFit, f64, ClassKind)> = self
             .classes
             .iter()
@@ -369,7 +628,111 @@ impl Atlas {
             modifiers,
             nearest: fits.into_iter().take(5).map(|f| f.0).collect(),
             kept_by_stickiness: kept,
+            classic: None,
         }
+    }
+
+    /// Every class example that does not come out as it says: an `in`
+    /// example must carry the class (as base, modifier or ancestor of the
+    /// base), an `out` example must not. Empty when all pass.
+    pub fn check_examples(&self) -> Vec<String> {
+        let mut bad = Vec::new();
+        for c in &self.classes {
+            for ex in &c.examples {
+                let l = self.label(&c.scheme, &Subject::new(ex.values.clone()), None);
+                let carries = l.modifiers.contains(&c.id)
+                    || l.base
+                        .as_deref()
+                        .is_some_and(|b| self.ancestry(b).iter().any(|k| k.id == c.id));
+                if carries != (ex.expect == Expect::In) {
+                    bad.push(format!(
+                        "{}: example {} should be {} but is labelled {:?} {:?}",
+                        c.id,
+                        ex.name,
+                        if ex.expect == Expect::In { "in" } else { "out" },
+                        l.base,
+                        l.modifiers
+                    ));
+                }
+            }
+        }
+        bad
+    }
+
+    /// Pairs of base classes in one region-scored scheme whose cores can
+    /// both hold the same subject at the same depth, so the label would come
+    /// down to a tie-break. Two classes are apart when some axis both
+    /// constrain (region or gate, with ancestors) has cores that meet in no
+    /// more than a point, categories with nothing in common, or opposite
+    /// flags. An axis only one of them constrains does not separate them.
+    pub fn overlaps(&self, scheme: &str) -> Vec<(String, String)> {
+        #[derive(Clone)]
+        enum Span {
+            Num(f64, f64),
+            Cat(BTreeSet<String>),
+            Flag(bool),
+            Never,
+        }
+        let spans = |id: &str| {
+            let mut m: BTreeMap<&str, Span> = BTreeMap::new();
+            for b in self
+                .ancestry(id)
+                .iter()
+                .flat_map(|k| k.region.iter().chain(&k.gate))
+            {
+                let next = match b {
+                    Bound::Numeric { core, .. } => Span::Num(core.0, core.1),
+                    Bound::AnyOf { any_of, .. } => Span::Cat(any_of.iter().cloned().collect()),
+                    Bound::Flag { is, .. } => Span::Flag(*is),
+                };
+                let a = bound_axis(b);
+                let merged = match (m.get(a).cloned(), next) {
+                    (None, n) => n,
+                    (Some(Span::Num(a0, a1)), Span::Num(b0, b1)) => {
+                        Span::Num(a0.max(b0), a1.min(b1))
+                    }
+                    (Some(Span::Cat(x)), Span::Cat(y)) => {
+                        Span::Cat(x.intersection(&y).cloned().collect())
+                    }
+                    (Some(Span::Flag(x)), Span::Flag(y)) if x == y => Span::Flag(x),
+                    _ => Span::Never,
+                };
+                m.insert(a, merged);
+            }
+            m
+        };
+        let bases: Vec<&Class> = self
+            .classes
+            .iter()
+            .filter(|c| c.scheme == scheme && c.kind == ClassKind::Base)
+            .collect();
+        let mut out = Vec::new();
+        for (i, x) in bases.iter().enumerate() {
+            let (sx, dx) = (spans(&x.id), self.ancestry(&x.id).len());
+            for y in &bases[i + 1..] {
+                if self.ancestry(&y.id).len() != dx {
+                    continue;
+                }
+                let sy = spans(&y.id);
+                let apart = sx.iter().any(|(a, p)| match (p, sy.get(a)) {
+                    (_, None) => false,
+                    (Span::Never, _) | (_, Some(Span::Never)) => true,
+                    (Span::Num(a0, a1), Some(Span::Num(b0, b1))) => a1.min(*b1) <= a0.max(*b0),
+                    (Span::Cat(p), Some(Span::Cat(q))) => p.is_disjoint(q),
+                    (Span::Flag(p), Some(Span::Flag(q))) => p != q,
+                    _ => true,
+                });
+                if !apart {
+                    out.push((x.id.clone(), y.id.clone()));
+                }
+            }
+        }
+        out
+    }
+
+    /// Content hash of the atlas (which classes and axes produced a label).
+    pub fn content_hash(&self) -> sse_core::ContentHash {
+        sse_core::ContentHash::of(self).expect("atlas holds no NaN")
     }
 
     /// Label a time series; returns (time, old, new) for every change.

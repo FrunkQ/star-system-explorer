@@ -1,0 +1,56 @@
+{
+ "format": "sse.world-stack/1",
+ "body": "u:sol/sys:0/body:8",
+ "name": "Europa today",
+ "radius_m": 1560800.0,
+ "sources": "Ice shell 15 to 25 km over a 60 to 150 km ocean (Schubert et al. 2004, Jupiter: The Planet, Satellites and Magnetosphere); surface dose about 5.4 Sv/day (Paranicas et al. 2009).",
+ "shells": [
+  {
+   "key": "ice",
+   "kind": "ice_shell",
+   "name": "Ice shell",
+   "top_m": 0.0,
+   "bottom_m": -20000.0,
+   "properties": {
+    "top_temperature_k": 100.0,
+    "radiation_dose_msv_yr": 2000000.0
+   }
+  },
+  {
+   "key": "ocean",
+   "kind": "sub_ice_ocean",
+   "name": "Ocean",
+   "top_m": -20000.0,
+   "bottom_m": -120000.0,
+   "properties": {
+    "temperature_k": 273.0,
+    "pressure_min_pa": 24000000.0,
+    "pressure_max_pa": 140000000.0,
+    "salinity": 0.03,
+    "radiation_dose_msv_yr": 0.0
+   },
+   "provides": [
+    "habitat"
+   ]
+  },
+  {
+   "key": "mantle",
+   "kind": "mantle",
+   "name": "Rock mantle",
+   "top_m": -120000.0,
+   "bottom_m": -800000.0,
+   "provides": [
+    "heat"
+   ]
+  },
+  {
+   "key": "core",
+   "kind": "core",
+   "name": "Iron core",
+   "top_m": -800000.0,
+   "bottom_m": -1560800.0
+  }
+ ],
+ "regions": [],
+ "features": []
+}
