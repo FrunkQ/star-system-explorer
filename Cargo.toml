@@ -25,6 +25,7 @@ sse-chronicle = { path = "crates/sse-chronicle" }
 sse-flow = { path = "crates/sse-flow" }
 sse-pack = { path = "crates/sse-pack" }
 sse-atoms = { path = "crates/sse-atoms" }
+sse-import-v3 = { path = "crates/sse-import-v3" }
 sse-kernel = { path = "crates/sse-kernel" }
 
 [profile.release]

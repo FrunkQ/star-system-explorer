@@ -13,9 +13,57 @@ fn main() -> ExitCode {
                 ExitCode::FAILURE
             }
         }
+        Some("import-v3") => import_v3(&args[1..]),
         _ => {
-            eprintln!("usage: sse <command>\n  harness   run the cross-device hash harness and print digests");
+            eprintln!(
+                "usage: sse <command>\n  harness                      run the cross-device hash harness and print digests\n  import-v3 <file> [universe]  import a V3 starmap.json or system.json; print the report"
+            );
             ExitCode::from(2)
+        }
+    }
+}
+
+/// `sse import-v3 <file> [universe-id]`: the report goes to stdout, a summary
+/// to stderr. A `.sse.zip` must be unpacked first (its `starmap.json` or
+/// `system.json` is the save).
+fn import_v3(args: &[String]) -> ExitCode {
+    let Some(path) = args.first() else {
+        eprintln!("usage: sse import-v3 <starmap.json | system.json> [universe-id]");
+        return ExitCode::from(2);
+    };
+    if path.ends_with(".zip") {
+        eprintln!("unpack the .sse.zip first and pass its starmap.json or system.json");
+        return ExitCode::from(2);
+    }
+    let text = match std::fs::read_to_string(path) {
+        Ok(t) => t,
+        Err(e) => {
+            eprintln!("{path}: {e}");
+            return ExitCode::FAILURE;
+        }
+    };
+    let id = args.get(1).map(String::as_str).unwrap_or("v3-import");
+    match sse_import_v3::import_json(&text, id) {
+        Ok(im) => {
+            let r = &im.report;
+            print!("{}", r.to_json());
+            eprintln!(
+                "{}: {} systems, {} bodies, {} constructs, {} facts; {} derived values compared, {} outside tolerance; {} unclassified fields kept; state {}",
+                path,
+                r.counts.systems,
+                r.counts.bodies,
+                r.counts.constructs,
+                r.counts.facts,
+                r.differences.len(),
+                r.differences_outside_tolerance(),
+                r.unclassified.values().sum::<u32>(),
+                r.state_hash
+            );
+            ExitCode::SUCCESS
+        }
+        Err(e) => {
+            eprintln!("{path}: {e}");
+            ExitCode::FAILURE
         }
     }
 }
