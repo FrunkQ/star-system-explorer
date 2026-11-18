@@ -52,7 +52,8 @@ try {
     await screenBtn("Symbols").click();
     const sym = page.getByRole("region", { name: "Symbols" });
     await sym.getByRole("radio", { name: /^Colour-coded/ }).click();
-    await sym.getByText(/Colours are placeholders/).first().waitFor();
+    await sym.getByText(/SSE 3's own colours/).first().waitFor();
+    assert.equal(await sym.getByText(/Placeholder colours/).count(), 0, "no placeholder colours are left");
     const previews = await sym.locator("[data-preview-theme]").count();
     assert.equal(previews, ALL_THEMES.length, "a preview under every theme");
     const one = ALL_THEMES.find((t) => t.supports.colours !== "full");
@@ -71,7 +72,22 @@ try {
     assert.equal(await page.getAttribute("[data-state-hash]", "data-state-hash"), hash, "symbols never change the state hash");
     await screenBtn("Chart").click();
     assert.equal(await chartMark("Tarn"), "disc band #123456", "the chart draws the GM's colour over the diagrammatic shading");
-    assert.match(await chartMark("Ember"), /^disc solid #[0-9A-F]{6}$/);
+    assert.match(await chartMark("Ember"), /^disc solid #cc6600$/i, "Ember is a hot rock: V3's terrestrial colour");
+
+    // SSE 3's colours: a pasted palette override, then a save's tag categories.
+    await screenBtn("Symbols").click();
+    await sym.getByText("Colours from SSE 3").click();
+    await sym.getByLabel("SSE 3 palette overrides").fill(JSON.stringify({ "--body-gas-giant": "#224466", "--bg": "#000000" }));
+    await sym.getByRole("button", { name: "Apply palette" }).click();
+    const rep = sym.getByRole("status", { name: "SSE 3 colour import" });
+    assert.match(await rep.innerText(), /Applied 1 of 2 V3 colours[\s\S]*--bg left: A theme colour/);
+    await sym.getByLabel("SSE 3 save file").setInputFiles({ name: "starmap.json", mimeType: "application/json", buffer: Buffer.from(JSON.stringify({ coiCategories: [{ id: "owner", label: "Owner", color: "#3366aa", textColor: "#ffffff", tags: [] }], systems: [{ id: "s", name: "S", nodes: [{ id: "b", name: "B", parentId: "s", apparentColorHex: "#808080", icon_color: "#ffcc00" }] }] })) });
+    await sym.locator("[data-tag-category='owner']").waitFor();
+    assert.match(await rep.innerText(), /1 tag category[\s\S]*1 authored object colour[\s\S]*1 derived true colour/);
+    await shot(page, "symbols-v3-import");
+    assert.equal(await page.getAttribute("[data-state-hash]", "data-state-hash"), hash, "importing colours never changes the state hash");
+    await screenBtn("Chart").click();
+    assert.match(await chartMark("Vault"), /#224466/i, "the chart draws the imported gas-giant colour");
 
     // Back to the shipped symbols.
     await screenBtn("Symbols").click();
@@ -97,7 +113,7 @@ try {
     await players.waitForFunction(() => /band/.test(document.querySelector(".pchart [role=button][aria-label^='Tarn'] [data-mark]")?.getAttribute("data-mark") ?? ""));
     await players.getByLabel("Symbols").selectOption({ label: "Colour-coded" });
     await players.getByLabel("Theme").selectOption("chart");
-    assert.match(await pmark(), /#[0-9A-F]{6}/, "colour under a full-colour theme");
+    assert.match(await pmark(), /#[0-9A-F]{6}/i, "colour under a full-colour theme");
     await players.getByLabel("Theme").selectOption(one.id);
     assert.doesNotMatch(await pmark(), /#/, `no colour under ${one.id}`);
     await shot(players, "players-phosphor-symbols");

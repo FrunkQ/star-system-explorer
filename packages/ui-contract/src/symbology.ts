@@ -57,6 +57,15 @@ export interface Binding {
   fallback?: string | number | boolean | null;
   /** Only in force under a theme limit: "one-colour" bindings stand in for a colour the theme cannot carry. */
   when?: "one-colour";
+  /** Sources tried before `from`, in order; the first whose scale knows the object wins (V3's "first match wins", e.g. a habitability tag before the class). */
+  prefer?: { from: string; scale: Scale }[];
+}
+
+/** A V3 tag category's colours (from a V3 save's coiCategories), for tag chips. */
+export interface TagColour {
+  label?: string;
+  color?: string;
+  textColor?: string;
 }
 
 export interface SymbologyDoc {
@@ -70,8 +79,10 @@ export interface SymbologyDoc {
   bindings: Binding[];
   /** "auto", or the legend's entries in hand order (source values). */
   legend?: "auto" | string[];
-  /** True while a table holds stand-in values that must be replaced (for example V3's colours, not yet read). */
+  /** True while a table holds stand-in values that must be replaced. */
   placeholder?: boolean | string;
+  /** Tag category colours by category id (V3's coiCategories), for tag chips; never a mark. */
+  tag_colours?: Record<string, TagColour>;
 }
 
 /** What a theme can carry (H8.4A), and its own palette for "palette:N" colours. */
@@ -111,13 +122,21 @@ function lookup(scale: Scale, v: string | number | undefined): string | number |
 }
 
 /** The value a binding reads, and what its scale makes of it. */
-function evaluate(b: Binding, s: MarkSubject): { key: string | undefined; out: string | number | boolean | undefined } {
+function evaluate(b: Pick<Binding, "from" | "scale" | "prefer">, s: MarkSubject): { key: string | undefined; out: string | number | boolean | undefined; from: string } {
+  for (const p of b.prefer ?? []) {
+    const r = evaluateOne(p, s);
+    if (r.out !== undefined) return r;
+  }
+  return evaluateOne(b, s);
+}
+
+function evaluateOne(b: Pick<Binding, "from" | "scale">, s: MarkSubject): { key: string | undefined; out: string | number | boolean | undefined; from: string } {
   if (b.from === "class") {
     for (const c of s.classes) {
       const out = lookup(b.scale, c);
-      if (out !== undefined) return { key: c, out };
+      if (out !== undefined) return { key: c, out, from: b.from };
     }
-    return { key: undefined, out: undefined };
+    return { key: undefined, out: undefined, from: b.from };
   }
   let v: string | number | undefined;
   if (b.from === "kind") v = s.kind;
@@ -125,7 +144,7 @@ function evaluate(b: Binding, s: MarkSubject): { key: string | undefined; out: s
     const prefix = b.from.slice(4);
     v = s.tags.find((t) => t.startsWith(prefix))?.slice(prefix.length);
   } else if (b.from.startsWith("number:")) v = s.numbers?.[b.from.slice(7)];
-  return { key: v === undefined ? undefined : String(v), out: lookup(b.scale, v) };
+  return { key: v === undefined ? undefined : String(v), out: lookup(b.scale, v), from: b.from };
 }
 
 export interface Marker {
@@ -152,7 +171,7 @@ export function markerFor(id: string, registry: readonly SymbologyDoc[], theme: 
   const bindings = resolveSymbology(id, registry).filter((b) => b.when === undefined || (b.when === "one-colour" && oneColour));
   const patternBound = bindings.some((b) => b.channel === "fill_pattern");
   const colourOrder: string[] = [];
-  for (const b of bindings) if (b.channel === "colour" && "table" in b.scale) for (const v of Object.values(b.scale.table)) if (typeof v === "string" && !colourOrder.includes(v)) colourOrder.push(v);
+  for (const b of bindings) if (b.channel === "colour") for (const src of [{ scale: b.scale }, ...(b.prefer ?? [])]) if ("table" in src.scale) for (const v of Object.values(src.scale.table)) if (typeof v === "string" && !colourOrder.includes(v)) colourOrder.push(v);
   const collapse = !oneColour ? null : patternBound ? "One-colour theme: colours are dropped; patterns and shapes carry the classes." : "One-colour theme: each colour becomes a pattern, in the legend's order (solid, hatch, stipple, band, cross, grid, dash, hollow).";
   const paint = (c: string): string | null => {
     const p = /^palette:(\d+)$/.exec(c);
@@ -218,13 +237,15 @@ export function legendFor(marker: Marker, opts: { present?: readonly MarkSubject
     if (b.applies_to !== kind && b.applies_to !== "*") continue;
     // Sizes are magnitudes, not categories: the legend lists what kind a body is.
     if (b.channel === "size" || b.channel === "tone") continue;
-    if (!(b.from === "class" || b.from.startsWith("tag:")) || !("table" in b.scale)) continue;
-    const keys = opts.present
-      ? opts.present.filter((s) => s.kind === kind).map((s) => evaluate(b, s).key).filter((k): k is string => k !== undefined && lookup(b.scale, k) !== undefined)
-      : Object.keys(b.scale.table).filter((k) => !k.endsWith("*"));
-    for (const k of keys) {
-      const subject: MarkSubject = b.from === "class" ? { kind, classes: [k], tags: [] } : { kind, classes: [], tags: [`${b.from.slice(4)}${k}`] };
-      add(k, b.channel, subject);
+    for (const src of [...(b.prefer ?? []), { from: b.from, scale: b.scale }]) {
+      if (!(src.from === "class" || src.from.startsWith("tag:")) || !("table" in src.scale)) continue;
+      const keys = opts.present
+        ? opts.present.filter((s) => s.kind === kind).map((s) => evaluate(b, s)).filter((r) => r.from === src.from && r.key !== undefined && r.out !== undefined).map((r) => r.key!)
+        : Object.keys(src.scale.table).filter((k) => !k.endsWith("*"));
+      for (const k of keys) {
+        const subject: MarkSubject = src.from === "class" ? { kind, classes: [k], tags: [] } : { kind, classes: [], tags: [`${src.from.slice(4)}${k}`] };
+        add(k, b.channel, subject);
+      }
     }
   }
   // One entry per value: a class drawn by several channels is one line.
@@ -245,6 +266,8 @@ export function sameLook(a: Mark, b: Mark): boolean {
   return a.shape === b.shape && a.fill_pattern === b.fill_pattern && a.colour === b.colour && a.ring === b.ring && a.glyph === b.glyph && a.outline === b.outline;
 }
 
+const HEX_OR_PALETTE = /^(#[0-9A-Fa-f]{6}|palette:\d+)$/;
+
 /** Why a symbology document is malformed, or null. */
 export function checkSymbology(d: SymbologyDoc, registry: readonly SymbologyDoc[]): string | null {
   if (d.schema !== "sse.symbology/1") return "not an sse.symbology/1 document";
@@ -252,10 +275,15 @@ export function checkSymbology(d: SymbologyDoc, registry: readonly SymbologyDoc[
   for (const b of d.bindings) {
     if (!CHANNELS.includes(b.channel)) return `unknown channel ${b.channel}`;
     if (b.when !== undefined && b.when !== "one-colour") return `binding condition ${String(b.when)} is not one-colour`;
-    if (!(b.from === "kind" || b.from === "class" || b.from.startsWith("tag:") || b.from.startsWith("number:"))) return `binding source ${b.from} is not kind, class, tag: or number:`;
-    if (b.channel === "colour" && "table" in b.scale) {
-      for (const v of Object.values(b.scale.table)) if (typeof v !== "string" || !/^(#[0-9A-Fa-f]{6}|palette:\d+)$/.test(v)) return `colour ${String(v)} must be #RRGGBB or palette:N`;
+    for (const src of [b, ...(b.prefer ?? [])]) {
+      if (!(src.from === "kind" || src.from === "class" || src.from.startsWith("tag:") || src.from.startsWith("number:"))) return `binding source ${src.from} is not kind, class, tag: or number:`;
+      if (b.channel === "colour" && "table" in src.scale) {
+        for (const v of Object.values(src.scale.table)) if (typeof v !== "string" || !HEX_OR_PALETTE.test(v)) return `colour ${String(v)} must be #RRGGBB or palette:N`;
+      }
     }
+  }
+  for (const [id, t] of Object.entries(d.tag_colours ?? {})) {
+    for (const v of [t.color, t.textColor]) if (v !== undefined && !/^#[0-9A-Fa-f]{6}$/.test(v)) return `tag colour ${id}: ${v} must be #RRGGBB`;
   }
   try {
     resolveSymbology(d.id, [...registry.filter((x) => x.id !== d.id), d]);
@@ -283,4 +311,6 @@ export interface SymbologyHost {
   keep(doc: SymbologyDoc | null): void;
   /** Themes to preview the symbols under: a name, the theme's tokens as a style, and what it can carry. */
   previews?(): readonly { id: string; name: string; style: string; capability: ThemeCapability }[];
+  /** How V3's colour tokens land on symbols, for importing a V3 palette. */
+  v3Tokens?(): import("./v3-colours.ts").V3TokenMap;
 }

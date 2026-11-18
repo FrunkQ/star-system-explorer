@@ -9,7 +9,7 @@
 -->
 <script lang="ts">
   import { untrack } from "svelte";
-  import { BODY_SHAPES, PATTERNS, legendFor, markerFor, resolveSymbology, subjectOf, type Binding, type Channel, type Json, type MarkSubject, type SymbologyDoc, type SystemScene, type ViewContext } from "../../../ui-contract/src/index.ts";
+  import { BODY_SHAPES, PATTERNS, coloursFromV3Save, objectColourSummary, parseV3Palette, symbologyFromV3Palette, v3SaveText, withV3TagColours, campaignCopy, legendFor, markerFor, resolveSymbology, subjectOf, type Binding, type Channel, type Json, type MarkSubject, type SymbologyDoc, type SystemScene, type ViewContext } from "../../../ui-contract/src/index.ts";
   import { HatchDefs, Legend, Mark, Stamp } from "../../../chart-grammar/src/index.ts";
 
   let { ctx, scene, params }: { ctx: ViewContext; scene: SystemScene; params: Record<string, Json> } = $props();
@@ -92,7 +92,7 @@
     const table = { ...(was && "table" in was.scale ? was.scale.table : {}) } as Record<string, string | number | boolean>;
     if (v === null) delete table[cls];
     else table[cls] = v;
-    const b: Binding = { applies_to: "planet", channel: ch, from: "class", scale: { table }, fallback: was?.fallback ?? null };
+    const b: Binding = { applies_to: "planet", channel: ch, from: "class", scale: { table }, fallback: was?.fallback ?? null, ...(was?.prefer ? { prefer: was.prefer } : {}) };
     d.bindings = [...d.bindings.filter((x) => !(x.applies_to === "planet" && x.channel === ch && x.from === "class")), b];
     save(d);
   }
@@ -101,6 +101,50 @@
     host.choose(bases[0]!.id);
   }
   const previews = $derived(host.previews?.() ?? []);
+
+  // Importing SSE 3's colours, from where V3 keeps them: the viewer's palette
+  // overrides (V3's localStorage, pasted or loaded) and a save's tag categories.
+  let paletteText = $state("");
+  let report = $state<{ title: string; lines: string[]; error?: boolean } | null>(null);
+  const tagColours = $derived(Object.entries(chosen?.tag_colours ?? registry.find((d) => d.id === CAMPAIGN)?.tag_colours ?? {}));
+  function applyPalette(text: string) {
+    const map = host.v3Tokens?.();
+    const parsed = parseV3Palette(text);
+    if (!map || typeof parsed === "string") {
+      report = { title: "Palette not applied", lines: [typeof parsed === "string" ? parsed : "This shell has no V3 token map."], error: true };
+      return;
+    }
+    const r = symbologyFromV3Palette(parsed, map, chosen.id, registry);
+    if (r.applied.length) save(r.doc);
+    report = {
+      title: r.applied.length ? `Applied ${r.applied.length} of ${r.applied.length + r.skipped.length} V3 colours` : "No V3 symbol colours in it",
+      lines: [...r.applied.map((a) => `${a.token} ${a.hex}: ${a.note}`), ...r.skipped.map((x) => `${x.token} left: ${x.note}`)],
+    };
+  }
+  async function loadPalette(f: File | undefined) {
+    if (!f) return;
+    paletteText = await f.text();
+    applyPalette(paletteText);
+  }
+  async function loadSave(f: File | undefined) {
+    if (!f) return;
+    try {
+      const text = await v3SaveText(new Uint8Array(await f.arrayBuffer()));
+      const c = coloursFromV3Save(JSON.parse(text));
+      const cats = Object.keys(c.tag_colours);
+      if (cats.length) save(withV3TagColours(campaignCopy(chosen.id, registry, CAMPAIGN), c));
+      report = {
+        title: `From ${f.name}`,
+        lines: [
+          cats.length ? `${cats.length} tag ${cats.length === 1 ? "category" : "categories"} with the GM's own colours (${cats.join(", ")}): kept as the campaign's tag colours.` : "No changed tag categories: the save uses V3's shipped tag colours.",
+          ...objectColourSummary(c.objects),
+          "Palette overrides and skins are not in V3 saves; they live in the V3 browser. Paste them above.",
+        ],
+      };
+    } catch (e) {
+      report = { title: "Save not read", lines: [(e as Error).message], error: true };
+    }
+  }
 </script>
 
 <div class="sym" role="region" aria-label="Symbols">
@@ -135,6 +179,30 @@
       <div class="actions"><button type="button" class="btn" disabled={!editable} onclick={reset}>Back to the shipped symbols</button></div>
     {/if}
     <p class="muted">Kept on this device. Symbols never change the universe or its state hash.</p>
+
+    <details class="v3" aria-label="Colours from SSE 3">
+      <summary>Colours from SSE 3</summary>
+      <p class="muted">SSE 3 keeps custom colours in the browser, not the save. In SSE 3, open the browser console and run <code>localStorage["sse-palette-overrides"]</code>, then paste the result here, or load a file of it.</p>
+      <textarea rows="3" aria-label="SSE 3 palette overrides" placeholder={'{"--body-gas-giant": "…"}'} bind:value={paletteText} disabled={!editable}></textarea>
+      <div class="actions">
+        <button type="button" class="btn" disabled={!editable || !paletteText.trim()} onclick={() => applyPalette(paletteText)}>Apply palette</button>
+        <label class="file"><span>Load file</span><input type="file" accept=".json,.txt,application/json" aria-label="SSE 3 palette file" disabled={!editable} onchange={(e) => loadPalette(e.currentTarget.files?.[0])} /></label>
+      </div>
+      <p class="muted">A save (.sse.zip or its starmap.json) carries tag category colours and each object's own colours.</p>
+      <label class="file"><span>Read a save</span><input type="file" accept=".zip,.json,application/zip,application/json" aria-label="SSE 3 save file" disabled={!editable} onchange={(e) => loadSave(e.currentTarget.files?.[0])} /></label>
+      {#if report}
+        <div class="report" role="status" aria-label="SSE 3 colour import" class:error={report.error}>
+          <strong>{report.title}</strong>
+          <ul>{#each report.lines as l, i (i)}<li>{l}</li>{/each}</ul>
+        </div>
+      {/if}
+      {#if tagColours.length}
+        <div class="k">Tag colours</div>
+        <div class="tags" aria-label="Tag colours">
+          {#each tagColours as [id, t] (id)}<span class="tchip" data-tag-category={id} style="background:{t.color ?? 'transparent'};color:{t.textColor ?? 'inherit'}">{t.label ?? id}</span>{/each}
+        </div>
+      {/if}
+    </details>
   </section>
 
   <section aria-labelledby="sym-classes">
@@ -306,6 +374,58 @@
     gap: 6px;
     align-items: center;
     font-size: 13px;
+  }
+  .v3 {
+    margin-top: 14px;
+    border-top: 1px solid var(--sse-rule, currentColor);
+    padding-top: 10px;
+  }
+  .v3 summary {
+    cursor: pointer;
+    font-weight: 600;
+  }
+  .v3 textarea {
+    width: 100%;
+    box-sizing: border-box;
+    font: inherit;
+    font-size: 12px;
+  }
+  .file {
+    display: inline-flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    align-items: center;
+    font-size: 13px;
+  }
+  .file span {
+    white-space: nowrap;
+  }
+  .file input {
+    max-width: 100%;
+    font-size: 12px;
+  }
+  .report {
+    margin-top: 8px;
+    font-size: 12px;
+    overflow-wrap: anywhere;
+  }
+  .report.error strong {
+    color: var(--sse-alert, currentColor);
+  }
+  .report ul {
+    margin: 4px 0 0;
+    padding-left: 16px;
+  }
+  .tags {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 4px;
+  }
+  .tchip {
+    font-size: 12px;
+    padding: 1px 6px;
+    border-radius: 3px;
+    border: 1px solid var(--sse-rule, currentColor);
   }
   .ctable {
     display: flex;

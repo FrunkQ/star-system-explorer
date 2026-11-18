@@ -29,11 +29,34 @@ test("the shipped symbologies are well formed and bind only real classes", () =>
     const own = m.bindings.filter((b) => b.from === "class" && b.channel !== "ring" && "table" in b.scale);
     for (const c of BASE) assert.ok(own.some((b) => "table" in b.scale && c in b.scale.table), `${id} has no look for ${c}`);
   }
-  // Colour-coded's colours are flagged as placeholders until V3's table is read.
-  assert.match(String(REG[1]!.placeholder), /placeholder/i);
+  // Colour-coded carries V3's own colours, no longer placeholders.
+  assert.equal(REG[1]!.placeholder, undefined);
 });
 
-test("both grammars and the mix draw the system under every shipped theme, telling every class apart", () => {
+test("colour-coded uses V3's colour table and V3's first-match rule", () => {
+  const v3 = JSON.parse(readFileSync(new URL("../../../docs/v3-colours.json", import.meta.url), "utf8")) as { bodies: { key: string; hex: string }[]; stars: { key: string; hex: string; token: string | null }[] };
+  const hex = (k: string) => v3.bodies.find((b) => b.key === k)!.hex;
+  const m = markerFor("sse.symbology.colour-coded", REG, { supports: { colours: "full", patterns: true, shapes: true } });
+  const col = (c: string, tags: string[] = []) => m.mark({ kind: "planet", classes: [c], tags }).colour;
+  assert.equal(col("planet/gas-giant"), hex("gasGiant"));
+  assert.equal(col("planet/hot-jupiter"), hex("gasGiant"));
+  assert.equal(col("planet/ice-giant"), hex("iceGiant"));
+  assert.equal(col("planet/brown-dwarf"), hex("brownDwarf"));
+  assert.equal(col("planet/forest"), hex("biosphere"));
+  assert.equal(col("planet/desert"), hex("terrestrial"));
+  // A habitability tag comes first, as in V3.
+  assert.equal(col("planet/forest", ["habitability/earth-like"]), hex("habitable"));
+  assert.equal(col("planet/gas-giant", ["habitability/human"]), hex("habitable"));
+  // Every colour is one of V3's.
+  const all = new Set(v3.bodies.map((b) => b.hex));
+  for (const c of BASE) assert.ok(all.has(col(c)!), `${c} is not drawn in a V3 colour`);
+  // Stars by spectral key, belts and constructs by kind.
+  assert.equal(m.mark({ kind: "star", classes: [], tags: ["spectral:K"] }).colour, v3.stars.find((x) => x.key === "K")!.hex);
+  assert.equal(m.mark({ kind: "belt", classes: [], tags: [] }).colour, hex("belt"));
+  assert.equal(m.mark({ kind: "station", classes: [], tags: [] }).colour, hex("construct"));
+});
+
+test("both grammars and the mix draw the system under every shipped theme; diagrammatic and the mix tell every class apart", () => {
   for (const t of ALL_THEMES) {
     for (const d of REG) {
       const m = markerFor(d.id, REG, t);
@@ -42,7 +65,9 @@ test("both grammars and the mix draw the system under every shipped theme, telli
         assert.ok(mk.shape && mk.fill_pattern && mk.size > 0, `${t.id}/${d.id}/${s.label}`);
         if (t.supports.colours !== "full") assert.equal(mk.colour, null, `${t.id} cannot carry colour`);
       }
-      assert.ok(distinct(BASE.map((c) => m.mark(planet(c)))), `${d.id} under ${t.id} draws two classes alike`);
+      // Colour-coded is V3's colours: by colour it tells V3's groups apart, not every class
+      // (unless the theme is one-colour, where class codes come in; tested below).
+      if (d.id !== "sse.symbology.colour-coded") assert.ok(distinct(BASE.map((c) => m.mark(planet(c)))), `${d.id} under ${t.id} draws two classes alike`);
     }
   }
 });

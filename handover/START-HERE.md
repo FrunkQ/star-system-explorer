@@ -37,7 +37,7 @@ Milestone M1 "Proven core" = packages K0 to K6 (build plan section 3/4).
 | V2 themes: tokens, frame parts, filter chains, six player themes | done | packages/V2.md |
 | V3 screens documents (data view, bind, layouts) and one screens runtime; composer opens screens from documents | done | packages/V3.md |
 | V11 Orac-first configuration: schemas for every view, style documents with inheritance, promoted controls, validation and cost budgets, Styles screen | done | packages/V11.md |
-| V12 symbology: diagrammatic and colour-coded grammars, mixing, key, Symbols screen | done except V3 colour import (needs V3's colour table); colours are placeholders | packages/V12.md |
+| V12 symbology: diagrammatic and colour-coded grammars, mixing, key, Symbols screen | done, with V3's colour table and the V3 colour import (palette overrides, save tag colours) | packages/V12.md |
 | G0 default Milky-Way-like patch envelope | done (kernel track) | packages/G0.md |
 | Kernel API additions: stack adopt, manifest, scene, scan_toggle | done (kernel track) | packages/K6-additions.md |
 | Numbers: exact float parse, JSON numbers decode by value (cross-track) | done (kernel track); other tracks merge and re-baseline | packages/numbers.md |
