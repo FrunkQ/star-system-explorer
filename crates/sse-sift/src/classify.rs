@@ -521,9 +521,10 @@ impl Atlas {
     pub fn fit(&self, class: &str, s: &Subject) -> Option<ClassFit> {
         let chain = self.ancestry(class);
         let c = *chain.first()?;
+        // Gates count like region bounds: failing one rules the class out.
         let mut axes: Vec<AxisFit> = chain
             .iter()
-            .flat_map(|k| k.region.iter())
+            .flat_map(|k| k.region.iter().chain(&k.gate))
             .map(|b| self.axis_fit(b, s))
             .collect();
         axes.sort_by(|a, b| a.axis.cmp(&b.axis).then(a.fit.total_cmp(&b.fit)));
@@ -656,6 +657,77 @@ impl Atlas {
             }
         }
         bad
+    }
+
+    /// Pairs of base classes in one region-scored scheme whose cores can
+    /// both hold the same subject at the same depth, so the label would come
+    /// down to a tie-break. Two classes are apart when some axis both
+    /// constrain (region or gate, with ancestors) has cores that meet in no
+    /// more than a point, categories with nothing in common, or opposite
+    /// flags. An axis only one of them constrains does not separate them.
+    pub fn overlaps(&self, scheme: &str) -> Vec<(String, String)> {
+        #[derive(Clone)]
+        enum Span {
+            Num(f64, f64),
+            Cat(BTreeSet<String>),
+            Flag(bool),
+            Never,
+        }
+        let spans = |id: &str| {
+            let mut m: BTreeMap<&str, Span> = BTreeMap::new();
+            for b in self
+                .ancestry(id)
+                .iter()
+                .flat_map(|k| k.region.iter().chain(&k.gate))
+            {
+                let next = match b {
+                    Bound::Numeric { core, .. } => Span::Num(core.0, core.1),
+                    Bound::AnyOf { any_of, .. } => Span::Cat(any_of.iter().cloned().collect()),
+                    Bound::Flag { is, .. } => Span::Flag(*is),
+                };
+                let a = bound_axis(b);
+                let merged = match (m.get(a).cloned(), next) {
+                    (None, n) => n,
+                    (Some(Span::Num(a0, a1)), Span::Num(b0, b1)) => {
+                        Span::Num(a0.max(b0), a1.min(b1))
+                    }
+                    (Some(Span::Cat(x)), Span::Cat(y)) => {
+                        Span::Cat(x.intersection(&y).cloned().collect())
+                    }
+                    (Some(Span::Flag(x)), Span::Flag(y)) if x == y => Span::Flag(x),
+                    _ => Span::Never,
+                };
+                m.insert(a, merged);
+            }
+            m
+        };
+        let bases: Vec<&Class> = self
+            .classes
+            .iter()
+            .filter(|c| c.scheme == scheme && c.kind == ClassKind::Base)
+            .collect();
+        let mut out = Vec::new();
+        for (i, x) in bases.iter().enumerate() {
+            let (sx, dx) = (spans(&x.id), self.ancestry(&x.id).len());
+            for y in &bases[i + 1..] {
+                if self.ancestry(&y.id).len() != dx {
+                    continue;
+                }
+                let sy = spans(&y.id);
+                let apart = sx.iter().any(|(a, p)| match (p, sy.get(a)) {
+                    (_, None) => false,
+                    (Span::Never, _) | (_, Some(Span::Never)) => true,
+                    (Span::Num(a0, a1), Some(Span::Num(b0, b1))) => a1.min(*b1) <= a0.max(*b0),
+                    (Span::Cat(p), Some(Span::Cat(q))) => p.is_disjoint(q),
+                    (Span::Flag(p), Some(Span::Flag(q))) => p != q,
+                    _ => true,
+                });
+                if !apart {
+                    out.push((x.id.clone(), y.id.clone()));
+                }
+            }
+        }
+        out
     }
 
     /// Content hash of the atlas (which classes and axes produced a label).

@@ -1,5 +1,5 @@
 {
- "about": "The Solar System's main bodies as SSE4 facts (SI under V4 kind names; fields no V4 flow publishes yet under their SSE 3 feature names). Rounded published values (NASA planetary fact sheets); makeup fractions are SSE 3-style estimates. v3_classes: SSE 3.1's classifier on the same values (scripts/v3-classify-oracle.mjs).",
+ "about": "The Solar System's main bodies as SSE4 facts (SI under V4 kind names; fields no V4 flow publishes yet under their SSE 3 feature names). Rounded published values (NASA planetary fact sheets); makeup fractions, ice cover, doses and fields are rounded literature estimates, good enough to classify, not to cite. v3_classes: SSE 3.1's classifier on the same values (scripts/v3-classify-oracle.mjs).",
  "bodies": [
   {
    "name": "Mercury",
@@ -31,11 +31,43 @@
     "has_ring_child": 0,
     "hasSubsurfaceOcean": 0,
     "hasBiosphere": 0,
-    "parent": "u:sol/sys:0"
+    "parent": "u:sol/sys:0",
+    "body.surface_gravity": 3.696989856090095,
+    "surface.ice_fraction": 0,
+    "surface.liquid_fraction": 0,
+    "surface.liquid": "none",
+    "interior.subsurface_ocean": false,
+    "atmosphere.main": "none",
+    "atmosphere.pp.o2": 0,
+    "atmosphere.pp.co2": 0,
+    "atmosphere.pp.n2": 0,
+    "atmosphere.pp.so2": 0,
+    "surface.radiation_dose": 300,
+    "magnetosphere.field": 0.3,
+    "spin.star_locked": false,
+    "rings": false,
+    "activity.volcanic": 0,
+    "interior.tidal_heat_flux": 0,
+    "orbit.host_kind": "star",
+    "origin": "native",
+    "life.stage": "none",
+    "system.age": 144218232000000000
    },
    "v3_classes": [
     "planet/terrestrial"
-   ]
+   ],
+   "expect": {
+    "physical": "iron-rich",
+    "physical_modifiers": [
+     "physical/eccentric"
+    ],
+    "surface": "surface/airless",
+    "habitability": "habitable/pressure-suit",
+    "air": "air/none",
+    "air_modifiers": [
+     "air/trace"
+    ]
+   }
   },
   {
    "name": "Venus",
@@ -67,11 +99,43 @@
     "has_ring_child": 0,
     "hasSubsurfaceOcean": 0,
     "hasBiosphere": 0,
-    "parent": "u:sol/sys:0"
+    "parent": "u:sol/sys:0",
+    "body.surface_gravity": 8.874540168176585,
+    "surface.ice_fraction": 0,
+    "surface.liquid_fraction": 0,
+    "surface.liquid": "none",
+    "interior.subsurface_ocean": false,
+    "atmosphere.main": "co2",
+    "atmosphere.pp.o2": 0,
+    "atmosphere.pp.co2": 89,
+    "atmosphere.pp.n2": 3.2,
+    "atmosphere.pp.so2": 0.014,
+    "surface.radiation_dose": 0.5,
+    "magnetosphere.field": 0,
+    "spin.star_locked": false,
+    "rings": false,
+    "activity.volcanic": 0.3,
+    "interior.tidal_heat_flux": 0,
+    "orbit.host_kind": "star",
+    "origin": "native",
+    "life.stage": "none",
+    "system.age": 144218232000000000
    },
    "v3_classes": [
     "planet/silicate"
-   ]
+   ],
+   "expect": {
+    "physical": "rocky",
+    "physical_modifiers": [
+     "physical/unshielded"
+    ],
+    "surface": "surface/hot-greenhouse",
+    "habitability": "habitable/sealed-habitat",
+    "air": "air/carbon-dioxide",
+    "air_modifiers": [
+     "air/crushing"
+    ]
+   }
   },
   {
    "name": "Earth",
@@ -104,11 +168,45 @@
     "hasSubsurfaceOcean": 0,
     "hasBiosphere": 1,
     "parent": "u:sol/sys:0",
-    "atm.composition.O2": 0.21
+    "atm.composition.O2": 0.21,
+    "body.surface_gravity": 9.80665,
+    "surface.ice_fraction": 0.03,
+    "surface.liquid_fraction": 0.71,
+    "surface.liquid": "water",
+    "interior.subsurface_ocean": false,
+    "atmosphere.main": "n2",
+    "atmosphere.pp.o2": 0.21,
+    "atmosphere.pp.co2": 0.0004,
+    "atmosphere.pp.n2": 0.78,
+    "atmosphere.pp.so2": 0,
+    "surface.radiation_dose": 2.4,
+    "magnetosphere.field": 50,
+    "spin.star_locked": false,
+    "rings": false,
+    "activity.volcanic": 0.2,
+    "interior.tidal_heat_flux": 0,
+    "orbit.host_kind": "star",
+    "origin": "native",
+    "life.stage": "complex",
+    "system.age": 144218232000000000,
+    "settlements.population": 8100000000
    },
    "v3_classes": [
     "planet/earth-analogue"
-   ]
+   ],
+   "expect": {
+    "physical": "rocky",
+    "physical_modifiers": [
+     "physical/living",
+     "physical/inhabited"
+    ],
+    "surface": "surface/temperate-ocean",
+    "habitability": "habitable/shirt-sleeve",
+    "air": "air/nitrogen-oxygen",
+    "air_modifiers": [
+     "air/standard"
+    ]
+   }
   },
   {
    "name": "Moon",
@@ -140,11 +238,43 @@
     "has_ring_child": 0,
     "hasSubsurfaceOcean": 0,
     "hasBiosphere": 0,
-    "parent": "u:sol/sys:0/body:2"
+    "parent": "u:sol/sys:0/body:2",
+    "body.surface_gravity": 1.6184544942237247,
+    "surface.ice_fraction": 0,
+    "surface.liquid_fraction": 0,
+    "surface.liquid": "none",
+    "interior.subsurface_ocean": false,
+    "atmosphere.main": "none",
+    "atmosphere.pp.o2": 0,
+    "atmosphere.pp.co2": 0,
+    "atmosphere.pp.n2": 0,
+    "atmosphere.pp.so2": 0,
+    "surface.radiation_dose": 380,
+    "magnetosphere.field": 0,
+    "spin.star_locked": false,
+    "rings": false,
+    "activity.volcanic": 0,
+    "interior.tidal_heat_flux": 0,
+    "orbit.host_kind": "planet",
+    "origin": "native",
+    "life.stage": "none",
+    "system.age": 144218232000000000
    },
    "v3_classes": [
     "planet/mesoplanet"
-   ]
+   ],
+   "expect": {
+    "physical": "rocky",
+    "physical_modifiers": [
+     "physical/unshielded"
+    ],
+    "surface": "surface/airless",
+    "habitability": "habitable/pressure-suit",
+    "air": "air/none",
+    "air_modifiers": [
+     "air/trace"
+    ]
+   }
   },
   {
    "name": "Mars",
@@ -177,11 +307,43 @@
     "hasSubsurfaceOcean": 0,
     "hasBiosphere": 0,
     "parent": "u:sol/sys:0",
-    "atm.composition.O2": 0.0013
+    "atm.composition.O2": 0.0013,
+    "body.surface_gravity": 3.707500247328847,
+    "surface.ice_fraction": 0.02,
+    "surface.liquid_fraction": 0,
+    "surface.liquid": "none",
+    "interior.subsurface_ocean": false,
+    "atmosphere.main": "co2",
+    "atmosphere.pp.o2": 0,
+    "atmosphere.pp.co2": 0.0058,
+    "atmosphere.pp.n2": 0.00016,
+    "atmosphere.pp.so2": 0,
+    "surface.radiation_dose": 230,
+    "magnetosphere.field": 0,
+    "spin.star_locked": false,
+    "rings": false,
+    "activity.volcanic": 0,
+    "interior.tidal_heat_flux": 0,
+    "orbit.host_kind": "star",
+    "origin": "native",
+    "life.stage": "none",
+    "system.age": 144218232000000000
    },
    "v3_classes": [
     "planet/sub-earth"
-   ]
+   ],
+   "expect": {
+    "physical": "rocky",
+    "physical_modifiers": [
+     "physical/unshielded"
+    ],
+    "surface": "surface/cold-desert",
+    "habitability": "habitable/pressure-suit",
+    "air": "air/carbon-dioxide",
+    "air_modifiers": [
+     "air/very-thin"
+    ]
+   }
   },
   {
    "name": "Ceres",
@@ -213,11 +375,43 @@
     "has_ring_child": 0,
     "hasSubsurfaceOcean": 0,
     "hasBiosphere": 0,
-    "parent": "u:sol/sys:0"
+    "parent": "u:sol/sys:0",
+    "body.surface_gravity": 0.2834558028900765,
+    "surface.ice_fraction": 0.1,
+    "surface.liquid_fraction": 0,
+    "surface.liquid": "none",
+    "interior.subsurface_ocean": false,
+    "atmosphere.main": "none",
+    "atmosphere.pp.o2": 0,
+    "atmosphere.pp.co2": 0,
+    "atmosphere.pp.n2": 0,
+    "atmosphere.pp.so2": 0,
+    "surface.radiation_dose": 500,
+    "magnetosphere.field": 0,
+    "spin.star_locked": false,
+    "rings": false,
+    "activity.volcanic": 0,
+    "interior.tidal_heat_flux": 0,
+    "orbit.host_kind": "star",
+    "origin": "native",
+    "life.stage": "none",
+    "system.age": 144218232000000000
    },
    "v3_classes": [
     "planet/planetesimal"
-   ]
+   ],
+   "expect": {
+    "physical": "water-rich",
+    "physical_modifiers": [
+     "physical/unshielded"
+    ],
+    "surface": "surface/airless",
+    "habitability": "habitable/pressure-suit",
+    "air": "air/none",
+    "air_modifiers": [
+     "air/trace"
+    ]
+   }
   },
   {
    "name": "Jupiter",
@@ -249,12 +443,44 @@
     "has_ring_child": 1,
     "hasSubsurfaceOcean": 0,
     "hasBiosphere": 0,
-    "parent": "u:sol/sys:0"
+    "parent": "u:sol/sys:0",
+    "body.surface_gravity": 25.897707013991084,
+    "surface.ice_fraction": 0,
+    "surface.liquid_fraction": 0,
+    "surface.liquid": "none",
+    "interior.subsurface_ocean": false,
+    "atmosphere.main": "h2",
+    "atmosphere.pp.o2": 0,
+    "atmosphere.pp.co2": 0,
+    "atmosphere.pp.n2": 0,
+    "atmosphere.pp.so2": 0,
+    "surface.radiation_dose": 100000,
+    "magnetosphere.field": 420,
+    "spin.star_locked": false,
+    "rings": true,
+    "activity.volcanic": 0,
+    "interior.tidal_heat_flux": 0,
+    "orbit.host_kind": "star",
+    "origin": "native",
+    "life.stage": "none",
+    "system.age": 144218232000000000
    },
    "v3_classes": [
     "planet/ammonia-clouds-gas-giant",
     "planet/ringed"
-   ]
+   ],
+   "expect": {
+    "physical": "gas-giant/ammonia-clouds",
+    "physical_modifiers": [
+     "physical/ringed"
+    ],
+    "surface": null,
+    "habitability": null,
+    "air": "air/hydrogen-helium",
+    "air_modifiers": [
+     "air/crushing"
+    ]
+   }
   },
   {
    "name": "Io",
@@ -286,11 +512,45 @@
     "has_ring_child": 0,
     "hasSubsurfaceOcean": 0,
     "hasBiosphere": 0,
-    "parent": "u:sol/sys:0/body:6"
+    "parent": "u:sol/sys:0/body:6",
+    "body.surface_gravity": 1.7983733923419238,
+    "surface.ice_fraction": 0,
+    "surface.liquid_fraction": 0,
+    "surface.liquid": "none",
+    "interior.subsurface_ocean": false,
+    "atmosphere.main": "so2",
+    "atmosphere.pp.o2": 0,
+    "atmosphere.pp.co2": 0,
+    "atmosphere.pp.n2": 0,
+    "atmosphere.pp.so2": 1e-09,
+    "surface.radiation_dose": 13000000,
+    "magnetosphere.field": 0,
+    "spin.star_locked": false,
+    "rings": false,
+    "activity.volcanic": 1,
+    "interior.tidal_heat_flux": 2.5,
+    "orbit.host_kind": "planet",
+    "origin": "native",
+    "life.stage": "none",
+    "system.age": 144218232000000000
    },
    "v3_classes": [
     "planet/sulfur"
-   ]
+   ],
+   "expect": {
+    "physical": "rocky",
+    "physical_modifiers": [
+     "physical/volcanic",
+     "physical/tide-heated",
+     "physical/unshielded"
+    ],
+    "surface": "surface/airless",
+    "habitability": "habitable/sealed-habitat",
+    "air": "air/sulphurous",
+    "air_modifiers": [
+     "air/trace"
+    ]
+   }
   },
   {
    "name": "Europa",
@@ -322,11 +582,44 @@
     "has_ring_child": 0,
     "hasSubsurfaceOcean": 1,
     "hasBiosphere": 0,
-    "parent": "u:sol/sys:0/body:6"
+    "parent": "u:sol/sys:0/body:6",
+    "body.surface_gravity": 1.3070087463556852,
+    "surface.ice_fraction": 1,
+    "surface.liquid_fraction": 0,
+    "surface.liquid": "none",
+    "interior.subsurface_ocean": true,
+    "atmosphere.main": "none",
+    "atmosphere.pp.o2": 0,
+    "atmosphere.pp.co2": 0,
+    "atmosphere.pp.n2": 0,
+    "atmosphere.pp.so2": 0,
+    "surface.radiation_dose": 2000000,
+    "magnetosphere.field": 0,
+    "spin.star_locked": false,
+    "rings": false,
+    "activity.volcanic": 0,
+    "interior.tidal_heat_flux": 0.05,
+    "orbit.host_kind": "planet",
+    "origin": "native",
+    "life.stage": "none",
+    "system.age": 144218232000000000
    },
    "v3_classes": [
     "planet/subsurface-ocean"
-   ]
+   ],
+   "expect": {
+    "physical": "rocky",
+    "physical_modifiers": [
+     "physical/tide-heated",
+     "physical/unshielded"
+    ],
+    "surface": "surface/ice-shell-ocean",
+    "habitability": "habitable/sealed-habitat",
+    "air": "air/none",
+    "air_modifiers": [
+     "air/trace"
+    ]
+   }
   },
   {
    "name": "Ganymede",
@@ -358,11 +651,41 @@
     "has_ring_child": 0,
     "hasSubsurfaceOcean": 1,
     "hasBiosphere": 0,
-    "parent": "u:sol/sys:0/body:6"
+    "parent": "u:sol/sys:0/body:6",
+    "body.surface_gravity": 1.425844790084951,
+    "surface.ice_fraction": 1,
+    "surface.liquid_fraction": 0,
+    "surface.liquid": "none",
+    "interior.subsurface_ocean": true,
+    "atmosphere.main": "none",
+    "atmosphere.pp.o2": 0,
+    "atmosphere.pp.co2": 0,
+    "atmosphere.pp.n2": 0,
+    "atmosphere.pp.so2": 0,
+    "surface.radiation_dose": 29000,
+    "magnetosphere.field": 0.72,
+    "spin.star_locked": false,
+    "rings": false,
+    "activity.volcanic": 0,
+    "interior.tidal_heat_flux": 0.005,
+    "orbit.host_kind": "planet",
+    "origin": "native",
+    "life.stage": "none",
+    "system.age": 144218232000000000
    },
    "v3_classes": [
     "planet/subsurface-ocean"
-   ]
+   ],
+   "expect": {
+    "physical": "water-rich",
+    "physical_modifiers": [],
+    "surface": "surface/ice-shell-ocean",
+    "habitability": "habitable/sealed-habitat",
+    "air": "air/none",
+    "air_modifiers": [
+     "air/trace"
+    ]
+   }
   },
   {
    "name": "Callisto",
@@ -394,11 +717,43 @@
     "has_ring_child": 0,
     "hasSubsurfaceOcean": 1,
     "hasBiosphere": 0,
-    "parent": "u:sol/sys:0/body:6"
+    "parent": "u:sol/sys:0/body:6",
+    "body.surface_gravity": 1.2354056437389769,
+    "surface.ice_fraction": 1,
+    "surface.liquid_fraction": 0,
+    "surface.liquid": "none",
+    "interior.subsurface_ocean": true,
+    "atmosphere.main": "none",
+    "atmosphere.pp.o2": 0,
+    "atmosphere.pp.co2": 0,
+    "atmosphere.pp.n2": 0,
+    "atmosphere.pp.so2": 0,
+    "surface.radiation_dose": 4,
+    "magnetosphere.field": 0,
+    "spin.star_locked": false,
+    "rings": false,
+    "activity.volcanic": 0,
+    "interior.tidal_heat_flux": 0,
+    "orbit.host_kind": "planet",
+    "origin": "native",
+    "life.stage": "none",
+    "system.age": 144218232000000000
    },
    "v3_classes": [
     "planet/subsurface-ocean"
-   ]
+   ],
+   "expect": {
+    "physical": "water-rich",
+    "physical_modifiers": [
+     "physical/unshielded"
+    ],
+    "surface": "surface/ice-shell-ocean",
+    "habitability": "habitable/pressure-suit",
+    "air": "air/none",
+    "air_modifiers": [
+     "air/trace"
+    ]
+   }
   },
   {
    "name": "Saturn",
@@ -430,12 +785,44 @@
     "has_ring_child": 1,
     "hasSubsurfaceOcean": 0,
     "hasBiosphere": 0,
-    "parent": "u:sol/sys:0"
+    "parent": "u:sol/sys:0",
+    "body.surface_gravity": 11.170759903087875,
+    "surface.ice_fraction": 0,
+    "surface.liquid_fraction": 0,
+    "surface.liquid": "none",
+    "interior.subsurface_ocean": false,
+    "atmosphere.main": "h2",
+    "atmosphere.pp.o2": 0,
+    "atmosphere.pp.co2": 0,
+    "atmosphere.pp.n2": 0,
+    "atmosphere.pp.so2": 0,
+    "surface.radiation_dose": 1000,
+    "magnetosphere.field": 21,
+    "spin.star_locked": false,
+    "rings": true,
+    "activity.volcanic": 0,
+    "interior.tidal_heat_flux": 0,
+    "orbit.host_kind": "star",
+    "origin": "native",
+    "life.stage": "none",
+    "system.age": 144218232000000000
    },
    "v3_classes": [
     "planet/ammonia-clouds-gas-giant",
     "planet/ringed"
-   ]
+   ],
+   "expect": {
+    "physical": "gas-giant/ammonia-clouds",
+    "physical_modifiers": [
+     "physical/ringed"
+    ],
+    "surface": null,
+    "habitability": null,
+    "air": "air/hydrogen-helium",
+    "air_modifiers": [
+     "air/crushing"
+    ]
+   }
   },
   {
    "name": "Titan",
@@ -467,11 +854,43 @@
     "has_ring_child": 0,
     "hasSubsurfaceOcean": 1,
     "hasBiosphere": 0,
-    "parent": "u:sol/sys:0/body:11"
+    "parent": "u:sol/sys:0/body:11",
+    "body.surface_gravity": 1.3518872230663657,
+    "surface.ice_fraction": 0.98,
+    "surface.liquid_fraction": 0.02,
+    "surface.liquid": "methane",
+    "interior.subsurface_ocean": true,
+    "atmosphere.main": "n2",
+    "atmosphere.pp.o2": 0,
+    "atmosphere.pp.co2": 0,
+    "atmosphere.pp.n2": 1.4,
+    "atmosphere.pp.so2": 0,
+    "surface.radiation_dose": 0.1,
+    "magnetosphere.field": 0,
+    "spin.star_locked": false,
+    "rings": false,
+    "activity.volcanic": 0,
+    "interior.tidal_heat_flux": 0.01,
+    "orbit.host_kind": "planet",
+    "origin": "native",
+    "life.stage": "none",
+    "system.age": 144218232000000000
    },
    "v3_classes": [
     "planet/subsurface-ocean"
-   ]
+   ],
+   "expect": {
+    "physical": "water-rich",
+    "physical_modifiers": [
+     "physical/unshielded"
+    ],
+    "surface": "surface/hydrocarbon-lakes",
+    "habitability": "habitable/pressure-suit",
+    "air": "air/nitrogen",
+    "air_modifiers": [
+     "air/standard"
+    ]
+   }
   },
   {
    "name": "Enceladus",
@@ -503,11 +922,45 @@
     "has_ring_child": 0,
     "hasSubsurfaceOcean": 1,
     "hasBiosphere": 0,
-    "parent": "u:sol/sys:0/body:11"
+    "parent": "u:sol/sys:0/body:11",
+    "body.surface_gravity": 0.11313552315334081,
+    "surface.ice_fraction": 1,
+    "surface.liquid_fraction": 0,
+    "surface.liquid": "none",
+    "interior.subsurface_ocean": true,
+    "atmosphere.main": "none",
+    "atmosphere.pp.o2": 0,
+    "atmosphere.pp.co2": 0,
+    "atmosphere.pp.n2": 0,
+    "atmosphere.pp.so2": 0,
+    "surface.radiation_dose": 1000,
+    "magnetosphere.field": 0,
+    "spin.star_locked": false,
+    "rings": false,
+    "activity.volcanic": 0.5,
+    "interior.tidal_heat_flux": 0.1,
+    "orbit.host_kind": "planet",
+    "origin": "native",
+    "life.stage": "none",
+    "system.age": 144218232000000000
    },
    "v3_classes": [
     "planet/subsurface-ocean"
-   ]
+   ],
+   "expect": {
+    "physical": "water-rich",
+    "physical_modifiers": [
+     "physical/volcanic",
+     "physical/tide-heated",
+     "physical/unshielded"
+    ],
+    "surface": "surface/ice-shell-ocean",
+    "habitability": "habitable/sealed-habitat",
+    "air": "air/none",
+    "air_modifiers": [
+     "air/trace"
+    ]
+   }
   },
   {
    "name": "Uranus",
@@ -539,12 +992,44 @@
     "has_ring_child": 1,
     "hasSubsurfaceOcean": 0,
     "hasBiosphere": 0,
-    "parent": "u:sol/sys:0"
+    "parent": "u:sol/sys:0",
+    "body.surface_gravity": 8.86740076243307,
+    "surface.ice_fraction": 0,
+    "surface.liquid_fraction": 0,
+    "surface.liquid": "none",
+    "interior.subsurface_ocean": false,
+    "atmosphere.main": "h2",
+    "atmosphere.pp.o2": 0,
+    "atmosphere.pp.co2": 0,
+    "atmosphere.pp.n2": 0,
+    "atmosphere.pp.so2": 0,
+    "surface.radiation_dose": 100,
+    "magnetosphere.field": 23,
+    "spin.star_locked": false,
+    "rings": true,
+    "activity.volcanic": 0,
+    "interior.tidal_heat_flux": 0,
+    "orbit.host_kind": "star",
+    "origin": "native",
+    "life.stage": "none",
+    "system.age": 144218232000000000
    },
    "v3_classes": [
     "planet/ice-giant",
     "planet/ringed"
-   ]
+   ],
+   "expect": {
+    "physical": "ice-giant",
+    "physical_modifiers": [
+     "physical/ringed"
+    ],
+    "surface": null,
+    "habitability": null,
+    "air": "air/hydrogen-helium",
+    "air_modifiers": [
+     "air/crushing"
+    ]
+   }
   },
   {
    "name": "Neptune",
@@ -576,12 +1061,44 @@
     "has_ring_child": 1,
     "hasSubsurfaceOcean": 0,
     "hasBiosphere": 0,
-    "parent": "u:sol/sys:0"
+    "parent": "u:sol/sys:0",
+    "body.surface_gravity": 11.171753606918905,
+    "surface.ice_fraction": 0,
+    "surface.liquid_fraction": 0,
+    "surface.liquid": "none",
+    "interior.subsurface_ocean": false,
+    "atmosphere.main": "h2",
+    "atmosphere.pp.o2": 0,
+    "atmosphere.pp.co2": 0,
+    "atmosphere.pp.n2": 0,
+    "atmosphere.pp.so2": 0,
+    "surface.radiation_dose": 100,
+    "magnetosphere.field": 14,
+    "spin.star_locked": false,
+    "rings": true,
+    "activity.volcanic": 0,
+    "interior.tidal_heat_flux": 0,
+    "orbit.host_kind": "star",
+    "origin": "native",
+    "life.stage": "none",
+    "system.age": 144218232000000000
    },
    "v3_classes": [
     "planet/ice-giant",
     "planet/ringed"
-   ]
+   ],
+   "expect": {
+    "physical": "ice-giant",
+    "physical_modifiers": [
+     "physical/ringed"
+    ],
+    "surface": null,
+    "habitability": null,
+    "air": "air/hydrogen-helium",
+    "air_modifiers": [
+     "air/crushing"
+    ]
+   }
   },
   {
    "name": "Triton",
@@ -593,7 +1110,7 @@
     "body.bulk_density": 2060,
     "body.escape_velocity": 1460,
     "orbit.semi_major_axis": 354546953.559,
-    "orbit.eccentricity": 0.000016,
+    "orbit.eccentricity": 1.6e-05,
     "planet.equilibrium_temperature": 38,
     "planet.surface_temperature": 38,
     "orbit.period": 508032,
@@ -613,11 +1130,44 @@
     "has_ring_child": 0,
     "hasSubsurfaceOcean": 0,
     "hasBiosphere": 0,
-    "parent": "u:sol/sys:0/body:15"
+    "parent": "u:sol/sys:0/body:15",
+    "body.surface_gravity": 0.7833275520647918,
+    "surface.ice_fraction": 1,
+    "surface.liquid_fraction": 0,
+    "surface.liquid": "none",
+    "interior.subsurface_ocean": false,
+    "atmosphere.main": "n2",
+    "atmosphere.pp.o2": 0,
+    "atmosphere.pp.co2": 0,
+    "atmosphere.pp.n2": 1.4e-05,
+    "atmosphere.pp.so2": 0,
+    "surface.radiation_dose": 10,
+    "magnetosphere.field": 0,
+    "spin.star_locked": false,
+    "rings": false,
+    "activity.volcanic": 0.2,
+    "interior.tidal_heat_flux": 0,
+    "orbit.host_kind": "planet",
+    "origin": "captured",
+    "life.stage": "none",
+    "system.age": 144218232000000000
    },
    "v3_classes": [
     "planet/dwarf-planet"
-   ]
+   ],
+   "expect": {
+    "physical": "water-rich",
+    "physical_modifiers": [
+     "physical/captured",
+     "physical/unshielded"
+    ],
+    "surface": "surface/frozen",
+    "habitability": "habitable/pressure-suit",
+    "air": "air/nitrogen",
+    "air_modifiers": [
+     "air/trace"
+    ]
+   }
   },
   {
    "name": "Pluto",
@@ -649,11 +1199,44 @@
     "has_ring_child": 0,
     "hasSubsurfaceOcean": 0,
     "hasBiosphere": 0,
-    "parent": "u:sol/sys:0"
+    "parent": "u:sol/sys:0",
+    "body.surface_gravity": 0.6236163140247427,
+    "surface.ice_fraction": 1,
+    "surface.liquid_fraction": 0,
+    "surface.liquid": "none",
+    "interior.subsurface_ocean": false,
+    "atmosphere.main": "n2",
+    "atmosphere.pp.o2": 0,
+    "atmosphere.pp.co2": 0,
+    "atmosphere.pp.n2": 1e-05,
+    "atmosphere.pp.so2": 0,
+    "surface.radiation_dose": 10,
+    "magnetosphere.field": 0,
+    "spin.star_locked": false,
+    "rings": false,
+    "activity.volcanic": 0,
+    "interior.tidal_heat_flux": 0,
+    "orbit.host_kind": "star",
+    "origin": "native",
+    "life.stage": "none",
+    "system.age": 144218232000000000
    },
    "v3_classes": [
     "planet/dwarf-planet"
-   ]
+   ],
+   "expect": {
+    "physical": "water-rich",
+    "physical_modifiers": [
+     "physical/eccentric",
+     "physical/unshielded"
+    ],
+    "surface": "surface/frozen",
+    "habitability": "habitable/pressure-suit",
+    "air": "air/nitrogen",
+    "air_modifiers": [
+     "air/trace"
+    ]
+   }
   }
  ]
 }
