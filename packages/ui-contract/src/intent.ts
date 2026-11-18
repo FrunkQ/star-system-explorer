@@ -15,11 +15,17 @@ export type Intent =
    * physics as shipped). Carries the change requests it adopts, by id. Only a
    * seat with GM authority applies it; others send it to the GM.
    */
-  | { kind: "adopt_physics"; pack: Json | null; requests: string[] };
+  | { kind: "adopt_physics"; pack: Json | null; requests: string[] }
+  /**
+   * Set the packs stacked above the ones the session opened with (Packs
+   * screen), bottom to top. The campaign's own physics pack stays on top.
+   * Only a seat with GM authority applies it.
+   */
+  | { kind: "stack_packs"; packs: Json[] };
 
 export type IntentKind = Intent["kind"];
 
-export const INTENT_KINDS: readonly IntentKind[] = ["set_value", "adopt_physics"];
+export const INTENT_KINDS: readonly IntentKind[] = ["set_value", "adopt_physics", "stack_packs"];
 
 /** Machine-readable description of an intent a view may send (H8.1 `intents`). */
 export interface IntentSchema {
@@ -44,6 +50,13 @@ export function secondsToYears(s: number | bigint): number {
 
 /** Why an intent is malformed, or null when it is well formed. */
 export function checkIntent(i: Intent): string | null {
+  if (i.kind === "stack_packs") {
+    if (!Array.isArray(i.packs)) return "packs must be a list";
+    for (const p of i.packs as { id?: unknown; format?: unknown }[]) {
+      if (!p || typeof p !== "object" || typeof p.id !== "string" || p.format !== "sse.pack/1") return "each pack must be an sse.pack/1 document";
+    }
+    return null;
+  }
   if (i.kind === "adopt_physics") {
     if (i.pack === null) return null;
     const p = i.pack as { id?: unknown; format?: unknown };
@@ -60,10 +73,13 @@ export function checkIntent(i: Intent): string | null {
 
 /**
  * The kernel request an approved intent becomes. Internal to the session.
- * `base` is the pack stack the session was opened with (bottom to top).
+ * `stack` is the pack stack in force: the packs the session opened with,
+ * the packs added above them, and the campaign's own physics pack.
  */
-export function intentToRequest(i: Intent, base: readonly unknown[] = []) {
-  if (i.kind === "adopt_physics") return { op: "load_stack" as const, packs: i.pack === null ? [...base] : [...base, i.pack] };
+export function intentToRequest(i: Intent, stack: { opening: readonly unknown[]; added: readonly unknown[]; campaign: unknown } = { opening: [], added: [], campaign: null }) {
+  const top = (c: unknown) => (c === null || c === undefined ? [] : [c]);
+  if (i.kind === "adopt_physics") return { op: "load_stack" as const, packs: [...stack.opening, ...stack.added, ...top(i.pack)] };
+  if (i.kind === "stack_packs") return { op: "load_stack" as const, packs: [...stack.opening, ...i.packs, ...top(stack.campaign)] };
   return {
     op: "set_authored" as const,
     edit: {

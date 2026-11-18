@@ -12,6 +12,7 @@
     derived = false,
     flagged = false,
     changed = false,
+    fictional = false,
     oncommit,
     onwhy,
   }: {
@@ -26,6 +27,8 @@
     flagged?: boolean;
     /** Published by the campaign's own physics, not the base packs. */
     changed?: boolean;
+    /** Published downstream of a fictional pack. */
+    fictional?: boolean;
     oncommit?: (text: string) => Promise<string | null>;
     onwhy?: () => void;
   } = $props();
@@ -58,7 +61,7 @@
 
 <div class="field">
   <div class="head">
-    <label for={id} class="k" class:set>{label}{#if set}<span class="mark">&nbsp;· set</span>{:else if derived}<span class="drv">&nbsp;· derived</span>{/if}{#if flagged}<span class="mark">&nbsp;· out of range</span>{/if}{#if changed}<span class="mark chg">&nbsp;· changed physics</span>{/if}</label>
+    <label for={id} class="k" class:set>{label}{#if set}<span class="mark">&nbsp;· set</span>{:else if derived}<span class="drv">&nbsp;· derived</span>{/if}{#if flagged}<span class="mark">&nbsp;· out of range</span>{/if}{#if changed}<span class="mark chg">&nbsp;· changed physics</span>{/if}{#if fictional}<span class="mark">&nbsp;· fictional</span>{/if}</label>
     {#if onwhy}
       <button type="button" class="why" onclick={onwhy} aria-label="Why {label.toLowerCase()}?">why?</button>
     {/if}

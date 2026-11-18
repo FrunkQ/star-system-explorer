@@ -60,12 +60,11 @@ export async function previewRequest(session: ViewSession, ws: Workspace, r: Cha
   } catch (e) {
     return { ok: false, problems: [String((e as Error).message)], values: [] };
   }
-  const refs = ref ? [ref] : [];
-  const t = await session.trial(pack, refs);
+  const t = await session.trial({ campaign: pack }, async (p) => (ref ? p.derive(ref) : null));
   if (!t.ok) return { ok: false, problems: (t.issues.length ? t.issues : [t.report]).map(readable), values: [] };
-  if (!ref) return { ok: true, problems: [], values: [] };
+  if (!ref || !t.result) return { ok: true, problems: [], values: [] };
   const now = await session.derive(ref);
-  const after = t.results[0]!;
+  const after = t.result;
   if (!after.ok) return { ok: false, problems: [after.message], values: [] };
   const kinds = [...new Set([...Object.keys(now.ok ? now.values : {}), ...Object.keys(after.values)])].sort();
   return { ok: true, problems: [], values: kinds.map((kind) => ({ kind, before: now.ok ? (now.values[kind] ?? null) : null, after: after.values[kind] ?? null })) };

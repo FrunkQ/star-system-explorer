@@ -25,6 +25,9 @@ export interface SceneFact {
   publisher?: string;
   /** Published by the campaign's own physics, not the base packs: badged "changed physics". */
   changed?: boolean;
+  /** Display value = SI value / scale (derived facts), so a preview can show another stack's value the same way. */
+  scale?: number;
+  digits?: number;
 }
 
 export interface SceneSubject {

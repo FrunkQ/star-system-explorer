@@ -62,6 +62,7 @@
             derived={f.source === "derived"}
             flagged={f.validity !== undefined && f.validity !== "in-range"}
             changed={f.changed}
+            fictional={f.fictional}
             editable={f.editable && ws.mode === "edit"}
             oncommit={(t) => commit(f, t)}
             onwhy={f.field === "name" ? undefined : () => (why = why === f.field ? null : f.field)}

@@ -62,6 +62,7 @@ jobs:
       - run: npm install --no-save playwright@1.63.0 && npx playwright install --with-deps chromium firefox
       - run: node tests/ui/shell.e2e.mjs chromium firefox --screens ui-screens
       - run: node tests/ui/players.e2e.mjs chromium firefox --screens ui-screens
+      - run: node tests/ui/setup.e2e.mjs chromium firefox --screens ui-screens
       - uses: actions/upload-artifact@v4
         with: { name: ui-screens, path: ui-screens }
 

@@ -87,23 +87,33 @@ export interface ViewSession {
   /** The flow document the stack uses for `flow` and the pack that provides it. */
   flowDoc(flow: string): { doc: FlowDoc; pack: string } | undefined;
   /**
-   * Try a candidate campaign pack without adopting it: the kernel validates
-   * the stack it would make and derives each ref under it, then the stack in
-   * force is restored. Read only; nothing is chronicled.
+   * Try a candidate stack without adopting it: the kernel validates the stack
+   * it would make, `probe` derives under it, then the stack in force is
+   * restored. Read only; nothing is chronicled. Whatever the candidate leaves
+   * out stays as it is in force.
    */
-  trial(pack: PackDoc | null, refs: DeriveRef[]): Promise<TrialResult>;
+  trial<T>(candidate: StackCandidate, probe: (s: Probe) => Promise<T>): Promise<TrialResult<T>>;
 }
 
 export interface StackInfo {
+  /** Everything under the campaign pack, bottom to top: the packs the session opened with, then `added`. */
   base: readonly PackDoc[];
+  /** Packs the GM stacked on top of the opening packs (Packs screen). */
+  added: readonly PackDoc[];
   /** The campaign's own physics pack over the base, if one is adopted. */
   campaign: PackDoc | null;
   hash: string;
 }
 
-export type TrialResult =
-  | { ok: true; stack_hash: string; results: ({ ok: true; values: Record<string, Derived> } | { ok: false; message: string })[] }
-  | { ok: false; report: string; issues: string[] };
+export interface StackCandidate {
+  added?: readonly PackDoc[];
+  campaign?: PackDoc | null;
+}
+
+/** What a trial's probe may do: derive, and see the candidate stack. */
+export type Probe = Pick<ViewSession, "derive" | "stack">;
+
+export type TrialResult<T> = { ok: true; stack_hash: string; result: T } | { ok: false; report: string; issues: string[] };
 
 type Raw = { type: string; [k: string]: unknown };
 
@@ -111,7 +121,8 @@ export class Session implements ViewSession {
   readonly #client: KernelClient;
   readonly #pending: Intent[] = [];
   #flows: string[] = [];
-  #base: PackDoc[] = [];
+  #opening: PackDoc[] = [];
+  #added: PackDoc[] = [];
   #campaign: PackDoc | null = null;
   #stackHash = "";
   /** Requests run one after another, so a trial's temporary stack is never seen by another call. */
@@ -139,7 +150,7 @@ export class Session implements ViewSession {
     if (r.type !== "universe_opened") throw new Error(`kernel would not open the universe: ${JSON.stringify(r)}`);
     const s = new Session(client, seat, { ...universe, root: String(r.root) });
     s.#flows = flows;
-    s.#base = structuredClone(packs) as PackDoc[];
+    s.#opening = structuredClone(packs) as PackDoc[];
     s.#stackHash = hash;
     return s;
   }
@@ -159,29 +170,41 @@ export class Session implements ViewSession {
     return [...this.#flows];
   }
 
+  /** The full stack in force, bottom to top. */
+  #packs(added: readonly PackDoc[] = this.#added, campaign: PackDoc | null = this.#campaign): PackDoc[] {
+    return [...this.#opening, ...added, ...(campaign ? [campaign] : [])];
+  }
+
   stack(): StackInfo {
-    return { base: structuredClone(this.#base), campaign: structuredClone(this.#campaign), hash: this.#stackHash };
+    return { base: structuredClone([...this.#opening, ...this.#added]), added: structuredClone(this.#added), campaign: structuredClone(this.#campaign), hash: this.#stackHash };
   }
 
   flowDoc(flow: string) {
-    const p = providerOf(this.#campaign ? [...this.#base, this.#campaign] : this.#base, flow);
+    const p = providerOf(this.#packs(), flow);
     return p ? { doc: structuredClone(p.doc), pack: p.pack.id } : undefined;
   }
 
-  trial(pack: PackDoc | null, refs: DeriveRef[]): Promise<TrialResult> {
-    const restore = this.#campaign ? [...this.#base, this.#campaign] : this.#base;
+  trial<T>(candidate: StackCandidate, probe: (s: Probe) => Promise<T>): Promise<TrialResult<T>> {
+    const restore = this.#packs();
+    const added = candidate.added ?? this.#added;
+    const campaign = candidate.campaign === undefined ? this.#campaign : candidate.campaign;
     return this.#serial(async () => {
-      const st = await call(this.#client, { op: "load_stack", packs: pack ? [...this.#base, pack] : this.#base });
+      const st = await call(this.#client, { op: "load_stack", packs: this.#packs(added, campaign) });
       if (st.type !== "stack_loaded") {
         return { ok: false as const, report: String(st.report ?? st.message ?? ""), issues: (st.issues as string[] | undefined) ?? [] };
       }
+      // Inside the queue: the probe's calls go straight to the kernel, under the candidate stack.
+      const client = this.#client;
+      const info: StackInfo = { base: structuredClone([...this.#opening, ...added]), added: structuredClone([...added]), campaign: structuredClone(campaign), hash: String(st.stack_hash) };
+      const p: Probe = {
+        stack: () => info,
+        async derive(ref) {
+          const r = await call(client, { op: "derive", flow: ref.flow, inputs: ref.inputs });
+          return r.type === "derived" ? { ok: true as const, values: r.values as Record<string, Derived> } : { ok: false as const, message: String(r.message ?? JSON.stringify(r)) };
+        },
+      };
       try {
-        const results = [];
-        for (const ref of refs) {
-          const r = await call(this.#client, { op: "derive", flow: ref.flow, inputs: ref.inputs });
-          results.push(r.type === "derived" ? { ok: true as const, values: r.values as Record<string, Derived> } : { ok: false as const, message: String(r.message ?? JSON.stringify(r)) });
-        }
-        return { ok: true as const, stack_hash: String(st.stack_hash), results };
+        return { ok: true as const, stack_hash: String(st.stack_hash), result: await probe(p) };
       } finally {
         const back = await call(this.#client, { op: "load_stack", packs: restore });
         if (back.type !== "stack_loaded") throw new Error("could not restore the pack stack after a trial");
@@ -210,10 +233,11 @@ export class Session implements ViewSession {
       this.#pending.push(intent);
       return { status: "pending", intent };
     }
-    const r = await this.#call(intentToRequest(intent, this.#base));
-    if (intent.kind === "adopt_physics") {
+    const r = await this.#call(intentToRequest(intent, { opening: this.#opening, added: this.#added, campaign: this.#campaign }));
+    if (intent.kind === "adopt_physics" || intent.kind === "stack_packs") {
       if (r.type !== "stack_loaded") return { status: "refused", reason: String(r.report ?? r.message ?? JSON.stringify(r)) };
-      this.#campaign = intent.pack === null ? null : (structuredClone(intent.pack) as unknown as PackDoc);
+      if (intent.kind === "adopt_physics") this.#campaign = intent.pack === null ? null : (structuredClone(intent.pack) as unknown as PackDoc);
+      else this.#added = structuredClone(intent.packs) as unknown as PackDoc[];
       this.#flows = r.flows as string[];
       this.#stackHash = String(r.stack_hash);
       return { status: "applied", event_id: `stack:${this.#stackHash}`, state_hash: await this.stateHash(), affected: [] };

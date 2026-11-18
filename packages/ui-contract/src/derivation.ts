@@ -98,7 +98,7 @@ function bindInputs(rule: DerivationRule, s: SceneSubject, star: SceneSubject | 
 }
 
 /** Ask the kernel for every derived fact the document names; returns a new scene. */
-export async function deriveScene(session: ViewSession, scene: SystemScene, doc: DerivationDoc): Promise<SystemScene> {
+export async function deriveScene(session: Pick<ViewSession, "derive" | "stack">, scene: SystemScene, doc: DerivationDoc): Promise<SystemScene> {
   // The star is derived first so its derived facts (luminosity now) can feed its planets.
   const basePacks = new Set(session.stack().base.map((p) => p.id));
   const order = [...scene.subjects].sort((a, b) => Number(b.kind === "star" && !b.orbit) - Number(a.kind === "star" && !a.orbit));
@@ -131,6 +131,8 @@ export async function deriveScene(session: ViewSession, scene: SystemScene, doc:
           fictional: d.fictional,
           publisher: d.publisher,
           changed: !basePacks.has(d.publisher.split("/")[0]!),
+          scale: o.scale,
+          digits: o.digits,
         };
         const i = facts.findIndex((f) => f.field === o.field);
         if (i >= 0) facts[i] = fact;
@@ -139,6 +141,7 @@ export async function deriveScene(session: ViewSession, scene: SystemScene, doc:
       cur = { ...cur, facts };
     }
     if (cur.facts.some((f) => f.changed) && !cur.stamps.includes("changed-physics")) cur = { ...cur, stamps: [...cur.stamps, "changed-physics"] };
+    if (cur.facts.some((f) => f.fictional) && !cur.stamps.includes("fictional")) cur = { ...cur, stamps: [...cur.stamps, "fictional"] };
     done.set(cur.address, cur);
     if (cur.kind === "star" && !cur.orbit) star = cur;
   }

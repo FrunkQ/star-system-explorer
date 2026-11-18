@@ -6,5 +6,7 @@ import { bodyCard } from "../../views/body-card/src/index.ts";
 import { timeRuler } from "../../views/time-ruler/src/index.ts";
 import { flowEditor } from "../../views/flow-editor/src/index.ts";
 import { changeRequests } from "../../views/change-requests/src/index.ts";
+import { packStack } from "../../views/pack-stack/src/index.ts";
+import { screenComposer } from "../../views/screen-composer/src/index.ts";
 
-export const REGISTRY: readonly ViewModule[] = [systemChart, bodyCard, timeRuler, flowEditor, changeRequests];
+export const REGISTRY: readonly ViewModule[] = [systemChart, bodyCard, timeRuler, flowEditor, changeRequests, packStack, screenComposer];

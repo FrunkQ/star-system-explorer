@@ -10,6 +10,8 @@
   import { Segmented, ToolButton, formatYears } from "../../chart-grammar/src/index.ts";
   import workspaceDoc from "./documents/workspace.gm.json";
   import physicsDoc from "./documents/physics.gm.json";
+  import packsDoc from "./documents/packs.gm.json";
+  import screensDoc from "./documents/screens.gm.json";
   import oracDoc from "./documents/orac.requests.json";
   import sceneDoc from "./documents/kestrel.scene.json";
   import symbologyDoc from "./documents/diagrammatic.stub.json";
@@ -29,7 +31,7 @@
   let scene = $state<SystemScene>(base);
 
   // Each screen document is checked before anything mounts; the GM switches between them.
-  const SCREENS: Record<string, ScreenDoc> = { system: workspaceDoc as unknown as ScreenDoc, physics: physicsDoc as unknown as ScreenDoc };
+  const SCREENS: Record<string, ScreenDoc> = { system: workspaceDoc as unknown as ScreenDoc, physics: physicsDoc as unknown as ScreenDoc, packs: packsDoc as unknown as ScreenDoc, screens: screensDoc as unknown as ScreenDoc };
   const checks = Object.fromEntries(Object.entries(SCREENS).map(([k, d]) => [k, checkScreen(d, REGISTRY)]));
   const badScreens = Object.values(checks).flatMap((c) => (c.ok ? [] : c.errors));
   const screen = $derived.by((): CheckedScreen | null => {
@@ -158,6 +160,8 @@
         options={[
           { value: "system", label: "Chart", key: "P" },
           { value: "physics", label: "Physics", key: "P" },
+          { value: "screens", label: "Screens" },
+          { value: "packs", label: "Packs" },
         ]}
         onchange={(v) => (ws.screen = v)}
       />

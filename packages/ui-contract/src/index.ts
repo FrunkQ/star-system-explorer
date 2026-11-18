@@ -5,7 +5,7 @@ export { YEAR_S, INTENT_KINDS, checkIntent, yearsToSeconds, secondsToYears } fro
 export type { Intent, IntentKind, IntentSchema } from "./intent.ts";
 export { decide, gmSeat, tableSeat, within } from "./seat.ts";
 export type { Seat, AutoApprove, Decision } from "./seat.ts";
-export type { ViewSession, IntentResult, HistoryEvent, DeviceEdge, DeriveRef, InputValue, Derived, Explanation, StackInfo, TrialResult } from "./session.ts";
+export type { ViewSession, IntentResult, HistoryEvent, DeviceEdge, DeriveRef, InputValue, Derived, Explanation, StackInfo, TrialResult, StackCandidate, Probe } from "./session.ts";
 export { CAMPAIGN_PACK, flowParams, editFlow, diffFlow, providerOf, campaignPack, packFor, checkRequest, flowColumns, paramText, siText } from "./physics.ts";
 export { draftId, adopted, draftParam, candidateFor, previewRequest, adoptRequest, withdrawRequest, declineRequest, benchRef } from "./physics-edit.ts";
 export type { Preview } from "./physics-edit.ts";
@@ -22,3 +22,5 @@ export type { Mark, Binding, Symbology, Channel } from "./mark.ts";
 export type { SystemScene, SceneSubject, SceneFact, SceneEvent, FactSource } from "./scene.ts";
 export { describeFact, wordsFor, fact, subjectName, parentOf, sentence, checkPlayerScene } from "./player-scene.ts";
 export type { PlayerScene, PlayerSubject, PlayerFact, Vocab, FieldWords, FactText } from "./player-scene.ts";
+export { packSummary, previewStack, stackPacks, checkPackDoc } from "./packs-edit.ts";
+export type { PackSummary, ValueChange, StackPreview } from "./packs-edit.ts";
