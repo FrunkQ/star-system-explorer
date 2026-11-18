@@ -234,7 +234,7 @@ pub struct World {
     last_event: Option<usize>,
 }
 
-fn earth(units: u64) -> f64 {
+pub(crate) fn earth(units: u64) -> f64 {
     units as f64 * MASS_UNIT * MSUN_IN_EARTH
 }
 
@@ -537,7 +537,7 @@ impl Upheaval {
     }
 }
 
-fn fnv(parts: &[&[u8]]) -> u64 {
+pub(crate) fn fnv(parts: &[&[u8]]) -> u64 {
     let mut h: u64 = 0xcbf2_9ce4_8422_2325;
     for p in parts {
         for b in (p.len() as u64).to_be_bytes().iter().chain(p.iter()) {
@@ -548,7 +548,7 @@ fn fnv(parts: &[&[u8]]) -> u64 {
     h
 }
 
-fn rayleigh(u: f64, sigma: f64) -> f64 {
+pub(crate) fn rayleigh(u: f64, sigma: f64) -> f64 {
     sigma * m::sqrt(-2.0 * m::ln(1.0 - u))
 }
 
@@ -562,7 +562,7 @@ fn band_key(disc: &Disc, r: f64) -> String {
 }
 
 /// Take `n` units from a water list proportionally (floor, then the remainder from the largest).
-fn take_water(from: &mut WaterFrom, n: u64) -> WaterFrom {
+pub(crate) fn take_water(from: &mut WaterFrom, n: u64) -> WaterFrom {
     let total: u64 = from.iter().map(|x| x.1).sum();
     assert!(n <= total, "water books: want {n} of {total}");
     if n == 0 {
@@ -596,7 +596,7 @@ fn take_water(from: &mut WaterFrom, n: u64) -> WaterFrom {
     out
 }
 
-fn world_water(w: &World) -> WaterFrom {
+pub(crate) fn world_water(w: &World) -> WaterFrom {
     let mut v = vec![];
     w.ledger.water_by_band(&mut v);
     v.into_iter()
@@ -605,13 +605,13 @@ fn world_water(w: &World) -> WaterFrom {
         .collect()
 }
 
-fn add(a: &mut [u64; 6], b: &[u64; 6]) {
+pub(crate) fn add(a: &mut [u64; 6], b: &[u64; 6]) {
     for g in 0..6 {
         a[g] += b[g];
     }
 }
 
-fn sum6(a: &[u64; 6]) -> u64 {
+pub(crate) fn sum6(a: &[u64; 6]) -> u64 {
     a.iter().sum()
 }
 
@@ -633,7 +633,7 @@ fn strip(solid: &mut [u64; 6], mut want: u64, order: &[usize]) -> [u64; 6] {
 }
 
 /// Take `want` units proportionally from the allowed groups.
-fn take_prop(solid: &mut [u64; 6], want: u64, allowed: &[usize]) -> [u64; 6] {
+pub(crate) fn take_prop(solid: &mut [u64; 6], want: u64, allowed: &[usize]) -> [u64; 6] {
     let total: u64 = allowed.iter().map(|g| solid[*g]).sum();
     let mut out = [0u64; 6];
     if total == 0 || want == 0 {
@@ -1660,8 +1660,13 @@ pub fn upheave(seed: &Seed, system: &Address, disc: &Disc, g: &Growth) -> Upheav
 
 /// The hand-over to stage 8 (F6) for every world that came through.
 pub fn protoplanets(u: &Upheaval, system: &Address) -> Vec<crate::early::Protoplanet> {
+    protoplanets_of(&u.worlds, system)
+}
+
+/// The same hand-over for a list of worlds (F5 passes its own, after moons are taken).
+pub fn protoplanets_of(worlds: &[World], system: &Address) -> Vec<crate::early::Protoplanet> {
     let k = MASS_UNIT * MSUN_IN_EARTH;
-    u.worlds
+    worlds
         .iter()
         .enumerate()
         .map(|(i, w)| {

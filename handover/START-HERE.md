@@ -1,6 +1,6 @@
 # START HERE
 
-Last updated: 18 Nov 2026, after F4 and the kernel track's C3. Milestone M1 complete (K0 documents with Alex for review). Milestone 2 running as parallel tracks.
+Last updated: 18 Nov 2026, after F5 and the kernel track's C3. Milestone M1 complete (K0 documents with Alex for review). Milestone 2 running as parallel tracks.
 
 ## Where we are
 Milestone M1 "Proven core" = packages K0 to K6 (build plan section 3/4).
@@ -22,7 +22,7 @@ Milestone M1 "Proven core" = packages K0 to K6 (build plan section 3/4).
 | F2 Classic Accrete block | done; **Alex to confirm**: System Lab (GPL-3.0, his code) ported under Apache-2.0 on his 17 Nov ruling, with credit (F2.md, Source) | packages/F2.md |
 | F3 modern growth block | done | packages/F3.md |
 | F4 violent phase and upheavals | done | packages/F4.md |
-| F5 leftovers | next on the physics track (reads F4's belts, reservoirs and impact moons) | |
+| F5 leftovers: belts, Oort cloud, Trojans, moons, rings | done | packages/F5.md |
 | F6 early worlds and hand-off | done (ahead of F2 to F5; reads a plain `Protoplanet`) | packages/F6.md |
 | K7 envelopes, partitioning, resolve, feasibility | done (kernel track) | packages/K7.md |
 | K8 rules, classification, sifters, significance | done (kernel track) | packages/K8.md |
@@ -39,7 +39,7 @@ Milestone M1 "Proven core" = packages K0 to K6 (build plan section 3/4).
 ## Parallel tracks (18 Nov, Alex: build in parallel, integrate later)
 | Track | Packages | Branch |
 |---|---|---|
-| Physics | P1, P3, P4, F0 to F4 and F6 done; F5 next; F7 not started | `claude/project-thread-h9y77o` (this file) |
+| Physics | P1, P3, P4, F0 to F6 done; F7 to F10 not started (F9 needs C3, F7 needs T1) | `claude/project-thread-h9y77o` (this file) |
 | Kernel | K7 to K10, G0, C1 to C3, L0 and the U3 gaps done; nothing queued | `claude/project-thread-dzkz4p` (PR #1 into the physics branch; physics branch merged in at 788aea1) |
 | Chart room shell | U1 | its own branch from the M1 state; see that thread |
 

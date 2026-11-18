@@ -240,3 +240,42 @@ pub fn upheaval_golden() -> serde_json::Value {
     }
     serde_json::Value::Array(out)
 }
+
+/// F5 golden: the leftovers of the six F3 golden systems, with the first
+/// objects of every cloud resolved (the same on every device).
+pub fn leftovers_golden() -> serde_json::Value {
+    let seed = sse_core::Seed::from_text("f3-golden");
+    let fits = Fits::new(0.02);
+    let mut out = vec![];
+    for n in 0..6u64 {
+        let sys = system(n);
+        let disc = crate::disc::Disc::new(crate::disc::disc_params(
+            &seed,
+            &sys,
+            1.0,
+            fits.l_zams(1.0),
+            0.0,
+            0.0,
+            0.55,
+            300.0,
+            None,
+        ));
+        let g = crate::growth::grow(&seed, &sys, &disc);
+        let u = crate::violent::upheave(&seed, &sys, &disc, &g);
+        let l = crate::leftovers::leftovers(&seed, &sys, &disc, &u);
+        let text = serde_json::to_string(&l).expect("serialisable");
+        out.push(serde_json::json!({
+            "system": n,
+            "clouds": l.clouds.iter().map(|c| serde_json::json!({
+                "address": c.address.to_string(), "kind": c.kind, "mass_earth": c.mass_earth(),
+                "largest_km": c.largest_km,
+                "first": (1..=3).map(|k| c.resolve(&seed, k)).collect::<Vec<_>>(),
+            })).collect::<Vec<_>>(),
+            "moons": l.moons.iter().map(|mo| serde_json::json!({
+                "address": mo.address.to_string(), "origin": mo.origin, "diameter_km": mo.diameter_km,
+            })).collect::<Vec<_>>(),
+            "digest": sse_core::ContentHash::of(&text).expect("hash").hex(),
+        }));
+    }
+    serde_json::Value::Array(out)
+}

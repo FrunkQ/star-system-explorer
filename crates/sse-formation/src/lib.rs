@@ -11,6 +11,7 @@ pub mod growth;
 pub mod history;
 pub mod hurley;
 pub mod inherit;
+pub mod leftovers;
 pub mod lifeline;
 pub mod scenario;
 pub mod stars;
@@ -26,6 +27,8 @@ mod accrete_tests;
 mod early_tests;
 #[cfg(test)]
 mod growth_tests;
+#[cfg(test)]
+mod leftovers_tests;
 #[cfg(test)]
 mod tests;
 #[cfg(test)]
