@@ -60,6 +60,12 @@ Kernel track integration points (K7 to K10):
 
 Each track keeps to its own crates and folders. Integration points are listed at the end of each package log.
 
+## Deployment
+https://v4.starsystemx.com: Cloudflare Worker `star-system-explorer` (Workers Builds, set up by Alex 18 Nov 2026).
+Build `npm run build` (scripts/build-site.sh, writes dist/), deploy `npx wrangler deploy` (wrangler.jsonc),
+production branch `claude/project-thread-h9y77o` until `main` exists; other branches get preview versions.
+The site is the cross-device check page today; point the GM shell build into dist/ when the UI track merges.
+
 ## How to resume
 1. Read `/CLAUDE.md`, then this file, then the log of the last package.
 2. `cargo test --workspace` must pass before you change anything.

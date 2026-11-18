@@ -42,6 +42,8 @@ and wasm-bindgen first if the machine lacks them) and publish `dist/` on any
 static host. Cloudflare Workers Builds: build command `npm run build`, deploy
 command `npx wrangler deploy` (`wrangler.jsonc` serves `dist/` as static assets),
 non-production branch command `npx wrangler versions upload`.
+Live at https://v4.starsystemx.com (Cloudflare Worker `star-system-explorer`, auto-deployed from
+`claude/project-thread-h9y77o` until a `main` exists).
 
 ## Checks
 
