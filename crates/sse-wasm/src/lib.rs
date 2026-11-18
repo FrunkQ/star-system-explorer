@@ -20,6 +20,7 @@ pub fn engines_run() -> String {
         "formation": sse_formation::scenario::golden(),
         "formation-early": sse_formation::scenario::early_golden(),
         "formation-accrete": sse_formation::scenario::accrete_golden(),
+        "formation-growth": sse_formation::scenario::growth_golden(),
         "cosmos": sse_cosmos::scenario::golden(),
     })
     .to_string()
