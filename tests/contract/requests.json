@@ -789,5 +789,239 @@
   "address": "u:elsewhere/sys:0",
   "audience": "everyone",
   "at_s": 145480536000000000
+ },
+ {
+  "op": "state_hash",
+  "at_s": 145480536000000000
+ },
+ {
+  "op": "scene",
+  "audience": "everyone",
+  "scope": "u:kestrel/sys:0",
+  "at_s": 145480536000000000,
+  "observe": {
+   "disclosure": {
+    "fields": {
+     "name": "obvious",
+     "kind": "obvious",
+     "size_class": "obvious",
+     "colour": "obvious",
+     "spectral": "obvious",
+     "orbit.*": "scanned",
+     "mass_kg": "scanned",
+     "atmosphere.*": "scanned",
+     "surface.*": "scanned",
+     "ocean.*": "scanned",
+     "hazards": "scanned",
+     "luminosity_w": "scanned",
+     "interior.*": "surveyed",
+     "resources": "surveyed",
+     "settlements.*": "surveyed",
+     "gm.*": "secret",
+     "story.*": "secret"
+    },
+    "tags": {
+     "habitable": "scanned",
+     "port": "scanned",
+     "hazard": "scanned",
+     "garden": "scanned",
+     "ancient-ruins": "secret"
+    }
+   },
+   "views": [
+    {
+     "id": "long-range",
+     "label": "Long-range sensors",
+     "description": "Exists, rough size and colour",
+     "show_tiers": [
+      "obvious"
+     ],
+     "tags": {
+      "mode": "none"
+     },
+     "unknown_style": "placeholder"
+    },
+    {
+     "id": "scanned",
+     "label": "Scanned",
+     "description": "Orbit, mass, air, temperature, hazards",
+     "show_tiers": [
+      "obvious",
+      "scanned"
+     ],
+     "tags": {
+      "mode": "listed",
+      "list": [
+       "hazard",
+       "habitable",
+       "port"
+      ]
+     },
+     "overrides": [
+      {
+       "target": {
+        "kind": "field",
+        "id": "surface.temp_mean_k"
+       },
+       "show": true,
+       "precision": {
+        "as": "band",
+        "step": 10,
+        "half_width": 10
+       }
+      }
+     ],
+     "unknown_style": "placeholder"
+    },
+    {
+     "id": "survey",
+     "label": "Survey on file",
+     "description": "Adds interiors, resources, settlements",
+     "show_tiers": [
+      "obvious",
+      "scanned",
+      "surveyed"
+     ],
+     "tags": {
+      "mode": "all"
+     },
+     "unknown_style": "placeholder"
+    },
+    {
+     "id": "rumour",
+     "label": "Rumour only",
+     "description": "Name and one story line, no numbers",
+     "show_tiers": [],
+     "tags": {
+      "mode": "none"
+     },
+     "overrides": [
+      {
+       "target": {
+        "kind": "field",
+        "id": "name"
+       },
+       "show": true
+      },
+      {
+       "target": {
+        "kind": "field",
+        "id": "story.rumour"
+       },
+       "show": true
+      }
+     ],
+     "unknown_style": "omit"
+    }
+   ],
+   "campaign": {
+    "default_view": "scanned",
+    "before": "long-range",
+    "after": "scanned"
+   }
+  }
+ },
+ {
+  "op": "scene",
+  "audience": "everyone",
+  "scope": "u:kestrel/sys:0",
+  "at_s": 145480536000000000
+ },
+ {
+  "op": "state_hash",
+  "at_s": 145480536000000000
+ },
+ {
+  "op": "scene",
+  "audience": "everyone",
+  "scope": "u:kestrel/sys:0",
+  "at_s": 145480536000000000,
+  "observe": {
+   "views": 5
+  }
+ },
+ {
+  "op": "atoms",
+  "ids": [
+   "toy.luminosity_from_mass"
+  ]
+ },
+ {
+  "op": "atoms",
+  "ids": [
+   "toy.nope"
+  ]
+ },
+ {
+  "op": "load_stack",
+  "packs": [
+   "$pack:toy-bad-test"
+  ]
+ },
+ {
+  "op": "load_stack",
+  "packs": [
+   "$pack:toy-bad-range"
+  ]
+ },
+ {
+  "op": "load_stack",
+  "packs": [
+   "$pack:toy-quiet"
+  ]
+ },
+ {
+  "op": "explain",
+  "flow": "toy.star-and-planet",
+  "inputs": {
+   "star_mass": {
+    "value": 1,
+    "unit": "m_sun"
+   },
+   "distance": {
+    "value": 1,
+    "unit": "au"
+   },
+   "albedo": {
+    "value": 0.3
+   },
+   "planet_mass": {
+    "value": 1,
+    "unit": "m_earth"
+   },
+   "planet_radius": {
+    "value": 1,
+    "unit": "r_earth",
+    "source": "resolved"
+   }
+  },
+  "kind": "dens.density"
+ },
+ {
+  "op": "explain",
+  "flow": "toy.star-and-planet",
+  "inputs": {
+   "star_mass": {
+    "value": 1,
+    "unit": "m_sun"
+   },
+   "distance": {
+    "value": 1,
+    "unit": "au"
+   },
+   "albedo": {
+    "value": 0.3
+   },
+   "planet_mass": {
+    "value": 1,
+    "unit": "m_earth"
+   },
+   "planet_radius": {
+    "value": 1,
+    "unit": "r_earth",
+    "source": "resolved"
+   }
+  },
+  "kind": "planet.bulk_density"
  }
 ]

@@ -231,7 +231,8 @@ fn rejects_dimension_and_structure_errors() {
     });
     assert!(e.iter().any(|m| m.contains("published twice")), "{e:?}");
     assert!(
-        e.iter().any(|m| m.contains("outside allowed range")),
+        e.iter()
+            .any(|m| m.contains("value 99 is outside the allowed range ") && !m.contains("Some(")),
         "{e:?}"
     );
     assert!(

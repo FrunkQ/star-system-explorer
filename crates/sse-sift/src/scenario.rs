@@ -157,3 +157,122 @@ pub fn golden() -> serde_json::Value {
         "state": cp.c.state_at(cp.now).hash().hex(),
     })
 }
+
+// ---- C1: the SSE 3 classic scheme and a warming Earth ----
+
+/// The SSE 3 classic scheme pack (`packs/sse3-classic`).
+pub fn classic_pack() -> PackManifest {
+    PackManifest::from_json(include_str!("../../../packs/sse3-classic/pack.json"))
+        .expect("classic pack")
+}
+pub fn classic_atlas() -> crate::Atlas {
+    crate::pack::load(&[classic_pack()])
+        .expect("classic pack loads")
+        .atlas
+}
+fn solar() -> serde_json::Value {
+    serde_json::from_str(include_str!(
+        "../../../tests/fixtures/classify/solar-system.json"
+    ))
+    .expect("solar fixture")
+}
+fn body_facts(v: &serde_json::Value) -> BTreeMap<String, Value> {
+    serde_json::from_value(v.clone()).expect("facts")
+}
+
+fn authored(ch: &mut Chronicle, a: &Address, t_gyr: i64, field: &str, v: Value) {
+    let mut f = BTreeMap::new();
+    f.insert(field.to_string(), v);
+    let mut set = BTreeMap::new();
+    set.insert(a.clone(), f);
+    let t = UniverseTime::years(t_gyr * 1_000_000_000);
+    let e = Event::new(EventBody {
+        kind: "authored.set".into(),
+        subject: vec![a.clone()],
+        occurred_at: t,
+        activated_at: t,
+        recognised_at: ch.next_stamp(),
+        causes: vec![],
+        payload: Payload {
+            set,
+            ..Default::default()
+        },
+        evidence: Evidence::Authored,
+        publisher: Publisher::new("gm", "edit", "1"),
+    })
+    .expect("event");
+    ch.append(e).expect("append");
+}
+
+/// An Earth that warms, as an ageing run would leave it: a brighter Sun,
+/// the oceans go, then the crust melts. Times are every 1 Gyr from 0 to 4.
+pub fn warming_earth() -> (Chronicle, Address, Vec<UniverseTime>) {
+    let a: Address = "u:sol/sys:0/body:2".parse().expect("address");
+    let mut ch = Chronicle::new();
+    let sol = solar();
+    let earth = sol["bodies"]
+        .as_array()
+        .expect("bodies")
+        .iter()
+        .find(|b| b["name"] == "Earth")
+        .expect("Earth");
+    for (k, v) in body_facts(&earth["facts"]) {
+        authored(&mut ch, &a, 0, &k, v);
+    }
+    authored(
+        &mut ch,
+        &a,
+        1,
+        "planet.surface_temperature",
+        Value::Float(330.0),
+    );
+    authored(
+        &mut ch,
+        &a,
+        2,
+        "hydrosphere.liquidCoverage",
+        Value::Float(0.0),
+    );
+    authored(&mut ch, &a, 2, "hydrosphere.coverage", Value::Float(0.0));
+    authored(
+        &mut ch,
+        &a,
+        2,
+        "planet.surface_temperature",
+        Value::Float(600.0),
+    );
+    authored(
+        &mut ch,
+        &a,
+        3,
+        "planet.surface_temperature",
+        Value::Float(1500.0),
+    );
+    let times = (0..=4)
+        .map(|g| UniverseTime::years(g * 1_000_000_000))
+        .collect();
+    (ch, a, times)
+}
+
+/// C1 golden: classic labels of the Solar System and the warming Earth's
+/// relabel events (ids and the chronicle head), identical on every device.
+pub fn classify_golden() -> serde_json::Value {
+    let atlas = classic_atlas();
+    let labels: Vec<serde_json::Value> = solar()["bodies"]
+        .as_array()
+        .expect("bodies")
+        .iter()
+        .map(|b| {
+            let l = atlas.label("sse3-classic", &Subject::new(body_facts(&b["facts"])), None);
+            serde_json::json!([b["name"], l.classic.map(|w| w.classes), l.fit])
+        })
+        .collect();
+    let (mut ch, a, times) = warming_earth();
+    let rl = crate::relabel::record(&mut ch, &atlas, "sse3-classic", &a, &times).expect("relabel");
+    serde_json::json!({
+        "atlas": atlas.content_hash().hex(),
+        "solar_system": labels,
+        "relabels": rl.iter().map(|r| serde_json::json!([r.at.s, r.from, r.to, r.event.hex()])).collect::<Vec<_>>(),
+        "chronicle_head": ch.head().hex(),
+    })
+}

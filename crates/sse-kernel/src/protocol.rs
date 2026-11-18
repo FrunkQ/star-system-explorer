@@ -193,6 +193,20 @@ pub enum Request {
         #[ts(optional)]
         data_view: Option<String>,
         at_s: i64,
+        /// A draft `provides.other.observe` setup to build with instead of
+        /// the stack's (a preview before Apply). Nothing is recorded.
+        #[serde(default)]
+        #[ts(optional, type = "unknown")]
+        observe: Option<serde_json::Value>,
+    },
+    /// Describe the registered atoms (ports with quantity kinds, dimensions
+    /// and valid ranges, parameters with defaults, ranges and descriptions,
+    /// cost class, references, explain text), for editors and Orac. All of
+    /// them, or only `ids`.
+    Atoms {
+        #[serde(default)]
+        #[ts(optional)]
+        ids: Option<Vec<String>>,
     },
     /// The Scanned button: flip `address` between the campaign's before and
     /// after views for `audience`. Chronicled; pressing again undoes. GM only.
@@ -226,6 +240,7 @@ impl Request {
             Request::Manifest => "manifest",
             Request::Scene { .. } => "scene",
             Request::ScanToggle { .. } => "scan_toggle",
+            Request::Atoms { .. } => "atoms",
         }
     }
 }
@@ -279,6 +294,7 @@ pub fn ops() -> Vec<OpInfo> {
             "linear in the facts within the scope; any device builds its own scenes",
         ),
         o("scan_toggle", Cost::Trivial, "GM machine only in a session"),
+        o("atoms", Cost::Trivial, none),
     ]
 }
 
@@ -400,6 +416,11 @@ pub enum Response {
         #[ts(type = "unknown")]
         scene: serde_json::Value,
         scene_hash: String,
+    },
+    /// One JSON record per atom, in id order (see `Request::Atoms`).
+    Atoms {
+        #[ts(type = "unknown[]")]
+        atoms: Vec<serde_json::Value>,
     },
     ScanToggled {
         event_id: String,
