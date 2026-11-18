@@ -17,6 +17,8 @@ Milestone M1 "Proven core" = packages K0 to K6 (build plan section 3/4).
 | P1 atom library, first wave | done | packages/P1.md |
 | P3 V3 importer | built; real-save check pending on Alex's PC | packages/P3.md |
 | P4 regions and features on worlds | done | packages/P4.md |
+| F0 inheritance, stars, life lines, formation history | done | packages/F0.md |
+| F1 disc and material bands | next on the physics track | |
 | K7 envelopes, partitioning, resolve, feasibility | done (kernel track) | packages/K7.md |
 | K8 rules, classification, sifters, significance | done (kernel track) | packages/K8.md |
 | K9 disclosure tiers, data views, scene building | done (kernel track) | packages/K9.md |
@@ -27,8 +29,8 @@ Milestone M1 "Proven core" = packages K0 to K6 (build plan section 3/4).
 ## Parallel tracks (18 Nov, Alex: build in parallel, integrate later)
 | Track | Packages | Branch |
 |---|---|---|
-| Physics | P1, P3, P4 | `claude/project-thread-h9y77o` (this file) |
-| Kernel | K7 to K10 and G0 done; C1, C2 next | `claude/project-thread-dzkz4p` (PR #1 into the physics branch; physics branch merged in at 00db0e7) |
+| Physics | P1, P3, P4, then F0 to F2 and F6 | `claude/project-thread-h9y77o` (this file) |
+| Kernel | K7 to K10 and G0 done; C1, C2 next | `claude/project-thread-dzkz4p` (PR #1 into the physics branch; physics branch merged in at e0a9701) |
 | Chart room shell | U1 | its own branch from the M1 state; see that thread |
 
 The kernel now registers the real atom library and loads the base-physics pack (see P1 log, integration notes). The kernel track has merged that in.

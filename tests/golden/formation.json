@@ -1,0 +1,180 @@
+{
+  "systems": [
+    {
+      "events": 5,
+      "hash": "288da3a18060af55191e2594f35b5cefb3270f33c386e7df2ce9f581c33f2c54",
+      "primary_mass": 0.8201693672800487,
+      "slices": 116,
+      "stars": 1,
+      "system": 0
+    },
+    {
+      "events": 5,
+      "hash": "c20a7c633e9bd1d2fff3e68f7caf0febee8bca29f77b9e893997a0f026e54d36",
+      "primary_mass": 0.6653769664914461,
+      "slices": 116,
+      "stars": 1,
+      "system": 1
+    },
+    {
+      "events": 11,
+      "hash": "10e17c966318483daf450e30af199d343c6927e76c900d6846e192a85fbd954d",
+      "primary_mass": 0.13649840977431357,
+      "slices": 117,
+      "stars": 2,
+      "system": 2
+    },
+    {
+      "events": 5,
+      "hash": "a64b011be7a334a50e51deb00f47b010d7b89e5afb279dcc172c26f9109c2ceb",
+      "primary_mass": 0.5265480676873837,
+      "slices": 116,
+      "stars": 1,
+      "system": 3
+    },
+    {
+      "events": 5,
+      "hash": "4a6154652392327db154eb8832ec622c4f4f795ec377802eb5f85922a92d49d2",
+      "primary_mass": 0.17711530306495318,
+      "slices": 116,
+      "stars": 1,
+      "system": 4
+    },
+    {
+      "events": 10,
+      "hash": "477426c6fec31659a686354b688234bf4418ef7caab22b104110895c2e675fa4",
+      "primary_mass": 0.1770382799926177,
+      "slices": 117,
+      "stars": 2,
+      "system": 5
+    },
+    {
+      "refused": "metal fraction Z = 3.43e-2 ([Fe/H] 0.23) is outside the stellar fits (1e-4 to 0.03)",
+      "system": 6
+    },
+    {
+      "events": 5,
+      "hash": "4432718ca379efe49a664c9547fd8e0fe5f72f9797f222405e52fba6007eeae2",
+      "primary_mass": 0.4523885235947116,
+      "slices": 116,
+      "stars": 1,
+      "system": 7
+    },
+    {
+      "refused": "metal fraction Z = 3.24e-2 ([Fe/H] 0.21) is outside the stellar fits (1e-4 to 0.03)",
+      "system": 8
+    },
+    {
+      "events": 5,
+      "hash": "fbdb212c3d9cf4df7f177821b438d2df9622bf2c623c7cc3d6e220cd6733ffc5",
+      "primary_mass": 0.22227828427501245,
+      "slices": 116,
+      "stars": 1,
+      "system": 9
+    },
+    {
+      "events": 15,
+      "hash": "32ffbb3de0988fd27b47ca1129899d32ef4060fbcfc2e3bb2fc51919e24b4769",
+      "primary_mass": 1.1041042051872563,
+      "slices": 121,
+      "stars": 3,
+      "system": 10
+    },
+    {
+      "refused": "metal fraction Z = 4.04e-2 ([Fe/H] 0.31) is outside the stellar fits (1e-4 to 0.03)",
+      "system": 11
+    },
+    {
+      "events": 5,
+      "hash": "29ba2229d31e02acedf6ceffcb3200cbbda9ed3eefa5d521a1955a965eecff7c",
+      "primary_mass": 0.6673413103734822,
+      "slices": 116,
+      "stars": 1,
+      "system": 12
+    },
+    {
+      "events": 10,
+      "hash": "8fe99244ae970d330cf0e3f7967c4d15e5abf14f4d9155d9776d664ef50d7e38",
+      "primary_mass": 1.5214471844577087,
+      "slices": 84,
+      "stars": 2,
+      "system": 13
+    },
+    {
+      "events": 5,
+      "hash": "506ea23cc38795cb9624317f5ff9400f25a8c51da59d3c99afe60483ca5bbdfa",
+      "primary_mass": 0.31062435535258026,
+      "slices": 116,
+      "stars": 1,
+      "system": 14
+    },
+    {
+      "refused": "metal fraction Z = 4.52e-2 ([Fe/H] 0.35) is outside the stellar fits (1e-4 to 0.03)",
+      "system": 15
+    },
+    {
+      "events": 5,
+      "hash": "304221a2ef51016185e1da1cecb545ab4e2ff80abcc6574efa37537bf82e5e9c",
+      "primary_mass": 0.11621088295324732,
+      "slices": 116,
+      "stars": 1,
+      "system": 16
+    },
+    {
+      "events": 5,
+      "hash": "c20352cd1b3e3873527175c373e1c7bd94e06f6e17e54819594252407f51cfe7",
+      "primary_mass": 0.13314807241429474,
+      "slices": 116,
+      "stars": 1,
+      "system": 17
+    },
+    {
+      "events": 5,
+      "hash": "f0dc83c9d3d974e54ee1ab02d1afbd1115dd0993fa072824ff34d54badab3f04",
+      "primary_mass": 0.45992343875839364,
+      "slices": 116,
+      "stars": 1,
+      "system": 18
+    },
+    {
+      "events": 5,
+      "hash": "75b2c764d05e25356cb976ed4b8ce31bf8599ec80333819e9e694249ab5869af",
+      "primary_mass": 0.12282552818573175,
+      "slices": 116,
+      "stars": 1,
+      "system": 19
+    },
+    {
+      "events": 10,
+      "hash": "66740071dcb9376feb1e2e5abdbbf85ccb028db511aba2c99110e66e28972e9d",
+      "primary_mass": 0.41521550648770034,
+      "slices": 117,
+      "stars": 2,
+      "system": 20
+    },
+    {
+      "events": 5,
+      "hash": "f2483ce0b4358efed5956d093d5656be315bb1f4a0c6549bbfa695be4af2c99f",
+      "primary_mass": 11.549845892011835,
+      "slices": 47,
+      "stars": 1,
+      "system": 21
+    },
+    {
+      "events": 5,
+      "hash": "d2ee8fdd4dccda81ef28ed0ac725524d2744bc12ea34b4f76c7e61a332fd6f9f",
+      "primary_mass": 0.19372149427337218,
+      "slices": 116,
+      "stars": 1,
+      "system": 22
+    },
+    {
+      "events": 5,
+      "hash": "e2a21520b5d60cb13720b78977abd7f7135feab2c2a3f7e6241f5bad04b57d6b",
+      "primary_mass": 0.20392771256746506,
+      "slices": 116,
+      "stars": 1,
+      "system": 23
+    }
+  ]
+}
