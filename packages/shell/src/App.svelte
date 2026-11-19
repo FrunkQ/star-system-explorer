@@ -1154,6 +1154,8 @@
       width: auto;
       max-height: none;
       overflow: visible;
+      /* A card opening from its body (U12) slides a little sideways; it must never make the page scroll. */
+      overflow-x: clip;
       margin: 16px 16px 24px;
       padding: 0 6px 6px 0;
     }
@@ -1161,6 +1163,8 @@
       position: sticky;
       bottom: 0;
       z-index: 2;
+      min-width: 0;
+      overflow-x: clip;
     }
     .status {
       flex-wrap: wrap;
