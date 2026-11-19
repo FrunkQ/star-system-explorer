@@ -74,6 +74,16 @@ export interface ViewSession {
   send(intent: Intent): Promise<IntentResult>;
   history(address: string): Promise<HistoryEvent[]>;
   stateHash(at_yr?: number): Promise<string>;
+  /**
+   * What-if branches (U4, H6.3): a branch of the chronicle the GM edits
+   * without touching the main line. GM seat only; players never see one.
+   */
+  openBranch(label: string): Promise<{ ok: true; branch: string } | { ok: false; message: string }>;
+  /** Apply a set_value on a branch only. The main chronicle and its state hash do not move. */
+  branchSend(branch: string, intent: Intent): Promise<IntentResult>;
+  branchStateHash(branch: string, at_yr?: number): Promise<string>;
+  /** Drop a branch and everything on it. */
+  discardBranch(branch: string): Promise<boolean>;
   kernelVersion(): Promise<string>;
   /** Derived values of a flow (read only; no event). */
   derive(ref: DeriveRef): Promise<{ ok: true; values: Record<string, Derived> } | { ok: false; message: string }>;
@@ -347,6 +357,34 @@ export class Session implements ViewSession {
     const at_s = at_yr === undefined ? 9_223_372_036_854_775_807n : yearsToSeconds(at_yr);
     const r = await this.#call({ op: "state_hash", at_s });
     return r.type === "state_hash" ? String(r.hash) : "";
+  }
+
+  async openBranch(label: string): Promise<{ ok: true; branch: string } | { ok: false; message: string }> {
+    if (this.seat.authority !== "gm") return { ok: false, message: "only the game master opens a what-if branch" };
+    const r = await this.#call({ op: "branch", label });
+    return r.type === "branch_opened" ? { ok: true, branch: String(r.branch) } : { ok: false, message: String(r.message ?? JSON.stringify(r)) };
+  }
+
+  async branchSend(branch: string, intent: Intent): Promise<IntentResult> {
+    if (this.seat.authority !== "gm") return { status: "refused", reason: "only the game master edits a what-if branch" };
+    if (intent.kind !== "set_value") return { status: "refused", reason: "a what-if branch takes value edits only" };
+    const bad = checkIntent(intent);
+    if (bad) return { status: "refused", reason: bad };
+    const req = intentToRequest(intent) as { edit: unknown };
+    const r = await this.#call({ op: "branch_set", branch, edit: req.edit });
+    if (r.type === "authored") return { status: "applied", event_id: String(r.event_id), state_hash: String(r.state_hash), affected: r.affected as string[] };
+    return { status: "error", code: String(r.code ?? "unexpected"), message: String(r.message ?? JSON.stringify(r)) };
+  }
+
+  async branchStateHash(branch: string, at_yr?: number): Promise<string> {
+    const at_s = at_yr === undefined ? 9_223_372_036_854_775_807n : yearsToSeconds(at_yr);
+    const r = await this.#call({ op: "branch_state_hash", branch, at_s });
+    return r.type === "state_hash" ? String(r.hash) : "";
+  }
+
+  async discardBranch(branch: string): Promise<boolean> {
+    const r = await this.#call({ op: "discard", branch });
+    return r.type === "discarded";
   }
 
   async kernelVersion(): Promise<string> {

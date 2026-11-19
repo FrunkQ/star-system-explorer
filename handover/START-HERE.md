@@ -32,7 +32,7 @@ Milestone M1 "Proven core" = packages K0 to K6 (build plan section 3/4).
 | U1 shell, chart room and night chart tokens, chart grammar | done, screenshots in packages/U1-screens/ for Alex | packages/U1.md |
 | U2 system chart editor | done: real base-physics values, drag and typed edits, undo, why | packages/U2.md |
 | U3 flow editor, explain lenses, change requests | done: real flows, kernel-validated drafts, adopt, badge; kernel gaps listed in the log | packages/U3.md |
-| U4 time ruler with history, branches, look-ahead | waits for T2 | |
+| U4 time ruler with history, branches, look-ahead | part 1 done: what-if branches, compare, keep or throw away; look-ahead waits for the T2 kernel ops | packages/U4.md |
 | V1 view contract, player scenes, Chart, Card, Table, Text, Readout | done (scenes from K9 fixtures until the kernel serves a scene op) | packages/V1.md |
 | U5 packs screen, data views screen, screens composer | done; player page and composer on live kernel scenes | packages/U5.md |
 | V2 themes: tokens, frame parts, filter chains, six player themes | done | packages/V2.md |
@@ -61,7 +61,7 @@ Milestone M1 "Proven core" = packages K0 to K6 (build plan section 3/4).
 |---|---|---|
 | Physics | P1, P3, P4, F0 to F6 done; next: formation pipeline, F7 (T1 now merged), F9, F8 integrator | `main` via PRs |
 | Kernel | K7 to K10, G0, C1 to C3, L0, T1, T2 and the U3 gaps done | `main` via PRs |
-| Chart room shell and player views | U0 to U3, V1, U5, V2, V12, V3, V11, V4, V5, planet chart, V10, V6 System 3D, U9 lenses, N1 sound done; next U4 (T2 is in), V3 import screen, V6 Body and Cutaway, V7 | `main` via PRs |
+| Chart room shell and player views | U0 to U3, V1, U5, V2, V12, V3, V11, V4, V5, planet chart, V10, V6 System 3D, U9 lenses, N1 sound, U4 part 1 (what-if) done; next U4 look-ahead (needs T2 ops), V3 import screen, V6 Body and Cutaway, V7 | `main` via PRs |
 
 **Since 19 Nov (Alex): `main` is the default branch.** New work branches from `main` and arrives as a pull request
 into `main`; its checks pass before merge. The old track branches are kept, not deleted.

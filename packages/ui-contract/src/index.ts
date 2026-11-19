@@ -15,8 +15,9 @@ export type { FlowDoc, PackDoc, ParamEdit, ChangeRequest, RequestStatus } from "
 export { deriveScene, applyEdits, sig } from "./derivation.ts";
 export type { DerivationDoc, DerivationRule, InputBinding, OutputBinding } from "./derivation.ts";
 export { resolveParams } from "./view.ts";
-export type { StylesHost, ViewModule, ViewContext, PlayerContext, ViewHandle, ParamSpec, Tier, TopicQuery, Workspace, AppliedEdit } from "./view.ts";
-export { commitEdit, undoEdit, redoEdit } from "./edit.ts";
+export type { StylesHost, ViewModule, ViewContext, PlayerContext, ViewHandle, ParamSpec, Tier, TopicQuery, Workspace, AppliedEdit, WhatIf } from "./view.ts";
+export { commitEdit, undoEdit, redoEdit, openWhatIf, dropWhatIf, keepWhatIf, compareScenes } from "./edit.ts";
+export type { Difference } from "./edit.ts";
 export { checkScreen, boundScene, LAYOUT_AREAS } from "./screen.ts";
 export { resolveStyle, checkStyle, settingCost, settingsCost, promotedOf, settingsDiff, COSTS, TIER_RUNS_UP_TO } from "./style.ts";
 export type { StyleDoc, StyleCheck } from "./style.ts";

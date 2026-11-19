@@ -11,6 +11,7 @@
   import LensPanel from "./LensPanel.svelte";
   import SoundControl from "../../sound/src/SoundControl.svelte";
   import { orbitScene, voicesFromSystem } from "../../ui-contract/src/index.ts";
+  import { compareScenes, dropWhatIf, keepWhatIf, openWhatIf } from "../../ui-contract/src/index.ts";
   import { allLenses, checkLens, defaultLens, hasTool, lensAudience, type Lens } from "../../ui-contract/src/index.ts";
   import { themeCss, THEMES } from "../../skins/chart-room/src/index.ts";
   import { ALL_THEMES } from "../../skins/player/src/index.ts";
@@ -177,12 +178,37 @@
     const applied = { ...ws.applied };
     const s = session;
     if (!s) return;
+    const b = ws.branch ? { id: ws.branch.id, applied: { ...ws.branch.applied } } : null;
     const g = ++generation;
     s.stateHash().then((h) => (status = { ...status, hash: h, stack: s.stack().hash, campaign: s.stack().campaign !== null }));
-    deriveScene(s, applyEdits({ ...base, now_yr: now }, applied), derivations).then((next) => {
-      if (g === generation) scene = next;
+    // U4: with a what-if open, the chart shows the branch; the main line is kept for comparing.
+    if (b) s.branchStateHash(b.id).then((h) => g === generation && (branchHash = h));
+    else branchHash = "";
+    const main = deriveScene(s, applyEdits({ ...base, now_yr: now }, applied), derivations);
+    const what = b ? deriveScene(s, applyEdits({ ...base, now_yr: now }, { ...applied, ...b.applied }), derivations) : main;
+    Promise.all([main, what]).then(([m, w]) => {
+      if (g !== generation) return;
+      mainScene = m;
+      scene = w;
     });
   });
+  let mainScene = $state<SystemScene>(base);
+  let branchHash = $state("");
+  let whatNote = $state<string | null>(null);
+  let compareDialog: HTMLDialogElement | undefined = $state();
+  const differences = $derived(ws.branch ? compareScenes(mainScene, scene, ws.branch.applied) : []);
+  async function whatIf(action: "open" | "keep" | "drop") {
+    if (!session) return;
+    whatNote = null;
+    if (action === "open") whatNote = await openWhatIf(session, ws, `What if, from ${formatYears(ws.now_yr)}`);
+    else if (action === "drop") await dropWhatIf(session, ws);
+    else {
+      const n = ws.branch?.edits.length ?? 0;
+      const bad = await keepWhatIf(session, ws);
+      whatNote = bad ?? `Kept: ${n} ${n === 1 ? "change is" : "changes are"} now on the chart's history.`;
+    }
+    compareDialog?.close();
+  }
 
   const handles: ViewHandle[] = [];
   $effect(() => {
@@ -334,12 +360,13 @@
     <main class="problem" aria-busy="true"><p>Opening the chart…</p></main>
   {:else}
     {#key ws.screen}
-    <main class="stage" data-screen={ws.screen} data-lens={lens.id}>
+    <main class="stage" data-screen={ws.screen} data-lens={lens.id} data-branch={ws.branch ? "open" : undefined}>
+      {#if ws.branch}<div class="branch-stamp" aria-hidden="true">What if · not kept</div>{/if}
       <div class="area-chart">{#if mountFor("chart")}<div class="fill" use:view={mountFor("chart")!}></div>{/if}</div>
       <nav class="tools" aria-label="Tools">
         <ToolButton label="Select" icon="M5 3l14 8-6 2-2 6z" pressed={true} />
-        {#if hasTool(ws.lens, "undo")}<ToolButton label="Undo" icon="M9 14L4 9l5-5M4 9h11a5 5 0 0 1 0 10h-3" keyhint="Control+Z" disabled={ws.undo.length === 0 || ws.mode !== "edit"} onclick={() => undo(true)} />
-        <ToolButton label="Redo" icon="M15 14l5-5-5-5M20 9H9a5 5 0 0 0 0 10h3" keyhint="Control+Shift+Z" disabled={ws.redo.length === 0 || ws.mode !== "edit"} onclick={() => undo(false)} />{/if}
+        {#if hasTool(ws.lens, "undo")}<ToolButton label="Undo" icon="M9 14L4 9l5-5M4 9h11a5 5 0 0 1 0 10h-3" keyhint="Control+Z" disabled={ws.undo.length === 0 || ws.mode !== "edit" || !!ws.branch} onclick={() => undo(true)} />
+        <ToolButton label="Redo" icon="M15 14l5-5-5-5M20 9H9a5 5 0 0 0 0 10h3" keyhint="Control+Shift+Z" disabled={ws.redo.length === 0 || ws.mode !== "edit" || !!ws.branch} onclick={() => undo(false)} />{/if}
         <ToolButton label="Keyboard shortcuts" icon="M3 7h18v10H3zM7 11h1M11 11h1M15 11h2M7 14h10" keyhint="?" onclick={() => help?.showModal()} />
       </nav>
       {#if undoNote}<p class="undo-note" role="status">{undoNote}</p>{/if}
@@ -353,6 +380,19 @@
       <span title="Measured capability tier of this device">tier {status.tier}</span>
       <span title="State hash: {status.hash}" data-state-hash={status.hash}>state {status.hash.slice(0, 10)}</span>
       <span title="Pack stack hash: {status.stack}" data-stack-hash={status.stack}>physics {status.campaign ? "campaign" : "base"} {status.stack.slice(0, 8)}</span>
+      <span class="whatif" data-branch={ws.branch?.id}>
+        {#if ws.branch}
+          <b>{ws.branch.label}</b>
+          <span data-whatif-edits={ws.branch.edits.length}>{ws.branch.edits.length} {ws.branch.edits.length === 1 ? "change" : "changes"}</span>
+          {#if branchHash}<span title="What-if state hash: {branchHash}" data-branch-hash={branchHash}>what-if {branchHash.slice(0, 10)}</span>{/if}
+          <button type="button" class="linkbtn" onclick={() => compareDialog?.showModal()}>Compare</button>
+          <button type="button" class="linkbtn" onclick={() => whatIf("keep")} disabled={!ws.branch.edits.length}>Keep it</button>
+          <button type="button" class="linkbtn" onclick={() => whatIf("drop")}>Throw away</button>
+        {:else}
+          <button type="button" class="linkbtn quiet" onclick={() => whatIf("open")} title="Try changes on a branch; the chart's history does not move until you keep them">What if…</button>
+        {/if}
+        {#if whatNote}<span role="status">{whatNote}</span>{/if}
+      </span>
       <SoundControl scene={soundScene} deviceTier={status.tier} seed={base.universe.seed} key="sound.gm" />
       {#if share}
         <span class="share" aria-label="Players">
@@ -390,6 +430,27 @@
 <dialog bind:this={lensDialog} class="help seats-dialog" aria-label="Lens editor" onclose={() => (lensOpen = false)}>
   {#if lensOpen && session}
     <LensPanel from={lens} {lenses} fieldsByKind={lensFields} kinds={lensKinds} onsave={saveLens} ondelete={deleteLens} />
+  {/if}
+  <form method="dialog"><button type="submit">Close</button></form>
+</dialog>
+
+<dialog bind:this={compareDialog} class="help seats-dialog" aria-label="Compare">
+  <h2>Control and changed</h2>
+  {#if ws.branch}
+    <p class="hint">The main line against <b>{ws.branch.label}</b>, at {formatYears(ws.now_yr)}. Set: changed on the branch. Follows: derived from what was set.</p>
+    {#if differences.length}
+      <table class="diff">
+        <thead><tr><th scope="col">Body</th><th scope="col">Value</th><th scope="col">Main line</th><th scope="col">What if</th><th scope="col"></th></tr></thead>
+        <tbody>
+          {#each differences as d (d.address + d.field)}
+            <tr data-diff={d.field}><th scope="row">{d.label}</th><td>{d.field_label}</td><td>{d.before}</td><td>{d.after}</td><td class="how">{d.how === "set" ? "set" : "follows"}</td></tr>
+          {/each}
+        </tbody>
+      </table>
+    {:else}
+      <p>No differences yet. Edit on the chart or a card; the edits go to the what-if.</p>
+    {/if}
+    <p class="row"><button type="button" onclick={() => whatIf("keep")} disabled={!ws.branch.edits.length}>Keep it</button> <button type="button" onclick={() => whatIf("drop")}>Throw away</button></p>
   {/if}
   <form method="dialog"><button type="submit">Close</button></form>
 </dialog>
@@ -462,6 +523,59 @@
   }
   .compact {
     display: none;
+  }
+  .branch-stamp {
+    position: absolute;
+    top: 14px;
+    left: 50%;
+    transform: translateX(-50%) rotate(-1deg);
+    z-index: 3;
+    padding: 2px 10px;
+    border: var(--sse-line) solid var(--sse-accent);
+    color: var(--sse-accent-ink);
+    font-family: var(--sse-font-mono);
+    font-size: 11px;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    background: var(--sse-ground);
+    pointer-events: none;
+  }
+  .stage[data-branch] {
+    outline: 2px dashed var(--sse-accent);
+    outline-offset: -4px;
+  }
+  .whatif {
+    display: inline-flex;
+    gap: 10px;
+    align-items: center;
+  }
+  .whatif b {
+    color: var(--sse-accent-ink);
+    font-weight: normal;
+  }
+  .help .hint {
+    color: var(--sse-ink-muted);
+    font-size: 12px;
+  }
+  .diff {
+    border-collapse: collapse;
+    font-size: 13px;
+    margin: 8px 0;
+  }
+  .diff th,
+  .diff td {
+    text-align: left;
+    padding: 4px 12px 4px 0;
+    border-bottom: var(--sse-line) solid var(--sse-rule);
+    font-weight: normal;
+  }
+  .diff td:nth-child(3),
+  .diff td:nth-child(4) {
+    font-family: var(--sse-font-mono);
+  }
+  .diff .how {
+    color: var(--sse-ink-muted);
+    font-size: 11px;
   }
   .lens {
     display: flex;

@@ -54,6 +54,17 @@ export interface AppliedEdit {
 }
 
 /** Shared, reactive state of one workspace: what is selected, what time it is, what mode. */
+/** A what-if branch in the workspace: its kernel id, its name, and the edits made on it in order. */
+export interface WhatIf {
+  id: string;
+  label: string;
+  /** Opened at this ruler time. */
+  from_yr: number;
+  edits: AppliedEdit[];
+  /** The values the branch sets, keyed "address#field", laid over the main line's. */
+  applied: Record<string, { value: Json; display: string; event_id: string }>;
+}
+
 export interface Workspace {
   selection: string | null;
   now_yr: number;
@@ -71,6 +82,11 @@ export interface Workspace {
   bench: { flow: string; node?: string; ref?: DeriveRef; label?: string } | null;
   /** Physics change requests: drafts, adopted, declined. */
   requests: ChangeRequest[];
+  /**
+   * The open what-if branch (U4), or null. While one is open, edits go to it
+   * and the main line does not move until the GM keeps it.
+   */
+  branch?: WhatIf | null;
   /** The GM's lens (H8.6): which layers, card fields and tools show. Never changes data. */
   lens?: Lens;
   /** The scene the lens looks through, for lenses that show what an audience knows; null while none is needed. */
