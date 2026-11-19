@@ -263,7 +263,11 @@ impl LifeLine {
                 (l, 0.1, Level::Sketch, mass)
             }
             Phase::WhiteDwarf => {
-                // HPT00 eqs. 90-91: Mestel cooling, A = 4 for carbon-oxygen;
+                // HPT00 eqs. 90-91: Mestel cooling. The paper's A is 4 for helium, 15 for
+                // carbon-oxygen and 17 for oxygen-neon white dwarfs; A = 4 is kept for every
+                // white dwarf as a documented fudge (docs/fudges.md): with 15 a 0.6 M_sun
+                // white dwarf at 1 Gyr is about 1e-4 L_sun, several times fainter than
+                // detailed cooling models, which A = 4 tracks more closely.
                 // radius from the Nauenberg-type law, floored at a neutron star.
                 let age = (t - self.t_end).max(0.0);
                 let mr = self.remnant_mass;
