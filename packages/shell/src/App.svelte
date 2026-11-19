@@ -21,6 +21,9 @@
   import AgentsPanel from "../../agents/src/AgentsPanel.svelte";
   import type { OracHost } from "../../agents/src/OracTab.svelte";
   import type { MinervaHost } from "../../agents/src/MinervaTab.svelte";
+  import type { TarsHost } from "../../agents/src/TarsTab.svelte";
+  import { whyPassage } from "../../agents/src/tars.ts";
+  import { showReference } from "../../ui-contract/src/index.ts";
   import { oracMay } from "../../agents/src/orac.ts";
   import { atomIssueTarget, flowEntries, lensEntries, lensTarget, physicsTarget } from "../../agents/src/orac-targets.ts";
   import { orbitScene, voicesFromSystem } from "../../ui-contract/src/index.ts";
@@ -407,6 +410,28 @@
       here: () => [agentContext, ws.bench ? `Flow on the bench: ${ws.bench.flow}${ws.bench.node ? `, node ${ws.bench.node}` : ""}` : "", `Lens in use: ${lens.label}`].filter(Boolean).join("\n"),
     };
   });
+  // A4: Tars reads SSE's help passages and the kernel's "why?" for the selected body's derived values.
+  const tarsHost = $derived.by((): TarsHost => {
+    const s = session;
+    const sub = scene.subjects.find((x) => x.address === ws.selection);
+    return {
+      here: () => agentContext,
+      why: async () => {
+        if (!s || !sub) return [];
+        const derived = sub.facts.filter((f) => f.why).slice(0, 8);
+        const out = await Promise.all(
+          derived.map(async (f) => {
+            const r = await s.explain(f.why!, f.why!.kind);
+            if (!r.ok) return null;
+            const x = r.explanation;
+            const refs = x.references.map(showReference);
+            return whyPassage({ subject: sub.label, field: f.field, label: f.label, display: f.display, curious: x.lenses.curious, science: x.lenses.science, validity: x.validity, references: refs });
+          }),
+        );
+        return out.filter((p) => p !== null);
+      },
+    };
+  });
   // A3: Minerva reads one audience's scene (K9) and nothing else; the GM's scene is used only to check her text.
   const minervaHost = $derived.by((): MinervaHost | undefined => {
     const s = session;
@@ -695,7 +720,7 @@
 </dialog>
 
 <dialog bind:this={agentsDialog} class="help seats-dialog" aria-label="Agents" onclose={() => (agentsOpen = !!agentsDialog?.open)}>
-  {#if agentsOpen}<AgentsPanel context={agentContext} orac={oracHost} minerva={minervaHost} />{/if}
+  {#if agentsOpen}<AgentsPanel tars={tarsHost} orac={oracHost} minerva={minervaHost} />{/if}
   <form method="dialog"><button type="submit">Close</button></form>
 </dialog>
 

@@ -4,12 +4,13 @@
   it is waiting for. Every run shows its estimate first and its cost after.
 -->
 <script lang="ts">
-  import { JOBS, PROVIDER_KINDS, chat, memoryStore, estimate, linked, listModels, loadAgents, newProvider, readLoaded, saveAgents, tarsSystem, type AgentsState, type ChatMessage, type JobId, type ModelInfo, type Provider, type ProviderKind } from "./agents.ts";
+  import { JOBS, PROVIDER_KINDS, memoryStore, listModels, loadAgents, newProvider, readLoaded, saveAgents, type AgentsState, type JobId, type ModelInfo, type Provider, type ProviderKind } from "./agents.ts";
 
   import OracTab, { type OracHost } from "./OracTab.svelte";
   import MinervaTab, { type MinervaHost } from "./MinervaTab.svelte";
+  import TarsTab, { type TarsHost } from "./TarsTab.svelte";
 
-  let { context = "", orac, minerva, onchange }: { context?: string; orac?: OracHost; minerva?: MinervaHost; onchange?: (s: AgentsState) => void } = $props();
+  let { tars, orac, minerva, onchange }: { tars?: TarsHost; orac?: OracHost; minerva?: MinervaHost; onchange?: (s: AgentsState) => void } = $props();
 
   // Settings in "sse4.agents", each key in its own entry (Ovid saves its links without keys).
   const store = (() => {
@@ -83,32 +84,6 @@
   // Money a provider did not report and no listed price covers stays unknown, never counted as zero.
   const unpriced = $derived(st.ledger.filter((r) => r.day === today && r.ok !== false && r.usd === undefined).length);
 
-  // Tars.
-  let question = $state("");
-  let answer = $state("");
-  let asking = $state(false);
-  let note = $state("");
-  const messages = $derived<ChatMessage[]>([
-    { role: "system", content: tarsSystem(st.humour, context || "(nothing selected)") },
-    { role: "user", content: question },
-  ]);
-  const est = $derived(estimate(st, "support", messages, 600));
-  async function ask(e: SubmitEvent) {
-    e.preventDefault();
-    if (!question.trim()) return;
-    asking = true;
-    note = "";
-    const r = await chat($state.snapshot(st) as AgentsState, "support", messages);
-    asking = false;
-    if (!r.ok) {
-      if (r.row) (st.ledger.push(r.row), save());
-      return void (note = r.message);
-    }
-    answer = r.text;
-    st.ledger.push(r.row);
-    save();
-    note = `${r.row.tokens_in} tokens in, ${r.row.tokens_out} out${r.row.usd !== undefined ? `, $${r.row.usd.toFixed(4)}` : ", price not given by the provider"}.`;
-  }
   const money = (x: number) => `$${x < 0.01 ? x.toFixed(4) : x.toFixed(2)}`;
 </script>
 
@@ -180,20 +155,7 @@
       {#if problem}<p class="problem" role="alert">{problem}</p>{/if}
     </div>
   {:else if tab === "tars"}
-    <div role="tabpanel" aria-label="Tars">
-      <p>Tars answers questions about SSE and the body you have selected. Read only, and allowed to be funny.</p>
-      {#if !linked(st, "support")}
-        <p class="hint" data-agent-off="tars">No model is linked for Support. Link one under Link models; until then Tars stays quiet and nothing else changes.</p>
-      {/if}
-      <label class="slider">Humour <input type="range" min="0" max="1" step="0.05" bind:value={st.humour} onchange={() => save()} aria-label="Humour" /></label>
-      <form class="ask" onsubmit={ask}>
-        <label>Ask Tars <textarea bind:value={question} rows="3" aria-label="Ask Tars"></textarea></label>
-        <p class="meta" data-estimate={est.tokens_in}>Before sending: about {est.tokens_in} tokens in, up to {est.max_out} out{est.usd !== undefined ? `, up to ${money(est.usd)}` : ""}{est.context ? `, the model fits ${est.context}` : ""}.{est.fits ? "" : " Too long for this model."}</p>
-        <button type="submit" class="primary" disabled={asking || !linked(st, "support") || !question.trim()}>{asking ? "Asking…" : "Ask"}</button>
-      </form>
-      {#if answer}<blockquote class="answer" data-answer>{answer}</blockquote>{/if}
-      {#if note}<p class="meta" role="status">{note}</p>{/if}
-    </div>
+    <TarsTab st={$state.snapshot(st) as AgentsState} host={tars} onrow={(r) => (st.ledger.push(r), save())} onhumour={(h) => ((st.humour = h), save())} />
   {:else if tab === "orac"}
     <OracTab st={$state.snapshot(st) as AgentsState} host={orac} onrow={(r) => (st.ledger.push(r), save())} />
   {:else}
@@ -268,9 +230,9 @@
     display: grid;
     gap: 6px;
   }
-  input:not([type="range"]),
-  select,
-  textarea {
+  .ag :global(input:not([type="range"])),
+  .ag :global(select),
+  .ag :global(textarea) {
     display: block;
     width: 100%;
     margin-top: 3px;
@@ -282,10 +244,10 @@
     font: inherit;
     box-sizing: border-box;
   }
-  textarea {
+  .ag :global(textarea) {
     padding: 6px 8px;
   }
-  input[type="range"] {
+  .ag :global(input[type="range"]) {
     accent-color: var(--sse-accent);
   }
   .jobs {

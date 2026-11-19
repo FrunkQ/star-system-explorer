@@ -71,6 +71,10 @@ export interface LoopOptions<T> {
   check: (m: Made) => Promise<{ problems: string[]; value?: T }>;
   /** Answer a lookup: the full entries asked for by key, or the nearest entries to some plain words. */
   lookup?: (need: readonly string[], find: string | null) => string;
+  /** Read an answer in another form than {note, make, missing} (Tars answers {words, sources}). */
+  read?: (text: string) => { note: string; make: Made[]; missing: Missing[] } | null;
+  /** What to say when an answer cannot be read. */
+  unreadable?: string;
   /** Fixes after the first answer (Ovid's default is three; at most six). */
   tries?: number;
   /** A limit for this run in US dollars: no call is started that the spend so far plus the last call's cost would pass. */
@@ -138,9 +142,9 @@ export async function draftLoop<T>(o: LoopOptions<T>): Promise<LoopResult<T>> {
       turns.push({ role: "user", content: `${o.lookup(look.need, look.find)}\nNow answer with the note and what you make.` });
       continue;
     }
-    const a = readAnswer(r.text);
+    const a = (o.read ?? readAnswer)(r.text);
     let problems: string[];
-    if (!a) problems = ['Your answer was not one JSON object with "note" and "make".'];
+    if (!a) problems = [o.unreadable ?? 'Your answer was not one JSON object with "note" and "make".'];
     else {
       note = a.note;
       missing = a.missing;

@@ -300,18 +300,6 @@ export async function chat(
   }
 }
 
-/** Tars's standing instructions. The humour setting turns the jokes down. */
-export function tarsSystem(humour: number, context: string): string {
-  const tone = humour >= 0.75 ? "Be dryly funny, briefly." : humour >= 0.35 ? "A light, dry remark is welcome now and then." : "Be plain and direct; no jokes.";
-  return [
-    "You are Tars, the support agent of Star System Explorer (SSE), an astrophysics and role-playing toolkit.",
-    "You are read only: you explain, you never change anything. You never compute physics: every number you give must come from the facts below or the user's message, and you say where it came from.",
-    "If you are not sure, say so and point to the place in the app that answers it (a value's \"why?\", the Physics screen, the Player data screen).",
-    tone,
-    "Facts in view:",
-    context,
-  ].join("\n");
-}
 
 /**
  * The loop's Ask for one job (loop.ts): every call goes through chat(), so it
