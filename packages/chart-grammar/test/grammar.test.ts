@@ -1,6 +1,6 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { formatYears, fraction, keyStep, niceStep, ticks } from "../src/ruler.ts";
+import { formatYears, fraction, keyStep, labelRows, niceStep, ticks } from "../src/ruler.ts";
 import { distanceAt, fitScale, polar, radius } from "../src/scale.ts";
 
 test("years read the way the chart writes them", () => {
@@ -37,4 +37,13 @@ test("log-radial scale is monotone and fits its orbits", () => {
   for (const a of [0.2, 1.4, 30]) assert.ok(Math.abs(distanceAt(radius(a, s), s) - a) < 1e-9 * a);
   const [x, y] = polar(0, 0, 10, 90);
   assert.ok(Math.abs(x) < 1e-9 && Math.abs(y + 10) < 1e-9);
+});
+
+test("ruler labels never overlap: a third crowded label keeps its marker and moves to the tooltip", () => {
+  const ev = (at_yr: number, label: string) => ({ at_yr, label });
+  // 1000 px over 0 to 10: one year is 100 px.
+  assert.deepEqual(labelRows([ev(1, "Red giant"), ev(5, "Nebula")], 0, 10, 1000), [0, 0], "far apart: both on the first row");
+  assert.deepEqual(labelRows([ev(1, "Planetary nebula"), ev(1.1, "Engulfed: Tarn"), ev(1.2, "White dwarf cools")], 0, 10, 1000), [0, 1, -1]);
+  // A label that ends before the next one starts shares the row.
+  assert.deepEqual(labelRows([ev(1, "ab"), ev(1.5, "cd")], 0, 10, 1000), [0, 0]);
 });

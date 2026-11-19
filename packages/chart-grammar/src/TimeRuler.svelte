@@ -5,7 +5,7 @@
   Page Up/Down 10 %, Home/End.
 -->
 <script lang="ts">
-  import { formatYears, fraction, keyStep, ticks, type RulerEvent } from "./ruler.ts";
+  import { formatYears, fraction, keyStep, labelRows, ticks, type RulerEvent } from "./ruler.ts";
 
   let {
     from,
@@ -29,13 +29,12 @@
   const tk = $derived(ticks(from, to, compact ? 5 : 10));
   const pct = (yr: number) => `${(fraction(yr, from, to) * 100).toFixed(3)}%`;
 
-  // Labels alternate between two rows so neighbours do not collide.
-  const labelled = $derived(
-    [...events]
-      .filter((e) => e.tone !== "authored")
-      .sort((a, b) => a.at_yr - b.at_yr)
-      .map((e, i) => ({ ...e, row: i % 2 })),
-  );
+  // Labels take two rows; a label with no clear room in either keeps its marker and moves to the tooltip.
+  const labelled = $derived.by(() => {
+    const sorted = [...events].filter((e) => e.tone !== "authored").sort((a, b) => a.at_yr - b.at_yr);
+    const rows = labelRows(sorted, from, to, width || 800);
+    return sorted.map((e, i) => ({ ...e, row: rows[i]! }));
+  });
   const authored = $derived(events.filter((e) => e.tone === "authored"));
 
   function set(yr: number) {
@@ -91,7 +90,7 @@
       {#each labelled as e (e.id)}
         <div class="ev {e.tone}" style="left: {pct(e.at_yr)}" title="{e.label}, {formatYears(e.at_yr)}">
           <span class="pin"></span>
-          {#if !compact}<span class="evl" class:row1={e.row === 1}>{e.label}</span>{/if}
+          {#if !compact && e.row >= 0}<span class="evl" class:row1={e.row === 1}>{e.label}</span>{/if}
         </div>
       {/each}
       {#each authored as e (e.id)}
