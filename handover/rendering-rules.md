@@ -28,3 +28,6 @@ No view may show precision jiggle at any scale, from a lander's ground track to 
   zoom. `packages/renderer/test/frames.test.ts` is the pixel-stability proof. It zooms from 3×10^21 m to 10 m onto a
   lander on a moon, through five frames, and holds it within 0.0001 px. Any new GPU view uses `frames.ts`, not its
   own maths.
+- **Body globe** (`views/body`, R1) draws through render recipes (`packages/renderer/src/recipe.ts`): a unit globe at
+  the origin, camera three radii away, so only small numbers reach the GPU. Views with true distances (descent, R2)
+  must compose frames with `frames.ts`. Recipes and the governor are presentation only and never touch the state hash.

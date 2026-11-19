@@ -7,9 +7,9 @@
       "erased": {
         "resurfaced by the regime": 1165
       },
-      "features": "22c27790db12b81274d7f8421b91764993983db10512ac54af0a700ce43e1469",
+      "features": "70eeac1dc76b1caf3a580eacbfc9c565ed627cf923a6c1c1ea9ed3061aa99c29",
       "listed_d_km": 241.84315999999998,
-      "plains": 146,
+      "plains": 147,
       "shields": 12,
       "tiles": [
         "21b7412da955dac255bb3f9a752155fa4298d73e741be23e45e09ed1e30b7225",
@@ -20,9 +20,9 @@
       "body": "Mars",
       "craters": 1178,
       "erased": {},
-      "features": "9eddac6853ceae7d25e56ad40bc44d095b26e68662049b70c72152bf3c0bf777",
+      "features": "4a26de14cef88fc747ea74feb8af38ab7e8426830797ebc72559cb27d308685a",
       "listed_d_km": 135.57488,
-      "plains": 116,
+      "plains": 117,
       "shields": 4,
       "tiles": [
         "b9884ddb2c329521b001b796fb52e33f0cd1dbdde8455801db071ebf49e80819",
@@ -33,7 +33,7 @@
       "body": "Moon",
       "craters": 1177,
       "erased": {},
-      "features": "b8acbc5fffce924ee4bd31465cc20f9ed5cb7e1b05bede3367c45bb0328a6250",
+      "features": "4ab2c8aad6452b92b8c0a4964c82ca7a617db46b13f4963eacc65666b8c9de02",
       "listed_d_km": 69.57132,
       "plains": 43,
       "shields": 0,
@@ -44,11 +44,11 @@
     },
     {
       "body": "Ganymede",
-      "craters": 48,
+      "craters": 46,
       "erased": {
-        "resurfaced by the regime": 1126
+        "resurfaced by the regime": 1128
       },
-      "features": "f40da3d04b9c3ec56ea9928be9e8306c538958b8ea909749eae87e7932322d6f",
+      "features": "4331c943383fd167d31052b16fe03fe4fb7627ae57dfabc7aeebfa3867cbef7f",
       "listed_d_km": 105.24892,
       "plains": 0,
       "shields": 0,

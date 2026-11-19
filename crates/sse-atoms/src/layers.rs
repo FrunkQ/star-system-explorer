@@ -8,7 +8,7 @@ use sse_flow::{Atom, AtomError, CostClass};
 const ATKINS: &str = "Atkins, P. and de Paula, J. 2014, Atkins' Physical Chemistry, 10th edn, Oxford University Press, topic 5B (colligative properties; water's cryoscopic constant 1.86 K kg/mol)";
 const RS: &str = "Robinson, R. A. and Stokes, R. H. 1959, Electrolyte Solutions, 2nd edn, Butterworths, appendix 8.10 (osmotic coefficient of NaCl about 0.93 near 2 mol/kg)";
 const PW: &str = "Petrenko, V. F. and Whitworth, R. W. 1999, Physics of Ice, Oxford University Press (thermal conductivity of ice Ih, k = 651/T W/m). doi:10.1093/acprof:oso/9780198518945.001.0001";
-const OS: &str = "Ojakangas, G. W. and Stevenson, D. J. 1989, Icarus 81, 220: thermal state of an ice shell on Europa (conductive shell with k = 651/T) https://ui.adsabs.harvard.edu/abs/1989Icar...81..220O";
+const OS: &str = "Ojakangas, G. W. and Stevenson, D. J. 1989, Icarus 81, 220: thermal state of an ice shell on Europa (conductive shell with conductivity falling as 1/T) https://ui.adsabs.harvard.edu/abs/1989Icar...81..220O";
 
 /// Molar mass of NaCl, kg/mol.
 pub const NACL_MOLAR_MASS: f64 = 0.058_44;
