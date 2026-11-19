@@ -47,3 +47,12 @@ Golden changes (on purpose): `contract.jsonl` lines 1 and 41, plus the new lines
 - Positions are local to each host. The chart room nests them (moon in planet in star), as the rendering rules ask: local orbits per parent in f64.
 - J4's `pairs` still read `pos.*` facts. A later pair source can read `orbits_at` instead, so that triggers follow bodies along their orbits.
 - No date parsing. The UI turns typed dates into universe seconds with the calendar.
+
+## Addition: named days, weeks and leap years (19 Nov 2026, asked for by the Traveller pack)
+The calendar gains four optional fields; unknown keys are still refused.
+- `named_days: [{day, name, outside_weeks?}]`: `day` is 1-based, within the year (one more when `leap` is set). `outside_weeks` needs a week with `continuous: false`.
+- `week: {names, first_day?, continuous?}`: `first_day` is 1-based; `continuous` defaults to true (weeks run across years). The Imperial calendar uses first_day 2 and continuous false, with Holiday (day 1) outside the weeks.
+- `leap: {every, except_every?, but_every?}`: `except_every` must be a multiple of `every`, `but_every` a multiple of `except_every` (and needs it). Gregorian is 4, 100, 400.
+- `leap_month` (0-based): needed when both months and leap are set; refused without leap.
+
+The kernel only checks the shape; the chart room formats dates with `packages/ui-contract/src/calendar.ts` (Traveller thread). Test: `orbits::tests::calendars_with_named_days_weeks_and_leaps`. No golden changed.

@@ -281,8 +281,51 @@ pub struct Calendar {
     /// Months in order; their days must add to `year_days` (whole years only).
     #[serde(default, skip_serializing_if = "Vec::is_empty")]
     pub months: Vec<Month>,
-    /// For the UI, e.g. `"{day:03}-{year}"` (Traveller) or `"{d} {month} {year}"`.
+    /// For the UI, e.g. `"{day:03}-{year}"` (Traveller) or `"{mday} {month} {year}"`.
     pub format: String,
+    /// Named days of the year (1-based), e.g. the Imperial Holiday.
+    #[serde(default, skip_serializing_if = "Vec::is_empty")]
+    pub named_days: Vec<NamedDay>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub week: Option<Week>,
+    /// Leap years: every `every` years, except every `except_every`, but every `but_every`.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub leap: Option<Leap>,
+    /// The month (0-based) that gains the leap day; needed when months and leap are both set.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub leap_month: Option<usize>,
+}
+
+#[derive(Clone, PartialEq, Debug, Serialize, Deserialize)]
+#[serde(deny_unknown_fields)]
+pub struct NamedDay {
+    pub day: u32,
+    pub name: String,
+    /// The day belongs to no week (needs a week that restarts each year).
+    #[serde(default)]
+    pub outside_weeks: bool,
+}
+
+#[derive(Clone, PartialEq, Debug, Serialize, Deserialize)]
+#[serde(deny_unknown_fields)]
+pub struct Week {
+    pub names: Vec<String>,
+    /// 1-based day of the year on which the first week starts.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub first_day: Option<u32>,
+    /// True (the default): weeks run on across years. False: they restart each year.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub continuous: Option<bool>,
+}
+
+#[derive(Clone, PartialEq, Debug, Serialize, Deserialize)]
+#[serde(deny_unknown_fields)]
+pub struct Leap {
+    pub every: u32,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub except_every: Option<u32>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub but_every: Option<u32>,
 }
 
 #[derive(Clone, PartialEq, Debug, Serialize, Deserialize)]
@@ -312,6 +355,58 @@ impl Calendar {
                     self.year_days
                 ));
             }
+        }
+        let max_day = self.year_days + if self.leap.is_some() { 1.0 } else { 0.0 };
+        let continuous = self
+            .week
+            .as_ref()
+            .is_none_or(|w| w.continuous != Some(false));
+        for d in &self.named_days {
+            if d.day == 0 || f64::from(d.day) > max_day || d.name.trim().is_empty() {
+                return Err(format!(
+                    "named day {} must be named and lie in 1 to {max_day}",
+                    d.day
+                ));
+            }
+            if d.outside_weeks && continuous {
+                return Err(format!(
+                    "named day {}: outside_weeks needs a week with continuous false",
+                    d.name
+                ));
+            }
+        }
+        if let Some(w) = &self.week {
+            if w.names.is_empty() || w.names.iter().any(|n| n.trim().is_empty()) {
+                return Err("a week needs its day names".into());
+            }
+            if let Some(f) = w.first_day {
+                if f == 0 || f64::from(f) > max_day {
+                    return Err(format!("week first_day {f} must lie in 1 to {max_day}"));
+                }
+            }
+        }
+        if let Some(l) = &self.leap {
+            let ok = |x: Option<u32>, of: u32| x.is_none_or(|x| x > of && x % of == 0);
+            if l.every == 0
+                || !ok(l.except_every, l.every)
+                || !ok(l.but_every, l.except_every.unwrap_or(u32::MAX))
+                || (l.but_every.is_some() && l.except_every.is_none())
+            {
+                return Err("leap: every > 0; except_every a multiple of it; but_every a multiple of except_every".into());
+            }
+            if !self.months.is_empty() {
+                match self.leap_month {
+                    Some(i) if i < self.months.len() => {}
+                    _ => {
+                        return Err(
+                            "leap_month (0-based) is needed when months and leap are both set"
+                                .into(),
+                        )
+                    }
+                }
+            }
+        } else if self.leap_month.is_some() {
+            return Err("leap_month needs leap".into());
         }
         Ok(())
     }
@@ -450,5 +545,51 @@ mod tests {
             "{:?}",
             p[0]
         );
+    }
+
+    #[test]
+    fn calendars_with_named_days_weeks_and_leaps() {
+        let cal = |v: serde_json::Value| -> Result<(), String> {
+            serde_json::from_value::<Calendar>(v)
+                .map_err(|e| e.to_string())
+                .and_then(|c| c.check())
+        };
+        // The Imperial calendar: Holiday outside the weeks, weeks restart each year on day 2.
+        let imperial = serde_json::json!({
+            "name": "Imperial", "epoch_s": 0, "epoch_year": 1105, "day_s": 86400.0,
+            "year_days": 365.0, "format": "{day:03}-{year}",
+            "named_days": [{"day": 1, "name": "Holiday", "outside_weeks": true}],
+            "week": {"names": ["Wonday", "Tuday", "Thirday", "Forday", "Fiday", "Sixday", "Senday"],
+                     "first_day": 2, "continuous": false}
+        });
+        assert_eq!(cal(imperial.clone()), Ok(()));
+        let mut v = imperial.clone();
+        v["week"]["continuous"] = serde_json::json!(true);
+        assert!(cal(v).unwrap_err().contains("outside_weeks"));
+        let mut v = imperial.clone();
+        v["named_days"][0]["day"] = serde_json::json!(366);
+        assert!(cal(v).is_err());
+        let mut v = imperial;
+        v["week"]["shape"] = serde_json::json!(1);
+        assert!(cal(v).is_err(), "unknown keys are still refused");
+        // Gregorian: 4, 100, 400, with February gaining the day.
+        let months: Vec<serde_json::Value> = [31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31]
+            .iter()
+            .enumerate()
+            .map(|(i, d)| serde_json::json!({"name": format!("M{i}"), "days": d}))
+            .collect();
+        let greg = serde_json::json!({
+            "name": "Gregorian", "epoch_s": 0, "day_s": 86400.0, "year_days": 365.0,
+            "format": "{mday} {month} {year}", "months": months,
+            "leap": {"every": 4, "except_every": 100, "but_every": 400}, "leap_month": 1,
+            "named_days": [{"day": 366, "name": "Leap day end"}]
+        });
+        assert_eq!(cal(greg.clone()), Ok(()));
+        let mut v = greg.clone();
+        v.as_object_mut().unwrap().remove("leap_month");
+        assert!(cal(v).unwrap_err().contains("leap_month"));
+        let mut v = greg;
+        v["leap"]["except_every"] = serde_json::json!(90);
+        assert!(cal(v).is_err());
     }
 }
