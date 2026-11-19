@@ -2,11 +2,19 @@
 // the pixels of an orthographic globe, at the plan's render scale. No GPU.
 import { fastFace, lightDir, lookupFast, viewRotation, type Prepared } from "./surface.ts";
 import type { Plan } from "./recipe.ts";
+import type { AirRender } from "./gpu-air.ts";
+
+/** Kasten and Young (1989) relative air mass for a cosine of the zenith angle (cos > -0.08; else a large number). */
+export function airMass(cosz: number): number {
+  if (cosz < -0.08) return 1e4;
+  const z = (Math.acos(Math.max(-1, Math.min(1, cosz))) * 180) / Math.PI;
+  return 1 / (cosz + 0.50572 * Math.pow(Math.max(0.5, 96.07995 - z), -1.6364));
+}
 
 const num = (v: unknown, d: number) => (typeof v === "number" ? v : d);
 
 /** Draw a plan into `out`, a 2D canvas `full` pixels square, rendering at the plan's scale and smoothing up. */
-export function drawCanvas(out: HTMLCanvasElement, p: Prepared, plan: Plan, lon: number, lat: number, full: number, scratch: { c?: HTMLCanvasElement; img?: ImageData }) {
+export function drawCanvas(out: HTMLCanvasElement, p: Prepared, plan: Plan, lon: number, lat: number, full: number, scratch: { c?: HTMLCanvasElement; img?: ImageData }, air?: AirRender | null) {
   const n = Math.max(16, Math.round(full * plan.render_scale));
   const target = n === full ? out : (scratch.c ??= document.createElement("canvas"));
   if (target.width !== n) target.width = target.height = n;
@@ -17,8 +25,10 @@ export function drawCanvas(out: HTMLCanvasElement, p: Prepared, plan: Plan, lon:
   const relief = plan.passes.find((x) => x.pass === "relief-globe")?.params ?? {};
   const grat = plan.passes.find((x) => x.pass === "graticule")?.params;
   const cont = plan.passes.find((x) => x.pass === "contours")?.params;
-  const shade = num(relief.shade, 0.8);
-  const ambient = num(relief.ambient, 0.16);
+  // Physical lighting has no canvas form; the nearest is full shading with a dark night side.
+  const physical = relief.lighting === "physical";
+  const shade = physical ? 1 : num(relief.shade, 0.8);
+  const ambient = physical ? 0.03 : num(relief.ambient, 0.16);
   const L = lightDir(num(relief.sun_azimuth_deg, 315), num(relief.sun_elevation_deg, 40));
   const rot = viewRotation(lon, lat);
   const R = n / 2;
@@ -76,6 +86,21 @@ export function drawCanvas(out: HTMLCanvasElement, p: Prepared, plan: Plan, lon:
           gg += (255 - gg) * a;
           b += (255 - b) * a;
         }
+      }
+      if (air) {
+        // One-column approximation of the air (canvas tier): the ground dimmed and reddened by the
+        // sun's path, then veiled by light scattered along the view's path, brightest where the sun is high.
+        const cs = x * L[0] + y * L[1] + z * L[2];
+        const amV = airMass(z);
+        const amS = airMass(cs);
+        const lightUp = Math.max(0, Math.min(1, cs * 1.2 + 0.1));
+        const H = air.scale_height;
+        const tv0 = Math.exp(-air.beta[0] * H * amV);
+        const tv1 = Math.exp(-air.beta[1] * H * amV);
+        const tv2 = Math.exp(-air.beta[2] * H * amV);
+        r = r * Math.exp(-air.beta[0] * H * Math.max(0, amS - 1)) * tv0 + 255 * (1 - tv0) * lightUp * Math.exp(-air.beta[0] * H * amS);
+        gg = gg * Math.exp(-air.beta[1] * H * Math.max(0, amS - 1)) * tv1 + 255 * (1 - tv1) * lightUp * Math.exp(-air.beta[1] * H * amS);
+        b = b * Math.exp(-air.beta[2] * H * Math.max(0, amS - 1)) * tv2 + 255 * (1 - tv2) * lightUp * Math.exp(-air.beta[2] * H * amS);
       }
       data[o] = r;
       data[o + 1] = gg;
