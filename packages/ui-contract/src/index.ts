@@ -69,3 +69,5 @@ export { NAMED_HALOES, MORPHOLOGY_WORDS, GROUP_WORDS, LAYER_WORDS, discFrame, ar
 export type { GalaxyAsk, GalaxyChart, GalaxyRing, GalaxyState, Group, CosmicEpoch, PlaceLocal, PlaceGreen, SliceAsk, WebSlice, DiscFrame, RingLayer, CurveAxis, GalaxyEdit, GalaxyEventMark, HistoryCompare } from "./galaxy.ts";
 export { SENSORS, camera, project, discPx, pointPx, towards, magWords, angleWords } from "./window.ts";
 export type { WindowAsk, WindowView, Seen, Camera } from "./window.ts";
+export { SIGNIFICANCE_PARTS, valueWords, fieldWords, storyBrief } from "./story.ts";
+export type { SifterDoc, StoryEvidence, StoryHit, SiftAsk, SiftResult } from "./story.ts";

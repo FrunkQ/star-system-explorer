@@ -1647,5 +1647,14 @@
   "fixture": "sol",
   "from": "Earth",
   "sensor": "x-ray"
+ },
+ {
+  "op": "sift",
+  "sifters": [{"id": "named", "label": "anything with a name", "pattern": {"match": "facts", "when": {"if": "has", "field": "name"}},
+   "significance": {"persistence": {"from": "fixed", "s": 1.0}, "reach": {"from": "fixed", "n": 1}, "reversibility": 1.0}}]
+ },
+ {
+  "op": "sift",
+  "sifters": [{"id": "broken"}]
  }
 ]

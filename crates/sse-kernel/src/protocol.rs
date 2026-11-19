@@ -403,6 +403,22 @@ pub enum Request {
         #[ts(optional, type = "unknown")]
         rescue: Option<serde_json::Value>,
     },
+    /// The story finder (U8): run the stack's sifters, plus any given inline,
+    /// over every address at or under `scope` (default the universe) at
+    /// `at_s` (default now). Hits come best first, each with its evidence
+    /// (facts and the events that set them) and significance. Reads the GM's
+    /// full state: GM only.
+    Sift {
+        #[serde(default)]
+        #[ts(optional)]
+        scope: Option<String>,
+        #[serde(default)]
+        #[ts(optional, type = "number")]
+        at_s: Option<i64>,
+        #[serde(default)]
+        #[ts(optional, type = "unknown[]")]
+        sifters: Option<Vec<serde_json::Value>>,
+    },
     /// The Window (V8): what a `sensor` (`eye`, `binoculars`, `telescope` in
     /// base-nav) picks up at `at_s` from beside body `from`, or from the point
     /// `at_au` around the star, in a NAV `fixture` or inline `nav` system:
@@ -769,6 +785,7 @@ impl Request {
             Request::GalaxyChart { .. } => "galaxy_chart",
             Request::WebSlice { .. } => "web_slice",
             Request::WindowView { .. } => "window_view",
+            Request::Sift { .. } => "sift",
             Request::PlanDescent { .. } => "plan_descent",
             Request::Systems => "systems",
             Request::LifeView { .. } => "life_view",
@@ -884,6 +901,11 @@ pub fn ops() -> Vec<OpInfo> {
             "web_slice",
             Cost::Medium,
             "n by n web samples at four octaves (n = 128: about 0.2 s native)",
+        ),
+        o(
+            "sift",
+            Cost::Light,
+            "linear in addresses x sifters within the scope (a campaign of a few systems: milliseconds)",
         ),
         o(
             "window_view",
@@ -1178,6 +1200,15 @@ pub enum Response {
     /// `window_view`: sse-nav's `WindowView` (`seen`: lon/lat, distance,
     /// angular diameter, magnitude, phase, lit fraction, detected, resolved,
     /// light time, why; `sensor`; `missed`; `model`).
+    /// `sift`: hits best first (`sifter`, `label`, `subject`, `evidence`
+    /// [{address, field, value, event}], `significance` {score, persistence_s,
+    /// reach, reversibility, rarity_p, components}), the sifters run, the scope.
+    Sifted {
+        scope: String,
+        sifters: Vec<String>,
+        #[ts(type = "unknown")]
+        hits: serde_json::Value,
+    },
     WindowViewed {
         #[ts(type = "unknown")]
         view: serde_json::Value,

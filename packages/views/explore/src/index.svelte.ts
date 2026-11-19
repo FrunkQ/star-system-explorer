@@ -4,6 +4,7 @@ import { route } from "../../route/src/index.ts";
 import { galaxyChart } from "../../galaxy-chart/src/index.ts";
 import { foamMap } from "../../foam-map/src/index.ts";
 import { windowView } from "../../window/src/index.ts";
+import { storyFinder } from "../../story-finder/src/index.ts";
 import Explore from "./Explore.svelte";
 
 /** The sections of the Explore screen, in order: each is an ordinary view module. */
@@ -12,6 +13,7 @@ export const EXPLORE_SECTIONS: readonly { id: string; label: string; view: ViewM
   { id: "window", label: "Window", view: windowView },
   { id: "galaxy", label: "Galaxy", view: galaxyChart },
   { id: "foam", label: "Cosmic web", view: foamMap },
+  { id: "stories", label: "Stories", view: storyFinder },
 ];
 
 /**
