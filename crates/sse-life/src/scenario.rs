@@ -538,3 +538,57 @@ pub fn signatures_golden() -> serde_json::Value {
     }
     serde_json::Value::Object(out)
 }
+
+/// L2 fixtures: Earth with no dated oxygen (the air box decides), and a
+/// small, reduced, volcanically busy world on the same habitats.
+pub fn coupled_manifest(name: &str) -> crate::feedback::CoupledManifest {
+    use crate::feedback::{AirParams, CoupledManifest, MANIFEST_FORMAT};
+    let mut world = earth_timeline();
+    for e in &mut world.epochs {
+        e.facts.insert("o2_fraction".into(), 0.0);
+    }
+    let air = match name {
+        "reduced" => AirParams {
+            air_mol: 5.0e19,
+            area_rel: 0.3,
+            reductant_mol_yr: 3.0e13,
+            ..AirParams::default()
+        },
+        _ => AirParams::default(),
+    };
+    CoupledManifest {
+        format: MANIFEST_FORMAT.into(),
+        world,
+        budget: budget_params(),
+        history: history_params(),
+        air,
+        seed: "a".into(),
+    }
+}
+
+/// L2 golden: the coupled runs of both fixtures, sampled every 500 Myr.
+pub fn feedback_golden() -> serde_json::Value {
+    let mut out = serde_json::Map::new();
+    for n in ["earth", "reduced"] {
+        let man = coupled_manifest(n);
+        let r = crate::feedback::coupled(&man).expect("coupled run");
+        let samples: Vec<_> = r
+            .air
+            .series
+            .iter()
+            .filter(|p| (p.at_myr % 500.0) == 0.0)
+            .map(|p| serde_json::json!([p.at_myr, p.o2_fraction, p.ch4_ppm, p.co2_rel]))
+            .collect();
+        out.insert(
+            n.into(),
+            serde_json::json!({
+                "oxygenated_myr": r.oxygenated_myr,
+                "first": r.history.first,
+                "air": samples,
+                "manifest_hash": r.manifest_hash,
+                "hash": sse_core::ContentHash::of(&r).expect("hash").hex(),
+            }),
+        );
+    }
+    serde_json::Value::Object(out)
+}
