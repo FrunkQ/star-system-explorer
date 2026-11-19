@@ -2,6 +2,8 @@
 import type { Cost } from "./Cost";
 import type { DerivedValue } from "./DerivedValue";
 import type { EventSummary } from "./EventSummary";
+import type { FateEvent } from "./FateEvent";
+import type { FateSnapshot } from "./FateSnapshot";
 import type { OpInfo } from "./OpInfo";
 import type { StackAdopted } from "./StackAdopted";
 import type { TierDef } from "./TierDef";
@@ -24,4 +26,16 @@ view: string, state_hash: string, } | { "type": "granted", event_id: string,
  * The view now in force for the audience at that address (grants and
  * defaults; tag grants show in scenes).
  */
-view: string, state_hash: string, } | { "type": "error", code: string, message: string, };
+view: string, state_hash: string, } | { "type": "looked_ahead", branch: string, label: string, 
+/**
+ * The system's address, its star's age now and at the end, Myr.
+ */
+system: string, now_myr: number, target_myr: number, 
+/**
+ * Universe year of the star's birth (a star age t is year birth + t x 1e6).
+ */
+birth_year: number, 
+/**
+ * Beyond this star age, futures are "one plausible future".
+ */
+horizon_myr: number, events: Array<FateEvent>, snapshots: Array<FateSnapshot>, work_units: number, } | { "type": "error", code: string, message: string, };

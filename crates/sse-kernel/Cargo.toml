@@ -14,6 +14,7 @@ sse-pack.workspace = true
 sse-atoms.workspace = true
 sse-observe = { path = "../sse-observe" }
 sse-sift = { path = "../sse-sift" }
+sse-time = { path = "../sse-time" }
 serde.workspace = true
 serde_json.workspace = true
 ts-rs = { version = "=12.0.1", features = ["serde-json-impl"] }

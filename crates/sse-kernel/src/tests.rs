@@ -391,3 +391,133 @@ fn grants_through_the_api() {
     assert_eq!(l[115]["code"], "unknown_view");
     assert_eq!(l[116]["code"], "bad_address");
 }
+
+/// T2 look-ahead through the API: age the Sun on a branch, read its fate,
+/// commit with "now" moved, and the error cases.
+#[test]
+fn look_ahead_through_the_api() {
+    let mut k = crate::Kernel::new();
+    let pack: serde_json::Value = serde_json::from_str(
+        &std::fs::read_to_string(root().join("packs/base-time/pack.json")).unwrap(),
+    )
+    .unwrap();
+    let system: serde_json::Value = serde_json::from_str(
+        &std::fs::read_to_string(root().join("tests/fixtures/time/solar-system.json")).unwrap(),
+    )
+    .unwrap();
+    let send = |k: &mut crate::Kernel, v: serde_json::Value| -> serde_json::Value {
+        serde_json::from_str(&k.handle_json(&v.to_string())).unwrap()
+    };
+    let r = send(
+        &mut k,
+        serde_json::json!({"op": "open_universe", "id": "sol", "seed": "sol"}),
+    );
+    assert_eq!(r["type"], "universe_opened");
+    let ask = serde_json::json!({"op": "look_ahead", "system": system, "target_myr": 13000.0});
+    // No stack yet: no settings.
+    assert_eq!(send(&mut k, ask.clone())["code"], "no_time_settings");
+    let r = send(
+        &mut k,
+        serde_json::json!({"op": "load_stack", "packs": [pack]}),
+    );
+    assert_eq!(r["type"], "stack_loaded", "{r}");
+    let before = send(
+        &mut k,
+        serde_json::json!({"op": "state_hash", "at_s": i64::MAX}),
+    );
+
+    let r = send(&mut k, ask.clone());
+    assert_eq!(r["type"], "looked_ahead", "{r}");
+    let kinds: Vec<&str> = r["events"]
+        .as_array()
+        .unwrap()
+        .iter()
+        .map(|e| e["kind"].as_str().unwrap())
+        .collect();
+    for want in ["oceans_lost", "engulfed", "planetary_nebula"] {
+        assert!(kinds.contains(&want), "{want} in {kinds:?}");
+    }
+    assert!(r["events"]
+        .as_array()
+        .unwrap()
+        .iter()
+        .all(|e| !e["why"].as_str().unwrap().is_empty()));
+    let snaps = r["snapshots"].as_array().unwrap();
+    assert!(snaps.len() > 10);
+    assert_eq!(snaps[0]["star"]["phase"], "main sequence");
+    assert_eq!(snaps.last().unwrap()["star"]["phase"], "white dwarf");
+    assert_eq!(r["now_myr"], 4570.0);
+    assert!(r["work_units"].as_u64().unwrap() > 1000);
+    let e0 = &r["events"][0];
+    assert_eq!(
+        e0["year"].as_i64().unwrap(),
+        9_230_000_000 + (e0["age_myr"].as_f64().unwrap() * 1.0e6).round() as i64
+    );
+    // The main chronicle is untouched until commit.
+    let mid = send(
+        &mut k,
+        serde_json::json!({"op": "state_hash", "at_s": i64::MAX}),
+    );
+    assert_eq!(before, mid);
+    let b = r["branch"].as_str().unwrap().to_string();
+    let bh = send(
+        &mut k,
+        serde_json::json!({"op": "branch_state_hash", "branch": b, "at_s": i64::MAX}),
+    );
+    assert_ne!(bh["hash"], mid["hash"]);
+
+    // Discard one, commit another with now moved.
+    let d = send(&mut k, serde_json::json!({"op": "discard", "branch": b}));
+    assert_eq!(d["type"], "discarded");
+    assert_eq!(
+        send(
+            &mut k,
+            serde_json::json!({"op": "commit_look_ahead", "branch": b})
+        )["code"],
+        "unknown_branch"
+    );
+    let r = send(&mut k, ask);
+    let b = r["branch"].as_str().unwrap().to_string();
+    let c = send(
+        &mut k,
+        serde_json::json!({"op": "commit_look_ahead", "branch": b, "move_now_myr": 12000.0}),
+    );
+    assert_eq!(c["type"], "committed", "{c}");
+    assert_ne!(c["state_hash"], mid["hash"]);
+    let h = send(
+        &mut k,
+        serde_json::json!({"op": "history", "address": "u:sol/sys:0"}),
+    );
+    let hk: Vec<&str> = h["events"]
+        .as_array()
+        .unwrap()
+        .iter()
+        .map(|e| e["kind"].as_str().unwrap())
+        .collect();
+    assert!(hk.contains(&"time.request"), "{hk:?}");
+
+    // Errors: target not ahead, a system outside the universe, a bad spec.
+    let mut s2 = system.clone();
+    assert_eq!(
+        send(
+            &mut k,
+            serde_json::json!({"op": "look_ahead", "system": s2, "target_myr": 100.0})
+        )["code"],
+        "bad_target"
+    );
+    s2["system"] = "u:other/sys:0".into();
+    assert_eq!(
+        send(
+            &mut k,
+            serde_json::json!({"op": "look_ahead", "system": s2, "target_myr": 6000.0})
+        )["code"],
+        "bad_address"
+    );
+    assert_eq!(
+        send(
+            &mut k,
+            serde_json::json!({"op": "look_ahead", "system": {"name": 1}, "target_myr": 6000.0})
+        )["code"],
+        "bad_system"
+    );
+}

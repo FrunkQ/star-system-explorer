@@ -585,6 +585,7 @@ dependencies = [
  "sse-observe",
  "sse-pack",
  "sse-sift",
+ "sse-time",
  "ts-rs",
 ]
 
