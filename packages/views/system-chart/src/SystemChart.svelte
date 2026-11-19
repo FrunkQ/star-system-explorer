@@ -235,6 +235,7 @@
           <g
             bind:this={focusables[i]}
             class="body"
+            data-address={s.address}
             class:unknown={through && !knows(s)}
             data-known={known ? (knows(s) ? (view ?? "yes") : "no") : undefined}
             role="button"

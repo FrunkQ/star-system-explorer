@@ -1,0 +1,70 @@
+{
+  "schema": "sse.band-recipes/0",
+  "note": "Band recipes (nebulae-and-light design 2.2). Data only: a pack can add more. Each says what its colours mean and how honest they are.",
+  "recipes": [
+    {
+      "schema": "sse.band-recipe/0", "id": "eye", "name": "Eye", "honesty": "actual", "mode": "eye", "channels": [],
+      "legend": "What a person would see: each mark takes the colour of its light through the CIE 1931 standard observer, shown on an sRGB screen.",
+      "why": "Colour matching functions turn a spectrum into the three numbers an eye sends the brain. Wyman, Sloan and Shirley's fit of the CIE 1931 functions (JCGT 2(2), 2013, http://jcgt.org/published/0002/02/01/) and the sRGB standard (IEC 61966-2-1) do the rest."
+    },
+    {
+      "schema": "sse.band-recipe/0", "id": "camera", "name": "Camera", "honesty": "actual-enhanced", "mode": "camera", "saturation": 1.6,
+      "channels": [
+        { "source": { "from_m": 5.9e-7, "to_m": 7.0e-7 }, "colour": "#ff0000", "label": "Red filter, 590 to 700 nm" },
+        { "source": { "from_m": 4.9e-7, "to_m": 5.8e-7 }, "colour": "#00ff00", "label": "Green filter, 490 to 580 nm" },
+        { "source": { "from_m": 4.0e-7, "to_m": 4.9e-7 }, "colour": "#0000ff", "label": "Blue filter, 400 to 490 nm" }
+      ],
+      "legend": "A colour camera's three broad filters, white-balanced to daylight, with saturation raised as a press photograph would be. Real light, stronger colour than the eye sees.",
+      "why": "Cameras sample light through red, green and blue filters that do not match the eye's response, and published pictures are usually stretched. This recipe does both, and says so."
+    },
+    {
+      "schema": "sse.band-recipe/0", "id": "sho", "name": "Hubble palette (SHO)", "honesty": "mapped", "mode": "composite",
+      "channels": [
+        { "source": { "line": "sii" }, "colour": "#ff0000", "label": "[S II] 671.6 nm as red" },
+        { "source": { "line": "ha" }, "colour": "#00ff00", "label": "H-alpha 656.3 nm as green" },
+        { "source": { "line": "oiii" }, "colour": "#0000ff", "label": "[O III] 500.7 nm as blue" }
+      ],
+      "legend": "Narrowband light from sulphur, hydrogen and oxygen painted red, green and blue. The colours label chemistry; they are not what an eye sees.",
+      "why": "The palette the Hubble team used for the Pillars of Creation (1995). Each filter passes a few nanometres around one emission line. Bodies with no line emission show only the continuum under the filters."
+    },
+    {
+      "schema": "sse.band-recipe/0", "id": "hoo", "name": "Bicolour (HOO)", "honesty": "mapped", "mode": "composite",
+      "channels": [
+        { "source": { "line": "ha" }, "colour": "#ff0000", "label": "H-alpha 656.3 nm as red" },
+        { "source": { "line": "oiii" }, "colour": "#00ffff", "label": "[O III] 500.7 nm as cyan" }
+      ],
+      "legend": "Hydrogen-alpha painted red and doubly ionised oxygen painted cyan, the amateur bicolour palette. Mapped colour.",
+      "why": "Two narrowband filters cover the brightest lines of most emission nebulae, which is why amateurs with mono cameras use this pair."
+    },
+    {
+      "schema": "sse.band-recipe/0", "id": "near-ir", "name": "Near infrared", "honesty": "mapped", "mode": "single", "decades": 8,
+      "channels": [{ "source": { "band": "near-ir" }, "colour": "#ffb060", "label": "Near infrared, 0.75 to 5 µm" }],
+      "legend": "Brightness in the near infrared, faint to bright along an amber ramp across eight decades. One band shown as one colour: mapped.",
+      "why": "Near-infrared light passes through dust that hides visible light, and cool stars are brightest here."
+    },
+    {
+      "schema": "sse.band-recipe/0", "id": "mid-ir", "name": "Thermal infrared", "honesty": "mapped", "mode": "single", "decades": 6,
+      "channels": [{ "source": { "band": "mid-ir" }, "colour": "#ff5030", "label": "Mid infrared, 5 to 25 µm" }],
+      "legend": "Brightness in the mid infrared, where worlds glow by their own heat. Faint to bright along a red ramp across six decades. Mapped.",
+      "why": "A world at a few hundred kelvin gives off most of its light near 10 µm (Wien's law), so here planets shine by their own warmth, not by reflected starlight."
+    },
+    {
+      "schema": "sse.band-recipe/0", "id": "uv", "name": "Ultraviolet", "honesty": "mapped", "mode": "single", "decades": 10,
+      "channels": [{ "source": { "band": "uv" }, "colour": "#b080ff", "label": "Ultraviolet, 10 to 380 nm" }],
+      "legend": "Brightness in the ultraviolet along a violet ramp across ten decades. Mapped.",
+      "why": "Hot stars are bright in the ultraviolet; cool stars and planets barely show. Stellar activity, which makes cool stars bright here, is not modelled yet."
+    },
+    {
+      "schema": "sse.band-recipe/0", "id": "xray", "name": "X-ray", "honesty": "mapped", "mode": "single", "decades": 12,
+      "channels": [{ "source": { "band": "xray" }, "colour": "#60d0ff", "label": "X-rays, 0.01 to 10 nm" }],
+      "legend": "Brightness in X-rays along a blue ramp. With only thermal light modelled, almost nothing here shows: real stars are lit by hot coronae, which arrive with stellar activity.",
+      "why": "A blackbody at a star's surface temperature gives off essentially no X-rays. The dark view is the honest answer until coronae are modelled."
+    },
+    {
+      "schema": "sse.band-recipe/0", "id": "radio", "name": "Radio", "honesty": "mapped", "mode": "single", "decades": 6,
+      "channels": [{ "source": { "band": "radio" }, "colour": "#80ff90", "label": "Radio, 1 cm to 10 m" }],
+      "legend": "Thermal radio brightness along a green ramp across six decades. Mapped. Synchrotron and auroral radio are not modelled yet.",
+      "why": "In the Rayleigh-Jeans tail, thermal radio brightness grows only in step with temperature, so warm planets come much closer to their star here than in visible light."
+    }
+  ]
+}

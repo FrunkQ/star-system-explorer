@@ -16,6 +16,9 @@
   import { PlayerReplica, SealedReplica, audienceOf, broadcastHub, relayHub, sharedTableSeat, type Hub, type OwnRequest, type ReplicaStatus } from "../../ui-contract/src/index.ts";
   import { APP_VERSION } from "./share.svelte.ts";
   import SoundControl from "../../sound/src/SoundControl.svelte";
+  import LightControl from "./LightControl.svelte";
+  import lightDoc from "./documents/light.recipes.json";
+  import { SYMBOLS, checkLightRecipe, describeLight, litFromPlayers, paint, type BandRecipe } from "../../ui-contract/src/index.ts";
   import { orbitScene, voicesFromPlayers } from "../../ui-contract/src/index.ts";
   import { focusOf } from "../../views/player-stack/src/pick.ts";
   import stackDoc from "./documents/stack.json";
@@ -232,7 +235,19 @@
     savePref("effects", effects ? "on" : "off");
   });
 
-  const mark = (x: PlayerScene["subjects"][number]) => marker.mark(playerSubjectOf(x));
+  // Light (O1): players see light only from facts their data view gives them.
+  const LIGHT_RECIPES = (lightDoc.recipes as unknown as BandRecipe[]).filter((r) => !checkLightRecipe(r).length);
+  let lightId = $state(SYMBOLS);
+  const lit = $derived(scene ? describeLight(litFromPlayers(scene)) : { lights: [], missing: [] });
+  const lightNames = $derived(new Map((scene?.subjects ?? []).map((x) => [x.address, subjectName(x)])));
+  const lightColours = $derived.by(() => {
+    const r = LIGHT_RECIPES.find((x) => x.id === lightId);
+    return r ? paint(r, lit.lights) : null;
+  });
+  const mark = (x: PlayerScene["subjects"][number]) => {
+    const m = marker.mark(playerSubjectOf(x));
+    return lightColours ? { ...m, colour: lightColours.get(x.address) ?? null } : m;
+  };
   const star = $derived(scene ? scene.subjects.find((s) => s.address === scene!.scope) : undefined);
 </script>
 
@@ -289,7 +304,7 @@
       {/if}
     </section>
   {/if}
-  {#if scene}<div class="soundbar"><SoundControl scene={orbitScene(scene.scope, voicesFromPlayers(scene))} key="sound.players" /></div>{/if}
+  {#if scene}<div class="soundbar"><LightControl recipes={LIGHT_RECIPES} lights={lit.lights} missing={lit.missing} names={lightNames} bind:value={lightId} key="light.players" /><SoundControl scene={orbitScene(scene.scope, voicesFromPlayers(scene))} key="sound.players" /></div>{/if}
   <footer class="status" data-state-hash={stateHash} data-scene-hash={sceneHash} data-sealed={isSealed || undefined} data-seat={joined ? seatId : undefined} data-audience={audience} data-link={joined ? link.state : "local"} data-via={via}>Scene: live from {isSealed ? "the game master's machine (sealed seat: this screen holds no seed and runs no kernel)" : joined ? "this screen's kernel, in step with the game master" : "the kernel"} {via ? ` (via ${via === "relay" ? "the site's relay" : "this browser"})` : ""} for {seatLabel && seatId !== "table" ? `the seat ${seatLabel}, ` : ""}the {audience} audience{sceneHash ? ` · scene ${sceneHash.slice(0, 10)}` : ""}{stateHash ? ` · state ${stateHash.slice(0, 10)}` : ""} {joined ? "" : screenDoc?.data_view ? ` · fixed to the ${screenDoc.data_view} view by the screen document` : ` · the Scanned control stands in for the GM's button and taps it for ${target ? subjectName(target) : "the body in focus"}`}</footer>
 </div>
 <FilterChain {layers} />
@@ -390,6 +405,9 @@
     padding: 20px 24px;
   }
   .soundbar {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px 18px;
     padding: 6px 24px 0;
     font-family: var(--sse-font-body);
     font-size: 12px;

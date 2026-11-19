@@ -10,6 +10,9 @@
   import SeatsPanel from "./SeatsPanel.svelte";
   import LensPanel from "./LensPanel.svelte";
   import SoundControl from "../../sound/src/SoundControl.svelte";
+  import LightControl from "./LightControl.svelte";
+  import lightDoc from "./documents/light.recipes.json";
+  import { SYMBOLS, checkLightRecipe, describeLight, litFromSystem, paint, type BandRecipe, type Mark } from "../../ui-contract/src/index.ts";
   import AgentsPanel from "../../agents/src/AgentsPanel.svelte";
   import { orbitScene, voicesFromSystem } from "../../ui-contract/src/index.ts";
   import { compareScenes, dropWhatIf, keepWhatIf, openWhatIf } from "../../ui-contract/src/index.ts";
@@ -161,6 +164,16 @@
     return out;
   });
   // N1: the sound bed for the frame in view (off until the GM turns it on; never touches the session).
+  // Light (O1): which band recipe paints the marks. Presentation only, on this device.
+  const LIGHT_RECIPES = (lightDoc.recipes as unknown as BandRecipe[]).filter((r) => !checkLightRecipe(r).length);
+  let lightId = $state(SYMBOLS);
+  const lit = $derived(describeLight(litFromSystem(scene)));
+  const lightNames = $derived(new Map(scene.subjects.map((x) => [x.address, x.label])));
+  const lightColours = $derived.by(() => {
+    const r = LIGHT_RECIPES.find((x) => x.id === lightId);
+    return r ? paint(r, lit.lights) : null;
+  });
+  const lightMark = (m: Mark, address: string): Mark => (lightColours ? { ...m, colour: lightColours.get(address) ?? null } : m);
   const soundScene = $derived(orbitScene(scene.system, voicesFromSystem(scene)));
   const lensKinds = $derived([...new Set(scene.subjects.filter((x) => x.facts.length).map((x) => x.kind))]);
 
@@ -233,7 +246,7 @@
   }
 
   function view(node: HTMLElement, m: { module: ViewModule; params: Record<string, Json> }) {
-    const h = m.module.mount(node, { session: session!, workspace: ws, params: m.params, mark: (s) => symbols.marker().mark(subjectOf(s)), symbology: symbols, styles: styleHost }, scene);
+    const h = m.module.mount(node, { session: session!, workspace: ws, params: m.params, mark: (s) => lightMark(symbols.marker().mark(subjectOf(s)), s.address), symbology: symbols, styles: styleHost }, scene);
     handles.push(h);
     return {
       destroy: () => {
@@ -403,6 +416,7 @@
         {#if whatNote}<span role="status">{whatNote}</span>{/if}
       </span>
       <button type="button" class="linkbtn quiet" onclick={() => ((agentsOpen = true), agentsDialog?.showModal())} title="Tars, Orac and Minerva, on your own key">Agents</button>
+      <LightControl recipes={LIGHT_RECIPES} lights={lit.lights} missing={lit.missing} names={lightNames} bind:value={lightId} key="light.gm" />
       <SoundControl scene={soundScene} deviceTier={status.tier} seed={base.universe.seed} key="sound.gm" />
       {#if share}
         <span class="share" aria-label="Players">
