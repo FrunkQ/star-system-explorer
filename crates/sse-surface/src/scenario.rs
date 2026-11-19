@@ -107,3 +107,34 @@ pub fn atlas_golden() -> serde_json::Value {
         .collect();
     serde_json::json!({"version": crate::atlas::ATLAS_VERSION, "worlds": out})
 }
+
+/// Golden for S2: the Earth fixture's plate history on a 16-cell-a-face grid,
+/// and tiles of its surveyed atlas.
+pub fn plates_golden() -> serde_json::Value {
+    use crate::atlas::{Atlas, TileKey};
+    let mut s = settings();
+    s.plates.cells_per_face = 16;
+    s.atlas.tile_samples = 32;
+    let seed = Seed::from_text("sse4-plates-golden");
+    let out: Vec<_> = fixtures()
+        .iter()
+        .filter(|f| ["Earth", "Wet super-Earth", "Mars"].contains(&f.body.label.as_str()))
+        .map(|f| {
+            let e = envelope(&s, &f.body);
+            let h = crate::plates::history(&s, &e, &seed, f.body.age_gyr);
+            let a = Atlas::from_plates(&s, &e, &seed, &h, f.body.oceans, vec![]);
+            let tiles: Vec<_> = [(0, 0, 0, 0), (2, 3, 4, 5), (5, 10, 700, 300)]
+                .iter()
+                .map(|&(face, level, x, y)| {
+                    a.build(TileKey::new(face, level, x, y).expect("key")).hash
+                })
+                .collect();
+            serde_json::json!({
+                "body": f.body.label, "steps": h.steps, "plates": h.plates.len(),
+                "events": h.events.len(), "snapshots": h.snapshots.len(),
+                "history": digest(&h), "tiles": tiles,
+            })
+        })
+        .collect();
+    serde_json::json!({"version": crate::plates::PLATES_VERSION, "worlds": out})
+}

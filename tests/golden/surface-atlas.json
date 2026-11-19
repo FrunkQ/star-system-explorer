@@ -2,7 +2,7 @@
   "version": "surface-atlas-v1",
   "worlds": [
     {
-      "atlas": "u:sol/sys:0/body:3/shell:surface@4500",
+      "atlas": "u:sol/sys:0/body:3/shell:sketch@4500",
       "body": "Earth",
       "regime": "mobile-lid",
       "tiles": [
@@ -49,7 +49,7 @@
       ]
     },
     {
-      "atlas": "u:sol/sys:0/body:4/shell:surface@4500",
+      "atlas": "u:sol/sys:0/body:4/shell:sketch@4500",
       "body": "Mars",
       "regime": "stagnant-lid",
       "tiles": [
@@ -96,7 +96,7 @@
       ]
     },
     {
-      "atlas": "u:sol/sys:0/body:6/moon:6/shell:surface@4500",
+      "atlas": "u:sol/sys:0/body:6/moon:6/shell:sketch@4500",
       "body": "Titan",
       "regime": "hydrocarbon",
       "tiles": [
@@ -143,7 +143,7 @@
       ]
     },
     {
-      "atlas": "u:sol/sys:0/belt:1/body:4/shell:surface@4500",
+      "atlas": "u:sol/sys:0/belt:1/body:4/shell:sketch@4500",
       "body": "Vesta",
       "regime": "small-body",
       "tiles": [
@@ -190,7 +190,7 @@
       ]
     },
     {
-      "atlas": "u:sol/sys:0/body:5/shell:surface@4500",
+      "atlas": "u:sol/sys:0/body:5/shell:sketch@4500",
       "body": "Jupiter",
       "regime": "cloud-deck",
       "tiles": [
@@ -237,7 +237,7 @@
       ]
     },
     {
-      "atlas": "u:fixtures/sys:55cnc/body:5/shell:surface@8600",
+      "atlas": "u:fixtures/sys:55cnc/body:5/shell:sketch@8600",
       "body": "55 Cancri e",
       "regime": "lava",
       "tiles": [

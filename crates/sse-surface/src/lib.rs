@@ -14,6 +14,7 @@
 //! surveyed worlds.
 
 pub mod atlas;
+pub mod plates;
 pub mod scenario;
 pub mod sketch;
 
@@ -97,6 +98,7 @@ pub struct SurfaceSettings {
     pub greenhouse_k: f64,
     pub tide: Tide,
     pub atlas: atlas::AtlasSettings,
+    pub plates: plates::PlateSettings,
     pub rules: Vec<Rule>,
     pub regimes: BTreeMap<String, RegimeDef>,
 }
@@ -615,5 +617,7 @@ pub fn envelopes_of(run: &SystemRun, s: &SurfaceSettings) -> Vec<SurfaceEnvelope
 
 #[cfg(test)]
 mod atlas_tests;
+#[cfg(test)]
+mod plates_tests;
 #[cfg(test)]
 mod tests;
