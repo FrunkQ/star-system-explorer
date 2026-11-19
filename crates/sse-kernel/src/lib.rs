@@ -7,6 +7,7 @@
 
 mod adopt;
 pub mod contract;
+mod descent;
 mod nav;
 pub mod protocol;
 mod survey;
@@ -1096,6 +1097,73 @@ impl Kernel {
                     }
                 };
                 Response::RoutePlanned { plan }
+            }
+            Request::PlanDescent {
+                system,
+                body,
+                fixture,
+                at_s,
+                options,
+                quick,
+                lander,
+                lat_deg,
+                lon_deg,
+                entry,
+            } => {
+                let quick = quick.unwrap_or(false);
+                let ask = |from| descent::Ask {
+                    from,
+                    options: options.as_ref(),
+                    quick,
+                    lander: &lander,
+                    lat_deg,
+                    lon_deg,
+                    entry: entry.as_ref(),
+                };
+                let descent = match (fixture, system, body) {
+                    (Some(f), None, None) => {
+                        descent::plan_descent(ask(survey::From::Fixture(&f)), &mut self.surveys)?
+                    }
+                    (None, Some(system), Some(body)) => {
+                        let a: Address = system
+                            .parse()
+                            .map_err(|e| err("bad_address", format!("{e}")))?;
+                        let u = self
+                            .universe
+                            .as_mut()
+                            .ok_or_else(|| err("no_universe", "open a universe first"))?;
+                        if !u.root.contains(&a) {
+                            return Err(err(
+                                "bad_address",
+                                format!("{a} is not in universe {}", u.root),
+                            ));
+                        }
+                        if !u.runs.contains_key(&system) {
+                            if let Some(req) = adopt::formation_request(&u.chronicle, &a) {
+                                let (_, run, _) = systems::form(req.into())?;
+                                u.runs.insert(system.clone(), run);
+                            }
+                        }
+                        descent::plan_descent(
+                            ask(survey::From::System {
+                                ch: &u.chronicle,
+                                seed: &u.seed,
+                                system: &a,
+                                body: &body,
+                                at_s,
+                                run: u.runs.get(&system),
+                            }),
+                            &mut self.surveys,
+                        )?
+                    }
+                    _ => {
+                        return Err(err(
+                            "bad_request",
+                            "give a fixture, or a system and one of its bodies",
+                        ))
+                    }
+                };
+                Response::DescentPlanned { descent }
             }
             Request::SurveySurface {
                 system,

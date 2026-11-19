@@ -14,6 +14,7 @@
 //! not small. Moons and planets' pulls along the way come later.
 
 pub mod courses;
+pub mod descent;
 pub mod drift;
 pub mod hazards;
 pub mod kepler;
@@ -54,6 +55,7 @@ pub struct NavSettings {
     pub hazards: HazardSettings,
     pub difficulty: DifficultySettings,
     pub drift: DriftSettings,
+    pub descent: descent::DescentPack,
     /// Ship templates by id.
     pub ships: BTreeMap<String, Ship>,
     pub sources: BTreeMap<String, String>,
@@ -555,5 +557,7 @@ fn order(mut c: Vec<Course>, p: Prefer) -> Vec<Course> {
     c
 }
 
+#[cfg(test)]
+mod descent_tests;
 #[cfg(test)]
 mod tests;

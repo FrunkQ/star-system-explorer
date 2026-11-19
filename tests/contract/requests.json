@@ -1417,6 +1417,38 @@
   "to": "Mars"
  },
  {
+  "op": "plan_descent",
+  "fixture": "Titan",
+  "quick": true,
+  "lander": "titan-probe",
+  "lat_deg": -10.0,
+  "lon_deg": 192.0
+ },
+ {
+  "op": "plan_descent",
+  "fixture": "Moon",
+  "quick": true,
+  "lander": "moon-lander",
+  "lat_deg": 0.7,
+  "lon_deg": 23.5
+ },
+ {
+  "op": "plan_descent",
+  "fixture": "Jupiter",
+  "quick": true,
+  "lander": "capsule",
+  "lat_deg": 0.0,
+  "lon_deg": 0.0
+ },
+ {
+  "op": "plan_descent",
+  "fixture": "Moon",
+  "quick": true,
+  "lander": "glider",
+  "lat_deg": 0.0,
+  "lon_deg": 0.0
+ },
+ {
   "op": "export_chronicle"
  },
  {

@@ -46,25 +46,25 @@ pub(crate) struct Request<'a> {
     pub limit: usize,
 }
 
-pub(crate) fn survey_surface(r: Request, cache: &mut Cache) -> Result<serde_json::Value, Response> {
-    if r.tiles.len() > MAX_TILES {
-        return Err(err(
-            "too_many_tiles",
-            format!("at most {MAX_TILES} tiles per request"),
-        ));
-    }
-    let opts: SurveyOptions = match r.options {
+/// A world surveyed (or found in the cache): where it came from, the body,
+/// the time read, and the survey.
+pub(crate) fn surveyed<'c>(
+    from: From,
+    options: Option<&serde_json::Value>,
+    quick: bool,
+    cache: &'c mut Cache,
+) -> Result<(String, Body, Option<i64>, &'c Survey), Response> {
+    let opts: SurveyOptions = match options {
         Some(v) => serde_json::from_value(v.clone())
             .map_err(|e| err("bad_request", format!("options: {e}")))?,
         None => SurveyOptions::default(),
     };
     let mut s = sse_surface::scenario::settings();
-    if r.quick {
+    if quick {
         s.plates.cells_per_face = 16;
         s.atlas.tile_samples = 32;
     }
-    let (source, body, seed, epoch_gyr, at_s): (String, Body, Seed, f64, Option<i64>) = match r.from
-    {
+    let (source, body, seed, epoch_gyr, at_s): (String, Body, Seed, f64, Option<i64>) = match from {
         From::Fixture(name) => {
             let all = sse_surface::scenario::fixtures();
             let names: Vec<String> = all.iter().map(|f| f.body.label.clone()).collect();
@@ -116,8 +116,7 @@ pub(crate) fn survey_surface(r: Request, cache: &mut Cache) -> Result<serde_json
             )
         }
     };
-    let key =
-        serde_json::to_string(&(&seed, &body, epoch_gyr, r.quick, &opts)).expect("plain data");
+    let key = serde_json::to_string(&(&seed, &body, epoch_gyr, quick, &opts)).expect("plain data");
     let sv = match cache.iter().position(|(k, _)| *k == key) {
         Some(i) => {
             let hit = cache.remove(i);
@@ -134,6 +133,17 @@ pub(crate) fn survey_surface(r: Request, cache: &mut Cache) -> Result<serde_json
             &cache[cache.len() - 1].1
         }
     };
+    Ok((source, body, at_s, sv))
+}
+
+pub(crate) fn survey_surface(r: Request, cache: &mut Cache) -> Result<serde_json::Value, Response> {
+    if r.tiles.len() > MAX_TILES {
+        return Err(err(
+            "too_many_tiles",
+            format!("at most {MAX_TILES} tiles per request"),
+        ));
+    }
+    let (source, body, at_s, sv) = surveyed(r.from, r.options, r.quick, cache)?;
     let mut tiles = vec![];
     let mut refused = vec![];
     for t in r.tiles {

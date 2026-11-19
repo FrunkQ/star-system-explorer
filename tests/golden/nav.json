@@ -157,5 +157,76 @@
       ]
     }
   ],
+  "descents": [
+    {
+      "duration_s": "1400.50",
+      "events": [
+        "entry",
+        "peak-heating",
+        "chute",
+        "touchdown"
+      ],
+      "lander": "capsule",
+      "method": "chute",
+      "peak_g": "9.4253",
+      "peak_heat_w_cm2": "115.3875",
+      "propellant_kg": "0.000",
+      "result": "landed",
+      "touchdown_m_s": "7.5976",
+      "world": "Earth"
+    },
+    {
+      "duration_s": "1383.50",
+      "events": [
+        "entry",
+        "peak-heating",
+        "chute",
+        "burn",
+        "chute-released",
+        "touchdown"
+      ],
+      "lander": "mars-lander",
+      "method": "chute-and-engines",
+      "peak_g": "4.5113",
+      "peak_heat_w_cm2": "3.8919",
+      "propellant_kg": "150.686",
+      "result": "landed",
+      "touchdown_m_s": "1.5546",
+      "world": "Mars"
+    },
+    {
+      "duration_s": "11361.70",
+      "events": [
+        "entry",
+        "peak-heating",
+        "chute",
+        "touchdown"
+      ],
+      "lander": "titan-probe",
+      "method": "chute",
+      "peak_g": "29.6404",
+      "peak_heat_w_cm2": "47.2100",
+      "propellant_kg": "0.000",
+      "result": "landed",
+      "touchdown_m_s": "3.5289",
+      "world": "Titan"
+    },
+    {
+      "duration_s": "453.80",
+      "events": [
+        "entry",
+        "burn",
+        "touchdown"
+      ],
+      "lander": "moon-lander",
+      "method": "engines",
+      "peak_g": "0.5444",
+      "peak_heat_w_cm2": "0.0000",
+      "propellant_kg": "6679.672",
+      "result": "landed",
+      "touchdown_m_s": "2.0570",
+      "world": "Moon"
+    }
+  ],
   "version": "nav-v1"
 }

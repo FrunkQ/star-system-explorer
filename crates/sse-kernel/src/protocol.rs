@@ -403,6 +403,39 @@ pub enum Request {
         #[ts(optional, type = "unknown")]
         rescue: Option<serde_json::Value>,
     },
+    /// S5's descent scene: survey a world as `survey_surface` does (a
+    /// `fixture`, or a `body` of an adopted `system` at `at_s`), judge the
+    /// landing site at `lat_deg`, `lon_deg` (slope, roughness, liquid) and
+    /// fly `lander` (a base-nav template id or a lander object) down to it
+    /// from `entry` (`{altitude_m, speed_m_s, flight_path_deg}`; default the
+    /// top of the air at orbital speed, or a low orbit on an airless world).
+    PlanDescent {
+        #[serde(default)]
+        #[ts(optional)]
+        system: Option<String>,
+        #[serde(default)]
+        #[ts(optional)]
+        body: Option<String>,
+        #[serde(default)]
+        #[ts(optional)]
+        fixture: Option<String>,
+        #[serde(default)]
+        #[ts(optional, type = "number")]
+        at_s: Option<i64>,
+        #[serde(default)]
+        #[ts(optional, type = "unknown")]
+        options: Option<serde_json::Value>,
+        #[serde(default)]
+        #[ts(optional)]
+        quick: Option<bool>,
+        #[ts(type = "unknown")]
+        lander: serde_json::Value,
+        lat_deg: f64,
+        lon_deg: f64,
+        #[serde(default)]
+        #[ts(optional, type = "unknown")]
+        entry: Option<serde_json::Value>,
+    },
     /// S2 to S7 in order for one world: a surface `fixture` (`Earth`,
     /// `Moon`, ...; no universe needed) or a `body` of an adopted `system`
     /// at `at_s`. `options` is sse-surface's `SurveyOptions` (rotation_hours,
@@ -633,6 +666,7 @@ impl Request {
             Request::ResolvedSystem { .. } => "resolved_system",
             Request::SurveySurface { .. } => "survey_surface",
             Request::PlanRoute { .. } => "plan_route",
+            Request::PlanDescent { .. } => "plan_descent",
             Request::Systems => "systems",
             Request::LifeView { .. } => "life_view",
             Request::ExportChronicle => "export_chronicle",
@@ -732,6 +766,11 @@ pub fn ops() -> Vec<OpInfo> {
             "plan_route",
             Cost::Medium,
             "about a thousand Lambert solves on the departure and flight-time grid plus torch flights; drift asks plan once per body and port (about 0.1 to 1 s native)",
+        ),
+        o(
+            "plan_descent",
+            Cost::Heavy,
+            "a survey as survey_surface (cached for the same world), one site read of about 30 heights, and a descent at 0.1 s steps (well under 0.1 s native)",
         ),
         o(
             "survey_surface",
@@ -998,6 +1037,14 @@ pub enum Response {
     RoutePlanned {
         #[ts(type = "unknown")]
         plan: serde_json::Value,
+    },
+    /// `plan_descent`: `{body, label, source, at_s?, lander, entry, site
+    /// (level, spacing, height, slope, local slope, roughness, relief,
+    /// under_liquid, ok, why), air_at_site, gravity_m_s2, hazards (kind,
+    /// level, why), verdict, descent (outcome, events, telemetry)}`.
+    DescentPlanned {
+        #[ts(type = "unknown")]
+        descent: serde_json::Value,
     },
     /// `survey_surface`: `{body, label, source (fixture:<name>, formation, v3
     /// or facts), version, epoch_myr, at_s?, stages, envelope, deposit_kinds,

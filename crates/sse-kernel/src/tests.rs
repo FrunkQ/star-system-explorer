@@ -1468,3 +1468,69 @@ fn logic_blocks_are_listed() {
     let toy = by("toy.luminosity_from_mass");
     assert!(toy.get("class").is_none() && toy["inputs"][0].get("shape").is_none());
 }
+
+/// S5 served: descents onto fixture worlds through the survey cache. Mars
+/// shows why real landers go to low ground: the same lander lands in a low
+/// basin and crashes on the uplands.
+#[test]
+fn plan_descent_flies_landers_onto_surveyed_sites() {
+    let mut k = crate::Kernel::new();
+    let ask = |w: &str, lander: &str, lat: f64, lon: f64| {
+        serde_json::json!({"op": "plan_descent", "fixture": w, "quick": true,
+            "lander": lander, "lat_deg": lat, "lon_deg": lon})
+    };
+    let get = |k: &mut crate::Kernel, q: serde_json::Value| {
+        let r = send(k, q);
+        assert_eq!(r["type"], "descent_planned", "{r}");
+        r["descent"].clone()
+    };
+    // Earth: a capsule on its parachute; this site is at sea, so it is a
+    // splashdown flagged on the site.
+    let d = get(&mut k, ask("Earth", "capsule", 45.0, 60.0));
+    let o = &d["descent"]["outcome"];
+    assert_eq!(o["result"], "landed", "{o}");
+    assert_eq!(o["method"], "chute");
+    assert_eq!(d["site"]["under_liquid"], "water");
+    assert_eq!(d["verdict"], "landed-on-a-bad-site");
+    assert!(d["hazards"]
+        .as_array()
+        .unwrap()
+        .iter()
+        .any(|h| h["kind"] == "liquid" && h["level"] == "danger"));
+    assert_eq!(d["entry"]["flight_path_deg"], -2.0);
+    // Mars: low ground lands, high ground crashes.
+    let low = get(&mut k, ask("Mars", "mars-lander", 0.0, 120.0));
+    let high = get(&mut k, ask("Mars", "mars-lander", 0.0, 180.0));
+    assert!(
+        low["site"]["height_m"].as_f64().unwrap()
+            < high["site"]["height_m"].as_f64().unwrap() - 3000.0
+    );
+    assert_eq!(
+        low["descent"]["outcome"]["result"], "landed",
+        "{}",
+        low["descent"]["outcome"]
+    );
+    assert_eq!(low["descent"]["outcome"]["method"], "chute-and-engines");
+    assert_eq!(high["descent"]["outcome"]["result"], "crash");
+    assert!(
+        high["air_at_site"]["density_kg_m3"].as_f64()
+            < low["air_at_site"]["density_kg_m3"].as_f64()
+    );
+    // Moon: engines only, from a low orbit.
+    let d = get(&mut k, ask("Moon", "moon-lander", 0.7, 23.5));
+    assert_eq!(d["descent"]["outcome"]["result"], "landed");
+    assert_eq!(d["descent"]["outcome"]["method"], "engines");
+    assert_eq!(d["air_at_site"]["density_kg_m3"], 0.0);
+    // Titan: a long parachute descent.
+    let d = get(&mut k, ask("Titan", "titan-probe", -10.0, 192.0));
+    assert_eq!(d["verdict"], "landed", "{}", d["site"]);
+    assert!(d["descent"]["outcome"]["duration_s"].as_f64().unwrap() > 3600.0);
+    // Deterministic, and refusals.
+    assert_eq!(get(&mut k, ask("Titan", "titan-probe", -10.0, 192.0)), d);
+    let r = send(&mut k, ask("Titan", "glider", 0.0, 0.0));
+    assert_eq!(r["code"], "unknown_lander", "{r}");
+    let r = send(&mut k, ask("Jupiter", "capsule", 0.0, 0.0));
+    assert_eq!(r["code"], "no_ground", "{r}");
+    let r = send(&mut k, ask("Earth", "capsule", 100.0, 0.0));
+    assert_eq!(r["code"], "bad_request", "{r}");
+}

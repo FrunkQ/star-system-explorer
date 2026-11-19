@@ -20,6 +20,7 @@ pub mod named;
 pub mod plates;
 pub mod regimes;
 pub mod scenario;
+pub mod site;
 pub mod sketch;
 pub mod survey;
 pub mod wear;

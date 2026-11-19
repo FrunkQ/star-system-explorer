@@ -100,3 +100,12 @@ deposits, built places and the feature register.
 NAV through the kernel; see `T3.md` for the model, the request and response, errors and checks. Contract: six cases
 (Sol by chemical ship and torch, the drift at 1 au, an unknown ship, a course in the adopted `u:kestrel/sys:40`, the
 same body twice); `contract.jsonl` re-blessed on purpose.
+
+## plan_descent (19 Nov, S5)
+`{op: "plan_descent", fixture | system + body, at_s?, options?, quick?, lander, lat_deg, lon_deg, entry?}`.
+Surveys through the `survey_surface` cache, judges the site (`sse_surface::site`), builds the air from the survey's
+air profile, and flies `sse_nav::descent::descend`. `lander` is a base-nav template (`capsule`, `mars-lander`,
+`titan-probe`, `moon-lander`) or an object; `entry` is `{altitude_m, speed_m_s, flight_path_deg}`. Returns
+`descent_planned {descent: {body, label, source, at_s?, lander, entry, site, air_at_site, gravity_m_s2, hazards,
+verdict, descent: {outcome, events, telemetry}}}`. Errors: `unknown_lander`, `no_ground`, `bad_request`, plus the
+survey's. Heavy. See packages/S5.md.
