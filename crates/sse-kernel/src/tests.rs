@@ -1203,3 +1203,23 @@ fn the_record_through_the_api() {
         "bad_export"
     );
 }
+
+/// J2: the logic blocks are listed with their class and shapes; physics
+/// atoms list as before (no new keys).
+#[test]
+fn logic_blocks_are_listed() {
+    let mut k = crate::Kernel::new();
+    let r = send(
+        &mut k,
+        serde_json::json!({"op":"atoms","ids":["logic.select","world.read","toy.luminosity_from_mass"]}),
+    );
+    let atoms = r["atoms"].as_array().unwrap_or_else(|| panic!("{r}"));
+    assert_eq!(atoms.len(), 3, "{r}");
+    let by = |id: &str| atoms.iter().find(|a| a["id"] == id).unwrap().clone();
+    let sel = by("logic.select");
+    assert_eq!(sel["class"], "logic");
+    assert_eq!(sel["inputs"][0]["shape"], "flag");
+    assert_eq!(sel["inputs"][1]["any_dim"], true);
+    let toy = by("toy.luminosity_from_mass");
+    assert!(toy.get("class").is_none() && toy["inputs"][0].get("shape").is_none());
+}
