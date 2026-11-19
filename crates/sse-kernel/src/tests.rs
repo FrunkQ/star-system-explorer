@@ -1332,3 +1332,119 @@ fn the_record_through_the_api() {
         "bad_export"
     );
 }
+
+/// T3 through the API: a fixture course, a drifting ship's ways out, a ship
+/// object, refusals, and a course between two worlds of an adopted system.
+#[test]
+fn plan_route_gives_courses_and_ways_out() {
+    let mut k = crate::Kernel::new();
+    let r = send(
+        &mut k,
+        serde_json::json!({"op": "plan_route", "fixture": "sol", "ship": "chemical-transfer",
+            "from": "Earth", "to": "Mars", "prefer": "save-fuel", "window_days": 800.0}),
+    );
+    assert_eq!(r["type"], "route_planned", "{r}");
+    let p = &r["plan"];
+    assert_eq!(p["from"], "u:sol/sys:sun/body:earth");
+    let c = &p["candidates"][0];
+    assert!(c["days"].as_f64().unwrap() > 100.0);
+    assert!(c["difficulty"]["label"].is_string());
+    assert_eq!(p["recommended"], 0);
+    // Same question, same bytes.
+    assert_eq!(
+        send(
+            &mut k,
+            serde_json::json!({"op": "plan_route", "fixture": "sol", "ship": "chemical-transfer",
+            "from": "Earth", "to": "Mars", "prefer": "save-fuel", "window_days": 800.0})
+        ),
+        r
+    );
+    // Drifting at 1 au with no speed: falls into the Sun; rescue from a port.
+    let d = send(
+        &mut k,
+        serde_json::json!({"op": "plan_route", "fixture": "sol", "ship": "chemical-transfer",
+            "from": {"r_m": [1.495978707e11, 0.0, 0.0], "v_m_s": [0.0, 0.0, 0.0]}}),
+    );
+    let drift = &d["plan"]["drift"];
+    assert!(
+        drift["fate"]
+            .as_str()
+            .unwrap()
+            .starts_with("falls into the star"),
+        "{d}"
+    );
+    assert!(drift["ways_out"]
+        .as_array()
+        .unwrap()
+        .iter()
+        .any(|w| w["kind"] == "rescue" && w["feasible"] == true));
+    // A ship object, and refusals.
+    let ship = serde_json::json!({"name": "Skiff", "accel_g": 0.01, "exhaust_km_s": 3.0, "wet_t": 11.0, "dry_t": 10.0});
+    let w = send(
+        &mut k,
+        serde_json::json!({"op": "plan_route", "fixture": "sol", "ship": ship, "from": "Earth", "to": "Neptune"}),
+    );
+    assert!(
+        w["plan"]["candidates"].as_array().unwrap().is_empty(),
+        "{w}"
+    );
+    assert!(!w["plan"]["refused"].as_array().unwrap().is_empty());
+    for (req, code) in [
+        (
+            serde_json::json!({"op": "plan_route", "fixture": "sol", "ship": "warp-barge", "from": "Earth", "to": "Mars"}),
+            "unknown_ship",
+        ),
+        (
+            serde_json::json!({"op": "plan_route", "fixture": "tatooine", "ship": "fusion-torch", "from": "Earth", "to": "Mars"}),
+            "unknown_fixture",
+        ),
+        (
+            serde_json::json!({"op": "plan_route", "fixture": "sol", "ship": "fusion-torch", "from": "Vulcan", "to": "Mars"}),
+            "route_refused",
+        ),
+        (
+            serde_json::json!({"op": "plan_route", "ship": "fusion-torch", "from": "Earth", "to": "Mars"}),
+            "bad_request",
+        ),
+        (
+            serde_json::json!({"op": "plan_route", "fixture": "sol", "ship": "fusion-torch", "from": "Earth", "to": "Mars", "prefer": "scenic"}),
+            "bad_request",
+        ),
+        (
+            serde_json::json!({"op": "plan_route", "system": "u:home/sys:5", "ship": "fusion-torch", "from": "Earth", "to": "Mars"}),
+            "no_universe",
+        ),
+    ] {
+        assert_eq!(send(&mut k, req)["code"], code);
+    }
+    // Between two worlds of an adopted system.
+    send(
+        &mut k,
+        serde_json::json!({"op": "open_universe", "id": "home", "seed": "home"}),
+    );
+    let form = serde_json::json!({"seed": "adopt-1", "system": "u:home/sys:5", "star_pins": {"primary_mass": 1.0}});
+    assert_eq!(
+        send(
+            &mut k,
+            serde_json::json!({"op": "adopt", "formation": form})
+        )["type"],
+        "adopted"
+    );
+    let v = send(
+        &mut k,
+        serde_json::json!({"op": "resolved_system", "system": "u:home/sys:5"}),
+    );
+    let planets = v["spec"]["planets"].as_array().unwrap();
+    assert!(planets.len() >= 2);
+    let (a, b) = (
+        planets[0]["address"].as_str().unwrap(),
+        planets[1]["address"].as_str().unwrap(),
+    );
+    let r = send(
+        &mut k,
+        serde_json::json!({"op": "plan_route", "system": "u:home/sys:5", "ship": "fusion-torch",
+            "from": a, "to": b, "prefer": "fastest", "ports": [a]}),
+    );
+    assert_eq!(r["type"], "route_planned", "{r}");
+    assert_eq!(r["plan"]["candidates"][0]["kind"], "torch");
+}

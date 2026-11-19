@@ -1356,6 +1356,67 @@
   "quick": true
  },
  {
+  "op": "plan_route",
+  "fixture": "sol",
+  "ship": "chemical-transfer",
+  "from": "Earth",
+  "to": "Mars",
+  "prefer": "save-fuel",
+  "window_days": 400.0
+ },
+ {
+  "op": "plan_route",
+  "fixture": "sol",
+  "ship": "fusion-torch",
+  "from": "Earth",
+  "to": "Jupiter",
+  "prefer": "fastest",
+  "window_days": 30.0
+ },
+ {
+  "op": "plan_route",
+  "fixture": "sol",
+  "ship": "chemical-transfer",
+  "from": {
+   "r_m": [
+    149597870700.0,
+    0.0,
+    0.0
+   ],
+   "v_m_s": [
+    0.0,
+    0.0,
+    0.0
+   ]
+  }
+ },
+ {
+  "op": "plan_route",
+  "fixture": "sol",
+  "ship": "warp-barge",
+  "from": "Earth",
+  "to": "Mars"
+ },
+ {
+  "op": "plan_route",
+  "system": "u:kestrel/sys:40",
+  "ship": "fusion-torch",
+  "from": "u:kestrel/sys:40/body:2",
+  "to": "u:kestrel/sys:40/body:3",
+  "prefer": "balanced",
+  "window_days": 60.0,
+  "ports": [
+   "u:kestrel/sys:40/body:2"
+  ]
+ },
+ {
+  "op": "plan_route",
+  "fixture": "sol",
+  "ship": "fusion-torch",
+  "from": "Mars",
+  "to": "Mars"
+ },
+ {
   "op": "export_chronicle"
  },
  {

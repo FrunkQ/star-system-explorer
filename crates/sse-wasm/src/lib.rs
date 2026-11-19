@@ -34,6 +34,7 @@ pub fn engines_run() -> String {
         "stars": sse_cosmos::scenario::stars_golden(),
         "life-signatures": sse_life::scenario::signatures_golden(),
         "life-feedback": sse_life::scenario::feedback_golden(),
+        "nav": sse_nav::scenario::golden(),
         "formation-accrete": sse_formation::scenario::accrete_golden(),
         "formation-accrete-dole": sse_formation::scenario::accrete_dole_golden(),
         "formation-growth": sse_formation::scenario::growth_golden(),

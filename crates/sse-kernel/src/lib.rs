@@ -7,6 +7,7 @@
 
 mod adopt;
 pub mod contract;
+mod nav;
 pub mod protocol;
 mod survey;
 mod systems;
@@ -1027,6 +1028,71 @@ impl Kernel {
                     tiles: r.tiles,
                     refused: r.refused,
                 }
+            }
+            Request::PlanRoute {
+                fixture,
+                nav,
+                system,
+                at_s,
+                ports,
+                ship,
+                from,
+                to,
+                depart_s,
+                window_days,
+                prefer,
+                rescue,
+            } => {
+                let ports = ports.unwrap_or_default();
+                let ask = |source| nav::Ask {
+                    source,
+                    ship: &ship,
+                    from: &from,
+                    to: to.as_ref(),
+                    depart_s,
+                    window_days,
+                    prefer: prefer.as_deref(),
+                    rescue: rescue.as_ref(),
+                };
+                let plan = match (fixture.as_deref(), nav.as_ref(), system) {
+                    (Some(f), None, None) => nav::plan_route(ask(nav::Source::Fixture(f)))?,
+                    (None, Some(n), None) => nav::plan_route(ask(nav::Source::Inline(n)))?,
+                    (None, None, Some(system)) => {
+                        let a: Address = system
+                            .parse()
+                            .map_err(|e| err("bad_address", format!("{e}")))?;
+                        let u = self
+                            .universe
+                            .as_mut()
+                            .ok_or_else(|| err("no_universe", "open a universe first"))?;
+                        if !u.root.contains(&a) {
+                            return Err(err(
+                                "bad_address",
+                                format!("{a} is not in universe {}", u.root),
+                            ));
+                        }
+                        if !u.runs.contains_key(&system) {
+                            if let Some(req) = adopt::formation_request(&u.chronicle, &a) {
+                                let (_, run, _) = systems::form(req.into())?;
+                                u.runs.insert(system.clone(), run);
+                            }
+                        }
+                        nav::plan_route(ask(nav::Source::System {
+                            ch: &u.chronicle,
+                            system: &a,
+                            at_s,
+                            run: u.runs.get(&system),
+                            ports: &ports,
+                        }))?
+                    }
+                    _ => {
+                        return Err(err(
+                            "bad_request",
+                            "give one of a fixture, a nav system or a universe system",
+                        ))
+                    }
+                };
+                Response::RoutePlanned { plan }
             }
             Request::SurveySurface {
                 system,

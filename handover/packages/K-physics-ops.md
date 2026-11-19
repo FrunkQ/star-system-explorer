@@ -95,3 +95,8 @@ deposits, built places and the feature register.
   `SurfaceTile.ts`).
 - **Next**: a rename or GM edit as a chronicle event (so the register and edits come from the universe rather
   than the request) belongs with the GM approvals flow; until then the UI sends them as options.
+
+## plan_route (19 Nov, T3)
+NAV through the kernel; see `T3.md` for the model, the request and response, errors and checks. Contract: six cases
+(Sol by chemical ship and torch, the drift at 1 au, an unknown ship, a course in the adopted `u:kestrel/sys:40`, the
+same body twice); `contract.jsonl` re-blessed on purpose.

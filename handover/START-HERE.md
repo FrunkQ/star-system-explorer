@@ -83,11 +83,12 @@ Milestone M1 "Proven core" = packages K0 to K6 (build plan section 3/4).
 | C3 reverse placement in a system | done (kernel track) | packages/C3.md |
 | T1 epoch stepping, ageing star, secular orbits, symplectic windows | done (kernel track); giant phase sketch awaits F7 | packages/T1.md |
 | T2 look-ahead branch, commit, age the Solar System | done (kernel track); with Alex for review | packages/T2.md |
+| T3 NAV: candidate courses (Hohmann, Lambert grid, torch) with burns, fuel and reserve, dose, heat, grazes, belts, debris, delays and difficulty with reasons; a drifting ship's fate and ways out; kernel op `plan_route` | done | packages/T3.md |
 
 ## Parallel tracks (18 Nov, Alex: build in parallel, integrate later)
 | Track | Packages | Branch |
 |---|---|---|
-| Physics | P1, P3, P4, F0 to F6 done; pipeline, F7, F9, S0 to S4, S6 and S7 done, served by the `survey_surface` op; F8 waits on G6, S5 on T3, S8 on G7; next T3 (NAV, new crate `sse-nav`), then S8 or S9 | `main` via PRs |
+| Physics | P1, P3, P4, F0 to F6 done; pipeline, F7, F9, S0 to S4, S6 and S7 done, served by the `survey_surface` op; T3 NAV done (`sse-nav`, `plan_route`); F8 waits on G6, S8 on G7; next S5, then S8 or S9 | `main` via PRs |
 | Kernel | K7 to K10, G0 to G5, C1 to C3, L0, L1a to L1d, L2, J1, T1, T2 (also through the API), the U3 gaps, the V10 grant gaps and the UI asks (`adopt`, look-ahead write-back, `resolved_system`; K6-additions.md) done; next J2 and J3 (logic blocks, boxes), then G6 | `main` via PRs |
 | Chart room shell and player views | U0 to U3, V1, U5, V2, V12, V3, V11, V4, V5, planet chart, V10, V6 System 3D, U9 lenses, N1 sound, U4 (what-if and look-ahead), A1 part 1, O1 light switch (UI), V13 parts 1 and 2 (import and grow, add to the campaign, read back and age with write-back), V6 Cutaway and Body globe (Body screen), phone screen menu, V14 size comparison and chart measuring done; next U7 biosphere (waits on the kernel's `life_view`), browser campaign save (waits on `export_chronicle`), V7 | `main` via PRs |
 

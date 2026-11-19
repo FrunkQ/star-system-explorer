@@ -360,6 +360,49 @@ pub enum Request {
         #[ts(optional)]
         tiles: Option<Vec<TileRequest>>,
     },
+    /// NAV (T3): candidate courses between two places, or the ways out
+    /// for a drifting ship (no `to`). The system is a NAV `fixture` (`sol`),
+    /// an inline `nav` system, or an adopted `system` read at `at_s` (its
+    /// planets; `ports` names bodies with ports for rescue). `ship` is a
+    /// template id from the base-nav pack or a ship object; `from` and `to`
+    /// are a body address or name, or `{r_m, v_m_s}` around the star;
+    /// `prefer` is `fastest`, `save-fuel` or `balanced`.
+    PlanRoute {
+        #[serde(default)]
+        #[ts(optional)]
+        fixture: Option<String>,
+        #[serde(default)]
+        #[ts(optional, type = "unknown")]
+        nav: Option<serde_json::Value>,
+        #[serde(default)]
+        #[ts(optional)]
+        system: Option<String>,
+        #[serde(default)]
+        #[ts(optional, type = "number")]
+        at_s: Option<i64>,
+        #[serde(default)]
+        #[ts(optional)]
+        ports: Option<Vec<String>>,
+        #[ts(type = "unknown")]
+        ship: serde_json::Value,
+        #[ts(type = "unknown")]
+        from: serde_json::Value,
+        #[serde(default)]
+        #[ts(optional, type = "unknown")]
+        to: Option<serde_json::Value>,
+        #[serde(default)]
+        #[ts(optional)]
+        depart_s: Option<f64>,
+        #[serde(default)]
+        #[ts(optional)]
+        window_days: Option<f64>,
+        #[serde(default)]
+        #[ts(optional)]
+        prefer: Option<String>,
+        #[serde(default)]
+        #[ts(optional, type = "unknown")]
+        rescue: Option<serde_json::Value>,
+    },
     /// S2 to S7 in order for one world: a surface `fixture` (`Earth`,
     /// `Moon`, ...; no universe needed) or a `body` of an adopted `system`
     /// at `at_s`. `options` is sse-surface's `SurveyOptions` (rotation_hours,
@@ -589,6 +632,7 @@ impl Request {
             Request::Adopt { .. } => "adopt",
             Request::ResolvedSystem { .. } => "resolved_system",
             Request::SurveySurface { .. } => "survey_surface",
+            Request::PlanRoute { .. } => "plan_route",
             Request::Systems => "systems",
             Request::LifeView { .. } => "life_view",
             Request::ExportChronicle => "export_chronicle",
@@ -683,6 +727,11 @@ pub fn ops() -> Vec<OpInfo> {
             "resolved_system",
             Cost::Medium,
             "a formation re-run for formation-adopted systems (cached), plus about 0.1 s per 256-sample tile; at most 24 tiles",
+        ),
+        o(
+            "plan_route",
+            Cost::Medium,
+            "about a thousand Lambert solves on the departure and flight-time grid plus torch flights; drift asks plan once per body and port (about 0.1 to 1 s native)",
         ),
         o(
             "survey_surface",
@@ -941,6 +990,14 @@ pub enum Response {
         state_hash: String,
         manifest_id: String,
         stack_matches: bool,
+    },
+    /// `plan_route`: sse-nav's `RoutePlan` (`candidates` best first by the
+    /// preference, each with burns, days, Δv, propellant and reserve, peak g,
+    /// dose, solar-storm chance, peak flux, delays, hazards, difficulty with
+    /// reasons and a track; `refused` with why; `drift` for ways out).
+    RoutePlanned {
+        #[ts(type = "unknown")]
+        plan: serde_json::Value,
     },
     /// `survey_surface`: `{body, label, source (fixture:<name>, formation, v3
     /// or facts), version, epoch_myr, at_s?, stages, envelope, deposit_kinds,
