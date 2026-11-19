@@ -434,9 +434,17 @@ impl Kernel {
                             units: &stack.units,
                         };
                         let mut flows = BTreeMap::new();
-                        let mut problems = Vec::new();
+                        let mut problems: Vec<String> = Vec::new();
+                        // Boxes (J3): each one's own golden cases, then flows
+                        // compiled with the stack's boxes inlined.
+                        for (id, b) in &stack.boxes {
+                            for m in sse_flow::boxes::run_box_tests(b, &cx, &stack.boxes) {
+                                problems
+                                    .push(format!("{} (box {id}): test {m}", stack.box_packs[id]));
+                            }
+                        }
                         for (id, af) in &stack.flows {
-                            match Flow::compile(af.doc.clone(), &cx) {
+                            match Flow::compile_with(af.doc.clone(), &cx, &stack.boxes) {
                                 Ok(f) => {
                                     flows.insert(id.clone(), f);
                                 }
