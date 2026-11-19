@@ -1,0 +1,14 @@
+# Sector: Kestrel Reach
+# Subsector F: Lanternfall
+0912 Ashgrove A867975-9 NS Hi Ga 712 Kv G2 V
+1013 Brannock's Hold B544620-8 S Ag Ni 503 Kv K1 V M4 V
+1114 Cinder Gate E430300-7 De Lo Po A 120 Na M2 V
+1215 Dunmere C766887-7 NW Ga Ri 820 Kv F7 V
+1316 Elsewhen X200000-0 Ba Va R 001 Na BD
+1417 Farrow's Reach B5A0754-B N De 704 Kv M0 III K5 V
+1518 Glasswater A99A9A9-C N Hi In Wa 913 Kv F5 IV D
+1619 Harrowmark D687432-5 Ni Pa 302 Kv G8 V
+0920 Ilverne C310577-8 D Ni 410 Kv K7 V
+1011 Jessamy's Rest B867888-9 Ga Ri Pa A 221 Na M3 V
+1312 Kettle B200400-A S Ni Va 600 Kv M5 V
+1520 Lantern Deep E6B2200-6 Fl Lo R 310 Na K2 V M6 V

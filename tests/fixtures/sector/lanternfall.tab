@@ -1,0 +1,13 @@
+Sector	SS	Hex	Name	UWP	Bases	Remarks	Zone	PBG	Allegiance	Stars	{Ix}	(Ex)	[Cx]	Nobility	W	RU
+Kstr	F	0912	Ashgrove	A867975-9	NS	Hi Ga		712	Kv	G2 V	{ +3 }	(D7E+2)	[9A6C]	BcC	9	2156
+Kstr	F	1013	Brannock's Hold	B544620-8	S	Ag Ni		503	Kv	K1 V M4 V	{ 0 }	(952-1)	[5655]	B	7	-90
+Kstr	F	1114	Cinder Gate	E430300-7		De Lo Po	A	120	Na	M2 V	{ -3 }	(300-5)	[1112]		4	-45
+Kstr	F	1215	Dunmere	C766887-7	NW	Ga Ri		820	Kv	F7 V	{ +1 }	(A79+1)	[8968]	Bc	6	4410
+Kstr	F	1316	Elsewhen	X200000-0		Ba Va	R	001	Na	BD	{ -3 }	(100-5)	[0000]		1	0
+Kstr	F	1417	Farrow's Reach	B5A0754-B	N	De		704	Kv	M0 III K5 V	{ +2 }	(C68+3)	[7A7B]	BC	8	3120
+Kstr	F	1518	Glasswater	A99A9A9-C	N	Hi In Wa		913	Kv	F5 IV D	{ +4 }	(F8E+4)	[BB8D]	BEf	11	8800
+Kstr	F	1619	Harrowmark	D687432-5		Ni Pa		302	Kv	G8 V	{ -1 }	(731-3)	[3343]		5	-63
+Kstr	F	0920	Ilverne	C310577-8	D	Ni		410	Kv	K7 V	{ 0 }	(843-1)	[4545]	B	6	-10
+Kstr	F	1011	Jessamy's Rest	B867888-9		Ga Ri Pa	A	221	Na	M3 V	{ +1 }	(A7A+2)	[8889]		7	980
+Kstr	F	1312	Kettle	B200400-A	S	Ni Va		600	Kv	M5 V	{ 0 }	(530-1)	[4436]	B	3	-15
+Kstr	F	1520	Lantern Deep	E6B2200-6		Fl Lo	R	310	Na	K2 V M6 V	{ -2 }	(200-5)	[2121]		2	-8
