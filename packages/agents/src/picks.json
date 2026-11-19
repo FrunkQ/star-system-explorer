@@ -1,0 +1,10 @@
+{
+  "schema": "sse.agent-picks/0",
+  "note": "Measured recommendations per job, shipped with the page so they work offline (Ovid's picks file). Rows appear only for models that were measured on SSE's own tasks; none have been yet.",
+  "jobs": {
+    "support": { "measured": [], "status": "not measured yet" },
+    "building": { "measured": [], "status": "not measured yet" },
+    "describing": { "measured": [], "status": "not measured yet" },
+    "deciding": { "measured": [], "status": "not measured yet" }
+  }
+}

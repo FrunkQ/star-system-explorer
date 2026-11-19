@@ -1,0 +1,19 @@
+{
+  "schema": "sse.screen/1",
+  "id": "sse.screen.players.bridge-3d",
+  "label": "Bridge in 3D",
+  "description": "The bridge with the system in perspective: drag to turn, zoom into a world with moons to open its frame.",
+  "audience": "players",
+  "layout": "grid",
+  "theme": "chart-room",
+  "symbology": "sse.symbology.diagrammatic",
+  "vocab": "plain",
+  "items": [
+    { "view": "sse.view.system-3d", "area": "a" },
+    { "view": "sse.view.card", "area": "b", "params": { "fields": ["kind", "size_class", "orbit.semi_major_axis_m", "mass_kg", "surface.temp_mean_k"] } },
+    { "view": "sse.view.readout", "area": "c", "params": { "field": "surface.temp_mean_k", "style": "gauge", "range": [200, 350] } },
+    { "view": "sse.view.readout", "area": "d", "params": { "style": "light", "tag": "hazard", "label": "Hazard warning" } },
+    { "view": "sse.view.text", "area": "e" },
+    { "view": "sse.view.table", "area": "f" }
+  ]
+}

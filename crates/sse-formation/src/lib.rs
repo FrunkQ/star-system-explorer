@@ -13,6 +13,8 @@ pub mod hurley;
 pub mod inherit;
 pub mod leftovers;
 pub mod lifeline;
+pub mod pins;
+pub mod pipeline;
 pub mod scenario;
 pub mod stars;
 pub mod violent;
@@ -29,6 +31,10 @@ mod early_tests;
 mod growth_tests;
 #[cfg(test)]
 mod leftovers_tests;
+#[cfg(test)]
+mod pins_tests;
+#[cfg(test)]
+mod pipeline_tests;
 #[cfg(test)]
 mod tests;
 #[cfg(test)]

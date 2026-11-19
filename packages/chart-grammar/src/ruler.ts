@@ -74,3 +74,24 @@ export function keyStep(key: string, now: number, from: number, to: number): num
       return null;
   }
 }
+
+/**
+ * Rows for event labels so none overlap: each label starts at its event and
+ * runs right; it takes the first of `rows` rows that is clear by then, or
+ * none (-1: the marker stays, the label goes to its tooltip). Widths are
+ * estimated at `char_px` per character, which suits the ruler's 11 px text.
+ */
+export function labelRows(events: readonly { at_yr: number; label: string }[], from: number, to: number, width_px: number, rows = 2, char_px = 6.2, gap_px = 10): number[] {
+  const end = new Array<number>(rows).fill(-Infinity);
+  return events.map((e) => {
+    const x = fraction(e.at_yr, from, to) * width_px - 4;
+    const w = e.label.length * char_px;
+    for (let r = 0; r < rows; r++) {
+      if (x >= end[r]! + gap_px) {
+        end[r] = x + w;
+        return r;
+      }
+    }
+    return -1;
+  });
+}

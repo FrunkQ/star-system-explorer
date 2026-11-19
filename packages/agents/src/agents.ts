@@ -1,0 +1,185 @@
+// Agents, bring your own key (A1, H13, docs/ovid-agents.md). Written fresh in
+// the shape of Ovid Next's set-up (the same three provider kinds plus "another
+// provider by its /v1 address"; jobs that each link one model; a usage ledger
+// with an estimate before every run; never send more than the model holds).
+// Ovid's own files are not lifted here: its source was not readable from this
+// session and Alex has not yet confirmed the relicensing. When it is, the
+// adapter below is the place to reconcile.
+//
+// Rules this module keeps:
+// - Keys live in this browser only (localStorage "sse4.agents"). They are sent
+//   only to the provider's own address, in its Authorization header. Nothing
+//   here is imported by the peer-to-peer code, the share, the players' page or
+//   any session, so a key cannot reach another device or a state hash
+//   (tests/ui/boundary.test.ts checks the imports).
+// - LLMs never compute physics and never sit in a deterministic path.
+// - The app is fully usable with no key: nothing else depends on this module.
+
+export type ProviderKind = "openrouter" | "lmstudio" | "ollama" | "other";
+
+export const PROVIDER_KINDS: Record<ProviderKind, { label: string; base: string; key: "required" | "optional" | "none"; note: string }> = {
+  openrouter: { label: "OpenRouter", base: "https://openrouter.ai/api/v1", key: "required", note: "One key, many models. Prices come with the model list." },
+  lmstudio: { label: "LM Studio on this computer", base: "http://localhost:1234/v1", key: "none", note: "Start LM Studio's local server. Nothing leaves this computer." },
+  ollama: { label: "Ollama on this computer", base: "http://localhost:11434/v1", key: "none", note: "Run Ollama with OLLAMA_ORIGINS set to allow this page. Nothing leaves this computer." },
+  other: { label: "Another provider", base: "", key: "optional", note: "Any OpenAI-compatible /v1 address." },
+};
+
+export interface Provider {
+  id: string;
+  kind: ProviderKind;
+  label: string;
+  /** The /v1 address. */
+  base: string;
+  /** Stays in this browser. */
+  key?: string;
+}
+
+/** The jobs agents do. Each job links one model (Ovid's "jobs", SSE4's agents). */
+export type JobId = "support" | "building" | "describing" | "deciding";
+export const JOBS: Record<JobId, { agent: string; label: string; what: string; package: string }> = {
+  support: { agent: "Tars", label: "Support", what: "Answers questions about SSE from the docs and this universe's facts. Read only. Allowed to be funny.", package: "A4" },
+  building: { agent: "Orac", label: "Building", what: "Proposes change requests (flows, packs, screens, data views, sifters), each validated before you see it. Never changes anything itself.", package: "A2" },
+  describing: { agent: "Minerva", label: "Describing", what: "Writes narrative from what the players may know, labelled narrative, never a number not in the facts.", package: "A3" },
+  deciding: { agent: "", label: "Deciding", what: "Small cheap checks for the others, so the expensive models do only the work that needs them.", package: "A2" },
+};
+
+export interface ModelInfo {
+  id: string;
+  /** Tokens the model holds, when the provider says. */
+  context?: number;
+  /** US dollars per token, when the provider says. */
+  price?: { prompt: number; completion: number };
+}
+
+export interface LedgerRow {
+  day: string;
+  job: JobId;
+  model: string;
+  tokens_in: number;
+  tokens_out: number;
+  usd?: number;
+}
+
+export interface AgentsState {
+  schema: "sse.agents/0";
+  providers: Provider[];
+  links: Partial<Record<JobId, { provider: string; model: string; context?: number; price?: ModelInfo["price"] }>>;
+  /** Daily spending cap in US dollars; null for none. */
+  cap_usd: number | null;
+  /** 0 (plain) to 1 (dry humour, the default), for Tars. */
+  humour: number;
+  ledger: LedgerRow[];
+}
+
+export const STORE_KEY = "sse4.agents";
+
+export function emptyAgents(): AgentsState {
+  return { schema: "sse.agents/0", providers: [], links: {}, cap_usd: 1, humour: 0.6, ledger: [] };
+}
+
+export function readAgents(raw: string | null): AgentsState {
+  if (!raw) return emptyAgents();
+  try {
+    const o = JSON.parse(raw) as Partial<AgentsState>;
+    if (o.schema !== "sse.agents/0") return emptyAgents();
+    return { ...emptyAgents(), ...o, providers: Array.isArray(o.providers) ? o.providers : [], ledger: Array.isArray(o.ledger) ? o.ledger.slice(-500) : [] };
+  } catch {
+    return emptyAgents();
+  }
+}
+
+/** Whether any agent can run. With none linked, every agent panel says so and the app carries on. */
+export function linked(s: AgentsState, job: JobId): boolean {
+  const l = s.links[job];
+  return !!l && s.providers.some((p) => p.id === l.provider);
+}
+
+// ------------------------------------------------------------ the adapter
+
+/** Headers for one provider's own address. A key goes nowhere else. */
+function headers(p: Provider): Record<string, string> {
+  const h: Record<string, string> = { "content-type": "application/json" };
+  if (p.key) h.authorization = `Bearer ${p.key}`;
+  if (p.kind === "openrouter") h["x-title"] = "Star System Explorer";
+  return h;
+}
+
+const url = (p: Provider, path: string) => `${p.base.replace(/\/+$/, "")}${path}`;
+
+export async function listModels(p: Provider, fetcher: typeof fetch = fetch): Promise<{ ok: true; models: ModelInfo[] } | { ok: false; message: string }> {
+  try {
+    const r = await fetcher(url(p, "/models"), { headers: headers(p) });
+    if (!r.ok) return { ok: false, message: r.status === 401 || r.status === 403 ? "The provider refused the key." : `The provider answered ${r.status}.` };
+    const body = (await r.json()) as { data?: { id: string; context_length?: number; pricing?: { prompt?: string; completion?: string } }[] };
+    const models = (body.data ?? []).map((m) => {
+      const price = m.pricing && m.pricing.prompt !== undefined && m.pricing.completion !== undefined ? { prompt: Number(m.pricing.prompt), completion: Number(m.pricing.completion) } : undefined;
+      return { id: m.id, ...(m.context_length ? { context: m.context_length } : {}), ...(price ? { price } : {}) };
+    });
+    return { ok: true, models };
+  } catch {
+    return { ok: false, message: p.kind === "lmstudio" || p.kind === "ollama" ? "Nothing answered on this computer at that address. Is the local server running and allowing this page?" : "Could not reach the provider." };
+  }
+}
+
+export interface ChatMessage {
+  role: "system" | "user" | "assistant";
+  content: string;
+}
+
+/** A rough token count: about four characters per token. Shown as an estimate, never as a fact. */
+export function estimateTokens(messages: readonly ChatMessage[]): number {
+  return Math.ceil(messages.reduce((n, m) => n + m.content.length + 4, 0) / 4);
+}
+
+/** The estimate before a run (Ovid's ledger rule: show it first). */
+export function estimate(s: AgentsState, job: JobId, messages: readonly ChatMessage[], max_out: number): { tokens_in: number; max_out: number; usd?: number; fits: boolean; context?: number; today_usd: number; over_cap: boolean } {
+  const l = s.links[job];
+  const tokens_in = estimateTokens(messages);
+  const usd = l?.price ? tokens_in * l.price.prompt + max_out * l.price.completion : undefined;
+  const today = new Date().toISOString().slice(0, 10);
+  const today_usd = s.ledger.filter((r) => r.day === today).reduce((a, r) => a + (r.usd ?? 0), 0);
+  const context = l?.context;
+  return { tokens_in, max_out, ...(usd !== undefined ? { usd } : {}), fits: context === undefined || tokens_in + max_out <= context, ...(context ? { context } : {}), today_usd, over_cap: s.cap_usd !== null && usd !== undefined && today_usd + usd > s.cap_usd };
+}
+
+/** Ask the job's model. Refuses before sending when the prompt would not fit or the day's cap would be passed. */
+export async function chat(
+  s: AgentsState,
+  job: JobId,
+  messages: readonly ChatMessage[],
+  opts: { max_out?: number; fetcher?: typeof fetch } = {},
+): Promise<{ ok: true; text: string; row: LedgerRow } | { ok: false; message: string }> {
+  const l = s.links[job];
+  const p = l && s.providers.find((x) => x.id === l.provider);
+  if (!l || !p) return { ok: false, message: `No model is linked for ${JOBS[job].label}. Everything else works without one.` };
+  const max_out = opts.max_out ?? 600;
+  const e = estimate(s, job, messages, max_out);
+  if (!e.fits) return { ok: false, message: `This would need about ${e.tokens_in + max_out} tokens and ${l.model} holds ${e.context}. Nothing was sent.` };
+  if (e.over_cap) return { ok: false, message: `This would pass today's cap of $${s.cap_usd!.toFixed(2)}. Nothing was sent.` };
+  try {
+    const r = await (opts.fetcher ?? fetch)(url(p, "/chat/completions"), { method: "POST", headers: headers(p), body: JSON.stringify({ model: l.model, messages, max_tokens: max_out }) });
+    if (!r.ok) return { ok: false, message: r.status === 401 || r.status === 403 ? "The provider refused the key." : `The provider answered ${r.status}.` };
+    const body = (await r.json()) as { choices?: { message?: { content?: string } }[]; usage?: { prompt_tokens?: number; completion_tokens?: number; cost?: number } };
+    const text = body.choices?.[0]?.message?.content ?? "";
+    const tokens_in = body.usage?.prompt_tokens ?? e.tokens_in;
+    const tokens_out = body.usage?.completion_tokens ?? Math.ceil(text.length / 4);
+    const usd = body.usage?.cost ?? (l.price ? tokens_in * l.price.prompt + tokens_out * l.price.completion : undefined);
+    const row: LedgerRow = { day: new Date().toISOString().slice(0, 10), job, model: l.model, tokens_in, tokens_out, ...(usd !== undefined ? { usd } : {}) };
+    return { ok: true, text, row };
+  } catch {
+    return { ok: false, message: "Could not reach the provider." };
+  }
+}
+
+/** Tars's standing instructions. The humour setting turns the jokes down. */
+export function tarsSystem(humour: number, context: string): string {
+  const tone = humour >= 0.75 ? "Be dryly funny, briefly." : humour >= 0.35 ? "A light, dry remark is welcome now and then." : "Be plain and direct; no jokes.";
+  return [
+    "You are Tars, the support agent of Star System Explorer (SSE), an astrophysics and role-playing toolkit.",
+    "You are read only: you explain, you never change anything. You never compute physics: every number you give must come from the facts below or the user's message, and you say where it came from.",
+    "If you are not sure, say so and point to the place in the app that answers it (a value's \"why?\", the Physics screen, the Player data screen).",
+    tone,
+    "Facts in view:",
+    context,
+  ].join("\n");
+}

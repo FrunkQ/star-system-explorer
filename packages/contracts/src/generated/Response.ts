@@ -2,6 +2,8 @@
 import type { Cost } from "./Cost";
 import type { DerivedValue } from "./DerivedValue";
 import type { EventSummary } from "./EventSummary";
+import type { FateEvent } from "./FateEvent";
+import type { FateSnapshot } from "./FateSnapshot";
 import type { OpInfo } from "./OpInfo";
 import type { StackAdopted } from "./StackAdopted";
 import type { TierDef } from "./TierDef";
@@ -15,8 +17,34 @@ adopted?: StackAdopted, } | { "type": "stack_rejected", report: string, issues: 
 /**
  * The raw u64 as 16 hex digits (JSON numbers cannot hold it exactly).
  */
-hex: string, unit: number, } | { "type": "branch_opened", branch: string, } | { "type": "committed", event_id: string, state_hash: string, } | { "type": "discarded", branch: string, } | { "type": "job_started", job: number, total_units: number, cost: Cost, } | { "type": "job_progress", job: number, done_units: number, total_units: number, } | { "type": "job_done", job: number, done_units: number, result: unknown, } | { "type": "job_cancelled", job: number, } | { "type": "manifest", manifest: unknown, manifest_id: string, } | { "type": "scene", scene: unknown, scene_hash: string, } | { "type": "atoms", atoms: unknown[], } | { "type": "scan_toggled", event_id: string, 
+hex: string, unit: number, } | { "type": "branch_opened", branch: string, } | { "type": "committed", event_id: string, state_hash: string, 
+/**
+ * `commit_look_ahead` with `write_back`: the aged-state event and its star age.
+ */
+aged_event?: string, aged_at_myr?: number, } | { "type": "discarded", branch: string, } | { "type": "job_started", job: number, total_units: number, cost: Cost, } | { "type": "job_progress", job: number, done_units: number, total_units: number, } | { "type": "job_done", job: number, done_units: number, result: unknown, } | { "type": "job_cancelled", job: number, } | { "type": "manifest", manifest: unknown, manifest_id: string, } | { "type": "scene", scene: unknown, scene_hash: string, } | { "type": "atoms", atoms: unknown[], } | { "type": "scan_toggled", event_id: string, 
 /**
  * The view now in force for the audience at that address.
  */
-view: string, state_hash: string, } | { "type": "error", code: string, message: string, };
+view: string, state_hash: string, } | { "type": "granted", event_id: string, 
+/**
+ * The view now in force for the audience at that address (grants and
+ * defaults; tag grants show in scenes).
+ */
+view: string, state_hash: string, } | { "type": "looked_ahead", branch: string, label: string, 
+/**
+ * The system's address, its star's age now and at the end, Myr.
+ */
+system: string, now_myr: number, target_myr: number, 
+/**
+ * Universe year of the star's birth (a star age t is year birth + t x 1e6).
+ */
+birth_year: number, 
+/**
+ * Beyond this star age, futures are "one plausible future".
+ */
+horizon_myr: number, events: Array<FateEvent>, snapshots: Array<FateSnapshot>, work_units: number, } | { "type": "v3_imported", universe: string, facts: unknown, report: unknown, reconstructed: unknown[], } | { "type": "formation_ran", system: string, pipeline: string, run: unknown, pinned?: unknown, surfaces: unknown[], } | { "type": "world_stack_read", body: string, source: string, stack: unknown, ladder: unknown[], notes: Array<string>, problems: unknown[], invalid: unknown[], } | { "type": "adopted", events: Array<string>, systems: Array<string>, facts: number, state_hash: string, } | { "type": "systems_listed", systems: unknown[], } | { "type": "system_resolved", system: string, source: string, 
+/**
+ * The date read, seconds; absent for "latest" (no date given and no
+ * `system.now_year`).
+ */
+at_s?: number, facts: unknown, evidence: unknown, spec?: unknown, surfaces: unknown[], tiles: unknown[], refused: unknown[], } | { "type": "error", code: string, message: string, };

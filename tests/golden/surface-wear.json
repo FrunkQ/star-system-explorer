@@ -1,0 +1,29 @@
+{
+  "version": "surface-wear-v1",
+  "worlds": [
+    {
+      "body": "Earth",
+      "epochs": 1,
+      "eroded_m3": 6.407123445769254e+17,
+      "lakes": 7,
+      "rivers": 4,
+      "tiles": [
+        "b2286424c0a2a5be438c59050434d1b49333e4c1cc0b0aa721fe2806864a9ed4",
+        "968c07abf3b5aab1a62d09be00d13d1e53464a5ab60add46af48e509d7b2d42b"
+      ],
+      "wear": "e11276bd1f42977d0a118f07e977caf6bef73f86b5639890194ab7a635f4a647"
+    },
+    {
+      "body": "Mars",
+      "epochs": 45,
+      "eroded_m3": 3.282411252293371e+18,
+      "lakes": 0,
+      "rivers": 0,
+      "tiles": [
+        "02e00adc4b7c3c1592a5c15d37bb2b2b8cae122a16a788fae07d13f71d22d0b7",
+        "922e49222d9fb77c5b8b00f1bded227c285c04973c68d82d33617b4fe216fce6"
+      ],
+      "wear": "08c4e1600592196f3bf05997bc346bd75ef59e64e61b79ee0f4ef97c536ed2dc"
+    }
+  ]
+}

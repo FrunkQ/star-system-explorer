@@ -3,8 +3,10 @@
 export type { Json } from "./json.ts";
 export { YEAR_S, INTENT_KINDS, checkIntent, yearsToSeconds, secondsToYears } from "./intent.ts";
 export type { Intent, IntentKind, IntentSchema } from "./intent.ts";
-export { audienceOf, decide, gmSeat, tableSeat, within } from "./seat.ts";
+export { audienceOf, decide, gmSeat, tableSeat, sharedTableSeat, within } from "./seat.ts";
 export type { Seat, AutoApprove, Decision } from "./seat.ts";
+export { EVERYONE, defaultPlan, isDefaultPlan, slug, grantField, addSeat, removeSeat, checkSeats, startIntents, discoverIntent, joinLink, sealedLink, fogViews } from "./seats.ts";
+export type { Audience, SeatPlan } from "./seats.ts";
 export type { ViewSession, IntentResult, HistoryEvent, DeviceEdge, DeriveRef, InputValue, Derived, Explanation, StackInfo, TrialResult, StackCandidate, Probe, SceneOptions } from "./session.ts";
 export { CAMPAIGN_PACK, flowParams, editFlow, diffFlow, providerOf, campaignPack, packFor, checkRequest, flowColumns, paramText, siText } from "./physics.ts";
 export { draftId, adopted, draftParam, candidateFor, previewRequest, adoptRequest, withdrawRequest, declineRequest, benchRef } from "./physics-edit.ts";
@@ -13,8 +15,9 @@ export type { FlowDoc, PackDoc, ParamEdit, ChangeRequest, RequestStatus } from "
 export { deriveScene, applyEdits, sig } from "./derivation.ts";
 export type { DerivationDoc, DerivationRule, InputBinding, OutputBinding } from "./derivation.ts";
 export { resolveParams } from "./view.ts";
-export type { StylesHost, ViewModule, ViewContext, PlayerContext, ViewHandle, ParamSpec, Tier, TopicQuery, Workspace, AppliedEdit } from "./view.ts";
-export { commitEdit, undoEdit, redoEdit } from "./edit.ts";
+export type { StylesHost, ViewModule, ViewContext, PlayerContext, ViewHandle, ParamSpec, Tier, TopicQuery, Workspace, AppliedEdit, WhatIf } from "./view.ts";
+export { commitEdit, undoEdit, redoEdit, openWhatIf, dropWhatIf, keepWhatIf, compareScenes } from "./edit.ts";
+export type { Difference } from "./edit.ts";
 export { checkScreen, boundScene, LAYOUT_AREAS } from "./screen.ts";
 export { resolveStyle, checkStyle, settingCost, settingsCost, promotedOf, settingsDiff, COSTS, TIER_RUNS_UP_TO } from "./style.ts";
 export type { StyleDoc, StyleCheck } from "./style.ts";
@@ -25,6 +28,7 @@ export type { Mark, Binding, Channel, Shape, Pattern, Scale, SymbologyDoc, Marke
 export { parseV3Palette, symbologyFromV3Palette, coloursFromV3Save, withV3TagColours, objectColourSummary, campaignCopy, v3SaveText } from "./v3-colours.ts";
 export type { V3TokenMap, V3ImportLine, V3PaletteImport, V3ObjectColour, V3SaveColours } from "./v3-colours.ts";
 export type { SystemScene, SceneSubject, SceneFact, SceneEvent, FactSource } from "./scene.ts";
+export { KM_PER_AU, primaryOf, childrenOf, systemOrder, frameFor } from "./scene.ts";
 export { describeFact, wordsFor, fact, subjectName, parentOf, sentence, checkPlayerScene } from "./player-scene.ts";
 export type { PlayerScene, PlayerSubject, PlayerFact, Vocab, FieldWords, FactText } from "./player-scene.ts";
 export { packSummary, previewStack, stackPacks, checkPackDoc } from "./packs-edit.ts";
@@ -33,3 +37,19 @@ export { observeOf, checkSetup, playerDataPack, setupChanges, applySetup, enterF
 export type { DataView, ObserveSetup, Override, TagMode, UnknownStyle, AuthoredFacts } from "./data-views.ts";
 export { showReference } from "./reference.ts";
 export type { ReferenceIn, ShownReference } from "./reference.ts";
+export { GmHost, PlayerReplica, SealedHost, SealedReplica, memoryRoom, broadcastHub, relayHub, multiHub, P2P_PROTOCOL } from "./p2p.ts";
+export type { Hub, Wire, Manifest, LogEntry, HostState, ReplicaStatus, PlayerRequest, OwnRequest, SealedManifest } from "./p2p.ts";
+// The session class as a type only (shells hold the one host-browser.ts opened; they cannot make one).
+export type { Session } from "./session.ts";
+export { LENS_SCHEMA, LAYERS, TOOLS, SHIPPED_LENSES, HONESTY_MARKS, playerLenses, hasLayer, hasTool, asPlayers, lensAudience, cardFor, cardFacts, gmStamps, defaultLens, lensFits, checkLens, saved, copyLens, lensPack, lensesFromPack, allLenses } from "./lens.ts";
+export type { Lens, LensCard, LayerId, ToolId, Density, LensPackMeta } from "./lens.ts";
+export { SOUND_SCENE_SCHEMA, SOUND_RECIPE_SCHEMA, SOUND_LABELS, SOUND_LAYERS, NODE_TYPES, hash32, draw, intoOctave, settle, dialled, bandFor, orbitScene, voicesFromSystem, voicesFromPlayers, score, scoreHash, checkRecipe, defaultSound, readSound, voiceLimit } from "./sound.ts";
+export type { SoundLabel, SoundLayer, SoundTier, SoundSource, ScoreNote, SoundScene, Voice, NodeType, RecipeNode, SoundRecipe, SoundSettings } from "./sound.ts";
+export { LIGHT_SCHEMA, BANDS, LINES, HONESTY_WORDS, SYMBOLS, DRAPER_K, planck, thermalColour, checkLightRecipe, paint, describeLight, litFromSystem, litFromPlayers, teffFromSpectral, readLight } from "./light.ts";
+export type { BandRecipe, Honesty, LightDescription, LitBody } from "./light.ts";
+export { importedSystems, sceneFromImport, reportSummary, sceneFromFormation, worldWords, noWorldsWhy, sceneFromResolved, listedTitle } from "./make.ts";
+export type { V3Imported, ImportReport, ImportDifference, ImportedSystem, FormationRan, FormationRequest, FormationWorld, Adopted, SystemResolved, ListedSystem } from "./make.ts";
+export { specFromScene, sceneAt, snapshotAt, fateEvents, subjectNames, fmtAge, KIND_WORDS, PHASE_WORDS, Z_SUN } from "./fate.ts";
+export type { SystemSpec, LookedAhead, FateEvent, FateSnapshot } from "./fate.ts";
+export { checkWorldStack, formatKm, kindPhrase, ladder, regionCounts, cutRadius } from "./world.ts";
+export type { WorldStack, WorldShell, WorldRegion, WorldFeature, LadderLine, WorldStackRead } from "./world.ts";

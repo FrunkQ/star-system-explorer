@@ -215,6 +215,196 @@ pub enum Request {
         audience: String,
         at_s: i64,
     },
+    /// Grant `audience` the data view `view` of `address` and everything under
+    /// it, or with no `view` take the grant back. With `default`, `address` is
+    /// the universe root and the view is the audience's starting view. One
+    /// `observe.grant` event. GM only.
+    Grant {
+        address: String,
+        audience: String,
+        #[serde(default)]
+        #[ts(optional)]
+        view: Option<String>,
+        #[serde(default)]
+        #[ts(optional)]
+        default: Option<bool>,
+        at_s: i64,
+    },
+    /// Look ahead (T2): age a system to `target_myr` (the star's age, Myr)
+    /// on a new chronicle branch and return its fate: dated transitions with
+    /// their reasons, and the star and planets at every step. `system` is an
+    /// `sse-time` SystemSpec (`tests/fixtures/time/solar-system.json` is one);
+    /// its `system` address must be in the open universe. Settings come from
+    /// the stack's `provides.other.time` unless `settings` is given. Nothing
+    /// touches the main chronicle until `commit_look_ahead`; `discard` and
+    /// `branch_state_hash` take the returned branch as for any branch.
+    LookAhead {
+        #[ts(type = "unknown")]
+        system: serde_json::Value,
+        target_myr: f64,
+        #[serde(default)]
+        #[ts(optional, type = "unknown")]
+        settings: Option<serde_json::Value>,
+    },
+    /// Commit a look-ahead branch. With `move_now_myr`, the system's "now"
+    /// moves to that star age (an authored `system.now_year` fact).
+    CommitLookAhead {
+        branch: String,
+        #[serde(default)]
+        #[ts(optional)]
+        move_now_myr: Option<f64>,
+        /// Also write the aged state as facts under the usual field names
+        /// (`orbit.semi_major_axis`, `orbit.eccentricity`, `orbit.inclination`,
+        /// `body.engulfed`, the star's `body.mass`, `body.radius`,
+        /// `star.effective_temperature`, `star.luminosity`, `star.phase`; SI),
+        /// dated at the snapshot at or before `move_now_myr`, else the last.
+        #[serde(default)]
+        #[ts(optional)]
+        write_back: Option<bool>,
+    },
+    /// Import an SSE 3 save (the text of its `starmap.json` or `system.json`):
+    /// the imported universe's facts and the difference report. With
+    /// `reconstruct` (candidate histories to search, F9), each known system
+    /// also gains a formation history solved around its planets, labelled
+    /// reconstructed. Nothing is recorded in an open universe.
+    ImportV3 {
+        save: String,
+        #[serde(default)]
+        #[ts(optional)]
+        universe_id: Option<String>,
+        #[serde(default)]
+        #[ts(optional)]
+        reconstruct: Option<u32>,
+    },
+    /// Generate one system through the single formation pipeline (F0 to F6,
+    /// heat, F9 pins) and give every world its surface envelope (S0). The
+    /// galaxy inheritance is either a cosmos `birth` (G0, read at `now_gyr`)
+    /// or a patch `envelope`; neither means the stand-in solar neighbourhood.
+    /// Nothing is recorded in an open universe.
+    RunFormation {
+        seed: String,
+        /// Address of the system; default `u:generated/sys:0`.
+        #[serde(default)]
+        #[ts(optional)]
+        system: Option<String>,
+        /// `modern` (default), `classic` or `classic-corrected`.
+        #[serde(default)]
+        #[ts(optional)]
+        block: Option<String>,
+        #[serde(default)]
+        #[ts(optional, type = "unknown")]
+        birth: Option<serde_json::Value>,
+        #[serde(default)]
+        #[ts(optional)]
+        now_gyr: Option<f64>,
+        #[serde(default)]
+        #[ts(optional, type = "unknown")]
+        envelope: Option<serde_json::Value>,
+        #[serde(default)]
+        #[ts(optional, type = "unknown")]
+        inherit_pins: Option<serde_json::Value>,
+        #[serde(default)]
+        #[ts(optional, type = "unknown")]
+        star_pins: Option<serde_json::Value>,
+        /// F9 `Pins`: worlds to honour, candidate histories to search.
+        #[serde(default)]
+        #[ts(optional, type = "unknown")]
+        pins: Option<serde_json::Value>,
+    },
+    /// A body's world stack (`sse.world-stack/1`: shells, regions, features)
+    /// with its depth ladder and physics notes. Served from the P4 fixtures
+    /// (by `fixture` name or by the fixture's `body` address) until surface
+    /// stacks are built from history; a given `stack` is checked instead.
+    ReadWorldStack {
+        #[serde(default)]
+        #[ts(optional)]
+        body: Option<String>,
+        /// `earth`, `europa`, `mars`, `tarn`, `titan` or `venus`.
+        #[serde(default)]
+        #[ts(optional)]
+        fixture: Option<String>,
+        #[serde(default)]
+        #[ts(optional, type = "unknown")]
+        stack: Option<serde_json::Value>,
+    },
+    /// Bring a system into the open universe as facts: an SSE 3 save
+    /// (`import_v3`, its text) or a formation run (`formation`, the same
+    /// fields as `run_formation`; its `system` must be in the universe). The
+    /// kernel runs the import or the pipeline itself, so the facts are the
+    /// ones those ops return. One event per evidence class (an import mixes
+    /// authored, catalogued and authored-impossible facts); the first carries
+    /// the report (import) or the request and run summary (formation) and the
+    /// others cite it. Dated `occurred_at_s` (default the universe origin).
+    Adopt {
+        #[serde(default)]
+        #[ts(optional)]
+        import_v3: Option<String>,
+        #[serde(default)]
+        #[ts(optional)]
+        formation: Option<FormationRequest>,
+        #[serde(default)]
+        #[ts(optional, type = "number")]
+        occurred_at_s: Option<i64>,
+    },
+    /// One system as resolved now (or at `at_s`): its facts, a `SystemSpec`
+    /// for `look_ahead`, an S0 surface envelope per world, and any S1 tiles
+    /// asked for (GM machine: down to the fact floor). Formation-adopted
+    /// systems use their run; imported or authored ones build the worlds from
+    /// facts.
+    ResolvedSystem {
+        system: String,
+        #[serde(default)]
+        #[ts(optional, type = "number")]
+        at_s: Option<i64>,
+        #[serde(default)]
+        #[ts(optional)]
+        tiles: Option<Vec<TileRequest>>,
+    },
+    /// The open universe's systems: every `<root>/sys:*` with facts, where it
+    /// came from (`v3`, `formation` or `facts`), its name and adopt event.
+    Systems,
+}
+
+/// `adopt`'s formation request: the `run_formation` fields.
+#[derive(Clone, PartialEq, Debug, Serialize, Deserialize, TS)]
+#[ts(export)]
+pub struct FormationRequest {
+    pub seed: String,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    #[ts(optional)]
+    pub system: Option<String>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    #[ts(optional)]
+    pub block: Option<String>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    #[ts(optional, type = "unknown")]
+    pub birth: Option<serde_json::Value>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    #[ts(optional)]
+    pub now_gyr: Option<f64>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    #[ts(optional, type = "unknown")]
+    pub envelope: Option<serde_json::Value>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    #[ts(optional, type = "unknown")]
+    pub inherit_pins: Option<serde_json::Value>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    #[ts(optional, type = "unknown")]
+    pub star_pins: Option<serde_json::Value>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    #[ts(optional, type = "unknown")]
+    pub pins: Option<serde_json::Value>,
+}
+
+/// One S1 tile of one world: cube face 0 to 5, level, x and y.
+#[derive(Clone, PartialEq, Debug, Serialize, Deserialize, TS)]
+#[ts(export)]
+pub struct TileRequest {
+    pub body: String,
+    pub face: u8,
+    pub level: u8,
+    pub x: u32,
+    pub y: u32,
 }
 
 impl Request {
@@ -240,7 +430,16 @@ impl Request {
             Request::Manifest => "manifest",
             Request::Scene { .. } => "scene",
             Request::ScanToggle { .. } => "scan_toggle",
+            Request::Grant { .. } => "grant",
             Request::Atoms { .. } => "atoms",
+            Request::LookAhead { .. } => "look_ahead",
+            Request::CommitLookAhead { .. } => "commit_look_ahead",
+            Request::ImportV3 { .. } => "import_v3",
+            Request::RunFormation { .. } => "run_formation",
+            Request::ReadWorldStack { .. } => "read_world_stack",
+            Request::Adopt { .. } => "adopt",
+            Request::ResolvedSystem { .. } => "resolved_system",
+            Request::Systems => "systems",
         }
     }
 }
@@ -294,7 +493,40 @@ pub fn ops() -> Vec<OpInfo> {
             "linear in the facts within the scope; any device builds its own scenes",
         ),
         o("scan_toggle", Cost::Trivial, "GM machine only in a session"),
+        o("grant", Cost::Trivial, "GM machine only in a session"),
         o("atoms", Cost::Trivial, none),
+        o(
+            "look_ahead",
+            Cost::Medium,
+            "GM edit: a Solar System run to a cold white dwarf is about 0.2 M work units; weak devices ask the GM machine",
+        ),
+        o("commit_look_ahead", Cost::Trivial, "GM machine only in a session"),
+        o(
+            "import_v3",
+            Cost::Light,
+            "linear in the save; with reconstruct, heavy (a formation run per candidate history per system)",
+        ),
+        o(
+            "run_formation",
+            Cost::Medium,
+            "one formation pipeline run; with pins, one per candidate history",
+        ),
+        o(
+            "read_world_stack",
+            Cost::Light,
+            "one stack: validation, the depth ladder and a few atom evaluations",
+        ),
+        o(
+            "adopt",
+            Cost::Medium,
+            "GM machine only in a session; an import or one formation run, then one event per evidence class",
+        ),
+        o(
+            "resolved_system",
+            Cost::Medium,
+            "a formation re-run for formation-adopted systems (cached), plus about 0.1 s per 256-sample tile; at most 24 tiles",
+        ),
+        o("systems", Cost::Light, "linear in the universe's facts"),
     ]
 }
 
@@ -383,6 +615,13 @@ pub enum Response {
     Committed {
         event_id: String,
         state_hash: String,
+        /// `commit_look_ahead` with `write_back`: the aged-state event and its star age.
+        #[serde(default, skip_serializing_if = "Option::is_none")]
+        #[ts(optional)]
+        aged_event: Option<String>,
+        #[serde(default, skip_serializing_if = "Option::is_none")]
+        #[ts(optional)]
+        aged_at_myr: Option<f64>,
     },
     Discarded {
         branch: String,
@@ -428,10 +667,170 @@ pub enum Response {
         view: String,
         state_hash: String,
     },
+    Granted {
+        event_id: String,
+        /// The view now in force for the audience at that address (grants and
+        /// defaults; tag grants show in scenes).
+        view: String,
+        state_hash: String,
+    },
+    LookedAhead {
+        branch: String,
+        label: String,
+        /// The system's address, its star's age now and at the end, Myr.
+        system: String,
+        now_myr: f64,
+        target_myr: f64,
+        /// Universe year of the star's birth (a star age t is year birth + t x 1e6).
+        #[ts(type = "number")]
+        birth_year: i64,
+        /// Beyond this star age, futures are "one plausible future".
+        horizon_myr: f64,
+        events: Vec<FateEvent>,
+        snapshots: Vec<FateSnapshot>,
+        work_units: u32,
+    },
+    /// `import_v3`: `facts` maps address to field to `{value, evidence}`;
+    /// `report` is the importer's difference report; `reconstructed` has one
+    /// record per known system when asked (summary plus the solved run).
+    V3Imported {
+        universe: String,
+        #[ts(type = "unknown")]
+        facts: serde_json::Value,
+        #[ts(type = "unknown")]
+        report: serde_json::Value,
+        #[ts(type = "unknown[]")]
+        reconstructed: Vec<serde_json::Value>,
+    },
+    /// `run_formation`: the pipeline's `SystemRun`, the F9 fit when pins were
+    /// given (`pinned`: attempt, seed, fit, matches, removed), and one S0
+    /// surface envelope per world in orbit order.
+    FormationRan {
+        system: String,
+        pipeline: String,
+        #[ts(type = "unknown")]
+        run: serde_json::Value,
+        #[serde(default, skip_serializing_if = "Option::is_none")]
+        #[ts(optional, type = "unknown")]
+        pinned: Option<serde_json::Value>,
+        #[ts(type = "unknown[]")]
+        surfaces: Vec<serde_json::Value>,
+    },
+    /// `read_world_stack`: `source` is `fixture:<name>` or `given`; `ladder`
+    /// is the "above, on and within" strip (`depth`, `text`, `where`, `key`);
+    /// `notes` what the atoms computed; `problems` what physics says cannot be
+    /// and `invalid` structural faults (each `{at, message}`).
+    WorldStackRead {
+        body: String,
+        source: String,
+        #[ts(type = "unknown")]
+        stack: serde_json::Value,
+        #[ts(type = "unknown[]")]
+        ladder: Vec<serde_json::Value>,
+        notes: Vec<String>,
+        #[ts(type = "unknown[]")]
+        problems: Vec<serde_json::Value>,
+        #[ts(type = "unknown[]")]
+        invalid: Vec<serde_json::Value>,
+    },
+    /// `adopt`: the events written (the first carries the report), the
+    /// systems adopted and the number of facts.
+    Adopted {
+        events: Vec<String>,
+        systems: Vec<String>,
+        facts: u32,
+        state_hash: String,
+    },
+    /// `systems`: one entry per system, `{system, source, name?, addresses,
+    /// adopted_event?}`.
+    SystemsListed {
+        #[ts(type = "unknown[]")]
+        systems: Vec<serde_json::Value>,
+    },
+    /// `resolved_system`. `source`: `formation`, `v3` or `facts`. `facts`:
+    /// address to field to value under the system. `evidence`: address to
+    /// field to `{evidence, by}`: the label (`authored`, `derived`, ...) and
+    /// the kind of the event that set it (`time.aged` for a write-back). `spec`: an `sse-time`
+    /// SystemSpec (absent without a star mass and age). `surfaces`: S0
+    /// envelopes. `tiles`: S1 tiles; `refused`: tiles not given, with why.
+    SystemResolved {
+        system: String,
+        source: String,
+        /// The date read, seconds; absent for "latest" (no date given and no
+        /// `system.now_year`).
+        #[serde(default, skip_serializing_if = "Option::is_none")]
+        #[ts(optional, type = "number")]
+        at_s: Option<i64>,
+        #[ts(type = "unknown")]
+        facts: serde_json::Value,
+        #[ts(type = "unknown")]
+        evidence: serde_json::Value,
+        #[serde(default, skip_serializing_if = "Option::is_none")]
+        #[ts(optional, type = "unknown")]
+        spec: Option<serde_json::Value>,
+        #[ts(type = "unknown[]")]
+        surfaces: Vec<serde_json::Value>,
+        #[ts(type = "unknown[]")]
+        tiles: Vec<serde_json::Value>,
+        #[ts(type = "unknown[]")]
+        refused: Vec<serde_json::Value>,
+    },
     Error {
         code: String,
         message: String,
     },
+}
+
+/// A named transition ahead (T2 `TimeEvent`), with its reason.
+#[derive(Clone, PartialEq, Debug, Serialize, Deserialize, TS)]
+#[ts(export)]
+pub struct FateEvent {
+    /// `oceans_lost`, `leaves_main_sequence`, `red_giant`, `engulfed`, `planetary_nebula`, `cooling_colour`, `pollution` (the base time pack).
+    pub kind: String,
+    pub age_myr: f64,
+    /// Universe year.
+    #[ts(type = "number")]
+    pub year: i64,
+    pub subjects: Vec<String>,
+    pub why: String,
+    /// Fidelity of the model behind it: `sketch` or `standard`.
+    pub level: String,
+    pub plausible_future: bool,
+    pub numbers: BTreeMap<String, f64>,
+}
+
+#[derive(Clone, PartialEq, Debug, Serialize, Deserialize, TS)]
+#[ts(export)]
+pub struct FateStar {
+    pub phase: String,
+    /// Solar units.
+    pub luminosity: f64,
+    pub radius_rsun: f64,
+    pub teff: f64,
+    pub mass: f64,
+    pub colour: String,
+    pub rgb: [u8; 3],
+}
+
+#[derive(Clone, PartialEq, Debug, Serialize, Deserialize, TS)]
+#[ts(export)]
+pub struct FatePlanet {
+    pub name: String,
+    pub a_au: f64,
+    pub e: f64,
+    pub i_deg: f64,
+    pub engulfed: bool,
+}
+
+/// The system at one step of a look-ahead.
+#[derive(Clone, PartialEq, Debug, Serialize, Deserialize, TS)]
+#[ts(export)]
+pub struct FateSnapshot {
+    pub age_myr: f64,
+    #[ts(type = "number")]
+    pub year: i64,
+    pub star: FateStar,
+    pub planets: Vec<FatePlanet>,
 }
 
 /// A pack stack change recorded in the open universe.

@@ -1,0 +1,284 @@
+[
+  {
+    "digest": "33a6ad0f1afb2f88b3b1e2a19dae15e2b933b612f43cc870ccf8e856c8457360",
+    "events": 0,
+    "heat": [],
+    "system": "u:g0/patch:9:solar/cohort:0/sys:0",
+    "worlds": []
+  },
+  {
+    "digest": "1420f37d4faae0ae6e2f0c76f9d5bff2791d1bffd9134f240b9f1cf9e6352a92",
+    "events": 0,
+    "heat": [
+      {
+        "address": "u:g0/patch:9:solar/cohort:0/sys:1/body:0",
+        "power_w": 5264791689.894458,
+        "until_gyr": 0.0
+      },
+      {
+        "address": "u:g0/patch:9:solar/cohort:0/sys:1/body:1",
+        "power_w": 12803398290.499363,
+        "until_gyr": 0.0
+      },
+      {
+        "address": "u:g0/patch:9:solar/cohort:0/sys:1/body:2",
+        "power_w": 12521552622.881649,
+        "until_gyr": 0.0
+      },
+      {
+        "address": "u:g0/patch:9:solar/cohort:0/sys:1/body:3",
+        "power_w": 98974149366.28633,
+        "until_gyr": 0.0
+      },
+      {
+        "address": "u:g0/patch:9:solar/cohort:0/sys:1/body:4",
+        "power_w": 49009895182.99387,
+        "until_gyr": 0.0
+      },
+      {
+        "address": "u:g0/patch:9:solar/cohort:0/sys:1/body:5",
+        "power_w": 46672614678.89088,
+        "until_gyr": 0.0
+      },
+      {
+        "address": "u:g0/patch:9:solar/cohort:0/sys:1/body:6",
+        "power_w": 57871234365.087036,
+        "until_gyr": 0.0
+      },
+      {
+        "address": "u:g0/patch:9:solar/cohort:0/sys:1/body:7",
+        "power_w": 68209265122.95785,
+        "until_gyr": 0.0
+      },
+      {
+        "address": "u:g0/patch:9:solar/cohort:0/sys:1/body:8",
+        "power_w": 91791348689.54532,
+        "until_gyr": 0.0
+      },
+      {
+        "address": "u:g0/patch:9:solar/cohort:0/sys:1/body:9",
+        "power_w": 105187448811.04903,
+        "until_gyr": 0.0
+      },
+      {
+        "address": "u:g0/patch:9:solar/cohort:0/sys:1/body:10",
+        "power_w": 128450259435.07368,
+        "until_gyr": 0.0
+      },
+      {
+        "address": "u:g0/patch:9:solar/cohort:0/sys:1/body:11",
+        "power_w": 154986553930.84573,
+        "until_gyr": 0.0
+      }
+    ],
+    "system": "u:g0/patch:9:solar/cohort:0/sys:1",
+    "worlds": [
+      {
+        "address": "u:g0/patch:9:solar/cohort:0/sys:1/body:0",
+        "envelope": "none",
+        "mass_earth": 0.0019097782559999998
+      },
+      {
+        "address": "u:g0/patch:9:solar/cohort:0/sys:1/body:1",
+        "envelope": "none",
+        "mass_earth": 0.004584999365999999
+      },
+      {
+        "address": "u:g0/patch:9:solar/cohort:0/sys:1/body:2",
+        "envelope": "none",
+        "mass_earth": 0.0043449453
+      },
+      {
+        "address": "u:g0/patch:9:solar/cohort:0/sys:1/body:3",
+        "envelope": "none",
+        "mass_earth": 0.032281112375999996
+      },
+      {
+        "address": "u:g0/patch:9:solar/cohort:0/sys:1/body:4",
+        "envelope": "none",
+        "mass_earth": 0.015981740946000002
+      },
+      {
+        "address": "u:g0/patch:9:solar/cohort:0/sys:1/body:5",
+        "envelope": "none",
+        "mass_earth": 0.015222624065999998
+      },
+      {
+        "address": "u:g0/patch:9:solar/cohort:0/sys:1/body:6",
+        "envelope": "none",
+        "mass_earth": 0.018875374632
+      },
+      {
+        "address": "u:g0/patch:9:solar/cohort:0/sys:1/body:7",
+        "envelope": "none",
+        "mass_earth": 0.022248450557999996
+      },
+      {
+        "address": "u:g0/patch:9:solar/cohort:0/sys:1/body:8",
+        "envelope": "none",
+        "mass_earth": 0.029937172535999996
+      },
+      {
+        "address": "u:g0/patch:9:solar/cohort:0/sys:1/body:9",
+        "envelope": "none",
+        "mass_earth": 0.03431175003
+      },
+      {
+        "address": "u:g0/patch:9:solar/cohort:0/sys:1/body:10",
+        "envelope": "kept",
+        "mass_earth": 0.041897924639999994
+      },
+      {
+        "address": "u:g0/patch:9:solar/cohort:0/sys:1/body:11",
+        "envelope": "kept",
+        "mass_earth": 0.050557184208
+      }
+    ]
+  },
+  {
+    "digest": "6a46944a4f600f00bb7b952692ad40a2e4ad3c7de7e9a70208b574f2a8b7fd4e",
+    "events": 13,
+    "heat": [
+      {
+        "address": "u:g0/patch:9:solar/cohort:1/sys:0/body:0",
+        "power_w": 186052796851.34003,
+        "until_gyr": 1.5421266033492884
+      },
+      {
+        "address": "u:g0/patch:9:solar/cohort:1/sys:0/body:1",
+        "power_w": 466506673724.51886,
+        "until_gyr": 2.7978827419732797
+      },
+      {
+        "address": "u:g0/patch:9:solar/cohort:1/sys:0/body:2",
+        "power_w": 296097361132.8238,
+        "until_gyr": 2.12419608234255
+      },
+      {
+        "address": "u:g0/patch:9:solar/cohort:1/sys:0/body:3",
+        "power_w": 481080575083.1701,
+        "until_gyr": 2.8481064501959326
+      },
+      {
+        "address": "u:g0/patch:9:solar/cohort:1/sys:0/body:4",
+        "power_w": 349593139194.94666,
+        "until_gyr": 2.3564010881572157
+      },
+      {
+        "address": "u:g0/patch:9:solar/cohort:1/sys:0/body:5",
+        "power_w": 744365724827.1283,
+        "until_gyr": 3.218713559181864
+      },
+      {
+        "address": "u:g0/patch:9:solar/cohort:1/sys:0/body:6",
+        "power_w": 4204912014011.8403,
+        "until_gyr": 6.266615433462836
+      },
+      {
+        "address": "u:g0/patch:9:solar/cohort:1/sys:0/body:7",
+        "power_w": 18118382409643.344,
+        "until_gyr": 12.551402425929037
+      },
+      {
+        "address": "u:g0/patch:9:solar/cohort:1/sys:0/body:8",
+        "power_w": 6949210936216.75,
+        "until_gyr": 7.645008214608093
+      },
+      {
+        "address": "u:g0/patch:9:solar/cohort:1/sys:0/body:9",
+        "power_w": 8023310902531.281,
+        "until_gyr": 8.469170157972137
+      },
+      {
+        "address": "u:g0/patch:9:solar/cohort:1/sys:0/body:10",
+        "power_w": 5050009287863.0625,
+        "until_gyr": 6.648641041537873
+      },
+      {
+        "address": "u:g0/patch:9:solar/cohort:1/sys:0/body:11",
+        "power_w": 3809628648580.22,
+        "until_gyr": 5.694929619535391
+      },
+      {
+        "address": "u:g0/patch:9:solar/cohort:1/sys:0/body:12",
+        "power_w": 2581771934103.9136,
+        "until_gyr": 4.597892188661256
+      }
+    ],
+    "system": "u:g0/patch:9:solar/cohort:1/sys:0",
+    "worlds": [
+      {
+        "address": "u:g0/patch:9:solar/cohort:1/sys:0/body:0",
+        "envelope": "none",
+        "mass_earth": 0.008766135234
+      },
+      {
+        "address": "u:g0/patch:9:solar/cohort:1/sys:0/body:1",
+        "envelope": "none",
+        "mass_earth": 0.021981760811999998
+      },
+      {
+        "address": "u:g0/patch:9:solar/cohort:1/sys:0/body:2",
+        "envelope": "none",
+        "mass_earth": 0.013952435076
+      },
+      {
+        "address": "u:g0/patch:9:solar/cohort:1/sys:0/body:3",
+        "envelope": "none",
+        "mass_earth": 0.022670626085999998
+      },
+      {
+        "address": "u:g0/patch:9:solar/cohort:1/sys:0/body:4",
+        "envelope": "none",
+        "mass_earth": 0.016473502188
+      },
+      {
+        "address": "u:g0/patch:9:solar/cohort:1/sys:0/body:5",
+        "envelope": "stripped",
+        "mass_earth": 0.033706454202
+      },
+      {
+        "address": "u:g0/patch:9:solar/cohort:1/sys:0/body:6",
+        "envelope": "stripped",
+        "mass_earth": 0.173508481926
+      },
+      {
+        "address": "u:g0/patch:9:solar/cohort:1/sys:0/body:7",
+        "envelope": "kept",
+        "mass_earth": 0.7359837919199999
+      },
+      {
+        "address": "u:g0/patch:9:solar/cohort:1/sys:0/body:8",
+        "envelope": "kept",
+        "mass_earth": 0.280979455374
+      },
+      {
+        "address": "u:g0/patch:9:solar/cohort:1/sys:0/body:9",
+        "envelope": "kept",
+        "mass_earth": 0.32418152949599993
+      },
+      {
+        "address": "u:g0/patch:9:solar/cohort:1/sys:0/body:10",
+        "envelope": "kept",
+        "mass_earth": 0.20404462431599996
+      },
+      {
+        "address": "u:g0/patch:9:solar/cohort:1/sys:0/body:11",
+        "envelope": "kept",
+        "mass_earth": 0.15392559704399997
+      },
+      {
+        "address": "u:g0/patch:9:solar/cohort:1/sys:0/body:12",
+        "envelope": "kept",
+        "mass_earth": 0.10431464536799999
+      }
+    ]
+  },
+  {
+    "digest": "b57b9074e7c4f1df4aee5f468fe805d802bb264c4a8c6c82c4e54c9afb09e80c",
+    "events": 0,
+    "heat": [],
+    "system": "u:g0/patch:9:solar/cohort:1/sys:1",
+    "worlds": []
+  }
+]

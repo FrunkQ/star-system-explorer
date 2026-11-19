@@ -8,6 +8,9 @@ import { checkIntent, intentToRequest, secondsToYears, yearsToSeconds, type Inte
 import { audienceOf, decide, type Seat } from "./seat.ts";
 import { providerOf, type FlowDoc, type PackDoc } from "./physics.ts";
 import type { PlayerScene } from "./player-scene.ts";
+import type { WorldStackRead } from "./world.ts";
+import type { Adopted, FormationRan, FormationRequest, ListedSystem, SystemResolved, V3Imported } from "./make.ts";
+import type { LookedAhead, SystemSpec } from "./fate.ts";
 
 export type IntentResult =
   /** For a stack change the kernel chronicles a `stack.adopt` event; `view` is the data view a scan_toggle left in force. */
@@ -74,6 +77,32 @@ export interface ViewSession {
   send(intent: Intent): Promise<IntentResult>;
   history(address: string): Promise<HistoryEvent[]>;
   stateHash(at_yr?: number): Promise<string>;
+  /**
+   * What-if branches (U4, H6.3): a branch of the chronicle the GM edits
+   * without touching the main line. GM seat only; players never see one.
+   */
+  openBranch(label: string): Promise<{ ok: true; branch: string } | { ok: false; message: string }>;
+  /** Apply a set_value on a branch only. The main chronicle and its state hash do not move. */
+  branchSend(branch: string, intent: Intent): Promise<IntentResult>;
+  branchStateHash(branch: string, at_yr?: number): Promise<string>;
+  /** Drop a branch and everything on it. */
+  discardBranch(branch: string): Promise<boolean>;
+  /** Read a V3 save into facts and a difference report; writes nothing (GM only). */
+  importV3(save: string, opts?: { universe_id?: string; reconstruct?: number }): Promise<{ ok: true; result: V3Imported } | { ok: false; code: string; message: string }>;
+  /** One system through the formation pipeline; writes nothing (GM only). */
+  runFormation(req: FormationRequest): Promise<{ ok: true; result: FormationRan } | { ok: false; code: string; message: string }>;
+  /** Age a system forward on a branch (T2); GM only. */
+  lookAhead(system: SystemSpec, target_myr: number): Promise<{ ok: true; result: LookedAhead } | { ok: false; code: string; message: string }>;
+  /** Keep a look-ahead as history, optionally moving the system's "now"; GM only. */
+  commitLookAhead(branch: string, move_now_myr?: number, write_back?: boolean): Promise<{ ok: true; event_id: string; state_hash: string; aged_event?: string; aged_at_myr?: number } | { ok: false; code: string; message: string }>;
+  /** Write an imported save or a formation run into the open universe as history (GM only). */
+  adopt(source: { import_v3: string } | { formation: FormationRequest }, occurred_at_s?: number): Promise<{ ok: true; result: Adopted } | { ok: false; code: string; message: string }>;
+  /** A body's world stack (P4) with the kernel's ladder and physics notes, by body address or fixture name. */
+  readWorldStack(by: { body?: string; fixture?: string }): Promise<{ ok: true; result: WorldStackRead } | { ok: false; code: string; message: string }>;
+  /** Every system in the open universe that has facts (kernel `systems`): adopted ones and authored ones. */
+  listSystems(): Promise<{ ok: true; systems: ListedSystem[] } | { ok: false; code: string; message: string }>;
+  /** A system as the universe now holds it: facts, a SystemSpec for look-ahead, and S0 surfaces. */
+  resolvedSystem(system: string, at_s?: number): Promise<{ ok: true; result: SystemResolved } | { ok: false; code: string; message: string }>;
   kernelVersion(): Promise<string>;
   /** Derived values of a flow (read only; no event). */
   derive(ref: DeriveRef): Promise<{ ok: true; values: Record<string, Derived> } | { ok: false; message: string }>;
@@ -135,12 +164,27 @@ export type TrialResult<T> = { ok: true; stack_hash: string; result: T } | { ok:
 
 type Raw = { type: string; [k: string]: unknown };
 
+/**
+ * Peer-to-peer hooks (V4), for p2p.ts only: not exported from the package
+ * index, so views and shells cannot reach them. APPLIED watches every intent
+ * the session applies (the GM's chronicle as it happens); REPLAY applies an
+ * intent the GM already applied, whatever this seat may send (a player's
+ * replica follows the single writer); GRANT_VIEWS names the data views the GM
+ * lets this seat's screens look through.
+ */
+export const APPLIED = Symbol("sse.session.applied");
+export const REPLAY = Symbol("sse.session.replay");
+export const GRANT_VIEWS = Symbol("sse.session.grant-views");
+export type AppliedListener = (intent: Intent, result: Extract<IntentResult, { status: "applied" }>) => void;
+
 export class Session implements ViewSession {
   readonly #client: KernelClient;
   /** A second kernel with no universe open, for trials: loading a candidate stack there chronicles nothing. */
   readonly #scratch: (() => KernelClient) | undefined;
   #scratchClient: KernelClient | undefined;
   readonly #pending: Intent[] = [];
+  readonly #listeners: AppliedListener[] = [];
+  #grantedViews: readonly string[] = [];
   #flows: string[] = [];
   #opening: PackDoc[] = [];
   #added: PackDoc[] = [];
@@ -237,7 +281,8 @@ export class Session implements ViewSession {
   async scene(scope: string, opts: SceneOptions = {}) {
     const own = audienceOf(this.seat);
     const audience = opts.audience ?? own;
-    if (this.seat.authority !== "gm" && (audience !== own || opts.data_view !== undefined || opts.observe !== undefined)) {
+    const viewOk = opts.data_view === undefined || this.#grantedViews.includes(opts.data_view);
+    if (this.seat.authority !== "gm" && (audience !== own || !viewOk || opts.observe !== undefined)) {
       return { ok: false as const, message: `seat ${this.seat.label} sees only its own audience` };
     }
     const at_s = opts.at_yr === undefined ? 9_223_372_036_854_775_807n : yearsToSeconds(opts.at_yr);
@@ -258,6 +303,25 @@ export class Session implements ViewSession {
     return { ok: false as const, message: String(r.message ?? JSON.stringify(r)) };
   }
 
+  [APPLIED](listener: AppliedListener): () => void {
+    this.#listeners.push(listener);
+    return () => {
+      const i = this.#listeners.indexOf(listener);
+      if (i >= 0) this.#listeners.splice(i, 1);
+    };
+  }
+
+  [GRANT_VIEWS](views: readonly string[]): void {
+    this.#grantedViews = [...views];
+  }
+
+  /** Apply an intent the GM already applied (no seat check). */
+  [REPLAY](intent: Intent): Promise<IntentResult> {
+    const bad = checkIntent(intent);
+    if (bad) return Promise.resolve({ status: "refused", reason: bad });
+    return this.#apply(intent);
+  }
+
   async send(intent: Intent): Promise<IntentResult> {
     const bad = checkIntent(intent);
     if (bad) return { status: "refused", reason: bad };
@@ -267,6 +331,16 @@ export class Session implements ViewSession {
       this.#pending.push(intent);
       return { status: "pending", intent };
     }
+    return this.#apply(intent);
+  }
+
+  async #apply(intent: Intent): Promise<IntentResult> {
+    const r = await this.#applyRaw(intent);
+    if (r.status === "applied") for (const l of [...this.#listeners]) l(intent, r);
+    return r;
+  }
+
+  async #applyRaw(intent: Intent): Promise<IntentResult> {
     const r = await this.#call(intentToRequest(intent, { opening: this.#opening, added: this.#added, campaign: this.#campaign }));
     if (intent.kind === "adopt_physics" || intent.kind === "stack_packs") {
       if (r.type !== "stack_loaded") return { status: "refused", reason: String(r.report ?? r.message ?? JSON.stringify(r)) };
@@ -279,6 +353,8 @@ export class Session implements ViewSession {
       return { status: "applied", event_id: `stack:${this.#stackHash}`, state_hash: await this.stateHash(), affected: [] };
     }
     if (intent.kind === "scan_toggle" && r.type === "scan_toggled")
+      return { status: "applied", event_id: String(r.event_id), state_hash: String(r.state_hash), affected: [intent.address], view: (r.view as string | null) ?? null };
+    if (intent.kind === "grant" && r.type === "granted")
       return { status: "applied", event_id: String(r.event_id), state_hash: String(r.state_hash), affected: [intent.address], view: (r.view as string | null) ?? null };
     if (r.type === "authored")
       return { status: "applied", event_id: String(r.event_id), state_hash: String(r.state_hash), affected: r.affected as string[] };
@@ -302,6 +378,91 @@ export class Session implements ViewSession {
     const at_s = at_yr === undefined ? 9_223_372_036_854_775_807n : yearsToSeconds(at_yr);
     const r = await this.#call({ op: "state_hash", at_s });
     return r.type === "state_hash" ? String(r.hash) : "";
+  }
+
+  async openBranch(label: string): Promise<{ ok: true; branch: string } | { ok: false; message: string }> {
+    if (this.seat.authority !== "gm") return { ok: false, message: "only the game master opens a what-if branch" };
+    const r = await this.#call({ op: "branch", label });
+    return r.type === "branch_opened" ? { ok: true, branch: String(r.branch) } : { ok: false, message: String(r.message ?? JSON.stringify(r)) };
+  }
+
+  async branchSend(branch: string, intent: Intent): Promise<IntentResult> {
+    if (this.seat.authority !== "gm") return { status: "refused", reason: "only the game master edits a what-if branch" };
+    if (intent.kind !== "set_value") return { status: "refused", reason: "a what-if branch takes value edits only" };
+    const bad = checkIntent(intent);
+    if (bad) return { status: "refused", reason: bad };
+    const req = intentToRequest(intent) as { edit: unknown };
+    const r = await this.#call({ op: "branch_set", branch, edit: req.edit });
+    if (r.type === "authored") return { status: "applied", event_id: String(r.event_id), state_hash: String(r.state_hash), affected: r.affected as string[] };
+    return { status: "error", code: String(r.code ?? "unexpected"), message: String(r.message ?? JSON.stringify(r)) };
+  }
+
+  async branchStateHash(branch: string, at_yr?: number): Promise<string> {
+    const at_s = at_yr === undefined ? 9_223_372_036_854_775_807n : yearsToSeconds(at_yr);
+    const r = await this.#call({ op: "branch_state_hash", branch, at_s });
+    return r.type === "state_hash" ? String(r.hash) : "";
+  }
+
+  async discardBranch(branch: string): Promise<boolean> {
+    const r = await this.#call({ op: "discard", branch });
+    return r.type === "discarded";
+  }
+
+  /**
+   * Read a V3 save (the text of a starmap.json or system.json) into facts and a difference report.
+   * Pure: nothing is written to the open universe. `reconstruct` (1 to 64) also solves candidate histories.
+   */
+  async importV3(save: string, opts: { universe_id?: string; reconstruct?: number } = {}): Promise<{ ok: true; result: V3Imported } | { ok: false; code: string; message: string }> {
+    if (this.seat.authority !== "gm") return { ok: false, code: "not_gm", message: "only the game master imports saves" };
+    const r = await this.#call({ op: "import_v3", save, ...(opts.universe_id ? { universe_id: opts.universe_id } : {}), ...(opts.reconstruct ? { reconstruct: opts.reconstruct } : {}) });
+    return r.type === "v3_imported" ? { ok: true, result: r as unknown as V3Imported } : { ok: false, code: String(r.code ?? "unexpected"), message: String(r.message ?? JSON.stringify(r)) };
+  }
+
+  /** One system through the formation pipeline. Pure: nothing is written to the open universe. */
+  async runFormation(req: FormationRequest): Promise<{ ok: true; result: FormationRan } | { ok: false; code: string; message: string }> {
+    if (this.seat.authority !== "gm") return { ok: false, code: "not_gm", message: "only the game master generates systems" };
+    const r = await this.#call({ op: "run_formation", ...req });
+    return r.type === "formation_ran" ? { ok: true, result: r as unknown as FormationRan } : { ok: false, code: String(r.code ?? "unexpected"), message: String(r.message ?? JSON.stringify(r)) };
+  }
+
+  /** Age a system forward on a branch of its own (T2). The main line does not move until the branch is committed. */
+  async lookAhead(system: SystemSpec, target_myr: number): Promise<{ ok: true; result: LookedAhead } | { ok: false; code: string; message: string }> {
+    if (this.seat.authority !== "gm") return { ok: false, code: "not_gm", message: "only the game master looks ahead" };
+    const r = await this.#call({ op: "look_ahead", system, target_myr });
+    return r.type === "looked_ahead" ? { ok: true, result: r as unknown as LookedAhead } : { ok: false, code: String(r.code ?? "unexpected"), message: String(r.message ?? JSON.stringify(r)) };
+  }
+
+  /**
+   * Keep a look-ahead as history; with `move_now_myr`, the system's "now" moves to that star age.
+   * `write_back` also writes the aged star and surviving orbits as one `time.aged` event.
+   */
+  async commitLookAhead(branch: string, move_now_myr?: number, write_back?: boolean): Promise<{ ok: true; event_id: string; state_hash: string; aged_event?: string; aged_at_myr?: number } | { ok: false; code: string; message: string }> {
+    if (this.seat.authority !== "gm") return { ok: false, code: "not_gm", message: "only the game master keeps a look-ahead" };
+    const r = await this.#call({ op: "commit_look_ahead", branch, ...(move_now_myr !== undefined ? { move_now_myr } : {}), ...(write_back ? { write_back: true } : {}) });
+    if (r.type !== "committed") return { ok: false, code: String(r.code ?? "unexpected"), message: String(r.message ?? JSON.stringify(r)) };
+    return { ok: true, event_id: String(r.event_id), state_hash: String(r.state_hash), ...(r.aged_event ? { aged_event: String(r.aged_event), aged_at_myr: Number(r.aged_at_myr) } : {}) };
+  }
+
+  async adopt(source: { import_v3: string } | { formation: FormationRequest }, occurred_at_s?: number): Promise<{ ok: true; result: Adopted } | { ok: false; code: string; message: string }> {
+    if (this.seat.authority !== "gm") return { ok: false, code: "not_gm", message: "only the game master adds systems to the universe" };
+    const r = await this.#call({ op: "adopt", ...source, ...(occurred_at_s !== undefined ? { occurred_at_s } : {}) } as never);
+    return r.type === "adopted" ? { ok: true, result: r as unknown as Adopted } : { ok: false, code: String(r.code ?? "unexpected"), message: String(r.message ?? JSON.stringify(r)) };
+  }
+
+  async readWorldStack(by: { body?: string; fixture?: string }): Promise<{ ok: true; result: WorldStackRead } | { ok: false; code: string; message: string }> {
+    const r = await this.#call({ op: "read_world_stack", ...(by.body ? { body: by.body } : {}), ...(by.fixture ? { fixture: by.fixture } : {}) });
+    return r.type === "world_stack_read" ? { ok: true, result: r as unknown as WorldStackRead } : { ok: false, code: String(r.code ?? "unexpected"), message: String(r.message ?? JSON.stringify(r)) };
+  }
+
+  async listSystems(): Promise<{ ok: true; systems: ListedSystem[] } | { ok: false; code: string; message: string }> {
+    const r = await this.#call({ op: "systems" });
+    return r.type === "systems_listed" ? { ok: true, systems: (r as unknown as { systems: ListedSystem[] }).systems } : { ok: false, code: String(r.code ?? "unexpected"), message: String(r.message ?? JSON.stringify(r)) };
+  }
+
+  async resolvedSystem(system: string, at_s?: number): Promise<{ ok: true; result: SystemResolved } | { ok: false; code: string; message: string }> {
+    if (this.seat.authority !== "gm") return { ok: false, code: "not_gm", message: "only the game master reads resolved systems" };
+    const r = await this.#call({ op: "resolved_system", system, ...(at_s !== undefined ? { at_s } : {}) });
+    return r.type === "system_resolved" ? { ok: true, result: r as unknown as SystemResolved } : { ok: false, code: String(r.code ?? "unexpected"), message: String(r.message ?? JSON.stringify(r)) };
   }
 
   async kernelVersion(): Promise<string> {

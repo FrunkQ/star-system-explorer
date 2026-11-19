@@ -5,9 +5,17 @@
 #![forbid(unsafe_code)]
 
 pub mod birth;
+pub mod cosmology;
+pub mod envelope;
+pub mod epochs;
+pub mod galaxy;
+pub mod haloes;
 pub mod model;
 pub mod patch;
+pub mod rings;
 pub mod scenario;
+pub mod stars;
+pub mod web;
 
 pub use birth::SystemBirth;
 pub use model::PatchModel;
@@ -88,6 +96,10 @@ pub fn ops() -> Vec<(&'static str, CostClass, &'static str)> {
     vec![
         ("cosmos.conditions", CostClass::Trivial, "closed form; any device"),
         ("cosmos.patch_envelope", CostClass::Trivial, "closed form; any device"),
+        ("cosmos.galaxy", CostClass::Light, "about 1,400 steps of a few equations per galaxy; any device"),
+        ("cosmos.rings", CostClass::Medium, "24 rings x 270 steps with delay convolutions (about 3 million multiply-adds, well under a second); any device"),
+        ("cosmos.envelope", CostClass::Trivial, "interpolation and closed forms per place; any device"),
+        ("cosmos.green_band", CostClass::Light, "about 90 envelope reads per time; any device"),
         ("cosmos.form_patch", CostClass::Medium, "linear in the systems a patch holds (about 330 in a 16 pc leaf near the Sun); weak devices resolve only the systems a view shows"),
     ]
 }
@@ -114,3 +126,13 @@ pub(crate) mod golden {
         );
     }
 }
+#[cfg(test)]
+mod g1_tests;
+#[cfg(test)]
+mod g2_tests;
+#[cfg(test)]
+mod g3_tests;
+#[cfg(test)]
+mod g4_tests;
+#[cfg(test)]
+mod g5_tests;

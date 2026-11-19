@@ -1,10 +1,18 @@
-// Cloudflare Workers: a static-assets Worker serving the built site.
-// Build: `npm run build` (scripts/build-site.sh) writes dist/.
+// Cloudflare Workers: the built site (dist/, from `npm run build`, i.e.
+// scripts/build-site.sh) plus the player-room signalling relay (worker/index.js,
+// one Durable Object per room, nothing stored).
 {
   "name": "star-system-explorer",
+  "main": "worker/index.js",
   "compatibility_date": "2026-11-01",
   "assets": {
     "directory": "./dist",
-    "not_found_handling": "404-page"
-  }
+    "binding": "ASSETS",
+    "not_found_handling": "404-page",
+    "run_worker_first": ["/signal/*"]
+  },
+  "durable_objects": {
+    "bindings": [{ "name": "ROOMS", "class_name": "SignalRoom" }]
+  },
+  "migrations": [{ "tag": "v1", "new_sqlite_classes": ["SignalRoom"] }]
 }

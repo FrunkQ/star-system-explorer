@@ -5,7 +5,7 @@ import type { ChangeRequest } from "../src/physics.ts";
 export function plainWorkspace(now_yr = 4_610_000_000): Workspace {
   const ws: Workspace = {
     selection: null, now_yr, mode: "edit", applied: {}, revision: 0, undo: [], redo: [],
-    screen: "system", bench: null, requests: [],
+    screen: "system", bench: null, requests: [], branch: null,
     select: () => {}, setTime: () => {},
     openFlow(flow, from = {}) { ws.bench = { flow, ...from }; ws.screen = "physics"; },
     fileRequest(r: ChangeRequest) { const i = ws.requests.findIndex((x) => x.id === r.id); if (i >= 0) ws.requests[i] = r; else ws.requests.push(r); },

@@ -6,9 +6,10 @@
 import { readdirSync, readFileSync, statSync } from "node:fs";
 import { dirname, join, relative, resolve, sep } from "node:path";
 
-export const CHECKED = ["packages/shell/src", "packages/views", "packages/chart-grammar/src", "packages/skins"];
+export const CHECKED = ["packages/shell/src", "packages/views", "packages/chart-grammar/src", "packages/skins", "packages/renderer/src", "packages/sound/src", "packages/agents/src"];
 export const CLIENT_API = ["packages/ui-contract/src/index.ts", "packages/ui-contract/src/host-browser.ts"];
-const PACKAGES_OK = [/^svelte(\/|$)/, /^@fontsource\//];
+// three.js is the decided renderer (SSE4-surfaces-and-rendering.md, accepted 18 Nov).
+const PACKAGES_OK = [/^svelte(\/|$)/, /^@fontsource\//, /^three(\/|$)/];
 const FORBIDDEN_TEXT = [/\bcallRaw\b/, /\bKernelClient\b/, /["']?op["']?\s*:\s*["'](set_authored|open_universe|load_stack|commit|branch|derive|resolve)["']/, /sse_wasm/];
 
 export interface Breach {
@@ -32,7 +33,7 @@ export function checkSource(root: string, file: string, text: string): Breach[] 
       const isApi = CLIENT_API.includes(target);
       if (!inChecked && !isApi) out.push({ file, line, why: `imports ${target}, outside the client API` });
     } else if (!PACKAGES_OK.some((r) => r.test(spec))) {
-      out.push({ file, line, why: `imports package ${spec}; only svelte and fonts are allowed here` });
+      out.push({ file, line, why: `imports package ${spec}; only svelte, fonts and three are allowed here` });
     }
   }
   text.split("\n").forEach((l, i) => {

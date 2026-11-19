@@ -45,6 +45,8 @@
               "seed": "x"
             },
             "densityGcm3": 5.514, "calculatedGravity_ms2": 9.82, "equilibriumTempK": 255, "albedo": 0.306,
+            "hydrosphere": { "coverage": 0.71, "depth_m": 3688, "composition": "water" },
+            "atmosphere": { "name": "Air", "main": "N2", "pressure_bar": 1.013, "composition": { "N2": 0.78, "O2": 0.21 } },
             "makeup": { "metal": 0.32, "rock": 0.68 },
             "tags": [
               { "key": "habitable", "origin": "physics" },

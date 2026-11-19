@@ -12,7 +12,7 @@ import { mkdirSync } from "node:fs";
 import assert from "node:assert/strict";
 import { createRequire } from "node:module";
 import { Session } from "../../packages/ui-contract/src/session.ts";
-import { tableSeat } from "../../packages/ui-contract/src/seat.ts";
+import { decide, gmSeat, tableSeat } from "../../packages/ui-contract/src/seat.ts";
 import { nodeKernel } from "../../packages/ui-contract/test/node-kernel.ts";
 import { enterFacts } from "../../packages/ui-contract/src/data-views.ts";
 import { readFileSync } from "node:fs";
@@ -36,10 +36,13 @@ async function playerEvent() {
   const k = nodeKernel();
   const seat = { ...tableSeat(), id: "helm", label: "Helm", may_send: ["set_value"], auto_approve: [{ intent: "set_value", scope: ["u:kestrel/sys:1"] }] };
   const packs = [doc("packs/base-physics/pack.json"), doc("packages/shell/src/documents/kestrel.player-data.pack.json")];
-  const s = await Session.open(k.client, seat, { id: "kestrel", seed: "kestrel reach campaign" }, packs);
-  // The campaign opens with the GM's recorded player-facing facts, as the shell does.
+  // The campaign opens with the GM's recorded player-facing facts, as the shell does (GM work: they include disclosure grants).
+  const s = await Session.open(k.client, gmSeat(), { id: "kestrel", seed: "kestrel reach campaign" }, packs);
   assert.equal(await enterFacts(s, doc("packages/shell/src/documents/kestrel.player-facts.json")), null);
-  const r = await s.send({ kind: "set_value", address: TARN, field: "mass_earth", value: 0.9, at_yr: NOW });
+  // The helm's intent is inside its auto-approve scope, so the GM's session applies it without asking (V10: the GM is the single writer).
+  const intent = { kind: "set_value", address: TARN, field: "mass_earth", value: 0.9, at_yr: NOW };
+  assert.deepEqual(decide(seat, intent), { action: "apply" });
+  const r = await s.send(intent);
   await k.close();
   assert.equal(r.status, "applied");
   return r;
@@ -56,6 +59,7 @@ async function tabTo(page, test, max = 60) {
 const results = [];
 let u2 = null;
 let u3 = null;
+let planet = null;
 const expected = await playerEvent();
 try {
   for (const name of engines) {
@@ -172,6 +176,43 @@ try {
     assert.match(surfaceLabel, /changed physics/i);
     u3 = { chipBefore, chipAfter, diff, effect, badge: surfaceLabel.replace(/\s+/g, " ") };
 
+    // Planet frame: a planet's moons orbit it, not the star (handover/rendering-rules.md).
+    const chartSvg = page.locator(".area-chart svg");
+    assert.equal(await chartSvg.locator("[role=button][aria-label^='Hasp']").count(), 0, "moons are not drawn in the star's frame");
+    assert.equal(await page.getAttribute("[role=button][aria-label^='Vault']", "data-moons"), "3", "Vault shows it has three moons");
+    await page.locator("[role=button][aria-label^='Vault']").click();
+    await page.getByRole("button", { name: "Moons of Vault ›" }).click();
+    await page.waitForFunction(() => document.querySelector(".area-chart svg")?.getAttribute("aria-label") === "Chart of Vault and its moons");
+    const moonNames = await chartSvg.locator(".body").evaluateAll((g) => g.map((x) => x.getAttribute("aria-label").split(",")[0]));
+    assert.deepEqual(moonNames, ["Vault", "Hasp", "Rivet", "Latch"], "the planet at the centre and its moons about it");
+    assert.match(await page.locator(".area-chart").innerText(), /in kilometres/);
+    await chartSvg.locator("[role=button][aria-label^='Hasp']").click();
+    const haspCard = page.locator("section[aria-label='Hasp']");
+    await haspCard.waitFor();
+    const haspOrbit = () => haspCard.locator(".field").filter({ hasText: /^orbit/i }).locator("input").inputValue();
+    assert.equal(await haspOrbit(), "412,000 km");
+    const hb = await chartSvg.locator("[role=button][aria-label^='Hasp'] circle.hit").boundingBox();
+    const vb = await chartSvg.locator("[role=button][aria-label^='Vault'] circle.hit").boundingBox();
+    const [hx, hy, vx, vy] = [hb.x + hb.width / 2, hb.y + hb.height / 2, vb.x + vb.width / 2, vb.y + vb.height / 2];
+    await page.mouse.move(hx, hy);
+    await page.mouse.down();
+    for (let k = 1; k <= 8; k++) await page.mouse.move(hx + ((hx - vx) * 0.2 * k) / 8, hy + ((hy - vy) * 0.2 * k) / 8);
+    await page.mouse.up();
+    await haspCard.locator(".field").filter({ hasText: /^orbit/i }).locator("input").waitFor();
+    await page.waitForFunction(() => {
+      const i = [...document.querySelectorAll("section[aria-label='Hasp'] .field")].find((x) => /^orbit/i.test(x.textContent.trim()))?.querySelector("input");
+      return i && /km$/.test(i.value) && Number(i.value.replace(/\D/g, "")) > 412000;
+    }, null, { timeout: 5000 });
+    const haspDragged = await haspOrbit();
+    const orbitInput = haspCard.locator(".field").filter({ hasText: /^orbit/i }).locator("input");
+    await orbitInput.fill("500,000 km");
+    await orbitInput.press("Enter");
+    await page.waitForFunction(() => [...document.querySelectorAll("section[aria-label='Hasp'] input")].some((i) => i.value === "500,000 km"), null, { timeout: 5000 });
+    await page.getByRole("button", { name: "‹ Kestrel" }).click();
+    await page.waitForFunction(() => document.querySelector(".area-chart svg")?.getAttribute("aria-label")?.startsWith("System chart"));
+    await page.locator("section[aria-label='Vault']").waitFor();
+    planet = { moonNames, haspDragged };
+
     // Ruler by keyboard.
     await page.keyboard.press("Escape");
     await page.locator("body").click({ position: { x: 5, y: 5 } }).catch(() => {});
@@ -248,6 +289,7 @@ try {
     results.push({ engine: name, tabsToTarn, tabsToMass, eventId, phoneWidth: phone, u2, u3 });
     console.log(`U2 ${name}: ${JSON.stringify(u2)}`);
     console.log(`U3 ${name}: ${JSON.stringify(u3)}`);
+    console.log(`Planet frame ${name}: ${JSON.stringify(planet)}`);
     console.log(`PASS ${name}: Tarn reached in ${tabsToTarn} tabs, Mass in ${tabsToMass}; event ${eventId.slice(0, 12)} matches the player seat; phone width ${JSON.stringify(phone)}`);
   }
 } finally {

@@ -24,6 +24,14 @@ Milestone M1 "Proven core" = packages K0 to K6 (build plan section 3/4).
 | F4 violent phase and upheavals | done | packages/F4.md |
 | F5 leftovers: belts, Oort cloud, Trojans, moons, rings | done | packages/F5.md |
 | F6 early worlds and hand-off | done (ahead of F2 to F5; reads a plain `Protoplanet`) | packages/F6.md |
+| Formation pipeline (stages chained, heat flow per world) | done | packages/F-pipeline.md |
+| F7 long life of generated systems; close binaries by rule table | done (giant tables still T1's sketch) | packages/F7.md |
+| F9 pins and reconstruction (solve around pinned worlds; imported systems gain a reconstructed history) | done | packages/F9.md |
+| S0 surface envelope: kind, regime over time with dated causes, regime sketch globe | done | packages/S0.md |
+| S1 surface atlas: cube-sphere tiles, band-limited detail, disclosure and fact floor, cache | done (sketch atlas; S2 adds the surveyed plate atlas) | packages/S1.md |
+| S2 plate sketch: moving plates, ridges, trenches, arcs, mountain belts, plumes, drift snapshots, surveyed atlas | done | packages/S2.md |
+| S3 wearing down: rivers, lakes, sediment, sea level, hillslopes, worn atlas with flow layer | done | packages/S3.md |
+| Kernel ops `import_v3`, `run_formation` and `read_world_stack` (V3 import with report; one system through the pipeline with pins and surfaces; a body's world stack with ladder and physics notes) | done (physics track, for the UI) | packages/K-physics-ops.md |
 | K7 envelopes, partitioning, resolve, feasibility | done (kernel track) | packages/K7.md |
 | K8 rules, classification, sifters, significance | done (kernel track) | packages/K8.md |
 | K9 disclosure tiers, data views, scene building | done (kernel track) | packages/K9.md |
@@ -32,19 +40,39 @@ Milestone M1 "Proven core" = packages K0 to K6 (build plan section 3/4).
 | U1 shell, chart room and night chart tokens, chart grammar | done, screenshots in packages/U1-screens/ for Alex | packages/U1.md |
 | U2 system chart editor | done: real base-physics values, drag and typed edits, undo, why | packages/U2.md |
 | U3 flow editor, explain lenses, change requests | done: real flows, kernel-validated drafts, adopt, badge; kernel gaps listed in the log | packages/U3.md |
-| U4 time ruler with history, branches, look-ahead | waits for T2 | |
+| U4 time ruler with history, branches, look-ahead | done: what-if branches (part 1) and look-ahead (part 2: age the system on a branch, scrub, throw away or keep, move now) | packages/U4.md |
 | V1 view contract, player scenes, Chart, Card, Table, Text, Readout | done (scenes from K9 fixtures until the kernel serves a scene op) | packages/V1.md |
 | U5 packs screen, data views screen, screens composer | done; player page and composer on live kernel scenes | packages/U5.md |
 | V2 themes: tokens, frame parts, filter chains, six player themes | done | packages/V2.md |
 | V3 screens documents (data view, bind, layouts) and one screens runtime; composer opens screens from documents | done | packages/V3.md |
 | V11 Orac-first configuration: schemas for every view, style documents with inheritance, promoted controls, validation and cost budgets, Styles screen | done | packages/V11.md |
 | V12 symbology: diagrammatic and colour-coded grammars, mixing, key, Symbols screen | done, with V3's colour table and the V3 colour import (palette overrides, save tag colours) | packages/V12.md |
+| V4 peer-to-peer session: replication by intent, state hash, snapshot, version pin, GM-offline read-only; relay room in the site Worker | done | packages/V4.md |
+| V5 player requests and GM approval | done | packages/V5.md |
+| Planet chart: moons in their planet's frame (coordinator ask, not in the plan) | done | packages/planet-chart.md |
+| V10 seats and audiences | done: plans, fog of war per audience, per-seat links and screens, auto-approve, sealed seats | packages/V10.md |
+| V6 System 3D (frames, camera-relative rule, pixel-stability test, GPU and Canvas tiers) | System 3D and Cutaway (from a fixture stack) done; Body view and the kernel world-stack op next | packages/V6.md |
+| U9 lenses: Basic, Advanced, Building, Running, every player data view as a lens, make your own, lens packs | done | packages/U9.md |
+| N1 sound engine: sound scenes, recipes, mixer, tiers, off by default, captions, orbit bed | done | packages/N1.md |
+| O1 light switch (UI side): Eye, Camera, SHO and HOO palettes, single bands, legend chip and honesty label, stubbed spectra marked | UI done on stubbed light; real light facts wait on the kernel | packages/O1-ui.md |
+| V13 make a system: import a V3 save (report and preview) and grow a new system (formation run and preview) | part 1 done: previews; part 2 adopts a preview into the campaign | packages/V13.md |
+| A1 agents shell, bring your own key | part 1 done: providers, keys on the device only, ledger and cap, Tars working, Orac and Minerva panels; part 2 reconciles with Ovid's source | packages/A1.md |
 | G0 default Milky-Way-like patch envelope | done (kernel track) | packages/G0.md |
-| Kernel API additions: stack adopt, manifest, scene, scan_toggle | done (kernel track) | packages/K6-additions.md |
+| G1 cosmology, cosmic web, epochs | done (kernel track) | packages/G1.md |
+| G2 haloes per cell, growth, spin, mergers | done (kernel track) | packages/G2.md |
+| G3 galaxy reservoirs, rings, element groups, what died here | done (kernel track) | packages/G3.md |
+| G4 patch envelopes from a galaxy, green regions, outcome-first | done (kernel track) | packages/G4.md |
+| G5 stars drawn per co-rotating cell: IMF, ages, metals, multiplicity, orbits through time, pins, formation input | done (kernel track) | packages/G5.md |
+| K9 additions: grant op, tag-driven grants (V10 seats gaps) | done (kernel track) | packages/K9-grants.md |
+| Kernel API additions: stack adopt, manifest, scene, scan_toggle, grant, look_ahead | done (kernel track) | packages/K6-additions.md |
 | Numbers: exact float parse, JSON numbers decode by value (cross-track) | done (kernel track); other tracks merge and re-baseline | packages/numbers.md |
 | C1 axis registry, class records, schemes, SSE 3 classic | done (kernel track) | packages/C1.md |
 | C2 base physical atlas, habitability, gas mixes | done (kernel track); thresholds and hycean open for Alex's review | packages/C2.md |
 | L0 life suite sockets: interfaces, habitat graphs, empty suite | done (kernel track) | packages/L0.md |
+| L1a life box B: energy and nutrient caps per habitat, closures with reasons | done (kernel track) | packages/L1a.md |
+| L1b life boxes C, D, E: origin, capability graph, catastrophes, dated history with causes | done (kernel track) | packages/L1b.md |
+| L1c life boxes F, G: guilds with production shares, four lenses, traits from physics, vocabulary | done (kernel track) | packages/L1c.md |
+| L1d life boxes I, J: signatures by tier with confidence, false positive and negative, data views, sifters, hooks, life view | done (kernel track) | packages/L1d.md |
 | C3 reverse placement in a system | done (kernel track) | packages/C3.md |
 | T1 epoch stepping, ageing star, secular orbits, symplectic windows | done (kernel track); giant phase sketch awaits F7 | packages/T1.md |
 | T2 look-ahead branch, commit, age the Solar System | done (kernel track); with Alex for review | packages/T2.md |
@@ -52,9 +80,9 @@ Milestone M1 "Proven core" = packages K0 to K6 (build plan section 3/4).
 ## Parallel tracks (18 Nov, Alex: build in parallel, integrate later)
 | Track | Packages | Branch |
 |---|---|---|
-| Physics | P1, P3, P4, F0 to F6 done; next: formation pipeline, F7 (T1 now merged), F9, F8 integrator | `main` via PRs |
-| Kernel | K7 to K10, G0, C1 to C3, L0, T1, T2 and the U3 gaps done | `main` via PRs |
-| Chart room shell and player views | U0 to U3, V1, U5, V2, V12, V3, V11 done; V4 peer-to-peer waits for Alex | `main` via PRs |
+| Physics | P1, P3, P4, F0 to F6 done; pipeline, F7, F9, S0 to S3 done; F8 waits on G6; next S4 (impacts, volcanism, explanations) | `main` via PRs |
+| Kernel | K7 to K10, G0 to G5, C1 to C3, L0, L1a to L1d, T1, T2 (also through the API), the U3 gaps, the V10 grant gaps and the UI asks (`adopt`, look-ahead write-back, `resolved_system`; K6-additions.md) done; next G6 or L2 (life feedback on the planet; needs T1) | `main` via PRs |
+| Chart room shell and player views | U0 to U3, V1, U5, V2, V12, V3, V11, V4, V5, planet chart, V10, V6 System 3D, U9 lenses, N1 sound, U4 (what-if and look-ahead), A1 part 1, O1 light switch (UI), V13 parts 1 and 2 (import and grow, add to the campaign, read back and age with write-back), V6 Cutaway (Body screen) done; next V6 Body view, V7 | `main` via PRs |
 
 **Since 19 Nov (Alex): `main` is the default branch.** New work branches from `main` and arrives as a pull request
 into `main`; its checks pass before merge. The old track branches are kept, not deleted.
@@ -71,6 +99,11 @@ Kernel track integration points (K7 to K10):
 - C1 (log `packages/C1.md`): pack `packs/sse3-classic` (SSE 3's 72 classes, exact SSE 3 scoring), pack key `provides.other.schemes`, `classify.relabel` events via `sse_sift::relabel::record`, golden `tests/golden/classify.json`.
 - C2 (log `packages/C2.md`): pack `packs/base-atlas` (physical, surface, air, habitability schemes; generated by `scripts/build-base-atlas.py`), gates now count in region fit, `Atlas::overlaps`, fixture `tests/fixtures/classify/exoplanets.json`.
 - L0 (log `packages/L0.md`): crate `sse-life` (fixed life interfaces, habitat graphs from world stacks, `NoLifeModel`), pack `packs/base-life` (habitat rules), fixture worlds Earth, Mars, Europa, Titan, Venus, golden `tests/golden/life.json`.
+- L1a (log `packages/L1a.md`): `sse-life::budget` (box B: energy caps from light and chemical supply, phosphorus caps, closures with reasons, biomass, feeding levels), `provides.other.life_budget` in `packs/base-life`, golden `tests/golden/life-budget.json`, harness engine `life-budget`.
+- L1b (log `packages/L1b.md`): `sse-life::history` (origin hazard with a dial, capability graph against opportunity, catastrophes with refuges and recovery, `record` to the chronicle), `provides.other.life_history`, Earth and Europa timelines in `scenario.rs`, golden `tests/golden/life-history.json`, harness engine `life-history`.
+- L1c (log `packages/L1c.md`): `sse-life::biosphere` (`resolve`: guilds, relations in four lenses, diversity, world traits from `WorldPhysics`), golden `tests/golden/life-biosphere.json`, harness engine `life-biosphere`.
+- L1d (log `packages/L1d.md`): `sse-life::signatures` (`Observables`, `signatures`, `facts`, `disclosure`) and `sse-life::sift` (`epochs`, `hooks`, `view`), golden `tests/golden/life-signatures.json`, harness engine `life-signatures`.
+- G5 (log `packages/G5.md`): `sse-cosmos::stars` (`Stars`: cells, draws, orbits, state, pins, `birth`), golden `tests/golden/stars.json`, harness engine `stars`.
 - C3 (log `packages/C3.md`): crate `sse-place` (reverse placement through the base-physics flows, four outcomes, picker preview, chronicle commit), pack `packs/base-place`, fixture `tests/fixtures/place/systems.json`, golden `tests/golden/place.json`. The base atlas gained `needs`.
 - T1 and T2 (logs `packages/T1.md`, `T2.md`): crate `sse-time` (integrator written fresh from Yoshida 1990, not from REBOUND; Laplace-Lagrange; the ageing star on F0's life line with a giant-branch core clock; look-ahead branches, commit, replay), pack `packs/base-time`, fixture `tests/fixtures/time/solar-system.json`, golden `tests/golden/time.json`. One-line K3 fix in `Chronicle::branch_append` (branch cut from an empty chronicle). **Physics track:** F7's giant tables replace the core clock in `sse-time/src/star.rs` (`star_with`, `core_at`).
 - Pack content keys these engines read: `provides.other.rules`, `.axes`, `.classes`, `.sifters` (K8). Data views and disclosure maps are plain serde types (K9); a pack key for them is for U5 to choose.

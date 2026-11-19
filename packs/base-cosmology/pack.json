@@ -1,0 +1,229 @@
+{
+ "format": "sse.pack/1",
+ "id": "sse.base-cosmology",
+ "version": "0.1.0",
+ "kind": [
+  "base-physics"
+ ],
+ "kernel_range": "^0.1",
+ "licence": "Apache-2.0",
+ "provides": {
+  "other": {
+   "about": "Cosmology and the cosmic web (G1; galaxy design sections 2 and 3): the universe's parameters, how the web's noise octaves are laid out, and what sets each epoch. A fictional universe pack may change any of them; everything downstream follows.",
+   "cosmology": {
+    "params": {
+     "h0": 67.66,
+     "omega_m": 0.3111,
+     "omega_b": 0.04897,
+     "sigma8": 0.8102,
+     "n_s": 0.9665,
+     "t_cmb": 2.7255,
+     "n_eff": 3.046,
+     "now_gyr": 13.8
+    },
+    "web": {
+     "top_spacing_mpc": 64.0,
+     "octaves": 8,
+     "tidal_threshold": 0.0
+    },
+    "epochs": {
+     "first_star_halo": 1000000.0,
+     "first_star_nu": 3.0,
+     "cooling_mass_z9": 100000000.0,
+     "reionisation_zeta": 11.0,
+     "last_stars_log10_yr": 14.0,
+     "proton_decay": true,
+     "proton_lifetime_log10_yr": 37.0,
+     "largest_black_hole": 100000000000.0
+    },
+    "haloes": {
+     "cell_mpc": 8.0,
+     "min_mass": 10000000000.0,
+     "max_mass": 1e+16,
+     "bins_per_dex": 4,
+     "position_candidates": 6,
+     "formation_scatter": 0.3,
+     "formation_environment": 0.3,
+     "spin_median": 0.035,
+     "spin_sigma_ln": 0.5,
+     "major_ratio": 0.25,
+     "merger_z_max": 6.0,
+     "neighbour_mpc": 3.0
+    },
+    "sources": {
+     "haloes": "Sheth and Tormen 1999 mass function and bias; growth M(z) = M0 (1+z)^alpha exp(beta z) (McBride et al. 2009) with alpha, beta from Correa et al. 2015; spin Bullock et al. 2001; major mergers Fakhouri, Ma and Boylan-Kolchin 2010; formation scatter and environment shift are rough (sketch)",
+     "params": "Planck Collaboration 2020, Planck 2018 results VI, table 2 (TT,TE,EE+lowE+lensing+BAO); T_CMB from Fixsen 2009; N_eff 3.046 (Mangano et al. 2005)",
+     "web": "galaxy design section 3; T-web threshold 0 as in Hahn et al. 2007",
+     "first_stars": "3-sigma peaks of 1e6 solar-mass minihaloes (Tegmark et al. 1997; Barkana and Loeb 2001)",
+     "cooling_mass_z9": "virial temperature 1e4 K at z = 9 for mean molecular weight 0.6 (Barkana and Loeb 2001 eq. 26)",
+     "reionisation_zeta": "tuned so reionisation is half way at z = 7.7 (Planck 2018) and complete near z = 6 (Fan et al. 2006)",
+     "far_future": "Adams and Laughlin 1997, Rev. Mod. Phys. 69, 337; Hawking evaporation time from Page 1976. Speculative",
+     "galaxy": "Regulator model (Bouche et al. 2010; Lilly et al. 2013; Dave, Finlator and Oppenheimer 2012); depletion times Tacconi et al. 2018 and Leroy et al. 2008; winds Muratov et al. 2015; fallback Henriques et al. 2013; hot haloes and radio-mode feedback Croton et al. 2006; ex-situ growth Rodriguez-Gomez et al. 2016; discs Mo, Mao and White 1998; bars Efstathiou, Lake and Negroponte 1982. Tuned against Behroozi et al. 2019, Renzini and Peng 2015, Andrews and Martini 2013 and Madau and Dickinson 2014 (package log G3)",
+     "rings": "Multi-zone chemical evolution (Matteucci and Francois 1989; Chiappini et al. 1997, 2001); Kennicutt 1998 star formation with a Martin and Kennicutt 2001 threshold; Ia rate Maoz and Mannucci 2012 and Maoz and Graur 2017; solar mass fractions Asplund et al. 2009; radial winds Belfiore et al. 2019; inward drift Spitoni and Matteucci 2011; yields are IMF-integrated net yields in solar units, tuned (package log G3)",
+     "envelope": "Galaxy design section 7: rings interpolated in radius and time; log-spiral density wave (Lin and Shu 1964), pitch 12 degrees and pattern speed 25 km/s/kpc (rough Milky Way values); scale heights 100, 300 and 900 pc; sterilising distance 10 pc (Gehrels et al. 2003); lethal bursts within 2 kpc at low metallicity (Piran and Jimenez 2014; Graham and Fruchter 2013), burst yield tuned so the Sun now sees about 0.4 per Gyr; texture is keyed lognormal noise (sketch)",
+     "green": "Galactic habitable zone (Lineweaver, Fenner and Gibson 2004) as editable criteria: [Fe/H] -0.5 to +0.3 (giant-planet dominance above, Fischer and Valenti 2005), at most 4 sterilising supernovae and 3 lethal bursts per Gyr (Earth has lived through several), 4 Gyr of quiet for complex life",
+     "stars": "Kroupa 2001 IMF; lifetimes 10 Gyr M^-2.5; white dwarf masses Kalirai et al. 2008; multiplicity by primary mass Duchene and Kraus 2013; separations Raghavan et al. 2010 (log a about 1.7 +- 1.5 au); dispersions rising as age^0.35 (Holmberg et al. 2009); midplane density 0.1 solar masses per pc^3 (McKee et al. 2015); cluster mass function M^-2 (Lada and Lada 2003)"
+    },
+    "galaxy": {
+     "bar_threshold": 1.1,
+     "black_hole_feed": 0.01,
+     "black_hole_steady": 0.0005,
+     "burst_fraction": 0.5,
+     "depletion_gyr": 1.5,
+     "depletion_v": 150.0,
+     "depletion_v_slope": 1.5,
+     "depletion_z_slope": 1.0,
+     "disc_factor": 0.6,
+     "eta_max": 60.0,
+     "eta_slope": 2.0,
+     "eta_v": 200.0,
+     "eta_z_slope": 1.0,
+     "exsitu_fraction": 0.3,
+     "exsitu_ratio": 0.02,
+     "filtering_mass": 1000000000.0,
+     "history_every": 5,
+     "hot_mass": 500000000000.0,
+     "hot_slope": 2.0,
+     "prevent_slope": 3.0,
+     "prevent_v": 60.0,
+     "quench_black_hole": 30000000.0,
+     "quench_halo": 1000000000000.0,
+     "quench_halo_slope": 2.0,
+     "quenched_ssfr": 1e-11,
+     "return_fraction": 0.4,
+     "return_gamma_gyr": 60.0,
+     "seed_black_hole": 100000.0,
+     "step_myr": 10.0,
+     "yield_z": 0.02,
+     "z_reion": 7.7,
+     "z_start": 20.0
+    },
+    "rings": {
+     "agb_min_gyr": 0.1,
+     "cc_per_mass": 0.0118,
+     "drift_kms": 1.0,
+     "eta_radial": 0.6,
+     "eta_ref_rd": 3.15,
+     "every": 5,
+     "fallback_metals": 0.5,
+     "ia_fe": 540.0,
+     "ia_min_gyr": 0.04,
+     "ia_per_mass": 0.002,
+     "inner_rd": 0.1,
+     "k40_half_life_gyr": 1.248,
+     "ks_a": 0.00025,
+     "ks_n": 1.4,
+     "nsm_min_gyr": 0.03,
+     "nsm_per_mass": 1e-05,
+     "nsm_r": 150000.0,
+     "outer_rd": 8.0,
+     "return_fraction": 0.4,
+     "rings": 24,
+     "tau0_gyr": -1.267,
+     "tau1_gyr": 2.686,
+     "tau_min_gyr": 0.5,
+     "threshold": 4.0,
+     "threshold_slope": 2.0,
+     "yield_alpha": 2.0,
+     "yield_cn": 1.5,
+     "yield_fe_cc": 0.7,
+     "yield_k40": 1.5,
+     "yield_s": 1.5
+    },
+    "envelope": {
+     "agn_window_gyr": 1.0,
+     "arm_contrast": 0.6,
+     "arm_phase0": 0.0,
+     "arms": 2,
+     "encounter_pc": 0.1,
+     "gas_height_pc": 100.0,
+     "grb_kpc": 2.0,
+     "grb_per_msun": 1.6e-07,
+     "grb_z_crit": 0.3,
+     "mean_star_msun": 0.5,
+     "pattern_kms_kpc": 25.0,
+     "pitch_deg": 12.0,
+     "rotation_kms": 220.0,
+     "sigma_kms": 35.0,
+     "sterilising_pc": 10.0,
+     "texture_cell_pc": 50.0,
+     "texture_sigma_dex": 0.2,
+     "thick_height_pc": 900.0,
+     "thick_share": 0.12,
+     "thin_height_pc": 300.0
+    },
+    "green": {
+     "agn_dose_max": 1.0,
+     "encounters_max_per_myr": 1.0,
+     "feh_max": 0.3,
+     "feh_min": -0.5,
+     "grb_max_per_gyr": 3.0,
+     "quiet_gyr": 4.0,
+     "sterilising_max_per_gyr": 4.0
+    },
+    "stars": {
+     "cell_pc": 10.0,
+     "frame_myr": 1.0,
+     "imf_edges": [
+      0.08,
+      0.5,
+      150.0
+     ],
+     "imf_alphas": [
+      1.3,
+      2.3
+     ],
+     "sun_life_gyr": 10.0,
+     "lifetime_slope": 2.5,
+     "giant_share": 0.1,
+     "wd_a": 0.109,
+     "wd_b": 0.394,
+     "ns_min_msun": 8.0,
+     "bh_min_msun": 20.0,
+     "ns_mass_msun": 1.4,
+     "bh_share": 0.3,
+     "multiplicity": [
+      [
+       0.1,
+       0.22
+      ],
+      [
+       0.5,
+       0.27
+      ],
+      [
+       1.0,
+       0.46
+      ],
+      [
+       3.0,
+       0.5
+      ],
+      [
+       10.0,
+       0.7
+      ],
+      [
+       150.0,
+       0.9
+      ]
+     ],
+     "log_a_mean": 1.7,
+     "log_a_sd": 1.5,
+     "q_min": 0.1,
+     "triple_share": 0.2,
+     "feh_scatter": 0.1,
+     "sigma_r_10": 40.0,
+     "sigma_z_10": 25.0,
+     "sigma_floor": 5.0,
+     "sigma_exponent": 0.35,
+     "midplane_density": 0.1,
+     "rotation_kms": 220.0,
+     "cluster_min": 50.0,
+     "cluster_max": 100000.0,
+     "cell_rotation_kms_kpc": 26.83
+    }
+   }
+  }
+ }
+}

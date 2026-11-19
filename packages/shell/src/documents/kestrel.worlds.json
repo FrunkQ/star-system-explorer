@@ -1,0 +1,5 @@
+{
+ "schema": "sse.world-links/0",
+ "note": "Which P4 world-stack fixture stands in for a Kestrel Reach body until the kernel builds stacks from each world's history (S7 on). The kernel serves the stack itself (read_world_stack); this file only names the fixture.",
+ "links": [{ "body": "u:kestrel/sys:1/body:3", "fixture": "tarn" }]
+}

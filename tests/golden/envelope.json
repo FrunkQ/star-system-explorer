@@ -1,0 +1,248 @@
+{
+  "bands": [
+    {
+      "complex": null,
+      "habitable": [
+        10.25,
+        11.0
+      ],
+      "t_gyr": 4.0
+    },
+    {
+      "complex": null,
+      "habitable": [
+        8.75,
+        17.75
+      ],
+      "t_gyr": 6.0
+    },
+    {
+      "complex": [
+        7.0,
+        11.0
+      ],
+      "habitable": [
+        7.0,
+        25.0
+      ],
+      "t_gyr": 8.0
+    },
+    {
+      "complex": [
+        5.75,
+        17.75
+      ],
+      "habitable": [
+        5.75,
+        25.0
+      ],
+      "t_gyr": 10.0
+    },
+    {
+      "complex": [
+        6.25,
+        25.0
+      ],
+      "habitable": [
+        6.25,
+        25.0
+      ],
+      "t_gyr": 12.0
+    },
+    {
+      "complex": [
+        6.25,
+        25.0
+      ],
+      "habitable": [
+        6.25,
+        25.0
+      ],
+      "t_gyr": 13.8
+    }
+  ],
+  "found": [
+    {
+      "phi": 2.7942960562058907,
+      "r_kpc": 22.80689398135999,
+      "t_gyr": 13.8,
+      "z_pc": 90.52640506650013
+    },
+    {
+      "phi": 5.6210713468234,
+      "r_kpc": 23.62832233845723,
+      "t_gyr": 13.8,
+      "z_pc": 34.19310073674067
+    },
+    {
+      "phi": 1.384086013519454,
+      "r_kpc": 22.894293352977314,
+      "t_gyr": 13.8,
+      "z_pc": -61.68549334594633
+    }
+  ],
+  "patch_model": {
+    "feh_now_at_sun": 0.12775275444,
+    "gradient": -0.035313826616,
+    "sun_radius_kpc": 9.8826522245,
+    "tau_gyr": 26.653993087
+  },
+  "places": [
+    {
+      "green": {
+        "complex": false,
+        "few_bursts": true,
+        "few_passages": false,
+        "few_supernovae": true,
+        "habitable": false,
+        "metals_enough": true,
+        "metals_not_too_many": false,
+        "nucleus_quiet": true,
+        "quiet_long_enough": true
+      },
+      "local": {
+        "agn_dose": -0.0,
+        "alpha_fe": -0.0099685125727203,
+        "arm": 1.5992121441202314,
+        "c_o": 0.5327692678511111,
+        "cc_gyr_pc3": 0.0004431535415306721,
+        "encounters_per_myr": 1.636085215808348,
+        "feh": 0.3756478959299824,
+        "gas_pc3": 0.052470100143004385,
+        "grb_per_gyr": 0.2645387527306509,
+        "ia_gyr_pc3": 0.000036956331136035337,
+        "k40_fe": -0.3954920832906373,
+        "place": {
+          "phi": 0.0,
+          "r_kpc": 4.941326112265078,
+          "t_gyr": 13.8,
+          "z_pc": 0.0
+        },
+        "r_fe": -0.0473684689891507,
+        "rocky_for_gyr": 11.200537651847391,
+        "sfr_gyr_pc3": 0.0375553848754807,
+        "stars_pc3": 0.2342611895590251,
+        "sterilising_per_gyr": 2.0110795318475456,
+        "systems_pc3": 0.4685223791180502,
+        "texture": 0.5606710608563429
+      }
+    },
+    {
+      "green": {
+        "complex": true,
+        "few_bursts": true,
+        "few_passages": true,
+        "few_supernovae": true,
+        "habitable": true,
+        "metals_enough": true,
+        "metals_not_too_many": true,
+        "nucleus_quiet": true,
+        "quiet_long_enough": true
+      },
+      "local": {
+        "agn_dose": -0.0,
+        "alpha_fe": 0.02669116615589953,
+        "arm": 0.8564235614061718,
+        "c_o": 0.4579247433320174,
+        "cc_gyr_pc3": 0.0001733930880529234,
+        "encounters_per_myr": 0.14988962559671387,
+        "feh": 0.12775275444230516,
+        "gas_pc3": 0.024472155531697785,
+        "grb_per_gyr": 0.38787406872661845,
+        "ia_gyr_pc3": 0.000012317958393638194,
+        "k40_fe": -0.3442491016127017,
+        "place": {
+          "phi": 1.0,
+          "r_kpc": 9.882652224530156,
+          "t_gyr": 13.8,
+          "z_pc": 20.0
+        },
+        "r_fe": -0.0632394976302668,
+        "rocky_for_gyr": 10.080149159275518,
+        "sfr_gyr_pc3": 0.014694329496010457,
+        "stars_pc3": 0.047216141554268815,
+        "sterilising_per_gyr": 0.7779046122759876,
+        "systems_pc3": 0.09443228310853763,
+        "texture": 1.0340652743743923
+      }
+    },
+    {
+      "green": {
+        "complex": true,
+        "few_bursts": true,
+        "few_passages": true,
+        "few_supernovae": true,
+        "habitable": true,
+        "metals_enough": true,
+        "metals_not_too_many": true,
+        "nucleus_quiet": true,
+        "quiet_long_enough": true
+      },
+      "local": {
+        "agn_dose": -0.0,
+        "alpha_fe": 0.07801154797895359,
+        "arm": 1.2896641623523324,
+        "c_o": 0.36296439480408793,
+        "cc_gyr_pc3": 0.000017298296645832674,
+        "encounters_per_myr": 0.036067564766306334,
+        "feh": -0.024632190595346767,
+        "gas_pc3": 0.002163257878090081,
+        "grb_per_gyr": 1.0002704870928212,
+        "ia_gyr_pc3": 5.53177585681789e-6,
+        "k40_fe": -0.23019724246374834,
+        "place": {
+          "phi": 2.5,
+          "r_kpc": 9.882652224530156,
+          "t_gyr": 9.0,
+          "z_pc": 300.0
+        },
+        "r_fe": -0.09483945740909,
+        "rocky_for_gyr": 5.280149159275517,
+        "sfr_gyr_pc3": 0.0014659573428671751,
+        "stars_pc3": 0.011361501749998459,
+        "sterilising_per_gyr": 0.09563038407366581,
+        "systems_pc3": 0.022723003499996917,
+        "texture": 0.8405523348996745
+      }
+    },
+    {
+      "green": {
+        "complex": true,
+        "few_bursts": true,
+        "few_passages": true,
+        "few_supernovae": true,
+        "habitable": true,
+        "metals_enough": true,
+        "metals_not_too_many": true,
+        "nucleus_quiet": true,
+        "quiet_long_enough": true
+      },
+      "local": {
+        "agn_dose": -0.0,
+        "alpha_fe": 0.02706398426430707,
+        "arm": 0.4184240374280822,
+        "c_o": 0.45718987954926826,
+        "cc_gyr_pc3": 5.9123486060962285e-6,
+        "encounters_per_myr": 0.0035937606502787858,
+        "feh": -0.05216075797203801,
+        "gas_pc3": 0.003220971788324839,
+        "grb_per_gyr": 0.07724873786387272,
+        "ia_gyr_pc3": 9.349200743016846e-7,
+        "k40_fe": -0.46292792870208166,
+        "place": {
+          "phi": 4.0,
+          "r_kpc": 15.812243559248252,
+          "t_gyr": 13.8,
+          "z_pc": -50.0
+        },
+        "r_fe": -0.06262406447164592,
+        "rocky_for_gyr": 8.378335420779559,
+        "sfr_gyr_pc3": 0.0005010464920420533,
+        "stars_pc3": 0.0029159324762750628,
+        "sterilising_per_gyr": 0.028681771977991412,
+        "systems_pc3": 0.0058318649525501256,
+        "texture": 1.0553240715637153
+      }
+    }
+  ]
+}

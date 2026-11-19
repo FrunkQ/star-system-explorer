@@ -10,6 +10,7 @@
     "packages/chart-grammar",
     "packages/views/system-chart",
     "packages/views/body-card",
+    "packages/views/cutaway",
     "packages/views/time-ruler",
     "packages/views/flow-editor",
     "packages/views/change-requests",
@@ -28,24 +29,26 @@
     "typecheck": "tsc -p packages/kernel-client --noEmit",
     "test": "node --test packages/kernel-client/test/*.test.ts",
     "harness": "scripts/build-harness.sh && node scripts/serve.mjs tests/harness",
-    "ui:test": "node --test packages/ui-contract/test/*.test.ts packages/skins/chart-room/test/*.test.ts packages/skins/player/test/*.test.ts packages/chart-grammar/test/*.test.ts tests/ui/*.test.ts",
+    "ui:test": "node --test packages/ui-contract/test/*.test.ts packages/renderer/test/*.test.ts packages/skins/chart-room/test/*.test.ts packages/skins/player/test/*.test.ts packages/chart-grammar/test/*.test.ts packages/agents/test/*.test.ts tests/ui/*.test.ts",
     "ui:check": "svelte-check --workspace packages/shell --tsconfig ./tsconfig.json --fail-on-warnings",
     "ui:build": "scripts/build-shell.sh",
-    "ui:e2e": "node tests/ui/shell.e2e.mjs && node tests/ui/players.e2e.mjs && node tests/ui/setup.e2e.mjs && node tests/ui/themes.e2e.mjs && node tests/ui/symbols.e2e.mjs && node tests/ui/styles.e2e.mjs",
+    "ui:e2e": "node tests/ui/shell.e2e.mjs && node tests/ui/players.e2e.mjs && node tests/ui/setup.e2e.mjs && node tests/ui/themes.e2e.mjs && node tests/ui/symbols.e2e.mjs && node tests/ui/styles.e2e.mjs && node tests/ui/p2p.e2e.mjs && node tests/ui/system3d.e2e.mjs && node tests/ui/lenses.e2e.mjs && node tests/ui/sound.e2e.mjs && node tests/ui/whatif.e2e.mjs && node tests/ui/agents.e2e.mjs && node tests/ui/light.e2e.mjs && node tests/ui/make.e2e.mjs && node tests/ui/lookahead.e2e.mjs && node tests/ui/cutaway.e2e.mjs && node tests/ui/adopt.e2e.mjs",
     "shell": "scripts/build-shell.sh && node scripts/serve.mjs packages/shell/dist 8081",
     "build:client": "scripts/build-wasm.sh && tsc -p packages/kernel-client"
   },
   "devDependencies": {
-    "typescript": "5.9.3",
-    "@types/node": "22.20.5",
-    "svelte": "5.58.0",
-    "vite": "8.3.8",
     "@sveltejs/vite-plugin-svelte": "7.3.1",
-    "svelte-check": "4.7.8"
+    "@types/node": "22.20.5",
+    "@types/three": "0.187.0",
+    "svelte": "5.58.0",
+    "svelte-check": "4.7.8",
+    "typescript": "5.9.3",
+    "vite": "8.3.8"
   },
   "dependencies": {
-    "@fontsource/newsreader": "5.3.0",
     "@fontsource/ibm-plex-mono": "5.3.0",
-    "@fontsource/ibm-plex-sans": "5.3.0"
+    "@fontsource/ibm-plex-sans": "5.3.0",
+    "@fontsource/newsreader": "5.3.0",
+    "three": "0.187.0"
   }
 }

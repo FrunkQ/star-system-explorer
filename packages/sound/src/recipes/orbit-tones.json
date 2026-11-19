@@ -1,0 +1,28 @@
+{
+  "schema": "sse.sound-recipe/0",
+  "id": "orbit-tones",
+  "label": "Orbit tones",
+  "layer": "music",
+  "label_kind": "designed",
+  "why": "A slow bed of soft tones, one per orbiting body: its orbital frequency raised by whole octaves into hearing (the SYSTEM Sounds approach). Slow attack and release, low and quiet, nothing to tap along to.",
+  "nodes": [
+    { "id": "tone", "type": "osc", "wave": "sine", "ratio": 1 },
+    { "id": "air", "type": "osc", "wave": "triangle", "ratio": 2, "detune_cents": 4 },
+    { "id": "air-level", "type": "gain", "gain": 0.18 },
+    { "id": "swell", "type": "env", "attack_s": 3, "release_s": 6 },
+    { "id": "soft", "type": "filter", "kind": "lowpass", "freq_hz": 900, "q": 0.7 },
+    { "id": "room", "type": "delay", "time_s": 1.3, "feedback": 0.35 },
+    { "id": "room-level", "type": "gain", "gain": 0.3 }
+  ],
+  "wires": [
+    ["tone", "swell"],
+    ["air", "air-level"],
+    ["air-level", "swell"],
+    ["swell", "soft"],
+    ["soft", "out"],
+    ["soft", "room"],
+    ["room", "room-level"],
+    ["room-level", "out"]
+  ],
+  "full_only": ["room", "room-level"]
+}

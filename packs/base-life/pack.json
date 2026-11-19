@@ -298,7 +298,425 @@
      "embedded": true,
      "about": "Caves and lava tubes: shelter from radiation and cold."
     }
-   ]
+   ],
+   "life_budget": {
+    "about": "Box B (life design section 3, L1a): energy and nutrient caps per habitat. Production is the smaller of the energy cap and the nutrient cap (Liebig); biomass is production times a residence time; feeding levels follow from production density and a 10% transfer efficiency.",
+    "chemistries": [
+     "water"
+    ],
+    "window_k": [
+     253.0,
+     395.0
+    ],
+    "water_triple_pa": 611.657,
+    "min_water_activity": 0.585,
+    "max_dose_msv_yr": 1000000.0,
+    "j_per_g_carbon": 39900.0,
+    "p_material": "p_new_mol_yr",
+    "reuse": {
+     "ocean-sunlit": 1000.0,
+     "ocean-interior": 1000.0,
+     "lake": 100.0,
+     "land-surface": 46.0,
+     "soil": 46.0
+    },
+    "default_reuse": 10.0,
+    "c_per_p": {
+     "liquid": 106.0,
+     "cloud": 106.0,
+     "surface": 1000.0,
+     "subsurface": 186.0
+    },
+    "default_c_per_p": 106.0,
+    "residence_yr": {
+     "ocean-sunlit": 0.05,
+     "ocean-interior": 0.1,
+     "lake": 0.1,
+     "land-surface": 10.0,
+     "soil": 10.0,
+     "sea-floor": 10.0,
+     "under-ice-ocean": 1.0,
+     "deep-crust": 1000.0,
+     "cave": 10.0,
+     "cloud-deck": 0.01
+    },
+    "default_residence_yr": 1.0,
+    "transfer_efficiency": 0.1,
+    "min_viable_g_m2_yr": 0.1,
+    "low_power_levels": 2,
+    "metabolisms": [
+     {
+      "id": "oxygenic",
+      "label": "oxygenic photosynthesis",
+      "channel": "light",
+      "band_nm": [
+       400.0,
+       700.0
+      ],
+      "light_efficiency": 0.006,
+      "channels": [
+       "light"
+      ],
+      "media": [
+       "liquid",
+       "surface",
+       "cloud"
+      ],
+      "high_power": true
+     },
+     {
+      "id": "anoxygenic-iron",
+      "label": "anoxygenic photosynthesis on ferrous iron",
+      "channel": "light",
+      "band_nm": [
+       400.0,
+       1100.0
+      ],
+      "light_efficiency": 0.006,
+      "light_donor": "fe2_mol_yr",
+      "c_per_donor": 0.25,
+      "channels": [
+       "light"
+      ],
+      "media": [
+       "liquid"
+      ]
+     },
+     {
+      "id": "anoxygenic-hydrogen",
+      "label": "anoxygenic photosynthesis on hydrogen",
+      "channel": "light",
+      "band_nm": [
+       400.0,
+       1100.0
+      ],
+      "light_efficiency": 0.006,
+      "light_donor": "h2_mol_yr",
+      "c_per_donor": 0.5,
+      "channels": [
+       "light"
+      ],
+      "media": [
+       "liquid",
+       "surface"
+      ]
+     },
+     {
+      "id": "aerobic-chemolithotroph",
+      "label": "aerobic chemolithotrophs (oxidising reduced compounds with oxygen)",
+      "channel": "supply",
+      "donor": "reductant_mol_yr",
+      "c_per_donor": 0.1,
+      "oxidant": "o2_mol_yr",
+      "c_per_oxidant": 0.2,
+      "channels": [
+       "chemical",
+       "oxidant",
+       "disequilibrium",
+       "radiogenic"
+      ],
+      "media": [
+       "liquid",
+       "subsurface"
+      ]
+     },
+     {
+      "id": "methanogen",
+      "label": "hydrogenotrophic methanogens",
+      "channel": "supply",
+      "donor": "h2_mol_yr",
+      "c_per_donor": 0.01,
+      "channels": [
+       "chemical",
+       "oxidant",
+       "disequilibrium",
+       "radiogenic"
+      ],
+      "media": [
+       "liquid",
+       "subsurface"
+      ]
+     }
+    ],
+    "sources": {
+     "j_per_g_carbon": "About 479 kJ per mole of CH2O for CO2 + H2O to CH2O + O2 (standard free energy of photosynthesis), 12 g C per mole",
+     "window_k": "Lower: about 253 K, the limit of cell division in brines (Clarke et al. 2013); upper: 395 K, Methanopyrus kandleri strain 116 (Takai et al. 2008)",
+     "min_water_activity": "0.585, the lowest water activity known to support cell division (Stevenson et al. 2015)",
+     "max_dose_msv_yr": "About 1000 Sv per year (around 0.1 Gy per hour), within what radiation-resistant microbes such as Deinococcus radiodurans grow under (Daly 2009)",
+     "light_efficiency": "0.6% of 400 to 700 nm sunlight stored as fixed carbon, about the global mean that makes about 105 Gt C per year (Field et al. 1998); anoxygenic photosynthesis reaches 1100 nm (bacteriochlorophylls) but is limited by its electron donor",
+     "c_per_donor": "Stoichiometry: 4 Fe2+ per CO2 fixed (Widdel et al. 1993; Canfield et al. 2006); 2 H2 per CO2 (Kharecha et al. 2005); chemolithotroph and methanogen yields are order-of-magnitude growth yields (McCollom and Amend 2005)",
+     "reuse": "Ocean: each new phosphorus atom is reused about 1000 times before burial (marine P residence about 20 kyr against a turnover of weeks to decades; Benitez-Nelson 2000); land: about 46 times (Cleveland et al. 2013)",
+     "c_per_p": "Redfield ratio 106:1 in water (Redfield 1958); about 1000:1 in land plants and 186:1 in soils (Cleveland and Liptzin 2007)",
+     "residence_yr": "Marine phytoplankton turn over in days to weeks (about 6 Gt C standing against about 50 Gt C per year; Bar-On et al. 2018, Field et al. 1998); land plants about 10 years (450 Gt C against about 56 Gt C per year); deep subsurface cells turn over in centuries to millennia (Hoehler and Jorgensen 2013)",
+     "transfer_efficiency": "About 10% of production passes from one feeding level to the next (Lindeman 1942; Pauly and Christensen 1995)",
+     "low_power_levels": "Without oxygen, anaerobic metabolisms release about a tenth of the energy, so food chains stay short (Catling et al. 2005)"
+    }
+   },
+   "life_history": {
+    "about": "Boxes C, D and E (life design sections 4 to 6, L1b): origin as a waiting time with a dial, innovations as a capability graph with waiting times against accumulated opportunity, and catastrophes from the physical chronicle with refuges and recovery. Defaults are tuned so Earth's inputs give an Earth-like outline in most seeds; that is one data point, not a law.",
+    "step_myr": 5.0,
+    "origin_rate_per_myr": 0.0018,
+    "earth_area_m2": 510000000000000.0,
+    "settings": [
+     {
+      "id": "alkaline-vents",
+      "label": "alkaline hydrothermal vents",
+      "habitats": [
+       "sea-floor",
+       "under-ice-ocean"
+      ],
+      "factor": 1.0
+     },
+     {
+      "id": "wet-dry-pools",
+      "label": "land pools with wet-dry cycling and ultraviolet light",
+      "habitats": [
+       "land-surface",
+       "lake"
+      ],
+      "factor": 1.0
+     },
+     {
+      "id": "delivered-organics",
+      "label": "organics delivered by comets and meteorites",
+      "habitats": [
+       "ocean-sunlit",
+       "lake"
+      ],
+      "factor": 0.3
+     },
+     {
+      "id": "mineral-catalysts",
+      "label": "mineral surfaces as catalysts",
+      "habitats": [
+       "soil",
+       "deep-crust",
+       "cave"
+      ],
+      "factor": 0.2
+     }
+    ],
+    "origin_media": [
+     "liquid",
+     "subsurface",
+     "cloud"
+    ],
+    "production_ref_gc_yr": 8e+16,
+    "population_exponent": 0.25,
+    "activation_ev": 0.65,
+    "reference_k": 288.0,
+    "variety_ref": 7.0,
+    "capabilities": [
+     {
+      "id": "chemotrophy",
+      "label": "chemical energy use",
+      "at_origin": true,
+      "rate": 0.0,
+      "unlocks_metabolisms": [
+       "methanogen",
+       "aerobic-chemolithotroph"
+      ],
+      "effect": "a base biosphere on chemical energy"
+     },
+     {
+      "id": "dormancy",
+      "label": "dormancy and spores",
+      "needs": [
+       "chemotrophy"
+      ],
+      "rate": 0.5,
+      "effect": "cells wait out bad times (survival of catastrophes and transfer between worlds come with L1c and L2)"
+     },
+     {
+      "id": "anoxygenic",
+      "label": "light harvesting without oxygen release",
+      "needs": [
+       "chemotrophy"
+      ],
+      "needs_facts": [
+       {
+        "fact": "light",
+        "min": 1.0
+       }
+      ],
+      "rate": 0.3,
+      "unlocks_metabolisms": [
+       "anoxygenic-iron",
+       "anoxygenic-hydrogen"
+      ],
+      "effect": "production rises 10 to 100 times where a donor is supplied"
+     },
+     {
+      "id": "oxygenic",
+      "label": "oxygen-releasing photosynthesis",
+      "needs": [
+       "anoxygenic"
+      ],
+      "needs_facts": [
+       {
+        "fact": "surface_water",
+        "min": 1.0
+       }
+      ],
+      "rate": 0.0016,
+      "dial": "oxygenic",
+      "unlocks_metabolisms": [
+       "oxygenic"
+      ],
+      "effect": "water becomes the donor, production rises again and oxygen is released"
+     },
+     {
+      "id": "complex_cells",
+      "label": "complex cells (a merger of lineages)",
+      "needs": [
+       "chemotrophy"
+      ],
+      "needs_facts": [
+       {
+        "fact": "o2_fraction",
+        "min": 0.001
+       }
+      ],
+      "rate": 0.0012,
+      "dial": "complex_cells",
+      "effect": "cells with internal power plants: the hard step to larger life"
+     },
+     {
+      "id": "sex",
+      "label": "sex and recombination",
+      "needs": [
+       "complex_cells"
+      ],
+      "rate": 0.02,
+      "effect": "faster innovation"
+     },
+     {
+      "id": "multicellularity",
+      "label": "multicellularity",
+      "needs": [
+       "complex_cells"
+      ],
+      "rate": 0.01,
+      "effect": "bodies of many cells; it arises often once complex cells exist"
+     },
+     {
+      "id": "large_bodies",
+      "label": "large active bodies",
+      "needs": [
+       "multicellularity"
+      ],
+      "needs_facts": [
+       {
+        "fact": "high_power",
+        "min": 1.0
+       },
+       {
+        "fact": "o2_fraction",
+        "min": 0.1
+       }
+      ],
+      "rate": 0.02,
+      "effect": "animals that move, hunt and burrow: more feeding levels"
+     },
+     {
+      "id": "hard_parts",
+      "label": "hard parts",
+      "needs": [
+       "large_bodies"
+      ],
+      "rate": 0.05,
+      "effect": "shells and skeletons: fossils and reefs"
+     },
+     {
+      "id": "land",
+      "label": "land colonisation",
+      "needs": [
+       "multicellularity"
+      ],
+      "needs_facts": [
+       {
+        "fact": "land",
+        "min": 1.0
+       },
+       {
+        "fact": "o2_fraction",
+        "min": 0.01
+       }
+      ],
+      "rate": 0.01,
+      "unlocks_media": [
+       "surface"
+      ],
+      "effect": "life on land under an ozone shield: land production joins the ocean's"
+     }
+    ],
+    "dials": {
+     "origin": 1.0,
+     "oxygenic": 1.0,
+     "complex_cells": 1.0
+    },
+    "fragile_myr": 30.0,
+    "recovery_myr": 10.0,
+    "diversity_floor_gc_yr": 1000000.0,
+    "oxidant_fact": "o2_fraction",
+    "history_every_myr": 50.0,
+    "sources": {
+     "origin_rate_per_myr": "The honest unknown. Set so an Earth-like early world most often has life within a few hundred million years (life by about 3.7 Gyr ago: Rosing 1999, Ohtomo et al. 2014); the origin dial runs from Rare (0.01) through Earth-like pace (1) to Common (100)",
+     "settings": "Alkaline vents (Russell and Martin 2004; Lane 2015), wet-dry pools (Damer and Deamer 2020), delivered organics (Chyba and Sagan 1992), mineral catalysts (Hazen and Sverjensky 2010); factors are relative weights, each switchable",
+     "population_exponent": "Innovation supply rises with population, but less than linearly (clonal interference; Lynch 2007); 0.25 keeps small biospheres able to innovate slowly",
+     "activation_ev": "0.65 eV, the metabolic theory's activation energy for generation rate (Gillooly et al. 2001)",
+     "rates": "Waiting times in Earth-Myr of opportunity: anoxygenic photosynthesis soon after origin (by 3.4 Gyr ago, Tice and Lowe 2004); oxygenic within about a billion years (before 2.4 Gyr ago, Lyons et al. 2014); complex cells a hard step once oxygen exists (about 1.8 Gyr ago, Knoll 2014); large animals once oxygen nears modern levels (Ediacaran, Sperling et al. 2013); land colonisation needs an ozone shield (Kenrick et al. 2012)",
+     "fragile_myr": "New capabilities held by few lineages can be lost in a mass extinction (Jablonski 2001)",
+     "recovery_myr": "Recovery of diversity after mass extinctions takes about 10 Myr (Kirchner and Weil 2000); 90% at about 23 Myr",
+     "oxidant_fact": "Oxygen levels are inputs until L2 computes them from the balance; here they count only once a high-power (oxygen-making) metabolism exists"
+    }
+   },
+   "life_signatures": {
+    "about": "Box I: what observers can tell. Confidence is a posterior from the prior and the likelihood ratios of what is seen; floors are detection limits; gas amounts are sketches calibrated to Earth today.",
+    "prior": 0.5,
+    "o2_floor": 0.001,
+    "ch4_floor_ppm": 0.1,
+    "edge_floor": 0.05,
+    "o2_per_earth_production": 0.21,
+    "earth_oxygenic_gc_yr": 1e+17,
+    "ch4_ppm_per_gc_yr": 4.5e-15,
+    "anoxic_ch4_factor": 100.0,
+    "decay_methane_oxic": 0.005,
+    "decay_methane_anoxic": 0.5,
+    "lr_o2_ch4": 20.0,
+    "lr_o2_alone": 3.0,
+    "lr_o2_m_dwarf": 1.5,
+    "m_dwarf_teff_k": 3900.0,
+    "lr_ch4_alone": 2.0,
+    "lr_edge": 10.0,
+    "lr_nothing": 0.5,
+    "abundant": 0.3,
+    "scattered": 0.03,
+    "rare": 0.0001,
+    "sources": [
+     "Meadows, V. S. et al. 2018, Astrobiology 18, 630: exoplanet biosignatures, false positives and context",
+     "Krissansen-Totton, J., Olson, S. and Catling, D. C. 2018, Science Advances 4, eaao5747: O2-CH4 disequilibrium",
+     "Luger, R. and Barnes, R. 2015, Astrobiology 15, 119: abiotic oxygen from water loss round M dwarfs",
+     "Seager, S., Turner, E. L., Schafer, J. and Ford, E. B. 2005, Astrobiology 5, 372: the vegetation red edge",
+     "Kiang, N. Y. et al. 2007, Astrobiology 7, 222: the red edge shifts with the host star",
+     "Reeburgh, W. S. 2007, Chem. Rev. 107, 486: about 0.5% of production decays as methane",
+     "Kasting, J. F. 2005, Precambrian Research 137, 119: Archean methane of 100 to 1000 ppm"
+    ],
+    "disclosure": {
+     "life.obvious.*": "obvious",
+     "life.signature.*": "scanned",
+     "life.survey.*": "surveyed",
+     "life.past.*": "surveyed",
+     "life.evidence": "scanned",
+     "gm.life.*": "secret"
+    }
+   },
+   "life_sift": {
+    "about": "Box J: sifters name epochs by the newest capability and score them by persistence, reach, capacity change and reversibility (weights in that order); hooks raise stories. Defaults are in the code (SiftParams); a pack may override any field.",
+    "major": 0.25,
+    "aftermath_share": 0.3,
+    "doomed_within_myr": 500.0
+   }
   }
  }
 }

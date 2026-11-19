@@ -362,3 +362,475 @@ fn whole_valued_physical_inputs_reach_the_atoms() {
         assert!(fails.is_empty(), "{}: {fails:?}", f.doc.id);
     }
 }
+
+/// V10's kernel gap: grants as proper `observe.grant` events through the API.
+#[test]
+fn grants_through_the_api() {
+    let l: Vec<serde_json::Value> = contract_lines()
+        .iter()
+        .map(|s| serde_json::from_str(s).unwrap())
+        .collect();
+    assert_eq!(l[111]["type"], "granted");
+    assert_eq!(l[111]["view"], "rumour");
+    assert_eq!(l[112]["view"], "scanned");
+    let subjects = l[113]["scene"]["subjects"].as_array().unwrap();
+    let view = |a: &str| {
+        subjects
+            .iter()
+            .find(|s| s["address"] == a)
+            .map(|s| s["view"].clone())
+    };
+    assert_eq!(view("u:kestrel/sys:0/body:3").unwrap(), "scanned");
+    assert_eq!(
+        view("u:kestrel/sys:0/body:3/body:0").unwrap(),
+        "scanned",
+        "moons follow"
+    );
+    assert_eq!(l[114]["view"], "rumour", "taken back to the starting view");
+    assert_ne!(l[114]["state_hash"], l[112]["state_hash"]);
+    assert_eq!(l[115]["code"], "unknown_view");
+    assert_eq!(l[116]["code"], "bad_address");
+}
+
+/// T2 look-ahead through the API: age the Sun on a branch, read its fate,
+/// commit with "now" moved, and the error cases.
+#[test]
+fn look_ahead_through_the_api() {
+    let mut k = crate::Kernel::new();
+    let pack: serde_json::Value = serde_json::from_str(
+        &std::fs::read_to_string(root().join("packs/base-time/pack.json")).unwrap(),
+    )
+    .unwrap();
+    let system: serde_json::Value = serde_json::from_str(
+        &std::fs::read_to_string(root().join("tests/fixtures/time/solar-system.json")).unwrap(),
+    )
+    .unwrap();
+    let send = |k: &mut crate::Kernel, v: serde_json::Value| -> serde_json::Value {
+        serde_json::from_str(&k.handle_json(&v.to_string())).unwrap()
+    };
+    let r = send(
+        &mut k,
+        serde_json::json!({"op": "open_universe", "id": "sol", "seed": "sol"}),
+    );
+    assert_eq!(r["type"], "universe_opened");
+    let ask = serde_json::json!({"op": "look_ahead", "system": system, "target_myr": 13000.0});
+    // No stack yet: no settings.
+    assert_eq!(send(&mut k, ask.clone())["code"], "no_time_settings");
+    let r = send(
+        &mut k,
+        serde_json::json!({"op": "load_stack", "packs": [pack]}),
+    );
+    assert_eq!(r["type"], "stack_loaded", "{r}");
+    let before = send(
+        &mut k,
+        serde_json::json!({"op": "state_hash", "at_s": i64::MAX}),
+    );
+
+    let r = send(&mut k, ask.clone());
+    assert_eq!(r["type"], "looked_ahead", "{r}");
+    let kinds: Vec<&str> = r["events"]
+        .as_array()
+        .unwrap()
+        .iter()
+        .map(|e| e["kind"].as_str().unwrap())
+        .collect();
+    for want in ["oceans_lost", "engulfed", "planetary_nebula"] {
+        assert!(kinds.contains(&want), "{want} in {kinds:?}");
+    }
+    assert!(r["events"]
+        .as_array()
+        .unwrap()
+        .iter()
+        .all(|e| !e["why"].as_str().unwrap().is_empty()));
+    let snaps = r["snapshots"].as_array().unwrap();
+    assert!(snaps.len() > 10);
+    assert_eq!(snaps[0]["star"]["phase"], "main sequence");
+    assert_eq!(snaps.last().unwrap()["star"]["phase"], "white dwarf");
+    assert_eq!(r["now_myr"], 4570.0);
+    assert!(r["work_units"].as_u64().unwrap() > 1000);
+    let e0 = &r["events"][0];
+    assert_eq!(
+        e0["year"].as_i64().unwrap(),
+        9_230_000_000 + (e0["age_myr"].as_f64().unwrap() * 1.0e6).round() as i64
+    );
+    // The main chronicle is untouched until commit.
+    let mid = send(
+        &mut k,
+        serde_json::json!({"op": "state_hash", "at_s": i64::MAX}),
+    );
+    assert_eq!(before, mid);
+    let b = r["branch"].as_str().unwrap().to_string();
+    let bh = send(
+        &mut k,
+        serde_json::json!({"op": "branch_state_hash", "branch": b, "at_s": i64::MAX}),
+    );
+    assert_ne!(bh["hash"], mid["hash"]);
+
+    // Discard one, commit another with now moved.
+    let d = send(&mut k, serde_json::json!({"op": "discard", "branch": b}));
+    assert_eq!(d["type"], "discarded");
+    assert_eq!(
+        send(
+            &mut k,
+            serde_json::json!({"op": "commit_look_ahead", "branch": b})
+        )["code"],
+        "unknown_branch"
+    );
+    let r = send(&mut k, ask);
+    let b = r["branch"].as_str().unwrap().to_string();
+    let c = send(
+        &mut k,
+        serde_json::json!({"op": "commit_look_ahead", "branch": b, "move_now_myr": 12000.0}),
+    );
+    assert_eq!(c["type"], "committed", "{c}");
+    assert_ne!(c["state_hash"], mid["hash"]);
+    let h = send(
+        &mut k,
+        serde_json::json!({"op": "history", "address": "u:sol/sys:0"}),
+    );
+    let hk: Vec<&str> = h["events"]
+        .as_array()
+        .unwrap()
+        .iter()
+        .map(|e| e["kind"].as_str().unwrap())
+        .collect();
+    assert!(hk.contains(&"time.request"), "{hk:?}");
+
+    // Errors: target not ahead, a system outside the universe, a bad spec.
+    let mut s2 = system.clone();
+    assert_eq!(
+        send(
+            &mut k,
+            serde_json::json!({"op": "look_ahead", "system": s2, "target_myr": 100.0})
+        )["code"],
+        "bad_target"
+    );
+    s2["system"] = "u:other/sys:0".into();
+    assert_eq!(
+        send(
+            &mut k,
+            serde_json::json!({"op": "look_ahead", "system": s2, "target_myr": 6000.0})
+        )["code"],
+        "bad_address"
+    );
+    assert_eq!(
+        send(
+            &mut k,
+            serde_json::json!({"op": "look_ahead", "system": {"name": 1}, "target_myr": 6000.0})
+        )["code"],
+        "bad_system"
+    );
+}
+
+#[test]
+fn run_formation_runs_the_pipeline_with_surfaces() {
+    let mut k = crate::Kernel::new();
+    let a = k.handle_json(
+        r#"{"op":"run_formation","seed":"kernel-form-4","star_pins":{"primary_mass":1.0}}"#,
+    );
+    let b = crate::Kernel::new().handle_json(
+        r#"{"op":"run_formation","seed":"kernel-form-4","star_pins":{"primary_mass":1.0}}"#,
+    );
+    assert_eq!(a, b, "same request, same response");
+    let v: serde_json::Value = serde_json::from_str(&a).unwrap();
+    assert_eq!(v["type"], "formation_ran", "{a:.300}");
+    assert_eq!(v["system"], "u:generated/sys:0");
+    let worlds = v["run"]["worlds"].as_array().unwrap().len();
+    assert!(worlds > 0);
+    assert_eq!(v["surfaces"].as_array().unwrap().len(), worlds);
+    assert!(v.get("pinned").is_none());
+    eprintln!("run_formation response {} bytes", a.len());
+    // With a pin: Earth at 1 au is honoured.
+    let p = k.handle_json(
+        r#"{"op":"run_formation","seed":"kernel-form-4","star_pins":{"primary_mass":1.0},"pins":{"worlds":[{"label":"Home","mass_earth":1.0,"a_au":1.0}],"tries":3}}"#,
+    );
+    let v: serde_json::Value = serde_json::from_str(&p).unwrap();
+    assert_eq!(v["type"], "formation_ran", "{p:.300}");
+    let m = &v["pinned"]["matches"][0];
+    assert!(m["world"].is_string());
+    let w = v["run"]["worlds"]
+        .as_array()
+        .unwrap()
+        .iter()
+        .find(|w| w["address"] == m["world"])
+        .unwrap();
+    assert!(
+        (w["mass_earth"].as_f64().unwrap() - 1.0).abs() < 0.05,
+        "{w}"
+    );
+    // Errors are protocol errors.
+    let e = k.handle_json(r#"{"op":"run_formation","seed":"x","block":"sideways"}"#);
+    assert!(e.contains("\"type\":\"error\""), "{e}");
+}
+
+#[test]
+fn import_v3_returns_facts_and_the_report() {
+    let save = include_str!("../../../tests/fixtures/v3/synthetic-sol.json");
+    let req = serde_json::json!({"op":"import_v3","save":save,"reconstruct":2}).to_string();
+    let a = crate::Kernel::new().handle_json(&req);
+    assert_eq!(a, crate::Kernel::new().handle_json(&req));
+    let v: serde_json::Value = serde_json::from_str(&a).unwrap();
+    assert_eq!(v["type"], "v3_imported", "{a:.300}");
+    assert!(v["facts"].as_object().unwrap().len() > 3);
+    assert!(v["report"]["differences"].is_array());
+    assert_eq!(v["reconstructed"].as_array().unwrap().len(), 1);
+    assert!(v["reconstructed"][0]["run"]["worlds"].is_array());
+    eprintln!("import_v3 response {} bytes", a.len());
+    let bad = crate::Kernel::new().handle_json(r#"{"op":"import_v3","save":"not json"}"#);
+    assert!(bad.contains("import_failed"), "{bad}");
+}
+
+#[test]
+fn read_world_stack_serves_fixtures_and_checks_given_stacks() {
+    let mut k = crate::Kernel::new();
+    let a = k.handle_json(r#"{"op":"read_world_stack","fixture":"europa"}"#);
+    let v: serde_json::Value = serde_json::from_str(&a).unwrap();
+    assert_eq!(v["type"], "world_stack_read", "{a:.300}");
+    assert_eq!(v["source"], "fixture:europa");
+    assert_eq!(v["stack"]["format"], "sse.world-stack/1");
+    assert!(!v["ladder"].as_array().unwrap().is_empty());
+    assert!(!v["notes"].as_array().unwrap().is_empty(), "{}", v["notes"]);
+    assert!(
+        v["invalid"].as_array().unwrap().is_empty(),
+        "{}",
+        v["invalid"]
+    );
+    // By the fixture's body address: the same stack.
+    let b = k.handle_json(r#"{"op":"read_world_stack","body":"u:sol/sys:0/body:8"}"#);
+    let w: serde_json::Value = serde_json::from_str(&b).unwrap();
+    assert_eq!(w["stack"], v["stack"]);
+    // A given stack is checked: freeze Europa's ocean and physics objects.
+    let mut st = v["stack"].clone();
+    for s in st["shells"].as_array_mut().unwrap() {
+        if s["properties"].get("salinity").is_some() {
+            s["properties"]["temperature_k"] = serde_json::json!(200.0);
+        }
+    }
+    let req = serde_json::json!({"op":"read_world_stack","stack":st}).to_string();
+    let c: serde_json::Value = serde_json::from_str(&k.handle_json(&req)).unwrap();
+    assert_eq!(c["source"], "given");
+    assert!(
+        !c["problems"].as_array().unwrap().is_empty(),
+        "{}",
+        c["problems"]
+    );
+    let none = k.handle_json(r#"{"op":"read_world_stack","body":"u:nowhere/sys:0/body:1"}"#);
+    assert!(none.contains("no_world_stack"), "{none}");
+}
+
+#[test]
+fn adopt_age_and_read_back_a_system() {
+    let mut k = crate::Kernel::new();
+    let send = |k: &mut crate::Kernel, v: serde_json::Value| -> serde_json::Value {
+        serde_json::from_str(&k.handle_json(&v.to_string())).unwrap()
+    };
+    let pack: serde_json::Value = serde_json::from_str(
+        &std::fs::read_to_string(root().join("packs/base-time/pack.json")).unwrap(),
+    )
+    .unwrap();
+    assert_eq!(
+        send(
+            &mut k,
+            serde_json::json!({"op": "load_stack", "packs": [pack]})
+        )["type"],
+        "stack_loaded"
+    );
+    send(
+        &mut k,
+        serde_json::json!({"op": "open_universe", "id": "home", "seed": "home"}),
+    );
+
+    // Formation: one event, facts in the importer's names, read back with surfaces and tiles.
+    let form = serde_json::json!({"seed": "adopt-1", "system": "u:home/sys:5", "star_pins": {"primary_mass": 1.0}});
+    let r = send(
+        &mut k,
+        serde_json::json!({"op": "adopt", "formation": form}),
+    );
+    assert_eq!(r["type"], "adopted", "{r}");
+    assert_eq!(r["events"].as_array().unwrap().len(), 1);
+    assert!(r["facts"].as_u64().unwrap() > 10);
+    let again = send(
+        &mut k,
+        serde_json::json!({"op": "adopt", "formation": form}),
+    );
+    assert_eq!(again["code"], "already_adopted");
+    let h = send(
+        &mut k,
+        serde_json::json!({"op": "history", "address": "u:home/sys:5"}),
+    );
+    assert_eq!(h["events"].as_array().unwrap().len(), 1, "{h}");
+
+    let r = send(
+        &mut k,
+        serde_json::json!({"op": "resolved_system", "system": "u:home/sys:5",
+        "tiles": [{"body": "nowhere", "face": 0, "level": 0, "x": 0, "y": 0}]}),
+    );
+    assert_eq!(r["type"], "system_resolved", "{r}");
+    assert_eq!(r["source"], "formation");
+    let surfaces = r["surfaces"].as_array().unwrap();
+    assert!(!surfaces.is_empty());
+    assert_eq!(r["refused"].as_array().unwrap().len(), 1);
+    let world = surfaces[0]["address"].as_str().unwrap().to_string();
+    let spec = r["spec"].clone();
+    // Facts and spec agree on the first world's orbit.
+    let a_m = r["facts"][&world]["orbit.semi_major_axis"]
+        .as_f64()
+        .unwrap();
+    let a_au = spec["planets"]
+        .as_array()
+        .unwrap()
+        .iter()
+        .find(|p| p["address"] == world.as_str())
+        .unwrap()["a_au"]
+        .as_f64()
+        .unwrap();
+    assert!((a_m / 149_597_870_700.0 - a_au).abs() < 1e-12);
+    let tiles = send(
+        &mut k,
+        serde_json::json!({"op": "resolved_system", "system": "u:home/sys:5",
+        "tiles": [{"body": world, "face": 0, "level": 0, "x": 0, "y": 0},
+                  {"body": world, "face": 0, "level": 30, "x": 0, "y": 0}]}),
+    );
+    assert_eq!(tiles["tiles"].as_array().unwrap().len(), 1, "{tiles}");
+    assert_eq!(tiles["refused"].as_array().unwrap().len(), 1);
+    // A fresh kernel cache gives the same read (the request is in the event).
+    let mut k2 = crate::Kernel::new();
+    send(
+        &mut k2,
+        serde_json::json!({"op": "load_stack", "packs": [pack]}),
+    );
+    send(
+        &mut k2,
+        serde_json::json!({"op": "open_universe", "id": "home", "seed": "home"}),
+    );
+    send(
+        &mut k2,
+        serde_json::json!({"op": "adopt", "formation": form}),
+    );
+    let fresh = send(
+        &mut k2,
+        serde_json::json!({"op": "resolved_system", "system": "u:home/sys:5",
+        "tiles": [{"body": world, "face": 0, "level": 0, "x": 0, "y": 0},
+                  {"body": world, "face": 0, "level": 30, "x": 0, "y": 0}]}),
+    );
+    let t2 = tiles.clone();
+    assert_eq!(fresh, t2);
+
+    // Age it with the spec it gave, and write the aged state back.
+    let target = spec["age_myr"].as_f64().unwrap() + 3000.0;
+    let la = send(
+        &mut k,
+        serde_json::json!({"op": "look_ahead", "system": spec, "target_myr": target}),
+    );
+    assert_eq!(la["type"], "looked_ahead", "{la}");
+    let move_to = spec["age_myr"].as_f64().unwrap() + 2000.0;
+    let c = send(
+        &mut k,
+        serde_json::json!({"op": "commit_look_ahead", "branch": la["branch"],
+        "move_now_myr": move_to, "write_back": true}),
+    );
+    assert_eq!(c["type"], "committed", "{c}");
+    let at = c["aged_at_myr"].as_f64().unwrap();
+    assert!(at <= move_to && at > move_to - 500.0, "{at}");
+    let aged = send(
+        &mut k,
+        serde_json::json!({"op": "resolved_system", "system": "u:home/sys:5"}),
+    );
+    let star = spec["star_address"].as_str().unwrap();
+    let l0 = r["facts"][star]["star.luminosity"].as_f64().unwrap();
+    let l1 = aged["facts"][star]["star.luminosity"].as_f64().unwrap();
+    assert!(l1 > l0, "a Sun-like star brightens: {l0} to {l1}");
+    assert!(aged["at_s"].as_i64().unwrap() > 0, "read at the moved now");
+    // Evidence per fact: the aged luminosity is derived by the write-back; the orbit host is from the adoption.
+    assert_eq!(aged["evidence"][star]["star.luminosity"]["by"], "time.aged");
+    assert_eq!(
+        aged["evidence"][star]["star.luminosity"]["evidence"],
+        "derived"
+    );
+    assert_eq!(
+        aged["evidence"][&world]["orbit.host"]["evidence"],
+        "resolved"
+    );
+    assert_eq!(
+        r["evidence"][star]["star.luminosity"]["by"],
+        "adopt.formation"
+    );
+
+    // V3: a handful of events (one per evidence class), the first with the report.
+    let save = include_str!("../../../tests/fixtures/v3/synthetic-sol.json");
+    let r = send(
+        &mut k,
+        serde_json::json!({"op": "adopt", "import_v3": save}),
+    );
+    assert_eq!(r["type"], "adopted", "{r}");
+    let n = r["events"].as_array().unwrap().len();
+    assert!((1..=3).contains(&n));
+    let sys = r["systems"][0].as_str().unwrap().to_string();
+    assert!(sys.starts_with("u:home/"));
+    let v = send(
+        &mut k,
+        serde_json::json!({"op": "resolved_system", "system": sys}),
+    );
+    assert_eq!(v["source"], "v3", "{v}");
+    assert!(
+        v["spec"]["planets"]
+            .as_array()
+            .map(|p| !p.is_empty())
+            .unwrap_or(false),
+        "{}",
+        v["spec"]
+    );
+    let names: Vec<&str> = v["surfaces"]
+        .as_array()
+        .unwrap()
+        .iter()
+        .map(|s| s["regime_now"].as_str().unwrap())
+        .collect();
+    eprintln!("v3 adopted regimes: {names:?}");
+    assert!(!names.is_empty());
+    // The universe's systems, with their sources.
+    let l = send(&mut k, serde_json::json!({"op": "systems"}));
+    let got: Vec<(String, String)> = l["systems"]
+        .as_array()
+        .unwrap()
+        .iter()
+        .map(|s| {
+            (
+                s["system"].as_str().unwrap().to_string(),
+                s["source"].as_str().unwrap().to_string(),
+            )
+        })
+        .collect();
+    assert!(
+        got.contains(&("u:home/sys:5".to_string(), "formation".to_string())),
+        "{got:?}"
+    );
+    assert!(got.contains(&(sys.clone(), "v3".to_string())), "{got:?}");
+    // The imported Earth carries its oceans (importer hydrosphere facts), so it has plates.
+    let earth = v["surfaces"]
+        .as_array()
+        .unwrap()
+        .iter()
+        .find(|s| s["label"] == "Earth")
+        .expect("Earth's surface");
+    assert_eq!(earth["regime_now"], "mobile-lid", "{earth:.400}");
+    // Errors.
+    assert_eq!(
+        send(&mut k, serde_json::json!({"op": "adopt"}))["code"],
+        "bad_request"
+    );
+    assert_eq!(
+        send(
+            &mut k,
+            serde_json::json!({"op": "resolved_system", "system": "u:home/sys:99"})
+        )["code"],
+        "unknown_system"
+    );
+    assert_eq!(
+        send(
+            &mut k,
+            serde_json::json!({"op": "adopt", "formation": {"seed": "x", "system": "u:elsewhere/sys:1"}})
+        )["code"],
+        "bad_address"
+    );
+}

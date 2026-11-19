@@ -14,6 +14,7 @@ export function createWorkspace(now_yr: number): Workspace {
     screen: "system",
     bench: null,
     requests: [],
+    branch: null,
     select(address: string | null) {
       ws.selection = address;
     },

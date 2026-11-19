@@ -12,7 +12,7 @@ export { default as TimeRuler } from "./TimeRuler.svelte";
 export { default as ToolButton } from "./ToolButton.svelte";
 export { default as Segmented } from "./Segmented.svelte";
 export { default as Lenses } from "./Lenses.svelte";
-export { formatYears, ticks, niceStep, fraction, keyStep } from "./ruler.ts";
+export { formatYears, ticks, niceStep, fraction, keyStep, labelRows } from "./ruler.ts";
 export type { Tick, RulerEvent } from "./ruler.ts";
 export { radius, distanceAt, fitScale, polar } from "./scale.ts";
 export type { RadialScale } from "./scale.ts";

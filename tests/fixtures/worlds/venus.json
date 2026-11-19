@@ -3,7 +3,7 @@
  "body": "u:sol/sys:0/body:1",
  "name": "Venus today",
  "radius_m": 6051800.0,
- "sources": "Surface 737 K and 9.2 MPa; at 48 to 62 km about 260 to 340 K and 0.2 to 1.1 bar in 75 to 85% sulphuric acid droplets (Seiff et al. 1985 VIRA; Limaye et al. 2018, Astrobiology 18).",
+ "sources": "Surface 737 K and 9.2 MPa; at 48 to 62 km about 260 to 340 K and 0.2 to 1.1 bar in 75 to 85% sulphuric acid droplets (Seiff et al. 1985 VIRA; Limaye et al. 2018, Astrobiology 18). Cloud water activity 0.004 or below (Hallsworth et al. 2021).",
  "shells": [
   {
    "key": "atmosphere",
@@ -50,7 +50,8 @@
     "temperature_max_k": 340.0,
     "pressure_min_pa": 20000.0,
     "pressure_max_pa": 110000.0,
-    "sulphuric_acid_fraction": 0.8
+    "sulphuric_acid_fraction": 0.8,
+    "water_activity": 0.004
    }
   },
   {

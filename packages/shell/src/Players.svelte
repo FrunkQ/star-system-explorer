@@ -4,16 +4,24 @@
   the screens runtime (V3). The document is loaded when the page opens:
   `?screen=<file>` names one in documents/, `?screen=composed` takes the one
   the composer handed over on this device, and the Bridge is the default.
-  With no network yet (V4), the page hosts its own kernel with the campaign's
-  stack and recorded facts, and its Scanned control stands in for the GM's
-  button: it taps Scanned for the body in focus.
+  Joined to a GM (`?join=<room>`, V4) the page runs its own kernel for the
+  table's seat, replays the GM's events and stays in step by state hash; when
+  the GM goes quiet it shows the last state read-only under a banner. Opened
+  on its own, the page hosts a local kernel with the campaign's stack and
+  recorded facts, and its Scanned control stands in for the GM's button.
 -->
 <script lang="ts">
   import { checkPlayerScene, checkScreen, enterFacts, gmSeat, markerFor, observeOf, playerSubjectOf, subjectName, type AuthoredFacts, type CheckedScreen, type PlayerScene, type ScreenDoc, type Vocab, type ViewSession } from "../../ui-contract/src/index.ts";
   import { openBrowserSession } from "../../ui-contract/src/host-browser.ts";
+  import { PlayerReplica, SealedReplica, audienceOf, broadcastHub, relayHub, sharedTableSeat, type Hub, type OwnRequest, type ReplicaStatus } from "../../ui-contract/src/index.ts";
+  import { APP_VERSION } from "./share.svelte.ts";
+  import SoundControl from "../../sound/src/SoundControl.svelte";
+  import LightControl from "./LightControl.svelte";
+  import lightDoc from "./documents/light.recipes.json";
+  import { SYMBOLS, checkLightRecipe, describeLight, litFromPlayers, paint, type BandRecipe } from "../../ui-contract/src/index.ts";
+  import { orbitScene, voicesFromPlayers } from "../../ui-contract/src/index.ts";
   import { focusOf } from "../../views/player-stack/src/pick.ts";
   import stackDoc from "./documents/stack.json";
-  import factsDoc from "./documents/kestrel.player-facts.json";
   import { PLAYER_STACK, ScreenRuntime } from "../../views/player-stack/src/index.ts";
   import { themeCss } from "../../skins/chart-room/src/index.ts";
   import { ALL_THEMES, PLAYER_THEMES, filterLayers } from "../../skins/player/src/index.ts";
@@ -27,10 +35,12 @@
   // A theme names its vocabulary layer (H8.4); the screen's is the fallback.
   const VOCABS: Record<string, Vocab> = { plain: vocabDoc as unknown as Vocab, guide: guideVocabDoc as unknown as Vocab };
   // The screen document, loaded at runtime and checked against the view stack and the campaign's data views.
-  const asked = new URLSearchParams(location.search).get("screen");
   let screenDoc = $state<ScreenDoc | null>(null);
   let checked = $state<{ ok: true; screen: CheckedScreen } | { ok: false; errors: string[] } | null>(null);
+  // V10: a seat names the screens it opens; `?screen=` picks one, else the seat's first.
+  let seatScreen: string | null = null;
   async function loadScreen(): Promise<ScreenDoc> {
+    const asked = new URLSearchParams(location.search).get("screen") ?? seatScreen;
     if (asked === "composed") {
       const raw = loadPref("composed-screen");
       if (!raw) throw new Error("No screen has been handed over from the composer on this device.");
@@ -42,33 +52,148 @@
     return (await r.json()) as ScreenDoc;
   }
 
-  const facts = factsDoc as unknown as AuthoredFacts;
+  // The campaign's recorded facts, loaded only when this screen runs a kernel: a sealed seat's screen never fetches them.
+  let facts: AuthoredFacts = { schema: "", universe: { id: "", seed: "" }, scope: "", at_yr: 0, facts: [] } as unknown as AuthoredFacts;
+  const loadFacts = async () => (facts = (await import("./documents/kestrel.player-facts.json")).default as unknown as AuthoredFacts);
   const AUDIENCE = "everyone";
+  // Joined through a seat's link, the scene is built for that seat's audience (and lens, if it has one).
+  let audience = $state(AUDIENCE);
+  let lens = $state<string | null>(null);
+  let seatLabel = $state("");
+  let mayAsk = $state(true);
   let session: ViewSession | null = null;
   let scene = $state<PlayerScene | null>(null);
   let sceneHash = $state("");
   let sceneErrors = $state<string[]>([]);
   async function refresh() {
-    const r = await session!.scene(facts.scope, { audience: AUDIENCE, ...(screenDoc?.data_view ? { data_view: screenDoc.data_view } : {}) });
+    const view = lens ?? screenDoc?.data_view;
+    const r = await session!.scene(facts.scope, { audience, ...(view ? { data_view: view } : {}) });
     if (!r.ok) return void (sceneErrors = [r.message]);
     const bad = checkPlayerScene(r.scene);
     sceneErrors = bad ? [bad] : [];
     scene = r.scene;
     sceneHash = r.hash;
   }
-  Promise.all(stackDoc.packs.map(async (p) => (await fetch(new URL(p, document.baseURI))).json()))
-    .then((packs) => openBrowserSession({ base: document.baseURI, seat: gmSeat(), universe: facts.universe, packs }))
-    .then(async (s) => {
-      const bad = await enterFacts(s, facts);
-      if (bad) throw new Error(`recorded facts refused: ${JSON.stringify(bad)}`);
-      session = s;
-      const doc = await loadScreen();
-      const views = observeOf(s.stack().base)?.setup.views.map((v) => v.id);
-      checked = checkScreen(doc, PLAYER_STACK, views, { registry: allStyles(), tier: s.device()?.tier ?? "standard" });
-      screenDoc = doc;
-      await refresh();
-    })
-    .catch((e) => (sceneErrors = [String(e)]));
+  async function useScreen(s: ViewSession) {
+    await useScreenWith(observeOf(s.stack().base)?.setup.views.map((v) => v.id), s.device()?.tier ?? "standard");
+  }
+  async function useScreenWith(views: string[] | undefined, tier: string) {
+    const doc = await loadScreen();
+    checked = checkScreen(doc, PLAYER_STACK, views, { registry: allStyles(), tier: tier as "standard" });
+    screenDoc = doc;
+  }
+
+  // Joined to a game master's room, or standing alone.
+  // A sealed seat (V10 part 2) joins its own room with `?sealed=`: no kernel, no seed, only the GM's finished scenes.
+  const sealedRoom = new URLSearchParams(location.search).get("sealed");
+  const isSealed = sealedRoom !== null && /^[a-z0-9]{4,40}$/.test(sealedRoom);
+  const room = isSealed ? sealedRoom : new URLSearchParams(location.search).get("join");
+  const joined = room !== null && /^[a-z0-9]{4,40}$/.test(room);
+  let link = $state<ReplicaStatus>({ state: "joining" });
+  let stateHash = $state("");
+  // How this screen reached the room: the site's relay (other devices) or this browser.
+  let via = $state<"relay" | "browser" | "">("");
+  async function roomHub(id: string): Promise<Hub> {
+    const want = new URLSearchParams(location.search).get("via");
+    if (want !== "browser") {
+      const r = relayHub(document.baseURI, room!, id, { timeoutMs: 3000 });
+      if (await r.opened) return (via = "relay"), r;
+      r.close();
+    }
+    via = "browser";
+    return broadcastHub(room!, id);
+  }
+  // V5: asking the GM. A request becomes an event only if the GM approves it.
+  let replicaRef: Pick<PlayerReplica, "request"> | null = null;
+  let mine = $state<OwnRequest[]>([]);
+  let ask = $state("");
+  let askError = $state("");
+  async function askName() {
+    if (!replicaRef || !target || !ask.trim()) return;
+    const r = await replicaRef.request({ kind: "set_value", address: target.address, field: "name", value: ask.trim(), at_yr: link.state === "live" ? link.clock_yr : facts.at_yr });
+    askError = r.ok ? "" : r.reason;
+    if (r.ok) ask = "";
+  }
+  const seatId = new URLSearchParams(location.search).get("seat") ?? "table";
+  if (isSealed) {
+    const id = `player-${Math.random().toString(36).slice(2, 10)}`;
+    void roomHub(id).then((hub) => {
+      const replica = new SealedReplica(hub, seatId, { app: APP_VERSION, now: () => performance.now() });
+      replicaRef = replica;
+      replica.onRequests = (r) => (mine = [...r]);
+      replica.onStatus = (st) => (link = st);
+      let first = true;
+      replica.onScene = (sc, hash) => {
+        const seat = replica.seat!;
+        audience = audienceOf(seat);
+        seatLabel = seat.label;
+        mayAsk = seat.may_send.includes("set_value");
+        const bad = checkPlayerScene(sc);
+        sceneErrors = bad ? [bad] : [];
+        scene = sc;
+        sceneHash = hash;
+        stateHash = "";
+        if (first) {
+          first = false;
+          seatScreen = seat.screens?.[0] ?? null;
+          void useScreenWith([...replica.dataViews], "standard").catch((e) => (sceneErrors = [String(e)]));
+        }
+      };
+      replica.join();
+      const again = setInterval(() => (link.state === "joining" ? replica.join() : clearInterval(again)), 1500);
+      setInterval(() => replica.tick(), 1000);
+    });
+  } else if (joined) {
+    const id = `player-${Math.random().toString(36).slice(2, 10)}`;
+    void Promise.all([roomHub(id), loadFacts()]).then(([hub]) => {
+      const replica = new PlayerReplica(
+        hub,
+        (m) => {
+          const seat = m.seats.find((x) => x.id === seatId) ?? (seatId === "table" ? sharedTableSeat() : null);
+          if (!seat) {
+            sceneErrors = [`This link's seat (${seatId}) is not in the game master's session any more. Ask for a new link.`];
+            return Promise.reject(new Error(sceneErrors[0]));
+          }
+          audience = audienceOf(seat);
+          lens = seat.lens ?? null;
+          seatLabel = seat.label;
+          mayAsk = seat.may_send.includes("set_value");
+          seatScreen = seat.screens?.[0] ?? null;
+          return openBrowserSession({ base: document.baseURI, seat, universe: m.universe, packs: m.packs });
+        },
+        { kernel: "", app: APP_VERSION, now: () => performance.now() },
+      );
+      replicaRef = replica;
+      replica.onRequests = (r) => (mine = [...r]);
+      replica.onStatus = (st) => {
+        link = st;
+        if (st.state === "live" || st.state === "offline") stateHash = st.state_hash;
+      };
+      replica.onSession = (s) => {
+        session = s;
+        void useScreen(s).then(refresh).catch((e) => (sceneErrors = [String(e)]));
+      };
+      replica.onUpdate = () => {
+        if (session && screenDoc) void refresh();
+      };
+      replica.join();
+      // Ask again until the GM answers (the GM's page may open after this one).
+      const ask = setInterval(() => (link.state === "joining" ? replica.join() : clearInterval(ask)), 1500);
+      setInterval(() => replica.tick(), 1000);
+    });
+  } else {
+    Promise.all([loadFacts(), ...stackDoc.packs.map(async (p) => (await fetch(new URL(p, document.baseURI))).json())])
+      .then(([, ...packs]) => openBrowserSession({ base: document.baseURI, seat: gmSeat(), universe: facts.universe, packs }))
+      .then(async (s) => {
+        const bad = await enterFacts(s, facts);
+        if (bad) throw new Error(`recorded facts refused: ${JSON.stringify(bad)}`);
+        session = s;
+        await useScreen(s);
+        await refresh();
+        stateHash = await s.stateHash();
+      })
+      .catch((e) => (sceneErrors = [String(e)]));
+  }
 
   let selection = $state<string | null>(null);
   // The Scanned control acts on the body in focus; the kernel says which view each tap left in force.
@@ -110,7 +235,19 @@
     savePref("effects", effects ? "on" : "off");
   });
 
-  const mark = (x: PlayerScene["subjects"][number]) => marker.mark(playerSubjectOf(x));
+  // Light (O1): players see light only from facts their data view gives them.
+  const LIGHT_RECIPES = (lightDoc.recipes as unknown as BandRecipe[]).filter((r) => !checkLightRecipe(r).length);
+  let lightId = $state(SYMBOLS);
+  const lit = $derived(scene ? describeLight(litFromPlayers(scene)) : { lights: [], missing: [] });
+  const lightNames = $derived(new Map((scene?.subjects ?? []).map((x) => [x.address, subjectName(x)])));
+  const lightColours = $derived.by(() => {
+    const r = LIGHT_RECIPES.find((x) => x.id === lightId);
+    return r ? paint(r, lit.lights) : null;
+  });
+  const mark = (x: PlayerScene["subjects"][number]) => {
+    const m = marker.mark(playerSubjectOf(x));
+    return lightColours ? { ...m, colour: lightColours.get(x.address) ?? null } : m;
+  };
   const star = $derived(scene ? scene.subjects.find((s) => s.address === scene!.scope) : undefined);
 </script>
 
@@ -119,7 +256,7 @@
     <h1>{star ? subjectName(star) : "System"}</h1>
     <span class="kicker">{screenDoc?.label ?? "…"}{screenDoc?.data_view ? ` · seen through ${screenDoc.data_view}` : ""} · audience {scene?.audience ?? "…"}</span>
     <span class="spacer"></span>
-    {#if !screenDoc?.data_view}
+    {#if !screenDoc?.data_view && !joined}
     <Segmented
       label="Sensor data"
       value={which}
@@ -137,6 +274,14 @@
       <select bind:value={symbology}>{#each SHIPPED as d (d.id)}<option value={d.id}>{d.name}</option>{/each}</select>
     </label>
     {#if themeDoc.filters?.length}<label class="pick"><input type="checkbox" bind:checked={effects} /> Screen effects</label>{/if}
+    {#if joined && link.state !== "live"}
+      <div class="banner" role="status" aria-label="Game master" data-link={link.state}>
+        {#if link.state === "joining"}Joining the game master…
+        {:else if link.state === "resync"}Catching up with the game master ({link.reason})…
+        {:else if link.state === "offline"}<strong>The game master is away.</strong> This is the last state they shared, read only. It updates when they are back.
+        {:else if link.state === "reload"}<strong>{link.reason}</strong> <button type="button" onclick={() => location.reload()}>Reload</button>{/if}
+      </div>
+    {/if}
   </header>
   {#if (checked && !checked.ok) || sceneErrors.length}
     <main class="problem" role="alert"><h2>This screen cannot be shown</h2><ul>{#each [...(checked && !checked.ok ? checked.errors : []), ...sceneErrors] as e (e)}<li>{e}</li>{/each}</ul></main>
@@ -147,7 +292,20 @@
       <main class="grid"><ScreenRuntime screen={checked.screen} {scene} {vocab} {mark} bind:selection /></main>
     {/key}
   {/if}
-  <footer class="status">Scene: live from the kernel for the {AUDIENCE} audience{sceneHash ? ` · scene ${sceneHash.slice(0, 10)}` : ""} {screenDoc?.data_view ? ` · fixed to the ${screenDoc.data_view} view by the screen document` : ` · the Scanned control stands in for the GM's button and taps it for ${target ? subjectName(target) : "the body in focus"}`}</footer>
+  {#if joined && scene && mayAsk}
+    <section class="ask" aria-label="Ask the game master">
+      <form onsubmit={(e) => (e.preventDefault(), askName())}>
+        <label>Suggest a name for {target ? subjectName(target) : "the body in focus"} <input type="text" bind:value={ask} maxlength="40" disabled={link.state !== "live" || !target} /></label>
+        <button type="submit" disabled={link.state !== "live" || !target || !ask.trim()}>Ask the game master</button>
+      </form>
+      {#if askError}<p class="err">{askError}</p>{/if}
+      {#if mine.length}
+        <ul>{#each mine as r (r.id)}<li data-own-request={r.status}>{r.intent.kind === "set_value" ? `"${r.intent.value}"` : r.intent.kind}: {r.status === "waiting" ? "waiting for the game master" : r.status}{r.reason ? ` (${r.reason})` : ""}</li>{/each}</ul>
+      {/if}
+    </section>
+  {/if}
+  {#if scene}<div class="soundbar"><LightControl recipes={LIGHT_RECIPES} lights={lit.lights} missing={lit.missing} names={lightNames} bind:value={lightId} key="light.players" /><SoundControl scene={orbitScene(scene.scope, voicesFromPlayers(scene))} key="sound.players" /></div>{/if}
+  <footer class="status" data-state-hash={stateHash} data-scene-hash={sceneHash} data-sealed={isSealed || undefined} data-seat={joined ? seatId : undefined} data-audience={audience} data-link={joined ? link.state : "local"} data-via={via}>Scene: live from {isSealed ? "the game master's machine (sealed seat: this screen holds no seed and runs no kernel)" : joined ? "this screen's kernel, in step with the game master" : "the kernel"} {via ? ` (via ${via === "relay" ? "the site's relay" : "this browser"})` : ""} for {seatLabel && seatId !== "table" ? `the seat ${seatLabel}, ` : ""}the {audience} audience{sceneHash ? ` · scene ${sceneHash.slice(0, 10)}` : ""}{stateHash ? ` · state ${stateHash.slice(0, 10)}` : ""} {joined ? "" : screenDoc?.data_view ? ` · fixed to the ${screenDoc.data_view} view by the screen document` : ` · the Scanned control stands in for the GM's button and taps it for ${target ? subjectName(target) : "the body in focus"}`}</footer>
 </div>
 <FilterChain {layers} />
 
@@ -165,7 +323,7 @@
   .page {
     min-height: 100dvh;
     display: grid;
-    grid-template-rows: auto 1fr auto;
+    grid-template-rows: auto 1fr auto auto;
   }
   .bar {
     display: flex;
@@ -190,6 +348,43 @@
   .spacer {
     flex: 1;
   }
+  .ask {
+    padding: 8px 24px 12px;
+    font-size: 13px;
+  }
+  .ask form {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    align-items: center;
+  }
+  .ask input,
+  .ask button {
+    min-height: 36px;
+    font: inherit;
+  }
+  .ask ul {
+    margin: 6px 0 0;
+    padding-left: 18px;
+  }
+  .ask .err {
+    margin: 4px 0 0;
+    color: var(--sse-alert, currentColor);
+  }
+  .banner {
+    flex-basis: 100%;
+    padding: 8px 12px;
+    border: var(--sse-line) solid var(--sse-ink);
+    border-left-width: 4px;
+    border-radius: var(--sse-radius);
+    background: var(--sse-ground-raised);
+    font-size: 14px;
+  }
+  .banner button {
+    margin-left: 8px;
+    min-height: 32px;
+    font: inherit;
+  }
   .pick {
     display: flex;
     gap: 8px;
@@ -208,6 +403,15 @@
   }
   .grid {
     padding: 20px 24px;
+  }
+  .soundbar {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px 18px;
+    padding: 6px 24px 0;
+    font-family: var(--sse-font-body);
+    font-size: 12px;
+    color: var(--sse-ink-muted);
   }
   .status {
     padding: 8px 24px;

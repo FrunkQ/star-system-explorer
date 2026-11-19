@@ -27,11 +27,19 @@ export type Intent =
    * subject, or take it back on a second tap (K9 scan_toggle, chronicled as
    * an observe.grant). Only a seat with GM authority applies it.
    */
-  | { kind: "scan_toggle"; address: string; audience: string; at_yr: number };
+  | { kind: "scan_toggle"; address: string; audience: string; at_yr: number }
+  /**
+   * Grant an audience a data view of one subject and everything under it
+   * (K9 grant, chronicled as observe.grant: "Vesh learned Tarn"). `view`
+   * null takes the grant back, so the subject falls back to its parent, its
+   * tags and the defaults. `default` sets the audience's starting view
+   * instead (address: the universe root). Only the GM applies it.
+   */
+  | { kind: "grant"; address: string; audience: string; view: string | null; default?: boolean; at_yr: number };
 
 export type IntentKind = Intent["kind"];
 
-export const INTENT_KINDS: readonly IntentKind[] = ["set_value", "adopt_physics", "stack_packs", "scan_toggle"];
+export const INTENT_KINDS: readonly IntentKind[] = ["set_value", "adopt_physics", "stack_packs", "scan_toggle", "grant"];
 
 /** Machine-readable description of an intent a view may send (H8.1 `intents`). */
 export interface IntentSchema {
@@ -76,6 +84,14 @@ export function checkIntent(i: Intent): string | null {
     if (!Number.isFinite(i.at_yr)) return "time must be finite";
     return null;
   }
+  if (i.kind === "grant") {
+    if (!i.address.startsWith("u:")) return "address must start with u:";
+    if (!/^[a-z0-9][a-z0-9._-]*$/.test(i.audience)) return "audience must be a lower-case name";
+    if (i.view !== null && (typeof i.view !== "string" || !i.view)) return "view must be a data view id, or null to take the grant back";
+    if (i.default && i.view === null) return "a starting view cannot be taken back, only replaced";
+    if (!Number.isFinite(i.at_yr)) return "time must be finite";
+    return null;
+  }
   if (i.kind !== "set_value") return `unknown intent kind ${(i as { kind: string }).kind}`;
   if (!i.address.startsWith("u:")) return "address must start with u:";
   if (!/^[a-z][a-z0-9_.-]*$/.test(i.field)) return "field must be a lower-case name";
@@ -93,6 +109,7 @@ export function intentToRequest(i: Intent, stack: { opening: readonly unknown[];
   if (i.kind === "adopt_physics") return { op: "load_stack" as const, packs: [...stack.opening, ...stack.added, ...top(i.pack)] };
   if (i.kind === "stack_packs") return { op: "load_stack" as const, packs: [...stack.opening, ...i.packs, ...top(stack.campaign)] };
   if (i.kind === "scan_toggle") return { op: "scan_toggle" as const, address: i.address, audience: i.audience, at_s: yearsToSeconds(i.at_yr) };
+  if (i.kind === "grant") return { op: "grant" as const, address: i.address, audience: i.audience, ...(i.view !== null ? { view: i.view } : {}), ...(i.default ? { default: true } : {}), at_s: yearsToSeconds(i.at_yr) };
   return {
     op: "set_authored" as const,
     edit: {

@@ -90,3 +90,65 @@ pub fn golden() -> serde_json::Value {
         "manifest": a.manifest.id().hex(),
     })
 }
+
+use sse_formation::pipeline::{run as form_run, Block, SystemRun};
+
+/// The first `n` G0 solar-patch systems through the formation pipeline.
+pub fn generated_runs(n: usize) -> Vec<SystemRun> {
+    sse_formation::scenario::solar_patch()
+        .into_iter()
+        .flatten()
+        .take(n)
+        .map(|h| form_run(h, Block::Modern))
+        .collect()
+}
+
+/// A Sun-like star (1 solar mass, alone, 4.57 Gyr) from the stand-in envelope.
+pub fn sunlike(n: u64) -> SystemRun {
+    let mut man = sse_formation::Manifest::new(
+        "f7-sunlike",
+        sse_formation::scenario::system(n),
+        sse_formation::scenario::envelope(),
+    );
+    man.star_pins.primary_mass = Some(1.0);
+    man.star_pins.count = Some(1);
+    man.inherit_pins.age_gyr = Some(4.57);
+    form_run(
+        sse_formation::FormationHistory::form(man).expect("forms"),
+        Block::Modern,
+    )
+}
+
+/// Ten billion years past now, or to 1 Gyr past the star's end if sooner.
+pub fn target(r: &SystemRun) -> f64 {
+    let s = settings();
+    let now = r.history.inheritance.age_gyr * 1000.0;
+    let star =
+        crate::star::AgeingStar::new(r.history.stars[0].mass, r.history.inheritance.z, s.star)
+            .expect("star");
+    (now + 10_000.0)
+        .min(star.line.t_end + 1000.0)
+        .max(now + 1.0)
+}
+
+/// F7 golden: three G0 systems and one Sun-like system aged through their
+/// long life, the merged story dated, identical on every device.
+pub fn generated_golden() -> serde_json::Value {
+    let settings = settings();
+    let mut all = generated_runs(3);
+    all.push(sunlike(5));
+    let out: Vec<_> = all
+        .iter()
+        .map(|r| {
+            let a = crate::generated::long_life(r, &settings, target(r)).expect("ages");
+            serde_json::json!({
+                "system": a.spec.system,
+                "story": a.story.iter().map(|s| serde_json::json!({
+                    "age_myr": s.age_myr, "kind": s.kind, "from": s.from,
+                })).collect::<Vec<_>>(),
+                "digest": ContentHash::of(&serde_json::to_string(&a).expect("json")).expect("hash").hex(),
+            })
+        })
+        .collect();
+    serde_json::Value::Array(out)
+}
