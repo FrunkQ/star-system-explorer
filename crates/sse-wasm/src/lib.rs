@@ -22,6 +22,7 @@ pub fn engines_run() -> String {
         "classify": sse_sift::scenario::classify_golden(),
         "life": sse_life::scenario::golden(),
         "place": sse_place::scenario::golden(),
+        "time": sse_time::scenario::golden(),
         "formation-accrete": sse_formation::scenario::accrete_golden(),
         "formation-accrete-dole": sse_formation::scenario::accrete_dole_golden(),
         "formation-growth": sse_formation::scenario::growth_golden(),

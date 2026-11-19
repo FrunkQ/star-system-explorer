@@ -285,7 +285,11 @@ impl Chronicle {
         let last = b
             .events
             .last()
-            .or_else(|| self.events.get(b.base as usize - 1).filter(|_| b.base > 0))
+            .or_else(|| {
+                b.base
+                    .checked_sub(1)
+                    .and_then(|i| self.events.get(i as usize))
+            })
             .map(|x| x.body.recognised_at);
         // causes may only be in the main prefix the branch was cut from, or in the branch
         let prefix: BTreeSet<ContentHash> = self.events[..b.base as usize]
