@@ -314,6 +314,7 @@ The engines above say what is true. This one remembers what was done and lets th
 - **Triggers and effects**: when an event arrives, a condition becomes true or a time is reached, an effect flow proposes changes (set a kept value, add a note, grant a data view, send an intent). Every effect passes one gate on the GM's machine with an approval policy (auto, ask, ask if) and becomes an ordinary event with its causes.
 - **Programs**: small state machines (sense through the owner's own sensors and audience, decide with a box of logic, act by sending an intent). A program is a seat driven by a flow, with the same `may_send` and `auto_approve` limits. Autopilot is the first use. Look-ahead runs programs forward.
 - **Turns and held orders** are optional and off by default.
+- **Secrecy**: the universe is shared, the record is need-to-know. The record is computed only on the GM's machine and each seat is sent only what its audience may see, as disclosures, never raw events. Dice use a table secret, not the universe seed. A pack may declare a campaign `competitive`, which requires sealed seats (8.7). Section 8A of the design file governs.
 - Two walls: the record never feeds RESOLVE, and never feeds physics except through an explicit, tagged `set_pin` effect. No LLM runs inside a program.
 
 A game (a 4X, a trading game) is then a pack using these parts; SSE4 does not grow a separate game engine.
@@ -545,7 +546,7 @@ Audience { id, label, tag?: TagId }   a knowledge group; "everyone" always exist
 - **Roles** are seats with a screen and a `may_send` list. Players still command, never pilot.
 - **Program seats [decided 19 Nov]**: a seat may be driven by a program instead of a person (an autopilot, a non-player empire), under the same `may_send` and `auto_approve` limits. See 6.9.
 - **Joining**: each seat has its own join link or code. The default link goes to "Table".
-- **Sealed seats.** Ordinary seats use soft filtering (players hold the seed; hacking your own instance is accepted). That is wrong for competitive fog of war, where one player peeking spoils the game for others. A sealed seat receives only finished, filtered scene data from the GM's machine and never the seed. Cost: the GM's machine builds those scenes, so it carries more load, and sealed seats need the GM online. This brings back, for sealed seats only, the strict option that was dropped as a general feature. [recommended; needs Alex's yes]
+- **Sealed seats.** Ordinary seats use soft filtering (players hold the seed; hacking your own instance is accepted). That is wrong for competitive fog of war, where one player peeking spoils the game for others. A sealed seat receives only finished, filtered scene data from the GM's machine and never the seed. Cost: the GM's machine builds those scenes, so it carries more load, and sealed seats need the GM online. This brings back, for sealed seats only, the strict option that was dropped as a general feature. [recommended; needs Alex's yes] **[19 Nov]** A game-system pack may declare its campaign `competitive`, which makes sealed seats required for every player seat; the GM can override knowingly, with a standing banner on every seat.
 - **UI rule**: with one seat, the session panel shows one line ("Everyone sees: Bridge approach") and a quiet "More seats" link. With several, a seat list replaces the line. Nothing else in the app changes.
 
 ### 8.8 Is the GM interface just another interface built from the same parts?
@@ -596,6 +597,7 @@ All long calls are cancellable and report progress in work units.
 ### 9.2 Peer-to-peer
 
 - Player apps and the kernel load from Cloudflare. The GM's machine serves no pages **[decided]**.
+- **Record data is the exception to everything below [decided 19 Nov]**: notes, kept values, held orders, dice and program state are never broadcast and never recomputed by players; each seat gets its own filtered stream (`SSE4-record-logic-programs-design.md` 8A). The state hash that players check covers the universe, not the record.
 - The GM is the single writer. Over the existing P2P data channel the GM sends: the run manifest (seed, pack stack hashes), authored events as they happen, the session clock, data-view state, approved intents, and results of anything players must not or cannot recompute.
 - Players run the same kernel and resolve and derive locally for their own views.
 - **Determinism classes**: Class A (the Rust kernel: bit-exact everywhere) may be recomputed on any device. Class B (anything not proven bit-exact across devices: a detailed heavy block, an external suite such as today's TypeScript Evolution Lab core, anything LLM-written) is computed once on the GM's machine and travels as recorded chronicle data. Players never recompute Class B.

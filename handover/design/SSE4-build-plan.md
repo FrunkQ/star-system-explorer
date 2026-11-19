@@ -125,7 +125,7 @@ Tracks can run in parallel once their dependencies are met. `needs` lists packag
 
 ### N: sound. Stages N1 to N7 exactly as `SSE4-sound-design.md` section 7, one package each. Off by default, synthesised from data-only recipes, no baked audio.
 
-### J: the campaign record, logic blocks, boxes and programs **[decided 19 Nov]**. Stages J1 to J9 exactly as `SSE4-record-logic-programs-design.md` section 10, one package each. J1 (needs K3, K5, K9), J2 (K4, K8) and J3 (K4, K5) can start now. Read that file's section 9 first: it lists four points of care against code already built (flow document hashes, note filtering in scenes, the intent list moving into the kernel, and X3d building on J4 and J7).
+### J: the campaign record, logic blocks, boxes and programs **[decided 19 Nov]**. Stages J1 to J9 exactly as `SSE4-record-logic-programs-design.md` section 10, one package each. J1 (needs K3, K5, K9), J2 (K4, K8) and J3 (K4, K5) can start now. Read that file's section 9 first: it lists five points of care against code already built (flow document hashes, note filtering in scenes, the intent list moving into the kernel, X3d building on J4 and J7, and record data leaving the peer-to-peer broadcast). Section 8A (secrecy: what each device receives) binds every J package.
 
 ### A: agents
 

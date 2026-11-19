@@ -66,7 +66,7 @@ There is also a schema-free corner for the GM and Orac: any address can hold fie
 
 ### 2.3 Who sees what
 
-Notes and kept values pass through data views exactly as facts do (H6.7). A kept kind has a tier; a note has an audience list or a tier. Scene building drops what the audience may not see. For sealed seats nothing changes: they only ever receive finished scenes. For ordinary seats, a note or kept value whose audience excludes them is **not sent**, the same rule as `secret` authored facts today.
+Notes and kept values pass through data views exactly as facts do (H6.7). A kept kind has a tier; a note has an audience list or a tier; a data view can show a kept value exactly, rounded, as a band or not at all (an enemy fleet's strength as "strong"). What actually travels to each device, and the stricter rules for competitive play, are in section 8A, which governs.
 
 Players can write notes: `add_note` is an intent. The default seat may send it, it is auto-approved for notes the seat addresses to its own audience (a party journal), and the GM sees every note. Anything a player wants on the shared record ("we told the governor we'd be back") goes to the GM for approval like any intent.
 
@@ -117,7 +117,9 @@ The flow editor can show any condition as blocks and edit it there; the compact 
 
 ### 3.4 Chance stays deterministic
 
-A `roll` atom is a keyed draw: `draw(seed, subject address, "<program or flow id>.<node id>.v1", counter)` where the counter is the index of the tick or turn (5.4), never a running generator. Same campaign, same orders, same dice, on every device and in every look-ahead. A GM who wants real dice at the table uses "ask the GM" approval (5.3) and types the result in, which is then an authored value with the roll's place in the trace.
+A `roll` atom is a keyed draw: `draw(table_secret, subject address, "<program or flow id>.<node id>.v1", counter)` where the counter is the index of the tick or turn (5.4), never a running generator. Same campaign, same orders, same dice, in every replay and look-ahead on the GM's machine.
+
+**Dice do not use the universe seed.** Ordinary seats hold the universe seed (H6.7), so a roll keyed on it could be worked out in advance by any player. Rolls are keyed on a separate **table secret** that never leaves the GM's machine (8A.3). A GM who wants real dice at the table uses "ask the GM" approval (5.3) and types the result in, which is then an authored value with the roll's place in the trace.
 
 ### 3.5 Engine blocks: the classifier and other heavy, unique blocks **[decided 19 Nov, Alex]**
 
@@ -187,7 +189,7 @@ The GM can change the policy per rule without editing the pack. Default for anyt
 
 ### 5.4 Order and determinism
 
-At a time boundary, fired triggers run in a fixed order: phase (declared by the pack), then trigger id, then subject address. Effects from one pass are applied together and may fire further triggers in a next pass, up to a declared pass limit (default 8); hitting the limit is reported with the chain, never silently cut. Everything here is Class A (H9.2) so players' kernels reach the same record from the same events; an `ask` answer travels as the GM's event.
+At a time boundary, fired triggers run in a fixed order: phase (declared by the pack), then trigger id, then subject address. Effects from one pass are applied together and may fire further triggers in a next pass, up to a declared pass limit (default 8); hitting the limit is reported with the chain, never silently cut. Everything here is deterministic and replays bit-identically **on the GM's machine**. It is not recomputed on player devices: doing so would need every hidden input (other actors' kept values, held orders, the table secret). Players receive results, filtered (8A).
 
 ### 5.5 First uses (none of them a game)
 
@@ -245,6 +247,8 @@ The pirate can be fooled: it sees only what its sensors reveal, so a ship runnin
 
 **What the universe then shows.** Each loss is an event and a note: `add_note` "the freighter Calla was taken off Tarn's second moon", visible to the audiences who would know (the route's owner at once, others when news reaches them by `activated_at`). A consequence rule lowers the route's `safety` and raises the band's `notoriety`. A sifter surfaces "piracy rising at the Tarn refuelling stop" in the story finder with the events as evidence, and Minerva can write the rumour. On look-ahead the GM sees where the pirates and patrols will be when the players arrive, and the players' own trip planner shows the hazard only if their audience has heard of it.
 
+Where programs run: on the GM's machine only. A program's document is pack data and so is public; its parameters, current state, target and plans are kept values owned by its actor and are disclosed only to that actor's audience. A seat that owns a program sees its state and can ask the GM's machine for a preview of what it will do; the preview is built from that seat's knowledge only.
+
 Agents and programs: Orac *writes* programs and boxes as change requests. No LLM runs inside one. A program is fixed logic and enters the state hash; an LLM never does (H13).
 
 ## 7. Turns and held orders (optional, off by default)
@@ -252,8 +256,9 @@ Agents and programs: Orac *writes* programs and boxes as change requests. No LLM
 For games, and for RPG downtime ("what does everyone do this week?"):
 
 - A pack may declare a **turn**: a named step of universe time and a list of phases.
-- In a turn-based session an intent can be **held**: it is validated on arrival (`on_intent`), stored sealed (other audiences do not see it; the GM does), and applied when the GM presses "resolve turn".
+- In a turn-based session an intent can be **held**: it is validated on arrival (`on_intent`), stored sealed on the GM's machine (it is never sent to any other seat, in any form, before resolution; the GM sees it), and applied when the GM presses "resolve turn".
 - Resolution runs the phases in order under 5.4. The result does not depend on the order in which orders arrived.
+- Orders are never published as orders, even after resolution: other seats learn only the consequences their audience can see. A pack may let seats see *that* a seat has submitted (a flag), never what.
 - Each seat then gets a turn report: the events its audience can see, which Minerva can word.
 
 Nothing in the default session changes. A campaign with no turn declared never sees any of this.
@@ -262,16 +267,73 @@ Nothing in the default session changes. A campaign with no turn declared never s
 
 H7A part 7 has stock ships and bases as templates for Traveller. Generalised: a pack declares **templates** (ship, unit, structure, module, station, faction) as a set of kept kinds with defaults, the tags it carries and the programs it may run. `create` makes an authored object from one, in the authored namespace. Traveller's constructs become the first use.
 
+## 8A. Secrecy: what each device receives **[added 19 Nov after Alex: "we will have to be careful we don't transmit too much to clients"]**
+
+### 8A.1 The rule
+
+**The universe is shared; the record is need-to-know.**
+
+- The *universe* (seed, packs, physics) is public knowledge among ordinary seats, as ruled (H6.7): they hold the seed and their own kernel filters what they see. That is trust-based and fine for an RPG table.
+- The *record* (notes, kept values, relations, held orders, program state, dice, automatic effects) is never recomputed on a player device and never broadcast. It is computed once on the GM's machine, and each seat is sent only what its audience may see, at the time it may see it. This holds for every seat, sealed or not, in every campaign, with no setting to turn it off.
+
+### 8A.2 What a seat's device receives
+
+| Thing | Sent to a seat |
+|---|---|
+| Notes | only those whose audience includes the seat's, and not before the note's `activated_at` for that audience (news that has not arrived is not on the device with a future date; it is not on the device) |
+| Kept values | only kinds its data view shows, at that view's precision (exact, rounded, band); a band is sent as a band, not as the number plus a hint to round it |
+| Other actors' held orders | nothing, before or after resolution; optionally a "has submitted" flag if the pack allows |
+| Its own held orders | echoed back to that seat alone |
+| Dice | the outcome of a roll, when the outcome is visible to it; never the table secret, never a future roll |
+| Program state | its own programs' state; for others, only what its sensors and data view reveal of their behaviour (where the ship is, not what it intends) |
+| Trigger and effect results | the resulting change if visible to it; not the rule firing, not hidden inputs |
+| "Why?" on a record value | the explanation with every input its audience cannot see replaced by "undisclosed" |
+| Snapshots and resync | the same filtered set; a resync is never a shortcut to the full record |
+
+Seats are sent **disclosures**, not raw chronicle events. A raw event carries its causes and a content-hash id; a hash of hidden, guessable content ("did Vesh order an attack on Tarn?") can be confirmed by guessing, so neither hidden causes nor their ids are sent. A disclosure is a per-audience record: subject, time, the visible part of the payload, the permitted explanation, and an id that is meaningful only within that seat's stream.
+
+Consequences:
+
+- **Two hashes.** The universe state hash (physics and shared authored facts) is still checked by every ordinary seat as now (H9.2). The record has its own hash, held by the GM. Each seat also keeps a running hash of its own disclosure stream so it can detect a lost message and ask for a resync.
+- **Volume.** Disclosures are batched per time boundary and a seat gets only its own, so background activity it cannot see (pirates in an unvisited system) costs it nothing.
+- **Channels.** Record data goes on a per-seat channel, never a broadcast. If the session uses the relay Worker, record traffic must be encrypted end to end between the GM and that seat so the relay carries only ciphertext. A seat's join link is its credential; the GM can reissue it.
+- **Packs are public.** Everyone loads the same packs from the web, so a pack must not hold scenario secrets (a hidden faction's plan, a planted artefact). Those are authored record entries made on the GM's machine at setup, by the GM, Orac or a pack's setup effect.
+- **Agents.** A player's own key and Minerva on a player device see only that seat's disclosures. On the GM's machine, text written for a seat is built only from that audience's facts (H13).
+
+### 8A.3 The table secret
+
+A second secret beside the universe seed, generated on the GM's machine when a campaign first uses a roll, held only there, never in the run manifest that players receive. All record dice are keyed on it (3.4).
+
+At creation the GM's machine sends every seat a commitment (a hash of the secret). The GM may reveal the secret when the game ends, or never; if revealed, any player can replay the dice and check that none was altered. This costs nothing in play and answers "did the umpire fudge it?" for those who care. A GM typing in real dice (5.3) is recorded as such.
+
+Look-ahead that includes dice or other actors runs on the GM's machine only. A player device's own look-ahead covers the shared universe (orbits, ageing), as now.
+
+### 8A.4 Secrecy levels and competitive play
+
+A campaign has one of two secrecy levels, declared by the game-system pack and shown in session settings:
+
+| Level | Map and physics | Record | For |
+|---|---|---|---|
+| `table` (default) | on trust: ordinary seats hold the seed, soft filter (H6.7) | need-to-know (8A.1) | RPG play, co-operative games |
+| `competitive` | **sealed seats required** (H8.7): no seed, finished scenes only | need-to-know | 4X and any game where one player peeking spoils it for the rest |
+
+- At `table` level a determined player can still explore the whole map from the seed, but cannot read another party's notes, a faction's standing, held orders or dice. For an RPG that is the right line.
+- At `competitive` level the session will not hand out an ordinary seat link. The GM may override to "open table" knowingly; every seat then shows a standing banner that fog of war is on trust. A pack cannot silently downgrade.
+- Sealed seats need the GM's machine online and it builds their scenes; turn-based play makes that cheap (once per seat per turn). With the GM offline a sealed seat is read-only on its last scenes, and may queue its orders locally to send on reconnect.
+- A sealed seat's device holds no seed, no table secret, no unfiltered fact and no other seat's disclosure. That is the acceptance check, by state inspection of the device.
+
 ## 9. What changes in what is already built
 
-Checked against `main` at 19 Nov (after PR 6). Everything is additive, but four points need care.
+Checked against `main` at 19 Nov (after PR 6). Everything is additive, but five points need care.
 
 | Area | Built today | Change |
 |---|---|---|
 | Chronicle (`sse-chronicle`) | event kinds are strings; payload has `set`, `unset`, free `data`; `authored.event` exists | **No code change to the fold.** New kind names `record.note`, `record.set`, `turn.*`. Notes ride in `data`; kept values ride in `set`. |
 | Flow engine (`sse-flow`) | nodes are atom or solve; all values are `f64`; no boxes | Add `box` to nodes, shapes to ports, a typed value beside the numeric fast path. **Care 1:** a flow document's content hash is taken over the whole parsed document, so new optional fields must be left out when absent or every existing flow hash and golden hash will change. Acceptance check: all existing hashes identical. |
 | Rules and sifters (`sse-sift`) | predicates over one subject's facts and its parent | The predicate becomes the shared condition language. Additive: read kept values and note counts. No rewrite of classification. |
-| Data views (`sse-observe`) | grants by audience and tag; scenes filter facts | **Care 2:** scenes must also filter notes and kept values by audience, and the peer-to-peer sender must not send notes an ordinary seat may not see. |
+| Data views (`sse-observe`) | grants by audience and tag; scenes filter facts | **Care 2:** scenes must also filter notes and kept values by audience and precision. |
+| Peer-to-peer (shell, H9.2) | the GM sends authored events to players as they happen; players check one state hash | **Care 5 (8A):** record events are excluded from that stream. Each seat gets its own disclosure stream on a per-seat channel, end-to-end encrypted if relayed. The state hash splits into a universe hash (checked by all, as now) and a record hash (GM only). The run manifest must never carry the table secret. |
+| Keyed draws (`sse-core`) | one master seed | A second root, the table secret, for record dice only. Same generator, different key; universe draws are untouched. |
 | Intents (`packages/ui-contract`) | a closed TypeScript list of five kinds, checked in the UI | **Care 3:** programs run in the kernel and send intents, and packs add intent kinds, so the intent list has to become a registry the kernel knows (declared in Rust or in packs, exported to TypeScript), not a UI-only union. This is the largest change to built code. |
 | Seats (`packages/ui-contract`, shell) | seats for people | A seat may be driven by a program. Additive field. |
 | Kernel protocol | requests as listed in H9.1 plus additions | New requests: `add_note`, `set_kept`, `record(address, range)`, `attach_program`, `resolve_turn`. Additive. |
@@ -285,14 +347,14 @@ One package each. `needs` uses build-plan ids.
 
 | Id | Package | Needs | Acceptance checks |
 |---|---|---|---|
-| J1 | The record: notes, kept kinds and the writer rule, `misc` fields, actors and relations, audience filtering in scenes, kernel requests | K3, K5, K9 | a note addressed to one audience is absent from another seat's scene and from what is sent to it; a kept value folds from its events and explains itself; an unlisted writer is refused; unloading the pack leaves values readable; an empty-record universe keeps its old state hash |
-| J2 | Typed values and the logic atom set; conditions shared with K8; `roll` as a keyed draw; the engine block kind, with `classify` and `place` as the first two | K4, K8, C3 | every existing flow hash and golden hash unchanged; truth tables for every atom; a K8 rule and the same condition as blocks give identical results and evidence; rolls independent of evaluation order; `classify` wired into a flow gives the same label and explanation as the class atlas for the fixture worlds |
+| J1 | The record: notes, kept kinds and the writer rule, `misc` fields, actors and relations, audience filtering in scenes, kernel requests | K3, K5, K9 | a note addressed to one audience is absent from another seat's scene and from every byte sent to it, checked by inspecting the device's stream; a note with a later `activated_at` is not sent early; a banded kept value is sent as the band; disclosures carry no hidden cause ids; universe hash unchanged by record activity; a kept value folds from its events and explains itself; an unlisted writer is refused; unloading the pack leaves values readable; an empty-record universe keeps its old state hash |
+| J2 | Typed values and the logic atom set; conditions shared with K8; `roll` as a keyed draw; the engine block kind, with `classify` and `place` as the first two | K4, K8, C3 | every existing flow hash and golden hash unchanged; truth tables for every atom; a K8 rule and the same condition as blocks give identical results and evidence; rolls independent of evaluation order and keyed on the table secret, so a device holding only the universe seed cannot reproduce one; the commitment verifies after reveal; `classify` wired into a flow gives the same label and explanation as the class atlas for the fixture worlds |
 | J3 | Boxes: documents, nesting, inlining, explain, tests, replace | K4, K5 | a boxed flow equals its hand-inlined twin value for value and trace for trace; self-containing box rejected with a readable report; depth limit reported; a pack replaces a box explicitly |
-| J4 | Triggers, effects, the gate and approval policies | J1, J2, V5 | the sensor ladder fixture moves a body up at the right range and time; an `ask` effect changes nothing until approved; a run replays bit-identically; pass limit reported with its chain |
+| J4 | Triggers, effects, the gate and approval policies | J1, J2, V5 | the sensor ladder fixture moves a body up at the right range and time; an `ask` effect changes nothing until approved; triggers and effects run on the GM's machine only and a player device receives results, never inputs it may not see; a run replays bit-identically; pass limit reported with its chain |
 | J5 | Intent registry in the kernel, pack-declared intent kinds, program-driven seats | J4, V10 | the five existing intents behave as before through the registry; a pack adds an intent with a validity condition; a program seat cannot send outside its `may_send` or scope |
 | J6 | Programs: state machines, sensing through the owner's audience, ticks, look-ahead | J3, J5, T3 | the mining drone fixture surveys, travels, mines and returns; it never acts on a fact its sensors have not revealed (checked by state inspection); a look-ahead branch equals the committed run; the pirate, patrol and engagement fixture of 6.1 runs for a simulated year with background fights resolved, a player-ship fight stopped for approval, and the program limit enforced |
 | J7 | Templates and `create` / `retire` | J1 | a ship made from a template carries its kept values and may run only its listed programs; removing the pack leaves the object valid |
-| J8 | Turns and held orders | J4, V10 | three-seat fixture: held orders are invisible to other seats; the resolved state is identical for every arrival order; each seat's turn report holds only what it may see |
+| J8 | Turns and held orders | J4, V10 | three-seat fixture at `competitive` level: an ordinary seat link is refused; held orders never leave the GM's machine and are absent from other seats' devices before and after resolution; no seat can obtain a turn's dice before it resolves; the resolved state is identical for every arrival order; each seat's turn report holds only what it may see |
 | J9 | Interface: record on cards and the time ruler, note entry for GM and players, relations lens, condition and box editing in the flow editor, program editor (state view), approval queue for effects | U2, U3, U4, J1 to J6 | screenshots at desktop and phone widths in both GM modes; a note added by a player appears for the GM and that seat only; a program edited by Orac shows as a diff before accept |
 
 Orac's scope (A2) widens to boxes, conditions, programs, triggers, templates and kept kinds, all as validated change requests.
