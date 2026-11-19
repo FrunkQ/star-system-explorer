@@ -13,3 +13,5 @@ export type { FateEvent } from "./generated/FateEvent";
 export type { FateSnapshot } from "./generated/FateSnapshot";
 export type { FateStar } from "./generated/FateStar";
 export type { FatePlanet } from "./generated/FatePlanet";
+export type { FormationRequest } from "./generated/FormationRequest";
+export type { TileRequest } from "./generated/TileRequest";

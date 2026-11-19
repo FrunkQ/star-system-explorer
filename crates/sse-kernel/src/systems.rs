@@ -66,7 +66,42 @@ fn parse<T: serde::de::DeserializeOwned>(what: &str, v: serde_json::Value) -> Re
     serde_json::from_value(v).map_err(|e| err("bad_request", format!("{what}: {e}")))
 }
 
+impl From<crate::protocol::FormationRequest> for FormArgs {
+    fn from(r: crate::protocol::FormationRequest) -> Self {
+        FormArgs {
+            seed: r.seed,
+            system: r.system,
+            block: r.block,
+            birth: r.birth,
+            now_gyr: r.now_gyr,
+            envelope: r.envelope,
+            inherit_pins: r.inherit_pins,
+            star_pins: r.star_pins,
+            pins: r.pins,
+        }
+    }
+}
+
 pub(crate) fn run_formation(a: FormArgs) -> Out {
+    let (system, run, pinned) = form(a)?;
+    let s = surface::settings();
+    let surfaces = sse_surface::envelopes_of(&run, &s)
+        .iter()
+        .map(to_json)
+        .collect();
+    Ok(Response::FormationRan {
+        system: system.to_string(),
+        pipeline: pipeline::PIPELINE_VERSION.to_string(),
+        run: to_json(&run),
+        pinned,
+        surfaces,
+    })
+}
+
+/// The pipeline run behind `run_formation` and `adopt`.
+pub(crate) fn form(
+    a: FormArgs,
+) -> Result<(Address, pipeline::SystemRun, Option<serde_json::Value>), Response> {
     let system: Address = a
         .system
         .as_deref()
@@ -121,16 +156,5 @@ pub(crate) fn run_formation(a: FormArgs) -> Out {
             (pipeline::run(h, block), None)
         }
     };
-    let s = surface::settings();
-    let surfaces = sse_surface::envelopes_of(&run, &s)
-        .iter()
-        .map(to_json)
-        .collect();
-    Ok(Response::FormationRan {
-        system: system.to_string(),
-        pipeline: pipeline::PIPELINE_VERSION.to_string(),
-        run: to_json(&run),
-        pinned,
-        surfaces,
-    })
+    Ok((system, run, pinned))
 }
