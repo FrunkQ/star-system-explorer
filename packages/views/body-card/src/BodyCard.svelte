@@ -60,6 +60,7 @@
 
   function whyText(f: SceneFact): string {
     if (f.source === "authored") return "you set it. It feeds every value derived from it.";
+    if (f.source === "catalogued") return "it comes from a real catalogue, carried in with the import.";
     if (f.source === "fixture") return "it comes from the sample system's fixture data, not from physics. Set it to make it yours.";
     return `its source is ${f.source}.`;
   }

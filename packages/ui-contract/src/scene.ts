@@ -5,7 +5,7 @@
 import type { Json } from "./json.ts";
 import type { DeriveRef } from "./session.ts";
 
-export type FactSource = "authored" | "derived" | "resolved" | "fixture";
+export type FactSource = "authored" | "derived" | "resolved" | "catalogued" | "fixture";
 
 export interface SceneFact {
   field: string;

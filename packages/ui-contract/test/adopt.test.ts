@@ -43,6 +43,15 @@ test("a grown system adopts as one event and reads back as the same worlds", asy
     assert.deepEqual(orbits(scene), orbits(preview));
     assert.ok(Math.abs(scene.now_yr - preview.now_yr) / preview.now_yr < 1e-3);
     assert.ok(scene.subjects.every((b) => b.facts.every((x) => !x.editable)));
+    // Evidence from the kernel: a grown system's values are the pipeline's (resolved), never authored.
+    assert.ok(r.result.evidence, "resolved_system carries evidence");
+    assert.ok(worlds(scene).every((w) => w.facts.filter((x) => x.field !== "name" && x.field !== "surface_k").every((x) => x.source === "resolved")));
+    // The kernel lists it, so the chart's list survives a reload.
+    const listed = await s.listSystems();
+    assert.ok(listed.ok);
+    const mine = listed.systems.find((x) => x.system === "u:kestrel/sys:40")!;
+    assert.equal(mine.source, "formation");
+    assert.equal(mine.adopted_event, a.result.events[0]);
   } finally {
     k.close();
   }
@@ -61,6 +70,10 @@ test("a V3 save adopts by evidence class; Sol reads back with its names", async 
     assert.equal(scene.title, "Sol");
     assert.deepEqual(scene.subjects.map((x) => x.label), ["Sun", "Earth", "Moon", "Station"]);
     assert.equal(scene.subjects.find((x) => x.label === "Earth")!.orbit!.a_au, 1);
+    // The Moon's density was set against the physics in V3: its subject carries the honesty mark.
+    assert.ok(scene.subjects.find((x) => x.label === "Moon")!.stamps.includes("impossible"));
+    const listed = await s.listSystems();
+    assert.ok(listed.ok && listed.systems.some((x) => x.source === "v3" && x.name === "Sol"));
     // Players never adopt.
     const p = await Session.open(k.client, tableSeat(), { id: "kestrel", seed: "k" }, packs).catch(() => null);
     if (p) assert.equal((await p.adopt({ import_v3: "{}" })).ok, false);

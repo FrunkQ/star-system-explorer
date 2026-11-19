@@ -9,7 +9,7 @@ import { audienceOf, decide, type Seat } from "./seat.ts";
 import { providerOf, type FlowDoc, type PackDoc } from "./physics.ts";
 import type { PlayerScene } from "./player-scene.ts";
 import type { WorldStackRead } from "./world.ts";
-import type { Adopted, FormationRan, FormationRequest, SystemResolved, V3Imported } from "./make.ts";
+import type { Adopted, FormationRan, FormationRequest, ListedSystem, SystemResolved, V3Imported } from "./make.ts";
 import type { LookedAhead, SystemSpec } from "./fate.ts";
 
 export type IntentResult =
@@ -99,6 +99,8 @@ export interface ViewSession {
   adopt(source: { import_v3: string } | { formation: FormationRequest }, occurred_at_s?: number): Promise<{ ok: true; result: Adopted } | { ok: false; code: string; message: string }>;
   /** A body's world stack (P4) with the kernel's ladder and physics notes, by body address or fixture name. */
   readWorldStack(by: { body?: string; fixture?: string }): Promise<{ ok: true; result: WorldStackRead } | { ok: false; code: string; message: string }>;
+  /** Every system in the open universe that has facts (kernel `systems`): adopted ones and authored ones. */
+  listSystems(): Promise<{ ok: true; systems: ListedSystem[] } | { ok: false; code: string; message: string }>;
   /** A system as the universe now holds it: facts, a SystemSpec for look-ahead, and S0 surfaces. */
   resolvedSystem(system: string, at_s?: number): Promise<{ ok: true; result: SystemResolved } | { ok: false; code: string; message: string }>;
   kernelVersion(): Promise<string>;
@@ -450,6 +452,11 @@ export class Session implements ViewSession {
   async readWorldStack(by: { body?: string; fixture?: string }): Promise<{ ok: true; result: WorldStackRead } | { ok: false; code: string; message: string }> {
     const r = await this.#call({ op: "read_world_stack", ...(by.body ? { body: by.body } : {}), ...(by.fixture ? { fixture: by.fixture } : {}) });
     return r.type === "world_stack_read" ? { ok: true, result: r as unknown as WorldStackRead } : { ok: false, code: String(r.code ?? "unexpected"), message: String(r.message ?? JSON.stringify(r)) };
+  }
+
+  async listSystems(): Promise<{ ok: true; systems: ListedSystem[] } | { ok: false; code: string; message: string }> {
+    const r = await this.#call({ op: "systems" });
+    return r.type === "systems_listed" ? { ok: true, systems: (r as unknown as { systems: ListedSystem[] }).systems } : { ok: false, code: String(r.code ?? "unexpected"), message: String(r.message ?? JSON.stringify(r)) };
   }
 
   async resolvedSystem(system: string, at_s?: number): Promise<{ ok: true; result: SystemResolved } | { ok: false; code: string; message: string }> {

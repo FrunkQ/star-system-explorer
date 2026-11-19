@@ -13,7 +13,7 @@
   import LightControl from "./LightControl.svelte";
   import MakeSystem from "./MakeSystem.svelte";
   import LookAhead from "./LookAhead.svelte";
-  import { sceneAt, sceneFromResolved, type LookedAhead, type SystemSpec } from "../../ui-contract/src/index.ts";
+  import { listedTitle, sceneAt, sceneFromResolved, type LookedAhead, type SystemSpec } from "../../ui-contract/src/index.ts";
   import lightDoc from "./documents/light.recipes.json";
   import { SYMBOLS, checkLightRecipe, describeLight, litFromSystem, paint, type BandRecipe, type Mark } from "../../ui-contract/src/index.ts";
   import AgentsPanel from "../../agents/src/AgentsPanel.svelte";
@@ -96,6 +96,9 @@
       const bad = await enterFacts(s, factsDoc as unknown as AuthoredFacts);
       if (bad) throw new Error(`recorded facts refused: ${JSON.stringify(bad)}`);
       scene = await deriveScene(s, { ...base, now_yr: ws.now_yr }, derivations);
+      // Systems already adopted into this universe (kept by the kernel across reloads) go on the "On the chart" list.
+      const listed = await s.listSystems();
+      if (listed.ok) adoptedSystems = listed.systems.filter((x) => x.system !== base.system && x.source !== "facts").map((x) => ({ system: x.system, title: listedTitle(x) }));
       session = s;
       status = { kernel: await s.kernelVersion(), tier: s.device()?.tier ?? "unmeasured", hash: await s.stateHash(), stack: s.stack().hash, campaign: false };
     })

@@ -334,6 +334,20 @@ export interface Adopted {
   facts: number;
   state_hash: string;
 }
+/** One line of the kernel's `systems` list. */
+export interface ListedSystem {
+  system: string;
+  source: "v3" | "formation" | "facts" | string;
+  name?: string;
+  addresses: string[];
+  adopted_event?: string;
+}
+/** A listed system's title: its own name, else the seed a grown system's address was made from. */
+export function listedTitle(x: ListedSystem): string {
+  if (x.name) return x.name;
+  const tail = x.system.split("/").pop() ?? x.system;
+  return x.source === "formation" && tail.startsWith("sys:@") ? `Seed "${tail.slice(5).replace(/-/g, " ")}"` : tail;
+}
 /** `resolved_system`'s answer: the system as the universe now holds it. */
 export interface SystemResolved {
   type: "system_resolved";
@@ -341,6 +355,8 @@ export interface SystemResolved {
   source: "formation" | "v3" | "facts" | string;
   at_s?: number;
   facts: Record<string, Record<string, Json>>;
+  /** Per fact: its evidence label and the kind of event that set it (kernel 7c1ed04). */
+  evidence?: Record<string, Record<string, { evidence: string; by: string }>>;
   spec?: import("./fate.ts").SystemSpec;
   surfaces: { address: string; kind: string; t_surface_now_k: number; regime_label?: string; speculative: boolean }[];
   tiles: Json[];
@@ -369,10 +385,18 @@ export function sceneFromResolved(r: SystemResolved, title?: string): SystemScen
   const worldOrder = bodies.filter((a) => role(a) !== "star").sort((x, y) => (num(x, "orbit.semi_major_axis") ?? 0) - (num(y, "orbit.semi_major_axis") ?? 0));
   const surf = new Map(r.surfaces.map((s) => [s.address, s]));
   const nameOf = (a: string) => str(a, "v3.name") ?? (role(a) === "star" ? (stars.length > 1 ? `Star ${stars.indexOf(a) + 1}` : "Star") : `World ${worldOrder.indexOf(a) + 1}`);
-  const src: SceneFact["source"] = grown ? "derived" : "authored";
-  // A kept look-ahead's write-back (time.aged) sets the star's phase and luminosity; a save never does. Those
-  // star values are the ageing model's, not the save's, so they are marked derived. (The facts carry no evidence yet.)
-  const aged = (a: string) => !grown && str(a, "star.phase") !== undefined;
+  // Each value is marked by the evidence the kernel holds for it: set in the save (authored, or authored against the
+  // physics), from a real catalogue, or the physics' own (resolved by formation, derived by ageing).
+  const evOf = (a: string, k: string) => r.evidence?.[a]?.[k];
+  const srcOf = (a: string, k: string): SceneFact["source"] => {
+    const e = evOf(a, k)?.evidence;
+    if (!e) return grown ? "derived" : "authored";
+    return e === "authored" || e === "authored-impossible" || e === "narrative" ? "authored" : e === "catalogued" ? "catalogued" : e === "resolved" ? "resolved" : "derived";
+  };
+  const aged = (a: string) => Object.values(r.evidence?.[a] ?? {}).some((e) => e.by === "time.aged");
+  // The save's own bookkeeping (v3.name, v3.id and so on) is authored by definition, so only physical values decide the
+  // stamps, except V3's overrides and anomalies, which carry the honesty mark (authored-impossible).
+  const classes = (a: string) => new Set(Object.entries(r.evidence?.[a] ?? {}).filter(([k, e]) => !k.startsWith("v3.") || e.evidence === "authored-impossible").map(([, e]) => e.evidence));
   let i = 0;
   const subjects: SceneSubject[] = bodies
     .filter((a) => a === primary || num(a, "orbit.semi_major_axis") !== undefined || role(a) === "star")
@@ -386,23 +410,22 @@ export function sceneFromResolved(r: SystemResolved, title?: string): SystemScen
       const s = surf.get(a);
       const out: SceneFact[] = [f("name", "Name", name)];
       if (kind === "star") {
-        const ss = aged(a) ? "derived" : src;
-        if (mass !== undefined) out.push(f("mass_sun", "Mass", mass / M_SUN, "M☉", ss));
-        if (radius !== undefined) out.push(f("radius_sun", "Radius", radius / R_SUN_M, "R☉", ss));
+        if (mass !== undefined) out.push(f("mass_sun", "Mass", mass / M_SUN, "M☉", srcOf(a, "body.mass")));
+        if (radius !== undefined) out.push(f("radius_sun", "Radius", radius / R_SUN_M, "R☉", srcOf(a, "body.radius")));
         const t = num(a, "star.effective_temperature");
-        if (t !== undefined) out.push(f("teff_k", "Surface", t, "K", ss));
+        if (t !== undefined) out.push(f("teff_k", "Surface", t, "K", srcOf(a, "star.effective_temperature")));
         const l = num(a, "star.luminosity");
-        if (l !== undefined) out.push(f("luminosity_sun", "Luminosity", l / 3.828e26, "L☉", ss));
+        if (l !== undefined) out.push(f("luminosity_sun", "Luminosity", l / 3.828e26, "L☉", srcOf(a, "star.luminosity")));
         const ph = str(a, "star.phase");
-        if (ph) out.push(f("phase", "Phase", ph.replace(/[-_]/g, " "), undefined, ss));
+        if (ph) out.push(f("phase", "Phase", ph.replace(/[-_]/g, " "), undefined, srcOf(a, "star.phase")));
       } else {
-        if (sma !== undefined) out.push(f("a_au", "Orbit", sma / AU_M, "AU", src));
+        if (sma !== undefined) out.push(f("a_au", "Orbit", sma / AU_M, "AU", srcOf(a, "orbit.semi_major_axis")));
         const e = num(a, "orbit.eccentricity");
-        if (e !== undefined) out.push(f("eccentricity", "Eccentricity", e, undefined, src));
-        if (mass !== undefined) out.push(f("mass_earth", "Mass", mass / M_EARTH, "M⊕", src));
-        if (radius !== undefined) out.push(f("radius_earth", "Radius", radius / R_EARTH_M, "R⊕", src));
+        if (e !== undefined) out.push(f("eccentricity", "Eccentricity", e, undefined, srcOf(a, "orbit.eccentricity")));
+        if (mass !== undefined) out.push(f("mass_earth", "Mass", mass / M_EARTH, "M⊕", srcOf(a, "body.mass")));
+        if (radius !== undefined) out.push(f("radius_earth", "Radius", radius / R_EARTH_M, "R⊕", srcOf(a, "body.radius")));
         const day = num(a, "body.rotation_period");
-        if (day !== undefined) out.push(f("day_h", "Day", day / 3600, "h", src));
+        if (day !== undefined) out.push(f("day_h", "Day", day / 3600, "h", srcOf(a, "body.rotation_period")));
         if (s) out.push(f("surface_k", "Surface", s.t_surface_now_k, "K", "derived"));
       }
       return {
@@ -413,7 +436,9 @@ export function sceneFromResolved(r: SystemResolved, title?: string): SystemScen
         ...(a !== primary && parent ? { parent } : {}),
         ...(a !== primary && sma !== undefined ? { orbit: { a_au: sma / AU_M, phase_deg: phase(i++) } } : {}),
         facts: out,
-        stamps: grown ? ["generated", ...(s?.speculative ? ["speculative"] : [])] : aged(a) ? ["imported"] : ["authored", "imported"],
+        stamps: r.evidence
+          ? [grown ? "generated" : "imported", ...(classes(a).has("authored") ? ["authored"] : []), ...(classes(a).has("catalogued") ? ["catalogued"] : []), ...(classes(a).has("authored-impossible") ? ["authored", "impossible"] : []), ...(s?.speculative ? ["speculative"] : [])].filter((x, j, all) => all.indexOf(x) === j)
+          : grown ? ["generated", ...(s?.speculative ? ["speculative"] : [])] : ["authored", "imported"],
         tags: mass !== undefined && kind !== "star" ? [sizeTag(mass / M_EARTH)] : [],
       };
     });

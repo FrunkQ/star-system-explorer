@@ -102,7 +102,10 @@ try {
     await gm.waitForTimeout(500);
     const l1 = await sunLum();
     assert.ok(l1 > l0 * 1.2, `the Sun read back has aged: ${l0} -> ${l1}`);
-    assert.match(await gm.locator(".area-card").innerText(), /aged by a kept look-ahead/);
+    const card = await gm.locator(".area-card").innerText();
+    assert.match(card, /aged by a kept look-ahead/);
+    assert.match(card, /LUMINOSITY\s*·\s*DERIVED/i, "a written-back value is marked derived, by the kernel's evidence");
+    assert.doesNotMatch(card, /LUMINOSITY\s*·\s*SET/i);
     await shot(gm, "v13-adopted-aged");
 
     // Back to the campaign's own system.
