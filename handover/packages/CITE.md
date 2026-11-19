@@ -22,3 +22,13 @@ Physics changed, goldens re-blessed on purpose:
 - Goldens moved: formation-pipeline (heat power, geology-end ages), surface, surface-impacts, surface-plates,
   surface-regimes, surface-wear (envelopes follow the heat), time-generated (ages), place (Zeng radius),
   contract.jsonl (formation_ran lines). Bulk silicate Earth heat +0.3%, rocky radii −0.11%.
+
+### Light, Sizes tab and design files (19 Nov)
+UI only, no golden moved:
+- Sizes tab reference objects: Alpha Centauri B 597700 → 600500 km and 5180 → 5231 K (Kervella 2017, 0.8632 R☉);
+  Sirius A 9940 → 9900 K and Sirius B 25000 → 25370 K (the cited papers' values); Ceres cites Park et al. 2019
+  Icarus (the old DOI did not resolve); Titan 2574.8 km after JPL; planets point at their own NSSDCA sheets.
+- `ui-contract/src/light.ts`: reflected light weight was (R*/a)²/4 (a whole-sphere absorbed-flux average);
+  the disc radiance of a Lambert sphere at full phase is (2/3)·A·(R*/a)², so reflected light rises 8/3 against
+  thermal emission in band views. Planck test reference corrected to 2.6239e13 with a 1e-4 tolerance.
+- Design files: titles, years and DOIs fixed in the sound, weather and nebulae designs (repo and project copies).
