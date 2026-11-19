@@ -1,14 +1,14 @@
 {
   "schema": "sse.screen/1",
-  "id": "sse.workspace.gm.route",
-  "label": "Route",
+  "id": "sse.workspace.gm.explore",
+  "label": "Explore",
   "audience": "gm",
   "layout": "chart-room",
   "theme": "chart-room",
   "symbology": "sse.symbology.diagrammatic",
   "vocab": "physics",
   "items": [
-    { "view": "sse.view.route", "area": "chart" },
+    { "view": "sse.view.explore", "area": "chart" },
     { "view": "sse.view.time-ruler", "area": "ruler" }
   ]
 }

@@ -403,6 +403,45 @@ pub enum Request {
         #[ts(optional, type = "unknown")]
         rescue: Option<serde_json::Value>,
     },
+    /// G1 to G4 for the galaxy chart (U6): one galaxy grown from the open
+    /// universe's seed, a named `halo` (`dwarf`, `milky-way-like`, `group`) or
+    /// a halo `mass_msun`; its history curves, rings now (abundances, deaths,
+    /// rates), green band through time, the cosmic epochs, and the
+    /// conditions at `place_kpc` (and `place_phi`, radians) at `at_gyr`. Read only.
+    GalaxyChart {
+        #[serde(default)]
+        #[ts(optional)]
+        halo: Option<String>,
+        #[serde(default)]
+        #[ts(optional)]
+        mass_msun: Option<f64>,
+        #[serde(default)]
+        #[ts(optional)]
+        at_gyr: Option<f64>,
+        #[serde(default)]
+        #[ts(optional)]
+        place_kpc: Option<f64>,
+        #[serde(default)]
+        #[ts(optional)]
+        place_phi: Option<f64>,
+    },
+    /// G1 for the foam and cluster maps (V9): a square slice of the cosmic
+    /// web from the open universe's seed, `n` samples a side over
+    /// `extent_mpc` around `centre` (Mpc, default the origin), at redshift
+    /// `z` or cosmic time `t_gyr` (default now). Read only.
+    WebSlice {
+        #[serde(default)]
+        #[ts(optional)]
+        z: Option<f64>,
+        #[serde(default)]
+        #[ts(optional)]
+        t_gyr: Option<f64>,
+        #[serde(default)]
+        #[ts(optional)]
+        centre: Option<[f64; 3]>,
+        extent_mpc: f64,
+        n: u32,
+    },
     /// S5's descent scene: survey a world as `survey_surface` does (a
     /// `fixture`, or a `body` of an adopted `system` at `at_s`), judge the
     /// landing site at `lat_deg`, `lon_deg` (slope, roughness, liquid) and
@@ -696,6 +735,8 @@ impl Request {
             Request::ResolvedSystem { .. } => "resolved_system",
             Request::SurveySurface { .. } => "survey_surface",
             Request::PlanRoute { .. } => "plan_route",
+            Request::GalaxyChart { .. } => "galaxy_chart",
+            Request::WebSlice { .. } => "web_slice",
             Request::PlanDescent { .. } => "plan_descent",
             Request::Systems => "systems",
             Request::LifeView { .. } => "life_view",
@@ -801,6 +842,16 @@ pub fn ops() -> Vec<OpInfo> {
             "plan_route",
             Cost::Medium,
             "about a thousand Lambert solves on the departure and flight-time grid plus torch flights; drift asks plan once per body and port (about 0.1 to 1 s native)",
+        ),
+        o(
+            "galaxy_chart",
+            Cost::Medium,
+            "one galaxy grown over cosmic time plus 24 rings of chemical evolution and a green band every half Gyr (about 0.1 to 0.5 s native)",
+        ),
+        o(
+            "web_slice",
+            Cost::Medium,
+            "n by n web samples at four octaves (n = 128: about 0.2 s native)",
         ),
         o(
             "plan_descent",
@@ -1073,6 +1124,19 @@ pub enum Response {
         state_hash: String,
         manifest_id: String,
         stack_matches: bool,
+    },
+    /// `galaxy_chart`: `{halo, key, halo_mass_msun, morphology, barred,
+    /// t_start_gyr, now_gyr, at_gyr, now, history, active_nuclei,
+    /// sun_radius_kpc, rings, core_collapse_per_century, ia_per_century,
+    /// green_bands, epochs, place, model}`.
+    GalaxyCharted {
+        #[ts(type = "unknown")]
+        chart: serde_json::Value,
+    },
+    /// `web_slice`: `{t_gyr, z, now_gyr, slice, model}` (`slice` is sse-cosmos's `Slice`).
+    WebSliced {
+        #[ts(type = "unknown")]
+        web: serde_json::Value,
     },
     /// `plan_route`: sse-nav's `RoutePlan` (`candidates` best first by the
     /// preference, each with burns, days, Δv, propellant and reserve, peak g,

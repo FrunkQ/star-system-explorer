@@ -1,0 +1,254 @@
+// The galaxy chart (U6) and the foam map (V9): the pure parts. The kernel's
+// `galaxy_chart` and `web_slice` (G1 to G4) grow the galaxy and the web from
+// the universe's seed; this file only shapes their numbers for a chart. No
+// physics here: radii, abundances, rates, arm crests and green bands are the
+// kernel's own.
+
+export interface GalaxyAsk {
+  halo?: "dwarf" | "milky-way-like" | "group";
+  mass_msun?: number;
+  at_gyr?: number;
+  place_kpc?: number;
+  place_phi?: number;
+}
+
+export interface GalaxyState {
+  t_gyr: number;
+  z: number;
+  halo: number;
+  gas: number;
+  stars: number;
+  bulge: number;
+  sfr: number;
+  z_gas: number;
+  black_hole: number;
+  quenched: boolean;
+  v_c: number;
+  disc_kpc: number;
+}
+
+export type Group = "alpha" | "fe" | "cn" | "s" | "r" | "k40";
+
+export interface GalaxyRing {
+  inner_kpc: number;
+  outer_kpc: number;
+  radius_kpc: number;
+  gas: number;
+  stars: number;
+  /** [X/H] in dex, by element group. */
+  abundances: Record<Group, number>;
+  deaths: { core_collapse: number; type_ia: number; neutron_star_mergers: number; agb_returned: number };
+  cc_per_century: number;
+  ia_per_century: number;
+}
+
+export interface CosmicEpoch { id: string; name: string; log10_yr: number; z?: number | null; speculative: boolean; why: string }
+
+export interface PlaceLocal {
+  place: { r_kpc: number; phi: number; z_pc: number; t_gyr: number };
+  gas_pc3: number;
+  stars_pc3: number;
+  systems_pc3: number;
+  feh: number;
+  alpha_fe: number;
+  c_o: number;
+  r_fe: number;
+  k40_fe: number;
+  sfr_gyr_pc3: number;
+  cc_gyr_pc3: number;
+  ia_gyr_pc3: number;
+  arm: number;
+  texture: number;
+  sterilising_per_gyr: number;
+  encounters_per_myr: number;
+  grb_per_gyr: number;
+  agn_dose: number;
+  rocky_for_gyr?: number | null;
+}
+
+export interface PlaceGreen {
+  metals_enough: boolean;
+  metals_not_too_many: boolean;
+  few_supernovae: boolean;
+  few_passages: boolean;
+  few_bursts: boolean;
+  nucleus_quiet: boolean;
+  quiet_long_enough: boolean;
+  habitable: boolean;
+  complex: boolean;
+}
+
+export interface GalaxyChart {
+  halo: string;
+  key: string;
+  halo_mass_msun: number;
+  morphology: string;
+  barred: boolean;
+  t_start_gyr: number;
+  now_gyr: number;
+  at_gyr: number;
+  now: GalaxyState;
+  history: GalaxyState[];
+  active_nuclei: [number, number][];
+  sun_radius_kpc: number;
+  disc_kpc: number;
+  arms: [number, number][][];
+  arm_contrast: number;
+  rings: GalaxyRing[];
+  core_collapse_per_century: number;
+  ia_per_century: number;
+  green_bands: { t_gyr: number; habitable: [number, number] | null; complex: [number, number] | null }[];
+  epochs: CosmicEpoch[];
+  place: { local: PlaceLocal; green: PlaceGreen; ring: number } | null;
+  model: string[];
+}
+
+export interface SliceAsk {
+  z?: number;
+  t_gyr?: number;
+  centre?: [number, number, number];
+  extent_mpc: number;
+  n: number;
+}
+
+export interface WebSlice {
+  t_gyr: number;
+  z: number;
+  now_gyr: number;
+  slice: {
+    scale_factor: number;
+    growth: number;
+    centre: [number, number, number];
+    extent: number;
+    n: number;
+    octaves: number;
+    density: number[];
+    environment: ("void" | "sheet" | "filament" | "knot" | string)[];
+    displaced: [number, number][];
+  };
+  model: string[];
+}
+
+export const NAMED_HALOES: readonly { key: "dwarf" | "milky-way-like" | "group"; label: string }[] = [
+  { key: "dwarf", label: "A dwarf galaxy" },
+  { key: "milky-way-like", label: "A Milky-Way-like galaxy" },
+  { key: "group", label: "A galaxy group's central" },
+];
+
+export const MORPHOLOGY_WORDS: Record<string, string> = {
+  dwarf: "dwarf",
+  irregular: "irregular",
+  disc: "spiral disc",
+  barred: "barred spiral",
+  lenticular: "lenticular (disc without arms)",
+  elliptical: "elliptical",
+};
+
+export const GROUP_WORDS: Record<Group, string> = {
+  alpha: "Rock-formers (O, Mg, Si)",
+  fe: "Iron",
+  cn: "Carbon and nitrogen",
+  s: "Slow-process metals (barium, lead)",
+  r: "Rapid-process metals (gold, uranium, thorium)",
+  k40: "Potassium-40 (heat in rocks)",
+};
+
+/** The face-on chart frame: centre, pixels per kpc, out to the outermost ring. */
+export interface DiscFrame { cx: number; cy: number; k: number; outer_kpc: number }
+
+export function discFrame(w: number, h: number, chart: Pick<GalaxyChart, "rings">, pad = 16): DiscFrame {
+  const outer = chart.rings.at(-1)?.outer_kpc ?? 1;
+  return { cx: w / 2, cy: h / 2, k: (Math.min(w, h) / 2 - pad) / outer, outer_kpc: outer };
+}
+
+/** An arm crest as an SVG path in the frame (phi counter-clockwise from +x, y up). */
+export function armPath(arm: readonly [number, number][], f: DiscFrame): string {
+  return arm.map(([r, phi], i) => `${i ? "L" : "M"}${(f.cx + r * f.k * Math.cos(phi)).toFixed(1)} ${(f.cy - r * f.k * Math.sin(phi)).toFixed(1)}`).join(" ");
+}
+
+/** The ring that holds radius r (the kernel's rings tile the disc). */
+export function ringAt(rings: readonly GalaxyRing[], r_kpc: number): number {
+  const i = rings.findIndex((g) => r_kpc >= g.inner_kpc && r_kpc < g.outer_kpc);
+  return i >= 0 ? i : r_kpc < (rings[0]?.inner_kpc ?? 0) ? 0 : rings.length - 1;
+}
+
+/** A shade from 0 (light) to 1 (dark) for a ring layer, scaled over the rings shown. */
+export type RingLayer = "metals" | "stars" | "supernovae" | "heavy";
+export function ringShades(rings: readonly GalaxyRing[], layer: RingLayer): number[] {
+  const v = rings.map((g) =>
+    layer === "metals" ? g.abundances.fe : layer === "heavy" ? g.abundances.r : layer === "stars" ? Math.log10(Math.max(1, g.stars) / Math.max(1e-30, Math.PI * (g.outer_kpc ** 2 - g.inner_kpc ** 2))) : Math.log10(Math.max(1e-12, g.cc_per_century + g.ia_per_century)),
+  );
+  const fin = v.filter(Number.isFinite);
+  const lo = Math.min(...fin);
+  const hi = Math.max(...fin);
+  return v.map((x) => (Number.isFinite(x) && hi > lo ? (x - lo) / (hi - lo) : 0));
+}
+
+export const LAYER_WORDS: Record<RingLayer, { label: string; legend: string }> = {
+  metals: { label: "Metals", legend: "darker: more iron in the gas ([Fe/H])" },
+  heavy: { label: "Uranium, thorium, gold", legend: "darker: more rapid-process metals from neutron-star mergers" },
+  stars: { label: "Stars", legend: "darker: more stars per square kiloparsec (log)" },
+  supernovae: { label: "Supernovae", legend: "darker: more supernovae per century (log)" },
+};
+
+/** The green band at a time (nearest half-Gyr row at or before it). */
+export function greenAt(chart: Pick<GalaxyChart, "green_bands">, t_gyr: number): { habitable: [number, number] | null; complex: [number, number] | null; t_gyr: number } | null {
+  let best: GalaxyChart["green_bands"][number] | null = null;
+  for (const b of chart.green_bands) if (b.t_gyr <= t_gyr + 1e-9) best = b;
+  return best ?? chart.green_bands[0] ?? null;
+}
+
+/** History curves on a cosmic-time axis: x from t, y on a log axis over the series' range. */
+export interface CurveAxis { x(t: number): number; t0: number; t1: number; w: number }
+export function cosmicAxis(t0: number, t1: number, w: number, pad = 8): CurveAxis {
+  return { t0, t1, w, x: (t) => pad + ((t - t0) / (t1 - t0)) * (w - 2 * pad) };
+}
+
+export function logCurve(points: readonly { t: number; v: number }[], ax: CurveAxis, top: number, h: number): { d: string; lo: number; hi: number } {
+  const ok = points.filter((p) => p.v > 0 && Number.isFinite(p.v));
+  if (!ok.length) return { d: "", lo: 0, hi: 0 };
+  const ls = ok.map((p) => Math.log10(p.v));
+  const hi = Math.ceil(Math.max(...ls));
+  const lo = Math.max(Math.floor(Math.min(...ls)), hi - 3);
+  const y = (l: number) => top + h - ((Math.max(lo, l) - lo) / Math.max(1e-9, hi - lo)) * h;
+  return { d: ok.map((p, i) => `${i ? "L" : "M"}${ax.x(p.t).toFixed(1)} ${y(Math.log10(p.v)).toFixed(1)}`).join(" "), lo, hi };
+}
+
+export function sci(x: number, digits = 2): string {
+  if (!Number.isFinite(x)) return "–";
+  if (x === 0) return "0";
+  const a = Math.abs(x);
+  if (a >= 1e4 || a < 1e-2) {
+    const e = Math.floor(Math.log10(a));
+    const m = x / 10 ** e;
+    return `${m.toFixed(digits - 1)} × 10^${e}`;
+  }
+  return x.toPrecision(digits + 1).replace(/\.?0+$/, "");
+}
+
+/** "1.6 × the Sun" from an [X/H] in dex. */
+export function timesSun(dex: number): string {
+  const f = 10 ** dex;
+  return f >= 0.95 && f <= 1.05 ? "about the Sun's" : `${f < 10 ? f.toFixed(f < 1 ? 2 : 1) : Math.round(f)} × the Sun's`;
+}
+
+export function dex(x: number): string {
+  return `${x >= 0 ? "+" : "−"}${Math.abs(x).toFixed(2)} dex`;
+}
+
+/** Cosmic epochs placed on a Gyr axis (only those after `t0`). */
+export function epochTicks(epochs: readonly CosmicEpoch[], ax: CurveAxis): { x: number; e: CosmicEpoch }[] {
+  return epochs.map((e) => ({ e, t: 10 ** e.log10_yr / 1e9 })).filter((x) => x.t >= ax.t0 && x.t <= ax.t1).map((x) => ({ x: ax.x(x.t), e: x.e }));
+}
+
+/** The foam slice as cells: density in units of the mean, drawn as darker ink where denser (log). */
+export function foamCells(s: WebSlice["slice"]): { i: number; j: number; shade: number; env: string }[] {
+  const out: { i: number; j: number; shade: number; env: string }[] = [];
+  for (let j = 0; j < s.n; j++)
+    for (let i = 0; i < s.n; i++) {
+      const d = s.density[j * s.n + i] ?? 1;
+      const shade = Math.max(0, Math.min(1, (Math.log10(Math.max(1e-3, d)) + 1) / 2.5));
+      out.push({ i, j, shade, env: String(s.environment[j * s.n + i] ?? "") });
+    }
+  return out;
+}

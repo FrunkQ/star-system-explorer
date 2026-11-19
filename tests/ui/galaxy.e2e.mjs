@@ -1,0 +1,87 @@
+// U6 part 1 in a real browser, against the built shell (scripts/build-shell.sh
+// first). Usage: node tests/ui/galaxy.e2e.mjs [chromium firefox webkit] [--screens <dir>]
+// Explore > Galaxy grows the Milky-Way-like galaxy from the universe's seed
+// through the kernel's galaxy_chart: 24 rings, arms, the green band, history
+// curves with epochs, and the ring at the Sun's distance picked with its
+// ledger (what died here, conditions, the green verdict). Another ring, a
+// layer, an earlier time and the dwarf galaxy all redraw. Night chart and
+// phone (no sideways scroll) too.
+import { spawn } from "node:child_process";
+import { mkdirSync } from "node:fs";
+import assert from "node:assert/strict";
+import { createRequire } from "node:module";
+
+const { chromium, firefox, webkit } = createRequire(import.meta.url)("playwright");
+const args = process.argv.slice(2);
+const si = args.indexOf("--screens");
+const screens = si >= 0 ? args.splice(si, 2)[1] : null;
+const engines = args.length ? args : ["chromium"];
+const port = 9700 + Math.floor(Math.random() * 90);
+const base = `http://localhost:${port}/`;
+const server = spawn(process.execPath, ["scripts/serve.mjs", "packages/shell/dist", String(port)], { stdio: "ignore" });
+await new Promise((r) => setTimeout(r, 400));
+const shot = async (page, n, full = false) => {
+  if (screens) (mkdirSync(screens, { recursive: true }), await page.screenshot({ path: `${screens}/${n}.png`, fullPage: full }));
+};
+
+try {
+  for (const name of engines) {
+    const browser = await { chromium, firefox, webkit }[name].launch();
+    const errors = [];
+    const gm = await (await browser.newContext({ viewport: { width: 1440, height: 900 }, deviceScaleFactor: screens ? 2 : 1 })).newPage();
+    gm.on("pageerror", (e) => errors.push(e.message));
+    await gm.goto(base);
+    await gm.waitForSelector("[data-state-hash]:not([data-state-hash=''])", { timeout: 20000 });
+    await gm.getByRole("button", { name: "Explore", exact: true }).click();
+    await gm.locator("[data-section-tab=galaxy]").click();
+    await gm.waitForSelector(".gal [data-ring]", { timeout: 30000 });
+    const gal = gm.locator(".gal");
+    assert.match(await gal.getAttribute("data-galaxy"), /halo:milky-way-like$/);
+    assert.equal(await gal.locator("circle.ring").count(), 24, "24 rings");
+    assert.ok((await gal.locator("path.arm").count()) >= 2, "arms");
+    assert.equal(await gal.locator("circle.green").count(), 1, "a green band now");
+    assert.match(await gal.locator(".lede").innerText(), /barred spiral/);
+    assert.ok((await gal.locator("path.curve").count()) === 3, "three history curves");
+    assert.match(await gal.locator(".ledger h3").innerText(), /at the Sun's distance/);
+    assert.match(await gal.locator(".ledger").innerText(), /Neutron-star mergers/);
+    await gal.locator("[data-green]").waitFor({ timeout: 20000 });
+    await shot(gm, "u6-galaxy");
+
+    // Another ring: its ledger.
+    const before = await gal.locator("[data-ring]").getAttribute("data-ring");
+    await gal.locator("[data-ring-pick]").selectOption("3");
+    await gm.waitForFunction((b) => document.querySelector(".gal [data-ring]")?.getAttribute("data-ring") !== b, before);
+    // A layer and an earlier time.
+    await gal.locator("[data-layer=supernovae]").click();
+    await gal.locator("[data-time]").fill("6");
+    await gal.locator("[data-time]").dispatchEvent("change");
+    await gm.waitForFunction(() => /At 6\.0 Gyr after the Big Bang/.test(document.querySelector(".gal .lede")?.textContent ?? ""), null, { timeout: 30000 });
+    // The dwarf.
+    await gal.locator("[data-halo]").selectOption("dwarf");
+    await gm.waitForFunction(() => /halo:dwarf$/.test(document.querySelector(".gal")?.getAttribute("data-galaxy") ?? ""), null, { timeout: 30000 });
+    await gal.locator("[data-halo]").selectOption("milky-way-like");
+    await gm.waitForFunction(() => /halo:milky-way-like$/.test(document.querySelector(".gal")?.getAttribute("data-galaxy") ?? ""), null, { timeout: 30000 });
+    await gal.locator("[data-green]").waitFor({ timeout: 20000 });
+
+    await gm.getByRole("button", { name: "Night chart" }).click();
+    await gm.waitForTimeout(300);
+    await shot(gm, "u6-galaxy-night");
+
+    const phone = await (await browser.newContext({ viewport: { width: 390, height: 844 }, deviceScaleFactor: 2 })).newPage();
+    phone.on("pageerror", (e) => errors.push(`phone: ${e.message}`));
+    await phone.goto(base);
+    await phone.waitForSelector("[data-state-hash]:not([data-state-hash=''])", { timeout: 20000 });
+    await phone.getByLabel("Screen menu").selectOption("explore");
+    await phone.locator("[data-section-tab=galaxy]").click();
+    await phone.waitForSelector(".gal [data-ring]", { timeout: 30000 });
+    const over = await phone.evaluate(() => document.documentElement.scrollWidth - window.innerWidth);
+    assert.ok(over <= 1, `no sideways scroll on a phone (${over}px over)`);
+    await shot(phone, "u6-galaxy-phone", true);
+
+    assert.deepEqual(errors, []);
+    await browser.close();
+    console.log(`${name}: galaxy chart from galaxy_chart: rings, arms, green band, curves, ledger, layers, time, dwarf, night chart, phone`);
+  }
+} finally {
+  server.kill();
+}

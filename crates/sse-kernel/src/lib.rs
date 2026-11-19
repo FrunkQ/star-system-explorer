@@ -7,6 +7,7 @@
 
 mod adopt;
 pub mod contract;
+mod cosmos;
 mod descent;
 mod nav;
 pub mod protocol;
@@ -1125,6 +1126,44 @@ impl Kernel {
                     }
                 };
                 Response::RoutePlanned { plan }
+            }
+            Request::GalaxyChart {
+                halo,
+                mass_msun,
+                at_gyr,
+                place_kpc,
+                place_phi,
+            } => {
+                let u = self.universe()?;
+                let chart = cosmos::galaxy_chart(cosmos::GalaxyAsk {
+                    seed: &u.seed,
+                    root: &u.root,
+                    halo: halo.as_deref(),
+                    mass_msun,
+                    at_gyr,
+                    place_kpc,
+                    place_phi,
+                })?;
+                Response::GalaxyCharted { chart }
+            }
+            Request::WebSlice {
+                z,
+                t_gyr,
+                centre,
+                extent_mpc,
+                n,
+            } => {
+                let u = self.universe()?;
+                let web = cosmos::web_slice(cosmos::SliceAsk {
+                    seed: &u.seed,
+                    root: &u.root,
+                    z,
+                    t_gyr,
+                    centre: centre.unwrap_or([0.0; 3]),
+                    extent_mpc,
+                    n,
+                })?;
+                Response::WebSliced { web }
             }
             Request::PlanDescent {
                 system,

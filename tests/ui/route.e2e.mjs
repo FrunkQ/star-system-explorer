@@ -32,7 +32,8 @@ try {
     gm.on("pageerror", (e) => errors.push(e.message));
     await gm.goto(base);
     await gm.waitForSelector("[data-state-hash]:not([data-state-hash=''])", { timeout: 20000 });
-    await gm.getByRole("button", { name: "Route", exact: true }).click();
+    await gm.getByRole("button", { name: "Explore", exact: true }).click();
+    await gm.locator("[data-section-tab=route]").click();
     const route = gm.locator(".route");
     await gm.waitForSelector(".route [data-course]", { timeout: 20000 });
     assert.equal(await route.locator("[data-from]").inputValue(), "u:kestrel/sys:1/body:3", "from Tarn, the world in the temperate zone");
@@ -76,7 +77,8 @@ try {
     phone.on("pageerror", (e) => errors.push(`phone: ${e.message}`));
     await phone.goto(base);
     await phone.waitForSelector("[data-state-hash]:not([data-state-hash=''])", { timeout: 20000 });
-    await phone.getByLabel("Screen menu").selectOption("route");
+    await phone.getByLabel("Screen menu").selectOption("explore");
+    await phone.locator("[data-section-tab=route]").click();
     await phone.waitForSelector(".route [data-course]", { timeout: 20000 });
     const over = await phone.evaluate(() => document.documentElement.scrollWidth - window.innerWidth);
     assert.ok(over <= 1, `no sideways scroll on a phone (${over}px over)`);
