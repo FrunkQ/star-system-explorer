@@ -700,6 +700,186 @@
       "url": "https://www.atmosp.physics.utoronto.ca/~dbj/PHY392/Budyko1969.pdf"
      }
     ]
+   },
+   "weather_aerosols": {
+    "thin_air_bar": 0.0001,
+    "thin_air_source": "Below this surface pressure a vent's plume is ballistic, not buoyant (fudge, docs/fudges.md)",
+    "magma_dre_kg_m3": 2500.0,
+    "mastin": {
+     "coef_km": 2.0,
+     "exponent": 0.241,
+     "source": "Earth eruption column height H = 2.00 V^0.241 km above the vent, V the dense-rock-equivalent rate in m3/s with magma at 2500 kg/m3; mass form 0.304 MER^0.241 (Mastin et al. 2009)"
+    },
+    "earth": {
+     "gravity_m_s2": 9.80665,
+     "molar_kg": 0.02897,
+     "t_strat_k": 214.4,
+     "density_kg_m3": 1.225,
+     "source": "Earth reference for scaling Mastin's heights: standard gravity and sea-level density; stratosphere at the skin temperature T_eff/2^(1/4) of a 255 K world"
+    },
+    "scaling_source": "Other worlds: H scales as (g/g_E)^(1/4) (rho_E/rho)^(1/4) (N_E/N)^(3/4), from the buoyant plume rise H proportional to F^(1/4) N^(-3/4) with buoyancy flux F proportional to g MER / rho (Morton, Taylor and Turner 1956); N^2 = g^2/(c_p T) for an isothermal stratosphere at the skin temperature, c_p = 3.5 R/M. The constant is Earth's (Mastin); carrying it to other worlds this way is a fudge (docs/fudges.md)",
+    "ballistic": {
+     "steady_speed_m_s": 500.0,
+     "eruption_speed_m_s": 1000.0,
+     "source": "Thin or no air: plume height v^2/(2g); vent speeds about 0.5 km/s for long-lived Prometheus-type plumes and about 1.0 km/s for short Pele-type eruptions on Io (McEwen and Soderblom 1983). Heights follow from the formula, not from the paper"
+    },
+    "ash": {
+     "settle_m_s": 0.5,
+     "spread_per_km": 0.15,
+     "umbrella_per_height": 2.0,
+     "tau_ref": 3.0,
+     "mer_ref_kg_s": 1000000.0,
+     "tau_max": 20.0,
+     "deposit_kg_m3": 1000.0,
+     "linger_days": 3.0,
+     "darkening_mm": 5.0,
+     "min_streak_km": 50.0,
+     "min_width_km": 5.0,
+     "default_mer_kg_s": 10000.0,
+     "colour": [
+      0.16,
+      0.15,
+      0.14
+     ],
+     "source": "Ash streak blown down the local zonal wind at plume height, falling out over (height / settling speed) of travel and widening sideways; vent optical depth tau_ref (MER/mer_ref)^(1/2); ash fall conserves the erupted mass. All constants are stand-ins (fudge, docs/fudges.md)"
+    },
+    "vog": {
+     "tau_per_kg_s": 0.005,
+     "tau_max": 1.0,
+     "acid_tau": 0.05,
+     "length_km": 300.0,
+     "colour": [
+      0.8,
+      0.75,
+      0.55
+     ],
+     "source": "Steady outgassing makes a low sulphate haze downwind and acid rain where it rains through it; strength and reach are stand-ins (fudge, docs/fudges.md)"
+    },
+    "veil": {
+     "conversion_years": 0.0833,
+     "residence_years": 1.0,
+     "response_years": 0.7,
+     "cooling_k_per_tg_so2": 0.02,
+     "max_cooling_k": 5.0,
+     "tau_per_tg_so2": 0.007,
+     "tropics_deg": 20.0,
+     "other_hemisphere": 0.3,
+     "colour": [
+      0.92,
+      0.92,
+      0.96
+     ],
+     "source": "A stratospheric sulphate veil: sulphate aerosol e-folding residence about 1 year; large eruptions cool the globe (tropical) or a hemisphere for 2 to 3 years, most about 1 year after (Robock 2000). SO2-to-sulphate conversion time, the climate response time (set so the cooling peaks near a year), cooling per Tg SO2 (about 0.4 K for Pinatubo's 20 Tg; NOT verified), optical depth per Tg, the tropical band and the other hemisphere's share are fudges (docs/fudges.md)"
+    },
+    "impact": {
+     "density_kg_m3": 3000.0,
+     "speed_m_s": 20000.0,
+     "fireball_j": 4184000000000000.0,
+     "regional_j": 4.184e+18,
+     "winter_j": 4.184e+21,
+     "plume_km_at_fireball": 10.0,
+     "fireball_days": 1.0,
+     "regional_radius_km": 300.0,
+     "regional_tau": 2.0,
+     "regional_days": 30.0,
+     "winter_tau": 5.0,
+     "winter_k": 3.0,
+     "winter_k_per_decade": 3.0,
+     "max_cooling_k": 20.0,
+     "rise_years": 0.01,
+     "residence_years": 0.5,
+     "response_years": 0.2,
+     "dust_colour": [
+      0.45,
+      0.38,
+      0.3
+     ],
+     "soot_colour": [
+      0.08,
+      0.07,
+      0.06
+     ],
+     "source": "Impacts: a fireball plume above 1 Mt TNT, a regional dust veil above 1 Gt, a world-wide soot and dust veil and impact winter above 10^6 Mt; heights, radii, depths, cooling and its timing are all stand-ins (fudge, docs/fudges.md)"
+    },
+    "fire": {
+     "min_o2": 0.15,
+     "dry_ratio": 0.8,
+     "plume_km_ref": 4.0,
+     "area_ref_km2": 1000.0,
+     "tau_ref": 2.0,
+     "tau_max": 8.0,
+     "settle_m_s": 0.05,
+     "colour": [
+      0.36,
+      0.3,
+      0.24
+     ],
+     "source": "Wildfire smoke plumes and regional haze; no fire below an oxygen mixing ratio of min_o2 (an unverified stand-in for the flammability limit), only in the dry part of the year where the rain is below dry_ratio of its yearly mean; plume height, depth and reach are stand-ins (fudge, docs/fudges.md)"
+    },
+    "smog": {
+     "tau_ref": 0.1,
+     "radius_km_ref": 40.0,
+     "inversion_boost": 1.0,
+     "inversion_width_deg": 10.0,
+     "basin_boost": 1.0,
+     "colour": [
+      0.4,
+      0.27,
+      0.12
+     ],
+     "source": "Industrial smog over settlements: depth tau_ref (population/1e6)^(1/2) 4 t (1 - t) for tech level t (none before industry, little after clean technology), trapped more under subsiding subtropical air and in basins; all stand-ins (fudge, docs/fudges.md)"
+    },
+    "spray": {
+     "u_min_m_s": 3.0,
+     "tau_per_m_s": 0.02,
+     "tau_max": 0.3,
+     "colour": [
+      0.9,
+      0.91,
+      0.93
+     ],
+     "source": "Sea spray and salt haze over open liquid in wind; threshold and depth are stand-ins (fudge, docs/fudges.md)"
+    },
+    "photochemical": [
+     {
+      "makes": "sulphur haze",
+      "needs": {
+       "so2": 1e-06
+      },
+      "min_flux_w_m2": 100.0,
+      "min_pressure_bar": 0.01,
+      "cloud_type": "haze",
+      "layer": 2,
+      "cover": 1.0,
+      "optical_depth": 0.3,
+      "colour": [
+       0.95,
+       0.9,
+       0.6
+      ],
+      "source": "Sulphur haze from sulphur dioxide under sunlight, counting gas from steady outgassing mixed through the column; optical depth a stand-in (fudge, docs/fudges.md)"
+     }
+    ],
+    "outgassing_mix_years": 1.0,
+    "tau_min": 0.01,
+    "references": [
+     {
+      "text": "Mastin, L. G. et al. 2009, A multidisciplinary effort to assign realistic source parameters to models of volcanic ash-cloud transport and dispersion during eruptions, J. Volcanol. Geotherm. Res. 186, 10-21",
+      "doi": "10.1016/j.jvolgeores.2009.01.008"
+     },
+     {
+      "text": "Morton, B. R., Taylor, G. I. and Turner, J. S. 1956, Turbulent gravitational convection from maintained and instantaneous sources, Proc. R. Soc. A 234, 1-23",
+      "doi": "10.1098/rspa.1956.0011"
+     },
+     {
+      "text": "McEwen, A. S. and Soderblom, L. A. 1983, Two classes of volcanic plumes on Io, Icarus 55, 191",
+      "doi": "10.1016/0019-1035(83)90075-1"
+     },
+     {
+      "text": "Robock, A. 2000, Volcanic eruptions and climate, Rev. Geophys. 38, 191",
+      "doi": "10.1029/1998RG000054"
+     }
+    ]
    }
   }
  }

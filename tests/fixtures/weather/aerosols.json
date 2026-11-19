@@ -1,0 +1,52 @@
+{
+  "about": "W4 aerosol scenarios: an Io-like world (not in worlds.json) and scripted sources on Earth. Sources are inputs until S7, S12 and L1c publish them.",
+  "io": {
+    "address": "u:sol/sys:0/body:5/moon:1",
+    "label": "Io",
+    "radius_m": 1821600.0,
+    "gravity_m_s2": 1.796,
+    "solid_surface": true,
+    "rotation_hours": 42.459,
+    "star_locked": false,
+    "obliquity_deg": 0.0,
+    "year_days": 4332.59,
+    "eccentricity": 0.0041,
+    "flux_w_m2": 50.5,
+    "albedo": 0.63,
+    "t_surface_k": 110.0,
+    "pressure_bar": 1e-9,
+    "mean_molar_kg": 0.064,
+    "gases": { "so2": 1.0 },
+    "liquid": null,
+    "ocean_fraction": 0.0,
+    "internal_flux_w_m2": 2.5
+  },
+  "io_sources": {
+    "volcanoes": [
+      { "id": "prometheus", "lat_deg": -1.5, "lon_deg": -153.0, "outgassing_kg_s": 1.0e4 }
+    ],
+    "eruptions": [
+      { "id": "pele-1", "lat_deg": -18.7, "lon_deg": -104.0, "day": 10.0, "duration_days": 20.0 }
+    ]
+  },
+  "earth_sources": {
+    "volcanoes": [
+      { "id": "kilauea", "lat_deg": 19.4, "lon_deg": -155.3, "vent_height_m": 1200.0, "outgassing_kg_s": 50.0 }
+    ],
+    "eruptions": [
+      { "id": "big-one", "lat_deg": 15.1, "lon_deg": 120.3, "day": 100.0, "duration_days": 2.0,
+        "volume_m3": 4.0e9, "so2_kg": 2.0e10, "vent_height_m": 1500.0 },
+      { "id": "streaker", "lat_deg": 45.0, "lon_deg": 10.0, "day": 100.0, "duration_days": 5.0,
+        "mer_kg_s": 2.5e7 }
+    ],
+    "impacts": [
+      { "id": "tunguska-like", "lat_deg": 60.9, "lon_deg": 101.9, "day": 100.0, "energy_j": 4.2e16 }
+    ],
+    "fires": [
+      { "id": "savanna", "lat_deg": 12.0, "lon_deg": 20.0, "area_km2": 2000.0, "day_start": 250.0, "day_end": 320.0 }
+    ],
+    "industry": [
+      { "id": "basin-city", "lat_deg": 34.0, "lon_deg": -118.2, "tech": 0.5, "population": 1.0e7, "basin": true }
+    ]
+  }
+}

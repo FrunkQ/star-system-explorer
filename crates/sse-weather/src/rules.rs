@@ -325,8 +325,13 @@ pub(crate) fn layer(cover: f64, kind: &str, cond: &str, tau: f64, old: &Layer) -
 
 /// Photochemical hazes (Titan's orange smog) that cover the whole world.
 pub fn haze(s: &WeatherSettings, c: &Conditions) -> Vec<Aerosol> {
-    s.photochemical
-        .iter()
+    haze_from(&s.photochemical, c)
+}
+
+/// The hazes of a list of photochemical rules that hold under `c` (W4 adds
+/// its own list, with outgassed gas counted in, through this).
+pub fn haze_from(list: &[crate::settings::Photochemical], c: &Conditions) -> Vec<Aerosol> {
+    list.iter()
         .filter(|p| {
             p.cloud_type == "haze"
                 && c.flux_w_m2 >= p.min_flux_w_m2

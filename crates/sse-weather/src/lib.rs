@@ -6,6 +6,7 @@
 //! - [`circulation`]: W1, the circulation regime, what condenses, climate averages.
 //! - [`rules`]: the rule-based block, `sse.weather.rules`.
 
+pub mod aerosols;
 pub mod circulation;
 pub mod conditions;
 pub mod contract;
