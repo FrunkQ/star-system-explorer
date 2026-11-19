@@ -70,3 +70,28 @@ test("the same view works with a non-Traveller grid", () => {
   assert.equal(distance(g, { col: 1, row: 2 }, { col: 2, row: 1 }), 2);
   assert.equal(within(g, { col: 4, row: 3 }, 1).length, 7);
 });
+
+test("sifters: mains, choke points and the pack's own filters", async () => {
+  const { mains, chokePoints, sift } = await import("../../packages/views/hex-map/src/sift.ts");
+  const w = (hex: string, fields: Record<string, string | number | boolean | string[]> = {}) => ({ hex, name: hex, fields });
+  // A chain 0101-0102-0103-0104-0204 (column 2 sits half a hex lower, so 0204 touches 0104), and a lone pair far away.
+  const worlds = [w("0101"), w("0102"), w("0103"), w("0104"), w("0204"), w("1010"), w("1011"), w("2020")];
+  const m = mains(TRAVELLER_GRID, worlds, 1, 3);
+  assert.deepEqual(m.map((x) => x.hexes), [["0101", "0102", "0103", "0104", "0204"]]);
+  assert.deepEqual(mains(TRAVELLER_GRID, worlds, 1, 2).map((x) => x.hexes.length), [5, 2]);
+  assert.deepEqual(chokePoints(TRAVELLER_GRID, worlds, 1), ["0102", "0103", "0104"]);
+  // Jump-2 joins more.
+  assert.ok(chokePoints(TRAVELLER_GRID, worlds, 2).length < 2);
+  // Pack sifters.
+  const pack = JSON.parse(readFileSync(fileURLToPath(new URL("../../packs/traveller/pack.json", import.meta.url)), "utf8"));
+  const cfg = pack.provides.other.views["sse.view.hex-map"];
+  const by = (id: string) => cfg.sifters.find((s: { id: string }) => s.id === id);
+  const map = [
+    w("0101", { gas_giants: 2, hydrographics: 0, starport: "C", zone: "none", atmosphere: 6, law: 3 }),
+    w("0102", { gas_giants: 0, hydrographics: 0, starport: "A", zone: "none", atmosphere: 11, law: 2 }),
+    w("0103", { gas_giants: 0, hydrographics: 5, starport: "X", zone: "R", atmosphere: 12, law: 15 }),
+  ];
+  assert.deepEqual(sift(by("refuel"), map), ["0101", "0103"]);
+  assert.deepEqual(sift(by("refined"), map), ["0102"]);
+  assert.deepEqual(sift(by("red-candidates"), map), ["0102"], "0103 is already red");
+});

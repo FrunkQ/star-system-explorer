@@ -435,6 +435,14 @@ SHEET = {
 HEX_MAP = {
     "grid": {"block": {"columns": 8, "rows": 10}, "blocks": {"across": 4, "down": 4}, "label": "{c2}{r2}",
              "block_names": list("ABCDEFGHIJKLMNOP"), "shifted": "even", "hex_distance": {"value": 1, "unit": "pc"}},
+    "sifters": [
+        {"id": "refuel", "label": "Good refuelling stops", "any": [{"field": "gas_giants", "gt": 0}, {"field": "hydrographics", "gt": 0}],
+         "explain": "a gas giant to skim or surface water to crack, so a ship can refuel without a port"},
+        {"id": "refined", "label": "Refined fuel", "any": [{"field": "starport", "in": ["A", "B"]}],
+         "explain": "a class A or B starport sells refined fuel"},
+        {"id": "red-candidates", "label": "Red zone candidates", "all": [{"field": "zone", "is": "none"}], "any": [{"field": "atmosphere", "in": [11, 12]}, {"field": "law", "gt": 12}],
+         "explain": "not yet zoned, but corrosive or insidious air, or extreme law"},
+    ],
     "glyphs": {
         "label_field": "name",
         "marks": [

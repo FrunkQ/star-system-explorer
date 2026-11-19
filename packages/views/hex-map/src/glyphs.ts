@@ -44,6 +44,8 @@ export interface GlyphRules {
 export interface HexMapConfig {
   grid: GridConfig;
   glyphs: GlyphRules;
+  /** Map sifters the pack offers (see sift.ts). */
+  sifters?: import("./sift.ts").MapSifter[];
 }
 
 export interface Mark {

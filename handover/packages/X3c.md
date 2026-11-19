@@ -19,3 +19,12 @@ Status: view module done (19 Nov 2026), Traveller pack track. Design: handoff 7A
 - Not on a GM screen yet: it registers through `packages/shell/src/screens.more.ts` (MORE_VIEWS, MORE_SCREENS) once that hook lands with PR 26.
 - No kernel op builds its scene yet; the importer preview (X3c io) and the `codes` op (X3a part 2) will.
 - Routes and allegiance borders are in the scene type but not drawn yet.
+
+# Map sifters (X3a part 9 on the hex map, 19 Nov 2026)
+- `packages/views/hex-map/src/sift.ts`, pure:
+  - `mains(cfg, worlds, jump, min)` finds chains of worlds a jump apart, largest first.
+  - `chokePoints(cfg, worlds, jump)` finds worlds whose loss splits a chain. It uses articulation points with an iterative search.
+  - `sift(sifter, worlds)` runs a pack filter (`any`/`all` of the glyph `When` conditions, with an `explain` sentence).
+- The Traveller pack's hex map config adds three sifters: good refuelling stops (a gas giant or surface water), refined fuel (class A or B starport) and red zone candidates (not zoned yet, but corrosive or insidious air, or extreme law).
+- Checks are in `tests/ui/hexmap.test.ts`: a chain with its choke points (column 2 sits half a hex lower, so 0204 touches 0104), jump-2 joining more, and the three pack sifters.
+- Not yet: the "worlds whose codes hide a contradiction" sifter. It comes from the `codes` op (authored digits that disagree with the physics) and belongs on the world sheet's list mode.
