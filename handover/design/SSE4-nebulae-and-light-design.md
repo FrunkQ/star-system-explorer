@@ -192,13 +192,13 @@ What that gives the table, with no special rules:
 
 ## 7. Sources to build from **[all from memory; verify titles before use, as for physics blocks]**
 
-- Strömgren (1939) on ionised regions round hot stars; Osterbrock and Ferland, *Astrophysics of Gaseous Nebulae and Active Galactic Nuclei*, the standard text for line emission.
-- Ferland et al., the Cloudy photoionisation code and its release papers, as the source of the line-strength grid; Allen et al. (2008) MAPPINGS shock model library for remnants.
+- Strömgren (1939) on ionised regions round hot stars; Osterbrock and Ferland, *Astrophysics of Gaseous Nebulae and Active Galactic Nuclei* (2nd ed., University Science Books, 2006), the standard text for line emission.
+- Ferland et al., the Cloudy photoionisation code and its release papers (latest checked: "The 2017 Release of Cloudy", RMxAA 53, 385), as the source of the line-strength grid; Allen et al. (2008) MAPPINGS shock model library for remnants.
 - Kwok, Purton and Fitzgerald (1978) for the interacting-winds picture of planetary nebulae; Balick (1987) for the shape sequence; Balick and Frank (2002) review of shapes and shaping, including companions.
 - Sedov and Taylor for the blast wave; Cioffi, McKee and Bertschinger (1988) for the later cooling phases; Weaver et al. (1977) for wind-blown bubbles.
 - Toomre and Toomre (1972) for tidal tails and bridges; Lynds and Toomre (1976) for ring galaxies; Gunn and Gott (1972) for stripping in clusters.
 - Rybicki and Lightman, *Radiative Processes in Astrophysics*, for Doppler shift, beaming and synchrotron light.
-- For colour practice: the Hubble palette as used for the Eagle Nebula image (1995), and observatory guidance on representative colour.
+- For colour practice: the Hubble palette as used for the Eagle Nebula image (released 1995; Hester et al. 1996, AJ 111, 2349, doi:10.1086/117968), and observatory guidance on representative colour.
 
 ## 8. Stages (track O, for optics)
 

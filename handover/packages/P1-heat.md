@@ -16,7 +16,7 @@ real, explained, cited blocks people can see; and link references to the papers.
     Mars 3.9 (ends about 0.7 Gyr ago), Moon 1.9, Earth with twice the r-process 19.4 (Unterborn et al. 2015).
     Radiogenic only: primordial heat, tides and lid style are left out and said so in the explain text.
   - `sse.heat.al26_planetesimal_heating`: Al-26 energy left after a planetesimal forms (adiabatic bound,
-    H0 = 0.00865 × 5.25e-5 × 0.355 W/kg, τ = 1.034 Myr; 5.26 MJ/kg at CAI time) and the share of water kept,
+    H0 = 0.00865 × 5.25e-5 × 0.3583 W/kg, τ = 1.034 Myr; 5.31 MJ/kg at CAI time) and the share of water kept,
     log-linear between 0.6 and 1.8 MJ/kg down to 0.1 (params). Grimm and McSween 1993, Lichtenberg et al. 2019.
 - Flows `packs/base-physics/flows/planet-heat.json` (hook `planet.heat`; Earth, Mars, Moon, thorium-rich Earth)
   and `planetesimal-water.json` (hook `planetesimal.water`; early iron parent body dry, late chondrite wet,
