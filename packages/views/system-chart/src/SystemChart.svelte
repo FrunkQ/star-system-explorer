@@ -6,7 +6,7 @@
   centre and its moons about it (handover/rendering-rules.md), in kilometres.
 -->
 <script lang="ts">
-  import { KM_PER_AU, childrenOf, commitEdit, frameFor, legendFor, primaryOf, sig, subjectOf, type Json, type SceneSubject, type SystemScene, type ViewContext } from "../../../ui-contract/src/index.ts";
+  import { KM_PER_AU, asPlayers, hasLayer, hasTool, childrenOf, commitEdit, frameFor, legendFor, primaryOf, sig, subjectOf, type Json, type SceneSubject, type SystemScene, type ViewContext } from "../../../ui-contract/src/index.ts";
   import { System3D, fromSystemScene } from "../../system-3d/src/index.ts";
   import { ChartGround, HatchDefs, Hatch, Ink, Legend, Mark, Stamp, markExtent, SurveyGrid, distanceAt, fitScale, polar, radius } from "../../../chart-grammar/src/index.ts";
 
@@ -73,6 +73,15 @@
   );
 
   const label = (s: SceneSubject) => s.label;
+  // The GM's lens (U9) decides which layers are drawn; it never changes the data.
+  const L = $derived(ctx.workspace.lens);
+  const on = (id: Parameters<typeof hasLayer>[1]) => hasLayer(L, id);
+  // What the lens's audience knows: each body's data view, from the kernel's scene for them.
+  const known = $derived(ctx.workspace.lensScene ? new Map(ctx.workspace.lensScene.subjects.map((x) => [x.address, x.view])) : null);
+  const through = $derived(asPlayers(L) && known !== null);
+  const knows = (s: SceneSubject) => !known || s === star || known.has(s.address);
+  const knownCount = $derived(known ? scene.subjects.filter((x) => (x.orbit || x.band_au) && known.has(x.address)).length : 0);
+  const bodyCount = $derived(scene.subjects.filter((x) => x.orbit || x.band_au).length);
   // The key is generated from the symbology for the bodies on this chart.
   const key = $derived.by(() => {
     const host = ctx.symbology;
@@ -86,7 +95,7 @@
   // sent when the drag ends. The scale is frozen during the drag.
   let drag = $state<{ address: string; a_au: number; moved: boolean; scale: typeof scale } | null>(null);
   let problem = $state<string | null>(null);
-  const editable = (s: SceneSubject) => ctx.workspace.mode === "edit" && !!s.orbit && !!s.facts.find((f) => f.field === "a_au" && f.editable);
+  const editable = (s: SceneSubject) => ctx.workspace.mode === "edit" && hasTool(L, "drag") && !!s.orbit && !!s.facts.find((f) => f.field === "a_au" && f.editable);
   const aOf = (s: SceneSubject) => (drag && drag.address === s.address ? drag.a_au : s.orbit!.a_au);
   const rr = (au: number) => radius(au, drag ? drag.scale : scale);
   const pos = (s: SceneSubject): [number, number] => polar(cx, cy, rr(aOf(s)), s.orbit!.phase_deg);
@@ -137,7 +146,7 @@
     ctx.workspace.select(s.address);
   }
   const showLabel = (s: SceneSubject) =>
-    params.labels === "all" || (params.labels === "selected" && ctx.workspace.selection === s.address);
+    on("labels") && (params.labels === "all" || (params.labels === "selected" && ctx.workspace.selection === s.address));
 
   const focusables: SVGGElement[] = $state([]);
   function onkey(e: KeyboardEvent, i: number, s: SceneSubject) {
@@ -185,12 +194,12 @@
         class:dragging={drag !== null}
       >
         <HatchDefs {prefix} />
-        <SurveyGrid width={w} height={h} step={Number(params.grid_step)} labels={params.grid_labels === true && !narrow} />
-        {#if params.unsurveyed_hatch && !frame}
+        {#if on("grid")}<SurveyGrid width={w} height={h} step={Number(params.grid_step)} labels={params.grid_labels === true && !narrow} />{/if}
+        {#if params.unsurveyed_hatch && on("unsurveyed") && !frame}
           <Hatch {prefix} d={unsurveyed} pattern="hatch" opacity={0.5} />
           <Ink circle={{ cx, cy, r: surveyR }} tone="muted" dash="dashed" />
         {/if}
-        {#each bands as b (b.address)}
+        {#each on("zones") ? bands : [] as b (b.address)}
           {@const r0 = r(b.band_au![0])}
           {@const r1 = r(b.band_au![1])}
           {#if b.kind === "zone"}
@@ -199,7 +208,7 @@
             <Ink circle={{ cx, cy, r: (r0 + r1) / 2 }} tone="muted" dash="belt" />
           {/if}
         {/each}
-        {#each decades as a (a)}
+        {#each on("distances") ? decades : [] as a (a)}
           <text class="dist" x={cx + 4} y={cy - r(a) - 4} aria-hidden="true">{dist(a)}</text>
         {/each}
         {#each orbiting as s (s.address)}
@@ -207,11 +216,11 @@
           {#if drag?.address === s.address}
             <Ink circle={{ cx, cy, r: rr(s.orbit!.a_au) }} tone="faint" dash="dashed" />
             <Ink circle={{ cx, cy, r: rr(drag.a_au) }} tone="accent" weight="heavy" dash="dashed" />
-          {:else}
+          {:else if on("orbits") || sel}
             <Ink circle={{ cx, cy, r: rr(s.orbit!.a_au) }} tone={sel ? "accent" : "faint"} weight={sel ? "heavy" : "line"} />
           {/if}
         {/each}
-        {#each bands as b (b.address)}
+        {#each on("zones") && on("labels") ? bands : [] as b (b.address)}
           {@const [lx, ly] = polar(cx, cy, r(b.band_au![1]) + 10, b.kind === "zone" ? -62 : 58)}
           <text class="band {b.kind}" x={lx} y={ly} aria-hidden="true">{label(b)}</text>
         {/each}
@@ -221,13 +230,16 @@
           {@const m0 = ctx.mark(s)}
           {@const m = atCentre && frame ? { ...m0, size: m0.size * 2.2 } : m0}
           {@const moons = !frame && !atCentre ? moonsOf(s) : 0}
+          {@const view = known?.get(s.address)}
           {@const sel = ctx.workspace.selection === s.address}
           <g
             bind:this={focusables[i]}
             class="body"
+            class:unknown={through && !knows(s)}
+            data-known={known ? (knows(s) ? (view ?? "yes") : "no") : undefined}
             role="button"
             tabindex="0"
-            aria-label="{label(s)}{s.subtitle ? `, ${s.subtitle}` : ''}"
+            aria-label="{label(s)}{s.subtitle ? `, ${s.subtitle}` : ''}{through && !knows(s) ? ', not known to them' : ''}"
             aria-pressed={sel}
             aria-describedby={editable(s) ? "chart-drag-hint" : undefined}
             onpointerdown={(e) => (editable(s) && !atCentre ? startDrag(e, s) : ctx.workspace.select(s.address))}
@@ -237,7 +249,7 @@
           >
             <circle class="hit" cx={x} cy={y} r={Math.max(22, m.size + 12)} />
             <Mark mark={m} cx={x} cy={y} {prefix} />
-            {#each { length: Math.min(moons, 4) } as _, k (k)}
+            {#each { length: on("moons") ? Math.min(moons, 4) : 0 } as _, k (k)}
               {@const [mx, my] = polar(x, y, markExtent(m) + 5, 200 + k * 28)}
               <circle class="moontick" cx={mx} cy={my} r="1.6" aria-hidden="true" />
             {/each}
@@ -248,6 +260,9 @@
             {#if showLabel(s) && (s.orbit || atCentre) && !(atCentre && !frame)}
               {@const left = x > w - 110}
               <text class="name" class:selname={sel} x={left ? x - m.size - 9 : x + m.size + 9} y={y - m.size - 4} text-anchor={left ? "end" : "start"}>{label(s)}</text>
+              {#if on("known") && known && !atCentre}
+                <text class="knownv" x={left ? x - m.size - 9 : x + m.size + 9} y={y - m.size + 9} text-anchor={left ? "end" : "start"} aria-hidden="true">{view ? view.replace(/-/g, " ") : "not known to the table"}</text>
+              {/if}
             {/if}
           </g>
         {/each}
@@ -267,13 +282,14 @@
       <div class="legend">
         {#if scene.fixture}<Stamp kind="fixture" title="The sample system's inputs are fixture data; every derived value comes from the kernel's base-physics pack." />{/if}
         <span>Distances on a log scale{frame ? ", in kilometres" : ""}</span>
-        {#if key?.entries.length}
+        {#if through}<span class="through" data-known-count={knownCount}>{L?.label}: {knownCount} of {bodyCount} known</span>{/if}
+        {#if key?.entries.length && on("key")}
           <details class="key">
             <summary>Key · {key.name}</summary>
             <div class="key-body"><Legend entries={key.entries} prefix="sck" note={key.note} label="Key to the chart's marks" /></div>
           </details>
         {/if}
-        {#if params.unsurveyed_hatch && !frame}<span>Hatched: unsurveyed beyond {scene.surveyed_to_au} AU</span>{/if}
+        {#if params.unsurveyed_hatch && on("unsurveyed") && !frame}<span>Hatched: unsurveyed beyond {scene.surveyed_to_au} AU</span>{/if}
       </div>
       <div class="zoom" role="group" aria-label="Zoom">
         <button type="button" aria-label="Zoom in" onclick={() => zoomBy(1.25)}>+</button>
@@ -423,6 +439,18 @@
     paint-order: stroke;
     stroke: var(--sse-ground);
     stroke-width: 4px;
+  }
+  .body.unknown {
+    opacity: 0.25;
+  }
+  .knownv {
+    font-family: var(--sse-font-body);
+    font-size: 10px;
+    font-style: italic;
+    fill: var(--sse-ink-muted);
+  }
+  .through {
+    color: var(--sse-accent-ink);
   }
   .band.zone {
     fill: var(--sse-zone-ink);

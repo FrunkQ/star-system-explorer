@@ -4,7 +4,8 @@
   derived values are read-only and open the kernel's explanation.
 -->
 <script lang="ts">
-  import { commitEdit, type Json, type SceneFact, type SystemScene, type ViewContext } from "../../../ui-contract/src/index.ts";
+  import { HONESTY_MARKS, asPlayers, cardFacts, cardFor, commitEdit, gmStamps, hasTool, primaryOf, type Json, type PlayerContext, type SceneFact, type SystemScene, type ViewContext, type Vocab } from "../../../ui-contract/src/index.ts";
+  import PlayerCard from "../../player-stack/src/PlayerCard.svelte";
   import { Card, CardField, Stamp } from "../../../chart-grammar/src/index.ts";
   import { parseFact } from "./parse.ts";
   import Explain from "./Explain.svelte";
@@ -13,7 +14,24 @@
 
   const ws = $derived(ctx.workspace);
   const subject = $derived(scene.subjects.find((s) => s.address === ws.selection));
-  const shown = $derived(subject ? subject.facts.filter((f) => f.field !== "name" || ws.mode === "edit") : []);
+  // The GM's lens (U9): which fields, in what order, how dense. A field it hides is untouched.
+  const L = $derived(ws.lens);
+  const rule = $derived(cardFor(L, subject?.kind ?? "*"));
+  const shown = $derived(subject ? cardFacts(rule, subject.facts.filter((f) => f.field !== "name" || ws.mode === "edit")) : []);
+  const cols = $derived(rule.density === "full" ? Number(params.columns) : 2);
+  // Evidence stamps follow the lens; honesty stamps always show on the GM view.
+  const stamps = $derived(subject ? (params.stamps === false ? subject.stamps.filter((k) => HONESTY_MARKS.includes(k)) : gmStamps(L, subject.stamps)) : []);
+  // "As players see it": the card turns into theirs, with the GM's honesty stamps over it.
+  const through = $derived(asPlayers(L) && ws.lensScene ? ws.lensScene : null);
+  const theirs = $derived(through && subject ? (subject === primaryOf(scene) ? through.scope : subject.address) : null);
+  let vocab = $state<Vocab | null>(null);
+  $effect(() => {
+    if (!through || vocab) return;
+    fetch(new URL(String(params.vocab ?? "documents/vocab.plain.json"), document.baseURI))
+      .then((r) => r.json())
+      .then((v) => (vocab = v));
+  });
+  const pctx = $derived<PlayerContext | null>(vocab && theirs ? { params: { density: rule.density === "full" ? "full" : "compact" }, vocab, selection: () => theirs, select: () => {} } : null);
   let why = $state<string | null>(null);
   let note = $state<string | null>(null);
   $effect(() => {
@@ -50,10 +68,14 @@
 <div class="wrap">
   {#if subject}
     <Card title={subject.label} subtitle={subject.subtitle}>
-      {#if params.stamps && subject.stamps.length}
-        <div class="stamps">{#each subject.stamps as k (k)}<Stamp kind={k} />{/each}</div>
+      {#if stamps.length}
+        <div class="stamps">{#each stamps as k (k)}<Stamp kind={k} />{/each}</div>
       {/if}
-      <div class="grid" style="--cols: {Number(params.columns)}">
+      {#if through}
+        <p class="as" data-through={L?.id}>{L?.label}{through.subjects.some((x) => x.address === theirs) ? "" : ": not known to them"}</p>
+        {#if pctx && through.subjects.some((x) => x.address === theirs)}<div class="theirs"><PlayerCard ctx={pctx} scene={through} /></div>{/if}
+      {:else}
+      <div class="grid" class:line={rule.density === "line"} style="--cols: {cols}">
         {#each shown as f (f.field)}
           <CardField
             label={f.label}
@@ -69,14 +91,15 @@
           />
           {#if why === f.field}
             {#if f.why}
-              <Explain session={ctx.session} why={f.why} label={f.label} onclose={() => (why = null)} onopenflow={ws.mode === "edit" && ctx.session.seat.authority === "gm" ? (node) => ws.openFlow(f.why!.flow, { node, ref: { flow: f.why!.flow, inputs: f.why!.inputs }, label: `${subject.label} · ${f.label.toLowerCase()}` }) : undefined} />
+              <Explain session={ctx.session} why={f.why} label={f.label} onclose={() => (why = null)} onopenflow={ws.mode === "edit" && hasTool(L, "flows") && ctx.session.seat.authority === "gm" ? (node) => ws.openFlow(f.why!.flow, { node, ref: { flow: f.why!.flow, inputs: f.why!.inputs }, label: `${subject.label} · ${f.label.toLowerCase()}` }) : undefined} />
             {:else}
               <p class="why" role="note">Why {f.label.toLowerCase()} is {f.display}: {whyText(f)}</p>
             {/if}
           {/if}
         {/each}
       </div>
-      {#if params.prose && subject.prose}<p class="prose">{subject.prose}</p>{/if}
+      {/if}
+      {#if params.prose && rule.density === "full" && subject.prose && !through}<p class="prose">{subject.prose}</p>{/if}
       {#if note}<p class="note" aria-live="polite">{note}</p>{/if}
     </Card>
   {:else}
@@ -93,9 +116,23 @@
     gap: 8px;
     padding: 10px 18px 2px;
   }
+  .as {
+    margin: 0;
+    padding: 8px 18px 0;
+    font-size: 12px;
+    color: var(--sse-accent-ink);
+    letter-spacing: 0.04em;
+  }
+  .theirs {
+    padding: 4px 6px 8px;
+  }
   .grid {
     display: grid;
     grid-template-columns: repeat(var(--cols), minmax(0, 1fr));
+  }
+  .grid.line > :global(.field) {
+    padding-top: 2px;
+    padding-bottom: 2px;
   }
   .grid > :global(.field) {
     border-bottom: var(--sse-line) solid var(--sse-rule);

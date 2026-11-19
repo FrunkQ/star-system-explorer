@@ -10,7 +10,8 @@ export const bodyCard: ViewModule = {
   params: [
     { name: "columns", type: "integer", default: 2, range: [1, 3], meaning: "Columns of fields on the card.", promoted: true },
     { name: "prose", type: "boolean", default: true, meaning: "Show the subject's prose description." },
-    { name: "stamps", type: "boolean", default: true, meaning: "Show evidence stamps. Honesty stamps always show on the GM view once V-packages add lenses." },
+    { name: "vocab", type: "string", default: "documents/vocab.plain.json", meaning: "Vocabulary the players' card speaks in, when a lens shows a body as players see it." },
+    { name: "stamps", type: "boolean", default: true, meaning: "Show evidence stamps (the lens can also hide them). Honesty stamps always show on the GM view." },
   ],
   intents: [{ kind: "set_value", meaning: "Set a field of the selected subject at the ruler's time." }],
   mount(el, ctx, scene) {

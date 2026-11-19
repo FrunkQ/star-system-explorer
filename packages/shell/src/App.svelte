@@ -8,6 +8,8 @@
   import { openBrowserSession } from "../../ui-contract/src/host-browser.ts";
   import { createShare, type Share } from "./share.svelte.ts";
   import SeatsPanel from "./SeatsPanel.svelte";
+  import LensPanel from "./LensPanel.svelte";
+  import { allLenses, checkLens, defaultLens, hasTool, lensAudience, type Lens } from "../../ui-contract/src/index.ts";
   import { themeCss, THEMES } from "../../skins/chart-room/src/index.ts";
   import { ALL_THEMES } from "../../skins/player/src/index.ts";
   import { Segmented, ToolButton, formatYears } from "../../chart-grammar/src/index.ts";
@@ -84,6 +86,77 @@
       status = { kernel: await s.kernelVersion(), tier: s.device()?.tier ?? "unmeasured", hash: await s.stateHash(), stack: s.stack().hash, campaign: false };
     })
     .catch((e) => (failure = String(e)));
+
+  // Lenses (U9, H8.6): what the GM sees for the job in hand. Switching never changes data, time or selection.
+  function loadMine(): Lens[] {
+    try {
+      const raw = JSON.parse(loadPref("lenses") ?? "[]") as unknown[];
+      return raw.filter((l) => checkLens(l).length === 0).map((l) => ({ ...(l as Lens), origin: "mine" as const }));
+    } catch {
+      return [];
+    }
+  }
+  let mine = $state<Lens[]>(loadMine());
+  let lensId = $state(loadPref("lens") ?? "");
+  const lenses = $derived.by(() => {
+    void ws.revision;
+    const s = session;
+    const st = s?.stack();
+    return allLenses(mine, st ? [...st.base, ...st.added] : [], st ? observeOf(st.base)?.setup : undefined, share?.state.plan);
+  });
+  const lens = $derived(lenses.find((l) => l.id === lensId) ?? lenses.find((l) => l.id === defaultLens(session?.device()?.tier))!);
+  $effect(() => {
+    ws.lens = lens;
+  });
+  function chooseLens(id: string) {
+    if (id === "__make") return void ((lensOpen = true), lensDialog?.showModal());
+    lensId = id;
+    savePref("lens", id);
+  }
+  function saveLens(l: Lens) {
+    mine = [...mine.filter((x) => x.id !== l.id), l];
+    savePref("lenses", JSON.stringify($state.snapshot(mine)));
+    chooseLens(l.id);
+  }
+  function deleteLens(id: string) {
+    mine = mine.filter((x) => x.id !== id);
+    savePref("lenses", JSON.stringify($state.snapshot(mine)));
+    chooseLens(defaultLens(session?.device()?.tier));
+    lensDialog?.close();
+  }
+  let lensDialog: HTMLDialogElement | undefined = $state();
+  let lensOpen = $state(false);
+  // The scene a lens looks through: what one audience knows, or every body through one data view.
+  let lensGen = 0;
+  $effect(() => {
+    void ws.revision;
+    const l = lens;
+    const s = session;
+    const aud = lensAudience(l);
+    const g = ++lensGen;
+    if (!s || !aud) return void (ws.lensScene = null);
+    s.scene((factsDoc as unknown as AuthoredFacts).scope, { audience: aud, ...(l.data ? { data_view: l.data } : {}) }).then((r) => {
+      if (g === lensGen) ws.lensScene = r.ok ? r.scene : null;
+    });
+  });
+  // The fields a card rule can list: per kind of body, and all of them for "any body".
+  const lensFields = $derived.by(() => {
+    const list = (subs: typeof scene.subjects) => {
+      const seen = new Map<string, string>();
+      for (const sub of subs) for (const f of sub.facts) if (!seen.has(f.field)) seen.set(f.field, f.label);
+      // Two fields may share a label (a star's mass and a planet's): the second says which it is.
+      const used = new Set<string>();
+      return [...seen].map(([id, label]) => {
+        const l = used.has(label) ? `${label} (${id})` : label;
+        used.add(label);
+        return { id, label: l };
+      });
+    };
+    const out: Record<string, { id: string; label: string }[]> = { "*": list(scene.subjects) };
+    for (const k of new Set(scene.subjects.map((x) => x.kind))) out[k] = list(scene.subjects.filter((x) => x.kind === k));
+    return out;
+  });
+  const lensKinds = $derived([...new Set(scene.subjects.filter((x) => x.facts.length).map((x) => x.kind))]);
 
   // The session clock travels to players with the GM's time ruler.
   $effect(() => {
@@ -165,6 +238,10 @@
       c: () => document.querySelector<HTMLElement>(".area-chart [role=button][aria-pressed=true], .area-chart [role=button]")?.focus(),
       "]": () => cycle(1),
       "[": () => cycle(-1),
+      l: () => {
+        const i = lenses.findIndex((x) => x.id === lens.id);
+        chooseLens(lenses[(i + 1) % lenses.length]!.id);
+      },
       "?": () => help?.showModal(),
       Escape: () => ws.select(null),
     };
@@ -183,6 +260,18 @@
     <h1 class="title">{scene.title}</h1>
     <div class="kicker">{scene.subtitle} · {formatYears(ws.now_yr)}</div>
     <div class="spacer"></div>
+    {#if session}
+      <label class="lens" title="Lens: what the chart and cards show (L)">
+        <span class="lens-k">Lens</span>
+        <select value={lens.id} onchange={(e) => { chooseLens(e.currentTarget.value); e.currentTarget.value = lens.id; }} aria-label="Lens" data-lens={lens.id}>
+          {#each [["shipped", "For the job"], ["mine", "Your own"], ["pack", "From packs"], ["players", "As players see it"]] as [o, group] (o)}
+            {@const ls = lenses.filter((x) => x.origin === o)}
+            {#if ls.length}<optgroup label={group}>{#each ls as l (l.id)}<option value={l.id}>{l.label}</option>{/each}</optgroup>{/if}
+          {/each}
+          <option value="__make">{lens.origin === "mine" ? "Change this lens…" : "Make your own…"}</option>
+        </select>
+      </label>
+    {/if}
     <div class="screens">
       <Segmented
         label="Screen"
@@ -241,12 +330,12 @@
     <main class="problem" aria-busy="true"><p>Opening the chart…</p></main>
   {:else}
     {#key ws.screen}
-    <main class="stage" data-screen={ws.screen}>
+    <main class="stage" data-screen={ws.screen} data-lens={lens.id}>
       <div class="area-chart">{#if mountFor("chart")}<div class="fill" use:view={mountFor("chart")!}></div>{/if}</div>
       <nav class="tools" aria-label="Tools">
         <ToolButton label="Select" icon="M5 3l14 8-6 2-2 6z" pressed={true} />
-        <ToolButton label="Undo" icon="M9 14L4 9l5-5M4 9h11a5 5 0 0 1 0 10h-3" keyhint="Control+Z" disabled={ws.undo.length === 0 || ws.mode !== "edit"} onclick={() => undo(true)} />
-        <ToolButton label="Redo" icon="M15 14l5-5-5-5M20 9H9a5 5 0 0 0 0 10h3" keyhint="Control+Shift+Z" disabled={ws.redo.length === 0 || ws.mode !== "edit"} onclick={() => undo(false)} />
+        {#if hasTool(ws.lens, "undo")}<ToolButton label="Undo" icon="M9 14L4 9l5-5M4 9h11a5 5 0 0 1 0 10h-3" keyhint="Control+Z" disabled={ws.undo.length === 0 || ws.mode !== "edit"} onclick={() => undo(true)} />
+        <ToolButton label="Redo" icon="M15 14l5-5-5-5M20 9H9a5 5 0 0 0 0 10h3" keyhint="Control+Shift+Z" disabled={ws.redo.length === 0 || ws.mode !== "edit"} onclick={() => undo(false)} />{/if}
         <ToolButton label="Keyboard shortcuts" icon="M3 7h18v10H3zM7 11h1M11 11h1M15 11h2M7 14h10" keyhint="?" onclick={() => help?.showModal()} />
       </nav>
       {#if undoNote}<p class="undo-note" role="status">{undoNote}</p>{/if}
@@ -293,6 +382,13 @@
   <form method="dialog"><button type="submit">Close</button></form>
 </dialog>
 
+<dialog bind:this={lensDialog} class="help seats-dialog" aria-label="Lens editor" onclose={() => (lensOpen = false)}>
+  {#if lensOpen && session}
+    <LensPanel from={lens} {lenses} fieldsByKind={lensFields} kinds={lensKinds} onsave={saveLens} ondelete={deleteLens} />
+  {/if}
+  <form method="dialog"><button type="submit">Close</button></form>
+</dialog>
+
 <dialog bind:this={help} class="help" aria-labelledby="help-title">
   <h2 id="help-title">Keyboard</h2>
   <dl>
@@ -305,10 +401,11 @@
     <dt>Page Up, Page Down, Home, End</dt><dd>On the ruler, larger steps</dd>
     <dt>Drag a body, or Page Up, Page Down on it</dt><dd>Move its orbit out or in (edit mode)</dd>
     <dt>Ctrl+Z, Ctrl+Shift+Z</dt><dd>Undo, redo (each is a new correction on the chart's history)</dd>
-    <dt>why?</dt><dd>On any value: where it came from, in three lenses; "Open the flow" puts its physics on the bench</dd>
+    <dt>why?</dt><dd>On any value: where it came from, at three depths (Curious, Science, Engine); "Open the flow" puts its physics on the bench</dd>
     <dt>P</dt><dd>Chart or Physics: the flow editor and change requests</dd>
     <dt>E, V</dt><dd>Edit or view</dd>
     <dt>N</dt><dd>Chart room or Night chart</dd>
+    <dt>L</dt><dd>Next lens: what the chart and cards show for the job in hand (Basic, Advanced, Building, Running, as players see it)</dd>
   </dl>
   <form method="dialog"><button type="submit">Close</button></form>
 </dialog>
@@ -360,6 +457,22 @@
   }
   .compact {
     display: none;
+  }
+  .lens {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 12px;
+    color: var(--sse-ink-muted);
+  }
+  .lens select {
+    height: 32px;
+    max-width: 180px;
+    border: var(--sse-line) solid var(--sse-ink);
+    background: var(--sse-ground);
+    color: var(--sse-ink);
+    font-family: var(--sse-font-body);
+    font-size: 13px;
   }
   .stage {
     position: relative;
@@ -514,7 +627,16 @@
     }
     .title {
       font-size: 22px;
+      min-width: 0;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
     }
+    .lens select {
+      max-width: 92px;
+      height: 44px;
+    }
+    .lens-k,
     .kicker,
     .themes,
     .screens,

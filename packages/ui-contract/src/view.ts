@@ -9,6 +9,8 @@ import type { SceneSubject, SystemScene } from "./scene.ts";
 import type { DeriveRef, ViewSession } from "./session.ts";
 import type { ChangeRequest } from "./physics.ts";
 import type { Json } from "./json.ts";
+import type { Lens } from "./lens.ts";
+import type { PlayerScene } from "./player-scene.ts";
 
 export type Tier = "still" | "gpu-high" | "gpu-basic" | "canvas" | "text";
 
@@ -69,6 +71,10 @@ export interface Workspace {
   bench: { flow: string; node?: string; ref?: DeriveRef; label?: string } | null;
   /** Physics change requests: drafts, adopted, declined. */
   requests: ChangeRequest[];
+  /** The GM's lens (H8.6): which layers, card fields and tools show. Never changes data. */
+  lens?: Lens;
+  /** The scene the lens looks through, for lenses that show what an audience knows; null while none is needed. */
+  lensScene?: PlayerScene | null;
   select(address: string | null): void;
   /** Put a flow on the bench and show the physics screen. */
   openFlow(flow: string, from?: { node?: string; ref?: DeriveRef; label?: string }): void;
