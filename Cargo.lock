@@ -596,6 +596,7 @@ dependencies = [
  "serde_json",
  "sse-atoms",
  "sse-chronicle",
+ "sse-codes",
  "sse-core",
  "sse-cosmos",
  "sse-flow",

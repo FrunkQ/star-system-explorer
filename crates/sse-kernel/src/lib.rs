@@ -204,6 +204,8 @@ pub struct Kernel {
     atoms: sse_flow::AtomRegistry,
     stack: Option<(ResolvedStack, BTreeMap<String, Flow>)>,
     observe: Observe,
+    /// Game-system code sheets from the stack (sse-codes).
+    codes: sse_codes::Codes,
     universe: Option<Universe>,
     jobs: BTreeMap<u32, Job>,
     next_job: u32,
@@ -326,6 +328,7 @@ impl Kernel {
             atoms: kernel_atoms(),
             stack: None,
             observe: Observe::default(),
+            codes: sse_codes::Codes::default(),
             universe: None,
             jobs: BTreeMap::new(),
             next_job: 1,
@@ -516,6 +519,22 @@ impl Kernel {
                                 });
                             }
                         };
+                        let codes = match sse_codes::Codes::load(&ms) {
+                            Ok(c) => c,
+                            Err(problems) => {
+                                let issues: Vec<sse_pack::StackIssue> = problems
+                                    .iter()
+                                    .map(|m| sse_pack::StackIssue {
+                                        pack: "codes".into(),
+                                        message: m.clone(),
+                                    })
+                                    .collect();
+                                return Ok(Response::StackRejected {
+                                    report: sse_pack::report(&issues),
+                                    issues: problems,
+                                });
+                            }
+                        };
                         let adopted = match self.universe.as_mut() {
                             Some(u) => u.adopt(&stack)?,
                             None => None,
@@ -529,6 +548,7 @@ impl Kernel {
                         };
                         self.stack = Some((stack, flows));
                         self.observe = observe;
+                        self.codes = codes;
                         self.time = sse_time::epoch::TimeSettings::from_packs(&ms).ok();
                         r
                     }
@@ -1838,6 +1858,34 @@ impl Kernel {
                     trail: sse_trigger::trail(&u.record),
                 }
             }
+            Request::Codes { scope, sheet, at_s } => {
+                let scope: Address = scope
+                    .parse()
+                    .map_err(|e| err("bad_address", format!("{e}")))?;
+                let sheet = match &sheet {
+                    Some(id) => self.codes.sheet(id).ok_or_else(|| {
+                        err(
+                            "unknown_sheet",
+                            format!("no code sheet {id:?} in the stack"),
+                        )
+                    })?,
+                    None => self.codes.sheets.first().ok_or_else(|| {
+                        err(
+                            "no_code_sheets",
+                            "the pack stack defines no code sheets (provides.other.code_sheets)",
+                        )
+                    })?,
+                };
+                let u = self
+                    .universe
+                    .as_ref()
+                    .ok_or_else(|| err("no_universe", "open a universe first"))?;
+                let readings = codes_at(&self.codes, sheet, u, &scope, at_s);
+                Response::Codes {
+                    sheet: sheet.id.clone(),
+                    readings,
+                }
+            }
             Request::Manifest => {
                 let m = self.universe()?.manifest();
                 Response::Manifest {
@@ -1851,3 +1899,72 @@ impl Kernel {
 
 #[cfg(test)]
 mod tests;
+
+/// The system a body belongs to: its nearest `sys` ancestor (itself if it is
+/// one), or its parent when there is none.
+fn system_of(a: &Address) -> Option<Address> {
+    let mut at = Some(a.clone());
+    while let Some(x) = at {
+        if x.last().kind() == "sys" {
+            return Some(x);
+        }
+        at = x.parent();
+    }
+    a.parent()
+}
+
+/// `codes`: a reading per body at or under `scope`, each against the bodies
+/// of its own system. Authored tags (`tag.*` facts) become subject tags, as
+/// in scenes.
+fn codes_at(
+    codes: &sse_codes::Codes,
+    sheet: &sse_codes::CodeSheet,
+    u: &Universe,
+    scope: &Address,
+    at_s: i64,
+) -> Vec<serde_json::Value> {
+    let state = u.chronicle.state_at(UniverseTime::seconds(at_s));
+    let subject = |a: &Address, f: &BTreeMap<String, Value>| {
+        let mut facts = BTreeMap::new();
+        let mut tags = std::collections::BTreeSet::new();
+        for (k, v) in f {
+            match k.strip_prefix(TAG_FIELD) {
+                Some(t) if *v == Value::Bool(true) => {
+                    tags.insert(t.to_string());
+                }
+                Some(_) => {}
+                None => {
+                    facts.insert(k.clone(), v.clone());
+                }
+            }
+        }
+        sse_sift::Subject {
+            address: Some(a.clone()),
+            facts,
+            parent: a
+                .parent()
+                .and_then(|p| state.facts.get(&p).cloned())
+                .unwrap_or_default(),
+            tags,
+            now_s: at_s,
+        }
+    };
+    let mut systems: BTreeMap<Address, Vec<sse_sift::Subject>> = BTreeMap::new();
+    for (a, f) in &state.facts {
+        if let Some(s) = system_of(a) {
+            if a != &s {
+                systems.entry(s).or_default().push(subject(a, f));
+            }
+        }
+    }
+    let mut out = Vec::new();
+    for (a, f) in &state.facts {
+        if !scope.contains(a) || a.last().kind() == "sys" {
+            continue;
+        }
+        let sys = system_of(a).and_then(|s| systems.get(&s));
+        let r = codes.read(sheet, &subject(a, f), sys.map(Vec::as_slice));
+        out.push(serde_json::json!({"address": a.to_string(), "reading": r}));
+    }
+    out
+}

@@ -1453,5 +1453,74 @@
  {
   "op": "rules_step",
   "at_s": 5
+ },
+ {
+  "op": "codes",
+  "scope": "u:toy/sys:0",
+  "at_s": 0
+ },
+ {
+  "op": "load_stack",
+  "packs": [
+   "$pack:codes-toy"
+  ]
+ },
+ {
+  "op": "open_universe",
+  "id": "toy",
+  "seed": "t"
+ },
+ {
+  "op": "set_authored",
+  "edit": {
+   "address": "u:toy/sys:0/body:1",
+   "field": "body.radius",
+   "value": 6400000.0,
+   "occurred_at_s": 0
+  }
+ },
+ {
+  "op": "set_authored",
+  "edit": {
+   "address": "u:toy/sys:0/body:2",
+   "field": "body.radius",
+   "value": 1700000.0,
+   "occurred_at_s": 0
+  }
+ },
+ {
+  "op": "set_authored",
+  "edit": {
+   "address": "u:toy/sys:0/body:3",
+   "field": "body.radius",
+   "value": 70000000.0,
+   "occurred_at_s": 0
+  }
+ },
+ {
+  "op": "set_authored",
+  "edit": {
+   "address": "u:toy/sys:0/body:2",
+   "field": "toy.code.size",
+   "value": "L",
+   "occurred_at_s": 0
+  }
+ },
+ {
+  "op": "codes",
+  "scope": "u:toy/sys:0",
+  "at_s": 10
+ },
+ {
+  "op": "codes",
+  "scope": "u:toy/sys:0/body:2",
+  "sheet": "toy.world",
+  "at_s": 10
+ },
+ {
+  "op": "codes",
+  "scope": "u:toy/sys:0",
+  "sheet": "nope",
+  "at_s": 10
  }
 ]

@@ -24,6 +24,7 @@ sse-import-v3.workspace = true
 sse-cosmos = { path = "../sse-cosmos" }
 sse-surface.workspace = true
 sse-world.workspace = true
+sse-codes = { path = "../sse-codes" }
 serde.workspace = true
 serde_json.workspace = true
 ts-rs = { version = "=12.0.1", features = ["serde-json-impl"] }

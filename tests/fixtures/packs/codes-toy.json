@@ -1,0 +1,177 @@
+{
+ "format": "sse.pack/1",
+ "id": "toy.codes",
+ "version": "0.1.0",
+ "kind": [
+  "game-system"
+ ],
+ "kernel_range": "^0.1",
+ "licence": "Apache-2.0",
+ "provides": {
+  "other": {
+   "schemes": [
+    {
+     "id": "toy.size",
+     "question": "How big is it?"
+    }
+   ],
+   "axes": [
+    [
+     "toy.size",
+     {
+      "field": "body.radius",
+      "scale": "linear",
+      "label": "radius",
+      "span": [
+       0,
+       10
+      ],
+      "unit": "x 1000 km",
+      "divide_by": 1000000.0
+     }
+    ]
+   ],
+   "classes": [
+    {
+     "id": "toy.size/small",
+     "scheme": "toy.size",
+     "kind": "base",
+     "region": [
+      {
+       "axis": "toy.size",
+       "core": [
+        0,
+        3
+       ],
+       "fringe": [
+        0,
+        3
+       ]
+      }
+     ],
+     "threshold": 1.0,
+     "names": {
+      "physics": "small",
+      "plain": "small",
+      "story": "small"
+     },
+     "learn": {
+      "summary": "small"
+     },
+     "source": "contract fixture",
+     "typical": [
+      {
+       "axis": "toy.size",
+       "centre": 1.5,
+       "spread": 0
+      }
+     ]
+    },
+    {
+     "id": "toy.size/large",
+     "scheme": "toy.size",
+     "kind": "base",
+     "region": [
+      {
+       "axis": "toy.size",
+       "core": [
+        3,
+        1000000000.0
+       ],
+       "fringe": [
+        3,
+        1000000000.0
+       ]
+      }
+     ],
+     "threshold": 1.0,
+     "names": {
+      "physics": "large",
+      "plain": "large",
+      "story": "large"
+     },
+     "learn": {
+      "summary": "large"
+     },
+     "source": "contract fixture",
+     "typical": [
+      {
+       "axis": "toy.size",
+       "centre": 500000001.5,
+       "spread": 0
+      }
+     ]
+    }
+   ],
+   "code_sheets": [
+    {
+     "id": "toy.world",
+     "label": "Toy world code",
+     "segments": [
+      {
+       "id": "size",
+       "label": "Size",
+       "authored": "toy.code.size",
+       "source": {
+        "from": "classify",
+        "scheme": "toy.size",
+        "symbols": [
+         {
+          "class": "toy.size/small",
+          "symbol": "S",
+          "value": 1
+         },
+         {
+          "class": "toy.size/large",
+          "symbol": "L",
+          "value": 2
+         }
+        ]
+       }
+      },
+      {
+       "id": "large",
+       "label": "Large bodies in the system",
+       "source": {
+        "from": "count",
+        "tag": "toy.large",
+        "max": 9
+       }
+      }
+     ],
+     "layouts": {
+      "code": "{size}{large}"
+     },
+     "fact_prefix": "toy.code.",
+     "groups": [
+      {
+       "id": "notes",
+       "label": "Notes",
+       "prefix": "toy.note."
+      }
+     ],
+     "rules": [
+      {
+       "id": "toy.large.v1",
+       "tag": "toy.large",
+       "when": {
+        "if": "range",
+        "field": "body.radius",
+        "min": 3000000.0
+       }
+      },
+      {
+       "id": "toy.note.big.v1",
+       "tag": "toy.note.big",
+       "when": {
+        "if": "range",
+        "field": "toy.code.size",
+        "min": 2
+       }
+      }
+     ]
+    }
+   ]
+  }
+ }
+}

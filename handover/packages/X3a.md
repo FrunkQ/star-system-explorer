@@ -51,3 +51,9 @@ Listed in `docs/fudges.md`, section "Game-system packs".
 - Checks: `tests/ui/calendar.test.ts` (Gregorian months, long years incl. 1900 and 2000, weekdays incl. 19 Nov 2026 a Thursday, 400-year cycles, round trips, Imperial dates and holiday, bad definitions, words).
 - Golden `traveller-codes.json`: only the pack hash moved (units, calendar and terms added).
 - Not yet: the campaign's anchor and calendar choice in the save, and the time controls showing it (human-scale time controls are queued on the chart room thread; they can call `formatDate`).
+
+# X3a part 2b: the kernel `codes` op (19 Nov 2026)
+- `{"op": "codes", "scope", "sheet"?, "at_s"}` reads every body at or under `scope` through a code sheet in the stack (the first one if `sheet` is left out). Each reading is the sse-codes `Reading` unchanged: digits with their why, lines (the UWP), rule groups. Count digits (belts, gas giants) count the bodies of the body's own system, its nearest `sys` ancestor. Authored `tag.*` facts become subject tags as in scenes. Read-only.
+- `load_stack` now also loads code sheets and refuses a stack whose sheets are broken (issues under pack "codes").
+- Checks: a contract case on the toy fixture `tests/fixtures/packs/codes-toy.json` (an authored code wins over physics, a count reads the system, errors for no sheets and an unknown sheet), plus a kernel test that loads base-physics, base-atlas, base-time and the Traveller pack and reads an Earth-like UWP. The contract golden changed for the new cases and the op list (line 1, the unknown-op message, and the appended lines).
+- Next: a Traveller lens and world sheet in the chart room that call `codes`, then sifters (pack data over the published `traveller.uwp.*` facts).

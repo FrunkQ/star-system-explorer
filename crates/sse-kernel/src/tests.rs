@@ -1401,3 +1401,74 @@ fn rules_through_the_api() {
     let b = run();
     assert_eq!(a, b, "the same session replays to the same bytes");
 }
+
+/// `codes`: digits from the stack's code sheet, authored codes win with the
+/// physics kept beside them, and counts read the body's own system.
+#[test]
+fn codes_read_every_body_with_its_why() {
+    let l: Vec<serde_json::Value> = contract_lines()
+        .iter()
+        .map(|s| serde_json::from_str(s).unwrap())
+        .collect();
+    let all: Vec<&serde_json::Value> = l.iter().filter(|r| r["type"] == "codes").collect();
+    assert_eq!(all.len(), 2);
+    let r = &all[0]["readings"];
+    let line = |i: usize| {
+        r[i]["reading"]["lines"]["code"]
+            .as_str()
+            .unwrap()
+            .to_string()
+    };
+    assert_eq!(r.as_array().unwrap().len(), 3);
+    assert_eq!(
+        (line(0), line(1), line(2)),
+        ("L2".into(), "L2".into(), "L2".into())
+    );
+    let size = &r[1]["reading"]["segments"][0]["why"];
+    assert_eq!(size["kind"], "authored");
+    assert_eq!(size["physics"], "S");
+    assert_eq!(all[1]["readings"].as_array().unwrap().len(), 1);
+    assert!(l
+        .iter()
+        .any(|x| x["type"] == "error" && x["code"] == "no_code_sheets"));
+    assert!(l
+        .iter()
+        .any(|x| x["type"] == "error" && x["code"] == "unknown_sheet"));
+}
+
+/// The Traveller pack loads on the real base packs and reads UWPs through
+/// the kernel.
+#[test]
+fn traveller_pack_reads_codes_through_the_kernel() {
+    let mut k = crate::Kernel::new();
+    let pack = |n: &str| -> serde_json::Value {
+        serde_json::from_str(
+            &std::fs::read_to_string(root().join(format!("packs/{n}/pack.json"))).unwrap(),
+        )
+        .unwrap()
+    };
+    let mut send = |v: serde_json::Value| -> serde_json::Value {
+        serde_json::from_str(&k.handle_json(&v.to_string())).unwrap()
+    };
+    let r = send(serde_json::json!({"op": "load_stack", "packs": [
+        pack("base-physics"), pack("base-atlas"), pack("base-time"), pack("traveller")]}));
+    assert_eq!(r["type"], "stack_loaded", "{r}");
+    send(serde_json::json!({"op": "open_universe", "id": "trav", "seed": "t"}));
+    for (f, v) in [
+        ("body.radius", serde_json::json!(6.371e6)),
+        ("atmosphere.surface_pressure", serde_json::json!(1.013e5)),
+        ("surface.liquid_fraction", serde_json::json!(0.71)),
+    ] {
+        let r = send(serde_json::json!({"op": "set_authored", "edit": {
+            "address": "u:trav/sys:0/body:3", "field": f, "value": v, "occurred_at_s": 0}}));
+        assert_eq!(r["type"], "authored", "{r}");
+    }
+    let r = send(serde_json::json!({"op": "codes", "scope": "u:trav/sys:0", "at_s": 0}));
+    assert_eq!(r["type"], "codes", "{r}");
+    assert_eq!(r["sheet"], "traveller.world");
+    let uwp = r["readings"][0]["reading"]["lines"]["uwp"]
+        .as_str()
+        .unwrap();
+    assert_eq!(&uwp[1..2], "8", "{uwp}");
+    assert_eq!(&uwp[3..4], "7", "71% water reads hydrographics 7: {uwp}");
+}

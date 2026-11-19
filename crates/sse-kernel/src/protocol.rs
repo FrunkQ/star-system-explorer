@@ -497,6 +497,18 @@ pub enum Request {
     /// The loaded rules with their effective policies, and the record's
     /// `rules.*` trail (GM only).
     Rules,
+    /// Game-system codes (handoff 7A part 1) for every body at or under
+    /// `scope` at `at_s`, read by a pack's code sheet (`sheet`, or the first
+    /// one in the stack): each digit with its why, the lines (a UWP), and the
+    /// rule groups (trade codes, zones). Count digits count bodies in the
+    /// same system. Read-only; GM machine (it reads every fact).
+    Codes {
+        scope: String,
+        #[serde(default)]
+        #[ts(optional)]
+        sheet: Option<String>,
+        at_s: i64,
+    },
 }
 
 /// `adopt`'s formation request: the `run_formation` fields.
@@ -587,6 +599,7 @@ impl Request {
             Request::RulesDecide { .. } => "rules_decide",
             Request::RulesPolicy { .. } => "rules_policy",
             Request::Rules => "rules",
+            Request::Codes { .. } => "codes",
         }
     }
 }
@@ -699,6 +712,11 @@ pub fn ops() -> Vec<OpInfo> {
         o("rules_decide", Cost::Light, "GM machine only; one fold and the proposal's effects"),
         o("rules_policy", Cost::Trivial, "GM machine only; one record event"),
         o("rules", Cost::Light, "GM machine only; linear in the record events"),
+        o(
+            "codes",
+            Cost::Light,
+            "GM machine only; one classification per digit per body, rules per body, linear in the system",
+        ),
     ]
 }
 
@@ -1047,6 +1065,13 @@ pub enum Response {
         tiles: Vec<serde_json::Value>,
         #[ts(type = "unknown[]")]
         refused: Vec<serde_json::Value>,
+    },
+    /// `codes`: one entry per body, in address order:
+    /// `{address, reading}` with the sse-codes `Reading` unchanged in shape.
+    Codes {
+        sheet: String,
+        #[ts(type = "unknown[]")]
+        readings: Vec<serde_json::Value>,
     },
     Error {
         code: String,
