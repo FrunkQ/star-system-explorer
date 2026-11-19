@@ -31,8 +31,6 @@
   const half = $derived(wedge >= 180 ? Rpx : Rpx * Math.sin(((wedge / 2) * Math.PI) / 180));
   const W = $derived(Math.round(2 * (half + SIDE)));
   const cx = $derived(W / 2);
-  const cy = $derived(22 + 14 * outsideCount + Rpx);
-  const H = $derived(Math.round(cy + (wedge > 180 ? -Rpx * Math.cos(((wedge / 2) * Math.PI) / 180) : 0) + 22));
   const rad = (d: number) => (d * Math.PI) / 180;
   const pt = (r: number, a: number) => `${(cx + r * Math.sin(rad(a))).toFixed(2)} ${(cy - r * Math.cos(rad(a))).toFixed(2)}`;
   function sector(r0: number, r1: number, a0: number, a1: number): string {
@@ -58,6 +56,8 @@
   const shellTop = $derived(w ? Math.max(0, ...w.shells.map((s) => s.top_m)) : 0);
   const outside = $derived(w ? w.features.filter((f) => f.altitude_m > shellTop).sort((a, b) => a.altitude_m - b.altitude_m) : []);
   const outsideCount = $derived(outside.length);
+  const cy = $derived(22 + 14 * outsideCount + Rpx);
+  const H = $derived(Math.round(cy + (wedge > 180 ? -Rpx * Math.cos(((wedge / 2) * Math.PI) / 180) : 0) + 22));
   const fr = (f: { key: string; altitude_m: number }) => (f.altitude_m > shellTop ? Rpx + 12 + 14 * outside.findIndex((o) => o.key === f.key) : r(f.altitude_m));
   // Marks: one per feature, except the surface, which gets one mark worded like its ladder line.
   // Labels alternate sides top to bottom so neighbours do not overprint.
