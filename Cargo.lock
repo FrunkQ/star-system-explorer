@@ -591,6 +591,7 @@ dependencies = [
  "sse-life",
  "sse-light",
  "sse-logic",
+ "sse-nebula",
  "sse-observe",
  "sse-pack",
  "sse-record",
@@ -638,6 +639,17 @@ dependencies = [
  "sse-life",
  "sse-place",
  "sse-sift",
+]
+
+[[package]]
+name = "sse-nebula"
+version = "0.1.0"
+dependencies = [
+ "serde",
+ "serde_json",
+ "sse-atoms",
+ "sse-core",
+ "sse-light",
 ]
 
 [[package]]

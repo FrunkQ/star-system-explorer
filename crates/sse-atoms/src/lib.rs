@@ -9,6 +9,7 @@ pub mod common;
 pub mod heat;
 pub mod layers;
 pub mod light;
+pub mod nebula;
 pub mod orbit;
 pub mod planet;
 pub mod star;
@@ -30,6 +31,7 @@ pub fn atoms() -> Vec<Box<dyn sse_flow::Atom>> {
         .chain(layers::atoms())
         .chain(heat::atoms())
         .chain(light::atoms())
+        .chain(nebula::atoms())
         .collect()
 }
 
@@ -246,6 +248,17 @@ pub const KIND_DESCRIPTIONS: &[(&str, &str)] = &[
     ("body.magnetopause_radius", "stand-off distance of the magnetopause towards the wind, from the body's centre; zero without a field"),
     ("radio.auroral_power", "auroral radio power, all frequencies"),
     ("radio.max_frequency", "highest auroral radio frequency, the electron gyrofrequency at the magnetic pole"),
+    // nebulae (O3)
+    ("light.ionising_photon_rate", "photons per second able to ionise hydrogen (above 13.6 eV)"),
+    ("gas.hydrogen_density", "number density of hydrogen nuclei in the surrounding gas"),
+    ("nebula.ionised_radius", "radius out to which a star's light keeps the gas ionised (Strömgren radius)"),
+    ("nebula.recombination_rate", "hydrogen recombinations per second in a nebula"),
+    ("nebula.h_alpha_power", "power in the hydrogen-alpha line"),
+    ("nebula.expansion_speed", "speed at which a nebula's shell expands"),
+    ("nebula.age", "time since the nebula's cause (a star's death, an explosion, a cluster's birth)"),
+    ("nebula.shell_radius", "radius of a nebula's shell or shock"),
+    ("event.explosion_energy", "kinetic energy of an explosion"),
+    ("event.ejecta_mass", "mass thrown out by an explosion"),
 ];
 
 /// Quantity kinds for the base-physics pack, from the atoms' port kinds.

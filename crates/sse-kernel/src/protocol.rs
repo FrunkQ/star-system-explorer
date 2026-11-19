@@ -340,6 +340,28 @@ pub enum Request {
         #[ts(optional, type = "unknown[]")]
         bodies: Option<Vec<serde_json::Value>>,
     },
+    /// Nebulae at a date (O3): planetary nebulae from stars' deaths (or given
+    /// inputs), supernova remnants and star-forming glows, each a descriptor
+    /// (shells, lobes, surroundings, lighting stars, light, decoration seed).
+    /// Nebulae not yet born or already faded are listed in `absent`.
+    ReadNebulae {
+        at_s: f64,
+        #[serde(default)]
+        #[ts(optional)]
+        seed: Option<String>,
+        #[serde(default)]
+        #[ts(optional, type = "unknown[]")]
+        deaths: Option<Vec<serde_json::Value>>,
+        #[serde(default)]
+        #[ts(optional, type = "unknown[]")]
+        planetary: Option<Vec<serde_json::Value>>,
+        #[serde(default)]
+        #[ts(optional, type = "unknown[]")]
+        remnants: Option<Vec<serde_json::Value>>,
+        #[serde(default)]
+        #[ts(optional, type = "unknown[]")]
+        glows: Option<Vec<serde_json::Value>>,
+    },
     /// Bring a system into the open universe as facts: an SSE 3 save
     /// (`import_v3`, its text) or a formation run (`formation`, the same
     /// fields as `run_formation`; its `system` must be in the universe). The
@@ -555,6 +577,7 @@ impl Request {
             Request::RunFormation { .. } => "run_formation",
             Request::ReadWorldStack { .. } => "read_world_stack",
             Request::ReadLight { .. } => "read_light",
+            Request::ReadNebulae { .. } => "read_nebulae",
             Request::Adopt { .. } => "adopt",
             Request::ResolvedSystem { .. } => "resolved_system",
             Request::Systems => "systems",
@@ -641,6 +664,11 @@ pub fn ops() -> Vec<OpInfo> {
             "read_world_stack",
             Cost::Light,
             "one stack: validation, the depth ladder and a few atom evaluations",
+        ),
+        o(
+            "read_nebulae",
+            Cost::Light,
+            "per nebula: a few block evaluations; a remnant's fading date is a 200-step bisection",
         ),
         o(
             "read_light",
@@ -890,6 +918,14 @@ pub enum Response {
         table: serde_json::Value,
         #[ts(type = "unknown[]")]
         bodies: Vec<serde_json::Value>,
+    },
+    /// `read_nebulae`: each of `nebulae` is `sse_nebula::Descriptor`;
+    /// `absent` lists the addresses asked about that do not exist at `at_s`.
+    NebulaeRead {
+        at_s: f64,
+        #[ts(type = "unknown[]")]
+        nebulae: Vec<serde_json::Value>,
+        absent: Vec<String>,
     },
     /// `adopt`: the events written (the first carries the report), the
     /// systems adopted and the number of facts.

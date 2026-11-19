@@ -1280,6 +1280,20 @@
   "fixture": "orion"
  },
  {
+  "op": "read_nebulae",
+  "at_s": 220000320000000000,
+  "seed": "contract",
+  "deaths": [{ "star": "u:sol/sys:0/star:0", "died_at_s": 2.2e17, "initial_mass_msun": 1.0, "remnant_mass_msun": 0.54, "ambient_h_m3": 1000000.0, "companion": true }],
+  "remnants": [{ "address": "u:t/sys:1/nebula:0", "star": "u:t/sys:1/star:0", "exploded_at_s": 2.2e17, "core_collapse": true, "energy_j": 1e44, "ejecta_kg": 9.94e30, "ambient_h_m3": 1000000.0, "remnant": "u:t/sys:1/star:0" }],
+  "glows": [{ "address": "u:t/cluster:0/nebula:0", "cluster": "u:t/cluster:0", "cloud_h_m3": 100000000.0,
+    "stars": [{ "address": "u:t/sys:2/star:0", "teff_k": 37000.0, "radius_m": 5.5656e9, "born_s": 2.2e17, "dies_s": 2.3e17 }] }]
+ },
+ {
+  "op": "read_nebulae",
+  "at_s": 1e17,
+  "deaths": [{ "star": "u:sol/sys:0/star:0", "died_at_s": 2.2e17, "initial_mass_msun": 1.0, "remnant_mass_msun": 0.54, "ambient_h_m3": 1000000.0 }]
+ },
+ {
   "op": "adopt",
   "formation": {
    "seed": "kernel-form-6",

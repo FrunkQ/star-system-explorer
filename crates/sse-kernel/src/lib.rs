@@ -967,6 +967,14 @@ impl Kernel {
             Request::ReadLight { fixture, bodies } => {
                 systems::read_light(fixture.as_deref(), bodies)?
             }
+            Request::ReadNebulae {
+                at_s,
+                seed,
+                deaths,
+                planetary,
+                remnants,
+                glows,
+            } => systems::read_nebulae(at_s, seed.as_deref(), deaths, planetary, remnants, glows)?,
             Request::Adopt {
                 import_v3,
                 formation,

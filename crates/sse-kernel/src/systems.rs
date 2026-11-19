@@ -267,3 +267,62 @@ pub(crate) fn read_light(fixture: Option<&str>, bodies: Option<Vec<serde_json::V
             .collect(),
     })
 }
+
+fn parse_list<T: serde::de::DeserializeOwned>(
+    what: &str,
+    v: Option<Vec<serde_json::Value>>,
+) -> Result<Vec<T>, Response> {
+    v.unwrap_or_default()
+        .into_iter()
+        .enumerate()
+        .map(|(i, x)| {
+            serde_json::from_value(x).map_err(|e| err("bad_nebula", format!("{what} {i}: {e}")))
+        })
+        .collect()
+}
+
+/// Nebulae at a date (O3).
+pub(crate) fn read_nebulae(
+    at_s: f64,
+    seed: Option<&str>,
+    deaths: Option<Vec<serde_json::Value>>,
+    planetary: Option<Vec<serde_json::Value>>,
+    remnants: Option<Vec<serde_json::Value>>,
+    glows: Option<Vec<serde_json::Value>>,
+) -> Out {
+    use sse_nebula::*;
+    let seed = sse_core::Seed::from_text(seed.unwrap_or("sse4"));
+    let deaths: Vec<Death> = parse_list("death", deaths)?;
+    let mut pns: Vec<PnInput> = deaths.iter().map(PnInput::from_death).collect();
+    pns.extend(parse_list::<PnInput>("planetary", planetary)?);
+    let snrs: Vec<SnrInput> = parse_list("remnant", remnants)?;
+    let gl: Vec<GlowInput> = parse_list("glow", glows)?;
+    let (mut nebulae, mut absent) = (vec![], vec![]);
+    let mut put = |addr: &str, d: Result<Option<Descriptor>, String>| -> Result<(), Response> {
+        match d.map_err(|e| err("bad_nebula", e))? {
+            Some(d) => nebulae.push(serde_json::to_value(d).expect("plain data")),
+            None => absent.push(addr.to_string()),
+        }
+        Ok(())
+    };
+    for p in &pns {
+        put(
+            &p.address,
+            planetary_nebula(&seed, p, &PnSettings::default(), at_s),
+        )?;
+    }
+    for p in &snrs {
+        put(
+            &p.address,
+            supernova_remnant(&seed, p, &SnrSettings::default(), at_s),
+        )?;
+    }
+    for p in &gl {
+        put(&p.address, star_forming_glow(&seed, p, at_s))?;
+    }
+    Ok(Response::NebulaeRead {
+        at_s,
+        nebulae,
+        absent,
+    })
+}

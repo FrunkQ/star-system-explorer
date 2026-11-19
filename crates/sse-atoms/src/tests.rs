@@ -108,7 +108,7 @@ fn every_atom_is_cited_explained_and_versioned() {
         }
     }
     assert_eq!(
-        n, 43,
+        n, 48,
         "first-wave atom count changed: update handover/packages/P1.md"
     );
 }
@@ -584,4 +584,60 @@ fn references_serialise_as_text_doi_and_link() {
     );
     assert_eq!(ads.doi, None);
     assert_eq!(ads.text, "B 1996, Icarus 122");
+}
+
+// ---- nebulae (O3) ----
+
+/// The series photon count agrees with a direct numerical integration of the
+/// Planck photon spectrum (midpoint rule, 200,000 steps in frequency).
+#[test]
+fn ionising_photons_series_matches_numeric() {
+    use crate::nebula::*;
+    let (h, c, k) = (6.626_070_15e-34, 299_792_458.0, 1.380_649e-23);
+    for t in [20_000.0, 40_000.0, 100_000.0] {
+        let r = 7e9;
+        let nu0 = E_ION_H / h;
+        let nu1 = nu0 * 40.0;
+        let n = 200_000;
+        let dnu = (nu1 - nu0) / n as f64;
+        let mut s = 0.0;
+        for i in 0..n {
+            let nu = nu0 + (i as f64 + 0.5) * dnu;
+            s += 2.0 * nu * nu / (c * c) / sse_core::math::expm1(h * nu / (k * t));
+        }
+        let numeric = 4.0 * sse_core::math::PI * r * r * sse_core::math::PI * s * dnu;
+        let series = ionising_photons(t, r, E_ION_H);
+        close(series, numeric, 1e-4, "ionising photons");
+    }
+}
+
+/// A star giving 10⁴⁹ ionising photons a second in gas of 100 per cm³ ionises
+/// a sphere about 3.1 pc across in radius (Osterbrock and Ferland 2006, sec 2.3).
+#[test]
+fn stromgren_sphere() {
+    let r = run("sse.nebula.stromgren_radius", &[1e49, 1e8])[0];
+    close(r / 3.0857e16, 3.15, 0.02, "Strömgren radius");
+    // Case B: L(Hα) = 1.37e-12 erg/s per ionising photon (Osterbrock and Ferland).
+    let l = run("sse.nebula.balmer_alpha_power", &[1e49])[0];
+    close(l, 1.37e-19 * 1e49, 0.01, "Hα");
+}
+
+/// Supernova remnant phases: R grows as t^(2/5) in the Sedov phase, and
+/// Cioffi et al.'s snowplough starts at R_PDS = 14 pc for E = 10⁵¹ erg, n = 1.
+#[test]
+fn remnant_phases() {
+    use crate::nebula::remnant_radius;
+    let yr = sse_core::quantity::consts::JULIAN_YEAR;
+    let pc = 3.085_677_581e16;
+    let (e, mej, n) = (1e44, 1.4 * 1.988_41e30, 1e6);
+    let (r1, p1) = remnant_radius(e, mej, n, 100.0 * yr);
+    assert_eq!(p1, "free expansion");
+    let (ra, pa) = remnant_radius(e, mej, n, 2000.0 * yr);
+    let (rb, _) = remnant_radius(e, mej, n, 4000.0 * yr);
+    assert_eq!(pa, "Sedov-Taylor");
+    close(rb / ra, sse_core::math::pow(2.0, 0.4), 1e-9, "t^2/5");
+    let (rp, pp) = remnant_radius(e, mej, n, 1.33e4 * yr * 1.000001);
+    assert_eq!(pp, "pressure-driven snowplough");
+    close(rp / pc, 14.0, 0.01, "R_PDS");
+    assert!(r1 < ra);
 }
