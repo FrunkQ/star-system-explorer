@@ -5,7 +5,7 @@ Date 17 Nov 2026. Audience: a coordinating session planning the work, and the bu
 ## 0. Read in this order
 
 1. `SSE4-design-handoff.md` : the architecture, contracts, decisions. The authority.
-2. `SSE4-galaxy-design.md`, `SSE4-life-design.md`, `SSE4-surface-design.md`, `SSE4-classification-design.md`, `SSE4-system-formation-design.md`, `SSE4-sound-design.md`, `SSE4-weather-design.md` and `SSE4-nebulae-and-light-design.md` : the domain designs in detail. `SSE4-surfaces-and-rendering.md` is the research report on browser photorealism, hardware scaling and software choices; it is the authority for rendering and must be read before any R or V package.
+2. `SSE4-galaxy-design.md`, `SSE4-life-design.md`, `SSE4-surface-design.md`, `SSE4-classification-design.md`, `SSE4-system-formation-design.md`, `SSE4-sound-design.md`, `SSE4-weather-design.md` `SSE4-nebulae-and-light-design.md` and `SSE4-record-logic-programs-design.md` : the domain designs in detail. `SSE4-surfaces-and-rendering.md` is the research report on browser photorealism, hardware scaling and software choices; it is the authority for rendering and must be read before any R or V package.
 3. The "SSE4 mockups" canvas : every screen. Chart room board is the reference for the GM look.
 4. "SSE4 decisions for Alex" : the reasoning trail, if a decision seems odd.
 5. On Alex's machine under `C:\Development`: the V3 source (for parity and import), `ovid-next` (agent system to reuse), `evolution-lab` and `evolution-lab-design` (contracts, UI components, experiments).
@@ -125,12 +125,14 @@ Tracks can run in parallel once their dependencies are met. `needs` lists packag
 
 ### N: sound. Stages N1 to N7 exactly as `SSE4-sound-design.md` section 7, one package each. Off by default, synthesised from data-only recipes, no baked audio.
 
+### J: the campaign record, logic blocks, boxes and programs **[decided 19 Nov]**. Stages J1 to J9 exactly as `SSE4-record-logic-programs-design.md` section 10, one package each. J1 (needs K3, K5, K9), J2 (K4, K8) and J3 (K4, K5) can start now. Read that file's section 9 first: it lists four points of care against code already built (flow document hashes, note filtering in scenes, the intent list moving into the kernel, and X3d building on J4 and J7).
+
 ### A: agents
 
 | Id | Package | Needs | Acceptance checks |
 |---|---|---|---|
 | A1 | Provider adapter and key handling lifted from Ovid Next; keys never leave the browser | K0 | works with two providers; app fully usable with no key |
-| A2 | Orac: change requests for flows, packs, screens, data views, sifters, atom issue drafts; all validated before display | A1, U3, U5 | invalid candidates never reach the accept button; nothing mutates without accept |
+| A2 | Orac: change requests for flows, packs, screens, data views, sifters, atom issue drafts; all validated before display | A1, U3, U5 (J3, J6 for boxes and programs) | invalid candidates never reach the accept button; nothing mutates without accept |
 | A3 | Minerva: narrative from sifter hits and explanation bundles, respecting data views | A1, K8, K9 | no number in output that is not in the supplied facts (automated check); will not reveal unscanned data |
 | A4 | Tars: support from docs and explanation bundles, humour setting | A1 | answers cite the bundle or doc they came from |
 
@@ -145,7 +147,7 @@ Tracks can run in parallel once their dependencies are met. `needs` lists packag
 | X3a | Traveller pack, rules (H7A parts 1, 8, 9): UWP, PBG, trade codes, zones, bases from classification rules; units, calendar, vocabulary; lenses, reports, sifters | K5, U9 | codes come from rules only; every digit answers why; world to UWP to world keeps every digit |
 | X3b | UWP to system (H7A part 2): codes as pins and constraints, constrained resolve, `traveller-generated` tag, impossible values kept and marked, "make physically sound" change request, seeded subsector rolls | X3a, K8 | reference UWP set resolves with every code honoured; impossible cases tagged with reasons, none altered; same seed gives same subsector on every device |
 | X3c | Hex map view in the core stack, configured by the pack; importers and exporters: UWP lines, SEC, T5 tab-delimited, sector XML, Travellermap fetch (H7A parts 3, 4) | V1, V12, X3b | a reference subsector imports, displays and exports back to an equivalent file; import is undoable; hex view works with a non-Traveller configuration |
-| X3d | Gas mixes, sensors and the knowledge ladder, constructs, jump-era fictional physics pack with jump shadows and refuelling (H7A parts 5, 6, 7), ported from V3's tables | X3a, T3, V5 | jump shadow fixtures match hand calculation; sensor rule moves a body up the ladder at the right range and time; everything downstream of the physics pack carries the fictional label; removing the bundle leaves a valid campaign |
+| X3d | Gas mixes, sensors and the knowledge ladder, constructs, jump-era fictional physics pack with jump shadows and refuelling (H7A parts 5, 6, 7), ported from V3's tables | X3a, T3, V5, J4, J7 | jump shadow fixtures match hand calculation; sensor rule moves a body up the ladder at the right range and time; everything downstream of the physics pack carries the fictional label; removing the bundle leaves a valid campaign |
 | X4 | Documentation and learning content: every atom's three lenses written, in-app glossary | P1 onward | coverage report: no atom without lenses |
 
 ## 4. Milestones (each is a usable thing Alex can try)
@@ -158,6 +160,8 @@ Tracks can run in parallel once their dependencies are met. `needs` lists packag
 | M4 Players | K9, V1 to V6, U5, U9, X1 | run a session with themed player screens and the Scanned button |
 | M4b Sound | N1 to N3 | turn sound on, hear a system's background tones change from world to world, hear the astrogation console |
 | M5 Time and travel | T1 to T3, U4, V8, U8, A1 to A4, F7, O10 (after O1, O2) | age the Solar System; plot courses; agents on his own key |
+| M5c Living campaign | J1 to J7, J9 | jot a note on a statue and find it on the timeline; track factions and what they think of the party; set a mining drone's autopilot and look ahead to see what it does |
+| M5d Turns (later) | J8 | run a week of downtime or a turn-based game with sealed orders |
 | M5b Traveller table | X3a to X3d, V12, O9 (after O1, O2, O8) | import a subsector from Travellermap onto a hex map, open any world as a full system with its impossible values marked, plan a jump with real jump shadows, hand players a UWP sheet |
 | M6 Living worlds | K10, L0 to L1d, U7 | open any world's biosphere and history |
 | M6b Surfaces | S0 to S7, R1 to R4, V11, N4, N5, W1 to W3, W5, O1, O2 | chart a world's terrain, ask why a range is there, watch continents drift, land on it in several styles |

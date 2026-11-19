@@ -165,7 +165,7 @@ An append-only causal history. Everything that happens is an event; nothing is o
 Event {
   id: content hash
   kind: "resolve" | "authored.set" | "authored.event" | "derive.milestone" | "evolve.transition"
-        | "commit.branch" | "observe.grant" | suite-defined kinds
+        | "commit.branch" | "observe.grant" | "record.note" | "record.set" | suite-defined kinds
   subject: Address[]                 what it affects
   occurred_at: UniverseTime          when it happened in the universe
   activated_at: UniverseTime         when its effects begin (light-time, delays)
@@ -176,6 +176,8 @@ Event {
   publisher: pack id + flow/atom id + version
 }
 ```
+
+`record.note` and `record.set` are the campaign record **[decided 19 Nov; `SSE4-record-logic-programs-design.md` is the authority]**: notes and kept values on any address, including actors (`/actor:<id>`, authored namespace) that are not places. They use the same payload and the same fold; nothing else about the chronicle changes.
 
 Three times are kept distinct (borrowed from Evolution Lab: occurred, activated, recognised). `recognised_at` must never influence a physical result.
 
@@ -237,6 +239,7 @@ AtomDecl { id, version, inputs: Port[], outputs: Port[], params: Param[],
 FlowDoc  { id, version, hook, nodes: [{atom|box|solve, params}], wires, publishes: QuantityKind[], tests: golden cases }
 ```
 
+- **Boxes, logic blocks and typed wires [decided 19 Nov; `SSE4-record-logic-programs-design.md` sections 3 and 4]**: a box is a flow used as a block, looks exactly like an atom from outside, nests, and is compiled by inlining. Wires may carry `flag`, `choice`, `ref`, `text`, `list` and `record` as well as numbers; a port with no shape is a number. A small fixed set of logic atoms (compare, combine, choose, lists, world reads, dice as keyed draws) ships in the core, marked as logic, not physics. The rule predicates of 6.6 and these atoms are one condition language. A third kind, the **engine block**, gives a dedicated engine (the classifier first, then NAV and simulators) the face of a block while it keeps its own editor.
 - Atoms are Rust. Flows are data. A user changes physics by rewiring atoms, changing parameters, or swapping a box, never by writing code.
 - `Solve` nodes handle implicit systems (climate equilibrium, interior structure) with a fixed method and a deterministic stopping rule.
 - Outside an atom's validity range the result is still produced but labelled `extrapolated`.
@@ -303,6 +306,18 @@ DataView { id, label,                      e.g. "Long-range sensors", "Scanned",
 
 Kernel service, not a view. Given ship capabilities, origin, destination, departure window and constraints, return a small set of candidate courses with: burn schedule, time, propellant with reserve, peak acceleration, radiation dose, heat load, debris and gravity hazards, communication delays, and a difficulty rating with reasons. Players command the computer ("fastest", "save fuel", "stay hidden behind the planet") and choose; they never fly by hand **[decided]**. "Ship not under power" is the same service asked "what are my ways out from this drifting state?". Courses are events in the chronicle once the GM approves.
 
+### 6.9 ACT: the record, triggers, effects and programs **[decided 19 Nov; `SSE4-record-logic-programs-design.md` is the authority]**
+
+The engines above say what is true. This one remembers what was done and lets things act.
+
+- **The record**: notes ("the players defaced the statue here") and kept values (a stockpile, a standing, an owner) on any address, as chronicle events, filtered by data views and audiences like any fact. Actors (empires, guilds, people, the party) are addressable so politics has subjects.
+- **Triggers and effects**: when an event arrives, a condition becomes true or a time is reached, an effect flow proposes changes (set a kept value, add a note, grant a data view, send an intent). Every effect passes one gate on the GM's machine with an approval policy (auto, ask, ask if) and becomes an ordinary event with its causes.
+- **Programs**: small state machines (sense through the owner's own sensors and audience, decide with a box of logic, act by sending an intent). A program is a seat driven by a flow, with the same `may_send` and `auto_approve` limits. Autopilot is the first use. Look-ahead runs programs forward.
+- **Turns and held orders** are optional and off by default.
+- Two walls: the record never feeds RESOLVE, and never feeds physics except through an explicit, tagged `set_pin` effect. No LLM runs inside a program.
+
+A game (a 4X, a trading game) is then a pack using these parts; SSE4 does not grow a separate game engine.
+
 ---
 
 ## 7. Packs
@@ -311,7 +326,8 @@ One format, several roles, stacked in a declared order **[decided: layered]**.
 
 ```
 PackManifest { id (namespaced), version, kind[], requires: [{id, range}], kernel_range,
-               provides: { atoms_used, flows, clouds, quantity_kinds, units, tags, tiers, rules,
+               provides: { atoms_used, flows, boxes, clouds, quantity_kinds, kept_kinds, units, tags, tiers, rules,
+                           triggers, effects, programs, templates, intents, turns,
                            sifters, data_views, screens, skins, catalogues, vocab, tests },
                seed_namespace, licence, content_hash }
 ```
@@ -363,7 +379,7 @@ Published setting data (the official sectors) is **not bundled**. Users fetch it
 
 **5. Gas mixes (V3).** Named atmosphere presets as composition and pressure envelopes, one or more per atmosphere code: standard, thin, dense, very thin, trace, each tainted variant with a named taint (low oxygen, high oxygen, pollutants, biologicals, sulphur compounds, radioactivity, particulates), exotic, corrosive, insidious, and the unusual cases. Each lists what a traveller needs (filter mask, compressor, vacc suit, protective suit) as a derived tag. They are ordinary pack data that the atmosphere flows consume, so a preset is a starting point the physics then carries forward. Port V3's list.
 
-**6. Sensors and what players can know (V3).** Range bands as distances, sensor kinds (visual, thermal, electromagnetic, active radar and lidar, neutrino, densitometer and the like, per the rule table), and for each kind and band what it reveals. This plugs straight into player data views: the pack ships a ladder (long-range, scanned, surveyed, detailed survey) and a rule that moves a body up the ladder when a ship with the right sensors is in range for long enough. Charts can draw the range rings. Port V3's ranges.
+**6. Sensors and what players can know (V3).** Range bands as distances, sensor kinds (visual, thermal, electromagnetic, active radar and lidar, neutrino, densitometer and the like, per the rule table), and for each kind and band what it reveals. This plugs straight into player data views: the pack ships a ladder (long-range, scanned, surveyed, detailed survey) and a rule that moves a body up the ladder when a ship with the right sensors is in range for long enough (a trigger and a `grant` effect, `SSE4-record-logic-programs-design.md` section 5; not a Traveller special). Charts can draw the range rings. Port V3's ranges.
 
 **7. Ships, drives and travel.** Stock ships and other constructs as templates **(V3 has standard constructs)**: tonnage in displacement tons, manoeuvre rating in g, jump rating, fuel, sensors fitted, crew and passengers, cargo. NAV uses the manoeuvre rating for real transit times inside a system. The fictional physics pack adds: jump of N parsecs taking about a week with the rule's variation drawn deterministically; the 100-diameter limit as a real geometric constraint computed from actual bodies, so stars and gas giants cast jump shadows and the astrogation console shows where a ship can safely jump from and arrive; fuel per jump, gas giant skimming and water refuelling with real orbits and times. Starports by class, highports, naval and scout bases are station templates with services derived from class and tech level.
 
@@ -527,6 +543,7 @@ Audience { id, label, tag?: TagId }   a knowledge group; "everyone" always exist
 - **Fog of war by tag.** An audience can be tied to a tag (an empire). A data-view rule "show what carries my audience's discovery tag" then does the whole job: the GM tags a system as discovered by Vesh (or the game-system pack's rules do it when a Vesh ship arrives) and only Vesh seats see it. No screenshots, no waiting until everything is discovered.
 - **Multi-screen** is one seat with several screens, each a window: chart on the wall, astrogation on a tablet.
 - **Roles** are seats with a screen and a `may_send` list. Players still command, never pilot.
+- **Program seats [decided 19 Nov]**: a seat may be driven by a program instead of a person (an autopilot, a non-player empire), under the same `may_send` and `auto_approve` limits. See 6.9.
 - **Joining**: each seat has its own join link or code. The default link goes to "Table".
 - **Sealed seats.** Ordinary seats use soft filtering (players hold the seed; hacking your own instance is accepted). That is wrong for competitive fog of war, where one player peeking spoils the game for others. A sealed seat receives only finished, filtered scene data from the GM's machine and never the seed. Cost: the GM's machine builds those scenes, so it carries more load, and sealed seats need the GM online. This brings back, for sealed seats only, the strict option that was dropped as a general feature. [recommended; needs Alex's yes]
 - **UI rule**: with one seat, the session panel shows one line ("Everyone sees: Bridge approach") and a quiet "More seats" link. With several, a seat list replaces the line. Nothing else in the app changes.
@@ -720,7 +737,7 @@ Experiments to run early, each returning evidence before more is built on top:
 LLMs never compute physics, never sit inside a deterministic path, and their output never enters a state hash.
 
 - **Tars** (support, formerly Zen): read-only, with a dry sense of humour (a humour setting the user can turn down is the obvious joke to reuse). Answers from documentation, explanation bundles and the current universe's facts.
-- **Orac** (builder): proposes **change requests**: schema-valid candidate documents (a flow edit, a pack, a screen, a data view, a sifter, a new atom spec as a GitHub issue draft). Each is validated (schema, units, publisher uniqueness, golden tests) and shown as a diff with its effects before the GM accepts. Orac cannot mutate anything directly.
+- **Orac** (builder): proposes **change requests**: schema-valid candidate documents (a flow edit, a box, a condition, a program, a trigger, a template, a pack, a screen, a data view, a sifter, a new atom spec as a GitHub issue draft). Each is validated (schema, units, publisher uniqueness, golden tests) and shown as a diff with its effects before the GM accepts. Orac cannot mutate anything directly.
 - **Minerva** (storytelling): reads sifter hits, explanation bundles and the disclosure state, and writes narrative in the story vocabulary. Her text is labelled `narrative`. She may not state a number that is not in the facts she was given, and she respects data views (she will not tell players what they have not scanned).
 
 Model access **[decided]**: bring your own key. Reuse the Ovid Next agent system for Orac and Minerva (the coding session should read it in `C:\Development\ovid-next` and lift its provider adapter, key handling and tool-calling pattern rather than reinvent them). Keys stay in the user's browser and are never sent to SSE servers or to other peers. The app must be fully usable with agents switched off.
