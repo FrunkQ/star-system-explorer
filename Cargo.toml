@@ -29,6 +29,7 @@ sse-import-v3 = { path = "crates/sse-import-v3" }
 sse-world = { path = "crates/sse-world" }
 sse-formation = { path = "crates/sse-formation" }
 sse-kernel = { path = "crates/sse-kernel" }
+sse-surface = { path = "crates/sse-surface" }
 
 [profile.release]
 opt-level = 3

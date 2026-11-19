@@ -1,0 +1,348 @@
+{
+ "format": "sse.pack/1",
+ "id": "sse.base-surface",
+ "version": "0.1.0",
+ "kind": [
+  "base-physics"
+ ],
+ "kernel_range": "^0.1",
+ "licence": "Apache-2.0",
+ "provides": {
+  "other": {
+   "about": "Surface envelope and tectonic regimes (S0; surface design sections 1, 2.1 and 6): which kind of surface a world has at each date, why, and the cheap sketch globe for unexamined and scanned worlds. Rules are tried in order; the first whose conditions all hold names the regime.",
+   "surface": {
+    "epoch_step_gyr": 0.25,
+    "bisect_steps": 24,
+    "q_crit_w_m2": 0.019,
+    "albedo_default": 0.3,
+    "tide": {
+     "q": 100.0,
+     "k2": 0.3,
+     "spin_hours": 10.0,
+     "moment": 0.33
+    },
+    "rules": [
+     {
+      "regime": "cloud-deck",
+      "when": {
+       "deep_envelope": {
+        "min": 1
+       }
+      },
+      "because": "the gas envelope is the planet: there is no solid surface to reach"
+     },
+     {
+      "regime": "magma-ocean",
+      "when": {
+       "molten": {
+        "min": 1
+       }
+      },
+      "because": "the heat of formation keeps the surface molten"
+     },
+     {
+      "regime": "lava",
+      "when": {
+       "t_surface_k": {
+        "min": 1400
+       }
+      },
+      "because": "the surface is hotter than rock's melting point"
+     },
+     {
+      "regime": "small-body",
+      "when": {
+       "radius_km": {
+        "max": 300
+       }
+      },
+      "because": "too small for gravity to pull it round: a shape of lumps and craters"
+     },
+     {
+      "regime": "hydrocarbon",
+      "when": {
+       "t_surface_k": {
+        "min": 70,
+        "max": 130
+       },
+       "pressure_bar": {
+        "min": 0.5
+       },
+       "water_fraction": {
+        "min": 0.05
+       }
+      },
+      "because": "cold enough for methane rain under a thick atmosphere, on a crust of water ice"
+     },
+     {
+      "regime": "ocean-world",
+      "when": {
+       "t_surface_k": {
+        "min": 260
+       },
+       "water_fraction": {
+        "min": 0.05
+       }
+      },
+      "because": "so much water that no land rises above it"
+     },
+     {
+      "regime": "ocean-world",
+      "when": {
+       "t_surface_k": {
+        "min": 260
+       },
+       "oceans": {
+        "min": 4
+       }
+      },
+      "because": "so much water that no land rises above it"
+     },
+     {
+      "regime": "ice-shell",
+      "when": {
+       "water_fraction": {
+        "min": 0.05
+       }
+      },
+      "because": "a water-rich world too cold for open sea: the ice shell is the surface"
+     },
+     {
+      "regime": "heat-pipe",
+      "when": {
+       "heat_flow_w_m2": {
+        "min": 1.0
+       }
+      },
+      "because": "heat flow so high it escapes through constant eruption rather than conduction"
+     },
+     {
+      "regime": "carbon-rich",
+      "when": {
+       "c_o": {
+        "min": 0.8
+       }
+      },
+      "because": "carbon outnumbers oxygen in its building blocks: graphite and carbide crust"
+     },
+     {
+      "regime": "super-earth-uncertain",
+      "when": {
+       "mass_earth": {
+        "min": 4
+       },
+       "q_ratio": {
+        "min": 1
+       }
+      },
+      "because": "a super-Earth with enough heat for plates or a stagnant lid; research is divided"
+     },
+     {
+      "regime": "mobile-lid",
+      "when": {
+       "mass_earth": {
+        "min": 0.3
+       },
+       "q_ratio": {
+        "min": 1
+       },
+       "oceans": {
+        "min": 0.05
+       }
+      },
+      "because": "heat flow above the critical value and surface water to weaken the lid, so the crust breaks into moving plates"
+     },
+     {
+      "regime": "episodic-lid",
+      "when": {
+       "mass_earth": {
+        "min": 0.3
+       },
+       "q_ratio": {
+        "min": 1
+       }
+      },
+      "because": "enough heat for plates but too dry: the lid holds, then fails in global resurfacing"
+     },
+     {
+      "regime": "stagnant-lid",
+      "when": {},
+      "because": "one global plate: too small, too cool or too quiet for the lid to break"
+     }
+    ],
+    "regimes": {
+     "cloud-deck": {
+      "label": "Cloud deck (no solid surface)",
+      "kind": "cloud-deck",
+      "style": "bands",
+      "relief_m": 0,
+      "albedo": [
+       0.35,
+       0.6
+      ],
+      "source": "surface design section 6; band count from rotation (Rhines scale)"
+     },
+     "magma-ocean": {
+      "label": "Magma ocean",
+      "kind": "lava",
+      "style": "smooth",
+      "relief_m": 50,
+      "albedo": [
+       0.04,
+       0.08
+      ],
+      "source": "Elkins-Tanton 2012, Annu. Rev. Earth Planet. Sci. 40, 113. doi:10.1146/annurev-earth-042711-105503"
+     },
+     "lava": {
+      "label": "Lava world",
+      "kind": "lava",
+      "style": "smooth",
+      "relief_m": 100,
+      "albedo": [
+       0.03,
+       0.1
+      ],
+      "source": "Leger et al. 2011 (CoRoT-7b), Icarus 213, 1. doi:10.1016/j.icarus.2011.02.004"
+     },
+     "small-body": {
+      "label": "Small body",
+      "kind": "small-body",
+      "style": "lumpy",
+      "relief_m": 0,
+      "albedo": [
+       0.05,
+       0.4
+      ],
+      "source": "surface design section 6"
+     },
+     "hydrocarbon": {
+      "label": "Hydrocarbon cycle",
+      "kind": "solid",
+      "style": "dunes",
+      "relief_m": 400,
+      "albedo": [
+       0.15,
+       0.3
+      ],
+      "source": "Hayes 2016, Annu. Rev. Earth Planet. Sci. 44, 57. doi:10.1146/annurev-earth-060115-012247"
+     },
+     "ocean-world": {
+      "label": "Ocean world",
+      "kind": "ocean",
+      "style": "ocean",
+      "relief_m": 3000,
+      "albedo": [
+       0.06,
+       0.06
+      ],
+      "source": "Leger et al. 2004, Icarus 169, 499. doi:10.1016/j.icarus.2004.01.001"
+     },
+     "ice-shell": {
+      "label": "Ice shell tectonics",
+      "kind": "ice-shell",
+      "style": "ice",
+      "relief_m": 250,
+      "albedo": [
+       0.5,
+       0.9
+      ],
+      "source": "Kattenhorn and Prockter 2014, Nature Geosci. 7, 762. doi:10.1038/ngeo2245"
+     },
+     "heat-pipe": {
+      "label": "Heat pipe",
+      "kind": "solid",
+      "style": "plains",
+      "relief_m": 400,
+      "albedo": [
+       0.4,
+       0.7
+      ],
+      "source": "Moore and Webb 2013, Nature 501, 501. doi:10.1038/nature12473"
+     },
+     "carbon-rich": {
+      "label": "Carbon-rich crust (speculative)",
+      "kind": "solid",
+      "style": "lid",
+      "relief_m": 2500,
+      "albedo": [
+       0.02,
+       0.06
+      ],
+      "speculative": true,
+      "source": "Kuchner and Seager 2005, arXiv:astro-ph/0504214 https://arxiv.org/abs/astro-ph/0504214"
+     },
+     "super-earth-uncertain": {
+      "label": "Super-Earth, regime uncertain",
+      "kind": "solid",
+      "style": "dial",
+      "relief_m": 2000,
+      "albedo": [
+       0.1,
+       0.3
+      ],
+      "dial": [
+       "mobile-lid",
+       "stagnant-lid"
+      ],
+      "source": "Valencia et al. 2007 (plates likely) doi:10.1086/524012 against O'Neill and Lenardic 2007 (stagnant lid likely) doi:10.1029/2007GL030598"
+     },
+     "mobile-lid": {
+      "label": "Mobile lid (plate tectonics)",
+      "kind": "solid",
+      "style": "plates",
+      "relief_m": 4500,
+      "land_fraction": 0.3,
+      "albedo": [
+       0.06,
+       0.28
+      ],
+      "source": "Korenaga 2013, Annu. Rev. Earth Planet. Sci. 41, 117. doi:10.1146/annurev-earth-050212-124208"
+     },
+     "episodic-lid": {
+      "label": "Episodic lid",
+      "kind": "solid",
+      "style": "plains",
+      "relief_m": 1000,
+      "albedo": [
+       0.6,
+       0.8
+      ],
+      "dial": [
+       "episodic-lid",
+       "plume-lid"
+      ],
+      "source": "Turcotte 1993, J. Geophys. Res. 98, 17061. doi:10.1029/93JE01775"
+     },
+     "plume-lid": {
+      "label": "Plume and squishy lid",
+      "kind": "solid",
+      "style": "plains",
+      "relief_m": 1200,
+      "albedo": [
+       0.6,
+       0.8
+      ],
+      "source": "Lourenco et al. 2020, Nature Geosci. 13, 300. doi:10.1038/s41561-020-0567-7"
+     },
+     "stagnant-lid": {
+      "label": "Stagnant lid",
+      "kind": "solid",
+      "style": "lid",
+      "relief_m": 2500,
+      "albedo": [
+       0.1,
+       0.3
+      ],
+      "source": "Solomatov and Moresi 1996, J. Geophys. Res. 101, 4737. doi:10.1029/95JE03361"
+     }
+    },
+    "greenhouse_k": 30.0,
+    "sources": {
+     "q_crit_w_m2": "the base-physics atom sse.heat.active_geology_lifetime uses the same threshold",
+     "tide": "despinning time and tidal heating after Gladman et al. 1996, Icarus 122, 166 (doi:10.1006/icar.1996.0117) and Peale and Cassen 1978; Q 100 and k2 0.3 are rocky-world defaults",
+     "greenhouse_k": "Earth's present greenhouse warming is about 33 K; applied only when a generated world has volatiles (oceans or CO2), until an atmosphere stage exists"
+    }
+   }
+  }
+ }
+}

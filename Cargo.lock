@@ -679,6 +679,17 @@ dependencies = [
 ]
 
 [[package]]
+name = "sse-surface"
+version = "0.1.0"
+dependencies = [
+ "serde",
+ "serde_json",
+ "sse-core",
+ "sse-formation",
+ "sse-pack",
+]
+
+[[package]]
 name = "sse-time"
 version = "0.1.0"
 dependencies = [
@@ -705,6 +716,7 @@ dependencies = [
  "sse-resolve",
  "sse-sift",
  "sse-suite",
+ "sse-surface",
  "sse-time",
  "wasm-bindgen",
 ]

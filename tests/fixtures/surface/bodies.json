@@ -1,0 +1,260 @@
+{
+ "format": "sse.surface-fixtures/1",
+ "sources": "Masses, radii, surface temperatures and pressures from the NASA planetary fact sheets; Io's heat flow about 2.5 W/m2 (Veeder et al. 1994); Europa's tidal heat order 0.05 W/m2; 55 Cancri e from Bourrier et al. 2018 and Demory et al. 2016. Water fractions are rounded literature values for the icy moons.",
+ "bodies": [
+  {
+   "expect": "mobile-lid",
+   "body": {
+    "address": "u:sol/sys:0/body:3",
+    "label": "Earth",
+    "mass_earth": 1.0,
+    "radius_earth": 1.0,
+    "core_mass_fraction": 0.325,
+    "age_gyr": 4.5,
+    "climate": {
+     "from": "fixed",
+     "t_surface_k": 288
+    },
+    "water_fraction": 0.00023,
+    "oceans": 1.0,
+    "pressure_bar": 1.0,
+    "magma_end_myr": 100
+   }
+  },
+  {
+   "expect": "episodic-lid",
+   "body": {
+    "address": "u:sol/sys:0/body:2",
+    "label": "Venus",
+    "mass_earth": 0.815,
+    "radius_earth": 0.949,
+    "core_mass_fraction": 0.32,
+    "age_gyr": 4.5,
+    "climate": {
+     "from": "fixed",
+     "t_surface_k": 737
+    },
+    "pressure_bar": 92.0,
+    "magma_end_myr": 100
+   }
+  },
+  {
+   "expect": "stagnant-lid",
+   "body": {
+    "address": "u:sol/sys:0/body:4",
+    "label": "Mars",
+    "mass_earth": 0.107,
+    "radius_earth": 0.532,
+    "core_mass_fraction": 0.24,
+    "age_gyr": 4.5,
+    "climate": {
+     "from": "fixed",
+     "t_surface_k": 210
+    },
+    "pressure_bar": 0.006
+   }
+  },
+  {
+   "expect": "stagnant-lid",
+   "body": {
+    "address": "u:sol/sys:0/body:1",
+    "label": "Mercury",
+    "mass_earth": 0.055,
+    "radius_earth": 0.383,
+    "core_mass_fraction": 0.7,
+    "age_gyr": 4.5,
+    "climate": {
+     "from": "fixed",
+     "t_surface_k": 440
+    }
+   }
+  },
+  {
+   "expect": "stagnant-lid",
+   "body": {
+    "address": "u:sol/sys:0/body:3/moon:1",
+    "label": "Moon",
+    "mass_earth": 0.0123,
+    "radius_earth": 0.273,
+    "core_mass_fraction": 0.02,
+    "age_gyr": 4.5,
+    "climate": {
+     "from": "fixed",
+     "t_surface_k": 250
+    },
+    "locked": true
+   }
+  },
+  {
+   "expect": "heat-pipe",
+   "body": {
+    "address": "u:sol/sys:0/body:5/moon:1",
+    "label": "Io",
+    "mass_earth": 0.015,
+    "radius_earth": 0.286,
+    "core_mass_fraction": 0.2,
+    "age_gyr": 4.5,
+    "climate": {
+     "from": "fixed",
+     "t_surface_k": 110
+    },
+    "tidal_w_m2": 2.5,
+    "locked": true
+   }
+  },
+  {
+   "expect": "ice-shell",
+   "body": {
+    "address": "u:sol/sys:0/body:5/moon:2",
+    "label": "Europa",
+    "mass_earth": 0.008,
+    "radius_earth": 0.245,
+    "core_mass_fraction": 0.15,
+    "age_gyr": 4.5,
+    "climate": {
+     "from": "fixed",
+     "t_surface_k": 102
+    },
+    "water_fraction": 0.08,
+    "tidal_w_m2": 0.05,
+    "locked": true
+   }
+  },
+  {
+   "expect": "ice-shell",
+   "body": {
+    "address": "u:sol/sys:0/body:5/moon:3",
+    "label": "Ganymede",
+    "mass_earth": 0.025,
+    "radius_earth": 0.413,
+    "core_mass_fraction": 0.1,
+    "age_gyr": 4.5,
+    "climate": {
+     "from": "fixed",
+     "t_surface_k": 110
+    },
+    "water_fraction": 0.45,
+    "locked": true
+   }
+  },
+  {
+   "expect": "hydrocarbon",
+   "body": {
+    "address": "u:sol/sys:0/body:6/moon:6",
+    "label": "Titan",
+    "mass_earth": 0.0225,
+    "radius_earth": 0.404,
+    "core_mass_fraction": 0.1,
+    "age_gyr": 4.5,
+    "climate": {
+     "from": "fixed",
+     "t_surface_k": 94
+    },
+    "water_fraction": 0.45,
+    "pressure_bar": 1.47,
+    "locked": true
+   }
+  },
+  {
+   "expect": "small-body",
+   "body": {
+    "address": "u:sol/sys:0/belt:1/body:4",
+    "label": "Vesta",
+    "mass_earth": 4.4e-05,
+    "radius_earth": 0.0413,
+    "core_mass_fraction": 0.2,
+    "age_gyr": 4.5,
+    "climate": {
+     "from": "fixed",
+     "t_surface_k": 180
+    }
+   }
+  },
+  {
+   "expect": "cloud-deck",
+   "body": {
+    "address": "u:sol/sys:0/body:5",
+    "label": "Jupiter",
+    "mass_earth": 317.8,
+    "radius_earth": 10.97,
+    "core_mass_fraction": 0.03,
+    "age_gyr": 4.5,
+    "climate": {
+     "from": "fixed",
+     "t_surface_k": 165
+    },
+    "deep_envelope": true
+   }
+  },
+  {
+   "expect": "lava",
+   "body": {
+    "address": "u:fixtures/sys:55cnc/body:5",
+    "label": "55 Cancri e",
+    "mass_earth": 8.0,
+    "radius_earth": 1.88,
+    "core_mass_fraction": 0.3,
+    "age_gyr": 8.6,
+    "climate": {
+     "from": "fixed",
+     "t_surface_k": 2000
+    },
+    "orbit": {
+     "a_au": 0.01544,
+     "e": 0.05,
+     "host_msun": 0.905
+    }
+   }
+  },
+  {
+   "expect": "ocean-world",
+   "body": {
+    "address": "u:fixtures/sys:1/body:1",
+    "label": "Deep ocean world",
+    "mass_earth": 2.0,
+    "radius_earth": 1.25,
+    "core_mass_fraction": 0.25,
+    "age_gyr": 4.5,
+    "climate": {
+     "from": "fixed",
+     "t_surface_k": 300
+    },
+    "water_fraction": 0.2,
+    "oceans": 500.0
+   }
+  },
+  {
+   "expect": "super-earth-uncertain",
+   "body": {
+    "address": "u:fixtures/sys:1/body:2",
+    "label": "Wet super-Earth",
+    "mass_earth": 6.0,
+    "radius_earth": 1.6,
+    "core_mass_fraction": 0.32,
+    "age_gyr": 3.0,
+    "climate": {
+     "from": "fixed",
+     "t_surface_k": 290
+    },
+    "water_fraction": 0.001,
+    "oceans": 2.0
+   }
+  },
+  {
+   "expect": "carbon-rich",
+   "body": {
+    "address": "u:fixtures/sys:2/body:1",
+    "label": "Carbon world",
+    "mass_earth": 1.5,
+    "radius_earth": 1.1,
+    "core_mass_fraction": 0.3,
+    "age_gyr": 4.5,
+    "climate": {
+     "from": "fixed",
+     "t_surface_k": 400
+    },
+    "c_o": 1.0
+   }
+  }
+ ]
+}

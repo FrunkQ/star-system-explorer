@@ -181,6 +181,7 @@ Surveyed detail is recorded at its date. Moving a campaign a million years leave
 
 ## 6. Worlds without a solid surface
 
+- **Weather, clouds, smoke and haze** on every kind of world are specified in the companion `SSE4-weather-design.md` (19 Nov), which extends the cloud deck model below and supplies the weather that the hazard layer and descent scene read.
 - **Gas and ice giants**: the "surface" is a cloud deck model: band count and widths from rotation and heat, zonal wind speeds, long-lived keyed storms that drift and merge, colour from cloud chemistry by temperature. Depth layers by pressure give the aerostat band. The tile service serves cloud-top height and colour so the same views work.
 - **Ice-shell ocean worlds**: the shell is the surface (section 2 regimes); the ocean floor is a second surface model below.
 - **Lava worlds, ocean worlds**: as their regimes.
