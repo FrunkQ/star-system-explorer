@@ -24,6 +24,8 @@
 //! bit-identically. Nothing here runs on a player device (design 5.4, 8A).
 #![forbid(unsafe_code)]
 
+pub mod intents;
+
 use serde::{Deserialize, Serialize};
 use serde_json::Value as J;
 use sse_chronicle::{
@@ -512,6 +514,22 @@ struct Pending {
 }
 
 impl Rules {
+    /// Intent kinds the rules listen for (`on_intent`) or send (`send_intent`): `(rule, kind)`.
+    pub fn intent_kinds(&self) -> Vec<(String, String)> {
+        let mut out = vec![];
+        for r in &self.rules {
+            if let When::OnIntent { kind } = &r.doc.when {
+                out.push((r.doc.id.clone(), kind.clone()));
+            }
+            for e in &r.doc.effects {
+                if let Effect::SendIntent { kind, .. } = e {
+                    out.push((r.doc.id.clone(), kind.clone()));
+                }
+            }
+        }
+        out
+    }
+
     /// Read every pack's `provides.other.triggers` (bottom to top). A rule id
     /// declared twice is refused; so are effects the gate cannot carry out.
     pub fn from_packs(packs: &[(String, String, J)]) -> Result<Rules, Vec<String>> {
@@ -1516,3 +1534,6 @@ pub fn trail(record: &Chronicle) -> Vec<J> {
 
 #[cfg(test)]
 mod tests;
+
+#[cfg(test)]
+mod intent_tests;

@@ -86,6 +86,29 @@ fn load_observe(ms: &[sse_pack::PackManifest]) -> Result<Observe, Vec<String>> {
         }
     }
     let triggers = sse_trigger::Rules::from_packs(&found)?;
+    let mut found = Vec::new();
+    for p in ms {
+        if let Some(v) = p.provides.other.get("intents") {
+            let j = serde_json::to_value(v).map_err(|e| vec![format!("{}: intents: {e}", p.id)])?;
+            found.push((p.id.clone(), j));
+        }
+    }
+    let intents = sse_trigger::intents::IntentRegistry::from_packs(&found)?;
+    let mut problems = vec![];
+    for (rule, kind) in triggers.intent_kinds() {
+        match intents.get(&kind) {
+            Some(k) if k.applied_by == sse_trigger::intents::AppliedBy::Record => {}
+            Some(_) => problems.push(format!(
+                "rule {rule}: intent {kind} is a built-in kind, applied by the kernel or session, not taken up by rules"
+            )),
+            None => problems.push(format!(
+                "rule {rule}: intent {kind} is not declared (provides.other.intents)"
+            )),
+        }
+    }
+    if !problems.is_empty() {
+        return Err(problems);
+    }
     let views: Vec<String> = setup
         .as_ref()
         .map(|s| s.views.iter().map(|v| v.id.clone()).collect())
@@ -101,6 +124,7 @@ fn load_observe(ms: &[sse_pack::PackManifest]) -> Result<Observe, Vec<String>> {
         record,
         triggers,
         calendar,
+        intents,
     })
 }
 
@@ -203,6 +227,8 @@ struct Observe {
     triggers: sse_trigger::Rules,
     /// The top pack's calendar (`provides.other.calendar`).
     calendar: Option<orbits::Calendar>,
+    /// Intent kinds: built in and from packs (`provides.other.intents`, J5).
+    intents: sse_trigger::intents::IntentRegistry,
 }
 
 pub struct Kernel {
@@ -219,6 +245,13 @@ pub struct Kernel {
 impl Default for Kernel {
     fn default() -> Self {
         Self::new()
+    }
+}
+
+fn arr(v: serde_json::Value) -> Vec<serde_json::Value> {
+    match v {
+        serde_json::Value::Array(a) => a,
+        _ => vec![],
     }
 }
 
@@ -352,6 +385,44 @@ impl Kernel {
             Ok(r) => r,
             Err(r) => r,
         }
+    }
+
+    /// Carry out an applied intent: a built-in becomes its kernel request
+    /// (the response is returned), a session kind is left to the session, and
+    /// a pack kind goes to the record as `intent.<kind>`.
+    fn apply_intent(
+        &mut self,
+        seat: &str,
+        intent: &serde_json::Value,
+        at_s: i64,
+        causes: Vec<ContentHash>,
+    ) -> Result<(String, Option<serde_json::Value>), Response> {
+        use sse_trigger::intents::{self as si, AppliedBy};
+        let reg = self.observe.intents.clone();
+        let k = reg.check(intent).map_err(|e| err("bad_intent", e))?.clone();
+        Ok(match k.applied_by {
+            AppliedBy::Session => ("session".into(), None),
+            AppliedBy::Kernel => {
+                let req = si::to_request(intent, seat, at_s).expect("a kernel kind");
+                let req: Request =
+                    serde_json::from_value(req).map_err(|e| err("bad_intent", e.to_string()))?;
+                let r = self.dispatch(req)?;
+                (
+                    "kernel".into(),
+                    Some(serde_json::to_value(&r).expect("plain")),
+                )
+            }
+            AppliedBy::Record => {
+                let u = self.universe()?;
+                let root = u.root.clone();
+                let id = si::record_intent(&reg, &mut u.record, &root, seat, intent, at_s, causes)
+                    .map_err(|e| err("chronicle", e))?;
+                (
+                    "record".into(),
+                    Some(serde_json::json!({"event_id": id.hex(), "record_hash": record_hash(u)})),
+                )
+            }
+        })
     }
 
     fn universe(&mut self) -> Result<&mut Universe, Response> {
@@ -1841,6 +1912,114 @@ impl Kernel {
                 Response::RulesListed {
                     rules: rules.listing(&u.record),
                     trail: sse_trigger::trail(&u.record),
+                }
+            }
+            Request::Intents => {
+                let reg = self.observe.intents.clone();
+                let kinds = serde_json::to_value(&reg.kinds).expect("plain");
+                let (seats, pending) = match self.universe.as_ref() {
+                    Some(u) => (
+                        serde_json::to_value(sse_trigger::intents::seats(&reg, &u.record))
+                            .expect("plain"),
+                        serde_json::to_value(sse_trigger::intents::pending(&u.record))
+                            .expect("plain"),
+                    ),
+                    None => (serde_json::json!([]), serde_json::json!([])),
+                };
+                Response::IntentsListed {
+                    kinds: arr(kinds),
+                    seats: arr(seats),
+                    pending: arr(pending),
+                }
+            }
+            Request::SetSeats { seats, at_s } => {
+                let reg = self.observe.intents.clone();
+                let seats: Vec<sse_trigger::intents::Seat> =
+                    serde_json::from_value(serde_json::Value::Array(seats))
+                        .map_err(|e| err("bad_seats", e.to_string()))?;
+                let u = self.universe()?;
+                let id =
+                    sse_trigger::intents::set_seats(&reg, &mut u.record, &u.root, &seats, at_s)
+                        .map_err(|e| err("bad_seats", e))?;
+                Response::SeatsSet {
+                    event_id: id.hex(),
+                    record_hash: record_hash(u),
+                }
+            }
+            Request::SendIntent {
+                seat,
+                intent,
+                at_s,
+                check_only,
+            } => {
+                use sse_trigger::intents as si;
+                let reg = self.observe.intents.clone();
+                let u = self.universe()?;
+                let s = si::seats(&reg, &u.record)
+                    .into_iter()
+                    .find(|x| x.id == seat)
+                    .ok_or_else(|| err("unknown_seat", format!("no seat {seat}")))?;
+                let valid = si::validity(&reg, &intent, &u.chronicle, &u.record, &u.root, at_s);
+                let decision = si::decide(&reg, &s, &intent, valid);
+                if check_only.unwrap_or(false) {
+                    return Ok(Response::IntentSent {
+                        decision: serde_json::to_value(&decision).expect("plain"),
+                        applied_by: None,
+                        proposal: None,
+                        applied: None,
+                    });
+                }
+                match decision {
+                    si::Decision::Refuse { .. } => Response::IntentSent {
+                        decision: serde_json::to_value(&decision).expect("plain"),
+                        applied_by: None,
+                        proposal: None,
+                        applied: None,
+                    },
+                    si::Decision::AskGm => {
+                        let root = u.root.clone();
+                        let id = si::propose(&reg, &mut u.record, &root, &s, &intent, at_s)
+                            .map_err(|e| err("chronicle", e))?;
+                        Response::IntentSent {
+                            decision: serde_json::to_value(&decision).expect("plain"),
+                            applied_by: None,
+                            proposal: Some(id.hex()),
+                            applied: None,
+                        }
+                    }
+                    si::Decision::Apply => {
+                        let (by, applied) = self.apply_intent(&s.id, &intent, at_s, vec![])?;
+                        Response::IntentSent {
+                            decision: serde_json::to_value(&decision).expect("plain"),
+                            applied_by: Some(by),
+                            proposal: None,
+                            applied,
+                        }
+                    }
+                }
+            }
+            Request::IntentDecide {
+                proposal,
+                approve,
+                at_s,
+            } => {
+                let u = self.universe()?;
+                let at = at_s.unwrap_or(i64::MIN);
+                let (p, id) = sse_trigger::intents::answer(&mut u.record, &proposal, approve, at)
+                    .map_err(|e| err("unknown_proposal", e))?;
+                let at = at_s.unwrap_or(p.at_s);
+                let (applied_by, applied) = if approve {
+                    let (by, a) = self.apply_intent(&p.seat, &p.intent, at, vec![id])?;
+                    (Some(by), a)
+                } else {
+                    (None, None)
+                };
+                Response::IntentDecided {
+                    event_id: id.hex(),
+                    seat: p.seat,
+                    intent: p.intent,
+                    applied_by,
+                    applied,
                 }
             }
             Request::OrbitsAt {

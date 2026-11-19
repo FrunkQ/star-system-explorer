@@ -519,6 +519,39 @@ pub enum Request {
     CampaignNow,
     /// The top pack's calendar (`provides.other.calendar`), checked at load.
     Calendar,
+    /// The intent registry (J5): built-in kinds and the stack's
+    /// (`provides.other.intents`), with their fields, who applies them and
+    /// whether they ever apply without the GM; the seat plan in force; and
+    /// intents waiting for the GM. GM machine only.
+    Intents,
+    /// Store the seat plan (as the chart room's `SeatPlan.seats`, plus
+    /// `program` for a program-driven seat). A GM seat is always present.
+    SetSeats {
+        #[ts(type = "unknown[]")]
+        seats: Vec<serde_json::Value>,
+        at_s: i64,
+    },
+    /// A seat sends an intent (`{kind, ...fields}`). The kernel checks it
+    /// against the registry and the seat, then applies it, queues it for the
+    /// GM, or refuses it, as the chart room's `decide`. `check_only` decides
+    /// and writes nothing.
+    SendIntent {
+        seat: String,
+        #[ts(type = "unknown")]
+        intent: serde_json::Value,
+        at_s: i64,
+        #[serde(default)]
+        #[ts(optional)]
+        check_only: Option<bool>,
+    },
+    /// The GM answers a queued intent; yes applies it at `at_s` (default: when it was sent).
+    IntentDecide {
+        proposal: String,
+        approve: bool,
+        #[serde(default)]
+        #[ts(optional)]
+        at_s: Option<i64>,
+    },
 }
 
 /// `adopt`'s formation request: the `run_formation` fields.
@@ -613,6 +646,10 @@ impl Request {
             Request::SetCampaignNow { .. } => "set_campaign_now",
             Request::CampaignNow => "campaign_now",
             Request::Calendar => "calendar",
+            Request::Intents => "intents",
+            Request::SetSeats { .. } => "set_seats",
+            Request::SendIntent { .. } => "send_intent",
+            Request::IntentDecide { .. } => "intent_decide",
         }
     }
 }
@@ -733,6 +770,14 @@ pub fn ops() -> Vec<OpInfo> {
         o("set_campaign_now", Cost::Trivial, "one universe event"),
         o("campaign_now", Cost::Trivial, "a scan of the universe events"),
         o("calendar", Cost::Trivial, "read at load"),
+        o("intents", Cost::Light, "GM machine only; linear in the record events"),
+        o("set_seats", Cost::Trivial, "GM machine only; one record event"),
+        o(
+            "send_intent",
+            Cost::Light,
+            "GM machine only; one fold for a validity condition, then the intent's own request",
+        ),
+        o("intent_decide", Cost::Light, "GM machine only; the intent's own request"),
     ]
 }
 
@@ -1047,6 +1092,50 @@ pub enum Response {
         rules: Vec<serde_json::Value>,
         #[ts(type = "unknown[]")]
         trail: Vec<serde_json::Value>,
+    },
+    /// `intents`: `kinds` `[{kind, meaning, fields, subject?, valid?, never_auto?, pack, applied_by}]`,
+    /// `seats` (the plan in force) and `pending` `[{id, seat, intent, at_s}]`.
+    IntentsListed {
+        #[ts(type = "unknown[]")]
+        kinds: Vec<serde_json::Value>,
+        #[ts(type = "unknown[]")]
+        seats: Vec<serde_json::Value>,
+        #[ts(type = "unknown[]")]
+        pending: Vec<serde_json::Value>,
+    },
+    SeatsSet {
+        event_id: String,
+        record_hash: String,
+    },
+    /// `send_intent`: `decision` `{action: apply | ask_gm | refuse, reason?}`;
+    /// `applied_by` `kernel` (with the request's response in `applied`),
+    /// `record` (`intent.<kind>` written) or `session` (the session applies
+    /// it); `proposal` when it waits for the GM.
+    IntentSent {
+        #[ts(type = "unknown")]
+        decision: serde_json::Value,
+        #[serde(default, skip_serializing_if = "Option::is_none")]
+        #[ts(optional)]
+        applied_by: Option<String>,
+        #[serde(default, skip_serializing_if = "Option::is_none")]
+        #[ts(optional)]
+        proposal: Option<String>,
+        #[serde(default, skip_serializing_if = "Option::is_none")]
+        #[ts(optional, type = "unknown")]
+        applied: Option<serde_json::Value>,
+    },
+    /// `intent_decide`: the answer's event, the intent, and what a yes applied.
+    IntentDecided {
+        event_id: String,
+        seat: String,
+        #[ts(type = "unknown")]
+        intent: serde_json::Value,
+        #[serde(default, skip_serializing_if = "Option::is_none")]
+        #[ts(optional)]
+        applied_by: Option<String>,
+        #[serde(default, skip_serializing_if = "Option::is_none")]
+        #[ts(optional, type = "unknown")]
+        applied: Option<serde_json::Value>,
     },
     /// `orbits_at`: per body `{address, placed, parent?, period_s?,
     /// phase_source?, missing?, at: [{at_s, r_m: [x, y, z], phase_deg}]}`.

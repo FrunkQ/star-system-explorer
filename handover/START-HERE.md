@@ -13,7 +13,7 @@ Milestone M1 "Proven core" = packages K0 to K6 (build plan section 3/4).
 | K4 flows, validation, scheduler, solve, explain | done | packages/K4.md |
 | K5 packs, stacks, one-publisher, fictional labels | done | packages/K5.md |
 | K6 kernel API, worker, TS client, cancellation, cost classes, tiers | done | packages/K6.md |
-| J1 to J9 campaign record, logic blocks, boxes, engine blocks, programs (new track J, decided 19 Nov) | J1 to J4 done (kernel track, logs `packages/J1.md` to `J4.md`); J5 (intent registry) next. Read `design/SSE4-record-logic-programs-design.md`, section 9 first (points of care against built code) | |
+| J1 to J9 campaign record, logic blocks, boxes, engine blocks, programs (new track J, decided 19 Nov) | J1 to J5 done (kernel track, logs `packages/J1.md` to `J5.md`; the chart room still has to switch to the kernel registry, see J5.md); J7 (templates) next, then J6. Read `design/SSE4-record-logic-programs-design.md`, section 9 first (points of care against built code) | |
 | K0 V3 / Ovid / Evolution Lab source reading | done, Alex reviewing docs/v3-parity.md, v3-save-fields.md, ovid-agents.md, evolab-reuse.md | packages/K0.md |
 | P1 atom library, first wave | done; heat-producing elements and reference links added | packages/P1.md, packages/P1-heat.md |
 | P3 V3 importer | built; run on 3 real saves on Alex's PC, one difference open (P3.md) | packages/P3.md |
@@ -92,7 +92,7 @@ Milestone M1 "Proven core" = packages K0 to K6 (build plan section 3/4).
 | Track | Packages | Branch |
 |---|---|---|
 | Physics | P1, P3, P4, F0 to F6 done; pipeline, F7, F9, S0 to S4 and S6 done; F8 waits on G6; next S7 (cover, named features, built layer) | `main` via PRs |
-| Kernel | K7 to K10, G0 to G6, C1 to C3, L0, L1a to L1d, L2, J1 to J4, T1, T2 (also through the API), the U3 gaps, the V10 grant gaps and the UI asks (`adopt`, look-ahead write-back, `resolved_system`; K6-additions.md; `orbits_at`, campaign clock and calendars, `packages/orbits-clock-calendar.md`) done; next J5, J7, J6, then G7 | `main` via PRs |
+| Kernel | K7 to K10, G0 to G6, C1 to C3, L0, L1a to L1d, L2, J1 to J5, T1, T2 (also through the API), the U3 gaps, the V10 grant gaps and the UI asks (`adopt`, look-ahead write-back, `resolved_system`; K6-additions.md; `orbits_at`, campaign clock and calendars, `packages/orbits-clock-calendar.md`) done; next J7, J6, then G7 | `main` via PRs |
 | Chart room shell and player views | U0 to U3, V1, U5, V2, V12, V3, V11, V4, V5, planet chart, V10, V6 System 3D, U9 lenses, N1 sound, U4 (what-if and look-ahead), A1 part 1, O1 light switch (UI), V13 parts 1 and 2 (import and grow, add to the campaign, read back and age with write-back), V6 Cutaway and Body globe (Body screen), phone screen menu, V14 size comparison and chart measuring, U10 browser campaign save, U7 biosphere view part 1 done; next V7, U7 part 2 (LifeFlow) | `main` via PRs |
 
 **Since 19 Nov (Alex): `main` is the default branch.** New work branches from `main` and arrives as a pull request

@@ -1540,3 +1540,136 @@ fn orbits_clock_and_calendar() {
     assert_eq!(n["at_s"], 4000);
     assert_eq!(n["event_id"], s2["event_id"]);
 }
+
+/// J5 through the API: the registry, a seat plan, built-ins applied by the
+/// kernel's own requests, a pack kind queued, approved and taken up by a rule.
+#[test]
+fn intents_through_the_api() {
+    let packs = crate::contract::load_packs(&root().join("tests/fixtures/packs"));
+    let mut k = crate::Kernel::new();
+    // A rule listening for an undeclared intent is refused at load.
+    let mut stray = packs["rpg-intents"].clone();
+    stray["provides"]["other"]["intents"]["kinds"] = serde_json::json!([]);
+    let r = send(
+        &mut k,
+        serde_json::json!({"op":"load_stack","packs":[packs["rpg-record"], stray]}),
+    );
+    assert_eq!(r["type"], "stack_rejected", "{r}");
+    assert!(
+        r["issues"][0]
+            .as_str()
+            .unwrap()
+            .contains("intent hail is not declared"),
+        "{r}"
+    );
+    let r = send(
+        &mut k,
+        serde_json::json!({"op":"load_stack","packs":[packs["rpg-record"], packs["rpg-intents"]]}),
+    );
+    assert_eq!(r["type"], "stack_loaded", "{r}");
+    send(
+        &mut k,
+        serde_json::json!({"op":"open_universe","id":"kestrel","seed":"k"}),
+    );
+    let reg = send(&mut k, serde_json::json!({"op":"intents"}));
+    let kinds: Vec<&str> = reg["kinds"]
+        .as_array()
+        .unwrap()
+        .iter()
+        .map(|x| x["kind"].as_str().unwrap())
+        .collect();
+    assert_eq!(
+        kinds,
+        [
+            "set_value",
+            "adopt_physics",
+            "stack_packs",
+            "scan_toggle",
+            "grant",
+            "add_note",
+            "hail"
+        ]
+    );
+    assert_eq!(reg["seats"][0]["id"], "gm");
+
+    let calla = "u:kestrel/ship:calla";
+    let rock = "u:kestrel/sys:0/body:3";
+    let r = send(
+        &mut k,
+        serde_json::json!({"op":"send_intent","seat":"gm","at_s":0,
+        "intent":{"kind":"set_value","address":calla,"field":"tag.crewed","value":true,"at_yr":0}}),
+    );
+    assert_eq!(r["decision"]["action"], "apply", "{r}");
+    assert_eq!(r["applied_by"], "kernel");
+    assert_eq!(
+        r["applied"]["type"], "authored",
+        "the GM's set_value is set_authored"
+    );
+
+    let r = send(
+        &mut k,
+        serde_json::json!({"op":"set_seats","at_s":0,"seats":[
+        {"id":"crew","label":"Crew","audience":"crew","authority":"player","may_send":["hail","set_value"],
+         "auto_approve":[{"intent":"set_value","scope":["u:kestrel/sys:0"],"fields":["name"]}],"sealed":false}]}),
+    );
+    assert_eq!(r["type"], "seats_set", "{r}");
+    // Inside the crew's naming scope: applied at once.
+    let r = send(
+        &mut k,
+        serde_json::json!({"op":"send_intent","seat":"crew","at_s":10,
+        "intent":{"kind":"set_value","address":rock,"field":"name","value":"Grit","at_yr":0}}),
+    );
+    assert_eq!(
+        (r["decision"]["action"].as_str(), r["applied_by"].as_str()),
+        (Some("apply"), Some("kernel")),
+        "{r}"
+    );
+    // Hailing a rock is not valid; check_only writes nothing.
+    let hail = |a: &str| serde_json::json!({"kind":"hail","address":a,"words":"this is Kestrel"});
+    let r = send(
+        &mut k,
+        serde_json::json!({"op":"send_intent","seat":"crew","at_s":20,"intent":hail(rock)}),
+    );
+    assert_eq!(r["decision"]["action"], "refuse", "{r}");
+    let before = send(&mut k, serde_json::json!({"op":"intents"}));
+    let r = send(
+        &mut k,
+        serde_json::json!({"op":"send_intent","seat":"crew","at_s":20,"intent":hail(calla),"check_only":true}),
+    );
+    assert_eq!(r["decision"]["action"], "ask_gm", "{r}");
+    assert_eq!(send(&mut k, serde_json::json!({"op":"intents"})), before);
+    // Sent for real: queued, then approved, then the rule answers.
+    let r = send(
+        &mut k,
+        serde_json::json!({"op":"send_intent","seat":"crew","at_s":20,"intent":hail(calla)}),
+    );
+    let proposal = r["proposal"].as_str().unwrap().to_string();
+    let p = send(&mut k, serde_json::json!({"op":"intents"}));
+    assert_eq!(p["pending"][0]["id"], proposal.as_str());
+    let r = send(
+        &mut k,
+        serde_json::json!({"op":"intent_decide","proposal":proposal,"approve":true}),
+    );
+    assert_eq!(r["applied_by"], "record", "{r}");
+    let again = send(
+        &mut k,
+        serde_json::json!({"op":"intent_decide","proposal":proposal,"approve":true}),
+    );
+    assert_eq!(again["code"], "unknown_proposal");
+    let step = send(&mut k, serde_json::json!({"op":"rules_step","at_s":30}));
+    let fired = &step["report"]["passes"][0];
+    assert_eq!(fired[0]["rule"], "answer-hail", "{step}");
+    assert_eq!(fired[0]["outcome"], "applied");
+    let rec = send(&mut k, serde_json::json!({"op":"record","address":calla}));
+    assert!(
+        rec.to_string()
+            .contains("u:kestrel/ship:calla answered the hail"),
+        "{rec}"
+    );
+    // An unknown seat.
+    let r = send(
+        &mut k,
+        serde_json::json!({"op":"send_intent","seat":"nobody","at_s":0,"intent":hail(calla)}),
+    );
+    assert_eq!(r["code"], "unknown_seat");
+}

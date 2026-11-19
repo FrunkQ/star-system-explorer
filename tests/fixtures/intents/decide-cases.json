@@ -1,0 +1,552 @@
+{
+ "about": "Approval cases shared by the kernel (sse-trigger intents) and the chart room (ui-contract seat.ts decide): the same seat and intent give the same action in both.",
+ "cases": [
+  {
+   "name": "gm applies anything",
+   "seat": {
+    "id": "gm",
+    "label": "Game master",
+    "audience": "all",
+    "authority": "gm",
+    "may_send": [
+     "set_value",
+     "adopt_physics",
+     "stack_packs",
+     "scan_toggle",
+     "grant"
+    ],
+    "sealed": false
+   },
+   "intent": {
+    "kind": "set_value",
+    "address": "u:tarn/sys:1/body:0",
+    "field": "mass_kg",
+    "value": 1,
+    "at_yr": 0
+   },
+   "action": "apply"
+  },
+  {
+   "name": "gm stacks packs",
+   "seat": {
+    "id": "gm",
+    "label": "Game master",
+    "audience": "all",
+    "authority": "gm",
+    "may_send": [
+     "set_value",
+     "adopt_physics",
+     "stack_packs",
+     "scan_toggle",
+     "grant"
+    ],
+    "sealed": false
+   },
+   "intent": {
+    "kind": "stack_packs",
+    "packs": [
+     {
+      "format": "sse.pack/1",
+      "id": "p"
+     }
+    ]
+   },
+   "action": "apply"
+  },
+  {
+   "name": "gm grants",
+   "seat": {
+    "id": "gm",
+    "label": "Game master",
+    "audience": "all",
+    "authority": "gm",
+    "may_send": [
+     "set_value",
+     "adopt_physics",
+     "stack_packs",
+     "scan_toggle",
+     "grant"
+    ],
+    "sealed": false
+   },
+   "intent": {
+    "kind": "grant",
+    "address": "u:tarn/sys:0/body:2",
+    "audience": "vesh",
+    "view": "survey",
+    "at_yr": 0
+   },
+   "action": "apply"
+  },
+  {
+   "name": "table asks to set a value",
+   "seat": {
+    "id": "table",
+    "label": "Table",
+    "audience": "everyone",
+    "authority": "player",
+    "may_send": [
+     "set_value"
+    ],
+    "sealed": false
+   },
+   "intent": {
+    "kind": "set_value",
+    "address": "u:tarn/sys:0/body:2",
+    "field": "name",
+    "value": "x",
+    "at_yr": 0
+   },
+   "action": "ask_gm"
+  },
+  {
+   "name": "table may not scan",
+   "seat": {
+    "id": "table",
+    "label": "Table",
+    "audience": "everyone",
+    "authority": "player",
+    "may_send": [
+     "set_value"
+    ],
+    "sealed": false
+   },
+   "intent": {
+    "kind": "scan_toggle",
+    "address": "u:tarn/sys:0/body:2",
+    "audience": "everyone",
+    "at_yr": 0
+   },
+   "action": "refuse"
+  },
+  {
+   "name": "quiet seat sends nothing",
+   "seat": {
+    "id": "quiet",
+    "label": "Quiet",
+    "audience": "q",
+    "authority": "player",
+    "may_send": [],
+    "sealed": false
+   },
+   "intent": {
+    "kind": "set_value",
+    "address": "u:tarn/sys:0/body:2",
+    "field": "name",
+    "value": "x",
+    "at_yr": 0
+   },
+   "action": "refuse"
+  },
+  {
+   "name": "names inside the scope apply, moons included",
+   "seat": {
+    "id": "vesh",
+    "label": "Vesh",
+    "audience": "vesh",
+    "authority": "player",
+    "may_send": [
+     "set_value",
+     "scan_toggle",
+     "grant",
+     "stack_packs",
+     "adopt_physics"
+    ],
+    "auto_approve": [
+     {
+      "intent": "set_value",
+      "scope": [
+       "u:tarn/sys:0/body:2"
+      ],
+      "fields": [
+       "name"
+      ]
+     },
+     {
+      "intent": "scan_toggle",
+      "scope": [
+       "u:tarn/sys:0"
+      ]
+     }
+    ],
+    "sealed": false
+   },
+   "intent": {
+    "kind": "set_value",
+    "address": "u:tarn/sys:0/body:2/moon:0",
+    "field": "name",
+    "value": "x",
+    "at_yr": 0
+   },
+   "action": "apply"
+  },
+  {
+   "name": "outside the scope asks",
+   "seat": {
+    "id": "vesh",
+    "label": "Vesh",
+    "audience": "vesh",
+    "authority": "player",
+    "may_send": [
+     "set_value",
+     "scan_toggle",
+     "grant",
+     "stack_packs",
+     "adopt_physics"
+    ],
+    "auto_approve": [
+     {
+      "intent": "set_value",
+      "scope": [
+       "u:tarn/sys:0/body:2"
+      ],
+      "fields": [
+       "name"
+      ]
+     },
+     {
+      "intent": "scan_toggle",
+      "scope": [
+       "u:tarn/sys:0"
+      ]
+     }
+    ],
+    "sealed": false
+   },
+   "intent": {
+    "kind": "set_value",
+    "address": "u:tarn/sys:1/body:0",
+    "field": "name",
+    "value": "x",
+    "at_yr": 0
+   },
+   "action": "ask_gm"
+  },
+  {
+   "name": "only the named fields",
+   "seat": {
+    "id": "vesh",
+    "label": "Vesh",
+    "audience": "vesh",
+    "authority": "player",
+    "may_send": [
+     "set_value",
+     "scan_toggle",
+     "grant",
+     "stack_packs",
+     "adopt_physics"
+    ],
+    "auto_approve": [
+     {
+      "intent": "set_value",
+      "scope": [
+       "u:tarn/sys:0/body:2"
+      ],
+      "fields": [
+       "name"
+      ]
+     },
+     {
+      "intent": "scan_toggle",
+      "scope": [
+       "u:tarn/sys:0"
+      ]
+     }
+    ],
+    "sealed": false
+   },
+   "intent": {
+    "kind": "set_value",
+    "address": "u:tarn/sys:0/body:2",
+    "field": "mass_kg",
+    "value": 1,
+    "at_yr": 0
+   },
+   "action": "ask_gm"
+  },
+  {
+   "name": "players never set disclosure",
+   "seat": {
+    "id": "vesh",
+    "label": "Vesh",
+    "audience": "vesh",
+    "authority": "player",
+    "may_send": [
+     "set_value",
+     "scan_toggle",
+     "grant",
+     "stack_packs",
+     "adopt_physics"
+    ],
+    "auto_approve": [
+     {
+      "intent": "set_value",
+      "scope": [
+       "u:tarn/sys:0/body:2"
+      ],
+      "fields": [
+       "name"
+      ]
+     },
+     {
+      "intent": "scan_toggle",
+      "scope": [
+       "u:tarn/sys:0"
+      ]
+     }
+    ],
+    "sealed": false
+   },
+   "intent": {
+    "kind": "set_value",
+    "address": "u:tarn/sys:0/body:2",
+    "field": "observe.view",
+    "value": "survey",
+    "at_yr": 0
+   },
+   "action": "refuse"
+  },
+  {
+   "name": "players never set disclosure (bare)",
+   "seat": {
+    "id": "vesh",
+    "label": "Vesh",
+    "audience": "vesh",
+    "authority": "player",
+    "may_send": [
+     "set_value",
+     "scan_toggle",
+     "grant",
+     "stack_packs",
+     "adopt_physics"
+    ],
+    "auto_approve": [
+     {
+      "intent": "set_value",
+      "scope": [
+       "u:tarn/sys:0/body:2"
+      ],
+      "fields": [
+       "name"
+      ]
+     },
+     {
+      "intent": "scan_toggle",
+      "scope": [
+       "u:tarn/sys:0"
+      ]
+     }
+    ],
+    "sealed": false
+   },
+   "intent": {
+    "kind": "set_value",
+    "address": "u:tarn/sys:0/body:2",
+    "field": "observe",
+    "value": "survey",
+    "at_yr": 0
+   },
+   "action": "refuse"
+  },
+  {
+   "name": "scan_toggle always asks, even in scope",
+   "seat": {
+    "id": "vesh",
+    "label": "Vesh",
+    "audience": "vesh",
+    "authority": "player",
+    "may_send": [
+     "set_value",
+     "scan_toggle",
+     "grant",
+     "stack_packs",
+     "adopt_physics"
+    ],
+    "auto_approve": [
+     {
+      "intent": "set_value",
+      "scope": [
+       "u:tarn/sys:0/body:2"
+      ],
+      "fields": [
+       "name"
+      ]
+     },
+     {
+      "intent": "scan_toggle",
+      "scope": [
+       "u:tarn/sys:0"
+      ]
+     }
+    ],
+    "sealed": false
+   },
+   "intent": {
+    "kind": "scan_toggle",
+    "address": "u:tarn/sys:0/body:2",
+    "audience": "vesh",
+    "at_yr": 0
+   },
+   "action": "ask_gm"
+  },
+  {
+   "name": "grant always asks",
+   "seat": {
+    "id": "vesh",
+    "label": "Vesh",
+    "audience": "vesh",
+    "authority": "player",
+    "may_send": [
+     "set_value",
+     "scan_toggle",
+     "grant",
+     "stack_packs",
+     "adopt_physics"
+    ],
+    "auto_approve": [
+     {
+      "intent": "set_value",
+      "scope": [
+       "u:tarn/sys:0/body:2"
+      ],
+      "fields": [
+       "name"
+      ]
+     },
+     {
+      "intent": "scan_toggle",
+      "scope": [
+       "u:tarn/sys:0"
+      ]
+     }
+    ],
+    "sealed": false
+   },
+   "intent": {
+    "kind": "grant",
+    "address": "u:tarn/sys:0/body:2",
+    "audience": "vesh",
+    "view": null,
+    "at_yr": 0
+   },
+   "action": "ask_gm"
+  },
+  {
+   "name": "packs always ask",
+   "seat": {
+    "id": "vesh",
+    "label": "Vesh",
+    "audience": "vesh",
+    "authority": "player",
+    "may_send": [
+     "set_value",
+     "scan_toggle",
+     "grant",
+     "stack_packs",
+     "adopt_physics"
+    ],
+    "auto_approve": [
+     {
+      "intent": "set_value",
+      "scope": [
+       "u:tarn/sys:0/body:2"
+      ],
+      "fields": [
+       "name"
+      ]
+     },
+     {
+      "intent": "scan_toggle",
+      "scope": [
+       "u:tarn/sys:0"
+      ]
+     }
+    ],
+    "sealed": false
+   },
+   "intent": {
+    "kind": "stack_packs",
+    "packs": [
+     {
+      "format": "sse.pack/1",
+      "id": "p"
+     }
+    ]
+   },
+   "action": "ask_gm"
+  },
+  {
+   "name": "physics always asks",
+   "seat": {
+    "id": "vesh",
+    "label": "Vesh",
+    "audience": "vesh",
+    "authority": "player",
+    "may_send": [
+     "set_value",
+     "scan_toggle",
+     "grant",
+     "stack_packs",
+     "adopt_physics"
+    ],
+    "auto_approve": [
+     {
+      "intent": "set_value",
+      "scope": [
+       "u:tarn/sys:0/body:2"
+      ],
+      "fields": [
+       "name"
+      ]
+     },
+     {
+      "intent": "scan_toggle",
+      "scope": [
+       "u:tarn/sys:0"
+      ]
+     }
+    ],
+    "sealed": false
+   },
+   "intent": {
+    "kind": "adopt_physics",
+    "pack": null,
+    "requests": []
+   },
+   "action": "ask_gm"
+  },
+  {
+   "name": "segments, not string prefixes",
+   "seat": {
+    "id": "vesh",
+    "label": "Vesh",
+    "audience": "vesh",
+    "authority": "player",
+    "may_send": [
+     "set_value",
+     "scan_toggle",
+     "grant",
+     "stack_packs",
+     "adopt_physics"
+    ],
+    "auto_approve": [
+     {
+      "intent": "set_value",
+      "scope": [
+       "u:tarn/sys:0/body:2"
+      ]
+     }
+    ],
+    "sealed": false
+   },
+   "intent": {
+    "kind": "set_value",
+    "address": "u:tarn/sys:0/body:20",
+    "field": "name",
+    "value": "x",
+    "at_yr": 0
+   },
+   "action": "ask_gm"
+  }
+ ]
+}
