@@ -11,6 +11,7 @@
   import LensPanel from "./LensPanel.svelte";
   import SoundControl from "../../sound/src/SoundControl.svelte";
   import LightControl from "./LightControl.svelte";
+  import MakeSystem from "./MakeSystem.svelte";
   import lightDoc from "./documents/light.recipes.json";
   import { SYMBOLS, checkLightRecipe, describeLight, litFromSystem, paint, type BandRecipe, type Mark } from "../../ui-contract/src/index.ts";
   import AgentsPanel from "../../agents/src/AgentsPanel.svelte";
@@ -213,6 +214,8 @@
   // A1: agents, on the GM's own key. The panel reads only what is on the chart.
   let agentsDialog: HTMLDialogElement | undefined = $state();
   let agentsOpen = $state(false);
+  let makeDialog: HTMLDialogElement | undefined = $state();
+  let makeOpen = $state(false);
   const agentContext = $derived.by(() => {
     const sub = scene.subjects.find((x) => x.address === ws.selection);
     const head = `${scene.title}: ${scene.subtitle}.`;
@@ -415,6 +418,7 @@
         {/if}
         {#if whatNote}<span role="status">{whatNote}</span>{/if}
       </span>
+      <button type="button" class="linkbtn quiet" onclick={() => ((makeOpen = true), makeDialog?.showModal())} title="Import a V3 save or grow a new system (a preview)">Make a system</button>
       <button type="button" class="linkbtn quiet" onclick={() => ((agentsOpen = true), agentsDialog?.showModal())} title="Tars, Orac and Minerva, on your own key">Agents</button>
       <LightControl recipes={LIGHT_RECIPES} lights={lit.lights} missing={lit.missing} names={lightNames} bind:value={lightId} key="light.gm" />
       <SoundControl scene={soundScene} deviceTier={status.tier} seed={base.universe.seed} key="sound.gm" />
@@ -481,6 +485,11 @@
 
 <dialog bind:this={agentsDialog} class="help seats-dialog" aria-label="Agents" onclose={() => (agentsOpen = !!agentsDialog?.open)}>
   {#if agentsOpen}<AgentsPanel context={agentContext} />{/if}
+  <form method="dialog"><button type="submit">Close</button></form>
+</dialog>
+
+<dialog bind:this={makeDialog} class="help make-dialog" aria-label="Make a system" onclose={() => (makeOpen = !!makeDialog?.open)}>
+  {#if makeOpen && session}<MakeSystem {session} context={{ mark: (s) => symbols.marker().mark(subjectOf(s)), symbology: symbols, styles: styleHost }} />{/if}
   <form method="dialog"><button type="submit">Close</button></form>
 </dialog>
 
@@ -724,6 +733,15 @@
   .seats-dialog {
     max-width: 640px;
     width: calc(100vw - 32px);
+  }
+  .make-dialog {
+    box-sizing: border-box;
+    max-width: 1040px;
+    width: calc(100vw - 32px);
+    max-height: calc(100vh - 32px);
+  }
+  .make-dialog form[method="dialog"] {
+    margin-top: 12px;
   }
   .seats-dialog form[method="dialog"] {
     margin-top: 16px;

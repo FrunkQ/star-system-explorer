@@ -46,9 +46,14 @@ try {
     // Open a what-if and change the mass.
     await gm.getByRole("button", { name: "What if…" }).click();
     await gm.waitForSelector("main.stage[data-branch=open]");
+    // The chart re-derives onto the branch as it opens; let that settle before typing.
+    await gm.waitForSelector("[data-branch-hash]");
+    await gm.waitForTimeout(500);
     const m = field("Mass").locator("input");
     await m.fill("1.6");
     await m.press("Enter");
+    // Leaving the field commits too (one commit: the field ignores a second one with nothing new).
+    await m.evaluate((el) => el.blur());
     await gm.waitForSelector("[data-whatif-edits='1']");
     await gm.waitForFunction((g) => {
       const f = [...document.querySelectorAll(".area-card .field")].find((x) => x.querySelector("label")?.textContent?.startsWith("Gravity"));
@@ -77,8 +82,11 @@ try {
     // Again, and keep it.
     await gm.getByRole("button", { name: "What if…" }).click();
     await gm.waitForSelector("main.stage[data-branch=open]");
+    await gm.waitForSelector("[data-branch-hash]");
+    await gm.waitForTimeout(500);
     await field("Mass").locator("input").fill("1.6");
     await field("Mass").locator("input").press("Enter");
+    await field("Mass").locator("input").evaluate((el) => el.blur());
     await gm.waitForSelector("[data-whatif-edits='1']");
     await gm.getByRole("button", { name: "Keep it" }).click();
     await gm.waitForFunction(() => !document.querySelector("main.stage[data-branch]"));

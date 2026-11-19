@@ -8,6 +8,7 @@ import { checkIntent, intentToRequest, secondsToYears, yearsToSeconds, type Inte
 import { audienceOf, decide, type Seat } from "./seat.ts";
 import { providerOf, type FlowDoc, type PackDoc } from "./physics.ts";
 import type { PlayerScene } from "./player-scene.ts";
+import type { FormationRan, FormationRequest, V3Imported } from "./make.ts";
 
 export type IntentResult =
   /** For a stack change the kernel chronicles a `stack.adopt` event; `view` is the data view a scan_toggle left in force. */
@@ -84,6 +85,10 @@ export interface ViewSession {
   branchStateHash(branch: string, at_yr?: number): Promise<string>;
   /** Drop a branch and everything on it. */
   discardBranch(branch: string): Promise<boolean>;
+  /** Read a V3 save into facts and a difference report; writes nothing (GM only). */
+  importV3(save: string, opts?: { universe_id?: string; reconstruct?: number }): Promise<{ ok: true; result: V3Imported } | { ok: false; code: string; message: string }>;
+  /** One system through the formation pipeline; writes nothing (GM only). */
+  runFormation(req: FormationRequest): Promise<{ ok: true; result: FormationRan } | { ok: false; code: string; message: string }>;
   kernelVersion(): Promise<string>;
   /** Derived values of a flow (read only; no event). */
   derive(ref: DeriveRef): Promise<{ ok: true; values: Record<string, Derived> } | { ok: false; message: string }>;
@@ -385,6 +390,23 @@ export class Session implements ViewSession {
   async discardBranch(branch: string): Promise<boolean> {
     const r = await this.#call({ op: "discard", branch });
     return r.type === "discarded";
+  }
+
+  /**
+   * Read a V3 save (the text of a starmap.json or system.json) into facts and a difference report.
+   * Pure: nothing is written to the open universe. `reconstruct` (1 to 64) also solves candidate histories.
+   */
+  async importV3(save: string, opts: { universe_id?: string; reconstruct?: number } = {}): Promise<{ ok: true; result: V3Imported } | { ok: false; code: string; message: string }> {
+    if (this.seat.authority !== "gm") return { ok: false, code: "not_gm", message: "only the game master imports saves" };
+    const r = await this.#call({ op: "import_v3", save, ...(opts.universe_id ? { universe_id: opts.universe_id } : {}), ...(opts.reconstruct ? { reconstruct: opts.reconstruct } : {}) });
+    return r.type === "v3_imported" ? { ok: true, result: r as unknown as V3Imported } : { ok: false, code: String(r.code ?? "unexpected"), message: String(r.message ?? JSON.stringify(r)) };
+  }
+
+  /** One system through the formation pipeline. Pure: nothing is written to the open universe. */
+  async runFormation(req: FormationRequest): Promise<{ ok: true; result: FormationRan } | { ok: false; code: string; message: string }> {
+    if (this.seat.authority !== "gm") return { ok: false, code: "not_gm", message: "only the game master generates systems" };
+    const r = await this.#call({ op: "run_formation", ...req });
+    return r.type === "formation_ran" ? { ok: true, result: r as unknown as FormationRan } : { ok: false, code: String(r.code ?? "unexpected"), message: String(r.message ?? JSON.stringify(r)) };
   }
 
   async kernelVersion(): Promise<string> {

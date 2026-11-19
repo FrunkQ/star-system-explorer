@@ -47,3 +47,5 @@ export { SOUND_SCENE_SCHEMA, SOUND_RECIPE_SCHEMA, SOUND_LABELS, SOUND_LAYERS, NO
 export type { SoundLabel, SoundLayer, SoundTier, SoundSource, ScoreNote, SoundScene, Voice, NodeType, RecipeNode, SoundRecipe, SoundSettings } from "./sound.ts";
 export { LIGHT_SCHEMA, BANDS, LINES, HONESTY_WORDS, SYMBOLS, DRAPER_K, planck, thermalColour, checkLightRecipe, paint, describeLight, litFromSystem, litFromPlayers, teffFromSpectral, readLight } from "./light.ts";
 export type { BandRecipe, Honesty, LightDescription, LitBody } from "./light.ts";
+export { importedSystems, sceneFromImport, reportSummary, sceneFromFormation, worldWords, noWorldsWhy } from "./make.ts";
+export type { V3Imported, ImportReport, ImportDifference, ImportedSystem, FormationRan, FormationRequest, FormationWorld } from "./make.ts";
