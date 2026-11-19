@@ -1453,5 +1453,83 @@
  {
   "op": "rules_step",
   "at_s": 5
+ },
+ {
+  "op": "calendar"
+ },
+ {
+  "op": "campaign_now"
+ },
+ {
+  "op": "set_campaign_now",
+  "at_s": 3600
+ },
+ {
+  "op": "campaign_now"
+ },
+ {
+  "op": "adopt",
+  "formation": {
+   "seed": "kernel-form-7",
+   "system": "u:kestrel/sys:41",
+   "star_pins": {
+    "primary_mass": 1.0
+   }
+  }
+ },
+ {
+  "op": "orbits_at",
+  "system": "u:kestrel/sys:41",
+  "at_s": [
+   0,
+   3600
+  ]
+ },
+ {
+  "op": "orbits_at",
+  "system": "u:kestrel/sys:41",
+  "at_s": []
+ },
+ {
+  "op": "orbits_at",
+  "system": "u:x/sys:0",
+  "at_s": [
+   0,
+   86400
+  ],
+  "bodies": [
+   {
+    "address": "u:x/sys:0/star:0",
+    "facts": {
+     "body.mass": 1.98847e+30
+    }
+   },
+   {
+    "address": "u:x/sys:0/body:0",
+    "facts": {
+     "orbit.host": "u:x/sys:0/star:0",
+     "orbit.semi_major_axis": 149597870700.0,
+     "orbit.eccentricity": 0.0167,
+     "orbit.mean_anomaly_at_epoch": 0.0
+    }
+   },
+   {
+    "address": "u:x/sys:0/body:1",
+    "facts": {
+     "orbit.host": "u:x/sys:0/star:0",
+     "orbit.semi_major_axis": 700000000000.0
+    }
+   }
+  ]
+ },
+ {
+  "op": "load_stack",
+  "packs": [
+   "$pack:base-toy",
+   "$pack:imperial-calendar"
+  ]
+ },
+ {
+  "op": "calendar"
  }
 ]

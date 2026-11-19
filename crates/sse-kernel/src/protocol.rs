@@ -497,6 +497,28 @@ pub enum Request {
     /// The loaded rules with their effective policies, and the record's
     /// `rules.*` trail (GM only).
     Rules,
+    /// Bodies at or under `system` placed on their orbits at each time
+    /// (universe seconds, at most 64): position relative to the host in
+    /// metres, longitude in degrees, period. Reads the universe's facts, or
+    /// `bodies` (`[{address, facts}]`) when given. A body with no dated phase
+    /// takes a keyed draw (`phase_source: resolved`); one missing anything
+    /// else comes back unplaced with `missing` named, never guessed.
+    OrbitsAt {
+        system: String,
+        at_s: Vec<i64>,
+        #[serde(default)]
+        #[ts(optional, type = "unknown[]")]
+        bodies: Option<Vec<serde_json::Value>>,
+    },
+    /// Set the campaign's now (`campaign.now_s` on the universe root, a
+    /// `time.campaign_now` event). It moves forwards or back.
+    SetCampaignNow {
+        at_s: i64,
+    },
+    /// The campaign's now (absent if never set).
+    CampaignNow,
+    /// The top pack's calendar (`provides.other.calendar`), checked at load.
+    Calendar,
 }
 
 /// `adopt`'s formation request: the `run_formation` fields.
@@ -587,6 +609,10 @@ impl Request {
             Request::RulesDecide { .. } => "rules_decide",
             Request::RulesPolicy { .. } => "rules_policy",
             Request::Rules => "rules",
+            Request::OrbitsAt { .. } => "orbits_at",
+            Request::SetCampaignNow { .. } => "set_campaign_now",
+            Request::CampaignNow => "campaign_now",
+            Request::Calendar => "calendar",
         }
     }
 }
@@ -699,6 +725,14 @@ pub fn ops() -> Vec<OpInfo> {
         o("rules_decide", Cost::Light, "GM machine only; one fold and the proposal's effects"),
         o("rules_policy", Cost::Trivial, "GM machine only; one record event"),
         o("rules", Cost::Light, "GM machine only; linear in the record events"),
+        o(
+            "orbits_at",
+            Cost::Light,
+            "linear in bodies x times (at most 64 times); 16 Newton steps each",
+        ),
+        o("set_campaign_now", Cost::Trivial, "one universe event"),
+        o("campaign_now", Cost::Trivial, "a scan of the universe events"),
+        o("calendar", Cost::Trivial, "read at load"),
     ]
 }
 
@@ -1013,6 +1047,31 @@ pub enum Response {
         rules: Vec<serde_json::Value>,
         #[ts(type = "unknown[]")]
         trail: Vec<serde_json::Value>,
+    },
+    /// `orbits_at`: per body `{address, placed, parent?, period_s?,
+    /// phase_source?, missing?, at: [{at_s, r_m: [x, y, z], phase_deg}]}`.
+    OrbitsPlaced {
+        system: String,
+        #[ts(type = "unknown[]")]
+        bodies: Vec<serde_json::Value>,
+    },
+    /// `set_campaign_now` and `campaign_now`.
+    CampaignNowIs {
+        #[serde(default, skip_serializing_if = "Option::is_none")]
+        #[ts(optional)]
+        at_s: Option<i64>,
+        #[serde(default, skip_serializing_if = "Option::is_none")]
+        #[ts(optional)]
+        event_id: Option<String>,
+        #[serde(default, skip_serializing_if = "Option::is_none")]
+        #[ts(optional)]
+        state_hash: Option<String>,
+    },
+    /// `calendar`: `{name, epoch_s, epoch_year, day_s, year_days, months?, format}`, or absent.
+    CalendarIs {
+        #[serde(default, skip_serializing_if = "Option::is_none")]
+        #[ts(optional, type = "unknown")]
+        calendar: Option<serde_json::Value>,
     },
     /// `systems`: one entry per system, `{system, source, name?, addresses,
     /// adopted_event?}`.

@@ -1401,3 +1401,142 @@ fn rules_through_the_api() {
     let b = run();
     assert_eq!(a, b, "the same session replays to the same bytes");
 }
+
+/// Orbits at any time, the campaign clock and a pack calendar (asked for by the chart room).
+#[test]
+fn orbits_clock_and_calendar() {
+    let mut k = crate::Kernel::new();
+    let send = |k: &mut crate::Kernel, v: serde_json::Value| -> serde_json::Value {
+        serde_json::from_str(&k.handle_json(&v.to_string())).unwrap()
+    };
+    let pack = |p: &str| -> serde_json::Value {
+        serde_json::from_str(&std::fs::read_to_string(root().join(p)).unwrap()).unwrap()
+    };
+    let r = send(
+        &mut k,
+        serde_json::json!({"op": "load_stack", "packs": [pack("packs/base-time/pack.json"), pack("tests/fixtures/packs/imperial-calendar.json")]}),
+    );
+    assert_eq!(r["type"], "stack_loaded", "{r}");
+    let c = send(&mut k, serde_json::json!({"op": "calendar"}));
+    assert_eq!(c["calendar"]["format"], "{day:03}-{year}", "{c}");
+    assert_eq!(c["calendar"]["year_days"], 365.0);
+
+    // A calendar whose months do not fill the year is refused at load.
+    let mut bad = pack("tests/fixtures/packs/imperial-calendar.json");
+    bad["provides"]["other"]["calendar"]["months"] =
+        serde_json::json!([{"name": "Only", "days": 30}]);
+    let r = send(
+        &mut k,
+        serde_json::json!({"op": "load_stack", "packs": [bad]}),
+    );
+    assert_eq!(r["type"], "stack_rejected", "{r}");
+    assert!(r["issues"][0]
+        .as_str()
+        .unwrap()
+        .contains("months add to 30"));
+
+    // No universe: inline bodies still place (no keyed draw without a seed).
+    let inline = serde_json::json!([
+        {"address": "u:x/sys:0/star:0", "facts": {"body.mass": 1.98847e30}},
+        {"address": "u:x/sys:0/body:0", "facts": {"orbit.host": "u:x/sys:0/star:0", "orbit.semi_major_axis": 1.495978707e11, "orbit.mean_anomaly_at_epoch": 0.0}},
+        {"address": "u:x/sys:0/body:1", "facts": {"orbit.host": "u:x/sys:0/star:0", "orbit.semi_major_axis": 7.0e11}}
+    ]);
+    let r = send(
+        &mut k,
+        serde_json::json!({"op": "orbits_at", "system": "u:x/sys:0", "at_s": [0, 1000], "bodies": inline}),
+    );
+    assert_eq!(r["type"], "orbits_placed", "{r}");
+    assert_eq!(r["bodies"][0]["placed"], true);
+    assert_eq!(r["bodies"][1]["placed"], false);
+    assert!(r["bodies"][1]["missing"][0]
+        .as_str()
+        .unwrap()
+        .contains("mean_anomaly"));
+    let r = send(
+        &mut k,
+        serde_json::json!({"op": "orbits_at", "system": "u:x/sys:0", "at_s": []}),
+    );
+    assert_eq!(r["code"], "bad_request");
+
+    // An adopted formation system: every body placed, phases dated, the
+    // same answer twice, and the keyed draw when a phase is missing.
+    send(
+        &mut k,
+        serde_json::json!({"op": "load_stack", "packs": [pack("packs/base-time/pack.json")]}),
+    );
+    send(
+        &mut k,
+        serde_json::json!({"op": "open_universe", "id": "home", "seed": "home"}),
+    );
+    let form = serde_json::json!({"seed": "adopt-1", "system": "u:home/sys:5", "star_pins": {"primary_mass": 1.0}});
+    let r = send(
+        &mut k,
+        serde_json::json!({"op": "adopt", "formation": form}),
+    );
+    assert_eq!(r["type"], "adopted", "{r}");
+    let ask = serde_json::json!({"op": "orbits_at", "system": "u:home/sys:5", "at_s": [0, 86400, 31557600]});
+    let a = send(&mut k, ask.clone());
+    let b = send(&mut k, ask);
+    assert_eq!(a, b);
+    let bodies = a["bodies"].as_array().unwrap();
+    assert!(!bodies.is_empty(), "{a}");
+    for x in bodies {
+        assert_eq!(x["placed"], true, "{x}");
+        assert_eq!(x["at"].as_array().unwrap().len(), 3);
+        assert!(x["period_s"].as_f64().unwrap() > 0.0);
+    }
+    eprintln!(
+        "formation orbits: {:?}",
+        bodies
+            .iter()
+            .map(|x| (
+                x["address"].as_str().unwrap(),
+                x["period_s"].as_f64().unwrap() / 86400.0,
+                x["phase_source"].as_str().unwrap()
+            ))
+            .collect::<Vec<_>>()
+    );
+
+    // An SSE 3 import: dated phases from the save, and a planet a year long.
+    let save = include_str!("../../../tests/fixtures/v3/synthetic-sol.json");
+    let r = send(
+        &mut k,
+        serde_json::json!({"op": "adopt", "import_v3": save}),
+    );
+    let sys = r["systems"][0].as_str().unwrap().to_string();
+    let v = send(
+        &mut k,
+        serde_json::json!({"op": "orbits_at", "system": sys, "at_s": [0]}),
+    );
+    let days: Vec<(String, f64, String)> = v["bodies"]
+        .as_array()
+        .unwrap()
+        .iter()
+        .filter(|x| x["placed"] == true)
+        .map(|x| {
+            (
+                x["address"].as_str().unwrap().to_string(),
+                x["period_s"].as_f64().unwrap() / 86400.0,
+                x["phase_source"].as_str().unwrap().to_string(),
+            )
+        })
+        .collect();
+    eprintln!("v3 orbits: {days:?} of {}", v["bodies"]);
+    assert!(days.iter().any(|d| (d.1 - 365.25).abs() < 1.0), "{days:?}");
+
+    // The campaign clock: unset, set, moved back, read.
+    let n = send(&mut k, serde_json::json!({"op": "campaign_now"}));
+    assert!(n.get("at_s").is_none(), "{n}");
+    let s1 = send(
+        &mut k,
+        serde_json::json!({"op": "set_campaign_now", "at_s": 5000}),
+    );
+    let s2 = send(
+        &mut k,
+        serde_json::json!({"op": "set_campaign_now", "at_s": 4000}),
+    );
+    assert_ne!(s1["state_hash"], s2["state_hash"]);
+    let n = send(&mut k, serde_json::json!({"op": "campaign_now"}));
+    assert_eq!(n["at_s"], 4000);
+    assert_eq!(n["event_id"], s2["event_id"]);
+}

@@ -7,6 +7,7 @@
 
 mod adopt;
 pub mod contract;
+mod orbits;
 pub mod protocol;
 mod systems;
 
@@ -93,11 +94,13 @@ fn load_observe(ms: &[sse_pack::PackManifest]) -> Result<Observe, Vec<String>> {
     if !issues.is_empty() {
         return Err(issues);
     }
+    let calendar = orbits::load_calendar(ms)?;
     Ok(Observe {
         setup,
         rules,
         record,
         triggers,
+        calendar,
     })
 }
 
@@ -198,6 +201,8 @@ struct Observe {
     record: sse_record::Registry,
     /// Triggers and effects (`provides.other.triggers`, J4).
     triggers: sse_trigger::Rules,
+    /// The top pack's calendar (`provides.other.calendar`).
+    calendar: Option<orbits::Calendar>,
 }
 
 pub struct Kernel {
@@ -1838,6 +1843,86 @@ impl Kernel {
                     trail: sse_trigger::trail(&u.record),
                 }
             }
+            Request::OrbitsAt {
+                system,
+                at_s,
+                bodies,
+            } => {
+                if at_s.is_empty() || at_s.len() > orbits::MAX_TIMES {
+                    return Err(err(
+                        "bad_request",
+                        format!("at_s needs 1 to {} times", orbits::MAX_TIMES),
+                    ));
+                }
+                let a: Address = system
+                    .parse()
+                    .map_err(|e| err("bad_address", format!("{e}")))?;
+                let (facts, seed) = match &bodies {
+                    Some(b) => (
+                        orbits::inline_facts(b)?,
+                        self.universe.as_ref().map(|u| u.seed),
+                    ),
+                    None => {
+                        let u = self.universe()?;
+                        if !u.root.contains(&a) {
+                            return Err(err(
+                                "bad_address",
+                                format!("{a} is not in universe {}", u.root),
+                            ));
+                        }
+                        let st = u.chronicle.state_at(UniverseTime::seconds(i64::MAX));
+                        let f: BTreeMap<Address, BTreeMap<String, Value>> = st
+                            .facts
+                            .iter()
+                            .filter(|(x, _)| a.contains(x))
+                            .map(|(x, r)| (x.clone(), r.clone()))
+                            .collect();
+                        (f, Some(u.seed))
+                    }
+                };
+                let placed = orbits::orbits_at(&facts, &a, &at_s, seed.as_ref());
+                Response::OrbitsPlaced {
+                    system,
+                    bodies: placed
+                        .iter()
+                        .map(|p| serde_json::to_value(p).expect("plain data"))
+                        .collect(),
+                }
+            }
+            Request::SetCampaignNow { at_s } => {
+                let u = self.universe()?;
+                let e = orbits::campaign_now_event(&u.chronicle, &u.root, at_s)?;
+                let id = u
+                    .chronicle
+                    .append(e)
+                    .map_err(|e| err("chronicle", format!("{e}")))?;
+                Response::CampaignNowIs {
+                    at_s: Some(at_s),
+                    event_id: Some(id.hex()),
+                    state_hash: Some(
+                        u.chronicle
+                            .state_at(UniverseTime::seconds(i64::MAX))
+                            .hash()
+                            .hex(),
+                    ),
+                }
+            }
+            Request::CampaignNow => {
+                let u = self.universe()?;
+                let (at_s, event_id) = orbits::campaign_now(&u.chronicle, &u.root);
+                Response::CampaignNowIs {
+                    at_s,
+                    event_id,
+                    state_hash: None,
+                }
+            }
+            Request::Calendar => Response::CalendarIs {
+                calendar: self
+                    .observe
+                    .calendar
+                    .as_ref()
+                    .map(|c| serde_json::to_value(c).expect("plain data")),
+            },
             Request::Manifest => {
                 let m = self.universe()?.manifest();
                 Response::Manifest {
