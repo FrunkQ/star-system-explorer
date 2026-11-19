@@ -25,6 +25,7 @@
 #![forbid(unsafe_code)]
 
 pub mod intents;
+pub mod programs;
 pub mod templates;
 
 use serde::{Deserialize, Serialize};
@@ -1075,6 +1076,17 @@ impl Rules {
             data,
             Self::publisher(r),
         )?;
+        // The intent behind an `on_intent` firing, for `{intent.<field>}` values.
+        let intent_payload: Option<J> = match d.cause {
+            Some((true, c)) => g
+                .record
+                .events()
+                .iter()
+                .find(|e| e.id == c && e.body.kind.starts_with(kinds::INTENT_PREFIX))
+                .and_then(|e| data_text(e, "payload"))
+                .and_then(|t| serde_json::from_str(t).ok()),
+            _ => None,
+        };
         // The observer's facts, for `{observer.<field>}` grant audiences.
         let observer_facts = match &d.observer {
             Some(o)
@@ -1093,7 +1105,13 @@ impl Rules {
             .doc
             .effects
             .iter()
-            .map(|e| substitute(e, &d.subject, d.observer.as_ref(), &observer_facts))
+            .map(|e| {
+                let e = substitute(e, &d.subject, d.observer.as_ref(), &observer_facts);
+                match &intent_payload {
+                    Some(p) => with_intent(&e, p),
+                    None => e,
+                }
+            })
             .collect();
         let policy = Self::policy_override(g.record, &r.doc.id)
             .or_else(|| r.doc.approval.clone())
@@ -1590,6 +1608,31 @@ fn authored(
     })
     .map_err(|e| e.to_string())?;
     universe.append(e).map_err(|e| e.to_string())
+}
+
+/// A kept value written as `"{intent.<field>}"` takes that field of the
+/// intent that fired the rule (an `on_intent` rule), any JSON type.
+fn with_intent(e: &Effect, payload: &J) -> Effect {
+    match e {
+        Effect::SetKept {
+            kind,
+            value: Some(J::String(v)),
+            add,
+            reason,
+        } => {
+            let got = v
+                .strip_prefix("{intent.")
+                .and_then(|f| f.strip_suffix('}'))
+                .and_then(|f| payload.get(f));
+            Effect::SetKept {
+                kind: kind.clone(),
+                value: Some(got.cloned().unwrap_or_else(|| J::String(v.clone()))),
+                add: *add,
+                reason: reason.clone(),
+            }
+        }
+        other => other.clone(),
+    }
 }
 
 /// The field named by an `{observer.<field>}` audience.

@@ -1897,3 +1897,117 @@ fn sift_through_the_api() {
     );
     assert!(ids(&early).is_empty());
 }
+
+/// J6: the mining drone surveys, travels, mines and returns; it acts only on
+/// what its sensors have shown; a replay gives the same record; the limit holds.
+#[test]
+fn programs_through_the_api() {
+    let packs = crate::contract::load_packs(&root().join("tests/fixtures/packs"));
+    let run = |scan: bool| -> (Vec<serde_json::Value>, String, crate::Kernel) {
+        let mut k = crate::Kernel::new();
+        let r = send(
+            &mut k,
+            serde_json::json!({"op":"load_stack","packs":[packs["rpg-programs"]]}),
+        );
+        assert_eq!(r["type"], "stack_loaded", "{r}");
+        send(
+            &mut k,
+            serde_json::json!({"op":"open_universe","id":"kestrel","seed":"k"}),
+        );
+        let sys = "u:kestrel/sys:0";
+        for (b, grade) in [("body:1", 0.9), ("body:2", 0.6), ("body:3", 0.2)] {
+            let r = send(
+                &mut k,
+                serde_json::json!({"op":"set_authored","edit":{"address":format!("{sys}/{b}"),"field":"ore.grade","value":grade,"occurred_at_s":0}}),
+            );
+            assert!(r["state_hash"].is_string(), "{r}");
+        }
+        let c = send(
+            &mut k,
+            serde_json::json!({"op":"create","template":"drone","under":sys,"name":"Pick","at_s":0}),
+        );
+        let drone = c["address"].as_str().unwrap().to_string();
+        let seats = serde_json::json!([{
+            "id": "drone-ops", "label": "Drone ops", "audience": "drone-ops", "authority": "player",
+            "may_send": ["go", "mine", "unload"], "program": "miner",
+            "auto_approve": [{"intent": "go", "scope": [drone]}, {"intent": "mine", "scope": [drone]}, {"intent": "unload", "scope": [drone]}]
+        }]);
+        let r = send(
+            &mut k,
+            serde_json::json!({"op":"set_seats","seats":seats,"at_s":0}),
+        );
+        assert_eq!(r["type"], "seats_set", "{r}");
+        let r = send(
+            &mut k,
+            serde_json::json!({"op":"attach_program","address":drone,"program":"miner","seat":"drone-ops","at_s":0}),
+        );
+        assert_eq!(r["type"], "program_attached", "{r}");
+        if scan {
+            // The GM scans the middling body for the drone's operators only.
+            let s = send(
+                &mut k,
+                serde_json::json!({"op":"scan_toggle","address":format!("{sys}/body:2"),"audience":"drone-ops","at_s":5}),
+            );
+            assert!(s["state_hash"].is_string(), "{s}");
+        }
+        let mut log = vec![];
+        for t in 1..=12 {
+            let r = send(
+                &mut k,
+                serde_json::json!({"op":"programs_step","at_s":t * 100}),
+            );
+            assert_eq!(r["type"], "programs_stepped", "{r}");
+            log.push(r["programs"][0].clone());
+        }
+        let head = send(&mut k, serde_json::json!({"op":"record"}))["record_hash"].to_string();
+        (log, head, k)
+    };
+    // Nothing shown: the drone waits at the depot, though the GM knows of rich ore.
+    let (blind, _, _) = run(false);
+    for l in &blind {
+        assert_eq!(l["to"], "survey", "{l}");
+        assert!(l["intent"].is_null(), "{l}");
+    }
+    // Body 2 scanned: it goes there (not to body 1, richer but unseen), mines four
+    // shifts, comes home, unloads and sets off again.
+    let (log, head, mut k) = run(true);
+    let states: Vec<&str> = log.iter().map(|l| l["to"].as_str().unwrap()).collect();
+    println!("{states:?}");
+    assert_eq!(log[0]["picked"], "u:kestrel/sys:0/body:2", "{}", log[0]);
+    assert_eq!(
+        states,
+        [
+            "survey", "mine", "mine", "mine", "mine", "return", "unload", "survey", "mine", "mine",
+            "mine", "mine"
+        ]
+    );
+    for l in &log {
+        assert_eq!(l["applied_by"], "record", "{l}");
+    }
+    // Replay: the same steps give the same record (a look-ahead branch equals the run).
+    let (_, again, _) = run(true);
+    assert_eq!(head, again);
+    // The limit: two programs at most, and only objects whose template lists the program.
+    let rock = send(
+        &mut k,
+        serde_json::json!({"op":"attach_program","address":"u:kestrel/sys:0/body:2","program":"miner","seat":"drone-ops","at_s":2000}),
+    );
+    assert_eq!(rock["code"], "program_refused", "{rock}");
+    for (n, want) in [(2, "program_attached"), (3, "error")] {
+        let c = send(
+            &mut k,
+            serde_json::json!({"op":"create","template":"drone","under":"u:kestrel/sys:0","key":n.to_string(),"at_s":2000}),
+        );
+        let r = send(
+            &mut k,
+            serde_json::json!({"op":"attach_program","address":c["address"],"program":"miner","seat":"drone-ops","at_s":2000}),
+        );
+        assert_eq!(r["type"], want, "{r}");
+        if want == "error" {
+            assert_eq!(r["code"], "program_limit");
+        }
+    }
+    let list = send(&mut k, serde_json::json!({"op":"programs"}));
+    assert_eq!(list["running"].as_array().unwrap().len(), 2, "{list}");
+    assert_eq!(list["limit"], 2);
+}

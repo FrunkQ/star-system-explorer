@@ -594,6 +594,32 @@ pub enum Request {
         scope: Option<String>,
         at_s: i64,
     },
+    /// The stack's programs (`provides.other.programs`, J6), the campaign's
+    /// limit and the programs running at `at_s` (default: latest).
+    Programs {
+        #[serde(default)]
+        #[ts(optional)]
+        at_s: Option<i64>,
+    },
+    /// Start `program` on `address` (an object whose template lists it),
+    /// driving `seat` (a program seat naming that program). GM machine only.
+    AttachProgram {
+        address: String,
+        program: String,
+        seat: String,
+        at_s: i64,
+    },
+    /// Stop the program on `address`. GM machine only.
+    DetachProgram {
+        address: String,
+        at_s: i64,
+    },
+    /// One tick for every running program at `at_s`: follow transitions,
+    /// then sense through the seat's audience, pick and send the state's
+    /// intent; then run the rules so its effects land. GM machine only.
+    ProgramsStep {
+        at_s: i64,
+    },
 }
 
 /// `adopt`'s formation request: the `run_formation` fields.
@@ -696,6 +722,10 @@ impl Request {
             Request::Create { .. } => "create",
             Request::Retire { .. } => "retire",
             Request::Sift { .. } => "sift",
+            Request::Programs { .. } => "programs",
+            Request::AttachProgram { .. } => "attach_program",
+            Request::DetachProgram { .. } => "detach_program",
+            Request::ProgramsStep { .. } => "programs_step",
         }
     }
 }
@@ -831,6 +861,14 @@ pub fn ops() -> Vec<OpInfo> {
             "sift",
             Cost::Light,
             "GM machine only; linear in subjects x sifters within the scope, plus one scene for an audience",
+        ),
+        o("programs", Cost::Trivial, "read at load, plus a fold of the record"),
+        o("attach_program", Cost::Trivial, "GM machine only; one record event"),
+        o("detach_program", Cost::Trivial, "GM machine only; one record event"),
+        o(
+            "programs_step",
+            Cost::Light,
+            "GM machine only; per running program (at most the campaign's limit) one scene, a few conditions and one intent, then a rules step",
         ),
     ]
 }
@@ -1207,6 +1245,33 @@ pub enum Response {
     Retired {
         event_id: String,
         state_hash: String,
+    },
+    /// `programs`: `programs: [{id, label, params, start, states, budget, explain, pack}]`,
+    /// `limit`, and `running: [{address, program, seat, state, since_s}]`.
+    ProgramsListed {
+        #[ts(type = "unknown[]")]
+        programs: Vec<serde_json::Value>,
+        limit: u32,
+        #[ts(type = "unknown[]")]
+        running: Vec<serde_json::Value>,
+    },
+    ProgramAttached {
+        event_id: String,
+        record_hash: String,
+    },
+    ProgramDetached {
+        event_id: String,
+        record_hash: String,
+    },
+    /// `programs_step`: per program `{address, program, from, to, moves,
+    /// sensed, picked?, intent?, decision?, applied_by?, proposal?, skipped?}`,
+    /// then the rules step's report.
+    ProgramsStepped {
+        #[ts(type = "unknown[]")]
+        programs: Vec<serde_json::Value>,
+        #[ts(type = "unknown")]
+        rules: serde_json::Value,
+        record_hash: String,
     },
     /// `sift`: hits best first, each `{sifter, label, subject, evidence:
     /// [{address, field, value, event?}], significance: {score,

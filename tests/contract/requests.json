@@ -1707,5 +1707,102 @@
    "nope"
   ],
   "at_s": 10
+ },
+ {
+  "op": "load_stack",
+  "packs": [
+   "$pack:rpg-programs"
+  ]
+ },
+ {
+  "op": "set_authored",
+  "edit": {
+   "address": "u:kestrel/sys:0/body:2",
+   "field": "ore.grade",
+   "value": 0.6,
+   "occurred_at_s": 0
+  }
+ },
+ {
+  "op": "create",
+  "template": "drone",
+  "under": "u:kestrel/sys:0",
+  "key": "1",
+  "at_s": 0
+ },
+ {
+  "op": "set_seats",
+  "seats": [
+   {
+    "id": "drone-ops",
+    "label": "Drone ops",
+    "audience": "drone-ops",
+    "authority": "player",
+    "may_send": [
+     "go",
+     "mine",
+     "unload"
+    ],
+    "program": "miner",
+    "auto_approve": [
+     {
+      "intent": "go",
+      "scope": [
+       "u:kestrel/sys:0/drone:1"
+      ]
+     },
+     {
+      "intent": "mine",
+      "scope": [
+       "u:kestrel/sys:0/drone:1"
+      ]
+     },
+     {
+      "intent": "unload",
+      "scope": [
+       "u:kestrel/sys:0/drone:1"
+      ]
+     }
+    ]
+   }
+  ],
+  "at_s": 0
+ },
+ {
+  "op": "attach_program",
+  "address": "u:kestrel/sys:0/drone:1",
+  "program": "miner",
+  "seat": "drone-ops",
+  "at_s": 0
+ },
+ {
+  "op": "attach_program",
+  "address": "u:kestrel/sys:0/body:2",
+  "program": "miner",
+  "seat": "drone-ops",
+  "at_s": 0
+ },
+ {
+  "op": "scan_toggle",
+  "address": "u:kestrel/sys:0/body:2",
+  "audience": "drone-ops",
+  "at_s": 5
+ },
+ {
+  "op": "programs_step",
+  "at_s": 100
+ },
+ {
+  "op": "programs_step",
+  "at_s": 200
+ },
+ {
+  "op": "programs",
+  "at_s": 200
+ },
+ {
+  "op": "detach_program",
+  "address": "u:kestrel/sys:0/drone:1",
+  "at_s": 300
  }
 ]
