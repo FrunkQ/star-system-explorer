@@ -4,18 +4,22 @@
 // canvas tier, in one TSL shader that three.js compiles to WGSL on WebGPU and
 // GLSL on WebGL2. The globe is unit-sized at the origin and the camera sits
 // three radii away, so only small numbers reach the GPU (rendering rule 3).
-// Shading is done in display (sRGB) values on purpose, as the canvas tier
-// does, so the two tiers match; physically lit, linear HDR comes with R2.
-import { BufferAttribute, BufferGeometry, LineSegments, LinearSRGBColorSpace, Matrix4, Mesh, OrthographicCamera, Scene, Vector3 } from "three";
+// Two lightings: "display" shades in display (sRGB) values, as the canvas
+// tier does, so the two tiers match; "physical" (R2) lights linear albedo by
+// the star through the air (Kasten and Young 1989 air mass for the sun's
+// transmittance at the ground), adds the atmosphere pass (gpu-air.ts) and
+// tone-maps the result.
+import { ACESFilmicToneMapping, BufferAttribute, BufferGeometry, LineSegments, LinearSRGBColorSpace, Matrix4, Mesh, NoToneMapping, OrthographicCamera, Scene, SphereGeometry, SRGBColorSpace, Vector3 } from "three";
 import { LineBasicNodeMaterial, MeshBasicNodeMaterial, WebGPURenderer } from "three/webgpu";
-import { dot, float, max, normalView, uniform, vec4, vertexColor } from "three/tsl";
+import { acos, attribute, clamp, dot, exp, float, max, normalView, normalize, pow, positionWorld, select, uniform, vec3, vec4, vertexColor } from "three/tsl";
+import { makeAirMaterial, type AirRender } from "./gpu-air.ts";
 import { cubeDirection } from "../../ui-contract/src/index.ts";
 import { lightDir, lookup, viewRotation, type Prepared } from "./surface.ts";
 import type { Plan } from "./recipe.ts";
 
 export interface GlobeGpu {
   readonly backend: "webgpu" | "webgl2";
-  draw(p: Prepared, plan: Plan, lon: number, lat: number, full: number): void;
+  draw(p: Prepared, plan: Plan, lon: number, lat: number, full: number, air?: AirRender | null): void;
   dispose(): void;
 }
 
@@ -45,6 +49,31 @@ export async function createGlobeGpu(canvas: HTMLCanvasElement): Promise<GlobeGp
   const ndl = max(float(0), dot(normalView, uL));
   const k = float(1).sub(uShade).add(uShade.mul(uAmb.add(float(1).sub(uAmb).mul(ndl))));
   material.colorNode = vec4(vertexColor().rgb.mul(k), 1);
+
+  // Physical lighting: linear albedo × max(0, n·L) × the sun's transmittance through the air at that ground point / pi.
+  const uBeta = uniform(new Vector3(0, 0, 0));
+  const uH = uniform(0.0013);
+  const uSun = uniform(1);
+  const uNight = uniform(0.002);
+  const physical = new MeshBasicNodeMaterial();
+  {
+    // Hue from the palette, brightness from the kernel's albedo layer (a physical reflectance, 0 to 1).
+    const lin = pow(vertexColor().rgb, vec3(2.2, 2.2, 2.2));
+    const lum = max(dot(lin, vec3(0.2126, 0.7152, 0.0722)), 0.01);
+    const albedo = clamp(lin.mul(attribute("albedo", "float").div(lum)), 0, 1);
+    const up = normalize(positionWorld);
+    const cosz = clamp(dot(up, uL), -1, 1);
+    const zdeg = acos(cosz).mul(180 / Math.PI);
+    // Kasten and Young (1989): air mass = 1 / (cos z + 0.50572 (96.07995 - z)^-1.6364), z in degrees.
+    const airmass = float(1).div(cosz.add(float(0.50572).mul(pow(max(float(96.07995).sub(zdeg), 0.5), -1.6364))));
+    const tsun = select(zdeg.lessThan(95), exp(uBeta.mul(uH).mul(airmass).negate()), vec3(0, 0, 0));
+    const ndlp = max(float(0), dot(normalView, uL));
+    physical.colorNode = vec4(albedo.mul(tsun.mul(ndlp).mul(uSun).div(Math.PI).add(uNight)), 1);
+  }
+  let airMat: ReturnType<typeof makeAirMaterial> | null = null;
+  const shell = new Mesh(new SphereGeometry(1, 128, 64));
+  shell.visible = false;
+  shell.renderOrder = 2;
   const lineMat = new LineBasicNodeMaterial({ transparent: true });
   const uLineA = uniform(0.3);
   lineMat.colorNode = vec4(1, 1, 1, uLineA);
@@ -60,6 +89,7 @@ export async function createGlobeGpu(canvas: HTMLCanvasElement): Promise<GlobeGp
     const pos = new Float32Array(6 * per * 3);
     const col = new Float32Array(6 * per * 3);
     const nor = new Float32Array(6 * per * 3);
+    const alb = new Float32Array(6 * per);
     const idx: number[] = [];
     for (let f = 0; f < 6; f++) {
       for (let j = 0; j <= G; j++) {
@@ -76,6 +106,7 @@ export async function createGlobeGpu(canvas: HTMLCanvasElement): Promise<GlobeGp
             col[o + 1] = hit.f.rgb[hit.k * 3 + 1]! / 255;
             col[o + 2] = hit.f.rgb[hit.k * 3 + 2]! / 255;
             nor.set(hit.f.normal.subarray(hit.k * 3, hit.k * 3 + 3), o);
+            alb[o / 3] = hit.f.albedo[hit.k]!;
           } else {
             col.fill(40 / 255, o, o + 3);
             nor.set(d, o);
@@ -96,6 +127,7 @@ export async function createGlobeGpu(canvas: HTMLCanvasElement): Promise<GlobeGp
     g.setAttribute("position", new BufferAttribute(pos, 3));
     g.setAttribute("color", new BufferAttribute(col, 3));
     g.setAttribute("normal", new BufferAttribute(nor, 3));
+    g.setAttribute("albedo", new BufferAttribute(alb, 1));
     g.setIndex(idx);
     if (mesh) (scene.remove(mesh), mesh.geometry.dispose());
     mesh = new Mesh(g, material);
@@ -125,7 +157,7 @@ export async function createGlobeGpu(canvas: HTMLCanvasElement): Promise<GlobeGp
 
   return {
     backend,
-    draw(p, plan, lon, lat, full) {
+    draw(p, plan, lon, lat, full, air) {
       const relief = plan.passes.find((x) => x.pass === "relief-globe")?.params ?? {};
       const grat = plan.passes.find((x) => x.pass === "graticule")?.params;
       const grid = Math.round(num(relief.grid, 128));
@@ -137,6 +169,31 @@ export async function createGlobeGpu(canvas: HTMLCanvasElement): Promise<GlobeGp
       } else if (lines) lines.visible = false;
       const L = lightDir(num(relief.sun_azimuth_deg, 315), num(relief.sun_elevation_deg, 40));
       uL.value.set(L[0], L[1], L[2]);
+      const isPhysical = relief.lighting === "physical";
+      const atm = plan.passes.find((x) => x.pass === "atmosphere")?.params;
+      const sun = num(atm?.sun, 6);
+      mesh!.material = isPhysical ? physical : material;
+      renderer.toneMapping = isPhysical ? ACESFilmicToneMapping : NoToneMapping;
+      renderer.toneMappingExposure = num(atm?.exposure, 1);
+      renderer.outputColorSpace = isPhysical ? SRGBColorSpace : LinearSRGBColorSpace;
+      if (air) {
+        uBeta.value.set(air.beta[0], air.beta[1], air.beta[2]);
+        uH.value = air.scale_height;
+      } else uBeta.value.set(0, 0, 0);
+      uSun.value = sun;
+      if (atm && air) {
+        const steps = Math.round(num(atm.steps, 16));
+        const lsteps = Math.round(num(atm.light_steps, 6));
+        if (!airMat || airMat.steps !== steps || airMat.lightSteps !== lsteps) {
+          airMat?.material.dispose();
+          airMat = makeAirMaterial(steps, lsteps);
+          shell.material = airMat.material;
+          if (!shell.parent) scene.add(shell);
+        }
+        airMat.set(air, L, sun);
+        shell.scale.setScalar(air.top);
+        shell.visible = true;
+      } else shell.visible = false;
       uShade.value = num(relief.shade, 0.8);
       uAmb.value = num(relief.ambient, 0.16);
       const r = viewRotation(lon, lat).rows;
@@ -144,6 +201,13 @@ export async function createGlobeGpu(canvas: HTMLCanvasElement): Promise<GlobeGp
       mesh!.matrix.copy(m);
       mesh!.matrixWorldNeedsUpdate = true;
       if (lines) (lines.matrix.copy(m), (lines.matrixWorldNeedsUpdate = true));
+      // Leave room for the air's limb when it is drawn; otherwise the globe fills the view, as on the canvas tier.
+      const half = shell.visible && air ? Math.max(1, air.top * 1.01) : 1;
+      if (camera.right !== half) {
+        camera.left = camera.bottom = -half;
+        camera.right = camera.top = half;
+        camera.updateProjectionMatrix();
+      }
       const n = Math.max(16, Math.round(full * plan.render_scale));
       renderer.setPixelRatio(1);
       renderer.setSize(n, n, false);
@@ -153,6 +217,9 @@ export async function createGlobeGpu(canvas: HTMLCanvasElement): Promise<GlobeGp
       mesh?.geometry.dispose();
       lines?.geometry.dispose();
       material.dispose();
+      physical.dispose();
+      airMat?.material.dispose();
+      shell.geometry.dispose();
       lineMat.dispose();
       renderer.dispose();
     },
