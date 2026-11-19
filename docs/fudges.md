@@ -52,3 +52,11 @@ Add entries under your area. Keep one row per fudge.
 
 | Where | Instead of the physics | Why | Real physics to replace it | Status |
 |---|---|---|---|---|
+
+## Candidates to move into flows
+
+Logic written in Rust that could be an editable, cited flow of small blocks (Alex, 19 Nov: "try and do everything in
+the physics chain blocks... other than Big Blocks. And have a UI element that makes sense to visualise").
+
+| Where | What it computes | Why it is not a flow yet | Blocks it would need | View that would show it |
+|---|---|---|---|---|
