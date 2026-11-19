@@ -15,6 +15,7 @@ sse-atoms.workspace = true
 sse-observe = { path = "../sse-observe" }
 sse-record = { path = "../sse-record" }
 sse-sift = { path = "../sse-sift" }
+sse-logic = { path = "../sse-logic" }
 sse-time = { path = "../sse-time" }
 sse-life = { path = "../sse-life" }
 sse-formation.workspace = true

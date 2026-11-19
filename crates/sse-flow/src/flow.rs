@@ -1,7 +1,8 @@
 //! Flow documents, validation, deterministic scheduling, evaluation with solve
 //! nodes, and explanation bundles (H6.2, H6.5).
 
-use crate::decl::{AtomDecl, AtomRegistry, Port};
+use crate::decl::{AtomDecl, AtomRegistry, Call, DimRule, Env, Port};
+use crate::value::{Shape, Val};
 use serde::{Deserialize, Serialize};
 use sse_core::{ContentHash, Dimension, Quantity, QuantityKind, Units};
 use std::collections::{BTreeMap, BTreeSet};
@@ -41,12 +42,20 @@ pub struct NodeDoc {
     pub solve: Option<SolveSpec>,
     #[serde(default)]
     pub params: BTreeMap<String, ParamValue>,
+    /// A logic or engine block's settings (a field to read, a scheme, a
+    /// table). Left out when absent, so existing flow hashes are unchanged.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub config: Option<serde_json::Value>,
 }
 
 #[derive(Clone, PartialEq, Debug, Serialize, Deserialize)]
 pub struct FlowInputDoc {
     pub name: String,
+    /// The quantity kind (numbers); for other shapes, a free label.
     pub kind: String,
+    /// What the input carries (J2); absent means a number of `kind`.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub shape: Option<Shape>,
 }
 
 #[derive(Clone, PartialEq, Debug, Serialize, Deserialize)]
@@ -140,6 +149,9 @@ struct Compiled {
     outputs: Vec<Port>,
     params: Vec<f64>,
     sources: Vec<Source>,
+    config: Option<serde_json::Value>,
+    /// A logic or engine block: evaluated through `eval_typed`.
+    typed: bool,
 }
 
 /// A validated flow, ready to evaluate.
@@ -149,8 +161,11 @@ pub struct Flow {
     pub hash: ContentHash,
     nodes: Vec<Compiled>,
     input_dims: Vec<Dimension>,
+    input_shapes: Vec<Shape>,
     order: Vec<usize>,
     published: BTreeMap<String, (usize, usize)>,
+    /// Each node output's dimension (any-dimension logic outputs resolved).
+    out_dims: Vec<Vec<Dimension>>,
 }
 
 fn split_ref(r: &str) -> Option<(&str, &str)> {
@@ -185,9 +200,13 @@ impl Flow {
         }
         // flow inputs
         let mut input_dims = Vec::new();
+        let mut input_shapes = Vec::new();
         let mut input_ix = BTreeMap::new();
         for (i, fi) in doc.inputs.iter().enumerate() {
+            let shape = fi.shape.clone().unwrap_or(Shape::Number);
+            input_shapes.push(shape.clone());
             match cx.kinds.get(&fi.kind) {
+                _ if shape != Shape::Number => input_dims.push(Dimension::NONE),
                 Some(k) => input_dims.push(k.dim),
                 None => {
                     err(
@@ -229,6 +248,13 @@ impl Flow {
                 continue;
             };
             let decl = atom.decl().clone();
+            let typed = decl.class.is_some();
+            if let Err(e) = atom.check_config(n.config.as_ref()) {
+                err(&n.id, e);
+            }
+            if typed && solve.is_some() {
+                err(&n.id, "logic and engine blocks cannot be solved for".into());
+            }
             let (inputs, outputs, solve) = if let Some(s) = solve {
                 let Some((ui, up)) = decl.input(&s.unknown) else {
                     err(
@@ -261,7 +287,10 @@ impl Flow {
                     .collect();
                 (ins, vec![up.clone()], Some((ui, s)))
             } else {
-                (decl.inputs.clone(), decl.outputs.clone(), None)
+                let (i, o) = atom
+                    .ports(n.config.as_ref())
+                    .unwrap_or_else(|| (decl.inputs.clone(), decl.outputs.clone()));
+                (i, o, None)
             };
             let mut params: Vec<f64> = decl.params.iter().map(|p| p.default).collect();
             for (k, v) in &n.params {
@@ -300,32 +329,46 @@ impl Flow {
                 outputs,
                 params,
                 sources: vec![Source::Input(usize::MAX); n_in],
+                config: n.config.clone(),
+                typed,
             }));
         }
         // wires
         let mut wired: BTreeSet<(usize, usize)> = BTreeSet::new();
-        let resolve_out =
-            |r: &str, nodes: &Vec<Option<Compiled>>| -> Result<(Source, Dimension), String> {
-                let (a, b) = split_ref(r)
-                    .ok_or_else(|| format!("bad reference {r:?} (want node.port or in.name)"))?;
-                if a == "in" {
-                    let i = *input_ix
-                        .get(b)
-                        .ok_or_else(|| format!("no flow input {b:?}"))?;
-                    return Ok((Source::Input(i), input_dims[i]));
-                }
-                let ni = *node_ix.get(a).ok_or_else(|| format!("no node {a:?}"))?;
-                let c = nodes[ni]
-                    .as_ref()
-                    .ok_or_else(|| format!("node {a:?} is invalid"))?;
-                let (oi, p) = c
-                    .outputs
-                    .iter()
-                    .enumerate()
-                    .find(|(_, p)| p.name == b)
-                    .ok_or_else(|| format!("node {a:?} has no output {b:?}"))?;
-                Ok((Source::Node(ni, oi), p.dim))
-            };
+        // (source, its dimension if known before scheduling, its shape)
+        let resolve_out = |r: &str,
+                           nodes: &Vec<Option<Compiled>>|
+         -> Result<(Source, Option<Dimension>, Shape), String> {
+            let (a, b) = split_ref(r)
+                .ok_or_else(|| format!("bad reference {r:?} (want node.port or in.name)"))?;
+            if a == "in" {
+                let i = *input_ix
+                    .get(b)
+                    .ok_or_else(|| format!("no flow input {b:?}"))?;
+                return Ok((
+                    Source::Input(i),
+                    Some(input_dims[i]),
+                    input_shapes[i].clone(),
+                ));
+            }
+            let ni = *node_ix.get(a).ok_or_else(|| format!("no node {a:?}"))?;
+            let c = nodes[ni]
+                .as_ref()
+                .ok_or_else(|| format!("node {a:?} is invalid"))?;
+            let (oi, p) = c
+                .outputs
+                .iter()
+                .enumerate()
+                .find(|(_, p)| p.name == b)
+                .ok_or_else(|| format!("node {a:?} has no output {b:?}"))?;
+            Ok((
+                Source::Node(ni, oi),
+                (!p.any_dim).then_some(p.dim),
+                p.shape(),
+            ))
+        };
+        // Dimension checks that wait for scheduling: (node, input, wire label).
+        let mut deferred: Vec<(usize, usize, String)> = Vec::new();
         for w in &doc.wires {
             let at = format!("wire {} -> {}", w.from, w.to);
             let from = match resolve_out(&w.from, &nodes) {
@@ -350,14 +393,32 @@ impl Flow {
                 err(&at, format!("node {tn:?} has no input {tp:?}"));
                 continue;
             };
-            if port.dim != from.1 {
+            if port.shape() != from.2 {
                 err(
                     &at,
                     format!(
-                        "dimension mismatch: [{}] into [{}] ({}.{})",
-                        from.1, port.dim, tn, port.name
+                        "shape mismatch: {} into {} ({}.{})",
+                        from.2,
+                        port.shape(),
+                        tn,
+                        port.name
                     ),
                 );
+            } else if from.2 == Shape::Number {
+                match from.1 {
+                    Some(d) if !port.any_dim => {
+                        if port.dim != d {
+                            err(
+                                &at,
+                                format!(
+                                    "dimension mismatch: [{}] into [{}] ({}.{})",
+                                    d, port.dim, tn, port.name
+                                ),
+                            );
+                        }
+                    }
+                    _ => deferred.push((ni, pi, at.clone())),
+                }
             }
             if !wired.insert((ni, pi)) {
                 err(&at, format!("input {tn}.{tp} is wired twice"));
@@ -378,21 +439,28 @@ impl Flow {
         }
         // publishes: each kind once, dims agree with the kind
         let mut published = BTreeMap::new();
+        let mut deferred_pub: Vec<(usize, usize, String, Dimension)> = Vec::new();
         for p in &doc.publishes {
             let at = format!("publish {}", p.kind);
             match (resolve_out(&p.from, &nodes), cx.kinds.get(&p.kind)) {
                 (Err(e), _) => err(&at, e),
                 (_, None) => err(&at, format!("unknown quantity kind {:?}", p.kind)),
-                (Ok((Source::Input(_), _)), _) => err(
+                (Ok((Source::Input(_), _, _)), _) => err(
                     &at,
                     "a flow input cannot be published; publish a node output".into(),
                 ),
-                (Ok((Source::Node(n, o), d)), Some(k)) => {
-                    if k.dim != d {
-                        err(
+                (Ok((Source::Node(_, _), _, sh)), _) if sh != Shape::Number => err(
+                    &at,
+                    format!("only numbers are published as quantities; this output is a {sh}"),
+                ),
+                (Ok((Source::Node(n, o), d, _)), Some(k)) => {
+                    match d {
+                        Some(d) if k.dim != d => err(
                             &at,
                             format!("dimension mismatch: output [{d}] published as [{}]", k.dim),
-                        );
+                        ),
+                        Some(_) => {}
+                        None => deferred_pub.push((n, o, at.clone(), k.dim)),
                     }
                     if published.insert(p.kind.clone(), (n, o)).is_some() {
                         err(
@@ -447,6 +515,80 @@ impl Flow {
                 .collect();
             err("graph", format!("cycle through nodes {}", stuck.join(", ")));
         }
+        // Dimensions through any-dimension logic blocks, in schedule order.
+        let mut out_dims: Vec<Vec<Dimension>> = nodes
+            .iter()
+            .map(|c| {
+                c.as_ref()
+                    .map_or(vec![], |c| c.outputs.iter().map(|p| p.dim).collect())
+            })
+            .collect();
+        if order.len() == nodes.len() {
+            for &ni in &order {
+                let Some(c) = nodes[ni].as_ref() else {
+                    continue;
+                };
+                let src_dim = |s: &Source, od: &Vec<Vec<Dimension>>| match *s {
+                    Source::Input(i) if i < input_dims.len() => input_dims[i],
+                    Source::Node(d, o) => od[d].get(o).copied().unwrap_or(Dimension::NONE),
+                    _ => Dimension::NONE,
+                };
+                for (n2, pi, at) in deferred.iter().filter(|(n2, _, _)| *n2 == ni) {
+                    let p = &c.inputs[*pi];
+                    let d = src_dim(&c.sources[*pi], &out_dims);
+                    if !p.any_dim && p.dim != d {
+                        err(
+                            at,
+                            format!(
+                                "dimension mismatch: [{}] into [{}] ({}.{})",
+                                d, p.dim, doc.nodes[*n2].id, p.name
+                            ),
+                        );
+                    }
+                }
+                let any: Vec<Dimension> = c
+                    .inputs
+                    .iter()
+                    .zip(&c.sources)
+                    .filter(|(p, _)| p.any_dim && p.shape() == Shape::Number)
+                    .map(|(_, s)| src_dim(s, &out_dims))
+                    .collect();
+                let rule = c.decl.dims.unwrap_or(DimRule::Same);
+                let od = match rule {
+                    DimRule::Same => {
+                        if let Some(d) = any.iter().find(|d| **d != any[0]) {
+                            err(
+                                &doc.nodes[ni].id,
+                                format!("dimension mismatch: inputs carry [{}] and [{d}]", any[0]),
+                            );
+                        }
+                        any.first().copied().unwrap_or(Dimension::NONE)
+                    }
+                    DimRule::Product | DimRule::Quotient if any.len() == 2 => {
+                        if rule == DimRule::Product {
+                            any[0].mul(any[1])
+                        } else {
+                            any[0].div(any[1])
+                        }
+                    }
+                    _ => Dimension::NONE,
+                };
+                for (o, p) in c.outputs.iter().enumerate() {
+                    if p.any_dim {
+                        out_dims[ni][o] = od;
+                    }
+                }
+            }
+            for (n, o, at, want) in &deferred_pub {
+                let d = out_dims[*n][*o];
+                if d != *want {
+                    err(
+                        at,
+                        format!("dimension mismatch: output [{d}] published as [{want}]"),
+                    );
+                }
+            }
+        }
         if !errs.is_empty() {
             return Err(errs);
         }
@@ -456,8 +598,10 @@ impl Flow {
             hash,
             nodes: nodes.into_iter().map(Option::unwrap).collect(),
             input_dims,
+            input_shapes,
             order,
             published,
+            out_dims,
         })
     }
 
@@ -497,10 +641,15 @@ pub struct InputValue {
 
 #[derive(Clone, PartialEq, Debug)]
 struct NodeOut {
-    values: Vec<f64>,
+    values: Vec<Val>,
     validity: Validity,
     /// Inputs that fell outside the atom's validity range.
     out_of_range: Vec<String>,
+    /// Typed blocks: inputs the result depended on (None: all), facts read,
+    /// an engine block's explanation.
+    used: Option<Vec<usize>>,
+    reads: Vec<(String, sse_core::cbor::Value)>,
+    note: Option<serde_json::Value>,
 }
 
 /// Result of evaluating a flow.
@@ -508,6 +657,7 @@ struct NodeOut {
 pub struct Evaluation<'f> {
     flow: &'f Flow,
     inputs: Vec<InputValue>,
+    in_vals: Vec<Val>,
     outs: Vec<NodeOut>,
     /// Deterministic work done: one unit per atom call (solve: per iteration).
     pub work_units: u64,
@@ -543,19 +693,61 @@ impl Flow {
         cx: &Context,
         inputs: &BTreeMap<String, InputValue>,
     ) -> Result<Evaluation<'_>, EvalError> {
+        self.eval_with(cx, inputs, &BTreeMap::new(), &Env::empty())
+    }
+
+    /// Evaluate with numeric inputs, typed inputs (flags, choices, refs,
+    /// text, lists, records) and an environment for logic blocks.
+    pub fn eval_with(
+        &self,
+        cx: &Context,
+        inputs: &BTreeMap<String, InputValue>,
+        typed_inputs: &BTreeMap<String, Val>,
+        env: &Env,
+    ) -> Result<Evaluation<'_>, EvalError> {
         let mut ins = Vec::new();
+        let mut in_vals = Vec::new();
         for (i, fi) in self.doc.inputs.iter().enumerate() {
-            let v = inputs.get(&fi.name).ok_or_else(|| EvalError {
-                node: format!("in.{}", fi.name),
-                message: "missing input".into(),
-            })?;
+            let shape = &self.input_shapes[i];
+            if *shape != Shape::Number {
+                let v = typed_inputs.get(&fi.name).ok_or_else(|| EvalError {
+                    node: format!("in.{}", fi.name),
+                    message: "missing input".into(),
+                })?;
+                if !v.fits(shape) {
+                    return Err(EvalError {
+                        node: format!("in.{}", fi.name),
+                        message: format!("expected a {shape} value"),
+                    });
+                }
+                ins.push(InputValue {
+                    q: Quantity::si(0.0, Dimension::NONE),
+                    source: SourceLabel::Authored,
+                });
+                in_vals.push(v.clone());
+                continue;
+            }
+            let v = match (inputs.get(&fi.name), typed_inputs.get(&fi.name)) {
+                (Some(v), _) => v.clone(),
+                (None, Some(Val::Number(x))) => InputValue {
+                    q: Quantity::si(*x, self.input_dims[i]),
+                    source: SourceLabel::Authored,
+                },
+                _ => {
+                    return Err(EvalError {
+                        node: format!("in.{}", fi.name),
+                        message: "missing input".into(),
+                    })
+                }
+            };
             v.q.expect(self.input_dims[i], &fi.name)
                 .map_err(|e| EvalError {
                     node: format!("in.{}", fi.name),
                     message: e.to_string(),
                 })?;
             check_finite(&[v.q.value], &format!("in.{}", fi.name), "input")?;
-            ins.push(v.clone());
+            in_vals.push(Val::Number(v.q.value));
+            ins.push(v);
         }
         let mut outs: Vec<Option<NodeOut>> = vec![None; self.nodes.len()];
         let mut work = 0u64;
@@ -563,83 +755,130 @@ impl Flow {
             let c = &self.nodes[ni];
             let id = &self.doc.nodes[ni].id;
             let atom = cx.atoms.get(&c.atom).expect("validated");
-            let mut vals = Vec::with_capacity(c.inputs.len());
+            let mut vals: Vec<Val> = Vec::with_capacity(c.inputs.len());
             let mut validity = Validity::InRange;
             for s in &c.sources {
                 match *s {
                     Source::Input(i) => {
-                        vals.push(ins[i].q.value);
+                        vals.push(in_vals[i].clone());
                         if ins[i].source == SourceLabel::AuthoredImpossible {
                             validity = Validity::ImpossibleInput;
                         }
                     }
                     Source::Node(d, o) => {
                         let up = outs[d].as_ref().expect("scheduled before use");
-                        vals.push(up.values[o]);
+                        vals.push(up.values[o].clone());
                         validity = validity.max(up.validity);
                     }
                 }
             }
             let mut out_of_range = Vec::new();
             for (p, v) in c.inputs.iter().zip(&vals) {
-                if p.valid.is_some_and(|(lo, hi)| *v < lo || *v > hi) {
-                    out_of_range.push(p.name.clone());
+                if let Val::Number(v) = v {
+                    if p.valid.is_some_and(|(lo, hi)| *v < lo || *v > hi) {
+                        out_of_range.push(p.name.clone());
+                    }
                 }
             }
-            let values = match &c.solve {
-                None => {
-                    work += 1;
-                    atom.eval(&vals, &c.params).map_err(|e| EvalError {
+            let mut extra = crate::decl::Out::default();
+            let values: Vec<Val> = if c.typed {
+                work += 1;
+                let mut call = Call {
+                    env,
+                    config: c.config.as_ref(),
+                    flow_id: &self.doc.id,
+                    node_id: id,
+                };
+                let o = atom
+                    .eval_typed(&vals, &c.params, &mut call)
+                    .map_err(|e| EvalError {
                         node: id.clone(),
                         message: e.0,
-                    })?
+                    })?;
+                if o.values.len() != c.outputs.len() {
+                    return Err(EvalError {
+                        node: id.clone(),
+                        message: "atom returned the wrong number of outputs".into(),
+                    });
                 }
-                Some((ui, s)) => {
-                    let f = |x: f64| -> Result<f64, EvalError> {
-                        let mut full = vals.clone();
-                        full.insert(*ui, x);
-                        let r = atom.eval(&full, &c.params).map_err(|e| EvalError {
-                            node: id.clone(),
-                            message: e.0,
-                        })?;
-                        check_finite(&r, id, "residual")?;
-                        Ok(r[0])
-                    };
-                    let (mut lo, mut hi) = s.bracket;
-                    let (flo, fhi) = (f(lo)?, f(hi)?);
-                    work += 2;
-                    if (flo > 0.0) == (fhi > 0.0) && flo != 0.0 && fhi != 0.0 {
+                for (p, v) in c.outputs.iter().zip(&o.values) {
+                    if !v.fits(&p.shape()) {
                         return Err(EvalError {
                             node: id.clone(),
                             message: format!(
-                                "residual does not change sign over bracket [{lo}, {hi}]"
+                                "output {} is not a {} (NaN or infinite values are errors, never values)",
+                                p.name,
+                                p.shape()
                             ),
                         });
                     }
-                    let lo_neg = flo < 0.0;
-                    for _ in 0..s.iterations {
-                        let mid = 0.5 * (lo + hi);
-                        let fm = f(mid)?;
-                        work += 1;
-                        if (fm < 0.0) == lo_neg {
-                            lo = mid;
-                        } else {
-                            hi = mid;
-                        }
-                    }
-                    vec![0.5 * (lo + hi)]
                 }
+                let values = o.values.clone();
+                extra = o;
+                values
+            } else {
+                let xs: Vec<f64> = vals
+                    .iter()
+                    .map(|v| v.num().expect("validated: physics atoms take numbers"))
+                    .collect();
+                let values = match &c.solve {
+                    None => {
+                        work += 1;
+                        atom.eval(&xs, &c.params).map_err(|e| EvalError {
+                            node: id.clone(),
+                            message: e.0,
+                        })?
+                    }
+                    Some((ui, s)) => {
+                        let f = |x: f64| -> Result<f64, EvalError> {
+                            let mut full = xs.clone();
+                            full.insert(*ui, x);
+                            let r = atom.eval(&full, &c.params).map_err(|e| EvalError {
+                                node: id.clone(),
+                                message: e.0,
+                            })?;
+                            check_finite(&r, id, "residual")?;
+                            Ok(r[0])
+                        };
+                        let (mut lo, mut hi) = s.bracket;
+                        let (flo, fhi) = (f(lo)?, f(hi)?);
+                        work += 2;
+                        if (flo > 0.0) == (fhi > 0.0) && flo != 0.0 && fhi != 0.0 {
+                            return Err(EvalError {
+                                node: id.clone(),
+                                message: format!(
+                                    "residual does not change sign over bracket [{lo}, {hi}]"
+                                ),
+                            });
+                        }
+                        let lo_neg = flo < 0.0;
+                        for _ in 0..s.iterations {
+                            let mid = 0.5 * (lo + hi);
+                            let fm = f(mid)?;
+                            work += 1;
+                            if (fm < 0.0) == lo_neg {
+                                lo = mid;
+                            } else {
+                                hi = mid;
+                            }
+                        }
+                        vec![0.5 * (lo + hi)]
+                    }
+                };
+                check_finite(&values, id, "output")?;
+                if values.len() != c.outputs.len() {
+                    return Err(EvalError {
+                        node: id.clone(),
+                        message: "atom returned the wrong number of outputs".into(),
+                    });
+                }
+                values.into_iter().map(Val::Number).collect()
             };
-            check_finite(&values, id, "output")?;
-            if values.len() != c.outputs.len() {
-                return Err(EvalError {
-                    node: id.clone(),
-                    message: "atom returned the wrong number of outputs".into(),
-                });
-            }
             for (p, v) in c.outputs.iter().zip(&values) {
-                if p.valid.is_some_and(|(lo, hi)| *v < lo || *v > hi) {
-                    out_of_range.push(p.name.clone());
+                if let Val::Number(v) = v {
+                    if p.valid.is_some_and(|(lo, hi)| *v < lo || *v > hi) {
+                        out_of_range.push(p.name.clone());
+                    }
                 }
             }
             if !out_of_range.is_empty() {
@@ -649,11 +888,15 @@ impl Flow {
                 values,
                 validity,
                 out_of_range,
+                used: extra.used,
+                reads: extra.reads,
+                note: extra.note,
             });
         }
         Ok(Evaluation {
             flow: self,
             inputs: ins,
+            in_vals,
             outs: outs.into_iter().map(Option::unwrap).collect(),
             work_units: work,
         })
@@ -722,6 +965,9 @@ pub struct ExplainInput {
     pub source: String,
     /// `node.port` of the upstream value to explain next, if derived here.
     pub explanation_ref: Option<String>,
+    /// A value that is not a number (flag, choice, text, list), as JSON.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub shown: Option<serde_json::Value>,
 }
 
 #[derive(Clone, PartialEq, Debug, Serialize, Deserialize)]
@@ -746,6 +992,12 @@ pub struct ExplainPublisher {
 pub struct Explanation {
     pub subject: String,
     pub value: Quantity,
+    /// A value that is not a number, as JSON (then `value` is a bare 0).
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub shown: Option<serde_json::Value>,
+    /// An engine block's own explanation.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub note: Option<serde_json::Value>,
     pub publisher: ExplainPublisher,
     pub inputs: Vec<ExplainInput>,
     pub params: BTreeMap<String, f64>,
@@ -760,9 +1012,59 @@ impl Evaluation<'_> {
     pub fn published(&self, kind: &str) -> Option<Quantity> {
         let (n, o) = *self.flow.published.get(kind)?;
         Some(Quantity::si(
-            self.outs[n].values[o],
-            self.flow.nodes[n].outputs[o].dim,
+            self.outs[n].values[o].num()?,
+            self.flow.out_dims[n][o],
         ))
+    }
+    /// Any node output (`node.port`) or flow input (`in.name`) as a value.
+    pub fn value_of(&self, r: &str) -> Option<&Val> {
+        let (a, b) = split_ref(r)?;
+        if a == "in" {
+            let i = self.flow.doc.inputs.iter().position(|x| x.name == b)?;
+            return self.in_vals.get(i);
+        }
+        let n = self.flow.doc.nodes.iter().position(|x| x.id == a)?;
+        let o = self.flow.nodes[n]
+            .outputs
+            .iter()
+            .position(|p| p.name == b)?;
+        self.outs[n].values.get(o)
+    }
+    /// An engine block's own explanation, by node id.
+    pub fn note_of(&self, node: &str) -> Option<&serde_json::Value> {
+        let n = self.flow.doc.nodes.iter().position(|x| x.id == node)?;
+        self.outs[n].note.as_ref()
+    }
+    /// The world facts a node output rests on: the reads of every block it
+    /// depended on, following only the inputs each block used (an `and`
+    /// stops at its first false input), sorted by field. The same evidence a
+    /// K8 predicate gives for the same condition.
+    pub fn evidence(&self, r: &str) -> Option<Vec<(String, sse_core::cbor::Value)>> {
+        let (a, _) = split_ref(r)?;
+        let n = self.flow.doc.nodes.iter().position(|x| x.id == a)?;
+        let mut seen = BTreeSet::new();
+        let mut stack = vec![n];
+        let mut out = Vec::new();
+        while let Some(k) = stack.pop() {
+            if !seen.insert(k) {
+                continue;
+            }
+            let o = &self.outs[k];
+            out.extend(o.reads.iter().cloned());
+            let c = &self.flow.nodes[k];
+            let used: Vec<usize> = match &o.used {
+                Some(u) => u.clone(),
+                None => (0..c.sources.len()).collect(),
+            };
+            for i in used {
+                if let Some(Source::Node(d, _)) = c.sources.get(i) {
+                    stack.push(*d);
+                }
+            }
+        }
+        out.sort_by(|x, y| x.0.cmp(&y.0));
+        out.dedup();
+        Some(out)
     }
     pub fn validity_of(&self, kind: &str) -> Option<Validity> {
         let (n, _) = *self.flow.published.get(kind)?;
@@ -789,6 +1091,10 @@ impl Evaluation<'_> {
         let c = &f.nodes[n];
         let out = &self.outs[n];
         let node_id = &f.doc.nodes[n].id;
+        let shown = |v: &Val| match v {
+            Val::Number(_) => None,
+            other => Some(serde_json::to_value(other).expect("plain values")),
+        };
         let inputs: Vec<ExplainInput> = c
             .inputs
             .iter()
@@ -804,16 +1110,21 @@ impl Evaluation<'_> {
                         .unwrap()
                         .to_string(),
                     explanation_ref: None,
+                    shown: shown(&self.in_vals[i]),
                 },
                 Source::Node(d, k) => ExplainInput {
                     port: p.name.clone(),
                     quantity: f.nodes[d].outputs[k].kind.clone(),
-                    value: Quantity::si(self.outs[d].values[k], f.nodes[d].outputs[k].dim),
+                    value: Quantity::si(
+                        self.outs[d].values[k].num().unwrap_or(0.0),
+                        f.out_dims[d][k],
+                    ),
                     source: "derived".into(),
                     explanation_ref: Some(format!(
                         "{}.{}",
                         f.doc.nodes[d].id, f.nodes[d].outputs[k].name
                     )),
+                    shown: shown(&self.outs[d].values[k]),
                 },
             })
             .collect();
@@ -866,7 +1177,9 @@ impl Evaluation<'_> {
         );
         Explanation {
             subject: subject.into(),
-            value: Quantity::si(out.values[o], c.outputs[o].dim),
+            value: Quantity::si(out.values[o].num().unwrap_or(0.0), f.out_dims[n][o]),
+            shown: shown(&out.values[o]),
+            note: out.note.clone(),
             publisher: ExplainPublisher {
                 flow: f.doc.id.clone(),
                 flow_version: f.doc.version.clone(),

@@ -291,13 +291,16 @@ fn bench_unit(i: u32) -> f64 {
 }
 
 /// The toy atoms (contract fixtures) plus the real library (`sse-atoms`, P1),
-/// so `load_stack` can take `packs/base-physics/pack.json`. Ids never clash:
-/// `toy.*` against `sse.*`.
+/// so `load_stack` can take `packs/base-physics/pack.json`, plus the logic
+/// blocks (J2). Ids never clash: `toy.*`, `sse.*`, `logic.*`, `world.*`,
+/// `chance.*`.
 fn kernel_atoms() -> sse_flow::AtomRegistry {
     let mut r = sse_flow::toy::registry();
     for a in sse_atoms::atoms() {
         r.insert(a);
     }
+    // J2: the logic set (`logic.*`, `world.*`, `chance.*`).
+    sse_logic::register(&mut r);
     r
 }
 
@@ -1537,9 +1540,17 @@ impl Kernel {
             }
             Request::Atoms { ids } => {
                 let port = |p: &sse_flow::Port| {
-                    serde_json::json!({
+                    let mut j = serde_json::json!({
                         "name": p.name, "kind": p.kind, "dim": p.dim.to_string(), "valid": p.valid,
-                    })
+                    });
+                    // Logic ports only, so physics atoms list as before.
+                    if let Some(s) = &p.shape {
+                        j["shape"] = serde_json::json!(s.to_string());
+                    }
+                    if p.any_dim {
+                        j["any_dim"] = serde_json::json!(true);
+                    }
+                    j
                 };
                 let mut atoms = Vec::new();
                 let mut missing = Vec::new();
@@ -1564,6 +1575,13 @@ impl Kernel {
                         "references": d.references,
                         "explain": d.explain,
                     }));
+                    if let Some(c) = d.class {
+                        let last = atoms.last_mut().expect("just pushed");
+                        last["class"] = serde_json::json!(c);
+                        if let Some(r) = d.dims {
+                            last["dims"] = serde_json::json!(r);
+                        }
+                    }
                 }
                 if let Some(w) = &want {
                     for id in w {
