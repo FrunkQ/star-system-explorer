@@ -1,0 +1,77 @@
+{
+  "version": "surface-regimes-v1",
+  "worlds": [
+    {
+      "body": "Venus",
+      "jets": null,
+      "landforms": 538,
+      "overturns": 64,
+      "regime": "episodic-lid",
+      "surface": "e0264cd85fb56d711fb3287a89692a0a90478fc157e217df7cd98aef0f6f446e",
+      "tiles": [
+        "1d6cb3d25250e513bd91b2f793b03c22c31cf947d310925e3b9614f2e35b08d1",
+        "d7d149d3450497eec4a3f6e31af834bda0377425fbc7af871e15d13241b83929"
+      ]
+    },
+    {
+      "body": "Mercury",
+      "jets": null,
+      "landforms": 260,
+      "overturns": 0,
+      "regime": "stagnant-lid",
+      "surface": "a50c2038b68c45c6f6aabe2c032c65ff76322043a635ab65f727945b2ca2063b",
+      "tiles": [
+        "f47806fe9d9e6d49fa7e0011e54d2ff91a2707a1632eb1f502bc07a79bdc9589",
+        "4d565f6605a156203eb7705bbfbc2bc8a3596d8773e90b68cadee567d423d75e"
+      ]
+    },
+    {
+      "body": "Io",
+      "jets": null,
+      "landforms": 555,
+      "overturns": 0,
+      "regime": "heat-pipe",
+      "surface": "273036005218702b3a5b5d90dfbf283207c2493f4f480bbdfbcacd6b595eb41a",
+      "tiles": [
+        "bdb23b5ae9eee696784840c01ecd88990d0861965c2a7f4ea32de234dbc19832",
+        "e37ba0c8cc3eb0ff4b0546fed6a3a9669fd7a1b9efb6136e9bbb8e2ab311661e"
+      ]
+    },
+    {
+      "body": "Europa",
+      "jets": null,
+      "landforms": 1294,
+      "overturns": 0,
+      "regime": "ice-shell",
+      "surface": "cc21338cb6fa1d907e951bf4e5692113f871d32d3e0dcb74b1a81ec6057a3dd0",
+      "tiles": [
+        "d49ae4053410e235d0a5a4fd0bd79dbe852a853a50db60c5862c5bc8b432e3d2",
+        "d31ae16756ea0bb20b3f93bdbc8c5269269e6d26ff648792de84a064fada907c"
+      ]
+    },
+    {
+      "body": "Titan",
+      "jets": null,
+      "landforms": 32,
+      "overturns": 0,
+      "regime": "hydrocarbon",
+      "surface": "0e0e1b4d82b7e86bfd72e64c2ba266fdb27778e6bba9547cf8b7db3ac2b1984a",
+      "tiles": [
+        "655b0da2dec3c5c10d5dc807bc49d1eb03627b3f564552d3bf0114a583ea1626",
+        "63f825ac32a3fcd3caee9e316b2063b2ce56f64e1ba44c17a5d7d08ea421fa3b"
+      ]
+    },
+    {
+      "body": "Jupiter",
+      "jets": 9,
+      "landforms": 0,
+      "overturns": 0,
+      "regime": "cloud-deck",
+      "surface": "e1d16d4f8e0e8ab33153712691dee4f2f7604dfd3ab0a802d8e787f048db2b63",
+      "tiles": [
+        "1b7977e038458930134915150899e654d0575f0395fedf064e99edbee35c9313",
+        "18220e0758aa400adc3c63d4578cf48c3c22af48d7f5f5fb98af3249e7032467"
+      ]
+    }
+  ]
+}
