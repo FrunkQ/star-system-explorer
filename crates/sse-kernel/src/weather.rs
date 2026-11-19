@@ -22,10 +22,33 @@ pub(crate) struct Ask {
     pub lat: f64,
     pub lon: f64,
     pub pins: Vec<serde_json::Value>,
+    pub sources: Option<serde_json::Value>,
+    pub block: Option<serde_json::Value>,
 }
 
 pub(crate) fn weather(a: Ask) -> Out {
-    let block = sse_weather::scenario::block();
+    let sources: sse_weather::aerosols::Sources = match a.sources {
+        Some(v) => serde_json::from_value(v)
+            .map_err(|e| err("bad_sources", format!("not weather sources: {e}")))?,
+        None => Default::default(),
+    };
+    let block = sse_weather::scenario::block().with_sources(sources);
+    let other: Option<Box<dyn WeatherBlock>> = match a.block {
+        None => None,
+        Some(v) => {
+            let id: sse_weather::BlockId = serde_json::from_value(v)
+                .map_err(|e| err("bad_block", format!("not a weather block id: {e}")))?;
+            if id == block.id() {
+                None
+            } else {
+                let stack = [sse_weather::scenario::base_weather_pack()];
+                Some(
+                    sse_weather::swap::block_for(&stack, &id)
+                        .map_err(|e| err("unknown_block", e))?,
+                )
+            }
+        }
+    };
     let c: Conditions = match (a.conditions, a.world.as_deref()) {
         (Some(v), _) => serde_json::from_value(v)
             .map_err(|e| err("bad_conditions", format!("not weather conditions: {e}")))?,
@@ -57,12 +80,26 @@ pub(crate) fn weather(a: Ask) -> Out {
         .collect::<Result<_, _>>()
         .map_err(|e| err("bad_pins", format!("not weather pins: {e}")))?;
     let date = Date { day: a.day };
+    let chosen: &dyn WeatherBlock = match &other {
+        Some(b) => b.as_ref(),
+        None => &block,
+    };
+    let rule_only = |what: &str| -> Result<(), Response> {
+        if other.is_some() {
+            Err(err(
+                "not_provided",
+                format!("the chosen weather block does not provide `{what}`; the rule block does"),
+            ))
+        } else {
+            Ok(())
+        }
+    };
     let data = match a.want.as_str() {
         "climate" => {
             let circ = sse_weather::circulation::circulation(&block.settings, &c);
-            serde_json::json!({ "climate": to_json(&block.climate(&c)), "circulation": to_json(&circ) })
+            serde_json::json!({ "climate": to_json(&chosen.climate(&c)), "circulation": to_json(&circ) })
         }
-        "systems" => to_json(&block.systems(&c, date, &pins)),
+        "systems" => to_json(&chosen.systems(&c, date, &pins)),
         "field" => {
             let [face, level, x, y] = a.tile.unwrap_or([0, 0, 0, 0]);
             let key = TileKey::new(face as u8, level.min(30) as u8, x, y).ok_or_else(|| {
@@ -72,15 +109,24 @@ pub(crate) fn weather(a: Ask) -> Out {
                 )
             })?;
             let n = a.n.unwrap_or(16).clamp(1, 64);
-            to_json(&block.field(&c, date, key, n, &pins))
+            to_json(&chosen.field(&c, date, key, n, &pins))
         }
-        "report" => to_json(&block.report(&c, date, a.lat, a.lon, &pins, None)),
-        "column" => to_json(&sse_weather::hooks::column(
-            &block, &c, date, a.lat, a.lon, &pins, None,
-        )),
-        "sound" => to_json(&sse_weather::hooks::sound(
-            &block, &c, date, a.lat, a.lon, &pins, None,
-        )),
+        "report" => {
+            rule_only("report")?;
+            to_json(&block.report(&c, date, a.lat, a.lon, &pins, None))
+        }
+        "column" => {
+            rule_only("column")?;
+            to_json(&sse_weather::hooks::column(
+                &block, &c, date, a.lat, a.lon, &pins, None,
+            ))
+        }
+        "sound" => {
+            rule_only("sound")?;
+            to_json(&sse_weather::hooks::sound(
+                &block, &c, date, a.lat, a.lon, &pins, None,
+            ))
+        }
         other => {
             return Err(err(
                 "bad_want",
@@ -91,7 +137,7 @@ pub(crate) fn weather(a: Ask) -> Out {
     Ok(Response::WeatherRead {
         want: a.want,
         world: c.label.clone(),
-        provenance: to_json(&block.provenance()),
+        provenance: to_json(&chosen.provenance()),
         data,
     })
 }

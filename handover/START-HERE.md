@@ -90,6 +90,8 @@ Milestone M1 "Proven core" = packages K0 to K6 (build plan section 3/4).
 | W2 formations on rocky and ocean worlds: storm tracks, tropical cyclones, dust, locked-world shields, marine decks, mountain cloud, lightning, snow; drawn storms with tracks; weather report | done (weather track) | packages/W2.md |
 | W5 weather hooks: kernel op `weather` (climate, systems, field, report, column, sound), descent column with hazards, sound cues, GM pins, clear and calm orders, triggered storms | done (weather track) | packages/W5.md |
 | W3 giants: bands as S6, storm families (great ovals, strings, dark spots, planet-circling outbreaks), polar regime by Burger number (cyclone ring, single vortex, diffuse cap), polygon jets by a stated rule (Saturn's hexagon); wired into the rule block and the `weather` op | done (weather track) | packages/W3.md |
+| W4 smoke, ash, haze, smog and spray from sources (eruption plumes by Mastin et al. 2009 and stratification, ballistic plumes on airless worlds, ash streaks and ash fall, dated sulphate veil cooling, impacts, fires gated by oxygen, smog over industry) | done (weather track); sources are caller inputs until S7, S12 and L1c publish them | packages/W4.md |
+| W6 the swap, proven: second block `sse.weather.zonal-ebm` (diffusive energy balance), save manifest, swap report with tolerance, pins carried, switch back restores exactly; kernel `weather` op takes `block` | done (weather track) | packages/W6.md |
 
 ## Parallel tracks (18 Nov, Alex: build in parallel, integrate later)
 | Track | Packages | Branch |

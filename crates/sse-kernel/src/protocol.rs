@@ -359,6 +359,15 @@ pub enum Request {
         #[serde(default)]
         #[ts(optional, type = "unknown[]")]
         pins: Option<Vec<serde_json::Value>>,
+        /// Smoke, ash and smog sources (volcanoes, eruptions, impacts,
+        /// fires, industry), `sse_weather::aerosols::Sources`.
+        #[serde(default)]
+        #[ts(optional, type = "unknown")]
+        sources: Option<serde_json::Value>,
+        /// Which weather block, `{id, version, level}`; default the rule block.
+        #[serde(default)]
+        #[ts(optional, type = "unknown")]
+        block: Option<serde_json::Value>,
     },
     /// Bring a system into the open universe as facts: an SSE 3 save
     /// (`import_v3`, its text) or a formation run (`formation`, the same

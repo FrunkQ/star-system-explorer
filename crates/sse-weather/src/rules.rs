@@ -3,6 +3,7 @@
 //! zonal climate (belts by latitude and season); later packages add the
 //! formations placed by rule and the drawn storm systems.
 
+use crate::aerosols::{self, AerosolSettings, Sources};
 use crate::circulation::{self, Circulation};
 use crate::conditions::Conditions;
 use crate::contract::*;
@@ -19,6 +20,10 @@ pub struct RuleBlock {
     pub settings: WeatherSettings,
     pub formations: FormationSettings,
     pub giants: GiantSettings,
+    pub aerosols: AerosolSettings,
+    /// Volcanoes, eruptions, impacts, fires and industry on the world asked
+    /// about (W4); empty unless the caller gives them.
+    pub sources: Sources,
 }
 
 pub fn lat_lon(d: [f64; 3]) -> (f64, f64) {
@@ -75,12 +80,21 @@ impl RuleBlock {
         settings: WeatherSettings,
         formations: FormationSettings,
         giants: GiantSettings,
+        aerosols: AerosolSettings,
     ) -> Self {
         RuleBlock {
             settings,
             formations,
             giants,
+            aerosols,
+            sources: Sources::default(),
         }
+    }
+
+    /// The same block reading these smoke, ash and smog sources.
+    pub fn with_sources(mut self, sources: Sources) -> Self {
+        self.sources = sources;
+        self
     }
 
     fn is_giant(p: &Prepared) -> bool {
@@ -92,6 +106,7 @@ impl RuleBlock {
             WeatherSettings::from_packs(stack)?,
             FormationSettings::from_packs(stack)?,
             GiantSettings::from_packs(stack)?,
+            AerosolSettings::from_packs(stack)?,
         ))
     }
 
@@ -109,6 +124,14 @@ impl RuleBlock {
         } else {
             formations::systems(&self.formations, &self.settings, c, p, date)
         };
+        let mut drawn = drawn;
+        drawn.extend(aerosols::plumes(
+            &self.aerosols,
+            &self.settings,
+            c,
+            date,
+            &self.sources,
+        ));
         let mut out: Vec<WeatherSystem> = drawn
             .into_iter()
             .filter(|s| !pins.iter().any(|q| q.id == s.id))
@@ -151,6 +174,16 @@ impl RuleBlock {
             date,
             systems,
             terrain,
+            &mut cell,
+        );
+        let sea = terrain.map(|t| t.ground(formations::dir(lat, lon)).1);
+        aerosols::imprint_aerosols(
+            &self.aerosols,
+            &self.settings,
+            c,
+            date,
+            &self.sources,
+            sea,
             &mut cell,
         );
         cell

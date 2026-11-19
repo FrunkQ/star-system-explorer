@@ -34,7 +34,16 @@ pins?: unknown, } | { "op": "read_world_stack", body?: string,
 /**
  * `earth`, `europa`, `mars`, `tarn`, `titan` or `venus`.
  */
-fixture?: string, stack?: unknown, } | { "op": "weather", want: string, world?: string, conditions?: unknown, day?: number, tile?: [number, number, number, number], n?: number, lat?: number, lon?: number, pins?: unknown[], } | { "op": "adopt", import_v3?: string, formation?: FormationRequest, occurred_at_s?: number, } | { "op": "resolved_system", system: string, at_s?: number, tiles?: Array<TileRequest>, } | { "op": "systems" } | { "op": "life_view", body?: string, fixture?: string, } | { "op": "export_chronicle" } | { "op": "import_chronicle", export: unknown, } | { "op": "add_note", address: string, links?: Array<string>, text: string, tags?: Array<string>, 
+fixture?: string, stack?: unknown, } | { "op": "weather", want: string, world?: string, conditions?: unknown, day?: number, tile?: [number, number, number, number], n?: number, lat?: number, lon?: number, pins?: unknown[], 
+/**
+ * Smoke, ash and smog sources (volcanoes, eruptions, impacts,
+ * fires, industry), `sse_weather::aerosols::Sources`.
+ */
+sources?: unknown, 
+/**
+ * Which weather block, `{id, version, level}`; default the rule block.
+ */
+block?: unknown, } | { "op": "adopt", import_v3?: string, formation?: FormationRequest, occurred_at_s?: number, } | { "op": "resolved_system", system: string, at_s?: number, tiles?: Array<TileRequest>, } | { "op": "systems" } | { "op": "life_view", body?: string, fixture?: string, } | { "op": "export_chronicle" } | { "op": "import_chronicle", export: unknown, } | { "op": "add_note", address: string, links?: Array<string>, text: string, tags?: Array<string>, 
 /**
  * The writing seat (default `gm`).
  */

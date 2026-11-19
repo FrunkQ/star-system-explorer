@@ -1436,6 +1436,35 @@
  },
  {
   "op": "weather",
+  "want": "climate",
+  "world": "Earth",
+  "block": {
+   "id": "sse.weather.zonal-ebm",
+   "version": "1",
+   "level": "simulated"
+  }
+ },
+ {
+  "op": "weather",
+  "want": "systems",
+  "world": "Earth",
+  "day": 5,
+  "sources": {
+   "eruptions": [
+    {
+     "id": "demo",
+     "lat_deg": -15.1,
+     "lon_deg": 120.3,
+     "day": 4,
+     "duration_days": 2,
+     "mer_kg_s": 100000000.0,
+     "so2_kg": 20000000000.0
+    }
+   ]
+  }
+ },
+ {
+  "op": "weather",
   "want": "forecast",
   "world": "Earth"
  }

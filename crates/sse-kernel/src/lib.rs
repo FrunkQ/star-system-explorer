@@ -975,6 +975,8 @@ impl Kernel {
                 lat,
                 lon,
                 pins,
+                sources,
+                block,
             } => weather::weather(weather::Ask {
                 want,
                 world,
@@ -985,6 +987,8 @@ impl Kernel {
                 lat: lat.unwrap_or(0.0),
                 lon: lon.unwrap_or(0.0),
                 pins: pins.unwrap_or_default(),
+                sources,
+                block,
             })?,
             Request::Adopt {
                 import_v3,
