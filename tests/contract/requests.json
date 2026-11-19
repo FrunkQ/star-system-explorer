@@ -1634,5 +1634,45 @@
    "address": "u:kestrel/ship:calla",
    "words": "this is Kestrel"
   }
+ },
+ {
+  "op": "load_stack",
+  "packs": [
+   "$pack:rpg-templates"
+  ]
+ },
+ {
+  "op": "templates"
+ },
+ {
+  "op": "create",
+  "template": "raider",
+  "under": "u:kestrel/sys:0",
+  "name": "Black Gull",
+  "at_s": 100
+ },
+ {
+  "op": "create",
+  "template": "raider",
+  "under": "u:kestrel/sys:0",
+  "key": "1",
+  "at_s": 100
+ },
+ {
+  "op": "create",
+  "template": "cruiser",
+  "under": "u:kestrel/sys:0",
+  "at_s": 100
+ },
+ {
+  "op": "retire",
+  "address": "u:kestrel/sys:0/ship:1",
+  "reason": "scuttled",
+  "at_s": 200
+ },
+ {
+  "op": "retire",
+  "address": "u:kestrel/sys:0/ship:1",
+  "at_s": 300
  }
 ]

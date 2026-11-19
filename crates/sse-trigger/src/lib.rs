@@ -25,6 +25,7 @@
 #![forbid(unsafe_code)]
 
 pub mod intents;
+pub mod templates;
 
 use serde::{Deserialize, Serialize};
 use serde_json::Value as J;
@@ -184,12 +185,20 @@ pub enum Effect {
         field: String,
         value: J,
     },
-    /// Make an authored object from a template (J7).
+    /// Make an authored object from a template (J7), under the subject:
+    /// `<subject>/<kind>:<key>` (the next free number when no key).
     Create {
         template: String,
+        #[serde(default, skip_serializing_if = "Option::is_none")]
+        key: Option<String>,
+        #[serde(default, skip_serializing_if = "Option::is_none")]
+        name: Option<String>,
     },
-    /// Retire an authored object (J7).
-    Retire,
+    /// Retire the subject, an object made from a template (J7).
+    Retire {
+        #[serde(default, skip_serializing_if = "Option::is_none")]
+        reason: Option<String>,
+    },
 }
 
 impl Effect {
@@ -203,14 +212,14 @@ impl Effect {
             Effect::SendIntent { .. } => "send_intent",
             Effect::SetPin { .. } => "set_pin",
             Effect::Create { .. } => "create",
-            Effect::Retire => "retire",
+            Effect::Retire { .. } => "retire",
         }
     }
     /// The design's default: ask for create, retire and set_pin; auto otherwise.
     fn asks_by_default(&self) -> bool {
         matches!(
             self,
-            Effect::Create { .. } | Effect::Retire | Effect::SetPin { .. }
+            Effect::Create { .. } | Effect::Retire { .. } | Effect::SetPin { .. }
         )
     }
 }
@@ -324,6 +333,8 @@ pub struct Gate<'a> {
     pub registry: &'a Registry,
     pub campaign: Option<&'a sse_observe::Campaign>,
     pub root: &'a Address,
+    /// The stack's templates (J7), for `create`.
+    pub templates: &'a templates::Templates,
 }
 
 fn text(s: &str) -> Value {
@@ -514,6 +525,24 @@ struct Pending {
 }
 
 impl Rules {
+    /// Templates the rules' `create` effects name that the stack lacks.
+    pub fn check_templates(&self, t: &templates::Templates) -> Vec<String> {
+        let mut out = vec![];
+        for r in &self.rules {
+            for e in &r.doc.effects {
+                if let Effect::Create { template, .. } = e {
+                    if t.get(template).is_none() {
+                        out.push(format!(
+                            "rule {}: create names template {template}, which no pack declares",
+                            r.doc.id
+                        ));
+                    }
+                }
+            }
+        }
+        out
+    }
+
     /// Intent kinds the rules listen for (`on_intent`) or send (`send_intent`): `(rule, kind)`.
     pub fn intent_kinds(&self) -> Vec<(String, String)> {
         let mut out = vec![];
@@ -564,13 +593,6 @@ impl Rules {
                     problems.push(format!("{pack}: rule {}: no effects", d.id));
                 }
                 for e in &d.effects {
-                    if matches!(e, Effect::Create { .. } | Effect::Retire) {
-                        problems.push(format!(
-                            "{pack}: rule {}: {} needs templates (J7), not built yet",
-                            d.id,
-                            e.name()
-                        ));
-                    }
                     if let Effect::Grant { view, ladder, .. } = e {
                         if view.is_none() == ladder.is_empty() {
                             problems.push(format!(
@@ -1206,7 +1228,23 @@ impl Rules {
                 Err("the stack defines no data views".into())
             }
             Effect::SetPin { value, .. } => json_value(value).map(|_| ()),
-            Effect::Create { .. } | Effect::Retire => Err("templates arrive in J7".into()),
+            Effect::Create { template, key, .. } => {
+                let t = g
+                    .templates
+                    .get(template)
+                    .ok_or_else(|| format!("no template {template}"))?;
+                templates::next_address(g.universe, t, subject, key.as_deref()).map(|_| ())
+            }
+            Effect::Retire { .. } => {
+                let st = g.universe.state_at(at);
+                if st.get(subject, templates::fields::ID).is_none() {
+                    Err(format!("{subject} was not made from a template"))
+                } else if st.get(subject, templates::fields::RETIRED) == Some(&Value::Bool(true)) {
+                    Err(format!("{subject} is already retired"))
+                } else {
+                    Ok(())
+                }
+            }
             _ => Ok(()),
         }
     }
@@ -1336,7 +1374,40 @@ impl Rules {
                 )?;
                 ("record", id)
             }
-            Effect::Create { .. } | Effect::Retire => return Err("templates arrive in J7".into()),
+            Effect::Create {
+                template,
+                key,
+                name,
+            } => {
+                let t = g
+                    .templates
+                    .get(template)
+                    .ok_or_else(|| format!("no template {template}"))?
+                    .clone();
+                let (_, id) = templates::create(
+                    g.universe,
+                    g.record,
+                    g.registry,
+                    g.root,
+                    &t,
+                    subject,
+                    key.as_deref(),
+                    name.as_deref(),
+                    at,
+                    vec![because],
+                )?;
+                ("universe", id)
+            }
+            Effect::Retire { reason } => {
+                let id = templates::retire(
+                    g.universe,
+                    subject,
+                    reason.as_deref().or(Some(r.doc.explain.as_str())),
+                    at,
+                    &publ,
+                )?;
+                ("universe", id)
+            }
         })
     }
 
@@ -1507,6 +1578,15 @@ fn substitute(e: &Effect, subject: &Address, observer: Option<&Address>) -> Effe
             audience: audience.clone(),
             tags: tags.clone(),
             tier: tier.clone(),
+        },
+        Effect::Create {
+            template,
+            key,
+            name,
+        } => Effect::Create {
+            template: template.clone(),
+            key: key.clone(),
+            name: name.as_deref().map(fill),
         },
         other => other.clone(),
     }

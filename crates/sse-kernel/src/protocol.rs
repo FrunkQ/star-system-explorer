@@ -544,6 +544,31 @@ pub enum Request {
         #[ts(optional)]
         check_only: Option<bool>,
     },
+    /// The stack's templates (J7, `provides.other.templates`).
+    Templates,
+    /// Make an authored object from a template under `under`
+    /// (`<under>/<kind>:<key>`, the next free number when no key): its facts,
+    /// tags and programs in one universe event, its kept values in the record.
+    /// GM machine only.
+    Create {
+        template: String,
+        under: String,
+        #[serde(default)]
+        #[ts(optional)]
+        key: Option<String>,
+        #[serde(default)]
+        #[ts(optional)]
+        name: Option<String>,
+        at_s: i64,
+    },
+    /// Take an object made from a template out of play (`retired`). Nothing is deleted.
+    Retire {
+        address: String,
+        #[serde(default)]
+        #[ts(optional)]
+        reason: Option<String>,
+        at_s: i64,
+    },
     /// The GM answers a queued intent; yes applies it at `at_s` (default: when it was sent).
     IntentDecide {
         proposal: String,
@@ -650,6 +675,9 @@ impl Request {
             Request::SetSeats { .. } => "set_seats",
             Request::SendIntent { .. } => "send_intent",
             Request::IntentDecide { .. } => "intent_decide",
+            Request::Templates => "templates",
+            Request::Create { .. } => "create",
+            Request::Retire { .. } => "retire",
         }
     }
 }
@@ -778,6 +806,9 @@ pub fn ops() -> Vec<OpInfo> {
             "GM machine only; one fold for a validity condition, then the intent's own request",
         ),
         o("intent_decide", Cost::Light, "GM machine only; the intent's own request"),
+        o("templates", Cost::Trivial, "read at load"),
+        o("create", Cost::Light, "GM machine only; one universe event and one record event per kept value"),
+        o("retire", Cost::Trivial, "GM machine only; one universe event"),
     ]
 }
 
@@ -1136,6 +1167,23 @@ pub enum Response {
         #[serde(default, skip_serializing_if = "Option::is_none")]
         #[ts(optional, type = "unknown")]
         applied: Option<serde_json::Value>,
+    },
+    /// `templates`: `[{id, kind, label, facts?, kept?, tags?, programs?, explain?, pack, version}]`.
+    TemplatesListed {
+        #[ts(type = "unknown[]")]
+        templates: Vec<serde_json::Value>,
+    },
+    /// `create`: the new address, its universe event and the kept values' record events.
+    Created {
+        address: String,
+        event_id: String,
+        kept: Vec<String>,
+        state_hash: String,
+        record_hash: String,
+    },
+    Retired {
+        event_id: String,
+        state_hash: String,
     },
     /// `orbits_at`: per body `{address, placed, parent?, period_s?,
     /// phase_source?, missing?, at: [{at_s, r_m: [x, y, z], phase_deg}]}`.

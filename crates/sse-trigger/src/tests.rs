@@ -119,8 +119,13 @@ fn gate<'a>(
         registry: reg,
         campaign: Some(c),
         root: r,
+        templates: &NO_TEMPLATES,
     }
 }
+
+static NO_TEMPLATES: templates::Templates = templates::Templates {
+    templates: Vec::new(),
+};
 
 fn view(w: &World, at: i64) -> String {
     sse_observe::effective_view(
@@ -359,7 +364,9 @@ fn j4_default_policies_and_load_refusals() {
     let bad = |v: J| Rules::from_packs(&[("p".into(), "1".into(), v)]).unwrap_err();
     assert!(bad(json!({"rules": [{"id": "Bad", "when": {"on_time": {"every_s": 1}}, "effects": [{"effect": "tag", "tag": "x"}]}]}))[0].contains("ids are lowercase"));
     assert!(bad(json!({"rules": [{"id": "a", "when": {"on_time": {"every_s": 0}}, "effects": [{"effect": "tag", "tag": "x"}]}]}))[0].contains("every_s"));
-    assert!(bad(json!({"rules": [{"id": "a", "when": {"on_time": {"every_s": 1}}, "effects": [{"effect": "create", "template": "ship"}]}]}))[0].contains("J7"));
+    // J7: create loads, and a missing template is named against the stack's.
+    let made = Rules::from_packs(&[("p".into(), "1".into(), json!({"rules": [{"id": "a", "when": {"on_time": {"every_s": 1}}, "effects": [{"effect": "create", "template": "ship"}]}]}))]).unwrap();
+    assert!(made.check_templates(&NO_TEMPLATES)[0].contains("names template ship"));
     assert!(bad(
         json!({"rules": [{"id": "a", "when": {"on_time": {"every_s": 1}}, "effects": []}]})
     )[0]

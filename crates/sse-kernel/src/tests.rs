@@ -1673,3 +1673,119 @@ fn intents_through_the_api() {
     );
     assert_eq!(r["code"], "unknown_seat");
 }
+
+/// J7 through the API: a ship from a template carries its facts, tags,
+/// programs and kept values; a rule wrecks it (create and retire, asked);
+/// removing the pack leaves the objects valid.
+#[test]
+fn templates_through_the_api() {
+    let packs = crate::contract::load_packs(&root().join("tests/fixtures/packs"));
+    let mut k = crate::Kernel::new();
+    // A template whose kept kind does not list it as a writer is refused.
+    let mut bad = packs["rpg-templates"].clone();
+    bad["provides"]["other"]["templates"]["templates"][0]["kept"] =
+        serde_json::json!({"ship.cargo_t": 5});
+    let r = send(&mut k, serde_json::json!({"op":"load_stack","packs":[bad]}));
+    assert_eq!(r["type"], "stack_rejected", "{r}");
+    assert!(
+        r["issues"]
+            .to_string()
+            .contains("template raider: kept ship.cargo_t"),
+        "{r}"
+    );
+    let r = send(
+        &mut k,
+        serde_json::json!({"op":"load_stack","packs":[packs["rpg-templates"]]}),
+    );
+    assert_eq!(r["type"], "stack_loaded", "{r}");
+    send(
+        &mut k,
+        serde_json::json!({"op":"open_universe","id":"kestrel","seed":"k"}),
+    );
+    let t = send(&mut k, serde_json::json!({"op":"templates"}));
+    assert_eq!(t["templates"].as_array().unwrap().len(), 3);
+
+    let sys = "u:kestrel/sys:0";
+    let c = send(
+        &mut k,
+        serde_json::json!({"op":"create","template":"raider","under":sys,"name":"Black Gull","at_s":100}),
+    );
+    assert_eq!(c["type"], "created", "{c}");
+    let ship = c["address"].as_str().unwrap().to_string();
+    assert_eq!(ship, "u:kestrel/sys:0/ship:1");
+    let c2 = send(
+        &mut k,
+        serde_json::json!({"op":"create","template":"freighter","under":sys,"at_s":100}),
+    );
+    assert_eq!(c2["address"], "u:kestrel/sys:0/ship:2");
+    assert_eq!(c2["kept"].as_array().unwrap().len(), 2);
+    let dup = send(
+        &mut k,
+        serde_json::json!({"op":"create","template":"freighter","under":sys,"key":"1","at_s":100}),
+    );
+    assert_eq!(dup["code"], "create_refused");
+    let h = send(&mut k, serde_json::json!({"op":"history","address":ship}));
+    assert!(h.to_string().contains("template.create"), "{h}");
+    let rec = send(&mut k, serde_json::json!({"op":"record","address":ship}));
+    assert!(rec.to_string().contains("ship.hull"), "{rec}");
+
+    // Hull to zero: the wreck rule asks (create and retire), then a yes applies both.
+    let r = send(
+        &mut k,
+        serde_json::json!({"op":"set_kept","address":ship,"kind":"ship.hull","value":0.0,"at_s":200}),
+    );
+    assert_eq!(r["type"], "kept_set", "{r}");
+    let step = send(&mut k, serde_json::json!({"op":"rules_step","at_s":300}));
+    assert_eq!(
+        step["report"]["passes"][0][0]["outcome"], "proposed",
+        "{step}"
+    );
+    let pending = send(&mut k, serde_json::json!({"op":"rules_pending"}));
+    let id = pending["proposals"][0]["id"].as_str().unwrap().to_string();
+    let r = send(
+        &mut k,
+        serde_json::json!({"op":"rules_decide","proposal":id,"approve":true}),
+    );
+    assert_eq!(r["written"].as_array().unwrap().len(), 2, "{r}");
+    let again = send(
+        &mut k,
+        serde_json::json!({"op":"retire","address":ship,"at_s":400}),
+    );
+    assert_eq!(again["code"], "retire_refused", "already retired");
+    let r = send(
+        &mut k,
+        serde_json::json!({"op":"retire","address":sys,"at_s":400}),
+    );
+    assert_eq!(
+        r["code"], "retire_refused",
+        "only objects made from templates retire"
+    );
+
+    // The pack goes; the objects stay readable, with their facts and kept values.
+    let r = send(
+        &mut k,
+        serde_json::json!({"op":"load_stack","packs":[packs["rpg-record"]]}),
+    );
+    assert_eq!(r["type"], "stack_loaded", "{r}");
+    let v = send(
+        &mut k,
+        serde_json::json!({"op":"resolved_system","system":sys}),
+    );
+    let f = &v["facts"];
+    assert_eq!(f[&ship]["retired"], true, "{v}");
+    assert_eq!(f[&ship]["name"], "Black Gull");
+    assert_eq!(f[&ship]["template.programs"], serde_json::json!(["pirate"]));
+    assert_eq!(f[&ship]["tag.raider"], true);
+    assert_eq!(
+        f[format!("{ship}/wreck:1")]["name"],
+        format!("wreck of {ship}")
+    );
+    let rec = send(
+        &mut k,
+        serde_json::json!({"op":"record","address":"u:kestrel/sys:0/ship:2"}),
+    );
+    assert!(
+        rec.to_string().contains("ship.cargo_t") && rec.to_string().contains("not loaded"),
+        "{rec}"
+    );
+}

@@ -88,6 +88,20 @@ fn load_observe(ms: &[sse_pack::PackManifest]) -> Result<Observe, Vec<String>> {
     let triggers = sse_trigger::Rules::from_packs(&found)?;
     let mut found = Vec::new();
     for p in ms {
+        if let Some(v) = p.provides.other.get("templates") {
+            let j =
+                serde_json::to_value(v).map_err(|e| vec![format!("{}: templates: {e}", p.id)])?;
+            found.push((p.id.clone(), p.version.to_string(), j));
+        }
+    }
+    let templates = sse_trigger::templates::Templates::from_packs(&found)?;
+    let mut issues = templates.check(&record);
+    issues.extend(triggers.check_templates(&templates));
+    if !issues.is_empty() {
+        return Err(issues);
+    }
+    let mut found = Vec::new();
+    for p in ms {
         if let Some(v) = p.provides.other.get("intents") {
             let j = serde_json::to_value(v).map_err(|e| vec![format!("{}: intents: {e}", p.id)])?;
             found.push((p.id.clone(), j));
@@ -125,6 +139,7 @@ fn load_observe(ms: &[sse_pack::PackManifest]) -> Result<Observe, Vec<String>> {
         triggers,
         calendar,
         intents,
+        templates,
     })
 }
 
@@ -229,6 +244,8 @@ struct Observe {
     calendar: Option<orbits::Calendar>,
     /// Intent kinds: built in and from packs (`provides.other.intents`, J5).
     intents: sse_trigger::intents::IntentRegistry,
+    /// Templates (`provides.other.templates`, J7).
+    templates: sse_trigger::templates::Templates,
 }
 
 pub struct Kernel {
@@ -1815,6 +1832,7 @@ impl Kernel {
             }
             Request::RulesStep { at_s } => {
                 let (rules, reg) = (self.observe.triggers.clone(), self.observe.record.clone());
+                let tpl = self.observe.templates.clone();
                 let campaign = self.observe.setup.as_ref().map(|s| s.campaign.clone());
                 let u = self.universe()?;
                 let root = u.root.clone();
@@ -1826,6 +1844,7 @@ impl Kernel {
                             registry: &reg,
                             campaign: campaign.as_ref(),
                             root: &root,
+                            templates: &tpl,
                         },
                         at_s,
                     )
@@ -1851,6 +1870,7 @@ impl Kernel {
                 at_s,
             } => {
                 let (rules, reg) = (self.observe.triggers.clone(), self.observe.record.clone());
+                let tpl = self.observe.templates.clone();
                 let campaign = self.observe.setup.as_ref().map(|s| s.campaign.clone());
                 let u = self.universe()?;
                 let root = u.root.clone();
@@ -1862,6 +1882,7 @@ impl Kernel {
                             registry: &reg,
                             campaign: campaign.as_ref(),
                             root: &root,
+                            templates: &tpl,
                         },
                         &proposal,
                         approve,
@@ -1885,6 +1906,7 @@ impl Kernel {
                 let approval: sse_trigger::Approval = serde_json::from_value(approval)
                     .map_err(|e| err("rules", format!("approval: {e}")))?;
                 let (rules, reg) = (self.observe.triggers.clone(), self.observe.record.clone());
+                let tpl = self.observe.templates.clone();
                 let u = self.universe()?;
                 let root = u.root.clone();
                 let id = rules
@@ -1895,6 +1917,7 @@ impl Kernel {
                             registry: &reg,
                             campaign: None,
                             root: &root,
+                            templates: &tpl,
                         },
                         &rule,
                         &approval,
@@ -2020,6 +2043,68 @@ impl Kernel {
                     intent: p.intent,
                     applied_by,
                     applied,
+                }
+            }
+            Request::Templates => Response::TemplatesListed {
+                templates: arr(
+                    serde_json::to_value(&self.observe.templates.templates).expect("plain")
+                ),
+            },
+            Request::Create {
+                template,
+                under,
+                key,
+                name,
+                at_s,
+            } => {
+                let t = self
+                    .observe
+                    .templates
+                    .get(&template)
+                    .ok_or_else(|| err("unknown_template", format!("no template {template}")))?
+                    .clone();
+                let reg = self.observe.record.clone();
+                let u = self.universe()?;
+                let under = in_universe(&u.root, &under)?;
+                let (c, _) = sse_trigger::templates::create(
+                    &mut u.chronicle,
+                    &mut u.record,
+                    &reg,
+                    &u.root,
+                    &t,
+                    &under,
+                    key.as_deref(),
+                    name.as_deref(),
+                    UniverseTime::seconds(at_s),
+                    vec![],
+                )
+                .map_err(|e| err("create_refused", e))?;
+                Response::Created {
+                    address: c.address,
+                    event_id: c.event,
+                    kept: c.kept,
+                    state_hash: latest_hash(&u.chronicle),
+                    record_hash: record_hash(u),
+                }
+            }
+            Request::Retire {
+                address,
+                reason,
+                at_s,
+            } => {
+                let u = self.universe()?;
+                let a = in_universe(&u.root, &address)?;
+                let id = sse_trigger::templates::retire(
+                    &mut u.chronicle,
+                    &a,
+                    reason.as_deref(),
+                    UniverseTime::seconds(at_s),
+                    &Publisher::new("gm", "retire", "1"),
+                )
+                .map_err(|e| err("retire_refused", e))?;
+                Response::Retired {
+                    event_id: id.hex(),
+                    state_hash: latest_hash(&u.chronicle),
                 }
             }
             Request::OrbitsAt {
