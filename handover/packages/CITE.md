@@ -79,3 +79,19 @@ Wording only, no physics value changed; goldens re-blessed because reference str
   (clear class not modelled); documented fudge.
 - Lourenço 2020 DOI corrected (G-cubed); Europa's 60 Myr surface age credited to Schenk et al. 2004; Venus coronae
   "several hundred, 60 to over 2000 km" (Stofan 1992 gives no count of 500); Neukum chronology valid to ~4.1 Gyr.
+
+### Galaxy and cosmology (19 Nov)
+Physics changed, goldens re-blessed on purpose (haloes, galaxy, envelope, stars, cosmos, cosmology):
+- Major-merger mass ratio (`sse-cosmos/src/haloes.rs`): drawn from the full Fakhouri, Ma and Boylan-Kolchin 2010
+  eq. 1 shape, ξ^β exp((ξ/ξ_t)^γ), by a fixed 40-step bisection on its integral. The old draw kept only ξ^β and
+  called the exponential "about 1"; it rises about 3 times from ξ = 0.25 to 1, so mergers now lean towards equal
+  masses. Every downstream galaxy history moves.
+- Disc heating exponent (`packs/base-cosmos` velocity.power): 0.35 → 0.40, the total-dispersion exponent of
+  Holmberg, Nordström and Andersen 2009 section 6.3 (U 0.39, V 0.40, W 0.53). Encounter rates move.
+- Hawking lifetime (`sse-cosmos/src/epochs.rs`): 2.1e67 → 1.14e67 (M/M☉)³ yr. Page 1976's total power for
+  massless species, counting only the photon and graviton shares (19 percent) because neutrinos have mass far
+  above the Hawking temperature of any stellar hole. The dark-era date moves about 0.27 dex earlier.
+- Reionisation "why" text now quotes Planck 2018's with-BAO column (7.8 ± 0.7) as well.
+- Metadata only: Correa et al. 2015 is paper I (MNRAS 450, 1514) eqs. 14, 15 and 20 to 23; Sheth and Tormen eq.
+  10 and its ν convention; Muratov 2015 wording; Planck z*; Asplund protosolar Z; spin width in ln, not dex;
+  Johnson and Li 2012's radius-dependent floor stated beside the single −1.0 value.

@@ -317,8 +317,92 @@ Two smaller physics errors (CH₄ lifetime 9.6 → 9.1 yr; escape coefficient ×
 
 ## Galaxy and cosmology
 
-| Where | Instead of the physics | Why | Real physics to replace it | Status |
+### Fudge register (deliberate simplifications, stand-ins, tuned constants, placeholders)
+
+| Where | Instead of the physics | Why (as code/log says) | Real physics to replace it | Status |
 |---|---|---|---|---|
+| web.rs (whole), G1.md known limits | Band-limited lattice noise octaves with per-band variance matched to σ²(R) | browser cost; no stored volume | Gaussian random field with the exact P(k) (e.g. a constrained FFT per tile, or wavelet-based noise with the spectral shape inside the band) | documented (G1 log) |
+| web.rs potential per octave | Φ_j = −δ_j / k_j² at one wavenumber (band centre); one Zel'dovich step | cheap | Solve Poisson per band with the full kernel; 2LPT for displacements | documented (G1 log) |
+| web.rs lognormal transform | Lognormal density from linear δ | stand-in for non-linear growth | Calibrated lognormal (Coles and Jones 1991) or a halo-model PDF | implicit (design names it) |
+| cosmology.rs atoms vs code | Atoms use matter+Λ (+curvature) without radiation; the core code is flat with radiation (ΩΛ = 1 − Ωm − Ωr) | the closed form is the atom | One parameter set for both, with radiation in the atom (quadrature block) | documented (G1 log) |
+| haloes.rs FMBK use | Fit calibrated on Millennium (Ωm 0.25, σ8 0.9) applied unchanged to Planck parameters | none given | Rescale through δc/D(z) (FMBK's own ω variable) or use an EPS merger rate derived from this cosmology's σ(M) (e.g. Parkinson, Cole and Helly 2008) | **undocumented**: add to the log |
+| haloes.rs ratio sampling | (was ξ^β only, exponential factor dropped as "~1"; it is 10 to 29) | | Inverse CDF of the full eq. 1 | **fixed 19 Nov** (40-step bisection on the eq. 1 integral) |
+| haloes.rs:360-371 merger grid | 60 fixed z slices from z = 6, at most 3 mergers per slice, none above z = 6 | fixed work | Continuous Poisson process in z with no per-slice cap; draw back to z_start | partly documented |
+| haloes.rs formation scatter / environment shift | σ 0.3 in ln f, shift 0.3 δ_l | "rough (sketch)" | Assembly bias from the conditional EPS formation-time distribution (Lacey and Cole 1993), or from the halo's own web environment | documented (pack, G2 log) |
+| haloes.rs orbit sketch | Circularity U(0.3,1), pericentre U(0.05,0.5) R_vir | "Benson 2005 ranges, rough" | Draw from the Benson 2005 / Jiang et al. 2015 fitted distributions | documented as rough |
+| haloes.rs neighbour | Two-body radial free fall from rest at today's comoving separation; bound if Hubble flow < escape speed | sketch, hook for Andromeda-like events | Timing argument with Λ (Partridge, Lahav and Hoffman 2013) | documented (G2 log) |
+| haloes.rs peak-background split | Linear (1 + bδ) floored at 0 | simple | Conditional mass function from EPS (Sheth and Tormen 2002 moving barrier) | documented (G2 log) |
+| epochs.rs ζ = 11 | Ionising efficiency tuned so Q = 0.5 at z 7.7 | tuned to Planck | ζ from f_* f_esc N_γ (each a cited block), plus recombinations (clumping factor) | documented (pack) |
+| epochs.rs cooling_mass_z9 1e8 | Rounded atomic-cooling mass (BL01 eq. 26 suggests about 5e7, unverified) | | Compute M(T_vir = 1e4 K, z) from the BL01 virial relation block | suspected discrepancy (P-2) |
+| epochs.rs first stars | Fixed 1e6 Msun, 3σ | pack choice | H2 cooling mass vs z (Tegmark et al. 1997) with Lyman-Werner feedback | documented |
+| epochs.rs Hawking | (was photons-only 2.1e67 yr) Now Page 1976 power for photons and gravitons only, 1.14e67 yr, because massive neutrinos are not emitted by stellar or larger holes | Page's 81% neutrino share assumed massless neutrinos | Page 1976 greybody tables per species with neutrino masses, for holes near the neutrino threshold | **fixed 19 Nov**; Page's paper body unread, power from its abstract |
+| galaxy.rs hot halo | 1/(1+(M/5e11)²) | tuned | Cooling radius vs virial radius (White and Frenk 1991; Croton 2006 rapid-cooling regime) | tuned, documented in pack |
+| galaxy.rs preventive feedback | 1/(1+(v_c/60)^-3) | lets small galaxies stay metal-rich | Photo-heating / preventive model of Davé 2012 eq. with its own cited parameters | tuned |
+| galaxy.rs radio mode | 1/(1+(Mh/1e12)² Mbh/3e7) "smooth, no threshold" | avoids a threshold | Croton 2006 heating rate ∝ M_BH f_hot V_vir³ against the cooling rate | **stand-in**: say so in pack |
+| galaxy.rs filtering mass | Constant 1e9 Msun after z_reion, hard cut to zero | | Gnedin 2000 M_F(z) with the Okamoto et al. 2008 baryon-fraction suppression curve (smooth) | partly documented |
+| galaxy.rs depletion time | 1.5 Gyr (1+z)^-1.0 | "Tacconi 2018 find times fall to the past" | Tacconi 2018 scaling (exponent about −0.6, unverified) | **tuned away from source**: document |
+| galaxy.rs small-galaxy depletion | (v_c/150)^-1.5 | Leroy 2008; Huang 2012 (qualitative) | H2-fraction model (Blitz and Rosolowsky 2006 / Krumholz 2009) | tuned |
+| galaxy.rs winds | (v_c/200)^-2 (1+z)^1.0, cap 60 | energy-driven slope; Muratov for z | Muratov 2015 broken power law (unverified) or a momentum/energy switch block | **tuned**: attribution fix M-5 |
+| galaxy.rs fallback | t = 60 Gyr (1e10/Mh) | Henriques 2013 | Henriques 2013 γ' (about 18 Gyr by recollection) | **tuned about 3x**: document |
+| galaxy.rs instantaneous recycling | R = 0.4, yield 0.02 | delays live in rings | Integrate the IMF and lifetimes (block) | documented |
+| galaxy.rs ex-situ | ratio² of host stars; smooth 0.3 × 0.02 × halo growth × (1 − hot) | | Satellite galaxies run as their own reservoirs, plus dynamical-friction times (Boylan-Kolchin et al. 2008) | documented as rough |
+| galaxy.rs black hole | Seed 1e5, 5e-4 of stars formed, 1% of bursts | | Bondi/Eddington-limited accretion block | tuned |
+| galaxy.rs:351 bar test | Extra ×1.1 on v_200 (presumably v_max/v_200) before the ELN 1.1 test | not stated | Compute v_max of the NFW + disc rotation curve (concentration-mass relation block) | **undocumented** |
+| galaxy.rs disc size | 0.6 λ/√2 R_200 | "MMW98 simplified" | MMW98 f_c and f_R with concentration and disc fraction | documented |
+| galaxy.rs morphology | Thresholds B/T 0.7, sSFR 1e-11/1e-10, M* 1e9 | rule over numbers | Pack-editable classification table (already intended) | documented |
+| galaxy.rs median haloes in tests | No growth-history scatter in volume sums (CSFH too flat) | known | Average over drawn histories | documented (G3 log) |
+| rings.rs inside-out τ | Chiappini τ(R) applied in the galaxy's "share of all inflow" clock, not in Gyr | ties rings to halo growth | Infall rate in Gyr per ring from the halo accretion and angular momentum | documented in code, worth logging |
+| rings.rs KS | A = 2.5e-4 (Salpeter-calibrated) used with Kroupa/Chabrier elsewhere | | Divide A by about 1.6 for Chabrier, or make the IMF a shared block | **undocumented IMF mismatch** |
+| rings.rs threshold | Σ_th = 4 Msun/pc², ×(Σ/Σ_th)² below | Martin and Kennicutt 2001 | Toomre Q threshold (MK01) using σ_gas and κ | stand-in |
+| rings.rs yields | IMF-integrated net yields in solar units, tuned so the solar ring is solar | stated in pack and G3 log | Nomoto 2013 / Karakas 2010 tables × IMF × lifetimes | documented |
+| rings.rs radial winds, drift | exp(0.6 (R/R_d − 3.15)); 1 km/s inflow | tuned to the gradient | Radial-flow model (Lacey and Fall 1985) with a cited velocity | tuned |
+| rings.rs Ia rate | 2e-3 per Msun, DTD 1/t from 40 Myr | | Maoz and Graur 2017 value; DTD slope −1.1 | tuned; citation crossed (M-8) |
+| rings.rs NSM | 1e-5 per Msun, 1.5e5 solar units per event | | Rate from LIGO/Virgo rate density / SFR density; yield per event from kilonova estimates | tuned, uncited |
+| rings.rs cc_per_mass 0.0118 | Hard number "8-40 Msun of Chabrier" | | Compute from the IMF block | uncited constant |
+| envelope.rs arms | Fixed 2-arm log spiral, pitch 12°, Ω_p 25, contrast 0.6 | "rough Milky Way values" | Measured MW arm geometry (e.g. Reid et al. 2019) or transient arms | documented |
+| envelope.rs texture | Lognormal 0.2 dex value noise on 50 pc | "sketch" | Turbulent ISM PDF (Mach-number dependent lognormal width) | documented |
+| envelope.rs GRB | 1.6e-7 per Msun formed, 1/(1+(Z/0.3)²), 2 kpc | tuned so the Sun sees about 0.4 per Gyr | GRB rate from SFR × metallicity-dependent efficiency fits (e.g. Graham and Fruchter 2017) | tuned, documented |
+| envelope.rs AGN dose | ΔM_bh in 1 Gyr per 1e6 Msun × (1 kpc/R)² | | Luminosity from accretion × duty cycle → flux at R | placeholder |
+| envelope.rs encounter σ | 35 km/s at R0 rising as exp(−R/2R_d) | | Age-velocity relation by population (as in patch.rs) | tuned |
+| envelope.rs green criteria | feh −0.5 to +0.3, ≤ 4 SN/Gyr, ≤ 3 GRB/Gyr, 4 Gyr quiet | pack, "Force" packs may change | (intentional editable criteria) | documented |
+| envelope.rs patch_model bridge | Fits a single τ so the Sun's ring matches at birth and now | bridge to G0 machinery | Use ring histories directly in cohorts (G5 already partly does) | documented |
+| patch.rs feh_ism | log10(1 − e^(−t/τ)) enrichment curve, fixed gradient | G0 closed form | Rings (G3) | superseded by G3/G4 |
+| patch.rs alpha_fe_ism | Linear in log time from plateau to now after a 1 Gyr knee | closed form | Rings | superseded |
+| base-cosmos cluster | M^-2 from 10 to 1e5 Msun | Lada and Lada 2003 | LL03 fitted range is about 50-1000 Msun; upper end from the young massive cluster ICMF (e.g. Portegies Zwart et al. 2010) | extrapolated, undocumented |
+| base-cosmos al26 | median 0.3, 0.7 dex | "rough" | Cluster-mass-dependent enrichment (Lichtenberg 2016) | documented rough |
+| base-cosmos fuv | lognormal around 1000 G0, independent of cluster mass | | G0 from cluster mass (Fatuzzo and Adams 2008 relation) | documented as limit in G0 log |
+| base-cosmos velocity | (was age^0.35) now age^0.40, the total-dispersion exponent | Holmberg, Nordstrom and Andersen 2009 section 6.3 | per-component exponents (U 0.39, V 0.40, W 0.53) if encounters need direction | **fixed 19 Nov** |
+| base-cosmos rocky | −1.0 at every radius | Johnson and Li 2012 (their Earth-like summary, Z > 0.1 Z_sun) | their [Fe/H]_crit = −1.5 + log10(r / 1 au), per planet radius | documented 19 Nov (source text says so) |
+| base-cosmos sterilising 8 pc vs envelope 10 pc | two different pack values | | One shared value | inconsistent; document |
+
+### Candidates to move into flows
+
+| Where | What it computes | Blocks it would need | View that would show it |
+|---|---|---|---|
+| cosmology.rs Cosmology::new (Ωr) | Radiation density from T_CMB and N_eff | `photon_density(T)`, `neutrino_density(N_eff)`, `sum` | Cosmology panel: energy budget pie vs a, with sliders |
+| cosmology.rs e(a), time_of_scale | Friedmann E(a); cosmic time by quadrature | `hubble_rate` (exists, add radiation), `integrate(1/(aH))` | Time ruler: a(t), H(t) curves |
+| cosmology.rs growth / growth_exact | D(a) by CPT and by Heath integral | `omega_m_of_a`, `omega_l_of_a`, `cpt_g`, `heath_integral` | Growth curve with both overlaid (shows the 0.2% check) |
+| cosmology.rs transfer, power, sigma2_r, sigma_m | EH98 T(k) → P(k) → σ(R) → σ(M) | `eh98_sound_horizon`, `eh98_alpha_gamma`, `eh98_gamma_eff`, `eh98_T0`, `primordial_power(ns)`, `tophat_window`, `sigma_integral`, `normalise_sigma8`, `mass_to_radius` | P(k) and σ(M) plots; slider for σ8, ns, Ωb |
+| cosmology.rs collapse_redshift | z where D σ ν = δc | `delta_c` (spherical collapse), `growth`, `solve` | "When do haloes of mass M form" chart |
+| epochs.rs recombination_z | HS96 z* | `hs96_zstar(ωb, ωm)` | Time ruler epoch marker with its formula |
+| epochs.rs ionised_fraction, reionisation_z | Q(z) = ζ f_coll(>M_cool) | `virial_temperature_mass(T, z, μ)` (BL01), `ps_collapsed_fraction`, `zeta = f_* f_esc N_γ`, `cap` | Reionisation curve Q(z) with the Planck band |
+| epochs.rs star_formation_peak_z | Peak of MD14 ψ(z) | `md14_csfh`, `argmax` | Cosmic SFH curve with simulated volume sum overlaid |
+| epochs.rs bh_end | Hawking lifetime | `hawking_lifetime(M, species)` | Far-future ruler (log time) |
+| haloes.rs st_f, st_bias, dn_dlnm, conditional_dn_dlnm | Mass function and peak-background split | `st_multiplicity`, `st_bias`, `dlnsigma_dlnm`, `conditional_mf` | Halo mass function plot per cell vs the universal one; cell density slider |
+| haloes.rs correa | MAH α, β from σ(M) | `correa_zf_tilde`, `correa_q`, `correa_f`, `growth_derivative` | Halo growth curve M(z) with z_half marker |
+| haloes.rs fmbk_rate, major_rate, ratio sampling | Merger rate and ratio PDF | `fmbk_rate`, `integrate_xi`, `inverse_cdf` | Merger timeline per halo (events on the time ruler) |
+| haloes.rs link_neighbours | Bound or not, approach time | `escape_speed`, `hubble_flow`, `free_fall_time` (or timing argument) | Group map with orbit sketch |
+| galaxy.rs evolve (the regulator) | Gas, stars, metals, BH per step | `baryon_inflow`, `hot_halo_suppression`, `preventive_feedback`, `filtering_cut`, `radio_mode`, `depletion_time`, `mass_loading`, `fallback_time`, `implicit_gas_step`, `metal_budget`, `merger_bulge`, `bh_growth` (an ODE flow stepped by a "fixed-grid integrator" block) | Galaxy reservoir "bathtub" diagram with live flows; history curves on the time ruler |
+| galaxy.rs virial | R_200, v_200 | `rho_crit(a)`, `virial_radius(M, Δ)`, `circular_speed` | Halo card |
+| galaxy.rs disc size, ELN bar test, classify | R_d, bar flag, morphology | `mmw_disc_scale`, `vmax_over_v200(c)`, `eln_epsilon`, `classify_table` | Galaxy chart: face-on disc with bar, morphology badge, the ε value shown against 1.1 |
+| rings.rs infall weights | Inside-out infall shares | `chiappini_tau(R)`, `exp_disc_profile`, `infall_share` | Rings chart: infall per ring vs time (heat map) |
+| rings.rs star formation | KS with threshold | `kennicutt_schmidt(Σ, A, n)`, `threshold(Q or Σ)`, `imf_conversion` | Ring SFR heat map; KS plot (Σ_SFR vs Σ_gas) with Kennicutt's line |
+| rings.rs enrichment channels | DTD-weighted yields per element group | `dtd_power_law(t_min, slope)`, `ia_per_mass`, `agb_dtd`, `nsm_dtd`, `poisson_lumps`, `k40_decay`, `cc_per_mass_from_imf` | "What died here" stacked history per ring; [α/Fe]–[Fe/H] track with knee |
+| rings.rs radial flows | Winds rising outward, inward drift | `radial_mass_loading`, `radial_drift(v)` | Metallicity gradient plot vs Genovali |
+| envelope.rs local | Patch envelope from rings × arms × vertical × texture | `ring_interp`, `log_spiral_phase(m, pitch, Ω_p, t)`, `vertical_profile(h)`, `lognormal_texture` | Patch inspector: each multiplier as a bar, product at the end |
+| envelope.rs hazards | SN within d, encounters, GRB, AGN dose | `volume_rate(d)`, `encounter_rate(n, b, σ)`, `grb_rate(SFR, Z)`, `agn_flux(L, R)` | Hazard dials on the patch card |
+| envelope.rs green | Green criteria and band | `threshold_test` per criterion, `quiet_clock`, `band_scan` | Galaxy chart hatched green band with a time slider; per-criterion pass/fail chips |
+| patch.rs conditions | G0 closed-form densities, SFR, Ia DTD, encounters | `exp_disc_density`, `halo_power_law`, `ia_dtd_integral`, `age_velocity_relation` | Solar-patch card (G0) |
 
 ## Light, rendering and sound
 
