@@ -2,12 +2,14 @@ import { mount, unmount } from "svelte";
 import type { ViewModule } from "../../../ui-contract/src/index.ts";
 import { route } from "../../route/src/index.ts";
 import { galaxyChart } from "../../galaxy-chart/src/index.ts";
+import { foamMap } from "../../foam-map/src/index.ts";
 import Explore from "./Explore.svelte";
 
 /** The sections of the Explore screen, in order: each is an ordinary view module. */
 export const EXPLORE_SECTIONS: readonly { id: string; label: string; view: ViewModule }[] = [
   { id: "route", label: "Route", view: route },
   { id: "galaxy", label: "Galaxy", view: galaxyChart },
+  { id: "foam", label: "Cosmic web", view: foamMap },
 ];
 
 /**
