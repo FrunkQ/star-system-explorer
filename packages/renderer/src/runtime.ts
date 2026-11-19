@@ -8,6 +8,15 @@ import { DEFAULT_BUDGET_MS, estimateMs, maxLevel, pickRecipe, plan, TIER_ORDER, 
 import { drawCanvas } from "./canvas.ts";
 import { lightDir, narrate, prepare, type Prepared } from "./surface.ts";
 import type { GlobeGpu } from "./gpu-globe.ts";
+import { air as airOf, type Air, type AirFacts } from "./atmosphere.ts";
+import type { AirRender } from "./gpu-air.ts";
+
+/** The air in render units (globe radius 1): coefficients × radius, scale height ÷ radius, shell to 10 scale heights. */
+export function airRender(a: { air: Air; radius_m: number }, thickness = 1): AirRender {
+  const k = Math.max(1, thickness);
+  const H = (a.air.scale_height_m / a.radius_m) * k;
+  return { beta: a.air.rayleigh_m.map((b) => (b * a.radius_m) / k) as [number, number, number], scale_height: H, top: 1 + 10 * H };
+}
 
 export interface GlobeRunOptions {
   registry: readonly RecipeDoc[];
@@ -23,6 +32,8 @@ export interface GlobeRunOptions {
   spin: boolean;
   size_px: number;
   label: string;
+  /** The world's air facts (absent or null: no air, and the atmosphere pass draws nothing). */
+  air?: AirFacts | null;
 }
 
 export interface GlobeStatus {
@@ -43,6 +54,8 @@ export interface GlobeStatus {
   /** The view's turn now (spinning moves it). */
   lon: number;
   lat: number;
+  /** The air in words (where it came from and what it does), or why there is none. */
+  air_note: string;
   /** The last frame's own drawing time, ms (the rest of a frame interval is the page and the browser). */
   work_ms: number;
 }
@@ -57,7 +70,7 @@ export interface GlobeRun {
 }
 
 /** What this device can draw: probed once a page. */
-let gpuProbe: Promise<boolean> | null = null;
+let gpuProbe: Promise<"webgpu" | "webgl2" | null> | null = null;
 
 export function mountGlobe(host: HTMLElement, opts: GlobeRunOptions, onStatus: (s: GlobeStatus) => void): GlobeRun {
   let o = { ...opts };
@@ -82,20 +95,36 @@ export function mountGlobe(host: HTMLElement, opts: GlobeRunOptions, onStatus: (
   const times: number[] = [];
   let disposed = false;
   let lastSig = "";
+  let airPhys: { air: Air; radius_m: number } | null = null;
+  const setAir = (f: AirFacts | null | undefined) => {
+    const a = f ? airOf(f) : null;
+    airPhys = a && f ? { air: a, radius_m: f.radius_m } : null;
+  };
+  setAir(opts.air);
+  let airFactsNow: AirFacts | null | undefined = opts.air;
+  const airNote = () => {
+    if (!airPhys || !airFactsNow) return "No air drawn: the kernel has no surface pressure and gas mix for this world.";
+    const a = airPhys.air;
+    const f = airFactsNow;
+    const mix = Object.entries(f.composition).sort((x, y) => y[1] - x[1]).slice(0, 3).map(([g, x]) => `${g} ${Math.round(x * 100)}%`).join(", ");
+    const th = Number(current()?.plan.passes.find((x) => x.pass === "atmosphere")?.params.thickness ?? 1);
+    return `Air from the kernel: ${(f.pressure_pa / 100).toFixed(0)} hPa at ${Math.round(f.temperature_k)} K, ${mix}; scale height ${(a.scale_height_m / 1000).toFixed(1)} km; blue light's path straight up scatters ${Math.round((1 - Math.exp(-a.zenith_depth[2])) * 100)}% (Rayleigh, single scattering).${a.unknown_gases.length ? ` Left out (no data): ${a.unknown_gases.join(", ")}.` : ""}${th > 1 ? ` Drawn ${th}× thicker than true.` : ""}`;
+  };
   let lastEmit = -1e9;
   let switching = false;
 
   const recipe = (tier: Tier) => pickRecipe(o.registry, o.recipe, tier);
   const full = () => Math.round(o.size_px * Math.min(2, typeof devicePixelRatio === "number" ? devicePixelRatio : 1));
 
-  // The probe: can this device draw on the GPU at all? (WebGPU, else WebGL2.)
-  async function probeGpu(): Promise<boolean> {
+  // The probe: can this device draw on the GPU at all, and is it WebGPU (gpu-high) or WebGL2 (gpu-basic)?
+  async function probeGpu(): Promise<"webgpu" | "webgl2" | null> {
     gpuProbe ??= (async () => {
       const c = document.createElement("canvas");
       const { createGlobeGpu } = await import("./gpu-globe.ts");
       const g = await createGlobeGpu(c);
+      const b = g?.backend ?? null;
       g?.dispose();
-      return !!g;
+      return b;
     })();
     return gpuProbe;
   }
@@ -104,14 +133,15 @@ export function mountGlobe(host: HTMLElement, opts: GlobeRunOptions, onStatus: (
   let startTier: Tier = "canvas";
   async function chooseTier() {
     const want = o.tier;
-    const hasGpu = !gpuFailed && (want === "auto" || want === "gpu-basic") ? await probeGpu() : false;
-    available = hasGpu ? ["gpu-basic", "canvas", "text"] : ["canvas", "text"];
-    const asked = recipe(want === "auto" ? (hasGpu ? "gpu-basic" : "canvas") : want);
+    const gpuKind = !gpuFailed && (want === "auto" || want === "gpu-basic" || want === "gpu-high") ? await probeGpu() : null;
+    const hasGpu = !!gpuKind;
+    // gpu-high is chosen by itself only on WebGPU; it can be asked for on WebGL2.
+    available = gpuKind === "webgpu" ? ["gpu-high", "gpu-basic", "canvas", "text"] : hasGpu ? ["gpu-basic", "canvas", "text"] : ["canvas", "text"];
     if (want === "auto") {
-      const doc = o.registry.find((r) => r.id === o.recipe) ?? asked?.doc;
+      const doc = o.registry.find((r) => r.id === o.recipe) ?? recipe(hasGpu ? "gpu-basic" : "canvas")?.doc;
       startTier = TIER_ORDER.find((t) => doc?.tiers.includes(t) && available.includes(t)) ?? "text";
-      tierNote = hasGpu ? `Chosen for this device: it can draw on the GPU.` : `Chosen for this device: no WebGPU or WebGL2 here, so the globe is drawn on a 2D canvas.`;
-    } else if (want === "gpu-basic" && !hasGpu) {
+      tierNote = gpuKind === "webgpu" ? "Chosen for this device: it has WebGPU." : hasGpu ? "Chosen for this device: it can draw on the GPU (WebGL2; the high tier waits for WebGPU)." : "Chosen for this device: no WebGPU or WebGL2 here, so the globe is drawn on a 2D canvas.";
+    } else if ((want === "gpu-basic" || want === "gpu-high") && !hasGpu) {
       startTier = "canvas";
       tierNote = "GPU tier asked for, but this device has neither WebGPU nor WebGL2: drawn on a 2D canvas instead.";
     } else {
@@ -177,17 +207,19 @@ export function mountGlobe(host: HTMLElement, opts: GlobeRunOptions, onStatus: (
     const relief = pl.passes.find((x) => x.pass === "relief-globe")?.params ?? {};
     const pkey = `${String(relief.colour ?? "survey")}|${String(relief.exaggeration ?? 12)}`;
     if (!prepared || preparedKey !== pkey || prepared.globe !== globe) ((prepared = prepare(globe, String(relief.colour ?? "survey"), Number(relief.exaggeration ?? 12))), (preparedKey = pkey));
-    const want = pl.tier === "gpu-basic" ? "gpu" : pl.tier === "canvas" ? "canvas" : "text";
+    const want = pl.tier === "gpu-basic" || pl.tier === "gpu-high" ? "gpu" : pl.tier === "canvas" ? "canvas" : "text";
+    const atm = pl.passes.find((x) => x.pass === "atmosphere")?.params;
+    const airNow = atm && airPhys ? airRender(airPhys, Number(atm.thickness ?? 1)) : null;
     ensureSurface(want);
     const t0 = performance.now();
     let drew = false;
     if (want === "canvas" && canvas) {
       if (canvas.style.width !== `${o.size_px}px`) canvas.style.width = canvas.style.height = `${o.size_px}px`;
-      drawCanvas(canvas, prepared, pl, lon, lat, full(), scratch);
+      drawCanvas(canvas, prepared, pl, lon, lat, full(), scratch, airNow);
       drew = true;
     } else if (want === "gpu" && gpu && canvas && !switching) {
       if (canvas.style.width !== `${o.size_px}px`) canvas.style.width = canvas.style.height = `${o.size_px}px`;
-      gpu.draw(prepared, pl, lon, lat, full());
+      gpu.draw(prepared, pl, lon, lat, full(), airNow);
       drew = true;
     }
     const work = performance.now() - t0;
@@ -219,7 +251,7 @@ export function mountGlobe(host: HTMLElement, opts: GlobeRunOptions, onStatus: (
       const narration = narrate(prepared, o.label, lon, lat, String(narr?.params.detail ?? "full"), L);
       onStatus({
       tier: c2.plan.tier,
-      backend: c2.plan.tier === "gpu-basic" ? (gpu?.backend ?? "none") : c2.plan.tier === "canvas" ? "canvas2d" : "none",
+      backend: c2.plan.tier === "gpu-basic" || c2.plan.tier === "gpu-high" ? (gpu?.backend ?? "none") : c2.plan.tier === "canvas" ? "canvas2d" : "none",
       recipe: c2.doc.id,
       level: c2.plan.level,
       max: gov?.max ?? 0,
@@ -234,6 +266,7 @@ export function mountGlobe(host: HTMLElement, opts: GlobeRunOptions, onStatus: (
       lon,
       lat,
       work_ms: work,
+      air_note: airNote(),
       });
     }
     if (!drew && want !== "text") dirty = true;
@@ -264,6 +297,7 @@ export function mountGlobe(host: HTMLElement, opts: GlobeRunOptions, onStatus: (
     update(n) {
       const retier = (n.tier !== undefined && n.tier !== o.tier) || (n.recipe !== undefined && n.recipe !== o.recipe);
       o = { ...o, ...n };
+      if ("air" in n) (setAir(n.air), (airFactsNow = n.air));
       if (!o.spin) spinFrom = null;
       dirty = true;
       if (retier) ready = chooseTier().then(() => ((gov = null), (dirty = true), kick()));

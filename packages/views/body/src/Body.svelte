@@ -12,14 +12,15 @@
 -->
 <script module lang="ts">
   import type { SurfaceTile } from "../../../ui-contract/src/index.ts";
+  import type { AirFacts } from "../../../renderer/src/index.ts";
   // Tiles take about a second to build; keep them per system and body for the page's life.
-  const cache = new Map<string, { tiles: SurfaceTile[]; regime?: string; refused: number }>();
+  const cache = new Map<string, { tiles: SurfaceTile[]; regime?: string; refused: number; air: AirFacts | null }>();
 </script>
 
 <script lang="ts">
   import { globeStats, type Globe, type Json, type SystemScene, type ViewContext } from "../../../ui-contract/src/index.ts";
   import { untrack } from "svelte";
-  import { LIBRARY, mountGlobe, type GlobeRun, type GlobeRunOptions, type GlobeStatus } from "../../../renderer/src/index.ts";
+  import { airFactsOf, LIBRARY, mountGlobe, type GlobeRun, type GlobeRunOptions, type GlobeStatus } from "../../../renderer/src/index.ts";
   import { SHIPPED_RECIPES } from "../../../renderer/src/recipes.ts";
   import Cutaway from "../../cutaway/src/Cutaway.svelte";
 
@@ -29,7 +30,7 @@
   const subject = $derived(scene.subjects.find((s) => s.address === ws.selection));
   const size = $derived(Math.round(Math.min(640, Math.max(160, Number(params.size_px ?? 320)))));
 
-  let got = $state<{ tiles: SurfaceTile[]; regime?: string; refused: number } | null>(null);
+  let got = $state<{ tiles: SurfaceTile[]; regime?: string; refused: number; air: AirFacts | null } | null>(null);
   let loading = $state(false);
   let failed = $state<string | null>(null);
   let gen = 0;
@@ -50,14 +51,19 @@
     (async () => {
       const r = await ctx.session.surfaceTiles(sys, sub.address);
       if (g !== gen) return;
-      loading = false;
       if (!r.ok) {
+        loading = false;
         failed = r.message;
         return;
       }
-      const v = { tiles: r.tiles, regime: r.regime, refused: r.refused.length };
+      // The air the atmosphere pass draws: the kernel's surface pressure, temperature, gravity and gas mix.
+      const rs = await ctx.session.resolvedSystem(sys);
+      if (g !== gen) return;
+      const surf = rs.ok ? (rs.result.surfaces.find((x) => x.address === sub.address) as Parameters<typeof airFactsOf>[1]) : undefined;
+      const v = { tiles: r.tiles, regime: r.regime, refused: r.refused.length, air: rs.ok ? airFactsOf(rs.result.facts[sub.address], surf) : null };
       cache.set(key, v);
       got = v;
+      loading = false;
     })();
   });
 
@@ -88,6 +94,7 @@
     spin: ovSpin ?? params.spin === true,
     size_px: size,
     label: subject?.label ?? "",
+    air: got?.air ?? null,
   });
   // One runtime per globe element; settings and turns are passed to it.
   $effect(() => {
@@ -119,8 +126,8 @@
     if (st && st.lon === lo && st.lat === la) return;
     untrack(() => run)?.setView(lo, la);
   });
-  const tierChoices: [string, string][] = [["auto", "This device's choice"], ["gpu-basic", "GPU"], ["canvas", "2D canvas"], ["text", "Words only"]];
-  const tierWords: Record<string, string> = { "gpu-basic": "GPU", canvas: "Canvas", text: "Text" };
+  const tierChoices: [string, string][] = [["auto", "This device's choice"], ["gpu-high", "GPU, high"], ["gpu-basic", "GPU"], ["canvas", "2D canvas"], ["text", "Words only"]];
+  const tierWords: Record<string, string> = { "gpu-high": "GPU high", "gpu-basic": "GPU", canvas: "Canvas", text: "Text" };
 
   let drag: { x: number; y: number; lon: number; lat: number } | null = null;
   function down(e: PointerEvent) {
@@ -216,6 +223,7 @@
             {#if badgeOpen && gs}
               <div class="badge-detail" data-badge-detail>
                 <p>{gs.tier_note}</p>
+                {#if gs.plan.passes.some((x) => x.pass === "atmosphere")}<p data-air-note>{gs.air_note}</p>{/if}
                 {#each gs.badge.detail as line (line)}<p>{line}</p>{/each}
                 {#if gs.badge.reduced}<p>{gs.badge.lift}</p>{/if}
                 <p>Recipe {gs.recipe}, level {gs.level} of {gs.max}. {Number.isFinite(gs.ewma_ms) ? `Frames about ${Math.round(gs.ewma_ms)} ms; budget ${Math.round(gs.budget_ms)} ms.` : ""}</p>
