@@ -53,3 +53,5 @@ export { specFromScene, sceneAt, snapshotAt, fateEvents, subjectNames, fmtAge, K
 export type { SystemSpec, LookedAhead, FateEvent, FateSnapshot } from "./fate.ts";
 export { checkWorldStack, formatKm, kindPhrase, ladder, regionCounts, cutRadius } from "./world.ts";
 export type { WorldStack, WorldShell, WorldRegion, WorldFeature, LadderLine, WorldStackRead } from "./world.ts";
+export { direction as cubeDirection, faceOf, sampleAt, sampleColour, globeStats, viewToWorld, MATERIALS as SURFACE_MATERIALS, COVERS as SURFACE_COVERS } from "./globe.ts";
+export type { SurfaceTile, Globe } from "./globe.ts";

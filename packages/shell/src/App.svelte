@@ -56,6 +56,16 @@
 
   // Each screen document is checked before anything mounts; the GM switches between them.
   const SCREENS: Record<string, ScreenDoc> = { system: workspaceDoc as unknown as ScreenDoc, physics: physicsDoc as unknown as ScreenDoc, packs: packsDoc as unknown as ScreenDoc, screens: screensDoc as unknown as ScreenDoc, data: dataDoc as unknown as ScreenDoc, symbols: symbolsDoc as unknown as ScreenDoc, body: bodyDoc as unknown as ScreenDoc, styles: stylesScreenDoc as unknown as ScreenDoc };
+  const SCREEN_TABS = [
+    { value: "system", label: "Chart", key: "P" },
+    { value: "physics", label: "Physics", key: "P" },
+    { value: "body", label: "Body" },
+    { value: "screens", label: "Screens" },
+    { value: "data", label: "Player data" },
+    { value: "symbols", label: "Symbols" },
+    { value: "styles", label: "Styles" },
+    { value: "packs", label: "Packs" },
+  ];
   const checks = Object.fromEntries(Object.entries(SCREENS).map(([k, d]) => [k, checkScreen(d, REGISTRY)]));
   const badScreens = Object.values(checks).flatMap((c) => (c.ok ? [] : c.errors));
   const screen = $derived.by((): CheckedScreen | null => {
@@ -377,22 +387,17 @@
       <Segmented
         label="Screen"
         value={ws.screen}
-        options={[
-          { value: "system", label: "Chart", key: "P" },
-          { value: "physics", label: "Physics", key: "P" },
-          { value: "body", label: "Body" },
-          { value: "screens", label: "Screens" },
-          { value: "data", label: "Player data" },
-          { value: "symbols", label: "Symbols" },
-          { value: "styles", label: "Styles" },
-          { value: "packs", label: "Packs" },
-        ]}
+        options={SCREEN_TABS}
         onchange={(v) => (ws.screen = v)}
       />
     </div>
-    <button type="button" class="compact" aria-label={ws.screen === "physics" ? "Show the chart" : "Show the physics"} aria-pressed={ws.screen === "physics"} onclick={() => (ws.screen = ws.screen === "physics" ? "system" : "physics")}>
-      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" aria-hidden="true"><circle cx="5" cy="7" r="2" /><circle cx="19" cy="7" r="2" /><circle cx="12" cy="17" r="2" /><path d="M7 7h10M6 9l5 6M18 9l-5 6" /></svg>
-    </button>
+    <!-- Phone: the same screens as a menu, since the tabs do not fit. -->
+    <label class="screen-menu">
+      <span class="sr">Screen</span>
+      <select value={ws.screen} onchange={(e) => (ws.screen = e.currentTarget.value)} aria-label="Screen menu">
+        {#each SCREEN_TABS as t (t.value)}<option value={t.value}>{t.label}</option>{/each}
+      </select>
+    </label>
     <Segmented
       label="Mode"
       value={ws.mode}
@@ -615,8 +620,16 @@
   .spacer {
     flex: 1;
   }
-  .compact {
+  .compact,
+  .screen-menu {
     display: none;
+  }
+  .sr {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip-path: inset(50%);
   }
   .branch-stamp {
     position: absolute;
@@ -883,6 +896,17 @@
     .tools {
       display: none;
     }
+    .screen-menu {
+      display: block;
+    }
+    .screen-menu select {
+      height: 44px;
+      max-width: 110px;
+      border: var(--sse-line) solid var(--sse-ink);
+      background: transparent;
+      color: var(--sse-ink);
+      font-family: var(--sse-font-body);
+    }
     .compact {
       display: flex;
       align-items: center;
@@ -892,10 +916,6 @@
       border: var(--sse-line) solid var(--sse-ink);
       background: transparent;
       color: var(--sse-ink);
-    }
-    .compact[aria-pressed="true"] {
-      background: var(--sse-ink);
-      color: var(--sse-on-ink);
     }
     .stage {
       display: contents;
@@ -908,20 +928,22 @@
     .area-chart .fill {
       position: absolute;
     }
-    /* The flow editor flows with the page on a phone instead of sitting in a fixed window. */
-    .stage[data-screen="physics"] .area-chart {
+    /* Tool screens (symbols, styles, packs...) scroll in a taller window; the flow editor and the Body view flow with the page. */
+    .stage:not([data-screen="system"]) .area-chart {
+      height: 72dvh;
+    }
+    .stage:not([data-screen="system"]) .area-chart .fill {
+      overflow: auto;
+    }
+    .stage:is([data-screen="physics"], [data-screen="body"]) .area-chart {
       height: auto;
     }
-    .stage[data-screen="physics"] .area-chart .fill {
+    .stage:is([data-screen="physics"], [data-screen="body"]) .area-chart .fill {
       position: relative;
     }
     .stage[data-screen="body"] .area-chart {
-      height: auto;
       inset: auto;
       padding: 12px 16px;
-    }
-    .stage[data-screen="body"] .area-chart .fill {
-      position: relative;
     }
     .undo-note {
     position: absolute;
