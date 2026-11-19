@@ -10,5 +10,6 @@ authors.workspace = true
 sse-core.workspace = true
 sse-chronicle.workspace = true
 sse-flow.workspace = true
+sse-record.workspace = true
 serde.workspace = true
 serde_json.workspace = true

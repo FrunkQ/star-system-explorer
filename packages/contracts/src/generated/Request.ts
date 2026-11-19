@@ -34,4 +34,17 @@ pins?: unknown, } | { "op": "read_world_stack", body?: string,
 /**
  * `earth`, `europa`, `mars`, `tarn`, `titan` or `venus`.
  */
-fixture?: string, stack?: unknown, } | { "op": "adopt", import_v3?: string, formation?: FormationRequest, occurred_at_s?: number, } | { "op": "resolved_system", system: string, at_s?: number, tiles?: Array<TileRequest>, } | { "op": "systems" } | { "op": "life_view", body?: string, fixture?: string, } | { "op": "export_chronicle" } | { "op": "import_chronicle", export: unknown, };
+fixture?: string, stack?: unknown, } | { "op": "adopt", import_v3?: string, formation?: FormationRequest, occurred_at_s?: number, } | { "op": "resolved_system", system: string, at_s?: number, tiles?: Array<TileRequest>, } | { "op": "systems" } | { "op": "life_view", body?: string, fixture?: string, } | { "op": "export_chronicle" } | { "op": "import_chronicle", export: unknown, } | { "op": "add_note", address: string, links?: Array<string>, text: string, tags?: Array<string>, 
+/**
+ * The writing seat (default `gm`).
+ */
+by?: string, audience?: "everyone" | "gm" | string[], tier?: string, supersedes?: string, 
+/**
+ * Written by an agent: evidence `narrative`.
+ */
+narrative?: boolean, at_s: bigint, 
+/**
+ * When the news reaches its audience (default `at_s`); not shown or
+ * disclosed before then.
+ */
+arrives_at_s?: bigint, } | { "op": "set_kept", address: string, kind: string, value: unknown, writer?: string, reason?: string, at_s: bigint, } | { "op": "add_actor", id: string, parent?: string, name: string, kind: string, at_s: bigint, } | { "op": "record", address: string, at_s?: bigint, } | { "op": "disclosures", audience: string, at_s: bigint, };
