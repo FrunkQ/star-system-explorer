@@ -558,6 +558,258 @@
    "prose": "A frozen shell over a dark sea, far out where the light is thin."
   },
   {
+   "address": "u:kestrel/sys:1/body:3/body:0",
+   "kind": "moon",
+   "label": "Tarn a",
+   "subtitle": "Tarn's moon",
+   "parent": "u:kestrel/sys:1/body:3",
+   "orbit": {
+    "a_au": 0.00248,
+    "phase_deg": 120
+   },
+   "facts": [
+    {
+     "field": "name",
+     "label": "Name",
+     "value": "Tarn a",
+     "display": "Tarn a",
+     "editable": true,
+     "source": "fixture"
+    },
+    {
+     "field": "a_au",
+     "label": "Orbit",
+     "value": 0.00248,
+     "unit": "AU",
+     "display": "371,000 km",
+     "editable": true,
+     "source": "fixture"
+    },
+    {
+     "field": "eccentricity",
+     "label": "Eccentricity",
+     "value": 0.04,
+     "display": "0.04",
+     "editable": true,
+     "source": "fixture"
+    },
+    {
+     "field": "mass_earth",
+     "label": "Mass",
+     "value": 0.0118,
+     "unit": "M⊕",
+     "display": "0.0118 M⊕",
+     "editable": true,
+     "source": "fixture"
+    },
+    {
+     "field": "radius_earth",
+     "label": "Radius",
+     "value": 0.27,
+     "unit": "R⊕",
+     "display": "0.27 R⊕",
+     "editable": true,
+     "source": "fixture"
+    }
+   ],
+   "stamps": [
+    "resolved"
+   ],
+   "tags": [
+    "size:small"
+   ],
+   "prose": "A grey, cratered moon that raises Tarn's tides."
+  },
+  {
+   "address": "u:kestrel/sys:1/body:4/body:0",
+   "kind": "moon",
+   "label": "Hasp",
+   "subtitle": "Vault i · icy moon",
+   "parent": "u:kestrel/sys:1/body:4",
+   "orbit": {
+    "a_au": 0.002754,
+    "phase_deg": 30
+   },
+   "facts": [
+    {
+     "field": "name",
+     "label": "Name",
+     "value": "Hasp",
+     "display": "Hasp",
+     "editable": true,
+     "source": "fixture"
+    },
+    {
+     "field": "a_au",
+     "label": "Orbit",
+     "value": 0.002754,
+     "unit": "AU",
+     "display": "412,000 km",
+     "editable": true,
+     "source": "fixture"
+    },
+    {
+     "field": "eccentricity",
+     "label": "Eccentricity",
+     "value": 0.003,
+     "display": "0.003",
+     "editable": true,
+     "source": "fixture"
+    },
+    {
+     "field": "mass_earth",
+     "label": "Mass",
+     "value": 0.009,
+     "unit": "M⊕",
+     "display": "0.009 M⊕",
+     "editable": true,
+     "source": "fixture"
+    },
+    {
+     "field": "radius_earth",
+     "label": "Radius",
+     "value": 0.25,
+     "unit": "R⊕",
+     "display": "0.25 R⊕",
+     "editable": true,
+     "source": "fixture"
+    }
+   ],
+   "stamps": [
+    "resolved"
+   ],
+   "tags": [
+    "size:small"
+   ],
+   "prose": "Smooth ice over a dark ocean; geysers at the south pole."
+  },
+  {
+   "address": "u:kestrel/sys:1/body:4/body:1",
+   "kind": "moon",
+   "label": "Rivet",
+   "subtitle": "Vault ii · icy moon",
+   "parent": "u:kestrel/sys:1/body:4",
+   "orbit": {
+    "a_au": 0.004378,
+    "phase_deg": 200
+   },
+   "facts": [
+    {
+     "field": "name",
+     "label": "Name",
+     "value": "Rivet",
+     "display": "Rivet",
+     "editable": true,
+     "source": "fixture"
+    },
+    {
+     "field": "a_au",
+     "label": "Orbit",
+     "value": 0.004378,
+     "unit": "AU",
+     "display": "655,000 km",
+     "editable": true,
+     "source": "fixture"
+    },
+    {
+     "field": "eccentricity",
+     "label": "Eccentricity",
+     "value": 0.009,
+     "display": "0.009",
+     "editable": true,
+     "source": "fixture"
+    },
+    {
+     "field": "mass_earth",
+     "label": "Mass",
+     "value": 0.008,
+     "unit": "M⊕",
+     "display": "0.008 M⊕",
+     "editable": true,
+     "source": "fixture"
+    },
+    {
+     "field": "radius_earth",
+     "label": "Radius",
+     "value": 0.24,
+     "unit": "R⊕",
+     "display": "0.24 R⊕",
+     "editable": true,
+     "source": "fixture"
+    }
+   ],
+   "stamps": [
+    "resolved"
+   ],
+   "tags": [
+    "size:small"
+   ],
+   "prose": "Old, cratered ice."
+  },
+  {
+   "address": "u:kestrel/sys:1/body:4/body:2",
+   "kind": "moon",
+   "label": "Latch",
+   "subtitle": "Vault iii · icy moon",
+   "parent": "u:kestrel/sys:1/body:4",
+   "orbit": {
+    "a_au": 0.012567,
+    "phase_deg": -70
+   },
+   "facts": [
+    {
+     "field": "name",
+     "label": "Name",
+     "value": "Latch",
+     "display": "Latch",
+     "editable": true,
+     "source": "fixture"
+    },
+    {
+     "field": "a_au",
+     "label": "Orbit",
+     "value": 0.012567,
+     "unit": "AU",
+     "display": "1,880,000 km",
+     "editable": true,
+     "source": "fixture"
+    },
+    {
+     "field": "eccentricity",
+     "label": "Eccentricity",
+     "value": 0.007,
+     "display": "0.007",
+     "editable": true,
+     "source": "fixture"
+    },
+    {
+     "field": "mass_earth",
+     "label": "Mass",
+     "value": 0.024,
+     "unit": "M⊕",
+     "display": "0.024 M⊕",
+     "editable": true,
+     "source": "fixture"
+    },
+    {
+     "field": "radius_earth",
+     "label": "Radius",
+     "value": 0.41,
+     "unit": "R⊕",
+     "display": "0.41 R⊕",
+     "editable": true,
+     "source": "fixture"
+    }
+   ],
+   "stamps": [
+    "resolved"
+   ],
+   "tags": [
+    "size:small"
+   ],
+   "prose": "The largest of Vault's moons, rock under thick ice."
+  },
+  {
    "address": "u:kestrel/sys:1/zone:temperate",
    "kind": "zone",
    "label": "Temperate zone",

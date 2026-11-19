@@ -4,7 +4,7 @@
   kernel only through the session, the same client API a player app uses.
 -->
 <script lang="ts">
-  import { applyEdits, enterFacts, observeOf, type AuthoredFacts, checkScreen, deriveScene, gmSeat, redoEdit, subjectOf, undoEdit, type CheckedScreen, type DerivationDoc, type ScreenDoc, type SystemScene, type ViewHandle, type ViewModule, type ViewSession } from "../../ui-contract/src/index.ts";
+  import { applyEdits, enterFacts, observeOf, type AuthoredFacts, checkScreen, deriveScene, gmSeat, redoEdit, subjectOf, systemOrder, undoEdit, type CheckedScreen, type DerivationDoc, type ScreenDoc, type SystemScene, type ViewHandle, type ViewModule, type ViewSession } from "../../ui-contract/src/index.ts";
   import { openBrowserSession } from "../../ui-contract/src/host-browser.ts";
   import { createShare, type Share } from "./share.svelte.ts";
   import { themeCss, THEMES } from "../../skins/chart-room/src/index.ts";
@@ -131,7 +131,8 @@
   }
 
   let help: HTMLDialogElement | undefined = $state();
-  const bodies = base.subjects.filter((s) => s.kind === "star" || s.orbit).sort((a, b) => (a.orbit?.a_au ?? 0) - (b.orbit?.a_au ?? 0));
+  // Tree order: the star, then each planet followed by its moons.
+  const bodies = systemOrder(base);
   function cycle(by: number) {
     const i = bodies.findIndex((b) => b.address === ws.selection);
     ws.select(bodies[(i + by + bodies.length) % bodies.length]!.address);

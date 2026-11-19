@@ -25,6 +25,7 @@ export type { Mark, Binding, Channel, Shape, Pattern, Scale, SymbologyDoc, Marke
 export { parseV3Palette, symbologyFromV3Palette, coloursFromV3Save, withV3TagColours, objectColourSummary, campaignCopy, v3SaveText } from "./v3-colours.ts";
 export type { V3TokenMap, V3ImportLine, V3PaletteImport, V3ObjectColour, V3SaveColours } from "./v3-colours.ts";
 export type { SystemScene, SceneSubject, SceneFact, SceneEvent, FactSource } from "./scene.ts";
+export { KM_PER_AU, primaryOf, childrenOf, systemOrder, frameFor } from "./scene.ts";
 export { describeFact, wordsFor, fact, subjectName, parentOf, sentence, checkPlayerScene } from "./player-scene.ts";
 export type { PlayerScene, PlayerSubject, PlayerFact, Vocab, FieldWords, FactText } from "./player-scene.ts";
 export { packSummary, previewStack, stackPacks, checkPackDoc } from "./packs-edit.ts";

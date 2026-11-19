@@ -71,3 +71,47 @@ export interface SystemScene {
   subjects: SceneSubject[];
   events: SceneEvent[];
 }
+
+/** Kilometres in one astronomical unit (IAU 2012 exact definition). */
+export const KM_PER_AU = 149_597_870.7;
+
+/** The system's primary star: the star with no orbit. */
+export function primaryOf(scene: Pick<SystemScene, "subjects">): SceneSubject | undefined {
+  return scene.subjects.find((s) => s.kind === "star" && !s.orbit);
+}
+
+/**
+ * The bodies that orbit `centre`, nearest first. Orbits are local to their
+ * parent (handover/rendering-rules.md): a moon belongs to its planet's frame,
+ * never to the star's. A body with an orbit and no parent orbits the primary.
+ */
+export function childrenOf(scene: Pick<SystemScene, "subjects">, centre: string): SceneSubject[] {
+  const primary = primaryOf(scene)?.address;
+  return scene.subjects
+    .filter((s) => s.orbit && (s.parent ?? primary) === centre)
+    .sort((a, b) => a.orbit!.a_au - b.orbit!.a_au);
+}
+
+/** Every body in tree order: the primary, then each planet followed by its moons. */
+export function systemOrder(scene: Pick<SystemScene, "subjects">): SceneSubject[] {
+  const out: SceneSubject[] = [];
+  const walk = (s: SceneSubject) => {
+    out.push(s);
+    for (const c of childrenOf(scene, s.address)) walk(c);
+  };
+  const p = primaryOf(scene);
+  if (p) walk(p);
+  return out;
+}
+
+/**
+ * The frame a body is drawn in: its parent's. Null is the primary's frame
+ * (the system chart), so a planet maps to null and a moon to its planet.
+ */
+export function frameFor(scene: Pick<SystemScene, "subjects">, address: string | null): string | null {
+  const primary = primaryOf(scene)?.address;
+  const s = address ? scene.subjects.find((x) => x.address === address) : undefined;
+  if (!s || s.address === primary) return null;
+  const parent = s.parent ?? primary;
+  return parent === primary ? null : (parent ?? null);
+}
