@@ -999,6 +999,10 @@ impl Kernel {
             Request::ReadSpectrum { targets, observer } => {
                 systems::read_spectrum(targets, observer)?
             }
+            Request::ReadAirOptics {
+                airs,
+                wavelengths_m,
+            } => systems::read_air_optics(airs, wavelengths_m)?,
             Request::ReadActivity {
                 stars,
                 seed,

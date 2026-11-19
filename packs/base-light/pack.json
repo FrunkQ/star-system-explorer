@@ -301,6 +301,14 @@
           {
             "text": "Gray, R. O. and Corbally, C. J. 2009, Stellar Spectral Classification, Princeton University Press: which absorption lines mark each spectral class (Balmer lines strongest near A0; Ca II H and K, the G band and metal lines in G and K; TiO bands in M; He I in B, He II in O)",
             "url": "https://press.princeton.edu/books/hardcover/9780691125107/stellar-spectral-classification"
+          },
+          {
+            "text": "Kaye, G. W. C. and Laby, T. H., Tables of Physical and Chemical Constants, section 2.5.7, Refractive index of gases (n−1 at 589.3 nm, 0 °C, one atmosphere)",
+            "url": "https://web.archive.org/web/2019/http://www.kayelaby.npl.co.uk/general_physics/2_5/2_5_7.html"
+          },
+          {
+            "text": "Bodhaine, B. A. et al. 1999, On Rayleigh optical depth calculations, J. Atmos. Oceanic Technol. 16, 1854",
+            "doi": "10.1175/1520-0426(1999)016<1854:ORODC>2.0.CO;2"
           }
         ],
         "absorption": {
@@ -458,6 +466,119 @@
                 0,
                 0
               ]
+            }
+          ]
+        },
+        "gases": {
+          "note": "Refractivity n−1 at 589.3 nm, 273.15 K and 101325 Pa (Loschmidt density). Dry air uses Peck and Reeder's dispersion exactly; other gases follow air's dispersion scaled to their 589 nm value (stand-in). King factor F = a + b λ⁻² + c λ⁻⁴ with λ in µm (Bodhaine et al. 1999 for N₂ and O₂; others constant).",
+          "list": [
+            {
+              "id": "air",
+              "name": "dry air",
+              "molar_mass_g": 28.9595,
+              "refractivity_589": 0.0002926,
+              "king": [
+                1.0469,
+                0.0,
+                0.0
+              ],
+              "dispersion": "peck-reeder"
+            },
+            {
+              "id": "n2",
+              "name": "nitrogen",
+              "molar_mass_g": 28.0134,
+              "refractivity_589": 0.000298,
+              "king": [
+                1.034,
+                0.000317,
+                0.0
+              ],
+              "dispersion": "scaled"
+            },
+            {
+              "id": "o2",
+              "name": "oxygen",
+              "molar_mass_g": 31.9988,
+              "refractivity_589": 0.000271,
+              "king": [
+                1.096,
+                0.001385,
+                0.0001448
+              ],
+              "dispersion": "scaled"
+            },
+            {
+              "id": "ar",
+              "name": "argon",
+              "molar_mass_g": 39.948,
+              "refractivity_589": 0.000281,
+              "king": [
+                1.0,
+                0.0,
+                0.0
+              ],
+              "dispersion": "scaled"
+            },
+            {
+              "id": "co2",
+              "name": "carbon dioxide",
+              "molar_mass_g": 44.0095,
+              "refractivity_589": 0.000449,
+              "king": [
+                1.15,
+                0.0,
+                0.0
+              ],
+              "dispersion": "scaled"
+            },
+            {
+              "id": "h2",
+              "name": "hydrogen",
+              "molar_mass_g": 2.01588,
+              "refractivity_589": 0.000132,
+              "king": [
+                1.0,
+                0.0,
+                0.0
+              ],
+              "dispersion": "scaled"
+            },
+            {
+              "id": "he",
+              "name": "helium",
+              "molar_mass_g": 4.002602,
+              "refractivity_589": 3.5e-05,
+              "king": [
+                1.0,
+                0.0,
+                0.0
+              ],
+              "dispersion": "scaled"
+            },
+            {
+              "id": "ch4",
+              "name": "methane",
+              "molar_mass_g": 16.0425,
+              "refractivity_589": 0.000444,
+              "king": [
+                1.0,
+                0.0,
+                0.0
+              ],
+              "dispersion": "scaled"
+            },
+            {
+              "id": "h2o",
+              "name": "water vapour",
+              "molar_mass_g": 18.01528,
+              "refractivity_589": 0.000256,
+              "king": [
+                1.0,
+                0.0,
+                0.0
+              ],
+              "dispersion": "scaled"
             }
           ]
         }

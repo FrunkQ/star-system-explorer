@@ -340,6 +340,18 @@ pub enum Request {
         #[ts(optional, type = "unknown[]")]
         bodies: Option<Vec<serde_json::Value>>,
     },
+    /// Air optics (light track, for the renderer's sky): for each air (gas
+    /// fractions by number, surface pressure, temperature, gravity), Rayleigh
+    /// cross-section, scattering per metre and optical depth at
+    /// `wavelengths_m` (default 680, 550 and 440 nm) and across the visible
+    /// slices, with scale height and surface density.
+    ReadAirOptics {
+        #[ts(type = "unknown[]")]
+        airs: Vec<serde_json::Value>,
+        #[serde(default)]
+        #[ts(optional)]
+        wavelengths_m: Option<Vec<f64>>,
+    },
     /// Spectrum as it reaches an observer (O12): each target is one or more
     /// components (`conditions` as for `read_light`, or a ready `light`
     /// description), each with a line-of-sight speed; the observer gives the
@@ -654,6 +666,7 @@ impl Request {
             Request::SurveyPlanets { .. } => "survey_planets",
             Request::ReadActivity { .. } => "read_activity",
             Request::ReadSpectrum { .. } => "read_spectrum",
+            Request::ReadAirOptics { .. } => "read_air_optics",
             Request::Adopt { .. } => "adopt",
             Request::ResolvedSystem { .. } => "resolved_system",
             Request::Systems => "systems",
@@ -745,6 +758,11 @@ pub fn ops() -> Vec<OpInfo> {
             "read_world_stack",
             Cost::Light,
             "one stack: validation, the depth ladder and a few atom evaluations",
+        ),
+        o(
+            "read_air_optics",
+            Cost::Trivial,
+            "per air and wavelength: a few closed-form blocks",
         ),
         o(
             "read_spectrum",
@@ -1023,6 +1041,11 @@ pub enum Response {
         table: serde_json::Value,
         #[ts(type = "unknown[]")]
         bodies: Vec<serde_json::Value>,
+    },
+    /// `read_air_optics`: each of `airs` is `sse_light::air::AirOptics`.
+    AirOpticsRead {
+        #[ts(type = "unknown[]")]
+        airs: Vec<serde_json::Value>,
     },
     /// `read_spectrum`: each of `spectra` is `sse_light::observe::Spectrum`.
     SpectrumRead {

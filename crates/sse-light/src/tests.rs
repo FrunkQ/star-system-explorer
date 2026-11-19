@@ -786,3 +786,102 @@ mod o12 {
         assert!(l.observed_m < l.rest_m);
     }
 }
+
+mod air_optics {
+    use crate::air::*;
+    use crate::table::LightTable;
+
+    fn mix(list: &[(&str, f64)]) -> Vec<Share> {
+        list.iter()
+            .map(|(g, f)| Share {
+                gas: g.to_string(),
+                fraction: *f,
+            })
+            .collect()
+    }
+
+    fn earth(gases: Vec<Share>) -> Air {
+        Air {
+            address: "u:sol/sys:0/body:2".into(),
+            gases,
+            surface_pressure_pa: 101_325.0,
+            surface_temperature_k: 288.15,
+            gravity_m_s2: 9.80665,
+        }
+    }
+
+    /// Earth from its gases against Bucholtz 1995 (4.84, 11.49 and 28.6 per
+    /// million metres at 680, 550 and 440 nm) and a scale height of 8.43 km.
+    #[test]
+    fn earth_from_its_gases() {
+        let t = LightTable::base();
+        for gases in [
+            mix(&[
+                ("n2", 0.7808),
+                ("o2", 0.2095),
+                ("ar", 0.0093),
+                ("co2", 0.0004),
+            ]),
+            mix(&[("air", 1.0)]),
+        ] {
+            let o = optics(&earth(gases), &[680e-9, 550e-9, 440e-9], &t).unwrap();
+            let want = [4.84e-6, 11.49e-6, 28.6e-6];
+            for (x, w) in o.at.iter().zip(want) {
+                assert!(
+                    (x.beta_per_m / w - 1.0).abs() < 0.015,
+                    "{} vs {w}",
+                    x.beta_per_m
+                );
+            }
+            assert!(
+                (o.scale_height_m - 8430.0).abs() < 30.0,
+                "{}",
+                o.scale_height_m
+            );
+            assert!((o.at[1].tau / 0.0971 - 1.0).abs() < 0.01, "{}", o.at[1].tau);
+            assert_eq!(o.visible_slices.len(), 3);
+            assert!(o.visible_slices[0].1.tau > o.visible_slices[2].1.tau);
+        }
+    }
+
+    /// Mars: thin carbon dioxide air, scale height about 11 km, far clearer than Earth's.
+    /// Titan: thick cold nitrogen, much more scattering than Earth.
+    #[test]
+    fn mars_and_titan() {
+        let t = LightTable::base();
+        let mars = Air {
+            address: "u:sol/sys:0/body:3".into(),
+            gases: mix(&[
+                ("co2", 0.951),
+                ("n2", 0.0259),
+                ("ar", 0.0194),
+                ("o2", 0.0037),
+            ]),
+            surface_pressure_pa: 610.0,
+            surface_temperature_k: 210.0,
+            gravity_m_s2: 3.71,
+        };
+        let m = optics(&mars, &[550e-9], &t).unwrap();
+        assert!(
+            (m.scale_height_m / 1e3 - 11.0).abs() < 0.6,
+            "{}",
+            m.scale_height_m
+        );
+        assert!(
+            m.at[0].tau > 0.001 && m.at[0].tau < 0.006,
+            "{}",
+            m.at[0].tau
+        );
+        let titan = Air {
+            address: "u:sol/sys:0/body:6/moon:5".into(),
+            gases: mix(&[("n2", 0.95), ("ch4", 0.05)]),
+            surface_pressure_pa: 146_700.0,
+            surface_temperature_k: 93.7,
+            gravity_m_s2: 1.352,
+        };
+        let ti = optics(&titan, &[550e-9], &t).unwrap();
+        assert!(ti.at[0].tau > 5.0 * 0.0971, "{}", ti.at[0].tau);
+        assert!(optics(&earth(mix(&[("xenon-ish", 1.0)])), &[550e-9], &t).is_err());
+        assert!(optics(&earth(mix(&[("n2", 0.5)])), &[550e-9], &t).is_err());
+    }
+}

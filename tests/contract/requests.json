@@ -1294,6 +1294,19 @@
   "deaths": [{ "star": "u:sol/sys:0/star:0", "died_at_s": 2.2e17, "initial_mass_msun": 1.0, "remnant_mass_msun": 0.54, "ambient_h_m3": 1000000.0 }]
  },
  {
+  "op": "read_air_optics",
+  "airs": [
+   { "address": "u:sol/sys:0/body:2", "gases": [{ "gas": "n2", "fraction": 0.7808 }, { "gas": "o2", "fraction": 0.2095 }, { "gas": "ar", "fraction": 0.0093 }, { "gas": "co2", "fraction": 0.0004 }],
+     "surface_pressure_pa": 101325.0, "surface_temperature_k": 288.15, "gravity_m_s2": 9.80665 },
+   { "address": "u:sol/sys:0/body:3", "gases": [{ "gas": "co2", "fraction": 0.951 }, { "gas": "n2", "fraction": 0.0259 }, { "gas": "ar", "fraction": 0.0194 }, { "gas": "o2", "fraction": 0.0037 }],
+     "surface_pressure_pa": 610.0, "surface_temperature_k": 210.0, "gravity_m_s2": 3.71 }
+  ]
+ },
+ {
+  "op": "read_air_optics",
+  "airs": [{ "address": "u:t/sys:0/body:1", "gases": [{ "gas": "unobtainium", "fraction": 1.0 }], "surface_pressure_pa": 1.0, "surface_temperature_k": 1.0, "gravity_m_s2": 1.0 }]
+ },
+ {
   "op": "read_spectrum",
   "targets": [
    { "address": "u:t/sys:4/star:0", "name": "a double star", "distance_m": 6.17e17,

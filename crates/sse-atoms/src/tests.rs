@@ -108,7 +108,7 @@ fn every_atom_is_cited_explained_and_versioned() {
         }
     }
     assert_eq!(
-        n, 54,
+        n, 59,
         "first-wave atom count changed: update handover/packages/P1.md"
     );
 }
@@ -670,4 +670,29 @@ fn sun_activity_from_rossby() {
     // Cycle: the inactive branch gives the Sun 6.1 years (Mittag et al. 2023 say so too).
     let cyc = cycle_period(26.09 * DAY, 1.488, 1.324) / JULIAN_YEAR;
     assert!((cyc - 6.1).abs() < 0.3, "{cyc} yr");
+}
+
+/// Air optics: Earth's sea-level Rayleigh scattering at 550 nm against
+/// Bodhaine et al. 1999 (4.5105e-31 m², τ = 0.0971) and Bucholtz 1995.
+#[test]
+fn earth_rayleigh_scattering() {
+    use crate::air::*;
+    let n1 = air_refractivity(550e-9);
+    assert!((n1 * 1e8 - 27_784.0).abs() < 30.0, "{n1}");
+    // Dry air King factor at 550 nm with 360 ppm CO2 (Bodhaine table 3).
+    let sigma = rayleigh_cross_section(
+        550e-9,
+        n1 * (1.0 + 0.54 * (0.00036 - 0.0003)),
+        N_S_288,
+        1.04882,
+    );
+    assert!((sigma / 4.5105e-31 - 1.0).abs() < 2e-3, "{sigma}");
+    let beta = N_S_288 * sigma;
+    assert!((beta / 11.49e-6 - 1.0).abs() < 0.01, "{beta}");
+    // Optical depth: g at the column's mass-weighted height, 45°N (Bodhaine eqs 10-11 give about 9.789).
+    let m_air = (15.0556 * 0.00036 + 28.9595) * 1e-3 / 6.022_140_76e23;
+    let tau = column_optical_depth(101_325.0, sigma, m_air, 9.789);
+    assert!((tau / 0.097_069 - 1.0).abs() < 0.005, "{tau}");
+    let h = scale_height(288.15, 28.9595 * AMU, 9.80665);
+    assert!((h - 8434.0).abs() < 10.0, "{h}");
 }

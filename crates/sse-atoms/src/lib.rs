@@ -5,6 +5,7 @@
 #![forbid(unsafe_code)]
 
 pub mod activity;
+pub mod air;
 pub mod climate;
 pub mod common;
 pub mod heat;
@@ -34,6 +35,7 @@ pub fn atoms() -> Vec<Box<dyn sse_flow::Atom>> {
         .chain(light::atoms())
         .chain(nebula::atoms())
         .chain(activity::atoms())
+        .chain(air::atoms())
         .collect()
 }
 
@@ -270,6 +272,16 @@ pub const KIND_DESCRIPTIONS: &[(&str, &str)] = &[
     ("star.activity_cycle_period", "length of a star's spot and activity cycle"),
     ("flare.energy", "total energy released by a flare, all wavelengths"),
     ("flare.rate_above", "flares per unit time with at least the given energy"),
+    // air optics
+    ("light.wavelength", "a wavelength of light"),
+    ("gas.refractivity", "refractive index minus one of a gas at its reference density"),
+    ("gas.reference_density", "number density at which a gas's refractivity is given"),
+    ("gas.king_factor", "King correction factor for scattering by non-spherical molecules (1 for spheres)"),
+    ("gas.rayleigh_cross_section", "Rayleigh scattering cross-section per molecule"),
+    ("atmosphere.mean_molecular_mass", "mean mass of one air molecule"),
+    ("atmosphere.rayleigh_optical_depth", "Rayleigh optical depth of the whole air column, looking straight up"),
+    ("atmosphere.number_density", "molecules per cubic metre of air"),
+    ("atmosphere.rayleigh_scattering_coefficient", "Rayleigh scattering per metre of path"),
 ];
 
 /// Quantity kinds for the base-physics pack, from the atoms' port kinds.

@@ -69,6 +69,27 @@ impl Absorption {
     }
 }
 
+/// A gas's optical data for Rayleigh scattering.
+#[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
+pub struct GasDef {
+    pub id: String,
+    pub name: String,
+    pub molar_mass_g: f64,
+    /// n − 1 at 589.3 nm, 273.15 K, 101325 Pa.
+    pub refractivity_589: f64,
+    /// King factor a + b λ⁻² + c λ⁻⁴ (λ in µm).
+    pub king: [f64; 3],
+    /// "peck-reeder" (dry air, exact) or "scaled" (air's dispersion, scaled).
+    pub dispersion: String,
+}
+
+#[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
+pub struct Gases {
+    #[serde(default)]
+    pub note: String,
+    pub list: Vec<GasDef>,
+}
+
 #[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
 pub struct Grid {
     pub from_m: f64,
@@ -86,6 +107,8 @@ pub struct LightTable {
     pub disc_rings: usize,
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub absorption: Option<Absorption>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub gases: Option<Gases>,
     #[serde(default)]
     pub references: Vec<Reference>,
 }

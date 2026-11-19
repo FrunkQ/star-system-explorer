@@ -281,6 +281,29 @@ fn parse_list<T: serde::de::DeserializeOwned>(
         .collect()
 }
 
+/// Air optics (Rayleigh scattering) for planets' air.
+pub(crate) fn read_air_optics(
+    airs: Vec<serde_json::Value>,
+    wavelengths_m: Option<Vec<f64>>,
+) -> Out {
+    let table = &sse_light::emit::Model::base().table;
+    let wl = wavelengths_m.unwrap_or_else(|| vec![680e-9, 550e-9, 440e-9]);
+    if wl.iter().any(|&l| !(1e-8..=1e-3).contains(&l)) {
+        return Err(err(
+            "bad_air",
+            "wavelengths must lie between 10 nm and 1 mm",
+        ));
+    }
+    let mut out = vec![];
+    for (n, v) in airs.into_iter().enumerate() {
+        let a: sse_light::air::Air =
+            serde_json::from_value(v).map_err(|e| err("bad_air", format!("air {n}: {e}")))?;
+        let o = sse_light::air::optics(&a, &wl, table).map_err(|e| err("bad_air", e))?;
+        out.push(serde_json::to_value(o).expect("plain data"));
+    }
+    Ok(Response::AirOpticsRead { airs: out })
+}
+
 /// Spectrum as it reaches an observer (O12).
 pub(crate) fn read_spectrum(
     targets: Vec<serde_json::Value>,

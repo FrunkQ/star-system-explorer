@@ -1249,6 +1249,20 @@
         "range": null
       },
       {
+        "description": "mean mass of one air molecule",
+        "dim": [
+          0,
+          1,
+          0,
+          0,
+          0,
+          0,
+          0
+        ],
+        "id": "atmosphere.mean_molecular_mass",
+        "range": null
+      },
+      {
         "description": "mean molecular weight in atomic mass units",
         "dim": [
           0,
@@ -1263,6 +1277,20 @@
         "range": null
       },
       {
+        "description": "molecules per cubic metre of air",
+        "dim": [
+          -3,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0
+        ],
+        "id": "atmosphere.number_density",
+        "range": null
+      },
+      {
         "description": "mass of an escaping particle in atomic mass units",
         "dim": [
           0,
@@ -1274,6 +1302,34 @@
           0
         ],
         "id": "atmosphere.particle_mass_amu",
+        "range": null
+      },
+      {
+        "description": "Rayleigh optical depth of the whole air column, looking straight up",
+        "dim": [
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0
+        ],
+        "id": "atmosphere.rayleigh_optical_depth",
+        "range": null
+      },
+      {
+        "description": "Rayleigh scattering per metre of path",
+        "dim": [
+          -1,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0
+        ],
+        "id": "atmosphere.rayleigh_scattering_coefficient",
         "range": null
       },
       {
@@ -1585,6 +1641,62 @@
         "range": null
       },
       {
+        "description": "King correction factor for scattering by non-spherical molecules (1 for spheres)",
+        "dim": [
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0
+        ],
+        "id": "gas.king_factor",
+        "range": null
+      },
+      {
+        "description": "Rayleigh scattering cross-section per molecule",
+        "dim": [
+          2,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0
+        ],
+        "id": "gas.rayleigh_cross_section",
+        "range": null
+      },
+      {
+        "description": "number density at which a gas's refractivity is given",
+        "dim": [
+          -3,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0
+        ],
+        "id": "gas.reference_density",
+        "range": null
+      },
+      {
+        "description": "refractive index minus one of a gas at its reference density",
+        "dim": [
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0
+        ],
+        "id": "gas.refractivity",
+        "range": null
+      },
+      {
         "description": "aluminium-26 at the star's birth relative to the Sun's birth cloud",
         "dim": [
           0,
@@ -1837,6 +1949,20 @@
           0
         ],
         "id": "light.reflected_area",
+        "range": null
+      },
+      {
+        "description": "a wavelength of light",
+        "dim": [
+          1,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0
+        ],
+        "id": "light.wavelength",
         "range": null
       },
       {
