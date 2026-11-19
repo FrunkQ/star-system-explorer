@@ -34,6 +34,8 @@ pub fn port(name: &str, kind: &str, dim: D, valid: Option<(f64, f64)>) -> Port {
         kind: kind.into(),
         dim,
         valid,
+        shape: None,
+        any_dim: false,
     }
 }
 
@@ -82,6 +84,8 @@ impl Def {
                     science: self.science.into(),
                     formula: self.formula.into(),
                 },
+                class: None,
+                dims: None,
             },
             f: self.f,
         })

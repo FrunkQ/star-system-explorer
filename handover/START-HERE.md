@@ -78,6 +78,7 @@ Milestone M1 "Proven core" = packages K0 to K6 (build plan section 3/4).
 | L1d life boxes I, J: signatures by tier with confidence, false positive and negative, data views, sifters, hooks, life view | done (kernel track) | packages/L1d.md |
 | L2 life box H: life's fluxes and the planet's answer (air box), oxygenation by balance | done (kernel track) | packages/L2.md |
 | J1 the campaign record: notes, kept values, actors and relations; GM-only, with per-audience disclosures | done (kernel track) | packages/J1.md |
+| J2 typed values, logic blocks, conditions shared with K8, dice on the table secret, engine blocks (classify, place) | done (kernel track) | packages/J2.md |
 | C3 reverse placement in a system | done (kernel track) | packages/C3.md |
 | T1 epoch stepping, ageing star, secular orbits, symplectic windows | done (kernel track); giant phase sketch awaits F7 | packages/T1.md |
 | T2 look-ahead branch, commit, age the Solar System | done (kernel track); with Alex for review | packages/T2.md |
@@ -86,7 +87,7 @@ Milestone M1 "Proven core" = packages K0 to K6 (build plan section 3/4).
 | Track | Packages | Branch |
 |---|---|---|
 | Physics | P1, P3, P4, F0 to F6 done; pipeline, F7, F9, S0 to S4 and S6 done; F8 waits on G6; next S7 (cover, named features, built layer) | `main` via PRs |
-| Kernel | K7 to K10, G0 to G5, C1 to C3, L0, L1a to L1d, L2, J1, T1, T2 (also through the API), the U3 gaps, the V10 grant gaps and the UI asks (`adopt`, look-ahead write-back, `resolved_system`; K6-additions.md) done; next J2 and J3 (logic blocks, boxes), then G6 | `main` via PRs |
+| Kernel | K7 to K10, G0 to G5, C1 to C3, L0, L1a to L1d, L2, J1, J2, T1, T2 (also through the API), the U3 gaps, the V10 grant gaps and the UI asks (`adopt`, look-ahead write-back, `resolved_system`; K6-additions.md) done; next J3 (boxes), then G6 | `main` via PRs |
 | Chart room shell and player views | U0 to U3, V1, U5, V2, V12, V3, V11, V4, V5, planet chart, V10, V6 System 3D, U9 lenses, N1 sound, U4 (what-if and look-ahead), A1 part 1, O1 light switch (UI), V13 parts 1 and 2 (import and grow, add to the campaign, read back and age with write-back), V6 Cutaway and Body globe (Body screen), phone screen menu, V14 size comparison and chart measuring done; next U7 biosphere (waits on the kernel's `life_view`), browser campaign save (waits on `export_chronicle`), V7 | `main` via PRs |
 
 **Since 19 Nov (Alex): `main` is the default branch.** New work branches from `main` and arrives as a pull request
@@ -110,6 +111,7 @@ Kernel track integration points (K7 to K10):
 - L1d (log `packages/L1d.md`): `sse-life::signatures` (`Observables`, `signatures`, `facts`, `disclosure`) and `sse-life::sift` (`epochs`, `hooks`, `view`), golden `tests/golden/life-signatures.json`, harness engine `life-signatures`.
 - L2 (log `packages/L2.md`): `sse-life::history::{Boundary, StepFluxes, history_with}` and `sse-life::feedback` (`AirBox`, `CoupledManifest`, `coupled`), pack key `provides.other.life_feedback`, golden `tests/golden/life-feedback.json`, harness engine `life-feedback`.
 - J1 (log `packages/J1.md`): crate `sse-record` (notes, kept kinds `provides.other.record.kept`, actors), the kernel's separate GM-only record chronicle with its own hash, scene notes in `sse-observe`, ops `add_note`, `set_kept`, `add_actor`, `record`, `disclosures`. **UI track:** never broadcast the record; send each seat its `disclosures`.
+- J2 (log `packages/J2.md`): typed wires in `sse-flow` (`Shape`, `Val`, `NodeDoc.config`, `Atom::eval_typed`, `Env` and `World`; all optional, no hash changed), crate `sse-logic` (logic set, `to_blocks` for K8 predicates, `chance.roll` and `chance.draw` on the table secret with `commitment`, `engine.classify`, `engine.place`). `atoms` lists logic blocks with `class` and port `shape`. **UI track:** draw `class: logic` and `engine` blocks apart from physics; an engine block opens its own editor.
 - G5 (log `packages/G5.md`): `sse-cosmos::stars` (`Stars`: cells, draws, orbits, state, pins, `birth`), golden `tests/golden/stars.json`, harness engine `stars`.
 - C3 (log `packages/C3.md`): crate `sse-place` (reverse placement through the base-physics flows, four outcomes, picker preview, chronicle commit), pack `packs/base-place`, fixture `tests/fixtures/place/systems.json`, golden `tests/golden/place.json`. The base atlas gained `needs`.
 - T1 and T2 (logs `packages/T1.md`, `T2.md`): crate `sse-time` (integrator written fresh from Yoshida 1990, not from REBOUND; Laplace-Lagrange; the ageing star on F0's life line with a giant-branch core clock; look-ahead branches, commit, replay), pack `packs/base-time`, fixture `tests/fixtures/time/solar-system.json`, golden `tests/golden/time.json`. One-line K3 fix in `Chronicle::branch_append` (branch cut from an empty chronicle). **Physics track:** F7's giant tables replace the core clock in `sse-time/src/star.rs` (`star_with`, `core_at`).

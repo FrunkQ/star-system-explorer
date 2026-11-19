@@ -1,5 +1,6 @@
 //! Atom declarations and the atom trait (H6.2).
 
+use crate::value::{Shape, Val};
 use serde::{Deserialize, Serialize};
 use sse_core::Dimension;
 use std::collections::BTreeMap;
@@ -30,6 +31,41 @@ pub struct Port {
     /// Range (SI) where the physics of the atom holds, if bounded.
     #[serde(default)]
     pub valid: Option<(f64, f64)>,
+    /// What the port carries (J2); absent means a number.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub shape: Option<Shape>,
+    /// A logic number port that takes any dimension (`dims` on the atom says
+    /// how outputs follow); `dim` is then ignored.
+    #[serde(default, skip_serializing_if = "std::ops::Not::not")]
+    pub any_dim: bool,
+}
+
+impl Port {
+    pub fn shape(&self) -> Shape {
+        self.shape.clone().unwrap_or(Shape::Number)
+    }
+}
+
+/// How a logic atom's any-dimension number outputs follow its inputs.
+#[derive(Clone, Copy, PartialEq, Eq, Debug, Serialize, Deserialize)]
+#[serde(rename_all = "kebab-case")]
+pub enum DimRule {
+    /// All any-dimension number inputs share one dimension; outputs have it.
+    Same,
+    /// Output = first input x second input.
+    Product,
+    /// Output = first input / second input.
+    Quotient,
+}
+
+/// What kind of block an atom is (J2, record design 3.2 and 3.5).
+#[derive(Clone, Copy, PartialEq, Eq, Debug, Serialize, Deserialize)]
+#[serde(rename_all = "kebab-case")]
+pub enum BlockClass {
+    /// Logic: no citation rule; drawn differently from physics.
+    Logic,
+    /// A dedicated engine behind a block face, with its own editor.
+    Engine,
 }
 
 #[derive(Clone, PartialEq, Debug, Serialize, Deserialize)]
@@ -66,6 +102,11 @@ pub struct AtomDecl {
     #[serde(default)]
     pub references: Vec<Reference>,
     pub explain: ExplainText,
+    /// Absent: a physics atom on numbers.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub class: Option<BlockClass>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub dims: Option<DimRule>,
 }
 
 impl AtomDecl {
@@ -93,6 +134,137 @@ impl fmt::Display for AtomError {
 pub trait Atom: Send + Sync {
     fn decl(&self) -> &AtomDecl;
     fn eval(&self, inputs: &[f64], params: &[f64]) -> Result<Vec<f64>, AtomError>;
+    /// Typed evaluation (logic and engine blocks). The default reads numbers
+    /// and calls `eval`, so physics atoms need nothing new.
+    fn eval_typed(&self, inputs: &[Val], params: &[f64], cx: &mut Call) -> Result<Out, AtomError> {
+        let _ = cx;
+        let xs: Vec<f64> = inputs
+            .iter()
+            .map(|v| v.num().ok_or_else(|| AtomError("expected a number".into())))
+            .collect::<Result<_, _>>()?;
+        Ok(Out::values(
+            self.eval(&xs, params)?
+                .into_iter()
+                .map(Val::Number)
+                .collect(),
+        ))
+    }
+    /// A node's own ports when its config sets them (the shape a read gives,
+    /// how many inputs an `and` takes). `None`: the declaration's ports.
+    fn ports(&self, config: Option<&serde_json::Value>) -> Option<(Vec<Port>, Vec<Port>)> {
+        let _ = config;
+        None
+    }
+    /// Check a node's `config` at validation (logic and engine blocks).
+    fn check_config(&self, config: Option<&serde_json::Value>) -> Result<(), String> {
+        match config {
+            None => Ok(()),
+            Some(_) => Err(format!("{} takes no config", self.decl().id)),
+        }
+    }
+}
+
+/// What a typed call returns.
+#[derive(Clone, PartialEq, Debug, Default)]
+pub struct Out {
+    pub values: Vec<Val>,
+    /// Inputs the result depended on (in order), for evidence; `None`: all.
+    /// `and` stops at its first false input, `or` at its first true one,
+    /// `select` uses the condition and the chosen branch.
+    pub used: Option<Vec<usize>>,
+    /// World facts this block read: (field or `tag:<name>`, value).
+    pub reads: Vec<(String, sse_core::cbor::Value)>,
+    /// An engine block's own explanation (a class label's axes and region).
+    pub note: Option<serde_json::Value>,
+}
+impl Out {
+    pub fn values(values: Vec<Val>) -> Self {
+        Out {
+            values,
+            ..Default::default()
+        }
+    }
+}
+
+/// What logic blocks may read of the world: one subject's facts (and its
+/// parent's, as `parent.<field>`), tags, other addresses' facts, children.
+/// The record is never offered to physics (record design 2.2.1).
+pub trait World {
+    fn fact(
+        &self,
+        address: Option<&sse_core::Address>,
+        field: &str,
+    ) -> Option<sse_core::cbor::Value>;
+    fn has_tag(&self, address: Option<&sse_core::Address>, tag: &str) -> bool;
+    fn children(&self, _address: &sse_core::Address) -> Vec<sse_core::Address> {
+        Vec::new()
+    }
+    /// Every fact of one address (the subject when `None`), for engine
+    /// blocks that read a whole subject (the classifier).
+    fn facts(
+        &self,
+        _address: Option<&sse_core::Address>,
+    ) -> BTreeMap<String, sse_core::cbor::Value> {
+        BTreeMap::new()
+    }
+    /// The facts of that address's parent (read as `parent.<field>`).
+    fn parent_facts(
+        &self,
+        _address: Option<&sse_core::Address>,
+    ) -> BTreeMap<String, sse_core::cbor::Value> {
+        BTreeMap::new()
+    }
+    /// Every tag on that address.
+    fn tags(&self, _address: Option<&sse_core::Address>) -> std::collections::BTreeSet<String> {
+        std::collections::BTreeSet::new()
+    }
+    /// A kept value from the record (GM machine only; never physics).
+    fn kept(
+        &self,
+        _address: Option<&sse_core::Address>,
+        _kind: &str,
+    ) -> Option<sse_core::cbor::Value> {
+        None
+    }
+}
+
+/// The environment of one typed evaluation.
+pub struct Env<'a> {
+    pub world: Option<&'a dyn World>,
+    /// The subject facts are read from by default.
+    pub subject: Option<sse_core::Address>,
+    /// Universe time of the reading, seconds.
+    pub now_s: i64,
+    /// Hysteresis: the widened form for staying in a state once entered.
+    pub staying: bool,
+    /// The universe seed, for engine blocks that resolve the universe
+    /// (placement). Never used for dice.
+    pub seed: Option<sse_core::Seed>,
+    /// The table secret for dice (GM machine only); none: rolls refuse.
+    pub table_secret: Option<sse_core::Seed>,
+    /// The tick or turn index, the dice counter.
+    pub counter: u64,
+}
+impl Env<'_> {
+    pub fn empty() -> Env<'static> {
+        Env {
+            world: None,
+            subject: None,
+            now_s: 0,
+            staying: false,
+            seed: None,
+            table_secret: None,
+            counter: 0,
+        }
+    }
+}
+
+/// One node's call: its environment, config and identity.
+pub struct Call<'a, 'e> {
+    pub env: &'a Env<'e>,
+    pub config: Option<&'a serde_json::Value>,
+    pub flow_id: &'a str,
+    pub node_id: &'a str,
 }
 
 /// The atoms known to a kernel.
