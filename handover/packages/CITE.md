@@ -69,3 +69,13 @@ formation-leftovers):
   α/(2 St)/λ added (about +42 percent at α 0.01, St 0.1). F3 population tests still pass.
 - Reference text: Kelvin-Helmholtz coefficient and type I reduction now say what the code uses; Marcus 2009 for
   the iron fraction; Obertas fit range; Jackson 2012 X-ray saturation by spectral type; Lodders vs Asplund Z.
+
+### Surfaces (19 Nov)
+Wording only, no physics value changed; goldens re-blessed because reference strings are hashed
+(surface-impacts: REFS; surface-regimes: Venus corona cause text):
+- Crater saturation 0.15 D^-2 is about 10 percent of geometric saturation (top of Gault 1970's 1 to 10 percent), not
+  "a few percent (Hartmann 1984)"; kept as a documented fudge.
+- Giant cloud chemistry thresholds are on 1-bar temperature, adapted from Sudarsky et al. 2000's Teff classes
+  (clear class not modelled); documented fudge.
+- Lourenço 2020 DOI corrected (G-cubed); Europa's 60 Myr surface age credited to Schenk et al. 2004; Venus coronae
+  "several hundred, 60 to over 2000 km" (Stofan 1992 gives no count of 500); Neukum chronology valid to ~4.1 Gyr.
