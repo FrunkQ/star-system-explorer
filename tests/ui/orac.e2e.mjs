@@ -44,6 +44,7 @@ const shot = async (page, n) => {
 try {
   for (const name of engines) {
     const engine = { chromium, firefox, webkit }[name];
+    provider.seen.length = 0; // one mock serves every engine: count from this engine's start
     const browser = await engine.launch();
     const errors = [];
     const gm = await browser.newPage({ viewport: { width: 1440, height: 900 } });
