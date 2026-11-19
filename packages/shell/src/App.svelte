@@ -44,6 +44,7 @@
   import stackDoc from "./documents/stack.json";
   import factsDoc from "./documents/kestrel.player-facts.json";
   import { REGISTRY } from "./registry.ts";
+  import { MORE_SCREENS } from "./screens.more.ts";
   import { createWorkspace } from "./workspace.svelte.ts";
   import { loadPref, savePref } from "./prefs.ts";
   import { createSymbols } from "./symbols.svelte.ts";
@@ -59,13 +60,14 @@
   let scene = $state<SystemScene>(base);
 
   // Each screen document is checked before anything mounts; the GM switches between them.
-  const SCREENS: Record<string, ScreenDoc> = { system: workspaceDoc as unknown as ScreenDoc, physics: physicsDoc as unknown as ScreenDoc, packs: packsDoc as unknown as ScreenDoc, screens: screensDoc as unknown as ScreenDoc, data: dataDoc as unknown as ScreenDoc, symbols: symbolsDoc as unknown as ScreenDoc, body: bodyDoc as unknown as ScreenDoc, compare: compareDoc as unknown as ScreenDoc, life: lifeDoc as unknown as ScreenDoc, styles: stylesScreenDoc as unknown as ScreenDoc };
+  const SCREENS: Record<string, ScreenDoc> = { system: workspaceDoc as unknown as ScreenDoc, physics: physicsDoc as unknown as ScreenDoc, packs: packsDoc as unknown as ScreenDoc, screens: screensDoc as unknown as ScreenDoc, data: dataDoc as unknown as ScreenDoc, symbols: symbolsDoc as unknown as ScreenDoc, body: bodyDoc as unknown as ScreenDoc, compare: compareDoc as unknown as ScreenDoc, life: lifeDoc as unknown as ScreenDoc, styles: stylesScreenDoc as unknown as ScreenDoc, ...Object.fromEntries(MORE_SCREENS.map((m) => [m.value, m.doc])) };
   const SCREEN_TABS = [
     { value: "system", label: "Chart", key: "P" },
     { value: "physics", label: "Physics", key: "P" },
     { value: "body", label: "Body" },
     { value: "compare", label: "Sizes" },
     { value: "life", label: "Life" },
+    ...MORE_SCREENS.filter((m) => m.tab).map((m) => ({ value: m.value, label: m.label })),
     { value: "screens", label: "Screens" },
     { value: "data", label: "Player data" },
     { value: "symbols", label: "Symbols" },
@@ -110,7 +112,7 @@
       // U10: the campaign kept in this browser reopens first; players then join from it.
       const reopened = await reopenKept(s);
       const packs = [...opened, ...s.stack().added, ...(s.stack().campaign ? [s.stack().campaign] : [])];
-      share = await createShare(s, { universe: base.universe, packs, ...(reopened ? { opening_export: reopened } : {}), clock_yr: ws.now_yr, views: () => observeOf(s.stack().base)?.setup.views.map((v) => v.id) ?? [], scope: (factsDoc as unknown as AuthoredFacts).scope });
+      share = await createShare(s, { universe: base.universe, packs, ...(reopened ? { opening_export: reopened } : {}), clock_yr: ws.campaign_now_yr ?? ws.now_yr, views: () => observeOf(s.stack().base)?.setup.views.map((v) => v.id) ?? [], scope: (factsDoc as unknown as AuthoredFacts).scope });
       // The player-facing facts the GM has recorded, entered when a fresh campaign opens (a reopened one has them).
       if (!reopened) {
         const bad = await enterFacts(s, factsDoc as unknown as AuthoredFacts);
@@ -151,6 +153,8 @@
     ws.undo = save.workspace.undo;
     ws.redo = save.workspace.redo;
     ws.now_yr = save.workspace.now_yr;
+    ws.campaign_now_yr = save.workspace.campaign_now_yr ?? save.workspace.now_yr;
+    ws.campaign_epoch_yr = save.workspace.campaign_epoch_yr ?? base.now_yr;
     savedAt = save.saved_at;
     const events = savedEvents(save);
     keptNote = `Reopened the campaign kept ${new Date(save.saved_at).toLocaleString("en-GB", { dateStyle: "medium", timeStyle: "short" })}: ${events} ${events === 1 ? "event" : "events"}.`;
@@ -169,7 +173,7 @@
       root: ROOT,
       state_hash: await s.stateHash(),
       export: ex.export,
-      workspace: JSON.parse(JSON.stringify({ applied: ws.applied, undo: ws.undo, redo: ws.redo, now_yr: ws.now_yr })) as CampaignSave["workspace"],
+      workspace: JSON.parse(JSON.stringify({ applied: ws.applied, undo: ws.undo, redo: ws.redo, now_yr: ws.now_yr, campaign_now_yr: ws.campaign_now_yr, campaign_epoch_yr: ws.campaign_epoch_yr })) as CampaignSave["workspace"],
       saved_at: new Date().toISOString(),
       ...(st.added.length || st.campaign ? { stack: { added: st.added as unknown as Json[], campaign: (st.campaign ?? null) as unknown as Json } } : {}),
     });
@@ -180,6 +184,7 @@
     void status.hash;
     void status.stack;
     void ws.now_yr;
+    void ws.campaign_now_yr;
     void ws.undo.length;
     void ws.redo.length;
     if (!session || !status.hash) return;
@@ -315,18 +320,28 @@
   const soundScene = $derived(orbitScene(shown.system, voicesFromSystem(shown)));
   const lensKinds = $derived([...new Set(scene.subjects.filter((x) => x.facts.length).map((x) => x.kind))]);
 
-  // The session clock travels to players with the GM's time ruler.
+  // The campaign's clock travels to players (U11): its now, not whatever time the GM is viewing.
   $effect(() => {
-    const yr = ws.now_yr;
+    const yr = ws.campaign_now_yr ?? ws.now_yr;
     if (share?.state.link) share.setClock(yr);
   });
+  // Physics changes over thousands of years, not hours: scenes re-derive when the viewed time moves by a kyr or more,
+  // so stepping and playing through days does not call the kernel's derivations at every frame.
+  const deriveNow = $derived(Math.abs(ws.now_yr - base.now_yr) < 1 ? base.now_yr : Math.round(ws.now_yr / 1000) * 1000);
+  /** Move the campaign's clock to another system's present, keeping the time elapsed in the campaign. */
+  function shiftCampaign(present: number) {
+    const elapsed = (ws.campaign_now_yr ?? ws.now_yr) - (ws.campaign_epoch_yr ?? ws.now_yr);
+    ws.campaign_epoch_yr = present;
+    ws.campaign_now_yr = present + elapsed;
+    ws.now_yr = ws.campaign_now_yr;
+  }
 
   // Scenes come from the kernel's derivations over the authored values; any
   // edit or a move of the ruler re-derives (K9 moves this into the kernel).
   let generation = 0;
   $effect(() => {
     void ws.revision;
-    const now = ws.now_yr;
+    const now = deriveNow;
     const applied = { ...ws.applied };
     const s = session;
     if (!s) return;
@@ -344,7 +359,7 @@
         if (!r.ok) return void (whatNote = `Could not read ${v.title} back: ${r.message}`);
         const read = sceneFromResolved(r.result, v.title);
         const now_yr = v.fresh ? read.now_yr : now;
-        if (v.fresh) ((v.fresh = false), (ws.now_yr = read.now_yr));
+        if (v.fresh) ((v.fresh = false), shiftCampaign(read.now_yr));
         viewingSpec = r.result.spec ?? null;
         mainScene = scene = { ...read, now_yr, span_yr: [read.span_yr[0], Math.max(read.span_yr[1], now_yr * 1.25)] };
       });
@@ -369,7 +384,7 @@
     const a = adoptedSystems.find((x) => x.system === system);
     ws.select(null);
     if (a) ((viewing = { ...a, fresh: true }), (ws.mode = "view"));
-    else ((viewing = null), (viewingSpec = null), (ws.now_yr = base.now_yr));
+    else ((viewing = null), (viewingSpec = null), shiftCampaign(base.now_yr));
     ws.revision++;
   }
   function adopted(systems: { system: string; title: string }[], note: string, hash: string) {
@@ -582,7 +597,7 @@
           <button type="button" class="linkbtn" onclick={() => whatIf("drop")}>Throw away</button>
         {:else}
           {#if !ahead && !viewing}<button type="button" class="linkbtn quiet" onclick={() => whatIf("open")} title="Try changes on a branch; the chart's history does not move until you keep them">What if…</button>{/if}
-          <LookAhead {session} {scene} given={viewing ? viewingSpec : null} writeBack={!!viewing} bind:ahead bind:at={aheadAt} onkept={(note, now_myr, h) => ((whatNote = note), now_myr !== null && (ws.now_yr = now_myr * 1e6), (status = { ...status, hash: h }), ws.revision++)} />
+          <LookAhead {session} {scene} given={viewing ? viewingSpec : null} writeBack={!!viewing} bind:ahead bind:at={aheadAt} onkept={(note, now_myr, h) => ((whatNote = note), now_myr !== null && (ws.now_yr = ws.campaign_now_yr = ws.campaign_epoch_yr = now_myr * 1e6), (status = { ...status, hash: h }), ws.revision++)} />
         {/if}
         {#if whatNote}<span role="status">{whatNote}</span>{/if}
       </span>
@@ -730,9 +745,26 @@
     outline: 2px solid var(--sse-focus);
     outline-offset: 2px;
   }
+  /* Tactility (handover/interface-style.md): every control answers a touch at once, quietly. */
+  :global(button, select, [role="button"]) {
+    transition:
+      background-color var(--sse-motion-quick) var(--sse-ease),
+      color var(--sse-motion-quick) var(--sse-ease),
+      box-shadow var(--sse-motion-quick) var(--sse-ease),
+      transform var(--sse-motion-quick) var(--sse-ease);
+  }
+  :global(button:not(:disabled):active) {
+    transform: translateY(1px);
+  }
+  @media (prefers-reduced-motion: reduce) {
+    :global(*) {
+      --sse-motion-quick: 0ms !important;
+      --sse-motion: 0ms !important;
+    }
+  }
   .app {
     display: grid;
-    grid-template-rows: 64px minmax(0, 1fr) 76px 28px;
+    grid-template-rows: 64px minmax(0, 1fr) 96px 28px;
     height: 100vh;
     height: 100dvh;
     overflow: hidden;
@@ -1033,7 +1065,7 @@
   /* Phone: the same card and ruler without the wide chart (H8.5). */
   @media (max-width: 760px) {
     .app {
-      grid-template-rows: 56px auto auto 64px auto;
+      grid-template-rows: 56px auto auto auto auto;
       height: auto;
       min-height: 100dvh;
       overflow: visible;
@@ -1124,6 +1156,8 @@
       width: auto;
       max-height: none;
       overflow: visible;
+      /* A card opening from its body (U12) slides a little sideways; it must never make the page scroll. */
+      overflow-x: clip;
       margin: 16px 16px 24px;
       padding: 0 6px 6px 0;
     }
@@ -1131,6 +1165,8 @@
       position: sticky;
       bottom: 0;
       z-index: 2;
+      min-width: 0;
+      overflow-x: clip;
     }
     .status {
       flex-wrap: wrap;

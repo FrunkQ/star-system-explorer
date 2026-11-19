@@ -66,7 +66,7 @@ A region cell (default 8 Mpc comoving) has a mean overdensity from W.
 - **How many haloes of each mass**: conditional mass function (Sheth and Tormen 1999 with peak-background split) gives expected counts per mass bin given the cell's overdensity. Counts are keyed Poisson draws per bin. Dense cells get more and bigger haloes; voids get few dwarfs. Budget rule: total halo mass may not exceed the cell's collapsed mass; the partition is drawn top-down from the largest bin.
 - **Where**: positions at the highest peaks of the finer noise octaves inside the cell, so galaxies sit on the filaments you can see.
 - **Growth history**: M(z) = M0 · (1+z)^β · exp(−γ z) (McBride et al. 2009). β and γ are drawn with scatter correlated with environment (denser means earlier formation).
-- **Spin**: lognormal, median 0.035, width 0.5 dex (Bullock et al. 2001). Sets disc size later.
+- **Spin**: lognormal, median 0.035, width sigma(ln lambda) = 0.5 (Bullock et al. 2001; natural log, about 0.22 dex). Sets disc size later.
 - **Major mergers**: a keyed Poisson process in time with the rate fit of Fakhouri, Ma and Boylan-Kolchin (2010) as a function of mass, mass ratio and redshift. Each major merger (ratio above 1:4) is an **event in the chronicle** with a time, a mass ratio and an orbit sketch. Minor mergers are part of smooth growth, except that the few largest leave **streams** (section 8).
 - **Satellites and groups**: sub-haloes drawn from the sub-halo mass function; group membership is a relation between galaxy addresses, with a simple two-body orbit for the nearest large neighbour (this is what schedules a future Andromeda-style collision).
 

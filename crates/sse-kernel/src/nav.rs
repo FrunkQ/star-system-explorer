@@ -189,3 +189,45 @@ pub(crate) fn plan_route(a: Ask) -> Result<serde_json::Value, Response> {
     let plan = sse_nav::plan(&s, &sys, &req).map_err(|e| err("route_refused", e))?;
     Ok(serde_json::to_value(plan).expect("plain data"))
 }
+
+/// `window_view`: what a sensor sees from beside a body or a point, in a fixture or inline system.
+pub(crate) fn window_view(
+    fixture: Option<&str>,
+    nav: Option<&serde_json::Value>,
+    at_s: Option<f64>,
+    from: Option<&str>,
+    at_au: Option<[f64; 3]>,
+    sensor: Option<&str>,
+) -> Result<serde_json::Value, Response> {
+    let s = sse_nav::scenario::settings();
+    let sys: NavSystem = match (fixture, nav) {
+        (Some(name), None) => sse_nav::scenario::fixture(name).ok_or_else(|| {
+            err(
+                "unknown_fixture",
+                format!("no NAV fixture {name}; fixtures: sol"),
+            )
+        })?,
+        (None, Some(v)) => {
+            serde_json::from_value(v.clone()).map_err(|e| bad(format!("nav: {e}")))?
+        }
+        _ => return Err(bad("give a fixture or a nav system")),
+    };
+    let vp = match (from, at_au) {
+        (Some(b), None) => sse_nav::sky::Viewpoint::Body(b.into()),
+        (None, Some(p)) => sse_nav::sky::Viewpoint::Point([
+            p[0] * sse_core::quantity::consts::AU,
+            p[1] * sse_core::quantity::consts::AU,
+            p[2] * sse_core::quantity::consts::AU,
+        ]),
+        _ => return Err(bad("give a body to look from or a point at_au, not both")),
+    };
+    let v = sse_nav::sky::window(
+        &s.window,
+        &sys,
+        &vp,
+        at_s.unwrap_or(sys.t0_s),
+        sensor.unwrap_or("eye"),
+    )
+    .map_err(|e| err("window_refused", e))?;
+    Ok(serde_json::to_value(v).expect("plain data"))
+}

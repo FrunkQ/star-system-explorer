@@ -387,7 +387,7 @@
         "cohort.feh_mean": -0.14635978909,
         "cohort.from_gyr": 5.8,
         "cohort.population": "thin",
-        "cohort.sigma_kms": 44.13207203,
+        "cohort.sigma_kms": 43.352008219,
         "cohort.to_gyr": 7.8
       },
       "fields": {
@@ -557,7 +557,7 @@
         "cohort.feh_mean": -0.080044236829,
         "cohort.from_gyr": 7.8,
         "cohort.population": "thin",
-        "cohort.sigma_kms": 39.229204895,
+        "cohort.sigma_kms": 37.892914163,
         "cohort.to_gyr": 9.8
       },
       "fields": {
@@ -727,7 +727,7 @@
         "cohort.feh_mean": -0.03807224007,
         "cohort.from_gyr": 9.8,
         "cohort.population": "thin",
-        "cohort.sigma_kms": 32.806692162,
+        "cohort.sigma_kms": 30.890042528,
         "cohort.to_gyr": 11.8
       },
       "fields": {
@@ -897,7 +897,7 @@
         "cohort.feh_mean": -0.016259791263,
         "cohort.from_gyr": 11.8,
         "cohort.population": "thin",
-        "cohort.sigma_kms": 25.739608975,
+        "cohort.sigma_kms": 23.4102746,
         "cohort.to_gyr": 12.8
       },
       "fields": {
@@ -1067,7 +1067,7 @@
         "cohort.feh_mean": -0.0049107327085,
         "cohort.from_gyr": 12.8,
         "cohort.population": "thin",
-        "cohort.sigma_kms": 17.52304216,
+        "cohort.sigma_kms": 15.085440841,
         "cohort.to_gyr": 13.8
       },
       "fields": {
@@ -1231,7 +1231,7 @@
         "index": 2,
         "population": "thin",
         "r_sigma_dex": 0.15,
-        "sigma_kms": 44.13207203,
+        "sigma_kms": 43.352008219,
         "to_gyr": 7.8
       },
       {
@@ -1243,7 +1243,7 @@
         "index": 3,
         "population": "thin",
         "r_sigma_dex": 0.15,
-        "sigma_kms": 39.229204895,
+        "sigma_kms": 37.892914163,
         "to_gyr": 9.8
       },
       {
@@ -1255,7 +1255,7 @@
         "index": 4,
         "population": "thin",
         "r_sigma_dex": 0.15,
-        "sigma_kms": 32.806692162,
+        "sigma_kms": 30.890042528,
         "to_gyr": 11.8
       },
       {
@@ -1267,7 +1267,7 @@
         "index": 5,
         "population": "thin",
         "r_sigma_dex": 0.15,
-        "sigma_kms": 25.739608975,
+        "sigma_kms": 23.4102746,
         "to_gyr": 12.8
       },
       {
@@ -1279,7 +1279,7 @@
         "index": 6,
         "population": "thin",
         "r_sigma_dex": 0.15,
-        "sigma_kms": 17.52304216,
+        "sigma_kms": 15.085440841,
         "to_gyr": 13.8
       }
     ],
@@ -1288,7 +1288,7 @@
       "thick": 0.0083620955597,
       "thin": 0.066608097334
     },
-    "encounters_per_myr": 12.325500134,
+    "encounters_per_myr": 11.834077407,
     "expected_systems": 308.53605645,
     "feh_ism": 0.0,
     "ia_sn_gyr_pc3": 6.0721241792e-6,
@@ -1340,7 +1340,7 @@
     "facts": {
       "patch.alpha_fe_ism": 0.0,
       "patch.cc_sn_gyr_pc3": 0.00007381997765,
-      "patch.encounters_per_myr": 12.325500134,
+      "patch.encounters_per_myr": 11.834077407,
       "patch.feh_ism": 0.0,
       "patch.ia_sn_gyr_pc3": 6.0721241792e-6,
       "patch.model": "milky-way-like.v1",

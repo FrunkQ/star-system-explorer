@@ -8,8 +8,8 @@
 //!   taken top-down from the largest bin under the cell's mass budget;
 //! - where: the highest of a few keyed candidate points on the finer octaves;
 //! - growth: M(z) = M0 (1+z)^alpha exp(beta z), the McBride et al. 2009 form,
-//!   with alpha and beta from the cosmology by Correa et al. 2015 (eqs. 19
-//!   to 22), shifted earlier in denser cells and scattered per halo;
+//!   with alpha and beta from the cosmology by Correa et al. 2015 (paper I,
+//!   MNRAS 450, 1514, doi:10.1093/mnras/stv689; eqs. 14, 15 and 20 to 23 with B2), shifted earlier in denser cells and scattered per halo;
 //! - spin: lognormal, median 0.035, sigma ln = 0.5 (Bullock et al. 2001);
 //! - major mergers (ratio above 1:4): a keyed Poisson process in redshift with
 //!   the Fakhouri, Ma and Boylan-Kolchin 2010 rate (eq. 1), each a dated
@@ -76,7 +76,8 @@ pub const ST_A: f64 = 0.3222;
 pub const ST_SMALL_A: f64 = 0.707;
 pub const ST_P: f64 = 0.3;
 
-/// Sheth-Tormen multiplicity f(nu) (eq. 6, written in nu = delta_c / sigma).
+/// Sheth-Tormen multiplicity (ST99 eq. 10, where nu = (delta_c / sigma)^2; written here as
+/// f(sigma) = 2 nu f(nu) in nu = delta_c / sigma).
 pub fn st_f(nu: f64) -> f64 {
     let an2 = ST_SMALL_A * nu * nu;
     ST_A * m::sqrt(2.0 * ST_SMALL_A / m::PI) * (1.0 + m::pow(an2, -ST_P)) * nu * m::exp(-0.5 * an2)
@@ -190,7 +191,7 @@ pub struct Cell {
     pub halo_mass: f64,
 }
 
-/// Correa et al. 2015 (MNRAS 450, 1514) eqs. 19 to 22: alpha and beta of the
+/// Correa et al. 2015 (paper I, MNRAS 450, 1514) eqs. 14, 15 and 20 to 23 (constant 1.8837 from eq. B2): alpha and beta of the
 /// McBride form from the power spectrum, for a halo of mass M0 today.
 pub fn correa(c: &Cosmology, m0: f64, shift_ln_f: f64) -> (f64, f64) {
     let lm = m::log10(m0);
@@ -384,13 +385,24 @@ impl Haloes<'_> {
             let count = poisson(&d, u64::from(s) * 16, lambda);
             for c in 0..count.min(3) {
                 let i = u64::from(s) * 16 + 4 + c * 4;
-                // Ratio from xi^beta on [major_ratio, 1] (beta = -1.995, the FMBK slope; exponential factor ~1 here).
+                // Ratio drawn from the full FMBK eq. 1 shape on [major_ratio, 1],
+                // xi^beta exp((xi / xi_t)^gamma), by inverting its integral with a
+                // fixed 40-step bisection. (The exponential factor rises about 3 times
+                // from xi = 0.25 to 1, so the bare power law is not enough.)
                 let u = d.unit(i);
-                let b1 = 1.0 - 1.995;
-                let xi = m::pow(
-                    m::pow(p.major_ratio, b1) + u * (1.0 - m::pow(p.major_ratio, b1)),
-                    1.0 / b1,
-                );
+                let total = major_rate(mz, p.major_ratio, z);
+                let (mut lo, mut hi) = (p.major_ratio, 1.0_f64);
+                for _ in 0..40 {
+                    let mid = 0.5 * (lo + hi);
+                    let part =
+                        crate::cosmology::quad(&|x| fmbk_rate(mz, x, z), p.major_ratio, mid, 4);
+                    if part < u * total {
+                        lo = mid;
+                    } else {
+                        hi = mid;
+                    }
+                }
+                let xi = 0.5 * (lo + hi);
                 let zz = z + dz * (d.unit(i + 1) - 0.5);
                 out.push(Merger {
                     z: zz,

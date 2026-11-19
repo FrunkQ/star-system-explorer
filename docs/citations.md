@@ -19,12 +19,15 @@ Add a row to the area file below in the same PR that adds the reference. Columns
 reference as written, what is relied on, status, what was checked.
 
 ## Areas
-| Area | File | Checked | Wrong | Physics changed |
+| Area | File | Checked (rows) | Wrong (fixed) | Physics changed |
 |---|---|---|---|---|
-| Stars | [citations/stars.md](citations/stars.md) | in progress | | |
-| Orbits and formation | [citations/orbits-formation.md](citations/orbits-formation.md) | in progress | | |
-| Interiors and heat | [citations/interiors-heat.md](citations/interiors-heat.md) | in progress | | |
-| Surfaces | [citations/surfaces.md](citations/surfaces.md) | in progress | | |
-| Climate and life | [citations/climate-life.md](citations/climate-life.md) | in progress | | |
-| Galaxy and cosmology | [citations/galaxy-cosmology.md](citations/galaxy-cosmology.md) | in progress | | |
-| Light, reference objects and design files | [citations/light-reference.md](citations/light-reference.md) | in progress | | |
+| Stars | [citations/stars.md](citations/stars.md) | 65 | 5 | multiplicity by primary mass, triple share, main-sequence L and R from the fitted atoms, low-mass q_crit |
+| Orbits and formation | [citations/orbits-formation.md](citations/orbits-formation.md) | 101 | 9 | giant-star tide factor (was inverted), pebble isolation mass diffusion term |
+| Interiors and heat | [citations/interiors-heat.md](citations/interiors-heat.md) | 32 | 8 | K-40 and U isotope shares, Al-26 decay energy, Zeng radius unit |
+| Surfaces | [citations/surfaces.md](citations/surfaces.md) | 72 | 5 | none (wording and DOIs only) |
+| Climate and life | [citations/climate-life.md](citations/climate-life.md) | 79 | 9 | methane lifetime in oxic air, hydrogen escape coefficient |
+| Galaxy and cosmology | [citations/galaxy-cosmology.md](citations/galaxy-cosmology.md) | 90 | 11 | merger mass ratios, disc heating exponent, Hawking lifetime |
+| Light, reference objects and design files | [citations/light-reference.md](citations/light-reference.md) | 108 | 18 | planet disc brightness factor, Sizes tab star radii and temperatures |
+
+Counts are table rows in each area file after the first pass (19 Nov 2026). About a third of rows are still
+unverified, mostly because sources could not be fetched in that pass; they say so and nothing was guessed.
