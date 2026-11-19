@@ -34,6 +34,10 @@ use sse_sift::rules::TagState;
 use sse_sift::{Atlas, Bound, Label, RuleSet, SiftContent, Subject};
 use std::collections::{BTreeMap, BTreeSet};
 
+pub mod plan;
+
+#[cfg(test)]
+mod plan_tests;
 #[cfg(test)]
 mod tests;
 
@@ -123,6 +127,9 @@ pub struct CodeSheet {
     pub fact_prefix: String,
     #[serde(default)]
     pub groups: Vec<Group>,
+    /// How a coded world's system is grown (X3b), if the sheet supports it.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub system: Option<plan::SystemHints>,
 }
 
 /// Why a segment shows its symbol.

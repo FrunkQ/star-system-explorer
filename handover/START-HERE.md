@@ -101,6 +101,7 @@ Milestone M1 "Proven core" = packages K0 to K6 (build plan section 3/4).
 | T1 epoch stepping, ageing star, secular orbits, symplectic windows | done (kernel track); giant phase sketch awaits F7 | packages/T1.md |
 | T2 look-ahead branch, commit, age the Solar System | done (kernel track); with Alex for review | packages/T2.md |
 | X3a part 1: code sheets (`sse-codes`) and the Traveller pack's world codes (UWP, PBG, trade codes, zones, bases) from classification rules, round-tripping | done (Traveller pack track); part 2 next: units, calendar, vocabulary, lenses, reports, sifters, `codes` op | packages/X3a.md |
+| X3b part 1: a whole system from a coded world (pins to a formation request, codes win, impossible values marked with reasons, make physically sound, counts searched) | done (Traveller pack track); kernel op and subsector rolls next | packages/X3b.md |
 
 ## Parallel tracks (18 Nov, Alex: build in parallel, integrate later)
 | Track | Packages | Branch |

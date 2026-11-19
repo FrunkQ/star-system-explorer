@@ -396,6 +396,7 @@ SHEET = {
         {"id": "zone_hint", "label": "Travel zone hints", "prefix": "traveller.zonehint."},
         {"id": "bases", "label": "Bases", "prefix": "traveller.base."},
     ],
+    "system": {"giants": "gas_giants", "belts": "belts", "tag": "traveller-generated"},
 }
 
 ABOUT = (

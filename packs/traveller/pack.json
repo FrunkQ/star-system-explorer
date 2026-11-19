@@ -7521,7 +7521,12 @@
        "label": "Bases",
        "prefix": "traveller.base."
       }
-     ]
+     ],
+     "system": {
+      "giants": "gas_giants",
+      "belts": "belts",
+      "tag": "traveller-generated"
+     }
     }
    ],
    "vocabulary": {

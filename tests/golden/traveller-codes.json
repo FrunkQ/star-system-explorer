@@ -89,5 +89,13 @@
     "004",
     "Ba He"
   ],
-  "pack": "51f719a73dabc843cbcfc97e9eee5f2ca17f85a821f49caf687381878ad0dceb"
+  "grown": {
+    "attempt": 7,
+    "belts": 2,
+    "giants": 2,
+    "history": "f28c1ba7d1c406a1e9ebcf9b15d8734599d37d1e32deb042a2238e962ced8cf9",
+    "main_world": "u:traveller/sys:0/body:5",
+    "worlds": 7
+  },
+  "pack": "e92a2ec2644273323c3d70bd4fee747d63660551919df69748b5b670ab04645a"
 }

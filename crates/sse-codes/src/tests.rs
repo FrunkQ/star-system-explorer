@@ -369,6 +369,25 @@ fn golden() {
         let trade = r.group("trade").unwrap().codes().join(" ");
         out.insert(n, serde_json::json!([r.line("uwp"), r.line("pbg"), trade]));
     }
+    // X3b: one coded world grown into a system (same seed, same system on every device).
+    let p = crate::plan::plan(
+        &c,
+        sheet,
+        &[("uwp", "A867975-9"), ("pbg", "812")],
+        &["G2 V"],
+        &BTreeMap::new(),
+        "golden:0101",
+    )
+    .unwrap();
+    let g = crate::plan::grow(p, "u:traveller/sys:0".parse().unwrap(), 12, 2).unwrap();
+    out.insert(
+        "grown".into(),
+        serde_json::json!({
+            "attempt": g.attempt, "giants": g.giants, "belts": g.belts,
+            "main_world": g.main_world.to_string(), "worlds": g.run.worlds.len(),
+            "history": g.run.history.hash().hex(),
+        }),
+    );
     let got = serde_json::Value::Object(out);
     let path = root("tests/golden/traveller-codes.json");
     let text = serde_json::to_string_pretty(&got).unwrap() + "\n";
