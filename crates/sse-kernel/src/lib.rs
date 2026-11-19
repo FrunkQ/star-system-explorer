@@ -8,6 +8,7 @@
 mod adopt;
 pub mod contract;
 pub mod protocol;
+mod survey;
 mod systems;
 
 use protocol::*;
@@ -161,6 +162,8 @@ pub struct Kernel {
     next_job: u32,
     /// `provides.other.time` from the stack, if any pack provides it.
     time: Option<sse_time::epoch::TimeSettings>,
+    /// Recent `survey_surface` results.
+    surveys: survey::Cache,
 }
 
 impl Default for Kernel {
@@ -221,6 +224,7 @@ impl Kernel {
             stack: None,
             observe: Observe::default(),
             universe: None,
+            surveys: vec![],
             jobs: BTreeMap::new(),
             next_job: 1,
             time: None,
@@ -931,6 +935,77 @@ impl Kernel {
                     tiles: r.tiles,
                     refused: r.refused,
                 }
+            }
+            Request::SurveySurface {
+                system,
+                body,
+                fixture,
+                at_s,
+                options,
+                tiles,
+                quick,
+                limit,
+            } => {
+                let tiles = tiles.unwrap_or_default();
+                let quick = quick.unwrap_or(false);
+                let limit = limit.unwrap_or(200) as usize;
+                let survey = match (fixture, system, body) {
+                    (Some(f), None, None) => survey::survey_surface(
+                        survey::Request {
+                            from: survey::From::Fixture(&f),
+                            options: options.as_ref(),
+                            tiles: &tiles,
+                            quick,
+                            limit,
+                        },
+                        &mut self.surveys,
+                    )?,
+                    (None, Some(system), Some(body)) => {
+                        let a: Address = system
+                            .parse()
+                            .map_err(|e| err("bad_address", format!("{e}")))?;
+                        let u = self
+                            .universe
+                            .as_mut()
+                            .ok_or_else(|| err("no_universe", "open a universe first"))?;
+                        if !u.root.contains(&a) {
+                            return Err(err(
+                                "bad_address",
+                                format!("{a} is not in universe {}", u.root),
+                            ));
+                        }
+                        if !u.runs.contains_key(&system) {
+                            if let Some(req) = adopt::formation_request(&u.chronicle, &a) {
+                                let (_, run, _) = systems::form(req.into())?;
+                                u.runs.insert(system.clone(), run);
+                            }
+                        }
+                        survey::survey_surface(
+                            survey::Request {
+                                from: survey::From::System {
+                                    ch: &u.chronicle,
+                                    seed: &u.seed,
+                                    system: &a,
+                                    body: &body,
+                                    at_s,
+                                    run: u.runs.get(&system),
+                                },
+                                options: options.as_ref(),
+                                tiles: &tiles,
+                                quick,
+                                limit,
+                            },
+                            &mut self.surveys,
+                        )?
+                    }
+                    _ => {
+                        return Err(err(
+                            "bad_request",
+                            "give a fixture, or a system and one of its bodies",
+                        ))
+                    }
+                };
+                Response::SurfaceSurveyed { survey }
             }
             Request::LifeView { body, fixture } => {
                 let (source, view) = adopt::life_view(body.as_deref(), fixture.as_deref())?;

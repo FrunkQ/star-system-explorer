@@ -360,6 +360,41 @@ pub enum Request {
         #[ts(optional)]
         tiles: Option<Vec<TileRequest>>,
     },
+    /// S2 to S7 in order for one world: a surface `fixture` (`Earth`,
+    /// `Moon`, ...; no universe needed) or a `body` of an adopted `system`
+    /// at `at_s`. `options` is sse-surface's `SurveyOptions` (rotation_hours,
+    /// obliquity_deg, life, settle, reshape, names, renames, wind_m_s);
+    /// `tiles` are S1 tiles of this world with S7's layers; `quick` uses a
+    /// coarse plate grid and 32-sample tiles (tests, weak devices). `limit`
+    /// caps the features and deposits listed (default 200, 0 for all):
+    /// remarkable features first, then the named landscape, then craters by
+    /// size; deposits by size. Totals are always given.
+    SurveySurface {
+        #[serde(default)]
+        #[ts(optional)]
+        system: Option<String>,
+        #[serde(default)]
+        #[ts(optional)]
+        body: Option<String>,
+        #[serde(default)]
+        #[ts(optional)]
+        fixture: Option<String>,
+        #[serde(default)]
+        #[ts(optional, type = "number")]
+        at_s: Option<i64>,
+        #[serde(default)]
+        #[ts(optional, type = "unknown")]
+        options: Option<serde_json::Value>,
+        #[serde(default)]
+        #[ts(optional)]
+        tiles: Option<Vec<SurfaceTile>>,
+        #[serde(default)]
+        #[ts(optional)]
+        quick: Option<bool>,
+        #[serde(default)]
+        #[ts(optional)]
+        limit: Option<u32>,
+    },
     /// The open universe's systems: every `<root>/sys:*` with facts, where it
     /// came from (`v3`, `formation` or `facts`), its name and adopt event.
     Systems,
@@ -416,6 +451,16 @@ pub struct FormationRequest {
     pub pins: Option<serde_json::Value>,
 }
 
+/// One S1 tile of the world `survey_surface` is reading.
+#[derive(Clone, PartialEq, Debug, Serialize, Deserialize, TS)]
+#[ts(export)]
+pub struct SurfaceTile {
+    pub face: u8,
+    pub level: u8,
+    pub x: u32,
+    pub y: u32,
+}
+
 /// One S1 tile of one world: cube face 0 to 5, level, x and y.
 #[derive(Clone, PartialEq, Debug, Serialize, Deserialize, TS)]
 #[ts(export)]
@@ -459,6 +504,7 @@ impl Request {
             Request::ReadWorldStack { .. } => "read_world_stack",
             Request::Adopt { .. } => "adopt",
             Request::ResolvedSystem { .. } => "resolved_system",
+            Request::SurveySurface { .. } => "survey_surface",
             Request::Systems => "systems",
             Request::LifeView { .. } => "life_view",
             Request::ExportChronicle => "export_chronicle",
@@ -548,6 +594,11 @@ pub fn ops() -> Vec<OpInfo> {
             "resolved_system",
             Cost::Medium,
             "a formation re-run for formation-adopted systems (cached), plus about 0.1 s per 256-sample tile; at most 24 tiles",
+        ),
+        o(
+            "survey_surface",
+            Cost::Heavy,
+            "every surface stage for one world: about 1 to 5 s native at pack defaults (plates, wear, register), well under 1 s with quick; plus about 0.2 s per tile, at most 24",
         ),
         o("systems", Cost::Light, "linear in the universe's facts"),
         o("life_view", Cost::Light, "one fixture's signatures, epochs and hooks"),
@@ -792,6 +843,15 @@ pub enum Response {
         state_hash: String,
         manifest_id: String,
         stack_matches: bool,
+    },
+    /// `survey_surface`: `{body, label, source (fixture:<name>, formation, v3
+    /// or facts), version, epoch_myr, at_s?, stages, envelope, deposit_kinds,
+    /// climate?, air?, deposits?, deposits_total?, built?, built_kinds?, applied?, register? (with features_total),
+    /// aerostat? or aerostat_refused, tiles, refused}`. A giant has no layers
+    /// or register.
+    SurfaceSurveyed {
+        #[ts(type = "unknown")]
+        survey: serde_json::Value,
     },
     /// `systems`: one entry per system, `{system, source, name?, addresses,
     /// adopted_event?}`.

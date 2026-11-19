@@ -33,7 +33,7 @@ Milestone M1 "Proven core" = packages K0 to K6 (build plan section 3/4).
 | S3 wearing down: rivers, lakes, sediment, sea level, hillslopes, worn atlas with flow layer | done | packages/S3.md |
 | S4 impacts and volcanism: chronology and spikes, survival by renewal, crater shapes, lava plains, shields, tiles to the fact floor, "why is this here" | done | packages/S4.md |
 | S6 other regimes: ice-shell ridges, bands and chaos; heat-pipe paterae and mountains; coronae, chasmata and overturns; contraction scarps and rifts; Titan's dunes and lakes; tar seas; giant cloud decks | done | packages/S6.md |
-| S7 cover, named features, built layer, aerostats, GM reshape: climate by latitude and height, wind cells and rain shadow, ice, deposits, colour; feature register with dated, per-audience renames and sifters; built-layer rules; aerostat band from the air profile; dated GM edits tagged when impossible, height pins honoured | done | packages/S7.md |
+| S7 cover, named features, built layer, aerostats, GM reshape: climate by latitude and height, wind cells and rain shadow, ice, deposits, colour; feature register with dated, per-audience renames and sifters; built-layer rules; aerostat band from the air profile; dated GM edits tagged when impossible, height pins honoured | done; served by `survey_surface` | packages/S7.md, packages/K-physics-ops.md |
 | Kernel ops `import_v3`, `run_formation` and `read_world_stack` (V3 import with report; one system through the pipeline with pins and surfaces; a body's world stack with ladder and physics notes) | done (physics track, for the UI) | packages/K-physics-ops.md |
 | K7 envelopes, partitioning, resolve, feasibility | done (kernel track) | packages/K7.md |
 | K8 rules, classification, sifters, significance | done (kernel track) | packages/K8.md |
@@ -83,7 +83,7 @@ Milestone M1 "Proven core" = packages K0 to K6 (build plan section 3/4).
 ## Parallel tracks (18 Nov, Alex: build in parallel, integrate later)
 | Track | Packages | Branch |
 |---|---|---|
-| Physics | P1, P3, P4, F0 to F6 done; pipeline, F7, F9, S0 to S4, S6 and S7 done; F8 waits on G6, S5 on T3, S8 on G7; next a kernel op serving S7's layers and feature register, then S9 (rock columns) | `main` via PRs |
+| Physics | P1, P3, P4, F0 to F6 done; pipeline, F7, F9, S0 to S4, S6 and S7 done, served by the `survey_surface` op; F8 waits on G6, S5 on T3, S8 on G7; next T3 (NAV, new crate `sse-nav`), then S8 or S9 | `main` via PRs |
 | Kernel | K7 to K10, G0 to G5, C1 to C3, L0, L1a to L1d, T1, T2 (also through the API), the U3 gaps, the V10 grant gaps and the UI asks (`adopt`, look-ahead write-back, `resolved_system`; K6-additions.md) done; next G6 or L2 (life feedback on the planet; needs T1) | `main` via PRs |
 | Chart room shell and player views | U0 to U3, V1, U5, V2, V12, V3, V11, V4, V5, planet chart, V10, V6 System 3D, U9 lenses, N1 sound, U4 (what-if and look-ahead), A1 part 1, O1 light switch (UI), V13 parts 1 and 2 (import and grow, add to the campaign, read back and age with write-back), V6 Cutaway and Body globe (Body screen), phone screen menu done; next U7 biosphere (waits on the kernel's `life_view`), browser campaign save (waits on `export_chronicle`), V7 | `main` via PRs |
 

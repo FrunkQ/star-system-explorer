@@ -1301,6 +1301,61 @@
   "fixture": "mars"
  },
  {
+  "op": "survey_surface",
+  "fixture": "Earth",
+  "quick": true,
+  "options": {
+   "rotation_hours": 23.93,
+   "life": 1.0,
+   "settle": [
+    "settlement",
+    "port"
+   ],
+   "reshape": [
+    {
+     "op": "pin",
+     "id": "gm:pin",
+     "lat_deg": 30.0,
+     "lon_deg": 30.0,
+     "height_m": 1200.0,
+     "radius_km": 20.0,
+     "at_myr": 0.0
+    }
+   ]
+  },
+  "tiles": [
+   {
+    "face": 0,
+    "level": 0,
+    "x": 0,
+    "y": 0
+   }
+  ],
+  "limit": 20
+ },
+ {
+  "op": "survey_surface",
+  "fixture": "Jupiter",
+  "quick": true
+ },
+ {
+  "op": "survey_surface",
+  "fixture": "Krypton"
+ },
+ {
+  "op": "survey_surface",
+  "system": "u:kestrel/sys:40",
+  "body": "u:kestrel/sys:40/body:2",
+  "quick": true,
+  "limit": 20
+ },
+ {
+  "op": "survey_surface",
+  "system": "u:kestrel/sys:40",
+  "body": "u:kestrel/sys:40/body:99",
+  "quick": true
+ },
+ {
   "op": "export_chronicle"
  },
  {

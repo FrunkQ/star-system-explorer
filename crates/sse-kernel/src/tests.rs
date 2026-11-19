@@ -951,3 +951,132 @@ fn save_and_reopen_a_universe_and_read_life_views() {
     );
     assert_eq!(e["code"], "no_habitats");
 }
+
+/// S7 served: a fixture world's survey (layers, register, aerostat band,
+/// tiles with the new layers), a GM rename and edit, a giant, refusals, and
+/// a body of an adopted system read at its date.
+#[test]
+fn survey_surface_serves_layers_register_and_tiles() {
+    let mut k = crate::Kernel::new();
+    let opts = serde_json::json!({
+        "rotation_hours": 23.93, "life": 1.0, "settle": ["settlement", "port"],
+        "reshape": [{"op": "raise-range", "id": "gm:r", "from": [10.0, 20.0], "to": [10.0, 40.0],
+                     "height_m": 40000.0, "width_km": 150.0, "at_myr": 0.0}],
+    });
+    let req = serde_json::json!({"op": "survey_surface", "fixture": "earth", "quick": true,
+        "options": opts, "tiles": [{"face": 0, "level": 0, "x": 0, "y": 0}, {"face": 9, "level": 0, "x": 0, "y": 0}]});
+    let r = send(&mut k, req.clone());
+    assert_eq!(r["type"], "surface_surveyed", "{r}");
+    let s = &r["survey"];
+    assert_eq!(s["source"], "fixture:Earth");
+    assert_eq!(s["stages"].as_array().unwrap().len(), 7);
+    assert_eq!(s["climate"]["cells"], 3, "{}", s["climate"]);
+    assert!(s["aerostat"]["low_km"].as_f64().is_some(), "{s}");
+    assert!(!s["built"].as_array().unwrap().is_empty());
+    assert!(
+        s["applied"][0]["impossible"].is_string(),
+        "a 40 km range is tagged"
+    );
+    assert_eq!(s["tiles"].as_array().unwrap().len(), 1);
+    assert!(s["tiles"][0]["colour"]
+        .as_array()
+        .is_some_and(|c| !c.is_empty()));
+    assert_eq!(s["refused"][0]["why"], "bad tile key");
+    let feats = s["register"]["features"].as_array().unwrap();
+    let ocean = feats
+        .iter()
+        .find(|f| f["kind"] == "ocean")
+        .expect("an ocean");
+    // Same request, same bytes; a rename changes names only.
+    assert_eq!(send(&mut k, req.clone()), r);
+    let mut renamed = req.clone();
+    renamed["options"]["renames"] =
+        serde_json::json!([{"feature": ocean["id"], "name": "Big Blue", "at_myr": 0.0}]);
+    let r2 = send(&mut k, renamed);
+    assert_eq!(r2["survey"]["tiles"], s["tiles"]);
+    assert_eq!(
+        r2["survey"]["register"]["renames"][0]["name"], "Big Blue",
+        "{}",
+        r2["survey"]["register"]["renames"]
+    );
+
+    // A giant: cloud deck only, no layers or register; the band is refused with why.
+    let j = send(
+        &mut k,
+        serde_json::json!({"op": "survey_surface", "fixture": "Jupiter", "quick": true}),
+    );
+    assert_eq!(
+        j["survey"]["stages"],
+        serde_json::json!(["envelope", "cloud-deck"])
+    );
+    assert!(j["survey"].get("register").is_none());
+    assert!(j["survey"]["aerostat_refused"].is_string(), "{j}");
+
+    // Refusals.
+    let e = send(
+        &mut k,
+        serde_json::json!({"op": "survey_surface", "fixture": "Krypton"}),
+    );
+    assert_eq!(e["code"], "unknown_fixture");
+    let e = send(&mut k, serde_json::json!({"op": "survey_surface"}));
+    assert_eq!(e["code"], "bad_request");
+    let e = send(
+        &mut k,
+        serde_json::json!({"op": "survey_surface", "fixture": "Earth", "options": {"life": "lots"}}),
+    );
+    assert_eq!(e["code"], "bad_request");
+    let e = send(
+        &mut k,
+        serde_json::json!({"op": "survey_surface", "system": "u:home/sys:5", "body": "u:home/sys:5/body:1"}),
+    );
+    assert_eq!(e["code"], "no_universe");
+
+    // A body of an adopted system.
+    send(
+        &mut k,
+        serde_json::json!({"op": "open_universe", "id": "home", "seed": "home"}),
+    );
+    let form = serde_json::json!({"seed": "adopt-1", "system": "u:home/sys:5", "star_pins": {"primary_mass": 1.0}});
+    assert_eq!(
+        send(
+            &mut k,
+            serde_json::json!({"op": "adopt", "formation": form})
+        )["type"],
+        "adopted"
+    );
+    let v = send(
+        &mut k,
+        serde_json::json!({"op": "resolved_system", "system": "u:home/sys:5"}),
+    );
+    let solid = v["surfaces"]
+        .as_array()
+        .unwrap()
+        .iter()
+        .find(|e| e["kind"] != "cloud-deck")
+        .expect("a solid world");
+    let body = solid["address"].as_str().unwrap();
+    let r = send(
+        &mut k,
+        serde_json::json!({"op": "survey_surface", "system": "u:home/sys:5", "body": body, "quick": true}),
+    );
+    assert_eq!(r["survey"]["source"], "formation", "{r}");
+    assert_eq!(r["survey"]["body"], body);
+    let total = r["survey"]["register"]["features_total"].as_u64().unwrap();
+    let listed = r["survey"]["register"]["features"]
+        .as_array()
+        .unwrap()
+        .len() as u64;
+    assert_eq!(listed, total.min(200));
+    let few = send(
+        &mut k,
+        serde_json::json!({"op": "survey_surface", "system": "u:home/sys:5", "body": body, "quick": true, "limit": 3}),
+    );
+    let f = few["survey"]["register"]["features"].as_array().unwrap();
+    assert_eq!(f.len() as u64, total.min(3));
+    assert!(few["survey"]["deposits"].as_array().unwrap().len() <= 3);
+    let e = send(
+        &mut k,
+        serde_json::json!({"op": "survey_surface", "system": "u:home/sys:5", "body": "u:home/sys:5/body:999"}),
+    );
+    assert_eq!(e["code"], "no_surface_body");
+}

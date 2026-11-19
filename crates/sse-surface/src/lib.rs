@@ -21,6 +21,7 @@ pub mod plates;
 pub mod regimes;
 pub mod scenario;
 pub mod sketch;
+pub mod survey;
 pub mod wear;
 
 use serde::{Deserialize, Serialize};
@@ -636,6 +637,8 @@ mod impacts_tests;
 mod plates_tests;
 #[cfg(test)]
 mod regimes_tests;
+#[cfg(test)]
+mod survey_tests;
 #[cfg(test)]
 mod tests;
 #[cfg(test)]
