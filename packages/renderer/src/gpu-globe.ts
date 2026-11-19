@@ -19,7 +19,8 @@ import type { Plan } from "./recipe.ts";
 
 export interface GlobeGpu {
   readonly backend: "webgpu" | "webgl2";
-  draw(p: Prepared, plan: Plan, lon: number, lat: number, full: number, air?: AirRender | null): void;
+  /** Draw one frame. `jitter` shifts the view by a fraction of a pixel (the still tier averages jittered frames). */
+  draw(p: Prepared, plan: Plan, lon: number, lat: number, full: number, air?: AirRender | null, jitter?: [number, number]): void;
   dispose(): void;
 }
 
@@ -157,7 +158,7 @@ export async function createGlobeGpu(canvas: HTMLCanvasElement): Promise<GlobeGp
 
   return {
     backend,
-    draw(p, plan, lon, lat, full, air) {
+    draw(p, plan, lon, lat, full, air, jitter) {
       const relief = plan.passes.find((x) => x.pass === "relief-globe")?.params ?? {};
       const grat = plan.passes.find((x) => x.pass === "graticule")?.params;
       const grid = Math.round(num(relief.grid, 128));
@@ -209,6 +210,8 @@ export async function createGlobeGpu(canvas: HTMLCanvasElement): Promise<GlobeGp
         camera.updateProjectionMatrix();
       }
       const n = Math.max(16, Math.round(full * plan.render_scale));
+      if (jitter) camera.setViewOffset(n, n, jitter[0], jitter[1], n, n);
+      else if (camera.view?.enabled) camera.clearViewOffset();
       renderer.setPixelRatio(1);
       renderer.setSize(n, n, false);
       renderer.render(scene, camera);

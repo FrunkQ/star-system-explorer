@@ -26,14 +26,14 @@ use serde::{Deserialize, Serialize};
 use sse_core::math as m;
 use sse_core::{Address, Draws, Seed, Stream};
 
-pub const REF_OBERTAS17: &str = "Obertas, A., Van Laerhoven, C. and Tamayo, D. 2017, Icarus 293, 52: instability time of compact multi-planet systems, log10(t/P1) = 0.951 Delta - 1.202 in mutual Hill radii";
+pub const REF_OBERTAS17: &str = "Obertas, A., Van Laerhoven, C. and Tamayo, D. 2017, Icarus 293, 52: instability time of compact multi-planet systems of equal Earth-mass planets, log10(t/P1) = 0.951 Delta - 1.202 in mutual Hill radii (fit over 3 to 8; used here further out and for unequal masses). arXiv:1703.08426";
 pub const REF_GLADMAN93: &str = "Gladman, B. 1993, Icarus 106, 247: two planets more than 2 sqrt(3) mutual Hill radii apart never cross (Hill stability)";
 pub const REF_IZIDORO: &str = "Izidoro, A. et al. 2017, MNRAS 470, 1750; 2021, A&A 650, A152: about 90 to 95 percent of resonant chains break after the gas leaves, mostly within 100 Myr";
 pub const REF_SAFRONOV: &str = "Safronov number Theta = (M_p/M_star)(a/R_p); Ford, E. B. and Rasio, F. A. 2008, ApJ 686, 621: collisions dominate for Theta < 1, scattering and ejection for Theta > 1";
 pub const REF_GENDA12: &str = "Genda, H., Kokubo, E. and Ida, S. 2012, ApJ 744, 137: merging criterion v_cr/v_esc = 2.43 G (1-sin t)^2.5 - 0.0408 G + 1.86 (1-sin t)^2.5 + 1.08, G = (M1-M2)/(M1+M2)";
 pub const REF_LS12: &str = "Leinhardt, Z. M. and Stewart, S. T. 2012, ApJ 745, 79: largest remnant M_lr/M_tot = 1 - Q_R/(2 Q*_RD), super-catastrophic 0.1 (Q_R/1.8 Q*_RD)^-1.5; Q*_RD = c* (4/5) pi rho1 G R_C1^2, c* = 1.9";
 pub const REF_ASPHAUG10: &str = "Asphaug, E. 2010, Chemie der Erde 70, 199: grazing impacts above the critical impact parameter are hit-and-run; the runner loses mantle";
-pub const REF_MARCUS10: &str = "Marcus, R. A. et al. 2010, ApJ 719, L45: erosive impacts strip mantle first, raising the iron fraction";
+pub const REF_MARCUS10: &str = "Marcus, R. A. et al. 2009, ApJ 700, L118 (collisional stripping and disruption of super-Earths): erosive impacts strip mantle first, raising the iron fraction. arXiv:0907.0234";
 pub const REF_SHOEMAKER: &str =
     "Shoemaker, E. M. 1962: impact angles are distributed as sin 2 theta, most likely 45 degrees";
 pub const REF_CANUP04: &str = "Canup, R. M. 2004, Icarus 168, 433; Elser, S. et al. 2011, Icarus 214, 357: moon-forming impacts are oblique (30 to 60 degrees), impactor 5 to 50 percent of the total; a few to tens of percent of rocky planets get one";

@@ -43,4 +43,7 @@
     background: var(--sse-ink);
     color: var(--sse-on-ink);
   }
+  button:not([aria-pressed="true"]):hover {
+    background: var(--sse-rule);
+  }
 </style>

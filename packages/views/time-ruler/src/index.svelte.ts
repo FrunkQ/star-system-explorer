@@ -10,6 +10,7 @@ export const timeRuler: ViewModule = {
   params: [
     { name: "scene_events", type: "boolean", default: true, group: "content", meaning: "Show the scene's history and futures, not only edits.", promoted: true },
     { name: "edits", type: "boolean", default: true, group: "content", meaning: "Show the GM's authored edits from the chronicle.", promoted: true },
+    { name: "campaign_clock", type: "boolean", default: true, group: "content", meaning: "Show the campaign's now with step, play and Make this now; off leaves a plain history slider.", promoted: true },
   ],
   intents: [],
   mount(el, ctx, scene) {

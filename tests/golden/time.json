@@ -1,6 +1,6 @@
 {
-  "chronicle_events": 156,
-  "chronicle_head": "a476deabbbb1a50e00c42f53fbc48bd181db4f1c86d5720962e808588e759bab",
+  "chronicle_events": 157,
+  "chronicle_head": "2eb1a84ef40285b36a8d2a3819ed62e78a3c813bc19fa77b44e14f0f5ca6d9f9",
   "events": [
     [
       484308792536407200,
@@ -24,10 +24,18 @@
       ]
     ],
     [
-      692914344433214400,
+      692954913968604000,
       "engulfed",
       [
         "u:sol/sys:0/body:0",
+        "u:sol/sys:0/star:0"
+      ]
+    ],
+    [
+      693079901377855200,
+      "engulfed",
+      [
+        "u:sol/sys:0/body:1",
         "u:sol/sys:0/star:0"
       ]
     ],
@@ -98,8 +106,8 @@
       148
     ]
   ],
-  "manifest": "80f5d9ffb6e1b5998fbbb5c785cf942a07d97a2a9a239e34d6c9643a0fe14638",
-  "run_digest": "0cad50d365e6ab4e4c221b465b49b73442c53299dc92208810f9d941f15679de",
+  "manifest": "8e03b75449237e62c5fb8d55d6438ab10b80c7014ca53725188db98fee9ee1be",
+  "run_digest": "738ee52172a5457f44457c418d79778f5c157856c3f42c8fcfcd4fb5c8795a48",
   "windows": [
     [
       11053.796134460601,
@@ -111,8 +119,8 @@
     ],
     [
       12733.221277246326,
-      12894
+      8171
     ]
   ],
-  "work": 212234
+  "work": 207511
 }

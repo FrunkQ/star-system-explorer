@@ -6,7 +6,7 @@
 <script lang="ts">
   import { HONESTY_MARKS, asPlayers, cardFacts, cardFor, commitEdit, gmStamps, hasTool, primaryOf, type Json, type PlayerContext, type SceneFact, type SystemScene, type ViewContext, type Vocab } from "../../../ui-contract/src/index.ts";
   import PlayerCard from "../../player-stack/src/PlayerCard.svelte";
-  import { Card, CardField, Stamp } from "../../../chart-grammar/src/index.ts";
+  import { Card, CardField, Stamp, opensFrom } from "../../../chart-grammar/src/index.ts";
   import { parseFact } from "./parse.ts";
   import Explain from "./Explain.svelte";
 
@@ -67,6 +67,9 @@
 </script>
 
 <div class="wrap">
+  <!-- A new subject's card opens from its body on the chart (dynamic minimalism); edits to the same subject do not. -->
+  {#key subject?.address}
+  <div use:opensFrom={() => (subject ? document.querySelector(`[data-address="${CSS.escape(subject.address)}"]`) : null)}>
   {#if subject}
     <Card title={subject.label} subtitle={subject.subtitle}>
       {#if stamps.length}
@@ -108,6 +111,8 @@
       <p class="prose">Pick a body on the chart, or press Tab to reach the chart and Enter to choose. The card shows its facts here; in edit mode you type new values where they are shown, and drag a body to move its orbit.</p>
     </Card>
   {/if}
+  </div>
+  {/key}
 </div>
 
 <style>
