@@ -14,13 +14,13 @@ use sse_core::math as m;
 use sse_core::{Address, Draws, Seed, Stream};
 
 pub const REF_LJ14: &str = "Lambrechts, M. and Johansen, A. 2014, A&A 572, A107: pebble flux and accretion, 2D Hill rate 2 (St/0.1)^(2/3) Omega R_H^2 Sigma_p";
-pub const REF_BITSCH18: &str = "Bitsch, B. et al. 2018, A&A 612, A30: pebble isolation mass 25 Earth masses (h/0.05)^3 (0.34 (log 0.001 / log alpha)^4 + 0.66) (M/M_sun), eq. 26";
+pub const REF_BITSCH18: &str = "Bitsch, B. et al. 2018, A&A 612, A30: pebble isolation mass 25 Earth masses (h/0.05)^3 (0.34 (log 0.001 / log alpha)^4 + 0.66) (eqs. 10-11) plus the diffusion term alpha/(2 St)/lambda (eq. 26); the (M/M_sun) scaling is an extrapolation. arXiv:1801.02341";
 pub const REF_DA17: &str = "Drazkowska, J. and Alibert, Y. 2017, A&A 608, A92: planetesimals form first at the water ice line";
 pub const REF_LC15: &str = "Lee, E. J. and Chiang, E. 2015, ApJ 811, 41: gas captured by cores in the disc, GCR rising as t^0.4 M^1.7";
-pub const REF_IKOMA00: &str = "Ikoma, M., Nakazawa, K. and Emori, H. 2000, ApJ 537, 1013; Ida, S. and Lin, D. N. C. 2004, ApJ 604, 388: Kelvin-Helmholtz runaway, tau = 1e9 yr (M/M_earth)^-3";
+pub const REF_IKOMA00: &str = "Ikoma, M., Nakazawa, K. and Emori, H. 2000, ApJ 537, 1013; Ida, S. and Lin, D. N. C. 2004, ApJ 604, 388: Kelvin-Helmholtz runaway, tau = 10^k1 yr (M/M_earth)^-3 with k1 8 to 10; SSE4 uses 1e11 (KH_COEFF_YR, tuned, outside the published range)";
 pub const REF_TT16: &str = "Tanigawa, T. and Tanaka, H. 2016, ApJ 823, 48: gas accretion through a gap, 0.29 h^-2 q^(4/3) Sigma_gap r^2 Omega";
 pub const REF_LD06: &str = "Lubow, S. H. and D'Angelo, G. 2006, ApJ 641, 526: a gap-opening giant takes up to about 80 percent of the disc's accretion flow";
-pub const REF_TANAKA02: &str = "Tanaka, H., Takeuchi, T. and Ward, W. R. 2002, ApJ 565, 1257: type I migration rate (2.7 + 1.1 beta) q (Sigma r^2 / M) h^-2 Omega, reduced by 0.1 as in Ida and Lin 2008";
+pub const REF_TANAKA02: &str = "Tanaka, H., Takeuchi, T. and Ward, W. R. 2002, ApJ 565, 1257: type I migration rate (2.7 + 1.1 beta) q (Sigma r^2 / M) h^-2 Omega, reduced by C_I = 0.5 (TYPE_I_REDUCTION; Ida and Lin 2008, ApJ 673, 487, explore a range of C_I)";
 pub const REF_KANAGAWA18: &str = "Kanagawa, K. D., Tanaka, H. and Szuszkiewicz, E. 2018, ApJ 861, 140: migration in a gap is type I divided by 1 + 0.04 K, K = q^2 h^-5 / alpha";
 pub const REF_IZIDORO17: &str = "Izidoro, A. et al. 2017, MNRAS 470, 1750; Izidoro et al. 2021, A&A 650, A152: migration piles super-Earths into resonant chains at the disc's inner edge";
 pub const REF_HP11: &str = "Hasegawa, Y. and Pudritz, R. E. 2011, MNRAS 417, 1236: planet traps at the ice line, heat transition and dead-zone edge";
@@ -304,12 +304,17 @@ fn omega(disc: &Disc, r: f64) -> f64 {
     m::sqrt(G * disc.params.host_mass * MSUN_KG / (rm * rm * rm))
 }
 
-/// Pebble isolation mass, Earth masses (Bitsch et al. 2018 eq. 26 with its
-/// viscosity factor; the pressure-gradient factor is near 1 for these discs).
+/// Pebble isolation mass, Earth masses (Bitsch et al. 2018 eq. 26: eqs. 10-11's
+/// 25 f_fit plus the turbulent-diffusion term Pi_crit / lambda, Pi_crit =
+/// alpha / (2 St), lambda = 0.00476 / f_fit; the pressure-gradient factor is
+/// near 1 for these discs). The paper fits a solar-mass star; the host-mass
+/// factor is an extrapolation (docs/fudges.md).
 pub fn isolation_mass(h: f64, host_mass: f64, alpha: f64) -> f64 {
     let la = m::log10(0.001) / m::log10(alpha);
     let visc = 0.34 * la * la * la * la + 0.66;
-    25.0 * m::pow(h / 0.05, 3.0) * visc * host_mass
+    let f_fit = m::pow(h / 0.05, 3.0) * visc;
+    let diffusion = alpha / (2.0 * STOKES) / 0.00476;
+    (25.0 + diffusion) * f_fit * host_mass
 }
 
 /// Share of the passing pebble flux a body of `mass_earth` takes (2D Hill

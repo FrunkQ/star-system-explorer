@@ -334,14 +334,18 @@ fn age_the_solar_system() {
         "{}",
         oceans.age_myr
     );
-    // Mercury is engulfed; Earth and the giants survive on widened orbits.
+    // Mercury and Venus are engulfed (as in Schroeder and Smith 2008); Earth
+    // survives on a widened orbit that the giant's tide has pulled in a little;
+    // the giants widen as a M = constant.
     let last = r.snapshots.last().unwrap();
     let p = |n: &str| last.planets.iter().find(|x| x.name == n).unwrap();
     assert!(p("Mercury").engulfed);
+    assert!(p("Venus").engulfed);
     assert!(!p("Earth").engulfed);
     let widen = 1.0 / 0.569;
     assert!((p("Jupiter").a_au / 5.2026 / widen - 1.0).abs() < 0.02);
-    assert!((p("Earth").a_au / 1.0 / widen - 1.0).abs() < 0.03);
+    let earth = p("Earth").a_au / 1.0 / widen;
+    assert!(earth > 0.9 && earth < 1.01, "{earth}");
     // The white dwarf cools through the colours in order.
     let colours: Vec<&str> = r
         .events

@@ -60,8 +60,103 @@ Add entries under your area. Keep one row per fudge.
 
 ## Orbits and formation
 
-| Where | Instead of the physics | Why | Real physics to replace it | Status |
+### Deliberate simplifications, stand-ins, tuned constants and placeholders
+
+| Where | Instead of the physics | Why (as the code or log says) | Real physics to replace it | Status |
 |---|---|---|---|---|
+| disc.rs:418-421 | Initial disc mass 0.03 M* ± 0.4 dex, capped at 0.15; rc0 30 AU ± 0.3 dex | "Young (class 0/I) discs", Andrews 2010/2013 | Draw from published Class 0/I or II disc-mass and radius distributions as functions of M* (e.g. Andrews 2013's M_d ∝ M*^1.0 to 1.5 with 0.7 dex scatter; Tobin et al. 2020 VANDAM) | tuned, documented |
+| disc.rs:445 | alpha = 0.01 for every disc | none stated | Draw alpha (1e-4 to 1e-2), or use a wind-driven disc. Alpha also sets the isolation mass and the gap K. | undocumented constant |
+| disc.rs:448 | kappa = 3 cm^2/g Rosseland mean, scaled by dust | none stated | Bell & Lin 1994 opacity table κ(T, ρ) | undocumented constant |
+| disc.rs:212-219 | Viscous time from the irradiation temperature at rc0 only (no accretion heating) | first order | Integrate ν(r) with the full midplane temperature | simplification |
+| disc.rs:437-441 | X-ray photoevaporation 1e-9 × M* M_sun/yr; external FUV 1e-9 (G0/1000)(rc/30) | "sketch, after Haworth et al. 2018" | OCE12's Mdot_X ≈ 6.25e-9 (M*)^-0.068 (L_X/1e30)^1.14 (unverified), with L_X drawn per star. Interpolate the FRIED grid for the external part. The internal rate is probably about 6× low (unverified). | documented sketch |
+| disc.rs:225-226 | Disc clears instantly when Mdot falls to Mdot_pe; t_disperse at least 0.1 Myr | two-timescale model | Inside-out clearing with a gap at r_g, then the outer disc removed (Clarke, Gendrin & Sotomayor 2001; Owen 2012) | simplification |
+| disc.rs:45-51, 79-87 | Condensation as sharp steps at single temperatures (pressure-independent) | standard first order | Pressure-dependent sublimation T (e.g. T_H2O ∝ ln P), partial condensation sequence (Lodders 2003 tables) | simplification |
+| disc.rs:95 | SOLAR_MIX split of Z by carrier | "split by carrier as in Oberg 2011" | Derive from Lodders 2003 (or Asplund 2009) elemental abundances with an explicit carrier allocation | numbers unsourced individually |
+| disc.rs:101-115 | Water left = 1 - 0.6 (C/O - 0.55), clamped | "Oberg 2011 figure 2, first order" | Oxygen budget bookkeeping: O to silicates, then CO, CO2, the rest to H2O | first-order fit |
+| disc.rs:426-433; F1.md:22 | Companion under 2 AU gives a circumbinary disc with cavity 2.5 a; else truncation at peri/3 | AL94 | AL94 or Miranda & Lai 2015 truncation radius as a function of q and e | simplification (values inside the published range) |
+| inherit.rs:85, 136 | Z = 0.02 × 10^[Fe/H] | none (Hurley-fit convention) | One solar Z for the whole chain (0.0142 or 0.0149), with Hurley fits rescaled | **inconsistent with disc.rs's 0.0142** |
+| growth.rs:38-41 | Pebble flux = Z × gas Mdot (PEBBLE_FLUX_PER_Z 1.0; F3.md says 1.5) | LJ14 order of magnitude | Dust growth and drift model (Birnstiel, Klahr & Ercolano 2012 two-population; LJ14 eq. for the pebble front) giving a time-dependent flux | tuned; **doc/code mismatch** |
+| growth.rs:42-43 | Stokes number fixed at 0.1 | standard | St from the drift or fragmentation limit (Birnstiel 2012) | constant |
+| growth.rs:317-322 | eta = h^2 (pressure-gradient term dropped) | none | eta = -(1/2) h^2 dlnP/dlnr from the disc profile (about 1.36 h^2 for this disc) | simplification, about 30 percent |
+| growth.rs:307-313 | Isolation mass without eq. 26's diffusion term; M* scaling extrapolated | "pressure factor near 1" | Full Bitsch 2018 eq. 26 (see fix P2) | **omission (fix P2)** |
+| growth.rs:324-329 | LC_COEFF 0.02 for the pebble-phase envelope | "Lee and Chiang 2015, scaled" (F3.md: calibrated) | LC15's analytic GCR with opacity, temperature and metallicity terms | tuned |
+| growth.rs:331-336 | KH_COEFF_YR 1e11, outside the published 1e8 to 1e10 | "dusty envelopes run slower" | Ikoma 2000 or Ida & Lin 2004 with an opacity-dependent k1 | tuned outside the range; **REF string wrong (fix M4)** |
+| growth.rs:45-46 | TYPE_I_REDUCTION 0.5 | "Ida and Lin 2008's C_I" | Full Paardekooper et al. 2011 torque (Lindblad plus saturating corotation) | tuned; **REF says 0.1 (fix M5)** |
+| growth.rs:47-48 | TYPE_II_REDUCTION 0.02 | calibrated on hot-Jupiter rarity (Wright 2012) | Kanagawa 2018 alone, plus inner-disc gas depletion (Lee & Chiang 2016; F3 known limits) | tuned |
+| growth.rs:49-50, 672-679 | Water-line trap for 3 to 15 M_E | Hasegawa & Pudritz 2011 | Compute the corotation torque sign from the local dlnΣ/dlnr and dlnT/dlnr (Paardekooper 2011) | tuned |
+| growth.rs:51-52, 594-597 | Giant takes up to 80 percent of the disc flow | Lubow & D'Angelo 2006 | as published (value unverified) | constant |
+| growth.rs:657-664 | Gap "open" when K > 25 | none | Use Kanagawa's depth continuously (the code already does for the rate); the flag is cosmetic | convention |
+| growth.rs:401-405 | Inner edge 0.08 M*^(1/3) AU (8-day corotation) for every star | Lee & Chiang 2017 | Corotation from a drawn young-star spin period (1 to 10 d) and magnetospheric radius | stand-in |
+| growth.rs:420-466 | Embryo ladder: spacing 1.35 to 1.7, birth times, seed mass 0.01 sqrt(r) M_E clamped 0.002 to 0.05, 3× at the water line | DA17 qualitatively | Streaming-instability planetesimal mass (Schäfer 2017, Liu et al. 2019 characteristic planetesimal mass; from memory) | tuned |
+| growth.rs:445-455 | Resonance ratio drawn (25 percent 2:1, 50 percent 3:2, 25 percent 4:3) | none | Capture by migration rate against the resonance width (e.g. Ogihara & Kobayashi 2013; Batygin 2015 capture criterion) | **unsourced draw** |
+| growth.rs:700-723 | Embryos closer than 2 sqrt(3) R_H,m merge at once, mass-weighted a | Gladman 1993 | That limit is Hill stability, not a merge criterion. In the gas phase, close pairs scatter or collide on a timescale (damping by gas); use a Safronov-weighted collision or scattering choice like F4's | simplification |
+| growth.rs:419-460 | Embryo eccentricities 0.002 to 0.01 drawn, no gas damping or stirring | "eccentricities stay at their small draws until F4" (F3 known limits) | Gas damping (Tanaka & Ward 2004) against mutual stirring | stand-in |
+| accrete.rs (whole) | Dole 1970 rule kept, with four KNOWN_DIFFERENCES for the System Lab rule | reproduce System Lab exactly | The modern block (F3); the Dole1970 rule as published | documented (KNOWN_DIFFERENCES) |
+| accrete.rs:318-323 | Critical mass B (rp sqrt(L))^-3/4 | as Burrows's code | B (rp/sqrt(L))^-3/4 if Fogg says so (fix P3) | **suspect** |
+| accrete.rs:521-525 | Run length 10 Gyr M^-2.5, at most 100 Myr | System Lab | not physical (Dole has no time) | ported placeholder |
+| violent.rs:62 | CHAIN_BREAK_FRACTION 0.9 | Izidoro 2017/2021 | N-body window over the chain (T1 integrator) once the gas leaves | calibrated draw |
+| violent.rs:64-65 | Nice trigger P = 1 - exp(-M_belt/10 M_E), 10 to 500 Myr | "1 - 1/e at 10 M_E" | Belt-driven migration until resonance crossing (Levison 2011, Nesvorny 2018), dated by the integrator | **unsourced law** |
+| violent.rs:66-68 | NICE_KAPPA 0.1 (angular momentum per belt mass per sqrt(a)) | Malhotra 1995 | Planetesimal-driven migration rate (Ida et al. 2000; Kirsh et al. 2009) | tuned |
+| violent.rs:69-73, 765-777 | Instability time: Obertas fit for every multi pair under 12 R_H, scatter 0.45 dex; two-planet pairs under 2 sqrt(3) get 10 to 30 orbits | Obertas 2017, Gladman 1993 | Fits for unequal masses and eccentric orbits (Petit et al. 2020, A&A 641, A176, from memory; or Tamayo et al. 2020 SPOCK), or the integrator in a window. The fit holds over 3 to 8 R_H only. | extrapolated |
+| violent.rs:74-75 | EJECT_SHARE 0.5 × Theta^2/(1+Theta^2); collision chance 1/(1+Theta^2) | Ford & Rasio 2008 | Encounter outcome from a three-body window, or Pu & Wu-style tables | smooth stand-in |
+| violent.rs:76-77 | RESIDUAL_E 0.25 Rayleigh per v_esc/v_kep | "calibrated on Kepler multis" | Post-impact e from momentum conservation plus dynamical friction from debris | tuned |
+| violent.rs:78-80 | MOON_CHANCE 1 in the 30 to 60 degree, 5 to 50 percent window | Canup 2004; Elser 2011 | Moon mass from the Canup 2004 scaling M_moon/M_disc against angular momentum | window rule |
+| violent.rs:81-89 | Stir depletion 0.99; Oort 0.04; scattered 0.01; to star 0.1; Trojans 7e-7; irregulars 1e-7; Earth hit 1e-6 | cited per value | Tracer integration of a test-particle belt in a window | calibrated shares |
+| violent.rs:90-91 | SPIKE_EFOLD_MYR 50 | "calibrated" | LHB decay from Bottke et al. 2012 or Morbidelli et al. 2018 | **unsourced** |
+| violent.rs:92-93 | Pericentre under 0.05 AU circularises at once to a = 2q | Ford & Rasio 2006 | Tidal circularisation timescale (Hut 1981 or constant-Q) against age | simplification |
+| violent.rs:953-969 | LS12 Q*_RD for equal masses only (no mu-bar mass-ratio correction); rho1 = 1000 | LS12 | LS12 eqs. 22-23 mass-ratio correction of Q*_RD | simplification |
+| violent.rs:892-930 | Erosion strips layers outermost first (LAYERS) | Marcus 2009/2010 | Marcus 2009's iron-fraction fit as a function of Q_R/Q* | simplification |
+| leftovers.rs:39-40 | Regular satellites = 1e-4 of every giant | Canup & Ward 2006 | CW06's actual scaling (balance of inflow and type I loss): about 1e-4 for a range of inflow, with a draw | constant |
+| leftovers.rs:41-43 | RING_CHANCE 0.25, RING_SHARE 1e-4 | "Saturn's rings about 1e-4 of Titan" | Ring from tidal stripping (Canup 2010) dated by a moon's inspiral | **guess (chance)** |
+| leftovers.rs:44-45 | L4 share 0.6 for every giant | Grav 2011 | as published (Jupiter only) | extrapolated |
+| leftovers.rs:46-49 | Largest body 2,400 km, size slope 2.5 everywhere | Dohnanyi; Nesvorny & Vokrouhlicky 2016 | Size-dependent strength (Q*_D(D), Bottke 2005), giving a wavy SFD | simplification |
+| leftovers.rs:57 | Group densities fixed (7800, 3000, 2000, 1000, 1500, 900) | none | compression with size; cite bulk densities (e.g. CO ice 0.88 to 1.03 g/cm^3) | **unsourced** |
+| early.rs:203-208 | Water oxidises up to half the core, ox = water/(water + rock) | "sketch" | Fe-FeO equilibrium with oxygen fugacity (e.g. Elkins-Tanton & Seager 2008) | sketch |
+| early.rs:212 | Water mantle adds 0.5 × wf to the radius | Zeng 2019 | Zeng 2016 or 2019 water-rock mass-radius tables | linear fit |
+| early.rs:222-238 | Envelope stripped if η F_XUV π r^2 over the first Gyr exceeds G M_c M_env/r; partial loss linear | Owen & Wu 2017 energy limit | OW17's mass-loss timescale with the evolving radius and η(v_esc); core-powered mass loss (Ginzburg et al. 2018) | first order |
+| early.rs:164-187 | XUV = 10^-3.5 L_bol for 100 Myr, then t^-1.5, every spectral type; X-ray used as XUV | Jackson 2012 | Jackson's saturation by B-V (10^-3.1 to 10^-4.3); add the EUV with Sanz-Forcada et al. 2011; rotation-dependent tracks (Tu et al. 2015) | simplification |
+| early.rs:189-190 | Efficiency 0.1 constant | OW17 | η ≈ 0.1 (v_esc/15 km/s)^-2 (OW17), from memory | simplification |
+| early.rs:191-195 | MANTLE_RETAINED 0.3; CARBON_TO_CORE 0.9 | Elkins-Tanton 2008; Dasgupta 2013 "sketch" | Solubility laws for H2O and CO2 in magma; metal-silicate partitioning of C | sketch |
+| early.rs:240-243 | Giants all 11.2 R_E | "sketch until F3's giant block" | Fortney et al. 2007 giant mass-radius tables with age and irradiation | **placeholder** |
+| early.rs:245-260 | Magma ocean 4 Myr or 100 Myr; none under 0.1 M_E | Hamano 2013 | Hamano's coupled cooling model against flux | step function |
+| epoch.rs:345-361 | Convective envelope radius set to the star's radius (R_env ≈ 0); envelope = M - Mc; one equilibrium tide, no dynamical tide or planet spin | "Renv ~ 0" (T1 known limits) | Envelope base radius from a giant model; also VL09's f (fix P1) | simplification, plus the **P1 bug** |
+| epoch.rs:332-335 | a ∝ 1/M on every step (adiabatic) | Jeans 1924 | Non-adiabatic loss when the mass-loss time is under the orbital period (Veras et al. 2011) | valid for planets; fine |
+| epoch.rs:370-385 | Laplace-Lagrange, first order, e clamped 0 to 0.99, frequencies rebuilt per step | first-order theory | Second-order terms near resonances (Great Inequality); windows already cover close pairs | documented limit (T1) |
+| base-time pack: runaway 1.1, window_hill 2 sqrt(3), horizon 60 Myr, window_rewrite_da 0.02, pollution 100 Myr | each sourced in pack | in pack | as published | documented |
+| base-place pack: optical_depth_k/n, dose | rough fits, "replaced when an atmosphere flow publishes" | self-declared | Real atmosphere flow (radiative transfer); GCR transport | documented placeholder |
+| base-place pack: mutual_hill 10 | Chambers et al. 1996 | conservative | Instability-time fit (as in F4) against the requested age | constant |
+| pins.rs:69-74 | MATCH_LIMIT 9 (score units), CLEAR_HILL 8 R_H | none | A stability rule shared with base-place (10 R_H) and F4 | **unsourced; disagrees with base-place's 10** |
+| sse-atoms tides.rs:275-277 | Q 100, k2 0.3, I/(mR^2) 0.4 defaults | "order of magnitude only" | Body-type defaults: Earth k2 0.30, Q about 12 (Earth today) to 100; Mars k2 0.17, Q 90; giants Q 1e4 to 1e5; I/mR^2 from the interior flow (Earth 0.3307) | defaults unsourced |
+| generated.rs:14-16 | Mutual inclinations Rayleigh 1.5 degrees for every system, giants included | Fabrycky 2014 | Inclination from the F4 cascade (scattered systems are hotter) | stand-in |
+| crates/sse-formation/src/growth.rs isolation_mass | Bitsch 2018 pebble isolation mass scaled by host mass | The paper fits a solar-mass star only | A fit or simulation grid across stellar masses (e.g. Ataiee et al. 2018, Johansen et al. 2019) | documented 19 Nov |
+| crates/sse-time/src/epoch.rs giant tide | Eddy time τ uses R*² where Villaver and Livio use (R* − R_env)², and a planet dragged inside the star is floored at half its radius | Envelope base radius not tracked; the floor stops a fast decay reaching a = 0 (NaN) before the engulfment check | Track the envelope base from the giant tables; resolve engulfment inside the substep | documented 19 Nov |
+
+### Candidates to move into flows (cited physics blocks)
+
+| Where | What it computes | Blocks it would need | View that would show it |
+|---|---|---|---|
+| disc.rs:189-207, 264-274 | Midplane temperature T(r, t) from irradiation plus accretion | `disc.irradiation_temperature` (CG97), `disc.accretion_teff` (3GMMdot/8πσr^3), `disc.optical_depth` (κΣ), `disc.midplane_temperature` (NN94 combine), `disc.sigma_lbp` (Σ from M, R_c, r) | Disc panel: T(r) curve at a chosen age with the condensation-line markers moving inward on a time slider |
+| disc.rs:212-262 | Viscous time, M(t), Mdot(t), R_c(t), clearing time | `disc.viscous_nu` (α c_s^2/Ω), `disc.viscous_time`, `disc.lbp_evolution` (T = 1 + t/t_s; M, Mdot, R_c), `disc.clearing_time` (Mdot = Mdot_pe) | Disc timeline: Mdot(t) log-log, with the photoevaporation floor as a horizontal line and the crossing labelled "disc clears" |
+| disc.rs:277-295 | Condensation-line radius (bisection) | `disc.line_radius` (solve T(r) = T_cond, fixed bisection) | The same disc panel; a table of the five lines at 0.1/0.5/2 Myr |
+| disc.rs:437-441 | Photoevaporation rate | `disc.xray_photoevaporation` (OCE12), `disc.external_photoevaporation` (FRIED lookup) | Disc panel: environment slider (G0) showing the lifetime change |
+| growth.rs:298-312 | Scale height and Ω | `disc.aspect_ratio` (c_s/v_K), `orbit.keplerian_omega` | Under the growth view |
+| growth.rs:307-322 | Pebble isolation mass and accretion share | `growth.pebble_isolation_mass` (Bitsch eq. 26), `growth.pebble_accretion_efficiency` (LJ14 2D Hill), `disc.headwind_eta` | Growth panel: mass-vs-time track per embryo with the isolation-mass line it climbs to |
+| growth.rs:324-336 | Envelope fraction before isolation; KH runaway time | `growth.gas_to_core_ratio` (LC15), `growth.kelvin_helmholtz_time` (IL04) | Growth panel: core mass against envelope mass, runaway marked |
+| growth.rs:600-616 | Gap accretion rate | `growth.gap_depth_K` (Kanagawa K), `growth.gap_accretion_rate` (TT16) | Giant card: accretion rate against time; gap depth |
+| growth.rs:647-666 | Migration rate | `growth.type1_rate` (TTW02), `growth.gap_reduction` (1/(1+0.04K)) | Migration map: a(t) tracks for all embryos over the disc lifetime (a "spaghetti" plot), with the trap and inner edge as bands |
+| growth.rs:700-723; violent.rs:765-777; epoch.rs:556; base-place stability | Mutual Hill spacing, Hill-stability test, instability time | `orbit.mutual_hill_radius`, `orbit.hill_stable_pair` (Gladman 2√3), `orbit.instability_time` (Obertas fit) | Architecture strip: planets on log a, spacing in R_H between neighbours, colour by predicted log instability time |
+| violent.rs:870-887 | Impact speed and merge criterion | `impact.mutual_escape_speed`, `impact.impact_speed` (v_esc ⊕ v_inf), `impact.merge_criterion` (Genda 2012) | Impact card: v/v_esc against angle with the Genda boundary drawn and this impact's point on it |
+| violent.rs:953-969 | Largest remnant | `impact.q_rd_star` (LS12), `impact.specific_energy` (Q_R), `impact.largest_remnant` (LS12 universal plus super-catastrophic) | Same impact card: M_lr/M_tot against Q_R/Q* curve with the point |
+| violent.rs:32 and encounter logic | Safronov number, collision against ejection | `orbit.safronov_number`, `encounter.outcome_odds` | Encounter card |
+| early.rs:148-161 | Rocky radius; envelope thickness | `interior.rocky_radius` (exists as the `sse.interior.rocky_radius` atom), `atmosphere.envelope_thickness` (LF14 eq. 3) | World card: mass-radius diagram with the Zeng line and the world's point; envelope as a shaded band |
+| early.rs:164-238 | XUV fluence and energy-limited stripping | `star.xuv_fraction` (Jackson 2012 saturated or decline), `atmosphere.xuv_fluence` (integral), `atmosphere.energy_limited_loss` (OW17) | World card: cumulative XUV energy against envelope binding energy, crossing = "stripped" |
+| early.rs:245-260 | Magma ocean duration, desiccation | `interior.magma_ocean_type` (Hamano: flux against runaway), `climate.runaway_threshold` (Kopparapu) | Early-world timeline |
+| epoch.rs:345-361 | Giant-star tidal decay | `star.convective_turnover_time` (Rasio 1996), `tides.equilibrium_efficiency` (VL09 f), `tides.giant_orbital_decay` (VL09 eq. 7) | Ageing view: a(t) of each planet against R*(t) on the giant branch; engulfment where they meet |
+| epoch.rs:332-335 | Orbit widening by mass loss | `orbit.adiabatic_mass_loss` (a M = const) | Same ageing view |
+| secular.rs | Laplace-Lagrange frequencies | `orbit.laplace_coefficient`, `secular.matrix_A/B`, `secular.eigen` (fixed Jacobi), `secular.evolve` | Secular panel: e(t) and i(t) for each planet over a few Myr; the mode frequencies g and s in arcsec/yr beside the Brouwer & van Woerkom values for the Solar System |
+| tides.rs (already atoms) | Tidal heating, locking time | exist (`sse.tides.*`); add `tides.circularisation_time` (Goldreich & Soter 1966), used to replace violent.rs CIRC_Q_AU | Moon card; tidal-lock clock on the world card |
+| leftovers.rs:35-38 | Size law and k-th largest body | `belt.dohnanyi_size_law`, `belt.kth_largest` | Belt view: cumulative N(>D) log-log with resolved bodies as points |
+| accrete.rs:338-346, 316-323 | Dole dust density, critical mass | `accrete.dole_density` (ρ = A e^(-α r^(1/n))), `accrete.critical_mass` (B (rp L^±1/2)^-3/4) | Classic Accrete view: dust-density profile with swept lanes greyed out |
 
 ## Interiors and heat
 

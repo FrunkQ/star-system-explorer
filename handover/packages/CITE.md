@@ -56,3 +56,16 @@ Physics changed, goldens re-blessed on purpose (stars, formation, formation-pipe
   section 2.6.1); no golden moved.
 - White dwarf cooling keeps A = 4 for all white dwarfs as a documented fudge (HPT00 eq. 90 gives 15 for CO; with 15
   white dwarfs come out several times fainter than detailed cooling models). Comment corrected; fudge F-S23.
+
+### Orbits and formation (19 Nov)
+Physics changed, goldens re-blessed on purpose (time, time-generated, formation-growth, formation-upheaval,
+formation-leftovers):
+- Giant-star tide (`sse-time/src/epoch.rs`): the efficiency factor was inverted, min(1, (τ/2P)²); Villaver and
+  Livio 2009 use (P/2τ)² capped at 1. Tides on planets round giants are now up to 1e2 to 1e4 times stronger: in
+  the Solar System run Venus is engulfed (as Schroeder and Smith 2008 find) and Earth survives about 3 percent
+  inside pure widening; T1 test updated. A planet dragged inside the star is floored at half its radius so the
+  engulfment check catches it (the faster decay otherwise reached a = 0 and NaN).
+- Pebble isolation mass (`sse-formation/src/growth.rs`): Bitsch et al. 2018 eq. 26's diffusion term
+  α/(2 St)/λ added (about +42 percent at α 0.01, St 0.1). F3 population tests still pass.
+- Reference text: Kelvin-Helmholtz coefficient and type I reduction now say what the code uses; Marcus 2009 for
+  the iron fraction; Obertas fit range; Jackson 2012 X-ray saturation by spectral type; Lodders vs Asplund Z.
