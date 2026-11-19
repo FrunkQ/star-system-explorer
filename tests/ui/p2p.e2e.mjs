@@ -91,6 +91,7 @@ try {
     await gm.waitForFunction((h) => document.querySelector(".status [data-state-hash]")?.getAttribute("data-state-hash") !== h, after);
     const named = await gmHash();
     let discovered = "";
+    let orun = null;
     for (const p of [desk, phone]) await p.waitForFunction((h) => document.querySelector("footer[data-state-hash]")?.getAttribute("data-state-hash") === h, named, { timeout: 15000 });
 
     // V10: the GM adds a fog-of-war seat; its windows see only what it has discovered.
@@ -127,6 +128,31 @@ try {
       assert.doesNotMatch(await shows(p), /Vault/, "only Vesh's own discovery");
     }
     await shot(vesh1, "v10-vesh-window");
+
+    // V10 part 2: a sealed seat runs no kernel and fetches no seed, packs or recorded facts; the GM sends finished scenes.
+    await panel.getByLabel("Name", { exact: true }).fill("Empire: Orun");
+    await panel.getByLabel(/Sealed: its screens/).check();
+    await panel.getByRole("button", { name: "Add seat" }).click();
+    await panel.locator("[data-seats='3']").waitFor();
+    const orunLink = await panel.locator("[data-seat-link='empire-orun']").getAttribute("href");
+    assert.match(orunLink, /players\.html\?sealed=[a-z0-9]+&seat=empire-orun$/);
+    assert.ok(!orunLink.includes(new URL(link).searchParams.get("join")), "a sealed seat's link does not name the shared room");
+    orun = await context.newPage();
+    await orun.setViewportSize({ width: 1280, height: 900 });
+    orun.on("pageerror", (e) => errors.push(`orun: ${e.message}`));
+    const fetched = [];
+    orun.on("request", (r) => fetched.push(r.url()));
+    await orun.goto(relay ? `${orunLink}&via=relay` : orunLink);
+    await orun.waitForSelector("footer[data-link='live'][data-sealed][data-audience='empire-orun']", { timeout: 30000 });
+    assert.doesNotMatch(await shows(orun), /Haven|Vault/, "Orun starts knowing nothing");
+    const orunScene0 = await orun.getAttribute("footer", "data-scene-hash");
+    await panel.getByLabel(/Vault known to Empire: Orun/).check();
+    await orun.waitForFunction((h) => document.querySelector("footer")?.getAttribute("data-scene-hash") !== h, orunScene0, { timeout: 15000 });
+    await orun.waitForFunction(() => /Vault/.test(document.querySelector("main")?.innerText ?? ""), null, { timeout: 15000 });
+    assert.doesNotMatch(await shows(orun), /Haven/, "only Orun's own discovery");
+    const leaks = fetched.filter((u) => /\.wasm|player-facts|\/packs\/|kernel/.test(u));
+    assert.deepEqual(leaks, [], "a sealed screen fetches no kernel, packs or recorded facts");
+    await shot(orun, "v10-sealed-window");
     await shot(gm, "v10-gm-seats");
     await panel.getByRole("button", { name: "Close" }).click();
 
@@ -134,17 +160,22 @@ try {
     const pw = await phone.evaluate(() => document.scrollingElement.scrollWidth);
     assert.ok(pw <= 390, `phone scrolls sideways (${pw}px)`);
 
-    // The GM leaves: both players go read-only with a banner, on the last state.
+    // The GM leaves: the players go read-only with a banner, on the last state.
+    const last = await gmHash();
+    for (const p of [desk, phone]) await p.waitForFunction((h) => document.querySelector("footer[data-state-hash]")?.getAttribute("data-state-hash") === h, last, { timeout: 15000 });
+    const orunLast = await orun.getAttribute("footer", "data-scene-hash");
     await gm.close({ runBeforeUnload: true });
+    await orun.waitForSelector("[role=status][aria-label='Game master'][data-link='offline']", { timeout: 15000 });
+    assert.equal(await orun.getAttribute("footer", "data-scene-hash"), orunLast, "the sealed seat keeps its last scene");
     for (const p of [desk, phone]) {
       await p.waitForSelector("[role=status][aria-label='Game master'][data-link='offline']", { timeout: 15000 });
-      assert.equal(await playerHash(p), discovered, "the last state stays on screen");
+      assert.equal(await playerHash(p), last, "the last state stays on screen");
     }
     assert.match(await phone.getByRole("status", { name: "Game master" }).innerText(), /away[\s\S]*read only/i);
     await shot(phone, "p2p-phone-offline");
     assert.deepEqual(errors, []);
     assert.equal(await desk.getByRole("button", { name: "Ask the game master" }).isDisabled(), true, "no requests while the GM is away");
-    console.log(`V4/V5 ${name}${relay ? " (relay)" : ""}: desk and phone joined; GM edit replayed (state ${after.slice(0, 10)}); request approved (state ${named.slice(0, 10)}); Vesh seat in two windows sees only its discovery (state ${discovered.slice(0, 10)}); GM drop shows read-only`);
+    console.log(`V4/V5 ${name}${relay ? " (relay)" : ""}: desk and phone joined; GM edit replayed (state ${after.slice(0, 10)}); request approved (state ${named.slice(0, 10)}); Vesh seat in two windows sees only its discovery (state ${discovered.slice(0, 10)}); sealed Orun seat shown only its discovery with no kernel; GM drop shows read-only`);
     await browser.close();
   }
   console.log("PASS");

@@ -8,7 +8,7 @@ import { readFileSync } from "node:fs";
 import { Session } from "../src/session.ts";
 import { gmSeat, decide } from "../src/seat.ts";
 import { enterFacts, type AuthoredFacts } from "../src/data-views.ts";
-import { GmHost, PlayerReplica, memoryRoom, type Manifest } from "../src/p2p.ts";
+import { GmHost, PlayerReplica, SealedHost, SealedReplica, memoryRoom, type Manifest, type Wire } from "../src/p2p.ts";
 import { addSeat, checkSeats, defaultPlan, discoverIntent, fogViews, isDefaultPlan, joinLink, removeSeat, startIntents, type SeatPlan } from "../src/seats.ts";
 import { observeOf } from "../src/data-views.ts";
 import type { PackDoc } from "../src/physics.ts";
@@ -46,7 +46,7 @@ test("the default plan is one table and needs no seat UI; plans are checked", ()
   assert.equal(addSeat(three, { label: "Empire: Vesh" }).seats.at(-1)!.id, "empire-vesh-2", "ids stay unique");
   const bad: SeatPlan = { ...three, seats: [...three.seats, { ...three.seats[1]!, id: "x", audience: "nobody", lens: "nope", sealed: true }] };
   const errs = checkSeats(bad, { views: VIEWS });
-  assert.ok(errs.some((e) => /no audience nobody/.test(e)) && errs.some((e) => /no data view nope/.test(e)) && errs.some((e) => /sealed/.test(e)), errs.join("; "));
+  assert.ok(errs.some((e) => /no audience nobody/.test(e)) && errs.some((e) => /no data view nope/.test(e)) && errs.some((e) => /no audience nobody/.test(e)), errs.join("; "));
   assert.deepEqual(removeSeat(three, "empire-orun").audiences.map((a) => a.id), ["everyone", "empire-vesh", "empire-kel"]);
   assert.deepEqual(fogViews(observeOf([playerData])!.setup), fog, "the campaign's blank view starts the fog; its before view is a discovery");
   assert.equal(fogViews({ views: [], campaign: { default_view: "a", before: "a", after: "b" } }), null);
@@ -170,5 +170,66 @@ test("auto-approve applies only inside its scope and fields; the rest waits for 
     assert.equal(await p.session!.stateHash(), await gm.stateHash());
   } finally {
     await Promise.all(kernels.map((k) => k.close()));
+  }
+});
+
+test("a sealed seat's device receives no seed and no unfiltered fact", async () => {
+  const gk = nodeKernel();
+  try {
+    const gm = await Session.open(gk.client, gmSeat(), universe, [base, playerData], gk.scratch);
+    const version = await gm.kernelVersion();
+    const shared = memoryRoom();
+    const plan = addSeat(defaultPlan(), { label: "Empire: Vesh", fog, names: true, sealed: true });
+    const seat = plan.seats.at(-1)!;
+    assert.equal(seat.sealed, true);
+    assert.deepEqual(checkSeats(plan, { views: VIEWS }), []);
+    const host = new GmHost(gm, shared.hub("gm"), { run: "rs", kernel: version, app: "a", universe, packs: [base, playerData], opening_hash: await gm.stateHash(), clock_yr: 0, seats: plan.seats });
+    assert.equal(await enterFacts(gm, facts), null);
+    for (const i of startIntents(plan, "u:kestrel", 0)) assert.equal((await gm.send(i)).status, "applied");
+
+    // The sealed seat finds the shared room: it is not served there.
+    const sneak = shared.hub("sneak");
+    const heardShared: Wire[] = [];
+    sneak.onMessage((m) => heardShared.push(m));
+    sneak.send({ t: "hello", from: "sneak", protocol: "sse.p2p/1", seat: seat.id });
+    await new Promise((r) => setTimeout(r, 30));
+    assert.ok(!heardShared.some((m) => m.t === "manifest"), "no manifest for a sealed seat");
+
+    // Its own room: scenes only.
+    const room = memoryRoom();
+    const sealedHost = new SealedHost(gm, host, room.hub("gm"), { seat, scope: SYS, app: "a", clock_yr: 0, data_views: VIEWS });
+    const device = room.hub("vesh-tablet");
+    const heard: Wire[] = [];
+    device.onMessage((m) => heard.push(structuredClone(m)));
+    let t = 0;
+    const p = new SealedReplica(device, seat.id, { app: "a", now: () => t });
+    p.join();
+    await until(() => p.status.state === "live", "sealed seat live");
+    assert.deepEqual(p.scene!.subjects, [], "knows nothing yet");
+
+    await gm.send(discoverIntent(plan.audiences.at(-1)!, TARN, true, "long-range", 0));
+    await until(() => (p.scene?.subjects.length ?? 0) > 0, "discovery arrives as a scene");
+    assert.deepEqual(p.scene!.subjects.map((x) => x.address).sort(), [TARN, TARN_A]);
+
+    // A request goes to the GM's queue and its answer comes back through the sealed room.
+    assert.ok((await p.request({ kind: "set_value", address: TARN, field: "name", value: "Haven", at_yr: 0 })).ok);
+    await until(() => host.requests().length === 1, "GM sees it");
+    await host.approve(host.requests()[0]!.id, "vesh-tablet");
+    await until(() => p.requests()[0]?.status === "approved", "approved");
+    await until(() => JSON.stringify(p.scene).includes("Haven"), "renamed scene");
+
+    // Everything the device ever received: no seed, no packs, no log, no fact it was not shown.
+    const all = JSON.stringify(heard);
+    assert.ok(!all.includes(universe.seed), "no seed");
+    assert.ok(!all.includes('"packs"') && !all.includes('"log"') && !all.includes('"entry"') && !all.includes('"intent"'), "no packs, log or intents");
+    assert.ok(!all.includes("Vault") && !all.includes(VAULT), "nothing about what Vesh has not found");
+    assert.ok(heard.every((m) => ["sealed", "scene", "answer", "beat", "bye", "hello", "request"].includes(m.t)), [...new Set(heard.map((m) => m.t))].join());
+
+    // The GM goes: read only on the last scene.
+    sealedHost.close();
+    await until(() => p.status.state === "offline", "offline");
+    assert.ok(JSON.stringify(p.scene).includes("Haven"));
+  } finally {
+    await gk.close();
   }
 });

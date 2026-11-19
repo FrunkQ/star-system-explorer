@@ -75,7 +75,7 @@
   loadPacks()
     .then((packs) => ((opened = packs), openBrowserSession({ base: document.baseURI, seat: gmSeat(), universe: base.universe, packs })))
     .then(async (s) => {
-      share = await createShare(s, { universe: base.universe, packs: opened, clock_yr: ws.now_yr, views: () => observeOf(s.stack().base)?.setup.views.map((v) => v.id) ?? [] });
+      share = await createShare(s, { universe: base.universe, packs: opened, clock_yr: ws.now_yr, views: () => observeOf(s.stack().base)?.setup.views.map((v) => v.id) ?? [], scope: (factsDoc as unknown as AuthoredFacts).scope });
       // The player-facing facts the GM has recorded, entered when the campaign opens.
       const bad = await enterFacts(s, factsDoc as unknown as AuthoredFacts);
       if (bad) throw new Error(`recorded facts refused: ${JSON.stringify(bad)}`);

@@ -13,7 +13,8 @@
 // Nothing here measures wall-clock time itself: the host passes `now()`.
 import { APPLIED, GRANT_VIEWS, REPLAY, type Session } from "./session.ts";
 import { checkIntent, type Intent } from "./intent.ts";
-import { decide, type Seat } from "./seat.ts";
+import { audienceOf, decide, type Seat } from "./seat.ts";
+import type { PlayerScene } from "./player-scene.ts";
 
 export const P2P_PROTOCOL = "sse.p2p/1";
 
@@ -44,7 +45,7 @@ export interface Manifest {
 }
 
 export type Wire =
-  | { t: "hello"; from: string; protocol: string }
+  | { t: "hello"; from: string; protocol: string; seat?: string }
   | { t: "manifest"; to: string; manifest: Manifest }
   | { t: "event"; run: string; entry: LogEntry }
   /** Session state for screens: the clock, the data views granted, and (V10) the seats when the GM changes them. */
@@ -54,7 +55,25 @@ export type Wire =
   | { t: "bye"; run: string }
   /** V5: a player's request, by seat; it becomes an event only if the GM approves it. */
   | { t: "request"; run: string; from: string; seat: string; id: string; intent: Intent }
-  | { t: "answer"; run: string; to: string; id: string; status: "approved" | "declined"; reason?: string; event_id?: string };
+  | { t: "answer"; run: string; to: string; id: string; status: "approved" | "declined"; reason?: string; event_id?: string }
+  /** V10 sealed seat: what joining gives, with no seed, packs or log. */
+  | { t: "sealed"; to: string; sealed: SealedManifest }
+  /** V10 sealed seat: a finished, filtered scene built on the GM's machine. */
+  | { t: "scene"; run: string; seq: number; scene: PlayerScene; scene_hash: string; clock_yr: number };
+
+/** What a sealed seat's screen receives on joining: never the seed, the packs or the event log. */
+export interface SealedManifest {
+  protocol: string;
+  run: string;
+  app: string;
+  seat: Seat;
+  /** Data views the seat's screens may name (the GM still builds every scene). */
+  data_views: string[];
+  seq: number;
+  scene: PlayerScene;
+  scene_hash: string;
+  clock_yr: number;
+}
 
 /** A player's request as the GM sees it. */
 export interface PlayerRequest {
@@ -222,6 +241,8 @@ export class GmHost {
   readonly #off: (() => void)[] = [];
   readonly #seats: Seat[];
   readonly #requests: PlayerRequest[] = [];
+  /** How to answer each request: through the room it came from (a sealed seat has its own). */
+  readonly #replies = new Map<string, (w: Wire) => void>();
   onChange: (s: HostState) => void = () => {};
 
   constructor(session: Session, hub: Hub | null, base: { run: string; kernel: string; app: string; universe: { id: string; seed: string }; packs: unknown[]; opening_hash: string; clock_yr: number; data_views?: string[]; seats?: Seat[] }) {
@@ -249,6 +270,8 @@ export class GmHost {
     this.#off.push(
       hub.onMessage((m) => {
         if (m.t === "hello" || m.t === "snapshot") {
+          // A sealed seat never gets the manifest (seed, packs, log), even if it finds the shared room.
+          if (m.t === "hello" && m.seat && this.#seats.find((x) => x.id === m.seat)?.sealed) return;
           this.#players.add(m.from);
           hub.send({ t: "manifest", to: m.from, manifest: this.manifest() });
           this.#changed();
@@ -262,7 +285,23 @@ export class GmHost {
   }
 
   #answer(r: PlayerRequest, status: "approved" | "declined", extra: { reason?: string; event_id?: string } = {}) {
+    const key = `${r.from}\u0000${r.id}`;
+    const reply = this.#replies.get(key);
+    this.#replies.delete(key);
+    if (reply) return reply({ t: "answer", run: this.#base.run, to: r.from, id: r.id, status, ...extra });
     this.#hub?.send({ t: "answer", run: this.#base.run, to: r.from, id: r.id, status, ...extra });
+  }
+
+  /** A sealed room hands its requests here; answers go back through `reply`. */
+  takeRequest(m: Extract<Wire, { t: "request" }>, reply: (w: Wire) => void) {
+    if (m.run !== this.#base.run) return;
+    if (!this.#requests.some((x) => x.from === m.from && x.id === m.id)) this.#replies.set(`${m.from}\u0000${m.id}`, reply);
+    this.#request(m);
+  }
+
+  /** The run id (a sealed room checks requests against it). */
+  get run(): string {
+    return this.#base.run;
   }
 
   /** A player's request: checked against the seat the GM gave it, then queued for the GM (never applied here). */
@@ -538,5 +577,219 @@ export class PlayerReplica {
     this.onSession(s);
     this.#live();
     this.onUpdate();
+  }
+}
+
+/**
+ * A sealed seat (V10 part 2, H8.7): its own room, served only finished,
+ * filtered scenes built on the GM's machine for the seat's audience (through
+ * its lens). Its screens never receive the seed, the packs, the event log or
+ * any fact the audience has not been shown, so peeking at the device shows
+ * nothing more than the screen. It needs the GM online; requests still go to
+ * the GM's queue and are checked against the seat.
+ */
+export class SealedHost {
+  readonly #session: Session;
+  readonly #host: GmHost;
+  readonly #hub: Hub;
+  readonly #seat: Seat;
+  readonly #scope: string;
+  readonly #app: string;
+  #views: string[];
+  #clock: number;
+  #seq = 0;
+  #last: { scene: PlayerScene; hash: string } | null = null;
+  #queue: Promise<void> = Promise.resolve();
+  readonly #off: (() => void)[] = [];
+
+  constructor(session: Session, host: GmHost, hub: Hub, o: { seat: Seat; scope: string; app: string; clock_yr: number; data_views: string[] }) {
+    if (!o.seat.sealed) throw new Error(`seat ${o.seat.label} is not sealed`);
+    this.#session = session;
+    this.#host = host;
+    this.#hub = hub;
+    this.#seat = structuredClone(o.seat);
+    this.#scope = o.scope;
+    this.#app = o.app;
+    this.#clock = o.clock_yr;
+    this.#views = [...o.data_views];
+    this.#off.push(session[APPLIED](() => this.refresh()));
+    this.#off.push(
+      hub.onMessage((m) => {
+        if (m.t === "hello" && m.protocol === P2P_PROTOCOL) this.#serial(() => this.#welcome(m.from));
+        else if (m.t === "request" && m.seat === this.#seat.id) this.#host.takeRequest(m, (w) => hub.send(w));
+      }),
+    );
+  }
+
+  #serial(f: () => Promise<void>) {
+    this.#queue = this.#queue.then(f, f).catch(() => undefined);
+  }
+
+  async #build(): Promise<{ scene: PlayerScene; hash: string }> {
+    const r = await this.#session.scene(this.#scope, { audience: audienceOf(this.#seat), ...(this.#seat.lens ? { data_view: this.#seat.lens } : {}) });
+    if (!r.ok) throw new Error(r.message);
+    return { scene: r.scene, hash: r.hash };
+  }
+
+  async #welcome(to: string) {
+    this.#last ??= await this.#build();
+    const sealed: SealedManifest = { protocol: P2P_PROTOCOL, run: this.#host.run, app: this.#app, seat: structuredClone(this.#seat), data_views: [...this.#views], seq: this.#seq, scene: this.#last.scene, scene_hash: this.#last.hash, clock_yr: this.#clock };
+    this.#hub.send({ t: "sealed", to, sealed });
+  }
+
+  /** Rebuild the seat's scene and send it if it changed (called after every applied intent, and by the host when the clock moves). */
+  refresh(): Promise<void> {
+    this.#serial(async () => {
+      const next = await this.#build();
+      if (this.#last && next.hash === this.#last.hash) return;
+      this.#last = next;
+      this.#seq += 1;
+      this.#hub.send({ t: "scene", run: this.#host.run, seq: this.#seq, scene: next.scene, scene_hash: next.hash, clock_yr: this.#clock });
+    });
+    return this.#queue;
+  }
+
+  setClock(yr: number) {
+    this.#clock = yr;
+  }
+
+  beat() {
+    this.#hub.send({ t: "beat", run: this.#host.run, seq: this.#seq, state_hash: this.#last?.hash ?? "" });
+  }
+
+  close() {
+    this.#hub.send({ t: "bye", run: this.#host.run });
+    this.#off.forEach((f) => f());
+  }
+}
+
+/**
+ * The sealed seat's screen: no kernel, no seed. It shows the scenes the GM
+ * sends, goes read-only on the last one when the GM goes quiet, and sends
+ * requests the seat may make for the GM to decide.
+ */
+export class SealedReplica {
+  readonly #hub: Hub;
+  readonly #seatId: string;
+  readonly #app: string;
+  readonly #now: () => number;
+  readonly #offlineAfter: number;
+  #run = "";
+  #seq = 0;
+  #hash = "";
+  #clock = 0;
+  #lastHeard = 0;
+  #seat: Seat | null = null;
+  #scene: PlayerScene | null = null;
+  #views: string[] = [];
+  #status: ReplicaStatus = { state: "joining" };
+  readonly #own: OwnRequest[] = [];
+  #nextId = 1;
+  readonly #off: () => void;
+  onStatus: (s: ReplicaStatus) => void = () => {};
+  onScene: (scene: PlayerScene, hash: string) => void = () => {};
+  onRequests: (r: readonly OwnRequest[]) => void = () => {};
+
+  constructor(hub: Hub, seat: string, opts: { app: string; now: () => number; offlineAfterMs?: number }) {
+    this.#hub = hub;
+    this.#seatId = seat;
+    this.#app = opts.app;
+    this.#now = opts.now;
+    this.#offlineAfter = opts.offlineAfterMs ?? 6000;
+    this.#off = hub.onMessage((m) => this.#receive(m));
+  }
+
+  get status(): ReplicaStatus {
+    return this.#status;
+  }
+  get seat(): Seat | null {
+    return this.#seat;
+  }
+  get scene(): PlayerScene | null {
+    return this.#scene;
+  }
+  get dataViews(): readonly string[] {
+    return this.#views;
+  }
+
+  join() {
+    this.#hub.send({ t: "hello", from: this.#hub.id, protocol: P2P_PROTOCOL, seat: this.#seatId });
+  }
+
+  async request(intent: Intent): Promise<{ ok: true; id: string } | { ok: false; reason: string }> {
+    if (this.#status.state !== "live" || !this.#seat) return { ok: false, reason: "The game master is not connected; requests wait until they are." };
+    const bad = checkIntent(intent);
+    if (bad) return { ok: false, reason: bad };
+    const d = decide(this.#seat, intent);
+    if (d.action === "refuse") return { ok: false, reason: d.reason };
+    const id = `${this.#hub.id}-${this.#nextId++}`;
+    this.#own.push({ id, intent: structuredClone(intent), status: "waiting" });
+    this.#hub.send({ t: "request", run: this.#run, from: this.#hub.id, seat: this.#seatId, id, intent });
+    this.onRequests(structuredClone(this.#own));
+    return { ok: true, id };
+  }
+
+  requests(): readonly OwnRequest[] {
+    return structuredClone(this.#own);
+  }
+
+  tick() {
+    const s = this.#status;
+    if (s.state === "live" && this.#now() - this.#lastHeard > this.#offlineAfter) this.#set({ state: "offline", seq: this.#seq, state_hash: this.#hash, since: this.#lastHeard });
+  }
+
+  close() {
+    this.#off();
+  }
+
+  #set(s: ReplicaStatus) {
+    this.#status = s;
+    this.onStatus(s);
+  }
+
+  #live() {
+    this.#set({ state: "live", seq: this.#seq, state_hash: this.#hash, clock_yr: this.#clock });
+  }
+
+  #show(scene: PlayerScene, hash: string, seq: number, clock: number) {
+    this.#scene = scene;
+    this.#hash = hash;
+    this.#seq = seq;
+    this.#clock = clock;
+    this.#lastHeard = this.#now();
+    this.#live();
+    this.onScene(scene, hash);
+  }
+
+  #receive(m: Wire) {
+    if (this.#status.state === "reload") return;
+    if (m.t === "sealed") {
+      if (m.to !== this.#hub.id) return;
+      const man = m.sealed;
+      if (man.protocol !== P2P_PROTOCOL || man.app !== this.#app) return this.#set({ state: "reload", reason: `The game master runs ${man.app}; this screen has ${this.#app}. Reload to match.` });
+      this.#run = man.run;
+      this.#seat = structuredClone(man.seat);
+      this.#views = [...man.data_views];
+      return this.#show(man.scene, man.scene_hash, man.seq, man.clock_yr);
+    }
+    if (!("run" in m) || m.run !== this.#run) return;
+    if (m.t === "scene") return m.seq > this.#seq ? this.#show(m.scene, m.scene_hash, m.seq, m.clock_yr) : undefined;
+    if (m.t === "answer") {
+      if (m.to !== this.#hub.id) return;
+      const r = this.#own.find((x) => x.id === m.id);
+      if (r) {
+        r.status = m.status;
+        if (m.reason) r.reason = m.reason;
+        this.onRequests(structuredClone(this.#own));
+      }
+      return;
+    }
+    if (m.t === "bye") return this.#set({ state: "offline", seq: this.#seq, state_hash: this.#hash, since: this.#now() });
+    if (m.t === "beat") {
+      this.#lastHeard = this.#now();
+      // Missed a scene: ask again (the GM answers with the current one).
+      if (m.seq > this.#seq) return this.join();
+      if (this.#status.state !== "live") this.#live();
+    }
   }
 }

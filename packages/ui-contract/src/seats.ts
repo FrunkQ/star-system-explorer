@@ -60,10 +60,11 @@ export function grantField(audience: string): string {
 /**
  * Add a seat with its own audience. `fog` gives the audience a view that
  * shows nothing until the GM marks discoveries (fog of war). `names` lets the
- * seat ask for names; `autoNames` applies those names without asking, inside
+ * seat ask for names; `sealed` serves it finished scenes only, never the seed,
+ * from its own room; `autoNames` applies those names without asking, inside
  * `scope`.
  */
-export function addSeat(p: SeatPlan, o: { label: string; fog?: { starts_with: string; discovered_view: string }; names?: boolean; autoNames?: string[]; screens?: string[] }): SeatPlan {
+export function addSeat(p: SeatPlan, o: { label: string; fog?: { starts_with: string; discovered_view: string }; names?: boolean; autoNames?: string[]; screens?: string[]; sealed?: boolean }): SeatPlan {
   let id = slug(o.label);
   const taken = new Set([...p.seats.map((s) => s.id), ...p.audiences.map((a) => a.id), ...RESERVED]);
   for (let n = 2; taken.has(id); n++) id = `${slug(o.label)}-${n}`;
@@ -75,7 +76,7 @@ export function addSeat(p: SeatPlan, o: { label: string; fog?: { starts_with: st
     authority: "player",
     may_send: o.names ? ["set_value"] : [],
     ...(o.names && o.autoNames?.length ? { auto_approve: [{ intent: "set_value" as const, scope: [...o.autoNames], fields: ["name"] }] } : {}),
-    sealed: false,
+    sealed: o.sealed === true,
     ...(o.screens?.length ? { screens: [...o.screens] } : {}),
   };
   return { ...p, audiences: [...p.audiences, audience], seats: [...p.seats, seat] };
@@ -113,7 +114,7 @@ export function checkSeats(p: SeatPlan, ctx: { views?: string[]; screens?: strin
     for (const k of s.may_send) if (!INTENT_KINDS.includes(k as IntentKind)) out.push(`seat ${s.label}: unknown intent ${k}`);
     for (const a of s.auto_approve ?? []) if (!s.may_send.includes(a.intent)) out.push(`seat ${s.label}: applies ${a.intent} without asking but may not send it`);
     for (const sc of s.screens ?? []) if (ctx.screens && !ctx.screens.includes(sc)) out.push(`seat ${s.label}: no screen ${sc}`);
-    if (s.sealed) out.push(`seat ${s.label}: sealed seats are not built yet`);
+    if (s.sealed && s.id === "table") out.push("the table cannot be sealed: it is the open link");
   }
   if (!ids.has("table")) out.push("the table seat always exists");
   return out;
@@ -157,4 +158,11 @@ export function fogViews(setup: Pick<ObserveSetup, "views" | "campaign"> | null 
   if (!setup) return null;
   const blank = setup.views.find((v) => v.show_tiers.length === 0 && !v.overrides?.some((o) => o.show) && v.tags.mode === "none" && v.unknown_style === "omit");
   return blank ? { starts_with: blank.id, discovered_view: setup.campaign.before } : null;
+}
+
+/** The join link for a sealed seat: its own room, never the shared one (whose events carry every fact). */
+export function sealedLink(base: string, room: string, seat: string, screen?: string): string {
+  const q = new URLSearchParams({ sealed: room, seat });
+  if (screen) q.set("screen", screen);
+  return new URL(`players.html?${q}`, base).href;
 }

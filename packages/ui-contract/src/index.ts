@@ -5,7 +5,7 @@ export { YEAR_S, INTENT_KINDS, checkIntent, yearsToSeconds, secondsToYears } fro
 export type { Intent, IntentKind, IntentSchema } from "./intent.ts";
 export { audienceOf, decide, gmSeat, tableSeat, sharedTableSeat, within } from "./seat.ts";
 export type { Seat, AutoApprove, Decision } from "./seat.ts";
-export { EVERYONE, defaultPlan, isDefaultPlan, slug, grantField, addSeat, removeSeat, checkSeats, startIntents, discoverIntent, joinLink, fogViews } from "./seats.ts";
+export { EVERYONE, defaultPlan, isDefaultPlan, slug, grantField, addSeat, removeSeat, checkSeats, startIntents, discoverIntent, joinLink, sealedLink, fogViews } from "./seats.ts";
 export type { Audience, SeatPlan } from "./seats.ts";
 export type { ViewSession, IntentResult, HistoryEvent, DeviceEdge, DeriveRef, InputValue, Derived, Explanation, StackInfo, TrialResult, StackCandidate, Probe, SceneOptions } from "./session.ts";
 export { CAMPAIGN_PACK, flowParams, editFlow, diffFlow, providerOf, campaignPack, packFor, checkRequest, flowColumns, paramText, siText } from "./physics.ts";
@@ -36,7 +36,7 @@ export { observeOf, checkSetup, playerDataPack, setupChanges, applySetup, enterF
 export type { DataView, ObserveSetup, Override, TagMode, UnknownStyle, AuthoredFacts } from "./data-views.ts";
 export { showReference } from "./reference.ts";
 export type { ReferenceIn, ShownReference } from "./reference.ts";
-export { GmHost, PlayerReplica, memoryRoom, broadcastHub, relayHub, multiHub, P2P_PROTOCOL } from "./p2p.ts";
-export type { Hub, Wire, Manifest, LogEntry, HostState, ReplicaStatus, PlayerRequest, OwnRequest } from "./p2p.ts";
+export { GmHost, PlayerReplica, SealedHost, SealedReplica, memoryRoom, broadcastHub, relayHub, multiHub, P2P_PROTOCOL } from "./p2p.ts";
+export type { Hub, Wire, Manifest, LogEntry, HostState, ReplicaStatus, PlayerRequest, OwnRequest, SealedManifest } from "./p2p.ts";
 // The session class as a type only (shells hold the one host-browser.ts opened; they cannot make one).
 export type { Session } from "./session.ts";

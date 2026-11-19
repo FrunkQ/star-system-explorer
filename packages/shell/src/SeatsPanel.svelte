@@ -26,13 +26,14 @@
   let withFog = $state(true);
   let names = $state(true);
   let autoNames = $state(false);
+  let sealed = $state(false);
   let screens = $state<string[]>(["players.screen.json"]);
   let problem = $state("");
 
   async function add(e: SubmitEvent) {
     e.preventDefault();
     if (!label.trim()) return void (problem = "Give the seat a name, for example Empire: Vesh.");
-    const bad = await share.addSeat({ label: label.trim(), ...(withFog && fog ? { fog } : {}), names, autoNames: autoNames ? [scope] : [], screens: screens.length > 1 || screens[0] !== "players.screen.json" ? screens : [] });
+    const bad = await share.addSeat({ label: label.trim(), ...(withFog && fog ? { fog } : {}), names, autoNames: autoNames ? [scope] : [], screens: screens.length > 1 || screens[0] !== "players.screen.json" ? screens : [], sealed });
     problem = bad ?? "";
     if (!bad) {
       label = "";
@@ -75,7 +76,7 @@
         {@const a = plan.audiences.find((x) => x.id === s.audience)}
         <li data-seat={s.id}>
           <span class="name">{s.label}</span>
-          <span class="meta">{s.audience === EVERYONE ? "sees what everyone has been shown" : a?.starts_with ? "fog of war: sees its own discoveries" : "its own knowledge"}{s.may_send.length ? (s.auto_approve?.length ? " · names apply without asking" : " · may suggest names") : ""}</span>
+          <span class="meta">{s.audience === EVERYONE ? "sees what everyone has been shown" : a?.starts_with ? "fog of war: sees its own discoveries" : "its own knowledge"}{s.sealed ? " · sealed" : ""}{s.may_send.length ? (s.auto_approve?.length ? " · names apply without asking" : " · may suggest names") : ""}</span>
           <span class="links">
             {#each share.links(s.id) as l (l.href)}
               <a href={l.href} target="_blank" rel="noopener" data-seat-link={s.id}>{l.screen ? (SCREENS.find((x) => x.file === l.screen)?.label ?? l.screen) : "join link"}</a>
@@ -114,6 +115,7 @@
     {#if !fog}<p class="hint">The campaign's data views have none that shows nothing, so fog of war is not available.</p>{/if}
     <label class="check"><input type="checkbox" bind:checked={names} /> May suggest names</label>
     <label class="check"><input type="checkbox" bind:checked={autoNames} disabled={!names} /> Its names apply without asking</label>
+    <label class="check"><input type="checkbox" bind:checked={sealed} /> Sealed: its screens get finished scenes only, never the seed (needs you online)</label>
     <fieldset>
       <legend>Screens (each opens in its own window or device)</legend>
       {#each SCREENS as sc (sc.file)}

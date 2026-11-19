@@ -13,11 +13,10 @@
 <script lang="ts">
   import { checkPlayerScene, checkScreen, enterFacts, gmSeat, markerFor, observeOf, playerSubjectOf, subjectName, type AuthoredFacts, type CheckedScreen, type PlayerScene, type ScreenDoc, type Vocab, type ViewSession } from "../../ui-contract/src/index.ts";
   import { openBrowserSession } from "../../ui-contract/src/host-browser.ts";
-  import { PlayerReplica, audienceOf, broadcastHub, relayHub, sharedTableSeat, type Hub, type OwnRequest, type ReplicaStatus } from "../../ui-contract/src/index.ts";
+  import { PlayerReplica, SealedReplica, audienceOf, broadcastHub, relayHub, sharedTableSeat, type Hub, type OwnRequest, type ReplicaStatus } from "../../ui-contract/src/index.ts";
   import { APP_VERSION } from "./share.svelte.ts";
   import { focusOf } from "../../views/player-stack/src/pick.ts";
   import stackDoc from "./documents/stack.json";
-  import factsDoc from "./documents/kestrel.player-facts.json";
   import { PLAYER_STACK, ScreenRuntime } from "../../views/player-stack/src/index.ts";
   import { themeCss } from "../../skins/chart-room/src/index.ts";
   import { ALL_THEMES, PLAYER_THEMES, filterLayers } from "../../skins/player/src/index.ts";
@@ -48,7 +47,9 @@
     return (await r.json()) as ScreenDoc;
   }
 
-  const facts = factsDoc as unknown as AuthoredFacts;
+  // The campaign's recorded facts, loaded only when this screen runs a kernel: a sealed seat's screen never fetches them.
+  let facts: AuthoredFacts = { schema: "", universe: { id: "", seed: "" }, scope: "", at_yr: 0, facts: [] } as unknown as AuthoredFacts;
+  const loadFacts = async () => (facts = (await import("./documents/kestrel.player-facts.json")).default as unknown as AuthoredFacts);
   const AUDIENCE = "everyone";
   // Joined through a seat's link, the scene is built for that seat's audience (and lens, if it has one).
   let audience = $state(AUDIENCE);
@@ -69,14 +70,19 @@
     sceneHash = r.hash;
   }
   async function useScreen(s: ViewSession) {
+    await useScreenWith(observeOf(s.stack().base)?.setup.views.map((v) => v.id), s.device()?.tier ?? "standard");
+  }
+  async function useScreenWith(views: string[] | undefined, tier: string) {
     const doc = await loadScreen();
-    const views = observeOf(s.stack().base)?.setup.views.map((v) => v.id);
-    checked = checkScreen(doc, PLAYER_STACK, views, { registry: allStyles(), tier: s.device()?.tier ?? "standard" });
+    checked = checkScreen(doc, PLAYER_STACK, views, { registry: allStyles(), tier: tier as "standard" });
     screenDoc = doc;
   }
 
   // Joined to a game master's room, or standing alone.
-  const room = new URLSearchParams(location.search).get("join");
+  // A sealed seat (V10 part 2) joins its own room with `?sealed=`: no kernel, no seed, only the GM's finished scenes.
+  const sealedRoom = new URLSearchParams(location.search).get("sealed");
+  const isSealed = sealedRoom !== null && /^[a-z0-9]{4,40}$/.test(sealedRoom);
+  const room = isSealed ? sealedRoom : new URLSearchParams(location.search).get("join");
   const joined = room !== null && /^[a-z0-9]{4,40}$/.test(room);
   let link = $state<ReplicaStatus>({ state: "joining" });
   let stateHash = $state("");
@@ -93,20 +99,48 @@
     return broadcastHub(room!, id);
   }
   // V5: asking the GM. A request becomes an event only if the GM approves it.
-  let replicaRef: PlayerReplica | null = null;
+  let replicaRef: Pick<PlayerReplica, "request"> | null = null;
   let mine = $state<OwnRequest[]>([]);
   let ask = $state("");
   let askError = $state("");
   async function askName() {
     if (!replicaRef || !target || !ask.trim()) return;
-    const r = await replicaRef.request({ kind: "set_value", address: target.address, field: "name", value: ask.trim(), at_yr: facts.at_yr });
+    const r = await replicaRef.request({ kind: "set_value", address: target.address, field: "name", value: ask.trim(), at_yr: link.state === "live" ? link.clock_yr : facts.at_yr });
     askError = r.ok ? "" : r.reason;
     if (r.ok) ask = "";
   }
   const seatId = new URLSearchParams(location.search).get("seat") ?? "table";
-  if (joined) {
+  if (isSealed) {
     const id = `player-${Math.random().toString(36).slice(2, 10)}`;
     void roomHub(id).then((hub) => {
+      const replica = new SealedReplica(hub, seatId, { app: APP_VERSION, now: () => performance.now() });
+      replicaRef = replica;
+      replica.onRequests = (r) => (mine = [...r]);
+      replica.onStatus = (st) => (link = st);
+      let first = true;
+      replica.onScene = (sc, hash) => {
+        const seat = replica.seat!;
+        audience = audienceOf(seat);
+        seatLabel = seat.label;
+        mayAsk = seat.may_send.includes("set_value");
+        const bad = checkPlayerScene(sc);
+        sceneErrors = bad ? [bad] : [];
+        scene = sc;
+        sceneHash = hash;
+        stateHash = "";
+        if (first) {
+          first = false;
+          seatScreen = seat.screens?.[0] ?? null;
+          void useScreenWith([...replica.dataViews], "standard").catch((e) => (sceneErrors = [String(e)]));
+        }
+      };
+      replica.join();
+      const again = setInterval(() => (link.state === "joining" ? replica.join() : clearInterval(again)), 1500);
+      setInterval(() => replica.tick(), 1000);
+    });
+  } else if (joined) {
+    const id = `player-${Math.random().toString(36).slice(2, 10)}`;
+    void Promise.all([roomHub(id), loadFacts()]).then(([hub]) => {
       const replica = new PlayerReplica(
         hub,
         (m) => {
@@ -143,8 +177,8 @@
       setInterval(() => replica.tick(), 1000);
     });
   } else {
-    Promise.all(stackDoc.packs.map(async (p) => (await fetch(new URL(p, document.baseURI))).json()))
-      .then((packs) => openBrowserSession({ base: document.baseURI, seat: gmSeat(), universe: facts.universe, packs }))
+    Promise.all([loadFacts(), ...stackDoc.packs.map(async (p) => (await fetch(new URL(p, document.baseURI))).json())])
+      .then(([, ...packs]) => openBrowserSession({ base: document.baseURI, seat: gmSeat(), universe: facts.universe, packs }))
       .then(async (s) => {
         const bad = await enterFacts(s, facts);
         if (bad) throw new Error(`recorded facts refused: ${JSON.stringify(bad)}`);
@@ -253,7 +287,7 @@
       {/if}
     </section>
   {/if}
-  <footer class="status" data-state-hash={stateHash} data-seat={joined ? seatId : undefined} data-audience={audience} data-link={joined ? link.state : "local"} data-via={via}>Scene: live from {joined ? "this screen's kernel, in step with the game master" : "the kernel"} {via ? ` (via ${via === "relay" ? "the site's relay" : "this browser"})` : ""} for {seatLabel && seatId !== "table" ? `the seat ${seatLabel}, ` : ""}the {audience} audience{sceneHash ? ` · scene ${sceneHash.slice(0, 10)}` : ""}{stateHash ? ` · state ${stateHash.slice(0, 10)}` : ""} {joined ? "" : screenDoc?.data_view ? ` · fixed to the ${screenDoc.data_view} view by the screen document` : ` · the Scanned control stands in for the GM's button and taps it for ${target ? subjectName(target) : "the body in focus"}`}</footer>
+  <footer class="status" data-state-hash={stateHash} data-scene-hash={sceneHash} data-sealed={isSealed || undefined} data-seat={joined ? seatId : undefined} data-audience={audience} data-link={joined ? link.state : "local"} data-via={via}>Scene: live from {isSealed ? "the game master's machine (sealed seat: this screen holds no seed and runs no kernel)" : joined ? "this screen's kernel, in step with the game master" : "the kernel"} {via ? ` (via ${via === "relay" ? "the site's relay" : "this browser"})` : ""} for {seatLabel && seatId !== "table" ? `the seat ${seatLabel}, ` : ""}the {audience} audience{sceneHash ? ` · scene ${sceneHash.slice(0, 10)}` : ""}{stateHash ? ` · state ${stateHash.slice(0, 10)}` : ""} {joined ? "" : screenDoc?.data_view ? ` · fixed to the ${screenDoc.data_view} view by the screen document` : ` · the Scanned control stands in for the GM's button and taps it for ${target ? subjectName(target) : "the body in focus"}`}</footer>
 </div>
 <FilterChain {layers} />
 
