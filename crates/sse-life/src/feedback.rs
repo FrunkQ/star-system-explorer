@@ -56,6 +56,21 @@ pub struct AirParams {
     pub escape_mol_yr_per_f: f64,
     /// Land life multiplies silicate weathering by this (Berner 1997).
     pub land_weathering_factor: f64,
+    /// E3 competing sinks (evolution design section 7). Fire: COPSE's
+    /// ignition index `clamp(slope * r - offset, 0, max)` from the O2 mixing
+    /// ratio r, and the land-burial factor `k / (k - 1 + ignition)`, 1 at
+    /// today's air. `fire_k` 0 switches fire off (a what-if).
+    pub fire_k: f64,
+    pub ignition_slope: f64,
+    pub ignition_offset: f64,
+    pub ignition_max: f64,
+    /// Photorespiration: land production falls as `1 + a (1 - r / r_pal)`
+    /// (COPSE's 1.5 - 0.5 O2/O2_0 is a = 0.5), floored at 0. 0 switches it off.
+    pub photorespiration: f64,
+    /// Aerobic decomposers: above today's air the burial share falls with O2
+    /// as `(1 + h) / (1 + h r / r_pal)` (1 at and below today's level, whose
+    /// burial efficiency the base fraction already holds); `h` 0 switches them off.
+    pub decomposer_h: f64,
     pub sources: Vec<String>,
 }
 
@@ -77,6 +92,12 @@ impl Default for AirParams {
             o2_switch_fraction: 1.0e-5,
             escape_mol_yr_per_f: 1.3e16,
             land_weathering_factor: 4.0,
+            fire_k: 3.0,
+            ignition_slope: 48.0,
+            ignition_offset: 9.08,
+            ignition_max: 5.0,
+            photorespiration: 0.5,
+            decomposer_h: 1.0,
             sources: vec![],
         }
     }
@@ -97,6 +118,14 @@ pub struct Ledger {
     pub escape_to_crust: f64,
     /// Organic carbon buried, moles (future fossil fuels and shales).
     pub carbon_buried: f64,
+    /// Of `burial`, the part from land production (the rest is marine).
+    #[serde(default)]
+    pub burial_land: f64,
+    /// Burial that did not happen because of fire, photorespiration and
+    /// aerobic decomposers, against today's-air factors (information only:
+    /// the carbon went back to the air as CO2, so no O2 moved).
+    #[serde(default)]
+    pub burial_suppressed: f64,
 }
 
 impl Ledger {
@@ -114,6 +143,13 @@ pub struct AirPoint {
     pub reductant_mol_yr: f64,
     pub burial_mol_yr: f64,
     pub escape_mol_yr: f64,
+    /// The fire factor on land burial this step (1 at today's air).
+    #[serde(default = "one")]
+    pub fire_factor: f64,
+}
+
+fn one() -> f64 {
+    1.0
 }
 
 /// The stand-in physics side: one air reservoir.
@@ -144,6 +180,34 @@ impl AirBox {
 
     pub fn o2_fraction(&self) -> f64 {
         self.o2_mol / self.p.air_mol
+    }
+
+    /// COPSE's fire ignition index at an O2 mixing ratio.
+    pub fn ignition(&self, r: f64) -> f64 {
+        let p = &self.p;
+        (p.ignition_slope * r - p.ignition_offset).clamp(0.0, p.ignition_max)
+    }
+
+    /// Land, marine burial factors at O2 fraction `f` (all 1 at today's air
+    /// when fire, photorespiration and decomposers are calibrated), and the fire factor.
+    pub fn burial_factors(&self, f: f64) -> (f64, f64, f64) {
+        let p = &self.p;
+        let r_pal = p.pal_mol / p.air_mol;
+        let rel = if r_pal > 0.0 { f / r_pal } else { 0.0 };
+        let fire = if p.fire_k > 0.0 {
+            p.fire_k / (p.fire_k - 1.0 + self.ignition(f))
+        } else {
+            1.0
+        };
+        let photo = (1.0 + p.photorespiration * (1.0 - rel)).max(0.0);
+        // Calibrated on today's burial efficiency, which already reflects
+        // anoxic bottom waters: decomposers only cut burial further above it.
+        let decomp = if rel > 1.0 {
+            (1.0 + p.decomposer_h) / (1.0 + p.decomposer_h * rel)
+        } else {
+            1.0
+        };
+        (fire * photo * decomp, decomp, fire)
     }
 
     fn reductants_at(&self, t_myr: f64) -> f64 {
@@ -180,8 +244,21 @@ impl AirBox {
         let k_esc = p.escape_mol_yr_per_f * p.area_rel * anoxic_weight / p.air_mol;
         let ch4_mol = ch4_flux / (1.0 / life_yr + k_esc);
         // O2 sources and sinks over the step, moles.
+        // Burial competes with fire (land), photorespiration (land) and
+        // aerobic decomposers (both): every factor falls as O2 rises, so the
+        // source O2 depends on weakens as O2 builds (E3).
         let oxygenic = fl.by_metabolism.get("oxygenic").copied().unwrap_or(0.0);
-        let burial = p.burial_fraction * oxygenic / G_PER_MOL_C * dt;
+        let land = fl
+            .land_by_metabolism
+            .get("oxygenic")
+            .copied()
+            .unwrap_or(0.0)
+            .min(oxygenic);
+        let (f_land, f_sea, _) = self.burial_factors(f_guess);
+        let base = p.burial_fraction / G_PER_MOL_C * dt;
+        let burial_land = base * land * f_land;
+        let burial = burial_land + base * (oxygenic - land) * f_sea;
+        let suppressed = (base * oxygenic - burial).max(0.0);
         // Hydrogen lost to space oxidises the planet: it cancels reducing
         // gases but never makes free O2 beyond them (the rest oxidises the crust).
         let demand = self.reductants_at(fl.at_myr) * dt;
@@ -193,6 +270,8 @@ impl AirBox {
             escape,
             escape_to_crust: escape_all - escape,
             carbon_buried: burial,
+            burial_land,
+            burial_suppressed: suppressed,
             ..Default::default()
         };
         let o2_mol = if avail <= demand {
@@ -253,6 +332,8 @@ impl Boundary for AirBox {
             (&mut self.totals.reductant_unmet, l.reductant_unmet),
             (&mut self.totals.escape_to_crust, l.escape_to_crust),
             (&mut self.totals.carbon_buried, l.carbon_buried),
+            (&mut self.totals.burial_land, l.burial_land),
+            (&mut self.totals.burial_suppressed, l.burial_suppressed),
         ] {
             *tot += v;
         }
@@ -272,6 +353,7 @@ impl Boundary for AirBox {
             reductant_mol_yr: t.demand / dt.max(1.0),
             burial_mol_yr: l.burial / dt.max(1.0),
             escape_mol_yr: l.escape / dt.max(1.0),
+            fire_factor: self.burial_factors(f).2,
         });
         [
             ("o2_fraction".to_string(), f),
