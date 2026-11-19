@@ -383,6 +383,90 @@ pub enum Request {
         #[ts(type = "unknown")]
         export: serde_json::Value,
     },
+    /// The record (J1): write a note at `address`, linked to `links`. The
+    /// audience is `"everyone"`, `"gm"` (the default) or a list of audience
+    /// ids; with `tier` it shows only where the audience's view shows that
+    /// tier. `supersedes` corrects an earlier note (empty `text` withdraws
+    /// it). Notes never change state; send the event only to the seats the
+    /// response's `audience` includes.
+    AddNote {
+        address: String,
+        #[serde(default)]
+        #[ts(optional)]
+        links: Option<Vec<String>>,
+        text: String,
+        #[serde(default)]
+        #[ts(optional)]
+        tags: Option<Vec<String>>,
+        /// The writing seat (default `gm`).
+        #[serde(default)]
+        #[ts(optional)]
+        by: Option<String>,
+        #[serde(default)]
+        #[ts(optional, type = "\"everyone\" | \"gm\" | string[]")]
+        audience: Option<serde_json::Value>,
+        #[serde(default)]
+        #[ts(optional)]
+        tier: Option<String>,
+        #[serde(default)]
+        #[ts(optional)]
+        supersedes: Option<String>,
+        /// Written by an agent: evidence `narrative`.
+        #[serde(default)]
+        #[ts(optional)]
+        narrative: Option<bool>,
+        at_s: i64,
+        /// When the news reaches its audience (default `at_s`); not shown or
+        /// disclosed before then.
+        #[serde(default)]
+        #[ts(optional)]
+        arrives_at_s: Option<i64>,
+    },
+    /// The record: change a kept value (`provides.other.record.kept`, or
+    /// `misc.<name>` for the GM). `value` null clears it. Refused unless
+    /// `writer` (default `gm`) is one of the kind's writers.
+    SetKept {
+        address: String,
+        kind: String,
+        #[ts(type = "unknown")]
+        value: serde_json::Value,
+        #[serde(default)]
+        #[ts(optional)]
+        writer: Option<String>,
+        #[serde(default)]
+        #[ts(optional)]
+        reason: Option<String>,
+        at_s: i64,
+    },
+    /// The record: an actor (empire, guild, noble, party, crew) at
+    /// `<root>/actor:<id>` or under `parent`.
+    AddActor {
+        id: String,
+        #[serde(default)]
+        #[ts(optional)]
+        parent: Option<String>,
+        name: String,
+        kind: String,
+        at_s: i64,
+    },
+    /// The record at `address` as of `at_s` (absent: latest), for the GM:
+    /// live notes at or linked to it, kept values with their history, and
+    /// actors under it. Never send this to a seat; seats get `disclosures`.
+    Record {
+        address: String,
+        #[serde(default)]
+        #[ts(optional)]
+        at_s: Option<i64>,
+    },
+    /// What one audience may be sent of the record at `at_s` (record design
+    /// 8A): per subject, the notes it may see (already arrived) and the kept
+    /// values its view shows, at that view's precision. No event ids, no
+    /// causes; note ids (`n1`, `n2`, ...) mean something only in this stream.
+    /// Built on the GM machine; send each seat its own.
+    Disclosures {
+        audience: String,
+        at_s: i64,
+    },
 }
 
 /// `adopt`'s formation request: the `run_formation` fields.
@@ -463,6 +547,11 @@ impl Request {
             Request::LifeView { .. } => "life_view",
             Request::ExportChronicle => "export_chronicle",
             Request::ImportChronicle { .. } => "import_chronicle",
+            Request::AddNote { .. } => "add_note",
+            Request::SetKept { .. } => "set_kept",
+            Request::AddActor { .. } => "add_actor",
+            Request::Record { .. } => "record",
+            Request::Disclosures { .. } => "disclosures",
         }
     }
 }
@@ -556,6 +645,15 @@ pub fn ops() -> Vec<OpInfo> {
             "import_chronicle",
             Cost::Light,
             "linear in the events; replaces the open universe",
+        ),
+        o("add_note", Cost::Light, "one event"),
+        o("set_kept", Cost::Light, "one fold and one event"),
+        o("add_actor", Cost::Light, "one fold and one event"),
+        o("record", Cost::Light, "linear in the record events"),
+        o(
+            "disclosures",
+            Cost::Light,
+            "one scene for the audience plus the record's notes",
         ),
     ]
 }
@@ -792,6 +890,54 @@ pub enum Response {
         state_hash: String,
         manifest_id: String,
         stack_matches: bool,
+    },
+    /// `add_note`: the note's event and who it is for (send the event to
+    /// ordinary seats of these audiences only; the GM sees every note).
+    NoteAdded {
+        note_id: String,
+        #[ts(type = "\"everyone\" | \"gm\" | string[]")]
+        audience: serde_json::Value,
+        /// The universe state hash: record activity never changes it.
+        state_hash: String,
+        /// The record's own hash (GM only).
+        record_hash: String,
+    },
+    /// `set_kept`: the change's id, the value before (null: none) and both hashes.
+    KeptSet {
+        change_id: String,
+        #[ts(type = "unknown")]
+        previous: serde_json::Value,
+        state_hash: String,
+        record_hash: String,
+    },
+    ActorAdded {
+        address: String,
+        state_hash: String,
+        record_hash: String,
+    },
+    /// `record`: notes `{id, subjects, at_s, text, tags?, by, audience,
+    /// tier?, supersedes?, narrative?}`, kept values `{kind, value, kept_by?,
+    /// orphan?, describes?, unit?, history: [{event, at_s, value, writer,
+    /// reason?, delta?}]}` and actors `{address, name, kind}`.
+    RecordRead {
+        address: String,
+        #[ts(type = "unknown[]")]
+        notes: Vec<serde_json::Value>,
+        #[ts(type = "unknown[]")]
+        kept: Vec<serde_json::Value>,
+        #[ts(type = "unknown[]")]
+        actors: Vec<serde_json::Value>,
+    },
+    /// `disclosures`: `items` are `{subject, notes?: [{id, at_s, text, tags?,
+    /// by, links?}], kept?: [{field, value?, band?}]}`, where `kept` holds the
+    /// record's facts the view shows (kept values, an actor's name and kind);
+    /// `stream_hash` lets the seat check it received this exactly.
+    Disclosed {
+        audience: String,
+        at_s: i64,
+        #[ts(type = "unknown[]")]
+        items: Vec<serde_json::Value>,
+        stream_hash: String,
     },
     /// `systems`: one entry per system, `{system, source, name?, addresses,
     /// adopted_event?}`.

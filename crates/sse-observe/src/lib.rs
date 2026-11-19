@@ -19,7 +19,8 @@ pub mod view;
 
 pub use pack::ObserveSetup;
 pub use scene::{
-    build_scene, build_scene_through, diff, Scene, SceneDelta, SceneFact, SceneInput, SceneSubject,
+    build_scene, build_scene_through, diff, Scene, SceneDelta, SceneFact, SceneInput, SceneNote,
+    SceneSubject,
 };
 pub use view::{
     effective_view, effective_view_tagged, grant, no_tags, scan_toggle, withheld, Campaign,

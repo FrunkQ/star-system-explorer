@@ -37,6 +37,27 @@ pub struct SceneSubject {
     pub view: String,
     pub facts: Vec<SceneFact>,
     pub tags: Vec<String>,
+    /// Record notes at or linked to this address that the audience may see
+    /// (J1). Left out when none, so scenes without notes hash as before.
+    #[serde(default, skip_serializing_if = "Vec::is_empty")]
+    pub notes: Vec<SceneNote>,
+}
+
+/// A note as a scene shows it.
+#[derive(Clone, PartialEq, Debug, Serialize, Deserialize)]
+pub struct SceneNote {
+    /// The note's event id, on the GM's scene only: a player's scene never
+    /// carries record event ids (record design 8A).
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub id: Option<String>,
+    pub at_s: i64,
+    pub text: String,
+    #[serde(default, skip_serializing_if = "Vec::is_empty")]
+    pub tags: Vec<String>,
+    pub by: String,
+    /// Linked addresses beyond this one.
+    #[serde(default, skip_serializing_if = "Vec::is_empty")]
+    pub links: Vec<Address>,
 }
 
 #[derive(Clone, PartialEq, Debug, Serialize, Deserialize)]
@@ -62,6 +83,10 @@ pub struct SceneInput<'a> {
     pub disclosure: &'a Disclosure,
     pub views: &'a BTreeMap<String, DataView>,
     pub campaign: &'a Campaign,
+    /// The live record notes at the scene's time (`sse_record::notes_at`);
+    /// empty for none. Each is shown at every address it names, to the
+    /// audiences it is for, where their view shows its tier.
+    pub notes: &'a [sse_record::Note],
 }
 
 fn sig_round(x: f64, digits: u8) -> f64 {
@@ -121,7 +146,7 @@ fn gm_view(d: &Disclosure) -> DataView {
     }
 }
 
-fn subject(inp: &SceneInput, a: &Address, v: &DataView) -> Option<SceneSubject> {
+fn subject(inp: &SceneInput, a: &Address, v: &DataView, audience: &str) -> Option<SceneSubject> {
     let d = inp.disclosure;
     let shown_rank = v.show_tiers.iter().filter_map(|t| d.ladder.rank(t)).max();
     let next_rank = shown_rank.map_or(0, |r| r + 1);
@@ -208,12 +233,26 @@ fn subject(inp: &SceneInput, a: &Address, v: &DataView) -> Option<SceneSubject> 
         })
         .cloned()
         .collect();
+    let notes: Vec<SceneNote> = inp
+        .notes
+        .iter()
+        .filter(|n| n.about(a) && n.visible_to(audience, Some(&v.show_tiers)))
+        .map(|n| SceneNote {
+            id: (audience == GM).then(|| n.id.clone()),
+            at_s: n.at_s,
+            text: n.text.clone(),
+            tags: n.tags.clone(),
+            by: n.by.clone(),
+            links: n.subjects.iter().filter(|s| *s != a).cloned().collect(),
+        })
+        .collect();
     // Nothing shown: the audience does not learn the subject exists.
-    (real > 0 || !tags.is_empty()).then(|| SceneSubject {
+    (real > 0 || !tags.is_empty() || !notes.is_empty()).then(|| SceneSubject {
         address: a.clone(),
         view: v.id.clone(),
         facts,
         tags,
+        notes,
     })
 }
 
@@ -243,7 +282,11 @@ pub fn build_scene_through(
         None => None,
     };
     let mut subjects = Vec::new();
-    for a in inp.state.facts.keys().filter(|a| scope.contains(a)) {
+    // Every address with facts, plus any a note names (an actor or place
+    // known only from the record).
+    let mut addrs: BTreeSet<&Address> = inp.state.facts.keys().collect();
+    addrs.extend(inp.notes.iter().flat_map(|n| n.subjects.iter()));
+    for a in addrs.into_iter().filter(|a| scope.contains(a)) {
         let v = if let Some(f) = forced {
             f
         } else if audience == GM {
@@ -254,7 +297,7 @@ pub fn build_scene_through(
                 .get(&id)
                 .ok_or_else(|| format!("{a}: data view {id:?} is not defined"))?
         };
-        subjects.extend(subject(inp, a, v));
+        subjects.extend(subject(inp, a, v, audience));
     }
     Ok(Scene {
         audience: audience.into(),

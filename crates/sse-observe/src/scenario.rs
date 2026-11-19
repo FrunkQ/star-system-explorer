@@ -103,6 +103,7 @@ pub fn setup() -> Fx {
 pub fn scene(fx: &Fx, audience: &str) -> Scene {
     let state = fx.c.state_at(fx.now);
     let fictional = BTreeSet::new();
+    let notes = sse_record::notes_at(fx.c.events(), fx.now);
     let inp = SceneInput {
         state: &state,
         chronicle: Some(&fx.c),
@@ -111,6 +112,7 @@ pub fn scene(fx: &Fx, audience: &str) -> Scene {
         disclosure: &fx.w.disclosure,
         views: &fx.views,
         campaign: &fx.w.campaign,
+        notes: &notes,
     };
     build_scene(&inp, audience, &"u:kestrel/sys:0".parse().unwrap()).unwrap()
 }

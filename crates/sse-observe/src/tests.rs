@@ -225,6 +225,7 @@ fn audiences_are_separate_and_own_grants_beat_inherited() {
         disclosure: &fx.w.disclosure,
         views: &fx.views,
         campaign: &fx.w.campaign,
+        notes: &[],
     };
     assert!(build_scene(&inp, EVERYONE, &"u:kestrel".parse().unwrap())
         .unwrap_err()
@@ -250,4 +251,108 @@ fn golden_digest() {
         want.replace("\r\n", "\n"),
         "golden observe.json changed"
     );
+}
+
+/// J1: record notes in scenes go only to the audiences they are for, wait
+/// for their tier, and leave a scene without notes hashing as before.
+#[test]
+fn record_notes_follow_audience_and_tier() {
+    use sse_record::{add_note, Audience, NoteDraft};
+    let mut fx = setup();
+    let plain = scene(&fx, "vesh").hash();
+    let draft =
+        |text: &str, audience: Audience, tier: Option<&str>, subjects: Vec<Address>| NoteDraft {
+            subjects,
+            text: text.into(),
+            tags: vec![],
+            by: "gm".into(),
+            audience,
+            tier: tier.map(str::to_string),
+            supersedes: None,
+            narrative: false,
+            arrives: None,
+        };
+    let actor: Address = "u:kestrel/sys:0/actor:guild".parse().unwrap();
+    for d in [
+        draft(
+            "the crew landed here",
+            Audience::Only(vec!["crew".into()]),
+            None,
+            vec![tarn()],
+        ),
+        draft(
+            "a beacon on the moon",
+            Audience::everyone(),
+            None,
+            vec![tarn()],
+        ),
+        draft(
+            "seen from orbit after a scan",
+            Audience::everyone(),
+            Some("scanned"),
+            vec![tarn()],
+        ),
+        draft(
+            "the guild owns Tarn's port",
+            Audience::Only(vec!["vesh".into()]),
+            None,
+            vec![actor.clone(), tarn()],
+        ),
+        draft("a plot twist", Audience::gm(), None, vec![tarn()]),
+    ] {
+        add_note(&mut fx.c, &d, fx.now, &gm()).unwrap();
+    }
+    let texts = |fx: &crate::scenario::Fx, aud: &str, a: &Address| -> Vec<String> {
+        scene(fx, aud)
+            .subjects
+            .iter()
+            .find(|s| &s.address == a)
+            .map(|s| s.notes.iter().map(|n| n.text.clone()).collect())
+            .unwrap_or_default()
+    };
+    assert_eq!(
+        texts(&fx, "crew", &tarn()),
+        vec!["the crew landed here", "a beacon on the moon"]
+    );
+    assert_eq!(
+        texts(&fx, "vesh", &tarn()),
+        vec!["a beacon on the moon", "the guild owns Tarn's port"]
+    );
+    assert_eq!(texts(&fx, GM, &tarn()).len(), 5);
+    // Player scenes carry no record event ids; the GM's do.
+    let ids = |aud: &str| -> Vec<Option<String>> {
+        scene(&fx, aud)
+            .subjects
+            .iter()
+            .flat_map(|s| s.notes.iter().map(|n| n.id.clone()))
+            .collect()
+    };
+    assert!(ids("crew").iter().all(Option::is_none));
+    assert!(ids(GM).iter().all(Option::is_some));
+    // An actor known only from the record shows to its audience alone.
+    assert_eq!(
+        texts(&fx, "vesh", &actor),
+        vec!["the guild owns Tarn's port"]
+    );
+    assert!(scene(&fx, "crew")
+        .subjects
+        .iter()
+        .all(|s| s.address != actor));
+    let n = scene(&fx, "vesh")
+        .subjects
+        .into_iter()
+        .find(|s| s.address == actor)
+        .unwrap();
+    assert_eq!(n.notes[0].links, vec![tarn()]);
+    // The tiered note appears once the audience's view shows that tier.
+    let campaign = fx.w.campaign.clone();
+    assert!(!texts(&fx, "crew", &tarn()).contains(&"seen from orbit after a scan".to_string()));
+    scan_toggle(&mut fx.c, &tarn(), "crew", &campaign, fx.now, &gm()).unwrap();
+    assert!(texts(&fx, "crew", &tarn()).contains(&"seen from orbit after a scan".to_string()));
+    // A scene with no notes serialises without the field, so its hash is the old one.
+    let fresh = setup();
+    assert_eq!(scene(&fresh, "vesh").hash(), plain);
+    assert!(!serde_json::to_string(&scene(&fresh, "vesh"))
+        .unwrap()
+        .contains("notes"));
 }

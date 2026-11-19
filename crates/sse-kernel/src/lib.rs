@@ -37,6 +37,10 @@ struct Universe {
     /// Formation runs of adopted systems by address (a cache: the
     /// `adopt.formation` event holds the request to run again).
     runs: BTreeMap<String, sse_formation::pipeline::SystemRun>,
+    /// The campaign record (J1): notes, kept values, actors. Held on the GM
+    /// machine only and never broadcast (record design 8A); its own chronicle,
+    /// so record activity never moves the universe state hash.
+    record: Chronicle,
 }
 
 /// Event kind for a pack stack change in an open universe.
@@ -64,7 +68,29 @@ fn load_observe(ms: &[sse_pack::PackManifest]) -> Result<Observe, Vec<String>> {
     }
     let setup = sse_observe::ObserveSetup::from_stack(&found).map_err(|e| vec![e])?;
     let rules = sse_sift::load(ms)?.rules;
-    Ok(Observe { setup, rules })
+    let mut kept = Vec::new();
+    for p in ms {
+        if let Some(v) = p.provides.other.get("record") {
+            let j = serde_json::to_value(v).map_err(|e| vec![format!("{}: record: {e}", p.id)])?;
+            kept.push((p.id.clone(), j));
+        }
+    }
+    let record = sse_record::Registry::from_packs(&kept)?;
+    Ok(Observe {
+        setup,
+        rules,
+        record,
+    })
+}
+
+/// The disclosure a scene uses: the stack's, plus each kept kind at its own
+/// tier and `misc.*` at the GM-only rung, where the stack does not say.
+fn with_record(d: &sse_observe::Disclosure, r: &sse_record::Registry) -> sse_observe::Disclosure {
+    let mut d = d.clone();
+    for (f, t) in r.disclosure_fields(d.ladder.secret()) {
+        d.fields.entry(f).or_insert(t);
+    }
+    d
 }
 
 /// Field prefix for an authored tag: `tag.<name>` = true puts the tag on the
@@ -150,6 +176,8 @@ struct Job {
 struct Observe {
     setup: Option<sse_observe::ObserveSetup>,
     rules: sse_sift::RuleSet,
+    /// Kept kinds (`provides.other.record`, J1).
+    record: sse_record::Registry,
 }
 
 pub struct Kernel {
@@ -174,6 +202,61 @@ fn err(code: &str, message: impl Into<String>) -> Response {
         code: code.into(),
         message: message.into(),
     }
+}
+
+fn record_err(e: sse_record::RecordError) -> Response {
+    use sse_record::RecordError as E;
+    let code = match &e {
+        E::BadNote(_) | E::UnknownNote(_) => "bad_note",
+        E::UnknownKind(_) => "unknown_kind",
+        E::WriterRefused { .. } => "writer_refused",
+        E::BadValue { .. } => "bad_value",
+        E::BadActor(_) => "bad_actor",
+        E::Registry(_) => "bad_record",
+        E::Chronicle(_) => "chronicle",
+    };
+    err(code, e.to_string())
+}
+
+fn in_universe(root: &Address, a: &str) -> Result<Address, Response> {
+    let a: Address = a.parse().map_err(|e| err("bad_address", format!("{e}")))?;
+    if !root.contains(&a) {
+        return Err(err("bad_address", format!("{a} is not in universe {root}")));
+    }
+    Ok(a)
+}
+
+/// Rebuild a chronicle from an export's `[{id, kind, cbor}]`, checking ids.
+fn replay_export(evs: &[serde_json::Value], what: &str) -> Result<Chronicle, Response> {
+    let mut chronicle = Chronicle::new();
+    for (k, e) in evs.iter().enumerate() {
+        let bytes = e["cbor"]
+            .as_str()
+            .and_then(adopt::unhex)
+            .ok_or_else(|| err("bad_export", format!("{what} {k}: missing cbor")))?;
+        let body: EventBody = sse_core::cbor::from_canonical(&bytes)
+            .map_err(|x| err("bad_export", format!("{what} {k}: {x:?}")))?;
+        let ev = Event::new(body).map_err(|x| err("bad_export", format!("{what} {k}: {x}")))?;
+        if e["id"].as_str() != Some(ev.id.hex().as_str()) {
+            return Err(err(
+                "bad_export",
+                format!("{what} {k}: id does not match its content"),
+            ));
+        }
+        chronicle
+            .append(ev)
+            .map_err(|x| err("bad_export", format!("{what} {k}: {x}")))?;
+    }
+    Ok(chronicle)
+}
+
+/// The record's hash: its chronicle head (covers notes, which touch no state).
+fn record_hash(u: &Universe) -> String {
+    u.record.head().hex()
+}
+
+fn latest_hash(c: &Chronicle) -> String {
+    c.state_at(UniverseTime::seconds(i64::MAX)).hash().hex()
 }
 
 fn json_to_value(v: &serde_json::Value) -> Result<Value, String> {
@@ -440,6 +523,7 @@ impl Kernel {
                     packs,
                     looks: BTreeMap::new(),
                     runs: BTreeMap::new(),
+                    record: Chronicle::new(),
                 };
                 let manifest_id = u.manifest().id().hex();
                 self.universe = Some(u);
@@ -813,14 +897,22 @@ impl Kernel {
                     .map(|(s, _)| s.fictional_kinds.iter().cloned().collect())
                     .unwrap_or_default();
                 let views = setup.views_by_id();
+                let disclosure = with_record(&setup.disclosure, &self.observe.record);
+                let notes = sse_record::notes_at(u.record.events(), UniverseTime::seconds(at_s));
+                // Kept values and actors live in the record; the GM machine
+                // folds them in here and filters them like any fact.
+                for (a, f) in u.record.state_at(UniverseTime::seconds(at_s)).facts {
+                    state.facts.entry(a).or_default().extend(f);
+                }
                 let inp = sse_observe::SceneInput {
                     state: &state,
                     chronicle: Some(&u.chronicle),
                     tags: &tags,
                     fictional: &fictional,
-                    disclosure: &setup.disclosure,
+                    disclosure: &disclosure,
                     views: &views,
                     campaign: &setup.campaign,
+                    notes: &notes,
                 };
                 let scene =
                     sse_observe::build_scene_through(&inp, &audience, &scope, data_view.as_deref())
@@ -947,6 +1039,15 @@ impl Kernel {
                         serde_json::json!({"id": e.id.hex(), "kind": e.body.kind, "cbor": adopt::hex(&bytes)})
                     })
                     .collect();
+                let record: Vec<serde_json::Value> = u
+                    .record
+                    .events()
+                    .iter()
+                    .map(|e| {
+                        let bytes = sse_core::cbor::to_canonical(&e.body).expect("event bodies encode");
+                        serde_json::json!({"id": e.id.hex(), "kind": e.body.kind, "cbor": adopt::hex(&bytes)})
+                    })
+                    .collect();
                 let manifest_id = u.manifest().id().hex();
                 Response::ChronicleExported {
                     export: serde_json::json!({
@@ -958,6 +1059,8 @@ impl Kernel {
                         "packs": u.packs,
                         "head": u.chronicle.head().hex(),
                         "events": events,
+                        "record": record,
+                        "record_head": u.record.head().hex(),
                     }),
                 }
             }
@@ -979,28 +1082,18 @@ impl Kernel {
                     .parse()
                     .map_err(|e| err("bad_export", format!("root: {e}")))?;
                 let seed_text = text("seed")?;
-                let mut chronicle = Chronicle::new();
                 let evs = ex["events"]
                     .as_array()
                     .ok_or_else(|| err("bad_export", "missing events"))?;
-                for (k, e) in evs.iter().enumerate() {
-                    let bytes = e["cbor"]
-                        .as_str()
-                        .and_then(adopt::unhex)
-                        .ok_or_else(|| err("bad_export", format!("event {k}: missing cbor")))?;
-                    let body: EventBody = sse_core::cbor::from_canonical(&bytes)
-                        .map_err(|x| err("bad_export", format!("event {k}: {x:?}")))?;
-                    let ev = Event::new(body)
-                        .map_err(|x| err("bad_export", format!("event {k}: {x}")))?;
-                    if e["id"].as_str() != Some(ev.id.hex().as_str()) {
-                        return Err(err(
-                            "bad_export",
-                            format!("event {k}: id does not match its content"),
-                        ));
-                    }
-                    chronicle
-                        .append(ev)
-                        .map_err(|x| err("bad_export", format!("event {k}: {x}")))?;
+                let chronicle = replay_export(evs, "event")?;
+                // A GM save carries the record; older exports have none.
+                let empty = vec![];
+                let rec = ex["record"].as_array().unwrap_or(&empty);
+                let record = replay_export(rec, "record event")?;
+                if !rec.is_empty()
+                    && ex["record_head"].as_str() != Some(record.head().hex().as_str())
+                {
+                    return Err(err("bad_export", "record head does not match the record"));
                 }
                 if ex["head"].as_str() != Some(chronicle.head().hex().as_str()) {
                     return Err(err("bad_export", "head does not match the events"));
@@ -1022,6 +1115,7 @@ impl Kernel {
                     packs,
                     looks: BTreeMap::new(),
                     runs: BTreeMap::new(),
+                    record,
                 };
                 let r = Response::ChronicleImported {
                     root: root.to_string(),
@@ -1037,6 +1131,262 @@ impl Kernel {
                 };
                 self.universe = Some(u);
                 r
+            }
+            Request::AddNote {
+                address,
+                links,
+                text,
+                tags,
+                by,
+                audience,
+                tier,
+                supersedes,
+                narrative,
+                at_s,
+                arrives_at_s,
+            } => {
+                let u = self.universe()?;
+                let mut subjects = vec![in_universe(&u.root, &address)?];
+                for l in links.unwrap_or_default() {
+                    subjects.push(in_universe(&u.root, &l)?);
+                }
+                let audience: sse_record::Audience = match audience {
+                    None => sse_record::Audience::gm(),
+                    Some(v) => serde_json::from_value(v).map_err(|e| {
+                        err(
+                            "bad_note",
+                            format!("audience: \"everyone\", \"gm\" or a list ({e})"),
+                        )
+                    })?,
+                };
+                let supersedes = match supersedes {
+                    None => None,
+                    Some(h) => Some(ContentHash::parse(&h).ok_or_else(|| {
+                        err("bad_note", format!("supersedes {h:?} is not an event id"))
+                    })?),
+                };
+                let by = by.unwrap_or_else(|| "gm".into());
+                let d = sse_record::NoteDraft {
+                    subjects,
+                    text,
+                    tags: tags.unwrap_or_default(),
+                    by: by.clone(),
+                    audience,
+                    tier,
+                    supersedes,
+                    narrative: narrative.unwrap_or(false),
+                    arrives: arrives_at_s.map(UniverseTime::seconds),
+                };
+                let id = sse_record::add_note(
+                    &mut u.record,
+                    &d,
+                    UniverseTime::seconds(at_s),
+                    &Publisher::new(&by, "note", "1"),
+                )
+                .map_err(record_err)?;
+                let note = u
+                    .record
+                    .events()
+                    .iter()
+                    .rev()
+                    .find(|e| e.id == id)
+                    .and_then(sse_record::note_of)
+                    .expect("just written");
+                Response::NoteAdded {
+                    note_id: id.hex(),
+                    audience: serde_json::to_value(&note.audience).expect("plain"),
+                    state_hash: latest_hash(&u.chronicle),
+                    record_hash: record_hash(u),
+                }
+            }
+            Request::SetKept {
+                address,
+                kind,
+                value,
+                writer,
+                reason,
+                at_s,
+            } => {
+                let reg = self.observe.record.clone();
+                let u = self.universe()?;
+                let a = in_universe(&u.root, &address)?;
+                let value = match value {
+                    serde_json::Value::Null => None,
+                    v => Some(json_to_value(&v).map_err(|e| err("bad_value", e))?),
+                };
+                let at = UniverseTime::seconds(at_s);
+                let previous = u.record.state_at(at).get(&a, &kind).cloned();
+                let id = sse_record::set_kept(
+                    &mut u.record,
+                    &reg,
+                    &sse_record::KeptSet {
+                        address: a,
+                        kind,
+                        value,
+                        writer: writer.unwrap_or_else(|| "gm".into()),
+                        reason,
+                        causes: vec![],
+                    },
+                    at,
+                    &Publisher::new("gm", "set_kept", "1"),
+                )
+                .map_err(record_err)?;
+                Response::KeptSet {
+                    change_id: id.hex(),
+                    previous: previous.map_or(serde_json::Value::Null, |v| {
+                        serde_json::to_value(&v).expect("plain")
+                    }),
+                    state_hash: latest_hash(&u.chronicle),
+                    record_hash: record_hash(u),
+                }
+            }
+            Request::AddActor {
+                id,
+                parent,
+                name,
+                kind,
+                at_s,
+            } => {
+                let u = self.universe()?;
+                let parent = match parent {
+                    None => None,
+                    Some(p) => Some(in_universe(&u.root, &p)?),
+                };
+                let root = u.root.clone();
+                let a = sse_record::add_actor(
+                    &mut u.record,
+                    &root,
+                    parent.as_ref(),
+                    &id,
+                    &name,
+                    &kind,
+                    UniverseTime::seconds(at_s),
+                    &Publisher::new("gm", "add_actor", "1"),
+                )
+                .map_err(record_err)?;
+                Response::ActorAdded {
+                    address: a.to_string(),
+                    state_hash: latest_hash(&u.chronicle),
+                    record_hash: record_hash(u),
+                }
+            }
+            Request::Disclosures { audience, at_s } => {
+                if audience == sse_observe::scene::GM {
+                    return Err(err(
+                        "bad_audience",
+                        "the GM reads the record itself (op record)",
+                    ));
+                }
+                let root = self.universe()?.root.to_string();
+                let scene = match self.dispatch(Request::Scene {
+                    audience: audience.clone(),
+                    scope: root,
+                    data_view: None,
+                    at_s,
+                    observe: None,
+                })? {
+                    Response::Scene { scene, .. } => scene,
+                    other => return Err(other),
+                };
+                let u = self.universe()?;
+                let rstate = u.record.state_at(UniverseTime::seconds(at_s));
+                let mut items = Vec::new();
+                // One stream id per note, the same at every subject it names.
+                let mut ids: BTreeMap<String, String> = BTreeMap::new();
+                for sub in scene["subjects"].as_array().into_iter().flatten() {
+                    let a: Address = sub["address"]
+                        .as_str()
+                        .unwrap_or("")
+                        .parse()
+                        .expect("scene addresses parse");
+                    let rf = rstate.facts.get(&a);
+                    let kept: Vec<serde_json::Value> = sub["facts"]
+                        .as_array()
+                        .into_iter()
+                        .flatten()
+                        .filter(|f| {
+                            f["placeholder"].is_null()
+                                && rf.is_some_and(|m| {
+                                    m.contains_key(f["field"].as_str().unwrap_or(""))
+                                })
+                        })
+                        .map(|f| {
+                            let mut f = f.clone();
+                            if let Some(o) = f.as_object_mut() {
+                                o.remove("marks");
+                            }
+                            f
+                        })
+                        .collect();
+                    let notes: Vec<serde_json::Value> = sub["notes"]
+                        .as_array()
+                        .into_iter()
+                        .flatten()
+                        .map(|x| {
+                            let mut at: Vec<String> = x["links"]
+                                .as_array()
+                                .into_iter()
+                                .flatten()
+                                .filter_map(|l| l.as_str().map(str::to_string))
+                                .collect();
+                            at.push(a.to_string());
+                            at.sort();
+                            let key =
+                                serde_json::json!([at, x["at_s"], x["by"], x["text"], x["tags"]])
+                                    .to_string();
+                            let next = format!("n{}", ids.len() + 1);
+                            let id = ids.entry(key).or_insert(next).clone();
+                            let mut x = x.clone();
+                            x["id"] = serde_json::json!(id);
+                            x
+                        })
+                        .collect();
+                    if kept.is_empty() && notes.is_empty() {
+                        continue;
+                    }
+                    let mut item = serde_json::json!({"subject": a.to_string()});
+                    if !notes.is_empty() {
+                        item["notes"] = serde_json::json!(notes);
+                    }
+                    if !kept.is_empty() {
+                        item["kept"] = serde_json::json!(kept);
+                    }
+                    items.push(item);
+                }
+                let stream_hash = ContentHash::of(&items)
+                    .map_err(|e| err("internal", format!("{e:?}")))?
+                    .hex();
+                Response::Disclosed {
+                    audience,
+                    at_s,
+                    items,
+                    stream_hash,
+                }
+            }
+            Request::Record { address, at_s } => {
+                let reg = self.observe.record.clone();
+                let u = self.universe()?;
+                let a = in_universe(&u.root, &address)?;
+                let at = UniverseTime::seconds(at_s.unwrap_or(i64::MAX));
+                let notes = sse_record::notes_at(u.record.events(), at)
+                    .into_iter()
+                    .filter(|n| n.about(&a))
+                    .map(|n| serde_json::to_value(&n).expect("plain"))
+                    .collect();
+                let kept = sse_record::kept_at(&u.record, &reg, &a, at)
+                    .into_iter()
+                    .map(|k| serde_json::to_value(&k).expect("plain"))
+                    .collect();
+                let actors = sse_record::actors(&u.record, &a, at)
+                    .into_iter()
+                    .map(|(x, n, k)| serde_json::json!({"address": x.to_string(), "name": n, "kind": k}))
+                    .collect();
+                Response::RecordRead {
+                    address: a.to_string(),
+                    notes,
+                    kept,
+                    actors,
+                }
             }
             Request::Systems => {
                 let u = self.universe()?;
