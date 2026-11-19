@@ -1,0 +1,52 @@
+{
+  "nuclei": [
+    {
+      "address": "u:g3/halo:dwarf/nucleus:0",
+      "brightest_gyr": 5.427989958057328,
+      "brightest_w": 2.6628478798823706e+36,
+      "class": "low_luminosity",
+      "digest": "f390714b539e4ae509cdacc36875294ddd6062f364956c761aab748d48530b4c",
+      "eddington_ratio": 0.001275346648345575,
+      "episodes": 3,
+      "luminosity_w": 1.5362918212084104e+34,
+      "mass_msun": 958319.213875235,
+      "mergers": 3,
+      "radio_loud": false,
+      "seed": "pop3_remnant",
+      "tde_rate_per_yr": 0.00018961289927681667,
+      "tdes_13_to_13_01_gyr": 1997
+    },
+    {
+      "address": "u:g3/halo:milky-way-like/nucleus:0",
+      "brightest_gyr": 3.6779899580573283,
+      "brightest_w": 3.734422587312499e+37,
+      "class": "low_luminosity",
+      "digest": "aa31da6c8cdc113cace60c4048aeca20192090e0b1240d94f2ce59ad648178e8",
+      "eddington_ratio": 0.0004094889695002723,
+      "episodes": 3,
+      "luminosity_w": 1.681246017280067e+35,
+      "mass_msun": 32662827.95141912,
+      "mergers": 3,
+      "radio_loud": false,
+      "seed": "pop3_remnant",
+      "tde_rate_per_yr": 0.000045574327560093654,
+      "tdes_13_to_13_01_gyr": 509
+    },
+    {
+      "address": "u:g3/halo:group/nucleus:0",
+      "brightest_gyr": 2.7779899580573284,
+      "brightest_w": 2.5483750426055247e+38,
+      "class": "dormant",
+      "digest": "52562e4595c42f2d559eda0f285fa499999753f5a2c28b4776624998a797e545",
+      "eddington_ratio": 4.9503381416316444e-8,
+      "episodes": 8,
+      "luminosity_w": 1.9704460423240068e+31,
+      "mass_msun": 31666087.244928654,
+      "mergers": 8,
+      "radio_loud": false,
+      "seed": "pop3_remnant",
+      "tde_rate_per_yr": 0.000046148528616603973,
+      "tdes_13_to_13_01_gyr": 448
+    }
+  ]
+}

@@ -216,7 +216,7 @@ impl GalaxyParams {
             .min(self.eta_max)
     }
 
-    fn virial(&self, c: &Cosmology, mh: f64, a: f64) -> (f64, f64) {
+    pub(crate) fn virial(&self, c: &Cosmology, mh: f64, a: f64) -> (f64, f64) {
         // R_200 against the critical density at a; rho_crit0 in Msun / kpc^3.
         let rho_c = crate::cosmology::RHO_CRIT_H2 * c.h * c.h * 1.0e-9 * c.e(a) * c.e(a);
         let r = m::cbrt(3.0 * mh / (4.0 * m::PI * 200.0 * rho_c));

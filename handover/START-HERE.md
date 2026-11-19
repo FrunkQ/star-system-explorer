@@ -70,6 +70,7 @@ Milestone M1 "Proven core" = packages K0 to K6 (build plan section 3/4).
 | G4 patch envelopes from a galaxy, green regions, outcome-first | done (kernel track) | packages/G4.md |
 | G5 stars drawn per co-rotating cell: IMF, ages, metals, multiplicity, orbits through time, pins, formation input | done (kernel track) | packages/G5.md |
 | G6 galaxy events: history edits (ink a merger, starburst, quiet nucleus), supernovae, kilonovae, bursts, encounters and arm crossings drawn per cell, cross-patch exposure with travel time, before/after, "ink a merger" manifest | done (kernel track) | packages/G6.md |
+| G nuclei: black-hole seeds, Eddington-limited quasar episodes, light and class, unified-model views, hole mergers, tidal disruptions, the nucleus as a body | done (kernel track) | packages/G-nuclei.md |
 | K9 additions: grant op, tag-driven grants (V10 seats gaps) | done (kernel track) | packages/K9-grants.md |
 | Kernel API additions: stack adopt, manifest, scene, scan_toggle, grant, look_ahead | done (kernel track) | packages/K6-additions.md |
 | Numbers: exact float parse, JSON numbers decode by value (cross-track) | done (kernel track); other tracks merge and re-baseline | packages/numbers.md |
@@ -92,7 +93,7 @@ Milestone M1 "Proven core" = packages K0 to K6 (build plan section 3/4).
 | Track | Packages | Branch |
 |---|---|---|
 | Physics | P1, P3, P4, F0 to F6 done; pipeline, F7, F9, S0 to S4 and S6 done; F8 waits on G6; next S7 (cover, named features, built layer) | `main` via PRs |
-| Kernel | K7 to K10, G0 to G6, C1 to C3, L0, L1a to L1d, L2 (with E3 competing O2 sinks, `packages/E3.md`), J1 to J5, J7, T1, T2 (also through the API), the U3 gaps, the V10 grant gaps and the UI asks (`adopt`, look-ahead write-back, `resolved_system`; K6-additions.md; `orbits_at`, campaign clock and calendars, `packages/orbits-clock-calendar.md`) done; next J6 (after T3), then G7 and galactic nuclei | `main` via PRs |
+| Kernel | K7 to K10, G0 to G6, C1 to C3, L0, L1a to L1d, L2 (with E3 competing O2 sinks, `packages/E3.md`), J1 to J5, J7, T1, T2 (also through the API), the U3 gaps, the V10 grant gaps and the UI asks (`adopt`, look-ahead write-back, `resolved_system`; K6-additions.md; `orbits_at`, campaign clock and calendars, `packages/orbits-clock-calendar.md`) and galactic nuclei (`packages/G-nuclei.md`) done; next J6 (after T3), then G7 | `main` via PRs |
 | Chart room shell and player views | U0 to U3, V1, U5, V2, V12, V3, V11, V4, V5, planet chart, V10, V6 System 3D, U9 lenses, N1 sound, U4 (what-if and look-ahead), A1 part 1, O1 light switch (UI), V13 parts 1 and 2 (import and grow, add to the campaign, read back and age with write-back), V6 Cutaway and Body globe (Body screen), phone screen menu, V14 size comparison and chart measuring, U10 browser campaign save, U7 biosphere view part 1 done; next V7, U7 part 2 (LifeFlow) | `main` via PRs |
 
 **Since 19 Nov (Alex): `main` is the default branch.** New work branches from `main` and arrives as a pull request
