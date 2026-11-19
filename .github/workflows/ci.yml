@@ -40,7 +40,7 @@ jobs:
       - run: npm run typecheck
       - run: node tests/harness/run-node.mjs
       - run: npm test
-      - run: npm install --no-save playwright@1.63.0 && npx playwright install --with-deps chromium firefox webkit
+      - run: npm install --no-save playwright@1.63.0 && (for i in 1 2 3; do npx playwright install --with-deps chromium firefox webkit && exit 0; echo "browser install failed (try $i), retrying"; sudo apt-get update || true; sleep 45; done; exit 1)
       - run: node tests/harness/run-browsers.mjs chromium firefox webkit
 
   ui:
@@ -57,7 +57,7 @@ jobs:
       - run: npm run ui:check
       - run: npm run ui:test
       - run: scripts/build-shell.sh
-      - run: npm install --no-save playwright@1.63.0 && npx playwright install --with-deps chromium firefox
+      - run: npm install --no-save playwright@1.63.0 && (for i in 1 2 3; do npx playwright install --with-deps chromium firefox && exit 0; echo "browser install failed (try $i), retrying"; sudo apt-get update || true; sleep 45; done; exit 1)
       - run: node tests/ui/shell.e2e.mjs chromium firefox --screens ui-screens
       - run: node tests/ui/players.e2e.mjs chromium firefox --screens ui-screens
       - run: node tests/ui/setup.e2e.mjs chromium firefox --screens ui-screens
@@ -76,5 +76,6 @@ jobs:
       - run: node tests/ui/cutaway.e2e.mjs chromium firefox --screens ui-screens
       - run: node tests/ui/adopt.e2e.mjs chromium firefox --screens ui-screens
       - run: node tests/ui/globe.e2e.mjs chromium firefox --screens ui-screens
+      - run: node tests/ui/compare.e2e.mjs chromium firefox --screens ui-screens
       - uses: actions/upload-artifact@v4
         with: { name: ui-screens, path: ui-screens }

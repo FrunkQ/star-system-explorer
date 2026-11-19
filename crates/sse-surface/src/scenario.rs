@@ -214,3 +214,42 @@ pub fn impacts_golden() -> serde_json::Value {
         .collect();
     serde_json::json!({"version": crate::impacts::IMPACTS_VERSION, "worlds": out})
 }
+
+/// Golden: S6 regime landforms (counts, digests, two tile hashes each).
+pub fn regimes_golden() -> serde_json::Value {
+    use crate::atlas::{Atlas, TileKey};
+    use crate::regimes::{regime_surface, RegimeInputs};
+    let mut s = settings();
+    s.atlas.tile_samples = 32;
+    let seed = Seed::from_text("sse4-regimes-golden");
+    let out: Vec<_> = fixtures()
+        .iter()
+        .filter(|f| {
+            ["Europa", "Io", "Venus", "Mercury", "Titan", "Jupiter"]
+                .contains(&f.body.label.as_str())
+        })
+        .map(|f| {
+            let e = envelope(&s, &f.body);
+            let rot = (f.body.label == "Jupiter").then_some(9.93);
+            let inp = RegimeInputs {
+                rotation_hours: rot,
+                mass_earth: f.body.mass_earth,
+                impacts: None,
+            };
+            let rs = regime_surface(&s, &e, &seed, &inp, f.body.age_gyr);
+            let a = Atlas::new(&s, &e, &seed, f.body.age_gyr, vec![]).with_regime(rs.clone());
+            let tiles: Vec<_> = [(0, 0, 0, 0), (3, 5, 9, 20)]
+                .iter()
+                .map(|&(face, level, x, y)| {
+                    a.build(TileKey::new(face, level, x, y).expect("key")).hash
+                })
+                .collect();
+            serde_json::json!({
+                "body": f.body.label, "regime": rs.regime, "landforms": rs.landforms.len(),
+                "overturns": rs.overturns.len(), "jets": rs.clouds.as_ref().map(|c| c.jets),
+                "surface": digest(&rs), "tiles": tiles,
+            })
+        })
+        .collect();
+    serde_json::json!({"version": crate::regimes::REGIMES_VERSION, "worlds": out})
+}
