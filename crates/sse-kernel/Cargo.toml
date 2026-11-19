@@ -14,6 +14,7 @@ sse-pack.workspace = true
 sse-atoms.workspace = true
 sse-observe = { path = "../sse-observe" }
 sse-record = { path = "../sse-record" }
+sse-trigger = { path = "../sse-trigger" }
 sse-sift = { path = "../sse-sift" }
 sse-logic = { path = "../sse-logic" }
 sse-time = { path = "../sse-time" }

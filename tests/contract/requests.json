@@ -1383,5 +1383,75 @@
   "op": "disclosures",
   "audience": "vesh",
   "at_s": 20
+ },
+ {
+  "op": "load_stack",
+  "packs": [
+   "$pack:rpg-record",
+   "$pack:rpg-rules"
+  ]
+ },
+ {
+  "op": "open_universe",
+  "id": "kestrel",
+  "seed": "k"
+ },
+ {
+  "op": "rules"
+ },
+ {
+  "op": "rules_step",
+  "at_s": 0
+ },
+ {
+  "op": "add_note",
+  "address": "u:kestrel/sys:0/body:3",
+  "text": "an insult",
+  "tags": [
+   "insult"
+  ],
+  "by": "crew-seat",
+  "audience": [
+   "crew"
+  ],
+  "at_s": 10
+ },
+ {
+  "op": "rules_step",
+  "at_s": 20
+ },
+ {
+  "op": "rules_pending"
+ },
+ {
+  "op": "rules_decide",
+  "proposal": "eb15bebe6499084b249a3a16af55df58b44cb02469a25df4410a572ec6097b43",
+  "approve": true,
+  "at_s": 30
+ },
+ {
+  "op": "rules_decide",
+  "proposal": "00",
+  "approve": true
+ },
+ {
+  "op": "rules_policy",
+  "rule": "consequence",
+  "approval": {
+   "policy": "auto"
+  },
+  "at_s": 20
+ },
+ {
+  "op": "rules_policy",
+  "rule": "nobody",
+  "approval": {
+   "policy": "auto"
+  },
+  "at_s": 20
+ },
+ {
+  "op": "rules_step",
+  "at_s": 5
  }
 ]
