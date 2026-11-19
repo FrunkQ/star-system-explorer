@@ -253,6 +253,14 @@ pub enum Request {
         #[serde(default)]
         #[ts(optional)]
         move_now_myr: Option<f64>,
+        /// Also write the aged state as facts under the usual field names
+        /// (`orbit.semi_major_axis`, `orbit.eccentricity`, `orbit.inclination`,
+        /// `body.engulfed`, the star's `body.mass`, `body.radius`,
+        /// `star.effective_temperature`, `star.luminosity`, `star.phase`; SI),
+        /// dated at the snapshot at or before `move_now_myr`, else the last.
+        #[serde(default)]
+        #[ts(optional)]
+        write_back: Option<bool>,
     },
     /// Import an SSE 3 save (the text of its `starmap.json` or `system.json`):
     /// the imported universe's facts and the difference report. With
@@ -319,6 +327,81 @@ pub enum Request {
         #[ts(optional, type = "unknown")]
         stack: Option<serde_json::Value>,
     },
+    /// Bring a system into the open universe as facts: an SSE 3 save
+    /// (`import_v3`, its text) or a formation run (`formation`, the same
+    /// fields as `run_formation`; its `system` must be in the universe). The
+    /// kernel runs the import or the pipeline itself, so the facts are the
+    /// ones those ops return. One event per evidence class (an import mixes
+    /// authored, catalogued and authored-impossible facts); the first carries
+    /// the report (import) or the request and run summary (formation) and the
+    /// others cite it. Dated `occurred_at_s` (default the universe origin).
+    Adopt {
+        #[serde(default)]
+        #[ts(optional)]
+        import_v3: Option<String>,
+        #[serde(default)]
+        #[ts(optional)]
+        formation: Option<FormationRequest>,
+        #[serde(default)]
+        #[ts(optional, type = "number")]
+        occurred_at_s: Option<i64>,
+    },
+    /// One system as resolved now (or at `at_s`): its facts, a `SystemSpec`
+    /// for `look_ahead`, an S0 surface envelope per world, and any S1 tiles
+    /// asked for (GM machine: down to the fact floor). Formation-adopted
+    /// systems use their run; imported or authored ones build the worlds from
+    /// facts.
+    ResolvedSystem {
+        system: String,
+        #[serde(default)]
+        #[ts(optional, type = "number")]
+        at_s: Option<i64>,
+        #[serde(default)]
+        #[ts(optional)]
+        tiles: Option<Vec<TileRequest>>,
+    },
+}
+
+/// `adopt`'s formation request: the `run_formation` fields.
+#[derive(Clone, PartialEq, Debug, Serialize, Deserialize, TS)]
+#[ts(export)]
+pub struct FormationRequest {
+    pub seed: String,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    #[ts(optional)]
+    pub system: Option<String>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    #[ts(optional)]
+    pub block: Option<String>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    #[ts(optional, type = "unknown")]
+    pub birth: Option<serde_json::Value>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    #[ts(optional)]
+    pub now_gyr: Option<f64>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    #[ts(optional, type = "unknown")]
+    pub envelope: Option<serde_json::Value>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    #[ts(optional, type = "unknown")]
+    pub inherit_pins: Option<serde_json::Value>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    #[ts(optional, type = "unknown")]
+    pub star_pins: Option<serde_json::Value>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    #[ts(optional, type = "unknown")]
+    pub pins: Option<serde_json::Value>,
+}
+
+/// One S1 tile of one world: cube face 0 to 5, level, x and y.
+#[derive(Clone, PartialEq, Debug, Serialize, Deserialize, TS)]
+#[ts(export)]
+pub struct TileRequest {
+    pub body: String,
+    pub face: u8,
+    pub level: u8,
+    pub x: u32,
+    pub y: u32,
 }
 
 impl Request {
@@ -351,6 +434,8 @@ impl Request {
             Request::ImportV3 { .. } => "import_v3",
             Request::RunFormation { .. } => "run_formation",
             Request::ReadWorldStack { .. } => "read_world_stack",
+            Request::Adopt { .. } => "adopt",
+            Request::ResolvedSystem { .. } => "resolved_system",
         }
     }
 }
@@ -426,6 +511,16 @@ pub fn ops() -> Vec<OpInfo> {
             "read_world_stack",
             Cost::Light,
             "one stack: validation, the depth ladder and a few atom evaluations",
+        ),
+        o(
+            "adopt",
+            Cost::Medium,
+            "GM machine only in a session; an import or one formation run, then one event per evidence class",
+        ),
+        o(
+            "resolved_system",
+            Cost::Medium,
+            "a formation re-run for formation-adopted systems (cached), plus about 0.1 s per 256-sample tile; at most 24 tiles",
         ),
     ]
 }
@@ -515,6 +610,13 @@ pub enum Response {
     Committed {
         event_id: String,
         state_hash: String,
+        /// `commit_look_ahead` with `write_back`: the aged-state event and its star age.
+        #[serde(default, skip_serializing_if = "Option::is_none")]
+        #[ts(optional)]
+        aged_event: Option<String>,
+        #[serde(default, skip_serializing_if = "Option::is_none")]
+        #[ts(optional)]
+        aged_at_myr: Option<f64>,
     },
     Discarded {
         branch: String,
@@ -625,6 +727,38 @@ pub enum Response {
         problems: Vec<serde_json::Value>,
         #[ts(type = "unknown[]")]
         invalid: Vec<serde_json::Value>,
+    },
+    /// `adopt`: the events written (the first carries the report), the
+    /// systems adopted and the number of facts.
+    Adopted {
+        events: Vec<String>,
+        systems: Vec<String>,
+        facts: u32,
+        state_hash: String,
+    },
+    /// `resolved_system`. `source`: `formation`, `v3` or `facts`. `facts`:
+    /// address to field to value under the system. `spec`: an `sse-time`
+    /// SystemSpec (absent without a star mass and age). `surfaces`: S0
+    /// envelopes. `tiles`: S1 tiles; `refused`: tiles not given, with why.
+    SystemResolved {
+        system: String,
+        source: String,
+        /// The date read, seconds; absent for "latest" (no date given and no
+        /// `system.now_year`).
+        #[serde(default, skip_serializing_if = "Option::is_none")]
+        #[ts(optional, type = "number")]
+        at_s: Option<i64>,
+        #[ts(type = "unknown")]
+        facts: serde_json::Value,
+        #[serde(default, skip_serializing_if = "Option::is_none")]
+        #[ts(optional, type = "unknown")]
+        spec: Option<serde_json::Value>,
+        #[ts(type = "unknown[]")]
+        surfaces: Vec<serde_json::Value>,
+        #[ts(type = "unknown[]")]
+        tiles: Vec<serde_json::Value>,
+        #[ts(type = "unknown[]")]
+        refused: Vec<serde_json::Value>,
     },
     Error {
         code: String,

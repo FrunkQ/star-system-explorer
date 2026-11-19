@@ -1257,5 +1257,36 @@
  {
   "op": "read_world_stack",
   "fixture": "pluto"
+ },
+ {
+  "op": "adopt",
+  "formation": {
+   "seed": "kernel-form-6",
+   "system": "u:kestrel/sys:40",
+   "star_pins": {
+    "primary_mass": 1.0
+   }
+  }
+ },
+ {
+  "op": "resolved_system",
+  "system": "u:kestrel/sys:40",
+  "tiles": [
+   {
+    "body": "u:kestrel/sys:40/body:99",
+    "face": 0,
+    "level": 0,
+    "x": 0,
+    "y": 0
+   }
+  ]
+ },
+ {
+  "op": "adopt"
+ },
+ {
+  "op": "commit_look_ahead",
+  "branch": "ffff",
+  "write_back": true
  }
 ]

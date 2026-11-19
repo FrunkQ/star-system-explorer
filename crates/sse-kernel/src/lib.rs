@@ -5,6 +5,7 @@
 // Errors are full protocol responses on a cold path; boxing them buys nothing.
 #![allow(clippy::result_large_err)]
 
+mod adopt;
 pub mod contract;
 pub mod protocol;
 mod systems;
@@ -31,6 +32,9 @@ struct Universe {
     packs: Vec<sse_chronicle::PackRef>,
     /// Open look-aheads (T2) by branch id; each is also in `branches`.
     looks: BTreeMap<String, sse_time::branch::LookAhead>,
+    /// Formation runs of adopted systems by address (a cache: the
+    /// `adopt.formation` event holds the request to run again).
+    runs: BTreeMap<String, sse_formation::pipeline::SystemRun>,
 }
 
 /// Event kind for a pack stack change in an open universe.
@@ -431,6 +435,7 @@ impl Kernel {
                     branches: BTreeMap::new(),
                     packs,
                     looks: BTreeMap::new(),
+                    runs: BTreeMap::new(),
                 };
                 let manifest_id = u.manifest().id().hex();
                 self.universe = Some(u);
@@ -643,6 +648,8 @@ impl Kernel {
                     )
                     .map_err(|e| err("chronicle", format!("{e}")))?;
                 Response::Committed {
+                    aged_event: None,
+                    aged_at_myr: None,
                     event_id: id.hex(),
                     state_hash: u
                         .chronicle
@@ -850,6 +857,76 @@ impl Kernel {
                 fixture,
                 stack,
             } => systems::read_world_stack(body.as_deref(), fixture.as_deref(), stack)?,
+            Request::Adopt {
+                import_v3,
+                formation,
+                occurred_at_s,
+            } => {
+                let u = self.universe()?;
+                let a = adopt::adopt(&u.chronicle, &u.root, import_v3, formation, occurred_at_s)?;
+                let mut events = vec![];
+                for e in a.events {
+                    events.push(
+                        u.chronicle
+                            .append(e)
+                            .map_err(|e| err("chronicle", format!("{e}")))?
+                            .hex(),
+                    );
+                }
+                if let Some((sys, run)) = a.run {
+                    u.runs.insert(sys, run);
+                }
+                Response::Adopted {
+                    events,
+                    systems: a.systems,
+                    facts: a.facts,
+                    state_hash: u
+                        .chronicle
+                        .state_at(UniverseTime::seconds(i64::MAX))
+                        .hash()
+                        .hex(),
+                }
+            }
+            Request::ResolvedSystem {
+                system,
+                at_s,
+                tiles,
+            } => {
+                let a: Address = system
+                    .parse()
+                    .map_err(|e| err("bad_address", format!("{e}")))?;
+                let u = self.universe()?;
+                if !u.root.contains(&a) {
+                    return Err(err(
+                        "bad_address",
+                        format!("{a} is not in universe {}", u.root),
+                    ));
+                }
+                if !u.runs.contains_key(&system) {
+                    if let Some(req) = adopt::formation_request(&u.chronicle, &a) {
+                        let (_, run, _) = systems::form(req.into())?;
+                        u.runs.insert(system.clone(), run);
+                    }
+                }
+                let r = adopt::resolved_system(
+                    &u.chronicle,
+                    &u.seed,
+                    &a,
+                    at_s,
+                    tiles.as_deref().unwrap_or(&[]),
+                    u.runs.get(&system),
+                )?;
+                Response::SystemResolved {
+                    system,
+                    source: r.source,
+                    at_s: r.at_s,
+                    facts: r.facts,
+                    spec: r.spec,
+                    surfaces: r.surfaces,
+                    tiles: r.tiles,
+                    refused: r.refused,
+                }
+            }
             Request::Atoms { ids } => {
                 let port = |p: &sse_flow::Port| {
                     serde_json::json!({
@@ -1055,6 +1132,7 @@ impl Kernel {
             Request::CommitLookAhead {
                 branch,
                 move_now_myr,
+                write_back,
             } => {
                 let u = self.universe()?;
                 let look = u.looks.remove(&branch).ok_or_else(|| {
@@ -1066,7 +1144,21 @@ impl Kernel {
                 u.branches.remove(&branch);
                 let id = sse_time::branch::commit(&mut u.chronicle, &look, move_now_myr)
                     .map_err(|e| err("chronicle", e))?;
+                let mut aged = None;
+                if write_back.unwrap_or(false) {
+                    if let Some((e, age)) =
+                        adopt::aged_event(&u.chronicle, &look, move_now_myr, id)?
+                    {
+                        let eid = u
+                            .chronicle
+                            .append(e)
+                            .map_err(|e| err("chronicle", format!("{e}")))?;
+                        aged = Some((eid.hex(), age));
+                    }
+                }
                 Response::Committed {
+                    aged_event: aged.as_ref().map(|a| a.0.clone()),
+                    aged_at_myr: aged.map(|a| a.1),
                     event_id: id.hex(),
                     state_hash: u
                         .chronicle

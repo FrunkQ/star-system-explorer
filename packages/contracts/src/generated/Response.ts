@@ -17,7 +17,11 @@ adopted?: StackAdopted, } | { "type": "stack_rejected", report: string, issues: 
 /**
  * The raw u64 as 16 hex digits (JSON numbers cannot hold it exactly).
  */
-hex: string, unit: number, } | { "type": "branch_opened", branch: string, } | { "type": "committed", event_id: string, state_hash: string, } | { "type": "discarded", branch: string, } | { "type": "job_started", job: number, total_units: number, cost: Cost, } | { "type": "job_progress", job: number, done_units: number, total_units: number, } | { "type": "job_done", job: number, done_units: number, result: unknown, } | { "type": "job_cancelled", job: number, } | { "type": "manifest", manifest: unknown, manifest_id: string, } | { "type": "scene", scene: unknown, scene_hash: string, } | { "type": "atoms", atoms: unknown[], } | { "type": "scan_toggled", event_id: string, 
+hex: string, unit: number, } | { "type": "branch_opened", branch: string, } | { "type": "committed", event_id: string, state_hash: string, 
+/**
+ * `commit_look_ahead` with `write_back`: the aged-state event and its star age.
+ */
+aged_event?: string, aged_at_myr?: number, } | { "type": "discarded", branch: string, } | { "type": "job_started", job: number, total_units: number, cost: Cost, } | { "type": "job_progress", job: number, done_units: number, total_units: number, } | { "type": "job_done", job: number, done_units: number, result: unknown, } | { "type": "job_cancelled", job: number, } | { "type": "manifest", manifest: unknown, manifest_id: string, } | { "type": "scene", scene: unknown, scene_hash: string, } | { "type": "atoms", atoms: unknown[], } | { "type": "scan_toggled", event_id: string, 
 /**
  * The view now in force for the audience at that address.
  */
@@ -38,4 +42,9 @@ birth_year: number,
 /**
  * Beyond this star age, futures are "one plausible future".
  */
-horizon_myr: number, events: Array<FateEvent>, snapshots: Array<FateSnapshot>, work_units: number, } | { "type": "v3_imported", universe: string, facts: unknown, report: unknown, reconstructed: unknown[], } | { "type": "formation_ran", system: string, pipeline: string, run: unknown, pinned?: unknown, surfaces: unknown[], } | { "type": "world_stack_read", body: string, source: string, stack: unknown, ladder: unknown[], notes: Array<string>, problems: unknown[], invalid: unknown[], } | { "type": "error", code: string, message: string, };
+horizon_myr: number, events: Array<FateEvent>, snapshots: Array<FateSnapshot>, work_units: number, } | { "type": "v3_imported", universe: string, facts: unknown, report: unknown, reconstructed: unknown[], } | { "type": "formation_ran", system: string, pipeline: string, run: unknown, pinned?: unknown, surfaces: unknown[], } | { "type": "world_stack_read", body: string, source: string, stack: unknown, ladder: unknown[], notes: Array<string>, problems: unknown[], invalid: unknown[], } | { "type": "adopted", events: Array<string>, systems: Array<string>, facts: number, state_hash: string, } | { "type": "system_resolved", system: string, source: string, 
+/**
+ * The date read, seconds; absent for "latest" (no date given and no
+ * `system.now_year`).
+ */
+at_s?: number, facts: unknown, spec?: unknown, surfaces: unknown[], tiles: unknown[], refused: unknown[], } | { "type": "error", code: string, message: string, };

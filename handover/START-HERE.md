@@ -70,7 +70,7 @@ Milestone M1 "Proven core" = packages K0 to K6 (build plan section 3/4).
 | Track | Packages | Branch |
 |---|---|---|
 | Physics | P1, P3, P4, F0 to F6 done; pipeline, F7, F9, S0 to S3 done; F8 waits on G6; next S4 (impacts, volcanism, explanations) | `main` via PRs |
-| Kernel | K7 to K10, G0 to G5, C1 to C3, L0, L1a to L1c, T1, T2 (also through the API), the U3 gaps and the V10 grant gaps done; next the UI asks (adopt, aged write-back, resolved system), then L1d | `main` via PRs |
+| Kernel | K7 to K10, G0 to G5, C1 to C3, L0, L1a to L1c, T1, T2 (also through the API), the U3 gaps, the V10 grant gaps and the UI asks (`adopt`, look-ahead write-back, `resolved_system`; K6-additions.md) done; next L1d (life signatures and views) | `main` via PRs |
 | Chart room shell and player views | U0 to U3, V1, U5, V2, V12, V3, V11 done; V4 peer-to-peer waits for Alex | `main` via PRs |
 
 **Since 19 Nov (Alex): `main` is the default branch.** New work branches from `main` and arrives as a pull request
