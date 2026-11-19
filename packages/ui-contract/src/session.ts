@@ -3,12 +3,13 @@
 // Only this file and host-browser.ts may import the kernel client (checked by
 // tests/ui/boundary.test.ts).
 import type { KernelClient } from "../../kernel-client/src/index.ts";
-import { encodeRequest } from "./json.ts";
+import { encodeRequest, type Json } from "./json.ts";
 import { checkIntent, intentToRequest, secondsToYears, yearsToSeconds, type Intent } from "./intent.ts";
 import { audienceOf, decide, type Seat } from "./seat.ts";
 import { providerOf, type FlowDoc, type PackDoc } from "./physics.ts";
 import type { PlayerScene } from "./player-scene.ts";
 import type { WorldStackRead } from "./world.ts";
+import type { SurfaceTile } from "./globe.ts";
 import type { Adopted, FormationRan, FormationRequest, ListedSystem, SystemResolved, V3Imported } from "./make.ts";
 import type { LookedAhead, SystemSpec } from "./fate.ts";
 
@@ -99,6 +100,8 @@ export interface ViewSession {
   adopt(source: { import_v3: string } | { formation: FormationRequest }, occurred_at_s?: number): Promise<{ ok: true; result: Adopted } | { ok: false; code: string; message: string }>;
   /** A body's world stack (P4) with the kernel's ladder and physics notes, by body address or fixture name. */
   readWorldStack(by: { body?: string; fixture?: string }): Promise<{ ok: true; result: WorldStackRead } | { ok: false; code: string; message: string }>;
+  /** A world's six level-0 surface tiles (S1, at the GM's disclosure), through resolved_system. Heavy: about 8 MB and a second or more. */
+  surfaceTiles(system: string, body: string): Promise<{ ok: true; tiles: SurfaceTile[]; refused: Json[]; regime?: string } | { ok: false; code: string; message: string }>;
   /** Every system in the open universe that has facts (kernel `systems`): adopted ones and authored ones. */
   listSystems(): Promise<{ ok: true; systems: ListedSystem[] } | { ok: false; code: string; message: string }>;
   /** A system as the universe now holds it: facts, a SystemSpec for look-ahead, and S0 surfaces. */
@@ -452,6 +455,15 @@ export class Session implements ViewSession {
   async readWorldStack(by: { body?: string; fixture?: string }): Promise<{ ok: true; result: WorldStackRead } | { ok: false; code: string; message: string }> {
     const r = await this.#call({ op: "read_world_stack", ...(by.body ? { body: by.body } : {}), ...(by.fixture ? { fixture: by.fixture } : {}) });
     return r.type === "world_stack_read" ? { ok: true, result: r as unknown as WorldStackRead } : { ok: false, code: String(r.code ?? "unexpected"), message: String(r.message ?? JSON.stringify(r)) };
+  }
+
+  async surfaceTiles(system: string, body: string): Promise<{ ok: true; tiles: SurfaceTile[]; refused: Json[]; regime?: string } | { ok: false; code: string; message: string }> {
+    if (this.seat.authority !== "gm") return { ok: false, code: "not_gm", message: "only the game master reads surface tiles" };
+    const tiles = [0, 1, 2, 3, 4, 5].map((face) => ({ body, face, level: 0, x: 0, y: 0 }));
+    const r = await this.#call({ op: "resolved_system", system, tiles });
+    if (r.type !== "system_resolved") return { ok: false, code: String(r.code ?? "unexpected"), message: String(r.message ?? JSON.stringify(r)) };
+    const x = r as unknown as { tiles?: SurfaceTile[]; refused?: Json[]; surfaces?: { address: string; regime_label?: string }[] };
+    return { ok: true, tiles: x.tiles ?? [], refused: x.refused ?? [], regime: x.surfaces?.find((s2) => s2.address === body)?.regime_label };
   }
 
   async listSystems(): Promise<{ ok: true; systems: ListedSystem[] } | { ok: false; code: string; message: string }> {
