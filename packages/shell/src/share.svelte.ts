@@ -3,7 +3,7 @@
 // shares. A room is a random id; the players' link opens players.html with it.
 // The GM serves both at once: BroadcastChannel for other windows and screens
 // of this computer, and the site's relay (worker/index.js) for other devices.
-import { GmHost, SealedHost, sealedLink, observeOf, addSeat, broadcastHub, defaultPlan, discoverIntent, joinLink, multiHub, relayHub, removeSeat, startIntents, type Audience, type HostState, type Hub, type PlayerRequest, type SeatPlan, type Session } from "../../ui-contract/src/index.ts";
+import { GmHost, SealedHost, sealedLink, observeOf, addSeat, broadcastHub, defaultPlan, discoverIntent, joinLink, multiHub, relayHub, removeSeat, startIntents, type Audience, type HostState, type Hub, type Json, type PlayerRequest, type SeatPlan, type Session } from "../../ui-contract/src/index.ts";
 
 declare const __SSE_APP__: string;
 export const APP_VERSION: string = typeof __SSE_APP__ === "string" ? __SSE_APP__ : "dev";
@@ -28,9 +28,9 @@ function roomId(): string {
   return [...b].map((x) => x.toString(36).padStart(2, "0")).join("").slice(0, 10);
 }
 
-export async function createShare(session: Session, opening: { universe: { id: string; seed: string }; packs: unknown[]; clock_yr: number; views: () => string[]; scope: string }, hubFor: (room: string, id: string) => Hub = (room, id) => multiHub(id, [broadcastHub(room, id), relayHub(document.baseURI, room, id)])): Promise<Share> {
+export async function createShare(session: Session, opening: { universe: { id: string; seed: string }; packs: unknown[]; opening_export?: Json; clock_yr: number; views: () => string[]; scope: string }, hubFor: (room: string, id: string) => Hub = (room, id) => multiHub(id, [broadcastHub(room, id), relayHub(document.baseURI, room, id)])): Promise<Share> {
   const run = roomId();
-  const host = new GmHost(session, null, { run, kernel: await session.kernelVersion(), app: APP_VERSION, universe: opening.universe, packs: opening.packs, opening_hash: await session.stateHash(), clock_yr: opening.clock_yr, seats: defaultPlan().seats });
+  const host = new GmHost(session, null, { run, kernel: await session.kernelVersion(), app: APP_VERSION, universe: opening.universe, packs: opening.packs, ...(opening.opening_export !== undefined ? { opening_export: opening.opening_export } : {}), opening_hash: await session.stateHash(), clock_yr: opening.clock_yr, seats: defaultPlan().seats });
   const st = $state({ ...host.state(), room: null as string | null, link: null as string | null, waiting: [] as PlayerRequest[], plan: defaultPlan() });
   const root = `u:${opening.universe.id}`;
   const failed = (r: Awaited<ReturnType<Session["send"]>>) => (r.status === "applied" ? null : r.status === "refused" ? r.reason : r.status === "error" ? r.message : "not applied");

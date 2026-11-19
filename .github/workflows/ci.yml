@@ -77,5 +77,7 @@ jobs:
       - run: node tests/ui/adopt.e2e.mjs chromium firefox --screens ui-screens
       - run: node tests/ui/globe.e2e.mjs chromium firefox --screens ui-screens
       - run: node tests/ui/compare.e2e.mjs chromium firefox --screens ui-screens
+      - run: node tests/ui/campaign.e2e.mjs chromium firefox --screens ui-screens
+      - run: node tests/ui/biosphere.e2e.mjs chromium firefox --screens ui-screens
       - uses: actions/upload-artifact@v4
         with: { name: ui-screens, path: ui-screens }
