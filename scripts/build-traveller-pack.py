@@ -507,6 +507,84 @@ GAS_MIXES = [
         note="V3 labelled it F (thin, low); low air is E here, so this is kept as unusual"),
 ]
 
+# Sensors and what players can know (7A part 6), ported from V3's starter-sf
+# sensors.json. Range bands are the usual Traveller ones; sensor kinds say how
+# far they reach and which rung of the knowledge ladder they can lift a body
+# to. A ship carries `sensor.<kind>.range_m`; the trigger below moves a body
+# up the ladder for the "players" audience when a ship with that sensor stays
+# in range for an hour (a general trigger and grant, not a Traveller special).
+KM = 1000.0
+RANGE_BANDS = [
+    {"id": "adjacent", "label": "adjacent", "range_m": 1 * KM},
+    {"id": "close", "label": "close", "range_m": 10 * KM},
+    {"id": "short", "label": "short", "range_m": 1250 * KM},
+    {"id": "medium", "label": "medium", "range_m": 10000 * KM},
+    {"id": "long", "label": "long", "range_m": 25000 * KM},
+    {"id": "very_long", "label": "very long", "range_m": 50000 * KM},
+    {"id": "distant", "label": "distant", "range_m": 300000 * KM},
+    {"id": "very_distant", "label": "very distant", "range_m": 5000000 * KM},
+    {"id": "far", "label": "far", "range_m": 150000000 * KM},
+]
+LADDER = ["long-range", "scanned", "surveyed", "detailed"]
+def sensor(id_, label, range_km, targets, reveals, up_to):
+    return {"id": id_, "label": label, "range_m": range_km * KM, "targets": targets,
+            "reveals": reveals, "up_to": up_to, "source": "V3 starter-sf sensors.json"}
+SENSORS = [
+    sensor("astrometer", "wide-field astrometer", 7479893535, ["star", "gas giant", "ice giant"], "stellar details, planetary basics", "scanned"),
+    sensor("telescope_15au", "deep-field telescope (15 au)", 2243968060, ["terrestrial planet", "belt"], "planetary basics", "scanned"),
+    sensor("telescope_2au", "deep-field telescope (2 au)", 299195741, ["dwarf planet", "moon"], "planetary basics", "scanned"),
+    sensor("spectral_5au", "spectral analyser (5 au)", 747989353, ["gas giant", "ice giant"], "air composition, surface liquids", "scanned"),
+    sensor("spectral_1au", "spectral analyser (1 au)", 149597870, ["terrestrial planet"], "air composition, surface liquids", "scanned"),
+    sensor("bio_scanner", "high-resolution bio-scanner", 10000, ["planetary surface"], "biosphere, vegetation, settlements", "surveyed"),
+    sensor("passive_rf", "passive radio antenna", 14959787070, ["construct (cooperative)"], "responder ping, transponder id", None),
+    sensor("search_radar", "active search radar", 500000, ["construct over 10,000 t"], "construct basics, lock, trajectory, hull", None),
+    sensor("thermal_ir", "thermal and infrared tracker", 50000, ["construct"], "drive plumes, heat sinks, power output", None),
+    sensor("gravimetric", "gravimetric grid", 25000, ["construct (stealthy)"], "construct basics", None),
+    sensor("visual_cam", "visual inspection camera", 50, ["construct"], "visual id, hull markings, damage", None),
+    sensor("datalink", "datalink", 0.5, ["construct"], "everything it shares", None),
+]
+def ladder_to(top):
+    return LADDER[: LADDER.index(top) + 1]
+TRIGGERS = {"rules": [
+    {
+        "id": f"traveller.sense.{s['id']}",
+        "when": {"on_condition": {
+            "condition": {"if": "compare", "left": "pair.distance_m", "op": "le", "right": f"observer.sensor.{s['id']}.range_m"},
+            "hold_s": 3600,
+        }},
+        "scope": {"pairs": {"observer_tag": "ship"}},
+        "effects": [{"effect": "grant", "audience": "players", "ladder": ladder_to(s["up_to"])}],
+        "explain": f"a ship's {s['label']} within {s['range_m'] / KM:,.0f} km for an hour reveals {s['reveals']}",
+    }
+    for s in SENSORS if s["up_to"]
+]}
+OBSERVE = {
+    "disclosure": {
+        "fields": {
+            "name": "obvious", "kind": "obvious", "body.radius": "obvious", "colour": "obvious", "spectral": "obvious",
+            "map.*": "obvious", "traveller.listed.*": "obvious", "traveller.zone": "obvious",
+            "orbit.*": "scanned", "body.mass": "scanned", "atmosphere.*": "scanned", "surface.*": "scanned",
+            "luminosity_w": "scanned", "hazards": "scanned",
+            "interior.*": "surveyed", "resources": "surveyed", "settlements.*": "surveyed", "society.*": "surveyed",
+            "traveller.bases.*": "surveyed",
+            "geology.*": "detailed", "life.*": "detailed",
+            "gm.*": "secret", "story.*": "secret",
+        },
+        "tags": {},
+    },
+    "views": [
+        {"id": "long-range", "label": "Long-range", "description": "Exists, name, size, colour; what the charts list",
+         "show_tiers": ["obvious"], "tags": {"mode": "none"}, "unknown_style": "placeholder"},
+        {"id": "scanned", "label": "Scanned", "description": "Orbit, mass, air, temperature, hazards",
+         "show_tiers": ["obvious", "scanned"], "tags": {"mode": "none"}, "unknown_style": "placeholder"},
+        {"id": "surveyed", "label": "Surveyed", "description": "Adds interiors, resources, people and bases",
+         "show_tiers": ["obvious", "scanned", "surveyed"], "tags": {"mode": "all"}, "unknown_style": "placeholder"},
+        {"id": "detailed", "label": "Detailed survey", "description": "Adds geology and life",
+         "show_tiers": ["obvious", "scanned", "surveyed", "detailed"], "tags": {"mode": "all"}, "unknown_style": "placeholder"},
+    ],
+    "campaign": {"default_view": "long-range", "before": "long-range", "after": "scanned"},
+}
+
 # Calendar (7A part 8): the Imperial date form, written as day of the year then
 # year, over the campaign clock. 365 days of 86 400 s, no long years; day 1 is a
 # holiday that stands outside the weeks, so weeks of seven run from day 2. The
@@ -563,6 +641,9 @@ pack = {
         "views": {"sse.view.hex-map": HEX_MAP},
         "calendar": IMPERIAL,
         "gas_mixes": GAS_MIXES,
+        "sensors": {"range_bands": RANGE_BANDS, "kinds": SENSORS, "ladder": LADDER},
+        "observe": OBSERVE,
+        "triggers": TRIGGERS,
         "vocabulary": {"terms": TERMS, "traveller.trade": TRADE_WORDS, "traveller.bases": BASES,
                        "traveller.zone": {"A": "amber", "R": "red"},
                        "traveller.need": {k: v[0] for k, v in NEEDS.items()}},

@@ -1499,3 +1499,80 @@ fn sector_import_previews_then_applies_as_authored_events() {
         "X8"
     );
 }
+
+/// The Traveller pack's knowledge ladder: a ship with a spectral analyser
+/// that stays within range for an hour lifts a world to "scanned" for the
+/// players; a ship without one changes nothing.
+#[test]
+fn traveller_sensors_move_a_world_up_the_ladder() {
+    let mut k = crate::Kernel::new();
+    let pack = |n: &str| -> serde_json::Value {
+        serde_json::from_str(
+            &std::fs::read_to_string(root().join(format!("packs/{n}/pack.json"))).unwrap(),
+        )
+        .unwrap()
+    };
+    let mut send = |v: serde_json::Value| -> serde_json::Value {
+        serde_json::from_str(&k.handle_json(&v.to_string())).unwrap()
+    };
+    let r = send(serde_json::json!({"op": "load_stack", "packs": [
+        pack("base-physics"), pack("base-atlas"), pack("base-time"), pack("traveller")]}));
+    assert_eq!(r["type"], "stack_loaded", "{r}");
+    send(serde_json::json!({"op": "open_universe", "id": "trav", "seed": "t"}));
+    let world = "u:trav/sys:0/body:3";
+    let ship = "u:trav/sys:0/ship:@1";
+    for (a, f, v) in [
+        (world, "name", serde_json::json!("Ashgrove")),
+        (
+            world,
+            "atmosphere.surface_pressure",
+            serde_json::json!(1.0e5),
+        ),
+        (world, "pos.x_m", serde_json::json!(0.0)),
+        (world, "pos.y_m", serde_json::json!(0.0)),
+        (world, "pos.z_m", serde_json::json!(0.0)),
+        (ship, "tag.ship", serde_json::json!(true)),
+        (
+            ship,
+            "sensor.spectral_1au.range_m",
+            serde_json::json!(1.496e11),
+        ),
+        (ship, "pos.x_m", serde_json::json!(1.0e10)),
+        (ship, "pos.y_m", serde_json::json!(0.0)),
+        (ship, "pos.z_m", serde_json::json!(0.0)),
+    ] {
+        let r = send(serde_json::json!({"op": "set_authored", "edit": {
+            "address": a, "field": f, "value": v, "occurred_at_s": 0}}));
+        assert_eq!(r["type"], "authored", "{r}");
+    }
+    // Whether the players see the world's air, and through which view.
+    let scene = |send: &mut dyn FnMut(serde_json::Value) -> serde_json::Value, at: i64| {
+        let r = send(
+            serde_json::json!({"op": "scene", "audience": "players", "scope": "u:trav/sys:0", "at_s": at}),
+        );
+        assert_eq!(r["type"], "scene", "{r}");
+        let w = r["scene"]["subjects"]
+            .as_array()
+            .unwrap()
+            .iter()
+            .find(|s| s["address"] == "u:trav/sys:0/body:3")
+            .unwrap()
+            .clone();
+        let air = w["facts"]
+            .as_array()
+            .unwrap()
+            .iter()
+            .any(|f| f["field"] == "atmosphere.surface_pressure" && f.get("value").is_some());
+        (air, w["view"].as_str().unwrap().to_string())
+    };
+    assert_eq!(scene(&mut send, 10), (false, "long-range".to_string()));
+    let r = send(serde_json::json!({"op": "rules_step", "at_s": 0}));
+    assert_ne!(r["type"], "error", "{r}");
+    let r = send(serde_json::json!({"op": "rules_step", "at_s": 4000}));
+    assert_ne!(r["type"], "error", "{r}");
+    assert_eq!(
+        scene(&mut send, 5000),
+        (true, "scanned".to_string()),
+        "scanned after an hour in range"
+    );
+}

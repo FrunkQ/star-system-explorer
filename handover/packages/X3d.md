@@ -22,3 +22,14 @@ Status: done (19 Nov 2026), Traveller pack track. Design: handoff 7A part 5. Sti
 - Composition only. The pressure comes from the code's class, not the preset's own range (`docs/fudges.md`).
 - Needs come from the digit, not from per-gas physiological limits (`docs/fudges.md`).
 - No atmosphere flow consumes mixes yet beyond the X3b plan. A general atmosphere flow could take a mix as its starting composition.
+
+# X3d part 2: sensors and the knowledge ladder (19 Nov 2026)
+- All pack data, with no new code. It runs on the general triggers (J4), grants (K10) and data views:
+  - `provides.other.sensors`: the Traveller range bands (adjacent to far), 12 sensor kinds ported from V3's `sensors.json` (range, targets, what it reveals, the highest rung it can reach), and the ladder.
+  - `provides.other.observe`: the knowledge ladder long-range, scanned, surveyed and detailed survey, with field disclosure tiers. It defaults to long-range.
+  - `provides.other.triggers`: one rule per body sensor (`traveller.sense.<kind>`). When a ship (`tag.ship`) whose `sensor.<kind>.range_m` reaches a body holds for an hour, the body moves one rung up the ladder for the `players` audience, up to that sensor's ceiling. Construct sensors are data only for now, because ships as subjects come with stock ships.
+- Check: `traveller_sensors_move_a_world_up_the_ladder` (kernel). A ship with a spectral analyser at 10 million km and one hour of `rules_step` lift a world from long-range to scanned, and the players then see its air.
+- Limits:
+  - The audience is the fixed `players`. The kernel thread has been asked about `{observer.<field>}` audiences, so each crew could learn for itself.
+  - Sensor targets (stars, belts, moons) are listed but not yet enforced in the condition.
+  - The Traveller pack now provides the stack's observe setup, and the top pack with one wins, so a pack above it replaces the ladder.
