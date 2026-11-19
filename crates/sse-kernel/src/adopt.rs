@@ -633,20 +633,25 @@ pub(crate) struct Resolved {
     pub refused: Vec<serde_json::Value>,
 }
 
-pub(crate) fn resolved_system(
+/// A system's worlds at a date: where they came from, the spec, the facts
+/// read and how far past the system's "now" the date is.
+pub(crate) struct Worlds {
+    pub source: &'static str,
+    pub spec: Option<SystemSpec>,
+    pub bodies: Vec<sse_surface::Body>,
+    pub facts: Facts,
+    pub at_s: i64,
+    /// How far past the system's own "now" the asked date is, Gyr.
+    pub shift_gyr: f64,
+}
+
+pub(crate) fn worlds_at(
     ch: &Chronicle,
-    seed: &Seed,
     system: &Address,
     at_s: Option<i64>,
-    tiles: &[TileRequest],
     run: Option<&SystemRun>,
-) -> Result<Resolved, Response> {
-    if tiles.len() > MAX_TILES {
-        return Err(err(
-            "too_many_tiles",
-            format!("at most {MAX_TILES} tiles per request"),
-        ));
-    }
+    s: &sse_surface::SurfaceSettings,
+) -> Result<Worlds, Response> {
     let all = ch.state_at(UniverseTime::seconds(i64::MAX));
     let now_s = all
         .get(system, "system.now_year")
@@ -666,7 +671,6 @@ pub(crate) fn resolved_system(
             format!("{system} has no facts in this universe"),
         ));
     }
-    let s = sse_surface::scenario::settings();
     let (source, spec, bodies) = match run {
         Some(run) => {
             let spec = sse_time::generated::spec_from_run(run);
@@ -675,7 +679,7 @@ pub(crate) fn resolved_system(
                 .filter(|(_, r)| r.get("body.engulfed") == Some(&Value::Bool(true)))
                 .map(|(a, _)| a)
                 .collect();
-            let bodies: Vec<sse_surface::Body> = sse_surface::bodies_of(run, &s)
+            let bodies: Vec<sse_surface::Body> = sse_surface::bodies_of(run, s)
                 .into_iter()
                 .filter(|b| !gone.contains(&&b.address))
                 .collect();
@@ -685,7 +689,7 @@ pub(crate) fn resolved_system(
             let spec = spec_from_facts(&facts, system);
             let bodies = spec
                 .as_ref()
-                .map(|sp| bodies_from_facts(&facts, sp, &s))
+                .map(|sp| bodies_from_facts(&facts, sp, s))
                 .unwrap_or_default();
             let source = if adopted_v3(ch, system) {
                 "v3"
@@ -695,7 +699,6 @@ pub(crate) fn resolved_system(
             (source, spec, bodies)
         }
     };
-    // How far past the system's own "now" the asked date is, Gyr.
     let shift_gyr = match (&spec, at_s) {
         (Some(sp), a) if a != i64::MAX => {
             let now_year = sp.birth_year as f64 + sp.age_myr * 1.0e6;
@@ -703,6 +706,39 @@ pub(crate) fn resolved_system(
         }
         _ => 0.0,
     };
+    Ok(Worlds {
+        source,
+        spec,
+        bodies,
+        facts,
+        at_s,
+        shift_gyr,
+    })
+}
+
+pub(crate) fn resolved_system(
+    ch: &Chronicle,
+    seed: &Seed,
+    system: &Address,
+    at_s: Option<i64>,
+    tiles: &[TileRequest],
+    run: Option<&SystemRun>,
+) -> Result<Resolved, Response> {
+    if tiles.len() > MAX_TILES {
+        return Err(err(
+            "too_many_tiles",
+            format!("at most {MAX_TILES} tiles per request"),
+        ));
+    }
+    let s = sse_surface::scenario::settings();
+    let Worlds {
+        source,
+        spec,
+        bodies,
+        facts,
+        at_s,
+        shift_gyr,
+    } = worlds_at(ch, system, at_s, run, &s)?;
     let envelopes: Vec<sse_surface::SurfaceEnvelope> = bodies
         .iter()
         .map(|b| sse_surface::envelope(&s, b))

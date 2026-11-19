@@ -1,0 +1,83 @@
+{
+  "venus_aerostat": {
+    "circuit_days": 7.39180753973856,
+    "high_km": 53.9,
+    "low_km": 51.3,
+    "p_bar": [
+      0.7494081399407893,
+      0.5063768501361227
+    ],
+    "t_k": [
+      322.5475411971792,
+      301.5421534215977
+    ]
+  },
+  "version": "surface-cover-v1",
+  "worlds": [
+    {
+      "address": "u:sol/sys:0/body:3",
+      "applied": 2,
+      "built": 72,
+      "cells": 3,
+      "contrast_k": 42.10660600254136,
+      "deposits": 0,
+      "features": {
+        "continent": 3,
+        "deep": 1,
+        "ice-cap": 11,
+        "island": 29,
+        "mine": 20,
+        "ocean": 1,
+        "peak": 6,
+        "port": 12,
+        "range": 7,
+        "sea": 4,
+        "settlement": 40
+      },
+      "first_names": [
+        "Nahal Ocean",
+        "Sea of Vencoul",
+        "Sea of Hallodor",
+        "Sea of Zenorna",
+        "Sea of Isis"
+      ],
+      "layers": "d6308a1ae97150c98ad5fc94af70019ce3d4391ab532fa3f099ab38cd09e9c79",
+      "register": "da161592e3eac84eb91a3c071981cf92b3e13ff9c0cda2e54d083b8085bd53e2",
+      "tiles": [
+        "aa822d7632a0f8cbce835dbe7faef3f37db9754485d06e414a97685e9df9df64",
+        "bf373b3d270a7fb80a6f7555e6c74e6ace7648db333535fb4c1c7d41fb09cd98",
+        "bfe90b96be16f6caccff995c37567bb70f8a1d07df981fc9ff9c5562bf6f46aa"
+      ]
+    },
+    {
+      "address": "u:sol/sys:0/body:3/moon:1",
+      "applied": 0,
+      "built": 2,
+      "cells": 1,
+      "contrast_k": 120.0,
+      "deposits": 600,
+      "features": {
+        "base": 2,
+        "crater": 1243,
+        "deep": 1,
+        "peak": 6,
+        "plains": 42,
+        "range": 6
+      },
+      "first_names": [
+        "Orri Range",
+        "Mount Orbe",
+        "Venelmi Range",
+        "Mount Mior",
+        "Ororbe Range"
+      ],
+      "layers": "fe6e2da3664796a38281e7f01e11755066e9c7c50839fea18a35dbdc57904b34",
+      "register": "d3cfadd63ca3cddec94a3b4e4a2711a57252c66ffed189f883cd157d3c2608ff",
+      "tiles": [
+        "e32dc7c73d1a3f5914ce6e1fdf2b429f2499894dd993800888eeddd057f14fdf",
+        "a712cbcb5432b8fd7a90d856014b29f63fd07a77ad5652c4d9a7fd26d0c44ba7",
+        "374ed6c901856c2b6cd3d3d4ac7551d5b25a46dfba544d8f150398e44f2939c0"
+      ]
+    }
+  ]
+}
