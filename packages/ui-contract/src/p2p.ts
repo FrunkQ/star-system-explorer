@@ -47,7 +47,8 @@ export type Wire =
   | { t: "hello"; from: string; protocol: string }
   | { t: "manifest"; to: string; manifest: Manifest }
   | { t: "event"; run: string; entry: LogEntry }
-  | { t: "state"; run: string; clock_yr: number; data_views: string[] }
+  /** Session state for screens: the clock, the data views granted, and (V10) the seats when the GM changes them. */
+  | { t: "state"; run: string; clock_yr: number; data_views: string[]; seats?: Seat[] }
   | { t: "beat"; run: string; seq: number; state_hash: string }
   | { t: "snapshot"; from: string }
   | { t: "bye"; run: string }
@@ -270,9 +271,12 @@ export class GmHost {
     if (this.#requests.some((x) => x.from === r.from && x.id === r.id)) return;
     const seat = this.#seats.find((x) => x.id === m.seat);
     const bad = checkIntent(m.intent);
-    const why = !seat ? `no seat ${m.seat} in this session` : bad ? bad : decide(seat, m.intent).action === "refuse" ? `seat ${seat.label} may not ask for ${m.intent.kind}` : null;
+    const d = seat && !bad ? decide(seat, m.intent) : null;
+    const why = !seat ? `no seat ${m.seat} in this session` : bad ? bad : d!.action === "refuse" ? (d as { reason: string }).reason : null;
     if (why) return this.#answer(r, "declined", { reason: why });
     this.#requests.push(r);
+    // V10: what the seat's auto-approve scopes cover is applied at once, through the GM's own session.
+    if (d!.action === "apply") return void this.approve(r.id, r.from);
     this.#changed();
   }
 
@@ -312,11 +316,16 @@ export class GmHost {
     return { ...structuredClone(this.#base), log: structuredClone(this.#log), state_hash: this.#hash(), clock_yr: this.#clock, data_views: [...this.#views], seats: structuredClone(this.#seats) };
   }
 
-  /** The session clock and the data views players' screens may use. */
-  setState(s: { clock_yr?: number; data_views?: string[] }) {
+  /** The session clock, the data views players' screens may use and (V10) the seats. */
+  setState(s: { clock_yr?: number; data_views?: string[]; seats?: Seat[] }) {
     if (s.clock_yr !== undefined) this.#clock = s.clock_yr;
     if (s.data_views) this.#views = [...s.data_views];
-    this.#hub?.send({ t: "state", run: this.#base.run, clock_yr: this.#clock, data_views: [...this.#views] });
+    if (s.seats) this.#seats.splice(0, this.#seats.length, ...structuredClone(s.seats));
+    this.#hub?.send({ t: "state", run: this.#base.run, clock_yr: this.#clock, data_views: [...this.#views], ...(s.seats ? { seats: structuredClone(this.#seats) } : {}) });
+  }
+
+  seats(): readonly Seat[] {
+    return structuredClone(this.#seats);
   }
 
   beat() {
@@ -362,6 +371,7 @@ export class PlayerReplica {
   #queue: Promise<void> = Promise.resolve();
   readonly #off: () => void;
   readonly #own: OwnRequest[] = [];
+  #seats: Seat[] = [];
   #nextId = 1;
   onStatus: (s: ReplicaStatus) => void = () => {};
   /** The player's own requests changed (sent, approved, declined). */
@@ -399,9 +409,12 @@ export class PlayerReplica {
    */
   async request(intent: Intent): Promise<{ ok: true; id: string } | { ok: false; reason: string }> {
     if (this.#status.state !== "live" || !this.#session) return { ok: false, reason: "The game master is not connected; requests wait until they are." };
-    const r = await this.#session.send(intent);
-    if (r.status === "refused") return { ok: false, reason: r.reason };
-    if (r.status !== "pending") return { ok: false, reason: "this seat's requests always go to the game master" };
+    // The seat decides first; even what its auto-approve covers is applied by the GM (the single writer), never here.
+    const bad = checkIntent(intent);
+    if (bad) return { ok: false, reason: bad };
+    const seat = this.#seats.find((x) => x.id === this.#session!.seat.id) ?? (this.#session.seat as Seat);
+    const d = decide(seat, intent);
+    if (d.action === "refuse") return { ok: false, reason: d.reason };
     const id = `${this.#hub.id}-${this.#nextId++}`;
     this.#own.push({ id, intent: structuredClone(intent), status: "waiting" });
     this.#hub.send({ t: "request", run: this.#run, from: this.#hub.id, seat: this.#session.seat.id, id, intent });
@@ -411,6 +424,11 @@ export class PlayerReplica {
 
   requests(): readonly OwnRequest[] {
     return structuredClone(this.#own);
+  }
+
+  /** The session's seats as the GM last sent them (V10). */
+  seats(): readonly Seat[] {
+    return structuredClone(this.#seats);
   }
 
   /** Called by the host on a timer: notices a GM that has gone quiet. */
@@ -481,6 +499,7 @@ export class PlayerReplica {
     } else if (m.t === "state") {
       this.#clock = m.clock_yr;
       this.#session[GRANT_VIEWS](m.data_views);
+      if (m.seats) this.#seats = structuredClone(m.seats);
       this.#live();
       this.onUpdate();
     } else if (m.t === "beat") {
@@ -514,6 +533,7 @@ export class PlayerReplica {
     this.#seq = man.log.length;
     this.#hash = hash;
     this.#clock = man.clock_yr;
+    this.#seats = structuredClone(man.seats);
     this.#lastHeard = this.#now();
     this.onSession(s);
     this.#live();

@@ -12,7 +12,7 @@ import { mkdirSync } from "node:fs";
 import assert from "node:assert/strict";
 import { createRequire } from "node:module";
 import { Session } from "../../packages/ui-contract/src/session.ts";
-import { tableSeat } from "../../packages/ui-contract/src/seat.ts";
+import { decide, gmSeat, tableSeat } from "../../packages/ui-contract/src/seat.ts";
 import { nodeKernel } from "../../packages/ui-contract/test/node-kernel.ts";
 import { enterFacts } from "../../packages/ui-contract/src/data-views.ts";
 import { readFileSync } from "node:fs";
@@ -36,10 +36,13 @@ async function playerEvent() {
   const k = nodeKernel();
   const seat = { ...tableSeat(), id: "helm", label: "Helm", may_send: ["set_value"], auto_approve: [{ intent: "set_value", scope: ["u:kestrel/sys:1"] }] };
   const packs = [doc("packs/base-physics/pack.json"), doc("packages/shell/src/documents/kestrel.player-data.pack.json")];
-  const s = await Session.open(k.client, seat, { id: "kestrel", seed: "kestrel reach campaign" }, packs);
-  // The campaign opens with the GM's recorded player-facing facts, as the shell does.
+  // The campaign opens with the GM's recorded player-facing facts, as the shell does (GM work: they include disclosure grants).
+  const s = await Session.open(k.client, gmSeat(), { id: "kestrel", seed: "kestrel reach campaign" }, packs);
   assert.equal(await enterFacts(s, doc("packages/shell/src/documents/kestrel.player-facts.json")), null);
-  const r = await s.send({ kind: "set_value", address: TARN, field: "mass_earth", value: 0.9, at_yr: NOW });
+  // The helm's intent is inside its auto-approve scope, so the GM's session applies it without asking (V10: the GM is the single writer).
+  const intent = { kind: "set_value", address: TARN, field: "mass_earth", value: 0.9, at_yr: NOW };
+  assert.deepEqual(decide(seat, intent), { action: "apply" });
+  const r = await s.send(intent);
   await k.close();
   assert.equal(r.status, "applied");
   return r;

@@ -7,6 +7,7 @@
   import { applyEdits, enterFacts, observeOf, type AuthoredFacts, checkScreen, deriveScene, gmSeat, redoEdit, subjectOf, systemOrder, undoEdit, type CheckedScreen, type DerivationDoc, type ScreenDoc, type SystemScene, type ViewHandle, type ViewModule, type ViewSession } from "../../ui-contract/src/index.ts";
   import { openBrowserSession } from "../../ui-contract/src/host-browser.ts";
   import { createShare, type Share } from "./share.svelte.ts";
+  import SeatsPanel from "./SeatsPanel.svelte";
   import { themeCss, THEMES } from "../../skins/chart-room/src/index.ts";
   import { ALL_THEMES } from "../../skins/player/src/index.ts";
   import { Segmented, ToolButton, formatYears } from "../../chart-grammar/src/index.ts";
@@ -131,6 +132,9 @@
   }
 
   let help: HTMLDialogElement | undefined = $state();
+  // V10: the seats panel opens from a quiet link once the session is shared.
+  let seatsDialog: HTMLDialogElement | undefined = $state();
+  let seatsOpen = $state(false);
   // Tree order: the star, then each planet followed by its moons.
   const bodies = systemOrder(base);
   function cycle(by: number) {
@@ -261,6 +265,7 @@
           {#if share.state.link}
             <a href={share.state.link} target="_blank" rel="noopener" data-players-link={share.state.link}>players' screen</a>
             <span data-players={share.state.players}>{share.state.players} {share.state.players === 1 ? "screen" : "screens"} · {share.state.seq} events</span>
+            <button type="button" class="linkbtn quiet" onclick={() => ((seatsOpen = true), seatsDialog?.showModal())}>{share.state.plan.seats.length > 1 ? `${share.state.plan.seats.length} seats` : "More seats"}</button>
             {#if share.state.waiting.length}
               <span class="requests" role="group" aria-label="Players' requests">
                 {#each share.state.waiting as r (r.from + r.id)}
@@ -280,6 +285,13 @@
     </div>
   {/if}
 </div>
+
+<dialog bind:this={seatsDialog} class="help seats-dialog" aria-label="Seats" onclose={() => (seatsOpen = false)}>
+  {#if seatsOpen && share && session}
+    <SeatsPanel {share} session={session} bodies={bodies.filter((b) => !b.parent || b.parent === bodies[0]?.address)} scope={(factsDoc as unknown as AuthoredFacts).scope} at_yr={(factsDoc as unknown as AuthoredFacts).at_yr} onchange={() => ws.notePhysics()} />
+  {/if}
+  <form method="dialog"><button type="submit">Close</button></form>
+</dialog>
 
 <dialog bind:this={help} class="help" aria-labelledby="help-title">
   <h2 id="help-title">Keyboard</h2>
@@ -447,6 +459,16 @@
     background: var(--sse-ground-raised);
     color: var(--sse-ink);
     padding: 20px 24px;
+  }
+  .seats-dialog {
+    max-width: 640px;
+    width: calc(100vw - 32px);
+  }
+  .seats-dialog form[method="dialog"] {
+    margin-top: 16px;
+  }
+  .quiet {
+    color: var(--sse-ink-muted);
   }
   .help::backdrop {
     background: rgba(0, 0, 0, 0.25);

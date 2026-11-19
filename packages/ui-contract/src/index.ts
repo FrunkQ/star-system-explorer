@@ -5,6 +5,8 @@ export { YEAR_S, INTENT_KINDS, checkIntent, yearsToSeconds, secondsToYears } fro
 export type { Intent, IntentKind, IntentSchema } from "./intent.ts";
 export { audienceOf, decide, gmSeat, tableSeat, sharedTableSeat, within } from "./seat.ts";
 export type { Seat, AutoApprove, Decision } from "./seat.ts";
+export { EVERYONE, defaultPlan, isDefaultPlan, slug, grantField, addSeat, removeSeat, checkSeats, startIntents, discoverIntent, joinLink, fogViews } from "./seats.ts";
+export type { Audience, SeatPlan } from "./seats.ts";
 export type { ViewSession, IntentResult, HistoryEvent, DeviceEdge, DeriveRef, InputValue, Derived, Explanation, StackInfo, TrialResult, StackCandidate, Probe, SceneOptions } from "./session.ts";
 export { CAMPAIGN_PACK, flowParams, editFlow, diffFlow, providerOf, campaignPack, packFor, checkRequest, flowColumns, paramText, siText } from "./physics.ts";
 export { draftId, adopted, draftParam, candidateFor, previewRequest, adoptRequest, withdrawRequest, declineRequest, benchRef } from "./physics-edit.ts";

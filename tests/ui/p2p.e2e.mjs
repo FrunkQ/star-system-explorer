@@ -39,6 +39,9 @@ try {
     await gm.waitForSelector("[data-state-hash]:not([data-state-hash=''])");
     const gmHash = () => gm.getAttribute(".status [data-state-hash]", "data-state-hash");
 
+    // V10: a session that is not shared shows no seat UI at all.
+    assert.equal(await gm.getByRole("button", { name: /seats/i }).count(), 0, "no seat UI before sharing");
+
     // Share: the players' link names a room.
     const popup = context.waitForEvent("page", { timeout: 3000 }).catch(() => null);
     await gm.getByRole("button", { name: "Share with players" }).click();
@@ -87,7 +90,45 @@ try {
     await desk.waitForSelector("[data-own-request='approved']", { timeout: 15000 });
     await gm.waitForFunction((h) => document.querySelector(".status [data-state-hash]")?.getAttribute("data-state-hash") !== h, after);
     const named = await gmHash();
+    let discovered = "";
     for (const p of [desk, phone]) await p.waitForFunction((h) => document.querySelector("footer[data-state-hash]")?.getAttribute("data-state-hash") === h, named, { timeout: 15000 });
+
+    // V10: the GM adds a fog-of-war seat; its windows see only what it has discovered.
+    await gm.getByRole("button", { name: "More seats" }).click();
+    const panel = gm.getByRole("dialog", { name: "Seats" });
+    assert.match(await panel.locator("[data-seats='1']").innerText(), /Everyone sees: Long-range sensors/);
+    await panel.getByLabel("Name", { exact: true }).fill("Empire: Vesh");
+    await panel.getByRole("button", { name: "Add seat" }).click();
+    await panel.locator("[data-seats='2']").waitFor();
+    // Adding a fog-of-war seat chronicles its starting view (one event); the table's scene does not change.
+    await gm.waitForFunction((h) => document.querySelector(".status [data-state-hash]")?.getAttribute("data-state-hash") !== h, named);
+    const seated = await gmHash();
+    const veshLink = await panel.locator("[data-seat-link='empire-vesh']").getAttribute("href");
+    assert.match(veshLink, /join=[a-z0-9]+&seat=empire-vesh$/);
+    const veshWindow = async (label) => {
+      const p = await context.newPage();
+      await p.setViewportSize({ width: 1280, height: 900 });
+      p.on("pageerror", (e) => errors.push(`${label}: ${e.message}`));
+      await p.goto(relay ? `${veshLink}&via=relay` : veshLink);
+      await p.waitForSelector("footer[data-link='live'][data-audience='empire-vesh']", { timeout: 30000 });
+      return p;
+    };
+    const vesh1 = await veshWindow("vesh-1");
+    const vesh2 = await veshWindow("vesh-2");
+    const shows = (p) => p.locator("main").innerText();
+    for (const p of [vesh1, vesh2]) assert.doesNotMatch(await shows(p), /Haven|Vault/, "Vesh starts knowing nothing");
+    assert.match(await shows(desk), /Vault/, "the table still sees what everyone has been shown");
+    await panel.getByLabel(/Tarn known to Empire: Vesh/).check();
+    await gm.waitForFunction((h) => document.querySelector(".status [data-state-hash]")?.getAttribute("data-state-hash") !== h, seated);
+    discovered = await gmHash();
+    for (const p of [vesh1, vesh2, desk, phone]) await p.waitForFunction((h) => document.querySelector("footer[data-state-hash]")?.getAttribute("data-state-hash") === h, discovered, { timeout: 15000 });
+    for (const p of [vesh1, vesh2]) {
+      await p.waitForFunction(() => /Haven/.test(document.querySelector("main")?.innerText ?? ""), null, { timeout: 15000 });
+      assert.doesNotMatch(await shows(p), /Vault/, "only Vesh's own discovery");
+    }
+    await shot(vesh1, "v10-vesh-window");
+    await shot(gm, "v10-gm-seats");
+    await panel.getByRole("button", { name: "Close" }).click();
 
     // Phone width: no sideways scroll.
     const pw = await phone.evaluate(() => document.scrollingElement.scrollWidth);
@@ -97,13 +138,13 @@ try {
     await gm.close({ runBeforeUnload: true });
     for (const p of [desk, phone]) {
       await p.waitForSelector("[role=status][aria-label='Game master'][data-link='offline']", { timeout: 15000 });
-      assert.equal(await playerHash(p), named, "the last state stays on screen");
+      assert.equal(await playerHash(p), discovered, "the last state stays on screen");
     }
     assert.match(await phone.getByRole("status", { name: "Game master" }).innerText(), /away[\s\S]*read only/i);
     await shot(phone, "p2p-phone-offline");
     assert.deepEqual(errors, []);
     assert.equal(await desk.getByRole("button", { name: "Ask the game master" }).isDisabled(), true, "no requests while the GM is away");
-    console.log(`V4/V5 ${name}${relay ? " (relay)" : ""}: desk and phone joined; GM edit replayed (state ${after.slice(0, 10)}); request approved (state ${named.slice(0, 10)}); GM drop shows read-only`);
+    console.log(`V4/V5 ${name}${relay ? " (relay)" : ""}: desk and phone joined; GM edit replayed (state ${after.slice(0, 10)}); request approved (state ${named.slice(0, 10)}); Vesh seat in two windows sees only its discovery (state ${discovered.slice(0, 10)}); GM drop shows read-only`);
     await browser.close();
   }
   console.log("PASS");

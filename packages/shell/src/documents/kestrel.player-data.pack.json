@@ -124,6 +124,16 @@
        }
       ],
       "unknown_style": "omit"
+     },
+     {
+      "id": "uncharted",
+      "label": "Uncharted",
+      "description": "Not known to exist: fog of war before a discovery",
+      "show_tiers": [],
+      "tags": {
+       "mode": "none"
+      },
+      "unknown_style": "omit"
      }
     ],
     "campaign": {

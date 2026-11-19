@@ -6,6 +6,8 @@ export interface AutoApprove {
   intent: IntentKind;
   /** Addresses (and everything inside them) where the intent applies without asking. */
   scope: string[];
+  /** For set_value: only these fields apply without asking (absent: any field). */
+  fields?: string[];
 }
 
 export interface Seat {
@@ -17,6 +19,10 @@ export interface Seat {
   may_send: IntentKind[];
   auto_approve?: AutoApprove[];
   sealed: boolean;
+  /** Screen documents this seat opens (V10): one or several, each its own window or device. Absent: the default player screen. */
+  screens?: string[];
+  /** Data view the seat looks through instead of its audience's own (H8.7 `lens`). */
+  lens?: string;
 }
 
 export type Decision = { action: "apply" } | { action: "ask_gm" } | { action: "refuse"; reason: string };
@@ -42,9 +48,13 @@ export function within(inner: string, outer: string): boolean {
 export function decide(seat: Seat, intent: Intent): Decision {
   if (!seat.may_send.includes(intent.kind)) return { action: "refuse", reason: `seat ${seat.label} may not send ${intent.kind}` };
   if (seat.authority === "gm") return { action: "apply" };
+  // What an audience knows is the GM's to grant (V10): a player seat never sets disclosure, even with auto-approve.
+  if (intent.kind === "set_value" && (intent.field === "observe" || intent.field.startsWith("observe."))) return { action: "refuse", reason: "what players know is set by the game master" };
   // Physics, pack and disclosure changes are never auto-approved: they go to the GM (H8.8).
   if (intent.kind === "adopt_physics" || intent.kind === "stack_packs" || intent.kind === "scan_toggle") return { action: "ask_gm" };
-  const ok = (seat.auto_approve ?? []).some((a) => a.intent === intent.kind && a.scope.some((s) => within(intent.address, s)));
+  const ok = (seat.auto_approve ?? []).some(
+    (a) => a.intent === intent.kind && a.scope.some((s) => within(intent.address, s)) && (!a.fields || (intent.kind === "set_value" && a.fields.includes(intent.field))),
+  );
   return ok ? { action: "apply" } : { action: "ask_gm" };
 }
 
