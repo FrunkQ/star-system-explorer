@@ -47,19 +47,32 @@ export interface IntentSchema {
   meaning: string;
 }
 
-/** Whole years to kernel seconds, exactly. */
+/**
+ * Years to kernel seconds: whole years exactly, the fraction to the nearest
+ * second (U11: edits and the campaign clock can fall on a day or an hour).
+ */
 export function yearsToSeconds(yr: number): bigint {
   if (!Number.isFinite(yr)) throw new Error("time must be finite");
-  return BigInt(Math.round(yr)) * YEAR_S;
+  const whole = Math.floor(yr);
+  return BigInt(whole) * YEAR_S + BigInt(Math.round((yr - whole) * Number(YEAR_S)));
 }
 
+const YEAR_MIN = Number(YEAR_S) / 60;
+
 /**
- * Kernel seconds to whole years. A number read from kernel JSON may have lost
- * its last bits above 2^53 seconds (about 285 million years); rounding to the
- * nearest year recovers it exactly, since the error is a few seconds.
+ * Kernel seconds to years. A number read from kernel JSON may have lost its
+ * last bits above 2^53 seconds (about 285 million years); rounding to the
+ * nearest minute recovers whole years exactly (the error is a few seconds)
+ * and keeps days and hours.
  */
 export function secondsToYears(s: number | bigint): number {
-  return typeof s === "bigint" ? Number(s / YEAR_S) : Math.round(s / Number(YEAR_S));
+  if (typeof s === "bigint") {
+    const whole = s / YEAR_S;
+    return Number(whole) + Number(s - whole * YEAR_S) / Number(YEAR_S);
+  }
+  const minutes = Math.round(s / 60);
+  const years = Math.floor(minutes / YEAR_MIN);
+  return years + (minutes - years * YEAR_MIN) / YEAR_MIN;
 }
 
 /** Why an intent is malformed, or null when it is well formed. */
