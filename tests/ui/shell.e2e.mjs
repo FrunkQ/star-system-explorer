@@ -266,7 +266,8 @@ try {
           await p.screenshot({ path: `${screens}/${theme}-${form}.png`, fullPage: form === "phone" });
         }
         // The physics screen with a draft change, at both widths.
-        await (form === "phone" ? p.getByRole("button", { name: "Show the physics" }) : p.getByRole("group", { name: "Screen" }).getByRole("button", { name: "Physics" })).click();
+        if (form === "phone") await p.getByLabel("Screen menu").selectOption("physics");
+        else await p.getByRole("group", { name: "Screen" }).getByRole("button", { name: "Physics" }).click();
         const ed = p.locator("section[aria-label='Flow editor']");
         await ed.waitFor();
         await ed.getByRole("button", { name: /^Node teq/ }).click();
