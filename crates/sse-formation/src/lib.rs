@@ -5,6 +5,7 @@
 #![forbid(unsafe_code)]
 
 pub mod accrete;
+pub mod body;
 pub mod disc;
 pub mod early;
 pub mod growth;

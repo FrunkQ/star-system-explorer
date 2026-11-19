@@ -223,3 +223,40 @@ fn settings_reject_bad_packs() {
 fn golden_surface() {
     check_golden("surface.json", &golden());
 }
+
+/// B1b: a companion star's light adds to the host's (fluxes add, so the
+/// fourth power of the temperature does).
+#[test]
+fn companion_light_warms_a_world() {
+    use sse_formation::hurley::Fits;
+    use sse_formation::lifeline::LifeLine;
+    let s = settings();
+    let fits = Fits::new(0.0142);
+    let sun = LifeLine::new(&fits, 1.0).unwrap();
+    let mut b = fixtures()
+        .into_iter()
+        .find(|f| f.body.label == "Earth")
+        .unwrap()
+        .body;
+    b.climate = Climate::Star {
+        life: Box::new(sun.clone()),
+        z: 0.0142,
+        a_au: 1.0,
+        albedo: 0.3,
+        greenhouse_k: 0.0,
+        formed_myr: 50.0,
+        others: vec![],
+    };
+    let alone = envelope(&s, &b).t_surface_now_k;
+    if let Climate::Star { others, .. } = &mut b.climate {
+        // An identical twin at the same orbit-averaged distance doubles the
+        // flux: T rises by 2^(1/4).
+        others.push(OtherLight {
+            life: Box::new(sun),
+            d_au: 1.0,
+        });
+    }
+    let twin = envelope(&s, &b).t_surface_now_k;
+    let r = twin / alone;
+    assert!((r - m::pow(2.0, 0.25)).abs() < 1e-9, "{alone} {twin}");
+}
