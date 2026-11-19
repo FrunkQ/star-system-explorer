@@ -160,7 +160,9 @@ pub enum Effect {
         tier: Option<String>,
     },
     /// Grant a data view of the subject to an audience: `view`, or the next
-    /// rung of `ladder` above the audience's present view there.
+    /// rung of `ladder` above the audience's present view there. On a pair
+    /// rule, `audience` may be `{observer.<field>}`, the observer's text fact
+    /// (for example `{observer.crew.audience}`), so each crew learns for itself.
     Grant {
         audience: String,
         #[serde(default, skip_serializing_if = "Option::is_none")]
@@ -593,7 +595,21 @@ impl Rules {
                     problems.push(format!("{pack}: rule {}: no effects", d.id));
                 }
                 for e in &d.effects {
-                    if let Effect::Grant { view, ladder, .. } = e {
+                    if let Effect::Grant {
+                        view,
+                        ladder,
+                        audience,
+                    } = e
+                    {
+                        if audience.contains('{') {
+                            let ok = observer_field(audience).is_some_and(|f| !f.is_empty());
+                            if !ok || d.scope.pairs.is_none() {
+                                problems.push(format!(
+                                    "{pack}: rule {}: a grant audience is a name, or {{observer.<field>}} on a pair rule",
+                                    d.id
+                                ));
+                            }
+                        }
                         if view.is_none() == ladder.is_empty() {
                             problems.push(format!(
                                 "{pack}: rule {}: a grant names a view or a ladder, not both or neither",
@@ -1059,11 +1075,25 @@ impl Rules {
             data,
             Self::publisher(r),
         )?;
+        // The observer's facts, for `{observer.<field>}` grant audiences.
+        let observer_facts = match &d.observer {
+            Some(o)
+                if r.doc.effects.iter().any(
+                    |e| matches!(e, Effect::Grant { audience, .. } if audience.contains('{')),
+                ) =>
+            {
+                subjects(g.universe, g.record, g.root, at)
+                    .remove(o)
+                    .map(|s| s.facts)
+                    .unwrap_or_default()
+            }
+            _ => BTreeMap::new(),
+        };
         let effects: Vec<Effect> = r
             .doc
             .effects
             .iter()
-            .map(|e| substitute(e, &d.subject, d.observer.as_ref()))
+            .map(|e| substitute(e, &d.subject, d.observer.as_ref(), &observer_facts))
             .collect();
         let policy = Self::policy_override(g.record, &r.doc.id)
             .or_else(|| r.doc.approval.clone())
@@ -1227,6 +1257,9 @@ impl Rules {
             Effect::Grant { .. } if g.campaign.is_none() => {
                 Err("the stack defines no data views".into())
             }
+            Effect::Grant { audience, .. } if audience.contains('{') => Err(format!(
+                "grant audience {audience}: the observer has no such text fact"
+            )),
             Effect::SetPin { value, .. } => json_value(value).map(|_| ()),
             Effect::Create { template, key, .. } => {
                 let t = g
@@ -1559,7 +1592,17 @@ fn authored(
     universe.append(e).map_err(|e| e.to_string())
 }
 
-fn substitute(e: &Effect, subject: &Address, observer: Option<&Address>) -> Effect {
+/// The field named by an `{observer.<field>}` audience.
+fn observer_field(a: &str) -> Option<&str> {
+    a.strip_prefix("{observer.")?.strip_suffix('}')
+}
+
+fn substitute(
+    e: &Effect,
+    subject: &Address,
+    observer: Option<&Address>,
+    observer_facts: &BTreeMap<String, Value>,
+) -> Effect {
     let fill = |t: &str| {
         let t = t.replace("{subject}", &subject.to_string());
         match observer {
@@ -1587,6 +1630,19 @@ fn substitute(e: &Effect, subject: &Address, observer: Option<&Address>) -> Effe
             template: template.clone(),
             key: key.clone(),
             name: name.as_deref().map(fill),
+        },
+        Effect::Grant {
+            audience,
+            view,
+            ladder,
+        } => Effect::Grant {
+            // Left as written when the fact is missing; the precheck refuses it.
+            audience: match observer_field(audience).and_then(|f| observer_facts.get(f)) {
+                Some(Value::Text(t)) if !t.contains('{') => t.clone(),
+                _ => audience.clone(),
+            },
+            view: view.clone(),
+            ladder: ladder.clone(),
         },
         other => other.clone(),
     }
