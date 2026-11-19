@@ -14,6 +14,7 @@ pub mod model;
 pub mod patch;
 pub mod rings;
 pub mod scenario;
+pub mod stars;
 pub mod web;
 
 pub use birth::SystemBirth;
@@ -133,3 +134,5 @@ mod g2_tests;
 mod g3_tests;
 #[cfg(test)]
 mod g4_tests;
+#[cfg(test)]
+mod g5_tests;

@@ -31,6 +31,7 @@ pub fn engines_run() -> String {
         "life-budget": sse_life::scenario::budget_golden(),
         "life-history": sse_life::scenario::history_golden(),
         "life-biosphere": sse_life::scenario::biosphere_golden(),
+        "stars": sse_cosmos::scenario::stars_golden(),
         "formation-accrete": sse_formation::scenario::accrete_golden(),
         "formation-accrete-dole": sse_formation::scenario::accrete_dole_golden(),
         "formation-growth": sse_formation::scenario::growth_golden(),

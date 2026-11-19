@@ -50,6 +50,7 @@ Milestone M1 "Proven core" = packages K0 to K6 (build plan section 3/4).
 | G2 haloes per cell, growth, spin, mergers | done (kernel track) | packages/G2.md |
 | G3 galaxy reservoirs, rings, element groups, what died here | done (kernel track) | packages/G3.md |
 | G4 patch envelopes from a galaxy, green regions, outcome-first | done (kernel track) | packages/G4.md |
+| G5 stars drawn per co-rotating cell: IMF, ages, metals, multiplicity, orbits through time, pins, formation input | done (kernel track) | packages/G5.md |
 | K9 additions: grant op, tag-driven grants (V10 seats gaps) | done (kernel track) | packages/K9-grants.md |
 | Kernel API additions: stack adopt, manifest, scene, scan_toggle, grant, look_ahead | done (kernel track) | packages/K6-additions.md |
 | Numbers: exact float parse, JSON numbers decode by value (cross-track) | done (kernel track); other tracks merge and re-baseline | packages/numbers.md |
@@ -67,7 +68,7 @@ Milestone M1 "Proven core" = packages K0 to K6 (build plan section 3/4).
 | Track | Packages | Branch |
 |---|---|---|
 | Physics | P1, P3, P4, F0 to F6 done; pipeline, F7, F9, S0 and S1 done; F8 waits on G6; next S2 (plates), S3 | `main` via PRs |
-| Kernel | K7 to K10, G0 to G4, C1 to C3, L0, L1a to L1c, T1, T2 (also through the API), the U3 gaps and the V10 grant gaps done; next L1d (life signatures and views) or G5 | `main` via PRs |
+| Kernel | K7 to K10, G0 to G5, C1 to C3, L0, L1a to L1c, T1, T2 (also through the API), the U3 gaps and the V10 grant gaps done; next the UI asks (adopt, aged write-back, resolved system), then L1d | `main` via PRs |
 | Chart room shell and player views | U0 to U3, V1, U5, V2, V12, V3, V11 done; V4 peer-to-peer waits for Alex | `main` via PRs |
 
 **Since 19 Nov (Alex): `main` is the default branch.** New work branches from `main` and arrives as a pull request
@@ -88,6 +89,7 @@ Kernel track integration points (K7 to K10):
 - L1a (log `packages/L1a.md`): `sse-life::budget` (box B: energy caps from light and chemical supply, phosphorus caps, closures with reasons, biomass, feeding levels), `provides.other.life_budget` in `packs/base-life`, golden `tests/golden/life-budget.json`, harness engine `life-budget`.
 - L1b (log `packages/L1b.md`): `sse-life::history` (origin hazard with a dial, capability graph against opportunity, catastrophes with refuges and recovery, `record` to the chronicle), `provides.other.life_history`, Earth and Europa timelines in `scenario.rs`, golden `tests/golden/life-history.json`, harness engine `life-history`.
 - L1c (log `packages/L1c.md`): `sse-life::biosphere` (`resolve`: guilds, relations in four lenses, diversity, world traits from `WorldPhysics`), golden `tests/golden/life-biosphere.json`, harness engine `life-biosphere`.
+- G5 (log `packages/G5.md`): `sse-cosmos::stars` (`Stars`: cells, draws, orbits, state, pins, `birth`), golden `tests/golden/stars.json`, harness engine `stars`.
 - C3 (log `packages/C3.md`): crate `sse-place` (reverse placement through the base-physics flows, four outcomes, picker preview, chronicle commit), pack `packs/base-place`, fixture `tests/fixtures/place/systems.json`, golden `tests/golden/place.json`. The base atlas gained `needs`.
 - T1 and T2 (logs `packages/T1.md`, `T2.md`): crate `sse-time` (integrator written fresh from Yoshida 1990, not from REBOUND; Laplace-Lagrange; the ageing star on F0's life line with a giant-branch core clock; look-ahead branches, commit, replay), pack `packs/base-time`, fixture `tests/fixtures/time/solar-system.json`, golden `tests/golden/time.json`. One-line K3 fix in `Chronicle::branch_append` (branch cut from an empty chronicle). **Physics track:** F7's giant tables replace the core clock in `sse-time/src/star.rs` (`star_with`, `core_at`).
 - Pack content keys these engines read: `provides.other.rules`, `.axes`, `.classes`, `.sifters` (K8). Data views and disclosure maps are plain serde types (K9); a pack key for them is for U5 to choose.
