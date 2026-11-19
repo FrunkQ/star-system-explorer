@@ -163,8 +163,14 @@ try {
         console.log(`  work per frame ${work} ms`);
         console.log(`  Moto G4 emulation, 4x CPU, ${tier} (${used}): level ${level}, smoothed frame ${ms} ms against ${budget} ms, ${frames} frames; badge "${badgeText}"`);
         assert.ok(frames > 20, "it kept drawing");
-        assert.ok(ms <= budget * 1.15, `the governor holds the budget: ${ms} ms against ${budget} ms at level ${level}`);
-        if (level > 0) assert.match(badgeText, /Reduced:/);
+        const max = Number(await g.getAttribute("data-max"));
+        // Either the governor holds the budget, or every reduction is taken and the badge says it is still over (slow runners).
+        if (ms <= budget * 1.15) {
+          if (level > 0) assert.match(badgeText, /Reduced:/);
+        } else {
+          assert.equal(level, max, `over budget (${ms} ms against ${budget} ms) only once every reduction is taken: level ${level} of ${max}`);
+          assert.match(badgeText, /Over budget at the plainest setting/);
+        }
         await ctx.close();
       }
     }

@@ -117,11 +117,14 @@ export interface Badge {
   lift: string;
 }
 
-export function badge(o: { reductions: readonly string[]; ewma_ms: number; budget_ms: number; lift?: string; stood_in?: string }): Badge {
+export function badge(o: { reductions: readonly string[]; ewma_ms: number; budget_ms: number; lift?: string; stood_in?: string; at_floor?: boolean }): Badge {
   const lines = [...(o.stood_in ? [o.stood_in] : []), ...o.reductions];
-  if (!lines.length) return { reduced: false, short: "Full quality", detail: [], lift: "" };
   const fps = (ms: number) => Math.max(1, Math.round(1000 / ms));
-  const why = Number.isFinite(o.ewma_ms) && o.reductions.length ? [`This device was taking about ${Math.round(o.ewma_ms)} ms a frame against a budget of ${Math.round(o.budget_ms)} ms (${fps(o.budget_ms)} a second).`] : [];
-  const short = o.reductions.length ? `Reduced: ${o.reductions[o.reductions.length - 1]!.replace(/\.$/, "")}` : lines[0]!.replace(/\.$/, "");
-  return { reduced: true, short, detail: [...lines, ...why], lift: o.lift ?? "A faster device, or a smaller view, would lift it." };
+  // The edge, said plainly: every reduction is taken and frames are still over budget.
+  const over = !!o.at_floor && Number.isFinite(o.ewma_ms) && o.ewma_ms > o.budget_ms * 1.15;
+  if (!lines.length && !over) return { reduced: false, short: "Full quality", detail: [], lift: "" };
+  const why = Number.isFinite(o.ewma_ms) && (o.reductions.length || over) ? [`This device was taking about ${Math.round(o.ewma_ms)} ms a frame against a budget of ${Math.round(o.budget_ms)} ms (${fps(o.budget_ms)} a second).`] : [];
+  const floor = over ? [`Every reduction this recipe has is taken and frames are still slower than the budget, so motion will be jerky here. Words only, a simpler recipe, or a smaller view would help.`] : [];
+  const short = over ? "Over budget at the plainest setting" : o.reductions.length ? `Reduced: ${o.reductions[o.reductions.length - 1]!.replace(/\.$/, "")}` : lines[0]!.replace(/\.$/, "");
+  return { reduced: true, short, detail: [...lines, ...why, ...floor], lift: o.lift ?? "A faster device, or a smaller view, would lift it." };
 }
