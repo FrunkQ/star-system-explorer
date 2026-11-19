@@ -246,6 +246,7 @@ pub(crate) fn run_facts(run: &SystemRun) -> Facts {
     row.insert("system.pipeline".to_string(), t(&run.pipeline));
     out.insert(sys.clone(), row);
     let fits = sse_formation::hurley::Fits::new(h.inheritance.z);
+    let tags = sse_formation::stars::stability(&h.stars);
     for (k, star) in h.stars.iter().enumerate() {
         let s = star.life.state_at(&fits, spec.age_myr);
         let mut row = BTreeMap::new();
@@ -259,6 +260,11 @@ pub(crate) fn run_facts(run: &SystemRun) -> Facts {
         let own =
             sse_formation::body::self_light(&fits, star.life.initial_mass, spec.age_myr, None);
         row.insert("body.light_source".to_string(), t(&json_name(&own.source)));
+        if let Some(tag) = &tags[k] {
+            let word = if tag.stable { "stable" } else { "unstable" };
+            row.insert("orbit.stability".to_string(), t(word));
+            row.insert("orbit.stability_why".to_string(), t(&tag.why));
+        }
         if k > 0 {
             if let Some(o) = &star.orbit {
                 row.insert("orbit.host".to_string(), t(&h.stars[0].address.to_string()));
