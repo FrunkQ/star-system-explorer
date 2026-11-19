@@ -14,8 +14,10 @@
 //! surveyed worlds.
 
 pub mod atlas;
+pub mod plates;
 pub mod scenario;
 pub mod sketch;
+pub mod wear;
 
 use serde::{Deserialize, Serialize};
 use sse_core::math as m;
@@ -97,6 +99,8 @@ pub struct SurfaceSettings {
     pub greenhouse_k: f64,
     pub tide: Tide,
     pub atlas: atlas::AtlasSettings,
+    pub plates: plates::PlateSettings,
+    pub wear: wear::WearSettings,
     pub rules: Vec<Rule>,
     pub regimes: BTreeMap<String, RegimeDef>,
 }
@@ -616,4 +620,8 @@ pub fn envelopes_of(run: &SystemRun, s: &SurfaceSettings) -> Vec<SurfaceEnvelope
 #[cfg(test)]
 mod atlas_tests;
 #[cfg(test)]
+mod plates_tests;
+#[cfg(test)]
 mod tests;
+#[cfg(test)]
+mod wear_tests;

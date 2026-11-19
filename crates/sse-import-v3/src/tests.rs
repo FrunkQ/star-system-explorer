@@ -280,3 +280,28 @@ fn imported_system_gains_a_reconstructed_history() {
         serde_json::to_string(&again).unwrap()
     );
 }
+
+#[test]
+fn hydrosphere_and_pressure_become_facts() {
+    let im = imported();
+    let e = "u:v3-synthetic-sol/sys:@1/body:@2";
+    let oceans = fact(&im, e, "body.surface_water_oceans")
+        .value
+        .as_f64()
+        .unwrap();
+    assert!((oceans - 1.0).abs() < 0.01, "{oceans}");
+    assert_eq!(fact(&im, e, "body.oceans").value, Json::Bool(true));
+    let p = fact(&im, e, "body.surface_pressure")
+        .value
+        .as_f64()
+        .unwrap();
+    assert!((p - 101_300.0).abs() < 1.0, "{p}");
+    // The raw V3 object stays too.
+    assert!(fact(&im, e, "v3.hydrosphere").value.is_object());
+    // A dry Moon gets no water facts.
+    let moon: Address = "u:v3-synthetic-sol/sys:@1/body:@3".parse().unwrap();
+    assert!(im
+        .facts
+        .get(&moon)
+        .is_none_or(|f| !f.contains_key("body.oceans")));
+}

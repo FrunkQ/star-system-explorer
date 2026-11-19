@@ -30,4 +30,8 @@ block?: string, birth?: unknown, now_gyr?: number, envelope?: unknown, inherit_p
 /**
  * F9 `Pins`: worlds to honour, candidate histories to search.
  */
-pins?: unknown, } | { "op": "adopt", import_v3?: string, formation?: FormationRequest, occurred_at_s?: number, } | { "op": "resolved_system", system: string, at_s?: number, tiles?: Array<TileRequest>, };
+pins?: unknown, } | { "op": "read_world_stack", body?: string, 
+/**
+ * `earth`, `europa`, `mars`, `tarn`, `titan` or `venus`.
+ */
+fixture?: string, stack?: unknown, } | { "op": "adopt", import_v3?: string, formation?: FormationRequest, occurred_at_s?: number, } | { "op": "resolved_system", system: string, at_s?: number, tiles?: Array<TileRequest>, };

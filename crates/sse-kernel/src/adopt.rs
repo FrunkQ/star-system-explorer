@@ -575,10 +575,12 @@ fn bodies_from_facts(
         };
         let mass_earth = mass / M_EARTH_KG;
         let density = mass / (4.0 / 3.0 * m::PI * radius * radius * radius);
-        let oceans = if r.get("body.oceans") == Some(&Value::Bool(true)) {
-            1.0
-        } else {
-            0.0
+        // Imports carry surface water in Earth oceans; formation adoption
+        // carries only whether there are oceans (one Earth ocean then).
+        let oceans = match r.get("body.surface_water_oceans").and_then(as_f64) {
+            Some(x) => x.max(0.0),
+            None if r.get("body.oceans") == Some(&Value::Bool(true)) => 1.0,
+            None => 0.0,
         };
         let greenhouse = if oceans > 0.0 { s.greenhouse_k } else { 0.0 };
         let t_eq = teff * m::sqrt(r_star / (2.0 * a_star)) * m::pow(1.0 - s.albedo_default, 0.25);
@@ -595,7 +597,11 @@ fn bodies_from_facts(
             water_fraction: 0.0,
             oceans,
             deep_envelope: mass_earth > 10.0 && density < 2500.0,
-            pressure_bar: 0.0,
+            pressure_bar: r
+                .get("body.surface_pressure")
+                .and_then(as_f64)
+                .map(|p| p / 1e5)
+                .unwrap_or(0.0),
             c_o: 0.55,
             k40_rel: 1.0,
             r_process_rel: 1.0,

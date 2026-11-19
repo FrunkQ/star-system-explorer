@@ -494,6 +494,91 @@ impl Importer {
                 },
             }
         }
+        if !is_star {
+            self.hydrosphere(a, n);
+        }
+    }
+
+    /// Surface water and pressure as physical facts, so the surface track sees
+    /// an imported ocean world as one (the raw V3 objects stay as `v3.*`).
+    /// `body.surface_water_oceans` is the surface liquid water in Earth oceans
+    /// (coverage × area × mean depth / 1.335e18 m³; a missing depth is taken as
+    /// Earth's mean, 3688 m), `body.oceans` whether there is any, and
+    /// `body.surface_pressure` the atmosphere's surface pressure in Pa.
+    fn hydrosphere(&mut self, a: &Address, n: &Map<String, Json>) {
+        const EARTH_OCEANS_M3: f64 = 1.335e18;
+        const EARTH_MEAN_DEPTH_M: f64 = 3688.0;
+        if let Some(p) = n
+            .get("atmosphere")
+            .and_then(|x| x.get("pressure_bar"))
+            .and_then(Json::as_f64)
+        {
+            self.set(
+                a,
+                "body.surface_pressure",
+                Json::from(p * 1e5),
+                Evidence::Authored,
+            );
+        }
+        let Some(h) = n.get("hydrosphere").and_then(Json::as_object) else {
+            return;
+        };
+        let watery = |c: Option<&str>| {
+            c.is_none_or(|c| {
+                let c = c.to_ascii_lowercase();
+                c.contains("water")
+                    || c.contains("h2o")
+                    || c.contains("brine")
+                    || c.contains("saline")
+            })
+        };
+        // Surface layers when V3 lists them; otherwise the hydrosphere's own coverage.
+        let layers: Vec<&Map<String, Json>> = h
+            .get("layers")
+            .and_then(Json::as_array)
+            .map(|l| l.iter().filter_map(Json::as_object).collect())
+            .unwrap_or_default();
+        let coverage = if layers.is_empty() {
+            if watery(h.get("composition").and_then(Json::as_str)) {
+                h.get("coverage").and_then(Json::as_f64).unwrap_or(0.0)
+            } else {
+                0.0
+            }
+        } else {
+            layers
+                .iter()
+                .filter(|l| l.get("location").and_then(Json::as_str) == Some("surface"))
+                .filter(|l| watery(l.get("liquid").and_then(Json::as_str)))
+                .map(|l| {
+                    l.get("coverage")
+                        .and_then(Json::as_f64)
+                        .or_else(|| h.get("coverage").and_then(Json::as_f64))
+                        .unwrap_or(0.0)
+                })
+                .sum::<f64>()
+        }
+        .clamp(0.0, 1.0);
+        let Some(r_km) = n.get("radiusKm").and_then(Json::as_f64) else {
+            return;
+        };
+        let depth = h
+            .get("depth_m")
+            .and_then(Json::as_f64)
+            .unwrap_or(EARTH_MEAN_DEPTH_M);
+        let r = r_km * 1e3;
+        let oceans = coverage * 4.0 * m::PI * r * r * depth / EARTH_OCEANS_M3;
+        self.set(
+            a,
+            "body.surface_water_oceans",
+            Json::from(oceans),
+            Evidence::Authored,
+        );
+        self.set(
+            a,
+            "body.oceans",
+            Json::from(oceans > 0.0),
+            Evidence::Authored,
+        );
     }
 
     fn quantity(&mut self, a: &Address, field: &str, v: &Json, scale: f64) {

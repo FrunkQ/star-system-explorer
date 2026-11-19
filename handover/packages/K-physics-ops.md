@@ -24,6 +24,17 @@ first, additive under `sse.kernel/1`; see `K6-additions.md` on the kernel track'
   events is for the screen that adopts it (set_authored, or a later "adopt" op if the kernel track prefers one).
 - Cost classes: `import_v3` light (heavy with `reconstruct`), `run_formation` medium.
 
+- `read_world_stack { body?, fixture?, stack? }` (added later on 19 Nov for the Cutaway (Body) view): a body's
+  world stack (`sse.world-stack/1`, P4). Served from the P4 fixtures (`earth`, `europa`, `mars`, `tarn`, `titan`,
+  `venus`) by `fixture` name, or by `body` when it is a fixture's address; a given `stack` is checked instead.
+  Response `world_stack_read { body, source, stack, ladder, notes, problems, invalid }`: `source` is
+  `fixture:<name>` or `given`; `stack` is the stack as stored (fixture `sources` kept); `ladder` the "above, on
+  and within" lines (`depth`, `text`, `where`, `key`); `notes` and `problems` from `physics_notes()`; `invalid`
+  from `validate()` (each `{at, message}`). Nothing else gives `error { code: "no_world_stack" }` listing the
+  fixtures. Light. A given `stack` is echoed as parsed (numbers as f64), so the worker and native
+  kernels return the same bytes. When the surface track builds stacks from history (S7 onwards), the same op serves them with
+  `source` `built:<epoch>`; the response shape stays.
+
 ## Notes for the UI
 - A `run_formation` response is 70 to 300 KB of JSON for a sun-like star. Some seeds form no planets: a high
   `history.inheritance.fuv_g0` (a nearby massive star) strips the disc in under a Myr; `run.growth.events` says
@@ -33,7 +44,8 @@ first, additive under `sse.kernel/1`; see `K6-additions.md` on the kernel track'
 ## Checks
 - `cargo test -p sse-kernel`: same request gives the same response; a pinned Earth at 1 au is honoured; worlds
   and surfaces line up; bad block and bad save are protocol errors.
-- Contract (`tests/contract/requests.json`): five new cases. `tests/golden/contract.jsonl` re-blessed on
+- Contract (`tests/contract/requests.json`): five new cases, then four for `read_world_stack` (re-blessed again:
+  `hello` and the unknown-op message gain it, plus four lines). `tests/golden/contract.jsonl` re-blessed on
   purpose: the `hello` op list and the unknown-op error message (which lists the variants) gain the two ops, and
   five new lines. TS types regenerated (`packages/contracts/src/generated/Request.ts`, `Response.ts`).
 - Harness: kernel API through a Web Worker, 115 of 115 responses identical to native (Node and Chromium);

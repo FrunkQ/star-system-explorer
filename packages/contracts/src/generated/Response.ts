@@ -42,7 +42,7 @@ birth_year: number,
 /**
  * Beyond this star age, futures are "one plausible future".
  */
-horizon_myr: number, events: Array<FateEvent>, snapshots: Array<FateSnapshot>, work_units: number, } | { "type": "v3_imported", universe: string, facts: unknown, report: unknown, reconstructed: unknown[], } | { "type": "formation_ran", system: string, pipeline: string, run: unknown, pinned?: unknown, surfaces: unknown[], } | { "type": "adopted", events: Array<string>, systems: Array<string>, facts: number, state_hash: string, } | { "type": "system_resolved", system: string, source: string, 
+horizon_myr: number, events: Array<FateEvent>, snapshots: Array<FateSnapshot>, work_units: number, } | { "type": "v3_imported", universe: string, facts: unknown, report: unknown, reconstructed: unknown[], } | { "type": "formation_ran", system: string, pipeline: string, run: unknown, pinned?: unknown, surfaces: unknown[], } | { "type": "world_stack_read", body: string, source: string, stack: unknown, ladder: unknown[], notes: Array<string>, problems: unknown[], invalid: unknown[], } | { "type": "adopted", events: Array<string>, systems: Array<string>, facts: number, state_hash: string, } | { "type": "system_resolved", system: string, source: string, 
 /**
  * The date read, seconds; absent for "latest" (no date given and no
  * `system.now_year`).
