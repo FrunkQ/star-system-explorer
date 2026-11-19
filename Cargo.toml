@@ -32,6 +32,7 @@ sse-formation = { path = "crates/sse-formation" }
 sse-kernel = { path = "crates/sse-kernel" }
 sse-surface = { path = "crates/sse-surface" }
 sse-weather = { path = "crates/sse-weather" }
+sse-nav = { path = "crates/sse-nav" }
 
 [profile.release]
 opt-level = 3

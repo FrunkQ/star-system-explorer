@@ -3,6 +3,7 @@ import type { AuthoredEdit } from "./AuthoredEdit";
 import type { FormationRequest } from "./FormationRequest";
 import type { InputSpec } from "./InputSpec";
 import type { JobSpec } from "./JobSpec";
+import type { SurfaceTile } from "./SurfaceTile";
 import type { TileRequest } from "./TileRequest";
 
 export type Request = { "op": "hello" } | { "op": "load_stack", packs: unknown[], } | { "op": "open_universe", id: string, seed: string, } | { "op": "set_authored", edit: AuthoredEdit, } | { "op": "history", address: string, } | { "op": "state_hash", scope?: string, at_s: bigint, } | { "op": "derive", flow: string, inputs: { [key in string]: InputSpec }, } | { "op": "explain", flow: string, inputs: { [key in string]: InputSpec }, kind: string, } | { "op": "draw", address: string, stream: string, counter: number, } | { "op": "branch", label: string, } | { "op": "branch_set", branch: string, edit: AuthoredEdit, } | { "op": "branch_state_hash", branch: string, at_s: bigint, } | { "op": "commit", branch: string, at_s: bigint, } | { "op": "discard", branch: string, } | { "op": "start_job", job: JobSpec, } | { "op": "step_job", job: number, budget: number, } | { "op": "cancel_job", job: number, } | { "op": "manifest" } | { "op": "scene", audience: string, scope: string, data_view?: string, at_s: bigint, 
@@ -43,7 +44,7 @@ sources?: unknown,
 /**
  * Which weather block, `{id, version, level}`; default the rule block.
  */
-block?: unknown, } | { "op": "adopt", import_v3?: string, formation?: FormationRequest, occurred_at_s?: number, } | { "op": "resolved_system", system: string, at_s?: number, tiles?: Array<TileRequest>, } | { "op": "systems" } | { "op": "life_view", body?: string, fixture?: string, } | { "op": "export_chronicle" } | { "op": "import_chronicle", export: unknown, } | { "op": "add_note", address: string, links?: Array<string>, text: string, tags?: Array<string>, 
+block?: unknown, } | { "op": "adopt", import_v3?: string, formation?: FormationRequest, occurred_at_s?: number, } | { "op": "resolved_system", system: string, at_s?: number, tiles?: Array<TileRequest>, } | { "op": "plan_route", fixture?: string, nav?: unknown, system?: string, at_s?: number, ports?: Array<string>, ship: unknown, from: unknown, to?: unknown, depart_s?: number, window_days?: number, prefer?: string, rescue?: unknown, } | { "op": "plan_descent", system?: string, body?: string, fixture?: string, at_s?: number, options?: unknown, quick?: boolean, lander: unknown, lat_deg: number, lon_deg: number, entry?: unknown, } | { "op": "survey_surface", system?: string, body?: string, fixture?: string, at_s?: number, options?: unknown, tiles?: Array<SurfaceTile>, quick?: boolean, limit?: number, } | { "op": "systems" } | { "op": "life_view", body?: string, fixture?: string, } | { "op": "export_chronicle" } | { "op": "import_chronicle", export: unknown, } | { "op": "add_note", address: string, links?: Array<string>, text: string, tags?: Array<string>, 
 /**
  * The writing seat (default `gm`).
  */

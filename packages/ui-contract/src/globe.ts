@@ -24,7 +24,7 @@ export interface SurfaceTile {
 
 /** The kernel's names for the material and cover codes (atlas.rs MATERIALS and COVERS). */
 export const MATERIALS = ["basalt", "granite", "regolith", "ice", "sediment", "lava", "cloud", "organic sediment", "carbon"] as const;
-export const COVERS = ["none", "water", "magma", "hydrocarbon"] as const;
+export const COVERS = ["none", "water", "magma", "hydrocarbon", "ice"] as const;
 
 type V3 = readonly [number, number, number];
 /** Normal, right and up of each cube face, as atlas.rs FACES. */
@@ -101,6 +101,7 @@ export function sampleColour(t: SurfaceTile, i: number, light = 1): V3 {
     c = [Math.round(70 - 50 * depth), Math.round(130 - 80 * depth), Math.round(170 - 60 * depth)];
   } else if (cover === "magma") c = [235, 110, 40];
   else if (cover === "hydrocarbon") c = [60, 46, 30];
+  else if (cover === "ice") c = [232, 240, 246];
   else {
     const m = MATERIAL_RGB[MATERIALS[t.material[i]!] ?? "regolith"] ?? MATERIAL_RGB.regolith!;
     const h = Math.min(1, Math.max(0, elev / 8000));

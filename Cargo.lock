@@ -590,6 +590,7 @@ dependencies = [
  "sse-import-v3",
  "sse-life",
  "sse-logic",
+ "sse-nav",
  "sse-observe",
  "sse-pack",
  "sse-record",
@@ -627,6 +628,16 @@ dependencies = [
  "sse-life",
  "sse-place",
  "sse-sift",
+]
+
+[[package]]
+name = "sse-nav"
+version = "0.1.0"
+dependencies = [
+ "serde",
+ "serde_json",
+ "sse-core",
+ "sse-pack",
 ]
 
 [[package]]
@@ -762,6 +773,7 @@ dependencies = [
  "sse-formation",
  "sse-kernel",
  "sse-life",
+ "sse-nav",
  "sse-observe",
  "sse-place",
  "sse-resolve",

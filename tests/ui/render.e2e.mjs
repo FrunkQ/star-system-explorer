@@ -1,6 +1,8 @@
 // R1 in a real browser, against the built shell (scripts/build-shell.sh
 // first). Usage: node tests/ui/render.e2e.mjs [chromium firefox webkit] [--screens <dir>]
 // The Body globe is a render recipe. For adopted Earth it checks that:
+//  - True colour draws the air from the kernel's facts (pressure, temperature,
+//    gravity, gas mix) and says so, on gpu-high and on the canvas;
 //  - the recipe runs on every tier it declares (GPU, 2D canvas, words), and
 //    the GPU and canvas tiers draw the same colours from the same numbers;
 //  - a recipe without the tier in use hands over to one of its family, and says so;
@@ -128,6 +130,24 @@ try {
     await gm.waitForFunction(() => document.querySelector("[data-body] [data-tier]")?.getAttribute("data-recipe") === "survey-contours", null, { timeout: 10000 });
     await gm.waitForTimeout(300);
     await shot(gm, `render-contours-${name}`);
+    await drawOn(gm, "auto");
+    await useRecipe(gm, "survey-relief");
+    // True colour (R2): the air from the kernel's facts, physically lit, on gpu-high and the canvas.
+    await useRecipe(gm, "true-colour");
+    for (const t of ["gpu-high", "canvas"]) {
+      await drawOn(gm, t);
+      await gm.waitForFunction((t) => {
+        const el = document.querySelector("[data-body] [data-tier]");
+        return el && el.getAttribute("data-recipe") === "true-colour" && (el.getAttribute("data-tier") === t || t === "gpu-high") && Number(el.getAttribute("data-frames")) > 0;
+      }, t, { timeout: 15000 });
+      await gm.waitForTimeout(600);
+      const got = await globe(gm).getAttribute("data-tier");
+      const note = await gm.locator("[data-air-note]").innerText();
+      assert.match(note, /^Air from the kernel: 1013 hPa at \d+ K, N2 78%, O2 21%; scale height 8\.\d km; blue light's path straight up scatters 2\d%/, note);
+      const px = await pixelsOf(gm, globe(gm));
+      assert.ok(px.upper[2] > px.upper[0] + 20, `${got}: the lit ocean under air is blue: ${px.upper}`);
+      await shot(gm, `render-true-colour-${got}-${name}`);
+    }
     await drawOn(gm, "auto");
     await useRecipe(gm, "survey-relief");
     if (auto.tier === "gpu-basic") await gm.waitForFunction(() => document.querySelector("[data-body] [data-tier]")?.getAttribute("data-tier") === "gpu-basic", null, { timeout: 10000 });
