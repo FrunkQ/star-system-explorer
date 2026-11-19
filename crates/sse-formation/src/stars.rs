@@ -10,12 +10,12 @@ use sse_core::math as m;
 use sse_core::{Address, Draws, Seed, Stream};
 
 pub const REF_KROUPA: &str =
-    "Kroupa, P. 2001, MNRAS 322, 231: initial mass function, slopes 1.3 below 0.5 and 2.3 above";
-pub const REF_DK13: &str = "Duchene, G. and Kraus, A. 2013, ARA&A 51, 269, table 1: multiplicity fraction against primary mass";
-pub const REF_RAGHAVAN: &str = "Raghavan, D. et al. 2010, ApJS 190, 1: solar-type multiples, log-normal periods (mean log P = 5.03 days, sigma 2.28), flat mass ratios, triples 8 of 44 percent";
+    "Kroupa, P. 2001, MNRAS 322, 231: initial mass function, slopes 1.3 below 0.5 and 2.3 above. arXiv:astro-ph/0009005";
+pub const REF_DK13: &str = "Duchene, G. and Kraus, A. 2013, ARA&A 51, 269, table 1: multiplicity fraction against primary mass. arXiv:1303.3028";
+pub const REF_RAGHAVAN: &str = "Raghavan, D. et al. 2010, ApJS 190, 1: solar-type multiples, log-normal periods (mean log P = 5.03 days, sigma 2.28), flat mass ratios, triples 8 and higher orders 3 of 44 percent (folded into triples here). arXiv:1007.0414";
 pub const REF_EGGLETON: &str = "Eggleton, P. P. 1983, ApJ 268, 368: Roche-lobe radius";
 pub const REF_MARDLING: &str =
-    "Mardling, R. A. and Aarseth, S. J. 2001, MNRAS 321, 398: stability of hierarchical triples";
+    "Mardling, R. A. and Aarseth, S. J. 2001, MNRAS 321, 398 (Tidal interactions in star cluster simulations): stability criterion for hierarchical triples, used here as an order of magnitude";
 
 /// Kroupa 2001 mass draw on [0.1, 100] solar masses through its exact inverse
 /// cumulative distribution (two power-law pieces, continuous at 0.5).
@@ -167,7 +167,7 @@ pub fn form_stars(
     let drawn_count = |m: f64| {
         if d.u(1) >= multiplicity_fraction(m) {
             1
-        } else if d.u(2) < 8.0 / 44.0 {
+        } else if d.u(2) < 11.0 / 44.0 {
             3
         } else {
             2

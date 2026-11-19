@@ -10,7 +10,7 @@ export interface Prepared {
   globe: Globe;
   samples: number;
   /** Per face: rgb 0..255 (3 per sample), unit normal (3 per sample), elevation m, cover code. */
-  faces: ({ s: number; rgb: Uint8ClampedArray; normal: Float32Array; elev: Float32Array; cover: Uint8Array; tile: SurfaceTile } | null)[];
+  faces: ({ s: number; rgb: Uint8ClampedArray; normal: Float32Array; elev: Float32Array; cover: Uint8Array; albedo: Float32Array; tile: SurfaceTile } | null)[];
   lowest_m: number;
   highest_m: number;
 }
@@ -66,9 +66,11 @@ export function prepare(globe: Globe, colour: string, exaggeration: number): Pre
     const normal = new Float32Array(n * 3);
     const elev = new Float32Array(n);
     const cover = new Uint8Array(n);
+    const albedo = new Float32Array(n);
     for (let i = 0; i < n; i++) {
       elev[i] = t.elevation_dm[i]! / 10;
       cover[i] = t.cover[i]!;
+      albedo[i] = (t.albedo[i] ?? 300) / 1000;
     }
     const face = t.key.face;
     const span = 2 / s;
@@ -105,7 +107,7 @@ export function prepare(globe: Globe, colour: string, exaggeration: number): Pre
         normal.set(norm([r[0] - gi * ei[0]! - gj * ej[0]!, r[1] - gi * ei[1]! - gj * ej[1]!, r[2] - gi * ei[2]! - gj * ej[2]!]), k * 3);
       }
     }
-    return { s, rgb, normal, elev, cover, tile: t };
+    return { s, rgb, normal, elev, cover, albedo, tile: t };
   });
   return { globe, samples, faces, lowest_m: lo, highest_m: hi };
 }

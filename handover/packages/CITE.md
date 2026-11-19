@@ -43,3 +43,16 @@ Physics changed, golden re-blessed on purpose (life-feedback.json only):
   interior cooling; Stevenson 2017 (not 2015) for a_w 0.585; Kiang 2007 part II for the red edge.
 Found, not yet changed: the air box (`feedback.rs`) is fed each metabolism's energy cap rather than realised,
 phosphorus-limited production (`budget.rs` by_metabolism), which is why land-life worlds reach about 51% O2.
+
+### Stars (19 Nov)
+Physics changed, goldens re-blessed on purpose (stars, formation, formation-pipeline, contract.jsonl):
+- G5 (`sse-cosmos/src/stars.rs` and `packs/base-cosmology`): multiplicity by primary mass now Duchêne and Kraus 2013
+  table 1 (was 0.27, 0.46, 0.7, 0.9 at 0.5, 1, 10, 150 M☉); main-sequence L and R from the Eker 2018 and
+  Demircan and Kahraman 1991 atoms instead of L = M^4 and R = M^0.8 (red dwarfs were up to 11 times too faint);
+  triple share 0.2 → 0.25.
+- Formation suite: Raghavan 2010 higher-order multiples (3 of 44 percent) folded into triples since systems cap at
+  three stars (8/44 → 11/44).
+- `sse-time/src/binary.rs`: q_crit 0.695 for main-sequence donors under 0.7 M☉ (Hurley, Tout and Pols 2002
+  section 2.6.1); no golden moved.
+- White dwarf cooling keeps A = 4 for all white dwarfs as a documented fudge (HPT00 eq. 90 gives 15 for CO; with 15
+  white dwarfs come out several times fainter than detailed cooling models). Comment corrected; fudge F-S23.

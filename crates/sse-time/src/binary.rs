@@ -24,13 +24,16 @@ use std::collections::BTreeMap;
 pub const RSUN_AU: f64 = 0.004_650_47;
 
 pub const REF_EGGLETON: &str = "Eggleton, P. P. 1983, ApJ 268, 368: Roche lobe radius r_L/a = 0.49 q^(2/3) / (0.6 q^(2/3) + ln(1 + q^(1/3)))";
-pub const REF_HTP02: &str = "Hurley, J. R., Tout, C. A. and Pols, O. R. 2002, MNRAS 329, 897: critical mass ratios for stable transfer (3 on the main sequence, 4 in the Hertzsprung gap, eq. 57 on the giant branch)";
+pub const REF_HTP02: &str = "Hurley, J. R., Tout, C. A. and Pols, O. R. 2002, MNRAS 329, 897: critical mass ratios for stable transfer (0.695 for low-mass main-sequence donors, 3 above about 0.7 solar masses as in BSE, 4 in the Hertzsprung gap, eq. 57 on the giant branch). arXiv:astro-ph/0201220";
 pub const REF_WEBBINK: &str = "Webbink, R. F. 1984, ApJ 277, 355; de Kool, M. 1990, ApJ 358, 189: common-envelope energy budget, alpha = 1, lambda = 0.5";
 
 /// Rule-table settings (pack data in a later step; defaults from the papers).
 #[derive(Clone, PartialEq, Debug, Serialize, Deserialize)]
 pub struct BinaryRules {
     pub q_crit_main_sequence: f64,
+    /// Low-mass (deeply convective) main-sequence donors below 0.7 solar masses:
+    /// 0.695 (Hurley, Tout and Pols 2002, section 2.6.1).
+    pub q_crit_low_mass_main_sequence: f64,
     pub q_crit_gap: f64,
     /// Exponent x in HTP02 eq. 57 for giant donors.
     pub giant_x: f64,
@@ -44,6 +47,7 @@ impl Default for BinaryRules {
     fn default() -> Self {
         BinaryRules {
             q_crit_main_sequence: 3.0,
+            q_crit_low_mass_main_sequence: 0.695,
             q_crit_gap: 4.0,
             giant_x: 0.30,
             alpha_ce: 1.0,
@@ -63,6 +67,9 @@ pub fn roche_fraction(q: f64) -> f64 {
 /// Critical mass ratio above which transfer is unstable.
 pub fn q_crit(r: &BinaryRules, phase: Phase, mass: f64, core: f64) -> f64 {
     match phase {
+        Phase::PreMainSequence | Phase::MainSequence if mass < 0.7 => {
+            r.q_crit_low_mass_main_sequence
+        }
         Phase::PreMainSequence | Phase::MainSequence => r.q_crit_main_sequence,
         Phase::HertzsprungGap => r.q_crit_gap,
         _ => (1.67 - r.giant_x + 2.0 * m::pow((core / mass).clamp(0.0, 1.0), 5.0)) / 2.13,
