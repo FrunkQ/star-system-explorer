@@ -40,16 +40,29 @@
     result = await runOrac({ request, here: host.here(), targets: host.targets(), catalogue: host.catalogue(), ask: asker(snap, "building", { onRow: onrow }), onRound: (r) => (rounds = [...rounds, r]) });
     running = false;
   }
+  const DONE: Record<string, string> = {
+    lens: "Saved with your lenses: pick it from the Lens menu.",
+    style: "Kept with your styles: name it on a screen item, or tweak it on the Styles screen.",
+    screen: "Opened on the players page on this device. Open it in the Screens composer to share it.",
+    symbology: "Kept with your symbols: choose it on the Symbols screen.",
+    data_view: "Applied to the campaign's player data: it is on the Player data screen now.",
+  };
   async function accept(i: number) {
     const c = result?.passed[i]?.value;
     if (!c) return;
-    const problem = await c.target.accept(c.value);
-    accepted[i] = problem ?? (c.target.kind === "physics" ? "Filed on the Physics screen: adopt it there." : c.target.kind === "atom_issue" ? "Opened on GitHub for you to read and send." : "Done.");
+    // The result lives in component state (deep proxies); a target gets plain data.
+    let problem: string | null;
+    try {
+      problem = await c.target.accept(JSON.parse(JSON.stringify(c.value)));
+    } catch (e) {
+      problem = `Not applied: ${(e as Error).message}`;
+    }
+    accepted[i] = problem ?? (c.target.kind === "physics" ? "Filed on the Physics screen: adopt it there." : c.target.kind === "atom_issue" ? "Opened on GitHub for you to read and send." : (DONE[c.target.kind] ?? "Done."));
   }
 </script>
 
 <div role="tabpanel" aria-label="Orac">
-  <p>Orac drafts changes from a sentence: physics, lenses, and new physics blocks as issues. SSE checks every draft and sends problems back to Orac, up to three times. Only drafts that pass can be accepted, and nothing changes until you accept.</p>
+  <p>Orac drafts changes from a sentence: physics, lenses, styles, player screens, symbols, data views, and new physics blocks as issues. SSE checks every draft and sends problems back to Orac, up to three times. Only drafts that pass can be accepted, and nothing changes until you accept.</p>
   {#if !host}
     <p class="hint" data-agent-off="orac">Orac works on the GM's chart room only.</p>
   {:else}

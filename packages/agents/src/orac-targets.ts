@@ -3,7 +3,7 @@
 // GM's own edits go through (the kernel for physics, checkLens for lenses);
 // each accept is the GM's own path (the Physics screen's request queue, the
 // lens list). Orac adds no validator of its own where SSE has one.
-import { checkLens, LAYERS, TOOLS, previewRequest, type ChangeRequest, type Lens, type ViewSession, type Workspace } from "../../ui-contract/src/index.ts";
+import { checkLens, LAYERS, TOOLS, previewRequest, type AtomInfo, type ChangeRequest, type Lens, type ViewSession, type Workspace } from "../../ui-contract/src/index.ts";
 import { ATOM_ISSUE_FORM, atomIssueText, atomIssueUrl, checkAtomIssue, type AtomIssue, type Entry, type OracTarget } from "./orac.ts";
 
 const num = (x: unknown): x is number => typeof x === "number" && Number.isFinite(x);
@@ -59,14 +59,35 @@ export function physicsTarget(session: ViewSession, ws: Workspace): OracTarget<C
 }
 
 /** The flows in the stack as catalogue entries: what each publishes on the list, nodes and parameters in full. */
-export function flowEntries(session: ViewSession): Entry[] {
+/**
+ * The atoms the kernel knows, for the catalogue: parameter ranges and units,
+ * so Orac drafts inside them instead of learning them from refusals. Empty
+ * when the session cannot say (an older kernel).
+ */
+export async function loadAtoms(session: ViewSession): Promise<readonly AtomInfo[]> {
+  const r = await session.atoms?.();
+  return r?.ok ? r.atoms : [];
+}
+
+function paramText(name: string, value: number, atom: AtomInfo | undefined): string {
+  const p = atom?.params.find((x) => x.name === name);
+  if (!p) return `${name}=${short(value)}`;
+  const range = p.range ? `, allowed ${short(p.range[0])} to ${short(p.range[1])}` : "";
+  const dim = p.dim && p.dim !== "1" ? ` ${p.dim}` : "";
+  return `${name}=${short(value)}${dim} (${p.description}${range})`;
+}
+
+export function flowEntries(session: ViewSession, atoms: readonly AtomInfo[] = []): Entry[] {
   return session.flows().flatMap((id) => {
     const f = session.flowDoc(id);
     if (!f) return [];
     const d = f.doc;
     const full = [
       `pack ${f.pack}; inputs: ${d.inputs.map((i) => `${i.name} (${i.kind})`).join(", ") || "none"}`,
-      ...d.nodes.map((n) => `node ${n.id}: atom ${n.atom}${n.params && Object.keys(n.params).length ? `; parameters ${Object.entries(n.params).map(([k, v]) => `${k}=${short(v)}`).join(", ")}` : ""}`),
+      ...d.nodes.map((n) => {
+        const atom = atoms.find((a) => a.id === n.atom);
+        return `node ${n.id}: atom ${n.atom}${atom?.explain.curious ? ` (${atom.explain.curious})` : ""}${n.params && Object.keys(n.params).length ? `; parameters ${Object.entries(n.params).map(([k, v]) => paramText(k, v, atom)).join(", ")}` : ""}`;
+      }),
       `wires: ${d.wires.map((w) => `${w.from} -> ${w.to}`).join(", ")}`,
       `publishes: ${d.publishes.map((p) => `${p.kind} (from ${p.from})`).join(", ")}`,
     ].join("\n");

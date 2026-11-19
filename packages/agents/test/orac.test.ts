@@ -14,7 +14,7 @@ import { nodeKernel } from "../../ui-contract/test/node-kernel.ts";
 import { plainWorkspace } from "../../ui-contract/test/workspace.ts";
 import { asker, emptyAgents, type AgentsState } from "../src/agents.ts";
 import { draftLoop } from "../src/loop.ts";
-import { atomIssueTarget, flowEntries, lensEntries, lensTarget, physicsTarget } from "../src/orac-targets.ts";
+import { atomIssueTarget, flowEntries, lensEntries, lensTarget, loadAtoms, physicsTarget } from "../src/orac-targets.ts";
 import { atomIssueUrl, checkAtomIssue, oracMay, oracSystem, runOrac } from "../src/orac.ts";
 // @ts-expect-error plain JS test helper
 import { mockProvider } from "./mock-provider.mjs";
@@ -141,4 +141,18 @@ test("Orac is for the GM only, and the loop stops at its own limit", async () =>
   const r = await draftLoop({ system: "s", request: "r", cap: 0.015, ask: async () => (n++, { ok: true, text: fence({ note: "", make: [{ kind: "k", doc: {} }] }), usd: 0.01, tokens_in: 1, tokens_out: 1 }), check: async () => ({ problems: ["no"] }) });
   assert.equal(n, 1);
   assert.match(r.message, /limit of \$0\.015/);
+});
+
+test("the catalogue carries the kernel's parameter ranges, so Orac can draft inside them", async () => {
+  const k = nodeKernel();
+  try {
+    const s = await Session.open(k.client, gmSeat(), scene.universe, [pack], k.scratch);
+    const atoms = await loadAtoms(s);
+    assert.ok(atoms.length > 0);
+    const full = flowEntries(s, atoms).find((e) => e.key === `flow:${CLIMATE}`)!.full;
+    assert.match(full, /redistribution=0\.25 \(.*allowed 0\.25 to 0\.666/);
+    assert.doesNotMatch(flowEntries(s).find((e) => e.key === `flow:${CLIMATE}`)!.full, /allowed/, "without atoms, values only");
+  } finally {
+    await k.close();
+  }
 });

@@ -25,8 +25,18 @@ await new Promise((r) => setTimeout(r, 400));
 const CLIMATE = "sse.base.planet-climate";
 const fence = (o) => "```json\n" + JSON.stringify(o) + "\n```";
 const draft = (after) => fence({ note: "More heat kept on the day side.", make: [{ kind: "physics", title: "Hold day-side heat", rationale: "Tidally locked worlds carry less heat to the night side.", doc: { flow: CLIMATE, edits: [{ node: "teq", param: "redistribution", after }] } }] });
+const view = (tiers) => fence({ note: "A view for a ship with only long-range sensors.", make: [{ kind: "data_view", title: "Orbits only", doc: { id: "orbits-only", label: "Orbits only", show_tiers: tiers, tags: { mode: "none" }, unknown_style: "omit" } }] });
 // Scripted by what Orac was last told: a first draft out of range, the fix after the kernel's words come back.
-const provider = await mockProvider({ context: 32000, replies: (messages) => (/allowed range/.test(messages.at(-1).content) ? draft(0.5) : draft(7)) });
+// The second request (a data view) first shows a GM-only tier, then is fixed after Player data's check answers.
+const provider = await mockProvider({
+  context: 32000,
+  replies: (messages) => {
+    const last = messages.at(-1).content;
+    if (/GM-only facts/.test(last)) return view(["obvious"]);
+    if (/long-range sensors/.test(messages[1].content)) return view(["obvious", "secret"]);
+    return /allowed range/.test(last) ? draft(0.5) : draft(7);
+  },
+});
 const shot = async (page, n) => {
   if (screens) (mkdirSync(screens, { recursive: true }), await page.screenshot({ path: `${screens}/${n}.png` }));
 };
@@ -76,7 +86,7 @@ try {
     await shot(gm, "a2-orac");
     await card.getByRole("button", { name: "Accept" }).click();
     await card.getByText("Filed on the Physics screen").waitFor();
-    await gm.keyboard.press("Escape");
+    await dlg.evaluate((d) => d.close());
 
     // On the Physics screen, Orac's request is there, validated, waiting for the GM to adopt.
     await gm.keyboard.press("p");
@@ -84,9 +94,28 @@ try {
     await req.waitFor({ timeout: 10000 });
     assert.equal(await gm.locator("[data-state-hash]").getAttribute("data-state-hash"), h0, "nothing adopted by Orac");
     await shot(gm, "a2-physics");
+
+    // Part 2: a data view. Player data's own check refuses a GM-only tier; the fix is applied only on Accept.
+    await gm.getByRole("group", { name: "Screen" }).getByRole("button", { name: "Player data" }).click();
+    const dv = gm.locator("[role=region][aria-label='Player data']");
+    await dv.waitFor();
+    assert.ok(!(await dv.innerText()).includes("Orbits only"));
+    await gm.getByRole("button", { name: "Agents" }).click();
+    await dlg.getByRole("tab", { name: "Orac" }).click();
+    await dlg.getByLabel("Ask Orac").fill("A data view for a ship with only long-range sensors.");
+    await dlg.getByRole("button", { name: "Draft" }).click();
+    await dlg.locator("[data-orac-result=ok]").waitFor({ timeout: 30000 });
+    assert.match(await dlg.getByRole("list", { name: "Orac's tries" }).innerText(), /Try 1: SSE found 1 problem, sent back/);
+    const vcard = dlg.locator("[data-candidate=passed]");
+    assert.match(await vcard.innerText(), /Orbits only: shows obvious, tags none, unknowns left out/);
+    assert.ok(!(await dv.innerText()).includes("Orbits only"), "nothing applied before Accept");
+    await vcard.getByRole("button", { name: "Accept" }).click();
+    await dlg.getByText("Applied to the campaign's player data").waitFor();
+    await dlg.evaluate((d) => d.close());
+    await gm.waitForFunction(() => /Orbits only/.test(document.querySelector("[role=region][aria-label='Player data']")?.textContent ?? ""), null, { timeout: 10000 });
     assert.deepEqual(errors, []);
     await browser.close();
-    console.log(`PASS ${name}: Orac's rejected draft fixed in the loop; only the passing one offered; filed on Physics after Accept; state hash unchanged`);
+    console.log(`PASS ${name}: Orac's rejected draft fixed in the loop; only the passing one offered; filed on Physics after Accept; state hash unchanged; a data view applied only on Accept`);
   }
 } finally {
   server.kill();
