@@ -596,6 +596,7 @@ dependencies = [
  "sse-sift",
  "sse-surface",
  "sse-time",
+ "sse-trigger",
  "sse-weather",
  "sse-world",
  "ts-rs",
@@ -736,6 +737,19 @@ dependencies = [
  "sse-core",
  "sse-formation",
  "sse-pack",
+]
+
+[[package]]
+name = "sse-trigger"
+version = "0.1.0"
+dependencies = [
+ "serde",
+ "serde_json",
+ "sse-chronicle",
+ "sse-core",
+ "sse-observe",
+ "sse-record",
+ "sse-sift",
 ]
 
 [[package]]
