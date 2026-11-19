@@ -253,6 +253,28 @@ pub fn evolve(
     seed: Seed,
     address: &Address,
 ) -> Disc {
+    evolve_clocked(gal, gp, p, seed, address, None)
+}
+
+/// The inside-out clock's total: all the gas a galaxy takes in over its life.
+/// An edited history keeps the unedited galaxy's clock (`evolve_clocked`), so
+/// the rings before an edit are bit-identical; with its own total, a later
+/// change in inflow would reshape the whole inside-out profile back to the start.
+pub fn inflow_clock(gal: &Galaxy, p: &RingParams) -> f64 {
+    let every = p.every.max(1) as usize;
+    let n = gal.inflow.len() / every;
+    gal.inflow[..n * every].iter().sum::<f64>().max(1.0e-30)
+}
+
+/// `evolve` with the inside-out clock's total given (None: the galaxy's own).
+pub fn evolve_clocked(
+    gal: &Galaxy,
+    gp: &GalaxyParams,
+    p: &RingParams,
+    seed: Seed,
+    address: &Address,
+    clock_total: Option<f64>,
+) -> Disc {
     let every = p.every.max(1) as usize;
     let n = gal.inflow.len() / every;
     let dt = gal.step_gyr * every as f64;
@@ -290,7 +312,7 @@ pub fn evolve(
     let mut feh_hist = vec![vec![]; nr];
     let mut states: Vec<Vec<RingState>> = vec![Vec::with_capacity(n); nr];
     let mut stars_so_far = vec![0.0f64; nr];
-    let total: f64 = gal.inflow[..n * every].iter().sum::<f64>().max(1.0e-30);
+    let total: f64 = clock_total.unwrap_or_else(|| inflow_clock(gal, p));
     let span = dt * n as f64;
     let mut cum = 0.0;
     for k in 0..n {
