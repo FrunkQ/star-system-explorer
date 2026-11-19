@@ -617,6 +617,7 @@ fn bodies_from_facts(
 }
 
 pub(crate) struct Resolved {
+    pub evidence: serde_json::Value,
     pub source: String,
     pub at_s: Option<i64>,
     pub facts: serde_json::Value,
@@ -730,6 +731,7 @@ pub(crate) fn resolved_system(
             }));
         }
     }
+    let evidence = evidence_of(ch, system, at_s);
     let facts_json: serde_json::Map<String, serde_json::Value> = facts
         .iter()
         .map(|(a, r)| {
@@ -740,6 +742,7 @@ pub(crate) fn resolved_system(
         })
         .collect();
     Ok(Resolved {
+        evidence,
         source: source.into(),
         at_s: (at_s != i64::MAX).then_some(at_s),
         facts: serde_json::Value::Object(facts_json),
@@ -751,4 +754,98 @@ pub(crate) fn resolved_system(
         tiles: out_tiles,
         refused,
     })
+}
+
+fn evidence_label(e: Evidence) -> &'static str {
+    match e {
+        Evidence::Catalogued => "catalogued",
+        Evidence::Derived => "derived",
+        Evidence::Resolved => "resolved",
+        Evidence::Authored => "authored",
+        Evidence::AuthoredImpossible => "authored-impossible",
+        Evidence::Narrative => "narrative",
+    }
+}
+
+/// Who set each fact under `system` as of `at_s`: address to field to
+/// `{evidence, by}` (the evidence label and the setting event's kind), from
+/// the last event in fold order that set it.
+pub(crate) fn evidence_of(ch: &Chronicle, system: &Address, at_s: i64) -> serde_json::Value {
+    let at = UniverseTime::seconds(at_s);
+    let mut sel: Vec<&Event> = ch
+        .events()
+        .iter()
+        .filter(|e| e.body.activated_at <= at)
+        .collect();
+    sel.sort_by_key(|e| e.order_key());
+    let mut who: BTreeMap<String, BTreeMap<String, serde_json::Value>> = BTreeMap::new();
+    for e in sel {
+        for (a, fields) in &e.body.payload.set {
+            if !system.contains(a) {
+                continue;
+            }
+            let row = who.entry(a.to_string()).or_default();
+            for k in fields.keys() {
+                row.insert(
+                    k.clone(),
+                    serde_json::json!({"evidence": evidence_label(e.body.evidence), "by": e.body.kind}),
+                );
+            }
+        }
+        for (a, fields) in &e.body.payload.unset {
+            if let Some(row) = who.get_mut(&a.to_string()) {
+                for k in fields {
+                    row.remove(k);
+                }
+            }
+        }
+    }
+    serde_json::to_value(who).expect("plain data")
+}
+
+/// The systems of a universe (addresses `<root>/sys:*` with facts at or
+/// under them), with where each came from and a name if one is known.
+pub(crate) fn systems_of(ch: &Chronicle, root: &Address) -> Vec<serde_json::Value> {
+    let st = ch.state_at(UniverseTime::seconds(i64::MAX));
+    let mut found: BTreeMap<Address, u32> = BTreeMap::new();
+    for a in st.facts.keys() {
+        if !root.contains(a) || a.segments().len() <= root.segments().len() {
+            continue;
+        }
+        let mut sys = a.clone();
+        while sys.segments().len() > root.segments().len() + 1 {
+            match sys.parent() {
+                Some(p) => sys = p,
+                None => break,
+            }
+        }
+        if sys.last().kind() != "sys" {
+            continue;
+        }
+        *found.entry(sys).or_insert(0) += 1;
+    }
+    found
+        .into_iter()
+        .map(|(sys, n)| {
+            let adopted = ch.events().iter().find(|e| {
+                (e.body.kind == ADOPT_V3 || e.body.kind == ADOPT_FORMATION)
+                    && e.body.subject.contains(&sys)
+            });
+            let source = match adopted.map(|e| e.body.kind.as_str()) {
+                Some(ADOPT_V3) => "v3",
+                Some(ADOPT_FORMATION) => "formation",
+                _ => "facts",
+            };
+            let name = ["name", "v3.name"]
+                .iter()
+                .find_map(|k| st.get(&sys, k).and_then(as_text).map(str::to_string));
+            serde_json::json!({
+                "system": sys.to_string(),
+                "source": source,
+                "name": name,
+                "addresses": n,
+                "adopted_event": adopted.map(|e| e.id.hex()),
+            })
+        })
+        .collect()
 }

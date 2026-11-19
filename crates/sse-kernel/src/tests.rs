@@ -703,6 +703,20 @@ fn adopt_age_and_read_back_a_system() {
     let l1 = aged["facts"][star]["star.luminosity"].as_f64().unwrap();
     assert!(l1 > l0, "a Sun-like star brightens: {l0} to {l1}");
     assert!(aged["at_s"].as_i64().unwrap() > 0, "read at the moved now");
+    // Evidence per fact: the aged luminosity is derived by the write-back; the orbit host is from the adoption.
+    assert_eq!(aged["evidence"][star]["star.luminosity"]["by"], "time.aged");
+    assert_eq!(
+        aged["evidence"][star]["star.luminosity"]["evidence"],
+        "derived"
+    );
+    assert_eq!(
+        aged["evidence"][&world]["orbit.host"]["evidence"],
+        "resolved"
+    );
+    assert_eq!(
+        r["evidence"][star]["star.luminosity"]["by"],
+        "adopt.formation"
+    );
 
     // V3: a handful of events (one per evidence class), the first with the report.
     let save = include_str!("../../../tests/fixtures/v3/synthetic-sol.json");
@@ -736,6 +750,24 @@ fn adopt_age_and_read_back_a_system() {
         .collect();
     eprintln!("v3 adopted regimes: {names:?}");
     assert!(!names.is_empty());
+    // The universe's systems, with their sources.
+    let l = send(&mut k, serde_json::json!({"op": "systems"}));
+    let got: Vec<(String, String)> = l["systems"]
+        .as_array()
+        .unwrap()
+        .iter()
+        .map(|s| {
+            (
+                s["system"].as_str().unwrap().to_string(),
+                s["source"].as_str().unwrap().to_string(),
+            )
+        })
+        .collect();
+    assert!(
+        got.contains(&("u:home/sys:5".to_string(), "formation".to_string())),
+        "{got:?}"
+    );
+    assert!(got.contains(&(sys.clone(), "v3".to_string())), "{got:?}");
     // Errors.
     assert_eq!(
         send(&mut k, serde_json::json!({"op": "adopt"}))["code"],

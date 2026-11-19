@@ -344,6 +344,9 @@ pub enum Request {
         #[ts(optional)]
         tiles: Option<Vec<TileRequest>>,
     },
+    /// The open universe's systems: every `<root>/sys:*` with facts, where it
+    /// came from (`v3`, `formation` or `facts`), its name and adopt event.
+    Systems,
 }
 
 /// `adopt`'s formation request: the `run_formation` fields.
@@ -419,6 +422,7 @@ impl Request {
             Request::RunFormation { .. } => "run_formation",
             Request::Adopt { .. } => "adopt",
             Request::ResolvedSystem { .. } => "resolved_system",
+            Request::Systems => "systems",
         }
     }
 }
@@ -500,6 +504,7 @@ pub fn ops() -> Vec<OpInfo> {
             Cost::Medium,
             "a formation re-run for formation-adopted systems (cached), plus about 0.1 s per 256-sample tile; at most 24 tiles",
         ),
+        o("systems", Cost::Light, "linear in the universe's facts"),
     ]
 }
 
@@ -697,8 +702,16 @@ pub enum Response {
         facts: u32,
         state_hash: String,
     },
+    /// `systems`: one entry per system, `{system, source, name?, addresses,
+    /// adopted_event?}`.
+    SystemsListed {
+        #[ts(type = "unknown[]")]
+        systems: Vec<serde_json::Value>,
+    },
     /// `resolved_system`. `source`: `formation`, `v3` or `facts`. `facts`:
-    /// address to field to value under the system. `spec`: an `sse-time`
+    /// address to field to value under the system. `evidence`: address to
+    /// field to `{evidence, by}`: the label (`authored`, `derived`, ...) and
+    /// the kind of the event that set it (`time.aged` for a write-back). `spec`: an `sse-time`
     /// SystemSpec (absent without a star mass and age). `surfaces`: S0
     /// envelopes. `tiles`: S1 tiles; `refused`: tiles not given, with why.
     SystemResolved {
@@ -711,6 +724,8 @@ pub enum Response {
         at_s: Option<i64>,
         #[ts(type = "unknown")]
         facts: serde_json::Value,
+        #[ts(type = "unknown")]
+        evidence: serde_json::Value,
         #[serde(default, skip_serializing_if = "Option::is_none")]
         #[ts(optional, type = "unknown")]
         spec: Option<serde_json::Value>,
