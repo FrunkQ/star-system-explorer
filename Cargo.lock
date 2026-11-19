@@ -511,6 +511,17 @@ dependencies = [
 ]
 
 [[package]]
+name = "sse-codes"
+version = "0.1.0"
+dependencies = [
+ "serde",
+ "serde_json",
+ "sse-core",
+ "sse-pack",
+ "sse-sift",
+]
+
+[[package]]
 name = "sse-core"
 version = "0.1.0"
 dependencies = [

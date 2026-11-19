@@ -60,3 +60,19 @@ the physics chain blocks... other than Big Blocks. And have a UI element that ma
 
 | Where | What it computes | Why it is not a flow yet | Blocks it would need | View that would show it |
 |---|---|---|---|---|
+
+## Game-system packs
+
+Codes that a game reads from physics. Where a code's band had to be drawn on the physics, the line is a choice,
+listed here. Imported codes always win over these (they are kept as authored and marked where physics disagrees).
+
+| Where | Instead of the physics | Why | Real physics to replace it | Status |
+|---|---|---|---|---|
+| `scripts/build-traveller-pack.py`, rule `traveller.prep.oxygen` | Air "carries oxygen" when O2 is at least 10% of the surface pressure | Traveller's breathable bands are named, not defined by partial pressure | A breathing model per species (O2 partial pressure against altitude and acclimatisation), shared with the habitability atlas | permanent for the code; the habitability scheme (C2) carries the real need |
+| `traveller.prep.tainted` | Tainted when CO2 > 0.005 bar, O2 > 0.5 bar, SO2 ≥ 1e-5 bar, or an authored `atmosphere.taint` | The published taints are a story list (pollutants, biologicals, radioactivity...) | Toxicity thresholds per gas from a gas table (V3's tags port in X3d gas mixes) | to review in X3d |
+| `traveller.prep.corrosive`, atmosphere C | Corrosive when SO2 ≥ 1 mbar or the main gas is SO2, H2S, Cl2, F2, HCl or H2SO4; insidious is corrosive at 10 bar or more | No physical definition exists for "insidious" | Materials attack rates from composition, pressure and temperature | permanent for the code |
+| Atmosphere E and F | Never produced by physics; authored with `atmosphere.traveller_kind` | "Low" and "unusual" describe places and times, not a mean state | Regional and time-varying air from the weather track (W) | stand-in until W |
+| `traveller.count.gas-giant` (PBG G digit) | A gas giant is anything 2.5 Earth radii or larger and below 13 Jupiter masses | The games count ice giants and puffy sub-Neptunes alike | The physical atlas's giant classes once the one-body object settles mass and envelope | to review after the one-body unification |
+| Trade codes Fr, Co, Ho, Tu, Tr | Mean surface temperature bands (below 223 K, 223 to 263 K, 303 to 353 K) | T5 places these by orbit against the habitable zone, which SSE4 does not keep as a fact | Climate classes from the weather track | to review with W |
+| Size F, population F | Size F also holds anything over 23,200 km across; population F anything over 10^15 | The code has no symbol beyond F | None needed: the reading keeps the true value | permanent |
+| Missing facts | Absent pressure, liquid cover, population, government, law and tech read as 0, starport as X | A profile always has every digit | None: each reading lists the facts that stood in (`defaulted`) | permanent |
