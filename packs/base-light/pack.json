@@ -1,0 +1,62 @@
+{
+ "format": "sse.pack/1",
+ "id": "sse.base-light",
+ "version": "0.1.0",
+ "kind": ["base-physics"],
+ "kernel_range": "^0.1",
+ "licence": "Apache-2.0",
+ "provides": {
+  "other": {
+   "about": "Light (track O1; nebulae-and-light design sections 1 and 2): the fixed band set every light description is integrated over, the visible slices, the named-line table, and the wavelength grid the spectrum chart samples. Wavelengths in metres. Radio runs to 10 km (30 kHz) so planetary auroral radio, which sits below 40 MHz, is inside the band set. Optical lines are rest wavelengths in standard air, as astronomers quote them; ultraviolet, X-ray, gamma, millimetre and radio lines are in vacuum.",
+   "light": {
+    "bands": [
+     { "id": "gamma", "name": "Gamma rays", "from_m": 1e-14, "to_m": 1e-11 },
+     { "id": "xray", "name": "X-rays", "from_m": 1e-11, "to_m": 1e-8 },
+     { "id": "uv", "name": "Ultraviolet", "from_m": 1e-8, "to_m": 3.8e-7 },
+     { "id": "visible", "name": "Visible", "from_m": 3.8e-7, "to_m": 7.5e-7 },
+     { "id": "near-ir", "name": "Near infrared", "from_m": 7.5e-7, "to_m": 5e-6 },
+     { "id": "mid-ir", "name": "Mid infrared", "from_m": 5e-6, "to_m": 2.5e-5 },
+     { "id": "far-ir", "name": "Far infrared", "from_m": 2.5e-5, "to_m": 3.5e-4 },
+     { "id": "mm", "name": "Millimetre", "from_m": 3.5e-4, "to_m": 1e-2 },
+     { "id": "radio", "name": "Radio", "from_m": 1e-2, "to_m": 1e4 }
+    ],
+    "visible_slices": [
+     { "id": "blue", "name": "Blue", "from_m": 3.8e-7, "to_m": 4.9e-7 },
+     { "id": "green", "name": "Green", "from_m": 4.9e-7, "to_m": 5.8e-7 },
+     { "id": "red", "name": "Red", "from_m": 5.8e-7, "to_m": 7.5e-7 }
+    ],
+    "lines": [
+     { "id": "e-511", "name": "Electron-positron annihilation 511 keV", "species": "e+e-", "at_m": 2.42631e-12, "medium": "vacuum" },
+     { "id": "fe-ka", "name": "Iron K-alpha 6.4 keV", "species": "Fe", "at_m": 1.9373e-10, "medium": "vacuum" },
+     { "id": "lya", "name": "Lyman-alpha 121.6 nm", "species": "H I", "at_m": 1.21567e-7, "medium": "vacuum" },
+     { "id": "oii", "name": "[O II] 372.7 nm (doublet)", "species": "O II", "at_m": 3.7274e-7, "medium": "air" },
+     { "id": "n2p", "name": "N2+ 391.4 nm (aurora)", "species": "N2+", "at_m": 3.9144e-7, "medium": "air" },
+     { "id": "hg", "name": "H-gamma 434.0 nm", "species": "H I", "at_m": 4.34047e-7, "medium": "air" },
+     { "id": "heii", "name": "He II 468.6 nm", "species": "He II", "at_m": 4.68568e-7, "medium": "air" },
+     { "id": "hb", "name": "H-beta 486.1 nm", "species": "H I", "at_m": 4.86133e-7, "medium": "air" },
+     { "id": "oiii-4959", "name": "[O III] 495.9 nm", "species": "O III", "at_m": 4.95891e-7, "medium": "air" },
+     { "id": "oiii", "name": "[O III] 500.7 nm", "species": "O III", "at_m": 5.00684e-7, "medium": "air" },
+     { "id": "oi-5577", "name": "[O I] 557.7 nm (green aurora, airglow)", "species": "O I", "at_m": 5.57734e-7, "medium": "air" },
+     { "id": "hei", "name": "He I 587.6 nm", "species": "He I", "at_m": 5.87562e-7, "medium": "air" },
+     { "id": "na-d", "name": "Sodium D 589.3 nm (doublet; sodium lamps)", "species": "Na I", "at_m": 5.8929e-7, "medium": "air" },
+     { "id": "oi-6300", "name": "[O I] 630.0 nm (red aurora)", "species": "O I", "at_m": 6.30030e-7, "medium": "air" },
+     { "id": "nii-6548", "name": "[N II] 654.8 nm", "species": "N II", "at_m": 6.54805e-7, "medium": "air" },
+     { "id": "ha", "name": "H-alpha 656.3 nm", "species": "H I", "at_m": 6.56281e-7, "medium": "air" },
+     { "id": "nii", "name": "[N II] 658.4 nm", "species": "N II", "at_m": 6.58345e-7, "medium": "air" },
+     { "id": "sii", "name": "[S II] 671.6 nm", "species": "S II", "at_m": 6.71644e-7, "medium": "air" },
+     { "id": "sii-6731", "name": "[S II] 673.1 nm", "species": "S II", "at_m": 6.73082e-7, "medium": "air" },
+     { "id": "co-10", "name": "Carbon monoxide J=1-0 2.6 mm (115.27 GHz)", "species": "CO", "at_m": 2.600757e-3, "medium": "vacuum" },
+     { "id": "hi-21", "name": "Neutral hydrogen 21 cm (1420.41 MHz)", "species": "H I", "at_m": 0.21106114, "medium": "vacuum" }
+    ],
+    "grid": { "from_m": 1e-14, "to_m": 1e4, "points": 145 },
+    "steps_per_decade": 64,
+    "disc_rings": 48,
+    "references": [
+     { "text": "NIST Atomic Spectra Database (Kramida, A., Ralchenko, Yu., Reader, J. and NIST ASD Team), rest wavelengths of atomic lines", "url": "https://physics.nist.gov/asd" },
+     { "text": "Osterbrock, D. E. and Ferland, G. J. 2006, Astrophysics of Gaseous Nebulae and Active Galactic Nuclei, 2nd edn, University Science Books: the nebular line list (H I, [O II], [O III], [N II], [S II], He I, He II)", "url": "https://uscibooks.aip.org/books/astrophysics-of-gaseous-nebulae-and-active-galactic-nuclei-second-edition/" },
+     { "text": "Splatalogue spectral line catalogue: CO J=1-0 at 115.2712018 GHz and the H I hyperfine line at 1420.405751768 MHz", "url": "https://splatalogue.online/" }
+    ]
+   }
+  }
+ }
+}
