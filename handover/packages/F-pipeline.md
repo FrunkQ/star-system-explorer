@@ -31,3 +31,4 @@ generation.
 - Explanations: `world_heat` keeps the numbers only; a caller wanting the "Why?" panel re-runs the same flow
   through the kernel's explain op with the same inputs.
 - The kernel has no op that runs the pipeline yet; the first UI consumer wires it (one call, data out).
+- `SystemRun.protoplanets` added for F7 (orbits for ageing); `formation-pipeline.json` digests re-blessed for it.

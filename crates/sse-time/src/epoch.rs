@@ -319,6 +319,7 @@ impl<'a> Ageing<'a> {
         let ts = self.schedule(t0, target_myr);
         let l = self.star.line.clone();
         let mut phase = self.star.line.phase_at(t0);
+        let mut last_hill: Option<f64> = None;
         let mut colour = self.star_now(t0).colour;
         let mut polluted = false;
         let mut r_max = 0.0_f64;
@@ -368,7 +369,17 @@ impl<'a> Ageing<'a> {
             if alive.len() >= 2 {
                 let next = Secular::new(mb, &alive).advance(&alive, (tb - ta) * 1.0e6);
                 for (lp, np) in live.iter_mut().filter(|x| !x.engulfed).zip(next) {
-                    lp.p.e = np.e;
+                    // First-order theory is linear in e and i; for crowded,
+                    // massive generated systems it can overshoot. Keep the last
+                    // good value if it fails, and stay bound.
+                    if !(np.e.is_finite()
+                        && np.i.is_finite()
+                        && np.varpi.is_finite()
+                        && np.node.is_finite())
+                    {
+                        continue;
+                    }
+                    lp.p.e = np.e.clamp(0.0, 0.99);
                     lp.p.varpi = np.varpi;
                     lp.p.i = np.i;
                     lp.p.node = np.node;
@@ -471,9 +482,13 @@ impl<'a> Ageing<'a> {
                 }
                 phase = ph;
             }
-            // Close pairs open a detailed window too.
+            // Close pairs open a detailed window too: once, and again only if
+            // the pair has closed in further by a tenth since (a generated
+            // system can be born with a tight but stable pair; checking it at
+            // every step would cost much and show nothing new).
             if let Some((x, y, d)) = Self::closest_pair(mb, &live) {
-                if d < s.window_hill {
+                if d < s.window_hill && last_hill.is_none_or(|h| d < 0.9 * h) {
+                    last_hill = Some(d);
                     let reason = format!("{x} and {y} are {d:.2} mutual Hill radii apart");
                     if let Some(wr) = self.window(tb, &mut live, &reason) {
                         run.work += wr.steps;
@@ -553,7 +568,16 @@ impl<'a> Ageing<'a> {
     /// the orbits are written back from the window's end.
     fn window(&self, t: f64, live: &mut [Live], reason: &str) -> Option<WindowReport> {
         let s = self.settings;
-        let idx: Vec<usize> = (0..live.len()).filter(|&k| !live[k].engulfed).collect();
+        // A planet the giant's tide has dragged to the star in this step is
+        // engulfed by the check that follows; it is not integrated.
+        let r_star = self.star.state_at(t).star.radius / AU_RSUN;
+        let idx: Vec<usize> = (0..live.len())
+            .filter(|&k| {
+                !live[k].engulfed
+                    && live[k].p.a.is_finite()
+                    && live[k].p.a * (1.0 - live[k].p.e) > r_star
+            })
+            .collect();
         if idx.is_empty() {
             return None;
         }
@@ -580,6 +604,9 @@ impl<'a> Ageing<'a> {
         let dt = m::sqrt(inner * inner * inner / mass) / s.window_steps_per_orbit;
         let mut w = Window::from_elements(mass, &planets, dt);
         let e0 = w.energy();
+        if !(dt.is_finite() && dt > 0.0) {
+            return None;
+        }
         let n = m::ceil(s.window_years / dt) as u64;
         let star = &self.star;
         let mass_of = move |yr: f64| star.mass_at(t + yr / 1.0e6);

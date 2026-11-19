@@ -69,6 +69,8 @@ pub struct SystemRun {
     pub leftovers: Option<Leftovers>,
     #[serde(default)]
     pub accrete: Option<accrete::Run>,
+    /// What growth handed to early life, one per world (orbit, formation date, provenance).
+    pub protoplanets: Vec<crate::early::Protoplanet>,
     pub worlds: Vec<WorldStart>,
     pub heat: Vec<WorldHeat>,
     /// Dated events this pipeline adds to the history's own (geology falling quiet).
@@ -242,6 +244,7 @@ pub fn run(history: FormationHistory, block: Block) -> SystemRun {
         upheaval,
         leftovers: left,
         accrete: acc,
+        protoplanets: protos,
         worlds,
         heat,
         events,
