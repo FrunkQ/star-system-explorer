@@ -206,7 +206,7 @@ pub struct Stars<'a> {
 const KMS_PC_MYR: f64 = 1.022_712;
 const G_PC3: f64 = 4.498_502e-3;
 
-fn imf_quantile(p: &StarParams, u: f64) -> f64 {
+pub(crate) fn imf_quantile(p: &StarParams, u: f64) -> f64 {
     // Piecewise power law by number.
     let e = &p.imf_edges;
     let a = &p.imf_alphas;
