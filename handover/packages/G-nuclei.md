@@ -11,7 +11,7 @@ Status: done (19 Nov 2026). Kernel track. Design: the galaxy design (`handover/d
 | Episodes | Each G3 burst feed is grown at the Eddington limit, so it lasts `t_Sal ln(1 + feed / m0)`; the peak is the Eddington luminosity of the grown hole. Inside an episode the history holds back the part of the feed not yet swallowed. | Salpeter 1964; t_Sal = 0.45 Gyr x eps / (1 - eps), 50 Myr at eps = 0.1 |
 | Light | L = eps Mdot c^2 above 1% Eddington; below it the flow is radiatively inefficient and L falls as lambda^2 (continuous at the join). Eddington ratio, and the thin disc's peak temperature (about 1e5 K at 1e8 Msun, hotter for smaller holes). | Shakura and Sunyaev 1973; Narayan and Yi 1995 |
 | Class | `quasar` (L >= 1e38 W), `seyfert` (>= 1e35 W and lambda >= 1e-3), `low_luminosity` (lambda >= 1e-5), `dormant`. | conventional cuts |
-| Seen from | `seen_from(nucleus, params, point, direction)`: within 10 degrees of a radio-loud jet a `blazar`, within the 45 degree torus opening `type_1`, otherwise `type_2`. The jet axis is a keyed isotropic direction; radio loudness is keyed, 10% at 1e8 Msun, rising as M^1.6, capped at 50%. | Antonucci 1993; Urry and Padovani 1995; Best et al. 2005 |
+| Seen from | `seen_from(nucleus, params, point, direction)`: within 10 degrees of a radio-loud jet a `blazar`, within the 45 degree torus opening `type_1`, otherwise `type_2`. The jet axis is a keyed isotropic direction; radio loudness is keyed, 1.25% at 1e8 Msun, rising as M^1.6, capped at 30% (Best et al. 2005 section 3.3 fit, checked at source). | Antonucci 1993; Urry and Padovani 1995; Best et al. 2005 |
 | Mergers | Every major halo merger brings a hole of ratio x the host's; they coalesce 1 Gyr later (or are still a pair today). The chirp mass is given for gravitational-wave work. | sketch delay |
 | Tidal disruptions | Rate 2.9e-5 per year at 1e8 Msun, scaling as M^-0.404, none above the Hills mass 1.1e8 Msun (Sun-like stars go in whole). `tidal_disruptions(nucleus, params, seed, from, to)` draws them per 10 kyr bin, so any window gives the same events as the bins it covers. | Stone and Metzger 2016; Hills 1975 |
 | Body | The nucleus is `<halo>/nucleus:0`. `facts(nucleus, point)` gives `body.mass`, `body.radius` (Schwarzschild), `body.compact = black_hole`, `star.luminosity` and the `nucleus.*` facts, for the chronicle and the one-body classifier. | |
@@ -41,7 +41,7 @@ Status: done (19 Nov 2026). Kernel track. Design: the galaxy design (`handover/d
 - The direct-collapse chance (10%) and its single redshift are a sketch; real direct collapse needs a nearby Lyman-Werner source and metal-free gas.
 - Radio loudness is keyed once for the whole life; real jets switch on and off with the accretion state.
 - Class cuts are conventions, not physics. The thin disc ignores spin (efficiency is one number) and the corona and the X-ray spectrum.
-- References were written from memory and need checking with the citations thread.
+- References were checked at source by the citations thread (19 Nov): Narayan and Yi's DOI corrected, the radio-loud share lowered from 10% to 1.25% at 1e8 Msun and its cap from 50% to 30%. The lambda^2 law is cited as the standard ADAF scaling (Yuan and Narayan 2014), not yet read at source.
 
 ## Next
 - The galaxy charts thread draws the nucleus at the halo centre in `galaxy_chart`.

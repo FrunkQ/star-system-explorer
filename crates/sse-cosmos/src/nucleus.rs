@@ -69,7 +69,8 @@ pub struct NucleusParams {
     pub direct_collapse_z: f64,
     pub direct_collapse_v_kms: f64,
     pub direct_collapse_chance: f64,
-    /// Radio-loud share at 1e8 Msun, its slope with hole mass, and its cap (Best et al. 2005).
+    /// Radio-loud share at 1e8 Msun, its slope with hole mass, and its cap (Best et al. 2005
+    /// section 3.3 fit at 1e23 W/Hz; the fit breaks down above about 0.25, a ceiling near 30%).
     pub radio_loud_1e8: f64,
     pub radio_loud_slope: f64,
     pub radio_loud_max: f64,
@@ -98,9 +99,9 @@ impl Default for NucleusParams {
             direct_collapse_z: 10.0,
             direct_collapse_v_kms: 16.5,
             direct_collapse_chance: 0.1,
-            radio_loud_1e8: 0.1,
+            radio_loud_1e8: 0.0125,
             radio_loud_slope: 1.6,
-            radio_loud_max: 0.5,
+            radio_loud_max: 0.3,
             torus_deg: 45.0,
             blazar_deg: 10.0,
             merge_delay_gyr: 1.0,
