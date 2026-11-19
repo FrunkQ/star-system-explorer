@@ -30,6 +30,8 @@ fn port(name: &str, kind: &str, dim: D, valid: Option<(f64, f64)>) -> Port {
         kind: kind.into(),
         dim,
         valid,
+        shape: None,
+        any_dim: false,
     }
 }
 
@@ -56,6 +58,8 @@ fn atom(
                 science: String::new(),
                 formula: formula.into(),
             },
+            class: None,
+            dims: None,
         },
         f,
     })

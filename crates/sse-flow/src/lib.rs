@@ -4,12 +4,17 @@
 pub mod decl;
 pub mod flow;
 pub mod toy;
+pub mod value;
 
-pub use decl::{Atom, AtomDecl, AtomError, AtomRegistry, CostClass, Param, Port, Reference};
+pub use decl::{
+    Atom, AtomDecl, AtomError, AtomRegistry, BlockClass, Call, CostClass, DimRule, Env, Out, Param,
+    Port, Reference, World,
+};
 pub use flow::{
     Context, EvalError, Evaluation, Explanation, Flow, FlowDoc, FlowError, InputValue, SourceLabel,
     Validity,
 };
+pub use value::{Shape, Val};
 
 #[cfg(test)]
 mod tests;

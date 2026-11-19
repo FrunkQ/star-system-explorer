@@ -1,0 +1,16 @@
+[package]
+name = "sse-logic"
+description = "SSE4 logic blocks (track J2): the logic atom set, conditions shared with K8, keyed dice on the table secret, and engine blocks (classify, place)"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+authors.workspace = true
+
+[dependencies]
+sse-core.workspace = true
+sse-flow.workspace = true
+sse-sift = { path = "../sse-sift" }
+sse-place = { path = "../sse-place" }
+sse-life = { path = "../sse-life" }
+serde.workspace = true
+serde_json.workspace = true
