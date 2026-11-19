@@ -5,9 +5,12 @@
 #![forbid(unsafe_code)]
 
 pub mod birth;
+pub mod cosmology;
+pub mod epochs;
 pub mod model;
 pub mod patch;
 pub mod scenario;
+pub mod web;
 
 pub use birth::SystemBirth;
 pub use model::PatchModel;
@@ -114,3 +117,5 @@ pub(crate) mod golden {
         );
     }
 }
+#[cfg(test)]
+mod g1_tests;

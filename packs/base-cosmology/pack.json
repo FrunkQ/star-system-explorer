@@ -1,0 +1,48 @@
+{
+ "format": "sse.pack/1",
+ "id": "sse.base-cosmology",
+ "version": "0.1.0",
+ "kind": ["base-physics"],
+ "kernel_range": "^0.1",
+ "licence": "Apache-2.0",
+ "provides": {
+  "other": {
+   "about": "Cosmology and the cosmic web (G1; galaxy design sections 2 and 3): the universe's parameters, how the web's noise octaves are laid out, and what sets each epoch. A fictional universe pack may change any of them; everything downstream follows.",
+   "cosmology": {
+    "params": {
+     "h0": 67.66,
+     "omega_m": 0.3111,
+     "omega_b": 0.04897,
+     "sigma8": 0.8102,
+     "n_s": 0.9665,
+     "t_cmb": 2.7255,
+     "n_eff": 3.046,
+     "now_gyr": 13.8
+    },
+    "web": {
+     "top_spacing_mpc": 64.0,
+     "octaves": 8,
+     "tidal_threshold": 0.0
+    },
+    "epochs": {
+     "first_star_halo": 1000000.0,
+     "first_star_nu": 3.0,
+     "cooling_mass_z9": 100000000.0,
+     "reionisation_zeta": 11.0,
+     "last_stars_log10_yr": 14.0,
+     "proton_decay": true,
+     "proton_lifetime_log10_yr": 37.0,
+     "largest_black_hole": 100000000000.0
+    },
+    "sources": {
+     "params": "Planck Collaboration 2020, Planck 2018 results VI, table 2 (TT,TE,EE+lowE+lensing+BAO); T_CMB from Fixsen 2009; N_eff 3.046 (Mangano et al. 2005)",
+     "web": "galaxy design section 3; T-web threshold 0 as in Hahn et al. 2007",
+     "first_stars": "3-sigma peaks of 1e6 solar-mass minihaloes (Tegmark et al. 1997; Barkana and Loeb 2001)",
+     "cooling_mass_z9": "virial temperature 1e4 K at z = 9 for mean molecular weight 0.6 (Barkana and Loeb 2001 eq. 26)",
+     "reionisation_zeta": "tuned so reionisation is half way at z = 7.7 (Planck 2018) and complete near z = 6 (Fan et al. 2006)",
+     "far_future": "Adams and Laughlin 1997, Rev. Mod. Phys. 69, 337; Hawking evaporation time from Page 1976. Speculative"
+    }
+   }
+  }
+ }
+}
