@@ -1363,5 +1363,80 @@
   "export": {
    "format": "other"
   }
+ },
+ {
+  "op": "load_stack",
+  "packs": [
+   "$pack:rpg-record"
+  ]
+ },
+ {
+  "op": "add_actor",
+  "id": "party",
+  "name": "The crew of the Calla",
+  "kind": "party",
+  "at_s": 0
+ },
+ {
+  "op": "add_note",
+  "address": "u:kestrel/sys:0/body:3",
+  "links": [
+   "u:kestrel/actor:party"
+  ],
+  "text": "the crew peed on the statue",
+  "tags": [
+   "insult"
+  ],
+  "by": "crew-seat",
+  "audience": [
+   "crew"
+  ],
+  "at_s": 5
+ },
+ {
+  "op": "add_note",
+  "address": "u:kestrel/sys:0/body:3",
+  "text": "the Calla was taken off Tarn",
+  "audience": "everyone",
+  "at_s": 5,
+  "arrives_at_s": 20
+ },
+ {
+  "op": "add_note",
+  "address": "u:kestrel/sys:0/body:3",
+  "text": "x",
+  "audience": "crew",
+  "at_s": 5
+ },
+ {
+  "op": "set_kept",
+  "address": "u:kestrel/actor:party",
+  "kind": "trade.credits",
+  "value": 1400,
+  "writer": "intent.trade",
+  "reason": "sold ore",
+  "at_s": 7
+ },
+ {
+  "op": "set_kept",
+  "address": "u:kestrel/actor:party",
+  "kind": "politics.standing",
+  "value": -1,
+  "writer": "intent.trade",
+  "at_s": 7
+ },
+ {
+  "op": "record",
+  "address": "u:kestrel/actor:party"
+ },
+ {
+  "op": "disclosures",
+  "audience": "crew",
+  "at_s": 10
+ },
+ {
+  "op": "disclosures",
+  "audience": "vesh",
+  "at_s": 20
  }
 ]

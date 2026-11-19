@@ -1080,3 +1080,255 @@ fn survey_surface_serves_layers_register_and_tiles() {
     );
     assert_eq!(e["code"], "no_surface_body");
 }
+
+/// J1 through the API: notes by audience, news that arrives later, kept
+/// values that fold, explain themselves and reach players only as their view
+/// allows (a band stays a band), the writer rule, actors, disclosures with no
+/// event ids, the universe hash untouched by the record, and a save and
+/// reopen that keeps the record.
+#[test]
+fn the_record_through_the_api() {
+    let packs = crate::contract::load_packs(&root().join("tests/fixtures/packs"));
+    let mut k = crate::Kernel::new();
+    let r = send(
+        &mut k,
+        serde_json::json!({"op":"load_stack","packs":[packs["rpg-record"]]}),
+    );
+    assert_eq!(r["type"], "stack_loaded", "{r}");
+    send(
+        &mut k,
+        serde_json::json!({"op":"open_universe","id":"kestrel","seed":"k"}),
+    );
+    let tarn = "u:kestrel/sys:0/body:3";
+    let a0 = send(
+        &mut k,
+        serde_json::json!({"op":"set_authored","edit":{"address":tarn,"field":"name","value":"Tarn","occurred_at_s":0}}),
+    );
+    let universe = a0["state_hash"].clone();
+    assert!(universe.is_string(), "{a0}");
+    let before = send(
+        &mut k,
+        serde_json::json!({"op":"scene","audience":"crew","scope":"u:kestrel","at_s":10}),
+    );
+    let n1 = send(
+        &mut k,
+        serde_json::json!({"op":"add_note","address":tarn,"text":"the crew peed on the statue","tags":["insult"],"by":"crew-seat","audience":["crew"],"at_s":5}),
+    );
+    assert_eq!(n1["type"], "note_added", "{n1}");
+    assert_eq!(n1["audience"], serde_json::json!(["crew"]));
+    let n2 = send(
+        &mut k,
+        serde_json::json!({"op":"add_note","address":tarn,"text":"the statue is a sleeping machine","at_s":5}),
+    );
+    assert_eq!(n2["audience"], "gm", "GM only by default");
+    let n3 = send(
+        &mut k,
+        serde_json::json!({"op":"add_note","address":tarn,"text":"the Calla was taken off Tarn","audience":"everyone","at_s":5,"arrives_at_s":20}),
+    );
+    // The record never moves the universe hash; it has its own.
+    for n in [&n1, &n2, &n3] {
+        assert_eq!(n["state_hash"], universe);
+    }
+    assert_ne!(n1["record_hash"], n2["record_hash"]);
+    let notes = |k: &mut crate::Kernel, aud: &str, at: i64| {
+        let s = send(
+            k,
+            serde_json::json!({"op":"scene","audience":aud,"scope":"u:kestrel","at_s":at}),
+        );
+        s["scene"]["subjects"]
+            .as_array()
+            .unwrap()
+            .iter()
+            .find(|x| x["address"] == tarn)
+            .map(|x| x["notes"].as_array().map(|a| a.len()).unwrap_or(0))
+            .unwrap_or(0)
+    };
+    assert_eq!(notes(&mut k, "crew", 10), 1);
+    assert_eq!(notes(&mut k, "vesh", 10), 0);
+    assert_eq!(notes(&mut k, "gm", 10), 2);
+    assert_eq!(notes(&mut k, "vesh", 20), 1, "the news has arrived");
+    let crew_early = send(
+        &mut k,
+        serde_json::json!({"op":"scene","audience":"crew","scope":"u:kestrel","at_s":4}),
+    );
+    assert_eq!(
+        crew_early["scene_hash"], before["scene_hash"],
+        "before the note, nothing changed"
+    );
+    // A correction supersedes.
+    let fix = send(
+        &mut k,
+        serde_json::json!({"op":"add_note","address":tarn,"text":"the crew only threatened to","audience":["crew"],"supersedes":n1["note_id"],"at_s":6}),
+    );
+    assert_eq!(fix["type"], "note_added", "{fix}");
+    // Actors and kept values.
+    let party = send(
+        &mut k,
+        serde_json::json!({"op":"add_actor","id":"party","name":"The crew of the Calla","kind":"party","at_s":0}),
+    );
+    assert_eq!(party["address"], "u:kestrel/actor:party", "{party}");
+    assert_eq!(party["state_hash"], universe);
+    let p = "u:kestrel/actor:party";
+    for (v, w, why) in [
+        (1000, "gm", "starting purse"),
+        (1400, "intent.trade", "sold ore"),
+        (1386, "gm", "docking fee"),
+    ] {
+        let r = send(
+            &mut k,
+            serde_json::json!({"op":"set_kept","address":p,"kind":"trade.credits","value":v,"writer":w,"reason":why,"at_s":7}),
+        );
+        assert_eq!(r["type"], "kept_set", "{r}");
+        assert_eq!(r["state_hash"], universe);
+    }
+    let refused = send(
+        &mut k,
+        serde_json::json!({"op":"set_kept","address":p,"kind":"politics.standing","value":-1,"writer":"intent.trade","at_s":7}),
+    );
+    assert_eq!(refused["code"], "writer_refused", "{refused}");
+    let bad = send(
+        &mut k,
+        serde_json::json!({"op":"set_kept","address":p,"kind":"politics.standing","value":-11,"at_s":7}),
+    );
+    assert_eq!(bad["code"], "bad_value");
+    let unknown = send(
+        &mut k,
+        serde_json::json!({"op":"set_kept","address":p,"kind":"x4.metal","value":1,"at_s":7}),
+    );
+    assert_eq!(unknown["code"], "unknown_kind");
+    send(
+        &mut k,
+        serde_json::json!({"op":"set_kept","address":p,"kind":"politics.standing","value":-2,"writer":"effect.consequence","reason":"the insult","at_s":7}),
+    );
+    send(
+        &mut k,
+        serde_json::json!({"op":"set_kept","address":p,"kind":"misc.ship_cat","value":"Jonesy","at_s":7}),
+    );
+    let rec = send(&mut k, serde_json::json!({"op":"record","address":p}));
+    assert_eq!(rec["type"], "record_read", "{rec}");
+    let kept = rec["kept"].as_array().unwrap();
+    assert_eq!(kept.len(), 3);
+    let credits = kept.iter().find(|x| x["kind"] == "trade.credits").unwrap();
+    assert_eq!(credits["value"], 1386);
+    assert_eq!(credits["history"][1]["reason"], "sold ore");
+    assert_eq!(credits["history"][2]["delta"], -14.0);
+    // What the crew's seat is sent: at long range the credits as a band,
+    // nothing secret, the corrected note, and no event ids anywhere.
+    let d = send(
+        &mut k,
+        serde_json::json!({"op":"disclosures","audience":"crew","at_s":10}),
+    );
+    assert_eq!(d["type"], "disclosed", "{d}");
+    let text = d.to_string();
+    let item = |d: &serde_json::Value, a: &str| {
+        d["items"]
+            .as_array()
+            .unwrap()
+            .iter()
+            .find(|x| x["subject"] == a)
+            .cloned()
+    };
+    let field = |d: &serde_json::Value, f: &str| {
+        item(d, p).unwrap()["kept"]
+            .as_array()
+            .unwrap()
+            .iter()
+            .find(|x| x["field"] == f)
+            .cloned()
+    };
+    // The actor's obvious name is disclosed too; it is record, not universe.
+    assert_eq!(field(&d, "name").unwrap()["value"], "The crew of the Calla");
+    let c = field(&d, "trade.credits").unwrap();
+    assert!(c["value"].is_null());
+    assert_eq!(c["band"], serde_json::json!([500.0, 1500.0]));
+    assert_eq!(item(&d, p).unwrap()["kept"].as_array().unwrap().len(), 2);
+    assert!(
+        !text.contains("1386") && !text.contains("Jonesy") && !text.contains("politics.standing")
+    );
+    let tn = item(&d, tarn).unwrap()["notes"].clone();
+    assert_eq!(tn.as_array().unwrap().len(), 1);
+    assert_eq!(tn[0]["text"], "the crew only threatened to");
+    assert_eq!(tn[0]["id"], "n1");
+    for id in [
+        &n1["note_id"],
+        &n2["note_id"],
+        &n3["note_id"],
+        &fix["note_id"],
+    ] {
+        assert!(!text.contains(id.as_str().unwrap()), "an event id leaked");
+    }
+    assert!(!text.contains("sleeping machine") && !text.contains("Calla was taken"));
+    // The Vesh get nothing of the crew's, and the news only once it arrives.
+    let dv = send(
+        &mut k,
+        serde_json::json!({"op":"disclosures","audience":"vesh","at_s":10}),
+    );
+    assert!(!dv.to_string().contains("crew only"), "{dv}");
+    assert!(item(&dv, tarn).is_none());
+    let dv20 = send(
+        &mut k,
+        serde_json::json!({"op":"disclosures","audience":"vesh","at_s":20}),
+    );
+    assert_eq!(
+        item(&dv20, tarn).unwrap()["notes"][0]["text"],
+        "the Calla was taken off Tarn"
+    );
+    assert_ne!(dv["stream_hash"], dv20["stream_hash"]);
+    // Once the crew have the party scanned, the exact value.
+    send(
+        &mut k,
+        serde_json::json!({"op":"grant","address":p,"audience":"crew","view":"scanned","at_s":8}),
+    );
+    let d2 = send(
+        &mut k,
+        serde_json::json!({"op":"disclosures","audience":"crew","at_s":10}),
+    );
+    assert_eq!(field(&d2, "trade.credits").unwrap()["value"], 1386, "{d2}");
+    assert_eq!(
+        send(
+            &mut k,
+            serde_json::json!({"op":"disclosures","audience":"gm","at_s":10})
+        )["code"],
+        "bad_audience"
+    );
+    let tg = send(
+        &mut k,
+        serde_json::json!({"op":"record","address":"u:kestrel"}),
+    );
+    assert_eq!(tg["actors"][0]["name"], "The crew of the Calla");
+    // Save and reopen: the record comes back; the universe hash is the same.
+    let ex = send(&mut k, serde_json::json!({"op":"export_chronicle"}));
+    let mut k2 = crate::Kernel::new();
+    send(
+        &mut k2,
+        serde_json::json!({"op":"load_stack","packs":[packs["tarn-observe"]]}),
+    );
+    let im = send(
+        &mut k2,
+        serde_json::json!({"op":"import_chronicle","export":ex["export"]}),
+    );
+    assert_eq!(im["type"], "chronicle_imported", "{im}");
+    // Without the record pack the values stay readable, marked as orphans.
+    let back = send(&mut k2, serde_json::json!({"op":"record","address":p}));
+    let c2 = back["kept"]
+        .as_array()
+        .unwrap()
+        .iter()
+        .find(|x| x["kind"] == "trade.credits")
+        .unwrap()
+        .clone();
+    assert_eq!(c2["value"], 1386);
+    assert_eq!(c2["orphan"], "kept by a pack that is not loaded");
+    assert_eq!(back["kept"].as_array().unwrap().len(), 3);
+    // A tampered record is refused.
+    let mut bad_ex = ex["export"].clone();
+    bad_ex["record_head"] = serde_json::json!("00");
+    let mut k3 = crate::Kernel::new();
+    assert_eq!(
+        send(
+            &mut k3,
+            serde_json::json!({"op":"import_chronicle","export":bad_ex})
+        )["code"],
+        "bad_export"
+    );
+}

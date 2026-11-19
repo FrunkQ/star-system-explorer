@@ -1,0 +1,13 @@
+[package]
+name = "sse-record"
+description = "SSE4 campaign record (track J1): notes, kept values, actors and relations, as chronicle events"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+authors.workspace = true
+
+[dependencies]
+sse-core.workspace = true
+sse-chronicle.workspace = true
+serde.workspace = true
+serde_json.workspace = true
