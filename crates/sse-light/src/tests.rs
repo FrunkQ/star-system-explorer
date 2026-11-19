@@ -458,3 +458,147 @@ mod o2 {
         assert_eq!(text, want);
     }
 }
+
+// ---- O7: shifts ---------------------------------------------------------
+
+mod o7 {
+    use crate::shift::*;
+    use crate::*;
+
+    fn rel(a: f64, b: f64) -> f64 {
+        (a - b).abs() / b.abs()
+    }
+
+    fn star(t: f64) -> LightDescription {
+        let mut d = LightDescription::new("s");
+        d.parts.push(Part::Thermal {
+            t_k: t,
+            area_m2: 1e18,
+            emissivity: 1.0,
+            cause: "test".into(),
+        });
+        d
+    }
+
+    #[test]
+    fn doppler_factor_special_cases() {
+        let b = 0.6;
+        let head_on = Shift::doppler(b, 1.0, false).factor;
+        assert!(rel(head_on, sse_core::math::sqrt((1.0 + b) / (1.0 - b))) < 1e-12);
+        let away = Shift::doppler(b, -1.0, false).factor;
+        assert!(rel(away, sse_core::math::sqrt((1.0 - b) / (1.0 + b))) < 1e-12);
+        // Side-on: only time dilation, D = 1/γ (the transverse Doppler effect).
+        let side = Shift::doppler(b, 0.0, false).factor;
+        assert!(rel(side, 0.8) < 1e-12);
+    }
+
+    /// A moving black body is seen as a black body at D times its temperature
+    /// (the Planck function's own symmetry), and its total light rises as D⁴.
+    #[test]
+    fn moving_blackbody_is_hotter_blackbody() {
+        let t = LightTable::base();
+        let s = Shift::doppler(0.3, 1.0, false);
+        let seen = publish_shifted(&star(5000.0), &s, &t);
+        let hot = publish(&star(5000.0 * s.factor), &t);
+        for (a, b) in seen.bands.iter().zip(&hot.bands) {
+            if b.power_w > 1e-30 * hot.total_w {
+                assert!(
+                    rel(a.power_w, b.power_w) < 1e-6,
+                    "{}: {} vs {}",
+                    a.band,
+                    a.power_w,
+                    b.power_w
+                );
+            }
+        }
+        let rest = publish(&star(5000.0), &t).total_w;
+        assert!(rel(seen.total_w, rest * sse_core::math::pow(s.factor, 4.0)) < 1e-6);
+    }
+
+    /// Lines move to λ₀/D and carry D^(p+1) of their power: Hα from a source
+    /// approaching at 0.15 c lands in the green slice.
+    #[test]
+    fn lines_shift_between_slices() {
+        let t = LightTable::base();
+        let mut d = LightDescription::new("n");
+        d.lines.push(LineEmission {
+            line: "ha".into(),
+            power_w: 1e20,
+            cause: "test".into(),
+        });
+        let s = Shift::doppler(0.15, 1.0, false);
+        let p = publish_shifted(&d, &s, &t);
+        let at = s.line_at(656.281e-9);
+        assert!(at > 4.9e-7 && at < 5.8e-7, "{at}");
+        assert!(
+            rel(
+                p.visible_slices[1].power_w,
+                1e20 * sse_core::math::pow(s.factor, 4.0)
+            ) < 1e-12
+        );
+        assert_eq!(p.visible_slices[2].power_w, 0.0);
+    }
+
+    /// No visible change at ordinary speeds: at 30 km/s (Earth's orbital
+    /// speed) the visible band changes by under 0.1 %.
+    #[test]
+    fn ordinary_speeds_change_nothing_visible() {
+        let t = LightTable::base();
+        let s = Shift::doppler(3e4 / C, 1.0, false);
+        let a = publish(&star(5772.0), &t).bands[3].power_w;
+        let b = publish_shifted(&star(5772.0), &s, &t).bands[3].power_w;
+        assert!(rel(b, a) < 1e-3, "{}", rel(b, a));
+    }
+
+    /// Twin jets: the approaching one outshines the receding one by
+    /// ((1 + β cos θ) / (1 − β cos θ))^(p+1) in total for a steady jet (p = 2).
+    #[test]
+    fn twin_jets_differ_by_the_beaming_formula() {
+        let t = LightTable::base();
+        let mut jet = LightDescription::new("jet");
+        jet.parts.push(Part::PowerLaw {
+            power_w: 1e30,
+            from_m: 1e-12,
+            to_m: 1e3,
+            alpha: 0.7,
+            cause: "synchrotron".into(),
+        });
+        let (b, c) = (0.9, 0.5);
+        let near = Shift::doppler(b, c, true);
+        let far = Shift::doppler(b, -c, true);
+        // Over a wide window both see all of the jet's light.
+        let pn = shifted_power(&jet, 1e-16, 1e6, &near, &t);
+        let pf = shifted_power(&jet, 1e-16, 1e6, &far, &t);
+        let want = sse_core::math::pow((1.0 + b * c) / (1.0 - b * c), 3.0);
+        assert!(rel(pn / pf, want) < 1e-9, "{} vs {want}", pn / pf);
+    }
+
+    /// Sirius B: 1.018 M☉ in 0.00864 R☉ gives a gravitational redshift of
+    /// about 75 km/s; Barstow et al. 2005 measured 80.4 ± 4.8 km/s.
+    #[test]
+    fn sirius_b_gravitational_redshift() {
+        let s = Shift::gravitational(1.018 * 1.988_41e30, 0.008_64 * 6.957e8);
+        let v = (1.0 / s.factor - 1.0) * C / 1e3;
+        assert!((v - 80.4).abs() < 2.0 * 4.8, "{v} km/s");
+    }
+
+    /// At z = 1 every wavelength doubles: H-alpha moves into the near infrared,
+    /// carrying (1 + z)⁻² of its power (with the comoving distance).
+    #[test]
+    fn cosmological_redshift_stretches() {
+        let t = LightTable::base();
+        let s = Shift::cosmological(1.0);
+        assert!(rel(s.line_at(656.281e-9), 1312.562e-9) < 1e-12);
+        let mut d = LightDescription::new("g");
+        d.lines.push(LineEmission {
+            line: "ha".into(),
+            power_w: 1.0,
+            cause: "test".into(),
+        });
+        let p = publish_shifted(&d, &s, &t);
+        assert_eq!(p.bands[3].power_w, 0.0);
+        assert!(rel(p.bands[4].power_w, 0.25) < 1e-12);
+        let c = s.then(&Shift::doppler(0.1, 1.0, false));
+        assert!(composite_power(&d, 1e-9, 1e-5, &c, &t) > 0.0);
+    }
+}
