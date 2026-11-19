@@ -195,3 +195,101 @@ fn every_flow_in_the_resolved_stack_compiles() {
         sse_flow::Flow::compile(f.doc.clone(), &cx).unwrap();
     }
 }
+
+const BOXES: &str = include_str!("../../../tests/fixtures/boxes/toy-boxes.json");
+const BOXED: &str = include_str!("../../../tests/fixtures/boxes/toy-boxed.json");
+
+fn boxed_base() -> PackManifest {
+    let mut p = pack("sse.base-toy", "0.1.0", json!({"kind": ["base-physics"]}));
+    p.provides.quantity_kinds = sse_flow::toy::kinds().into_values().collect();
+    p.provides.flows = vec![FlowDoc::from_json(BOXED).unwrap()];
+    p.provides.boxes = serde_json::from_str(BOXES).unwrap();
+    p
+}
+
+fn rival_bulk(version: &str, replaces: bool) -> PackManifest {
+    let mut b: Vec<sse_flow::BoxDoc> = serde_json::from_str(BOXES).unwrap();
+    let mut bulk = b.remove(2);
+    assert_eq!(bulk.id, "toy.bulk");
+    bulk.version = version.into();
+    bulk.fictional = true;
+    bulk.explain.curious = "Bulk properties under the Acme rules.".into();
+    let mut p = pack(
+        "acme.bulk",
+        "1.0.0",
+        json!({"requires": [{"id": "sse.base-toy", "range": "^0.1"}]}),
+    );
+    if replaces {
+        p.replaces = vec![Replacement {
+            flow: "toy.bulk".into(),
+            pack: "sse.base-toy".into(),
+            range: "^0.1".into(),
+        }];
+    }
+    p.provides.boxes = vec![bulk];
+    p
+}
+
+/// J3: boxes come from packs; replacing one is explicit, as for flows, and
+/// a fictional box marks everything downstream.
+#[test]
+fn a_pack_replaces_a_box_explicitly() {
+    let s = resolve(&[boxed_base()], KERNEL).unwrap();
+    assert_eq!(s.boxes.len(), 3);
+    assert_eq!(s.box_packs["toy.bulk"], "sse.base-toy");
+    assert!(s.fictional_kinds.is_empty());
+    // A pack without boxes serialises without the field: its hash is unchanged.
+    assert!(!serde_json::to_string(&base()).unwrap().contains("boxes"));
+    // Providing the same box again without `replaces` is refused.
+    let e = report(&resolve(&[boxed_base(), rival_bulk("1.1.0", false)], KERNEL).unwrap_err());
+    assert!(
+        e.contains("provides box toy.bulk already provided by sse.base-toy; add `replaces`"),
+        "{e}"
+    );
+    // With `replaces`, the rival's box is the one the flow uses.
+    let s = resolve(&[boxed_base(), rival_bulk("1.1.0", true)], KERNEL).unwrap();
+    assert_eq!(s.box_packs["toy.bulk"], "acme.bulk");
+    assert_eq!(s.boxes["toy.bulk"].version, "1.1.0");
+    let atoms = sse_flow::toy::registry();
+    let cx = sse_flow::Context {
+        atoms: &atoms,
+        kinds: &s.kinds,
+        units: &s.units,
+    };
+    let f = sse_flow::Flow::compile_with(
+        s.flows["toy.star-and-planet-boxed"].doc.clone(),
+        &cx,
+        &s.boxes,
+    )
+    .unwrap();
+    let bulk = f.boxes.iter().find(|u| u.id == "toy.bulk").unwrap();
+    assert_eq!((bulk.version.as_str(), bulk.fictional), ("1.1.0", true));
+    // Its fictional flag reaches what the flow publishes.
+    assert!(s.is_fictional("planet.surface_gravity"));
+    // A replacement written against another version of the base is refused.
+    let mut wrong = rival_bulk("1.1.0", true);
+    wrong.replaces[0].range = "^3".into();
+    let e = report(&resolve(&[boxed_base(), wrong], KERNEL).unwrap_err());
+    assert!(
+        e.contains("replaces toy.bulk@^3, but the stack has sse.base-toy 0.1.0"),
+        "{e}"
+    );
+    // A box version outside what the flow asks for is a compile error naming both.
+    let s = resolve(&[boxed_base(), rival_bulk("2.0.0", true)], KERNEL).unwrap();
+    let cx = sse_flow::Context {
+        atoms: &atoms,
+        kinds: &s.kinds,
+        units: &s.units,
+    };
+    let e = sse_flow::Flow::compile_with(
+        s.flows["toy.star-and-planet-boxed"].doc.clone(),
+        &cx,
+        &s.boxes,
+    )
+    .unwrap_err();
+    assert!(
+        e.iter()
+            .any(|x| x.message == "wants box toy.bulk@^1.0, but the stack has toy.bulk 2.0.0"),
+        "{e:?}"
+    );
+}
