@@ -12,10 +12,11 @@ use sse_core::Dimension as D;
 use sse_flow::{Atom, CostClass};
 
 pub const M_SUN: f64 = GM_SUN / G;
-/// The Sun's age, 4.57 Gyr (Bonanno, Schlattl and Paternò 2002), in seconds.
+/// The Sun's age, 4.57 Gyr (Bonanno, Schlattl and Paternò 2002, A&A 390, 1115,
+/// doi:10.1051/0004-6361:20020749), in seconds.
 pub const SUN_AGE: f64 = 4.57e9 * JULIAN_YEAR;
 
-const EKER: &str = "Eker, Z. et al. 2018, MNRAS 479, 5491: interrelated main-sequence mass-luminosity, mass-radius and mass-effective temperature relations (six-piece MLR, table 4) https://ui.adsabs.harvard.edu/abs/2018MNRAS.479.5491E";
+const EKER: &str = "Eker, Z. et al. 2018, MNRAS 479, 5491: interrelated main-sequence mass-luminosity, mass-radius and mass-effective temperature relations (six-piece MLR, table 4). doi:10.1093/mnras/sty1834";
 const DK91: &str = "Demircan, O. and Kahraman, G. 1991, Ap&SS 181, 313: stellar mass-luminosity and mass-radius relations https://ui.adsabs.harvard.edu/abs/1991Ap%26SS.181..313D";
 const GOUGH: &str =
     "Gough, D. O. 1981, Solar Physics 74, 21: solar interior structure and luminosity variations. doi:10.1007/BF00151270";
