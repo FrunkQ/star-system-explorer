@@ -20,11 +20,12 @@
   import { SYMBOLS, checkLightRecipe, describeLight, litFromSystem, paint, type BandRecipe, type Mark } from "../../ui-contract/src/index.ts";
   import AgentsPanel from "../../agents/src/AgentsPanel.svelte";
   import type { OracHost } from "../../agents/src/OracTab.svelte";
+  import type { MinervaHost } from "../../agents/src/MinervaTab.svelte";
   import { oracMay } from "../../agents/src/orac.ts";
   import { atomIssueTarget, flowEntries, lensEntries, lensTarget, physicsTarget } from "../../agents/src/orac-targets.ts";
   import { orbitScene, voicesFromSystem } from "../../ui-contract/src/index.ts";
   import { compareScenes, dropWhatIf, keepWhatIf, openWhatIf } from "../../ui-contract/src/index.ts";
-  import { allLenses, checkLens, defaultLens, hasTool, lensAudience, type Lens } from "../../ui-contract/src/index.ts";
+  import { allLenses, checkLens, defaultLens, hasTool, lensAudience, type Lens, type Vocab } from "../../ui-contract/src/index.ts";
   import { themeCss, THEMES } from "../../skins/chart-room/src/index.ts";
   import { ALL_THEMES } from "../../skins/player/src/index.ts";
   import { Segmented, ToolButton, formatYears } from "../../chart-grammar/src/index.ts";
@@ -46,6 +47,7 @@
   import derivationsDoc from "./documents/derivations.base.json";
   import stackDoc from "./documents/stack.json";
   import factsDoc from "./documents/kestrel.player-facts.json";
+  import plainVocab from "./documents/vocab.plain.json";
   import { REGISTRY } from "./registry.ts";
   import { createWorkspace } from "./workspace.svelte.ts";
   import { loadPref, savePref } from "./prefs.ts";
@@ -405,6 +407,21 @@
       here: () => [agentContext, ws.bench ? `Flow on the bench: ${ws.bench.flow}${ws.bench.node ? `, node ${ws.bench.node}` : ""}` : "", `Lens in use: ${lens.label}`].filter(Boolean).join("\n"),
     };
   });
+  // A3: Minerva reads one audience's scene (K9) and nothing else; the GM's scene is used only to check her text.
+  const minervaHost = $derived.by((): MinervaHost | undefined => {
+    const s = session;
+    if (!s || !oracMay(s.seat)) return undefined;
+    const scope = (factsDoc as unknown as AuthoredFacts).scope;
+    return {
+      audiences: () => (share?.state.plan.audiences ?? [{ id: "everyone", label: "Everyone" }]).map((a) => ({ id: a.id, label: a.label })),
+      scene: async (audience) => {
+        const r = await s.scene(scope, audience ? { audience } : {});
+        return r.ok ? r.scene : null;
+      },
+      vocab: plainVocab as unknown as Vocab,
+      title: `${scene.title}: ${scene.subtitle}`,
+    };
+  });
   const differences = $derived(ws.branch ? compareScenes(mainScene, scene, ws.branch.applied) : []);
   async function whatIf(action: "open" | "keep" | "drop") {
     if (!session) return;
@@ -678,7 +695,7 @@
 </dialog>
 
 <dialog bind:this={agentsDialog} class="help seats-dialog" aria-label="Agents" onclose={() => (agentsOpen = !!agentsDialog?.open)}>
-  {#if agentsOpen}<AgentsPanel context={agentContext} orac={oracHost} />{/if}
+  {#if agentsOpen}<AgentsPanel context={agentContext} orac={oracHost} minerva={minervaHost} />{/if}
   <form method="dialog"><button type="submit">Close</button></form>
 </dialog>
 

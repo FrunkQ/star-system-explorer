@@ -71,6 +71,7 @@ jobs:
       - run: node tests/ui/whatif.e2e.mjs chromium firefox --screens ui-screens
       - run: node tests/ui/agents.e2e.mjs chromium firefox --screens ui-screens
       - run: node tests/ui/orac.e2e.mjs chromium firefox --screens ui-screens
+      - run: node tests/ui/minerva.e2e.mjs chromium firefox --screens ui-screens
       - run: node tests/ui/light.e2e.mjs chromium firefox --screens ui-screens
       - run: node tests/ui/make.e2e.mjs chromium firefox --screens ui-screens
       - run: node tests/ui/lookahead.e2e.mjs chromium firefox --screens ui-screens

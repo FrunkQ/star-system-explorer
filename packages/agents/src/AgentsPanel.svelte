@@ -7,8 +7,9 @@
   import { JOBS, PROVIDER_KINDS, chat, memoryStore, estimate, linked, listModels, loadAgents, newProvider, readLoaded, saveAgents, tarsSystem, type AgentsState, type ChatMessage, type JobId, type ModelInfo, type Provider, type ProviderKind } from "./agents.ts";
 
   import OracTab, { type OracHost } from "./OracTab.svelte";
+  import MinervaTab, { type MinervaHost } from "./MinervaTab.svelte";
 
-  let { context = "", orac, onchange }: { context?: string; orac?: OracHost; onchange?: (s: AgentsState) => void } = $props();
+  let { context = "", orac, minerva, onchange }: { context?: string; orac?: OracHost; minerva?: MinervaHost; onchange?: (s: AgentsState) => void } = $props();
 
   // Settings in "sse4.agents", each key in its own entry (Ovid saves its links without keys).
   const store = (() => {
@@ -196,10 +197,7 @@
   {:else if tab === "orac"}
     <OracTab st={$state.snapshot(st) as AgentsState} host={orac} onrow={(r) => (st.ledger.push(r), save())} />
   {:else}
-    <div role="tabpanel" aria-label="Minerva">
-      <p>{JOBS.describing.what}</p>
-      <p class="hint" data-agent-off="minerva">{linked(st, "describing") ? `Linked: ${st.links.describing!.model}.` : "No model is linked for Describing."} Minerva's narrative arrives with package A3, after the story finder (sifter hits) she reads from.</p>
-    </div>
+    <MinervaTab st={$state.snapshot(st) as AgentsState} host={minerva} onrow={(r) => (st.ledger.push(r), save())} />
   {/if}
 </section>
 
