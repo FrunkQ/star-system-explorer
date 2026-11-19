@@ -256,7 +256,7 @@ export function mountGlobe(host: HTMLElement, opts: GlobeRunOptions, onStatus: (
       level: c2.plan.level,
       max: gov?.max ?? 0,
       plan: c2.plan,
-      badge: badge({ reductions: c2.plan.reductions, ewma_ms: gov?.ewma ?? NaN, budget_ms: c2.budget, lift: c2.doc.lift, stood_in: c2.stood_in}),
+      badge: badge({ reductions: c2.plan.reductions, ewma_ms: gov?.ewma ?? NaN, budget_ms: c2.budget, lift: c2.doc.lift, stood_in: c2.stood_in, at_floor: !!gov && c2.plan.level >= gov.max }),
       ewma_ms: gov?.ewma ?? NaN,
       budget_ms: c2.budget,
       estimate_ms: estimateMs(c2.plan, o.library, full() * full()),

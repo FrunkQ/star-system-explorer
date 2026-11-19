@@ -84,3 +84,10 @@ test("the badge says nothing at full quality, and what was reduced and why other
   assert.deepEqual(b.detail, ["Drawn at three-quarter resolution.", "Grid lines off.", "This device was taking about 48 ms a frame against a budget of 33 ms (30 a second)."]);
   assert.equal(b.lift, "A faster device would lift it.");
 });
+
+test("at the plainest setting and still over budget, the badge says so", () => {
+  const b = badge({ reductions: ["Drawn at a quarter of full resolution."], ewma_ms: 41, budget_ms: 33.3, at_floor: true });
+  assert.equal(b.short, "Over budget at the plainest setting");
+  assert.match(b.detail.join(" "), /still slower than the budget/);
+  assert.equal(badge({ reductions: ["Drawn at a quarter of full resolution."], ewma_ms: 30, budget_ms: 33.3, at_floor: true }).short, "Reduced: Drawn at a quarter of full resolution");
+});

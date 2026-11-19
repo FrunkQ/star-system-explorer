@@ -191,6 +191,7 @@
             data-tier={gs?.tier ?? ""}
             data-backend={gs?.backend ?? ""}
             data-level={gs?.level ?? 0}
+            data-max={gs?.max ?? 0}
             data-recipe={gs?.recipe ?? ""}
             data-frame-ms={gs && Number.isFinite(gs.ewma_ms) ? gs.ewma_ms.toFixed(1) : ""}
             data-budget-ms={gs?.budget_ms ?? ""}
