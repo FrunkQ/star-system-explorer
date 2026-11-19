@@ -79,10 +79,28 @@ fn load_observe(ms: &[sse_pack::PackManifest]) -> Result<Observe, Vec<String>> {
         }
     }
     let record = sse_record::Registry::from_packs(&kept)?;
+    let mut found = Vec::new();
+    for p in ms {
+        if let Some(v) = p.provides.other.get("triggers") {
+            let j =
+                serde_json::to_value(v).map_err(|e| vec![format!("{}: triggers: {e}", p.id)])?;
+            found.push((p.id.clone(), p.version.to_string(), j));
+        }
+    }
+    let triggers = sse_trigger::Rules::from_packs(&found)?;
+    let views: Vec<String> = setup
+        .as_ref()
+        .map(|s| s.views.iter().map(|v| v.id.clone()).collect())
+        .unwrap_or_default();
+    let issues = triggers.check(&record, &views);
+    if !issues.is_empty() {
+        return Err(issues);
+    }
     Ok(Observe {
         setup,
         rules,
         record,
+        triggers,
     })
 }
 
@@ -181,6 +199,8 @@ struct Observe {
     rules: sse_sift::RuleSet,
     /// Kept kinds (`provides.other.record`, J1).
     record: sse_record::Registry,
+    /// Triggers and effects (`provides.other.triggers`, J4).
+    triggers: sse_trigger::Rules,
 }
 
 pub struct Kernel {
@@ -1924,6 +1944,107 @@ impl Kernel {
                     event_id: id.hex(),
                     view: sse_observe::effective_view(&state, &a, &audience, &campaign),
                     state_hash: state.hash().hex(),
+                }
+            }
+            Request::RulesStep { at_s } => {
+                let (rules, reg) = (self.observe.triggers.clone(), self.observe.record.clone());
+                let campaign = self.observe.setup.as_ref().map(|s| s.campaign.clone());
+                let u = self.universe()?;
+                let root = u.root.clone();
+                let report = rules
+                    .step(
+                        &mut sse_trigger::Gate {
+                            universe: &mut u.chronicle,
+                            record: &mut u.record,
+                            registry: &reg,
+                            campaign: campaign.as_ref(),
+                            root: &root,
+                        },
+                        at_s,
+                    )
+                    .map_err(|e| err("rules", e))?;
+                Response::RulesStepped {
+                    report: serde_json::to_value(&report).expect("plain"),
+                    state_hash: latest_hash(&u.chronicle),
+                    record_hash: record_hash(u),
+                }
+            }
+            Request::RulesPending => {
+                let u = self.universe()?;
+                Response::RulesPending {
+                    proposals: sse_trigger::Rules::pending(&u.record)
+                        .iter()
+                        .map(|p| serde_json::to_value(p).expect("plain"))
+                        .collect(),
+                }
+            }
+            Request::RulesDecide {
+                proposal,
+                approve,
+                at_s,
+            } => {
+                let (rules, reg) = (self.observe.triggers.clone(), self.observe.record.clone());
+                let campaign = self.observe.setup.as_ref().map(|s| s.campaign.clone());
+                let u = self.universe()?;
+                let root = u.root.clone();
+                let written = rules
+                    .decide(
+                        &mut sse_trigger::Gate {
+                            universe: &mut u.chronicle,
+                            record: &mut u.record,
+                            registry: &reg,
+                            campaign: campaign.as_ref(),
+                            root: &root,
+                        },
+                        &proposal,
+                        approve,
+                        at_s,
+                    )
+                    .map_err(|e| err("rules", e))?;
+                Response::RulesDecided {
+                    written: written
+                        .iter()
+                        .map(|w| serde_json::to_value(w).expect("plain"))
+                        .collect(),
+                    state_hash: latest_hash(&u.chronicle),
+                    record_hash: record_hash(u),
+                }
+            }
+            Request::RulesPolicy {
+                rule,
+                approval,
+                at_s,
+            } => {
+                let approval: sse_trigger::Approval = serde_json::from_value(approval)
+                    .map_err(|e| err("rules", format!("approval: {e}")))?;
+                let (rules, reg) = (self.observe.triggers.clone(), self.observe.record.clone());
+                let u = self.universe()?;
+                let root = u.root.clone();
+                let id = rules
+                    .set_policy(
+                        &mut sse_trigger::Gate {
+                            universe: &mut u.chronicle,
+                            record: &mut u.record,
+                            registry: &reg,
+                            campaign: None,
+                            root: &root,
+                        },
+                        &rule,
+                        &approval,
+                        at_s,
+                    )
+                    .map_err(|e| err("rules", e))?;
+                Response::RulesPolicySet {
+                    event_id: id.hex(),
+                    record_hash: record_hash(u),
+                }
+            }
+            Request::Rules => {
+                let rules = self.observe.triggers.clone();
+                let u = self.universe()?;
+                Response::RulesListed {
+                    rules: rules.listing(&u.record),
+                    trail: sse_trigger::trail(&u.record),
                 }
             }
             Request::Manifest => {

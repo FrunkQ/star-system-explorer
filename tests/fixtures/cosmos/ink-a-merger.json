@@ -1,0 +1,15 @@
+{
+  "format": "sse.galaxy-scenario/1",
+  "about": "G6 scripted scenario: ink a major merger (ratio 0.5) into a Milky-Way-like galaxy at 9 Gyr, and watch a site at the Sun's radius from 8.5 to 10.5 Gyr. The report holds both histories, the before/after comparison and what the site felt each way. Reproduces from this file alone.",
+  "universe": "g6",
+  "halo_mass": 1e12,
+  "halo_key": "milky-way-like",
+  "edits": [
+    { "kind": "merger", "t_gyr": 9.0, "ratio": 0.5 }
+  ],
+  "site_name": "watch",
+  "site_r_sun": 1.0,
+  "site_phi": 0.0,
+  "site_z_pc": 20.0,
+  "window_myr": [8500.0, 10500.0]
+}
