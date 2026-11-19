@@ -615,6 +615,17 @@ dependencies = [
 ]
 
 [[package]]
+name = "sse-light"
+version = "0.1.0"
+dependencies = [
+ "serde",
+ "serde_json",
+ "sse-core",
+ "sse-flow",
+ "sse-pack",
+]
+
+[[package]]
 name = "sse-logic"
 version = "0.1.0"
 dependencies = [
