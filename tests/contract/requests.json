@@ -1294,6 +1294,28 @@
   "deaths": [{ "star": "u:sol/sys:0/star:0", "died_at_s": 2.2e17, "initial_mass_msun": 1.0, "remnant_mass_msun": 0.54, "ambient_h_m3": 1000000.0 }]
  },
  {
+  "op": "survey_planets",
+  "survey": {
+   "star": { "address": "u:sol/sys:0/star:0", "mass_kg": 1.98841e30, "radius_m": 6.957e8, "visible_w": 1.6757e26 },
+   "planets": [{ "address": "u:sol/sys:0/body:2", "name": "Earth", "mass_kg": 5.9722e24, "radius_m": 6.371e6, "a_m": 1.495978707e11, "e": 0.0167, "i_rad": 0.0, "node_rad": 0.0, "phase_rad": 0.3, "geometric_albedo": 0.434 },
+     { "address": "u:sol/sys:0/body:4", "name": "Jupiter", "mass_kg": 1.89819e27, "radius_m": 6.9911e7, "a_m": 7.783e11, "e": 0.0489, "i_rad": 0.02274, "node_rad": 1.7534, "phase_rad": 2.0, "geometric_albedo": 0.538 }],
+   "observer": { "direction": [1.0, 0.0, 0.0], "distance_m": 3.085677581e17 },
+   "instrument": { "name": "space photometer and spectrograph", "aperture_m": 1.0, "photometric_floor_ppm_hr": 10.0, "rv_precision_m_s": 1.0 },
+   "watch_s": 378691200.0
+  }
+ },
+ {
+  "op": "survey_planets",
+  "survey": {
+   "star": { "address": "u:sol/sys:0/star:0", "mass_kg": 1.98841e30, "radius_m": 6.957e8, "visible_w": 1.6757e26 },
+   "planets": [{ "address": "u:sol/sys:0/body:2", "name": "Earth", "mass_kg": 5.9722e24, "radius_m": 6.371e6, "a_m": 1.495978707e11, "e": 0.0167, "i_rad": 0.0, "node_rad": 0.0, "phase_rad": 0.3, "geometric_albedo": 0.434 },
+     { "address": "u:sol/sys:0/body:4", "name": "Jupiter", "mass_kg": 1.89819e27, "radius_m": 6.9911e7, "a_m": 7.783e11, "e": 0.0489, "i_rad": 0.02274, "node_rad": 1.7534, "phase_rad": 2.0, "geometric_albedo": 0.538 }],
+   "observer": { "direction": [1.0, 0.0, 0.0], "distance_m": 0.0 },
+   "instrument": { "name": "space photometer and spectrograph", "aperture_m": 1.0, "photometric_floor_ppm_hr": 10.0, "rv_precision_m_s": 1.0 },
+   "watch_s": 378691200.0
+  }
+ },
+ {
   "op": "adopt",
   "formation": {
    "seed": "kernel-form-6",

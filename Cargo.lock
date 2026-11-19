@@ -597,6 +597,7 @@ dependencies = [
  "sse-record",
  "sse-sift",
  "sse-surface",
+ "sse-survey",
  "sse-time",
  "sse-trigger",
  "sse-world",
@@ -749,6 +750,16 @@ dependencies = [
  "sse-core",
  "sse-formation",
  "sse-pack",
+]
+
+[[package]]
+name = "sse-survey"
+version = "0.1.0"
+dependencies = [
+ "serde",
+ "serde_json",
+ "sse-core",
+ "sse-flow",
 ]
 
 [[package]]

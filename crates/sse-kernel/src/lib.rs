@@ -995,6 +995,7 @@ impl Kernel {
                 remnants,
                 glows,
             } => systems::read_nebulae(at_s, seed.as_deref(), deaths, planetary, remnants, glows)?,
+            Request::SurveyPlanets { survey } => systems::survey_planets(survey)?,
             Request::Adopt {
                 import_v3,
                 formation,

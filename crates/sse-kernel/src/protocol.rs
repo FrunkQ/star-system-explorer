@@ -340,6 +340,16 @@ pub enum Request {
         #[ts(optional, type = "unknown[]")]
         bodies: Option<Vec<serde_json::Value>>,
     },
+    /// Planet finding from afar (O13): one star, its planets, an observer
+    /// (direction and distance), an instrument and a watch time. Returns
+    /// what each method (transit, wobble, position wobble, direct imaging,
+    /// timing) finds, with what players would measure and why. Mass from a
+    /// wobble is the minimum mass, as in reality. GM-side: the planets are
+    /// the truth the survey is run against.
+    SurveyPlanets {
+        #[ts(type = "unknown")]
+        survey: serde_json::Value,
+    },
     /// Nebulae at a date (O3): planetary nebulae from stars' deaths (or given
     /// inputs), supernova remnants and star-forming glows, each a descriptor
     /// (shells, lobes, surroundings, lighting stars, light, decoration seed).
@@ -608,6 +618,7 @@ impl Request {
             Request::ReadWorldStack { .. } => "read_world_stack",
             Request::ReadLight { .. } => "read_light",
             Request::ReadNebulae { .. } => "read_nebulae",
+            Request::SurveyPlanets { .. } => "survey_planets",
             Request::Adopt { .. } => "adopt",
             Request::ResolvedSystem { .. } => "resolved_system",
             Request::Systems => "systems",
@@ -699,6 +710,11 @@ pub fn ops() -> Vec<OpInfo> {
             "read_world_stack",
             Cost::Light,
             "one stack: validation, the depth ladder and a few atom evaluations",
+        ),
+        o(
+            "survey_planets",
+            Cost::Light,
+            "per planet and method: closed-form signal and noise, no integration",
         ),
         o(
             "read_nebulae",
@@ -962,6 +978,13 @@ pub enum Response {
         table: serde_json::Value,
         #[ts(type = "unknown[]")]
         bodies: Vec<serde_json::Value>,
+    },
+    /// `survey_planets`: `result` is `sse_survey::SurveyResult` (findings
+    /// per planet and method with verdict, signal to noise, measured values
+    /// and why; the addresses found; references).
+    PlanetsSurveyed {
+        #[ts(type = "unknown")]
+        result: serde_json::Value,
     },
     /// `read_nebulae`: each of `nebulae` is `sse_nebula::Descriptor`;
     /// `absent` lists the addresses asked about that do not exist at `at_s`.

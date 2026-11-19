@@ -281,6 +281,22 @@ fn parse_list<T: serde::de::DeserializeOwned>(
         .collect()
 }
 
+/// Planet finding from afar (O13).
+pub(crate) fn survey_planets(survey: serde_json::Value) -> Out {
+    let sv: sse_survey::Survey =
+        serde_json::from_value(survey).map_err(|e| err("bad_survey", e.to_string()))?;
+    if sv.star.mass_kg <= 0.0 || sv.observer.distance_m <= 0.0 || sv.watch_s < 0.0 {
+        return Err(err(
+            "bad_survey",
+            "star mass and observer distance must be positive, watch time not negative",
+        ));
+    }
+    let result = sse_survey::run(&sv);
+    Ok(Response::PlanetsSurveyed {
+        result: serde_json::to_value(result).expect("plain data"),
+    })
+}
+
 /// Nebulae at a date (O3).
 pub(crate) fn read_nebulae(
     at_s: f64,
