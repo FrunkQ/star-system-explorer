@@ -1,0 +1,47 @@
+{
+  "chronicle_head": "985a4e9073485eca3d03b8e30a8860b33a6470b8b5c9f46c97e464a8609f5806",
+  "galaxies": [
+    {
+      "black_hole": 958319.213875235,
+      "core_collapse_per_century": 0.19747017645892653,
+      "disc_kpc": 1.4544476724843365,
+      "galaxy_digest": "40b64f00369b2b94e38b3844bd93aed118502f286542f18098397e657d02a3d8",
+      "halo": "u:g3/halo:dwarf",
+      "ia_per_century": 0.03062476493707933,
+      "morphology": "irregular",
+      "rings_digest": "1fae97e391e0b677051e352dcf03dadd30b5f18d11be885beaebdb18421a0575",
+      "sfr": 0.13673371673177412,
+      "solar_ring_feh": -0.5032498914382528,
+      "stars": 660427626.5433571,
+      "z_gas": 0.003650777318421188
+    },
+    {
+      "black_hole": 32662827.95141912,
+      "core_collapse_per_century": 3.4042736308139747,
+      "disc_kpc": 3.1335238760705377,
+      "galaxy_digest": "f6ea566e5cb196da9944d2c4d21154938972da0a80364e1effb7216f040c53d9",
+      "halo": "u:g3/halo:milky-way-like",
+      "ia_per_century": 0.6946405537573432,
+      "morphology": "barred",
+      "rings_digest": "a96cec863619111f133482447ffcdcd35cb2d089f86310342a03725fa7d2813d",
+      "sfr": 2.640743308070084,
+      "solar_ring_feh": 0.14855583108017956,
+      "stars": 30090122570.800255,
+      "z_gas": 0.01890640045332127
+    },
+    {
+      "black_hole": 31666087.244928654,
+      "core_collapse_per_century": 0.4012805163527641,
+      "disc_kpc": 6.751008226413507,
+      "galaxy_digest": "3d1082cd2735440da9513a4051df75cda958878d4b4b8f1da56fa8db55583a25",
+      "halo": "u:g3/halo:group",
+      "ia_per_century": 0.17890461496816662,
+      "morphology": "elliptical",
+      "rings_digest": "c13b3ae1df0465d702d9b861d99b2fa8e164ae9744ffeb529fb06b0b2ce99562",
+      "sfr": 0.028149010783626065,
+      "solar_ring_feh": 0.29255256480543385,
+      "stars": 71535122907.79985,
+      "z_gas": 0.02545517941338955
+    }
+  ]
+}

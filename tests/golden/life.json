@@ -1,7 +1,7 @@
 {
   "worlds": {
     "earth": {
-      "hash": "c5c3c43a67cb2ed43b560495218124db939d8e2bd5665efd82505c1d304be735",
+      "hash": "6910f2af16c5d45eddf7b045f9c2509262be1f461617e00026c25008cf5c1743",
       "summary": [
         "ocean/ocean-sunlit 0 to -200 m",
         "ocean/ocean-interior -200 to -3688 m",
@@ -43,7 +43,7 @@
       ]
     },
     "europa": {
-      "hash": "65c592802ab0bd85bfbdebe86f1dbe0a62c90a07536ff951d632930dd62a6a66",
+      "hash": "755d3e34f614c2501ab695d3b86cfcd643d350cd5bb757f806479ad3b89f614a",
       "summary": [
         "ocean/sea-floor -120000 to -120100 m",
         "ocean/under-ice-ocean -20000 to -120000 m",
@@ -73,7 +73,7 @@
       ]
     },
     "venus": {
-      "hash": "ff4b7d6f913af13ad322c9c0ca85f28c6e93bc71c723c118611c7dbbd139e617",
+      "hash": "45177bffc56e413774210002689381813dd61c53e84082daad61b9ea8958f74e",
       "summary": [
         "clouds/cloud-deck 62000 to 48000 m",
         "plains/land-surface 10 to 0 m",

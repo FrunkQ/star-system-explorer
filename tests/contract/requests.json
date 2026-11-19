@@ -1025,6 +1025,171 @@
   "kind": "planet.bulk_density"
  },
  {
+  "op": "load_stack",
+  "packs": [
+   "$pack:tarn-observe"
+  ]
+ },
+ {
+  "op": "grant",
+  "address": "u:kestrel",
+  "audience": "vesh",
+  "view": "rumour",
+  "default": true,
+  "at_s": 145480536000000000
+ },
+ {
+  "op": "grant",
+  "address": "u:kestrel/sys:0/body:3",
+  "audience": "vesh",
+  "view": "scanned",
+  "at_s": 145480536000000000
+ },
+ {
+  "op": "scene",
+  "audience": "vesh",
+  "scope": "u:kestrel/sys:0",
+  "at_s": 145480536000000000
+ },
+ {
+  "op": "grant",
+  "address": "u:kestrel/sys:0/body:3",
+  "audience": "vesh",
+  "at_s": 145480536000000000
+ },
+ {
+  "op": "grant",
+  "address": "u:kestrel/sys:0/body:3",
+  "audience": "vesh",
+  "view": "x-ray",
+  "at_s": 145480536000000000
+ },
+ {
+  "op": "grant",
+  "address": "u:kestrel/sys:0",
+  "audience": "vesh",
+  "view": "rumour",
+  "default": true,
+  "at_s": 145480536000000000
+ },
+ {
+  "op": "look_ahead",
+  "system": {
+   "name": "the Sun",
+   "system": "u:sol/sys:0",
+   "star_address": "u:sol/sys:0/star:0",
+   "star_mass": 1.0,
+   "z": 0.02,
+   "age_myr": 4570.0,
+   "birth_year": 9230000000,
+   "planets": [
+    {
+     "name": "Mercury",
+     "address": "u:sol/sys:0/body:0",
+     "mass_me": 0.0553,
+     "a_au": 0.3871,
+     "e": 0.20563,
+     "i_deg": 7.005,
+     "node_deg": 48.331,
+     "varpi_deg": 77.456,
+     "mean_longitude_deg": 252.251
+    },
+    {
+     "name": "Venus",
+     "address": "u:sol/sys:0/body:1",
+     "mass_me": 0.815,
+     "a_au": 0.72333,
+     "e": 0.00677,
+     "i_deg": 3.395,
+     "node_deg": 76.68,
+     "varpi_deg": 131.53,
+     "mean_longitude_deg": 181.98
+    },
+    {
+     "name": "Earth",
+     "address": "u:sol/sys:0/body:2",
+     "mass_me": 1.0,
+     "a_au": 1.0,
+     "e": 0.01671,
+     "i_deg": 5e-05,
+     "node_deg": -11.26,
+     "varpi_deg": 102.947,
+     "mean_longitude_deg": 100.464,
+     "oceans": true
+    },
+    {
+     "name": "Mars",
+     "address": "u:sol/sys:0/body:3",
+     "mass_me": 0.1074,
+     "a_au": 1.52368,
+     "e": 0.0934,
+     "i_deg": 1.85,
+     "node_deg": 49.558,
+     "varpi_deg": 336.04,
+     "mean_longitude_deg": 355.45
+    },
+    {
+     "name": "Jupiter",
+     "address": "u:sol/sys:0/body:4",
+     "mass_me": 317.83,
+     "a_au": 5.2026,
+     "e": 0.04849,
+     "i_deg": 1.303,
+     "node_deg": 100.464,
+     "varpi_deg": 14.331,
+     "mean_longitude_deg": 34.4
+    },
+    {
+     "name": "Saturn",
+     "address": "u:sol/sys:0/body:5",
+     "mass_me": 95.16,
+     "a_au": 9.5549,
+     "e": 0.05551,
+     "i_deg": 2.489,
+     "node_deg": 113.665,
+     "varpi_deg": 93.057,
+     "mean_longitude_deg": 49.94
+    },
+    {
+     "name": "Uranus",
+     "address": "u:sol/sys:0/body:6",
+     "mass_me": 14.54,
+     "a_au": 19.2184,
+     "e": 0.0463,
+     "i_deg": 0.773,
+     "node_deg": 74.006,
+     "varpi_deg": 173.005,
+     "mean_longitude_deg": 313.23
+    },
+    {
+     "name": "Neptune",
+     "address": "u:sol/sys:0/body:7",
+     "mass_me": 17.15,
+     "a_au": 30.1104,
+     "e": 0.00899,
+     "i_deg": 1.77,
+     "node_deg": 131.784,
+     "varpi_deg": 48.124,
+     "mean_longitude_deg": 304.88
+    }
+   ],
+   "debris": {
+    "name": "asteroid belt",
+    "address": "u:sol/sys:0/belt:0",
+    "a_in_au": 2.1,
+    "a_out_au": 3.3,
+    "mass_me": 0.0005
+   },
+   "sources": "J2000 mean elements, Standish 1992 (JPL, Explanatory Supplement table 5.8.1), ecliptic; masses IAU 2015 nominal; Sun 4.57 Gyr (Connelly et al. 2012)"
+  },
+  "target_myr": 6000.0
+ },
+ {
+  "op": "commit_look_ahead",
+  "branch": "0000",
+  "move_now_myr": 5000.0
+ },
+ {
   "op": "run_formation",
   "seed": "kernel-form-6",
   "star_pins": {

@@ -14,6 +14,7 @@ sse-pack.workspace = true
 sse-atoms.workspace = true
 sse-observe = { path = "../sse-observe" }
 sse-sift = { path = "../sse-sift" }
+sse-time = { path = "../sse-time" }
 sse-formation.workspace = true
 sse-import-v3.workspace = true
 sse-cosmos = { path = "../sse-cosmos" }

@@ -29,6 +29,8 @@ struct Universe {
     branches: BTreeMap<String, ContentHash>,
     /// The pack stack the universe runs on now (bottom to top).
     packs: Vec<sse_chronicle::PackRef>,
+    /// Open look-aheads (T2) by branch id; each is also in `branches`.
+    looks: BTreeMap<String, sse_time::branch::LookAhead>,
 }
 
 /// Event kind for a pack stack change in an open universe.
@@ -151,6 +153,8 @@ pub struct Kernel {
     universe: Option<Universe>,
     jobs: BTreeMap<u32, Job>,
     next_job: u32,
+    /// `provides.other.time` from the stack, if any pack provides it.
+    time: Option<sse_time::epoch::TimeSettings>,
 }
 
 impl Default for Kernel {
@@ -213,6 +217,7 @@ impl Kernel {
             universe: None,
             jobs: BTreeMap::new(),
             next_job: 1,
+            time: None,
         }
     }
 
@@ -404,6 +409,7 @@ impl Kernel {
                         };
                         self.stack = Some((stack, flows));
                         self.observe = observe;
+                        self.time = sse_time::epoch::TimeSettings::from_packs(&ms).ok();
                         r
                     }
                 }
@@ -424,6 +430,7 @@ impl Kernel {
                     chronicle,
                     branches: BTreeMap::new(),
                     packs,
+                    looks: BTreeMap::new(),
                 };
                 let manifest_id = u.manifest().id().hex();
                 self.universe = Some(u);
@@ -624,6 +631,7 @@ impl Kernel {
                     .branches
                     .remove(&branch)
                     .ok_or_else(|| err("unknown_branch", branch.clone()))?;
+                u.looks.remove(&branch);
                 let root = u.root.clone();
                 let id = u
                     .chronicle
@@ -652,6 +660,7 @@ impl Kernel {
                 u.chronicle
                     .discard(&b)
                     .map_err(|e| err("chronicle", format!("{e}")))?;
+                u.looks.remove(&branch);
                 Response::Discarded { branch }
             }
             Request::StartJob { job } => {
@@ -925,6 +934,197 @@ impl Kernel {
                         .state_at(UniverseTime::seconds(i64::MAX))
                         .hash()
                         .hex(),
+                }
+            }
+            Request::LookAhead {
+                system,
+                target_myr,
+                settings,
+            } => {
+                use sse_time::branch as tb;
+                let settings: sse_time::epoch::TimeSettings = match settings {
+                    Some(v) => serde_json::from_value(v)
+                        .map_err(|e| err("bad_settings", format!("time settings: {e}")))?,
+                    None => self.time.clone().ok_or_else(|| {
+                        err(
+                            "no_time_settings",
+                            "no pack in the stack provides time settings",
+                        )
+                    })?,
+                };
+                let spec: sse_time::epoch::SystemSpec = serde_json::from_value(system)
+                    .map_err(|e| err("bad_system", format!("system: {e}")))?;
+                let u = self.universe()?;
+                let a: Address = spec
+                    .system
+                    .parse()
+                    .map_err(|e| err("bad_address", format!("{e}")))?;
+                if !u.root.contains(&a) {
+                    return Err(err(
+                        "bad_address",
+                        format!("{a} is not in universe {}", u.root),
+                    ));
+                }
+                if !target_myr.is_finite() || target_myr <= spec.age_myr {
+                    return Err(err(
+                        "bad_target",
+                        format!(
+                            "target {target_myr} Myr must be after the star's age now ({} Myr)",
+                            spec.age_myr
+                        ),
+                    ));
+                }
+                let horizon = spec.age_myr + settings.horizon_myr;
+                let req = tb::Request::new(spec, settings, target_myr);
+                let look = tb::look_ahead(&mut u.chronicle, req, &mut |_| true)
+                    .map_err(|e| err("look_ahead", e))?
+                    .ok_or_else(|| err("look_ahead", "cancelled"))?;
+                let sp = &look.request.system;
+                let year = |age: f64| sp.birth_year + sse_core::math::round(age * 1.0e6) as i64;
+                let events = look
+                    .run
+                    .events
+                    .iter()
+                    .map(|e| FateEvent {
+                        kind: e.kind.clone(),
+                        age_myr: e.age_myr,
+                        year: year(e.age_myr),
+                        subjects: e.subjects.clone(),
+                        why: e.why.clone(),
+                        level: e.level.clone(),
+                        plausible_future: e.plausible_future,
+                        numbers: e.numbers.clone(),
+                    })
+                    .collect();
+                let snapshots = look
+                    .run
+                    .snapshots
+                    .iter()
+                    .map(|s| FateSnapshot {
+                        age_myr: s.age_myr,
+                        year: year(s.age_myr),
+                        star: FateStar {
+                            phase: s.star.phase.clone(),
+                            luminosity: s.star.luminosity,
+                            radius_rsun: s.star.radius_rsun,
+                            teff: s.star.teff,
+                            mass: s.star.mass,
+                            colour: s.star.colour.clone(),
+                            rgb: s.star.rgb,
+                        },
+                        planets: s
+                            .planets
+                            .iter()
+                            .map(|p| FatePlanet {
+                                name: p.name.clone(),
+                                a_au: p.a_au,
+                                e: p.e,
+                                i_deg: p.i_deg,
+                                engulfed: p.engulfed,
+                            })
+                            .collect(),
+                    })
+                    .collect();
+                let id = look.branch.hex();
+                let label = u
+                    .chronicle
+                    .branch_info(&look.branch)
+                    .map(|b| b.label.clone())
+                    .unwrap_or_default();
+                let r = Response::LookedAhead {
+                    branch: id.clone(),
+                    label,
+                    system: sp.system.clone(),
+                    now_myr: sp.age_myr,
+                    target_myr,
+                    birth_year: sp.birth_year,
+                    horizon_myr: horizon,
+                    events,
+                    snapshots,
+                    work_units: u32::try_from(look.run.work).unwrap_or(u32::MAX),
+                };
+                u.branches.insert(id.clone(), look.branch);
+                u.looks.insert(id, look);
+                r
+            }
+            Request::CommitLookAhead {
+                branch,
+                move_now_myr,
+            } => {
+                let u = self.universe()?;
+                let look = u.looks.remove(&branch).ok_or_else(|| {
+                    err(
+                        "unknown_branch",
+                        format!("{branch} is not an open look-ahead"),
+                    )
+                })?;
+                u.branches.remove(&branch);
+                let id = sse_time::branch::commit(&mut u.chronicle, &look, move_now_myr)
+                    .map_err(|e| err("chronicle", e))?;
+                Response::Committed {
+                    event_id: id.hex(),
+                    state_hash: u
+                        .chronicle
+                        .state_at(UniverseTime::seconds(i64::MAX))
+                        .hash()
+                        .hex(),
+                }
+            }
+            Request::Grant {
+                address,
+                audience,
+                view,
+                default,
+                at_s,
+            } => {
+                let a: Address = address
+                    .parse()
+                    .map_err(|e| err("bad_address", format!("{e}")))?;
+                let setup = self.observe.setup.as_ref().ok_or_else(|| {
+                    err(
+                        "no_data_views",
+                        "the pack stack defines no data views (provides.other.observe)",
+                    )
+                })?;
+                if let Some(v) = &view {
+                    if !setup.views.iter().any(|d| &d.id == v) {
+                        return Err(err("unknown_view", format!("no data view {v:?}")));
+                    }
+                }
+                let campaign = setup.campaign.clone();
+                let default = default.unwrap_or(false);
+                let u = self.universe()?;
+                if !u.root.contains(&a) {
+                    return Err(err(
+                        "bad_address",
+                        format!("{a} is not in universe {}", u.root),
+                    ));
+                }
+                if default && a != u.root {
+                    return Err(err(
+                        "bad_address",
+                        format!(
+                            "a starting view is granted on the universe root {}, not {a}",
+                            u.root
+                        ),
+                    ));
+                }
+                let at = UniverseTime::seconds(at_s);
+                let id = sse_observe::grant(
+                    &mut u.chronicle,
+                    &a,
+                    &audience,
+                    view.as_deref(),
+                    default,
+                    at,
+                    &Publisher::new("gm", "grant", "1"),
+                )
+                .map_err(|e| err("chronicle", format!("{e}")))?;
+                let state = u.chronicle.state_at(UniverseTime::seconds(i64::MAX));
+                Response::Granted {
+                    event_id: id.hex(),
+                    view: sse_observe::effective_view(&state, &a, &audience, &campaign),
+                    state_hash: state.hash().hex(),
                 }
             }
             Request::Manifest => {
