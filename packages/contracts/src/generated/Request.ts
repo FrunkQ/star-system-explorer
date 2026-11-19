@@ -8,4 +8,4 @@ export type Request = { "op": "hello" } | { "op": "load_stack", packs: unknown[]
  * A draft `provides.other.observe` setup to build with instead of
  * the stack's (a preview before Apply). Nothing is recorded.
  */
-observe?: unknown, } | { "op": "atoms", ids?: Array<string>, } | { "op": "scan_toggle", address: string, audience: string, at_s: bigint, };
+observe?: unknown, } | { "op": "atoms", ids?: Array<string>, } | { "op": "scan_toggle", address: string, audience: string, at_s: bigint, } | { "op": "grant", address: string, audience: string, view?: string, default?: boolean, at_s: bigint, };

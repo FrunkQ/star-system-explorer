@@ -900,6 +900,63 @@ impl Kernel {
                         .hex(),
                 }
             }
+            Request::Grant {
+                address,
+                audience,
+                view,
+                default,
+                at_s,
+            } => {
+                let a: Address = address
+                    .parse()
+                    .map_err(|e| err("bad_address", format!("{e}")))?;
+                let setup = self.observe.setup.as_ref().ok_or_else(|| {
+                    err(
+                        "no_data_views",
+                        "the pack stack defines no data views (provides.other.observe)",
+                    )
+                })?;
+                if let Some(v) = &view {
+                    if !setup.views.iter().any(|d| &d.id == v) {
+                        return Err(err("unknown_view", format!("no data view {v:?}")));
+                    }
+                }
+                let campaign = setup.campaign.clone();
+                let default = default.unwrap_or(false);
+                let u = self.universe()?;
+                if !u.root.contains(&a) {
+                    return Err(err(
+                        "bad_address",
+                        format!("{a} is not in universe {}", u.root),
+                    ));
+                }
+                if default && a != u.root {
+                    return Err(err(
+                        "bad_address",
+                        format!(
+                            "a starting view is granted on the universe root {}, not {a}",
+                            u.root
+                        ),
+                    ));
+                }
+                let at = UniverseTime::seconds(at_s);
+                let id = sse_observe::grant(
+                    &mut u.chronicle,
+                    &a,
+                    &audience,
+                    view.as_deref(),
+                    default,
+                    at,
+                    &Publisher::new("gm", "grant", "1"),
+                )
+                .map_err(|e| err("chronicle", format!("{e}")))?;
+                let state = u.chronicle.state_at(UniverseTime::seconds(i64::MAX));
+                Response::Granted {
+                    event_id: id.hex(),
+                    view: sse_observe::effective_view(&state, &a, &audience, &campaign),
+                    state_hash: state.hash().hex(),
+                }
+            }
             Request::Manifest => {
                 let m = self.universe()?.manifest();
                 Response::Manifest {

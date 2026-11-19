@@ -19,4 +19,9 @@ hex: string, unit: number, } | { "type": "branch_opened", branch: string, } | { 
 /**
  * The view now in force for the audience at that address.
  */
+view: string, state_hash: string, } | { "type": "granted", event_id: string, 
+/**
+ * The view now in force for the audience at that address (grants and
+ * defaults; tag grants show in scenes).
+ */
 view: string, state_hash: string, } | { "type": "error", code: string, message: string, };

@@ -362,3 +362,32 @@ fn whole_valued_physical_inputs_reach_the_atoms() {
         assert!(fails.is_empty(), "{}: {fails:?}", f.doc.id);
     }
 }
+
+/// V10's kernel gap: grants as proper `observe.grant` events through the API.
+#[test]
+fn grants_through_the_api() {
+    let l: Vec<serde_json::Value> = contract_lines()
+        .iter()
+        .map(|s| serde_json::from_str(s).unwrap())
+        .collect();
+    assert_eq!(l[111]["type"], "granted");
+    assert_eq!(l[111]["view"], "rumour");
+    assert_eq!(l[112]["view"], "scanned");
+    let subjects = l[113]["scene"]["subjects"].as_array().unwrap();
+    let view = |a: &str| {
+        subjects
+            .iter()
+            .find(|s| s["address"] == a)
+            .map(|s| s["view"].clone())
+    };
+    assert_eq!(view("u:kestrel/sys:0/body:3").unwrap(), "scanned");
+    assert_eq!(
+        view("u:kestrel/sys:0/body:3/body:0").unwrap(),
+        "scanned",
+        "moons follow"
+    );
+    assert_eq!(l[114]["view"], "rumour", "taken back to the starting view");
+    assert_ne!(l[114]["state_hash"], l[112]["state_hash"]);
+    assert_eq!(l[115]["code"], "unknown_view");
+    assert_eq!(l[116]["code"], "bad_address");
+}

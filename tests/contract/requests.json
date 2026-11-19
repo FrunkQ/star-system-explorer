@@ -1023,5 +1023,53 @@
    }
   },
   "kind": "planet.bulk_density"
+ },
+ {
+  "op": "load_stack",
+  "packs": [
+   "$pack:tarn-observe"
+  ]
+ },
+ {
+  "op": "grant",
+  "address": "u:kestrel",
+  "audience": "vesh",
+  "view": "rumour",
+  "default": true,
+  "at_s": 145480536000000000
+ },
+ {
+  "op": "grant",
+  "address": "u:kestrel/sys:0/body:3",
+  "audience": "vesh",
+  "view": "scanned",
+  "at_s": 145480536000000000
+ },
+ {
+  "op": "scene",
+  "audience": "vesh",
+  "scope": "u:kestrel/sys:0",
+  "at_s": 145480536000000000
+ },
+ {
+  "op": "grant",
+  "address": "u:kestrel/sys:0/body:3",
+  "audience": "vesh",
+  "at_s": 145480536000000000
+ },
+ {
+  "op": "grant",
+  "address": "u:kestrel/sys:0/body:3",
+  "audience": "vesh",
+  "view": "x-ray",
+  "at_s": 145480536000000000
+ },
+ {
+  "op": "grant",
+  "address": "u:kestrel/sys:0",
+  "audience": "vesh",
+  "view": "rumour",
+  "default": true,
+  "at_s": 145480536000000000
  }
 ]

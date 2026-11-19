@@ -44,6 +44,7 @@ Milestone M1 "Proven core" = packages K0 to K6 (build plan section 3/4).
 | G2 haloes per cell, growth, spin, mergers | done (kernel track) | packages/G2.md |
 | G3 galaxy reservoirs, rings, element groups, what died here | done (kernel track) | packages/G3.md |
 | G4 patch envelopes from a galaxy, green regions, outcome-first | done (kernel track) | packages/G4.md |
+| K9 additions: grant op, tag-driven grants (V10 seats gaps) | done (kernel track) | packages/K9-grants.md |
 | Kernel API additions: stack adopt, manifest, scene, scan_toggle | done (kernel track) | packages/K6-additions.md |
 | Numbers: exact float parse, JSON numbers decode by value (cross-track) | done (kernel track); other tracks merge and re-baseline | packages/numbers.md |
 | C1 axis registry, class records, schemes, SSE 3 classic | done (kernel track) | packages/C1.md |
@@ -57,7 +58,7 @@ Milestone M1 "Proven core" = packages K0 to K6 (build plan section 3/4).
 | Track | Packages | Branch |
 |---|---|---|
 | Physics | P1, P3, P4, F0 to F6 done; next: formation pipeline, F7 (T1 now merged), F9, F8 integrator | `main` via PRs |
-| Kernel | K7 to K10, G0 to G4, C1 to C3, L0, T1, T2 and the U3 gaps done; next the seats gaps (grant event, tag-driven discovery), then G5 or L1a | `main` via PRs |
+| Kernel | K7 to K10, G0 to G4, C1 to C3, L0, T1, T2, the U3 gaps and the V10 grant gaps done; next L1a (life) or G5 | `main` via PRs |
 | Chart room shell and player views | U0 to U3, V1, U5, V2, V12, V3, V11 done; V4 peer-to-peer waits for Alex | `main` via PRs |
 
 **Since 19 Nov (Alex): `main` is the default branch.** New work branches from `main` and arrives as a pull request

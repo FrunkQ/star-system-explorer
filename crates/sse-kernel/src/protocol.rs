@@ -215,6 +215,21 @@ pub enum Request {
         audience: String,
         at_s: i64,
     },
+    /// Grant `audience` the data view `view` of `address` and everything under
+    /// it, or with no `view` take the grant back. With `default`, `address` is
+    /// the universe root and the view is the audience's starting view. One
+    /// `observe.grant` event. GM only.
+    Grant {
+        address: String,
+        audience: String,
+        #[serde(default)]
+        #[ts(optional)]
+        view: Option<String>,
+        #[serde(default)]
+        #[ts(optional)]
+        default: Option<bool>,
+        at_s: i64,
+    },
 }
 
 impl Request {
@@ -240,6 +255,7 @@ impl Request {
             Request::Manifest => "manifest",
             Request::Scene { .. } => "scene",
             Request::ScanToggle { .. } => "scan_toggle",
+            Request::Grant { .. } => "grant",
             Request::Atoms { .. } => "atoms",
         }
     }
@@ -294,6 +310,7 @@ pub fn ops() -> Vec<OpInfo> {
             "linear in the facts within the scope; any device builds its own scenes",
         ),
         o("scan_toggle", Cost::Trivial, "GM machine only in a session"),
+        o("grant", Cost::Trivial, "GM machine only in a session"),
         o("atoms", Cost::Trivial, none),
     ]
 }
@@ -425,6 +442,13 @@ pub enum Response {
     ScanToggled {
         event_id: String,
         /// The view now in force for the audience at that address.
+        view: String,
+        state_hash: String,
+    },
+    Granted {
+        event_id: String,
+        /// The view now in force for the audience at that address (grants and
+        /// defaults; tag grants show in scenes).
         view: String,
         state_hash: String,
     },
