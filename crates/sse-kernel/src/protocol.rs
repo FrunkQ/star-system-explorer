@@ -578,6 +578,36 @@ pub enum Request {
         audience: String,
         at_s: i64,
     },
+    /// Step the stack's trigger rules (J4, `provides.other.triggers`) to a time boundary:
+    /// fire what is due, pass each firing's effects through the gate under its
+    /// approval policy, and run further passes for what they set off (up to
+    /// the pass limit, then the chain is reported). Boundaries run forwards.
+    /// GM machine only: never run on a seat.
+    RulesStep {
+        at_s: i64,
+    },
+    /// Proposals waiting for the GM (`ask` and `ask_if` effects).
+    RulesPending,
+    /// The GM answers a proposal; yes applies its effects at `at_s` (default:
+    /// the proposal's time).
+    RulesDecide {
+        proposal: String,
+        approve: bool,
+        #[serde(default)]
+        #[ts(optional)]
+        at_s: Option<i64>,
+    },
+    /// Change a rule's approval policy without editing its pack:
+    /// `{"policy":"auto"}`, `{"policy":"ask"}` or `{"policy":"ask_if","condition":{..}}`.
+    RulesPolicy {
+        rule: String,
+        #[ts(type = "unknown")]
+        approval: serde_json::Value,
+        at_s: i64,
+    },
+    /// The loaded rules with their effective policies, and the record's
+    /// `rules.*` trail (GM only).
+    Rules,
 }
 
 /// `adopt`'s formation request: the `run_formation` fields.
@@ -676,6 +706,11 @@ impl Request {
             Request::AddActor { .. } => "add_actor",
             Request::Record { .. } => "record",
             Request::Disclosures { .. } => "disclosures",
+            Request::RulesStep { .. } => "rules_step",
+            Request::RulesPending => "rules_pending",
+            Request::RulesDecide { .. } => "rules_decide",
+            Request::RulesPolicy { .. } => "rules_policy",
+            Request::Rules => "rules",
         }
     }
 }
@@ -794,6 +829,15 @@ pub fn ops() -> Vec<OpInfo> {
             Cost::Light,
             "one scene for the audience plus the record's notes",
         ),
+        o(
+            "rules_step",
+            Cost::Light,
+            "GM machine only; one fold per pass, conditions linear in watched subjects (pairs: subjects x observers)",
+        ),
+        o("rules_pending", Cost::Trivial, "GM machine only"),
+        o("rules_decide", Cost::Light, "GM machine only; one fold and the proposal's effects"),
+        o("rules_policy", Cost::Trivial, "GM machine only; one record event"),
+        o("rules", Cost::Light, "GM machine only; linear in the record events"),
     ]
 }
 
@@ -1102,6 +1146,37 @@ pub enum Response {
         #[ts(type = "unknown[]")]
         items: Vec<serde_json::Value>,
         stream_hash: String,
+    },
+    /// `rules_step`: `report` is `{at_s, passes: [[{rule, subject, observer?,
+    /// cause?, fired, outcome, written: [{chronicle, event, effect}]}]], limit?}`.
+    RulesStepped {
+        #[ts(type = "unknown")]
+        report: serde_json::Value,
+        state_hash: String,
+        record_hash: String,
+    },
+    /// `rules_pending`: `[{id, rule, subject, observer?, at_s, effects, explain}]`.
+    RulesPending {
+        #[ts(type = "unknown[]")]
+        proposals: Vec<serde_json::Value>,
+    },
+    /// `rules_decide`: what the yes wrote (empty for a no).
+    RulesDecided {
+        #[ts(type = "unknown[]")]
+        written: Vec<serde_json::Value>,
+        state_hash: String,
+        record_hash: String,
+    },
+    RulesPolicySet {
+        event_id: String,
+        record_hash: String,
+    },
+    /// `rules`: each rule `{id, pack, phase, when, effects, approval, explain}`, and the trail.
+    RulesListed {
+        #[ts(type = "unknown[]")]
+        rules: Vec<serde_json::Value>,
+        #[ts(type = "unknown[]")]
+        trail: Vec<serde_json::Value>,
     },
     /// `systems`: one entry per system, `{system, source, name?, addresses,
     /// adopted_event?}`.

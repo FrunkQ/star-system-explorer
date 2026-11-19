@@ -8,6 +8,7 @@ pub mod birth;
 pub mod cosmology;
 pub mod envelope;
 pub mod epochs;
+pub mod events;
 pub mod galaxy;
 pub mod haloes;
 pub mod model;
@@ -100,6 +101,8 @@ pub fn ops() -> Vec<(&'static str, CostClass, &'static str)> {
         ("cosmos.rings", CostClass::Medium, "24 rings x 270 steps with delay convolutions (about 3 million multiply-adds, well under a second); any device"),
         ("cosmos.envelope", CostClass::Trivial, "interpolation and closed forms per place; any device"),
         ("cosmos.green_band", CostClass::Light, "about 90 envelope reads per time; any device"),
+        ("cosmos.galaxy_edit", CostClass::Light, "the galaxy and its rings run again (about 1,400 and 270 steps); any device"),
+        ("cosmos.events", CostClass::Light, "keyed draws in the cells a site's path comes near (about 30 cells per 10 Myr bin); a 2 Gyr window is a few thousand cell reads; any device"),
         ("cosmos.form_patch", CostClass::Medium, "linear in the systems a patch holds (about 330 in a 16 pc leaf near the Sun); weak devices resolve only the systems a view shows"),
     ]
 }
@@ -136,3 +139,5 @@ mod g3_tests;
 mod g4_tests;
 #[cfg(test)]
 mod g5_tests;
+#[cfg(test)]
+mod g6_tests;
