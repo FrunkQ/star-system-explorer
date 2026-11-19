@@ -82,6 +82,7 @@ impl B {
             solve: None,
             params: BTreeMap::new(),
             config,
+            r#box: None,
         });
         id
     }
@@ -250,6 +251,30 @@ impl B {
                 )
             }
         })
+    }
+}
+
+impl Condition {
+    /// The condition as a box (J3) with one output, `holds`: a rule that
+    /// any flow, box or program can use as one block.
+    pub fn into_box(self, id: &str, version: &str) -> sse_flow::BoxDoc {
+        sse_flow::BoxDoc {
+            format: sse_flow::boxes::BOX_FORMAT.into(),
+            id: id.into(),
+            version: version.into(),
+            inputs: vec![],
+            outputs: vec![sse_flow::boxes::BoxOutput {
+                name: "holds".into(),
+                from: self.output,
+            }],
+            nodes: self.doc.nodes,
+            wires: self.doc.wires,
+            promoted_params: vec![],
+            explain: Default::default(),
+            references: vec![],
+            tests: vec![],
+            fictional: false,
+        }
     }
 }
 

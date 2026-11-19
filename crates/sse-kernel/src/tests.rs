@@ -1223,3 +1223,43 @@ fn logic_blocks_are_listed() {
     let toy = by("toy.luminosity_from_mass");
     assert!(toy.get("class").is_none() && toy["inputs"][0].get("shape").is_none());
 }
+
+/// J3: a stack with boxes loads (box golden cases run, flows are compiled
+/// with their boxes inlined); a box whose own case fails is refused by name.
+#[test]
+fn boxes_load_with_the_stack() {
+    let root = root();
+    let read = |p: &str| std::fs::read_to_string(root.join(p)).unwrap();
+    let boxes: serde_json::Value =
+        serde_json::from_str(&read("tests/fixtures/boxes/toy-boxes.json")).unwrap();
+    let flow: serde_json::Value =
+        serde_json::from_str(&read("tests/fixtures/boxes/toy-boxed.json")).unwrap();
+    let kinds: Vec<sse_core::QuantityKind> = sse_flow::toy::kinds().into_values().collect();
+    let pack = |boxes: serde_json::Value| {
+        serde_json::json!({
+            "format": "sse.pack/1", "id": "sse.boxed-toy", "version": "0.1.0", "kind": ["base-physics"],
+            "kernel_range": "^0.1", "licence": "Apache-2.0",
+            "provides": {"quantity_kinds": kinds, "flows": [flow], "boxes": boxes}
+        })
+    };
+    let mut k = crate::Kernel::new();
+    let r = send(
+        &mut k,
+        serde_json::json!({"op":"load_stack","packs":[pack(boxes.clone())]}),
+    );
+    assert_eq!(r["type"], "stack_loaded", "{r}");
+    let mut bad = boxes;
+    bad[1]["tests"][0]["expect"]["teff"]["value"] = serde_json::json!(6000);
+    let r = send(
+        &mut k,
+        serde_json::json!({"op":"load_stack","packs":[pack(bad)]}),
+    );
+    assert_eq!(r["type"], "stack_rejected", "{r}");
+    assert!(
+        r["report"]
+            .as_str()
+            .unwrap()
+            .contains("(box toy.star): test toy.star: the Sun: teff = 577"),
+        "{r}"
+    );
+}

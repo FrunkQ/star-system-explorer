@@ -556,6 +556,7 @@ fn node(id: &str, atom: &str, config: Option<J>) -> NodeDoc {
         solve: None,
         params: BTreeMap::new(),
         config,
+        r#box: None,
     }
 }
 fn wire(a: &str, b: &str) -> WireDoc {
@@ -1243,4 +1244,58 @@ fn place_in_a_flow_is_reverse_placement() {
         &reg,
     );
     assert!(e.contains("no class \"unicorn\""), "{e}");
+}
+
+/// J3 with J2: a rule as a box of logic blocks, used twice in one flow
+/// (once negated), gives the K8 answers and evidence.
+#[test]
+fn a_rule_as_a_box_is_the_rule() {
+    let content = sse_sift::pack::load(&[sse_sift::scenario::pack()]).unwrap();
+    let rule = content
+        .rules
+        .rules
+        .iter()
+        .find(|r| r.id == "habitable.v1")
+        .unwrap();
+    let b = to_blocks(&rule.when, "x")
+        .unwrap()
+        .into_box("rules.habitable", "1.0.0");
+    let lib: BTreeMap<String, sse_flow::BoxDoc> = [(b.id.clone(), b)].into();
+    let boxed = |id: &str| NodeDoc {
+        atom: None,
+        r#box: Some("rules.habitable@^1".into()),
+        ..node(id, "unused", None)
+    };
+    let nodes = vec![boxed("h"), boxed("h2"), node("not", "logic.not", None)];
+    let d = doc(
+        "test.boxed-rule",
+        vec![],
+        nodes,
+        vec![wire("h2.holds", "not.a")],
+    );
+    let (reg, k, u) = cx_parts();
+    let cx = Context {
+        atoms: &reg,
+        kinds: &k,
+        units: &u,
+    };
+    let flow = Flow::compile_with(d, &cx, &lib).unwrap_or_else(|e| panic!("{e:?}"));
+    for s in grid() {
+        for staying in [false, true] {
+            let w = SubjectWorld(&s);
+            let ev = flow
+                .eval_with(
+                    &cx,
+                    &BTreeMap::new(),
+                    &BTreeMap::new(),
+                    &subject_env(&w, &s, staying),
+                )
+                .unwrap();
+            let out = format!("h/{}", lib["rules.habitable"].outputs[0].from);
+            let (holds, read) = by_k8(&rule.when, &s, staying);
+            assert_eq!(ev.value_of(&out).unwrap().flag(), Some(holds));
+            assert_eq!(ev.value_of("not.holds").unwrap().flag(), Some(!holds));
+            assert_eq!(ev.evidence(&out).unwrap(), read);
+        }
+    }
 }
