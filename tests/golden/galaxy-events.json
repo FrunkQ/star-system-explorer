@@ -1,0 +1,91 @@
+{
+  "after": {
+    "black_hole": 34934563.18650459,
+    "bulge_fraction": 0.44076692668541306,
+    "exposure_digest": "4fe511b9cd0a933066f8b15521e351d81e714ea37184ec69e423f3b961773e89",
+    "galaxy_digest": "a079e15f381a445ab3a86cea5b9554698e3058eed6d0c618c9321cb4b1f92b34",
+    "harmful": 4,
+    "hits": {
+      "active_nucleus": 1,
+      "arm_entry": 1,
+      "arm_exit": 2,
+      "core_collapse": 203,
+      "encounter": 198,
+      "gamma_ray_burst": 3,
+      "merger": 1,
+      "type_ia": 13
+    },
+    "morphology": "barred",
+    "sfr": 2.5860246751196287,
+    "showers": 51,
+    "stars": 31590133138.655666
+  },
+  "before": {
+    "black_hole": 24524649.780923653,
+    "bulge_fraction": 0.08911287451729184,
+    "exposure_digest": "0afb09e9294b30d74fcffaa71473ff496a0cbd618b051565c0577bca677eb819",
+    "galaxy_digest": "9d0d94f43e3455184e3f751523e1f6088c7729903b5e0a5caf93123a84d1624d",
+    "harmful": 5,
+    "hits": {
+      "arm_entry": 1,
+      "arm_exit": 2,
+      "core_collapse": 230,
+      "encounter": 199,
+      "gamma_ray_burst": 3,
+      "type_ia": 13
+    },
+    "morphology": "barred",
+    "sfr": 3.054071601531913,
+    "showers": 51,
+    "stars": 31189401448.121822
+  },
+  "changes": [
+    {
+      "curve": "stars",
+      "max_change": 0.10646284759673827
+    },
+    {
+      "curve": "bulge_fraction",
+      "max_change": 5.456302257551907
+    },
+    {
+      "curve": "gas",
+      "max_change": 0.24178530019878575
+    },
+    {
+      "curve": "sfr",
+      "max_change": 0.24178530019878566
+    },
+    {
+      "curve": "z_gas",
+      "max_change": 0.2957485672453119
+    },
+    {
+      "curve": "black_hole",
+      "max_change": 0.7436165887415629
+    }
+  ],
+  "chronicle_head": "37f54b80ec47d05a2e5db20ad070db3a0c4b1f1fd007c0ea1f86c6b435fca6e2",
+  "edit_from_gyr": 9.0,
+  "edits": [
+    {
+      "kind": "merger",
+      "ratio": 0.5,
+      "t_gyr": 9.0
+    }
+  ],
+  "events_unchanged_before_edit": true,
+  "first_change_gyr": 9.027989958057328,
+  "format": "sse.galaxy-scenario-report/1",
+  "halo": "u:g6/halo:milky-way-like",
+  "history_unchanged_before_edit": true,
+  "morphology": [
+    "barred",
+    "barred"
+  ],
+  "site": "u:g6/halo:milky-way-like/site:watch",
+  "window_myr": [
+    8500.0,
+    10500.0
+  ]
+}

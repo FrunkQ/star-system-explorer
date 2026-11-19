@@ -224,8 +224,102 @@ impl GalaxyParams {
     }
 }
 
+/// An authored change to a galaxy's history (galaxy design section 11:
+/// "rewrite history in a few clicks"). Each edit acts from its own time
+/// onward; everything before the earliest edit is bit-identical to the
+/// unedited galaxy (the loop is causal and an edit adds no work before its time).
+#[derive(Clone, PartialEq, Debug, Serialize, Deserialize)]
+#[serde(tag = "kind", rename_all = "snake_case")]
+pub enum Edit {
+    /// Ink a major merger at a universe time (Gyr) with a mass ratio (smaller over larger, up to 1).
+    Merger { t_gyr: f64, ratio: f64 },
+    /// Take out one of the halo's own mergers (its index in `halo.mergers`).
+    RemoveMerger { index: usize },
+    /// A starburst (a bar inflow, a fly-by): this fraction of the gas turns to
+    /// disc stars at once, and the black hole feeds as in a merger burst.
+    Starburst { t_gyr: f64, gas_fraction: f64 },
+    /// The nucleus stays quiet from one time to another: no black hole growth, no active episodes.
+    QuietNucleus { from_gyr: f64, to_gyr: f64 },
+}
+
+impl Edit {
+    /// The earliest time this edit can change anything (Gyr).
+    pub fn from_gyr(&self, halo: &Halo) -> f64 {
+        match self {
+            Edit::Merger { t_gyr, .. } | Edit::Starburst { t_gyr, .. } => *t_gyr,
+            Edit::RemoveMerger { index } => {
+                halo.mergers.get(*index).map_or(f64::INFINITY, |m| m.t_gyr)
+            }
+            Edit::QuietNucleus { from_gyr, .. } => *from_gyr,
+        }
+    }
+}
+
+/// Check a list of edits against a halo: ratios in (0, 1], fractions in [0, 1],
+/// windows the right way round, merger indices that exist.
+pub fn check_edits(halo: &Halo, edits: &[Edit]) -> Result<(), String> {
+    for (i, e) in edits.iter().enumerate() {
+        let bad = |why: &str| Err(format!("edit {i}: {why}"));
+        match e {
+            Edit::Merger { t_gyr, ratio } => {
+                if !(*ratio > 0.0 && *ratio <= 1.0) || !t_gyr.is_finite() {
+                    return bad("a merger needs a finite time and a ratio in (0, 1]");
+                }
+            }
+            Edit::RemoveMerger { index } => {
+                if *index >= halo.mergers.len() {
+                    return bad("no such merger in this halo");
+                }
+            }
+            Edit::Starburst {
+                t_gyr,
+                gas_fraction,
+            } => {
+                if !(0.0..=1.0).contains(gas_fraction) || !t_gyr.is_finite() {
+                    return bad("a starburst needs a finite time and a gas fraction in [0, 1]");
+                }
+            }
+            Edit::QuietNucleus { from_gyr, to_gyr } => {
+                if from_gyr >= to_gyr || !from_gyr.is_finite() {
+                    return bad("a quiet window must end after it starts");
+                }
+            }
+        }
+    }
+    Ok(())
+}
+
 /// Evolve one galaxy in its halo.
 pub fn evolve(c: &Cosmology, p: &GalaxyParams, halo: &Halo) -> Galaxy {
+    evolve_with(c, p, halo, &[])
+}
+
+/// The merger times and ratios a galaxy evolves with: the halo's own, less any
+/// removed, plus any inked, in time order.
+pub fn mergers_with(halo: &Halo, edits: &[Edit]) -> Vec<(f64, f64)> {
+    let removed = |i: usize| {
+        edits
+            .iter()
+            .any(|e| matches!(e, Edit::RemoveMerger { index } if *index == i))
+    };
+    let mut mergers: Vec<(f64, f64)> = halo
+        .mergers
+        .iter()
+        .enumerate()
+        .filter(|(i, _)| !removed(*i))
+        .map(|(_, mg)| (mg.t_gyr, mg.ratio))
+        .collect();
+    for e in edits {
+        if let Edit::Merger { t_gyr, ratio } = e {
+            mergers.push((*t_gyr, *ratio));
+        }
+    }
+    mergers.sort_by(|a, b| a.0.total_cmp(&b.0));
+    mergers
+}
+
+/// Evolve one galaxy in its halo with authored edits (call `check_edits` first).
+pub fn evolve_with(c: &Cosmology, p: &GalaxyParams, halo: &Halo, edits: &[Edit]) -> Galaxy {
     let table = time_table(c, p.z_start);
     let t0 = table[0].0;
     let now = c.p.now_gyr;
@@ -239,9 +333,25 @@ pub fn evolve(c: &Cosmology, p: &GalaxyParams, halo: &Halo) -> Galaxy {
     let mut inflow_steps = vec![];
     let mut returned_steps = vec![];
     let mut agn = vec![];
-    let mut mergers: Vec<(f64, f64)> = halo.mergers.iter().map(|mg| (mg.t_gyr, mg.ratio)).collect();
-    mergers.sort_by(|a, b| a.0.total_cmp(&b.0));
+    let mergers = mergers_with(halo, edits);
     let mut next_merger = 0;
+    let mut bursts: Vec<(f64, f64)> = edits
+        .iter()
+        .filter_map(|e| match e {
+            Edit::Starburst {
+                t_gyr,
+                gas_fraction,
+            } => Some((*t_gyr, *gas_fraction)),
+            _ => None,
+        })
+        .collect();
+    bursts.sort_by(|a, b| a.0.total_cmp(&b.0));
+    let mut next_burst = 0;
+    let quiet = |t: f64| {
+        edits.iter().any(
+            |e| matches!(e, Edit::QuietNucleus { from_gyr, to_gyr } if t >= *from_gyr && t < *to_gyr),
+        )
+    };
     let mut state = None;
     for k in 0..n {
         let t = t0 + dt * f64::from(k);
@@ -292,7 +402,9 @@ pub fn evolve(c: &Cosmology, p: &GalaxyParams, halo: &Halo) -> Galaxy {
         ejected_metals += zg * eta * formed;
         gas = new_gas;
         stars += (1.0 - p.return_fraction) * formed;
-        bh += p.black_hole_steady * formed;
+        if !quiet(t) {
+            bh += p.black_hole_steady * formed;
+        }
         let smooth = p.exsitu_fraction * p.exsitu_ratio * (1.0 - hot) * dmh;
         stars += smooth;
         bulge += smooth;
@@ -317,8 +429,26 @@ pub fn evolve(c: &Cosmology, p: &GalaxyParams, halo: &Halo) -> Galaxy {
             stars += born;
             bulge += born;
             let feed = p.black_hole_feed * burst;
-            bh += feed;
-            agn.push((tm, feed));
+            if !quiet(tm) {
+                bh += feed;
+                agn.push((tm, feed));
+            }
+        }
+        // Authored starbursts in this step: disc stars, and the black hole feeds.
+        while next_burst < bursts.len() && bursts[next_burst].0 < t + dt {
+            let (tb, f) = bursts[next_burst];
+            next_burst += 1;
+            if tb < t0 {
+                continue;
+            }
+            let burst = f * gas;
+            gas -= burst;
+            stars += (1.0 - p.return_fraction) * burst;
+            let feed = p.black_hole_feed * burst;
+            if !quiet(tb) {
+                bh += feed;
+                agn.push((tb, feed));
+            }
         }
         bulge = bulge.min(stars);
         let quenched = stars > 0.0 && sfr_gyr / 1.0e9 < p.quenched_ssfr * stars;
