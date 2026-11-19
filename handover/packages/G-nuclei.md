@@ -36,7 +36,7 @@ Status: done (19 Nov 2026). Kernel track. Design: the galaxy design (`handover/d
 - New golden `tests/golden/nucleus.json` (new on purpose), also a harness engine (`nucleus`), so the browsers check it too.
 
 ## Fudges and limits (for `docs/fudges.md` once it is on main)
-- **G3's holes are too small in big galaxies.** G3 grows holes from 1% of each burst and 5e-4 of star formation, and never adds the incoming galaxies' holes. In group and cluster haloes the hole is 1e-4 to 1e-5 of the bulge, against 1e-3 to 5e-3 (Kormendy and Ho 2013). The fix is in G3 (add merging holes, grow with the ex-situ bulge) but G3's radio-mode quench constant (3e7 Msun) is tuned to today's small holes, so it needs re-tuning in the same package. Candidate follow-up; this package reads whatever G3 gives.
+- **G3's holes were too small in big galaxies; fixed in the same PR** (section "G3 change" below).
 - The merger hole is ratio x the host's hole and coalesces after a fixed 1 Gyr: real delays run from 0.1 Gyr to never, from dynamical friction, stellar hardening and gas.
 - The direct-collapse chance (10%) and its single redshift are a sketch; real direct collapse needs a nearby Lyman-Werner source and metal-free gas.
 - Radio loudness is keyed once for the whole life; real jets switch on and off with the accretion state.
@@ -46,4 +46,19 @@ Status: done (19 Nov 2026). Kernel track. Design: the galaxy design (`handover/d
 ## Next
 - The galaxy charts thread draws the nucleus at the halo centre in `galaxy_chart`.
 - G6's quiet-nucleus edit already stops G3's feed; a "light a quasar" edit would be an ordinary starburst edit.
-- G3 hole growth (above), then quasar spectra by band for track O's sensors.
+- Quasar spectra by band for track O's sensors. Bright quasars here peak near 1e38 W, at the faint end of observed quasars (1e38 to 1e41 W), because G3's burst feeds are small at z 2 to 3: a later G3 package could feed holes from the cold gas inflow too.
+
+## G3 change: holes arrive with ex-situ stars
+G3 grew holes only from its own bursts and star formation, so in group and cluster haloes the hole was 1e-4 to 1e-5 of the bulge, against 1e-3 to 5e-3 observed (Kormendy and Ho 2013). Merging galaxies bring their holes, which sink and coalesce with the host's. G3 now adds `exsitu_black_hole` (1e-3, Reines and Volonteri 2015 for early types) times every ex-situ star it adds (major-merger stars and the smooth satellite term).
+
+| Halo | Hole before | Hole after | Hole / bulge after |
+|---|---|---|---|
+| 1e12 | 2.9e7 | 3.2e7 | 0.6% |
+| 1e13 | 3.2e7 | 8.7e7 | 0.13% |
+| 1e13.5 | 3.9e7 | 2.3e8 | 0.11% |
+| 1e14 | 2.6e7 | 6.2e8 | 0.10% |
+
+- Radio-mode feedback reads the hole, so big haloes quench a little harder: the group galaxy's SFR today falls from 0.028 to 0.011 Msun/yr and its stars by 1.4%; the Milky-Way-like galaxy's stars by 2.2% (3.01e10 to 2.94e10) and SFR from 2.64 to 2.51 Msun/yr. The dwarf barely moves. The G3 tuning tests all still pass, so `quench_black_hole` was left alone.
+- A quiet-nucleus edit still gains the arriving holes (they are not accretion); G6's test now checks exactly that.
+- New check in `nucleus_tests`: hole/bulge between 5e-4 and 1e-2 in haloes of 1e13 and up.
+- **Golden changes (on purpose):** `galaxy.json`, `envelope.json`, `stars.json`, `galaxy-events.json` and `nucleus.json`, all from the larger holes and the slightly stronger quench.

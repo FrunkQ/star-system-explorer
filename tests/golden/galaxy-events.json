@@ -1,71 +1,71 @@
 {
   "after": {
-    "black_hole": 34900945.15668896,
-    "bulge_fraction": 0.4405694216750672,
-    "exposure_digest": "d7dffde5b3de0e204ef5a57f526d2d91629fa4b90777aedefecc5ad297e4d549",
-    "galaxy_digest": "57b41cb2c3b36f14e97ee8e2e0bd866ee75672ebeca117a1afd47427f3675151",
+    "black_hole": 38346493.16748729,
+    "bulge_fraction": 0.4444457583448639,
+    "exposure_digest": "a2c9fd4d42316cb09ad11cbd15280f61a79092049378d5bb181e5bc53ae1e4dc",
+    "galaxy_digest": "8f0df622385328827e195582141cb1894a7c160e354751c8cf5deddfd2140d65",
     "harmful": 4,
     "hits": {
       "active_nucleus": 1,
       "arm_entry": 1,
       "arm_exit": 2,
-      "core_collapse": 203,
+      "core_collapse": 201,
       "encounter": 198,
       "gamma_ray_burst": 3,
       "merger": 1,
       "type_ia": 13
     },
     "morphology": "barred",
-    "sfr": 2.5876003638413296,
+    "sfr": 2.4758020728719448,
     "showers": 51,
-    "stars": 31601105932.982735
+    "stars": 31092592393.766136
   },
   "before": {
-    "black_hole": 24483446.558548488,
-    "bulge_fraction": 0.08878327273436161,
-    "exposure_digest": "a67ab0b9c30b5eb3b22ce0f0c2049e0b09a8017e296d0462ab414c13c59ff6ad",
-    "galaxy_digest": "ffd01278b323ec874e8bb9105f419e8f0c5414aae342a2e617f9cd9c42977461",
+    "black_hole": 26797007.750822533,
+    "bulge_fraction": 0.09009642293848917,
+    "exposure_digest": "55adec78a3bea3bf5c8f0696ad2305ffa3801d273226b79e904195ed395033a2",
+    "galaxy_digest": "2c434a622ca0d58ec7f1e406503120b63d2074bc53b2a1f5cd8d1d1ee2e1a1f8",
     "harmful": 5,
     "hits": {
       "arm_entry": 1,
       "arm_exit": 2,
-      "core_collapse": 230,
+      "core_collapse": 225,
       "encounter": 199,
       "gamma_ray_burst": 3,
       "type_ia": 13
     },
     "morphology": "barred",
-    "sfr": 3.0565445183298054,
+    "sfr": 2.9517766925207876,
     "showers": 51,
-    "stars": 31202786368.314888
+    "stars": 30748007382.181152
   },
   "changes": [
     {
       "curve": "stars",
-      "max_change": 0.10648526654213426
+      "max_change": 0.10598871955366933
     },
     {
       "curve": "bulge_fraction",
-      "max_change": 5.4879893864932
+      "max_change": 5.439048499289199
     },
     {
       "curve": "gas",
-      "max_change": 0.2418039718574121
+      "max_change": 0.24261576169190208
     },
     {
       "curve": "sfr",
-      "max_change": 0.24180397185741206
+      "max_change": 0.24261576169190205
     },
     {
       "curve": "z_gas",
-      "max_change": 0.2957659193146005
+      "max_change": 0.2965249628647342
     },
     {
       "curve": "black_hole",
-      "max_change": 0.7465472813350755
+      "max_change": 0.7443734404317025
     }
   ],
-  "chronicle_head": "fe06f9c39bf270c99dd9e29715ee49878595edb69600064c35e3fe158e803279",
+  "chronicle_head": "1128509f2e71bf92bdaadd63b2e8020abccad6e6d3bdf96e4d4c83c119eaf899",
   "edit_from_gyr": 9.0,
   "edits": [
     {

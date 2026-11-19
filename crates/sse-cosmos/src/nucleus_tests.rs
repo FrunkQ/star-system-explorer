@@ -65,6 +65,12 @@ fn black_holes_quasars_and_quiet_nuclei() {
             .history
             .iter()
             .all(|p| p.luminosity_w.is_finite() && p.luminosity_w >= 0.0));
+        // Big galaxies' holes follow their bulges (Kormendy and Ho 2013: 0.1 to 0.5%),
+        // through the holes merging galaxies bring.
+        if *lm >= 13.0 {
+            let r = now.mass_msun / g.now.bulge;
+            assert!((5.0e-4..1.0e-2).contains(&r), "1e{lm}: hole/bulge {r:.1e}");
+        }
         // Above the Hills mass, Sun-like stars are swallowed whole.
         if now.mass_msun > np.hills_mass_msun {
             assert_eq!(n.tde_rate_per_yr, 0.0);
