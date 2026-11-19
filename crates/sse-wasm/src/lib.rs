@@ -29,6 +29,7 @@ pub fn engines_run() -> String {
         "galaxy": sse_cosmos::scenario::galaxy_golden(),
         "envelope": sse_cosmos::scenario::envelope_golden(),
         "life-budget": sse_life::scenario::budget_golden(),
+        "life-history": sse_life::scenario::history_golden(),
         "formation-accrete": sse_formation::scenario::accrete_golden(),
         "formation-accrete-dole": sse_formation::scenario::accrete_dole_golden(),
         "formation-growth": sse_formation::scenario::growth_golden(),
