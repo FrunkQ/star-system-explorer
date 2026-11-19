@@ -36,7 +36,7 @@ impl fmt::Display for ImportError {
 }
 impl std::error::Error for ImportError {}
 
-#[derive(Clone, Debug, PartialEq)]
+#[derive(Clone, Debug, PartialEq, Serialize)]
 pub struct Fact {
     pub value: Json,
     pub evidence: Evidence,

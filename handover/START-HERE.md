@@ -29,6 +29,7 @@ Milestone M1 "Proven core" = packages K0 to K6 (build plan section 3/4).
 | F9 pins and reconstruction (solve around pinned worlds; imported systems gain a reconstructed history) | done | packages/F9.md |
 | S0 surface envelope: kind, regime over time with dated causes, regime sketch globe | done | packages/S0.md |
 | S1 surface atlas: cube-sphere tiles, band-limited detail, disclosure and fact floor, cache | done (height source is the S0 sketch until S2, S3) | packages/S1.md |
+| Kernel ops `import_v3` and `run_formation` (V3 import with report; one system through the pipeline with pins and surfaces) | done (physics track, for the UI) | packages/K-physics-ops.md |
 | K7 envelopes, partitioning, resolve, feasibility | done (kernel track) | packages/K7.md |
 | K8 rules, classification, sifters, significance | done (kernel track) | packages/K8.md |
 | K9 disclosure tiers, data views, scene building | done (kernel track) | packages/K9.md |

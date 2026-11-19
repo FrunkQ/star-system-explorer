@@ -19,4 +19,4 @@ hex: string, unit: number, } | { "type": "branch_opened", branch: string, } | { 
 /**
  * The view now in force for the audience at that address.
  */
-view: string, state_hash: string, } | { "type": "error", code: string, message: string, };
+view: string, state_hash: string, } | { "type": "v3_imported", universe: string, facts: unknown, report: unknown, reconstructed: unknown[], } | { "type": "formation_ran", system: string, pipeline: string, run: unknown, pinned?: unknown, surfaces: unknown[], } | { "type": "error", code: string, message: string, };

@@ -236,4 +236,3 @@ fn golden_atlas() {
         "golden surface-atlas changed"
     );
 }
-

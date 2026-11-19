@@ -582,10 +582,14 @@ dependencies = [
  "sse-atoms",
  "sse-chronicle",
  "sse-core",
+ "sse-cosmos",
  "sse-flow",
+ "sse-formation",
+ "sse-import-v3",
  "sse-observe",
  "sse-pack",
  "sse-sift",
+ "sse-surface",
  "ts-rs",
 ]
 
