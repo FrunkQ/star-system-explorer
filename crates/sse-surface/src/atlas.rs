@@ -169,6 +169,7 @@ pub struct Atlas {
     material_land: u8,
     plates: Option<PlateSurface>,
     impacts: Option<Box<ImpactLayer>>,
+    regime_layer: Option<Box<crate::regimes::RegimeSurface>>,
 }
 
 /// S4's craters, plains and shields on an atlas.
@@ -360,6 +361,7 @@ impl Atlas {
             material_land,
             plates: None,
             impacts: None,
+            regime_layer: None,
         }
     }
 
@@ -484,6 +486,53 @@ impl Atlas {
     ) -> Self {
         self.impacts = Some(Box::new(ImpactLayer { features, field }));
         self
+    }
+
+    /// Add S6's regime landforms (and a giant's cloud deck): relief band-limited
+    /// by each landform's width, cover and material inside regions, cloud
+    /// albedo and cloud-top heights, tags.
+    pub fn with_regime(mut self, rs: crate::regimes::RegimeSurface) -> Self {
+        self.regime_layer = Some(Box::new(rs));
+        self
+    }
+
+    pub fn regime_surface(&self) -> Option<&crate::regimes::RegimeSurface> {
+        self.regime_layer.as_deref()
+    }
+
+    /// Tolerance terms from regime landforms and cloud bands, m.
+    fn regime_tolerance_m(&self, child_level: u8) -> f64 {
+        let Some(rs) = &self.regime_layer else {
+            return 0.0;
+        };
+        let parent = child_level.saturating_sub(1);
+        let (sp_p, min_p, min_c) = (
+            self.spacing_m(parent),
+            self.min_feature_km(parent),
+            self.min_feature_km(child_level),
+        );
+        let mut added: f64 = 0.0;
+        let mut carried: f64 = 0.0;
+        for l in &rs.landforms {
+            let k = crate::regimes::landform_curvature(&l.kind);
+            if k == 0.0 {
+                continue;
+            }
+            if l.width_km >= min_c && l.width_km < min_p {
+                added = added.max(1.2 * l.height_m.abs());
+            }
+            if l.width_km >= min_p {
+                let hw = 0.5 * l.width_km * 1000.0;
+                carried = carried.max(k * l.height_m.abs() * (sp_p / hw) * (sp_p / hw) / 16.0);
+            }
+        }
+        let clouds = rs.clouds.as_ref().map_or(0.0, |c| {
+            let amp = 0.5 * c.scale_height_km * 1000.0;
+            let bw = c.narrowest_band_km(self.radius_m / 1000.0) * 1000.0;
+            let x = m::PI * sp_p / bw.max(1.0);
+            amp * (0.25 * x * x).min(1.0)
+        });
+        2.0 * (added + carried) + clouds
     }
 
     pub fn features(&self) -> Option<&crate::impacts::Features> {
@@ -628,7 +677,12 @@ impl Atlas {
         };
         let x = m::PI * sp / scale;
         let sketch = self.model.relief_m() * (0.25 * x * x).min(1.0);
-        added + carried + sketch + 0.1 + self.impact_tolerance_m(child_level)
+        added
+            + carried
+            + sketch
+            + 0.1
+            + self.impact_tolerance_m(child_level)
+            + self.regime_tolerance_m(child_level)
     }
 
     /// Height at a direction carrying `octaves` detail octaves, metres.
@@ -716,6 +770,53 @@ impl Atlas {
             _ => {}
         }
         Ok(self.build(key))
+    }
+
+    /// Regime landforms near a tile: those with relief at this level, and
+    /// those that set cover or material (at every level).
+    fn tile_landforms(&self, key: TileKey, tags: &mut Vec<String>) -> TileLandforms {
+        let mut out = TileLandforms::default();
+        let Some(rs) = &self.regime_layer else {
+            return out;
+        };
+        let rk = self.radius_m / 1000.0;
+        let n = (1u64 << key.level) as f64;
+        let centre = direction(
+            key.face,
+            -1.0 + 2.0 * (key.x as f64 + 0.5) / n,
+            -1.0 + 2.0 * (key.y as f64 + 0.5) / n,
+        );
+        let half =
+            1.5 * self.spacing_m(key.level) * self.settings.tile_samples as f64 / self.radius_m;
+        let min = self.min_feature_km(key.level);
+        for l in &rs.landforms {
+            let reach = (0.5 * l.size_km + 2.0 * l.width_km) / rk;
+            if m::acos(crate::sketch::dot(l.dir, centre).clamp(-1.0, 1.0)) > half + reach {
+                continue;
+            }
+            let relief = l.width_km >= min && crate::regimes::landform_curvature(&l.kind) > 0.0;
+            if relief {
+                out.relief.push(l.clone());
+            }
+            if l.cover.is_some() || l.material.is_some() {
+                out.regions.push(l.clone());
+            }
+            if relief || l.cover.is_some() || l.material.is_some() {
+                tags.push(l.id.clone());
+            }
+        }
+        if let Some(c) = &rs.clouds {
+            for st in &c.storms {
+                let (la, lo) = (st.lat_deg.to_radians(), st.lon_deg.to_radians());
+                let sd = [m::cos(la) * m::cos(lo), m::cos(la) * m::sin(lo), m::sin(la)];
+                if m::acos(crate::sketch::dot(sd, centre).clamp(-1.0, 1.0))
+                    <= half + st.size_km / rk
+                {
+                    tags.push(st.id.clone());
+                }
+            }
+        }
+        out
     }
 
     /// The craters, shields and plains that can touch a tile at its level.
@@ -816,7 +917,10 @@ impl Atlas {
         let n = (1u64 << key.level) as f64;
         let total = s as f64 * n;
         let oct = self.octaves_at(key.level);
-        let feats = self.tile_features(key);
+        let mut feats = self.tile_features(key);
+        let lands = self.tile_landforms(key, &mut feats.tags);
+        let rk = self.radius_m / 1000.0;
+        let deck = self.regime_layer.as_ref().and_then(|r| r.clouds.as_ref());
         // One-sample border for slopes.
         let w = (s + 2) as usize;
         let mut hh = vec![0.0; w * w];
@@ -827,8 +931,16 @@ impl Atlas {
                 let u = -1.0 + 2.0 * ((key.x as i64 * s + i) as f64 + 0.5) / total;
                 let v = -1.0 + 2.0 * ((key.y as i64 * s + j) as f64 + 0.5) / total;
                 let d = direction(key.face, u, v);
-                let (mut h, p) = self.height(d, oct);
-                h += feats.height(d, self.radius_m / 1000.0);
+                let (mut h, mut p) = self.height(d, oct);
+                h += feats.height(d, rk);
+                for l in &lands.relief {
+                    h += crate::regimes::landform_height(l, d, rk).0;
+                }
+                if let Some(c) = deck {
+                    let (al, ch) = c.at(d, rk);
+                    p.albedo = al;
+                    h += ch;
+                }
                 let idx = ((j + 1) as usize) * w + (i + 1) as usize;
                 hh[idx] = h;
                 dirs[idx] = d;
@@ -910,6 +1022,25 @@ impl Atlas {
                     _ => a,
                 };
                 age.push(m::round(a) as u32);
+                for l in &lands.regions {
+                    if crate::regimes::landform_height(l, dirs[c], rk).1 {
+                        if let Some(mi) = l
+                            .material
+                            .as_deref()
+                            .and_then(|x| MATERIALS.iter().position(|y| *y == x))
+                        {
+                            mat_override = Some(mi as u8);
+                        }
+                        if let (Some(ci), Some(last)) = (
+                            l.cover
+                                .as_deref()
+                                .and_then(|x| COVERS.iter().position(|y| *y == x)),
+                            cover.last_mut(),
+                        ) {
+                            *last = ci as u8;
+                        }
+                    }
+                }
                 if let (Some(mm), Some(last)) = (mat_override, material.last_mut()) {
                     *last = mm;
                 }
@@ -973,6 +1104,12 @@ impl Atlas {
             hash,
         }
     }
+}
+
+#[derive(Default)]
+struct TileLandforms {
+    relief: Vec<crate::regimes::Landform>,
+    regions: Vec<crate::regimes::Landform>,
 }
 
 /// Features that can touch one tile (gathered once per tile build).
