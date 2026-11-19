@@ -15,6 +15,8 @@ pub mod hooks;
 pub mod rules;
 pub mod scenario;
 pub mod settings;
+pub mod swap;
+pub mod zonal;
 
 pub use conditions::Conditions;
 pub use contract::*;

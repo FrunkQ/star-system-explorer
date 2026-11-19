@@ -635,6 +635,71 @@
       "doi": "10.1088/2041-8205/806/1/L18"
      }
     ]
+   },
+   "weather_zonal": {
+    "bands": 36,
+    "seasons": 12,
+    "iterations": 80,
+    "relax": 0.5,
+    "olr": {
+     "b_hat": 0.47,
+     "source": "Outgoing longwave linear in temperature, A + B T (Budyko 1969 eq. 1: I = a + B T - (a1 + B1 T) n with a 14.0, B 0.14, a1 3.0, B1 0.10 kcal cm-2 month-1, T in deg C). At cloudiness n 0.5 that is B = 1.43 W m-2 K-1 and 220 W m-2 at 288 K, so B T / (4 OLR) = 0.47 on Earth; the same dimensionless slope is used on every world (docs/fudges.md). A is set so the global mean temperature is the world's own."
+    },
+    "diffusion": {
+     "d_earth_w_m2_k": 0.45,
+     "column_power": 1.0,
+     "spin_power": 2.0,
+     "max_over_b": 10000.0,
+     "moisture_ratio": 1.0,
+     "source": "Diffusive heat transport D (1/cos phi) d/dphi (cos phi dT/dphi) (North 1975). D on Earth fitted to an equator-to-pole contrast near 40 K; scaling with air column and (Omega_Earth / Omega)^2 is a stand-in for eddy transport theory (docs/fudges.md)."
+    },
+    "ice": {
+     "albedo_step": 0.3,
+     "t_ice_k": 263.15,
+     "width_k": 3.0,
+     "source": "Ice-albedo step on water worlds, smoothed; edge and step fitted, base albedo renormalised so the world's Bond albedo is kept (docs/fudges.md)."
+    },
+    "moisture": {
+     "exchange_m_s": 0.0115,
+     "humidity": 0.8,
+     "source": "Bulk evaporation rho C_E |U| q_sat (1 - RH), capped by the energy reaching wet ground; C_E |U| fitted to Earth's mean rain (docs/fudges.md)."
+    },
+    "cloud": {
+     "cover_max": 0.8,
+     "latent_scale_w_m2": 25.0,
+     "gradient_cover": 0.25,
+     "gradient_scale_k_deg": 0.8,
+     "saturation_cover": 0.15,
+     "saturation_ln_scale": 2.0,
+     "min_pressure_bar": 1e-06,
+     "source": "Cloud from latent heat released and from baroclinic temperature gradients; frost cloud where a gas saturates at the band temperature. All constants fitted (docs/fudges.md)."
+    },
+    "storms": {
+     "max_day_hours": 48.0,
+     "min_gradient_k_deg": 0.3,
+     "every_days": 3.0,
+     "life_days": 5.0,
+     "size_km": 1800.0,
+     "peak_wind_m_s": 22.0,
+     "steering": 2.5,
+     "source": "One cyclone per hemisphere every few days at the steepest temperature gradient; a deliberately simple stand-in (docs/fudges.md)."
+    },
+    "thermal_depth_scale_heights": 1.8,
+    "surface_wind_share": 0.3,
+    "references": [
+     {
+      "text": "North, G. R. 1975, Theory of energy-balance climate models, J. Atmos. Sci. 32, 2033-2043",
+      "doi": "10.1175/1520-0469(1975)032<2033:TOEBCM>2.0.CO;2"
+     },
+     {
+      "text": "North, G. R. 1975, Analytical solution to a simple climate model with diffusive heat transport, J. Atmos. Sci. 32, 1301-1307",
+      "doi": "10.1175/1520-0469(1975)032<1301:ASTASC>2.0.CO;2"
+     },
+     {
+      "text": "Budyko, M. I. 1969, The effect of solar radiation variations on the climate of the Earth, Tellus 21(5), 611-619",
+      "url": "https://www.atmosp.physics.utoronto.ca/~dbj/PHY392/Budyko1969.pdf"
+     }
+    ]
    }
   }
  }
