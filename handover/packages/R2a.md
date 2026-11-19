@@ -29,7 +29,7 @@ scripts/build-shell.sh && node tests/ui/render.e2e.mjs chromium --screens <dir>
 
 Screens: `R2-screens/true-colour-gpu-high.png`, `true-colour-canvas.png`.
 
-## Fudges (to go in docs/fudges.md once it is on main)
+## Fudges (listed in docs/fudges.md, Light, rendering and sound)
 - **Air optics in the renderer, not the kernel.** Rayleigh coefficients are physics and belong in atoms. Asked the light and nebulae thread (19 Nov) to publish air optics per body; this file goes when they do.
 - **Refractivity without dispersion.** One refractivity per gas near 550 nm, so the lambda^-4 law carries the colour; real blue scatters a few per cent more.
 - **No aerosols or absorption.** No Mie haze, no ozone, no methane absorption, so Earth's limb lacks its haze and Titan is blue-grey rather than orange.
