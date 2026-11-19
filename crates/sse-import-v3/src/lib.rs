@@ -10,6 +10,7 @@
 #![forbid(unsafe_code)]
 
 mod classify;
+pub mod reconstruct;
 
 use classify::{body_class, starmap_class, system_class, Class};
 use serde::Serialize;

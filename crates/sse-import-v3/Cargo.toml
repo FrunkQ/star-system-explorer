@@ -11,5 +11,6 @@ sse-core.workspace = true
 sse-chronicle.workspace = true
 sse-flow.workspace = true
 sse-atoms.workspace = true
+sse-formation.workspace = true
 serde.workspace = true
 serde_json.workspace = true

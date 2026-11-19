@@ -211,31 +211,7 @@ pub fn run(history: FormationHistory, block: Block) -> SystemRun {
         }
     };
     let worlds: Vec<WorldStart> = protos.iter().map(|p| early_life(p, &fits, host)).collect();
-    let now_myr = inh.age_gyr * 1000.0;
-    let mut heat = vec![];
-    let mut events = vec![];
-    for (w, p) in worlds.iter().zip(&protos) {
-        if w.envelope == Envelope::Giant {
-            continue;
-        }
-        let age = (now_myr - p.formed_myr).max(0.0) / 1000.0;
-        if let Some(hh) = world_heat(w, age, inh.k40_rel, inh.r_process_rel) {
-            let quiet_myr = p.formed_myr + hh.active_geology_until_gyr * 1000.0;
-            if hh.active_geology_until_gyr > 0.0 && hh.active_geology_until_gyr < 100.0 {
-                events.push(HistoryEvent {
-                    t_myr: quiet_myr,
-                    kind: "geology-quiet".into(),
-                    subject: w.address.clone(),
-                    text: format!(
-                        "Radioactive heat can no longer drive volcanism or plate motion ({:.1} Gyr after formation).",
-                        hh.active_geology_until_gyr
-                    ),
-                });
-            }
-            heat.push(hh);
-        }
-    }
-    events.sort_by(|a, b| a.t_myr.total_cmp(&b.t_myr));
+    let (heat, events) = heat_and_events(&history, &protos, &worlds);
     SystemRun {
         pipeline: PIPELINE_VERSION.into(),
         block,
@@ -250,4 +226,45 @@ pub fn run(history: FormationHistory, block: Block) -> SystemRun {
         events,
         notes,
     }
+}
+
+/// The heat flow for every solid world and the dated `geology-quiet` events.
+fn heat_and_events(
+    history: &FormationHistory,
+    protos: &[crate::early::Protoplanet],
+    worlds: &[WorldStart],
+) -> (Vec<WorldHeat>, Vec<HistoryEvent>) {
+    let inh = &history.inheritance;
+    let now_myr = inh.age_gyr * 1000.0;
+    let mut heat = vec![];
+    let mut events = vec![];
+    for (w, p) in worlds.iter().zip(protos) {
+        if w.envelope == Envelope::Giant {
+            continue;
+        }
+        let age = (now_myr - p.formed_myr).max(0.0) / 1000.0;
+        if let Some(hh) = world_heat(w, age, inh.k40_rel, inh.r_process_rel) {
+            if hh.active_geology_until_gyr > 0.0 && hh.active_geology_until_gyr < 100.0 {
+                events.push(HistoryEvent {
+                    t_myr: p.formed_myr + hh.active_geology_until_gyr * 1000.0,
+                    kind: "geology-quiet".into(),
+                    subject: w.address.clone(),
+                    text: format!(
+                        "Radioactive heat can no longer drive volcanism or plate motion ({:.1} Gyr after formation).",
+                        hh.active_geology_until_gyr
+                    ),
+                });
+            }
+            heat.push(hh);
+        }
+    }
+    events.sort_by(|a, b| a.t_myr.total_cmp(&b.t_myr));
+    (heat, events)
+}
+
+/// Recompute heat and events after the worlds changed (pins, edits).
+pub fn rerun_heat(run: &mut SystemRun) {
+    let (heat, events) = heat_and_events(&run.history, &run.protoplanets, &run.worlds);
+    run.heat = heat;
+    run.events = events;
 }

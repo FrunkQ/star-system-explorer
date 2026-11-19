@@ -54,7 +54,7 @@ Milestone M1 "Proven core" = packages K0 to K6 (build plan section 3/4).
 ## Parallel tracks (18 Nov, Alex: build in parallel, integrate later)
 | Track | Packages | Branch |
 |---|---|---|
-| Physics | P1, P3, P4, F0 to F6 done; pipeline and F7 done; next, F9, F8 integrator | `main` via PRs |
+| Physics | P1, P3, P4, F0 to F6 done; pipeline, F7 and F9 done; next is the F8 integrator | `main` via PRs |
 | Kernel | K7 to K10, G0, C1 to C3, L0, T1, T2 and the U3 gaps done | `main` via PRs |
 | Chart room shell and player views | U0 to U3, V1, U5, V2, V12, V3, V11 done; V4 peer-to-peer waits for Alex | `main` via PRs |
 

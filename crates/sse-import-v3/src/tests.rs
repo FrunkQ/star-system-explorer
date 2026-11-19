@@ -249,3 +249,34 @@ fn real_save_findings_are_explained_and_classified() {
         Some(&1)
     );
 }
+
+/// F9: an imported V3 system gains a labelled reconstructed history with its
+/// planets pinned (the Moon, a moon of Earth, is not a planet pin).
+#[test]
+fn imported_system_gains_a_reconstructed_history() {
+    let im = imported();
+    let known = crate::reconstruct::known_systems(&im);
+    assert_eq!(known.len(), 1);
+    let k = &known[0];
+    assert!((k.star_mass - 1.0).abs() < 0.01, "{}", k.star_mass);
+    assert_eq!(k.planets.len(), 1, "{:?}", k.planets);
+    assert!((k.planets[0].1.a_au - 1.0).abs() < 0.01);
+    let r = crate::reconstruct::reconstruct(k, 8).unwrap();
+    assert_eq!(
+        r.run.history.evidence.get("history"),
+        Some(&sse_formation::history::How::Reconstructed)
+    );
+    let earth = &r.matches[0].world;
+    let p = r
+        .run
+        .protoplanets
+        .iter()
+        .find(|p| &p.address == earth)
+        .unwrap();
+    assert_eq!(p.a_au, k.planets[0].1.a_au);
+    let again = crate::reconstruct::reconstruct(k, 8).unwrap();
+    assert_eq!(
+        serde_json::to_string(&r).unwrap(),
+        serde_json::to_string(&again).unwrap()
+    );
+}
