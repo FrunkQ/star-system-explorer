@@ -13,6 +13,7 @@ sse-flow.workspace = true
 sse-pack.workspace = true
 sse-atoms.workspace = true
 sse-observe = { path = "../sse-observe" }
+sse-record = { path = "../sse-record" }
 sse-sift = { path = "../sse-sift" }
 sse-time = { path = "../sse-time" }
 sse-life = { path = "../sse-life" }

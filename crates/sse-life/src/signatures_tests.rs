@@ -162,6 +162,7 @@ fn data_views_show_each_tier_only() {
         disclosure: &setup.disclosure,
         views: &views,
         campaign: &setup.campaign,
+        notes: &[],
     };
     let scope: Address = "u:tarn".parse().unwrap();
     let shown = |lens: &str| -> Vec<Vec<String>> {
