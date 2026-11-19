@@ -14,6 +14,10 @@ sse-pack.workspace = true
 sse-atoms.workspace = true
 sse-observe = { path = "../sse-observe" }
 sse-sift = { path = "../sse-sift" }
+sse-formation.workspace = true
+sse-import-v3.workspace = true
+sse-cosmos = { path = "../sse-cosmos" }
+sse-surface.workspace = true
 serde.workspace = true
 serde_json.workspace = true
 ts-rs = { version = "=12.0.1", features = ["serde-json-impl"] }

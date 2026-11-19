@@ -1023,5 +1023,44 @@
    }
   },
   "kind": "planet.bulk_density"
+ },
+ {
+  "op": "run_formation",
+  "seed": "kernel-form-6",
+  "star_pins": {
+   "primary_mass": 1.0
+  }
+ },
+ {
+  "op": "run_formation",
+  "seed": "kernel-form-6",
+  "system": "u:contract/sys:7",
+  "star_pins": {
+   "primary_mass": 1.0
+  },
+  "pins": {
+   "worlds": [
+    {
+     "label": "Home",
+     "mass_earth": 1.0,
+     "a_au": 1.0
+    }
+   ],
+   "tries": 2
+  }
+ },
+ {
+  "op": "run_formation",
+  "seed": "kernel-form-6",
+  "block": "sideways"
+ },
+ {
+  "op": "import_v3",
+  "save": "{\n  \"bundleFormat\": 1,\n  \"id\": \"synthetic-sol\",\n  \"name\": \"Synthetic Sol (hand-written from the V3.1 type definitions; not a real save)\",\n  \"description\": \"Test fixture for the V3 importer. Real V3 saves stay outside the repo.\",\n  \"gmNotes\": \"GM only: never in a player view\",\n  \"appVersion\": \"3.1.0\",\n  \"distanceUnit\": \"ly\",\n  \"unitIsPrefix\": false,\n  \"mapMode\": \"scaled\",\n  \"mapGrid\": { \"type\": \"hex\", \"size\": 1 },\n  \"routes\": [],\n  \"generationEngine\": \"accrete\",\n  \"aFieldV3NeverHad\": 42,\n  \"systems\": [\n    {\n      \"id\": \"sn-sol\",\n      \"name\": \"Sol\",\n      \"isNameUserDefined\": true,\n      \"position\": { \"x\": 0, \"y\": 0, \"z\": 0 },\n      \"viewport\": { \"pan\": { \"x\": 0, \"y\": 0 }, \"zoom\": 1 },\n      \"system\": {\n        \"id\": \"sys-sol\",\n        \"name\": \"Sol\",\n        \"seed\": \"sol-seed\",\n        \"epochT0\": 0,\n        \"age_Gyr\": 4.57,\n        \"rulePackId\": \"std\",\n        \"rulePackVersion\": \"3.1\",\n        \"tags\": [{ \"key\": \"home\", \"origin\": \"manual\" }],\n        \"toytownFactor\": 1,\n        \"nodes\": [\n          {\n            \"id\": \"sun\", \"name\": \"Sun\", \"parentId\": null, \"kind\": \"body\", \"roleHint\": \"star\",\n            \"massKg\": 1.98847e30, \"radiusKm\": 695700, \"temperatureK\": 5772,\n            \"tags\": [{ \"key\": \"class\", \"value\": \"G2V\", \"origin\": \"physics\" }],\n            \"classes\": [\"star/G2V\"]\n          },\n          {\n            \"id\": \"earth\", \"name\": \"Earth\", \"parentId\": \"sun\", \"kind\": \"body\", \"roleHint\": \"planet\",\n            \"massKg\": 5.9722e24, \"radiusKm\": 6371.0, \"rotation_period_hours\": 23.9345, \"axial_tilt_deg\": 23.44,\n            \"orbit\": {\n              \"hostId\": \"sun\", \"t0\": 0, \"hostMu\": 1.32712440018e20, \"n_rad_per_s\": 1.99098659e-7,\n              \"elements\": { \"a_AU\": 1.0, \"e\": 0.0167, \"i_deg\": 0.0, \"Omega_deg\": 0.0, \"omega_deg\": 102.9, \"M0_rad\": 0.0 },\n              \"seed\": \"x\"\n            },\n            \"densityGcm3\": 5.514, \"calculatedGravity_ms2\": 9.82, \"equilibriumTempK\": 255, \"albedo\": 0.306,\n            \"makeup\": { \"metal\": 0.32, \"rock\": 0.68 },\n            \"tags\": [\n              { \"key\": \"habitable\", \"origin\": \"physics\" },\n              { \"key\": \"capital\", \"origin\": \"manual\", \"secret\": true },\n              { \"key\": \"ocean\", \"origin\": \"physics\", \"override\": true }\n            ],\n            \"gmNotes\": \"the cult hides here\",\n            \"description\": \"Blue and green.\",\n            \"image\": \"earth.png\",\n            \"placementHealCount\": 3\n          },\n          {\n            \"id\": \"moon\", \"name\": \"Moon\", \"parentId\": \"earth\", \"kind\": \"body\", \"roleHint\": \"moon\",\n            \"massKg\": 7.346e22, \"radiusKm\": 1737.4,\n            \"orbit\": {\n              \"hostId\": \"earth\", \"t0\": 0, \"hostMu\": 3.986004418e14,\n              \"elements\": { \"a_AU\": 0.00256955529, \"e\": 0.0549, \"i_deg\": 5.145, \"Omega_deg\": 0, \"omega_deg\": 0, \"M0_rad\": 0 }\n            },\n            \"densityGcm3\": 3.0,\n            \"overrides\": { \"densityGcm3\": 3.0 },\n            \"anomalies\": [\"density set below physics\"]\n          },\n          {\n            \"id\": \"iss\", \"name\": \"Station\", \"parentId\": \"earth\", \"kind\": \"construct\", \"roleHint\": \"construct\",\n            \"physical_parameters\": { \"massKg\": 420000 }, \"crew\": { \"current\": 7 },\n            \"orbit\": { \"hostId\": \"earth\", \"t0\": 0, \"elements\": { \"a_AU\": 4.5e-5, \"e\": 0.0005, \"i_deg\": 51.6, \"Omega_deg\": 0, \"omega_deg\": 0, \"M0_rad\": 0 } },\n            \"autopilotStuckReason\": \"none\"\n          }\n        ]\n      }\n    }\n  ]\n}\n",
+  "reconstruct": 1
+ },
+ {
+  "op": "import_v3",
+  "save": "not json"
  }
 ]

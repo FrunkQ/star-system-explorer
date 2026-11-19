@@ -505,6 +505,7 @@ dependencies = [
 name = "sse-cli"
 version = "0.1.0"
 dependencies = [
+ "serde_json",
  "sse-core",
  "sse-import-v3",
 ]
@@ -569,6 +570,7 @@ dependencies = [
  "sse-chronicle",
  "sse-core",
  "sse-flow",
+ "sse-formation",
 ]
 
 [[package]]
@@ -580,10 +582,14 @@ dependencies = [
  "sse-atoms",
  "sse-chronicle",
  "sse-core",
+ "sse-cosmos",
  "sse-flow",
+ "sse-formation",
+ "sse-import-v3",
  "sse-observe",
  "sse-pack",
  "sse-sift",
+ "sse-surface",
  "ts-rs",
 ]
 
@@ -677,6 +683,17 @@ dependencies = [
 ]
 
 [[package]]
+name = "sse-surface"
+version = "0.1.0"
+dependencies = [
+ "serde",
+ "serde_json",
+ "sse-core",
+ "sse-formation",
+ "sse-pack",
+]
+
+[[package]]
 name = "sse-time"
 version = "0.1.0"
 dependencies = [
@@ -703,6 +720,7 @@ dependencies = [
  "sse-resolve",
  "sse-sift",
  "sse-suite",
+ "sse-surface",
  "sse-time",
  "wasm-bindgen",
 ]

@@ -11,5 +11,6 @@ name = "sse"
 path = "src/main.rs"
 
 [dependencies]
+serde_json.workspace = true
 sse-core.workspace = true
 sse-import-v3.workspace = true

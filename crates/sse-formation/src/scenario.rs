@@ -303,3 +303,30 @@ pub fn accrete_dole_golden() -> serde_json::Value {
     }
     serde_json::Value::Array(out)
 }
+
+/// Formation pipeline golden: four G0 solar-patch systems through every stage
+/// (modern block) and the planet-heat flow.
+pub fn pipeline_golden() -> serde_json::Value {
+    let out: Vec<_> = solar_patch()
+        .into_iter()
+        .flatten()
+        .take(4)
+        .map(|h| {
+            let r = crate::pipeline::run(h, crate::pipeline::Block::Modern);
+            let text = serde_json::to_string(&r).expect("serialisable");
+            serde_json::json!({
+                "system": r.history.manifest.system.to_string(),
+                "worlds": r.worlds.iter().map(|w| serde_json::json!({
+                    "address": w.address.to_string(), "mass_earth": w.mass_earth, "envelope": w.envelope,
+                })).collect::<Vec<_>>(),
+                "heat": r.heat.iter().map(|x| serde_json::json!({
+                    "address": x.address.to_string(), "power_w": x.radiogenic_power_w,
+                    "until_gyr": x.active_geology_until_gyr,
+                })).collect::<Vec<_>>(),
+                "events": r.events.len(),
+                "digest": sse_core::ContentHash::of(&text).expect("hash").hex(),
+            })
+        })
+        .collect();
+    serde_json::Value::Array(out)
+}
