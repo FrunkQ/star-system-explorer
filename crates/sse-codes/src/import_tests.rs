@@ -61,7 +61,26 @@ fn a_reference_subsector_imports_with_every_impossible_value_marked() {
         }
         assert!(w.system.starts_with("u:kestrel/sys:"), "{}", w.system);
         assert!(w.system_edits.iter().any(|e| e.field == "map.hex"));
+        let z = w
+            .system_edits
+            .iter()
+            .find(|e| e.field == "map.z_pc")
+            .unwrap();
+        assert!(matches!(z.value, Value::Float(v) if v.abs() <= 0.25));
     }
+    // Neighbouring hexes sit about a parsec apart.
+    let pos = |name: &str| {
+        let w = i.worlds.iter().find(|w| w.name == name).unwrap();
+        let f = |k: &str| match w.system_edits.iter().find(|e| e.field == k).unwrap().value {
+            Value::Float(v) => v,
+            _ => panic!(),
+        };
+        (f("map.x_pc"), f("map.y_pc"))
+    };
+    // Ashgrove 0912 and Jessamy's Rest 1011: one hex apart.
+    let (a, b) = (pos("Ashgrove"), pos("Jessamy's Rest"));
+    let d = sse_core::math::sqrt((a.0 - b.0) * (a.0 - b.0) + (a.1 - b.1) * (a.1 - b.1));
+    assert!((d - 1.0).abs() < 1e-9, "{d}");
     // The zone is the referee's call and reads back as written.
     let cinder = i.worlds.iter().find(|w| w.name == "Cinder Gate").unwrap();
     let z = cinder

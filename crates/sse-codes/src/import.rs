@@ -159,6 +159,29 @@ fn known_codes(sheet: &CodeSheet, group: &str) -> Vec<String> {
     out
 }
 
+/// sqrt(3) / 2: the column spacing of flat-topped hexes one unit apart.
+const COLUMN_STEP: f64 = 0.866_025_403_784_438_6;
+/// Half-thickness of the slab flat maps are lifted into, parsecs.
+const SLAB_PC: f64 = 0.25;
+
+/// Where a mapped system sits, parsecs from the sector's corner (handoff 7A
+/// part 3): one hex is one parsec, even columns half a hex lower, and a
+/// small deterministic offset across the map plane so the sky and 3D views
+/// have depth. Authored, like the hex itself.
+fn map_position(universe: &Address, w: &WorldLine) -> Option<(f64, f64, f64)> {
+    let (c, r) = w.xy()?;
+    let x = c as f64 * COLUMN_STEP;
+    let y = r as f64 + if c % 2 == 0 { 0.5 } else { 0.0 };
+    let u = sse_core::draw::draw(
+        &sse_core::draw::Seed::from_text(&universe.to_string()),
+        universe,
+        &sse_core::draw::Stream::new("codes.map_depth.v1").expect("a fixed stream"),
+        u64::from(c) * 1000 + u64::from(r),
+    ) as f64
+        / 18_446_744_073_709_551_616.0;
+    Some((x, y, (u * 2.0 - 1.0) * SLAB_PC))
+}
+
 /// A system address for a hex: `<universe>/sys:<hex>`, or the line number
 /// when the line had no hex.
 fn system_address(universe: &Address, hex: &str, n: usize) -> Result<Address, String> {
@@ -207,6 +230,11 @@ pub fn import(
         if !w.hex.is_empty() {
             out.system_edits
                 .push(edit("map.hex", Value::Text(w.hex.clone())));
+        }
+        if let Some((x, y, z)) = map_position(universe, w) {
+            out.system_edits.push(edit("map.x_pc", Value::Float(x)));
+            out.system_edits.push(edit("map.y_pc", Value::Float(y)));
+            out.system_edits.push(edit("map.z_pc", Value::Float(z)));
         }
         if let Some(s) = &file.name {
             out.system_edits
