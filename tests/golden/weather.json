@@ -1,0 +1,66 @@
+{
+  "block": {
+    "id": "sse.weather.rules",
+    "level": "rule",
+    "version": "1"
+  },
+  "version": "weather-v1",
+  "worlds": [
+    {
+      "climate": "0381b87ed6621bbdaeb14f6e772b5aa70886c7233af288388c8afccbf58deeef",
+      "condensate": "water",
+      "field": "b2062c29057fa6a733da16ba75721522218e7114232cffc199aa4ca5b690adda",
+      "regime": "earth-like",
+      "world": "Earth"
+    },
+    {
+      "climate": "e3606b6af70b0962eeaaa38ceb4c3b96723414f0c27134924f0b2f49803daf0c",
+      "condensate": "water",
+      "field": "39a6ccadb9bb581a9fc4515672f82079812b65011d7e6ef1c743d053c99b41e3",
+      "regime": "thin-air",
+      "world": "Mars"
+    },
+    {
+      "climate": "6fa569c0729d96cab242cba1f68cb1a6a9fc2d3448b298f154079781da71dda7",
+      "condensate": "sulphuric acid",
+      "field": "53dca2e8caa3331763b889194c3fec8049243a7ed4935c94226956b5a656bb9b",
+      "regime": "slow-rotator",
+      "world": "Venus"
+    },
+    {
+      "climate": "5d0f318bd6c81c2d1a0893ac1d2e413672fcf29131b676634b03131c39be0a65",
+      "condensate": "methane",
+      "field": "2072ae3df30ca41d7ba9dedb40635c6cf217a056c242bce028c32bf046040351",
+      "regime": "slow-rotator",
+      "world": "Titan"
+    },
+    {
+      "climate": "3dd4ffed5cd7d96b89020d5e44e6df838ab15a4a29652f4035db39c27657adfa",
+      "condensate": "water",
+      "field": "743c45ed2b009aa12b8613afa8c081d7127a6ea1f7acb7e05744e3c687203fd2",
+      "regime": "tidally-locked",
+      "world": "Locked temperate world"
+    },
+    {
+      "climate": "d537edf6148aedb3752e69a234d7439a65dfc3a3efc3532121a27a4b7a7cfb39",
+      "condensate": "water",
+      "field": "afeef5a9bc6e63877e46e8734069d79504c7ac65fe38a14d38a9e1a2dc4edcae",
+      "regime": "fast-rotator",
+      "world": "Fast-spinning Earth"
+    },
+    {
+      "climate": "d76d04b553a53be34d4db734e3e9972a147df0610d7e943e40586bf674baa047",
+      "condensate": "",
+      "field": "8e1aaca07a1016e3a37f3a38a45e80f2273248f75eaf3a6da3a9bac389ea90c9",
+      "regime": "airless",
+      "world": "Moon"
+    },
+    {
+      "climate": "616bc9bbf9552a9e328522fb4164b2e51790fa280c7feb045a990c269a5c999e",
+      "condensate": "ammonia",
+      "field": "a73339a5fb09b38cc39fae91fed25728258de9e8289760c54ddcfbc15ddbabf7",
+      "regime": "banded-giant",
+      "world": "Jupiter"
+    }
+  ]
+}
