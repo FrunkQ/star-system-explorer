@@ -1,0 +1,97 @@
+//! The `weather` op (weather track, W5): one op for every reader of the
+//! rule-based weather block. `want` picks what comes back.
+
+use crate::err;
+use crate::protocol::Response;
+use sse_surface::atlas::TileKey;
+use sse_weather::{Conditions, Date, Pin, WeatherBlock};
+
+type Out = Result<Response, Response>;
+
+fn to_json<T: serde::Serialize>(t: &T) -> serde_json::Value {
+    serde_json::to_value(t).expect("plain data")
+}
+
+pub(crate) struct Ask {
+    pub want: String,
+    pub world: Option<String>,
+    pub conditions: Option<serde_json::Value>,
+    pub day: f64,
+    pub tile: Option<[u32; 4]>,
+    pub n: Option<u32>,
+    pub lat: f64,
+    pub lon: f64,
+    pub pins: Vec<serde_json::Value>,
+}
+
+pub(crate) fn weather(a: Ask) -> Out {
+    let block = sse_weather::scenario::block();
+    let c: Conditions = match (a.conditions, a.world.as_deref()) {
+        (Some(v), _) => serde_json::from_value(v)
+            .map_err(|e| err("bad_conditions", format!("not weather conditions: {e}")))?,
+        (None, Some(w)) => sse_weather::scenario::fixtures()
+            .into_iter()
+            .find(|f| f.conditions.label.eq_ignore_ascii_case(w))
+            .map(|f| f.conditions)
+            .ok_or_else(|| {
+                let names: Vec<String> = sse_weather::scenario::fixtures()
+                    .into_iter()
+                    .map(|f| f.conditions.label)
+                    .collect();
+                err(
+                    "no_weather_world",
+                    format!("no weather fixture {w}; try one of: {}", names.join(", ")),
+                )
+            })?,
+        (None, None) => {
+            return Err(err(
+                "no_weather_world",
+                "give `world` (a fixture label) or `conditions`",
+            ))
+        }
+    };
+    let pins: Vec<Pin> = a
+        .pins
+        .into_iter()
+        .map(serde_json::from_value)
+        .collect::<Result<_, _>>()
+        .map_err(|e| err("bad_pins", format!("not weather pins: {e}")))?;
+    let date = Date { day: a.day };
+    let data = match a.want.as_str() {
+        "climate" => {
+            let circ = sse_weather::circulation::circulation(&block.settings, &c);
+            serde_json::json!({ "climate": to_json(&block.climate(&c)), "circulation": to_json(&circ) })
+        }
+        "systems" => to_json(&block.systems(&c, date, &pins)),
+        "field" => {
+            let [face, level, x, y] = a.tile.unwrap_or([0, 0, 0, 0]);
+            let key = TileKey::new(face as u8, level.min(30) as u8, x, y).ok_or_else(|| {
+                err(
+                    "bad_tile",
+                    "tile is [face 0-5, level, x, y] inside the face",
+                )
+            })?;
+            let n = a.n.unwrap_or(16).clamp(1, 64);
+            to_json(&block.field(&c, date, key, n, &pins))
+        }
+        "report" => to_json(&block.report(&c, date, a.lat, a.lon, &pins, None)),
+        "column" => to_json(&sse_weather::hooks::column(
+            &block, &c, date, a.lat, a.lon, &pins, None,
+        )),
+        "sound" => to_json(&sse_weather::hooks::sound(
+            &block, &c, date, a.lat, a.lon, &pins, None,
+        )),
+        other => {
+            return Err(err(
+                "bad_want",
+                format!("weather want {other}: climate, systems, field, report, column or sound"),
+            ))
+        }
+    };
+    Ok(Response::WeatherRead {
+        want: a.want,
+        world: c.label.clone(),
+        provenance: to_json(&block.provenance()),
+        data,
+    })
+}

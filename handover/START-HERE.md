@@ -87,6 +87,8 @@ Milestone M1 "Proven core" = packages K0 to K6 (build plan section 3/4).
 | T1 epoch stepping, ageing star, secular orbits, symplectic windows | done (kernel track); giant phase sketch awaits F7 | packages/T1.md |
 | T2 look-ahead branch, commit, age the Solar System | done (kernel track); with Alex for review | packages/T2.md |
 | W1 weather contract (swappable `WeatherBlock`, field on atlas tiles, systems, pins), circulation regime, what condenses, climate averages | done (weather track), crate `sse-weather`, pack `packs/base-weather` | packages/W1.md |
+| W2 formations on rocky and ocean worlds: storm tracks, tropical cyclones, dust, locked-world shields, marine decks, mountain cloud, lightning, snow; drawn storms with tracks; weather report | done (weather track) | packages/W2.md |
+| W5 weather hooks: kernel op `weather` (climate, systems, field, report, column, sound), descent column with hazards, sound cues, GM pins, clear and calm orders, triggered storms | done (weather track) | packages/W5.md |
 
 ## Parallel tracks (18 Nov, Alex: build in parallel, integrate later)
 | Track | Packages | Branch |

@@ -1383,5 +1383,54 @@
   "op": "disclosures",
   "audience": "vesh",
   "at_s": 20
+ },
+ {
+  "op": "weather",
+  "want": "climate",
+  "world": "Earth"
+ },
+ {
+  "op": "weather",
+  "want": "systems",
+  "world": "Earth",
+  "day": 100
+ },
+ {
+  "op": "weather",
+  "want": "field",
+  "world": "Titan",
+  "day": 3,
+  "tile": [
+   2,
+   1,
+   0,
+   1
+  ],
+  "n": 4
+ },
+ {
+  "op": "weather",
+  "want": "report",
+  "world": "Earth",
+  "day": 200,
+  "lat": 45,
+  "lon": 0
+ },
+ {
+  "op": "weather",
+  "want": "column",
+  "world": "Venus",
+  "lat": 10,
+  "lon": 0
+ },
+ {
+  "op": "weather",
+  "want": "sound",
+  "world": "Moon"
+ },
+ {
+  "op": "weather",
+  "want": "forecast",
+  "world": "Earth"
  }
 ]

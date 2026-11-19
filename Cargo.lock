@@ -596,6 +596,7 @@ dependencies = [
  "sse-sift",
  "sse-surface",
  "sse-time",
+ "sse-weather",
  "sse-world",
  "ts-rs",
 ]

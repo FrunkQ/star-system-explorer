@@ -325,3 +325,110 @@ fn reports_read_plainly() {
 fn golden_weather_storms() {
     check_golden("weather-storms.json", &crate::scenario::storms_golden());
 }
+
+// ------------------------------------------------------------------ W5
+
+#[test]
+fn one_storm_seen_from_orbit_met_on_descent_and_heard_on_the_ground() {
+    use crate::hooks::{column, sound, trigger_storm};
+    let b = block();
+    let e = fixture("Earth");
+    let pin = trigger_storm(
+        &b,
+        &e,
+        "gm-storm-1",
+        "tropical-cyclone",
+        18.0,
+        -50.0,
+        30.0,
+        4.0,
+    );
+    let pins = [pin];
+    let day = Date { day: 31.0 };
+    let sys = b.systems(&e, day, &pins);
+    let s = sys
+        .iter()
+        .find(|s| s.id == "gm-storm-1")
+        .expect("storm drawn with pins");
+    assert_eq!(s.evidence, "authored");
+    let (la, lo) = crate::formations::position_at(s, day.day);
+    // From orbit: the field cell over it is thick cloud.
+    let d = crate::formations::dir(la, lo);
+    let (face, u, v) = sse_surface::atlas::face_of(d);
+    let lvl = 6u8;
+    let n = 1u32 << lvl;
+    let x = (((u + 1.0) / 2.0) * n as f64) as u32;
+    let y = (((v + 1.0) / 2.0) * n as f64) as u32;
+    let key = TileKey::new(face, lvl, x.min(n - 1), y.min(n - 1)).unwrap();
+    let tile = b.field(&e, day, key, 2, &pins);
+    assert!(
+        tile.cells.iter().all(|c| c.layers[1].cloud_cover > 0.9),
+        "{:?}",
+        tile.cells[0].layers
+    );
+    // On descent: hazards.
+    let col = column(&b, &e, day, la, lo, &pins, None);
+    assert!(col.hazard >= 2, "{:#?}", col.levels);
+    assert_eq!(col.levels.len(), 3);
+    // On the ground: wind and thunder.
+    let snd = sound(&b, &e, day, la, lo, &pins, None);
+    assert!(
+        snd.thunder_per_hour > 1.0 && snd.precip_mm_day > 10.0,
+        "{snd:?}"
+    );
+    // A fresh block from the packs (regeneration) still honours the pin.
+    let again = block().systems(&e, day, &pins);
+    assert!(again.iter().any(|x| x == s));
+}
+
+#[test]
+fn gm_orders_clear_skies_and_calm() {
+    use crate::hooks::{order_calm, order_clear, trigger_storm};
+    let b = block();
+    let e = fixture("Earth");
+    let storm = trigger_storm(&b, &e, "gm-storm-2", "cyclone", 50.0, 10.0, 0.0, 3.0);
+    let clear = order_clear("gm-clear-1", 50.0, 10.0, 500.0, 0.0, 2.0);
+    let calm = order_calm("gm-calm-1", 50.0, 10.0, 500.0, 0.0, 2.0);
+    let r = b.report(
+        &e,
+        Date { day: 0.1 },
+        50.0,
+        10.0,
+        &[storm.clone(), clear, calm],
+        None,
+    );
+    assert_eq!(r.cloud_cover, 0.0);
+    assert!(r.wind_km_h < 10.0, "{}", r.wind_km_h);
+    // Before the order starts, the storm's cloud is there.
+    let before = b.report(&e, Date { day: 0.1 }, 50.0, 10.0, &[storm], None);
+    assert!(before.cloud_cover > 0.5);
+}
+
+#[test]
+fn airless_worlds_are_silent_and_have_no_column() {
+    let b = block();
+    let m = fixture("Moon");
+    let s = crate::hooks::sound(&b, &m, Date { day: 0.0 }, 0.0, 0.0, &[], None);
+    assert!(s.silent && s.wind_m_s == 0.0);
+    let c = crate::hooks::column(&b, &m, Date { day: 0.0 }, 0.0, 0.0, &[], None);
+    assert!(c.levels.is_empty() && c.hazard == 0);
+}
+
+#[test]
+fn venus_descent_meets_acid_cloud() {
+    let b = block();
+    let c = crate::hooks::column(
+        &b,
+        &fixture("Venus"),
+        Date { day: 0.0 },
+        10.0,
+        0.0,
+        &[],
+        None,
+    );
+    assert!(
+        c.levels.iter().any(|l| l.line.contains("corrosive")),
+        "{:#?}",
+        c.levels
+    );
+}

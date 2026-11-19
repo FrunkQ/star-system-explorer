@@ -637,6 +637,7 @@ pub fn imprint(
         }
     }
     // Lightning where convection is deep (Price and Rind 1992).
+    let ordered_clear = orders_here(c, systems, date, lat, lon, "order-clear");
     let deep = cell.layers[1].cloud_type == "cumulonimbus";
     if deep {
         let top_km = s.circulation.tropopause_scale_heights * c.scale_height_m() / KM * 0.9;
@@ -648,6 +649,27 @@ pub fn imprint(
         let per_min = ab[0] * m::pow(top_km, ab[1]);
         let cells = fs.lightning.storms_per_1e4_km2 * cell.layers[1].cloud_cover / 1.0e4;
         cell.lightning_km2_yr += per_min * 60.0 * 24.0 * 365.25 * cells;
+    }
+    // GM orders win over everything drawn (authored, marked as such).
+    if ordered_clear {
+        for l in cell.layers.iter_mut() {
+            l.cloud_cover = 0.0;
+            l.cloud_type = "none".into();
+            l.condensate.clear();
+            l.optical_depth = 0.0;
+        }
+        cell.precip_mm_day = 0.0;
+        cell.precip_kind = "none".into();
+        cell.lightning_km2_yr = 0.0;
+    }
+    if orders_here(c, systems, date, lat, lon, "order-calm") {
+        for l in cell.layers.iter_mut() {
+            // Light air at most: 1 m/s.
+            let v = m::sqrt(l.wind_m_s[0] * l.wind_m_s[0] + l.wind_m_s[1] * l.wind_m_s[1]);
+            let k = if v > 1.0 { 1.0 / v } else { 1.0 };
+            l.wind_m_s = [k * l.wind_m_s[0], k * l.wind_m_s[1]];
+            l.turbulence = 0.0;
+        }
     }
     // What falls: snow where it is freezing.
     if cell.precip_mm_day > 0.0 && c.liquid.as_deref() == Some("water") {
@@ -797,4 +819,20 @@ fn capital(s: &str) -> String {
         Some(f) => f.to_uppercase().collect::<String>() + c.as_str(),
         None => String::new(),
     }
+}
+
+fn orders_here(
+    c: &Conditions,
+    systems: &[WeatherSystem],
+    date: Date,
+    lat: f64,
+    lon: f64,
+    kind: &str,
+) -> bool {
+    systems.iter().any(|s| {
+        s.kind == kind
+            && s.born <= date.day
+            && date.day < s.ends
+            && distance_km(c, (lat, lon), (s.lat_deg, s.lon_deg)) <= s.size_km / 2.0
+    })
 }

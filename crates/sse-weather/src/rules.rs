@@ -100,7 +100,9 @@ impl RuleBlock {
         for q in pins {
             if q.system.born <= date.day && date.day < q.system.ends {
                 let mut s = q.system.clone();
-                s.evidence = "pinned".into();
+                if s.evidence != "authored" {
+                    s.evidence = "pinned".into();
+                }
                 out.push(s);
             }
         }
