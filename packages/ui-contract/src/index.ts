@@ -51,3 +51,5 @@ export { importedSystems, sceneFromImport, reportSummary, sceneFromFormation, wo
 export type { V3Imported, ImportReport, ImportDifference, ImportedSystem, FormationRan, FormationRequest, FormationWorld } from "./make.ts";
 export { specFromScene, sceneAt, snapshotAt, fateEvents, subjectNames, fmtAge, KIND_WORDS, PHASE_WORDS, Z_SUN } from "./fate.ts";
 export type { SystemSpec, LookedAhead, FateEvent, FateSnapshot } from "./fate.ts";
+export { checkWorldStack, formatKm, kindPhrase, ladder, regionCounts, cutRadius } from "./world.ts";
+export type { WorldStack, WorldShell, WorldRegion, WorldFeature, LadderLine } from "./world.ts";

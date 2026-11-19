@@ -46,6 +46,8 @@ export interface SceneSubject {
   stamps: string[];
   tags: string[];
   prose?: string;
+  /** The world's shells, regions and features (P4 world stack), when known. */
+  world?: import("./world.ts").WorldStack;
 }
 
 export interface SceneEvent {

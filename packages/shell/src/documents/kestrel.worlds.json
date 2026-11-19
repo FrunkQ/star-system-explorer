@@ -1,0 +1,288 @@
+{
+ "schema": "sse.world-stacks/0",
+ "note": "World stacks (P4, sse.world-stack/1) for Kestrel Reach. A fixture copied from tests/fixtures/worlds/tarn.json with Tarn's address in this campaign; the kernel will serve stacks once the S track builds them from each world's history.",
+ "fixture": true,
+ "stacks": [
+  {
+   "format": "sse.world-stack/1",
+   "body": "u:kestrel/sys:1/body:3",
+   "name": "Tarn (world stack from the Strata mockup; a fixture until the kernel builds stacks from surfaces)",
+   "radius_m": 6090000.0,
+   "shells": [
+    {
+     "key": "atmosphere",
+     "kind": "atmosphere",
+     "name": "Atmosphere",
+     "top_m": 120000.0,
+     "bottom_m": 0.0
+    },
+    {
+     "key": "crust",
+     "kind": "crust",
+     "name": "Crust",
+     "top_m": 0.0,
+     "bottom_m": -35000.0
+    },
+    {
+     "key": "mantle",
+     "kind": "mantle",
+     "name": "Mantle",
+     "top_m": -35000.0,
+     "bottom_m": -2900000.0
+    },
+    {
+     "key": "core",
+     "kind": "core",
+     "name": "Liquid core",
+     "top_m": -2900000.0,
+     "bottom_m": -6090000.0,
+     "provides": [
+      "dynamo",
+      "heat"
+     ]
+    },
+    {
+     "key": "polar-ice",
+     "kind": "ice_shell",
+     "name": "Polar ice shell",
+     "top_m": 0.0,
+     "bottom_m": -3000.0,
+     "within": "south-pole",
+     "properties": {
+      "top_temperature_k": 230.0
+     }
+    },
+    {
+     "key": "brine-ocean",
+     "kind": "sub_ice_ocean",
+     "name": "Sub-ice brine ocean",
+     "top_m": -3000.0,
+     "bottom_m": -11000.0,
+     "within": "south-pole",
+     "properties": {
+      "salinity": 0.12,
+      "temperature_k": 266.0
+     },
+     "provides": [
+      "habitat"
+     ]
+    }
+   ],
+   "regions": [
+    {
+     "key": "south-pole",
+     "kind": "polar_cap",
+     "name": "south pole",
+     "on": "crust",
+     "extent": {
+      "type": "cap",
+      "from_lat_deg": -62.0
+     }
+    },
+    {
+     "key": "equator-shelf",
+     "kind": "shelf",
+     "name": "equator shelf",
+     "on": "crust",
+     "extent": {
+      "type": "band",
+      "min_lat_deg": -8.0,
+      "max_lat_deg": 8.0
+     }
+    },
+    {
+     "key": "storm-belt",
+     "kind": "aerostat_band",
+     "name": "storm belt",
+     "on": "atmosphere",
+     "extent": {
+      "type": "band",
+      "min_lat_deg": 20.0,
+      "max_lat_deg": 35.0
+     },
+     "top_m": 60000.0,
+     "bottom_m": 40000.0
+    },
+    {
+     "key": "forest",
+     "kind": "biome",
+     "name": "Coastal forest",
+     "on": "crust",
+     "extent": {
+      "type": "unmapped"
+     },
+     "provides": [
+      "habitat"
+     ]
+    },
+    {
+     "key": "steppe",
+     "kind": "biome",
+     "name": "Steppe",
+     "on": "crust",
+     "extent": {
+      "type": "unmapped"
+     },
+     "provides": [
+      "habitat"
+     ]
+    },
+    {
+     "key": "reef",
+     "kind": "biome",
+     "name": "Reef shallows",
+     "on": "crust",
+     "extent": {
+      "type": "unmapped"
+     },
+     "provides": [
+      "habitat"
+     ]
+    },
+    {
+     "key": "plate-1",
+     "kind": "plate",
+     "name": "Plate 1",
+     "on": "crust",
+     "extent": {
+      "type": "unmapped"
+     }
+    },
+    {
+     "key": "plate-2",
+     "kind": "plate",
+     "name": "Plate 2",
+     "on": "crust",
+     "extent": {
+      "type": "unmapped"
+     }
+    },
+    {
+     "key": "plate-3",
+     "kind": "plate",
+     "name": "Plate 3",
+     "on": "crust",
+     "extent": {
+      "type": "unmapped"
+     }
+    },
+    {
+     "key": "plate-4",
+     "kind": "plate",
+     "name": "Plate 4",
+     "on": "crust",
+     "extent": {
+      "type": "unmapped"
+     }
+    },
+    {
+     "key": "plate-5",
+     "kind": "plate",
+     "name": "Plate 5",
+     "on": "crust",
+     "extent": {
+      "type": "unmapped"
+     }
+    },
+    {
+     "key": "plate-6",
+     "kind": "plate",
+     "name": "Plate 6",
+     "on": "crust",
+     "extent": {
+      "type": "unmapped"
+     }
+    },
+    {
+     "key": "plate-7",
+     "kind": "plate",
+     "name": "Plate 7",
+     "on": "crust",
+     "extent": {
+      "type": "unmapped"
+     }
+    },
+    {
+     "key": "plate-8",
+     "kind": "plate",
+     "name": "Plate 8",
+     "on": "crust",
+     "extent": {
+      "type": "unmapped"
+     }
+    },
+    {
+     "key": "plate-9",
+     "kind": "plate",
+     "name": "Plate 9",
+     "on": "crust",
+     "extent": {
+      "type": "unmapped"
+     }
+    }
+   ],
+   "features": [
+    {
+     "key": "tarn-high",
+     "kind": "station",
+     "name": "Tarn High",
+     "altitude_m": 400000.0
+    },
+    {
+     "key": "highwater",
+     "kind": "aerostat",
+     "name": "Highwater",
+     "in": "storm-belt",
+     "altitude_m": 52000.0
+    },
+    {
+     "key": "port-sable",
+     "kind": "city",
+     "name": "Port Sable",
+     "in": "forest",
+     "altitude_m": 0.0
+    },
+    {
+     "key": "greywater",
+     "kind": "city",
+     "name": "Greywater",
+     "in": "steppe",
+     "altitude_m": 0.0
+    },
+    {
+     "key": "lowmere",
+     "kind": "city",
+     "name": "Lowmere",
+     "in": "reef",
+     "altitude_m": 0.0
+    },
+    {
+     "key": "ridge-4",
+     "kind": "volcano",
+     "name": "Ridge 4",
+     "in": "plate-4",
+     "altitude_m": 0.0,
+     "provides": [
+      "heat"
+     ]
+    },
+    {
+     "key": "undercroft",
+     "kind": "lava_tube_city",
+     "name": "Undercroft",
+     "in": "equator-shelf",
+     "altitude_m": -400.0
+    },
+    {
+     "key": "ridge-4-chamber",
+     "kind": "magma_chamber",
+     "in": "ridge-4",
+     "altitude_m": -9000.0,
+     "provides": [
+      "heat"
+     ]
+    }
+   ]
+  }
+ ]
+}

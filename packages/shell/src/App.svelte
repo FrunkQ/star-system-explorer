@@ -29,11 +29,14 @@
   import screensDoc from "./documents/screens.gm.json";
   import dataDoc from "./documents/dataviews.gm.json";
   import symbolsDoc from "./documents/symbols.gm.json";
+  import bodyDoc from "./documents/body.gm.json";
   import stylesScreenDoc from "./documents/styles.gm.json";
   import { createStyles } from "./styles.svelte.ts";
   import { PLAYER_STACK } from "../../views/player-stack/src/index.ts";
   import oracDoc from "./documents/orac.requests.json";
   import sceneDoc from "./documents/kestrel.scene.json";
+  import worldsDoc from "./documents/kestrel.worlds.json";
+  import { checkWorldStack, type WorldStack } from "../../ui-contract/src/index.ts";
   import derivationsDoc from "./documents/derivations.base.json";
   import stackDoc from "./documents/stack.json";
   import factsDoc from "./documents/kestrel.player-facts.json";
@@ -43,7 +46,9 @@
   import { createSymbols } from "./symbols.svelte.ts";
   import type { ChangeRequest, Json } from "../../ui-contract/src/index.ts";
 
-  const base = sceneDoc as unknown as SystemScene;
+  // World stacks (P4) ride on their subjects; until the kernel serves them they come from a fixture document.
+  const worlds = new Map((worldsDoc as unknown as { stacks: WorldStack[] }).stacks.filter((w) => !checkWorldStack(w).length).map((w) => [w.body, w]));
+  const base = { ...(sceneDoc as unknown as SystemScene), subjects: (sceneDoc as unknown as SystemScene).subjects.map((x) => (worlds.has(x.address) ? { ...x, world: worlds.get(x.address) } : x)) };
   const derivations = derivationsDoc as unknown as DerivationDoc;
   const ws = createWorkspace(base.now_yr);
   // Orac is not connected yet (A2): its sample requests come from a fixture document.
@@ -51,7 +56,7 @@
   let scene = $state<SystemScene>(base);
 
   // Each screen document is checked before anything mounts; the GM switches between them.
-  const SCREENS: Record<string, ScreenDoc> = { system: workspaceDoc as unknown as ScreenDoc, physics: physicsDoc as unknown as ScreenDoc, packs: packsDoc as unknown as ScreenDoc, screens: screensDoc as unknown as ScreenDoc, data: dataDoc as unknown as ScreenDoc, symbols: symbolsDoc as unknown as ScreenDoc, styles: stylesScreenDoc as unknown as ScreenDoc };
+  const SCREENS: Record<string, ScreenDoc> = { system: workspaceDoc as unknown as ScreenDoc, physics: physicsDoc as unknown as ScreenDoc, packs: packsDoc as unknown as ScreenDoc, screens: screensDoc as unknown as ScreenDoc, data: dataDoc as unknown as ScreenDoc, symbols: symbolsDoc as unknown as ScreenDoc, body: bodyDoc as unknown as ScreenDoc, styles: stylesScreenDoc as unknown as ScreenDoc };
   const checks = Object.fromEntries(Object.entries(SCREENS).map(([k, d]) => [k, checkScreen(d, REGISTRY)]));
   const badScreens = Object.values(checks).flatMap((c) => (c.ok ? [] : c.errors));
   const screen = $derived.by((): CheckedScreen | null => {
@@ -342,6 +347,7 @@
         options={[
           { value: "system", label: "Chart", key: "P" },
           { value: "physics", label: "Physics", key: "P" },
+          { value: "body", label: "Body" },
           { value: "screens", label: "Screens" },
           { value: "data", label: "Player data" },
           { value: "symbols", label: "Symbols" },
@@ -654,6 +660,11 @@
     position: relative;
     height: 100%;
   }
+  /* The cutaway sits between the tools and the card instead of under them. */
+  .stage[data-screen="body"] .area-chart {
+    inset: 24px 428px 24px 96px;
+    overflow: auto;
+  }
   .tools {
     position: absolute;
     left: 24px;
@@ -848,6 +859,14 @@
       height: auto;
     }
     .stage[data-screen="physics"] .area-chart .fill {
+      position: relative;
+    }
+    .stage[data-screen="body"] .area-chart {
+      height: auto;
+      inset: auto;
+      padding: 12px 16px;
+    }
+    .stage[data-screen="body"] .area-chart .fill {
       position: relative;
     }
     .undo-note {
