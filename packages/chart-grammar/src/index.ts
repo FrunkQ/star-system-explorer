@@ -14,6 +14,8 @@ export { default as Segmented } from "./Segmented.svelte";
 export { default as Lenses } from "./Lenses.svelte";
 export { formatYears, ticks, niceStep, fraction, keyStep, labelRows } from "./ruler.ts";
 export type { Tick, RulerEvent } from "./ruler.ts";
+export { DAY_S, around, calendarTicks, checkCalendar, dateParts, dateWords, defaultCalendar, spanWords, steps, timeWords, zoom } from "./calendar.ts";
+export type { Calendar, DateParts, RulerWindow } from "./calendar.ts";
 export { radius, distanceAt, fitScale, polar } from "./scale.ts";
 export type { RadialScale } from "./scale.ts";
 export { STAMP_LABELS, HONESTY, stampLabel } from "./stamps.ts";

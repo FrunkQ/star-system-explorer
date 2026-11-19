@@ -1,105 +1,247 @@
 <!--
-  The time ruler: always present, and the system's history. A slider over
-  the span with ticks, events below the line, authored edits inked in the
-  accent, and the present as a heavy accent stroke. Keyboard: arrows 1 %,
-  Page Up/Down 10 %, Home/End.
+  The time ruler: always present, and the system's history. One ruler from
+  the Big Bang to hours (U11): it shows a window of the span that zooms
+  (wheel, the − and + buttons, or the Show list) and changes register as it
+  goes, from billions of years to calendar dates and hours. Events sit below
+  the line, authored edits are inked in the accent, the time being viewed is
+  a heavy accent stroke, and the campaign's own "now" is a stamped marker.
+  Viewing another time never moves the campaign's now; "Make this now" does.
+  While the view is at the campaign's now, stepping and playing move both:
+  time passes in the campaign. The track itself (pointer or keyboard) only
+  looks: arrows 1 % of the window, Page Up/Down 10 %, Home/End, + and − zoom.
 -->
 <script lang="ts">
-  import { formatYears, fraction, keyStep, labelRows, ticks, type RulerEvent } from "./ruler.ts";
+  import { fraction, keyStep, labelRows, type RulerEvent } from "./ruler.ts";
+  import { around, calendarTicks, defaultCalendar, spanWords, steps, timeWords, zoom, type Calendar, type RulerWindow } from "./calendar.ts";
 
   let {
     from,
     to,
     now,
+    campaignNow,
+    calendar,
     events = [],
     label = "Time",
     onchange,
+    onmakenow,
+    note,
   }: {
     from: number;
     to: number;
     now: number;
+    /** The campaign's own now; without it the ruler is a plain history slider. */
+    campaignNow?: number;
+    calendar?: Calendar;
     events?: RulerEvent[];
     label?: string;
     onchange?: (yr: number) => void;
+    onmakenow?: (yr: number) => void;
+    /** A caveat shown while the window is in human time (under 10,000 years). */
+    note?: string;
   } = $props();
+
+  const cal = $derived(calendar ?? defaultCalendar(campaignNow ?? now));
+  const bounds = $derived({ from, to });
+  let win = $state<RulerWindow | null>(null);
+  // The window follows the bounds until the GM zooms; it is clamped if the span shrinks.
+  const w = $derived.by((): RulerWindow => {
+    if (!win) return { from, to };
+    const span = Math.min(win.to - win.from, to - from);
+    const f = Math.min(Math.max(from, win.from), to - span);
+    return { from: f, to: f + span };
+  });
+  const span = $derived(w.to - w.from);
+  const full = $derived(span >= (to - from) * 0.999);
 
   let width = $state(0);
   let track: HTMLDivElement | undefined = $state();
   const compact = $derived(width > 0 && width < 520);
-  const tk = $derived(ticks(from, to, compact ? 5 : 10));
-  const pct = (yr: number) => `${(fraction(yr, from, to) * 100).toFixed(3)}%`;
+  const tk = $derived(calendarTicks(w.from, w.to, cal, compact ? 4 : 8));
+  const pct = (yr: number) => `${(fraction(yr, w.from, w.to) * 100).toFixed(3)}%`;
+  const inView = (yr: number) => yr >= w.from && yr <= w.to;
 
-  // Labels take two rows; a label with no clear room in either keeps its marker and moves to the tooltip.
+  const shown = $derived(events.filter((e) => inView(e.at_yr)));
   const labelled = $derived.by(() => {
-    const sorted = [...events].filter((e) => e.tone !== "authored").sort((a, b) => a.at_yr - b.at_yr);
-    const rows = labelRows(sorted, from, to, width || 800);
+    const sorted = shown.filter((e) => e.tone !== "authored").sort((a, b) => a.at_yr - b.at_yr);
+    const rows = labelRows(sorted, w.from, w.to, width || 800);
     return sorted.map((e, i) => ({ ...e, row: rows[i]! }));
   });
-  const authored = $derived(events.filter((e) => e.tone === "authored"));
+  const authored = $derived(shown.filter((e) => e.tone === "authored"));
 
-  function set(yr: number) {
-    if (yr !== now) onchange?.(yr);
+  const linked = $derived(campaignNow !== undefined && Math.abs(now - campaignNow) <= Math.max(1e-6, Math.abs(now) * 1e-15));
+  function set(yr: number, moveCampaign = false) {
+    const v = Math.min(to, Math.max(from, yr));
+    if (v !== now) onchange?.(v);
+    if (moveCampaign && campaignNow !== undefined && v !== campaignNow) onmakenow?.(v);
+    // Keep the viewed time on screen.
+    if (win && !inView(v)) win = around(v, span, bounds);
   }
 
   function onkeydown(e: KeyboardEvent) {
-    const v = keyStep(e.key, now, from, to);
+    if (e.key === "+" || e.key === "=") return void (e.preventDefault(), zoomBy(0.5, now));
+    if (e.key === "-" || e.key === "_") return void (e.preventDefault(), zoomBy(2, now));
+    const v = keyStep(e.key, now, w.from, w.to);
     if (v === null) return;
     e.preventDefault();
-    set(v);
+    // keyStep rounds to whole years; inside a human window keep the fraction.
+    const step = span < 1e4 ? { ArrowRight: 0.01, ArrowUp: 0.01, ArrowLeft: -0.01, ArrowDown: -0.01, PageUp: 0.1, PageDown: -0.1 }[e.key] : undefined;
+    set(step !== undefined ? now + span * step : v);
   }
 
-  function at(e: PointerEvent): number {
+  function at(e: PointerEvent | WheelEvent): number {
     const r = track!.getBoundingClientRect();
     const f = Math.min(1, Math.max(0, (e.clientX - r.left) / r.width));
-    return Math.round(from + f * (to - from));
+    const t = w.from + f * span;
+    return span > 1e4 ? Math.round(t) : t;
   }
-
   function onpointerdown(e: PointerEvent) {
     track!.setPointerCapture(e.pointerId);
     track!.focus();
     set(at(e));
   }
-
   function onpointermove(e: PointerEvent) {
     if (track!.hasPointerCapture(e.pointerId)) set(at(e));
   }
+  function zoomBy(factor: number, about: number) {
+    win = zoom(w, factor, about, bounds);
+  }
+  // Wheel zoom about the pointer (non-passive, so the page does not scroll).
+  $effect(() => {
+    const el = track;
+    if (!el) return;
+    const h = (e: WheelEvent) => {
+      if (Math.abs(e.deltaY) < Math.abs(e.deltaX)) return;
+      e.preventDefault();
+      zoomBy(Math.pow(1.0015, e.deltaY), at(e));
+    };
+    el.addEventListener("wheel", h, { passive: false });
+    return () => el.removeEventListener("wheel", h);
+  });
+
+  // "Show": windows around the time being viewed.
+  const DAY = $derived(cal.day_s / 31_557_600);
+  const SHOWS = $derived([
+    { id: "all", label: "Whole history", span: Infinity },
+    { id: "myr", label: "10 million years", span: 1e7 },
+    { id: "kyr", label: "1,000 years", span: 1e3 },
+    { id: "decade", label: "10 years", span: (10 * cal.year_days * cal.day_s) / 31_557_600 },
+    { id: "year", label: "A year", span: (cal.year_days * cal.day_s) / 31_557_600 },
+    { id: "month", label: "A month", span: 30 * DAY },
+    { id: "week", label: "A week", span: 7 * DAY },
+    { id: "day", label: "A day", span: DAY },
+  ]);
+  function show(id: string) {
+    const s = SHOWS.find((x) => x.id === id);
+    if (!s) return;
+    win = s.span === Infinity ? null : around(now, s.span, bounds);
+  }
+
+  // Stepping and playing.
+  const STEPS = $derived(steps(cal));
+  let stepId = $state("day");
+  const stepYr = $derived(STEPS.find((s) => s.id === stepId)?.yr ?? DAY);
+  let playing = $state(false);
+  $effect(() => {
+    if (!playing) return;
+    let last: number | null = null;
+    let sent = 0;
+    let t = now;
+    const move = linked;
+    let raf = 0;
+    const frame = (ms: number) => {
+      if (last !== null) {
+        t += ((ms - last) / 1000) * stepYr;
+        if (t >= to) ((t = to), (playing = false));
+        // Ten updates a second is plenty for the chart and keeps the kernel calm.
+        if (ms - sent >= 100 || !playing) ((sent = ms), set(t, move));
+      }
+      last = ms;
+      if (playing) raf = requestAnimationFrame(frame);
+    };
+    raf = requestAnimationFrame(frame);
+    return () => cancelAnimationFrame(raf);
+  });
+  const nowWords = $derived(timeWords(now, cal, span));
+  const campaignWords = $derived(campaignNow === undefined ? "" : timeWords(campaignNow, cal, Math.min(span, 1e4 - 1)));
 </script>
 
-<div class="ruler" class:compact>
-  <div class="now" aria-hidden="true">{formatYears(now)}</div>
-  <div class="trackwrap" bind:clientWidth={width}>
-    <div
-      bind:this={track}
-      class="track"
-      role="slider"
-      tabindex="0"
-      aria-label={label}
-      aria-valuemin={from}
-      aria-valuemax={to}
-      aria-valuenow={now}
-      aria-valuetext={formatYears(now)}
-      {onkeydown}
-      {onpointerdown}
-      {onpointermove}
-    >
-      <div class="line"></div>
-      {#each tk as t (t.at)}
-        <div class="tick" class:major={t.major} style="left: {pct(t.at)}"></div>
-        {#if t.label && !compact && t.at > from && t.at < to}<div class="tl" style="left: {pct(t.at)}" aria-hidden="true">{t.label}</div>{/if}
-      {/each}
-      {#each labelled as e (e.id)}
-        <div class="ev {e.tone}" style="left: {pct(e.at_yr)}" title="{e.label}, {formatYears(e.at_yr)}">
-          <span class="pin"></span>
-          {#if !compact && e.row >= 0}<span class="evl" class:row1={e.row === 1}>{e.label}</span>{/if}
+<div class="ruler" class:compact data-span={span} data-linked={linked ? "yes" : "no"}>
+  <div class="readout">
+    <div class="now" data-viewing={now}>{nowWords}</div>
+    {#if campaignNow !== undefined}
+      {#if linked}
+        <div class="sub"><span class="stamp">Now</span> in the campaign</div>
+      {:else}
+        <div class="sub" data-campaign-now={campaignNow}>
+          Campaign now: {campaignWords}
         </div>
-      {/each}
-      {#each authored as e (e.id)}
-        <div class="inked" style="left: {pct(e.at_yr)}" data-event-id={e.id} title="{e.label}, {formatYears(e.at_yr)}"></div>
-      {/each}
-      <div class="present" style="left: {pct(now)}"></div>
+      {/if}
+    {/if}
+  </div>
+  <div class="mid">
+    <div class="bar" role="toolbar" aria-label="Time controls">
+      <span class="grp">
+        <button type="button" onclick={() => zoomBy(2, now)} disabled={full} aria-label="Zoom out" title="Zoom out (−)">−</button>
+        <button type="button" onclick={() => zoomBy(0.5, now)} aria-label="Zoom in" title="Zoom in (+)">+</button>
+        <select aria-label="Show" onchange={(e) => (show(e.currentTarget.value), (e.currentTarget.value = ""))}>
+          <option value="">{full ? "Whole history" : `Showing ${spanWords(span, cal)}`}</option>
+          {#each SHOWS as s (s.id)}<option value={s.id}>{s.label}</option>{/each}
+        </select>
+      </span>
+      {#if campaignNow !== undefined}
+        <span class="grp">
+          <button type="button" onclick={() => set(now - stepYr, linked)} aria-label="Back one {STEPS.find((s) => s.id === stepId)?.label}" title="Back one step">‹</button>
+          <button type="button" class:on={playing} onclick={() => (playing = !playing)} aria-label={playing ? "Pause" : "Play"} aria-pressed={playing} title={linked ? "Play: time passes in the campaign" : "Play: look ahead without moving the campaign's now"}>{playing ? "❚❚" : "▶"}</button>
+          <button type="button" onclick={() => set(now + stepYr, linked)} aria-label="Forward one {STEPS.find((s) => s.id === stepId)?.label}" title="Forward one step">›</button>
+          <select aria-label="Step" bind:value={stepId}>
+            {#each STEPS as s (s.id)}<option value={s.id}>{s.label === "1,000 years" || s.label === "million years" ? `${s.label === "million years" ? "a million years" : "1,000 years"}` : `a ${s.label}`}</option>{/each}
+          </select>
+          <span class="hint">{playing ? `${spanWords(stepYr, cal)} a second` : ""}</span>
+        </span>
+        <span class="grp end-grp">
+          {#if !linked}
+            <button type="button" class="link" onclick={() => (set(campaignNow), win && (win = around(campaignNow, span, bounds)))}>Back to now</button>
+            <button type="button" class="link accent" onclick={() => onmakenow?.(now)} title="Move the campaign's now to the time you are viewing; players' screens follow">Make this now</button>
+          {/if}
+        </span>
+      {/if}
+      {#if note && span <= 1e4}<span class="note" data-note>{note}</span>{/if}
+      <span class="end" aria-hidden="true">{full ? `to ${timeWords(to, cal, span)}` : `to ${timeWords(w.to, cal, span)}`}</span>
+    </div>
+    <div class="trackwrap" bind:clientWidth={width}>
+      <div
+        bind:this={track}
+        class="track"
+        role="slider"
+        tabindex="0"
+        aria-label={label}
+        aria-valuemin={w.from}
+        aria-valuemax={w.to}
+        aria-valuenow={now}
+        aria-valuetext={nowWords}
+        {onkeydown}
+        {onpointerdown}
+        {onpointermove}
+      >
+        <div class="line"></div>
+        {#each tk as t (t.at)}
+          <div class="tick" class:major={t.major} style="left: {pct(t.at)}"></div>
+          {#if t.label && !compact && t.at > w.from && t.at < w.to}<div class="tl" style="left: {pct(t.at)}" aria-hidden="true">{t.label}</div>{/if}
+        {/each}
+        {#each labelled as e (e.id)}
+          <div class="ev {e.tone}" style="left: {pct(e.at_yr)}" title="{e.label}, {timeWords(e.at_yr, cal, span)}">
+            <span class="pin"></span>
+            {#if !compact && e.row >= 0}<span class="evl" class:row1={e.row === 1}>{e.label}</span>{/if}
+          </div>
+        {/each}
+        {#each authored as e (e.id)}
+          <div class="inked" style="left: {pct(e.at_yr)}" data-event-id={e.id} title="{e.label}, {timeWords(e.at_yr, cal, span)}"></div>
+        {/each}
+        {#if campaignNow !== undefined && inView(campaignNow)}<div class="cnow" style="left: {pct(campaignNow)}" title="The campaign's now: {campaignWords}"></div>{/if}
+        {#if inView(now)}<div class="present" style="left: {pct(now)}"></div>{/if}
+      </div>
     </div>
   </div>
-  <div class="end" aria-hidden="true">{formatYears(to)}</div>
 </div>
 
 <style>
@@ -117,24 +259,103 @@
     gap: 12px;
     padding: 0 16px;
   }
-  .now {
+  .readout {
     flex: none;
-    min-width: 96px;
+    min-width: 132px;
+    max-width: 200px;
+  }
+  .now {
     font-family: var(--sse-font-display);
-    font-size: 22px;
+    font-size: 20px;
+    line-height: 1.2;
+  }
+  .compact .readout {
+    min-width: 84px;
   }
   .compact .now {
-    min-width: 72px;
-    font-size: 18px;
+    font-size: 16px;
+  }
+  .sub {
+    font-size: 11px;
+    color: var(--sse-ink-muted);
+    margin-top: 2px;
+  }
+  .stamp {
+    display: inline-block;
+    border: 1.5px solid var(--sse-accent);
+    color: var(--sse-accent-ink);
+    font-size: 9px;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    padding: 0 4px;
+    transform: rotate(-3deg);
+  }
+  .mid {
+    flex: 1;
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+  }
+  .bar {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px 16px;
+    align-items: center;
+    font-size: 12px;
+  }
+  .grp {
+    display: inline-flex;
+    gap: 4px;
+    align-items: center;
+  }
+  .bar button,
+  .bar select {
+    font: inherit;
+    font-size: 12px;
+    min-height: 24px;
+    background: transparent;
+    color: var(--sse-ink);
+    border: var(--sse-line) solid var(--sse-ink);
+  }
+  .bar button {
+    min-width: 26px;
+    padding: 0 6px;
+  }
+  .bar button.on {
+    background: var(--sse-ink);
+    color: var(--sse-ground);
+  }
+  .bar button:disabled {
+    opacity: 0.4;
+  }
+  .bar button.link {
+    border: 0;
+    text-decoration: underline;
+    padding: 0;
+  }
+  .bar button.accent {
+    color: var(--sse-accent-ink);
+  }
+  .hint {
+    color: var(--sse-ink-muted);
+  }
+  .note {
+    color: var(--sse-ink-muted);
+    font-style: italic;
   }
   .end {
-    flex: none;
     font-family: var(--sse-font-mono);
     font-size: 12px;
     color: var(--sse-ink-muted);
+    pointer-events: none;
+    white-space: nowrap;
+    margin-left: auto;
+  }
+  .compact .end {
+    display: none;
   }
   .trackwrap {
-    flex: 1;
     min-width: 0;
     height: 52px;
   }
@@ -209,11 +430,41 @@
     transform: rotate(45deg);
     background: var(--sse-accent);
   }
+  .cnow {
+    position: absolute;
+    top: 21px;
+    margin-left: -5px;
+    width: 0;
+    height: 0;
+    border-left: 5px solid transparent;
+    border-right: 5px solid transparent;
+    border-bottom: 8px solid var(--sse-ink);
+    pointer-events: none;
+  }
   .present {
     position: absolute;
     top: 2px;
     height: 40px;
     border-left: 2px solid var(--sse-accent);
     pointer-events: none;
+  }
+  /* Phones: the readout goes on its own line above the controls and track. */
+  @media (max-width: 600px) {
+    .ruler {
+      flex-wrap: wrap;
+      gap: 4px 12px;
+      padding: 8px 16px;
+    }
+    .readout {
+      flex: 1 1 100%;
+      max-width: none;
+      display: flex;
+      align-items: baseline;
+      gap: 10px;
+      flex-wrap: wrap;
+    }
+    .mid {
+      flex: 1 1 100%;
+    }
   }
 </style>
