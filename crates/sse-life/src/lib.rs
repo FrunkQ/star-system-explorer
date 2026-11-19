@@ -14,8 +14,10 @@
 //! "no life model installed" everywhere.
 #![forbid(unsafe_code)]
 
+pub mod biosphere;
 pub mod budget;
 pub mod habitat;
+pub mod history;
 pub mod scenario;
 mod suite;
 
@@ -224,4 +226,8 @@ pub trait LifeSuite {
 }
 
 #[cfg(test)]
+mod biosphere_tests;
+#[cfg(test)]
 mod budget_tests;
+#[cfg(test)]
+mod history_tests;
