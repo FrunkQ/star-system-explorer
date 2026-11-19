@@ -434,7 +434,7 @@ impl<'a> Ageing<'a> {
                         "oceans_lost",
                         vec![lp.spec.address.clone()],
                         format!(
-                            "{} has brightened to {:.3} times the Sun's present luminosity, so {} receives {:.2} times the sunlight that reaches Earth today; above {:.2} an ocean world's water vapour greenhouse runs away and the oceans boil off (Kopparapu et al. 2013)",
+                            "{} has brightened to {:.3} times the Sun's present luminosity, so {} receives {:.2} times the sunlight that reaches Earth today; above {:.2} an ocean world's water vapour greenhouse runs away and the oceans boil off (Kopparapu et al. 2014)",
                             self.spec.name, lum, lp.spec.name, lum / (lp.p.a * lp.p.a), s.runaway_greenhouse_flux
                         ),
                         "standard",

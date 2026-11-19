@@ -327,7 +327,7 @@ fn age_the_solar_system() {
         t = e.age_myr;
         assert_eq!(e.plausible_future, e.age_myr > sp.age_myr + st.horizon_myr);
     }
-    // Oceans go 1 to 2 Gyr from now (Kopparapu 2013 type limit on the HPT00 Sun).
+    // Oceans go 1 to 2 Gyr from now (Kopparapu 2014 limit on the HPT00 Sun).
     let oceans = r.events.iter().find(|e| e.kind == "oceans_lost").unwrap();
     assert!(
         oceans.age_myr > 5300.0 && oceans.age_myr < 6800.0,

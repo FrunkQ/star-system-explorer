@@ -95,3 +95,12 @@ Physics changed, goldens re-blessed on purpose (haloes, galaxy, envelope, stars,
 - Metadata only: Correa et al. 2015 is paper I (MNRAS 450, 1514) eqs. 14, 15 and 20 to 23; Sheth and Tormen eq.
   10 and its ν convention; Muratov 2015 wording; Planck z*; Asplund protosolar Z; spin width in ln, not dex;
   Johnson and Li 2012's radius-dependent floor stated beside the single −1.0 value.
+
+### Runaway greenhouse limit (19 Nov)
+Physics changed; goldens re-blessed on purpose (time, time-generated: event text only):
+- `sse-formation/src/early.rs`: the runaway limit was 1.06 times Earth's insolation, Kopparapu et al. 2013's
+  section 3.1 value, which their 2014 letter (ApJL 787, L29) corrected after an error in the water infrared
+  coefficients. It now follows the 2014 table 1 by planet mass: 0.99 at 0.1, 1.107 at 1 and 1.188 at 5 Earth
+  masses, straight in log mass between them and flat outside. No body in the formation-early golden sits between
+  the old and new limits, so that golden does not move.
+- `packs/base-time` keeps 1.1 as the ocean-loss point and now cites the 2014 value; the T1 event text cites 2014.
