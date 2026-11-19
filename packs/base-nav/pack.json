@@ -140,7 +140,10 @@
      "belts": "rough: Jupiter-like radiation belts, tens of mSv an hour behind light shielding inside about 15 radii",
      "ships": "stock templates for play: chemical (H2/O2, Isp about 450 s), nuclear thermal (Isp about 900 s), and fictional fusion torches",
      "descent": "Sutton, K. and Graves, R. A. 1971, A general stagnation-point convective heating equation for arbitrary gas mixtures, NASA TR R-376. https://ntrs.nasa.gov/citations/19720003329",
-     "landers": "stock templates for play, sized after Soyuz, the Mars Science Laboratory, Huygens (its 3 m stabiliser chute) and Apollo's lunar module"
+     "landers": "stock templates for play, sized after Soyuz, the Mars Science Laboratory, Huygens (its 3 m stabiliser chute) and Apollo's lunar module",
+     "sun_magnitude": "Willmer, C. N. A. 2018, The Absolute Magnitude of the Sun in Several Filters, ApJS 236, 47 (V = -26.76). doi:10.3847/1538-4365/aabfdf",
+     "phase_law": "Russell, H. N. 1916, On the Albedo of the Planets and Their Satellites, ApJ 43, 173 (the Lambert sphere phase law). doi:10.1086/142244",
+     "sensors": "rough: naked-eye limit about magnitude 6 and one arcminute; 10x50 binoculars about 9.5; a 0.5 m telescope reaches about 18 in a short exposure (Clark, R. N. 1990, Visual Astronomy of the Deep Sky, Cambridge University Press)"
     },
     "descent": {
      "step_s": 0.1,
@@ -227,6 +230,36 @@
        },
        "heat_limit_w_cm2": 1.0,
        "touchdown_m_s": 3.0
+      }
+     }
+    },
+    "window": {
+     "sun_mag_1au": -26.74,
+     "default_albedo": 0.3,
+     "sensors": {
+      "eye": {
+       "name": "Eyes at a port",
+       "limit_mag": 6.0,
+       "resolution_arcsec": 60.0,
+       "field_deg": 100.0,
+       "band": "visible",
+       "why": "a dark-adapted eye: about magnitude 6, one arcminute"
+      },
+      "binoculars": {
+       "name": "Binoculars (10x50)",
+       "limit_mag": 9.5,
+       "resolution_arcsec": 6.0,
+       "field_deg": 6.0,
+       "band": "visible",
+       "why": "50 mm aperture: about magnitude 9.5, a few arcseconds"
+      },
+      "telescope": {
+       "name": "Ship's telescope (0.5 m)",
+       "limit_mag": 18.0,
+       "resolution_arcsec": 0.3,
+       "field_deg": 0.5,
+       "band": "visible",
+       "why": "0.5 m mirror, a short exposure: about magnitude 18, diffraction limit about 0.25 arcseconds"
       }
      }
     }
