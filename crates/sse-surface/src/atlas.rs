@@ -168,6 +168,14 @@ pub struct Atlas {
     regime_age_myr: f64,
     material_land: u8,
     plates: Option<PlateSurface>,
+    impacts: Option<Box<ImpactLayer>>,
+}
+
+/// S4's craters, plains and shields on an atlas.
+#[derive(Clone, Debug)]
+struct ImpactLayer {
+    features: crate::impacts::Features,
+    field: crate::impacts::CraterField,
 }
 
 /// The plate history's surface at the atlas epoch, on the plate grid.
@@ -351,6 +359,7 @@ impl Atlas {
             regime_age_myr,
             material_land,
             plates: None,
+            impacts: None,
         }
     }
 
@@ -465,6 +474,91 @@ impl Atlas {
         a
     }
 
+    /// Add S4's impacts and volcanism: crater and shield relief to the fact
+    /// floor (each feature only at levels whose spacing can carry it), lava
+    /// plains as basalt with their own surface age, and feature tags.
+    pub fn with_impacts(
+        mut self,
+        features: crate::impacts::Features,
+        field: crate::impacts::CraterField,
+    ) -> Self {
+        self.impacts = Some(Box::new(ImpactLayer { features, field }));
+        self
+    }
+
+    pub fn features(&self) -> Option<&crate::impacts::Features> {
+        self.impacts.as_ref().map(|x| &x.features)
+    }
+
+    /// Smallest feature (crater diameter, shield width) a level carries, km.
+    pub fn min_feature_km(&self, level: u8) -> f64 {
+        self.settings.nyquist * self.spacing_m(level) / 1000.0
+    }
+
+    /// Size bands of small craters a level carries.
+    fn bands_at(&self, level: u8) -> u32 {
+        let Some(ip) = &self.impacts else { return 0 };
+        if ip.features.surface_from_myr.is_none() {
+            return 0;
+        }
+        let min = self.min_feature_km(level);
+        let mut k = 0u32;
+        while k < 40 && ip.field.band(ip.features.listed_d_km, k).1 > min {
+            k += 1;
+        }
+        k
+    }
+
+    /// Tolerance terms from craters and shields between a parent and child level, m.
+    fn impact_tolerance_m(&self, child_level: u8) -> f64 {
+        let Some(ip) = &self.impacts else { return 0.0 };
+        if ip.features.surface_from_myr.is_none() {
+            return 0.0;
+        }
+        let parent = child_level.saturating_sub(1);
+        let (sp_p, min_p, min_c) = (
+            self.spacing_m(parent),
+            self.min_feature_km(parent),
+            self.min_feature_km(child_level),
+        );
+        let s = ip.field.settings();
+        let g = ip.field.gravity();
+        let relief = |d: f64| {
+            let (_, a, b, c) = crate::impacts::crater_shape(s, g, d);
+            a + b + c
+        };
+        // Craters entering at the child level (at most min_p across), fresh.
+        let added = if min_c < min_p { relief(min_p) } else { 0.0 };
+        // Curvature of craters both carry, worst at the smallest of each shape.
+        let gs = s.g_ref_m_s2 / g.max(1e-6);
+        let carried = [
+            min_p,
+            s.simple_complex_km * gs,
+            s.peak_ring_km * gs,
+            s.multi_ring_km * gs,
+        ]
+        .iter()
+        .filter(|d| **d >= min_p)
+        .map(|d| crate::impacts::crater_curvature_err(s, g, *d, sp_p))
+        .fold(0.0, f64::max);
+        let mut sh_added: f64 = 0.0;
+        let mut sh_carried: f64 = 0.0;
+        for sh in &ip.features.shields {
+            let w = 2.0 * sh.radius_km;
+            if w >= min_c && w < min_p {
+                sh_added = sh_added.max(sh.height_m);
+            }
+            if w >= min_p {
+                let rr = sh.radius_km * 1000.0;
+                // |f''| up to 8 H / R² for the shield, plus the caldera's 0.03 H × 2 / 0.05².
+                let k = 8.0 * sh.height_m + 24.0 * sh.height_m;
+                sh_carried = sh_carried.max(k * (sp_p / rr) * (sp_p / rr) / 16.0);
+            }
+        }
+        // Twice each, for overlapping features.
+        2.0 * (added + carried + sh_added + sh_carried)
+    }
+
     /// Whether heights come from the plate history.
     pub fn has_plates(&self) -> bool {
         self.plates.is_some()
@@ -534,7 +628,7 @@ impl Atlas {
         };
         let x = m::PI * sp / scale;
         let sketch = self.model.relief_m() * (0.25 * x * x).min(1.0);
-        added + carried + sketch + 0.1
+        added + carried + sketch + 0.1 + self.impact_tolerance_m(child_level)
     }
 
     /// Height at a direction carrying `octaves` detail octaves, metres.
@@ -624,12 +718,105 @@ impl Atlas {
         Ok(self.build(key))
     }
 
+    /// The craters, shields and plains that can touch a tile at its level.
+    fn tile_features(&self, key: TileKey) -> TileFeatures {
+        let mut tf = TileFeatures::default();
+        let Some(ip) = &self.impacts else { return tf };
+        let f = &ip.features;
+        if f.surface_from_myr.is_none() {
+            return tf;
+        }
+        let rk = self.radius_m / 1000.0;
+        let n = (1u64 << key.level) as f64;
+        let centre = direction(
+            key.face,
+            -1.0 + 2.0 * (key.x as f64 + 0.5) / n,
+            -1.0 + 2.0 * (key.y as f64 + 0.5) / n,
+        );
+        // Half the tile's diagonal, angle, with margin for the tangent warp.
+        let half =
+            1.5 * self.spacing_m(key.level) * self.settings.tile_samples as f64 / self.radius_m;
+        let min = self.min_feature_km(key.level);
+        let near = |d: [f64; 3], reach_km: f64| {
+            m::acos(crate::sketch::dot(d, centre).clamp(-1.0, 1.0)) <= half + reach_km / rk
+        };
+        for c in &f.craters {
+            if !c.ghost && c.d_km >= min && near(c.dir, 1.1 * c.d_km) {
+                tf.tags.push(c.id.clone());
+                tf.craters.push(c.clone());
+            }
+        }
+        for sh in &f.shields {
+            if 2.0 * sh.radius_km >= min && near(sh.dir, sh.radius_km) {
+                tf.tags.push(sh.id.clone());
+                tf.shields.push(sh.clone());
+            }
+        }
+        for p in &f.plains {
+            if near(p.dir, p.radius_km) {
+                tf.tags.push(p.id.clone());
+                tf.plains.push((p.dir, p.radius_km, p.formed_myr));
+            }
+        }
+        // Small craters: every band this level carries, from the cells that
+        // hold the tile's samples and their neighbours.
+        let bands = self.bands_at(key.level);
+        let s = self.settings.tile_samples as i64;
+        for k in 0..bands {
+            let (_, hi) = ip.field.band(f.listed_d_km, k);
+            let cells_n = ip.field.band_cells(hi) as f64;
+            // Probe the tile at about half a cell (at most every sample).
+            let cell_ang = (m::PI / 2.0) / cells_n;
+            let sample_ang = self.spacing_m(key.level) / self.radius_m;
+            let step = ((0.5 * cell_ang / sample_ang).max(1.0) as i64).min(s);
+            let mut cells = std::collections::BTreeSet::new();
+            let total = s as f64 * n;
+            let mut j = 0i64;
+            while j <= s {
+                let mut i = 0i64;
+                while i <= s {
+                    let u = -1.0 + 2.0 * ((key.x as i64 * s + i.min(s - 1)) as f64 + 0.5) / total;
+                    let v = -1.0 + 2.0 * ((key.y as i64 * s + j.min(s - 1)) as f64 + 0.5) / total;
+                    cells.insert(
+                        ip.field
+                            .cell_of(f.listed_d_km, k, direction(key.face, u, v)),
+                    );
+                    i += step;
+                }
+                j += step;
+            }
+            let mut all = std::collections::BTreeSet::new();
+            for c in cells {
+                for nb in ip.field.neighbourhood(f.listed_d_km, k, c) {
+                    all.insert(nb);
+                }
+            }
+            for (face, i, j) in all {
+                for c in ip.field.cell_craters(f.listed_d_km, k, face, i, j) {
+                    if c.d_km >= min && near(c.dir, 1.1 * c.d_km) {
+                        tf.craters.push(c);
+                    }
+                }
+            }
+        }
+        tf.craters.iter_mut().for_each(|c| {
+            c.cause.clear();
+        });
+        tf.reach = tf
+            .craters
+            .iter()
+            .map(|c| crate::impacts::crater_reach_cos(c, rk))
+            .collect();
+        tf
+    }
+
     /// Build a tile regardless of disclosure (the GM's own machine, tests).
     pub fn build(&self, key: TileKey) -> Tile {
         let s = self.settings.tile_samples as i64;
         let n = (1u64 << key.level) as f64;
         let total = s as f64 * n;
         let oct = self.octaves_at(key.level);
+        let feats = self.tile_features(key);
         // One-sample border for slopes.
         let w = (s + 2) as usize;
         let mut hh = vec![0.0; w * w];
@@ -640,7 +827,8 @@ impl Atlas {
                 let u = -1.0 + 2.0 * ((key.x as i64 * s + i) as f64 + 0.5) / total;
                 let v = -1.0 + 2.0 * ((key.y as i64 * s + j) as f64 + 0.5) / total;
                 let d = direction(key.face, u, v);
-                let (h, p) = self.height(d, oct);
+                let (mut h, p) = self.height(d, oct);
+                h += feats.height(d, self.radius_m / 1000.0);
                 let idx = ((j + 1) as usize) * w + (i + 1) as usize;
                 hh[idx] = h;
                 dirs[idx] = d;
@@ -702,6 +890,7 @@ impl Atlas {
                         _ => (self.material_land, 0),
                     },
                 };
+                let mut mat_override: Option<u8> = None;
                 material.push(mat);
                 cover.push(cov);
                 // Ocean floor is young everywhere on a plate world; the plate
@@ -713,7 +902,17 @@ impl Atlas {
                 } else {
                     self.regime_age_myr
                 };
+                let a = match feats.plains_at(dirs[c], self.radius_m / 1000.0) {
+                    Some(t) if !liquid => {
+                        mat_override = Some(0);
+                        a.min((self.epoch_myr as f64 - t).max(0.0))
+                    }
+                    _ => a,
+                };
                 age.push(m::round(a) as u32);
+                if let (Some(mm), Some(last)) = (mat_override, material.last_mut()) {
+                    *last = mm;
+                }
                 if let Some((ps, pc)) = plate_cell {
                     if let Some(f) = &ps.flow {
                         let (river, _, _, cells) = f[pc];
@@ -744,7 +943,11 @@ impl Atlas {
         .hex();
         let mut pending: Vec<String> = vec![
             "flow and channels (S3)".into(),
-            "feature tags (S4, S7)".into(),
+            if self.impacts.is_some() {
+                "named features (S7)".into()
+            } else {
+                "feature tags (S4, S7)".into()
+            },
             "biome (S11)".into(),
             "structures (S7)".into(),
         ];
@@ -764,11 +967,46 @@ impl Atlas {
             slope_ddeg: slope,
             surface_age_myr: age,
             albedo,
-            tags: vec![],
+            tags: feats.tags,
             pending,
             flow,
             hash,
         }
+    }
+}
+
+/// Features that can touch one tile (gathered once per tile build).
+#[derive(Default)]
+struct TileFeatures {
+    craters: Vec<crate::impacts::Crater>,
+    /// Per crater, the cosine beyond which it adds nothing.
+    reach: Vec<f64>,
+    shields: Vec<crate::impacts::Shield>,
+    /// (centre, radius km, formed Myr).
+    plains: Vec<([f64; 3], f64, f64)>,
+    tags: Vec<String>,
+}
+
+impl TileFeatures {
+    fn height(&self, d: [f64; 3], radius_km: f64) -> f64 {
+        let mut h = 0.0;
+        for (c, reach) in self.craters.iter().zip(&self.reach) {
+            h += crate::impacts::crater_height_within(c, d, radius_km, *reach);
+        }
+        for s in &self.shields {
+            h += crate::impacts::shield_height(s, d, radius_km);
+        }
+        h
+    }
+
+    /// When the newest plains unit covering the point erupted, Myr since the
+    /// world formed.
+    fn plains_at(&self, d: [f64; 3], radius_km: f64) -> Option<f64> {
+        self.plains
+            .iter()
+            .filter(|p| m::acos(crate::sketch::dot(p.0, d).clamp(-1.0, 1.0)) * radius_km < p.1)
+            .map(|p| p.2)
+            .fold(None, |a: Option<f64>, t| Some(a.map_or(t, |x| x.max(t))))
     }
 }
 

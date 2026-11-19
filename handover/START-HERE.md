@@ -31,6 +31,7 @@ Milestone M1 "Proven core" = packages K0 to K6 (build plan section 3/4).
 | S1 surface atlas: cube-sphere tiles, band-limited detail, disclosure and fact floor, cache | done (sketch atlas; S2 adds the surveyed plate atlas) | packages/S1.md |
 | S2 plate sketch: moving plates, ridges, trenches, arcs, mountain belts, plumes, drift snapshots, surveyed atlas | done | packages/S2.md |
 | S3 wearing down: rivers, lakes, sediment, sea level, hillslopes, worn atlas with flow layer | done | packages/S3.md |
+| S4 impacts and volcanism: chronology and spikes, survival by renewal, crater shapes, lava plains, shields, tiles to the fact floor, "why is this here" | done | packages/S4.md |
 | Kernel ops `import_v3`, `run_formation` and `read_world_stack` (V3 import with report; one system through the pipeline with pins and surfaces; a body's world stack with ladder and physics notes) | done (physics track, for the UI) | packages/K-physics-ops.md |
 | K7 envelopes, partitioning, resolve, feasibility | done (kernel track) | packages/K7.md |
 | K8 rules, classification, sifters, significance | done (kernel track) | packages/K8.md |
@@ -80,7 +81,7 @@ Milestone M1 "Proven core" = packages K0 to K6 (build plan section 3/4).
 ## Parallel tracks (18 Nov, Alex: build in parallel, integrate later)
 | Track | Packages | Branch |
 |---|---|---|
-| Physics | P1, P3, P4, F0 to F6 done; pipeline, F7, F9, S0 to S3 done; F8 waits on G6; next S4 (impacts, volcanism, explanations) | `main` via PRs |
+| Physics | P1, P3, P4, F0 to F6 done; pipeline, F7, F9, S0 to S4 done; F8 waits on G6; next S6 (other regimes), S7 | `main` via PRs |
 | Kernel | K7 to K10, G0 to G5, C1 to C3, L0, L1a to L1d, T1, T2 (also through the API), the U3 gaps, the V10 grant gaps and the UI asks (`adopt`, look-ahead write-back, `resolved_system`; K6-additions.md) done; next G6 or L2 (life feedback on the planet; needs T1) | `main` via PRs |
 | Chart room shell and player views | U0 to U3, V1, U5, V2, V12, V3, V11, V4, V5, planet chart, V10, V6 System 3D, U9 lenses, N1 sound, U4 (what-if and look-ahead), A1 part 1, O1 light switch (UI), V13 parts 1 and 2 (import and grow, add to the campaign, read back and age with write-back), V6 Cutaway and Body globe (Body screen), phone screen menu done; next U7 biosphere (waits on the kernel's `life_view`), browser campaign save (waits on `export_chronicle`), V7 | `main` via PRs |
 

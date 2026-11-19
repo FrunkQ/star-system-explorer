@@ -44,6 +44,7 @@ pub fn engines_run() -> String {
         "surface-atlas": sse_surface::scenario::atlas_golden(),
         "surface-plates": sse_surface::scenario::plates_golden(),
         "surface-wear": sse_surface::scenario::wear_golden(),
+        "surface-impacts": sse_surface::scenario::impacts_golden(),
     })
     .to_string()
 }
