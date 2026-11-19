@@ -7,7 +7,7 @@ use sse_chronicle::{
 };
 use sse_core::cbor::Value;
 use sse_core::{Address, ContentHash};
-use std::collections::BTreeMap;
+use std::collections::{BTreeMap, BTreeSet};
 
 /// The audience that always exists (H8.7).
 pub const EVERYONE: &str = "everyone";
@@ -182,6 +182,37 @@ pub struct Campaign {
     pub default_view: String,
     pub before: String,
     pub after: String,
+    /// Tags that grant a view (the 4X case: whatever carries an empire's
+    /// discovery tag is shown to that empire). Checked after explicit grants
+    /// at each level, so a grant on the body beats a tag on it, and a tag on a
+    /// planet beats a grant on its star.
+    #[serde(default, skip_serializing_if = "Vec::is_empty")]
+    pub tag_grants: Vec<TagGrant>,
+}
+
+/// "Bodies tagged `tag` are shown to `audience` through view `view`."
+/// `audience` may be `*` (every audience but the GM's), and `tag` may name the
+/// audience as `{audience}`: one rule `* / discovered:{audience} / scanned`
+/// covers every empire.
+#[derive(Clone, PartialEq, Debug, Serialize, Deserialize)]
+pub struct TagGrant {
+    pub audience: String,
+    pub tag: String,
+    pub view: String,
+}
+
+impl TagGrant {
+    /// The tag this rule looks for when serving `audience`, if it applies to it.
+    pub fn tag_for(&self, audience: &str) -> Option<String> {
+        (self.audience == "*" || self.audience == audience)
+            .then(|| self.tag.replace("{audience}", audience))
+    }
+}
+
+/// No tags: for callers that have none to hand (the view then follows grants only).
+pub fn no_tags() -> &'static BTreeMap<Address, BTreeSet<String>> {
+    static EMPTY: BTreeMap<Address, BTreeSet<String>> = BTreeMap::new();
+    &EMPTY
 }
 
 fn grant_field(audience: &str) -> String {
@@ -194,18 +225,42 @@ fn grant_field(audience: &str) -> String {
 
 /// The view in force for `audience` at `addr`: its own grant, else the
 /// nearest ancestor's (moons follow their planet), else the audience's
-/// session default, else the campaign default.
+/// session default, else the campaign default. Tags are not consulted; see
+/// `effective_view_tagged`.
 pub fn effective_view(
     state: &State,
     addr: &Address,
     audience: &str,
     campaign: &Campaign,
 ) -> String {
+    effective_view_tagged(state, no_tags(), addr, audience, campaign)
+}
+
+/// As `effective_view`, with the campaign's tag grants: walking up from
+/// `addr`, at each level an explicit grant wins, then a tag grant matching a
+/// tag on that body (first rule in campaign order).
+pub fn effective_view_tagged(
+    state: &State,
+    tags: &BTreeMap<Address, BTreeSet<String>>,
+    addr: &Address,
+    audience: &str,
+    campaign: &Campaign,
+) -> String {
     let f = grant_field(audience);
+    let wanted: Vec<(String, &str)> = campaign
+        .tag_grants
+        .iter()
+        .filter_map(|g| g.tag_for(audience).map(|t| (t, g.view.as_str())))
+        .collect();
     let mut cur = Some(addr.clone());
     while let Some(a) = cur {
         if let Some(Value::Text(v)) = state.get(&a, &f) {
             return v.clone();
+        }
+        if let Some(have) = tags.get(&a) {
+            if let Some((_, v)) = wanted.iter().find(|(t, _)| have.contains(t)) {
+                return (*v).to_string();
+            }
         }
         cur = a.parent();
     }
@@ -215,6 +270,62 @@ pub fn effective_view(
         Some(Value::Text(v)) => v.clone(),
         _ => campaign.default_view.clone(),
     }
+}
+
+/// Grant `audience` a view of `addr` (and, by inheritance, of everything
+/// under it), or with `None` take the grant back so the body falls back to
+/// its parent, tags and defaults. With `default`, `addr` must be the universe
+/// root and the grant is the audience's starting view for everything. One
+/// `observe.grant` event either way: history shows when they learned it.
+pub fn grant(
+    chronicle: &mut Chronicle,
+    addr: &Address,
+    audience: &str,
+    view: Option<&str>,
+    default: bool,
+    at: UniverseTime,
+    publisher: &Publisher,
+) -> Result<ContentHash, ChronicleError> {
+    let field = if default {
+        format!("{}.default", grant_field(audience))
+    } else {
+        grant_field(audience)
+    };
+    let mut payload = Payload {
+        data: Some(Value::Map(
+            [
+                ("audience".to_string(), Value::Text(audience.into())),
+                (
+                    "view".to_string(),
+                    view.map_or(Value::Null, |v| Value::Text(v.into())),
+                ),
+            ]
+            .into(),
+        )),
+        ..Default::default()
+    };
+    match view {
+        Some(v) => {
+            payload
+                .set
+                .insert(addr.clone(), [(field, Value::Text(v.into()))].into());
+        }
+        None => {
+            payload.unset.insert(addr.clone(), vec![field]);
+        }
+    }
+    let e = Event::new(EventBody {
+        kind: kinds::OBSERVE_GRANT.into(),
+        subject: vec![addr.clone()],
+        occurred_at: at,
+        activated_at: at,
+        recognised_at: chronicle.next_stamp(),
+        causes: vec![],
+        payload,
+        evidence: Evidence::Authored,
+        publisher: publisher.clone(),
+    })?;
+    chronicle.append(e)
 }
 
 /// The Scanned button: flip `addr` between the campaign's before and after

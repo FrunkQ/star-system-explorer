@@ -3,7 +3,7 @@
  "body": "u:sol/sys:0/body:8",
  "name": "Europa today",
  "radius_m": 1560800.0,
- "sources": "Ice shell 15 to 25 km over a 60 to 150 km ocean (Schubert et al. 2004, Jupiter: The Planet, Satellites and Magnetosphere); surface dose about 5.4 Sv/day (Paranicas et al. 2009).",
+ "sources": "Ice shell 15 to 25 km over a 60 to 150 km ocean (Schubert et al. 2004, Jupiter: The Planet, Satellites and Magnetosphere); surface dose about 5.4 Sv/day (Paranicas et al. 2009). Box B inputs: oxidants delivered to the ocean about 1e10 mol per year (Chyba and Hand 2001 give 1e9 to 1e12) and hydrothermal reductants about 1e9 mol per year (Hand et al. 2007).",
  "shells": [
   {
    "key": "ice",
@@ -27,7 +27,9 @@
     "pressure_min_pa": 24000000.0,
     "pressure_max_pa": 140000000.0,
     "salinity": 0.03,
-    "radiation_dose_msv_yr": 0.0
+    "radiation_dose_msv_yr": 0.0,
+    "material.o2_mol_yr": 10000000000.0,
+    "material.reductant_mol_yr": 1000000000.0
    },
    "provides": [
     "habitat"

@@ -528,6 +528,7 @@ version = "0.1.0"
 dependencies = [
  "serde",
  "serde_json",
+ "sse-atoms",
  "sse-chronicle",
  "sse-core",
  "sse-flow",
@@ -590,6 +591,7 @@ dependencies = [
  "sse-pack",
  "sse-sift",
  "sse-surface",
+ "sse-time",
  "ts-rs",
 ]
 

@@ -3,7 +3,7 @@
  "body": "u:sol/sys:0/body:2",
  "name": "Earth today",
  "radius_m": 6371000.0,
- "sources": "PREM (Dziewonski and Anderson 1981); ocean mean depth 3688 m (Charette and Smith 2010); surface dose 2.4 mSv/yr (UNSCEAR 2008); deep biosphere to about 5 km (Magnabosco et al. 2018); Movile Cave, Romania (Sarbu et al. 1996).",
+ "sources": "PREM (Dziewonski and Anderson 1981); ocean mean depth 3688 m (Charette and Smith 2010); surface dose 2.4 mSv/yr (UNSCEAR 2008); deep biosphere to about 5 km (Magnabosco et al. 2018); Movile Cave, Romania (Sarbu et al. 1996). Box B inputs: surface sunlight by band, annual means (Wild et al. 2013); new phosphorus to the ocean about 3e10 mol per year (rivers and dust, Benitez-Nelson 2000) and to land about 1.5e11 mol per year from weathering, shared by land area (Cleveland et al. 2013).",
  "shells": [
   {
    "key": "atmosphere",
@@ -31,7 +31,8 @@
     "salinity": 0.035,
     "light_w_m2": 185.0,
     "light_peak_nm": 500.0,
-    "persistence_s": 1.262304e+17
+    "persistence_s": 1.262304e+17,
+    "material.p_new_mol_yr": 30000000000.0
    }
   },
   {
@@ -102,7 +103,10 @@
     "temperature_k": 299.0,
     "cover_fraction": 0.25,
     "radiation_dose_msv_yr": 2.4,
-    "pressure_pa": 101325.0
+    "pressure_pa": 101325.0,
+    "light_w_m2": 230.0,
+    "light_peak_nm": 500.0,
+    "material.p_new_mol_yr": 58500000000.0
    }
   },
   {
@@ -119,7 +123,10 @@
     "temperature_k": 284.0,
     "cover_fraction": 0.45,
     "radiation_dose_msv_yr": 2.4,
-    "pressure_pa": 101325.0
+    "pressure_pa": 101325.0,
+    "light_w_m2": 160.0,
+    "light_peak_nm": 500.0,
+    "material.p_new_mol_yr": 69000000000.0
    }
   },
   {
@@ -136,7 +143,10 @@
     "temperature_k": 284.0,
     "cover_fraction": 0.1,
     "radiation_dose_msv_yr": 2.4,
-    "pressure_pa": 101325.0
+    "pressure_pa": 101325.0,
+    "light_w_m2": 160.0,
+    "light_peak_nm": 500.0,
+    "material.p_new_mol_yr": 15000000000.0
    }
   },
   {
@@ -152,7 +162,10 @@
     "temperature_k": 262.0,
     "cover_fraction": 0.3,
     "radiation_dose_msv_yr": 2.4,
-    "pressure_pa": 101325.0
+    "pressure_pa": 101325.0,
+    "light_w_m2": 90.0,
+    "light_peak_nm": 500.0,
+    "material.p_new_mol_yr": 7500000000.0
    }
   },
   {

@@ -20,7 +20,7 @@
         "rate": 1e-12
       }
     ],
-    "inputs": "65c592802ab0bd85bfbdebe86f1dbe0a62c90a07536ff951d632930dd62a6a66",
+    "inputs": "755d3e34f614c2501ab695d3b86cfcd643d350cd5bb757f806479ad3b89f614a",
     "origin_time": {
       "quantiles": [
         [
@@ -69,7 +69,10 @@
           "events": [],
           "habitat": "u:sol/sys:0/body:8/shell:@ocean/habitat:@sea-floor",
           "kind": "sea-floor",
-          "materials": {},
+          "materials": {
+            "o2_mol_yr": 10000000000.0,
+            "reductant_mol_yr": 1000000000.0
+          },
           "medium": "liquid",
           "missing": [
             "persistence_s",
@@ -122,7 +125,10 @@
           "events": [],
           "habitat": "u:sol/sys:0/body:8/shell:@ocean/habitat:@under-ice-ocean",
           "kind": "under-ice-ocean",
-          "materials": {},
+          "materials": {
+            "o2_mol_yr": 10000000000.0,
+            "reductant_mol_yr": 1000000000.0
+          },
           "medium": "liquid",
           "missing": [
             "persistence_s",
@@ -177,7 +183,10 @@
     "events": [],
     "habitat": "u:sol/sys:0/body:8/shell:@ocean/habitat:@sea-floor",
     "kind": "sea-floor",
-    "materials": {},
+    "materials": {
+      "o2_mol_yr": 10000000000.0,
+      "reductant_mol_yr": 1000000000.0
+    },
     "medium": "liquid",
     "missing": [
       "persistence_s",

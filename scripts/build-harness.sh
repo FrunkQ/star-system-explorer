@@ -16,6 +16,6 @@ cp tests/fixtures/packs/*.json tests/harness/pkg/fixtures/packs/
 cp tests/contract/requests.json tests/harness/pkg/fixtures/requests.json
 cp tests/golden/harness.json tests/harness/pkg/golden.json
 cp tests/golden/contract.jsonl tests/harness/pkg/contract.jsonl
-python3 -c 'import json; print(json.dumps({k: json.load(open(f"tests/golden/{k}.json")) for k in ["resolve", "sift", "observe", "suite", "cosmos", "formation", "formation-early", "formation-accrete", "formation-accrete-dole", "formation-growth", "formation-upheaval", "formation-leftovers", "formation-pipeline", "classify", "life", "place", "time", "time-generated", "surface", "surface-atlas", "surface-plates"]}))' > tests/harness/pkg/engines.json
+python3 -c 'import json; print(json.dumps({k: json.load(open(f"tests/golden/{k}.json")) for k in ["resolve", "sift", "observe", "suite", "cosmos", "formation", "formation-early", "formation-accrete", "formation-accrete-dole", "formation-growth", "formation-upheaval", "formation-leftovers", "formation-pipeline", "classify", "life", "place", "time", "time-generated", "surface", "surface-atlas", "surface-plates", "cosmology", "haloes", "galaxy", "envelope", "life-budget"]}))' > tests/harness/pkg/engines.json
 ls tests/fixtures/packs/*.json | xargs -n1 basename | sed 's/\.json$//' | python3 -c 'import sys,json; print(json.dumps([l.strip() for l in sys.stdin]))' > tests/harness/pkg/fixtures/packs.json
 echo "site ready in tests/harness/ (serve that folder over http, e.g. npm run harness)"

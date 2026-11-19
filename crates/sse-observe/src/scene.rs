@@ -2,7 +2,7 @@
 //! view's filter (H8.1). Views see only this; they never read kernel state.
 
 use crate::view::{
-    effective_view, Campaign, DataView, Disclosure, Precision, TagMode, Target, UnknownStyle,
+    effective_view_tagged, Campaign, DataView, Disclosure, Precision, TagMode, Target, UnknownStyle,
 };
 use serde::{Deserialize, Serialize};
 use sse_chronicle::{Chronicle, Evidence, State};
@@ -249,7 +249,7 @@ pub fn build_scene_through(
         } else if audience == GM {
             &gm
         } else {
-            let id = effective_view(inp.state, a, audience, inp.campaign);
+            let id = effective_view_tagged(inp.state, inp.tags, a, audience, inp.campaign);
             inp.views
                 .get(&id)
                 .ok_or_else(|| format!("{a}: data view {id:?} is not defined"))?

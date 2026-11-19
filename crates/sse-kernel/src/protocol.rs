@@ -215,6 +215,45 @@ pub enum Request {
         audience: String,
         at_s: i64,
     },
+    /// Grant `audience` the data view `view` of `address` and everything under
+    /// it, or with no `view` take the grant back. With `default`, `address` is
+    /// the universe root and the view is the audience's starting view. One
+    /// `observe.grant` event. GM only.
+    Grant {
+        address: String,
+        audience: String,
+        #[serde(default)]
+        #[ts(optional)]
+        view: Option<String>,
+        #[serde(default)]
+        #[ts(optional)]
+        default: Option<bool>,
+        at_s: i64,
+    },
+    /// Look ahead (T2): age a system to `target_myr` (the star's age, Myr)
+    /// on a new chronicle branch and return its fate: dated transitions with
+    /// their reasons, and the star and planets at every step. `system` is an
+    /// `sse-time` SystemSpec (`tests/fixtures/time/solar-system.json` is one);
+    /// its `system` address must be in the open universe. Settings come from
+    /// the stack's `provides.other.time` unless `settings` is given. Nothing
+    /// touches the main chronicle until `commit_look_ahead`; `discard` and
+    /// `branch_state_hash` take the returned branch as for any branch.
+    LookAhead {
+        #[ts(type = "unknown")]
+        system: serde_json::Value,
+        target_myr: f64,
+        #[serde(default)]
+        #[ts(optional, type = "unknown")]
+        settings: Option<serde_json::Value>,
+    },
+    /// Commit a look-ahead branch. With `move_now_myr`, the system's "now"
+    /// moves to that star age (an authored `system.now_year` fact).
+    CommitLookAhead {
+        branch: String,
+        #[serde(default)]
+        #[ts(optional)]
+        move_now_myr: Option<f64>,
+    },
     /// Import an SSE 3 save (the text of its `starmap.json` or `system.json`):
     /// the imported universe's facts and the difference report. With
     /// `reconstruct` (candidate histories to search, F9), each known system
@@ -289,7 +328,10 @@ impl Request {
             Request::Manifest => "manifest",
             Request::Scene { .. } => "scene",
             Request::ScanToggle { .. } => "scan_toggle",
+            Request::Grant { .. } => "grant",
             Request::Atoms { .. } => "atoms",
+            Request::LookAhead { .. } => "look_ahead",
+            Request::CommitLookAhead { .. } => "commit_look_ahead",
             Request::ImportV3 { .. } => "import_v3",
             Request::RunFormation { .. } => "run_formation",
         }
@@ -345,7 +387,14 @@ pub fn ops() -> Vec<OpInfo> {
             "linear in the facts within the scope; any device builds its own scenes",
         ),
         o("scan_toggle", Cost::Trivial, "GM machine only in a session"),
+        o("grant", Cost::Trivial, "GM machine only in a session"),
         o("atoms", Cost::Trivial, none),
+        o(
+            "look_ahead",
+            Cost::Medium,
+            "GM edit: a Solar System run to a cold white dwarf is about 0.2 M work units; weak devices ask the GM machine",
+        ),
+        o("commit_look_ahead", Cost::Trivial, "GM machine only in a session"),
         o(
             "import_v3",
             Cost::Light,
@@ -489,6 +538,29 @@ pub enum Response {
         view: String,
         state_hash: String,
     },
+    Granted {
+        event_id: String,
+        /// The view now in force for the audience at that address (grants and
+        /// defaults; tag grants show in scenes).
+        view: String,
+        state_hash: String,
+    },
+    LookedAhead {
+        branch: String,
+        label: String,
+        /// The system's address, its star's age now and at the end, Myr.
+        system: String,
+        now_myr: f64,
+        target_myr: f64,
+        /// Universe year of the star's birth (a star age t is year birth + t x 1e6).
+        #[ts(type = "number")]
+        birth_year: i64,
+        /// Beyond this star age, futures are "one plausible future".
+        horizon_myr: f64,
+        events: Vec<FateEvent>,
+        snapshots: Vec<FateSnapshot>,
+        work_units: u32,
+    },
     /// `import_v3`: `facts` maps address to field to `{value, evidence}`;
     /// `report` is the importer's difference report; `reconstructed` has one
     /// record per known system when asked (summary plus the solved run).
@@ -519,6 +591,58 @@ pub enum Response {
         code: String,
         message: String,
     },
+}
+
+/// A named transition ahead (T2 `TimeEvent`), with its reason.
+#[derive(Clone, PartialEq, Debug, Serialize, Deserialize, TS)]
+#[ts(export)]
+pub struct FateEvent {
+    /// `oceans_lost`, `leaves_main_sequence`, `red_giant`, `engulfed`, `planetary_nebula`, `cooling_colour`, `pollution` (the base time pack).
+    pub kind: String,
+    pub age_myr: f64,
+    /// Universe year.
+    #[ts(type = "number")]
+    pub year: i64,
+    pub subjects: Vec<String>,
+    pub why: String,
+    /// Fidelity of the model behind it: `sketch` or `standard`.
+    pub level: String,
+    pub plausible_future: bool,
+    pub numbers: BTreeMap<String, f64>,
+}
+
+#[derive(Clone, PartialEq, Debug, Serialize, Deserialize, TS)]
+#[ts(export)]
+pub struct FateStar {
+    pub phase: String,
+    /// Solar units.
+    pub luminosity: f64,
+    pub radius_rsun: f64,
+    pub teff: f64,
+    pub mass: f64,
+    pub colour: String,
+    pub rgb: [u8; 3],
+}
+
+#[derive(Clone, PartialEq, Debug, Serialize, Deserialize, TS)]
+#[ts(export)]
+pub struct FatePlanet {
+    pub name: String,
+    pub a_au: f64,
+    pub e: f64,
+    pub i_deg: f64,
+    pub engulfed: bool,
+}
+
+/// The system at one step of a look-ahead.
+#[derive(Clone, PartialEq, Debug, Serialize, Deserialize, TS)]
+#[ts(export)]
+pub struct FateSnapshot {
+    pub age_myr: f64,
+    #[ts(type = "number")]
+    pub year: i64,
+    pub star: FateStar,
+    pub planets: Vec<FatePlanet>,
 }
 
 /// A pack stack change recorded in the open universe.
