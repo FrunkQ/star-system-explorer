@@ -1576,3 +1576,51 @@ fn traveller_sensors_move_a_world_up_the_ladder() {
         "scanned after an hour in range"
     );
 }
+
+/// Importing with `grow`: each line's whole system is grown and adopted, the
+/// coded facts land on the grown main world, and the codes read back.
+#[test]
+fn a_sector_imports_as_grown_systems() {
+    let mut k = crate::Kernel::new();
+    let pack = |n: &str| -> serde_json::Value {
+        serde_json::from_str(
+            &std::fs::read_to_string(root().join(format!("packs/{n}/pack.json"))).unwrap(),
+        )
+        .unwrap()
+    };
+    let mut send = |v: serde_json::Value| -> serde_json::Value {
+        serde_json::from_str(&k.handle_json(&v.to_string())).unwrap()
+    };
+    let r = send(serde_json::json!({"op": "load_stack", "packs": [
+        pack("base-physics"), pack("base-atlas"), pack("base-time"), pack("traveller")]}));
+    assert_eq!(r["type"], "stack_loaded", "{r}");
+    send(serde_json::json!({"op": "open_universe", "id": "kestrel", "seed": "k"}));
+    let text =
+        std::fs::read_to_string(root().join("tests/fixtures/sector/lanternfall.tab")).unwrap();
+    let three: String = text.lines().take(13).map(|l| format!("{l}\n")).collect();
+    let r = send(
+        serde_json::json!({"op": "import_sector", "text": three, "apply": true, "grow": true, "at_s": 0}),
+    );
+    assert_eq!(r["type"], "sector_import", "{r}");
+    let worlds = r["import"]["worlds"].as_array().unwrap();
+    assert_eq!(worlds.len(), 12);
+    for w in worlds {
+        let main = w["main_world"].as_str().unwrap();
+        assert!(!main.ends_with("@1"), "the grown main world: {main}");
+        let c = send(serde_json::json!({"op": "codes", "scope": main, "at_s": 0}));
+        let uwp = c["readings"][0]["reading"]["lines"]["uwp"]
+            .as_str()
+            .unwrap()
+            .to_string();
+        let listed = w["raw"].as_str().unwrap().split('\t').nth(4).unwrap();
+        assert_eq!(uwp, listed, "{}", w["name"]);
+        let s = send(serde_json::json!({"op": "codes", "scope": w["system"], "at_s": 0}));
+        assert!(
+            s["readings"].as_array().unwrap().len() >= 2,
+            "a whole system: {}",
+            w["name"]
+        );
+    }
+    let h = send(serde_json::json!({"op": "systems"}));
+    assert!(h.to_string().contains("u:kestrel/sys:0912"), "{h}");
+}

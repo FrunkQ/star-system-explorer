@@ -47,4 +47,10 @@ narrative?: boolean, at_s: bigint,
  * When the news reaches its audience (default `at_s`); not shown or
  * disclosed before then.
  */
-arrives_at_s?: bigint, } | { "op": "set_kept", address: string, kind: string, value: unknown, writer?: string, reason?: string, at_s: bigint, } | { "op": "add_actor", id: string, parent?: string, name: string, kind: string, at_s: bigint, } | { "op": "record", address: string, at_s?: bigint, } | { "op": "disclosures", audience: string, at_s: bigint, } | { "op": "rules_step", at_s: bigint, } | { "op": "rules_pending" } | { "op": "rules_decide", proposal: string, approve: boolean, at_s?: bigint, } | { "op": "rules_policy", rule: string, approval: unknown, at_s: bigint, } | { "op": "rules" } | { "op": "codes", scope: string, sheet?: string, at_s: bigint, } | { "op": "import_sector", text: string, format?: string, sheet?: string, apply: boolean, at_s: bigint, };
+arrives_at_s?: bigint, } | { "op": "set_kept", address: string, kind: string, value: unknown, writer?: string, reason?: string, at_s: bigint, } | { "op": "add_actor", id: string, parent?: string, name: string, kind: string, at_s: bigint, } | { "op": "record", address: string, at_s?: bigint, } | { "op": "disclosures", audience: string, at_s: bigint, } | { "op": "rules_step", at_s: bigint, } | { "op": "rules_pending" } | { "op": "rules_decide", proposal: string, approve: boolean, at_s?: bigint, } | { "op": "rules_policy", rule: string, approval: unknown, at_s: bigint, } | { "op": "rules" } | { "op": "codes", scope: string, sheet?: string, at_s: bigint, } | { "op": "import_sector", text: string, format?: string, sheet?: string, apply: boolean, 
+/**
+ * With `apply`: grow each world's whole system first (formation
+ * pinned to the coded main world, giant and belt counts searched),
+ * adopt it, and write the coded facts on the grown main world.
+ */
+grow: boolean, at_s: bigint, };

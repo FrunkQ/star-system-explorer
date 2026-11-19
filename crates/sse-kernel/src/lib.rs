@@ -1891,9 +1891,13 @@ impl Kernel {
                 format,
                 sheet,
                 apply,
+                grow,
                 at_s,
             } => {
                 use sse_sector_io::Format;
+                if grow && !apply {
+                    return Err(err("bad_request", "grow needs apply"));
+                }
                 let file = match format.as_deref() {
                     None => sse_sector_io::parse_any(&text),
                     Some("t5_tab") => sse_sector_io::parse_as(Format::T5Tab, &text),
@@ -1933,10 +1937,38 @@ impl Kernel {
                 let imp = sse_codes::import::import(codes, sheet, &file, &u.root)
                     .map_err(|e| err("bad_import", e))?;
                 let mut events = Vec::new();
+                let mut imp = imp;
                 if apply {
                     let t = UniverseTime::seconds(at_s);
-                    for w in imp.worlds.iter().filter(|w| w.plan.is_some()) {
+                    for w in imp.worlds.iter_mut().filter(|w| w.plan.is_some()) {
                         let sys: Address = w.system.parse().expect("import addresses parse");
+                        if grow {
+                            let plan = w.plan.clone().expect("filtered");
+                            let g = sse_codes::plan::grow(plan, sys.clone(), 6, 2)
+                                .map_err(|e| err("formation_failed", e))?;
+                            let req: FormationRequest = serde_json::from_value(serde_json::json!({
+                                "seed": g.rerun.seed,
+                                "system": sys.to_string(),
+                                "star_pins": g.rerun.star_pins,
+                                "pins": g.rerun.pins,
+                            }))
+                            .expect("a formation request");
+                            let a =
+                                adopt::adopt(&u.chronicle, &u.root, None, Some(req), Some(at_s))?;
+                            for e in a.events {
+                                events.push(
+                                    u.chronicle
+                                        .append(e)
+                                        .map_err(|e| err("chronicle", format!("{e}")))?
+                                        .hex(),
+                                );
+                            }
+                            if let Some((s, run)) = a.run {
+                                u.runs.insert(s, run);
+                            }
+                            w.main_world = g.main_world.to_string();
+                            w.guessed.extend(g.unmet.iter().cloned());
+                        }
                         let main: Address = w.main_world.parse().expect("import addresses parse");
                         for impossible in [false, true] {
                             let mut set: BTreeMap<Address, BTreeMap<String, Value>> =

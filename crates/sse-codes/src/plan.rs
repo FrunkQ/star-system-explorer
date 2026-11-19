@@ -437,6 +437,8 @@ pub fn plan(
 #[derive(Clone, Debug, Serialize, Deserialize)]
 pub struct Grown {
     pub plan: Plan,
+    /// The formation request that reproduces this system.
+    pub rerun: Rerun,
     pub run: SystemRun,
     /// The main world's address in the run.
     pub main_world: Address,
@@ -467,23 +469,46 @@ fn belts_in(run: &SystemRun) -> u32 {
 /// around the main-world pin; candidates are tried until the giant and belt
 /// counts match (at most `candidates`), else the closest is kept. Every
 /// step is seeded, so the same plan grows the same system on any device.
+/// The formation request a grown system reruns from: the candidate's seed,
+/// the star pins and the main-world pin. Running it again (for example
+/// through the kernel's `adopt`) gives the same system.
+#[derive(Clone, PartialEq, Debug, Serialize, Deserialize)]
+pub struct Rerun {
+    pub seed: String,
+    pub star_pins: sse_formation::stars::StarPins,
+    pub pins: Pins,
+}
+
+impl Plan {
+    /// Candidate `k`'s formation request (`k` = 0 is the plan's own seed).
+    pub fn rerun(&self, k: u32, tries: u32) -> Rerun {
+        let seed = if k == 0 {
+            self.seed.clone()
+        } else {
+            format!("{}#counts-{k}", self.seed)
+        };
+        Rerun {
+            seed,
+            star_pins: sse_formation::stars::StarPins {
+                primary_mass: self.stars.first().map(|s| s.mass),
+                count: Some((self.stars.len().clamp(1, 3)) as u32),
+            },
+            pins: Pins {
+                worlds: vec![self.pin.clone()],
+                tries,
+                reconstruct: false,
+            },
+        }
+    }
+}
+
 pub fn grow(plan: Plan, system: Address, candidates: u32, tries: u32) -> Result<Grown, String> {
     let mut best: Option<(u32, u32, sse_formation::pins::PinnedRun)> = None;
     for k in 0..candidates.max(1) {
-        let seed = if k == 0 {
-            plan.seed.clone()
-        } else {
-            format!("{}#counts-{k}", plan.seed)
-        };
-        let mut man = Manifest::new(&seed, system.clone(), sse_formation::scenario::envelope());
-        man.star_pins.primary_mass = plan.stars.first().map(|s| s.mass);
-        man.star_pins.count = Some((plan.stars.len().clamp(1, 3)) as u32);
-        let pins = Pins {
-            worlds: vec![plan.pin.clone()],
-            tries,
-            reconstruct: false,
-        };
-        let pr = sse_formation::pins::solve(man, &pins, Block::Modern).map_err(|e| e.0)?;
+        let r = plan.rerun(k, tries);
+        let mut man = Manifest::new(&r.seed, system.clone(), sse_formation::scenario::envelope());
+        man.star_pins = r.star_pins.clone();
+        let pr = sse_formation::pins::solve(man, &r.pins, Block::Modern).map_err(|e| e.0)?;
         let g = giants_in(&pr.run, plan.giant_min);
         let b = belts_in(&pr.run);
         let miss = plan.want_giants.map_or(0, |w| w.abs_diff(g))
@@ -516,6 +541,7 @@ pub fn grow(plan: Plan, system: Address, candidates: u32, tries: u32) -> Result<
     }
     unmet.extend(plan.stars.iter().filter_map(|s| s.note.clone()));
     Ok(Grown {
+        rerun: plan.rerun(attempt, tries),
         plan,
         run: pr.run,
         main_world,

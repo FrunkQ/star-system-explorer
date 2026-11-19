@@ -526,6 +526,11 @@ pub enum Request {
         sheet: Option<String>,
         #[serde(default)]
         apply: bool,
+        /// With `apply`: grow each world's whole system first (formation
+        /// pinned to the coded main world, giant and belt counts searched),
+        /// adopt it, and write the coded facts on the grown main world.
+        #[serde(default)]
+        grow: bool,
         at_s: i64,
     },
 }
@@ -740,7 +745,7 @@ pub fn ops() -> Vec<OpInfo> {
         o(
             "import_sector",
             Cost::Light,
-            "GM machine only; one code-sheet plan per world line (no formation runs)",
+            "GM machine only; one code-sheet plan per world line; with grow, up to 6 pinned formation runs per world (heavy for a whole sector)",
         ),
     ]
 }

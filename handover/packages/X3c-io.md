@@ -65,3 +65,9 @@ Status: built (19 Nov 2026), new crate `crates/sse-sector-io`. Build plan row X3
 - Client: `packages/ui-contract/src/sector-fetch.ts` (`fetchSector(fetch, sector, subsector?)`) gives `{text, attribution, source}` for `import_sector`.
 - Checks (`tests/ui/worker.test.ts`): URL mapping, refused names and paths, attribution, the cache hit, 404 and 405, and the client through the Worker. These are stand-ins: the real upstream was not called from here. The first live try is on the deployed site after merge.
 - Not yet: a GM import screen (sector picker, preview report, Apply). It waits on the screen hook.
+
+# X3c import with growth (19 Nov 2026)
+- `import_sector {..., apply: true, grow: true}`: each line's whole system is grown first. That uses `sse_codes::plan::grow` with 6 candidate seeds and 2 tries, pinned to the coded main world, with giant and belt counts searched. The system is adopted through the ordinary formation `adopt`, from `Grown.rerun` (the request that reproduces it). The coded facts are then written on the grown main world, which wins over the formation's values. Counts that could not be met are added to the world's `guessed` list.
+- `Plan::rerun(k, tries)` gives candidate k's formation request, which `grow` itself uses.
+- Check: `a_sector_imports_as_grown_systems` (kernel) imports all 12 Lanternfall worlds as grown systems. Every main world reads back its listed UWP through `codes`, and the systems are listed. It takes about 3 s in a debug build.
+- Limits: there is no progress reporting or job split yet, so a full 32 x 40 sector in one call is slow. It should become a job (`start_job`), or the screen should grow per subsector. Systems sit at their map hex only: no 3D placement yet.
