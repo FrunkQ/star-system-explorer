@@ -26,6 +26,8 @@ pub const KERNEL_VERSION: &str = env!("CARGO_PKG_VERSION");
 struct Universe {
     root: Address,
     seed: Seed,
+    /// The seed as the GM typed it (exports reopen from it).
+    seed_text: String,
     chronicle: Chronicle,
     branches: BTreeMap<String, ContentHash>,
     /// The pack stack the universe runs on now (bottom to top).
@@ -421,6 +423,7 @@ impl Kernel {
             Request::OpenUniverse { id, seed } => {
                 let root =
                     Address::universe(&id).map_err(|e| err("bad_address", format!("{e}")))?;
+                let seed_text = seed.clone();
                 let seed = Seed::from_text(&seed);
                 let chronicle = Chronicle::new();
                 let packs = self
@@ -431,6 +434,7 @@ impl Kernel {
                 let u = Universe {
                     root: root.clone(),
                     seed,
+                    seed_text,
                     chronicle,
                     branches: BTreeMap::new(),
                     packs,
@@ -927,6 +931,112 @@ impl Kernel {
                     tiles: r.tiles,
                     refused: r.refused,
                 }
+            }
+            Request::LifeView { body, fixture } => {
+                let (source, view) = adopt::life_view(body.as_deref(), fixture.as_deref())?;
+                Response::LifeViewed { source, view }
+            }
+            Request::ExportChronicle => {
+                let u = self.universe()?;
+                let events: Vec<serde_json::Value> = u
+                    .chronicle
+                    .events()
+                    .iter()
+                    .map(|e| {
+                        let bytes = sse_core::cbor::to_canonical(&e.body).expect("event bodies encode");
+                        serde_json::json!({"id": e.id.hex(), "kind": e.body.kind, "cbor": adopt::hex(&bytes)})
+                    })
+                    .collect();
+                let manifest_id = u.manifest().id().hex();
+                Response::ChronicleExported {
+                    export: serde_json::json!({
+                        "format": adopt::EXPORT_FORMAT,
+                        "kernel_version": KERNEL_VERSION,
+                        "root": u.root.to_string(),
+                        "seed": u.seed_text,
+                        "manifest_id": manifest_id,
+                        "packs": u.packs,
+                        "head": u.chronicle.head().hex(),
+                        "events": events,
+                    }),
+                }
+            }
+            Request::ImportChronicle { export } => {
+                let ex = &export;
+                if ex["format"] != adopt::EXPORT_FORMAT {
+                    return Err(err(
+                        "bad_export",
+                        format!("format must be {}", adopt::EXPORT_FORMAT),
+                    ));
+                }
+                let text = |k: &str| -> Result<String, Response> {
+                    ex[k]
+                        .as_str()
+                        .map(str::to_string)
+                        .ok_or_else(|| err("bad_export", format!("missing {k}")))
+                };
+                let root: Address = text("root")?
+                    .parse()
+                    .map_err(|e| err("bad_export", format!("root: {e}")))?;
+                let seed_text = text("seed")?;
+                let mut chronicle = Chronicle::new();
+                let evs = ex["events"]
+                    .as_array()
+                    .ok_or_else(|| err("bad_export", "missing events"))?;
+                for (k, e) in evs.iter().enumerate() {
+                    let bytes = e["cbor"]
+                        .as_str()
+                        .and_then(adopt::unhex)
+                        .ok_or_else(|| err("bad_export", format!("event {k}: missing cbor")))?;
+                    let body: EventBody = sse_core::cbor::from_canonical(&bytes)
+                        .map_err(|x| err("bad_export", format!("event {k}: {x:?}")))?;
+                    let ev = Event::new(body)
+                        .map_err(|x| err("bad_export", format!("event {k}: {x}")))?;
+                    if e["id"].as_str() != Some(ev.id.hex().as_str()) {
+                        return Err(err(
+                            "bad_export",
+                            format!("event {k}: id does not match its content"),
+                        ));
+                    }
+                    chronicle
+                        .append(ev)
+                        .map_err(|x| err("bad_export", format!("event {k}: {x}")))?;
+                }
+                if ex["head"].as_str() != Some(chronicle.head().hex().as_str()) {
+                    return Err(err("bad_export", "head does not match the events"));
+                }
+                let packs: Vec<sse_chronicle::PackRef> =
+                    serde_json::from_value(ex["packs"].clone())
+                        .map_err(|x| err("bad_export", format!("packs: {x}")))?;
+                let stack_matches = self
+                    .stack
+                    .as_ref()
+                    .map(|(s, _)| pack_refs(s) == packs)
+                    .unwrap_or(packs.is_empty());
+                let u = Universe {
+                    root: root.clone(),
+                    seed: Seed::from_text(&seed_text),
+                    seed_text,
+                    chronicle,
+                    branches: BTreeMap::new(),
+                    packs,
+                    looks: BTreeMap::new(),
+                    runs: BTreeMap::new(),
+                };
+                let r = Response::ChronicleImported {
+                    root: root.to_string(),
+                    events: evs.len() as u32,
+                    head: u.chronicle.head().hex(),
+                    state_hash: u
+                        .chronicle
+                        .state_at(UniverseTime::seconds(i64::MAX))
+                        .hash()
+                        .hex(),
+                    manifest_id: u.manifest().id().hex(),
+                    stack_matches,
+                };
+                self.universe = Some(u);
+                r
             }
             Request::Systems => {
                 let u = self.universe()?;

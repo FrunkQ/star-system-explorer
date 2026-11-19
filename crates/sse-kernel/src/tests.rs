@@ -834,3 +834,120 @@ fn adopt_age_and_read_back_a_system() {
         "bad_address"
     );
 }
+
+#[test]
+fn save_and_reopen_a_universe_and_read_life_views() {
+    let send = |k: &mut crate::Kernel, v: serde_json::Value| -> serde_json::Value {
+        serde_json::from_str(&k.handle_json(&v.to_string())).unwrap()
+    };
+    let pack: serde_json::Value = serde_json::from_str(
+        &std::fs::read_to_string(root().join("packs/base-time/pack.json")).unwrap(),
+    )
+    .unwrap();
+    let mut k = crate::Kernel::new();
+    send(
+        &mut k,
+        serde_json::json!({"op": "load_stack", "packs": [pack]}),
+    );
+    send(
+        &mut k,
+        serde_json::json!({"op": "open_universe", "id": "home", "seed": "home seed"}),
+    );
+    let form = serde_json::json!({"seed": "adopt-1", "system": "u:home/sys:5", "star_pins": {"primary_mass": 1.0}});
+    send(
+        &mut k,
+        serde_json::json!({"op": "adopt", "formation": form}),
+    );
+    let r = send(
+        &mut k,
+        serde_json::json!({"op": "resolved_system", "system": "u:home/sys:5"}),
+    );
+    let la = send(
+        &mut k,
+        serde_json::json!({"op": "look_ahead", "system": r["spec"], "target_myr": r["spec"]["age_myr"].as_f64().unwrap() + 1000.0}),
+    );
+    send(
+        &mut k,
+        serde_json::json!({"op": "commit_look_ahead", "branch": la["branch"], "move_now_myr": r["spec"]["age_myr"].as_f64().unwrap() + 500.0, "write_back": true}),
+    );
+    let before = send(&mut k, serde_json::json!({"op": "state_hash"}));
+    let read_before = send(
+        &mut k,
+        serde_json::json!({"op": "resolved_system", "system": "u:home/sys:5"}),
+    );
+    let man = send(&mut k, serde_json::json!({"op": "manifest"}));
+    let ex = send(&mut k, serde_json::json!({"op": "export_chronicle"}));
+    assert_eq!(ex["type"], "chronicle_exported", "{ex}");
+    // Through text, as a browser would save it.
+    let saved: serde_json::Value = serde_json::from_str(&ex["export"].to_string()).unwrap();
+
+    let mut k2 = crate::Kernel::new();
+    send(
+        &mut k2,
+        serde_json::json!({"op": "load_stack", "packs": [pack]}),
+    );
+    let im = send(
+        &mut k2,
+        serde_json::json!({"op": "import_chronicle", "export": saved}),
+    );
+    assert_eq!(im["type"], "chronicle_imported", "{im}");
+    assert_eq!(im["stack_matches"], true);
+    assert_eq!(
+        send(&mut k2, serde_json::json!({"op": "state_hash"})),
+        before
+    );
+    assert_eq!(
+        send(
+            &mut k2,
+            serde_json::json!({"op": "resolved_system", "system": "u:home/sys:5"})
+        ),
+        read_before
+    );
+    assert_eq!(im["manifest_id"], ex["export"]["manifest_id"]);
+    let _ = man;
+    // Tampering is refused.
+    let mut bad = saved.clone();
+    let c = bad["events"][0]["cbor"].as_str().unwrap().to_string();
+    let flipped = format!(
+        "{}{}",
+        &c[..c.len() - 2],
+        if c.ends_with("00") { "01" } else { "00" }
+    );
+    bad["events"][0]["cbor"] = flipped.into();
+    let e = send(
+        &mut crate::Kernel::new(),
+        serde_json::json!({"op": "import_chronicle", "export": bad}),
+    );
+    assert_eq!(e["code"], "bad_export", "{e}");
+    // A different stack is flagged, not refused.
+    let im3 = send(
+        &mut crate::Kernel::new(),
+        serde_json::json!({"op": "import_chronicle", "export": saved}),
+    );
+    assert_eq!(im3["stack_matches"], false);
+
+    // Life views by fixture.
+    let v = send(
+        &mut k,
+        serde_json::json!({"op": "life_view", "fixture": "europa"}),
+    );
+    assert_eq!(v["type"], "life_viewed", "{v}");
+    assert_eq!(v["source"], "fixture:europa");
+    let hooks: Vec<&str> = v["view"]["hooks"]
+        .as_array()
+        .unwrap()
+        .iter()
+        .map(|h| h["id"].as_str().unwrap())
+        .collect();
+    assert!(hooks.contains(&"hidden_life"), "{hooks:?}");
+    let e = send(
+        &mut k,
+        serde_json::json!({"op": "life_view", "fixture": "mars"}),
+    );
+    assert_eq!(e["code"], "unknown_fixture");
+    let e = send(
+        &mut k,
+        serde_json::json!({"op": "life_view", "body": "u:home/sys:5/body:1"}),
+    );
+    assert_eq!(e["code"], "no_habitats");
+}

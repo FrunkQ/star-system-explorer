@@ -855,3 +855,78 @@ pub(crate) fn systems_of(ch: &Chronicle, root: &Address) -> Vec<serde_json::Valu
         })
         .collect()
 }
+
+/// `export_chronicle` document format.
+pub const EXPORT_FORMAT: &str = "sse.chronicle-export/1";
+
+/// L1d's life view for a fixture world (bodies come later).
+pub(crate) fn life_view(
+    body: Option<&str>,
+    fixture: Option<&str>,
+) -> Result<(String, serde_json::Value), Response> {
+    if let Some(b) = body {
+        return Err(err(
+            "no_habitats",
+            format!("{b}: adopted systems do not carry habitat graphs yet; use a fixture"),
+        ));
+    }
+    let name = fixture.ok_or_else(|| err("bad_request", "give a fixture or a body"))?;
+    let cases = sse_life::scenario::signature_cases();
+    let names: Vec<String> = cases.iter().map(|c| c.0.clone()).collect();
+    let (n, b, h, o) = cases.into_iter().find(|c| c.0 == name).ok_or_else(|| {
+        err(
+            "unknown_fixture",
+            format!("no life fixture {name}; fixtures: {}", names.join(", ")),
+        )
+    })?;
+    let s = sse_life::signatures::signatures(
+        b.as_ref(),
+        h.as_ref(),
+        &o,
+        &sse_life::signatures::SignatureParams::default(),
+    );
+    let inp = sse_life::sift::HookInputs {
+        habitable_until_myr: None,
+        o2_fraction: s.o2,
+        now_myr: o.age_myr,
+    };
+    let v = sse_life::sift::view(
+        &n,
+        b.as_ref(),
+        h.as_ref(),
+        &s,
+        &inp,
+        &sse_life::sift::SiftParams::default(),
+    );
+    Ok((
+        format!("fixture:{n}"),
+        serde_json::to_value(v).expect("plain data"),
+    ))
+}
+
+pub(crate) fn hex(b: &[u8]) -> String {
+    const D: &[u8; 16] = b"0123456789abcdef";
+    let mut s = String::with_capacity(b.len() * 2);
+    for x in b {
+        s.push(D[(x >> 4) as usize] as char);
+        s.push(D[(x & 15) as usize] as char);
+    }
+    s
+}
+
+pub(crate) fn unhex(s: &str) -> Option<Vec<u8>> {
+    if !s.len().is_multiple_of(2) {
+        return None;
+    }
+    let v = |c: u8| -> Option<u8> {
+        match c {
+            b'0'..=b'9' => Some(c - b'0'),
+            b'a'..=b'f' => Some(c - b'a' + 10),
+            _ => None,
+        }
+    };
+    s.as_bytes()
+        .chunks(2)
+        .map(|p| Some(v(p[0])? << 4 | v(p[1])?))
+        .collect()
+}
