@@ -19,6 +19,22 @@ const port = 9700 + Math.floor(Math.random() * 90);
 const base = `http://localhost:${port}/`;
 const server = spawn(process.execPath, ["scripts/serve.mjs", "packages/shell/dist", String(port)], { stdio: "ignore" });
 await new Promise((r) => setTimeout(r, 400));
+/** Pixels of an element as the user sees them (works for 2D and GPU canvases alike). */
+const pixelsOf = async (page, loc) => {
+  const b64 = (await loc.screenshot()).toString("base64");
+  return page.evaluate(async (b) => {
+    const img = new Image();
+    img.src = `data:image/png;base64,${b}`;
+    await img.decode();
+    const c = document.createElement("canvas");
+    c.width = img.width;
+    c.height = img.height;
+    const g = c.getContext("2d");
+    g.drawImage(img, 0, 0);
+    const at = (x, y) => Array.from(g.getImageData(x, y, 1, 1).data).slice(0, 3);
+    return { centre: at(img.width >> 1, img.height >> 1), corner: at(1, 1) };
+  }, b64);
+};
 const shot = async (page, n) => {
   if (screens) (mkdirSync(screens, { recursive: true }), await page.screenshot({ path: `${screens}/${n}.png` }));
 };
@@ -52,29 +68,25 @@ try {
     await gm.locator('.area-chart .body[aria-label^="Earth"]').first().click();
     await screenBtn(gm, "Body").click();
     const t0 = Date.now();
-    await gm.waitForSelector("[data-body] canvas", { timeout: 30000 });
+    await gm.waitForSelector("[data-body] [data-tier]:not([data-tier='']) canvas", { timeout: 30000 });
     const built = Date.now() - t0;
     const covers = await gm.locator("[data-covers]").innerText();
     const water = Number(/(\d+)% under water/.exec(covers)?.[1] ?? "0");
     assert.ok(water > 40, `Earth is mostly under water: ${covers}`);
     assert.ok((await gm.locator("[data-regime]").innerText()).length > 0, "the regime is named");
-    const canvas = gm.locator("[data-body] canvas");
-    assert.match(await canvas.getAttribute("aria-label"), /Globe of Earth\. Earth: \d+% under water/);
-    // The disk is drawn: the centre pixel is opaque and the corner is not.
-    const px = await canvas.evaluate((c) => {
-      const g = c.getContext("2d");
-      const n = c.width;
-      return [g.getImageData(n / 2, n / 2, 1, 1).data[3], g.getImageData(1, 1, 1, 1).data[3]];
-    });
-    assert.deepEqual(px, [255, 0]);
-    const centre = () => canvas.evaluate((c) => Array.from(c.getContext("2d").getImageData(c.width / 2, c.height / 2, 1, 1).data).join(","));
-    const before = await centre();
-    await canvas.focus();
+    const globe = gm.locator("[data-body] [data-tier]");
+    assert.match(await globe.getAttribute("aria-label"), /Globe of Earth\. Earth: \d+% under water/);
+    // The disk is drawn (whatever the tier): its centre is not the page's ground.
+    await gm.waitForTimeout(300);
+    const px = await pixelsOf(gm, globe);
+    assert.notDeepEqual(px.centre, px.corner, "the globe is drawn");
+    const before = px.centre.join(",");
+    await globe.focus();
     await gm.keyboard.press("Shift+ArrowRight");
     await gm.keyboard.press("Shift+ArrowRight");
-    assert.equal(await canvas.getAttribute("data-lon"), "90");
-    await gm.waitForTimeout(200);
-    const after = await centre();
+    assert.equal(await globe.getAttribute("data-lon"), "90");
+    await gm.waitForTimeout(300);
+    const after = (await pixelsOf(gm, globe)).centre.join(",");
     assert.notEqual(after, before, "turning the globe redraws it");
     // The Cutaway below names Earth too, from the kernel.
     await gm.waitForSelector("[data-cutaway]");
