@@ -1,0 +1,16 @@
+{
+  "schema": "sse.change-requests/0",
+  "note": "Sample change requests in the shape Orac (A2) will file. Orac is not connected; these are fixtures and are labelled as such on screen.",
+  "requests": [
+    {
+      "id": "orac.dayside-heat",
+      "title": "Keep the heat on the dayside",
+      "author": "orac",
+      "rationale": "You describe Kestrel's inner worlds as tidally locked, one face always to the star. With no day and night the heat a world absorbs is not spread over the whole sphere. A redistribution factor of 1/2 (dayside only) instead of 1/4 (whole sphere) models that. It raises equilibrium and surface temperatures for every world this flow serves.",
+      "flow": "sse.base.planet-climate",
+      "edits": [{ "node": "teq", "param": "redistribution", "before": 0.25, "after": 0.5 }],
+      "status": "draft",
+      "fixture": true
+    }
+  ]
+}

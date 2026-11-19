@@ -1,0 +1,339 @@
+{
+ "schema": "sse.symbology/1",
+ "id": "sse.symbology.colour-coded",
+ "name": "Colour-coded",
+ "description": "SSE 3's own colours on plain discs: SSE as people know it. Colour tells V3's eight groups apart (habitable, biosphere, brown dwarf, ice giant, gas giant, terrestrial, belt, construct), not every class.",
+ "bindings": [
+  {
+   "applies_to": "star",
+   "channel": "shape",
+   "from": "kind",
+   "scale": {
+    "table": {
+     "star": "star"
+    }
+   }
+  },
+  {
+   "applies_to": "star",
+   "channel": "size",
+   "from": "kind",
+   "scale": {
+    "table": {
+     "star": 7
+    }
+   }
+  },
+  {
+   "applies_to": "planet",
+   "channel": "size",
+   "from": "tag:size:",
+   "scale": {
+    "table": {
+     "small": 4.5,
+     "medium": 6,
+     "large": 9,
+     "terrestrial": 6,
+     "giant": 9
+    }
+   },
+   "fallback": 5
+  },
+  {
+   "applies_to": "planet",
+   "channel": "ring",
+   "from": "class",
+   "scale": {
+    "table": {
+     "planet/ringed": true
+    }
+   },
+   "fallback": false
+  },
+  {
+   "applies_to": "moon",
+   "channel": "size",
+   "from": "kind",
+   "scale": {
+    "table": {
+     "moon": 2.5
+    }
+   }
+  },
+  {
+   "applies_to": "planet",
+   "channel": "colour",
+   "from": "class",
+   "scale": {
+    "table": {
+     "planet/ecumenopolis": "#cc6600",
+     "planet/rogue": "#cc0000",
+     "planet/protoplanet": "#cc6600",
+     "planet/planetesimal": "#cc6600",
+     "asteroid/c-type": "#cc6600",
+     "asteroid/s-type": "#cc6600",
+     "asteroid/m-type": "#cc6600",
+     "asteroid/comet": "#cc6600",
+     "planet/dwarf-planet": "#cc6600",
+     "planet/sub-earth": "#cc6600",
+     "planet/terrestrial": "#cc6600",
+     "planet/super-earth": "#cc6600",
+     "planet/mega-earth": "#cc6600",
+     "planet/supermassive-terrestrial": "#cc6600",
+     "planet/iron": "#cc6600",
+     "planet/silicate": "#cc6600",
+     "planet/coreless": "#cc6600",
+     "planet/carbon": "#cc6600",
+     "planet/lava": "#cc6600",
+     "planet/desert": "#cc6600",
+     "planet/barren": "#cc6600",
+     "planet/crater": "#cc6600",
+     "planet/ice": "#cc6600",
+     "planet/ocean": "#cc6600",
+     "planet/subsurface-ocean": "#cc6600",
+     "planet/hycean": "#cc6600",
+     "planet/methane": "#cc6600",
+     "planet/ammonia-planet": "#cc6600",
+     "planet/chlorine": "#cc6600",
+     "planet/fluorine": "#cc6600",
+     "planet/sulfur": "#cc6600",
+     "planet/phosphorus": "#cc6600",
+     "planet/earth-analogue": "#cc6600",
+     "planet/earth-like": "#cc6600",
+     "planet/superhabitable": "#cc6600",
+     "planet/mini-neptune": "#cc6600",
+     "planet/sub-neptune": "#add8e6",
+     "planet/ice-giant": "#add8e6",
+     "planet/super-neptune": "#add8e6",
+     "planet/hot-neptune": "#cc6600",
+     "planet/ultra-hot-neptune": "#cc6600",
+     "planet/gas-giant": "#cc0000",
+     "planet/mini-jupiter": "#cc0000",
+     "planet/super-jupiter": "#cc0000",
+     "planet/hot-jupiter": "#cc0000",
+     "planet/ultra-hot-jupiter": "#cc0000",
+     "planet/puffy": "#cc0000",
+     "planet/super-puff": "#cc6600",
+     "planet/cloudless-gas-giant": "#cc0000",
+     "planet/water-clouds-gas-giant": "#cc0000",
+     "planet/ammonia-clouds-gas-giant": "#cc0000",
+     "planet/alkali-metal-clouds-gas-giant": "#cc0000",
+     "planet/silicate-clouds-gas-giant": "#cc0000",
+     "planet/helium": "#cc0000",
+     "planet/chthonian": "#cc6600",
+     "planet/sub-brown-dwarf": "#cc0000",
+     "planet/brown-dwarf": "#5d4037",
+     "planet/ultra-cool-dwarf": "#5d4037",
+     "planet/eyeball": "#cc6600",
+     "planet/hot-eyeball": "#cc6600",
+     "planet/cold-eyeball": "#cc6600",
+     "planet/mesoplanet": "#cc6600",
+     "planet/forest": "#00ff00",
+     "planet/jungle": "#00ff00",
+     "planet/swamp": "#00ff00"
+    }
+   },
+   "fallback": null,
+   "prefer": [
+    {
+     "from": "tag:habitability/",
+     "scale": {
+      "table": {
+       "earth-like": "#007bff",
+       "human": "#007bff"
+      }
+     }
+    }
+   ]
+  },
+  {
+   "applies_to": "star",
+   "channel": "colour",
+   "from": "tag:spectral:",
+   "scale": {
+    "table": {
+     "O": "#9bb0ff",
+     "B": "#aabfff",
+     "A": "#cad8ff",
+     "F": "#f8f7ff",
+     "G": "#fff4ea",
+     "K": "#ffd2a1",
+     "M": "#ffc46f",
+     "L": "#8a4a4a",
+     "T": "#4a2a2a",
+     "Y": "#2a1a1a",
+     "WD": "#f0f0f0",
+     "NS": "#c0c0ff",
+     "magnetar": "#800080",
+     "BH": "#000000"
+    }
+   },
+   "fallback": null
+  },
+  {
+   "applies_to": "belt",
+   "channel": "colour",
+   "from": "kind",
+   "scale": {
+    "table": {
+     "belt": "#888888"
+    }
+   },
+   "fallback": null
+  },
+  {
+   "applies_to": "station",
+   "channel": "colour",
+   "from": "kind",
+   "scale": {
+    "table": {
+     "station": "#ffd24d"
+    }
+   },
+   "fallback": null
+  },
+  {
+   "applies_to": "planet",
+   "channel": "glyph",
+   "from": "class",
+   "scale": {
+    "table": {
+     "planet/ecumenopolis": "Ec",
+     "planet/rogue": "Ro",
+     "planet/protoplanet": "Pr",
+     "planet/planetesimal": "Pl",
+     "asteroid/c-type": "CT",
+     "asteroid/s-type": "ST",
+     "asteroid/m-type": "MT",
+     "asteroid/comet": "Co",
+     "planet/dwarf-planet": "DP",
+     "planet/sub-earth": "SE",
+     "planet/terrestrial": "Te",
+     "planet/super-earth": "Sea",
+     "planet/mega-earth": "ME",
+     "planet/supermassive-terrestrial": "Ste",
+     "planet/iron": "Ir",
+     "planet/silicate": "Si",
+     "planet/coreless": "Cr",
+     "planet/carbon": "Ca",
+     "planet/lava": "La",
+     "planet/desert": "De",
+     "planet/barren": "Ba",
+     "planet/crater": "Ce",
+     "planet/ice": "Ic",
+     "planet/ocean": "Oc",
+     "planet/subsurface-ocean": "SO",
+     "planet/hycean": "Hy",
+     "planet/methane": "Mh",
+     "planet/ammonia-planet": "AP",
+     "planet/chlorine": "Ch",
+     "planet/fluorine": "Fl",
+     "planet/sulfur": "Su",
+     "planet/phosphorus": "Ph",
+     "planet/earth-analogue": "EA",
+     "planet/earth-like": "EL",
+     "planet/superhabitable": "Sp",
+     "planet/mini-neptune": "MN",
+     "planet/sub-neptune": "SN",
+     "planet/ice-giant": "IG",
+     "planet/super-neptune": "Sne",
+     "planet/hot-neptune": "HN",
+     "planet/ultra-hot-neptune": "UHN",
+     "planet/gas-giant": "GG",
+     "planet/mini-jupiter": "MJ",
+     "planet/super-jupiter": "SJ",
+     "planet/hot-jupiter": "HJ",
+     "planet/ultra-hot-jupiter": "UHJ",
+     "planet/puffy": "Pu",
+     "planet/super-puff": "Spu",
+     "planet/cloudless-gas-giant": "CGG",
+     "planet/water-clouds-gas-giant": "WCG",
+     "planet/ammonia-clouds-gas-giant": "ACG",
+     "planet/alkali-metal-clouds-gas-giant": "AMC",
+     "planet/silicate-clouds-gas-giant": "SCG",
+     "planet/helium": "He",
+     "planet/chthonian": "Cn",
+     "planet/sub-brown-dwarf": "SBD",
+     "planet/brown-dwarf": "BD",
+     "planet/ultra-cool-dwarf": "UCD",
+     "planet/eyeball": "Ey",
+     "planet/hot-eyeball": "Hey",
+     "planet/cold-eyeball": "Cey",
+     "planet/mesoplanet": "Ms",
+     "planet/forest": "Fo",
+     "planet/jungle": "Ju",
+     "planet/swamp": "Sw"
+    }
+   },
+   "fallback": null,
+   "when": "one-colour"
+  }
+ ],
+ "legend": [
+  "planet/dwarf-planet",
+  "planet/sub-earth",
+  "planet/terrestrial",
+  "planet/super-earth",
+  "planet/mega-earth",
+  "planet/supermassive-terrestrial",
+  "planet/iron",
+  "planet/silicate",
+  "planet/coreless",
+  "planet/carbon",
+  "planet/barren",
+  "planet/crater",
+  "planet/chthonian",
+  "planet/mesoplanet",
+  "planet/lava",
+  "planet/desert",
+  "planet/hot-eyeball",
+  "planet/chlorine",
+  "planet/fluorine",
+  "planet/sulfur",
+  "planet/phosphorus",
+  "planet/ocean",
+  "planet/hycean",
+  "planet/earth-analogue",
+  "planet/earth-like",
+  "planet/superhabitable",
+  "planet/eyeball",
+  "planet/forest",
+  "planet/jungle",
+  "planet/swamp",
+  "planet/ice",
+  "planet/subsurface-ocean",
+  "planet/methane",
+  "planet/ammonia-planet",
+  "planet/cold-eyeball",
+  "planet/mini-neptune",
+  "planet/sub-neptune",
+  "planet/ice-giant",
+  "planet/super-neptune",
+  "planet/hot-neptune",
+  "planet/ultra-hot-neptune",
+  "planet/gas-giant",
+  "planet/mini-jupiter",
+  "planet/super-jupiter",
+  "planet/hot-jupiter",
+  "planet/ultra-hot-jupiter",
+  "planet/puffy",
+  "planet/super-puff",
+  "planet/cloudless-gas-giant",
+  "planet/water-clouds-gas-giant",
+  "planet/ammonia-clouds-gas-giant",
+  "planet/alkali-metal-clouds-gas-giant",
+  "planet/silicate-clouds-gas-giant",
+  "planet/helium",
+  "planet/sub-brown-dwarf",
+  "planet/brown-dwarf",
+  "planet/ultra-cool-dwarf",
+  "planet/ecumenopolis",
+  "planet/rogue",
+  "planet/protoplanet",
+  "planet/planetesimal",
+  "asteroid/c-type",
+  "asteroid/s-type",
+  "asteroid/m-type",
+  "asteroid/comet"
+ ]
+}

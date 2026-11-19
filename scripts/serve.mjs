@@ -4,7 +4,7 @@ import { readFile } from "node:fs/promises";
 import { join, extname, normalize, resolve } from "node:path";
 const root = resolve(process.argv[2] ?? ".");
 const port = Number(process.argv[3] ?? 8080);
-const types = { ".html": "text/html", ".js": "text/javascript", ".wasm": "application/wasm", ".json": "application/json", ".jsonl": "text/plain" };
+const types = { ".html": "text/html", ".js": "text/javascript", ".wasm": "application/wasm", ".json": "application/json", ".jsonl": "text/plain", ".css": "text/css", ".svg": "image/svg+xml", ".png": "image/png", ".woff2": "font/woff2", ".woff": "font/woff" };
 createServer(async (req, res) => {
   const p = normalize(join(root, decodeURIComponent(new URL(req.url, "http://x").pathname)));
   const file = p.endsWith("/") ? join(p, "index.html") : p;

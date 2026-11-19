@@ -1,0 +1,10 @@
+{
+  "name": "@sse/chart-grammar",
+  "version": "0.1.0",
+  "private": true,
+  "license": "Apache-2.0",
+  "type": "module",
+  "description": "Chart grammar components (Svelte 5): ground, grid, ink, hatch, stamps, cards, time ruler. Drawn only with theme tokens; marks come from symbology.",
+  "exports": { ".": "./src/index.ts" },
+  "peerDependencies": { "svelte": "^5.0.0" }
+}

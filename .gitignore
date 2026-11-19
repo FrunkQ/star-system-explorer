@@ -5,6 +5,7 @@ node_modules/
 /packages/kernel-client/wasm/
 *.log
 .DS_Store
+/packages/shell/public/
 /dist/
 /.tools/
 /.wrangler/

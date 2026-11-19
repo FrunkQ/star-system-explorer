@@ -1,0 +1,14 @@
+{
+  "schema": "sse.screen/1",
+  "id": "sse.workspace.gm.screens",
+  "label": "Screens",
+  "audience": "gm",
+  "layout": "chart-room",
+  "theme": "chart-room",
+  "symbology": "sse.symbology.diagrammatic",
+  "vocab": "physics",
+  "items": [
+    { "view": "sse.view.screen-composer", "area": "chart", "params": { "orac": "documents/orac.screen-request.json" } },
+    { "view": "sse.view.time-ruler", "area": "ruler" }
+  ]
+}

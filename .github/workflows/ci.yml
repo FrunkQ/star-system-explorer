@@ -45,6 +45,30 @@ jobs:
       - uses: actions/upload-pages-artifact@v3
         with: { path: tests/harness }
 
+  ui:
+    name: ui (GM shell, U0 and U1 checks)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with: { node-version: 22 }
+      - run: rustup show
+      - run: cargo install wasm-bindgen-cli --version 0.2.130 --locked
+      - run: npm ci
+      - run: scripts/build-wasm.sh
+      - run: npm run ui:check
+      - run: npm run ui:test
+      - run: scripts/build-shell.sh
+      - run: npm install --no-save playwright@1.63.0 && npx playwright install --with-deps chromium firefox
+      - run: node tests/ui/shell.e2e.mjs chromium firefox --screens ui-screens
+      - run: node tests/ui/players.e2e.mjs chromium firefox --screens ui-screens
+      - run: node tests/ui/setup.e2e.mjs chromium firefox --screens ui-screens
+      - run: node tests/ui/themes.e2e.mjs chromium firefox --screens ui-screens
+      - run: node tests/ui/symbols.e2e.mjs chromium firefox --screens ui-screens
+      - run: node tests/ui/styles.e2e.mjs chromium firefox --screens ui-screens
+      - uses: actions/upload-artifact@v4
+        with: { name: ui-screens, path: ui-screens }
+
   # Publishes the harness page so it can be opened on phones and tablets.
   # Needs GitHub Pages enabled with source "GitHub Actions" (repo Settings, Pages).
   pages:

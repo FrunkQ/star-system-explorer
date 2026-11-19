@@ -1,0 +1,14 @@
+{
+  "schema": "sse.screen/1",
+  "id": "sse.workspace.gm.packs",
+  "label": "Packs",
+  "audience": "gm",
+  "layout": "chart-room",
+  "theme": "chart-room",
+  "symbology": "sse.symbology.diagrammatic",
+  "vocab": "physics",
+  "items": [
+    { "view": "sse.view.pack-stack", "area": "chart", "params": { "samples": ["packs/samples/warm-worlds.json"] } },
+    { "view": "sse.view.time-ruler", "area": "ruler" }
+  ]
+}

@@ -1,0 +1,14 @@
+{
+  "schema": "sse.screen/1",
+  "id": "sse.workspace.gm.data-views",
+  "label": "Player data",
+  "audience": "gm",
+  "layout": "chart-room",
+  "theme": "chart-room",
+  "symbology": "sse.symbology.diagrammatic",
+  "vocab": "physics",
+  "items": [
+    { "view": "sse.view.data-views", "area": "chart" },
+    { "view": "sse.view.time-ruler", "area": "ruler" }
+  ]
+}

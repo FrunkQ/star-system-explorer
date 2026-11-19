@@ -1,0 +1,136 @@
+{
+ "schema": "sse.vocab/0",
+ "id": "sse.vocab.guide",
+ "fields": {
+  "name": {
+   "label": "Name"
+  },
+  "kind": {
+   "label": "Kind"
+  },
+  "class": { "label": "What sort of world", "sentence": "The locals would call it {text}.", "values": {"planet/ecumenopolis": "ecumenopolis", "planet/rogue": "rogue", "planet/protoplanet": "protoplanet", "planet/planetesimal": "planetesimal", "asteroid/c-type": "c type", "asteroid/s-type": "s type", "asteroid/m-type": "m type", "asteroid/comet": "comet", "asteroid/rubble-pile": "rubble pile", "asteroid/contact-binary": "contact binary", "planet/dwarf-planet": "dwarf planet", "planet/sub-earth": "sub earth", "planet/terrestrial": "terrestrial", "planet/super-earth": "super earth", "planet/mega-earth": "mega earth", "planet/supermassive-terrestrial": "supermassive terrestrial", "planet/iron": "iron", "planet/silicate": "silicate", "planet/coreless": "coreless", "planet/carbon": "carbon", "planet/lava": "lava", "planet/desert": "desert", "planet/barren": "barren", "planet/crater": "crater", "planet/ice": "ice", "planet/ocean": "ocean", "planet/subsurface-ocean": "subsurface ocean", "planet/hycean": "hycean", "planet/methane": "methane", "planet/ammonia-planet": "ammonia planet", "planet/chlorine": "chlorine", "planet/fluorine": "fluorine", "planet/sulfur": "sulfur", "planet/phosphorus": "phosphorus", "planet/earth-analogue": "earth analogue", "planet/earth-like": "earth like", "planet/superhabitable": "superhabitable", "planet/mini-neptune": "mini neptune", "planet/sub-neptune": "sub neptune", "planet/ice-giant": "ice giant", "planet/super-neptune": "super neptune", "planet/hot-neptune": "hot neptune", "planet/ultra-hot-neptune": "ultra hot neptune", "planet/gas-giant": "gas giant", "planet/mini-jupiter": "mini jupiter", "planet/super-jupiter": "super jupiter", "planet/hot-jupiter": "hot jupiter", "planet/ultra-hot-jupiter": "ultra hot jupiter", "planet/puffy": "puffy", "planet/super-puff": "super puff", "planet/cloudless-gas-giant": "cloudless gas giant", "planet/water-clouds-gas-giant": "water clouds gas giant", "planet/ammonia-clouds-gas-giant": "ammonia clouds gas giant", "planet/alkali-metal-clouds-gas-giant": "alkali metal clouds gas giant", "planet/silicate-clouds-gas-giant": "silicate clouds gas giant", "planet/helium": "helium", "planet/chthonian": "chthonian", "planet/sub-brown-dwarf": "sub brown dwarf", "planet/brown-dwarf": "brown dwarf", "planet/ultra-cool-dwarf": "ultra cool dwarf", "planet/eyeball": "eyeball", "planet/hot-eyeball": "hot eyeball", "planet/cold-eyeball": "cold eyeball", "planet/mesoplanet": "mesoplanet", "planet/ringed": "ringed", "planet/ultra-short-period": "ultra short period", "planet/toroidal": "toroidal", "planet/ellipsoid": "ellipsoid", "planet/disrupted": "disrupted", "planet/forest": "forest", "planet/jungle": "jungle", "planet/swamp": "swamp"} },
+  "size_class": {
+   "label": "How big",
+   "sentence": "It's a {text} sort of world."
+  },
+  "colour": {
+   "label": "Looks like",
+   "sentence": "Seen from a distance it's {text}. Lovely."
+  },
+  "spectral": {
+   "label": "Star type",
+   "sentence": "Its star is type {text}."
+  },
+  "luminosity_w": {
+   "label": "Brightness",
+   "scale": 3.828e+26,
+   "unit": "× Sun",
+   "digits": 2,
+   "sentence": "It shines {text}.",
+   "unknown": "How bright it is: {placeholder}."
+  },
+  "mass_kg": {
+   "label": "Heft",
+   "scale": 5.9722e+24,
+   "unit": "× Earth",
+   "digits": 2,
+   "sentence": "It weighs in at {text}.",
+   "unknown": "Its mass: {placeholder}."
+  },
+  "orbit.semi_major_axis_m": {
+   "label": "Distance from home star",
+   "scale": 149597870700.0,
+   "unit": "AU",
+   "digits": 2,
+   "sentence": "It swings round {text} out from its star.",
+   "unknown": "Its orbit: {placeholder}."
+  },
+  "orbit.period_s": {
+   "label": "Length of a year",
+   "scale": 86400,
+   "unit": "days",
+   "digits": 3,
+   "sentence": "Birthdays come round every {text}."
+  },
+  "orbit.*": {
+   "label": "Orbit"
+  },
+  "atmosphere.composition": {
+   "label": "What the air is",
+   "sentence": "Breathe in: it's {text}.",
+   "unknown": "Its air: {placeholder}."
+  },
+  "atmosphere.pressure_pa": {
+   "label": "Air pressure",
+   "scale": 101325,
+   "unit": "atm",
+   "digits": 2,
+   "sentence": "Pressure at the surface is {text}. Ears may pop."
+  },
+  "atmosphere.*": {
+   "label": "Air"
+  },
+  "surface.class": {
+   "label": "Weather",
+   "sentence": "The weather is broadly {text}."
+  },
+  "surface.temp_mean_k": {
+   "label": "Mean temperature",
+   "unit": "K",
+   "digits": 3,
+   "sentence": "The mean surface temperature is {text}."
+  },
+  "surface.*": {
+   "label": "Surface"
+  },
+  "ocean.fraction": {
+   "label": "Ocean cover",
+   "percent": true,
+   "digits": 2,
+   "sentence": "Oceans cover {text} of it."
+  },
+  "ocean.*": {
+   "label": "Ocean"
+  },
+  "hazards": {
+   "label": "Watch out for",
+   "sentence": "Mind the {text}.",
+   "unknown": "Hazards: {placeholder}."
+  },
+  "interior.core_fraction": {
+   "label": "Core",
+   "percent": true,
+   "digits": 2
+  },
+  "interior.*": {
+   "label": "Interior"
+  },
+  "resources": {
+   "label": "Worth finding",
+   "unknown": "Resources: {placeholder}."
+  },
+  "settlements.count": {
+   "label": "Settlements"
+  },
+  "settlements.*": {
+   "label": "Settlements"
+  },
+  "story.rumour": {
+   "label": "Rumour"
+  },
+  "story.*": {
+   "label": "Story"
+  }
+ },
+ "kinds": {
+  "planetary-body": "planet",
+  "star": "star",
+  "moon": "moon"
+ },
+ "tags": {
+  "habitable": "Habitable",
+  "hazard": "Hazard",
+  "port": "Starport",
+  "garden": "Garden world"
+ }
+}

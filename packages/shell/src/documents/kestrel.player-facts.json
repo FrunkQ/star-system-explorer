@@ -1,0 +1,215 @@
+{
+ "schema": "sse.authored-facts/0",
+ "note": "Player-facing facts the GM has recorded for Kestrel Reach, entered as authored edits at time 0 when the campaign opens. Taken from the kernel's Tarn scene contract (tests/contract/requests.json), moved to this campaign's addresses.",
+ "universe": {
+  "id": "kestrel",
+  "seed": "kestrel reach campaign"
+ },
+ "scope": "u:kestrel/sys:1",
+ "at_yr": 0,
+ "facts": [
+  {
+   "address": "u:kestrel/sys:1",
+   "field": "name",
+   "value": "Kestrel"
+  },
+  {
+   "address": "u:kestrel/sys:1",
+   "field": "kind",
+   "value": "star"
+  },
+  {
+   "address": "u:kestrel/sys:1",
+   "field": "spectral",
+   "value": "K1V"
+  },
+  {
+   "address": "u:kestrel/sys:1",
+   "field": "luminosity_w",
+   "value": 1.53e+26
+  },
+  {
+   "address": "u:kestrel/sys:1/body:3",
+   "field": "name",
+   "value": "Tarn"
+  },
+  {
+   "address": "u:kestrel/sys:1/body:3",
+   "field": "kind",
+   "value": "planetary-body"
+  },
+  {
+   "address": "u:kestrel/sys:1/body:3",
+   "field": "size_class",
+   "value": "terrestrial"
+  },
+  {
+   "address": "u:kestrel/sys:1/body:3",
+   "field": "class",
+   "value": "planet/ocean"
+  },
+  {
+   "address": "u:kestrel/sys:1/body:3",
+   "field": "colour",
+   "value": "blue-white"
+  },
+  {
+   "address": "u:kestrel/sys:1/body:3",
+   "field": "orbit.semi_major_axis_m",
+   "value": 94246658541
+  },
+  {
+   "address": "u:kestrel/sys:1/body:3",
+   "field": "orbit.period_s",
+   "value": 18489600
+  },
+  {
+   "address": "u:kestrel/sys:1/body:3",
+   "field": "atmosphere.composition",
+   "value": "N2-O2"
+  },
+  {
+   "address": "u:kestrel/sys:1/body:3",
+   "field": "atmosphere.pressure_pa",
+   "value": 130000
+  },
+  {
+   "address": "u:kestrel/sys:1/body:3",
+   "field": "surface.class",
+   "value": "temperate"
+  },
+  {
+   "address": "u:kestrel/sys:1/body:3",
+   "field": "surface.temp_mean_k",
+   "value": 281
+  },
+  {
+   "address": "u:kestrel/sys:1/body:3",
+   "field": "ocean.fraction",
+   "value": 0.71
+  },
+  {
+   "address": "u:kestrel/sys:1/body:3",
+   "field": "hazards",
+   "value": [
+    "storm belt",
+    "tides"
+   ]
+  },
+  {
+   "address": "u:kestrel/sys:1/body:3",
+   "field": "interior.core_fraction",
+   "value": 0.32
+  },
+  {
+   "address": "u:kestrel/sys:1/body:3",
+   "field": "resources",
+   "value": "rare earths"
+  },
+  {
+   "address": "u:kestrel/sys:1/body:3",
+   "field": "resolve.tier",
+   "value": "body"
+  },
+  {
+   "address": "u:kestrel/sys:1/body:3/body:0",
+   "field": "name",
+   "value": "Tarn a"
+  },
+  {
+   "address": "u:kestrel/sys:1/body:3/body:0",
+   "field": "kind",
+   "value": "moon"
+  },
+  {
+   "address": "u:kestrel/sys:1/body:3/body:0",
+   "field": "size_class",
+   "value": "small"
+  },
+  {
+   "address": "u:kestrel/sys:1/body:3/body:0",
+   "field": "mass_kg",
+   "value": 7.3e+22
+  },
+  {
+   "address": "u:kestrel/sys:1/body:4",
+   "field": "name",
+   "value": "Vault"
+  },
+  {
+   "address": "u:kestrel/sys:1/body:4",
+   "field": "kind",
+   "value": "planetary-body"
+  },
+  {
+   "address": "u:kestrel/sys:1/body:4",
+   "field": "size_class",
+   "value": "giant"
+  },
+  {
+   "address": "u:kestrel/sys:1/body:4",
+   "field": "class",
+   "value": "planet/gas-giant"
+  },
+  {
+   "address": "u:kestrel/sys:1/body:4",
+   "field": "colour",
+   "value": "banded ochre"
+  },
+  {
+   "address": "u:kestrel/sys:1/body:4",
+   "field": "mass_kg",
+   "value": 1.9e+27
+  },
+  {
+   "address": "u:kestrel/sys:1/body:4",
+   "field": "story.rumour",
+   "value": "Miners say the third moon sings on the comms."
+  },
+  {
+   "address": "u:kestrel/sys:1/body:3",
+   "field": "mass_kg",
+   "value": 6.56942e+24
+  },
+  {
+   "address": "u:kestrel/sys:1/body:3",
+   "field": "settlements.count",
+   "value": 3
+  },
+  {
+   "address": "u:kestrel/sys:1/body:3",
+   "field": "gm.notes",
+   "value": "Pirate cache under the north pole."
+  },
+  {
+   "address": "u:kestrel/sys:1/body:3",
+   "field": "tag.ancient-ruins",
+   "value": true
+  },
+  {
+   "address": "u:kestrel/sys:1/body:3",
+   "field": "tag.garden",
+   "value": true
+  },
+  {
+   "address": "u:kestrel/sys:1/body:3",
+   "field": "tag.habitable",
+   "value": true
+  },
+  {
+   "address": "u:kestrel/sys:1/body:3",
+   "field": "tag.hazard",
+   "value": true
+  },
+  {
+   "address": "u:kestrel/sys:1/body:3",
+   "field": "tag.port",
+   "value": true
+  },
+  {
+   "address": "u:kestrel/sys:1/body:4",
+   "field": "observe.view",
+   "value": "rumour"
+  }
+ ]
+}

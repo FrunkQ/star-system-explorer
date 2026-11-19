@@ -11,7 +11,7 @@ Status: early build. Milestone 1 ("proven core") is in progress.
 | Path | What |
 |---|---|
 | `crates/` | Rust kernel (deterministic): `sse-core` substrate, `sse-chronicle`, `sse-flow`, `sse-pack`, `sse-kernel` (message API), `sse-wasm`, `sse-cli` |
-| `packages/` | TypeScript: contracts (generated types), kernel client, apps |
+| `packages/` | TypeScript: contracts (generated types), kernel client, `ui-contract` (the one client API for GM and player apps), `skins/chart-room`, `chart-grammar` (Svelte parts), `views/*`, `shell` (the GM app) |
 | `tests/golden/` | golden hashes that every device must reproduce |
 | `tests/harness/` | cross-device hash check page (open in any browser) |
 | `docs/adr/` | architecture decision records |
@@ -32,7 +32,15 @@ npm install
 npm run harness        # builds everything and serves http://localhost:8080/
 ```
 
-That page is what exists to run today: the cross-device check. It runs the
+To run the GM chart room (fixture system, edits go to the real kernel):
+
+```
+npm run shell          # builds the kernel and the shell, serves http://localhost:8081/
+```
+
+`scripts/build-shell.sh` alone builds static files into `packages/shell/dist/` for any static host.
+
+The harness page is the cross-device check. It runs the
 pinned maths, encoding and draw cases and every kernel API call through a Web
 Worker, and says PASS when this browser matches the native results. Open it
 on each of your devices.
@@ -54,6 +62,8 @@ scripts/check.sh                             # fmt, clippy, all Rust tests
 scripts/build-harness.sh && node tests/harness/run-node.mjs
 npm test                                     # kernel contract through a Node worker
 node tests/harness/run-browsers.mjs          # needs Playwright browsers
+npm run ui:check && npm run ui:test          # GM shell: svelte-check, client API, themes, boundary lint
+node tests/ui/shell.e2e.mjs                  # GM shell in a browser (after scripts/build-shell.sh)
 ```
 
 ## Licence

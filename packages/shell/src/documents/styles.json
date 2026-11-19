@@ -1,0 +1,57 @@
+{
+  "schema": "sse.styles/0",
+  "note": "Shipped style documents (H8.9). Each configures one view and may extend another; screens name them per item. Orac writes more of these; people tweak the promoted settings.",
+  "styles": [
+    {
+      "schema": "sse.style/1",
+      "id": "sse.style.chart.plain",
+      "name": "Plain chart",
+      "description": "The player chart as shipped: names on, marks at their size, still.",
+      "view": "sse.view.chart",
+      "settings": { "labels": true, "mark_scale": 1, "animate": false }
+    },
+    {
+      "schema": "sse.style/1",
+      "id": "sse.style.chart.table-screen",
+      "name": "Across the table",
+      "description": "For a screen at the end of a table: bigger names and marks, no corner notes.",
+      "view": "sse.view.chart",
+      "extends": "sse.style.chart.plain",
+      "settings": { "label_size": 21, "mark_scale": 1.6, "show_scale": false }
+    },
+    {
+      "schema": "sse.style/1",
+      "id": "sse.style.chart.orrery",
+      "name": "Orrery",
+      "description": "Bodies drift round their orbits. Needs a standard device or better.",
+      "view": "sse.view.chart",
+      "extends": "sse.style.chart.plain",
+      "settings": { "animate": true },
+      "promote": ["animate", "mark_scale", "label_size"]
+    },
+    {
+      "schema": "sse.style/1",
+      "id": "sse.style.card.brief",
+      "name": "Brief card",
+      "description": "Only the headline facts, tight rows, no moons.",
+      "view": "sse.view.card",
+      "settings": { "fields": ["kind", "size_class", "orbit.semi_major_axis_m", "surface.temp_mean_k"], "only_fields": true, "show_moons": false, "density": "compact" }
+    },
+    {
+      "schema": "sse.style/1",
+      "id": "sse.style.text.teaser",
+      "name": "Teaser",
+      "description": "Three sentences and no rumours: enough to hook the table.",
+      "view": "sse.view.text",
+      "settings": { "max_sentences": 3, "show_story": false }
+    },
+    {
+      "schema": "sse.style/1",
+      "id": "sse.style.table.top-five",
+      "name": "Top five",
+      "description": "Five rows, fixed order, for a handout.",
+      "view": "sse.view.table",
+      "settings": { "max_rows": 5, "sortable": false, "include_scope": false }
+    }
+  ]
+}

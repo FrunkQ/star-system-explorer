@@ -4,7 +4,23 @@
   "license": "Apache-2.0",
   "workspaces": [
     "packages/contracts",
-    "packages/kernel-client"
+    "packages/kernel-client",
+    "packages/ui-contract",
+    "packages/skins/chart-room",
+    "packages/chart-grammar",
+    "packages/views/system-chart",
+    "packages/views/body-card",
+    "packages/views/time-ruler",
+    "packages/views/flow-editor",
+    "packages/views/change-requests",
+    "packages/views/player-stack",
+    "packages/views/pack-stack",
+    "packages/views/data-views",
+    "packages/views/symbols",
+    "packages/views/styles",
+    "packages/skins/player",
+    "packages/views/screen-composer",
+    "packages/shell"
   ],
   "scripts": {
     "build:wasm": "scripts/build-wasm.sh",
@@ -12,10 +28,24 @@
     "typecheck": "tsc -p packages/kernel-client --noEmit",
     "test": "node --test packages/kernel-client/test/*.test.ts",
     "harness": "scripts/build-harness.sh && node scripts/serve.mjs tests/harness",
+    "ui:test": "node --test packages/ui-contract/test/*.test.ts packages/skins/chart-room/test/*.test.ts packages/skins/player/test/*.test.ts packages/chart-grammar/test/*.test.ts tests/ui/*.test.ts",
+    "ui:check": "svelte-check --workspace packages/shell --tsconfig ./tsconfig.json --fail-on-warnings",
+    "ui:build": "scripts/build-shell.sh",
+    "ui:e2e": "node tests/ui/shell.e2e.mjs && node tests/ui/players.e2e.mjs && node tests/ui/setup.e2e.mjs && node tests/ui/themes.e2e.mjs && node tests/ui/symbols.e2e.mjs && node tests/ui/styles.e2e.mjs",
+    "shell": "scripts/build-shell.sh && node scripts/serve.mjs packages/shell/dist 8081",
     "build:client": "scripts/build-wasm.sh && tsc -p packages/kernel-client"
   },
   "devDependencies": {
     "typescript": "5.9.3",
-    "@types/node": "22.20.5"
+    "@types/node": "22.20.5",
+    "svelte": "5.58.0",
+    "vite": "8.3.8",
+    "@sveltejs/vite-plugin-svelte": "7.3.1",
+    "svelte-check": "4.7.8"
+  },
+  "dependencies": {
+    "@fontsource/newsreader": "5.3.0",
+    "@fontsource/ibm-plex-mono": "5.3.0",
+    "@fontsource/ibm-plex-sans": "5.3.0"
   }
 }

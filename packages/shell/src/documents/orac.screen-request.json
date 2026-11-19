@@ -1,0 +1,27 @@
+{
+  "schema": "sse.change-requests/0",
+  "note": "A sample screen change request in the shape Orac (A2) will file. Orac is not connected; this is a fixture and is labelled as such on screen.",
+  "request": {
+    "id": "orac.bridge-approach",
+    "author": "orac",
+    "fixture": true,
+    "asked": "Give the players a bridge screen for the approach, with the target's key facts and a bit of mood.",
+    "rationale": "I combined four views from the stack: the chart, a card on the selected body, a hazard light and the plain prose voice. It uses the campaign's data view, so players see only what they have scanned. No code was written; this is a layout document you can edit by hand.",
+    "screen": {
+      "schema": "sse.screen/1",
+      "id": "sse.screen.players.bridge-approach",
+      "label": "Bridge approach",
+      "audience": "players",
+      "layout": "grid",
+      "theme": "chart-room",
+      "symbology": "sse.symbology.diagrammatic",
+      "vocab": "plain",
+      "items": [
+        { "view": "sse.view.chart", "area": "a" },
+        { "view": "sse.view.card", "area": "b", "params": { "fields": ["orbit.semi_major_axis_m", "surface.class", "ocean.fraction", "hazards"], "unknown": false } },
+        { "view": "sse.view.readout", "area": "c", "params": { "style": "light", "tag": "hazard", "label": "Storm warning" } },
+        { "view": "sse.view.text", "area": "e" }
+      ]
+    }
+  }
+}

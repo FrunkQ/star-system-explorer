@@ -1,0 +1,12 @@
+{
+  "name": "@sse/ui-contract",
+  "version": "0.1.0",
+  "private": true,
+  "license": "Apache-2.0",
+  "type": "module",
+  "description": "The one client API every SSE4 interface uses: view contract, screen documents, intents, seats and the session. GM and player apps alike.",
+  "exports": {
+    ".": "./src/index.ts",
+    "./browser": "./src/host-browser.ts"
+  }
+}

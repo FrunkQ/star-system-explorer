@@ -1,0 +1,17 @@
+{
+  "schema": "sse.screen/1",
+  "id": "sse.screen.players.tarn-survey",
+  "label": "Tarn survey report",
+  "description": "A printable one-column report on Tarn, seen through the survey view.",
+  "audience": "players",
+  "layout": "page",
+  "theme": "paper",
+  "symbology": "sse.symbology.diagrammatic",
+  "vocab": "plain",
+  "data_view": "survey",
+  "items": [
+    { "view": "sse.view.text", "area": "1", "bind": { "addresses": ["u:kestrel/sys:1/body:3"] } },
+    { "view": "sse.view.card", "area": "2", "bind": { "addresses": ["u:kestrel/sys:1/body:3"] } },
+    { "view": "sse.view.table", "area": "3" }
+  ]
+}

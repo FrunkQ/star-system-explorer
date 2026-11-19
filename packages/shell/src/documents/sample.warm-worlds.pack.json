@@ -1,0 +1,104 @@
+{
+ "format": "sse.pack/1",
+ "id": "sample.warm-worlds",
+ "version": "0.1.0",
+ "kind": [
+  "physics"
+ ],
+ "kernel_range": "^0.1",
+ "fictional": true,
+ "licence": "Apache-2.0",
+ "description": "Sample fictional physics pack for trying the Packs screen: worlds keep more of their starlight than real physics allows (heat redistribution 0.6). Everything it touches is labelled fictional.",
+ "replaces": [
+  {
+   "flow": "sse.base.planet-climate",
+   "pack": "sse.base-physics",
+   "range": "^0.1.0"
+  }
+ ],
+ "provides": {
+  "flows": [
+   {
+    "format": "sse.flow/1",
+    "hook": "planet.climate",
+    "id": "sse.base.planet-climate",
+    "inputs": [
+     {
+      "kind": "star.luminosity",
+      "name": "luminosity"
+     },
+     {
+      "kind": "orbit.semi_major_axis",
+      "name": "distance"
+     },
+     {
+      "kind": "planet.bond_albedo",
+      "name": "albedo"
+     },
+     {
+      "kind": "atmosphere.infrared_optical_depth",
+      "name": "optical_depth"
+     }
+    ],
+    "nodes": [
+     {
+      "atom": "sse.climate.insolation",
+      "id": "sun"
+     },
+     {
+      "atom": "sse.climate.equilibrium_temperature",
+      "id": "teq",
+      "params": {
+       "redistribution": 0.6
+      }
+     },
+     {
+      "atom": "sse.climate.grey_surface_temperature",
+      "id": "surf"
+     }
+    ],
+    "publishes": [
+     {
+      "from": "sun.flux",
+      "kind": "planet.insolation"
+     },
+     {
+      "from": "teq.teq",
+      "kind": "planet.equilibrium_temperature"
+     },
+     {
+      "from": "surf.surface",
+      "kind": "planet.surface_temperature"
+     }
+    ],
+    "version": "0.1.0",
+    "wires": [
+     {
+      "from": "in.luminosity",
+      "to": "sun.luminosity"
+     },
+     {
+      "from": "in.distance",
+      "to": "sun.distance"
+     },
+     {
+      "from": "sun.flux",
+      "to": "teq.flux"
+     },
+     {
+      "from": "in.albedo",
+      "to": "teq.albedo"
+     },
+     {
+      "from": "teq.teq",
+      "to": "surf.teq"
+     },
+     {
+      "from": "in.optical_depth",
+      "to": "surf.optical_depth"
+     }
+    ]
+   }
+  ]
+ }
+}

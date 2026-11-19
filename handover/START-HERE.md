@@ -1,6 +1,6 @@
 # START HERE
 
-Last updated: 18 Nov 2026, after F5 and the kernel track's C3. Milestone M1 complete (K0 documents with Alex for review). Milestone 2 running as parallel tracks.
+Last updated: 18 Nov 2026, after F5 (physics track), C3 (kernel track) and U0 to U3, V1, U5, V2, V12, V3, V11 (UI track); live site v4.starsystemx.com. Milestone M1 complete (K0 documents with Alex for review). Milestone 2 running as parallel tracks.
 
 ## Where we are
 Milestone M1 "Proven core" = packages K0 to K6 (build plan section 3/4).
@@ -28,6 +28,17 @@ Milestone M1 "Proven core" = packages K0 to K6 (build plan section 3/4).
 | K8 rules, classification, sifters, significance | done (kernel track) | packages/K8.md |
 | K9 disclosure tiers, data views, scene building | done (kernel track) | packages/K9.md |
 | K10 suite socket and coordinator | done (kernel track) | packages/K10.md |
+| U0 one client API, every edit an intent (rule for all U packages) | done | packages/U0.md |
+| U1 shell, chart room and night chart tokens, chart grammar | done, screenshots in packages/U1-screens/ for Alex | packages/U1.md |
+| U2 system chart editor | done: real base-physics values, drag and typed edits, undo, why | packages/U2.md |
+| U3 flow editor, explain lenses, change requests | done: real flows, kernel-validated drafts, adopt, badge; kernel gaps listed in the log | packages/U3.md |
+| U4 time ruler with history, branches, look-ahead | waits for T2 | |
+| V1 view contract, player scenes, Chart, Card, Table, Text, Readout | done (scenes from K9 fixtures until the kernel serves a scene op) | packages/V1.md |
+| U5 packs screen, data views screen, screens composer | done; player page and composer on live kernel scenes | packages/U5.md |
+| V2 themes: tokens, frame parts, filter chains, six player themes | done | packages/V2.md |
+| V3 screens documents (data view, bind, layouts) and one screens runtime; composer opens screens from documents | done | packages/V3.md |
+| V11 Orac-first configuration: schemas for every view, style documents with inheritance, promoted controls, validation and cost budgets, Styles screen | done | packages/V11.md |
+| V12 symbology: diagrammatic and colour-coded grammars, mixing, key, Symbols screen | done, with V3's colour table and the V3 colour import (palette overrides, save tag colours) | packages/V12.md |
 | G0 default Milky-Way-like patch envelope | done (kernel track) | packages/G0.md |
 | Kernel API additions: stack adopt, manifest, scene, scan_toggle | done (kernel track) | packages/K6-additions.md |
 | Numbers: exact float parse, JSON numbers decode by value (cross-track) | done (kernel track); other tracks merge and re-baseline | packages/numbers.md |
@@ -41,7 +52,7 @@ Milestone M1 "Proven core" = packages K0 to K6 (build plan section 3/4).
 |---|---|---|
 | Physics | P1, P3, P4, F0 to F6 done; F7 to F10 not started (F9 needs C3, F7 needs T1) | `claude/project-thread-h9y77o` (this file) |
 | Kernel | K7 to K10, G0, C1 to C3, L0 and the U3 gaps done; nothing queued | `claude/project-thread-dzkz4p` (PR #1 into the physics branch; physics branch merged in at 788aea1) |
-| Chart room shell | U1 | its own branch from the M1 state; see that thread |
+| Chart room shell and player views | U0 to U3, V1, U5, V2, V12, V3, V11 done; stopped for Alex before V4 peer-to-peer (U4 waits for T2) | `claude/project-thread-adgixl`, PR #2 into the physics branch (kept merged up to date with it) |
 
 The kernel now registers the real atom library and loads the base-physics pack (see P1 log, integration notes). The kernel track has merged that in.
 
@@ -58,19 +69,19 @@ Kernel track integration points (K7 to K10):
 - C3 (log `packages/C3.md`): crate `sse-place` (reverse placement through the base-physics flows, four outcomes, picker preview, chronicle commit), pack `packs/base-place`, fixture `tests/fixtures/place/systems.json`, golden `tests/golden/place.json`. The base atlas gained `needs`.
 - Pack content keys these engines read: `provides.other.rules`, `.axes`, `.classes`, `.sifters` (K8). Data views and disclosure maps are plain serde types (K9); a pack key for them is for U5 to choose.
 
-Each track keeps to its own crates and folders. Integration points are listed at the end of each package log.
+Each track keeps to its own crates and folders. Integration points are listed at the end of each package log. UI work stays in `packages/ui-contract`, `packages/skins`, `packages/chart-grammar`, `packages/views`, `packages/shell`, `tests/ui`; it does not touch `/crates`, and a missing kernel op is reported in the package log.
 
 ## Deployment
 https://v4.starsystemx.com: Cloudflare Worker `star-system-explorer` (Workers Builds, set up by Alex 18 Nov 2026).
 Build `npm run build` (scripts/build-site.sh, writes dist/), deploy `npx wrangler deploy` (wrangler.jsonc),
 production branch `claude/project-thread-h9y77o` until `main` exists; other branches get preview versions.
-The site is the cross-device check page today; point the GM shell build into dist/ when the UI track merges.
+The site is the GM shell (chart room) at `/`, the players page at `/players.html` and the cross-device check page at `/harness/` (the UI track's branch builds this; production gets it when PR #2 merges).
 
 ## How to resume
-1. Read `/CLAUDE.md`, then this file, then the log of the last package.
+1. Read `/CLAUDE.md`, then this file, then the log of the last package. Any view or renderer package also follows `rendering-rules.md` (no precision jiggle: local orbits, nested frames, camera-relative numbers).
 2. `cargo test --workspace` must pass before you change anything.
 3. Take the first package marked "next"; write its log in `packages/` as you go (evidence packet format: build plan section 2).
 4. At the end of a package: `scripts/check.sh`, update this table, re-sync `design/`, commit as FrunkQ, push.
 
 ## Environment
-Rust 1.97.0 (rust-toolchain.toml, wasm32 target), wasm-bindgen-cli 0.2.130, Node 22 (`npm install`), Playwright for browser checks. Install and run: see README.
+Rust 1.97.0 (rust-toolchain.toml, wasm32 target), wasm-bindgen-cli 0.2.130, Node 22 (`npm install`), Playwright for browser checks. Install and run: see README. UI: Svelte 5.58, Vite 8.3; `npm run ui:check`, `npm run ui:test`, `scripts/build-shell.sh`, `node tests/ui/shell.e2e.mjs`.

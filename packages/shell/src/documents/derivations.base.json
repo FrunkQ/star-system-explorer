@@ -1,0 +1,229 @@
+{
+ "schema": "sse.derivations/0",
+ "id": "sse.derivations.base-physics",
+ "note": "Which base-physics flow serves which object and which facts feed it. Physics changes by editing this document or the pack, never the views.",
+ "rules": [
+  {
+   "applies_to": "star",
+   "flow": "sse.base.star-main-sequence",
+   "inputs": [
+    {
+     "input": "mass",
+     "from": "fact",
+     "subject": "self",
+     "field": "mass_sun",
+     "unit": "m_sun"
+    },
+    {
+     "input": "age",
+     "from": "now",
+     "scale": 1000000000.0,
+     "unit": "gyr"
+    }
+   ],
+   "outputs": [
+    {
+     "field": "luminosity_sun",
+     "label": "Luminosity now",
+     "kind": "star.luminosity_at_age",
+     "scale": 3.828e+26,
+     "unit": "L☉",
+     "digits": 3
+    },
+    {
+     "field": "radius_sun",
+     "label": "Radius",
+     "kind": "star.radius",
+     "scale": 695700000.0,
+     "unit": "R☉",
+     "digits": 3
+    },
+    {
+     "field": "teff_k",
+     "label": "Surface",
+     "kind": "star.effective_temperature",
+     "scale": 1,
+     "unit": "K",
+     "digits": 4
+    },
+    {
+     "field": "ms_life",
+     "label": "Main sequence",
+     "kind": "star.main_sequence_lifetime",
+     "scale": 3.15576e+16,
+     "unit": "Gyr",
+     "digits": 3
+    }
+   ]
+  },
+  {
+   "applies_to": "planet",
+   "flow": "sse.base.planet-bulk",
+   "inputs": [
+    {
+     "input": "mass",
+     "from": "fact",
+     "subject": "self",
+     "field": "mass_earth",
+     "unit": "m_earth"
+    },
+    {
+     "input": "radius",
+     "from": "fact",
+     "subject": "self",
+     "field": "radius_earth",
+     "unit": "r_earth"
+    }
+   ],
+   "outputs": [
+    {
+     "field": "gravity_g",
+     "label": "Gravity",
+     "kind": "body.surface_gravity",
+     "scale": 9.80665,
+     "unit": "g",
+     "digits": 3
+    },
+    {
+     "field": "density",
+     "label": "Density",
+     "kind": "body.bulk_density",
+     "scale": 1000,
+     "unit": "g/cm³",
+     "digits": 3
+    },
+    {
+     "field": "escape_kms",
+     "label": "Escape",
+     "kind": "body.escape_velocity",
+     "scale": 1000,
+     "unit": "km/s",
+     "digits": 3
+    }
+   ]
+  },
+  {
+   "applies_to": "planet",
+   "flow": "sse.base.orbit-basics",
+   "inputs": [
+    {
+     "input": "host_mass",
+     "from": "fact",
+     "subject": "star",
+     "field": "mass_sun",
+     "unit": "m_sun"
+    },
+    {
+     "input": "body_mass",
+     "from": "fact",
+     "subject": "self",
+     "field": "mass_earth",
+     "unit": "m_earth"
+    },
+    {
+     "input": "semi_major_axis",
+     "from": "fact",
+     "subject": "self",
+     "field": "a_au",
+     "unit": "au"
+    },
+    {
+     "input": "eccentricity",
+     "from": "fact",
+     "subject": "self",
+     "field": "eccentricity",
+     "unit": "one"
+    }
+   ],
+   "outputs": [
+    {
+     "field": "year_d",
+     "label": "Year",
+     "kind": "orbit.period",
+     "scale": 86400,
+     "unit": "d",
+     "digits": 3
+    },
+    {
+     "field": "peri_au",
+     "label": "Closest",
+     "kind": "orbit.periapsis",
+     "scale": 149597870700.0,
+     "unit": "AU",
+     "digits": 3
+    },
+    {
+     "field": "apo_au",
+     "label": "Farthest",
+     "kind": "orbit.apoapsis",
+     "scale": 149597870700.0,
+     "unit": "AU",
+     "digits": 3
+    }
+   ]
+  },
+  {
+   "applies_to": "planet",
+   "flow": "sse.base.planet-climate",
+   "inputs": [
+    {
+     "input": "luminosity",
+     "from": "fact",
+     "subject": "star",
+     "field": "luminosity_sun",
+     "unit": "l_sun"
+    },
+    {
+     "input": "distance",
+     "from": "fact",
+     "subject": "self",
+     "field": "a_au",
+     "unit": "au"
+    },
+    {
+     "input": "albedo",
+     "from": "fact",
+     "subject": "self",
+     "field": "albedo",
+     "unit": "one"
+    },
+    {
+     "input": "optical_depth",
+     "from": "fact",
+     "subject": "self",
+     "field": "optical_depth",
+     "unit": "one"
+    }
+   ],
+   "outputs": [
+    {
+     "field": "flux",
+     "label": "Starlight",
+     "kind": "planet.insolation",
+     "scale": 1,
+     "unit": "W/m²",
+     "digits": 3
+    },
+    {
+     "field": "teq_k",
+     "label": "T equilibrium",
+     "kind": "planet.equilibrium_temperature",
+     "scale": 1,
+     "unit": "K",
+     "digits": 3
+    },
+    {
+     "field": "surface_k",
+     "label": "Surface",
+     "kind": "planet.surface_temperature",
+     "scale": 1,
+     "unit": "K",
+     "digits": 3,
+     "except_tags": [
+      "class:planet/gas-giant"
+     ]
+    }
+   ]
+  }
+ ]
+}

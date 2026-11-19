@@ -1,0 +1,10 @@
+{
+  "name": "@sse/view-player-stack",
+  "version": "0.1.0",
+  "private": true,
+  "license": "Apache-2.0",
+  "type": "module",
+  "description": "The first player views of the finite view stack (H8.2): Chart, Card, Table, Text, Readout. They draw K9 player scenes with theme tokens only.",
+  "exports": { ".": "./src/index.ts" },
+  "peerDependencies": { "svelte": "^5.0.0" }
+}
