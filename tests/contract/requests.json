@@ -1301,6 +1301,154 @@
   "fixture": "mars"
  },
  {
+  "op": "survey_surface",
+  "fixture": "Earth",
+  "quick": true,
+  "options": {
+   "rotation_hours": 23.93,
+   "life": 1.0,
+   "settle": [
+    "settlement",
+    "port"
+   ],
+   "reshape": [
+    {
+     "op": "pin",
+     "id": "gm:pin",
+     "lat_deg": 30.0,
+     "lon_deg": 30.0,
+     "height_m": 1200.0,
+     "radius_km": 20.0,
+     "at_myr": 0.0
+    }
+   ]
+  },
+  "tiles": [
+   {
+    "face": 0,
+    "level": 0,
+    "x": 0,
+    "y": 0
+   }
+  ],
+  "limit": 20
+ },
+ {
+  "op": "survey_surface",
+  "fixture": "Jupiter",
+  "quick": true
+ },
+ {
+  "op": "survey_surface",
+  "fixture": "Krypton"
+ },
+ {
+  "op": "survey_surface",
+  "system": "u:kestrel/sys:40",
+  "body": "u:kestrel/sys:40/body:2",
+  "quick": true,
+  "limit": 20
+ },
+ {
+  "op": "survey_surface",
+  "system": "u:kestrel/sys:40",
+  "body": "u:kestrel/sys:40/body:99",
+  "quick": true
+ },
+ {
+  "op": "plan_route",
+  "fixture": "sol",
+  "ship": "chemical-transfer",
+  "from": "Earth",
+  "to": "Mars",
+  "prefer": "save-fuel",
+  "window_days": 400.0
+ },
+ {
+  "op": "plan_route",
+  "fixture": "sol",
+  "ship": "fusion-torch",
+  "from": "Earth",
+  "to": "Jupiter",
+  "prefer": "fastest",
+  "window_days": 30.0
+ },
+ {
+  "op": "plan_route",
+  "fixture": "sol",
+  "ship": "chemical-transfer",
+  "from": {
+   "r_m": [
+    149597870700.0,
+    0.0,
+    0.0
+   ],
+   "v_m_s": [
+    0.0,
+    0.0,
+    0.0
+   ]
+  }
+ },
+ {
+  "op": "plan_route",
+  "fixture": "sol",
+  "ship": "warp-barge",
+  "from": "Earth",
+  "to": "Mars"
+ },
+ {
+  "op": "plan_route",
+  "system": "u:kestrel/sys:40",
+  "ship": "fusion-torch",
+  "from": "u:kestrel/sys:40/body:2",
+  "to": "u:kestrel/sys:40/body:3",
+  "prefer": "balanced",
+  "window_days": 60.0,
+  "ports": [
+   "u:kestrel/sys:40/body:2"
+  ]
+ },
+ {
+  "op": "plan_route",
+  "fixture": "sol",
+  "ship": "fusion-torch",
+  "from": "Mars",
+  "to": "Mars"
+ },
+ {
+  "op": "plan_descent",
+  "fixture": "Titan",
+  "quick": true,
+  "lander": "titan-probe",
+  "lat_deg": -10.0,
+  "lon_deg": 192.0
+ },
+ {
+  "op": "plan_descent",
+  "fixture": "Moon",
+  "quick": true,
+  "lander": "moon-lander",
+  "lat_deg": 0.7,
+  "lon_deg": 23.5
+ },
+ {
+  "op": "plan_descent",
+  "fixture": "Jupiter",
+  "quick": true,
+  "lander": "capsule",
+  "lat_deg": 0.0,
+  "lon_deg": 0.0
+ },
+ {
+  "op": "plan_descent",
+  "fixture": "Moon",
+  "quick": true,
+  "lander": "glider",
+  "lat_deg": 0.0,
+  "lon_deg": 0.0
+ },
+ {
   "op": "export_chronicle"
  },
  {
@@ -1383,5 +1531,75 @@
   "op": "disclosures",
   "audience": "vesh",
   "at_s": 20
+ },
+ {
+  "op": "load_stack",
+  "packs": [
+   "$pack:rpg-record",
+   "$pack:rpg-rules"
+  ]
+ },
+ {
+  "op": "open_universe",
+  "id": "kestrel",
+  "seed": "k"
+ },
+ {
+  "op": "rules"
+ },
+ {
+  "op": "rules_step",
+  "at_s": 0
+ },
+ {
+  "op": "add_note",
+  "address": "u:kestrel/sys:0/body:3",
+  "text": "an insult",
+  "tags": [
+   "insult"
+  ],
+  "by": "crew-seat",
+  "audience": [
+   "crew"
+  ],
+  "at_s": 10
+ },
+ {
+  "op": "rules_step",
+  "at_s": 20
+ },
+ {
+  "op": "rules_pending"
+ },
+ {
+  "op": "rules_decide",
+  "proposal": "eb15bebe6499084b249a3a16af55df58b44cb02469a25df4410a572ec6097b43",
+  "approve": true,
+  "at_s": 30
+ },
+ {
+  "op": "rules_decide",
+  "proposal": "00",
+  "approve": true
+ },
+ {
+  "op": "rules_policy",
+  "rule": "consequence",
+  "approval": {
+   "policy": "auto"
+  },
+  "at_s": 20
+ },
+ {
+  "op": "rules_policy",
+  "rule": "nobody",
+  "approval": {
+   "policy": "auto"
+  },
+  "at_s": 20
+ },
+ {
+  "op": "rules_step",
+  "at_s": 5
  }
 ]

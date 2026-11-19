@@ -32,8 +32,10 @@ pub fn engines_run() -> String {
         "life-history": sse_life::scenario::history_golden(),
         "life-biosphere": sse_life::scenario::biosphere_golden(),
         "stars": sse_cosmos::scenario::stars_golden(),
+        "galaxy-events": sse_cosmos::scenario::galaxy_events_golden(),
         "life-signatures": sse_life::scenario::signatures_golden(),
         "life-feedback": sse_life::scenario::feedback_golden(),
+        "nav": sse_nav::scenario::golden(),
         "formation-accrete": sse_formation::scenario::accrete_golden(),
         "formation-accrete-dole": sse_formation::scenario::accrete_dole_golden(),
         "formation-growth": sse_formation::scenario::growth_golden(),
@@ -47,6 +49,7 @@ pub fn engines_run() -> String {
         "surface-wear": sse_surface::scenario::wear_golden(),
         "surface-impacts": sse_surface::scenario::impacts_golden(),
         "surface-regimes": sse_surface::scenario::regimes_golden(),
+        "surface-cover": sse_surface::scenario::cover_golden(),
     })
     .to_string()
 }

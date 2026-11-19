@@ -590,12 +590,14 @@ dependencies = [
  "sse-import-v3",
  "sse-life",
  "sse-logic",
+ "sse-nav",
  "sse-observe",
  "sse-pack",
  "sse-record",
  "sse-sift",
  "sse-surface",
  "sse-time",
+ "sse-trigger",
  "sse-world",
  "ts-rs",
 ]
@@ -625,6 +627,16 @@ dependencies = [
  "sse-life",
  "sse-place",
  "sse-sift",
+]
+
+[[package]]
+name = "sse-nav"
+version = "0.1.0"
+dependencies = [
+ "serde",
+ "serde_json",
+ "sse-core",
+ "sse-pack",
 ]
 
 [[package]]
@@ -738,6 +750,19 @@ dependencies = [
 ]
 
 [[package]]
+name = "sse-trigger"
+version = "0.1.0"
+dependencies = [
+ "serde",
+ "serde_json",
+ "sse-chronicle",
+ "sse-core",
+ "sse-observe",
+ "sse-record",
+ "sse-sift",
+]
+
+[[package]]
 name = "sse-wasm"
 version = "0.1.0"
 dependencies = [
@@ -747,6 +772,7 @@ dependencies = [
  "sse-formation",
  "sse-kernel",
  "sse-life",
+ "sse-nav",
  "sse-observe",
  "sse-place",
  "sse-resolve",

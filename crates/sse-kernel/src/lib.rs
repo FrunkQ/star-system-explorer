@@ -7,7 +7,10 @@
 
 mod adopt;
 pub mod contract;
+mod descent;
+mod nav;
 pub mod protocol;
+mod survey;
 mod systems;
 
 use protocol::*;
@@ -76,10 +79,28 @@ fn load_observe(ms: &[sse_pack::PackManifest]) -> Result<Observe, Vec<String>> {
         }
     }
     let record = sse_record::Registry::from_packs(&kept)?;
+    let mut found = Vec::new();
+    for p in ms {
+        if let Some(v) = p.provides.other.get("triggers") {
+            let j =
+                serde_json::to_value(v).map_err(|e| vec![format!("{}: triggers: {e}", p.id)])?;
+            found.push((p.id.clone(), p.version.to_string(), j));
+        }
+    }
+    let triggers = sse_trigger::Rules::from_packs(&found)?;
+    let views: Vec<String> = setup
+        .as_ref()
+        .map(|s| s.views.iter().map(|v| v.id.clone()).collect())
+        .unwrap_or_default();
+    let issues = triggers.check(&record, &views);
+    if !issues.is_empty() {
+        return Err(issues);
+    }
     Ok(Observe {
         setup,
         rules,
         record,
+        triggers,
     })
 }
 
@@ -178,6 +199,8 @@ struct Observe {
     rules: sse_sift::RuleSet,
     /// Kept kinds (`provides.other.record`, J1).
     record: sse_record::Registry,
+    /// Triggers and effects (`provides.other.triggers`, J4).
+    triggers: sse_trigger::Rules,
 }
 
 pub struct Kernel {
@@ -189,6 +212,8 @@ pub struct Kernel {
     next_job: u32,
     /// `provides.other.time` from the stack, if any pack provides it.
     time: Option<sse_time::epoch::TimeSettings>,
+    /// Recent `survey_surface` results.
+    surveys: survey::Cache,
 }
 
 impl Default for Kernel {
@@ -307,6 +332,7 @@ impl Kernel {
             stack: None,
             observe: Observe::default(),
             universe: None,
+            surveys: vec![],
             jobs: BTreeMap::new(),
             next_job: 1,
             time: None,
@@ -1035,6 +1061,209 @@ impl Kernel {
                     refused: r.refused,
                 }
             }
+            Request::PlanRoute {
+                fixture,
+                nav,
+                system,
+                at_s,
+                ports,
+                ship,
+                from,
+                to,
+                depart_s,
+                window_days,
+                prefer,
+                rescue,
+            } => {
+                let ports = ports.unwrap_or_default();
+                let ask = |source| nav::Ask {
+                    source,
+                    ship: &ship,
+                    from: &from,
+                    to: to.as_ref(),
+                    depart_s,
+                    window_days,
+                    prefer: prefer.as_deref(),
+                    rescue: rescue.as_ref(),
+                };
+                let plan = match (fixture.as_deref(), nav.as_ref(), system) {
+                    (Some(f), None, None) => nav::plan_route(ask(nav::Source::Fixture(f)))?,
+                    (None, Some(n), None) => nav::plan_route(ask(nav::Source::Inline(n)))?,
+                    (None, None, Some(system)) => {
+                        let a: Address = system
+                            .parse()
+                            .map_err(|e| err("bad_address", format!("{e}")))?;
+                        let u = self
+                            .universe
+                            .as_mut()
+                            .ok_or_else(|| err("no_universe", "open a universe first"))?;
+                        if !u.root.contains(&a) {
+                            return Err(err(
+                                "bad_address",
+                                format!("{a} is not in universe {}", u.root),
+                            ));
+                        }
+                        if !u.runs.contains_key(&system) {
+                            if let Some(req) = adopt::formation_request(&u.chronicle, &a) {
+                                let (_, run, _) = systems::form(req.into())?;
+                                u.runs.insert(system.clone(), run);
+                            }
+                        }
+                        nav::plan_route(ask(nav::Source::System {
+                            ch: &u.chronicle,
+                            system: &a,
+                            at_s,
+                            run: u.runs.get(&system),
+                            ports: &ports,
+                        }))?
+                    }
+                    _ => {
+                        return Err(err(
+                            "bad_request",
+                            "give one of a fixture, a nav system or a universe system",
+                        ))
+                    }
+                };
+                Response::RoutePlanned { plan }
+            }
+            Request::PlanDescent {
+                system,
+                body,
+                fixture,
+                at_s,
+                options,
+                quick,
+                lander,
+                lat_deg,
+                lon_deg,
+                entry,
+            } => {
+                let quick = quick.unwrap_or(false);
+                let ask = |from| descent::Ask {
+                    from,
+                    options: options.as_ref(),
+                    quick,
+                    lander: &lander,
+                    lat_deg,
+                    lon_deg,
+                    entry: entry.as_ref(),
+                };
+                let descent = match (fixture, system, body) {
+                    (Some(f), None, None) => {
+                        descent::plan_descent(ask(survey::From::Fixture(&f)), &mut self.surveys)?
+                    }
+                    (None, Some(system), Some(body)) => {
+                        let a: Address = system
+                            .parse()
+                            .map_err(|e| err("bad_address", format!("{e}")))?;
+                        let u = self
+                            .universe
+                            .as_mut()
+                            .ok_or_else(|| err("no_universe", "open a universe first"))?;
+                        if !u.root.contains(&a) {
+                            return Err(err(
+                                "bad_address",
+                                format!("{a} is not in universe {}", u.root),
+                            ));
+                        }
+                        if !u.runs.contains_key(&system) {
+                            if let Some(req) = adopt::formation_request(&u.chronicle, &a) {
+                                let (_, run, _) = systems::form(req.into())?;
+                                u.runs.insert(system.clone(), run);
+                            }
+                        }
+                        descent::plan_descent(
+                            ask(survey::From::System {
+                                ch: &u.chronicle,
+                                seed: &u.seed,
+                                system: &a,
+                                body: &body,
+                                at_s,
+                                run: u.runs.get(&system),
+                            }),
+                            &mut self.surveys,
+                        )?
+                    }
+                    _ => {
+                        return Err(err(
+                            "bad_request",
+                            "give a fixture, or a system and one of its bodies",
+                        ))
+                    }
+                };
+                Response::DescentPlanned { descent }
+            }
+            Request::SurveySurface {
+                system,
+                body,
+                fixture,
+                at_s,
+                options,
+                tiles,
+                quick,
+                limit,
+            } => {
+                let tiles = tiles.unwrap_or_default();
+                let quick = quick.unwrap_or(false);
+                let limit = limit.unwrap_or(200) as usize;
+                let survey = match (fixture, system, body) {
+                    (Some(f), None, None) => survey::survey_surface(
+                        survey::Request {
+                            from: survey::From::Fixture(&f),
+                            options: options.as_ref(),
+                            tiles: &tiles,
+                            quick,
+                            limit,
+                        },
+                        &mut self.surveys,
+                    )?,
+                    (None, Some(system), Some(body)) => {
+                        let a: Address = system
+                            .parse()
+                            .map_err(|e| err("bad_address", format!("{e}")))?;
+                        let u = self
+                            .universe
+                            .as_mut()
+                            .ok_or_else(|| err("no_universe", "open a universe first"))?;
+                        if !u.root.contains(&a) {
+                            return Err(err(
+                                "bad_address",
+                                format!("{a} is not in universe {}", u.root),
+                            ));
+                        }
+                        if !u.runs.contains_key(&system) {
+                            if let Some(req) = adopt::formation_request(&u.chronicle, &a) {
+                                let (_, run, _) = systems::form(req.into())?;
+                                u.runs.insert(system.clone(), run);
+                            }
+                        }
+                        survey::survey_surface(
+                            survey::Request {
+                                from: survey::From::System {
+                                    ch: &u.chronicle,
+                                    seed: &u.seed,
+                                    system: &a,
+                                    body: &body,
+                                    at_s,
+                                    run: u.runs.get(&system),
+                                },
+                                options: options.as_ref(),
+                                tiles: &tiles,
+                                quick,
+                                limit,
+                            },
+                            &mut self.surveys,
+                        )?
+                    }
+                    _ => {
+                        return Err(err(
+                            "bad_request",
+                            "give a fixture, or a system and one of its bodies",
+                        ))
+                    }
+                };
+                Response::SurfaceSurveyed { survey }
+            }
             Request::LifeView { body, fixture } => {
                 let (source, view) = adopt::life_view(body.as_deref(), fixture.as_deref())?;
                 Response::LifeViewed { source, view }
@@ -1715,6 +1944,107 @@ impl Kernel {
                     event_id: id.hex(),
                     view: sse_observe::effective_view(&state, &a, &audience, &campaign),
                     state_hash: state.hash().hex(),
+                }
+            }
+            Request::RulesStep { at_s } => {
+                let (rules, reg) = (self.observe.triggers.clone(), self.observe.record.clone());
+                let campaign = self.observe.setup.as_ref().map(|s| s.campaign.clone());
+                let u = self.universe()?;
+                let root = u.root.clone();
+                let report = rules
+                    .step(
+                        &mut sse_trigger::Gate {
+                            universe: &mut u.chronicle,
+                            record: &mut u.record,
+                            registry: &reg,
+                            campaign: campaign.as_ref(),
+                            root: &root,
+                        },
+                        at_s,
+                    )
+                    .map_err(|e| err("rules", e))?;
+                Response::RulesStepped {
+                    report: serde_json::to_value(&report).expect("plain"),
+                    state_hash: latest_hash(&u.chronicle),
+                    record_hash: record_hash(u),
+                }
+            }
+            Request::RulesPending => {
+                let u = self.universe()?;
+                Response::RulesPending {
+                    proposals: sse_trigger::Rules::pending(&u.record)
+                        .iter()
+                        .map(|p| serde_json::to_value(p).expect("plain"))
+                        .collect(),
+                }
+            }
+            Request::RulesDecide {
+                proposal,
+                approve,
+                at_s,
+            } => {
+                let (rules, reg) = (self.observe.triggers.clone(), self.observe.record.clone());
+                let campaign = self.observe.setup.as_ref().map(|s| s.campaign.clone());
+                let u = self.universe()?;
+                let root = u.root.clone();
+                let written = rules
+                    .decide(
+                        &mut sse_trigger::Gate {
+                            universe: &mut u.chronicle,
+                            record: &mut u.record,
+                            registry: &reg,
+                            campaign: campaign.as_ref(),
+                            root: &root,
+                        },
+                        &proposal,
+                        approve,
+                        at_s,
+                    )
+                    .map_err(|e| err("rules", e))?;
+                Response::RulesDecided {
+                    written: written
+                        .iter()
+                        .map(|w| serde_json::to_value(w).expect("plain"))
+                        .collect(),
+                    state_hash: latest_hash(&u.chronicle),
+                    record_hash: record_hash(u),
+                }
+            }
+            Request::RulesPolicy {
+                rule,
+                approval,
+                at_s,
+            } => {
+                let approval: sse_trigger::Approval = serde_json::from_value(approval)
+                    .map_err(|e| err("rules", format!("approval: {e}")))?;
+                let (rules, reg) = (self.observe.triggers.clone(), self.observe.record.clone());
+                let u = self.universe()?;
+                let root = u.root.clone();
+                let id = rules
+                    .set_policy(
+                        &mut sse_trigger::Gate {
+                            universe: &mut u.chronicle,
+                            record: &mut u.record,
+                            registry: &reg,
+                            campaign: None,
+                            root: &root,
+                        },
+                        &rule,
+                        &approval,
+                        at_s,
+                    )
+                    .map_err(|e| err("rules", e))?;
+                Response::RulesPolicySet {
+                    event_id: id.hex(),
+                    record_hash: record_hash(u),
+                }
+            }
+            Request::Rules => {
+                let rules = self.observe.triggers.clone();
+                let u = self.universe()?;
+                Response::RulesListed {
+                    rules: rules.listing(&u.record),
+                    trail: sse_trigger::trail(&u.record),
                 }
             }
             Request::Manifest => {

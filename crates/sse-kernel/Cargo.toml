@@ -14,6 +14,7 @@ sse-pack.workspace = true
 sse-atoms.workspace = true
 sse-observe = { path = "../sse-observe" }
 sse-record = { path = "../sse-record" }
+sse-trigger = { path = "../sse-trigger" }
 sse-sift = { path = "../sse-sift" }
 sse-logic = { path = "../sse-logic" }
 sse-time = { path = "../sse-time" }
@@ -22,6 +23,7 @@ sse-formation.workspace = true
 sse-import-v3.workspace = true
 sse-cosmos = { path = "../sse-cosmos" }
 sse-surface.workspace = true
+sse-nav.workspace = true
 sse-world.workspace = true
 serde.workspace = true
 serde_json.workspace = true

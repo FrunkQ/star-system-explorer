@@ -27,7 +27,7 @@ Milestone M1 "Proven core" = packages K0 to K6 (build plan section 3/4).
 | K4 flows, validation, scheduler, solve, explain | done | packages/K4.md |
 | K5 packs, stacks, one-publisher, fictional labels | done | packages/K5.md |
 | K6 kernel API, worker, TS client, cancellation, cost classes, tiers | done | packages/K6.md |
-| J1 to J9 campaign record, logic blocks, boxes, engine blocks, programs (new track J, decided 19 Nov) | J1, J2 and J3 done (kernel track, logs `packages/J1.md`, `J2.md`, `J3.md`); J4 on wait for intents and approval. Read `design/SSE4-record-logic-programs-design.md`, section 9 first (points of care against built code) | |
+| J1 to J9 campaign record, logic blocks, boxes, engine blocks, programs (new track J, decided 19 Nov) | J1 to J4 done (kernel track, logs `packages/J1.md` to `J4.md`); J5 (intent registry) next. Read `design/SSE4-record-logic-programs-design.md`, section 9 first (points of care against built code) | |
 | K0 V3 / Ovid / Evolution Lab source reading | done, Alex reviewing docs/v3-parity.md, v3-save-fields.md, ovid-agents.md, evolab-reuse.md | packages/K0.md |
 | P1 atom library, first wave | done; heat-producing elements and reference links added | packages/P1.md, packages/P1-heat.md |
 | P3 V3 importer | built; run on 3 real saves on Alex's PC, one difference open (P3.md) | packages/P3.md |
@@ -48,6 +48,7 @@ Milestone M1 "Proven core" = packages K0 to K6 (build plan section 3/4).
 | S3 wearing down: rivers, lakes, sediment, sea level, hillslopes, worn atlas with flow layer | done | packages/S3.md |
 | S4 impacts and volcanism: chronology and spikes, survival by renewal, crater shapes, lava plains, shields, tiles to the fact floor, "why is this here" | done | packages/S4.md |
 | S6 other regimes: ice-shell ridges, bands and chaos; heat-pipe paterae and mountains; coronae, chasmata and overturns; contraction scarps and rifts; Titan's dunes and lakes; tar seas; giant cloud decks | done | packages/S6.md |
+| S7 cover, named features, built layer, aerostats, GM reshape: climate by latitude and height, wind cells and rain shadow, ice, deposits, colour; feature register with dated, per-audience renames and sifters; built-layer rules; aerostat band from the air profile; dated GM edits tagged when impossible, height pins honoured | done; served by `survey_surface` | packages/S7.md, packages/K-physics-ops.md |
 | Kernel ops `import_v3`, `run_formation` and `read_world_stack` (V3 import with report; one system through the pipeline with pins and surfaces; a body's world stack with ladder and physics notes) | done (physics track, for the UI) | packages/K-physics-ops.md |
 | K7 envelopes, partitioning, resolve, feasibility | done (kernel track) | packages/K7.md |
 | K8 rules, classification, sifters, significance | done (kernel track) | packages/K8.md |
@@ -76,13 +77,14 @@ Milestone M1 "Proven core" = packages K0 to K6 (build plan section 3/4).
 | N1 sound engine: sound scenes, recipes, mixer, tiers, off by default, captions, orbit bed | done | packages/N1.md |
 | O1 light switch (UI side): Eye, Camera, SHO and HOO palettes, single bands, legend chip and honesty label, stubbed spectra marked | UI done on stubbed light; real light facts wait on the kernel | packages/O1-ui.md |
 | V13 make a system: import a V3 save (report and preview) and grow a new system (formation run and preview) | part 1 done: previews; part 2 adopts a preview into the campaign | packages/V13.md |
-| A1 agents shell, bring your own key | part 1 done: providers, keys on the device only, ledger and cap, Tars working, Orac and Minerva panels; part 2 reconciles with Ovid's source | packages/A1.md |
+| A1 agents shell, bring your own key | done (parts 1 and 2): providers, keys on the device only and apart from the settings, ledger and cap, loaded-context guard, reconciled with Ovid's source (agents track); **Alex to confirm** the Ovid relicensing line in NOTICE | packages/A1.md |
 | G0 default Milky-Way-like patch envelope | done (kernel track) | packages/G0.md |
 | G1 cosmology, cosmic web, epochs | done (kernel track) | packages/G1.md |
 | G2 haloes per cell, growth, spin, mergers | done (kernel track) | packages/G2.md |
 | G3 galaxy reservoirs, rings, element groups, what died here | done (kernel track) | packages/G3.md |
 | G4 patch envelopes from a galaxy, green regions, outcome-first | done (kernel track) | packages/G4.md |
 | G5 stars drawn per co-rotating cell: IMF, ages, metals, multiplicity, orbits through time, pins, formation input | done (kernel track) | packages/G5.md |
+| G6 galaxy events: history edits (ink a merger, starburst, quiet nucleus), supernovae, kilonovae, bursts, encounters and arm crossings drawn per cell, cross-patch exposure with travel time, before/after, "ink a merger" manifest | done (kernel track) | packages/G6.md |
 | K9 additions: grant op, tag-driven grants (V10 seats gaps) | done (kernel track) | packages/K9-grants.md |
 | Kernel API additions: stack adopt, manifest, scene, scan_toggle, grant, look_ahead | done (kernel track) | packages/K6-additions.md |
 | Numbers: exact float parse, JSON numbers decode by value (cross-track) | done (kernel track); other tracks merge and re-baseline | packages/numbers.md |
@@ -100,12 +102,16 @@ Milestone M1 "Proven core" = packages K0 to K6 (build plan section 3/4).
 | C3 reverse placement in a system | done (kernel track) | packages/C3.md |
 | T1 epoch stepping, ageing star, secular orbits, symplectic windows | done (kernel track); giant phase sketch awaits F7 | packages/T1.md |
 | T2 look-ahead branch, commit, age the Solar System | done (kernel track); with Alex for review | packages/T2.md |
+| S5 descent scene: entry heating, lift, parachutes, powered descent and touchdown; site slope, roughness and liquid from the height map; hazards in one shape; kernel op `plan_descent` | done | packages/S5.md |
+| T3 NAV: candidate courses (Hohmann, Lambert grid, torch) with burns, fuel and reserve, dose, heat, grazes, belts, debris, delays and difficulty with reasons; a drifting ship's fate and ways out; kernel op `plan_route` | done | packages/T3.md |
+| R1 pass library, render recipes, degrade order, governor, quality badge (the Body globe runs on recipes: GPU, canvas, words) | done (renderer track) | packages/R1.md |
 
 ## Parallel tracks (18 Nov, Alex: build in parallel, integrate later)
 | Track | Packages | Branch |
 |---|---|---|
-| Physics | P1, P3, P4, F0 to F6 done; pipeline, F7, F9, S0 to S4 and S6 done; F8 waits on G6; next S7 (cover, named features, built layer) | `main` via PRs |
-| Kernel | K7 to K10, G0 to G5, C1 to C3, L0, L1a to L1d, L2, J1 to J3, T1, T2 (also through the API), the U3 gaps, the V10 grant gaps and the UI asks (`adopt`, look-ahead write-back, `resolved_system`; K6-additions.md) done; next G6 | `main` via PRs |
+| Physics | P1, P3, P4, F0 to F6 done; pipeline, F7, F9, S0 to S4, S6 and S7 done, served by the `survey_surface` op; T3 NAV done (`sse-nav`, `plan_route`); S5 done (`plan_descent`); F8 waits on G6, S8 on G7; next B1 one body (handover/design/SSE4-star-census.md), then weather W1 to W3 and W5, then S8 or S9 | `main` via PRs |
+| Kernel | K7 to K10, G0 to G6, C1 to C3, L0, L1a to L1d, L2, J1 to J4, T1, T2 (also through the API), the U3 gaps, the V10 grant gaps and the UI asks (`adopt`, look-ahead write-back, `resolved_system`; K6-additions.md) done; next G7 | `main` via PRs |
+| Renderer (R1 to R4, then exotic objects in bands) | R1 done; next R2 (Body and descent views, gpu-high, atmosphere, clouds, magnetic field overlay) | `main` via PRs |
 | Chart room shell and player views | U0 to U3, V1, U5, V2, V12, V3, V11, V4, V5, planet chart, V10, V6 System 3D, U9 lenses, N1 sound, U4 (what-if and look-ahead), A1 part 1, O1 light switch (UI), V13 parts 1 and 2 (import and grow, add to the campaign, read back and age with write-back), V6 Cutaway and Body globe (Body screen), phone screen menu, V14 size comparison and chart measuring, U10 browser campaign save, U7 biosphere view part 1 done; next V7, U7 part 2 (LifeFlow) | `main` via PRs |
 
 **Since 19 Nov (Alex): `main` is the default branch.** New work branches from `main` and arrives as a pull request

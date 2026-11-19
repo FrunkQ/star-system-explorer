@@ -952,6 +952,135 @@ fn save_and_reopen_a_universe_and_read_life_views() {
     assert_eq!(e["code"], "no_habitats");
 }
 
+/// S7 served: a fixture world's survey (layers, register, aerostat band,
+/// tiles with the new layers), a GM rename and edit, a giant, refusals, and
+/// a body of an adopted system read at its date.
+#[test]
+fn survey_surface_serves_layers_register_and_tiles() {
+    let mut k = crate::Kernel::new();
+    let opts = serde_json::json!({
+        "rotation_hours": 23.93, "life": 1.0, "settle": ["settlement", "port"],
+        "reshape": [{"op": "raise-range", "id": "gm:r", "from": [10.0, 20.0], "to": [10.0, 40.0],
+                     "height_m": 40000.0, "width_km": 150.0, "at_myr": 0.0}],
+    });
+    let req = serde_json::json!({"op": "survey_surface", "fixture": "earth", "quick": true,
+        "options": opts, "tiles": [{"face": 0, "level": 0, "x": 0, "y": 0}, {"face": 9, "level": 0, "x": 0, "y": 0}]});
+    let r = send(&mut k, req.clone());
+    assert_eq!(r["type"], "surface_surveyed", "{r}");
+    let s = &r["survey"];
+    assert_eq!(s["source"], "fixture:Earth");
+    assert_eq!(s["stages"].as_array().unwrap().len(), 7);
+    assert_eq!(s["climate"]["cells"], 3, "{}", s["climate"]);
+    assert!(s["aerostat"]["low_km"].as_f64().is_some(), "{s}");
+    assert!(!s["built"].as_array().unwrap().is_empty());
+    assert!(
+        s["applied"][0]["impossible"].is_string(),
+        "a 40 km range is tagged"
+    );
+    assert_eq!(s["tiles"].as_array().unwrap().len(), 1);
+    assert!(s["tiles"][0]["colour"]
+        .as_array()
+        .is_some_and(|c| !c.is_empty()));
+    assert_eq!(s["refused"][0]["why"], "bad tile key");
+    let feats = s["register"]["features"].as_array().unwrap();
+    let ocean = feats
+        .iter()
+        .find(|f| f["kind"] == "ocean")
+        .expect("an ocean");
+    // Same request, same bytes; a rename changes names only.
+    assert_eq!(send(&mut k, req.clone()), r);
+    let mut renamed = req.clone();
+    renamed["options"]["renames"] =
+        serde_json::json!([{"feature": ocean["id"], "name": "Big Blue", "at_myr": 0.0}]);
+    let r2 = send(&mut k, renamed);
+    assert_eq!(r2["survey"]["tiles"], s["tiles"]);
+    assert_eq!(
+        r2["survey"]["register"]["renames"][0]["name"], "Big Blue",
+        "{}",
+        r2["survey"]["register"]["renames"]
+    );
+
+    // A giant: cloud deck only, no layers or register; the band is refused with why.
+    let j = send(
+        &mut k,
+        serde_json::json!({"op": "survey_surface", "fixture": "Jupiter", "quick": true}),
+    );
+    assert_eq!(
+        j["survey"]["stages"],
+        serde_json::json!(["envelope", "cloud-deck"])
+    );
+    assert!(j["survey"].get("register").is_none());
+    assert!(j["survey"]["aerostat_refused"].is_string(), "{j}");
+
+    // Refusals.
+    let e = send(
+        &mut k,
+        serde_json::json!({"op": "survey_surface", "fixture": "Krypton"}),
+    );
+    assert_eq!(e["code"], "unknown_fixture");
+    let e = send(&mut k, serde_json::json!({"op": "survey_surface"}));
+    assert_eq!(e["code"], "bad_request");
+    let e = send(
+        &mut k,
+        serde_json::json!({"op": "survey_surface", "fixture": "Earth", "options": {"life": "lots"}}),
+    );
+    assert_eq!(e["code"], "bad_request");
+    let e = send(
+        &mut k,
+        serde_json::json!({"op": "survey_surface", "system": "u:home/sys:5", "body": "u:home/sys:5/body:1"}),
+    );
+    assert_eq!(e["code"], "no_universe");
+
+    // A body of an adopted system.
+    send(
+        &mut k,
+        serde_json::json!({"op": "open_universe", "id": "home", "seed": "home"}),
+    );
+    let form = serde_json::json!({"seed": "adopt-1", "system": "u:home/sys:5", "star_pins": {"primary_mass": 1.0}});
+    assert_eq!(
+        send(
+            &mut k,
+            serde_json::json!({"op": "adopt", "formation": form})
+        )["type"],
+        "adopted"
+    );
+    let v = send(
+        &mut k,
+        serde_json::json!({"op": "resolved_system", "system": "u:home/sys:5"}),
+    );
+    let solid = v["surfaces"]
+        .as_array()
+        .unwrap()
+        .iter()
+        .find(|e| e["kind"] != "cloud-deck")
+        .expect("a solid world");
+    let body = solid["address"].as_str().unwrap();
+    let r = send(
+        &mut k,
+        serde_json::json!({"op": "survey_surface", "system": "u:home/sys:5", "body": body, "quick": true}),
+    );
+    assert_eq!(r["survey"]["source"], "formation", "{r}");
+    assert_eq!(r["survey"]["body"], body);
+    let total = r["survey"]["register"]["features_total"].as_u64().unwrap();
+    let listed = r["survey"]["register"]["features"]
+        .as_array()
+        .unwrap()
+        .len() as u64;
+    assert_eq!(listed, total.min(200));
+    let few = send(
+        &mut k,
+        serde_json::json!({"op": "survey_surface", "system": "u:home/sys:5", "body": body, "quick": true, "limit": 3}),
+    );
+    let f = few["survey"]["register"]["features"].as_array().unwrap();
+    assert_eq!(f.len() as u64, total.min(3));
+    assert!(few["survey"]["deposits"].as_array().unwrap().len() <= 3);
+    let e = send(
+        &mut k,
+        serde_json::json!({"op": "survey_surface", "system": "u:home/sys:5", "body": "u:home/sys:5/body:999"}),
+    );
+    assert_eq!(e["code"], "no_surface_body");
+}
+
 /// J1 through the API: notes by audience, news that arrives later, kept
 /// values that fold, explain themselves and reach players only as their view
 /// allows (a band stays a band), the writer rule, actors, disclosures with no
@@ -1204,6 +1333,122 @@ fn the_record_through_the_api() {
     );
 }
 
+/// T3 through the API: a fixture course, a drifting ship's ways out, a ship
+/// object, refusals, and a course between two worlds of an adopted system.
+#[test]
+fn plan_route_gives_courses_and_ways_out() {
+    let mut k = crate::Kernel::new();
+    let r = send(
+        &mut k,
+        serde_json::json!({"op": "plan_route", "fixture": "sol", "ship": "chemical-transfer",
+            "from": "Earth", "to": "Mars", "prefer": "save-fuel", "window_days": 800.0}),
+    );
+    assert_eq!(r["type"], "route_planned", "{r}");
+    let p = &r["plan"];
+    assert_eq!(p["from"], "u:sol/sys:sun/body:earth");
+    let c = &p["candidates"][0];
+    assert!(c["days"].as_f64().unwrap() > 100.0);
+    assert!(c["difficulty"]["label"].is_string());
+    assert_eq!(p["recommended"], 0);
+    // Same question, same bytes.
+    assert_eq!(
+        send(
+            &mut k,
+            serde_json::json!({"op": "plan_route", "fixture": "sol", "ship": "chemical-transfer",
+            "from": "Earth", "to": "Mars", "prefer": "save-fuel", "window_days": 800.0})
+        ),
+        r
+    );
+    // Drifting at 1 au with no speed: falls into the Sun; rescue from a port.
+    let d = send(
+        &mut k,
+        serde_json::json!({"op": "plan_route", "fixture": "sol", "ship": "chemical-transfer",
+            "from": {"r_m": [1.495978707e11, 0.0, 0.0], "v_m_s": [0.0, 0.0, 0.0]}}),
+    );
+    let drift = &d["plan"]["drift"];
+    assert!(
+        drift["fate"]
+            .as_str()
+            .unwrap()
+            .starts_with("falls into the star"),
+        "{d}"
+    );
+    assert!(drift["ways_out"]
+        .as_array()
+        .unwrap()
+        .iter()
+        .any(|w| w["kind"] == "rescue" && w["feasible"] == true));
+    // A ship object, and refusals.
+    let ship = serde_json::json!({"name": "Skiff", "accel_g": 0.01, "exhaust_km_s": 3.0, "wet_t": 11.0, "dry_t": 10.0});
+    let w = send(
+        &mut k,
+        serde_json::json!({"op": "plan_route", "fixture": "sol", "ship": ship, "from": "Earth", "to": "Neptune"}),
+    );
+    assert!(
+        w["plan"]["candidates"].as_array().unwrap().is_empty(),
+        "{w}"
+    );
+    assert!(!w["plan"]["refused"].as_array().unwrap().is_empty());
+    for (req, code) in [
+        (
+            serde_json::json!({"op": "plan_route", "fixture": "sol", "ship": "warp-barge", "from": "Earth", "to": "Mars"}),
+            "unknown_ship",
+        ),
+        (
+            serde_json::json!({"op": "plan_route", "fixture": "tatooine", "ship": "fusion-torch", "from": "Earth", "to": "Mars"}),
+            "unknown_fixture",
+        ),
+        (
+            serde_json::json!({"op": "plan_route", "fixture": "sol", "ship": "fusion-torch", "from": "Vulcan", "to": "Mars"}),
+            "route_refused",
+        ),
+        (
+            serde_json::json!({"op": "plan_route", "ship": "fusion-torch", "from": "Earth", "to": "Mars"}),
+            "bad_request",
+        ),
+        (
+            serde_json::json!({"op": "plan_route", "fixture": "sol", "ship": "fusion-torch", "from": "Earth", "to": "Mars", "prefer": "scenic"}),
+            "bad_request",
+        ),
+        (
+            serde_json::json!({"op": "plan_route", "system": "u:home/sys:5", "ship": "fusion-torch", "from": "Earth", "to": "Mars"}),
+            "no_universe",
+        ),
+    ] {
+        assert_eq!(send(&mut k, req)["code"], code);
+    }
+    // Between two worlds of an adopted system.
+    send(
+        &mut k,
+        serde_json::json!({"op": "open_universe", "id": "home", "seed": "home"}),
+    );
+    let form = serde_json::json!({"seed": "adopt-1", "system": "u:home/sys:5", "star_pins": {"primary_mass": 1.0}});
+    assert_eq!(
+        send(
+            &mut k,
+            serde_json::json!({"op": "adopt", "formation": form})
+        )["type"],
+        "adopted"
+    );
+    let v = send(
+        &mut k,
+        serde_json::json!({"op": "resolved_system", "system": "u:home/sys:5"}),
+    );
+    let planets = v["spec"]["planets"].as_array().unwrap();
+    assert!(planets.len() >= 2);
+    let (a, b) = (
+        planets[0]["address"].as_str().unwrap(),
+        planets[1]["address"].as_str().unwrap(),
+    );
+    let r = send(
+        &mut k,
+        serde_json::json!({"op": "plan_route", "system": "u:home/sys:5", "ship": "fusion-torch",
+            "from": a, "to": b, "prefer": "fastest", "ports": [a]}),
+    );
+    assert_eq!(r["type"], "route_planned", "{r}");
+    assert_eq!(r["plan"]["candidates"][0]["kind"], "torch");
+}
+
 /// J2: the logic blocks are listed with their class and shapes; physics
 /// atoms list as before (no new keys).
 #[test]
@@ -1222,6 +1467,72 @@ fn logic_blocks_are_listed() {
     assert_eq!(sel["inputs"][1]["any_dim"], true);
     let toy = by("toy.luminosity_from_mass");
     assert!(toy.get("class").is_none() && toy["inputs"][0].get("shape").is_none());
+}
+
+/// S5 served: descents onto fixture worlds through the survey cache. Mars
+/// shows why real landers go to low ground: the same lander lands in a low
+/// basin and crashes on the uplands.
+#[test]
+fn plan_descent_flies_landers_onto_surveyed_sites() {
+    let mut k = crate::Kernel::new();
+    let ask = |w: &str, lander: &str, lat: f64, lon: f64| {
+        serde_json::json!({"op": "plan_descent", "fixture": w, "quick": true,
+            "lander": lander, "lat_deg": lat, "lon_deg": lon})
+    };
+    let get = |k: &mut crate::Kernel, q: serde_json::Value| {
+        let r = send(k, q);
+        assert_eq!(r["type"], "descent_planned", "{r}");
+        r["descent"].clone()
+    };
+    // Earth: a capsule on its parachute; this site is at sea, so it is a
+    // splashdown flagged on the site.
+    let d = get(&mut k, ask("Earth", "capsule", 45.0, 60.0));
+    let o = &d["descent"]["outcome"];
+    assert_eq!(o["result"], "landed", "{o}");
+    assert_eq!(o["method"], "chute");
+    assert_eq!(d["site"]["under_liquid"], "water");
+    assert_eq!(d["verdict"], "landed-on-a-bad-site");
+    assert!(d["hazards"]
+        .as_array()
+        .unwrap()
+        .iter()
+        .any(|h| h["kind"] == "liquid" && h["level"] == "danger"));
+    assert_eq!(d["entry"]["flight_path_deg"], -2.0);
+    // Mars: low ground lands, high ground crashes.
+    let low = get(&mut k, ask("Mars", "mars-lander", 0.0, 120.0));
+    let high = get(&mut k, ask("Mars", "mars-lander", 0.0, 180.0));
+    assert!(
+        low["site"]["height_m"].as_f64().unwrap()
+            < high["site"]["height_m"].as_f64().unwrap() - 3000.0
+    );
+    assert_eq!(
+        low["descent"]["outcome"]["result"], "landed",
+        "{}",
+        low["descent"]["outcome"]
+    );
+    assert_eq!(low["descent"]["outcome"]["method"], "chute-and-engines");
+    assert_eq!(high["descent"]["outcome"]["result"], "crash");
+    assert!(
+        high["air_at_site"]["density_kg_m3"].as_f64()
+            < low["air_at_site"]["density_kg_m3"].as_f64()
+    );
+    // Moon: engines only, from a low orbit.
+    let d = get(&mut k, ask("Moon", "moon-lander", 0.7, 23.5));
+    assert_eq!(d["descent"]["outcome"]["result"], "landed");
+    assert_eq!(d["descent"]["outcome"]["method"], "engines");
+    assert_eq!(d["air_at_site"]["density_kg_m3"], 0.0);
+    // Titan: a long parachute descent.
+    let d = get(&mut k, ask("Titan", "titan-probe", -10.0, 192.0));
+    assert_eq!(d["verdict"], "landed", "{}", d["site"]);
+    assert!(d["descent"]["outcome"]["duration_s"].as_f64().unwrap() > 3600.0);
+    // Deterministic, and refusals.
+    assert_eq!(get(&mut k, ask("Titan", "titan-probe", -10.0, 192.0)), d);
+    let r = send(&mut k, ask("Titan", "glider", 0.0, 0.0));
+    assert_eq!(r["code"], "unknown_lander", "{r}");
+    let r = send(&mut k, ask("Jupiter", "capsule", 0.0, 0.0));
+    assert_eq!(r["code"], "no_ground", "{r}");
+    let r = send(&mut k, ask("Earth", "capsule", 100.0, 0.0));
+    assert_eq!(r["code"], "bad_request", "{r}");
 }
 
 /// J3: a stack with boxes loads (box golden cases run, flows are compiled
@@ -1262,4 +1573,142 @@ fn boxes_load_with_the_stack() {
             .contains("(box toy.star): test toy.star: the Sun: teff = 577"),
         "{r}"
     );
+}
+
+/// J4 through the API: the sensor ladder grants the crew the next rung after an
+/// hour in range; an `ask` consequence changes nothing until the GM says yes;
+/// the rules run on the GM machine and a seat's disclosures carry results
+/// only, never the trail, its ids or its inputs; a replay is identical.
+#[test]
+fn rules_through_the_api() {
+    let packs = crate::contract::load_packs(&root().join("tests/fixtures/packs"));
+    let run = || {
+        let mut k = crate::Kernel::new();
+        let r = send(
+            &mut k,
+            serde_json::json!({"op":"load_stack","packs":[packs["rpg-record"], packs["rpg-rules"]]}),
+        );
+        assert_eq!(r["type"], "stack_loaded", "{r}");
+        send(
+            &mut k,
+            serde_json::json!({"op":"open_universe","id":"kestrel","seed":"k"}),
+        );
+        let tarn = "u:kestrel/sys:0/body:3";
+        let ship = "u:kestrel/ship:calla";
+        let edit = |k: &mut crate::Kernel, a: &str, f: &str, v: serde_json::Value, t: i64| {
+            let r = send(
+                k,
+                serde_json::json!({"op":"set_authored","edit":{"address":a,"field":f,"value":v,"occurred_at_s":t}}),
+            );
+            assert_eq!(r["type"], "authored", "{r}");
+        };
+        edit(&mut k, tarn, "name", serde_json::json!("Tarn"), 0);
+        for (f, v) in [("pos.x_m", 0.0), ("pos.y_m", 0.0), ("pos.z_m", 0.0)] {
+            edit(&mut k, tarn, f, serde_json::json!(v), 0);
+        }
+        edit(&mut k, ship, "tag.ship", serde_json::json!(true), 0);
+        edit(&mut k, ship, "sensor.range_m", serde_json::json!(1.0e9), 0);
+        for (f, v) in [("pos.x_m", 5.0e9), ("pos.y_m", 0.0), ("pos.z_m", 0.0)] {
+            edit(&mut k, ship, f, serde_json::json!(v), 0);
+        }
+        edit(&mut k, ship, "pos.x_m", serde_json::json!(5.0e8), 1000);
+        let listed = send(&mut k, serde_json::json!({"op":"rules"}));
+        assert_eq!(listed["rules"].as_array().unwrap().len(), 2, "{listed}");
+        let view = |k: &mut crate::Kernel, t: i64| {
+            let s = send(
+                k,
+                serde_json::json!({"op":"scene","audience":"crew","scope":"u:kestrel","at_s":t}),
+            );
+            s["scene"]["subjects"]
+                .as_array()
+                .unwrap()
+                .iter()
+                .find(|x| x["address"] == tarn)
+                .map(|x| x["view"].clone())
+                .unwrap()
+        };
+        let mut steps = vec![];
+        for t in [0, 1000, 3000, 4600] {
+            let r = send(&mut k, serde_json::json!({"op":"rules_step","at_s":t}));
+            assert_eq!(r["type"], "rules_stepped", "{r}");
+            steps.push(r);
+        }
+        assert_eq!(view(&mut k, 3000), "long-range");
+        assert_eq!(
+            view(&mut k, 4600),
+            "scanned",
+            "an hour in range: one rung up"
+        );
+        assert_eq!(steps[3]["report"]["passes"][0][0]["rule"], "sensor-ladder");
+        // A step back is refused.
+        let back = send(&mut k, serde_json::json!({"op":"rules_step","at_s":10}));
+        assert_eq!(back["code"], "rules", "{back}");
+        // An insult: proposed, nothing changes until the GM says yes.
+        send(
+            &mut k,
+            serde_json::json!({"op":"add_note","address":tarn,"text":"the crew peed on the statue","tags":["insult"],"by":"crew-seat","audience":["crew"],"at_s":5000}),
+        );
+        let before = send(&mut k, serde_json::json!({"op":"record","address":tarn}));
+        let s = send(&mut k, serde_json::json!({"op":"rules_step","at_s":5100}));
+        assert_eq!(s["report"]["passes"][0][0]["outcome"], "proposed", "{s}");
+        assert_eq!(
+            s["state_hash"], steps[3]["state_hash"],
+            "the universe is untouched"
+        );
+        let after = send(&mut k, serde_json::json!({"op":"record","address":tarn}));
+        assert_eq!(before["kept"], after["kept"]);
+        let p = send(&mut k, serde_json::json!({"op":"rules_pending"}));
+        let id = p["proposals"][0]["id"].as_str().unwrap().to_string();
+        let d = send(
+            &mut k,
+            serde_json::json!({"op":"rules_decide","proposal":id,"approve":true,"at_s":5200}),
+        );
+        assert_eq!(d["written"].as_array().unwrap().len(), 2, "{d}");
+        let rec = send(&mut k, serde_json::json!({"op":"record","address":tarn}));
+        let standing = rec["kept"]
+            .as_array()
+            .unwrap()
+            .iter()
+            .find(|v| v["kind"] == "politics.standing")
+            .unwrap()["value"]
+            .clone();
+        assert_eq!(standing, serde_json::json!(-1.0));
+        let again = send(
+            &mut k,
+            serde_json::json!({"op":"rules_decide","proposal":id,"approve":true}),
+        );
+        assert_eq!(again["code"], "rules");
+        let pol = send(
+            &mut k,
+            serde_json::json!({"op":"rules_policy","rule":"consequence","approval":{"policy":"auto"},"at_s":5200}),
+        );
+        assert_eq!(pol["type"], "rules_policy_set", "{pol}");
+        // What the crew's device is sent: results only.
+        let disc = send(
+            &mut k,
+            serde_json::json!({"op":"disclosures","audience":"crew","at_s":6000}),
+        );
+        let text = disc.to_string();
+        let listed = send(&mut k, serde_json::json!({"op":"rules"}));
+        for e in listed["trail"].as_array().unwrap() {
+            assert!(
+                !text.contains(e["id"].as_str().unwrap()),
+                "a rules event id reached the crew"
+            );
+        }
+        for word in [
+            "rules.",
+            "sensor-ladder",
+            "consequence",
+            "the Vesh remember",
+            "politics.standing",
+        ] {
+            assert!(!text.contains(word), "{word} reached the crew: {text}");
+        }
+        let export = send(&mut k, serde_json::json!({"op":"export_chronicle"}));
+        (steps, d, listed, export)
+    };
+    let a = run();
+    let b = run();
+    assert_eq!(a, b, "the same session replays to the same bytes");
 }
