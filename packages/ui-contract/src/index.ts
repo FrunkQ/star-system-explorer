@@ -63,3 +63,7 @@ export { CAMPAIGN_SCHEMA, checkCampaignSave, makeCampaignSave, publicExport, sav
 export type { CampaignSave } from "./campaign.ts";
 export { LIFE_EXAMPLES, MARKED_KINDS, carbonWords, confidenceWords, epochBands, foodWeb, productionPath, scanTiers, timeAxis, words as lifeWords } from "./life.ts";
 export type { LifeEpoch, LifeEvent, LifeGuild, LifeHook, LifePoint, LifeSignatures, LifeView, WebLink, WebNode } from "./life.ts";
+export { GREGORIAN, calendarOf, checkCalendar, dateOf, epochOf, formatDate, isLong, parseDate, startOf, yearLength } from "./calendar.ts";
+export type { Anchor, Calendar, CalendarDate } from "./calendar.ts";
+export { termsOf, word } from "./words.ts";
+export type { Terms } from "./words.ts";

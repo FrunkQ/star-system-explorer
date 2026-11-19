@@ -42,3 +42,12 @@ Listed in `docs/fudges.md`, section "Game-system packs".
 
 ## Shared files touched
 `docs/fudges.md` (new section). Root `Cargo.toml` untouched (workspace globs `crates/*`).
+
+# X3a part 2a: units, calendar, words (19 Nov 2026)
+- Units in the pack (`provides.units`, the K5 mechanism): `dton` (14 m³) and `g_std` (9.80665 m/s²). Parsecs were already built in. Credits are money, not a physical dimension, so they are a word (`money`, `money_symbol`).
+- Calendar: the kernel's shape and key (`provides.other.calendar`, singular, top pack wins; `{name, epoch_s, epoch_year?, day_s, year_days, months?, format}`, checked by the kernel, op `calendar`). The UI formatter is `packages/ui-contract/src/calendar.ts` (`calendarOf(stack)`, `formatDate`, `dateOf`, `parseDate`, `startOf`; a campaign may pass its own anchor, else the epoch). Optional extras read by the formatter: `leap`/`leap_month`, `named_days` (optionally outside the weeks), `week` (restarting each year or continuous). The kernel thread was asked (19 Nov) to accept these in its deny-unknown checker; if the Traveller pack is refused by the kernel's calendar check, that is why. Format tokens `{year} {day} {month} {mday} {weekday} {name}`, numbers padded as `{day:03}`. `GREGORIAN` ships as the everyday calendar.
+- The Traveller pack's calendar `Imperial`: 365 days, day 1 a holiday outside the weeks, seven-day weeks from day 2, written `{day:03}-{year}` (001-1105).
+- Words: `packages/ui-contract/src/words.ts` (`termsOf(stack)`, `word(terms, term)`), pack key `provides.other.vocabulary.terms`; later packs win; unlisted terms keep their own word.
+- Checks: `tests/ui/calendar.test.ts` (Gregorian months, long years incl. 1900 and 2000, weekdays incl. 19 Nov 2026 a Thursday, 400-year cycles, round trips, Imperial dates and holiday, bad definitions, words).
+- Golden `traveller-codes.json`: only the pack hash moved (units, calendar and terms added).
+- Not yet: the campaign's anchor and calendar choice in the save, and the time controls showing it (human-scale time controls are queued on the chart room thread; they can call `formatDate`).
