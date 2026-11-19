@@ -12,7 +12,8 @@
 //
 // Nothing here measures wall-clock time itself: the host passes `now()`.
 import { APPLIED, GRANT_VIEWS, REPLAY, type Session } from "./session.ts";
-import type { Intent } from "./intent.ts";
+import { checkIntent, type Intent } from "./intent.ts";
+import { decide, type Seat } from "./seat.ts";
 
 export const P2P_PROTOCOL = "sse.p2p/1";
 
@@ -38,6 +39,8 @@ export interface Manifest {
   state_hash: string;
   clock_yr: number;
   data_views: string[];
+  /** The seats of this session (V5: what each may ask for; the table is "table"). */
+  seats: Seat[];
 }
 
 export type Wire =
@@ -47,7 +50,26 @@ export type Wire =
   | { t: "state"; run: string; clock_yr: number; data_views: string[] }
   | { t: "beat"; run: string; seq: number; state_hash: string }
   | { t: "snapshot"; from: string }
-  | { t: "bye"; run: string };
+  | { t: "bye"; run: string }
+  /** V5: a player's request, by seat; it becomes an event only if the GM approves it. */
+  | { t: "request"; run: string; from: string; seat: string; id: string; intent: Intent }
+  | { t: "answer"; run: string; to: string; id: string; status: "approved" | "declined"; reason?: string; event_id?: string };
+
+/** A player's request as the GM sees it. */
+export interface PlayerRequest {
+  id: string;
+  from: string;
+  seat: string;
+  intent: Intent;
+}
+
+/** A player's own request as that player sees it. */
+export interface OwnRequest {
+  id: string;
+  intent: Intent;
+  status: "waiting" | "approved" | "declined";
+  reason?: string;
+}
 
 /** A room: every member hears every message (messages may name one recipient with `to`). */
 export interface Hub {
@@ -179,6 +201,7 @@ export interface HostState {
   seq: number;
   state_hash: string;
   players: number;
+  requests: number;
 }
 
 /**
@@ -189,17 +212,20 @@ export interface HostState {
 export class GmHost {
   readonly #session: Session;
   #hub: Hub | null = null;
-  readonly #base: Omit<Manifest, "log" | "state_hash" | "clock_yr" | "data_views">;
+  readonly #base: Omit<Manifest, "log" | "state_hash" | "clock_yr" | "data_views" | "seats">;
   readonly #log: LogEntry[] = [];
   #opening_hash: string;
   #clock: number;
   #views: string[];
   readonly #players = new Set<string>();
   readonly #off: (() => void)[] = [];
+  readonly #seats: Seat[];
+  readonly #requests: PlayerRequest[] = [];
   onChange: (s: HostState) => void = () => {};
 
-  constructor(session: Session, hub: Hub | null, base: { run: string; kernel: string; app: string; universe: { id: string; seed: string }; packs: unknown[]; opening_hash: string; clock_yr: number; data_views?: string[] }) {
+  constructor(session: Session, hub: Hub | null, base: { run: string; kernel: string; app: string; universe: { id: string; seed: string }; packs: unknown[]; opening_hash: string; clock_yr: number; data_views?: string[]; seats?: Seat[] }) {
     this.#session = session;
+    this.#seats = structuredClone(base.seats ?? []);
     this.#hub = hub;
     this.#base = { protocol: P2P_PROTOCOL, run: base.run, kernel: base.kernel, app: base.app, universe: base.universe, packs: base.packs };
     this.#opening_hash = base.opening_hash;
@@ -225,7 +251,7 @@ export class GmHost {
           this.#players.add(m.from);
           hub.send({ t: "manifest", to: m.from, manifest: this.manifest() });
           this.#changed();
-        }
+        } else if (m.t === "request" && m.run === this.#base.run) this.#request(m);
       }),
     );
   }
@@ -234,8 +260,48 @@ export class GmHost {
     this.onChange(this.state());
   }
 
+  #answer(r: PlayerRequest, status: "approved" | "declined", extra: { reason?: string; event_id?: string } = {}) {
+    this.#hub?.send({ t: "answer", run: this.#base.run, to: r.from, id: r.id, status, ...extra });
+  }
+
+  /** A player's request: checked against the seat the GM gave it, then queued for the GM (never applied here). */
+  #request(m: Extract<Wire, { t: "request" }>) {
+    const r: PlayerRequest = { id: m.id, from: m.from, seat: m.seat, intent: m.intent };
+    if (this.#requests.some((x) => x.from === r.from && x.id === r.id)) return;
+    const seat = this.#seats.find((x) => x.id === m.seat);
+    const bad = checkIntent(m.intent);
+    const why = !seat ? `no seat ${m.seat} in this session` : bad ? bad : decide(seat, m.intent).action === "refuse" ? `seat ${seat.label} may not ask for ${m.intent.kind}` : null;
+    if (why) return this.#answer(r, "declined", { reason: why });
+    this.#requests.push(r);
+    this.#changed();
+  }
+
+  /** Requests waiting for the GM, oldest first. */
+  requests(): readonly PlayerRequest[] {
+    return structuredClone(this.#requests);
+  }
+
+  /** The GM approves: the intent is applied through the GM's own session (and so travels to every player as an event). */
+  async approve(id: string, from: string): Promise<void> {
+    const i = this.#requests.findIndex((x) => x.id === id && x.from === from);
+    if (i < 0) return;
+    const [r] = this.#requests.splice(i, 1);
+    const res = await this.#session.send(r!.intent);
+    if (res.status === "applied") this.#answer(r!, "approved", { event_id: res.event_id });
+    else this.#answer(r!, "declined", { reason: res.status === "refused" ? res.reason : res.status === "error" ? res.message : "the GM's session could not apply it" });
+    this.#changed();
+  }
+
+  decline(id: string, from: string, reason = "The game master declined."): void {
+    const i = this.#requests.findIndex((x) => x.id === id && x.from === from);
+    if (i < 0) return;
+    const [r] = this.#requests.splice(i, 1);
+    this.#answer(r!, "declined", { reason });
+    this.#changed();
+  }
+
   state(): HostState {
-    return { run: this.#base.run, seq: this.#log.length, state_hash: this.#hash(), players: this.#players.size };
+    return { run: this.#base.run, seq: this.#log.length, state_hash: this.#hash(), players: this.#players.size, requests: this.#requests.length };
   }
 
   #hash(): string {
@@ -243,7 +309,7 @@ export class GmHost {
   }
 
   manifest(): Manifest {
-    return { ...structuredClone(this.#base), log: structuredClone(this.#log), state_hash: this.#hash(), clock_yr: this.#clock, data_views: [...this.#views] };
+    return { ...structuredClone(this.#base), log: structuredClone(this.#log), state_hash: this.#hash(), clock_yr: this.#clock, data_views: [...this.#views], seats: structuredClone(this.#seats) };
   }
 
   /** The session clock and the data views players' screens may use. */
@@ -295,7 +361,11 @@ export class PlayerReplica {
   #status: ReplicaStatus = { state: "joining" };
   #queue: Promise<void> = Promise.resolve();
   readonly #off: () => void;
+  readonly #own: OwnRequest[] = [];
+  #nextId = 1;
   onStatus: (s: ReplicaStatus) => void = () => {};
+  /** The player's own requests changed (sent, approved, declined). */
+  onRequests: (r: readonly OwnRequest[]) => void = () => {};
   /** A new session was built (on join or after a resync): views should rebind to it. */
   onSession: (s: Session) => void = () => {};
   /** The state moved (an event or the clock): views should refresh. */
@@ -319,6 +389,28 @@ export class PlayerReplica {
 
   join() {
     this.#hub.send({ t: "hello", from: this.#hub.id, protocol: P2P_PROTOCOL });
+  }
+
+  /**
+   * Ask the GM for a change (V5). The seat decides locally first: what it may
+   * never send is refused here; what needs the GM goes to the GM, and becomes
+   * an event (replayed like any other) only if the GM approves. Not while the
+   * GM is away: the queue is disabled then.
+   */
+  async request(intent: Intent): Promise<{ ok: true; id: string } | { ok: false; reason: string }> {
+    if (this.#status.state !== "live" || !this.#session) return { ok: false, reason: "The game master is not connected; requests wait until they are." };
+    const r = await this.#session.send(intent);
+    if (r.status === "refused") return { ok: false, reason: r.reason };
+    if (r.status !== "pending") return { ok: false, reason: "this seat's requests always go to the game master" };
+    const id = `${this.#hub.id}-${this.#nextId++}`;
+    this.#own.push({ id, intent: structuredClone(intent), status: "waiting" });
+    this.#hub.send({ t: "request", run: this.#run, from: this.#hub.id, seat: this.#session.seat.id, id, intent });
+    this.onRequests(structuredClone(this.#own));
+    return { ok: true, id };
+  }
+
+  requests(): readonly OwnRequest[] {
+    return structuredClone(this.#own);
   }
 
   /** Called by the host on a timer: notices a GM that has gone quiet. */
@@ -361,6 +453,17 @@ export class PlayerReplica {
       return this.#load(m.manifest);
     }
     if (!("run" in m) || m.run !== this.#run || !this.#session) return;
+    if (m.t === "answer") {
+      if (m.to !== this.#hub.id) return;
+      const r = this.#own.find((x) => x.id === m.id);
+      if (r) {
+        r.status = m.status;
+        if (m.reason) r.reason = m.reason;
+        this.onRequests(structuredClone(this.#own));
+      }
+      return;
+    }
+    if (m.t === "request") return;
     if (m.t === "bye") return this.#set({ state: "offline", seq: this.#seq, state_hash: this.#hash, since: this.#now() });
     this.#heard();
     if (this.#status.state === "resync") return;

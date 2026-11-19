@@ -73,6 +73,22 @@ try {
     await shot(phone, "p2p-phone-live");
     await shot(desk, "p2p-desk-live");
 
+    // V5: the desk asks for a name; nothing changes until the GM approves; then everyone follows.
+    await desk.getByLabel("Position not known").getByRole("button", { name: "Tarn" }).click();
+    await desk.getByLabel(/Suggest a name for Tarn/).fill("Haven");
+    await desk.getByRole("button", { name: "Ask the game master" }).click();
+    await desk.waitForSelector("[data-own-request='waiting']");
+    const req = gm.getByRole("group", { name: "Players' requests" });
+    await req.waitFor();
+    assert.match(await req.innerText(), /name of Tarn → "Haven"/);
+    assert.equal(await gmHash(), after, "a request alone changes nothing");
+    await shot(gm, "p5-gm-request");
+    await req.getByRole("button", { name: "Approve" }).click();
+    await desk.waitForSelector("[data-own-request='approved']", { timeout: 15000 });
+    await gm.waitForFunction((h) => document.querySelector(".status [data-state-hash]")?.getAttribute("data-state-hash") !== h, after);
+    const named = await gmHash();
+    for (const p of [desk, phone]) await p.waitForFunction((h) => document.querySelector("footer[data-state-hash]")?.getAttribute("data-state-hash") === h, named, { timeout: 15000 });
+
     // Phone width: no sideways scroll.
     const pw = await phone.evaluate(() => document.scrollingElement.scrollWidth);
     assert.ok(pw <= 390, `phone scrolls sideways (${pw}px)`);
@@ -81,12 +97,13 @@ try {
     await gm.close({ runBeforeUnload: true });
     for (const p of [desk, phone]) {
       await p.waitForSelector("[role=status][aria-label='Game master'][data-link='offline']", { timeout: 15000 });
-      assert.equal(await playerHash(p), after, "the last state stays on screen");
+      assert.equal(await playerHash(p), named, "the last state stays on screen");
     }
     assert.match(await phone.getByRole("status", { name: "Game master" }).innerText(), /away[\s\S]*read only/i);
     await shot(phone, "p2p-phone-offline");
     assert.deepEqual(errors, []);
-    console.log(`V4 ${name}${relay ? " (relay)" : ""}: desk and phone joined; GM edit replayed (state ${after.slice(0, 10)}); GM drop shows read-only`);
+    assert.equal(await desk.getByRole("button", { name: "Ask the game master" }).isDisabled(), true, "no requests while the GM is away");
+    console.log(`V4/V5 ${name}${relay ? " (relay)" : ""}: desk and phone joined; GM edit replayed (state ${after.slice(0, 10)}); request approved (state ${named.slice(0, 10)}); GM drop shows read-only`);
     await browser.close();
   }
   console.log("PASS");

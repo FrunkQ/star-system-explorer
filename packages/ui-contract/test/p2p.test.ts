@@ -6,7 +6,7 @@ import { test } from "node:test";
 import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 import { Session } from "../src/session.ts";
-import { gmSeat, tableSeat } from "../src/seat.ts";
+import { gmSeat, sharedTableSeat, tableSeat } from "../src/seat.ts";
 import { enterFacts, type AuthoredFacts } from "../src/data-views.ts";
 import { GmHost, PlayerReplica, memoryRoom, type Manifest, type ReplicaStatus } from "../src/p2p.ts";
 import type { PackDoc } from "../src/physics.ts";
@@ -160,6 +160,76 @@ test("a player that diverges asks for a snapshot and rebuilds in step", async ()
     assert.ok(states.includes("resync"));
     assert.equal(sessions, 2, "a fresh session was built from the snapshot");
     assert.equal(await p.session!.stateHash(), await gm.stateHash());
+  } finally {
+    await Promise.all(kernels.map((k) => k.close()));
+  }
+});
+
+test("V5: a player's request becomes an event only after the GM approves it", async () => {
+  const kernels: ReturnType<typeof nodeKernel>[] = [];
+  const kernel = () => {
+    const k = nodeKernel();
+    kernels.push(k);
+    return k;
+  };
+  try {
+    const room = memoryRoom();
+    const gk = kernel();
+    const gm = await Session.open(gk.client, gmSeat(), universe, [base, playerData], gk.scratch);
+    const version = await gm.kernelVersion();
+    const host = new GmHost(gm, room.hub("gm"), { run: "r5", kernel: version, app: "a", universe, packs: [base, playerData], opening_hash: await gm.stateHash(), clock_yr: 0, seats: [sharedTableSeat()] });
+    const open = async (m: Manifest) => {
+      const k = kernel();
+      return Session.open(k.client, m.seats.find((x) => x.id === "table")!, m.universe, m.packs, k.scratch);
+    };
+    const p = new PlayerReplica(room.hub("p"), open, { kernel: version, app: "a", now: () => 0 });
+    let answers = 0;
+    p.onRequests = () => (answers += 1);
+    p.join();
+    await until(() => p.status.state === "live", "live");
+
+    // The request travels; nothing changes until the GM acts.
+    const name = { kind: "set_value" as const, address: TARN, field: "name", value: "Haven", at_yr: 0 };
+    const sent = await p.request(name);
+    assert.ok(sent.ok);
+    await until(() => host.requests().length === 1, "GM sees the request");
+    assert.equal(host.state().seq, 0, "no event before approval");
+    assert.equal(await p.session!.stateHash(), await gm.stateHash());
+    assert.equal(p.requests()[0]!.status, "waiting");
+
+    // Approved: the GM's session applies it; it reaches the player as an ordinary event.
+    await host.approve(host.requests()[0]!.id, "p");
+    await until(() => p.requests()[0]!.status === "approved" && (p.status as { seq: number }).seq === 1, "approved and replayed");
+    assert.equal(host.state().seq, 1);
+    assert.equal(await p.session!.stateHash(), await gm.stateHash());
+    const hist = await gm.history(TARN);
+    assert.ok(hist.length >= 1, "chronicled on the GM's side");
+
+    // Declined: no event, a reason comes back.
+    const again = await p.request({ ...name, value: "Nope" });
+    assert.ok(again.ok);
+    await until(() => host.requests().length === 1, "second request");
+    host.decline(host.requests()[0]!.id, "p", "Not tonight.");
+    await until(() => p.requests()[1]!.status === "declined", "declined");
+    assert.equal(p.requests()[1]!.reason, "Not tonight.");
+    assert.equal(host.state().seq, 1);
+
+    // A request the seat may never make is refused on the player's side; a forged one is declined by the GM.
+    const never = await p.request({ kind: "scan_toggle", address: TARN, audience: "everyone", at_yr: 0 });
+    assert.equal(never.ok, false);
+    const forger = room.hub("forger");
+    let forged: unknown = null;
+    forger.onMessage((m) => (m.t === "answer" && m.to === "forger" ? (forged = m) : null));
+    forger.send({ t: "request", run: "r5", from: "forger", seat: "gm", id: "x", intent: name });
+    await until(() => forged !== null, "forged answered");
+    assert.equal((forged as { status: string }).status, "declined");
+    assert.equal(host.requests().length, 0);
+
+    // While the GM is away, requests are disabled.
+    host.close();
+    await until(() => p.status.state === "offline", "offline");
+    assert.equal((await p.request(name)).ok, false);
+    assert.ok(answers >= 4);
   } finally {
     await Promise.all(kernels.map((k) => k.close()));
   }

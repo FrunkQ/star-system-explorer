@@ -3,14 +3,14 @@
 // shares. A room is a random id; the players' link opens players.html with it.
 // The GM serves both at once: BroadcastChannel for other windows and screens
 // of this computer, and the site's relay (worker/index.js) for other devices.
-import { GmHost, broadcastHub, multiHub, relayHub, type HostState, type Hub, type Session } from "../../ui-contract/src/index.ts";
+import { GmHost, broadcastHub, multiHub, relayHub, sharedTableSeat, type HostState, type Hub, type PlayerRequest, type Session } from "../../ui-contract/src/index.ts";
 
 declare const __SSE_APP__: string;
 export const APP_VERSION: string = typeof __SSE_APP__ === "string" ? __SSE_APP__ : "dev";
 
 export interface Share {
   readonly host: GmHost;
-  readonly state: HostState & { room: string | null; link: string | null };
+  readonly state: HostState & { room: string | null; link: string | null; waiting: PlayerRequest[] };
   start(): string;
   setClock(yr: number): void;
 }
@@ -23,9 +23,9 @@ function roomId(): string {
 
 export async function createShare(session: Session, opening: { universe: { id: string; seed: string }; packs: unknown[]; clock_yr: number; views: () => string[] }, hubFor: (room: string, id: string) => Hub = (room, id) => multiHub(id, [broadcastHub(room, id), relayHub(document.baseURI, room, id)])): Promise<Share> {
   const run = roomId();
-  const host = new GmHost(session, null, { run, kernel: await session.kernelVersion(), app: APP_VERSION, universe: opening.universe, packs: opening.packs, opening_hash: await session.stateHash(), clock_yr: opening.clock_yr });
-  const st = $state({ ...host.state(), room: null as string | null, link: null as string | null });
-  host.onChange = (s) => Object.assign(st, s);
+  const host = new GmHost(session, null, { run, kernel: await session.kernelVersion(), app: APP_VERSION, universe: opening.universe, packs: opening.packs, opening_hash: await session.stateHash(), clock_yr: opening.clock_yr, seats: [sharedTableSeat()] });
+  const st = $state({ ...host.state(), room: null as string | null, link: null as string | null, waiting: [] as PlayerRequest[] });
+  host.onChange = (s) => Object.assign(st, s, { waiting: [...host.requests()] });
   let timer: ReturnType<typeof setInterval> | null = null;
   return {
     host,

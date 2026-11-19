@@ -29,6 +29,11 @@ export function tableSeat(): Seat {
   return { id: "table", label: "Table", audience: "everyone", authority: "player", may_send: [], sealed: false };
 }
 
+/** The table in a shared session (V4/V5): sees "everyone", and may ask the GM to set a value (never applied without approval). */
+export function sharedTableSeat(): Seat {
+  return { ...tableSeat(), may_send: ["set_value"] };
+}
+
 /** `inner` is `outer` or lies inside it (address segments, not string prefixes). */
 export function within(inner: string, outer: string): boolean {
   return inner === outer || inner.startsWith(outer + "/");

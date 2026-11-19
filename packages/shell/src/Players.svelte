@@ -13,7 +13,7 @@
 <script lang="ts">
   import { checkPlayerScene, checkScreen, enterFacts, gmSeat, markerFor, observeOf, playerSubjectOf, subjectName, type AuthoredFacts, type CheckedScreen, type PlayerScene, type ScreenDoc, type Vocab, type ViewSession } from "../../ui-contract/src/index.ts";
   import { openBrowserSession } from "../../ui-contract/src/host-browser.ts";
-  import { PlayerReplica, broadcastHub, relayHub, tableSeat, type Hub, type ReplicaStatus } from "../../ui-contract/src/index.ts";
+  import { PlayerReplica, broadcastHub, relayHub, sharedTableSeat, type Hub, type OwnRequest, type ReplicaStatus } from "../../ui-contract/src/index.ts";
   import { APP_VERSION } from "./share.svelte.ts";
   import { focusOf } from "../../views/player-stack/src/pick.ts";
   import stackDoc from "./documents/stack.json";
@@ -84,14 +84,27 @@
     via = "browser";
     return broadcastHub(room!, id);
   }
+  // V5: asking the GM. A request becomes an event only if the GM approves it.
+  let replicaRef: PlayerReplica | null = null;
+  let mine = $state<OwnRequest[]>([]);
+  let ask = $state("");
+  let askError = $state("");
+  async function askName() {
+    if (!replicaRef || !target || !ask.trim()) return;
+    const r = await replicaRef.request({ kind: "set_value", address: target.address, field: "name", value: ask.trim(), at_yr: facts.at_yr });
+    askError = r.ok ? "" : r.reason;
+    if (r.ok) ask = "";
+  }
   if (joined) {
     const id = `player-${Math.random().toString(36).slice(2, 10)}`;
     void roomHub(id).then((hub) => {
       const replica = new PlayerReplica(
         hub,
-        (m) => openBrowserSession({ base: document.baseURI, seat: tableSeat(), universe: m.universe, packs: m.packs }),
+        (m) => openBrowserSession({ base: document.baseURI, seat: m.seats.find((x) => x.id === "table") ?? sharedTableSeat(), universe: m.universe, packs: m.packs }),
         { kernel: "", app: APP_VERSION, now: () => performance.now() },
       );
+      replicaRef = replica;
+      replica.onRequests = (r) => (mine = [...r]);
       replica.onStatus = (st) => {
         link = st;
         if (st.state === "live" || st.state === "offline") stateHash = st.state_hash;
@@ -207,6 +220,18 @@
       <main class="grid"><ScreenRuntime screen={checked.screen} {scene} {vocab} {mark} bind:selection /></main>
     {/key}
   {/if}
+  {#if joined && scene}
+    <section class="ask" aria-label="Ask the game master">
+      <form onsubmit={(e) => (e.preventDefault(), askName())}>
+        <label>Suggest a name for {target ? subjectName(target) : "the body in focus"} <input type="text" bind:value={ask} maxlength="40" disabled={link.state !== "live" || !target} /></label>
+        <button type="submit" disabled={link.state !== "live" || !target || !ask.trim()}>Ask the game master</button>
+      </form>
+      {#if askError}<p class="err">{askError}</p>{/if}
+      {#if mine.length}
+        <ul>{#each mine as r (r.id)}<li data-own-request={r.status}>{r.intent.kind === "set_value" ? `"${r.intent.value}"` : r.intent.kind}: {r.status === "waiting" ? "waiting for the game master" : r.status}{r.reason ? ` (${r.reason})` : ""}</li>{/each}</ul>
+      {/if}
+    </section>
+  {/if}
   <footer class="status" data-state-hash={stateHash} data-link={joined ? link.state : "local"} data-via={via}>Scene: live from {joined ? "this screen's kernel, in step with the game master" : "the kernel"} {via ? ` (via ${via === "relay" ? "the site's relay" : "this browser"})` : ""} for the {AUDIENCE} audience{sceneHash ? ` · scene ${sceneHash.slice(0, 10)}` : ""}{stateHash ? ` · state ${stateHash.slice(0, 10)}` : ""} {joined ? "" : screenDoc?.data_view ? ` · fixed to the ${screenDoc.data_view} view by the screen document` : ` · the Scanned control stands in for the GM's button and taps it for ${target ? subjectName(target) : "the body in focus"}`}</footer>
 </div>
 <FilterChain {layers} />
@@ -225,7 +250,7 @@
   .page {
     min-height: 100dvh;
     display: grid;
-    grid-template-rows: auto 1fr auto;
+    grid-template-rows: auto 1fr auto auto;
   }
   .bar {
     display: flex;
@@ -249,6 +274,29 @@
   }
   .spacer {
     flex: 1;
+  }
+  .ask {
+    padding: 8px 24px 12px;
+    font-size: 13px;
+  }
+  .ask form {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    align-items: center;
+  }
+  .ask input,
+  .ask button {
+    min-height: 36px;
+    font: inherit;
+  }
+  .ask ul {
+    margin: 6px 0 0;
+    padding-left: 18px;
+  }
+  .ask .err {
+    margin: 4px 0 0;
+    color: var(--sse-alert, currentColor);
   }
   .banner {
     flex-basis: 100%;

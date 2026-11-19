@@ -260,6 +260,17 @@
           {#if share.state.link}
             <a href={share.state.link} target="_blank" rel="noopener" data-players-link={share.state.link}>players' screen</a>
             <span data-players={share.state.players}>{share.state.players} {share.state.players === 1 ? "screen" : "screens"} · {share.state.seq} events</span>
+            {#if share.state.waiting.length}
+              <span class="requests" role="group" aria-label="Players' requests">
+                {#each share.state.waiting as r (r.from + r.id)}
+                  <span class="req" data-request={r.id}>
+                    {r.intent.kind === "set_value" ? `${r.intent.field} of ${scene?.subjects.find((x) => x.address === (r.intent as { address: string }).address)?.label ?? (r.intent as { address: string }).address} → ${JSON.stringify(r.intent.value)}` : r.intent.kind}
+                    <button type="button" class="linkbtn" onclick={async () => (await share!.host.approve(r.id, r.from), ws.notePhysics())}>Approve</button>
+                    <button type="button" class="linkbtn" onclick={() => share!.host.decline(r.id, r.from)}>Decline</button>
+                  </span>
+                {/each}
+              </span>
+            {/if}
           {:else}
             <button type="button" class="linkbtn" onclick={() => window.open(share!.start(), "_blank", "noopener")}>Share with players</button>
           {/if}
@@ -385,6 +396,18 @@
     display: inline-flex;
     gap: 10px;
     align-items: center;
+  }
+  .requests {
+    display: inline-flex;
+    gap: 12px;
+    color: var(--sse-ink);
+  }
+  .req {
+    display: inline-flex;
+    gap: 6px;
+    padding: 2px 6px;
+    border: var(--sse-line) solid var(--sse-accent);
+    border-radius: var(--sse-radius);
   }
   .share a,
   .linkbtn {
