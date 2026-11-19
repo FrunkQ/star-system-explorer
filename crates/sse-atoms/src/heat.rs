@@ -11,12 +11,14 @@ use sse_core::Dimension as D;
 use sse_flow::{Atom, AtomError, CostClass};
 
 const MS95: &str = "McDonough, W. F. and Sun, S.-s. 1995, Chemical Geology 120, 223: the composition of the Earth (bulk silicate Earth U 20.3 ppb, Th 79.5 ppb, K 240 ppm). doi:10.1016/0009-2541(94)00140-4";
-const TS14: &str = "Turcotte, D. L. and Schubert, G. 2014, Geodynamics, 3rd edn, Cambridge University Press, section 4.4 and table 4.2 (isotope heating rates and half-lives). doi:10.1017/CBO9780511843877";
+const TS14: &str = "Turcotte, D. L. and Schubert, G. 2014, Geodynamics, 3rd edn, Cambridge University Press, section 4.5 and table 4.2 (isotope heating rates). doi:10.1017/CBO9780511843877";
 const FMM14: &str = "Frank, E. A., Meyer, B. S. and Mojzsis, S. J. 2014, Icarus 243, 274: a radiogenic heating evolution model for cosmochemically Earth-like exoplanets https://ui.adsabs.harvard.edu/abs/2014Icar..243..274F";
 const UJP15: &str = "Unterborn, C. T., Johnson, J. A. and Panero, W. R. 2015, ApJ 806, 139: thorium abundances in solar twins and analogs, implications for the habitability of extrasolar planetary systems https://ui.adsabs.harvard.edu/abs/2015ApJ...806..139U";
 const KAMLAND11: &str = "KamLAND Collaboration (Gando, A. et al.) 2011, Nature Geoscience 4, 647: partial radiogenic heat model for Earth revealed by geoneutrino measurements. doi:10.1038/ngeo1205";
 const GM93: &str = "Grimm, R. E. and McSween, H. Y. 1993, Science 259, 653: heliocentric zoning of the asteroid belt by aluminum-26 heating. doi:10.1126/science.259.5095.653";
-const L19: &str = "Lichtenberg, T. et al. 2019, Nature Astronomy 3, 307: a water budget dichotomy of rocky protoplanets from Al-26 heating. doi:10.1038/s41550-018-0688-5";
+const L19: &str = "Lichtenberg, T. et al. 2019, Nature Astronomy 3, 307: a water budget dichotomy of rocky protoplanets from 26Al-heating. doi:10.1038/s41550-018-0688-5";
+const R17: &str = "Ruedas, T. 2017, Geochemistry, Geophysics, Geosystems 18, 3530: radioactive heat production of six geologically important nuclides (isotope abundances, half-lives, 26Al heat 0.3583 W/kg). doi:10.1002/2017GC006997";
+const KITA13: &str = "Kita, N. T. et al. 2013, Meteoritics and Planetary Science 48, 1383: 26Al-26Mg isotope systematics of the first solids in the early solar system (canonical 26Al/27Al about 5.2e-5). doi:10.1111/maps.12141";
 const NEWTON: &str = "Spherical geometry: heat flow is power over surface area, e.g. Turcotte and Schubert 2014, chapter 4. doi:10.1017/CBO9780511843877";
 
 /// Age of the Solar System (CAI condensation), Gyr. Connelly et al. 2012, Science 338, 651.
@@ -26,7 +28,8 @@ const MYR: f64 = 1e6 * JULIAN_YEAR;
 const LN2: f64 = core::f64::consts::LN_2;
 
 /// One heat-producing isotope: share of its element by mass, heat per kg of the
-/// isotope (W/kg) and half-life (Gyr). Turcotte and Schubert 2014, table 4.2.
+/// isotope (W/kg) and half-life (Gyr). Heat: Turcotte and Schubert 2014, table 4.2;
+/// shares by mass (from atom abundances) and half-lives: Ruedas 2017, tables 1 and 2.
 struct Isotope {
     share: f64,
     heat: f64,
@@ -34,12 +37,12 @@ struct Isotope {
 }
 
 const U238: Isotope = Isotope {
-    share: 0.9928,
+    share: 0.9929,
     heat: 9.46e-5,
     half_life_gyr: 4.468,
 };
 const U235: Isotope = Isotope {
-    share: 0.0072,
+    share: 0.00711,
     heat: 5.69e-4,
     half_life_gyr: 0.704,
 };
@@ -49,7 +52,7 @@ const TH232: Isotope = Isotope {
     half_life_gyr: 14.05,
 };
 const K40: Isotope = Isotope {
-    share: 1.17e-4,
+    share: 1.19e-4,
     heat: 2.92e-5,
     half_life_gyr: 1.248,
 };
@@ -111,8 +114,9 @@ fn budget() -> Vec<sse_flow::Param> {
 }
 
 /// Al-26 heating per kg of chondritic rock at CAI time zero, W/kg:
-/// Al 0.865 wt% × canonical 26Al/27Al 5.25e-5 × 0.355 W per kg of Al-26.
-pub const AL26_H0: f64 = 0.00865 * 5.25e-5 * 0.355;
+/// Al 0.865 wt% (CI chondrite, McDonough and Sun 1995) × canonical 26Al/27Al
+/// 5.25e-5 (Kita et al. 2013) × 0.3583 W per kg of Al-26 (Ruedas 2017, table 2).
+pub const AL26_H0: f64 = 0.00865 * 5.25e-5 * 0.3583;
 /// Al-26 mean life, Myr (half-life 0.717 Myr).
 pub const AL26_TAU_MYR: f64 = 0.717 / LN2;
 
@@ -143,12 +147,12 @@ pub fn atoms() -> Vec<Box<dyn Atom>> {
     vec![
         Def {
             id: "sse.heat.radiogenic_heating",
-            version: "1.0.0",
+            version: "1.0.1",
             inputs: vec![age.clone(), k40.clone(), rp.clone()],
             outputs: vec![port("heating", "interior.radiogenic_heating", dims::SPECIFIC_POWER, None)],
             params: budget(),
             cost: CostClass::Trivial,
-            references: &[MS95, TS14, FMM14, UJP15],
+            references: &[MS95, TS14, R17, FMM14, UJP15],
             curious: "Rock is very slightly radioactive. Uranium, thorium and potassium-40 warm every kilogram of a planet's mantle by a few trillionths of a watt, and over a whole world that is enough to keep volcanoes and drifting continents going for billions of years. Young worlds run hotter, and a star born with more thorium gives its planets a longer-lived fire.",
             science: "Four long-lived isotopes. Today's bulk silicate Earth budget is wound back to the Sun's birth, scaled by the star's inheritance (K-40 for potassium; r-process for uranium and thorium, which are made in neutron-star mergers and some supernovae), then decayed to the body's age. U-235 and K-40 dominate in the first billion years, thorium in the far future. This is the radiogenic part only: Earth also loses about as much again as primordial heat.",
             formula: "H(t) = Σᵢ cᵢ,now · e^{λᵢ·4.567 Gyr} · relᵢ · hᵢ · e^{-λᵢ t},  λᵢ = ln2 / t½ᵢ",
@@ -178,7 +182,7 @@ pub fn atoms() -> Vec<Box<dyn Atom>> {
         .build(),
         Def {
             id: "sse.heat.radiogenic_power",
-            version: "1.0.0",
+            version: "1.0.1",
             inputs: vec![
                 port("heating", "interior.radiogenic_heating", dims::SPECIFIC_POWER, None),
                 mantle.clone(),
@@ -188,7 +192,7 @@ pub fn atoms() -> Vec<Box<dyn Atom>> {
             cost: CostClass::Trivial,
             references: &[KAMLAND11],
             curious: "Earth's rocks make about 20 terawatts of heat, roughly the whole of humanity's power use. Geoneutrinos, ghost particles from those decays, let physicists weigh it directly.",
-            science: "Heating per kg times the silicate mass. KamLAND and Borexino geoneutrino counts put Earth's U and Th power at about 20 TW, in line with this budget.",
+            science: "Heating per kg times the silicate mass. KamLAND and Borexino geoneutrino counts put Earth's U and Th power at 20 (+9/−9) TW, and K-40 adds about 4 TW; this budget's U and Th part (about 16.5 TW today) is inside that range.",
             formula: "P = H · M_mantle",
             f: |i, _| Ok(vec![i[0] * i[1]]),
         }
@@ -212,7 +216,7 @@ pub fn atoms() -> Vec<Box<dyn Atom>> {
         .build(),
         Def {
             id: "sse.heat.active_geology_lifetime",
-            version: "1.0.0",
+            version: "1.0.1",
             inputs: vec![k40, rp, mantle, radius],
             outputs: vec![port("lifetime", "interior.active_geology_lifetime", D::TIME, None)],
             params: {
@@ -221,7 +225,7 @@ pub fn atoms() -> Vec<Box<dyn Atom>> {
                 p
             },
             cost: CostClass::Light,
-            references: &[FMM14, UJP15, TS14],
+            references: &[FMM14, UJP15, TS14, R17],
             curious: "How long a world stays geologically alive: volcanoes, mountain building, a recycled crust, and the carbon cycle that keeps a climate steady. Mars went quiet early because it is small; a planet with extra thorium can stay lively billions of years longer than Earth.",
             science: "The age at which radiogenic surface heat flow falls to a threshold, found by bisection on 0 to 100 Gyr. The default threshold, half of Earth's present radiogenic flux, is a calibration, not a law: it puts the end of Mars's widespread volcanism about a billion years ago and the Moon's mare volcanism in its first two billion years, and keeps Earth active for billions of years more. Primordial heat, tides and lid style are left out.",
             formula: "find t with q(t) = q_crit,  q(t) = H(t)·M_mantle / (4π R²)",
@@ -252,7 +256,7 @@ pub fn atoms() -> Vec<Box<dyn Atom>> {
         .build(),
         Def {
             id: "sse.heat.al26_planetesimal_heating",
-            version: "1.0.0",
+            version: "1.0.1",
             inputs: vec![
                 port("al26_rel", "inheritance.al26_rel", D::NONE, Some((0.0, 100.0))),
                 port("formation_time", "planetesimal.formation_time", D::TIME, Some((0.0, 100.0 * MYR))),
@@ -267,9 +271,9 @@ pub fn atoms() -> Vec<Box<dyn Atom>> {
                 param("dry_residual", D::NONE, 0.1, (0.0, 1.0), "share of water left in a fully melted planetesimal"),
             ],
             cost: CostClass::Trivial,
-            references: &[GM93, L19],
+            references: &[GM93, L19, R17, KITA13],
             curious: "In the first million years, short-lived aluminium-26 heated young asteroids from inside like a slow oven. Bodies that formed early melted and boiled off their water; those that formed a few million years later stayed cold and wet. How much Al-26 a star was born with may decide whether its rocky planets are dry or drowned.",
-            science: "Adiabatic upper bound for a body larger than a few tens of kilometres: all the Al-26 energy left after its formation time stays in the rock. Starting heating is Al 0.865 wt% (CI chondrite) times canonical 26Al/27Al = 5.25e-5 times 0.355 W per kg of Al-26, about 1.6e-7 W/kg, scaled by the star's inheritance. Water loss is log-linear in energy between dehydration and melting.",
+            science: "Adiabatic upper bound for a body larger than a few tens of kilometres: all the Al-26 energy left after its formation time stays in the rock. Starting heating is Al 0.865 wt% (CI chondrite) times canonical 26Al/27Al = 5.25e-5 times 0.358 W per kg of Al-26, about 1.6e-7 W/kg, scaled by the star's inheritance. Water loss is log-linear in energy between dehydration and melting.",
             formula: "E = H₀ · rel · τ · e^{-t/τ},  τ = 1.034 Myr;  kept = 1 → residual, log-linear from e_dry_start to e_dry",
             f: |i, p| {
                 let r = rel(i[0], "al26_rel")?;

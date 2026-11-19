@@ -2,8 +2,9 @@
 
 Status: K0 draft for Alex's review. Source read: Ovid Next `README.md`, `LICENSING.md`,
 `docs/guide/how-ovid-works.md`, and the design notes `2026-10-23-naso.md`, `2026-10-25-models-in-the-page.md`,
-`2026-10-26-best-model-for-each-job.md`, `2026-10-29-tech-support.md`. The browser source under `browser/src/models/`
-was **not** read in K0; A1 reads it before lifting anything. The paths below are as the design notes name them.
+`2026-10-26-best-model-for-each-job.md`, `2026-10-29-tech-support.md`. The browser source under `browser/src/models/`,
+`agent/builder.ts` and `play/support-*.ts` was read in A1 part 2 (19 Nov); what was lifted is listed in
+`handover/packages/A1.md`, part 2, and in `NOTICE`.
 
 ## 1. Licence first
 

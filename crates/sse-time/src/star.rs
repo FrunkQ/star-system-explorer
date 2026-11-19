@@ -77,8 +77,9 @@ impl AgeingStar {
         l.remnant == Phase::WhiteDwarf && l.l_tip > l.l_bgb && l.t_end > l.t_bgb && l.l_bgb > 0.0
     }
 
-    /// Core mass for a giant luminosity: L = 2.3e5 Mc^6 (Boothroyd and
-    /// Sackmann 1988; Refsdal and Weigert 1970).
+    /// Core mass for a giant luminosity: L = D Mc^6 with D = 10^5.37 = 2.3e5 at
+    /// Z = 0.02 (Hurley, Pols and Tout 2000 eq. 37; after Boothroyd and Sackmann
+    /// 1988 and Refsdal and Weigert 1970). Fixed at Z = 0.02 (docs/fudges.md).
     fn core_for(l: f64) -> f64 {
         m::pow(l / CORE_LUM_K, 1.0 / 6.0)
     }

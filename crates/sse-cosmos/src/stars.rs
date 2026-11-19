@@ -90,18 +90,22 @@ impl Default for StarParams {
             bh_min_msun: 20.0,
             ns_mass_msun: 1.4,
             bh_share: 0.3,
+            // Duchene and Kraus 2013 table 1 (the same points as the formation suite).
             multiplicity: vec![
                 (0.1, 0.22),
-                (0.5, 0.27),
-                (1.0, 0.46),
+                (0.3, 0.26),
+                (1.0, 0.44),
                 (3.0, 0.5),
-                (10.0, 0.7),
-                (150.0, 0.9),
+                (12.0, 0.6),
+                (30.0, 0.8),
+                (150.0, 0.8),
             ],
             log_a_mean: 1.7,
             log_a_sd: 1.5,
             q_min: 0.1,
-            triple_share: 0.2,
+            // Raghavan et al. 2010: triples 8 and higher orders 3 of 44 percent of
+            // multiples; systems are capped at three stars, so both count here.
+            triple_share: 0.25,
             feh_scatter: 0.1,
             sigma_r_10: 40.0,
             sigma_z_10: 25.0,
@@ -253,12 +257,10 @@ impl StarParams {
     /// The primary's state at an age (analytic stand-in for pack tracks).
     pub fn state(&self, mass: f64, age_gyr: f64) -> StarState {
         let life = self.lifetime_gyr(mass);
-        let ms_l = if mass < 2.0 {
-            m::pow(mass, 4.0)
-        } else {
-            1.4 * m::pow(mass, 3.5)
-        };
-        let ms_r = m::pow(mass, 0.8);
+        // Eker et al. 2018 six-piece MLR and Demircan and Kahraman 1991 radii,
+        // the same relations as the base-physics atoms.
+        let ms_l = sse_atoms::star::luminosity_solar(mass);
+        let ms_r = sse_atoms::star::radius_solar(mass);
         let teff = |l: f64, r: f64| 5772.0 * m::pow(l / (r * r), 0.25);
         if age_gyr < 0.0 {
             return StarState {
