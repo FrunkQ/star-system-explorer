@@ -2,6 +2,12 @@
 
 Last updated: 19 Nov 2026: PR #2 (UI track) and PR #3 (kernel T1, T2) merged into the integration branch, which became `main`. Live site v4.starsystemx.com. Milestone M1 complete (K0 documents with Alex for review). Milestone 2 running as parallel tracks.
 
+## Standing rule: real physics, documented fudges (Alex, 19 Nov 2026)
+In his words: "the physics is WAY more interesting than faking it. But understand a browser has limited capability. Fall on physics rather than simplification where practical. If we decide to "fudge" it is a known and documented fudge with a damn fine reason to exist."
+
+- Every deliberate simplification, stand-in or tuned constant goes in `docs/fudges.md` (where it lives, why it exists, what real physics would replace it) in the same PR that adds it.
+- Every reference, published relation or quoted constant goes in `docs/citations.md` with its check status (verified, corrected, unverified). Check a relation against its source before relying on it.
+
 ## Where we are
 Milestone M1 "Proven core" = packages K0 to K6 (build plan section 3/4).
 
