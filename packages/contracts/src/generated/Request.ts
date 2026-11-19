@@ -41,7 +41,12 @@ fixture?: string, stack?: unknown, } | { "op": "adopt", import_v3?: string, form
  * `{kind: "remove_merger", index}`, `{kind: "starburst", t_gyr, gas_fraction}`,
  * `{kind: "quiet_nucleus", from_gyr, to_gyr}`.
  */
-edits?: unknown[], } | { "op": "web_slice", z?: number, t_gyr?: number, centre?: [number, number, number], extent_mpc: number, n: number, } | { "op": "plan_descent", system?: string, body?: string, fixture?: string, at_s?: number, options?: unknown, quick?: boolean, lander: unknown, lat_deg: number, lon_deg: number, entry?: unknown, } | { "op": "survey_surface", system?: string, body?: string, fixture?: string, at_s?: number, options?: unknown, tiles?: Array<SurfaceTile>, quick?: boolean, limit?: number, } | { "op": "systems" } | { "op": "life_view", body?: string, fixture?: string, } | { "op": "export_chronicle" } | { "op": "import_chronicle", export: unknown, } | { "op": "add_note", address: string, links?: Array<string>, text: string, tags?: Array<string>, 
+edits?: unknown[], 
+/**
+ * A halo cell's index (from `halo_cell`): `halo` is then one of its
+ * catalogued haloes (`halo:3` or its full address), with its own history.
+ */
+cell?: [bigint, bigint, bigint], } | { "op": "web_slice", z?: number, t_gyr?: number, centre?: [number, number, number], extent_mpc: number, n: number, } | { "op": "plan_descent", system?: string, body?: string, fixture?: string, at_s?: number, options?: unknown, quick?: boolean, lander: unknown, lat_deg: number, lon_deg: number, entry?: unknown, } | { "op": "survey_surface", system?: string, body?: string, fixture?: string, at_s?: number, options?: unknown, tiles?: Array<SurfaceTile>, quick?: boolean, limit?: number, } | { "op": "systems" } | { "op": "life_view", body?: string, fixture?: string, } | { "op": "export_chronicle" } | { "op": "import_chronicle", export: unknown, } | { "op": "add_note", address: string, links?: Array<string>, text: string, tags?: Array<string>, 
 /**
  * The writing seat (default `gm`).
  */
@@ -54,4 +59,4 @@ narrative?: boolean, at_s: bigint,
  * When the news reaches its audience (default `at_s`); not shown or
  * disclosed before then.
  */
-arrives_at_s?: bigint, } | { "op": "set_kept", address: string, kind: string, value: unknown, writer?: string, reason?: string, at_s: bigint, } | { "op": "add_actor", id: string, parent?: string, name: string, kind: string, at_s: bigint, } | { "op": "record", address: string, at_s?: bigint, } | { "op": "disclosures", audience: string, at_s: bigint, } | { "op": "rules_step", at_s: bigint, } | { "op": "rules_pending" } | { "op": "rules_decide", proposal: string, approve: boolean, at_s?: bigint, } | { "op": "rules_policy", rule: string, approval: unknown, at_s: bigint, } | { "op": "rules" };
+arrives_at_s?: bigint, } | { "op": "set_kept", address: string, kind: string, value: unknown, writer?: string, reason?: string, at_s: bigint, } | { "op": "add_actor", id: string, parent?: string, name: string, kind: string, at_s: bigint, } | { "op": "record", address: string, at_s?: bigint, } | { "op": "disclosures", audience: string, at_s: bigint, } | { "op": "rules_step", at_s: bigint, } | { "op": "rules_pending" } | { "op": "rules_decide", proposal: string, approve: boolean, at_s?: bigint, } | { "op": "rules_policy", rule: string, approval: unknown, at_s: bigint, } | { "op": "rules" } | { "op": "halo_cell", cell?: [bigint, bigint, bigint], min_mass_msun?: number, limit?: number, };

@@ -55,4 +55,4 @@ record_hash: string, } | { "type": "kept_set", change_id: string, previous: unkn
  * The date read, seconds; absent for "latest" (no date given and no
  * `system.now_year`).
  */
-at_s?: number, facts: unknown, evidence: unknown, spec?: unknown, surfaces: unknown[], tiles: unknown[], refused: unknown[], } | { "type": "error", code: string, message: string, };
+at_s?: number, facts: unknown, evidence: unknown, spec?: unknown, surfaces: unknown[], tiles: unknown[], refused: unknown[], } | { "type": "error", code: string, message: string, } | { "type": "halo_celled", cell: unknown, };

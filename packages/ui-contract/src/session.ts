@@ -119,6 +119,8 @@ export interface ViewSession {
   sift(ask: import("./story.ts").SiftAsk): Promise<{ ok: true; result: import("./story.ts").SiftResult } | { ok: false; code: string; message: string }>;
   /** What a ship's sensor sees from beside a body (V8 Window, kernel `window_view`). Read only; any seat, on the system it knows. */
   windowView(ask: import("./window.ts").WindowAsk): Promise<{ ok: true; view: import("./window.ts").WindowView } | { ok: false; code: string; message: string }>;
+  /** One halo cell's galaxies (V9 cluster map, kernel `halo_cell`, G2). Read only; GM only. */
+  haloCell(ask: import("./galaxy.ts").HaloCellAsk): Promise<{ ok: true; cell: import("./galaxy.ts").HaloCell } | { ok: false; code: string; message: string }>;
   /** A slice of the cosmic web at one epoch (V9, kernel `web_slice`, G1). Read only; GM only. */
   webSlice(ask: import("./galaxy.ts").SliceAsk): Promise<{ ok: true; web: import("./galaxy.ts").WebSlice } | { ok: false; code: string; message: string }>;
   /** A system as the universe now holds it: facts, a SystemSpec for look-ahead, and S0 surfaces. */
@@ -524,6 +526,12 @@ export class Session implements ViewSession {
     if (this.seat.authority !== "gm") return { ok: false, code: "not_gm", message: "the galaxy's history is the game master's chart; players see it through data views" };
     const r = await this.#call({ op: "galaxy_chart", ...ask });
     return r.type === "galaxy_charted" ? { ok: true, chart: (r as unknown as { chart: import("./galaxy.ts").GalaxyChart }).chart } : { ok: false, code: String(r.code ?? "unexpected"), message: String(r.message ?? JSON.stringify(r)) };
+  }
+
+  async haloCell(ask: import("./galaxy.ts").HaloCellAsk): Promise<{ ok: true; cell: import("./galaxy.ts").HaloCell } | { ok: false; code: string; message: string }> {
+    if (this.seat.authority !== "gm") return { ok: false, code: "not_gm", message: "the universe's galaxies are charted on the game master's machine" };
+    const r = await this.#call({ op: "halo_cell", ...ask });
+    return r.type === "halo_celled" ? { ok: true, cell: (r as unknown as { cell: import("./galaxy.ts").HaloCell }).cell } : { ok: false, code: String(r.code ?? "unexpected"), message: String(r.message ?? JSON.stringify(r)) };
   }
 
   async webSlice(ask: import("./galaxy.ts").SliceAsk): Promise<{ ok: true; web: import("./galaxy.ts").WebSlice } | { ok: false; code: string; message: string }> {
