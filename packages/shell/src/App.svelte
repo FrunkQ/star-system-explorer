@@ -420,14 +420,14 @@
   {/if}
 </div>
 
-<dialog bind:this={seatsDialog} class="help seats-dialog" aria-label="Seats" onclose={() => (seatsOpen = false)}>
+<dialog bind:this={seatsDialog} class="help seats-dialog" aria-label="Seats" onclose={() => (seatsOpen = !!seatsDialog?.open)}>
   {#if seatsOpen && share && session}
     <SeatsPanel {share} session={session} bodies={bodies.filter((b) => !b.parent || b.parent === bodies[0]?.address)} scope={(factsDoc as unknown as AuthoredFacts).scope} at_yr={(factsDoc as unknown as AuthoredFacts).at_yr} onchange={() => ws.notePhysics()} />
   {/if}
   <form method="dialog"><button type="submit">Close</button></form>
 </dialog>
 
-<dialog bind:this={lensDialog} class="help seats-dialog" aria-label="Lens editor" onclose={() => (lensOpen = false)}>
+<dialog bind:this={lensDialog} class="help seats-dialog" aria-label="Lens editor" onclose={() => (lensOpen = !!lensDialog?.open)}>
   {#if lensOpen && session}
     <LensPanel from={lens} {lenses} fieldsByKind={lensFields} kinds={lensKinds} onsave={saveLens} ondelete={deleteLens} />
   {/if}
