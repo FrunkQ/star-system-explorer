@@ -75,7 +75,7 @@ pub fn atoms() -> Vec<Box<dyn Atom>> {
             cost: CostClass::Trivial,
             references: &[CK, PIERRE],
             curious: "Air that lets sunlight in but holds heat back keeps the ground warmer than the bare-ball figure. The thicker that blanket, the warmer.",
-            science: "Grey radiative-equilibrium atmosphere in the Eddington approximation, with all sunlight absorbed at the ground and one infrared optical depth τ. Earth needs τ ≈ 0.83; Venus about 125. It ignores convection, which in reality caps the lapse rate, so it overstates hot thick atmospheres.",
+            science: "Grey radiative-equilibrium atmosphere in the Eddington approximation, with all sunlight absorbed at the ground and one infrared optical depth τ. Earth needs τ ≈ 0.87 (0.83 with T_eq = 255 K); Venus about 140 (737 K over T_eq ≈ 230 K). It ignores convection, which in reality caps the lapse rate, so it overstates hot thick atmospheres.",
             formula: "T_s = T_eq (1 + ¾ τ)^¼",
             f: |i, _| {
                 let t = positive(i[0], "equilibrium temperature")?;
@@ -144,7 +144,7 @@ pub fn atoms() -> Vec<Box<dyn Atom>> {
             cost: CostClass::Trivial,
             references: &[CK, "Chamberlain, J. W. and Hunten, D. M. 1987, Theory of Planetary Atmospheres, 2nd edn, Academic Press"],
             curious: "Compares how tightly a world holds a gas molecule with how fast heat makes it move. Below about 1.5 the gas pours away; above about 30 it stays for billions of years.",
-            science: "Escape parameter at the exobase: gravitational energy over thermal energy for a particle of the given mass (atomic mass units). Jeans escape flux falls roughly as λ e^(-λ).",
+            science: "Escape parameter at the exobase: gravitational energy over thermal energy for a particle of the given mass (atomic mass units). The Jeans escape flux is n v₀ (1 + λ) e^(-λ) / (2√π), with v₀ the most probable speed.",
             formula: "λ = G M m / (k T r)",
             f: |i, _| {
                 let mm = positive(i[0], "mass")?;

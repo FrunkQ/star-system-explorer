@@ -36,7 +36,7 @@ pub struct AirParams {
     pub burial_fraction: f64,
     /// Reducing gases from volcanoes and metamorphism, mol O2-equivalent a
     /// year, at `reductant_ref_myr`; e-folding time of their decline as the
-    /// interior cools (negative: rising).
+    /// gases grow less reducing (negative: rising); a stand-in, see the pack sources.
     pub reductant_mol_yr: f64,
     pub reductant_ref_myr: f64,
     pub reductant_tau_myr: f64,
@@ -52,7 +52,9 @@ pub struct AirParams {
     pub ch4_life_anoxic_yr: f64,
     pub o2_switch_fraction: f64,
     /// Diffusion-limited hydrogen escape, mol O2-equivalent a year per unit
-    /// CH4 mixing ratio for an Earth-sized world (Catling et al. 2001).
+    /// CH4 mixing ratio for an Earth-sized world: 2.5e13 f_T(H2) H2 cm^-2 s^-1 with
+    /// f_T = 2 f_CH4 (Catling et al. 2001; Catling and Claire 2005 eq. 4) is 1.34e16 mol H2
+    /// a year, and two H2 lost leave one O2.
     pub escape_mol_yr_per_f: f64,
     /// Land life multiplies silicate weathering by this (Berner 1997).
     pub land_weathering_factor: f64,
@@ -87,10 +89,10 @@ impl Default for AirParams {
             pal_mol: 3.78e19,
             decay_methane_oxic: 0.0025,
             decay_methane_anoxic: 0.5,
-            ch4_life_oxic_yr: 9.6,
+            ch4_life_oxic_yr: 9.1,
             ch4_life_anoxic_yr: 1000.0,
             o2_switch_fraction: 1.0e-5,
-            escape_mol_yr_per_f: 1.3e16,
+            escape_mol_yr_per_f: 6.7e15,
             land_weathering_factor: 4.0,
             fire_k: 3.0,
             ignition_slope: 48.0,
