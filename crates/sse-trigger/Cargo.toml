@@ -1,0 +1,16 @@
+[package]
+name = "sse-trigger"
+description = "SSE4 triggers, effects, the gate and approval policies (track J4)"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+authors.workspace = true
+
+[dependencies]
+sse-core.workspace = true
+sse-chronicle.workspace = true
+sse-record.workspace = true
+sse-observe = { path = "../sse-observe" }
+sse-sift = { path = "../sse-sift" }
+serde.workspace = true
+serde_json.workspace = true

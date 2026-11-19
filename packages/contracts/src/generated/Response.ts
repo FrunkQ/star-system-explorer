@@ -50,7 +50,7 @@ state_hash: string,
 /**
  * The record's own hash (GM only).
  */
-record_hash: string, } | { "type": "kept_set", change_id: string, previous: unknown, state_hash: string, record_hash: string, } | { "type": "actor_added", address: string, state_hash: string, record_hash: string, } | { "type": "record_read", address: string, notes: unknown[], kept: unknown[], actors: unknown[], } | { "type": "disclosed", audience: string, at_s: bigint, items: unknown[], stream_hash: string, } | { "type": "systems_listed", systems: unknown[], } | { "type": "system_resolved", system: string, source: string, 
+record_hash: string, } | { "type": "kept_set", change_id: string, previous: unknown, state_hash: string, record_hash: string, } | { "type": "actor_added", address: string, state_hash: string, record_hash: string, } | { "type": "record_read", address: string, notes: unknown[], kept: unknown[], actors: unknown[], } | { "type": "disclosed", audience: string, at_s: bigint, items: unknown[], stream_hash: string, } | { "type": "rules_stepped", report: unknown, state_hash: string, record_hash: string, } | { "type": "rules_pending", proposals: unknown[], } | { "type": "rules_decided", written: unknown[], state_hash: string, record_hash: string, } | { "type": "rules_policy_set", event_id: string, record_hash: string, } | { "type": "rules_listed", rules: unknown[], trail: unknown[], } | { "type": "systems_listed", systems: unknown[], } | { "type": "system_resolved", system: string, source: string, 
 /**
  * The date read, seconds; absent for "latest" (no date given and no
  * `system.now_year`).
