@@ -55,4 +55,4 @@ Physics changed, goldens re-blessed on purpose (stars, formation, formation-pipe
 - `sse-time/src/binary.rs`: q_crit 0.695 for main-sequence donors under 0.7 M☉ (Hurley, Tout and Pols 2002
   section 2.6.1); no golden moved.
 - White dwarf cooling keeps A = 4 for all white dwarfs as a documented fudge (HPT00 eq. 90 gives 15 for CO; with 15
-  white dwarfs come out several times fainter than detailed cooling models). Comment corrected; F-S16.
+  white dwarfs come out several times fainter than detailed cooling models). Comment corrected; fudge F-S23.
