@@ -14,3 +14,6 @@ sse-world.workspace = true
 sse-suite = { path = "../sse-suite" }
 serde.workspace = true
 serde_json.workspace = true
+
+[dev-dependencies]
+sse-observe = { path = "../sse-observe" }

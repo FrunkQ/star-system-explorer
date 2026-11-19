@@ -19,6 +19,8 @@ pub mod budget;
 pub mod habitat;
 pub mod history;
 pub mod scenario;
+pub mod sift;
+pub mod signatures;
 mod suite;
 
 pub use habitat::{Footprint, Habitat, HabitatGraph, HabitatRule, Link};
@@ -231,3 +233,5 @@ mod biosphere_tests;
 mod budget_tests;
 #[cfg(test)]
 mod history_tests;
+#[cfg(test)]
+mod signatures_tests;
