@@ -34,10 +34,10 @@ pub struct Requirement {
     pub range: String,
 }
 
-/// An explicit override of a lower pack's flow (`replaces: flow@range`).
+/// An explicit override of a lower pack's flow or box (`replaces: id@range`).
 #[derive(Clone, PartialEq, Debug, Serialize, Deserialize)]
 pub struct Replacement {
-    /// Id of the flow being replaced.
+    /// Id of the flow or box being replaced (they share one namespace).
     pub flow: String,
     /// Pack that provides it.
     pub pack: String,
@@ -53,6 +53,10 @@ pub struct Provides {
     pub units: Vec<Unit>,
     #[serde(default)]
     pub flows: Vec<FlowDoc>,
+    /// Boxes (J3): flows of blocks used as one block, `id@version`. Left out
+    /// when empty, so a pack without boxes hashes as before.
+    #[serde(default, skip_serializing_if = "Vec::is_empty")]
+    pub boxes: Vec<sse_flow::BoxDoc>,
     /// Content not yet interpreted by the kernel (rules, sifters, data views,
     /// screens, skins, vocab, catalogues...). Carried and hashed.
     #[serde(default)]
@@ -140,6 +144,9 @@ pub struct ResolvedStack {
     pub publishers: BTreeMap<(String, String), PublisherRef>,
     /// Quantity kinds whose value depends on fictional physics.
     pub fictional_kinds: BTreeSet<String>,
+    /// Active boxes by id (J3), and the pack each comes from.
+    pub boxes: BTreeMap<String, sse_flow::BoxDoc>,
+    pub box_packs: BTreeMap<String, String>,
 }
 
 impl ResolvedStack {
@@ -179,6 +186,8 @@ pub fn resolve(
     let mut units = sse_core::Units::standard();
     let mut unit_owner: BTreeMap<String, String> = BTreeMap::new();
     let mut flows: BTreeMap<String, ActiveFlow> = BTreeMap::new();
+    let mut boxes: BTreeMap<String, sse_flow::BoxDoc> = BTreeMap::new();
+    let mut box_packs: BTreeMap<String, String> = BTreeMap::new();
     let mut fictional_packs = BTreeSet::new();
 
     for p in stack {
@@ -263,22 +272,26 @@ pub fn resolve(
         // explicit replacements first
         let mut replaced_here = BTreeSet::new();
         for r in &p.replaces {
-            match (flows.get(&r.flow), VersionReq::parse(&r.range)) {
+            let from = flows
+                .get(&r.flow)
+                .map(|a| a.pack.clone())
+                .or_else(|| box_packs.get(&r.flow).cloned());
+            match (from, VersionReq::parse(&r.range)) {
                 (_, Err(e)) => issue(pid, format!("replaces {}@{}: {e}", r.flow, r.range)),
                 (None, _) => issue(
                     pid,
                     format!(
-                        "replaces flow {} from {}, but no lower pack provides it",
+                        "replaces {} from {}, but no lower pack provides a flow or box of that id",
                         r.flow, r.pack
                     ),
                 ),
-                (Some(a), Ok(req)) => {
-                    if a.pack != r.pack {
+                (Some(owner), Ok(req)) => {
+                    if owner != r.pack {
                         issue(
                             pid,
                             format!(
-                                "replaces {} from {}, but it comes from {}",
-                                r.flow, r.pack, a.pack
+                                "replaces {} from {}, but it comes from {owner}",
+                                r.flow, r.pack
                             ),
                         );
                     } else if !seen.get(&r.pack).is_some_and(|v| req.matches(v)) {
@@ -291,14 +304,47 @@ pub fn resolve(
                         );
                     } else {
                         flows.remove(&r.flow);
+                        boxes.remove(&r.flow);
+                        box_packs.remove(&r.flow);
                         replaced_here.insert(r.flow.clone());
                     }
                 }
             }
         }
+        for b in &p.provides.boxes {
+            if let Some(old) = box_packs
+                .get(&b.id)
+                .or_else(|| flows.get(&b.id).map(|f| &f.pack))
+            {
+                issue(pid, format!("provides box {} already provided by {old}; add `replaces` to override it on purpose", b.id));
+                continue;
+            }
+            if b.format != sse_flow::boxes::BOX_FORMAT {
+                issue(
+                    pid,
+                    format!(
+                        "box {}: format must be {:?}",
+                        b.id,
+                        sse_flow::boxes::BOX_FORMAT
+                    ),
+                );
+            }
+            if Version::parse(&b.version).is_err() {
+                issue(
+                    pid,
+                    format!("box {} version {:?} is not semver", b.id, b.version),
+                );
+            }
+            boxes.insert(b.id.clone(), b.clone());
+            box_packs.insert(b.id.clone(), p.id.clone());
+        }
         for f in &p.provides.flows {
-            if let Some(old) = flows.get(&f.id) {
-                issue(pid, format!("provides flow {} already provided by {}; add `replaces` to override it on purpose", f.id, old.pack));
+            if let Some(old) = flows
+                .get(&f.id)
+                .map(|f| &f.pack)
+                .or_else(|| box_packs.get(&f.id))
+            {
+                issue(pid, format!("provides flow {} already provided by {old}; add `replaces` to override it on purpose", f.id));
                 continue;
             }
             flows.insert(
@@ -349,6 +395,7 @@ pub fn resolve(
         let before = fictional_kinds.len();
         for af in flows.values() {
             let tainted = fictional_packs.contains(&af.pack)
+                || uses_fictional_box(&af.doc.nodes, &boxes, &box_packs, &fictional_packs, 0)
                 || af
                     .doc
                     .inputs
@@ -381,6 +428,37 @@ pub fn resolve(
         flows,
         publishers,
         fictional_kinds,
+        boxes,
+        box_packs,
+    })
+}
+
+/// Does any box these nodes use (at any depth) carry invented physics: a box
+/// flagged `fictional`, or one from a fictional pack?
+fn uses_fictional_box(
+    nodes: &[sse_flow::flow::NodeDoc],
+    boxes: &BTreeMap<String, sse_flow::BoxDoc>,
+    packs: &BTreeMap<String, String>,
+    fictional_packs: &BTreeSet<String>,
+    depth: usize,
+) -> bool {
+    if depth > sse_flow::boxes::MAX_DEPTH {
+        return false; // reported when the flow is compiled
+    }
+    nodes.iter().any(|n| {
+        let Some((id, _)) = n
+            .r#box
+            .as_deref()
+            .and_then(|r| sse_flow::boxes::parse_ref(r).ok())
+        else {
+            return false;
+        };
+        let Some(b) = boxes.get(&id) else {
+            return false;
+        };
+        b.fictional
+            || packs.get(&id).is_some_and(|p| fictional_packs.contains(p))
+            || uses_fictional_box(&b.nodes, boxes, packs, fictional_packs, depth + 1)
     })
 }
 
