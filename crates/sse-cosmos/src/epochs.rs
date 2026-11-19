@@ -138,8 +138,13 @@ pub fn epochs(c: &Cosmology, ep: &EpochParams) -> Vec<Epoch> {
     let now = c.p.now_gyr;
     let a_now = c.scale_of_time(now);
     let tau = ep.proton_lifetime_log10_yr;
-    // Hawking evaporation: t = 2.1e67 (M / Msun)^3 years (Page 1976; Adams and Laughlin 1997 eq. 5.4).
-    let bh_end = m::log10(2.1e67) + 3.0 * m::log10(ep.largest_black_hole);
+    // Hawking evaporation, Page 1976 (Phys. Rev. D 13, 198): a hole well above 1e17 g radiates
+    // P = 2e-4 hbar c^6 / (G^2 M^2) in massless species, 81% neutrinos, 17% photons, 2% gravitons.
+    // Neutrinos have mass, far above the Hawking temperature of any stellar or larger hole, so only
+    // photons and gravitons (19%) are emitted: t = M^3 c^2 / (3 x 0.19 x 2e-4 hbar c^6 / G^2)
+    // = 1.14e67 (M / Msun)^3 years. (All massless species would give 2.2e66; photons only, no
+    // greybody, 2.1e67, the value used before 19 Nov 2026.)
+    let bh_end = m::log10(1.14e67) + 3.0 * m::log10(ep.largest_black_hole);
     let mut v = vec![
         e("recombination", "Recombination", yr(zr), Some(zr), false, format!(
             "the universe cools below about 3000 K at z = {zr:.0}: electrons and protons combine into hydrogen and light runs free, the background we now see as the CMB (Hu and Sugiyama 1996 fit to Omega_b h^2 and Omega_m h^2)")),
@@ -148,7 +153,7 @@ pub fn epochs(c: &Cosmology, ep: &EpochParams) -> Vec<Epoch> {
         e("first_stars", "First stars", yr(zf), Some(zf), false, format!(
             "the first {:.0e} solar-mass minihaloes from {:.0}-sigma peaks collapse at z = {zf:.1} (D sigma(M) nu = 1.686): Population III stars light up", ep.first_star_halo, ep.first_star_nu)),
         e("reionisation", "Reionisation (half way)", yr(zh), Some(zh), false, format!(
-            "half the intergalactic hydrogen is ionised at z = {zh:.1}: zeta = {} times the mass in haloes able to cool by atomic hydrogen (Planck 2018 measure z = 7.7 +- 0.7)", ep.reionisation_zeta)),
+            "half the intergalactic hydrogen is ionised at z = {zh:.1}: zeta = {} times the mass in haloes able to cool by atomic hydrogen (Planck 2018 measure z = 7.8 +- 0.7 with BAO, 7.7 +- 0.7 without)", ep.reionisation_zeta)),
         e("reionisation_end", "Reionisation complete", yr(ze), Some(ze), false, format!(
             "the last neutral pockets are gone by z = {ze:.1}; haloes below the filtering mass can no longer gather gas, leaving fossil dwarfs")),
         e("peak_star_formation", "Cosmic noon", yr(zp), Some(zp), false, format!(

@@ -28,9 +28,9 @@ pub const REF_ZENG16: &str = "Zeng, L., Sasselov, D. D. and Jacobsen, S. B. 2016
 pub const REF_LF14: &str =
     "Lopez, E. D. and Fortney, J. J. 2014, ApJ 792, 1, eq. 3: radius of a hydrogen envelope";
 pub const REF_OW17: &str = "Owen, J. E. and Wu, Y. 2017, ApJ 847, 29: energy-limited photoevaporation carves the radius valley";
-pub const REF_JACKSON: &str = "Jackson, A. P., Davis, T. A. and Wheatley, P. J. 2012, MNRAS 422, 2024: X-ray to bolometric 10^-3.5 while saturated (about 100 Myr), falling as t^-1.5 after";
+pub const REF_JACKSON: &str = "Jackson, A. P., Davis, T. A. and Wheatley, P. J. 2012, MNRAS 422, 2024: X-ray to bolometric saturated at 10^-3.1 (late K) to 10^-4.3 (early F) for 10^7.6 to 10^8.3 yr; SSE4 uses 10^-3.5 and 100 Myr for every star, as XUV, falling as t^-1.5 after. arXiv:1111.0031";
 pub const REF_HAMANO: &str = "Hamano, K., Abe, Y. and Genda, H. 2013, Nature 497, 607: magma oceans solidify in a few Myr beyond the runaway limit, about 100 Myr inside it, losing their water";
-pub const REF_KOPPARAPU: &str = "Kopparapu, R. K. et al. 2013, ApJ 765, 131: runaway greenhouse near 1.06 times Earth's insolation for a Sun-like star";
+pub const REF_KOPPARAPU: &str = "Kopparapu, R. K. et al. 2014, ApJL 787, L29 (arXiv:1404.5292), table 1: runaway greenhouse for a Sun-like star at 0.99, 1.107 and 1.188 times Earth's insolation for 0.1, 1 and 5 Earth masses (corrects the 2013 value of about 1.06, ApJ 765, 131)";
 pub const REF_ELKINS: &str = "Elkins-Tanton, L. T. 2008, EPSL 271, 181: magma ocean outgassing; most water and CO2 go to the early atmosphere, a fraction stays in the mantle";
 
 /// What growth leaves behind (F2 to F4 fill this; F6 reads it).
@@ -245,7 +245,16 @@ pub fn early_life(p: &Protoplanet, fits: &Fits, host: &LifeLine) -> WorldStart {
     // Magma ocean: Hamano 2013 type I (a few Myr) beyond the runaway limit, type
     // II (about 100 Myr, water lost to space) inside it. Bodies below 0.1 Earth
     // masses keep no global magma ocean beyond formation.
-    let runaway = 1.06;
+    // Runaway limit by planet mass, Kopparapu et al. 2014 table 1 (Sun-like star),
+    // straight between its three masses in log mass, held flat outside them.
+    let runaway = {
+        let lm = m::log10(solids.clamp(0.1, 5.0));
+        if lm < 0.0 {
+            1.107 + (1.107 - 0.99) * lm
+        } else {
+            1.107 + (1.188 - 1.107) * lm / m::log10(5.0)
+        }
+    };
     let desiccated = solids >= 0.1
         && flux > runaway
         && envelope != Envelope::Kept

@@ -81,7 +81,8 @@
         spellcheck="false"
       />
     {:else}
-      <output {id} class="v">{display}</output>
+      <!-- A new value settles into place (U12): the element is new, so its arrival animates; the text is always the true value. -->
+      {#key display}<output {id} class="v arrive">{display}</output>{/key}
     {/if}
   </div>
   {#if error}<p class="err" id="{id}-err" role="alert">{error}</p>{/if}
@@ -122,6 +123,15 @@
     display: flex;
     align-items: center;
     gap: 6px;
+  }
+  .arrive {
+    animation: value-in var(--sse-motion) var(--sse-ease);
+  }
+  @keyframes value-in {
+    from {
+      opacity: 0.35;
+      transform: translateY(4px);
+    }
   }
   .v {
     flex: 1;

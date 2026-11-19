@@ -1713,6 +1713,616 @@ fn rules_through_the_api() {
     assert_eq!(a, b, "the same session replays to the same bytes");
 }
 
+/// Orbits at any time, the campaign clock and a pack calendar (asked for by the chart room).
+#[test]
+fn orbits_clock_and_calendar() {
+    let mut k = crate::Kernel::new();
+    let send = |k: &mut crate::Kernel, v: serde_json::Value| -> serde_json::Value {
+        serde_json::from_str(&k.handle_json(&v.to_string())).unwrap()
+    };
+    let pack = |p: &str| -> serde_json::Value {
+        serde_json::from_str(&std::fs::read_to_string(root().join(p)).unwrap()).unwrap()
+    };
+    let r = send(
+        &mut k,
+        serde_json::json!({"op": "load_stack", "packs": [pack("packs/base-time/pack.json"), pack("tests/fixtures/packs/imperial-calendar.json")]}),
+    );
+    assert_eq!(r["type"], "stack_loaded", "{r}");
+    let c = send(&mut k, serde_json::json!({"op": "calendar"}));
+    assert_eq!(c["calendar"]["format"], "{day:03}-{year}", "{c}");
+    assert_eq!(c["calendar"]["year_days"], 365.0);
+
+    // A calendar whose months do not fill the year is refused at load.
+    let mut bad = pack("tests/fixtures/packs/imperial-calendar.json");
+    bad["provides"]["other"]["calendar"]["months"] =
+        serde_json::json!([{"name": "Only", "days": 30}]);
+    let r = send(
+        &mut k,
+        serde_json::json!({"op": "load_stack", "packs": [bad]}),
+    );
+    assert_eq!(r["type"], "stack_rejected", "{r}");
+    assert!(r["issues"][0]
+        .as_str()
+        .unwrap()
+        .contains("months add to 30"));
+
+    // No universe: inline bodies still place (no keyed draw without a seed).
+    let inline = serde_json::json!([
+        {"address": "u:x/sys:0/star:0", "facts": {"body.mass": 1.98847e30}},
+        {"address": "u:x/sys:0/body:0", "facts": {"orbit.host": "u:x/sys:0/star:0", "orbit.semi_major_axis": 1.495978707e11, "orbit.mean_anomaly_at_epoch": 0.0}},
+        {"address": "u:x/sys:0/body:1", "facts": {"orbit.host": "u:x/sys:0/star:0", "orbit.semi_major_axis": 7.0e11}}
+    ]);
+    let r = send(
+        &mut k,
+        serde_json::json!({"op": "orbits_at", "system": "u:x/sys:0", "at_s": [0, 1000], "bodies": inline}),
+    );
+    assert_eq!(r["type"], "orbits_placed", "{r}");
+    assert_eq!(r["bodies"][0]["placed"], true);
+    assert_eq!(r["bodies"][1]["placed"], false);
+    assert!(r["bodies"][1]["missing"][0]
+        .as_str()
+        .unwrap()
+        .contains("mean_anomaly"));
+    let r = send(
+        &mut k,
+        serde_json::json!({"op": "orbits_at", "system": "u:x/sys:0", "at_s": []}),
+    );
+    assert_eq!(r["code"], "bad_request");
+
+    // An adopted formation system: every body placed, phases dated, the
+    // same answer twice, and the keyed draw when a phase is missing.
+    send(
+        &mut k,
+        serde_json::json!({"op": "load_stack", "packs": [pack("packs/base-time/pack.json")]}),
+    );
+    send(
+        &mut k,
+        serde_json::json!({"op": "open_universe", "id": "home", "seed": "home"}),
+    );
+    let form = serde_json::json!({"seed": "adopt-1", "system": "u:home/sys:5", "star_pins": {"primary_mass": 1.0}});
+    let r = send(
+        &mut k,
+        serde_json::json!({"op": "adopt", "formation": form}),
+    );
+    assert_eq!(r["type"], "adopted", "{r}");
+    let ask = serde_json::json!({"op": "orbits_at", "system": "u:home/sys:5", "at_s": [0, 86400, 31557600]});
+    let a = send(&mut k, ask.clone());
+    let b = send(&mut k, ask);
+    assert_eq!(a, b);
+    let bodies = a["bodies"].as_array().unwrap();
+    assert!(!bodies.is_empty(), "{a}");
+    for x in bodies {
+        assert_eq!(x["placed"], true, "{x}");
+        assert_eq!(x["at"].as_array().unwrap().len(), 3);
+        assert!(x["period_s"].as_f64().unwrap() > 0.0);
+    }
+    eprintln!(
+        "formation orbits: {:?}",
+        bodies
+            .iter()
+            .map(|x| (
+                x["address"].as_str().unwrap(),
+                x["period_s"].as_f64().unwrap() / 86400.0,
+                x["phase_source"].as_str().unwrap()
+            ))
+            .collect::<Vec<_>>()
+    );
+
+    // An SSE 3 import: dated phases from the save, and a planet a year long.
+    let save = include_str!("../../../tests/fixtures/v3/synthetic-sol.json");
+    let r = send(
+        &mut k,
+        serde_json::json!({"op": "adopt", "import_v3": save}),
+    );
+    let sys = r["systems"][0].as_str().unwrap().to_string();
+    let v = send(
+        &mut k,
+        serde_json::json!({"op": "orbits_at", "system": sys, "at_s": [0]}),
+    );
+    let days: Vec<(String, f64, String)> = v["bodies"]
+        .as_array()
+        .unwrap()
+        .iter()
+        .filter(|x| x["placed"] == true)
+        .map(|x| {
+            (
+                x["address"].as_str().unwrap().to_string(),
+                x["period_s"].as_f64().unwrap() / 86400.0,
+                x["phase_source"].as_str().unwrap().to_string(),
+            )
+        })
+        .collect();
+    eprintln!("v3 orbits: {days:?} of {}", v["bodies"]);
+    assert!(days.iter().any(|d| (d.1 - 365.25).abs() < 1.0), "{days:?}");
+
+    // The campaign clock: unset, set, moved back, read.
+    let n = send(&mut k, serde_json::json!({"op": "campaign_now"}));
+    assert!(n.get("at_s").is_none(), "{n}");
+    let s1 = send(
+        &mut k,
+        serde_json::json!({"op": "set_campaign_now", "at_s": 5000}),
+    );
+    let s2 = send(
+        &mut k,
+        serde_json::json!({"op": "set_campaign_now", "at_s": 4000}),
+    );
+    assert_ne!(s1["state_hash"], s2["state_hash"]);
+    let n = send(&mut k, serde_json::json!({"op": "campaign_now"}));
+    assert_eq!(n["at_s"], 4000);
+    assert_eq!(n["event_id"], s2["event_id"]);
+}
+
+/// J5 through the API: the registry, a seat plan, built-ins applied by the
+/// kernel's own requests, a pack kind queued, approved and taken up by a rule.
+#[test]
+fn intents_through_the_api() {
+    let packs = crate::contract::load_packs(&root().join("tests/fixtures/packs"));
+    let mut k = crate::Kernel::new();
+    // A rule listening for an undeclared intent is refused at load.
+    let mut stray = packs["rpg-intents"].clone();
+    stray["provides"]["other"]["intents"]["kinds"] = serde_json::json!([]);
+    let r = send(
+        &mut k,
+        serde_json::json!({"op":"load_stack","packs":[packs["rpg-record"], stray]}),
+    );
+    assert_eq!(r["type"], "stack_rejected", "{r}");
+    assert!(
+        r["issues"][0]
+            .as_str()
+            .unwrap()
+            .contains("intent hail is not declared"),
+        "{r}"
+    );
+    let r = send(
+        &mut k,
+        serde_json::json!({"op":"load_stack","packs":[packs["rpg-record"], packs["rpg-intents"]]}),
+    );
+    assert_eq!(r["type"], "stack_loaded", "{r}");
+    send(
+        &mut k,
+        serde_json::json!({"op":"open_universe","id":"kestrel","seed":"k"}),
+    );
+    let reg = send(&mut k, serde_json::json!({"op":"intents"}));
+    let kinds: Vec<&str> = reg["kinds"]
+        .as_array()
+        .unwrap()
+        .iter()
+        .map(|x| x["kind"].as_str().unwrap())
+        .collect();
+    assert_eq!(
+        kinds,
+        [
+            "set_value",
+            "adopt_physics",
+            "stack_packs",
+            "scan_toggle",
+            "grant",
+            "add_note",
+            "set_campaign_now",
+            "hail"
+        ]
+    );
+    assert_eq!(reg["seats"][0]["id"], "gm");
+
+    let calla = "u:kestrel/ship:calla";
+    let rock = "u:kestrel/sys:0/body:3";
+    let r = send(
+        &mut k,
+        serde_json::json!({"op":"send_intent","seat":"gm","at_s":0,
+        "intent":{"kind":"set_value","address":calla,"field":"tag.crewed","value":true,"at_yr":0}}),
+    );
+    assert_eq!(r["decision"]["action"], "apply", "{r}");
+    assert_eq!(r["applied_by"], "kernel");
+    assert_eq!(
+        r["applied"]["type"], "authored",
+        "the GM's set_value is set_authored"
+    );
+
+    let r = send(
+        &mut k,
+        serde_json::json!({"op":"set_seats","at_s":0,"seats":[
+        {"id":"crew","label":"Crew","audience":"crew","authority":"player","may_send":["hail","set_value"],
+         "auto_approve":[{"intent":"set_value","scope":["u:kestrel/sys:0"],"fields":["name"]}],"sealed":false}]}),
+    );
+    assert_eq!(r["type"], "seats_set", "{r}");
+    // Inside the crew's naming scope: applied at once.
+    let r = send(
+        &mut k,
+        serde_json::json!({"op":"send_intent","seat":"crew","at_s":10,
+        "intent":{"kind":"set_value","address":rock,"field":"name","value":"Grit","at_yr":0}}),
+    );
+    assert_eq!(
+        (r["decision"]["action"].as_str(), r["applied_by"].as_str()),
+        (Some("apply"), Some("kernel")),
+        "{r}"
+    );
+    // Hailing a rock is not valid; check_only writes nothing.
+    let hail = |a: &str| serde_json::json!({"kind":"hail","address":a,"words":"this is Kestrel"});
+    let r = send(
+        &mut k,
+        serde_json::json!({"op":"send_intent","seat":"crew","at_s":20,"intent":hail(rock)}),
+    );
+    assert_eq!(r["decision"]["action"], "refuse", "{r}");
+    let before = send(&mut k, serde_json::json!({"op":"intents"}));
+    let r = send(
+        &mut k,
+        serde_json::json!({"op":"send_intent","seat":"crew","at_s":20,"intent":hail(calla),"check_only":true}),
+    );
+    assert_eq!(r["decision"]["action"], "ask_gm", "{r}");
+    assert_eq!(send(&mut k, serde_json::json!({"op":"intents"})), before);
+    // Sent for real: queued, then approved, then the rule answers.
+    let r = send(
+        &mut k,
+        serde_json::json!({"op":"send_intent","seat":"crew","at_s":20,"intent":hail(calla)}),
+    );
+    let proposal = r["proposal"].as_str().unwrap().to_string();
+    let p = send(&mut k, serde_json::json!({"op":"intents"}));
+    assert_eq!(p["pending"][0]["id"], proposal.as_str());
+    let r = send(
+        &mut k,
+        serde_json::json!({"op":"intent_decide","proposal":proposal,"approve":true}),
+    );
+    assert_eq!(r["applied_by"], "record", "{r}");
+    let again = send(
+        &mut k,
+        serde_json::json!({"op":"intent_decide","proposal":proposal,"approve":true}),
+    );
+    assert_eq!(again["code"], "unknown_proposal");
+    let step = send(&mut k, serde_json::json!({"op":"rules_step","at_s":30}));
+    let fired = &step["report"]["passes"][0];
+    assert_eq!(fired[0]["rule"], "answer-hail", "{step}");
+    assert_eq!(fired[0]["outcome"], "applied");
+    let rec = send(&mut k, serde_json::json!({"op":"record","address":calla}));
+    assert!(
+        rec.to_string()
+            .contains("u:kestrel/ship:calla answered the hail"),
+        "{rec}"
+    );
+    // An unknown seat.
+    let r = send(
+        &mut k,
+        serde_json::json!({"op":"send_intent","seat":"nobody","at_s":0,"intent":hail(calla)}),
+    );
+    assert_eq!(r["code"], "unknown_seat");
+    // The campaign clock travels as an intent: the GM's applies at once,
+    // through set_campaign_now; a bad time is refused.
+    let r = send(
+        &mut k,
+        serde_json::json!({"op":"send_intent","seat":"gm","at_s":0,"intent":{"kind":"set_campaign_now","now_s":86400}}),
+    );
+    assert_eq!(r["decision"]["action"], "apply", "{r}");
+    assert_eq!(r["applied"]["type"], "campaign_now_is", "{r}");
+    let n = send(&mut k, serde_json::json!({"op": "campaign_now"}));
+    assert_eq!(n["at_s"], 86400, "{n}");
+    let r = send(
+        &mut k,
+        serde_json::json!({"op":"send_intent","seat":"gm","at_s":0,"intent":{"kind":"set_campaign_now","now_s":1.5}}),
+    );
+    assert!(r.to_string().contains("whole number"), "{r}");
+}
+
+/// J7 through the API: a ship from a template carries its facts, tags,
+/// programs and kept values; a rule wrecks it (create and retire, asked);
+/// removing the pack leaves the objects valid.
+#[test]
+fn templates_through_the_api() {
+    let packs = crate::contract::load_packs(&root().join("tests/fixtures/packs"));
+    let mut k = crate::Kernel::new();
+    // A template whose kept kind does not list it as a writer is refused.
+    let mut bad = packs["rpg-templates"].clone();
+    bad["provides"]["other"]["templates"]["templates"][0]["kept"] =
+        serde_json::json!({"ship.cargo_t": 5});
+    let r = send(&mut k, serde_json::json!({"op":"load_stack","packs":[bad]}));
+    assert_eq!(r["type"], "stack_rejected", "{r}");
+    assert!(
+        r["issues"]
+            .to_string()
+            .contains("template raider: kept ship.cargo_t"),
+        "{r}"
+    );
+    let r = send(
+        &mut k,
+        serde_json::json!({"op":"load_stack","packs":[packs["rpg-templates"]]}),
+    );
+    assert_eq!(r["type"], "stack_loaded", "{r}");
+    send(
+        &mut k,
+        serde_json::json!({"op":"open_universe","id":"kestrel","seed":"k"}),
+    );
+    let t = send(&mut k, serde_json::json!({"op":"templates"}));
+    assert_eq!(t["templates"].as_array().unwrap().len(), 3);
+
+    let sys = "u:kestrel/sys:0";
+    let c = send(
+        &mut k,
+        serde_json::json!({"op":"create","template":"raider","under":sys,"name":"Black Gull","at_s":100}),
+    );
+    assert_eq!(c["type"], "created", "{c}");
+    let ship = c["address"].as_str().unwrap().to_string();
+    assert_eq!(ship, "u:kestrel/sys:0/ship:1");
+    let c2 = send(
+        &mut k,
+        serde_json::json!({"op":"create","template":"freighter","under":sys,"at_s":100}),
+    );
+    assert_eq!(c2["address"], "u:kestrel/sys:0/ship:2");
+    assert_eq!(c2["kept"].as_array().unwrap().len(), 2);
+    let dup = send(
+        &mut k,
+        serde_json::json!({"op":"create","template":"freighter","under":sys,"key":"1","at_s":100}),
+    );
+    assert_eq!(dup["code"], "create_refused");
+    let h = send(&mut k, serde_json::json!({"op":"history","address":ship}));
+    assert!(h.to_string().contains("template.create"), "{h}");
+    let rec = send(&mut k, serde_json::json!({"op":"record","address":ship}));
+    assert!(rec.to_string().contains("ship.hull"), "{rec}");
+
+    // Hull to zero: the wreck rule asks (create and retire), then a yes applies both.
+    let r = send(
+        &mut k,
+        serde_json::json!({"op":"set_kept","address":ship,"kind":"ship.hull","value":0.0,"at_s":200}),
+    );
+    assert_eq!(r["type"], "kept_set", "{r}");
+    let step = send(&mut k, serde_json::json!({"op":"rules_step","at_s":300}));
+    assert_eq!(
+        step["report"]["passes"][0][0]["outcome"], "proposed",
+        "{step}"
+    );
+    let pending = send(&mut k, serde_json::json!({"op":"rules_pending"}));
+    let id = pending["proposals"][0]["id"].as_str().unwrap().to_string();
+    let r = send(
+        &mut k,
+        serde_json::json!({"op":"rules_decide","proposal":id,"approve":true}),
+    );
+    assert_eq!(r["written"].as_array().unwrap().len(), 2, "{r}");
+    let again = send(
+        &mut k,
+        serde_json::json!({"op":"retire","address":ship,"at_s":400}),
+    );
+    assert_eq!(again["code"], "retire_refused", "already retired");
+    let r = send(
+        &mut k,
+        serde_json::json!({"op":"retire","address":sys,"at_s":400}),
+    );
+    assert_eq!(
+        r["code"], "retire_refused",
+        "only objects made from templates retire"
+    );
+
+    // The pack goes; the objects stay readable, with their facts and kept values.
+    let r = send(
+        &mut k,
+        serde_json::json!({"op":"load_stack","packs":[packs["rpg-record"]]}),
+    );
+    assert_eq!(r["type"], "stack_loaded", "{r}");
+    let v = send(
+        &mut k,
+        serde_json::json!({"op":"resolved_system","system":sys}),
+    );
+    let f = &v["facts"];
+    assert_eq!(f[&ship]["retired"], true, "{v}");
+    assert_eq!(f[&ship]["name"], "Black Gull");
+    assert_eq!(f[&ship]["template.programs"], serde_json::json!(["pirate"]));
+    assert_eq!(f[&ship]["tag.raider"], true);
+    assert_eq!(
+        f[format!("{ship}/wreck:1")]["name"],
+        format!("wreck of {ship}")
+    );
+    let rec = send(
+        &mut k,
+        serde_json::json!({"op":"record","address":"u:kestrel/sys:0/ship:2"}),
+    );
+    assert!(
+        rec.to_string().contains("ship.cargo_t") && rec.to_string().contains("not loaded"),
+        "{rec}"
+    );
+}
+
+#[test]
+fn sift_through_the_api() {
+    let packs = crate::contract::load_packs(&root().join("tests/fixtures/packs"));
+    let mut k = crate::Kernel::new();
+    let r = send(
+        &mut k,
+        serde_json::json!({"op":"load_stack","packs":[packs["rpg-record"], packs["rpg-sifters"]]}),
+    );
+    assert_eq!(r["type"], "stack_loaded", "{r}");
+    let r = send(&mut k, serde_json::json!({"op":"sift","at_s":0}));
+    assert_eq!(r["code"], "no_universe", "{r}");
+    send(
+        &mut k,
+        serde_json::json!({"op":"open_universe","id":"kestrel","seed":"k"}),
+    );
+    let tarn = "u:kestrel/sys:0/body:3";
+    for (field, value) in [
+        ("name", serde_json::json!("Tarn")),
+        ("mass_kg", serde_json::json!(6.0e24)),
+        ("gm.threat", serde_json::json!(3.0)),
+    ] {
+        let r = send(
+            &mut k,
+            serde_json::json!({"op":"set_authored","edit":{"address":tarn,"field":field,"value":value,"occurred_at_s":0}}),
+        );
+        assert!(r["state_hash"].is_string(), "{r}");
+    }
+    let ids = |r: &serde_json::Value| -> Vec<String> {
+        r["hits"]
+            .as_array()
+            .unwrap()
+            .iter()
+            .map(|h| h["sifter"].as_str().unwrap().to_string())
+            .collect()
+    };
+    // The GM sees everything, with the events behind the evidence.
+    let gm = send(&mut k, serde_json::json!({"op":"sift","at_s":10}));
+    assert_eq!(gm["type"], "sifted", "{gm}");
+    let mut got = ids(&gm);
+    got.sort();
+    assert_eq!(got, ["heavy-world", "sleeping-threat"], "{gm}");
+    assert!(gm["hits"][0]["evidence"][0]["event"].is_string(), "{gm}");
+    assert!(gm.get("skipped").is_none(), "nothing skipped for the GM");
+    // Only one sifter, and a missing one.
+    let one = send(
+        &mut k,
+        serde_json::json!({"op":"sift","sifters":["heavy-world"],"scope":tarn,"at_s":10}),
+    );
+    assert_eq!(ids(&one), ["heavy-world"]);
+    let bad = send(
+        &mut k,
+        serde_json::json!({"op":"sift","sifters":["nope"],"at_s":10}),
+    );
+    assert_eq!(bad["code"], "unknown_sifter", "{bad}");
+    let out = send(
+        &mut k,
+        serde_json::json!({"op":"sift","scope":"u:elsewhere","at_s":10}),
+    );
+    assert_eq!(out["code"], "bad_address", "{out}");
+    // The crew's long-range view shows no mass and never the GM's secrets.
+    let crew = send(
+        &mut k,
+        serde_json::json!({"op":"sift","audience":"crew","at_s":10}),
+    );
+    assert_eq!(crew["type"], "sifted", "{crew}");
+    assert_eq!(crew["audience"], "crew");
+    assert!(ids(&crew).is_empty(), "{crew}");
+    assert_eq!(crew["skipped"], serde_json::json!(["granted"]));
+    // Scanned: the mass is shown, so the heavy world is a hit; the threat stays secret.
+    let s = send(
+        &mut k,
+        serde_json::json!({"op":"scan_toggle","address":tarn,"audience":"crew","at_s":5}),
+    );
+    assert!(s["state_hash"].is_string(), "{s}");
+    let crew = send(
+        &mut k,
+        serde_json::json!({"op":"sift","audience":"crew","at_s":10}),
+    );
+    assert_eq!(ids(&crew), ["heavy-world"], "{crew}");
+    let text = crew.to_string();
+    assert!(
+        !text.contains("gm.threat") && !text.contains("\"event\":\""),
+        "{crew}"
+    );
+    // Before the scan, nothing.
+    let early = send(
+        &mut k,
+        serde_json::json!({"op":"sift","audience":"crew","at_s":4}),
+    );
+    assert!(ids(&early).is_empty());
+}
+
+/// J6: the mining drone surveys, travels, mines and returns; it acts only on
+/// what its sensors have shown; a replay gives the same record; the limit holds.
+#[test]
+fn programs_through_the_api() {
+    let packs = crate::contract::load_packs(&root().join("tests/fixtures/packs"));
+    let run = |scan: bool| -> (Vec<serde_json::Value>, String, crate::Kernel) {
+        let mut k = crate::Kernel::new();
+        let r = send(
+            &mut k,
+            serde_json::json!({"op":"load_stack","packs":[packs["rpg-programs"]]}),
+        );
+        assert_eq!(r["type"], "stack_loaded", "{r}");
+        send(
+            &mut k,
+            serde_json::json!({"op":"open_universe","id":"kestrel","seed":"k"}),
+        );
+        let sys = "u:kestrel/sys:0";
+        for (b, grade) in [("body:1", 0.9), ("body:2", 0.6), ("body:3", 0.2)] {
+            let r = send(
+                &mut k,
+                serde_json::json!({"op":"set_authored","edit":{"address":format!("{sys}/{b}"),"field":"ore.grade","value":grade,"occurred_at_s":0}}),
+            );
+            assert!(r["state_hash"].is_string(), "{r}");
+        }
+        let c = send(
+            &mut k,
+            serde_json::json!({"op":"create","template":"drone","under":sys,"name":"Pick","at_s":0}),
+        );
+        let drone = c["address"].as_str().unwrap().to_string();
+        let seats = serde_json::json!([{
+            "id": "drone-ops", "label": "Drone ops", "audience": "drone-ops", "authority": "player",
+            "may_send": ["go", "mine", "unload"], "program": "miner",
+            "auto_approve": [{"intent": "go", "scope": [drone]}, {"intent": "mine", "scope": [drone]}, {"intent": "unload", "scope": [drone]}]
+        }]);
+        let r = send(
+            &mut k,
+            serde_json::json!({"op":"set_seats","seats":seats,"at_s":0}),
+        );
+        assert_eq!(r["type"], "seats_set", "{r}");
+        let r = send(
+            &mut k,
+            serde_json::json!({"op":"attach_program","address":drone,"program":"miner","seat":"drone-ops","at_s":0}),
+        );
+        assert_eq!(r["type"], "program_attached", "{r}");
+        if scan {
+            // The GM scans the middling body for the drone's operators only.
+            let s = send(
+                &mut k,
+                serde_json::json!({"op":"scan_toggle","address":format!("{sys}/body:2"),"audience":"drone-ops","at_s":5}),
+            );
+            assert!(s["state_hash"].is_string(), "{s}");
+        }
+        let mut log = vec![];
+        for t in 1..=12 {
+            let r = send(
+                &mut k,
+                serde_json::json!({"op":"programs_step","at_s":t * 100}),
+            );
+            assert_eq!(r["type"], "programs_stepped", "{r}");
+            log.push(r["programs"][0].clone());
+        }
+        let head = send(&mut k, serde_json::json!({"op":"record"}))["record_hash"].to_string();
+        (log, head, k)
+    };
+    // Nothing shown: the drone waits at the depot, though the GM knows of rich ore.
+    let (blind, _, _) = run(false);
+    for l in &blind {
+        assert_eq!(l["to"], "survey", "{l}");
+        assert!(l["intent"].is_null(), "{l}");
+    }
+    // Body 2 scanned: it goes there (not to body 1, richer but unseen), mines four
+    // shifts, comes home, unloads and sets off again.
+    let (log, head, mut k) = run(true);
+    let states: Vec<&str> = log.iter().map(|l| l["to"].as_str().unwrap()).collect();
+    println!("{states:?}");
+    assert_eq!(log[0]["picked"], "u:kestrel/sys:0/body:2", "{}", log[0]);
+    assert_eq!(
+        states,
+        [
+            "survey", "mine", "mine", "mine", "mine", "return", "unload", "survey", "mine", "mine",
+            "mine", "mine"
+        ]
+    );
+    for l in &log {
+        assert_eq!(l["applied_by"], "record", "{l}");
+    }
+    // Replay: the same steps give the same record (a look-ahead branch equals the run).
+    let (_, again, _) = run(true);
+    assert_eq!(head, again);
+    // The limit: two programs at most, and only objects whose template lists the program.
+    let rock = send(
+        &mut k,
+        serde_json::json!({"op":"attach_program","address":"u:kestrel/sys:0/body:2","program":"miner","seat":"drone-ops","at_s":2000}),
+    );
+    assert_eq!(rock["code"], "program_refused", "{rock}");
+    for (n, want) in [(2, "program_attached"), (3, "error")] {
+        let c = send(
+            &mut k,
+            serde_json::json!({"op":"create","template":"drone","under":"u:kestrel/sys:0","key":n.to_string(),"at_s":2000}),
+        );
+        let r = send(
+            &mut k,
+            serde_json::json!({"op":"attach_program","address":c["address"],"program":"miner","seat":"drone-ops","at_s":2000}),
+        );
+        assert_eq!(r["type"], want, "{r}");
+        if want == "error" {
+            assert_eq!(r["code"], "program_limit");
+        }
+    }
+    let list = send(&mut k, serde_json::json!({"op":"programs"}));
+    assert_eq!(list["running"].as_array().unwrap().len(), 2, "{list}");
+    assert_eq!(list["limit"], 2);
+}
+
 #[test]
 fn sift_finds_story_hooks_with_their_evidence() {
     let mut k = crate::Kernel::new();

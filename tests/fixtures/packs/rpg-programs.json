@@ -1,0 +1,83 @@
+{
+  "format": "sse.pack/1",
+  "id": "test.rpg-programs",
+  "version": "0.1.0",
+  "kind": ["game-system"],
+  "kernel_range": "^0.1",
+  "licence": "Apache-2.0",
+  "provides": {
+    "other": {
+      "observe": {
+        "disclosure": {
+          "fields": {"name": "obvious", "kind": "obvious", "ore.*": "scanned", "drone.*": "secret"},
+          "tags": {}
+        },
+        "views": [
+          {"id": "long-range", "label": "Long-range sensors", "show_tiers": ["obvious"], "tags": {"mode": "none"}, "unknown_style": "placeholder"},
+          {"id": "scanned", "label": "Scanned", "show_tiers": ["obvious", "scanned"], "tags": {"mode": "all"}, "unknown_style": "placeholder"}
+        ],
+        "campaign": {"default_view": "long-range", "before": "long-range", "after": "scanned"}
+      },
+      "record": {
+        "kept": [
+          {"id": "drone.at", "shape": "text", "default": "depot", "tier": "secret", "writers": ["gm", "template.drone", "effect.go-to"], "describes": "where the drone is: depot, or a body's address"},
+          {"id": "drone.cargo_t", "shape": "number", "range": [0.0, 100.0], "default": 0, "tier": "secret", "writers": ["gm", "template.drone", "effect.mine", "effect.unload"], "describes": "ore aboard, tonnes"}
+        ]
+      },
+      "templates": {
+        "templates": [
+          {"id": "drone", "kind": "drone", "label": "Mining drone", "kept": {"drone.at": "depot", "drone.cargo_t": 0}, "tags": ["drone"], "programs": ["miner"], "explain": "the mining drone of record design 6"}
+        ]
+      },
+      "intents": {
+        "kinds": [
+          {"kind": "go", "meaning": "fly to a body, or back to the depot", "fields": [{"name": "address", "type": "address"}, {"name": "to", "type": "text"}]},
+          {"kind": "mine", "meaning": "dig ore into the hold", "fields": [{"name": "address", "type": "address"}]},
+          {"kind": "unload", "meaning": "empty the hold at the depot", "fields": [{"name": "address", "type": "address"}]}
+        ]
+      },
+      "triggers": {
+        "rules": [
+          {"id": "go-to", "when": {"on_intent": {"kind": "go"}}, "effects": [{"effect": "set_kept", "kind": "drone.at", "value": "{intent.to}"}], "explain": "a drone that is told to go arrives (travel time comes with NAV)"},
+          {"id": "mine", "when": {"on_intent": {"kind": "mine"}}, "effects": [{"effect": "set_kept", "kind": "drone.cargo_t", "add": 25}], "explain": "a quarter of the hold per shift"},
+          {"id": "unload", "when": {"on_intent": {"kind": "unload"}}, "effects": [{"effect": "set_kept", "kind": "drone.cargo_t", "value": 0}], "explain": "the depot takes the ore"}
+        ]
+      },
+      "programs": {
+        "limit": 2,
+        "programs": [
+          {
+            "id": "miner",
+            "label": "Mining drone",
+            "params": {"min_grade": 0.5, "capacity_t": 100, "depot": "depot"},
+            "start": "survey",
+            "states": [
+              {
+                "id": "survey",
+                "pick": {"where": {"if": "compare", "left": "ore.grade", "op": "ge", "right": "param.min_grade"}, "by": "ore.grade", "order": "max"},
+                "act": {"kind": "go", "payload": {"address": "{self}", "to": "{pick}"}},
+                "transitions": [{"when": {"if": "not", "p": {"if": "is", "field": "drone.at", "value": "depot"}}, "to": "mine"}]
+              },
+              {
+                "id": "mine",
+                "act": {"kind": "mine", "payload": {"address": "{self}"}},
+                "transitions": [{"when": {"if": "compare", "left": "drone.cargo_t", "op": "ge", "right": "param.capacity_t"}, "to": "return"}]
+              },
+              {
+                "id": "return",
+                "act": {"kind": "go", "payload": {"address": "{self}", "to": "{param.depot}"}},
+                "transitions": [{"when": {"if": "is", "field": "drone.at", "value": "depot"}, "to": "unload"}]
+              },
+              {
+                "id": "unload",
+                "act": {"kind": "unload", "payload": {"address": "{self}"}},
+                "transitions": [{"when": {"if": "range", "field": "drone.cargo_t", "max": 0}, "to": "survey"}]
+              }
+            ],
+            "explain": "survey for the richest ore its sensors have shown, fly there, mine until full, fly home, unload"
+          }
+        ]
+      }
+    }
+  }
+}

@@ -56,3 +56,51 @@ Physics changed, goldens re-blessed on purpose (stars, formation, formation-pipe
   section 2.6.1); no golden moved.
 - White dwarf cooling keeps A = 4 for all white dwarfs as a documented fudge (HPT00 eq. 90 gives 15 for CO; with 15
   white dwarfs come out several times fainter than detailed cooling models). Comment corrected; fudge F-S23.
+
+### Orbits and formation (19 Nov)
+Physics changed, goldens re-blessed on purpose (time, time-generated, formation-growth, formation-upheaval,
+formation-leftovers):
+- Giant-star tide (`sse-time/src/epoch.rs`): the efficiency factor was inverted, min(1, (τ/2P)²); Villaver and
+  Livio 2009 use (P/2τ)² capped at 1. Tides on planets round giants are now up to 1e2 to 1e4 times stronger: in
+  the Solar System run Venus is engulfed (as Schroeder and Smith 2008 find) and Earth survives about 3 percent
+  inside pure widening; T1 test updated. A planet dragged inside the star is floored at half its radius so the
+  engulfment check catches it (the faster decay otherwise reached a = 0 and NaN).
+- Pebble isolation mass (`sse-formation/src/growth.rs`): Bitsch et al. 2018 eq. 26's diffusion term
+  α/(2 St)/λ added (about +42 percent at α 0.01, St 0.1). F3 population tests still pass.
+- Reference text: Kelvin-Helmholtz coefficient and type I reduction now say what the code uses; Marcus 2009 for
+  the iron fraction; Obertas fit range; Jackson 2012 X-ray saturation by spectral type; Lodders vs Asplund Z.
+
+### Surfaces (19 Nov)
+Wording only, no physics value changed; goldens re-blessed because reference strings are hashed
+(surface-impacts: REFS; surface-regimes: Venus corona cause text):
+- Crater saturation 0.15 D^-2 is about 10 percent of geometric saturation (top of Gault 1970's 1 to 10 percent), not
+  "a few percent (Hartmann 1984)"; kept as a documented fudge.
+- Giant cloud chemistry thresholds are on 1-bar temperature, adapted from Sudarsky et al. 2000's Teff classes
+  (clear class not modelled); documented fudge.
+- Lourenço 2020 DOI corrected (G-cubed); Europa's 60 Myr surface age credited to Schenk et al. 2004; Venus coronae
+  "several hundred, 60 to over 2000 km" (Stofan 1992 gives no count of 500); Neukum chronology valid to ~4.1 Gyr.
+
+### Galaxy and cosmology (19 Nov)
+Physics changed, goldens re-blessed on purpose (haloes, galaxy, envelope, stars, cosmos, cosmology; galaxy-events after merging G6 from main, and the galaxy_chart cases in contract.jsonl after merging the Explore tab, since both follow the merger histories):
+- Major-merger mass ratio (`sse-cosmos/src/haloes.rs`): drawn from the full Fakhouri, Ma and Boylan-Kolchin 2010
+  eq. 1 shape, ξ^β exp((ξ/ξ_t)^γ), by a fixed 40-step bisection on its integral. The old draw kept only ξ^β and
+  called the exponential "about 1"; it rises about 3 times from ξ = 0.25 to 1, so mergers now lean towards equal
+  masses. Every downstream galaxy history moves.
+- Disc heating exponent (`packs/base-cosmos` velocity.power): 0.35 → 0.40, the total-dispersion exponent of
+  Holmberg, Nordström and Andersen 2009 section 6.3 (U 0.39, V 0.40, W 0.53). Encounter rates move.
+- Hawking lifetime (`sse-cosmos/src/epochs.rs`): 2.1e67 → 1.14e67 (M/M☉)³ yr. Page 1976's total power for
+  massless species, counting only the photon and graviton shares (19 percent) because neutrinos have mass far
+  above the Hawking temperature of any stellar hole. The dark-era date moves about 0.27 dex earlier.
+- Reionisation "why" text now quotes Planck 2018's with-BAO column (7.8 ± 0.7) as well.
+- Metadata only: Correa et al. 2015 is paper I (MNRAS 450, 1514) eqs. 14, 15 and 20 to 23; Sheth and Tormen eq.
+  10 and its ν convention; Muratov 2015 wording; Planck z*; Asplund protosolar Z; spin width in ln, not dex;
+  Johnson and Li 2012's radius-dependent floor stated beside the single −1.0 value.
+
+### Runaway greenhouse limit (19 Nov)
+Physics changed; goldens re-blessed on purpose (time, time-generated: event text only):
+- `sse-formation/src/early.rs`: the runaway limit was 1.06 times Earth's insolation, Kopparapu et al. 2013's
+  section 3.1 value, which their 2014 letter (ApJL 787, L29) corrected after an error in the water infrared
+  coefficients. It now follows the 2014 table 1 by planet mass: 0.99 at 0.1, 1.107 at 1 and 1.188 at 5 Earth
+  masses, straight in log mass between them and flat outside. No body in the formation-early golden sits between
+  the old and new limits, so that golden does not move.
+- `packs/base-time` keeps 1.1 as the ocean-loss point and now cites the 2014 value; the T1 event text cites 2014.

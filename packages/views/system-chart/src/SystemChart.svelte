@@ -8,7 +8,7 @@
 <script lang="ts">
   import { KM_PER_AU, asPlayers, distanceWords, lightWords, separation, hasLayer, hasTool, childrenOf, commitEdit, frameFor, legendFor, primaryOf, sig, subjectOf, type Json, type SceneSubject, type SystemScene, type ViewContext } from "../../../ui-contract/src/index.ts";
   import { System3D, fromSystemScene } from "../../system-3d/src/index.ts";
-  import { ChartGround, HatchDefs, Hatch, Ink, Legend, Mark, Stamp, markExtent, SurveyGrid, distanceAt, fitScale, polar, radius } from "../../../chart-grammar/src/index.ts";
+  import { ChartGround, HatchDefs, Hatch, Ink, Legend, Mark, Stamp, markExtent, SurveyGrid, distanceAt, easing, fitScale, motionMs, polar, radius } from "../../../chart-grammar/src/index.ts";
 
   let { ctx, scene, params }: { ctx: ViewContext; scene: SystemScene; params: Record<string, Json> } = $props();
 
@@ -40,13 +40,28 @@
       if (f !== frame) frame = f;
     }
   });
+  // Entering a planet's frame grows the chart out of the planet; leaving shrinks back into the system (U12).
+  function frameMotion(into: boolean, from?: [number, number]) {
+    const el = svgEl;
+    const ms = motionMs(el ?? null);
+    if (!el || ms <= 0 || typeof el.animate !== "function") return;
+    const [ox, oy] = from ?? [cx, cy];
+    el.animate(
+      into
+        ? [{ transformOrigin: `${ox}px ${oy}px`, transform: "scale(0.4)", opacity: 0 }, { transformOrigin: `${ox}px ${oy}px`, transform: "none", opacity: 1 }]
+        : [{ transformOrigin: `${cx}px ${cy}px`, transform: "scale(1.6)", opacity: 0 }, { transformOrigin: `${cx}px ${cy}px`, transform: "none", opacity: 1 }],
+      { duration: ms * 1.4, easing: easing(el) },
+    );
+  }
   function openFrame(s: SceneSubject) {
+    frameMotion(true, pos(s));
     frame = s.address;
     zoom = Number(params.zoom);
     ctx.workspace.select(s.address);
   }
   function closeFrame() {
     const back = frame;
+    frameMotion(false);
     frame = null;
     zoom = Number(params.zoom);
     if (back) ctx.workspace.select(back);
