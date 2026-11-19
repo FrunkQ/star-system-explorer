@@ -1263,3 +1263,141 @@ fn boxes_load_with_the_stack() {
         "{r}"
     );
 }
+
+/// J4 through the API: the sensor ladder grants the crew the next rung after an
+/// hour in range; an `ask` consequence changes nothing until the GM says yes;
+/// the rules run on the GM machine and a seat's disclosures carry results
+/// only, never the trail, its ids or its inputs; a replay is identical.
+#[test]
+fn rules_through_the_api() {
+    let packs = crate::contract::load_packs(&root().join("tests/fixtures/packs"));
+    let run = || {
+        let mut k = crate::Kernel::new();
+        let r = send(
+            &mut k,
+            serde_json::json!({"op":"load_stack","packs":[packs["rpg-record"], packs["rpg-rules"]]}),
+        );
+        assert_eq!(r["type"], "stack_loaded", "{r}");
+        send(
+            &mut k,
+            serde_json::json!({"op":"open_universe","id":"kestrel","seed":"k"}),
+        );
+        let tarn = "u:kestrel/sys:0/body:3";
+        let ship = "u:kestrel/ship:calla";
+        let edit = |k: &mut crate::Kernel, a: &str, f: &str, v: serde_json::Value, t: i64| {
+            let r = send(
+                k,
+                serde_json::json!({"op":"set_authored","edit":{"address":a,"field":f,"value":v,"occurred_at_s":t}}),
+            );
+            assert_eq!(r["type"], "authored", "{r}");
+        };
+        edit(&mut k, tarn, "name", serde_json::json!("Tarn"), 0);
+        for (f, v) in [("pos.x_m", 0.0), ("pos.y_m", 0.0), ("pos.z_m", 0.0)] {
+            edit(&mut k, tarn, f, serde_json::json!(v), 0);
+        }
+        edit(&mut k, ship, "tag.ship", serde_json::json!(true), 0);
+        edit(&mut k, ship, "sensor.range_m", serde_json::json!(1.0e9), 0);
+        for (f, v) in [("pos.x_m", 5.0e9), ("pos.y_m", 0.0), ("pos.z_m", 0.0)] {
+            edit(&mut k, ship, f, serde_json::json!(v), 0);
+        }
+        edit(&mut k, ship, "pos.x_m", serde_json::json!(5.0e8), 1000);
+        let listed = send(&mut k, serde_json::json!({"op":"rules"}));
+        assert_eq!(listed["rules"].as_array().unwrap().len(), 2, "{listed}");
+        let view = |k: &mut crate::Kernel, t: i64| {
+            let s = send(
+                k,
+                serde_json::json!({"op":"scene","audience":"crew","scope":"u:kestrel","at_s":t}),
+            );
+            s["scene"]["subjects"]
+                .as_array()
+                .unwrap()
+                .iter()
+                .find(|x| x["address"] == tarn)
+                .map(|x| x["view"].clone())
+                .unwrap()
+        };
+        let mut steps = vec![];
+        for t in [0, 1000, 3000, 4600] {
+            let r = send(&mut k, serde_json::json!({"op":"rules_step","at_s":t}));
+            assert_eq!(r["type"], "rules_stepped", "{r}");
+            steps.push(r);
+        }
+        assert_eq!(view(&mut k, 3000), "long-range");
+        assert_eq!(
+            view(&mut k, 4600),
+            "scanned",
+            "an hour in range: one rung up"
+        );
+        assert_eq!(steps[3]["report"]["passes"][0][0]["rule"], "sensor-ladder");
+        // A step back is refused.
+        let back = send(&mut k, serde_json::json!({"op":"rules_step","at_s":10}));
+        assert_eq!(back["code"], "rules", "{back}");
+        // An insult: proposed, nothing changes until the GM says yes.
+        send(
+            &mut k,
+            serde_json::json!({"op":"add_note","address":tarn,"text":"the crew peed on the statue","tags":["insult"],"by":"crew-seat","audience":["crew"],"at_s":5000}),
+        );
+        let before = send(&mut k, serde_json::json!({"op":"record","address":tarn}));
+        let s = send(&mut k, serde_json::json!({"op":"rules_step","at_s":5100}));
+        assert_eq!(s["report"]["passes"][0][0]["outcome"], "proposed", "{s}");
+        assert_eq!(
+            s["state_hash"], steps[3]["state_hash"],
+            "the universe is untouched"
+        );
+        let after = send(&mut k, serde_json::json!({"op":"record","address":tarn}));
+        assert_eq!(before["kept"], after["kept"]);
+        let p = send(&mut k, serde_json::json!({"op":"rules_pending"}));
+        let id = p["proposals"][0]["id"].as_str().unwrap().to_string();
+        let d = send(
+            &mut k,
+            serde_json::json!({"op":"rules_decide","proposal":id,"approve":true,"at_s":5200}),
+        );
+        assert_eq!(d["written"].as_array().unwrap().len(), 2, "{d}");
+        let rec = send(&mut k, serde_json::json!({"op":"record","address":tarn}));
+        let standing = rec["kept"]
+            .as_array()
+            .unwrap()
+            .iter()
+            .find(|v| v["kind"] == "politics.standing")
+            .unwrap()["value"]
+            .clone();
+        assert_eq!(standing, serde_json::json!(-1.0));
+        let again = send(
+            &mut k,
+            serde_json::json!({"op":"rules_decide","proposal":id,"approve":true}),
+        );
+        assert_eq!(again["code"], "rules");
+        let pol = send(
+            &mut k,
+            serde_json::json!({"op":"rules_policy","rule":"consequence","approval":{"policy":"auto"},"at_s":5200}),
+        );
+        assert_eq!(pol["type"], "rules_policy_set", "{pol}");
+        // What the crew's device is sent: results only.
+        let disc = send(
+            &mut k,
+            serde_json::json!({"op":"disclosures","audience":"crew","at_s":6000}),
+        );
+        let text = disc.to_string();
+        let listed = send(&mut k, serde_json::json!({"op":"rules"}));
+        for e in listed["trail"].as_array().unwrap() {
+            assert!(
+                !text.contains(e["id"].as_str().unwrap()),
+                "a rules event id reached the crew"
+            );
+        }
+        for word in [
+            "rules.",
+            "sensor-ladder",
+            "consequence",
+            "the Vesh remember",
+            "politics.standing",
+        ] {
+            assert!(!text.contains(word), "{word} reached the crew: {text}");
+        }
+        let export = send(&mut k, serde_json::json!({"op":"export_chronicle"}));
+        (steps, d, listed, export)
+    };
+    let a = run();
+    let b = run();
+    assert_eq!(a, b, "the same session replays to the same bytes");
+}

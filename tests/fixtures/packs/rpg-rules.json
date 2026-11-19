@@ -1,0 +1,36 @@
+{
+  "format": "sse.pack/1",
+  "id": "test.rpg-rules",
+  "version": "0.1.0",
+  "kind": ["game-system"],
+  "kernel_range": "^0.1",
+  "licence": "Apache-2.0",
+  "provides": {
+    "other": {
+      "triggers": {
+        "rules": [
+          {
+            "id": "sensor-ladder",
+            "when": {"on_condition": {
+              "condition": {"if": "compare", "left": "pair.distance_m", "op": "le", "right": "observer.sensor.range_m"},
+              "hold_s": 3600
+            }},
+            "scope": {"under": "u:kestrel/sys:0", "pairs": {"observer_tag": "ship"}},
+            "effects": [{"effect": "grant", "audience": "crew", "ladder": ["long-range", "scanned", "survey"]}],
+            "explain": "a ship whose sensor has had a body in range for an hour learns the next rung of it (Traveller sensor ladder)"
+          },
+          {
+            "id": "consequence",
+            "when": {"on_event": {"kind": "record.note", "tag": "insult"}},
+            "effects": [
+              {"effect": "set_kept", "kind": "politics.standing", "add": -1.0, "reason": "insulted"},
+              {"effect": "add_note", "text": "the Vesh remember", "audience": "gm"}
+            ],
+            "approval": {"policy": "ask"},
+            "explain": "an insult costs standing with the locals"
+          }
+        ]
+      }
+    }
+  }
+}
