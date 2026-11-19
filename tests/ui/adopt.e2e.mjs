@@ -53,6 +53,8 @@ try {
     await gm.waitForFunction(() => document.querySelector("[aria-label='System on the chart']")?.getAttribute("data-viewing")?.includes("sys:@first-light"), null, { timeout: 15000 });
     assert.notEqual(await hash(), h0, "adopting writes history");
     await gm.locator(".area-chart .body").first().waitFor();
+    // Wait for the worlds to render (the star alone satisfies the first wait), then count them.
+    await gm.waitForFunction((n) => document.querySelectorAll('.area-chart .body[aria-label^="World"]').length === n, worlds, { timeout: 15000 }).catch(() => {});
     assert.equal(await gm.locator('.area-chart .body[aria-label^="World"]').count(), worlds, "the same worlds, read back from the universe");
     assert.match(await gm.locator("header .kicker").innerText(), /In the campaign/i);
     assert.match(await gm.locator(".status [role=status]").innerText(), /Added Seed "first light" to the campaign/);
@@ -75,6 +77,7 @@ try {
     await dlg.getByRole("button", { name: "Add this system to the campaign" }).click();
     await gm.waitForFunction(() => document.querySelector("[aria-label='System on the chart']")?.getAttribute("data-viewing")?.endsWith("sys:@1"), null, { timeout: 15000 });
     await gm.locator('.area-chart .body[aria-label^="Earth"]').first().waitFor({ timeout: 8000 });
+    await gm.waitForFunction(() => document.querySelectorAll("[aria-label='System on the chart'] option").length === 3, null, { timeout: 15000 }).catch(() => {});
     assert.equal(await onChart().locator("option").count(), 3);
     assert.equal(await gm.locator("header h1").innerText(), "Sol");
 
