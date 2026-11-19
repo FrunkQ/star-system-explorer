@@ -1,9 +1,9 @@
 // Sharing a session with players (V4): the GM shell records every applied
 // intent from the moment the campaign opens, and serves players once the GM
 // shares. A room is a random id; the players' link opens players.html with it.
-// Same-browser rooms use BroadcastChannel (other windows and screens of this
-// computer); cross-device rooms join through the site's signalling Worker.
-import { GmHost, broadcastHub, type HostState, type Hub, type Session } from "../../ui-contract/src/index.ts";
+// The GM serves both at once: BroadcastChannel for other windows and screens
+// of this computer, and the site's relay (worker/index.js) for other devices.
+import { GmHost, broadcastHub, multiHub, relayHub, type HostState, type Hub, type Session } from "../../ui-contract/src/index.ts";
 
 declare const __SSE_APP__: string;
 export const APP_VERSION: string = typeof __SSE_APP__ === "string" ? __SSE_APP__ : "dev";
@@ -21,7 +21,7 @@ function roomId(): string {
   return [...b].map((x) => x.toString(36).padStart(2, "0")).join("").slice(0, 10);
 }
 
-export async function createShare(session: Session, opening: { universe: { id: string; seed: string }; packs: unknown[]; clock_yr: number; views: () => string[] }, hubFor: (room: string, id: string) => Hub = broadcastHub): Promise<Share> {
+export async function createShare(session: Session, opening: { universe: { id: string; seed: string }; packs: unknown[]; clock_yr: number; views: () => string[] }, hubFor: (room: string, id: string) => Hub = (room, id) => multiHub(id, [broadcastHub(room, id), relayHub(document.baseURI, room, id)])): Promise<Share> {
   const run = roomId();
   const host = new GmHost(session, null, { run, kernel: await session.kernelVersion(), app: APP_VERSION, universe: opening.universe, packs: opening.packs, opening_hash: await session.stateHash(), clock_yr: opening.clock_yr });
   const st = $state({ ...host.state(), room: null as string | null, link: null as string | null });

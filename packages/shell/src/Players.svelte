@@ -13,7 +13,7 @@
 <script lang="ts">
   import { checkPlayerScene, checkScreen, enterFacts, gmSeat, markerFor, observeOf, playerSubjectOf, subjectName, type AuthoredFacts, type CheckedScreen, type PlayerScene, type ScreenDoc, type Vocab, type ViewSession } from "../../ui-contract/src/index.ts";
   import { openBrowserSession } from "../../ui-contract/src/host-browser.ts";
-  import { PlayerReplica, broadcastHub, tableSeat, type ReplicaStatus } from "../../ui-contract/src/index.ts";
+  import { PlayerReplica, broadcastHub, relayHub, tableSeat, type Hub, type ReplicaStatus } from "../../ui-contract/src/index.ts";
   import { APP_VERSION } from "./share.svelte.ts";
   import { focusOf } from "../../views/player-stack/src/pick.ts";
   import stackDoc from "./documents/stack.json";
@@ -72,28 +72,42 @@
   const joined = room !== null && /^[a-z0-9]{4,40}$/.test(room);
   let link = $state<ReplicaStatus>({ state: "joining" });
   let stateHash = $state("");
+  // How this screen reached the room: the site's relay (other devices) or this browser.
+  let via = $state<"relay" | "browser" | "">("");
+  async function roomHub(id: string): Promise<Hub> {
+    const want = new URLSearchParams(location.search).get("via");
+    if (want !== "browser") {
+      const r = relayHub(document.baseURI, room!, id, { timeoutMs: 3000 });
+      if (await r.opened) return (via = "relay"), r;
+      r.close();
+    }
+    via = "browser";
+    return broadcastHub(room!, id);
+  }
   if (joined) {
     const id = `player-${Math.random().toString(36).slice(2, 10)}`;
-    const replica = new PlayerReplica(
-      broadcastHub(room!, id),
-      (m) => openBrowserSession({ base: document.baseURI, seat: tableSeat(), universe: m.universe, packs: m.packs }),
-      { kernel: "", app: APP_VERSION, now: () => performance.now() },
-    );
-    replica.onStatus = (st) => {
-      link = st;
-      if (st.state === "live" || st.state === "offline") stateHash = st.state_hash;
-    };
-    replica.onSession = (s) => {
-      session = s;
-      void useScreen(s).then(refresh).catch((e) => (sceneErrors = [String(e)]));
-    };
-    replica.onUpdate = () => {
-      if (session && screenDoc) void refresh();
-    };
-    replica.join();
-    // Ask again until the GM answers (the GM's page may open after this one).
-    const ask = setInterval(() => (link.state === "joining" ? replica.join() : clearInterval(ask)), 1500);
-    setInterval(() => replica.tick(), 1000);
+    void roomHub(id).then((hub) => {
+      const replica = new PlayerReplica(
+        hub,
+        (m) => openBrowserSession({ base: document.baseURI, seat: tableSeat(), universe: m.universe, packs: m.packs }),
+        { kernel: "", app: APP_VERSION, now: () => performance.now() },
+      );
+      replica.onStatus = (st) => {
+        link = st;
+        if (st.state === "live" || st.state === "offline") stateHash = st.state_hash;
+      };
+      replica.onSession = (s) => {
+        session = s;
+        void useScreen(s).then(refresh).catch((e) => (sceneErrors = [String(e)]));
+      };
+      replica.onUpdate = () => {
+        if (session && screenDoc) void refresh();
+      };
+      replica.join();
+      // Ask again until the GM answers (the GM's page may open after this one).
+      const ask = setInterval(() => (link.state === "joining" ? replica.join() : clearInterval(ask)), 1500);
+      setInterval(() => replica.tick(), 1000);
+    });
   } else {
     Promise.all(stackDoc.packs.map(async (p) => (await fetch(new URL(p, document.baseURI))).json()))
       .then((packs) => openBrowserSession({ base: document.baseURI, seat: gmSeat(), universe: facts.universe, packs }))
@@ -193,7 +207,7 @@
       <main class="grid"><ScreenRuntime screen={checked.screen} {scene} {vocab} {mark} bind:selection /></main>
     {/key}
   {/if}
-  <footer class="status" data-state-hash={stateHash} data-link={joined ? link.state : "local"}>Scene: live from {joined ? "this screen's kernel, in step with the game master" : "the kernel"} for the {AUDIENCE} audience{sceneHash ? ` · scene ${sceneHash.slice(0, 10)}` : ""}{stateHash ? ` · state ${stateHash.slice(0, 10)}` : ""} {joined ? "" : screenDoc?.data_view ? ` · fixed to the ${screenDoc.data_view} view by the screen document` : ` · the Scanned control stands in for the GM's button and taps it for ${target ? subjectName(target) : "the body in focus"}`}</footer>
+  <footer class="status" data-state-hash={stateHash} data-link={joined ? link.state : "local"} data-via={via}>Scene: live from {joined ? "this screen's kernel, in step with the game master" : "the kernel"} {via ? ` (via ${via === "relay" ? "the site's relay" : "this browser"})` : ""} for the {AUDIENCE} audience{sceneHash ? ` · scene ${sceneHash.slice(0, 10)}` : ""}{stateHash ? ` · state ${stateHash.slice(0, 10)}` : ""} {joined ? "" : screenDoc?.data_view ? ` · fixed to the ${screenDoc.data_view} view by the screen document` : ` · the Scanned control stands in for the GM's button and taps it for ${target ? subjectName(target) : "the body in focus"}`}</footer>
 </div>
 <FilterChain {layers} />
 

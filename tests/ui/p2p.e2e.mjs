@@ -15,10 +15,13 @@ const { chromium, firefox, webkit } = createRequire(import.meta.url)("playwright
 const args = process.argv.slice(2);
 const si = args.indexOf("--screens");
 const screens = si >= 0 ? args.splice(si, 2)[1] : null;
+// --relay <url>: run against the Worker (e.g. `wrangler dev`) and join players through its relay.
+const ri = args.indexOf("--relay");
+const relay = ri >= 0 ? args.splice(ri, 2)[1] : null;
 const engines = args.length ? args : ["chromium"];
 const port = 8900 + Math.floor(Math.random() * 300);
-const base = `http://localhost:${port}/`;
-const server = spawn(process.execPath, ["scripts/serve.mjs", "packages/shell/dist", String(port)], { stdio: "ignore" });
+const base = relay ?? `http://localhost:${port}/`;
+const server = relay ? { kill() {} } : spawn(process.execPath, ["scripts/serve.mjs", "packages/shell/dist", String(port)], { stdio: "ignore" });
 await new Promise((r) => setTimeout(r, 400));
 const shot = async (page, n) => {
   if (screens) (mkdirSync(screens, { recursive: true }), await page.screenshot({ path: `${screens}/${n}.png` }));
@@ -47,11 +50,12 @@ try {
       const p = await context.newPage();
       await p.setViewportSize(viewport);
       p.on("pageerror", (e) => errors.push(`${label}: ${e.message}`));
-      await p.goto(link);
+      await p.goto(relay ? `${link}&via=relay` : link);
       await p.waitForSelector("footer[data-link='live'][data-state-hash]:not([data-state-hash=''])", { timeout: 30000 });
       return p;
     };
     const desk = await join("desk", { width: 1280, height: 900 });
+    if (relay) assert.equal(await desk.getAttribute("footer[data-via]", "data-via"), "relay", "joined through the site's relay");
     const phone = await join("phone", { width: 390, height: 844 });
     const playerHash = (p) => p.getAttribute("footer[data-state-hash]", "data-state-hash");
     assert.equal(await playerHash(desk), await gmHash(), "desk agrees with the GM on joining");
@@ -82,7 +86,7 @@ try {
     assert.match(await phone.getByRole("status", { name: "Game master" }).innerText(), /away[\s\S]*read only/i);
     await shot(phone, "p2p-phone-offline");
     assert.deepEqual(errors, []);
-    console.log(`V4 ${name}: desk and phone joined; GM edit replayed (state ${after.slice(0, 10)}); GM drop shows read-only`);
+    console.log(`V4 ${name}${relay ? " (relay)" : ""}: desk and phone joined; GM edit replayed (state ${after.slice(0, 10)}); GM drop shows read-only`);
     await browser.close();
   }
   console.log("PASS");

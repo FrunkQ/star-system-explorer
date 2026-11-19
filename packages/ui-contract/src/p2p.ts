@@ -99,6 +99,81 @@ export function broadcastHub(room: string, id: string): Hub {
   };
 }
 
+/**
+ * A room through the site's signalling Worker (worker/index.js): a WebSocket
+ * to /signal/<room>, relayed by the room's Durable Object, which stores
+ * nothing. Reconnects with backoff; messages sent while closed wait.
+ * `opened` settles true on the first connection, false if none within
+ * `timeoutMs` (the caller may then use a same-browser room instead).
+ */
+export function relayHub(site: string, room: string, id: string, opts: { timeoutMs?: number } = {}): Hub & { opened: Promise<boolean> } {
+  const url = new URL(`signal/${room}?peer=${encodeURIComponent(id)}`, site);
+  url.protocol = url.protocol === "https:" ? "wss:" : "ws:";
+  const cbs: ((m: Wire) => void)[] = [];
+  const waiting: string[] = [];
+  let ws: WebSocket | null = null;
+  let closed = false;
+  let delay = 500;
+  let settle: (ok: boolean) => void = () => {};
+  const opened = new Promise<boolean>((r) => (settle = r));
+  const timer = setTimeout(() => settle(false), opts.timeoutMs ?? 4000);
+  const connect = () => {
+    if (closed) return;
+    const s = new WebSocket(url);
+    ws = s;
+    s.onopen = () => {
+      delay = 500;
+      clearTimeout(timer);
+      settle(true);
+      for (const m of waiting.splice(0)) s.send(m);
+    };
+    s.onmessage = (e) => {
+      try {
+        const m = JSON.parse(String(e.data)) as Wire & { from?: string };
+        if (m && typeof m === "object" && typeof m.t === "string") cbs.forEach((cb) => cb(m));
+      } catch {
+        // not ours
+      }
+    };
+    s.onclose = () => {
+      ws = null;
+      if (!closed) setTimeout(connect, (delay = Math.min(delay * 2, 15000)));
+    };
+  };
+  connect();
+  return {
+    id,
+    opened,
+    send(m) {
+      const text = JSON.stringify(m);
+      if (ws && ws.readyState === 1) ws.send(text);
+      else waiting.push(text);
+    },
+    onMessage(cb) {
+      cbs.push(cb);
+      return () => cbs.splice(cbs.indexOf(cb), 1);
+    },
+    close() {
+      closed = true;
+      clearTimeout(timer);
+      ws?.close();
+    },
+  };
+}
+
+/** Several rooms as one (the GM serves this browser's screens and the relay at once). */
+export function multiHub(id: string, hubs: Hub[]): Hub {
+  return {
+    id,
+    send: (m) => hubs.forEach((h) => h.send(m)),
+    onMessage(cb) {
+      const offs = hubs.map((h) => h.onMessage(cb));
+      return () => offs.forEach((f) => f());
+    },
+    close: () => hubs.forEach((h) => h.close()),
+  };
+}
+
 export interface HostState {
   run: string;
   seq: number;
