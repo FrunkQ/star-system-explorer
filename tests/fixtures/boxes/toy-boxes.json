@@ -1,0 +1,81 @@
+[
+  {
+    "format": "sse.box/1",
+    "id": "toy.photosphere",
+    "version": "1.0.0",
+    "inputs": [
+      { "name": "luminosity", "kind": "star.luminosity" },
+      { "name": "radius", "kind": "star.radius" }
+    ],
+    "outputs": [{ "name": "teff", "from": "teff.teff" }],
+    "nodes": [{ "id": "teff", "atom": "toy.effective_temperature" }],
+    "wires": [
+      { "from": "in.luminosity", "to": "teff.luminosity" },
+      { "from": "in.radius", "to": "teff.radius" }
+    ],
+    "explain": { "curious": "How hot a star's surface is, from how bright and how big it is.", "science": "Stefan-Boltzmann over the photosphere.", "formula": "L = 4 pi R^2 sigma T^4" }
+  },
+  {
+    "format": "sse.box/1",
+    "id": "toy.star",
+    "version": "1.0.0",
+    "inputs": [{ "name": "mass", "kind": "star.mass" }],
+    "outputs": [
+      { "name": "luminosity", "from": "lum.luminosity" },
+      { "name": "radius", "from": "rad.radius" },
+      { "name": "teff", "from": "photo.teff" },
+      { "name": "mass", "from": "in.mass" }
+    ],
+    "nodes": [
+      { "id": "lum", "atom": "toy.luminosity_from_mass" },
+      { "id": "rad", "atom": "toy.radius_from_mass" },
+      { "id": "photo", "box": "toy.photosphere@^1" }
+    ],
+    "wires": [
+      { "from": "in.mass", "to": "lum.mass" },
+      { "from": "in.mass", "to": "rad.mass" },
+      { "from": "lum.luminosity", "to": "photo.luminosity" },
+      { "from": "rad.radius", "to": "photo.radius" }
+    ],
+    "promoted_params": [{ "name": "exponent", "node": "lum", "param": "exponent" }],
+    "explain": { "curious": "A main-sequence star from its mass alone.", "science": "Mass-luminosity and mass-radius power laws, then the photosphere.", "formula": "" },
+    "tests": [
+      {
+        "name": "the Sun",
+        "inputs": { "mass": { "value": 1.0, "unit": "m_sun" } },
+        "expect": {
+          "teff": { "value": 5772, "unit": "k", "tol": 1 },
+          "mass": { "value": 1.0, "unit": "m_sun", "tol": 1e-12 }
+        }
+      }
+    ]
+  },
+  {
+    "format": "sse.box/1",
+    "id": "toy.bulk",
+    "version": "1.0.0",
+    "inputs": [
+      { "name": "mass", "kind": "planet.mass" },
+      { "name": "radius", "kind": "planet.radius" }
+    ],
+    "outputs": [
+      { "name": "g", "from": "grav.g" },
+      { "name": "v", "from": "esc.v" },
+      { "name": "density", "from": "dens.density" }
+    ],
+    "nodes": [
+      { "id": "grav", "atom": "toy.surface_gravity" },
+      { "id": "esc", "atom": "toy.escape_velocity" },
+      { "id": "dens", "atom": "toy.bulk_density" }
+    ],
+    "wires": [
+      { "from": "in.mass", "to": "grav.mass" },
+      { "from": "in.radius", "to": "grav.radius" },
+      { "from": "in.mass", "to": "esc.mass" },
+      { "from": "in.radius", "to": "esc.radius" },
+      { "from": "in.mass", "to": "dens.mass" },
+      { "from": "in.radius", "to": "dens.radius" }
+    ],
+    "explain": { "curious": "What a planet's size and mass say about standing on it.", "science": "Newtonian gravity at the surface, escape speed and mean density.", "formula": "" }
+  }
+]

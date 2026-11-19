@@ -46,6 +46,10 @@ pub struct NodeDoc {
     /// table). Left out when absent, so existing flow hashes are unchanged.
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub config: Option<serde_json::Value>,
+    /// A box (J3): `id@range`, a flow of blocks used as one block. Inlined
+    /// before compiling ([`Flow::compile_with`]). Left out when absent.
+    #[serde(rename = "box", default, skip_serializing_if = "Option::is_none")]
+    pub r#box: Option<String>,
 }
 
 #[derive(Clone, PartialEq, Debug, Serialize, Deserialize)]
@@ -165,14 +169,16 @@ pub struct Flow {
     order: Vec<usize>,
     published: BTreeMap<String, (usize, usize)>,
     /// Each node output's dimension (any-dimension logic outputs resolved).
-    out_dims: Vec<Vec<Dimension>>,
+    pub(crate) out_dims: Vec<Vec<Dimension>>,
+    /// The boxes this flow was inlined from (J3), outermost first.
+    pub boxes: Vec<crate::boxes::BoxUse>,
 }
 
-fn split_ref(r: &str) -> Option<(&str, &str)> {
+pub(crate) fn split_ref(r: &str) -> Option<(&str, &str)> {
     r.split_once('.')
 }
 
-fn param_si(units: &Units, v: &ParamValue, dim: Dimension) -> Result<f64, String> {
+pub(crate) fn param_si(units: &Units, v: &ParamValue, dim: Dimension) -> Result<f64, String> {
     match v {
         ParamValue::Si(x) => Ok(*x),
         ParamValue::InUnit { value, unit } => {
@@ -232,6 +238,16 @@ impl Flow {
             }
             if node_ix.insert(n.id.clone(), nodes.len()).is_some() {
                 err(&n.id, "duplicate node id".into());
+            }
+            if let Some(b) = &n.r#box {
+                err(
+                    &n.id,
+                    format!(
+                        "uses box {b}; boxes are inlined first (compile with the stack's boxes)"
+                    ),
+                );
+                nodes.push(None);
+                continue;
             }
             let (atom_id, solve) = match (&n.atom, &n.solve) {
                 (Some(a), None) => (a.clone(), None),
@@ -602,9 +618,45 @@ impl Flow {
             order,
             published,
             out_dims,
+            boxes: vec![],
         })
     }
 
+    /// The dimension and shape of a node output (`node.port`) or flow input.
+    pub fn port_of(&self, r: &str) -> Option<(Dimension, Shape)> {
+        let (a, b) = split_ref(r)?;
+        if a == "in" {
+            let i = self.doc.inputs.iter().position(|x| x.name == b)?;
+            return Some((self.input_dims[i], self.input_shapes[i].clone()));
+        }
+        let n = self.doc.nodes.iter().position(|x| x.id == a)?;
+        let o = self.nodes[n].outputs.iter().position(|p| p.name == b)?;
+        Some((self.out_dims[n][o], self.nodes[n].outputs[o].shape()))
+    }
+    /// Where the physics of everything a flow input feeds holds: the
+    /// intersection of the validity ranges of the ports it is wired to.
+    /// `None` when unbounded; an empty intersection is `(lo, hi)` with lo > hi.
+    pub fn input_validity(&self, name: &str) -> Option<(f64, f64)> {
+        let i = self.doc.inputs.iter().position(|x| x.name == name)?;
+        let mut out: Option<(f64, f64)> = None;
+        for c in &self.nodes {
+            for (p, s) in c.inputs.iter().zip(&c.sources) {
+                if *s == Source::Input(i) {
+                    if let Some((lo, hi)) = p.valid {
+                        out = Some(match out {
+                            None => (lo, hi),
+                            Some((a, b)) => (a.max(lo), b.min(hi)),
+                        });
+                    }
+                }
+            }
+        }
+        out
+    }
+    /// The declarations of the atoms in this flow, in node order.
+    pub fn decls(&self) -> impl Iterator<Item = &AtomDecl> {
+        self.nodes.iter().map(|c| &c.decl)
+    }
     pub fn node_ids(&self) -> impl Iterator<Item = &str> {
         self.doc.nodes.iter().map(|n| n.id.as_str())
     }

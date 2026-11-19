@@ -1,0 +1,222 @@
+{
+  "format": "sse.flow/1",
+  "id": "toy.star-and-planet-boxed",
+  "version": "0.1.0",
+  "hook": "system.toy",
+  "inputs": [
+    {
+      "name": "star_mass",
+      "kind": "star.mass"
+    },
+    {
+      "name": "distance",
+      "kind": "orbit.semi_major_axis"
+    },
+    {
+      "name": "albedo",
+      "kind": "planet.bond_albedo"
+    },
+    {
+      "name": "planet_mass",
+      "kind": "planet.mass"
+    },
+    {
+      "name": "planet_radius",
+      "kind": "planet.radius"
+    }
+  ],
+  "nodes": [
+    {
+      "id": "star",
+      "box": "toy.star@^1",
+      "params": {
+        "exponent": 3.5
+      }
+    },
+    {
+      "id": "sun",
+      "atom": "toy.insolation"
+    },
+    {
+      "id": "teq",
+      "atom": "toy.equilibrium_temperature"
+    },
+    {
+      "id": "year",
+      "atom": "toy.orbital_period"
+    },
+    {
+      "id": "bulk",
+      "box": "toy.bulk@^1.0"
+    },
+    {
+      "id": "surf",
+      "solve": {
+        "atom": "toy.greenhouse_residual",
+        "unknown": "t_surface",
+        "bracket": [
+          1.0,
+          100000.0
+        ],
+        "iterations": 80
+      },
+      "params": {
+        "tau": 0.8
+      }
+    }
+  ],
+  "wires": [
+    {
+      "from": "in.star_mass",
+      "to": "star.mass"
+    },
+    {
+      "from": "star.luminosity",
+      "to": "sun.luminosity"
+    },
+    {
+      "from": "in.distance",
+      "to": "sun.distance"
+    },
+    {
+      "from": "sun.flux",
+      "to": "teq.flux"
+    },
+    {
+      "from": "in.albedo",
+      "to": "teq.albedo"
+    },
+    {
+      "from": "in.distance",
+      "to": "year.distance"
+    },
+    {
+      "from": "star.mass",
+      "to": "year.mass"
+    },
+    {
+      "from": "in.planet_mass",
+      "to": "bulk.mass"
+    },
+    {
+      "from": "in.planet_radius",
+      "to": "bulk.radius"
+    },
+    {
+      "from": "sun.flux",
+      "to": "surf.flux"
+    },
+    {
+      "from": "in.albedo",
+      "to": "surf.albedo"
+    }
+  ],
+  "publishes": [
+    {
+      "kind": "star.luminosity",
+      "from": "star.luminosity"
+    },
+    {
+      "kind": "star.radius",
+      "from": "star.radius"
+    },
+    {
+      "kind": "star.effective_temperature",
+      "from": "star.teff"
+    },
+    {
+      "kind": "planet.insolation",
+      "from": "sun.flux"
+    },
+    {
+      "kind": "planet.equilibrium_temperature",
+      "from": "teq.teq"
+    },
+    {
+      "kind": "orbit.period",
+      "from": "year.period"
+    },
+    {
+      "kind": "planet.surface_gravity",
+      "from": "bulk.g"
+    },
+    {
+      "kind": "planet.escape_velocity",
+      "from": "bulk.v"
+    },
+    {
+      "kind": "planet.bulk_density",
+      "from": "bulk.density"
+    },
+    {
+      "kind": "planet.surface_temperature",
+      "from": "surf.t_surface"
+    }
+  ],
+  "tests": [
+    {
+      "name": "sun and earth",
+      "inputs": {
+        "star_mass": {
+          "value": 1.0,
+          "unit": "m_sun"
+        },
+        "distance": {
+          "value": 1.0,
+          "unit": "au"
+        },
+        "albedo": 0.3,
+        "planet_mass": {
+          "value": 1.0,
+          "unit": "m_earth"
+        },
+        "planet_radius": {
+          "value": 1.0,
+          "unit": "r_earth"
+        }
+      },
+      "expect": {
+        "star.effective_temperature": {
+          "value": 5772,
+          "unit": "k",
+          "tol": 1
+        },
+        "planet.insolation": {
+          "value": 1361,
+          "unit": "w_m2",
+          "tol": 1
+        },
+        "planet.equilibrium_temperature": {
+          "value": 254.6,
+          "unit": "k",
+          "tol": 0.3
+        },
+        "planet.surface_temperature": {
+          "value": 286.3,
+          "unit": "k",
+          "tol": 0.5
+        },
+        "orbit.period": {
+          "value": 365.256,
+          "unit": "day",
+          "tol": 0.01
+        },
+        "planet.surface_gravity": {
+          "value": 9.798,
+          "unit": "m_s2",
+          "tol": 0.01
+        },
+        "planet.escape_velocity": {
+          "value": 11.18,
+          "unit": "km_s",
+          "tol": 0.01
+        },
+        "planet.bulk_density": {
+          "value": 5.495,
+          "unit": "g_cm3",
+          "tol": 0.005
+        }
+      }
+    }
+  ]
+}
