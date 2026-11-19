@@ -67,3 +67,5 @@ export { GREGORIAN, calendarOf, checkCalendar, dateOf, epochOf, formatDate, isLo
 export type { Anchor, Calendar, CalendarDate } from "./calendar.ts";
 export { termsOf, word } from "./words.ts";
 export type { Terms } from "./words.ts";
+export { fetchSector, sectorPath } from "./sector-fetch.ts";
+export type { SectorText } from "./sector-fetch.ts";

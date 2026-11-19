@@ -59,3 +59,9 @@ Status: built (19 Nov 2026), new crate `crates/sse-sector-io`. Build plan row X3
 - Checks: Lanternfall imports all 12 worlds and every UWP reads back unchanged. The tab, SEC and UWP-line files give the same facts. Zones and bases read back. The messy paste imports. A '?' line is refused with its reason. An impossible line (X266000-0) is kept and marked. Contract cases cover preview, apply, codes after the import, and a bad format.
 - Found on Lanternfall: 6 of 12 worlds list trade codes that differ from the T5 rules read back (for example Ashgrove reads Pr as well). These are the fixture's own choices, and the report shows them.
 - Not yet: the Travellermap fetch (needs the site Worker), growing each imported system (call `run_formation` with the plan's pins per system, or batch it), placing systems in 3D (handoff 7A part 3, "small deterministic offset"), and export from a campaign.
+
+# X3c Travellermap fetch (19 Nov 2026)
+- The site Worker (`worker/index.js`) answers `/tmap/sectors`, `/tmap/sector?sector=<name>[&subsector=A-P]` (T5 tab-delimited) and `/tmap/metadata?sector=<name>` (XML). It passes only these named reads to travellermap.com's public API (`/api/universe`, `/api/sec?type=TabDelimited`, `/api/metadata`), checks the names, caches each answer for a day (Cloudflare cache) and puts an `x-attribution` header on every answer. Nothing from the campaign is sent. `wrangler.jsonc` runs the Worker first for `/tmap/*`.
+- Client: `packages/ui-contract/src/sector-fetch.ts` (`fetchSector(fetch, sector, subsector?)`) gives `{text, attribution, source}` for `import_sector`.
+- Checks (`tests/ui/worker.test.ts`): URL mapping, refused names and paths, attribution, the cache hit, 404 and 405, and the client through the Worker. These are stand-ins: the real upstream was not called from here. The first live try is on the deployed site after merge.
+- Not yet: a GM import screen (sector picker, preview report, Apply). It waits on the screen hook.
