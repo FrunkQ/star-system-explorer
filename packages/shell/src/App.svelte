@@ -19,6 +19,9 @@
   import lightDoc from "./documents/light.recipes.json";
   import { SYMBOLS, checkLightRecipe, describeLight, litFromSystem, paint, type BandRecipe, type Mark } from "../../ui-contract/src/index.ts";
   import AgentsPanel from "../../agents/src/AgentsPanel.svelte";
+  import type { OracHost } from "../../agents/src/OracTab.svelte";
+  import { oracMay } from "../../agents/src/orac.ts";
+  import { atomIssueTarget, flowEntries, lensEntries, lensTarget, physicsTarget } from "../../agents/src/orac-targets.ts";
   import { orbitScene, voicesFromSystem } from "../../ui-contract/src/index.ts";
   import { compareScenes, dropWhatIf, keepWhatIf, openWhatIf } from "../../ui-contract/src/index.ts";
   import { allLenses, checkLens, defaultLens, hasTool, lensAudience, type Lens } from "../../ui-contract/src/index.ts";
@@ -391,6 +394,17 @@
     const head = `${scene.title}: ${scene.subtitle}.`;
     return sub ? `${head}\nSelected: ${sub.label}${sub.subtitle ? ` (${sub.subtitle})` : ""}.\n${sub.facts.map((f) => `${f.label}: ${f.display} (${f.source})`).join("\n")}` : head;
   });
+  // A2: Orac's targets go through the GM's own paths (the kernel's checks, the Physics screen's queue, the lens list).
+  const oracHost = $derived.by((): OracHost | undefined => {
+    const s = session;
+    if (!s || !oracMay(s.seat)) return undefined;
+    const fields = () => Object.fromEntries(Object.entries(lensFields).filter(([k]) => k !== "*").map(([k, v]) => [k, v.map((f) => f.id)]));
+    return {
+      targets: () => [physicsTarget(s, ws), lensTarget({ taken: () => lenses.map((l) => l.id), fields, save: saveLens }), atomIssueTarget((u) => window.open(u, "_blank", "noopener"))],
+      catalogue: () => [...flowEntries(s), ...lensEntries(lenses, fields())],
+      here: () => [agentContext, ws.bench ? `Flow on the bench: ${ws.bench.flow}${ws.bench.node ? `, node ${ws.bench.node}` : ""}` : "", `Lens in use: ${lens.label}`].filter(Boolean).join("\n"),
+    };
+  });
   const differences = $derived(ws.branch ? compareScenes(mainScene, scene, ws.branch.applied) : []);
   async function whatIf(action: "open" | "keep" | "drop") {
     if (!session) return;
@@ -664,7 +678,7 @@
 </dialog>
 
 <dialog bind:this={agentsDialog} class="help seats-dialog" aria-label="Agents" onclose={() => (agentsOpen = !!agentsDialog?.open)}>
-  {#if agentsOpen}<AgentsPanel context={agentContext} />{/if}
+  {#if agentsOpen}<AgentsPanel context={agentContext} orac={oracHost} />{/if}
   <form method="dialog"><button type="submit">Close</button></form>
 </dialog>
 

@@ -2,7 +2,7 @@
 // with CORS for the browser test. Records every request it sees (path and authorization).
 import { createServer } from "node:http";
 
-export function mockProvider({ key = null, priced = false, context = 4096 } = {}) {
+export function mockProvider({ key = null, priced = false, context = 4096, replies = null } = {}) {
   const seen = [];
   const server = createServer((req, res) => {
     const cors = { "access-control-allow-origin": "*", "access-control-allow-headers": "authorization, content-type, x-title", "access-control-allow-methods": "GET, POST, OPTIONS" };
@@ -19,7 +19,10 @@ export function mockProvider({ key = null, priced = false, context = 4096 } = {}
       }
       const q = JSON.parse(body || "{}");
       const last = q.messages?.[q.messages.length - 1]?.content ?? "";
-      res.end(JSON.stringify({ choices: [{ message: { content: `Mock answer to: ${last}` } }], usage: { prompt_tokens: 120, completion_tokens: 12 } }));
+      // Scripted replies (A2 to A4 tests): a list of strings, or a function of the messages.
+      const scripted = typeof replies === "function" ? replies(q.messages) : Array.isArray(replies) ? replies.shift() : undefined;
+      const content = scripted ?? `Mock answer to: ${last}`;
+      res.end(JSON.stringify({ choices: [{ message: { content } }], usage: { prompt_tokens: 120, completion_tokens: 12 } }));
     });
   });
   return new Promise((resolve) =>

@@ -77,6 +77,7 @@ Milestone M1 "Proven core" = packages K0 to K6 (build plan section 3/4).
 | O1 light switch (UI side): Eye, Camera, SHO and HOO palettes, single bands, legend chip and honesty label, stubbed spectra marked | UI done on stubbed light; real light facts wait on the kernel | packages/O1-ui.md |
 | V13 make a system: import a V3 save (report and preview) and grow a new system (formation run and preview) | part 1 done: previews; part 2 adopts a preview into the campaign | packages/V13.md |
 | A1 agents shell, bring your own key | done (parts 1 and 2): providers, keys on the device only and apart from the settings, ledger and cap, loaded-context guard, reconciled with Ovid's source (agents track); **Alex to confirm** the Ovid relicensing line in NOTICE | packages/A1.md |
+| A2 Orac: change requests from a sentence, Ovid's draft, check and fix loop; every draft checked by SSE's own validators before it can be accepted | part 1 done (agents track): physics (kernel-checked, filed on the Physics screen), lenses, atom issue drafts; part 2 next: screens, styles, data views, sifters, track J boxes and programs, game tables to packs | packages/A2.md |
 | G0 default Milky-Way-like patch envelope | done (kernel track) | packages/G0.md |
 | G1 cosmology, cosmic web, epochs | done (kernel track) | packages/G1.md |
 | G2 haloes per cell, growth, spin, mergers | done (kernel track) | packages/G2.md |

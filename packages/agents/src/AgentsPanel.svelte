@@ -6,7 +6,9 @@
 <script lang="ts">
   import { JOBS, PROVIDER_KINDS, chat, memoryStore, estimate, linked, listModels, loadAgents, newProvider, readLoaded, saveAgents, tarsSystem, type AgentsState, type ChatMessage, type JobId, type ModelInfo, type Provider, type ProviderKind } from "./agents.ts";
 
-  let { context = "", onchange }: { context?: string; onchange?: (s: AgentsState) => void } = $props();
+  import OracTab, { type OracHost } from "./OracTab.svelte";
+
+  let { context = "", orac, onchange }: { context?: string; orac?: OracHost; onchange?: (s: AgentsState) => void } = $props();
 
   // Settings in "sse4.agents", each key in its own entry (Ovid saves its links without keys).
   const store = (() => {
@@ -192,10 +194,7 @@
       {#if note}<p class="meta" role="status">{note}</p>{/if}
     </div>
   {:else if tab === "orac"}
-    <div role="tabpanel" aria-label="Orac">
-      <p>{JOBS.building.what}</p>
-      <p class="hint" data-agent-off="orac">{linked(st, "building") ? `Linked: ${st.links.building!.model}.` : "No model is linked for Building."} Orac's change-request loop (plan, draft, check, fix up to three times) arrives with package A2, built on Ovid's agent loop once its source is read. Until then the change requests on the Physics screen are fixtures.</p>
-    </div>
+    <OracTab st={$state.snapshot(st) as AgentsState} host={orac} onrow={(r) => (st.ledger.push(r), save())} />
   {:else}
     <div role="tabpanel" aria-label="Minerva">
       <p>{JOBS.describing.what}</p>
@@ -221,8 +220,8 @@
     margin-top: 16px;
     font-size: 17px;
   }
-  .hint,
-  .meta {
+  .ag :global(.hint),
+  .ag :global(.meta) {
     color: var(--sse-ink-muted);
     font-size: 12px;
   }
@@ -267,7 +266,7 @@
     flex-wrap: wrap;
   }
   .add,
-  .ask {
+  .ag :global(.ask) {
     display: grid;
     gap: 6px;
   }
@@ -301,7 +300,7 @@
     font-weight: normal;
     padding: 4px 8px 4px 0;
   }
-  .linkbtn {
+  .ag :global(.linkbtn) {
     color: var(--sse-accent);
     font: inherit;
     background: none;
@@ -310,7 +309,7 @@
     cursor: pointer;
     text-decoration: underline;
   }
-  .primary {
+  .ag :global(.primary) {
     justify-self: start;
     height: 38px;
     padding: 0 16px;
@@ -320,11 +319,11 @@
     font: inherit;
     cursor: pointer;
   }
-  .primary:disabled {
+  .ag :global(.primary):disabled {
     opacity: 0.45;
     cursor: default;
   }
-  .answer {
+  .ag :global(.answer) {
     margin: 10px 0;
     padding: 8px 12px;
     border-left: 2px solid var(--sse-accent);
@@ -333,7 +332,7 @@
     line-height: 1.5;
     white-space: pre-wrap;
   }
-  .problem {
+  .ag :global(.problem) {
     color: var(--sse-accent-ink);
   }
 </style>

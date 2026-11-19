@@ -3,7 +3,7 @@
   document shown as a diff with its effect before anyone accepts it. A
   request the kernel would reject never reaches the Adopt button. Adopting is
   one intent (adopt_physics) through the session; withdrawing is another.
-  Orac is not connected yet (A2): its requests come from a fixture and say so.
+  Orac files its requests from the Agents panel (A2); the shipped sample request still comes from a fixture and says so.
 -->
 <script lang="ts">
   import {
@@ -100,7 +100,7 @@
     {#if current}
       <div class="detail" role="region" aria-label="Request {current.title}">
         {#if current.rationale}<p class="why">{current.rationale}</p>{/if}
-        {#if current.fixture}<p class="muted">Orac is not connected yet; this request is a sample document in the shape Orac will file.</p>{/if}
+        {#if current.fixture}<p class="muted">This request is a sample document in the shape Orac files. Ask Orac under Agents for real ones.</p>{/if}
         <table class="diff">
           <caption>Diff · {current.flow}</caption>
           <thead><tr><th scope="col">Parameter</th><th scope="col" class="n">In force</th><th scope="col" class="n">Proposed</th></tr></thead>

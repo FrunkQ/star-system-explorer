@@ -312,3 +312,19 @@ export function tarsSystem(humour: number, context: string): string {
     context,
   ].join("\n");
 }
+
+/**
+ * The loop's Ask for one job (loop.ts): every call goes through chat(), so it
+ * is estimated, cleaned of keys and held to the day's cap; each row, failed
+ * ones too, is handed to `onRow` for the ledger.
+ */
+export function asker(s: AgentsState, job: JobId, o: { max_out?: number; fetcher?: typeof fetch; temperature?: number; onRow?: (r: LedgerRow) => void } = {}) {
+  return async (turns: readonly ChatMessage[]) => {
+    const r = await chat(s, job, turns, { max_out: o.max_out ?? 4000, ...(o.fetcher ? { fetcher: o.fetcher } : {}), temperature: o.temperature ?? 0.2 });
+    if (r.row) {
+      s.ledger.push(r.row);
+      o.onRow?.(r.row);
+    }
+    return r.ok ? { ok: true as const, text: r.text, tokens_in: r.row.tokens_in, tokens_out: r.row.tokens_out, ...(r.row.usd !== undefined ? { usd: r.row.usd } : {}) } : { ok: false as const, message: r.message };
+  };
+}
