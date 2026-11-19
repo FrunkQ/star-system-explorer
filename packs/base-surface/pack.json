@@ -342,7 +342,8 @@
      "tide": "despinning time and tidal heating after Gladman et al. 1996, Icarus 122, 166 (doi:10.1006/icar.1996.0117) and Peale and Cassen 1978; Q 100 and k2 0.3 are rocky-world defaults",
      "greenhouse_k": "Earth's present greenhouse warming is about 33 K; applied only when a generated world has volatiles (oceans or CO2), until an atmosphere stage exists",
      "atlas": "surfaces research report section 3: cube-sphere quadtree, level 0 about 20 km per sample on an Earth (here level 1 at 256 samples per tile), fact floor about 100 m anywhere and 10 m in declared sites; detail octaves fall off with a Hurst exponent of 0.8, typical of planetary topography (Turcotte 1987; Rosenburg et al. 2015 for the Moon)",
-     "plates": "semi-Lagrangian kinematic plates on the cube grid in the spirit of Cortial et al. 2019 (Procedural Tectonic Planets, Computer Graphics Forum 38, 2. doi:10.1111/cgf.13614); plate speeds of a few cm/yr scaled by heat flow; sea-floor depth from crust age by the GDH1 plate model (Stein and Stein 1992, Nature 359, 123. doi:10.1038/359123a0); continental elevation by Airy isostasy (factor (rho_m - rho_c)/rho_m, about 0.18); mountain belts worn down with an e-folding time of about 150 Myr (Pinet and Souriau 1988)"
+     "plates": "semi-Lagrangian kinematic plates on the cube grid in the spirit of Cortial et al. 2019 (Procedural Tectonic Planets, Computer Graphics Forum 38, 2. doi:10.1111/cgf.13614); plate speeds of a few cm/yr scaled by heat flow; sea-floor depth from crust age by the GDH1 plate model (Stein and Stein 1992, Nature 359, 123. doi:10.1038/359123a0); continental elevation by Airy isostasy (factor (rho_m - rho_c)/rho_m, about 0.18); mountain belts worn down with an e-folding time of about 150 Myr (Pinet and Souriau 1988)",
+     "wear": "stream-power incision E = K Q^m S solved implicitly in drainage order (Braun and Willett 2013, Geomorphology 180, 170. doi:10.1016/j.geomorph.2012.10.008); depression filling by priority-flood (Barnes et al. 2014, Computers and Geosciences 62, 117. doi:10.1016/j.cageo.2013.04.024); Hack's law L ~ A^0.6 (Hack 1957) as the drainage check; diffusion is an effective coarse-grid value (the local hillslope value is about 0.01 m2/yr)"
     },
     "atlas": {
      "tile_samples": 256,
@@ -387,6 +388,24 @@
      "airy": 0.18,
      "snapshot_every": 4,
      "suture_fraction": 0.002
+    },
+    "wear": {
+     "epoch_myr": 100.0,
+     "plate_window_myr": 100.0,
+     "rain_m_yr": 1.0,
+     "rain_floor": 0.15,
+     "rain_cells": 3,
+     "k_stream": 2e-06,
+     "m": 0.5,
+     "glacial_factor": 2.0,
+     "ice_k": 263.0,
+     "lapse_k_m": 0.0065,
+     "diffusion_m2_yr": 10.0,
+     "river_area_cells": 6.0,
+     "dune_rain": 0.1,
+     "dune_pressure_bar": 0.005,
+     "fill_epsilon_m": 0.01,
+     "dune_slope": 0.0005
     }
    }
   }

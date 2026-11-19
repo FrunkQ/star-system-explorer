@@ -128,6 +128,10 @@ pub struct Tile {
     pub albedo: Vec<u16>,
     /// Feature tags present in the tile (filled from S4 and S7).
     pub tags: Vec<String>,
+    /// Channels (S3): 0 off the river network, else 1 + 8 × log2(drainage in
+    /// cells), capped at 255. Empty before wearing down.
+    #[serde(default, skip_serializing_if = "Vec::is_empty")]
+    pub flow: Vec<u8>,
     /// Layers a later stage fills.
     pub pending: Vec<String>,
     pub hash: String,
@@ -175,6 +179,10 @@ struct PlateSurface {
     continental: Vec<bool>,
     age_myr: Vec<f64>,
     oceans: bool,
+    /// Worlds whose plates never moved: one land material everywhere.
+    land_material: Option<u8>,
+    /// From S3: per cell, (river, lake, thick sediment, drainage in cells).
+    flow: Option<Vec<(bool, bool, bool, f64)>>,
 }
 
 impl std::fmt::Debug for PlateSurface {
@@ -389,6 +397,70 @@ impl Atlas {
                 })
                 .collect(),
             oceans: sl.is_some(),
+            land_material: None,
+            flow: None,
+        });
+        a
+    }
+
+    /// The surveyed atlas after wearing down (S3): heights from the worn cell
+    /// grid, rivers, lakes and sediment from its drainage. Works for every
+    /// solid world: plates where they moved, the regime sketch elsewhere.
+    pub fn from_worn(
+        s: &SurfaceSettings,
+        env: &SurfaceEnvelope,
+        seed: &Seed,
+        history: &crate::plates::PlateHistory,
+        worn: &crate::wear::Wear,
+        sites: Vec<Site>,
+    ) -> Self {
+        let mut a = Atlas::new(s, env, seed, worn.epoch_myr / 1000.0, sites);
+        a.address = env
+            .address
+            .child_key("shell", &format!("surface@{}", a.epoch_myr))
+            .expect("valid shell key");
+        let moved = history.steps > 0;
+        let nc = worn.heights.len();
+        let cell = 4.0 * m::PI * env.reference_radius_m * env.reference_radius_m / nc as f64;
+        a.plates = Some(PlateSurface {
+            grid: crate::plates::grid_for(history),
+            heights: worn.heights.clone(),
+            continental: if moved {
+                history.cells.iter().map(|c| c.continental).collect()
+            } else {
+                vec![false; nc]
+            },
+            age_myr: if moved {
+                history
+                    .cells
+                    .iter()
+                    .map(|c| {
+                        let last = c
+                            .orogeny
+                            .last()
+                            .map(|o| o.0)
+                            .unwrap_or(c.born_myr)
+                            .max(c.born_myr);
+                        (history.epoch_myr - last).max(0.0)
+                    })
+                    .collect()
+            } else {
+                vec![a.regime_age_myr; nc]
+            },
+            oceans: worn.sea_level_raw_m.is_some(),
+            land_material: (!moved).then_some(a.material_land),
+            flow: Some(
+                (0..nc)
+                    .map(|c| {
+                        (
+                            worn.river[c],
+                            worn.lake[c],
+                            worn.sediment_m[c] > 10.0,
+                            worn.area_m2[c] / cell,
+                        )
+                    })
+                    .collect(),
+            ),
         });
         a
     }
@@ -584,6 +656,7 @@ impl Atlas {
         let mut slope = Vec::with_capacity(cnt);
         let mut age = Vec::with_capacity(cnt);
         let mut albedo = Vec::with_capacity(cnt);
+        let mut flow: Vec<u8> = vec![];
         let style = self.model.style.as_str();
         let dist = |a: [f64; 3], b: [f64; 3]| {
             let d = [a[0] - b[0], a[1] - b[1], a[2] - b[2]];
@@ -609,8 +682,17 @@ impl Atlas {
                     .map(|ps| (ps, ps.grid.cell_at(dirs[c])));
                 let (mat, cov) = match (style, plate_cell) {
                     (_, Some((ps, pc))) => (
-                        if ps.continental[pc] { 1u8 } else { 0 },
-                        if liquid { 1u8 } else { 0 },
+                        match (ps.land_material, &ps.flow) {
+                            (_, Some(f)) if f[pc].2 => 4u8,
+                            (Some(mat), _) if !liquid => mat,
+                            _ if ps.continental[pc] => 1u8,
+                            _ => 0,
+                        },
+                        if liquid || ps.flow.as_ref().is_some_and(|f| f[pc].1) {
+                            1u8
+                        } else {
+                            0
+                        },
                     ),
                     _ => match style {
                         "plates" if liquid => (0u8, 1u8),
@@ -632,12 +714,43 @@ impl Atlas {
                     self.regime_age_myr
                 };
                 age.push(m::round(a) as u32);
+                if let Some((ps, pc)) = plate_cell {
+                    if let Some(f) = &ps.flow {
+                        let (river, _, _, cells) = f[pc];
+                        flow.push(if river {
+                            (1.0 + 8.0 * m::log2(cells.max(1.0))).min(255.0) as u8
+                        } else {
+                            0
+                        });
+                    }
+                }
                 albedo.push(m::round(p.albedo.clamp(0.0, 1.0) * 1000.0) as u16);
             }
         }
-        let hash = ContentHash::of(&(&elevation_dm, &material, &cover, &slope, &age, &albedo))
-            .expect("hash")
-            .hex();
+        let hash = if flow.is_empty() {
+            ContentHash::of(&(&elevation_dm, &material, &cover, &slope, &age, &albedo))
+        } else {
+            ContentHash::of(&(
+                &elevation_dm,
+                &material,
+                &cover,
+                &slope,
+                &age,
+                &albedo,
+                &flow,
+            ))
+        }
+        .expect("hash")
+        .hex();
+        let mut pending: Vec<String> = vec![
+            "flow and channels (S3)".into(),
+            "feature tags (S4, S7)".into(),
+            "biome (S11)".into(),
+            "structures (S7)".into(),
+        ];
+        if !flow.is_empty() {
+            pending.remove(0);
+        }
         Tile {
             address: self.tile_address(&key),
             key,
@@ -652,12 +765,8 @@ impl Atlas {
             surface_age_myr: age,
             albedo,
             tags: vec![],
-            pending: vec![
-                "flow and channels (S3)".into(),
-                "feature tags (S4, S7)".into(),
-                "biome (S11)".into(),
-                "structures (S7)".into(),
-            ],
+            pending,
+            flow,
             hash,
         }
     }

@@ -17,6 +17,7 @@ pub mod atlas;
 pub mod plates;
 pub mod scenario;
 pub mod sketch;
+pub mod wear;
 
 use serde::{Deserialize, Serialize};
 use sse_core::math as m;
@@ -99,6 +100,7 @@ pub struct SurfaceSettings {
     pub tide: Tide,
     pub atlas: atlas::AtlasSettings,
     pub plates: plates::PlateSettings,
+    pub wear: wear::WearSettings,
     pub rules: Vec<Rule>,
     pub regimes: BTreeMap<String, RegimeDef>,
 }
@@ -621,3 +623,5 @@ mod atlas_tests;
 mod plates_tests;
 #[cfg(test)]
 mod tests;
+#[cfg(test)]
+mod wear_tests;

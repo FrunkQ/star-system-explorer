@@ -138,3 +138,39 @@ pub fn plates_golden() -> serde_json::Value {
         .collect();
     serde_json::json!({"version": crate::plates::PLATES_VERSION, "worlds": out})
 }
+
+/// Golden for S3: wearing down on a 16-cell-a-face grid for Earth (plates, wet)
+/// and Mars (sketch, wet for its first Gyr), and tiles of the worn atlas.
+pub fn wear_golden() -> serde_json::Value {
+    use crate::atlas::{Atlas, TileKey};
+    use crate::wear::{wear_world, WaterHistory};
+    let mut s = settings();
+    s.plates.cells_per_face = 16;
+    s.atlas.tile_samples = 32;
+    let seed = Seed::from_text("sse4-wear-golden");
+    let out: Vec<_> = fixtures()
+        .iter()
+        .filter(|f| ["Earth", "Mars"].contains(&f.body.label.as_str()))
+        .map(|f| {
+            let e = envelope(&s, &f.body);
+            let h = crate::plates::history(&s, &e, &seed, f.body.age_gyr);
+            let water = if f.body.label == "Mars" {
+                WaterHistory { wet_from_gyr: 0.0, wet_until_gyr: 1.0, oceans: 0.05, pressure_bar: 0.006 }
+            } else {
+                WaterHistory::steady(f.body.oceans, f.body.pressure_bar, f.body.age_gyr)
+            };
+            let w = wear_world(&s, &e, &seed, &h, &water, f.body.magma_end_myr.max(50.0));
+            let a = Atlas::from_worn(&s, &e, &seed, &h, &w, vec![]);
+            let tiles: Vec<_> = [(0, 0, 0, 0), (3, 5, 9, 20)]
+                .iter()
+                .map(|&(face, level, x, y)| a.build(TileKey::new(face, level, x, y).expect("key")).hash)
+                .collect();
+            serde_json::json!({
+                "body": f.body.label, "epochs": w.epochs.len(),
+                "rivers": w.river.iter().filter(|x| **x).count(), "lakes": w.lake.iter().filter(|x| **x).count(),
+                "eroded_m3": w.eroded_m3, "wear": digest(&w), "tiles": tiles,
+            })
+        })
+        .collect();
+    serde_json::json!({"version": crate::wear::WEAR_VERSION, "worlds": out})
+}
