@@ -403,6 +403,31 @@ pub enum Request {
         #[ts(optional, type = "unknown")]
         rescue: Option<serde_json::Value>,
     },
+    /// The Window (V8): what a `sensor` (`eye`, `binoculars`, `telescope` in
+    /// base-nav) picks up at `at_s` from beside body `from`, or from the point
+    /// `at_au` around the star, in a NAV `fixture` or inline `nav` system:
+    /// each object's sky position, size, brightness, phase, whether it is
+    /// seen and whether its disc shows. Read only.
+    WindowView {
+        #[serde(default)]
+        #[ts(optional)]
+        fixture: Option<String>,
+        #[serde(default)]
+        #[ts(optional, type = "unknown")]
+        nav: Option<serde_json::Value>,
+        #[serde(default)]
+        #[ts(optional)]
+        at_s: Option<f64>,
+        #[serde(default)]
+        #[ts(optional)]
+        from: Option<String>,
+        #[serde(default)]
+        #[ts(optional)]
+        at_au: Option<[f64; 3]>,
+        #[serde(default)]
+        #[ts(optional)]
+        sensor: Option<String>,
+    },
     /// G1 to G4 for the galaxy chart (U6): one galaxy grown from the open
     /// universe's seed, a named `halo` (`dwarf`, `milky-way-like`, `group`) or
     /// a halo `mass_msun`; its history curves, rings now (abundances, deaths,
@@ -743,6 +768,7 @@ impl Request {
             Request::PlanRoute { .. } => "plan_route",
             Request::GalaxyChart { .. } => "galaxy_chart",
             Request::WebSlice { .. } => "web_slice",
+            Request::WindowView { .. } => "window_view",
             Request::PlanDescent { .. } => "plan_descent",
             Request::Systems => "systems",
             Request::LifeView { .. } => "life_view",
@@ -858,6 +884,11 @@ pub fn ops() -> Vec<OpInfo> {
             "web_slice",
             Cost::Medium,
             "n by n web samples at four octaves (n = 128: about 0.2 s native)",
+        ),
+        o(
+            "window_view",
+            Cost::Light,
+            "one Kepler solve and one brightness per body (microseconds)",
         ),
         o(
             "plan_descent",
@@ -1143,6 +1174,13 @@ pub enum Response {
     WebSliced {
         #[ts(type = "unknown")]
         web: serde_json::Value,
+    },
+    /// `window_view`: sse-nav's `WindowView` (`seen`: lon/lat, distance,
+    /// angular diameter, magnitude, phase, lit fraction, detected, resolved,
+    /// light time, why; `sensor`; `missed`; `model`).
+    WindowViewed {
+        #[ts(type = "unknown")]
+        view: serde_json::Value,
     },
     /// `plan_route`: sse-nav's `RoutePlan` (`candidates` best first by the
     /// preference, each with burns, days, Δv, propellant and reserve, peak g,

@@ -1635,5 +1635,17 @@
   "op": "galaxy_chart",
   "halo": "dwarf",
   "edits": [{"kind": "comet"}]
+ },
+ {
+  "op": "window_view",
+  "fixture": "sol",
+  "from": "Earth",
+  "sensor": "binoculars"
+ },
+ {
+  "op": "window_view",
+  "fixture": "sol",
+  "from": "Earth",
+  "sensor": "x-ray"
  }
 ]

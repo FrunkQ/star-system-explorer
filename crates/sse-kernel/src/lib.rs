@@ -1154,6 +1154,23 @@ impl Kernel {
                 })?;
                 Response::GalaxyCharted { chart }
             }
+            Request::WindowView {
+                fixture,
+                nav,
+                at_s,
+                from,
+                at_au,
+                sensor,
+            } => Response::WindowViewed {
+                view: nav::window_view(
+                    fixture.as_deref(),
+                    nav.as_ref(),
+                    at_s,
+                    from.as_deref(),
+                    at_au,
+                    sensor.as_deref(),
+                )?,
+            },
             Request::WebSlice {
                 z,
                 t_gyr,

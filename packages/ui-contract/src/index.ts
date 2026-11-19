@@ -67,3 +67,5 @@ export { STOCK_SHIPS, navFromScene, safestFirst, shortlist, DIFFICULTY_STEPS, di
 export type { NavShip, NavBody, NavSystem, Prefer, RouteAsk, RoutePlan, Course, RouteBurn, RouteHazard, WayOut, NavFromScene, RouteFrame } from "./route.ts";
 export { NAMED_HALOES, MORPHOLOGY_WORDS, GROUP_WORDS, LAYER_WORDS, discFrame, armPath, ringAt, ringShades, greenAt, cosmicAxis, logCurve, sci, timesSun, dex, epochTicks, foamCells, editWords, toggleRemoval } from "./galaxy.ts";
 export type { GalaxyAsk, GalaxyChart, GalaxyRing, GalaxyState, Group, CosmicEpoch, PlaceLocal, PlaceGreen, SliceAsk, WebSlice, DiscFrame, RingLayer, CurveAxis, GalaxyEdit, GalaxyEventMark, HistoryCompare } from "./galaxy.ts";
+export { SENSORS, camera, project, discPx, pointPx, towards, magWords, angleWords } from "./window.ts";
+export type { WindowAsk, WindowView, Seen, Camera } from "./window.ts";

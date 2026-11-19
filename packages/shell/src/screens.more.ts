@@ -7,11 +7,12 @@ import { route } from "../../views/route/src/index.ts";
 import { galaxyChart } from "../../views/galaxy-chart/src/index.ts";
 import { explore } from "../../views/explore/src/index.ts";
 import { foamMap } from "../../views/foam-map/src/index.ts";
+import { windowView } from "../../views/window/src/index.ts";
 import exploreDoc from "./documents/explore.gm.json";
 import "./screens.more.css";
 
 /** GM view modules from this track (the sections are registered too, so other screens and Orac can use them alone). */
-export const MORE_VIEWS: readonly ViewModule[] = [explore, route, galaxyChart, foamMap];
+export const MORE_VIEWS: readonly ViewModule[] = [explore, route, windowView, galaxyChart, foamMap];
 
 /** Screens: one tab in the bar ("Explore"), whose sections switch inside it. */
 export const MORE_SCREENS: readonly { value: string; label: string; doc: ScreenDoc; tab?: boolean }[] = [

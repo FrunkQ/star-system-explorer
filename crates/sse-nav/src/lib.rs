@@ -19,6 +19,7 @@ pub mod drift;
 pub mod hazards;
 pub mod kepler;
 pub mod scenario;
+pub mod sky;
 
 use kepler::{Elements, V3};
 use serde::{Deserialize, Serialize};
@@ -59,6 +60,9 @@ pub struct NavSettings {
     /// Ship templates by id.
     pub ships: BTreeMap<String, Ship>,
     pub sources: BTreeMap<String, String>,
+    /// The Window's sensors and brightness constants (V8).
+    #[serde(default)]
+    pub window: sky::WindowSettings,
 }
 
 #[derive(Clone, PartialEq, Debug, Serialize, Deserialize)]

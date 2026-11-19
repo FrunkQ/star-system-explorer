@@ -18,6 +18,7 @@
     "packages/views/galaxy-chart",
     "packages/views/explore",
     "packages/views/foam-map",
+    "packages/views/window",
     "packages/views/time-ruler",
     "packages/views/flow-editor",
     "packages/views/change-requests",
@@ -39,7 +40,7 @@
     "ui:test": "node --test packages/ui-contract/test/*.test.ts packages/renderer/test/*.test.ts packages/skins/chart-room/test/*.test.ts packages/skins/player/test/*.test.ts packages/chart-grammar/test/*.test.ts packages/agents/test/*.test.ts tests/ui/*.test.ts",
     "ui:check": "svelte-check --workspace packages/shell --tsconfig ./tsconfig.json --fail-on-warnings",
     "ui:build": "scripts/build-shell.sh",
-    "ui:e2e": "node tests/ui/shell.e2e.mjs && node tests/ui/players.e2e.mjs && node tests/ui/setup.e2e.mjs && node tests/ui/themes.e2e.mjs && node tests/ui/symbols.e2e.mjs && node tests/ui/styles.e2e.mjs && node tests/ui/p2p.e2e.mjs && node tests/ui/system3d.e2e.mjs && node tests/ui/lenses.e2e.mjs && node tests/ui/sound.e2e.mjs && node tests/ui/whatif.e2e.mjs && node tests/ui/agents.e2e.mjs && node tests/ui/light.e2e.mjs && node tests/ui/make.e2e.mjs && node tests/ui/lookahead.e2e.mjs && node tests/ui/cutaway.e2e.mjs && node tests/ui/adopt.e2e.mjs && node tests/ui/globe.e2e.mjs && node tests/ui/compare.e2e.mjs && node tests/ui/campaign.e2e.mjs && node tests/ui/biosphere.e2e.mjs && node tests/ui/route.e2e.mjs && node tests/ui/galaxy.e2e.mjs && node tests/ui/foam.e2e.mjs",
+    "ui:e2e": "node tests/ui/shell.e2e.mjs && node tests/ui/players.e2e.mjs && node tests/ui/setup.e2e.mjs && node tests/ui/themes.e2e.mjs && node tests/ui/symbols.e2e.mjs && node tests/ui/styles.e2e.mjs && node tests/ui/p2p.e2e.mjs && node tests/ui/system3d.e2e.mjs && node tests/ui/lenses.e2e.mjs && node tests/ui/sound.e2e.mjs && node tests/ui/whatif.e2e.mjs && node tests/ui/agents.e2e.mjs && node tests/ui/light.e2e.mjs && node tests/ui/make.e2e.mjs && node tests/ui/lookahead.e2e.mjs && node tests/ui/cutaway.e2e.mjs && node tests/ui/adopt.e2e.mjs && node tests/ui/globe.e2e.mjs && node tests/ui/compare.e2e.mjs && node tests/ui/campaign.e2e.mjs && node tests/ui/biosphere.e2e.mjs && node tests/ui/route.e2e.mjs && node tests/ui/galaxy.e2e.mjs && node tests/ui/foam.e2e.mjs && node tests/ui/window.e2e.mjs",
     "shell": "scripts/build-shell.sh && node scripts/serve.mjs packages/shell/dist 8081",
     "build:client": "scripts/build-wasm.sh && tsc -p packages/kernel-client"
   },
