@@ -345,6 +345,27 @@ impl Haloes<'_> {
         }
     }
 
+    /// A halo of mass `mass` today with the median growth history and spin and
+    /// its own keyed mergers (for reference galaxies and volume sums).
+    pub fn median(&self, mass: f64, key: &str) -> Halo {
+        let addr = self.universe.child_key("halo", key).expect("valid key");
+        let (alpha, beta) = correa(self.cosmo, mass, 0.0);
+        let mut h = Halo {
+            address: addr.to_string(),
+            mass,
+            position: [0.0; 3],
+            alpha,
+            beta,
+            z_half: 0.0,
+            spin: self.params.spin_median,
+            mergers: vec![],
+            neighbour: None,
+        };
+        h.z_half = half_mass_z(&h);
+        h.mergers = self.mergers(&h, &addr);
+        h
+    }
+
     /// Major mergers of one halo: a keyed Poisson process in z from merger_z_max to 0
     /// on a fixed grid of 60 slices, the rate at the halo's mass then.
     fn mergers(&self, h: &Halo, addr: &Address) -> Vec<Merger> {

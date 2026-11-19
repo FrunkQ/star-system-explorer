@@ -7,9 +7,11 @@
 pub mod birth;
 pub mod cosmology;
 pub mod epochs;
+pub mod galaxy;
 pub mod haloes;
 pub mod model;
 pub mod patch;
+pub mod rings;
 pub mod scenario;
 pub mod web;
 
@@ -122,3 +124,5 @@ pub(crate) mod golden {
 mod g1_tests;
 #[cfg(test)]
 mod g2_tests;
+#[cfg(test)]
+mod g3_tests;

@@ -62,6 +62,10 @@ pub struct CosmologyPack {
     pub epochs: EpochParams,
     #[serde(default)]
     pub haloes: crate::haloes::HaloParams,
+    #[serde(default)]
+    pub galaxy: crate::galaxy::GalaxyParams,
+    #[serde(default)]
+    pub rings: crate::rings::RingParams,
 }
 
 impl CosmologyPack {
@@ -169,4 +173,57 @@ pub fn haloes_golden() -> serde_json::Value {
         })
         .collect();
     serde_json::json!({ "cells": cells, "chronicle_head": ch.head().hex() })
+}
+
+/// G3 golden: a Milky-Way-like galaxy in a median 1e12 halo and its rings,
+/// plus a dwarf and a group galaxy: present numbers and digests of the full
+/// histories, and the chronicle head after its active-nucleus events.
+pub fn galaxy_golden() -> serde_json::Value {
+    let cp = CosmologyPack::from_packs(&[base_cosmology_pack()]).expect("settings");
+    let c = Cosmology::new(cp.params.clone());
+    let u = Address::universe("g3").expect("address");
+    let web = Web::new(
+        &c,
+        WebParams {
+            octaves: 4,
+            ..cp.web.clone()
+        },
+        &Seed::from_text("g3"),
+        &u,
+    )
+    .expect("web");
+    let hs = crate::haloes::Haloes {
+        cosmo: &c,
+        web: &web,
+        params: cp.haloes.clone(),
+        seed: Seed::from_text("g3"),
+        universe: u,
+    };
+    let mut ch = Chronicle::new();
+    let gals: Vec<serde_json::Value> = [("dwarf", 1.0e11), ("milky-way-like", 1.0e12), ("group", 1.0e13)]
+        .iter()
+        .map(|(key, mass)| {
+            let h = hs.median(*mass, key);
+            let g = crate::galaxy::evolve(&c, &cp.galaxy, &h);
+            crate::galaxy::record(&mut ch, &g).expect("record");
+            let addr: Address = h.address.parse().expect("address");
+            let d = crate::rings::evolve(&g, &cp.galaxy, &cp.rings, Seed::from_text("g3"), &addr);
+            let r8 = d.ring_at(8.2 * g.now.disc_kpc / 2.6);
+            serde_json::json!({
+                "halo": h.address,
+                "morphology": g.morphology,
+                "stars": g.now.stars,
+                "sfr": g.now.sfr,
+                "z_gas": g.now.z_gas,
+                "black_hole": g.now.black_hole,
+                "disc_kpc": g.now.disc_kpc,
+                "solar_ring_feh": r8.abundance(crate::rings::FE),
+                "core_collapse_per_century": d.core_collapse_rate() * 100.0,
+                "ia_per_century": d.ia_rate() * 100.0,
+                "galaxy_digest": ContentHash::of(&serde_json::to_string(&g).expect("json")).expect("hash").hex(),
+                "rings_digest": ContentHash::of(&serde_json::to_string(&d).expect("json")).expect("hash").hex(),
+            })
+        })
+        .collect();
+    serde_json::json!({ "galaxies": gals, "chronicle_head": ch.head().hex() })
 }
