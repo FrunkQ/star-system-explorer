@@ -1,0 +1,15 @@
+{
+  "schema": "sse.screen/1",
+  "id": "sse.workspace.gm.compare",
+  "label": "Sizes",
+  "audience": "gm",
+  "layout": "chart-room",
+  "theme": "chart-room",
+  "symbology": "sse.symbology.diagrammatic",
+  "vocab": "physics",
+  "items": [
+    { "view": "sse.view.compare", "area": "chart" },
+    { "view": "sse.view.body-card", "area": "card" },
+    { "view": "sse.view.time-ruler", "area": "ruler" }
+  ]
+}
