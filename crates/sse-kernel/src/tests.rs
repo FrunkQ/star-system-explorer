@@ -774,6 +774,14 @@ fn adopt_age_and_read_back_a_system() {
         .collect();
     eprintln!("v3 adopted regimes: {names:?}");
     assert!(!names.is_empty());
+    // The imported Earth carries its oceans (importer hydrosphere facts), so it has plates.
+    let earth = v["surfaces"]
+        .as_array()
+        .unwrap()
+        .iter()
+        .find(|s| s["label"] == "Earth")
+        .expect("Earth's surface");
+    assert_eq!(earth["regime_now"], "mobile-lid", "{earth:.400}");
     // Errors.
     assert_eq!(
         send(&mut k, serde_json::json!({"op": "adopt"}))["code"],

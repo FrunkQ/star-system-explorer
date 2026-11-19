@@ -167,9 +167,11 @@ pub(crate) fn read_world_stack(
 ) -> Out {
     let names: Vec<&str> = sse_world::fixtures().iter().map(|f| f.0).collect();
     let (ws, source, raw) = if let Some(v) = stack {
-        let ws: sse_world::WorldStack = serde_json::from_value(v.clone())
+        let ws: sse_world::WorldStack = serde_json::from_value(v)
             .map_err(|e| err("bad_world_stack", format!("not a world stack: {e}")))?;
-        (ws, "given".to_string(), v)
+        // Echo the stack as parsed (numbers as f64), so every caller gets the same bytes.
+        let raw = serde_json::to_value(&ws).expect("plain data");
+        (ws, "given".to_string(), raw)
     } else {
         let all: Vec<(&str, sse_world::WorldStack, &str)> = sse_world::fixtures()
             .iter()

@@ -31,7 +31,8 @@ first, additive under `sse.kernel/1`; see `K6-additions.md` on the kernel track'
   `fixture:<name>` or `given`; `stack` is the stack as stored (fixture `sources` kept); `ladder` the "above, on
   and within" lines (`depth`, `text`, `where`, `key`); `notes` and `problems` from `physics_notes()`; `invalid`
   from `validate()` (each `{at, message}`). Nothing else gives `error { code: "no_world_stack" }` listing the
-  fixtures. Light. When the surface track builds stacks from history (S7 onwards), the same op serves them with
+  fixtures. Light. A given `stack` is echoed as parsed (numbers as f64), so the worker and native
+  kernels return the same bytes. When the surface track builds stacks from history (S7 onwards), the same op serves them with
   `source` `built:<epoch>`; the response shape stays.
 
 ## Notes for the UI
