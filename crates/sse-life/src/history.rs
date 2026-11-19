@@ -174,6 +174,9 @@ pub struct HistoryPoint {
     pub production_gc_yr: f64,
     pub diversity: f64,
     pub opportunity: f64,
+    /// World facts from the physics boundary (coupled runs only).
+    #[serde(default, skip_serializing_if = "BTreeMap::is_empty")]
+    pub world: BTreeMap<String, f64>,
 }
 
 #[derive(Clone, PartialEq, Debug, Serialize, Deserialize)]
@@ -224,12 +227,46 @@ struct Life {
 }
 
 /// Run boxes C, D and E over a world's timeline.
+/// What life hands the physics side at a time boundary (L2, box H): the
+/// last step's production by metabolism. The life suite never sets the
+/// planet's state; it only reports these.
+#[derive(Clone, PartialEq, Debug, Serialize, Deserialize, Default)]
+pub struct StepFluxes {
+    pub at_myr: f64,
+    pub dt_myr: f64,
+    pub alive: bool,
+    pub production_gc_yr: f64,
+    pub by_metabolism: BTreeMap<String, f64>,
+    /// Life holds the land (weathering enhancement, cover).
+    pub on_land: bool,
+}
+
+/// The physics side of a coupled run: at each step's start it receives the
+/// previous step's fluxes and returns world facts (such as `o2_fraction`)
+/// that override the epoch's own for this step.
+pub trait Boundary {
+    fn step(&mut self, fluxes: &StepFluxes) -> BTreeMap<String, f64>;
+}
+
 pub fn history(
     w: &WorldTimeline,
     bp: &BudgetParams,
     hp: &HistoryParams,
     seed: Seed,
 ) -> Result<LifeHistory, String> {
+    history_with(w, bp, hp, seed, None)
+}
+
+/// As `history`, coupled to a physics boundary (L2) when one is given.
+pub fn history_with(
+    w: &WorldTimeline,
+    bp: &BudgetParams,
+    hp: &HistoryParams,
+    seed: Seed,
+    mut boundary: Option<&mut dyn Boundary>,
+) -> Result<LifeHistory, String> {
+    let mut last = StepFluxes::default();
+    let mut world: BTreeMap<String, f64> = BTreeMap::new();
     let k_ev = 8.617_333e-5;
     let origin_draws = Stream::new("life.origin.v1").map_err(|e| e.to_string())?;
     let cap_stream = Stream::new("life.capability.v1").map_err(|e| e.to_string())?;
@@ -261,6 +298,12 @@ pub fn history(
         }
         let t1 = (t0 + hp.step_myr).min(w.end_myr);
         let dt = t1 - t0;
+        if let Some(b) = boundary.as_mut() {
+            last.at_myr = t0;
+            last.dt_myr = dt;
+            world = b.step(&last);
+            last = StepFluxes::default();
+        }
         let Some((ei, ep)) = w
             .epochs
             .iter()
@@ -474,7 +517,18 @@ pub fn history(
                 budget::world_budget(g, &bp2, &mets)
             });
             production = wb.production_gc_yr;
+            last.alive = true;
+            last.production_gc_yr = production;
+            last.on_land = l.caps.contains_key("land");
+            for h in &wb.habitats {
+                for (k, v) in &h.by_metabolism {
+                    *last.by_metabolism.entry(k.clone()).or_default() += v;
+                }
+            }
             let mut facts = ep.facts.clone();
+            for (k, v) in &world {
+                facts.insert(k.clone(), *v);
+            }
             let ox = facts.get(&hp.oxidant_fact).copied().unwrap_or(0.0);
             facts.insert(
                 hp.oxidant_fact.clone(),
@@ -602,6 +656,7 @@ pub fn history(
                 production_gc_yr: production,
                 diversity: life.as_ref().map_or(0.0, |l| l.diversity),
                 opportunity: life.as_ref().map_or(0.0, |l| l.opportunity),
+                world: world.clone(),
             });
         }
     }
