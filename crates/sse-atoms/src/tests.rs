@@ -108,7 +108,7 @@ fn every_atom_is_cited_explained_and_versioned() {
         }
     }
     assert_eq!(
-        n, 48,
+        n, 54,
         "first-wave atom count changed: update handover/packages/P1.md"
     );
 }
@@ -640,4 +640,34 @@ fn remnant_phases() {
     assert_eq!(pp, "pressure-driven snowplough");
     close(rp / pc, 14.0, 0.01, "R_PDS");
     assert!(r1 < ra);
+}
+
+/// O10: the Sun's activity from its mass and spin (Wright et al. 2011).
+#[test]
+fn sun_activity_from_rossby() {
+    use crate::activity::*;
+    use sse_core::quantity::consts::*;
+    let m_sun = GM_SUN / G;
+    let tau = convective_turnover(m_sun) / DAY;
+    assert!((tau - 14.45).abs() < 0.05, "τ☉ = {tau} d");
+    let ro = 26.09 / tau;
+    let rx = xray_fraction(ro, -3.13, 0.13, -2.70);
+    let log_rx = sse_core::math::ln(rx) / sse_core::math::ln(10.0);
+    assert!((log_rx - SUN_LOG_RX).abs() < 0.1, "log Rx = {log_rx}");
+    // A fast spinner is saturated at 10^-3.13 whatever its spin.
+    assert_eq!(
+        xray_fraction(0.05, -3.13, 0.13, -2.70),
+        xray_fraction(0.1, -3.13, 0.13, -2.70)
+    );
+    // Superflares above 1e34 erg on a Sun-like star: once a century or so.
+    let lx = 5.754_399e-7 * L_SUN;
+    let per_year = flare_rate_above(lx, E_REF_J, FLARE_K, 2.0) * JULIAN_YEAR;
+    assert!((per_year - 8.63e-3).abs() < 1e-6, "{per_year}");
+    // Ten times the energy, a tenth as often.
+    let r1 = flare_rate_above(lx, 1e25, FLARE_K, 2.0);
+    let r2 = flare_rate_above(lx, 1e26, FLARE_K, 2.0);
+    assert!((r1 / r2 - 10.0).abs() < 1e-9);
+    // Cycle: the inactive branch gives the Sun 6.1 years (Mittag et al. 2023 say so too).
+    let cyc = cycle_period(26.09 * DAY, 1.488, 1.324) / JULIAN_YEAR;
+    assert!((cyc - 6.1).abs() < 0.3, "{cyc} yr");
 }

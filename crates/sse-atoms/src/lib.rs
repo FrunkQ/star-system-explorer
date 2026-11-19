@@ -4,6 +4,7 @@
 //! issue, spec, tests, code rule (docs/atom-spec-template.md).
 #![forbid(unsafe_code)]
 
+pub mod activity;
 pub mod climate;
 pub mod common;
 pub mod heat;
@@ -32,6 +33,7 @@ pub fn atoms() -> Vec<Box<dyn sse_flow::Atom>> {
         .chain(heat::atoms())
         .chain(light::atoms())
         .chain(nebula::atoms())
+        .chain(activity::atoms())
         .collect()
 }
 
@@ -259,6 +261,15 @@ pub const KIND_DESCRIPTIONS: &[(&str, &str)] = &[
     ("nebula.shell_radius", "radius of a nebula's shell or shock"),
     ("event.explosion_energy", "kinetic energy of an explosion"),
     ("event.ejecta_mass", "mass thrown out by an explosion"),
+    // stellar activity (O10)
+    ("body.rotation_period", "time for one turn about the spin axis (sidereal)"),
+    ("star.convective_turnover_time", "time for the churning outer layer of a cool star to turn over once"),
+    ("star.rossby_number", "rotation period over convective turnover time; low means magnetically active"),
+    ("star.xray_fraction", "share of a star's power given out as coronal X-rays (L_X / L_bol)"),
+    ("star.xray_luminosity", "coronal X-ray power of a star"),
+    ("star.activity_cycle_period", "length of a star's spot and activity cycle"),
+    ("flare.energy", "total energy released by a flare, all wavelengths"),
+    ("flare.rate_above", "flares per unit time with at least the given energy"),
 ];
 
 /// Quantity kinds for the base-physics pack, from the atoms' port kinds.

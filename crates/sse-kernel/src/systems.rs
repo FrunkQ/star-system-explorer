@@ -281,6 +281,62 @@ fn parse_list<T: serde::de::DeserializeOwned>(
         .collect()
 }
 
+/// Stellar activity (O10).
+pub(crate) fn read_activity(
+    stars: Vec<serde_json::Value>,
+    seed: Option<&str>,
+    at_s: Option<f64>,
+    window: Option<serde_json::Value>,
+) -> Out {
+    use sse_activity::*;
+    #[derive(serde::Deserialize)]
+    struct Item {
+        #[serde(flatten)]
+        star: Star,
+        #[serde(default)]
+        targets: Vec<Target>,
+    }
+    #[derive(serde::Deserialize)]
+    struct Window {
+        from_s: f64,
+        to_s: f64,
+        #[serde(default = "min_e")]
+        min_energy_j: f64,
+    }
+    fn min_e() -> f64 {
+        1e25
+    }
+    let seed = sse_core::Seed::from_text(seed.unwrap_or("sse4"));
+    let set = Settings::default();
+    let window: Option<Window> = window
+        .map(|w| serde_json::from_value(w).map_err(|e| err("bad_activity", format!("window: {e}"))))
+        .transpose()?;
+    let mut out = vec![];
+    for (n, v) in stars.into_iter().enumerate() {
+        let it: Item =
+            serde_json::from_value(v).map_err(|e| err("bad_activity", format!("star {n}: {e}")))?;
+        let a = activity(&seed, &it.star, &set).map_err(|e| err("bad_activity", e))?;
+        let mo = moment(&a, at_s.unwrap_or(it.star.age_s), &set);
+        let fl = match &window {
+            Some(w) => Some(
+                flares(
+                    &seed,
+                    &a,
+                    w.from_s,
+                    w.to_s,
+                    w.min_energy_j,
+                    &it.targets,
+                    &set,
+                )
+                .map_err(|e| err("bad_activity", e))?,
+            ),
+            None => None,
+        };
+        out.push(serde_json::json!({ "activity": a, "moment": mo, "flares": fl }));
+    }
+    Ok(Response::ActivityRead { stars: out })
+}
+
 /// Planet finding from afar (O13).
 pub(crate) fn survey_planets(survey: serde_json::Value) -> Out {
     let sv: sse_survey::Survey =

@@ -340,6 +340,25 @@ pub enum Request {
         #[ts(optional, type = "unknown[]")]
         bodies: Option<Vec<serde_json::Value>>,
     },
+    /// Stellar activity (O10): for each star (conditions: mass, radius,
+    /// power, temperature, age, and spin or a close companion's orbit), its
+    /// activity level, cycle, spots and coronal X-rays, the state at `at_s`
+    /// (default: the star's age), and, with `window`, its flares and mass
+    /// ejections as keyed events, each ejection hitting or missing the
+    /// star's `targets` by geometry.
+    ReadActivity {
+        #[ts(type = "unknown[]")]
+        stars: Vec<serde_json::Value>,
+        #[serde(default)]
+        #[ts(optional)]
+        seed: Option<String>,
+        #[serde(default)]
+        #[ts(optional)]
+        at_s: Option<f64>,
+        #[serde(default)]
+        #[ts(optional, type = "unknown")]
+        window: Option<serde_json::Value>,
+    },
     /// Planet finding from afar (O13): one star, its planets, an observer
     /// (direction and distance), an instrument and a watch time. Returns
     /// what each method (transit, wobble, position wobble, direct imaging,
@@ -619,6 +638,7 @@ impl Request {
             Request::ReadLight { .. } => "read_light",
             Request::ReadNebulae { .. } => "read_nebulae",
             Request::SurveyPlanets { .. } => "survey_planets",
+            Request::ReadActivity { .. } => "read_activity",
             Request::Adopt { .. } => "adopt",
             Request::ResolvedSystem { .. } => "resolved_system",
             Request::Systems => "systems",
@@ -710,6 +730,11 @@ pub fn ops() -> Vec<OpInfo> {
             "read_world_stack",
             Cost::Light,
             "one stack: validation, the depth ladder and a few atom evaluations",
+        ),
+        o(
+            "read_activity",
+            Cost::Light,
+            "per star: a few block evaluations; flares are one draw per time bin per energy decade, capped at 2000 listed",
         ),
         o(
             "survey_planets",
@@ -978,6 +1003,12 @@ pub enum Response {
         table: serde_json::Value,
         #[ts(type = "unknown[]")]
         bodies: Vec<serde_json::Value>,
+    },
+    /// `read_activity`: each of `stars` is `{ activity, moment, flares? }`
+    /// with `sse_activity::Activity`, `Moment` and `Flares`.
+    ActivityRead {
+        #[ts(type = "unknown[]")]
+        stars: Vec<serde_json::Value>,
     },
     /// `survey_planets`: `result` is `sse_survey::SurveyResult` (findings
     /// per planet and method with verdict, signal to noise, measured values

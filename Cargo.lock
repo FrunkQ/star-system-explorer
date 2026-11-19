@@ -482,6 +482,18 @@ dependencies = [
 ]
 
 [[package]]
+name = "sse-activity"
+version = "0.1.0"
+dependencies = [
+ "serde",
+ "serde_json",
+ "sse-atoms",
+ "sse-core",
+ "sse-flow",
+ "sse-light",
+]
+
+[[package]]
 name = "sse-atoms"
 version = "0.1.0"
 dependencies = [
@@ -581,6 +593,7 @@ version = "0.1.0"
 dependencies = [
  "serde",
  "serde_json",
+ "sse-activity",
  "sse-atoms",
  "sse-chronicle",
  "sse-core",
