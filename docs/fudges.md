@@ -228,6 +228,7 @@ The owner wants the physics in chain blocks (except big blocks) with a UI elemen
 | `gpu-globe.ts` physical lighting | Ground hue from the survey palette, scaled to the kernel's albedo | No spectral reflectance per material yet | Spectral reflectance per material (light track) | Stand-in |
 | `passes.ts` relief pass | The star's direction is a look setting (azimuth, elevation) and its light is white | The view has no ephemeris position at the ruler's date yet | Star direction from the orbit at the campaign date; star colour from its spectrum | Stand-in |
 | `canvas.ts` air | One-column, plane-parallel air along view and sun; no limb glow beyond the disk | Canvas tier is the weak-device path | The GPU ray-march (already on GPU tiers) | Permanent for the canvas tier (weak devices do less) |
+| `canvas.ts` exposure (R4) | Exposure is a plain brightness gain | The canvas tier has no tone mapping | Tone mapping on canvas (cost) | Permanent for the canvas tier |
 
 ## Interface and player views
 
