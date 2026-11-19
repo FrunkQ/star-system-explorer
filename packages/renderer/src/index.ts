@@ -10,7 +10,9 @@ export type { RecipeDoc, RecipePass, PassSpec, PassCost, Knob, DegradeStep, Plan
 export { Governor, badge } from "./governor.ts";
 export type { Badge, GovernorOptions, GovernorMove } from "./governor.ts";
 export { LIBRARY } from "./passes.ts";
-export { mountGlobe } from "./runtime.ts";
+export { mountGlobe, airRender } from "./runtime.ts";
+export { air, airFactsOf } from "./atmosphere.ts";
+export type { Air, AirFacts } from "./atmosphere.ts";
 export type { GlobeRun, GlobeRunOptions, GlobeStatus } from "./runtime.ts";
 
 /** Start the GPU path (WebGPU, else WebGL2), or null when this device has neither. */
@@ -18,3 +20,8 @@ export async function startGpu(canvas: HTMLCanvasElement) {
   const { createGpu } = await import("./gpu.ts");
   return createGpu(canvas);
 }
+// R3: the still tier, "take photograph", and photographs kept on this device.
+export { photograph, halton } from "./photograph.ts";
+export type { Photo, PhotoOptions } from "./photograph.ts";
+export { keepPhoto, listPhotos, removePhoto } from "./media.ts";
+export type { MediaItem } from "./media.ts";

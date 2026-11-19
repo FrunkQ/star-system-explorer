@@ -90,12 +90,12 @@
     "Ba He"
   ],
   "grown": {
-    "attempt": 7,
-    "belts": 2,
-    "giants": 2,
-    "history": "f28c1ba7d1c406a1e9ebcf9b15d8734599d37d1e32deb042a2238e962ced8cf9",
+    "attempt": 1,
+    "belts": 0,
+    "giants": 3,
+    "history": "50500bec27355d31d9ede9f5ac939eabad2c534279d992f41cd11ca3e96b6d3f",
     "main_world": "u:traveller/sys:0/body:5",
-    "worlds": 7
+    "worlds": 9
   },
   "pack": "2930af9f57c30731aa7b40c0392ddd43ae81ea8571224b36d9461a49469e628e"
 }

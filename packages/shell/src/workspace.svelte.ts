@@ -6,6 +6,8 @@ export function createWorkspace(now_yr: number): Workspace {
   const ws: Workspace = $state({
     selection: null,
     now_yr,
+    campaign_now_yr: now_yr,
+    campaign_epoch_yr: now_yr,
     mode: "edit",
     applied: {},
     revision: 0,
@@ -32,6 +34,9 @@ export function createWorkspace(now_yr: number): Workspace {
     },
     setTime(yr: number) {
       ws.now_yr = yr;
+    },
+    setCampaignNow(yr: number) {
+      ws.campaign_now_yr = yr;
     },
     noteApplied(e: AppliedEdit, as: "edit" | "undo" | "redo" = "edit") {
       ws.applied[`${e.address}#${e.field}`] = { value: e.after.value, display: e.after.display, event_id: e.event_id };

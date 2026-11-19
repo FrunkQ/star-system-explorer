@@ -403,6 +403,92 @@ pub enum Request {
         #[ts(optional, type = "unknown")]
         rescue: Option<serde_json::Value>,
     },
+    /// The story finder (U8): run the stack's sifters, plus any given inline,
+    /// over every address at or under `scope` (default the universe) at
+    /// `at_s` (default now). Hits come best first, each with its evidence
+    /// (facts and the events that set them) and significance. Reads the GM's
+    /// full state: GM only.
+    Sift {
+        #[serde(default)]
+        #[ts(optional)]
+        scope: Option<String>,
+        #[serde(default)]
+        #[ts(optional, type = "number")]
+        at_s: Option<i64>,
+        #[serde(default)]
+        #[ts(optional, type = "unknown[]")]
+        sifters: Option<Vec<serde_json::Value>>,
+    },
+    /// The Window (V8): what a `sensor` (`eye`, `binoculars`, `telescope` in
+    /// base-nav) picks up at `at_s` from beside body `from`, or from the point
+    /// `at_au` around the star, in a NAV `fixture` or inline `nav` system:
+    /// each object's sky position, size, brightness, phase, whether it is
+    /// seen and whether its disc shows. Read only.
+    WindowView {
+        #[serde(default)]
+        #[ts(optional)]
+        fixture: Option<String>,
+        #[serde(default)]
+        #[ts(optional, type = "unknown")]
+        nav: Option<serde_json::Value>,
+        #[serde(default)]
+        #[ts(optional)]
+        at_s: Option<f64>,
+        #[serde(default)]
+        #[ts(optional)]
+        from: Option<String>,
+        #[serde(default)]
+        #[ts(optional)]
+        at_au: Option<[f64; 3]>,
+        #[serde(default)]
+        #[ts(optional)]
+        sensor: Option<String>,
+    },
+    /// G1 to G4 for the galaxy chart (U6): one galaxy grown from the open
+    /// universe's seed, a named `halo` (`dwarf`, `milky-way-like`, `group`) or
+    /// a halo `mass_msun`; its history curves, rings now (abundances, deaths,
+    /// rates), green band through time, the cosmic epochs, and the
+    /// conditions at `place_kpc` (and `place_phi`, radians) at `at_gyr`. Read only.
+    GalaxyChart {
+        #[serde(default)]
+        #[ts(optional)]
+        halo: Option<String>,
+        #[serde(default)]
+        #[ts(optional)]
+        mass_msun: Option<f64>,
+        #[serde(default)]
+        #[ts(optional)]
+        at_gyr: Option<f64>,
+        #[serde(default)]
+        #[ts(optional)]
+        place_kpc: Option<f64>,
+        #[serde(default)]
+        #[ts(optional)]
+        place_phi: Option<f64>,
+        /// History edits to preview (galaxy design 11, G6): `{kind: "merger", t_gyr, ratio}`,
+        /// `{kind: "remove_merger", index}`, `{kind: "starburst", t_gyr, gas_fraction}`,
+        /// `{kind: "quiet_nucleus", from_gyr, to_gyr}`.
+        #[serde(default)]
+        #[ts(optional, type = "unknown[]")]
+        edits: Option<Vec<serde_json::Value>>,
+    },
+    /// G1 for the foam and cluster maps (V9): a square slice of the cosmic
+    /// web from the open universe's seed, `n` samples a side over
+    /// `extent_mpc` around `centre` (Mpc, default the origin), at redshift
+    /// `z` or cosmic time `t_gyr` (default now). Read only.
+    WebSlice {
+        #[serde(default)]
+        #[ts(optional)]
+        z: Option<f64>,
+        #[serde(default)]
+        #[ts(optional)]
+        t_gyr: Option<f64>,
+        #[serde(default)]
+        #[ts(optional)]
+        centre: Option<[f64; 3]>,
+        extent_mpc: f64,
+        n: u32,
+    },
     /// S5's descent scene: survey a world as `survey_surface` does (a
     /// `fixture`, or a `body` of an adopted `system` at `at_s`), judge the
     /// landing site at `lat_deg`, `lon_deg` (slope, roughness, liquid) and
@@ -744,6 +830,10 @@ impl Request {
             Request::ResolvedSystem { .. } => "resolved_system",
             Request::SurveySurface { .. } => "survey_surface",
             Request::PlanRoute { .. } => "plan_route",
+            Request::GalaxyChart { .. } => "galaxy_chart",
+            Request::WebSlice { .. } => "web_slice",
+            Request::WindowView { .. } => "window_view",
+            Request::Sift { .. } => "sift",
             Request::PlanDescent { .. } => "plan_descent",
             Request::Systems => "systems",
             Request::LifeView { .. } => "life_view",
@@ -852,6 +942,26 @@ pub fn ops() -> Vec<OpInfo> {
             "plan_route",
             Cost::Medium,
             "about a thousand Lambert solves on the departure and flight-time grid plus torch flights; drift asks plan once per body and port (about 0.1 to 1 s native)",
+        ),
+        o(
+            "galaxy_chart",
+            Cost::Medium,
+            "one galaxy grown over cosmic time plus 24 rings of chemical evolution and a green band every half Gyr (about 0.1 to 0.5 s native)",
+        ),
+        o(
+            "web_slice",
+            Cost::Medium,
+            "n by n web samples at four octaves (n = 128: about 0.2 s native)",
+        ),
+        o(
+            "sift",
+            Cost::Light,
+            "linear in addresses x sifters within the scope (a campaign of a few systems: milliseconds)",
+        ),
+        o(
+            "window_view",
+            Cost::Light,
+            "one Kepler solve and one brightness per body (microseconds)",
         ),
         o(
             "plan_descent",
@@ -1139,6 +1249,35 @@ pub enum Response {
         state_hash: String,
         manifest_id: String,
         stack_matches: bool,
+    },
+    /// `galaxy_chart`: `{halo, key, halo_mass_msun, morphology, barred,
+    /// t_start_gyr, now_gyr, at_gyr, now, history, active_nuclei,
+    /// sun_radius_kpc, rings, core_collapse_per_century, ia_per_century,
+    /// green_bands, epochs, place, model}`.
+    GalaxyCharted {
+        #[ts(type = "unknown")]
+        chart: serde_json::Value,
+    },
+    /// `web_slice`: `{t_gyr, z, now_gyr, slice, model}` (`slice` is sse-cosmos's `Slice`).
+    WebSliced {
+        #[ts(type = "unknown")]
+        web: serde_json::Value,
+    },
+    /// `window_view`: sse-nav's `WindowView` (`seen`: lon/lat, distance,
+    /// angular diameter, magnitude, phase, lit fraction, detected, resolved,
+    /// light time, why; `sensor`; `missed`; `model`).
+    /// `sift`: hits best first (`sifter`, `label`, `subject`, `evidence`
+    /// [{address, field, value, event}], `significance` {score, persistence_s,
+    /// reach, reversibility, rarity_p, components}), the sifters run, the scope.
+    Sifted {
+        scope: String,
+        sifters: Vec<String>,
+        #[ts(type = "unknown")]
+        hits: serde_json::Value,
+    },
+    WindowViewed {
+        #[ts(type = "unknown")]
+        view: serde_json::Value,
     },
     /// `plan_route`: sse-nav's `RoutePlan` (`candidates` best first by the
     /// preference, each with burns, days, Δv, propellant and reserve, peak g,

@@ -28,3 +28,11 @@ Status: done (19 Nov 2026), Traveller pack track. Design: handoff 7A part 2; bui
 - Only the main world is pinned; moons, a main world that is a satellite (Sa), and placing by C3 reverse placement through the climate flows are next.
 - Seeded subsector rolls (random UWPs by keyed draws) are not done yet.
 - Belts come from formation's leftovers; the count search over 12 candidates may still miss them (said in `unmet`).
+
+## Golden re-bless (19 Nov, late)
+
+`tests/golden/traveller-codes.json`, `grown` block only: after merging main
+(PR 37, citations for orbits and formation), the pinned formation run for
+the Earth-like test world now succeeds on attempt 7 with 2 giants and
+2 belts (was attempt 1, 3 giants, 0 belts). Every UWP line is unchanged.
+The cause is upstream formation constants, not this track.

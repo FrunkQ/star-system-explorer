@@ -1,0 +1,181 @@
+{
+  "schema": "sse.render-recipe/1",
+  "id": "true-colour",
+  "name": "True colour",
+  "family": "survey-globe",
+  "description": "The world as an eye in space would see it: ground colours lit by its star, the night side dark, and its air scattering light from the kernel's own pressure, temperature, gravity and gas mix. Worlds without air show bare ground.",
+  "scene": "body",
+  "tiers": [
+    "still",
+    "gpu-high",
+    "gpu-basic",
+    "canvas",
+    "text"
+  ],
+  "passes": [
+    {
+      "id": "relief",
+      "pass": "relief-globe",
+      "params": {
+        "lighting": "physical",
+        "exaggeration": 6,
+        "sun_azimuth_deg": 300,
+        "sun_elevation_deg": 25
+      },
+      "tiers": [
+        "gpu-high",
+        "gpu-basic",
+        "canvas"
+      ]
+    },
+    {
+      "id": "relief-still",
+      "pass": "relief-globe",
+      "params": {
+        "lighting": "physical",
+        "exaggeration": 6,
+        "sun_azimuth_deg": 300,
+        "sun_elevation_deg": 25,
+        "grid": 256
+      },
+      "tiers": [
+        "still"
+      ]
+    },
+    {
+      "id": "air-still",
+      "pass": "atmosphere",
+      "params": {
+        "steps": 32,
+        "light_steps": 8
+      },
+      "tiers": [
+        "still"
+      ]
+    },
+    {
+      "id": "air",
+      "pass": "atmosphere",
+      "params": {
+        "steps": 24,
+        "light_steps": 8
+      },
+      "tiers": [
+        "gpu-high"
+      ]
+    },
+    {
+      "id": "air-basic",
+      "pass": "atmosphere",
+      "params": {
+        "steps": 10,
+        "light_steps": 4
+      },
+      "tiers": [
+        "gpu-basic",
+        "canvas"
+      ]
+    },
+    {
+      "id": "words",
+      "pass": "text-narration"
+    }
+  ],
+  "knobs": [
+    {
+      "name": "relief",
+      "label": "Relief",
+      "meaning": "How strongly slopes catch the light.",
+      "default": 0.3,
+      "maps": [
+        {
+          "pass": "relief",
+          "param": "exaggeration",
+          "at0": 1,
+          "at1": 20
+        }
+      ]
+    },
+    {
+      "name": "detail",
+      "label": "Detail",
+      "meaning": "How finely the globe is built and the air sampled. Costs more as it rises.",
+      "default": 0.5,
+      "maps": [
+        {
+          "pass": "relief",
+          "param": "grid",
+          "at0": 48,
+          "at1": 208
+        },
+        {
+          "pass": "air",
+          "param": "steps",
+          "at0": 12,
+          "at1": 40
+        }
+      ]
+    }
+  ],
+  "degrade": [
+    {
+      "render_scale": 0.75,
+      "says": "Drawn at three-quarter resolution."
+    },
+    {
+      "set": {
+        "pass": "air",
+        "param": "steps",
+        "value": 12
+      },
+      "tiers": [
+        "gpu-high"
+      ],
+      "says": "Air sampled more coarsely."
+    },
+    {
+      "tier": "gpu-basic",
+      "tiers": [
+        "gpu-high"
+      ],
+      "says": "Dropped to the basic GPU tier."
+    },
+    {
+      "set": {
+        "pass": "relief",
+        "param": "grid",
+        "value": 64
+      },
+      "tiers": [
+        "gpu-basic"
+      ],
+      "says": "Coarser globe mesh."
+    },
+    {
+      "render_scale": 0.5,
+      "says": "Drawn at half resolution."
+    },
+    {
+      "tier": "canvas",
+      "tiers": [
+        "gpu-basic"
+      ],
+      "says": "Drawn on a 2D canvas instead of the GPU (air approximated in one column)."
+    },
+    {
+      "render_scale": 0.35,
+      "tiers": [
+        "canvas"
+      ],
+      "says": "Drawn at a third of full resolution."
+    },
+    {
+      "render_scale": 0.25,
+      "tiers": [
+        "canvas"
+      ],
+      "says": "Drawn at a quarter of full resolution."
+    }
+  ],
+  "lift": "A device with WebGPU, a smaller globe, or stopping the spin would lift it."
+}
