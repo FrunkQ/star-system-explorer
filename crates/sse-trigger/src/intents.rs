@@ -159,7 +159,8 @@ fn builtin(
     }
 }
 
-/// The built-in kinds, as the chart room sends them (`intent.ts`), plus `add_note`.
+/// The built-in kinds, as the chart room sends them (`intent.ts`), plus
+/// `add_note` and `set_campaign_now`.
 pub fn builtins() -> Vec<Kind> {
     use AppliedBy::*;
     use FieldType::*;
@@ -225,6 +226,13 @@ pub fn builtins() -> Vec<Kind> {
                 field("audience", Any, false),
             ],
             false,
+            Kernel,
+        ),
+        builtin(
+            "set_campaign_now",
+            "move the campaign's now (universe seconds), so every replica's clock agrees",
+            vec![field("now_s", Number, true)],
+            true,
             Kernel,
         ),
     ]
@@ -390,6 +398,12 @@ impl IntentRegistry {
                     if o.get("default") == Some(&J::Bool(true)) && view.is_null() {
                         return Err("a starting view cannot be taken back, only replaced".into());
                     }
+                }
+            }
+            "set_campaign_now" => {
+                let t = o["now_s"].as_f64().unwrap_or(f64::NAN);
+                if !(t.is_finite() && sse_core::math::floor(t) == t && t.abs() < 9.0e15) {
+                    return Err("now_s must be a whole number of seconds".into());
                 }
             }
             "stack_packs" => {
@@ -679,6 +693,9 @@ pub fn to_request(intent: &J, by: &str, at_s: i64) -> Option<J> {
             }
             r
         }
+        "set_campaign_now" => serde_json::json!({
+            "op": "set_campaign_now", "at_s": o["now_s"].as_f64().unwrap_or(0.0) as i64
+        }),
         "add_note" => {
             let mut r = serde_json::json!({
                 "op": "add_note", "address": o["address"], "text": o["text"], "by": by, "at_s": at_s

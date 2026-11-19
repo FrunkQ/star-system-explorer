@@ -1674,5 +1674,38 @@
   "op": "retire",
   "address": "u:kestrel/sys:0/ship:1",
   "at_s": 300
+ },
+ {
+  "op": "load_stack",
+  "packs": [
+   "$pack:rpg-record",
+   "$pack:rpg-sifters"
+  ]
+ },
+ {
+  "op": "set_authored",
+  "edit": {
+   "address": "u:kestrel/sys:0/body:3",
+   "field": "mass_kg",
+   "value": 6e+24,
+   "occurred_at_s": 0
+  }
+ },
+ {
+  "op": "sift",
+  "at_s": 10
+ },
+ {
+  "op": "sift",
+  "audience": "crew",
+  "scope": "u:kestrel/sys:0/body:3",
+  "at_s": 10
+ },
+ {
+  "op": "sift",
+  "sifters": [
+   "nope"
+  ],
+  "at_s": 10
  }
 ]

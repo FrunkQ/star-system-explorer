@@ -577,6 +577,23 @@ pub enum Request {
         #[ts(optional)]
         at_s: Option<i64>,
     },
+    /// Run the stack's sifters (`provides.other.sifters`; all, or only
+    /// `sifters`) over the campaign at `at_s`, at or under `scope` (default
+    /// the universe). With `audience`, only what that audience's scene shows
+    /// is sifted, and event patterns are skipped (players never see the
+    /// chronicle). GM machine only.
+    Sift {
+        #[serde(default)]
+        #[ts(optional)]
+        sifters: Option<Vec<String>>,
+        #[serde(default)]
+        #[ts(optional)]
+        audience: Option<String>,
+        #[serde(default)]
+        #[ts(optional)]
+        scope: Option<String>,
+        at_s: i64,
+    },
 }
 
 /// `adopt`'s formation request: the `run_formation` fields.
@@ -678,6 +695,7 @@ impl Request {
             Request::Templates => "templates",
             Request::Create { .. } => "create",
             Request::Retire { .. } => "retire",
+            Request::Sift { .. } => "sift",
         }
     }
 }
@@ -809,6 +827,11 @@ pub fn ops() -> Vec<OpInfo> {
         o("templates", Cost::Trivial, "read at load"),
         o("create", Cost::Light, "GM machine only; one universe event and one record event per kept value"),
         o("retire", Cost::Trivial, "GM machine only; one universe event"),
+        o(
+            "sift",
+            Cost::Light,
+            "GM machine only; linear in subjects x sifters within the scope, plus one scene for an audience",
+        ),
     ]
 }
 
@@ -1184,6 +1207,18 @@ pub enum Response {
     Retired {
         event_id: String,
         state_hash: String,
+    },
+    /// `sift`: hits best first, each `{sifter, label, subject, evidence:
+    /// [{address, field, value, event?}], significance: {score,
+    /// persistence_s, reach, reversibility, rarity_p, components}}`;
+    /// `skipped` names sifters not run for this audience.
+    Sifted {
+        #[ts(optional)]
+        #[serde(default, skip_serializing_if = "Option::is_none")]
+        audience: Option<String>,
+        #[ts(type = "unknown[]")]
+        hits: Vec<serde_json::Value>,
+        skipped: Vec<String>,
     },
     /// `orbits_at`: per body `{address, placed, parent?, period_s?,
     /// phase_source?, missing?, at: [{at_s, r_m: [x, y, z], phase_deg}]}`.

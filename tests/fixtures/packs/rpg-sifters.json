@@ -1,0 +1,34 @@
+{
+  "format": "sse.pack/1",
+  "id": "test.rpg-sifters",
+  "version": "0.1.0",
+  "kind": ["game-system"],
+  "kernel_range": "^0.1",
+  "licence": "Apache-2.0",
+  "provides": {
+    "other": {
+      "sifters": [
+        {
+          "id": "heavy-world",
+          "label": "a world heavier than Earth",
+          "applies_to": ["body"],
+          "pattern": {"match": "facts", "when": {"if": "range", "field": "mass_kg", "min": 5e24}},
+          "significance": {"persistence": {"from": "fixed", "s": 3e16}, "reach": {"from": "fixed", "n": 1}, "reversibility": 0.0}
+        },
+        {
+          "id": "sleeping-threat",
+          "label": "something dangerous sleeps here",
+          "applies_to": ["body"],
+          "pattern": {"match": "facts", "when": {"if": "range", "field": "gm.threat", "min": 1}},
+          "significance": {"persistence": {"from": "fixed", "s": 3e9}, "reach": {"from": "fixed", "n": 10}, "reversibility": 0.5}
+        },
+        {
+          "id": "granted",
+          "label": "the GM granted knowledge",
+          "pattern": {"match": "event", "kind": "observe.grant"},
+          "significance": {"persistence": {"from": "fixed", "s": 3e7}, "reach": {"from": "fixed", "n": 1}, "reversibility": 1.0}
+        }
+      ]
+    }
+  }
+}

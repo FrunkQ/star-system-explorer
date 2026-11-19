@@ -1587,6 +1587,7 @@ fn intents_through_the_api() {
             "scan_toggle",
             "grant",
             "add_note",
+            "set_campaign_now",
             "hail"
         ]
     );
@@ -1672,6 +1673,21 @@ fn intents_through_the_api() {
         serde_json::json!({"op":"send_intent","seat":"nobody","at_s":0,"intent":hail(calla)}),
     );
     assert_eq!(r["code"], "unknown_seat");
+    // The campaign clock travels as an intent: the GM's applies at once,
+    // through set_campaign_now; a bad time is refused.
+    let r = send(
+        &mut k,
+        serde_json::json!({"op":"send_intent","seat":"gm","at_s":0,"intent":{"kind":"set_campaign_now","now_s":86400}}),
+    );
+    assert_eq!(r["decision"]["action"], "apply", "{r}");
+    assert_eq!(r["applied"]["type"], "campaign_now_is", "{r}");
+    let n = send(&mut k, serde_json::json!({"op": "campaign_now"}));
+    assert_eq!(n["at_s"], 86400, "{n}");
+    let r = send(
+        &mut k,
+        serde_json::json!({"op":"send_intent","seat":"gm","at_s":0,"intent":{"kind":"set_campaign_now","now_s":1.5}}),
+    );
+    assert!(r.to_string().contains("whole number"), "{r}");
 }
 
 /// J7 through the API: a ship from a template carries its facts, tags,
@@ -1788,4 +1804,96 @@ fn templates_through_the_api() {
         rec.to_string().contains("ship.cargo_t") && rec.to_string().contains("not loaded"),
         "{rec}"
     );
+}
+
+#[test]
+fn sift_through_the_api() {
+    let packs = crate::contract::load_packs(&root().join("tests/fixtures/packs"));
+    let mut k = crate::Kernel::new();
+    let r = send(
+        &mut k,
+        serde_json::json!({"op":"load_stack","packs":[packs["rpg-record"], packs["rpg-sifters"]]}),
+    );
+    assert_eq!(r["type"], "stack_loaded", "{r}");
+    let r = send(&mut k, serde_json::json!({"op":"sift","at_s":0}));
+    assert_eq!(r["code"], "no_universe", "{r}");
+    send(
+        &mut k,
+        serde_json::json!({"op":"open_universe","id":"kestrel","seed":"k"}),
+    );
+    let tarn = "u:kestrel/sys:0/body:3";
+    for (field, value) in [
+        ("name", serde_json::json!("Tarn")),
+        ("mass_kg", serde_json::json!(6.0e24)),
+        ("gm.threat", serde_json::json!(3.0)),
+    ] {
+        let r = send(
+            &mut k,
+            serde_json::json!({"op":"set_authored","edit":{"address":tarn,"field":field,"value":value,"occurred_at_s":0}}),
+        );
+        assert!(r["state_hash"].is_string(), "{r}");
+    }
+    let ids = |r: &serde_json::Value| -> Vec<String> {
+        r["hits"]
+            .as_array()
+            .unwrap()
+            .iter()
+            .map(|h| h["sifter"].as_str().unwrap().to_string())
+            .collect()
+    };
+    // The GM sees everything, with the events behind the evidence.
+    let gm = send(&mut k, serde_json::json!({"op":"sift","at_s":10}));
+    assert_eq!(gm["type"], "sifted", "{gm}");
+    let mut got = ids(&gm);
+    got.sort();
+    assert_eq!(got, ["heavy-world", "sleeping-threat"], "{gm}");
+    assert!(gm["hits"][0]["evidence"][0]["event"].is_string(), "{gm}");
+    assert_eq!(gm["skipped"], serde_json::json!([]));
+    // Only one sifter, and a missing one.
+    let one = send(
+        &mut k,
+        serde_json::json!({"op":"sift","sifters":["heavy-world"],"scope":tarn,"at_s":10}),
+    );
+    assert_eq!(ids(&one), ["heavy-world"]);
+    let bad = send(
+        &mut k,
+        serde_json::json!({"op":"sift","sifters":["nope"],"at_s":10}),
+    );
+    assert_eq!(bad["code"], "unknown_sifter", "{bad}");
+    let out = send(
+        &mut k,
+        serde_json::json!({"op":"sift","scope":"u:elsewhere","at_s":10}),
+    );
+    assert_eq!(out["code"], "bad_address", "{out}");
+    // The crew's long-range view shows no mass and never the GM's secrets.
+    let crew = send(
+        &mut k,
+        serde_json::json!({"op":"sift","audience":"crew","at_s":10}),
+    );
+    assert_eq!(crew["type"], "sifted", "{crew}");
+    assert_eq!(crew["audience"], "crew");
+    assert!(ids(&crew).is_empty(), "{crew}");
+    assert_eq!(crew["skipped"], serde_json::json!(["granted"]));
+    // Scanned: the mass is shown, so the heavy world is a hit; the threat stays secret.
+    let s = send(
+        &mut k,
+        serde_json::json!({"op":"scan_toggle","address":tarn,"audience":"crew","at_s":5}),
+    );
+    assert!(s["state_hash"].is_string(), "{s}");
+    let crew = send(
+        &mut k,
+        serde_json::json!({"op":"sift","audience":"crew","at_s":10}),
+    );
+    assert_eq!(ids(&crew), ["heavy-world"], "{crew}");
+    let text = crew.to_string();
+    assert!(
+        !text.contains("gm.threat") && !text.contains("\"event\":\""),
+        "{crew}"
+    );
+    // Before the scan, nothing.
+    let early = send(
+        &mut k,
+        serde_json::json!({"op":"sift","audience":"crew","at_s":4}),
+    );
+    assert!(ids(&early).is_empty());
 }

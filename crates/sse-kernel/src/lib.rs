@@ -68,7 +68,8 @@ fn load_observe(ms: &[sse_pack::PackManifest]) -> Result<Observe, Vec<String>> {
         }
     }
     let setup = sse_observe::ObserveSetup::from_stack(&found).map_err(|e| vec![e])?;
-    let rules = sse_sift::load(ms)?.rules;
+    let sift = sse_sift::load(ms)?;
+    let (rules, sifters) = (sift.rules, sift.sifters);
     let mut kept = Vec::new();
     for p in ms {
         if let Some(v) = p.provides.other.get("record") {
@@ -135,6 +136,7 @@ fn load_observe(ms: &[sse_pack::PackManifest]) -> Result<Observe, Vec<String>> {
     Ok(Observe {
         setup,
         rules,
+        sifters,
         record,
         triggers,
         calendar,
@@ -236,6 +238,8 @@ struct Job {
 struct Observe {
     setup: Option<sse_observe::ObserveSetup>,
     rules: sse_sift::RuleSet,
+    /// Sifters (`provides.other.sifters`), for the `sift` op.
+    sifters: Vec<sse_sift::Sifter>,
     /// Kept kinds (`provides.other.record`, J1).
     record: sse_record::Registry,
     /// Triggers and effects (`provides.other.triggers`, J4).
@@ -439,6 +443,163 @@ impl Kernel {
                     Some(serde_json::json!({"event_id": id.hex(), "record_hash": record_hash(u)})),
                 )
             }
+        })
+    }
+
+    /// The `sift` op: the stack's sifters over the campaign, or over one
+    /// audience's scene.
+    fn sift(
+        &mut self,
+        ids: Option<Vec<String>>,
+        audience: Option<String>,
+        scope: Option<String>,
+        at_s: i64,
+    ) -> Result<Response, Response> {
+        use sse_sift::TagState;
+        let sifters: Vec<sse_sift::Sifter> = match &ids {
+            None => self.observe.sifters.clone(),
+            Some(ids) => {
+                let mut out = Vec::new();
+                for id in ids {
+                    let s = self
+                        .observe
+                        .sifters
+                        .iter()
+                        .find(|s| &s.id == id)
+                        .ok_or_else(|| {
+                            err(
+                                "unknown_sifter",
+                                format!("no pack in the stack provides sifter {id}"),
+                            )
+                        })?;
+                    out.push(s.clone());
+                }
+                out
+            }
+        };
+        let root = self
+            .universe
+            .as_ref()
+            .ok_or_else(|| err("no_universe", "open a universe first"))?
+            .root
+            .clone();
+        let scope = match scope {
+            None => root.clone(),
+            Some(s) => in_universe(&root, &s)?,
+        };
+        let now = UniverseTime::seconds(at_s);
+        let tag_state = |tag: &str, rule: &str| TagState {
+            tag: tag.to_string(),
+            rule: rule.to_string(),
+            evidence: Vec::new(),
+        };
+        let gm = audience
+            .as_deref()
+            .is_none_or(|a| a == sse_observe::scene::GM);
+        let mut skipped = Vec::new();
+        let hits = if gm {
+            let u = self.universe.as_ref().expect("checked");
+            let mut state = u.chronicle.state_at(now);
+            for (a, f) in u.record.state_at(now).facts {
+                state.facts.entry(a).or_default().extend(f);
+            }
+            // Authored tags out of the facts; rule tags (with their evidence) from the stack.
+            let mut tags: BTreeMap<Address, BTreeMap<String, TagState>> = BTreeMap::new();
+            for (a, f) in state.facts.iter_mut() {
+                let keys: Vec<String> = f
+                    .keys()
+                    .filter(|k| k.starts_with(TAG_FIELD))
+                    .cloned()
+                    .collect();
+                for k in keys {
+                    if f.remove(&k) == Some(Value::Bool(true)) {
+                        let t = &k[TAG_FIELD.len()..];
+                        tags.entry(a.clone())
+                            .or_default()
+                            .insert(t.to_string(), tag_state(t, "authored"));
+                    }
+                }
+            }
+            for (a, f) in &state.facts {
+                let subject = sse_sift::Subject {
+                    address: Some(a.clone()),
+                    facts: f.clone(),
+                    parent: a
+                        .parent()
+                        .and_then(|p| state.facts.get(&p).cloned())
+                        .unwrap_or_default(),
+                    now_s: at_s,
+                    ..Default::default()
+                };
+                let held = tags.get(a).cloned().unwrap_or_default();
+                let got = self.observe.rules.apply(&subject, &held);
+                tags.entry(a.clone()).or_default().extend(got);
+            }
+            let clouds = BTreeMap::new();
+            let w = sse_sift::World {
+                state: &state,
+                chronicle: Some(&u.chronicle),
+                tags: &tags,
+                clouds: &clouds,
+                now,
+            };
+            sse_sift::sift(&sifters, &w, &scope)
+        } else {
+            let audience = audience.clone().expect("not the GM");
+            let scene = match self.dispatch(Request::Scene {
+                audience: audience.clone(),
+                scope: scope.to_string(),
+                data_view: None,
+                at_s,
+                observe: None,
+            })? {
+                Response::Scene { scene, .. } => scene,
+                other => return Err(other),
+            };
+            let scene: sse_observe::scene::Scene =
+                serde_json::from_value(scene).expect("scenes round-trip");
+            let mut state = sse_chronicle::State::default();
+            let mut tags: BTreeMap<Address, BTreeMap<String, TagState>> = BTreeMap::new();
+            for sub in &scene.subjects {
+                let f = state.facts.entry(sub.address.clone()).or_default();
+                for x in &sub.facts {
+                    if let (Some(v), None) = (&x.value, &x.placeholder) {
+                        f.insert(x.field.clone(), v.clone());
+                    }
+                }
+                for t in &sub.tags {
+                    tags.entry(sub.address.clone())
+                        .or_default()
+                        .insert(t.clone(), tag_state(t, "shown"));
+                }
+            }
+            let run: Vec<sse_sift::Sifter> = sifters
+                .into_iter()
+                .filter(|s| {
+                    let facts = matches!(s.pattern, sse_sift::Pattern::Facts { .. });
+                    if !facts {
+                        skipped.push(s.id.clone());
+                    }
+                    facts
+                })
+                .collect();
+            let clouds = BTreeMap::new();
+            let w = sse_sift::World {
+                state: &state,
+                chronicle: None,
+                tags: &tags,
+                clouds: &clouds,
+                now,
+            };
+            sse_sift::sift(&run, &w, &scope)
+        };
+        Ok(Response::Sifted {
+            audience: if gm { None } else { audience },
+            hits: hits
+                .iter()
+                .map(|h| serde_json::to_value(h).expect("hits are plain data"))
+                .collect(),
+            skipped,
         })
     }
 
@@ -2107,6 +2268,12 @@ impl Kernel {
                     state_hash: latest_hash(&u.chronicle),
                 }
             }
+            Request::Sift {
+                sifters,
+                audience,
+                scope,
+                at_s,
+            } => self.sift(sifters, audience, scope, at_s)?,
             Request::OrbitsAt {
                 system,
                 at_s,
