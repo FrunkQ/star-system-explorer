@@ -1,7 +1,7 @@
 {
   "before": {
     "count": 86,
-    "digest": "d90679cf5b82b0b69ef8f151cbe5f8a9bf5d02bdd38e99403792a43bd214e8e4"
+    "digest": "1cf528480271b798fcce60406a526e7b685248306b9ecdde1cf91c9f0d7eeb18"
   },
   "birth": {
     "address": "u:g5/cell:988_0_0/sys:f13800k0",
@@ -25,7 +25,7 @@
   ],
   "now": {
     "count": 88,
-    "digest": "953b5df885597d8382eae4f50dcd2fcc0ae40f80f26a961c5f0f76d0a05a3874"
+    "digest": "0ccc44906e44fe1ecee235a0525f9234a483a46b68fe64a5ad32d473c08fce68"
   },
   "pin": {
     "address": "u:g5/cell:988_0_0/sys:f13800k0",
@@ -68,10 +68,10 @@
     {
       "state": {
         "age_gyr": 4.2368468010780065,
-        "luminosity_lsun": 0.0001024406965042086,
+        "luminosity_lsun": 0.0010030199448543295,
         "mass_msun": 0.10060466764026736,
         "phase": "main sequence",
-        "teff_k": 1455.1146085506084
+        "teff_k": 2953.0018245300807
       },
       "xyz_pc": [
         10418.12513676327,
@@ -82,10 +82,10 @@
     {
       "state": {
         "age_gyr": 6.2368468010780065,
-        "luminosity_lsun": 0.0001024406965042086,
+        "luminosity_lsun": 0.0010030199448543295,
         "mass_msun": 0.10060466764026736,
         "phase": "main sequence",
-        "teff_k": 1455.1146085506084
+        "teff_k": 2953.0018245300807
       },
       "xyz_pc": [
         -1007.5329565000212,
@@ -96,10 +96,10 @@
     {
       "state": {
         "age_gyr": 6.7368468010780065,
-        "luminosity_lsun": 0.0001024406965042086,
+        "luminosity_lsun": 0.0010030199448543295,
         "mass_msun": 0.10060466764026736,
         "phase": "main sequence",
-        "teff_k": 1455.1146085506084
+        "teff_k": 2953.0018245300807
       },
       "xyz_pc": [
         12105.84686404377,

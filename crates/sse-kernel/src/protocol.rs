@@ -403,6 +403,99 @@ pub enum Request {
         #[ts(optional, type = "unknown")]
         rescue: Option<serde_json::Value>,
     },
+    /// The story finder (U8) and the agents' sift: run sifters over every
+    /// address at or under `scope` (default the universe) at `at_s` (default
+    /// now). `sifters` holds names of the stack's sifters
+    /// (`provides.other.sifters`) and inline sifter objects: with no names,
+    /// every stack sifter runs, plus the inline ones; with names, only those
+    /// named, plus the inline ones. With `audience`, only what that
+    /// audience's scene shows is sifted and event patterns are skipped
+    /// (players never see the chronicle). Hits come best first, each with its
+    /// evidence and significance. GM machine only.
+    Sift {
+        #[serde(default)]
+        #[ts(optional)]
+        scope: Option<String>,
+        #[serde(default)]
+        #[ts(optional, type = "number")]
+        at_s: Option<i64>,
+        #[serde(default)]
+        #[ts(optional, type = "unknown[]")]
+        sifters: Option<Vec<serde_json::Value>>,
+        #[serde(default)]
+        #[ts(optional)]
+        audience: Option<String>,
+    },
+    /// The Window (V8): what a `sensor` (`eye`, `binoculars`, `telescope` in
+    /// base-nav) picks up at `at_s` from beside body `from`, or from the point
+    /// `at_au` around the star, in a NAV `fixture` or inline `nav` system:
+    /// each object's sky position, size, brightness, phase, whether it is
+    /// seen and whether its disc shows. Read only.
+    WindowView {
+        #[serde(default)]
+        #[ts(optional)]
+        fixture: Option<String>,
+        #[serde(default)]
+        #[ts(optional, type = "unknown")]
+        nav: Option<serde_json::Value>,
+        #[serde(default)]
+        #[ts(optional)]
+        at_s: Option<f64>,
+        #[serde(default)]
+        #[ts(optional)]
+        from: Option<String>,
+        #[serde(default)]
+        #[ts(optional)]
+        at_au: Option<[f64; 3]>,
+        #[serde(default)]
+        #[ts(optional)]
+        sensor: Option<String>,
+    },
+    /// G1 to G4 for the galaxy chart (U6): one galaxy grown from the open
+    /// universe's seed, a named `halo` (`dwarf`, `milky-way-like`, `group`) or
+    /// a halo `mass_msun`; its history curves, rings now (abundances, deaths,
+    /// rates), green band through time, the cosmic epochs, and the
+    /// conditions at `place_kpc` (and `place_phi`, radians) at `at_gyr`. Read only.
+    GalaxyChart {
+        #[serde(default)]
+        #[ts(optional)]
+        halo: Option<String>,
+        #[serde(default)]
+        #[ts(optional)]
+        mass_msun: Option<f64>,
+        #[serde(default)]
+        #[ts(optional)]
+        at_gyr: Option<f64>,
+        #[serde(default)]
+        #[ts(optional)]
+        place_kpc: Option<f64>,
+        #[serde(default)]
+        #[ts(optional)]
+        place_phi: Option<f64>,
+        /// History edits to preview (galaxy design 11, G6): `{kind: "merger", t_gyr, ratio}`,
+        /// `{kind: "remove_merger", index}`, `{kind: "starburst", t_gyr, gas_fraction}`,
+        /// `{kind: "quiet_nucleus", from_gyr, to_gyr}`.
+        #[serde(default)]
+        #[ts(optional, type = "unknown[]")]
+        edits: Option<Vec<serde_json::Value>>,
+    },
+    /// G1 for the foam and cluster maps (V9): a square slice of the cosmic
+    /// web from the open universe's seed, `n` samples a side over
+    /// `extent_mpc` around `centre` (Mpc, default the origin), at redshift
+    /// `z` or cosmic time `t_gyr` (default now). Read only.
+    WebSlice {
+        #[serde(default)]
+        #[ts(optional)]
+        z: Option<f64>,
+        #[serde(default)]
+        #[ts(optional)]
+        t_gyr: Option<f64>,
+        #[serde(default)]
+        #[ts(optional)]
+        centre: Option<[f64; 3]>,
+        extent_mpc: f64,
+        n: u32,
+    },
     /// S5's descent scene: survey a world as `survey_surface` does (a
     /// `fixture`, or a `body` of an adopted `system` at `at_s`), judge the
     /// landing site at `lat_deg`, `lon_deg` (slope, roughness, liquid) and
@@ -688,23 +781,6 @@ pub enum Request {
         #[ts(optional)]
         at_s: Option<i64>,
     },
-    /// Run the stack's sifters (`provides.other.sifters`; all, or only
-    /// `sifters`) over the campaign at `at_s`, at or under `scope` (default
-    /// the universe). With `audience`, only what that audience's scene shows
-    /// is sifted, and event patterns are skipped (players never see the
-    /// chronicle). GM machine only.
-    Sift {
-        #[serde(default)]
-        #[ts(optional)]
-        sifters: Option<Vec<String>>,
-        #[serde(default)]
-        #[ts(optional)]
-        audience: Option<String>,
-        #[serde(default)]
-        #[ts(optional)]
-        scope: Option<String>,
-        at_s: i64,
-    },
     /// The stack's programs (`provides.other.programs`, J6), the campaign's
     /// limit and the programs running at `at_s` (default: latest).
     Programs {
@@ -819,6 +895,10 @@ impl Request {
             Request::ResolvedSystem { .. } => "resolved_system",
             Request::SurveySurface { .. } => "survey_surface",
             Request::PlanRoute { .. } => "plan_route",
+            Request::GalaxyChart { .. } => "galaxy_chart",
+            Request::WebSlice { .. } => "web_slice",
+            Request::WindowView { .. } => "window_view",
+            Request::Sift { .. } => "sift",
             Request::PlanDescent { .. } => "plan_descent",
             Request::Systems => "systems",
             Request::LifeView { .. } => "life_view",
@@ -845,7 +925,6 @@ impl Request {
             Request::Templates => "templates",
             Request::Create { .. } => "create",
             Request::Retire { .. } => "retire",
-            Request::Sift { .. } => "sift",
             Request::Programs { .. } => "programs",
             Request::AttachProgram { .. } => "attach_program",
             Request::DetachProgram { .. } => "detach_program",
@@ -942,6 +1021,26 @@ pub fn ops() -> Vec<OpInfo> {
             "about a thousand Lambert solves on the departure and flight-time grid plus torch flights; drift asks plan once per body and port (about 0.1 to 1 s native)",
         ),
         o(
+            "galaxy_chart",
+            Cost::Medium,
+            "one galaxy grown over cosmic time plus 24 rings of chemical evolution and a green band every half Gyr (about 0.1 to 0.5 s native)",
+        ),
+        o(
+            "web_slice",
+            Cost::Medium,
+            "n by n web samples at four octaves (n = 128: about 0.2 s native)",
+        ),
+        o(
+            "sift",
+            Cost::Light,
+            "GM machine only; linear in addresses x sifters within the scope (a campaign of a few systems: milliseconds), plus one scene for an audience",
+        ),
+        o(
+            "window_view",
+            Cost::Light,
+            "one Kepler solve and one brightness per body (microseconds)",
+        ),
+        o(
             "plan_descent",
             Cost::Heavy,
             "a survey as survey_surface (cached for the same world), one site read of about 30 heights, and a descent at 0.1 s steps (well under 0.1 s native)",
@@ -996,11 +1095,6 @@ pub fn ops() -> Vec<OpInfo> {
         o("templates", Cost::Trivial, "read at load"),
         o("create", Cost::Light, "GM machine only; one universe event and one record event per kept value"),
         o("retire", Cost::Trivial, "GM machine only; one universe event"),
-        o(
-            "sift",
-            Cost::Light,
-            "GM machine only; linear in subjects x sifters within the scope, plus one scene for an audience",
-        ),
         o("programs", Cost::Trivial, "read at load, plus a fold of the record"),
         o("attach_program", Cost::Trivial, "GM machine only; one record event"),
         o("detach_program", Cost::Trivial, "GM machine only; one record event"),
@@ -1245,6 +1339,41 @@ pub enum Response {
         manifest_id: String,
         stack_matches: bool,
     },
+    /// `galaxy_chart`: `{halo, key, halo_mass_msun, morphology, barred,
+    /// t_start_gyr, now_gyr, at_gyr, now, history, active_nuclei,
+    /// sun_radius_kpc, rings, core_collapse_per_century, ia_per_century,
+    /// green_bands, epochs, place, model}`.
+    GalaxyCharted {
+        #[ts(type = "unknown")]
+        chart: serde_json::Value,
+    },
+    /// `web_slice`: `{t_gyr, z, now_gyr, slice, model}` (`slice` is sse-cosmos's `Slice`).
+    WebSliced {
+        #[ts(type = "unknown")]
+        web: serde_json::Value,
+    },
+    /// `window_view`: sse-nav's `WindowView` (`seen`: lon/lat, distance,
+    /// angular diameter, magnitude, phase, lit fraction, detected, resolved,
+    /// light time, why; `sensor`; `missed`; `model`).
+    /// `sift`: hits best first (`sifter`, `label`, `subject`, `evidence`
+    /// [{address, field, value, event}], `significance` {score, persistence_s,
+    /// reach, reversibility, rarity_p, components}), the sifters run, the scope.
+    /// With an `audience`, `skipped` names the sifters not run for it.
+    Sifted {
+        scope: String,
+        sifters: Vec<String>,
+        #[ts(type = "unknown")]
+        hits: serde_json::Value,
+        #[ts(optional)]
+        #[serde(default, skip_serializing_if = "Option::is_none")]
+        audience: Option<String>,
+        #[serde(default, skip_serializing_if = "Vec::is_empty")]
+        skipped: Vec<String>,
+    },
+    WindowViewed {
+        #[ts(type = "unknown")]
+        view: serde_json::Value,
+    },
     /// `plan_route`: sse-nav's `RoutePlan` (`candidates` best first by the
     /// preference, each with burns, days, Δv, propellant and reserve, peak g,
     /// dose, solar-storm chance, peak flux, delays, hazards, difficulty with
@@ -1436,18 +1565,6 @@ pub enum Response {
         #[ts(type = "unknown")]
         rules: serde_json::Value,
         record_hash: String,
-    },
-    /// `sift`: hits best first, each `{sifter, label, subject, evidence:
-    /// [{address, field, value, event?}], significance: {score,
-    /// persistence_s, reach, reversibility, rarity_p, components}}`;
-    /// `skipped` names sifters not run for this audience.
-    Sifted {
-        #[ts(optional)]
-        #[serde(default, skip_serializing_if = "Option::is_none")]
-        audience: Option<String>,
-        #[ts(type = "unknown[]")]
-        hits: Vec<serde_json::Value>,
-        skipped: Vec<String>,
     },
     /// `orbits_at`: per body `{address, placed, parent?, period_s?,
     /// phase_source?, missing?, at: [{at_s, r_m: [x, y, z], phase_deg}]}`.

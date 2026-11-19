@@ -21,3 +21,6 @@ Golden changes (on purpose): `contract.jsonl` line 1 and the new lines 188 to 19
 ## Limits
 - Rarity is not measured here (no clouds are passed), so `rarity_p` is null and that component is 0. Passing the resolved clouds is a later step if Minerva wants rarer things first.
 - An audience's tags carry no rule evidence (the scene gives names only), so a tag-based hit for a player shows the tag, not the facts behind it. That is on purpose: the facts may be ones the player has not been shown.
+
+## One op with U8 (19 Nov, evening)
+The story finder (U8) added its own `sift` op on main at the same time, so the two are now one op. Request: `{scope?, at_s? (default now), sifters?, audience?}`. `sifters` mixes names of stack sifters with inline sifter objects: with no names, every stack sifter runs, plus any inline ones. Response: `{scope, sifters (those run), hits, audience?, skipped?}`.

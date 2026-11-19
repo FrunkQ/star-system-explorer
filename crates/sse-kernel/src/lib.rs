@@ -7,6 +7,7 @@
 
 mod adopt;
 pub mod contract;
+mod cosmos;
 mod descent;
 mod nav;
 mod orbits;
@@ -72,7 +73,8 @@ fn load_observe(ms: &[sse_pack::PackManifest]) -> Result<Observe, Vec<String>> {
     }
     let setup = sse_observe::ObserveSetup::from_stack(&found).map_err(|e| vec![e])?;
     let sift = sse_sift::load(ms)?;
-    let (rules, sifters) = (sift.rules, sift.sifters);
+    let rules = sift.rules;
+    let sifters = sift.sifters;
     let mut kept = Vec::new();
     for p in ms {
         if let Some(v) = p.provides.other.get("record") {
@@ -258,7 +260,7 @@ struct Job {
 struct Observe {
     setup: Option<sse_observe::ObserveSetup>,
     rules: sse_sift::RuleSet,
-    /// Sifters (`provides.other.sifters`), for the `sift` op.
+    /// Sifters (`provides.other.sifters`): the story finder's patterns (U8).
     sifters: Vec<sse_sift::Sifter>,
     /// Kept kinds (`provides.other.record`, J1).
     record: sse_record::Registry,
@@ -653,32 +655,41 @@ impl Kernel {
     /// audience's scene.
     fn sift(
         &mut self,
-        ids: Option<Vec<String>>,
+        ids: Option<Vec<serde_json::Value>>,
         audience: Option<String>,
         scope: Option<String>,
         at_s: i64,
     ) -> Result<Response, Response> {
         use sse_sift::TagState;
-        let sifters: Vec<sse_sift::Sifter> = match &ids {
-            None => self.observe.sifters.clone(),
-            Some(ids) => {
-                let mut out = Vec::new();
-                for id in ids {
+        // Names pick stack sifters (none named: all of them); objects are inline.
+        let mut named = Vec::new();
+        let mut inline = Vec::new();
+        for v in ids.unwrap_or_default() {
+            match v {
+                serde_json::Value::String(id) => {
                     let s = self
                         .observe
                         .sifters
                         .iter()
-                        .find(|s| &s.id == id)
+                        .find(|s| s.id == id)
                         .ok_or_else(|| {
                             err(
                                 "unknown_sifter",
                                 format!("no pack in the stack provides sifter {id}"),
                             )
                         })?;
-                    out.push(s.clone());
+                    named.push(s.clone());
                 }
-                out
+                v => inline.push(
+                    serde_json::from_value::<sse_sift::Sifter>(v)
+                        .map_err(|e| err("bad_sifter", format!("sifter: {e}")))?,
+                ),
             }
+        }
+        let sifters: Vec<sse_sift::Sifter> = if named.is_empty() {
+            self.observe.sifters.iter().cloned().chain(inline).collect()
+        } else {
+            named.into_iter().chain(inline).collect()
         };
         let root = self
             .universe
@@ -700,29 +711,16 @@ impl Kernel {
             .as_deref()
             .is_none_or(|a| a == sse_observe::scene::GM);
         let mut skipped = Vec::new();
+        let sifters_run: Vec<String> = sifters.iter().map(|s| s.id.clone()).collect();
         let hits = if gm {
             let u = self.universe.as_ref().expect("checked");
             let mut state = u.chronicle.state_at(now);
             for (a, f) in u.record.state_at(now).facts {
                 state.facts.entry(a).or_default().extend(f);
             }
-            // Authored tags out of the facts; rule tags (with their evidence) from the stack.
+            // Tags as the scene sees them: rule tags (with their evidence) plus
+            // the GM's `tag.*` facts, with the fact itself as evidence.
             let mut tags: BTreeMap<Address, BTreeMap<String, TagState>> = BTreeMap::new();
-            for (a, f) in state.facts.iter_mut() {
-                let keys: Vec<String> = f
-                    .keys()
-                    .filter(|k| k.starts_with(TAG_FIELD))
-                    .cloned()
-                    .collect();
-                for k in keys {
-                    if f.remove(&k) == Some(Value::Bool(true)) {
-                        let t = &k[TAG_FIELD.len()..];
-                        tags.entry(a.clone())
-                            .or_default()
-                            .insert(t.to_string(), tag_state(t, "authored"));
-                    }
-                }
-            }
             for (a, f) in &state.facts {
                 let subject = sse_sift::Subject {
                     address: Some(a.clone()),
@@ -734,9 +732,22 @@ impl Kernel {
                     now_s: at_s,
                     ..Default::default()
                 };
-                let held = tags.get(a).cloned().unwrap_or_default();
-                let got = self.observe.rules.apply(&subject, &held);
-                tags.entry(a.clone()).or_default().extend(got);
+                let mut t = self.observe.rules.apply(&subject, &BTreeMap::new());
+                for (k, v) in f {
+                    if let (Some(tag), Value::Bool(true)) = (k.strip_prefix(TAG_FIELD), v) {
+                        t.entry(tag.to_string()).or_insert_with(|| TagState {
+                            tag: tag.to_string(),
+                            rule: "authored".into(),
+                            evidence: vec![sse_sift::Read {
+                                field: k.clone(),
+                                value: v.clone(),
+                            }],
+                        });
+                    }
+                }
+                if !t.is_empty() {
+                    tags.insert(a.clone(), t);
+                }
             }
             let clouds = BTreeMap::new();
             let w = sse_sift::World {
@@ -797,11 +808,13 @@ impl Kernel {
             sse_sift::sift(&run, &w, &scope)
         };
         Ok(Response::Sifted {
-            audience: if gm { None } else { audience },
-            hits: hits
-                .iter()
-                .map(|h| serde_json::to_value(h).expect("hits are plain data"))
+            scope: scope.to_string(),
+            sifters: sifters_run
+                .into_iter()
+                .filter(|id| !skipped.contains(id))
                 .collect(),
+            hits: serde_json::to_value(hits).expect("hits are plain data"),
+            audience: if gm { None } else { audience },
             skipped,
         })
     }
@@ -1576,6 +1589,69 @@ impl Kernel {
                     }
                 };
                 Response::RoutePlanned { plan }
+            }
+            Request::GalaxyChart {
+                halo,
+                mass_msun,
+                at_gyr,
+                place_kpc,
+                place_phi,
+                edits,
+            } => {
+                let u = self.universe()?;
+                let edits: Vec<sse_cosmos::galaxy::Edit> = edits
+                    .unwrap_or_default()
+                    .into_iter()
+                    .map(serde_json::from_value)
+                    .collect::<Result<_, _>>()
+                    .map_err(|e| err("bad_edit", format!("history edit: {e}")))?;
+                let chart = cosmos::galaxy_chart(cosmos::GalaxyAsk {
+                    edits: &edits,
+                    seed: &u.seed,
+                    root: &u.root,
+                    halo: halo.as_deref(),
+                    mass_msun,
+                    at_gyr,
+                    place_kpc,
+                    place_phi,
+                })?;
+                Response::GalaxyCharted { chart }
+            }
+            Request::WindowView {
+                fixture,
+                nav,
+                at_s,
+                from,
+                at_au,
+                sensor,
+            } => Response::WindowViewed {
+                view: nav::window_view(
+                    fixture.as_deref(),
+                    nav.as_ref(),
+                    at_s,
+                    from.as_deref(),
+                    at_au,
+                    sensor.as_deref(),
+                )?,
+            },
+            Request::WebSlice {
+                z,
+                t_gyr,
+                centre,
+                extent_mpc,
+                n,
+            } => {
+                let u = self.universe()?;
+                let web = cosmos::web_slice(cosmos::SliceAsk {
+                    seed: &u.seed,
+                    root: &u.root,
+                    z,
+                    t_gyr,
+                    centre: centre.unwrap_or([0.0; 3]),
+                    extent_mpc,
+                    n,
+                })?;
+                Response::WebSliced { web }
             }
             Request::PlanDescent {
                 system,
@@ -2679,7 +2755,7 @@ impl Kernel {
                 audience,
                 scope,
                 at_s,
-            } => self.sift(sifters, audience, scope, at_s)?,
+            } => self.sift(sifters, audience, scope, at_s.unwrap_or(i64::MAX))?,
             Request::Programs { at_s } => {
                 let ps = self.observe.programs.clone();
                 let u = self.universe()?;

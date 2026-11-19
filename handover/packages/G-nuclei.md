@@ -62,3 +62,8 @@ G3 grew holes only from its own bursts and star formation, so in group and clust
 - A quiet-nucleus edit still gains the arriving holes (they are not accretion); G6's test now checks exactly that.
 - New check in `nucleus_tests`: hole/bulge between 5e-4 and 1e-2 in haloes of 1e13 and up.
 - **Golden changes (on purpose):** `galaxy.json`, `envelope.json`, `stars.json`, `galaxy-events.json` and `nucleus.json`, all from the larger holes and the slightly stronger quench.
+
+## Merge with main (19 Nov, evening)
+- `tests/golden/stars.json` was re-blessed again on purpose: main's star citations (G5 multiplicity and luminosity) and this branch's ex-situ holes both changed it.
+- In `contract.jsonl`, the two `galaxy_charted` lines changed on purpose: `active_nuclei` in the galaxy chart (U6) now carries the ex-situ hole growth.
+- The story finder's `sift` op (U8) and this branch's `sift` op are now one op. `sifters` takes names of the stack's sifters and inline objects. With no names, every stack sifter runs plus the inline ones, as U8 expects. `audience` sifts that audience's scene only. `Sifted` keeps U8's `{scope, sifters, hits}` and adds `audience` and `skipped` when an audience is given. U8's contract lines did not change.

@@ -2159,7 +2159,7 @@ fn sift_through_the_api() {
     got.sort();
     assert_eq!(got, ["heavy-world", "sleeping-threat"], "{gm}");
     assert!(gm["hits"][0]["evidence"][0]["event"].is_string(), "{gm}");
-    assert_eq!(gm["skipped"], serde_json::json!([]));
+    assert!(gm.get("skipped").is_none(), "nothing skipped for the GM");
     // Only one sifter, and a missing one.
     let one = send(
         &mut k,
@@ -2321,4 +2321,66 @@ fn programs_through_the_api() {
     let list = send(&mut k, serde_json::json!({"op":"programs"}));
     assert_eq!(list["running"].as_array().unwrap().len(), 2, "{list}");
     assert_eq!(list["limit"], 2);
+}
+
+#[test]
+fn sift_finds_story_hooks_with_their_evidence() {
+    let mut k = crate::Kernel::new();
+    send(
+        &mut k,
+        serde_json::json!({"op": "open_universe", "id": "s", "seed": "s"}),
+    );
+    for (a, f, v) in [
+        ("u:s/sys:1/body:2", "name", serde_json::json!("Harbour")),
+        (
+            "u:s/sys:1/body:2",
+            "story.rumour",
+            serde_json::json!("a ship went down in the ice"),
+        ),
+        (
+            "u:s/sys:1/body:2",
+            "settlements.count",
+            serde_json::json!(3),
+        ),
+        (
+            "u:s/sys:1/body:2",
+            "hazards",
+            serde_json::json!("ice quakes"),
+        ),
+        ("u:s/sys:1/body:3", "name", serde_json::json!("Bare")),
+    ] {
+        let r = send(
+            &mut k,
+            serde_json::json!({"op": "set_authored", "edit": {"address": a, "field": f, "value": v, "occurred_at_s": 10}}),
+        );
+        assert_eq!(r["type"], "authored", "{r}");
+    }
+    let sifters = serde_json::json!([
+        {"id": "rumour", "label": "A rumour to chase", "pattern": {"match": "facts", "when": {"if": "has", "field": "story.rumour"}},
+         "significance": {"persistence": {"from": "fixed", "s": 3.15e7}, "reach": {"from": "fixed", "n": 1}, "reversibility": 0.5}},
+        {"id": "danger-at-home", "label": "Danger where people live", "pattern": {"match": "facts", "when": {"if": "all", "of": [
+            {"if": "has", "field": "hazards"}, {"if": "range", "field": "settlements.count", "min": 1}]}},
+         "significance": {"persistence": {"from": "fixed", "s": 3.15e9}, "reach": {"from": "fixed", "n": 1000}, "reversibility": 0.2}}
+    ]);
+    let r = send(
+        &mut k,
+        serde_json::json!({"op": "sift", "sifters": sifters}),
+    );
+    assert_eq!(r["type"], "sifted", "{r}");
+    let hits = r["hits"].as_array().unwrap();
+    assert_eq!(hits.len(), 2, "{r}");
+    // Danger at home lasts longer, reaches more and is harder to undo: it comes first.
+    assert_eq!(hits[0]["sifter"], "danger-at-home");
+    assert!(hits.iter().all(|h| h["subject"] == "u:s/sys:1/body:2"));
+    let ev = hits[0]["evidence"].as_array().unwrap();
+    assert!(
+        ev.iter()
+            .any(|e| e["field"] == "settlements.count" && !e["event"].is_null()),
+        "evidence names the event: {r}"
+    );
+    let bad = send(
+        &mut k,
+        serde_json::json!({"op": "sift", "sifters": [{"id": "x"}]}),
+    );
+    assert_eq!(bad["code"], "bad_sifter", "{bad}");
 }
