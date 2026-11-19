@@ -10,6 +10,7 @@
   import SeatsPanel from "./SeatsPanel.svelte";
   import LensPanel from "./LensPanel.svelte";
   import SoundControl from "../../sound/src/SoundControl.svelte";
+  import AgentsPanel from "../../agents/src/AgentsPanel.svelte";
   import { orbitScene, voicesFromSystem } from "../../ui-contract/src/index.ts";
   import { compareScenes, dropWhatIf, keepWhatIf, openWhatIf } from "../../ui-contract/src/index.ts";
   import { allLenses, checkLens, defaultLens, hasTool, lensAudience, type Lens } from "../../ui-contract/src/index.ts";
@@ -196,6 +197,14 @@
   let branchHash = $state("");
   let whatNote = $state<string | null>(null);
   let compareDialog: HTMLDialogElement | undefined = $state();
+  // A1: agents, on the GM's own key. The panel reads only what is on the chart.
+  let agentsDialog: HTMLDialogElement | undefined = $state();
+  let agentsOpen = $state(false);
+  const agentContext = $derived.by(() => {
+    const sub = scene.subjects.find((x) => x.address === ws.selection);
+    const head = `${scene.title}: ${scene.subtitle}.`;
+    return sub ? `${head}\nSelected: ${sub.label}${sub.subtitle ? ` (${sub.subtitle})` : ""}.\n${sub.facts.map((f) => `${f.label}: ${f.display} (${f.source})`).join("\n")}` : head;
+  });
   const differences = $derived(ws.branch ? compareScenes(mainScene, scene, ws.branch.applied) : []);
   async function whatIf(action: "open" | "keep" | "drop") {
     if (!session) return;
@@ -393,6 +402,7 @@
         {/if}
         {#if whatNote}<span role="status">{whatNote}</span>{/if}
       </span>
+      <button type="button" class="linkbtn quiet" onclick={() => ((agentsOpen = true), agentsDialog?.showModal())} title="Tars, Orac and Minerva, on your own key">Agents</button>
       <SoundControl scene={soundScene} deviceTier={status.tier} seed={base.universe.seed} key="sound.gm" />
       {#if share}
         <span class="share" aria-label="Players">
@@ -452,6 +462,11 @@
     {/if}
     <p class="row"><button type="button" onclick={() => whatIf("keep")} disabled={!ws.branch.edits.length}>Keep it</button> <button type="button" onclick={() => whatIf("drop")}>Throw away</button></p>
   {/if}
+  <form method="dialog"><button type="submit">Close</button></form>
+</dialog>
+
+<dialog bind:this={agentsDialog} class="help seats-dialog" aria-label="Agents" onclose={() => (agentsOpen = !!agentsDialog?.open)}>
+  {#if agentsOpen}<AgentsPanel context={agentContext} />{/if}
   <form method="dialog"><button type="submit">Close</button></form>
 </dialog>
 

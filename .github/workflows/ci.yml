@@ -71,6 +71,7 @@ jobs:
       - run: node tests/ui/lenses.e2e.mjs chromium firefox --screens ui-screens
       - run: node tests/ui/sound.e2e.mjs chromium firefox --screens ui-screens
       - run: node tests/ui/whatif.e2e.mjs chromium firefox --screens ui-screens
+      - run: node tests/ui/agents.e2e.mjs chromium firefox --screens ui-screens
       - uses: actions/upload-artifact@v4
         with: { name: ui-screens, path: ui-screens }
 
