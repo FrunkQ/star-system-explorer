@@ -743,6 +743,23 @@
     outline: 2px solid var(--sse-focus);
     outline-offset: 2px;
   }
+  /* Tactility (handover/interface-style.md): every control answers a touch at once, quietly. */
+  :global(button, select, [role="button"]) {
+    transition:
+      background-color var(--sse-motion-quick) var(--sse-ease),
+      color var(--sse-motion-quick) var(--sse-ease),
+      box-shadow var(--sse-motion-quick) var(--sse-ease),
+      transform var(--sse-motion-quick) var(--sse-ease);
+  }
+  :global(button:not(:disabled):active) {
+    transform: translateY(1px);
+  }
+  @media (prefers-reduced-motion: reduce) {
+    :global(*) {
+      --sse-motion-quick: 0ms !important;
+      --sse-motion: 0ms !important;
+    }
+  }
   .app {
     display: grid;
     grid-template-rows: 64px minmax(0, 1fr) 96px 28px;

@@ -55,3 +55,16 @@ test("zoom keeps the point under the pointer, stays inside the span, and stops a
   assert.ok(Math.abs(a.to - a.from - 10 * day) < 1e-6 && a.from < EPOCH && a.to > EPOCH);
   assert.deepEqual(zoom(b, 10, 5e9, b), b, "never wider than the whole span");
 });
+
+test("the ruler's glide: log-scale zoom about the shared point, linear pan", async () => {
+  const { between } = await import("../src/calendar.ts");
+  const a = { from: 0, to: 1e10 };
+  const b = { from: 4.6e9 - 0.5, to: 4.6e9 + 0.5 };
+  assert.deepEqual(between(a, b, 0), a);
+  assert.deepEqual(between(a, b, 1), b);
+  const m = between(a, b, 0.5);
+  assert.ok(Math.abs(m.to - m.from - 1e5) / 1e5 < 1e-6, `half way in log span: ${m.to - m.from}`);
+  assert.ok(m.from < 4.6e9 && m.to > 4.6e9, "the shared point stays in view");
+  const p = between({ from: 0, to: 10 }, { from: 10, to: 20 }, 0.25);
+  assert.deepEqual(p, { from: 2.5, to: 12.5 });
+});

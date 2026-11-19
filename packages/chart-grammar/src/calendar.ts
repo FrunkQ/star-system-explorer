@@ -202,3 +202,25 @@ export function zoom(w: RulerWindow, factor: number, about: number, bounds: Rule
 export function around(at: number, span: number, bounds: RulerWindow): RulerWindow {
   return zoom({ from: at - span / 2, to: at + span / 2 }, 1, at, bounds, span);
 }
+
+/**
+ * A window part way (k from 0 to 1) between two windows, for the ruler's
+ * glide. The span changes on a log scale (a glide from 14 Gyr to a day reads
+ * as a steady zoom, not a jump at the end), about the point that sits at the
+ * same place in both windows; a pan with no zoom moves linearly.
+ */
+export function between(a: RulerWindow, b: RulerWindow, k: number): RulerWindow {
+  const sa = a.to - a.from;
+  const sb = b.to - b.from;
+  if (k <= 0) return a;
+  if (k >= 1) return b;
+  if (Math.abs(sa - sb) <= Math.max(sa, sb) * 1e-9) {
+    const from = a.from + (b.from - a.from) * k;
+    return { from, to: from + sa };
+  }
+  const span = Math.exp(Math.log(sa) + (Math.log(sb) - Math.log(sa)) * k);
+  const f = (b.from - a.from) / (sa - sb);
+  const p = a.from + f * sa;
+  const from = p - f * span;
+  return { from, to: from + span };
+}

@@ -12,7 +12,8 @@
 -->
 <script lang="ts">
   import { fraction, keyStep, labelRows, type RulerEvent } from "./ruler.ts";
-  import { around, calendarTicks, defaultCalendar, spanWords, steps, timeWords, zoom, type Calendar, type RulerWindow } from "./calendar.ts";
+  import { motionMs } from "./motion.ts";
+  import { around, between, calendarTicks, defaultCalendar, spanWords, steps, timeWords, zoom, type Calendar, type RulerWindow } from "./calendar.ts";
 
   let {
     from,
@@ -44,13 +45,36 @@
   const bounds = $derived({ from, to });
   let win = $state<RulerWindow | null>(null);
   // The window follows the bounds until the GM zooms; it is clamped if the span shrinks.
-  const w = $derived.by((): RulerWindow => {
+  const wt = $derived.by((): RulerWindow => {
     if (!win) return { from, to };
     const span = Math.min(win.to - win.from, to - from);
     const f = Math.min(Math.max(from, win.from), to - span);
     return { from: f, to: f + span };
   });
-  const span = $derived(w.to - w.from);
+  // What is drawn: the target window, or a glide towards it after a button,
+  // key or Show (the wheel is continuous already). Readout, register and
+  // stepping always use the target, so nothing waits on the motion.
+  let anim = $state<RulerWindow | null>(null);
+  const w = $derived(anim ?? wt);
+  const span = $derived(wt.to - wt.from);
+  let glideRaf = 0;
+  function glide(next: RulerWindow | null) {
+    const prev = w;
+    win = next;
+    const target = wt;
+    cancelAnimationFrame(glideRaf);
+    anim = null;
+    const ms = motionMs(track ?? null);
+    if (ms <= 0 || (prev.from === target.from && prev.to === target.to)) return;
+    const t0 = performance.now();
+    const step = (t: number) => {
+      const k = Math.min(1, (t - t0) / ms);
+      anim = k >= 1 ? null : between(prev, target, 1 - Math.pow(1 - k, 3));
+      if (k < 1) glideRaf = requestAnimationFrame(step);
+    };
+    glideRaf = requestAnimationFrame(step);
+  }
+  $effect(() => () => cancelAnimationFrame(glideRaf));
   const full = $derived(span >= (to - from) * 0.999);
 
   let width = $state(0);
@@ -80,7 +104,7 @@
   function onkeydown(e: KeyboardEvent) {
     if (e.key === "+" || e.key === "=") return void (e.preventDefault(), zoomBy(0.5, now));
     if (e.key === "-" || e.key === "_") return void (e.preventDefault(), zoomBy(2, now));
-    const v = keyStep(e.key, now, w.from, w.to);
+    const v = keyStep(e.key, now, wt.from, wt.to);
     if (v === null) return;
     e.preventDefault();
     // keyStep rounds to whole years; inside a human window keep the fraction.
@@ -91,7 +115,7 @@
   function at(e: PointerEvent | WheelEvent): number {
     const r = track!.getBoundingClientRect();
     const f = Math.min(1, Math.max(0, (e.clientX - r.left) / r.width));
-    const t = w.from + f * span;
+    const t = w.from + f * (w.to - w.from);
     return span > 1e4 ? Math.round(t) : t;
   }
   function onpointerdown(e: PointerEvent) {
@@ -102,8 +126,10 @@
   function onpointermove(e: PointerEvent) {
     if (track!.hasPointerCapture(e.pointerId)) set(at(e));
   }
-  function zoomBy(factor: number, about: number) {
-    win = zoom(w, factor, about, bounds);
+  function zoomBy(factor: number, about: number, smooth = true) {
+    const next = zoom(wt, factor, about, bounds);
+    if (smooth) glide(next);
+    else ((anim = null), (win = next));
   }
   // Wheel zoom about the pointer (non-passive, so the page does not scroll).
   $effect(() => {
@@ -112,7 +138,7 @@
     const h = (e: WheelEvent) => {
       if (Math.abs(e.deltaY) < Math.abs(e.deltaX)) return;
       e.preventDefault();
-      zoomBy(Math.pow(1.0015, e.deltaY), at(e));
+      zoomBy(Math.pow(1.0015, e.deltaY), at(e), false);
     };
     el.addEventListener("wheel", h, { passive: false });
     return () => el.removeEventListener("wheel", h);
@@ -133,7 +159,7 @@
   function show(id: string) {
     const s = SHOWS.find((x) => x.id === id);
     if (!s) return;
-    win = s.span === Infinity ? null : around(now, s.span, bounds);
+    glide(s.span === Infinity ? null : around(now, s.span, bounds));
   }
 
   // Stepping and playing.
@@ -206,7 +232,7 @@
         </span>
       {/if}
       {#if note && span <= 1e4}<span class="note" data-note>{note}</span>{/if}
-      <span class="end" aria-hidden="true">{full ? `to ${timeWords(to, cal, span)}` : `to ${timeWords(w.to, cal, span)}`}</span>
+      <span class="end" aria-hidden="true">{full ? `to ${timeWords(to, cal, span)}` : `to ${timeWords(wt.to, cal, span)}`}</span>
     </div>
     <div class="trackwrap" bind:clientWidth={width}>
       <div
@@ -215,8 +241,8 @@
         role="slider"
         tabindex="0"
         aria-label={label}
-        aria-valuemin={w.from}
-        aria-valuemax={w.to}
+        aria-valuemin={wt.from}
+        aria-valuemax={wt.to}
         aria-valuenow={now}
         aria-valuetext={nowWords}
         {onkeydown}
@@ -358,6 +384,9 @@
   .trackwrap {
     min-width: 0;
     height: 52px;
+    /* Labels near the ends (and mid-glide) never push the page sideways. */
+    overflow-x: clip;
+    overflow-clip-margin: 8px;
   }
   .track {
     position: relative;

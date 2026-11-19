@@ -24,3 +24,4 @@ export { default as Legend } from "./Legend.svelte";
 export { markExtent, markPattern } from "./extent.ts";
 export { default as Settings } from "./Settings.svelte";
 export { default as References } from "./References.svelte";
+export { opensFrom, tactileDialogs, motionMs, easing, reducedMotion, fromKeyframes } from "./motion.ts";
