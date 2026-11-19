@@ -426,3 +426,35 @@ fn golden_regimes() {
         "golden surface-regimes changed"
     );
 }
+
+/// Giant bands mirror about the equator: albedo, cloud height and winds.
+#[test]
+fn giant_bands_mirror_about_the_equator() {
+    let s = settings();
+    let b = body("Jupiter");
+    let e = envelope(&s, &b);
+    let inp = RegimeInputs {
+        rotation_hours: Some(9.93),
+        mass_earth: b.mass_earth,
+        impacts: None,
+    };
+    let rs = regime_surface(&s, &e, &Seed::from_text("mirror"), &inp, b.age_gyr);
+    let mut d = rs.clouds.expect("a cloud deck");
+    d.storms.clear();
+    for lat in [3.0f64, 12.0, 25.0, 40.0, 61.0] {
+        let la = lat.to_radians();
+        let (c, sn) = (m::cos(la), m::sin(la));
+        let n = d.at([c, 0.0, sn], 71_492.0);
+        let so = d.at([c, 0.0, -sn], 71_492.0);
+        assert!(
+            (n.0 - so.0).abs() < 1e-12 && (n.1 - so.1).abs() < 1e-9,
+            "{lat}: {n:?} {so:?}"
+        );
+    }
+    let w = &d.winds;
+    let nb = w.len();
+    for i in 0..nb / 2 {
+        assert!((w[i].wind_m_s - w[nb - 1 - i].wind_m_s).abs() < 1e-9, "{i}");
+    }
+    assert!(w[nb / 2].wind_m_s > 0.0 && w[nb / 2 - 1].wind_m_s > 0.0);
+}
