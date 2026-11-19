@@ -1,0 +1,42 @@
+{
+  "schema": "sse.render-recipe/1",
+  "id": "survey-contours",
+  "name": "Contour survey",
+  "family": "survey-globe",
+  "description": "A surveyor's sheet on a globe: height tints from the lowest bare ground to the highest, soft shading, contour lines every kilometre and a firm shoreline.",
+  "scene": "body",
+  "tiers": ["canvas", "text"],
+  "passes": [
+    { "id": "relief", "pass": "relief-globe", "params": { "colour": "height", "shade": 0.55, "exaggeration": 8 } },
+    { "id": "lines", "pass": "contours" },
+    { "id": "grid", "pass": "graticule", "params": { "opacity": 0.2 } },
+    { "id": "words", "pass": "text-narration" }
+  ],
+  "knobs": [
+    {
+      "name": "relief",
+      "label": "Relief",
+      "meaning": "How strongly slopes are shaded under the tints.",
+      "default": 0.5,
+      "maps": [
+        { "pass": "relief", "param": "exaggeration", "at0": 1, "at1": 20 },
+        { "pass": "relief", "param": "shade", "at0": 0.2, "at1": 0.9 }
+      ]
+    },
+    {
+      "name": "detail",
+      "label": "Detail",
+      "meaning": "Contour spacing: from every 2.5 km down to every 250 m.",
+      "default": 0.5,
+      "maps": [{ "pass": "lines", "param": "interval_m", "at0": 2500, "at1": 250 }]
+    }
+  ],
+  "degrade": [
+    { "render_scale": 0.75, "says": "Drawn at three-quarter resolution." },
+    { "drop": "grid", "says": "Grid lines off." },
+    { "render_scale": 0.5, "says": "Drawn at half resolution." },
+    { "render_scale": 0.35, "says": "Drawn at a third of full resolution." },
+    { "drop": "lines", "says": "Contour lines off (the shoreline goes with them)." }
+  ],
+  "lift": "A faster device, a smaller globe, or stopping the spin would lift it."
+}

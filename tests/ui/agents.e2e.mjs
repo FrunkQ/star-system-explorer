@@ -4,7 +4,7 @@
 // With no key every agent says it is not linked and the chart works as ever.
 // Link a provider (a local mock with a key), check it, link Support, and ask
 // Tars: the answer arrives with its cost. The key travels only to that
-// provider and is stored only under sse4.agents; the state hash never moves.
+// provider and is stored only in its own entry, never in the settings; the state hash never moves.
 import { spawn } from "node:child_process";
 import { mkdirSync } from "node:fs";
 import assert from "node:assert/strict";
@@ -72,14 +72,14 @@ try {
     assert.match(sent.messages[0].content, /Selected: Tarn/);
     await shot(gm, "a1-tars");
 
-    // The key went only to the provider, is stored only under sse4.agents, and the state hash did not move.
+    // The key went only to the provider, is stored only in its own entry, never in the settings, and the state hash did not move.
     assert.ok(carried.length >= 2 && carried.every((u) => u.startsWith(provider.base)), `key carried only to the provider: ${carried.join(", ")}`);
     const stored = await gm.evaluate((k) => Object.keys(localStorage).filter((x) => localStorage.getItem(x).includes(k)), KEY);
-    assert.deepEqual(stored, ["sse4.agents"]);
+    assert.deepEqual(stored, ["sse4.agents.key.other"], "the key has its own entry; the settings never hold it");
     assert.equal(await gm.locator("[data-state-hash]").getAttribute("data-state-hash"), h0);
     assert.deepEqual(errors, []);
     await browser.close();
-    console.log(`PASS ${name}: no key works; Tars answered through the provider; key only to ${provider.base} and only in sse4.agents`);
+    console.log(`PASS ${name}: no key works; Tars answered through the provider; key only to ${provider.base} and only in its own entry`);
   }
 } finally {
   server.kill();

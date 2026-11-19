@@ -81,7 +81,7 @@ Milestone M1 "Proven core" = packages K0 to K6 (build plan section 3/4).
 | N1 sound engine: sound scenes, recipes, mixer, tiers, off by default, captions, orbit bed | done | packages/N1.md |
 | O1 light switch (UI side): Eye, Camera, SHO and HOO palettes, single bands, legend chip and honesty label, stubbed spectra marked | UI done on stubbed light; real light facts wait on the kernel | packages/O1-ui.md |
 | V13 make a system: import a V3 save (report and preview) and grow a new system (formation run and preview) | part 1 done: previews; part 2 adopts a preview into the campaign | packages/V13.md |
-| A1 agents shell, bring your own key | part 1 done: providers, keys on the device only, ledger and cap, Tars working, Orac and Minerva panels; part 2 reconciles with Ovid's source | packages/A1.md |
+| A1 agents shell, bring your own key | done (parts 1 and 2): providers, keys on the device only and apart from the settings, ledger and cap, loaded-context guard, reconciled with Ovid's source (agents track); **Alex to confirm** the Ovid relicensing line in NOTICE | packages/A1.md |
 | G0 default Milky-Way-like patch envelope | done (kernel track) | packages/G0.md |
 | G1 cosmology, cosmic web, epochs | done (kernel track) | packages/G1.md |
 | G2 haloes per cell, growth, spin, mergers | done (kernel track) | packages/G2.md |
@@ -108,12 +108,14 @@ Milestone M1 "Proven core" = packages K0 to K6 (build plan section 3/4).
 | T2 look-ahead branch, commit, age the Solar System | done (kernel track); with Alex for review | packages/T2.md |
 | S5 descent scene: entry heating, lift, parachutes, powered descent and touchdown; site slope, roughness and liquid from the height map; hazards in one shape; kernel op `plan_descent` | done | packages/S5.md |
 | T3 NAV: candidate courses (Hohmann, Lambert grid, torch) with burns, fuel and reserve, dose, heat, grazes, belts, debris, delays and difficulty with reasons; a drifting ship's fate and ways out; kernel op `plan_route` | done | packages/T3.md |
+| R1 pass library, render recipes, degrade order, governor, quality badge (the Body globe runs on recipes: GPU, canvas, words) | done (renderer track) | packages/R1.md |
 
 ## Parallel tracks (18 Nov, Alex: build in parallel, integrate later)
 | Track | Packages | Branch |
 |---|---|---|
 | Physics | P1, P3, P4, F0 to F6 done; pipeline, F7, F9, S0 to S4, S6 and S7 done, served by the `survey_surface` op; T3 NAV done (`sse-nav`, `plan_route`); S5 done (`plan_descent`); F8 next (G6 is in), S8 on G7; next B1 one body (handover/design/SSE4-star-census.md), then weather W1 to W3 and W5, then S8 or S9 | `main` via PRs |
 | Kernel | K7 to K10, G0 to G6, C1 to C3, L0, L1a to L1d, L2, J1 to J4, T1, T2 (also through the API), the U3 gaps, the V10 grant gaps and the UI asks (`adopt`, look-ahead write-back, `resolved_system`; K6-additions.md) done; next G7 | `main` via PRs |
+| Renderer (R1 to R4, then exotic objects in bands) | R1 done; next R2 (Body and descent views, gpu-high, atmosphere, clouds, magnetic field overlay) | `main` via PRs |
 | Chart room shell and player views | U0 to U3, V1, U5, V2, V12, V3, V11, V4, V5, planet chart, V10, V6 System 3D, U9 lenses, N1 sound, U4 (what-if and look-ahead), A1 part 1, O1 light switch (UI), V13 parts 1 and 2 (import and grow, add to the campaign, read back and age with write-back), V6 Cutaway and Body globe (Body screen), phone screen menu, V14 size comparison and chart measuring, U10 browser campaign save, U7 biosphere view part 1 done; next V7, U7 part 2 (LifeFlow) | `main` via PRs |
 
 **Since 19 Nov (Alex): `main` is the default branch.** New work branches from `main` and arrives as a pull request

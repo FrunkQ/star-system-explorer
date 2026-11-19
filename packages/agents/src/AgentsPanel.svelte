@@ -4,25 +4,22 @@
   it is waiting for. Every run shows its estimate first and its cost after.
 -->
 <script lang="ts">
-  import { JOBS, PROVIDER_KINDS, STORE_KEY, chat, estimate, linked, listModels, readAgents, tarsSystem, type AgentsState, type ChatMessage, type JobId, type ModelInfo, type Provider, type ProviderKind } from "./agents.ts";
+  import { JOBS, PROVIDER_KINDS, chat, memoryStore, estimate, linked, listModels, loadAgents, newProvider, readLoaded, saveAgents, tarsSystem, type AgentsState, type ChatMessage, type JobId, type ModelInfo, type Provider, type ProviderKind } from "./agents.ts";
 
   let { context = "", onchange }: { context?: string; onchange?: (s: AgentsState) => void } = $props();
 
-  function load(): AgentsState {
+  // Settings in "sse4.agents", each key in its own entry (Ovid saves its links without keys).
+  const store = (() => {
     try {
-      return readAgents(localStorage.getItem(STORE_KEY));
+      return localStorage ?? memoryStore();
     } catch {
-      return readAgents(null);
+      return memoryStore();
     }
-  }
-  let st = $state<AgentsState>(load());
-  function save() {
+  })();
+  let st = $state<AgentsState>(loadAgents(store));
+  function save(removed: string[] = []) {
     const snap = $state.snapshot(st) as AgentsState;
-    try {
-      localStorage.setItem(STORE_KEY, JSON.stringify(snap));
-    } catch {
-      /* private window: settings last for this page only */
-    }
+    saveAgents(store, snap, removed);
     onchange?.(snap);
   }
 
@@ -51,11 +48,9 @@
   }
   async function add(e: SubmitEvent) {
     e.preventDefault();
-    if (!/^https?:\/\//.test(base)) return void (problem = "The address must start with http:// or https://, and usually ends in /v1.");
-    if (PROVIDER_KINDS[kind].key === "required" && !key.trim()) return void (problem = `${PROVIDER_KINDS[kind].label} needs a key.`);
-    let id: string = kind;
-    for (let n = 2; st.providers.some((p) => p.id === id); n++) id = `${kind}-${n}`;
-    const p: Provider = { id, kind, label: label.trim() || PROVIDER_KINDS[kind].label, base: base.trim(), ...(key.trim() ? { key: key.trim() } : {}) };
+    const made = newProvider($state.snapshot(st) as AgentsState, kind, label, base, key);
+    if ("problem" in made) return void (problem = made.problem);
+    const p: Provider = made;
     st.providers.push(p);
     key = "";
     save();
@@ -64,20 +59,26 @@
   function remove(id: string) {
     st.providers = st.providers.filter((p) => p.id !== id);
     for (const j of Object.keys(st.links) as JobId[]) if (st.links[j]?.provider === id) delete st.links[j];
-    save();
+    save([id]);
   }
-  function link(job: JobId, provider: string, model: string) {
+  async function link(job: JobId, provider: string, model: string) {
     if (!provider || !model) {
       delete st.links[job];
     } else {
       const m = models[provider]?.find((x) => x.id === model);
-      st.links[job] = { provider, model, ...(m?.context ? { context: m.context } : {}), ...(m?.price ? { price: m.price } : {}) };
+      st.links[job] = { provider, model, ...(m?.context ? { context: m.context } : {}), ...(m?.price ? { price: m.price } : {}), ...(m?.varies ? { varies: true as const } : {}) };
+      // A local model plans with what it is loaded with, never the most it could take.
+      const p = st.providers.find((x) => x.id === provider);
+      const loaded = p ? await readLoaded($state.snapshot(p) as Provider, model) : null;
+      if (loaded && st.links[job]?.model === model) st.links[job]!.loaded = loaded;
     }
     save();
   }
   const today = new Date().toISOString().slice(0, 10);
   const spent = $derived(st.ledger.filter((r) => r.day === today).reduce((a, r) => a + (r.usd ?? 0), 0));
   const runs = $derived(st.ledger.filter((r) => r.day === today).length);
+  // Money a provider did not report and no listed price covers stays unknown, never counted as zero.
+  const unpriced = $derived(st.ledger.filter((r) => r.day === today && r.ok !== false && r.usd === undefined).length);
 
   // Tars.
   let question = $state("");
@@ -96,7 +97,10 @@
     note = "";
     const r = await chat($state.snapshot(st) as AgentsState, "support", messages);
     asking = false;
-    if (!r.ok) return void (note = r.message);
+    if (!r.ok) {
+      if (r.row) (st.ledger.push(r.row), save());
+      return void (note = r.message);
+    }
     answer = r.text;
     st.ledger.push(r.row);
     save();
@@ -121,7 +125,7 @@
           {#each st.providers as p (p.id)}
             <li data-provider={p.id}>
               <span class="name">{p.label}</span>
-              <span class="meta">{p.base}{p.key ? " · key kept in this browser" : ""}</span>
+              <span class="meta">{p.base}{p.key ? " · key kept in this browser only" : ""}</span>
               <span class="row">
                 <button type="button" class="linkbtn" onclick={() => check(p)} disabled={checking === p.id}>{checking === p.id ? "Checking…" : models[p.id] ? `${models[p.id]!.length} models` : "Check"}</button>
                 <button type="button" class="linkbtn" onclick={() => remove(p.id)}>Remove</button>
@@ -168,7 +172,7 @@
       </table>
       <p class="row">
         <label>Daily cap, US dollars <input type="number" min="0" step="0.5" value={st.cap_usd ?? ""} aria-label="Daily cap" onchange={(e) => ((st.cap_usd = e.currentTarget.value === "" ? null : Number(e.currentTarget.value)), save())} /></label>
-        <span class="meta" data-spent={spent}>Today: {runs} {runs === 1 ? "run" : "runs"}, {money(spent)}</span>
+        <span class="meta" data-spent={spent}>Today: {runs} {runs === 1 ? "run" : "runs"}, {money(spent)}{unpriced ? ` (and ${unpriced} with no price given)` : ""}</span>
       </p>
       {#if problem}<p class="problem" role="alert">{problem}</p>{/if}
     </div>
@@ -178,10 +182,10 @@
       {#if !linked(st, "support")}
         <p class="hint" data-agent-off="tars">No model is linked for Support. Link one under Link models; until then Tars stays quiet and nothing else changes.</p>
       {/if}
-      <label class="slider">Humour <input type="range" min="0" max="1" step="0.05" bind:value={st.humour} onchange={save} aria-label="Humour" /></label>
+      <label class="slider">Humour <input type="range" min="0" max="1" step="0.05" bind:value={st.humour} onchange={() => save()} aria-label="Humour" /></label>
       <form class="ask" onsubmit={ask}>
         <label>Ask Tars <textarea bind:value={question} rows="3" aria-label="Ask Tars"></textarea></label>
-        <p class="meta" data-estimate={est.tokens_in}>Before sending: about {est.tokens_in} tokens in, up to {est.max_out} out{est.usd !== undefined ? `, up to ${money(est.usd)}` : ""}{est.context ? `, the model holds ${est.context}` : ""}.{est.fits ? "" : " Too long for this model."}</p>
+        <p class="meta" data-estimate={est.tokens_in}>Before sending: about {est.tokens_in} tokens in, up to {est.max_out} out{est.usd !== undefined ? `, up to ${money(est.usd)}` : ""}{est.context ? `, the model fits ${est.context}` : ""}.{est.fits ? "" : " Too long for this model."}</p>
         <button type="submit" class="primary" disabled={asking || !linked(st, "support") || !question.trim()}>{asking ? "Asking…" : "Ask"}</button>
       </form>
       {#if answer}<blockquote class="answer" data-answer>{answer}</blockquote>{/if}
