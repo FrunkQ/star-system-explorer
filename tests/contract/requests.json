@@ -1545,5 +1545,17 @@
   "text": "x",
   "format": "xml",
   "at_s": 0
+ },
+ {
+  "op": "export_sector",
+  "scope": "u:toy",
+  "format": "uwp_lines",
+  "at_s": 30
+ },
+ {
+  "op": "export_sector",
+  "scope": "u:toy",
+  "format": "docx",
+  "at_s": 30
  }
 ]

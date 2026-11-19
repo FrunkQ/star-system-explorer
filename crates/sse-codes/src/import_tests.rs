@@ -179,3 +179,42 @@ fn messy_pastes_and_unreadable_lines_say_what_happened() {
     assert_eq!(i.summary.impossible, 1);
     assert_eq!(i.summary.refused, 1);
 }
+
+#[test]
+fn exported_lines_read_back_as_the_imported_ones() {
+    let c = codes();
+    let sheet = c.sheet("traveller.world").unwrap();
+    let hints = sheet.import.clone().unwrap();
+    let i = lanternfall("lanternfall.tab");
+    let text = std::fs::read_to_string(root("tests/fixtures/sector/lanternfall.tab")).unwrap();
+    let original = sse_sector_io::parse_any(&text);
+    let mut out = sse_sector_io::SectorFile::default();
+    for w in &i.worlds {
+        let f = |es: &[crate::plan::Edit]| -> BTreeMap<String, Value> {
+            es.iter()
+                .map(|e| (e.field.clone(), e.value.clone()))
+                .collect()
+        };
+        let world = f(&w.world_edits);
+        let r = c.read(sheet, &Subject::new(world.clone()), None);
+        out.worlds
+            .push(world_line(&hints, &r, &world, &f(&w.system_edits)));
+    }
+    let written = sse_sector_io::write(sse_sector_io::Format::T5Tab, &out);
+    let back = sse_sector_io::parse_any(&written);
+    assert_eq!(back.worlds.len(), 12);
+    for (a, b) in original.worlds.iter().zip(&back.worlds) {
+        assert_eq!(
+            (&a.hex, &a.name, &a.uwp, &a.zone, &a.stars),
+            (&b.hex, &b.name, &b.uwp, &b.zone, &b.stars)
+        );
+        let mut ab = a.bases.clone();
+        ab.sort();
+        let mut bb = b.bases.clone();
+        bb.sort();
+        assert_eq!(ab, bb, "{}", a.name);
+        // PBG: the population digit is kept; counts come from the facts
+        // here (no grown system), so only the first digit is compared.
+        assert_eq!(&a.pbg[..1], &b.pbg[..1], "{}", a.name);
+    }
+}

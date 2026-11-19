@@ -72,3 +72,22 @@ Status: built (19 Nov 2026), new crate `crates/sse-sector-io`. Build plan row X3
 - Check: `a_sector_imports_as_grown_systems` (kernel) imports all 12 Lanternfall worlds as grown systems. Every main world reads back its listed UWP through `codes`, and the systems are listed. It takes about 3 s in a debug build.
 - Limits: there is no progress reporting or job split yet, so a full 32 x 40 sector in one call is slow. It should become a job (`start_job`), or the screen should grow per subsector. Systems sit at their map hex only: no 3D placement yet.
 - Map positions (handoff 7A part 3): each imported system also gets authored `map.x_pc`, `map.y_pc` and `map.z_pc`. One hex is one parsec, even columns sit half a hex lower, and a small deterministic offset (up to ±0.25 pc, stream `codes.map_depth.v1`) is added across the plane so the sky and 3D views have depth. Positions are measured from the sector's corner. Placing sectors relative to each other (Travellermap sector coordinates from the metadata) is not done yet. Check: neighbouring hexes are exactly 1 pc apart. Golden `contract.jsonl`: the two `sector_import` lines changed because they now carry these facts.
+
+## Export (19 Nov, evening)
+
+- `sse_codes::import::world_line(hints, reading, world, system)` rebuilds a
+  sector line from a live code reading: hex, name, stars and sector from the
+  system's `map.*` facts, UWP and PBG from the sheet's lines, remarks from
+  the listed groups, bases, zone and allegiance from the pack's facts.
+- Kernel op `export_sector {scope, format, sheet?, at_s}` writes every mapped
+  system (`map.hex`) under `scope` as `t5_tab`, `sec` or `uwp_lines`. The main
+  world is the body carrying `provenance.code` (or tagged `main_world`);
+  systems without one are listed in `skipped`. Import now also keeps the
+  sector abbreviation as `map.sector_abbr` so the T5 Sector column survives.
+- Codes are read, not copied: a grown system writes what it is now, so PBG
+  belts and giants and derived remarks can differ from the imported line
+  (Lanternfall's Ashgrove came in as PBG 712 and goes out as 703, gaining
+  "Pr"). That is the honest answer, and the UWP itself round-trips.
+- Tests: `exported_lines_read_back_as_the_imported_ones` (sse-codes) and the
+  tail of `a_sector_imports_as_grown_systems` (kernel). Contract gains two
+  lines (one export, one bad format); the hello line moves for the new op.

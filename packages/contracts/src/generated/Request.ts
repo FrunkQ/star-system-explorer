@@ -53,4 +53,4 @@ arrives_at_s?: bigint, } | { "op": "set_kept", address: string, kind: string, va
  * pinned to the coded main world, giant and belt counts searched),
  * adopt it, and write the coded facts on the grown main world.
  */
-grow: boolean, at_s: bigint, };
+grow: boolean, at_s: bigint, } | { "op": "export_sector", scope: string, format: string, sheet?: string, at_s: bigint, };

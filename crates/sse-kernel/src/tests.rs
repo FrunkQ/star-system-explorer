@@ -1623,4 +1623,21 @@ fn a_sector_imports_as_grown_systems() {
     }
     let h = send(serde_json::json!({"op": "systems"}));
     assert!(h.to_string().contains("u:kestrel/sys:0912"), "{h}");
+    // And back out: every grown system writes the line it came in on.
+    let e = send(
+        serde_json::json!({"op": "export_sector", "scope": "u:kestrel", "format": "t5_tab", "at_s": 0}),
+    );
+    assert_eq!(e["type"], "sector_export", "{e}");
+    assert_eq!(e["written"], 12, "{e}");
+    let out = e["text"].as_str().unwrap();
+    for w in worlds {
+        let raw = w["raw"].as_str().unwrap();
+        let f: Vec<&str> = raw.split('\t').collect();
+        let (hex, uwp) = (f[2], f[4]);
+        assert!(
+            out.lines()
+                .any(|l| l.starts_with(&format!("Kstr\tF\t{hex}\t")) && l.contains(uwp)),
+            "{hex} {uwp} in\n{out}"
+        );
+    }
 }

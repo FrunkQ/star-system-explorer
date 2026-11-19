@@ -240,9 +240,16 @@ pub fn import(
             out.system_edits
                 .push(edit("map.sector", Value::Text(s.clone())));
         }
+        if let Some(s) = &file.abbreviation {
+            out.system_edits
+                .push(edit("map.sector_abbr", Value::Text(s.clone())));
+        }
         if !w.name.is_empty() {
             out.system_edits
                 .push(edit("name", Value::Text(w.name.clone())));
+        }
+        if !w.stars.is_empty() {
+            out.system_edits.push(edit("map.stars", texts(&w.stars)));
         }
         // Code lines: a line holding '?' is not a pin (unknown is not a value).
         let mut lines: Vec<(String, String)> = Vec::new();
@@ -393,4 +400,86 @@ pub fn import(
             .collect(),
         summary,
     })
+}
+
+/// The world line for one coded main world, the other way round (export):
+/// its code lines and rule groups from a reading, the referee's columns
+/// from its facts, and the map facts of its system.
+pub fn world_line(
+    hints: &ImportHints,
+    reading: &crate::Reading,
+    world: &BTreeMap<String, Value>,
+    system: &BTreeMap<String, Value>,
+) -> WorldLine {
+    let text = |f: &BTreeMap<String, Value>, k: &str| match f.get(k) {
+        Some(Value::Text(t)) => t.clone(),
+        _ => String::new(),
+    };
+    let mut w = WorldLine {
+        hex: text(system, "map.hex"),
+        name: {
+            let n = text(world, "name");
+            if n.is_empty() {
+                text(system, "name")
+            } else {
+                n
+            }
+        },
+        stars: match system.get("map.stars") {
+            Some(Value::Array(a)) => a
+                .iter()
+                .filter_map(|v| match v {
+                    Value::Text(t) => Some(t.clone()),
+                    _ => None,
+                })
+                .collect(),
+            _ => vec![],
+        },
+        allegiance: text(world, &format!("{}allegiance", hints.fact_prefix)),
+        ..Default::default()
+    };
+    for (layout, col) in &hints.lines {
+        if let Some(l) = reading.line(layout) {
+            match col.as_str() {
+                "uwp" => w.uwp = l.to_string(),
+                "pbg" => w.pbg = l.to_string(),
+                _ => {}
+            }
+        }
+    }
+    for (group, col) in &hints.listed {
+        if col == "remarks" {
+            if let Some(g) = reading.groups.iter().find(|g| &g.id == group) {
+                w.remarks = g.codes().iter().map(|c| c.to_string()).collect();
+            }
+        }
+    }
+    for cf in &hints.facts {
+        let items: Vec<String> = if let Some((pre, post)) = cf.field.split_once("{}") {
+            world
+                .iter()
+                .filter(|(k, v)| {
+                    **v == Value::Bool(true) && k.starts_with(pre) && k.ends_with(post)
+                })
+                .map(|(k, _)| k[pre.len()..k.len() - post.len()].to_string())
+                .collect()
+        } else {
+            match world.get(&cf.field) {
+                Some(Value::Text(t)) => vec![t.clone()],
+                _ => vec![],
+            }
+        };
+        match cf.column.as_str() {
+            "zone" => {
+                w.zone = items
+                    .first()
+                    .and_then(|z| z.chars().next())
+                    .filter(|c| *c == 'A' || *c == 'R')
+            }
+            "bases" => w.bases = items,
+            "remarks" => w.remarks.extend(items),
+            _ => {}
+        }
+    }
+    w
 }

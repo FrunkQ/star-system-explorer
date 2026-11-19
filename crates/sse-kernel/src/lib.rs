@@ -2023,6 +2023,58 @@ impl Kernel {
                     state_hash,
                 }
             }
+            Request::ExportSector {
+                scope,
+                format,
+                sheet,
+                at_s,
+            } => {
+                use sse_sector_io::Format;
+                let fmt = match format.as_str() {
+                    "t5_tab" => Format::T5Tab,
+                    "sec" => Format::Sec,
+                    "uwp_lines" => Format::UwpLines,
+                    f => {
+                        return Err(err(
+                            "bad_format",
+                            format!("format {f:?}: use t5_tab, sec or uwp_lines"),
+                        ))
+                    }
+                };
+                let scope: Address = scope
+                    .parse()
+                    .map_err(|e| err("bad_address", format!("{e}")))?;
+                let sheet = match &sheet {
+                    Some(id) => self.codes.sheet(id).ok_or_else(|| {
+                        err(
+                            "unknown_sheet",
+                            format!("no code sheet {id:?} in the stack"),
+                        )
+                    })?,
+                    None => self
+                        .codes
+                        .sheets
+                        .iter()
+                        .find(|s| s.import.is_some())
+                        .ok_or_else(|| {
+                            err(
+                                "no_code_sheets",
+                                "no code sheet in the stack writes sector files",
+                            )
+                        })?,
+                };
+                let hints = sheet.import.clone().expect("chosen for its import hints");
+                let u = self
+                    .universe
+                    .as_ref()
+                    .ok_or_else(|| err("no_universe", "open a universe first"))?;
+                let (file, skipped) = export_at(&self.codes, sheet, &hints, u, &scope, at_s);
+                Response::SectorExport {
+                    text: sse_sector_io::write(fmt, &file),
+                    written: file.worlds.len() as u32,
+                    skipped,
+                }
+            }
             Request::Manifest => {
                 let m = self.universe()?.manifest();
                 Response::Manifest {
@@ -2104,4 +2156,81 @@ fn codes_at(
         out.push(serde_json::json!({"address": a.to_string(), "reading": r}));
     }
     out
+}
+
+/// `export_sector`: one world line per mapped system under `scope`. The
+/// file takes its sector name and abbreviation from the first system that
+/// has them (a scope spanning two sectors writes one file).
+fn export_at(
+    codes: &sse_codes::Codes,
+    sheet: &sse_codes::CodeSheet,
+    hints: &sse_codes::import::ImportHints,
+    u: &Universe,
+    scope: &Address,
+    at_s: i64,
+) -> (sse_sector_io::SectorFile, Vec<String>) {
+    let state = u.chronicle.state_at(UniverseTime::seconds(at_s));
+    let mut file = sse_sector_io::SectorFile::default();
+    let mut skipped = Vec::new();
+    for (sys, sf) in state
+        .facts
+        .iter()
+        .filter(|(a, f)| scope.contains(a) && a.last().kind() == "sys" && f.contains_key("map.hex"))
+    {
+        let mut bodies: Vec<sse_sift::Subject> = Vec::new();
+        let mut main: Option<usize> = None;
+        for (a, f) in state
+            .facts
+            .iter()
+            .filter(|(a, _)| sys.contains(a) && *a != sys)
+        {
+            let mut facts = BTreeMap::new();
+            let mut tags = std::collections::BTreeSet::new();
+            for (k, v) in f {
+                match k.strip_prefix(TAG_FIELD) {
+                    Some(t) if *v == Value::Bool(true) => {
+                        tags.insert(t.to_string());
+                    }
+                    Some(_) => {}
+                    None => {
+                        facts.insert(k.clone(), v.clone());
+                    }
+                }
+            }
+            if main.is_none()
+                && (facts.contains_key("provenance.code") || tags.contains("main_world"))
+            {
+                main = Some(bodies.len());
+            }
+            bodies.push(sse_sift::Subject {
+                address: Some(a.clone()),
+                parent: a
+                    .parent()
+                    .and_then(|p| state.facts.get(&p).cloned())
+                    .unwrap_or_default(),
+                facts,
+                tags,
+                now_s: at_s,
+            });
+        }
+        let text = |k: &str| match sf.get(k) {
+            Some(Value::Text(t)) => Some(t.clone()),
+            _ => None,
+        };
+        file.name = file.name.take().or_else(|| text("map.sector"));
+        file.abbreviation = file.abbreviation.take().or_else(|| text("map.sector_abbr"));
+        let Some(m) = main else {
+            skipped.push(sys.to_string());
+            continue;
+        };
+        let r = codes.read(sheet, &bodies[m], Some(&bodies));
+        file.worlds.push(sse_codes::import::world_line(
+            hints,
+            &r,
+            &bodies[m].facts,
+            sf,
+        ));
+    }
+    file.worlds.sort_by(|a, b| a.hex.cmp(&b.hex));
+    (file, skipped)
 }

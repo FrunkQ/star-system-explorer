@@ -533,6 +533,18 @@ pub enum Request {
         grow: bool,
         at_s: i64,
     },
+    /// Write a campaign's mapped systems (those with `map.hex`) at or under
+    /// `scope` as a sector file (`format`: `t5_tab`, `sec`, `uwp_lines`):
+    /// each system's main world (the body carrying `provenance.code`, or
+    /// tagged `main_world`) read through the code sheet at `at_s`.
+    ExportSector {
+        scope: String,
+        format: String,
+        #[serde(default)]
+        #[ts(optional)]
+        sheet: Option<String>,
+        at_s: i64,
+    },
 }
 
 /// `adopt`'s formation request: the `run_formation` fields.
@@ -625,6 +637,7 @@ impl Request {
             Request::Rules => "rules",
             Request::Codes { .. } => "codes",
             Request::ImportSector { .. } => "import_sector",
+            Request::ExportSector { .. } => "export_sector",
         }
     }
 }
@@ -746,6 +759,11 @@ pub fn ops() -> Vec<OpInfo> {
             "import_sector",
             Cost::Light,
             "GM machine only; one code-sheet plan per world line; with grow, up to 6 pinned formation runs per world (heavy for a whole sector)",
+        ),
+        o(
+            "export_sector",
+            Cost::Light,
+            "GM machine only; one code reading per mapped system",
         ),
     ]
 }
@@ -1114,6 +1132,13 @@ pub enum Response {
         #[serde(default, skip_serializing_if = "Option::is_none")]
         #[ts(optional)]
         state_hash: Option<String>,
+    },
+    /// `export_sector`: the file's text, the systems written, and those
+    /// skipped (no main world found), by address.
+    SectorExport {
+        text: String,
+        written: u32,
+        skipped: Vec<String>,
     },
     Error {
         code: String,
