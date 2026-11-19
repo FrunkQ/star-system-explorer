@@ -10,6 +10,7 @@ pub mod contract;
 mod cosmos;
 mod descent;
 mod nav;
+mod orbits;
 pub mod protocol;
 mod survey;
 mod systems;
@@ -91,6 +92,59 @@ fn load_observe(ms: &[sse_pack::PackManifest]) -> Result<Observe, Vec<String>> {
         }
     }
     let triggers = sse_trigger::Rules::from_packs(&found)?;
+    let mut found = Vec::new();
+    for p in ms {
+        if let Some(v) = p.provides.other.get("templates") {
+            let j =
+                serde_json::to_value(v).map_err(|e| vec![format!("{}: templates: {e}", p.id)])?;
+            found.push((p.id.clone(), p.version.to_string(), j));
+        }
+    }
+    let templates = sse_trigger::templates::Templates::from_packs(&found)?;
+    let mut issues = templates.check(&record);
+    issues.extend(triggers.check_templates(&templates));
+    if !issues.is_empty() {
+        return Err(issues);
+    }
+    let mut found = Vec::new();
+    for p in ms {
+        if let Some(v) = p.provides.other.get("intents") {
+            let j = serde_json::to_value(v).map_err(|e| vec![format!("{}: intents: {e}", p.id)])?;
+            found.push((p.id.clone(), j));
+        }
+    }
+    let intents = sse_trigger::intents::IntentRegistry::from_packs(&found)?;
+    let mut problems = vec![];
+    for (rule, kind) in triggers.intent_kinds() {
+        match intents.get(&kind) {
+            Some(k) if k.applied_by == sse_trigger::intents::AppliedBy::Record => {}
+            Some(_) => problems.push(format!(
+                "rule {rule}: intent {kind} is a built-in kind, applied by the kernel or session, not taken up by rules"
+            )),
+            None => problems.push(format!(
+                "rule {rule}: intent {kind} is not declared (provides.other.intents)"
+            )),
+        }
+    }
+    let mut found = Vec::new();
+    for p in ms {
+        if let Some(v) = p.provides.other.get("programs") {
+            let j =
+                serde_json::to_value(v).map_err(|e| vec![format!("{}: programs: {e}", p.id)])?;
+            found.push((p.id.clone(), j));
+        }
+    }
+    let programs = sse_trigger::programs::Programs::from_packs(&found)?;
+    for (prog, kind) in programs.sends() {
+        if intents.get(&kind).is_none() {
+            problems.push(format!(
+                "program {prog}: sends intent {kind}, which is not declared"
+            ));
+        }
+    }
+    if !problems.is_empty() {
+        return Err(problems);
+    }
     let views: Vec<String> = setup
         .as_ref()
         .map(|s| s.views.iter().map(|v| v.id.clone()).collect())
@@ -99,12 +153,17 @@ fn load_observe(ms: &[sse_pack::PackManifest]) -> Result<Observe, Vec<String>> {
     if !issues.is_empty() {
         return Err(issues);
     }
+    let calendar = orbits::load_calendar(ms)?;
     Ok(Observe {
         setup,
         rules,
         sifters,
         record,
         triggers,
+        calendar,
+        intents,
+        templates,
+        programs,
     })
 }
 
@@ -207,6 +266,14 @@ struct Observe {
     record: sse_record::Registry,
     /// Triggers and effects (`provides.other.triggers`, J4).
     triggers: sse_trigger::Rules,
+    /// The top pack's calendar (`provides.other.calendar`).
+    calendar: Option<orbits::Calendar>,
+    /// Intent kinds: built in and from packs (`provides.other.intents`, J5).
+    intents: sse_trigger::intents::IntentRegistry,
+    /// Templates (`provides.other.templates`, J7).
+    templates: sse_trigger::templates::Templates,
+    /// Programs (`provides.other.programs`, J6).
+    programs: sse_trigger::programs::Programs,
 }
 
 pub struct Kernel {
@@ -225,6 +292,13 @@ pub struct Kernel {
 impl Default for Kernel {
     fn default() -> Self {
         Self::new()
+    }
+}
+
+fn arr(v: serde_json::Value) -> Vec<serde_json::Value> {
+    match v {
+        serde_json::Value::Array(a) => a,
+        _ => vec![],
     }
 }
 
@@ -359,6 +433,390 @@ impl Kernel {
             Ok(r) => r,
             Err(r) => r,
         }
+    }
+
+    /// Carry out an applied intent: a built-in becomes its kernel request
+    /// (the response is returned), a session kind is left to the session, and
+    /// a pack kind goes to the record as `intent.<kind>`.
+    fn apply_intent(
+        &mut self,
+        seat: &str,
+        intent: &serde_json::Value,
+        at_s: i64,
+        causes: Vec<ContentHash>,
+    ) -> Result<(String, Option<serde_json::Value>), Response> {
+        use sse_trigger::intents::{self as si, AppliedBy};
+        let reg = self.observe.intents.clone();
+        let k = reg.check(intent).map_err(|e| err("bad_intent", e))?.clone();
+        Ok(match k.applied_by {
+            AppliedBy::Session => ("session".into(), None),
+            AppliedBy::Kernel => {
+                let req = si::to_request(intent, seat, at_s).expect("a kernel kind");
+                let req: Request =
+                    serde_json::from_value(req).map_err(|e| err("bad_intent", e.to_string()))?;
+                let r = self.dispatch(req)?;
+                (
+                    "kernel".into(),
+                    Some(serde_json::to_value(&r).expect("plain")),
+                )
+            }
+            AppliedBy::Record => {
+                let u = self.universe()?;
+                let root = u.root.clone();
+                let id = si::record_intent(&reg, &mut u.record, &root, seat, intent, at_s, causes)
+                    .map_err(|e| err("chronicle", e))?;
+                (
+                    "record".into(),
+                    Some(serde_json::json!({"event_id": id.hex(), "record_hash": record_hash(u)})),
+                )
+            }
+        })
+    }
+
+    /// One tick of every running program (J6), in address order.
+    fn programs_step(&mut self, at_s: i64) -> Result<Response, Response> {
+        use sse_trigger::programs as sp;
+        let ps = self.observe.programs.clone();
+        let reg = self.observe.intents.clone();
+        let (running, seats) = {
+            let u = self.universe()?;
+            (
+                sp::running(&u.record, at_s),
+                sse_trigger::intents::seats(&reg, &u.record),
+            )
+        };
+        let mut report = Vec::new();
+        for r in running.values() {
+            let a: Address = r.address.parse().expect("record addresses parse");
+            let mut line =
+                serde_json::json!({"address": r.address, "program": r.program, "from": r.state});
+            let Some(p) = ps.get(&r.program) else {
+                line["skipped"] = "the program is no longer in the stack".into();
+                report.push(line);
+                continue;
+            };
+            let d = &p.doc;
+            {
+                let u = self.universe()?;
+                if let Err(e) = sse_trigger::templates::may_run(
+                    &u.chronicle,
+                    &a,
+                    &r.program,
+                    UniverseTime::seconds(at_s),
+                ) {
+                    line["skipped"] = e.into();
+                    report.push(line);
+                    continue;
+                }
+            }
+            let Some(seat) = seats.iter().find(|s| s.id == r.seat).cloned() else {
+                line["skipped"] = format!("no seat {}", r.seat).into();
+                report.push(line);
+                continue;
+            };
+            // Sense: what the seat's audience has been shown, never the GM's truth.
+            let root = self.universe()?.root.to_string();
+            let scene = match self.dispatch(Request::Scene {
+                audience: seat.audience.clone(),
+                scope: root,
+                data_view: None,
+                at_s,
+                observe: None,
+            })? {
+                Response::Scene { scene, .. } => scene,
+                other => return Err(other),
+            };
+            let scene: sse_observe::scene::Scene =
+                serde_json::from_value(scene).expect("scenes round-trip");
+            let sensed: Vec<(Address, sse_sift::Subject)> = scene
+                .subjects
+                .iter()
+                .filter(|x| x.address != a)
+                .map(|x| {
+                    let mut f = BTreeMap::new();
+                    for fact in &x.facts {
+                        if let (Some(v), None) = (&fact.value, &fact.placeholder) {
+                            f.insert(fact.field.clone(), v.clone());
+                        }
+                    }
+                    let subj = sse_sift::Subject {
+                        address: Some(x.address.clone()),
+                        facts: f,
+                        tags: x.tags.iter().cloned().collect(),
+                        now_s: at_s,
+                        ..Default::default()
+                    };
+                    (x.address.clone(), subj)
+                })
+                .collect();
+            line["sensed"] = sensed.len().into();
+            // Think: follow transitions (the program knows itself), at most max_steps.
+            let mut state = r.state.clone();
+            let mut moves = 0u32;
+            let picked = loop {
+                let st = d.state(&state).expect("checked at load");
+                let picked = st
+                    .pick
+                    .as_ref()
+                    .and_then(|pk| sp::pick(pk, d, &sensed))
+                    .cloned();
+                if moves >= d.budget.max_steps {
+                    break picked;
+                }
+                let me = {
+                    let u = self.universe()?;
+                    sse_trigger::subjects(
+                        &u.chronicle,
+                        &u.record,
+                        &u.root,
+                        UniverseTime::seconds(at_s),
+                    )
+                    .remove(&a)
+                    .unwrap_or_default()
+                };
+                let mut me = sp::with_params(me, d);
+                me.now_s = at_s;
+                me.facts
+                    .insert("pick.found".into(), Value::Bool(picked.is_some()));
+                match st
+                    .transitions
+                    .iter()
+                    .find(|t| t.when.eval(&me, false).holds)
+                {
+                    Some(t) => {
+                        let to = t.to.clone();
+                        let u = self.universe()?;
+                        sp::write(
+                            &mut u.record,
+                            sp::kinds::STATE,
+                            &a,
+                            at_s,
+                            &[("program", &r.program), ("state", &to), ("from", &state)],
+                            &r.program,
+                        )
+                        .map_err(|e| err("chronicle", e))?;
+                        state = to;
+                        moves += 1;
+                    }
+                    None => break picked,
+                }
+            };
+            line["to"] = state.clone().into();
+            line["moves"] = moves.into();
+            if let Some(pk) = &picked {
+                line["picked"] = pk.to_string().into();
+            }
+            // Act: the state's intent, through the seat like any player's.
+            let st = d.state(&state).expect("checked at load");
+            if let Some(act) = &st.act {
+                if st.pick.is_some() && picked.is_none() {
+                    line["waiting"] = "nothing sensed fits the pick".into();
+                } else {
+                    let intent = sp::intent(act, d, &a, picked.as_ref());
+                    line["intent"] = intent.clone();
+                    let sent = self.dispatch(Request::SendIntent {
+                        seat: seat.id.clone(),
+                        intent,
+                        at_s,
+                        check_only: None,
+                    })?;
+                    if let Response::IntentSent {
+                        decision,
+                        applied_by,
+                        proposal,
+                        ..
+                    } = sent
+                    {
+                        line["decision"] = decision;
+                        if let Some(b) = applied_by {
+                            line["applied_by"] = b.into();
+                        }
+                        if let Some(p) = proposal {
+                            line["proposal"] = p.into();
+                        }
+                    }
+                }
+            }
+            report.push(line);
+        }
+        let rules = match self.dispatch(Request::RulesStep { at_s })? {
+            Response::RulesStepped { report, .. } => report,
+            other => return Err(other),
+        };
+        let u = self.universe()?;
+        Ok(Response::ProgramsStepped {
+            programs: report,
+            rules,
+            record_hash: record_hash(u),
+        })
+    }
+
+    /// The `sift` op: the stack's sifters over the campaign, or over one
+    /// audience's scene.
+    fn sift(
+        &mut self,
+        ids: Option<Vec<serde_json::Value>>,
+        audience: Option<String>,
+        scope: Option<String>,
+        at_s: i64,
+    ) -> Result<Response, Response> {
+        use sse_sift::TagState;
+        // Names pick stack sifters (none named: all of them); objects are inline.
+        let mut named = Vec::new();
+        let mut inline = Vec::new();
+        for v in ids.unwrap_or_default() {
+            match v {
+                serde_json::Value::String(id) => {
+                    let s = self
+                        .observe
+                        .sifters
+                        .iter()
+                        .find(|s| s.id == id)
+                        .ok_or_else(|| {
+                            err(
+                                "unknown_sifter",
+                                format!("no pack in the stack provides sifter {id}"),
+                            )
+                        })?;
+                    named.push(s.clone());
+                }
+                v => inline.push(
+                    serde_json::from_value::<sse_sift::Sifter>(v)
+                        .map_err(|e| err("bad_sifter", format!("sifter: {e}")))?,
+                ),
+            }
+        }
+        let sifters: Vec<sse_sift::Sifter> = if named.is_empty() {
+            self.observe.sifters.iter().cloned().chain(inline).collect()
+        } else {
+            named.into_iter().chain(inline).collect()
+        };
+        let root = self
+            .universe
+            .as_ref()
+            .ok_or_else(|| err("no_universe", "open a universe first"))?
+            .root
+            .clone();
+        let scope = match scope {
+            None => root.clone(),
+            Some(s) => in_universe(&root, &s)?,
+        };
+        let now = UniverseTime::seconds(at_s);
+        let tag_state = |tag: &str, rule: &str| TagState {
+            tag: tag.to_string(),
+            rule: rule.to_string(),
+            evidence: Vec::new(),
+        };
+        let gm = audience
+            .as_deref()
+            .is_none_or(|a| a == sse_observe::scene::GM);
+        let mut skipped = Vec::new();
+        let sifters_run: Vec<String> = sifters.iter().map(|s| s.id.clone()).collect();
+        let hits = if gm {
+            let u = self.universe.as_ref().expect("checked");
+            let mut state = u.chronicle.state_at(now);
+            for (a, f) in u.record.state_at(now).facts {
+                state.facts.entry(a).or_default().extend(f);
+            }
+            // Tags as the scene sees them: rule tags (with their evidence) plus
+            // the GM's `tag.*` facts, with the fact itself as evidence.
+            let mut tags: BTreeMap<Address, BTreeMap<String, TagState>> = BTreeMap::new();
+            for (a, f) in &state.facts {
+                let subject = sse_sift::Subject {
+                    address: Some(a.clone()),
+                    facts: f.clone(),
+                    parent: a
+                        .parent()
+                        .and_then(|p| state.facts.get(&p).cloned())
+                        .unwrap_or_default(),
+                    now_s: at_s,
+                    ..Default::default()
+                };
+                let mut t = self.observe.rules.apply(&subject, &BTreeMap::new());
+                for (k, v) in f {
+                    if let (Some(tag), Value::Bool(true)) = (k.strip_prefix(TAG_FIELD), v) {
+                        t.entry(tag.to_string()).or_insert_with(|| TagState {
+                            tag: tag.to_string(),
+                            rule: "authored".into(),
+                            evidence: vec![sse_sift::Read {
+                                field: k.clone(),
+                                value: v.clone(),
+                            }],
+                        });
+                    }
+                }
+                if !t.is_empty() {
+                    tags.insert(a.clone(), t);
+                }
+            }
+            let clouds = BTreeMap::new();
+            let w = sse_sift::World {
+                state: &state,
+                chronicle: Some(&u.chronicle),
+                tags: &tags,
+                clouds: &clouds,
+                now,
+            };
+            sse_sift::sift(&sifters, &w, &scope)
+        } else {
+            let audience = audience.clone().expect("not the GM");
+            let scene = match self.dispatch(Request::Scene {
+                audience: audience.clone(),
+                scope: scope.to_string(),
+                data_view: None,
+                at_s,
+                observe: None,
+            })? {
+                Response::Scene { scene, .. } => scene,
+                other => return Err(other),
+            };
+            let scene: sse_observe::scene::Scene =
+                serde_json::from_value(scene).expect("scenes round-trip");
+            let mut state = sse_chronicle::State::default();
+            let mut tags: BTreeMap<Address, BTreeMap<String, TagState>> = BTreeMap::new();
+            for sub in &scene.subjects {
+                let f = state.facts.entry(sub.address.clone()).or_default();
+                for x in &sub.facts {
+                    if let (Some(v), None) = (&x.value, &x.placeholder) {
+                        f.insert(x.field.clone(), v.clone());
+                    }
+                }
+                for t in &sub.tags {
+                    tags.entry(sub.address.clone())
+                        .or_default()
+                        .insert(t.clone(), tag_state(t, "shown"));
+                }
+            }
+            let run: Vec<sse_sift::Sifter> = sifters
+                .into_iter()
+                .filter(|s| {
+                    let facts = matches!(s.pattern, sse_sift::Pattern::Facts { .. });
+                    if !facts {
+                        skipped.push(s.id.clone());
+                    }
+                    facts
+                })
+                .collect();
+            let clouds = BTreeMap::new();
+            let w = sse_sift::World {
+                state: &state,
+                chronicle: None,
+                tags: &tags,
+                clouds: &clouds,
+                now,
+            };
+            sse_sift::sift(&run, &w, &scope)
+        };
+        Ok(Response::Sifted {
+            scope: scope.to_string(),
+            sifters: sifters_run
+                .into_iter()
+                .filter(|id| !skipped.contains(id))
+                .collect(),
+            hits: serde_json::to_value(hits).expect("hits are plain data"),
+            audience: if gm { None } else { audience },
+            skipped,
+        })
     }
 
     fn universe(&mut self) -> Result<&mut Universe, Response> {
@@ -1158,77 +1616,6 @@ impl Kernel {
                     place_phi,
                 })?;
                 Response::GalaxyCharted { chart }
-            }
-            Request::Sift {
-                scope,
-                at_s,
-                sifters,
-            } => {
-                let u = self
-                    .universe
-                    .as_ref()
-                    .ok_or_else(|| err("no_universe", "open a universe first"))?;
-                let scope: Address = match scope {
-                    Some(t) => t.parse().map_err(|e| err("bad_address", format!("{e}")))?,
-                    None => u.root.clone(),
-                };
-                let inline: Vec<sse_sift::Sifter> = sifters
-                    .unwrap_or_default()
-                    .into_iter()
-                    .map(serde_json::from_value)
-                    .collect::<Result<_, _>>()
-                    .map_err(|e| err("bad_sifter", format!("sifter: {e}")))?;
-                let all: Vec<sse_sift::Sifter> =
-                    self.observe.sifters.iter().cloned().chain(inline).collect();
-                let now = UniverseTime::seconds(at_s.unwrap_or(i64::MAX));
-                let state = u.chronicle.state_at(now);
-                // Tags as the scene sees them: rule tags plus `tag.*` facts.
-                let mut tags: BTreeMap<Address, BTreeMap<String, sse_sift::TagState>> =
-                    BTreeMap::new();
-                for (a, f) in &state.facts {
-                    let subject = sse_sift::Subject {
-                        address: Some(a.clone()),
-                        facts: f.clone(),
-                        parent: a
-                            .parent()
-                            .and_then(|p| state.facts.get(&p).cloned())
-                            .unwrap_or_default(),
-                        now_s: now.s,
-                        ..Default::default()
-                    };
-                    let mut t = self.observe.rules.apply(&subject, &BTreeMap::new());
-                    // A `tag.*` fact the GM set is a tag too, with itself as evidence.
-                    for (k, v) in f {
-                        if let (Some(tag), Value::Bool(true)) = (k.strip_prefix(TAG_FIELD), v) {
-                            t.entry(tag.to_string())
-                                .or_insert_with(|| sse_sift::TagState {
-                                    tag: tag.to_string(),
-                                    rule: "authored".into(),
-                                    evidence: vec![sse_sift::Read {
-                                        field: k.clone(),
-                                        value: v.clone(),
-                                    }],
-                                });
-                        }
-                    }
-                    if !t.is_empty() {
-                        tags.insert(a.clone(), t);
-                    }
-                }
-                let clouds = BTreeMap::new();
-                let w = sse_sift::World {
-                    state: &state,
-                    chronicle: Some(&u.chronicle),
-                    tags: &tags,
-                    clouds: &clouds,
-                    now,
-                };
-                let hits = sse_sift::sift(&all, &w, &scope);
-                Response::Sifted {
-                    scope: scope.to_string(),
-                    sifters: all.iter().map(|s| s.id.clone()).collect(),
-                    hits: serde_json::to_value(hits).expect("plain data"),
-                }
             }
             Request::WindowView {
                 fixture,
@@ -2088,6 +2475,7 @@ impl Kernel {
             }
             Request::RulesStep { at_s } => {
                 let (rules, reg) = (self.observe.triggers.clone(), self.observe.record.clone());
+                let tpl = self.observe.templates.clone();
                 let campaign = self.observe.setup.as_ref().map(|s| s.campaign.clone());
                 let u = self.universe()?;
                 let root = u.root.clone();
@@ -2099,6 +2487,7 @@ impl Kernel {
                             registry: &reg,
                             campaign: campaign.as_ref(),
                             root: &root,
+                            templates: &tpl,
                         },
                         at_s,
                     )
@@ -2124,6 +2513,7 @@ impl Kernel {
                 at_s,
             } => {
                 let (rules, reg) = (self.observe.triggers.clone(), self.observe.record.clone());
+                let tpl = self.observe.templates.clone();
                 let campaign = self.observe.setup.as_ref().map(|s| s.campaign.clone());
                 let u = self.universe()?;
                 let root = u.root.clone();
@@ -2135,6 +2525,7 @@ impl Kernel {
                             registry: &reg,
                             campaign: campaign.as_ref(),
                             root: &root,
+                            templates: &tpl,
                         },
                         &proposal,
                         approve,
@@ -2158,6 +2549,7 @@ impl Kernel {
                 let approval: sse_trigger::Approval = serde_json::from_value(approval)
                     .map_err(|e| err("rules", format!("approval: {e}")))?;
                 let (rules, reg) = (self.observe.triggers.clone(), self.observe.record.clone());
+                let tpl = self.observe.templates.clone();
                 let u = self.universe()?;
                 let root = u.root.clone();
                 let id = rules
@@ -2168,6 +2560,7 @@ impl Kernel {
                             registry: &reg,
                             campaign: None,
                             root: &root,
+                            templates: &tpl,
                         },
                         &rule,
                         &approval,
@@ -2187,6 +2580,366 @@ impl Kernel {
                     trail: sse_trigger::trail(&u.record),
                 }
             }
+            Request::Intents => {
+                let reg = self.observe.intents.clone();
+                let kinds = serde_json::to_value(&reg.kinds).expect("plain");
+                let (seats, pending) = match self.universe.as_ref() {
+                    Some(u) => (
+                        serde_json::to_value(sse_trigger::intents::seats(&reg, &u.record))
+                            .expect("plain"),
+                        serde_json::to_value(sse_trigger::intents::pending(&u.record))
+                            .expect("plain"),
+                    ),
+                    None => (serde_json::json!([]), serde_json::json!([])),
+                };
+                Response::IntentsListed {
+                    kinds: arr(kinds),
+                    seats: arr(seats),
+                    pending: arr(pending),
+                }
+            }
+            Request::SetSeats { seats, at_s } => {
+                let reg = self.observe.intents.clone();
+                let seats: Vec<sse_trigger::intents::Seat> =
+                    serde_json::from_value(serde_json::Value::Array(seats))
+                        .map_err(|e| err("bad_seats", e.to_string()))?;
+                let u = self.universe()?;
+                let id =
+                    sse_trigger::intents::set_seats(&reg, &mut u.record, &u.root, &seats, at_s)
+                        .map_err(|e| err("bad_seats", e))?;
+                Response::SeatsSet {
+                    event_id: id.hex(),
+                    record_hash: record_hash(u),
+                }
+            }
+            Request::SendIntent {
+                seat,
+                intent,
+                at_s,
+                check_only,
+            } => {
+                use sse_trigger::intents as si;
+                let reg = self.observe.intents.clone();
+                let u = self.universe()?;
+                let s = si::seats(&reg, &u.record)
+                    .into_iter()
+                    .find(|x| x.id == seat)
+                    .ok_or_else(|| err("unknown_seat", format!("no seat {seat}")))?;
+                let valid = si::validity(&reg, &intent, &u.chronicle, &u.record, &u.root, at_s);
+                let decision = si::decide(&reg, &s, &intent, valid);
+                if check_only.unwrap_or(false) {
+                    return Ok(Response::IntentSent {
+                        decision: serde_json::to_value(&decision).expect("plain"),
+                        applied_by: None,
+                        proposal: None,
+                        applied: None,
+                    });
+                }
+                match decision {
+                    si::Decision::Refuse { .. } => Response::IntentSent {
+                        decision: serde_json::to_value(&decision).expect("plain"),
+                        applied_by: None,
+                        proposal: None,
+                        applied: None,
+                    },
+                    si::Decision::AskGm => {
+                        let root = u.root.clone();
+                        let id = si::propose(&reg, &mut u.record, &root, &s, &intent, at_s)
+                            .map_err(|e| err("chronicle", e))?;
+                        Response::IntentSent {
+                            decision: serde_json::to_value(&decision).expect("plain"),
+                            applied_by: None,
+                            proposal: Some(id.hex()),
+                            applied: None,
+                        }
+                    }
+                    si::Decision::Apply => {
+                        let (by, applied) = self.apply_intent(&s.id, &intent, at_s, vec![])?;
+                        Response::IntentSent {
+                            decision: serde_json::to_value(&decision).expect("plain"),
+                            applied_by: Some(by),
+                            proposal: None,
+                            applied,
+                        }
+                    }
+                }
+            }
+            Request::IntentDecide {
+                proposal,
+                approve,
+                at_s,
+            } => {
+                let u = self.universe()?;
+                let at = at_s.unwrap_or(i64::MIN);
+                let (p, id) = sse_trigger::intents::answer(&mut u.record, &proposal, approve, at)
+                    .map_err(|e| err("unknown_proposal", e))?;
+                let at = at_s.unwrap_or(p.at_s);
+                let (applied_by, applied) = if approve {
+                    let (by, a) = self.apply_intent(&p.seat, &p.intent, at, vec![id])?;
+                    (Some(by), a)
+                } else {
+                    (None, None)
+                };
+                Response::IntentDecided {
+                    event_id: id.hex(),
+                    seat: p.seat,
+                    intent: p.intent,
+                    applied_by,
+                    applied,
+                }
+            }
+            Request::Templates => Response::TemplatesListed {
+                templates: arr(
+                    serde_json::to_value(&self.observe.templates.templates).expect("plain")
+                ),
+            },
+            Request::Create {
+                template,
+                under,
+                key,
+                name,
+                at_s,
+            } => {
+                let t = self
+                    .observe
+                    .templates
+                    .get(&template)
+                    .ok_or_else(|| err("unknown_template", format!("no template {template}")))?
+                    .clone();
+                let reg = self.observe.record.clone();
+                let u = self.universe()?;
+                let under = in_universe(&u.root, &under)?;
+                let (c, _) = sse_trigger::templates::create(
+                    &mut u.chronicle,
+                    &mut u.record,
+                    &reg,
+                    &u.root,
+                    &t,
+                    &under,
+                    key.as_deref(),
+                    name.as_deref(),
+                    UniverseTime::seconds(at_s),
+                    vec![],
+                )
+                .map_err(|e| err("create_refused", e))?;
+                Response::Created {
+                    address: c.address,
+                    event_id: c.event,
+                    kept: c.kept,
+                    state_hash: latest_hash(&u.chronicle),
+                    record_hash: record_hash(u),
+                }
+            }
+            Request::Retire {
+                address,
+                reason,
+                at_s,
+            } => {
+                let u = self.universe()?;
+                let a = in_universe(&u.root, &address)?;
+                let id = sse_trigger::templates::retire(
+                    &mut u.chronicle,
+                    &a,
+                    reason.as_deref(),
+                    UniverseTime::seconds(at_s),
+                    &Publisher::new("gm", "retire", "1"),
+                )
+                .map_err(|e| err("retire_refused", e))?;
+                Response::Retired {
+                    event_id: id.hex(),
+                    state_hash: latest_hash(&u.chronicle),
+                }
+            }
+            Request::Sift {
+                sifters,
+                audience,
+                scope,
+                at_s,
+            } => self.sift(sifters, audience, scope, at_s.unwrap_or(i64::MAX))?,
+            Request::Programs { at_s } => {
+                let ps = self.observe.programs.clone();
+                let u = self.universe()?;
+                let running = sse_trigger::programs::running(&u.record, at_s.unwrap_or(i64::MAX));
+                Response::ProgramsListed {
+                    programs: ps
+                        .programs
+                        .iter()
+                        .map(|p| serde_json::to_value(p).expect("plain"))
+                        .collect(),
+                    limit: ps.limit as u32,
+                    running: running
+                        .values()
+                        .map(|r| serde_json::to_value(r).expect("plain"))
+                        .collect(),
+                }
+            }
+            Request::AttachProgram {
+                address,
+                program,
+                seat,
+                at_s,
+            } => {
+                use sse_trigger::programs as sp;
+                let ps = self.observe.programs.clone();
+                let reg = self.observe.intents.clone();
+                let u = self.universe()?;
+                let a = in_universe(&u.root, &address)?;
+                let p = ps.get(&program).ok_or_else(|| {
+                    err(
+                        "unknown_program",
+                        format!("no pack in the stack provides program {program}"),
+                    )
+                })?;
+                sse_trigger::templates::may_run(
+                    &u.chronicle,
+                    &a,
+                    &program,
+                    UniverseTime::seconds(at_s),
+                )
+                .map_err(|e| err("program_refused", e))?;
+                let s = sse_trigger::intents::seats(&reg, &u.record)
+                    .into_iter()
+                    .find(|x| x.id == seat)
+                    .ok_or_else(|| err("unknown_seat", format!("no seat {seat}")))?;
+                if s.program.as_deref() != Some(program.as_str()) {
+                    return Err(err(
+                        "program_refused",
+                        format!("seat {seat} is not a program seat for {program}"),
+                    ));
+                }
+                let running = sp::running(&u.record, at_s);
+                if running.contains_key(&a.to_string()) {
+                    return Err(err(
+                        "program_refused",
+                        format!("{a} already runs a program"),
+                    ));
+                }
+                if running.len() >= ps.limit {
+                    return Err(err(
+                        "program_limit",
+                        format!("the campaign allows {} running programs", ps.limit),
+                    ));
+                }
+                let id = sp::write(
+                    &mut u.record,
+                    sp::kinds::ATTACHED,
+                    &a,
+                    at_s,
+                    &[
+                        ("program", &program),
+                        ("seat", &seat),
+                        ("state", &p.doc.start),
+                    ],
+                    &program,
+                )
+                .map_err(|e| err("chronicle", e))?;
+                Response::ProgramAttached {
+                    event_id: id.hex(),
+                    record_hash: record_hash(u),
+                }
+            }
+            Request::DetachProgram { address, at_s } => {
+                use sse_trigger::programs as sp;
+                let u = self.universe()?;
+                let a = in_universe(&u.root, &address)?;
+                let r = sp::running(&u.record, at_s)
+                    .remove(&a.to_string())
+                    .ok_or_else(|| err("program_refused", format!("{a} runs no program")))?;
+                let id = sp::write(
+                    &mut u.record,
+                    sp::kinds::DETACHED,
+                    &a,
+                    at_s,
+                    &[("program", &r.program)],
+                    &r.program,
+                )
+                .map_err(|e| err("chronicle", e))?;
+                Response::ProgramDetached {
+                    event_id: id.hex(),
+                    record_hash: record_hash(u),
+                }
+            }
+            Request::ProgramsStep { at_s } => self.programs_step(at_s)?,
+            Request::OrbitsAt {
+                system,
+                at_s,
+                bodies,
+            } => {
+                if at_s.is_empty() || at_s.len() > orbits::MAX_TIMES {
+                    return Err(err(
+                        "bad_request",
+                        format!("at_s needs 1 to {} times", orbits::MAX_TIMES),
+                    ));
+                }
+                let a: Address = system
+                    .parse()
+                    .map_err(|e| err("bad_address", format!("{e}")))?;
+                let (facts, seed) = match &bodies {
+                    Some(b) => (
+                        orbits::inline_facts(b)?,
+                        self.universe.as_ref().map(|u| u.seed),
+                    ),
+                    None => {
+                        let u = self.universe()?;
+                        if !u.root.contains(&a) {
+                            return Err(err(
+                                "bad_address",
+                                format!("{a} is not in universe {}", u.root),
+                            ));
+                        }
+                        let st = u.chronicle.state_at(UniverseTime::seconds(i64::MAX));
+                        let f: BTreeMap<Address, BTreeMap<String, Value>> = st
+                            .facts
+                            .iter()
+                            .filter(|(x, _)| a.contains(x))
+                            .map(|(x, r)| (x.clone(), r.clone()))
+                            .collect();
+                        (f, Some(u.seed))
+                    }
+                };
+                let placed = orbits::orbits_at(&facts, &a, &at_s, seed.as_ref());
+                Response::OrbitsPlaced {
+                    system,
+                    bodies: placed
+                        .iter()
+                        .map(|p| serde_json::to_value(p).expect("plain data"))
+                        .collect(),
+                }
+            }
+            Request::SetCampaignNow { at_s } => {
+                let u = self.universe()?;
+                let e = orbits::campaign_now_event(&u.chronicle, &u.root, at_s)?;
+                let id = u
+                    .chronicle
+                    .append(e)
+                    .map_err(|e| err("chronicle", format!("{e}")))?;
+                Response::CampaignNowIs {
+                    at_s: Some(at_s),
+                    event_id: Some(id.hex()),
+                    state_hash: Some(
+                        u.chronicle
+                            .state_at(UniverseTime::seconds(i64::MAX))
+                            .hash()
+                            .hex(),
+                    ),
+                }
+            }
+            Request::CampaignNow => {
+                let u = self.universe()?;
+                let (at_s, event_id) = orbits::campaign_now(&u.chronicle, &u.root);
+                Response::CampaignNowIs {
+                    at_s,
+                    event_id,
+                    state_hash: None,
+                }
+            }
+            Request::Calendar => Response::CalendarIs {
+                calendar: self
+                    .observe
+                    .calendar
+                    .as_ref()
+                    .map(|c| serde_json::to_value(c).expect("plain data")),
+            },
             Request::Manifest => {
                 let m = self.universe()?.manifest();
                 Response::Manifest {

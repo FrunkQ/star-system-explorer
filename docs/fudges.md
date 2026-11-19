@@ -68,6 +68,8 @@ Add entries under your area. Keep one row per fudge.
 
 | Where | Instead of the physics | Why (as the code or log says) | Real physics to replace it | Status |
 |---|---|---|---|---|
+| `crates/sse-kernel/src/orbits.rs` (`orbits_at`) | Two-body Kepler orbits per parent, fixed elements: no perturbations, precession, tides or resonance libration | Chart and 3D placement need any time in microseconds on a phone; the F-track n-body run is for formation, not playback | Secular perturbation theory (Laplace-Lagrange) for slow element drift, or replay of a stored n-body ephemeris for systems the GM marks as interacting | stand-in, permanent for playback with reason |
+| `orbits.rs` phase | Bodies with no stored mean anomaly get a keyed random phase (stream `orbit.phase.v1`) | V3 saves and generated systems often carry no epoch phase | None needed when a phase is authored or imported; the draw is labelled `phase_source: drawn` | documented |
 | disc.rs:418-421 | Initial disc mass 0.03 M* ± 0.4 dex, capped at 0.15; rc0 30 AU ± 0.3 dex | "Young (class 0/I) discs", Andrews 2010/2013 | Draw from published Class 0/I or II disc-mass and radius distributions as functions of M* (e.g. Andrews 2013's M_d ∝ M*^1.0 to 1.5 with 0.7 dex scatter; Tobin et al. 2020 VANDAM) | tuned, documented |
 | disc.rs:445 | alpha = 0.01 for every disc | none stated | Draw alpha (1e-4 to 1e-2), or use a wind-driven disc. Alpha also sets the isolation mass and the gap K. | undocumented constant |
 | disc.rs:448 | kappa = 3 cm^2/g Rosseland mean, scaled by dust | none stated | Bell & Lin 1994 opacity table κ(T, ρ) | undocumented constant |
@@ -291,6 +293,9 @@ Add entries under your area. Keep one row per fudge.
 | F22. `build-base-atlas.py:226-235` | Human gravity band 0.3 to 1.5 g, temperature 263 to 313 K | none | No long-term data exist for gravity; temperature from WBGT and heat-stress limits (wet-bulb 35 °C; Sherwood and Huber 2010) | Uncited |
 | F23. `packs/base-time/pack.json:27` | Ocean loss at 1.1 S⊕ (the runaway value is 1.06 elsewhere in `early.rs:248`) | Wolf and Toon 2015 | One HZ block with the Kopparapu 2013/2014 polynomial S_eff(Teff) = S₀ + aT + bT² + cT³ + dT⁴ per limit and per mass | **Two different runaway numbers in two crates** |
 | F24. `feedback.rs:300-303` | Oxygenated = O₂ ≥ 1% for 200 Myr | Avoids counting whiffs | (a definition) | Documented |
+| F25. `feedback.rs` (E3) fire brake | Fire suppresses land burial through COPSE reloaded's ignition index clamp(48 r − 9.08, 0, 5) and k_fire 3, on Earth's pressure and an N₂ filler | Lenton, Daines and Mills 2018 eq. 4 (checked); E3.md | Ignition from O₂ partial pressure and the air's heat capacity (Belcher et al. 2010), labelled extrapolated on other air; fire as a regional flux with fuel and moisture (E6, weather track) | Documented; the cap 5 and k 3 are COPSE reloaded's tuning |
+| F26. `feedback.rs` (E3) decomposer brake | (1 + h)/(1 + h r/r_pal), h = 1, acting only above today's air | Stand-in; acting below PAL moved the GOE by 755 Myr | COPSE reloaded's f(O₂) = 2.1276 e^(−0.755 o) on organic burial (eq. 35, from Betts and Holland 1991), with a separate ocean O₂ reservoir | **Stand-in**, to replace (E3.md) |
+| F27. E3 and F1 together | E3's brakes bring O₂ today to 0.21 to 0.26 on top of F1's over-fed burial | E3 was asked for as competing sinks (Alex, 19 Nov) before F1 was found | Fix F1 (realised production) first, then re-tune nothing: re-check that E3's brakes still hold O₂ near 0.21 with the correct feed | To review once F1 is fixed |
 
 ### Candidates to move into flows (small cited physics blocks)
 
@@ -325,6 +330,12 @@ Two smaller physics errors (CH₄ lifetime 9.6 → 9.1 yr; escape coefficient ×
 
 | Where | Instead of the physics | Why (as code/log says) | Real physics to replace it | Status |
 |---|---|---|---|---|
+| `crates/sse-cosmos/src/nucleus.rs` merger delay | Two black holes coalesce a fixed 1 Gyr after their galaxies merge | No dynamics of the pair are modelled | Dynamical friction (Chandrasekhar), stellar hardening and gas-driven inspiral; delays from 0.1 Gyr to never (final parsec) | sketch (G-nuclei.md) |
+| `nucleus.rs` seeds | Direct collapse: a keyed 10% chance at one redshift (z = 10) in atomic-cooling haloes | Needs Lyman-Werner fields and metal-free gas, which are not modelled | Seed from the halo's own history: metal enrichment and a nearby star-forming neighbour (Lyman-Werner flux) | sketch |
+| `nucleus.rs` radio loudness | Keyed once for the whole life from the Best et al. 2005 fit | Jets need an accretion-state model | Jet power from the accretion state (hard or soft, Eddington ratio) and spin, switching with episodes | stand-in |
+| `nucleus.rs` light | One radiative efficiency (0.1) for every hole; L ∝ ṁ² below 1% Eddington | Spin is not tracked; the λ² law is the standard ADAF scaling, source passage not yet read | Spin evolution with efficiency 0.057 to 0.42; the RIAF efficiency curve (Yuan and Narayan 2014) | documented |
+| `crates/sse-cosmos/src/galaxy.rs` `exsitu_black_hole` | Merging galaxies' holes arrive at 1e-3 of their stars | G3 does not follow satellites' own holes | Each satellite's own hole from its own (smaller) galaxy run | documented, editable param |
+| `galaxy.rs` black-hole feed | Holes grow from 1% of each burst and 5e-4 of star formation; quasars here peak near 1e38 W, the faint end of the observed range | G3's regulator has no nuclear gas inflow | Feed from cold-mode inflow and disc instabilities (e.g. Hopkins and Quataert 2010 torque model) | to review |
 | web.rs (whole), G1.md known limits | Band-limited lattice noise octaves with per-band variance matched to σ²(R) | browser cost; no stored volume | Gaussian random field with the exact P(k) (e.g. a constrained FFT per tile, or wavelet-based noise with the spectral shape inside the band) | documented (G1 log) |
 | web.rs potential per octave | Φ_j = −δ_j / k_j² at one wavenumber (band centre); one Zel'dovich step | cheap | Solve Poisson per band with the full kernel; 2LPT for displacements | documented (G1 log) |
 | web.rs lognormal transform | Lognormal density from linear δ | stand-in for non-linear growth | Calibrated lognormal (Coles and Jones 1991) or a halo-model PDF | implicit (design names it) |

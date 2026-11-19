@@ -74,6 +74,8 @@ pub struct CosmologyPack {
     pub stars: crate::stars::StarParams,
     #[serde(default)]
     pub events: crate::events::EventParams,
+    #[serde(default)]
+    pub nucleus: crate::nucleus::NucleusParams,
 }
 
 impl CosmologyPack {
@@ -385,4 +387,61 @@ pub fn ink_a_merger() -> crate::events::Manifest {
 pub fn galaxy_events_golden() -> serde_json::Value {
     let cp = CosmologyPack::from_packs(&[base_cosmology_pack()]).expect("settings");
     crate::events::run_manifest(&cp, &ink_a_merger()).expect("scenario runs")
+}
+
+/// Nuclei golden: the black holes of the G3 dwarf, Milky-Way-like and group
+/// galaxies, their light today and at their brightest, mergers, a window of
+/// tidal disruptions and digests of the full nuclei.
+pub fn nucleus_golden() -> serde_json::Value {
+    let cp = CosmologyPack::from_packs(&[base_cosmology_pack()]).expect("settings");
+    let c = Cosmology::new(cp.params.clone());
+    let u = Address::universe("g3").expect("address");
+    let web = Web::new(
+        &c,
+        WebParams {
+            octaves: 4,
+            ..cp.web.clone()
+        },
+        &Seed::from_text("g3"),
+        &u,
+    )
+    .expect("web");
+    let hs = crate::haloes::Haloes {
+        cosmo: &c,
+        web: &web,
+        params: cp.haloes.clone(),
+        seed: Seed::from_text("g3"),
+        universe: u,
+    };
+    let np = &cp.nucleus;
+    let nuclei: Vec<serde_json::Value> = [("dwarf", 1.0e11), ("milky-way-like", 1.0e12), ("group", 1.0e13)]
+        .iter()
+        .map(|(key, mass)| {
+            let h = hs.median(*mass, key);
+            let g = crate::galaxy::evolve(&c, &cp.galaxy, &h);
+            let n = crate::nucleus::nucleus(&c, &cp.galaxy, np, &h, &g, &[], Seed::from_text("g3"));
+            let brightest = n
+                .history
+                .iter()
+                .fold(&n.now, |b, p| if p.luminosity_w > b.luminosity_w { p } else { b });
+            let tdes = crate::nucleus::tidal_disruptions(&n, np, Seed::from_text("g3"), 13.0, 13.01);
+            serde_json::json!({
+                "address": n.address,
+                "seed": n.seed.channel,
+                "mass_msun": n.now.mass_msun,
+                "class": n.now.class.name(),
+                "eddington_ratio": n.now.eddington_ratio,
+                "luminosity_w": n.now.luminosity_w,
+                "brightest_gyr": brightest.t_gyr,
+                "brightest_w": brightest.luminosity_w,
+                "episodes": n.episodes.len(),
+                "mergers": n.mergers.len(),
+                "radio_loud": n.radio_loud,
+                "tde_rate_per_yr": n.tde_rate_per_yr,
+                "tdes_13_to_13_01_gyr": tdes.len(),
+                "digest": ContentHash::of(&serde_json::to_string(&n).expect("json")).expect("hash").hex(),
+            })
+        })
+        .collect();
+    serde_json::json!({ "nuclei": nuclei })
 }
