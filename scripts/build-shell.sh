@@ -13,6 +13,7 @@ cp packages/kernel-client/dist/kernel-client/src/*.js packages/shell/public/kern
 cp packages/kernel-client/wasm/sse_wasm.js packages/kernel-client/wasm/sse_wasm_bg.wasm packages/shell/public/kernel/
 rm -rf packages/shell/public/packs && mkdir -p packages/shell/public/packs
 cp packs/base-physics/pack.json packages/shell/public/packs/base-physics.json
+cp packs/base-time/pack.json packages/shell/public/packs/base-time.json
 cp packages/shell/src/documents/kestrel.player-data.pack.json packages/shell/public/packs/kestrel-player-data.json
 mkdir -p packages/shell/public/packs/samples
 cp packages/shell/src/documents/sample.warm-worlds.pack.json packages/shell/public/packs/samples/warm-worlds.json

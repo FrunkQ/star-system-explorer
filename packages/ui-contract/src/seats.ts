@@ -128,7 +128,7 @@ export function checkSeats(p: SeatPlan, ctx: { views?: string[]; screens?: strin
 export function startIntents(p: SeatPlan, root: string, at_yr: number): Intent[] {
   return p.audiences
     .filter((a) => a.id !== EVERYONE && a.starts_with)
-    .map((a) => ({ kind: "set_value" as const, address: root, field: `${grantField(a.id)}.default`, value: a.starts_with!, at_yr }));
+    .map((a) => ({ kind: "grant" as const, address: root, audience: a.id, view: a.starts_with!, default: true, at_yr }));
 }
 
 /**
@@ -137,7 +137,8 @@ export function startIntents(p: SeatPlan, root: string, at_yr: number): Intent[]
  * audience, chronicled, so "when did Vesh learn of Tarn" is history.
  */
 export function discoverIntent(a: Audience, address: string, known: boolean, fallbackView: string, at_yr: number): Intent {
-  return { kind: "set_value", address, field: grantField(a.id), value: known ? (a.discovered_view ?? fallbackView) : (a.starts_with ?? fallbackView), at_yr };
+  // Taking a discovery back removes the grant, so the body falls back to its parent, its tags and the audience's starting view.
+  return { kind: "grant", address, audience: a.id, view: known ? (a.discovered_view ?? fallbackView) : null, at_yr };
 }
 
 /** The join link for a seat ("table" is the plain room link) and, optionally, one of its screens. */

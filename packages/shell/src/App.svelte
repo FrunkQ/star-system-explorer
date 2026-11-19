@@ -12,6 +12,8 @@
   import SoundControl from "../../sound/src/SoundControl.svelte";
   import LightControl from "./LightControl.svelte";
   import MakeSystem from "./MakeSystem.svelte";
+  import LookAhead from "./LookAhead.svelte";
+  import { sceneAt, type LookedAhead } from "../../ui-contract/src/index.ts";
   import lightDoc from "./documents/light.recipes.json";
   import { SYMBOLS, checkLightRecipe, describeLight, litFromSystem, paint, type BandRecipe, type Mark } from "../../ui-contract/src/index.ts";
   import AgentsPanel from "../../agents/src/AgentsPanel.svelte";
@@ -168,14 +170,18 @@
   // Light (O1): which band recipe paints the marks. Presentation only, on this device.
   const LIGHT_RECIPES = (lightDoc.recipes as unknown as BandRecipe[]).filter((r) => !checkLightRecipe(r).length);
   let lightId = $state(SYMBOLS);
-  const lit = $derived(describeLight(litFromSystem(scene)));
-  const lightNames = $derived(new Map(scene.subjects.map((x) => [x.address, x.label])));
+  // U4 part 2: with a look-ahead open, the views show the snapshot the scrubber is on.
+  let ahead = $state<LookedAhead | null>(null);
+  let aheadAt = $state(0);
+  const shown = $derived(ahead && ahead.snapshots[aheadAt] ? sceneAt(scene, ahead, ahead.snapshots[aheadAt]!) : scene);
+  const lit = $derived(describeLight(litFromSystem(shown)));
+  const lightNames = $derived(new Map(shown.subjects.map((x) => [x.address, x.label])));
   const lightColours = $derived.by(() => {
     const r = LIGHT_RECIPES.find((x) => x.id === lightId);
     return r ? paint(r, lit.lights) : null;
   });
   const lightMark = (m: Mark, address: string): Mark => (lightColours ? { ...m, colour: lightColours.get(address) ?? null } : m);
-  const soundScene = $derived(orbitScene(scene.system, voicesFromSystem(scene)));
+  const soundScene = $derived(orbitScene(shown.system, voicesFromSystem(shown)));
   const lensKinds = $derived([...new Set(scene.subjects.filter((x) => x.facts.length).map((x) => x.kind))]);
 
   // The session clock travels to players with the GM's time ruler.
@@ -199,8 +205,10 @@
     // U4: with a what-if open, the chart shows the branch; the main line is kept for comparing.
     if (b) s.branchStateHash(b.id).then((h) => g === generation && (branchHash = h));
     else branchHash = "";
-    const main = deriveScene(s, applyEdits({ ...base, now_yr: now }, applied), derivations);
-    const what = b ? deriveScene(s, applyEdits({ ...base, now_yr: now }, { ...applied, ...b.applied }), derivations) : main;
+    // A now moved by a kept look-ahead can pass the fixture's ruler: the ruler grows to keep it in view.
+    const at = { ...base, now_yr: now, span_yr: [base.span_yr[0], Math.max(base.span_yr[1], now * 1.25)] as [number, number] };
+    const main = deriveScene(s, applyEdits(at, applied), derivations);
+    const what = b ? deriveScene(s, applyEdits(at, { ...applied, ...b.applied }), derivations) : main;
     Promise.all([main, what]).then(([m, w]) => {
       if (g !== generation) return;
       mainScene = m;
@@ -237,7 +245,7 @@
 
   const handles: ViewHandle[] = [];
   $effect(() => {
-    const s = scene;
+    const s = shown;
     for (const h of handles) h.update(s);
   });
 
@@ -249,7 +257,7 @@
   }
 
   function view(node: HTMLElement, m: { module: ViewModule; params: Record<string, Json> }) {
-    const h = m.module.mount(node, { session: session!, workspace: ws, params: m.params, mark: (s) => lightMark(symbols.marker().mark(subjectOf(s)), s.address), symbology: symbols, styles: styleHost }, scene);
+    const h = m.module.mount(node, { session: session!, workspace: ws, params: m.params, mark: (s) => lightMark(symbols.marker().mark(subjectOf(s)), s.address), symbology: symbols, styles: styleHost }, shown);
     handles.push(h);
     return {
       destroy: () => {
@@ -385,7 +393,7 @@
     <main class="problem" aria-busy="true"><p>Opening the chart…</p></main>
   {:else}
     {#key ws.screen}
-    <main class="stage" data-screen={ws.screen} data-lens={lens.id} data-branch={ws.branch ? "open" : undefined}>
+    <main class="stage" data-screen={ws.screen} data-lens={lens.id} data-branch={ws.branch ? "open" : ahead ? "ahead" : undefined}>
       {#if ws.branch}<div class="branch-stamp" aria-hidden="true">What if · not kept</div>{/if}
       <div class="area-chart">{#if mountFor("chart")}<div class="fill" use:view={mountFor("chart")!}></div>{/if}</div>
       <nav class="tools" aria-label="Tools">
@@ -414,7 +422,8 @@
           <button type="button" class="linkbtn" onclick={() => whatIf("keep")} disabled={!ws.branch.edits.length}>Keep it</button>
           <button type="button" class="linkbtn" onclick={() => whatIf("drop")}>Throw away</button>
         {:else}
-          <button type="button" class="linkbtn quiet" onclick={() => whatIf("open")} title="Try changes on a branch; the chart's history does not move until you keep them">What if…</button>
+          {#if !ahead}<button type="button" class="linkbtn quiet" onclick={() => whatIf("open")} title="Try changes on a branch; the chart's history does not move until you keep them">What if…</button>{/if}
+          <LookAhead {session} {scene} bind:ahead bind:at={aheadAt} onkept={(note, now_myr, h) => ((whatNote = note), now_myr !== null && (ws.now_yr = now_myr * 1e6), (status = { ...status, hash: h }), ws.revision++)} />
         {/if}
         {#if whatNote}<span role="status">{whatNote}</span>{/if}
       </span>

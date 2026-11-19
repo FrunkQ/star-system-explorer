@@ -49,3 +49,5 @@ export { LIGHT_SCHEMA, BANDS, LINES, HONESTY_WORDS, SYMBOLS, DRAPER_K, planck, t
 export type { BandRecipe, Honesty, LightDescription, LitBody } from "./light.ts";
 export { importedSystems, sceneFromImport, reportSummary, sceneFromFormation, worldWords, noWorldsWhy } from "./make.ts";
 export type { V3Imported, ImportReport, ImportDifference, ImportedSystem, FormationRan, FormationRequest, FormationWorld } from "./make.ts";
+export { specFromScene, sceneAt, snapshotAt, fateEvents, subjectNames, fmtAge, KIND_WORDS, PHASE_WORDS, Z_SUN } from "./fate.ts";
+export type { SystemSpec, LookedAhead, FateEvent, FateSnapshot } from "./fate.ts";

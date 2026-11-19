@@ -9,6 +9,7 @@ import { audienceOf, decide, type Seat } from "./seat.ts";
 import { providerOf, type FlowDoc, type PackDoc } from "./physics.ts";
 import type { PlayerScene } from "./player-scene.ts";
 import type { FormationRan, FormationRequest, V3Imported } from "./make.ts";
+import type { LookedAhead, SystemSpec } from "./fate.ts";
 
 export type IntentResult =
   /** For a stack change the kernel chronicles a `stack.adopt` event; `view` is the data view a scan_toggle left in force. */
@@ -89,6 +90,10 @@ export interface ViewSession {
   importV3(save: string, opts?: { universe_id?: string; reconstruct?: number }): Promise<{ ok: true; result: V3Imported } | { ok: false; code: string; message: string }>;
   /** One system through the formation pipeline; writes nothing (GM only). */
   runFormation(req: FormationRequest): Promise<{ ok: true; result: FormationRan } | { ok: false; code: string; message: string }>;
+  /** Age a system forward on a branch (T2); GM only. */
+  lookAhead(system: SystemSpec, target_myr: number): Promise<{ ok: true; result: LookedAhead } | { ok: false; code: string; message: string }>;
+  /** Keep a look-ahead as history, optionally moving the system's "now"; GM only. */
+  commitLookAhead(branch: string, move_now_myr?: number): Promise<{ ok: true; event_id: string; state_hash: string } | { ok: false; code: string; message: string }>;
   kernelVersion(): Promise<string>;
   /** Derived values of a flow (read only; no event). */
   derive(ref: DeriveRef): Promise<{ ok: true; values: Record<string, Derived> } | { ok: false; message: string }>;
@@ -340,6 +345,8 @@ export class Session implements ViewSession {
     }
     if (intent.kind === "scan_toggle" && r.type === "scan_toggled")
       return { status: "applied", event_id: String(r.event_id), state_hash: String(r.state_hash), affected: [intent.address], view: (r.view as string | null) ?? null };
+    if (intent.kind === "grant" && r.type === "granted")
+      return { status: "applied", event_id: String(r.event_id), state_hash: String(r.state_hash), affected: [intent.address], view: (r.view as string | null) ?? null };
     if (r.type === "authored")
       return { status: "applied", event_id: String(r.event_id), state_hash: String(r.state_hash), affected: r.affected as string[] };
     if (r.type === "error") return { status: "error", code: String(r.code), message: String(r.message) };
@@ -407,6 +414,20 @@ export class Session implements ViewSession {
     if (this.seat.authority !== "gm") return { ok: false, code: "not_gm", message: "only the game master generates systems" };
     const r = await this.#call({ op: "run_formation", ...req });
     return r.type === "formation_ran" ? { ok: true, result: r as unknown as FormationRan } : { ok: false, code: String(r.code ?? "unexpected"), message: String(r.message ?? JSON.stringify(r)) };
+  }
+
+  /** Age a system forward on a branch of its own (T2). The main line does not move until the branch is committed. */
+  async lookAhead(system: SystemSpec, target_myr: number): Promise<{ ok: true; result: LookedAhead } | { ok: false; code: string; message: string }> {
+    if (this.seat.authority !== "gm") return { ok: false, code: "not_gm", message: "only the game master looks ahead" };
+    const r = await this.#call({ op: "look_ahead", system, target_myr });
+    return r.type === "looked_ahead" ? { ok: true, result: r as unknown as LookedAhead } : { ok: false, code: String(r.code ?? "unexpected"), message: String(r.message ?? JSON.stringify(r)) };
+  }
+
+  /** Keep a look-ahead as history; with `move_now_myr`, the system's "now" moves to that star age. */
+  async commitLookAhead(branch: string, move_now_myr?: number): Promise<{ ok: true; event_id: string; state_hash: string } | { ok: false; code: string; message: string }> {
+    if (this.seat.authority !== "gm") return { ok: false, code: "not_gm", message: "only the game master keeps a look-ahead" };
+    const r = await this.#call({ op: "commit_look_ahead", branch, ...(move_now_myr !== undefined ? { move_now_myr } : {}) });
+    return r.type === "committed" ? { ok: true, event_id: String(r.event_id), state_hash: String(r.state_hash) } : { ok: false, code: String(r.code ?? "unexpected"), message: String(r.message ?? JSON.stringify(r)) };
   }
 
   async kernelVersion(): Promise<string> {

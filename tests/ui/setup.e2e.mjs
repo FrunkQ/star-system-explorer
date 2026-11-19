@@ -43,7 +43,7 @@ try {
     const packs = page.locator("[role=region][aria-label=Packs]");
     await packs.getByRole("button", { name: "Check stack" }).click();
     await packs.locator(".verdict").getByText("Validated").waitFor();
-    assert.deepEqual(await packs.locator("[data-pack]").evaluateAll((els) => els.map((e) => e.dataset.pack)), ["kestrel.player-data", "sse.base-physics"]);
+    assert.deepEqual(await packs.locator("[data-pack]").evaluateAll((els) => els.map((e) => e.dataset.pack)), ["kestrel.player-data", "sse.base-time", "sse.base-physics"]);
     await packs.getByRole("button", { name: "Try the sample pack" }).click();
     const proposal = packs.locator("[aria-label=Proposal]");
     await proposal.getByText("Validated").waitFor();
