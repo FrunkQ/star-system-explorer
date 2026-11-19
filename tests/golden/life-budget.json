@@ -1,0 +1,336 @@
+{
+  "worlds": {
+    "earth": {
+      "biomass_gc": 4.1863567834148736e+17,
+      "class": "teeming",
+      "feeding_levels": 4,
+      "habitats": [
+        [
+          "u:sol/sys:0/body:2/shell:@ocean/habitat:@ocean-sunlit",
+          "nutrients",
+          3.816e+16,
+          4,
+          null
+        ],
+        [
+          "u:sol/sys:0/body:2/shell:@ocean/habitat:@ocean-interior",
+          "unknown",
+          null,
+          null,
+          null
+        ],
+        [
+          "u:sol/sys:0/body:2/shell:@ocean/habitat:@sea-floor",
+          "unknown",
+          null,
+          null,
+          null
+        ],
+        [
+          "u:sol/sys:0/body:2/shell:@crust/habitat:@deep-crust",
+          "unknown",
+          null,
+          null,
+          null
+        ],
+        [
+          "u:sol/sys:0/body:2/region:@tropics/habitat:@land-surface",
+          "energy",
+          2.0311169506063256e+16,
+          4,
+          null
+        ],
+        [
+          "u:sol/sys:0/body:2/region:@tropics/habitat:@soil",
+          "unknown",
+          null,
+          null,
+          null
+        ],
+        [
+          "u:sol/sys:0/body:2/region:@north-temperate/habitat:@land-surface",
+          "energy",
+          1.6669674077223494e+16,
+          4,
+          null
+        ],
+        [
+          "u:sol/sys:0/body:2/region:@north-temperate/habitat:@soil",
+          "unknown",
+          null,
+          null,
+          null
+        ],
+        [
+          "u:sol/sys:0/body:2/region:@south-temperate/habitat:@land-surface",
+          "energy",
+          3704372017160776.0,
+          4,
+          null
+        ],
+        [
+          "u:sol/sys:0/body:2/region:@south-temperate/habitat:@soil",
+          "unknown",
+          null,
+          null,
+          null
+        ],
+        [
+          "u:sol/sys:0/body:2/region:@arctic/habitat:@land-surface",
+          "energy",
+          987552233701209.5,
+          4,
+          null
+        ],
+        [
+          "u:sol/sys:0/body:2/region:@arctic/habitat:@soil",
+          "unknown",
+          null,
+          null,
+          null
+        ],
+        [
+          "u:sol/sys:0/body:2/feature:@movile/habitat:@cave",
+          "unknown",
+          null,
+          null,
+          null
+        ]
+      ],
+      "hash": "6fefa212ee411896579268d36660e872079b11d501dc1cbbf4a440c1c84d623b",
+      "high_power": true,
+      "power_w": 100936935526863.08,
+      "production_gc_yr": 7.983276783414874e+16
+    },
+    "earth-archean": {
+      "biomass_gc": 150000000000000.0,
+      "class": "modest",
+      "feeding_levels": 2,
+      "habitats": [
+        [
+          "u:sol/sys:0/body:2/shell:@ocean/habitat:@ocean-sunlit",
+          "energy",
+          3000000000000000.0,
+          2,
+          null
+        ],
+        [
+          "u:sol/sys:0/body:2/shell:@ocean/habitat:@ocean-interior",
+          "unknown",
+          null,
+          null,
+          null
+        ],
+        [
+          "u:sol/sys:0/body:2/shell:@ocean/habitat:@sea-floor",
+          "unknown",
+          null,
+          null,
+          null
+        ],
+        [
+          "u:sol/sys:0/body:2/shell:@crust/habitat:@deep-crust",
+          "unknown",
+          null,
+          null,
+          null
+        ],
+        [
+          "u:sol/sys:0/body:2/region:@tropics/habitat:@land-surface",
+          "unknown",
+          null,
+          null,
+          null
+        ],
+        [
+          "u:sol/sys:0/body:2/region:@tropics/habitat:@soil",
+          "unknown",
+          null,
+          null,
+          null
+        ],
+        [
+          "u:sol/sys:0/body:2/region:@north-temperate/habitat:@land-surface",
+          "unknown",
+          null,
+          null,
+          null
+        ],
+        [
+          "u:sol/sys:0/body:2/region:@north-temperate/habitat:@soil",
+          "unknown",
+          null,
+          null,
+          null
+        ],
+        [
+          "u:sol/sys:0/body:2/region:@south-temperate/habitat:@land-surface",
+          "unknown",
+          null,
+          null,
+          null
+        ],
+        [
+          "u:sol/sys:0/body:2/region:@south-temperate/habitat:@soil",
+          "unknown",
+          null,
+          null,
+          null
+        ],
+        [
+          "u:sol/sys:0/body:2/region:@arctic/habitat:@land-surface",
+          "unknown",
+          null,
+          null,
+          null
+        ],
+        [
+          "u:sol/sys:0/body:2/region:@arctic/habitat:@soil",
+          "unknown",
+          null,
+          null,
+          null
+        ],
+        [
+          "u:sol/sys:0/body:2/feature:@movile/habitat:@cave",
+          "unknown",
+          null,
+          null,
+          null
+        ]
+      ],
+      "hash": "1309d5161a441e6a41e178ad25eb1a55332a5b2e469a02aaf6f8e524181bee07",
+      "high_power": false,
+      "power_w": 3793064111339.265,
+      "production_gc_yr": 3000000000000000.0
+    },
+    "europa": {
+      "biomass_gc": 13200000000.0,
+      "class": "sparse",
+      "feeding_levels": 0,
+      "habitats": [
+        [
+          "u:sol/sys:0/body:8/shell:@ocean/habitat:@sea-floor",
+          "energy",
+          1200000000.0,
+          0,
+          null
+        ],
+        [
+          "u:sol/sys:0/body:8/shell:@ocean/habitat:@under-ice-ocean",
+          "energy",
+          1200000000.0,
+          0,
+          null
+        ]
+      ],
+      "hash": "4045ee27562f445acac31f04e6fa12e27ac70efce750c09894ef4bab58f7d63a",
+      "high_power": false,
+      "power_w": 3034451.2890714123,
+      "production_gc_yr": 2400000000.0
+    },
+    "mars": {
+      "biomass_gc": 0.0,
+      "class": "none",
+      "feeding_levels": 0,
+      "habitats": [
+        [
+          "u:sol/sys:0/body:4/shell:@crust/habitat:@deep-crust",
+          "unknown",
+          null,
+          null,
+          null
+        ],
+        [
+          "u:sol/sys:0/body:4/region:@surface/habitat:@land-surface",
+          "closed",
+          0.0,
+          0,
+          "at 610 Pa water cannot be liquid (triple point 612 Pa)"
+        ],
+        [
+          "u:sol/sys:0/body:4/region:@surface/habitat:@soil",
+          "closed",
+          0.0,
+          0,
+          "at 610 Pa water cannot be liquid (triple point 612 Pa)"
+        ],
+        [
+          "u:sol/sys:0/body:4/feature:@arsia-cave/habitat:@cave",
+          "unknown",
+          null,
+          null,
+          null
+        ]
+      ],
+      "hash": "d61d0a3c512d4b5cfc5d5d048cbe917ce9be08014ac85b68e8a324d1b8ebf128",
+      "high_power": false,
+      "power_w": 0.0,
+      "production_gc_yr": 0.0
+    },
+    "titan": {
+      "biomass_gc": 0.0,
+      "class": "none",
+      "feeding_levels": 0,
+      "habitats": [
+        [
+          "u:sol/sys:0/body:12/shell:@ocean/habitat:@under-ice-ocean",
+          "unknown",
+          null,
+          null,
+          null
+        ],
+        [
+          "u:sol/sys:0/body:12/region:@kraken/habitat:@hydrocarbon-lake",
+          "closed",
+          0.0,
+          0,
+          "no chemistry for methane-ethane in this pack stack"
+        ],
+        [
+          "u:sol/sys:0/body:12/region:@ligeia/habitat:@hydrocarbon-lake",
+          "closed",
+          0.0,
+          0,
+          "no chemistry for methane-ethane in this pack stack"
+        ]
+      ],
+      "hash": "4b8bccc73396c5d7048bd78ea6c9f2b46be6000e064ce57aa93959fe1298ba64",
+      "high_power": false,
+      "power_w": 0.0,
+      "production_gc_yr": 0.0
+    },
+    "venus": {
+      "biomass_gc": 0.0,
+      "class": "none",
+      "feeding_levels": 0,
+      "habitats": [
+        [
+          "u:sol/sys:0/body:1/region:@clouds/habitat:@cloud-deck",
+          "closed",
+          0.0,
+          0,
+          "water activity 0.004 is below the 0.585 limit"
+        ],
+        [
+          "u:sol/sys:0/body:1/region:@plains/habitat:@land-surface",
+          "closed",
+          0.0,
+          0,
+          "737 to 737 K is outside the 253 to 395 K window"
+        ],
+        [
+          "u:sol/sys:0/body:1/region:@plains/habitat:@soil",
+          "closed",
+          0.0,
+          0,
+          "737 to 737 K is outside the 253 to 395 K window"
+        ]
+      ],
+      "hash": "12f76c65482029e18056820c546285a3fe0bc5b807adb7da04bdd61fd1e1e60f",
+      "high_power": false,
+      "power_w": 0.0,
+      "production_gc_yr": 0.0
+    }
+  }
+}

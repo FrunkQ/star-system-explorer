@@ -298,7 +298,160 @@
      "embedded": true,
      "about": "Caves and lava tubes: shelter from radiation and cold."
     }
-   ]
+   ],
+   "life_budget": {
+    "about": "Box B (life design section 3, L1a): energy and nutrient caps per habitat. Production is the smaller of the energy cap and the nutrient cap (Liebig); biomass is production times a residence time; feeding levels follow from production density and a 10% transfer efficiency.",
+    "chemistries": [
+     "water"
+    ],
+    "window_k": [
+     253.0,
+     395.0
+    ],
+    "water_triple_pa": 611.657,
+    "min_water_activity": 0.585,
+    "max_dose_msv_yr": 1000000.0,
+    "j_per_g_carbon": 39900.0,
+    "p_material": "p_new_mol_yr",
+    "reuse": {
+     "ocean-sunlit": 1000.0,
+     "ocean-interior": 1000.0,
+     "lake": 100.0,
+     "land-surface": 46.0,
+     "soil": 46.0
+    },
+    "default_reuse": 10.0,
+    "c_per_p": {
+     "liquid": 106.0,
+     "cloud": 106.0,
+     "surface": 1000.0,
+     "subsurface": 186.0
+    },
+    "default_c_per_p": 106.0,
+    "residence_yr": {
+     "ocean-sunlit": 0.05,
+     "ocean-interior": 0.1,
+     "lake": 0.1,
+     "land-surface": 10.0,
+     "soil": 10.0,
+     "sea-floor": 10.0,
+     "under-ice-ocean": 1.0,
+     "deep-crust": 1000.0,
+     "cave": 10.0,
+     "cloud-deck": 0.01
+    },
+    "default_residence_yr": 1.0,
+    "transfer_efficiency": 0.1,
+    "min_viable_g_m2_yr": 0.1,
+    "low_power_levels": 2,
+    "metabolisms": [
+     {
+      "id": "oxygenic",
+      "label": "oxygenic photosynthesis",
+      "channel": "light",
+      "band_nm": [
+       400.0,
+       700.0
+      ],
+      "light_efficiency": 0.006,
+      "channels": [
+       "light"
+      ],
+      "media": [
+       "liquid",
+       "surface",
+       "cloud"
+      ],
+      "high_power": true
+     },
+     {
+      "id": "anoxygenic-iron",
+      "label": "anoxygenic photosynthesis on ferrous iron",
+      "channel": "light",
+      "band_nm": [
+       400.0,
+       1100.0
+      ],
+      "light_efficiency": 0.006,
+      "light_donor": "fe2_mol_yr",
+      "c_per_donor": 0.25,
+      "channels": [
+       "light"
+      ],
+      "media": [
+       "liquid"
+      ]
+     },
+     {
+      "id": "anoxygenic-hydrogen",
+      "label": "anoxygenic photosynthesis on hydrogen",
+      "channel": "light",
+      "band_nm": [
+       400.0,
+       1100.0
+      ],
+      "light_efficiency": 0.006,
+      "light_donor": "h2_mol_yr",
+      "c_per_donor": 0.5,
+      "channels": [
+       "light"
+      ],
+      "media": [
+       "liquid",
+       "surface"
+      ]
+     },
+     {
+      "id": "aerobic-chemolithotroph",
+      "label": "aerobic chemolithotrophs (oxidising reduced compounds with oxygen)",
+      "channel": "supply",
+      "donor": "reductant_mol_yr",
+      "c_per_donor": 0.1,
+      "oxidant": "o2_mol_yr",
+      "c_per_oxidant": 0.2,
+      "channels": [
+       "chemical",
+       "oxidant",
+       "disequilibrium",
+       "radiogenic"
+      ],
+      "media": [
+       "liquid",
+       "subsurface"
+      ]
+     },
+     {
+      "id": "methanogen",
+      "label": "hydrogenotrophic methanogens",
+      "channel": "supply",
+      "donor": "h2_mol_yr",
+      "c_per_donor": 0.01,
+      "channels": [
+       "chemical",
+       "oxidant",
+       "disequilibrium",
+       "radiogenic"
+      ],
+      "media": [
+       "liquid",
+       "subsurface"
+      ]
+     }
+    ],
+    "sources": {
+     "j_per_g_carbon": "About 479 kJ per mole of CH2O for CO2 + H2O to CH2O + O2 (standard free energy of photosynthesis), 12 g C per mole",
+     "window_k": "Lower: about 253 K, the limit of cell division in brines (Clarke et al. 2013); upper: 395 K, Methanopyrus kandleri strain 116 (Takai et al. 2008)",
+     "min_water_activity": "0.585, the lowest water activity known to support cell division (Stevenson et al. 2015)",
+     "max_dose_msv_yr": "About 1000 Sv per year (around 0.1 Gy per hour), within what radiation-resistant microbes such as Deinococcus radiodurans grow under (Daly 2009)",
+     "light_efficiency": "0.6% of 400 to 700 nm sunlight stored as fixed carbon, about the global mean that makes about 105 Gt C per year (Field et al. 1998); anoxygenic photosynthesis reaches 1100 nm (bacteriochlorophylls) but is limited by its electron donor",
+     "c_per_donor": "Stoichiometry: 4 Fe2+ per CO2 fixed (Widdel et al. 1993; Canfield et al. 2006); 2 H2 per CO2 (Kharecha et al. 2005); chemolithotroph and methanogen yields are order-of-magnitude growth yields (McCollom and Amend 2005)",
+     "reuse": "Ocean: each new phosphorus atom is reused about 1000 times before burial (marine P residence about 20 kyr against a turnover of weeks to decades; Benitez-Nelson 2000); land: about 46 times (Cleveland et al. 2013)",
+     "c_per_p": "Redfield ratio 106:1 in water (Redfield 1958); about 1000:1 in land plants and 186:1 in soils (Cleveland and Liptzin 2007)",
+     "residence_yr": "Marine phytoplankton turn over in days to weeks (about 6 Gt C standing against about 50 Gt C per year; Bar-On et al. 2018, Field et al. 1998); land plants about 10 years (450 Gt C against about 56 Gt C per year); deep subsurface cells turn over in centuries to millennia (Hoehler and Jorgensen 2013)",
+     "transfer_efficiency": "About 10% of production passes from one feeding level to the next (Lindeman 1942; Pauly and Christensen 1995)",
+     "low_power_levels": "Without oxygen, anaerobic metabolisms release about a tenth of the energy, so food chains stay short (Catling et al. 2005)"
+    }
+   }
   }
  }
 }

@@ -14,6 +14,7 @@
 //! "no life model installed" everywhere.
 #![forbid(unsafe_code)]
 
+pub mod budget;
 pub mod habitat;
 pub mod scenario;
 mod suite;
@@ -221,3 +222,6 @@ pub trait LifeSuite {
     fn query_feasible(&self, q: &LifeQuery, profiles: &[LifeRequirementProfile]) -> Feasibility;
     fn explain(&self, address: &Address, field: &str) -> String;
 }
+
+#[cfg(test)]
+mod budget_tests;
