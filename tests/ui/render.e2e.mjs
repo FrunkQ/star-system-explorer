@@ -223,26 +223,26 @@ try {
         await ph.getByLabel("Spin").check();
         // Let it run: about 15 s of spinning frames.
         await ph.waitForTimeout(15000);
-        const g = globe(ph);
-        const ms = Number(await g.getAttribute("data-frame-ms"));
-        const budget = Number(await g.getAttribute("data-budget-ms"));
-        const level = Number(await g.getAttribute("data-level"));
-        const frames = Number(await g.getAttribute("data-frames"));
-        const used = `${await g.getAttribute("data-tier")}/${await g.getAttribute("data-backend")}`;
-        const badgeText = await ph.locator("[data-badge]").innerText();
-        await shot(ph, `render-phone-${tier}`);
-        const work = await g.getAttribute("data-work-ms");
-        console.log(`  work per frame ${work} ms`);
-        console.log(`  Moto G4 emulation, 4x CPU, ${tier} (${used}): level ${level}, smoothed frame ${ms} ms against ${budget} ms, ${frames} frames; badge "${badgeText}"`);
-        assert.ok(frames > 20, "it kept drawing");
-        const max = Number(await g.getAttribute("data-max"));
-        // Either the governor holds the budget, or every reduction is taken and the badge says it is still over (slow runners).
-        if (ms <= budget * 1.15) {
-          if (level > 0) assert.match(badgeText, /Reduced:/);
-        } else {
-          assert.equal(level, max, `over budget (${ms} ms against ${budget} ms) only once every reduction is taken: level ${level} of ${max}`);
-          assert.match(badgeText, /Over budget at the plainest setting/);
+        // One snapshot of the globe's attributes and the badge, read in the same task, so they describe the same status.
+        const snap = () => ph.evaluate(() => {
+          const el = document.querySelector("[data-body] [data-tier]");
+          const n = (k) => Number(el.getAttribute(k));
+          return { ms: n("data-frame-ms"), budget: n("data-budget-ms"), level: n("data-level"), max: n("data-max"), frames: n("data-frames"), work: el.getAttribute("data-work-ms"), used: `${el.getAttribute("data-tier")}/${el.getAttribute("data-backend")}`, badge: document.querySelector("[data-badge]").textContent.trim() };
+        });
+        // Settled means: within budget (and the badge names any reduction), or every reduction taken and the badge says it is
+        // still over. The governor steps only after 10 frames over or 90 under, so a snapshot can fall between a change and
+        // its settling; poll until a snapshot is settled (up to 10 s). A loop that never settles fails.
+        const settled = (x) => (x.ms <= x.budget * 1.15 && (x.level === 0 || /Reduced:/.test(x.badge))) || (x.level === x.max && /Over budget at the plainest setting/.test(x.badge));
+        let s = await snap();
+        for (let i = 0; i < 20 && !settled(s); i++) {
+          await ph.waitForTimeout(500);
+          s = await snap();
         }
+        await shot(ph, `render-phone-${tier}`);
+        console.log(`  work per frame ${s.work} ms`);
+        console.log(`  Moto G4 emulation, 4x CPU, ${tier} (${s.used}): level ${s.level} of ${s.max}, smoothed frame ${s.ms} ms against ${s.budget} ms, ${s.frames} frames; badge "${s.badge}"`);
+        assert.ok(s.frames > 20, "it kept drawing");
+        assert.ok(settled(s), `the governor holds the budget, or takes every reduction and says it is still over: ${JSON.stringify(s)}`);
         await ctx.close();
       }
     }
