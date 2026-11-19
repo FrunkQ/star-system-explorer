@@ -587,6 +587,7 @@ dependencies = [
  "sse-flow",
  "sse-formation",
  "sse-import-v3",
+ "sse-life",
  "sse-observe",
  "sse-pack",
  "sse-sift",

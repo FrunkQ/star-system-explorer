@@ -152,3 +152,22 @@ Code: `crates/sse-kernel/src/adopt.rs`; `systems::form` is the pipeline run shar
 - Brought in S2, S3, `read_world_stack` and the importer's hydrosphere facts (`body.surface_water_oceans`, `body.oceans`, `body.surface_pressure`; an imported Earth is now mobile-lid through `resolved_system`).
 - Conflicts were resolved by keeping both sides: tests, the harness engine lists (both tracks' engines), START-HERE rows (each track's own row).
 - The generated TS and `contract.jsonl` were regenerated. Against the physics head, only `hello`, the "nonsense" error, the resolved-system line (now with `evidence`) and the new `systems` line differ. Worker 133 of 133.
+
+## life_view, export_chronicle, import_chronicle (19 Nov, the UI track's third asks)
+- **`life_view { fixture? | body? }`** returns `life_viewed { source, view }`, where `view` is L1d's `LifeView`.
+  - Fixtures: `earth`, `earth-archean`, `europa`, `red-dwarf-desert`, `dead-earth`.
+  - A `body` gives `no_habitats` until adopted systems carry habitat graphs; an unknown fixture gives `unknown_fixture`.
+- **`export_chronicle`** returns `chronicle_exported { export }`, a JSON document to save as is, format `sse.chronicle-export/1`.
+  - It holds `root`, `seed` (the text given to `open_universe`; the universe now keeps it), `manifest_id`, `packs` (the stack the universe runs on), `head`, and `events: [{id, kind, cbor}]`.
+  - `cbor` is the hex of the body's canonical CBOR. JSON alone is lossy: the CBOR reader turns integral floats into integers, which changes ids.
+  - Open branches and uncommitted look-aheads are not saved; committed ones are in the log.
+- **`import_chronicle { export }`** returns `chronicle_imported { root, events, head, state_hash, manifest_id, stack_matches }`.
+  - It replaces the open universe. Every event is decoded and re-hashed against its id, and the head is checked; any mismatch gives `bad_export`.
+  - `stack_matches` is false when the loaded stack differs from the export's. That is flagged, not refused, so the shell can warn.
+  - Formation runs are re-run on demand from their `adopt.formation` events.
+- **Test** `save_and_reopen_a_universe_and_read_life_views`:
+  - adopt, look ahead, commit with write-back, export through text, import into a fresh kernel;
+  - the state hash and `resolved_system` are identical;
+  - a flipped byte is refused, and a different stack is flagged;
+  - the life views and their errors.
+- **Contract** lines 133 to 136 are new. The export line is large (kestrel's full log) and the golden is now about 630 kB.

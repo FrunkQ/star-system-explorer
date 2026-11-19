@@ -363,6 +363,26 @@ pub enum Request {
     /// The open universe's systems: every `<root>/sys:*` with facts, where it
     /// came from (`v3`, `formation` or `facts`), its name and adopt event.
     Systems,
+    /// L1d's `LifeView` (biosphere view and life timeline) for a fixture
+    /// world (`earth`, `earth-archean`, `europa`, `red-dwarf-desert`,
+    /// `dead-earth`), or for a body once adopted systems carry habitat graphs.
+    LifeView {
+        #[serde(default)]
+        #[ts(optional)]
+        body: Option<String>,
+        #[serde(default)]
+        #[ts(optional)]
+        fixture: Option<String>,
+    },
+    /// The open universe as a saveable log: root, seed text, manifest and
+    /// stack ids, and every event body in order with its id.
+    ExportChronicle,
+    /// Reopen a universe from `export_chronicle`'s output: opens it, replays
+    /// every event, checks each id and the head, returns the state hash.
+    ImportChronicle {
+        #[ts(type = "unknown")]
+        export: serde_json::Value,
+    },
 }
 
 /// `adopt`'s formation request: the `run_formation` fields.
@@ -440,6 +460,9 @@ impl Request {
             Request::Adopt { .. } => "adopt",
             Request::ResolvedSystem { .. } => "resolved_system",
             Request::Systems => "systems",
+            Request::LifeView { .. } => "life_view",
+            Request::ExportChronicle => "export_chronicle",
+            Request::ImportChronicle { .. } => "import_chronicle",
         }
     }
 }
@@ -527,6 +550,13 @@ pub fn ops() -> Vec<OpInfo> {
             "a formation re-run for formation-adopted systems (cached), plus about 0.1 s per 256-sample tile; at most 24 tiles",
         ),
         o("systems", Cost::Light, "linear in the universe's facts"),
+        o("life_view", Cost::Light, "one fixture's signatures, epochs and hooks"),
+        o("export_chronicle", Cost::Light, "linear in the events"),
+        o(
+            "import_chronicle",
+            Cost::Light,
+            "linear in the events; replaces the open universe",
+        ),
     ]
 }
 
@@ -740,6 +770,28 @@ pub enum Response {
         systems: Vec<String>,
         facts: u32,
         state_hash: String,
+    },
+    /// `life_view`: `source` is `fixture:<name>` (or the body's address).
+    LifeViewed {
+        source: String,
+        #[ts(type = "unknown")]
+        view: serde_json::Value,
+    },
+    /// `export_chronicle`: a JSON document to save as is
+    /// (`format` `sse.chronicle-export/1`).
+    ChronicleExported {
+        #[ts(type = "unknown")]
+        export: serde_json::Value,
+    },
+    /// `import_chronicle`: the reopened universe. `stack_matches` says whether
+    /// the loaded pack stack is the one the export was made on.
+    ChronicleImported {
+        root: String,
+        events: u32,
+        head: String,
+        state_hash: String,
+        manifest_id: String,
+        stack_matches: bool,
     },
     /// `systems`: one entry per system, `{system, source, name?, addresses,
     /// adopted_event?}`.

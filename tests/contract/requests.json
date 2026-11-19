@@ -1291,5 +1291,22 @@
  },
  {
   "op": "systems"
+ },
+ {
+  "op": "life_view",
+  "fixture": "red-dwarf-desert"
+ },
+ {
+  "op": "life_view",
+  "fixture": "mars"
+ },
+ {
+  "op": "export_chronicle"
+ },
+ {
+  "op": "import_chronicle",
+  "export": {
+   "format": "other"
+  }
  }
 ]
