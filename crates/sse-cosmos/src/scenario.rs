@@ -70,6 +70,8 @@ pub struct CosmologyPack {
     pub envelope: crate::envelope::EnvelopeParams,
     #[serde(default)]
     pub green: crate::envelope::GreenParams,
+    #[serde(default)]
+    pub stars: crate::stars::StarParams,
 }
 
 impl CosmologyPack {
@@ -304,5 +306,67 @@ pub fn envelope_golden() -> serde_json::Value {
         "bands": bands,
         "found": found,
         "patch_model": { "feh_now_at_sun": pm.enrichment.feh_now_at_sun, "gradient": pm.enrichment.gradient_dex_per_kpc, "tau_gyr": pm.enrichment.tau_gyr, "sun_radius_kpc": pm.sun_radius_kpc },
+    })
+}
+
+/// G5 golden: the cell holding the Sun's place now and in the frame before,
+/// with one promoted system read at three times.
+pub fn stars_golden() -> serde_json::Value {
+    let cp = CosmologyPack::from_packs(&[base_cosmology_pack()]).expect("settings");
+    let c = Cosmology::new(cp.params.clone());
+    let u = Address::universe("g3").expect("address");
+    let web = Web::new(
+        &c,
+        WebParams {
+            octaves: 4,
+            ..cp.web.clone()
+        },
+        &Seed::from_text("g3"),
+        &u,
+    )
+    .expect("web");
+    let hs = crate::haloes::Haloes {
+        cosmo: &c,
+        web: &web,
+        params: cp.haloes.clone(),
+        seed: Seed::from_text("g3"),
+        universe: u,
+    };
+    let h = hs.median(1.0e12, "milky-way-like");
+    let g = crate::galaxy::evolve(&c, &cp.galaxy, &h);
+    let addr: Address = h.address.parse().expect("address");
+    let d = crate::rings::evolve(&g, &cp.galaxy, &cp.rings, Seed::from_text("g3"), &addr);
+    let e = crate::envelope::GalaxyEnvelope {
+        galaxy: &g,
+        disc: &d,
+        params: cp.envelope.clone(),
+        seed: Seed::from_text("g4"),
+        address: addr,
+    };
+    let st = crate::stars::Stars {
+        env: &e,
+        green: cp.green.clone(),
+        params: cp.stars.clone(),
+        seed: Seed::from_text("g5"),
+        galaxy: Address::universe("g5").expect("address"),
+    };
+    let now = st.frame_of(13_800.0);
+    let t = now as f64 * cp.stars.frame_myr;
+    let sun = st.from_grid([e.sun_radius_kpc() * 1000.0, 0.0, 0.0], t);
+    let cell = st.cell_at(sun, t);
+    let a = st.cell(cell, now, &[]).expect("cell");
+    let b = st.cell(cell, now - 1, &[]).expect("cell");
+    let pin = st.promote(&a[0]);
+    let reads: Vec<serde_json::Value> = [t - 2000.0, t, t + 500.0]
+        .iter()
+        .map(|x| serde_json::json!(st.at(&pin, *x)))
+        .collect();
+    serde_json::json!({
+        "cell": cell,
+        "now": { "count": a.len(), "digest": sse_core::ContentHash::of(&a).expect("hash").hex() },
+        "before": { "count": b.len(), "digest": sse_core::ContentHash::of(&b).expect("hash").hex() },
+        "pin": pin,
+        "reads": reads,
+        "birth": st.birth(&pin),
     })
 }

@@ -1,0 +1,218 @@
+{
+  "earth": {
+    "diversity": {
+      "area_m2": 492105423676283.1,
+      "climate_bins": 3,
+      "lineages": 910.8334451329691,
+      "provinces": 5,
+      "since_catastrophe_myr": 66.0
+    },
+    "guilds": [
+      [
+        "consumer.2.land-surface",
+        0.0,
+        4167276783414874.0,
+        "grazers of the land"
+      ],
+      [
+        "consumer.2.ocean-sunlit",
+        0.0,
+        3816000000000000.0,
+        "grazers of the sunlit sea"
+      ],
+      [
+        "consumer.3.land-surface",
+        0.0,
+        416727678341487.44,
+        "hunters of the land, some flying"
+      ],
+      [
+        "consumer.3.ocean-sunlit",
+        0.0,
+        381600000000000.06,
+        "hunters of the sunlit sea"
+      ],
+      [
+        "consumer.4.land-surface",
+        0.0,
+        41672767834148.74,
+        "top hunters (level 4) of the land"
+      ],
+      [
+        "consumer.4.ocean-sunlit",
+        0.0,
+        38160000000000.01,
+        "top hunters (level 4) of the sunlit sea"
+      ],
+      [
+        "decomposer.land-surface",
+        0.0,
+        3.7505491050733864e+16,
+        "fungi and soil life"
+      ],
+      [
+        "decomposer.ocean-sunlit",
+        0.0,
+        3.4344e+16,
+        "rotters of the sunlit sea"
+      ],
+      [
+        "parasite.land-surface",
+        0.0,
+        0.0,
+        "parasites of the land"
+      ],
+      [
+        "parasite.ocean-sunlit",
+        0.0,
+        0.0,
+        "parasites of the sunlit sea"
+      ],
+      [
+        "producer.oxygenic.land-surface",
+        0.5220007894593262,
+        0.0,
+        "forests and grasslands"
+      ],
+      [
+        "producer.oxygenic.ocean-sunlit",
+        0.4779992105406739,
+        0.0,
+        "seaweeds and green scums of the sunlit sea"
+      ],
+      [
+        "symbiont.land-surface",
+        0.0,
+        0.0,
+        "symbiotic partners in the land"
+      ],
+      [
+        "symbiont.ocean-sunlit",
+        0.0,
+        0.0,
+        "symbiotic partners in the sunlit sea"
+      ]
+    ],
+    "hash": "aae7144fa123c11d3db1bec06d60cc93d40e8409e4dc0ba7a45cb11699104cff",
+    "relations": 32,
+    "traits": {
+      "colour_options": [
+        "green",
+        "yellow-green",
+        "red-brown"
+      ],
+      "day_strategies": [
+        "day and night rhythms"
+      ],
+      "flight": "feasible",
+      "handedness": "right-handed amino acids",
+      "max_flyer_kg": 250.0,
+      "max_land_animal_kg": 70000.0,
+      "origin": "its own origin (no transfer between worlds is modelled yet)",
+      "pace": 1.5587918659165705,
+      "photon_peak_nm": 635.8281358281358,
+      "producer_colour": "green",
+      "senses": [
+        "chemical sensing",
+        "vision",
+        "hearing in water",
+        "hearing in air",
+        "electric sense in salty water"
+      ],
+      "solvent": "water",
+      "tallest_plant_m": 130.0,
+      "to_visitors": "biochemically unrelated to visitors: probably inert, rarely toxic, not infectious"
+    }
+  },
+  "earth-archean": {
+    "diversity": {
+      "area_m2": 1086437325167848.9,
+      "climate_bins": 1,
+      "lineages": 4.9720077979192645,
+      "provinces": 3,
+      "since_catastrophe_myr": null
+    },
+    "guilds": [
+      [
+        "consumer.2.ocean-sunlit",
+        0.0,
+        300003600000000.0,
+        "microbe-eating microbes and viruses of the sunlit sea"
+      ],
+      [
+        "decomposer.ocean-interior",
+        0.0,
+        32400000000.0,
+        "rotters of the deep water"
+      ],
+      [
+        "decomposer.ocean-sunlit",
+        0.0,
+        2700032400000000.0,
+        "rotters of the sunlit sea"
+      ],
+      [
+        "decomposer.sea-floor",
+        0.0,
+        32400000000.0,
+        "rotters of the sea floor"
+      ],
+      [
+        "parasite.ocean-sunlit",
+        0.0,
+        0.0,
+        "parasites of the sunlit sea"
+      ],
+      [
+        "producer.anoxygenic-iron.ocean-sunlit",
+        0.9999640012959533,
+        0.0,
+        "rusty purple mats"
+      ],
+      [
+        "producer.methanogen.ocean-interior",
+        0.00001199956801555144,
+        0.0,
+        "gas-making microbes"
+      ],
+      [
+        "producer.methanogen.ocean-sunlit",
+        0.00001199956801555144,
+        0.0,
+        "gas-making microbes"
+      ],
+      [
+        "producer.methanogen.sea-floor",
+        0.00001199956801555144,
+        0.0,
+        "gas-making microbes"
+      ]
+    ],
+    "hash": "9c6a58c391a499fa224b033e805e057d9fa6791b2da6731ba080f27636bb4227",
+    "relations": 21,
+    "traits": {
+      "colour_options": [
+        "purple",
+        "brown",
+        "olive green"
+      ],
+      "day_strategies": [
+        "day and night rhythms"
+      ],
+      "flight": "not_evolved",
+      "handedness": "right-handed amino acids",
+      "max_flyer_kg": null,
+      "max_land_animal_kg": null,
+      "origin": "its own origin (no transfer between worlds is modelled yet)",
+      "pace": 1.0955505045779725,
+      "photon_peak_nm": 635.8281358281358,
+      "producer_colour": "brown",
+      "senses": [
+        "chemical sensing"
+      ],
+      "solvent": "water",
+      "tallest_plant_m": null,
+      "to_visitors": "biochemically unrelated to visitors: probably inert, rarely toxic, not infectious"
+    }
+  }
+}

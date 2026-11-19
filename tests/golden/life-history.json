@@ -1,0 +1,338 @@
+{
+  "earth/a": {
+    "events": [
+      [
+        1165.0,
+        "origin",
+        "u:sol/sys:0/body:2/region:@tropics/habitat:@soil"
+      ],
+      [
+        1260.0,
+        "capability",
+        "anoxygenic"
+      ],
+      [
+        1265.0,
+        "capability",
+        "dormancy"
+      ],
+      [
+        1780.0,
+        "capability",
+        "oxygenic"
+      ],
+      [
+        2170.0,
+        "catastrophe",
+        "u:sol/sys:0/body:2"
+      ],
+      [
+        2180.0,
+        "recovery",
+        "u:sol/sys:0/body:2"
+      ],
+      [
+        3853.0,
+        "catastrophe",
+        "u:sol/sys:0/body:2"
+      ],
+      [
+        3860.0,
+        "recovery",
+        "u:sol/sys:0/body:2"
+      ],
+      [
+        4310.0,
+        "capability",
+        "complex_cells"
+      ],
+      [
+        4315.0,
+        "capability",
+        "sex"
+      ],
+      [
+        4318.0,
+        "catastrophe",
+        "u:sol/sys:0/body:2"
+      ],
+      [
+        4318.0,
+        "capability_lost",
+        "sex"
+      ],
+      [
+        4330.0,
+        "recovery",
+        "u:sol/sys:0/body:2"
+      ],
+      [
+        4350.0,
+        "capability",
+        "sex"
+      ],
+      [
+        4380.0,
+        "capability",
+        "multicellularity"
+      ],
+      [
+        4390.0,
+        "capability",
+        "land"
+      ],
+      [
+        4504.0,
+        "catastrophe",
+        "u:sol/sys:0/body:2"
+      ],
+      [
+        4515.0,
+        "recovery",
+        "u:sol/sys:0/body:2"
+      ],
+      [
+        4530.0,
+        "capability",
+        "large_bodies"
+      ],
+      [
+        4540.0,
+        "capability",
+        "hard_parts"
+      ]
+    ],
+    "first": {
+      "anoxygenic": 1260.0,
+      "chemotrophy": 1165.0,
+      "complex_cells": 4310.0,
+      "dormancy": 1265.0,
+      "hard_parts": 4540.0,
+      "land": 4390.0,
+      "large_bodies": 4530.0,
+      "multicellularity": 4380.0,
+      "oxygenic": 1780.0,
+      "sex": 4315.0
+    },
+    "hash": "a38c58749b996481902e039aa63fa8681953819755bce170f3c83720bffe60d2",
+    "origin_myr": 1165.0
+  },
+  "earth/b": {
+    "events": [
+      [
+        1230.0,
+        "origin",
+        "u:sol/sys:0/body:2/region:@tropics/habitat:@land-surface"
+      ],
+      [
+        1270.0,
+        "capability",
+        "anoxygenic"
+      ],
+      [
+        1275.0,
+        "capability",
+        "dormancy"
+      ],
+      [
+        1690.0,
+        "capability",
+        "oxygenic"
+      ],
+      [
+        2170.0,
+        "catastrophe",
+        "u:sol/sys:0/body:2"
+      ],
+      [
+        2180.0,
+        "recovery",
+        "u:sol/sys:0/body:2"
+      ],
+      [
+        3853.0,
+        "catastrophe",
+        "u:sol/sys:0/body:2"
+      ],
+      [
+        3860.0,
+        "recovery",
+        "u:sol/sys:0/body:2"
+      ],
+      [
+        4318.0,
+        "catastrophe",
+        "u:sol/sys:0/body:2"
+      ],
+      [
+        4330.0,
+        "recovery",
+        "u:sol/sys:0/body:2"
+      ],
+      [
+        4504.0,
+        "catastrophe",
+        "u:sol/sys:0/body:2"
+      ],
+      [
+        4515.0,
+        "recovery",
+        "u:sol/sys:0/body:2"
+      ],
+      [
+        4540.0,
+        "capability",
+        "complex_cells"
+      ],
+      [
+        4555.0,
+        "capability",
+        "multicellularity"
+      ]
+    ],
+    "first": {
+      "anoxygenic": 1270.0,
+      "chemotrophy": 1230.0,
+      "complex_cells": 4540.0,
+      "dormancy": 1275.0,
+      "multicellularity": 4555.0,
+      "oxygenic": 1690.0
+    },
+    "hash": "337d37bb040b9c3bb9b5fb2d3efe32beb0c693633612947dbb76d4c4494c8838",
+    "origin_myr": 1230.0
+  },
+  "earth/c": {
+    "events": [
+      [
+        830.0,
+        "origin",
+        "u:sol/sys:0/body:2/region:@north-temperate/habitat:@land-surface"
+      ],
+      [
+        850.0,
+        "capability",
+        "dormancy"
+      ],
+      [
+        935.0,
+        "capability",
+        "anoxygenic"
+      ],
+      [
+        1045.0,
+        "capability",
+        "oxygenic"
+      ],
+      [
+        2170.0,
+        "catastrophe",
+        "u:sol/sys:0/body:2"
+      ],
+      [
+        2180.0,
+        "recovery",
+        "u:sol/sys:0/body:2"
+      ],
+      [
+        2795.0,
+        "capability",
+        "complex_cells"
+      ],
+      [
+        2830.0,
+        "capability",
+        "sex"
+      ],
+      [
+        2875.0,
+        "capability",
+        "multicellularity"
+      ],
+      [
+        2925.0,
+        "capability",
+        "land"
+      ],
+      [
+        3853.0,
+        "catastrophe",
+        "u:sol/sys:0/body:2"
+      ],
+      [
+        3860.0,
+        "recovery",
+        "u:sol/sys:0/body:2"
+      ],
+      [
+        3980.0,
+        "capability",
+        "large_bodies"
+      ],
+      [
+        3990.0,
+        "capability",
+        "hard_parts"
+      ],
+      [
+        4318.0,
+        "catastrophe",
+        "u:sol/sys:0/body:2"
+      ],
+      [
+        4330.0,
+        "recovery",
+        "u:sol/sys:0/body:2"
+      ],
+      [
+        4504.0,
+        "catastrophe",
+        "u:sol/sys:0/body:2"
+      ],
+      [
+        4515.0,
+        "recovery",
+        "u:sol/sys:0/body:2"
+      ]
+    ],
+    "first": {
+      "anoxygenic": 935.0,
+      "chemotrophy": 830.0,
+      "complex_cells": 2795.0,
+      "dormancy": 850.0,
+      "hard_parts": 3990.0,
+      "land": 2925.0,
+      "large_bodies": 3980.0,
+      "multicellularity": 2875.0,
+      "oxygenic": 1045.0,
+      "sex": 2830.0
+    },
+    "hash": "4390033ba99baabbe5fb1ff8294a153ad89010a4a9a71a8a3a6c94e423d3aac6",
+    "origin_myr": 830.0
+  },
+  "europa/a": {
+    "events": [],
+    "first": {},
+    "hash": "cc3a8720180af4bfc93aaf6c49f751b1416ff54c47592732faa91ba8b6909aec",
+    "origin_myr": null
+  },
+  "europa/b": {
+    "events": [
+      [
+        4155.0,
+        "origin",
+        "u:sol/sys:0/body:8/shell:@ocean/habitat:@under-ice-ocean"
+      ]
+    ],
+    "first": {
+      "chemotrophy": 4155.0
+    },
+    "hash": "d169673dbc7125842ccbb47fd08700b6c27f234fd4ed0f11f5b1e70c92973741",
+    "origin_myr": 4155.0
+  },
+  "europa/c": {
+    "events": [],
+    "first": {},
+    "hash": "cc3a8720180af4bfc93aaf6c49f751b1416ff54c47592732faa91ba8b6909aec",
+    "origin_myr": null
+  }
+}

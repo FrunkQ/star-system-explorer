@@ -451,6 +451,225 @@
      "transfer_efficiency": "About 10% of production passes from one feeding level to the next (Lindeman 1942; Pauly and Christensen 1995)",
      "low_power_levels": "Without oxygen, anaerobic metabolisms release about a tenth of the energy, so food chains stay short (Catling et al. 2005)"
     }
+   },
+   "life_history": {
+    "about": "Boxes C, D and E (life design sections 4 to 6, L1b): origin as a waiting time with a dial, innovations as a capability graph with waiting times against accumulated opportunity, and catastrophes from the physical chronicle with refuges and recovery. Defaults are tuned so Earth's inputs give an Earth-like outline in most seeds; that is one data point, not a law.",
+    "step_myr": 5.0,
+    "origin_rate_per_myr": 0.0018,
+    "earth_area_m2": 510000000000000.0,
+    "settings": [
+     {
+      "id": "alkaline-vents",
+      "label": "alkaline hydrothermal vents",
+      "habitats": [
+       "sea-floor",
+       "under-ice-ocean"
+      ],
+      "factor": 1.0
+     },
+     {
+      "id": "wet-dry-pools",
+      "label": "land pools with wet-dry cycling and ultraviolet light",
+      "habitats": [
+       "land-surface",
+       "lake"
+      ],
+      "factor": 1.0
+     },
+     {
+      "id": "delivered-organics",
+      "label": "organics delivered by comets and meteorites",
+      "habitats": [
+       "ocean-sunlit",
+       "lake"
+      ],
+      "factor": 0.3
+     },
+     {
+      "id": "mineral-catalysts",
+      "label": "mineral surfaces as catalysts",
+      "habitats": [
+       "soil",
+       "deep-crust",
+       "cave"
+      ],
+      "factor": 0.2
+     }
+    ],
+    "origin_media": [
+     "liquid",
+     "subsurface",
+     "cloud"
+    ],
+    "production_ref_gc_yr": 8e+16,
+    "population_exponent": 0.25,
+    "activation_ev": 0.65,
+    "reference_k": 288.0,
+    "variety_ref": 7.0,
+    "capabilities": [
+     {
+      "id": "chemotrophy",
+      "label": "chemical energy use",
+      "at_origin": true,
+      "rate": 0.0,
+      "unlocks_metabolisms": [
+       "methanogen",
+       "aerobic-chemolithotroph"
+      ],
+      "effect": "a base biosphere on chemical energy"
+     },
+     {
+      "id": "dormancy",
+      "label": "dormancy and spores",
+      "needs": [
+       "chemotrophy"
+      ],
+      "rate": 0.5,
+      "effect": "cells wait out bad times (survival of catastrophes and transfer between worlds come with L1c and L2)"
+     },
+     {
+      "id": "anoxygenic",
+      "label": "light harvesting without oxygen release",
+      "needs": [
+       "chemotrophy"
+      ],
+      "needs_facts": [
+       {
+        "fact": "light",
+        "min": 1.0
+       }
+      ],
+      "rate": 0.3,
+      "unlocks_metabolisms": [
+       "anoxygenic-iron",
+       "anoxygenic-hydrogen"
+      ],
+      "effect": "production rises 10 to 100 times where a donor is supplied"
+     },
+     {
+      "id": "oxygenic",
+      "label": "oxygen-releasing photosynthesis",
+      "needs": [
+       "anoxygenic"
+      ],
+      "needs_facts": [
+       {
+        "fact": "surface_water",
+        "min": 1.0
+       }
+      ],
+      "rate": 0.0016,
+      "dial": "oxygenic",
+      "unlocks_metabolisms": [
+       "oxygenic"
+      ],
+      "effect": "water becomes the donor, production rises again and oxygen is released"
+     },
+     {
+      "id": "complex_cells",
+      "label": "complex cells (a merger of lineages)",
+      "needs": [
+       "chemotrophy"
+      ],
+      "needs_facts": [
+       {
+        "fact": "o2_fraction",
+        "min": 0.001
+       }
+      ],
+      "rate": 0.0012,
+      "dial": "complex_cells",
+      "effect": "cells with internal power plants: the hard step to larger life"
+     },
+     {
+      "id": "sex",
+      "label": "sex and recombination",
+      "needs": [
+       "complex_cells"
+      ],
+      "rate": 0.02,
+      "effect": "faster innovation"
+     },
+     {
+      "id": "multicellularity",
+      "label": "multicellularity",
+      "needs": [
+       "complex_cells"
+      ],
+      "rate": 0.01,
+      "effect": "bodies of many cells; it arises often once complex cells exist"
+     },
+     {
+      "id": "large_bodies",
+      "label": "large active bodies",
+      "needs": [
+       "multicellularity"
+      ],
+      "needs_facts": [
+       {
+        "fact": "high_power",
+        "min": 1.0
+       },
+       {
+        "fact": "o2_fraction",
+        "min": 0.1
+       }
+      ],
+      "rate": 0.02,
+      "effect": "animals that move, hunt and burrow: more feeding levels"
+     },
+     {
+      "id": "hard_parts",
+      "label": "hard parts",
+      "needs": [
+       "large_bodies"
+      ],
+      "rate": 0.05,
+      "effect": "shells and skeletons: fossils and reefs"
+     },
+     {
+      "id": "land",
+      "label": "land colonisation",
+      "needs": [
+       "multicellularity"
+      ],
+      "needs_facts": [
+       {
+        "fact": "land",
+        "min": 1.0
+       },
+       {
+        "fact": "o2_fraction",
+        "min": 0.01
+       }
+      ],
+      "rate": 0.01,
+      "unlocks_media": [
+       "surface"
+      ],
+      "effect": "life on land under an ozone shield: land production joins the ocean's"
+     }
+    ],
+    "dials": {
+     "origin": 1.0,
+     "oxygenic": 1.0,
+     "complex_cells": 1.0
+    },
+    "fragile_myr": 30.0,
+    "recovery_myr": 10.0,
+    "diversity_floor_gc_yr": 1000000.0,
+    "oxidant_fact": "o2_fraction",
+    "history_every_myr": 50.0,
+    "sources": {
+     "origin_rate_per_myr": "The honest unknown. Set so an Earth-like early world most often has life within a few hundred million years (life by about 3.7 Gyr ago: Rosing 1999, Ohtomo et al. 2014); the origin dial runs from Rare (0.01) through Earth-like pace (1) to Common (100)",
+     "settings": "Alkaline vents (Russell and Martin 2004; Lane 2015), wet-dry pools (Damer and Deamer 2020), delivered organics (Chyba and Sagan 1992), mineral catalysts (Hazen and Sverjensky 2010); factors are relative weights, each switchable",
+     "population_exponent": "Innovation supply rises with population, but less than linearly (clonal interference; Lynch 2007); 0.25 keeps small biospheres able to innovate slowly",
+     "activation_ev": "0.65 eV, the metabolic theory's activation energy for generation rate (Gillooly et al. 2001)",
+     "rates": "Waiting times in Earth-Myr of opportunity: anoxygenic photosynthesis soon after origin (by 3.4 Gyr ago, Tice and Lowe 2004); oxygenic within about a billion years (before 2.4 Gyr ago, Lyons et al. 2014); complex cells a hard step once oxygen exists (about 1.8 Gyr ago, Knoll 2014); large animals once oxygen nears modern levels (Ediacaran, Sperling et al. 2013); land colonisation needs an ozone shield (Kenrick et al. 2012)",
+     "fragile_myr": "New capabilities held by few lineages can be lost in a mass extinction (Jablonski 2001)",
+     "recovery_myr": "Recovery of diversity after mass extinctions takes about 10 Myr (Kirchner and Weil 2000); 90% at about 23 Myr",
+     "oxidant_fact": "Oxygen levels are inputs until L2 computes them from the balance; here they count only once a high-power (oxygen-making) metabolism exists"
+    }
    }
   }
  }

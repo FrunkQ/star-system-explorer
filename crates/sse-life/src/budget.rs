@@ -166,7 +166,7 @@ pub fn band_fraction(peak_nm: f64, lo_nm: f64, hi_nm: f64) -> f64 {
     (integral * m::PI / (SIGMA * t * t * t * t)).clamp(0.0, 1.0)
 }
 
-fn closed_reason(p: &LifeRequirementProfile, bp: &BudgetParams) -> Option<String> {
+pub(crate) fn closed_reason(p: &LifeRequirementProfile, bp: &BudgetParams) -> Option<String> {
     if !bp.chemistries.contains(&p.solvent) {
         return Some(format!("no chemistry for {} in this pack stack", p.solvent));
     }
