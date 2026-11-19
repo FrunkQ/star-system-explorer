@@ -95,8 +95,8 @@
   .tone-ink { color: var(--sse-ink); }
   .tone-muted { color: var(--sse-ink-muted); fill: var(--sse-ink-muted); }
   .tone-accent { color: var(--sse-accent); stroke: var(--sse-accent); }
-  .tone-caution { color: var(--sse-caution, #c08a00); stroke: var(--sse-caution, #c08a00); }
-  .tone-danger { color: var(--sse-danger, #b3261e); stroke: var(--sse-danger, #b3261e); }
+  .tone-caution { color: var(--sse-caution, var(--sse-accent)); stroke: var(--sse-caution, var(--sse-accent)); stroke-dasharray: 4 3; }
+  .tone-danger { color: var(--sse-alert, var(--sse-accent)); stroke: var(--sse-alert, var(--sse-accent)); }
   .hex-table { font-family: var(--sse-font-mono); color: var(--sse-ink); border-collapse: collapse; }
   .hex-table td, .hex-table th { padding: 2px 8px; border-bottom: 1px solid var(--sse-rule); text-align: left; }
 </style>
