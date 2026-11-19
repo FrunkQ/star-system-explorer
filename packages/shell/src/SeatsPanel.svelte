@@ -15,6 +15,7 @@
   const SCREENS = [
     { file: "players.screen.json", label: "Bridge" },
     { file: "players.survey.screen.json", label: "Tarn survey report" },
+    { file: "players.bridge-3d.screen.json", label: "Bridge in 3D" },
   ];
   const setup = $derived(observeOf(session.stack().base)?.setup);
   const fog = $derived(fogViews(setup));

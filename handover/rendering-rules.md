@@ -20,8 +20,11 @@ No view may show precision jiggle at any scale, from a lander's ground track to 
 ## Where the current views stand (checked 18 Nov, UI track)
 - **GM system chart** (`views/system-chart`) is the star's frame: 2D SVG, log-radial screen scale computed in f64
   per frame, so SVG gets pixel-sized numbers. It now draws only the star's own children; a body whose `parent` is
-  another body (a moon) is left to that body's frame. There is no planet-frame chart yet (no fixture has moons).
+  another body (a moon) is left to that body's frame. A planet's frame opens from the chart (packages/planet-chart.md).
 - **Players' chart** (`player-stack/PlayerChart`) draws only the scope's direct children (`topLevel`), so it is one
   frame too; its optional drift is presentation (an angle, kept modulo 360), not accumulated position.
-- No 3D or GPU view exists yet. The first one (renderer packages) must follow rules 3 and 4 and prove it with a test
-  that zooms from patch to surface and checks a fixed body's screen position is stable to a pixel.
+- **System 3D** (`views/system-3d`, V6) draws one frame at a time through `packages/renderer/src/frames.ts`: positions
+  local to their parent in f64, camera subtracted in f64, float32 only for the GPU, and the frame is handed over on
+  zoom. `packages/renderer/test/frames.test.ts` is the pixel-stability proof. It zooms from 3×10^21 m to 10 m onto a
+  lander on a moon, through five frames, and holds it within 0.0001 px. Any new GPU view uses `frames.ts`, not its
+  own maths.

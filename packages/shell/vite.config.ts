@@ -26,6 +26,8 @@ export default defineConfig({
     outDir: "dist",
     emptyOutDir: true,
     target: "es2022",
+    // three.js (about 800 kB) is one lazily loaded chunk, fetched only when a 3D view starts its GPU path.
+    chunkSizeWarningLimit: 900,
     rollupOptions: { input: { main: `${import.meta.dirname}/index.html`, players: `${import.meta.dirname}/players.html` } },
   },
   server: { fs: { allow: ["../.."] } },

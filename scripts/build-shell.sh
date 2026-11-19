@@ -19,6 +19,6 @@ cp packages/shell/src/documents/sample.warm-worlds.pack.json packages/shell/publ
 rm -rf packages/shell/public/scenes
 # Documents the screens composer edits and previews (U5).
 rm -rf packages/shell/public/documents && mkdir -p packages/shell/public/documents
-cp packages/shell/src/documents/players.screen.json packages/shell/src/documents/players.survey.screen.json packages/shell/src/documents/vocab.plain.json packages/shell/src/documents/orac.screen-request.json packages/shell/public/documents/
+cp packages/shell/src/documents/players.screen.json packages/shell/src/documents/players.survey.screen.json packages/shell/src/documents/players.bridge-3d.screen.json packages/shell/src/documents/vocab.plain.json packages/shell/src/documents/orac.screen-request.json packages/shell/public/documents/
 npx vite build --config packages/shell/vite.config.ts --logLevel warn
 echo "shell ready in packages/shell/dist/ (serve it over http, e.g. npm run shell)"

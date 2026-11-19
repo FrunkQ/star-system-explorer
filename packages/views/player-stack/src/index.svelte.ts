@@ -9,6 +9,7 @@ import PlayerCard from "./PlayerCard.svelte";
 import PlayerTable from "./PlayerTable.svelte";
 import PlayerText from "./PlayerText.svelte";
 import PlayerReadout from "./PlayerReadout.svelte";
+import { playerSystem3d } from "../../system-3d/src/index.svelte.ts";
 
 type PlayerView = ViewModule<PlayerScene, PlayerContext>;
 const scenes = [{ addresses: [], quantity_kinds: [] }];
@@ -64,4 +65,4 @@ export const playerReadout: PlayerView = {
   mount: (el, ctx, scene) => mountPlayer(PlayerReadout, el, ctx, scene),
 };
 
-export const PLAYER_STACK: readonly PlayerView[] = [playerChart, playerCard, playerTable, playerText, playerReadout];
+export const PLAYER_STACK: readonly PlayerView[] = [playerChart, playerCard, playerTable, playerText, playerReadout, playerSystem3d];
