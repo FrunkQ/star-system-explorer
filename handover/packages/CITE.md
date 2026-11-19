@@ -81,7 +81,7 @@ Wording only, no physics value changed; goldens re-blessed because reference str
   "several hundred, 60 to over 2000 km" (Stofan 1992 gives no count of 500); Neukum chronology valid to ~4.1 Gyr.
 
 ### Galaxy and cosmology (19 Nov)
-Physics changed, goldens re-blessed on purpose (haloes, galaxy, envelope, stars, cosmos, cosmology; galaxy-events after merging G6 from main, since its events follow the merger histories):
+Physics changed, goldens re-blessed on purpose (haloes, galaxy, envelope, stars, cosmos, cosmology; galaxy-events after merging G6 from main, and the galaxy_chart cases in contract.jsonl after merging the Explore tab, since both follow the merger histories):
 - Major-merger mass ratio (`sse-cosmos/src/haloes.rs`): drawn from the full Fakhouri, Ma and Boylan-Kolchin 2010
   eq. 1 shape, ξ^β exp((ξ/ξ_t)^γ), by a fixed 40-step bisection on its integral. The old draw kept only ξ^β and
   called the exponential "about 1"; it rises about 3 times from ξ = 0.25 to 1, so mergers now lean towards equal
