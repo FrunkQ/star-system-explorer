@@ -36,7 +36,6 @@
   import oracDoc from "./documents/orac.requests.json";
   import sceneDoc from "./documents/kestrel.scene.json";
   import worldsDoc from "./documents/kestrel.worlds.json";
-  import { checkWorldStack, type WorldStack } from "../../ui-contract/src/index.ts";
   import derivationsDoc from "./documents/derivations.base.json";
   import stackDoc from "./documents/stack.json";
   import factsDoc from "./documents/kestrel.player-facts.json";
@@ -47,8 +46,8 @@
   import type { ChangeRequest, Json } from "../../ui-contract/src/index.ts";
 
   // World stacks (P4) ride on their subjects; until the kernel serves them they come from a fixture document.
-  const worlds = new Map((worldsDoc as unknown as { stacks: WorldStack[] }).stacks.filter((w) => !checkWorldStack(w).length).map((w) => [w.body, w]));
-  const base = { ...(sceneDoc as unknown as SystemScene), subjects: (sceneDoc as unknown as SystemScene).subjects.map((x) => (worlds.has(x.address) ? { ...x, world: worlds.get(x.address) } : x)) };
+  const worlds = new Map((worldsDoc as unknown as { links: { body: string; fixture: string }[] }).links.map((w) => [w.body, w.fixture]));
+  const base = { ...(sceneDoc as unknown as SystemScene), subjects: (sceneDoc as unknown as SystemScene).subjects.map((x) => (worlds.has(x.address) ? { ...x, world_fixture: worlds.get(x.address) } : x)) };
   const derivations = derivationsDoc as unknown as DerivationDoc;
   const ws = createWorkspace(base.now_yr);
   // Orac is not connected yet (A2): its sample requests come from a fixture document.

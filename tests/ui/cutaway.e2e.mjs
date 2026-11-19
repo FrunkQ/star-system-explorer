@@ -2,7 +2,8 @@
 // first). Usage: node tests/ui/cutaway.e2e.mjs [chromium firefox webkit] [--screens <dir>]
 // Select Tarn on the chart, open the Body screen: the cut shows its shells
 // (the south pole's ice and brine in their own sector) and the ladder lists
-// the nine Strata lines as the kernel words them. A body with no stack says
+// the nine Strata lines as the kernel words them, served by read_world_stack,
+// with the kernel's physics notes under a picked line. A body with no stack says
 // so and offers the worlds that have one. Nothing here changes the state hash.
 import { spawn } from "node:child_process";
 import { mkdirSync } from "node:fs";
@@ -50,8 +51,11 @@ try {
     assert.match(await lines.nth(8).innerText(), /−2,900 km\s+Liquid core, dynamo on/);
     // The card beside it is Tarn's.
     assert.match(await gm.locator(".area-card").innerText(), /Tarn/);
+    assert.equal(await cut.getAttribute("data-source"), "fixture:tarn", "served by the kernel");
     await lines.nth(5).getByRole("button").click();
     assert.equal(await lines.nth(5).getByRole("button").getAttribute("aria-pressed"), "true");
+    // The kernel's physics notes for the picked line.
+    assert.match(await cut.getByLabel("Physics of Sub-ice brine ocean").innerText(), /freezes at 265\.1 K.*liquid/);
     await shot(gm, `cutaway-${name}`);
 
     // A body with no stack says so.

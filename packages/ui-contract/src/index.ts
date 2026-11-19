@@ -52,4 +52,4 @@ export type { V3Imported, ImportReport, ImportDifference, ImportedSystem, Format
 export { specFromScene, sceneAt, snapshotAt, fateEvents, subjectNames, fmtAge, KIND_WORDS, PHASE_WORDS, Z_SUN } from "./fate.ts";
 export type { SystemSpec, LookedAhead, FateEvent, FateSnapshot } from "./fate.ts";
 export { checkWorldStack, formatKm, kindPhrase, ladder, regionCounts, cutRadius } from "./world.ts";
-export type { WorldStack, WorldShell, WorldRegion, WorldFeature, LadderLine } from "./world.ts";
+export type { WorldStack, WorldShell, WorldRegion, WorldFeature, LadderLine, WorldStackRead } from "./world.ts";

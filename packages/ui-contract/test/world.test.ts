@@ -5,6 +5,9 @@ import { test } from "node:test";
 import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 import { checkWorldStack, cutRadius, formatKm, ladder, regionCounts, type WorldStack } from "../src/world.ts";
+import { Session } from "../src/session.ts";
+import { gmSeat } from "../src/seat.ts";
+import { nodeKernel } from "./node-kernel.ts";
 
 const tarn = JSON.parse(readFileSync(new URL("../../../tests/fixtures/worlds/tarn.json", import.meta.url), "utf8")) as WorldStack;
 
@@ -29,15 +32,28 @@ test("the ladder reproduces the kernel's Strata lines", () => {
   );
 });
 
-test("every fixture world gets a ladder and the shell app's copy matches tarn", () => {
-  for (const n of ["earth", "europa", "mars", "titan", "venus"]) {
-    const w = JSON.parse(readFileSync(new URL(`../../../tests/fixtures/worlds/${n}.json`, import.meta.url), "utf8")) as WorldStack;
-    assert.deepEqual(checkWorldStack(w), [], n);
-    assert.ok(ladder(w).length > 0, n);
+test("the kernel serves every fixture; its ladder and this port agree; the campaign's links resolve", async () => {
+  const k = nodeKernel();
+  try {
+    const s = await Session.open(k.client, gmSeat(), { id: "kestrel", seed: "k" }, [JSON.parse(readFileSync(new URL("../../../packs/base-physics/pack.json", import.meta.url), "utf8"))]);
+    for (const n of ["earth", "europa", "mars", "tarn", "titan", "venus"]) {
+      const r = await s.readWorldStack({ fixture: n });
+      assert.ok(r.ok, n);
+      assert.equal(r.result.source, `fixture:${n}`);
+      assert.deepEqual(r.result.invalid, [], n);
+      assert.deepEqual(checkWorldStack(r.result.stack), [], n);
+      assert.deepEqual(ladder(r.result.stack).map((l) => [l.depth, l.text, l.where, l.key]), r.result.ladder.map((l) => [l.depth, l.text, l.where, l.key]), `${n}: the TS port words it as the kernel does`);
+    }
+    const tarn = await s.readWorldStack({ fixture: "tarn" });
+    assert.ok(tarn.ok && tarn.result.notes.some((x) => x.startsWith("brine-ocean: ")));
+    // Kestrel's Tarn has no built stack yet; the campaign names its fixture.
+    const none = await s.readWorldStack({ body: "u:kestrel/sys:1/body:3" });
+    assert.ok(!none.ok && none.code === "no_world_stack");
+    const links = JSON.parse(readFileSync(new URL("../../shell/src/documents/kestrel.worlds.json", import.meta.url), "utf8")) as { links: { body: string; fixture: string }[] };
+    for (const l of links.links) assert.ok((await s.readWorldStack({ fixture: l.fixture })).ok, l.fixture);
+  } finally {
+    await k.close();
   }
-  const doc = JSON.parse(readFileSync(new URL("../../shell/src/documents/kestrel.worlds.json", import.meta.url), "utf8")) as { stacks: WorldStack[] };
-  const copy = doc.stacks[0]!;
-  assert.deepEqual({ ...copy, body: tarn.body, name: tarn.name }, tarn);
 });
 
 test("km words and region counts", () => {

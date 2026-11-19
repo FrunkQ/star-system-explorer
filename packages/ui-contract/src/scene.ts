@@ -46,8 +46,12 @@ export interface SceneSubject {
   stamps: string[];
   tags: string[];
   prose?: string;
-  /** The world's shells, regions and features (P4 world stack), when known. */
-  world?: import("./world.ts").WorldStack;
+  /**
+   * A P4 world-stack fixture that stands in for this body until the kernel
+   * builds its stack from history. The Cutaway asks the kernel by address
+   * first (read_world_stack) and by this name only when that finds none.
+   */
+  world_fixture?: string;
 }
 
 export interface SceneEvent {

@@ -3,22 +3,45 @@
   Global shells fill the wedge; shells that lie only under a region (the
   south pole's ice and brine) fill a sector at its edge, named for the
   region. Features sit at their heights. The ladder beside it lists the
-  same things top to bottom in words. It draws what the world stack says
-  and nothing else: no stack, no picture.
+  same things top to bottom in words, and under a picked line the kernel's
+  physics notes for it. Stack, ladder and notes come from the kernel
+  (read_world_stack): by the body's address, else by the P4 fixture the
+  campaign names for it. It draws what the stack says and nothing else:
+  no stack, no picture.
 -->
 <script lang="ts">
-  import { cutRadius, formatKm, kindPhrase, ladder, regionCounts, type Json, type SystemScene, type ViewContext, type WorldShell, type WorldStack } from "../../../ui-contract/src/index.ts";
+  import { cutRadius, formatKm, kindPhrase, regionCounts, type Json, type LadderLine, type WorldStackRead, type SystemScene, type ViewContext, type WorldShell, type WorldStack } from "../../../ui-contract/src/index.ts";
   import { Card } from "../../../chart-grammar/src/index.ts";
 
   let { ctx, scene, params }: { ctx: ViewContext; scene: SystemScene; params: Record<string, Json> } = $props();
 
   const ws = $derived(ctx.workspace);
   const subject = $derived(scene.subjects.find((s) => s.address === ws.selection));
-  const withStacks = $derived(scene.subjects.filter((s) => s.world));
-  const w = $derived<WorldStack | undefined>(subject?.world);
+  const withStacks = $derived(scene.subjects.filter((s) => s.world_fixture));
+  // The kernel's read for the selected body: by address first, then by the fixture the campaign names.
+  let read = $state<WorldStackRead | null>(null);
+  let loading = $state(false);
+  let gen = 0;
+  $effect(() => {
+    const sub = subject;
+    const g = ++gen;
+    read = null;
+    if (!sub) return;
+    loading = true;
+    (async () => {
+      let r = await ctx.session.readWorldStack({ body: sub.address });
+      if (!r.ok && r.code === "no_world_stack" && sub.world_fixture) r = await ctx.session.readWorldStack({ fixture: sub.world_fixture });
+      if (g !== gen) return;
+      loading = false;
+      read = r.ok && !r.result.invalid.length ? r.result : null;
+    })();
+  });
+  const w = $derived<WorldStack | undefined>(read?.stack);
   const scale = $derived(params.scale === "true" ? "true" : "log");
   const wedge = $derived(Math.min(360, Math.max(60, Number(params.wedge_deg ?? 140))));
-  const lines = $derived(w ? ladder(w) : []);
+  const lines = $derived<LadderLine[]>(read?.ladder ?? []);
+  // physics_notes() lines start "<key>: ".
+  const notesFor = (key: string) => (read && key ? [...read.notes, ...read.problems.filter((p) => p.at === key).map((p) => `Problem: ${p.message}`)].filter((n) => n.startsWith(`${key}: `) || n.startsWith("Problem:")).map((n) => n.replace(`${key}: `, "")) : []);
   let picked = $state<string | null>(null);
   $effect(() => {
     void ws.selection;
@@ -93,7 +116,7 @@
   });
 </script>
 
-<div class="wrap" data-cutaway={w ? w.body : "none"} data-scale={scale}>
+<div class="wrap" data-cutaway={w && subject ? subject.address : loading ? "loading" : "none"} data-source={read?.source ?? ""} data-scale={scale}>
   {#if w && subject}
     <Card title="{subject.label}: cutaway" subtitle={regionCounts(w) ? `Regions: ${regionCounts(w)}` : undefined}>
       <div class="body" class:noladder={params.ladder === false}>
@@ -130,19 +153,23 @@
                 <button type="button" class="row" aria-pressed={!!l.key && picked === l.key} onclick={() => (picked = !l.key || picked === l.key ? null : l.key)}>
                   <span class="depth">{l.depth}</span>
                   <span class="what">{l.text}</span>
-                  <span class="where">{l.where}</span>
+                  <span class="where">{l.where}{#if notesFor(l.key).length}<span class="has-why" aria-hidden="true">&nbsp;· why</span>{/if}</span>
                 </button>
+                {#if picked === l.key && notesFor(l.key).length}
+                  <ul class="why" aria-label="Physics of {l.text}">{#each notesFor(l.key) as n (n)}<li>{n}</li>{/each}</ul>
+                {/if}
               </li>
             {/each}
           </ol>
         {/if}
       </div>
-      {#if (scene as { fixture?: boolean }).fixture || w.name.includes("fixture")}<p class="note" role="note">This stack is a fixture until the kernel builds world stacks from each world's history.</p>{/if}
+      {#if read?.source.startsWith("fixture:")}<p class="note" role="note">The kernel serves this stack from its P4 fixture "{read.source.slice(8)}" until it builds world stacks from each world's history.</p>{/if}
+      {#if read?.problems.length}<p class="note problem" role="note">Physics problems: {read.problems.map((p) => `${p.at}: ${p.message}`).join("; ")}</p>{/if}
     </Card>
   {:else}
-    <Card title={subject ? `${subject.label}: no cutaway yet` : "Nothing selected"}>
+    <Card title={subject ? (loading ? subject.label : `${subject.label}: no cutaway yet`) : "Nothing selected"}>
       <p class="note">
-        {subject ? "The kernel has no world stack for this body yet, so there is nothing true to draw." : "Pick a world on the chart to cut it open."}
+        {subject ? (loading ? "Asking the kernel for its world stack…" : "The kernel has no world stack for this body yet, so there is nothing true to draw.") : "Pick a world on the chart to cut it open."}
         {#if withStacks.length}Worlds with a stack:{/if}
       </p>
       {#if withStacks.length}
@@ -240,6 +267,18 @@
     grid-column: 2;
     font-size: 11px;
     color: var(--sse-ink-muted);
+  }
+  .has-why {
+    color: var(--sse-accent);
+  }
+  .why {
+    margin: 2px 12px 6px;
+    padding-left: 16px;
+    font-size: 11px;
+    line-height: 1.45;
+  }
+  .problem {
+    color: var(--sse-accent-ink, var(--sse-accent));
   }
   .pick {
     margin: 6px 0 0;

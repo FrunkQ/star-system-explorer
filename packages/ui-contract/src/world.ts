@@ -158,3 +158,16 @@ export function cutRadius(w: WorldStack, altitude_m: number, scale: "true" | "lo
   const d_km = Math.min(R, -altitude_m) / 1000;
   return Math.max(0, surf * (1 - Math.log10(1 + d_km) / Math.log10(1 + R / 1000)));
 }
+
+/** `read_world_stack`'s answer (physics track, K-physics-ops.md): the stack, the kernel's ladder and physics notes. */
+export interface WorldStackRead {
+  type: "world_stack_read";
+  body: string;
+  /** "fixture:<name>", "given", later "built:<epoch>". */
+  source: string;
+  stack: WorldStack;
+  ladder: LadderLine[];
+  notes: string[];
+  problems: { at: string; message: string }[];
+  invalid: { at: string; message: string }[];
+}
