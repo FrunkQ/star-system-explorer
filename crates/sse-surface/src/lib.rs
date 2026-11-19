@@ -14,7 +14,9 @@
 //! surveyed worlds.
 
 pub mod atlas;
+pub mod impacts;
 pub mod plates;
+pub mod regimes;
 pub mod scenario;
 pub mod sketch;
 pub mod wear;
@@ -101,6 +103,8 @@ pub struct SurfaceSettings {
     pub atlas: atlas::AtlasSettings,
     pub plates: plates::PlateSettings,
     pub wear: wear::WearSettings,
+    pub impacts: impacts::ImpactSettings,
+    pub regime_features: regimes::RegimeSettings,
     pub rules: Vec<Rule>,
     pub regimes: BTreeMap<String, RegimeDef>,
 }
@@ -620,7 +624,11 @@ pub fn envelopes_of(run: &SystemRun, s: &SurfaceSettings) -> Vec<SurfaceEnvelope
 #[cfg(test)]
 mod atlas_tests;
 #[cfg(test)]
+mod impacts_tests;
+#[cfg(test)]
 mod plates_tests;
+#[cfg(test)]
+mod regimes_tests;
 #[cfg(test)]
 mod tests;
 #[cfg(test)]

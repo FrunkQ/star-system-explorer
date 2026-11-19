@@ -31,6 +31,8 @@ Milestone M1 "Proven core" = packages K0 to K6 (build plan section 3/4).
 | S1 surface atlas: cube-sphere tiles, band-limited detail, disclosure and fact floor, cache | done (sketch atlas; S2 adds the surveyed plate atlas) | packages/S1.md |
 | S2 plate sketch: moving plates, ridges, trenches, arcs, mountain belts, plumes, drift snapshots, surveyed atlas | done | packages/S2.md |
 | S3 wearing down: rivers, lakes, sediment, sea level, hillslopes, worn atlas with flow layer | done | packages/S3.md |
+| S4 impacts and volcanism: chronology and spikes, survival by renewal, crater shapes, lava plains, shields, tiles to the fact floor, "why is this here" | done | packages/S4.md |
+| S6 other regimes: ice-shell ridges, bands and chaos; heat-pipe paterae and mountains; coronae, chasmata and overturns; contraction scarps and rifts; Titan's dunes and lakes; tar seas; giant cloud decks | done | packages/S6.md |
 | Kernel ops `import_v3`, `run_formation` and `read_world_stack` (V3 import with report; one system through the pipeline with pins and surfaces; a body's world stack with ladder and physics notes) | done (physics track, for the UI) | packages/K-physics-ops.md |
 | K7 envelopes, partitioning, resolve, feasibility | done (kernel track) | packages/K7.md |
 | K8 rules, classification, sifters, significance | done (kernel track) | packages/K8.md |
@@ -52,6 +54,7 @@ Milestone M1 "Proven core" = packages K0 to K6 (build plan section 3/4).
 | Planet chart: moons in their planet's frame (coordinator ask, not in the plan) | done | packages/planet-chart.md |
 | V10 seats and audiences | done: plans, fog of war per audience, per-seat links and screens, auto-approve, sealed seats | packages/V10.md |
 | V6 System 3D (frames, camera-relative rule, pixel-stability test, GPU and Canvas tiers) | System 3D, Cutaway (from the kernel's world stacks) and Body globe (from S1 surface tiles) done; finer tiles and a GPU tier next | packages/V6.md |
+| V14 Size comparison (Sizes screen: true-scale lineup from this system, the campaign and reference objects; Measure on the chart) | done (UI track) | packages/V14.md |
 | U9 lenses: Basic, Advanced, Building, Running, every player data view as a lens, make your own, lens packs | done | packages/U9.md |
 | N1 sound engine: sound scenes, recipes, mixer, tiers, off by default, captions, orbit bed | done | packages/N1.md |
 | O1 light switch (UI side): Eye, Camera, SHO and HOO palettes, single bands, legend chip and honesty label, stubbed spectra marked | UI done on stubbed light; real light facts wait on the kernel | packages/O1-ui.md |
@@ -81,9 +84,9 @@ Milestone M1 "Proven core" = packages K0 to K6 (build plan section 3/4).
 ## Parallel tracks (18 Nov, Alex: build in parallel, integrate later)
 | Track | Packages | Branch |
 |---|---|---|
-| Physics | P1, P3, P4, F0 to F6 done; pipeline, F7, F9, S0 to S3 done; F8 waits on G6; next S4 (impacts, volcanism, explanations) | `main` via PRs |
+| Physics | P1, P3, P4, F0 to F6 done; pipeline, F7, F9, S0 to S4 and S6 done; F8 waits on G6; next S7 (cover, named features, built layer) | `main` via PRs |
 | Kernel | K7 to K10, G0 to G5, C1 to C3, L0, L1a to L1d, L2, T1, T2 (also through the API), the U3 gaps, the V10 grant gaps and the UI asks (`adopt`, look-ahead write-back, `resolved_system`; K6-additions.md) done; next J1 to J3 (record, logic blocks, boxes), then G6 | `main` via PRs |
-| Chart room shell and player views | U0 to U3, V1, U5, V2, V12, V3, V11, V4, V5, planet chart, V10, V6 System 3D, U9 lenses, N1 sound, U4 (what-if and look-ahead), A1 part 1, O1 light switch (UI), V13 parts 1 and 2 (import and grow, add to the campaign, read back and age with write-back), V6 Cutaway and Body globe (Body screen), phone screen menu done; next U7 biosphere (waits on the kernel's `life_view`), browser campaign save (waits on `export_chronicle`), V7 | `main` via PRs |
+| Chart room shell and player views | U0 to U3, V1, U5, V2, V12, V3, V11, V4, V5, planet chart, V10, V6 System 3D, U9 lenses, N1 sound, U4 (what-if and look-ahead), A1 part 1, O1 light switch (UI), V13 parts 1 and 2 (import and grow, add to the campaign, read back and age with write-back), V6 Cutaway and Body globe (Body screen), phone screen menu, V14 size comparison and chart measuring done; next U7 biosphere (waits on the kernel's `life_view`), browser campaign save (waits on `export_chronicle`), V7 | `main` via PRs |
 
 **Since 19 Nov (Alex): `main` is the default branch.** New work branches from `main` and arrives as a pull request
 into `main`; its checks pass before merge. The old track branches are kept, not deleted.

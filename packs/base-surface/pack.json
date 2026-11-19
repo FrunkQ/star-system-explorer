@@ -343,7 +343,8 @@
      "greenhouse_k": "Earth's present greenhouse warming is about 33 K; applied only when a generated world has volatiles (oceans or CO2), until an atmosphere stage exists",
      "atlas": "surfaces research report section 3: cube-sphere quadtree, level 0 about 20 km per sample on an Earth (here level 1 at 256 samples per tile), fact floor about 100 m anywhere and 10 m in declared sites; detail octaves fall off with a Hurst exponent of 0.8, typical of planetary topography (Turcotte 1987; Rosenburg et al. 2015 for the Moon)",
      "plates": "semi-Lagrangian kinematic plates on the cube grid in the spirit of Cortial et al. 2019 (Procedural Tectonic Planets, Computer Graphics Forum 38, 2. doi:10.1111/cgf.13614); plate speeds of a few cm/yr scaled by heat flow; sea-floor depth from crust age by the GDH1 plate model (Stein and Stein 1992, Nature 359, 123. doi:10.1038/359123a0); continental elevation by Airy isostasy (factor (rho_m - rho_c)/rho_m, about 0.18); mountain belts worn down with an e-folding time of about 150 Myr (Pinet and Souriau 1988)",
-     "wear": "stream-power incision E = K Q^m S solved implicitly in drainage order (Braun and Willett 2013, Geomorphology 180, 170. doi:10.1016/j.geomorph.2012.10.008); depression filling by priority-flood (Barnes et al. 2014, Computers and Geosciences 62, 117. doi:10.1016/j.cageo.2013.04.024); Hack's law L ~ A^0.6 (Hack 1957) as the drainage check; diffusion is an effective coarse-grid value (the local hillslope value is about 0.01 m2/yr)"
+     "wear": "stream-power incision E = K Q^m S solved implicitly in drainage order (Braun and Willett 2013, Geomorphology 180, 170. doi:10.1016/j.geomorph.2012.10.008); depression filling by priority-flood (Barnes et al. 2014, Computers and Geosciences 62, 117. doi:10.1016/j.cageo.2013.04.024); Hack's law L ~ A^0.6 (Hack 1957) as the drainage check; diffusion is an effective coarse-grid value (the local hillslope value is about 0.01 m2/yr)",
+     "impacts": "chronology after Neukum, Ivanov and Hartmann 2001 (doi:10.1023/A:1011989004263); production slopes -3 below 1 km and -2 above (Hartmann-type); saturation 0.15 D^-2 per km2, a few percent of geometric (Hartmann 1984, doi:10.1016/0019-1035(84)90138-6); crater size scales as g^-0.216 (Holsapple 1993, doi:10.1146/annurev.ea.21.050193.002001); depth and rim after Pike 1977, transitions 15, 150 and 600 km at lunar gravity scaled as 1/g (Melosh 1989); atmosphere cut-off 0.1 km x P^0.75 fitted to Earth and Venus (no Venus craters under about 3 km); dry degradation 5.5 m2/Myr (Fassett and Thomson 2014, doi:10.1002/2014JE004698), wet 5e4 m2/Myr set so a 10 km crater on a wet world loses most of its relief in about 100 Myr; renewal times: Europa about 60 Myr (Zahnle et al. 2003, doi:10.1016/S0019-1035(03)00048-4), Venus about 500 Myr, Titan about 500 Myr, Io under 1 Myr; volcanism thresholds, plains rates and shield growth are rule-of-thumb values for lid worlds (Mars, Moon, Mercury), labelled as such; shields reach 9 km x (9.81/g); renewal rates scale as the cube of heat flow against each regime's reference (so a cooling Ganymede keeps its younger craters while Europa keeps none); shields need a lid world of at least 3000 km radius (none on the Moon or Mercury)"
     },
     "atlas": {
      "tile_samples": 256,
@@ -406,6 +407,392 @@
      "dune_pressure_bar": 0.005,
      "fill_epsilon_m": 0.01,
      "dune_slope": 0.0005
+    },
+    "impacts": {
+     "mechanisms": {
+      "chronology": "neukum-2001",
+      "crater_shape": "pike-1977",
+      "volcanism": "heat-flow-plains"
+     },
+     "chron_a": 5.44e-14,
+     "chron_b": 6.93,
+     "chron_c": 0.000838,
+     "chron_ref_gyr": 4.5,
+     "sfd_slope_small": 3.0,
+     "sfd_slope_large": 2.0,
+     "sfd_break_km": 1.0,
+     "saturation_n1": 0.15,
+     "gravity_exponent": 0.216,
+     "g_ref_m_s2": 1.62,
+     "v_inf_km_s": 17.0,
+     "crater_impactor_ratio": 12.0,
+     "impactor_density": 2500.0,
+     "impactor_max_km": 300.0,
+     "listed_d_frac": 0.04,
+     "listed_max": 20000,
+     "max_d_frac": 1.5,
+     "simple_complex_km": 15.0,
+     "peak_ring_km": 150.0,
+     "multi_ring_km": 600.0,
+     "atm_cut_km": 0.1,
+     "atm_cut_exp": 0.75,
+     "kappa_dry_m2_myr": 5.5,
+     "kappa_wet_m2_myr": 50000.0,
+     "kappa_air_m2_myr_bar": 100.0,
+     "degrade_coeff": 0.016,
+     "ghost_fraction": 0.05,
+     "no_surface": [
+      "magma-ocean",
+      "lava",
+      "cloud-deck",
+      "ocean-world"
+     ],
+     "volcanism": {
+      "regimes": [
+       "stagnant-lid",
+       "plume-lid",
+       "episodic-lid",
+       "heat-pipe",
+       "carbon-rich",
+       "super-earth-uncertain"
+      ],
+      "q_min_w_m2": 0.02,
+      "q_ref_w_m2": 0.06,
+      "plains_per_gyr": 0.15,
+      "plains_cap": 0.6,
+      "plains_radius_frac": [
+       0.04,
+       0.25
+      ],
+      "bury_d_km": 40.0,
+      "shields_per_gyr": 2.0,
+      "shields_max": 12,
+      "shield_height_m": 9000.0,
+      "shield_aspect": 12.0,
+      "shield_growth_myr": 500.0,
+      "step_myr": 50.0,
+      "shield_regimes": [
+       "stagnant-lid",
+       "plume-lid",
+       "episodic-lid",
+       "super-earth-uncertain",
+       "carbon-rich"
+      ],
+      "shield_min_radius_km": 3000.0
+     },
+     "resurface": {
+      "ice-shell": {
+       "myr": 60.0,
+       "q_ref_w_m2": 0.06
+      },
+      "heat-pipe": {
+       "myr": 1.0,
+       "q_ref_w_m2": 2.5
+      },
+      "episodic-lid": {
+       "myr": 500.0,
+       "q_ref_w_m2": 0.04
+      },
+      "hydrocarbon": {
+       "myr": 500.0,
+       "q_ref_w_m2": 0.007
+      },
+      "plume-lid": {
+       "myr": 1000.0,
+       "q_ref_w_m2": 0.05
+      }
+     },
+     "resurface_exponent": 3.0
+    },
+    "regime_features": {
+     "rotation_hours_default": 10.0,
+     "max_per_kind": 4000,
+     "landforms": {
+      "ice-shell": [
+       {
+        "kind": "double-ridge",
+        "size_km": [
+         50,
+         1500
+        ],
+        "height_m": [
+         100,
+         300
+        ],
+        "driver": "heat",
+        "source": "tidal flexing cracks the shell and ridges grow either side (Kattenhorn and Hurford 2009, in Europa, 199; Europa's lineae trend about 45 degrees from east).",
+        "north_share": 0.5,
+        "per_mkm2": 8.0,
+        "width_ratio": 0.004
+       },
+       {
+        "kind": "band",
+        "size_km": [
+         100,
+         1000
+        ],
+        "height_m": [
+         -150,
+         -50
+        ],
+        "driver": "heat",
+        "source": "the shell pulled apart and new ice filled the gap (Prockter et al. 2002, JGR 107, 5028. doi:10.1029/2000JE001458).",
+        "north_share": 0.5,
+        "per_mkm2": 1.0,
+        "width_ratio": 0.03
+       },
+       {
+        "kind": "chaos",
+        "size_km": [
+         20,
+         200
+        ],
+        "height_m": [
+         50,
+         200
+        ],
+        "driver": "heat-now",
+        "source": "warm ice or melt below broke the shell into rafts (Schmidt et al. 2011, Nature 479, 502. doi:10.1038/nature10608); cover follows today's heat flow.",
+        "north_share": 0.5,
+        "cover_fraction": 0.25,
+        "material": "ice"
+       }
+      ],
+      "heat-pipe": [
+       {
+        "kind": "patera",
+        "size_km": [
+         10,
+         200
+        ],
+        "height_m": [
+         -1000,
+         -100
+        ],
+        "driver": "heat",
+        "source": "a volcanic depression over a magma column; Io has about 417 (Radebaugh et al. 2001, JGR 106, 33005. doi:10.1029/2000JE001406).",
+        "north_share": 0.5,
+        "per_mkm2": 10.0,
+        "material": "lava"
+       },
+       {
+        "kind": "massif",
+        "size_km": [
+         50,
+         300
+        ],
+        "height_m": [
+         1000,
+         17000
+        ],
+        "driver": "heat",
+        "source": "a crustal block thrust up as buried lava sinks and compresses the lithosphere (Turtle et al. 2001, JGR 106, 33175. doi:10.1029/2000JE001354; about 135 on Io).",
+        "north_share": 0.5,
+        "per_mkm2": 3.2
+       }
+      ],
+      "episodic-lid": [
+       {
+        "kind": "corona",
+        "size_km": [
+         60,
+         1000
+        ],
+        "height_m": [
+         500,
+         1500
+        ],
+        "driver": "heat",
+        "source": "an upwelling plume domed and fractured the lid; Venus has about 500 (Stofan et al. 1992, JGR 97, 13347. doi:10.1029/92JE01314).",
+        "north_share": 0.5,
+        "per_mkm2": 1.1
+       },
+       {
+        "kind": "chasma",
+        "size_km": [
+         1000,
+         6000
+        ],
+        "height_m": [
+         -4000,
+         -2000
+        ],
+        "driver": "heat",
+        "source": "a rift belt where the lid stretched (Venus's chasmata).",
+        "north_share": 0.5,
+        "per_mkm2": 0.05,
+        "width_ratio": 0.03
+       },
+       {
+        "kind": "tessera",
+        "size_km": [
+         300,
+         2000
+        ],
+        "height_m": [
+         1000,
+         3000
+        ],
+        "driver": "heat",
+        "source": "older deformed highland crust that escaped the last overturn (about 8% of Venus).",
+        "north_share": 0.5,
+        "per_mkm2": 0.03
+       }
+      ],
+      "plume-lid": [
+       {
+        "kind": "corona",
+        "size_km": [
+         60,
+         1000
+        ],
+        "height_m": [
+         500,
+         1500
+        ],
+        "driver": "heat",
+        "source": "plumes dome a weak lid (Lourenco et al. 2020).",
+        "north_share": 0.5,
+        "per_mkm2": 1.5
+       },
+       {
+        "kind": "chasma",
+        "size_km": [
+         1000,
+         6000
+        ],
+        "height_m": [
+         -4000,
+         -2000
+        ],
+        "driver": "heat",
+        "source": "a rift belt where the lid stretched.",
+        "north_share": 0.5,
+        "per_mkm2": 0.05,
+        "width_ratio": 0.03
+       }
+      ],
+      "stagnant-lid": [
+       {
+        "kind": "scarp",
+        "size_km": [
+         50,
+         500
+        ],
+        "height_m": [
+         300,
+         3000
+        ],
+        "driver": "cooling",
+        "source": "a thrust fault as the cooling world shrank (lobate scarps; Byrne et al. 2014, Nature Geosci. 7, 301. doi:10.1038/ngeo2097); height scales with radius.",
+        "north_share": 0.5,
+        "per_mkm2": 4.0,
+        "width_ratio": 0.05,
+        "radius_ref_km": 2440.0
+       }
+      ],
+      "hydrocarbon": [
+       {
+        "kind": "dune-field",
+        "size_km": [
+         200,
+         1600
+        ],
+        "height_m": [
+         0,
+         0
+        ],
+        "driver": "heat",
+        "source": "organic sand blown into linear dunes by the winds near the equator (Lorenz et al. 2006, Science 312, 724. doi:10.1126/science.1123257).",
+        "north_share": 0.5,
+        "cover_fraction": 0.15,
+        "lat_deg": [
+         0,
+         30
+        ],
+        "material": "organic-sediment"
+       },
+       {
+        "kind": "lake",
+        "size_km": [
+         20,
+         1000
+        ],
+        "height_m": [
+         -200,
+         -50
+        ],
+        "driver": "heat",
+        "source": "methane and ethane collect near the poles, mostly in the north (Hayes 2016).",
+        "north_share": 0.9,
+        "cover_fraction": 0.011,
+        "lat_deg": [
+         55,
+         88
+        ],
+        "cover": "hydrocarbon"
+       }
+      ],
+      "carbon-rich": [
+       {
+        "kind": "tar-sea",
+        "size_km": [
+         100,
+         1500
+        ],
+        "height_m": [
+         0,
+         0
+        ],
+        "driver": "",
+        "source": "speculative: pooled hydrocarbons on a carbon-rich crust (Kuchner and Seager 2005).",
+        "north_share": 0.5,
+        "cover_fraction": 0.05,
+        "cover": "hydrocarbon",
+        "material": "carbon"
+       }
+      ]
+     },
+     "clouds": {
+      "wind_gas_m_s": 150.0,
+      "wind_ice_m_s": 400.0,
+      "ice_giant_mass_earth": 50.0,
+      "storms_per_jet": 1.5,
+      "chemistry": [
+       [
+        90.0,
+        0.62,
+        0.45,
+        "methane ice"
+       ],
+       [
+        200.0,
+        0.6,
+        0.4,
+        "ammonia ice over ammonium hydrosulphide"
+       ],
+       [
+        500.0,
+        0.55,
+        0.45,
+        "water ice"
+       ],
+       [
+        1000.0,
+        0.3,
+        0.25,
+        "alkali and sulphide haze"
+       ],
+       [
+        100000.0,
+        0.1,
+        0.08,
+        "silicate and iron clouds"
+       ]
+      ],
+      "mean_molar_kg": 0.0023,
+      "source": "jets from the Rhines scale (Rhines 1975, J. Fluid Mech. 69, 417. doi:10.1017/S0022112075001504) with empirical wind scales: gas giants about 150 m/s, ice giants about 400 m/s; cloud chemistry by temperature after Sudarsky et al. 2000 (ApJ 538, 885. doi:10.1086/309160)"
+     }
     }
    }
   }

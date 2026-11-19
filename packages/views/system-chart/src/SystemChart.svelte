@@ -6,7 +6,7 @@
   centre and its moons about it (handover/rendering-rules.md), in kilometres.
 -->
 <script lang="ts">
-  import { KM_PER_AU, asPlayers, hasLayer, hasTool, childrenOf, commitEdit, frameFor, legendFor, primaryOf, sig, subjectOf, type Json, type SceneSubject, type SystemScene, type ViewContext } from "../../../ui-contract/src/index.ts";
+  import { KM_PER_AU, asPlayers, distanceWords, lightWords, separation, hasLayer, hasTool, childrenOf, commitEdit, frameFor, legendFor, primaryOf, sig, subjectOf, type Json, type SceneSubject, type SystemScene, type ViewContext } from "../../../ui-contract/src/index.ts";
   import { System3D, fromSystemScene } from "../../system-3d/src/index.ts";
   import { ChartGround, HatchDefs, Hatch, Ink, Legend, Mark, Stamp, markExtent, SurveyGrid, distanceAt, fitScale, polar, radius } from "../../../chart-grammar/src/index.ts";
 
@@ -155,7 +155,8 @@
       void moveOrbit(s, round(s.orbit!.a_au * (e.key === "PageUp" ? 1.05 : 1 / 1.05)));
     } else if (e.key === "Enter" || e.key === " ") {
       e.preventDefault();
-      ctx.workspace.select(s.address);
+      if (measuring) measurePick(s);
+      else ctx.workspace.select(s.address);
     } else if (e.key === "Escape" && frame) {
       e.preventDefault();
       closeFrame();
@@ -172,6 +173,22 @@
   // V6: the same frame in 3D (view only; edits stay on the 2D chart).
   let dims = $state<"2d" | "3d">("2d");
   const bodies3d = $derived(dims === "3d" ? fromSystemScene(scene, ctx.mark) : []);
+  // Measure (V14): pick two bodies; the chart draws the line and says how far apart they are now.
+  let measuring = $state(false);
+  let picks = $state<string[]>([]);
+  function measurePick(s: SceneSubject) {
+    picks = picks.length >= 2 || picks.includes(s.address) ? [s.address] : [...picks, s.address];
+  }
+  function toggleMeasure() {
+    measuring = !measuring;
+    picks = [];
+  }
+  const sep = $derived(picks.length === 2 ? separation(scene, picks[0]!, picks[1]!) : null);
+  const at = (address: string): [number, number] | null => {
+    const s = all.find((x) => x.address === address);
+    if (!s) return null;
+    return s === centre ? [cx, cy] : pos(s);
+  };
   const zoomBy = (f: number) => (zoom = Math.min(6, Math.max(0.5, zoom * f)));
 </script>
 
@@ -243,7 +260,7 @@
             aria-label="{label(s)}{s.subtitle ? `, ${s.subtitle}` : ''}{through && !knows(s) ? ', not known to them' : ''}"
             aria-pressed={sel}
             aria-describedby={editable(s) ? "chart-drag-hint" : undefined}
-            onpointerdown={(e) => (editable(s) && !atCentre ? startDrag(e, s) : ctx.workspace.select(s.address))}
+            onpointerdown={(e) => (measuring ? measurePick(s) : editable(s) && !atCentre ? startDrag(e, s) : ctx.workspace.select(s.address))}
             ondblclick={() => moons > 0 && openFrame(s)}
             onkeydown={(e) => onkey(e, i, s)}
             data-moons={moons || undefined}
@@ -267,7 +284,28 @@
             {/if}
           </g>
         {/each}
+        {#if measuring && picks.length}
+          {@const p0 = at(picks[0]!)}
+          {@const p1 = picks[1] ? at(picks[1]) : null}
+          {#if p0}<circle class="mpick" cx={p0[0]} cy={p0[1]} r="14" />{/if}
+          {#if p1}<circle class="mpick" cx={p1[0]} cy={p1[1]} r="14" />{/if}
+          {#if p0 && p1}<line class="mline" x1={p0[0]} y1={p0[1]} x2={p1[0]} y2={p1[1]} />{/if}
+        {/if}
       </svg>
+      {#if measuring}
+        <div class="measure" role="status" aria-label="Measurement" data-measure={sep ? sep.now_au : picks.length}>
+          {#if sep}
+            <b>{sep.from} to {sep.to}</b>
+            <span>Now {distanceWords(sep.now_au)}, {lightWords(sep.light_s)}.</span>
+            {#if sep.range_au && sep.range_au[0] !== sep.range_au[1]}<span>Closest {distanceWords(sep.range_au[0])}, farthest {distanceWords(sep.range_au[1])}.</span>{/if}
+            <span class="fine">From the orbits as drawn: circular, in one plane, at the ruler's time. Distances on the chart are on a log scale; these are true.</span>
+          {:else if picks.length === 1}
+            <span>Now pick a second body.</span>
+          {:else}
+            <span>Measure: pick two bodies on the chart.</span>
+          {/if}
+        </div>
+      {/if}
       {#if framed}
         <div class="frame" role="group" aria-label="Chart frame">
           <button type="button" onclick={closeFrame}>‹ {scene.title}</button>
@@ -296,6 +334,7 @@
         <button type="button" aria-label="Zoom in" onclick={() => zoomBy(1.25)}>+</button>
         <button type="button" aria-label="Zoom out" onclick={() => zoomBy(0.8)}>−</button>
         <button type="button" aria-label={frame ? "Fit the moons" : "Fit the system"} onclick={() => (zoom = Number(params.zoom))}>Fit</button>
+        <button type="button" aria-pressed={measuring} onclick={toggleMeasure} title="Measure the distance between two bodies">Measure</button>
       </div>
     {/if}
   </ChartGround>
@@ -314,7 +353,7 @@
   }
   .dims {
     position: absolute;
-    right: 160px;
+    right: 236px;
     bottom: 16px;
     display: flex;
     border: var(--sse-line) solid var(--sse-ink);
@@ -486,6 +525,37 @@
     border: var(--sse-frame-width) solid var(--sse-frame-line);
     box-shadow: var(--sse-frame-shadow);
   }
+  .measure {
+    position: absolute;
+    left: 24px;
+    bottom: 64px;
+    max-width: min(420px, calc(100% - 32px));
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    padding: 8px 12px;
+    border: var(--sse-line) solid var(--sse-ink);
+    background: var(--sse-ground-raised);
+    font-family: var(--sse-font-body);
+    font-size: 13px;
+    color: var(--sse-ink);
+  }
+  .measure .fine {
+    font-size: 11px;
+    color: var(--sse-ink-muted);
+  }
+  .mline {
+    stroke: var(--sse-accent);
+    stroke-width: 1.5;
+    stroke-dasharray: 5 4;
+    pointer-events: none;
+  }
+  .mpick {
+    fill: none;
+    stroke: var(--sse-accent);
+    stroke-width: 1.5;
+    pointer-events: none;
+  }
   .zoom {
     position: absolute;
     right: 16px;
@@ -504,13 +574,18 @@
     font-size: 15px;
     cursor: pointer;
   }
+  .zoom button[aria-pressed="true"] {
+    background: var(--sse-ink);
+    color: var(--sse-on-ink);
+  }
   .zoom button + button {
     border-left: var(--sse-line) solid var(--sse-ink);
   }
   @media (max-width: 760px) {
     .dims {
-      right: 148px;
-      bottom: 12px;
+      right: 12px;
+      bottom: auto;
+      top: 12px;
     }
     .frame {
       left: 16px;
