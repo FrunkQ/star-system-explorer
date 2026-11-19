@@ -20,3 +20,8 @@ export async function startGpu(canvas: HTMLCanvasElement) {
   const { createGpu } = await import("./gpu.ts");
   return createGpu(canvas);
 }
+// R3: the still tier, "take photograph", and photographs kept on this device.
+export { photograph, halton } from "./photograph.ts";
+export type { Photo, PhotoOptions } from "./photograph.ts";
+export { keepPhoto, listPhotos, removePhoto } from "./media.ts";
+export type { MediaItem } from "./media.ts";

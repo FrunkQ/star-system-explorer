@@ -45,7 +45,7 @@ test("invalid recipes are rejected, each with its reason", () => {
     ["unknown pass", (r) => (r.passes[1]!.pass = "lens-flare"), /no pass lens-flare/],
     ["parameter out of range", (r) => (r.passes[0]!.params = { exaggeration: 900 }), /exaggeration: must be within 1 to 60/],
     ["unknown parameter", (r) => (r.passes[0]!.params = { sparkle: 1 }), /unknown parameter sparkle/],
-    ["tier a pass lacks", (r) => r.tiers.push("still"), /tier still: no image pass/],
+    ["a tier with no picture", (r) => (r.passes = r.passes.filter((p) => p.id !== "relief-still")), /tier still: no image pass/],
     ["pass on an undeclared tier", (r) => (r.passes[1]!.tiers = ["gpu-high"]), /does not declare/],
     ["knob leaves the range", (r) => (r.knobs![0]!.maps[0]!.at1 = 400), /would leave its range/],
     ["knob on text", (r) => (r.knobs![0]!.maps[0]!.param = "colour"), /is not a number/],
@@ -103,5 +103,6 @@ test("a recipe that cannot run on a tier hands over to one of its family that ca
   assert.match(got!.stood_in!, /Contour survey has no gpu-basic form, so Survey relief stands in/);
   assert.equal(pickRecipe(SHIPPED, "survey-contours", "canvas")?.stood_in, undefined);
   assert.equal(pickRecipe(SHIPPED, "survey-contours", "gpu-high")?.doc.id, "true-colour");
-  assert.equal(pickRecipe(SHIPPED, "survey-contours", "still"), null);
+  assert.equal(pickRecipe(SHIPPED, "survey-contours", "still")?.doc.id, "survey-relief");
+  assert.equal(pickRecipe(SHIPPED, "no-such-recipe", "canvas"), null);
 });
