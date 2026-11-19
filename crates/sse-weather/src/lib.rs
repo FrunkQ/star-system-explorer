@@ -10,6 +10,7 @@ pub mod circulation;
 pub mod conditions;
 pub mod contract;
 pub mod formations;
+pub mod giants;
 pub mod hooks;
 pub mod rules;
 pub mod scenario;

@@ -1430,6 +1430,12 @@
  },
  {
   "op": "weather",
+  "want": "systems",
+  "world": "Jupiter",
+  "day": 1000
+ },
+ {
+  "op": "weather",
   "want": "forecast",
   "world": "Earth"
  }

@@ -7,6 +7,7 @@ use crate::circulation::{self, Circulation};
 use crate::conditions::Conditions;
 use crate::contract::*;
 use crate::formations::{self, FormationSettings, Terrain};
+use crate::giants::{self, GiantSettings};
 use crate::settings::WeatherSettings;
 use sse_core::math as m;
 use sse_surface::atlas::{direction, TileKey};
@@ -17,6 +18,7 @@ pub const BLOCK_VERSION: &str = "1";
 pub struct RuleBlock {
     pub settings: WeatherSettings,
     pub formations: FormationSettings,
+    pub giants: GiantSettings,
 }
 
 pub fn lat_lon(d: [f64; 3]) -> (f64, f64) {
@@ -69,17 +71,27 @@ pub struct Prepared {
 }
 
 impl RuleBlock {
-    pub fn new(settings: WeatherSettings, formations: FormationSettings) -> Self {
+    pub fn new(
+        settings: WeatherSettings,
+        formations: FormationSettings,
+        giants: GiantSettings,
+    ) -> Self {
         RuleBlock {
             settings,
             formations,
+            giants,
         }
+    }
+
+    fn is_giant(p: &Prepared) -> bool {
+        p.circ.regime == "banded-giant"
     }
 
     pub fn from_packs(stack: &[sse_pack::PackManifest]) -> Result<Self, String> {
         Ok(RuleBlock::new(
             WeatherSettings::from_packs(stack)?,
             FormationSettings::from_packs(stack)?,
+            GiantSettings::from_packs(stack)?,
         ))
     }
 
@@ -92,11 +104,15 @@ impl RuleBlock {
         date: Date,
         pins: &[Pin],
     ) -> Vec<WeatherSystem> {
-        let mut out: Vec<WeatherSystem> =
+        let drawn = if Self::is_giant(p) {
+            giants::giant_systems(&self.giants, c, date)
+        } else {
             formations::systems(&self.formations, &self.settings, c, p, date)
-                .into_iter()
-                .filter(|s| !pins.iter().any(|q| q.id == s.id))
-                .collect();
+        };
+        let mut out: Vec<WeatherSystem> = drawn
+            .into_iter()
+            .filter(|s| !pins.iter().any(|q| q.id == s.id))
+            .collect();
         for q in pins {
             if q.system.born <= date.day && date.day < q.system.ends {
                 let mut s = q.system.clone();
@@ -122,6 +138,10 @@ impl RuleBlock {
         lat: f64,
         lon: f64,
     ) -> Cell {
+        if Self::is_giant(p) {
+            let gp = giants::prepare(&self.giants, c, date);
+            return giants::giant_cell(&self.giants, c, &gp, lat, lon);
+        }
         let mut cell = self.zonal_cell(c, p, lat, lon);
         formations::imprint(
             &self.formations,
@@ -147,6 +167,9 @@ impl RuleBlock {
         terrain: Option<&dyn Terrain>,
     ) -> FieldTile {
         let p = self.prepare(c, date);
+        if Self::is_giant(&p) {
+            return giants::giant_tile(&self.giants, c, date, key, n);
+        }
         let systems = self.systems_at(c, &p, date, pins);
         let cells = cell_dirs(key, n)
             .into_iter()

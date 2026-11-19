@@ -89,6 +89,7 @@ Milestone M1 "Proven core" = packages K0 to K6 (build plan section 3/4).
 | W1 weather contract (swappable `WeatherBlock`, field on atlas tiles, systems, pins), circulation regime, what condenses, climate averages | done (weather track), crate `sse-weather`, pack `packs/base-weather` | packages/W1.md |
 | W2 formations on rocky and ocean worlds: storm tracks, tropical cyclones, dust, locked-world shields, marine decks, mountain cloud, lightning, snow; drawn storms with tracks; weather report | done (weather track) | packages/W2.md |
 | W5 weather hooks: kernel op `weather` (climate, systems, field, report, column, sound), descent column with hazards, sound cues, GM pins, clear and calm orders, triggered storms | done (weather track) | packages/W5.md |
+| W3 giants: bands as S6, storm families (great ovals, strings, dark spots, planet-circling outbreaks), polar regime by Burger number (cyclone ring, single vortex, diffuse cap), polygon jets by a stated rule (Saturn's hexagon); wired into the rule block and the `weather` op | done (weather track) | packages/W3.md |
 
 ## Parallel tracks (18 Nov, Alex: build in parallel, integrate later)
 | Track | Packages | Branch |
