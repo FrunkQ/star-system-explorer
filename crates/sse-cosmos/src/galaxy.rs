@@ -11,8 +11,8 @@
 //! - Preventive feedback: small haloes heat their surroundings so less gas
 //!   falls in at all (Dave, Finlator and Oppenheimer 2012), which lets small
 //!   galaxies stay metal-rich enough while staying small.
-//! - Outflow = eta x star formation, eta = (v_c / v_eta)^-a (energy-driven
-//!   winds, slope 2; Muratov et al. 2015).
+//! - Outflow = eta x star formation, eta = (v_c / v_eta)^-a (slope 2 is the
+//!   energy-driven-wind scaling; the (1+z) term after Muratov et al. 2015, tuned).
 //! - Gas returned by dying stars: an instantaneous fraction R (the delays are
 //!   in the rings, section 6).
 //! - Metals: a yield per mass formed; outflows carry gas-phase metals out.

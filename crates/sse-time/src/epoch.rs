@@ -5,8 +5,8 @@
 //! the star loses mass (a M constant, the adiabatic invariant for slow mass
 //! loss: Jeans 1924; Hadjidemetriou 1963); a giant's tides drag close
 //! planets in (Zahn 1977 equilibrium tide in the form of Villaver and Livio
-//! 2009, eq. 2, with f = (tau / 2P)^2 capped at 1: Verbunt and Phinney
-//! 1995); eccentricities and inclinations follow Laplace-Lagrange secular
+//! 2009, ApJ 705, L81, eqs. 7 and 8 of the arXiv version, with f = (P / 2 tau)^2
+//! capped at 1: Verbunt and Phinney 1995); eccentricities and inclinations follow Laplace-Lagrange secular
 //! theory, its frequencies scaled with the star's mass; and named
 //! transitions are dated, each with its reason.
 
@@ -356,11 +356,15 @@ impl<'a> Ageing<'a> {
                     for lp in live.iter_mut().filter(|x| !x.engulfed) {
                         let a = lp.p.a;
                         let period = m::sqrt(a * a * a / st.mass);
-                        let f = (tau / (2.0 * period) * (tau / (2.0 * period))).min(1.0);
+                        // Villaver and Livio 2009 eq. 7: f = (P / 2 tau)^2 when tau > P/2, else 1.
+                        let f = (period / (2.0 * tau) * (period / (2.0 * tau))).min(1.0);
                         let q = lp.p.mass / st.mass;
                         let rate = f / tau * menv / st.mass * q * (1.0 + q) * m::pow(r_au / a, 8.0);
                         let dt_yr = (tb - ta) / f64::from(n) * 1.0e6;
-                        lp.p.a = a * m::exp(-rate * dt_yr);
+                        // A planet dragged inside the star stops at half its radius, so the
+                        // engulfment test below catches it (a fast decay would otherwise reach
+                        // a = 0 and turn the next substep into NaN).
+                        lp.p.a = (a * m::exp(-rate * dt_yr)).max(0.5 * r_au);
                     }
                 }
             }
@@ -430,7 +434,7 @@ impl<'a> Ageing<'a> {
                         "oceans_lost",
                         vec![lp.spec.address.clone()],
                         format!(
-                            "{} has brightened to {:.3} times the Sun's present luminosity, so {} receives {:.2} times the sunlight that reaches Earth today; above {:.2} an ocean world's water vapour greenhouse runs away and the oceans boil off (Kopparapu et al. 2013)",
+                            "{} has brightened to {:.3} times the Sun's present luminosity, so {} receives {:.2} times the sunlight that reaches Earth today; above {:.2} an ocean world's water vapour greenhouse runs away and the oceans boil off (Kopparapu et al. 2014)",
                             self.spec.name, lum, lp.spec.name, lum / (lp.p.a * lp.p.a), s.runaway_greenhouse_flux
                         ),
                         "standard",

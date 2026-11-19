@@ -88,7 +88,7 @@ impl Group {
 }
 
 /// Mass fraction of each group in the disc gas for the Sun's composition
-/// (protosolar, Lodders 2003, Z = 0.0142, split by carrier as in Oberg et al.
+/// (protosolar Z = 0.0142 as in Asplund et al. 2009; Lodders 2003 gives Z0 = 0.0149; split by carrier as in Oberg et al.
 /// 2011): metal 0.0018, rock 0.0035, carbon 0.0010, water 0.0045, CO2 0.0008,
 /// CO 0.0022. The remainder of Z (nitrogen, noble gases, sulphur in gas) is not
 /// tracked as solids.
