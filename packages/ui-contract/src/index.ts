@@ -59,3 +59,5 @@ export { R_EARTH_KM, R_JUPITER_KM, R_SUN_KM, checkReferences, itemFromReference,
 export type { ReferenceObject, ReferenceDoc, CompareItem, Placed, Lineup } from "./compare.ts";
 export { separation, distanceWords, lightWords, C_KM_S } from "./measure.ts";
 export type { Separation } from "./measure.ts";
+export { CAMPAIGN_SCHEMA, checkCampaignSave, makeCampaignSave, publicExport, savedEvents, saveFileName } from "./campaign.ts";
+export type { CampaignSave } from "./campaign.ts";

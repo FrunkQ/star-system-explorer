@@ -15,6 +15,8 @@ import { APPLIED, GRANT_VIEWS, REPLAY, type Session } from "./session.ts";
 import { checkIntent, type Intent } from "./intent.ts";
 import { audienceOf, decide, type Seat } from "./seat.ts";
 import type { PlayerScene } from "./player-scene.ts";
+import type { Json } from "./json.ts";
+import { publicExport } from "./campaign.ts";
 
 export const P2P_PROTOCOL = "sse.p2p/1";
 
@@ -35,6 +37,13 @@ export interface Manifest {
   universe: { id: string; seed: string };
   /** The packs the GM opened with, bottom to top (later stack changes travel as events). */
   packs: unknown[];
+  /**
+   * A kept campaign the GM reopened before recording began (kernel
+   * `export_chronicle`): a player's screen imports it first, then replays the
+   * log. Ordinary seats only; a sealed seat never gets the manifest. The GM
+   * campaign record is stripped (publicExport): it never goes on the manifest.
+   */
+  opening_export?: Json;
   log: LogEntry[];
   /** State hash after the last entry (or after opening, with no entries). */
   state_hash: string;
@@ -245,11 +254,11 @@ export class GmHost {
   readonly #replies = new Map<string, (w: Wire) => void>();
   onChange: (s: HostState) => void = () => {};
 
-  constructor(session: Session, hub: Hub | null, base: { run: string; kernel: string; app: string; universe: { id: string; seed: string }; packs: unknown[]; opening_hash: string; clock_yr: number; data_views?: string[]; seats?: Seat[] }) {
+  constructor(session: Session, hub: Hub | null, base: { run: string; kernel: string; app: string; universe: { id: string; seed: string }; packs: unknown[]; opening_export?: Json; opening_hash: string; clock_yr: number; data_views?: string[]; seats?: Seat[] }) {
     this.#session = session;
     this.#seats = structuredClone(base.seats ?? []);
     this.#hub = hub;
-    this.#base = { protocol: P2P_PROTOCOL, run: base.run, kernel: base.kernel, app: base.app, universe: base.universe, packs: base.packs };
+    this.#base = { protocol: P2P_PROTOCOL, run: base.run, kernel: base.kernel, app: base.app, universe: base.universe, packs: base.packs, ...(base.opening_export !== undefined ? { opening_export: publicExport(base.opening_export) } : {}) };
     this.#opening_hash = base.opening_hash;
     this.#clock = base.clock_yr;
     this.#views = [...(base.data_views ?? [])];
@@ -557,6 +566,10 @@ export class PlayerReplica {
     if (!this.#versions.kernel) {
       const k = await s.kernelVersion();
       if (k !== man.kernel) return mismatch(k);
+    }
+    if (man.opening_export !== undefined) {
+      const im = await s.importChronicle(man.opening_export);
+      if (!im.ok) return this.#set({ state: "reload", reason: `This screen could not open the game master's saved campaign (${im.message}). Reload to try again.` });
     }
     for (const e of man.log) {
       const r = await s[REPLAY](e.intent);
