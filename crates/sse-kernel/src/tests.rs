@@ -1411,7 +1411,7 @@ fn codes_read_every_body_with_its_why() {
         .map(|s| serde_json::from_str(s).unwrap())
         .collect();
     let all: Vec<&serde_json::Value> = l.iter().filter(|r| r["type"] == "codes").collect();
-    assert_eq!(all.len(), 2);
+    assert_eq!(all.len(), 3, "two here, one after the sector import");
     let r = &all[0]["readings"];
     let line = |i: usize| {
         r[i]["reading"]["lines"]["code"]
@@ -1422,11 +1422,11 @@ fn codes_read_every_body_with_its_why() {
     assert_eq!(r.as_array().unwrap().len(), 3);
     assert_eq!(
         (line(0), line(1), line(2)),
-        ("L2".into(), "L2".into(), "L2".into())
+        ("X800000-2".into(), "X800000-2".into(), "X800000-2".into())
     );
     let size = &r[1]["reading"]["segments"][0]["why"];
     assert_eq!(size["kind"], "authored");
-    assert_eq!(size["physics"], "S");
+    assert_eq!(size["physics"], "1");
     assert_eq!(all[1]["readings"].as_array().unwrap().len(), 1);
     assert!(l
         .iter()
@@ -1471,4 +1471,31 @@ fn traveller_pack_reads_codes_through_the_kernel() {
         .unwrap();
     assert_eq!(&uwp[1..2], "8", "{uwp}");
     assert_eq!(&uwp[3..4], "7", "71% water reads hydrographics 7: {uwp}");
+}
+
+/// `import_sector`: a preview changes nothing; applying writes authored
+/// events whose facts read back as the listed codes.
+#[test]
+fn sector_import_previews_then_applies_as_authored_events() {
+    let l: Vec<serde_json::Value> = contract_lines()
+        .iter()
+        .map(|s| serde_json::from_str(s).unwrap())
+        .collect();
+    let imps: Vec<&serde_json::Value> = l.iter().filter(|r| r["type"] == "sector_import").collect();
+    assert_eq!(imps.len(), 2);
+    let preview = imps[0];
+    assert!(preview["events"].as_array().unwrap().is_empty());
+    assert!(preview.get("state_hash").is_none());
+    assert_eq!(preview["import"]["summary"]["refused"], 1);
+    let applied = imps[1];
+    assert_eq!(applied["events"].as_array().unwrap().len(), 2);
+    assert!(applied["state_hash"].is_string());
+    let c = l.iter().rfind(|r| r["type"] == "codes").unwrap();
+    assert_eq!(c["readings"][0]["address"], "u:toy/sys:0101/body:@1");
+    assert_eq!(
+        &c["readings"][0]["reading"]["lines"]["code"]
+            .as_str()
+            .unwrap()[..2],
+        "X8"
+    );
 }

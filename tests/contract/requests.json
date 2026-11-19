@@ -1502,7 +1502,7 @@
   "edit": {
    "address": "u:toy/sys:0/body:2",
    "field": "toy.code.size",
-   "value": "L",
+   "value": "8",
    "occurred_at_s": 0
   }
  },
@@ -1522,5 +1522,28 @@
   "scope": "u:toy/sys:0",
   "sheet": "nope",
   "at_s": 10
+ },
+ {
+  "op": "import_sector",
+  "text": "0101 Alpha X800000-0 A\n0102 Beta X100000-0\n0103 Gamma X?00000-0",
+  "at_s": 0
+ },
+ {
+  "op": "import_sector",
+  "text": "0101 Alpha X800000-0 A\n0102 Beta X100000-0",
+  "format": "uwp_lines",
+  "apply": true,
+  "at_s": 20
+ },
+ {
+  "op": "codes",
+  "scope": "u:toy/sys:0101",
+  "at_s": 30
+ },
+ {
+  "op": "import_sector",
+  "text": "x",
+  "format": "xml",
+  "at_s": 0
  }
 ]

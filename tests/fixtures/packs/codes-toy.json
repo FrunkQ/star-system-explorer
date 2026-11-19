@@ -76,11 +76,11 @@
        "axis": "toy.size",
        "core": [
         3,
-        1000000000.0
+        100
        ],
        "fringe": [
         3,
-        1000000000.0
+        100
        ]
       }
      ],
@@ -97,7 +97,7 @@
      "typical": [
       {
        "axis": "toy.size",
-       "centre": 500000001.5,
+       "centre": 6.5,
        "spread": 0
       }
      ]
@@ -118,12 +118,12 @@
         "symbols": [
          {
           "class": "toy.size/small",
-          "symbol": "S",
+          "symbol": "1",
           "value": 1
          },
          {
           "class": "toy.size/large",
-          "symbol": "L",
+          "symbol": "8",
           "value": 2
          }
         ]
@@ -140,7 +140,7 @@
       }
      ],
      "layouts": {
-      "code": "{size}{large}"
+      "code": "X{size}00000-{large}"
      },
      "fact_prefix": "toy.code.",
      "groups": [
@@ -169,7 +169,23 @@
         "min": 2
        }
       }
-     ]
+     ],
+     "system": {
+      "tag": "toy-generated"
+     },
+     "import": {
+      "lines": {
+       "code": "uwp"
+      },
+      "profile": "code",
+      "fact_prefix": "toy.listed.",
+      "facts": [
+       {
+        "column": "zone",
+        "field": "toy.zone"
+       }
+      ]
+     }
     }
    ]
   }

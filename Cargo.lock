@@ -520,6 +520,7 @@ dependencies = [
  "sse-core",
  "sse-formation",
  "sse-pack",
+ "sse-sector-io",
  "sse-sift",
 ]
 
@@ -607,6 +608,7 @@ dependencies = [
  "sse-observe",
  "sse-pack",
  "sse-record",
+ "sse-sector-io",
  "sse-sift",
  "sse-surface",
  "sse-time",

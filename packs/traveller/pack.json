@@ -6497,6 +6497,27 @@
       "belts": "belts",
       "tag": "traveller-generated"
      },
+     "import": {
+      "lines": {
+       "uwp": "uwp",
+       "pbg": "pbg"
+      },
+      "profile": "uwp",
+      "listed": {
+       "trade": "remarks"
+      },
+      "fact_prefix": "traveller.listed.",
+      "facts": [
+       {
+        "column": "zone",
+        "field": "traveller.zone"
+       },
+       {
+        "column": "bases",
+        "field": "traveller.bases.{}"
+       }
+      ]
+     },
      "rules": [
       {
        "id": "traveller.prep.oxygen.v1",

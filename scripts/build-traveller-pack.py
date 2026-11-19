@@ -397,6 +397,19 @@ SHEET = {
         {"id": "bases", "label": "Bases", "prefix": "traveller.base."},
     ],
     "system": {"giants": "gas_giants", "belts": "belts", "tag": "traveller-generated"},
+    # Sector files (X3c): which columns are code lines, which list codes the
+    # rules also read (compared, and kept as traveller.listed.*), and which
+    # are the referee's call, written as facts (zone, bases).
+    "import": {
+        "lines": {"uwp": "uwp", "pbg": "pbg"},
+        "profile": "uwp",
+        "listed": {"trade": "remarks"},
+        "fact_prefix": "traveller.listed.",
+        "facts": [
+            {"column": "zone", "field": "traveller.zone"},
+            {"column": "bases", "field": "traveller.bases.{}"},
+        ],
+    },
     "rules": RULES,
 }
 

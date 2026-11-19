@@ -34,8 +34,11 @@ use sse_sift::rules::TagState;
 use sse_sift::{Atlas, Bound, Label, RuleSet, SiftContent, Subject};
 use std::collections::{BTreeMap, BTreeSet};
 
+pub mod import;
 pub mod plan;
 
+#[cfg(test)]
+mod import_tests;
 #[cfg(test)]
 mod plan_tests;
 #[cfg(test)]
@@ -135,6 +138,9 @@ pub struct CodeSheet {
     /// How a coded world's system is grown (X3b), if the sheet supports it.
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub system: Option<plan::SystemHints>,
+    /// How community sector files map onto the sheet (X3c), if they do.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub import: Option<import::ImportHints>,
 }
 
 /// Why a segment shows its symbol.

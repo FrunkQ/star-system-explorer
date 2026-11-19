@@ -52,3 +52,10 @@ Status: built (19 Nov 2026), new crate `crates/sse-sector-io`. Build plan row X3
 - A PBG of "???" is accepted as a PBG.
 - `SectorFile::subsector` keeps the whole file's warnings.
 - No Travellermap fetch, no hex view, no undo. Those belong to the rest of X3c.
+
+# X3c import: sector files into a campaign (19 Nov 2026)
+- `sse_codes::import::import(codes, sheet, file, universe)`: every world line goes through the sheet's `import` hints (pack data: which columns are code lines, the profile line, listed codes to compare, and the referee's columns written as facts). Each line becomes a preview with its plan (X3b), system facts (`map.hex`, `map.sector`, `name`) and main-world facts at `<universe>/sys:<hex>/body:@1`. Impossible values are kept and marked with their reason, never altered. Guesses are said plainly (no or unreadable stellar data, giants and white dwarfs grown as dwarfs, '?' digits left to the physics). Listed trade codes that differ from those read back are reported. There is a one-line summary.
+- Kernel op `import_sector {text, format?, sheet?, apply, at_s}`: a preview without `apply`; with it each world writes one authored event, plus one authored-impossible event when it has impossible facts. Undo and replay work as for any authored event.
+- Checks: Lanternfall imports all 12 worlds and every UWP reads back unchanged. The tab, SEC and UWP-line files give the same facts. Zones and bases read back. The messy paste imports. A '?' line is refused with its reason. An impossible line (X266000-0) is kept and marked. Contract cases cover preview, apply, codes after the import, and a bad format.
+- Found on Lanternfall: 6 of 12 worlds list trade codes that differ from the T5 rules read back (for example Ashgrove reads Pr as well). These are the fixture's own choices, and the report shows them.
+- Not yet: the Travellermap fetch (needs the site Worker), growing each imported system (call `run_formation` with the plan's pins per system, or batch it), placing systems in 3D (handoff 7A part 3, "small deterministic offset"), and export from a campaign.

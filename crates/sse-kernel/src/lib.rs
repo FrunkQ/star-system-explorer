@@ -1886,6 +1886,111 @@ impl Kernel {
                     readings,
                 }
             }
+            Request::ImportSector {
+                text,
+                format,
+                sheet,
+                apply,
+                at_s,
+            } => {
+                use sse_sector_io::Format;
+                let file = match format.as_deref() {
+                    None => sse_sector_io::parse_any(&text),
+                    Some("t5_tab") => sse_sector_io::parse_as(Format::T5Tab, &text),
+                    Some("sec") => sse_sector_io::parse_as(Format::Sec, &text),
+                    Some("uwp_lines") => sse_sector_io::parse_as(Format::UwpLines, &text),
+                    Some(f) => {
+                        return Err(err(
+                            "bad_format",
+                            format!("format {f:?}: use t5_tab, sec or uwp_lines"),
+                        ))
+                    }
+                };
+                let sheet = match &sheet {
+                    Some(id) => self.codes.sheet(id).ok_or_else(|| {
+                        err(
+                            "unknown_sheet",
+                            format!("no code sheet {id:?} in the stack"),
+                        )
+                    })?,
+                    None => self
+                        .codes
+                        .sheets
+                        .iter()
+                        .find(|s| s.import.is_some())
+                        .ok_or_else(|| {
+                            err(
+                                "no_code_sheets",
+                                "no code sheet in the stack reads sector files",
+                            )
+                        })?,
+                };
+                let codes = &self.codes;
+                let u = self
+                    .universe
+                    .as_mut()
+                    .ok_or_else(|| err("no_universe", "open a universe first"))?;
+                let imp = sse_codes::import::import(codes, sheet, &file, &u.root)
+                    .map_err(|e| err("bad_import", e))?;
+                let mut events = Vec::new();
+                if apply {
+                    let t = UniverseTime::seconds(at_s);
+                    for w in imp.worlds.iter().filter(|w| w.plan.is_some()) {
+                        let sys: Address = w.system.parse().expect("import addresses parse");
+                        let main: Address = w.main_world.parse().expect("import addresses parse");
+                        for impossible in [false, true] {
+                            let mut set: BTreeMap<Address, BTreeMap<String, Value>> =
+                                BTreeMap::new();
+                            for (a, list) in [(&sys, &w.system_edits), (&main, &w.world_edits)] {
+                                for e in list.iter().filter(|e| e.impossible == impossible) {
+                                    set.entry(a.clone())
+                                        .or_default()
+                                        .insert(e.field.clone(), e.value.clone());
+                                }
+                            }
+                            if set.is_empty() {
+                                continue;
+                            }
+                            let e = Event::new(EventBody {
+                                kind: kinds::AUTHORED_SET.into(),
+                                subject: set.keys().cloned().collect(),
+                                occurred_at: t,
+                                activated_at: t,
+                                recognised_at: u.chronicle.next_stamp(),
+                                causes: vec![],
+                                payload: Payload {
+                                    set,
+                                    ..Default::default()
+                                },
+                                evidence: if impossible {
+                                    Evidence::AuthoredImpossible
+                                } else {
+                                    Evidence::Authored
+                                },
+                                publisher: Publisher::new("gm", "import", "1"),
+                            })
+                            .map_err(|e| err("bad_event", format!("{e}")))?;
+                            let id = u
+                                .chronicle
+                                .append(e)
+                                .map_err(|e| err("chronicle", format!("{e}")))?;
+                            events.push(id.hex());
+                        }
+                    }
+                }
+                let state_hash = apply.then(|| {
+                    u.chronicle
+                        .state_at(UniverseTime::seconds(i64::MAX))
+                        .hash()
+                        .hex()
+                });
+                Response::SectorImport {
+                    summary: imp.summary.sentence(),
+                    import: serde_json::to_value(&imp).expect("imports are plain data"),
+                    events,
+                    state_hash,
+                }
+            }
             Request::Manifest => {
                 let m = self.universe()?.manifest();
                 Response::Manifest {

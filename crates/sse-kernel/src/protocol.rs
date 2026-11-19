@@ -509,6 +509,25 @@ pub enum Request {
         sheet: Option<String>,
         at_s: i64,
     },
+    /// Import a community sector file (handoff 7A part 4) into the open
+    /// universe through a code sheet: UWP lines, legacy SEC or T5
+    /// tab-delimited text (`format`: `t5_tab`, `sec`, `uwp_lines`; detected
+    /// when left out). Without `apply` it is a preview and changes nothing;
+    /// with it every world becomes authored events at `at_s` (one for its
+    /// facts, one more for any impossible ones, kept and marked), so the
+    /// import can be undone and replayed.
+    ImportSector {
+        text: String,
+        #[serde(default)]
+        #[ts(optional)]
+        format: Option<String>,
+        #[serde(default)]
+        #[ts(optional)]
+        sheet: Option<String>,
+        #[serde(default)]
+        apply: bool,
+        at_s: i64,
+    },
 }
 
 /// `adopt`'s formation request: the `run_formation` fields.
@@ -600,6 +619,7 @@ impl Request {
             Request::RulesPolicy { .. } => "rules_policy",
             Request::Rules => "rules",
             Request::Codes { .. } => "codes",
+            Request::ImportSector { .. } => "import_sector",
         }
     }
 }
@@ -716,6 +736,11 @@ pub fn ops() -> Vec<OpInfo> {
             "codes",
             Cost::Light,
             "GM machine only; one classification per digit per body, rules per body, linear in the system",
+        ),
+        o(
+            "import_sector",
+            Cost::Light,
+            "GM machine only; one code-sheet plan per world line (no formation runs)",
         ),
     ]
 }
@@ -1072,6 +1097,18 @@ pub enum Response {
         sheet: String,
         #[ts(type = "unknown[]")]
         readings: Vec<serde_json::Value>,
+    },
+    /// `import_sector`: the sse-codes `Import` (worlds, plans, what was
+    /// impossible, guessed or differs, a summary) and, when applied, the
+    /// events written.
+    SectorImport {
+        #[ts(type = "unknown")]
+        import: serde_json::Value,
+        summary: String,
+        events: Vec<String>,
+        #[serde(default, skip_serializing_if = "Option::is_none")]
+        #[ts(optional)]
+        state_hash: Option<String>,
     },
     Error {
         code: String,
