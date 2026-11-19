@@ -6,7 +6,7 @@
   Ages past the predictability horizon are one plausible future and say so.
 -->
 <script lang="ts">
-  import { KIND_WORDS, fmtAge, specFromScene, subjectNames, type LookedAhead, type SystemScene, type ViewSession } from "../../ui-contract/src/index.ts";
+  import { KIND_WORDS, fmtAge, specFromScene, subjectNames, type LookedAhead, type SystemScene, type SystemSpec, type ViewSession } from "../../ui-contract/src/index.ts";
 
   let {
     session,
@@ -14,12 +14,15 @@
     ahead = $bindable(null),
     at = $bindable(0),
     onkept,
-  }: { session: ViewSession; scene: SystemScene; ahead?: LookedAhead | null; at?: number; onkept: (note: string, now_myr: number | null, state_hash: string) => void } = $props();
+    given = null,
+    writeBack = false,
+  }: { session: ViewSession; scene: SystemScene; ahead?: LookedAhead | null; at?: number; onkept: (note: string, now_myr: number | null, state_hash: string) => void; given?: SystemSpec | null; writeBack?: boolean } = $props();
 
   let open = $state(false);
   let busy = $state(false);
   let problem = $state<string | null>(null);
-  const prepared = $derived(specFromScene(scene));
+  // A system the universe holds brings the kernel's own spec (resolved_system); the fixture chart builds one from its facts.
+  const prepared = $derived(given ? { spec: given, assumed: ["the system as the universe holds it"] } : specFromScene(scene));
   const nowGyr = $derived(scene.now_yr / 1e9);
   let target = $state(0);
   $effect(() => {
@@ -47,10 +50,11 @@
   async function keep(moveNow: boolean) {
     if (!ahead) return;
     const snap = ahead.snapshots[at];
-    const r = await session.commitLookAhead(ahead.branch, moveNow && snap ? snap.age_myr : undefined);
+    const r = await session.commitLookAhead(ahead.branch, moveNow && snap ? snap.age_myr : undefined, writeBack && moveNow);
     if (!r.ok) return void (problem = r.message);
     const n = ahead.events.length;
-    onkept(moveNow && snap ? `Kept: ${n} future ${n === 1 ? "event" : "events"} on the chronicle, and now is ${fmtAge(snap.age_myr)}.` : `Kept: ${n} future ${n === 1 ? "event" : "events"} on the chronicle.`, moveNow && snap ? snap.age_myr : null, r.state_hash);
+    const aged = r.aged_event ? ` The star and orbits as of ${fmtAge(r.aged_at_myr ?? snap?.age_myr ?? 0)} are written back.` : "";
+    onkept((moveNow && snap ? `Kept: ${n} future ${n === 1 ? "event" : "events"} on the chronicle, and now is ${fmtAge(snap.age_myr)}.` : `Kept: ${n} future ${n === 1 ? "event" : "events"} on the chronicle.`) + aged, moveNow && snap ? snap.age_myr : null, r.state_hash);
     ahead = null;
     at = 0;
     open = false;

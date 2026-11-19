@@ -31,7 +31,7 @@ const k = nodeKernel();
 let worlds;
 try {
   const s = await Session.open(k.client, gmSeat(), { id: "kestrel", seed: "k" }, [JSON.parse(readFileSync("packs/base-physics/pack.json", "utf8"))]);
-  const r = await s.runFormation({ seed: SEED, block: "modern", star_pins: { primary_mass: 1 } });
+  const r = await s.runFormation({ seed: SEED, block: "modern", system: "u:kestrel/sys:@first-light", star_pins: { primary_mass: 1 } });
   assert.ok(r.ok);
   worlds = r.result.run.worlds.length;
 } finally {

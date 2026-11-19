@@ -323,3 +323,114 @@ export function noWorldsWhy(r: FormationRan): string | null {
     ? `No worlds formed: the disc's gas was gone after ${round(gone.t_myr, 2)} Myr${g0 > 1000 ? `, stripped by a bright neighbour (far-UV field ${Math.round(g0)} G₀)` : ""}. Try another seed, or pin the star's mass.`
     : "No worlds formed in this run.";
 }
+
+// ── Adopting (V13 part 2) ──
+
+/** `adopt`'s answer: the events written, the systems they hold, how many facts, the new state hash. */
+export interface Adopted {
+  type: "adopted";
+  events: string[];
+  systems: string[];
+  facts: number;
+  state_hash: string;
+}
+/** `resolved_system`'s answer: the system as the universe now holds it. */
+export interface SystemResolved {
+  type: "system_resolved";
+  system: string;
+  source: "formation" | "v3" | "facts" | string;
+  at_s?: number;
+  facts: Record<string, Record<string, Json>>;
+  spec?: import("./fate.ts").SystemSpec;
+  surfaces: { address: string; kind: string; t_surface_now_k: number; regime_label?: string; speculative: boolean }[];
+  tiles: Json[];
+  refused: Json[];
+}
+
+/**
+ * A system the universe holds, as a scene: read back with `resolved_system`
+ * after `adopt` (or after a look-ahead's write-back), so the chart draws the
+ * kernel's facts, not the preview it was made from. Names come from the save
+ * (v3.name); a grown system's bodies are "Star", "World 1" and on, by orbit.
+ */
+export function sceneFromResolved(r: SystemResolved, title?: string): SystemScene {
+  const facts = r.facts;
+  const val = (a: string, k: string) => facts[a]?.[k];
+  const num = (a: string, k: string) => (typeof val(a, k) === "number" ? (val(a, k) as number) : undefined);
+  const str = (a: string, k: string) => (typeof val(a, k) === "string" ? (val(a, k) as string) : undefined);
+  const system = r.system;
+  const inside = Object.keys(facts).filter((a) => a.startsWith(system + "/"));
+  const role = (a: string) => str(a, "v3.roleHint") ?? (str(a, "body.kind") ? str(a, "body.kind")! : /\/star:/.test(a) ? "star" : a.includes("/craft:") ? "construct" : a.includes("/cloud:") ? "belt" : "planet");
+  const engulfed = (a: string) => val(a, "body.engulfed") === true;
+  const bodies = inside.filter((a) => !engulfed(a) && (num(a, "body.mass") !== undefined || role(a) !== "planet"));
+  const stars = bodies.filter((a) => role(a) === "star");
+  const primary = stars.find((a) => !str(a, "parent") && num(a, "body.mass") !== undefined) ?? stars[0];
+  const grown = r.source === "formation";
+  const worldOrder = bodies.filter((a) => role(a) !== "star").sort((x, y) => (num(x, "orbit.semi_major_axis") ?? 0) - (num(y, "orbit.semi_major_axis") ?? 0));
+  const surf = new Map(r.surfaces.map((s) => [s.address, s]));
+  const nameOf = (a: string) => str(a, "v3.name") ?? (role(a) === "star" ? (stars.length > 1 ? `Star ${stars.indexOf(a) + 1}` : "Star") : `World ${worldOrder.indexOf(a) + 1}`);
+  const src: SceneFact["source"] = grown ? "derived" : "authored";
+  // A kept look-ahead's write-back (time.aged) sets the star's phase and luminosity; a save never does. Those
+  // star values are the ageing model's, not the save's, so they are marked derived. (The facts carry no evidence yet.)
+  const aged = (a: string) => !grown && str(a, "star.phase") !== undefined;
+  let i = 0;
+  const subjects: SceneSubject[] = bodies
+    .filter((a) => a === primary || num(a, "orbit.semi_major_axis") !== undefined || role(a) === "star")
+    .map((a) => {
+      const kind = ROLE_KIND[role(a)] ?? "planet";
+      const name = nameOf(a);
+      const mass = num(a, "body.mass");
+      const radius = num(a, "body.radius");
+      const sma = num(a, "orbit.semi_major_axis");
+      const parent = str(a, "parent") ?? str(a, "orbit.host");
+      const s = surf.get(a);
+      const out: SceneFact[] = [f("name", "Name", name)];
+      if (kind === "star") {
+        const ss = aged(a) ? "derived" : src;
+        if (mass !== undefined) out.push(f("mass_sun", "Mass", mass / M_SUN, "M☉", ss));
+        if (radius !== undefined) out.push(f("radius_sun", "Radius", radius / R_SUN_M, "R☉", ss));
+        const t = num(a, "star.effective_temperature");
+        if (t !== undefined) out.push(f("teff_k", "Surface", t, "K", ss));
+        const l = num(a, "star.luminosity");
+        if (l !== undefined) out.push(f("luminosity_sun", "Luminosity", l / 3.828e26, "L☉", ss));
+        const ph = str(a, "star.phase");
+        if (ph) out.push(f("phase", "Phase", ph.replace(/[-_]/g, " "), undefined, ss));
+      } else {
+        if (sma !== undefined) out.push(f("a_au", "Orbit", sma / AU_M, "AU", src));
+        const e = num(a, "orbit.eccentricity");
+        if (e !== undefined) out.push(f("eccentricity", "Eccentricity", e, undefined, src));
+        if (mass !== undefined) out.push(f("mass_earth", "Mass", mass / M_EARTH, "M⊕", src));
+        if (radius !== undefined) out.push(f("radius_earth", "Radius", radius / R_EARTH_M, "R⊕", src));
+        const day = num(a, "body.rotation_period");
+        if (day !== undefined) out.push(f("day_h", "Day", day / 3600, "h", src));
+        if (s) out.push(f("surface_k", "Surface", s.t_surface_now_k, "K", "derived"));
+      }
+      return {
+        address: a,
+        kind,
+        label: name,
+        subtitle: `${grown ? "Grown" : r.source === "v3" ? "Imported from V3" : "From the universe's facts"} · ${kind}${aged(a) ? " · aged by a kept look-ahead" : ""}${s?.regime_label ? ` · ${s.regime_label.toLowerCase()}` : ""}`,
+        ...(a !== primary && parent ? { parent } : {}),
+        ...(a !== primary && sma !== undefined ? { orbit: { a_au: sma / AU_M, phase_deg: phase(i++) } } : {}),
+        facts: out,
+        stamps: grown ? ["generated", ...(s?.speculative ? ["speculative"] : [])] : aged(a) ? ["imported"] : ["authored", "imported"],
+        tags: mass !== undefined && kind !== "star" ? [sizeTag(mass / M_EARTH)] : [],
+      };
+    });
+  const age = num(system, "system.age");
+  const now_yr = age !== undefined ? age / Number(YEAR_S) : 4.6e9;
+  const far = Math.max(1, ...subjects.filter((s) => s.orbit && s.parent === primary).map((s) => s.orbit!.a_au));
+  return {
+    schema: "sse.scene.system/0",
+    fixture: false,
+    universe: { id: system.split("/")[0]!.replace(/^u:/, ""), seed: str(system, "v3.seed") ?? system },
+    system,
+    title: title ?? str(system, "v3.name") ?? system.split("/").pop()!,
+    subtitle: `In the campaign · ${grown ? "grown by the formation pipeline" : r.source === "v3" ? "imported from V3" : "from its facts"} · read back from the universe`,
+    now_yr,
+    span_yr: [0, Math.max(now_yr * 2, 1e10)],
+    surveyed_to_au: Math.ceil(far * 1.5),
+    subjects,
+    events: [],
+  };
+}

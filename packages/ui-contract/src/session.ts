@@ -8,7 +8,7 @@ import { checkIntent, intentToRequest, secondsToYears, yearsToSeconds, type Inte
 import { audienceOf, decide, type Seat } from "./seat.ts";
 import { providerOf, type FlowDoc, type PackDoc } from "./physics.ts";
 import type { PlayerScene } from "./player-scene.ts";
-import type { FormationRan, FormationRequest, V3Imported } from "./make.ts";
+import type { Adopted, FormationRan, FormationRequest, SystemResolved, V3Imported } from "./make.ts";
 import type { LookedAhead, SystemSpec } from "./fate.ts";
 
 export type IntentResult =
@@ -93,7 +93,11 @@ export interface ViewSession {
   /** Age a system forward on a branch (T2); GM only. */
   lookAhead(system: SystemSpec, target_myr: number): Promise<{ ok: true; result: LookedAhead } | { ok: false; code: string; message: string }>;
   /** Keep a look-ahead as history, optionally moving the system's "now"; GM only. */
-  commitLookAhead(branch: string, move_now_myr?: number): Promise<{ ok: true; event_id: string; state_hash: string } | { ok: false; code: string; message: string }>;
+  commitLookAhead(branch: string, move_now_myr?: number, write_back?: boolean): Promise<{ ok: true; event_id: string; state_hash: string; aged_event?: string; aged_at_myr?: number } | { ok: false; code: string; message: string }>;
+  /** Write an imported save or a formation run into the open universe as history (GM only). */
+  adopt(source: { import_v3: string } | { formation: FormationRequest }, occurred_at_s?: number): Promise<{ ok: true; result: Adopted } | { ok: false; code: string; message: string }>;
+  /** A system as the universe now holds it: facts, a SystemSpec for look-ahead, and S0 surfaces. */
+  resolvedSystem(system: string, at_s?: number): Promise<{ ok: true; result: SystemResolved } | { ok: false; code: string; message: string }>;
   kernelVersion(): Promise<string>;
   /** Derived values of a flow (read only; no event). */
   derive(ref: DeriveRef): Promise<{ ok: true; values: Record<string, Derived> } | { ok: false; message: string }>;
@@ -423,11 +427,27 @@ export class Session implements ViewSession {
     return r.type === "looked_ahead" ? { ok: true, result: r as unknown as LookedAhead } : { ok: false, code: String(r.code ?? "unexpected"), message: String(r.message ?? JSON.stringify(r)) };
   }
 
-  /** Keep a look-ahead as history; with `move_now_myr`, the system's "now" moves to that star age. */
-  async commitLookAhead(branch: string, move_now_myr?: number): Promise<{ ok: true; event_id: string; state_hash: string } | { ok: false; code: string; message: string }> {
+  /**
+   * Keep a look-ahead as history; with `move_now_myr`, the system's "now" moves to that star age.
+   * `write_back` also writes the aged star and surviving orbits as one `time.aged` event.
+   */
+  async commitLookAhead(branch: string, move_now_myr?: number, write_back?: boolean): Promise<{ ok: true; event_id: string; state_hash: string; aged_event?: string; aged_at_myr?: number } | { ok: false; code: string; message: string }> {
     if (this.seat.authority !== "gm") return { ok: false, code: "not_gm", message: "only the game master keeps a look-ahead" };
-    const r = await this.#call({ op: "commit_look_ahead", branch, ...(move_now_myr !== undefined ? { move_now_myr } : {}) });
-    return r.type === "committed" ? { ok: true, event_id: String(r.event_id), state_hash: String(r.state_hash) } : { ok: false, code: String(r.code ?? "unexpected"), message: String(r.message ?? JSON.stringify(r)) };
+    const r = await this.#call({ op: "commit_look_ahead", branch, ...(move_now_myr !== undefined ? { move_now_myr } : {}), ...(write_back ? { write_back: true } : {}) });
+    if (r.type !== "committed") return { ok: false, code: String(r.code ?? "unexpected"), message: String(r.message ?? JSON.stringify(r)) };
+    return { ok: true, event_id: String(r.event_id), state_hash: String(r.state_hash), ...(r.aged_event ? { aged_event: String(r.aged_event), aged_at_myr: Number(r.aged_at_myr) } : {}) };
+  }
+
+  async adopt(source: { import_v3: string } | { formation: FormationRequest }, occurred_at_s?: number): Promise<{ ok: true; result: Adopted } | { ok: false; code: string; message: string }> {
+    if (this.seat.authority !== "gm") return { ok: false, code: "not_gm", message: "only the game master adds systems to the universe" };
+    const r = await this.#call({ op: "adopt", ...source, ...(occurred_at_s !== undefined ? { occurred_at_s } : {}) } as never);
+    return r.type === "adopted" ? { ok: true, result: r as unknown as Adopted } : { ok: false, code: String(r.code ?? "unexpected"), message: String(r.message ?? JSON.stringify(r)) };
+  }
+
+  async resolvedSystem(system: string, at_s?: number): Promise<{ ok: true; result: SystemResolved } | { ok: false; code: string; message: string }> {
+    if (this.seat.authority !== "gm") return { ok: false, code: "not_gm", message: "only the game master reads resolved systems" };
+    const r = await this.#call({ op: "resolved_system", system, ...(at_s !== undefined ? { at_s } : {}) });
+    return r.type === "system_resolved" ? { ok: true, result: r as unknown as SystemResolved } : { ok: false, code: String(r.code ?? "unexpected"), message: String(r.message ?? JSON.stringify(r)) };
   }
 
   async kernelVersion(): Promise<string> {

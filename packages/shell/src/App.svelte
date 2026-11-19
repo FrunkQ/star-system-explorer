@@ -13,7 +13,7 @@
   import LightControl from "./LightControl.svelte";
   import MakeSystem from "./MakeSystem.svelte";
   import LookAhead from "./LookAhead.svelte";
-  import { sceneAt, type LookedAhead } from "../../ui-contract/src/index.ts";
+  import { sceneAt, sceneFromResolved, type LookedAhead, type SystemSpec } from "../../ui-contract/src/index.ts";
   import lightDoc from "./documents/light.recipes.json";
   import { SYMBOLS, checkLightRecipe, describeLight, litFromSystem, paint, type BandRecipe, type Mark } from "../../ui-contract/src/index.ts";
   import AgentsPanel from "../../agents/src/AgentsPanel.svelte";
@@ -210,6 +210,20 @@
     // U4: with a what-if open, the chart shows the branch; the main line is kept for comparing.
     if (b) s.branchStateHash(b.id).then((h) => g === generation && (branchHash = h));
     else branchHash = "";
+    // V13 part 2: a system adopted into the campaign is read back from the universe, not derived from the fixture.
+    const v = viewing;
+    if (v) {
+      s.resolvedSystem(v.system).then((r) => {
+        if (g !== generation) return;
+        if (!r.ok) return void (whatNote = `Could not read ${v.title} back: ${r.message}`);
+        const read = sceneFromResolved(r.result, v.title);
+        const now_yr = v.fresh ? read.now_yr : now;
+        if (v.fresh) ((v.fresh = false), (ws.now_yr = read.now_yr));
+        viewingSpec = r.result.spec ?? null;
+        mainScene = scene = { ...read, now_yr, span_yr: [read.span_yr[0], Math.max(read.span_yr[1], now_yr * 1.25)] };
+      });
+      return;
+    }
     // A now moved by a kept look-ahead can pass the fixture's ruler: the ruler grows to keep it in view.
     const at = { ...base, now_yr: now, span_yr: [base.span_yr[0], Math.max(base.span_yr[1], now * 1.25)] as [number, number] };
     const main = deriveScene(s, applyEdits(at, applied), derivations);
@@ -221,6 +235,23 @@
     });
   });
   let mainScene = $state<SystemScene>(base);
+  // V13 part 2: systems adopted into the campaign this session, and the one on the chart (null: the campaign's own).
+  let adoptedSystems = $state<{ system: string; title: string }[]>([]);
+  let viewing = $state<{ system: string; title: string; fresh: boolean } | null>(null);
+  let viewingSpec = $state<SystemSpec | null>(null);
+  function showSystem(system: string) {
+    const a = adoptedSystems.find((x) => x.system === system);
+    ws.select(null);
+    if (a) ((viewing = { ...a, fresh: true }), (ws.mode = "view"));
+    else ((viewing = null), (viewingSpec = null), (ws.now_yr = base.now_yr));
+    ws.revision++;
+  }
+  function adopted(systems: { system: string; title: string }[], note: string, hash: string) {
+    adoptedSystems = [...adoptedSystems.filter((x) => !systems.some((y) => y.system === x.system)), ...systems];
+    whatNote = note;
+    status = { ...status, hash };
+    ws.revision++;
+  }
   let branchHash = $state("");
   let whatNote = $state<string | null>(null);
   let compareDialog: HTMLDialogElement | undefined = $state();
@@ -428,12 +459,20 @@
           <button type="button" class="linkbtn" onclick={() => whatIf("keep")} disabled={!ws.branch.edits.length}>Keep it</button>
           <button type="button" class="linkbtn" onclick={() => whatIf("drop")}>Throw away</button>
         {:else}
-          {#if !ahead}<button type="button" class="linkbtn quiet" onclick={() => whatIf("open")} title="Try changes on a branch; the chart's history does not move until you keep them">What if…</button>{/if}
-          <LookAhead {session} {scene} bind:ahead bind:at={aheadAt} onkept={(note, now_myr, h) => ((whatNote = note), now_myr !== null && (ws.now_yr = now_myr * 1e6), (status = { ...status, hash: h }), ws.revision++)} />
+          {#if !ahead && !viewing}<button type="button" class="linkbtn quiet" onclick={() => whatIf("open")} title="Try changes on a branch; the chart's history does not move until you keep them">What if…</button>{/if}
+          <LookAhead {session} {scene} given={viewing ? viewingSpec : null} writeBack={!!viewing} bind:ahead bind:at={aheadAt} onkept={(note, now_myr, h) => ((whatNote = note), now_myr !== null && (ws.now_yr = now_myr * 1e6), (status = { ...status, hash: h }), ws.revision++)} />
         {/if}
         {#if whatNote}<span role="status">{whatNote}</span>{/if}
       </span>
-      <button type="button" class="linkbtn quiet" onclick={() => ((makeOpen = true), makeDialog?.showModal())} title="Import a V3 save or grow a new system (a preview)">Make a system</button>
+      {#if adoptedSystems.length}
+        <label class="onchart">On the chart
+          <select aria-label="System on the chart" value={viewing?.system ?? ""} onchange={(e) => showSystem(e.currentTarget.value)} data-viewing={viewing?.system ?? ""}>
+            <option value="">{base.title}</option>
+            {#each adoptedSystems as a (a.system)}<option value={a.system}>{a.title}</option>{/each}
+          </select>
+        </label>
+      {/if}
+      <button type="button" class="linkbtn quiet" onclick={() => ((makeOpen = true), makeDialog?.showModal())} title="Import a V3 save or grow a new system, and add it to the campaign">Make a system</button>
       <button type="button" class="linkbtn quiet" onclick={() => ((agentsOpen = true), agentsDialog?.showModal())} title="Tars, Orac and Minerva, on your own key">Agents</button>
       <LightControl recipes={LIGHT_RECIPES} lights={lit.lights} missing={lit.missing} names={lightNames} bind:value={lightId} key="light.gm" />
       <SoundControl scene={soundScene} deviceTier={status.tier} seed={base.universe.seed} key="sound.gm" />
@@ -504,7 +543,7 @@
 </dialog>
 
 <dialog bind:this={makeDialog} class="help make-dialog" aria-label="Make a system" onclose={() => (makeOpen = !!makeDialog?.open)}>
-  {#if makeOpen && session}<MakeSystem {session} context={{ mark: (s) => symbols.marker().mark(subjectOf(s)), symbology: symbols, styles: styleHost }} />{/if}
+  {#if makeOpen && session}<MakeSystem {session} onadopted={(sys, note, hash) => (adopted(sys, note, hash), sys[0] && (makeDialog?.close(), showSystem(sys[0].system)))} context={{ mark: (s) => symbols.marker().mark(subjectOf(s)), symbology: symbols, styles: styleHost }} />{/if}
   <form method="dialog"><button type="submit">Close</button></form>
 </dialog>
 
@@ -601,6 +640,19 @@
     display: inline-flex;
     gap: 10px;
     align-items: center;
+  }
+  .onchart {
+    display: inline-flex;
+    gap: 6px;
+    align-items: center;
+  }
+  .onchart select {
+    font: inherit;
+    font-size: 12px;
+    max-width: 14em;
+    background: var(--sse-ground);
+    color: var(--sse-ink);
+    border: 1px solid var(--sse-rule);
   }
   .whatif b {
     color: var(--sse-accent-ink);

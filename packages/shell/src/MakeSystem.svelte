@@ -3,16 +3,18 @@
   with the formation pipeline. Both kernel ops are pure, so this is a
   preview: the campaign's universe and state hash do not move. The preview
   chart and card are the ordinary view modules, mounted on a workspace of
-  their own in view mode. Adopting a preview into the campaign is part 2.
+  their own in view mode. "Add to the campaign" (part 2) writes the
+  previewed save or run into the universe as history with the kernel's
+  adopt op; the chart then reads the system back from the universe.
 -->
 <script lang="ts">
   import { untrack } from "svelte";
-  import { importedSystems, noWorldsWhy, reportSummary, resolveParams, sceneFromFormation, sceneFromImport, worldWords, type FormationRan, type SystemScene, type V3Imported, type ViewContext, type ViewHandle, type ViewModule, type ViewSession } from "../../ui-contract/src/index.ts";
+  import { importedSystems, noWorldsWhy, reportSummary, resolveParams, sceneFromFormation, sceneFromImport, worldWords, type FormationRan, type FormationRequest, type SystemScene, type V3Imported, type ViewContext, type ViewHandle, type ViewModule, type ViewSession } from "../../ui-contract/src/index.ts";
   import { systemChart } from "../../views/system-chart/src/index.ts";
   import { bodyCard } from "../../views/body-card/src/index.ts";
   import { createWorkspace } from "./workspace.svelte.ts";
 
-  let { session, context }: { session: ViewSession; context: Omit<ViewContext, "workspace" | "params" | "session"> } = $props();
+  let { session, context, onadopted }: { session: ViewSession; context: Omit<ViewContext, "workspace" | "params" | "session">; onadopted?: (systems: { system: string; title: string }[], note: string, state_hash: string) => void } = $props();
 
   let tab = $state<"import" | "generate">("import");
   let busy = $state(false);
@@ -29,6 +31,7 @@
     busy = false;
     if (!r.ok) return void ((problem = r.code === "import_failed" ? `That file is not a V3 save the importer can read (${r.message}).` : r.message), (imported = null));
     imported = r.result;
+    importText = text;
     fileName = name;
     pick = importedSystems(r.result)[0]?.address ?? "";
   }
@@ -58,14 +61,39 @@
   let block = $state<"modern" | "classic" | "classic-corrected">("modern");
   let grown = $state<FormationRan | null>(null);
   let grownSeed = $state("");
+  let grownReq = $state<FormationRequest | null>(null);
+  let importText = "";
   async function grow() {
     busy = true;
     problem = null;
-    const r = await session.runFormation({ seed, block, ...(pinMass ? { star_pins: { primary_mass: Number(mass) } } : {}) });
+    const req: FormationRequest = { seed, block, system: `${universeRoot}/sys:@${slug(seed)}`, ...(pinMass ? { star_pins: { primary_mass: Number(mass) } } : {}) };
+    const r = await session.runFormation(req);
     busy = false;
     if (!r.ok) return void ((problem = r.message), (grown = null));
     grown = r.result;
+    grownReq = req;
     grownSeed = seed;
+  }
+
+  // ── Adopt (part 2) ──
+  // A grown system takes an address under the campaign's universe named for its seed, so the same seed lands in the same place.
+  const universeRoot = $derived(session.universe.root);
+  const slug = (t: string) => t.trim().toLowerCase().replace(/[^a-z0-9._:-]+/g, "-").replace(/^-+|-+$/g, "").slice(0, 40) || "seed";
+  let adoptedNote = $state<string | null>(null);
+  async function adopt() {
+    busy = true;
+    problem = null;
+    const r = tab === "import" ? await session.adopt({ import_v3: importText }) : grownReq ? await session.adopt({ formation: grownReq }) : null;
+    busy = false;
+    if (!r) return;
+    if (!r.ok) return void (problem = r.code === "already_adopted" ? "This system is already in the campaign." : r.message);
+    // The import was previewed under its own universe id; adopted, the same systems sit under the campaign's root.
+    const tail = (a: string) => a.split("/").slice(1).join("/");
+    const names = tab === "import" ? new Map(systems.map((x) => [tail(x.address), x.name])) : new Map([[tail(r.result.systems[0] ?? ""), `Seed "${grownSeed}"`]]);
+    const list = r.result.systems.map((x) => ({ system: x, title: names.get(tail(x)) ?? x.split("/").pop()! }));
+    const note = `Added ${list.map((x) => x.title).join(", ")} to the campaign: ${r.result.facts} facts in ${r.result.events.length} ${r.result.events.length === 1 ? "event" : "events"} on the chronicle.`;
+    adoptedNote = note;
+    onadopted?.(list, note, r.result.state_hash);
   }
 
   // ── Preview ──
@@ -101,7 +129,7 @@
     <button type="button" role="tab" aria-selected={tab === "import"} onclick={() => (tab = "import")}>Import a V3 save</button>
     <button type="button" role="tab" aria-selected={tab === "generate"} onclick={() => (tab = "generate")}>Grow a new system</button>
   </div>
-  <p class="note">A preview: nothing here enters the campaign or changes its history. Bringing a system into the campaign comes next.</p>
+  <p class="note">A preview: nothing enters the campaign or changes its history until you add it.</p>
 
   {#if tab === "import"}
     <div class="row">
@@ -179,6 +207,13 @@
   {/if}
 
   {#if problem}<p class="problem" role="alert">{problem}</p>{/if}
+  {#if preview && (tab === "import" ? imported : grown && grown.run.worlds.length)}
+    <div class="row adopt">
+      <button type="button" class="go" onclick={adopt} disabled={busy}>{busy ? "Adding…" : tab === "import" ? `Add ${systems.length === 1 ? "this system" : `these ${systems.length} systems`} to the campaign` : "Add this system to the campaign"}</button>
+      <span class="note">Written to the chronicle as history, with each value's evidence kept{tab === "import" ? " (authored, catalogued or set against the physics)" : ""}.</span>
+    </div>
+  {/if}
+  {#if adoptedNote}<p role="status" data-adopted>{adoptedNote}</p>{/if}
 
   {#if preview}
     {#key preview.system + tab}
