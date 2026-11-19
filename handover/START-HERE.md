@@ -24,6 +24,7 @@ Milestone M1 "Proven core" = packages K0 to K6 (build plan section 3/4).
 | F4 violent phase and upheavals | done | packages/F4.md |
 | F5 leftovers: belts, Oort cloud, Trojans, moons, rings | done | packages/F5.md |
 | F6 early worlds and hand-off | done (ahead of F2 to F5; reads a plain `Protoplanet`) | packages/F6.md |
+| Formation pipeline (stages chained, heat flow per world) | done | packages/F-pipeline.md |
 | K7 envelopes, partitioning, resolve, feasibility | done (kernel track) | packages/K7.md |
 | K8 rules, classification, sifters, significance | done (kernel track) | packages/K8.md |
 | K9 disclosure tiers, data views, scene building | done (kernel track) | packages/K9.md |
@@ -52,7 +53,7 @@ Milestone M1 "Proven core" = packages K0 to K6 (build plan section 3/4).
 ## Parallel tracks (18 Nov, Alex: build in parallel, integrate later)
 | Track | Packages | Branch |
 |---|---|---|
-| Physics | P1, P3, P4, F0 to F6 done; next: formation pipeline, F7 (T1 now merged), F9, F8 integrator | `main` via PRs |
+| Physics | P1, P3, P4, F0 to F6 done; pipeline done; next: F7 (T1 now merged), F9, F8 integrator | `main` via PRs |
 | Kernel | K7 to K10, G0, C1 to C3, L0, T1, T2 and the U3 gaps done | `main` via PRs |
 | Chart room shell and player views | U0 to U3, V1, U5, V2, V12, V3, V11 done; V4 peer-to-peer waits for Alex | `main` via PRs |
 

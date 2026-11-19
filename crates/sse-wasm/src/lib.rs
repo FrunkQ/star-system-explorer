@@ -28,6 +28,7 @@ pub fn engines_run() -> String {
         "formation-growth": sse_formation::scenario::growth_golden(),
         "formation-upheaval": sse_formation::scenario::upheaval_golden(),
         "formation-leftovers": sse_formation::scenario::leftovers_golden(),
+        "formation-pipeline": sse_formation::scenario::pipeline_golden(),
         "cosmos": sse_cosmos::scenario::golden(),
     })
     .to_string()

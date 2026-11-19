@@ -13,8 +13,8 @@ sse-resolve = { path = "../sse-resolve" }
 sse-cosmos = { path = "../sse-cosmos" }
 serde.workspace = true
 serde_json.workspace = true
-
-[dev-dependencies]
 sse-flow.workspace = true
 sse-pack.workspace = true
 sse-atoms.workspace = true
+
+[dev-dependencies]
