@@ -1227,5 +1227,35 @@
  {
   "op": "import_v3",
   "save": "not json"
+ },
+ {
+  "op": "read_world_stack",
+  "fixture": "tarn"
+ },
+ {
+  "op": "read_world_stack",
+  "body": "u:sol/sys:0/body:12"
+ },
+ {
+  "op": "read_world_stack",
+  "stack": {
+   "format": "sse.world-stack/1",
+   "body": "u:t/sys:0/body:1",
+   "name": "Bad",
+   "radius_m": 1000.0,
+   "shells": [
+    {
+     "key": "a",
+     "kind": "crust",
+     "name": "A",
+     "top_m": 0.0,
+     "bottom_m": 10.0
+    }
+   ]
+  }
+ },
+ {
+  "op": "read_world_stack",
+  "fixture": "pluto"
  }
 ]

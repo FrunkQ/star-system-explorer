@@ -134,3 +134,70 @@ pub(crate) fn run_formation(a: FormArgs) -> Out {
         surfaces,
     })
 }
+
+/// A body's world stack, its ladder and physics notes (P4 fixtures for now).
+pub(crate) fn read_world_stack(
+    body: Option<&str>,
+    fixture: Option<&str>,
+    stack: Option<serde_json::Value>,
+) -> Out {
+    let names: Vec<&str> = sse_world::fixtures().iter().map(|f| f.0).collect();
+    let (ws, source, raw) = if let Some(v) = stack {
+        let ws: sse_world::WorldStack = serde_json::from_value(v.clone())
+            .map_err(|e| err("bad_world_stack", format!("not a world stack: {e}")))?;
+        (ws, "given".to_string(), v)
+    } else {
+        let all: Vec<(&str, sse_world::WorldStack, &str)> = sse_world::fixtures()
+            .iter()
+            .map(|(n, t)| {
+                (
+                    *n,
+                    sse_world::WorldStack::from_json(t).expect("fixture stacks parse"),
+                    *t,
+                )
+            })
+            .collect();
+        let hit = all.into_iter().find(|(n, w, _)| {
+            fixture.is_some_and(|f| f == *n)
+                || (fixture.is_none() && body.is_some_and(|b| b == w.body))
+        });
+        match hit {
+            Some((n, w, t)) => (
+                w,
+                format!("fixture:{n}"),
+                serde_json::from_str(t).expect("fixture stacks parse"),
+            ),
+            None => {
+                return Err(err(
+                    "no_world_stack",
+                    format!(
+                        "no world stack for {}; fixtures: {}",
+                        fixture.or(body).unwrap_or("(nothing asked)"),
+                        names.join(", ")
+                    ),
+                ))
+            }
+        }
+    };
+    if ws.format != sse_world::FORMAT {
+        return Err(err(
+            "bad_world_stack",
+            format!("format {} is not {}", ws.format, sse_world::FORMAT),
+        ));
+    }
+    let issue = |i: &sse_world::Issue| serde_json::json!({"at": i.at, "message": i.message});
+    let (notes, problems) = ws.physics_notes();
+    Ok(Response::WorldStackRead {
+        body: ws.body.clone(),
+        source,
+        ladder: ws
+            .ladder()
+            .iter()
+            .map(|l| serde_json::to_value(l).expect("plain data"))
+            .collect(),
+        invalid: ws.validate().iter().map(issue).collect(),
+        problems: problems.iter().map(issue).collect(),
+        notes,
+        stack: raw,
+    })
+}

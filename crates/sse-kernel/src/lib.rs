@@ -845,6 +845,11 @@ impl Kernel {
                 star_pins,
                 pins,
             })?,
+            Request::ReadWorldStack {
+                body,
+                fixture,
+                stack,
+            } => systems::read_world_stack(body.as_deref(), fixture.as_deref(), stack)?,
             Request::Atoms { ids } => {
                 let port = |p: &sse_flow::Port| {
                     serde_json::json!({

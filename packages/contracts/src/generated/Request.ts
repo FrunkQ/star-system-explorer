@@ -20,4 +20,8 @@ block?: string, birth?: unknown, now_gyr?: number, envelope?: unknown, inherit_p
 /**
  * F9 `Pins`: worlds to honour, candidate histories to search.
  */
-pins?: unknown, };
+pins?: unknown, } | { "op": "read_world_stack", body?: string, 
+/**
+ * `earth`, `europa`, `mars`, `tarn`, `titan` or `venus`.
+ */
+fixture?: string, stack?: unknown, };

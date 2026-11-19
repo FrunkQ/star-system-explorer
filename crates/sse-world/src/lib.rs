@@ -121,6 +121,37 @@ impl fmt::Display for Issue {
     }
 }
 
+/// The P4 fixture stacks shipped with the build, by name: what the kernel's
+/// `read_world_stack` serves until surface stacks are built from history.
+pub fn fixtures() -> [(&'static str, &'static str); 6] {
+    [
+        (
+            "earth",
+            include_str!("../../../tests/fixtures/worlds/earth.json"),
+        ),
+        (
+            "europa",
+            include_str!("../../../tests/fixtures/worlds/europa.json"),
+        ),
+        (
+            "mars",
+            include_str!("../../../tests/fixtures/worlds/mars.json"),
+        ),
+        (
+            "tarn",
+            include_str!("../../../tests/fixtures/worlds/tarn.json"),
+        ),
+        (
+            "titan",
+            include_str!("../../../tests/fixtures/worlds/titan.json"),
+        ),
+        (
+            "venus",
+            include_str!("../../../tests/fixtures/worlds/venus.json"),
+        ),
+    ]
+}
+
 /// Readable phrase for a kind ("lava_tube_city" reads "lava-tube city").
 pub fn kind_phrase(kind: &str) -> String {
     match kind {

@@ -31,7 +31,7 @@ Milestone M1 "Proven core" = packages K0 to K6 (build plan section 3/4).
 | S1 surface atlas: cube-sphere tiles, band-limited detail, disclosure and fact floor, cache | done (sketch atlas; S2 adds the surveyed plate atlas) | packages/S1.md |
 | S2 plate sketch: moving plates, ridges, trenches, arcs, mountain belts, plumes, drift snapshots, surveyed atlas | done | packages/S2.md |
 | S3 wearing down: rivers, lakes, sediment, sea level, hillslopes, worn atlas with flow layer | done | packages/S3.md |
-| Kernel ops `import_v3` and `run_formation` (V3 import with report; one system through the pipeline with pins and surfaces) | done (physics track, for the UI) | packages/K-physics-ops.md |
+| Kernel ops `import_v3`, `run_formation` and `read_world_stack` (V3 import with report; one system through the pipeline with pins and surfaces; a body's world stack with ladder and physics notes) | done (physics track, for the UI) | packages/K-physics-ops.md |
 | K7 envelopes, partitioning, resolve, feasibility | done (kernel track) | packages/K7.md |
 | K8 rules, classification, sifters, significance | done (kernel track) | packages/K8.md |
 | K9 disclosure tiers, data views, scene building | done (kernel track) | packages/K9.md |

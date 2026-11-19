@@ -303,6 +303,22 @@ pub enum Request {
         #[ts(optional, type = "unknown")]
         pins: Option<serde_json::Value>,
     },
+    /// A body's world stack (`sse.world-stack/1`: shells, regions, features)
+    /// with its depth ladder and physics notes. Served from the P4 fixtures
+    /// (by `fixture` name or by the fixture's `body` address) until surface
+    /// stacks are built from history; a given `stack` is checked instead.
+    ReadWorldStack {
+        #[serde(default)]
+        #[ts(optional)]
+        body: Option<String>,
+        /// `earth`, `europa`, `mars`, `tarn`, `titan` or `venus`.
+        #[serde(default)]
+        #[ts(optional)]
+        fixture: Option<String>,
+        #[serde(default)]
+        #[ts(optional, type = "unknown")]
+        stack: Option<serde_json::Value>,
+    },
 }
 
 impl Request {
@@ -334,6 +350,7 @@ impl Request {
             Request::CommitLookAhead { .. } => "commit_look_ahead",
             Request::ImportV3 { .. } => "import_v3",
             Request::RunFormation { .. } => "run_formation",
+            Request::ReadWorldStack { .. } => "read_world_stack",
         }
     }
 }
@@ -404,6 +421,11 @@ pub fn ops() -> Vec<OpInfo> {
             "run_formation",
             Cost::Medium,
             "one formation pipeline run; with pins, one per candidate history",
+        ),
+        o(
+            "read_world_stack",
+            Cost::Light,
+            "one stack: validation, the depth ladder and a few atom evaluations",
         ),
     ]
 }
@@ -586,6 +608,23 @@ pub enum Response {
         pinned: Option<serde_json::Value>,
         #[ts(type = "unknown[]")]
         surfaces: Vec<serde_json::Value>,
+    },
+    /// `read_world_stack`: `source` is `fixture:<name>` or `given`; `ladder`
+    /// is the "above, on and within" strip (`depth`, `text`, `where`, `key`);
+    /// `notes` what the atoms computed; `problems` what physics says cannot be
+    /// and `invalid` structural faults (each `{at, message}`).
+    WorldStackRead {
+        body: String,
+        source: String,
+        #[ts(type = "unknown")]
+        stack: serde_json::Value,
+        #[ts(type = "unknown[]")]
+        ladder: Vec<serde_json::Value>,
+        notes: Vec<String>,
+        #[ts(type = "unknown[]")]
+        problems: Vec<serde_json::Value>,
+        #[ts(type = "unknown[]")]
+        invalid: Vec<serde_json::Value>,
     },
     Error {
         code: String,

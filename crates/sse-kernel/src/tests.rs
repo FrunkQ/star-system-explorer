@@ -579,3 +579,41 @@ fn import_v3_returns_facts_and_the_report() {
     let bad = crate::Kernel::new().handle_json(r#"{"op":"import_v3","save":"not json"}"#);
     assert!(bad.contains("import_failed"), "{bad}");
 }
+
+#[test]
+fn read_world_stack_serves_fixtures_and_checks_given_stacks() {
+    let mut k = crate::Kernel::new();
+    let a = k.handle_json(r#"{"op":"read_world_stack","fixture":"europa"}"#);
+    let v: serde_json::Value = serde_json::from_str(&a).unwrap();
+    assert_eq!(v["type"], "world_stack_read", "{a:.300}");
+    assert_eq!(v["source"], "fixture:europa");
+    assert_eq!(v["stack"]["format"], "sse.world-stack/1");
+    assert!(!v["ladder"].as_array().unwrap().is_empty());
+    assert!(!v["notes"].as_array().unwrap().is_empty(), "{}", v["notes"]);
+    assert!(
+        v["invalid"].as_array().unwrap().is_empty(),
+        "{}",
+        v["invalid"]
+    );
+    // By the fixture's body address: the same stack.
+    let b = k.handle_json(r#"{"op":"read_world_stack","body":"u:sol/sys:0/body:8"}"#);
+    let w: serde_json::Value = serde_json::from_str(&b).unwrap();
+    assert_eq!(w["stack"], v["stack"]);
+    // A given stack is checked: freeze Europa's ocean and physics objects.
+    let mut st = v["stack"].clone();
+    for s in st["shells"].as_array_mut().unwrap() {
+        if s["properties"].get("salinity").is_some() {
+            s["properties"]["temperature_k"] = serde_json::json!(200.0);
+        }
+    }
+    let req = serde_json::json!({"op":"read_world_stack","stack":st}).to_string();
+    let c: serde_json::Value = serde_json::from_str(&k.handle_json(&req)).unwrap();
+    assert_eq!(c["source"], "given");
+    assert!(
+        !c["problems"].as_array().unwrap().is_empty(),
+        "{}",
+        c["problems"]
+    );
+    let none = k.handle_json(r#"{"op":"read_world_stack","body":"u:nowhere/sys:0/body:1"}"#);
+    assert!(none.contains("no_world_stack"), "{none}");
+}
