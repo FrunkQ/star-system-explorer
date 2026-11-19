@@ -7,6 +7,8 @@
   import { applyEdits, enterFacts, observeOf, type AuthoredFacts, checkScreen, deriveScene, gmSeat, redoEdit, subjectOf, systemOrder, undoEdit, type CheckedScreen, type DerivationDoc, type ScreenDoc, type SystemScene, type ViewHandle, type ViewModule, type ViewSession } from "../../ui-contract/src/index.ts";
   import { openBrowserSession } from "../../ui-contract/src/host-browser.ts";
   import { createShare, type Share } from "./share.svelte.ts";
+  import { clearStored, download, readStored, setAside, writeStored } from "./campaign-store.ts";
+  import { checkCampaignSave, makeCampaignSave, saveFileName, savedEvents, type CampaignSave } from "../../ui-contract/src/index.ts";
   import SeatsPanel from "./SeatsPanel.svelte";
   import LensPanel from "./LensPanel.svelte";
   import SoundControl from "../../sound/src/SoundControl.svelte";
@@ -31,6 +33,7 @@
   import symbolsDoc from "./documents/symbols.gm.json";
   import bodyDoc from "./documents/body.gm.json";
   import compareDoc from "./documents/compare.gm.json";
+  import lifeDoc from "./documents/life.gm.json";
   import stylesScreenDoc from "./documents/styles.gm.json";
   import { createStyles } from "./styles.svelte.ts";
   import { PLAYER_STACK } from "../../views/player-stack/src/index.ts";
@@ -56,12 +59,13 @@
   let scene = $state<SystemScene>(base);
 
   // Each screen document is checked before anything mounts; the GM switches between them.
-  const SCREENS: Record<string, ScreenDoc> = { system: workspaceDoc as unknown as ScreenDoc, physics: physicsDoc as unknown as ScreenDoc, packs: packsDoc as unknown as ScreenDoc, screens: screensDoc as unknown as ScreenDoc, data: dataDoc as unknown as ScreenDoc, symbols: symbolsDoc as unknown as ScreenDoc, body: bodyDoc as unknown as ScreenDoc, compare: compareDoc as unknown as ScreenDoc, styles: stylesScreenDoc as unknown as ScreenDoc };
+  const SCREENS: Record<string, ScreenDoc> = { system: workspaceDoc as unknown as ScreenDoc, physics: physicsDoc as unknown as ScreenDoc, packs: packsDoc as unknown as ScreenDoc, screens: screensDoc as unknown as ScreenDoc, data: dataDoc as unknown as ScreenDoc, symbols: symbolsDoc as unknown as ScreenDoc, body: bodyDoc as unknown as ScreenDoc, compare: compareDoc as unknown as ScreenDoc, life: lifeDoc as unknown as ScreenDoc, styles: stylesScreenDoc as unknown as ScreenDoc };
   const SCREEN_TABS = [
     { value: "system", label: "Chart", key: "P" },
     { value: "physics", label: "Physics", key: "P" },
     { value: "body", label: "Body" },
     { value: "compare", label: "Sizes" },
+    { value: "life", label: "Life" },
     { value: "screens", label: "Screens" },
     { value: "data", label: "Player data" },
     { value: "symbols", label: "Symbols" },
@@ -103,10 +107,15 @@
   loadPacks()
     .then((packs) => ((opened = packs), openBrowserSession({ base: document.baseURI, seat: gmSeat(), universe: base.universe, packs })))
     .then(async (s) => {
-      share = await createShare(s, { universe: base.universe, packs: opened, clock_yr: ws.now_yr, views: () => observeOf(s.stack().base)?.setup.views.map((v) => v.id) ?? [], scope: (factsDoc as unknown as AuthoredFacts).scope });
-      // The player-facing facts the GM has recorded, entered when the campaign opens.
-      const bad = await enterFacts(s, factsDoc as unknown as AuthoredFacts);
-      if (bad) throw new Error(`recorded facts refused: ${JSON.stringify(bad)}`);
+      // U10: the campaign kept in this browser reopens first; players then join from it.
+      const reopened = await reopenKept(s);
+      const packs = [...opened, ...s.stack().added, ...(s.stack().campaign ? [s.stack().campaign] : [])];
+      share = await createShare(s, { universe: base.universe, packs, ...(reopened ? { opening_export: reopened } : {}), clock_yr: ws.now_yr, views: () => observeOf(s.stack().base)?.setup.views.map((v) => v.id) ?? [], scope: (factsDoc as unknown as AuthoredFacts).scope });
+      // The player-facing facts the GM has recorded, entered when a fresh campaign opens (a reopened one has them).
+      if (!reopened) {
+        const bad = await enterFacts(s, factsDoc as unknown as AuthoredFacts);
+        if (bad) throw new Error(`recorded facts refused: ${JSON.stringify(bad)}`);
+      }
       scene = await deriveScene(s, { ...base, now_yr: ws.now_yr }, derivations);
       // Systems already adopted into this universe (kept by the kernel across reloads) go on the "On the chart" list.
       const listed = await s.listSystems();
@@ -115,6 +124,109 @@
       status = { kernel: await s.kernelVersion(), tier: s.device()?.tier ?? "unmeasured", hash: await s.stateHash(), stack: s.stack().hash, campaign: false };
     })
     .catch((e) => (failure = String(e)));
+
+  // Keeping the campaign (U10): the kernel's export plus the workspace overlay, in this browser and as a file.
+  const ROOT = `u:${base.universe.id}`;
+  let keptNote = $state<string | null>(null);
+  let savedAt = $state<string | null>(null);
+  let saveProblem = $state<string | null>(null);
+  async function reopenKept(s: ViewSession): Promise<Json | null> {
+    const { save, problem } = readStored(ROOT);
+    if (problem) {
+      setAside();
+      keptNote = `The campaign kept in this browser could not be reopened (${problem}); it is set aside and a fresh campaign opened.`;
+      return null;
+    }
+    if (!save) return null;
+    if (save.stack?.added.length) await s.send({ kind: "stack_packs", packs: save.stack.added });
+    if (save.stack?.campaign) await s.send({ kind: "adopt_physics", pack: save.stack.campaign, requests: [] });
+    const im = await s.importChronicle(save.export);
+    if (!im.ok) {
+      setAside();
+      keptNote = `The campaign kept in this browser could not be reopened (${im.message}); it is set aside and a fresh campaign opened.`;
+      if (save.stack) await s.send({ kind: "stack_packs", packs: [] }).then(() => s.send({ kind: "adopt_physics", pack: null, requests: [] }));
+      return null;
+    }
+    ws.applied = save.workspace.applied;
+    ws.undo = save.workspace.undo;
+    ws.redo = save.workspace.redo;
+    ws.now_yr = save.workspace.now_yr;
+    savedAt = save.saved_at;
+    const events = savedEvents(save);
+    keptNote = `Reopened the campaign kept ${new Date(save.saved_at).toLocaleString("en-GB", { dateStyle: "medium", timeStyle: "short" })}: ${events} ${events === 1 ? "event" : "events"}.`;
+    if (!im.stack_matches) keptNote += " The physics loaded now differs from the physics it was kept with: results may differ.";
+    if (im.state_hash !== save.state_hash) keptNote += " Its state differs from when it was kept.";
+    return save.export;
+  }
+  async function currentSave(): Promise<CampaignSave | null> {
+    const s = session;
+    if (!s) return null;
+    const ex = await s.exportChronicle();
+    if (!ex.ok) return null;
+    const st = s.stack();
+    return makeCampaignSave({
+      title: base.title,
+      root: ROOT,
+      state_hash: await s.stateHash(),
+      export: ex.export,
+      workspace: JSON.parse(JSON.stringify({ applied: ws.applied, undo: ws.undo, redo: ws.redo, now_yr: ws.now_yr })) as CampaignSave["workspace"],
+      saved_at: new Date().toISOString(),
+      ...(st.added.length || st.campaign ? { stack: { added: st.added as unknown as Json[], campaign: (st.campaign ?? null) as unknown as Json } } : {}),
+    });
+  }
+  // Autosave: after each change of state (or of the ruler's time, or the undo stack), once things settle.
+  let saveTimer: ReturnType<typeof setTimeout> | undefined;
+  $effect(() => {
+    void status.hash;
+    void status.stack;
+    void ws.now_yr;
+    void ws.undo.length;
+    void ws.redo.length;
+    if (!session || !status.hash) return;
+    clearTimeout(saveTimer);
+    saveTimer = setTimeout(async () => {
+      const save = await currentSave();
+      if (!save) return;
+      const bad = writeStored(save);
+      saveProblem = bad ? `Not kept in this browser: ${bad}. Use Save campaign to download it.` : null;
+      if (!bad) savedAt = save.saved_at;
+    }, 600);
+  });
+  async function saveFile() {
+    const save = await currentSave();
+    if (save) download(save, saveFileName(save.title, save.saved_at));
+  }
+  let campaignDialog: HTMLDialogElement | undefined = $state();
+  let offered = $state<{ save: CampaignSave | null; problems: string[]; name: string } | null>(null);
+  let confirmFresh = $state(false);
+  async function pickFile(e: Event) {
+    const input = e.currentTarget as HTMLInputElement;
+    const file = input.files?.[0];
+    input.value = "";
+    if (!file) return;
+    let doc: unknown = null;
+    try {
+      doc = JSON.parse(await file.text());
+    } catch {
+      doc = null;
+    }
+    const problems = checkCampaignSave(doc, ROOT);
+    offered = { save: problems.length ? null : (doc as CampaignSave), problems, name: file.name };
+  }
+  function reopenOffered() {
+    if (!offered?.save) return;
+    const bad = writeStored(offered.save);
+    if (bad) return void (offered = { ...offered, problems: [`it could not be kept to reopen: ${bad}`], save: null });
+    location.reload();
+  }
+  function startFresh() {
+    clearStored();
+    clearTimeout(saveTimer);
+    // No autosave between here and the reload.
+    session = null;
+    location.reload();
+  }
+  const savedWords = $derived(savedAt ? `Kept ${new Date(savedAt).toLocaleTimeString("en-GB", { hour: "2-digit", minute: "2-digit" })}` : "Not kept yet");
 
   // Lenses (U9, H8.6): what the GM sees for the job in hand. Switching never changes data, time or selection.
   function loadMine(): Lens[] {
@@ -453,6 +565,7 @@
     </main>
     <footer class="area-ruler" aria-label="Time">{#if mountFor("ruler")}<div class="fill" use:view={mountFor("ruler")!}></div>{/if}</footer>
     {/key}
+    {#if keptNote}<p class="kept-note" role="status" data-kept-note>{keptNote} <button type="button" class="linkbtn" onclick={() => (keptNote = null)}>OK</button></p>{/if}
     <div class="status" aria-label="Session">
       <span>Seat: {session.seat.label}</span>
       <span>kernel {status.kernel}</span>
@@ -483,6 +596,10 @@
       {/if}
       <button type="button" class="linkbtn quiet" onclick={() => ((makeOpen = true), makeDialog?.showModal())} title="Import a V3 save or grow a new system, and add it to the campaign">Make a system</button>
       <button type="button" class="linkbtn quiet" onclick={() => ((agentsOpen = true), agentsDialog?.showModal())} title="Tars, Orac and Minerva, on your own key">Agents</button>
+      <span class="kept">
+        <span data-kept={savedAt ?? ""} title={saveProblem ?? "The campaign is kept in this browser after every change"}>{saveProblem ? "Not kept" : savedWords}</span>
+        <button type="button" class="linkbtn quiet" onclick={() => ((offered = null), (confirmFresh = false), campaignDialog?.showModal())} title="Save the campaign as a file, open one, or start fresh">Campaign…</button>
+      </span>
       <LightControl recipes={LIGHT_RECIPES} lights={lit.lights} missing={lit.missing} names={lightNames} bind:value={lightId} key="light.gm" />
       <SoundControl scene={soundScene} deviceTier={status.tier} seed={base.universe.seed} key="sound.gm" />
       {#if share}
@@ -553,6 +670,31 @@
 
 <dialog bind:this={makeDialog} class="help make-dialog" aria-label="Make a system" onclose={() => (makeOpen = !!makeDialog?.open)}>
   {#if makeOpen && session}<MakeSystem {session} onadopted={(sys, note, hash) => (adopted(sys, note, hash), sys[0] && (makeDialog?.close(), showSystem(sys[0].system)))} context={{ mark: (s) => symbols.marker().mark(subjectOf(s)), symbology: symbols, styles: styleHost }} />{/if}
+  <form method="dialog"><button type="submit">Close</button></form>
+</dialog>
+
+<dialog bind:this={campaignDialog} class="help seats-dialog" aria-label="Campaign">
+  <h2>Campaign</h2>
+  <p class="hint">{saveProblem ?? `The campaign is kept in this browser after every change (${savedWords.toLowerCase()}). Save it as a file to keep a copy, move it to another device or hand it on.`}</p>
+  <p class="row"><button type="button" onclick={saveFile}>Save campaign</button></p>
+  <h3>Open a campaign</h3>
+  <p class="hint">A file from Save campaign. It replaces the campaign open now; save that first if you want to keep it. Players' screens reload into the opened campaign.</p>
+  <label class="row">Campaign file <input type="file" accept=".json,application/json" onchange={pickFile} /></label>
+  {#if offered}
+    {#if offered.save}
+      <p data-offered={offered.save.saved_at}><b>{offered.save.title}</b>, kept {new Date(offered.save.saved_at).toLocaleString("en-GB", { dateStyle: "medium", timeStyle: "short" })}: {savedEvents(offered.save)} events.</p>
+      <p class="row"><button type="button" onclick={reopenOffered}>Open it</button></p>
+    {:else}
+      <p role="alert" data-offered-problem>{offered.name} cannot be opened here: {offered.problems.join("; ")}.</p>
+    {/if}
+  {/if}
+  <h3>Start fresh</h3>
+  {#if confirmFresh}
+    <p role="alert">This forgets the campaign kept in this browser and opens {base.title} as shipped. Save campaign first to keep a copy.</p>
+    <p class="row"><button type="button" onclick={startFresh}>Forget it and start fresh</button> <button type="button" onclick={() => (confirmFresh = false)}>Keep it</button></p>
+  {:else}
+    <p class="row"><button type="button" onclick={() => (confirmFresh = true)}>Start fresh…</button></p>
+  {/if}
   <form method="dialog"><button type="submit">Close</button></form>
 </dialog>
 
@@ -658,6 +800,24 @@
     gap: 10px;
     align-items: center;
   }
+  .kept {
+    display: inline-flex;
+    gap: 8px;
+    align-items: center;
+  }
+  .kept-note {
+    position: fixed;
+    left: 24px;
+    bottom: 40px;
+    z-index: 5;
+    margin: 0;
+    max-width: min(560px, calc(100vw - 48px));
+    padding: 8px 12px;
+    font-size: 13px;
+    background: var(--sse-ground);
+    border: var(--sse-line) solid var(--sse-accent);
+    color: var(--sse-ink);
+  }
   .onchart {
     display: inline-flex;
     gap: 6px;
@@ -731,7 +891,8 @@
   }
   /* The cutaway sits between the tools and the card instead of under them. */
   .stage[data-screen="body"] .area-chart,
-  .stage[data-screen="compare"] .area-chart {
+  .stage[data-screen="compare"] .area-chart,
+  .stage[data-screen="life"] .area-chart {
     inset: 24px 428px 24px 96px;
     overflow: auto;
   }
@@ -938,14 +1099,15 @@
     .stage:not([data-screen="system"]) .area-chart .fill {
       overflow: auto;
     }
-    .stage:is([data-screen="physics"], [data-screen="body"], [data-screen="compare"]) .area-chart {
+    .stage:is([data-screen="physics"], [data-screen="body"], [data-screen="compare"], [data-screen="life"]) .area-chart {
       height: auto;
     }
-    .stage:is([data-screen="physics"], [data-screen="body"], [data-screen="compare"]) .area-chart .fill {
+    .stage:is([data-screen="physics"], [data-screen="body"], [data-screen="compare"], [data-screen="life"]) .area-chart .fill {
       position: relative;
     }
     .stage[data-screen="body"] .area-chart,
-    .stage[data-screen="compare"] .area-chart {
+    .stage[data-screen="compare"] .area-chart,
+    .stage[data-screen="life"] .area-chart {
       inset: auto;
       padding: 12px 16px;
     }

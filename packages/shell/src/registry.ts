@@ -6,6 +6,7 @@ import { bodyCard } from "../../views/body-card/src/index.ts";
 import { cutaway } from "../../views/cutaway/src/index.ts";
 import { body } from "../../views/body/src/index.ts";
 import { compare } from "../../views/compare/src/index.ts";
+import { biosphere } from "../../views/biosphere/src/index.ts";
 import { timeRuler } from "../../views/time-ruler/src/index.ts";
 import { flowEditor } from "../../views/flow-editor/src/index.ts";
 import { changeRequests } from "../../views/change-requests/src/index.ts";
@@ -15,4 +16,4 @@ import { dataViews } from "../../views/data-views/src/index.ts";
 import { symbols } from "../../views/symbols/src/index.ts";
 import { styles } from "../../views/styles/src/index.ts";
 
-export const REGISTRY: readonly ViewModule[] = [systemChart, bodyCard, cutaway, body, compare, timeRuler, flowEditor, changeRequests, packStack, screenComposer, dataViews, symbols, styles];
+export const REGISTRY: readonly ViewModule[] = [systemChart, bodyCard, cutaway, body, compare, biosphere, timeRuler, flowEditor, changeRequests, packStack, screenComposer, dataViews, symbols, styles];
