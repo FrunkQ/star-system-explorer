@@ -77,7 +77,7 @@ Milestone M1 "Proven core" = packages K0 to K6 (build plan section 3/4).
 | V9 map views (part 1: the Cosmic web foam under Explore, from `web_slice`, with time scrub and Play) | part 1 done (second UI track); cluster map next | packages/V9.md |
 | U8 story finder (part 1: Stories under Explore, on the new `sift` op; starter sifters as data, hits with evidence, the GM's own sifter, a brief for a storyteller) | part 1 done (second UI track); Minerva and rarity next | packages/U8.md |
 | U10 browser campaign save: kept in this browser after every change, Save, Open and Start fresh, players join a reopened campaign | done (UI track) | packages/U10.md |
-| U11 human-scale time: one zooming ruler from Gyr to hours, a campaign "now", step and play, Make this now, worlds moving by the day (kernel `orbits_at`), pack calendars | parts 1 and 2 done (UI track); players' screens moving and the campaign's now in the chronicle next | packages/U11.md |
+| U11 human-scale time: one zooming ruler from Gyr to hours, a campaign "now", step and play, Make this now, worlds moving by the day (kernel `orbits_at`), pack calendars | parts 1 and 2 done (UI track); the campaign's now through the intent log (kernel `set_campaign_now` intent) next | packages/U11.md |
 | U12 tactility (dynamic minimalism, `handover/interface-style.md`): motion tokens, hover peek, cards and dialogs open from what opened them, ruler glide, reduced motion honoured | parts 1 and 2 done (UI track) | packages/U12.md |
 | U9 lenses: Basic, Advanced, Building, Running, every player data view as a lens, make your own, lens packs | done | packages/U9.md |
 | N1 sound engine: sound scenes, recipes, mixer, tiers, off by default, captions, orbit bed | done | packages/N1.md |
