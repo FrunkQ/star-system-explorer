@@ -8,4 +8,16 @@ export type Request = { "op": "hello" } | { "op": "load_stack", packs: unknown[]
  * A draft `provides.other.observe` setup to build with instead of
  * the stack's (a preview before Apply). Nothing is recorded.
  */
-observe?: unknown, } | { "op": "atoms", ids?: Array<string>, } | { "op": "scan_toggle", address: string, audience: string, at_s: bigint, } | { "op": "grant", address: string, audience: string, view?: string, default?: boolean, at_s: bigint, } | { "op": "look_ahead", system: unknown, target_myr: number, settings?: unknown, } | { "op": "commit_look_ahead", branch: string, move_now_myr?: number, };
+observe?: unknown, } | { "op": "atoms", ids?: Array<string>, } | { "op": "scan_toggle", address: string, audience: string, at_s: bigint, } | { "op": "grant", address: string, audience: string, view?: string, default?: boolean, at_s: bigint, } | { "op": "look_ahead", system: unknown, target_myr: number, settings?: unknown, } | { "op": "commit_look_ahead", branch: string, move_now_myr?: number, } | { "op": "import_v3", save: string, universe_id?: string, reconstruct?: number, } | { "op": "run_formation", seed: string, 
+/**
+ * Address of the system; default `u:generated/sys:0`.
+ */
+system?: string, 
+/**
+ * `modern` (default), `classic` or `classic-corrected`.
+ */
+block?: string, birth?: unknown, now_gyr?: number, envelope?: unknown, inherit_pins?: unknown, star_pins?: unknown, 
+/**
+ * F9 `Pins`: worlds to honour, candidate histories to search.
+ */
+pins?: unknown, };

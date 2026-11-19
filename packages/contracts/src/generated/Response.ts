@@ -38,4 +38,4 @@ birth_year: number,
 /**
  * Beyond this star age, futures are "one plausible future".
  */
-horizon_myr: number, events: Array<FateEvent>, snapshots: Array<FateSnapshot>, work_units: number, } | { "type": "error", code: string, message: string, };
+horizon_myr: number, events: Array<FateEvent>, snapshots: Array<FateSnapshot>, work_units: number, } | { "type": "v3_imported", universe: string, facts: unknown, report: unknown, reconstructed: unknown[], } | { "type": "formation_ran", system: string, pipeline: string, run: unknown, pinned?: unknown, surfaces: unknown[], } | { "type": "error", code: string, message: string, };

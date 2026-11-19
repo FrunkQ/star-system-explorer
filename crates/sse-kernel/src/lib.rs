@@ -7,6 +7,7 @@
 
 pub mod contract;
 pub mod protocol;
+mod systems;
 
 use protocol::*;
 use sse_chronicle::{
@@ -818,6 +819,32 @@ impl Kernel {
                     scene: serde_json::to_value(&scene).expect("scenes are plain data"),
                 }
             }
+            Request::ImportV3 {
+                save,
+                universe_id,
+                reconstruct,
+            } => systems::import_v3(&save, universe_id.as_deref(), reconstruct)?,
+            Request::RunFormation {
+                seed,
+                system,
+                block,
+                birth,
+                now_gyr,
+                envelope,
+                inherit_pins,
+                star_pins,
+                pins,
+            } => systems::run_formation(systems::FormArgs {
+                seed,
+                system,
+                block,
+                birth,
+                now_gyr,
+                envelope,
+                inherit_pins,
+                star_pins,
+                pins,
+            })?,
             Request::Atoms { ids } => {
                 let port = |p: &sse_flow::Port| {
                     serde_json::json!({

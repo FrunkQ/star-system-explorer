@@ -521,3 +521,61 @@ fn look_ahead_through_the_api() {
         "bad_system"
     );
 }
+
+#[test]
+fn run_formation_runs_the_pipeline_with_surfaces() {
+    let mut k = crate::Kernel::new();
+    let a = k.handle_json(
+        r#"{"op":"run_formation","seed":"kernel-form-4","star_pins":{"primary_mass":1.0}}"#,
+    );
+    let b = crate::Kernel::new().handle_json(
+        r#"{"op":"run_formation","seed":"kernel-form-4","star_pins":{"primary_mass":1.0}}"#,
+    );
+    assert_eq!(a, b, "same request, same response");
+    let v: serde_json::Value = serde_json::from_str(&a).unwrap();
+    assert_eq!(v["type"], "formation_ran", "{a:.300}");
+    assert_eq!(v["system"], "u:generated/sys:0");
+    let worlds = v["run"]["worlds"].as_array().unwrap().len();
+    assert!(worlds > 0);
+    assert_eq!(v["surfaces"].as_array().unwrap().len(), worlds);
+    assert!(v.get("pinned").is_none());
+    eprintln!("run_formation response {} bytes", a.len());
+    // With a pin: Earth at 1 au is honoured.
+    let p = k.handle_json(
+        r#"{"op":"run_formation","seed":"kernel-form-4","star_pins":{"primary_mass":1.0},"pins":{"worlds":[{"label":"Home","mass_earth":1.0,"a_au":1.0}],"tries":3}}"#,
+    );
+    let v: serde_json::Value = serde_json::from_str(&p).unwrap();
+    assert_eq!(v["type"], "formation_ran", "{p:.300}");
+    let m = &v["pinned"]["matches"][0];
+    assert!(m["world"].is_string());
+    let w = v["run"]["worlds"]
+        .as_array()
+        .unwrap()
+        .iter()
+        .find(|w| w["address"] == m["world"])
+        .unwrap();
+    assert!(
+        (w["mass_earth"].as_f64().unwrap() - 1.0).abs() < 0.05,
+        "{w}"
+    );
+    // Errors are protocol errors.
+    let e = k.handle_json(r#"{"op":"run_formation","seed":"x","block":"sideways"}"#);
+    assert!(e.contains("\"type\":\"error\""), "{e}");
+}
+
+#[test]
+fn import_v3_returns_facts_and_the_report() {
+    let save = include_str!("../../../tests/fixtures/v3/synthetic-sol.json");
+    let req = serde_json::json!({"op":"import_v3","save":save,"reconstruct":2}).to_string();
+    let a = crate::Kernel::new().handle_json(&req);
+    assert_eq!(a, crate::Kernel::new().handle_json(&req));
+    let v: serde_json::Value = serde_json::from_str(&a).unwrap();
+    assert_eq!(v["type"], "v3_imported", "{a:.300}");
+    assert!(v["facts"].as_object().unwrap().len() > 3);
+    assert!(v["report"]["differences"].is_array());
+    assert_eq!(v["reconstructed"].as_array().unwrap().len(), 1);
+    assert!(v["reconstructed"][0]["run"]["worlds"].is_array());
+    eprintln!("import_v3 response {} bytes", a.len());
+    let bad = crate::Kernel::new().handle_json(r#"{"op":"import_v3","save":"not json"}"#);
+    assert!(bad.contains("import_failed"), "{bad}");
+}

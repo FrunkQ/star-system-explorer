@@ -1,0 +1,287 @@
+{
+  "version": "surface-atlas-v1",
+  "worlds": [
+    {
+      "atlas": "u:sol/sys:0/body:3/shell:surface@4500",
+      "body": "Earth",
+      "regime": "mobile-lid",
+      "tiles": [
+        {
+          "hash": "96db5cc35c0cb0c2efefb9474b2d9b77b307a990bb26b9a3012a3b7c5e3a5d7a",
+          "octaves": 0,
+          "tile": "0.0.0.0"
+        },
+        {
+          "hash": "200d10647267fa33d3ba9eeb36d468cafb74041091d44828026fe72f44913c5a",
+          "octaves": 0,
+          "tile": "1.0.0.0"
+        },
+        {
+          "hash": "6e507db8e392a5da686e3f443858dd95a6392a8df73ff06c3f91ab5ba14bc377",
+          "octaves": 0,
+          "tile": "2.0.0.0"
+        },
+        {
+          "hash": "2d0d785c32a81121f1e9d041f93ac618e5ac9b4dec84a44d0f67034afe36f6e4",
+          "octaves": 0,
+          "tile": "3.0.0.0"
+        },
+        {
+          "hash": "97ef92cb8de61fdc7f026953c80a3f3cf5b308fb1ef0dcc46f04fc3ada745c3f",
+          "octaves": 0,
+          "tile": "4.0.0.0"
+        },
+        {
+          "hash": "198196f31ed9225490b271db449f73d8719168f11aa5a2668c9b1849b3ea6b49",
+          "octaves": 0,
+          "tile": "5.0.0.0"
+        },
+        {
+          "hash": "9493cac3b4d0f52a84dd9cfbc14b2ae11f805d8448f6c44311c9c4f8ac0e0026",
+          "octaves": 3,
+          "tile": "2.6.40.17"
+        },
+        {
+          "hash": "2bfa13025a011b4fffc99b8529e431c00f3c415a777278dfb9fa2c4622c3a531",
+          "octaves": 10,
+          "tile": "4.13.5000.7000"
+        }
+      ]
+    },
+    {
+      "atlas": "u:sol/sys:0/body:4/shell:surface@4500",
+      "body": "Mars",
+      "regime": "stagnant-lid",
+      "tiles": [
+        {
+          "hash": "50bca771a5622b029697d4e75669a197df139d6dc2c36ff93c407116050e25d7",
+          "octaves": 0,
+          "tile": "0.0.0.0"
+        },
+        {
+          "hash": "812635066c86e592f3299fc61795bc7ce982bceb537a9b45e6e9f5829708e2fb",
+          "octaves": 0,
+          "tile": "1.0.0.0"
+        },
+        {
+          "hash": "160a509208d2afd1d031bd03959f3171ca0edd0ff1f02f15b59ac9f7634946bf",
+          "octaves": 0,
+          "tile": "2.0.0.0"
+        },
+        {
+          "hash": "7ecf4993af932541c3b239b3714d691db2fa03c19aac3b32f97da7b2f1f11710",
+          "octaves": 0,
+          "tile": "3.0.0.0"
+        },
+        {
+          "hash": "c0c591b798d5f2d1f517530e11705af847a18fe08651a7a26dc98cef48f56b1f",
+          "octaves": 0,
+          "tile": "4.0.0.0"
+        },
+        {
+          "hash": "14c02d62dd365156a38b9619e0c6cf5d230ecbbfbc5600ba05366ea715ea4955",
+          "octaves": 0,
+          "tile": "5.0.0.0"
+        },
+        {
+          "hash": "de23b49863409af63fc864c40782e7882982db21faa7e0835f78f3c0386e87dc",
+          "octaves": 3,
+          "tile": "2.6.40.17"
+        },
+        {
+          "hash": "b5688f6120d1c2081c3299838a5edb237ed4c4d9c85af4ab9603b1e08085616c",
+          "octaves": 10,
+          "tile": "4.13.5000.7000"
+        }
+      ]
+    },
+    {
+      "atlas": "u:sol/sys:0/body:6/moon:6/shell:surface@4500",
+      "body": "Titan",
+      "regime": "hydrocarbon",
+      "tiles": [
+        {
+          "hash": "f7fb035608ae971b64d542b38cea5142c9eef3e5d58bdbd811be34228aabfbde",
+          "octaves": 0,
+          "tile": "0.0.0.0"
+        },
+        {
+          "hash": "cb8e2a306d751a59cd5dde5179f48003fe8153651409a26a377a4dc6adf0c05c",
+          "octaves": 0,
+          "tile": "1.0.0.0"
+        },
+        {
+          "hash": "e2987a286bac75fc3a5e2b92e14e241664eae4376ff76d4bb081b83e78ece0a3",
+          "octaves": 0,
+          "tile": "2.0.0.0"
+        },
+        {
+          "hash": "86a2fd630807dd2dcbef109b0480d69c8622f2850afebc0a4aaa8e929860f500",
+          "octaves": 0,
+          "tile": "3.0.0.0"
+        },
+        {
+          "hash": "50e1a934963ce761f1dd45a4eb0ed9ea24b50f8b80128c687af1d5a3e9266069",
+          "octaves": 0,
+          "tile": "4.0.0.0"
+        },
+        {
+          "hash": "fa60af2b5fcf69e7b46a9101d0ee232e8e4b35317172b9546ae6b996edbc84cb",
+          "octaves": 0,
+          "tile": "5.0.0.0"
+        },
+        {
+          "hash": "b91766c7214563894ac69f179e8357470fa6381d4c002ead99cdf9cf1893201c",
+          "octaves": 3,
+          "tile": "2.6.40.17"
+        },
+        {
+          "hash": "06a02fce1fe9f22e5999215fad2730864baa4226b3a50acd63d182f34530e7a8",
+          "octaves": 10,
+          "tile": "4.13.5000.7000"
+        }
+      ]
+    },
+    {
+      "atlas": "u:sol/sys:0/belt:1/body:4/shell:surface@4500",
+      "body": "Vesta",
+      "regime": "small-body",
+      "tiles": [
+        {
+          "hash": "e41eb00a1b2dd6c113a05dc87f301c40a44966f3d10226eb4a20a059dc903461",
+          "octaves": 0,
+          "tile": "0.0.0.0"
+        },
+        {
+          "hash": "d423aec99d031d14c89e3d5d92b98c27ad69442f0905adcc6d2481730e7f979d",
+          "octaves": 0,
+          "tile": "1.0.0.0"
+        },
+        {
+          "hash": "87782827d8b5f5072560d07a5e4e66db9fe896b0a42f89f5fbbbc084d68d3fdd",
+          "octaves": 0,
+          "tile": "2.0.0.0"
+        },
+        {
+          "hash": "b51e588d567736ce6593fa3571e82a632f2fe2747416959ff68d2f03d5699524",
+          "octaves": 0,
+          "tile": "3.0.0.0"
+        },
+        {
+          "hash": "8aecb76618e6cb780f732cdd7821b11a5b4da38b031dcd1f50db01ec1abc9976",
+          "octaves": 0,
+          "tile": "4.0.0.0"
+        },
+        {
+          "hash": "60049cf18919b9e7e70f431c6671df6bfaef9600116f26e99e3e220a154be780",
+          "octaves": 0,
+          "tile": "5.0.0.0"
+        },
+        {
+          "hash": "a98b67073567d0df696431ad49270afb1228f28482b59f7cd8dff31869c752ad",
+          "octaves": 3,
+          "tile": "2.6.40.17"
+        },
+        {
+          "hash": "729c2abe6940f187de18cbaf6b37aa3c183b3af995f5b3468e24e84127aa2799",
+          "octaves": 10,
+          "tile": "4.13.5000.7000"
+        }
+      ]
+    },
+    {
+      "atlas": "u:sol/sys:0/body:5/shell:surface@4500",
+      "body": "Jupiter",
+      "regime": "cloud-deck",
+      "tiles": [
+        {
+          "hash": "97e60d268f8d7687cf1d842d64770299a5ab18ffcc48126f18256b5dbba8169e",
+          "octaves": 0,
+          "tile": "0.0.0.0"
+        },
+        {
+          "hash": "5013f0f94e3fd9dfad0b7943119d6a6667b4b9b542ef1613cb547c5b001869e7",
+          "octaves": 0,
+          "tile": "1.0.0.0"
+        },
+        {
+          "hash": "1b8e4ee2d8a2c8b90b1fe319cbb1cdb14433595957bb5a2be1d094d56e092a41",
+          "octaves": 0,
+          "tile": "2.0.0.0"
+        },
+        {
+          "hash": "b8b1ebbfb9bc3dd5ab3c8d6a9956bcb5e3961be8594be26c3eae67453d1bfef3",
+          "octaves": 0,
+          "tile": "3.0.0.0"
+        },
+        {
+          "hash": "f6a9dae8e2b21ff640c27a1fd94c67a790bdd65748a2ab7609522cb8c30cc879",
+          "octaves": 0,
+          "tile": "4.0.0.0"
+        },
+        {
+          "hash": "113adcdd53b35568fd4906447676917c805bbe9a8171fbe443153d8a7a9bcf49",
+          "octaves": 0,
+          "tile": "5.0.0.0"
+        },
+        {
+          "hash": "ef97182881af73a7af879592db047fa274d92934732e07593df6c5e6960b3d7d",
+          "octaves": 3,
+          "tile": "2.6.40.17"
+        },
+        {
+          "hash": "076bf748376a4515044790ae8c8c3f0d463f5e83c355bf226e674220c9877488",
+          "octaves": 10,
+          "tile": "4.13.5000.7000"
+        }
+      ]
+    },
+    {
+      "atlas": "u:fixtures/sys:55cnc/body:5/shell:surface@8600",
+      "body": "55 Cancri e",
+      "regime": "lava",
+      "tiles": [
+        {
+          "hash": "58689f167a33f33d495cd21ea06c9d354a8922b952f5c8d596e9dc8c59c5da34",
+          "octaves": 0,
+          "tile": "0.0.0.0"
+        },
+        {
+          "hash": "ffa6415b856ba2a9bd48c89626b2b39c03dee88888b33cd5a5974c5f6d6a72b6",
+          "octaves": 0,
+          "tile": "1.0.0.0"
+        },
+        {
+          "hash": "b16027a5ef1a2cbd71890f3301699ccf25fecd0c38e665de6413e1c460a55c62",
+          "octaves": 0,
+          "tile": "2.0.0.0"
+        },
+        {
+          "hash": "5f2b4665ae259bd17e8f6d6b53c4a944a93aa415eb923b179d1d7b2adeba297b",
+          "octaves": 0,
+          "tile": "3.0.0.0"
+        },
+        {
+          "hash": "c2134270f8e7dcb0cdfeb3a7229fa516ecd0421c8a2d063b9e1ee96a18faa52a",
+          "octaves": 0,
+          "tile": "4.0.0.0"
+        },
+        {
+          "hash": "db37e8725f87bee16efd23beaffb3f162e46e873039b37d209060df91b9454a8",
+          "octaves": 0,
+          "tile": "5.0.0.0"
+        },
+        {
+          "hash": "78f31cd0d4f49d8a15bf2785e6d492b9b0f65bac4c108b849870dfd8462d438f",
+          "octaves": 3,
+          "tile": "2.6.40.17"
+        },
+        {
+          "hash": "16281faad2c167d8d8b04bb20a4a606c379350baf8d1a39afa3eafcd9e543923",
+          "octaves": 10,
+          "tile": "4.13.5000.7000"
+        }
+      ]
+    }
+  ]
+}

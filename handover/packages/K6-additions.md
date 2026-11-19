@@ -103,3 +103,14 @@ Two traps, both now avoided in the fixtures, and both apply to every client:
   - `packages/contracts/src/index.ts` and `generated/*`
   - `tests/contract/requests.json`
   - `tests/golden/contract.jsonl`
+
+## Merge with the physics track's ops (19 Nov)
+- The physics branch (`import_v3`, `run_formation`; see `K-physics-ops.md`) is merged into the kernel track's branch. Both sets of variants are kept.
+- Contract request order:
+  - 0 to 110: base;
+  - 111 to 118: grant and look-ahead;
+  - 119 to 123: run_formation and import_v3.
+- Re-blessed `contract.jsonl`:
+  - the physics responses are byte-identical to that branch's golden;
+  - only `hello` (op list) and the "nonsense" error (variant list) changed in earlier lines.
+- The harness engine lists carry both tracks' engines.

@@ -254,6 +254,55 @@ pub enum Request {
         #[ts(optional)]
         move_now_myr: Option<f64>,
     },
+    /// Import an SSE 3 save (the text of its `starmap.json` or `system.json`):
+    /// the imported universe's facts and the difference report. With
+    /// `reconstruct` (candidate histories to search, F9), each known system
+    /// also gains a formation history solved around its planets, labelled
+    /// reconstructed. Nothing is recorded in an open universe.
+    ImportV3 {
+        save: String,
+        #[serde(default)]
+        #[ts(optional)]
+        universe_id: Option<String>,
+        #[serde(default)]
+        #[ts(optional)]
+        reconstruct: Option<u32>,
+    },
+    /// Generate one system through the single formation pipeline (F0 to F6,
+    /// heat, F9 pins) and give every world its surface envelope (S0). The
+    /// galaxy inheritance is either a cosmos `birth` (G0, read at `now_gyr`)
+    /// or a patch `envelope`; neither means the stand-in solar neighbourhood.
+    /// Nothing is recorded in an open universe.
+    RunFormation {
+        seed: String,
+        /// Address of the system; default `u:generated/sys:0`.
+        #[serde(default)]
+        #[ts(optional)]
+        system: Option<String>,
+        /// `modern` (default), `classic` or `classic-corrected`.
+        #[serde(default)]
+        #[ts(optional)]
+        block: Option<String>,
+        #[serde(default)]
+        #[ts(optional, type = "unknown")]
+        birth: Option<serde_json::Value>,
+        #[serde(default)]
+        #[ts(optional)]
+        now_gyr: Option<f64>,
+        #[serde(default)]
+        #[ts(optional, type = "unknown")]
+        envelope: Option<serde_json::Value>,
+        #[serde(default)]
+        #[ts(optional, type = "unknown")]
+        inherit_pins: Option<serde_json::Value>,
+        #[serde(default)]
+        #[ts(optional, type = "unknown")]
+        star_pins: Option<serde_json::Value>,
+        /// F9 `Pins`: worlds to honour, candidate histories to search.
+        #[serde(default)]
+        #[ts(optional, type = "unknown")]
+        pins: Option<serde_json::Value>,
+    },
 }
 
 impl Request {
@@ -283,6 +332,8 @@ impl Request {
             Request::Atoms { .. } => "atoms",
             Request::LookAhead { .. } => "look_ahead",
             Request::CommitLookAhead { .. } => "commit_look_ahead",
+            Request::ImportV3 { .. } => "import_v3",
+            Request::RunFormation { .. } => "run_formation",
         }
     }
 }
@@ -344,6 +395,16 @@ pub fn ops() -> Vec<OpInfo> {
             "GM edit: a Solar System run to a cold white dwarf is about 0.2 M work units; weak devices ask the GM machine",
         ),
         o("commit_look_ahead", Cost::Trivial, "GM machine only in a session"),
+        o(
+            "import_v3",
+            Cost::Light,
+            "linear in the save; with reconstruct, heavy (a formation run per candidate history per system)",
+        ),
+        o(
+            "run_formation",
+            Cost::Medium,
+            "one formation pipeline run; with pins, one per candidate history",
+        ),
     ]
 }
 
@@ -499,6 +560,32 @@ pub enum Response {
         events: Vec<FateEvent>,
         snapshots: Vec<FateSnapshot>,
         work_units: u32,
+    },
+    /// `import_v3`: `facts` maps address to field to `{value, evidence}`;
+    /// `report` is the importer's difference report; `reconstructed` has one
+    /// record per known system when asked (summary plus the solved run).
+    V3Imported {
+        universe: String,
+        #[ts(type = "unknown")]
+        facts: serde_json::Value,
+        #[ts(type = "unknown")]
+        report: serde_json::Value,
+        #[ts(type = "unknown[]")]
+        reconstructed: Vec<serde_json::Value>,
+    },
+    /// `run_formation`: the pipeline's `SystemRun`, the F9 fit when pins were
+    /// given (`pinned`: attempt, seed, fit, matches, removed), and one S0
+    /// surface envelope per world in orbit order.
+    FormationRan {
+        system: String,
+        pipeline: String,
+        #[ts(type = "unknown")]
+        run: serde_json::Value,
+        #[serde(default, skip_serializing_if = "Option::is_none")]
+        #[ts(optional, type = "unknown")]
+        pinned: Option<serde_json::Value>,
+        #[ts(type = "unknown[]")]
+        surfaces: Vec<serde_json::Value>,
     },
     Error {
         code: String,
