@@ -9,6 +9,7 @@
 pub mod circulation;
 pub mod conditions;
 pub mod contract;
+pub mod formations;
 pub mod rules;
 pub mod scenario;
 pub mod settings;

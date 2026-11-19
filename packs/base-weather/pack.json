@@ -296,6 +296,88 @@
       "url": "https://webbook.nist.gov/cgi/cbook.cgi?ID=C7727379&Mask=4"
      }
     ]
+   },
+   "weather_formations": {
+    "t_contrast_k": 40.0,
+    "cyclones": {
+     "n_s": 0.012,
+     "eady_wavelengths": 3.9,
+     "life_days": 5.0,
+     "peak_wind_m_s": 25.0,
+     "winter_boost": 0.3,
+     "source": "Storm-track cyclones as baroclinic waves (Eady 1949; Chang, Lee and Swanson 2002): wavelength 3.9 N H / f; life, wind and winter boost are Earth-like stand-ins (docs/fudges.md)"
+    },
+    "tropical": {
+     "min_sst_k": 299.15,
+     "min_lat_deg": 5.0,
+     "per_year_earth": 80.0,
+     "earth_warm_fraction": 0.1,
+     "life_days": 7.0,
+     "peak_wind_m_s": 50.0,
+     "size_km": 600.0,
+     "source": "Genesis over sea above 26 °C and at least 5° from the equator (Emanuel 2003, after Palmén 1948); yearly count, life and size are Earth-like stand-ins (docs/fudges.md)"
+    },
+    "dust": {
+     "global_per_year": 0.33,
+     "season_phase": 0.69,
+     "regional_per_year": 6.0,
+     "optical_depth": 3.0,
+     "source": "Planet-encircling dust storms come in some years, in the southern spring and summer near perihelion (Zurek and Martin 1993); chance and depth are stand-ins (docs/fudges.md)"
+    },
+    "orography": {
+     "rain_per_m_s": 20.0,
+     "sample_km": 100.0,
+     "cap_cloud_m": 4000.0,
+     "source": "Rain from forced uplift on windward slopes and a rain shadow behind (Roe 2005); the uplift coefficient is a stand-in (docs/fudges.md)"
+    },
+    "lightning": {
+     "storms_per_1e4_km2": 0.5,
+     "land": [
+      3.44e-05,
+      4.9
+     ],
+     "ocean": [
+      0.00064,
+      1.73
+     ],
+     "source": "Flash rate from cloud-top height, continental and marine (Price and Rind 1992); storm density is a stand-in (docs/fudges.md)"
+    },
+    "marine_layer": 0.35,
+    "clear_visibility_km": 50.0,
+    "references": [
+     {
+      "text": "Eady, E. T. 1949, Long waves and cyclone waves, Tellus 1(3), 33-52",
+      "doi": "10.1111/j.2153-3490.1949.tb01265.x"
+     },
+     {
+      "text": "Chang, E. K. M., Lee, S. and Swanson, K. L. 2002, Storm track dynamics, J. Climate 15, 2163",
+      "doi": "10.1175/1520-0442(2002)015<02163:STD>2.0.CO;2"
+     },
+     {
+      "text": "Emanuel, K. 2003, Tropical cyclones, Annu. Rev. Earth Planet. Sci. 31, 75",
+      "doi": "10.1146/annurev.earth.31.100901.141259"
+     },
+     {
+      "text": "Zurek, R. W. and Martin, L. J. 1993, Interannual variability of planet-encircling dust storms on Mars, JGR 98(E2), 3247-3259",
+      "doi": "10.1029/92JE02936"
+     },
+     {
+      "text": "Roe, G. H. 2005, Orographic precipitation, Annu. Rev. Earth Planet. Sci. 33, 645",
+      "doi": "10.1146/annurev.earth.33.092203.122541"
+     },
+     {
+      "text": "Price, C. and Rind, D. 1992, A simple lightning parameterization for calculating global lightning distributions, JGR 97, 9919",
+      "doi": "10.1029/92JD00719"
+     },
+     {
+      "text": "Klein, S. A. and Hartmann, D. L. 1993, The seasonal cycle of low stratiform clouds, J. Climate 6, 1587",
+      "doi": "10.1175/1520-0442(1993)006<1587:TSCOLS>2.0.CO;2"
+     },
+     {
+      "text": "Webster, P. J. et al. 1998, Monsoons: processes, predictability, and the prospects for prediction, JGR 103, 14451",
+      "doi": "10.1029/97JC02719"
+     }
+    ]
    }
   }
  }

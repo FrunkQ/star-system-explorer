@@ -15,7 +15,7 @@ pub fn settings() -> WeatherSettings {
 }
 
 pub fn block() -> RuleBlock {
-    RuleBlock::new(settings())
+    RuleBlock::from_packs(&[base_weather_pack()]).expect("weather block")
 }
 
 #[derive(Deserialize)]
@@ -66,4 +66,26 @@ pub fn golden() -> serde_json::Value {
         })
         .collect();
     serde_json::json!({ "version": crate::WEATHER_VERSION, "block": b.id(), "worlds": rows })
+}
+
+/// Golden for W2: Earth's systems on two dates, a field tile and a report;
+/// identical on every device.
+pub fn storms_golden() -> serde_json::Value {
+    let b = block();
+    let e = fixture("Earth");
+    let dates = [Date { day: 100.0 }, Date { day: 250.5 }];
+    let sys: Vec<_> = dates
+        .iter()
+        .map(|d| {
+            let s = b.systems(&e, *d, &[]);
+            serde_json::json!({
+                "day": d.day, "count": s.len(),
+                "ids": s.iter().map(|x| x.id.clone()).collect::<Vec<_>>(), "digest": digest(&s),
+            })
+        })
+        .collect();
+    let key = TileKey::new(1, 2, 1, 1).expect("tile");
+    let tile = b.field(&e, dates[1], key, 8, &[]);
+    let r = b.report(&e, dates[1], 15.0, -60.0, &[], None);
+    serde_json::json!({ "systems": sys, "tile": digest(&tile), "report": r.lines })
 }

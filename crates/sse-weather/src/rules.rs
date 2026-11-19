@@ -6,6 +6,7 @@
 use crate::circulation::{self, Circulation};
 use crate::conditions::Conditions;
 use crate::contract::*;
+use crate::formations::{self, FormationSettings, Terrain};
 use crate::settings::WeatherSettings;
 use sse_core::math as m;
 use sse_surface::atlas::{direction, TileKey};
@@ -15,6 +16,7 @@ pub const BLOCK_VERSION: &str = "1";
 
 pub struct RuleBlock {
     pub settings: WeatherSettings,
+    pub formations: FormationSettings,
 }
 
 pub fn lat_lon(d: [f64; 3]) -> (f64, f64) {
@@ -67,8 +69,114 @@ pub struct Prepared {
 }
 
 impl RuleBlock {
-    pub fn new(settings: WeatherSettings) -> Self {
-        RuleBlock { settings }
+    pub fn new(settings: WeatherSettings, formations: FormationSettings) -> Self {
+        RuleBlock {
+            settings,
+            formations,
+        }
+    }
+
+    pub fn from_packs(stack: &[sse_pack::PackManifest]) -> Result<Self, String> {
+        Ok(RuleBlock::new(
+            WeatherSettings::from_packs(stack)?,
+            FormationSettings::from_packs(stack)?,
+        ))
+    }
+
+    /// Drawn systems, with pins honoured: a pinned system replaces the drawn
+    /// one of the same id and is kept for its recorded life.
+    pub fn systems_at(
+        &self,
+        c: &Conditions,
+        p: &Prepared,
+        date: Date,
+        pins: &[Pin],
+    ) -> Vec<WeatherSystem> {
+        let mut out: Vec<WeatherSystem> =
+            formations::systems(&self.formations, &self.settings, c, p, date)
+                .into_iter()
+                .filter(|s| !pins.iter().any(|q| q.id == s.id))
+                .collect();
+        for q in pins {
+            if q.system.born <= date.day && date.day < q.system.ends {
+                let mut s = q.system.clone();
+                s.evidence = "pinned".into();
+                out.push(s);
+            }
+        }
+        out.sort_by(|a, b| a.id.cmp(&b.id));
+        out
+    }
+
+    /// One cell with every formation and system at a place.
+    #[allow(clippy::too_many_arguments)]
+    pub fn cell_at(
+        &self,
+        c: &Conditions,
+        p: &Prepared,
+        date: Date,
+        systems: &[WeatherSystem],
+        terrain: Option<&dyn Terrain>,
+        lat: f64,
+        lon: f64,
+    ) -> Cell {
+        let mut cell = self.zonal_cell(c, p, lat, lon);
+        formations::imprint(
+            &self.formations,
+            &self.settings,
+            c,
+            p,
+            date,
+            systems,
+            terrain,
+            &mut cell,
+        );
+        cell
+    }
+
+    /// The field over a tile, reading the ground when it is known.
+    pub fn field_with(
+        &self,
+        c: &Conditions,
+        date: Date,
+        key: TileKey,
+        n: u32,
+        pins: &[Pin],
+        terrain: Option<&dyn Terrain>,
+    ) -> FieldTile {
+        let p = self.prepare(c, date);
+        let systems = self.systems_at(c, &p, date, pins);
+        let cells = cell_dirs(key, n)
+            .into_iter()
+            .map(|d| {
+                let (lat, lon) = lat_lon(d);
+                self.cell_at(c, &p, date, &systems, terrain, lat, lon)
+            })
+            .collect();
+        FieldTile { key, n, cells }
+    }
+
+    /// A plain weather report for one place and date.
+    pub fn report(
+        &self,
+        c: &Conditions,
+        date: Date,
+        lat: f64,
+        lon: f64,
+        pins: &[Pin],
+        terrain: Option<&dyn Terrain>,
+    ) -> Report {
+        let p = self.prepare(c, date);
+        let systems = self.systems_at(c, &p, date, pins);
+        let cell = self.cell_at(c, &p, date, &systems, terrain, lat, lon);
+        formations::report(
+            &self.formations,
+            &cell,
+            c,
+            &systems,
+            date.day,
+            self.provenance(),
+        )
     }
 
     pub fn prepare(&self, c: &Conditions, date: Date) -> Prepared {
@@ -107,7 +215,11 @@ impl RuleBlock {
         let mut layers: Vec<Layer> = (0..LAYERS.len()).map(|_| empty_layer()).collect();
         let wet = circulation::wetness(s, &p.circ, lat, p.itcz_deg) * p.wet_norm;
         let rel = wet / p.wet_peak.max(1e-9);
-        let u = circulation::zonal_wind(s, &p.circ, lat);
+        let u = if p.circ.regime == "airless" {
+            0.0
+        } else {
+            circulation::zonal_wind(s, &p.circ, lat)
+        };
         for (k, l) in layers.iter_mut().enumerate() {
             // Winds strengthen with height toward the jets.
             l.wind_m_s = [u * (1.0 + 1.5 * k as f64), 0.0];
@@ -175,7 +287,7 @@ impl RuleBlock {
     }
 }
 
-fn layer(cover: f64, kind: &str, cond: &str, tau: f64, old: &Layer) -> Layer {
+pub(crate) fn layer(cover: f64, kind: &str, cond: &str, tau: f64, old: &Layer) -> Layer {
     Layer {
         cloud_cover: cover.clamp(0.0, 1.0),
         cloud_type: kind.into(),
@@ -219,20 +331,13 @@ impl WeatherBlock for RuleBlock {
         circulation::climate(&self.settings, c)
     }
 
-    fn field(&self, c: &Conditions, date: Date, key: TileKey, n: u32, _pins: &[Pin]) -> FieldTile {
-        let p = self.prepare(c, date);
-        let cells = cell_dirs(key, n)
-            .into_iter()
-            .map(|d| {
-                let (lat, lon) = lat_lon(d);
-                self.zonal_cell(c, &p, lat, lon)
-            })
-            .collect();
-        FieldTile { key, n, cells }
+    fn field(&self, c: &Conditions, date: Date, key: TileKey, n: u32, pins: &[Pin]) -> FieldTile {
+        self.field_with(c, date, key, n, pins, None)
     }
 
-    fn systems(&self, _c: &Conditions, _date: Date, pins: &[Pin]) -> Vec<WeatherSystem> {
-        pins.iter().map(|p| p.system.clone()).collect()
+    fn systems(&self, c: &Conditions, date: Date, pins: &[Pin]) -> Vec<WeatherSystem> {
+        let p = self.prepare(c, date);
+        self.systems_at(c, &p, date, pins)
     }
 
     fn provenance(&self) -> Provenance {

@@ -1,4 +1,5 @@
 use crate::circulation::{circulation, condensation};
+use crate::contract::Pin;
 use crate::scenario::{block, fixture, fixtures, golden, settings};
 use crate::*;
 use sse_surface::atlas::TileKey;
@@ -173,4 +174,154 @@ fn every_reference_is_linked() {
 #[test]
 fn golden_weather() {
     check_golden("weather.json", &golden());
+}
+
+// ------------------------------------------------------------------ W2
+
+fn year_of_systems(c: &Conditions, days: i64) -> Vec<WeatherSystem> {
+    let b = block();
+    let mut seen = std::collections::BTreeMap::new();
+    for d in 0..days {
+        for s in b.systems(
+            c,
+            Date {
+                day: d as f64 + 0.5,
+            },
+            &[],
+        ) {
+            seen.entry(s.id.clone()).or_insert(s);
+        }
+    }
+    seen.into_values().collect()
+}
+
+#[test]
+fn earth_storms_fall_in_the_right_latitudes() {
+    let e = fixture("Earth");
+    let all = year_of_systems(&e, 365);
+    let tc: Vec<_> = all
+        .iter()
+        .filter(|s| s.kind == "tropical-cyclone")
+        .collect();
+    let cy: Vec<_> = all.iter().filter(|s| s.kind == "cyclone").collect();
+    assert!(
+        (40..140).contains(&tc.len()),
+        "tropical cyclones a year: {}",
+        tc.len()
+    );
+    assert!(tc.iter().all(|s| (5.0..35.0).contains(&s.lat_deg.abs())));
+    let mean = cy.iter().map(|s| s.lat_deg.abs()).sum::<f64>() / cy.len() as f64;
+    assert!((40.0..60.0).contains(&mean), "storm track mean {mean}");
+    assert!(cy.len() > 200);
+}
+
+#[test]
+fn no_tropical_cyclones_without_warm_ocean() {
+    let mut dry = fixture("Earth");
+    dry.liquid = None;
+    dry.ocean_fraction = 0.0;
+    let mut cold = fixture("Earth");
+    cold.t_surface_k = 265.0;
+    for c in [
+        dry,
+        cold,
+        fixture("Mars"),
+        fixture("Venus"),
+        fixture("Titan"),
+    ] {
+        let n = year_of_systems(&c, 200)
+            .iter()
+            .filter(|s| s.kind == "tropical-cyclone")
+            .count();
+        assert_eq!(n, 0, "{}", c.label);
+    }
+}
+
+#[test]
+fn a_storm_is_the_same_whichever_day_it_is_asked_from() {
+    let b = block();
+    let e = fixture("Earth");
+    let a = b.systems(&e, Date { day: 120.3 }, &[]);
+    let later = b.systems(&e, Date { day: 121.1 }, &[]);
+    let mut shared = 0;
+    for s in &a {
+        if let Some(t) = later.iter().find(|t| t.id == s.id) {
+            assert_eq!(s, t);
+            shared += 1;
+        }
+    }
+    assert!(shared > 3);
+}
+
+struct Ridge;
+impl crate::formations::Terrain for Ridge {
+    fn ground(&self, d: [f64; 3]) -> (f64, bool) {
+        let (_, lon) = crate::rules::lat_lon(d);
+        let h = 3000.0 * (1.0 - (lon.abs() / 4.0)).max(0.0);
+        (h, lon.abs() > 30.0)
+    }
+}
+
+#[test]
+fn mountains_bank_cloud_windward_and_dry_the_lee() {
+    let b = block();
+    let e = fixture("Earth");
+    let p = b.prepare(&e, Date { day: 10.0 });
+    // Westerlies at 45°: the west slope is windward.
+    let w = b.cell_at(&e, &p, Date { day: 10.0 }, &[], Some(&Ridge), 45.0, -2.0);
+    let l = b.cell_at(&e, &p, Date { day: 10.0 }, &[], Some(&Ridge), 45.0, 2.0);
+    assert!(
+        w.precip_mm_day > 2.0 * l.precip_mm_day,
+        "{} {}",
+        w.precip_mm_day,
+        l.precip_mm_day
+    );
+    assert!(w.layers[0].cloud_cover > l.layers[0].cloud_cover);
+}
+
+#[test]
+fn locked_worlds_cloud_the_day_side() {
+    let b = block();
+    let c = fixture("Locked temperate world");
+    let p = b.prepare(&c, Date { day: 1.0 });
+    let sys = b.systems_at(&c, &p, Date { day: 1.0 }, &[]);
+    assert!(sys.iter().any(|s| s.kind == "substellar-storm"));
+    let day = b.cell_at(&c, &p, Date { day: 1.0 }, &sys, None, 0.0, 0.0);
+    let night = b.cell_at(&c, &p, Date { day: 1.0 }, &sys, None, 0.0, 180.0);
+    assert!(day.layers[1].cloud_cover > 0.9 && night.layers[1].cloud_cover < 0.3);
+}
+
+#[test]
+fn pins_replace_drawn_systems_and_outlive_regeneration() {
+    let b = block();
+    let e = fixture("Earth");
+    let a = b.systems(&e, Date { day: 50.0 }, &[]);
+    let mut s = a.iter().find(|s| s.kind == "cyclone").unwrap().clone();
+    s.ends += 3.0;
+    let pin = Pin {
+        id: s.id.clone(),
+        name: "Storm Ada".into(),
+        system: s.clone(),
+    };
+    let got = b.systems(&e, Date { day: s.ends - 1.0 }, &[pin]);
+    let p = got
+        .iter()
+        .find(|x| x.id == s.id)
+        .expect("pinned storm alive");
+    assert_eq!(p.evidence, "pinned");
+    assert_eq!(got.iter().filter(|x| x.id == s.id).count(), 1);
+}
+
+#[test]
+fn reports_read_plainly() {
+    let r = block().report(&fixture("Earth"), Date { day: 200.0 }, 45.0, 0.0, &[], None);
+    assert!(r.lines[0].starts_with("Wind "));
+    assert!(r.lines.iter().any(|l| l.starts_with("Visibility")));
+    let m = block().report(&fixture("Moon"), Date { day: 200.0 }, 0.0, 0.0, &[], None);
+    assert_eq!(m.wind_km_h, 0.0);
+}
+
+#[test]
+fn golden_weather_storms() {
+    check_golden("weather-storms.json", &crate::scenario::storms_golden());
 }
