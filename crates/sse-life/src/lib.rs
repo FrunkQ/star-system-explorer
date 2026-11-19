@@ -14,6 +14,7 @@
 //! "no life model installed" everywhere.
 #![forbid(unsafe_code)]
 
+pub mod biosphere;
 pub mod budget;
 pub mod habitat;
 pub mod history;
@@ -224,6 +225,8 @@ pub trait LifeSuite {
     fn explain(&self, address: &Address, field: &str) -> String;
 }
 
+#[cfg(test)]
+mod biosphere_tests;
 #[cfg(test)]
 mod budget_tests;
 #[cfg(test)]

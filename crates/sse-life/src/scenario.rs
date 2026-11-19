@@ -292,3 +292,97 @@ pub fn history_golden() -> serde_json::Value {
     }
     serde_json::Value::Object(out)
 }
+
+/// Fixture physics for trait derivation (Williams, NASA planetary fact sheets).
+pub fn physics(name: &str) -> crate::biosphere::WorldPhysics {
+    let (g, air, day, tilt, locked) = match name {
+        "earth" | "earth-archean" => (9.81, Some(1.225), 24.0, 23.4, false),
+        "mars" => (3.71, Some(0.020), 24.6, 25.2, false),
+        "europa" => (1.315, None, 85.2, 0.1, true),
+        "titan" => (1.352, Some(5.4), 382.7, 0.3, true),
+        "venus" => (8.87, Some(65.0), 2802.0, 2.6, false),
+        _ => (9.81, Some(1.225), 24.0, 23.4, false),
+    };
+    crate::biosphere::WorldPhysics {
+        surface_gravity_m_s2: g,
+        air_density_kg_m3: air,
+        star_teff_k: 5772.0,
+        day_hours: day,
+        obliquity_deg: tilt,
+        tidally_locked: locked,
+    }
+}
+
+/// Every capability in the base pack (Earth today).
+pub fn all_capabilities() -> Vec<String> {
+    history_params()
+        .capabilities
+        .iter()
+        .map(|c| c.id.clone())
+        .collect()
+}
+
+/// Earth today and Archean Earth, resolved.
+pub fn biospheres() -> Vec<(String, crate::biosphere::Biosphere)> {
+    let bp = budget_params();
+    let hp = history_params();
+    let first: BTreeMap<String, f64> = [
+        ("chemotrophy", 700.0),
+        ("anoxygenic", 1100.0),
+        ("oxygenic", 1700.0),
+        ("complex_cells", 2800.0),
+        ("multicellularity", 3600.0),
+        ("large_bodies", 3990.0),
+        ("land", 4100.0),
+    ]
+    .iter()
+    .map(|(k, v)| (k.to_string(), *v))
+    .collect();
+    let today = crate::biosphere::resolve(
+        &graph("earth"),
+        &bp,
+        &hp,
+        &all_capabilities(),
+        &first,
+        Some(66.0),
+        &physics("earth"),
+        sse_core::Seed::from_text("earth"),
+        9_230_000_000 - 4_570_000_000,
+    )
+    .expect("earth biosphere");
+    let early_caps: Vec<String> = ["chemotrophy", "dormancy", "anoxygenic"]
+        .iter()
+        .map(|s| s.to_string())
+        .collect();
+    let early = crate::biosphere::resolve(
+        &earth_with(&[("fe2_mol_yr", 1.0e15), ("h2_mol_yr", 3.0e11)]),
+        &bp,
+        &hp,
+        &early_caps,
+        &first,
+        None,
+        &physics("earth-archean"),
+        sse_core::Seed::from_text("earth"),
+        9_230_000_000 - 4_570_000_000,
+    )
+    .expect("archean biosphere");
+    vec![("earth".into(), today), ("earth-archean".into(), early)]
+}
+
+/// L1c golden: guilds, shares and traits of both biospheres.
+pub fn biosphere_golden() -> serde_json::Value {
+    let mut out = serde_json::Map::new();
+    for (n, b) in biospheres() {
+        out.insert(
+            n,
+            serde_json::json!({
+                "guilds": b.guilds.iter().map(|g| serde_json::json!([g.id, g.share, g.intake_gc_yr, g.plain_name])).collect::<Vec<_>>(),
+                "traits": b.traits,
+                "diversity": b.diversity,
+                "relations": b.resolved.relations.len(),
+                "hash": sse_core::ContentHash::of(&b).expect("hash").hex(),
+            }),
+        );
+    }
+    serde_json::Value::Object(out)
+}
