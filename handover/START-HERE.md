@@ -48,6 +48,7 @@ Milestone M1 "Proven core" = packages K0 to K6 (build plan section 3/4).
 | S3 wearing down: rivers, lakes, sediment, sea level, hillslopes, worn atlas with flow layer | done | packages/S3.md |
 | S4 impacts and volcanism: chronology and spikes, survival by renewal, crater shapes, lava plains, shields, tiles to the fact floor, "why is this here" | done | packages/S4.md |
 | S6 other regimes: ice-shell ridges, bands and chaos; heat-pipe paterae and mountains; coronae, chasmata and overturns; contraction scarps and rifts; Titan's dunes and lakes; tar seas; giant cloud decks | done | packages/S6.md |
+| S7 cover, named features, built layer, aerostats, GM reshape: climate by latitude and height, wind cells and rain shadow, ice, deposits, colour; feature register with dated, per-audience renames and sifters; built-layer rules; aerostat band from the air profile; dated GM edits tagged when impossible, height pins honoured | done; served by `survey_surface` | packages/S7.md, packages/K-physics-ops.md |
 | Kernel ops `import_v3`, `run_formation` and `read_world_stack` (V3 import with report; one system through the pipeline with pins and surfaces; a body's world stack with ladder and physics notes) | done (physics track, for the UI) | packages/K-physics-ops.md |
 | K7 envelopes, partitioning, resolve, feasibility | done (kernel track) | packages/K7.md |
 | K8 rules, classification, sifters, significance | done (kernel track) | packages/K8.md |
@@ -71,7 +72,13 @@ Milestone M1 "Proven core" = packages K0 to K6 (build plan section 3/4).
 | V6 System 3D (frames, camera-relative rule, pixel-stability test, GPU and Canvas tiers) | System 3D, Cutaway (from the kernel's world stacks) and Body globe (from S1 surface tiles) done; finer tiles and a GPU tier next | packages/V6.md |
 | V14 Size comparison (Sizes screen: true-scale lineup from this system, the campaign and reference objects; Measure on the chart) | done (UI track) | packages/V14.md |
 | U7 biosphere view and life timeline (Life screen: epochs, food web, scan tiers, hooks, traits, dials, in three lenses; example worlds until chart worlds carry habitats) | part 1 done (UI track); LifeFlow board next | packages/U7.md |
+| V8 Route, the astrogation console (part 1: GM Route screen on plan_route; courses compared, the chosen one charted in the star's frame) | part 1 and 2a (Window, on the new `window_view` op) done (second UI track); next: course requests, player console, drift | packages/V8.md |
+| U6 galaxy and patch charts (part 1: Galaxy under the Explore tab, from the new `galaxy_chart` op; also `web_slice` for V9) | part 1 and 2a (inked history preview) done (second UI track); part 2b: patch survey, find a home, save inked history | packages/U6.md |
+| V9 map views (part 1: the Cosmic web foam under Explore, from `web_slice`, with time scrub and Play) | part 1 done (second UI track); cluster map next | packages/V9.md |
+| U8 story finder (part 1: Stories under Explore, on the new `sift` op; starter sifters as data, hits with evidence, the GM's own sifter, a brief for a storyteller) | part 1 done (second UI track); Minerva and rarity next | packages/U8.md |
 | U10 browser campaign save: kept in this browser after every change, Save, Open and Start fresh, players join a reopened campaign | done (UI track) | packages/U10.md |
+| U11 human-scale time: one zooming ruler from Gyr to hours, a campaign "now", step and play, Make this now, calendars | part 1 done (UI track); orbits by date, campaign now in the chronicle and pack calendars wait on the kernel | packages/U11.md |
+| U12 tactility (dynamic minimalism, `handover/interface-style.md`): motion tokens, hover peek, cards and dialogs open from what opened them, ruler glide, reduced motion honoured | part 1 done (UI track) | packages/U12.md |
 | U9 lenses: Basic, Advanced, Building, Running, every player data view as a lens, make your own, lens packs | done | packages/U9.md |
 | N1 sound engine: sound scenes, recipes, mixer, tiers, off by default, captions, orbit bed | done | packages/N1.md |
 | O1 light switch (UI side): Eye, Camera, SHO and HOO palettes, single bands, legend chip and honesty label, stubbed spectra marked | UI done on stubbed light; real light facts wait on the kernel | packages/O1-ui.md |
@@ -104,15 +111,17 @@ Milestone M1 "Proven core" = packages K0 to K6 (build plan section 3/4).
 | C3 reverse placement in a system | done (kernel track) | packages/C3.md |
 | T1 epoch stepping, ageing star, secular orbits, symplectic windows | done (kernel track); giant phase sketch awaits F7 | packages/T1.md |
 | T2 look-ahead branch, commit, age the Solar System | done (kernel track); with Alex for review | packages/T2.md |
+| S5 descent scene: entry heating, lift, parachutes, powered descent and touchdown; site slope, roughness and liquid from the height map; hazards in one shape; kernel op `plan_descent` | done | packages/S5.md |
+| T3 NAV: candidate courses (Hohmann, Lambert grid, torch) with burns, fuel and reserve, dose, heat, grazes, belts, debris, delays and difficulty with reasons; a drifting ship's fate and ways out; kernel op `plan_route` | done | packages/T3.md |
 | R1 pass library, render recipes, degrade order, governor, quality badge (the Body globe runs on recipes: GPU, canvas, words) | done (renderer track) | packages/R1.md |
 
 ## Parallel tracks (18 Nov, Alex: build in parallel, integrate later)
 | Track | Packages | Branch |
 |---|---|---|
-| Physics | P1, P3, P4, F0 to F6 done; pipeline, F7, F9, S0 to S4 and S6 done; F8 waits on G6; next S7 (cover, named features, built layer) | `main` via PRs |
+| Physics | P1, P3, P4, F0 to F6 done; pipeline, F7, F9, S0 to S4, S6 and S7 done, served by the `survey_surface` op; T3 NAV done (`sse-nav`, `plan_route`); S5 done (`plan_descent`); F8 next (G6 is in), S8 on G7; next B1 one body (handover/design/SSE4-star-census.md), then weather W1 to W3 and W5, then S8 or S9 | `main` via PRs |
 | Kernel | K7 to K10, G0 to G6, C1 to C3, L0, L1a to L1d, L2, J1 to J4, T1, T2 (also through the API), the U3 gaps, the V10 grant gaps and the UI asks (`adopt`, look-ahead write-back, `resolved_system`; K6-additions.md) done; next G7 | `main` via PRs |
-| Renderer (R1 to R4, then exotic objects in bands) | R1 done; next R2 (Body and descent views, gpu-high, atmosphere, clouds, magnetic field overlay) | `main` via PRs |
-| Chart room shell and player views | U0 to U3, V1, U5, V2, V12, V3, V11, V4, V5, planet chart, V10, V6 System 3D, U9 lenses, N1 sound, U4 (what-if and look-ahead), A1 part 1, O1 light switch (UI), V13 parts 1 and 2 (import and grow, add to the campaign, read back and age with write-back), V6 Cutaway and Body globe (Body screen), phone screen menu, V14 size comparison and chart measuring, U10 browser campaign save, U7 biosphere view part 1 done; next V7, U7 part 2 (LifeFlow) | `main` via PRs |
+| Renderer (R1 to R4, then exotic objects in bands) | R1, R2a (air from kernel facts, physical lighting, True colour) and R3 (still tier, "Take photograph") done; next R2b clouds and haze from the weather op, R2c magnetic field overlay, R4 Orac recipe editing | `main` via PRs |
+| Chart room shell and player views | U0 to U3, V1, U5, V2, V12, V3, V11, V4, V5, planet chart, V10, V6 System 3D, U9 lenses, N1 sound, U4 (what-if and look-ahead), A1 part 1, O1 light switch (UI), V13 parts 1 and 2 (import and grow, add to the campaign, read back and age with write-back), V6 Cutaway and Body globe (Body screen), phone screen menu, V14 size comparison and chart measuring, U10 browser campaign save, U7 biosphere view part 1, U11 human-scale time part 1, U12 tactility part 1 done; next U11 part 2 (orbits by date) when the kernel's orbits_at lands, V7, U7 part 2 (LifeFlow) | `main` via PRs |
 
 **Since 19 Nov (Alex): `main` is the default branch.** New work branches from `main` and arrives as a pull request
 into `main`; its checks pass before merge. The old track branches are kept, not deleted.

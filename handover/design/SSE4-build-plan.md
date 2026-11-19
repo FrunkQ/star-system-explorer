@@ -119,7 +119,7 @@ Tracks can run in parallel once their dependencies are met. `needs` lists packag
 
 ### C: classification. Stages C1 to C5 exactly as `SSE4-classification-design.md` section 12, one package each. C1 needs K5 and P1; C3 needs K8 and L0; C4 needs U3 and A2; C5 needs G5. The Traveller pack's codes (X3a) are schemes in this machinery, so X3a needs C1 and X3b needs C3.
 
-### O: light and nebulae. Stages O1 to O11 exactly as `SSE4-nebulae-and-light-design.md` section 8, one package each. Light stays a spectrum until a per-view band recipe; nebulae are objects with causes and lifetimes.
+### O: light and nebulae. Stages O1 to O15 exactly as `SSE4-nebulae-and-light-design.md` section 8, one package each. Light stays a spectrum until a per-view band recipe; nebulae are objects with causes and lifetimes.
 
 ### W: weather. Stages W1 to W6 exactly as `SSE4-weather-design.md` section 8, one package each. Rule-based, deterministic, behind a contract so a simulation block can replace it without breaking saves.
 
@@ -159,13 +159,13 @@ Tracks can run in parallel once their dependencies are met. `needs` lists packag
 | M3 Open physics | K5, U3, K8, X3 (generic pack), C3, C4, F3 to F5, F9, F10 | change physics in the flow editor; stack packs |
 | M4 Players | K9, V1 to V6, U5, U9, X1 | run a session with themed player screens and the Scanned button |
 | M4b Sound | N1 to N3 | turn sound on, hear a system's background tones change from world to world, hear the astrogation console |
-| M5 Time and travel | T1 to T3, U4, V8, U8, A1 to A4, F7, O10 (after O1, O2) | age the Solar System; plot courses; agents on his own key |
+| M5 Time and travel | T1 to T3, U4, V8, U8, A1 to A4, F7, O10 (after O1, O2), O12 to O14 | age the Solar System; plot courses; agents on his own key |
 | M5c Living campaign | J1 to J7, J9 | jot a note on a statue and find it on the timeline; track factions and what they think of the party; set a mining drone's autopilot and look ahead to see what it does |
 | M5d Turns (later) | J8 | run a week of downtime or a turn-based game with sealed orders |
 | M5b Traveller table | X3a to X3d, V12, O9 (after O1, O2, O8) | import a subsector from Travellermap onto a hex map, open any world as a full system with its impossible values marked, plan a jump with real jump shadows, hand players a UWP sheet |
 | M6 Living worlds | K10, L0 to L1d, U7 | open any world's biosphere and history |
 | M6b Surfaces | S0 to S7, R1 to R4, V11, N4, N5, W1 to W3, W5, O1, O2 | chart a world's terrain, ask why a range is there, watch continents drift, land on it in several styles |
-| M7 Galaxy | K7, G1 to G6, U6, V9, C5, F8, N6, N7, O3 to O8, O11 | chart a galaxy, ink a merger, find a home, survey a patch |
+| M7 Galaxy | K7, G1 to G6, U6, V9, C5, F8, N6, N7, O3 to O8, O11, O15 | chart a galaxy, ink a merger, find a home, survey a patch |
 | M6c Ground detail (later) | S9 to S13, W4, W6 | watch a layered canyon cut over millions of years; find a sea arch on approach; walk through alien forest; place landmarks and ruins; chart a country with borders and roads |
 | M8 Whole universe | G7, G8, V7, L2, L2b, S8, T4, X2, X3, X5 | real Milky Way skies; coupled living planets; share on the explorers site |
 
