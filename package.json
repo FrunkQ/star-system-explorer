@@ -31,7 +31,7 @@
     "ui:test": "node --test packages/ui-contract/test/*.test.ts packages/skins/chart-room/test/*.test.ts packages/skins/player/test/*.test.ts packages/chart-grammar/test/*.test.ts tests/ui/*.test.ts",
     "ui:check": "svelte-check --workspace packages/shell --tsconfig ./tsconfig.json --fail-on-warnings",
     "ui:build": "scripts/build-shell.sh",
-    "ui:e2e": "node tests/ui/shell.e2e.mjs && node tests/ui/players.e2e.mjs && node tests/ui/setup.e2e.mjs && node tests/ui/themes.e2e.mjs && node tests/ui/symbols.e2e.mjs && node tests/ui/styles.e2e.mjs",
+    "ui:e2e": "node tests/ui/shell.e2e.mjs && node tests/ui/players.e2e.mjs && node tests/ui/setup.e2e.mjs && node tests/ui/themes.e2e.mjs && node tests/ui/symbols.e2e.mjs && node tests/ui/styles.e2e.mjs && node tests/ui/p2p.e2e.mjs",
     "shell": "scripts/build-shell.sh && node scripts/serve.mjs packages/shell/dist 8081",
     "build:client": "scripts/build-wasm.sh && tsc -p packages/kernel-client"
   },

@@ -4,8 +4,9 @@
   kernel only through the session, the same client API a player app uses.
 -->
 <script lang="ts">
-  import { applyEdits, enterFacts, type AuthoredFacts, checkScreen, deriveScene, gmSeat, redoEdit, subjectOf, undoEdit, type CheckedScreen, type DerivationDoc, type ScreenDoc, type SystemScene, type ViewHandle, type ViewModule, type ViewSession } from "../../ui-contract/src/index.ts";
+  import { applyEdits, enterFacts, observeOf, type AuthoredFacts, checkScreen, deriveScene, gmSeat, redoEdit, subjectOf, undoEdit, type CheckedScreen, type DerivationDoc, type ScreenDoc, type SystemScene, type ViewHandle, type ViewModule, type ViewSession } from "../../ui-contract/src/index.ts";
   import { openBrowserSession } from "../../ui-contract/src/host-browser.ts";
+  import { createShare, type Share } from "./share.svelte.ts";
   import { themeCss, THEMES } from "../../skins/chart-room/src/index.ts";
   import { ALL_THEMES } from "../../skins/player/src/index.ts";
   import { Segmented, ToolButton, formatYears } from "../../chart-grammar/src/index.ts";
@@ -67,9 +68,13 @@
     return Promise.all(stackDoc.packs.map(async (p) => (await fetch(new URL(p, document.baseURI))).json()));
   }
 
+  // Sharing with players (V4): recording starts as the campaign opens, before any fact is entered.
+  let share = $state<Share | null>(null);
+  let opened: unknown[] = [];
   loadPacks()
-    .then((packs) => openBrowserSession({ base: document.baseURI, seat: gmSeat(), universe: base.universe, packs }))
+    .then((packs) => ((opened = packs), openBrowserSession({ base: document.baseURI, seat: gmSeat(), universe: base.universe, packs })))
     .then(async (s) => {
+      share = await createShare(s, { universe: base.universe, packs: opened, clock_yr: ws.now_yr, views: () => observeOf(s.stack().base)?.setup.views.map((v) => v.id) ?? [] });
       // The player-facing facts the GM has recorded, entered when the campaign opens.
       const bad = await enterFacts(s, factsDoc as unknown as AuthoredFacts);
       if (bad) throw new Error(`recorded facts refused: ${JSON.stringify(bad)}`);
@@ -78,6 +83,12 @@
       status = { kernel: await s.kernelVersion(), tier: s.device()?.tier ?? "unmeasured", hash: await s.stateHash(), stack: s.stack().hash, campaign: false };
     })
     .catch((e) => (failure = String(e)));
+
+  // The session clock travels to players with the GM's time ruler.
+  $effect(() => {
+    const yr = ws.now_yr;
+    if (share?.state.link) share.setClock(yr);
+  });
 
   // Scenes come from the kernel's derivations over the authored values; any
   // edit or a move of the ruler re-derives (K9 moves this into the kernel).
@@ -244,6 +255,16 @@
       <span title="Measured capability tier of this device">tier {status.tier}</span>
       <span title="State hash: {status.hash}" data-state-hash={status.hash}>state {status.hash.slice(0, 10)}</span>
       <span title="Pack stack hash: {status.stack}" data-stack-hash={status.stack}>physics {status.campaign ? "campaign" : "base"} {status.stack.slice(0, 8)}</span>
+      {#if share}
+        <span class="share" aria-label="Players">
+          {#if share.state.link}
+            <a href={share.state.link} target="_blank" rel="noopener" data-players-link={share.state.link}>players' screen</a>
+            <span data-players={share.state.players}>{share.state.players} {share.state.players === 1 ? "screen" : "screens"} · {share.state.seq} events</span>
+          {:else}
+            <button type="button" class="linkbtn" onclick={() => window.open(share!.start(), "_blank", "noopener")}>Share with players</button>
+          {/if}
+        </span>
+      {/if}
     </div>
   {/if}
 </div>
@@ -358,6 +379,22 @@
   .area-ruler {
     border-top: var(--sse-line) solid var(--sse-ink);
     min-width: 0;
+  }
+  .share {
+    margin-left: auto;
+    display: inline-flex;
+    gap: 10px;
+    align-items: center;
+  }
+  .share a,
+  .linkbtn {
+    color: var(--sse-accent);
+    font: inherit;
+    background: none;
+    border: 0;
+    padding: 0;
+    cursor: pointer;
+    text-decoration: underline;
   }
   .status {
     display: flex;

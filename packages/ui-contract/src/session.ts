@@ -135,12 +135,27 @@ export type TrialResult<T> = { ok: true; stack_hash: string; result: T } | { ok:
 
 type Raw = { type: string; [k: string]: unknown };
 
+/**
+ * Peer-to-peer hooks (V4), for p2p.ts only: not exported from the package
+ * index, so views and shells cannot reach them. APPLIED watches every intent
+ * the session applies (the GM's chronicle as it happens); REPLAY applies an
+ * intent the GM already applied, whatever this seat may send (a player's
+ * replica follows the single writer); GRANT_VIEWS names the data views the GM
+ * lets this seat's screens look through.
+ */
+export const APPLIED = Symbol("sse.session.applied");
+export const REPLAY = Symbol("sse.session.replay");
+export const GRANT_VIEWS = Symbol("sse.session.grant-views");
+export type AppliedListener = (intent: Intent, result: Extract<IntentResult, { status: "applied" }>) => void;
+
 export class Session implements ViewSession {
   readonly #client: KernelClient;
   /** A second kernel with no universe open, for trials: loading a candidate stack there chronicles nothing. */
   readonly #scratch: (() => KernelClient) | undefined;
   #scratchClient: KernelClient | undefined;
   readonly #pending: Intent[] = [];
+  readonly #listeners: AppliedListener[] = [];
+  #grantedViews: readonly string[] = [];
   #flows: string[] = [];
   #opening: PackDoc[] = [];
   #added: PackDoc[] = [];
@@ -237,7 +252,8 @@ export class Session implements ViewSession {
   async scene(scope: string, opts: SceneOptions = {}) {
     const own = audienceOf(this.seat);
     const audience = opts.audience ?? own;
-    if (this.seat.authority !== "gm" && (audience !== own || opts.data_view !== undefined || opts.observe !== undefined)) {
+    const viewOk = opts.data_view === undefined || this.#grantedViews.includes(opts.data_view);
+    if (this.seat.authority !== "gm" && (audience !== own || !viewOk || opts.observe !== undefined)) {
       return { ok: false as const, message: `seat ${this.seat.label} sees only its own audience` };
     }
     const at_s = opts.at_yr === undefined ? 9_223_372_036_854_775_807n : yearsToSeconds(opts.at_yr);
@@ -258,6 +274,25 @@ export class Session implements ViewSession {
     return { ok: false as const, message: String(r.message ?? JSON.stringify(r)) };
   }
 
+  [APPLIED](listener: AppliedListener): () => void {
+    this.#listeners.push(listener);
+    return () => {
+      const i = this.#listeners.indexOf(listener);
+      if (i >= 0) this.#listeners.splice(i, 1);
+    };
+  }
+
+  [GRANT_VIEWS](views: readonly string[]): void {
+    this.#grantedViews = [...views];
+  }
+
+  /** Apply an intent the GM already applied (no seat check). */
+  [REPLAY](intent: Intent): Promise<IntentResult> {
+    const bad = checkIntent(intent);
+    if (bad) return Promise.resolve({ status: "refused", reason: bad });
+    return this.#apply(intent);
+  }
+
   async send(intent: Intent): Promise<IntentResult> {
     const bad = checkIntent(intent);
     if (bad) return { status: "refused", reason: bad };
@@ -267,6 +302,16 @@ export class Session implements ViewSession {
       this.#pending.push(intent);
       return { status: "pending", intent };
     }
+    return this.#apply(intent);
+  }
+
+  async #apply(intent: Intent): Promise<IntentResult> {
+    const r = await this.#applyRaw(intent);
+    if (r.status === "applied") for (const l of [...this.#listeners]) l(intent, r);
+    return r;
+  }
+
+  async #applyRaw(intent: Intent): Promise<IntentResult> {
     const r = await this.#call(intentToRequest(intent, { opening: this.#opening, added: this.#added, campaign: this.#campaign }));
     if (intent.kind === "adopt_physics" || intent.kind === "stack_packs") {
       if (r.type !== "stack_loaded") return { status: "refused", reason: String(r.report ?? r.message ?? JSON.stringify(r)) };

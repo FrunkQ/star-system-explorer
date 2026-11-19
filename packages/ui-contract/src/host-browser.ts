@@ -5,9 +5,8 @@
 import { KernelClient, browserPort } from "../../kernel-client/src/index.ts";
 import { Session } from "./session.ts";
 import type { Seat } from "./seat.ts";
-import type { ViewSession } from "./session.ts";
 
-export async function openBrowserSession(opts: { base: string; seat: Seat; universe: { id: string; seed: string }; packs?: unknown[] }): Promise<ViewSession> {
+export async function openBrowserSession(opts: { base: string; seat: Seat; universe: { id: string; seed: string }; packs?: unknown[] }): Promise<Session> {
   const kernel = () => {
     const worker = new Worker(new URL("kernel/worker.js", opts.base), { type: "module" });
     return new KernelClient(browserPort(worker), { jsUrl: new URL("kernel/sse_wasm.js", opts.base).href });

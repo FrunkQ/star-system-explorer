@@ -4,13 +4,17 @@
   the screens runtime (V3). The document is loaded when the page opens:
   `?screen=<file>` names one in documents/, `?screen=composed` takes the one
   the composer handed over on this device, and the Bridge is the default.
-  With no network yet (V4), the page hosts its own kernel with the campaign's
-  stack and recorded facts, and its Scanned control stands in for the GM's
-  button: it taps Scanned for the body in focus.
+  Joined to a GM (`?join=<room>`, V4) the page runs its own kernel for the
+  table's seat, replays the GM's events and stays in step by state hash; when
+  the GM goes quiet it shows the last state read-only under a banner. Opened
+  on its own, the page hosts a local kernel with the campaign's stack and
+  recorded facts, and its Scanned control stands in for the GM's button.
 -->
 <script lang="ts">
   import { checkPlayerScene, checkScreen, enterFacts, gmSeat, markerFor, observeOf, playerSubjectOf, subjectName, type AuthoredFacts, type CheckedScreen, type PlayerScene, type ScreenDoc, type Vocab, type ViewSession } from "../../ui-contract/src/index.ts";
   import { openBrowserSession } from "../../ui-contract/src/host-browser.ts";
+  import { PlayerReplica, broadcastHub, tableSeat, type ReplicaStatus } from "../../ui-contract/src/index.ts";
+  import { APP_VERSION } from "./share.svelte.ts";
   import { focusOf } from "../../views/player-stack/src/pick.ts";
   import stackDoc from "./documents/stack.json";
   import factsDoc from "./documents/kestrel.player-facts.json";
@@ -56,19 +60,53 @@
     scene = r.scene;
     sceneHash = r.hash;
   }
-  Promise.all(stackDoc.packs.map(async (p) => (await fetch(new URL(p, document.baseURI))).json()))
-    .then((packs) => openBrowserSession({ base: document.baseURI, seat: gmSeat(), universe: facts.universe, packs }))
-    .then(async (s) => {
-      const bad = await enterFacts(s, facts);
-      if (bad) throw new Error(`recorded facts refused: ${JSON.stringify(bad)}`);
+  async function useScreen(s: ViewSession) {
+    const doc = await loadScreen();
+    const views = observeOf(s.stack().base)?.setup.views.map((v) => v.id);
+    checked = checkScreen(doc, PLAYER_STACK, views, { registry: allStyles(), tier: s.device()?.tier ?? "standard" });
+    screenDoc = doc;
+  }
+
+  // Joined to a game master's room, or standing alone.
+  const room = new URLSearchParams(location.search).get("join");
+  const joined = room !== null && /^[a-z0-9]{4,40}$/.test(room);
+  let link = $state<ReplicaStatus>({ state: "joining" });
+  let stateHash = $state("");
+  if (joined) {
+    const id = `player-${Math.random().toString(36).slice(2, 10)}`;
+    const replica = new PlayerReplica(
+      broadcastHub(room!, id),
+      (m) => openBrowserSession({ base: document.baseURI, seat: tableSeat(), universe: m.universe, packs: m.packs }),
+      { kernel: "", app: APP_VERSION, now: () => performance.now() },
+    );
+    replica.onStatus = (st) => {
+      link = st;
+      if (st.state === "live" || st.state === "offline") stateHash = st.state_hash;
+    };
+    replica.onSession = (s) => {
       session = s;
-      const doc = await loadScreen();
-      const views = observeOf(s.stack().base)?.setup.views.map((v) => v.id);
-      checked = checkScreen(doc, PLAYER_STACK, views, { registry: allStyles(), tier: s.device()?.tier ?? "standard" });
-      screenDoc = doc;
-      await refresh();
-    })
-    .catch((e) => (sceneErrors = [String(e)]));
+      void useScreen(s).then(refresh).catch((e) => (sceneErrors = [String(e)]));
+    };
+    replica.onUpdate = () => {
+      if (session && screenDoc) void refresh();
+    };
+    replica.join();
+    // Ask again until the GM answers (the GM's page may open after this one).
+    const ask = setInterval(() => (link.state === "joining" ? replica.join() : clearInterval(ask)), 1500);
+    setInterval(() => replica.tick(), 1000);
+  } else {
+    Promise.all(stackDoc.packs.map(async (p) => (await fetch(new URL(p, document.baseURI))).json()))
+      .then((packs) => openBrowserSession({ base: document.baseURI, seat: gmSeat(), universe: facts.universe, packs }))
+      .then(async (s) => {
+        const bad = await enterFacts(s, facts);
+        if (bad) throw new Error(`recorded facts refused: ${JSON.stringify(bad)}`);
+        session = s;
+        await useScreen(s);
+        await refresh();
+        stateHash = await s.stateHash();
+      })
+      .catch((e) => (sceneErrors = [String(e)]));
+  }
 
   let selection = $state<string | null>(null);
   // The Scanned control acts on the body in focus; the kernel says which view each tap left in force.
@@ -119,7 +157,7 @@
     <h1>{star ? subjectName(star) : "System"}</h1>
     <span class="kicker">{screenDoc?.label ?? "…"}{screenDoc?.data_view ? ` · seen through ${screenDoc.data_view}` : ""} · audience {scene?.audience ?? "…"}</span>
     <span class="spacer"></span>
-    {#if !screenDoc?.data_view}
+    {#if !screenDoc?.data_view && !joined}
     <Segmented
       label="Sensor data"
       value={which}
@@ -137,6 +175,14 @@
       <select bind:value={symbology}>{#each SHIPPED as d (d.id)}<option value={d.id}>{d.name}</option>{/each}</select>
     </label>
     {#if themeDoc.filters?.length}<label class="pick"><input type="checkbox" bind:checked={effects} /> Screen effects</label>{/if}
+    {#if joined && link.state !== "live"}
+      <div class="banner" role="status" aria-label="Game master" data-link={link.state}>
+        {#if link.state === "joining"}Joining the game master…
+        {:else if link.state === "resync"}Catching up with the game master ({link.reason})…
+        {:else if link.state === "offline"}<strong>The game master is away.</strong> This is the last state they shared, read only. It updates when they are back.
+        {:else if link.state === "reload"}<strong>{link.reason}</strong> <button type="button" onclick={() => location.reload()}>Reload</button>{/if}
+      </div>
+    {/if}
   </header>
   {#if (checked && !checked.ok) || sceneErrors.length}
     <main class="problem" role="alert"><h2>This screen cannot be shown</h2><ul>{#each [...(checked && !checked.ok ? checked.errors : []), ...sceneErrors] as e (e)}<li>{e}</li>{/each}</ul></main>
@@ -147,7 +193,7 @@
       <main class="grid"><ScreenRuntime screen={checked.screen} {scene} {vocab} {mark} bind:selection /></main>
     {/key}
   {/if}
-  <footer class="status">Scene: live from the kernel for the {AUDIENCE} audience{sceneHash ? ` · scene ${sceneHash.slice(0, 10)}` : ""} {screenDoc?.data_view ? ` · fixed to the ${screenDoc.data_view} view by the screen document` : ` · the Scanned control stands in for the GM's button and taps it for ${target ? subjectName(target) : "the body in focus"}`}</footer>
+  <footer class="status" data-state-hash={stateHash} data-link={joined ? link.state : "local"}>Scene: live from {joined ? "this screen's kernel, in step with the game master" : "the kernel"} for the {AUDIENCE} audience{sceneHash ? ` · scene ${sceneHash.slice(0, 10)}` : ""}{stateHash ? ` · state ${stateHash.slice(0, 10)}` : ""} {joined ? "" : screenDoc?.data_view ? ` · fixed to the ${screenDoc.data_view} view by the screen document` : ` · the Scanned control stands in for the GM's button and taps it for ${target ? subjectName(target) : "the body in focus"}`}</footer>
 </div>
 <FilterChain {layers} />
 
@@ -189,6 +235,20 @@
   }
   .spacer {
     flex: 1;
+  }
+  .banner {
+    flex-basis: 100%;
+    padding: 8px 12px;
+    border: var(--sse-line) solid var(--sse-ink);
+    border-left-width: 4px;
+    border-radius: var(--sse-radius);
+    background: var(--sse-ground-raised);
+    font-size: 14px;
+  }
+  .banner button {
+    margin-left: 8px;
+    min-height: 32px;
+    font: inherit;
   }
   .pick {
     display: flex;

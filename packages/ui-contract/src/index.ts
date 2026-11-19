@@ -33,3 +33,7 @@ export { observeOf, checkSetup, playerDataPack, setupChanges, applySetup, enterF
 export type { DataView, ObserveSetup, Override, TagMode, UnknownStyle, AuthoredFacts } from "./data-views.ts";
 export { showReference } from "./reference.ts";
 export type { ReferenceIn, ShownReference } from "./reference.ts";
+export { GmHost, PlayerReplica, memoryRoom, broadcastHub, P2P_PROTOCOL } from "./p2p.ts";
+export type { Hub, Wire, Manifest, LogEntry, HostState, ReplicaStatus } from "./p2p.ts";
+// The session class as a type only (shells hold the one host-browser.ts opened; they cannot make one).
+export type { Session } from "./session.ts";
