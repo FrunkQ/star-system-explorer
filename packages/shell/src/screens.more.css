@@ -1,0 +1,23 @@
+/* Layouts for this track's screens, keyed on the stage's data-screen (kept out of App.svelte). */
+.stage.stage[data-screen="route"] .area-chart.area-chart {
+  inset: 24px 24px 24px 96px;
+  overflow: auto;
+}
+.stage.stage[data-screen="route"] .area-chart.area-chart .fill.fill {
+  height: auto;
+  min-height: 100%;
+  padding: 0 0 24px;
+}
+.stage.stage[data-screen="route"] .area-card.area-card {
+  display: none;
+}
+@media (max-width: 760px) {
+  .stage.stage[data-screen="route"] .area-chart.area-chart {
+    inset: auto;
+    height: auto;
+    padding: 12px 16px;
+  }
+  .stage.stage[data-screen="route"] .area-chart.area-chart .fill.fill {
+    position: relative;
+  }
+}
