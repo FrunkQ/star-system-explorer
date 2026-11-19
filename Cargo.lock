@@ -604,6 +604,7 @@ dependencies = [
  "sse-life",
  "sse-light",
  "sse-logic",
+ "sse-nav",
  "sse-nebula",
  "sse-observe",
  "sse-pack",
@@ -655,6 +656,16 @@ dependencies = [
  "sse-life",
  "sse-place",
  "sse-sift",
+]
+
+[[package]]
+name = "sse-nav"
+version = "0.1.0"
+dependencies = [
+ "serde",
+ "serde_json",
+ "sse-core",
+ "sse-pack",
 ]
 
 [[package]]
@@ -822,6 +833,7 @@ dependencies = [
  "sse-formation",
  "sse-kernel",
  "sse-life",
+ "sse-nav",
  "sse-observe",
  "sse-place",
  "sse-resolve",
