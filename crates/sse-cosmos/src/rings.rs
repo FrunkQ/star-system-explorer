@@ -187,6 +187,25 @@ pub struct Disc {
     pub t_start_gyr: f64,
     /// Ring-step [Fe/H] history per ring (gas), every step.
     pub feh_history: Vec<Vec<f64>>,
+    /// Every ring at the end of every step: `states[ring][step]`.
+    pub states: Vec<Vec<RingState>>,
+}
+
+/// One ring at the end of one step (abundances as [X/H] in dex, rates per year).
+#[derive(Clone, PartialEq, Debug, Serialize, Deserialize)]
+pub struct RingState {
+    pub gas: f64,
+    pub stars: f64,
+    pub feh: f64,
+    pub alpha_h: f64,
+    pub cn_h: f64,
+    pub s_h: f64,
+    pub r_h: f64,
+    pub k40_h: f64,
+    pub sfr: f64,
+    pub cc_rate: f64,
+    pub ia_rate: f64,
+    pub nsm_so_far: u64,
 }
 
 impl Disc {
@@ -269,6 +288,8 @@ pub fn evolve(
     let mut deaths = vec![Deaths::default(); nr];
     let mut rates = vec![(0.0, 0.0); nr];
     let mut feh_hist = vec![vec![]; nr];
+    let mut states: Vec<Vec<RingState>> = vec![Vec::with_capacity(n); nr];
+    let mut stars_so_far = vec![0.0f64; nr];
     let total: f64 = gal.inflow[..n * every].iter().sum::<f64>().max(1.0e-30);
     let span = dt * n as f64;
     let mut cum = 0.0;
@@ -368,10 +389,28 @@ pub fn evolve(
             deaths[i].neutron_star_mergers += events;
             units[i][K40] *= decay;
             rates[i] = (p.cc_per_mass * sf / (dt * 1.0e9), n_ia / (dt * 1.0e9));
-            feh_hist[i].push(if gas[i] > 0.0 && units[i][FE] > 0.0 {
-                m::log10(units[i][FE] / gas[i])
-            } else {
-                -9.0
+            let ab = |g: usize| {
+                if gas[i] > 0.0 && units[i][g] > 0.0 {
+                    m::log10(units[i][g] / gas[i])
+                } else {
+                    -9.0
+                }
+            };
+            feh_hist[i].push(ab(FE));
+            stars_so_far[i] += (1.0 - p.return_fraction) * sf;
+            states[i].push(RingState {
+                gas: gas[i],
+                stars: stars_so_far[i],
+                feh: ab(FE),
+                alpha_h: ab(ALPHA),
+                cn_h: ab(CN),
+                s_h: ab(S),
+                r_h: ab(R),
+                k40_h: ab(K40),
+                sfr: sf / (dt * 1.0e9),
+                cc_rate: rates[i].0,
+                ia_rate: rates[i].1,
+                nsm_so_far: deaths[i].neutron_star_mergers,
             });
         }
         // Inward drift: a share v dt / width of each ring's gas moves one ring in.
@@ -412,5 +451,6 @@ pub fn evolve(
         step_gyr: dt,
         t_start_gyr: gal.t_start_gyr,
         feh_history: feh_hist,
+        states,
     }
 }

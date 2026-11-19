@@ -66,6 +66,10 @@ pub struct CosmologyPack {
     pub galaxy: crate::galaxy::GalaxyParams,
     #[serde(default)]
     pub rings: crate::rings::RingParams,
+    #[serde(default)]
+    pub envelope: crate::envelope::EnvelopeParams,
+    #[serde(default)]
+    pub green: crate::envelope::GreenParams,
 }
 
 impl CosmologyPack {
@@ -226,4 +230,79 @@ pub fn galaxy_golden() -> serde_json::Value {
         })
         .collect();
     serde_json::json!({ "galaxies": gals, "chronicle_head": ch.head().hex() })
+}
+
+/// G4 golden: the Milky-Way-like galaxy's envelope at a few places and times,
+/// its green band through time, outcome-first finds, and the derived patch model.
+pub fn envelope_golden() -> serde_json::Value {
+    use crate::envelope::{GalaxyEnvelope, Place};
+    let cp = CosmologyPack::from_packs(&[base_cosmology_pack()]).expect("settings");
+    let c = Cosmology::new(cp.params.clone());
+    let u = Address::universe("g3").expect("address");
+    let web = Web::new(
+        &c,
+        WebParams {
+            octaves: 4,
+            ..cp.web.clone()
+        },
+        &Seed::from_text("g3"),
+        &u,
+    )
+    .expect("web");
+    let hs = crate::haloes::Haloes {
+        cosmo: &c,
+        web: &web,
+        params: cp.haloes.clone(),
+        seed: Seed::from_text("g3"),
+        universe: u,
+    };
+    let h = hs.median(1.0e12, "milky-way-like");
+    let g = crate::galaxy::evolve(&c, &cp.galaxy, &h);
+    let addr: Address = h.address.parse().expect("address");
+    let d = crate::rings::evolve(&g, &cp.galaxy, &cp.rings, Seed::from_text("g3"), &addr);
+    let e = GalaxyEnvelope {
+        galaxy: &g,
+        disc: &d,
+        params: cp.envelope.clone(),
+        seed: Seed::from_text("g4"),
+        address: addr,
+    };
+    let r0 = e.sun_radius_kpc();
+    let places: Vec<serde_json::Value> = [
+        (0.5, 0.0, 0.0, 13.8),
+        (1.0, 1.0, 20.0, 13.8),
+        (1.0, 2.5, 300.0, 9.0),
+        (1.6, 4.0, -50.0, 13.8),
+    ]
+    .iter()
+    .map(|(f, phi, z, t)| {
+        let l = e.local(
+            Place {
+                r_kpc: r0 * f,
+                phi: *phi,
+                z_pc: *z,
+                t_gyr: *t,
+            },
+            &cp.green,
+        );
+        let gr = e.green(&l, &cp.green);
+        serde_json::json!({ "local": l, "green": gr })
+    })
+    .collect();
+    let bands: Vec<serde_json::Value> = [4.0, 6.0, 8.0, 10.0, 12.0, 13.8]
+        .iter()
+        .map(|t| serde_json::json!({ "t_gyr": t, "habitable": e.green_band(*t, &cp.green, false, 0.25), "complex": e.green_band(*t, &cp.green, true, 0.25) }))
+        .collect();
+    let found: Vec<serde_json::Value> = e
+        .find_green(13.8, &cp.green, 3)
+        .iter()
+        .map(|(l, _)| serde_json::json!(l.place))
+        .collect();
+    let pm = e.patch_model(&crate::PatchModel::milky_way_like());
+    serde_json::json!({
+        "places": places,
+        "bands": bands,
+        "found": found,
+        "patch_model": { "feh_now_at_sun": pm.enrichment.feh_now_at_sun, "gradient": pm.enrichment.gradient_dex_per_kpc, "tau_gyr": pm.enrichment.tau_gyr, "sun_radius_kpc": pm.sun_radius_kpc },
+    })
 }
