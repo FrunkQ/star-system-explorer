@@ -26,6 +26,9 @@ export interface CampaignSave {
     undo: AppliedEdit[];
     redo: AppliedEdit[];
     now_yr: number;
+    /** U11: the campaign's now and where its calendar starts (older saves have neither; they open at now_yr). */
+    campaign_now_yr?: number;
+    campaign_epoch_yr?: number;
   };
   /**
    * The packs over the opening stack (Packs screen) and the campaign's own

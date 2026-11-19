@@ -4,7 +4,7 @@
 // properties `--sse-<name>`.
 export interface TokenSpec {
   name: string;
-  type: "colour" | "length" | "font" | "number" | "shadow" | "keyword";
+  type: "colour" | "length" | "font" | "number" | "shadow" | "keyword" | "duration" | "easing";
   /** For keywords: the values a theme may set. */
   options?: readonly string[];
   meaning: string;
@@ -73,4 +73,11 @@ export const TOKENS: readonly TokenSpec[] = [
   { name: "tag-radius", type: "length", meaning: "Rounding of tag chips." },
   { name: "text-glow", type: "shadow", meaning: "Glow around text (phosphor screens); none for print." },
   { name: "chart-ground", type: "colour", meaning: "Ground behind an orbital chart drawing." },
+
+  // Motion (dynamic minimalism, handover/interface-style.md): motion explains
+  // a change of state and never delays input. Reduced-motion settings make
+  // every duration 0 whatever the theme says.
+  { name: "motion-quick", type: "duration", meaning: "Feedback on touch: hover, press, focus." },
+  { name: "motion", type: "duration", meaning: "A change of state: a card opening from its body, the ruler zooming, a tab moving." },
+  { name: "ease", type: "easing", meaning: "Easing for every motion (eases out, so it answers at once and settles)." },
 ];

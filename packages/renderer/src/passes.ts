@@ -18,7 +18,7 @@ export const RELIEF: PassSpec = {
   meaning: "The world's surface tiles on a globe, coloured by cover and bare material, shaded by its real slopes (hill shading from the elevation layer) under one light.",
   kind: "image",
   inputs: ["surface.tiles"],
-  tiers: ["gpu-high", "gpu-basic", "canvas"],
+  tiers: ["still", "gpu-high", "gpu-basic", "canvas"],
   params: [
     { name: "colour", type: "enum", default: "survey", options: ["survey", "height"], meaning: "Survey: water by depth and bare ground by material. Height: a height tint from the lowest ground to the highest, with water kept blue.", group: "look", promoted: true },
     { name: "shade", type: "number", default: 0.8, range: [0, 1], meaning: "How strongly slopes and the globe's own curve are shaded (0 is flat colour).", group: "look" },
@@ -33,6 +33,7 @@ export const RELIEF: PassSpec = {
     canvas: { fixed_ms: 0.5, per_mpix_ms: 60 },
     "gpu-basic": { fixed_ms: 1.5, per_mpix_ms: 1.5, scale: [{ param: "grid", ref: 128, power: 1.2 }] },
     "gpu-high": { fixed_ms: 1.5, per_mpix_ms: 2, scale: [{ param: "grid", ref: 128, power: 1.2 }] },
+    still: { fixed_ms: 1.5, per_mpix_ms: 2, scale: [{ param: "grid", ref: 128, power: 1.2 }] },
   },
   references: [HILLSHADE_REF],
 };
@@ -44,12 +45,12 @@ export const GRATICULE: PassSpec = {
   meaning: "Lines of latitude and longitude over the globe, with the equator drawn a little stronger.",
   kind: "overlay",
   inputs: [],
-  tiers: ["gpu-basic", "canvas"],
+  tiers: ["still", "gpu-basic", "canvas"],
   params: [
     { name: "spacing_deg", type: "number", default: 30, range: [5, 90], unit: "°", meaning: "Degrees between lines.", group: "look", promoted: true },
     { name: "opacity", type: "number", default: 0.3, range: [0, 1], meaning: "How strongly the lines show.", group: "look" },
   ],
-  cost: { canvas: { fixed_ms: 0, per_mpix_ms: 8 }, "gpu-basic": { fixed_ms: 0.3, per_mpix_ms: 0.2 } },
+  cost: { canvas: { fixed_ms: 0, per_mpix_ms: 8 }, "gpu-basic": { fixed_ms: 0.3, per_mpix_ms: 0.2 }, still: { fixed_ms: 0.3, per_mpix_ms: 0.2 } },
 };
 
 export const CONTOURS: PassSpec = {
@@ -75,7 +76,7 @@ export const ATMOSPHERE: PassSpec = {
   meaning: "The world's air: light scattered by its molecules (Rayleigh) towards the viewer, from the kernel's surface pressure, temperature, gravity and gas mix, and the dimming of the ground behind it. GPU tiers ray-march single scattering through a shell; the canvas tier uses a one-column approximation. Worlds without air draw nothing.",
   kind: "overlay",
   inputs: ["body.air"],
-  tiers: ["gpu-high", "gpu-basic", "canvas"],
+  tiers: ["still", "gpu-high", "gpu-basic", "canvas"],
   params: [
     { name: "steps", type: "integer", default: 16, range: [4, 64], meaning: "GPU: samples along each view ray through the air.", group: "look" },
     { name: "light_steps", type: "integer", default: 6, range: [2, 16], meaning: "GPU: samples from each of those towards the star.", group: "look" },
@@ -85,6 +86,7 @@ export const ATMOSPHERE: PassSpec = {
   ],
   cost: {
     "gpu-high": { fixed_ms: 0.5, per_mpix_ms: 6, scale: [{ param: "steps", ref: 16, power: 1 }, { param: "light_steps", ref: 6, power: 1 }] },
+    still: { fixed_ms: 0.5, per_mpix_ms: 6, scale: [{ param: "steps", ref: 16, power: 1 }, { param: "light_steps", ref: 6, power: 1 }] },
     "gpu-basic": { fixed_ms: 0.5, per_mpix_ms: 6, scale: [{ param: "steps", ref: 16, power: 1 }, { param: "light_steps", ref: 6, power: 1 }] },
     canvas: { fixed_ms: 0, per_mpix_ms: 6 },
   },
@@ -102,9 +104,9 @@ export const NARRATION: PassSpec = {
   meaning: "The globe in words: the face turned to the viewer, what covers it, the highest and lowest ground in view and which way they lie.",
   kind: "text",
   inputs: ["surface.tiles", "body.label"],
-  tiers: ["text", "canvas", "gpu-basic", "gpu-high"],
+  tiers: ["text", "canvas", "gpu-basic", "gpu-high", "still"],
   params: [{ name: "detail", type: "enum", default: "full", options: ["brief", "full"], meaning: "Brief: one sentence. Full: cover, heights and where they lie.", group: "content" }],
-  cost: { text: { fixed_ms: 2, per_mpix_ms: 0 }, canvas: { fixed_ms: 0, per_mpix_ms: 0 }, "gpu-basic": { fixed_ms: 0, per_mpix_ms: 0 }, "gpu-high": { fixed_ms: 0, per_mpix_ms: 0 } },
+  cost: { text: { fixed_ms: 2, per_mpix_ms: 0 }, canvas: { fixed_ms: 0, per_mpix_ms: 0 }, "gpu-basic": { fixed_ms: 0, per_mpix_ms: 0 }, "gpu-high": { fixed_ms: 0, per_mpix_ms: 0 }, still: { fixed_ms: 0, per_mpix_ms: 0 } },
 };
 
 /** Every pass this release ships. */
