@@ -964,6 +964,9 @@ impl Kernel {
                 fixture,
                 stack,
             } => systems::read_world_stack(body.as_deref(), fixture.as_deref(), stack)?,
+            Request::ReadLight { fixture, bodies } => {
+                systems::read_light(fixture.as_deref(), bodies)?
+            }
             Request::Adopt {
                 import_v3,
                 formation,

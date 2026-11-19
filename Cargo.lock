@@ -589,6 +589,7 @@ dependencies = [
  "sse-formation",
  "sse-import-v3",
  "sse-life",
+ "sse-light",
  "sse-logic",
  "sse-observe",
  "sse-pack",
@@ -620,6 +621,7 @@ version = "0.1.0"
 dependencies = [
  "serde",
  "serde_json",
+ "sse-atoms",
  "sse-core",
  "sse-flow",
  "sse-pack",

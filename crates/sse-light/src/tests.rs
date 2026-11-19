@@ -238,3 +238,223 @@ fn golden() {
     let want = std::fs::read_to_string(path).expect("golden exists (bless with SSE_BLESS=1)");
     assert_eq!(text, want);
 }
+
+// ---- O2: bodies' light from their conditions ----------------------------
+
+mod o2 {
+    use crate::emit::*;
+    use crate::*;
+
+    fn solar() -> Vec<BodyLight> {
+        publish_all(&solar_system().bodies, Model::base()).unwrap()
+    }
+
+    fn by_name<'a>(all: &'a [BodyLight], n: &str) -> &'a BodyLight {
+        all.iter().find(|b| b.name.as_deref() == Some(n)).unwrap()
+    }
+
+    fn band(b: &BodyLight, id: &str) -> f64 {
+        b.light.bands.iter().find(|x| x.band == id).unwrap().power_w
+    }
+
+    /// Effective temperatures from the energy balance match those measured
+    /// (NSSDC black-body temperatures; Voyager and Cassini for the giants).
+    #[test]
+    fn effective_temperatures_match_observed() {
+        let all = solar();
+        let fx = solar_system();
+        let obs = fx.observed["effective_temperature_k"].as_object().unwrap();
+        for (name, t) in obs {
+            let got = by_name(&all, name).facts.effective_temperature_k;
+            let want = t.as_f64().unwrap();
+            assert!((got - want).abs() < 1.5, "{name}: {got:.2} K vs {want} K");
+        }
+        // The Sun's own luminosity gives its effective temperature, by the same block.
+        let sun = by_name(&all, "Sun").facts.effective_temperature_k;
+        assert!((sun - 5772.0).abs() < 2.0, "Sun {sun}");
+    }
+
+    /// Infrared brightness temperatures: in the thermal infrared a body is seen
+    /// by its own heat at its effective temperature; in the near infrared and
+    /// visible, by reflected sunlight.
+    #[test]
+    fn infrared_brightness_temperatures() {
+        let all = solar();
+        let t = LightTable::base();
+        for name in ["Earth", "Mars", "Jupiter", "Saturn", "Neptune"] {
+            let b = by_name(&all, name);
+            let r = solar_system()
+                .bodies
+                .iter()
+                .find(|c| c.name.as_deref() == Some(name))
+                .unwrap()
+                .radius_m;
+            let area = 4.0 * sse_core::math::PI * r * r;
+            let far = t.band("far-ir").unwrap();
+            let tb = brightness_temperature(&b.light.description, far.from_m, far.to_m, area, &t)
+                .unwrap();
+            let te = b.facts.effective_temperature_k;
+            assert!(
+                (tb - te).abs() / te < 0.01,
+                "{name}: far-IR {tb:.1} K vs {te:.1} K"
+            );
+            assert!(
+                band(b, "visible")
+                    > 1e3 * {
+                        let only_own: f64 = b
+                            .light
+                            .description
+                            .parts
+                            .iter()
+                            .filter(|p| matches!(p, Part::Thermal { .. }))
+                            .map(|p| part_power(p, 3.8e-7, 7.5e-7, &t))
+                            .sum();
+                        only_own
+                    },
+                "{name} is seen by reflected light"
+            );
+        }
+    }
+
+    /// Auroral radio from the radio-magnetic Bode's law, within a factor of 3
+    /// of the measured average powers; none without a magnetic field.
+    #[test]
+    fn auroral_radio_only_with_a_field() {
+        let all = solar();
+        let fx = solar_system();
+        for (name, p) in fx.observed["auroral_radio_w"].as_object().unwrap() {
+            let got = by_name(&all, name).facts.auroral_radio_w;
+            let want = p.as_f64().unwrap();
+            assert!(
+                got / want < 3.0 && want / got < 3.0,
+                "{name}: {got:.2e} W vs {want:.2e} W"
+            );
+            assert!(band(by_name(&all, name), "radio") > 0.0);
+        }
+        for name in ["Venus", "Mars", "Moon"] {
+            let b = by_name(&all, name);
+            assert_eq!(b.facts.auroral_radio_w, 0.0, "{name}");
+            // Still faintly radio-bright by its own heat (the Rayleigh-Jeans tail), and nothing else.
+            assert!(band(b, "radio") > 0.0, "{name}");
+            assert!(
+                !b.light
+                    .description
+                    .parts
+                    .iter()
+                    .any(|p| matches!(p, Part::PowerLaw { .. })),
+                "{name}"
+            );
+        }
+        // Jupiter is the loudest, and Earth's magnetopause is about 10 radii out.
+        let j = by_name(&all, "Jupiter").facts.auroral_radio_w;
+        assert!(all
+            .iter()
+            .filter(|b| b.name.as_deref() != Some("Sun"))
+            .all(|b| b.facts.auroral_radio_w <= j));
+        let e = by_name(&all, "Earth");
+        let rmp = e.facts.magnetopause_radius_m / 6.378_137e6;
+        assert!(rmp > 8.5 && rmp < 11.5, "{rmp}");
+    }
+
+    /// The same conditions with the field switched off lose their radio and
+    /// nothing else.
+    #[test]
+    fn field_switch_changes_only_radio() {
+        let mut c = solar_system()
+            .bodies
+            .into_iter()
+            .find(|c| c.name.as_deref() == Some("Jupiter"))
+            .unwrap();
+        let with = publish_all(std::slice::from_ref(&c), Model::base()).unwrap();
+        c.magnetic_moment_a_m2 = 0.0;
+        let without = publish_all(&[c], Model::base()).unwrap();
+        for (a, b) in with[0].light.bands.iter().zip(&without[0].light.bands) {
+            if a.band == "radio" {
+                // The difference is exactly the auroral radio (it all lies inside the radio band).
+                let extra = a.power_w - b.power_w;
+                assert!(
+                    (extra - with[0].facts.auroral_radio_w).abs() < 1e-6 * extra,
+                    "{extra}"
+                );
+            } else {
+                assert_eq!(a.power_w, b.power_w, "{}", a.band);
+            }
+        }
+    }
+
+    /// Built things: a hot ship is bright in the mid infrared, a cold one is
+    /// dim; a radar lights itself up in radio; sodium lamps put their light in
+    /// the sodium line.
+    #[test]
+    fn built_things() {
+        let sun = Source {
+            address: "sun".into(),
+            luminosity_w: 3.828e26,
+            t_k: 5772.0,
+            distance_m: 1.496e11,
+        };
+        let ship = |t_k: f64, radar: bool| Conditions {
+            address: "ship".into(),
+            radius_m: 20.0,
+            bond_albedo: 0.2,
+            lit_by: vec![sun.clone()],
+            radiators: vec![Radiator {
+                t_k,
+                area_m2: 400.0,
+            }],
+            transmitters: if radar {
+                vec![Transmitter {
+                    frequency_hz: 9.4e9,
+                    bandwidth_hz: 1e7,
+                    power_w: 2e4,
+                }]
+            } else {
+                vec![]
+            },
+            ..Default::default()
+        };
+        let all = publish_all(&[ship(600.0, true), ship(150.0, false)], Model::base()).unwrap();
+        let hot = band(&all[0], "mid-ir");
+        let cold = band(&all[1], "mid-ir");
+        // The cold ship is dim but never zero: its hull still sits near the
+        // equilibrium temperature in sunlight.
+        assert!(hot > 2.0 * cold && cold > 0.0, "{hot} vs {cold}");
+        assert!(band(&all[0], "radio") > 1e4 && band(&all[1], "radio") < 1.0);
+        let city = Conditions {
+            address: "city".into(),
+            radius_m: 6.4e6,
+            lamps: vec![Lamp {
+                kind: LampKind::Sodium,
+                power_w: 1e9,
+            }],
+            ..Default::default()
+        };
+        let p = publish_all(&[city], Model::base()).unwrap();
+        assert_eq!(p[0].light.visible_slices[2].power_w, 1e9);
+    }
+
+    /// Every device gives the same bytes for the Solar System's light.
+    #[test]
+    fn golden_o2() {
+        let all = solar();
+        let g: Vec<_> = all
+            .iter()
+            .map(|b| {
+                serde_json::json!({
+                    "name": b.name, "facts": b.facts, "bands": b.light.bands, "total_w": b.light.total_w,
+                    "hash": sse_core::hash::ContentHash::of(&b.light).unwrap().hex(),
+                })
+            })
+            .collect();
+        let path = concat!(
+            env!("CARGO_MANIFEST_DIR"),
+            "/../../tests/golden/light-bodies.json"
+        );
+        let text = serde_json::to_string_pretty(&g).unwrap() + "\n";
+        if std::env::var("SSE_BLESS").is_ok() {
+            std::fs::write(path, &text).unwrap();
+        }
+        let want = std::fs::read_to_string(path).expect("golden exists (bless with SSE_BLESS=1)");
+        assert_eq!(text, want);
+    }
+}

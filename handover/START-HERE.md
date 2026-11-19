@@ -62,6 +62,7 @@ Milestone M1 "Proven core" = packages K0 to K6 (build plan section 3/4).
 | N1 sound engine: sound scenes, recipes, mixer, tiers, off by default, captions, orbit bed | done | packages/N1.md |
 | O1 light switch (UI side): Eye, Camera, SHO and HOO palettes, single bands, legend chip and honesty label, stubbed spectra marked | UI done on stubbed light; real light facts wait on the kernel | packages/O1-ui.md |
 | O1 light (kernel side): light descriptions as spectra (thermal, reflected, power law, accretion disc, named lines), band set and line table as pack data, deterministic band integrals, brightness temperature | done (light track, crate `sse-light`, pack `packs/base-light`); O2 next | packages/O1.md |
+| O2 light from bodies: glow, reflected light, stellar wind, magnetopause, auroral radio as atoms and the `body.emission` flow; radiators, transmitters, lamps, discs, coronae; Solar System checked; kernel op `read_light` | done (light track) | packages/O2.md |
 | V13 make a system: import a V3 save (report and preview) and grow a new system (formation run and preview) | part 1 done: previews; part 2 adopts a preview into the campaign | packages/V13.md |
 | A1 agents shell, bring your own key | part 1 done: providers, keys on the device only, ledger and cap, Tars working, Orac and Minerva panels; part 2 reconciles with Ovid's source | packages/A1.md |
 | G0 default Milky-Way-like patch envelope | done (kernel track) | packages/G0.md |

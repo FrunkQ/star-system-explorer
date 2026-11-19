@@ -17,6 +17,7 @@
 //! adaptive tolerance, so every device gives the same bits.
 #![forbid(unsafe_code)]
 
+pub mod emit;
 pub mod table;
 
 #[cfg(test)]

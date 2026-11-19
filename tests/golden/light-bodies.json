@@ -1,0 +1,512 @@
+[
+  {
+    "bands": [
+      {
+        "band": "gamma",
+        "power_w": 0.0
+      },
+      {
+        "band": "xray",
+        "power_w": 1.5151686532033103e-75
+      },
+      {
+        "band": "uv",
+        "power_w": 3.8150909497778254e+25
+      },
+      {
+        "band": "visible",
+        "power_w": 1.6756978560949168e+26
+      },
+      {
+        "band": "near-ir",
+        "power_w": 1.7506965592183924e+26
+      },
+      {
+        "band": "mid-ir",
+        "power_w": 1.9908816492107958e+24
+      },
+      {
+        "band": "far-ir",
+        "power_w": 1.8751405827329448e+22
+      },
+      {
+        "band": "mm",
+        "power_w": 7.078809606322901e+18
+      },
+      {
+        "band": "radio",
+        "power_w": 304300580519729.8
+      }
+    ],
+    "facts": {
+      "auroral_radio_w": 0.0,
+      "effective_temperature_k": 5772.003429145849,
+      "insolation_w_m2": -0.0,
+      "internal_flux_w_m2": 62938742.035721585,
+      "magnetopause_radius_m": 0.0,
+      "radio_max_frequency_hz": 0.0
+    },
+    "hash": "334791e3c3def61e215911e330c225500c11765ebc0c21b9e7188df3f0e7578a",
+    "name": "Sun",
+    "total_w": 3.827999911632612e+26
+  },
+  {
+    "bands": [
+      {
+        "band": "gamma",
+        "power_w": 0.0
+      },
+      {
+        "band": "xray",
+        "power_w": 4.574167959194854e-86
+      },
+      {
+        "band": "uv",
+        "power_w": 1151909243842789.8
+      },
+      {
+        "band": "visible",
+        "power_w": 5059527410466954.0
+      },
+      {
+        "band": "near-ir",
+        "power_w": 2.120162987853625e+16
+      },
+      {
+        "band": "mid-ir",
+        "power_w": 1.317344652020602e+17
+      },
+      {
+        "band": "far-ir",
+        "power_w": 1.0818064470057584e+16
+      },
+      {
+        "band": "mm",
+        "power_w": 6421210604829.285
+      },
+      {
+        "band": "radio",
+        "power_w": 284849040.6010945
+      }
+    ],
+    "facts": {
+      "auroral_radio_w": 1641381.9670597562,
+      "effective_temperature_k": 439.54518777105653,
+      "insolation_w_m2": 9083.849584018808,
+      "internal_flux_w_m2": 0.0,
+      "magnetopause_radius_m": 3100979.20512328,
+      "radio_max_frequency_hz": 11196.995948933216
+    },
+    "hash": "f2483e924c08a337400f3b915a04b895c6f36ad3300a28c2effa7f8e16964fbf",
+    "name": "Mercury",
+    "total_w": 1.6997201770041766e+17
+  },
+  {
+    "bands": [
+      {
+        "band": "gamma",
+        "power_w": 0.0
+      },
+      {
+        "band": "xray",
+        "power_w": 9.12142657818381e-85
+      },
+      {
+        "band": "uv",
+        "power_w": 2.2970419289747052e+16
+      },
+      {
+        "band": "visible",
+        "power_w": 1.0089290163058182e+17
+      },
+      {
+        "band": "near-ir",
+        "power_w": 1.0549343831456101e+17
+      },
+      {
+        "band": "mid-ir",
+        "power_w": 4.9820264433708264e+16
+      },
+      {
+        "band": "far-ir",
+        "power_w": 2.0130542417228776e+16
+      },
+      {
+        "band": "mm",
+        "power_w": 19692685332755.996
+      },
+      {
+        "band": "radio",
+        "power_w": 902228811.0333413
+      }
+    ],
+    "facts": {
+      "auroral_radio_w": 0.0,
+      "effective_temperature_k": 226.63179824141915,
+      "insolation_w_m2": 2601.520610924066,
+      "internal_flux_w_m2": 0.0,
+      "magnetopause_radius_m": 0.0,
+      "radio_max_frequency_hz": 0.0
+    },
+    "hash": "4dcd2e058298640383241d1f62a9505cb44ce4832283271131f1fe4506ac00c8",
+    "name": "Venus",
+    "total_w": 2.993272596733885e+17
+  },
+  {
+    "bands": [
+      {
+        "band": "gamma",
+        "power_w": 0.0
+      },
+      {
+        "band": "xray",
+        "power_w": 2.0240495687348636e-85
+      },
+      {
+        "band": "uv",
+        "power_w": 5097148659648467.0
+      },
+      {
+        "band": "visible",
+        "power_w": 2.238819029933466e+16
+      },
+      {
+        "band": "near-ir",
+        "power_w": 2.3842544519443864e+16
+      },
+      {
+        "band": "mid-ir",
+        "power_w": 9.41296027254029e+16
+      },
+      {
+        "band": "far-ir",
+        "power_w": 2.8523166052565092e+16
+      },
+      {
+        "band": "mm",
+        "power_w": 24813573948203.02
+      },
+      {
+        "band": "radio",
+        "power_w": 1218864291.7772732
+      }
+    ],
+    "facts": {
+      "auroral_radio_w": 90474816.707828,
+      "effective_temperature_k": 255.1535010001276,
+      "insolation_w_m2": 1361.1641124526816,
+      "internal_flux_w_m2": 0.09,
+      "magnetopause_radius_m": 59475431.698496714,
+      "radio_max_frequency_hz": 1713140.3801867815
+    },
+    "hash": "94d303d2e579e41ed0f62671c0fdde059f0efbc4422be24ae18ab2da8f4a1b61",
+    "name": "Earth",
+    "total_w": 1.7400546704920746e+17
+  },
+  {
+    "bands": [
+      {
+        "band": "gamma",
+        "power_w": 0.0
+      },
+      {
+        "band": "xray",
+        "power_w": 2.1016586041224593e-86
+      },
+      {
+        "band": "uv",
+        "power_w": 529259090415325.7
+      },
+      {
+        "band": "visible",
+        "power_w": 2324663066564017.5
+      },
+      {
+        "band": "near-ir",
+        "power_w": 2437487092960743.5
+      },
+      {
+        "band": "mid-ir",
+        "power_w": 1.0584930939023962e+16
+      },
+      {
+        "band": "far-ir",
+        "power_w": 5359998900202371.0
+      },
+      {
+        "band": "mm",
+        "power_w": 5709050665838.507
+      },
+      {
+        "band": "radio",
+        "power_w": 262973218.182084
+      }
+    ],
+    "facts": {
+      "auroral_radio_w": 0.0,
+      "effective_temperature_k": 209.82749035808837,
+      "insolation_w_m2": 586.2191611672464,
+      "internal_flux_w_m2": 0.0,
+      "magnetopause_radius_m": 0.0,
+      "radio_max_frequency_hz": 0.0
+    },
+    "hash": "5216c71b06cbda3863c758959d08031c7099cacdb39f26c3942222166aaf64bd",
+    "name": "Mars",
+    "total_w": 2.124204840280548e+16
+  },
+  {
+    "bands": [
+      {
+        "band": "gamma",
+        "power_w": 0.0
+      },
+      {
+        "band": "xray",
+        "power_w": 1.6066703407371353e-84
+      },
+      {
+        "band": "uv",
+        "power_w": 4.046065719084172e+16
+      },
+      {
+        "band": "visible",
+        "power_w": 1.777152194904162e+17
+      },
+      {
+        "band": "near-ir",
+        "power_w": 1.856695894580285e+17
+      },
+      {
+        "band": "mid-ir",
+        "power_w": 2.6662754080435427e+17
+      },
+      {
+        "band": "far-ir",
+        "power_w": 6.159559650303762e+17
+      },
+      {
+        "band": "mm",
+        "power_w": 1428484838325405.5
+      },
+      {
+        "band": "radio",
+        "power_w": 76496265966.10187
+      }
+    ],
+    "facts": {
+      "auroral_radio_w": 7340485504.812998,
+      "effective_temperature_k": 124.74362593697427,
+      "insolation_w_m2": 50.26529801199607,
+      "internal_flux_w_m2": 7.4849999999999985,
+      "magnetopause_radius_m": 2787772014.2813015,
+      "radio_max_frequency_hz": 24073541.29020641
+    },
+    "hash": "268d25553a37e596b404adfdd677c33f22c434797940c07c17e020090f1db71a",
+    "name": "Jupiter",
+    "total_w": 1.2878575333086085e+18
+  },
+  {
+    "bands": [
+      {
+        "band": "gamma",
+        "power_w": 0.0
+      },
+      {
+        "band": "xray",
+        "power_w": 2.2941745748915613e-85
+      },
+      {
+        "band": "uv",
+        "power_w": 5777402411501867.0
+      },
+      {
+        "band": "visible",
+        "power_w": 2.5376066750515244e+16
+      },
+      {
+        "band": "near-ir",
+        "power_w": 2.6511850152249936e+16
+      },
+      {
+        "band": "mid-ir",
+        "power_w": 2.6875641824123212e+16
+      },
+      {
+        "band": "far-ir",
+        "power_w": 1.7597053887359667e+17
+      },
+      {
+        "band": "mm",
+        "power_w": 734753832702801.0
+      },
+      {
+        "band": "radio",
+        "power_w": 37350519029.33478
+      }
+    ],
+    "facts": {
+      "auroral_radio_w": 314112621.0687621,
+      "effective_temperature_k": 94.13975796291416,
+      "insolation_w_m2": 14.854264768008486,
+      "internal_flux_w_m2": 2.01,
+      "magnetopause_radius_m": 1060830762.6699032,
+      "radio_max_frequency_hz": 1203677.0645103205
+    },
+    "hash": "f2ae248fe4ba065213f85bc647239d7fd468a2b744bcd776ce32b026c0278281",
+    "name": "Saturn",
+    "total_w": 2.612462911952088e+17
+  },
+  {
+    "bands": [
+      {
+        "band": "gamma",
+        "power_w": 0.0
+      },
+      {
+        "band": "xray",
+        "power_w": 9.029802657833332e-87
+      },
+      {
+        "band": "uv",
+        "power_w": 227396834668600.16
+      },
+      {
+        "band": "visible",
+        "power_w": 998794413890622.4
+      },
+      {
+        "band": "near-ir",
+        "power_w": 1043498507540732.2
+      },
+      {
+        "band": "mid-ir",
+        "power_w": 77192668580093.47
+      },
+      {
+        "band": "far-ir",
+        "power_w": 5528637836310659.0
+      },
+      {
+        "band": "mm",
+        "power_w": 74820092822952.47
+      },
+      {
+        "band": "radio",
+        "power_w": 4188924552.9077296
+      }
+    ],
+    "facts": {
+      "auroral_radio_w": 23282277.56172174,
+      "effective_temperature_k": 59.073552171953956,
+      "insolation_w_m2": 3.7058996230774297,
+      "internal_flux_w_m2": 0.042,
+      "magnetopause_radius_m": 578222380.5831542,
+      "radio_max_frequency_hz": 1276457.5381783866
+    },
+    "hash": "c75de40e724e3e4a853a8c513f70da1a9040e1f34798ffcfb599b6ddd1cbcca1",
+    "name": "Uranus",
+    "total_w": 7950344542738213.0
+  },
+  {
+    "bands": [
+      {
+        "band": "gamma",
+        "power_w": 0.0
+      },
+      {
+        "band": "xray",
+        "power_w": 3.3042342051810033e-87
+      },
+      {
+        "band": "uv",
+        "power_w": 83210279087335.8
+      },
+      {
+        "band": "visible",
+        "power_w": 365484251580863.44
+      },
+      {
+        "band": "near-ir",
+        "power_w": 381842615207134.56
+      },
+      {
+        "band": "mid-ir",
+        "power_w": 67581108602021.72
+      },
+      {
+        "band": "far-ir",
+        "power_w": 5247296091340793.0
+      },
+      {
+        "band": "mm",
+        "power_w": 70487965178660.58
+      },
+      {
+        "band": "radio",
+        "power_w": 3930170837.3132076
+      }
+    ],
+    "facts": {
+      "auroral_radio_w": 8700074.385117134,
+      "effective_temperature_k": 59.237901520946586,
+      "insolation_w_m2": 1.4943612506776907,
+      "internal_flux_w_m2": 0.43299999999999994,
+      "magnetopause_radius_m": 556624959.1608001,
+      "radio_max_frequency_hz": 794986.712374258
+    },
+    "hash": "8b3d9d7b30c70f9a862b488eae1697013d1e5248a7ca0708349b55064321b429",
+    "name": "Neptune",
+    "total_w": 6215906241167646.0
+  },
+  {
+    "bands": [
+      {
+        "band": "gamma",
+        "power_w": 0.0
+      },
+      {
+        "band": "xray",
+        "power_w": 5.619251190176544e-87
+      },
+      {
+        "band": "uv",
+        "power_w": 141509176033367.97
+      },
+      {
+        "band": "visible",
+        "power_w": 621550316398969.6
+      },
+      {
+        "band": "near-ir",
+        "power_w": 717505798014353.6
+      },
+      {
+        "band": "mid-ir",
+        "power_w": 9054990022527202.0
+      },
+      {
+        "band": "far-ir",
+        "power_w": 2370518011543673.5
+      },
+      {
+        "band": "mm",
+        "power_w": 1957468139899.2378
+      },
+      {
+        "band": "radio",
+        "power_w": 88719303.76413164
+      }
+    ],
+    "facts": {
+      "auroral_radio_w": 0.0,
+      "effective_temperature_k": 270.33805959680694,
+      "insolation_w_m2": 1361.1641124526816,
+      "internal_flux_w_m2": 0.0,
+      "magnetopause_radius_m": 0.0,
+      "radio_max_frequency_hz": 0.0
+    },
+    "hash": "50b6c19e61d6ff282c10edd37678a0a690b01a0bcb82297c988d2cf744a10dbc",
+    "name": "Moon",
+    "total_w": 1.2908030881376772e+16
+  }
+]

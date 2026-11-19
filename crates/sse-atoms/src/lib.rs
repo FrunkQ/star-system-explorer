@@ -8,6 +8,7 @@ pub mod climate;
 pub mod common;
 pub mod heat;
 pub mod layers;
+pub mod light;
 pub mod orbit;
 pub mod planet;
 pub mod star;
@@ -28,6 +29,7 @@ pub fn atoms() -> Vec<Box<dyn sse_flow::Atom>> {
         .chain(tides::atoms())
         .chain(layers::atoms())
         .chain(heat::atoms())
+        .chain(light::atoms())
         .collect()
 }
 
@@ -233,6 +235,17 @@ pub const KIND_DESCRIPTIONS: &[(&str, &str)] = &[
     ),
     ("layer.density", "mean density of a layer"),
     ("layer.pressure_increase", "pressure added across a layer"),
+    // light (O2)
+    ("body.internal_heat_flux", "heat flowing out through a body's surface from inside, per area: a star's or brown dwarf's own luminosity, a giant planet's left-over heat"),
+    ("body.effective_temperature", "temperature of the black body that radiates what this body radiates in total"),
+    ("light.reflected_area", "effective area for reflected starlight: Bond albedo times cross-section times the source's dilution (R*/d)²"),
+    ("wind.density", "mass density of the stellar wind at the body"),
+    ("wind.speed", "speed of the stellar wind at the body"),
+    ("wind.transverse_field", "magnetic field in the stellar wind across the flow direction, at the body"),
+    ("body.magnetic_moment", "magnetic dipole moment of a body"),
+    ("body.magnetopause_radius", "stand-off distance of the magnetopause towards the wind, from the body's centre; zero without a field"),
+    ("radio.auroral_power", "auroral radio power, all frequencies"),
+    ("radio.max_frequency", "highest auroral radio frequency, the electron gyrofrequency at the magnetic pole"),
 ];
 
 /// Quantity kinds for the base-physics pack, from the atoms' port kinds.

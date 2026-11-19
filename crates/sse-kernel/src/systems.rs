@@ -227,3 +227,43 @@ pub(crate) fn read_world_stack(
         stack: raw,
     })
 }
+
+/// Light from bodies (O2): the Solar System fixture or given conditions.
+pub(crate) fn read_light(fixture: Option<&str>, bodies: Option<Vec<serde_json::Value>>) -> Out {
+    let model = sse_light::emit::Model::base();
+    let (source, conds) = match (fixture, bodies) {
+        (_, Some(list)) => {
+            let mut out = vec![];
+            for (i, v) in list.into_iter().enumerate() {
+                out.push(
+                    serde_json::from_value::<sse_light::emit::Conditions>(v)
+                        .map_err(|e| err("bad_conditions", format!("body {i}: {e}")))?,
+                );
+            }
+            ("given".to_string(), out)
+        }
+        (Some("solar-system"), None) => (
+            "fixture:solar-system".to_string(),
+            sse_light::emit::solar_system().bodies,
+        ),
+        (f, None) => {
+            return Err(err(
+                "no_light",
+                format!(
+                    "no light for {}; fixtures: solar-system, or give bodies",
+                    f.unwrap_or("(nothing asked)")
+                ),
+            ))
+        }
+    };
+    let lit = sse_light::emit::publish_all(&conds, model).map_err(|e| err("bad_conditions", e))?;
+    let t = &model.table;
+    Ok(Response::LightRead {
+        source,
+        table: serde_json::json!({ "bands": t.bands, "visible_slices": t.visible_slices, "lines": t.lines }),
+        bodies: lit
+            .iter()
+            .map(|b| serde_json::to_value(b).expect("plain data"))
+            .collect(),
+    })
+}

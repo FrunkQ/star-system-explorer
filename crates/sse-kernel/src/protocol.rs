@@ -327,6 +327,19 @@ pub enum Request {
         #[ts(optional, type = "unknown")]
         stack: Option<serde_json::Value>,
     },
+    /// Light from bodies (O2): each body's spectrum (own glow, reflected
+    /// light, auroral radio, discs, coronae, radiators, transmitters, lamps)
+    /// and its power in every band, from conditions (`sse_light::emit::Conditions`,
+    /// keyed on conditions, never on kind). `fixture: "solar-system"` serves
+    /// the Solar System; given `bodies` are described instead.
+    ReadLight {
+        #[serde(default)]
+        #[ts(optional)]
+        fixture: Option<String>,
+        #[serde(default)]
+        #[ts(optional, type = "unknown[]")]
+        bodies: Option<Vec<serde_json::Value>>,
+    },
     /// Bring a system into the open universe as facts: an SSE 3 save
     /// (`import_v3`, its text) or a formation run (`formation`, the same
     /// fields as `run_formation`; its `system` must be in the universe). The
@@ -541,6 +554,7 @@ impl Request {
             Request::ImportV3 { .. } => "import_v3",
             Request::RunFormation { .. } => "run_formation",
             Request::ReadWorldStack { .. } => "read_world_stack",
+            Request::ReadLight { .. } => "read_light",
             Request::Adopt { .. } => "adopt",
             Request::ResolvedSystem { .. } => "resolved_system",
             Request::Systems => "systems",
@@ -627,6 +641,11 @@ pub fn ops() -> Vec<OpInfo> {
             "read_world_stack",
             Cost::Light,
             "one stack: validation, the depth ladder and a few atom evaluations",
+        ),
+        o(
+            "read_light",
+            Cost::Light,
+            "per body: one small flow run and about 2,000 Planck evaluations",
         ),
         o(
             "adopt",
@@ -860,6 +879,17 @@ pub enum Response {
         problems: Vec<serde_json::Value>,
         #[ts(type = "unknown[]")]
         invalid: Vec<serde_json::Value>,
+    },
+    /// `read_light`: `source` is `fixture:<name>` or `given`; `table` is the
+    /// band set, visible slices and line table in force; each of `bodies` is
+    /// `sse_light::emit::BodyLight` (address, name, facts, light: description,
+    /// bands, visible_slices, total_w, samples, peak_m).
+    LightRead {
+        source: String,
+        #[ts(type = "unknown")]
+        table: serde_json::Value,
+        #[ts(type = "unknown[]")]
+        bodies: Vec<serde_json::Value>,
     },
     /// `adopt`: the events written (the first carries the report), the
     /// systems adopted and the number of facts.
