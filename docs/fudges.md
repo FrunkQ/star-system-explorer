@@ -403,6 +403,9 @@ Two smaller physics errors (CH₄ lifetime 9.6 → 9.1 yr; escape coefficient ×
 | envelope.rs hazards | SN within d, encounters, GRB, AGN dose | `volume_rate(d)`, `encounter_rate(n, b, σ)`, `grb_rate(SFR, Z)`, `agn_flux(L, R)` | Hazard dials on the patch card |
 | envelope.rs green | Green criteria and band | `threshold_test` per criterion, `quiet_clock`, `band_scan` | Galaxy chart hatched green band with a time slider; per-criterion pass/fail chips |
 | patch.rs conditions | G0 closed-form densities, SFR, Ia DTD, encounters | `exp_disc_density`, `halo_power_law`, `ia_dtd_integral`, `age_velocity_relation` | Solar-patch card (G0) |
+| `sse-kernel/src/cosmos.rs` `galaxy_chart` arm crests | Arms drawn as crests of one fixed log-spiral density wave (envelope pitch and pattern speed), rotated to the time shown | The envelope's arm term is itself that pattern; a chart needs lines | Transient, ragged arms from a stellar-dynamics model, broken up after mergers (G6 events) | stand-in until arms are evolved |
+| `sse-kernel/src/cosmos.rs` `web()` | Cosmic web octaves capped at 4 for `galaxy_chart` and `web_slice` | Browser cost: a 96 x 96 slice in about a second | All pack octaves (finer filaments below a few Mpc) on capable devices | permanent cap for weak devices; to lift by tier |
+| `sse-kernel/src/cosmos.rs` `galaxy_chart` halo | The median halo for a named mass, not the campaign's own galaxy | G7 (Milky Way pack, campaign galaxy) not built | The campaign's galaxy placed by G7 | stand-in until G7 |
 
 ## Light, rendering and sound
 
@@ -463,6 +466,11 @@ The owner wants the physics in chain blocks (except big blocks) with a UI elemen
 
 | Where | Instead of the physics | Why | Real physics to replace it | Status |
 |---|---|---|---|---|
+| `ui-contract/src/route.ts` `navFromScene` | Orbits taken as flat (inclination 0) and moons left out when the chart scene feeds NAV | The chart scene carries no inclinations or moon elements | The adopted system's SystemSpec elements (the `system` source of `plan_route`) | stand-in until scenes carry elements |
+| `sse-nav/src/sky.rs` `window` albedo | Every body reflects at geometric albedo 0.3 (pack `nav.window.default_albedo`) | The chart has no albedos yet | Each body's albedo from its surface and clouds (S7 cover, W weather) | stand-in until bodies carry albedo |
+| `sse-nav/src/sky.rs` `window` star brightness | The star's magnitude scales with bolometric luminosity, not its visual band | Needs a spectrum to integrate | V-band flux from the star's spectrum (O1/O12 `read_spectrum`) | stand-in until the light track's spectra are wired in |
+| `packs/base-nav` `nav.window.sensors` | Three sensors with rough limiting magnitudes and resolutions | Sensors by band (O track) not built | Sensor arrays by band with apertures, exposures and noise | stand-in until O-track sensors |
+| `sse-kernel` `sift` rarity | Hits carry no rarity (no resolve clouds passed) | Not wired yet | Rarity from the parent's resolve cloud (`criterion_probability`) | stand-in |
 
 ## Candidates to move into flows
 
