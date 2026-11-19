@@ -5,11 +5,54 @@
   "family": "survey-globe",
   "description": "The surveyed globe as a map-maker shades it: cover and bare ground in survey colours, every slope hill-shaded from the elevation layer under a light from the upper left, with a light graticule.",
   "scene": "body",
-  "tiers": ["gpu-basic", "canvas", "text"],
+  "tiers": [
+    "still",
+    "gpu-basic",
+    "canvas",
+    "text"
+  ],
   "passes": [
-    { "id": "relief", "pass": "relief-globe", "params": { "colour": "survey" } },
-    { "id": "grid", "pass": "graticule" },
-    { "id": "words", "pass": "text-narration" }
+    {
+      "id": "relief",
+      "pass": "relief-globe",
+      "params": {
+        "colour": "survey"
+      },
+      "tiers": [
+        "gpu-basic",
+        "canvas"
+      ]
+    },
+    {
+      "id": "relief-still",
+      "pass": "relief-globe",
+      "params": {
+        "colour": "survey",
+        "grid": 256
+      },
+      "tiers": [
+        "still"
+      ]
+    },
+    {
+      "id": "grid-still",
+      "pass": "graticule",
+      "tiers": [
+        "still"
+      ]
+    },
+    {
+      "id": "grid",
+      "pass": "graticule",
+      "tiers": [
+        "gpu-basic",
+        "canvas"
+      ]
+    },
+    {
+      "id": "words",
+      "pass": "text-narration"
+    }
   ],
   "knobs": [
     {
@@ -18,8 +61,18 @@
       "meaning": "How strongly the land's shape shows: slope exaggeration and shading together.",
       "default": 0.5,
       "maps": [
-        { "pass": "relief", "param": "exaggeration", "at0": 2, "at1": 30 },
-        { "pass": "relief", "param": "shade", "at0": 0.4, "at1": 1 }
+        {
+          "pass": "relief",
+          "param": "exaggeration",
+          "at0": 2,
+          "at1": 30
+        },
+        {
+          "pass": "relief",
+          "param": "shade",
+          "at0": 0.4,
+          "at1": 1
+        }
       ]
     },
     {
@@ -27,17 +80,61 @@
       "label": "Detail",
       "meaning": "How finely the GPU globe is built (mesh cells per face edge). Costs more as it rises.",
       "default": 0.5,
-      "maps": [{ "pass": "relief", "param": "grid", "at0": 48, "at1": 208 }]
+      "maps": [
+        {
+          "pass": "relief",
+          "param": "grid",
+          "at0": 48,
+          "at1": 208
+        }
+      ]
     }
   ],
   "degrade": [
-    { "render_scale": 0.75, "says": "Drawn at three-quarter resolution." },
-    { "set": { "pass": "relief", "param": "grid", "value": 64 }, "tiers": ["gpu-basic"], "says": "Coarser globe mesh." },
-    { "drop": "grid", "says": "Grid lines off." },
-    { "render_scale": 0.5, "says": "Drawn at half resolution." },
-    { "tier": "canvas", "tiers": ["gpu-basic"], "says": "Drawn on a 2D canvas instead of the GPU." },
-    { "render_scale": 0.35, "tiers": ["canvas"], "says": "Drawn at a third of full resolution." },
-    { "render_scale": 0.25, "tiers": ["canvas"], "says": "Drawn at a quarter of full resolution." }
+    {
+      "render_scale": 0.75,
+      "says": "Drawn at three-quarter resolution."
+    },
+    {
+      "set": {
+        "pass": "relief",
+        "param": "grid",
+        "value": 64
+      },
+      "tiers": [
+        "gpu-basic"
+      ],
+      "says": "Coarser globe mesh."
+    },
+    {
+      "drop": "grid",
+      "says": "Grid lines off."
+    },
+    {
+      "render_scale": 0.5,
+      "says": "Drawn at half resolution."
+    },
+    {
+      "tier": "canvas",
+      "tiers": [
+        "gpu-basic"
+      ],
+      "says": "Drawn on a 2D canvas instead of the GPU."
+    },
+    {
+      "render_scale": 0.35,
+      "tiers": [
+        "canvas"
+      ],
+      "says": "Drawn at a third of full resolution."
+    },
+    {
+      "render_scale": 0.25,
+      "tiers": [
+        "canvas"
+      ],
+      "says": "Drawn at a quarter of full resolution."
+    }
   ],
   "lift": "A faster device, a smaller globe, or stopping the spin would lift it."
 }
