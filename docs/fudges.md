@@ -70,8 +70,61 @@ Add entries under your area. Keep one row per fudge.
 
 ## Climate, weather and life
 
-| Where | Instead of the physics | Why | Real physics to replace it | Status |
+### Fudge register
+
+| Where | Instead of the physics | Why (as the code or log says) | Real physics to replace it | Status |
 |---|---|---|---|---|
+| F1. `feedback.rs:183-187`, `history.rs:523-527` | O₂ burial is 0.1% of each metabolism's **energy cap**, and nothing on O₂ pushes back except √O₂ weathering | L2.md:36: "nothing in the box yet raises oxidative weathering or fires to match" | Feed realised production (see fixes P3). Burial efficiency falls with O₂ through phosphorus retention (Van Cappellen and Ingall 1996). Fire caps land biomass above about 25% O₂ (Lenton and Watson 2000; Belcher and McElwain 2008). Use the COPSE functional forms (Bergman et al. 2004). | **Undocumented error, not a fudge.** It explains the 51% O₂: land adds 42 Gt C/yr to an ocean already counted at its 118 Gt light cap instead of its 38 Gt realised production. No misremembered constant is needed to explain it. |
+| F2. `feedback.rs:149-152`, pack:725-727 | Reducing gases decline as 3e12 × exp((4570 − t)/2000 Myr) | "until the planet layer's interior models exist" | Outgassing from the S-track heat budget × gas redox from mantle fO₂ (Holland 2002 gas composition; Kump and Barley 2007 subaerial fraction from continental growth) | Documented stand-in. The source wording overclaims (fixes M3). |
+| F3. `feedback.rs:205-209`, pack:728 | Oxidative weathering = 6.5e12 √(O₂/PAL), organic only, no pyrite cycle | Holland 1978; Bolton et al. 2006 as cited | The S cycle: pyrite burial is 7.8 Tmol O₂/yr, about 40% of modern O₂ sources (Catling and Claire 2005). Kerogen weathering is erosion-limited above a few % PAL (Bolton 2006, memory). | Partly documented; exponent unverified |
+| F4. `feedback.rs:169-175` | Oxic and anoxic chemistry blended by 1/(1 + f/1e-5); CH₄ lifetime interpolated between 9.6 (9.1) and 1000 yr | Avoids flip-flopping; a fixed point found by bisection | CH₄ lifetime against O₂ from photochemical models (Pavlov et al. 2000; Goldblatt et al. 2006 parameterise the ozone-shielded CH₄ lifetime against O₂) | Documented in L2.md |
+| F5. pack:730 vs pack:685 (`decay_methane_oxic`) | 0.25% of production decays as CH₄ in box H; 0.5% in box I | Reeburgh 2007 cited for 0.5% | One value from a methane budget: natural emissions about 200 to 250 Tg CH₄/yr against NPP (memory) | **Inconsistent**, undocumented |
+| F6. `feedback.rs:259-264` | CO₂ index = 1/land_weathering_factor (0.25) as soon as land life exists | Berner 1997 | Silicate-weathering steady state, CO₂ against T with the weathering kernel (Walker, Hays and Kasting 1981; GEOCARB). A ×4 rate gives much less than a ×4 drop in CO₂ once temperature feeds back. | Documented as a stand-in; the mapping is undocumented |
+| F7. `signatures.rs:191-197` | O₂ = 0.21 × min(production/1e17, 1) | L1d: a sketch calibrated to Earth today; L2.md says box I does not read box H yet | Read O₂ and CH₄ from box H's air (`AirBox.series`) | Documented |
+| F8. `signatures.rs:103`, pack:682 | CH₄ ppm per g C/yr 4.5e-15 (fit to 1.9 ppm) | Calibrated to one point (L1d.md) | Steady state τ/(12 N_air) from box H (4.2e-15 for 9.1 yr) | Documented |
+| F9. `signatures.rs:245-246` | Red edge at 700 √(5772/Teff) nm | Kiang 2007 cited | Kiang et al. 2007 II: pigment absorption is predicted from the photon-flux peak and the top-of-canopy spectrum. No √ law. | **Undocumented invented scaling** |
+| F10. pack:686-695 | Likelihood ratios 20, 3, 1.5, 2, 10, 0.5; detection floors | Bayesian framing (Meadows 2018; Krissansen-Totton 2018) | Detectability from retrieval S/N (instrument model); the LRs stay judgment calls | Documented as choices |
+| F11. `biosphere.rs:132-134, 326-343` | Flyer 250 kg (ρ/1.225)^1.5 (g/g⊕)^−3.5; land animal 7e4 kg × g^−3; plant 130 m/g | L1c: rule table | Flight: required power ∝ (W³/ρ)^½ against muscle power ∝ mass (Pennycuick). Land: bone stress ∝ g M^⅓. Trees: hydraulic limit (Koch 2004) depends on g through the water-column potential, about 0.01 MPa per m × g. | **Uncited exponents** |
+| F12. `biosphere.rs:698-715` | lineages = 0.05 area^0.25 √provinces √bins × grade | "a sketch" (L1c.md) | Species-area z ≈ 0.25 is a real empirical exponent (Arrhenius 1921; MacArthur and Wilson). The 0.05 is tuned. | Documented sketch |
+| F13. pack:458, 504-507, 561, 580 | Origin rate 0.0018/Myr, innovation rates, population exponent 0.25 | "tuned so Earth's inputs give an Earth-like outline… one data point, not a law" | None possible. It is the honest unknown, with dials. | Documented, with a damn fine reason |
+| F14. pack:313, `budget.rs:199-206` | Radiation cap 1000 Sv/yr flat | Daly 2009 | Dose-rate tolerance by organism, plus a repair rate | Documented |
+| F15. `budget.rs:263-267` | Missing light peak defaults to 500 nm, band to 400-700 nm | Listed in `missing` | Star Teff through the atmosphere's transmission | Documented (a gap is listed, not hidden) |
+| F16. `budget.rs:362-364` | Volume habitats use V^(2/3) as their area for feeding levels | none | Production per volume, with a volumetric viability threshold | Undocumented |
+| F17. budget pack:316-330 | P reuse 1000/100/46/10 and C:P 1000 on land | Benitez-Nelson 2000; Cleveland 2013 | Explicit P cycle: weathering supply → recycling → burial | Documented, partly unverified |
+| F18. `climate.rs:66-87` and `planet-climate.json` | Grey radiative equilibrium, τ input, no convection | The atom's science text says it overstates thick atmospheres | Radiative-convective adjustment (a lapse-rate cap): T_s from τ at the radiating level with a dry or moist adiabat below (Robinson and Catling 2012/2014 analytic RC model) | Documented in the atom |
+| F19. `climate.rs:44-50` | Redistribution f is a free parameter (0.25 in the flow) | — | f from the day-night heat-transport efficiency (Koll and Abbot 2016 scaling, against surface pressure and rotation) | Documented |
+| F20. planet-climate flow, test | Earth τ = 0.83 gives 286.7 K against the 288 test, at the edge of tolerance | — | τ 0.87 for T_eq 254 (fixes M5) | Minor, numeric |
+| F21. `build-base-atlas.py:232-233` | "Filter mask" profile allows CO₂ up to 0.05 bar | Narrative category | No mask removes ambient CO₂. A rebreather or CO₂ scrubber is a sealed system. | Undocumented fiction. Label it as a game convention. |
+| F22. `build-base-atlas.py:226-235` | Human gravity band 0.3 to 1.5 g, temperature 263 to 313 K | none | No long-term data exist for gravity; temperature from WBGT and heat-stress limits (wet-bulb 35 °C; Sherwood and Huber 2010) | Uncited |
+| F23. `packs/base-time/pack.json:27` | Ocean loss at 1.1 S⊕ (the runaway value is 1.06 elsewhere in `early.rs:248`) | Wolf and Toon 2015 | One HZ block with the Kopparapu 2013/2014 polynomial S_eff(Teff) = S₀ + aT + bT² + cT³ + dT⁴ per limit and per mass | **Two different runaway numbers in two crates** |
+| F24. `feedback.rs:300-303` | Oxygenated = O₂ ≥ 1% for 200 Myr | Avoids counting whiffs | (a definition) | Documented |
+
+### Candidates to move into flows (small cited physics blocks)
+
+| Where | What it computes | Blocks it would need | View that would show it |
+|---|---|---|---|
+| `budget.rs:150-167, 260-279` (light energy cap) | Carbon fixed from starlight in a band | `sse.light.band_fraction(peak, lo, hi)` (Planck); `sse.life.photosynthetic_yield(flux, share, efficiency, area)`; `sse.unit.energy_to_carbon(J per g C)` | A spectrum strip: the star's Planck curve, the pigment band shaded, the efficiency arrow, then g C/yr |
+| `budget.rs:336-354` (Liebig) | min(energy cap, P supply × reuse × C:P) | `sse.life.nutrient_cap(p_new, reuse, c_per_p)`; `sse.math.min_with_label` (says which cap won) | Two bars per habitat, energy against nutrients, with the limiting one highlighted (this also exposes the P3 bug) |
+| `budget.rs:362-374` (feeding levels) | log(density/min)/log(1/efficiency) | `sse.life.trophic_levels(density, min, transfer)` | A trophic pyramid with each level's g C/m²/yr |
+| `feedback.rs:166-218` (the air box, one step) | O₂ balance: burial + escape − reductants − weathering (implicit √) | `sse.redox.organic_burial(prod, fraction)`; `sse.redox.reductant_flux(t)` (later from interior); `sse.atmosphere.diffusion_limited_escape(f_T, area)` (Catling and Claire eq. 4); `sse.redox.oxidative_weathering(O₂, PAL, k, exponent)`; `sse.solve.reservoir_step(implicit)` | A stacked source/sink ledger chart over time (the `Ledger` already exists): burial, escape, reductants and weathering, with O₂ and CH₄ lines. This is the view where the 51% shows up. |
+| `feedback.rs:172-181` (methane steady state) | CH₄ = flux/(1/τ + k_esc) | `sse.atmosphere.steady_state_mixing(flux, lifetime, sinks…)`; `sse.atmosphere.ch4_lifetime(O₂)` (Prather oxic, Pavlov anoxic) | CH₄ against O₂ phase plot with the bistable branches (Goldblatt 2006) |
+| `feedback.rs:259-264` (CO₂ index) | CO₂ drawdown by land | `sse.carbon.silicate_weathering(T, CO₂, plant factor)`; `sse.climate.grey_surface_temperature` (exists); a `solve` node for the steady state | A CO₂-temperature thermostat curve with the plant factor slider |
+| `signatures.rs:191-210` | O₂ and CH₄ seen from afar | Read box H's outputs (`atmosphere.o2_fraction`, `atmosphere.ch4_ppm`) instead of the sketch; `sse.observe.detectable(value, floor)` | The observer's card: gas bars against detection floors |
+| `signatures.rs:245-246` | Red-edge wavelength | `sse.light.photon_peak(Teff)` (3669.7 μm K, textbook); a pigment-edge rule from Kiang 2007 II | Same spectrum strip as the light cap, with the edge marked |
+| `biosphere.rs:326-343` (flight, size, plant height) | Size limits from g and ρ | `sse.bio.max_flyer(ρ, g)`; `sse.bio.max_walker(g)`; `sse.bio.max_tree_height(g)`, each with its scaling cited | A silhouette scale panel against Earth's |
+| `biosphere.rs:380` (pace of life) | Arrhenius factor | `sse.bio.arrhenius_rate(E, T, T_ref)` | Pace dial against temperature |
+| `early.rs:245-250`, base-time `runaway_greenhouse_flux` | HZ limits | `sse.climate.hz_seff(Teff, limit, mass)` (Kopparapu polynomials); `sse.climate.insolation` (exists) | An HZ band diagram (Teff against S_eff) with each planet plotted; both crates then use one block |
+| `climate.rs` (already blocks) | — | Add `sse.atmosphere.jeans_flux(λ, n, v₀)` next to `jeans_parameter`; `sse.climate.radiative_convective_surface` | Escape chart: λ for H, He, H₂O, N₂ and CO₂ against exobase temperature |
+
+### The 51% oxygen gap
+
+No misremembered constant explains it. The constants that set the steady state check out against Catling and Claire 2005, which I read: reductants 3e12, an O₂ inventory of 3.8e19 mol, and a burial share of about 0.1% of NPP.
+
+The cause is **F1 (fixes P3)**. The air box is fed each metabolism's energy cap rather than its realised production:
+- The ocean's oxygenic input is 118 Gt C/yr (the light cap) instead of 38 Gt C/yr (nutrient-limited production). Earth's 21% before land therefore comes from an error.
+- Land adds its real 42 Gt C/yr on top, giving 160 Gt C/yr: burial 1.33e13, minus reductants 3.1e12, then (1.02e13/6.5e12)² × 0.2095 = **0.518**.
+
+Two smaller physics errors (CH₄ lifetime 9.6 → 9.1 yr; escape coefficient ×2 high) do not affect the oxic steady state.
 
 ## Galaxy and cosmology
 
