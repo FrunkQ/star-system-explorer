@@ -11,7 +11,7 @@
 //    slowed 4x, as Lighthouse does for mobile; not a real phone) the governor
 //    steps quality down until frames fit the budget, and the badge says so.
 import { spawn } from "node:child_process";
-import { mkdirSync } from "node:fs";
+import { mkdirSync, writeFileSync } from "node:fs";
 import assert from "node:assert/strict";
 import { createRequire } from "node:module";
 
@@ -130,6 +130,51 @@ try {
     await gm.waitForFunction(() => document.querySelector("[data-body] [data-tier]")?.getAttribute("data-recipe") === "survey-contours", null, { timeout: 10000 });
     await gm.waitForTimeout(300);
     await shot(gm, `render-contours-${name}`);
+    // R3: take a photograph (the still tier off screen, frames averaged), kept on this device.
+    const takePhoto = async (page, label) => {
+      const t0 = Date.now();
+      await page.locator("[data-take-photo]").click();
+      await page.locator("[data-photo-note]").waitFor({ timeout: 60000 });
+      const secs = (Date.now() - t0) / 1000;
+      const note = await page.locator("[data-photo-note]").innerText();
+      assert.doesNotMatch(note, /^No photograph/, note);
+      const px = await page.locator("[data-photos] img").first().evaluate(async (img) => {
+        const r = await fetch(img.src);
+        const b = await createImageBitmap(await r.blob());
+        const c = new OffscreenCanvas(b.width, b.height);
+        const g = c.getContext("2d");
+        g.drawImage(b, 0, 0);
+        const at = (x, y) => [...g.getImageData(Math.round(x * b.width), Math.round(y * b.height), 1, 1).data];
+        return { w: b.width, centre: at(0.5, 0.5), corner: at(0.02, 0.02) };
+      });
+      assert.equal(px.w, 1024, "photographs are 1024 px across");
+      assert.ok(px.centre[3] > 250 && px.centre[0] + px.centre[1] + px.centre[2] > 30, `the world is in the picture: ${px.centre}`);
+      assert.ok(px.corner[3] < 10, `space around it is clear: ${px.corner}`);
+      if (screens) {
+        const b64 = await page.locator("[data-photos] img").first().evaluate(async (img) => {
+          const buf = new Uint8Array(await (await fetch(img.src)).arrayBuffer());
+          let bin = "";
+          for (let i = 0; i < buf.length; i += 0x8000) bin += String.fromCharCode(...buf.subarray(i, i + 0x8000));
+          return btoa(bin);
+        });
+        writeFileSync(`${screens}/photograph-${label.replace(/[^a-z0-9]+/gi, "-")}.png`, Buffer.from(b64, "base64"));
+      }
+      console.log(`  photograph ${label}: ${secs.toFixed(1)} s; ${note}`);
+      return secs;
+    };
+    await useRecipe(gm, "true-colour");
+    await takePhoto(gm, name);
+    await shot(gm, `render-photo-${name}`);
+    const kept = await gm.evaluate(() => new Promise((res) => {
+      const r = indexedDB.open("sse-media", 1);
+      r.onsuccess = () => {
+        const q = r.result.transaction("photographs").objectStore("photographs").count();
+        q.onsuccess = () => res(q.result);
+      };
+      r.onerror = () => res(-1);
+    }));
+    assert.ok(kept >= 1, `the photograph is kept on this device: ${kept}`);
+
     await drawOn(gm, "auto");
     await useRecipe(gm, "survey-relief");
     // True colour (R2): the air from the kernel's facts, physically lit, on gpu-high and the canvas.
@@ -168,6 +213,13 @@ try {
         const cdp = await ctx.newCDPSession(ph);
         await cdp.send("Emulation.setCPUThrottlingRate", { rate: 4 });
         await drawOn(ph, tier);
+        if (tier === "auto") {
+          await useRecipe(ph, "true-colour");
+          const secs = await takePhoto(ph, "on the Moto G4 emulation");
+          // Shared CI runners run this emulation about twice as slow as a desk machine; the 10 s target is checked locally.
+          assert.ok(secs < (process.env.CI ? 25 : 10), `a photograph on a phone takes under 10 s: ${secs} s`);
+          await useRecipe(ph, "survey-relief");
+        }
         await ph.getByLabel("Spin").check();
         // Let it run: about 15 s of spinning frames.
         await ph.waitForTimeout(15000);

@@ -20,7 +20,7 @@
 <script lang="ts">
   import { globeStats, type Globe, type Json, type SystemScene, type ViewContext } from "../../../ui-contract/src/index.ts";
   import { untrack } from "svelte";
-  import { airFactsOf, LIBRARY, mountGlobe, type GlobeRun, type GlobeRunOptions, type GlobeStatus } from "../../../renderer/src/index.ts";
+  import { airFactsOf, keepPhoto, listPhotos, LIBRARY, mountGlobe, photograph, removePhoto, type GlobeRun, type MediaItem, type GlobeRunOptions, type GlobeStatus } from "../../../renderer/src/index.ts";
   import { SHIPPED_RECIPES } from "../../../renderer/src/recipes.ts";
   import Cutaway from "../../cutaway/src/Cutaway.svelte";
 
@@ -126,6 +126,52 @@
     if (st && st.lon === lo && st.lat === la) return;
     untrack(() => run)?.setView(lo, la);
   });
+  // R3: take a photograph (the still tier, off screen), keep it on this device, save it as a PNG.
+  let shooting = $state<string | null>(null);
+  let shotNote = $state<string | null>(null);
+  let photos = $state<{ item: MediaItem; url: string }[]>([]);
+  $effect(() => {
+    const a = subject?.address;
+    if (!a) return;
+    let live = true;
+    void listPhotos(a).then((l) => {
+      if (!live) return;
+      for (const p of untrack(() => photos)) URL.revokeObjectURL(p.url);
+      photos = l.map((item) => ({ item, url: URL.createObjectURL(item.png) }));
+    });
+    return () => {
+      live = false;
+    };
+  });
+  const stamp = (d: Date) => d.toISOString().slice(0, 16).replace("T", " ");
+  async function takePhoto() {
+    const s = subject;
+    if (!s || !has || shooting) return;
+    shooting = "Starting…";
+    shotNote = null;
+    try {
+      const o = runOpts;
+      const shot = await photograph({ registry: o.registry, library: o.library, recipe: o.recipe, knobs: o.knobs, globe, air: o.air, label: s.label, lon, lat, size: 1024, frames: 16, onProgress: (d, n) => (shooting = `Refining ${d} of ${n}…`) });
+      const png = await new Promise<Blob>((res, rej) => shot.canvas.toBlob((b) => (b ? res(b) : rej(new Error("the browser would not encode the picture"))), "image/png"));
+      const now = new Date();
+      const caption = `${s.label}, centred on ${lat.toFixed(0)}° ${lon.toFixed(0)}°. ${shot.note} Made in ${(shot.ms / 1000).toFixed(1)} s.`;
+      const item: MediaItem = { id: `${s.address}@${now.getTime()}`, title: `${s.label} ${stamp(now)}`, subject: s.address, caption, created: now.toISOString(), png, width: shot.canvas.width, height: shot.canvas.height };
+      const where = await keepPhoto(item);
+      photos = [{ item, url: URL.createObjectURL(png) }, ...photos];
+      shotNote = `${caption} ${where === "device" ? "Kept on this device." : "This browser will not keep it after the page closes: save it."}`;
+    } catch (e) {
+      shotNote = `No photograph: ${e instanceof Error ? e.message : String(e)}`;
+    } finally {
+      shooting = null;
+    }
+  }
+  async function dropPhoto(id: string) {
+    await removePhoto(id);
+    const gone = photos.find((p) => p.item.id === id);
+    if (gone) URL.revokeObjectURL(gone.url);
+    photos = photos.filter((p) => p.item.id !== id);
+  }
+  const fileName = (m: MediaItem) => `${m.title.replace(/[^A-Za-z0-9 _-]+/g, "").replace(/ +/g, "-")}.png`;
   const tierChoices: [string, string][] = [["auto", "This device's choice"], ["gpu-high", "GPU, high"], ["gpu-basic", "GPU"], ["canvas", "2D canvas"], ["text", "Words only"]];
   const tierWords: Record<string, string> = { "gpu-high": "GPU high", "gpu-basic": "GPU", canvas: "Canvas", text: "Text" };
 
@@ -234,6 +280,22 @@
                   <label><input type="checkbox" checked={runOpts.spin} onchange={(e) => (ovSpin = e.currentTarget.checked)} /> Spin</label>
                 </div>
               </div>
+            {/if}
+          </dd>
+          <dt>Photograph</dt>
+          <dd data-photo>
+            <button class="badge" data-take-photo disabled={!!shooting} onclick={takePhoto}>{shooting ?? "Take photograph"}</button>
+            {#if shotNote}<p class="shot-note" data-photo-note>{shotNote}</p>{/if}
+            {#if photos.length}
+              <ul class="photos" data-photos>
+                {#each photos.slice(0, 6) as p (p.item.id)}
+                  <li>
+                    <img src={p.url} alt={p.item.caption} width="48" height="48" />
+                    <a href={p.url} download={fileName(p.item)}>Save</a>
+                    <button class="link" onclick={() => dropPhoto(p.item.id)} aria-label={`Remove ${p.item.title}`}>Remove</button>
+                  </li>
+                {/each}
+              </ul>
             {/if}
           </dd>
           <dt>Surface</dt>
@@ -364,5 +426,38 @@
   }
   dd {
     margin: 0;
+  }
+  .shot-note {
+    font-size: 12px;
+    color: var(--sse-ink-muted);
+    margin: 4px 0 0;
+  }
+  .photos {
+    list-style: none;
+    padding: 0;
+    margin: 6px 0 0;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+  .photos li {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 2px;
+    font-size: 11px;
+  }
+  .photos img {
+    border-radius: 50%;
+    background: var(--sse-line);
+  }
+  .photos a,
+  .link {
+    font: inherit;
+    color: var(--sse-accent);
+    background: none;
+    border: 0;
+    padding: 0;
+    cursor: pointer;
   }
 </style>
