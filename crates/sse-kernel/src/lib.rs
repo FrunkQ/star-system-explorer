@@ -996,6 +996,9 @@ impl Kernel {
                 glows,
             } => systems::read_nebulae(at_s, seed.as_deref(), deaths, planetary, remnants, glows)?,
             Request::SurveyPlanets { survey } => systems::survey_planets(survey)?,
+            Request::ReadSpectrum { targets, observer } => {
+                systems::read_spectrum(targets, observer)?
+            }
             Request::ReadActivity {
                 stars,
                 seed,

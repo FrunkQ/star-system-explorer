@@ -18,6 +18,7 @@
 #![forbid(unsafe_code)]
 
 pub mod emit;
+pub mod observe;
 pub mod shift;
 pub mod table;
 

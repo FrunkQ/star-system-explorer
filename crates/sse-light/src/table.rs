@@ -26,6 +26,49 @@ pub struct LineDef {
     pub medium: String,
 }
 
+/// Photospheric absorption: each line's strength (0 to 1) at the listed temperatures.
+#[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
+pub struct Absorption {
+    pub teff_k: Vec<f64>,
+    #[serde(default)]
+    pub note: String,
+    pub lines: Vec<AbsorptionLine>,
+}
+
+#[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
+pub struct AbsorptionLine {
+    pub line: String,
+    pub strength: Vec<f64>,
+}
+
+impl Absorption {
+    /// Strength of each line at `teff`, interpolated in log temperature, held flat beyond the ends.
+    pub fn at(&self, teff: f64) -> Vec<(&str, f64)> {
+        let t = &self.teff_k;
+        let x = m::ln(teff.max(1.0));
+        self.lines
+            .iter()
+            .map(|l| {
+                let v = if teff <= t[0] {
+                    l.strength[0]
+                } else if teff >= t[t.len() - 1] {
+                    l.strength[t.len() - 1]
+                } else {
+                    let j = t
+                        .iter()
+                        .position(|&a| a > teff)
+                        .unwrap_or(t.len() - 1)
+                        .max(1);
+                    let (x0, x1) = (m::ln(t[j - 1]), m::ln(t[j]));
+                    let f = (x - x0) / (x1 - x0);
+                    l.strength[j - 1] + f * (l.strength[j] - l.strength[j - 1])
+                };
+                (l.line.as_str(), v)
+            })
+            .collect()
+    }
+}
+
 #[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
 pub struct Grid {
     pub from_m: f64,
@@ -41,6 +84,8 @@ pub struct LightTable {
     pub grid: Grid,
     pub steps_per_decade: usize,
     pub disc_rings: usize,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub absorption: Option<Absorption>,
     #[serde(default)]
     pub references: Vec<Reference>,
 }
@@ -89,6 +134,19 @@ impl LightTable {
         ids.sort_unstable();
         if ids.windows(2).any(|w| w[0] == w[1]) {
             return Err("line ids repeat".into());
+        }
+        if let Some(a) = &self.absorption {
+            if a.teff_k.len() < 2 || a.teff_k.windows(2).any(|w| w[1] <= w[0]) {
+                return Err("absorption temperatures must rise, at least two".into());
+            }
+            for l in &a.lines {
+                if l.strength.len() != a.teff_k.len() || self.line(&l.line).is_none() {
+                    return Err(format!(
+                        "absorption line {} is unknown or has the wrong number of strengths",
+                        l.line
+                    ));
+                }
+            }
         }
         if self.steps_per_decade < 8 || self.grid.points < 2 {
             return Err(

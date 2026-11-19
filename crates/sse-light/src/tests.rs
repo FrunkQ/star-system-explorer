@@ -602,3 +602,187 @@ mod o7 {
         assert!(composite_power(&d, 1e-9, 1e-5, &c, &t) > 0.0);
     }
 }
+
+mod o12 {
+    use crate::observe::*;
+    use crate::*;
+    const PC: f64 = 3.085_677_581e16;
+
+    fn star(addr: &str, t_k: f64, r_m: f64) -> LightDescription {
+        let mut d = LightDescription::new(addr);
+        d.parts.push(Part::Thermal {
+            t_k,
+            area_m2: 4.0 * m::PI * r_m * r_m,
+            emissivity: 1.0,
+            cause: "photosphere".into(),
+        });
+        d
+    }
+
+    fn one(t_k: f64, v: f64) -> Component {
+        Component {
+            light: star("u:t/sys:0/star:0", t_k, 6.957e8),
+            radial_velocity_m_s: v,
+            photosphere_k: Some(t_k),
+        }
+    }
+
+    fn gm() -> Observer {
+        Observer {
+            coverage: vec![],
+            resolving_power: 1e4,
+        }
+    }
+
+    fn has(s: &Spectrum, id: &str) -> bool {
+        s.lines.iter().any(|l| l.line == id)
+    }
+
+    fn reading(s: &Spectrum, what: &str) -> Option<f64> {
+        s.readings
+            .iter()
+            .find(|r| r.what.starts_with(what))
+            .map(|r| r.value)
+    }
+
+    /// The Sun from 10 pc: Wien's law gives back 5772 K; the Fraunhofer lines are listed; TiO and He II are not.
+    #[test]
+    fn the_sun_from_ten_parsecs() {
+        let table = LightTable::base();
+        let t = Target {
+            address: "u:sol/sys:0/star:0".into(),
+            name: Some("Sun".into()),
+            distance_m: 10.0 * PC,
+            components: vec![one(5772.0, 0.0)],
+        };
+        let s = observe(&t, &gm(), &table).unwrap();
+        let tk = reading(&s, "temperature").unwrap();
+        assert!((tk / 5772.0 - 1.0).abs() < 1e-3, "{tk}");
+        for id in ["ca-k", "ca-h", "ch-g", "mg-b", "fe-e", "na-d", "ha", "hb"] {
+            assert!(has(&s, id), "{id}");
+        }
+        assert!(!has(&s, "tio-7054") && !has(&s, "heii"));
+        let sigma_t4 = SIGMA * 5772.0 * 5772.0 * 5772.0 * 5772.0;
+        let want = sigma_t4 * 4.0 * m::PI * 6.957e8 * 6.957e8 / (4.0 * m::PI * 100.0 * PC * PC);
+        let got = reading(&s, "flux").unwrap();
+        assert!((got / want - 1.0).abs() < 1e-3, "{got} {want}");
+    }
+
+    /// Temperature decides the lines: helium in a 20 000 K star, titanium oxide in a 3200 K one.
+    #[test]
+    fn lines_follow_temperature() {
+        let table = LightTable::base();
+        let at = |tk: f64| {
+            let t = Target {
+                address: "u:t/sys:0/star:0".into(),
+                name: None,
+                distance_m: PC,
+                components: vec![one(tk, 0.0)],
+            };
+            observe(&t, &gm(), &table).unwrap()
+        };
+        let b = at(20_000.0);
+        assert!(has(&b, "hei") && !has(&b, "tio-7054") && !has(&b, "na-d"));
+        let md = at(3200.0);
+        assert!(has(&md, "tio-7054") && has(&md, "na-d") && !has(&md, "hei"));
+    }
+
+    /// A double star shows doubled lines when the spectrograph can split them.
+    #[test]
+    fn double_star_doubles_its_lines() {
+        let table = LightTable::base();
+        let t = Target {
+            address: "u:t/sys:0/star:0".into(),
+            name: None,
+            distance_m: 20.0 * PC,
+            components: vec![one(5800.0, -30e3), one(5600.0, 30e3)],
+        };
+        let s = observe(&t, &gm(), &table).unwrap();
+        assert_eq!(reading(&s, "lines doubled"), Some(1.0));
+        let v0 = reading(&s, "line-of-sight speed, component 0").unwrap();
+        let v1 = reading(&s, "line-of-sight speed, component 1").unwrap();
+        assert!(
+            (v0 + 30e3).abs() < 10.0 && (v1 - 30e3).abs() < 10.0,
+            "{v0} {v1}"
+        );
+        let coarse = Observer {
+            coverage: vec![],
+            resolving_power: 2000.0,
+        };
+        assert_eq!(
+            reading(&observe(&t, &coarse, &table).unwrap(), "lines doubled"),
+            Some(0.0)
+        );
+    }
+
+    /// An observer reads only what its bands cover: optical sees the peak and the
+    /// lines; radio alone sees neither, and the chart greys the rest.
+    #[test]
+    fn coverage_greys_the_rest() {
+        let table = LightTable::base();
+        let t = Target {
+            address: "u:sol/sys:0/star:0".into(),
+            name: None,
+            distance_m: 10.0 * PC,
+            components: vec![one(5772.0, 12e3)],
+        };
+        let optical = Observer {
+            coverage: vec![Coverage {
+                name: "optical telescope".into(),
+                from_m: 3.5e-7,
+                to_m: 1.0e-6,
+            }],
+            resolving_power: 5000.0,
+        };
+        let s = observe(&t, &optical, &table).unwrap();
+        assert!(reading(&s, "temperature").is_some());
+        assert!(s.samples.iter().any(|x| x[2] == 0.0) && s.samples.iter().any(|x| x[2] == 1.0));
+        assert!(s
+            .samples
+            .iter()
+            .filter(|x| x[0] > 2e-6)
+            .all(|x| x[2] == 0.0));
+        assert!((reading(&s, "line-of-sight speed").unwrap() - 12e3).abs() < 5.0);
+        let radio = Observer {
+            coverage: vec![Coverage {
+                name: "radio dish".into(),
+                from_m: 1e-2,
+                to_m: 1.0,
+            }],
+            resolving_power: 5000.0,
+        };
+        let r = observe(&t, &radio, &table).unwrap();
+        assert!(reading(&r, "temperature").is_none());
+        assert!(reading(&r, "line-of-sight speed").is_none());
+        assert!(r.why.iter().any(|w| w.contains("outside your instruments")));
+        assert!(r.lines.iter().all(|l| !l.covered));
+    }
+
+    /// Emission lines arrive thinned by distance and moved by speed.
+    #[test]
+    fn emission_lines_arrive() {
+        let table = LightTable::base();
+        let mut neb = LightDescription::new("u:t/sys:0/nebula:0");
+        neb.lines.push(LineEmission {
+            line: "ha".into(),
+            power_w: 1e27,
+            cause: "recombination".into(),
+        });
+        let t = Target {
+            address: "u:t/sys:0/nebula:0".into(),
+            name: None,
+            distance_m: 500.0 * PC,
+            components: vec![Component {
+                light: neb,
+                radial_velocity_m_s: -20e3,
+                photosphere_k: None,
+            }],
+        };
+        let s = observe(&t, &gm(), &table).unwrap();
+        let l = s.lines.iter().find(|l| l.line == "ha").unwrap();
+        assert_eq!(l.kind, "emission");
+        let want = 1e27 / (4.0 * m::PI * 500.0 * PC * 500.0 * PC);
+        assert!((l.amount / want - 1.0).abs() < 1e-3);
+        assert!(l.observed_m < l.rest_m);
+    }
+}

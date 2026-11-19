@@ -1294,6 +1294,21 @@
   "deaths": [{ "star": "u:sol/sys:0/star:0", "died_at_s": 2.2e17, "initial_mass_msun": 1.0, "remnant_mass_msun": 0.54, "ambient_h_m3": 1000000.0 }]
  },
  {
+  "op": "read_spectrum",
+  "targets": [
+   { "address": "u:t/sys:4/star:0", "name": "a double star", "distance_m": 6.17e17,
+     "components": [
+      { "conditions": { "address": "u:t/sys:4/star:0", "radius_m": 6.957e8, "own_luminosity_w": 3.828e26 }, "radial_velocity_m_s": -30000.0 },
+      { "conditions": { "address": "u:t/sys:4/star:1", "radius_m": 6.0e8, "own_luminosity_w": 2.0e26 }, "radial_velocity_m_s": 30000.0 }
+     ] }
+  ],
+  "observer": { "coverage": [{ "name": "optical telescope", "from_m": 3.5e-7, "to_m": 1.0e-6 }], "resolving_power": 10000.0 }
+ },
+ {
+  "op": "read_spectrum",
+  "targets": [{ "address": "u:t/sys:4/star:0", "distance_m": 1.0, "components": [{ "radial_velocity_m_s": 0.0 }] }]
+ },
+ {
   "op": "read_activity",
   "seed": "contract",
   "stars": [

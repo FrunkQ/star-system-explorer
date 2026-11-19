@@ -340,6 +340,20 @@ pub enum Request {
         #[ts(optional, type = "unknown[]")]
         bodies: Option<Vec<serde_json::Value>>,
     },
+    /// Spectrum as it reaches an observer (O12): each target is one or more
+    /// components (`conditions` as for `read_light`, or a ready `light`
+    /// description), each with a line-of-sight speed; the observer gives the
+    /// wavelength ranges its instruments cover (none: everything) and a
+    /// resolving power. Returns flux samples with coverage, band fluxes,
+    /// emission and absorption lines where they arrive, and readings
+    /// (temperature from the peak, speeds, doubled lines) with Why.
+    ReadSpectrum {
+        #[ts(type = "unknown[]")]
+        targets: Vec<serde_json::Value>,
+        #[serde(default)]
+        #[ts(optional, type = "unknown")]
+        observer: Option<serde_json::Value>,
+    },
     /// Stellar activity (O10): for each star (conditions: mass, radius,
     /// power, temperature, age, and spin or a close companion's orbit), its
     /// activity level, cycle, spots and coronal X-rays, the state at `at_s`
@@ -639,6 +653,7 @@ impl Request {
             Request::ReadNebulae { .. } => "read_nebulae",
             Request::SurveyPlanets { .. } => "survey_planets",
             Request::ReadActivity { .. } => "read_activity",
+            Request::ReadSpectrum { .. } => "read_spectrum",
             Request::Adopt { .. } => "adopt",
             Request::ResolvedSystem { .. } => "resolved_system",
             Request::Systems => "systems",
@@ -730,6 +745,11 @@ pub fn ops() -> Vec<OpInfo> {
             "read_world_stack",
             Cost::Light,
             "one stack: validation, the depth ladder and a few atom evaluations",
+        ),
+        o(
+            "read_spectrum",
+            Cost::Light,
+            "per target: the grid, band integrals and a 400-point peak scan per covered range",
         ),
         o(
             "read_activity",
@@ -1003,6 +1023,11 @@ pub enum Response {
         table: serde_json::Value,
         #[ts(type = "unknown[]")]
         bodies: Vec<serde_json::Value>,
+    },
+    /// `read_spectrum`: each of `spectra` is `sse_light::observe::Spectrum`.
+    SpectrumRead {
+        #[ts(type = "unknown[]")]
+        spectra: Vec<serde_json::Value>,
     },
     /// `read_activity`: each of `stars` is `{ activity, moment, flares? }`
     /// with `sse_activity::Activity`, `Moment` and `Flares`.

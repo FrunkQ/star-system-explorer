@@ -281,6 +281,89 @@ fn parse_list<T: serde::de::DeserializeOwned>(
         .collect()
 }
 
+/// Spectrum as it reaches an observer (O12).
+pub(crate) fn read_spectrum(
+    targets: Vec<serde_json::Value>,
+    observer: Option<serde_json::Value>,
+) -> Out {
+    use sse_light::observe::*;
+    #[derive(serde::Deserialize)]
+    struct In {
+        #[serde(default)]
+        conditions: Option<sse_light::emit::Conditions>,
+        #[serde(default)]
+        light: Option<sse_light::LightDescription>,
+        #[serde(default)]
+        radial_velocity_m_s: f64,
+        #[serde(default)]
+        photosphere_k: Option<f64>,
+    }
+    #[derive(serde::Deserialize)]
+    struct T {
+        address: String,
+        #[serde(default)]
+        name: Option<String>,
+        distance_m: f64,
+        components: Vec<In>,
+    }
+    let model = sse_light::emit::Model::base();
+    let o: Observer = match observer {
+        Some(v) => {
+            serde_json::from_value(v).map_err(|e| err("bad_spectrum", format!("observer: {e}")))?
+        }
+        None => Observer {
+            coverage: vec![],
+            resolving_power: 5000.0,
+        },
+    };
+    let mut spectra = vec![];
+    for (n, v) in targets.into_iter().enumerate() {
+        let t: T = serde_json::from_value(v)
+            .map_err(|e| err("bad_spectrum", format!("target {n}: {e}")))?;
+        let mut comps = vec![];
+        for (k, c) in t.components.into_iter().enumerate() {
+            let (light, photo) = match (c.conditions, c.light) {
+                (Some(cond), _) => {
+                    let (d, facts) = sse_light::emit::describe(&cond, model)
+                        .map_err(|e| err("bad_conditions", e))?;
+                    // A glowing photosphere (2000 K or hotter) shows absorption lines.
+                    let tk = facts.effective_temperature_k;
+                    (
+                        d,
+                        c.photosphere_k
+                            .or(if cond.own_luminosity_w > 0.0 && tk >= 2000.0 {
+                                Some(tk)
+                            } else {
+                                None
+                            }),
+                    )
+                }
+                (None, Some(d)) => (d, c.photosphere_k),
+                (None, None) => {
+                    return Err(err(
+                        "bad_spectrum",
+                        format!("target {n} component {k}: give conditions or light"),
+                    ))
+                }
+            };
+            comps.push(Component {
+                light,
+                radial_velocity_m_s: c.radial_velocity_m_s,
+                photosphere_k: photo,
+            });
+        }
+        let tg = Target {
+            address: t.address,
+            name: t.name,
+            distance_m: t.distance_m,
+            components: comps,
+        };
+        let s = observe(&tg, &o, &model.table).map_err(|e| err("bad_spectrum", e))?;
+        spectra.push(serde_json::to_value(s).expect("plain data"));
+    }
+    Ok(Response::SpectrumRead { spectra })
+}
+
 /// Stellar activity (O10).
 pub(crate) fn read_activity(
     stars: Vec<serde_json::Value>,
