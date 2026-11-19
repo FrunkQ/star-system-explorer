@@ -1,7 +1,7 @@
 <!-- Time ruler view: scene events plus the kernel's history of this system, and the campaign's clock (U11). -->
 <script lang="ts">
   import { KIND_WORDS, type HistoryEvent, type Json, type SystemScene, type ViewContext } from "../../../ui-contract/src/index.ts";
-  import { TimeRuler, defaultCalendar, type RulerEvent } from "../../../chart-grammar/src/index.ts";
+  import { TimeRuler, defaultCalendar, fromPackCalendar, type RulerEvent } from "../../../chart-grammar/src/index.ts";
 
   let { ctx, scene, params }: { ctx: ViewContext; scene: SystemScene; params: Record<string, Json> } = $props();
   let history = $state<HistoryEvent[]>([]);
@@ -25,11 +25,9 @@
       return [{ id: e.id, at_yr: e.at_yr, label: `Authored edit (${e.subject.map(name).join(", ")})`, tone: "authored" }];
     }),
   ]);
-  // Until the kernel gives positions by date (orbits_at), worlds keep their places as the days pass. Said, not hidden.
-  const ORBITS_NOTE = "Worlds hold their places for now: orbits by the day come with the next kernel step.";
   function name(address: string): string {
     return scene.subjects.find((s) => s.address === address)?.label ?? address;
   }
 </script>
 
-<TimeRuler from={scene.span_yr[0]} to={scene.span_yr[1]} now={ctx.workspace.now_yr} campaignNow={params.campaign_clock === false ? undefined : ctx.workspace.campaign_now_yr} calendar={defaultCalendar(ctx.workspace.campaign_epoch_yr ?? ctx.workspace.campaign_now_yr ?? ctx.workspace.now_yr)} {events} label="System time" onchange={(yr) => ctx.workspace.setTime(yr)} onmakenow={(yr) => ctx.workspace.setCampaignNow?.(yr)} note={ORBITS_NOTE} />
+<TimeRuler from={scene.span_yr[0]} to={scene.span_yr[1]} now={ctx.workspace.now_yr} campaignNow={params.campaign_clock === false ? undefined : ctx.workspace.campaign_now_yr} calendar={ctx.workspace.pack_calendar ? fromPackCalendar(ctx.workspace.pack_calendar) : defaultCalendar(ctx.workspace.campaign_epoch_yr ?? ctx.workspace.campaign_now_yr ?? ctx.workspace.now_yr)} {events} label="System time" onchange={(yr) => ctx.workspace.setTime(yr)} onmakenow={(yr) => ctx.workspace.setCampaignNow?.(yr)} />
