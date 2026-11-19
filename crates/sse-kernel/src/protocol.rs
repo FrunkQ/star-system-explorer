@@ -340,6 +340,21 @@ pub enum Request {
         #[ts(optional, type = "unknown[]")]
         bodies: Option<Vec<serde_json::Value>>,
     },
+    /// Sensing (O9): for each target (light given as `conditions` or a ready
+    /// `light`, distance, dust as A_V, bright neighbours with their sky
+    /// separation) and each sensor (band, aperture, noise, stare,
+    /// threshold), whether it is detected, S/N, the stare needed and the
+    /// range at which it would be. With `radar`, how far a radar sees by its
+    /// echo against how far its pulse is heard.
+    Detect {
+        #[ts(type = "unknown[]")]
+        targets: Vec<serde_json::Value>,
+        #[ts(type = "unknown[]")]
+        sensors: Vec<serde_json::Value>,
+        #[serde(default)]
+        #[ts(optional, type = "unknown")]
+        radar: Option<serde_json::Value>,
+    },
     /// Air optics (light track, for the renderer's sky): for each air (gas
     /// fractions by number, surface pressure, temperature, gravity), Rayleigh
     /// cross-section, scattering per metre and optical depth at
@@ -667,6 +682,7 @@ impl Request {
             Request::ReadActivity { .. } => "read_activity",
             Request::ReadSpectrum { .. } => "read_spectrum",
             Request::ReadAirOptics { .. } => "read_air_optics",
+            Request::Detect { .. } => "detect",
             Request::Adopt { .. } => "adopt",
             Request::ResolvedSystem { .. } => "resolved_system",
             Request::Systems => "systems",
@@ -758,6 +774,11 @@ pub fn ops() -> Vec<OpInfo> {
             "read_world_stack",
             Cost::Light,
             "one stack: validation, the depth ladder and a few atom evaluations",
+        ),
+        o(
+            "detect",
+            Cost::Light,
+            "per target and sensor: two band integrals and closed-form noise",
         ),
         o(
             "read_air_optics",
@@ -1041,6 +1062,14 @@ pub enum Response {
         table: serde_json::Value,
         #[ts(type = "unknown[]")]
         bodies: Vec<serde_json::Value>,
+    },
+    /// `detect`: each of `detections` is `sse_sense::Detection` (target by
+    /// sensor, in order); `radar` is `sse_sense::RadarRanges` when asked.
+    Detected {
+        #[ts(type = "unknown[]")]
+        detections: Vec<serde_json::Value>,
+        #[ts(optional, type = "unknown")]
+        radar: Option<serde_json::Value>,
     },
     /// `read_air_optics`: each of `airs` is `sse_light::air::AirOptics`.
     AirOpticsRead {

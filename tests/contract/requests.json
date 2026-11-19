@@ -1294,6 +1294,28 @@
   "deaths": [{ "star": "u:sol/sys:0/star:0", "died_at_s": 2.2e17, "initial_mass_msun": 1.0, "remnant_mass_msun": 0.54, "ambient_h_m3": 1000000.0 }]
  },
  {
+  "op": "detect",
+  "targets": [
+   { "address": "u:t/sys:0/ship:0", "distance_m": 2.99e11,
+     "conditions": { "address": "u:t/sys:0/ship:0", "radius_m": 50.0, "bond_albedo": 0.1,
+       "lit_by": [{ "address": "u:t/sys:0/star:0", "luminosity_w": 3.828e26, "t_k": 5772.0, "distance_m": 7.48e11 }],
+       "radiators": [{ "t_k": 600.0, "area_m2": 2000.0 }] } },
+   { "address": "u:t/sys:0/ship:1", "distance_m": 2.99e11, "extinction_av": 30.0,
+     "conditions": { "address": "u:t/sys:0/ship:1", "radius_m": 50.0, "bond_albedo": 0.1,
+       "lit_by": [{ "address": "u:t/sys:0/star:0", "luminosity_w": 3.828e26, "t_k": 5772.0, "distance_m": 7.48e11 }] } }
+  ],
+  "sensors": [
+   { "name": "mid-infrared telescope", "from_m": 8e-6, "to_m": 1.4e-5, "aperture_m": 1.0, "dark_photons_s": 100.0, "stare_s": 60.0 },
+   { "name": "visible camera", "from_m": 4e-7, "to_m": 7e-7, "aperture_m": 0.5, "stare_s": 10.0 }
+  ],
+  "radar": { "power_w": 100000.0, "gain": 10000.0, "wavelength_m": 0.1, "cross_section_m2": 100.0, "min_power_w": 1e-16 }
+ },
+ {
+  "op": "detect",
+  "targets": [{ "address": "u:t/sys:0/ship:0", "distance_m": 1.0 }],
+  "sensors": [{ "name": "eye", "from_m": 4e-7, "to_m": 7e-7, "aperture_m": 0.007 }]
+ },
+ {
   "op": "read_air_optics",
   "airs": [
    { "address": "u:sol/sys:0/body:2", "gases": [{ "gas": "n2", "fraction": 0.7808 }, { "gas": "o2", "fraction": 0.2095 }, { "gas": "ar", "fraction": 0.0093 }, { "gas": "co2", "fraction": 0.0004 }],

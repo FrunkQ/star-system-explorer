@@ -28,6 +28,7 @@ sse-light = { path = "../sse-light" }
 sse-nebula = { path = "../sse-nebula" }
 sse-survey = { path = "../sse-survey" }
 sse-activity = { path = "../sse-activity" }
+sse-sense = { path = "../sse-sense" }
 serde.workspace = true
 serde_json.workspace = true
 ts-rs = { version = "=12.0.1", features = ["serde-json-impl"] }

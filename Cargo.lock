@@ -608,6 +608,7 @@ dependencies = [
  "sse-observe",
  "sse-pack",
  "sse-record",
+ "sse-sense",
  "sse-sift",
  "sse-surface",
  "sse-survey",
@@ -727,6 +728,17 @@ dependencies = [
  "sse-chronicle",
  "sse-core",
  "sse-flow",
+]
+
+[[package]]
+name = "sse-sense"
+version = "0.1.0"
+dependencies = [
+ "serde",
+ "serde_json",
+ "sse-core",
+ "sse-flow",
+ "sse-light",
 ]
 
 [[package]]

@@ -1003,6 +1003,11 @@ impl Kernel {
                 airs,
                 wavelengths_m,
             } => systems::read_air_optics(airs, wavelengths_m)?,
+            Request::Detect {
+                targets,
+                sensors,
+                radar,
+            } => systems::detect(targets, sensors, radar)?,
             Request::ReadActivity {
                 stars,
                 seed,

@@ -281,6 +281,94 @@ fn parse_list<T: serde::de::DeserializeOwned>(
         .collect()
 }
 
+/// Sensing (O9).
+pub(crate) fn detect(
+    targets: Vec<serde_json::Value>,
+    sensors: Vec<serde_json::Value>,
+    radar: Option<serde_json::Value>,
+) -> Out {
+    #[derive(serde::Deserialize)]
+    struct Lit {
+        #[serde(default)]
+        conditions: Option<sse_light::emit::Conditions>,
+        #[serde(default)]
+        light: Option<sse_light::LightDescription>,
+    }
+    #[derive(serde::Deserialize)]
+    struct Near {
+        address: String,
+        #[serde(flatten)]
+        lit: Lit,
+        distance_m: f64,
+        separation_rad: f64,
+    }
+    #[derive(serde::Deserialize)]
+    struct T {
+        address: String,
+        #[serde(flatten)]
+        lit: Lit,
+        distance_m: f64,
+        #[serde(default)]
+        extinction_av: f64,
+        #[serde(default)]
+        neighbours: Vec<Near>,
+    }
+    let model = sse_light::emit::Model::base();
+    let light_of = |l: Lit, what: &str| -> Result<sse_light::LightDescription, Response> {
+        match (l.conditions, l.light) {
+            (Some(c), _) => Ok(sse_light::emit::describe(&c, model)
+                .map_err(|e| err("bad_conditions", e))?
+                .0),
+            (None, Some(d)) => Ok(d),
+            (None, None) => Err(err(
+                "bad_sensing",
+                format!("{what}: give conditions or light"),
+            )),
+        }
+    };
+    let sensors: Vec<sse_sense::Sensor> = sensors
+        .into_iter()
+        .enumerate()
+        .map(|(n, v)| {
+            serde_json::from_value(v).map_err(|e| err("bad_sensing", format!("sensor {n}: {e}")))
+        })
+        .collect::<Result<_, _>>()?;
+    let mut detections = vec![];
+    for (n, v) in targets.into_iter().enumerate() {
+        let t: T = serde_json::from_value(v)
+            .map_err(|e| err("bad_sensing", format!("target {n}: {e}")))?;
+        let mut neighbours = vec![];
+        for nb in t.neighbours {
+            neighbours.push(sse_sense::Neighbour {
+                light: light_of(nb.lit, &nb.address)?,
+                address: nb.address,
+                distance_m: nb.distance_m,
+                separation_rad: nb.separation_rad,
+            });
+        }
+        let seen = sse_sense::Seen {
+            light: light_of(t.lit, &t.address)?,
+            address: t.address,
+            distance_m: t.distance_m,
+            extinction_av: t.extinction_av,
+            neighbours,
+        };
+        for s in &sensors {
+            let d = sse_sense::detect(&seen, s, &model.table).map_err(|e| err("bad_sensing", e))?;
+            detections.push(serde_json::to_value(d).expect("plain data"));
+        }
+    }
+    let radar = match radar {
+        Some(v) => {
+            let r: sse_sense::Radar =
+                serde_json::from_value(v).map_err(|e| err("bad_sensing", format!("radar: {e}")))?;
+            Some(serde_json::to_value(sse_sense::radar_ranges(&r)).expect("plain data"))
+        }
+        None => None,
+    };
+    Ok(Response::Detected { detections, radar })
+}
+
 /// Air optics (Rayleigh scattering) for planets' air.
 pub(crate) fn read_air_optics(
     airs: Vec<serde_json::Value>,
