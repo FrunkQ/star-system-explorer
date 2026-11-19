@@ -35,6 +35,7 @@ use sse_sift::{Atlas, Bound, Label, RuleSet, SiftContent, Subject};
 use std::collections::{BTreeMap, BTreeSet};
 
 pub mod import;
+pub mod mix;
 pub mod plan;
 
 #[cfg(test)]
@@ -236,6 +237,8 @@ pub const UNKNOWN: &str = "?";
 pub struct Codes {
     pub sheets: Vec<CodeSheet>,
     pub sift: SiftContent,
+    /// Gas mixes from every pack (`provides.other.gas_mixes`), in stack order.
+    pub mixes: Vec<mix::GasMix>,
 }
 
 impl Codes {
@@ -259,7 +262,28 @@ impl Codes {
                 Err(e) => errs.push(format!("{}: code_sheets: {e}", p.id)),
             }
         }
-        let out = Codes { sheets, sift };
+        let mut mixes: Vec<mix::GasMix> = Vec::new();
+        for p in stack {
+            let Some(v) = p.provides.other.get("gas_mixes") else {
+                continue;
+            };
+            match serde_json::to_value(v).and_then(serde_json::from_value::<Vec<mix::GasMix>>) {
+                Ok(ms) => {
+                    for m in ms {
+                        if mixes.iter().any(|o| o.id == m.id) {
+                            errs.push(format!("{}: gas mix {} is already defined", p.id, m.id));
+                        }
+                        mixes.push(m);
+                    }
+                }
+                Err(e) => errs.push(format!("{}: gas_mixes: {e}", p.id)),
+            }
+        }
+        let out = Codes {
+            sheets,
+            sift,
+            mixes,
+        };
         for s in &out.sheets {
             if let Err(e) = out.check(s) {
                 errs.push(e);

@@ -170,3 +170,56 @@ fn growing_honours_the_main_world_and_is_reproducible() {
         a.attempt, a.giants, a.belts, a.unmet
     );
 }
+
+/// Every gas mix, applied at its code's typical pressure, reads back as the
+/// same atmosphere digit (no preset silently changes a code).
+#[test]
+fn every_gas_mix_reads_back_as_its_own_digit() {
+    let c = codes();
+    let sheet = c.sheet("traveller.world").unwrap();
+    assert!(c.mixes.len() >= 20, "{}", c.mixes.len());
+    for m in &c.mixes {
+        for sym in m.codes.get("atmosphere").unwrap() {
+            let line = format!("X6{sym}5000-0");
+            let pins = crate::pins(&c, sheet, "uwp", &line).unwrap();
+            let mut w = crate::typical_world(sheet, &pins, &BTreeMap::new());
+            m.apply(&mut w);
+            let r = c.read(sheet, &Subject::new(w.clone()), None);
+            assert_eq!(
+                r.line("uwp"),
+                Some(line.as_str()),
+                "{} as {sym}: {w:?}",
+                m.id
+            );
+        }
+    }
+    // The plan picks a fitting mix by the seed, the same one every time.
+    let a = plan_for(&c, "A867975-9", "814", &["G2 V"]);
+    assert_eq!(a.mix.as_deref(), Some("traveller.mix.6-earth"));
+    let picks: std::collections::BTreeSet<Option<String>> = (0..40)
+        .map(|i| {
+            let sheet = c.sheet("traveller.world").unwrap();
+            plan(
+                &c,
+                sheet,
+                &[("uwp", "X6A5000-0")],
+                &["G2 V"],
+                &BTreeMap::new(),
+                &format!("s{i}"),
+            )
+            .unwrap()
+            .mix
+        })
+        .collect();
+    assert!(picks.len() >= 3, "{picks:?}");
+    // What to wear outside comes from the digit.
+    let r = c.read(
+        sheet,
+        &Subject::new(facts(&plan_for(&c, "X6B5000-0", "000", &["G2 V"]))),
+        None,
+    );
+    assert_eq!(
+        r.groups.iter().find(|g| g.id == "needs").unwrap().codes(),
+        vec!["protective_suit"]
+    );
+}

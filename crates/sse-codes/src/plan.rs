@@ -292,6 +292,9 @@ pub struct Edit {
 #[derive(Clone, PartialEq, Debug, Serialize, Deserialize)]
 pub struct Plan {
     pub line: String,
+    /// The gas mix chosen for the air, if the stack has one that fits.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub mix: Option<String>,
     pub seed: String,
     pub stars: Vec<StarCode>,
     pub pin: WorldPin,
@@ -332,7 +335,24 @@ pub fn plan(
             u.segment, u.symbol
         ));
     }
-    let world = typical_world(sheet, &all, &BTreeMap::new());
+    let mut world = typical_world(sheet, &all, &BTreeMap::new());
+    // A named gas mix for the air code, picked by the seed (handoff 7A part 5).
+    let fitting: Vec<&crate::mix::GasMix> = codes
+        .mixes
+        .iter()
+        .filter(|m| all.iter().any(|p| m.fits(&p.segment, &p.symbol)))
+        .collect();
+    let u = sse_core::draw::draw(
+        &sse_core::draw::Seed::from_text(seed),
+        &"u:codes".parse().expect("a fixed address"),
+        &sse_core::draw::Stream::new("codes.gas_mix.v1").expect("a fixed stream"),
+        0,
+    ) as f64
+        / 18_446_744_073_709_551_616.0;
+    let mix = crate::mix::pick(&fitting, u).cloned();
+    if let Some(m) = &mix {
+        m.apply(&mut world);
+    }
     let stars: Vec<StarCode> = stars_text.iter().filter_map(|s| star(s)).collect();
     let primary = stars.first().map_or(1.0, |s| s.mass);
     let lum = luminosity(primary);
@@ -390,6 +410,7 @@ pub fn plan(
     });
     edits.sort_by(|a, b| a.field.cmp(&b.field));
     Ok(Plan {
+        mix: mix.map(|m| m.id),
         line: line.join(" "),
         seed: seed.into(),
         stars,

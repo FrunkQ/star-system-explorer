@@ -6490,6 +6490,11 @@
        "id": "bases",
        "label": "Bases",
        "prefix": "traveller.base."
+      },
+      {
+       "id": "needs",
+       "label": "Needed to go outside",
+       "prefix": "traveller.need."
       }
      ],
      "system": {
@@ -6539,6 +6544,21 @@
          {
           "if": "range",
           "field": "atmosphere.pp.so2",
+          "min": 0.001
+         },
+         {
+          "if": "range",
+          "field": "atmosphere.pp.cl2",
+          "min": 0.001
+         },
+         {
+          "if": "range",
+          "field": "atmosphere.pp.f2",
+          "min": 0.001
+         },
+         {
+          "if": "range",
+          "field": "atmosphere.pp.h2so4",
           "min": 0.001
          },
          {
@@ -7576,6 +7596,118 @@
         "field": "traveller.bases.K",
         "value": true
        }
+      },
+      {
+       "id": "traveller.need.vacc_suit.v1",
+       "tag": "traveller.need.vacc_suit",
+       "when": {
+        "if": "any",
+        "of": [
+         {
+          "if": "is",
+          "field": "traveller.uwp.atmosphere",
+          "value": 0
+         },
+         {
+          "if": "is",
+          "field": "traveller.uwp.atmosphere",
+          "value": 1
+         }
+        ]
+       }
+      },
+      {
+       "id": "traveller.need.respirator.v1",
+       "tag": "traveller.need.respirator",
+       "when": {
+        "if": "any",
+        "of": [
+         {
+          "if": "is",
+          "field": "traveller.uwp.atmosphere",
+          "value": 2
+         },
+         {
+          "if": "is",
+          "field": "traveller.uwp.atmosphere",
+          "value": 3
+         }
+        ]
+       }
+      },
+      {
+       "id": "traveller.need.filter.v1",
+       "tag": "traveller.need.filter",
+       "when": {
+        "if": "any",
+        "of": [
+         {
+          "if": "is",
+          "field": "traveller.uwp.atmosphere",
+          "value": 2
+         },
+         {
+          "if": "is",
+          "field": "traveller.uwp.atmosphere",
+          "value": 4
+         },
+         {
+          "if": "is",
+          "field": "traveller.uwp.atmosphere",
+          "value": 7
+         },
+         {
+          "if": "is",
+          "field": "traveller.uwp.atmosphere",
+          "value": 9
+         }
+        ]
+       }
+      },
+      {
+       "id": "traveller.need.air_supply.v1",
+       "tag": "traveller.need.air_supply",
+       "when": {
+        "if": "is",
+        "field": "traveller.uwp.atmosphere",
+        "value": 10
+       }
+      },
+      {
+       "id": "traveller.need.protective_suit.v1",
+       "tag": "traveller.need.protective_suit",
+       "when": {
+        "if": "is",
+        "field": "traveller.uwp.atmosphere",
+        "value": 11
+       }
+      },
+      {
+       "id": "traveller.need.sealed_suit.v1",
+       "tag": "traveller.need.sealed_suit",
+       "when": {
+        "if": "is",
+        "field": "traveller.uwp.atmosphere",
+        "value": 12
+       }
+      },
+      {
+       "id": "traveller.need.altitude.v1",
+       "tag": "traveller.need.altitude",
+       "when": {
+        "if": "is",
+        "field": "traveller.uwp.atmosphere",
+        "value": 13
+       }
+      },
+      {
+       "id": "traveller.need.low_ground.v1",
+       "tag": "traveller.need.low_ground",
+       "when": {
+        "if": "is",
+        "field": "traveller.uwp.atmosphere",
+        "value": 14
+       }
       }
      ]
     }
@@ -7734,6 +7866,590 @@
      "first_day": 2
     }
    },
+   "gas_mixes": [
+    {
+     "id": "traveller.mix.0-traces",
+     "label": "vacuum with traces of hydrogen, helium and sodium",
+     "codes": {
+      "atmosphere": [
+       "0"
+      ]
+     },
+     "composition": {
+      "h": [
+       0,
+       0.9
+      ],
+      "he": [
+       0,
+       0.1
+      ],
+      "na": [
+       0,
+       0.1
+      ]
+     },
+     "weight": 1.0,
+     "source": "V3 starter-sf atmospheres.json"
+    },
+    {
+     "id": "traveller.mix.1-mars",
+     "label": "trace carbon dioxide (ancient Mars)",
+     "codes": {
+      "atmosphere": [
+       "1"
+      ]
+     },
+     "composition": {
+      "co2": [
+       0.95,
+       0.98
+      ],
+      "n2": [
+       0.02,
+       0.03
+      ],
+      "ar": [
+       0.01,
+       0.02
+      ]
+     },
+     "weight": 1.0,
+     "source": "V3 starter-sf atmospheres.json"
+    },
+    {
+     "id": "traveller.mix.2-co2",
+     "label": "very thin, tainted by carbon dioxide",
+     "codes": {
+      "atmosphere": [
+       "2"
+      ]
+     },
+     "composition": {
+      "n2": [
+       0.7,
+       0.8
+      ],
+      "co2": [
+       0.15,
+       0.25
+      ],
+      "o2": [
+       0.1,
+       0.12
+      ]
+     },
+     "weight": 1.0,
+     "source": "V3 starter-sf atmospheres.json",
+     "note": "V3 had 5 to 10% oxygen, which reads as exotic (under 10% oxygen) here; raised to 10 to 12%"
+    },
+    {
+     "id": "traveller.mix.2-sulphur",
+     "label": "very thin, tainted by sulphur dioxide",
+     "codes": {
+      "atmosphere": [
+       "2"
+      ]
+     },
+     "composition": {
+      "n2": [
+       0.8,
+       0.9
+      ],
+      "o2": [
+       0.08,
+       0.15
+      ],
+      "so2": [
+       0.001,
+       0.005
+      ]
+     },
+     "weight": 1.0,
+     "source": "V3 starter-sf atmospheres.json"
+    },
+    {
+     "id": "traveller.mix.3-alpine",
+     "label": "very thin (alpine)",
+     "codes": {
+      "atmosphere": [
+       "3"
+      ]
+     },
+     "composition": {
+      "n2": [
+       0.75,
+       0.85
+      ],
+      "o2": [
+       0.15,
+       0.24
+      ],
+      "ar": [
+       0.01,
+       0.02
+      ]
+     },
+     "weight": 1.0,
+     "source": "V3 starter-sf atmospheres.json"
+    },
+    {
+     "id": "traveller.mix.4-smog",
+     "label": "thin, tainted by industrial pollutants",
+     "codes": {
+      "atmosphere": [
+       "4"
+      ]
+     },
+     "composition": {
+      "n2": [
+       0.7,
+       0.8
+      ],
+      "o2": [
+       0.15,
+       0.2
+      ],
+      "co": [
+       0.002,
+       0.005
+      ],
+      "no2": [
+       0.001,
+       0.003
+      ]
+     },
+     "weight": 1.0,
+     "source": "V3 starter-sf atmospheres.json",
+     "taint": "pollutants"
+    },
+    {
+     "id": "traveller.mix.5-plateau",
+     "label": "thin (plateau)",
+     "codes": {
+      "atmosphere": [
+       "5"
+      ]
+     },
+     "composition": {
+      "n2": [
+       0.78,
+       0.82
+      ],
+      "o2": [
+       0.18,
+       0.21
+      ],
+      "ar": [
+       0.01,
+       0.01
+      ]
+     },
+     "weight": 1.0,
+     "source": "V3 starter-sf atmospheres.json"
+    },
+    {
+     "id": "traveller.mix.6-earth",
+     "label": "standard nitrogen and oxygen (Earth-like)",
+     "codes": {
+      "atmosphere": [
+       "6"
+      ]
+     },
+     "composition": {
+      "n2": [
+       0.78,
+       0.79
+      ],
+      "o2": [
+       0.2,
+       0.21
+      ],
+      "ar": [
+       0.009,
+       0.01
+      ],
+      "co2": [
+       0.0004,
+       0.0006
+      ]
+     },
+     "weight": 1.0,
+     "source": "V3 starter-sf atmospheres.json"
+    },
+    {
+     "id": "traveller.mix.7-biological",
+     "label": "standard, tainted by pollen and spores",
+     "codes": {
+      "atmosphere": [
+       "7"
+      ]
+     },
+     "composition": {
+      "n2": [
+       0.75,
+       0.78
+      ],
+      "o2": [
+       0.2,
+       0.23
+      ],
+      "h2o": [
+       0.02,
+       0.05
+      ]
+     },
+     "weight": 1.0,
+     "source": "V3 starter-sf atmospheres.json",
+     "taint": "biological"
+    },
+    {
+     "id": "traveller.mix.8-heavy-n2",
+     "label": "dense, heavy in nitrogen",
+     "codes": {
+      "atmosphere": [
+       "8"
+      ]
+     },
+     "composition": {
+      "n2": [
+       0.7,
+       0.8
+      ],
+      "o2": [
+       0.1,
+       0.15
+      ],
+      "he": [
+       0.05,
+       0.1
+      ]
+     },
+     "weight": 1.0,
+     "source": "V3 starter-sf atmospheres.json"
+    },
+    {
+     "id": "traveller.mix.9-ammonia",
+     "label": "dense, tainted by ammonia",
+     "codes": {
+      "atmosphere": [
+       "9"
+      ]
+     },
+     "composition": {
+      "n2": [
+       0.6,
+       0.7
+      ],
+      "o2": [
+       0.15,
+       0.2
+      ],
+      "nh3": [
+       0.005,
+       0.02
+      ]
+     },
+     "weight": 1.0,
+     "source": "V3 starter-sf atmospheres.json",
+     "taint": "ammonia"
+    },
+    {
+     "id": "traveller.mix.9-oxygen",
+     "label": "dense, tainted by too much oxygen (a fire hazard)",
+     "codes": {
+      "atmosphere": [
+       "9"
+      ]
+     },
+     "composition": {
+      "n2": [
+       0.5,
+       0.6
+      ],
+      "o2": [
+       0.35,
+       0.45
+      ],
+      "ar": [
+       0.05,
+       0.1
+      ]
+     },
+     "weight": 1.0,
+     "source": "V3 starter-sf atmospheres.json"
+    },
+    {
+     "id": "traveller.mix.a-ammonia",
+     "label": "exotic: nitrogen and ammonia",
+     "codes": {
+      "atmosphere": [
+       "A"
+      ]
+     },
+     "composition": {
+      "n2": [
+       0.8,
+       0.9
+      ],
+      "nh3": [
+       0.1,
+       0.2
+      ]
+     },
+     "weight": 1.0,
+     "source": "V3 starter-sf atmospheres.json"
+    },
+    {
+     "id": "traveller.mix.a-co2",
+     "label": "exotic: dense carbon dioxide (greenhouse)",
+     "codes": {
+      "atmosphere": [
+       "A"
+      ]
+     },
+     "composition": {
+      "co2": [
+       0.8,
+       0.9
+      ],
+      "n2": [
+       0.1,
+       0.2
+      ]
+     },
+     "weight": 1.0,
+     "source": "V3 starter-sf atmospheres.json",
+     "note": "V3's Traveller-D; with no oxygen it reads as exotic here, and D is kept for very dense air with oxygen"
+    },
+    {
+     "id": "traveller.mix.a-phosphine",
+     "label": "exotic: reducing phosphine and hydrogen",
+     "codes": {
+      "atmosphere": [
+       "A"
+      ]
+     },
+     "composition": {
+      "ph3": [
+       0.4,
+       0.6
+      ],
+      "h2": [
+       0.3,
+       0.5
+      ],
+      "ch4": [
+       0,
+       0.2
+      ]
+     },
+     "weight": 0.2,
+     "source": "V3 starter-sf atmospheres.json"
+    },
+    {
+     "id": "traveller.mix.a-carbon",
+     "label": "exotic: reducing carbon monoxide and methane",
+     "codes": {
+      "atmosphere": [
+       "A"
+      ]
+     },
+     "composition": {
+      "co": [
+       0.5,
+       0.7
+      ],
+      "ch4": [
+       0.2,
+       0.4
+      ],
+      "h2": [
+       0,
+       0.1
+      ]
+     },
+     "weight": 0.3,
+     "source": "V3 starter-sf atmospheres.json"
+    },
+    {
+     "id": "traveller.mix.a-dense-ammonia",
+     "label": "exotic: ammonia world",
+     "codes": {
+      "atmosphere": [
+       "A"
+      ]
+     },
+     "composition": {
+      "nh3": [
+       0.5,
+       0.7
+      ],
+      "n2": [
+       0.2,
+       0.4
+      ],
+      "ch4": [
+       0,
+       0.1
+      ]
+     },
+     "weight": 0.2,
+     "source": "V3 starter-sf atmospheres.json"
+    },
+    {
+     "id": "traveller.mix.b-venusian",
+     "label": "corrosive: carbon dioxide with sulphur compounds (Venusian)",
+     "codes": {
+      "atmosphere": [
+       "B",
+       "C"
+      ]
+     },
+     "composition": {
+      "co2": [
+       0.95,
+       0.97
+      ],
+      "so2": [
+       0.01,
+       0.03
+      ],
+      "h2so4": [
+       0.01,
+       0.02
+      ]
+     },
+     "weight": 1.0,
+     "source": "V3 starter-sf atmospheres.json"
+    },
+    {
+     "id": "traveller.mix.b-chlorine",
+     "label": "corrosive chlorine haze",
+     "codes": {
+      "atmosphere": [
+       "B",
+       "C"
+      ]
+     },
+     "composition": {
+      "cl2": [
+       0.6,
+       0.8
+      ],
+      "n2": [
+       0.1,
+       0.3
+      ],
+      "hcl": [
+       0,
+       0.1
+      ]
+     },
+     "weight": 0.2,
+     "source": "V3 starter-sf atmospheres.json"
+    },
+    {
+     "id": "traveller.mix.b-fluorine",
+     "label": "hyper-corrosive fluorine",
+     "codes": {
+      "atmosphere": [
+       "B",
+       "C"
+      ]
+     },
+     "composition": {
+      "f2": [
+       0.5,
+       0.7
+      ],
+      "n2": [
+       0.2,
+       0.4
+      ],
+      "hf": [
+       0,
+       0.1
+      ]
+     },
+     "weight": 0.2,
+     "source": "V3 starter-sf atmospheres.json"
+    },
+    {
+     "id": "traveller.mix.c-halogens",
+     "label": "insidious: nitrogen with chlorine and fluorine",
+     "codes": {
+      "atmosphere": [
+       "C"
+      ]
+     },
+     "composition": {
+      "n2": [
+       0.8,
+       0.9
+      ],
+      "cl2": [
+       0.05,
+       0.1
+      ],
+      "f2": [
+       0.01,
+       0.05
+      ]
+     },
+     "weight": 1.0,
+     "source": "V3 starter-sf atmospheres.json",
+     "note": "V3 gave 1 to 5 bar; insidious air here is corrosive at 10 bar and up, so the pressure comes from the code"
+    },
+    {
+     "id": "traveller.mix.d-dense",
+     "label": "very dense nitrogen and oxygen",
+     "codes": {
+      "atmosphere": [
+       "D"
+      ]
+     },
+     "composition": {
+      "n2": [
+       0.78,
+       0.8
+      ],
+      "o2": [
+       0.19,
+       0.21
+      ],
+      "ar": [
+       0.009,
+       0.01
+      ]
+     },
+     "weight": 1.0,
+     "source": "Traveller pack (SSE4)",
+     "note": "new: V3's D preset had no oxygen (now an exotic mix)"
+    },
+    {
+     "id": "traveller.mix.f-methane",
+     "label": "unusual: thin nitrogen and methane (Titan-like)",
+     "codes": {
+      "atmosphere": [
+       "F"
+      ]
+     },
+     "composition": {
+      "n2": [
+       0.9,
+       0.95
+      ],
+      "ch4": [
+       0.05,
+       0.1
+      ]
+     },
+     "weight": 1.0,
+     "source": "V3 starter-sf atmospheres.json",
+     "note": "V3 labelled it F (thin, low); low air is E here, so this is kept as unusual"
+    }
+   ],
    "vocabulary": {
     "terms": {
      "planet": "world",
@@ -7801,6 +8517,16 @@
     "traveller.zone": {
      "A": "amber",
      "R": "red"
+    },
+    "traveller.need": {
+     "vacc_suit": "a vacuum suit",
+     "respirator": "a respirator (compressor) for the thin air",
+     "filter": "a filter mask against the taint",
+     "air_supply": "an air supply: no breathable oxygen",
+     "protective_suit": "a protective suit against corrosive air",
+     "sealed_suit": "a sealed suit, renewed often: insidious air defeats seals",
+     "altitude": "high ground: the air is breathable only at altitude",
+     "low_ground": "low ground: the air is breathable only in the lowlands"
     }
    }
   }
