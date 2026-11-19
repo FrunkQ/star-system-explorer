@@ -1,0 +1,15 @@
+{
+  "schema": "sse.screen/1",
+  "id": "sse.workspace.gm.life",
+  "label": "Life",
+  "audience": "gm",
+  "layout": "chart-room",
+  "theme": "chart-room",
+  "symbology": "sse.symbology.diagrammatic",
+  "vocab": "physics",
+  "items": [
+    { "view": "sse.view.biosphere", "area": "chart" },
+    { "view": "sse.view.body-card", "area": "card" },
+    { "view": "sse.view.time-ruler", "area": "ruler" }
+  ]
+}
