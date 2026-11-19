@@ -34,4 +34,4 @@ pins?: unknown, } | { "op": "read_world_stack", body?: string,
 /**
  * `earth`, `europa`, `mars`, `tarn`, `titan` or `venus`.
  */
-fixture?: string, stack?: unknown, } | { "op": "adopt", import_v3?: string, formation?: FormationRequest, occurred_at_s?: number, } | { "op": "resolved_system", system: string, at_s?: number, tiles?: Array<TileRequest>, };
+fixture?: string, stack?: unknown, } | { "op": "adopt", import_v3?: string, formation?: FormationRequest, occurred_at_s?: number, } | { "op": "resolved_system", system: string, at_s?: number, tiles?: Array<TileRequest>, } | { "op": "systems" };

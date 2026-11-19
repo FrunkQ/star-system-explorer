@@ -142,3 +142,13 @@ Code: `crates/sse-kernel/src/adopt.rs`; `systems::form` is the pipeline run shar
   - Facts-built bodies have no water or atmosphere unless `body.oceans` is set, so an imported Earth gets `episodic-lid` rather than plates. A V3 hydrosphere or atmosphere field mapped to facts would fix it.
   - Formation surfaces come from the run as formed; after a write-back the orbits in the facts move but the run's surfaces do not, except for the epoch shift and engulfed worlds.
   - New TS types: `FormationRequest`, `TileRequest`.
+
+## Evidence per fact and the systems list (19 Nov, the UI track's second asks)
+- `system_resolved` gains `evidence`: address to field to `{evidence, by}`, from the last event in fold order (activated by the date read) that set the field. `evidence` is the label (`authored`, `catalogued`, `resolved`, `derived`, `authored-impossible`, `narrative`), and `by` is the event kind (`adopt.formation`, `adopt.v3`, `time.aged`, `authored.set`, `evolve.transition`, ...). A written-back value reads `derived` by `time.aged`, never authored.
+- New op `systems` (light) returns `systems_listed { systems: [{system, source, name?, addresses, adopted_event?}] }`: every `<root>/sys:*` with facts at or under it, so the chart's list survives a reload. `source` is `v3`, `formation` or `facts` (authored only).
+- Test `adopt_age_and_read_back_a_system` checks both. Contract line 128 (`systems` in `u:kestrel`) is new, and the resolved-system line gained `evidence`. `hello` changed with the op list.
+
+## Second merge with the physics track (19 Nov, at ac61f49)
+- Brought in S2, S3, `read_world_stack` and the importer's hydrosphere facts (`body.surface_water_oceans`, `body.oceans`, `body.surface_pressure`; an imported Earth is now mobile-lid through `resolved_system`).
+- Conflicts were resolved by keeping both sides: tests, the harness engine lists (both tracks' engines), START-HERE rows (each track's own row).
+- The generated TS and `contract.jsonl` were regenerated. Against the physics head, only `hello`, the "nonsense" error, the resolved-system line (now with `evidence`) and the new `systems` line differ. Worker 133 of 133.

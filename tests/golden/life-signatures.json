@@ -1,0 +1,274 @@
+{
+  "dead-earth": {
+    "epochs": [
+      [
+        "The barren age",
+        0.0,
+        1165.0,
+        false
+      ],
+      [
+        "The age of rock-eaters",
+        1165.0,
+        1260.0,
+        true
+      ],
+      [
+        "The age of purple mats",
+        1260.0,
+        1265.0,
+        false
+      ],
+      [
+        "The age of rock-eaters",
+        1265.0,
+        1780.0,
+        true
+      ],
+      [
+        "The age of green mats",
+        1780.0,
+        4310.0,
+        true
+      ],
+      [
+        "The age of complex cells",
+        4310.0,
+        4380.0,
+        false
+      ],
+      [
+        "The age of soft bodies",
+        4380.0,
+        4390.0,
+        false
+      ],
+      [
+        "The age of the land",
+        4390.0,
+        4530.0,
+        false
+      ],
+      [
+        "The age of large animals",
+        4530.0,
+        4540.0,
+        false
+      ],
+      [
+        "The age of shells and bones",
+        4540.0,
+        4570.0,
+        false
+      ]
+    ],
+    "facts": {
+      "gm.life.alive": false,
+      "gm.life.ever_alive": true,
+      "life.evidence": "plausible reconstruction",
+      "life.obvious.seasonal": false,
+      "life.past.traces": [
+        "isotopes (rare)",
+        "stromatolites (rare)",
+        "banded_iron (scattered)",
+        "fossils (abundant)"
+      ],
+      "life.signature.candidate": false,
+      "life.signature.ch4_ppm": 0.01,
+      "life.signature.confidence": 0.3333333333333333,
+      "life.signature.o2": 0.0,
+      "life.signature.signals": [
+        "nothing"
+      ],
+      "life.survey.biomass_gc": 0.0,
+      "life.survey.guilds": []
+    },
+    "hash": "53ed98b46717b5aa55a6e2a79b5344268ba22dcf855995b61e6303867fe8f229",
+    "hooks": [
+      "dead_world_record"
+    ]
+  },
+  "earth": {
+    "epochs": [
+      [
+        "The barren age",
+        0.0,
+        1165.0,
+        false
+      ],
+      [
+        "The age of rock-eaters",
+        1165.0,
+        1260.0,
+        true
+      ],
+      [
+        "The age of purple mats",
+        1260.0,
+        1265.0,
+        false
+      ],
+      [
+        "The age of rock-eaters",
+        1265.0,
+        1780.0,
+        true
+      ],
+      [
+        "The age of green mats",
+        1780.0,
+        4310.0,
+        true
+      ],
+      [
+        "The age of complex cells",
+        4310.0,
+        4380.0,
+        false
+      ],
+      [
+        "The age of soft bodies",
+        4380.0,
+        4390.0,
+        false
+      ],
+      [
+        "The age of the land",
+        4390.0,
+        4530.0,
+        false
+      ],
+      [
+        "The age of large animals",
+        4530.0,
+        4540.0,
+        false
+      ],
+      [
+        "The age of shells and bones",
+        4540.0,
+        4570.0,
+        false
+      ]
+    ],
+    "facts": {
+      "gm.life.alive": true,
+      "gm.life.ever_alive": true,
+      "life.evidence": "plausible reconstruction",
+      "life.obvious.colour": "green",
+      "life.obvious.seasonal": true,
+      "life.past.traces": [
+        "isotopes (rare)",
+        "stromatolites (rare)",
+        "banded_iron (scattered)",
+        "fossils (abundant)"
+      ],
+      "life.signature.candidate": true,
+      "life.signature.ch4_ppm": 1.8062372762683465,
+      "life.signature.confidence": 0.9950248756218906,
+      "life.signature.edge_nm": 700.0,
+      "life.signature.o2": 0.21,
+      "life.signature.signals": [
+        "o2_ch4",
+        "red_edge"
+      ],
+      "life.survey.biomass_gc": 4.1863567834148736e+17,
+      "life.survey.guilds": [
+        "forests and grasslands",
+        "seaweeds and green scums of the sunlit sea",
+        "fungi and soil life",
+        "rotters of the sunlit sea",
+        "grazers of the land",
+        "grazers of the sunlit sea"
+      ],
+      "life.survey.hazard": "biochemically unrelated to visitors: probably inert, rarely toxic, not infectious",
+      "life.survey.summary": "teeming biosphere, 14 guilds, about 911 lineages"
+    },
+    "hash": "18814680aa3e0095b3c69fb2f9bff289b7e0745128f9a076ef6c6104ea969881",
+    "hooks": []
+  },
+  "earth-archean": {
+    "epochs": [],
+    "facts": {
+      "gm.life.alive": true,
+      "gm.life.ever_alive": true,
+      "life.evidence": "plausible reconstruction",
+      "life.obvious.seasonal": false,
+      "life.past.traces": [],
+      "life.signature.candidate": true,
+      "life.signature.ch4_ppm": 675.0829,
+      "life.signature.confidence": 0.6666666666666666,
+      "life.signature.o2": 0.0,
+      "life.signature.signals": [
+        "ch4"
+      ],
+      "life.survey.biomass_gc": 150365400000000.0,
+      "life.survey.guilds": [
+        "rusty purple mats",
+        "gas-making microbes",
+        "gas-making microbes",
+        "gas-making microbes",
+        "rotters of the sunlit sea",
+        "microbe-eating microbes and viruses of the sunlit sea"
+      ],
+      "life.survey.hazard": "biochemically unrelated to visitors: probably inert, rarely toxic, not infectious",
+      "life.survey.summary": "modest biosphere, 9 guilds, about 5 lineages"
+    },
+    "hash": "0c00d7ae54b3928146ca55527166ecb7aec00dd393719dc0a9c5226e7eb872f0",
+    "hooks": []
+  },
+  "europa": {
+    "epochs": [],
+    "facts": {
+      "gm.life.alive": true,
+      "gm.life.ever_alive": true,
+      "life.evidence": "plausible reconstruction",
+      "life.obvious.seasonal": false,
+      "life.past.traces": [],
+      "life.signature.blind": "an ice shell 20 km thick hides any ocean below; a remote scan sees nothing either way",
+      "life.signature.candidate": false,
+      "life.signature.ch4_ppm": 0.0,
+      "life.signature.confidence": 0.5,
+      "life.signature.o2": 0.0,
+      "life.signature.signals": [
+        "nothing"
+      ],
+      "life.survey.biomass_gc": 13200000000.0,
+      "life.survey.guilds": [
+        "rock-eating microbes",
+        "rock-eating microbes",
+        "rotters of the sea floor",
+        "rotters of the dark ocean under the ice"
+      ],
+      "life.survey.hazard": "biochemically unrelated to visitors: probably inert, rarely toxic, not infectious",
+      "life.survey.summary": "sparse biosphere, 4 guilds, about 2 lineages"
+    },
+    "hash": "87470fa21bf5d293b3e321e6ee4aa56f0e89e97ab4dd987b5bb81f1e2b0a0e7f",
+    "hooks": [
+      "hidden_life"
+    ]
+  },
+  "red-dwarf-desert": {
+    "epochs": [],
+    "facts": {
+      "gm.life.alive": false,
+      "gm.life.ever_alive": false,
+      "life.evidence": "plausible reconstruction",
+      "life.obvious.seasonal": false,
+      "life.past.traces": [],
+      "life.signature.candidate": true,
+      "life.signature.ch4_ppm": 0.0,
+      "life.signature.confidence": 0.6,
+      "life.signature.o2": 0.1,
+      "life.signature.signals": [
+        "o2"
+      ],
+      "life.survey.biomass_gc": 0.0,
+      "life.survey.guilds": []
+    },
+    "hash": "119e6efb5a9f12fff5b45c76eb94efc187ce22b339410bcb2b4fb8d74fb58f7a",
+    "hooks": [
+      "false_positive"
+    ]
+  }
+}

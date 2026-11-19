@@ -921,10 +921,17 @@ impl Kernel {
                     source: r.source,
                     at_s: r.at_s,
                     facts: r.facts,
+                    evidence: r.evidence,
                     spec: r.spec,
                     surfaces: r.surfaces,
                     tiles: r.tiles,
                     refused: r.refused,
+                }
+            }
+            Request::Systems => {
+                let u = self.universe()?;
+                Response::SystemsListed {
+                    systems: adopt::systems_of(&u.chronicle, &u.root),
                 }
             }
             Request::Atoms { ids } => {

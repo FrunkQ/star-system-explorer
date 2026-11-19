@@ -670,6 +670,52 @@
      "recovery_myr": "Recovery of diversity after mass extinctions takes about 10 Myr (Kirchner and Weil 2000); 90% at about 23 Myr",
      "oxidant_fact": "Oxygen levels are inputs until L2 computes them from the balance; here they count only once a high-power (oxygen-making) metabolism exists"
     }
+   },
+   "life_signatures": {
+    "about": "Box I: what observers can tell. Confidence is a posterior from the prior and the likelihood ratios of what is seen; floors are detection limits; gas amounts are sketches calibrated to Earth today.",
+    "prior": 0.5,
+    "o2_floor": 0.001,
+    "ch4_floor_ppm": 0.1,
+    "edge_floor": 0.05,
+    "o2_per_earth_production": 0.21,
+    "earth_oxygenic_gc_yr": 1e+17,
+    "ch4_ppm_per_gc_yr": 4.5e-15,
+    "anoxic_ch4_factor": 100.0,
+    "decay_methane_oxic": 0.005,
+    "decay_methane_anoxic": 0.5,
+    "lr_o2_ch4": 20.0,
+    "lr_o2_alone": 3.0,
+    "lr_o2_m_dwarf": 1.5,
+    "m_dwarf_teff_k": 3900.0,
+    "lr_ch4_alone": 2.0,
+    "lr_edge": 10.0,
+    "lr_nothing": 0.5,
+    "abundant": 0.3,
+    "scattered": 0.03,
+    "rare": 0.0001,
+    "sources": [
+     "Meadows, V. S. et al. 2018, Astrobiology 18, 630: exoplanet biosignatures, false positives and context",
+     "Krissansen-Totton, J., Olson, S. and Catling, D. C. 2018, Science Advances 4, eaao5747: O2-CH4 disequilibrium",
+     "Luger, R. and Barnes, R. 2015, Astrobiology 15, 119: abiotic oxygen from water loss round M dwarfs",
+     "Seager, S., Turner, E. L., Schafer, J. and Ford, E. B. 2005, Astrobiology 5, 372: the vegetation red edge",
+     "Kiang, N. Y. et al. 2007, Astrobiology 7, 222: the red edge shifts with the host star",
+     "Reeburgh, W. S. 2007, Chem. Rev. 107, 486: about 0.5% of production decays as methane",
+     "Kasting, J. F. 2005, Precambrian Research 137, 119: Archean methane of 100 to 1000 ppm"
+    ],
+    "disclosure": {
+     "life.obvious.*": "obvious",
+     "life.signature.*": "scanned",
+     "life.survey.*": "surveyed",
+     "life.past.*": "surveyed",
+     "life.evidence": "scanned",
+     "gm.life.*": "secret"
+    }
+   },
+   "life_sift": {
+    "about": "Box J: sifters name epochs by the newest capability and score them by persistence, reach, capacity change and reversibility (weights in that order); hooks raise stories. Defaults are in the code (SiftParams); a pack may override any field.",
+    "major": 0.25,
+    "aftermath_share": 0.3,
+    "doomed_within_myr": 500.0
    }
   }
  }

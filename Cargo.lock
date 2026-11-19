@@ -604,6 +604,7 @@ dependencies = [
  "serde_json",
  "sse-chronicle",
  "sse-core",
+ "sse-observe",
  "sse-pack",
  "sse-suite",
  "sse-world",

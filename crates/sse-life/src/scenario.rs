@@ -386,3 +386,155 @@ pub fn biosphere_golden() -> serde_json::Value {
     }
     serde_json::Value::Object(out)
 }
+
+/// Europa's ocean biosphere: chemotrophs and dormancy under 20 km of ice.
+pub fn europa_biosphere() -> crate::biosphere::Biosphere {
+    let caps: Vec<String> = ["chemotrophy", "dormancy"]
+        .iter()
+        .map(|s| s.to_string())
+        .collect();
+    let first: BTreeMap<String, f64> = [("chemotrophy", 900.0), ("dormancy", 2600.0)]
+        .iter()
+        .map(|(k, v)| (k.to_string(), *v))
+        .collect();
+    crate::biosphere::resolve(
+        &graph("europa"),
+        &budget_params(),
+        &history_params(),
+        &caps,
+        &first,
+        None,
+        &physics("europa"),
+        sse_core::Seed::from_text("europa"),
+        9_230_000_000 - 4_570_000_000,
+    )
+    .expect("europa biosphere")
+}
+
+/// What an observer could measure on the L1d fixture worlds.
+pub fn observables(name: &str) -> crate::signatures::Observables {
+    use crate::signatures::Observables;
+    let base = Observables {
+        star_teff_k: 5772.0,
+        atmosphere_bar: Some(1.0),
+        abiotic_o2: 0.0,
+        abiotic_ch4_ppm: 0.01,
+        ice_shell_km: None,
+        cloud_cover: 0.6,
+        land_fraction: 0.29,
+        obliquity_deg: 23.4,
+        recycling_gyr: Some(0.8),
+        erosion_gyr: None,
+        age_myr: 4570.0,
+    };
+    match name {
+        "earth-archean" => Observables {
+            age_myr: 2500.0,
+            land_fraction: 0.1,
+            ..base
+        },
+        "europa" => Observables {
+            atmosphere_bar: None,
+            abiotic_ch4_ppm: 0.0,
+            ice_shell_km: Some(20.0),
+            cloud_cover: 0.0,
+            land_fraction: 0.0,
+            obliquity_deg: 0.1,
+            recycling_gyr: Some(0.05),
+            ..base
+        },
+        // The scripted false positive: a dry world round a red dwarf whose
+        // oceans were lost in the star's bright youth, leaving oxygen.
+        "red-dwarf-desert" => Observables {
+            star_teff_k: 3200.0,
+            abiotic_o2: 0.1,
+            abiotic_ch4_ppm: 0.0,
+            cloud_cover: 0.1,
+            land_fraction: 1.0,
+            obliquity_deg: 5.0,
+            recycling_gyr: None,
+            erosion_gyr: Some(2.0),
+            age_myr: 6000.0,
+            ..base
+        },
+        _ => base,
+    }
+}
+
+/// The L1d cases: Earth today, Archean Earth, Europa (the scripted false
+/// negative), a red-dwarf desert (the scripted false positive) and a dead
+/// Earth (life's history without a living biosphere).
+#[allow(clippy::type_complexity)]
+pub fn signature_cases() -> Vec<(
+    String,
+    Option<crate::biosphere::Biosphere>,
+    Option<crate::history::LifeHistory>,
+    crate::signatures::Observables,
+)> {
+    let bios = biospheres();
+    let earth_h = crate::history::history(
+        &earth_timeline(),
+        &budget_params(),
+        &history_params(),
+        sse_core::Seed::from_text("a"),
+    )
+    .expect("earth history");
+    vec![
+        (
+            "earth".into(),
+            Some(bios[0].1.clone()),
+            Some(earth_h.clone()),
+            observables("earth"),
+        ),
+        (
+            "earth-archean".into(),
+            Some(bios[1].1.clone()),
+            None,
+            observables("earth-archean"),
+        ),
+        (
+            "europa".into(),
+            Some(europa_biosphere()),
+            None,
+            observables("europa"),
+        ),
+        (
+            "red-dwarf-desert".into(),
+            None,
+            None,
+            observables("red-dwarf-desert"),
+        ),
+        (
+            "dead-earth".into(),
+            None,
+            Some(earth_h),
+            observables("earth"),
+        ),
+    ]
+}
+
+/// L1d golden: signatures, hooks and epoch names of each case.
+pub fn signatures_golden() -> serde_json::Value {
+    let p = crate::signatures::SignatureParams::default();
+    let sp = crate::sift::SiftParams::default();
+    let mut out = serde_json::Map::new();
+    for (n, b, h, o) in signature_cases() {
+        let s = crate::signatures::signatures(b.as_ref(), h.as_ref(), &o, &p);
+        let inp = crate::sift::HookInputs {
+            habitable_until_myr: None,
+            o2_fraction: s.o2,
+            now_myr: o.age_myr,
+        };
+        let v = crate::sift::view(&n, b.as_ref(), h.as_ref(), &s, &inp, &sp);
+        out.insert(
+            n,
+            serde_json::json!({
+                "facts": crate::signatures::facts(&s),
+                "hooks": v.hooks.iter().map(|x| x.id.clone()).collect::<Vec<_>>(),
+                "epochs": v.epochs.iter().map(|e| serde_json::json!([e.name, e.from_myr, e.to_myr, e.major])).collect::<Vec<_>>(),
+                "hash": sse_core::ContentHash::of(&v).expect("hash").hex(),
+            }),
+        );
+    }
+    serde_json::Value::Object(out)
+}
