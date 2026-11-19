@@ -341,9 +341,7 @@ impl Placer<'_> {
                         .1
                         .max(num(b, "body.mass").map_or(0.0, |x| x.1 / model::M_EARTH)),
                 );
-                let r = (1.07 - 0.21 * 0.33)
-                    * m::pow(me, 1.0 / 3.7)
-                    * sse_core::quantity::consts::R_EARTH;
+                let r = (1.07 - 0.21 * 0.33) * m::pow(me, 1.0 / 3.7) * 6.371e6; // Zeng et al. 2016 R⊕ (mean radius)
                 let v = m::sqrt(2.0 * sse_core::quantity::consts::G * me * model::M_EARTH / r);
                 let i_max = m::pow(v / s.shoreline_v0_m_s, 4.0);
                 let a_min = m::sqrt(lum_sun / i_max);

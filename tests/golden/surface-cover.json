@@ -22,16 +22,16 @@
       "contrast_k": 42.10660600254136,
       "deposits": 0,
       "features": {
-        "continent": 2,
+        "continent": 3,
         "deep": 1,
-        "ice-cap": 9,
-        "island": 15,
+        "ice-cap": 11,
+        "island": 29,
         "mine": 20,
         "ocean": 1,
-        "peak": 8,
+        "peak": 6,
         "port": 12,
-        "range": 9,
-        "sea": 11,
+        "range": 7,
+        "sea": 4,
         "settlement": 40
       },
       "first_names": [
@@ -41,12 +41,12 @@
         "Sea of Zenorna",
         "Sea of Isis"
       ],
-      "layers": "e320b549ba3f4ae8963665dbc147d7415bb2ad07b7d8bd9a4d2fd7a60e6ec785",
-      "register": "2e15fae13fb068b2b5867d1cc601f3258482906f2b2d84718e0d8143f96fadf3",
+      "layers": "d6308a1ae97150c98ad5fc94af70019ce3d4391ab532fa3f099ab38cd09e9c79",
+      "register": "da161592e3eac84eb91a3c071981cf92b3e13ff9c0cda2e54d083b8085bd53e2",
       "tiles": [
-        "5c680d9c011ac80927938f3fb5c3c416a63493332d6fe868e48acb3993cb4867",
-        "0bda2ce38749faec6ffe62e6e8bc1d99f2a80dc343eee7e9ef5f1ef55d6653b6",
-        "995b75bfed6795456cdabc901d99e74f8264bb64c165986b12f546d8ea4bd66f"
+        "aa822d7632a0f8cbce835dbe7faef3f37db9754485d06e414a97685e9df9df64",
+        "bf373b3d270a7fb80a6f7555e6c74e6ace7648db333535fb4c1c7d41fb09cd98",
+        "bfe90b96be16f6caccff995c37567bb70f8a1d07df981fc9ff9c5562bf6f46aa"
       ]
     },
     {
@@ -72,7 +72,7 @@
         "Ororbe Range"
       ],
       "layers": "fe6e2da3664796a38281e7f01e11755066e9c7c50839fea18a35dbdc57904b34",
-      "register": "317923031208983b473cfa49eaaa0c2a2995ec8bd1f66629179e5ee13c1bcfab",
+      "register": "d3cfadd63ca3cddec94a3b4e4a2711a57252c66ffed189f883cd157d3c2608ff",
       "tiles": [
         "e32dc7c73d1a3f5914ce6e1fdf2b429f2499894dd993800888eeddd057f14fdf",
         "a712cbcb5432b8fd7a90d856014b29f63fd07a77ad5652c4d9a7fd26d0c44ba7",

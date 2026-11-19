@@ -9,13 +9,15 @@ use sse_flow::{Atom, CostClass};
 pub const M_EARTH: f64 = GM_EARTH / G;
 const M_JUPITER: f64 = GM_JUPITER / G;
 const M_SUN: f64 = GM_SUN / G;
+/// Earth's mean radius, the R⊕ of Zeng et al. 2016 (table 2 notes: 6.371e6 m).
+const R_EARTH_ZENG: f64 = 6.371e6;
 
-const CK17: &str = "Chen, J. and Kipping, D. 2017, ApJ 834, 17: probabilistic forecasting of the masses and radii of other worlds (mean relation, table 1). doi:10.3847/1538-4357/834/1/17";
-const ZENG16: &str = "Zeng, L., Sasselov, D. D. and Jacobsen, S. B. 2016, ApJ 819, 127: mass-radius relation for rocky planets based on PREM, eq. 8. doi:10.3847/0004-637X/819/2/127";
-const ZJ17: &str = "Zeng, L. and Jacobsen, S. B. 2017, ApJ 837, 164: a simple analytical model for rocky planet interiors (core radius fraction about the square root of core mass fraction) https://ui.adsabs.harvard.edu/abs/2017ApJ...837..164Z";
+const CK17: &str = "Chen, J. and Kipping, D. 2017, ApJ 834, 17: probabilistic forecasting of the masses and radii of other worlds (median posterior hyper-parameters, table 1). doi:10.3847/1538-4357/834/1/17";
+const ZENG16: &str = "Zeng, L., Sasselov, D. D. and Jacobsen, S. B. 2016, ApJ 819, 127: mass-radius relation for rocky planets based on PREM, eq. 2 (inverse eq. 3). doi:10.3847/0004-637X/819/2/127";
+const ZJ17: &str = "Zeng, L. and Jacobsen, S. B. 2017, ApJ 837, 164: a simple analytical model for rocky planet interiors (core radius fraction about the square root of core mass fraction). doi:10.3847/1538-4357/aa6218";
 const NEWTON: &str = "Newtonian gravity for a spherical body, e.g. de Pater, I. and Lissauer, J. J. 2015, Planetary Sciences, 2nd edn, Cambridge University Press, chapter 2. doi:10.1017/CBO9781316165270";
 
-/// Chen and Kipping 2017 mean relation: (upper mass bound in M⊕, exponent).
+/// Chen and Kipping 2017 relation at the posterior medians (table 1): (upper mass bound in M⊕, exponent).
 /// R = 1.008 R⊕ at 1 M⊕ (the paper's Terran constant); the other segments'
 /// constants follow from continuity, as in the paper.
 pub const CK_SEGMENTS: [(f64, f64); 4] = [
@@ -51,7 +53,7 @@ pub fn atoms() -> Vec<Box<dyn Atom>> {
             cost: CostClass::Trivial,
             references: &[CK17],
             curious: "Rocky worlds grow slowly with mass, gas-wrapped ones balloon, and past about Saturn's mass extra weight squeezes a giant rather than enlarging it.",
-            science: "Mean of a broken power law fitted to 316 objects from dwarf planets to late stars, with breaks at 2.0 M⊕ (rock to volatile envelope), 0.41 MJ (degeneracy pressure) and 0.08 M☉ (hydrogen fusion). Real worlds scatter around it by tens of percent; it is a forecast, not a composition model.",
+            science: "Median of a broken power law fitted to 316 objects from dwarf planets to late stars, with breaks at 2.0 M⊕ (rock to volatile envelope), 0.41 MJ (degeneracy pressure) and 0.08 M☉ (hydrogen fusion). Real worlds scatter around it by tens of percent; it is a forecast, not a composition model.",
             formula: "R ∝ M^0.279 | M^0.589 | M^-0.044 | M^0.881, continuous, R = 1.008 R⊕ at 1 M⊕",
             f: |i, _| {
                 let me = positive(i[0], "mass")? / M_EARTH;
@@ -112,7 +114,7 @@ pub fn atoms() -> Vec<Box<dyn Atom>> {
         .build(),
         Def {
             id: "sse.interior.rocky_radius",
-            version: "1.0.0",
+            version: "1.0.1",
             inputs: vec![
                 port("mass", "body.mass", D::MASS, Some((1.0 * M_EARTH, 8.0 * M_EARTH))),
                 port("core_mass_fraction", "interior.core_mass_fraction", D::NONE, Some((0.0, 0.4))),
@@ -122,17 +124,17 @@ pub fn atoms() -> Vec<Box<dyn Atom>> {
             cost: CostClass::Trivial,
             references: &[ZENG16],
             curious: "An iron-rich rocky world is smaller than a rock-rich one of the same mass, because iron packs tighter.",
-            science: "Fit to two-layer (iron core, silicate mantle) models scaled from Earth's seismic profile (PREM), for rocky planets without water or atmosphere. Holds to about 2 percent in its range.",
+            science: "Fit to two-layer (iron core, silicate mantle) models scaled from Earth's seismic profile (PREM), for rocky planets without water or atmosphere. Agrees with the model curves to about 0.01 R⊕ in its range (1 to 8 M⊕, core mass fraction 0 to 0.4); the inverse gives core mass fraction to about ±0.02.",
             formula: "R/R⊕ = (1.07 - 0.21 CMF) (M/M⊕)^(1/3.7)",
             f: |i, _| {
                 let me = positive(i[0], "mass")? / M_EARTH;
-                Ok(vec![R_EARTH * (1.07 - 0.21 * i[1]) * m::pow(me, 1.0 / 3.7)])
+                Ok(vec![R_EARTH_ZENG * (1.07 - 0.21 * i[1]) * m::pow(me, 1.0 / 3.7)])
             },
         }
         .build(),
         Def {
             id: "sse.interior.core_mass_fraction",
-            version: "1.0.0",
+            version: "1.0.1",
             inputs: vec![
                 port("mass", "body.mass", D::MASS, Some((1.0 * M_EARTH, 8.0 * M_EARTH))),
                 port("radius", "body.radius", D::LENGTH, None),
@@ -151,7 +153,7 @@ pub fn atoms() -> Vec<Box<dyn Atom>> {
             formula: "CMF = (1.07 - (R/R⊕) / (M/M⊕)^(1/3.7)) / 0.21",
             f: |i, _| {
                 let me = positive(i[0], "mass")? / M_EARTH;
-                let re = positive(i[1], "radius")? / R_EARTH;
+                let re = positive(i[1], "radius")? / R_EARTH_ZENG;
                 Ok(vec![(1.07 - re / m::pow(me, 1.0 / 3.7)) / 0.21])
             },
         }
