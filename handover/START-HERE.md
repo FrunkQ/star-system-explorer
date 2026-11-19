@@ -2,6 +2,20 @@
 
 Last updated: 19 Nov 2026: PR #2 (UI track) and PR #3 (kernel T1, T2) merged into the integration branch, which became `main`. Live site v4.starsystemx.com. Milestone M1 complete (K0 documents with Alex for review). Milestone 2 running as parallel tracks.
 
+## Standing rule: real physics, documented fudges (Alex, 19 Nov 2026)
+In his words: "the physics is WAY more interesting than faking it. But understand a browser has limited capability. Fall on physics rather than simplification where practical. If we decide to "fudge" it is a known and documented fudge with a damn fine reason to exist."
+
+- Every deliberate simplification, stand-in or tuned constant goes in `docs/fudges.md` (where it lives, why it exists, what real physics would replace it) in the same PR that adds it.
+- Every reference, published relation or quoted constant goes in `docs/citations.md` with its check status (verified, corrected, unverified). Check a relation against its source before relying on it.
+
+## Standing rule: physics in the chain blocks, each with a view (Alex, 19 Nov 2026)
+In his words: "try and do everything in the physics chain blocks... other than Big Blocks. And have a UI element that makes sense to visualise".
+
+- New physics goes into the editable, cited flows of small blocks (atoms and boxes) by default.
+- "Big Blocks" (heavy engine or simulator blocks: the classifier, weather, geology, stellar evolution and the like) only for what truly cannot be expressed as a flow, and each says why in `docs/fudges.md`.
+- Each block or Big Block has a UI element that makes sense to visualise what it does.
+- Logic hidden in Rust that could be a flow is listed in `docs/fudges.md` (section "Candidates to move into flows") until it moves.
+
 ## Where we are
 Milestone M1 "Proven core" = packages K0 to K6 (build plan section 3/4).
 
@@ -62,7 +76,7 @@ Milestone M1 "Proven core" = packages K0 to K6 (build plan section 3/4).
 | N1 sound engine: sound scenes, recipes, mixer, tiers, off by default, captions, orbit bed | done | packages/N1.md |
 | O1 light switch (UI side): Eye, Camera, SHO and HOO palettes, single bands, legend chip and honesty label, stubbed spectra marked | UI done on stubbed light; real light facts wait on the kernel | packages/O1-ui.md |
 | V13 make a system: import a V3 save (report and preview) and grow a new system (formation run and preview) | part 1 done: previews; part 2 adopts a preview into the campaign | packages/V13.md |
-| A1 agents shell, bring your own key | part 1 done: providers, keys on the device only, ledger and cap, Tars working, Orac and Minerva panels; part 2 reconciles with Ovid's source | packages/A1.md |
+| A1 agents shell, bring your own key | done (parts 1 and 2): providers, keys on the device only and apart from the settings, ledger and cap, loaded-context guard, reconciled with Ovid's source (agents track); **Alex to confirm** the Ovid relicensing line in NOTICE | packages/A1.md |
 | G0 default Milky-Way-like patch envelope | done (kernel track) | packages/G0.md |
 | G1 cosmology, cosmic web, epochs | done (kernel track) | packages/G1.md |
 | G2 haloes per cell, growth, spin, mergers | done (kernel track) | packages/G2.md |
@@ -93,12 +107,14 @@ Milestone M1 "Proven core" = packages K0 to K6 (build plan section 3/4).
 | W3 giants: bands as S6, storm families (great ovals, strings, dark spots, planet-circling outbreaks), polar regime by Burger number (cyclone ring, single vortex, diffuse cap), polygon jets by a stated rule (Saturn's hexagon); wired into the rule block and the `weather` op | done (weather track) | packages/W3.md |
 | W4 smoke, ash, haze, smog and spray from sources (eruption plumes by Mastin et al. 2009 and stratification, ballistic plumes on airless worlds, ash streaks and ash fall, dated sulphate veil cooling, impacts, fires gated by oxygen, smog over industry) | done (weather track); sources are caller inputs until S7, S12 and L1c publish them | packages/W4.md |
 | W6 the swap, proven: second block `sse.weather.zonal-ebm` (diffusive energy balance), save manifest, swap report with tolerance, pins carried, switch back restores exactly; kernel `weather` op takes `block` | done (weather track) | packages/W6.md |
+| R1 pass library, render recipes, degrade order, governor, quality badge (the Body globe runs on recipes: GPU, canvas, words) | done (renderer track) | packages/R1.md |
 
 ## Parallel tracks (18 Nov, Alex: build in parallel, integrate later)
 | Track | Packages | Branch |
 |---|---|---|
 | Physics | P1, P3, P4, F0 to F6 done; pipeline, F7, F9, S0 to S4 and S6 done; F8 waits on G6; next S7 (cover, named features, built layer) | `main` via PRs |
 | Kernel | K7 to K10, G0 to G6, C1 to C3, L0, L1a to L1d, L2, J1 to J4, T1, T2 (also through the API), the U3 gaps, the V10 grant gaps and the UI asks (`adopt`, look-ahead write-back, `resolved_system`; K6-additions.md) done; next G7 | `main` via PRs |
+| Renderer (R1 to R4, then exotic objects in bands) | R1 done; next R2 (Body and descent views, gpu-high, atmosphere, clouds, magnetic field overlay) | `main` via PRs |
 | Chart room shell and player views | U0 to U3, V1, U5, V2, V12, V3, V11, V4, V5, planet chart, V10, V6 System 3D, U9 lenses, N1 sound, U4 (what-if and look-ahead), A1 part 1, O1 light switch (UI), V13 parts 1 and 2 (import and grow, add to the campaign, read back and age with write-back), V6 Cutaway and Body globe (Body screen), phone screen menu, V14 size comparison and chart measuring, U10 browser campaign save, U7 biosphere view part 1 done; next V7, U7 part 2 (LifeFlow) | `main` via PRs |
 
 **Since 19 Nov (Alex): `main` is the default branch.** New work branches from `main` and arrives as a pull request

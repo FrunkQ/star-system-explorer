@@ -83,11 +83,11 @@
       "system": "m-dwarf"
     },
     {
-      "a_au": 2.926208969349532,
+      "a_au": 2.9254207503603977,
       "blocking": [],
       "class": "surface/hot-greenhouse",
       "fit": 1.0,
-      "hash": "d81719b710ff4f43b080aea6d22182f7faf5eea892803ad5279ac7beaf032a7d",
+      "hash": "fbb52b06bb41cdb02dbc569d183b6831fee82d0326ad4dd3572dfc14df182be6",
       "interventions": [],
       "label": "surface/hot-greenhouse",
       "outcome": "placed",

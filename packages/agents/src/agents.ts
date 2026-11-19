@@ -1,19 +1,25 @@
-// Agents, bring your own key (A1, H13, docs/ovid-agents.md). Written fresh in
-// the shape of Ovid Next's set-up (the same three provider kinds plus "another
-// provider by its /v1 address"; jobs that each link one model; a usage ledger
-// with an estimate before every run; never send more than the model holds).
-// Ovid's own files are not lifted here: its source was not readable from this
-// session and Alex has not yet confirmed the relicensing. When it is, the
-// adapter below is the place to reconcile.
+// Agents, bring your own key (A1, H13, docs/ovid-agents.md), in the shape of
+// Ovid Next's set-up: the same three provider kinds plus "another provider by
+// its /v1 address"; jobs that each link one model; a content-free usage
+// ledger with an estimate before every run; never send more than the model is
+// loaded with. Part 2 reconciled this with Ovid's source (models/links.ts,
+// ledger.ts, loaded-context.ts, play/support-ask.ts): the pieces lifted from
+// it are in lifted.ts, each naming the Ovid function it came from.
 //
 // Rules this module keeps:
-// - Keys live in this browser only (localStorage "sse4.agents"). They are sent
-//   only to the provider's own address, in its Authorization header. Nothing
+// - Keys live in this browser only, each under its own entry
+//   ("sse4.agents.key.<provider>"), apart from the settings ("sse4.agents"),
+//   as Ovid saves its link list without keys. So the settings can be shown,
+//   exported or reset without carrying a key. Keys are sent only to the
+//   provider's own address, in its Authorization header, and taken out of
+//   anything sent to a model (lifted.ts clean). Nothing
 //   here is imported by the peer-to-peer code, the share, the players' page or
 //   any session, so a key cannot reach another device or a state hash
 //   (tests/ui/boundary.test.ts checks the imports).
 // - LLMs never compute physics and never sit in a deterministic path.
 // - The app is fully usable with no key: nothing else depends on this module.
+
+import { UNSAID, clean, fromLmStudioV1, fromOllamaPs, listedPrice, normalBase } from "./lifted.ts";
 
 export type ProviderKind = "openrouter" | "lmstudio" | "ollama" | "other";
 
@@ -49,6 +55,8 @@ export interface ModelInfo {
   context?: number;
   /** US dollars per token, when the provider says. */
   price?: { prompt: number; completion: number };
+  /** The provider lists the price as varying (a router): no estimate is made. */
+  varies?: true;
 }
 
 export interface LedgerRow {
@@ -57,13 +65,18 @@ export interface LedgerRow {
   model: string;
   tokens_in: number;
   tokens_out: number;
+  /** As the provider charged it, else from its listed price; missing when neither is known (never shown as zero). */
   usd?: number;
+  /** False for a call that failed: it is kept too, as Ovid's ledger keeps them. */
+  ok?: boolean;
+  /** Milliseconds the call took. */
+  ms?: number;
 }
 
 export interface AgentsState {
   schema: "sse.agents/0";
   providers: Provider[];
-  links: Partial<Record<JobId, { provider: string; model: string; context?: number; price?: ModelInfo["price"] }>>;
+  links: Partial<Record<JobId, { provider: string; model: string; context?: number; price?: ModelInfo["price"]; varies?: true; loaded?: number }>>;
   /** Daily spending cap in US dollars; null for none. */
   cap_usd: number | null;
   /** 0 (plain) to 1 (dry humour, the default), for Tars. */
@@ -72,6 +85,15 @@ export interface AgentsState {
 }
 
 export const STORE_KEY = "sse4.agents";
+/** Where one provider's key is kept: its own entry, never inside the settings. */
+export const keyEntry = (provider: string) => `${STORE_KEY}.key.${provider}`;
+
+/** The part of localStorage the agents use (a Map in tests). */
+export interface KeyStore {
+  getItem(k: string): string | null;
+  setItem(k: string, v: string): void;
+  removeItem(k: string): void;
+}
 
 export function emptyAgents(): AgentsState {
   return { schema: "sse.agents/0", providers: [], links: {}, cap_usd: 1, humour: 0.6, ledger: [] };
@@ -85,6 +107,107 @@ export function readAgents(raw: string | null): AgentsState {
     return { ...emptyAgents(), ...o, providers: Array.isArray(o.providers) ? o.providers : [], ledger: Array.isArray(o.ledger) ? o.ledger.slice(-500) : [] };
   } catch {
     return emptyAgents();
+  }
+}
+
+/** A store that lasts for this page only (a private window, tests). */
+export function memoryStore(): KeyStore {
+  const m = new Map<string, string>();
+  return { getItem: (k) => m.get(k) ?? null, setItem: (k, v) => void m.set(k, v), removeItem: (k) => void m.delete(k) };
+}
+
+/** The settings as stored: every provider without its key (Ovid's saveLinks). */
+export function settingsText(s: AgentsState): string {
+  return JSON.stringify({ ...s, providers: s.providers.map(({ key: _k, ...p }) => p), ledger: s.ledger.slice(-500) });
+}
+
+/**
+ * Settings and keys from the store. A key saved inside the settings by part 1
+ * is moved to its own entry the first time it is read.
+ */
+export function loadAgents(store: KeyStore): AgentsState {
+  let raw: string | null = null;
+  try {
+    raw = store.getItem(STORE_KEY);
+  } catch {
+    return emptyAgents();
+  }
+  const s = readAgents(raw);
+  let moved = false;
+  for (const p of s.providers) {
+    if (p.key) {
+      try {
+        store.setItem(keyEntry(p.id), p.key);
+        moved = true;
+      } catch {
+        /* keep it for this page */
+      }
+    } else {
+      try {
+        const k = store.getItem(keyEntry(p.id));
+        if (k) p.key = k;
+      } catch {
+        /* none */
+      }
+    }
+  }
+  if (moved) saveAgents(store, s);
+  return s;
+}
+
+/** Save the settings and each key in its own entry; a removed provider's key is deleted with it. */
+export function saveAgents(store: KeyStore, s: AgentsState, removed: readonly string[] = []): void {
+  try {
+    store.setItem(STORE_KEY, settingsText(s));
+    for (const p of s.providers) {
+      if (p.key) store.setItem(keyEntry(p.id), p.key);
+      else store.removeItem(keyEntry(p.id));
+    }
+    for (const id of removed) if (!s.providers.some((p) => p.id === id)) store.removeItem(keyEntry(id));
+  } catch {
+    /* private window: settings last for this page only */
+  }
+}
+
+/** A new provider from what was typed: the address mended as Ovid mends it (normalBase). */
+export function newProvider(s: AgentsState, kind: ProviderKind, label: string, typedBase: string, key: string): Provider | { problem: string } {
+  const base = normalBase(typedBase, kind === "ollama");
+  if (!/^https?:\/\//.test(base)) return { problem: "That is not an address SSE can call. It usually looks like https://example.com/v1." };
+  if (PROVIDER_KINDS[kind].key === "required" && !key.trim()) return { problem: `${PROVIDER_KINDS[kind].label} needs a key.` };
+  let id: string = kind;
+  for (let n = 2; s.providers.some((p) => p.id === id); n++) id = `${kind}-${n}`;
+  return { id, kind, label: label.trim() || PROVIDER_KINDS[kind].label, base, ...(key.trim() ? { key: key.trim() } : {}) };
+}
+
+const isLocal = (p: Provider) => p.kind === "lmstudio" || p.kind === "ollama";
+
+/**
+ * The context a prompt to this link must fit. For LM Studio and Ollama, what
+ * the model is loaded with (read by readLoaded), else 4096; never the most it
+ * could take (Ovid's loaded-context rule). For others, the listed context.
+ */
+export function contextOf(s: AgentsState, job: JobId): number | undefined {
+  const l = s.links[job];
+  const p = l && s.providers.find((x) => x.id === l.provider);
+  if (!l || !p) return undefined;
+  if (isLocal(p)) return l.loaded ?? UNSAID;
+  return l.context;
+}
+
+/**
+ * Ask a local server what the model is loaded with (LM Studio's /api/v1/models,
+ * Ollama's /api/ps). Null for a provider that is not local or does not say.
+ */
+export async function readLoaded(p: Provider, model: string, fetcher: typeof fetch = fetch): Promise<number | null> {
+  if (!isLocal(p)) return null;
+  const root = p.base.replace(/\/+$/, "").replace(/\/v1$/, "");
+  try {
+    const r = await fetcher(p.kind === "lmstudio" ? `${root}/api/v1/models` : `${root}/api/ps`);
+    if (!r.ok) return null;
+    const j = (await r.json()) as unknown;
+    return p.kind === "lmstudio" ? (fromLmStudioV1(j, model)?.tokens ?? null) : (fromOllamaPs(j, model) ?? null);
+  } catch {
+    return null;
   }
 }
 
@@ -112,8 +235,8 @@ export async function listModels(p: Provider, fetcher: typeof fetch = fetch): Pr
     if (!r.ok) return { ok: false, message: r.status === 401 || r.status === 403 ? "The provider refused the key." : `The provider answered ${r.status}.` };
     const body = (await r.json()) as { data?: { id: string; context_length?: number; pricing?: { prompt?: string; completion?: string } }[] };
     const models = (body.data ?? []).map((m) => {
-      const price = m.pricing && m.pricing.prompt !== undefined && m.pricing.completion !== undefined ? { prompt: Number(m.pricing.prompt), completion: Number(m.pricing.completion) } : undefined;
-      return { id: m.id, ...(m.context_length ? { context: m.context_length } : {}), ...(price ? { price } : {}) };
+      const listed = m.pricing && m.pricing.prompt !== undefined && m.pricing.completion !== undefined ? { prompt: Number(m.pricing.prompt), completion: Number(m.pricing.completion) } : undefined;
+      return { id: m.id, ...(m.context_length ? { context: m.context_length } : {}), ...listedPrice(listed) };
     });
     return { ok: true, models };
   } catch {
@@ -138,7 +261,7 @@ export function estimate(s: AgentsState, job: JobId, messages: readonly ChatMess
   const usd = l?.price ? tokens_in * l.price.prompt + max_out * l.price.completion : undefined;
   const today = new Date().toISOString().slice(0, 10);
   const today_usd = s.ledger.filter((r) => r.day === today).reduce((a, r) => a + (r.usd ?? 0), 0);
-  const context = l?.context;
+  const context = contextOf(s, job);
   return { tokens_in, max_out, ...(usd !== undefined ? { usd } : {}), fits: context === undefined || tokens_in + max_out <= context, ...(context ? { context } : {}), today_usd, over_cap: s.cap_usd !== null && usd !== undefined && today_usd + usd > s.cap_usd };
 }
 
@@ -147,27 +270,33 @@ export async function chat(
   s: AgentsState,
   job: JobId,
   messages: readonly ChatMessage[],
-  opts: { max_out?: number; fetcher?: typeof fetch } = {},
-): Promise<{ ok: true; text: string; row: LedgerRow } | { ok: false; message: string }> {
+  opts: { max_out?: number; fetcher?: typeof fetch; temperature?: number } = {},
+): Promise<{ ok: true; text: string; row: LedgerRow } | { ok: false; message: string; row?: LedgerRow }> {
   const l = s.links[job];
   const p = l && s.providers.find((x) => x.id === l.provider);
   if (!l || !p) return { ok: false, message: `No model is linked for ${JOBS[job].label}. Everything else works without one.` };
   const max_out = opts.max_out ?? 600;
-  const e = estimate(s, job, messages, max_out);
-  if (!e.fits) return { ok: false, message: `This would need about ${e.tokens_in + max_out} tokens and ${l.model} holds ${e.context}. Nothing was sent.` };
+  // Keys out of anything sent, by value and by shape (a person may paste one into a question).
+  const keys = s.providers.map((x) => x.key ?? "").filter(Boolean);
+  const sent = messages.map((m) => ({ role: m.role, content: clean(m.content, keys) }));
+  const e = estimate(s, job, sent, max_out);
+  if (!e.fits) return { ok: false, message: `This would need about ${e.tokens_in + max_out} tokens and ${l.model} ${isLocal(p) ? "is loaded with" : "holds"} ${e.context}. Nothing was sent.${isLocal(p) ? " Load the model with a longer context, then check it again." : ""}` };
   if (e.over_cap) return { ok: false, message: `This would pass today's cap of $${s.cap_usd!.toFixed(2)}. Nothing was sent.` };
+  const day = new Date().toISOString().slice(0, 10);
+  const t0 = Date.now();
+  const failed = (message: string) => ({ ok: false as const, message, row: { day, job, model: l.model, tokens_in: 0, tokens_out: 0, ok: false, ms: Date.now() - t0 } });
   try {
-    const r = await (opts.fetcher ?? fetch)(url(p, "/chat/completions"), { method: "POST", headers: headers(p), body: JSON.stringify({ model: l.model, messages, max_tokens: max_out }) });
-    if (!r.ok) return { ok: false, message: r.status === 401 || r.status === 403 ? "The provider refused the key." : `The provider answered ${r.status}.` };
+    const r = await (opts.fetcher ?? fetch)(url(p, "/chat/completions"), { method: "POST", headers: headers(p), body: JSON.stringify({ model: l.model, messages: sent, max_tokens: max_out, ...(opts.temperature !== undefined ? { temperature: opts.temperature } : {}) }) });
+    if (!r.ok) return failed(r.status === 401 || r.status === 403 ? "The provider refused the key." : `The provider answered ${r.status}.`);
     const body = (await r.json()) as { choices?: { message?: { content?: string } }[]; usage?: { prompt_tokens?: number; completion_tokens?: number; cost?: number } };
     const text = body.choices?.[0]?.message?.content ?? "";
     const tokens_in = body.usage?.prompt_tokens ?? e.tokens_in;
     const tokens_out = body.usage?.completion_tokens ?? Math.ceil(text.length / 4);
     const usd = body.usage?.cost ?? (l.price ? tokens_in * l.price.prompt + tokens_out * l.price.completion : undefined);
-    const row: LedgerRow = { day: new Date().toISOString().slice(0, 10), job, model: l.model, tokens_in, tokens_out, ...(usd !== undefined ? { usd } : {}) };
+    const row: LedgerRow = { day, job, model: l.model, tokens_in, tokens_out, ...(usd !== undefined ? { usd } : {}), ok: true, ms: Date.now() - t0 };
     return { ok: true, text, row };
   } catch {
-    return { ok: false, message: "Could not reach the provider." };
+    return failed(isLocal(p) ? "Nothing answered on this computer at that address. Is the local server running and allowing this page?" : "Could not reach the provider.");
   }
 }
 
