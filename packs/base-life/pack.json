@@ -716,6 +716,33 @@
     "major": 0.25,
     "aftermath_share": 0.3,
     "doomed_within_myr": 500.0
+   },
+   "life_feedback": {
+    "about": "Box H: the stand-in physics side of the life-planet boundary. Life reports fluxes each step; this air box answers with O2, CH4 and a CO2 index. Oxygen builds only when organic burial and hydrogen escape outpace volcanic reducing gases and oxidative weathering, so oxygenation is a balance, never a date. Replaced by the planet layer's atmosphere and interior models when they exist.",
+    "air_mol": 1.8e+20,
+    "area_rel": 1.0,
+    "burial_fraction": 0.001,
+    "reductant_mol_yr": 3000000000000.0,
+    "reductant_ref_myr": 4570.0,
+    "reductant_tau_myr": 2000.0,
+    "weathering_pal_mol_yr": 6500000000000.0,
+    "pal_mol": 3.78e+19,
+    "decay_methane_oxic": 0.0025,
+    "decay_methane_anoxic": 0.5,
+    "ch4_life_oxic_yr": 9.6,
+    "ch4_life_anoxic_yr": 1000.0,
+    "o2_switch_fraction": 1e-05,
+    "escape_mol_yr_per_f": 1.3e+16,
+    "land_weathering_factor": 4.0,
+    "sources": [
+     "Oxygen as a balance of sources (organic burial, hydrogen escape) and sinks (reducing gases, oxidative weathering): Catling and Claire 2005, https://doi.org/10.1016/j.epsl.2005.06.013",
+     "Hydrogen escape and methane in the Archean irreversibly oxidise the Earth: Catling, Zahnle and McKay 2001, https://doi.org/10.1126/science.1061976",
+     "Declining reducing gas flux as the interior cools sets the timing of the Great Oxidation: Holland 2002, https://doi.org/10.1016/S0016-7037(02)00950-X; Kump and Barley 2007, https://doi.org/10.1038/nature06058",
+     "Bistable oxic and anoxic states through methane and ozone: Goldblatt, Lenton and Watson 2006, https://doi.org/10.1038/nature05169",
+     "Oxidative weathering rising with sqrt(O2) and the modern O2 budget: Holland 1978 (The Chemistry of the Atmosphere and Oceans, Wiley); Bolton, Berner and Petsch 2006, https://doi.org/10.2475/ajs.306.8.575",
+     "Land plants speed silicate weathering and draw CO2 down: Berner 1997, https://doi.org/10.1126/science.276.5312.544",
+     "Methane lifetime about 9.6 yr today and much longer in an anoxic air: Prather, Holmes and Hsu 2012, https://doi.org/10.1029/2012GL051440; Pavlov et al. 2000, https://doi.org/10.1029/1999JE001134"
+    ]
    }
   }
  }
