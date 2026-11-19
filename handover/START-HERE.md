@@ -28,6 +28,7 @@ Milestone M1 "Proven core" = packages K0 to K6 (build plan section 3/4).
 | F7 long life of generated systems; close binaries by rule table | done (giant tables still T1's sketch) | packages/F7.md |
 | F9 pins and reconstruction (solve around pinned worlds; imported systems gain a reconstructed history) | done | packages/F9.md |
 | S0 surface envelope: kind, regime over time with dated causes, regime sketch globe | done | packages/S0.md |
+| S1 surface atlas: cube-sphere tiles, band-limited detail, disclosure and fact floor, cache | done (height source is the S0 sketch until S2, S3) | packages/S1.md |
 | K7 envelopes, partitioning, resolve, feasibility | done (kernel track) | packages/K7.md |
 | K8 rules, classification, sifters, significance | done (kernel track) | packages/K8.md |
 | K9 disclosure tiers, data views, scene building | done (kernel track) | packages/K9.md |
@@ -56,7 +57,7 @@ Milestone M1 "Proven core" = packages K0 to K6 (build plan section 3/4).
 ## Parallel tracks (18 Nov, Alex: build in parallel, integrate later)
 | Track | Packages | Branch |
 |---|---|---|
-| Physics | P1, P3, P4, F0 to F6 done; pipeline, F7, F9 and S0 done; F8 waits on G6; next S1, S2 (surfaces) | `main` via PRs |
+| Physics | P1, P3, P4, F0 to F6 done; pipeline, F7, F9, S0 and S1 done; F8 waits on G6; next S2 (plates), S3 | `main` via PRs |
 | Kernel | K7 to K10, G0, C1 to C3, L0, T1, T2 and the U3 gaps done | `main` via PRs |
 | Chart room shell and player views | U0 to U3, V1, U5, V2, V12, V3, V11 done; V4 peer-to-peer waits for Alex | `main` via PRs |
 

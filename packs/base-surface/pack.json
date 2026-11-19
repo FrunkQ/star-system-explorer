@@ -340,7 +340,18 @@
     "sources": {
      "q_crit_w_m2": "the base-physics atom sse.heat.active_geology_lifetime uses the same threshold",
      "tide": "despinning time and tidal heating after Gladman et al. 1996, Icarus 122, 166 (doi:10.1006/icar.1996.0117) and Peale and Cassen 1978; Q 100 and k2 0.3 are rocky-world defaults",
-     "greenhouse_k": "Earth's present greenhouse warming is about 33 K; applied only when a generated world has volatiles (oceans or CO2), until an atmosphere stage exists"
+     "greenhouse_k": "Earth's present greenhouse warming is about 33 K; applied only when a generated world has volatiles (oceans or CO2), until an atmosphere stage exists",
+     "atlas": "surfaces research report section 3: cube-sphere quadtree, level 0 about 20 km per sample on an Earth (here level 1 at 256 samples per tile), fact floor about 100 m anywhere and 10 m in declared sites; detail octaves fall off with a Hurst exponent of 0.8, typical of planetary topography (Turcotte 1987; Rosenburg et al. 2015 for the Moon)"
+    },
+    "atlas": {
+     "tile_samples": 256,
+     "fact_floor_m": 100.0,
+     "site_floor_m": 10.0,
+     "detail_wavelength_rad": 0.02,
+     "detail_hurst": 0.8,
+     "detail_amplitude": 0.08,
+     "nyquist": 4.0,
+     "cache_tiles": 64
     }
    }
   }

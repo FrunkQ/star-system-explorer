@@ -40,3 +40,7 @@ codegen-units = 1
 # test builds too (same IEEE arithmetic, no fast-math, so results are unchanged).
 [profile.dev.package.sse-formation]
 opt-level = 2
+
+# Surface tiles sample a height function tens of thousands of times; same reason.
+[profile.dev.package.sse-surface]
+opt-level = 2

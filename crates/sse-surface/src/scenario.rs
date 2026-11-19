@@ -71,3 +71,39 @@ pub fn golden() -> serde_json::Value {
         .collect();
     serde_json::json!({ "version": crate::SURFACE_VERSION, "fixtures": fx, "generated": gen })
 }
+
+/// Golden for S1: tile hashes for several fixture worlds, built alone, at 32
+/// samples a tile so the browser harness stays quick.
+pub fn atlas_golden() -> serde_json::Value {
+    use crate::atlas::{Atlas, TileKey};
+    let mut s = settings();
+    s.atlas.tile_samples = 32;
+    let seed = Seed::from_text("sse4-atlas-golden");
+    let keys = [
+        (0, 0, 0, 0),
+        (1, 0, 0, 0),
+        (2, 0, 0, 0),
+        (3, 0, 0, 0),
+        (4, 0, 0, 0),
+        (5, 0, 0, 0),
+        (2, 6, 40, 17),
+        (4, 13, 5000, 7000),
+    ];
+    let out: Vec<_> = fixtures()
+        .iter()
+        .filter(|f| ["Earth", "Mars", "Titan", "Vesta", "Jupiter", "55 Cancri e"].contains(&f.body.label.as_str()))
+        .map(|f| {
+            let e = envelope(&s, &f.body);
+            let a = Atlas::new(&s, &e, &seed, f.body.age_gyr, vec![]);
+            let tiles: Vec<_> = keys
+                .iter()
+                .map(|&(face, level, x, y)| {
+                    let t = a.build(TileKey::new(face, level, x, y).expect("key"));
+                    serde_json::json!({"tile": t.key.text(), "octaves": t.octaves, "hash": t.hash})
+                })
+                .collect();
+            serde_json::json!({"body": f.body.label, "atlas": a.address.to_string(), "regime": a.regime, "tiles": tiles})
+        })
+        .collect();
+    serde_json::json!({"version": crate::atlas::ATLAS_VERSION, "worlds": out})
+}

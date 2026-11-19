@@ -32,6 +32,7 @@ pub fn engines_run() -> String {
         "formation-pipeline": sse_formation::scenario::pipeline_golden(),
         "cosmos": sse_cosmos::scenario::golden(),
         "surface": sse_surface::scenario::golden(),
+        "surface-atlas": sse_surface::scenario::atlas_golden(),
     })
     .to_string()
 }

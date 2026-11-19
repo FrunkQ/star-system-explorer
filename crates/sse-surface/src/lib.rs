@@ -13,6 +13,7 @@
 //! history run. The full atlas (S1) and plate history (S2) replace it on
 //! surveyed worlds.
 
+pub mod atlas;
 pub mod scenario;
 pub mod sketch;
 
@@ -95,6 +96,7 @@ pub struct SurfaceSettings {
     pub albedo_default: f64,
     pub greenhouse_k: f64,
     pub tide: Tide,
+    pub atlas: atlas::AtlasSettings,
     pub rules: Vec<Rule>,
     pub regimes: BTreeMap<String, RegimeDef>,
 }
@@ -611,5 +613,7 @@ pub fn envelopes_of(run: &SystemRun, s: &SurfaceSettings) -> Vec<SurfaceEnvelope
     bodies_of(run, s).iter().map(|b| envelope(s, b)).collect()
 }
 
+#[cfg(test)]
+mod atlas_tests;
 #[cfg(test)]
 mod tests;
