@@ -5497,1066 +5497,6 @@
      "source": "Traveller pack (SSE4)"
     }
    ],
-   "rules": [
-    {
-     "id": "traveller.prep.oxygen.v1",
-     "tag": "traveller.prep.oxygen",
-     "when": {
-      "if": "compare",
-      "left": "atmosphere.pp.o2",
-      "op": "ge",
-      "right": "atmosphere.surface_pressure",
-      "factor": 1e-06
-     }
-    },
-    {
-     "id": "traveller.prep.corrosive.v1",
-     "tag": "traveller.prep.corrosive",
-     "when": {
-      "if": "any",
-      "of": [
-       {
-        "if": "range",
-        "field": "atmosphere.pp.so2",
-        "min": 0.001
-       },
-       {
-        "if": "is",
-        "field": "atmosphere.main",
-        "value": "so2"
-       },
-       {
-        "if": "is",
-        "field": "atmosphere.main",
-        "value": "h2s"
-       },
-       {
-        "if": "is",
-        "field": "atmosphere.main",
-        "value": "cl2"
-       },
-       {
-        "if": "is",
-        "field": "atmosphere.main",
-        "value": "f2"
-       },
-       {
-        "if": "is",
-        "field": "atmosphere.main",
-        "value": "hcl"
-       },
-       {
-        "if": "is",
-        "field": "atmosphere.main",
-        "value": "h2so4"
-       }
-      ]
-     }
-    },
-    {
-     "id": "traveller.prep.tainted.v1",
-     "tag": "traveller.prep.tainted",
-     "when": {
-      "if": "any",
-      "of": [
-       {
-        "if": "has",
-        "field": "atmosphere.taint"
-       },
-       {
-        "if": "range",
-        "field": "atmosphere.pp.co2",
-        "min": 0.005000000000000001
-       },
-       {
-        "if": "range",
-        "field": "atmosphere.pp.o2",
-        "min": 0.5000000000000001
-       },
-       {
-        "if": "range",
-        "field": "atmosphere.pp.so2",
-        "min": 1e-05
-       }
-      ]
-     }
-    },
-    {
-     "id": "traveller.prep.belt.v1",
-     "tag": "traveller.prep.belt",
-     "when": {
-      "if": "all",
-      "of": []
-     },
-     "applies_to": [
-      "belt"
-     ]
-    },
-    {
-     "id": "traveller.count.belt.v1",
-     "tag": "traveller.count.belt",
-     "when": {
-      "if": "all",
-      "of": []
-     },
-     "applies_to": [
-      "belt"
-     ]
-    },
-    {
-     "id": "traveller.count.gas-giant.v1",
-     "tag": "traveller.count.gas-giant",
-     "when": {
-      "if": "all",
-      "of": [
-       {
-        "if": "range",
-        "field": "body.radius",
-        "min": 15927500.0
-       },
-       {
-        "if": "range",
-        "field": "body.mass",
-        "max": 2.4674e+28
-       }
-      ]
-     },
-     "applies_to": [
-      "body"
-     ]
-    },
-    {
-     "id": "traveller.trade.As.v1",
-     "tag": "traveller.trade.As",
-     "when": {
-      "if": "all",
-      "of": [
-       {
-        "if": "is",
-        "field": "traveller.uwp.size",
-        "value": 0
-       },
-       {
-        "if": "is",
-        "field": "traveller.uwp.atmosphere",
-        "value": 0
-       },
-       {
-        "if": "is",
-        "field": "traveller.uwp.hydrographics",
-        "value": 0
-       }
-      ]
-     }
-    },
-    {
-     "id": "traveller.trade.De.v1",
-     "tag": "traveller.trade.De",
-     "when": {
-      "if": "all",
-      "of": [
-       {
-        "if": "range",
-        "field": "traveller.uwp.atmosphere",
-        "min": 2,
-        "max": 9
-       },
-       {
-        "if": "is",
-        "field": "traveller.uwp.hydrographics",
-        "value": 0
-       }
-      ]
-     }
-    },
-    {
-     "id": "traveller.trade.Fl.v1",
-     "tag": "traveller.trade.Fl",
-     "when": {
-      "if": "all",
-      "of": [
-       {
-        "if": "range",
-        "field": "traveller.uwp.atmosphere",
-        "min": 10,
-        "max": 12
-       },
-       {
-        "if": "range",
-        "field": "traveller.uwp.hydrographics",
-        "min": 1,
-        "max": 10
-       }
-      ]
-     }
-    },
-    {
-     "id": "traveller.trade.Ga.v1",
-     "tag": "traveller.trade.Ga",
-     "when": {
-      "if": "all",
-      "of": [
-       {
-        "if": "range",
-        "field": "traveller.uwp.size",
-        "min": 6,
-        "max": 8
-       },
-       {
-        "if": "any",
-        "of": [
-         {
-          "if": "is",
-          "field": "traveller.uwp.atmosphere",
-          "value": 5
-         },
-         {
-          "if": "is",
-          "field": "traveller.uwp.atmosphere",
-          "value": 6
-         },
-         {
-          "if": "is",
-          "field": "traveller.uwp.atmosphere",
-          "value": 8
-         }
-        ]
-       },
-       {
-        "if": "range",
-        "field": "traveller.uwp.hydrographics",
-        "min": 5,
-        "max": 7
-       }
-      ]
-     }
-    },
-    {
-     "id": "traveller.trade.He.v1",
-     "tag": "traveller.trade.He",
-     "when": {
-      "if": "all",
-      "of": [
-       {
-        "if": "range",
-        "field": "traveller.uwp.size",
-        "min": 3,
-        "max": 12
-       },
-       {
-        "if": "any",
-        "of": [
-         {
-          "if": "is",
-          "field": "traveller.uwp.atmosphere",
-          "value": 2
-         },
-         {
-          "if": "is",
-          "field": "traveller.uwp.atmosphere",
-          "value": 4
-         },
-         {
-          "if": "is",
-          "field": "traveller.uwp.atmosphere",
-          "value": 7
-         },
-         {
-          "if": "range",
-          "field": "traveller.uwp.atmosphere",
-          "min": 9,
-          "max": 12
-         }
-        ]
-       },
-       {
-        "if": "range",
-        "field": "traveller.uwp.hydrographics",
-        "min": 0,
-        "max": 2
-       }
-      ]
-     }
-    },
-    {
-     "id": "traveller.trade.Ic.v1",
-     "tag": "traveller.trade.Ic",
-     "when": {
-      "if": "all",
-      "of": [
-       {
-        "if": "range",
-        "field": "traveller.uwp.atmosphere",
-        "min": 0,
-        "max": 1
-       },
-       {
-        "if": "range",
-        "field": "traveller.uwp.hydrographics",
-        "min": 1,
-        "max": 10
-       }
-      ]
-     }
-    },
-    {
-     "id": "traveller.trade.Oc.v1",
-     "tag": "traveller.trade.Oc",
-     "when": {
-      "if": "all",
-      "of": [
-       {
-        "if": "range",
-        "field": "traveller.uwp.size",
-        "min": 10,
-        "max": 15
-       },
-       {
-        "if": "any",
-        "of": [
-         {
-          "if": "range",
-          "field": "traveller.uwp.atmosphere",
-          "min": 3,
-          "max": 9
-         },
-         {
-          "if": "range",
-          "field": "traveller.uwp.atmosphere",
-          "min": 13,
-          "max": 15
-         }
-        ]
-       },
-       {
-        "if": "is",
-        "field": "traveller.uwp.hydrographics",
-        "value": 10
-       }
-      ]
-     }
-    },
-    {
-     "id": "traveller.trade.Va.v1",
-     "tag": "traveller.trade.Va",
-     "when": {
-      "if": "is",
-      "field": "traveller.uwp.atmosphere",
-      "value": 0
-     }
-    },
-    {
-     "id": "traveller.trade.Wa.v1",
-     "tag": "traveller.trade.Wa",
-     "when": {
-      "if": "all",
-      "of": [
-       {
-        "if": "range",
-        "field": "traveller.uwp.size",
-        "min": 3,
-        "max": 9
-       },
-       {
-        "if": "any",
-        "of": [
-         {
-          "if": "range",
-          "field": "traveller.uwp.atmosphere",
-          "min": 3,
-          "max": 9
-         },
-         {
-          "if": "range",
-          "field": "traveller.uwp.atmosphere",
-          "min": 13,
-          "max": 15
-         }
-        ]
-       },
-       {
-        "if": "is",
-        "field": "traveller.uwp.hydrographics",
-        "value": 10
-       }
-      ]
-     }
-    },
-    {
-     "id": "traveller.trade.Di.v1",
-     "tag": "traveller.trade.Di",
-     "when": {
-      "if": "all",
-      "of": [
-       {
-        "if": "is",
-        "field": "traveller.uwp.population",
-        "value": 0
-       },
-       {
-        "if": "is",
-        "field": "traveller.uwp.government",
-        "value": 0
-       },
-       {
-        "if": "is",
-        "field": "traveller.uwp.law",
-        "value": 0
-       },
-       {
-        "if": "range",
-        "field": "traveller.uwp.tech",
-        "min": 1,
-        "max": 33
-       }
-      ]
-     }
-    },
-    {
-     "id": "traveller.trade.Ba.v1",
-     "tag": "traveller.trade.Ba",
-     "when": {
-      "if": "all",
-      "of": [
-       {
-        "if": "is",
-        "field": "traveller.uwp.population",
-        "value": 0
-       },
-       {
-        "if": "is",
-        "field": "traveller.uwp.government",
-        "value": 0
-       },
-       {
-        "if": "is",
-        "field": "traveller.uwp.law",
-        "value": 0
-       },
-       {
-        "if": "is",
-        "field": "traveller.uwp.tech",
-        "value": 0
-       }
-      ]
-     }
-    },
-    {
-     "id": "traveller.trade.Lo.v1",
-     "tag": "traveller.trade.Lo",
-     "when": {
-      "if": "range",
-      "field": "traveller.uwp.population",
-      "min": 1,
-      "max": 3
-     }
-    },
-    {
-     "id": "traveller.trade.Ni.v1",
-     "tag": "traveller.trade.Ni",
-     "when": {
-      "if": "range",
-      "field": "traveller.uwp.population",
-      "min": 4,
-      "max": 6
-     }
-    },
-    {
-     "id": "traveller.trade.Ph.v1",
-     "tag": "traveller.trade.Ph",
-     "when": {
-      "if": "is",
-      "field": "traveller.uwp.population",
-      "value": 8
-     }
-    },
-    {
-     "id": "traveller.trade.Hi.v1",
-     "tag": "traveller.trade.Hi",
-     "when": {
-      "if": "range",
-      "field": "traveller.uwp.population",
-      "min": 9,
-      "max": 15
-     }
-    },
-    {
-     "id": "traveller.trade.Pa.v1",
-     "tag": "traveller.trade.Pa",
-     "when": {
-      "if": "all",
-      "of": [
-       {
-        "if": "range",
-        "field": "traveller.uwp.atmosphere",
-        "min": 4,
-        "max": 9
-       },
-       {
-        "if": "range",
-        "field": "traveller.uwp.hydrographics",
-        "min": 4,
-        "max": 8
-       },
-       {
-        "if": "any",
-        "of": [
-         {
-          "if": "is",
-          "field": "traveller.uwp.population",
-          "value": 4
-         },
-         {
-          "if": "is",
-          "field": "traveller.uwp.population",
-          "value": 8
-         }
-        ]
-       }
-      ]
-     }
-    },
-    {
-     "id": "traveller.trade.Ag.v1",
-     "tag": "traveller.trade.Ag",
-     "when": {
-      "if": "all",
-      "of": [
-       {
-        "if": "range",
-        "field": "traveller.uwp.atmosphere",
-        "min": 4,
-        "max": 9
-       },
-       {
-        "if": "range",
-        "field": "traveller.uwp.hydrographics",
-        "min": 4,
-        "max": 8
-       },
-       {
-        "if": "range",
-        "field": "traveller.uwp.population",
-        "min": 5,
-        "max": 7
-       }
-      ]
-     }
-    },
-    {
-     "id": "traveller.trade.Na.v1",
-     "tag": "traveller.trade.Na",
-     "when": {
-      "if": "all",
-      "of": [
-       {
-        "if": "range",
-        "field": "traveller.uwp.atmosphere",
-        "min": 0,
-        "max": 3
-       },
-       {
-        "if": "range",
-        "field": "traveller.uwp.hydrographics",
-        "min": 0,
-        "max": 3
-       },
-       {
-        "if": "range",
-        "field": "traveller.uwp.population",
-        "min": 6,
-        "max": 15
-       }
-      ]
-     }
-    },
-    {
-     "id": "traveller.trade.Pi.v1",
-     "tag": "traveller.trade.Pi",
-     "when": {
-      "if": "all",
-      "of": [
-       {
-        "if": "any",
-        "of": [
-         {
-          "if": "range",
-          "field": "traveller.uwp.atmosphere",
-          "min": 0,
-          "max": 2
-         },
-         {
-          "if": "is",
-          "field": "traveller.uwp.atmosphere",
-          "value": 4
-         },
-         {
-          "if": "is",
-          "field": "traveller.uwp.atmosphere",
-          "value": 7
-         },
-         {
-          "if": "is",
-          "field": "traveller.uwp.atmosphere",
-          "value": 9
-         }
-        ]
-       },
-       {
-        "if": "range",
-        "field": "traveller.uwp.population",
-        "min": 7,
-        "max": 8
-       }
-      ]
-     }
-    },
-    {
-     "id": "traveller.trade.In.v1",
-     "tag": "traveller.trade.In",
-     "when": {
-      "if": "all",
-      "of": [
-       {
-        "if": "any",
-        "of": [
-         {
-          "if": "range",
-          "field": "traveller.uwp.atmosphere",
-          "min": 0,
-          "max": 2
-         },
-         {
-          "if": "is",
-          "field": "traveller.uwp.atmosphere",
-          "value": 4
-         },
-         {
-          "if": "is",
-          "field": "traveller.uwp.atmosphere",
-          "value": 7
-         },
-         {
-          "if": "range",
-          "field": "traveller.uwp.atmosphere",
-          "min": 9,
-          "max": 12
-         }
-        ]
-       },
-       {
-        "if": "range",
-        "field": "traveller.uwp.population",
-        "min": 9,
-        "max": 15
-       }
-      ]
-     }
-    },
-    {
-     "id": "traveller.trade.Po.v1",
-     "tag": "traveller.trade.Po",
-     "when": {
-      "if": "all",
-      "of": [
-       {
-        "if": "range",
-        "field": "traveller.uwp.atmosphere",
-        "min": 2,
-        "max": 5
-       },
-       {
-        "if": "range",
-        "field": "traveller.uwp.hydrographics",
-        "min": 0,
-        "max": 3
-       }
-      ]
-     }
-    },
-    {
-     "id": "traveller.trade.Pr.v1",
-     "tag": "traveller.trade.Pr",
-     "when": {
-      "if": "all",
-      "of": [
-       {
-        "if": "any",
-        "of": [
-         {
-          "if": "is",
-          "field": "traveller.uwp.atmosphere",
-          "value": 6
-         },
-         {
-          "if": "is",
-          "field": "traveller.uwp.atmosphere",
-          "value": 8
-         }
-        ]
-       },
-       {
-        "if": "any",
-        "of": [
-         {
-          "if": "is",
-          "field": "traveller.uwp.population",
-          "value": 5
-         },
-         {
-          "if": "is",
-          "field": "traveller.uwp.population",
-          "value": 9
-         }
-        ]
-       }
-      ]
-     }
-    },
-    {
-     "id": "traveller.trade.Ri.v1",
-     "tag": "traveller.trade.Ri",
-     "when": {
-      "if": "all",
-      "of": [
-       {
-        "if": "any",
-        "of": [
-         {
-          "if": "is",
-          "field": "traveller.uwp.atmosphere",
-          "value": 6
-         },
-         {
-          "if": "is",
-          "field": "traveller.uwp.atmosphere",
-          "value": 8
-         }
-        ]
-       },
-       {
-        "if": "range",
-        "field": "traveller.uwp.population",
-        "min": 6,
-        "max": 8
-       }
-      ]
-     }
-    },
-    {
-     "id": "traveller.trade.Sa.v1",
-     "tag": "traveller.trade.Sa",
-     "when": {
-      "if": "is",
-      "field": "orbit.host_kind",
-      "value": "planet"
-     }
-    },
-    {
-     "id": "traveller.trade.Lk.v1",
-     "tag": "traveller.trade.Lk",
-     "when": {
-      "if": "all",
-      "of": [
-       {
-        "if": "is",
-        "field": "orbit.host_kind",
-        "value": "planet"
-       },
-       {
-        "if": "is",
-        "field": "spin.host_locked",
-        "value": true
-       }
-      ]
-     }
-    },
-    {
-     "id": "traveller.trade.Tz.v1",
-     "tag": "traveller.trade.Tz",
-     "when": {
-      "if": "all",
-      "of": [
-       {
-        "if": "is",
-        "field": "orbit.host_kind",
-        "value": "star"
-       },
-       {
-        "if": "is",
-        "field": "spin.star_locked",
-        "value": true
-       }
-      ]
-     }
-    },
-    {
-     "id": "traveller.trade.Fr.v1",
-     "tag": "traveller.trade.Fr",
-     "when": {
-      "if": "all",
-      "of": [
-       {
-        "if": "range",
-        "field": "traveller.uwp.size",
-        "min": 2,
-        "max": 9
-       },
-       {
-        "if": "range",
-        "field": "traveller.uwp.hydrographics",
-        "min": 1,
-        "max": 10
-       },
-       {
-        "if": "range",
-        "field": "planet.surface_temperature",
-        "max": 222.99999999999997
-       }
-      ]
-     }
-    },
-    {
-     "id": "traveller.trade.Co.v1",
-     "tag": "traveller.trade.Co",
-     "when": {
-      "if": "all",
-      "of": [
-       {
-        "if": "range",
-        "field": "traveller.uwp.size",
-        "min": 2,
-        "max": 15
-       },
-       {
-        "if": "range",
-        "field": "planet.surface_temperature",
-        "min": 223,
-        "max": 262.99999999999994
-       }
-      ]
-     }
-    },
-    {
-     "id": "traveller.trade.Ho.v1",
-     "tag": "traveller.trade.Ho",
-     "when": {
-      "if": "all",
-      "of": [
-       {
-        "if": "range",
-        "field": "traveller.uwp.size",
-        "min": 2,
-        "max": 15
-       },
-       {
-        "if": "range",
-        "field": "planet.surface_temperature",
-        "min": 303.00000000000006,
-        "max": 353
-       }
-      ]
-     }
-    },
-    {
-     "id": "traveller.trade.Tu.v1",
-     "tag": "traveller.trade.Tu",
-     "when": {
-      "if": "all",
-      "of": [
-       {
-        "if": "range",
-        "field": "traveller.uwp.size",
-        "min": 6,
-        "max": 9
-       },
-       {
-        "if": "range",
-        "field": "traveller.uwp.atmosphere",
-        "min": 4,
-        "max": 9
-       },
-       {
-        "if": "range",
-        "field": "traveller.uwp.hydrographics",
-        "min": 3,
-        "max": 7
-       },
-       {
-        "if": "range",
-        "field": "planet.surface_temperature",
-        "min": 223,
-        "max": 262.99999999999994
-       }
-      ]
-     }
-    },
-    {
-     "id": "traveller.trade.Tr.v1",
-     "tag": "traveller.trade.Tr",
-     "when": {
-      "if": "all",
-      "of": [
-       {
-        "if": "range",
-        "field": "traveller.uwp.size",
-        "min": 6,
-        "max": 9
-       },
-       {
-        "if": "range",
-        "field": "traveller.uwp.atmosphere",
-        "min": 4,
-        "max": 9
-       },
-       {
-        "if": "range",
-        "field": "traveller.uwp.hydrographics",
-        "min": 3,
-        "max": 7
-       },
-       {
-        "if": "range",
-        "field": "planet.surface_temperature",
-        "min": 303.00000000000006,
-        "max": 353
-       }
-      ]
-     }
-    },
-    {
-     "id": "traveller.zone.A.v1",
-     "tag": "traveller.zone.A",
-     "when": {
-      "if": "is",
-      "field": "traveller.zone",
-      "value": "A"
-     }
-    },
-    {
-     "id": "traveller.zone.R.v1",
-     "tag": "traveller.zone.R",
-     "when": {
-      "if": "is",
-      "field": "traveller.zone",
-      "value": "R"
-     }
-    },
-    {
-     "id": "traveller.zonehint.amber.v1",
-     "tag": "traveller.zonehint.amber",
-     "when": {
-      "if": "any",
-      "of": [
-       {
-        "if": "range",
-        "field": "traveller.uwp.atmosphere",
-        "min": 10,
-        "max": 15
-       },
-       {
-        "if": "any",
-        "of": [
-         {
-          "if": "is",
-          "field": "traveller.uwp.government",
-          "value": 0
-         },
-         {
-          "if": "is",
-          "field": "traveller.uwp.government",
-          "value": 7
-         },
-         {
-          "if": "is",
-          "field": "traveller.uwp.government",
-          "value": 10
-         }
-        ]
-       },
-       {
-        "if": "any",
-        "of": [
-         {
-          "if": "is",
-          "field": "traveller.uwp.law",
-          "value": 0
-         },
-         {
-          "if": "range",
-          "field": "traveller.uwp.law",
-          "min": 9,
-          "max": 18
-         }
-        ]
-       }
-      ]
-     }
-    },
-    {
-     "id": "traveller.base.N.v1",
-     "tag": "traveller.base.N",
-     "when": {
-      "if": "is",
-      "field": "traveller.bases.N",
-      "value": true
-     }
-    },
-    {
-     "id": "traveller.base.S.v1",
-     "tag": "traveller.base.S",
-     "when": {
-      "if": "is",
-      "field": "traveller.bases.S",
-      "value": true
-     }
-    },
-    {
-     "id": "traveller.base.W.v1",
-     "tag": "traveller.base.W",
-     "when": {
-      "if": "is",
-      "field": "traveller.bases.W",
-      "value": true
-     }
-    },
-    {
-     "id": "traveller.base.D.v1",
-     "tag": "traveller.base.D",
-     "when": {
-      "if": "is",
-      "field": "traveller.bases.D",
-      "value": true
-     }
-    },
-    {
-     "id": "traveller.base.M.v1",
-     "tag": "traveller.base.M",
-     "when": {
-      "if": "is",
-      "field": "traveller.bases.M",
-      "value": true
-     }
-    },
-    {
-     "id": "traveller.base.C.v1",
-     "tag": "traveller.base.C",
-     "when": {
-      "if": "is",
-      "field": "traveller.bases.C",
-      "value": true
-     }
-    },
-    {
-     "id": "traveller.base.K.v1",
-     "tag": "traveller.base.K",
-     "when": {
-      "if": "is",
-      "field": "traveller.bases.K",
-      "value": true
-     }
-    }
-   ],
    "code_sheets": [
     {
      "id": "traveller.world",
@@ -7526,9 +6466,1196 @@
       "giants": "gas_giants",
       "belts": "belts",
       "tag": "traveller-generated"
-     }
+     },
+     "rules": [
+      {
+       "id": "traveller.prep.oxygen.v1",
+       "tag": "traveller.prep.oxygen",
+       "when": {
+        "if": "compare",
+        "left": "atmosphere.pp.o2",
+        "op": "ge",
+        "right": "atmosphere.surface_pressure",
+        "factor": 1e-06
+       }
+      },
+      {
+       "id": "traveller.prep.corrosive.v1",
+       "tag": "traveller.prep.corrosive",
+       "when": {
+        "if": "any",
+        "of": [
+         {
+          "if": "range",
+          "field": "atmosphere.pp.so2",
+          "min": 0.001
+         },
+         {
+          "if": "is",
+          "field": "atmosphere.main",
+          "value": "so2"
+         },
+         {
+          "if": "is",
+          "field": "atmosphere.main",
+          "value": "h2s"
+         },
+         {
+          "if": "is",
+          "field": "atmosphere.main",
+          "value": "cl2"
+         },
+         {
+          "if": "is",
+          "field": "atmosphere.main",
+          "value": "f2"
+         },
+         {
+          "if": "is",
+          "field": "atmosphere.main",
+          "value": "hcl"
+         },
+         {
+          "if": "is",
+          "field": "atmosphere.main",
+          "value": "h2so4"
+         }
+        ]
+       }
+      },
+      {
+       "id": "traveller.prep.tainted.v1",
+       "tag": "traveller.prep.tainted",
+       "when": {
+        "if": "any",
+        "of": [
+         {
+          "if": "has",
+          "field": "atmosphere.taint"
+         },
+         {
+          "if": "range",
+          "field": "atmosphere.pp.co2",
+          "min": 0.005000000000000001
+         },
+         {
+          "if": "range",
+          "field": "atmosphere.pp.o2",
+          "min": 0.5000000000000001
+         },
+         {
+          "if": "range",
+          "field": "atmosphere.pp.so2",
+          "min": 1e-05
+         }
+        ]
+       }
+      },
+      {
+       "id": "traveller.prep.belt.v1",
+       "tag": "traveller.prep.belt",
+       "when": {
+        "if": "all",
+        "of": []
+       },
+       "applies_to": [
+        "belt"
+       ]
+      },
+      {
+       "id": "traveller.count.belt.v1",
+       "tag": "traveller.count.belt",
+       "when": {
+        "if": "all",
+        "of": []
+       },
+       "applies_to": [
+        "belt"
+       ]
+      },
+      {
+       "id": "traveller.count.gas-giant.v1",
+       "tag": "traveller.count.gas-giant",
+       "when": {
+        "if": "all",
+        "of": [
+         {
+          "if": "range",
+          "field": "body.radius",
+          "min": 15927500.0
+         },
+         {
+          "if": "range",
+          "field": "body.mass",
+          "max": 2.4674e+28
+         }
+        ]
+       },
+       "applies_to": [
+        "body"
+       ]
+      },
+      {
+       "id": "traveller.trade.As.v1",
+       "tag": "traveller.trade.As",
+       "when": {
+        "if": "all",
+        "of": [
+         {
+          "if": "is",
+          "field": "traveller.uwp.size",
+          "value": 0
+         },
+         {
+          "if": "is",
+          "field": "traveller.uwp.atmosphere",
+          "value": 0
+         },
+         {
+          "if": "is",
+          "field": "traveller.uwp.hydrographics",
+          "value": 0
+         }
+        ]
+       }
+      },
+      {
+       "id": "traveller.trade.De.v1",
+       "tag": "traveller.trade.De",
+       "when": {
+        "if": "all",
+        "of": [
+         {
+          "if": "range",
+          "field": "traveller.uwp.atmosphere",
+          "min": 2,
+          "max": 9
+         },
+         {
+          "if": "is",
+          "field": "traveller.uwp.hydrographics",
+          "value": 0
+         }
+        ]
+       }
+      },
+      {
+       "id": "traveller.trade.Fl.v1",
+       "tag": "traveller.trade.Fl",
+       "when": {
+        "if": "all",
+        "of": [
+         {
+          "if": "range",
+          "field": "traveller.uwp.atmosphere",
+          "min": 10,
+          "max": 12
+         },
+         {
+          "if": "range",
+          "field": "traveller.uwp.hydrographics",
+          "min": 1,
+          "max": 10
+         }
+        ]
+       }
+      },
+      {
+       "id": "traveller.trade.Ga.v1",
+       "tag": "traveller.trade.Ga",
+       "when": {
+        "if": "all",
+        "of": [
+         {
+          "if": "range",
+          "field": "traveller.uwp.size",
+          "min": 6,
+          "max": 8
+         },
+         {
+          "if": "any",
+          "of": [
+           {
+            "if": "is",
+            "field": "traveller.uwp.atmosphere",
+            "value": 5
+           },
+           {
+            "if": "is",
+            "field": "traveller.uwp.atmosphere",
+            "value": 6
+           },
+           {
+            "if": "is",
+            "field": "traveller.uwp.atmosphere",
+            "value": 8
+           }
+          ]
+         },
+         {
+          "if": "range",
+          "field": "traveller.uwp.hydrographics",
+          "min": 5,
+          "max": 7
+         }
+        ]
+       }
+      },
+      {
+       "id": "traveller.trade.He.v1",
+       "tag": "traveller.trade.He",
+       "when": {
+        "if": "all",
+        "of": [
+         {
+          "if": "range",
+          "field": "traveller.uwp.size",
+          "min": 3,
+          "max": 12
+         },
+         {
+          "if": "any",
+          "of": [
+           {
+            "if": "is",
+            "field": "traveller.uwp.atmosphere",
+            "value": 2
+           },
+           {
+            "if": "is",
+            "field": "traveller.uwp.atmosphere",
+            "value": 4
+           },
+           {
+            "if": "is",
+            "field": "traveller.uwp.atmosphere",
+            "value": 7
+           },
+           {
+            "if": "range",
+            "field": "traveller.uwp.atmosphere",
+            "min": 9,
+            "max": 12
+           }
+          ]
+         },
+         {
+          "if": "range",
+          "field": "traveller.uwp.hydrographics",
+          "min": 0,
+          "max": 2
+         }
+        ]
+       }
+      },
+      {
+       "id": "traveller.trade.Ic.v1",
+       "tag": "traveller.trade.Ic",
+       "when": {
+        "if": "all",
+        "of": [
+         {
+          "if": "range",
+          "field": "traveller.uwp.atmosphere",
+          "min": 0,
+          "max": 1
+         },
+         {
+          "if": "range",
+          "field": "traveller.uwp.hydrographics",
+          "min": 1,
+          "max": 10
+         }
+        ]
+       }
+      },
+      {
+       "id": "traveller.trade.Oc.v1",
+       "tag": "traveller.trade.Oc",
+       "when": {
+        "if": "all",
+        "of": [
+         {
+          "if": "range",
+          "field": "traveller.uwp.size",
+          "min": 10,
+          "max": 15
+         },
+         {
+          "if": "any",
+          "of": [
+           {
+            "if": "range",
+            "field": "traveller.uwp.atmosphere",
+            "min": 3,
+            "max": 9
+           },
+           {
+            "if": "range",
+            "field": "traveller.uwp.atmosphere",
+            "min": 13,
+            "max": 15
+           }
+          ]
+         },
+         {
+          "if": "is",
+          "field": "traveller.uwp.hydrographics",
+          "value": 10
+         }
+        ]
+       }
+      },
+      {
+       "id": "traveller.trade.Va.v1",
+       "tag": "traveller.trade.Va",
+       "when": {
+        "if": "is",
+        "field": "traveller.uwp.atmosphere",
+        "value": 0
+       }
+      },
+      {
+       "id": "traveller.trade.Wa.v1",
+       "tag": "traveller.trade.Wa",
+       "when": {
+        "if": "all",
+        "of": [
+         {
+          "if": "range",
+          "field": "traveller.uwp.size",
+          "min": 3,
+          "max": 9
+         },
+         {
+          "if": "any",
+          "of": [
+           {
+            "if": "range",
+            "field": "traveller.uwp.atmosphere",
+            "min": 3,
+            "max": 9
+           },
+           {
+            "if": "range",
+            "field": "traveller.uwp.atmosphere",
+            "min": 13,
+            "max": 15
+           }
+          ]
+         },
+         {
+          "if": "is",
+          "field": "traveller.uwp.hydrographics",
+          "value": 10
+         }
+        ]
+       }
+      },
+      {
+       "id": "traveller.trade.Di.v1",
+       "tag": "traveller.trade.Di",
+       "when": {
+        "if": "all",
+        "of": [
+         {
+          "if": "is",
+          "field": "traveller.uwp.population",
+          "value": 0
+         },
+         {
+          "if": "is",
+          "field": "traveller.uwp.government",
+          "value": 0
+         },
+         {
+          "if": "is",
+          "field": "traveller.uwp.law",
+          "value": 0
+         },
+         {
+          "if": "range",
+          "field": "traveller.uwp.tech",
+          "min": 1,
+          "max": 33
+         }
+        ]
+       }
+      },
+      {
+       "id": "traveller.trade.Ba.v1",
+       "tag": "traveller.trade.Ba",
+       "when": {
+        "if": "all",
+        "of": [
+         {
+          "if": "is",
+          "field": "traveller.uwp.population",
+          "value": 0
+         },
+         {
+          "if": "is",
+          "field": "traveller.uwp.government",
+          "value": 0
+         },
+         {
+          "if": "is",
+          "field": "traveller.uwp.law",
+          "value": 0
+         },
+         {
+          "if": "is",
+          "field": "traveller.uwp.tech",
+          "value": 0
+         }
+        ]
+       }
+      },
+      {
+       "id": "traveller.trade.Lo.v1",
+       "tag": "traveller.trade.Lo",
+       "when": {
+        "if": "range",
+        "field": "traveller.uwp.population",
+        "min": 1,
+        "max": 3
+       }
+      },
+      {
+       "id": "traveller.trade.Ni.v1",
+       "tag": "traveller.trade.Ni",
+       "when": {
+        "if": "range",
+        "field": "traveller.uwp.population",
+        "min": 4,
+        "max": 6
+       }
+      },
+      {
+       "id": "traveller.trade.Ph.v1",
+       "tag": "traveller.trade.Ph",
+       "when": {
+        "if": "is",
+        "field": "traveller.uwp.population",
+        "value": 8
+       }
+      },
+      {
+       "id": "traveller.trade.Hi.v1",
+       "tag": "traveller.trade.Hi",
+       "when": {
+        "if": "range",
+        "field": "traveller.uwp.population",
+        "min": 9,
+        "max": 15
+       }
+      },
+      {
+       "id": "traveller.trade.Pa.v1",
+       "tag": "traveller.trade.Pa",
+       "when": {
+        "if": "all",
+        "of": [
+         {
+          "if": "range",
+          "field": "traveller.uwp.atmosphere",
+          "min": 4,
+          "max": 9
+         },
+         {
+          "if": "range",
+          "field": "traveller.uwp.hydrographics",
+          "min": 4,
+          "max": 8
+         },
+         {
+          "if": "any",
+          "of": [
+           {
+            "if": "is",
+            "field": "traveller.uwp.population",
+            "value": 4
+           },
+           {
+            "if": "is",
+            "field": "traveller.uwp.population",
+            "value": 8
+           }
+          ]
+         }
+        ]
+       }
+      },
+      {
+       "id": "traveller.trade.Ag.v1",
+       "tag": "traveller.trade.Ag",
+       "when": {
+        "if": "all",
+        "of": [
+         {
+          "if": "range",
+          "field": "traveller.uwp.atmosphere",
+          "min": 4,
+          "max": 9
+         },
+         {
+          "if": "range",
+          "field": "traveller.uwp.hydrographics",
+          "min": 4,
+          "max": 8
+         },
+         {
+          "if": "range",
+          "field": "traveller.uwp.population",
+          "min": 5,
+          "max": 7
+         }
+        ]
+       }
+      },
+      {
+       "id": "traveller.trade.Na.v1",
+       "tag": "traveller.trade.Na",
+       "when": {
+        "if": "all",
+        "of": [
+         {
+          "if": "range",
+          "field": "traveller.uwp.atmosphere",
+          "min": 0,
+          "max": 3
+         },
+         {
+          "if": "range",
+          "field": "traveller.uwp.hydrographics",
+          "min": 0,
+          "max": 3
+         },
+         {
+          "if": "range",
+          "field": "traveller.uwp.population",
+          "min": 6,
+          "max": 15
+         }
+        ]
+       }
+      },
+      {
+       "id": "traveller.trade.Pi.v1",
+       "tag": "traveller.trade.Pi",
+       "when": {
+        "if": "all",
+        "of": [
+         {
+          "if": "any",
+          "of": [
+           {
+            "if": "range",
+            "field": "traveller.uwp.atmosphere",
+            "min": 0,
+            "max": 2
+           },
+           {
+            "if": "is",
+            "field": "traveller.uwp.atmosphere",
+            "value": 4
+           },
+           {
+            "if": "is",
+            "field": "traveller.uwp.atmosphere",
+            "value": 7
+           },
+           {
+            "if": "is",
+            "field": "traveller.uwp.atmosphere",
+            "value": 9
+           }
+          ]
+         },
+         {
+          "if": "range",
+          "field": "traveller.uwp.population",
+          "min": 7,
+          "max": 8
+         }
+        ]
+       }
+      },
+      {
+       "id": "traveller.trade.In.v1",
+       "tag": "traveller.trade.In",
+       "when": {
+        "if": "all",
+        "of": [
+         {
+          "if": "any",
+          "of": [
+           {
+            "if": "range",
+            "field": "traveller.uwp.atmosphere",
+            "min": 0,
+            "max": 2
+           },
+           {
+            "if": "is",
+            "field": "traveller.uwp.atmosphere",
+            "value": 4
+           },
+           {
+            "if": "is",
+            "field": "traveller.uwp.atmosphere",
+            "value": 7
+           },
+           {
+            "if": "range",
+            "field": "traveller.uwp.atmosphere",
+            "min": 9,
+            "max": 12
+           }
+          ]
+         },
+         {
+          "if": "range",
+          "field": "traveller.uwp.population",
+          "min": 9,
+          "max": 15
+         }
+        ]
+       }
+      },
+      {
+       "id": "traveller.trade.Po.v1",
+       "tag": "traveller.trade.Po",
+       "when": {
+        "if": "all",
+        "of": [
+         {
+          "if": "range",
+          "field": "traveller.uwp.atmosphere",
+          "min": 2,
+          "max": 5
+         },
+         {
+          "if": "range",
+          "field": "traveller.uwp.hydrographics",
+          "min": 0,
+          "max": 3
+         }
+        ]
+       }
+      },
+      {
+       "id": "traveller.trade.Pr.v1",
+       "tag": "traveller.trade.Pr",
+       "when": {
+        "if": "all",
+        "of": [
+         {
+          "if": "any",
+          "of": [
+           {
+            "if": "is",
+            "field": "traveller.uwp.atmosphere",
+            "value": 6
+           },
+           {
+            "if": "is",
+            "field": "traveller.uwp.atmosphere",
+            "value": 8
+           }
+          ]
+         },
+         {
+          "if": "any",
+          "of": [
+           {
+            "if": "is",
+            "field": "traveller.uwp.population",
+            "value": 5
+           },
+           {
+            "if": "is",
+            "field": "traveller.uwp.population",
+            "value": 9
+           }
+          ]
+         }
+        ]
+       }
+      },
+      {
+       "id": "traveller.trade.Ri.v1",
+       "tag": "traveller.trade.Ri",
+       "when": {
+        "if": "all",
+        "of": [
+         {
+          "if": "any",
+          "of": [
+           {
+            "if": "is",
+            "field": "traveller.uwp.atmosphere",
+            "value": 6
+           },
+           {
+            "if": "is",
+            "field": "traveller.uwp.atmosphere",
+            "value": 8
+           }
+          ]
+         },
+         {
+          "if": "range",
+          "field": "traveller.uwp.population",
+          "min": 6,
+          "max": 8
+         }
+        ]
+       }
+      },
+      {
+       "id": "traveller.trade.Sa.v1",
+       "tag": "traveller.trade.Sa",
+       "when": {
+        "if": "is",
+        "field": "orbit.host_kind",
+        "value": "planet"
+       }
+      },
+      {
+       "id": "traveller.trade.Lk.v1",
+       "tag": "traveller.trade.Lk",
+       "when": {
+        "if": "all",
+        "of": [
+         {
+          "if": "is",
+          "field": "orbit.host_kind",
+          "value": "planet"
+         },
+         {
+          "if": "is",
+          "field": "spin.host_locked",
+          "value": true
+         }
+        ]
+       }
+      },
+      {
+       "id": "traveller.trade.Tz.v1",
+       "tag": "traveller.trade.Tz",
+       "when": {
+        "if": "all",
+        "of": [
+         {
+          "if": "is",
+          "field": "orbit.host_kind",
+          "value": "star"
+         },
+         {
+          "if": "is",
+          "field": "spin.star_locked",
+          "value": true
+         }
+        ]
+       }
+      },
+      {
+       "id": "traveller.trade.Fr.v1",
+       "tag": "traveller.trade.Fr",
+       "when": {
+        "if": "all",
+        "of": [
+         {
+          "if": "range",
+          "field": "traveller.uwp.size",
+          "min": 2,
+          "max": 9
+         },
+         {
+          "if": "range",
+          "field": "traveller.uwp.hydrographics",
+          "min": 1,
+          "max": 10
+         },
+         {
+          "if": "range",
+          "field": "planet.surface_temperature",
+          "max": 222.99999999999997
+         }
+        ]
+       }
+      },
+      {
+       "id": "traveller.trade.Co.v1",
+       "tag": "traveller.trade.Co",
+       "when": {
+        "if": "all",
+        "of": [
+         {
+          "if": "range",
+          "field": "traveller.uwp.size",
+          "min": 2,
+          "max": 15
+         },
+         {
+          "if": "range",
+          "field": "planet.surface_temperature",
+          "min": 223,
+          "max": 262.99999999999994
+         }
+        ]
+       }
+      },
+      {
+       "id": "traveller.trade.Ho.v1",
+       "tag": "traveller.trade.Ho",
+       "when": {
+        "if": "all",
+        "of": [
+         {
+          "if": "range",
+          "field": "traveller.uwp.size",
+          "min": 2,
+          "max": 15
+         },
+         {
+          "if": "range",
+          "field": "planet.surface_temperature",
+          "min": 303.00000000000006,
+          "max": 353
+         }
+        ]
+       }
+      },
+      {
+       "id": "traveller.trade.Tu.v1",
+       "tag": "traveller.trade.Tu",
+       "when": {
+        "if": "all",
+        "of": [
+         {
+          "if": "range",
+          "field": "traveller.uwp.size",
+          "min": 6,
+          "max": 9
+         },
+         {
+          "if": "range",
+          "field": "traveller.uwp.atmosphere",
+          "min": 4,
+          "max": 9
+         },
+         {
+          "if": "range",
+          "field": "traveller.uwp.hydrographics",
+          "min": 3,
+          "max": 7
+         },
+         {
+          "if": "range",
+          "field": "planet.surface_temperature",
+          "min": 223,
+          "max": 262.99999999999994
+         }
+        ]
+       }
+      },
+      {
+       "id": "traveller.trade.Tr.v1",
+       "tag": "traveller.trade.Tr",
+       "when": {
+        "if": "all",
+        "of": [
+         {
+          "if": "range",
+          "field": "traveller.uwp.size",
+          "min": 6,
+          "max": 9
+         },
+         {
+          "if": "range",
+          "field": "traveller.uwp.atmosphere",
+          "min": 4,
+          "max": 9
+         },
+         {
+          "if": "range",
+          "field": "traveller.uwp.hydrographics",
+          "min": 3,
+          "max": 7
+         },
+         {
+          "if": "range",
+          "field": "planet.surface_temperature",
+          "min": 303.00000000000006,
+          "max": 353
+         }
+        ]
+       }
+      },
+      {
+       "id": "traveller.zone.A.v1",
+       "tag": "traveller.zone.A",
+       "when": {
+        "if": "is",
+        "field": "traveller.zone",
+        "value": "A"
+       }
+      },
+      {
+       "id": "traveller.zone.R.v1",
+       "tag": "traveller.zone.R",
+       "when": {
+        "if": "is",
+        "field": "traveller.zone",
+        "value": "R"
+       }
+      },
+      {
+       "id": "traveller.zonehint.amber.v1",
+       "tag": "traveller.zonehint.amber",
+       "when": {
+        "if": "any",
+        "of": [
+         {
+          "if": "range",
+          "field": "traveller.uwp.atmosphere",
+          "min": 10,
+          "max": 15
+         },
+         {
+          "if": "any",
+          "of": [
+           {
+            "if": "is",
+            "field": "traveller.uwp.government",
+            "value": 0
+           },
+           {
+            "if": "is",
+            "field": "traveller.uwp.government",
+            "value": 7
+           },
+           {
+            "if": "is",
+            "field": "traveller.uwp.government",
+            "value": 10
+           }
+          ]
+         },
+         {
+          "if": "any",
+          "of": [
+           {
+            "if": "is",
+            "field": "traveller.uwp.law",
+            "value": 0
+           },
+           {
+            "if": "range",
+            "field": "traveller.uwp.law",
+            "min": 9,
+            "max": 18
+           }
+          ]
+         }
+        ]
+       }
+      },
+      {
+       "id": "traveller.base.N.v1",
+       "tag": "traveller.base.N",
+       "when": {
+        "if": "is",
+        "field": "traveller.bases.N",
+        "value": true
+       }
+      },
+      {
+       "id": "traveller.base.S.v1",
+       "tag": "traveller.base.S",
+       "when": {
+        "if": "is",
+        "field": "traveller.bases.S",
+        "value": true
+       }
+      },
+      {
+       "id": "traveller.base.W.v1",
+       "tag": "traveller.base.W",
+       "when": {
+        "if": "is",
+        "field": "traveller.bases.W",
+        "value": true
+       }
+      },
+      {
+       "id": "traveller.base.D.v1",
+       "tag": "traveller.base.D",
+       "when": {
+        "if": "is",
+        "field": "traveller.bases.D",
+        "value": true
+       }
+      },
+      {
+       "id": "traveller.base.M.v1",
+       "tag": "traveller.base.M",
+       "when": {
+        "if": "is",
+        "field": "traveller.bases.M",
+        "value": true
+       }
+      },
+      {
+       "id": "traveller.base.C.v1",
+       "tag": "traveller.base.C",
+       "when": {
+        "if": "is",
+        "field": "traveller.bases.C",
+        "value": true
+       }
+      },
+      {
+       "id": "traveller.base.K.v1",
+       "tag": "traveller.base.K",
+       "when": {
+        "if": "is",
+        "field": "traveller.bases.K",
+        "value": true
+       }
+      }
+     ]
     }
    ],
+   "views": {
+    "sse.view.hex-map": {
+     "grid": {
+      "block": {
+       "columns": 8,
+       "rows": 10
+      },
+      "blocks": {
+       "across": 4,
+       "down": 4
+      },
+      "label": "{c2}{r2}",
+      "block_names": [
+       "A",
+       "B",
+       "C",
+       "D",
+       "E",
+       "F",
+       "G",
+       "H",
+       "I",
+       "J",
+       "K",
+       "L",
+       "M",
+       "N",
+       "O",
+       "P"
+      ],
+      "shifted": "even",
+      "hex_distance": {
+       "value": 1,
+       "unit": "pc"
+      }
+     },
+     "glyphs": {
+      "label_field": "name",
+      "marks": [
+       {
+        "at": "top",
+        "mark": "starport",
+        "text_field": "starport"
+       },
+       {
+        "when": {
+         "field": "size",
+         "is": 0
+        },
+        "at": "centre",
+        "mark": "belt"
+       },
+       {
+        "when": {
+         "field": "hydrographics",
+         "gt": 0
+        },
+        "at": "centre",
+        "mark": "world-wet"
+       },
+       {
+        "at": "centre",
+        "mark": "world"
+       },
+       {
+        "when": {
+         "field": "gas_giants",
+         "gt": 0
+        },
+        "at": "top-right",
+        "mark": "gas-giant"
+       },
+       {
+        "when": {
+         "field": "bases",
+         "has": "N"
+        },
+        "at": "top-left",
+        "mark": "star"
+       },
+       {
+        "when": {
+         "field": "bases",
+         "has": "S"
+        },
+        "at": "bottom-left",
+        "mark": "triangle"
+       },
+       {
+        "when": {
+         "field": "bases",
+         "has": "W"
+        },
+        "at": "bottom-left",
+        "mark": "triangle",
+        "tone": "muted"
+       },
+       {
+        "when": {
+         "field": "bases",
+         "has": "D"
+        },
+        "at": "top-left",
+        "mark": "square"
+       },
+       {
+        "when": {
+         "field": "zone",
+         "is": "A"
+        },
+        "at": "ring",
+        "mark": "zone",
+        "tone": "caution"
+       },
+       {
+        "when": {
+         "field": "zone",
+         "is": "R"
+        },
+        "at": "ring",
+        "mark": "zone",
+        "tone": "danger"
+       }
+      ]
+     }
+    }
+   },
    "vocabulary": {
     "traveller.trade": {
      "As": "asteroid",

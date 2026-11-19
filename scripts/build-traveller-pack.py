@@ -397,6 +397,30 @@ SHEET = {
         {"id": "bases", "label": "Bases", "prefix": "traveller.base."},
     ],
     "system": {"giants": "gas_giants", "belts": "belts", "tag": "traveller-generated"},
+    "rules": RULES,
+}
+
+# The hex map (a core view) as this pack configures it: one hex a parsec,
+# subsectors 8 by 10, sectors 4 by 4 subsectors, four-digit labels.
+HEX_MAP = {
+    "grid": {"block": {"columns": 8, "rows": 10}, "blocks": {"across": 4, "down": 4}, "label": "{c2}{r2}",
+             "block_names": list("ABCDEFGHIJKLMNOP"), "shifted": "even", "hex_distance": {"value": 1, "unit": "pc"}},
+    "glyphs": {
+        "label_field": "name",
+        "marks": [
+            {"at": "top", "mark": "starport", "text_field": "starport"},
+            {"when": {"field": "size", "is": 0}, "at": "centre", "mark": "belt"},
+            {"when": {"field": "hydrographics", "gt": 0}, "at": "centre", "mark": "world-wet"},
+            {"at": "centre", "mark": "world"},
+            {"when": {"field": "gas_giants", "gt": 0}, "at": "top-right", "mark": "gas-giant"},
+            {"when": {"field": "bases", "has": "N"}, "at": "top-left", "mark": "star"},
+            {"when": {"field": "bases", "has": "S"}, "at": "bottom-left", "mark": "triangle"},
+            {"when": {"field": "bases", "has": "W"}, "at": "bottom-left", "mark": "triangle", "tone": "muted"},
+            {"when": {"field": "bases", "has": "D"}, "at": "top-left", "mark": "square"},
+            {"when": {"field": "zone", "is": "A"}, "at": "ring", "mark": "zone", "tone": "caution"},
+            {"when": {"field": "zone", "is": "R"}, "at": "ring", "mark": "zone", "tone": "danger"},
+        ],
+    },
 }
 
 ABOUT = (
@@ -418,8 +442,8 @@ pack = {
         "schemes": SCHEMES,
         "axes": [[k, v] for k, v in sorted(AXES.items())],
         "classes": CLASSES,
-        "rules": RULES,
         "code_sheets": [SHEET],
+        "views": {"sse.view.hex-map": HEX_MAP},
         "vocabulary": {"traveller.trade": TRADE_WORDS, "traveller.bases": BASES,
                        "traveller.zone": {"A": "amber", "R": "red"}},
     }},

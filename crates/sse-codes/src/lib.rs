@@ -127,6 +127,11 @@ pub struct CodeSheet {
     pub fact_prefix: String,
     #[serde(default)]
     pub groups: Vec<Group>,
+    /// The sheet's own rules (K8 rules): prepare flags, counts and groups.
+    /// Kept here, not in the stack's `rules`, so they tag nothing outside a
+    /// code reading.
+    #[serde(default)]
+    pub rules: Vec<sse_sift::Rule>,
     /// How a coded world's system is grown (X3b), if the sheet supports it.
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub system: Option<plan::SystemHints>,
@@ -325,7 +330,7 @@ impl Codes {
                     }
                 }
                 Source::Count { tag, .. } => {
-                    if !self.sift.rules.rules.iter().any(|r| &r.tag == tag) {
+                    if !s.rules.iter().any(|r| &r.tag == tag) {
                         return Err(format!("code sheet {}: no rule sets the tag {tag}", s.id));
                     }
                 }
@@ -344,11 +349,9 @@ impl Codes {
         Ok(())
     }
 
-    fn rules_with(&self, prefix: &str) -> RuleSet {
+    fn rules_with(sheet: &CodeSheet, prefix: &str) -> RuleSet {
         RuleSet {
-            rules: self
-                .sift
-                .rules
+            rules: sheet
                 .rules
                 .iter()
                 .filter(|r| r.tag.starts_with(prefix))
@@ -365,7 +368,7 @@ impl Codes {
         // 1. prepare: flag facts from rules.
         let mut prepared = Vec::new();
         for p in &sheet.prepare {
-            let rs = self.rules_with(p);
+            let rs = Self::rules_with(sheet, p);
             let got = rs.apply(&subj, &BTreeMap::new());
             for r in &rs.rules {
                 subj.facts
@@ -376,7 +379,7 @@ impl Codes {
         // 2. segments.
         let mut segments: Vec<SegmentReading> = Vec::new();
         for g in &sheet.segments {
-            let physics = self.segment(atlas, g, &subj, system, &segments);
+            let physics = self.segment(sheet, atlas, g, &subj, system, &segments);
             let reading = match g
                 .authored
                 .as_ref()
@@ -417,7 +420,7 @@ impl Codes {
             .groups
             .iter()
             .map(|gr| {
-                let got = self.rules_with(&gr.prefix).apply(&subj, &BTreeMap::new());
+                let got = Self::rules_with(sheet, &gr.prefix).apply(&subj, &BTreeMap::new());
                 GroupReading {
                     id: gr.id.clone(),
                     tags: got
@@ -443,6 +446,7 @@ impl Codes {
 
     fn segment(
         &self,
+        sheet: &CodeSheet,
         atlas: &Atlas,
         g: &Segment,
         subj: &Subject,
@@ -500,7 +504,7 @@ impl Codes {
             Source::Count { tag, max } => match system {
                 None => (UNKNOWN.into(), None, Why::NoSystem { tag: tag.clone() }),
                 Some(sys) => {
-                    let rs = self.rules_with(tag);
+                    let rs = Self::rules_with(sheet, tag);
                     let mut members: Vec<String> = sys
                         .iter()
                         .filter(|b| rs.apply(b, &BTreeMap::new()).contains_key(tag))
