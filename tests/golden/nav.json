@@ -1,0 +1,232 @@
+{
+  "cases": [
+    {
+      "candidates": [
+        {
+          "days": "258.8671",
+          "difficulty": "hard",
+          "dv_m_s": "5608.469",
+          "id": "hohmann"
+        },
+        {
+          "days": "199.8468",
+          "difficulty": "hard",
+          "dv_m_s": "6136.582",
+          "id": "lambert-fuel"
+        },
+        {
+          "days": "180.7802",
+          "difficulty": "hard",
+          "dv_m_s": "6367.531",
+          "id": "lambert-fast"
+        }
+      ],
+      "case": "chemical",
+      "plan": "21738a9910e1a46e75db19bb35bf69edc83587573734424789cc82891f16eb11",
+      "refused": 0,
+      "ways_out": []
+    },
+    {
+      "candidates": [
+        {
+          "days": "5.9663",
+          "difficulty": "moderate",
+          "dv_m_s": "1247664.925",
+          "id": "torch-100"
+        },
+        {
+          "days": "10.9844",
+          "difficulty": "routine",
+          "dv_m_s": "623832.463",
+          "id": "torch-50"
+        },
+        {
+          "days": "27.5759",
+          "difficulty": "easy",
+          "dv_m_s": "249532.985",
+          "id": "torch-20"
+        },
+        {
+          "days": "94.4987",
+          "difficulty": "very hard",
+          "dv_m_s": "59295.282",
+          "id": "lambert-fast"
+        },
+        {
+          "days": "119.1506",
+          "difficulty": "moderate",
+          "dv_m_s": "8702.670",
+          "id": "lambert-balanced"
+        },
+        {
+          "days": "199.8468",
+          "difficulty": "moderate",
+          "dv_m_s": "6136.582",
+          "id": "lambert-fuel"
+        },
+        {
+          "days": "258.8671",
+          "difficulty": "moderate",
+          "dv_m_s": "5608.469",
+          "id": "hohmann"
+        }
+      ],
+      "case": "torch",
+      "plan": "ed58f21cadf17a5dfa18beca10d20bacc329b81ecf58fc198d00e4c26e64d076",
+      "refused": 0,
+      "ways_out": []
+    },
+    {
+      "candidates": [],
+      "case": "drift",
+      "plan": "50fdc5a78e05632827e071d20d9987b652352b612f882eda034874ba56ebb312",
+      "refused": 0,
+      "ways_out": [
+        {
+          "dv_m_s": "0.000",
+          "feasible": true,
+          "kind": "rescue",
+          "label": "Call for rescue from Mars"
+        },
+        {
+          "dv_m_s": "0.000",
+          "feasible": true,
+          "kind": "rescue",
+          "label": "Call for rescue from Earth"
+        },
+        {
+          "dv_m_s": "29785.142",
+          "feasible": false,
+          "kind": "safe-orbit",
+          "label": "Burn into a circular orbit at 1.00 au"
+        },
+        {
+          "dv_m_s": "0.000",
+          "feasible": false,
+          "kind": "drift",
+          "label": "Keep drifting"
+        },
+        {
+          "dv_m_s": "34804.451",
+          "feasible": false,
+          "kind": "burn-to",
+          "label": "Burn for Mars"
+        },
+        {
+          "dv_m_s": "35910.133",
+          "feasible": false,
+          "kind": "burn-to",
+          "label": "Burn for Mercury"
+        },
+        {
+          "dv_m_s": "34107.056",
+          "feasible": false,
+          "kind": "burn-to",
+          "label": "Burn for Venus"
+        },
+        {
+          "dv_m_s": "29696.770",
+          "feasible": false,
+          "kind": "burn-to",
+          "label": "Burn for Earth"
+        },
+        {
+          "dv_m_s": "55609.051",
+          "feasible": false,
+          "kind": "burn-to",
+          "label": "Burn for Jupiter"
+        },
+        {
+          "dv_m_s": "50567.282",
+          "feasible": false,
+          "kind": "burn-to",
+          "label": "Burn for Saturn"
+        },
+        {
+          "dv_m_s": "40778.659",
+          "feasible": false,
+          "kind": "burn-to",
+          "label": "Burn for Uranus"
+        },
+        {
+          "dv_m_s": "41032.895",
+          "feasible": false,
+          "kind": "burn-to",
+          "label": "Burn for Neptune"
+        }
+      ]
+    }
+  ],
+  "descents": [
+    {
+      "duration_s": "1400.50",
+      "events": [
+        "entry",
+        "peak-heating",
+        "chute",
+        "touchdown"
+      ],
+      "lander": "capsule",
+      "method": "chute",
+      "peak_g": "9.4253",
+      "peak_heat_w_cm2": "115.3875",
+      "propellant_kg": "0.000",
+      "result": "landed",
+      "touchdown_m_s": "7.5976",
+      "world": "Earth"
+    },
+    {
+      "duration_s": "1383.50",
+      "events": [
+        "entry",
+        "peak-heating",
+        "chute",
+        "burn",
+        "chute-released",
+        "touchdown"
+      ],
+      "lander": "mars-lander",
+      "method": "chute-and-engines",
+      "peak_g": "4.5113",
+      "peak_heat_w_cm2": "3.8919",
+      "propellant_kg": "150.686",
+      "result": "landed",
+      "touchdown_m_s": "1.5546",
+      "world": "Mars"
+    },
+    {
+      "duration_s": "11361.70",
+      "events": [
+        "entry",
+        "peak-heating",
+        "chute",
+        "touchdown"
+      ],
+      "lander": "titan-probe",
+      "method": "chute",
+      "peak_g": "29.6404",
+      "peak_heat_w_cm2": "47.2100",
+      "propellant_kg": "0.000",
+      "result": "landed",
+      "touchdown_m_s": "3.5289",
+      "world": "Titan"
+    },
+    {
+      "duration_s": "453.80",
+      "events": [
+        "entry",
+        "burn",
+        "touchdown"
+      ],
+      "lander": "moon-lander",
+      "method": "engines",
+      "peak_g": "0.5444",
+      "peak_heat_w_cm2": "0.0000",
+      "propellant_kg": "6679.672",
+      "result": "landed",
+      "touchdown_m_s": "2.0570",
+      "world": "Moon"
+    }
+  ],
+  "version": "nav-v1"
+}

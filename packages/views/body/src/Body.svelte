@@ -202,7 +202,7 @@
 
   const pct = (x: number) => (x >= 0.995 ? "all" : x < 0.005 ? "none" : `${Math.round(x * 100)}%`);
   const km = (m: number) => (m < 0 ? "−" : "") + (Math.abs(m) >= 1000 ? `${(Math.abs(m) / 1000).toFixed(1)} km` : `${Math.round(Math.abs(m))} m`);
-  const coverWords: Record<string, string> = { water: "under water", magma: "under magma", hydrocarbon: "under hydrocarbon seas" };
+  const coverWords: Record<string, string> = { water: "under water", magma: "under magma", hydrocarbon: "under hydrocarbon seas", ice: "under ice" };
   const covers = $derived(stats ? Object.entries(stats.covered).filter(([k, v]) => k !== "none" && v > 0).sort((a, b) => b[1] - a[1]) : []);
   const summary = $derived.by(() => {
     if (!stats || !subject) return "";

@@ -102,7 +102,7 @@ pub const MATERIALS: [&str; 9] = [
     "organic-sediment",
     "carbon",
 ];
-pub const COVERS: [&str; 4] = ["none", "water", "magma", "hydrocarbon"];
+pub const COVERS: [&str; 5] = ["none", "water", "magma", "hydrocarbon", "ice"];
 
 #[derive(Clone, PartialEq, Debug, Serialize, Deserialize)]
 pub struct Tile {
@@ -132,6 +132,18 @@ pub struct Tile {
     /// cells), capped at 255. Empty before wearing down.
     #[serde(default, skip_serializing_if = "Vec::is_empty")]
     pub flow: Vec<u8>,
+    /// S7: moisture, 0 to 255. Empty without S7's layers.
+    #[serde(default, skip_serializing_if = "Vec::is_empty")]
+    pub wetness: Vec<u8>,
+    /// S7: index into [`crate::cover::DEPOSITS`].
+    #[serde(default, skip_serializing_if = "Vec::is_empty")]
+    pub deposit: Vec<u8>,
+    /// S7: 0 none, else 1 + index into the layers' built kinds.
+    #[serde(default, skip_serializing_if = "Vec::is_empty")]
+    pub structure: Vec<u8>,
+    /// S7: colour from material and cover, 0xRRGGBB.
+    #[serde(default, skip_serializing_if = "Vec::is_empty")]
+    pub colour: Vec<u32>,
     /// Layers a later stage fills.
     pub pending: Vec<String>,
     pub hash: String,
@@ -170,6 +182,7 @@ pub struct Atlas {
     plates: Option<PlateSurface>,
     impacts: Option<Box<ImpactLayer>>,
     regime_layer: Option<Box<crate::regimes::RegimeSurface>>,
+    layers: Option<Box<crate::cover::Layers>>,
 }
 
 /// S4's craters, plains and shields on an atlas.
@@ -362,6 +375,7 @@ impl Atlas {
             plates: None,
             impacts: None,
             regime_layer: None,
+            layers: None,
         }
     }
 
@@ -496,15 +510,117 @@ impl Atlas {
         self
     }
 
+    /// Add S7's layers (cover, deposits, built layer, GM edits), then settle
+    /// the GM's height pins: each becomes a smooth bump sized so that the
+    /// fact-floor height at the pin equals the pinned height, measured on the
+    /// terrain as it stands with every earlier pin in place.
+    pub fn with_layers(mut self, mut l: crate::cover::Layers) -> Self {
+        let pins = std::mem::take(&mut l.pins);
+        let max = l.max_relief_m;
+        self.layers = Some(Box::new(l));
+        let level = self.level_for(self.settings.fact_floor_m);
+        let rk = self.radius_m / 1000.0;
+        let min_w = self.settings.nyquist * self.spacing_m(level) / 1000.0;
+        for p in pins {
+            let before = self.height_at(p.dir, level);
+            let delta = p.height_m - before;
+            let (la, lo) = (
+                m::asin(p.dir[2].clamp(-1.0, 1.0)).to_degrees(),
+                m::atan2(p.dir[1], p.dir[0]).to_degrees(),
+            );
+            let ly = self.layers.as_mut().expect("just set");
+            ly.landforms.push(crate::regimes::Landform {
+                id: p.id.clone(),
+                kind: "pin".into(),
+                dir: p.dir,
+                axis: None,
+                lat_deg: la,
+                lon_deg: lo,
+                size_km: 2.0 * p.radius_km,
+                width_km: (2.0 * p.radius_km).max(min_w),
+                height_m: delta,
+                formed_myr: p.at_myr,
+                cover: None,
+                material: None,
+                cause: format!(
+                    "pinned by the GM at {:.0} Myr to {:.0} m (the ground stood at {:.0} m)",
+                    p.at_myr, p.height_m, before
+                ),
+            });
+            if let Some(a) = ly.applied.iter_mut().find(|a| a.id == p.id) {
+                a.note = format!(
+                    "{}; the ground stood at {:.0} m, raised by {:.0} m over {:.1} km",
+                    a.note, before, delta, p.radius_km
+                );
+                if delta.abs() > max {
+                    a.impossible = Some(format!(
+                        "moving the ground {:.0} m by hand exceeds the {:.0} m rock can hold up here",
+                        delta, max
+                    ));
+                }
+            }
+            let _ = rk;
+        }
+        self
+    }
+
+    pub fn layers(&self) -> Option<&crate::cover::Layers> {
+        self.layers.as_deref()
+    }
+
+    /// Thick-sediment flags per plate cell (S3), when the atlas was worn.
+    pub(crate) fn sediment_cells(&self) -> Option<Vec<bool>> {
+        self.plates
+            .as_ref()
+            .and_then(|p| p.flow.as_ref())
+            .map(|f| f.iter().map(|x| x.2).collect())
+    }
+
+    /// The height a tile at `level` gives at a direction, m (the same sum
+    /// `build` makes for a sample there).
+    pub fn height_at(&self, d: [f64; 3], level: u8) -> f64 {
+        let (f, u, v) = face_of(d);
+        let n = 1u64 << level;
+        let ix = (((u + 1.0) * 0.5 * n as f64) as i64).clamp(0, n as i64 - 1) as u32;
+        let iy = (((v + 1.0) * 0.5 * n as f64) as i64).clamp(0, n as i64 - 1) as u32;
+        let key = TileKey::new(f, level, ix, iy).expect("key in range");
+        let rk = self.radius_m / 1000.0;
+        let feats = self.tile_features(key);
+        let mut tags = vec![];
+        let lands = self.tile_landforms(key, &mut tags);
+        let (mut h, _) = self.height(d, self.octaves_at(level));
+        h += feats.height(d, rk);
+        for l in &lands.relief {
+            h += crate::regimes::landform_height(l, d, rk).0;
+        }
+        if let Some(c) = self.regime_layer.as_ref().and_then(|r| r.clouds.as_ref()) {
+            h += c.at(d, rk).1;
+        }
+        h
+    }
+
+    /// Tile centre and half its diagonal (angle, with margin for the warp).
+    fn centre_half(&self, key: TileKey) -> ([f64; 3], f64) {
+        let n = (1u64 << key.level) as f64;
+        let centre = direction(
+            key.face,
+            -1.0 + 2.0 * (key.x as f64 + 0.5) / n,
+            -1.0 + 2.0 * (key.y as f64 + 0.5) / n,
+        );
+        let half =
+            1.5 * self.spacing_m(key.level) * self.settings.tile_samples as f64 / self.radius_m;
+        (centre, half)
+    }
+
     pub fn regime_surface(&self) -> Option<&crate::regimes::RegimeSurface> {
         self.regime_layer.as_deref()
     }
 
     /// Tolerance terms from regime landforms and cloud bands, m.
     fn regime_tolerance_m(&self, child_level: u8) -> f64 {
-        let Some(rs) = &self.regime_layer else {
+        if self.regime_layer.is_none() && self.layers.is_none() {
             return 0.0;
-        };
+        }
         let parent = child_level.saturating_sub(1);
         let (sp_p, min_p, min_c) = (
             self.spacing_m(parent),
@@ -513,7 +629,7 @@ impl Atlas {
         );
         let mut added: f64 = 0.0;
         let mut carried: f64 = 0.0;
-        for l in &rs.landforms {
+        for l in self.all_landforms() {
             let k = crate::regimes::landform_curvature(&l.kind);
             if k == 0.0 {
                 continue;
@@ -526,12 +642,34 @@ impl Atlas {
                 carried = carried.max(k * l.height_m.abs() * (sp_p / hw) * (sp_p / hw) / 16.0);
             }
         }
-        let clouds = rs.clouds.as_ref().map_or(0.0, |c| {
-            let amp = 0.5 * c.scale_height_km * 1000.0;
-            let bw = c.narrowest_band_km(self.radius_m / 1000.0) * 1000.0;
-            let x = m::PI * sp_p / bw.max(1.0);
-            amp * (0.25 * x * x).min(1.0)
-        });
+        // Authored craters (S7), as S4's craters.
+        let mut cr_added: f64 = 0.0;
+        let mut cr_carried: f64 = 0.0;
+        if let Some(ly) = &self.layers {
+            let s = &ly.impact_settings;
+            let g = ly.gravity;
+            for (d, relief) in &ly.crater_relief {
+                if *d >= min_c && *d < min_p {
+                    cr_added = cr_added.max(*relief);
+                }
+                if *d >= min_p {
+                    cr_carried =
+                        cr_carried.max(crate::impacts::crater_curvature_err(s, g, *d, sp_p));
+                }
+            }
+        }
+        added = added.max(cr_added);
+        carried = carried.max(cr_carried);
+        let clouds = self
+            .regime_layer
+            .as_ref()
+            .and_then(|r| r.clouds.as_ref())
+            .map_or(0.0, |c| {
+                let amp = 0.5 * c.scale_height_km * 1000.0;
+                let bw = c.narrowest_band_km(self.radius_m / 1000.0) * 1000.0;
+                let x = m::PI * sp_p / bw.max(1.0);
+                amp * (0.25 * x * x).min(1.0)
+            });
         2.0 * (added + carried) + clouds
     }
 
@@ -772,13 +910,21 @@ impl Atlas {
         Ok(self.build(key))
     }
 
+    /// Regime landforms (S6) and the GM's ranges and pins (S7).
+    fn all_landforms(&self) -> impl Iterator<Item = &crate::regimes::Landform> {
+        self.regime_layer
+            .iter()
+            .flat_map(|r| r.landforms.iter())
+            .chain(self.layers.iter().flat_map(|l| l.landforms.iter()))
+    }
+
     /// Regime landforms near a tile: those with relief at this level, and
     /// those that set cover or material (at every level).
     fn tile_landforms(&self, key: TileKey, tags: &mut Vec<String>) -> TileLandforms {
         let mut out = TileLandforms::default();
-        let Some(rs) = &self.regime_layer else {
+        if self.regime_layer.is_none() && self.layers.is_none() {
             return out;
-        };
+        }
         let rk = self.radius_m / 1000.0;
         let n = (1u64 << key.level) as f64;
         let centre = direction(
@@ -789,7 +935,7 @@ impl Atlas {
         let half =
             1.5 * self.spacing_m(key.level) * self.settings.tile_samples as f64 / self.radius_m;
         let min = self.min_feature_km(key.level);
-        for l in &rs.landforms {
+        for l in self.all_landforms() {
             let reach = (0.5 * l.size_km + 2.0 * l.width_km) / rk;
             if m::acos(crate::sketch::dot(l.dir, centre).clamp(-1.0, 1.0)) > half + reach {
                 continue;
@@ -805,7 +951,7 @@ impl Atlas {
                 tags.push(l.id.clone());
             }
         }
-        if let Some(c) = &rs.clouds {
+        if let Some(c) = self.regime_layer.as_ref().and_then(|r| r.clouds.as_ref()) {
             for st in &c.storms {
                 let (la, lo) = (st.lat_deg.to_radians(), st.lon_deg.to_radians());
                 let sd = [m::cos(la) * m::cos(lo), m::cos(la) * m::sin(lo), m::sin(la)];
@@ -821,6 +967,29 @@ impl Atlas {
 
     /// The craters, shields and plains that can touch a tile at its level.
     fn tile_features(&self, key: TileKey) -> TileFeatures {
+        let mut tf = self.tile_impact_features(key);
+        if let Some(ly) = &self.layers {
+            let rk = self.radius_m / 1000.0;
+            let (centre, half) = self.centre_half(key);
+            let min = self.min_feature_km(key.level);
+            for c in &ly.craters {
+                if c.d_km >= min
+                    && m::acos(crate::sketch::dot(c.dir, centre).clamp(-1.0, 1.0))
+                        <= half + 1.1 * c.d_km / rk
+                {
+                    tf.tags.push(c.id.clone());
+                    let mut c = c.clone();
+                    c.cause.clear();
+                    tf.reach.push(crate::impacts::crater_reach_cos(&c, rk));
+                    tf.craters.push(c);
+                }
+            }
+        }
+        tf
+    }
+
+    /// S4's craters, shields and plains that can touch a tile at its level.
+    fn tile_impact_features(&self, key: TileKey) -> TileFeatures {
         let mut tf = TileFeatures::default();
         let Some(ip) = &self.impacts else { return tf };
         let f = &ip.features;
@@ -921,6 +1090,10 @@ impl Atlas {
         let lands = self.tile_landforms(key, &mut feats.tags);
         let rk = self.radius_m / 1000.0;
         let deck = self.regime_layer.as_ref().and_then(|r| r.clouds.as_ref());
+        let tl = self.layers.as_ref().map(|ly| {
+            let (centre, half) = self.centre_half(key);
+            ly.near_tile(centre, half, rk, &mut feats.tags)
+        });
         // One-sample border for slopes.
         let w = (s + 2) as usize;
         let mut hh = vec![0.0; w * w];
@@ -957,6 +1130,10 @@ impl Atlas {
         let mut age = Vec::with_capacity(cnt);
         let mut albedo = Vec::with_capacity(cnt);
         let mut flow: Vec<u8> = vec![];
+        let mut wetness: Vec<u8> = vec![];
+        let mut deposit: Vec<u8> = vec![];
+        let mut structure: Vec<u8> = vec![];
+        let mut colour: Vec<u32> = vec![];
         let style = self.model.style.as_str();
         let dist = |a: [f64; 3], b: [f64; 3]| {
             let d = [a[0] - b[0], a[1] - b[1], a[2] - b[2]];
@@ -1054,10 +1231,27 @@ impl Atlas {
                         });
                     }
                 }
-                albedo.push(m::round(p.albedo.clamp(0.0, 1.0) * 1000.0) as u16);
+                let mut al = p.albedo;
+                if let (Some(ly), Some(t)) = (&self.layers, &tl) {
+                    let mat = *material.last().expect("pushed");
+                    let cov = cover.last_mut().expect("pushed");
+                    let sl = ly.sample(t, dirs[c], h, mat, *cov, al, rk);
+                    *cov = sl.cover;
+                    al = sl.albedo;
+                    wetness.push(sl.wet);
+                    deposit.push(sl.deposit);
+                    structure.push(sl.structure);
+                    colour.push(sl.colour);
+                }
+                albedo.push(m::round(al.clamp(0.0, 1.0) * 1000.0) as u16);
             }
         }
-        let hash = if flow.is_empty() {
+        let hash = if self.layers.is_some() {
+            ContentHash::of(&(
+                (&elevation_dm, &material, &cover, &slope, &age, &albedo),
+                (&flow, &wetness, &deposit, &structure, &colour),
+            ))
+        } else if flow.is_empty() {
             ContentHash::of(&(&elevation_dm, &material, &cover, &slope, &age, &albedo))
         } else {
             ContentHash::of(&(
@@ -1085,6 +1279,9 @@ impl Atlas {
         if !flow.is_empty() {
             pending.remove(0);
         }
+        if self.layers.is_some() {
+            pending.retain(|x| x.contains("flow") || x.contains("biome"));
+        }
         Tile {
             address: self.tile_address(&key),
             key,
@@ -1101,6 +1298,10 @@ impl Atlas {
             tags: feats.tags,
             pending,
             flow,
+            wetness,
+            deposit,
+            structure,
+            colour,
             hash,
         }
     }

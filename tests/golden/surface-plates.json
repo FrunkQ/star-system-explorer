@@ -3,15 +3,15 @@
   "worlds": [
     {
       "body": "Earth",
-      "events": 372,
-      "history": "4670fb7470e179aa3c2d7632ca1e69f0076b1c8ea2a199aec4e2c7bbba401314",
+      "events": 369,
+      "history": "e138ffb62aa79f30a4e9ab1e5c11eff3e61721c7c89a79b34f9fca29a608e786",
       "plates": 8,
       "snapshots": 45,
       "steps": 176,
       "tiles": [
-        "a70680e52c0d0c9661c3ab92522649c897222cac43a013a3ef90c1cb691ecd8e",
-        "19d5b31bf1c596710f215b107ea47f06cf5ff112b2260b1dd23ca270e84b5b8e",
-        "38a5508f1bf46549430099fc2eab95cd1045726f7d246616411f739719a7ff89"
+        "7bc557832be86c1b80f7fce76503bfcea9efb98deacc7e46a72acaccfd23ac9d",
+        "4e50a638f366156cf68d3e6eb183713c4666e082f8b596b72434486e0fa61f8b",
+        "e90e25a8c0f7face1967320cae30d807c89fc8bd649598f3cc6bd2b5070b27ed"
       ]
     },
     {
