@@ -60,6 +60,8 @@ pub struct CosmologyPack {
     pub params: Params,
     pub web: WebParams,
     pub epochs: EpochParams,
+    #[serde(default)]
+    pub haloes: crate::haloes::HaloParams,
 }
 
 impl CosmologyPack {
@@ -131,4 +133,40 @@ mod erased {
             serde_json::to_string(self).expect("json")
         }
     }
+}
+
+/// G2 golden: two cells' halo catalogues (digests, counts, masses) and their
+/// merger events, identical on every device.
+pub fn haloes_golden() -> serde_json::Value {
+    let cp = CosmologyPack::from_packs(&[base_cosmology_pack()]).expect("settings");
+    let c = Cosmology::new(cp.params.clone());
+    let u = Address::universe("g2").expect("address");
+    let web = Web::new(&c, cp.web.clone(), &Seed::from_text("g2"), &u).expect("web");
+    let hs = crate::haloes::Haloes {
+        cosmo: &c,
+        web: &web,
+        params: crate::haloes::HaloParams {
+            min_mass: 1.0e11,
+            ..cp.haloes.clone()
+        },
+        seed: Seed::from_text("g2"),
+        universe: u,
+    };
+    let mut ch = Chronicle::new();
+    let cells: Vec<serde_json::Value> = [[0, 0, 0], [3, -2, 1]]
+        .iter()
+        .map(|i| {
+            let cell = hs.cell(*i);
+            hs.record(&mut ch, &cell).expect("record");
+            serde_json::json!({
+                "address": cell.address,
+                "delta_l": cell.delta_l,
+                "haloes": cell.haloes.len(),
+                "halo_mass": cell.halo_mass,
+                "mergers": cell.haloes.iter().map(|h| h.mergers.len()).sum::<usize>(),
+                "digest": ContentHash::of(&serde_json::to_string(&cell).expect("json")).expect("hash").hex(),
+            })
+        })
+        .collect();
+    serde_json::json!({ "cells": cells, "chronicle_head": ch.head().hex() })
 }

@@ -34,7 +34,22 @@
      "proton_lifetime_log10_yr": 37.0,
      "largest_black_hole": 100000000000.0
     },
+    "haloes": {
+     "cell_mpc": 8.0,
+     "min_mass": 10000000000.0,
+     "max_mass": 1e16,
+     "bins_per_dex": 4,
+     "position_candidates": 6,
+     "formation_scatter": 0.3,
+     "formation_environment": 0.3,
+     "spin_median": 0.035,
+     "spin_sigma_ln": 0.5,
+     "major_ratio": 0.25,
+     "merger_z_max": 6.0,
+     "neighbour_mpc": 3.0
+    },
     "sources": {
+     "haloes": "Sheth and Tormen 1999 mass function and bias; growth M(z) = M0 (1+z)^alpha exp(beta z) (McBride et al. 2009) with alpha, beta from Correa et al. 2015; spin Bullock et al. 2001; major mergers Fakhouri, Ma and Boylan-Kolchin 2010; formation scatter and environment shift are rough (sketch)",
      "params": "Planck Collaboration 2020, Planck 2018 results VI, table 2 (TT,TE,EE+lowE+lensing+BAO); T_CMB from Fixsen 2009; N_eff 3.046 (Mangano et al. 2005)",
      "web": "galaxy design section 3; T-web threshold 0 as in Hahn et al. 2007",
      "first_stars": "3-sigma peaks of 1e6 solar-mass minihaloes (Tegmark et al. 1997; Barkana and Loeb 2001)",

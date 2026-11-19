@@ -1,0 +1,21 @@
+{
+  "cells": [
+    {
+      "address": "u:g2/cell:0.0.0",
+      "delta_l": 1.3010410378516066,
+      "digest": "2c4e745318373306b56218d6146af6708f3014dd725cd47e4d2a14e2029ab82c",
+      "halo_mass": 12796340596025.74,
+      "haloes": 14,
+      "mergers": 26
+    },
+    {
+      "address": "u:g2/cell:3.-2.1",
+      "delta_l": 0.13768040353923228,
+      "digest": "7de8f43ea646c312874f4ae92a777110129fb2eb2ad629f99054530093ab1796",
+      "halo_mass": 3925083942045.4287,
+      "haloes": 7,
+      "mergers": 16
+    }
+  ],
+  "chronicle_head": "9948c15343bdf376c0a917bd300c9f36e42394a05d1491aacc49021406652c26"
+}

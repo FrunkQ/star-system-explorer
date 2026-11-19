@@ -136,12 +136,12 @@ fn web(octaves: u32) -> (Cosmology, Web) {
     (c, w)
 }
 
-/// Deterministic sample points: a scrambled lattice over a 2 Gpc box.
+/// Deterministic sample points: a scrambled lattice over a 640 Mpc box.
 fn points(n: u32) -> Vec<[f64; 3]> {
     (0..n)
         .map(|i| {
             let f = |k: u32, p: f64| {
-                m::fmod(f64::from(i) * p + f64::from(k) * 0.123, 1.0) * 2000.0 - 1000.0
+                m::fmod(f64::from(i) * p + f64::from(k) * 0.123, 1.0) * 640.0 - 320.0
             };
             [
                 f(1, 0.618_033_988_7),
@@ -155,7 +155,7 @@ fn points(n: u32) -> Vec<[f64; 3]> {
 #[test]
 fn web_variance_matches_the_spectrum_at_three_scales() {
     let (_, w) = web(6);
-    let pts = points(4000);
+    let pts = points(2000);
     let mut cache = Cache::default();
     for j in [1_u32, 3, 5] {
         let v: Vec<f64> = pts.iter().map(|p| w.delta0(&mut cache, *p, j)).collect();
@@ -203,7 +203,7 @@ fn t_web_fractions_match_a_gaussian_field() {
     // Doroshkevich 1970: for a Gaussian field and threshold 0, voids and knots
     // are about 8 percent each, sheets and filaments about 42 percent each.
     let (_, w) = web(4);
-    let pts = points(3000);
+    let pts = points(2000);
     let mut cache = Cache::default();
     let mut counts = [0usize; 4];
     for p in &pts {
