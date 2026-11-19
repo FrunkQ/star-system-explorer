@@ -852,6 +852,11 @@ impl Kernel {
                 star_pins,
                 pins,
             })?,
+            Request::ReadWorldStack {
+                body,
+                fixture,
+                stack,
+            } => systems::read_world_stack(body.as_deref(), fixture.as_deref(), stack)?,
             Request::Adopt {
                 import_v3,
                 formation,

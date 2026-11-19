@@ -1,0 +1,463 @@
+//! S3: wearing down (surface design section 3, term 6).
+//!
+//! Runs on the cell grid the relief came from: the plate history's cells on a
+//! mobile-lid world, the regime sketch sampled at the same cells otherwise.
+//! Each epoch (100 Myr):
+//! - depressions are filled by priority-flood, so every land cell drains to the
+//!   sea or to a lake and no river runs uphill;
+//! - water is routed by steepest descent on the filled surface and
+//!   accumulated from rainfall (latitude bands, none on a dry world);
+//! - valleys are cut by the stream-power rule (incision grows with discharge
+//!   and slope; glaciers cut harder), solved implicitly in drainage order;
+//! - what is worn off is carried downstream and laid down in lakes and at river
+//!   mouths, so eroded and deposited volume balance exactly;
+//! - slopes relax by diffusion, wet or dry;
+//! - sea level is refitted to the water volume, so shelves flood and drain.
+//!
+//! On a mobile-lid world the relief is young (S2 already wore old belts down),
+//! so only the last `plate_window_myr` is carved; elsewhere the whole history
+//! from the magma ocean's end is.
+
+use crate::plates::{sea_level, Grid, PlateHistory};
+use crate::sketch::SketchModel;
+use crate::{SurfaceEnvelope, SurfaceSettings};
+use serde::{Deserialize, Serialize};
+use sse_core::draw::Seed;
+use sse_core::math as m;
+use std::collections::BTreeSet;
+
+pub const WEAR_VERSION: &str = "surface-wear-v1";
+
+#[derive(Clone, PartialEq, Debug, Serialize, Deserialize)]
+pub struct WearSettings {
+    pub epoch_myr: f64,
+    pub plate_window_myr: f64,
+    pub rain_m_yr: f64,
+    pub rain_floor: f64,
+    pub rain_cells: u32,
+    pub k_stream: f64,
+    pub m: f64,
+    pub glacial_factor: f64,
+    pub ice_k: f64,
+    pub lapse_k_m: f64,
+    pub diffusion_m2_yr: f64,
+    pub river_area_cells: f64,
+    pub dune_rain: f64,
+    pub dune_pressure_bar: f64,
+    pub dune_slope: f64,
+    pub fill_epsilon_m: f64,
+}
+
+/// When the world had surface water, and how much.
+#[derive(Clone, PartialEq, Debug, Serialize, Deserialize)]
+pub struct WaterHistory {
+    /// Gyr since the world formed.
+    pub wet_from_gyr: f64,
+    pub wet_until_gyr: f64,
+    /// Earth oceans while wet.
+    pub oceans: f64,
+    pub pressure_bar: f64,
+}
+
+impl WaterHistory {
+    /// Wet for its whole life with today's water (the default reading of a body).
+    pub fn steady(oceans: f64, pressure_bar: f64, age_gyr: f64) -> Self {
+        WaterHistory {
+            wet_from_gyr: 0.0,
+            wet_until_gyr: if oceans > 0.0 { age_gyr } else { 0.0 },
+            oceans,
+            pressure_bar,
+        }
+    }
+}
+
+#[derive(Clone, PartialEq, Debug, Serialize, Deserialize)]
+pub struct WearEpoch {
+    pub t_myr: f64,
+    pub wet: bool,
+    /// Metres on the raw datum; None without surface water.
+    pub sea_level_m: Option<f64>,
+    pub eroded_m3: f64,
+}
+
+#[derive(Clone, PartialEq, Debug, Serialize, Deserialize)]
+pub struct Wear {
+    pub n: u32,
+    pub epoch_myr: f64,
+    /// Final heights, metres from the datum (sea level when there is a sea).
+    pub heights: Vec<f64>,
+    pub sea_level_raw_m: Option<f64>,
+    /// Downstream cell (itself at an outlet).
+    pub receiver: Vec<u32>,
+    pub area_m2: Vec<f64>,
+    /// m³/yr in the last wet epoch.
+    pub discharge: Vec<f64>,
+    /// Length of the longest stream above the cell, metres.
+    pub stream_m: Vec<f64>,
+    pub river: Vec<bool>,
+    pub lake: Vec<bool>,
+    /// In a filled depression (a lake when wet, a dry basin otherwise).
+    pub pit: Vec<bool>,
+    pub incision_m: Vec<f64>,
+    pub sediment_m: Vec<f64>,
+    pub glaciated: Vec<bool>,
+    pub dunes: Vec<bool>,
+    pub eroded_m3: f64,
+    pub deposited_m3: f64,
+    pub epochs: Vec<WearEpoch>,
+}
+
+fn key(h: f64) -> u64 {
+    let b = h.to_bits();
+    if b >> 63 == 1 {
+        !b
+    } else {
+        b | (1 << 63)
+    }
+}
+
+struct Net {
+    filled: Vec<f64>,
+    receiver: Vec<usize>,
+    /// Cells in ascending filled height (outlets first).
+    order: Vec<usize>,
+}
+
+/// Priority-flood fill and steepest-descent receivers on the filled surface.
+fn route(g: &Grid, nb: &[[usize; 4]], h: &[f64], sea: Option<f64>, eps: f64) -> Net {
+    let nc = h.len();
+    let mut filled = h.to_vec();
+    let mut done = vec![false; nc];
+    let mut open: BTreeSet<(u64, usize)> = BTreeSet::new();
+    let mut outlet = vec![false; nc];
+    if let Some(sl) = sea {
+        for (o, x) in outlet.iter_mut().zip(h) {
+            *o = *x < sl;
+        }
+    }
+    if !outlet.iter().any(|x| *x) {
+        // No sea: the lowest cell is the one closed basin's floor.
+        let low = (0..nc)
+            .min_by(|&a, &b| h[a].total_cmp(&h[b]).then(a.cmp(&b)))
+            .expect("cells");
+        outlet[low] = true;
+    }
+    for c in 0..nc {
+        if outlet[c] {
+            done[c] = true;
+            open.insert((key(filled[c]), c));
+        }
+    }
+    let mut order = Vec::with_capacity(nc);
+    while let Some(&(k, c)) = open.iter().next() {
+        open.remove(&(k, c));
+        order.push(c);
+        for &x in &nb[c] {
+            if !done[x] {
+                done[x] = true;
+                filled[x] = filled[x].max(filled[c] + eps);
+                open.insert((key(filled[x]), x));
+            }
+        }
+    }
+    let _ = g;
+    let mut receiver: Vec<usize> = (0..nc).collect();
+    for c in 0..nc {
+        if outlet[c] {
+            continue;
+        }
+        let mut best = c;
+        let mut drop = 0.0;
+        for &x in &nb[c] {
+            let d = filled[c] - filled[x];
+            if d > drop || (d == drop && d > 0.0 && x < best) {
+                drop = d;
+                best = x;
+            }
+        }
+        receiver[c] = best;
+    }
+    // Ascending filled height, ties by flood order (which is consistent with it).
+    let mut rank = vec![0usize; nc];
+    for (i, c) in order.iter().enumerate() {
+        rank[*c] = i;
+    }
+    let mut asc: Vec<usize> = (0..nc).collect();
+    asc.sort_by(|&a, &b| filled[a].total_cmp(&filled[b]).then(rank[a].cmp(&rank[b])));
+    Net {
+        filled,
+        receiver,
+        order: asc,
+    }
+}
+
+/// Heights on a cell grid for wearing: the plate history's when its plates
+/// moved, else the regime sketch sampled at the same cells (raw datum).
+pub fn base_heights(
+    s: &SurfaceSettings,
+    env: &SurfaceEnvelope,
+    seed: &Seed,
+    plates: &PlateHistory,
+) -> Vec<f64> {
+    if plates.steps > 0 {
+        crate::plates::cell_heights(s, plates, env.gravity_m_s2)
+    } else {
+        let regime = env
+            .timeline
+            .iter()
+            .find(|x| {
+                plates.epoch_myr / 1000.0 >= x.from_gyr && plates.epoch_myr / 1000.0 <= x.to_gyr
+            })
+            .map(|x| x.regime.clone())
+            .unwrap_or_else(|| env.regime_now.clone());
+        let model = SketchModel::new(s, env, &regime, seed);
+        Grid::new(plates.n)
+            .dirs
+            .iter()
+            .map(|d| model.at(*d).height_m)
+            .collect()
+    }
+}
+
+/// Wear a cell grid of heights from `from_myr` to `to_myr` (Myr since the world formed).
+pub fn wear(
+    s: &SurfaceSettings,
+    env: &SurfaceEnvelope,
+    n: u32,
+    heights0: &[f64],
+    water: &WaterHistory,
+    from_myr: f64,
+    to_myr: f64,
+) -> Wear {
+    let w = &s.wear;
+    let g = Grid::new(n);
+    let nc = g.len();
+    let r = env.reference_radius_m.max(1.0);
+    let area = 4.0 * m::PI * r * r / nc as f64;
+    let nb: Vec<[usize; 4]> = (0..nc).map(|c| g.neighbours(c)).collect();
+    // Symmetric edge list for diffusion (exactly conserving).
+    let mut edges: BTreeSet<(usize, usize)> = BTreeSet::new();
+    for (c, list) in nb.iter().enumerate() {
+        for &x in list {
+            if x != c {
+                edges.insert((c.min(x), c.max(x)));
+            }
+        }
+    }
+    let dist = |a: usize, b: usize| {
+        let (p, q) = (g.dirs[a], g.dirs[b]);
+        let d = [p[0] - q[0], p[1] - q[1], p[2] - q[2]];
+        (m::sqrt(d[0] * d[0] + d[1] * d[1] + d[2] * d[2]) * r).max(1.0)
+    };
+    let lat: Vec<f64> = g
+        .dirs
+        .iter()
+        .map(|d| m::asin(d[2].clamp(-1.0, 1.0)))
+        .collect();
+    let rain: Vec<f64> = lat
+        .iter()
+        .map(|la| {
+            let b = 0.5 + 0.5 * m::cos(2.0 * w.rain_cells as f64 * la);
+            // Less water, less rain: scaled by the square root of the ocean volume (at most Earth's).
+            w.rain_m_yr
+                * m::sqrt(water.oceans.clamp(0.0, 1.0))
+                * (w.rain_floor + (1.0 - w.rain_floor) * b)
+        })
+        .collect();
+    let mut h = heights0.to_vec();
+    let mut eroded_total = 0.0;
+    let mut deposited = vec![0.0; nc];
+    let mut epochs = vec![];
+    let mut last_q = vec![0.0; nc];
+    let mut glaciated = vec![false; nc];
+    let span = (to_myr - from_myr).max(0.0);
+    let steps = m::ceil(span / w.epoch_myr.max(1.0)).max(0.0) as u32;
+    let dt_myr = if steps > 0 { span / steps as f64 } else { 0.0 };
+    let mut net = route(&g, &nb, &h, None, w.fill_epsilon_m);
+    let mut sl_now = None;
+    for k in 0..steps {
+        let t = from_myr + dt_myr * (k as f64 + 0.5);
+        let wet = t >= water.wet_from_gyr * 1000.0
+            && t < water.wet_until_gyr * 1000.0
+            && water.oceans > 0.0;
+        let sl = if wet {
+            sea_level(&h, r, water.oceans)
+        } else {
+            None
+        };
+        sl_now = sl;
+        net = route(&g, &nb, &h, sl, w.fill_epsilon_m);
+        let dt = dt_myr * 1.0e6;
+        let mut eroded_epoch = 0.0;
+        if wet {
+            // Discharge, accumulated upstream to downstream.
+            let mut q: Vec<f64> = (0..nc).map(|c| rain[c] * area).collect();
+            for &c in net.order.iter().rev() {
+                let rc = net.receiver[c];
+                if rc != c {
+                    q[rc] += q[c];
+                }
+            }
+            for c in 0..nc {
+                let t_k = env.t_surface_now_k + 20.0
+                    - 40.0 * m::sin(lat[c]) * m::sin(lat[c])
+                    - w.lapse_k_m * (h[c] - sl.unwrap_or(0.0)).max(0.0);
+                glaciated[c] = t_k < w.ice_k && sl.is_none_or(|x| h[c] >= x);
+            }
+            // Implicit stream power, outlets first.
+            let old = h.clone();
+            for &c in &net.order {
+                let rc = net.receiver[c];
+                if rc == c || sl.is_some_and(|x| h[c] < x) {
+                    continue;
+                }
+                let kf = w.k_stream * if glaciated[c] { w.glacial_factor } else { 1.0 };
+                // Q / (1 m/yr) is the drainage area a metre of rain a year would fill.
+                let f = kf * m::pow(q[c], w.m) * dt / dist(c, rc);
+                let new = (h[c] + f * h[rc]) / (1.0 + f);
+                if new < h[c] {
+                    h[c] = new;
+                }
+            }
+            // Carry what was worn off downstream; lay it in pits and at the sea.
+            let mut flux = vec![0.0; nc];
+            for c in 0..nc {
+                let e = (old[c] - h[c]).max(0.0) * area;
+                flux[c] += e;
+                eroded_epoch += e;
+            }
+            let mut put = vec![0.0; nc];
+            for &c in net.order.iter().rev() {
+                let rc = net.receiver[c];
+                let in_sea = sl.is_some_and(|x| h[c] < x);
+                let room = if rc == c || in_sea {
+                    f64::INFINITY
+                } else {
+                    ((net.filled[c] - h[c]) * area).max(0.0)
+                };
+                let d = flux[c].min(room);
+                put[c] += d;
+                let rest = flux[c] - d;
+                if rc != c && rest > 0.0 {
+                    flux[rc] += rest;
+                }
+            }
+            for c in 0..nc {
+                h[c] += put[c] / area;
+                deposited[c] += put[c];
+            }
+            last_q = q;
+        }
+        // Slopes relax, wet or dry (effective coarse-grid diffusivity).
+        let kappa = w.diffusion_m2_yr;
+        let lmin = edges
+            .iter()
+            .map(|&(a, b)| dist(a, b))
+            .fold(f64::INFINITY, f64::min);
+        let sub = m::ceil(dt * kappa / (lmin * lmin) / 0.2).max(1.0) as u32;
+        let ds = dt / sub as f64;
+        for _ in 0..sub {
+            let mut dh = vec![0.0; nc];
+            for &(a, b) in &edges {
+                let l = dist(a, b);
+                let f = ds * kappa * (h[b] - h[a]) / (l * l);
+                dh[a] += f;
+                dh[b] -= f;
+            }
+            for c in 0..nc {
+                h[c] += dh[c];
+            }
+        }
+        eroded_total += eroded_epoch;
+        epochs.push(WearEpoch {
+            t_myr: from_myr + dt_myr * (k as f64 + 1.0),
+            wet,
+            sea_level_m: sl,
+            eroded_m3: eroded_epoch,
+        });
+    }
+    if steps == 0 {
+        sl_now = if water.oceans > 0.0 {
+            sea_level(&h, r, water.oceans)
+        } else {
+            None
+        };
+        net = route(&g, &nb, &h, sl_now, w.fill_epsilon_m);
+    }
+    // Final drainage on the worn surface.
+    let final_net = route(&g, &nb, &h, sl_now, w.fill_epsilon_m);
+    let mut a = vec![area; nc];
+    let mut stream = vec![0.0; nc];
+    for &c in final_net.order.iter().rev() {
+        let rc = final_net.receiver[c];
+        if rc != c {
+            a[rc] += a[c];
+            stream[rc] = f64::max(stream[rc], stream[c] + dist(c, rc));
+        }
+    }
+    let _ = net;
+    let sea = sl_now;
+    let land = |c: usize| sea.is_none_or(|x| h[c] >= x);
+    let dry_now = sea.is_none();
+    let datum = sea.unwrap_or(0.0);
+    let slope = |c: usize| {
+        let rc = final_net.receiver[c];
+        if rc == c {
+            0.0
+        } else {
+            (h[c] - h[rc]).abs() / dist(c, rc)
+        }
+    };
+    Wear {
+        n,
+        epoch_myr: to_myr,
+        heights: h.iter().map(|x| x - datum).collect(),
+        sea_level_raw_m: sea,
+        receiver: final_net.receiver.iter().map(|x| *x as u32).collect(),
+        river: (0..nc)
+            .map(|c| land(c) && !dry_now && a[c] >= w.river_area_cells * area)
+            .collect(),
+        lake: (0..nc)
+            .map(|c| land(c) && !dry_now && final_net.filled[c] - h[c] > 2.0 * w.fill_epsilon_m)
+            .collect(),
+        pit: (0..nc)
+            .map(|c| final_net.filled[c] - h[c] > 2.0 * w.fill_epsilon_m)
+            .collect(),
+        incision_m: (0..nc).map(|c| (heights0[c] - h[c]).max(0.0)).collect(),
+        sediment_m: deposited.iter().map(|d| d / area).collect(),
+        dunes: (0..nc)
+            .map(|c| {
+                land(c)
+                    && dry_now
+                    && water.pressure_bar >= w.dune_pressure_bar
+                    && slope(c) < w.dune_slope
+            })
+            .collect(),
+        glaciated,
+        area_m2: a,
+        discharge: last_q,
+        stream_m: stream,
+        eroded_m3: eroded_total,
+        deposited_m3: deposited.iter().sum(),
+        epochs,
+    }
+}
+
+/// Wear a world up to its plate history's epoch, with a water history.
+pub fn wear_world(
+    s: &SurfaceSettings,
+    env: &SurfaceEnvelope,
+    seed: &Seed,
+    plates: &PlateHistory,
+    water: &WaterHistory,
+    magma_end_myr: f64,
+) -> Wear {
+    let h0 = base_heights(s, env, seed, plates);
+    let to = plates.epoch_myr;
+    let from = if plates.steps > 0 {
+        (to - s.wear.plate_window_myr).max(0.0)
+    } else {
+        magma_end_myr.min(to)
+    };
+    wear(s, env, plates.n, &h0, water, from, to)
+}

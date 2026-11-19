@@ -128,6 +128,10 @@ pub struct Tile {
     pub albedo: Vec<u16>,
     /// Feature tags present in the tile (filled from S4 and S7).
     pub tags: Vec<String>,
+    /// Channels (S3): 0 off the river network, else 1 + 8 × log2(drainage in
+    /// cells), capped at 255. Empty before wearing down.
+    #[serde(default, skip_serializing_if = "Vec::is_empty")]
+    pub flow: Vec<u8>,
     /// Layers a later stage fills.
     pub pending: Vec<String>,
     pub hash: String,
@@ -163,6 +167,55 @@ pub struct Atlas {
     /// Myr since the current regime began, at the epoch.
     regime_age_myr: f64,
     material_land: u8,
+    plates: Option<PlateSurface>,
+}
+
+/// The plate history's surface at the atlas epoch, on the plate grid.
+#[derive(Clone)]
+struct PlateSurface {
+    grid: crate::plates::Grid,
+    /// Metres from the datum (sea level when the world has oceans).
+    heights: Vec<f64>,
+    continental: Vec<bool>,
+    age_myr: Vec<f64>,
+    oceans: bool,
+    /// Worlds whose plates never moved: one land material everywhere.
+    land_material: Option<u8>,
+    /// From S3: per cell, (river, lake, thick sediment, drainage in cells).
+    flow: Option<Vec<(bool, bool, bool, f64)>>,
+}
+
+impl std::fmt::Debug for PlateSurface {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(f, "PlateSurface({} cells)", self.heights.len())
+    }
+}
+
+impl PlateSurface {
+    /// Bilinear height across the plate grid (across face edges too), and the
+    /// nearest cell's crust.
+    fn at(&self, d: [f64; 3]) -> (f64, usize) {
+        let (f, u, v) = face_of(d);
+        let n = self.grid.n as f64;
+        let ci = (u + 1.0) * 0.5 * n - 0.5;
+        let cj = (v + 1.0) * 0.5 * n - 0.5;
+        let (i0, j0) = (m::floor(ci), m::floor(cj));
+        let (fx, fy) = (ci - i0, cj - j0);
+        let cell = |i: f64, j: f64| {
+            let uu = -1.0 + 2.0 * (i + 0.5) / n;
+            let vv = -1.0 + 2.0 * (j + 0.5) / n;
+            self.grid.cell_at(direction(f, uu, vv))
+        };
+        let (a, b, c, e) = (
+            cell(i0, j0),
+            cell(i0 + 1.0, j0),
+            cell(i0, j0 + 1.0),
+            cell(i0 + 1.0, j0 + 1.0),
+        );
+        let h0 = self.heights[a] + (self.heights[b] - self.heights[a]) * fx;
+        let h1 = self.heights[c] + (self.heights[e] - self.heights[c]) * fx;
+        (h0 + (h1 - h0) * fy, self.grid.cell_at(d))
+    }
 }
 
 const FACES: [([f64; 3], [f64; 3], [f64; 3]); 6] = [
@@ -267,7 +320,7 @@ impl Atlas {
         let epoch_myr = m::round(t * 1000.0) as i64;
         let address = env
             .address
-            .child_key("shell", &format!("surface@{epoch_myr}"))
+            .child_key("shell", &format!("sketch@{epoch_myr}"))
             .expect("valid shell key");
         let d = Draws::new(
             *seed,
@@ -297,7 +350,124 @@ impl Atlas {
             detail_key: d.u64(0),
             regime_age_myr,
             material_land,
+            plates: None,
         }
+    }
+
+    /// The surveyed atlas: heights from the plate history (S2) instead of the
+    /// regime sketch. Its address is `shell:surface@`; a sketch atlas is
+    /// `shell:sketch@`, so the two never share tile addresses. A world whose
+    /// plates never moved keeps the sketch atlas.
+    pub fn from_plates(
+        s: &SurfaceSettings,
+        env: &SurfaceEnvelope,
+        seed: &Seed,
+        history: &crate::plates::PlateHistory,
+        oceans: f64,
+        sites: Vec<Site>,
+    ) -> Self {
+        let mut a = Atlas::new(s, env, seed, history.epoch_myr / 1000.0, sites);
+        if history.steps == 0 {
+            // No plates ever moved (stagnant lid and the other regimes until
+            // S6): the regime sketch stays the height source.
+            return a;
+        }
+        a.address = env
+            .address
+            .child_key("shell", &format!("surface@{}", a.epoch_myr))
+            .expect("valid shell key");
+        let raw = crate::plates::cell_heights(s, history, env.gravity_m_s2);
+        let sl = crate::plates::sea_level(&raw, env.reference_radius_m, oceans);
+        let heights = raw.iter().map(|h| h - sl.unwrap_or(0.0)).collect();
+        a.plates = Some(PlateSurface {
+            grid: crate::plates::grid_for(history),
+            heights,
+            continental: history.cells.iter().map(|c| c.continental).collect(),
+            age_myr: history
+                .cells
+                .iter()
+                .map(|c| {
+                    let last = c
+                        .orogeny
+                        .last()
+                        .map(|o| o.0)
+                        .unwrap_or(c.born_myr)
+                        .max(c.born_myr);
+                    (history.epoch_myr - last).max(0.0)
+                })
+                .collect(),
+            oceans: sl.is_some(),
+            land_material: None,
+            flow: None,
+        });
+        a
+    }
+
+    /// The surveyed atlas after wearing down (S3): heights from the worn cell
+    /// grid, rivers, lakes and sediment from its drainage. Works for every
+    /// solid world: plates where they moved, the regime sketch elsewhere.
+    pub fn from_worn(
+        s: &SurfaceSettings,
+        env: &SurfaceEnvelope,
+        seed: &Seed,
+        history: &crate::plates::PlateHistory,
+        worn: &crate::wear::Wear,
+        sites: Vec<Site>,
+    ) -> Self {
+        let mut a = Atlas::new(s, env, seed, worn.epoch_myr / 1000.0, sites);
+        a.address = env
+            .address
+            .child_key("shell", &format!("surface@{}", a.epoch_myr))
+            .expect("valid shell key");
+        let moved = history.steps > 0;
+        let nc = worn.heights.len();
+        let cell = 4.0 * m::PI * env.reference_radius_m * env.reference_radius_m / nc as f64;
+        a.plates = Some(PlateSurface {
+            grid: crate::plates::grid_for(history),
+            heights: worn.heights.clone(),
+            continental: if moved {
+                history.cells.iter().map(|c| c.continental).collect()
+            } else {
+                vec![false; nc]
+            },
+            age_myr: if moved {
+                history
+                    .cells
+                    .iter()
+                    .map(|c| {
+                        let last = c
+                            .orogeny
+                            .last()
+                            .map(|o| o.0)
+                            .unwrap_or(c.born_myr)
+                            .max(c.born_myr);
+                        (history.epoch_myr - last).max(0.0)
+                    })
+                    .collect()
+            } else {
+                vec![a.regime_age_myr; nc]
+            },
+            oceans: worn.sea_level_raw_m.is_some(),
+            land_material: (!moved).then_some(a.material_land),
+            flow: Some(
+                (0..nc)
+                    .map(|c| {
+                        (
+                            worn.river[c],
+                            worn.lake[c],
+                            worn.sediment_m[c] > 10.0,
+                            worn.area_m2[c] / cell,
+                        )
+                    })
+                    .collect(),
+            ),
+        });
+        a
+    }
+
+    /// Whether heights come from the plate history.
+    pub fn has_plates(&self) -> bool {
+        self.plates.is_some()
     }
 
     pub fn relief_m(&self) -> f64 {
@@ -357,14 +527,26 @@ impl Atlas {
                 amp * (0.25 * x * x).min(1.0)
             })
             .sum();
-        let x = m::PI * sp / 0.077;
+        // Smallest smooth feature: the sketch's bumps, or two plate cells.
+        let scale = match &self.plates {
+            Some(ps) => 2.0 * (m::PI / 2.0) / ps.grid.n as f64,
+            None => 0.077,
+        };
+        let x = m::PI * sp / scale;
         let sketch = self.model.relief_m() * (0.25 * x * x).min(1.0);
         added + carried + sketch + 0.1
     }
 
     /// Height at a direction carrying `octaves` detail octaves, metres.
     pub fn height(&self, d: [f64; 3], octaves: u32) -> (f64, crate::sketch::Point) {
-        let p = self.model.at(d);
+        let mut p = self.model.at(d);
+        if let Some(ps) = &self.plates {
+            let (h, _) = ps.at(d);
+            let [a_lo, a_hi] = self.model.def().albedo;
+            p.height_m = h;
+            p.liquid = ps.oceans && h < 0.0;
+            p.albedo = if p.liquid { a_lo } else { a_hi };
+        }
         let mut h = p.height_m;
         if self.model.style != "bands" {
             for k in 0..octaves {
@@ -474,6 +656,7 @@ impl Atlas {
         let mut slope = Vec::with_capacity(cnt);
         let mut age = Vec::with_capacity(cnt);
         let mut albedo = Vec::with_capacity(cnt);
+        let mut flow: Vec<u8> = vec![];
         let style = self.model.style.as_str();
         let dist = |a: [f64; 3], b: [f64; 3]| {
             let d = [a[0] - b[0], a[1] - b[1], a[2] - b[2]];
@@ -493,29 +676,81 @@ impl Atlas {
                 slope.push(m::round(sl * 10.0) as u16);
                 elevation_dm.push(m::round(h * 10.0) as i32);
                 let liquid = p.liquid;
-                let (mat, cov) = match style {
-                    "plates" if liquid => (0u8, 1u8),
-                    "ocean" => (0, 1),
-                    "smooth" if liquid => (5, 2),
-                    "dunes" if liquid => (3, 3),
-                    _ => (self.material_land, 0),
+                let plate_cell = self
+                    .plates
+                    .as_ref()
+                    .map(|ps| (ps, ps.grid.cell_at(dirs[c])));
+                let (mat, cov) = match (style, plate_cell) {
+                    (_, Some((ps, pc))) => (
+                        match (ps.land_material, &ps.flow) {
+                            (_, Some(f)) if f[pc].2 => 4u8,
+                            (Some(mat), _) if !liquid => mat,
+                            _ if ps.continental[pc] => 1u8,
+                            _ => 0,
+                        },
+                        if liquid || ps.flow.as_ref().is_some_and(|f| f[pc].1) {
+                            1u8
+                        } else {
+                            0
+                        },
+                    ),
+                    _ => match style {
+                        "plates" if liquid => (0u8, 1u8),
+                        "ocean" => (0, 1),
+                        "smooth" if liquid => (5, 2),
+                        "dunes" if liquid => (3, 3),
+                        _ => (self.material_land, 0),
+                    },
                 };
                 material.push(mat);
                 cover.push(cov);
                 // Ocean floor is young everywhere on a plate world; the plate
                 // history (S2) writes real crust ages.
-                let a = if style == "plates" && liquid {
+                let a = if let Some((ps, pc)) = plate_cell {
+                    ps.age_myr[pc]
+                } else if style == "plates" && liquid {
                     self.regime_age_myr.min(200.0)
                 } else {
                     self.regime_age_myr
                 };
                 age.push(m::round(a) as u32);
+                if let Some((ps, pc)) = plate_cell {
+                    if let Some(f) = &ps.flow {
+                        let (river, _, _, cells) = f[pc];
+                        flow.push(if river {
+                            (1.0 + 8.0 * m::log2(cells.max(1.0))).min(255.0) as u8
+                        } else {
+                            0
+                        });
+                    }
+                }
                 albedo.push(m::round(p.albedo.clamp(0.0, 1.0) * 1000.0) as u16);
             }
         }
-        let hash = ContentHash::of(&(&elevation_dm, &material, &cover, &slope, &age, &albedo))
-            .expect("hash")
-            .hex();
+        let hash = if flow.is_empty() {
+            ContentHash::of(&(&elevation_dm, &material, &cover, &slope, &age, &albedo))
+        } else {
+            ContentHash::of(&(
+                &elevation_dm,
+                &material,
+                &cover,
+                &slope,
+                &age,
+                &albedo,
+                &flow,
+            ))
+        }
+        .expect("hash")
+        .hex();
+        let mut pending: Vec<String> = vec![
+            "flow and channels (S3)".into(),
+            "feature tags (S4, S7)".into(),
+            "biome (S11)".into(),
+            "structures (S7)".into(),
+        ];
+        if !flow.is_empty() {
+            pending.remove(0);
+        }
         Tile {
             address: self.tile_address(&key),
             key,
@@ -530,13 +765,8 @@ impl Atlas {
             surface_age_myr: age,
             albedo,
             tags: vec![],
-            pending: vec![
-                "flow and channels (S3)".into(),
-                "feature tags (S4, S7)".into(),
-                "crust ages (S2)".into(),
-                "biome (S11)".into(),
-                "structures (S7)".into(),
-            ],
+            pending,
+            flow,
             hash,
         }
     }

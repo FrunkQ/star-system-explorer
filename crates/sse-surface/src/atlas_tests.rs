@@ -46,7 +46,7 @@ fn any_tile_builds_alone() {
         forward[2].address.to_string(),
         format!("{}/tile:5.9.300.511", a.address)
     );
-    assert!(a.address.to_string().ends_with("/shell:surface@4500"));
+    assert!(a.address.to_string().ends_with("/shell:sketch@4500"));
 }
 
 #[test]
