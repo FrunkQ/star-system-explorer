@@ -9,6 +9,8 @@
   import { createShare, type Share } from "./share.svelte.ts";
   import SeatsPanel from "./SeatsPanel.svelte";
   import LensPanel from "./LensPanel.svelte";
+  import SoundControl from "../../sound/src/SoundControl.svelte";
+  import { orbitScene, voicesFromSystem } from "../../ui-contract/src/index.ts";
   import { allLenses, checkLens, defaultLens, hasTool, lensAudience, type Lens } from "../../ui-contract/src/index.ts";
   import { themeCss, THEMES } from "../../skins/chart-room/src/index.ts";
   import { ALL_THEMES } from "../../skins/player/src/index.ts";
@@ -156,6 +158,8 @@
     for (const k of new Set(scene.subjects.map((x) => x.kind))) out[k] = list(scene.subjects.filter((x) => x.kind === k));
     return out;
   });
+  // N1: the sound bed for the frame in view (off until the GM turns it on; never touches the session).
+  const soundScene = $derived(orbitScene(scene.system, voicesFromSystem(scene)));
   const lensKinds = $derived([...new Set(scene.subjects.filter((x) => x.facts.length).map((x) => x.kind))]);
 
   // The session clock travels to players with the GM's time ruler.
@@ -349,6 +353,7 @@
       <span title="Measured capability tier of this device">tier {status.tier}</span>
       <span title="State hash: {status.hash}" data-state-hash={status.hash}>state {status.hash.slice(0, 10)}</span>
       <span title="Pack stack hash: {status.stack}" data-stack-hash={status.stack}>physics {status.campaign ? "campaign" : "base"} {status.stack.slice(0, 8)}</span>
+      <SoundControl scene={soundScene} deviceTier={status.tier} seed={base.universe.seed} key="sound.gm" />
       {#if share}
         <span class="share" aria-label="Players">
           {#if share.state.link}

@@ -42,3 +42,5 @@ export type { Hub, Wire, Manifest, LogEntry, HostState, ReplicaStatus, PlayerReq
 export type { Session } from "./session.ts";
 export { LENS_SCHEMA, LAYERS, TOOLS, SHIPPED_LENSES, HONESTY_MARKS, playerLenses, hasLayer, hasTool, asPlayers, lensAudience, cardFor, cardFacts, gmStamps, defaultLens, lensFits, checkLens, saved, copyLens, lensPack, lensesFromPack, allLenses } from "./lens.ts";
 export type { Lens, LensCard, LayerId, ToolId, Density, LensPackMeta } from "./lens.ts";
+export { SOUND_SCENE_SCHEMA, SOUND_RECIPE_SCHEMA, SOUND_LABELS, SOUND_LAYERS, NODE_TYPES, hash32, draw, intoOctave, settle, dialled, bandFor, orbitScene, voicesFromSystem, voicesFromPlayers, score, scoreHash, checkRecipe, defaultSound, readSound, voiceLimit } from "./sound.ts";
+export type { SoundLabel, SoundLayer, SoundTier, SoundSource, ScoreNote, SoundScene, Voice, NodeType, RecipeNode, SoundRecipe, SoundSettings } from "./sound.ts";

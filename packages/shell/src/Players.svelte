@@ -15,6 +15,8 @@
   import { openBrowserSession } from "../../ui-contract/src/host-browser.ts";
   import { PlayerReplica, SealedReplica, audienceOf, broadcastHub, relayHub, sharedTableSeat, type Hub, type OwnRequest, type ReplicaStatus } from "../../ui-contract/src/index.ts";
   import { APP_VERSION } from "./share.svelte.ts";
+  import SoundControl from "../../sound/src/SoundControl.svelte";
+  import { orbitScene, voicesFromPlayers } from "../../ui-contract/src/index.ts";
   import { focusOf } from "../../views/player-stack/src/pick.ts";
   import stackDoc from "./documents/stack.json";
   import { PLAYER_STACK, ScreenRuntime } from "../../views/player-stack/src/index.ts";
@@ -287,6 +289,7 @@
       {/if}
     </section>
   {/if}
+  {#if scene}<div class="soundbar"><SoundControl scene={orbitScene(scene.scope, voicesFromPlayers(scene))} key="sound.players" /></div>{/if}
   <footer class="status" data-state-hash={stateHash} data-scene-hash={sceneHash} data-sealed={isSealed || undefined} data-seat={joined ? seatId : undefined} data-audience={audience} data-link={joined ? link.state : "local"} data-via={via}>Scene: live from {isSealed ? "the game master's machine (sealed seat: this screen holds no seed and runs no kernel)" : joined ? "this screen's kernel, in step with the game master" : "the kernel"} {via ? ` (via ${via === "relay" ? "the site's relay" : "this browser"})` : ""} for {seatLabel && seatId !== "table" ? `the seat ${seatLabel}, ` : ""}the {audience} audience{sceneHash ? ` · scene ${sceneHash.slice(0, 10)}` : ""}{stateHash ? ` · state ${stateHash.slice(0, 10)}` : ""} {joined ? "" : screenDoc?.data_view ? ` · fixed to the ${screenDoc.data_view} view by the screen document` : ` · the Scanned control stands in for the GM's button and taps it for ${target ? subjectName(target) : "the body in focus"}`}</footer>
 </div>
 <FilterChain {layers} />
@@ -385,6 +388,12 @@
   }
   .grid {
     padding: 20px 24px;
+  }
+  .soundbar {
+    padding: 6px 24px 0;
+    font-family: var(--sse-font-body);
+    font-size: 12px;
+    color: var(--sse-ink-muted);
   }
   .status {
     padding: 8px 24px;
