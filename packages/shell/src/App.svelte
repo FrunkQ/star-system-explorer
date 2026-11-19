@@ -33,6 +33,7 @@
   import symbolsDoc from "./documents/symbols.gm.json";
   import bodyDoc from "./documents/body.gm.json";
   import compareDoc from "./documents/compare.gm.json";
+  import lifeDoc from "./documents/life.gm.json";
   import stylesScreenDoc from "./documents/styles.gm.json";
   import { createStyles } from "./styles.svelte.ts";
   import { PLAYER_STACK } from "../../views/player-stack/src/index.ts";
@@ -58,12 +59,13 @@
   let scene = $state<SystemScene>(base);
 
   // Each screen document is checked before anything mounts; the GM switches between them.
-  const SCREENS: Record<string, ScreenDoc> = { system: workspaceDoc as unknown as ScreenDoc, physics: physicsDoc as unknown as ScreenDoc, packs: packsDoc as unknown as ScreenDoc, screens: screensDoc as unknown as ScreenDoc, data: dataDoc as unknown as ScreenDoc, symbols: symbolsDoc as unknown as ScreenDoc, body: bodyDoc as unknown as ScreenDoc, compare: compareDoc as unknown as ScreenDoc, styles: stylesScreenDoc as unknown as ScreenDoc };
+  const SCREENS: Record<string, ScreenDoc> = { system: workspaceDoc as unknown as ScreenDoc, physics: physicsDoc as unknown as ScreenDoc, packs: packsDoc as unknown as ScreenDoc, screens: screensDoc as unknown as ScreenDoc, data: dataDoc as unknown as ScreenDoc, symbols: symbolsDoc as unknown as ScreenDoc, body: bodyDoc as unknown as ScreenDoc, compare: compareDoc as unknown as ScreenDoc, life: lifeDoc as unknown as ScreenDoc, styles: stylesScreenDoc as unknown as ScreenDoc };
   const SCREEN_TABS = [
     { value: "system", label: "Chart", key: "P" },
     { value: "physics", label: "Physics", key: "P" },
     { value: "body", label: "Body" },
     { value: "compare", label: "Sizes" },
+    { value: "life", label: "Life" },
     { value: "screens", label: "Screens" },
     { value: "data", label: "Player data" },
     { value: "symbols", label: "Symbols" },
@@ -889,7 +891,8 @@
   }
   /* The cutaway sits between the tools and the card instead of under them. */
   .stage[data-screen="body"] .area-chart,
-  .stage[data-screen="compare"] .area-chart {
+  .stage[data-screen="compare"] .area-chart,
+  .stage[data-screen="life"] .area-chart {
     inset: 24px 428px 24px 96px;
     overflow: auto;
   }
@@ -1096,14 +1099,15 @@
     .stage:not([data-screen="system"]) .area-chart .fill {
       overflow: auto;
     }
-    .stage:is([data-screen="physics"], [data-screen="body"], [data-screen="compare"]) .area-chart {
+    .stage:is([data-screen="physics"], [data-screen="body"], [data-screen="compare"], [data-screen="life"]) .area-chart {
       height: auto;
     }
-    .stage:is([data-screen="physics"], [data-screen="body"], [data-screen="compare"]) .area-chart .fill {
+    .stage:is([data-screen="physics"], [data-screen="body"], [data-screen="compare"], [data-screen="life"]) .area-chart .fill {
       position: relative;
     }
     .stage[data-screen="body"] .area-chart,
-    .stage[data-screen="compare"] .area-chart {
+    .stage[data-screen="compare"] .area-chart,
+    .stage[data-screen="life"] .area-chart {
       inset: auto;
       padding: 12px 16px;
     }

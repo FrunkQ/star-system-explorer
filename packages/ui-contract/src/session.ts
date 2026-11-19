@@ -10,6 +10,7 @@ import { providerOf, type FlowDoc, type PackDoc } from "./physics.ts";
 import type { PlayerScene } from "./player-scene.ts";
 import type { WorldStackRead } from "./world.ts";
 import type { SurfaceTile } from "./globe.ts";
+import type { LifeView } from "./life.ts";
 import type { Adopted, FormationRan, FormationRequest, ListedSystem, SystemResolved, V3Imported } from "./make.ts";
 import type { LookedAhead, SystemSpec } from "./fate.ts";
 
@@ -106,6 +107,8 @@ export interface ViewSession {
   exportChronicle(): Promise<{ ok: true; export: Json } | { ok: false; code: string; message: string }>;
   /** Replace the open universe with a kept one (U10, kernel `import_chronicle`). */
   importChronicle(doc: Json): Promise<{ ok: true; state_hash: string; events: number; stack_matches: boolean } | { ok: false; code: string; message: string }>;
+  /** One world's life (U7, kernel `life_view`): a body once systems carry habitat graphs, or one of the example fixtures. GM only. */
+  lifeView(by: { body?: string; fixture?: string }): Promise<{ ok: true; source: string; view: LifeView } | { ok: false; code: string; message: string }>;
   /** Every system in the open universe that has facts (kernel `systems`): adopted ones and authored ones. */
   listSystems(): Promise<{ ok: true; systems: ListedSystem[] } | { ok: false; code: string; message: string }>;
   /** A system as the universe now holds it: facts, a SystemSpec for look-ahead, and S0 surfaces. */
@@ -488,6 +491,12 @@ export class Session implements ViewSession {
     if (r.type !== "chronicle_imported") return { ok: false, code: String(r.code ?? "unexpected"), message: String(r.message ?? JSON.stringify(r)) };
     const x = r as unknown as { state_hash: string; events: number | unknown[]; stack_matches: boolean };
     return { ok: true, state_hash: String(x.state_hash), events: Array.isArray(x.events) ? x.events.length : Number(x.events), stack_matches: x.stack_matches !== false };
+  }
+
+  async lifeView(by: { body?: string; fixture?: string }): Promise<{ ok: true; source: string; view: LifeView } | { ok: false; code: string; message: string }> {
+    if (this.seat.authority !== "gm") return { ok: false, code: "not_gm", message: "only the game master reads a world's whole biosphere; players see it through data views" };
+    const r = await this.#call({ op: "life_view", ...(by.body !== undefined ? { body: by.body } : {}), ...(by.fixture !== undefined ? { fixture: by.fixture } : {}) });
+    return r.type === "life_viewed" ? { ok: true, source: String(r.source), view: (r as unknown as { view: LifeView }).view } : { ok: false, code: String(r.code ?? "unexpected"), message: String(r.message ?? JSON.stringify(r)) };
   }
 
   async listSystems(): Promise<{ ok: true; systems: ListedSystem[] } | { ok: false; code: string; message: string }> {

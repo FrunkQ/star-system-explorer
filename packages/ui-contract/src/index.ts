@@ -61,3 +61,5 @@ export { separation, distanceWords, lightWords, C_KM_S } from "./measure.ts";
 export type { Separation } from "./measure.ts";
 export { CAMPAIGN_SCHEMA, checkCampaignSave, makeCampaignSave, publicExport, savedEvents, saveFileName } from "./campaign.ts";
 export type { CampaignSave } from "./campaign.ts";
+export { LIFE_EXAMPLES, MARKED_KINDS, carbonWords, confidenceWords, epochBands, foodWeb, productionPath, scanTiers, timeAxis, words as lifeWords } from "./life.ts";
+export type { LifeEpoch, LifeEvent, LifeGuild, LifeHook, LifePoint, LifeSignatures, LifeView, WebLink, WebNode } from "./life.ts";
