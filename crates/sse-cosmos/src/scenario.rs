@@ -72,6 +72,8 @@ pub struct CosmologyPack {
     pub green: crate::envelope::GreenParams,
     #[serde(default)]
     pub stars: crate::stars::StarParams,
+    #[serde(default)]
+    pub events: crate::events::EventParams,
 }
 
 impl CosmologyPack {
@@ -369,4 +371,18 @@ pub fn stars_golden() -> serde_json::Value {
         "reads": reads,
         "birth": st.birth(&pin),
     })
+}
+
+/// The G6 "ink a merger" manifest (`tests/fixtures/cosmos/ink-a-merger.json`).
+pub fn ink_a_merger() -> crate::events::Manifest {
+    serde_json::from_str(include_str!(
+        "../../../tests/fixtures/cosmos/ink-a-merger.json"
+    ))
+    .expect("manifest")
+}
+
+/// G6 golden: the "ink a merger" scenario's report.
+pub fn galaxy_events_golden() -> serde_json::Value {
+    let cp = CosmologyPack::from_packs(&[base_cosmology_pack()]).expect("settings");
+    crate::events::run_manifest(&cp, &ink_a_merger()).expect("scenario runs")
 }
