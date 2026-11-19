@@ -114,7 +114,8 @@ export function lineRadiance(d: LightDescription, line: string): number {
 }
 
 // CIE 1931 2° colour matching functions, the multi-lobe Gaussian fit of
-// Wyman, Sloan and Shirley (2013), JCGT 2(2), http://jcgt.org/published/0002/02/01/
+// Wyman, Sloan and Shirley (2013), "Simple Analytic Approximations to the CIE XYZ
+// Color Matching Functions", JCGT 2(2), https://jcgt.org/published/0002/02/01/
 const g = (x: number, mu: number, s1: number, s2: number) => {
   const t = (x - mu) / (x < mu ? s1 : s2);
   return Math.exp(-0.5 * t * t);
@@ -359,8 +360,10 @@ export function describeLight(bodies: readonly LitBody[]): { lights: LightDescri
     const c: Continuum[] = [];
     const parts: string[] = [];
     if (ts !== undefined && albedo !== undefined && a !== undefined && a > 0) {
-      // A lit hemisphere's mean radiance: albedo × (R*/a)² / 4 of the star's.
-      const dilution = (rs / (a * AU_M)) ** 2 / 4;
+      // Disc-mean radiance of a Lambert sphere seen at full phase: (2/3) × Bond albedo × (R*/a)²
+      // of the star's (geometric albedo p = 2A/3). Phase angle is ignored until the kernel
+      // publishes light facts (docs/fudges.md).
+      const dilution = (2 / 3) * (rs / (a * AU_M)) ** 2;
       c.push({ kind: "reflected", t_k: ts, weight: albedo * dilution });
       parts.push(`starlight reflected with a grey albedo of ${albedo}`);
     }

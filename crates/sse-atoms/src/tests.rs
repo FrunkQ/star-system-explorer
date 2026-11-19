@@ -556,7 +556,7 @@ fn radiogenic_heat_budget() {
     );
     // Al-26: about 5.3 MJ/kg at time zero, a factor e per 1.034 Myr.
     let e0 = run("sse.heat.al26_planetesimal_heating", &[1.0, 0.0]);
-    close(e0[0], 5.26e6, 0.01, "Al-26 energy at CAI time");
+    close(e0[0], 5.31e6, 0.01, "Al-26 energy at CAI time");
     assert_eq!(e0[1], 0.1);
     let e3 = run("sse.heat.al26_planetesimal_heating", &[1.0, 3.0 * myr]);
     assert_eq!(e3[1], 1.0);

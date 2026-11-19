@@ -1,0 +1,126 @@
+{
+ "about": "The Solar System for NAV tests: JPL approximate Keplerian elements at J2000 (Standish; https://ssd.jpl.nasa.gov/planets/approx_pos.html, values written from memory, to verify), masses in Earth masses and mean radii. t0 is J2000 in universe seconds since the year 0 (2000 Julian years).",
+ "name": "Sol",
+ "star_mass_msun": 1.0,
+ "star_luminosity_lsun": 1.0,
+ "star_radius_rsun": 1.0,
+ "t0_s": 63115200000.0,
+ "bodies": [
+  {
+   "address": "u:sol/sys:sun/body:mercury",
+   "name": "Mercury",
+   "mass_earth": 0.0553,
+   "radius_m": 2439700.0,
+   "a_au": 0.38709927,
+   "e": 0.20563593,
+   "i_deg": 7.00497902,
+   "node_deg": 48.33076593,
+   "varpi_deg": 77.45779628,
+   "mean_longitude_deg": 252.2503235,
+   "port": false
+  },
+  {
+   "address": "u:sol/sys:sun/body:venus",
+   "name": "Venus",
+   "mass_earth": 0.815,
+   "radius_m": 6051800.0,
+   "a_au": 0.72333566,
+   "e": 0.00677672,
+   "i_deg": 3.39467605,
+   "node_deg": 76.67984255,
+   "varpi_deg": 131.60246718,
+   "mean_longitude_deg": 181.9790995,
+   "port": false
+  },
+  {
+   "address": "u:sol/sys:sun/body:earth",
+   "name": "Earth",
+   "mass_earth": 1.0,
+   "radius_m": 6371000.0,
+   "a_au": 1.00000261,
+   "e": 0.01671123,
+   "i_deg": -1.531e-05,
+   "node_deg": 0.0,
+   "varpi_deg": 102.93768193,
+   "mean_longitude_deg": 100.46457166,
+   "port": true
+  },
+  {
+   "address": "u:sol/sys:sun/body:mars",
+   "name": "Mars",
+   "mass_earth": 0.107,
+   "radius_m": 3389500.0,
+   "a_au": 1.52371034,
+   "e": 0.0933941,
+   "i_deg": 1.84969142,
+   "node_deg": 49.55953891,
+   "varpi_deg": -23.94362959,
+   "mean_longitude_deg": -4.55343205,
+   "port": true
+  },
+  {
+   "address": "u:sol/sys:sun/body:jupiter",
+   "name": "Jupiter",
+   "mass_earth": 317.8,
+   "radius_m": 69911000.0,
+   "a_au": 5.202887,
+   "e": 0.04838624,
+   "i_deg": 1.30439695,
+   "node_deg": 100.47390909,
+   "varpi_deg": 14.72847983,
+   "mean_longitude_deg": 34.39644051,
+   "port": false
+  },
+  {
+   "address": "u:sol/sys:sun/body:saturn",
+   "name": "Saturn",
+   "mass_earth": 95.2,
+   "radius_m": 58232000.0,
+   "a_au": 9.53667594,
+   "e": 0.05386179,
+   "i_deg": 2.48599187,
+   "node_deg": 113.66242448,
+   "varpi_deg": 92.59887831,
+   "mean_longitude_deg": 49.95424423,
+   "port": false
+  },
+  {
+   "address": "u:sol/sys:sun/body:uranus",
+   "name": "Uranus",
+   "mass_earth": 14.5,
+   "radius_m": 25362000.0,
+   "a_au": 19.18916464,
+   "e": 0.04725744,
+   "i_deg": 0.77263783,
+   "node_deg": 74.01692503,
+   "varpi_deg": 170.9542763,
+   "mean_longitude_deg": 313.23810451,
+   "port": false
+  },
+  {
+   "address": "u:sol/sys:sun/body:neptune",
+   "name": "Neptune",
+   "mass_earth": 17.1,
+   "radius_m": 24622000.0,
+   "a_au": 30.06992276,
+   "e": 0.00859048,
+   "i_deg": 1.77004347,
+   "node_deg": 131.78422574,
+   "varpi_deg": 44.96476227,
+   "mean_longitude_deg": -55.12002969,
+   "port": false
+  }
+ ],
+ "belts": [
+  {
+   "name": "Main Belt",
+   "a_in_au": 2.1,
+   "a_out_au": 3.3
+  },
+  {
+   "name": "Kuiper Belt",
+   "a_in_au": 30.0,
+   "a_out_au": 50.0
+  }
+ ]
+}

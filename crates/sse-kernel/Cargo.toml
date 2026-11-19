@@ -23,6 +23,7 @@ sse-formation.workspace = true
 sse-import-v3.workspace = true
 sse-cosmos = { path = "../sse-cosmos" }
 sse-surface.workspace = true
+sse-nav.workspace = true
 sse-world.workspace = true
 sse-codes = { path = "../sse-codes" }
 sse-sector-io = { path = "../sse-sector-io" }

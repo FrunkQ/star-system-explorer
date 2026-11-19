@@ -360,6 +360,117 @@ pub enum Request {
         #[ts(optional)]
         tiles: Option<Vec<TileRequest>>,
     },
+    /// NAV (T3): candidate courses between two places, or the ways out
+    /// for a drifting ship (no `to`). The system is a NAV `fixture` (`sol`),
+    /// an inline `nav` system, or an adopted `system` read at `at_s` (its
+    /// planets; `ports` names bodies with ports for rescue). `ship` is a
+    /// template id from the base-nav pack or a ship object; `from` and `to`
+    /// are a body address or name, or `{r_m, v_m_s}` around the star;
+    /// `prefer` is `fastest`, `save-fuel` or `balanced`.
+    PlanRoute {
+        #[serde(default)]
+        #[ts(optional)]
+        fixture: Option<String>,
+        #[serde(default)]
+        #[ts(optional, type = "unknown")]
+        nav: Option<serde_json::Value>,
+        #[serde(default)]
+        #[ts(optional)]
+        system: Option<String>,
+        #[serde(default)]
+        #[ts(optional, type = "number")]
+        at_s: Option<i64>,
+        #[serde(default)]
+        #[ts(optional)]
+        ports: Option<Vec<String>>,
+        #[ts(type = "unknown")]
+        ship: serde_json::Value,
+        #[ts(type = "unknown")]
+        from: serde_json::Value,
+        #[serde(default)]
+        #[ts(optional, type = "unknown")]
+        to: Option<serde_json::Value>,
+        #[serde(default)]
+        #[ts(optional)]
+        depart_s: Option<f64>,
+        #[serde(default)]
+        #[ts(optional)]
+        window_days: Option<f64>,
+        #[serde(default)]
+        #[ts(optional)]
+        prefer: Option<String>,
+        #[serde(default)]
+        #[ts(optional, type = "unknown")]
+        rescue: Option<serde_json::Value>,
+    },
+    /// S5's descent scene: survey a world as `survey_surface` does (a
+    /// `fixture`, or a `body` of an adopted `system` at `at_s`), judge the
+    /// landing site at `lat_deg`, `lon_deg` (slope, roughness, liquid) and
+    /// fly `lander` (a base-nav template id or a lander object) down to it
+    /// from `entry` (`{altitude_m, speed_m_s, flight_path_deg}`; default the
+    /// top of the air at orbital speed, or a low orbit on an airless world).
+    PlanDescent {
+        #[serde(default)]
+        #[ts(optional)]
+        system: Option<String>,
+        #[serde(default)]
+        #[ts(optional)]
+        body: Option<String>,
+        #[serde(default)]
+        #[ts(optional)]
+        fixture: Option<String>,
+        #[serde(default)]
+        #[ts(optional, type = "number")]
+        at_s: Option<i64>,
+        #[serde(default)]
+        #[ts(optional, type = "unknown")]
+        options: Option<serde_json::Value>,
+        #[serde(default)]
+        #[ts(optional)]
+        quick: Option<bool>,
+        #[ts(type = "unknown")]
+        lander: serde_json::Value,
+        lat_deg: f64,
+        lon_deg: f64,
+        #[serde(default)]
+        #[ts(optional, type = "unknown")]
+        entry: Option<serde_json::Value>,
+    },
+    /// S2 to S7 in order for one world: a surface `fixture` (`Earth`,
+    /// `Moon`, ...; no universe needed) or a `body` of an adopted `system`
+    /// at `at_s`. `options` is sse-surface's `SurveyOptions` (rotation_hours,
+    /// obliquity_deg, life, settle, reshape, names, renames, wind_m_s);
+    /// `tiles` are S1 tiles of this world with S7's layers; `quick` uses a
+    /// coarse plate grid and 32-sample tiles (tests, weak devices). `limit`
+    /// caps the features and deposits listed (default 200, 0 for all):
+    /// remarkable features first, then the named landscape, then craters by
+    /// size; deposits by size. Totals are always given.
+    SurveySurface {
+        #[serde(default)]
+        #[ts(optional)]
+        system: Option<String>,
+        #[serde(default)]
+        #[ts(optional)]
+        body: Option<String>,
+        #[serde(default)]
+        #[ts(optional)]
+        fixture: Option<String>,
+        #[serde(default)]
+        #[ts(optional, type = "number")]
+        at_s: Option<i64>,
+        #[serde(default)]
+        #[ts(optional, type = "unknown")]
+        options: Option<serde_json::Value>,
+        #[serde(default)]
+        #[ts(optional)]
+        tiles: Option<Vec<SurfaceTile>>,
+        #[serde(default)]
+        #[ts(optional)]
+        quick: Option<bool>,
+        #[serde(default)]
+        #[ts(optional)]
+        limit: Option<u32>,
+    },
     /// The open universe's systems: every `<root>/sys:*` with facts, where it
     /// came from (`v3`, `formation` or `facts`), its name and adopt event.
     Systems,
@@ -578,6 +689,16 @@ pub struct FormationRequest {
     pub pins: Option<serde_json::Value>,
 }
 
+/// One S1 tile of the world `survey_surface` is reading.
+#[derive(Clone, PartialEq, Debug, Serialize, Deserialize, TS)]
+#[ts(export)]
+pub struct SurfaceTile {
+    pub face: u8,
+    pub level: u8,
+    pub x: u32,
+    pub y: u32,
+}
+
 /// One S1 tile of one world: cube face 0 to 5, level, x and y.
 #[derive(Clone, PartialEq, Debug, Serialize, Deserialize, TS)]
 #[ts(export)]
@@ -621,6 +742,9 @@ impl Request {
             Request::ReadWorldStack { .. } => "read_world_stack",
             Request::Adopt { .. } => "adopt",
             Request::ResolvedSystem { .. } => "resolved_system",
+            Request::SurveySurface { .. } => "survey_surface",
+            Request::PlanRoute { .. } => "plan_route",
+            Request::PlanDescent { .. } => "plan_descent",
             Request::Systems => "systems",
             Request::LifeView { .. } => "life_view",
             Request::ExportChronicle => "export_chronicle",
@@ -723,6 +847,21 @@ pub fn ops() -> Vec<OpInfo> {
             "resolved_system",
             Cost::Medium,
             "a formation re-run for formation-adopted systems (cached), plus about 0.1 s per 256-sample tile; at most 24 tiles",
+        ),
+        o(
+            "plan_route",
+            Cost::Medium,
+            "about a thousand Lambert solves on the departure and flight-time grid plus torch flights; drift asks plan once per body and port (about 0.1 to 1 s native)",
+        ),
+        o(
+            "plan_descent",
+            Cost::Heavy,
+            "a survey as survey_surface (cached for the same world), one site read of about 30 heights, and a descent at 0.1 s steps (well under 0.1 s native)",
+        ),
+        o(
+            "survey_surface",
+            Cost::Heavy,
+            "every surface stage for one world: about 1 to 5 s native at pack defaults (plates, wear, register), well under 1 s with quick; plus about 0.2 s per tile, at most 24",
         ),
         o("systems", Cost::Light, "linear in the universe's facts"),
         o("life_view", Cost::Light, "one fixture's signatures, epochs and hooks"),
@@ -1000,6 +1139,31 @@ pub enum Response {
         state_hash: String,
         manifest_id: String,
         stack_matches: bool,
+    },
+    /// `plan_route`: sse-nav's `RoutePlan` (`candidates` best first by the
+    /// preference, each with burns, days, Δv, propellant and reserve, peak g,
+    /// dose, solar-storm chance, peak flux, delays, hazards, difficulty with
+    /// reasons and a track; `refused` with why; `drift` for ways out).
+    RoutePlanned {
+        #[ts(type = "unknown")]
+        plan: serde_json::Value,
+    },
+    /// `plan_descent`: `{body, label, source, at_s?, lander, entry, site
+    /// (level, spacing, height, slope, local slope, roughness, relief,
+    /// under_liquid, ok, why), air_at_site, gravity_m_s2, hazards (kind,
+    /// level, why), verdict, descent (outcome, events, telemetry)}`.
+    DescentPlanned {
+        #[ts(type = "unknown")]
+        descent: serde_json::Value,
+    },
+    /// `survey_surface`: `{body, label, source (fixture:<name>, formation, v3
+    /// or facts), version, epoch_myr, at_s?, stages, envelope, deposit_kinds,
+    /// climate?, air?, deposits?, deposits_total?, built?, built_kinds?, applied?, register? (with features_total),
+    /// aerostat? or aerostat_refused, tiles, refused}`. A giant has no layers
+    /// or register.
+    SurfaceSurveyed {
+        #[ts(type = "unknown")]
+        survey: serde_json::Value,
     },
     /// `add_note`: the note's event and who it is for (send the event to
     /// ordinary seats of these audiences only; the GM sees every note).

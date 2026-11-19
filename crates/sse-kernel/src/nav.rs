@@ -1,0 +1,191 @@
+//! `plan_route`: NAV (T3) through the kernel. The system comes from a NAV
+//! fixture (`sol`), an inline `nav` system, or an adopted system in the open
+//! universe, read at `at_s` like `resolved_system` (planets from its
+//! SystemSpec, radii from the surface bodies, the star from its facts).
+
+use crate::adopt::worlds_at;
+use crate::err;
+use crate::protocol::Response;
+use sse_chronicle::Chronicle;
+use sse_core::cbor::Value;
+use sse_core::quantity::consts::{JULIAN_YEAR, L_SUN, R_EARTH, R_SUN, STEFAN_BOLTZMANN};
+use sse_core::{math as m, Address};
+use sse_formation::pipeline::SystemRun;
+use sse_nav::{Belt, NavBody, NavSettings, NavSystem, RouteRequest, Ship};
+
+pub(crate) enum Source<'a> {
+    Fixture(&'a str),
+    Inline(&'a serde_json::Value),
+    System {
+        ch: &'a Chronicle,
+        system: &'a Address,
+        at_s: Option<i64>,
+        run: Option<&'a SystemRun>,
+        ports: &'a [String],
+    },
+}
+
+fn bad(e: impl std::fmt::Display) -> Response {
+    err("bad_request", e.to_string())
+}
+
+/// A ship given as a template id or in full.
+fn ship(s: &NavSettings, v: &serde_json::Value) -> Result<Ship, Response> {
+    match v {
+        serde_json::Value::String(id) => s.ships.get(id).cloned().ok_or_else(|| {
+            err(
+                "unknown_ship",
+                format!(
+                    "no ship template {id}; templates: {}",
+                    s.ships.keys().cloned().collect::<Vec<_>>().join(", ")
+                ),
+            )
+        }),
+        other => serde_json::from_value(other.clone()).map_err(|e| bad(format!("ship: {e}"))),
+    }
+}
+
+fn num(v: Option<&Value>) -> Option<f64> {
+    match v? {
+        Value::Float(x) => Some(*x),
+        Value::Int(i) => Some(*i as f64),
+        _ => None,
+    }
+}
+
+/// An adopted system as NAV reads it.
+fn from_system(
+    ch: &Chronicle,
+    system: &Address,
+    at_s: Option<i64>,
+    run: Option<&SystemRun>,
+    ports: &[String],
+) -> Result<(NavSystem, Option<f64>), Response> {
+    let ss = sse_surface::scenario::settings();
+    let w = worlds_at(ch, system, at_s, run, &ss)?;
+    let spec = w.spec.ok_or_else(|| {
+        err(
+            "no_orbits",
+            format!("{system} has no star mass and age, so no orbits to fly"),
+        )
+    })?;
+    let star = w
+        .facts
+        .get(&spec.star_address.parse::<Address>().map_err(bad)?);
+    let lum_w = star.and_then(|r| num(r.get("star.luminosity")));
+    let teff = star.and_then(|r| num(r.get("star.effective_temperature")));
+    let lum = lum_w
+        .map(|l| l / L_SUN)
+        .unwrap_or(m::pow(spec.star_mass, 4.0));
+    let radius = match (lum_w, teff) {
+        (Some(l), Some(t)) if t > 0.0 => {
+            m::sqrt(l / (4.0 * m::PI * STEFAN_BOLTZMANN * t * t * t * t)) / R_SUN
+        }
+        _ => m::pow(spec.star_mass, 0.8),
+    };
+    let bodies = spec
+        .planets
+        .iter()
+        .map(|p| {
+            let rad = w
+                .bodies
+                .iter()
+                .find(|b| b.address.to_string() == p.address)
+                .map(|b| b.radius_earth * R_EARTH)
+                // Mass-radius (Chen and Kipping 2017, rocky branch) when there is no surface body.
+                .unwrap_or(R_EARTH * m::pow(p.mass_me.max(1e-6), 0.28));
+            NavBody {
+                address: p.address.clone(),
+                name: p.name.clone(),
+                mass_earth: p.mass_me,
+                radius_m: rad,
+                a_au: p.a_au,
+                e: p.e,
+                i_deg: p.i_deg,
+                node_deg: p.node_deg,
+                varpi_deg: p.varpi_deg,
+                mean_longitude_deg: p.mean_longitude_deg,
+                port: ports.contains(&p.address),
+            }
+        })
+        .collect();
+    let now_s = (spec.birth_year as f64 + spec.age_myr * 1.0e6) * JULIAN_YEAR;
+    let t_read = (w.at_s != i64::MAX).then_some(w.at_s as f64);
+    Ok((
+        NavSystem {
+            name: spec.name.clone(),
+            star_mass_msun: spec.star_mass,
+            star_luminosity_lsun: lum,
+            star_radius_rsun: radius,
+            t0_s: now_s,
+            bodies,
+            belts: spec
+                .debris
+                .iter()
+                .map(|d| Belt {
+                    name: d.name.clone(),
+                    a_in_au: d.a_in_au,
+                    a_out_au: d.a_out_au,
+                })
+                .collect(),
+        },
+        t_read,
+    ))
+}
+
+pub(crate) struct Ask<'a> {
+    pub source: Source<'a>,
+    pub ship: &'a serde_json::Value,
+    pub from: &'a serde_json::Value,
+    pub to: Option<&'a serde_json::Value>,
+    pub depart_s: Option<f64>,
+    pub window_days: Option<f64>,
+    pub prefer: Option<&'a str>,
+    pub rescue: Option<&'a serde_json::Value>,
+}
+
+pub(crate) fn plan_route(a: Ask) -> Result<serde_json::Value, Response> {
+    let s = sse_nav::scenario::settings();
+    let (sys, t_read) = match a.source {
+        Source::Fixture(name) => (
+            sse_nav::scenario::fixture(name).ok_or_else(|| {
+                err(
+                    "unknown_fixture",
+                    format!("no NAV fixture {name}; fixtures: sol"),
+                )
+            })?,
+            None,
+        ),
+        Source::Inline(v) => (
+            serde_json::from_value(v.clone()).map_err(|e| bad(format!("nav: {e}")))?,
+            None,
+        ),
+        Source::System {
+            ch,
+            system,
+            at_s,
+            run,
+            ports,
+        } => from_system(ch, system, at_s, run, ports)?,
+    };
+    let mut req = serde_json::json!({
+        "ship": ship(&s, a.ship)?,
+        "from": a.from,
+        "window_days": a.window_days.unwrap_or(365.0),
+    });
+    if let Some(t) = a.to {
+        req["to"] = t.clone();
+    }
+    if let Some(d) = a.depart_s.or(t_read) {
+        req["depart_s"] = d.into();
+    }
+    if let Some(p) = a.prefer {
+        req["prefer"] = p.into();
+    }
+    if let Some(r) = a.rescue {
+        req["rescue"] = serde_json::to_value(ship(&s, r)?).expect("plain data");
+    }
+    let req: RouteRequest = serde_json::from_value(req).map_err(|e| bad(format!("route: {e}")))?;
+    let plan = sse_nav::plan(&s, &sys, &req).map_err(|e| err("route_refused", e))?;
+    Ok(serde_json::to_value(plan).expect("plain data"))
+}
