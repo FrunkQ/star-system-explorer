@@ -14,7 +14,9 @@
 //! surveyed worlds.
 
 pub mod atlas;
+pub mod cover;
 pub mod impacts;
+pub mod named;
 pub mod plates;
 pub mod regimes;
 pub mod scenario;
@@ -105,6 +107,8 @@ pub struct SurfaceSettings {
     pub wear: wear::WearSettings,
     pub impacts: impacts::ImpactSettings,
     pub regime_features: regimes::RegimeSettings,
+    pub cover: cover::CoverSettings,
+    pub features: named::FeatureSettings,
     pub rules: Vec<Rule>,
     pub regimes: BTreeMap<String, RegimeDef>,
 }
@@ -137,6 +141,7 @@ impl SurfaceSettings {
                 }
             }
         }
+        s.cover.check()?;
         if s.rules.last().is_none_or(|r| !r.when.is_empty()) {
             return Err("the last rule must have no conditions (the fallback)".into());
         }
@@ -623,6 +628,8 @@ pub fn envelopes_of(run: &SystemRun, s: &SurfaceSettings) -> Vec<SurfaceEnvelope
 
 #[cfg(test)]
 mod atlas_tests;
+#[cfg(test)]
+mod cover_tests;
 #[cfg(test)]
 mod impacts_tests;
 #[cfg(test)]
