@@ -1625,5 +1625,15 @@
   "op": "web_slice",
   "extent_mpc": 50,
   "n": 1
+ },
+ {
+  "op": "galaxy_chart",
+  "halo": "dwarf",
+  "edits": [{"kind": "starburst", "t_gyr": 6.0, "gas_fraction": 0.3}]
+ },
+ {
+  "op": "galaxy_chart",
+  "halo": "dwarf",
+  "edits": [{"kind": "comet"}]
  }
 ]

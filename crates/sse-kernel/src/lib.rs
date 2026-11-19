@@ -1133,9 +1133,17 @@ impl Kernel {
                 at_gyr,
                 place_kpc,
                 place_phi,
+                edits,
             } => {
                 let u = self.universe()?;
+                let edits: Vec<sse_cosmos::galaxy::Edit> = edits
+                    .unwrap_or_default()
+                    .into_iter()
+                    .map(serde_json::from_value)
+                    .collect::<Result<_, _>>()
+                    .map_err(|e| err("bad_edit", format!("history edit: {e}")))?;
                 let chart = cosmos::galaxy_chart(cosmos::GalaxyAsk {
+                    edits: &edits,
                     seed: &u.seed,
                     root: &u.root,
                     halo: halo.as_deref(),

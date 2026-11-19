@@ -59,7 +59,7 @@ Milestone M1 "Proven core" = packages K0 to K6 (build plan section 3/4).
 | V14 Size comparison (Sizes screen: true-scale lineup from this system, the campaign and reference objects; Measure on the chart) | done (UI track) | packages/V14.md |
 | U7 biosphere view and life timeline (Life screen: epochs, food web, scan tiers, hooks, traits, dials, in three lenses; example worlds until chart worlds carry habitats) | part 1 done (UI track); LifeFlow board next | packages/U7.md |
 | V8 Route, the astrogation console (part 1: GM Route screen on plan_route; courses compared, the chosen one charted in the star's frame) | part 1 done (second UI track); part 2: course requests, player console, drift, Window | packages/V8.md |
-| U6 galaxy and patch charts (part 1: Galaxy under the Explore tab, from the new `galaxy_chart` op; also `web_slice` for V9) | part 1 done (second UI track); part 2: ink G6 events, patch survey, find a home | packages/U6.md |
+| U6 galaxy and patch charts (part 1: Galaxy under the Explore tab, from the new `galaxy_chart` op; also `web_slice` for V9) | part 1 and 2a (inked history preview) done (second UI track); part 2b: patch survey, find a home, save inked history | packages/U6.md |
 | V9 map views (part 1: the Cosmic web foam under Explore, from `web_slice`, with time scrub and Play) | part 1 done (second UI track); cluster map next | packages/V9.md |
 | U10 browser campaign save: kept in this browser after every change, Save, Open and Start fresh, players join a reopened campaign | done (UI track) | packages/U10.md |
 | U9 lenses: Basic, Advanced, Building, Running, every player data view as a lens, make your own, lens packs | done | packages/U9.md |

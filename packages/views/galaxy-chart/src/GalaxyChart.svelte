@@ -7,7 +7,7 @@
 -->
 <script lang="ts">
   import { untrack } from "svelte";
-  import { GROUP_WORDS, LAYER_WORDS, MORPHOLOGY_WORDS, NAMED_HALOES, armPath, cosmicAxis, dex, discFrame, epochTicks, greenAt, logCurve, ringAt, ringShades, sci, timesSun, type GalaxyChart, type Group, type Json, type RingLayer, type SystemScene, type ViewContext } from "../../../ui-contract/src/index.ts";
+  import { GROUP_WORDS, LAYER_WORDS, MORPHOLOGY_WORDS, NAMED_HALOES, armPath, cosmicAxis, dex, editWords, toggleRemoval, discFrame, epochTicks, greenAt, logCurve, ringAt, ringShades, sci, timesSun, type GalaxyChart, type GalaxyEdit, type Group, type Json, type RingLayer, type SystemScene, type ViewContext } from "../../../ui-contract/src/index.ts";
 
   let { ctx, params }: { ctx: ViewContext; scene: SystemScene; params: Record<string, Json> } = $props();
   const first = untrack(() => ({ halo: String(params.halo ?? "milky-way-like"), layer: String(params.layer ?? "metals") }));
@@ -20,16 +20,50 @@
   let failed = $state<string | null>(null);
   let busy = $state(false);
   let gen = 0;
+  // Inked history (G6): previewed by the kernel, kept in this browser per galaxy.
+  const EDIT_KEY = (h: string) => `sse.galaxy.edits.${h}`;
+  function loadEdits(h: string): GalaxyEdit[] {
+    try {
+      const v = JSON.parse(localStorage.getItem(EDIT_KEY(h)) ?? "[]");
+      return Array.isArray(v) ? (v as GalaxyEdit[]) : [];
+    } catch {
+      return [];
+    }
+  }
+  function keepEdits(h: string, e: GalaxyEdit[]) {
+    try {
+      localStorage.setItem(EDIT_KEY(h), JSON.stringify(e));
+    } catch {
+      /* private window: the edits last for this visit */
+    }
+  }
+  let edits = $state<GalaxyEdit[]>(untrack(() => loadEdits(first.halo)));
+  function setEdits(e: GalaxyEdit[]) {
+    edits = e;
+    keepEdits(halo, e);
+  }
+  // The ink form.
+  let inkKind = $state<"merger" | "starburst" | "quiet_nucleus">("merger");
+  let inkT = $state(8);
+  let inkTo = $state(10);
+  let inkRatio = $state(0.33);
+  let inkGas = $state(0.3);
+  function ink() {
+    const t = Math.round(inkT * 10) / 10;
+    const e: GalaxyEdit = inkKind === "merger" ? { kind: "merger", t_gyr: t, ratio: inkRatio } : inkKind === "starburst" ? { kind: "starburst", t_gyr: t, gas_fraction: inkGas } : { kind: "quiet_nucleus", from_gyr: t, to_gyr: Math.max(t + 0.1, Math.round(inkTo * 10) / 10) };
+    setEdits([...edits, e]);
+  }
 
   // One call returns the galaxy, its rings and the conditions at the picked ring.
   $effect(() => {
     const h = halo;
     const t = at;
     const p = picked;
+    const ed = edits;
     const r = untrack(() => (p !== null && chart && chart.key === h ? chart.rings[p]?.radius_kpc : undefined));
     const g = ++gen;
     busy = true;
-    ctx.session.galaxyChart({ halo: h, ...(t !== null ? { at_gyr: t } : {}), ...(r !== undefined ? { place_kpc: r } : {}) }).then((res) => {
+    ctx.session.galaxyChart({ halo: h, ...(t !== null ? { at_gyr: t } : {}), ...(r !== undefined ? { place_kpc: r } : {}), ...(ed.length ? { edits: ed } : {}) }).then((res) => {
       if (g !== gen) return;
       busy = false;
       if (!res.ok) return void ((failed = res.message), (chart = null));
@@ -42,6 +76,7 @@
     if (h === halo) return;
     picked = null;
     at = null;
+    edits = loadEdits(h);
     halo = h;
   }
 
@@ -72,7 +107,13 @@
       { id: "sfr", label: "star formation", v: (s) => s.sfr },
     ];
     const c = chart;
-    return series.map((s) => ({ ...s, ...logCurve(c.history.map((h) => ({ t: h.t_gyr, v: s.v(h) })), ax, 22, HH - 44) }));
+    return series.map((s) => {
+      const cur = logCurve(c.history.map((h) => ({ t: h.t_gyr, v: s.v(h) })), ax, 22, HH - 44);
+      // The galaxy as grown, before the inked edits: a ghost on the same scale.
+      const was = c.compare?.curves.find((k) => k.name === s.id);
+      const ghost = was ? logCurve(was.t_gyr.map((t, i) => ({ t, v: was.before[i]! })), ax, 22, HH - 44, cur).d : "";
+      return { ...s, ...cur, ghost };
+    });
   });
   const ticks = $derived(chart && ax ? epochTicks(chart.epochs, ax).filter((t, i, a) => i === 0 || t.x - a[i - 1]!.x > 40) : []);
   const reached = $derived.by(() => {
@@ -111,6 +152,7 @@
     <header class="head">
       <h2>{NAMED_HALOES.find((h) => h.key === chart!.key)?.label ?? chart.key}</h2>
       <span class="stamp">grown, not prebaked</span>
+      {#if chart.edits.length}<span class="stamp authored" data-inked>history inked by the GM</span>{/if}
       <p class="lede">
         {#if then && chart.at_gyr < chart.now_gyr - 1e-6}
           At {gyr(chart.at_gyr)} after the Big Bang: {sci(then.stars)} solar masses of stars, forming {sci(then.sfr)} a year, with {sci(then.gas)} of gas. Today it is a {MORPHOLOGY_WORDS[chart.morphology] ?? chart.morphology}.
@@ -119,6 +161,17 @@
           {sci(chart.core_collapse_per_century)} core-collapse and {sci(chart.ia_per_century)} white-dwarf supernovae a century. Shown today, {gyr(chart.at_gyr)} after the Big Bang.
         {/if}
       </p>
+      {#if chart.compare}
+        <p class="lede" data-compare>
+          {#if chart.compare.first_change_gyr !== null}
+            The inked history changes this galaxy from {gyr(chart.compare.first_change_gyr)} on; everything before is as grown.
+            {chart.compare.morphology[0] !== chart.compare.morphology[1] ? `It was a ${MORPHOLOGY_WORDS[chart.compare.morphology[0]] ?? chart.compare.morphology[0]}; now it is a ${MORPHOLOGY_WORDS[chart.compare.morphology[1]] ?? chart.compare.morphology[1]}.` : `It is still a ${MORPHOLOGY_WORDS[chart.morphology] ?? chart.morphology}.`}
+            Stars today {sci(chart.compare.curves.find((c) => c.name === "stars")?.before.at(-1) ?? 0)} → {sci(chart.now.stars)} M☉.
+          {:else}
+            The inked edits change nothing in this galaxy's history.
+          {/if}
+        </p>
+      {/if}
     </header>
 
     <div class="cols">
@@ -189,13 +242,67 @@
           {#each ticks as t (t.e.id)}<line class="tick" class:spec={t.e.speculative} x1={t.x} x2={t.x} y1="14" y2={HH - 18}><title>{t.e.name}: {t.e.why}</title></line><text class="tlabel" x={t.x + 2} y="11">{t.e.name}</text>{/each}
           {#each chart.active_nuclei as [t, m], i (i)}<circle class="agn" cx={ax.x(t)} cy={HH - 22} r="3"><title>Active nucleus at {gyr(t)}: the black hole gained {sci(m)} M☉</title></circle>{/each}
           <line class="nowline" x1={ax.x(chart.at_gyr)} x2={ax.x(chart.at_gyr)} y1="14" y2={HH - 18} />
+          {#each curves as c (c.id)}{#if c.ghost}<path class="ghost {c.id}" d={c.ghost}><title>{c.label} as grown, before the inked history</title></path>{/if}{/each}
+          {#each chart.events.filter((e) => e.kind === "merger" || e.kind === "starburst") as e (e.id)}
+            {@const x = ax.x(e.t_myr / 1000)}
+            <path class="mark {e.kind}" class:inked={e.id.startsWith("edit/")} d="M{x} {HH - 30} l5 6 l-5 6 l-5 -6 z" data-event={e.id}><title>{e.kind === "merger" ? "Merger" : "Starburst"} at {gyr(e.t_myr / 1000)}{e.id.startsWith("edit/") ? " (inked by the GM)" : ""}</title></path>
+          {/each}
           {#each curves as c (c.id)}{#if c.d}<path class="curve {c.id}" d={c.d}><title>{c.label}, log scale 10^{c.lo} to 10^{c.hi}</title></path>{/if}{/each}
           <text class="axis" x="10" y={HH - 4}>Big Bang</text>
           <text class="axis end" x={HW - 10} y={HH - 4}>{gyr(chart.now_gyr)}</text>
         </svg>
-        <p class="hint key"><span class="sw stars"></span> stars <span class="sw gas"></span> gas <span class="sw sfr"></span> star formation (each on its own log scale, three decades tall) · dots: active-nucleus episodes · ticks: cosmic epochs</p>
+        <p class="hint key"><span class="sw stars"></span> stars <span class="sw gas"></span> gas <span class="sw sfr"></span> star formation (each on its own log scale, three decades tall) · dots: active-nucleus episodes · diamonds: mergers (filled when inked) · ticks: cosmic epochs{chart.compare ? " · faint: as grown, before the inked history" : ""}</p>
       {/if}
       <p class="hint">Model: {chart.model.join("; ")}.</p>
+    </section>
+
+    <section aria-label="Ink history" class="ink" data-ink>
+      <h4>Ink history</h4>
+      <p class="hint">Rewrite this galaxy's past: each edit acts from its own time on, so what came before is untouched. A preview kept in this browser; nothing is sent to players.</p>
+      <div class="inkform">
+        <label>Event
+          <select bind:value={inkKind} data-ink-kind>
+            <option value="merger">A merger</option>
+            <option value="starburst">A starburst</option>
+            <option value="quiet_nucleus">A quiet nucleus</option>
+          </select>
+        </label>
+        <label>{inkKind === "quiet_nucleus" ? "From" : "At"} <input type="number" min={Math.ceil(chart.t_start_gyr * 10) / 10} max={chart.now_gyr} step="0.1" bind:value={inkT} data-ink-t /> Gyr</label>
+        {#if inkKind === "merger"}
+          <label>Size
+            <select bind:value={inkRatio} data-ink-ratio>
+              <option value={0.1}>minor (1 : 10)</option>
+              <option value={0.33}>major (1 : 3)</option>
+              <option value={1}>equal (1 : 1)</option>
+            </select>
+          </label>
+        {:else if inkKind === "starburst"}
+          <label>Gas into stars
+            <select bind:value={inkGas}>
+              <option value={0.1}>10%</option>
+              <option value={0.3}>30%</option>
+              <option value={0.6}>60%</option>
+            </select>
+          </label>
+        {:else}
+          <label>To <input type="number" min={inkT} max={chart.now_gyr} step="0.1" bind:value={inkTo} /> Gyr</label>
+        {/if}
+        <button type="button" class="act" onclick={ink} data-ink-add>Ink it</button>
+      </div>
+      {#if edits.length}
+        <ul class="edits">
+          {#each edits as e, i (i)}<li data-edit={i}>{editWords(e, chart.mergers)} <button type="button" class="x" aria-label="Remove this edit" onclick={() => setEdits(edits.filter((_, j) => j !== i))}>✕</button></li>{/each}
+        </ul>
+        <button type="button" class="act" onclick={() => setEdits([])} data-ink-clear>Back to the galaxy as grown</button>
+      {/if}
+      {#if chart.mergers.length}
+        <h4>The halo's own mergers</h4>
+        <ul class="edits">
+          {#each chart.mergers as mg (mg.index)}
+            <li class:out={mg.removed} data-merger={mg.index}>{gyr(mg.t_gyr)}, {mg.ratio >= 0.25 ? "major" : "minor"} (1 : {Math.round(1 / mg.ratio)}) <button type="button" class="act small" onclick={() => setEdits(toggleRemoval(edits, mg.index))}>{mg.removed ? "Put back" : "Take out"}</button></li>
+          {/each}
+        </ul>
+      {/if}
     </section>
   {:else}
     <p class="note">Growing the galaxy from the universe's seed…</p>
@@ -203,6 +310,78 @@
 </div>
 
 <style>
+  .stamp.authored {
+    border-style: dashed;
+  }
+  .ghost {
+    fill: none;
+    stroke: var(--sse-ink-muted);
+    stroke-width: 1;
+    stroke-dasharray: 3 3;
+    opacity: 0.7;
+  }
+  .mark {
+    fill: var(--sse-ground);
+    stroke: var(--sse-ink);
+    stroke-width: 1.2;
+  }
+  .mark.inked {
+    fill: var(--sse-accent);
+    stroke: var(--sse-accent);
+  }
+  .ink {
+    border-top: 1px solid var(--sse-rule);
+    padding-top: 8px;
+  }
+  .inkform {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px 16px;
+    align-items: center;
+  }
+  .inkform input {
+    font: inherit;
+    width: 5em;
+    min-height: 30px;
+    background: var(--sse-ground);
+    color: var(--sse-ink);
+    border: 1px solid var(--sse-rule);
+  }
+  .act {
+    font: inherit;
+    min-height: 34px;
+    padding: 0 12px;
+    border: 1px solid var(--sse-ink);
+    background: transparent;
+    color: var(--sse-ink);
+    cursor: pointer;
+  }
+  .act.small {
+    min-height: 26px;
+    padding: 0 8px;
+    margin-left: 8px;
+  }
+  .edits {
+    list-style: none;
+    padding: 0;
+    margin: 6px 0;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+  }
+  .edits li.out {
+    text-decoration: line-through;
+    color: var(--sse-ink-muted);
+  }
+  .x {
+    font: inherit;
+    border: none;
+    background: transparent;
+    color: var(--sse-ink-muted);
+    cursor: pointer;
+    min-width: 28px;
+    min-height: 28px;
+  }
   .gal {
     color: var(--sse-ink);
     font-size: 13px;

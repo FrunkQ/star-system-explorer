@@ -87,11 +87,11 @@
   let tick = $state(0);
   $effect(() => {
     const o = new MutationObserver(() => (tick += 1));
-    o.observe(document.documentElement, { attributes: true, attributeFilter: ["style", "data-theme"] });
+    o.observe(document.documentElement, { attributes: true, attributeFilter: ["style"] });
     return () => o.disconnect();
   });
-  function rgb(el: Element, name: string, fallback: string): [number, number, number] {
-    const v = getComputedStyle(el).getPropertyValue(name).trim() || fallback;
+  function rgb(el: Element, name: string): [number, number, number] {
+    const v = getComputedStyle(el).getPropertyValue(name).trim() || "currentColor";
     const c = document.createElement("canvas").getContext("2d");
     if (!c) return [0, 0, 0];
     c.fillStyle = v;
@@ -108,9 +108,9 @@
     const g = cv.getContext("2d");
     if (!g) return;
     const S = cv.width;
-    const ink = rgb(cv, "--sse-ink", "#1b2530");
-    const ground = rgb(cv, "--sse-ground", "#f1ece3");
-    const accent = rgb(cv, "--sse-accent", "#b5532a");
+    const ink = rgb(cv, "--sse-ink");
+    const ground = rgb(cv, "--sse-ground");
+    const accent = rgb(cv, "--sse-accent");
     const s = w.slice;
     // Background: density or environment, one texel a sample, smoothed up.
     const off = document.createElement("canvas");

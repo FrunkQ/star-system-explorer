@@ -10,6 +10,24 @@ export interface GalaxyAsk {
   at_gyr?: number;
   place_kpc?: number;
   place_phi?: number;
+  /** History edits to preview (G6), applied from their own times on. */
+  edits?: GalaxyEdit[];
+}
+
+/** An authored change to a galaxy's history (galaxy design 11, kernel G6). */
+export type GalaxyEdit =
+  | { kind: "merger"; t_gyr: number; ratio: number }
+  | { kind: "remove_merger"; index: number }
+  | { kind: "starburst"; t_gyr: number; gas_fraction: number }
+  | { kind: "quiet_nucleus"; from_gyr: number; to_gyr: number };
+
+/** A galaxy-wide event (G6): mergers, inked starbursts, nucleus episodes. */
+export interface GalaxyEventMark { kind: string; id: string; t_myr: number; grid_pc: [number, number, number] }
+
+export interface HistoryCompare {
+  first_change_gyr: number | null;
+  morphology: [string, string];
+  curves: { name: string; t_gyr: number[]; before: number[]; after: number[]; max_change: number }[];
 }
 
 export interface GalaxyState {
@@ -100,6 +118,12 @@ export interface GalaxyChart {
   green_bands: { t_gyr: number; habitable: [number, number] | null; complex: [number, number] | null }[];
   epochs: CosmicEpoch[];
   place: { local: PlaceLocal; green: PlaceGreen; ring: number } | null;
+  /** The halo's own mergers, with whether an edit took each out. */
+  mergers: { index: number; t_gyr: number; ratio: number; removed: boolean }[];
+  events: GalaxyEventMark[];
+  edits: GalaxyEdit[];
+  /** Before and after, when history is inked. */
+  compare: HistoryCompare | null;
   model: string[];
 }
 
@@ -204,12 +228,12 @@ export function cosmicAxis(t0: number, t1: number, w: number, pad = 8): CurveAxi
   return { t0, t1, w, x: (t) => pad + ((t - t0) / (t1 - t0)) * (w - 2 * pad) };
 }
 
-export function logCurve(points: readonly { t: number; v: number }[], ax: CurveAxis, top: number, h: number): { d: string; lo: number; hi: number } {
+export function logCurve(points: readonly { t: number; v: number }[], ax: CurveAxis, top: number, h: number, fix?: { lo: number; hi: number }): { d: string; lo: number; hi: number } {
   const ok = points.filter((p) => p.v > 0 && Number.isFinite(p.v));
   if (!ok.length) return { d: "", lo: 0, hi: 0 };
   const ls = ok.map((p) => Math.log10(p.v));
-  const hi = Math.ceil(Math.max(...ls));
-  const lo = Math.max(Math.floor(Math.min(...ls)), hi - 3);
+  const hi = fix ? fix.hi : Math.ceil(Math.max(...ls));
+  const lo = fix ? fix.lo : Math.max(Math.floor(Math.min(...ls)), hi - 3);
   const y = (l: number) => top + h - ((Math.max(lo, l) - lo) / Math.max(1e-9, hi - lo)) * h;
   return { d: ok.map((p, i) => `${i ? "L" : "M"}${ax.x(p.t).toFixed(1)} ${y(Math.log10(p.v)).toFixed(1)}`).join(" "), lo, hi };
 }
@@ -251,4 +275,27 @@ export function foamCells(s: WebSlice["slice"]): { i: number; j: number; shade: 
       out.push({ i, j, shade, env: String(s.environment[j * s.n + i] ?? "") });
     }
   return out;
+}
+
+/** An edit in words, for the inked-history list. */
+export function editWords(e: GalaxyEdit, mergers: readonly { index: number; t_gyr: number }[] = []): string {
+  const g = (t: number) => `${t.toFixed(1)} Gyr`;
+  switch (e.kind) {
+    case "merger":
+      return `${e.ratio >= 0.25 ? "Major" : "Minor"} merger at ${g(e.t_gyr)} (1 : ${Math.round(1 / e.ratio)})`;
+    case "remove_merger": {
+      const m = mergers.find((x) => x.index === e.index);
+      return `Took out the merger at ${m ? g(m.t_gyr) : `#${e.index}`}`;
+    }
+    case "starburst":
+      return `Starburst at ${g(e.t_gyr)}: ${Math.round(e.gas_fraction * 100)}% of the gas into stars`;
+    case "quiet_nucleus":
+      return `Quiet nucleus from ${g(e.from_gyr)} to ${g(e.to_gyr)}`;
+  }
+}
+
+/** Toggle taking out one of the halo's own mergers. */
+export function toggleRemoval(edits: readonly GalaxyEdit[], index: number): GalaxyEdit[] {
+  const has = edits.some((e) => e.kind === "remove_merger" && e.index === index);
+  return has ? edits.filter((e) => !(e.kind === "remove_merger" && e.index === index)) : [...edits, { kind: "remove_merger", index }];
 }

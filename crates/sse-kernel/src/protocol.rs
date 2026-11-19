@@ -424,6 +424,12 @@ pub enum Request {
         #[serde(default)]
         #[ts(optional)]
         place_phi: Option<f64>,
+        /// History edits to preview (galaxy design 11, G6): `{kind: "merger", t_gyr, ratio}`,
+        /// `{kind: "remove_merger", index}`, `{kind: "starburst", t_gyr, gas_fraction}`,
+        /// `{kind: "quiet_nucleus", from_gyr, to_gyr}`.
+        #[serde(default)]
+        #[ts(optional, type = "unknown[]")]
+        edits: Option<Vec<serde_json::Value>>,
     },
     /// G1 for the foam and cluster maps (V9): a square slice of the cosmic
     /// web from the open universe's seed, `n` samples a side over

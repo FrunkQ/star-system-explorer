@@ -63,6 +63,25 @@ try {
     await gm.waitForFunction(() => /halo:milky-way-like$/.test(document.querySelector(".gal")?.getAttribute("data-galaxy") ?? ""), null, { timeout: 30000 });
     await gal.locator("[data-green]").waitFor({ timeout: 20000 });
 
+    // Ink history (G6): a major merger at 8 Gyr redraws the galaxy from then on, with a ghost of the past.
+    assert.equal(await gal.locator("[data-inked]").count(), 0);
+    await gal.locator("[data-ink-kind]").selectOption("merger");
+    await gal.locator("[data-ink-t]").fill("8");
+    await gal.locator("[data-ink-ratio]").selectOption({ label: "equal (1 : 1)" });
+    await gal.locator("[data-ink-add]").click();
+    await gal.locator("[data-inked]").waitFor({ timeout: 30000 });
+    await gm.waitForFunction(() => /from 8\.\d Gyr on/.test(document.querySelector(".gal [data-compare]")?.textContent ?? ""), null, { timeout: 30000 });
+    assert.ok((await gal.locator("path.ghost").count()) >= 2, "ghost curves");
+    assert.equal(await gal.locator("path.mark.inked").count(), 1, "the inked merger marked");
+    const own = await gal.locator("[data-merger]").count();
+    if (own) {
+      await gal.locator("[data-merger='0'] button").click();
+      await gm.waitForSelector(".gal [data-merger='0'].out", { timeout: 30000 });
+    }
+    await shot(gm, "u6-galaxy-inked");
+    await gal.locator("[data-ink-clear]").click();
+    await gm.waitForFunction(() => !document.querySelector(".gal [data-inked]") && !document.querySelector(".gal path.ghost"), null, { timeout: 30000 });
+
     await gm.getByRole("button", { name: "Night chart" }).click();
     await gm.waitForTimeout(300);
     await shot(gm, "u6-galaxy-night");
@@ -80,7 +99,7 @@ try {
 
     assert.deepEqual(errors, []);
     await browser.close();
-    console.log(`${name}: galaxy chart from galaxy_chart: rings, arms, green band, curves, ledger, layers, time, dwarf, night chart, phone`);
+    console.log(`${name}: galaxy chart from galaxy_chart: rings, arms, green band, curves, ledger, layers, time, dwarf, inked history, night chart, phone`);
   }
 } finally {
   server.kill();

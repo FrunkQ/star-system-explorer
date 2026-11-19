@@ -47,6 +47,8 @@ pub(crate) struct GalaxyAsk<'a> {
     pub at_gyr: Option<f64>,
     pub place_kpc: Option<f64>,
     pub place_phi: Option<f64>,
+    /// The GM's history edits, inked in this view (G6); empty for the galaxy as grown.
+    pub edits: &'a [sse_cosmos::galaxy::Edit],
 }
 
 /// One galaxy: its history curves, its rings now (abundances, deaths, rates),
@@ -60,7 +62,7 @@ pub(crate) fn galaxy_chart(a: GalaxyAsk) -> Result<serde_json::Value, Response> 
         cosmo: &c,
         web: &w,
         params: cp.haloes.clone(),
-        seed: a.seed.clone(),
+        seed: *a.seed,
         universe: a.root.clone(),
     };
     let (key, mass) = match (a.halo, a.mass_msun) {
@@ -83,20 +85,54 @@ pub(crate) fn galaxy_chart(a: GalaxyAsk) -> Result<serde_json::Value, Response> 
         _ => return Err(err("bad_request", "give a halo name or a mass, not both")),
     };
     let h = hs.median(mass, &key);
-    let g = sse_cosmos::galaxy::evolve(&c, &cp.galaxy, &h);
+    sse_cosmos::galaxy::check_edits(&h, a.edits).map_err(|e| err("bad_edit", e))?;
+    let g = sse_cosmos::galaxy::evolve_with(&c, &cp.galaxy, &h, a.edits);
+    // Before and after, when the GM has inked history: the ghost the chart draws.
+    let compare = if a.edits.is_empty() {
+        None
+    } else {
+        Some(sse_cosmos::events::compare(
+            &sse_cosmos::galaxy::evolve(&c, &cp.galaxy, &h),
+            &g,
+        ))
+    };
     let addr: Address = h
         .address
         .parse()
         .map_err(|e| err("bad_address", format!("{e:?}")))?;
-    let d = rings::evolve(&g, &cp.galaxy, &cp.rings, a.seed.clone(), &addr);
+    let d = rings::evolve(&g, &cp.galaxy, &cp.rings, *a.seed, &addr);
     let env = GalaxyEnvelope {
         galaxy: &g,
         disc: &d,
         params: cp.envelope.clone(),
-        seed: a.seed.clone(),
+        seed: *a.seed,
         address: addr.clone(),
     };
     let now = g.now.t_gyr;
+    // Galaxy-wide events over the whole history (mergers, inked starbursts, nucleus episodes).
+    let events = sse_cosmos::events::Events {
+        env: &env,
+        halo: &h,
+        edits: a.edits,
+        green: cp.green.clone(),
+        stars: cp.stars.clone(),
+        params: cp.events.clone(),
+        seed: *a.seed,
+    }
+    .galaxy_events(&g, 0.0, now * 1000.0 + 1.0);
+    let removed = |i: usize| {
+        a.edits
+            .iter()
+            .any(|e| matches!(e, sse_cosmos::galaxy::Edit::RemoveMerger { index } if *index == i))
+    };
+    let mergers: Vec<serde_json::Value> = h
+        .mergers
+        .iter()
+        .enumerate()
+        .map(|(i, mg)| {
+            serde_json::json!({ "index": i, "t_gyr": mg.t_gyr, "ratio": mg.ratio, "removed": removed(i) })
+        })
+        .collect();
     let at = a.at_gyr.unwrap_or(now).clamp(g.t_start_gyr, now);
     let sun_r = env.sun_radius_kpc();
     let ring_rows: Vec<serde_json::Value> = d
@@ -131,7 +167,9 @@ pub(crate) fn galaxy_chart(a: GalaxyAsk) -> Result<serde_json::Value, Response> 
             env.green_band(t, &cp.green, complex, 0.25)
                 .map(|(lo, hi)| serde_json::json!([lo, hi]))
         };
-        bands.push(serde_json::json!({ "t_gyr": t, "habitable": band(false), "complex": band(true) }));
+        bands.push(
+            serde_json::json!({ "t_gyr": t, "habitable": band(false), "complex": band(true) }),
+        );
     }
     // Arm crests at `at` (where the envelope's arm term peaks), as (r, phi) polylines.
     let e = &cp.envelope;
@@ -189,10 +227,15 @@ pub(crate) fn galaxy_chart(a: GalaxyAsk) -> Result<serde_json::Value, Response> 
         "green_bands": bands,
         "epochs": sse_cosmos::epochs::epochs(&c, &cp.epochs),
         "place": place,
+        "mergers": mergers,
+        "events": events,
+        "edits": a.edits,
+        "compare": compare,
         "model": [
             "galaxy: a halo's median growth, gas and star formation by published relations (G3), not a simulation",
             "rings: chemical evolution ring by ring with delayed type Ia and neutron-star mergers",
             "green band: the G4 criteria (metals, supernovae, passages, bursts, a quiet nucleus, time)",
+            "inked history (G6): each edit acts from its own time on; everything before the earliest edit is unchanged",
         ],
     }))
 }
@@ -213,7 +256,10 @@ pub(crate) fn web_slice(a: SliceAsk) -> Result<serde_json::Value, Response> {
         return Err(err("bad_request", "n must be 4 to 256 samples a side"));
     }
     if !(a.extent_mpc > 0.0 && a.extent_mpc <= 2000.0) {
-        return Err(err("bad_request", "extent_mpc must be above 0 and at most 2000"));
+        return Err(err(
+            "bad_request",
+            "extent_mpc must be above 0 and at most 2000",
+        ));
     }
     let cp = settings()?;
     let c = Cosmology::new(cp.params.clone());
@@ -222,7 +268,12 @@ pub(crate) fn web_slice(a: SliceAsk) -> Result<serde_json::Value, Response> {
         (Some(z), None) if z > -0.99 => 1.0 / (1.0 + z),
         (None, Some(t)) if t > 0.0 => c.scale_of_time(t).min(1.0),
         (None, None) => 1.0,
-        _ => return Err(err("bad_request", "give a redshift z or a time t_gyr, not both")),
+        _ => {
+            return Err(err(
+                "bad_request",
+                "give a redshift z or a time t_gyr, not both",
+            ))
+        }
     };
     let octaves = w.params.octaves;
     let s = w.slice(&c, scale, a.centre, a.extent_mpc, a.n, octaves);
@@ -253,7 +304,10 @@ mod tests {
     #[test]
     fn galaxy_chart_matches_the_g3_golden_and_is_repeatable() {
         let mut k = open();
-        let r = ask(&mut k, r#"{"op":"galaxy_chart","halo":"milky-way-like","place_kpc":8.0}"#);
+        let r = ask(
+            &mut k,
+            r#"{"op":"galaxy_chart","halo":"milky-way-like","place_kpc":8.0}"#,
+        );
         assert_eq!(r["type"], "galaxy_charted", "{r}");
         let c = &r["chart"];
         // The same galaxy as G3's golden (seed g3, universe g3).
@@ -261,7 +315,8 @@ mod tests {
         assert_eq!(c["halo"], "u:g3/halo:milky-way-like");
         let golden: serde_json::Value = serde_json::from_str(
             &std::fs::read_to_string(
-                std::path::Path::new(env!("CARGO_MANIFEST_DIR")).join("../../tests/golden/galaxy.json"),
+                std::path::Path::new(env!("CARGO_MANIFEST_DIR"))
+                    .join("../../tests/golden/galaxy.json"),
             )
             .unwrap(),
         )
@@ -269,22 +324,78 @@ mod tests {
         let g = &golden["galaxies"][1];
         assert_eq!(c["now"]["stars"], g["stars"]);
         assert_eq!(c["now"]["sfr"], g["sfr"]);
-        assert_eq!(c["core_collapse_per_century"], g["core_collapse_per_century"]);
+        assert_eq!(
+            c["core_collapse_per_century"],
+            g["core_collapse_per_century"]
+        );
         assert_eq!(c["rings"].as_array().unwrap().len(), 24);
         assert!(c["history"].as_array().unwrap().len() > 10);
-        assert!(c["green_bands"].as_array().unwrap().iter().any(|b| !b["habitable"].is_null()));
+        assert!(c["green_bands"]
+            .as_array()
+            .unwrap()
+            .iter()
+            .any(|b| !b["habitable"].is_null()));
         assert!(c["place"]["local"]["feh"].is_number());
         assert!(c["epochs"].as_array().unwrap().len() > 3);
-        let again = ask(&mut k, r#"{"op":"galaxy_chart","halo":"milky-way-like","place_kpc":8.0}"#);
+        let again = ask(
+            &mut k,
+            r#"{"op":"galaxy_chart","halo":"milky-way-like","place_kpc":8.0}"#,
+        );
         assert_eq!(r, again);
         let bad = ask(&mut k, r#"{"op":"galaxy_chart","halo":"andromeda"}"#);
         assert_eq!(bad["code"], "unknown_halo");
     }
 
     #[test]
+    fn inked_history_changes_only_what_comes_after() {
+        let mut k = open();
+        let base = ask(&mut k, r#"{"op":"galaxy_chart","halo":"milky-way-like"}"#);
+        let c0 = &base["chart"];
+        assert!(c0["compare"].is_null());
+        let mergers = c0["mergers"].as_array().unwrap();
+        let events = c0["events"].as_array().unwrap();
+        let own = events.iter().filter(|e| e["kind"] == "merger").count();
+        assert_eq!(own, mergers.len(), "every halo merger is an event");
+        // Ink a major merger at 8 Gyr: the galaxy changes from 8 Gyr on, not before.
+        let r = ask(
+            &mut k,
+            r#"{"op":"galaxy_chart","halo":"milky-way-like","edits":[{"kind":"merger","t_gyr":8.0,"ratio":0.5}]}"#,
+        );
+        let c = &r["chart"];
+        assert_eq!(r["type"], "galaxy_charted", "{r}");
+        let first = c["compare"]["first_change_gyr"].as_f64().unwrap();
+        assert!((7.9..8.2).contains(&first), "{first}");
+        assert!(c["events"]
+            .as_array()
+            .unwrap()
+            .iter()
+            .any(|e| e["id"] == "edit/0"));
+        assert_ne!(c["now"]["bulge"], c0["now"]["bulge"]);
+        for (a, b) in c["history"]
+            .as_array()
+            .unwrap()
+            .iter()
+            .zip(c0["history"].as_array().unwrap())
+        {
+            if a["t_gyr"].as_f64().unwrap() < 7.9 {
+                assert_eq!(a, b, "history before the edit is untouched");
+            }
+        }
+        // A bad edit is refused.
+        let bad = ask(
+            &mut k,
+            r#"{"op":"galaxy_chart","halo":"dwarf","edits":[{"kind":"remove_merger","index":999}]}"#,
+        );
+        assert_eq!(bad["code"], "bad_edit", "{bad}");
+    }
+
+    #[test]
     fn web_slice_grows_contrast_with_time() {
         let mut k = open();
-        let early = ask(&mut k, r#"{"op":"web_slice","z":3.0,"extent_mpc":100,"n":16}"#);
+        let early = ask(
+            &mut k,
+            r#"{"op":"web_slice","z":3.0,"extent_mpc":100,"n":16}"#,
+        );
         let now = ask(&mut k, r#"{"op":"web_slice","extent_mpc":100,"n":16}"#);
         assert_eq!(now["type"], "web_sliced", "{now}");
         let spread = |v: &serde_json::Value| {
