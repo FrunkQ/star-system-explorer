@@ -1,15 +1,8 @@
 name: ci
 on:
-  # Branches with a pull request run once, through pull_request; pushes to
-  # main still run. A newer push cancels the older run of the same PR.
   push:
-    branches: [main]
   pull_request:
   workflow_dispatch:
-
-concurrency:
-  group: ci-${{ github.event.pull_request.number || github.ref }}
-  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
 
 jobs:
   rust:
