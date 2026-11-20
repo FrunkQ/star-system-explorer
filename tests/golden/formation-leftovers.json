@@ -22,7 +22,7 @@
             "diameter_km": 2399.9999999999995,
             "e": 0.11026493593903858,
             "i_deg": 13.40950784234552,
-            "kind": "outer-belt",
+            "kind": "asteroid-belt",
             "mass_kg": 2.7452162941512447e+22,
             "mean_anomaly_deg": 55.59248667895734,
             "node_deg": 171.9993869484005,
@@ -36,7 +36,7 @@
             "diameter_km": 1823.5672577056664,
             "e": 0.20170588142417312,
             "i_deg": 2.6314406995839947,
-            "kind": "outer-belt",
+            "kind": "asteroid-belt",
             "mass_kg": 1.2042265562127268e+22,
             "mean_anomaly_deg": 83.00624131561119,
             "node_deg": 140.68973605428562,
@@ -50,7 +50,7 @@
             "diameter_km": 1550.5482393445284,
             "e": 0.2155124714561959,
             "i_deg": 16.933712586744573,
-            "kind": "outer-belt",
+            "kind": "asteroid-belt",
             "mass_kg": 7.402845564667674e+21,
             "mean_anomaly_deg": 276.62572540627826,
             "node_deg": 293.33952969826777,
@@ -59,7 +59,7 @@
             "swarm": null
           }
         ],
-        "kind": "outer-belt",
+        "kind": "asteroid-belt",
         "largest_km": 2399.9999999999995,
         "mass_earth": 0.025866241794
       },
@@ -70,10 +70,10 @@
             "a_au": 2.1822577113791537,
             "address": "u:f0/sys:2/cloud:1/obj:1",
             "diameter_km": 2400.0,
-            "e": 0.04033807295886599,
-            "i_deg": 0.032243260901407236,
+            "e": 0.12101421887659794,
+            "i_deg": 0.0859820290704193,
             "kind": "outer-belt",
-            "mass_kg": 1.5265255673347774e+22,
+            "mass_kg": 1.5265249007600461e+22,
             "mean_anomaly_deg": 313.1707982039272,
             "node_deg": 231.52457474947286,
             "peri_deg": 145.2904730549796,
@@ -84,10 +84,10 @@
             "a_au": 2.7416774271988062,
             "address": "u:f0/sys:2/cloud:1/obj:2",
             "diameter_km": 2400.0,
-            "e": 0.047578848021767484,
-            "i_deg": 2.229169979131733,
+            "e": 0.14273654406530242,
+            "i_deg": 5.944453277684622,
             "kind": "outer-belt",
-            "mass_kg": 1.5265255673347774e+22,
+            "mass_kg": 1.5265249007600461e+22,
             "mean_anomaly_deg": 171.98922347282408,
             "node_deg": 344.0394624675122,
             "peri_deg": 136.65791562514022,
@@ -98,10 +98,10 @@
             "a_au": 2.618817694408978,
             "address": "u:f0/sys:2/cloud:1/obj:3",
             "diameter_km": 2400.0,
-            "e": 0.02021945082441519,
-            "i_deg": 1.4733322622059533,
+            "e": 0.06065835247324555,
+            "i_deg": 3.9288860325492085,
             "kind": "outer-belt",
-            "mass_kg": 1.5265255673347774e+22,
+            "mass_kg": 1.5265249007600461e+22,
             "mean_anomaly_deg": 299.29600750396094,
             "node_deg": 39.852804048583565,
             "peri_deg": 42.80490945675007,
@@ -111,19 +111,19 @@
         ],
         "kind": "outer-belt",
         "largest_km": 2400.0,
-        "mass_earth": 25.91844439734
+        "mass_earth": 0.25918514316
       },
       {
         "address": "u:f0/sys:2/cloud:2",
         "first": [
           {
-            "a_au": 0.08648713330576696,
+            "a_au": 0.22347276734505267,
             "address": "u:f0/sys:2/cloud:2/obj:1",
-            "diameter_km": 2400.0,
+            "diameter_km": 2399.9999999999995,
             "e": 0.040703504152637,
             "i_deg": 3.2899988443844834,
             "kind": "debris-belt",
-            "mass_kg": 2.1714688421612646e+22,
+            "mass_kg": 1.920540675214241e+22,
             "mean_anomaly_deg": 290.3635887733778,
             "node_deg": 2.8258424650122738,
             "peri_deg": 24.145027845250972,
@@ -131,13 +131,13 @@
             "swarm": null
           },
           {
-            "a_au": 0.08937179621703734,
+            "a_au": 0.23092640326752162,
             "address": "u:f0/sys:2/cloud:2/obj:2",
-            "diameter_km": 2400.0,
+            "diameter_km": 2399.9999999999995,
             "e": 0.026547501604707664,
             "i_deg": 6.282600738073301,
             "kind": "debris-belt",
-            "mass_kg": 2.1714688421612646e+22,
+            "mass_kg": 1.920540675214241e+22,
             "mean_anomaly_deg": 67.06683557839386,
             "node_deg": 335.2330449885926,
             "peri_deg": 34.56664962311689,
@@ -145,13 +145,13 @@
             "swarm": null
           },
           {
-            "a_au": 0.0715891024416198,
+            "a_au": 0.18497797560033682,
             "address": "u:f0/sys:2/cloud:2/obj:3",
-            "diameter_km": 2400.0,
+            "diameter_km": 2399.9999999999995,
             "e": 0.023211594886167405,
             "i_deg": 7.079551194228134,
             "kind": "debris-belt",
-            "mass_kg": 2.1714688421612646e+22,
+            "mass_kg": 1.920540675214241e+22,
             "mean_anomaly_deg": 287.4631943002678,
             "node_deg": 195.546160000961,
             "peri_deg": 267.0768596855804,
@@ -160,20 +160,20 @@
           }
         ],
         "kind": "debris-belt",
-        "largest_km": 2400.0,
-        "mass_earth": 1.437050537982
+        "largest_km": 2399.9999999999995,
+        "mass_earth": 1.301250854124
       },
       {
         "address": "u:f0/sys:2/cloud:3",
         "first": [
           {
-            "a_au": 0.044319842435859555,
+            "a_au": 0.12430705486628858,
             "address": "u:f0/sys:2/cloud:3/obj:1",
-            "diameter_km": 2400.0,
+            "diameter_km": 2399.9999999999995,
             "e": 0.05717301113110488,
             "i_deg": 1.8840900097447175,
             "kind": "debris-belt",
-            "mass_kg": 2.6489417176981134e+22,
+            "mass_kg": 2.548707254673126e+22,
             "mean_anomaly_deg": 193.598393075299,
             "node_deg": 42.110845722646005,
             "peri_deg": 123.54818162167221,
@@ -181,13 +181,13 @@
             "swarm": null
           },
           {
-            "a_au": 0.036810792894086675,
+            "a_au": 0.10324588266709331,
             "address": "u:f0/sys:2/cloud:3/obj:2",
-            "diameter_km": 2400.0,
+            "diameter_km": 2399.9999999999995,
             "e": 0.07416689936729358,
             "i_deg": 1.207011499825023,
             "kind": "debris-belt",
-            "mass_kg": 2.6489417176981134e+22,
+            "mass_kg": 2.548707254673126e+22,
             "mean_anomaly_deg": 182.74168462731922,
             "node_deg": 20.8768123630778,
             "peri_deg": 280.58557663496083,
@@ -195,13 +195,13 @@
             "swarm": null
           },
           {
-            "a_au": 0.043703610274307234,
+            "a_au": 0.12257866412962667,
             "address": "u:f0/sys:2/cloud:3/obj:3",
-            "diameter_km": 2400.0,
+            "diameter_km": 2399.9999999999995,
             "e": 0.0439461550199838,
             "i_deg": 1.5157975029183044,
             "kind": "debris-belt",
-            "mass_kg": 2.6489417176981134e+22,
+            "mass_kg": 2.548707254673126e+22,
             "mean_anomaly_deg": 350.9744488351483,
             "node_deg": 123.50560486084764,
             "peri_deg": 179.38495159711232,
@@ -210,20 +210,20 @@
           }
         ],
         "kind": "debris-belt",
-        "largest_km": 2400.0,
-        "mass_earth": 5.5617131043
+        "largest_km": 2399.9999999999995,
+        "mass_earth": 7.28388794241
       },
       {
         "address": "u:f0/sys:2/cloud:4",
         "first": [
           {
-            "a_au": 5427.280159051502,
+            "a_au": 0.07273373709422098,
             "address": "u:f0/sys:2/cloud:4/obj:1",
             "diameter_km": 2400.0,
-            "e": 0.6741123041919903,
-            "i_deg": 102.69454550787428,
-            "kind": "oort",
-            "mass_kg": 2.745213428214499e+22,
+            "e": 0.055041774644569934,
+            "i_deg": 4.11621942024889,
+            "kind": "debris-belt",
+            "mass_kg": 2.170308616718322e+22,
             "mean_anomaly_deg": 318.3106641717409,
             "node_deg": 353.95869498904364,
             "peri_deg": 298.8016470021035,
@@ -231,13 +231,13 @@
             "swarm": null
           },
           {
-            "a_au": 3524.00650406586,
+            "a_au": 0.06928548153302212,
             "address": "u:f0/sys:2/cloud:4/obj:2",
             "diameter_km": 2400.0,
-            "e": 0.4572344128521678,
-            "i_deg": 89.48699653059985,
-            "kind": "oort",
-            "mass_kg": 2.745213428214499e+22,
+            "e": 0.03424451417309739,
+            "i_deg": 3.5094449441142723,
+            "kind": "debris-belt",
+            "mass_kg": 2.170308616718322e+22,
             "mean_anomaly_deg": 345.97914995935656,
             "node_deg": 312.1030163295559,
             "peri_deg": 250.35772504742943,
@@ -245,16 +245,266 @@
             "swarm": null
           },
           {
-            "a_au": 28518.338631978928,
+            "a_au": 0.08598178821364033,
             "address": "u:f0/sys:2/cloud:4/obj:3",
             "diameter_km": 2400.0,
-            "e": 0.7699003898987639,
-            "i_deg": 90.06909924097265,
-            "kind": "oort",
-            "mass_kg": 2.745213428214499e+22,
+            "e": 0.0670193892955151,
+            "i_deg": 3.5353034540546067,
+            "kind": "debris-belt",
+            "mass_kg": 2.170308616718322e+22,
             "mean_anomaly_deg": 344.9311871203076,
             "node_deg": 92.2322334068406,
             "peri_deg": 186.46863122362709,
+            "rank": 3,
+            "swarm": null
+          }
+        ],
+        "kind": "debris-belt",
+        "largest_km": 2400.0,
+        "mass_earth": 1.437748059852
+      },
+      {
+        "address": "u:f0/sys:2/cloud:5",
+        "first": [
+          {
+            "a_au": 0.0895814149756684,
+            "address": "u:f0/sys:2/cloud:5/obj:1",
+            "diameter_km": 2399.9999999999995,
+            "e": 0.07614731201471146,
+            "i_deg": 2.418324036822695,
+            "kind": "debris-belt",
+            "mass_kg": 2.78557893809609e+22,
+            "mean_anomaly_deg": 69.18752001413434,
+            "node_deg": 326.29817150029504,
+            "peri_deg": 152.95395882536653,
+            "rank": 1,
+            "swarm": null
+          },
+          {
+            "a_au": 0.09190894969329168,
+            "address": "u:f0/sys:2/cloud:5/obj:2",
+            "diameter_km": 2399.9999999999995,
+            "e": 0.04202104535409246,
+            "i_deg": 2.4539681279240115,
+            "kind": "debris-belt",
+            "mass_kg": 2.78557893809609e+22,
+            "mean_anomaly_deg": 198.62181194659712,
+            "node_deg": 93.06709151608894,
+            "peri_deg": 101.54883546420545,
+            "rank": 2,
+            "swarm": null
+          },
+          {
+            "a_au": 0.08262068356627258,
+            "address": "u:f0/sys:2/cloud:5/obj:3",
+            "diameter_km": 2399.9999999999995,
+            "e": 0.0406958137763512,
+            "i_deg": 2.634988250886543,
+            "kind": "debris-belt",
+            "mass_kg": 2.78557893809609e+22,
+            "mean_anomaly_deg": 251.97460119053056,
+            "node_deg": 253.53046637241718,
+            "peri_deg": 342.8872137476199,
+            "rank": 3,
+            "swarm": null
+          }
+        ],
+        "kind": "debris-belt",
+        "largest_km": 2399.9999999999995,
+        "mass_earth": 0.718874029926
+      },
+      {
+        "address": "u:f0/sys:2/cloud:6",
+        "first": [
+          {
+            "a_au": 0.07901606689865064,
+            "address": "u:f0/sys:2/cloud:6/obj:1",
+            "diameter_km": 2399.9999999999995,
+            "e": 0.03210184959247963,
+            "i_deg": 1.067620277171508,
+            "kind": "debris-belt",
+            "mass_kg": 5.645818989619288e+22,
+            "mean_anomaly_deg": 216.02147099327607,
+            "node_deg": 7.460466721871262,
+            "peri_deg": 270.8592283821161,
+            "rank": 1,
+            "swarm": null
+          },
+          {
+            "a_au": 0.07531171336448235,
+            "address": "u:f0/sys:2/cloud:6/obj:2",
+            "diameter_km": 2399.9999999999995,
+            "e": 0.04444052158723366,
+            "i_deg": 8.583376953594827,
+            "kind": "debris-belt",
+            "mass_kg": 5.645818989619288e+22,
+            "mean_anomaly_deg": 89.62459889180889,
+            "node_deg": 142.49086747938824,
+            "peri_deg": 258.7893298173148,
+            "rank": 2,
+            "swarm": null
+          },
+          {
+            "a_au": 0.08074558924962562,
+            "address": "u:f0/sys:2/cloud:6/obj:3",
+            "diameter_km": 2399.9999999999995,
+            "e": 0.11086431616762077,
+            "i_deg": 3.116670061809838,
+            "kind": "debris-belt",
+            "mass_kg": 5.645818989619288e+22,
+            "mean_anomaly_deg": 25.40249636005217,
+            "node_deg": 127.48897230203184,
+            "peri_deg": 313.6161266287125,
+            "rank": 3,
+            "swarm": null
+          }
+        ],
+        "kind": "debris-belt",
+        "largest_km": 2399.9999999999995,
+        "mass_earth": 0.35943718143599995
+      },
+      {
+        "address": "u:f0/sys:2/cloud:7",
+        "first": [
+          {
+            "a_au": 0.0824424404941715,
+            "address": "u:f0/sys:2/cloud:7/obj:1",
+            "diameter_km": 2399.9999999999995,
+            "e": 0.01990925291468351,
+            "i_deg": 2.853794044848045,
+            "kind": "debris-belt",
+            "mass_kg": 5.645818989619288e+22,
+            "mean_anomaly_deg": 71.48825711926646,
+            "node_deg": 283.90357336981896,
+            "peri_deg": 355.2426166746818,
+            "rank": 1,
+            "swarm": null
+          },
+          {
+            "a_au": 0.08232644781228264,
+            "address": "u:f0/sys:2/cloud:7/obj:2",
+            "diameter_km": 2399.9999999999995,
+            "e": 0.04581151785571904,
+            "i_deg": 4.237467607538776,
+            "kind": "debris-belt",
+            "mass_kg": 5.645818989619288e+22,
+            "mean_anomaly_deg": 183.39845513743143,
+            "node_deg": 22.992376038409038,
+            "peri_deg": 281.98609683075614,
+            "rank": 2,
+            "swarm": null
+          },
+          {
+            "a_au": 0.07115398158964352,
+            "address": "u:f0/sys:2/cloud:7/obj:3",
+            "diameter_km": 2399.9999999999995,
+            "e": 0.042461644258349605,
+            "i_deg": 2.1564668233614697,
+            "kind": "debris-belt",
+            "mass_kg": 5.645818989619288e+22,
+            "mean_anomaly_deg": 216.0473976161271,
+            "node_deg": 224.3518168690499,
+            "peri_deg": 12.48770008498925,
+            "rank": 3,
+            "swarm": null
+          }
+        ],
+        "kind": "debris-belt",
+        "largest_km": 2399.9999999999995,
+        "mass_earth": 0.17971859071799998
+      },
+      {
+        "address": "u:f0/sys:2/cloud:8",
+        "first": [
+          {
+            "a_au": 0.08758902719867226,
+            "address": "u:f0/sys:2/cloud:8/obj:1",
+            "diameter_km": 2400.0,
+            "e": 0.10182735694586556,
+            "i_deg": 3.407786776486135,
+            "kind": "debris-belt",
+            "mass_kg": 1.631994133150027e+22,
+            "mean_anomaly_deg": 128.5104042132624,
+            "node_deg": 210.0342674876692,
+            "peri_deg": 238.6983500679912,
+            "rank": 1,
+            "swarm": null
+          },
+          {
+            "a_au": 0.08295462453725362,
+            "address": "u:f0/sys:2/cloud:8/obj:2",
+            "diameter_km": 2400.0,
+            "e": 0.06264511553679519,
+            "i_deg": 2.6690179735274393,
+            "kind": "debris-belt",
+            "mass_kg": 1.631994133150027e+22,
+            "mean_anomaly_deg": 17.51532713234145,
+            "node_deg": 262.5020128217145,
+            "peri_deg": 86.69183931806032,
+            "rank": 2,
+            "swarm": null
+          },
+          {
+            "a_au": 0.06967022836849893,
+            "address": "u:f0/sys:2/cloud:8/obj:3",
+            "diameter_km": 2400.0,
+            "e": 0.09296354935590258,
+            "i_deg": 3.739852941767869,
+            "kind": "debris-belt",
+            "mass_kg": 1.631994133150027e+22,
+            "mean_anomaly_deg": 74.58928496908581,
+            "node_deg": 244.28312961785954,
+            "peri_deg": 55.911945594780214,
+            "rank": 3,
+            "swarm": null
+          }
+        ],
+        "kind": "debris-belt",
+        "largest_km": 2400.0,
+        "mass_earth": 0.984845278458
+      },
+      {
+        "address": "u:f0/sys:2/cloud:9",
+        "first": [
+          {
+            "a_au": 12197.349712649831,
+            "address": "u:f0/sys:2/cloud:9/obj:1",
+            "diameter_km": 2400.0,
+            "e": 0.6177168152143849,
+            "i_deg": 53.91262117141876,
+            "kind": "oort",
+            "mass_kg": 2.745213428214499e+22,
+            "mean_anomaly_deg": 111.48303224226999,
+            "node_deg": 58.90831189816132,
+            "peri_deg": 136.50398959705512,
+            "rank": 1,
+            "swarm": null
+          },
+          {
+            "a_au": 5158.341408701312,
+            "address": "u:f0/sys:2/cloud:9/obj:2",
+            "diameter_km": 2400.0,
+            "e": 0.8418172489738486,
+            "i_deg": 70.19784245943286,
+            "kind": "oort",
+            "mass_kg": 2.745213428214499e+22,
+            "mean_anomaly_deg": 103.53742717952623,
+            "node_deg": 38.58397342596964,
+            "peri_deg": 226.21291714405018,
+            "rank": 2,
+            "swarm": null
+          },
+          {
+            "a_au": 8433.421647910223,
+            "address": "u:f0/sys:2/cloud:9/obj:3",
+            "diameter_km": 2400.0,
+            "e": 0.8998099937964608,
+            "i_deg": 104.88833615878576,
+            "kind": "oort",
+            "mass_kg": 2.745213428214499e+22,
+            "mean_anomaly_deg": 235.91788840193655,
+            "node_deg": 247.55777690355725,
+            "peri_deg": 9.696287543486072,
             "rank": 3,
             "swarm": null
           }
@@ -264,47 +514,47 @@
         "mass_earth": 0.102428173332
       },
       {
-        "address": "u:f0/sys:2/cloud:5",
+        "address": "u:f0/sys:2/cloud:10",
         "first": [
           {
-            "a_au": 4.785398878807366,
-            "address": "u:f0/sys:2/cloud:5/obj:1",
+            "a_au": 4.161592671380113,
+            "address": "u:f0/sys:2/cloud:10/obj:1",
             "diameter_km": 2397.040624408716,
-            "e": 0.611848586468231,
-            "i_deg": 12.091620184113474,
+            "e": 0.4577371501170371,
+            "i_deg": 29.0053209537444,
             "kind": "scattered-disc",
             "mass_kg": 2.7350616629339683e+22,
-            "mean_anomaly_deg": 69.18752001413434,
-            "node_deg": 326.29817150029504,
-            "peri_deg": 152.95395882536653,
+            "mean_anomaly_deg": 97.4611015667008,
+            "node_deg": 56.54770704697991,
+            "peri_deg": 37.47068624347959,
             "rank": 1,
             "swarm": null
           },
           {
-            "a_au": 6.138579363565836,
-            "address": "u:f0/sys:2/cloud:5/obj:2",
+            "a_au": 1.337670401553689,
+            "address": "u:f0/sys:2/cloud:10/obj:2",
             "diameter_km": 1816.6170925073602,
-            "e": 0.3785184498128106,
-            "i_deg": 12.269840639620059,
+            "e": 0.711489922161457,
+            "i_deg": 12.190721364190823,
             "kind": "scattered-disc",
             "mass_kg": 1.1905047356584e+22,
-            "mean_anomaly_deg": 198.62181194659712,
-            "node_deg": 93.06709151608894,
-            "peri_deg": 101.54883546420545,
+            "mean_anomaly_deg": 120.53887191524251,
+            "node_deg": 299.36586174842967,
+            "peri_deg": 15.80061123784529,
             "rank": 2,
             "swarm": null
           },
           {
-            "a_au": 2.2724025798922223,
-            "address": "u:f0/sys:2/cloud:5/obj:3",
+            "a_au": 0.6251837715636098,
+            "address": "u:f0/sys:2/cloud:10/obj:3",
             "diameter_km": 1544.6386320263173,
-            "e": 0.36917593563688156,
-            "i_deg": 13.174941254432715,
+            "e": 0.5099647692254077,
+            "i_deg": 17.26982807542721,
             "kind": "scattered-disc",
             "mass_kg": 7.318492236047158e+21,
-            "mean_anomaly_deg": 251.97460119053056,
-            "node_deg": 253.53046637241718,
-            "peri_deg": 342.8872137476199,
+            "mean_anomaly_deg": 226.49156907933244,
+            "node_deg": 158.32468158222247,
+            "peri_deg": 350.8572364718019,
             "rank": 3,
             "swarm": null
           }
@@ -314,81 +564,331 @@
         "mass_earth": 0.02560687686
       },
       {
-        "address": "u:f0/sys:2/cloud:6",
+        "address": "u:f0/sys:2/cloud:11",
         "first": [
           {
-            "a_au": 0.29635522410999826,
-            "address": "u:f0/sys:2/cloud:6/obj:1",
+            "a_au": 0.47153037608641435,
+            "address": "u:f0/sys:2/cloud:11/obj:1",
             "diameter_km": 91.50775890962916,
-            "e": 0.04494258942947148,
-            "i_deg": 4.270481108686032,
+            "e": 0.0767424103188076,
+            "i_deg": 7.070052795928607,
             "kind": "trojans",
             "mass_kg": 1.4224738852861624e+18,
-            "mean_anomaly_deg": 216.02147099327607,
-            "node_deg": 7.460466721871262,
-            "peri_deg": 270.8592283821161,
+            "mean_anomaly_deg": 113.57721101963878,
+            "node_deg": 235.25656905302554,
+            "peri_deg": 15.788454100286247,
             "rank": 1,
             "swarm": "L4"
           },
           {
-            "a_au": 0.29478021806073207,
-            "address": "u:f0/sys:2/cloud:6/obj:2",
+            "a_au": 0.479525858973379,
+            "address": "u:f0/sys:2/cloud:11/obj:2",
             "diameter_km": 69.3499130717822,
-            "e": 0.062216730222127134,
-            "i_deg": 34.33350781437931,
+            "e": 0.07314459110820568,
+            "i_deg": 5.205437869172531,
             "kind": "trojans",
             "mass_kg": 6.191677210549475e+17,
-            "mean_anomaly_deg": 89.62459889180889,
-            "node_deg": 142.49086747938824,
-            "peri_deg": 258.7893298173148,
+            "mean_anomaly_deg": 18.886299350442897,
+            "node_deg": 114.66082869113303,
+            "peri_deg": 183.27821312605963,
             "rank": 2,
             "swarm": "L4"
           },
           {
-            "a_au": 0.2970905772937592,
-            "address": "u:f0/sys:2/cloud:6/obj:3",
+            "a_au": 0.47144550279292613,
+            "address": "u:f0/sys:2/cloud:11/obj:3",
             "diameter_km": 58.967052165346544,
-            "e": 0.1552100426346691,
-            "i_deg": 12.466680247239353,
+            "e": 0.035915052594459644,
+            "i_deg": 7.285445937623964,
             "kind": "trojans",
             "mass_kg": 3.806263027459191e+17,
-            "mean_anomaly_deg": 25.40249636005217,
-            "node_deg": 127.48897230203184,
-            "peri_deg": 313.6161266287125,
+            "mean_anomaly_deg": 126.47217568698201,
+            "node_deg": 328.73308669142466,
+            "peri_deg": 21.73065957386088,
             "rank": 3,
-            "swarm": "L5"
+            "swarm": "L4"
           }
         ],
         "kind": "trojans",
         "largest_km": 91.50775890962916,
         "mass_earth": 1.3317839999999999e-6
+      },
+      {
+        "address": "u:f0/sys:2/cloud:12",
+        "first": [
+          {
+            "a_au": 83456.71983623477,
+            "address": "u:f0/sys:2/cloud:12/obj:1",
+            "diameter_km": 2400.0,
+            "e": 0.5543031058067459,
+            "i_deg": 112.87198092228495,
+            "kind": "oort",
+            "mass_kg": 1.5265253831164624e+22,
+            "mean_anomaly_deg": 283.3009174954277,
+            "node_deg": 320.6788914750977,
+            "peri_deg": 163.5181282139284,
+            "rank": 1,
+            "swarm": null
+          },
+          {
+            "a_au": 34620.43451813796,
+            "address": "u:f0/sys:2/cloud:12/obj:2",
+            "diameter_km": 2400.0,
+            "e": 0.8689498676450882,
+            "i_deg": 78.50682156289626,
+            "kind": "oort",
+            "mass_kg": 1.5265253831164624e+22,
+            "mean_anomaly_deg": 77.46090241399935,
+            "node_deg": 237.2730748190621,
+            "peri_deg": 29.377791789750972,
+            "rank": 2,
+            "swarm": null
+          },
+          {
+            "a_au": 13446.206871211669,
+            "address": "u:f0/sys:2/cloud:12/obj:3",
+            "diameter_km": 2400.0,
+            "e": 0.9488845973357672,
+            "i_deg": 38.706717141224175,
+            "kind": "oort",
+            "mass_kg": 1.5265253831164624e+22,
+            "mean_anomaly_deg": 37.89059327386874,
+            "node_deg": 200.33361616897218,
+            "peri_deg": 48.19165498677386,
+            "rank": 3,
+            "swarm": null
+          }
+        ],
+        "kind": "oort",
+        "largest_km": 2400.0,
+        "mass_earth": 1.026369970632
+      },
+      {
+        "address": "u:f0/sys:2/cloud:13",
+        "first": [
+          {
+            "a_au": 43.62842081955639,
+            "address": "u:f0/sys:2/cloud:13/obj:1",
+            "diameter_km": 2399.9999999999995,
+            "e": 0.753540316037149,
+            "i_deg": 3.1878720083904084,
+            "kind": "scattered-disc",
+            "mass_kg": 1.5265248224048912e+22,
+            "mean_anomaly_deg": 23.238911252365284,
+            "node_deg": 37.0796070941499,
+            "peri_deg": 91.06784343811914,
+            "rank": 1,
+            "swarm": null
+          },
+          {
+            "a_au": 41.95382247851165,
+            "address": "u:f0/sys:2/cloud:13/obj:2",
+            "diameter_km": 2399.9999999999995,
+            "e": 0.3922743154803772,
+            "i_deg": 11.957363589632166,
+            "kind": "scattered-disc",
+            "mass_kg": 1.5265248224048912e+22,
+            "mean_anomaly_deg": 256.1636218242848,
+            "node_deg": 330.580050303175,
+            "peri_deg": 72.768788383028,
+            "rank": 2,
+            "swarm": null
+          },
+          {
+            "a_au": 6.611721621001005,
+            "address": "u:f0/sys:2/cloud:13/obj:3",
+            "diameter_km": 2399.9999999999995,
+            "e": 0.3203744716350028,
+            "i_deg": 6.9745845058672815,
+            "kind": "scattered-disc",
+            "mass_kg": 1.5265248224048912e+22,
+            "mean_anomaly_deg": 326.64048049322236,
+            "node_deg": 117.78278832797784,
+            "peri_deg": 116.02981765092386,
+            "rank": 3,
+            "swarm": null
+          }
+        ],
+        "kind": "scattered-disc",
+        "largest_km": 2399.9999999999995,
+        "mass_earth": 0.256591826766
+      },
+      {
+        "address": "u:f0/sys:2/cloud:14",
+        "first": [
+          {
+            "a_au": 0.017453131794162764,
+            "address": "u:f0/sys:2/cloud:14/obj:1",
+            "diameter_km": 113.06626809486967,
+            "e": 0.16223105871159557,
+            "i_deg": 39.876763248268915,
+            "kind": "irregular-moons",
+            "mass_kg": 1.778092356607703e+18,
+            "mean_anomaly_deg": 279.7022890134936,
+            "node_deg": 79.69600582289588,
+            "peri_deg": 205.30808934182443,
+            "rank": 1,
+            "swarm": null
+          },
+          {
+            "a_au": 0.013605139182052667,
+            "address": "u:f0/sys:2/cloud:14/obj:2",
+            "diameter_km": 85.68820783245002,
+            "e": 0.16915361946788074,
+            "i_deg": 67.96904807797176,
+            "kind": "irregular-moons",
+            "mass_kg": 7.739596513186843e+17,
+            "mean_anomaly_deg": 249.65080144498808,
+            "node_deg": 145.2569884842707,
+            "peri_deg": 192.9856365009078,
+            "rank": 2,
+            "swarm": null
+          },
+          {
+            "a_au": 0.011411951219300807,
+            "address": "u:f0/sys:2/cloud:14/obj:3",
+            "diameter_km": 72.8592264561477,
+            "e": 0.26725537222596385,
+            "i_deg": 76.7710748752392,
+            "kind": "irregular-moons",
+            "mass_kg": 4.7578287843239885e+17,
+            "mean_anomaly_deg": 150.7917491590128,
+            "node_deg": 237.11892569178852,
+            "peri_deg": 24.98859845772249,
+            "rank": 3,
+            "swarm": null
+          }
+        ],
+        "kind": "irregular-moons",
+        "largest_km": 113.06626809486967,
+        "mass_earth": 1.66473e-6
+      },
+      {
+        "address": "u:f0/sys:2/cloud:15",
+        "first": [
+          {
+            "a_au": 2.4256708645367095,
+            "address": "u:f0/sys:2/cloud:15/obj:1",
+            "diameter_km": 256.1431807633558,
+            "e": 0.11343086267007156,
+            "i_deg": 10.531158741590687,
+            "kind": "trojans",
+            "mass_kg": 1.849216050872011e+19,
+            "mean_anomaly_deg": 278.33628511931346,
+            "node_deg": 45.015716478689114,
+            "peri_deg": 295.35333889575486,
+            "rank": 1,
+            "swarm": "L5"
+          },
+          {
+            "a_au": 2.4861392465319163,
+            "address": "u:f0/sys:2/cloud:15/obj:2",
+            "diameter_km": 194.120231240843,
+            "e": 0.11039411967668444,
+            "i_deg": 23.424352959287297,
+            "kind": "trojans",
+            "mass_kg": 8.049180373714316e+18,
+            "mean_anomaly_deg": 90.50880698658844,
+            "node_deg": 234.5841209842323,
+            "peri_deg": 56.37907821272626,
+            "rank": 2,
+            "swarm": "L4"
+          },
+          {
+            "a_au": 2.4571749954022297,
+            "address": "u:f0/sys:2/cloud:15/obj:3",
+            "diameter_km": 165.05713266114347,
+            "e": 0.08258795768880779,
+            "i_deg": 2.2926549889328323,
+            "kind": "trojans",
+            "mass_kg": 4.948141935696948e+18,
+            "mean_anomaly_deg": 41.056799657314706,
+            "node_deg": 188.14610317049215,
+            "peri_deg": 251.94508532660834,
+            "rank": 3,
+            "swarm": "L4"
+          }
+        ],
+        "kind": "trojans",
+        "largest_km": 256.1431807633558,
+        "mass_earth": 0.000017313192
+      },
+      {
+        "address": "u:f0/sys:2/cloud:16",
+        "first": [
+          {
+            "a_au": 0.11112668225321572,
+            "address": "u:f0/sys:2/cloud:16/obj:1",
+            "diameter_km": 113.06626809486967,
+            "e": 0.5252995491648017,
+            "i_deg": 87.30303739883037,
+            "kind": "irregular-moons",
+            "mass_kg": 1.778092356607703e+18,
+            "mean_anomaly_deg": 331.2588347482881,
+            "node_deg": 148.74751639333226,
+            "peri_deg": 333.97741278918056,
+            "rank": 1,
+            "swarm": null
+          },
+          {
+            "a_au": 0.05303653577327876,
+            "address": "u:f0/sys:2/cloud:16/obj:2",
+            "diameter_km": 85.68820783245002,
+            "e": 0.23187627302463124,
+            "i_deg": 84.85545242389189,
+            "kind": "irregular-moons",
+            "mass_kg": 7.739596513186843e+17,
+            "mean_anomaly_deg": 202.49339922307132,
+            "node_deg": 313.94104921488656,
+            "peri_deg": 191.7615823937678,
+            "rank": 2,
+            "swarm": null
+          },
+          {
+            "a_au": 0.12715928696742068,
+            "address": "u:f0/sys:2/cloud:16/obj:3",
+            "diameter_km": 72.8592264561477,
+            "e": 0.36278306306122876,
+            "i_deg": 65.11449680662938,
+            "kind": "irregular-moons",
+            "mass_kg": 4.7578287843239885e+17,
+            "mean_anomaly_deg": 141.46920940159043,
+            "node_deg": 78.41707524931203,
+            "peri_deg": 40.22384321672876,
+            "rank": 3,
+            "swarm": null
+          }
+        ],
+        "kind": "irregular-moons",
+        "largest_km": 113.06626809486967,
+        "mass_earth": 1.66473e-6
       }
     ],
-    "digest": "1a909068b574b62df3cb1c6eaadd9c90a88f48aa77b3524f7b6092f3590fead6",
+    "digest": "71c1aca16b77e0160ce98582e3877c764b720180e3f40f6e928cbe9fcbed254d",
     "moons": [
       {
-        "address": "u:f0/sys:2/body:0/moon:0",
-        "diameter_km": 5798.812366973441,
+        "address": "u:f0/sys:2/body:1/moon:0",
+        "diameter_km": 6278.831501249641,
         "origin": "regular"
       },
       {
-        "address": "u:f0/sys:2/body:0/moon:1",
-        "diameter_km": 7337.931002128744,
+        "address": "u:f0/sys:2/body:1/moon:1",
+        "diameter_km": 6505.061396040256,
         "origin": "regular"
       },
       {
-        "address": "u:f0/sys:2/body:0/moon:2",
-        "diameter_km": 7626.274679509364,
+        "address": "u:f0/sys:2/body:1/moon:2",
+        "diameter_km": 6620.862846891017,
         "origin": "regular"
       },
       {
-        "address": "u:f0/sys:2/body:0/moon:3",
-        "diameter_km": 6625.573304127646,
+        "address": "u:f0/sys:2/body:1/moon:3",
+        "diameter_km": 4926.849671172661,
         "origin": "regular"
       },
       {
-        "address": "u:f0/sys:2/body:0/moon:4",
-        "diameter_km": 5401.899995059036,
+        "address": "u:f0/sys:2/body:1/moon:4",
+        "diameter_km": 7157.139091233449,
         "origin": "regular"
       }
     ],
@@ -418,13 +918,13 @@
         "address": "u:f0/sys:5/cloud:0",
         "first": [
           {
-            "a_au": 2.756507229406217,
+            "a_au": 2.7103296377910557,
             "address": "u:f0/sys:5/cloud:0/obj:1",
-            "diameter_km": 2400.0,
+            "diameter_km": 2399.9999999999995,
             "e": 0.16963027622558238,
             "i_deg": 22.227310727044657,
             "kind": "asteroid-belt",
-            "mass_kg": 1.3529250663908002e+22,
+            "mass_kg": 1.2219469994416843e+22,
             "mean_anomaly_deg": 58.80936324583978,
             "node_deg": 307.17032821638935,
             "peri_deg": 152.89196600189888,
@@ -432,13 +932,13 @@
             "swarm": null
           },
           {
-            "a_au": 2.821680315371302,
+            "a_au": 2.7744109304476052,
             "address": "u:f0/sys:5/cloud:0/obj:2",
-            "diameter_km": 2400.0,
+            "diameter_km": 2399.9999999999995,
             "e": 0.07048764783187651,
             "i_deg": 1.723402320949227,
             "kind": "asteroid-belt",
-            "mass_kg": 1.3529250663908002e+22,
+            "mass_kg": 1.2219469994416843e+22,
             "mean_anomaly_deg": 89.25344016130215,
             "node_deg": 25.71500732416903,
             "peri_deg": 56.896016255258296,
@@ -446,13 +946,13 @@
             "swarm": null
           },
           {
-            "a_au": 3.286906361488786,
+            "a_au": 3.2318434115284482,
             "address": "u:f0/sys:5/cloud:0/obj:3",
-            "diameter_km": 2400.0,
+            "diameter_km": 2072.3817228951452,
             "e": 0.1593970250900639,
             "i_deg": 13.13810491332687,
             "kind": "asteroid-belt",
-            "mass_kg": 1.3529250663908002e+22,
+            "mass_kg": 7.867339730292926e+21,
             "mean_anomaly_deg": 26.119752918116102,
             "node_deg": 98.14139742385689,
             "peri_deg": 115.41308368088819,
@@ -461,20 +961,20 @@
           }
         ],
         "kind": "asteroid-belt",
-        "largest_km": 2400.0,
-        "mass_earth": 0.045506726334
+        "largest_km": 2399.9999999999995,
+        "mass_earth": 0.024553435716
       },
       {
         "address": "u:f0/sys:5/cloud:1",
         "first": [
           {
-            "a_au": 2.5056151973647856,
+            "a_au": 2.503421591179517,
             "address": "u:f0/sys:5/cloud:1/obj:1",
-            "diameter_km": 686.2835423823318,
+            "diameter_km": 681.9797779609511,
             "e": 0.07889098448437737,
             "i_deg": 9.733362001941096,
             "kind": "asteroid-belt",
-            "mass_kg": 5.181361127154846e+20,
+            "mass_kg": 5.0853441398980307e+20,
             "mean_anomaly_deg": 319.42485776800055,
             "node_deg": 173.05387897945164,
             "peri_deg": 168.20594694812382,
@@ -482,13 +982,13 @@
             "swarm": null
           },
           {
-            "a_au": 2.8464849969311135,
+            "a_au": 2.8439929673879853,
             "address": "u:f0/sys:5/cloud:1/obj:2",
-            "diameter_km": 520.1056672561706,
+            "diameter_km": 516.8440237402483,
             "e": 0.2914610769065056,
             "i_deg": 2.720987907031354,
             "kind": "asteroid-belt",
-            "mass_kg": 2.255318423942646e+20,
+            "mass_kg": 2.2135246027714373e+20,
             "mean_anomaly_deg": 79.51787300348249,
             "node_deg": 289.02646154310395,
             "peri_deg": 243.48906197995802,
@@ -496,13 +996,13 @@
             "swarm": null
           },
           {
-            "a_au": 2.799565245494764,
+            "a_au": 2.7971142930719655,
             "address": "u:f0/sys:5/cloud:1/obj:3",
-            "diameter_km": 442.2370072885634,
+            "diameter_km": 439.4636872535537,
             "e": 0.16981556616242388,
             "i_deg": 10.961889103714341,
             "kind": "asteroid-belt",
-            "mass_kg": 1.3864313077520104e+20,
+            "mass_kg": 1.360739032316661e+20,
             "mean_anomaly_deg": 214.17657625768732,
             "node_deg": 141.4677756082462,
             "peri_deg": 133.79551023618924,
@@ -511,20 +1011,20 @@
           }
         ],
         "kind": "asteroid-belt",
-        "largest_km": 686.2835423823318,
-        "mass_earth": 0.000485102322
+        "largest_km": 681.9797779609511,
+        "mass_earth": 0.00047611278
       },
       {
         "address": "u:f0/sys:5/cloud:2",
         "first": [
           {
-            "a_au": 2.618494308256972,
+            "a_au": 2.616315898878776,
             "address": "u:f0/sys:5/cloud:2/obj:1",
-            "diameter_km": 2400.0,
+            "diameter_km": 2399.9999999999995,
             "e": 0.09549082035917676,
             "i_deg": 15.006035233278391,
             "kind": "asteroid-belt",
-            "mass_kg": 2.40311183815191e+22,
+            "mass_kg": 2.403111719556437e+22,
             "mean_anomaly_deg": 135.28545815527343,
             "node_deg": 279.43995098008384,
             "peri_deg": 84.55488071378647,
@@ -532,13 +1032,13 @@
             "swarm": null
           },
           {
-            "a_au": 3.255437576621781,
+            "a_au": 3.2527292737147695,
             "address": "u:f0/sys:5/cloud:2/obj:2",
-            "diameter_km": 2400.0,
+            "diameter_km": 2399.9999999999995,
             "e": 0.10650328069834628,
             "i_deg": 4.57246887493966,
             "kind": "asteroid-belt",
-            "mass_kg": 2.40311183815191e+22,
+            "mass_kg": 2.403111719556437e+22,
             "mean_anomaly_deg": 178.04591010064334,
             "node_deg": 131.82910115123698,
             "peri_deg": 227.632285942512,
@@ -546,13 +1046,13 @@
             "swarm": null
           },
           {
-            "a_au": 2.9228194326304116,
+            "a_au": 2.9203878454229315,
             "address": "u:f0/sys:5/cloud:2/obj:3",
-            "diameter_km": 2400.0,
+            "diameter_km": 2399.9999999999995,
             "e": 0.19725187595256502,
             "i_deg": 13.678173049192115,
             "kind": "asteroid-belt",
-            "mass_kg": 2.40311183815191e+22,
+            "mass_kg": 2.403111719556437e+22,
             "mean_anomaly_deg": 202.36493480891534,
             "node_deg": 209.53163434669855,
             "peri_deg": 117.88850447673875,
@@ -561,8 +1061,8 @@
           }
         ],
         "kind": "asteroid-belt",
-        "largest_km": 2400.0,
-        "mass_earth": 0.523368804618
+        "largest_km": 2399.9999999999995,
+        "mass_earth": 0.523332513504
       },
       {
         "address": "u:f0/sys:5/cloud:3",
@@ -574,7 +1074,7 @@
             "e": 0.4036116640537583,
             "i_deg": 18.601130864906512,
             "kind": "oort",
-            "mass_kg": 1.3529228490388563e+22,
+            "mass_kg": 1.2219396026333454e+22,
             "mean_anomaly_deg": 191.78117218178866,
             "node_deg": 23.820577511380613,
             "peri_deg": 220.59623054229056,
@@ -588,7 +1088,7 @@
             "e": 0.8948227918551035,
             "i_deg": 89.27160723261298,
             "kind": "oort",
-            "mass_kg": 1.3529228490388563e+22,
+            "mass_kg": 1.2219396026333454e+22,
             "mean_anomaly_deg": 192.2021838103685,
             "node_deg": 162.5769607260711,
             "peri_deg": 84.19390443329654,
@@ -602,7 +1102,7 @@
             "e": 0.9412240625596713,
             "i_deg": 134.54282519165034,
             "kind": "oort",
-            "mass_kg": 1.3529228490388563e+22,
+            "mass_kg": 1.2219396026333454e+22,
             "mean_anomaly_deg": 164.76894472537498,
             "node_deg": 119.67804209619315,
             "peri_deg": 121.16049876578501,
@@ -612,19 +1112,19 @@
         ],
         "kind": "oort",
         "largest_km": 2400.0,
-        "mass_earth": 0.18020369303999997
+        "mass_earth": 0.097227556812
       },
       {
         "address": "u:f0/sys:5/cloud:4",
         "first": [
           {
-            "a_au": 47.0409196529187,
+            "a_au": 46.25288022615397,
             "address": "u:f0/sys:5/cloud:4/obj:1",
-            "diameter_km": 2399.9999999999995,
+            "diameter_km": 2400.0,
             "e": 0.24219298891775767,
             "i_deg": 31.285253127405934,
             "kind": "scattered-disc",
-            "mass_kg": 1.3529189002639252e+22,
+            "mass_kg": 1.2219292580303046e+22,
             "mean_anomaly_deg": 69.98409843373837,
             "node_deg": 77.22626975181637,
             "peri_deg": 29.705371170249293,
@@ -632,13 +1132,13 @@
             "swarm": null
           },
           {
-            "a_au": 50.05876217003654,
+            "a_au": 49.22016720769124,
             "address": "u:f0/sys:5/cloud:4/obj:2",
-            "diameter_km": 2399.9999999999995,
+            "diameter_km": 2400.0,
             "e": 0.39113416422071634,
             "i_deg": 40.91077409978545,
             "kind": "scattered-disc",
-            "mass_kg": 1.3529189002639252e+22,
+            "mass_kg": 1.2219292580303046e+22,
             "mean_anomaly_deg": 199.91304811708576,
             "node_deg": 11.936729392498338,
             "peri_deg": 149.8272814495664,
@@ -646,13 +1146,13 @@
             "swarm": null
           },
           {
-            "a_au": 22.896880662857548,
+            "a_au": 22.51330727939928,
             "address": "u:f0/sys:5/cloud:4/obj:3",
-            "diameter_km": 2399.9999999999995,
+            "diameter_km": 2064.0194726768214,
             "e": 0.7518675458794852,
             "i_deg": 27.008850828228386,
             "kind": "scattered-disc",
-            "mass_kg": 1.3529189002639252e+22,
+            "mass_kg": 7.772374341221686e+21,
             "mean_anomaly_deg": 241.7253027755213,
             "node_deg": 329.6908162772821,
             "peri_deg": 339.68266398576196,
@@ -661,20 +1161,20 @@
           }
         ],
         "kind": "scattered-disc",
-        "largest_km": 2399.9999999999995,
-        "mass_earth": 0.045050590313999994
+        "largest_km": 2400.0,
+        "mass_earth": 0.024306389783999998
       },
       {
         "address": "u:f0/sys:5/cloud:5",
         "first": [
           {
-            "a_au": 3.103678363853233,
+            "a_au": 3.0990296523040017,
             "address": "u:f0/sys:5/cloud:5/obj:1",
-            "diameter_km": 146.487116136818,
+            "diameter_km": 116.58808204428263,
             "e": 0.03611963596245013,
             "i_deg": 3.291351475748554,
             "kind": "trojans",
-            "mass_kg": 2.844947770572325e+18,
+            "mass_kg": 1.0668554139646218e+18,
             "mean_anomaly_deg": 148.74763127142654,
             "node_deg": 189.28405179091567,
             "peri_deg": 245.35672074820098,
@@ -682,13 +1182,13 @@
             "swarm": "L4"
           },
           {
-            "a_au": 3.125908242690358,
+            "a_au": 3.1212262350703446,
             "address": "u:f0/sys:5/cloud:5/obj:2",
-            "diameter_km": 111.01647435445385,
+            "diameter_km": 88.35724370609633,
             "e": 0.15262918949260543,
             "i_deg": 15.395321529564669,
             "kind": "trojans",
-            "mass_kg": 1.238335442109895e+18,
+            "mass_kg": 4.6437579079121056e+17,
             "mean_anomaly_deg": 250.37024878514347,
             "node_deg": 259.3369682751644,
             "peri_deg": 300.24764239314203,
@@ -696,13 +1196,13 @@
             "swarm": "L4"
           },
           {
-            "a_au": 3.0473753583740097,
+            "a_au": 3.04281097786722,
             "address": "u:f0/sys:5/cloud:5/obj:3",
-            "diameter_km": 94.39542090984348,
+            "diameter_km": 75.1286622870128,
             "e": 0.08833688484618868,
             "i_deg": 27.894982195341246,
             "kind": "trojans",
-            "mass_kg": 7.612526054918382e+17,
+            "mass_kg": 2.8546972705943933e+17,
             "mean_anomaly_deg": 42.822810722671115,
             "node_deg": 153.02643789344577,
             "peri_deg": 63.96231767113904,
@@ -711,8 +1211,8 @@
           }
         ],
         "kind": "trojans",
-        "largest_km": 146.487116136818,
-        "mass_earth": 2.6635679999999998e-6
+        "largest_km": 116.58808204428263,
+        "mass_earth": 9.98838e-7
       },
       {
         "address": "u:f0/sys:5/cloud:6",
@@ -720,11 +1220,11 @@
           {
             "a_au": 5490.061114409386,
             "address": "u:f0/sys:5/cloud:6/obj:1",
-            "diameter_km": 1084.7183727154768,
+            "diameter_km": 1077.9317394298,
             "e": 0.7185022825104767,
             "i_deg": 97.25369766215714,
             "kind": "oort",
-            "mass_kg": 2.048006776340752e+21,
+            "mass_kg": 2.0099555999093474e+21,
             "mean_anomaly_deg": 59.52626281402003,
             "node_deg": 131.93653401468993,
             "peri_deg": 49.52637480453848,
@@ -734,11 +1234,11 @@
           {
             "a_au": 25534.127701404035,
             "address": "u:f0/sys:5/cloud:6/obj:2",
-            "diameter_km": 822.0628037615245,
+            "diameter_km": 816.9194975105587,
             "e": 0.9138704026766726,
             "i_deg": 122.59965188332149,
             "kind": "oort",
-            "mass_kg": 8.914467263888605e+20,
+            "mass_kg": 8.748839898506407e+20,
             "mean_anomaly_deg": 68.76781784958555,
             "node_deg": 153.76795039452355,
             "peri_deg": 192.5793853127935,
@@ -748,11 +1248,11 @@
           {
             "a_au": 66111.4463055554,
             "address": "u:f0/sys:5/cloud:6/obj:3",
-            "diameter_km": 698.98602731372,
+            "diameter_km": 694.6127614425842,
             "e": 0.9659794893165384,
             "i_deg": 117.09781521622317,
             "kind": "oort",
-            "mass_kg": 5.48006719378437e+20,
+            "mass_kg": 5.378249657799837e+20,
             "mean_anomaly_deg": 343.82819337435944,
             "node_deg": 304.8400057086036,
             "peri_deg": 99.24830535992442,
@@ -761,20 +1261,20 @@
           }
         ],
         "kind": "oort",
-        "largest_km": 1084.7183727154768,
-        "mass_earth": 0.001917436014
+        "largest_km": 1077.9317394298,
+        "mass_earth": 0.001881810792
       },
       {
         "address": "u:f0/sys:5/cloud:7",
         "first": [
           {
-            "a_au": 21.150821031434067,
+            "a_au": 21.132303993428042,
             "address": "u:f0/sys:5/cloud:7/obj:1",
-            "diameter_km": 682.8336715357559,
+            "diameter_km": 678.4858906854381,
             "e": 0.351268111835782,
             "i_deg": 21.81752885667185,
             "kind": "scattered-disc",
-            "mass_kg": 5.1137936176037534e+20,
+            "mass_kg": 5.017776630346938e+20,
             "mean_anomaly_deg": 119.26350091512748,
             "node_deg": 199.15780064790988,
             "peri_deg": 220.49107892778883,
@@ -782,13 +1282,13 @@
             "swarm": null
           },
           {
-            "a_au": 31.141782504925946,
+            "a_au": 31.11451861907669,
             "address": "u:f0/sys:5/cloud:7/obj:2",
-            "diameter_km": 517.4911540589324,
+            "diameter_km": 514.1961523277407,
             "e": 0.4410347932591503,
             "i_deg": 25.232985747708582,
             "kind": "scattered-disc",
-            "mass_kg": 2.225907957192536e+20,
+            "mass_kg": 2.1841141360213272e+20,
             "mean_anomaly_deg": 337.2870314603447,
             "node_deg": 216.80718964995785,
             "peri_deg": 195.72207211103893,
@@ -796,13 +1296,13 @@
             "swarm": null
           },
           {
-            "a_au": 35.267821198967496,
+            "a_au": 35.236945064912916,
             "address": "u:f0/sys:5/cloud:7/obj:3",
-            "diameter_km": 440.0139311625853,
+            "diameter_km": 437.21224720420787,
             "e": 0.7619100574550612,
             "i_deg": 11.526783078242907,
             "kind": "scattered-disc",
-            "mass_kg": 1.368351558371579e+20,
+            "mass_kg": 1.3426592829362297e+20,
             "mean_anomaly_deg": 336.12305057388187,
             "node_deg": 147.09303672441524,
             "peri_deg": 55.72583953860256,
@@ -811,8 +1311,8 @@
           }
         ],
         "kind": "scattered-disc",
-        "largest_km": 682.8336715357559,
-        "mass_earth": 0.000478776348
+        "largest_km": 678.4858906854381,
+        "mass_earth": 0.000469786806
       },
       {
         "address": "u:f0/sys:5/cloud:8",
@@ -824,7 +1324,7 @@
             "e": 0.18808852123871966,
             "i_deg": 126.98453883564949,
             "kind": "oort",
-            "mass_kg": 2.4031117381455984e+22,
+            "mass_kg": 2.4031118559116115e+22,
             "mean_anomaly_deg": 168.71892780748328,
             "node_deg": 25.28159406753296,
             "peri_deg": 261.0228708267679,
@@ -838,7 +1338,7 @@
             "e": 0.5261074194106029,
             "i_deg": 80.51175596808268,
             "kind": "oort",
-            "mass_kg": 2.4031117381455984e+22,
+            "mass_kg": 2.4031118559116115e+22,
             "mean_anomaly_deg": 315.25971789093006,
             "node_deg": 118.7323336022622,
             "peri_deg": 135.49030368647098,
@@ -852,7 +1352,7 @@
             "e": 0.8905705939970809,
             "i_deg": 63.190414402661865,
             "kind": "oort",
-            "mass_kg": 2.4031117381455984e+22,
+            "mass_kg": 2.4031118559116115e+22,
             "mean_anomaly_deg": 147.4242664087813,
             "node_deg": 303.6402913265976,
             "peri_deg": 11.814099700994278,
@@ -862,19 +1362,19 @@
         ],
         "kind": "oort",
         "largest_km": 2400.0,
-        "mass_earth": 2.072537576316
+        "mass_earth": 2.072394742482
       },
       {
         "address": "u:f0/sys:5/cloud:9",
         "first": [
           {
-            "a_au": 24.150387347151472,
+            "a_au": 24.13029586552472,
             "address": "u:f0/sys:5/cloud:9/obj:1",
             "diameter_km": 2400.0,
             "e": 0.4182413980722538,
             "i_deg": 23.236491393566514,
             "kind": "scattered-disc",
-            "mass_kg": 2.403111294683813e+22,
+            "mass_kg": 2.403111897096793e+22,
             "mean_anomaly_deg": 208.97494789562998,
             "node_deg": 296.64464585816876,
             "peri_deg": 121.69232402910873,
@@ -882,13 +1382,13 @@
             "swarm": null
           },
           {
-            "a_au": 11.63398690354667,
+            "a_au": 11.624308216792768,
             "address": "u:f0/sys:5/cloud:9/obj:2",
             "diameter_km": 2400.0,
             "e": 0.6215932155452608,
             "i_deg": 2.0285922283385984,
             "kind": "scattered-disc",
-            "mass_kg": 2.403111294683813e+22,
+            "mass_kg": 2.403111897096793e+22,
             "mean_anomaly_deg": 87.20183618599513,
             "node_deg": 67.23832687176629,
             "peri_deg": 158.63742735495228,
@@ -896,13 +1396,13 @@
             "swarm": null
           },
           {
-            "a_au": 67.18762492867604,
+            "a_au": 67.1317293890975,
             "address": "u:f0/sys:5/cloud:9/obj:3",
             "diameter_km": 2400.0,
             "e": 0.23269750338689496,
             "i_deg": 28.37677524636026,
             "kind": "scattered-disc",
-            "mass_kg": 2.403111294683813e+22,
+            "mass_kg": 2.403111897096793e+22,
             "mean_anomaly_deg": 105.73170804344622,
             "node_deg": 215.7627211693664,
             "peri_deg": 235.41834755019158,
@@ -912,13 +1412,13 @@
         ],
         "kind": "scattered-disc",
         "largest_km": 2400.0,
-        "mass_earth": 0.5181342276059999
+        "mass_earth": 0.518098602384
       },
       {
         "address": "u:f0/sys:5/cloud:10",
         "first": [
           {
-            "a_au": 3.080771681172506,
+            "a_au": 3.076157279415672,
             "address": "u:f0/sys:5/cloud:10/obj:1",
             "diameter_km": 280.4413776224528,
             "e": 0.020644578582031635,
@@ -932,7 +1432,7 @@
             "swarm": "L5"
           },
           {
-            "a_au": 3.10013893938838,
+            "a_au": 3.09549552921431,
             "address": "u:f0/sys:5/cloud:10/obj:2",
             "diameter_km": 212.53482099867512,
             "e": 0.07809134576171839,
@@ -946,7 +1446,7 @@
             "swarm": "L5"
           },
           {
-            "a_au": 3.0514473995786875,
+            "a_au": 3.0468769199395913,
             "address": "u:f0/sys:5/cloud:10/obj:3",
             "diameter_km": 180.71474529188467,
             "e": 0.04501423772965862,
@@ -968,7 +1468,7 @@
         "address": "u:f0/sys:5/cloud:11",
         "first": [
           {
-            "a_au": 0.14698637650402394,
+            "a_au": 0.14640159901798266,
             "address": "u:f0/sys:5/cloud:11/obj:1",
             "diameter_km": 141.5911889615567,
             "e": 0.2372896426119739,
@@ -982,7 +1482,7 @@
             "swarm": null
           },
           {
-            "a_au": 0.06822276172924224,
+            "a_au": 0.0679513410979994,
             "address": "u:f0/sys:5/cloud:11/obj:2",
             "diameter_km": 107.30605539046785,
             "e": 0.2528609759528574,
@@ -996,7 +1496,7 @@
             "swarm": null
           },
           {
-            "a_au": 0.058642262864602696,
+            "a_au": 0.0584089577388532,
             "address": "u:f0/sys:5/cloud:11/obj:3",
             "diameter_km": 91.24051474034061,
             "e": 0.4113260023801769,
@@ -1015,16 +1515,16 @@
         "mass_earth": 4.661244e-6
       }
     ],
-    "digest": "cb86339c30d7b66b4bcf70c4006be1e779f57ca0cac6d5c6128c631318a15530",
+    "digest": "037806f0167c9f21d807e45a74642a7847b589386722eefafbb27625907fe8df",
     "moons": [
       {
         "address": "u:f0/sys:5/body:7/moon:0",
-        "diameter_km": 9753.377194399342,
+        "diameter_km": 9713.282239985714,
         "origin": "regular"
       },
       {
         "address": "u:f0/sys:5/body:7/moon:1",
-        "diameter_km": 11374.387193085244,
+        "diameter_km": 11327.645004799193,
         "origin": "regular"
       }
     ],

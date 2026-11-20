@@ -13,7 +13,7 @@ fn planck() -> Cosmology {
 #[test]
 fn expansion_and_time() {
     let c = planck();
-    // Planck 2018 table 2 (last column): age 13.787 Gyr; z* = 1089.9, age there about 0.37 Myr.
+    // Planck 2018 table 2 (last column): age 13.787 Gyr; z* = 1089.80, age there about 0.37 Myr.
     let age = c.age_gyr();
     println!(
         "age {age:.4} Gyr, Omega_r {:.3e}, Omega_L {:.4}",
@@ -100,7 +100,7 @@ fn epochs_in_order_and_where_they_belong() {
     // First stars: 3-sigma 1e6 solar-mass minihaloes near z = 20 to 30 (Tegmark et al. 1997; Barkana and Loeb 2001 fig. 6).
     let zf = get("first_stars").z.unwrap();
     assert!(zf > 15.0 && zf < 35.0, "{zf}");
-    // Reionisation half way: Planck 2018 7.7 +- 0.7; complete by about z = 5.5 to 6.5 (quasar spectra).
+    // Reionisation half way: Planck 2018 table 2 7.82 +- 0.71 (with BAO, the column our parameters use; 7.67 +- 0.73 without); complete by about z = 5.5 to 6.5 (quasar spectra).
     let zh = get("reionisation").z.unwrap();
     assert!(zh > 7.0 && zh < 8.4, "{zh}");
     let ze = get("reionisation_end").z.unwrap();

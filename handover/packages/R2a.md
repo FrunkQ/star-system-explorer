@@ -45,3 +45,10 @@ Screens: `R2-screens/true-colour-gpu-high.png`, `true-colour-canvas.png`.
 
 ## Decisions needed from Alex
 None blocking. One for later: should photographic recipes draw a black space background behind the globe (it reads better), or keep the chart room page?
+
+## Follow-up (20 Nov): air optics from the kernel
+The renderer's own Rayleigh table is gone. The Body screen asks the kernel (`read_air_optics`, light track, PR 24) for each world's air; `atmosphere.ts` only builds the request from the body's facts and reads the answer (`airRequest`, `airFromOptics`). `Session.readAirOptics` was added for it. `atmosphere.test.ts` now runs Earth, Mars and Titan through the kernel: Earth within 3% of Bucholtz, scale height 8.4 km; Mars about 11 km; Titan optically thick in blue. Gases the kernel's table lacks (NH3, SO2, CO, Ne and others) are left out and named in the badge, as before. The two renderer-side fudges (air optics in the renderer; one refractivity per gas) are removed from `docs/fudges.md`.
+
+## Follow-up, 20 Nov: four more gases
+
+Light PR 50 added NH3, SO2, CO and Ne to the kernel's gas table, so `KERNEL_GASES` in `packages/renderer/src/atmosphere.ts` now maps them too. V3 mixes such as Venus (CO2, N2, SO2, CO, Ne) now reach the kernel whole. Any other gas still goes through the leave-out-and-name path (test now uses Xe). Checks: `npm run ui:test` 221 of 221.

@@ -327,21 +327,25 @@ fn age_the_solar_system() {
         t = e.age_myr;
         assert_eq!(e.plausible_future, e.age_myr > sp.age_myr + st.horizon_myr);
     }
-    // Oceans go 1 to 2 Gyr from now (Kopparapu 2013 type limit on the HPT00 Sun).
+    // Oceans go 1 to 2 Gyr from now (Kopparapu 2014 limit on the HPT00 Sun).
     let oceans = r.events.iter().find(|e| e.kind == "oceans_lost").unwrap();
     assert!(
         oceans.age_myr > 5300.0 && oceans.age_myr < 6800.0,
         "{}",
         oceans.age_myr
     );
-    // Mercury is engulfed; Earth and the giants survive on widened orbits.
+    // Mercury and Venus are engulfed (as in Schroeder and Smith 2008); Earth
+    // survives on a widened orbit that the giant's tide has pulled in a little;
+    // the giants widen as a M = constant.
     let last = r.snapshots.last().unwrap();
     let p = |n: &str| last.planets.iter().find(|x| x.name == n).unwrap();
     assert!(p("Mercury").engulfed);
+    assert!(p("Venus").engulfed);
     assert!(!p("Earth").engulfed);
     let widen = 1.0 / 0.569;
     assert!((p("Jupiter").a_au / 5.2026 / widen - 1.0).abs() < 0.02);
-    assert!((p("Earth").a_au / 1.0 / widen - 1.0).abs() < 0.03);
+    let earth = p("Earth").a_au / 1.0 / widen;
+    assert!(earth > 0.9 && earth < 1.01, "{earth}");
     // The white dwarf cools through the colours in order.
     let colours: Vec<&str> = r
         .events

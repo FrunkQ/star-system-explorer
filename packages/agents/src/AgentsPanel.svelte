@@ -4,9 +4,13 @@
   it is waiting for. Every run shows its estimate first and its cost after.
 -->
 <script lang="ts">
-  import { JOBS, PROVIDER_KINDS, chat, memoryStore, estimate, linked, listModels, loadAgents, newProvider, readLoaded, saveAgents, tarsSystem, type AgentsState, type ChatMessage, type JobId, type ModelInfo, type Provider, type ProviderKind } from "./agents.ts";
+  import { JOBS, PROVIDER_KINDS, memoryStore, listModels, loadAgents, newProvider, readLoaded, saveAgents, type AgentsState, type JobId, type ModelInfo, type Provider, type ProviderKind } from "./agents.ts";
 
-  let { context = "", onchange }: { context?: string; onchange?: (s: AgentsState) => void } = $props();
+  import OracTab, { type OracHost } from "./OracTab.svelte";
+  import MinervaTab, { type MinervaHost } from "./MinervaTab.svelte";
+  import TarsTab, { type TarsHost } from "./TarsTab.svelte";
+
+  let { tars, orac, minerva, onchange }: { tars?: TarsHost; orac?: OracHost; minerva?: MinervaHost; onchange?: (s: AgentsState) => void } = $props();
 
   // Settings in "sse4.agents", each key in its own entry (Ovid saves its links without keys).
   const store = (() => {
@@ -80,32 +84,6 @@
   // Money a provider did not report and no listed price covers stays unknown, never counted as zero.
   const unpriced = $derived(st.ledger.filter((r) => r.day === today && r.ok !== false && r.usd === undefined).length);
 
-  // Tars.
-  let question = $state("");
-  let answer = $state("");
-  let asking = $state(false);
-  let note = $state("");
-  const messages = $derived<ChatMessage[]>([
-    { role: "system", content: tarsSystem(st.humour, context || "(nothing selected)") },
-    { role: "user", content: question },
-  ]);
-  const est = $derived(estimate(st, "support", messages, 600));
-  async function ask(e: SubmitEvent) {
-    e.preventDefault();
-    if (!question.trim()) return;
-    asking = true;
-    note = "";
-    const r = await chat($state.snapshot(st) as AgentsState, "support", messages);
-    asking = false;
-    if (!r.ok) {
-      if (r.row) (st.ledger.push(r.row), save());
-      return void (note = r.message);
-    }
-    answer = r.text;
-    st.ledger.push(r.row);
-    save();
-    note = `${r.row.tokens_in} tokens in, ${r.row.tokens_out} out${r.row.usd !== undefined ? `, $${r.row.usd.toFixed(4)}` : ", price not given by the provider"}.`;
-  }
   const money = (x: number) => `$${x < 0.01 ? x.toFixed(4) : x.toFixed(2)}`;
 </script>
 
@@ -177,30 +155,11 @@
       {#if problem}<p class="problem" role="alert">{problem}</p>{/if}
     </div>
   {:else if tab === "tars"}
-    <div role="tabpanel" aria-label="Tars">
-      <p>Tars answers questions about SSE and the body you have selected. Read only, and allowed to be funny.</p>
-      {#if !linked(st, "support")}
-        <p class="hint" data-agent-off="tars">No model is linked for Support. Link one under Link models; until then Tars stays quiet and nothing else changes.</p>
-      {/if}
-      <label class="slider">Humour <input type="range" min="0" max="1" step="0.05" bind:value={st.humour} onchange={() => save()} aria-label="Humour" /></label>
-      <form class="ask" onsubmit={ask}>
-        <label>Ask Tars <textarea bind:value={question} rows="3" aria-label="Ask Tars"></textarea></label>
-        <p class="meta" data-estimate={est.tokens_in}>Before sending: about {est.tokens_in} tokens in, up to {est.max_out} out{est.usd !== undefined ? `, up to ${money(est.usd)}` : ""}{est.context ? `, the model fits ${est.context}` : ""}.{est.fits ? "" : " Too long for this model."}</p>
-        <button type="submit" class="primary" disabled={asking || !linked(st, "support") || !question.trim()}>{asking ? "Asking…" : "Ask"}</button>
-      </form>
-      {#if answer}<blockquote class="answer" data-answer>{answer}</blockquote>{/if}
-      {#if note}<p class="meta" role="status">{note}</p>{/if}
-    </div>
+    <TarsTab st={$state.snapshot(st) as AgentsState} host={tars} onrow={(r) => (st.ledger.push(r), save())} onhumour={(h) => ((st.humour = h), save())} />
   {:else if tab === "orac"}
-    <div role="tabpanel" aria-label="Orac">
-      <p>{JOBS.building.what}</p>
-      <p class="hint" data-agent-off="orac">{linked(st, "building") ? `Linked: ${st.links.building!.model}.` : "No model is linked for Building."} Orac's change-request loop (plan, draft, check, fix up to three times) arrives with package A2, built on Ovid's agent loop once its source is read. Until then the change requests on the Physics screen are fixtures.</p>
-    </div>
+    <OracTab st={$state.snapshot(st) as AgentsState} host={orac} onrow={(r) => (st.ledger.push(r), save())} />
   {:else}
-    <div role="tabpanel" aria-label="Minerva">
-      <p>{JOBS.describing.what}</p>
-      <p class="hint" data-agent-off="minerva">{linked(st, "describing") ? `Linked: ${st.links.describing!.model}.` : "No model is linked for Describing."} Minerva's narrative arrives with package A3, after the story finder (sifter hits) she reads from.</p>
-    </div>
+    <MinervaTab st={$state.snapshot(st) as AgentsState} host={minerva} onrow={(r) => (st.ledger.push(r), save())} />
   {/if}
 </section>
 
@@ -221,8 +180,8 @@
     margin-top: 16px;
     font-size: 17px;
   }
-  .hint,
-  .meta {
+  .ag :global(.hint),
+  .ag :global(.meta) {
     color: var(--sse-ink-muted);
     font-size: 12px;
   }
@@ -267,13 +226,13 @@
     flex-wrap: wrap;
   }
   .add,
-  .ask {
+  .ag :global(.ask) {
     display: grid;
     gap: 6px;
   }
-  input:not([type="range"]),
-  select,
-  textarea {
+  .ag :global(input:not([type="range"])),
+  .ag :global(select),
+  .ag :global(textarea) {
     display: block;
     width: 100%;
     margin-top: 3px;
@@ -285,10 +244,10 @@
     font: inherit;
     box-sizing: border-box;
   }
-  textarea {
+  .ag :global(textarea) {
     padding: 6px 8px;
   }
-  input[type="range"] {
+  .ag :global(input[type="range"]) {
     accent-color: var(--sse-accent);
   }
   .jobs {
@@ -301,7 +260,7 @@
     font-weight: normal;
     padding: 4px 8px 4px 0;
   }
-  .linkbtn {
+  .ag :global(.linkbtn) {
     color: var(--sse-accent);
     font: inherit;
     background: none;
@@ -310,7 +269,7 @@
     cursor: pointer;
     text-decoration: underline;
   }
-  .primary {
+  .ag :global(.primary) {
     justify-self: start;
     height: 38px;
     padding: 0 16px;
@@ -320,11 +279,11 @@
     font: inherit;
     cursor: pointer;
   }
-  .primary:disabled {
+  .ag :global(.primary):disabled {
     opacity: 0.45;
     cursor: default;
   }
-  .answer {
+  .ag :global(.answer) {
     margin: 10px 0;
     padding: 8px 12px;
     border-left: 2px solid var(--sse-accent);
@@ -333,7 +292,7 @@
     line-height: 1.5;
     white-space: pre-wrap;
   }
-  .problem {
+  .ag :global(.problem) {
     color: var(--sse-accent-ink);
   }
 </style>

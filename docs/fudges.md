@@ -43,6 +43,12 @@ Add entries under your area. Keep one row per fudge.
 | F-S22 | sse-cosmos stars.rs:261 (`birth`) | Birth-cluster FUV G0 = 10 (M/1000)^0.5 | not stated (pack sources cite Fatuzzo and Adams 2008 for a median about 1000 G0) | Fatuzzo and Adams 2008 FUV distribution by cluster size. Note that this formula gives about 10 G0 for a 1000 M☉ cluster, two orders of magnitude below the cited median of about 1000. | Possible physics bug; outside stars proper, flag to the galaxy register |
 | F-S23 | crates/sse-formation/src/lifeline.rs white dwarf cooling (decision on F-S16) | Mestel cooling with A = 4 for every white dwarf; HPT00 eq. 90 gives A = 15 for carbon-oxygen (4 helium, 17 oxygen-neon) | With 15, a 0.6 M☉ white dwarf at 1 Gyr is about 1e-4 L☉, several times fainter than detailed cooling models; 4 tracks them more closely | Tabulated cooling sequences (Bédard et al. 2020 Montreal tables) by mass and core composition | documented 19 Nov, to replace |
 | F-S24 | crates/sse-time/src/star.rs CORE_LUM_K | Core mass-luminosity constant 2.3e5 fixed at Z = 0.02 | Simplicity | HPT00 eq. 37's Z-dependent D (already computed as fits.zpars[6]); 47% higher at Z = 0.001 | to fix |
+| F-S25 | crates/sse-formation/src/body.rs `cooling_luminosity` (B1a), giant planets and brown dwarfs | One Burrows et al. 2001 eq. 3 power law; Jupiter comes out at about 1.6e-10 L☉ against the measured 8.7e-10 | Tabulated giant-planet cooling grids not shipped yet; one law gives no seam at the deuterium limit | Tabulated cooling with helium rain and a real interior (Fortney et al. 2011; Mankovich and Fortney 2020) behind the same function | Stand-in until B2 |
+| F-S26 | crates/sse-formation/src/lifeline.rs hydrogen-burning limit, read by body.rs | 0.08 M☉ | Inherited from the life-line fits | About 0.075 M☉, metallicity dependent (Chabrier and Baraffe 2000) | To review in B2 |
+| F-S27 | crates/sse-formation/src/body.rs `deuterium_myr` | Deuterium burning lasts 10 Myr × (M / 0.0124 M☉)² | Simple scaling, no deuterium tables | Spiegel, Burrows and Milsom 2011 burning tracks | Stand-in until B2 |
+| F-S28 | crates/sse-surface/src/lib.rs `OtherLight` distance (B1b) | Companion light at √(a_c² + a_w²), the orbit-averaged d², steady | Climate is orbit-averaged everywhere today | Time-resolved distance from the ephemeris, for seasons in multiples | Stand-in until climate runs in time |
+| F-S29 | crates/sse-atoms/src/magnetic.rs `sse.magnetic.surface_dipole` param `dipole_ratio` = 0.085 | Dipole at the dynamo surface as a fixed share of the rms field inside | Christensen and Aubert 2006 give a range for dipolar dynamos, not one value; 0.085 puts Earth and Jupiter within about 15% of their measured moments | The dipole share from the local Rossby number (Christensen and Aubert 2006), which also says when a dynamo turns multipolar | Tuned to two planets; to review in B1d part 2 |
+| F-S30 | crates/sse-atoms/src/magnetic.rs `sse.magnetic.dynamo_field` input | The whole heat flux out of the dynamo region drives it, with Christensen's efficiency F taken as 1 | Superadiabatic (convective) flux needs the core's adiabat and thermal conductivity, not yet modelled | Convective flux = total minus the adiabatic conducted flux, from a core thermal model (e.g. Labrosse 2015) | Stand-in until B1d part 2 |
 
 ### Candidates to move into flows
 
@@ -60,8 +66,105 @@ Add entries under your area. Keep one row per fudge.
 
 ## Orbits and formation
 
-| Where | Instead of the physics | Why | Real physics to replace it | Status |
+### Deliberate simplifications, stand-ins, tuned constants and placeholders
+
+| Where | Instead of the physics | Why (as the code or log says) | Real physics to replace it | Status |
 |---|---|---|---|---|
+| `crates/sse-kernel/src/orbits.rs` (`orbits_at`) | Two-body Kepler orbits per parent, fixed elements: no perturbations, precession, tides or resonance libration | Chart and 3D placement need any time in microseconds on a phone; the F-track n-body run is for formation, not playback | Secular perturbation theory (Laplace-Lagrange) for slow element drift, or replay of a stored n-body ephemeris for systems the GM marks as interacting | stand-in, permanent for playback with reason |
+| `orbits.rs` phase | Bodies with no stored mean anomaly get a keyed random phase (stream `orbit.phase.v1`) | V3 saves and generated systems often carry no epoch phase | None needed when a phase is authored or imported; the draw is labelled `phase_source: drawn` | documented |
+| disc.rs:418-421 | Initial disc mass 0.03 M* ± 0.4 dex, capped at 0.15; rc0 30 AU ± 0.3 dex | "Young (class 0/I) discs", Andrews 2010/2013 | Draw from published Class 0/I or II disc-mass and radius distributions as functions of M* (e.g. Andrews 2013's M_d ∝ M*^1.0 to 1.5 with 0.7 dex scatter; Tobin et al. 2020 VANDAM) | tuned, documented |
+| disc.rs:445 | alpha = 0.01 for every disc | none stated | Draw alpha (1e-4 to 1e-2), or use a wind-driven disc. Alpha also sets the isolation mass and the gap K. | undocumented constant |
+| disc.rs:448 | kappa = 3 cm^2/g Rosseland mean, scaled by dust | none stated | Bell & Lin 1994 opacity table κ(T, ρ) | undocumented constant |
+| disc.rs:212-219 | Viscous time from the irradiation temperature at rc0 only (no accretion heating) | first order | Integrate ν(r) with the full midplane temperature | simplification |
+| disc.rs:437-441 | X-ray photoevaporation 1e-9 × M* M_sun/yr; external FUV 1e-9 (G0/1000)(rc/30) | "sketch, after Haworth et al. 2018" | OCE12's Mdot_X ≈ 6.25e-9 (M*)^-0.068 (L_X/1e30)^1.14 (unverified), with L_X drawn per star. Interpolate the FRIED grid for the external part. The internal rate is probably about 6× low (unverified). | documented sketch |
+| disc.rs:225-226 | Disc clears instantly when Mdot falls to Mdot_pe; t_disperse at least 0.1 Myr | two-timescale model | Inside-out clearing with a gap at r_g, then the outer disc removed (Clarke, Gendrin & Sotomayor 2001; Owen 2012) | simplification |
+| disc.rs:45-51, 79-87 | Condensation as sharp steps at single temperatures (pressure-independent) | standard first order | Pressure-dependent sublimation T (e.g. T_H2O ∝ ln P), partial condensation sequence (Lodders 2003 tables) | simplification |
+| disc.rs:95 | SOLAR_MIX split of Z by carrier | "split by carrier as in Oberg 2011" | Derive from Lodders 2003 (or Asplund 2009) elemental abundances with an explicit carrier allocation | numbers unsourced individually |
+| disc.rs:101-115 | Water left = 1 - 0.6 (C/O - 0.55), clamped | "Oberg 2011 figure 2, first order" | Oxygen budget bookkeeping: O to silicates, then CO, CO2, the rest to H2O | first-order fit |
+| disc.rs:426-433; F1.md:22 | Companion under 2 AU gives a circumbinary disc with cavity 2.5 a; else truncation at peri/3 | AL94 | AL94 or Miranda & Lai 2015 truncation radius as a function of q and e | simplification (values inside the published range) |
+| inherit.rs:85, 136 | Z = 0.02 × 10^[Fe/H] | none (Hurley-fit convention) | One solar Z for the whole chain (0.0142 or 0.0149), with Hurley fits rescaled | **inconsistent with disc.rs's 0.0142** |
+| growth.rs:38-41 | Pebble flux = Z × gas Mdot (PEBBLE_FLUX_PER_Z 1.0; F3.md says 1.5) | LJ14 order of magnitude | Dust growth and drift model (Birnstiel, Klahr & Ercolano 2012 two-population; LJ14 eq. for the pebble front) giving a time-dependent flux | tuned; **doc/code mismatch** |
+| growth.rs:42-43 | Stokes number fixed at 0.1 | standard | St from the drift or fragmentation limit (Birnstiel 2012) | constant |
+| growth.rs:317-322 | eta = h^2 (pressure-gradient term dropped) | none | eta = -(1/2) h^2 dlnP/dlnr from the disc profile (about 1.36 h^2 for this disc) | simplification, about 30 percent |
+| growth.rs:307-313 | Isolation mass without eq. 26's diffusion term; M* scaling extrapolated | "pressure factor near 1" | Full Bitsch 2018 eq. 26 (see fix P2) | **omission (fix P2)** |
+| growth.rs:324-329 | LC_COEFF 0.02 for the pebble-phase envelope | "Lee and Chiang 2015, scaled" (F3.md: calibrated) | LC15's analytic GCR with opacity, temperature and metallicity terms | tuned |
+| growth.rs:331-336 | KH_COEFF_YR 1e11, outside the published 1e8 to 1e10 | "dusty envelopes run slower" | Ikoma 2000 or Ida & Lin 2004 with an opacity-dependent k1 | tuned outside the range; **REF string wrong (fix M4)** |
+| growth.rs:45-46 | TYPE_I_REDUCTION 0.5 | "Ida and Lin 2008's C_I" | Full Paardekooper et al. 2011 torque (Lindblad plus saturating corotation) | tuned; **REF says 0.1 (fix M5)** |
+| growth.rs:47-48 | TYPE_II_REDUCTION 0.02 | calibrated on hot-Jupiter rarity (Wright 2012) | Kanagawa 2018 alone, plus inner-disc gas depletion (Lee & Chiang 2016; F3 known limits) | tuned |
+| growth.rs:49-50, 672-679 | Water-line trap for 3 to 15 M_E | Hasegawa & Pudritz 2011 | Compute the corotation torque sign from the local dlnΣ/dlnr and dlnT/dlnr (Paardekooper 2011) | tuned |
+| growth.rs:51-52, 594-597 | Giant takes up to 80 percent of the disc flow | Lubow & D'Angelo 2006 | as published (value unverified) | constant |
+| growth.rs:657-664 | Gap "open" when K > 25 | none | Use Kanagawa's depth continuously (the code already does for the rate); the flag is cosmetic | convention |
+| growth.rs:401-405 | Inner edge 0.08 M*^(1/3) AU (8-day corotation) for every star | Lee & Chiang 2017 | Corotation from a drawn young-star spin period (1 to 10 d) and magnetospheric radius | stand-in |
+| growth.rs:420-466 | Embryo ladder: spacing 1.35 to 1.7, birth times, seed mass 0.01 sqrt(r) M_E clamped 0.002 to 0.05, 3× at the water line | DA17 qualitatively | Streaming-instability planetesimal mass (Schäfer 2017, Liu et al. 2019 characteristic planetesimal mass; from memory) | tuned |
+| growth.rs:445-455 | Resonance ratio drawn (25 percent 2:1, 50 percent 3:2, 25 percent 4:3) | none | Capture by migration rate against the resonance width (e.g. Ogihara & Kobayashi 2013; Batygin 2015 capture criterion) | **unsourced draw** |
+| growth.rs:700-723 | Embryos closer than 2 sqrt(3) R_H,m merge at once, mass-weighted a | Gladman 1993 | That limit is Hill stability, not a merge criterion. In the gas phase, close pairs scatter or collide on a timescale (damping by gas); use a Safronov-weighted collision or scattering choice like F4's | simplification |
+| growth.rs:419-460 | Embryo eccentricities 0.002 to 0.01 drawn, no gas damping or stirring | "eccentricities stay at their small draws until F4" (F3 known limits) | Gas damping (Tanaka & Ward 2004) against mutual stirring | stand-in |
+| accrete.rs (whole) | Dole 1970 rule kept, with four KNOWN_DIFFERENCES for the System Lab rule | reproduce System Lab exactly | The modern block (F3); the Dole1970 rule as published | documented (KNOWN_DIFFERENCES) |
+| accrete.rs:318-323 | Critical mass B (rp sqrt(L))^-3/4 | as Burrows's code | B (rp/sqrt(L))^-3/4 if Fogg says so (fix P3) | **suspect** |
+| accrete.rs:521-525 | Run length 10 Gyr M^-2.5, at most 100 Myr | System Lab | not physical (Dole has no time) | ported placeholder |
+| violent.rs:62 | CHAIN_BREAK_FRACTION 0.9 | Izidoro 2017/2021 | N-body window over the chain (T1 integrator) once the gas leaves | calibrated draw |
+| violent.rs:64-65 | Nice trigger P = 1 - exp(-M_belt/10 M_E), 10 to 500 Myr | "1 - 1/e at 10 M_E" | Belt-driven migration until resonance crossing (Levison 2011, Nesvorny 2018), dated by the integrator | **unsourced law** |
+| violent.rs:66-68 | NICE_KAPPA 0.1 (angular momentum per belt mass per sqrt(a)) | Malhotra 1995 | Planetesimal-driven migration rate (Ida et al. 2000; Kirsh et al. 2009) | tuned |
+| violent.rs:69-73, 765-777 | Instability time: Obertas fit for every multi pair under 12 R_H, scatter 0.45 dex; two-planet pairs under 2 sqrt(3) get 10 to 30 orbits | Obertas 2017, Gladman 1993 | Fits for unequal masses and eccentric orbits (Petit et al. 2020, A&A 641, A176, from memory; or Tamayo et al. 2020 SPOCK), or the integrator in a window. The fit holds over 3 to 8 R_H only. | extrapolated |
+| violent.rs:74-75 | EJECT_SHARE 0.5 × Theta^2/(1+Theta^2); collision chance 1/(1+Theta^2) | Ford & Rasio 2008 | Encounter outcome from a three-body window, or Pu & Wu-style tables | smooth stand-in |
+| violent.rs:76-77 | RESIDUAL_E 0.25 Rayleigh per v_esc/v_kep | "calibrated on Kepler multis" | Post-impact e from momentum conservation plus dynamical friction from debris | tuned |
+| violent.rs:78-80 | MOON_CHANCE 1 in the 30 to 60 degree, 5 to 50 percent window | Canup 2004; Elser 2011 | Moon mass from the Canup 2004 scaling M_moon/M_disc against angular momentum | window rule |
+| violent.rs:81-89 | Stir depletion 0.99; Oort 0.04; scattered 0.01; to star 0.1; Trojans 7e-7; irregulars 1e-7; Earth hit 1e-6 | cited per value | Tracer integration of a test-particle belt in a window | calibrated shares |
+| violent.rs:90-91 | SPIKE_EFOLD_MYR 50 | "calibrated" | LHB decay from Bottke et al. 2012 or Morbidelli et al. 2018 | **unsourced** |
+| violent.rs:92-93 | Pericentre under 0.05 AU circularises at once to a = 2q | Ford & Rasio 2006 | Tidal circularisation timescale (Hut 1981 or constant-Q) against age | simplification |
+| violent.rs:953-969 | LS12 Q*_RD for equal masses only (no mu-bar mass-ratio correction); rho1 = 1000 | LS12 | LS12 eqs. 22-23 mass-ratio correction of Q*_RD | simplification |
+| violent.rs:892-930 | Erosion strips layers outermost first (LAYERS) | Marcus 2009/2010 | Marcus 2009's iron-fraction fit as a function of Q_R/Q* | simplification |
+| leftovers.rs:39-40 | Regular satellites = 1e-4 of every giant | Canup & Ward 2006 | CW06's actual scaling (balance of inflow and type I loss): about 1e-4 for a range of inflow, with a draw | constant |
+| leftovers.rs:41-43 | RING_CHANCE 0.25, RING_SHARE 1e-4 | "Saturn's rings about 1e-4 of Titan" | Ring from tidal stripping (Canup 2010) dated by a moon's inspiral | **guess (chance)** |
+| leftovers.rs:44-45 | L4 share 0.6 for every giant | Grav 2011 | as published (Jupiter only) | extrapolated |
+| leftovers.rs:46-49 | Largest body 2,400 km, size slope 2.5 everywhere | Dohnanyi; Nesvorny & Vokrouhlicky 2016 | Size-dependent strength (Q*_D(D), Bottke 2005), giving a wavy SFD | simplification |
+| leftovers.rs:57 | Group densities fixed (7800, 3000, 2000, 1000, 1500, 900) | none | compression with size; cite bulk densities (e.g. CO ice 0.88 to 1.03 g/cm^3) | **unsourced** |
+| early.rs:203-208 | Water oxidises up to half the core, ox = water/(water + rock) | "sketch" | Fe-FeO equilibrium with oxygen fugacity (e.g. Elkins-Tanton & Seager 2008) | sketch |
+| early.rs:212 | Water mantle adds 0.5 × wf to the radius | Zeng 2019 | Zeng 2016 or 2019 water-rock mass-radius tables | linear fit |
+| early.rs:222-238 | Envelope stripped if η F_XUV π r^2 over the first Gyr exceeds G M_c M_env/r; partial loss linear | Owen & Wu 2017 energy limit | OW17's mass-loss timescale with the evolving radius and η(v_esc); core-powered mass loss (Ginzburg et al. 2018) | first order |
+| early.rs:164-187 | XUV = 10^-3.5 L_bol for 100 Myr, then t^-1.5, every spectral type; X-ray used as XUV | Jackson 2012 | Jackson's saturation by B-V (10^-3.1 to 10^-4.3); add the EUV with Sanz-Forcada et al. 2011; rotation-dependent tracks (Tu et al. 2015) | simplification |
+| early.rs:189-190 | Efficiency 0.1 constant | OW17 | η ≈ 0.1 (v_esc/15 km/s)^-2 (OW17), from memory | simplification |
+| early.rs:191-195 | MANTLE_RETAINED 0.3; CARBON_TO_CORE 0.9 | Elkins-Tanton 2008; Dasgupta 2013 "sketch" | Solubility laws for H2O and CO2 in magma; metal-silicate partitioning of C | sketch |
+| early.rs:240-243 | Giants all 11.2 R_E | "sketch until F3's giant block" | Fortney et al. 2007 giant mass-radius tables with age and irradiation | **placeholder** |
+| early.rs:245-260 | Magma ocean 4 Myr or 100 Myr; none under 0.1 M_E | Hamano 2013 | Hamano's coupled cooling model against flux | step function |
+| epoch.rs:345-361 | Convective envelope radius set to the star's radius (R_env ≈ 0); envelope = M - Mc; one equilibrium tide, no dynamical tide or planet spin | "Renv ~ 0" (T1 known limits) | Envelope base radius from a giant model; also VL09's f (fix P1) | simplification, plus the **P1 bug** |
+| epoch.rs:332-335 | a ∝ 1/M on every step (adiabatic) | Jeans 1924 | Non-adiabatic loss when the mass-loss time is under the orbital period (Veras et al. 2011) | valid for planets; fine |
+| epoch.rs:370-385 | Laplace-Lagrange, first order, e clamped 0 to 0.99, frequencies rebuilt per step | first-order theory | Second-order terms near resonances (Great Inequality); windows already cover close pairs | documented limit (T1) |
+| base-time pack: runaway 1.1, window_hill 2 sqrt(3), horizon 60 Myr, window_rewrite_da 0.02, pollution 100 Myr | each sourced in pack | in pack | as published | documented |
+| base-place pack: optical_depth_k/n, dose | rough fits, "replaced when an atmosphere flow publishes" | self-declared | Real atmosphere flow (radiative transfer); GCR transport | documented placeholder |
+| base-place pack: mutual_hill 10 | Chambers et al. 1996 | conservative | Instability-time fit (as in F4) against the requested age | constant |
+| pins.rs:69-74 | MATCH_LIMIT 9 (score units), CLEAR_HILL 8 R_H | none | A stability rule shared with base-place (10 R_H) and F4 | **unsourced; disagrees with base-place's 10** |
+| sse-atoms tides.rs:275-277 | Q 100, k2 0.3, I/(mR^2) 0.4 defaults | "order of magnitude only" | Body-type defaults: Earth k2 0.30, Q about 12 (Earth today) to 100; Mars k2 0.17, Q 90; giants Q 1e4 to 1e5; I/mR^2 from the interior flow (Earth 0.3307) | defaults unsourced |
+| generated.rs:14-16 | Mutual inclinations Rayleigh 1.5 degrees for every system, giants included | Fabrycky 2014 | Inclination from the F4 cascade (scattered systems are hotter) | stand-in |
+| crates/sse-formation/src/growth.rs isolation_mass | Bitsch 2018 pebble isolation mass scaled by host mass | The paper fits a solar-mass star only | A fit or simulation grid across stellar masses (e.g. Ataiee et al. 2018, Johansen et al. 2019) | documented 19 Nov |
+| crates/sse-time/src/epoch.rs giant tide | Eddy time τ uses R*² where Villaver and Livio use (R* − R_env)², and a planet dragged inside the star is floored at half its radius | Envelope base radius not tracked; the floor stops a fast decay reaching a = 0 (NaN) before the engulfment check | Track the envelope base from the giant tables; resolve engulfment inside the substep | documented 19 Nov |
+
+### Candidates to move into flows (cited physics blocks)
+
+| Where | What it computes | Blocks it would need | View that would show it |
+|---|---|---|---|
+| disc.rs:189-207, 264-274 | Midplane temperature T(r, t) from irradiation plus accretion | `disc.irradiation_temperature` (CG97), `disc.accretion_teff` (3GMMdot/8πσr^3), `disc.optical_depth` (κΣ), `disc.midplane_temperature` (NN94 combine), `disc.sigma_lbp` (Σ from M, R_c, r) | Disc panel: T(r) curve at a chosen age with the condensation-line markers moving inward on a time slider |
+| disc.rs:212-262 | Viscous time, M(t), Mdot(t), R_c(t), clearing time | `disc.viscous_nu` (α c_s^2/Ω), `disc.viscous_time`, `disc.lbp_evolution` (T = 1 + t/t_s; M, Mdot, R_c), `disc.clearing_time` (Mdot = Mdot_pe) | Disc timeline: Mdot(t) log-log, with the photoevaporation floor as a horizontal line and the crossing labelled "disc clears" |
+| disc.rs:277-295 | Condensation-line radius (bisection) | `disc.line_radius` (solve T(r) = T_cond, fixed bisection) | The same disc panel; a table of the five lines at 0.1/0.5/2 Myr |
+| disc.rs:437-441 | Photoevaporation rate | `disc.xray_photoevaporation` (OCE12), `disc.external_photoevaporation` (FRIED lookup) | Disc panel: environment slider (G0) showing the lifetime change |
+| growth.rs:298-312 | Scale height and Ω | `disc.aspect_ratio` (c_s/v_K), `orbit.keplerian_omega` | Under the growth view |
+| growth.rs:307-322 | Pebble isolation mass and accretion share | `growth.pebble_isolation_mass` (Bitsch eq. 26), `growth.pebble_accretion_efficiency` (LJ14 2D Hill), `disc.headwind_eta` | Growth panel: mass-vs-time track per embryo with the isolation-mass line it climbs to |
+| growth.rs:324-336 | Envelope fraction before isolation; KH runaway time | `growth.gas_to_core_ratio` (LC15), `growth.kelvin_helmholtz_time` (IL04) | Growth panel: core mass against envelope mass, runaway marked |
+| growth.rs:600-616 | Gap accretion rate | `growth.gap_depth_K` (Kanagawa K), `growth.gap_accretion_rate` (TT16) | Giant card: accretion rate against time; gap depth |
+| growth.rs:647-666 | Migration rate | `growth.type1_rate` (TTW02), `growth.gap_reduction` (1/(1+0.04K)) | Migration map: a(t) tracks for all embryos over the disc lifetime (a "spaghetti" plot), with the trap and inner edge as bands |
+| growth.rs:700-723; violent.rs:765-777; epoch.rs:556; base-place stability | Mutual Hill spacing, Hill-stability test, instability time | `orbit.mutual_hill_radius`, `orbit.hill_stable_pair` (Gladman 2√3), `orbit.instability_time` (Obertas fit) | Architecture strip: planets on log a, spacing in R_H between neighbours, colour by predicted log instability time |
+| violent.rs:870-887 | Impact speed and merge criterion | `impact.mutual_escape_speed`, `impact.impact_speed` (v_esc ⊕ v_inf), `impact.merge_criterion` (Genda 2012) | Impact card: v/v_esc against angle with the Genda boundary drawn and this impact's point on it |
+| violent.rs:953-969 | Largest remnant | `impact.q_rd_star` (LS12), `impact.specific_energy` (Q_R), `impact.largest_remnant` (LS12 universal plus super-catastrophic) | Same impact card: M_lr/M_tot against Q_R/Q* curve with the point |
+| violent.rs:32 and encounter logic | Safronov number, collision against ejection | `orbit.safronov_number`, `encounter.outcome_odds` | Encounter card |
+| early.rs:148-161 | Rocky radius; envelope thickness | `interior.rocky_radius` (exists as the `sse.interior.rocky_radius` atom), `atmosphere.envelope_thickness` (LF14 eq. 3) | World card: mass-radius diagram with the Zeng line and the world's point; envelope as a shaded band |
+| early.rs:164-238 | XUV fluence and energy-limited stripping | `star.xuv_fraction` (Jackson 2012 saturated or decline), `atmosphere.xuv_fluence` (integral), `atmosphere.energy_limited_loss` (OW17) | World card: cumulative XUV energy against envelope binding energy, crossing = "stripped" |
+| early.rs:245-260 | Magma ocean duration, desiccation | `interior.magma_ocean_type` (Hamano: flux against runaway), `climate.runaway_threshold` (Kopparapu) | Early-world timeline |
+| epoch.rs:345-361 | Giant-star tidal decay | `star.convective_turnover_time` (Rasio 1996), `tides.equilibrium_efficiency` (VL09 f), `tides.giant_orbital_decay` (VL09 eq. 7) | Ageing view: a(t) of each planet against R*(t) on the giant branch; engulfment where they meet |
+| epoch.rs:332-335 | Orbit widening by mass loss | `orbit.adiabatic_mass_loss` (a M = const) | Same ageing view |
+| secular.rs | Laplace-Lagrange frequencies | `orbit.laplace_coefficient`, `secular.matrix_A/B`, `secular.eigen` (fixed Jacobi), `secular.evolve` | Secular panel: e(t) and i(t) for each planet over a few Myr; the mode frequencies g and s in arcsec/yr beside the Brouwer & van Woerkom values for the Solar System |
+| tides.rs (already atoms) | Tidal heating, locking time | exist (`sse.tides.*`); add `tides.circularisation_time` (Goldreich & Soter 1966), used to replace violent.rs CIRC_Q_AU | Moon card; tidal-lock clock on the world card |
+| leftovers.rs:35-38 | Size law and k-th largest body | `belt.dohnanyi_size_law`, `belt.kth_largest` | Belt view: cumulative N(>D) log-log with resolved bodies as points |
+| accrete.rs:338-346, 316-323 | Dole dust density, critical mass | `accrete.dole_density` (ρ = A e^(-α r^(1/n))), `accrete.critical_mass` (B (rp L^±1/2)^-3/4) | Classic Accrete view: dust-density profile with swept lanes greyed out |
 
 ## Interiors and heat
 
@@ -105,8 +208,62 @@ Add entries under your area. Keep one row per fudge.
 
 ## Surfaces
 
-| Where | Instead of the physics | Why | Real physics to replace it | Status |
+### A. Fudge register
+
+| Where | Instead of the physics | Why (as the code or log says) | Real physics to replace it | Status |
 |---|---|---|---|---|
+| `impacts.rs:457-463`, pack `chron_ref_gyr` 4.5 | the lunar Neukum chronology shifted so every world forms at T = 4.5 Gyr, extrapolated before 4.1 Ga | "One chronology shape for every system (lunar, shifted to the world's formation)" (S4 log) | impactor flux from the system's own leftover planetesimal population (F4 debris decay) or a dynamical model (e.g. Morbidelli-type sawtooth). At least state that the first ~0.4 Gyr is extrapolated (O'Brien et al. 2014) | documented in the S4 log; validity gap not documented |
+| `impacts.rs:497`, pack `saturation_n1` 0.15 | a single empirical saturation line at slope -2 | "a few percent of geometric (Hartmann 1984)": wrong, it is ~10% | equilibrium from crater erasure (e.g. Minton et al. 2019, with the ejecta-blanket erasure exponent), or at least Gault's 1-10% with the Hartmann -1.83 slope | **mis-documented** (see fixes 2) |
+| `impacts.rs:871-872` | crater size scaled by g^-0.216 only, at a fixed impact speed | Holsapple 1993 gravity regime | full pi-scaling: D ∝ a (ρ_i/ρ_t)^(1/3) (g a / U²)^(-μ/(2+μ)), with U = sqrt(v_inf² + v_esc²) per world (μ = 0.55, K1 ~ 1.6) | undocumented simplification |
+| pack `v_inf_km_s` 17 | one encounter speed for every world, every system | none given | v_inf from the impactor population's orbits relative to the world (depends on a, host mass and belt eccentricities) | undocumented |
+| pack `crater_impactor_ratio` 12, `impactor_max_km` 300 | fixed crater-to-impactor ratio for spike craters | none given | the same pi-scaling as above (the ratio then follows from U and g) | undocumented tuned |
+| pack `sfd_slope_small` 3, `sfd_slope_large` 2, `break` 1 km | two-slope production function | "Hartmann-type" | Neukum 2001 production polynomial (11-coefficient lunar PF) or Hartmann 2005 PF | labelled "Hartmann-type" |
+| `impacts.rs:358-372` | Pike simple-crater exponents 1.010/1.014 rounded to 1; complex fits made self-similar in D g; peak 0.4 × depth | "self-similar in D g / g_ref" | Pike's full fits; peak heights from Hale and Grieve 1982 or Kalynn et al. 2013 | partly documented |
+| pack `simple_complex_km` 15, `peak_ring_km` 150, `multi_ring_km` 600, scaled 1/g | transition diameters fixed and scaled by 1/g | Melosh 1989 | the transition scales as g^-1 only roughly (target strength matters; Earth differs for sedimentary and crystalline targets) | documented |
+| pack `atm_cut_km` 0.1, `atm_cut_exp` 0.75 | a hard cut-off for craters by surface pressure | "fitted to Earth and Venus (no Venus craters under about 3 km)" | atmospheric ablation and break-up of impactors by strength and density (e.g. a pancake model as in Chyba et al. 1993 or Herrick and Phillips 1994), giving a smooth deficit and crater clusters | documented fit; the "3 km" claim is unverified (memory says the smallest are ~1.5-2 km) |
+| pack `kappa_wet` 5e4, `kappa_air` 100/bar, `degrade_coeff` 0.016, `ghost_fraction` 0.05 | crater degradation as exp(-K t/(0.016 D²)) with tuned wet and air rates | "set so a 10 km crater on a wet world loses most of its relief in about 100 Myr" | solve the diffusion equation on the crater profile (Fassett and Thomson 2014 method), with K depending on crater scale; fluvial infill from S3 itself | documented tuned |
+| pack `resurface` myr and `resurface_exponent` 3 | global renewal as an e-folding rate × (q/q_ref)³ | "renewal rates scale as the cube of heat flow" | resurfacing from the regime's own mechanism (eruption volume flux from heat flow; overturn dates from S6's Poisson overturns; S6 log: "S4's crater survival on an episodic lid is continuous renewal, not S6's discrete overturns") | documented rule of thumb; the cube is not justified |
+| pack volcanism block (`plains_per_gyr` 0.15, cap 0.6, `shields_per_gyr` 2, height 9 km × 9.81/g, aspect 12, `shield_min_radius_km` 3000) | lid-world volcanism as tuned rates | "rule-of-thumb values for lid worlds (Mars, Moon, Mercury), labelled as such" | melt production from mantle temperature against the solidus (Kiefer 2003; O'Rourke and Korenaga 2012), and shield height limited by lithospheric flexure and the magma driving pressure | documented |
+| pack `q_crit_w_m2` 0.019 and regime rule order | regime from fixed thresholds on heat flow, mass and water | pack data | a plate-yield criterion (convective stress against lithospheric yield stress, e.g. Foley et al. 2012; O'Neill et al. 2007) | documented as rules |
+| pack `greenhouse_k` 30 | flat +30 K warming | "until an atmosphere stage exists" | the atmosphere stage (W track), with greenhouse from column CO2 and H2O | documented placeholder |
+| `lib.rs` heat flow | radiogenic plus tides, no secular cooling | S0 log: "no secular cooling term, so young worlds' heat is low" | parameterised mantle convection (Nu–Ra scaling) with secular cooling | documented known limit |
+| pack plates `speed_cm_yr` 4 × spread × (q/0.039), clamp 0.2-5 | plate speed linear in heat flow | "Plate speeds and reorganisation rates are pack numbers to tune" (S2) | boundary-layer scaling v ∝ κ/D Ra^(2/3) (Turcotte and Schubert ch. 6), with Ra from mantle temperature | documented tuned; the ocean crust is 280 Myr against 60 |
+| pack plates orogeny 3500 m, `erosion_tau_myr` 150, arc, trench and plume heights and taus, `max_relief_m` 9000 × 9.81/g, `tanh` cap | mountain heights as stamped amplitudes decaying exponentially; soft relief cap | "Relief saturates at the strength of rock under this gravity"; Pinet and Souriau 1988 for 150 Myr | crustal thickening from convergence rate × duration, with Airy isostasy (already used for thickness); erosion from S3 stream power instead of a separate tau; relief cap from rock strength / (ρ g) | partly documented; 150 Myr unverified |
+| `plates.rs` continents +400 m base; `continental_km` 35, `oceanic_km` 7 | fixed crust thicknesses | pack data | Airy isostasy fully (the ocean's depth relative to continents follows from thickness and density, not a 400 m offset) | undocumented |
+| pack wear `k_stream` 2e-6, `m` 0.5, Q standing in for area | stream power with discharge in place of area; n = 1 | "solved implicitly" (Braun and Willett) | K from rock erodibility and climate; the n = 1 implicit scheme is the paper's, so fine | tuned (no source for K) |
+| pack wear `diffusion_m2_yr` 10 | coarse-grid diffusivity 1000× the hillslope value | "effective coarse-grid value (local about 0.01 m²/yr)" | sub-grid hillslope model or a scale-dependent effective diffusivity derived from relief spectra | documented |
+| pack wear `glacial_factor` 2, `ice_k` 263, rain bands 0.5 + 0.5 cos(2·3·lat) × sqrt(oceans) | glaciers as a factor 2; rain as fixed latitude bands | none given / "Less water, less rain" | ice-sheet mass balance and glacial erosion ∝ sliding velocity; precipitation from the W track's Hadley-cell model | undocumented tuned |
+| `wear.rs:262` (t_k) | ground temperature = t_surface + 20 − 40 sin²(lat) − lapse | none | latitudinal energy balance (the W track) | undocumented |
+| pack atlas `detail_hurst` 0.8, `detail_amplitude` 0.08 | fractal detail octaves | "typical of planetary topography (Turcotte 1987; Rosenburg 2015)" | per-terrain Hurst and amplitude from the regime and age (lunar maria against highlands differ) | documented; unverified |
+| `sketch.rs:216` | giant band count 6 sqrt(10/spin h) | none | the same Rhines count as S6 (S6 log: the two "can show different band counts") | documented known limit |
+| `regimes.rs:574`, pack winds 150 and 400 m/s | U fixed by class; N = sqrt(aΩ/U) with no 1/2 prefactor | "Wind speeds ... empirical by class, not derived from the heat flux" (S6) | U from the thermal-wind or energy budget (internal plus absorbed flux); the prefactor is set and documented against Jupiter, Saturn, Uranus and Neptune | documented; prefactor undocumented |
+| `regimes.rs:583-586` | equatorial jet prograde on every giant | none | ice giants have retrograde equatorial jets (Uranus, Neptune); the sign depends on the regime (e.g. Aurnou 2007 shallow and deep) | **undocumented, physically wrong for ice giants** |
+| `regimes.rs:590-598`, pack chemistry | cloud chemistry by t_surface with non-Sudarsky boundaries | "after Sudarsky et al. 2000" | Sudarsky classes by Teff (fixes 3), or condensation curves against a T-P profile | **mis-documented** |
+| `regimes.rs:596` | ice-giant albedo hard-coded (0.32, 0.28) | none | methane absorption of red light gives the colour; albedo from Sudarsky or measured values | undocumented |
+| pack landform densities `per_mkm2` (patera 10, massif 3.2, corona 1.1/1.5, ridge 8, band 1, scarp 4, chasma 0.05, tessera 0.03) and cover fractions | counts tuned to reproduce Io, Venus, Europa and Mercury | "Each landform rule names its source" | densities from heat flow or lithospheric stress (e.g. corona density from plume flux; patera density from magma flux) | tuned to observed counts; two counts unverified (135, 500) |
+| pack ice-shell lineae at 45° | fixed trend | S6 log: "a fixed 45° trend, not a cycloid from a stress model" | diurnal and non-synchronous rotation tidal stress field (Hoppa et al. 1999 cycloids) | documented |
+| pack chaos cover 25% × (q/0.06)³ | chaos fraction from heat flow cubed | "cover follows today's heat flow" | melt-lens model (Schmidt 2011) driven by shell thickness from heat flow | documented tuned |
+| pack scarps: count ∝ (q0 − q)/q0, height ∝ radius/2440 km | contraction proxy | "as many as the world has cooled" | radial contraction ΔR from thermal history and core freezing (Byrne 2014 gives ΔR up to 7 km for Mercury), and strain to fault count and offset | documented proxy |
+| `lib.rs` tide Q 100, k2 0.3, spin 10 h, C 0.33 | rocky-world default tidal parameters | "rocky-world defaults" | k2 from rigidity (k2 = 1.5/(1 + 19μ/(2ρgR))); Q by body type | documented |
+| `sketch.rs` styles (hemispheric split 0.45, three shields, land 0.18 r) | the S0 sketch grammars | cheap globe for unexamined worlds | replaced by the S2-S6 chain when surveyed | documented (design intent) |
+| `sketch.rs` small-body lumps | lumps too large (Vesta 0.64 against 0.24) | S6 log: "waits for a package that re-blesses them" | shape from the size-strength relation (gravity against material strength) | documented known bug |
+
+### B. Candidates to move into flows
+
+| Where | What it computes | Blocks it would need | View that would show it |
+|---|---|---|---|
+| `impacts.rs:457` `n1_moon` + `n_prod` | crater production N(>D, t) on a world | [lunar chronology N1(T): Neukum 2001] → [flux ratio to the Moon: F4 debris / spike sum] → [gravitational focusing 1 + v_esc²/v_inf²] → [crater scaling D(a, U, g): Holsapple pi-scaling] → [production SFD shape] | cumulative SFD log-log plot (production, saturation, kept), with a time slider |
+| `impacts.rs:497-520` saturation and dates | kept crater count and dates | [geometric saturation 1.54 D^-2] → [equilibrium fraction (Gault/Hartmann/Minton)] → [N_sat(1 − e^(−N/N_sat))] | the same SFD plot, with the saturation line and an "age histogram of kept craters" |
+| `impacts.rs:595-623` survival chain | why a crater is erased or how much relief is left | [air cut-off: pressure → D_min] → [regime renewal: rate(q)] → [plate crust age] → [lava plains burial] → [diffusion degradation K t / D²] | a per-crater "survival waterfall" (a funnel from produced to kept, by reason, the `erased` map), plus a degradation curve |
+| `impacts.rs:351` `crater_shape` | bowl, central peak or ring; depth and rim | [transition D_sc(g) = D_moon × g_moon/g] → [Pike d(D), h(D)] → [shape class] | a crater profile cross-section with the depth/diameter law plotted |
+| `lib.rs:287` `lock_time_gyr`, `lib.rs:300` `tidal_flux` | despin time; tidal heat flux | [k2 from rigidity] → [Gladman despin time] → [Peale tidal heating (21/2)(k2/Q)…] → [sum with radiogenic heat] | the heat-flow timeline with radiogenic and tidal stacked, and the lock date marked |
+| `lib.rs` regime rules + bisection | regime over time and the event cause | [heat flow q(t)] → [q/q_crit] → [mass, water, T_surface tests] → [first-match rule] | the regime timeline strip with the crossing quantity plotted under it (an existing envelope concept) |
+| `plates.rs:280` `rate_for` | plate speed from heat flow | [heat flow q] → [Ra or velocity scaling] → [keyed spread] | plate-speed versus time chart; plate map with velocity arrows |
+| `plates.rs:845-884` `cell_heights` | elevation from crust | [GDH1 depth(age): Stein and Stein] → [Airy isostasy (ρm − ρc)/ρm] → [orogen decay] → [strength cap] → [sea level by volume] | hypsometry histogram (bimodality) plus a depth-age curve with cells scattered on it |
+| `wear.rs:255-380` epoch loop | erosion and deposition | [rain(lat, oceans)] → [priority-flood fill: Barnes] → [flow accumulation] → [stream power implicit: Braun and Willett] → [sediment routing] → [diffusion] → [sea-level refit] | drainage network map, Hack's-law plot (L against A), sediment-balance readout per epoch |
+| `regimes.rs:558-630` `cloud_deck` | giant bands, winds, chemistry, scale height | [Rhines k_β = sqrt(β/2U)] → [jet count] → [wind profile] → [Sudarsky class by Teff] → [scale height RT/μg] | zonal-wind profile (U against latitude) beside the banded globe; class marker on a temperature axis |
+| `regimes.rs:395-460` landform counts | landform number and date by heat flow | [renewal integral Z(t)] → [density × (1 − e^(−Z))] → [activity (q/q_ref)³] → [date sampler] | landform age histogram per kind, with renewal rate overlaid |
+| pack `volcanism` block | plains and shield growth | [melt production from q] → [plains rate] → [shield height limit 9 km × 9.81/g] | the volcanic-history timeline: plains fraction and tallest shield against time |
 
 ## Climate, weather and life
 
@@ -138,6 +295,9 @@ Add entries under your area. Keep one row per fudge.
 | F22. `build-base-atlas.py:226-235` | Human gravity band 0.3 to 1.5 g, temperature 263 to 313 K | none | No long-term data exist for gravity; temperature from WBGT and heat-stress limits (wet-bulb 35 °C; Sherwood and Huber 2010) | Uncited |
 | F23. `packs/base-time/pack.json:27` | Ocean loss at 1.1 S⊕ (the runaway value is 1.06 elsewhere in `early.rs:248`) | Wolf and Toon 2015 | One HZ block with the Kopparapu 2013/2014 polynomial S_eff(Teff) = S₀ + aT + bT² + cT³ + dT⁴ per limit and per mass | **Two different runaway numbers in two crates** |
 | F24. `feedback.rs:300-303` | Oxygenated = O₂ ≥ 1% for 200 Myr | Avoids counting whiffs | (a definition) | Documented |
+| F25. `feedback.rs` (E3) fire brake | Fire suppresses land burial through COPSE reloaded's ignition index clamp(48 r − 9.08, 0, 5) and k_fire 3, on Earth's pressure and an N₂ filler | Lenton, Daines and Mills 2018 eq. 4 (checked); E3.md | Ignition from O₂ partial pressure and the air's heat capacity (Belcher et al. 2010), labelled extrapolated on other air; fire as a regional flux with fuel and moisture (E6, weather track) | Documented; the cap 5 and k 3 are COPSE reloaded's tuning |
+| F26. `feedback.rs` (E3) decomposer brake | (1 + h)/(1 + h r/r_pal), h = 1, acting only above today's air | Stand-in; acting below PAL moved the GOE by 755 Myr | COPSE reloaded's f(O₂) = 2.1276 e^(−0.755 o) on organic burial (eq. 35, from Betts and Holland 1991), with a separate ocean O₂ reservoir | **Stand-in**, to replace (E3.md) |
+| F27. E3 and F1 together | E3's brakes bring O₂ today to 0.21 to 0.26 on top of F1's over-fed burial | E3 was asked for as competing sinks (Alex, 19 Nov) before F1 was found | Fix F1 (realised production) first, then re-tune nothing: re-check that E3's brakes still hold O₂ near 0.21 with the correct feed | To review once F1 is fixed |
 
 ### Candidates to move into flows (small cited physics blocks)
 
@@ -168,8 +328,98 @@ Two smaller physics errors (CH₄ lifetime 9.6 → 9.1 yr; escape coefficient ×
 
 ## Galaxy and cosmology
 
-| Where | Instead of the physics | Why | Real physics to replace it | Status |
+### Fudge register (deliberate simplifications, stand-ins, tuned constants, placeholders)
+
+| Where | Instead of the physics | Why (as code/log says) | Real physics to replace it | Status |
 |---|---|---|---|---|
+| `crates/sse-cosmos/src/nucleus.rs` merger delay | Two black holes coalesce a fixed 1 Gyr after their galaxies merge | No dynamics of the pair are modelled | Dynamical friction (Chandrasekhar), stellar hardening and gas-driven inspiral; delays from 0.1 Gyr to never (final parsec) | sketch (G-nuclei.md) |
+| `nucleus.rs` seeds | Direct collapse: a keyed 10% chance at one redshift (z = 10) in atomic-cooling haloes | Needs Lyman-Werner fields and metal-free gas, which are not modelled | Seed from the halo's own history: metal enrichment and a nearby star-forming neighbour (Lyman-Werner flux) | sketch |
+| `nucleus.rs` radio loudness | Keyed once for the whole life from the Best et al. 2005 fit | Jets need an accretion-state model | Jet power from the accretion state (hard or soft, Eddington ratio) and spin, switching with episodes | stand-in |
+| `nucleus.rs` light | One radiative efficiency (0.1) for every hole; L ∝ ṁ² below 1% Eddington | Spin is not tracked; the λ² law is the standard ADAF scaling, source passage not yet read | Spin evolution with efficiency 0.057 to 0.42; the RIAF efficiency curve (Yuan and Narayan 2014) | documented |
+| `crates/sse-cosmos/src/galaxy.rs` `exsitu_black_hole` | Merging galaxies' holes arrive at 1e-3 of their stars | G3 does not follow satellites' own holes | Each satellite's own hole from its own (smaller) galaxy run | documented, editable param |
+| `galaxy.rs` black-hole feed | Holes grow from 1% of each burst and 5e-4 of star formation; quasars here peak near 1e38 W, the faint end of the observed range | G3's regulator has no nuclear gas inflow | Feed from cold-mode inflow and disc instabilities (e.g. Hopkins and Quataert 2010 torque model) | to review |
+| web.rs (whole), G1.md known limits | Band-limited lattice noise octaves with per-band variance matched to σ²(R) | browser cost; no stored volume | Gaussian random field with the exact P(k) (e.g. a constrained FFT per tile, or wavelet-based noise with the spectral shape inside the band) | documented (G1 log) |
+| web.rs potential per octave | Φ_j = −δ_j / k_j² at one wavenumber (band centre); one Zel'dovich step | cheap | Solve Poisson per band with the full kernel; 2LPT for displacements | documented (G1 log) |
+| web.rs lognormal transform | Lognormal density from linear δ | stand-in for non-linear growth | Calibrated lognormal (Coles and Jones 1991) or a halo-model PDF | implicit (design names it) |
+| cosmology.rs atoms vs code | Atoms use matter+Λ (+curvature) without radiation; the core code is flat with radiation (ΩΛ = 1 − Ωm − Ωr) | the closed form is the atom | One parameter set for both, with radiation in the atom (quadrature block) | documented (G1 log) |
+| haloes.rs FMBK use | Fit calibrated on Millennium (Ωm 0.25, σ8 0.9) applied unchanged to Planck parameters | none given | Rescale through δc/D(z) (FMBK's own ω variable) or use an EPS merger rate derived from this cosmology's σ(M) (e.g. Parkinson, Cole and Helly 2008) | **undocumented**: add to the log |
+| haloes.rs ratio sampling | (was ξ^β only, exponential factor dropped as "~1"; it is 10 to 29) | | Inverse CDF of the full eq. 1 | **fixed 19 Nov** (40-step bisection on the eq. 1 integral) |
+| haloes.rs:360-371 merger grid | 60 fixed z slices from z = 6, at most 3 mergers per slice, none above z = 6 | fixed work | Continuous Poisson process in z with no per-slice cap; draw back to z_start | partly documented |
+| haloes.rs formation scatter / environment shift | σ 0.3 in ln f, shift 0.3 δ_l | "rough (sketch)" | Assembly bias from the conditional EPS formation-time distribution (Lacey and Cole 1993), or from the halo's own web environment | documented (pack, G2 log) |
+| haloes.rs orbit sketch | Circularity U(0.3,1), pericentre U(0.05,0.5) R_vir | "Benson 2005 ranges, rough" | Draw from the Benson 2005 / Jiang et al. 2015 fitted distributions | documented as rough |
+| haloes.rs neighbour | Two-body radial free fall from rest at today's comoving separation; bound if Hubble flow < escape speed | sketch, hook for Andromeda-like events | Timing argument with Λ (Partridge, Lahav and Hoffman 2013) | documented (G2 log) |
+| haloes.rs peak-background split | Linear (1 + bδ) floored at 0 | simple | Conditional mass function from EPS (Sheth and Tormen 2002 moving barrier) | documented (G2 log) |
+| epochs.rs ζ = 11 | Ionising efficiency tuned so Q = 0.5 at z 7.7 | tuned to Planck | ζ from f_* f_esc N_γ (each a cited block), plus recombinations (clumping factor) | documented (pack) |
+| epochs.rs cooling_mass_z9 1e8 | Rounded atomic-cooling mass (BL01 eq. 26 suggests about 5e7, unverified) | | Compute M(T_vir = 1e4 K, z) from the BL01 virial relation block | suspected discrepancy (P-2) |
+| epochs.rs first stars | Fixed 1e6 Msun, 3σ | pack choice | H2 cooling mass vs z (Tegmark et al. 1997) with Lyman-Werner feedback | documented |
+| epochs.rs Hawking | (was photons-only 2.1e67 yr) Now Page 1976 power for photons and gravitons only, 1.14e67 yr, because massive neutrinos are not emitted by stellar or larger holes | Page's 81% neutrino share assumed massless neutrinos | Page 1976 greybody tables per species with neutrino masses, for holes near the neutrino threshold | **fixed 19 Nov**; Page's paper body unread, power from its abstract |
+| galaxy.rs hot halo | 1/(1+(M/5e11)²) | tuned | Cooling radius vs virial radius (White and Frenk 1991; Croton 2006 rapid-cooling regime) | tuned, documented in pack |
+| galaxy.rs preventive feedback | 1/(1+(v_c/60)^-3) | lets small galaxies stay metal-rich | Photo-heating / preventive model of Davé 2012 eq. with its own cited parameters | tuned |
+| galaxy.rs radio mode | 1/(1+(Mh/1e12)² Mbh/3e7) "smooth, no threshold" | avoids a threshold | Croton 2006 heating rate ∝ M_BH f_hot V_vir³ against the cooling rate | **stand-in**: say so in pack |
+| galaxy.rs filtering mass | Constant 1e9 Msun after z_reion, hard cut to zero | | Gnedin 2000 M_F(z) with the Okamoto et al. 2008 baryon-fraction suppression curve (smooth) | partly documented |
+| galaxy.rs depletion time | 1.5 Gyr (1+z)^-1.0 | "Tacconi 2018 find times fall to the past" | Tacconi 2018 scaling (exponent about −0.6, unverified) | **tuned away from source**: document |
+| galaxy.rs small-galaxy depletion | (v_c/150)^-1.5 | Leroy 2008; Huang 2012 (qualitative) | H2-fraction model (Blitz and Rosolowsky 2006 / Krumholz 2009) | tuned |
+| galaxy.rs winds | (v_c/200)^-2 (1+z)^1.0, cap 60 | energy-driven slope; Muratov for z | Muratov 2015 broken power law (unverified) or a momentum/energy switch block | **tuned**: attribution fix M-5 |
+| galaxy.rs fallback | t = 60 Gyr (1e10/Mh) | Henriques 2013 | Henriques 2013 γ' (about 18 Gyr by recollection) | **tuned about 3x**: document |
+| galaxy.rs instantaneous recycling | R = 0.4, yield 0.02 | delays live in rings | Integrate the IMF and lifetimes (block) | documented |
+| galaxy.rs ex-situ | ratio² of host stars; smooth 0.3 × 0.02 × halo growth × (1 − hot) | | Satellite galaxies run as their own reservoirs, plus dynamical-friction times (Boylan-Kolchin et al. 2008) | documented as rough |
+| galaxy.rs black hole | Seed 1e5, 5e-4 of stars formed, 1% of bursts | | Bondi/Eddington-limited accretion block | tuned |
+| galaxy.rs:351 bar test | Extra ×1.1 on v_200 (presumably v_max/v_200) before the ELN 1.1 test | not stated | Compute v_max of the NFW + disc rotation curve (concentration-mass relation block) | **undocumented** |
+| galaxy.rs disc size | 0.6 λ/√2 R_200 | "MMW98 simplified" | MMW98 f_c and f_R with concentration and disc fraction | documented |
+| galaxy.rs morphology | Thresholds B/T 0.7, sSFR 1e-11/1e-10, M* 1e9 | rule over numbers | Pack-editable classification table (already intended) | documented |
+| galaxy.rs median haloes in tests | No growth-history scatter in volume sums (CSFH too flat) | known | Average over drawn histories | documented (G3 log) |
+| rings.rs inside-out τ | Chiappini τ(R) applied in the galaxy's "share of all inflow" clock, not in Gyr | ties rings to halo growth | Infall rate in Gyr per ring from the halo accretion and angular momentum | documented in code, worth logging |
+| rings.rs KS | A = 2.5e-4 (Salpeter-calibrated) used with Kroupa/Chabrier elsewhere | | Divide A by about 1.6 for Chabrier, or make the IMF a shared block | **undocumented IMF mismatch** |
+| rings.rs threshold | Σ_th = 4 Msun/pc², ×(Σ/Σ_th)² below | Martin and Kennicutt 2001 | Toomre Q threshold (MK01) using σ_gas and κ | stand-in |
+| rings.rs yields | IMF-integrated net yields in solar units, tuned so the solar ring is solar | stated in pack and G3 log | Nomoto 2013 / Karakas 2010 tables × IMF × lifetimes | documented |
+| rings.rs radial winds, drift | exp(0.6 (R/R_d − 3.15)); 1 km/s inflow | tuned to the gradient | Radial-flow model (Lacey and Fall 1985) with a cited velocity | tuned |
+| rings.rs Ia rate | 2e-3 per Msun, DTD 1/t from 40 Myr | | Maoz and Graur 2017 value; DTD slope −1.1 | tuned; citation crossed (M-8) |
+| rings.rs NSM | 1e-5 per Msun, 1.5e5 solar units per event | | Rate from LIGO/Virgo rate density / SFR density; yield per event from kilonova estimates | tuned, uncited |
+| rings.rs cc_per_mass 0.0118 | Hard number "8-40 Msun of Chabrier" | | Compute from the IMF block | uncited constant |
+| envelope.rs arms | Fixed 2-arm log spiral, pitch 12°, Ω_p 25, contrast 0.6 | "rough Milky Way values" | Measured MW arm geometry (e.g. Reid et al. 2019) or transient arms | documented |
+| envelope.rs texture | Lognormal 0.2 dex value noise on 50 pc | "sketch" | Turbulent ISM PDF (Mach-number dependent lognormal width) | documented |
+| envelope.rs GRB | 1.6e-7 per Msun formed, 1/(1+(Z/0.3)²), 2 kpc | tuned so the Sun sees about 0.4 per Gyr | GRB rate from SFR × metallicity-dependent efficiency fits (e.g. Graham and Fruchter 2017) | tuned, documented |
+| envelope.rs AGN dose | ΔM_bh in 1 Gyr per 1e6 Msun × (1 kpc/R)² | | Luminosity from accretion × duty cycle → flux at R | placeholder |
+| envelope.rs encounter σ | 35 km/s at R0 rising as exp(−R/2R_d) | | Age-velocity relation by population (as in patch.rs) | tuned |
+| envelope.rs green criteria | feh −0.5 to +0.3, ≤ 4 SN/Gyr, ≤ 3 GRB/Gyr, 4 Gyr quiet | pack, "Force" packs may change | (intentional editable criteria) | documented |
+| envelope.rs patch_model bridge | Fits a single τ so the Sun's ring matches at birth and now | bridge to G0 machinery | Use ring histories directly in cohorts (G5 already partly does) | documented |
+| patch.rs feh_ism | log10(1 − e^(−t/τ)) enrichment curve, fixed gradient | G0 closed form | Rings (G3) | superseded by G3/G4 |
+| patch.rs alpha_fe_ism | Linear in log time from plateau to now after a 1 Gyr knee | closed form | Rings | superseded |
+| base-cosmos cluster | M^-2 from 10 to 1e5 Msun | Lada and Lada 2003 | LL03 fitted range is about 50-1000 Msun; upper end from the young massive cluster ICMF (e.g. Portegies Zwart et al. 2010) | extrapolated, undocumented |
+| base-cosmos al26 | median 0.3, 0.7 dex | "rough" | Cluster-mass-dependent enrichment (Lichtenberg 2016) | documented rough |
+| base-cosmos fuv | lognormal around 1000 G0, independent of cluster mass | | G0 from cluster mass (Fatuzzo and Adams 2008 relation) | documented as limit in G0 log |
+| base-cosmos velocity | (was age^0.35) now age^0.40, the total-dispersion exponent | Holmberg, Nordstrom and Andersen 2009 section 6.3 | per-component exponents (U 0.39, V 0.40, W 0.53) if encounters need direction | **fixed 19 Nov** |
+| base-cosmos rocky | −1.0 at every radius | Johnson and Li 2012 (their Earth-like summary, Z > 0.1 Z_sun) | their [Fe/H]_crit = −1.5 + log10(r / 1 au), per planet radius | documented 19 Nov (source text says so) |
+| base-cosmos sterilising 8 pc vs envelope 10 pc | two different pack values | | One shared value | inconsistent; document |
+
+### Candidates to move into flows
+
+| Where | What it computes | Blocks it would need | View that would show it |
+|---|---|---|---|
+| cosmology.rs Cosmology::new (Ωr) | Radiation density from T_CMB and N_eff | `photon_density(T)`, `neutrino_density(N_eff)`, `sum` | Cosmology panel: energy budget pie vs a, with sliders |
+| cosmology.rs e(a), time_of_scale | Friedmann E(a); cosmic time by quadrature | `hubble_rate` (exists, add radiation), `integrate(1/(aH))` | Time ruler: a(t), H(t) curves |
+| cosmology.rs growth / growth_exact | D(a) by CPT and by Heath integral | `omega_m_of_a`, `omega_l_of_a`, `cpt_g`, `heath_integral` | Growth curve with both overlaid (shows the 0.2% check) |
+| cosmology.rs transfer, power, sigma2_r, sigma_m | EH98 T(k) → P(k) → σ(R) → σ(M) | `eh98_sound_horizon`, `eh98_alpha_gamma`, `eh98_gamma_eff`, `eh98_T0`, `primordial_power(ns)`, `tophat_window`, `sigma_integral`, `normalise_sigma8`, `mass_to_radius` | P(k) and σ(M) plots; slider for σ8, ns, Ωb |
+| cosmology.rs collapse_redshift | z where D σ ν = δc | `delta_c` (spherical collapse), `growth`, `solve` | "When do haloes of mass M form" chart |
+| epochs.rs recombination_z | HS96 z* | `hs96_zstar(ωb, ωm)` | Time ruler epoch marker with its formula |
+| epochs.rs ionised_fraction, reionisation_z | Q(z) = ζ f_coll(>M_cool) | `virial_temperature_mass(T, z, μ)` (BL01), `ps_collapsed_fraction`, `zeta = f_* f_esc N_γ`, `cap` | Reionisation curve Q(z) with the Planck band |
+| epochs.rs star_formation_peak_z | Peak of MD14 ψ(z) | `md14_csfh`, `argmax` | Cosmic SFH curve with simulated volume sum overlaid |
+| epochs.rs bh_end | Hawking lifetime | `hawking_lifetime(M, species)` | Far-future ruler (log time) |
+| haloes.rs st_f, st_bias, dn_dlnm, conditional_dn_dlnm | Mass function and peak-background split | `st_multiplicity`, `st_bias`, `dlnsigma_dlnm`, `conditional_mf` | Halo mass function plot per cell vs the universal one; cell density slider |
+| haloes.rs correa | MAH α, β from σ(M) | `correa_zf_tilde`, `correa_q`, `correa_f`, `growth_derivative` | Halo growth curve M(z) with z_half marker |
+| haloes.rs fmbk_rate, major_rate, ratio sampling | Merger rate and ratio PDF | `fmbk_rate`, `integrate_xi`, `inverse_cdf` | Merger timeline per halo (events on the time ruler) |
+| haloes.rs link_neighbours | Bound or not, approach time | `escape_speed`, `hubble_flow`, `free_fall_time` (or timing argument) | Group map with orbit sketch |
+| galaxy.rs evolve (the regulator) | Gas, stars, metals, BH per step | `baryon_inflow`, `hot_halo_suppression`, `preventive_feedback`, `filtering_cut`, `radio_mode`, `depletion_time`, `mass_loading`, `fallback_time`, `implicit_gas_step`, `metal_budget`, `merger_bulge`, `bh_growth` (an ODE flow stepped by a "fixed-grid integrator" block) | Galaxy reservoir "bathtub" diagram with live flows; history curves on the time ruler |
+| galaxy.rs virial | R_200, v_200 | `rho_crit(a)`, `virial_radius(M, Δ)`, `circular_speed` | Halo card |
+| galaxy.rs disc size, ELN bar test, classify | R_d, bar flag, morphology | `mmw_disc_scale`, `vmax_over_v200(c)`, `eln_epsilon`, `classify_table` | Galaxy chart: face-on disc with bar, morphology badge, the ε value shown against 1.1 |
+| rings.rs infall weights | Inside-out infall shares | `chiappini_tau(R)`, `exp_disc_profile`, `infall_share` | Rings chart: infall per ring vs time (heat map) |
+| rings.rs star formation | KS with threshold | `kennicutt_schmidt(Σ, A, n)`, `threshold(Q or Σ)`, `imf_conversion` | Ring SFR heat map; KS plot (Σ_SFR vs Σ_gas) with Kennicutt's line |
+| rings.rs enrichment channels | DTD-weighted yields per element group | `dtd_power_law(t_min, slope)`, `ia_per_mass`, `agb_dtd`, `nsm_dtd`, `poisson_lumps`, `k40_decay`, `cc_per_mass_from_imf` | "What died here" stacked history per ring; [α/Fe]–[Fe/H] track with knee |
+| rings.rs radial flows | Winds rising outward, inward drift | `radial_mass_loading`, `radial_drift(v)` | Metallicity gradient plot vs Genovali |
+| envelope.rs local | Patch envelope from rings × arms × vertical × texture | `ring_interp`, `log_spiral_phase(m, pitch, Ω_p, t)`, `vertical_profile(h)`, `lognormal_texture` | Patch inspector: each multiplier as a bar, product at the end |
+| envelope.rs hazards | SN within d, encounters, GRB, AGN dose | `volume_rate(d)`, `encounter_rate(n, b, σ)`, `grb_rate(SFR, Z)`, `agn_flux(L, R)` | Hazard dials on the patch card |
+| envelope.rs green | Green criteria and band | `threshold_test` per criterion, `quiet_clock`, `band_scan` | Galaxy chart hatched green band with a time slider; per-criterion pass/fail chips |
+| patch.rs conditions | G0 closed-form densities, SFR, Ia DTD, encounters | `exp_disc_density`, `halo_power_law`, `ia_dtd_integral`, `age_velocity_relation` | Solar-patch card (G0) |
 | `sse-kernel/src/cosmos.rs` `galaxy_chart` arm crests | Arms drawn as crests of one fixed log-spiral density wave (envelope pitch and pattern speed), rotated to the time shown | The envelope's arm term is itself that pattern; a chart needs lines | Transient, ragged arms from a stellar-dynamics model, broken up after mergers (G6 events) | stand-in until arms are evolved |
 | `sse-kernel/src/cosmos.rs` `web()` | Cosmic web octaves capped at 4 for `galaxy_chart` and `web_slice` | Browser cost: a 96 x 96 slice in about a second | All pack octaves (finer filaments below a few Mpc) on capable devices | permanent cap for weak devices; to lift by tier |
 | `sse-kernel/src/cosmos.rs` `galaxy_chart` halo | The median halo for a named mass, not the campaign's own galaxy | G7 (Milky Way pack, campaign galaxy) not built | The campaign's galaxy placed by G7 | stand-in until G7 |
@@ -221,13 +471,42 @@ The owner wants the physics in chain blocks (except big blocks) with a UI elemen
 | light.recipes.json `why` texts (Wien, Rayleigh–Jeans) | Prose physics claims. | None (prose). The spectrum chart could draw λ_peak = b/T and mark the R–J tail, so the claim is visible. | Spectrum chart annotations. |
 
 **UI element to visualise the chain.** One **Spectrum** panel per body (and per star) does most of this. It is a log-wavelength plot of the light description from its blocks, with the fixed band set as shaded strips, emission lines as ticks, and the active band recipe's channels overlaid. Under it are the block chain (stellar spectrum → reflected + thermal → description) and each block's "Why?". It shows what every recipe is integrating, makes stubbed parts visible (dashed curves labelled "stubbed"), and is the natural home for O2 and O4 evidence (brightness temperatures, line ratios).
-| `packages/renderer/src/atmosphere.ts` (R2a) | Air optics (Rayleigh per gas, scale height) computed in the renderer | The kernel op did not exist yet | Kernel `read_air_optics` (light track, PR 24) | Stand-in until PR 24 merges; then the renderer reads the op |
-| `atmosphere.ts` gas table | One refractivity per gas near 550 nm, no dispersion | Small table, colour carried by the lambda^-4 law | Per-wavelength refractivity (Peck and Reeder, Bucholtz tables) | To review with the kernel op |
 | `gpu-air.ts`, `canvas.ts` | No aerosols (Mie haze) and no absorption (ozone, methane) | Not built yet | Mie scattering from the weather op's aerosols; absorption bands from the light track | Stand-in until R2b |
 | `gpu-air.ts` | Single scattering only | Exact for thin air, no lookup tables to build | Hillaire (2020) multiple-scattering LUT; thick air (Venus, Titan) is too dark without it | Stand-in |
 | `gpu-globe.ts` physical lighting | Ground hue from the survey palette, scaled to the kernel's albedo | No spectral reflectance per material yet | Spectral reflectance per material (light track) | Stand-in |
 | `passes.ts` relief pass | The star's direction is a look setting (azimuth, elevation) and its light is white | The view has no ephemeris position at the ruler's date yet | Star direction from the orbit at the campaign date; star colour from its spectrum | Stand-in |
 | `canvas.ts` air | One-column, plane-parallel air along view and sun; no limb glow beyond the disk | Canvas tier is the weak-device path | The GPU ray-march (already on GPU tiers) | Permanent for the canvas tier (weak devices do less) |
+| `canvas.ts` exposure (R4) | Exposure is a plain brightness gain | The canvas tier has no tone mapping | Tone mapping on canvas (cost) | Permanent for the canvas tier |
+| `renderer/src/star.ts` spotsFor (R5a) | Spot places and sizes drawn from the star's address and cycle number; belts follow Sporer's law linearly (28 to 8 degrees) | The kernel publishes spot coverage, not spot maps | A surface flux-transport model (active-region emergence, differential rotation, decay) as a kernel block | Stand-in |
+| `star.ts` SPOT_DELTA_K | Every spot is one umbra 1700 K cooler with a simple penumbra | Berdyugina (2005) gives 1500 to 2000 K for Sun-like stars; one value for all | Spot contrast as a function of Teff (Berdyugina 2005 fig. 7) | Stand-in |
+| `star.ts` CORONA_K | Corona at 1.5 MK for every star | No coronal temperature in the kernel yet | Coronal temperature from L_X (Güdel 2004 relation) published by read_activity | Stand-in |
+| `star.ts` X-ray view | Active regions are Gaussian brightenings over spots; flares drawn at a spot; log emission-measure mapped to violet | X-ray images are mapped colour by nature; loops not modelled | Loop models (RTV scaling) over the spot map; flare sites from the kernel | Stand-in (the colour map is permanent and labelled) |
+| `star.ts` limbDarkening | Grey atmosphere (Eddington) in every band | Physics-derived, no tables | Wavelength-dependent coefficients (Claret 2000 tables) by Teff and log g | To review |
+
+
+### 3. Kernel light track (light thread, PR 24)
+
+| Where | Instead of the physics | Why | Real physics to replace it | Status |
+|---|---|---|---|---|
+| crates/sse-light emit (O2) | Grey Bond albedo and a black body at the effective temperature for planets; no bands, no day-night contrast | atmosphere model not built | spectral albedo and emission from the atmosphere model | stand-in |
+| sse.light.stellar_wind (O2) | Every star gets the Sun's wind at 1 au (Parker), scaled by distance | per-star winds came with O10 | wind strength from O10 activity | stand-in, now replaceable |
+| emit auroral radio (O2) | Isotropic and flat in frequency from f_max/30 to f_max | simple, energy-correct | beamed emission cones, rotation modulation | stand-in |
+| emit corona (O2) | Coronal X-rays flat over 0.1 to 10 keV | no coronal temperature model | thermal plasma emission at the coronal temperature | stand-in |
+| emit lamps (O2) | White lamps flat over 400 to 700 nm | no lamp spectra table | lamp spectra per technology as pack data | stand-in |
+| emit accretion disc (O1) | Thin disc seen isotropically, no inclination or limb effects | view angle not known in the description | inclination-dependent disc emission | stand-in |
+| sse-nebula (O3) | Planetary nebula speeds, shell share, pulse timing and ring count drawn from stated ranges; core at 100 000 K | published spreads, no hydrodynamic model | radiation-hydrodynamic PN models | stand-in |
+| sse-activity (O10) spin from age | Skumanich P ∝ √t scaled by turnover time, never faster than a 1-day birth spin | the life line has no spin yet | spin from the life line (F7) or a torque model (Matt et al. 2015) | stand-in |
+| sse-activity tides | Tidal lock assumed below a 10-day companion orbit | no tidal synchronisation model | Zahn-type synchronisation time | stand-in |
+| sse-activity regimes | Cut-offs at 10 000 K (hot wind), 6900 K (no corona), 0.05 R☉ (compact); labels at 1e-4 and 3e-7 L_X/L_bol | conditions, not kinds; labels only | convective envelope depth from structure models | stand-in |
+| sse-activity spots and cycle | Spot cover ∝ √(L_X/L_bol) from the Sun's 0.3 %, cap 50 %; cycle a sine of amplitude 0.7, branch at 1e-5 | no flux-transport model | surface flux transport model | stand-in |
+| sse-activity flares | Durations ∝ E^0.39 from 600 s at 1e25 J; light a 10 000 K black body plus 10 % soft X-rays; largest 1e29 J | Kepler-era statistics only | flare spectra and duration statistics from TESS/Kepler studies | stand-in |
+| sse-activity ejections | Share, speed and mass by power laws in flare energy; cone half-width 30°, within 30° of the equator; planets circular in the equator | no CME model | CME catalogues (Yashiro) and an ephemeris | stand-in |
+| sse_light::observe (O12) absorption | Qualitative 0-to-1 line strengths by temperature, same for every metal content; no line widths or reddening | O4 grid not built | line-strength grid (results-as-data), broadening, dust | stand-in until O4 |
+| sse-survey (O13) | White noise ∝ 1/√N, no spots or flares in light curves; activity 15 ppm/hr, jitter 1 m/s, efficiency 0.5, IWA 3λ/D; found at S/N 7.1 with 3 transits; eccentric transits timed as circular; no microlensing | closed-form, cheap | red-noise and activity models (O10), full light-curve simulation | stand-in |
+| sse-sense (O9) | One dust power law (λ/0.55 µm)^−1.75 from 0.3 µm to 1 mm; all-or-nothing glare inside the resolution; photon energy at band centre; radar listener in the main beam | closed-form | an extinction curve (Cardelli, Draine), PSF halo, sidelobes | stand-in |
+| sse_light::air | Other gases follow air's dispersion scaled to 589 nm; King factors constant except N₂ and O₂; isothermal scale height; gravity at the surface; Rayleigh only | small table | per-gas dispersion (Sneep and Ubachs 2005), haze, absorption | stand-in |
+| sse_light::air gases NH₃, SO₂, CO, Ne | King factor 1 (no depolarisation); refractivity values from memory of Kaye and Laby | a few per cent on σ (SO₂ more) | tabulated depolarisation ratios and a checked source | stand-in |
+| sse_cosmos::patch glows | Expected nebulae as steady-state counts (rate × visible life); one mean ambient density (1 H per cm³) for every patch; planetary nebula shell at mid-range speed; ionising stars (≥ 15 M☉) stand in for H II regions, which group many such stars; main-sequence life 10 Gyr × M^−2.5 | counts within a factor of two or three near the Sun | local gas density from the patch, cluster grouping of ionising stars | stand-in |
 
 ## Interface and player views
 
@@ -272,3 +551,25 @@ Details per package in `handover/packages/W1.md` to `W6.md`.
 | `weather_aerosols` veil 0.02 K per Tg SO₂, conversion 1/12 yr, response 0.7 yr | Cooling size not verified against a source | Placeholder for a radiative forcing calculation | Aerosol optical depth to forcing to climate response (Robock 2000 framework) | NOT verified |
 | `weather_aerosols.fire.min_o2` 0.15; impact thresholds and cooling; smog, spray and sulphur haze constants | Stand-ins, no number cited | No source read yet | Combustion limits (literature), impact-winter models, emission inventories | stand-in |
 | `weather_zonal` OLR slope 0.47 × blackbody, diffusion and other EBM constants | Fitted constants in the second block | Budyko's Earth fit, scaled | Radiative transfer per world | tuned |
+
+## Game-system packs
+
+Codes that a game reads from physics. Where a code's band had to be drawn on the physics, the line is a choice,
+listed here. Imported codes always win over these (they are kept as authored and marked where physics disagrees).
+
+| Where | Instead of the physics | Why | Real physics to replace it | Status |
+|---|---|---|---|---|
+| `scripts/build-traveller-pack.py`, rule `traveller.prep.oxygen` | Air "carries oxygen" when O2 is at least 10% of the surface pressure | Traveller's breathable bands are named, not defined by partial pressure | A breathing model per species (O2 partial pressure against altitude and acclimatisation), shared with the habitability atlas | permanent for the code; the habitability scheme (C2) carries the real need |
+| `traveller.prep.tainted` | Tainted when CO2 > 0.005 bar, O2 > 0.5 bar, SO2 ≥ 1e-5 bar, or an authored `atmosphere.taint` | The published taints are a story list (pollutants, biologicals, radioactivity...) | Toxicity thresholds per gas from a gas table (V3's tags port in X3d gas mixes) | to review in X3d |
+| `traveller.prep.corrosive`, atmosphere C | Corrosive when SO2 ≥ 1 mbar or the main gas is SO2, H2S, Cl2, F2, HCl or H2SO4; insidious is corrosive at 10 bar or more | No physical definition exists for "insidious" | Materials attack rates from composition, pressure and temperature | permanent for the code |
+| Atmosphere E and F | Never produced by physics; authored with `atmosphere.traveller_kind` | "Low" and "unusual" describe places and times, not a mean state | Regional and time-varying air from the weather track (W) | stand-in until W |
+| `traveller.count.gas-giant` (PBG G digit) | A gas giant is anything 2.5 Earth radii or larger and below 13 Jupiter masses | The games count ice giants and puffy sub-Neptunes alike | The physical atlas's giant classes once the one-body object settles mass and envelope | to review after the one-body unification |
+| Trade codes Fr, Co, Ho, Tu, Tr | Mean surface temperature bands (below 223 K, 223 to 263 K, 303 to 353 K) | T5 places these by orbit against the habitable zone, which SSE4 does not keep as a fact | Climate classes from the weather track | to review with W |
+| Size F, population F | Size F also holds anything over 23,200 km across; population F anything over 10^15 | The code has no symbol beyond F | None needed: the reading keeps the true value | permanent |
+| Missing facts | Absent pressure, liquid cover, population, government, law and tech read as 0, starport as X | A profile always has every digit | None: each reading lists the facts that stood in (`defaulted`) | permanent |
+| `crates/sse-codes/src/plan.rs`, `target_temperature`, `optical_depth` | A coded world is placed for 288 K if it has surface liquid (220 K under next to no air, 300 K if dry), through the grey-atmosphere atom with infrared optical depth 0.83 x pressure in bar, at albedo 0.3 | Codes carry no temperature; the orbit must come from somewhere | The climate flows' own greenhouse and albedo for the pinned air, solved for the orbit (C3 reverse placement through base-physics flows) | to review: wire to C3 placement |
+| `plan.rs`, `EXOSPHERE_K`, `JEANS_KEEP` | Air retention runs the `sse.atmosphere.jeans_parameter` atom at the surface radius and a fixed 1000 K exosphere, keeping air when it is 30 or more | Exosphere temperature needs the upper-atmosphere energy balance, which no flow computes | Exosphere temperature from stellar XUV and composition; Jeans plus hydrodynamic escape | to review |
+| `plan.rs`, `rocky_mass`, `star` | A coded world's mass is M = R^3.7 (Earth-like rock); stars other than class V are grown as dwarfs of the same spectral type, white dwarfs as 0.6 solar-mass dwarfs | Codes give size only; the formation pipeline grows stars from birth and no age is chosen yet to reach a giant or remnant | Composition from the system's formation run; an age solve that evolves the star to its written class | stand-in until the one-body star work |
+| `plan.rs`, `giants_in` | A grown world counts as a gas giant from 10 Earth masses, whatever its envelope | The game counts ice giants and big sub-Neptunes alike | As the gas giant reading rule above | to review with it |
+| `mix.rs`, `gas_mixes` | A coded world's air is a named preset: mid-range fractions scaled to one, at the pressure of the code's own class (not the preset's range) | No flow yet derives composition from outgassing and escape; the game names air by code | Per-gas partial pressures from an atmosphere flow (outgassing, escape, photochemistry) | to review |
+| rules `traveller.need.*` | What to wear outside is read from the atmosphere digit, not from partial pressures and toxicity limits | The game's gear follows its codes | Physiological limits per gas (oxygen 0.16 to 0.5 bar, carbon dioxide and toxic-gas limits) as rules over partial pressures | to review |

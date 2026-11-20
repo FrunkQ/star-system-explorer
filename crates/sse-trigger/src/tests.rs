@@ -119,8 +119,13 @@ fn gate<'a>(
         registry: reg,
         campaign: Some(c),
         root: r,
+        templates: &NO_TEMPLATES,
     }
 }
+
+static NO_TEMPLATES: templates::Templates = templates::Templates {
+    templates: Vec::new(),
+};
 
 fn view(w: &World, at: i64) -> String {
     sse_observe::effective_view(
@@ -359,7 +364,9 @@ fn j4_default_policies_and_load_refusals() {
     let bad = |v: J| Rules::from_packs(&[("p".into(), "1".into(), v)]).unwrap_err();
     assert!(bad(json!({"rules": [{"id": "Bad", "when": {"on_time": {"every_s": 1}}, "effects": [{"effect": "tag", "tag": "x"}]}]}))[0].contains("ids are lowercase"));
     assert!(bad(json!({"rules": [{"id": "a", "when": {"on_time": {"every_s": 0}}, "effects": [{"effect": "tag", "tag": "x"}]}]}))[0].contains("every_s"));
-    assert!(bad(json!({"rules": [{"id": "a", "when": {"on_time": {"every_s": 1}}, "effects": [{"effect": "create", "template": "ship"}]}]}))[0].contains("J7"));
+    // J7: create loads, and a missing template is named against the stack's.
+    let made = Rules::from_packs(&[("p".into(), "1".into(), json!({"rules": [{"id": "a", "when": {"on_time": {"every_s": 1}}, "effects": [{"effect": "create", "template": "ship"}]}]}))]).unwrap();
+    assert!(made.check_templates(&NO_TEMPLATES)[0].contains("names template ship"));
     assert!(bad(
         json!({"rules": [{"id": "a", "when": {"on_time": {"every_s": 1}}, "effects": []}]})
     )[0]
@@ -450,4 +457,51 @@ fn j4_a_run_replays_bit_identically() {
     assert_eq!(a, b);
     let firings: usize = a.2.iter().map(|r| r.passes.iter().flatten().count()).sum();
     assert_eq!(firings, 3, "two ladder steps and one consequence");
+}
+
+/// Each crew learns for itself: the grant audience comes from the observer.
+#[test]
+fn j4_grant_audience_from_the_observer() {
+    let mut v = ladder();
+    v["rules"][0]["effects"][0]["audience"] = json!("{observer.crew.audience}");
+    let rs = rules(v.clone());
+    let (reg, c, r) = (registry(), campaign(), root());
+    let mut w = world();
+    set(
+        &mut w.universe,
+        &ship(),
+        0,
+        &[("crew.audience", text("calla-crew"))],
+    );
+    for t in [0, 1000, 4600] {
+        rs.step(&mut gate(&mut w, &reg, &c, &r), t).unwrap();
+    }
+    let seen = |w: &World, aud: &str| {
+        sse_observe::effective_view(
+            &w.universe.state_at(UniverseTime::seconds(5000)),
+            &body(),
+            aud,
+            &campaign(),
+        )
+    };
+    assert_eq!(seen(&w, "calla-crew"), "scanned");
+    assert_eq!(seen(&w, "crew"), "long-range", "other crews learn nothing");
+    // A ship with no such fact: the grant is refused, nothing half-done.
+    let mut w = world();
+    let mut fired = vec![];
+    for t in [0, 1000, 4600] {
+        let rep = rs.step(&mut gate(&mut w, &reg, &c, &r), t).unwrap();
+        fired.extend(rep.passes.into_iter().flatten());
+    }
+    assert_eq!(fired.len(), 1);
+    assert!(
+        fired[0].outcome.contains("no such text fact"),
+        "{:?}",
+        fired[0]
+    );
+    // Only pair rules may name the observer.
+    let mut bad = v;
+    bad["rules"][0]["scope"] = json!({"under": "u:t/sys:0"});
+    bad["rules"][0]["when"] = json!({"on_condition": {"condition": {"if": "tag", "tag": "x"}}});
+    assert!(Rules::from_packs(&[("test.rules".into(), "1.0.0".into(), bad)]).is_err());
 }

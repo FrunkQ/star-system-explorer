@@ -143,7 +143,7 @@ fn star_forming_main_sequence_and_quenching() {
 #[test]
 fn mass_metallicity_relation() {
     // Andrews and Martini 2013 (direct method): 12 + log O/H = 8.798 - log(1 + (10^8.901 / M*)^0.64);
-    // solar 12 + log O/H = 8.69 and Z_sun = 0.0142 (Asplund et al. 2009).
+    // solar 12 + log O/H = 8.69 and protosolar Z = 0.0142 (Asplund et al. 2009; present-day photosphere 0.0134).
     let (c, w) = world();
     let mut last = 0.0;
     for (lm, g) in grid(&c, &w, 10.5, 12.5, 0.5) {

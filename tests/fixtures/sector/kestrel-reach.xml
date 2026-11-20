@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Invented for the SSE4 tests. Not official setting data. -->
+<Sector Abbreviation="Kstr">
+  <Name>Kestrel Reach</Name>
+  <X>7</X>
+  <Y>-3</Y>
+  <Credits>Made up for the sector-io fixtures</Credits>
+  <Subsectors>
+    <Subsector Index="A">Corvane</Subsector>
+    <Subsector Index="F">Lanternfall</Subsector>
+    <Subsector Index="K">Siltmoor &amp; Vey</Subsector>
+  </Subsectors>
+</Sector>

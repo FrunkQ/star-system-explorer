@@ -20,9 +20,10 @@
 <script lang="ts">
   import { globeStats, type Globe, type Json, type SystemScene, type ViewContext } from "../../../ui-contract/src/index.ts";
   import { untrack } from "svelte";
-  import { airFactsOf, keepPhoto, listPhotos, LIBRARY, mountGlobe, photograph, removePhoto, type GlobeRun, type MediaItem, type GlobeRunOptions, type GlobeStatus } from "../../../renderer/src/index.ts";
+  import { airFactsOf, airFromOptics, airRequest, applyEdits, editableSettings, keepPhoto, listPhotos, LIBRARY, mountGlobe, photograph, removePhoto, type GlobeRun, type MediaItem, type RecipeDoc, type RecipeEdit, type GlobeRunOptions, type GlobeStatus } from "../../../renderer/src/index.ts";
   import { SHIPPED_RECIPES } from "../../../renderer/src/recipes.ts";
   import Cutaway from "../../cutaway/src/Cutaway.svelte";
+  import StarDisc from "./StarDisc.svelte";
 
   let { ctx, scene, params }: { ctx: ViewContext; scene: SystemScene; params: Record<string, Json> } = $props();
 
@@ -60,7 +61,15 @@
       const rs = await ctx.session.resolvedSystem(sys);
       if (g !== gen) return;
       const surf = rs.ok ? (rs.result.surfaces.find((x) => x.address === sub.address) as Parameters<typeof airFactsOf>[1]) : undefined;
-      const v = { tiles: r.tiles, regime: r.regime, refused: r.refused.length, air: rs.ok ? airFactsOf(rs.result.facts[sub.address], surf) : null };
+      const facts = rs.ok ? airFactsOf(rs.result.facts[sub.address], surf) : null;
+      // The optics themselves come from the kernel (light track, read_air_optics).
+      const req = facts ? airRequest(sub.address, facts) : null;
+      if (facts && req) {
+        const ao = await ctx.session.readAirOptics([req.air]);
+        if (g !== gen) return;
+        facts.optics = ao.ok && ao.airs[0] ? airFromOptics(ao.airs[0] as Parameters<typeof airFromOptics>[0], req) : null;
+      }
+      const v = { tiles: r.tiles, regime: r.regime, refused: r.refused.length, air: facts };
       cache.set(key, v);
       got = v;
       loading = false;
@@ -83,10 +92,53 @@
   let ovRecipe = $state<string | null>(null);
   let ovTier = $state<string | null>(null);
   let ovSpin = $state<boolean | null>(null);
+  // R4: recipes edited on this device. Kept in this browser (a per-viewer look), never in the campaign or the kernel.
+  const MINE = "sse-recipes-mine";
+  const loadMine = (): RecipeDoc[] => {
+    try {
+      const x = JSON.parse(localStorage.getItem(MINE) ?? "[]");
+      return Array.isArray(x) ? x : [];
+    } catch {
+      return [];
+    }
+  };
+  let mine = $state<RecipeDoc[]>(loadMine());
+  let editing = $state(false);
+  let edits = $state<RecipeEdit[]>([]);
+  let editName = $state("");
+  const registry = $derived<RecipeDoc[]>([...SHIPPED_RECIPES, ...mine]);
+  const baseRecipe = $derived(registry.find((r) => r.id === (ovRecipe ?? String(params.recipe ?? "survey-relief"))) ?? SHIPPED_RECIPES[0]!);
+  const draft = $derived(editing && edits.length ? applyEdits(baseRecipe, editName.trim() && editName.trim() !== baseRecipe.name ? [...edits, { op: "name", name: editName.trim() }] : edits, { library: LIBRARY, pixels: size * size, budget_ms: Number(params.budget_ms ?? 33.3), id: baseRecipe.derived_from ? baseRecipe.id : `${baseRecipe.id}-mine-${mine.length + 1}` }) : null);
+  function setEdit(use: string, param: string, value: number | string) {
+    edits = [...edits.filter((e) => !(e.op === "set" && e.use === use && e.param === param)), { op: "set", use, param, value }];
+  }
+  function keepDraft() {
+    const d = draft;
+    if (!d?.ok) return;
+    mine = [...mine.filter((r) => r.id !== d.doc.id), d.doc];
+    try {
+      localStorage.setItem(MINE, JSON.stringify(mine));
+    } catch {
+      /* kept for this page only */
+    }
+    ovRecipe = d.doc.id;
+    editing = false;
+    edits = [];
+  }
+  function forget(id: string) {
+    mine = mine.filter((r) => r.id !== id);
+    try {
+      localStorage.setItem(MINE, JSON.stringify(mine));
+    } catch {
+      /* ignore */
+    }
+    if (ovRecipe === id) ovRecipe = null;
+  }
+
   const runOpts = $derived({
-    registry: SHIPPED_RECIPES,
+    registry: draft?.ok ? [...registry.filter((r) => r.id !== draft.doc.id), draft.doc] : registry,
     library: LIBRARY,
-    recipe: ovRecipe ?? String(params.recipe ?? "survey-relief"),
+    recipe: draft?.ok ? draft.doc.id : (ovRecipe ?? String(params.recipe ?? "survey-relief")),
     tier: (ovTier ?? String(params.tier ?? "auto")) as GlobeRunOptions["tier"],
     knobs: { relief: Number(params.relief ?? 0.5), detail: Number(params.detail ?? 0.5) },
     budget_ms: Number(params.budget_ms ?? 33.3),
@@ -173,7 +225,7 @@
   }
   const fileName = (m: MediaItem) => `${m.title.replace(/[^A-Za-z0-9 _-]+/g, "").replace(/ +/g, "-")}.png`;
   const tierChoices: [string, string][] = [["auto", "This device's choice"], ["gpu-high", "GPU, high"], ["gpu-basic", "GPU"], ["canvas", "2D canvas"], ["text", "Words only"]];
-  const tierWords: Record<string, string> = { "gpu-high": "GPU high", "gpu-basic": "GPU", canvas: "Canvas", text: "Text" };
+  const tierWords: Record<string, string> = { still: "Photograph", "gpu-high": "GPU high", "gpu-basic": "GPU", canvas: "Canvas", text: "Text" };
 
   let drag: { x: number; y: number; lon: number; lat: number } | null = null;
   function down(e: PointerEvent) {
@@ -217,7 +269,7 @@
   {#if !subject}
     <p class="note">Pick a world on the chart to see its globe.</p>
   {:else if subject.kind === "star"}
-    <p class="note">{subject.label} is a star; the Body view shows worlds.</p>
+    <StarDisc {ctx} {scene} address={subject.address} label={subject.label} {size} />
   {:else}
     <div class="top">
       <div class="globe" style:width="{size}px" style:height="{size}px">
@@ -275,10 +327,50 @@
                 {#if gs.badge.reduced}<p>{gs.badge.lift}</p>{/if}
                 <p>Recipe {gs.recipe}, level {gs.level} of {gs.max}. {Number.isFinite(gs.ewma_ms) ? `Frames about ${Math.round(gs.ewma_ms)} ms; budget ${Math.round(gs.budget_ms)} ms.` : ""}</p>
                 <div class="drawing">
-                  <label>Recipe <select value={runOpts.recipe} onchange={(e) => (ovRecipe = e.currentTarget.value)}>{#each SHIPPED_RECIPES as r (r.id)}<option value={r.id}>{r.name}</option>{/each}</select></label>
+                  <label>Recipe <select value={runOpts.recipe} onchange={(e) => (ovRecipe = e.currentTarget.value)}>{#each registry as r (r.id)}<option value={r.id}>{r.name}</option>{/each}</select></label>
                   <label>Draw on <select value={runOpts.tier} onchange={(e) => (ovTier = e.currentTarget.value)}>{#each tierChoices as [v, w] (v)}<option value={v}>{w}</option>{/each}</select></label>
                   <label><input type="checkbox" checked={runOpts.spin} onchange={(e) => (ovSpin = e.currentTarget.checked)} /> Spin</label>
                 </div>
+                <div class="drawing">
+                  <button class="link" data-edit-recipe aria-expanded={editing} onclick={() => ((editing = !editing), (edits = []), (editName = baseRecipe.derived_from ? baseRecipe.name : `My ${baseRecipe.name.toLowerCase()}`))}>{editing ? "Stop editing" : "Edit this recipe"}</button>
+                  {#if baseRecipe.derived_from}<button class="link" onclick={() => forget(baseRecipe.id)}>Forget {baseRecipe.name}</button>{/if}
+                </div>
+                {#if editing}
+                  <div class="editor" data-recipe-editor>
+                    <label>Name <input value={editName} oninput={(e) => (editName = e.currentTarget.value)} /></label>
+                    {#each editableSettings(baseRecipe, LIBRARY).filter((u) => u.tiers.includes(gs?.tier ?? "canvas")) as u (u.use)}
+                      <fieldset>
+                        <legend>{u.name}</legend>
+                        {#each u.settings.filter((x) => x.type === "number" || x.type === "integer" || x.type === "enum") as st (st.name)}
+                          {@const now = (edits.find((e) => e.op === "set" && e.use === u.use && e.param === st.name) as { value?: unknown } | undefined)?.value ?? st.value}
+                          <label title={st.meaning}>
+                            {st.name.replace(/_/g, " ")}{st.unit ? ` (${st.unit})` : ""}
+                            {#if st.type === "enum"}
+                              <select value={String(now)} onchange={(e) => setEdit(u.use, st.name, e.currentTarget.value)}>{#each st.options ?? [] as o (o)}<option value={o}>{o}</option>{/each}</select>
+                            {:else}
+                              <input type="number" value={Number(now)} min={st.range?.[0]} max={st.range?.[1]} step={st.type === "integer" ? 1 : "any"} disabled={!!st.knob} data-setting={`${u.use}.${st.name}`} onchange={(e) => setEdit(u.use, st.name, st.type === "integer" ? Math.round(Number(e.currentTarget.value)) : Number(e.currentTarget.value))} />
+                            {/if}
+                            {#if st.knob}<small>(the {st.knob} knob sets this)</small>{/if}
+                          </label>
+                        {/each}
+                      </fieldset>
+                    {/each}
+                    {#if draft}
+                      {#if draft.ok}
+                        <ul data-edit-changes>{#each draft.changes as c (c)}<li>{c}</li>{/each}</ul>
+                        <ul data-edit-cost>
+                          {#each draft.cost.filter((c) => c.tier !== "text") as c (c.tier)}
+                            <li class:over={!c.fits}>{tierWords[c.tier] ?? c.tier}: about {c.before_ms?.toFixed(1)} ms, now {c.after_ms?.toFixed(1)} ms a frame of {Math.round(c.budget_ms)} ms{c.fits ? "" : " (over: the governor will reduce it here)"}</li>
+                          {/each}
+                        </ul>
+                        <p>The globe above is drawing the edited recipe now.</p>
+                        <button class="badge" data-keep-recipe onclick={keepDraft}>Keep as my recipe</button>
+                      {:else}
+                        <p class="over" data-edit-errors>{draft.errors.join(" ")}</p>
+                      {/if}
+                    {/if}
+                  </div>
+                {/if}
               </div>
             {/if}
           </dd>
@@ -426,6 +518,33 @@
   }
   dd {
     margin: 0;
+  }
+  .editor {
+    margin-top: 6px;
+    color: var(--sse-ink);
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+  }
+  .editor fieldset {
+    border: 1px solid var(--sse-line);
+    border-radius: 3px;
+    padding: 2px 6px 4px;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 2px 10px;
+  }
+  .editor input,
+  .editor select {
+    font: inherit;
+    width: 6em;
+  }
+  .editor ul {
+    margin: 2px 0;
+    padding-left: 16px;
+  }
+  .over {
+    color: var(--sse-accent);
   }
   .shot-note {
     font-size: 12px;

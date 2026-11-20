@@ -14,8 +14,10 @@ export const DAY_S = 86_400;
 export interface Calendar {
   id: string;
   label: string;
-  /** Where day 1 of year 1 falls, in years since the universe's origin. */
+  /** Where day 1 of the first year falls, in years since the universe's origin. */
   epoch_yr: number;
+  /** The number of the epoch's year (a pack's, e.g. 1105 for the Imperial calendar); 1 by default. */
+  epoch_year?: number;
   /** Length of a day and of a year (in days), in this calendar. */
   day_s: number;
   year_days: number;
@@ -23,8 +25,8 @@ export interface Calendar {
   months?: { name: string; days: number }[];
   /**
    * Optional date format. Placeholders: {year}, {day} (day of the year, from
-   * 1), {day:03} (zero-padded to 3), {month}, {mday} (day of the month),
-   * {hh}, {mm}. Default "Year {year}, day {day}" or "{mday} {month}, year {year}".
+   * 1), {day:03} (zero-padded to 3), {month}, {mday} or {d} (day of the
+   * month), {hh}, {mm}. Default "Year {year}, day {day}" or "{mday} {month}, year {year}".
    */
   format?: string;
 }
@@ -32,6 +34,11 @@ export interface Calendar {
 /** The calendar used when no pack gives one: Earth days and Julian years, counted from the campaign's start. */
 export function defaultCalendar(epoch_yr: number): Calendar {
   return { id: "sse.calendar.standard", label: "Standard (days and years from the campaign's start)", epoch_yr, day_s: DAY_S, year_days: 365.25 };
+}
+
+/** A pack's calendar as the kernel serves it (`provides.other.calendar`), for the ruler. */
+export function fromPackCalendar(pc: { name: string; epoch_s: number; epoch_year?: number; day_s: number; year_days: number; months?: { name: string; days: number }[]; format: string }): Calendar {
+  return { id: `pack.calendar.${pc.name}`, label: pc.name, epoch_yr: pc.epoch_s / YEAR_S, ...(pc.epoch_year !== undefined ? { epoch_year: pc.epoch_year } : {}), day_s: pc.day_s, year_days: pc.year_days, ...(pc.months?.length ? { months: pc.months } : {}), format: pc.format };
 }
 
 /** Problems with a calendar document, as sentences; empty when usable. */
@@ -72,7 +79,7 @@ export function dateParts(yr: number, c: Calendar): DateParts {
   const intoYear = dayPos - years * c.year_days;
   const dayIndex = Math.min(Math.floor(intoYear + 1e-9), Math.ceil(c.year_days) - 1);
   const minutes = Math.min(Math.max(0, Math.round((intoYear - dayIndex) * perDay)), Math.floor(perDay) - 1);
-  const p: DateParts = { year: years + 1, day: dayIndex + 1, hh: Math.floor(minutes / 60), mm: minutes % 60 };
+  const p: DateParts = { year: years + (c.epoch_year ?? 1), day: dayIndex + 1, hh: Math.floor(minutes / 60), mm: minutes % 60 };
   if (c.months?.length) {
     let left = dayIndex;
     for (let i = 0; i < c.months.length; i++) {
@@ -94,7 +101,7 @@ export function dateWords(yr: number, c: Calendar, time = false): string {
   const fmt = c.format ?? (p.month ? "{mday} {month}, year {year}" : "Year {year}, day {day}");
   const pad = (n: number, w: number) => String(n).padStart(w, "0");
   const s = fmt.replace(/\{(\w+)(?::0(\d))?\}/g, (_, k: string, w?: string) => {
-    const v = k === "year" ? p.year : k === "day" ? p.day : k === "mday" ? (p.mday ?? p.day) : k === "month" ? (p.month ?? "") : k === "hh" ? p.hh : k === "mm" ? p.mm : `{${k}}`;
+    const v = k === "year" ? p.year : k === "day" ? p.day : k === "mday" || k === "d" ? (p.mday ?? p.day) : k === "month" ? (p.month ?? "") : k === "hh" ? p.hh : k === "mm" ? p.mm : `{${k}}`;
     return typeof v === "number" && w ? pad(v, Number(w)) : String(v);
   });
   return time && !/\{hh\}/.test(fmt) ? `${s}, ${pad(p.hh, 2)}:${pad(p.mm, 2)}` : s;

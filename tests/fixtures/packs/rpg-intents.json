@@ -1,0 +1,32 @@
+{
+  "format": "sse.pack/1",
+  "id": "test.rpg-intents",
+  "version": "0.1.0",
+  "kind": ["game-system"],
+  "kernel_range": "^0.1",
+  "licence": "Apache-2.0",
+  "provides": {
+    "other": {
+      "intents": {
+        "kinds": [
+          {
+            "kind": "hail",
+            "meaning": "open a channel to a ship or station that can answer",
+            "fields": [{"name": "address", "type": "address"}, {"name": "words", "type": "text"}],
+            "valid": {"if": "tag", "tag": "crewed"}
+          }
+        ]
+      },
+      "triggers": {
+        "rules": [
+          {
+            "id": "answer-hail",
+            "when": {"on_intent": {"kind": "hail"}},
+            "effects": [{"effect": "add_note", "text": "{subject} answered the hail", "audience": "everyone", "tags": ["hail"]}],
+            "explain": "a crewed ship that is hailed answers"
+          }
+        ]
+      }
+    }
+  }
+}

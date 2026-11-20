@@ -1,0 +1,13 @@
+[package]
+name = "sse-sector-io"
+description = "SSE4 sector data formats: UWP lines, legacy SEC, T5 tab-delimited and sector metadata XML (X3c, parsing half)"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+authors.workspace = true
+
+[dependencies]
+serde.workspace = true
+
+[dev-dependencies]
+serde_json.workspace = true
