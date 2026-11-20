@@ -20,7 +20,7 @@
 <script lang="ts">
   import { globeStats, type Globe, type Json, type SystemScene, type ViewContext } from "../../../ui-contract/src/index.ts";
   import { untrack } from "svelte";
-  import { airFactsOf, applyEdits, editableSettings, keepPhoto, listPhotos, LIBRARY, mountGlobe, photograph, removePhoto, type GlobeRun, type MediaItem, type RecipeDoc, type RecipeEdit, type GlobeRunOptions, type GlobeStatus } from "../../../renderer/src/index.ts";
+  import { airFactsOf, airFromOptics, airRequest, applyEdits, editableSettings, keepPhoto, listPhotos, LIBRARY, mountGlobe, photograph, removePhoto, type GlobeRun, type MediaItem, type RecipeDoc, type RecipeEdit, type GlobeRunOptions, type GlobeStatus } from "../../../renderer/src/index.ts";
   import { SHIPPED_RECIPES } from "../../../renderer/src/recipes.ts";
   import Cutaway from "../../cutaway/src/Cutaway.svelte";
 
@@ -60,7 +60,15 @@
       const rs = await ctx.session.resolvedSystem(sys);
       if (g !== gen) return;
       const surf = rs.ok ? (rs.result.surfaces.find((x) => x.address === sub.address) as Parameters<typeof airFactsOf>[1]) : undefined;
-      const v = { tiles: r.tiles, regime: r.regime, refused: r.refused.length, air: rs.ok ? airFactsOf(rs.result.facts[sub.address], surf) : null };
+      const facts = rs.ok ? airFactsOf(rs.result.facts[sub.address], surf) : null;
+      // The optics themselves come from the kernel (light track, read_air_optics).
+      const req = facts ? airRequest(sub.address, facts) : null;
+      if (facts && req) {
+        const ao = await ctx.session.readAirOptics([req.air]);
+        if (g !== gen) return;
+        facts.optics = ao.ok && ao.airs[0] ? airFromOptics(ao.airs[0] as Parameters<typeof airFromOptics>[0], req) : null;
+      }
+      const v = { tiles: r.tiles, regime: r.regime, refused: r.refused.length, air: facts };
       cache.set(key, v);
       got = v;
       loading = false;

@@ -154,6 +154,8 @@ export interface ViewSession {
   webSlice(ask: import("./galaxy.ts").SliceAsk): Promise<{ ok: true; web: import("./galaxy.ts").WebSlice } | { ok: false; code: string; message: string }>;
   /** A system as the universe now holds it: facts, a SystemSpec for look-ahead, and S0 surfaces. */
   resolvedSystem(system: string, at_s?: number): Promise<{ ok: true; result: SystemResolved } | { ok: false; code: string; message: string }>;
+  /** Air optics for the renderer's sky (kernel `read_air_optics`, light track): Rayleigh scattering and optical depth per wavelength. Read only; any seat. */
+  readAirOptics(airs: Json[], wavelengths_m?: number[]): Promise<{ ok: true; airs: Json[] } | { ok: false; code: string; message: string }>;
   kernelVersion(): Promise<string>;
   /** Derived values of a flow (read only; no event). */
   derive(ref: DeriveRef): Promise<{ ok: true; values: Record<string, Derived> } | { ok: false; message: string }>;
@@ -552,6 +554,11 @@ export class Session implements ViewSession {
     if (this.seat.authority !== "gm") return { ok: false, code: "not_gm", message: "the story finder reads the whole campaign, so it runs on the game master's machine" };
     const r = await this.#call({ op: "sift", ...ask });
     return r.type === "sifted" ? { ok: true, result: r as unknown as import("./story.ts").SiftResult } : { ok: false, code: String(r.code ?? "unexpected"), message: String(r.message ?? JSON.stringify(r)) };
+  }
+
+  async readAirOptics(airs: Json[], wavelengths_m?: number[]): Promise<{ ok: true; airs: Json[] } | { ok: false; code: string; message: string }> {
+    const r = await this.#call({ op: "read_air_optics", airs, ...(wavelengths_m ? { wavelengths_m } : {}) });
+    return r.type === "air_optics_read" ? { ok: true, airs: (r as unknown as { airs: Json[] }).airs } : { ok: false, code: String(r.code ?? "unexpected"), message: String(r.message ?? JSON.stringify(r)) };
   }
 
   async windowView(ask: import("./window.ts").WindowAsk): Promise<{ ok: true; view: import("./window.ts").WindowView } | { ok: false; code: string; message: string }> {

@@ -11,7 +11,7 @@ export { Governor, badge } from "./governor.ts";
 export type { Badge, GovernorOptions, GovernorMove } from "./governor.ts";
 export { LIBRARY } from "./passes.ts";
 export { mountGlobe, airRender } from "./runtime.ts";
-export { air, airFactsOf } from "./atmosphere.ts";
+export { air, airFactsOf, airFromOptics, airRequest, KERNEL_GASES } from "./atmosphere.ts";
 export type { Air, AirFacts } from "./atmosphere.ts";
 export type { GlobeRun, GlobeRunOptions, GlobeStatus } from "./runtime.ts";
 
