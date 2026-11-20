@@ -28,6 +28,7 @@
   import { atomIssueTarget, flowEntries, lensEntries, lensTarget, loadAtoms, physicsTarget } from "../../agents/src/orac-targets.ts";
   import { dataViewEntries, dataViewTarget, lookEntries, screenTarget, styleTarget, symbologyTarget } from "../../agents/src/orac-looks.ts";
   import { orbitScene, voicesFromSystem } from "../../ui-contract/src/index.ts";
+  import { orbitBodies, phasesFrom, withPhases, yearsToSeconds } from "../../ui-contract/src/index.ts";
   import { compareScenes, dropWhatIf, keepWhatIf, openWhatIf } from "../../ui-contract/src/index.ts";
   import { allLenses, checkLens, defaultLens, hasTool, lensAudience, type Lens, type Vocab } from "../../ui-contract/src/index.ts";
   import { themeCss, THEMES } from "../../skins/chart-room/src/index.ts";
@@ -322,7 +323,45 @@
   $effect(() => {
     if (status.tier) document.documentElement.dataset.tier = status.tier;
   });
-  const shown = $derived(ahead && ahead.snapshots[aheadAt] ? sceneAt(scene, ahead, ahead.snapshots[aheadAt]!) : scene);
+  // U11 part 2: every body where it is on the day being viewed, from the kernel's orbits_at (two-body Kepler, local
+  // to each host). Views draw from the scene, so the phases go onto it and the chart, 3D view and sound move together.
+  // A fixture scene sends its own elements, with its drawn phases as their places at the campaign's start.
+  let phases = $state<Map<string, number> | null>(null);
+  // Play asks ten times a second: one call at a time, and only the latest time waits.
+  let orbitsFor = "";
+  let orbitsBusy = false;
+  let orbitsWant: { s: ViewSession; sc: SystemScene; at: bigint; epoch: bigint; key: string } | null = null;
+  function pumpOrbits() {
+    if (orbitsBusy || !orbitsWant) return;
+    const w = orbitsWant;
+    orbitsWant = null;
+    orbitsBusy = true;
+    w.s.orbitsAt(w.sc.system, [w.at], orbitBodies(w.sc, w.epoch)).then((r) => {
+      orbitsBusy = false;
+      if (r.ok && orbitsFor === w.key) phases = phasesFrom(r.bodies);
+      pumpOrbits();
+    });
+  }
+  $effect(() => {
+    const s = session;
+    const sc = scene;
+    const at = yearsToSeconds(ws.now_yr);
+    const epoch = yearsToSeconds(ws.campaign_epoch_yr ?? base.now_yr);
+    if (!s) return;
+    const key = `${sc.system}|${sc.fixture ? "f" : "k"}`;
+    if (key !== orbitsFor) ((orbitsFor = key), (phases = null));
+    orbitsWant = { s, sc, at, epoch, key };
+    pumpOrbits();
+  });
+  // A pack's calendar (kernel calendar), read again whenever the pack stack changes.
+  $effect(() => {
+    const s = session;
+    void status.stack;
+    if (!s) return;
+    s.calendar().then((r) => (ws.pack_calendar = r.ok ? (r.calendar ?? null) : null));
+  });
+  const timed = $derived(withPhases(scene, phases));
+  const shown = $derived(ahead && ahead.snapshots[aheadAt] ? sceneAt(timed, ahead, ahead.snapshots[aheadAt]!) : timed);
   const lit = $derived(describeLight(litFromSystem(shown)));
   const lightNames = $derived(new Map(shown.subjects.map((x) => [x.address, x.label])));
   const lightColours = $derived.by(() => {

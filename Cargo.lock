@@ -523,6 +523,20 @@ dependencies = [
 ]
 
 [[package]]
+name = "sse-codes"
+version = "0.1.0"
+dependencies = [
+ "serde",
+ "serde_json",
+ "sse-atoms",
+ "sse-core",
+ "sse-formation",
+ "sse-pack",
+ "sse-sector-io",
+ "sse-sift",
+]
+
+[[package]]
 name = "sse-core"
 version = "0.1.0"
 dependencies = [
@@ -596,6 +610,7 @@ dependencies = [
  "sse-activity",
  "sse-atoms",
  "sse-chronicle",
+ "sse-codes",
  "sse-core",
  "sse-cosmos",
  "sse-flow",
@@ -609,6 +624,7 @@ dependencies = [
  "sse-observe",
  "sse-pack",
  "sse-record",
+ "sse-sector-io",
  "sse-sense",
  "sse-sift",
  "sse-surface",
@@ -739,6 +755,14 @@ dependencies = [
  "sse-chronicle",
  "sse-core",
  "sse-flow",
+]
+
+[[package]]
+name = "sse-sector-io"
+version = "0.1.0"
+dependencies = [
+ "serde",
+ "serde_json",
 ]
 
 [[package]]

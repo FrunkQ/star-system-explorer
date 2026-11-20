@@ -2167,5 +2167,109 @@
   "op": "detach_program",
   "address": "u:kestrel/sys:0/drone:1",
   "at_s": 300
+ },
+ {
+  "op": "codes",
+  "scope": "u:toy/sys:0",
+  "at_s": 0
+ },
+ {
+  "op": "load_stack",
+  "packs": [
+   "$pack:codes-toy"
+  ]
+ },
+ {
+  "op": "open_universe",
+  "id": "toy",
+  "seed": "t"
+ },
+ {
+  "op": "set_authored",
+  "edit": {
+   "address": "u:toy/sys:0/body:1",
+   "field": "body.radius",
+   "value": 6400000.0,
+   "occurred_at_s": 0
+  }
+ },
+ {
+  "op": "set_authored",
+  "edit": {
+   "address": "u:toy/sys:0/body:2",
+   "field": "body.radius",
+   "value": 1700000.0,
+   "occurred_at_s": 0
+  }
+ },
+ {
+  "op": "set_authored",
+  "edit": {
+   "address": "u:toy/sys:0/body:3",
+   "field": "body.radius",
+   "value": 70000000.0,
+   "occurred_at_s": 0
+  }
+ },
+ {
+  "op": "set_authored",
+  "edit": {
+   "address": "u:toy/sys:0/body:2",
+   "field": "toy.code.size",
+   "value": "8",
+   "occurred_at_s": 0
+  }
+ },
+ {
+  "op": "codes",
+  "scope": "u:toy/sys:0",
+  "at_s": 10
+ },
+ {
+  "op": "codes",
+  "scope": "u:toy/sys:0/body:2",
+  "sheet": "toy.world",
+  "at_s": 10
+ },
+ {
+  "op": "codes",
+  "scope": "u:toy/sys:0",
+  "sheet": "nope",
+  "at_s": 10
+ },
+ {
+  "op": "import_sector",
+  "text": "0101 Alpha X800000-0 A\n0102 Beta X100000-0\n0103 Gamma X?00000-0",
+  "at_s": 0
+ },
+ {
+  "op": "import_sector",
+  "text": "0101 Alpha X800000-0 A\n0102 Beta X100000-0",
+  "format": "uwp_lines",
+  "apply": true,
+  "at_s": 20
+ },
+ {
+  "op": "codes",
+  "scope": "u:toy/sys:0101",
+  "at_s": 30
+ },
+ {
+  "op": "import_sector",
+  "text": "x",
+  "format": "xml",
+  "at_s": 0
+ },
+ {
+  "op": "export_sector",
+  "scope": "u:toy",
+  "format": "uwp_lines",
+  "at_s": 30
+ },
+ {
+  "op": "export_sector",
+  "scope": "u:toy",
+  "format": "docx",
+  "at_s": 30
  }
 ]

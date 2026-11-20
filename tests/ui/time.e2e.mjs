@@ -52,8 +52,15 @@ try {
       assert.equal(await readout(), "Year 1, day 1, 00:00");
 
       // Stepping at now: time passes in the campaign.
+      // Worlds move along their orbits as the days pass (the kernel's orbits_at): Tarn, a 151-day year, moves about 5 degrees in two days.
+      const tarnAt = () => page.locator('.body[aria-label^="Tarn"] .hit').first().evaluate((c) => [Number(c.getAttribute("cx")), Number(c.getAttribute("cy"))]);
+      const [x0, y0] = await tarnAt();
       await page.getByRole("button", { name: "Forward one day" }).click();
       await page.getByRole("button", { name: "Forward one day" }).click();
+      await page.waitForFunction(([x, y]) => {
+        const c = document.querySelector('.body[aria-label^="Tarn"] .hit');
+        return c && Math.hypot(Number(c.getAttribute("cx")) - x, Number(c.getAttribute("cy")) - y) > 2;
+      }, [x0, y0], { timeout: 5000 });
       assert.equal(await readout(), "Year 1, day 3, 00:00");
       assert.equal(await linked(), "yes");
       await shot("2-week");
@@ -95,7 +102,6 @@ try {
       assert.equal(await readout(), before);
       assert.equal(await linked(), "yes");
 
-      assert.match(await ruler.locator("[data-note]").innerText(), /orbits by the day/);
       // Fits the screen.
       const over = await ruler.evaluate((el) => el.scrollWidth - el.clientWidth);
       assert.ok(over <= 1, `ruler overflows by ${over}px`);
