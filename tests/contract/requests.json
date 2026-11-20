@@ -1694,6 +1694,357 @@
   ]
  },
  {
+  "op": "calendar"
+ },
+ {
+  "op": "campaign_now"
+ },
+ {
+  "op": "set_campaign_now",
+  "at_s": 3600
+ },
+ {
+  "op": "campaign_now"
+ },
+ {
+  "op": "adopt",
+  "formation": {
+   "seed": "kernel-form-7",
+   "system": "u:kestrel/sys:41",
+   "star_pins": {
+    "primary_mass": 1.0
+   }
+  }
+ },
+ {
+  "op": "orbits_at",
+  "system": "u:kestrel/sys:41",
+  "at_s": [
+   0,
+   3600
+  ]
+ },
+ {
+  "op": "orbits_at",
+  "system": "u:kestrel/sys:41",
+  "at_s": []
+ },
+ {
+  "op": "orbits_at",
+  "system": "u:x/sys:0",
+  "at_s": [
+   0,
+   86400
+  ],
+  "bodies": [
+   {
+    "address": "u:x/sys:0/star:0",
+    "facts": {
+     "body.mass": 1.98847e+30
+    }
+   },
+   {
+    "address": "u:x/sys:0/body:0",
+    "facts": {
+     "orbit.host": "u:x/sys:0/star:0",
+     "orbit.semi_major_axis": 149597870700.0,
+     "orbit.eccentricity": 0.0167,
+     "orbit.mean_anomaly_at_epoch": 0.0
+    }
+   },
+   {
+    "address": "u:x/sys:0/body:1",
+    "facts": {
+     "orbit.host": "u:x/sys:0/star:0",
+     "orbit.semi_major_axis": 700000000000.0
+    }
+   }
+  ]
+ },
+ {
+  "op": "load_stack",
+  "packs": [
+   "$pack:base-toy",
+   "$pack:imperial-calendar"
+  ]
+ },
+ {
+  "op": "calendar"
+ },
+ {
+  "op": "load_stack",
+  "packs": [
+   "$pack:rpg-record",
+   "$pack:rpg-intents"
+  ]
+ },
+ {
+  "op": "intents"
+ },
+ {
+  "op": "send_intent",
+  "seat": "gm",
+  "at_s": 0,
+  "intent": {
+   "kind": "set_value",
+   "address": "u:kestrel/ship:calla",
+   "field": "tag.crewed",
+   "value": true,
+   "at_yr": 0
+  }
+ },
+ {
+  "op": "set_seats",
+  "at_s": 0,
+  "seats": [
+   {
+    "id": "crew",
+    "label": "Crew",
+    "audience": "crew",
+    "authority": "player",
+    "may_send": [
+     "hail"
+    ],
+    "sealed": false
+   }
+  ]
+ },
+ {
+  "op": "set_seats",
+  "at_s": 0,
+  "seats": [
+   {
+    "id": "crew",
+    "audience": "crew",
+    "authority": "player",
+    "may_send": [
+     "fly"
+    ]
+   }
+  ]
+ },
+ {
+  "op": "send_intent",
+  "seat": "crew",
+  "at_s": 20,
+  "intent": {
+   "kind": "hail",
+   "address": "u:kestrel/sys:0/body:3",
+   "words": "hello"
+  }
+ },
+ {
+  "op": "send_intent",
+  "seat": "crew",
+  "at_s": 20,
+  "intent": {
+   "kind": "hail",
+   "address": "u:kestrel/ship:calla",
+   "words": "this is Kestrel"
+  },
+  "check_only": true
+ },
+ {
+  "op": "send_intent",
+  "seat": "crew",
+  "at_s": 20,
+  "intent": {
+   "kind": "hail",
+   "address": "u:kestrel/ship:calla",
+   "words": "this is Kestrel"
+  }
+ },
+ {
+  "op": "intent_decide",
+  "proposal": "578dd9797f02ffac424f93ecfdc4c9d7c304d6040beb607e9b251bd0a596ef1a",
+  "approve": true
+ },
+ {
+  "op": "intent_decide",
+  "proposal": "00",
+  "approve": false
+ },
+ {
+  "op": "send_intent",
+  "seat": "nobody",
+  "at_s": 0,
+  "intent": {
+   "kind": "hail",
+   "address": "u:kestrel/ship:calla",
+   "words": "this is Kestrel"
+  }
+ },
+ {
+  "op": "load_stack",
+  "packs": [
+   "$pack:rpg-templates"
+  ]
+ },
+ {
+  "op": "templates"
+ },
+ {
+  "op": "create",
+  "template": "raider",
+  "under": "u:kestrel/sys:0",
+  "name": "Black Gull",
+  "at_s": 100
+ },
+ {
+  "op": "create",
+  "template": "raider",
+  "under": "u:kestrel/sys:0",
+  "key": "1",
+  "at_s": 100
+ },
+ {
+  "op": "create",
+  "template": "cruiser",
+  "under": "u:kestrel/sys:0",
+  "at_s": 100
+ },
+ {
+  "op": "retire",
+  "address": "u:kestrel/sys:0/ship:1",
+  "reason": "scuttled",
+  "at_s": 200
+ },
+ {
+  "op": "retire",
+  "address": "u:kestrel/sys:0/ship:1",
+  "at_s": 300
+ },
+ {
+  "op": "load_stack",
+  "packs": [
+   "$pack:rpg-record",
+   "$pack:rpg-sifters"
+  ]
+ },
+ {
+  "op": "set_authored",
+  "edit": {
+   "address": "u:kestrel/sys:0/body:3",
+   "field": "mass_kg",
+   "value": 6e+24,
+   "occurred_at_s": 0
+  }
+ },
+ {
+  "op": "sift",
+  "at_s": 10
+ },
+ {
+  "op": "sift",
+  "audience": "crew",
+  "scope": "u:kestrel/sys:0/body:3",
+  "at_s": 10
+ },
+ {
+  "op": "sift",
+  "sifters": [
+   "nope"
+  ],
+  "at_s": 10
+ },
+ {
+  "op": "load_stack",
+  "packs": [
+   "$pack:rpg-programs"
+  ]
+ },
+ {
+  "op": "set_authored",
+  "edit": {
+   "address": "u:kestrel/sys:0/body:2",
+   "field": "ore.grade",
+   "value": 0.6,
+   "occurred_at_s": 0
+  }
+ },
+ {
+  "op": "create",
+  "template": "drone",
+  "under": "u:kestrel/sys:0",
+  "key": "1",
+  "at_s": 0
+ },
+ {
+  "op": "set_seats",
+  "seats": [
+   {
+    "id": "drone-ops",
+    "label": "Drone ops",
+    "audience": "drone-ops",
+    "authority": "player",
+    "may_send": [
+     "go",
+     "mine",
+     "unload"
+    ],
+    "program": "miner",
+    "auto_approve": [
+     {
+      "intent": "go",
+      "scope": [
+       "u:kestrel/sys:0/drone:1"
+      ]
+     },
+     {
+      "intent": "mine",
+      "scope": [
+       "u:kestrel/sys:0/drone:1"
+      ]
+     },
+     {
+      "intent": "unload",
+      "scope": [
+       "u:kestrel/sys:0/drone:1"
+      ]
+     }
+    ]
+   }
+  ],
+  "at_s": 0
+ },
+ {
+  "op": "attach_program",
+  "address": "u:kestrel/sys:0/drone:1",
+  "program": "miner",
+  "seat": "drone-ops",
+  "at_s": 0
+ },
+ {
+  "op": "attach_program",
+  "address": "u:kestrel/sys:0/body:2",
+  "program": "miner",
+  "seat": "drone-ops",
+  "at_s": 0
+ },
+ {
+  "op": "scan_toggle",
+  "address": "u:kestrel/sys:0/body:2",
+  "audience": "drone-ops",
+  "at_s": 5
+ },
+ {
+  "op": "programs_step",
+  "at_s": 100
+ },
+ {
+  "op": "programs_step",
+  "at_s": 200
+ },
+ {
+  "op": "programs",
+  "at_s": 200
+ },
+ {
+  "op": "detach_program",
+  "address": "u:kestrel/sys:0/drone:1",
+  "at_s": 300
+ },
+ {
   "op": "codes",
   "scope": "u:toy/sys:0",
   "at_s": 0

@@ -78,6 +78,12 @@ pub struct GalaxyParams {
     /// Steady feeding: black hole growth per mass of stars formed (black holes
     /// track their galaxies, Kormendy and Ho 2013).
     pub black_hole_steady: f64,
+    /// Black holes brought in with ex-situ stars: the merging galaxies' holes
+    /// sink with their stars and coalesce, at this hole-to-stars ratio
+    /// (Kormendy and Ho 2013; Reines and Volonteri 2015). This is how the
+    /// biggest galaxies get billion-sun holes.
+    #[serde(default = "exsitu_black_hole_default")]
+    pub exsitu_black_hole: f64,
     /// Gas turned into stars in a major merger, times the mass ratio.
     pub burst_fraction: f64,
     /// Radio-mode feedback: cooling times 1 / (1 + (M_h / M_q)^k (M_bh / M_bh,q)),
@@ -93,6 +99,10 @@ pub struct GalaxyParams {
     pub bar_threshold: f64,
     /// Steps between stored history points.
     pub history_every: u32,
+}
+
+fn exsitu_black_hole_default() -> f64 {
+    1.0e-3
 }
 
 impl Default for GalaxyParams {
@@ -122,6 +132,7 @@ impl Default for GalaxyParams {
             seed_black_hole: 1.0e5,
             black_hole_feed: 0.01,
             black_hole_steady: 5.0e-4,
+            exsitu_black_hole: exsitu_black_hole_default(),
             burst_fraction: 0.5,
             quench_halo: 1.0e12,
             quench_halo_slope: 2.0,
@@ -216,7 +227,7 @@ impl GalaxyParams {
             .min(self.eta_max)
     }
 
-    fn virial(&self, c: &Cosmology, mh: f64, a: f64) -> (f64, f64) {
+    pub(crate) fn virial(&self, c: &Cosmology, mh: f64, a: f64) -> (f64, f64) {
         // R_200 against the critical density at a; rho_crit0 in Msun / kpc^3.
         let rho_c = crate::cosmology::RHO_CRIT_H2 * c.h * c.h * 1.0e-9 * c.e(a) * c.e(a);
         let r = m::cbrt(3.0 * mh / (4.0 * m::PI * 200.0 * rho_c));
@@ -408,6 +419,7 @@ pub fn evolve_with(c: &Cosmology, p: &GalaxyParams, halo: &Halo, edits: &[Edit])
         let smooth = p.exsitu_fraction * p.exsitu_ratio * (1.0 - hot) * dmh;
         stars += smooth;
         bulge += smooth;
+        bh += p.exsitu_black_hole * smooth;
         // Major mergers in this step: bulge, burst, black hole.
         while next_merger < mergers.len() && mergers[next_merger].0 < t + dt {
             let (tm, ratio) = mergers[next_merger];
@@ -423,6 +435,7 @@ pub fn evolve_with(c: &Cosmology, p: &GalaxyParams, halo: &Halo, edits: &[Edit])
             let accreted = stars * m::pow(ratio, 2.0) * hot;
             stars += accreted;
             bulge += accreted;
+            bh += p.exsitu_black_hole * accreted;
             let burst = (p.burst_fraction * ratio * gas).min(gas);
             gas -= burst;
             let born = (1.0 - p.return_fraction) * burst;

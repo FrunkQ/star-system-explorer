@@ -403,11 +403,15 @@ pub enum Request {
         #[ts(optional, type = "unknown")]
         rescue: Option<serde_json::Value>,
     },
-    /// The story finder (U8): run the stack's sifters, plus any given inline,
-    /// over every address at or under `scope` (default the universe) at
-    /// `at_s` (default now). Hits come best first, each with its evidence
-    /// (facts and the events that set them) and significance. Reads the GM's
-    /// full state: GM only.
+    /// The story finder (U8) and the agents' sift: run sifters over every
+    /// address at or under `scope` (default the universe) at `at_s` (default
+    /// now). `sifters` holds names of the stack's sifters
+    /// (`provides.other.sifters`) and inline sifter objects: with no names,
+    /// every stack sifter runs, plus the inline ones; with names, only those
+    /// named, plus the inline ones. With `audience`, only what that
+    /// audience's scene shows is sifted and event patterns are skipped
+    /// (players never see the chronicle). Hits come best first, each with its
+    /// evidence and significance. GM machine only.
     Sift {
         #[serde(default)]
         #[ts(optional)]
@@ -418,6 +422,9 @@ pub enum Request {
         #[serde(default)]
         #[ts(optional, type = "unknown[]")]
         sifters: Option<Vec<serde_json::Value>>,
+        #[serde(default)]
+        #[ts(optional)]
+        audience: Option<String>,
     },
     /// The Window (V8): what a `sensor` (`eye`, `binoculars`, `telescope` in
     /// base-nav) picks up at `at_s` from beside body `from`, or from the point
@@ -694,6 +701,112 @@ pub enum Request {
     /// The loaded rules with their effective policies, and the record's
     /// `rules.*` trail (GM only).
     Rules,
+    /// Bodies at or under `system` placed on their orbits at each time
+    /// (universe seconds, at most 64): position relative to the host in
+    /// metres, longitude in degrees, period. Reads the universe's facts, or
+    /// `bodies` (`[{address, facts}]`) when given. A body with no dated phase
+    /// takes a keyed draw (`phase_source: resolved`); one missing anything
+    /// else comes back unplaced with `missing` named, never guessed.
+    OrbitsAt {
+        system: String,
+        at_s: Vec<i64>,
+        #[serde(default)]
+        #[ts(optional, type = "unknown[]")]
+        bodies: Option<Vec<serde_json::Value>>,
+    },
+    /// Set the campaign's now (`campaign.now_s` on the universe root, a
+    /// `time.campaign_now` event). It moves forwards or back.
+    SetCampaignNow {
+        at_s: i64,
+    },
+    /// The campaign's now (absent if never set).
+    CampaignNow,
+    /// The top pack's calendar (`provides.other.calendar`), checked at load.
+    Calendar,
+    /// The intent registry (J5): built-in kinds and the stack's
+    /// (`provides.other.intents`), with their fields, who applies them and
+    /// whether they ever apply without the GM; the seat plan in force; and
+    /// intents waiting for the GM. GM machine only.
+    Intents,
+    /// Store the seat plan (as the chart room's `SeatPlan.seats`, plus
+    /// `program` for a program-driven seat). A GM seat is always present.
+    SetSeats {
+        #[ts(type = "unknown[]")]
+        seats: Vec<serde_json::Value>,
+        at_s: i64,
+    },
+    /// A seat sends an intent (`{kind, ...fields}`). The kernel checks it
+    /// against the registry and the seat, then applies it, queues it for the
+    /// GM, or refuses it, as the chart room's `decide`. `check_only` decides
+    /// and writes nothing.
+    SendIntent {
+        seat: String,
+        #[ts(type = "unknown")]
+        intent: serde_json::Value,
+        at_s: i64,
+        #[serde(default)]
+        #[ts(optional)]
+        check_only: Option<bool>,
+    },
+    /// The stack's templates (J7, `provides.other.templates`).
+    Templates,
+    /// Make an authored object from a template under `under`
+    /// (`<under>/<kind>:<key>`, the next free number when no key): its facts,
+    /// tags and programs in one universe event, its kept values in the record.
+    /// GM machine only.
+    Create {
+        template: String,
+        under: String,
+        #[serde(default)]
+        #[ts(optional)]
+        key: Option<String>,
+        #[serde(default)]
+        #[ts(optional)]
+        name: Option<String>,
+        at_s: i64,
+    },
+    /// Take an object made from a template out of play (`retired`). Nothing is deleted.
+    Retire {
+        address: String,
+        #[serde(default)]
+        #[ts(optional)]
+        reason: Option<String>,
+        at_s: i64,
+    },
+    /// The GM answers a queued intent; yes applies it at `at_s` (default: when it was sent).
+    IntentDecide {
+        proposal: String,
+        approve: bool,
+        #[serde(default)]
+        #[ts(optional)]
+        at_s: Option<i64>,
+    },
+    /// The stack's programs (`provides.other.programs`, J6), the campaign's
+    /// limit and the programs running at `at_s` (default: latest).
+    Programs {
+        #[serde(default)]
+        #[ts(optional)]
+        at_s: Option<i64>,
+    },
+    /// Start `program` on `address` (an object whose template lists it),
+    /// driving `seat` (a program seat naming that program). GM machine only.
+    AttachProgram {
+        address: String,
+        program: String,
+        seat: String,
+        at_s: i64,
+    },
+    /// Stop the program on `address`. GM machine only.
+    DetachProgram {
+        address: String,
+        at_s: i64,
+    },
+    /// One tick for every running program at `at_s`: follow transitions,
+    /// then sense through the seat's audience, pick and send the state's
+    /// intent; then run the rules so its effects land. GM machine only.
+    ProgramsStep {
+        at_s: i64,
+    },
     /// Game-system codes (handoff 7A part 1) for every body at or under
     /// `scope` at `at_s`, read by a pack's code sheet (`sheet`, or the first
     /// one in the stack): each digit with its why, the lines (a UWP), and the
@@ -849,6 +962,21 @@ impl Request {
             Request::RulesDecide { .. } => "rules_decide",
             Request::RulesPolicy { .. } => "rules_policy",
             Request::Rules => "rules",
+            Request::OrbitsAt { .. } => "orbits_at",
+            Request::SetCampaignNow { .. } => "set_campaign_now",
+            Request::CampaignNow => "campaign_now",
+            Request::Calendar => "calendar",
+            Request::Intents => "intents",
+            Request::SetSeats { .. } => "set_seats",
+            Request::SendIntent { .. } => "send_intent",
+            Request::IntentDecide { .. } => "intent_decide",
+            Request::Templates => "templates",
+            Request::Create { .. } => "create",
+            Request::Retire { .. } => "retire",
+            Request::Programs { .. } => "programs",
+            Request::AttachProgram { .. } => "attach_program",
+            Request::DetachProgram { .. } => "detach_program",
+            Request::ProgramsStep { .. } => "programs_step",
             Request::Codes { .. } => "codes",
             Request::ImportSector { .. } => "import_sector",
             Request::ExportSector { .. } => "export_sector",
@@ -956,7 +1084,7 @@ pub fn ops() -> Vec<OpInfo> {
         o(
             "sift",
             Cost::Light,
-            "linear in addresses x sifters within the scope (a campaign of a few systems: milliseconds)",
+            "GM machine only; linear in addresses x sifters within the scope (a campaign of a few systems: milliseconds), plus one scene for an audience",
         ),
         o(
             "window_view",
@@ -999,6 +1127,33 @@ pub fn ops() -> Vec<OpInfo> {
         o("rules_decide", Cost::Light, "GM machine only; one fold and the proposal's effects"),
         o("rules_policy", Cost::Trivial, "GM machine only; one record event"),
         o("rules", Cost::Light, "GM machine only; linear in the record events"),
+        o(
+            "orbits_at",
+            Cost::Light,
+            "linear in bodies x times (at most 64 times); 16 Newton steps each",
+        ),
+        o("set_campaign_now", Cost::Trivial, "one universe event"),
+        o("campaign_now", Cost::Trivial, "a scan of the universe events"),
+        o("calendar", Cost::Trivial, "read at load"),
+        o("intents", Cost::Light, "GM machine only; linear in the record events"),
+        o("set_seats", Cost::Trivial, "GM machine only; one record event"),
+        o(
+            "send_intent",
+            Cost::Light,
+            "GM machine only; one fold for a validity condition, then the intent's own request",
+        ),
+        o("intent_decide", Cost::Light, "GM machine only; the intent's own request"),
+        o("templates", Cost::Trivial, "read at load"),
+        o("create", Cost::Light, "GM machine only; one universe event and one record event per kept value"),
+        o("retire", Cost::Trivial, "GM machine only; one universe event"),
+        o("programs", Cost::Trivial, "read at load, plus a fold of the record"),
+        o("attach_program", Cost::Trivial, "GM machine only; one record event"),
+        o("detach_program", Cost::Trivial, "GM machine only; one record event"),
+        o(
+            "programs_step",
+            Cost::Light,
+            "GM machine only; per running program (at most the campaign's limit) one scene, a few conditions and one intent, then a rules step",
+        ),
         o(
             "codes",
             Cost::Light,
@@ -1269,11 +1424,17 @@ pub enum Response {
     /// `sift`: hits best first (`sifter`, `label`, `subject`, `evidence`
     /// [{address, field, value, event}], `significance` {score, persistence_s,
     /// reach, reversibility, rarity_p, components}), the sifters run, the scope.
+    /// With an `audience`, `skipped` names the sifters not run for it.
     Sifted {
         scope: String,
         sifters: Vec<String>,
         #[ts(type = "unknown")]
         hits: serde_json::Value,
+        #[ts(optional)]
+        #[serde(default, skip_serializing_if = "Option::is_none")]
+        audience: Option<String>,
+        #[serde(default, skip_serializing_if = "Vec::is_empty")]
+        skipped: Vec<String>,
     },
     WindowViewed {
         #[ts(type = "unknown")]
@@ -1382,6 +1543,119 @@ pub enum Response {
         rules: Vec<serde_json::Value>,
         #[ts(type = "unknown[]")]
         trail: Vec<serde_json::Value>,
+    },
+    /// `intents`: `kinds` `[{kind, meaning, fields, subject?, valid?, never_auto?, pack, applied_by}]`,
+    /// `seats` (the plan in force) and `pending` `[{id, seat, intent, at_s}]`.
+    IntentsListed {
+        #[ts(type = "unknown[]")]
+        kinds: Vec<serde_json::Value>,
+        #[ts(type = "unknown[]")]
+        seats: Vec<serde_json::Value>,
+        #[ts(type = "unknown[]")]
+        pending: Vec<serde_json::Value>,
+    },
+    SeatsSet {
+        event_id: String,
+        record_hash: String,
+    },
+    /// `send_intent`: `decision` `{action: apply | ask_gm | refuse, reason?}`;
+    /// `applied_by` `kernel` (with the request's response in `applied`),
+    /// `record` (`intent.<kind>` written) or `session` (the session applies
+    /// it); `proposal` when it waits for the GM.
+    IntentSent {
+        #[ts(type = "unknown")]
+        decision: serde_json::Value,
+        #[serde(default, skip_serializing_if = "Option::is_none")]
+        #[ts(optional)]
+        applied_by: Option<String>,
+        #[serde(default, skip_serializing_if = "Option::is_none")]
+        #[ts(optional)]
+        proposal: Option<String>,
+        #[serde(default, skip_serializing_if = "Option::is_none")]
+        #[ts(optional, type = "unknown")]
+        applied: Option<serde_json::Value>,
+    },
+    /// `intent_decide`: the answer's event, the intent, and what a yes applied.
+    IntentDecided {
+        event_id: String,
+        seat: String,
+        #[ts(type = "unknown")]
+        intent: serde_json::Value,
+        #[serde(default, skip_serializing_if = "Option::is_none")]
+        #[ts(optional)]
+        applied_by: Option<String>,
+        #[serde(default, skip_serializing_if = "Option::is_none")]
+        #[ts(optional, type = "unknown")]
+        applied: Option<serde_json::Value>,
+    },
+    /// `templates`: `[{id, kind, label, facts?, kept?, tags?, programs?, explain?, pack, version}]`.
+    TemplatesListed {
+        #[ts(type = "unknown[]")]
+        templates: Vec<serde_json::Value>,
+    },
+    /// `create`: the new address, its universe event and the kept values' record events.
+    Created {
+        address: String,
+        event_id: String,
+        kept: Vec<String>,
+        state_hash: String,
+        record_hash: String,
+    },
+    Retired {
+        event_id: String,
+        state_hash: String,
+    },
+    /// `programs`: `programs: [{id, label, params, start, states, budget, explain, pack}]`,
+    /// `limit`, and `running: [{address, program, seat, state, since_s}]`.
+    ProgramsListed {
+        #[ts(type = "unknown[]")]
+        programs: Vec<serde_json::Value>,
+        limit: u32,
+        #[ts(type = "unknown[]")]
+        running: Vec<serde_json::Value>,
+    },
+    ProgramAttached {
+        event_id: String,
+        record_hash: String,
+    },
+    ProgramDetached {
+        event_id: String,
+        record_hash: String,
+    },
+    /// `programs_step`: per program `{address, program, from, to, moves,
+    /// sensed, picked?, intent?, decision?, applied_by?, proposal?, skipped?}`,
+    /// then the rules step's report.
+    ProgramsStepped {
+        #[ts(type = "unknown[]")]
+        programs: Vec<serde_json::Value>,
+        #[ts(type = "unknown")]
+        rules: serde_json::Value,
+        record_hash: String,
+    },
+    /// `orbits_at`: per body `{address, placed, parent?, period_s?,
+    /// phase_source?, missing?, at: [{at_s, r_m: [x, y, z], phase_deg}]}`.
+    OrbitsPlaced {
+        system: String,
+        #[ts(type = "unknown[]")]
+        bodies: Vec<serde_json::Value>,
+    },
+    /// `set_campaign_now` and `campaign_now`.
+    CampaignNowIs {
+        #[serde(default, skip_serializing_if = "Option::is_none")]
+        #[ts(optional)]
+        at_s: Option<i64>,
+        #[serde(default, skip_serializing_if = "Option::is_none")]
+        #[ts(optional)]
+        event_id: Option<String>,
+        #[serde(default, skip_serializing_if = "Option::is_none")]
+        #[ts(optional)]
+        state_hash: Option<String>,
+    },
+    /// `calendar`: `{name, epoch_s, epoch_year, day_s, year_days, months?, format}`, or absent.
+    CalendarIs {
+        #[serde(default, skip_serializing_if = "Option::is_none")]
+        #[ts(optional, type = "unknown")]
+        calendar: Option<serde_json::Value>,
     },
     /// `systems`: one entry per system, `{system, source, name?, addresses,
     /// adopted_event?}`.

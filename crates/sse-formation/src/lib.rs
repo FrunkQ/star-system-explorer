@@ -5,9 +5,11 @@
 #![forbid(unsafe_code)]
 
 pub mod accrete;
+pub mod body;
 pub mod disc;
 pub mod early;
 pub mod growth;
+pub mod hierarchy;
 pub mod history;
 pub mod hurley;
 pub mod inherit;

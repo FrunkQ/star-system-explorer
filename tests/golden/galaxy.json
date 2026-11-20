@@ -1,47 +1,47 @@
 {
-  "chronicle_head": "ea9782083d6e0100003d1d353897d4fc0f4579e249da40ef349c49f49951b37a",
+  "chronicle_head": "a6d743e09d85aa591eacf4eb37afbb54c983c6a36f33871d0f81abd30a3030bf",
   "galaxies": [
     {
-      "black_hole": 1017130.1137915732,
-      "core_collapse_per_century": 0.19735723481337344,
+      "black_hole": 1052057.7354824226,
+      "core_collapse_per_century": 0.197354782180651,
       "disc_kpc": 1.4544476724843365,
-      "galaxy_digest": "4f621f9cb96168191462ff517115b230f14be5ac47311fe0b22bcf457519506b",
+      "galaxy_digest": "77caa4e59b7764fd1d6b8a60fdbfab825a086bea2ee87cf426abad0cce9adb2a",
       "halo": "u:g3/halo:dwarf",
-      "ia_per_century": 0.03060796187334181,
+      "ia_per_century": 0.030607634540676908,
       "morphology": "irregular",
-      "rings_digest": "f154c1b78945ad7586e04ce3fa5e69e7946ecf0a9a569b4267d3f6727d91ba07",
-      "sfr": 0.1366525568514393,
-      "solar_ring_feh": -0.5033480865137396,
-      "stars": 671026541.1322774,
-      "z_gas": 0.003650462691808378
+      "rings_digest": "3043548389d763a095a3cc8ebd2e1bb1d58100201ef9f659ff3bdc04373521f6",
+      "sfr": 0.13665083131876074,
+      "solar_ring_feh": -0.503349108307421,
+      "stars": 671022231.9287435,
+      "z_gas": 0.003650456420108124
     },
     {
-      "black_hole": 33907696.39373302,
-      "core_collapse_per_century": 3.3368343841031245,
+      "black_hole": 37914620.38754249,
+      "core_collapse_per_century": 3.1672089436030593,
       "disc_kpc": 3.1335238760705377,
-      "galaxy_digest": "7017fc1ca8542d171202397d2e646a5cf09ecfc24f79f835b36388b6f429d007",
+      "galaxy_digest": "1162d43f3bed6126c438942ceeda448e416d50fa7b9790aad85bfa2e0acd2e96",
       "halo": "u:g3/halo:milky-way-like",
-      "ia_per_century": 0.6813425556161944,
+      "ia_per_century": 0.6515600545165967,
       "morphology": "barred",
-      "rings_digest": "dbc5b45e7d9ca4c64b40f99f4af8164d01edd87af42cf57da1a28af4eb9aa5bb",
-      "sfr": 2.5859707843968653,
-      "solar_ring_feh": 0.1476530963347683,
-      "stars": 30280803900.461624,
-      "z_gas": 0.018785364924353606
+      "rings_digest": "f1a8111b1af1e8d822dab97b2241ff9032a2c633a6fe5c93f68980f4c266408b",
+      "sfr": 2.4485769983361627,
+      "solar_ring_feh": 0.14741696498975354,
+      "stars": 29517336341.68244,
+      "z_gas": 0.018540822166183052
     },
     {
-      "black_hole": 33239175.494347755,
-      "core_collapse_per_century": 0.3974918260835808,
+      "black_hole": 87910154.99531557,
+      "core_collapse_per_century": 0.3651512890964826,
       "disc_kpc": 6.751008226413507,
-      "galaxy_digest": "a01aa5be2d217edd113f26d8de28ba541c0ce829e9d26e17e55dfda00b974d55",
+      "galaxy_digest": "5b7668c7e5d076566cf5728fa093dae0175d22a60a4b6d3663c336498672ec21",
       "halo": "u:g3/halo:group",
-      "ia_per_century": 0.17685036337081073,
+      "ia_per_century": 0.16567822290617368,
       "morphology": "elliptical",
-      "rings_digest": "ec279c1ec623399f2f3c9ddf88603a9b78bd27a00cc4795fca8e9df578034a73",
-      "sfr": 0.026252001811071308,
-      "solar_ring_feh": 0.2892768385467346,
-      "stars": 71819940628.32524,
-      "z_gas": 0.025484518139081383
+      "rings_digest": "9c93994b0096d22019c78a4de8f0e0fc7d4e1f44cf5053e0d338732f9d70ffca",
+      "sfr": 0.010339905360015715,
+      "solar_ring_feh": 0.2773703948504928,
+      "stars": 70831580875.0771,
+      "z_gas": 0.02639716160348112
     }
   ]
 }

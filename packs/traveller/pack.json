@@ -7918,7 +7918,8 @@
       "Sixday",
       "Senday"
      ],
-     "first_day": 2
+     "first_day": 2,
+     "continuous": false
     }
    },
    "gas_mixes": [
@@ -8813,7 +8814,7 @@
       "effects": [
        {
         "effect": "grant",
-        "audience": "players",
+        "audience": "{observer.crew.audience}",
         "ladder": [
          "long-range",
          "scanned"
@@ -8843,7 +8844,7 @@
       "effects": [
        {
         "effect": "grant",
-        "audience": "players",
+        "audience": "{observer.crew.audience}",
         "ladder": [
          "long-range",
          "scanned"
@@ -8873,7 +8874,7 @@
       "effects": [
        {
         "effect": "grant",
-        "audience": "players",
+        "audience": "{observer.crew.audience}",
         "ladder": [
          "long-range",
          "scanned"
@@ -8903,7 +8904,7 @@
       "effects": [
        {
         "effect": "grant",
-        "audience": "players",
+        "audience": "{observer.crew.audience}",
         "ladder": [
          "long-range",
          "scanned"
@@ -8933,7 +8934,7 @@
       "effects": [
        {
         "effect": "grant",
-        "audience": "players",
+        "audience": "{observer.crew.audience}",
         "ladder": [
          "long-range",
          "scanned"
@@ -8963,7 +8964,7 @@
       "effects": [
        {
         "effect": "grant",
-        "audience": "players",
+        "audience": "{observer.crew.audience}",
         "ladder": [
          "long-range",
          "scanned",

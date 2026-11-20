@@ -67,6 +67,17 @@ try {
       assert.equal(dialogMoving > 0, !reduced, `dialog motion ${dialogMoving} with reduced=${reduced}`);
       await page.keyboard.press("Escape");
 
+      // Entering a planet's moons grows the chart out of the planet; leaving shrinks back.
+      await page.locator('.body[aria-label^="Vault"]').first().click();
+      await page.getByRole("button", { name: "Moons of Vault ›" }).click();
+      const chartSvg = page.locator(".area-chart svg[role=group]").first();
+      const frameMoving = await moving(chartSvg);
+      if (!reduced) await shot("5-moons-opening");
+      assert.equal(frameMoving > 0, !reduced, `frame motion ${frameMoving} with reduced=${reduced}`);
+      await page.locator('[role=button][aria-label^="Hasp"]').first().waitFor();
+      await page.getByRole("button", { name: /‹/ }).first().click();
+      await page.locator('.body[aria-label^="Tarn"]').first().waitFor();
+
       // The ruler glides, but its readout answers at once.
       const ruler = page.locator(".area-ruler .ruler");
       await page.getByLabel("Show", { exact: true }).selectOption("year");

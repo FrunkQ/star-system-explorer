@@ -518,9 +518,11 @@ GAS_MIXES = [
 # Sensors and what players can know (7A part 6), ported from V3's starter-sf
 # sensors.json. Range bands are the usual Traveller ones; sensor kinds say how
 # far they reach and which rung of the knowledge ladder they can lift a body
-# to. A ship carries `sensor.<kind>.range_m`; the trigger below moves a body
-# up the ladder for the "players" audience when a ship with that sensor stays
-# in range for an hour (a general trigger and grant, not a Traveller special).
+# to. A ship carries `sensor.<kind>.range_m` and `crew.audience` (whose
+# players it carries, e.g. "players"); the trigger below moves a body up the
+# ladder for that ship's own audience when a ship with that sensor stays in
+# range for an hour (a general trigger and grant, not a Traveller special), so
+# each crew learns only what its own ship saw.
 KM = 1000.0
 RANGE_BANDS = [
     {"id": "adjacent", "label": "adjacent", "range_m": 1 * KM},
@@ -561,7 +563,7 @@ TRIGGERS = {"rules": [
             "hold_s": 3600,
         }},
         "scope": {"pairs": {"observer_tag": "ship"}},
-        "effects": [{"effect": "grant", "audience": "players", "ladder": ladder_to(s["up_to"])}],
+        "effects": [{"effect": "grant", "audience": "{observer.crew.audience}", "ladder": ladder_to(s["up_to"])}],
         "explain": f"a ship's {s['label']} within {s['range_m'] / KM:,.0f} km for an hour reveals {s['reveals']}",
     }
     for s in SENSORS if s["up_to"]
@@ -609,7 +611,7 @@ IMPERIAL = {
     # Optional extras the kernel's checker is being asked to accept; the UI
     # formatter (packages/ui-contract/src/calendar.ts) reads them.
     "named_days": [{"day": 1, "name": "Holiday", "outside_weeks": True}],
-    "week": {"names": ["Wonday", "Tuday", "Thirday", "Forday", "Fiday", "Sixday", "Senday"], "first_day": 2},
+    "week": {"names": ["Wonday", "Tuday", "Thirday", "Forday", "Fiday", "Sixday", "Senday"], "first_day": 2, "continuous": False},
 }
 
 # Units (7A part 8). Parsecs and g already exist as length and acceleration;

@@ -257,7 +257,7 @@
         {#each labelled as e (e.id)}
           <div class="ev {e.tone}" style="left: {pct(e.at_yr)}" title="{e.label}, {timeWords(e.at_yr, cal, span)}">
             <span class="pin"></span>
-            {#if !compact && e.row >= 0}<span class="evl" class:row1={e.row === 1}>{e.label}</span>{/if}
+            {#if !compact && e.row >= 0}<span class="evl" class:row1={e.row === 1}>{e.label}<span class="evdate">, {timeWords(e.at_yr, cal, span)}</span></span>{/if}
           </div>
         {/each}
         {#each authored as e (e.id)}
@@ -445,6 +445,35 @@
   }
   .evl.row1 {
     top: 20px;
+  }
+  /* Resting on an event lifts it and says when (U12). */
+  .ev::before {
+    content: "";
+    position: absolute;
+    left: -6px;
+    top: -4px;
+    width: 12px;
+    height: 16px;
+  }
+  .pin {
+    transition:
+      height var(--sse-motion-quick) var(--sse-ease),
+      border-color var(--sse-motion-quick) var(--sse-ease);
+  }
+  .ev:hover .pin {
+    height: 10px;
+    border-color: var(--sse-ink);
+  }
+  .ev:hover .evl {
+    color: var(--sse-ink);
+    z-index: 1;
+    background: var(--sse-ground-raised);
+  }
+  .evdate {
+    display: none;
+  }
+  .ev:hover .evdate {
+    display: inline;
   }
   .ev.future .evl {
     color: var(--sse-accent-ink);

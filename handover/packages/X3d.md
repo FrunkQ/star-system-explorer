@@ -33,3 +33,14 @@ Status: done (19 Nov 2026), Traveller pack track. Design: handoff 7A part 5. Sti
   - The audience is the fixed `players`. The kernel thread has been asked about `{observer.<field>}` audiences, so each crew could learn for itself.
   - Sensor targets (stars, belts, moons) are listed but not yet enforced in the condition.
   - The Traveller pack now provides the stack's observe setup, and the top pack with one wins, so a pack above it replaces the ladder.
+
+## After kernel PR 28 (20 Nov)
+
+- Sensor grants now go to the observing ship's own audience,
+  `{observer.crew.audience}` (J4), instead of a fixed "players". A ship needs
+  `crew.audience` (for example "players") as well as its
+  `sensor.<kind>.range_m`; a ship without it gets the grant refused, nothing
+  half-done. The kernel test sets it on the test ship.
+- The Imperial calendar now spells out `week.continuous: false`, which the
+  kernel's calendar check requires for a day outside the weeks (Holiday).
+- `tests/golden/traveller-codes.json`: pack hash only, for these two edits.

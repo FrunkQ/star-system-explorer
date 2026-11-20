@@ -581,8 +581,9 @@ fn cloud_deck(
         .map(|i| {
             let lat = 0.5 * (edges[i as usize] + edges[i as usize + 1]);
             // Prograde at the equator, alternating, weakening poleward.
-            let mid = i as i64 - jets as i64;
-            let sign = if mid.rem_euclid(2) == 0 { 1.0 } else { -0.5 };
+            // Bands counted from the equator, mirrored north and south.
+            let k = if i >= jets { i - jets } else { jets - 1 - i };
+            let sign = if k.is_multiple_of(2) { 1.0 } else { -0.5 };
             Jet {
                 lat_deg: lat,
                 wind_m_s: sign * u * m::cos(lat.to_radians()),
@@ -639,8 +640,8 @@ impl CloudDeck {
     pub fn at(&self, v: [f64; 3], radius_km: f64) -> (f64, f64) {
         let nb = self.band_edges_deg.len() - 1;
         // Zones (w = 1) and belts (w = 0) alternate smoothly in sin(latitude);
-        // the bands either side of the equator are zones.
-        let x = (v[2].clamp(-1.0, 1.0) + 1.0) * 0.5 * nb as f64;
+        // the bands either side of the equator are zones, mirrored about it.
+        let x = (v[2].abs().min(1.0) + 1.0) * 0.5 * nb as f64;
         let sign = if (self.jets as usize).is_multiple_of(2) {
             1.0
         } else {
