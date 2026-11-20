@@ -4,7 +4,7 @@
   kernel only through the session, the same client API a player app uses.
 -->
 <script lang="ts">
-  import { applyEdits, enterFacts, observeOf, type AuthoredFacts, checkScreen, deriveScene, gmSeat, redoEdit, subjectOf, systemOrder, undoEdit, type CheckedScreen, type DerivationDoc, type ScreenDoc, type SystemScene, type ViewHandle, type ViewModule, type ViewSession } from "../../ui-contract/src/index.ts";
+  import { applyEdits, applySetup, type AtomInfo, enterFacts, observeOf, type AuthoredFacts, checkScreen, deriveScene, gmSeat, redoEdit, subjectOf, systemOrder, undoEdit, type CheckedScreen, type DerivationDoc, type ScreenDoc, type SystemScene, type ViewHandle, type ViewModule, type ViewSession } from "../../ui-contract/src/index.ts";
   import { openBrowserSession } from "../../ui-contract/src/host-browser.ts";
   import { createShare, type Share } from "./share.svelte.ts";
   import { clearStored, download, readStored, setAside, writeStored } from "./campaign-store.ts";
@@ -19,10 +19,18 @@
   import lightDoc from "./documents/light.recipes.json";
   import { SYMBOLS, checkLightRecipe, describeLight, litFromSystem, paint, type BandRecipe, type Mark } from "../../ui-contract/src/index.ts";
   import AgentsPanel from "../../agents/src/AgentsPanel.svelte";
+  import type { OracHost } from "../../agents/src/OracTab.svelte";
+  import type { MinervaHost } from "../../agents/src/MinervaTab.svelte";
+  import type { TarsHost } from "../../agents/src/TarsTab.svelte";
+  import { whyPassage } from "../../agents/src/tars.ts";
+  import { showReference } from "../../ui-contract/src/index.ts";
+  import { oracMay } from "../../agents/src/orac.ts";
+  import { atomIssueTarget, flowEntries, lensEntries, lensTarget, loadAtoms, physicsTarget } from "../../agents/src/orac-targets.ts";
+  import { dataViewEntries, dataViewTarget, lookEntries, screenTarget, styleTarget, symbologyTarget } from "../../agents/src/orac-looks.ts";
   import { orbitScene, voicesFromSystem } from "../../ui-contract/src/index.ts";
   import { orbitBodies, phasesFrom, withPhases, yearsToSeconds } from "../../ui-contract/src/index.ts";
   import { compareScenes, dropWhatIf, keepWhatIf, openWhatIf } from "../../ui-contract/src/index.ts";
-  import { allLenses, checkLens, defaultLens, hasTool, lensAudience, type Lens } from "../../ui-contract/src/index.ts";
+  import { allLenses, checkLens, defaultLens, hasTool, lensAudience, type Lens, type Vocab } from "../../ui-contract/src/index.ts";
   import { themeCss, THEMES } from "../../skins/chart-room/src/index.ts";
   import { ALL_THEMES } from "../../skins/player/src/index.ts";
   import { Segmented, ToolButton, formatYears } from "../../chart-grammar/src/index.ts";
@@ -44,6 +52,7 @@
   import derivationsDoc from "./documents/derivations.base.json";
   import stackDoc from "./documents/stack.json";
   import factsDoc from "./documents/kestrel.player-facts.json";
+  import plainVocab from "./documents/vocab.plain.json";
   import { REGISTRY } from "./registry.ts";
   import { MORE_SCREENS } from "./screens.more.ts";
   import { createWorkspace } from "./workspace.svelte.ts";
@@ -449,6 +458,81 @@
     const head = `${scene.title}: ${scene.subtitle}.`;
     return sub ? `${head}\nSelected: ${sub.label}${sub.subtitle ? ` (${sub.subtitle})` : ""}.\n${sub.facts.map((f) => `${f.label}: ${f.display} (${f.source})`).join("\n")}` : head;
   });
+  // The kernel's atoms (parameter ranges and units) for Orac's catalogue, read once a session is open.
+  let atoms = $state.raw<readonly AtomInfo[]>([]);
+  $effect(() => {
+    const s = session;
+    if (s && oracMay(s.seat)) loadAtoms(s).then((a) => (atoms = a));
+  });
+  /** An accepted Orac screen goes to the players page on this device, as the composer's Show to players does. */
+  function openOracScreen(d: ScreenDoc) {
+    try {
+      localStorage.setItem("sse4.composed-screen", JSON.stringify(d));
+      const page = "players.html?screen=composed";
+      window.open(new URL(page, document.baseURI).href, "_blank", "noopener");
+    } catch {
+      /* A browser that keeps nothing: the composer's download is the way. */
+    }
+  }
+  // A2: Orac's targets go through the GM's own paths (the kernel's checks, the Physics screen's queue, the lens list).
+  const oracHost = $derived.by((): OracHost | undefined => {
+    const s = session;
+    if (!s || !oracMay(s.seat)) return undefined;
+    const fields = () => Object.fromEntries(Object.entries(lensFields).filter(([k]) => k !== "*").map(([k, v]) => [k, v.map((f) => f.id)]));
+    return {
+      targets: () => [
+        physicsTarget(s, ws),
+        lensTarget({ taken: () => lenses.map((l) => l.id), fields, save: saveLens }),
+        styleTarget({ registry: styleHost.registry, views: styleHost.views, tier: styleHost.tier, keep: styleHost.keep }),
+        screenTarget({ views: () => PLAYER_STACK, taken: () => [], dataViews: () => observeOf(s.stack().base)?.setup.views.map((v) => v.id), styles: () => ({ registry: styleHost.registry(), tier: styleHost.tier() }), themes: () => ALL_THEMES.map((t) => t.id), symbologies: () => symbols.registry().map((d) => d.id), open: openOracScreen }),
+        symbologyTarget({ registry: symbols.registry, keep: symbols.keep }),
+        dataViewTarget({ setup: () => observeOf(s.stack().base)?.setup ?? null, apply: async (x) => {
+          const r = await applySetup(s, ws, x);
+          return r.status === "applied" ? null : r.status === "refused" ? r.reason : `not applied (${r.status})`;
+        } }),
+        atomIssueTarget((u) => window.open(u, "_blank", "noopener")),
+      ],
+      catalogue: () => [...flowEntries(s, atoms), ...lensEntries(lenses, fields()), ...lookEntries({ views: [...REGISTRY, ...PLAYER_STACK] as never, styles: styleHost.registry(), symbologies: symbols.registry() }), ...dataViewEntries(observeOf(s.stack().base)?.setup ?? null)],
+      here: () => [agentContext, ws.bench ? `Flow on the bench: ${ws.bench.flow}${ws.bench.node ? `, node ${ws.bench.node}` : ""}` : "", `Lens in use: ${lens.label}`].filter(Boolean).join("\n"),
+    };
+  });
+  // A4: Tars reads SSE's help passages and the kernel's "why?" for the selected body's derived values.
+  const tarsHost = $derived.by((): TarsHost => {
+    const s = session;
+    const sub = scene.subjects.find((x) => x.address === ws.selection);
+    return {
+      here: () => agentContext,
+      why: async () => {
+        if (!s || !sub) return [];
+        const derived = sub.facts.filter((f) => f.why).slice(0, 8);
+        const out = await Promise.all(
+          derived.map(async (f) => {
+            const r = await s.explain(f.why!, f.why!.kind);
+            if (!r.ok) return null;
+            const x = r.explanation;
+            const refs = x.references.map(showReference);
+            return whyPassage({ subject: sub.label, field: f.field, label: f.label, display: f.display, curious: x.lenses.curious, science: x.lenses.science, validity: x.validity, references: refs });
+          }),
+        );
+        return out.filter((p) => p !== null);
+      },
+    };
+  });
+  // A3: Minerva reads one audience's scene (K9) and nothing else; the GM's scene is used only to check her text.
+  const minervaHost = $derived.by((): MinervaHost | undefined => {
+    const s = session;
+    if (!s || !oracMay(s.seat)) return undefined;
+    const scope = (factsDoc as unknown as AuthoredFacts).scope;
+    return {
+      audiences: () => (share?.state.plan.audiences ?? [{ id: "everyone", label: "Everyone" }]).map((a) => ({ id: a.id, label: a.label })),
+      scene: async (audience) => {
+        const r = await s.scene(scope, audience ? { audience } : {});
+        return r.ok ? r.scene : null;
+      },
+      vocab: plainVocab as unknown as Vocab,
+      title: `${scene.title}: ${scene.subtitle}`,
+    };
+  });
   const differences = $derived(ws.branch ? compareScenes(mainScene, scene, ws.branch.applied) : []);
   async function whatIf(action: "open" | "keep" | "drop") {
     if (!session) return;
@@ -722,7 +806,7 @@
 </dialog>
 
 <dialog bind:this={agentsDialog} class="help seats-dialog" aria-label="Agents" onclose={() => (agentsOpen = !!agentsDialog?.open)}>
-  {#if agentsOpen}<AgentsPanel context={agentContext} />{/if}
+  {#if agentsOpen}<AgentsPanel tars={tarsHost} orac={oracHost} minerva={minervaHost} />{/if}
   <form method="dialog"><button type="submit">Close</button></form>
 </dialog>
 

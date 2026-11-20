@@ -76,6 +76,9 @@ export interface RecipeDoc {
   lift?: string;
   /** Custom shader code. Not run in this release (shared recipes are data-only, decision 7). */
   contains_code?: boolean;
+  /** The recipe this one was edited from (R4), and the edits in words, newest last. */
+  derived_from?: string;
+  history?: string[];
 }
 
 /** Default frame budgets: 60 a second on the high GPU tier, 30 elsewhere. */

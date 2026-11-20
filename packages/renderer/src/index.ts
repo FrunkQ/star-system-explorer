@@ -25,3 +25,6 @@ export { photograph, halton } from "./photograph.ts";
 export type { Photo, PhotoOptions } from "./photograph.ts";
 export { keepPhoto, listPhotos, removePhoto } from "./media.ts";
 export type { MediaItem } from "./media.ts";
+// R4: recipe editing through checked edits, costed against the device budget.
+export { applyEdits, editableSettings, tierCosts } from "./recipe-edit.ts";
+export type { EditContext, EditResult, RecipeEdit, TierCost } from "./recipe-edit.ts";

@@ -81,7 +81,7 @@ export const ATMOSPHERE: PassSpec = {
     { name: "steps", type: "integer", default: 16, range: [4, 64], meaning: "GPU: samples along each view ray through the air.", group: "look" },
     { name: "light_steps", type: "integer", default: 6, range: [2, 16], meaning: "GPU: samples from each of those towards the star.", group: "look" },
     { name: "sun", type: "number", default: 6, range: [1, 100], meaning: "The star's light at the top of the air, in the renderer's units (the ground and the sky share it, so their balance is physical).", group: "look" },
-    { name: "exposure", type: "number", default: 1, range: [0.1, 8], meaning: "Camera exposure before tone mapping.", group: "look", promoted: true },
+    { name: "exposure", type: "number", default: 1, range: [0.1, 8], meaning: "Camera exposure before tone mapping (the canvas tier has no tone mapping, so there it is a plain brightness gain).", group: "look", promoted: true },
     { name: "thickness", type: "number", default: 1, range: [1, 20], unit: "×", meaning: "Draw the air this many times thicker than it is (1 is true scale). Above 1 is a look, not the world, and the badge says so.", group: "look" },
   ],
   cost: {
