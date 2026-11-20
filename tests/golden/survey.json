@@ -1,0 +1,111 @@
+{
+  "findings": [
+    {
+      "planet": "u:sol/sys:0/body:2",
+      "method": "transit",
+      "verdict": "missed",
+      "snr": 0.0,
+      "measured": [],
+      "why": "From here Earth's orbit is tilted 53.130° from edge-on; it would need to be within 0.269° to cross the star's face, so it never transits."
+    },
+    {
+      "planet": "u:sol/sys:0/body:2",
+      "method": "wobble",
+      "verdict": "missed",
+      "snr": 0.7947004043473949,
+      "measured": [],
+      "why": "Earth swings the star towards and away from here by 0.054 m/s every 365.3 days; 877 measurements at 1.00 m/s (with the star's own 1.0 m/s jitter) give 0.8σ. Only the minimum mass is measured: the tilt is unknown."
+    },
+    {
+      "planet": "u:sol/sys:0/body:2",
+      "method": "position-wobble",
+      "verdict": "missed",
+      "snr": 0.31440116331049667,
+      "measured": [],
+      "why": "Earth drags the star round a circle 0.6 µas across on the sky every 1.0 years; 877 positions at 20 µas give 0.3σ. This gives the true mass and the tilt."
+    },
+    {
+      "planet": "u:sol/sys:0/body:4",
+      "method": "transit",
+      "verdict": "missed",
+      "snr": 0.0,
+      "measured": [],
+      "why": "From here Jupiter's orbit is tilted 54.411° from edge-on; it would need to be within 0.056° to cross the star's face, so it never transits."
+    },
+    {
+      "planet": "u:sol/sys:0/body:4",
+      "method": "wobble",
+      "verdict": "found",
+      "snr": 107.47337394134242,
+      "measured": [
+        {
+          "what": "minimum mass (m sin i)",
+          "value": 1.1046902135619528e+27,
+          "error": 1.0278733913805279e+25,
+          "unit": "kg"
+        },
+        {
+          "what": "period",
+          "value": 374313606.6875616,
+          "error": 3442588.651456239,
+          "unit": "s"
+        }
+      ],
+      "why": "Jupiter swings the star towards and away from here by 7.260 m/s every 4332.3 days; 877 measurements at 1.00 m/s (with the star's own 1.0 m/s jitter) give 107.5σ. Only the minimum mass is measured: the tilt is unknown."
+    },
+    {
+      "planet": "u:sol/sys:0/body:4",
+      "method": "position-wobble",
+      "verdict": "found",
+      "snr": 519.8881504191935,
+      "measured": [
+        {
+          "what": "mass",
+          "value": 1.89819e+27,
+          "error": 3.6511507301512093e+24,
+          "unit": "kg"
+        },
+        {
+          "what": "tilt from edge-on",
+          "value": 0.9496468570163012,
+          "error": 0.0019234906569685908,
+          "unit": "rad"
+        }
+      ],
+      "why": "Jupiter drags the star round a circle 993.3 µas across on the sky every 11.9 years; 877 positions at 20 µas give 519.9σ. This gives the true mass and the tilt."
+    }
+  ],
+  "found": [
+    "u:sol/sys:0/body:4"
+  ],
+  "references": [
+    {
+      "text": "Seager, S. and Mallén-Ornelas, G. 2003, A unique solution of planet and star parameters from an extrasolar planet transit light curve, ApJ 585, 1038: depth (Rp/R*)², duration, impact parameter.",
+      "doi": "10.1086/346105",
+      "url": "https://doi.org/10.1086/346105"
+    },
+    {
+      "text": "Winn, J. N. 2010, Transits and occultations, in Exoplanets (ed. S. Seager), University of Arizona Press: transit probability R*/a, total duration.",
+      "url": "https://arxiv.org/abs/1001.2010"
+    },
+    {
+      "text": "Lovis, C. and Fischer, D. 2010, Radial velocity techniques for exoplanets, in Exoplanets (ed. S. Seager): K = (2πG/P)^⅓ m sin i / (M* + m)^⅔ / √(1 − e²).",
+      "url": "https://ui.adsabs.harvard.edu/abs/2010exop.book...27L"
+    },
+    {
+      "text": "Perryman, M. 2018, The Exoplanet Handbook, 2nd edn, Cambridge University Press: astrometric signature α = (m/M*)(a/d), imaging contrast and inner working angle, timing.",
+      "doi": "10.1017/9781108304160",
+      "url": "https://doi.org/10.1017/9781108304160"
+    },
+    {
+      "text": "Jenkins, J. M. et al. 2010, Overview of the Kepler science processing pipeline, ApJ 713, L87: the 7.1σ detection threshold.",
+      "doi": "10.1088/2041-8205/713/2/L87",
+      "url": "https://doi.org/10.1088/2041-8205/713/2/L87"
+    },
+    {
+      "text": "Wolszczan, A. and Frail, D. A. 1992, A planetary system around the millisecond pulsar PSR1257+12, Nature 355, 145.",
+      "doi": "10.1038/355145a0",
+      "url": "https://doi.org/10.1038/355145a0"
+    }
+  ]
+}

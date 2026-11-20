@@ -234,7 +234,7 @@ The disclosure ladder (H6 OBSERVE, H7A part 6) gains rungs below "long-range", a
 
 The magnetic field overlay wanted today (improved over V3) belongs with the band views: field lines and belts drawn from the field model, lit by the radio and auroral emission they cause. It is specified with the body overlays, and is noted here because its radio glow appears on the spectrum chart.
 
-Sources **[from memory, verify]**: Seager and Mallén-Ornelas (2003) for transit geometry and what it measures; Winn (2010), "Exoplanet transits and occultations"; Lovis and Fischer (2010) for the wobble method; Perryman, *The Exoplanet Handbook*, for all methods and their limits; Gaudi (2012) for microlensing; Wolszczan and Frail (1992) for pulsar planets.
+Sources **[from memory, verify]**: Seager and Mallén-Ornelas (2003) for transit geometry and what it measures; Winn (2010), "Transits and Occultations", in *Exoplanets* (ed. S. Seager; arXiv 1001.2010); Lovis and Fischer (2010) for the wobble method; Perryman, *The Exoplanet Handbook*, for all methods and their limits; Gaudi (2012) for microlensing; Wolszczan and Frail (1992) for pulsar planets.
 
 ## 6. Rendering, tiers and determinism
 

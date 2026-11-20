@@ -327,6 +327,111 @@ pub enum Request {
         #[ts(optional, type = "unknown")]
         stack: Option<serde_json::Value>,
     },
+    /// Light from bodies (O2): each body's spectrum (own glow, reflected
+    /// light, auroral radio, discs, coronae, radiators, transmitters, lamps)
+    /// and its power in every band, from conditions (`sse_light::emit::Conditions`,
+    /// keyed on conditions, never on kind). `fixture: "solar-system"` serves
+    /// the Solar System; given `bodies` are described instead.
+    ReadLight {
+        #[serde(default)]
+        #[ts(optional)]
+        fixture: Option<String>,
+        #[serde(default)]
+        #[ts(optional, type = "unknown[]")]
+        bodies: Option<Vec<serde_json::Value>>,
+    },
+    /// Sensing (O9): for each target (light given as `conditions` or a ready
+    /// `light`, distance, dust as A_V, bright neighbours with their sky
+    /// separation) and each sensor (band, aperture, noise, stare,
+    /// threshold), whether it is detected, S/N, the stare needed and the
+    /// range at which it would be. With `radar`, how far a radar sees by its
+    /// echo against how far its pulse is heard.
+    Detect {
+        #[ts(type = "unknown[]")]
+        targets: Vec<serde_json::Value>,
+        #[ts(type = "unknown[]")]
+        sensors: Vec<serde_json::Value>,
+        #[serde(default)]
+        #[ts(optional, type = "unknown")]
+        radar: Option<serde_json::Value>,
+    },
+    /// Air optics (light track, for the renderer's sky): for each air (gas
+    /// fractions by number, surface pressure, temperature, gravity), Rayleigh
+    /// cross-section, scattering per metre and optical depth at
+    /// `wavelengths_m` (default 680, 550 and 440 nm) and across the visible
+    /// slices, with scale height and surface density.
+    ReadAirOptics {
+        #[ts(type = "unknown[]")]
+        airs: Vec<serde_json::Value>,
+        #[serde(default)]
+        #[ts(optional)]
+        wavelengths_m: Option<Vec<f64>>,
+    },
+    /// Spectrum as it reaches an observer (O12): each target is one or more
+    /// components (`conditions` as for `read_light`, or a ready `light`
+    /// description), each with a line-of-sight speed; the observer gives the
+    /// wavelength ranges its instruments cover (none: everything) and a
+    /// resolving power. Returns flux samples with coverage, band fluxes,
+    /// emission and absorption lines where they arrive, and readings
+    /// (temperature from the peak, speeds, doubled lines) with Why.
+    ReadSpectrum {
+        #[ts(type = "unknown[]")]
+        targets: Vec<serde_json::Value>,
+        #[serde(default)]
+        #[ts(optional, type = "unknown")]
+        observer: Option<serde_json::Value>,
+    },
+    /// Stellar activity (O10): for each star (conditions: mass, radius,
+    /// power, temperature, age, and spin or a close companion's orbit), its
+    /// activity level, cycle, spots and coronal X-rays, the state at `at_s`
+    /// (default: the star's age), and, with `window`, its flares and mass
+    /// ejections as keyed events, each ejection hitting or missing the
+    /// star's `targets` by geometry.
+    ReadActivity {
+        #[ts(type = "unknown[]")]
+        stars: Vec<serde_json::Value>,
+        #[serde(default)]
+        #[ts(optional)]
+        seed: Option<String>,
+        #[serde(default)]
+        #[ts(optional)]
+        at_s: Option<f64>,
+        #[serde(default)]
+        #[ts(optional, type = "unknown")]
+        window: Option<serde_json::Value>,
+    },
+    /// Planet finding from afar (O13): one star, its planets, an observer
+    /// (direction and distance), an instrument and a watch time. Returns
+    /// what each method (transit, wobble, position wobble, direct imaging,
+    /// timing) finds, with what players would measure and why. Mass from a
+    /// wobble is the minimum mass, as in reality. GM-side: the planets are
+    /// the truth the survey is run against.
+    SurveyPlanets {
+        #[ts(type = "unknown")]
+        survey: serde_json::Value,
+    },
+    /// Nebulae at a date (O3): planetary nebulae from stars' deaths (or given
+    /// inputs), supernova remnants and star-forming glows, each a descriptor
+    /// (shells, lobes, surroundings, lighting stars, light, decoration seed).
+    /// Nebulae not yet born or already faded are listed in `absent`.
+    ReadNebulae {
+        at_s: f64,
+        #[serde(default)]
+        #[ts(optional)]
+        seed: Option<String>,
+        #[serde(default)]
+        #[ts(optional, type = "unknown[]")]
+        deaths: Option<Vec<serde_json::Value>>,
+        #[serde(default)]
+        #[ts(optional, type = "unknown[]")]
+        planetary: Option<Vec<serde_json::Value>>,
+        #[serde(default)]
+        #[ts(optional, type = "unknown[]")]
+        remnants: Option<Vec<serde_json::Value>>,
+        #[serde(default)]
+        #[ts(optional, type = "unknown[]")]
+        glows: Option<Vec<serde_json::Value>>,
+    },
     /// Bring a system into the open universe as facts: an SSE 3 save
     /// (`import_v3`, its text) or a formation run (`formation`, the same
     /// fields as `run_formation`; its `system` must be in the universe). The
@@ -891,6 +996,13 @@ impl Request {
             Request::ImportV3 { .. } => "import_v3",
             Request::RunFormation { .. } => "run_formation",
             Request::ReadWorldStack { .. } => "read_world_stack",
+            Request::ReadLight { .. } => "read_light",
+            Request::ReadNebulae { .. } => "read_nebulae",
+            Request::SurveyPlanets { .. } => "survey_planets",
+            Request::ReadActivity { .. } => "read_activity",
+            Request::ReadSpectrum { .. } => "read_spectrum",
+            Request::ReadAirOptics { .. } => "read_air_optics",
+            Request::Detect { .. } => "detect",
             Request::Adopt { .. } => "adopt",
             Request::ResolvedSystem { .. } => "resolved_system",
             Request::SurveySurface { .. } => "survey_surface",
@@ -1004,6 +1116,41 @@ pub fn ops() -> Vec<OpInfo> {
             "read_world_stack",
             Cost::Light,
             "one stack: validation, the depth ladder and a few atom evaluations",
+        ),
+        o(
+            "detect",
+            Cost::Light,
+            "per target and sensor: two band integrals and closed-form noise",
+        ),
+        o(
+            "read_air_optics",
+            Cost::Trivial,
+            "per air and wavelength: a few closed-form blocks",
+        ),
+        o(
+            "read_spectrum",
+            Cost::Light,
+            "per target: the grid, band integrals and a 400-point peak scan per covered range",
+        ),
+        o(
+            "read_activity",
+            Cost::Light,
+            "per star: a few block evaluations; flares are one draw per time bin per energy decade, capped at 2000 listed",
+        ),
+        o(
+            "survey_planets",
+            Cost::Light,
+            "per planet and method: closed-form signal and noise, no integration",
+        ),
+        o(
+            "read_nebulae",
+            Cost::Light,
+            "per nebula: a few block evaluations; a remnant's fading date is a 200-step bisection",
+        ),
+        o(
+            "read_light",
+            Cost::Light,
+            "per body: one small flow run and about 2,000 Planck evaluations",
         ),
         o(
             "adopt",
@@ -1308,6 +1455,56 @@ pub enum Response {
         problems: Vec<serde_json::Value>,
         #[ts(type = "unknown[]")]
         invalid: Vec<serde_json::Value>,
+    },
+    /// `read_light`: `source` is `fixture:<name>` or `given`; `table` is the
+    /// band set, visible slices and line table in force; each of `bodies` is
+    /// `sse_light::emit::BodyLight` (address, name, facts, light: description,
+    /// bands, visible_slices, total_w, samples, peak_m).
+    LightRead {
+        source: String,
+        #[ts(type = "unknown")]
+        table: serde_json::Value,
+        #[ts(type = "unknown[]")]
+        bodies: Vec<serde_json::Value>,
+    },
+    /// `detect`: each of `detections` is `sse_sense::Detection` (target by
+    /// sensor, in order); `radar` is `sse_sense::RadarRanges` when asked.
+    Detected {
+        #[ts(type = "unknown[]")]
+        detections: Vec<serde_json::Value>,
+        #[ts(optional, type = "unknown")]
+        radar: Option<serde_json::Value>,
+    },
+    /// `read_air_optics`: each of `airs` is `sse_light::air::AirOptics`.
+    AirOpticsRead {
+        #[ts(type = "unknown[]")]
+        airs: Vec<serde_json::Value>,
+    },
+    /// `read_spectrum`: each of `spectra` is `sse_light::observe::Spectrum`.
+    SpectrumRead {
+        #[ts(type = "unknown[]")]
+        spectra: Vec<serde_json::Value>,
+    },
+    /// `read_activity`: each of `stars` is `{ activity, moment, flares? }`
+    /// with `sse_activity::Activity`, `Moment` and `Flares`.
+    ActivityRead {
+        #[ts(type = "unknown[]")]
+        stars: Vec<serde_json::Value>,
+    },
+    /// `survey_planets`: `result` is `sse_survey::SurveyResult` (findings
+    /// per planet and method with verdict, signal to noise, measured values
+    /// and why; the addresses found; references).
+    PlanetsSurveyed {
+        #[ts(type = "unknown")]
+        result: serde_json::Value,
+    },
+    /// `read_nebulae`: each of `nebulae` is `sse_nebula::Descriptor`;
+    /// `absent` lists the addresses asked about that do not exist at `at_s`.
+    NebulaeRead {
+        at_s: f64,
+        #[ts(type = "unknown[]")]
+        nebulae: Vec<serde_json::Value>,
+        absent: Vec<String>,
     },
     /// `adopt`: the events written (the first carries the report), the
     /// systems adopted and the number of facts.

@@ -60,6 +60,7 @@ Fogg, Matt Burdick, Jim Burrows (StarGen), Ian Burrell.
 
 packages/agents/src/lifted.ts lifts small parts of Ovid Next (address
 mending, listed prices, the loaded-context rule, key shapes, reading a
-model's JSON reply). Ovid Next is FrunkQ's own code, source-available there under
+model's JSON reply), and packages/agents/src/loop.ts follows the shape of
+its builder loop (agent/builder.ts). Ovid Next is FrunkQ's own code, source-available there under
 the Business Source License 1.1; its author relicenses these parts as
 Apache-2.0 for SSE4. Each lifted function names the Ovid file it came from.

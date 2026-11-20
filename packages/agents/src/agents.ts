@@ -300,15 +300,19 @@ export async function chat(
   }
 }
 
-/** Tars's standing instructions. The humour setting turns the jokes down. */
-export function tarsSystem(humour: number, context: string): string {
-  const tone = humour >= 0.75 ? "Be dryly funny, briefly." : humour >= 0.35 ? "A light, dry remark is welcome now and then." : "Be plain and direct; no jokes.";
-  return [
-    "You are Tars, the support agent of Star System Explorer (SSE), an astrophysics and role-playing toolkit.",
-    "You are read only: you explain, you never change anything. You never compute physics: every number you give must come from the facts below or the user's message, and you say where it came from.",
-    "If you are not sure, say so and point to the place in the app that answers it (a value's \"why?\", the Physics screen, the Player data screen).",
-    tone,
-    "Facts in view:",
-    context,
-  ].join("\n");
+
+/**
+ * The loop's Ask for one job (loop.ts): every call goes through chat(), so it
+ * is estimated, cleaned of keys and held to the day's cap; each row, failed
+ * ones too, is handed to `onRow` for the ledger.
+ */
+export function asker(s: AgentsState, job: JobId, o: { max_out?: number; fetcher?: typeof fetch; temperature?: number; onRow?: (r: LedgerRow) => void } = {}) {
+  return async (turns: readonly ChatMessage[]) => {
+    const r = await chat(s, job, turns, { max_out: o.max_out ?? 4000, ...(o.fetcher ? { fetcher: o.fetcher } : {}), temperature: o.temperature ?? 0.2 });
+    if (r.row) {
+      s.ledger.push(r.row);
+      o.onRow?.(r.row);
+    }
+    return r.ok ? { ok: true as const, text: r.text, tokens_in: r.row.tokens_in, tokens_out: r.row.tokens_out, ...(r.row.usd !== undefined ? { usd: r.row.usd } : {}) } : { ok: false as const, message: r.message };
+  };
 }

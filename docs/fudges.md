@@ -478,6 +478,30 @@ The owner wants the physics in chain blocks (except big blocks) with a UI elemen
 | `gpu-globe.ts` physical lighting | Ground hue from the survey palette, scaled to the kernel's albedo | No spectral reflectance per material yet | Spectral reflectance per material (light track) | Stand-in |
 | `passes.ts` relief pass | The star's direction is a look setting (azimuth, elevation) and its light is white | The view has no ephemeris position at the ruler's date yet | Star direction from the orbit at the campaign date; star colour from its spectrum | Stand-in |
 | `canvas.ts` air | One-column, plane-parallel air along view and sun; no limb glow beyond the disk | Canvas tier is the weak-device path | The GPU ray-march (already on GPU tiers) | Permanent for the canvas tier (weak devices do less) |
+| `canvas.ts` exposure (R4) | Exposure is a plain brightness gain | The canvas tier has no tone mapping | Tone mapping on canvas (cost) | Permanent for the canvas tier |
+
+
+### 3. Kernel light track (light thread, PR 24)
+
+| Where | Instead of the physics | Why | Real physics to replace it | Status |
+|---|---|---|---|---|
+| crates/sse-light emit (O2) | Grey Bond albedo and a black body at the effective temperature for planets; no bands, no day-night contrast | atmosphere model not built | spectral albedo and emission from the atmosphere model | stand-in |
+| sse.light.stellar_wind (O2) | Every star gets the Sun's wind at 1 au (Parker), scaled by distance | per-star winds came with O10 | wind strength from O10 activity | stand-in, now replaceable |
+| emit auroral radio (O2) | Isotropic and flat in frequency from f_max/30 to f_max | simple, energy-correct | beamed emission cones, rotation modulation | stand-in |
+| emit corona (O2) | Coronal X-rays flat over 0.1 to 10 keV | no coronal temperature model | thermal plasma emission at the coronal temperature | stand-in |
+| emit lamps (O2) | White lamps flat over 400 to 700 nm | no lamp spectra table | lamp spectra per technology as pack data | stand-in |
+| emit accretion disc (O1) | Thin disc seen isotropically, no inclination or limb effects | view angle not known in the description | inclination-dependent disc emission | stand-in |
+| sse-nebula (O3) | Planetary nebula speeds, shell share, pulse timing and ring count drawn from stated ranges; core at 100 000 K | published spreads, no hydrodynamic model | radiation-hydrodynamic PN models | stand-in |
+| sse-activity (O10) spin from age | Skumanich P ∝ √t scaled by turnover time, never faster than a 1-day birth spin | the life line has no spin yet | spin from the life line (F7) or a torque model (Matt et al. 2015) | stand-in |
+| sse-activity tides | Tidal lock assumed below a 10-day companion orbit | no tidal synchronisation model | Zahn-type synchronisation time | stand-in |
+| sse-activity regimes | Cut-offs at 10 000 K (hot wind), 6900 K (no corona), 0.05 R☉ (compact); labels at 1e-4 and 3e-7 L_X/L_bol | conditions, not kinds; labels only | convective envelope depth from structure models | stand-in |
+| sse-activity spots and cycle | Spot cover ∝ √(L_X/L_bol) from the Sun's 0.3 %, cap 50 %; cycle a sine of amplitude 0.7, branch at 1e-5 | no flux-transport model | surface flux transport model | stand-in |
+| sse-activity flares | Durations ∝ E^0.39 from 600 s at 1e25 J; light a 10 000 K black body plus 10 % soft X-rays; largest 1e29 J | Kepler-era statistics only | flare spectra and duration statistics from TESS/Kepler studies | stand-in |
+| sse-activity ejections | Share, speed and mass by power laws in flare energy; cone half-width 30°, within 30° of the equator; planets circular in the equator | no CME model | CME catalogues (Yashiro) and an ephemeris | stand-in |
+| sse_light::observe (O12) absorption | Qualitative 0-to-1 line strengths by temperature, same for every metal content; no line widths or reddening | O4 grid not built | line-strength grid (results-as-data), broadening, dust | stand-in until O4 |
+| sse-survey (O13) | White noise ∝ 1/√N, no spots or flares in light curves; activity 15 ppm/hr, jitter 1 m/s, efficiency 0.5, IWA 3λ/D; found at S/N 7.1 with 3 transits; eccentric transits timed as circular; no microlensing | closed-form, cheap | red-noise and activity models (O10), full light-curve simulation | stand-in |
+| sse-sense (O9) | One dust power law (λ/0.55 µm)^−1.75 from 0.3 µm to 1 mm; all-or-nothing glare inside the resolution; photon energy at band centre; radar listener in the main beam | closed-form | an extinction curve (Cardelli, Draine), PSF halo, sidelobes | stand-in |
+| sse_light::air | Other gases follow air's dispersion scaled to 589 nm; King factors constant except N₂ and O₂; isothermal scale height; gravity at the surface; Rayleigh only | small table | per-gas dispersion (Sneep and Ubachs 2005), haze, absorption | stand-in |
 
 ## Interface and player views
 
