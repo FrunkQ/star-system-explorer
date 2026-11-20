@@ -1,0 +1,257 @@
+{
+  "cells": [
+    {
+      "aerosols": [
+        {
+          "colour": [
+            0.15999999999999998,
+            0.14999999999999997,
+            0.14
+          ],
+          "kind": "ash",
+          "optical_depth": 20.000000008937473
+        },
+        {
+          "colour": [
+            0.9,
+            0.91,
+            0.93
+          ],
+          "kind": "spray",
+          "optical_depth": 0.02372140884904262
+        }
+      ],
+      "lat": 15.1,
+      "lon": 120.3,
+      "out": {
+        "acid_rain": false,
+        "ash_fall_mm": 95.85914653730828,
+        "ground_darkening": 0.9999999952817568
+      }
+    },
+    {
+      "aerosols": [
+        {
+          "colour": [
+            0.9,
+            0.91,
+            0.93
+          ],
+          "kind": "spray",
+          "optical_depth": 0.02372140884904262
+        }
+      ],
+      "lat": 15.1,
+      "lon": 125.0,
+      "out": {
+        "acid_rain": false,
+        "ash_fall_mm": 2.9370270150929745e-8,
+        "ground_darkening": 5.874054020971187e-9
+      }
+    },
+    {
+      "aerosols": [
+        {
+          "colour": [
+            0.15999999999999998,
+            0.15,
+            0.14
+          ],
+          "kind": "ash",
+          "optical_depth": 2.5502467607630557
+        },
+        {
+          "colour": [
+            0.9,
+            0.91,
+            0.93
+          ],
+          "kind": "spray",
+          "optical_depth": 0.01813138938200704
+        }
+      ],
+      "lat": 45.0,
+      "lon": 14.0,
+      "out": {
+        "acid_rain": false,
+        "ash_fall_mm": 12.229216437077337,
+        "ground_darkening": 0.9133469693281528
+      }
+    },
+    {
+      "aerosols": [
+        {
+          "colour": [
+            0.4,
+            0.27,
+            0.12
+          ],
+          "kind": "smog",
+          "optical_depth": 1.2582570791030352
+        }
+      ],
+      "lat": 34.0,
+      "lon": -118.2,
+      "out": {
+        "acid_rain": false,
+        "ash_fall_mm": 0.0,
+        "ground_darkening": 0.0
+      }
+    },
+    {
+      "aerosols": [
+        {
+          "colour": [
+            0.8248144850095207,
+            0.7851538537634878,
+            0.634782823782529
+          ],
+          "kind": "haze",
+          "optical_depth": 0.027398955654536167
+        },
+        {
+          "colour": [
+            0.9,
+            0.91,
+            0.93
+          ],
+          "kind": "spray",
+          "optical_depth": 0.024812609382329875
+        }
+      ],
+      "lat": 19.4,
+      "lon": -157.0,
+      "out": {
+        "acid_rain": false,
+        "ash_fall_mm": 0.0,
+        "ground_darkening": 0.0
+      }
+    }
+  ],
+  "cooling_k": [
+    [
+      100.0,
+      0.0
+    ],
+    [
+      282.625,
+      -0.3269834222334679
+    ],
+    [
+      465.25,
+      -0.39848310677455284
+    ],
+    [
+      647.875,
+      -0.3397768469839074
+    ],
+    [
+      830.5,
+      -0.25410183054067664
+    ],
+    [
+      1013.125,
+      -0.17762675363558944
+    ],
+    [
+      1195.75,
+      -0.11924333755788241
+    ],
+    [
+      1378.375,
+      -0.07795802604156897
+    ]
+  ],
+  "earth_plumes": [
+    {
+      "born": -1.7976931348623157e+308,
+      "count": 0,
+      "ends": 1.7976931348623157e+308,
+      "evidence": "rule",
+      "id": "plume-kilauea",
+      "kind": "plume",
+      "lat_deg": 19.4,
+      "lon_deg": -155.3,
+      "size_km": 10.0,
+      "strength": 0.7777801122217719,
+      "track": [],
+      "why": "A 0.8 km degassing plume from 50 kg/s of gas (Mastin et al. 2009 applied to the gas rate, a stand-in), trailing a sulphate haze downwind."
+    },
+    {
+      "born": 100.0,
+      "count": 0,
+      "ends": 102.0,
+      "evidence": "rule",
+      "id": "plume-big-one",
+      "kind": "plume",
+      "lat_deg": 15.1,
+      "lon_deg": 120.3,
+      "size_km": 44.99735827849725,
+      "strength": 22.498679139248626,
+      "track": [
+        [
+          100.0,
+          15.1,
+          120.3
+        ]
+      ],
+      "why": "A 22.5 km eruption column from 5.79e7 kg/s of magma: 22.5 km on Earth (Mastin et al. 2009), × 1.00 for this world's gravity, air density and stratification (Morton, Taylor and Turner 1956)."
+    },
+    {
+      "born": 100.0,
+      "count": 0,
+      "ends": 105.0,
+      "evidence": "rule",
+      "id": "plume-streaker",
+      "kind": "plume",
+      "lat_deg": 45.0,
+      "lon_deg": 10.0,
+      "size_km": 36.75687664172773,
+      "strength": 18.378438320863864,
+      "track": [
+        [
+          100.0,
+          45.0,
+          10.0
+        ]
+      ],
+      "why": "A 18.4 km eruption column from 2.50e7 kg/s of magma: 18.4 km on Earth (Mastin et al. 2009), × 1.00 for this world's gravity, air density and stratification (Morton, Taylor and Turner 1956)."
+    }
+  ],
+  "io_plumes": [
+    {
+      "born": -1.7976931348623157e+308,
+      "count": 0,
+      "ends": 1.7976931348623157e+308,
+      "evidence": "rule",
+      "id": "plume-prometheus",
+      "kind": "plume",
+      "lat_deg": -1.5,
+      "lon_deg": -153.0,
+      "size_km": 139.19821826280625,
+      "strength": 69.59910913140313,
+      "track": [],
+      "why": "A 70 km ballistic plume: gas leaves the vent at 500 m/s into almost no air, height v²/2g (McEwen and Soderblom 1983 speeds)."
+    },
+    {
+      "born": 10.0,
+      "count": 0,
+      "ends": 30.0,
+      "evidence": "rule",
+      "id": "plume-pele-1",
+      "kind": "plume",
+      "lat_deg": -18.7,
+      "lon_deg": -104.0,
+      "size_km": 556.792873051225,
+      "strength": 278.3964365256125,
+      "track": [
+        [
+          10.0,
+          -18.7,
+          -104.0
+        ]
+      ],
+      "why": "A 278 km ballistic eruption plume: 1000 m/s from the vent into almost no air, height v²/2g."
+    }
+  ]
+}

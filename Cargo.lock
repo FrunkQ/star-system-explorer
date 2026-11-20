@@ -632,6 +632,7 @@ dependencies = [
  "sse-survey",
  "sse-time",
  "sse-trigger",
+ "sse-weather",
  "sse-world",
  "ts-rs",
 ]
@@ -867,6 +868,17 @@ dependencies = [
  "sse-surface",
  "sse-time",
  "wasm-bindgen",
+]
+
+[[package]]
+name = "sse-weather"
+version = "0.1.0"
+dependencies = [
+ "serde",
+ "serde_json",
+ "sse-core",
+ "sse-pack",
+ "sse-surface",
 ]
 
 [[package]]

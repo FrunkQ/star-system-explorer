@@ -14,6 +14,7 @@ mod orbits;
 pub mod protocol;
 mod survey;
 mod systems;
+mod weather;
 
 use protocol::*;
 use sse_chronicle::{
@@ -1474,6 +1475,31 @@ impl Kernel {
                 fixture,
                 stack,
             } => systems::read_world_stack(body.as_deref(), fixture.as_deref(), stack)?,
+            Request::Weather {
+                want,
+                world,
+                conditions,
+                day,
+                tile,
+                n,
+                lat,
+                lon,
+                pins,
+                sources,
+                block,
+            } => weather::weather(weather::Ask {
+                want,
+                world,
+                conditions,
+                day: day.unwrap_or(0.0),
+                tile,
+                n,
+                lat: lat.unwrap_or(0.0),
+                lon: lon.unwrap_or(0.0),
+                pins: pins.unwrap_or_default(),
+                sources,
+                block,
+            })?,
             Request::ReadLight { fixture, bodies } => {
                 systems::read_light(fixture.as_deref(), bodies)?
             }

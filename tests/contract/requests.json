@@ -2273,5 +2273,89 @@
   "at_s": 30
  },
  {"op": "halo_cell", "cell": [0, 0, 0], "min_mass_msun": 3e11, "limit": 5},
- {"op": "halo_cell", "limit": 0}
+ {"op": "halo_cell", "limit": 0},
+ {
+  "op": "weather",
+  "want": "climate",
+  "world": "Earth"
+ },
+ {
+  "op": "weather",
+  "want": "systems",
+  "world": "Earth",
+  "day": 100
+ },
+ {
+  "op": "weather",
+  "want": "field",
+  "world": "Titan",
+  "day": 3,
+  "tile": [
+   2,
+   1,
+   0,
+   1
+  ],
+  "n": 4
+ },
+ {
+  "op": "weather",
+  "want": "report",
+  "world": "Earth",
+  "day": 200,
+  "lat": 45,
+  "lon": 0
+ },
+ {
+  "op": "weather",
+  "want": "column",
+  "world": "Venus",
+  "lat": 10,
+  "lon": 0
+ },
+ {
+  "op": "weather",
+  "want": "sound",
+  "world": "Moon"
+ },
+ {
+  "op": "weather",
+  "want": "systems",
+  "world": "Jupiter",
+  "day": 1000
+ },
+ {
+  "op": "weather",
+  "want": "climate",
+  "world": "Earth",
+  "block": {
+   "id": "sse.weather.zonal-ebm",
+   "version": "1",
+   "level": "simulated"
+  }
+ },
+ {
+  "op": "weather",
+  "want": "systems",
+  "world": "Earth",
+  "day": 5,
+  "sources": {
+   "eruptions": [
+    {
+     "id": "demo",
+     "lat_deg": -15.1,
+     "lon_deg": 120.3,
+     "day": 4,
+     "duration_days": 2,
+     "mer_kg_s": 100000000.0,
+     "so2_kg": 20000000000.0
+    }
+   ]
+  }
+ },
+ {
+  "op": "weather",
+  "want": "forecast",
+  "world": "Earth"
+ }
 ]

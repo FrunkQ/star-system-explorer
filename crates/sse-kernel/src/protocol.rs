@@ -327,6 +327,48 @@ pub enum Request {
         #[ts(optional, type = "unknown")]
         stack: Option<serde_json::Value>,
     },
+    /// Weather from the rule-based weather block (weather track): `want` is
+    /// `climate`, `systems`, `field` (a cube-sphere `tile` [face, level, x,
+    /// y], `n` × `n` cells), `report`, `column` (descent hazards) or `sound`,
+    /// at `day` (days since the campaign epoch) and `lat`/`lon` where a place
+    /// is needed. The world is a weather fixture by `world` label or given
+    /// `conditions`; `pins` are recorded or GM-authored systems to honour.
+    Weather {
+        want: String,
+        #[serde(default)]
+        #[ts(optional)]
+        world: Option<String>,
+        #[serde(default)]
+        #[ts(optional, type = "unknown")]
+        conditions: Option<serde_json::Value>,
+        #[serde(default)]
+        #[ts(optional)]
+        day: Option<f64>,
+        #[serde(default)]
+        #[ts(optional)]
+        tile: Option<[u32; 4]>,
+        #[serde(default)]
+        #[ts(optional)]
+        n: Option<u32>,
+        #[serde(default)]
+        #[ts(optional)]
+        lat: Option<f64>,
+        #[serde(default)]
+        #[ts(optional)]
+        lon: Option<f64>,
+        #[serde(default)]
+        #[ts(optional, type = "unknown[]")]
+        pins: Option<Vec<serde_json::Value>>,
+        /// Smoke, ash and smog sources (volcanoes, eruptions, impacts,
+        /// fires, industry), `sse_weather::aerosols::Sources`.
+        #[serde(default)]
+        #[ts(optional, type = "unknown")]
+        sources: Option<serde_json::Value>,
+        /// Which weather block, `{id, version, level}`; default the rule block.
+        #[serde(default)]
+        #[ts(optional, type = "unknown")]
+        block: Option<serde_json::Value>,
+    },
     /// Light from bodies (O2): each body's spectrum (own glow, reflected
     /// light, auroral radio, discs, coronae, radiators, transmitters, lamps)
     /// and its power in every band, from conditions (`sse_light::emit::Conditions`,
@@ -1064,6 +1106,7 @@ impl Request {
             Request::ImportV3 { .. } => "import_v3",
             Request::RunFormation { .. } => "run_formation",
             Request::ReadWorldStack { .. } => "read_world_stack",
+            Request::Weather { .. } => "weather",
             Request::ReadLight { .. } => "read_light",
             Request::ReadNebulae { .. } => "read_nebulae",
             Request::SurveyPlanets { .. } => "survey_planets",
@@ -1188,6 +1231,11 @@ pub fn ops() -> Vec<OpInfo> {
             "read_world_stack",
             Cost::Light,
             "one stack: validation, the depth ladder and a few atom evaluations",
+        ),
+        o(
+            "weather",
+            Cost::Light,
+            "rules and keyed draws only: a 16 x 16 field tile or a report is milliseconds on any device",
         ),
         o(
             "detect",
@@ -1530,6 +1578,16 @@ pub enum Response {
         pinned: Option<serde_json::Value>,
         #[ts(type = "unknown[]")]
         surfaces: Vec<serde_json::Value>,
+    },
+    /// `weather`: the data asked for (`want`), the world's label, and which
+    /// block made it (`provenance`: block id, version, level, evidence).
+    WeatherRead {
+        want: String,
+        world: String,
+        #[ts(type = "unknown")]
+        provenance: serde_json::Value,
+        #[ts(type = "unknown")]
+        data: serde_json::Value,
     },
     /// `read_world_stack`: `source` is `fixture:<name>` or `given`; `ladder`
     /// is the "above, on and within" strip (`depth`, `text`, `where`, `key`);

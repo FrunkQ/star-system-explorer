@@ -527,6 +527,32 @@ the physics chain blocks... other than Big Blocks. And have a UI element that ma
 | Where | What it computes | Why it is not a flow yet | Blocks it would need | View that would show it |
 |---|---|---|---|---|
 
+## Weather (track W, `crates/sse-weather`, `packs/base-weather`)
+
+Details per package in `handover/packages/W1.md` to `W6.md`.
+
+| Where | Instead of the physics | Why | Real physics to replace it | Status |
+|---|---|---|---|---|
+| packs/base-weather `weather.circulation.wind_m_s` 12 m/s | One eddy wind scale for every world with a surface in the Rhines cell count | Rhines needs an eddy speed; tuned so Earth gets 3 cells | Eddy speed from each world's baroclinic energy budget | tuned, editable |
+| `weather.circulation.delta_h` 1/3, `tropopause_scale_heights` 1.8 | Fixed equator-pole contrast and tropopause depth in Held and Hou | Both needed; Earth values | Radiative-convective column per world | tuned |
+| `weather.supply.*` | Rain = 0.5 of sunlight reaching wet ground as latent heat; ground sunlight 0.67 (column/Earth)^-0.75; cloud 0.75 (1 − e^(−latent/35 W m⁻²)) | Fitted to Earth, Venus and Titan | Radiative transfer and a moisture budget | tuned |
+| `weather.circulation` rain profile weights, rain belt following 0.35 to 0.6 of the sun | Shapes of wet and dry belts | Earth-like look | Zonal-mean energy balance (W6's block is a start) | tuned |
+| `weather.photochemical` deck and haze optical depths 30 and 3 | Stand-in depths | No chemistry model yet | Photochemistry block | stand-in |
+| circulation.rs `p_sat` | Clausius-Clapeyron with one latent heat from the triple point | Simple, published constants (NIST) | Full vapour-pressure fits per range | documented |
+| `weather_formations.t_contrast_k` 40 K × (column/Earth)^-½ | Latitude temperature profile | Needed for sea temperature and snow | Energy-balance model | stand-in |
+| `weather_formations.cyclones.*` and Eady's 3.9 | Storm life 5 d, 25 m/s, winter +30 %, N 0.012 s⁻¹; 3.9 not yet read from Eady's paper | Earth-like | Baroclinic growth from each world's shear and stratification | to review |
+| `weather_formations.tropical.*` (80 a year, warm fraction 0.1, life, size, tracks) | Counts and motion | Earth-like | Potential intensity and genesis indices (Emanuel) | stand-in |
+| `weather_formations.dust.*`, `orography.rain_per_m_s` 20, lightning storm density, marine layer 0.35, visibility 50 km, locked day-night 45 K | Stand-in constants | No data yet | Dust lifting thresholds; linear upslope rain (Smith and Barstad); convective mass flux; lower-tropospheric stability | stand-in |
+| hooks.rs descent bands (0.24, 0.83 scale heights), icing 248 to 273 K, hazard thresholds, thunder heard to 15 km | Column and hazard rules | Readable descent telemetry | A real column model and aviation hazard rules | stand-in |
+| `weather_giants.stratification.brunt_s` 0.0148 s⁻¹ | One N for every giant, fitted so Saturn's polar Bu = 1.6e-3 | L_d needs a stratification | Radiative-convective column per giant | tuned |
+| `weather_giants.polygon.wavelength_ld` 5.07, side window 3 to 8, jet at 70° or more and 100 m/s or more | Polygon rule fitted to Saturn's 6 sides | Stated rule | Jet linear stability (Morales-Juberías 2015) | tuned |
+| giants.rs circumpolar jet at (U a²/2Ω)^⅓ from the pole | Own derivation (polar γ-plane Rhines) | Puts Saturn's jet at 78.6° with no tuning | Zonal-mean or shallow-water jets | to review |
+| `weather_giants.polar.*` diffuse-cap Bu 4e-3, internal 0.1 W/m², transition drawn 50/50, ring and vortex sizes; band jet strengths; storm family rates | Regime thresholds and storm statistics | Between published values; tuned to the record | Shallow-water parameter sweep (a later simulation block) | tuned |
+| `weather_aerosols` plume scaling to other worlds by gravity, density and stratification; buoyant to ballistic at 1e-4 bar | Mastin's Earth constant carried to other worlds | Only Earth calibrations exist | Buoyant plume model per atmosphere (Morton, Taylor and Turner with entrainment) | stand-in |
+| `weather_aerosols` veil 0.02 K per Tg SO₂, conversion 1/12 yr, response 0.7 yr | Cooling size not verified against a source | Placeholder for a radiative forcing calculation | Aerosol optical depth to forcing to climate response (Robock 2000 framework) | NOT verified |
+| `weather_aerosols.fire.min_o2` 0.15; impact thresholds and cooling; smog, spray and sulphur haze constants | Stand-ins, no number cited | No source read yet | Combustion limits (literature), impact-winter models, emission inventories | stand-in |
+| `weather_zonal` OLR slope 0.47 × blackbody, diffusion and other EBM constants | Fitted constants in the second block | Budyko's Earth fit, scaled | Radiative transfer per world | tuned |
+
 ## Game-system packs
 
 Codes that a game reads from physics. Where a code's band had to be drawn on the physics, the line is a choice,

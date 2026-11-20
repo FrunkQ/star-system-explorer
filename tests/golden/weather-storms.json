@@ -1,0 +1,45 @@
+{
+  "report": [
+    "Wind 16 km/h from the east",
+    "Sky mostly cloudy",
+    "Rain 1 mm a day",
+    "Visibility 34 km"
+  ],
+  "systems": [
+    {
+      "count": 10,
+      "day": 100.0,
+      "digest": "1c51365fe294f6cb49948a83c9b5b445464f03e122df00332e4e9a7de98ce3f3",
+      "ids": [
+        "cyclone-n0-93-0",
+        "cyclone-n0-96-0",
+        "cyclone-n0-97-0",
+        "cyclone-n0-98-0",
+        "cyclone-s0-95-0",
+        "cyclone-s0-96-0",
+        "cyclone-s0-97-0",
+        "cyclone-s0-98-0",
+        "cyclone-s0-99-0",
+        "polar-vortex-s-0"
+      ]
+    },
+    {
+      "count": 10,
+      "day": 250.5,
+      "digest": "8260eae2465fb437c27b1198d8553ee863eca8c4fad942b0ce7846419aa4027c",
+      "ids": [
+        "cyclone-n0-245-0",
+        "cyclone-n0-246-0",
+        "cyclone-n0-247-0",
+        "cyclone-n0-248-0",
+        "cyclone-n0-249-0",
+        "cyclone-s0-246-0",
+        "cyclone-s0-247-0",
+        "cyclone-s0-248-0",
+        "cyclone-s0-249-0",
+        "polar-vortex-n-0"
+      ]
+    }
+  ],
+  "tile": "99dcb5c498fc47c0191da16b96cd728322b4952999c5aecf9e76e63d9092f2ee"
+}
