@@ -156,6 +156,8 @@ export interface ViewSession {
   resolvedSystem(system: string, at_s?: number): Promise<{ ok: true; result: SystemResolved } | { ok: false; code: string; message: string }>;
   /** Air optics for the renderer's sky (kernel `read_air_optics`, light track): Rayleigh scattering and optical depth per wavelength. Read only; any seat. */
   readAirOptics(airs: Json[], wavelengths_m?: number[]): Promise<{ ok: true; airs: Json[] } | { ok: false; code: string; message: string }>;
+  /** Stellar activity (kernel `read_activity`, light track O10): regime, spin, X-rays, spots, cycle, and flares in a window. Read only; any seat. */
+  readActivity(ask: { stars: Json[]; seed?: string; at_s?: number; window?: { from_s: number; to_s: number; min_energy_j?: number } }): Promise<{ ok: true; stars: Json[] } | { ok: false; code: string; message: string }>;
   kernelVersion(): Promise<string>;
   /** Derived values of a flow (read only; no event). */
   derive(ref: DeriveRef): Promise<{ ok: true; values: Record<string, Derived> } | { ok: false; message: string }>;
@@ -559,6 +561,11 @@ export class Session implements ViewSession {
   async readAirOptics(airs: Json[], wavelengths_m?: number[]): Promise<{ ok: true; airs: Json[] } | { ok: false; code: string; message: string }> {
     const r = await this.#call({ op: "read_air_optics", airs, ...(wavelengths_m ? { wavelengths_m } : {}) });
     return r.type === "air_optics_read" ? { ok: true, airs: (r as unknown as { airs: Json[] }).airs } : { ok: false, code: String(r.code ?? "unexpected"), message: String(r.message ?? JSON.stringify(r)) };
+  }
+
+  async readActivity(ask: { stars: Json[]; seed?: string; at_s?: number; window?: { from_s: number; to_s: number; min_energy_j?: number } }): Promise<{ ok: true; stars: Json[] } | { ok: false; code: string; message: string }> {
+    const r = await this.#call({ op: "read_activity", ...ask } as Json);
+    return r.type === "activity_read" ? { ok: true, stars: (r as unknown as { stars: Json[] }).stars } : { ok: false, code: String(r.code ?? "unexpected"), message: String(r.message ?? JSON.stringify(r)) };
   }
 
   async windowView(ask: import("./window.ts").WindowAsk): Promise<{ ok: true; view: import("./window.ts").WindowView } | { ok: false; code: string; message: string }> {

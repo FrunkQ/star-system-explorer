@@ -475,6 +475,11 @@ The owner wants the physics in chain blocks (except big blocks) with a UI elemen
 | `passes.ts` relief pass | The star's direction is a look setting (azimuth, elevation) and its light is white | The view has no ephemeris position at the ruler's date yet | Star direction from the orbit at the campaign date; star colour from its spectrum | Stand-in |
 | `canvas.ts` air | One-column, plane-parallel air along view and sun; no limb glow beyond the disk | Canvas tier is the weak-device path | The GPU ray-march (already on GPU tiers) | Permanent for the canvas tier (weak devices do less) |
 | `canvas.ts` exposure (R4) | Exposure is a plain brightness gain | The canvas tier has no tone mapping | Tone mapping on canvas (cost) | Permanent for the canvas tier |
+| `renderer/src/star.ts` spotsFor (R5a) | Spot places and sizes drawn from the star's address and cycle number; belts follow Sporer's law linearly (28 to 8 degrees) | The kernel publishes spot coverage, not spot maps | A surface flux-transport model (active-region emergence, differential rotation, decay) as a kernel block | Stand-in |
+| `star.ts` SPOT_DELTA_K | Every spot is one umbra 1700 K cooler with a simple penumbra | Berdyugina (2005) gives 1500 to 2000 K for Sun-like stars; one value for all | Spot contrast as a function of Teff (Berdyugina 2005 fig. 7) | Stand-in |
+| `star.ts` CORONA_K | Corona at 1.5 MK for every star | No coronal temperature in the kernel yet | Coronal temperature from L_X (Güdel 2004 relation) published by read_activity | Stand-in |
+| `star.ts` X-ray view | Active regions are Gaussian brightenings over spots; flares drawn at a spot; log emission-measure mapped to violet | X-ray images are mapped colour by nature; loops not modelled | Loop models (RTV scaling) over the spot map; flare sites from the kernel | Stand-in (the colour map is permanent and labelled) |
+| `star.ts` limbDarkening | Grey atmosphere (Eddington) in every band | Physics-derived, no tables | Wavelength-dependent coefficients (Claret 2000 tables) by Teff and log g | To review |
 
 
 ### 3. Kernel light track (light thread, PR 24)
