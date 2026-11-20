@@ -1,0 +1,231 @@
+{
+  "cc": {
+    "address": "u:t/sys:1/nebula:0",
+    "age_s": 631152000000.0,
+    "ambient_h_m3": 1000000.0,
+    "at_s": 631152000000.0,
+    "cause": {
+      "at_s": 0.0,
+      "event": "supernova_cc",
+      "source": "u:t/sys:1/star:0"
+    },
+    "decoration_seed": "86135ccfa47a1e4b",
+    "elongation": 1.2349925994477857,
+    "fades_s": 63867227377447.695,
+    "kind": "supernova-remnant",
+    "light": {
+      "address": "u:t/sys:1/nebula:0",
+      "lines": [],
+      "parts": [],
+      "references": [
+        {
+          "doi": "10.1002/9783527618170",
+          "text": "Planck's law and the Stefan-Boltzmann law: Rybicki, G. B. and Lightman, A. P. 1979, Radiative Processes in Astrophysics, Wiley, chapter 1"
+        },
+        {
+          "doi": "10.1103/RevModPhys.93.025010",
+          "text": "Tiesinga, E., Mohr, P. J., Newell, D. B. and Taylor, B. N. 2021, CODATA recommended values of the fundamental physical constants: 2018, Rev. Mod. Phys. 93, 025010"
+        }
+      ],
+      "why": []
+    },
+    "lighting": [
+      "u:t/sys:1/star:0"
+    ],
+    "phase": "pressure-driven snowplough",
+    "references": [
+      {
+        "doi": "10.1098/rspa.1950.0049",
+        "text": "Taylor, G. I. 1950, The formation of a blast wave by a very intense explosion, Proc. R. Soc. A 201, 159.",
+        "url": "https://doi.org/10.1098/rspa.1950.0049"
+      },
+      {
+        "doi": "10.1086/166834",
+        "text": "Cioffi, D. F., McKee, C. F. and Bertschinger, E. 1988, Dynamics of radiative supernova remnants, ApJ 334, 252.",
+        "url": "https://doi.org/10.1086/166834"
+      }
+    ],
+    "shells": [
+      {
+        "label": "blast wave",
+        "mass_kg": 1.2663068171996963e+33,
+        "radius_m": 5.0399295106631834e+17,
+        "speed_m_s": 287326.64871438243,
+        "thickness_m": 4.0319436085305464e+16
+      }
+    ],
+    "stand_ins": [
+      "no light yet: shocked-gas lines, the hot X-ray interior and the radio shell come from the shock grid in O4",
+      "uniform surroundings: no bulging into thin gas or flattening against dense gas"
+    ],
+    "why": [
+      "u:t/sys:1/star:0 exploded 20000 years ago with 1.0e44 J; the blast is in its pressure-driven snowplough phase, 32.7 pc across and moving at 287 km/s.",
+      "It has swept up 631.8 solar masses of gas and will merge with its surroundings in 2003830 years, when it has slowed to 10 km/s.",
+      "The collapsed core, u:t/sys:1/star:0, sits at its centre."
+    ]
+  },
+  "ia": {
+    "address": "u:t/sys:1/nebula:0",
+    "age_s": 12623040000.0,
+    "ambient_h_m3": 100000.0,
+    "at_s": 12623040000.0,
+    "cause": {
+      "at_s": 0.0,
+      "event": "supernova_ia",
+      "source": "u:t/sys:1/star:0"
+    },
+    "decoration_seed": "86135ccfa47a1e4b",
+    "elongation": 1.0391654332412976,
+    "fades_s": 148954215256587.06,
+    "kind": "supernova-remnant",
+    "light": {
+      "address": "u:t/sys:1/nebula:0",
+      "lines": [],
+      "parts": [],
+      "references": [
+        {
+          "doi": "10.1002/9783527618170",
+          "text": "Planck's law and the Stefan-Boltzmann law: Rybicki, G. B. and Lightman, A. P. 1979, Radiative Processes in Astrophysics, Wiley, chapter 1"
+        },
+        {
+          "doi": "10.1103/RevModPhys.93.025010",
+          "text": "Tiesinga, E., Mohr, P. J., Newell, D. B. and Taylor, B. N. 2021, CODATA recommended values of the fundamental physical constants: 2018, Rev. Mod. Phys. 93, 025010"
+        }
+      ],
+      "why": []
+    },
+    "lighting": [],
+    "phase": "free expansion",
+    "references": [
+      {
+        "doi": "10.1098/rspa.1950.0049",
+        "text": "Taylor, G. I. 1950, The formation of a blast wave by a very intense explosion, Proc. R. Soc. A 201, 159.",
+        "url": "https://doi.org/10.1098/rspa.1950.0049"
+      },
+      {
+        "doi": "10.1086/166834",
+        "text": "Cioffi, D. F., McKee, C. F. and Bertschinger, E. 1988, Dynamics of radiative supernova remnants, ApJ 334, 252.",
+        "url": "https://doi.org/10.1086/166834"
+      }
+    ],
+    "shells": [
+      {
+        "label": "blast wave",
+        "mass_kg": 3.985839876900399e+30,
+        "radius_m": 1.0699462701098395e+17,
+        "speed_m_s": 8476137.840883333,
+        "thickness_m": 8559570160878716.0
+      }
+    ],
+    "stand_ins": [
+      "no light yet: shocked-gas lines, the hot X-ray interior and the radio shell come from the shock grid in O4",
+      "uniform surroundings: no bulging into thin gas or flattening against dense gas"
+    ],
+    "why": [
+      "u:t/sys:1/star:0 exploded 400 years ago with 1.0e44 J; the blast is in its free expansion phase, 6.9 pc across and moving at 8476 km/s.",
+      "It has swept up 0.6 solar masses of gas and will merge with its surroundings in 4719674 years, when it has slowed to 10 km/s."
+    ]
+  },
+  "pn": {
+    "address": "u:t/sys:0/star:0/nebula:0",
+    "age_s": 126230400000.0,
+    "ambient_h_m3": 1000000.0,
+    "at_s": 1.000001262304e+17,
+    "cause": {
+      "at_s": 1e+17,
+      "event": "planetary_nebula",
+      "source": "u:t/sys:0/star:0"
+    },
+    "decoration_seed": "8f2a3e55cd56931f",
+    "elongation": 1.0,
+    "fades_s": 1.0000076196275659e+17,
+    "kind": "planetary-nebula",
+    "light": {
+      "address": "u:t/sys:0/star:0/nebula:0",
+      "lines": [
+        {
+          "cause": "hydrogen recombination (case B)",
+          "line": "ha",
+          "power_w": 2.2112779836781765e+27
+        },
+        {
+          "cause": "hydrogen recombination (case B)",
+          "line": "hb",
+          "power_w": 7.731741201671946e+26
+        }
+      ],
+      "parts": [],
+      "references": [
+        {
+          "doi": "10.1002/9783527618170",
+          "text": "Planck's law and the Stefan-Boltzmann law: Rybicki, G. B. and Lightman, A. P. 1979, Radiative Processes in Astrophysics, Wiley, chapter 1"
+        },
+        {
+          "doi": "10.1103/RevModPhys.93.025010",
+          "text": "Tiesinga, E., Mohr, P. J., Newell, D. B. and Taylor, B. N. 2021, CODATA recommended values of the fundamental physical constants: 2018, Rev. Mod. Phys. 93, 025010"
+        },
+        {
+          "text": "Osterbrock, D. E. and Ferland, G. J. 2006, Astrophysics of Gaseous Nebulae and Active Galactic Nuclei, 2nd edn, University Science Books",
+          "url": "https://uscibooks.aip.org/books/astrophysics-of-gaseous-nebulae-and-active-galactic-nuclei-second-edition/"
+        }
+      ],
+      "why": []
+    },
+    "lighting": [
+      "u:t/sys:0/star:0"
+    ],
+    "lobes": {
+      "axis": [
+        -0.9894746126453514,
+        0.09339139833203178,
+        -0.11053523260897169
+      ],
+      "ratio": 3.5931249319142684,
+      "why": "shaped by a close companion"
+    },
+    "phase": "partly lit",
+    "references": [
+      {
+        "doi": "10.1086/182621",
+        "text": "Kwok, S., Purton, C. R. and Fitzgerald, P. M. 1978, On the origin of planetary nebulae, ApJ 219, L125.",
+        "url": "https://doi.org/10.1086/182621"
+      },
+      {
+        "doi": "10.1146/annurev.astro.40.060401.093849",
+        "text": "Balick, B. and Frank, A. 2002, Shapes and shaping of planetary nebulae, ARA&A 40, 439: binary companions and fast spin give bipolar and butterfly shapes; concentric rings round many nebulae record earlier pulses of mass loss.",
+        "url": "https://doi.org/10.1146/annurev.astro.40.060401.093849"
+      },
+      {
+        "text": "Osterbrock, D. E. and Ferland, G. J. 2006, Astrophysics of Gaseous Nebulae and Active Galactic Nuclei, 2nd edn, University Science Books",
+        "url": "https://uscibooks.aip.org/books/astrophysics-of-gaseous-nebulae-and-active-galactic-nuclei-second-edition/"
+      }
+    ],
+    "shells": [
+      {
+        "label": "bright shell",
+        "mass_kg": 1.7895689999999997e+29,
+        "radius_m": 2399653261577415.0,
+        "speed_m_s": 19010.105819021526,
+        "thickness_m": 479930652315483.0
+      },
+      {
+        "label": "halo ring 2",
+        "mass_kg": 0.0,
+        "radius_m": 2808388359196834.5,
+        "speed_m_s": 15000.0,
+        "thickness_m": 140419417959841.73
+      }
+    ],
+    "stand_ins": [
+      "only hydrogen's recombination lines so far: oxygen, nitrogen, sulphur and helium lines (the teal cores and red edges) come from the line-strength grid in O4",
+      "the white dwarf's ionising light is held at its birth temperature; its cooling (and the nebula dimming with it) comes when the remnant track gives the cooling curve",
+      "the shell is uniform: no clumps or density gradient in the surroundings"
+    ],
+    "why": [
+      "Shed by u:t/sys:0/star:0 4000 years ago; the shell coasts out at 19 km/s and is now 0.16 pc across.",
+      "The white dwarf (100000 K) gives 1.6e46 ionising photons a second, fewer than the 4.4e46 recombinations the dense young shell would need: only its inner part glows.",
+      "2 faint rings outside it are earlier puffs of the giant's slow wind, 966 years apart: the shed layers.",
+      "a close companion squeezes the outflow at the waist, so it blows out two lobes 3.6 times longer than wide."
+    ]
+  }
+}

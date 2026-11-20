@@ -1,0 +1,344 @@
+//! O9: sensing (nebulae-and-light design 5A). What a sensor can detect falls
+//! out of two things: the target's light in the sensor's band, after
+//! distance and dust, and the sensor's noise (background, dark counts, glare
+//! from anything bright beside the target). No stealth rating.
+//!
+//! - Light bands: photon counting. Signal S and background B in photons per
+//!   second; S/N after a stare t is S t / √((S + B + D) t).
+//! - Radio: the radiometer equation. S/N = (P / k T_sys B) √(B t), with
+//!   P = flux × effective area.
+//! - Radar: the radar equation for the echo against the direct pulse that
+//!   any listener in the beam receives, so a radar is heard further than it
+//!   can see.
+
+use serde::{Deserialize, Serialize};
+use sse_core::math as m;
+use sse_flow::Reference;
+use sse_light::table::LightTable;
+use sse_light::{power_between, LightDescription, C, H, K_B};
+
+#[cfg(test)]
+mod tests;
+
+const R_PHOTON: &str = "Photon-counting signal to noise, S t / √((S + B + D) t): Howell, S. B. 2006, Handbook of CCD Astronomy, 2nd edn, Cambridge University Press, chapter 4 (the CCD equation). doi:10.1017/CBO9780511807909";
+const R_RADIOMETER: &str = "Radiometer equation ΔT = T_sys / √(B t): Wilson, T. L., Rohlfs, K. and Hüttemeister, S. 2013, Tools of Radio Astronomy, 6th edn, Springer, chapter 4. doi:10.1007/978-3-642-39950-3";
+const R_RADAR: &str = "Radar equation P_r = P G² λ² σ / ((4π)³ R⁴) and effective aperture A_e = G λ² / 4π: Skolnik, M. I. 2001, Introduction to Radar Systems, 3rd edn, McGraw-Hill, chapter 2";
+const R_DUST: &str = "Interstellar extinction falls with wavelength: A_λ/A_V ≈ (λ/0.55 µm)^−1.75 in the near and mid infrared (Draine, B. T. 2003, Interstellar dust grains, ARA&A 41, 241. doi:10.1146/annurev.astro.41.011802.094840); the optical shape follows Cardelli, Clayton and Mathis 1989, ApJ 345, 245. doi:10.1086/167900";
+const R_DIFFRACTION: &str = "Diffraction limit 1.22 λ / D (Airy disc first minimum)";
+
+#[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
+pub struct Sensor {
+    pub name: String,
+    /// "photon" (gamma to far infrared) or "radio".
+    #[serde(default = "photon")]
+    pub kind: String,
+    pub from_m: f64,
+    pub to_m: f64,
+    pub aperture_m: f64,
+    #[serde(default = "half")]
+    pub efficiency: f64,
+    /// Photon sensors: detector dark counts per second in the resolution element.
+    #[serde(default = "one")]
+    pub dark_photons_s: f64,
+    /// Diffuse background radiance in the band, W m⁻² sr⁻¹ (zodiacal light, nebula glow, warm optics).
+    #[serde(default)]
+    pub background_w_m2_sr: f64,
+    /// Resolution, rad; default the diffraction limit at the band centre.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub resolution_rad: Option<f64>,
+    /// Radio: system temperature, K, and bandwidth, Hz (default the whole band).
+    #[serde(default = "t_sys")]
+    pub system_temperature_k: f64,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub bandwidth_hz: Option<f64>,
+    /// Signal to noise needed to call it a detection.
+    #[serde(default = "five")]
+    pub threshold_snr: f64,
+    /// How long it may stare, s.
+    #[serde(default = "one")]
+    pub stare_s: f64,
+}
+
+fn photon() -> String {
+    "photon".into()
+}
+fn half() -> f64 {
+    0.5
+}
+fn one() -> f64 {
+    1.0
+}
+fn five() -> f64 {
+    5.0
+}
+fn t_sys() -> f64 {
+    50.0
+}
+
+impl Sensor {
+    pub fn centre_m(&self) -> f64 {
+        m::sqrt(self.from_m * self.to_m)
+    }
+    pub fn resolution(&self) -> f64 {
+        self.resolution_rad
+            .unwrap_or(1.22 * self.centre_m() / self.aperture_m)
+    }
+    fn area(&self) -> f64 {
+        m::PI * 0.25 * self.aperture_m * self.aperture_m * self.efficiency
+    }
+    fn bandwidth(&self) -> f64 {
+        self.bandwidth_hz.unwrap_or(C / self.from_m - C / self.to_m)
+    }
+}
+
+/// Something bright near the target on the sky (its star, a nebula behind it).
+#[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
+pub struct Neighbour {
+    pub address: String,
+    pub light: LightDescription,
+    pub distance_m: f64,
+    pub separation_rad: f64,
+}
+
+#[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
+pub struct Seen {
+    pub address: String,
+    pub light: LightDescription,
+    pub distance_m: f64,
+    /// Dust between, as visual extinction A_V in magnitudes.
+    #[serde(default)]
+    pub extinction_av: f64,
+    #[serde(default)]
+    pub neighbours: Vec<Neighbour>,
+}
+
+#[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
+pub struct Detection {
+    pub target: String,
+    pub sensor: String,
+    /// Flux in the band at the sensor, after dust, W/m².
+    pub flux_w_m2: f64,
+    /// Dimming by dust in the band, magnitudes.
+    pub extinction_mag: f64,
+    pub snr: f64,
+    pub detectable: bool,
+    /// Stare needed for the threshold, s (infinite if never).
+    pub stare_needed_s: f64,
+    /// Furthest distance at which this sensor would detect it with its stare (dust held as now).
+    pub range_m: f64,
+    pub lost_in_glare: bool,
+    pub why: Vec<String>,
+    pub references: Vec<Reference>,
+}
+
+/// Dust dimming at λ for visual extinction `av`, magnitudes. Optical to mid
+/// infrared by the power law; ultraviolet held at the 0.3 µm value; nothing
+/// in radio; X-rays not modelled (dust absorbs soft X-rays only weakly here).
+pub fn extinction_mag(av: f64, lambda_m: f64) -> f64 {
+    if av <= 0.0 || !(1e-8..=1e-3).contains(&lambda_m) {
+        return 0.0;
+    }
+    let l = lambda_m.max(3e-7);
+    av * m::pow(l / 0.55e-6, -1.75)
+}
+
+fn dimming(mag: f64) -> f64 {
+    m::pow(10.0, -0.4 * mag)
+}
+
+/// Flux of a light description in [a, b] at distance d, W/m².
+pub fn flux_in(light: &LightDescription, a: f64, b: f64, d: f64, table: &LightTable) -> f64 {
+    power_between(light, a, b, table) / (4.0 * m::PI * d * d)
+}
+
+/// S/N for signal and noise rates over a stare.
+fn snr_photon(s: f64, b: f64, t: f64) -> f64 {
+    if s <= 0.0 {
+        return 0.0;
+    }
+    s * t / m::sqrt((s + b) * t)
+}
+
+pub fn detect(seen: &Seen, sensor: &Sensor, table: &LightTable) -> Result<Detection, String> {
+    if !(sensor.to_m > sensor.from_m
+        && sensor.from_m > 0.0
+        && sensor.aperture_m > 0.0
+        && seen.distance_m > 0.0)
+    {
+        return Err(format!(
+            "{} / {}: bad band, aperture or distance",
+            seen.address, sensor.name
+        ));
+    }
+    let lc = sensor.centre_m();
+    let ext = extinction_mag(seen.extinction_av, lc);
+    let flux = flux_in(
+        &seen.light,
+        sensor.from_m,
+        sensor.to_m,
+        seen.distance_m,
+        table,
+    ) * dimming(ext);
+    let res = sensor.resolution();
+    let mut why = vec![];
+    let mut refs = vec![Reference::parse(R_DIFFRACTION)];
+    if ext > 0.01 {
+        why.push(format!(
+            "Dust between dims this band by {:.2} magnitudes (a factor {:.3}).",
+            ext,
+            dimming(ext)
+        ));
+        refs.push(Reference::parse(R_DUST));
+    }
+    // Glare: neighbours inside the resolution element add their light to the noise.
+    let mut glare_flux = 0.0;
+    for n in &sensor_neighbours(seen, res) {
+        glare_flux +=
+            flux_in(&n.light, sensor.from_m, sensor.to_m, n.distance_m, table) * dimming(ext);
+        why.push(format!(
+            "{} lies within the sensor's resolution ({:.2e} rad), so its light swamps the pixel.",
+            n.address, res
+        ));
+    }
+    let (snr, stare_needed, range) = if sensor.kind == "radio" {
+        refs.push(Reference::parse(R_RADIOMETER));
+        let bw = sensor.bandwidth();
+        let p = flux * sensor.area();
+        let pg = glare_flux * sensor.area();
+        // Glare adds to the system temperature.
+        let t_sys = sensor.system_temperature_k + pg / (K_B * bw);
+        let noise = K_B * t_sys * bw / m::sqrt(bw * sensor.stare_s);
+        let snr = p / noise;
+        let need = if p > 0.0 {
+            sensor.stare_s * (sensor.threshold_snr / snr) * (sensor.threshold_snr / snr)
+        } else {
+            f64::INFINITY
+        };
+        // Signal falls as 1/d² (glare held as now).
+        let range = if p > 0.0 {
+            seen.distance_m * m::sqrt(snr / sensor.threshold_snr)
+        } else {
+            0.0
+        };
+        why.push(format!(
+            "{:.3e} W reaches the {} against {:.3e} W of noise ({:.0} K over {:.3e} Hz for {:.0} s): S/N {:.2}.",
+            p, sensor.name, noise, t_sys, bw, sensor.stare_s, snr
+        ));
+        (snr, need, range)
+    } else {
+        refs.push(Reference::parse(R_PHOTON));
+        let e_ph = H * C / lc;
+        let s = flux * sensor.area() / e_ph;
+        let omega = m::PI * res * res;
+        let bg = sensor.background_w_m2_sr * omega * sensor.area() / e_ph
+            + glare_flux * sensor.area() / e_ph;
+        let b = bg + sensor.dark_photons_s;
+        let snr = snr_photon(s, b, sensor.stare_s);
+        let k2 = sensor.threshold_snr * sensor.threshold_snr;
+        let need = if s > 0.0 {
+            k2 * (s + b) / (s * s)
+        } else {
+            f64::INFINITY
+        };
+        // Range: S scales as (d0/d)²; solve S0² t x² − k² S0 x − k² B = 0 for x = (d0/d)².
+        let range = if s > 0.0 {
+            let t = sensor.stare_s;
+            let x =
+                (k2 * s + m::sqrt(k2 * k2 * s * s + 4.0 * s * s * t * k2 * b)) / (2.0 * s * s * t);
+            seen.distance_m / m::sqrt(x)
+        } else {
+            0.0
+        };
+        why.push(format!(
+            "{:.3e} photons/s arrive in {:.0} to {:.0} nm against {:.3e}/s of background and dark counts; staring {:.0} s gives S/N {:.2}.",
+            s,
+            sensor.from_m * 1e9,
+            sensor.to_m * 1e9,
+            b,
+            sensor.stare_s,
+            snr
+        ));
+        (snr, need, range)
+    };
+    let detectable = snr >= sensor.threshold_snr;
+    let lost_in_glare = !detectable && glare_flux > flux;
+    why.push(if detectable {
+        format!(
+            "Detected (needs S/N {}); it would still be seen out to {:.3e} m.",
+            sensor.threshold_snr, range
+        )
+    } else if lost_in_glare {
+        "Not detected: lost in the glare of something brighter beside it.".into()
+    } else {
+        format!(
+            "Not detected: it would need a {:.3e} s stare, or to be within {:.3e} m.",
+            stare_needed, range
+        )
+    });
+    Ok(Detection {
+        target: seen.address.clone(),
+        sensor: sensor.name.clone(),
+        flux_w_m2: flux,
+        extinction_mag: ext,
+        snr,
+        detectable,
+        stare_needed_s: stare_needed,
+        range_m: range,
+        lost_in_glare,
+        why,
+        references: refs,
+    })
+}
+
+fn sensor_neighbours(seen: &Seen, res: f64) -> Vec<&Neighbour> {
+    seen.neighbours
+        .iter()
+        .filter(|n| n.separation_rad < res)
+        .collect()
+}
+
+/// A radar and who can hear it.
+#[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
+pub struct Radar {
+    pub power_w: f64,
+    /// Antenna gain (linear).
+    pub gain: f64,
+    pub wavelength_m: f64,
+    /// Target's radar cross-section, m².
+    pub cross_section_m2: f64,
+    /// Smallest power the receivers can pick out, W (the same for the radar and a listener).
+    pub min_power_w: f64,
+}
+
+#[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
+pub struct RadarRanges {
+    /// Furthest the radar can see the target by its echo.
+    pub sees_to_m: f64,
+    /// Furthest a listener with the same antenna, in the beam, hears the pulse.
+    pub heard_to_m: f64,
+    pub why: Vec<String>,
+    pub references: Vec<Reference>,
+}
+
+pub fn radar_ranges(r: &Radar) -> RadarRanges {
+    let fp3 = 4.0 * m::PI * 4.0 * m::PI * 4.0 * m::PI;
+    let sees = m::pow(
+        r.power_w * r.gain * r.gain * r.wavelength_m * r.wavelength_m * r.cross_section_m2
+            / (fp3 * r.min_power_w),
+        0.25,
+    );
+    // Listener with effective aperture G λ²/4π, in the main beam: P_i = P G · G λ² / ((4π)² R²).
+    let heard = m::sqrt(
+        r.power_w * r.gain * r.gain * r.wavelength_m * r.wavelength_m
+            / (4.0 * m::PI * 4.0 * m::PI * r.min_power_w),
+    );
+    RadarRanges {
+        sees_to_m: sees,
+        heard_to_m: heard,
+        why: vec![
+            format!("The echo falls as the fourth power of distance, so the radar sees a {:.0} m² target out to {:.3e} m.", r.cross_section_m2, sees),
+            format!("The pulse itself falls only as the square, so anyone in the beam with the same receiver hears it out to {:.3e} m: {:.0} times further.", heard, heard / sees),
+        ],
+        references: vec![Reference::parse(R_RADAR)],
+    }
+}

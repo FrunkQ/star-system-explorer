@@ -4,10 +4,14 @@
 //! issue, spec, tests, code rule (docs/atom-spec-template.md).
 #![forbid(unsafe_code)]
 
+pub mod activity;
+pub mod air;
 pub mod climate;
 pub mod common;
 pub mod heat;
 pub mod layers;
+pub mod light;
+pub mod nebula;
 pub mod orbit;
 pub mod planet;
 pub mod star;
@@ -28,6 +32,10 @@ pub fn atoms() -> Vec<Box<dyn sse_flow::Atom>> {
         .chain(tides::atoms())
         .chain(layers::atoms())
         .chain(heat::atoms())
+        .chain(light::atoms())
+        .chain(nebula::atoms())
+        .chain(activity::atoms())
+        .chain(air::atoms())
         .collect()
 }
 
@@ -233,6 +241,47 @@ pub const KIND_DESCRIPTIONS: &[(&str, &str)] = &[
     ),
     ("layer.density", "mean density of a layer"),
     ("layer.pressure_increase", "pressure added across a layer"),
+    // light (O2)
+    ("body.internal_heat_flux", "heat flowing out through a body's surface from inside, per area: a star's or brown dwarf's own luminosity, a giant planet's left-over heat"),
+    ("body.effective_temperature", "temperature of the black body that radiates what this body radiates in total"),
+    ("light.reflected_area", "effective area for reflected starlight: Bond albedo times cross-section times the source's dilution (R*/d)²"),
+    ("wind.density", "mass density of the stellar wind at the body"),
+    ("wind.speed", "speed of the stellar wind at the body"),
+    ("wind.transverse_field", "magnetic field in the stellar wind across the flow direction, at the body"),
+    ("body.magnetic_moment", "magnetic dipole moment of a body"),
+    ("body.magnetopause_radius", "stand-off distance of the magnetopause towards the wind, from the body's centre; zero without a field"),
+    ("radio.auroral_power", "auroral radio power, all frequencies"),
+    ("radio.max_frequency", "highest auroral radio frequency, the electron gyrofrequency at the magnetic pole"),
+    // nebulae (O3)
+    ("light.ionising_photon_rate", "photons per second able to ionise hydrogen (above 13.6 eV)"),
+    ("gas.hydrogen_density", "number density of hydrogen nuclei in the surrounding gas"),
+    ("nebula.ionised_radius", "radius out to which a star's light keeps the gas ionised (Strömgren radius)"),
+    ("nebula.recombination_rate", "hydrogen recombinations per second in a nebula"),
+    ("nebula.h_alpha_power", "power in the hydrogen-alpha line"),
+    ("nebula.expansion_speed", "speed at which a nebula's shell expands"),
+    ("nebula.age", "time since the nebula's cause (a star's death, an explosion, a cluster's birth)"),
+    ("nebula.shell_radius", "radius of a nebula's shell or shock"),
+    ("event.explosion_energy", "kinetic energy of an explosion"),
+    ("event.ejecta_mass", "mass thrown out by an explosion"),
+    // stellar activity (O10)
+    ("body.rotation_period", "time for one turn about the spin axis (sidereal)"),
+    ("star.convective_turnover_time", "time for the churning outer layer of a cool star to turn over once"),
+    ("star.rossby_number", "rotation period over convective turnover time; low means magnetically active"),
+    ("star.xray_fraction", "share of a star's power given out as coronal X-rays (L_X / L_bol)"),
+    ("star.xray_luminosity", "coronal X-ray power of a star"),
+    ("star.activity_cycle_period", "length of a star's spot and activity cycle"),
+    ("flare.energy", "total energy released by a flare, all wavelengths"),
+    ("flare.rate_above", "flares per unit time with at least the given energy"),
+    // air optics
+    ("light.wavelength", "a wavelength of light"),
+    ("gas.refractivity", "refractive index minus one of a gas at its reference density"),
+    ("gas.reference_density", "number density at which a gas's refractivity is given"),
+    ("gas.king_factor", "King correction factor for scattering by non-spherical molecules (1 for spheres)"),
+    ("gas.rayleigh_cross_section", "Rayleigh scattering cross-section per molecule"),
+    ("atmosphere.mean_molecular_mass", "mean mass of one air molecule"),
+    ("atmosphere.rayleigh_optical_depth", "Rayleigh optical depth of the whole air column, looking straight up"),
+    ("atmosphere.number_density", "molecules per cubic metre of air"),
+    ("atmosphere.rayleigh_scattering_coefficient", "Rayleigh scattering per metre of path"),
 ];
 
 /// Quantity kinds for the base-physics pack, from the atoms' port kinds.
