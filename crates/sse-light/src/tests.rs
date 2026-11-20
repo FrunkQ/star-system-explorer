@@ -810,6 +810,19 @@ mod air_optics {
         }
     }
 
+    /// The gases in V3 mixes all resolve, and scatter in the order of their
+    /// refractivity squared: neon far below air, sulphur dioxide well above.
+    #[test]
+    fn v3_mix_gases_resolve() {
+        let t = LightTable::base();
+        let at = |g: &str| cross_section(&earth(mix(&[(g, 1.0)])), 550e-9, &t).unwrap();
+        let air = at("air");
+        assert!(at("ne") < 0.1 * air);
+        assert!((0.9 * air..1.6 * air).contains(&at("co")));
+        assert!(at("nh3") > air && at("nh3") < at("so2"));
+        assert!(at("so2") > 4.0 * air);
+    }
+
     /// Earth from its gases against Bucholtz 1995 (4.84, 11.49 and 28.6 per
     /// million metres at 680, 550 and 440 nm) and a scale height of 8.43 km.
     #[test]
