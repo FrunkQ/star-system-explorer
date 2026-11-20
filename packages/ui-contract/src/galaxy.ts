@@ -5,7 +5,10 @@
 // kernel's own.
 
 export interface GalaxyAsk {
-  halo?: "dwarf" | "milky-way-like" | "group";
+  /** A named halo, or (with `cell`) one of that cell's catalogued haloes, `halo:N`. */
+  halo?: string;
+  /** A halo cell's index, from `halo_cell` (V9's cluster map). */
+  cell?: [number, number, number];
   mass_msun?: number;
   at_gyr?: number;
   place_kpc?: number;
@@ -298,4 +301,68 @@ export function editWords(e: GalaxyEdit, mergers: readonly { index: number; t_gy
 export function toggleRemoval(edits: readonly GalaxyEdit[], index: number): GalaxyEdit[] {
   const has = edits.some((e) => e.kind === "remove_merger" && e.index === index);
   return has ? edits.filter((e) => !(e.kind === "remove_merger" && e.index === index)) : [...edits, { kind: "remove_merger", index }];
+}
+
+// ---- V9 cluster map: one halo cell (kernel `halo_cell`, G2) ----
+
+export interface HaloCellAsk {
+  cell?: [number, number, number];
+  min_mass_msun?: number;
+  limit?: number;
+}
+
+export interface CellHalo {
+  address: string;
+  key: string;
+  mass_msun: number;
+  position_mpc: [number, number, number];
+  half_mass_gyr: number;
+  spin: number;
+  mergers: number;
+  major_mergers: number;
+  last_major_gyr: number | null;
+  neighbour: { address: string; distance_mpc: number; bound: boolean; approach_gyr: number | null } | null;
+}
+
+export interface HaloCell {
+  address: string;
+  index: [number, number, number];
+  side_mpc: number;
+  origin_mpc: [number, number, number];
+  delta_l: number;
+  mass_msun: number;
+  halo_mass_msun: number;
+  total: number;
+  above_min: number;
+  min_mass_msun: number;
+  haloes: CellHalo[];
+  bins: { log10_mass: number; expected: number; drawn: number }[];
+  now_gyr: number;
+  model: string[];
+}
+
+/** A catalogued halo's address split into its cell and key, or null for a named halo. */
+export function cellHalo(address: string | null | undefined): { cell: [number, number, number]; halo: string; key: string } | null {
+  const m = /\/cell:(-?\d+)\.(-?\d+)\.(-?\d+)\/halo:(\d+)$/.exec(address ?? "");
+  return m ? { cell: [Number(m[1]), Number(m[2]), Number(m[3])], halo: `halo:${m[4]}`, key: m[4]! } : null;
+}
+
+/** Which two axes a map shows, and the one it looks along. */
+export type Projection = "xy" | "xz" | "yz";
+export function projectHalo(p: readonly [number, number, number], origin: readonly [number, number, number], side: number, proj: Projection, size: number, pad = 12): { x: number; y: number } {
+  const [a, b] = proj === "xy" ? [0, 1] : proj === "xz" ? [0, 2] : [1, 2];
+  const k = (size - 2 * pad) / side;
+  return { x: pad + (p[a]! - origin[a]!) * k, y: size - pad - (p[b]! - origin[b]!) * k };
+}
+
+/** A dot's radius for a halo: by the cube root of mass (its size), 2 px at the catalogue floor. */
+export function haloRadius(mass: number, floor = 1e10): number {
+  return 2 + 2.2 * (Math.cbrt(Math.max(1, mass / floor)) - 1);
+}
+
+/** The cell's overdensity in words. */
+export function overdensityWords(delta_l: number): string {
+  const p = Math.round(Math.abs(delta_l) * 100);
+  if (Math.abs(delta_l) < 0.15) return "about as dense as the universe on average";
+  return delta_l > 0 ? `denser than average (linear overdensity +${p}%)` : `emptier than average (linear underdensity ${p}%)`;
 }

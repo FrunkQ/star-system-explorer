@@ -422,6 +422,7 @@ Two smaller physics errors (CH₄ lifetime 9.6 → 9.1 yr; escape coefficient ×
 | patch.rs conditions | G0 closed-form densities, SFR, Ia DTD, encounters | `exp_disc_density`, `halo_power_law`, `ia_dtd_integral`, `age_velocity_relation` | Solar-patch card (G0) |
 | `sse-kernel/src/cosmos.rs` `galaxy_chart` arm crests | Arms drawn as crests of one fixed log-spiral density wave (envelope pitch and pattern speed), rotated to the time shown | The envelope's arm term is itself that pattern; a chart needs lines | Transient, ragged arms from a stellar-dynamics model, broken up after mergers (G6 events) | stand-in until arms are evolved |
 | `sse-kernel/src/cosmos.rs` `web()` | Cosmic web octaves capped at 4 for `galaxy_chart` and `web_slice` | Browser cost: a 96 x 96 slice in about a second | All pack octaves (finer filaments below a few Mpc) on capable devices | permanent cap for weak devices; to lift by tier |
+| `packages/views/cluster-map` | The cluster map flattens the cube's height and draws one web slice through its middle behind every halo | A flat chart of a 3D cube; one slice is cheap | A 3D view, or the web projected through the whole cube | stand-in until the 3D view takes cells |
 | `sse-kernel/src/cosmos.rs` `galaxy_chart` halo | The median halo for a named mass, not the campaign's own galaxy | G7 (Milky Way pack, campaign galaxy) not built | The campaign's galaxy placed by G7 | stand-in until G7 |
 
 ## Light, rendering and sound

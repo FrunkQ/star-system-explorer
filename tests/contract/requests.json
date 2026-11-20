@@ -2271,5 +2271,7 @@
   "scope": "u:toy",
   "format": "docx",
   "at_s": 30
- }
+ },
+ {"op": "halo_cell", "cell": [0, 0, 0], "min_mass_msun": 3e11, "limit": 5},
+ {"op": "halo_cell", "limit": 0}
 ]

@@ -47,6 +47,8 @@ pub(crate) struct GalaxyAsk<'a> {
     pub at_gyr: Option<f64>,
     pub place_kpc: Option<f64>,
     pub place_phi: Option<f64>,
+    /// A halo cell (V9's cluster map): `halo` is then one of its catalogued haloes.
+    pub cell: Option<[i64; 3]>,
     /// The GM's history edits, inked in this view (G6); empty for the galaxy as grown.
     pub edits: &'a [sse_cosmos::galaxy::Edit],
 }
@@ -65,7 +67,34 @@ pub(crate) fn galaxy_chart(a: GalaxyAsk) -> Result<serde_json::Value, Response> 
         seed: *a.seed,
         universe: a.root.clone(),
     };
-    let (key, mass) = match (a.halo, a.mass_msun) {
+    let catalogued = match (a.cell, a.halo) {
+        (Some(idx), Some(k)) => {
+            let cell = hs.cell(idx);
+            Some(
+                cell.haloes
+                    .into_iter()
+                    .find(|h| h.address == k || h.address.ends_with(&format!("/{k}")))
+                    .ok_or_else(|| {
+                        err("unknown_halo", format!("no halo {k} in {}", cell.address))
+                    })?,
+            )
+        }
+        (Some(_), None) => return Err(err("bad_request", "with a cell, name one of its haloes")),
+        _ => None,
+    };
+    let h = match catalogued {
+        Some(h) => h,
+        None => named_halo(&hs, a.halo, a.mass_msun)?,
+    };
+    galaxy_chart_of(&c, &cp, a, h)
+}
+
+fn named_halo(
+    hs: &Haloes,
+    halo: Option<&str>,
+    mass_msun: Option<f64>,
+) -> Result<sse_cosmos::haloes::Halo, Response> {
+    let (key, mass) = match (halo, mass_msun) {
         (Some(k), None) => HALOES
             .iter()
             .find(|(n, _)| *n == k)
@@ -84,15 +113,23 @@ pub(crate) fn galaxy_chart(a: GalaxyAsk) -> Result<serde_json::Value, Response> 
         (None, None) => ("milky-way-like".to_string(), 1.0e12),
         _ => return Err(err("bad_request", "give a halo name or a mass, not both")),
     };
-    let h = hs.median(mass, &key);
+    Ok(hs.median(mass, &key))
+}
+
+fn galaxy_chart_of(
+    c: &Cosmology,
+    cp: &CosmologyPack,
+    a: GalaxyAsk,
+    h: sse_cosmos::haloes::Halo,
+) -> Result<serde_json::Value, Response> {
     sse_cosmos::galaxy::check_edits(&h, a.edits).map_err(|e| err("bad_edit", e))?;
-    let g = sse_cosmos::galaxy::evolve_with(&c, &cp.galaxy, &h, a.edits);
+    let g = sse_cosmos::galaxy::evolve_with(c, &cp.galaxy, &h, a.edits);
     // Before and after, when the GM has inked history: the ghost the chart draws.
     let compare = if a.edits.is_empty() {
         None
     } else {
         Some(sse_cosmos::events::compare(
-            &sse_cosmos::galaxy::evolve(&c, &cp.galaxy, &h),
+            &sse_cosmos::galaxy::evolve(c, &cp.galaxy, &h),
             &g,
         ))
     };
@@ -207,8 +244,8 @@ pub(crate) fn galaxy_chart(a: GalaxyAsk) -> Result<serde_json::Value, Response> 
     });
     Ok(serde_json::json!({
         "halo": h.address,
-        "key": key,
-        "halo_mass_msun": mass,
+        "key": h.address.rsplit_once("/halo:").map_or(h.address.as_str(), |x| x.1),
+        "halo_mass_msun": h.mass,
         "morphology": g.morphology,
         "barred": g.barred,
         "t_start_gyr": g.t_start_gyr,
@@ -225,7 +262,7 @@ pub(crate) fn galaxy_chart(a: GalaxyAsk) -> Result<serde_json::Value, Response> 
         "core_collapse_per_century": d.core_collapse_rate() * 100.0,
         "ia_per_century": d.ia_rate() * 100.0,
         "green_bands": bands,
-        "epochs": sse_cosmos::epochs::epochs(&c, &cp.epochs),
+        "epochs": sse_cosmos::epochs::epochs(c, &cp.epochs),
         "place": place,
         "mergers": mergers,
         "events": events,
@@ -283,6 +320,97 @@ pub(crate) fn web_slice(a: SliceAsk) -> Result<serde_json::Value, Response> {
         "now_gyr": c.age_gyr(),
         "slice": s,
         "model": ["the cosmic web from seeded Gaussian fields, grown linearly and moved by the Zel'dovich approximation (G1); a picture of the large-scale pattern, not an N-body simulation"],
+    }))
+}
+
+pub(crate) struct CellAsk<'a> {
+    pub seed: &'a Seed,
+    pub root: &'a Address,
+    pub cell: [i64; 3],
+    pub min_mass: f64,
+    pub limit: usize,
+}
+
+/// One halo cell (G2) for V9's cluster map: its galaxies' haloes, biggest
+/// first, down to `min_mass` and at most `limit` of them, with the mass
+/// function they were drawn from. Small on purpose: no merger trees.
+pub(crate) fn halo_cell(a: CellAsk) -> Result<serde_json::Value, Response> {
+    if !(a.min_mass >= 1.0e8 && a.min_mass < 1.0e16) {
+        return Err(err("bad_request", "min_mass_msun must be 1e8 to 1e16"));
+    }
+    if a.limit == 0 || a.limit > 1000 {
+        return Err(err("bad_request", "limit must be 1 to 1000"));
+    }
+    let cp = settings()?;
+    let c = Cosmology::new(cp.params.clone());
+    let w = web(&c, &cp, a.seed, a.root)?;
+    let hs = Haloes {
+        cosmo: &c,
+        web: &w,
+        params: cp.haloes.clone(),
+        seed: *a.seed,
+        universe: a.root.clone(),
+    };
+    let cell = hs.cell(a.cell);
+    let side = cp.haloes.cell_mpc;
+    let total = cell.haloes.len();
+    let mut list: Vec<&sse_cosmos::haloes::Halo> = cell
+        .haloes
+        .iter()
+        .filter(|h| h.mass >= a.min_mass)
+        .collect();
+    // Biggest first; ties by address so every device agrees.
+    list.sort_by(|x, y| {
+        y.mass
+            .total_cmp(&x.mass)
+            .then_with(|| x.address.cmp(&y.address))
+    });
+    let above = list.len();
+    list.truncate(a.limit);
+    let t_of_z = |z: f64| c.time_of_scale(1.0 / (1.0 + z));
+    let haloes: Vec<serde_json::Value> = list
+        .iter()
+        .map(|h| {
+            let major: Vec<&sse_cosmos::haloes::Merger> =
+                h.mergers.iter().filter(|m| m.ratio >= cp.haloes.major_ratio).collect();
+            serde_json::json!({
+                "address": h.address,
+                "key": h.address.rsplit_once("/halo:").map_or(h.address.as_str(), |x| x.1).to_string(),
+                "mass_msun": h.mass,
+                "position_mpc": h.position,
+                "half_mass_gyr": t_of_z(h.z_half),
+                "spin": h.spin,
+                "mergers": h.mergers.len(),
+                "major_mergers": major.len(),
+                "last_major_gyr": major.iter().map(|m| m.t_gyr).fold(None, |a: Option<f64>, t| Some(a.map_or(t, |x| x.max(t)))),
+                "neighbour": h.neighbour,
+            })
+        })
+        .collect();
+    let bins: Vec<serde_json::Value> = cell
+        .bins
+        .iter()
+        .map(|(lm, e, n)| serde_json::json!({ "log10_mass": lm, "expected": e, "drawn": n }))
+        .collect();
+    Ok(serde_json::json!({
+        "address": cell.address,
+        "index": cell.index,
+        "side_mpc": side,
+        "origin_mpc": [a.cell[0] as f64 * side, a.cell[1] as f64 * side, a.cell[2] as f64 * side],
+        "delta_l": cell.delta_l,
+        "mass_msun": cell.mass,
+        "halo_mass_msun": cell.halo_mass,
+        "total": total,
+        "above_min": above,
+        "min_mass_msun": a.min_mass,
+        "haloes": haloes,
+        "bins": bins,
+        "now_gyr": c.age_gyr(),
+        "model": [
+            "haloes: counts from the Sheth and Tormen 1999 mass function, raised or lowered by the cell's overdensity; each placed on the web's highest nearby peak (G2)",
+            "growth and mergers: the Correa et al. 2015 median history with scatter, mergers from the Fakhouri, Ma and Boylan-Kolchin 2010 rate",
+            "positions are comoving Mpc today; a halo is the galaxy's dark matter, the galaxy itself is grown when charted",
+        ],
     }))
 }
 
@@ -415,5 +543,30 @@ mod tests {
         let mut fresh = Kernel::new();
         let none = ask(&mut fresh, r#"{"op":"web_slice","extent_mpc":100,"n":16}"#);
         assert_eq!(none["code"], "no_universe");
+    }
+    #[test]
+    fn a_cell_lists_its_haloes_and_one_can_be_charted() {
+        let mut k = open();
+        let c = ask(&mut k, r#"{"op":"halo_cell","cell":[0,0,0]}"#);
+        let c = &c["cell"];
+        let hs = c["haloes"].as_array().unwrap();
+        assert!(!hs.is_empty(), "{c}");
+        let m: Vec<f64> = hs
+            .iter()
+            .map(|h| h["mass_msun"].as_f64().unwrap())
+            .collect();
+        assert!(m.windows(2).all(|w| w[0] >= w[1]), "biggest first");
+        assert!(c["halo_mass_msun"].as_f64().unwrap() <= c["mass_msun"].as_f64().unwrap());
+        let again = ask(&mut k, r#"{"op":"halo_cell","cell":[0,0,0]}"#);
+        assert_eq!(c, &again["cell"]);
+        let key = hs[0]["key"].as_str().unwrap();
+        let g = ask(
+            &mut k,
+            &format!(r#"{{"op":"galaxy_chart","cell":[0,0,0],"halo":"halo:{key}"}}"#),
+        );
+        assert_eq!(g["chart"]["halo"], hs[0]["address"]);
+        assert!((g["chart"]["halo_mass_msun"].as_f64().unwrap() - m[0]).abs() < 1.0);
+        let bad = k.handle_json(r#"{"op":"galaxy_chart","cell":[0,0,0],"halo":"halo:99999"}"#);
+        assert!(bad.contains("unknown_halo"), "{bad}");
     }
 }

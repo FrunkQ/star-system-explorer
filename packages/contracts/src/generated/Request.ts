@@ -41,7 +41,12 @@ fixture?: string, stack?: unknown, } | { "op": "read_light", fixture?: string, b
  * `{kind: "remove_merger", index}`, `{kind: "starburst", t_gyr, gas_fraction}`,
  * `{kind: "quiet_nucleus", from_gyr, to_gyr}`.
  */
-edits?: unknown[], } | { "op": "web_slice", z?: number, t_gyr?: number, centre?: [number, number, number], extent_mpc: number, n: number, } | { "op": "plan_descent", system?: string, body?: string, fixture?: string, at_s?: number, options?: unknown, quick?: boolean, lander: unknown, lat_deg: number, lon_deg: number, entry?: unknown, } | { "op": "survey_surface", system?: string, body?: string, fixture?: string, at_s?: number, options?: unknown, tiles?: Array<SurfaceTile>, quick?: boolean, limit?: number, } | { "op": "systems" } | { "op": "life_view", body?: string, fixture?: string, } | { "op": "export_chronicle" } | { "op": "import_chronicle", export: unknown, } | { "op": "add_note", address: string, links?: Array<string>, text: string, tags?: Array<string>, 
+edits?: unknown[], 
+/**
+ * A halo cell's index (from `halo_cell`): `halo` is then one of its
+ * catalogued haloes (`halo:3` or its full address), with its own history.
+ */
+cell?: [bigint, bigint, bigint], } | { "op": "web_slice", z?: number, t_gyr?: number, centre?: [number, number, number], extent_mpc: number, n: number, } | { "op": "plan_descent", system?: string, body?: string, fixture?: string, at_s?: number, options?: unknown, quick?: boolean, lander: unknown, lat_deg: number, lon_deg: number, entry?: unknown, } | { "op": "survey_surface", system?: string, body?: string, fixture?: string, at_s?: number, options?: unknown, tiles?: Array<SurfaceTile>, quick?: boolean, limit?: number, } | { "op": "systems" } | { "op": "life_view", body?: string, fixture?: string, } | { "op": "export_chronicle" } | { "op": "import_chronicle", export: unknown, } | { "op": "add_note", address: string, links?: Array<string>, text: string, tags?: Array<string>, 
 /**
  * The writing seat (default `gm`).
  */
@@ -60,4 +65,4 @@ arrives_at_s?: bigint, } | { "op": "set_kept", address: string, kind: string, va
  * pinned to the coded main world, giant and belt counts searched),
  * adopt it, and write the coded facts on the grown main world.
  */
-grow: boolean, at_s: bigint, } | { "op": "export_sector", scope: string, format: string, sheet?: string, at_s: bigint, };
+grow: boolean, at_s: bigint, } | { "op": "export_sector", scope: string, format: string, sheet?: string, at_s: bigint, } | { "op": "halo_cell", cell?: [bigint, bigint, bigint], min_mass_msun?: number, limit?: number, };

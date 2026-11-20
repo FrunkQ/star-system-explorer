@@ -583,6 +583,11 @@ pub enum Request {
         #[serde(default)]
         #[ts(optional, type = "unknown[]")]
         edits: Option<Vec<serde_json::Value>>,
+        /// A halo cell's index (from `halo_cell`): `halo` is then one of its
+        /// catalogued haloes (`halo:3` or its full address), with its own history.
+        #[serde(default)]
+        #[ts(optional)]
+        cell: Option<[i64; 3]>,
     },
     /// G1 for the foam and cluster maps (V9): a square slice of the cosmic
     /// web from the open universe's seed, `n` samples a side over
@@ -960,6 +965,21 @@ pub enum Request {
         sheet: Option<String>,
         at_s: i64,
     },
+    /// G2 for V9's cluster map: one halo cell (8 Mpc a side at pack
+    /// defaults) of the open universe, its haloes biggest first down to
+    /// `min_mass_msun` (default 1e10, the catalogue floor), at most `limit` (default 300), with
+    /// the mass function they were drawn from. Read only.
+    HaloCell {
+        #[serde(default)]
+        #[ts(optional)]
+        cell: Option<[i64; 3]>,
+        #[serde(default)]
+        #[ts(optional)]
+        min_mass_msun: Option<f64>,
+        #[serde(default)]
+        #[ts(optional)]
+        limit: Option<u32>,
+    },
 }
 
 /// `adopt`'s formation request: the `run_formation` fields.
@@ -1092,6 +1112,7 @@ impl Request {
             Request::Codes { .. } => "codes",
             Request::ImportSector { .. } => "import_sector",
             Request::ExportSector { .. } => "export_sector",
+            Request::HaloCell { .. } => "halo_cell",
         }
     }
 }
@@ -1315,6 +1336,11 @@ pub fn ops() -> Vec<OpInfo> {
             "export_sector",
             Cost::Light,
             "GM machine only; one code reading per mapped system",
+        ),
+        o(
+            "halo_cell",
+            Cost::Medium,
+            "one cell's haloes drawn from the mass function, each placed on the web and given a growth history and mergers (about 0.1 to 1 s native)",
         ),
     ]
 }
@@ -1917,6 +1943,14 @@ pub enum Response {
     Error {
         code: String,
         message: String,
+    },
+    /// `halo_cell`: `{address, index, side_mpc, origin_mpc, delta_l, mass_msun,
+    /// halo_mass_msun, total, above_min, haloes: [{address, key, mass_msun,
+    /// position_mpc, half_mass_gyr, spin, mergers, major_mergers, last_major_gyr,
+    /// neighbour}], bins, now_gyr, model}`.
+    HaloCelled {
+        #[ts(type = "unknown")]
+        cell: serde_json::Value,
     },
 }
 
