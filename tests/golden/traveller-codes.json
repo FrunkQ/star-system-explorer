@@ -1,0 +1,101 @@
+{
+  "Callisto": [
+    "X300000-0",
+    "004",
+    "Ba Sa Va"
+  ],
+  "Ceres": [
+    "X100000-0",
+    "004",
+    "Ba Va"
+  ],
+  "Earth": [
+    "X867900-0",
+    "804",
+    "Ga Hi Pr"
+  ],
+  "Enceladus": [
+    "X000000-0",
+    "004",
+    "As Ba Sa Va"
+  ],
+  "Europa": [
+    "X200000-0",
+    "004",
+    "Ba Sa Va"
+  ],
+  "Ganymede": [
+    "X300000-0",
+    "004",
+    "Ba Sa Va"
+  ],
+  "Io": [
+    "X200000-0",
+    "004",
+    "Ba Sa Va"
+  ],
+  "Jupiter": [
+    "XFA0000-0",
+    "004",
+    "Ba"
+  ],
+  "Mars": [
+    "X410000-0",
+    "004",
+    "Ba"
+  ],
+  "Mercury": [
+    "X300000-0",
+    "004",
+    "Ba Ho Va"
+  ],
+  "Moon": [
+    "X200000-0",
+    "004",
+    "Ba Sa Va"
+  ],
+  "Neptune": [
+    "XFA0000-0",
+    "004",
+    "Ba"
+  ],
+  "Pluto": [
+    "X100000-0",
+    "004",
+    "Ba Va"
+  ],
+  "Saturn": [
+    "XFA0000-0",
+    "004",
+    "Ba"
+  ],
+  "Titan": [
+    "X3A0000-0",
+    "004",
+    "Ba He Sa"
+  ],
+  "Triton": [
+    "X200000-0",
+    "004",
+    "Ba Sa Va"
+  ],
+  "Uranus": [
+    "XFA0000-0",
+    "004",
+    "Ba"
+  ],
+  "Venus": [
+    "X8C0000-0",
+    "004",
+    "Ba He"
+  ],
+  "grown": {
+    "attempt": 1,
+    "belts": 0,
+    "giants": 3,
+    "history": "50500bec27355d31d9ede9f5ac939eabad2c534279d992f41cd11ca3e96b6d3f",
+    "main_world": "u:traveller/sys:0/body:5",
+    "worlds": 9
+  },
+  "pack": "3ca5bd9dac75a5935ad5b66a44edb5c129a9b54baf79ed95d382e3ddbe644763"
+}

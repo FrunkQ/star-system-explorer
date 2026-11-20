@@ -280,6 +280,8 @@ pub struct Kernel {
     atoms: sse_flow::AtomRegistry,
     stack: Option<(ResolvedStack, BTreeMap<String, Flow>)>,
     observe: Observe,
+    /// Game-system code sheets from the stack (sse-codes).
+    codes: sse_codes::Codes,
     universe: Option<Universe>,
     jobs: BTreeMap<u32, Job>,
     next_job: u32,
@@ -411,6 +413,7 @@ impl Kernel {
             atoms: kernel_atoms(),
             stack: None,
             observe: Observe::default(),
+            codes: sse_codes::Codes::default(),
             universe: None,
             surveys: vec![],
             jobs: BTreeMap::new(),
@@ -986,6 +989,22 @@ impl Kernel {
                                 });
                             }
                         };
+                        let codes = match sse_codes::Codes::load(&ms) {
+                            Ok(c) => c,
+                            Err(problems) => {
+                                let issues: Vec<sse_pack::StackIssue> = problems
+                                    .iter()
+                                    .map(|m| sse_pack::StackIssue {
+                                        pack: "codes".into(),
+                                        message: m.clone(),
+                                    })
+                                    .collect();
+                                return Ok(Response::StackRejected {
+                                    report: sse_pack::report(&issues),
+                                    issues: problems,
+                                });
+                            }
+                        };
                         let adopted = match self.universe.as_mut() {
                             Some(u) => u.adopt(&stack)?,
                             None => None,
@@ -999,6 +1018,7 @@ impl Kernel {
                         };
                         self.stack = Some((stack, flows));
                         self.observe = observe;
+                        self.codes = codes;
                         self.time = sse_time::epoch::TimeSettings::from_packs(&ms).ok();
                         r
                     }
@@ -2970,6 +2990,223 @@ impl Kernel {
                     .as_ref()
                     .map(|c| serde_json::to_value(c).expect("plain data")),
             },
+            Request::Codes { scope, sheet, at_s } => {
+                let scope: Address = scope
+                    .parse()
+                    .map_err(|e| err("bad_address", format!("{e}")))?;
+                let sheet = match &sheet {
+                    Some(id) => self.codes.sheet(id).ok_or_else(|| {
+                        err(
+                            "unknown_sheet",
+                            format!("no code sheet {id:?} in the stack"),
+                        )
+                    })?,
+                    None => self.codes.sheets.first().ok_or_else(|| {
+                        err(
+                            "no_code_sheets",
+                            "the pack stack defines no code sheets (provides.other.code_sheets)",
+                        )
+                    })?,
+                };
+                let u = self
+                    .universe
+                    .as_ref()
+                    .ok_or_else(|| err("no_universe", "open a universe first"))?;
+                let readings = codes_at(&self.codes, sheet, u, &scope, at_s);
+                Response::Codes {
+                    sheet: sheet.id.clone(),
+                    readings,
+                }
+            }
+            Request::ImportSector {
+                text,
+                format,
+                sheet,
+                apply,
+                grow,
+                at_s,
+            } => {
+                use sse_sector_io::Format;
+                if grow && !apply {
+                    return Err(err("bad_request", "grow needs apply"));
+                }
+                let file = match format.as_deref() {
+                    None => sse_sector_io::parse_any(&text),
+                    Some("t5_tab") => sse_sector_io::parse_as(Format::T5Tab, &text),
+                    Some("sec") => sse_sector_io::parse_as(Format::Sec, &text),
+                    Some("uwp_lines") => sse_sector_io::parse_as(Format::UwpLines, &text),
+                    Some(f) => {
+                        return Err(err(
+                            "bad_format",
+                            format!("format {f:?}: use t5_tab, sec or uwp_lines"),
+                        ))
+                    }
+                };
+                let sheet = match &sheet {
+                    Some(id) => self.codes.sheet(id).ok_or_else(|| {
+                        err(
+                            "unknown_sheet",
+                            format!("no code sheet {id:?} in the stack"),
+                        )
+                    })?,
+                    None => self
+                        .codes
+                        .sheets
+                        .iter()
+                        .find(|s| s.import.is_some())
+                        .ok_or_else(|| {
+                            err(
+                                "no_code_sheets",
+                                "no code sheet in the stack reads sector files",
+                            )
+                        })?,
+                };
+                let codes = &self.codes;
+                let u = self
+                    .universe
+                    .as_mut()
+                    .ok_or_else(|| err("no_universe", "open a universe first"))?;
+                let imp = sse_codes::import::import(codes, sheet, &file, &u.root)
+                    .map_err(|e| err("bad_import", e))?;
+                let mut events = Vec::new();
+                let mut imp = imp;
+                if apply {
+                    let t = UniverseTime::seconds(at_s);
+                    for w in imp.worlds.iter_mut().filter(|w| w.plan.is_some()) {
+                        let sys: Address = w.system.parse().expect("import addresses parse");
+                        if grow {
+                            let plan = w.plan.clone().expect("filtered");
+                            let g = sse_codes::plan::grow(plan, sys.clone(), 6, 2)
+                                .map_err(|e| err("formation_failed", e))?;
+                            let req: FormationRequest = serde_json::from_value(serde_json::json!({
+                                "seed": g.rerun.seed,
+                                "system": sys.to_string(),
+                                "star_pins": g.rerun.star_pins,
+                                "pins": g.rerun.pins,
+                            }))
+                            .expect("a formation request");
+                            let a =
+                                adopt::adopt(&u.chronicle, &u.root, None, Some(req), Some(at_s))?;
+                            for e in a.events {
+                                events.push(
+                                    u.chronicle
+                                        .append(e)
+                                        .map_err(|e| err("chronicle", format!("{e}")))?
+                                        .hex(),
+                                );
+                            }
+                            if let Some((s, run)) = a.run {
+                                u.runs.insert(s, run);
+                            }
+                            w.main_world = g.main_world.to_string();
+                            w.guessed.extend(g.unmet.iter().cloned());
+                        }
+                        let main: Address = w.main_world.parse().expect("import addresses parse");
+                        for impossible in [false, true] {
+                            let mut set: BTreeMap<Address, BTreeMap<String, Value>> =
+                                BTreeMap::new();
+                            for (a, list) in [(&sys, &w.system_edits), (&main, &w.world_edits)] {
+                                for e in list.iter().filter(|e| e.impossible == impossible) {
+                                    set.entry(a.clone())
+                                        .or_default()
+                                        .insert(e.field.clone(), e.value.clone());
+                                }
+                            }
+                            if set.is_empty() {
+                                continue;
+                            }
+                            let e = Event::new(EventBody {
+                                kind: kinds::AUTHORED_SET.into(),
+                                subject: set.keys().cloned().collect(),
+                                occurred_at: t,
+                                activated_at: t,
+                                recognised_at: u.chronicle.next_stamp(),
+                                causes: vec![],
+                                payload: Payload {
+                                    set,
+                                    ..Default::default()
+                                },
+                                evidence: if impossible {
+                                    Evidence::AuthoredImpossible
+                                } else {
+                                    Evidence::Authored
+                                },
+                                publisher: Publisher::new("gm", "import", "1"),
+                            })
+                            .map_err(|e| err("bad_event", format!("{e}")))?;
+                            let id = u
+                                .chronicle
+                                .append(e)
+                                .map_err(|e| err("chronicle", format!("{e}")))?;
+                            events.push(id.hex());
+                        }
+                    }
+                }
+                let state_hash = apply.then(|| {
+                    u.chronicle
+                        .state_at(UniverseTime::seconds(i64::MAX))
+                        .hash()
+                        .hex()
+                });
+                Response::SectorImport {
+                    summary: imp.summary.sentence(),
+                    import: serde_json::to_value(&imp).expect("imports are plain data"),
+                    events,
+                    state_hash,
+                }
+            }
+            Request::ExportSector {
+                scope,
+                format,
+                sheet,
+                at_s,
+            } => {
+                use sse_sector_io::Format;
+                let fmt = match format.as_str() {
+                    "t5_tab" => Format::T5Tab,
+                    "sec" => Format::Sec,
+                    "uwp_lines" => Format::UwpLines,
+                    f => {
+                        return Err(err(
+                            "bad_format",
+                            format!("format {f:?}: use t5_tab, sec or uwp_lines"),
+                        ))
+                    }
+                };
+                let scope: Address = scope
+                    .parse()
+                    .map_err(|e| err("bad_address", format!("{e}")))?;
+                let sheet = match &sheet {
+                    Some(id) => self.codes.sheet(id).ok_or_else(|| {
+                        err(
+                            "unknown_sheet",
+                            format!("no code sheet {id:?} in the stack"),
+                        )
+                    })?,
+                    None => self
+                        .codes
+                        .sheets
+                        .iter()
+                        .find(|s| s.import.is_some())
+                        .ok_or_else(|| {
+                            err(
+                                "no_code_sheets",
+                                "no code sheet in the stack writes sector files",
+                            )
+                        })?,
+                };
+                let hints = sheet.import.clone().expect("chosen for its import hints");
+                let u = self
+                    .universe
+                    .as_ref()
+                    .ok_or_else(|| err("no_universe", "open a universe first"))?;
+                let (file, skipped) = export_at(&self.codes, sheet, &hints, u, &scope, at_s);
+                Response::SectorExport {
+                    text: sse_sector_io::write(fmt, &file),
+                    written: file.worlds.len() as u32,
+                    skipped,
+                }
+            }
             Request::Manifest => {
                 let m = self.universe()?.manifest();
                 Response::Manifest {
@@ -2983,3 +3220,149 @@ impl Kernel {
 
 #[cfg(test)]
 mod tests;
+
+/// The system a body belongs to: its nearest `sys` ancestor (itself if it is
+/// one), or its parent when there is none.
+fn system_of(a: &Address) -> Option<Address> {
+    let mut at = Some(a.clone());
+    while let Some(x) = at {
+        if x.last().kind() == "sys" {
+            return Some(x);
+        }
+        at = x.parent();
+    }
+    a.parent()
+}
+
+/// `codes`: a reading per body at or under `scope`, each against the bodies
+/// of its own system. Authored tags (`tag.*` facts) become subject tags, as
+/// in scenes.
+fn codes_at(
+    codes: &sse_codes::Codes,
+    sheet: &sse_codes::CodeSheet,
+    u: &Universe,
+    scope: &Address,
+    at_s: i64,
+) -> Vec<serde_json::Value> {
+    let state = u.chronicle.state_at(UniverseTime::seconds(at_s));
+    let subject = |a: &Address, f: &BTreeMap<String, Value>| {
+        let mut facts = BTreeMap::new();
+        let mut tags = std::collections::BTreeSet::new();
+        for (k, v) in f {
+            match k.strip_prefix(TAG_FIELD) {
+                Some(t) if *v == Value::Bool(true) => {
+                    tags.insert(t.to_string());
+                }
+                Some(_) => {}
+                None => {
+                    facts.insert(k.clone(), v.clone());
+                }
+            }
+        }
+        sse_sift::Subject {
+            address: Some(a.clone()),
+            facts,
+            parent: a
+                .parent()
+                .and_then(|p| state.facts.get(&p).cloned())
+                .unwrap_or_default(),
+            tags,
+            now_s: at_s,
+        }
+    };
+    let mut systems: BTreeMap<Address, Vec<sse_sift::Subject>> = BTreeMap::new();
+    for (a, f) in &state.facts {
+        if let Some(s) = system_of(a) {
+            if a != &s {
+                systems.entry(s).or_default().push(subject(a, f));
+            }
+        }
+    }
+    let mut out = Vec::new();
+    for (a, f) in &state.facts {
+        if !scope.contains(a) || a.last().kind() == "sys" {
+            continue;
+        }
+        let sys = system_of(a).and_then(|s| systems.get(&s));
+        let r = codes.read(sheet, &subject(a, f), sys.map(Vec::as_slice));
+        out.push(serde_json::json!({"address": a.to_string(), "reading": r}));
+    }
+    out
+}
+
+/// `export_sector`: one world line per mapped system under `scope`. The
+/// file takes its sector name and abbreviation from the first system that
+/// has them (a scope spanning two sectors writes one file).
+fn export_at(
+    codes: &sse_codes::Codes,
+    sheet: &sse_codes::CodeSheet,
+    hints: &sse_codes::import::ImportHints,
+    u: &Universe,
+    scope: &Address,
+    at_s: i64,
+) -> (sse_sector_io::SectorFile, Vec<String>) {
+    let state = u.chronicle.state_at(UniverseTime::seconds(at_s));
+    let mut file = sse_sector_io::SectorFile::default();
+    let mut skipped = Vec::new();
+    for (sys, sf) in state
+        .facts
+        .iter()
+        .filter(|(a, f)| scope.contains(a) && a.last().kind() == "sys" && f.contains_key("map.hex"))
+    {
+        let mut bodies: Vec<sse_sift::Subject> = Vec::new();
+        let mut main: Option<usize> = None;
+        for (a, f) in state
+            .facts
+            .iter()
+            .filter(|(a, _)| sys.contains(a) && *a != sys)
+        {
+            let mut facts = BTreeMap::new();
+            let mut tags = std::collections::BTreeSet::new();
+            for (k, v) in f {
+                match k.strip_prefix(TAG_FIELD) {
+                    Some(t) if *v == Value::Bool(true) => {
+                        tags.insert(t.to_string());
+                    }
+                    Some(_) => {}
+                    None => {
+                        facts.insert(k.clone(), v.clone());
+                    }
+                }
+            }
+            if main.is_none()
+                && (facts.contains_key("provenance.code") || tags.contains("main_world"))
+            {
+                main = Some(bodies.len());
+            }
+            bodies.push(sse_sift::Subject {
+                address: Some(a.clone()),
+                parent: a
+                    .parent()
+                    .and_then(|p| state.facts.get(&p).cloned())
+                    .unwrap_or_default(),
+                facts,
+                tags,
+                now_s: at_s,
+            });
+        }
+        let text = |k: &str| match sf.get(k) {
+            Some(Value::Text(t)) => Some(t.clone()),
+            _ => None,
+        };
+        file.name = file.name.take().or_else(|| text("map.sector"));
+        file.abbreviation = file.abbreviation.take().or_else(|| text("map.sector_abbr"));
+        let Some(m) = main else {
+            skipped.push(sys.to_string());
+            continue;
+        };
+        let r = codes.read(sheet, &bodies[m], Some(&bodies));
+        file.worlds.push(sse_codes::import::world_line(
+            hints,
+            &r,
+            &bodies[m].facts,
+            sf,
+        ));
+    }
+    file.worlds.sort_by(|a, b| a.hex.cmp(&b.hex));
+    (file, skipped)
+}

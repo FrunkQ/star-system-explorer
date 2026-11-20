@@ -63,6 +63,12 @@ export { CAMPAIGN_SCHEMA, checkCampaignSave, makeCampaignSave, publicExport, sav
 export type { CampaignSave } from "./campaign.ts";
 export { LIFE_EXAMPLES, MARKED_KINDS, carbonWords, confidenceWords, epochBands, foodWeb, productionPath, scanTiers, timeAxis, words as lifeWords } from "./life.ts";
 export type { LifeEpoch, LifeEvent, LifeGuild, LifeHook, LifePoint, LifeSignatures, LifeView, WebLink, WebNode } from "./life.ts";
+export { GREGORIAN, calendarOf, checkCalendar, dateOf, epochOf, formatDate, isLong, parseDate, startOf, yearLength } from "./calendar.ts";
+export type { Anchor, Calendar, CalendarDate } from "./calendar.ts";
+export { termsOf, word } from "./words.ts";
+export type { Terms } from "./words.ts";
+export { fetchSector, sectorPath } from "./sector-fetch.ts";
+export type { SectorText } from "./sector-fetch.ts";
 export { STOCK_SHIPS, navFromScene, safestFirst, shortlist, DIFFICULTY_STEPS, difficultyPips, daysWords, dvWords, doseWords, delayWords, fromNowWords, fuelLeft, routeFrame, trackPath, trackPoint, orbitEllipse, trackIndexAt } from "./route.ts";
 export type { NavShip, NavBody, NavSystem, Prefer, RouteAsk, RoutePlan, Course, RouteBurn, RouteHazard, WayOut, NavFromScene, RouteFrame } from "./route.ts";
 export { NAMED_HALOES, MORPHOLOGY_WORDS, GROUP_WORDS, LAYER_WORDS, discFrame, armPath, ringAt, ringShades, greenAt, cosmicAxis, logCurve, sci, timesSun, dex, epochTicks, foamCells, editWords, toggleRemoval } from "./galaxy.ts";

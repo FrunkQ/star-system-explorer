@@ -912,6 +912,54 @@ pub enum Request {
     ProgramsStep {
         at_s: i64,
     },
+    /// Game-system codes (handoff 7A part 1) for every body at or under
+    /// `scope` at `at_s`, read by a pack's code sheet (`sheet`, or the first
+    /// one in the stack): each digit with its why, the lines (a UWP), and the
+    /// rule groups (trade codes, zones). Count digits count bodies in the
+    /// same system. Read-only; GM machine (it reads every fact).
+    Codes {
+        scope: String,
+        #[serde(default)]
+        #[ts(optional)]
+        sheet: Option<String>,
+        at_s: i64,
+    },
+    /// Import a community sector file (handoff 7A part 4) into the open
+    /// universe through a code sheet: UWP lines, legacy SEC or T5
+    /// tab-delimited text (`format`: `t5_tab`, `sec`, `uwp_lines`; detected
+    /// when left out). Without `apply` it is a preview and changes nothing;
+    /// with it every world becomes authored events at `at_s` (one for its
+    /// facts, one more for any impossible ones, kept and marked), so the
+    /// import can be undone and replayed.
+    ImportSector {
+        text: String,
+        #[serde(default)]
+        #[ts(optional)]
+        format: Option<String>,
+        #[serde(default)]
+        #[ts(optional)]
+        sheet: Option<String>,
+        #[serde(default)]
+        apply: bool,
+        /// With `apply`: grow each world's whole system first (formation
+        /// pinned to the coded main world, giant and belt counts searched),
+        /// adopt it, and write the coded facts on the grown main world.
+        #[serde(default)]
+        grow: bool,
+        at_s: i64,
+    },
+    /// Write a campaign's mapped systems (those with `map.hex`) at or under
+    /// `scope` as a sector file (`format`: `t5_tab`, `sec`, `uwp_lines`):
+    /// each system's main world (the body carrying `provenance.code`, or
+    /// tagged `main_world`) read through the code sheet at `at_s`.
+    ExportSector {
+        scope: String,
+        format: String,
+        #[serde(default)]
+        #[ts(optional)]
+        sheet: Option<String>,
+        at_s: i64,
+    },
 }
 
 /// `adopt`'s formation request: the `run_formation` fields.
@@ -1041,6 +1089,9 @@ impl Request {
             Request::AttachProgram { .. } => "attach_program",
             Request::DetachProgram { .. } => "detach_program",
             Request::ProgramsStep { .. } => "programs_step",
+            Request::Codes { .. } => "codes",
+            Request::ImportSector { .. } => "import_sector",
+            Request::ExportSector { .. } => "export_sector",
         }
     }
 }
@@ -1249,6 +1300,21 @@ pub fn ops() -> Vec<OpInfo> {
             "programs_step",
             Cost::Light,
             "GM machine only; per running program (at most the campaign's limit) one scene, a few conditions and one intent, then a rules step",
+        ),
+        o(
+            "codes",
+            Cost::Light,
+            "GM machine only; one classification per digit per body, rules per body, linear in the system",
+        ),
+        o(
+            "import_sector",
+            Cost::Light,
+            "GM machine only; one code-sheet plan per world line; with grow, up to 6 pinned formation runs per world (heavy for a whole sector)",
+        ),
+        o(
+            "export_sector",
+            Cost::Light,
+            "GM machine only; one code reading per mapped system",
         ),
     ]
 }
@@ -1821,6 +1887,32 @@ pub enum Response {
         tiles: Vec<serde_json::Value>,
         #[ts(type = "unknown[]")]
         refused: Vec<serde_json::Value>,
+    },
+    /// `codes`: one entry per body, in address order:
+    /// `{address, reading}` with the sse-codes `Reading` unchanged in shape.
+    Codes {
+        sheet: String,
+        #[ts(type = "unknown[]")]
+        readings: Vec<serde_json::Value>,
+    },
+    /// `import_sector`: the sse-codes `Import` (worlds, plans, what was
+    /// impossible, guessed or differs, a summary) and, when applied, the
+    /// events written.
+    SectorImport {
+        #[ts(type = "unknown")]
+        import: serde_json::Value,
+        summary: String,
+        events: Vec<String>,
+        #[serde(default, skip_serializing_if = "Option::is_none")]
+        #[ts(optional)]
+        state_hash: Option<String>,
+    },
+    /// `export_sector`: the file's text, the systems written, and those
+    /// skipped (no main world found), by address.
+    SectorExport {
+        text: String,
+        written: u32,
+        skipped: Vec<String>,
     },
     Error {
         code: String,
