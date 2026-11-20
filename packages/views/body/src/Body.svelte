@@ -23,6 +23,7 @@
   import { airFactsOf, airFromOptics, airRequest, applyEdits, editableSettings, keepPhoto, listPhotos, LIBRARY, mountGlobe, photograph, removePhoto, type GlobeRun, type MediaItem, type RecipeDoc, type RecipeEdit, type GlobeRunOptions, type GlobeStatus } from "../../../renderer/src/index.ts";
   import { SHIPPED_RECIPES } from "../../../renderer/src/recipes.ts";
   import Cutaway from "../../cutaway/src/Cutaway.svelte";
+  import StarDisc from "./StarDisc.svelte";
 
   let { ctx, scene, params }: { ctx: ViewContext; scene: SystemScene; params: Record<string, Json> } = $props();
 
@@ -268,7 +269,7 @@
   {#if !subject}
     <p class="note">Pick a world on the chart to see its globe.</p>
   {:else if subject.kind === "star"}
-    <p class="note">{subject.label} is a star; the Body view shows worlds.</p>
+    <StarDisc {ctx} {scene} address={subject.address} label={subject.label} {size} />
   {:else}
     <div class="top">
       <div class="globe" style:width="{size}px" style:height="{size}px">

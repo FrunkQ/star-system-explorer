@@ -221,6 +221,30 @@ try {
     await shot(gm, `render-night-${name}`);
     await gm.getByRole("button", { name: "Chart room" }).click();
     assert.equal(await gm.locator("[data-state-hash]").first().getAttribute("data-state-hash"), hash, "drawing never changes the state hash");
+
+    // R5a: a star on the Body screen, drawn from the kernel's facts and activity, in visible light and X-rays.
+    {
+      const screen = gm.getByRole("group", { name: "Screen" });
+      await screen.getByRole("button", { name: "Chart", exact: true }).click();
+      await gm.locator('.area-chart .body[aria-label^="Sun"]').first().click();
+      await screen.getByRole("button", { name: "Body", exact: true }).click();
+      const disc = gm.locator("[data-star] [data-band]");
+      await disc.waitFor({ timeout: 20000 });
+      const regime = await gm.locator("[data-star] [data-regime]").innerText();
+      assert.match(regime, /^(quiet|moderate|active|saturated)/, regime);
+      const vis = await pixelsOf(gm, disc);
+      assert.ok(vis.centre[0] > 200 && vis.centre[1] > 180, `the Sun's centre is bright and near white: ${vis.centre}`);
+      await shot(gm, `render-star-visible-${name}`);
+      await gm.locator("[data-star]").getByRole("button", { name: "X-ray" }).click();
+      await gm.waitForFunction(() => document.querySelector("[data-star] [data-band]")?.getAttribute("data-band") === "xray");
+      await gm.waitForTimeout(200);
+      const xr = await pixelsOf(gm, disc);
+      // In X-rays the photosphere does not show; what is seen is the hot corona in front of it, on the mapped (violet) scale.
+      assert.ok(xr.centre[2] > xr.centre[1] + 30 && vis.centre[1] - xr.centre[1] > 40, `the X-ray view is the corona's mapped colour: ${xr.centre} (visible ${vis.centre})`);
+      await shot(gm, `render-star-xray-${name}`);
+      console.log(`  star: Sun ${regime}; ${await gm.locator("[data-star] [data-spot-words]").innerText()}; ${await gm.locator("[data-star] [data-flares]").innerText()}`);
+      assert.equal(await gm.locator("[data-state-hash]").first().getAttribute("data-state-hash"), hash, "drawing a star never changes the state hash");
+    }
     console.log(`render e2e ${name}: tiers ok (auto chose ${auto.tier}/${auto.backend}; ${parity})`);
 
     // The governor on an emulated low-end phone (Chromium only: CPU throttling is a CDP feature).

@@ -28,3 +28,6 @@ export type { MediaItem } from "./media.ts";
 // R4: recipe editing through checked edits, costed against the device budget.
 export { applyEdits, editableSettings, tierCosts } from "./recipe-edit.ts";
 export type { EditContext, EditResult, RecipeEdit, TierCost } from "./recipe-edit.ts";
+// R5a: stars drawn from their physics (photosphere, spots, corona in X-rays).
+export { coronaScaleHeight, CORONA_K, drawStar, limbDarkening, narrateStar, SPOT_DELTA_K, spotsFor, STAR_REFERENCES } from "./star.ts";
+export type { Spot, StarDraw } from "./star.ts";
