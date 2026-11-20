@@ -3,6 +3,7 @@ import type { ViewModule } from "../../../ui-contract/src/index.ts";
 import { route } from "../../route/src/index.ts";
 import { galaxyChart } from "../../galaxy-chart/src/index.ts";
 import { foamMap } from "../../foam-map/src/index.ts";
+import { clusterMap } from "../../cluster-map/src/index.ts";
 import { windowView } from "../../window/src/index.ts";
 import { storyFinder } from "../../story-finder/src/index.ts";
 import Explore from "./Explore.svelte";
@@ -12,6 +13,7 @@ export const EXPLORE_SECTIONS: readonly { id: string; label: string; view: ViewM
   { id: "route", label: "Route", view: route },
   { id: "window", label: "Window", view: windowView },
   { id: "galaxy", label: "Galaxy", view: galaxyChart },
+  { id: "cluster", label: "Galaxies nearby", view: clusterMap },
   { id: "foam", label: "Cosmic web", view: foamMap },
   { id: "stories", label: "Stories", view: storyFinder },
 ];

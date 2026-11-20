@@ -30,6 +30,20 @@
     }
   }
 
+  // A section can send the GM to another one (the cluster map's "Chart this
+  // galaxy"): it dispatches a bubbling "sse:explore" event naming the section.
+  let root = $state<HTMLDivElement | null>(null);
+  $effect(() => {
+    const el = root;
+    if (!el) return;
+    const go = (e: Event) => {
+      const id = (e as CustomEvent<{ section?: string }>).detail?.section;
+      if (id && sections.some((s) => s.id === id)) choose(id);
+    };
+    el.addEventListener("sse:explore", go);
+    return () => el.removeEventListener("sse:explore", go);
+  });
+
   let host = $state<HTMLDivElement | null>(null);
   let handle: ViewHandle | null = null;
   $effect(() => {
@@ -49,7 +63,7 @@
   });
 </script>
 
-<div class="explore" data-section={current}>
+<div class="explore" data-section={current} bind:this={root}>
   <nav class="tabs" aria-label="Explore">
     {#each sections as s (s.id)}<button type="button" class:on={current === s.id} aria-pressed={current === s.id} onclick={() => choose(s.id)} data-section-tab={s.id}>{s.label}</button>{/each}
   </nav>

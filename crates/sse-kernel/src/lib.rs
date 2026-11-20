@@ -1667,6 +1667,7 @@ impl Kernel {
                 Response::RoutePlanned { plan }
             }
             Request::GalaxyChart {
+                cell,
                 halo,
                 mass_msun,
                 at_gyr,
@@ -1682,6 +1683,7 @@ impl Kernel {
                     .collect::<Result<_, _>>()
                     .map_err(|e| err("bad_edit", format!("history edit: {e}")))?;
                 let chart = cosmos::galaxy_chart(cosmos::GalaxyAsk {
+                    cell,
                     edits: &edits,
                     seed: &u.seed,
                     root: &u.root,
@@ -3232,6 +3234,21 @@ impl Kernel {
                     written: file.worlds.len() as u32,
                     skipped,
                 }
+            }
+            Request::HaloCell {
+                cell,
+                min_mass_msun,
+                limit,
+            } => {
+                let u = self.universe()?;
+                let cell = cosmos::halo_cell(cosmos::CellAsk {
+                    seed: &u.seed,
+                    root: &u.root,
+                    cell: cell.unwrap_or([0, 0, 0]),
+                    min_mass: min_mass_msun.unwrap_or(1.0e10),
+                    limit: limit.unwrap_or(300) as usize,
+                })?;
+                Response::HaloCelled { cell }
             }
             Request::Manifest => {
                 let m = self.universe()?.manifest();

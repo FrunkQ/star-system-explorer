@@ -7,12 +7,23 @@
 -->
 <script lang="ts">
   import { untrack } from "svelte";
-  import { GROUP_WORDS, LAYER_WORDS, MORPHOLOGY_WORDS, NAMED_HALOES, armPath, cosmicAxis, dex, editWords, toggleRemoval, discFrame, epochTicks, greenAt, logCurve, ringAt, ringShades, sci, timesSun, type GalaxyChart, type GalaxyEdit, type Group, type Json, type RingLayer, type SystemScene, type ViewContext } from "../../../ui-contract/src/index.ts";
+  import { cellHalo, GROUP_WORDS, LAYER_WORDS, MORPHOLOGY_WORDS, NAMED_HALOES, armPath, cosmicAxis, dex, editWords, toggleRemoval, discFrame, epochTicks, greenAt, logCurve, ringAt, ringShades, sci, timesSun, type GalaxyChart, type GalaxyEdit, type Group, type Json, type RingLayer, type SystemScene, type ViewContext } from "../../../ui-contract/src/index.ts";
 
   let { ctx, params }: { ctx: ViewContext; scene: SystemScene; params: Record<string, Json> } = $props();
   const first = untrack(() => ({ halo: String(params.halo ?? "milky-way-like"), layer: String(params.layer ?? "metals") }));
-  type HaloKey = (typeof NAMED_HALOES)[number]["key"];
-  let halo = $state<HaloKey>((NAMED_HALOES.some((h) => h.key === first.halo) ? first.halo : "milky-way-like") as HaloKey);
+  // A named halo, or a catalogued halo's address picked on the cluster map (V9).
+  type HaloKey = string;
+  const startHalo = untrack(() => {
+    const sel = ctx.workspace.selection;
+    return cellHalo(sel) ? sel! : NAMED_HALOES.some((h) => h.key === first.halo) ? first.halo : "milky-way-like";
+  });
+  let halo = $state<HaloKey>(startHalo);
+  const catalogued = $derived(cellHalo(halo));
+  // Picking a galaxy on the cluster map charts it here.
+  $effect(() => {
+    const sel = ctx.workspace.selection;
+    if (cellHalo(sel)) untrack(() => chooseHalo(sel!));
+  });
   let layer = $state<RingLayer>((["metals", "heavy", "stars", "supernovae"].includes(first.layer) ? first.layer : "metals") as RingLayer);
   let at = $state<number | null>(null);
   let picked = $state<number | null>(null);
@@ -37,7 +48,7 @@
       /* private window: the edits last for this visit */
     }
   }
-  let edits = $state<GalaxyEdit[]>(untrack(() => loadEdits(first.halo)));
+  let edits = $state<GalaxyEdit[]>(untrack(() => loadEdits(startHalo)));
   function setEdits(e: GalaxyEdit[]) {
     edits = e;
     keepEdits(halo, e);
@@ -60,10 +71,11 @@
     const t = at;
     const p = picked;
     const ed = edits;
-    const r = untrack(() => (p !== null && chart && chart.key === h ? chart.rings[p]?.radius_kpc : undefined));
+    const r = untrack(() => (p !== null && chart && (chart.key === h || chart.halo === h) ? chart.rings[p]?.radius_kpc : undefined));
     const g = ++gen;
     busy = true;
-    ctx.session.galaxyChart({ halo: h, ...(t !== null ? { at_gyr: t } : {}), ...(r !== undefined ? { place_kpc: r } : {}), ...(ed.length ? { edits: ed } : {}) }).then((res) => {
+    const ch = cellHalo(h);
+    ctx.session.galaxyChart({ ...(ch ? { cell: ch.cell, halo: ch.halo } : { halo: h }), ...(t !== null ? { at_gyr: t } : {}), ...(r !== undefined ? { place_kpc: r } : {}), ...(ed.length ? { edits: ed } : {}) }).then((res) => {
       if (g !== gen) return;
       busy = false;
       if (!res.ok) return void ((failed = res.message), (chart = null));
@@ -138,6 +150,7 @@
     <label>Galaxy
       <select value={halo} onchange={(e) => chooseHalo(e.currentTarget.value as HaloKey)} data-halo>
         {#each NAMED_HALOES as h (h.key)}<option value={h.key}>{h.label}</option>{/each}
+        {#if catalogued}<option value={halo}>Halo {catalogued.key} of cell {catalogued.cell.join(".")} (cluster map)</option>{/if}
       </select>
     </label>
     <div class="seg" role="group" aria-label="Shade the rings by">
@@ -150,7 +163,7 @@
     <p class="note" role="alert">Could not chart the galaxy: {failed}</p>
   {:else if chart && f}
     <header class="head">
-      <h2>{NAMED_HALOES.find((h) => h.key === chart!.key)?.label ?? chart.key}</h2>
+      <h2>{NAMED_HALOES.find((h) => h.key === chart!.key)?.label ?? (catalogued ? `Halo ${catalogued.key}, cell ${catalogued.cell.join(".")}` : chart.key)}</h2>
       <span class="stamp">grown, not prebaked</span>
       {#if chart.edits.length}<span class="stamp authored" data-inked>history inked by the GM</span>{/if}
       <p class="lede">
