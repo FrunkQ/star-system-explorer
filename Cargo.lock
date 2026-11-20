@@ -544,6 +544,7 @@ dependencies = [
  "sse-chronicle",
  "sse-core",
  "sse-flow",
+ "sse-nebula",
  "sse-pack",
  "sse-resolve",
 ]

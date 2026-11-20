@@ -241,6 +241,21 @@ fn unit_vector(d: &Draws, i: u64) -> [f64; 3] {
     [s * m::cos(phi), s * m::sin(phi), z]
 }
 
+/// Radius at which a planetary nebula's shell of `shell_kg` has thinned to
+/// `fade_contrast` times the surrounding gas (density M / (mu m_H 4 pi R^2 dR)).
+pub fn planetary_fade_radius_m(shell_kg: f64, ambient_h_m3: f64, s: &PnSettings) -> f64 {
+    let per_h = nb::MU_H * nb::M_H;
+    m::cbrt(shell_kg / (per_h * 4.0 * m::PI * s.thickness * s.fade_contrast * ambient_h_m3))
+}
+
+/// How long a typical planetary nebula stays visible, s: a star that sheds
+/// `envelope_kg` into gas of `ambient_h_m3`, its shell coasting at the middle
+/// of the settings' speed range.
+pub fn planetary_fades_after(envelope_kg: f64, ambient_h_m3: f64, s: &PnSettings) -> f64 {
+    let v = 0.5 * (s.speed_km_s[0] + s.speed_km_s[1]) * 1e3;
+    planetary_fade_radius_m(envelope_kg * s.shell_share, ambient_h_m3, s) / v
+}
+
 /// The nebula a dying star leaves, as it is at `at_s`; `None` before the
 /// star dies or after the nebula has faded into its surroundings.
 pub fn planetary_nebula(
@@ -258,9 +273,7 @@ pub fn planetary_nebula(
     let mass = p.envelope_kg * s.shell_share;
     // Fades when shell density M / (μ m_H 4π R² ΔR) reaches fade_contrast × ambient.
     let per_h = nb::MU_H * nb::M_H;
-    let r_fade =
-        m::cbrt(mass / (per_h * 4.0 * m::PI * s.thickness * s.fade_contrast * p.ambient_h_m3));
-    let t_fade = r_fade / v;
+    let t_fade = planetary_fade_radius_m(mass, p.ambient_h_m3, s) / v;
     if age > t_fade {
         return Ok(None);
     }

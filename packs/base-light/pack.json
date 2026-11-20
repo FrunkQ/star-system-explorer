@@ -470,7 +470,7 @@
           ]
         },
         "gases": {
-          "note": "Refractivity n−1 at 589.3 nm, 273.15 K and 101325 Pa (Loschmidt density). Dry air uses Peck and Reeder's dispersion exactly; other gases follow air's dispersion scaled to their 589 nm value (stand-in). King factor F = a + b λ⁻² + c λ⁻⁴ with λ in µm (Bodhaine et al. 1999 for N₂ and O₂; others constant).",
+          "note": "Refractivity n−1 at 589.3 nm, 273.15 K and 101325 Pa (Loschmidt density). Dry air uses Peck and Reeder's dispersion exactly; other gases follow air's dispersion scaled to their 589 nm value (stand-in). King factor F = a + b λ⁻² + c λ⁻⁴ with λ in µm (Bodhaine et al. 1999 for N₂ and O₂; others constant). Ammonia, sulphur dioxide, carbon monoxide and neon: refractivity from Kaye and Laby at 589 nm (from memory, verify); King factor taken as 1 (stand-in: molecular depolarisation not yet tabulated).",
           "list": [
             {
               "id": "air",
@@ -573,6 +573,54 @@
               "name": "water vapour",
               "molar_mass_g": 18.01528,
               "refractivity_589": 0.000256,
+              "king": [
+                1.0,
+                0.0,
+                0.0
+              ],
+              "dispersion": "scaled"
+            },
+            {
+              "id": "nh3",
+              "name": "ammonia",
+              "molar_mass_g": 17.0305,
+              "refractivity_589": 0.000376,
+              "king": [
+                1.0,
+                0.0,
+                0.0
+              ],
+              "dispersion": "scaled"
+            },
+            {
+              "id": "so2",
+              "name": "sulphur dioxide",
+              "molar_mass_g": 64.066,
+              "refractivity_589": 0.000686,
+              "king": [
+                1.0,
+                0.0,
+                0.0
+              ],
+              "dispersion": "scaled"
+            },
+            {
+              "id": "co",
+              "name": "carbon monoxide",
+              "molar_mass_g": 28.0101,
+              "refractivity_589": 0.000338,
+              "king": [
+                1.0,
+                0.0,
+                0.0
+              ],
+              "dispersion": "scaled"
+            },
+            {
+              "id": "ne",
+              "name": "neon",
+              "molar_mass_g": 20.1797,
+              "refractivity_589": 6.7e-05,
               "king": [
                 1.0,
                 0.0,

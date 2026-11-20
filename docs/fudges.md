@@ -500,6 +500,8 @@ The owner wants the physics in chain blocks (except big blocks) with a UI elemen
 | sse-survey (O13) | White noise ∝ 1/√N, no spots or flares in light curves; activity 15 ppm/hr, jitter 1 m/s, efficiency 0.5, IWA 3λ/D; found at S/N 7.1 with 3 transits; eccentric transits timed as circular; no microlensing | closed-form, cheap | red-noise and activity models (O10), full light-curve simulation | stand-in |
 | sse-sense (O9) | One dust power law (λ/0.55 µm)^−1.75 from 0.3 µm to 1 mm; all-or-nothing glare inside the resolution; photon energy at band centre; radar listener in the main beam | closed-form | an extinction curve (Cardelli, Draine), PSF halo, sidelobes | stand-in |
 | sse_light::air | Other gases follow air's dispersion scaled to 589 nm; King factors constant except N₂ and O₂; isothermal scale height; gravity at the surface; Rayleigh only | small table | per-gas dispersion (Sneep and Ubachs 2005), haze, absorption | stand-in |
+| sse_light::air gases NH₃, SO₂, CO, Ne | King factor 1 (no depolarisation); refractivity values from memory of Kaye and Laby | a few per cent on σ (SO₂ more) | tabulated depolarisation ratios and a checked source | stand-in |
+| sse_cosmos::patch glows | Expected nebulae as steady-state counts (rate × visible life); one mean ambient density (1 H per cm³) for every patch; planetary nebula shell at mid-range speed; ionising stars (≥ 15 M☉) stand in for H II regions, which group many such stars; main-sequence life 10 Gyr × M^−2.5 | counts within a factor of two or three near the Sun | local gas density from the patch, cluster grouping of ionising stars | stand-in |
 
 ## Interface and player views
 
