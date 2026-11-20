@@ -52,12 +52,18 @@ test("Earth, Mars and Titan from the kernel's air optics", async () => {
 
 test("no air, unknown gases and missing facts are said, not invented", () => {
   assert.equal(airRequest("x", { pressure_pa: 0, temperature_k: 300, gravity_m_s2: 3, radius_m: 1e6, composition: { N2: 1 } }), null);
-  const r = airRequest("x", { pressure_pa: 1e5, temperature_k: 300, gravity_m_s2: 9, radius_m: 6e6, composition: { N2: 0.9, SO2: 0.1 } })!;
-  assert.deepEqual(r.unknown_gases, ["SO2"]);
+  const r = airRequest("x", { pressure_pa: 1e5, temperature_k: 300, gravity_m_s2: 9, radius_m: 6e6, composition: { N2: 0.9, Xe: 0.1 } })!;
+  assert.deepEqual(r.unknown_gases, ["Xe"]);
   assert.ok(near(r.unknown_share, 0.1, 1e-9));
   assert.deepEqual((r.air as { gases: unknown[] }).gases, [{ gas: "n2", fraction: 1 }]);
   assert.equal(airRequest("x", { pressure_pa: 1e5, temperature_k: 300, gravity_m_s2: 9, radius_m: 6e6, composition: { Xq: 1 } }), null);
   assert.equal(air({ pressure_pa: 1e5, temperature_k: 300, gravity_m_s2: 9, radius_m: 6e6, composition: { N2: 1 } }), null, "nothing drawn until the kernel has answered");
   assert.equal(airFactsOf({ "body.surface_pressure": 101300 }, { gravity_m_s2: 9.8, t_surface_now_k: 285, reference_radius_m: 6.4e6 }), null, "no gas mix, no air");
   assert.ok(airFactsOf({ "body.surface_pressure": 101300, "v3.atmosphere": { composition: { N2: 0.78, O2: 0.21 } } }, { gravity_m_s2: 9.8, t_surface_now_k: 285, reference_radius_m: 6.4e6 }));
+});
+
+test("V3 mixes with NH3, SO2, CO and Ne resolve whole", () => {
+  const r = airRequest("v", { pressure_pa: 9.2e6, temperature_k: 737, gravity_m_s2: 8.87, radius_m: 6.05e6, composition: { CO2: 0.965, N2: 0.035, SO2: 1.5e-4, CO: 1.7e-5, Ne: 7e-6, NH3: 1e-6 } })!;
+  assert.deepEqual(r.unknown_gases, []);
+  assert.equal(r.unknown_share, 0);
 });

@@ -18,7 +18,7 @@ export const REFERENCES = [
 export const WAVELENGTHS_M = [680e-9, 550e-9, 440e-9] as const;
 
 /** Gases the kernel's `read_air_optics` knows (base-light pack), by the formula the facts use. */
-export const KERNEL_GASES: Readonly<Record<string, string>> = { N2: "n2", O2: "o2", Ar: "ar", CO2: "co2", H2: "h2", He: "he", CH4: "ch4", H2O: "h2o" };
+export const KERNEL_GASES: Readonly<Record<string, string>> = { N2: "n2", O2: "o2", Ar: "ar", CO2: "co2", H2: "h2", He: "he", CH4: "ch4", H2O: "h2o", NH3: "nh3", SO2: "so2", CO: "co", Ne: "ne" };
 
 export interface AirFacts {
   pressure_pa: number;
