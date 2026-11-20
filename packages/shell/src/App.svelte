@@ -1213,7 +1213,15 @@
       text-overflow: ellipsis;
       white-space: nowrap;
     }
+    /* The header holds the lens, the screen menu, the mode switch and the night button; on a narrow phone the two menus
+       give way (they shrink, their text clips) so the bar never runs past the screen edge. */
+    .lens,
+    .screen-menu {
+      flex: 0 1 auto;
+      min-width: 56px;
+    }
     .lens select {
+      width: 100%;
       max-width: 92px;
       height: 44px;
     }
@@ -1228,6 +1236,7 @@
       display: block;
     }
     .screen-menu select {
+      width: 100%;
       height: 44px;
       max-width: 110px;
       border: var(--sse-line) solid var(--sse-ink);

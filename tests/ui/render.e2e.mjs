@@ -254,6 +254,9 @@ try {
         const ph = await ctx.newPage();
         ph.on("pageerror", (e) => errors.push(e.message));
         await openEarth(ph);
+        // A page wider than the phone moves the visual viewport off the layout one, and taps land beside their targets.
+        const widths = await ph.evaluate(() => ({ screen: screen.width, page: document.scrollingElement.scrollWidth }));
+        assert.ok(widths.page <= widths.screen, `the phone page has no sideways scroll: ${JSON.stringify(widths)}`);
         const cdp = await ctx.newCDPSession(ph);
         await cdp.send("Emulation.setCPUThrottlingRate", { rate: 4 });
         await drawOn(ph, tier);
@@ -273,7 +276,11 @@ try {
           console.log(`  phone photograph against the 10 s target: ${secs < 10 ? "met" : "not met on this machine"} (${secs.toFixed(1)} s)`);
           await useRecipe(ph, "survey-relief");
         }
-        await ph.getByLabel("Spin").check();
+        // On the phone the time ruler sticks to the bottom of the screen (148 px of 687 on the Moto G4). Scrolled only "into
+        // view", the box can land under it, so bring it to the middle of the screen first.
+        const spin = ph.getByLabel("Spin");
+        await spin.evaluate((el) => el.scrollIntoView({ block: "center" }));
+        await spin.check();
         // Let it run: about 15 s of spinning frames.
         await ph.waitForTimeout(15000);
         // One snapshot of the globe's attributes and the badge, read in the same task, so they describe the same status.
