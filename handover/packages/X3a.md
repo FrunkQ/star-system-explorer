@@ -57,3 +57,11 @@ Listed in `docs/fudges.md`, section "Game-system packs".
 - `load_stack` now also loads code sheets and refuses a stack whose sheets are broken (issues under pack "codes").
 - Checks: a contract case on the toy fixture `tests/fixtures/packs/codes-toy.json` (an authored code wins over physics, a count reads the system, errors for no sheets and an unknown sheet), plus a kernel test that loads base-physics, base-atlas, base-time and the Traveller pack and reads an Earth-like UWP. The contract golden changed for the new cases and the op list (line 1, the unknown-op message, and the appended lines).
 - Next: a Traveller lens and world sheet in the chart room that call `codes`, then sifters (pack data over the published `traveller.uwp.*` facts).
+
+## Follow-up: two calendar formatters (20 Nov)
+
+U11 part 2 added `packages/chart-grammar/src/calendar.ts` (the time ruler's
+dates, epoch in years) beside this track's `packages/ui-contract/src/calendar.ts`
+(the kernel's `provides.other.calendar` shape, epoch in seconds, named days,
+weeks and leap rules). Both read the same pack data. One should call the
+other; the ui-contract one is the fuller reader of the kernel shape.

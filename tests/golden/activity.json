@@ -1,0 +1,225 @@
+[
+  {
+    "address": "u:t/sys:1/star:0",
+    "regime": "saturated",
+    "rotation_period_s": 378432.0,
+    "rotation_from": "given",
+    "turnover_s": 5030451.208625854,
+    "rossby": 0.0752282418227399,
+    "xray_fraction": 0.0007413102413009177,
+    "xray_w": 3.6890562848098867e+21,
+    "spot_coverage": 0.10767658039350161,
+    "flares": true,
+    "why": [
+      "Its outer layer turns over in 58.2 days and it spins in 4.4: Rossby number 0.075, so saturated: heavily spotted, flaring constantly; X-rays are 7.4e-4 of its power (3.69e21 W).",
+      "Saturated stars show no clean cycle; their activity is steady and high."
+    ],
+    "stand_ins": [
+      "regime words: active above 10⁻⁴ of the star's power in X-rays, moderate above 3×10⁻⁷, quiet below (labels only; the numbers carry the physics)",
+      "spot coverage scales as the square root of the X-ray fraction from the Sun's 0.3 %, capped at half the disc"
+    ],
+    "references": [
+      {
+        "text": "Wright, N. J., Drake, J. J., Mamajek, E. E. and Henry, G. W. 2011, The stellar-activity-rotation relationship and the evolution of stellar dynamos, ApJ 743, 48: log τ = 1.16 − 1.49 log(M/M☉) − 0.54 log²(M/M☉) days (0.09 to 1.36 M☉); saturated log(L_X/L_bol) = −3.13 below Ro = 0.13; slope β = −2.70 above it (unbiased sample); Sun log(L_X/L_bol) = −6.24.",
+        "url": "https://arxiv.org/abs/1109.4634"
+      },
+      {
+        "text": "Noyes, R. W., Hartmann, L. W., Baliunas, S. L., Duncan, D. K. and Vaughan, A. H. 1984, Rotation, convection, and magnetic activity in lower main-sequence stars, ApJ 279, 763: activity depends on the Rossby number.",
+        "doi": "10.1086/161945",
+        "url": "https://doi.org/10.1086/161945"
+      }
+    ]
+  },
+  {
+    "star": "u:t/sys:1/star:0",
+    "from_s": 0.0,
+    "to_s": 2592000.0,
+    "listed_above_j": 3e+24,
+    "flares": [
+      {
+        "address": "u:t/sys:1/star:0/flare:0",
+        "at_s": 84666.00001340988,
+        "energy_j": 1.0219059842976352e+25,
+        "rise_s": 60.50921488171912,
+        "decay_s": 605.0921488171912,
+        "peak_w": 1.608422446848191e+22,
+        "light": {
+          "address": "u:t/sys:1/star:0/flare:0",
+          "parts": [
+            {
+              "kind": "thermal",
+              "t_k": 10000.0,
+              "area_m2": 28365365811801.973,
+              "emissivity": 1.0,
+              "cause": "flare"
+            },
+            {
+              "kind": "power-law",
+              "power_w": 1.6084224468481912e+21,
+              "from_m": 1.23984e-10,
+              "to_m": 1.2398399999999998e-8,
+              "alpha": 0.0,
+              "cause": "flare X-rays"
+            }
+          ],
+          "lines": [],
+          "why": [
+            "A flare of 1.0e25 J: a white-hot flash (10000 K over 2.8e13 m²) peaking at 1.6e22 W, rising in 61 s and fading over 605 s, with a burst of X-rays."
+          ],
+          "references": [
+            {
+              "text": "Planck's law and the Stefan-Boltzmann law: Rybicki, G. B. and Lightman, A. P. 1979, Radiative Processes in Astrophysics, Wiley, chapter 1",
+              "doi": "10.1002/9783527618170"
+            },
+            {
+              "text": "Tiesinga, E., Mohr, P. J., Newell, D. B. and Taylor, B. N. 2021, CODATA recommended values of the fundamental physical constants: 2018, Rev. Mod. Phys. 93, 025010",
+              "doi": "10.1103/RevModPhys.93.025010"
+            }
+          ]
+        },
+        "ejection": {
+          "speed_m_s": 1009118.5272147168,
+          "mass_kg": 16056340350670.936,
+          "direction": [
+            0.8689273140286528,
+            0.3226776128786205,
+            -0.3752925273462106
+          ],
+          "half_width_rad": 0.5235987755982988,
+          "hits": [],
+          "misses": [
+            "u:t/sys:1/body:1"
+          ]
+        }
+      },
+      {
+        "address": "u:t/sys:1/star:0/flare:1",
+        "at_s": 977371.9981565876,
+        "energy_j": 4.585146579060083e+24,
+        "rise_s": 44.266889621555784,
+        "decay_s": 442.6688962155578,
+        "peak_w": 9.864723505771432e+21,
+        "light": {
+          "address": "u:t/sys:1/star:0/flare:1",
+          "parts": [
+            {
+              "kind": "thermal",
+              "t_k": 10000.0,
+              "area_m2": 17396952611660.387,
+              "emissivity": 1.0,
+              "cause": "flare"
+            },
+            {
+              "kind": "power-law",
+              "power_w": 9.864723505771432e+20,
+              "from_m": 1.23984e-10,
+              "to_m": 1.2398399999999998e-8,
+              "alpha": 0.0,
+              "cause": "flare X-rays"
+            }
+          ],
+          "lines": [],
+          "why": [
+            "A flare of 4.6e24 J: a white-hot flash (10000 K over 1.7e13 m²) peaking at 9.9e21 W, rising in 44 s and fading over 443 s, with a burst of X-rays."
+          ],
+          "references": [
+            {
+              "text": "Planck's law and the Stefan-Boltzmann law: Rybicki, G. B. and Lightman, A. P. 1979, Radiative Processes in Astrophysics, Wiley, chapter 1",
+              "doi": "10.1002/9783527618170"
+            },
+            {
+              "text": "Tiesinga, E., Mohr, P. J., Newell, D. B. and Taylor, B. N. 2021, CODATA recommended values of the fundamental physical constants: 2018, Rev. Mod. Phys. 93, 025010",
+              "doi": "10.1103/RevModPhys.93.025010"
+            }
+          ]
+        },
+        "ejection": {
+          "speed_m_s": 859667.752757471,
+          "mass_kg": 9926860852863.04,
+          "direction": [
+            -0.7812689168840815,
+            -0.5719353778088486,
+            -0.2500176056229315
+          ],
+          "half_width_rad": 0.5235987755982988,
+          "hits": [],
+          "misses": [
+            "u:t/sys:1/body:1"
+          ]
+        }
+      },
+      {
+        "address": "u:t/sys:1/star:0/flare:2",
+        "at_s": 1201352.5878320506,
+        "energy_j": 6.987968122318222e+24,
+        "rise_s": 52.17327600374755,
+        "decay_s": 521.7327600374755,
+        "peak_w": 1.2755970575938395e+22,
+        "light": {
+          "address": "u:t/sys:1/star:0/flare:2",
+          "parts": [
+            {
+              "kind": "thermal",
+              "t_k": 10000.0,
+              "area_m2": 22495817089602.305,
+              "emissivity": 1.0,
+              "cause": "flare"
+            },
+            {
+              "kind": "power-law",
+              "power_w": 1.2755970575938395e+21,
+              "from_m": 1.23984e-10,
+              "to_m": 1.2398399999999998e-8,
+              "alpha": 0.0,
+              "cause": "flare X-rays"
+            }
+          ],
+          "lines": [],
+          "why": [
+            "A flare of 7.0e24 J: a white-hot flash (10000 K over 2.2e13 m²) peaking at 1.3e22 W, rising in 52 s and fading over 522 s, with a burst of X-rays."
+          ],
+          "references": [
+            {
+              "text": "Planck's law and the Stefan-Boltzmann law: Rybicki, G. B. and Lightman, A. P. 1979, Radiative Processes in Astrophysics, Wiley, chapter 1",
+              "doi": "10.1002/9783527618170"
+            },
+            {
+              "text": "Tiesinga, E., Mohr, P. J., Newell, D. B. and Taylor, B. N. 2021, CODATA recommended values of the fundamental physical constants: 2018, Rev. Mod. Phys. 93, 025010",
+              "doi": "10.1103/RevModPhys.93.025010"
+            }
+          ]
+        }
+      }
+    ],
+    "summarised_count": 0.0,
+    "summarised_energy_j": 0.0,
+    "why": [
+      "3 flares above 3.0e24 J in 0.08 years; ten times the energy comes about a tenth as often."
+    ],
+    "stand_ins": [
+      "flare durations scale as E^0.39 from 600 s at 10²⁵ J; rise is a tenth of decay",
+      "flare light is a 10000 K black body plus 10 % extra in soft X-rays; no radio burst yet",
+      "ejection share, speed and mass grow with flare energy by stated power laws; cone half-width 30°, leaving within 30° of the star's equator; planets on circular orbits in that equator",
+      "largest possible flare 1e29 J"
+    ],
+    "references": [
+      {
+        "text": "Vasilyev, V. et al. 2024, Sun-like stars produce superflares roughly once per century, Science: (8.63 ± 0.20)×10⁻³ per year above 10³⁴ erg for 5000 to 6500 K stars with rotation over 20 days; energy spread dN/dE ∝ E^(−1.97 ± 0.30), consistent with the Sun's own flares extrapolated.",
+        "url": "https://arxiv.org/abs/2412.12265"
+      },
+      {
+        "text": "Shibayama, T. et al. 2013, Superflares on solar-type stars observed with Kepler I, ApJS 209, 5: dN/dE ∝ E^(−2.0) for slow rotators, −2.2 for all G dwarfs; fast rotators flare far more often.",
+        "url": "https://arxiv.org/abs/1308.1480"
+      },
+      {
+        "text": "Shibayama, T. et al. 2013, Superflares on solar-type stars observed with Kepler I, ApJS 209, 5: flare light as a 10 000 K black body.",
+        "url": "https://arxiv.org/abs/1308.1480"
+      },
+      {
+        "text": "Yashiro, S. et al. 2006, Different power-law indices in the frequency distributions of flares with and without coronal mass ejections, ApJ 650, L143: the share of flares with ejections rises with flare size, to nearly all of the largest.",
+        "doi": "10.1086/508876",
+        "url": "https://doi.org/10.1086/508876"
+      }
+    ]
+  }
+]

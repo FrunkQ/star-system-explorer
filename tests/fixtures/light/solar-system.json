@@ -1,0 +1,172 @@
+{
+ "about": "Solar System light conditions (O2). Radii, semi-major axes, Bond albedos and dipole field strengths (gauss times radius cubed, turned into moments as B R³ 4π/μ₀) from the NSSDC planetary fact sheets, https://nssdc.gsfc.nasa.gov/planetary/factsheet/ ; except Jupiter's Bond albedo 0.503 and internal heat 7.485 W/m² (Li et al. 2018, doi:10.1038/s41467-018-06107-2), Neptune's internal heat 0.433 W/m² (Pearl and Conrath 1991), Uranus's 0.042 W/m² (Pearl et al. 1990), Saturn's 2.01 W/m² (Li et al. 2010, from memory, unverified), Earth's 0.09 W/m² (Davies and Davies 2010, 47 TW, from memory). Moon Bond albedo 0.11 (NSSDC Moon fact sheet, from memory). Sun: IAU 2015 nominal luminosity 3.828e26 W and radius 695,700 km.",
+ "observed": {
+  "effective_temperature_k": {
+   "Earth": 254.0,
+   "Mars": 209.8,
+   "Venus": 226.6,
+   "Mercury": 439.6,
+   "Jupiter": 125.57,
+   "Neptune": 59.3,
+   "Uranus": 59.1
+  },
+  "auroral_radio_w": {
+   "Earth": 40000000.0,
+   "Jupiter": 9000000000.0,
+   "Saturn": 400000000.0,
+   "Uranus": 13000000.0,
+   "Neptune": 4000000.0
+  },
+  "sources": "Effective temperatures: NSSDC black-body temperatures for Mercury, Venus, Earth and Mars (no internal heat); Li et al. 2018 for Jupiter; Pearl and Conrath 1991 for Neptune; Pearl et al. 1990 for Uranus. Radio: average auroral powers in Zarka's scaling-law tables (ISSI 2004 slides, https://lira.obspm.fr/perso/philippe-zarka/ConfsPZ/Scaling-ISSI-2004.pdf ; Zarka et al. 2001, doi:10.1023/A:1012221527425), Jupiter's hectometric component."
+ },
+ "bodies": [
+  {
+   "address": "u:sol/sys:0/star:0",
+   "name": "Sun",
+   "radius_m": 695700000.0,
+   "own_luminosity_w": 3.828e+26
+  },
+  {
+   "address": "u:sol/sys:0/body:0",
+   "name": "Mercury",
+   "radius_m": 2440500.0,
+   "own_luminosity_w": 0.0,
+   "bond_albedo": 0.068,
+   "magnetic_moment_a_m2": 2.9071432444424225e+19,
+   "lit_by": [
+    {
+     "address": "u:sol/sys:0/star:0",
+     "luminosity_w": 3.828e+26,
+     "t_k": 5772.0,
+     "distance_m": 57909000000.0
+    }
+   ]
+  },
+  {
+   "address": "u:sol/sys:0/body:1",
+   "name": "Venus",
+   "radius_m": 6051800.0,
+   "own_luminosity_w": 0.0,
+   "bond_albedo": 0.77,
+   "magnetic_moment_a_m2": 0.0,
+   "lit_by": [
+    {
+     "address": "u:sol/sys:0/star:0",
+     "luminosity_w": 3.828e+26,
+     "t_k": 5772.0,
+     "distance_m": 108210000000.0
+    }
+   ]
+  },
+  {
+   "address": "u:sol/sys:0/body:2",
+   "name": "Earth",
+   "radius_m": 6378137.0,
+   "own_luminosity_w": 46008710405622.99,
+   "bond_albedo": 0.294,
+   "magnetic_moment_a_m2": 7.93967922657088e+22,
+   "lit_by": [
+    {
+     "address": "u:sol/sys:0/star:0",
+     "luminosity_w": 3.828e+26,
+     "t_k": 5772.0,
+     "distance_m": 149598000000.0
+    }
+   ]
+  },
+  {
+   "address": "u:sol/sys:0/body:3",
+   "name": "Mars",
+   "radius_m": 3396200.0,
+   "own_luminosity_w": 0.0,
+   "bond_albedo": 0.25,
+   "magnetic_moment_a_m2": 0.0,
+   "lit_by": [
+    {
+     "address": "u:sol/sys:0/star:0",
+     "luminosity_w": 3.828e+26,
+     "t_k": 5772.0,
+     "distance_m": 227956000000.0
+    }
+   ]
+  },
+  {
+   "address": "u:sol/sys:0/body:4",
+   "name": "Jupiter",
+   "radius_m": 71492000.0,
+   "own_luminosity_w": 4.807469770756764e+17,
+   "bond_albedo": 0.503,
+   "magnetic_moment_a_m2": 1.571233736472857e+27,
+   "lit_by": [
+    {
+     "address": "u:sol/sys:0/star:0",
+     "luminosity_w": 3.828e+26,
+     "t_k": 5772.0,
+     "distance_m": 778479000000.0
+    }
+   ]
+  },
+  {
+   "address": "u:sol/sys:0/body:5",
+   "name": "Saturn",
+   "radius_m": 60268000.0,
+   "own_luminosity_w": 9.174438222788416e+16,
+   "bond_albedo": 0.342,
+   "magnetic_moment_a_m2": 4.706507970167779e+25,
+   "lit_by": [
+    {
+     "address": "u:sol/sys:0/star:0",
+     "luminosity_w": 3.828e+26,
+     "t_k": 5772.0,
+     "distance_m": 1432041000000.0
+    }
+   ]
+  },
+  {
+   "address": "u:sol/sys:0/body:6",
+   "name": "Uranus",
+   "radius_m": 25559000.0,
+   "own_luminosity_w": 344783814677474.25,
+   "bond_albedo": 0.3,
+   "magnetic_moment_a_m2": 3.8068557493560524e+24,
+   "lit_by": [
+    {
+     "address": "u:sol/sys:0/star:0",
+     "luminosity_w": 3.828e+26,
+     "t_k": 5772.0,
+     "distance_m": 2867043000000.0
+    }
+   ]
+  },
+  {
+   "address": "u:sol/sys:0/body:7",
+   "name": "Neptune",
+   "radius_m": 24764000.0,
+   "own_luminosity_w": 3336870488712104.5,
+   "bond_albedo": 0.29,
+   "magnetic_moment_a_m2": 2.1565062947416984e+24,
+   "lit_by": [
+    {
+     "address": "u:sol/sys:0/star:0",
+     "luminosity_w": 3.828e+26,
+     "t_k": 5772.0,
+     "distance_m": 4514953000000.0
+    }
+   ]
+  },
+  {
+   "address": "u:sol/sys:0/body:2/moon:0",
+   "name": "Moon",
+   "radius_m": 1737400.0,
+   "bond_albedo": 0.11,
+   "lit_by": [
+    {
+     "address": "u:sol/sys:0/star:0",
+     "luminosity_w": 3.828e+26,
+     "t_k": 5772.0,
+     "distance_m": 149598000000.0
+    }
+   ]
+  }
+ ]
+}

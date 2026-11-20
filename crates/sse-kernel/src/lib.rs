@@ -1474,6 +1474,36 @@ impl Kernel {
                 fixture,
                 stack,
             } => systems::read_world_stack(body.as_deref(), fixture.as_deref(), stack)?,
+            Request::ReadLight { fixture, bodies } => {
+                systems::read_light(fixture.as_deref(), bodies)?
+            }
+            Request::ReadNebulae {
+                at_s,
+                seed,
+                deaths,
+                planetary,
+                remnants,
+                glows,
+            } => systems::read_nebulae(at_s, seed.as_deref(), deaths, planetary, remnants, glows)?,
+            Request::SurveyPlanets { survey } => systems::survey_planets(survey)?,
+            Request::ReadSpectrum { targets, observer } => {
+                systems::read_spectrum(targets, observer)?
+            }
+            Request::ReadAirOptics {
+                airs,
+                wavelengths_m,
+            } => systems::read_air_optics(airs, wavelengths_m)?,
+            Request::Detect {
+                targets,
+                sensors,
+                radar,
+            } => systems::detect(targets, sensors, radar)?,
+            Request::ReadActivity {
+                stars,
+                seed,
+                at_s,
+                window,
+            } => systems::read_activity(stars, seed.as_deref(), at_s, window)?,
             Request::Adopt {
                 import_v3,
                 formation,

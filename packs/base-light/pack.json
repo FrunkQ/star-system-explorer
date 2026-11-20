@@ -1,0 +1,964 @@
+{
+  "format": "sse.pack/1",
+  "id": "sse.base-light",
+  "version": "0.1.0",
+  "kind": [
+    "base-physics"
+  ],
+  "kernel_range": "^0.1",
+  "licence": "Apache-2.0",
+  "provides": {
+    "other": {
+      "about": "Light (track O1; nebulae-and-light design sections 1 and 2): the fixed band set every light description is integrated over, the visible slices, the named-line table, and the wavelength grid the spectrum chart samples. Wavelengths in metres. Radio runs to 10 km (30 kHz) so planetary auroral radio, which sits below 40 MHz, is inside the band set. Optical lines are rest wavelengths in standard air, as astronomers quote them; ultraviolet, X-ray, gamma, millimetre and radio lines are in vacuum.",
+      "light": {
+        "bands": [
+          {
+            "id": "gamma",
+            "name": "Gamma rays",
+            "from_m": 1e-14,
+            "to_m": 1e-11
+          },
+          {
+            "id": "xray",
+            "name": "X-rays",
+            "from_m": 1e-11,
+            "to_m": 1e-08
+          },
+          {
+            "id": "uv",
+            "name": "Ultraviolet",
+            "from_m": 1e-08,
+            "to_m": 3.8e-07
+          },
+          {
+            "id": "visible",
+            "name": "Visible",
+            "from_m": 3.8e-07,
+            "to_m": 7.5e-07
+          },
+          {
+            "id": "near-ir",
+            "name": "Near infrared",
+            "from_m": 7.5e-07,
+            "to_m": 5e-06
+          },
+          {
+            "id": "mid-ir",
+            "name": "Mid infrared",
+            "from_m": 5e-06,
+            "to_m": 2.5e-05
+          },
+          {
+            "id": "far-ir",
+            "name": "Far infrared",
+            "from_m": 2.5e-05,
+            "to_m": 0.00035
+          },
+          {
+            "id": "mm",
+            "name": "Millimetre",
+            "from_m": 0.00035,
+            "to_m": 0.01
+          },
+          {
+            "id": "radio",
+            "name": "Radio",
+            "from_m": 0.01,
+            "to_m": 10000.0
+          }
+        ],
+        "visible_slices": [
+          {
+            "id": "blue",
+            "name": "Blue",
+            "from_m": 3.8e-07,
+            "to_m": 4.9e-07
+          },
+          {
+            "id": "green",
+            "name": "Green",
+            "from_m": 4.9e-07,
+            "to_m": 5.8e-07
+          },
+          {
+            "id": "red",
+            "name": "Red",
+            "from_m": 5.8e-07,
+            "to_m": 7.5e-07
+          }
+        ],
+        "lines": [
+          {
+            "id": "e-511",
+            "name": "Electron-positron annihilation 511 keV",
+            "species": "e+e-",
+            "at_m": 2.42631e-12,
+            "medium": "vacuum"
+          },
+          {
+            "id": "fe-ka",
+            "name": "Iron K-alpha 6.4 keV",
+            "species": "Fe",
+            "at_m": 1.9373e-10,
+            "medium": "vacuum"
+          },
+          {
+            "id": "lya",
+            "name": "Lyman-alpha 121.6 nm",
+            "species": "H I",
+            "at_m": 1.21567e-07,
+            "medium": "vacuum"
+          },
+          {
+            "id": "oii",
+            "name": "[O II] 372.7 nm (doublet)",
+            "species": "O II",
+            "at_m": 3.7274e-07,
+            "medium": "air"
+          },
+          {
+            "id": "n2p",
+            "name": "N2+ 391.4 nm (aurora)",
+            "species": "N2+",
+            "at_m": 3.9144e-07,
+            "medium": "air"
+          },
+          {
+            "id": "ca-k",
+            "name": "Calcium K 393.4 nm (Fraunhofer K)",
+            "species": "Ca II",
+            "at_m": 3.93366e-07,
+            "medium": "air"
+          },
+          {
+            "id": "ca-h",
+            "name": "Calcium H 396.8 nm (Fraunhofer H)",
+            "species": "Ca II",
+            "at_m": 3.96847e-07,
+            "medium": "air"
+          },
+          {
+            "id": "ch-g",
+            "name": "CH G band 430.8 nm (Fraunhofer G)",
+            "species": "CH",
+            "at_m": 4.3078e-07,
+            "medium": "air"
+          },
+          {
+            "id": "hg",
+            "name": "H-gamma 434.0 nm",
+            "species": "H I",
+            "at_m": 4.34047e-07,
+            "medium": "air"
+          },
+          {
+            "id": "heii",
+            "name": "He II 468.6 nm",
+            "species": "He II",
+            "at_m": 4.68568e-07,
+            "medium": "air"
+          },
+          {
+            "id": "hb",
+            "name": "H-beta 486.1 nm",
+            "species": "H I",
+            "at_m": 4.86133e-07,
+            "medium": "air"
+          },
+          {
+            "id": "oiii-4959",
+            "name": "[O III] 495.9 nm",
+            "species": "O III",
+            "at_m": 4.95891e-07,
+            "medium": "air"
+          },
+          {
+            "id": "oiii",
+            "name": "[O III] 500.7 nm",
+            "species": "O III",
+            "at_m": 5.00684e-07,
+            "medium": "air"
+          },
+          {
+            "id": "mg-b",
+            "name": "Magnesium b 517.3 nm (Fraunhofer b)",
+            "species": "Mg I",
+            "at_m": 5.17268e-07,
+            "medium": "air"
+          },
+          {
+            "id": "fe-e",
+            "name": "Iron E 527.0 nm (Fraunhofer E)",
+            "species": "Fe I",
+            "at_m": 5.27039e-07,
+            "medium": "air"
+          },
+          {
+            "id": "oi-5577",
+            "name": "[O I] 557.7 nm (green aurora, airglow)",
+            "species": "O I",
+            "at_m": 5.57734e-07,
+            "medium": "air"
+          },
+          {
+            "id": "hei",
+            "name": "He I 587.6 nm",
+            "species": "He I",
+            "at_m": 5.87562e-07,
+            "medium": "air"
+          },
+          {
+            "id": "na-d",
+            "name": "Sodium D 589.3 nm (doublet; sodium lamps)",
+            "species": "Na I",
+            "at_m": 5.8929e-07,
+            "medium": "air"
+          },
+          {
+            "id": "oi-6300",
+            "name": "[O I] 630.0 nm (red aurora)",
+            "species": "O I",
+            "at_m": 6.3003e-07,
+            "medium": "air"
+          },
+          {
+            "id": "nii-6548",
+            "name": "[N II] 654.8 nm",
+            "species": "N II",
+            "at_m": 6.54805e-07,
+            "medium": "air"
+          },
+          {
+            "id": "ha",
+            "name": "H-alpha 656.3 nm",
+            "species": "H I",
+            "at_m": 6.56281e-07,
+            "medium": "air"
+          },
+          {
+            "id": "nii",
+            "name": "[N II] 658.4 nm",
+            "species": "N II",
+            "at_m": 6.58345e-07,
+            "medium": "air"
+          },
+          {
+            "id": "sii",
+            "name": "[S II] 671.6 nm",
+            "species": "S II",
+            "at_m": 6.71644e-07,
+            "medium": "air"
+          },
+          {
+            "id": "sii-6731",
+            "name": "[S II] 673.1 nm",
+            "species": "S II",
+            "at_m": 6.73082e-07,
+            "medium": "air"
+          },
+          {
+            "id": "tio-7054",
+            "name": "Titanium oxide band 705.4 nm",
+            "species": "TiO",
+            "at_m": 7.054e-07,
+            "medium": "air"
+          },
+          {
+            "id": "co-10",
+            "name": "Carbon monoxide J=1-0 2.6 mm (115.27 GHz)",
+            "species": "CO",
+            "at_m": 0.002600757,
+            "medium": "vacuum"
+          },
+          {
+            "id": "hi-21",
+            "name": "Neutral hydrogen 21 cm (1420.41 MHz)",
+            "species": "H I",
+            "at_m": 0.21106114,
+            "medium": "vacuum"
+          }
+        ],
+        "grid": {
+          "from_m": 1e-14,
+          "to_m": 10000.0,
+          "points": 145
+        },
+        "steps_per_decade": 64,
+        "disc_rings": 48,
+        "references": [
+          {
+            "text": "NIST Atomic Spectra Database (Kramida, A., Ralchenko, Yu., Reader, J. and NIST ASD Team), rest wavelengths of atomic lines",
+            "url": "https://physics.nist.gov/asd"
+          },
+          {
+            "text": "Osterbrock, D. E. and Ferland, G. J. 2006, Astrophysics of Gaseous Nebulae and Active Galactic Nuclei, 2nd edn, University Science Books: the nebular line list (H I, [O II], [O III], [N II], [S II], He I, He II)",
+            "url": "https://uscibooks.aip.org/books/astrophysics-of-gaseous-nebulae-and-active-galactic-nuclei-second-edition/"
+          },
+          {
+            "text": "Splatalogue spectral line catalogue: CO J=1-0 at 115.2712018 GHz and the H I hyperfine line at 1420.405751768 MHz",
+            "url": "https://splatalogue.online/"
+          },
+          {
+            "text": "Gray, R. O. and Corbally, C. J. 2009, Stellar Spectral Classification, Princeton University Press: which absorption lines mark each spectral class (Balmer lines strongest near A0; Ca II H and K, the G band and metal lines in G and K; TiO bands in M; He I in B, He II in O)",
+            "url": "https://press.princeton.edu/books/hardcover/9780691125107/stellar-spectral-classification"
+          },
+          {
+            "text": "Kaye, G. W. C. and Laby, T. H., Tables of Physical and Chemical Constants, section 2.5.7, Refractive index of gases (n−1 at 589.3 nm, 0 °C, one atmosphere)",
+            "url": "https://web.archive.org/web/2019/http://www.kayelaby.npl.co.uk/general_physics/2_5/2_5_7.html"
+          },
+          {
+            "text": "Bodhaine, B. A. et al. 1999, On Rayleigh optical depth calculations, J. Atmos. Oceanic Technol. 16, 1854",
+            "doi": "10.1175/1520-0426(1999)016<1854:ORODC>2.0.CO;2"
+          }
+        ],
+        "absorption": {
+          "teff_k": [
+            3200,
+            4500,
+            5800,
+            7000,
+            9500,
+            20000,
+            40000
+          ],
+          "note": "Qualitative strength (0 to 1) of photospheric absorption lines with temperature, after the MK classification criteria: Balmer lines peak near A0, ionised calcium and metals in G and K, titanium oxide only in M, helium in B (neutral) and O (ionised). A stand-in until the O4 line-strength grid replaces it.",
+          "lines": [
+            {
+              "line": "ha",
+              "strength": [
+                0.05,
+                0.15,
+                0.3,
+                0.6,
+                1.0,
+                0.6,
+                0.1
+              ]
+            },
+            {
+              "line": "hb",
+              "strength": [
+                0.05,
+                0.15,
+                0.3,
+                0.6,
+                1.0,
+                0.6,
+                0.1
+              ]
+            },
+            {
+              "line": "hg",
+              "strength": [
+                0.05,
+                0.15,
+                0.3,
+                0.6,
+                1.0,
+                0.6,
+                0.1
+              ]
+            },
+            {
+              "line": "heii",
+              "strength": [
+                0,
+                0,
+                0,
+                0,
+                0,
+                0.1,
+                1.0
+              ]
+            },
+            {
+              "line": "hei",
+              "strength": [
+                0,
+                0,
+                0,
+                0,
+                0.1,
+                1.0,
+                0.5
+              ]
+            },
+            {
+              "line": "ca-k",
+              "strength": [
+                0.8,
+                1.0,
+                1.0,
+                0.7,
+                0.3,
+                0.05,
+                0
+              ]
+            },
+            {
+              "line": "ca-h",
+              "strength": [
+                0.8,
+                1.0,
+                1.0,
+                0.7,
+                0.3,
+                0.05,
+                0
+              ]
+            },
+            {
+              "line": "ch-g",
+              "strength": [
+                0.5,
+                0.9,
+                0.8,
+                0.3,
+                0,
+                0,
+                0
+              ]
+            },
+            {
+              "line": "mg-b",
+              "strength": [
+                0.8,
+                0.9,
+                0.7,
+                0.4,
+                0.1,
+                0,
+                0
+              ]
+            },
+            {
+              "line": "fe-e",
+              "strength": [
+                0.7,
+                0.9,
+                0.7,
+                0.3,
+                0.05,
+                0,
+                0
+              ]
+            },
+            {
+              "line": "na-d",
+              "strength": [
+                1.0,
+                0.8,
+                0.5,
+                0.2,
+                0.05,
+                0,
+                0
+              ]
+            },
+            {
+              "line": "tio-7054",
+              "strength": [
+                1.0,
+                0.2,
+                0,
+                0,
+                0,
+                0,
+                0
+              ]
+            }
+          ]
+        },
+        "gases": {
+          "note": "Refractivity n−1 at 589.3 nm, 273.15 K and 101325 Pa (Loschmidt density). Dry air uses Peck and Reeder's dispersion exactly; other gases follow air's dispersion scaled to their 589 nm value (stand-in). King factor F = a + b λ⁻² + c λ⁻⁴ with λ in µm (Bodhaine et al. 1999 for N₂ and O₂; others constant).",
+          "list": [
+            {
+              "id": "air",
+              "name": "dry air",
+              "molar_mass_g": 28.9595,
+              "refractivity_589": 0.0002926,
+              "king": [
+                1.0469,
+                0.0,
+                0.0
+              ],
+              "dispersion": "peck-reeder"
+            },
+            {
+              "id": "n2",
+              "name": "nitrogen",
+              "molar_mass_g": 28.0134,
+              "refractivity_589": 0.000298,
+              "king": [
+                1.034,
+                0.000317,
+                0.0
+              ],
+              "dispersion": "scaled"
+            },
+            {
+              "id": "o2",
+              "name": "oxygen",
+              "molar_mass_g": 31.9988,
+              "refractivity_589": 0.000271,
+              "king": [
+                1.096,
+                0.001385,
+                0.0001448
+              ],
+              "dispersion": "scaled"
+            },
+            {
+              "id": "ar",
+              "name": "argon",
+              "molar_mass_g": 39.948,
+              "refractivity_589": 0.000281,
+              "king": [
+                1.0,
+                0.0,
+                0.0
+              ],
+              "dispersion": "scaled"
+            },
+            {
+              "id": "co2",
+              "name": "carbon dioxide",
+              "molar_mass_g": 44.0095,
+              "refractivity_589": 0.000449,
+              "king": [
+                1.15,
+                0.0,
+                0.0
+              ],
+              "dispersion": "scaled"
+            },
+            {
+              "id": "h2",
+              "name": "hydrogen",
+              "molar_mass_g": 2.01588,
+              "refractivity_589": 0.000132,
+              "king": [
+                1.0,
+                0.0,
+                0.0
+              ],
+              "dispersion": "scaled"
+            },
+            {
+              "id": "he",
+              "name": "helium",
+              "molar_mass_g": 4.002602,
+              "refractivity_589": 3.5e-05,
+              "king": [
+                1.0,
+                0.0,
+                0.0
+              ],
+              "dispersion": "scaled"
+            },
+            {
+              "id": "ch4",
+              "name": "methane",
+              "molar_mass_g": 16.0425,
+              "refractivity_589": 0.000444,
+              "king": [
+                1.0,
+                0.0,
+                0.0
+              ],
+              "dispersion": "scaled"
+            },
+            {
+              "id": "h2o",
+              "name": "water vapour",
+              "molar_mass_g": 18.01528,
+              "refractivity_589": 0.000256,
+              "king": [
+                1.0,
+                0.0,
+                0.0
+              ],
+              "dispersion": "scaled"
+            }
+          ]
+        }
+      }
+    },
+    "units": [
+      {
+        "id": "a_m2",
+        "symbol": "A m²",
+        "dim": [
+          2,
+          0,
+          0,
+          1,
+          0,
+          0,
+          0
+        ],
+        "scale": 1.0,
+        "offset": 0.0
+      },
+      {
+        "id": "tesla",
+        "symbol": "T",
+        "dim": [
+          0,
+          1,
+          -2,
+          -1,
+          0,
+          0,
+          0
+        ],
+        "scale": 1.0,
+        "offset": 0.0
+      },
+      {
+        "id": "nt",
+        "symbol": "nT",
+        "dim": [
+          0,
+          1,
+          -2,
+          -1,
+          0,
+          0,
+          0
+        ],
+        "scale": 1e-09,
+        "offset": 0.0
+      },
+      {
+        "id": "hz",
+        "symbol": "Hz",
+        "dim": [
+          0,
+          0,
+          -1,
+          0,
+          0,
+          0,
+          0
+        ],
+        "scale": 1.0,
+        "offset": 0.0
+      },
+      {
+        "id": "mhz",
+        "symbol": "MHz",
+        "dim": [
+          0,
+          0,
+          -1,
+          0,
+          0,
+          0,
+          0
+        ],
+        "scale": 1000000.0,
+        "offset": 0.0
+      },
+      {
+        "id": "m2",
+        "symbol": "m²",
+        "dim": [
+          2,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0
+        ],
+        "scale": 1.0,
+        "offset": 0.0
+      }
+    ],
+    "flows": [
+      {
+        "format": "sse.flow/1",
+        "id": "sse.base-light.body-emission",
+        "version": "0.1.0",
+        "hook": "body.emission",
+        "inputs": [
+          {
+            "name": "flux",
+            "kind": "planet.insolation"
+          },
+          {
+            "name": "albedo",
+            "kind": "planet.bond_albedo"
+          },
+          {
+            "name": "internal_flux",
+            "kind": "body.internal_heat_flux"
+          },
+          {
+            "name": "radius",
+            "kind": "body.radius"
+          },
+          {
+            "name": "moment",
+            "kind": "body.magnetic_moment"
+          },
+          {
+            "name": "distance",
+            "kind": "orbit.semi_major_axis"
+          }
+        ],
+        "nodes": [
+          {
+            "id": "glow",
+            "atom": "sse.light.effective_temperature"
+          },
+          {
+            "id": "wind",
+            "atom": "sse.light.stellar_wind"
+          },
+          {
+            "id": "bubble",
+            "atom": "sse.light.magnetopause_radius"
+          },
+          {
+            "id": "radio",
+            "atom": "sse.light.auroral_radio_power"
+          },
+          {
+            "id": "top",
+            "atom": "sse.light.cyclotron_frequency"
+          }
+        ],
+        "wires": [
+          {
+            "from": "in.flux",
+            "to": "glow.flux"
+          },
+          {
+            "from": "in.albedo",
+            "to": "glow.albedo"
+          },
+          {
+            "from": "in.internal_flux",
+            "to": "glow.internal_flux"
+          },
+          {
+            "from": "in.distance",
+            "to": "wind.distance"
+          },
+          {
+            "from": "in.moment",
+            "to": "bubble.moment"
+          },
+          {
+            "from": "wind.density",
+            "to": "bubble.density"
+          },
+          {
+            "from": "wind.speed",
+            "to": "bubble.speed"
+          },
+          {
+            "from": "wind.field",
+            "to": "radio.field"
+          },
+          {
+            "from": "wind.speed",
+            "to": "radio.speed"
+          },
+          {
+            "from": "bubble.radius",
+            "to": "radio.magnetopause"
+          },
+          {
+            "from": "in.radius",
+            "to": "radio.radius"
+          },
+          {
+            "from": "in.moment",
+            "to": "top.moment"
+          },
+          {
+            "from": "in.radius",
+            "to": "top.radius"
+          }
+        ],
+        "publishes": [
+          {
+            "kind": "body.effective_temperature",
+            "from": "glow.teff"
+          },
+          {
+            "kind": "body.magnetopause_radius",
+            "from": "bubble.radius"
+          },
+          {
+            "kind": "radio.auroral_power",
+            "from": "radio.power"
+          },
+          {
+            "kind": "radio.max_frequency",
+            "from": "top.frequency"
+          }
+        ],
+        "tests": [
+          {
+            "name": "Earth (NSSDC fact sheet: Bond albedo 0.294, black-body temperature 254.0 K; magnetopause about 10 Earth radii, Kivelson and Russell 1995)",
+            "inputs": {
+              "flux": {
+                "value": 1361.0,
+                "unit": "w_m2"
+              },
+              "albedo": {
+                "value": 0.294,
+                "unit": "one"
+              },
+              "internal_flux": {
+                "value": 0.09,
+                "unit": "w_m2"
+              },
+              "radius": {
+                "value": 6378.137,
+                "unit": "km"
+              },
+              "moment": {
+                "value": 7.94e+22,
+                "unit": "a_m2"
+              },
+              "distance": {
+                "value": 1.0,
+                "unit": "au"
+              }
+            },
+            "expect": {
+              "body.effective_temperature": {
+                "value": 254.0,
+                "unit": "k",
+                "tol": 1.0
+              },
+              "body.magnetopause_radius": {
+                "value": 10.0,
+                "unit": "r_earth",
+                "tol": 1.5
+              }
+            }
+          },
+          {
+            "name": "Jupiter (Li et al. 2018: Bond albedo 0.503, internal heat 7.485 W/m², effective temperature 125.57 K)",
+            "inputs": {
+              "flux": {
+                "value": 50.26,
+                "unit": "w_m2"
+              },
+              "albedo": {
+                "value": 0.503,
+                "unit": "one"
+              },
+              "internal_flux": {
+                "value": 7.485,
+                "unit": "w_m2"
+              },
+              "radius": {
+                "value": 71492.0,
+                "unit": "km"
+              },
+              "moment": {
+                "value": 1.571e+27,
+                "unit": "a_m2"
+              },
+              "distance": {
+                "value": 5.2026,
+                "unit": "au"
+              }
+            },
+            "expect": {
+              "body.effective_temperature": {
+                "value": 125.57,
+                "unit": "k",
+                "tol": 1.5
+              }
+            }
+          },
+          {
+            "name": "Neptune (Pearl and Conrath 1991: Bond albedo 0.290, internal heat 0.433 W/m², effective temperature 59.3 ± 0.8 K)",
+            "inputs": {
+              "flux": {
+                "value": 1.51,
+                "unit": "w_m2"
+              },
+              "albedo": {
+                "value": 0.29,
+                "unit": "one"
+              },
+              "internal_flux": {
+                "value": 0.433,
+                "unit": "w_m2"
+              },
+              "radius": {
+                "value": 24764.0,
+                "unit": "km"
+              },
+              "moment": {
+                "value": 2.16e+24,
+                "unit": "a_m2"
+              },
+              "distance": {
+                "value": 30.07,
+                "unit": "au"
+              }
+            },
+            "expect": {
+              "body.effective_temperature": {
+                "value": 59.3,
+                "unit": "k",
+                "tol": 0.8
+              }
+            }
+          },
+          {
+            "name": "Mars (NSSDC: Bond albedo 0.250, black-body 209.8 K; no global field, so no magnetosphere and no auroral radio)",
+            "inputs": {
+              "flux": {
+                "value": 586.2,
+                "unit": "w_m2"
+              },
+              "albedo": {
+                "value": 0.25,
+                "unit": "one"
+              },
+              "internal_flux": {
+                "value": 0.0,
+                "unit": "w_m2"
+              },
+              "radius": {
+                "value": 3396.2,
+                "unit": "km"
+              },
+              "moment": {
+                "value": 0.0,
+                "unit": "a_m2"
+              },
+              "distance": {
+                "value": 1.52368,
+                "unit": "au"
+              }
+            },
+            "expect": {
+              "body.effective_temperature": {
+                "value": 209.8,
+                "unit": "k",
+                "tol": 1.0
+              },
+              "radio.auroral_power": {
+                "value": 0.0,
+                "unit": "w",
+                "tol": 0.0
+              }
+            }
+          }
+        ]
+      }
+    ]
+  }
+}

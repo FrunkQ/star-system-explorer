@@ -482,6 +482,18 @@ dependencies = [
 ]
 
 [[package]]
+name = "sse-activity"
+version = "0.1.0"
+dependencies = [
+ "serde",
+ "serde_json",
+ "sse-atoms",
+ "sse-core",
+ "sse-flow",
+ "sse-light",
+]
+
+[[package]]
 name = "sse-atoms"
 version = "0.1.0"
 dependencies = [
@@ -595,6 +607,7 @@ version = "0.1.0"
 dependencies = [
  "serde",
  "serde_json",
+ "sse-activity",
  "sse-atoms",
  "sse-chronicle",
  "sse-codes",
@@ -604,14 +617,18 @@ dependencies = [
  "sse-formation",
  "sse-import-v3",
  "sse-life",
+ "sse-light",
  "sse-logic",
  "sse-nav",
+ "sse-nebula",
  "sse-observe",
  "sse-pack",
  "sse-record",
  "sse-sector-io",
+ "sse-sense",
  "sse-sift",
  "sse-surface",
+ "sse-survey",
  "sse-time",
  "sse-trigger",
  "sse-world",
@@ -630,6 +647,18 @@ dependencies = [
  "sse-pack",
  "sse-suite",
  "sse-world",
+]
+
+[[package]]
+name = "sse-light"
+version = "0.1.0"
+dependencies = [
+ "serde",
+ "serde_json",
+ "sse-atoms",
+ "sse-core",
+ "sse-flow",
+ "sse-pack",
 ]
 
 [[package]]
@@ -653,6 +682,17 @@ dependencies = [
  "serde_json",
  "sse-core",
  "sse-pack",
+]
+
+[[package]]
+name = "sse-nebula"
+version = "0.1.0"
+dependencies = [
+ "serde",
+ "serde_json",
+ "sse-atoms",
+ "sse-core",
+ "sse-light",
 ]
 
 [[package]]
@@ -726,6 +766,17 @@ dependencies = [
 ]
 
 [[package]]
+name = "sse-sense"
+version = "0.1.0"
+dependencies = [
+ "serde",
+ "serde_json",
+ "sse-core",
+ "sse-flow",
+ "sse-light",
+]
+
+[[package]]
 name = "sse-sift"
 version = "0.1.0"
 dependencies = [
@@ -759,6 +810,16 @@ dependencies = [
  "sse-core",
  "sse-formation",
  "sse-pack",
+]
+
+[[package]]
+name = "sse-survey"
+version = "0.1.0"
+dependencies = [
+ "serde",
+ "serde_json",
+ "sse-core",
+ "sse-flow",
 ]
 
 [[package]]
