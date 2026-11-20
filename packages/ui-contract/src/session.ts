@@ -2,6 +2,17 @@
 // shells receive a ViewSession and never see the kernel client behind it.
 // Only this file and host-browser.ts may import the kernel client (checked by
 // tests/ui/boundary.test.ts).
+import type { OrbitPlaced } from "./orbits.ts";
+/** A pack's calendar as the kernel serves it (`provides.other.calendar`). */
+export interface PackCalendar {
+  name: string;
+  epoch_s: number;
+  epoch_year?: number;
+  day_s: number;
+  year_days: number;
+  months?: { name: string; days: number }[];
+  format: string;
+}
 import type { KernelClient } from "../../kernel-client/src/index.ts";
 import { encodeRequest, type Json } from "./json.ts";
 import { checkIntent, intentToRequest, secondsToYears, yearsToSeconds, type Intent } from "./intent.ts";
@@ -121,6 +132,14 @@ export interface ViewSession {
   importChronicle(doc: Json): Promise<{ ok: true; state_hash: string; events: number; stack_matches: boolean } | { ok: false; code: string; message: string }>;
   /** One world's life (U7, kernel `life_view`): a body once systems carry habitat graphs, or one of the example fixtures. GM only. */
   lifeView(by: { body?: string; fixture?: string }): Promise<{ ok: true; source: string; view: LifeView } | { ok: false; code: string; message: string }>;
+  /** Bodies on their orbits at given times (kernel `orbits_at`, U11 part 2): relative to each host, up to 64 times. `bodies` places a scene the kernel does not hold. */
+  orbitsAt(system: string, at_s: readonly bigint[], bodies?: { address: string; facts: Record<string, number | string | bigint> }[]): Promise<{ ok: true; bodies: OrbitPlaced[] } | { ok: false; code: string; message: string }>;
+  /** The campaign's now kept in the universe (kernel `campaign_now`); absent if never set. */
+  campaignNow(): Promise<{ ok: true; at_s?: bigint } | { ok: false; code: string; message: string }>;
+  /** Move the campaign's now (kernel `set_campaign_now`); GM only. */
+  setCampaignNow(at_s: bigint): Promise<{ ok: true; state_hash: string } | { ok: false; code: string; message: string }>;
+  /** The top pack's calendar (kernel `calendar`), if any pack gives one. */
+  calendar(): Promise<{ ok: true; calendar?: PackCalendar } | { ok: false; code: string; message: string }>;
   /** Every system in the open universe that has facts (kernel `systems`): adopted ones and authored ones. */
   listSystems(): Promise<{ ok: true; systems: ListedSystem[] } | { ok: false; code: string; message: string }>;
   /** Candidate courses (V8, kernel `plan_route`, T3): from an inline system any seat may ask about; an adopted `system` is GM only. Writes nothing. */
@@ -556,6 +575,31 @@ export class Session implements ViewSession {
     if (this.seat.authority !== "gm") return { ok: false, code: "not_gm", message: "only the game master reads a world's whole biosphere; players see it through data views" };
     const r = await this.#call({ op: "life_view", ...(by.body !== undefined ? { body: by.body } : {}), ...(by.fixture !== undefined ? { fixture: by.fixture } : {}) });
     return r.type === "life_viewed" ? { ok: true, source: String(r.source), view: (r as unknown as { view: LifeView }).view } : { ok: false, code: String(r.code ?? "unexpected"), message: String(r.message ?? JSON.stringify(r)) };
+  }
+
+  async orbitsAt(system: string, at_s: readonly bigint[], bodies?: { address: string; facts: Record<string, number | string | bigint> }[]): Promise<{ ok: true; bodies: OrbitPlaced[] } | { ok: false; code: string; message: string }> {
+    const r = await this.#call({ op: "orbits_at", system, at_s: [...at_s], ...(bodies ? { bodies } : {}) });
+    return r.type === "orbits_placed" ? { ok: true, bodies: (r as unknown as { bodies: OrbitPlaced[] }).bodies } : { ok: false, code: String(r.code ?? "unexpected"), message: String(r.message ?? JSON.stringify(r)) };
+  }
+
+  async campaignNow(): Promise<{ ok: true; at_s?: bigint } | { ok: false; code: string; message: string }> {
+    const r = await this.#call({ op: "campaign_now" });
+    if (r.type !== "campaign_now_is") return { ok: false, code: String(r.code ?? "unexpected"), message: String(r.message ?? JSON.stringify(r)) };
+    const at = (r as unknown as { at_s?: number | bigint | string }).at_s;
+    return at === undefined || at === null ? { ok: true } : { ok: true, at_s: BigInt(at) };
+  }
+
+  async setCampaignNow(at_s: bigint): Promise<{ ok: true; state_hash: string } | { ok: false; code: string; message: string }> {
+    if (this.seat.authority !== "gm") return { ok: false, code: "not_gm", message: "only the game master moves the campaign's now" };
+    const r = await this.#call({ op: "set_campaign_now", at_s });
+    return r.type === "campaign_now_is" ? { ok: true, state_hash: String((r as unknown as { state_hash?: string }).state_hash ?? "") } : { ok: false, code: String(r.code ?? "unexpected"), message: String(r.message ?? JSON.stringify(r)) };
+  }
+
+  async calendar(): Promise<{ ok: true; calendar?: PackCalendar } | { ok: false; code: string; message: string }> {
+    const r = await this.#call({ op: "calendar" });
+    if (r.type !== "calendar_is") return { ok: false, code: String(r.code ?? "unexpected"), message: String(r.message ?? JSON.stringify(r)) };
+    const c = (r as unknown as { calendar?: PackCalendar }).calendar;
+    return c ? { ok: true, calendar: c } : { ok: true };
   }
 
   async listSystems(): Promise<{ ok: true; systems: ListedSystem[] } | { ok: false; code: string; message: string }> {
