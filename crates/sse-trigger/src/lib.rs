@@ -24,6 +24,10 @@
 //! bit-identically. Nothing here runs on a player device (design 5.4, 8A).
 #![forbid(unsafe_code)]
 
+pub mod intents;
+pub mod programs;
+pub mod templates;
+
 use serde::{Deserialize, Serialize};
 use serde_json::Value as J;
 use sse_chronicle::{
@@ -157,7 +161,9 @@ pub enum Effect {
         tier: Option<String>,
     },
     /// Grant a data view of the subject to an audience: `view`, or the next
-    /// rung of `ladder` above the audience's present view there.
+    /// rung of `ladder` above the audience's present view there. On a pair
+    /// rule, `audience` may be `{observer.<field>}`, the observer's text fact
+    /// (for example `{observer.crew.audience}`), so each crew learns for itself.
     Grant {
         audience: String,
         #[serde(default, skip_serializing_if = "Option::is_none")]
@@ -182,12 +188,20 @@ pub enum Effect {
         field: String,
         value: J,
     },
-    /// Make an authored object from a template (J7).
+    /// Make an authored object from a template (J7), under the subject:
+    /// `<subject>/<kind>:<key>` (the next free number when no key).
     Create {
         template: String,
+        #[serde(default, skip_serializing_if = "Option::is_none")]
+        key: Option<String>,
+        #[serde(default, skip_serializing_if = "Option::is_none")]
+        name: Option<String>,
     },
-    /// Retire an authored object (J7).
-    Retire,
+    /// Retire the subject, an object made from a template (J7).
+    Retire {
+        #[serde(default, skip_serializing_if = "Option::is_none")]
+        reason: Option<String>,
+    },
 }
 
 impl Effect {
@@ -201,14 +215,14 @@ impl Effect {
             Effect::SendIntent { .. } => "send_intent",
             Effect::SetPin { .. } => "set_pin",
             Effect::Create { .. } => "create",
-            Effect::Retire => "retire",
+            Effect::Retire { .. } => "retire",
         }
     }
     /// The design's default: ask for create, retire and set_pin; auto otherwise.
     fn asks_by_default(&self) -> bool {
         matches!(
             self,
-            Effect::Create { .. } | Effect::Retire | Effect::SetPin { .. }
+            Effect::Create { .. } | Effect::Retire { .. } | Effect::SetPin { .. }
         )
     }
 }
@@ -322,6 +336,8 @@ pub struct Gate<'a> {
     pub registry: &'a Registry,
     pub campaign: Option<&'a sse_observe::Campaign>,
     pub root: &'a Address,
+    /// The stack's templates (J7), for `create`.
+    pub templates: &'a templates::Templates,
 }
 
 fn text(s: &str) -> Value {
@@ -512,6 +528,40 @@ struct Pending {
 }
 
 impl Rules {
+    /// Templates the rules' `create` effects name that the stack lacks.
+    pub fn check_templates(&self, t: &templates::Templates) -> Vec<String> {
+        let mut out = vec![];
+        for r in &self.rules {
+            for e in &r.doc.effects {
+                if let Effect::Create { template, .. } = e {
+                    if t.get(template).is_none() {
+                        out.push(format!(
+                            "rule {}: create names template {template}, which no pack declares",
+                            r.doc.id
+                        ));
+                    }
+                }
+            }
+        }
+        out
+    }
+
+    /// Intent kinds the rules listen for (`on_intent`) or send (`send_intent`): `(rule, kind)`.
+    pub fn intent_kinds(&self) -> Vec<(String, String)> {
+        let mut out = vec![];
+        for r in &self.rules {
+            if let When::OnIntent { kind } = &r.doc.when {
+                out.push((r.doc.id.clone(), kind.clone()));
+            }
+            for e in &r.doc.effects {
+                if let Effect::SendIntent { kind, .. } = e {
+                    out.push((r.doc.id.clone(), kind.clone()));
+                }
+            }
+        }
+        out
+    }
+
     /// Read every pack's `provides.other.triggers` (bottom to top). A rule id
     /// declared twice is refused; so are effects the gate cannot carry out.
     pub fn from_packs(packs: &[(String, String, J)]) -> Result<Rules, Vec<String>> {
@@ -546,14 +596,21 @@ impl Rules {
                     problems.push(format!("{pack}: rule {}: no effects", d.id));
                 }
                 for e in &d.effects {
-                    if matches!(e, Effect::Create { .. } | Effect::Retire) {
-                        problems.push(format!(
-                            "{pack}: rule {}: {} needs templates (J7), not built yet",
-                            d.id,
-                            e.name()
-                        ));
-                    }
-                    if let Effect::Grant { view, ladder, .. } = e {
+                    if let Effect::Grant {
+                        view,
+                        ladder,
+                        audience,
+                    } = e
+                    {
+                        if audience.contains('{') {
+                            let ok = observer_field(audience).is_some_and(|f| !f.is_empty());
+                            if !ok || d.scope.pairs.is_none() {
+                                problems.push(format!(
+                                    "{pack}: rule {}: a grant audience is a name, or {{observer.<field>}} on a pair rule",
+                                    d.id
+                                ));
+                            }
+                        }
                         if view.is_none() == ladder.is_empty() {
                             problems.push(format!(
                                 "{pack}: rule {}: a grant names a view or a ladder, not both or neither",
@@ -1019,11 +1076,42 @@ impl Rules {
             data,
             Self::publisher(r),
         )?;
+        // The intent behind an `on_intent` firing, for `{intent.<field>}` values.
+        let intent_payload: Option<J> = match d.cause {
+            Some((true, c)) => g
+                .record
+                .events()
+                .iter()
+                .find(|e| e.id == c && e.body.kind.starts_with(kinds::INTENT_PREFIX))
+                .and_then(|e| data_text(e, "payload"))
+                .and_then(|t| serde_json::from_str(t).ok()),
+            _ => None,
+        };
+        // The observer's facts, for `{observer.<field>}` grant audiences.
+        let observer_facts = match &d.observer {
+            Some(o)
+                if r.doc.effects.iter().any(
+                    |e| matches!(e, Effect::Grant { audience, .. } if audience.contains('{')),
+                ) =>
+            {
+                subjects(g.universe, g.record, g.root, at)
+                    .remove(o)
+                    .map(|s| s.facts)
+                    .unwrap_or_default()
+            }
+            _ => BTreeMap::new(),
+        };
         let effects: Vec<Effect> = r
             .doc
             .effects
             .iter()
-            .map(|e| substitute(e, &d.subject, d.observer.as_ref()))
+            .map(|e| {
+                let e = substitute(e, &d.subject, d.observer.as_ref(), &observer_facts);
+                match &intent_payload {
+                    Some(p) => with_intent(&e, p),
+                    None => e,
+                }
+            })
             .collect();
         let policy = Self::policy_override(g.record, &r.doc.id)
             .or_else(|| r.doc.approval.clone())
@@ -1187,8 +1275,27 @@ impl Rules {
             Effect::Grant { .. } if g.campaign.is_none() => {
                 Err("the stack defines no data views".into())
             }
+            Effect::Grant { audience, .. } if audience.contains('{') => Err(format!(
+                "grant audience {audience}: the observer has no such text fact"
+            )),
             Effect::SetPin { value, .. } => json_value(value).map(|_| ()),
-            Effect::Create { .. } | Effect::Retire => Err("templates arrive in J7".into()),
+            Effect::Create { template, key, .. } => {
+                let t = g
+                    .templates
+                    .get(template)
+                    .ok_or_else(|| format!("no template {template}"))?;
+                templates::next_address(g.universe, t, subject, key.as_deref()).map(|_| ())
+            }
+            Effect::Retire { .. } => {
+                let st = g.universe.state_at(at);
+                if st.get(subject, templates::fields::ID).is_none() {
+                    Err(format!("{subject} was not made from a template"))
+                } else if st.get(subject, templates::fields::RETIRED) == Some(&Value::Bool(true)) {
+                    Err(format!("{subject} is already retired"))
+                } else {
+                    Ok(())
+                }
+            }
             _ => Ok(()),
         }
     }
@@ -1318,7 +1425,40 @@ impl Rules {
                 )?;
                 ("record", id)
             }
-            Effect::Create { .. } | Effect::Retire => return Err("templates arrive in J7".into()),
+            Effect::Create {
+                template,
+                key,
+                name,
+            } => {
+                let t = g
+                    .templates
+                    .get(template)
+                    .ok_or_else(|| format!("no template {template}"))?
+                    .clone();
+                let (_, id) = templates::create(
+                    g.universe,
+                    g.record,
+                    g.registry,
+                    g.root,
+                    &t,
+                    subject,
+                    key.as_deref(),
+                    name.as_deref(),
+                    at,
+                    vec![because],
+                )?;
+                ("universe", id)
+            }
+            Effect::Retire { reason } => {
+                let id = templates::retire(
+                    g.universe,
+                    subject,
+                    reason.as_deref().or(Some(r.doc.explain.as_str())),
+                    at,
+                    &publ,
+                )?;
+                ("universe", id)
+            }
         })
     }
 
@@ -1470,7 +1610,42 @@ fn authored(
     universe.append(e).map_err(|e| e.to_string())
 }
 
-fn substitute(e: &Effect, subject: &Address, observer: Option<&Address>) -> Effect {
+/// A kept value written as `"{intent.<field>}"` takes that field of the
+/// intent that fired the rule (an `on_intent` rule), any JSON type.
+fn with_intent(e: &Effect, payload: &J) -> Effect {
+    match e {
+        Effect::SetKept {
+            kind,
+            value: Some(J::String(v)),
+            add,
+            reason,
+        } => {
+            let got = v
+                .strip_prefix("{intent.")
+                .and_then(|f| f.strip_suffix('}'))
+                .and_then(|f| payload.get(f));
+            Effect::SetKept {
+                kind: kind.clone(),
+                value: Some(got.cloned().unwrap_or_else(|| J::String(v.clone()))),
+                add: *add,
+                reason: reason.clone(),
+            }
+        }
+        other => other.clone(),
+    }
+}
+
+/// The field named by an `{observer.<field>}` audience.
+fn observer_field(a: &str) -> Option<&str> {
+    a.strip_prefix("{observer.")?.strip_suffix('}')
+}
+
+fn substitute(
+    e: &Effect,
+    subject: &Address,
+    observer: Option<&Address>,
+    observer_facts: &BTreeMap<String, Value>,
+) -> Effect {
     let fill = |t: &str| {
         let t = t.replace("{subject}", &subject.to_string());
         match observer {
@@ -1489,6 +1664,28 @@ fn substitute(e: &Effect, subject: &Address, observer: Option<&Address>) -> Effe
             audience: audience.clone(),
             tags: tags.clone(),
             tier: tier.clone(),
+        },
+        Effect::Create {
+            template,
+            key,
+            name,
+        } => Effect::Create {
+            template: template.clone(),
+            key: key.clone(),
+            name: name.as_deref().map(fill),
+        },
+        Effect::Grant {
+            audience,
+            view,
+            ladder,
+        } => Effect::Grant {
+            // Left as written when the fact is missing; the precheck refuses it.
+            audience: match observer_field(audience).and_then(|f| observer_facts.get(f)) {
+                Some(Value::Text(t)) if !t.contains('{') => t.clone(),
+                _ => audience.clone(),
+            },
+            view: view.clone(),
+            ladder: ladder.clone(),
         },
         other => other.clone(),
     }
@@ -1516,3 +1713,6 @@ pub fn trail(record: &Chronicle) -> Vec<J> {
 
 #[cfg(test)]
 mod tests;
+
+#[cfg(test)]
+mod intent_tests;

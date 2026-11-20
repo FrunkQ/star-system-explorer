@@ -43,6 +43,10 @@ Add entries under your area. Keep one row per fudge.
 | F-S22 | sse-cosmos stars.rs:261 (`birth`) | Birth-cluster FUV G0 = 10 (M/1000)^0.5 | not stated (pack sources cite Fatuzzo and Adams 2008 for a median about 1000 G0) | Fatuzzo and Adams 2008 FUV distribution by cluster size. Note that this formula gives about 10 G0 for a 1000 M☉ cluster, two orders of magnitude below the cited median of about 1000. | Possible physics bug; outside stars proper, flag to the galaxy register |
 | F-S23 | crates/sse-formation/src/lifeline.rs white dwarf cooling (decision on F-S16) | Mestel cooling with A = 4 for every white dwarf; HPT00 eq. 90 gives A = 15 for carbon-oxygen (4 helium, 17 oxygen-neon) | With 15, a 0.6 M☉ white dwarf at 1 Gyr is about 1e-4 L☉, several times fainter than detailed cooling models; 4 tracks them more closely | Tabulated cooling sequences (Bédard et al. 2020 Montreal tables) by mass and core composition | documented 19 Nov, to replace |
 | F-S24 | crates/sse-time/src/star.rs CORE_LUM_K | Core mass-luminosity constant 2.3e5 fixed at Z = 0.02 | Simplicity | HPT00 eq. 37's Z-dependent D (already computed as fits.zpars[6]); 47% higher at Z = 0.001 | to fix |
+| F-S25 | crates/sse-formation/src/body.rs `cooling_luminosity` (B1a), giant planets and brown dwarfs | One Burrows et al. 2001 eq. 3 power law; Jupiter comes out at about 1.6e-10 L☉ against the measured 8.7e-10 | Tabulated giant-planet cooling grids not shipped yet; one law gives no seam at the deuterium limit | Tabulated cooling with helium rain and a real interior (Fortney et al. 2011; Mankovich and Fortney 2020) behind the same function | Stand-in until B2 |
+| F-S26 | crates/sse-formation/src/lifeline.rs hydrogen-burning limit, read by body.rs | 0.08 M☉ | Inherited from the life-line fits | About 0.075 M☉, metallicity dependent (Chabrier and Baraffe 2000) | To review in B2 |
+| F-S27 | crates/sse-formation/src/body.rs `deuterium_myr` | Deuterium burning lasts 10 Myr × (M / 0.0124 M☉)² | Simple scaling, no deuterium tables | Spiegel, Burrows and Milsom 2011 burning tracks | Stand-in until B2 |
+| F-S28 | crates/sse-surface/src/lib.rs `OtherLight` distance (B1b) | Companion light at √(a_c² + a_w²), the orbit-averaged d², steady | Climate is orbit-averaged everywhere today | Time-resolved distance from the ephemeris, for seasons in multiples | Stand-in until climate runs in time |
 
 ### Candidates to move into flows
 
@@ -64,6 +68,8 @@ Add entries under your area. Keep one row per fudge.
 
 | Where | Instead of the physics | Why (as the code or log says) | Real physics to replace it | Status |
 |---|---|---|---|---|
+| `crates/sse-kernel/src/orbits.rs` (`orbits_at`) | Two-body Kepler orbits per parent, fixed elements: no perturbations, precession, tides or resonance libration | Chart and 3D placement need any time in microseconds on a phone; the F-track n-body run is for formation, not playback | Secular perturbation theory (Laplace-Lagrange) for slow element drift, or replay of a stored n-body ephemeris for systems the GM marks as interacting | stand-in, permanent for playback with reason |
+| `orbits.rs` phase | Bodies with no stored mean anomaly get a keyed random phase (stream `orbit.phase.v1`) | V3 saves and generated systems often carry no epoch phase | None needed when a phase is authored or imported; the draw is labelled `phase_source: drawn` | documented |
 | disc.rs:418-421 | Initial disc mass 0.03 M* ± 0.4 dex, capped at 0.15; rc0 30 AU ± 0.3 dex | "Young (class 0/I) discs", Andrews 2010/2013 | Draw from published Class 0/I or II disc-mass and radius distributions as functions of M* (e.g. Andrews 2013's M_d ∝ M*^1.0 to 1.5 with 0.7 dex scatter; Tobin et al. 2020 VANDAM) | tuned, documented |
 | disc.rs:445 | alpha = 0.01 for every disc | none stated | Draw alpha (1e-4 to 1e-2), or use a wind-driven disc. Alpha also sets the isolation mass and the gap K. | undocumented constant |
 | disc.rs:448 | kappa = 3 cm^2/g Rosseland mean, scaled by dust | none stated | Bell & Lin 1994 opacity table κ(T, ρ) | undocumented constant |
@@ -287,6 +293,9 @@ Add entries under your area. Keep one row per fudge.
 | F22. `build-base-atlas.py:226-235` | Human gravity band 0.3 to 1.5 g, temperature 263 to 313 K | none | No long-term data exist for gravity; temperature from WBGT and heat-stress limits (wet-bulb 35 °C; Sherwood and Huber 2010) | Uncited |
 | F23. `packs/base-time/pack.json:27` | Ocean loss at 1.1 S⊕ (the runaway value is 1.06 elsewhere in `early.rs:248`) | Wolf and Toon 2015 | One HZ block with the Kopparapu 2013/2014 polynomial S_eff(Teff) = S₀ + aT + bT² + cT³ + dT⁴ per limit and per mass | **Two different runaway numbers in two crates** |
 | F24. `feedback.rs:300-303` | Oxygenated = O₂ ≥ 1% for 200 Myr | Avoids counting whiffs | (a definition) | Documented |
+| F25. `feedback.rs` (E3) fire brake | Fire suppresses land burial through COPSE reloaded's ignition index clamp(48 r − 9.08, 0, 5) and k_fire 3, on Earth's pressure and an N₂ filler | Lenton, Daines and Mills 2018 eq. 4 (checked); E3.md | Ignition from O₂ partial pressure and the air's heat capacity (Belcher et al. 2010), labelled extrapolated on other air; fire as a regional flux with fuel and moisture (E6, weather track) | Documented; the cap 5 and k 3 are COPSE reloaded's tuning |
+| F26. `feedback.rs` (E3) decomposer brake | (1 + h)/(1 + h r/r_pal), h = 1, acting only above today's air | Stand-in; acting below PAL moved the GOE by 755 Myr | COPSE reloaded's f(O₂) = 2.1276 e^(−0.755 o) on organic burial (eq. 35, from Betts and Holland 1991), with a separate ocean O₂ reservoir | **Stand-in**, to replace (E3.md) |
+| F27. E3 and F1 together | E3's brakes bring O₂ today to 0.21 to 0.26 on top of F1's over-fed burial | E3 was asked for as competing sinks (Alex, 19 Nov) before F1 was found | Fix F1 (realised production) first, then re-tune nothing: re-check that E3's brakes still hold O₂ near 0.21 with the correct feed | To review once F1 is fixed |
 
 ### Candidates to move into flows (small cited physics blocks)
 
@@ -321,6 +330,12 @@ Two smaller physics errors (CH₄ lifetime 9.6 → 9.1 yr; escape coefficient ×
 
 | Where | Instead of the physics | Why (as code/log says) | Real physics to replace it | Status |
 |---|---|---|---|---|
+| `crates/sse-cosmos/src/nucleus.rs` merger delay | Two black holes coalesce a fixed 1 Gyr after their galaxies merge | No dynamics of the pair are modelled | Dynamical friction (Chandrasekhar), stellar hardening and gas-driven inspiral; delays from 0.1 Gyr to never (final parsec) | sketch (G-nuclei.md) |
+| `nucleus.rs` seeds | Direct collapse: a keyed 10% chance at one redshift (z = 10) in atomic-cooling haloes | Needs Lyman-Werner fields and metal-free gas, which are not modelled | Seed from the halo's own history: metal enrichment and a nearby star-forming neighbour (Lyman-Werner flux) | sketch |
+| `nucleus.rs` radio loudness | Keyed once for the whole life from the Best et al. 2005 fit | Jets need an accretion-state model | Jet power from the accretion state (hard or soft, Eddington ratio) and spin, switching with episodes | stand-in |
+| `nucleus.rs` light | One radiative efficiency (0.1) for every hole; L ∝ ṁ² below 1% Eddington | Spin is not tracked; the λ² law is the standard ADAF scaling, source passage not yet read | Spin evolution with efficiency 0.057 to 0.42; the RIAF efficiency curve (Yuan and Narayan 2014) | documented |
+| `crates/sse-cosmos/src/galaxy.rs` `exsitu_black_hole` | Merging galaxies' holes arrive at 1e-3 of their stars | G3 does not follow satellites' own holes | Each satellite's own hole from its own (smaller) galaxy run | documented, editable param |
+| `galaxy.rs` black-hole feed | Holes grow from 1% of each burst and 5e-4 of star formation; quasars here peak near 1e38 W, the faint end of the observed range | G3's regulator has no nuclear gas inflow | Feed from cold-mode inflow and disc instabilities (e.g. Hopkins and Quataert 2010 torque model) | to review |
 | web.rs (whole), G1.md known limits | Band-limited lattice noise octaves with per-band variance matched to σ²(R) | browser cost; no stored volume | Gaussian random field with the exact P(k) (e.g. a constrained FFT per tile, or wavelet-based noise with the spectral shape inside the band) | documented (G1 log) |
 | web.rs potential per octave | Φ_j = −δ_j / k_j² at one wavenumber (band centre); one Zel'dovich step | cheap | Solve Poisson per band with the full kernel; 2LPT for displacements | documented (G1 log) |
 | web.rs lognormal transform | Lognormal density from linear δ | stand-in for non-linear growth | Calibrated lognormal (Coles and Jones 1991) or a halo-model PDF | implicit (design names it) |
@@ -461,6 +476,7 @@ The owner wants the physics in chain blocks (except big blocks) with a UI elemen
 | `gpu-globe.ts` physical lighting | Ground hue from the survey palette, scaled to the kernel's albedo | No spectral reflectance per material yet | Spectral reflectance per material (light track) | Stand-in |
 | `passes.ts` relief pass | The star's direction is a look setting (azimuth, elevation) and its light is white | The view has no ephemeris position at the ruler's date yet | Star direction from the orbit at the campaign date; star colour from its spectrum | Stand-in |
 | `canvas.ts` air | One-column, plane-parallel air along view and sun; no limb glow beyond the disk | Canvas tier is the weak-device path | The GPU ray-march (already on GPU tiers) | Permanent for the canvas tier (weak devices do less) |
+| `canvas.ts` exposure (R4) | Exposure is a plain brightness gain | The canvas tier has no tone mapping | Tone mapping on canvas (cost) | Permanent for the canvas tier |
 
 
 ### 3. Kernel light track (light thread, PR 24)

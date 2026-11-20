@@ -309,6 +309,10 @@
   // U4 part 2: with a look-ahead open, the views show the snapshot the scrubber is on.
   let ahead = $state<LookedAhead | null>(null);
   let aheadAt = $state(0);
+  // The device's tier on the page, so basic devices drop motion (U12).
+  $effect(() => {
+    if (status.tier) document.documentElement.dataset.tier = status.tier;
+  });
   const shown = $derived(ahead && ahead.snapshots[aheadAt] ? sceneAt(scene, ahead, ahead.snapshots[aheadAt]!) : scene);
   const lit = $derived(describeLight(litFromSystem(shown)));
   const lightNames = $derived(new Map(shown.subjects.map((x) => [x.address, x.label])));
@@ -755,6 +759,11 @@
   }
   :global(button:not(:disabled):active) {
     transform: translateY(1px);
+  }
+  /* Basic-tier devices drop motion too (interface-style rule 8). */
+  :global([data-tier="basic"] *) {
+    --sse-motion-quick: 0ms !important;
+    --sse-motion: 0ms !important;
   }
   @media (prefers-reduced-motion: reduce) {
     :global(*) {

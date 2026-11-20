@@ -179,7 +179,15 @@ fn g6_edits_change_only_what_follows() {
             to_gyr: 20.0,
         }],
     );
-    assert!(gq.active_nuclei.is_empty() && gq.now.black_hole == s.cp.galaxy.seed_black_hole);
+    // A quiet nucleus never feeds; it still gains the holes that arrive with
+    // merging galaxies (ex-situ stars), and nothing else.
+    let exsitu = gq.now.black_hole - s.cp.galaxy.seed_black_hole;
+    assert!(gq.active_nuclei.is_empty() && exsitu >= 0.0);
+    assert!(
+        exsitu <= s.cp.galaxy.exsitu_black_hole * gq.now.bulge * (1.0 + 1e-9),
+        "{exsitu}"
+    );
+    assert!(gq.now.black_hole < g0.now.black_hole);
     // Bad edits are refused.
     assert!(galaxy::check_edits(
         &s.halo,

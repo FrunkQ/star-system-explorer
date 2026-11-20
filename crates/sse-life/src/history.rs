@@ -237,6 +237,8 @@ pub struct StepFluxes {
     pub alive: bool,
     pub production_gc_yr: f64,
     pub by_metabolism: BTreeMap<String, f64>,
+    /// The share of `by_metabolism` made in land habitats (fire, land burial).
+    pub land_by_metabolism: BTreeMap<String, f64>,
     /// Life holds the land (weathering enhancement, cover).
     pub on_land: bool,
 }
@@ -523,6 +525,9 @@ pub fn history_with(
             for h in &wb.habitats {
                 for (k, v) in &h.by_metabolism {
                     *last.by_metabolism.entry(k.clone()).or_default() += v;
+                    if h.kind == "land-surface" {
+                        *last.land_by_metabolism.entry(k.clone()).or_default() += v;
+                    }
                 }
             }
             let mut facts = ep.facts.clone();

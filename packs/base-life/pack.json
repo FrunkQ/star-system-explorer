@@ -734,6 +734,12 @@
     "o2_switch_fraction": 1e-05,
     "escape_mol_yr_per_f": 6.7e+15,
     "land_weathering_factor": 4.0,
+    "fire_k": 3.0,
+    "ignition_slope": 48.0,
+    "ignition_offset": 9.08,
+    "ignition_max": 5.0,
+    "photorespiration": 0.5,
+    "decomposer_h": 1.0,
     "sources": [
      "Oxygen as a balance of sources (organic burial, hydrogen escape) and sinks (reducing gases, oxidative weathering): Catling and Claire 2005, https://doi.org/10.1016/j.epsl.2005.06.013",
      "Hydrogen escape and methane in the Archean irreversibly oxidise the Earth: Catling, Zahnle and McKay 2001, https://doi.org/10.1126/science.1061976",
@@ -741,7 +747,10 @@
      "Bistable oxic and anoxic states through methane and ozone: Goldblatt, Lenton and Watson 2006, https://doi.org/10.1038/nature05169",
      "Oxidative weathering rising with sqrt(O2) and the modern O2 budget: Holland 1978 (The Chemistry of the Atmosphere and Oceans, Wiley); Bolton, Berner and Petsch 2006, https://doi.org/10.2475/ajs.306.8.575",
      "Land plants speed silicate weathering and draw CO2 down: Berner 1997, https://doi.org/10.1126/science.276.5312.544",
-     "Methane lifetime 9.1 +/- 0.9 yr today (total atmospheric; tropospheric OH alone 11.2 yr) and much longer in an anoxic air: Prather, Holmes and Hsu 2012, https://doi.org/10.1029/2012GL051440; Pavlov et al. 2000, https://doi.org/10.1029/1999JE001134"
+     "Methane lifetime 9.1 +/- 0.9 yr today (total atmospheric; tropospheric OH alone 11.2 yr) and much longer in an anoxic air: Prather, Holmes and Hsu 2012, https://doi.org/10.1029/2012GL051440; Pavlov et al. 2000, https://doi.org/10.1029/1999JE001134",
+     "E3 competing sinks. Fire ignition index clamp(48 r - 9.08, 0, 5) and land-biomass factor k_fire / (k_fire - 1 + ignition) with k_fire 3: COPSE reloaded, Lenton, Daines and Mills 2018, Earth-Science Reviews 178, 1-28, eq. 4, https://doi.org/10.1016/j.earscirev.2017.12.004; photorespiration 1.5 - 0.5 O2/O2_0: COPSE, Bergman, Lenton and Watson 2004 eq. 4, https://doi.org/10.2475/ajs.304.5.397; Lenton and Watson 2000, https://doi.org/10.1029/1998GB900015 (checked at source 19 Nov 2026)",
+     "Fire does not spread below about 16% O2 and rises steeply from 19 to 22%: Belcher et al. 2010, https://doi.org/10.1038/ngeo923",
+     "Aerobic decomposition lowers organic burial efficiency as O2 rises: Betts and Holland 1991, Global and Planetary Change 5, 5-18, https://doi.org/10.1016/0921-8181(91)90123-E; COPSE reloaded uses it as f(O2) = 2.1276 exp(-0.755 O2/O2_0) (Lenton et al. 2018 eq. 35). The form and strength here are a stand-in, see docs/fudges.md"
     ]
    }
   }

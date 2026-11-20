@@ -29,6 +29,8 @@ export function drawCanvas(out: HTMLCanvasElement, p: Prepared, plan: Plan, lon:
   const physical = relief.lighting === "physical";
   const shade = physical ? 1 : num(relief.shade, 0.8);
   const ambient = physical ? 0.03 : num(relief.ambient, 0.16);
+  // Exposure: the GPU applies it before tone mapping; the canvas has no tone mapping, so it is a plain gain here.
+  const gain = physical ? num(plan.passes.find((x) => x.pass === "atmosphere")?.params.exposure, 1) : 1;
   const L = lightDir(num(relief.sun_azimuth_deg, 315), num(relief.sun_elevation_deg, 40));
   const rot = viewRotation(lon, lat);
   const R = n / 2;
@@ -102,9 +104,9 @@ export function drawCanvas(out: HTMLCanvasElement, p: Prepared, plan: Plan, lon:
         gg = gg * Math.exp(-air.beta[1] * H * Math.max(0, amS - 1)) * tv1 + 255 * (1 - tv1) * lightUp * Math.exp(-air.beta[1] * H * amS);
         b = b * Math.exp(-air.beta[2] * H * Math.max(0, amS - 1)) * tv2 + 255 * (1 - tv2) * lightUp * Math.exp(-air.beta[2] * H * amS);
       }
-      data[o] = r;
-      data[o + 1] = gg;
-      data[o + 2] = b;
+      data[o] = r * gain;
+      data[o + 1] = gg * gain;
+      data[o + 2] = b * gain;
       // Soften the rim: coverage of the pixel by the disk.
       const edge = (1 - Math.sqrt(rr2)) * R + 0.5;
       data[o + 3] = edge >= 1 ? 255 : 255 * edge;
