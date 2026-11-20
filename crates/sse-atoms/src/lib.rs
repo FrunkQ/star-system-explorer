@@ -11,6 +11,7 @@ pub mod common;
 pub mod heat;
 pub mod layers;
 pub mod light;
+pub mod magnetic;
 pub mod nebula;
 pub mod orbit;
 pub mod planet;
@@ -32,6 +33,7 @@ pub fn atoms() -> Vec<Box<dyn sse_flow::Atom>> {
         .chain(tides::atoms())
         .chain(layers::atoms())
         .chain(heat::atoms())
+        .chain(magnetic::atoms())
         .chain(light::atoms())
         .chain(nebula::atoms())
         .chain(activity::atoms())
@@ -118,6 +120,27 @@ pub const KIND_DESCRIPTIONS: &[(&str, &str)] = &[
         "fraction of the mass in the iron core",
     ),
     ("interior.core_radius", "radius of the iron core"),
+    (
+        "interior.dynamo_density",
+        "mean density of the convecting, conducting region that runs the dynamo",
+    ),
+    (
+        "interior.dynamo_radius",
+        "outer radius of the dynamo region (the core top, or about 0.85 R for a giant)",
+    ),
+    (
+        "interior.dynamo_heat_flux",
+        "heat flux carried out of the dynamo region by convection",
+    ),
+    (
+        "magnetic.dynamo_field",
+        "rms magnetic field inside the dynamo region",
+    ),
+    (
+        "body.surface_magnetic_field",
+        "equatorial dipole magnetic field at the body's surface",
+    ),
+    ("body.magnetic_moment", "magnetic dipole moment of the body"),
     ("body.age", "time since the body formed"),
     (
         "inheritance.k40_rel",

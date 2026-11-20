@@ -47,6 +47,8 @@ Add entries under your area. Keep one row per fudge.
 | F-S26 | crates/sse-formation/src/lifeline.rs hydrogen-burning limit, read by body.rs | 0.08 M☉ | Inherited from the life-line fits | About 0.075 M☉, metallicity dependent (Chabrier and Baraffe 2000) | To review in B2 |
 | F-S27 | crates/sse-formation/src/body.rs `deuterium_myr` | Deuterium burning lasts 10 Myr × (M / 0.0124 M☉)² | Simple scaling, no deuterium tables | Spiegel, Burrows and Milsom 2011 burning tracks | Stand-in until B2 |
 | F-S28 | crates/sse-surface/src/lib.rs `OtherLight` distance (B1b) | Companion light at √(a_c² + a_w²), the orbit-averaged d², steady | Climate is orbit-averaged everywhere today | Time-resolved distance from the ephemeris, for seasons in multiples | Stand-in until climate runs in time |
+| F-S29 | crates/sse-atoms/src/magnetic.rs `sse.magnetic.surface_dipole` param `dipole_ratio` = 0.085 | Dipole at the dynamo surface as a fixed share of the rms field inside | Christensen and Aubert 2006 give a range for dipolar dynamos, not one value; 0.085 puts Earth and Jupiter within about 15% of their measured moments | The dipole share from the local Rossby number (Christensen and Aubert 2006), which also says when a dynamo turns multipolar | Tuned to two planets; to review in B1d part 2 |
+| F-S30 | crates/sse-atoms/src/magnetic.rs `sse.magnetic.dynamo_field` input | The whole heat flux out of the dynamo region drives it, with Christensen's efficiency F taken as 1 | Superadiabatic (convective) flux needs the core's adiabat and thermal conductivity, not yet modelled | Convective flux = total minus the adiabatic conducted flux, from a core thermal model (e.g. Labrosse 2015) | Stand-in until B1d part 2 |
 
 ### Candidates to move into flows
 
