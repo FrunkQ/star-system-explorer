@@ -44,3 +44,33 @@ Status: done (19 Nov 2026), Traveller pack track. Design: handoff 7A part 5. Sti
 - The Imperial calendar now spells out `week.continuous: false`, which the
   kernel's calendar check requires for a day outside the weeks (Holiday).
 - `tests/golden/traveller-codes.json`: pack hash only, for these two edits.
+
+## Part 3: stock ships, stations and sites as J7 templates (20 Nov)
+
+- `provides.other.templates` in the Traveller pack: 21 templates, built in
+  `scripts/build-traveller-pack.py` (`TEMPLATES`).
+  - Ships (`kind: ship`): courier, trader, far trader, patrol ship (generic
+    jump-hull roles written for this pack: `traveller.hull_dt`, `thrust_g`,
+    `jump`, `cargo_dt`, tagged `fictional_drive`), plus a shuttle and a
+    heavy lifter from V3.
+  - Stations (`kind: station`): highports A and B, naval base, naval depot,
+    scout base, way station, research station, corsair base.
+  - Sites (`kind: site`): downport, class D spaceport, class E beacon,
+    planetary military base, dome city, arcology, solar array.
+- Ported from V3's `starter-sf/construct_templates.json` ("traveller" group
+  and the two generic craft of the "ship" group). Left out on purpose: the
+  film and TV ships, and setting or trademark words ("Imperial", "IISS",
+  "Xboat", "TAS", engine brand names, and V3's "slave pens").
+- Facts: `construct.mass_kg`, `length_m`, `cargo_t`, `crew_max`,
+  `power_mw`, `modules` (a list), `source`. Kept value `construct.crew`
+  (people aboard now), declared in the pack's `record` with every template
+  as a writer. Tags carry roles (`starport_a`, `base_naval`, `refined_fuel`,
+  ...), so sifters and rules can find them.
+- Ships carry sensors as `sensor.<kind>.range_m`, so the sensor triggers
+  work on a ship as made; the GM sets `crew.audience` to say whose players
+  it carries.
+- Test: `traveller_stock_ships_are_templates_that_sense` (the templates op
+  lists them; a trader and a highport are created; the trader lifts a world
+  to "scanned" for its crew). Golden: `traveller-codes.json` pack hash only.
+- Next: NAV numbers (`nav.*`) for the jump ships once a fictional-drive
+  model is agreed; programs (J6) for traders and patrols.

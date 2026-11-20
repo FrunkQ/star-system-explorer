@@ -608,8 +608,8 @@ IMPERIAL = {
     "day_s": 86400.0,
     "year_days": 365,
     "format": "{day:03}-{year}",
-    # Optional extras the kernel's checker is being asked to accept; the UI
-    # formatter (packages/ui-contract/src/calendar.ts) reads them.
+    # Optional extras, checked by the kernel at load (J calendars) and read by
+    # the UI formatter (packages/ui-contract/src/calendar.ts).
     "named_days": [{"day": 1, "name": "Holiday", "outside_weeks": True}],
     "week": {"names": ["Wonday", "Tuday", "Thirday", "Forday", "Fiday", "Sixday", "Senday"], "first_day": 2, "continuous": False},
 }
@@ -635,6 +635,116 @@ TERMS = {
     "calendar": "traveller.imperial",
 }
 
+# Stock ships, stations and sites (7A part 7) as J7 templates: `create`
+# makes `<under>/<kind>:<n>` with these facts, tags and kept values. Ported
+# from V3's starter-sf construct_templates.json ("traveller" group and the
+# two generic craft of the "ship" group), with setting names, trademarks and
+# franchise craft left out: no "Imperial", "IISS", "Xboat" or "TAS", and none
+# of V3's film and TV ships. The four jump ships are generic hull roles
+# written for this pack (numbers only, no rules text); their drives are
+# fictional and tagged so. Ships carry sensors as `sensor.<kind>.range_m`,
+# so the sensor triggers above work on them as made; set `crew.audience` on a
+# ship to say whose players it carries.
+SENSOR_RANGE = {s["id"]: s["range_m"] for s in SENSORS}
+def sensors(*ids):
+    return {f"sensor.{i}.range_m": SENSOR_RANGE[i] for i in ids}
+V3C = "V3 starter-sf construct_templates.json"
+def construct(id_, kind, label, explain, *, mass_kg=None, length_m=None, cargo_t=None,
+              crew=None, crew_max=None, power_mw=None, modules=(), tags=(), facts=None, source=V3C):
+    f = dict(facts or {})
+    for k, v in [("construct.mass_kg", mass_kg), ("construct.length_m", length_m),
+                 ("construct.cargo_t", cargo_t), ("construct.crew_max", crew_max),
+                 ("construct.power_mw", power_mw)]:
+        if v is not None:
+            f[k] = float(v)
+    if modules:
+        f["construct.modules"] = list(modules)
+    f["construct.source"] = source
+    kept = {} if crew is None else {"construct.crew": float(crew)}
+    return {"id": id_, "kind": kind, "label": label, "facts": f, "kept": kept,
+            "tags": ["construct", kind, *tags], "explain": explain}
+def jump_ship(id_, label, explain, hull_dt, thrust_g, jump, cargo_dt, crew_max, sensor_ids, tags=()):
+    return construct(id_, "ship", label, explain, crew=crew_max, crew_max=crew_max,
+                     tags=("fictional_drive", *tags), source="written for this pack",
+                     facts={"traveller.hull_dt": float(hull_dt), "traveller.thrust_g": float(thrust_g),
+                            "traveller.jump": float(jump), "traveller.cargo_dt": float(cargo_dt),
+                            **sensors(*sensor_ids)})
+TEMPLATES = [
+    # Ships.
+    jump_ship("courier", "Courier (100 dT)", "a small fast ship for messages, survey and scouting",
+              100, 2, 2, 10, 4, ["astrometer", "telescope_2au", "spectral_1au", "passive_rf"], ["survey"]),
+    jump_ship("trader", "Trader (200 dT)", "a slow, cheap jump-1 cargo carrier, the workhorse of short routes",
+              200, 1, 1, 80, 6, ["spectral_1au", "passive_rf", "search_radar"], ["trade"]),
+    jump_ship("far_trader", "Far trader (200 dT)", "a trader that gives up cargo space for jump-2 fuel",
+              200, 1, 2, 60, 6, ["spectral_1au", "passive_rf", "search_radar"], ["trade"]),
+    jump_ship("patrol", "Patrol ship (400 dT)", "an armed hull for customs, escort and anti-piracy work",
+              400, 4, 3, 20, 12, ["astrometer", "spectral_5au", "search_radar", "thermal_ir", "gravimetric"], ["armed"]),
+    construct("shuttle", "ship", "Shuttle", "a small craft for people and light cargo between orbit and ground",
+              mass_kg=40000, length_m=20, cargo_t=5, crew_max=6, crew=2,
+              modules=["passenger cabin", "small cargo hold"], tags=("small_craft", "lands"),
+              facts=sensors("visual_cam", "datalink")),
+    construct("heavy_lifter", "ship", "Heavy lifter (single stage to orbit)",
+              "a reusable methane-oxygen rocket lifting about 100 t to orbit",
+              mass_kg=100000, length_m=95, cargo_t=100, crew_max=20, crew=6, power_mw=16,
+              modules=["large cargo bay", "header tanks", "heat tiles"], tags=("small_craft", "lands")),
+    # Orbital stations.
+    construct("highport_a", "station", "Highport, class A", "a major orbital port with a shipyard for jump ships",
+              mass_kg=5e10, length_m=2000, cargo_t=1e6, crew_max=50000, crew=5000, power_mw=10000,
+              modules=["shipyard (jump ships)", "refined fuel plant", "hostel", "concourse", "customs"],
+              tags=("starport", "starport_a", "refined_fuel", "shipyard")),
+    construct("highport_b", "station", "Highport, class B", "a good orbital port that builds small craft",
+              mass_kg=2e10, crew_max=10000, crew=1000,
+              modules=["shipyard (small craft)", "repair deck", "refined fuel plant", "trade concourse"],
+              tags=("starport", "starport_b", "refined_fuel", "shipyard")),
+    construct("naval_base", "station", "Naval base", "a fleet base: docking, repair, marines and command",
+              mass_kg=8e10, crew_max=20000, crew=20000,
+              modules=["heavy weapon emplacements", "fleet docking spines", "marine barracks", "brig"],
+              tags=("base", "base_naval", "military")),
+    construct("naval_depot", "station", "Naval depot", "a sector-scale fleet yard and strategic reserve",
+              mass_kg=1e14, crew_max=500000, crew=100000,
+              modules=["capital ship drydocks", "reserve fleet anchorages", "strategic fuel reserve", "command"],
+              tags=("base", "base_depot", "military", "shipyard")),
+    construct("scout_base", "station", "Scout base", "a survey and courier post with long-range sensors",
+              mass_kg=5e5, crew_max=500, crew=200,
+              modules=["long-range sensors", "courier link", "survey data core", "mess hall"],
+              tags=("base", "base_scout"), facts=sensors("astrometer", "telescope_15au", "spectral_5au")),
+    construct("way_station", "station", "Way station", "a refuelling and message relay stop on a courier route",
+              mass_kg=1e9, crew_max=1000, crew=500,
+              modules=["courier tender clamps", "refined fuel reservoirs", "crew lounge"],
+              tags=("base", "base_way", "refined_fuel")),
+    construct("research_station", "station", "Research station", "a small, isolated laboratory",
+              mass_kg=2e5, crew_max=200, crew=50,
+              modules=["containment labs", "sensor array", "isolation ward"], tags=("research",)),
+    construct("corsair_base", "station", "Corsair base", "a hidden pirate haven for repair, fencing and leisure",
+              mass_kg=1e11, crew_max=300, crew=100,
+              modules=["hidden hangar", "loot storage", "gambling den"], tags=("base", "base_corsair", "outlaw")),
+    # Surface sites.
+    construct("downport", "site", "Downport", "a surface port: landing grid, tower, warehouses, customs line",
+              mass_kg=1e9, crew_max=500, crew=50,
+              modules=["landing grid", "control tower", "warehousing", "customs line"], tags=("starport", "unrefined_fuel")),
+    construct("spaceport_d", "site", "Spaceport, class D", "a landing pad with unrefined fuel and a radio",
+              mass_kg=1e5, crew_max=20, crew=5,
+              modules=["landing pad", "fuel pump (unrefined)", "radio shack"], tags=("starport", "starport_d", "unrefined_fuel")),
+    construct("beacon_e", "site", "Landing beacon, class E", "a marked patch of ground and a navigation beacon",
+              mass_kg=500, modules=["navigation beacon", "wind sock"], tags=("starport", "starport_e")),
+    construct("military_base", "site", "Planetary military base", "ground forces, defence silos and a command bunker",
+              mass_kg=5e9, crew_max=10000, crew=5000,
+              modules=["defence silos", "barracks", "motor pool", "command bunker"], tags=("base", "military")),
+    construct("dome_city", "site", "Hardened dome city", "a shielded surface city built for a world with flares",
+              crew_max=50000, crew=10000,
+              modules=["radiation shielding", "flare warning grid", "storm cellars"], tags=("settlement",)),
+    construct("arcology", "site", "Subsurface arcology", "a city underground, lit and fed from within",
+              crew_max=200000, crew=50000,
+              modules=["geothermal tap", "hydroponic gardens", "artificial sun"], tags=("settlement", "underground")),
+    construct("solar_array", "site", "Hardened solar array", "a power farm built to ride out stellar flares",
+              modules=["surge breakers", "repair drones"], tags=("power",)),
+]
+RECORD = {"kept": [
+    {"id": "construct.crew", "shape": "number", "range": [0.0, 1.0e7], "default": 0, "tier": "scanned",
+     "writers": ["gm", *[f"template.{t['id']}" for t in TEMPLATES]],
+     "describes": "people aboard or living there now"},
+]}
+
 pack = {
     "format": "sse.pack/1",
     "id": "sse.traveller",
@@ -654,6 +764,8 @@ pack = {
         "sensors": {"range_bands": RANGE_BANDS, "kinds": SENSORS, "ladder": LADDER},
         "observe": OBSERVE,
         "triggers": TRIGGERS,
+        "templates": {"templates": TEMPLATES},
+        "record": RECORD,
         "vocabulary": {"terms": TERMS, "traveller.trade": TRADE_WORDS, "traveller.bases": BASES,
                        "traveller.zone": {"A": "amber", "R": "red"},
                        "traveller.need": {k: v[0] for k, v in NEEDS.items()}},

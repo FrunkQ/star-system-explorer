@@ -2499,6 +2499,78 @@ fn traveller_sensors_move_a_world_up_the_ladder() {
     );
 }
 
+/// The Traveller pack's stock ships and stations are J7 templates: a trader
+/// made from the pack carries its own sensors, so once its crew is named it
+/// lifts a world up the ladder like any hand-built ship.
+#[test]
+fn traveller_stock_ships_are_templates_that_sense() {
+    let mut k = crate::Kernel::new();
+    let pack = |n: &str| -> serde_json::Value {
+        serde_json::from_str(
+            &std::fs::read_to_string(root().join(format!("packs/{n}/pack.json"))).unwrap(),
+        )
+        .unwrap()
+    };
+    let mut send = |v: serde_json::Value| -> serde_json::Value {
+        serde_json::from_str(&k.handle_json(&v.to_string())).unwrap()
+    };
+    let r = send(serde_json::json!({"op": "load_stack", "packs": [
+        pack("base-physics"), pack("base-atlas"), pack("base-time"), pack("traveller")]}));
+    assert_eq!(r["type"], "stack_loaded", "{r}");
+    send(serde_json::json!({"op": "open_universe", "id": "trav", "seed": "t"}));
+    let t = send(serde_json::json!({"op": "templates"}));
+    let ids: Vec<&str> = t["templates"]
+        .as_array()
+        .unwrap()
+        .iter()
+        .map(|x| x["id"].as_str().unwrap())
+        .collect();
+    for want in ["courier", "trader", "highport_a", "downport", "scout_base"] {
+        assert!(ids.contains(&want), "{want} in {ids:?}");
+    }
+    let c = send(serde_json::json!({"op": "create", "template": "trader",
+        "under": "u:trav/sys:0", "name": "Kestrel Dawn", "at_s": 0}));
+    assert_eq!(c["type"], "created", "{c}");
+    let ship = c["address"].as_str().unwrap().to_string();
+    assert_eq!(ship, "u:trav/sys:0/ship:1");
+    let st = send(serde_json::json!({"op": "create", "template": "highport_a",
+        "under": "u:trav/sys:0/body:3", "at_s": 0}));
+    assert_eq!(st["type"], "created", "{st}");
+    assert_eq!(st["kept"].as_array().unwrap().len(), 1, "crew aboard: {st}");
+    let world = "u:trav/sys:0/body:3";
+    for (a, f, v) in [
+        (
+            world,
+            "atmosphere.surface_pressure",
+            serde_json::json!(1.0e5),
+        ),
+        (world, "pos.x_m", serde_json::json!(0.0)),
+        (world, "pos.y_m", serde_json::json!(0.0)),
+        (world, "pos.z_m", serde_json::json!(0.0)),
+        (ship.as_str(), "crew.audience", serde_json::json!("players")),
+        (ship.as_str(), "pos.x_m", serde_json::json!(1.0e10)),
+        (ship.as_str(), "pos.y_m", serde_json::json!(0.0)),
+        (ship.as_str(), "pos.z_m", serde_json::json!(0.0)),
+    ] {
+        let r = send(serde_json::json!({"op": "set_authored", "edit": {
+            "address": a, "field": f, "value": v, "occurred_at_s": 0}}));
+        assert_eq!(r["type"], "authored", "{r}");
+    }
+    send(serde_json::json!({"op": "rules_step", "at_s": 0}));
+    send(serde_json::json!({"op": "rules_step", "at_s": 4000}));
+    let r = send(
+        serde_json::json!({"op": "scene", "audience": "players", "scope": "u:trav/sys:0", "at_s": 5000}),
+    );
+    let w = r["scene"]["subjects"]
+        .as_array()
+        .unwrap()
+        .iter()
+        .find(|s| s["address"] == world)
+        .unwrap()
+        .clone();
+    assert_eq!(w["view"], "scanned", "{w}");
+}
+
 /// Importing with `grow`: each line's whole system is grown and adopted, the
 /// coded facts land on the grown main world, and the codes read back.
 #[test]

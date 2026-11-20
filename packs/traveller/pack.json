@@ -8976,6 +8976,597 @@
      }
     ]
    },
+   "templates": {
+    "templates": [
+     {
+      "id": "courier",
+      "kind": "ship",
+      "label": "Courier (100 dT)",
+      "facts": {
+       "traveller.hull_dt": 100.0,
+       "traveller.thrust_g": 2.0,
+       "traveller.jump": 2.0,
+       "traveller.cargo_dt": 10.0,
+       "sensor.astrometer.range_m": 7479893535000.0,
+       "sensor.telescope_2au.range_m": 299195741000.0,
+       "sensor.spectral_1au.range_m": 149597870000.0,
+       "sensor.passive_rf.range_m": 14959787070000.0,
+       "construct.crew_max": 4.0,
+       "construct.source": "written for this pack"
+      },
+      "kept": {
+       "construct.crew": 4.0
+      },
+      "tags": [
+       "construct",
+       "ship",
+       "fictional_drive",
+       "survey"
+      ],
+      "explain": "a small fast ship for messages, survey and scouting"
+     },
+     {
+      "id": "trader",
+      "kind": "ship",
+      "label": "Trader (200 dT)",
+      "facts": {
+       "traveller.hull_dt": 200.0,
+       "traveller.thrust_g": 1.0,
+       "traveller.jump": 1.0,
+       "traveller.cargo_dt": 80.0,
+       "sensor.spectral_1au.range_m": 149597870000.0,
+       "sensor.passive_rf.range_m": 14959787070000.0,
+       "sensor.search_radar.range_m": 500000000.0,
+       "construct.crew_max": 6.0,
+       "construct.source": "written for this pack"
+      },
+      "kept": {
+       "construct.crew": 6.0
+      },
+      "tags": [
+       "construct",
+       "ship",
+       "fictional_drive",
+       "trade"
+      ],
+      "explain": "a slow, cheap jump-1 cargo carrier, the workhorse of short routes"
+     },
+     {
+      "id": "far_trader",
+      "kind": "ship",
+      "label": "Far trader (200 dT)",
+      "facts": {
+       "traveller.hull_dt": 200.0,
+       "traveller.thrust_g": 1.0,
+       "traveller.jump": 2.0,
+       "traveller.cargo_dt": 60.0,
+       "sensor.spectral_1au.range_m": 149597870000.0,
+       "sensor.passive_rf.range_m": 14959787070000.0,
+       "sensor.search_radar.range_m": 500000000.0,
+       "construct.crew_max": 6.0,
+       "construct.source": "written for this pack"
+      },
+      "kept": {
+       "construct.crew": 6.0
+      },
+      "tags": [
+       "construct",
+       "ship",
+       "fictional_drive",
+       "trade"
+      ],
+      "explain": "a trader that gives up cargo space for jump-2 fuel"
+     },
+     {
+      "id": "patrol",
+      "kind": "ship",
+      "label": "Patrol ship (400 dT)",
+      "facts": {
+       "traveller.hull_dt": 400.0,
+       "traveller.thrust_g": 4.0,
+       "traveller.jump": 3.0,
+       "traveller.cargo_dt": 20.0,
+       "sensor.astrometer.range_m": 7479893535000.0,
+       "sensor.spectral_5au.range_m": 747989353000.0,
+       "sensor.search_radar.range_m": 500000000.0,
+       "sensor.thermal_ir.range_m": 50000000.0,
+       "sensor.gravimetric.range_m": 25000000.0,
+       "construct.crew_max": 12.0,
+       "construct.source": "written for this pack"
+      },
+      "kept": {
+       "construct.crew": 12.0
+      },
+      "tags": [
+       "construct",
+       "ship",
+       "fictional_drive",
+       "armed"
+      ],
+      "explain": "an armed hull for customs, escort and anti-piracy work"
+     },
+     {
+      "id": "shuttle",
+      "kind": "ship",
+      "label": "Shuttle",
+      "facts": {
+       "sensor.visual_cam.range_m": 50000.0,
+       "sensor.datalink.range_m": 500.0,
+       "construct.mass_kg": 40000.0,
+       "construct.length_m": 20.0,
+       "construct.cargo_t": 5.0,
+       "construct.crew_max": 6.0,
+       "construct.modules": [
+        "passenger cabin",
+        "small cargo hold"
+       ],
+       "construct.source": "V3 starter-sf construct_templates.json"
+      },
+      "kept": {
+       "construct.crew": 2.0
+      },
+      "tags": [
+       "construct",
+       "ship",
+       "small_craft",
+       "lands"
+      ],
+      "explain": "a small craft for people and light cargo between orbit and ground"
+     },
+     {
+      "id": "heavy_lifter",
+      "kind": "ship",
+      "label": "Heavy lifter (single stage to orbit)",
+      "facts": {
+       "construct.mass_kg": 100000.0,
+       "construct.length_m": 95.0,
+       "construct.cargo_t": 100.0,
+       "construct.crew_max": 20.0,
+       "construct.power_mw": 16.0,
+       "construct.modules": [
+        "large cargo bay",
+        "header tanks",
+        "heat tiles"
+       ],
+       "construct.source": "V3 starter-sf construct_templates.json"
+      },
+      "kept": {
+       "construct.crew": 6.0
+      },
+      "tags": [
+       "construct",
+       "ship",
+       "small_craft",
+       "lands"
+      ],
+      "explain": "a reusable methane-oxygen rocket lifting about 100 t to orbit"
+     },
+     {
+      "id": "highport_a",
+      "kind": "station",
+      "label": "Highport, class A",
+      "facts": {
+       "construct.mass_kg": 50000000000.0,
+       "construct.length_m": 2000.0,
+       "construct.cargo_t": 1000000.0,
+       "construct.crew_max": 50000.0,
+       "construct.power_mw": 10000.0,
+       "construct.modules": [
+        "shipyard (jump ships)",
+        "refined fuel plant",
+        "hostel",
+        "concourse",
+        "customs"
+       ],
+       "construct.source": "V3 starter-sf construct_templates.json"
+      },
+      "kept": {
+       "construct.crew": 5000.0
+      },
+      "tags": [
+       "construct",
+       "station",
+       "starport",
+       "starport_a",
+       "refined_fuel",
+       "shipyard"
+      ],
+      "explain": "a major orbital port with a shipyard for jump ships"
+     },
+     {
+      "id": "highport_b",
+      "kind": "station",
+      "label": "Highport, class B",
+      "facts": {
+       "construct.mass_kg": 20000000000.0,
+       "construct.crew_max": 10000.0,
+       "construct.modules": [
+        "shipyard (small craft)",
+        "repair deck",
+        "refined fuel plant",
+        "trade concourse"
+       ],
+       "construct.source": "V3 starter-sf construct_templates.json"
+      },
+      "kept": {
+       "construct.crew": 1000.0
+      },
+      "tags": [
+       "construct",
+       "station",
+       "starport",
+       "starport_b",
+       "refined_fuel",
+       "shipyard"
+      ],
+      "explain": "a good orbital port that builds small craft"
+     },
+     {
+      "id": "naval_base",
+      "kind": "station",
+      "label": "Naval base",
+      "facts": {
+       "construct.mass_kg": 80000000000.0,
+       "construct.crew_max": 20000.0,
+       "construct.modules": [
+        "heavy weapon emplacements",
+        "fleet docking spines",
+        "marine barracks",
+        "brig"
+       ],
+       "construct.source": "V3 starter-sf construct_templates.json"
+      },
+      "kept": {
+       "construct.crew": 20000.0
+      },
+      "tags": [
+       "construct",
+       "station",
+       "base",
+       "base_naval",
+       "military"
+      ],
+      "explain": "a fleet base: docking, repair, marines and command"
+     },
+     {
+      "id": "naval_depot",
+      "kind": "station",
+      "label": "Naval depot",
+      "facts": {
+       "construct.mass_kg": 100000000000000.0,
+       "construct.crew_max": 500000.0,
+       "construct.modules": [
+        "capital ship drydocks",
+        "reserve fleet anchorages",
+        "strategic fuel reserve",
+        "command"
+       ],
+       "construct.source": "V3 starter-sf construct_templates.json"
+      },
+      "kept": {
+       "construct.crew": 100000.0
+      },
+      "tags": [
+       "construct",
+       "station",
+       "base",
+       "base_depot",
+       "military",
+       "shipyard"
+      ],
+      "explain": "a sector-scale fleet yard and strategic reserve"
+     },
+     {
+      "id": "scout_base",
+      "kind": "station",
+      "label": "Scout base",
+      "facts": {
+       "sensor.astrometer.range_m": 7479893535000.0,
+       "sensor.telescope_15au.range_m": 2243968060000.0,
+       "sensor.spectral_5au.range_m": 747989353000.0,
+       "construct.mass_kg": 500000.0,
+       "construct.crew_max": 500.0,
+       "construct.modules": [
+        "long-range sensors",
+        "courier link",
+        "survey data core",
+        "mess hall"
+       ],
+       "construct.source": "V3 starter-sf construct_templates.json"
+      },
+      "kept": {
+       "construct.crew": 200.0
+      },
+      "tags": [
+       "construct",
+       "station",
+       "base",
+       "base_scout"
+      ],
+      "explain": "a survey and courier post with long-range sensors"
+     },
+     {
+      "id": "way_station",
+      "kind": "station",
+      "label": "Way station",
+      "facts": {
+       "construct.mass_kg": 1000000000.0,
+       "construct.crew_max": 1000.0,
+       "construct.modules": [
+        "courier tender clamps",
+        "refined fuel reservoirs",
+        "crew lounge"
+       ],
+       "construct.source": "V3 starter-sf construct_templates.json"
+      },
+      "kept": {
+       "construct.crew": 500.0
+      },
+      "tags": [
+       "construct",
+       "station",
+       "base",
+       "base_way",
+       "refined_fuel"
+      ],
+      "explain": "a refuelling and message relay stop on a courier route"
+     },
+     {
+      "id": "research_station",
+      "kind": "station",
+      "label": "Research station",
+      "facts": {
+       "construct.mass_kg": 200000.0,
+       "construct.crew_max": 200.0,
+       "construct.modules": [
+        "containment labs",
+        "sensor array",
+        "isolation ward"
+       ],
+       "construct.source": "V3 starter-sf construct_templates.json"
+      },
+      "kept": {
+       "construct.crew": 50.0
+      },
+      "tags": [
+       "construct",
+       "station",
+       "research"
+      ],
+      "explain": "a small, isolated laboratory"
+     },
+     {
+      "id": "corsair_base",
+      "kind": "station",
+      "label": "Corsair base",
+      "facts": {
+       "construct.mass_kg": 100000000000.0,
+       "construct.crew_max": 300.0,
+       "construct.modules": [
+        "hidden hangar",
+        "loot storage",
+        "gambling den"
+       ],
+       "construct.source": "V3 starter-sf construct_templates.json"
+      },
+      "kept": {
+       "construct.crew": 100.0
+      },
+      "tags": [
+       "construct",
+       "station",
+       "base",
+       "base_corsair",
+       "outlaw"
+      ],
+      "explain": "a hidden pirate haven for repair, fencing and leisure"
+     },
+     {
+      "id": "downport",
+      "kind": "site",
+      "label": "Downport",
+      "facts": {
+       "construct.mass_kg": 1000000000.0,
+       "construct.crew_max": 500.0,
+       "construct.modules": [
+        "landing grid",
+        "control tower",
+        "warehousing",
+        "customs line"
+       ],
+       "construct.source": "V3 starter-sf construct_templates.json"
+      },
+      "kept": {
+       "construct.crew": 50.0
+      },
+      "tags": [
+       "construct",
+       "site",
+       "starport",
+       "unrefined_fuel"
+      ],
+      "explain": "a surface port: landing grid, tower, warehouses, customs line"
+     },
+     {
+      "id": "spaceport_d",
+      "kind": "site",
+      "label": "Spaceport, class D",
+      "facts": {
+       "construct.mass_kg": 100000.0,
+       "construct.crew_max": 20.0,
+       "construct.modules": [
+        "landing pad",
+        "fuel pump (unrefined)",
+        "radio shack"
+       ],
+       "construct.source": "V3 starter-sf construct_templates.json"
+      },
+      "kept": {
+       "construct.crew": 5.0
+      },
+      "tags": [
+       "construct",
+       "site",
+       "starport",
+       "starport_d",
+       "unrefined_fuel"
+      ],
+      "explain": "a landing pad with unrefined fuel and a radio"
+     },
+     {
+      "id": "beacon_e",
+      "kind": "site",
+      "label": "Landing beacon, class E",
+      "facts": {
+       "construct.mass_kg": 500.0,
+       "construct.modules": [
+        "navigation beacon",
+        "wind sock"
+       ],
+       "construct.source": "V3 starter-sf construct_templates.json"
+      },
+      "kept": {},
+      "tags": [
+       "construct",
+       "site",
+       "starport",
+       "starport_e"
+      ],
+      "explain": "a marked patch of ground and a navigation beacon"
+     },
+     {
+      "id": "military_base",
+      "kind": "site",
+      "label": "Planetary military base",
+      "facts": {
+       "construct.mass_kg": 5000000000.0,
+       "construct.crew_max": 10000.0,
+       "construct.modules": [
+        "defence silos",
+        "barracks",
+        "motor pool",
+        "command bunker"
+       ],
+       "construct.source": "V3 starter-sf construct_templates.json"
+      },
+      "kept": {
+       "construct.crew": 5000.0
+      },
+      "tags": [
+       "construct",
+       "site",
+       "base",
+       "military"
+      ],
+      "explain": "ground forces, defence silos and a command bunker"
+     },
+     {
+      "id": "dome_city",
+      "kind": "site",
+      "label": "Hardened dome city",
+      "facts": {
+       "construct.crew_max": 50000.0,
+       "construct.modules": [
+        "radiation shielding",
+        "flare warning grid",
+        "storm cellars"
+       ],
+       "construct.source": "V3 starter-sf construct_templates.json"
+      },
+      "kept": {
+       "construct.crew": 10000.0
+      },
+      "tags": [
+       "construct",
+       "site",
+       "settlement"
+      ],
+      "explain": "a shielded surface city built for a world with flares"
+     },
+     {
+      "id": "arcology",
+      "kind": "site",
+      "label": "Subsurface arcology",
+      "facts": {
+       "construct.crew_max": 200000.0,
+       "construct.modules": [
+        "geothermal tap",
+        "hydroponic gardens",
+        "artificial sun"
+       ],
+       "construct.source": "V3 starter-sf construct_templates.json"
+      },
+      "kept": {
+       "construct.crew": 50000.0
+      },
+      "tags": [
+       "construct",
+       "site",
+       "settlement",
+       "underground"
+      ],
+      "explain": "a city underground, lit and fed from within"
+     },
+     {
+      "id": "solar_array",
+      "kind": "site",
+      "label": "Hardened solar array",
+      "facts": {
+       "construct.modules": [
+        "surge breakers",
+        "repair drones"
+       ],
+       "construct.source": "V3 starter-sf construct_templates.json"
+      },
+      "kept": {},
+      "tags": [
+       "construct",
+       "site",
+       "power"
+      ],
+      "explain": "a power farm built to ride out stellar flares"
+     }
+    ]
+   },
+   "record": {
+    "kept": [
+     {
+      "id": "construct.crew",
+      "shape": "number",
+      "range": [
+       0.0,
+       10000000.0
+      ],
+      "default": 0,
+      "tier": "scanned",
+      "writers": [
+       "gm",
+       "template.courier",
+       "template.trader",
+       "template.far_trader",
+       "template.patrol",
+       "template.shuttle",
+       "template.heavy_lifter",
+       "template.highport_a",
+       "template.highport_b",
+       "template.naval_base",
+       "template.naval_depot",
+       "template.scout_base",
+       "template.way_station",
+       "template.research_station",
+       "template.corsair_base",
+       "template.downport",
+       "template.spaceport_d",
+       "template.beacon_e",
+       "template.military_base",
+       "template.dome_city",
+       "template.arcology",
+       "template.solar_array"
+      ],
+      "describes": "people aboard or living there now"
+     }
+    ]
+   },
    "vocabulary": {
     "terms": {
      "planet": "world",
