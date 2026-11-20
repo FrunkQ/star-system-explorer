@@ -1259,6 +1259,130 @@
   "fixture": "pluto"
  },
  {
+  "op": "read_light",
+  "fixture": "solar-system"
+ },
+ {
+  "op": "read_light",
+  "bodies": [
+   {
+    "address": "u:t/ship:1",
+    "radius_m": 20.0,
+    "bond_albedo": 0.2,
+    "lit_by": [{ "address": "u:t/star:0", "luminosity_w": 3.828e26, "t_k": 5772.0, "distance_m": 149597870700.0 }],
+    "radiators": [{ "t_k": 600.0, "area_m2": 400.0 }],
+    "transmitters": [{ "frequency_hz": 9400000000.0, "bandwidth_hz": 10000000.0, "power_w": 20000.0 }]
+   }
+  ]
+ },
+ {
+  "op": "read_light",
+  "fixture": "orion"
+ },
+ {
+  "op": "read_nebulae",
+  "at_s": 220000320000000000,
+  "seed": "contract",
+  "deaths": [{ "star": "u:sol/sys:0/star:0", "died_at_s": 2.2e17, "initial_mass_msun": 1.0, "remnant_mass_msun": 0.54, "ambient_h_m3": 1000000.0, "companion": true }],
+  "remnants": [{ "address": "u:t/sys:1/nebula:0", "star": "u:t/sys:1/star:0", "exploded_at_s": 2.2e17, "core_collapse": true, "energy_j": 1e44, "ejecta_kg": 9.94e30, "ambient_h_m3": 1000000.0, "remnant": "u:t/sys:1/star:0" }],
+  "glows": [{ "address": "u:t/cluster:0/nebula:0", "cluster": "u:t/cluster:0", "cloud_h_m3": 100000000.0,
+    "stars": [{ "address": "u:t/sys:2/star:0", "teff_k": 37000.0, "radius_m": 5.5656e9, "born_s": 2.2e17, "dies_s": 2.3e17 }] }]
+ },
+ {
+  "op": "read_nebulae",
+  "at_s": 1e17,
+  "deaths": [{ "star": "u:sol/sys:0/star:0", "died_at_s": 2.2e17, "initial_mass_msun": 1.0, "remnant_mass_msun": 0.54, "ambient_h_m3": 1000000.0 }]
+ },
+ {
+  "op": "detect",
+  "targets": [
+   { "address": "u:t/sys:0/ship:0", "distance_m": 2.99e11,
+     "conditions": { "address": "u:t/sys:0/ship:0", "radius_m": 50.0, "bond_albedo": 0.1,
+       "lit_by": [{ "address": "u:t/sys:0/star:0", "luminosity_w": 3.828e26, "t_k": 5772.0, "distance_m": 7.48e11 }],
+       "radiators": [{ "t_k": 600.0, "area_m2": 2000.0 }] } },
+   { "address": "u:t/sys:0/ship:1", "distance_m": 2.99e11, "extinction_av": 30.0,
+     "conditions": { "address": "u:t/sys:0/ship:1", "radius_m": 50.0, "bond_albedo": 0.1,
+       "lit_by": [{ "address": "u:t/sys:0/star:0", "luminosity_w": 3.828e26, "t_k": 5772.0, "distance_m": 7.48e11 }] } }
+  ],
+  "sensors": [
+   { "name": "mid-infrared telescope", "from_m": 8e-6, "to_m": 1.4e-5, "aperture_m": 1.0, "dark_photons_s": 100.0, "stare_s": 60.0 },
+   { "name": "visible camera", "from_m": 4e-7, "to_m": 7e-7, "aperture_m": 0.5, "stare_s": 10.0 }
+  ],
+  "radar": { "power_w": 100000.0, "gain": 10000.0, "wavelength_m": 0.1, "cross_section_m2": 100.0, "min_power_w": 1e-16 }
+ },
+ {
+  "op": "detect",
+  "targets": [{ "address": "u:t/sys:0/ship:0", "distance_m": 1.0 }],
+  "sensors": [{ "name": "eye", "from_m": 4e-7, "to_m": 7e-7, "aperture_m": 0.007 }]
+ },
+ {
+  "op": "read_air_optics",
+  "airs": [
+   { "address": "u:sol/sys:0/body:2", "gases": [{ "gas": "n2", "fraction": 0.7808 }, { "gas": "o2", "fraction": 0.2095 }, { "gas": "ar", "fraction": 0.0093 }, { "gas": "co2", "fraction": 0.0004 }],
+     "surface_pressure_pa": 101325.0, "surface_temperature_k": 288.15, "gravity_m_s2": 9.80665 },
+   { "address": "u:sol/sys:0/body:3", "gases": [{ "gas": "co2", "fraction": 0.951 }, { "gas": "n2", "fraction": 0.0259 }, { "gas": "ar", "fraction": 0.0194 }, { "gas": "o2", "fraction": 0.0037 }],
+     "surface_pressure_pa": 610.0, "surface_temperature_k": 210.0, "gravity_m_s2": 3.71 }
+  ]
+ },
+ {
+  "op": "read_air_optics",
+  "airs": [{ "address": "u:t/sys:0/body:1", "gases": [{ "gas": "unobtainium", "fraction": 1.0 }], "surface_pressure_pa": 1.0, "surface_temperature_k": 1.0, "gravity_m_s2": 1.0 }]
+ },
+ {
+  "op": "read_spectrum",
+  "targets": [
+   { "address": "u:t/sys:4/star:0", "name": "a double star", "distance_m": 6.17e17,
+     "components": [
+      { "conditions": { "address": "u:t/sys:4/star:0", "radius_m": 6.957e8, "own_luminosity_w": 3.828e26 }, "radial_velocity_m_s": -30000.0 },
+      { "conditions": { "address": "u:t/sys:4/star:1", "radius_m": 6.0e8, "own_luminosity_w": 2.0e26 }, "radial_velocity_m_s": 30000.0 }
+     ] }
+  ],
+  "observer": { "coverage": [{ "name": "optical telescope", "from_m": 3.5e-7, "to_m": 1.0e-6 }], "resolving_power": 10000.0 }
+ },
+ {
+  "op": "read_spectrum",
+  "targets": [{ "address": "u:t/sys:4/star:0", "distance_m": 1.0, "components": [{ "radial_velocity_m_s": 0.0 }] }]
+ },
+ {
+  "op": "read_activity",
+  "seed": "contract",
+  "stars": [
+   { "address": "u:sol/sys:0/star:0", "mass_kg": 1.98841e30, "radius_m": 6.957e8, "luminosity_w": 3.828e26, "teff_k": 5772.0,
+     "age_s": 1.4422e17, "rotation_period_s": 2254176.0,
+     "targets": [{ "address": "u:sol/sys:0/body:2", "distance_m": 1.495978707e11, "period_s": 31557600.0 }] },
+   { "address": "u:t/sys:1/star:0", "mass_kg": 6.363e29, "radius_m": 2.435e8, "luminosity_w": 4.976e24, "teff_k": 3300.0,
+     "age_s": 9.47e15, "rotation_period_s": 378432.0 },
+   { "address": "u:t/sys:2/star:0", "mass_kg": 4.2e30, "radius_m": 1.9e9, "luminosity_w": 1.5e28, "teff_k": 9600.0, "age_s": 1.4e16 }
+  ],
+  "window": { "from_s": 1.4422e17, "to_s": 1.44220000315576e17, "min_energy_j": 1e25 }
+ },
+ {
+  "op": "read_activity",
+  "stars": [{ "address": "u:t/sys:3/star:0", "mass_kg": -1.0, "radius_m": 1.0, "luminosity_w": 1.0, "teff_k": 1.0, "age_s": 0.0 }]
+ },
+ {
+  "op": "survey_planets",
+  "survey": {
+   "star": { "address": "u:sol/sys:0/star:0", "mass_kg": 1.98841e30, "radius_m": 6.957e8, "visible_w": 1.6757e26 },
+   "planets": [{ "address": "u:sol/sys:0/body:2", "name": "Earth", "mass_kg": 5.9722e24, "radius_m": 6.371e6, "a_m": 1.495978707e11, "e": 0.0167, "i_rad": 0.0, "node_rad": 0.0, "phase_rad": 0.3, "geometric_albedo": 0.434 },
+     { "address": "u:sol/sys:0/body:4", "name": "Jupiter", "mass_kg": 1.89819e27, "radius_m": 6.9911e7, "a_m": 7.783e11, "e": 0.0489, "i_rad": 0.02274, "node_rad": 1.7534, "phase_rad": 2.0, "geometric_albedo": 0.538 }],
+   "observer": { "direction": [1.0, 0.0, 0.0], "distance_m": 3.085677581e17 },
+   "instrument": { "name": "space photometer and spectrograph", "aperture_m": 1.0, "photometric_floor_ppm_hr": 10.0, "rv_precision_m_s": 1.0 },
+   "watch_s": 378691200.0
+  }
+ },
+ {
+  "op": "survey_planets",
+  "survey": {
+   "star": { "address": "u:sol/sys:0/star:0", "mass_kg": 1.98841e30, "radius_m": 6.957e8, "visible_w": 1.6757e26 },
+   "planets": [{ "address": "u:sol/sys:0/body:2", "name": "Earth", "mass_kg": 5.9722e24, "radius_m": 6.371e6, "a_m": 1.495978707e11, "e": 0.0167, "i_rad": 0.0, "node_rad": 0.0, "phase_rad": 0.3, "geometric_albedo": 0.434 },
+     { "address": "u:sol/sys:0/body:4", "name": "Jupiter", "mass_kg": 1.89819e27, "radius_m": 6.9911e7, "a_m": 7.783e11, "e": 0.0489, "i_rad": 0.02274, "node_rad": 1.7534, "phase_rad": 2.0, "geometric_albedo": 0.538 }],
+   "observer": { "direction": [1.0, 0.0, 0.0], "distance_m": 0.0 },
+   "instrument": { "name": "space photometer and spectrograph", "aperture_m": 1.0, "photometric_floor_ppm_hr": 10.0, "rv_precision_m_s": 1.0 },
+   "watch_s": 378691200.0
+  }
+ },
+ {
   "op": "adopt",
   "formation": {
    "seed": "kernel-form-6",
@@ -1629,12 +1753,22 @@
  {
   "op": "galaxy_chart",
   "halo": "dwarf",
-  "edits": [{"kind": "starburst", "t_gyr": 6.0, "gas_fraction": 0.3}]
+  "edits": [
+   {
+    "kind": "starburst",
+    "t_gyr": 6.0,
+    "gas_fraction": 0.3
+   }
+  ]
  },
  {
   "op": "galaxy_chart",
   "halo": "dwarf",
-  "edits": [{"kind": "comet"}]
+  "edits": [
+   {
+    "kind": "comet"
+   }
+  ]
  },
  {
   "op": "window_view",
@@ -1650,12 +1784,493 @@
  },
  {
   "op": "sift",
-  "sifters": [{"id": "named", "label": "anything with a name", "pattern": {"match": "facts", "when": {"if": "has", "field": "name"}},
-   "significance": {"persistence": {"from": "fixed", "s": 1.0}, "reach": {"from": "fixed", "n": 1}, "reversibility": 1.0}}]
+  "sifters": [
+   {
+    "id": "named",
+    "label": "anything with a name",
+    "pattern": {
+     "match": "facts",
+     "when": {
+      "if": "has",
+      "field": "name"
+     }
+    },
+    "significance": {
+     "persistence": {
+      "from": "fixed",
+      "s": 1.0
+     },
+     "reach": {
+      "from": "fixed",
+      "n": 1
+     },
+     "reversibility": 1.0
+    }
+   }
+  ]
  },
  {
   "op": "sift",
-  "sifters": [{"id": "broken"}]
+  "sifters": [
+   {
+    "id": "broken"
+   }
+  ]
+ },
+ {
+  "op": "calendar"
+ },
+ {
+  "op": "campaign_now"
+ },
+ {
+  "op": "set_campaign_now",
+  "at_s": 3600
+ },
+ {
+  "op": "campaign_now"
+ },
+ {
+  "op": "adopt",
+  "formation": {
+   "seed": "kernel-form-7",
+   "system": "u:kestrel/sys:41",
+   "star_pins": {
+    "primary_mass": 1.0
+   }
+  }
+ },
+ {
+  "op": "orbits_at",
+  "system": "u:kestrel/sys:41",
+  "at_s": [
+   0,
+   3600
+  ]
+ },
+ {
+  "op": "orbits_at",
+  "system": "u:kestrel/sys:41",
+  "at_s": []
+ },
+ {
+  "op": "orbits_at",
+  "system": "u:x/sys:0",
+  "at_s": [
+   0,
+   86400
+  ],
+  "bodies": [
+   {
+    "address": "u:x/sys:0/star:0",
+    "facts": {
+     "body.mass": 1.98847e+30
+    }
+   },
+   {
+    "address": "u:x/sys:0/body:0",
+    "facts": {
+     "orbit.host": "u:x/sys:0/star:0",
+     "orbit.semi_major_axis": 149597870700.0,
+     "orbit.eccentricity": 0.0167,
+     "orbit.mean_anomaly_at_epoch": 0.0
+    }
+   },
+   {
+    "address": "u:x/sys:0/body:1",
+    "facts": {
+     "orbit.host": "u:x/sys:0/star:0",
+     "orbit.semi_major_axis": 700000000000.0
+    }
+   }
+  ]
+ },
+ {
+  "op": "load_stack",
+  "packs": [
+   "$pack:base-toy",
+   "$pack:imperial-calendar"
+  ]
+ },
+ {
+  "op": "calendar"
+ },
+ {
+  "op": "load_stack",
+  "packs": [
+   "$pack:rpg-record",
+   "$pack:rpg-intents"
+  ]
+ },
+ {
+  "op": "intents"
+ },
+ {
+  "op": "send_intent",
+  "seat": "gm",
+  "at_s": 0,
+  "intent": {
+   "kind": "set_value",
+   "address": "u:kestrel/ship:calla",
+   "field": "tag.crewed",
+   "value": true,
+   "at_yr": 0
+  }
+ },
+ {
+  "op": "set_seats",
+  "at_s": 0,
+  "seats": [
+   {
+    "id": "crew",
+    "label": "Crew",
+    "audience": "crew",
+    "authority": "player",
+    "may_send": [
+     "hail"
+    ],
+    "sealed": false
+   }
+  ]
+ },
+ {
+  "op": "set_seats",
+  "at_s": 0,
+  "seats": [
+   {
+    "id": "crew",
+    "audience": "crew",
+    "authority": "player",
+    "may_send": [
+     "fly"
+    ]
+   }
+  ]
+ },
+ {
+  "op": "send_intent",
+  "seat": "crew",
+  "at_s": 20,
+  "intent": {
+   "kind": "hail",
+   "address": "u:kestrel/sys:0/body:3",
+   "words": "hello"
+  }
+ },
+ {
+  "op": "send_intent",
+  "seat": "crew",
+  "at_s": 20,
+  "intent": {
+   "kind": "hail",
+   "address": "u:kestrel/ship:calla",
+   "words": "this is Kestrel"
+  },
+  "check_only": true
+ },
+ {
+  "op": "send_intent",
+  "seat": "crew",
+  "at_s": 20,
+  "intent": {
+   "kind": "hail",
+   "address": "u:kestrel/ship:calla",
+   "words": "this is Kestrel"
+  }
+ },
+ {
+  "op": "intent_decide",
+  "proposal": "578dd9797f02ffac424f93ecfdc4c9d7c304d6040beb607e9b251bd0a596ef1a",
+  "approve": true
+ },
+ {
+  "op": "intent_decide",
+  "proposal": "00",
+  "approve": false
+ },
+ {
+  "op": "send_intent",
+  "seat": "nobody",
+  "at_s": 0,
+  "intent": {
+   "kind": "hail",
+   "address": "u:kestrel/ship:calla",
+   "words": "this is Kestrel"
+  }
+ },
+ {
+  "op": "load_stack",
+  "packs": [
+   "$pack:rpg-templates"
+  ]
+ },
+ {
+  "op": "templates"
+ },
+ {
+  "op": "create",
+  "template": "raider",
+  "under": "u:kestrel/sys:0",
+  "name": "Black Gull",
+  "at_s": 100
+ },
+ {
+  "op": "create",
+  "template": "raider",
+  "under": "u:kestrel/sys:0",
+  "key": "1",
+  "at_s": 100
+ },
+ {
+  "op": "create",
+  "template": "cruiser",
+  "under": "u:kestrel/sys:0",
+  "at_s": 100
+ },
+ {
+  "op": "retire",
+  "address": "u:kestrel/sys:0/ship:1",
+  "reason": "scuttled",
+  "at_s": 200
+ },
+ {
+  "op": "retire",
+  "address": "u:kestrel/sys:0/ship:1",
+  "at_s": 300
+ },
+ {
+  "op": "load_stack",
+  "packs": [
+   "$pack:rpg-record",
+   "$pack:rpg-sifters"
+  ]
+ },
+ {
+  "op": "set_authored",
+  "edit": {
+   "address": "u:kestrel/sys:0/body:3",
+   "field": "mass_kg",
+   "value": 6e+24,
+   "occurred_at_s": 0
+  }
+ },
+ {
+  "op": "sift",
+  "at_s": 10
+ },
+ {
+  "op": "sift",
+  "audience": "crew",
+  "scope": "u:kestrel/sys:0/body:3",
+  "at_s": 10
+ },
+ {
+  "op": "sift",
+  "sifters": [
+   "nope"
+  ],
+  "at_s": 10
+ },
+ {
+  "op": "load_stack",
+  "packs": [
+   "$pack:rpg-programs"
+  ]
+ },
+ {
+  "op": "set_authored",
+  "edit": {
+   "address": "u:kestrel/sys:0/body:2",
+   "field": "ore.grade",
+   "value": 0.6,
+   "occurred_at_s": 0
+  }
+ },
+ {
+  "op": "create",
+  "template": "drone",
+  "under": "u:kestrel/sys:0",
+  "key": "1",
+  "at_s": 0
+ },
+ {
+  "op": "set_seats",
+  "seats": [
+   {
+    "id": "drone-ops",
+    "label": "Drone ops",
+    "audience": "drone-ops",
+    "authority": "player",
+    "may_send": [
+     "go",
+     "mine",
+     "unload"
+    ],
+    "program": "miner",
+    "auto_approve": [
+     {
+      "intent": "go",
+      "scope": [
+       "u:kestrel/sys:0/drone:1"
+      ]
+     },
+     {
+      "intent": "mine",
+      "scope": [
+       "u:kestrel/sys:0/drone:1"
+      ]
+     },
+     {
+      "intent": "unload",
+      "scope": [
+       "u:kestrel/sys:0/drone:1"
+      ]
+     }
+    ]
+   }
+  ],
+  "at_s": 0
+ },
+ {
+  "op": "attach_program",
+  "address": "u:kestrel/sys:0/drone:1",
+  "program": "miner",
+  "seat": "drone-ops",
+  "at_s": 0
+ },
+ {
+  "op": "attach_program",
+  "address": "u:kestrel/sys:0/body:2",
+  "program": "miner",
+  "seat": "drone-ops",
+  "at_s": 0
+ },
+ {
+  "op": "scan_toggle",
+  "address": "u:kestrel/sys:0/body:2",
+  "audience": "drone-ops",
+  "at_s": 5
+ },
+ {
+  "op": "programs_step",
+  "at_s": 100
+ },
+ {
+  "op": "programs_step",
+  "at_s": 200
+ },
+ {
+  "op": "programs",
+  "at_s": 200
+ },
+ {
+  "op": "detach_program",
+  "address": "u:kestrel/sys:0/drone:1",
+  "at_s": 300
+ },
+ {
+  "op": "codes",
+  "scope": "u:toy/sys:0",
+  "at_s": 0
+ },
+ {
+  "op": "load_stack",
+  "packs": [
+   "$pack:codes-toy"
+  ]
+ },
+ {
+  "op": "open_universe",
+  "id": "toy",
+  "seed": "t"
+ },
+ {
+  "op": "set_authored",
+  "edit": {
+   "address": "u:toy/sys:0/body:1",
+   "field": "body.radius",
+   "value": 6400000.0,
+   "occurred_at_s": 0
+  }
+ },
+ {
+  "op": "set_authored",
+  "edit": {
+   "address": "u:toy/sys:0/body:2",
+   "field": "body.radius",
+   "value": 1700000.0,
+   "occurred_at_s": 0
+  }
+ },
+ {
+  "op": "set_authored",
+  "edit": {
+   "address": "u:toy/sys:0/body:3",
+   "field": "body.radius",
+   "value": 70000000.0,
+   "occurred_at_s": 0
+  }
+ },
+ {
+  "op": "set_authored",
+  "edit": {
+   "address": "u:toy/sys:0/body:2",
+   "field": "toy.code.size",
+   "value": "8",
+   "occurred_at_s": 0
+  }
+ },
+ {
+  "op": "codes",
+  "scope": "u:toy/sys:0",
+  "at_s": 10
+ },
+ {
+  "op": "codes",
+  "scope": "u:toy/sys:0/body:2",
+  "sheet": "toy.world",
+  "at_s": 10
+ },
+ {
+  "op": "codes",
+  "scope": "u:toy/sys:0",
+  "sheet": "nope",
+  "at_s": 10
+ },
+ {
+  "op": "import_sector",
+  "text": "0101 Alpha X800000-0 A\n0102 Beta X100000-0\n0103 Gamma X?00000-0",
+  "at_s": 0
+ },
+ {
+  "op": "import_sector",
+  "text": "0101 Alpha X800000-0 A\n0102 Beta X100000-0",
+  "format": "uwp_lines",
+  "apply": true,
+  "at_s": 20
+ },
+ {
+  "op": "codes",
+  "scope": "u:toy/sys:0101",
+  "at_s": 30
+ },
+ {
+  "op": "import_sector",
+  "text": "x",
+  "format": "xml",
+  "at_s": 0
+ },
+ {
+  "op": "export_sector",
+  "scope": "u:toy",
+  "format": "uwp_lines",
+  "at_s": 30
+ },
+ {
+  "op": "export_sector",
+  "scope": "u:toy",
+  "format": "docx",
+  "at_s": 30
  },
  {"op": "halo_cell", "cell": [0, 0, 0], "min_mass_msun": 3e11, "limit": 5},
  {"op": "halo_cell", "limit": 0}

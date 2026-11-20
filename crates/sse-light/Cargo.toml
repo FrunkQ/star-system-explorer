@@ -1,0 +1,15 @@
+[package]
+name = "sse-light"
+description = "SSE4 light (track O): light descriptions as spectra, the band set and line table, deterministic band integrals, emission from a body's conditions"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+authors.workspace = true
+
+[dependencies]
+sse-core.workspace = true
+sse-pack.workspace = true
+sse-flow.workspace = true
+sse-atoms.workspace = true
+serde.workspace = true
+serde_json.workspace = true

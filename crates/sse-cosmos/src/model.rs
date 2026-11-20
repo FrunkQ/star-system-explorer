@@ -144,6 +144,39 @@ pub struct PatchModel {
     pub encounter_pc: f64,
     pub populations: Vec<Population>,
     pub cohorts: Vec<CohortSpec>,
+    /// What lights up a patch: dying and massive stars (nebulae and light design 4).
+    #[serde(default)]
+    pub glows: Glows,
+}
+
+/// How a patch counts the nebulae it expects without placing them.
+#[derive(Clone, PartialEq, Debug, Serialize, Deserialize)]
+#[serde(default)]
+pub struct Glows {
+    /// Main-sequence lifetime = sun_life_gyr x M^-lifetime_slope (the same
+    /// rule as the star settings).
+    pub sun_life_gyr: f64,
+    pub lifetime_slope: f64,
+    /// Initial-final mass relation, white dwarf = wd_a x M + wd_b (Kalirai et al. 2008).
+    pub wd_a: f64,
+    pub wd_b: f64,
+    /// Stars at least this heavy light an H II region (late O and early B).
+    pub ionising_min_msun: f64,
+    /// Mean gas density nebulae expand into, hydrogen per m^3.
+    pub ambient_h_m3: f64,
+}
+
+impl Default for Glows {
+    fn default() -> Self {
+        Glows {
+            sun_life_gyr: 10.0,
+            lifetime_slope: 2.5,
+            wd_a: 0.109,
+            wd_b: 0.394,
+            ionising_min_msun: 15.0,
+            ambient_h_m3: 1e6,
+        }
+    }
 }
 
 impl PatchModel {

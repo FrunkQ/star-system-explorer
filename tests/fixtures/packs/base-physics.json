@@ -10,6 +10,172 @@
     "flows": [
       {
         "format": "sse.flow/1",
+        "hook": "body.magnetism",
+        "id": "sse.base.body-magnetism",
+        "inputs": [
+          {
+            "kind": "interior.dynamo_density",
+            "name": "dynamo_density"
+          },
+          {
+            "kind": "interior.dynamo_heat_flux",
+            "name": "dynamo_heat_flux"
+          },
+          {
+            "kind": "interior.dynamo_radius",
+            "name": "dynamo_radius"
+          },
+          {
+            "kind": "body.radius",
+            "name": "radius"
+          }
+        ],
+        "nodes": [
+          {
+            "atom": "sse.magnetic.dynamo_field",
+            "id": "dynamo"
+          },
+          {
+            "atom": "sse.magnetic.surface_dipole",
+            "id": "dipole"
+          }
+        ],
+        "publishes": [
+          {
+            "from": "dynamo.field",
+            "kind": "magnetic.dynamo_field"
+          },
+          {
+            "from": "dipole.surface_field",
+            "kind": "body.surface_magnetic_field"
+          },
+          {
+            "from": "dipole.moment",
+            "kind": "body.magnetic_moment"
+          }
+        ],
+        "tests": [
+          {
+            "expect": {
+              "body.magnetic_moment": {
+                "tol": 1.5e+22,
+                "unit": "a_m2",
+                "value": 7.7e+22
+              },
+              "body.surface_magnetic_field": {
+                "tol": 8.0,
+                "unit": "ut",
+                "value": 30.0
+              }
+            },
+            "inputs": {
+              "dynamo_density": {
+                "unit": "kg_m3",
+                "value": 10900.0
+              },
+              "dynamo_heat_flux": {
+                "unit": "w_m2",
+                "value": 0.0657
+              },
+              "dynamo_radius": {
+                "unit": "km",
+                "value": 3480.0
+              },
+              "radius": {
+                "unit": "km",
+                "value": 6371.0
+              }
+            },
+            "name": "Earth: 10 TW out of the core (Lay et al. 2008, 5 to 15 TW) gives a dipole moment near the measured 7.7e22 A m² (IGRF-13)"
+          },
+          {
+            "expect": {
+              "body.magnetic_moment": {
+                "tol": 4e+26,
+                "unit": "a_m2",
+                "value": 1.56e+27
+              },
+              "body.surface_magnetic_field": {
+                "tol": 1.2,
+                "unit": "gauss",
+                "value": 4.1
+              }
+            },
+            "inputs": {
+              "dynamo_density": {
+                "unit": "kg_m3",
+                "value": 1960.0
+              },
+              "dynamo_heat_flux": {
+                "unit": "w_m2",
+                "value": 10.36
+              },
+              "dynamo_radius": {
+                "unit": "r_jupiter",
+                "value": 0.85
+              },
+              "radius": {
+                "unit": "r_jupiter",
+                "value": 1.0
+              }
+            },
+            "name": "Jupiter: Juno's 7.5 W/m² internal flux (Li et al. 2018) through a metallic-hydrogen dynamo at 0.85 R_J gives about 4 G at the equator (JRM09)"
+          },
+          {
+            "expect": {
+              "body.magnetic_moment": {
+                "tol": 1.0,
+                "unit": "a_m2",
+                "value": 0.0
+              }
+            },
+            "inputs": {
+              "dynamo_density": {
+                "unit": "kg_m3",
+                "value": 7000.0
+              },
+              "dynamo_heat_flux": {
+                "unit": "w_m2",
+                "value": 0.0
+              },
+              "dynamo_radius": {
+                "unit": "km",
+                "value": 1830.0
+              },
+              "radius": {
+                "unit": "km",
+                "value": 3389.5
+              }
+            },
+            "name": "No convected heat, no dynamo (Mars and Venus today)"
+          }
+        ],
+        "version": "0.1.0",
+        "wires": [
+          {
+            "from": "in.dynamo_density",
+            "to": "dynamo.density"
+          },
+          {
+            "from": "in.dynamo_heat_flux",
+            "to": "dynamo.flux"
+          },
+          {
+            "from": "dynamo.field",
+            "to": "dipole.field"
+          },
+          {
+            "from": "in.dynamo_radius",
+            "to": "dipole.dynamo_radius"
+          },
+          {
+            "from": "in.radius",
+            "to": "dipole.radius"
+          }
+        ]
+      },
+      {
+        "format": "sse.flow/1",
         "hook": "moon.tides",
         "id": "sse.base.moon-tides",
         "inputs": [
@@ -1249,6 +1415,20 @@
         "range": null
       },
       {
+        "description": "mean mass of one air molecule",
+        "dim": [
+          0,
+          1,
+          0,
+          0,
+          0,
+          0,
+          0
+        ],
+        "id": "atmosphere.mean_molecular_mass",
+        "range": null
+      },
+      {
         "description": "mean molecular weight in atomic mass units",
         "dim": [
           0,
@@ -1263,6 +1443,20 @@
         "range": null
       },
       {
+        "description": "molecules per cubic metre of air",
+        "dim": [
+          -3,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0
+        ],
+        "id": "atmosphere.number_density",
+        "range": null
+      },
+      {
         "description": "mass of an escaping particle in atomic mass units",
         "dim": [
           0,
@@ -1274,6 +1468,34 @@
           0
         ],
         "id": "atmosphere.particle_mass_amu",
+        "range": null
+      },
+      {
+        "description": "Rayleigh optical depth of the whole air column, looking straight up",
+        "dim": [
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0
+        ],
+        "id": "atmosphere.rayleigh_optical_depth",
+        "range": null
+      },
+      {
+        "description": "Rayleigh scattering per metre of path",
+        "dim": [
+          -1,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0
+        ],
+        "id": "atmosphere.rayleigh_scattering_coefficient",
         "range": null
       },
       {
@@ -1347,6 +1569,20 @@
         "range": null
       },
       {
+        "description": "temperature of the black body that radiates what this body radiates in total",
+        "dim": [
+          0,
+          0,
+          0,
+          0,
+          1,
+          0,
+          0
+        ],
+        "id": "body.effective_temperature",
+        "range": null
+      },
+      {
         "description": "escape velocity from the surface",
         "dim": [
           1,
@@ -1386,6 +1622,48 @@
           0
         ],
         "id": "body.initial_spin_rate",
+        "range": null
+      },
+      {
+        "description": "heat flowing out through a body's surface from inside, per area: a star's or brown dwarf's own luminosity, a giant planet's left-over heat",
+        "dim": [
+          0,
+          1,
+          -3,
+          0,
+          0,
+          0,
+          0
+        ],
+        "id": "body.internal_heat_flux",
+        "range": null
+      },
+      {
+        "description": "magnetic dipole moment of a body",
+        "dim": [
+          2,
+          0,
+          0,
+          1,
+          0,
+          0,
+          0
+        ],
+        "id": "body.magnetic_moment",
+        "range": null
+      },
+      {
+        "description": "stand-off distance of the magnetopause towards the wind, from the body's centre; zero without a field",
+        "dim": [
+          1,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0
+        ],
+        "id": "body.magnetopause_radius",
         "range": null
       },
       {
@@ -1431,6 +1709,20 @@
         "range": null
       },
       {
+        "description": "time for one turn about the spin axis (sidereal)",
+        "dim": [
+          0,
+          0,
+          1,
+          0,
+          0,
+          0,
+          0
+        ],
+        "id": "body.rotation_period",
+        "range": null
+      },
+      {
         "description": "gravitational acceleration at the surface, ignoring rotation",
         "dim": [
           1,
@@ -1442,6 +1734,146 @@
           0
         ],
         "id": "body.surface_gravity",
+        "range": null
+      },
+      {
+        "description": "equatorial dipole magnetic field at the body's surface",
+        "dim": [
+          0,
+          1,
+          -2,
+          -1,
+          0,
+          0,
+          0
+        ],
+        "id": "body.surface_magnetic_field",
+        "range": null
+      },
+      {
+        "description": "mass thrown out by an explosion",
+        "dim": [
+          0,
+          1,
+          0,
+          0,
+          0,
+          0,
+          0
+        ],
+        "id": "event.ejecta_mass",
+        "range": null
+      },
+      {
+        "description": "kinetic energy of an explosion",
+        "dim": [
+          2,
+          1,
+          -2,
+          0,
+          0,
+          0,
+          0
+        ],
+        "id": "event.explosion_energy",
+        "range": null
+      },
+      {
+        "description": "total energy released by a flare, all wavelengths",
+        "dim": [
+          2,
+          1,
+          -2,
+          0,
+          0,
+          0,
+          0
+        ],
+        "id": "flare.energy",
+        "range": null
+      },
+      {
+        "description": "flares per unit time with at least the given energy",
+        "dim": [
+          0,
+          0,
+          -1,
+          0,
+          0,
+          0,
+          0
+        ],
+        "id": "flare.rate_above",
+        "range": null
+      },
+      {
+        "description": "number density of hydrogen nuclei in the surrounding gas",
+        "dim": [
+          -3,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0
+        ],
+        "id": "gas.hydrogen_density",
+        "range": null
+      },
+      {
+        "description": "King correction factor for scattering by non-spherical molecules (1 for spheres)",
+        "dim": [
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0
+        ],
+        "id": "gas.king_factor",
+        "range": null
+      },
+      {
+        "description": "Rayleigh scattering cross-section per molecule",
+        "dim": [
+          2,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0
+        ],
+        "id": "gas.rayleigh_cross_section",
+        "range": null
+      },
+      {
+        "description": "number density at which a gas's refractivity is given",
+        "dim": [
+          -3,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0
+        ],
+        "id": "gas.reference_density",
+        "range": null
+      },
+      {
+        "description": "refractive index minus one of a gas at its reference density",
+        "dim": [
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0
+        ],
+        "id": "gas.refractivity",
         "range": null
       },
       {
@@ -1529,6 +1961,48 @@
           0
         ],
         "id": "interior.core_radius",
+        "range": null
+      },
+      {
+        "description": "mean density of the convecting, conducting region that runs the dynamo",
+        "dim": [
+          -3,
+          1,
+          0,
+          0,
+          0,
+          0,
+          0
+        ],
+        "id": "interior.dynamo_density",
+        "range": null
+      },
+      {
+        "description": "heat flux carried out of the dynamo region by convection",
+        "dim": [
+          0,
+          1,
+          -3,
+          0,
+          0,
+          0,
+          0
+        ],
+        "id": "interior.dynamo_heat_flux",
+        "range": null
+      },
+      {
+        "description": "outer radius of the dynamo region (the core top, or about 0.85 R for a giant)",
+        "dim": [
+          1,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0
+        ],
+        "id": "interior.dynamo_radius",
         "range": null
       },
       {
@@ -1669,6 +2143,146 @@
           0
         ],
         "id": "layer.top_temperature",
+        "range": null
+      },
+      {
+        "description": "photons per second able to ionise hydrogen (above 13.6 eV)",
+        "dim": [
+          0,
+          0,
+          -1,
+          0,
+          0,
+          0,
+          0
+        ],
+        "id": "light.ionising_photon_rate",
+        "range": null
+      },
+      {
+        "description": "effective area for reflected starlight: Bond albedo times cross-section times the source's dilution (R*/d)²",
+        "dim": [
+          2,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0
+        ],
+        "id": "light.reflected_area",
+        "range": null
+      },
+      {
+        "description": "a wavelength of light",
+        "dim": [
+          1,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0
+        ],
+        "id": "light.wavelength",
+        "range": null
+      },
+      {
+        "description": "rms magnetic field inside the dynamo region",
+        "dim": [
+          0,
+          1,
+          -2,
+          -1,
+          0,
+          0,
+          0
+        ],
+        "id": "magnetic.dynamo_field",
+        "range": null
+      },
+      {
+        "description": "time since the nebula's cause (a star's death, an explosion, a cluster's birth)",
+        "dim": [
+          0,
+          0,
+          1,
+          0,
+          0,
+          0,
+          0
+        ],
+        "id": "nebula.age",
+        "range": null
+      },
+      {
+        "description": "speed at which a nebula's shell expands",
+        "dim": [
+          1,
+          0,
+          -1,
+          0,
+          0,
+          0,
+          0
+        ],
+        "id": "nebula.expansion_speed",
+        "range": null
+      },
+      {
+        "description": "power in the hydrogen-alpha line",
+        "dim": [
+          2,
+          1,
+          -3,
+          0,
+          0,
+          0,
+          0
+        ],
+        "id": "nebula.h_alpha_power",
+        "range": null
+      },
+      {
+        "description": "radius out to which a star's light keeps the gas ionised (Strömgren radius)",
+        "dim": [
+          1,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0
+        ],
+        "id": "nebula.ionised_radius",
+        "range": null
+      },
+      {
+        "description": "hydrogen recombinations per second in a nebula",
+        "dim": [
+          0,
+          0,
+          -1,
+          0,
+          0,
+          0,
+          0
+        ],
+        "id": "nebula.recombination_rate",
+        "range": null
+      },
+      {
+        "description": "radius of a nebula's shell or shock",
+        "dim": [
+          1,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0
+        ],
+        "id": "nebula.shell_radius",
         "range": null
       },
       {
@@ -1961,6 +2575,34 @@
         ]
       },
       {
+        "description": "auroral radio power, all frequencies",
+        "dim": [
+          2,
+          1,
+          -3,
+          0,
+          0,
+          0,
+          0
+        ],
+        "id": "radio.auroral_power",
+        "range": null
+      },
+      {
+        "description": "highest auroral radio frequency, the electron gyrofrequency at the magnetic pole",
+        "dim": [
+          0,
+          0,
+          -1,
+          0,
+          0,
+          0,
+          0
+        ],
+        "id": "radio.max_frequency",
+        "range": null
+      },
+      {
         "description": "mean density of a satellite",
         "dim": [
           -3,
@@ -1975,6 +2617,20 @@
         "range": null
       },
       {
+        "description": "length of a star's spot and activity cycle",
+        "dim": [
+          0,
+          0,
+          1,
+          0,
+          0,
+          0,
+          0
+        ],
+        "id": "star.activity_cycle_period",
+        "range": null
+      },
+      {
         "description": "time since the star reached the main sequence",
         "dim": [
           0,
@@ -1986,6 +2642,20 @@
           0
         ],
         "id": "star.age",
+        "range": null
+      },
+      {
+        "description": "time for the churning outer layer of a cool star to turn over once",
+        "dim": [
+          0,
+          0,
+          1,
+          0,
+          0,
+          0,
+          0
+        ],
+        "id": "star.convective_turnover_time",
         "range": null
       },
       {
@@ -2073,6 +2743,48 @@
         "range": null
       },
       {
+        "description": "rotation period over convective turnover time; low means magnetically active",
+        "dim": [
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0
+        ],
+        "id": "star.rossby_number",
+        "range": null
+      },
+      {
+        "description": "share of a star's power given out as coronal X-rays (L_X / L_bol)",
+        "dim": [
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0
+        ],
+        "id": "star.xray_fraction",
+        "range": null
+      },
+      {
+        "description": "coronal X-ray power of a star",
+        "dim": [
+          2,
+          1,
+          -3,
+          0,
+          0,
+          0,
+          0
+        ],
+        "id": "star.xray_luminosity",
+        "range": null
+      },
+      {
         "description": "tidal heating power",
         "dim": [
           2,
@@ -2098,6 +2810,48 @@
           0
         ],
         "id": "tides.locking_time",
+        "range": null
+      },
+      {
+        "description": "mass density of the stellar wind at the body",
+        "dim": [
+          -3,
+          1,
+          0,
+          0,
+          0,
+          0,
+          0
+        ],
+        "id": "wind.density",
+        "range": null
+      },
+      {
+        "description": "speed of the stellar wind at the body",
+        "dim": [
+          1,
+          0,
+          -1,
+          0,
+          0,
+          0,
+          0
+        ],
+        "id": "wind.speed",
+        "range": null
+      },
+      {
+        "description": "magnetic field in the stellar wind across the flow direction, at the body",
+        "dim": [
+          0,
+          1,
+          -2,
+          -1,
+          0,
+          0,
+          0
+        ],
+        "id": "wind.transverse_field",
         "range": null
       }
     ]

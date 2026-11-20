@@ -68,3 +68,12 @@ test("the ruler's glide: log-scale zoom about the shared point, linear pan", asy
   const p = between({ from: 0, to: 10 }, { from: 10, to: 20 }, 0.25);
   assert.deepEqual(p, { from: 2.5, to: 12.5 });
 });
+
+test("a pack's calendar: Imperial dates count from its epoch year", async () => {
+  const { fromPackCalendar } = await import("../src/calendar.ts");
+  const c = fromPackCalendar({ name: "Imperial calendar", epoch_s: 0, epoch_year: 1105, day_s: 86400, year_days: 365, format: "{day:03}-{year}" });
+  assert.equal(dateWords(0, c), "001-1105");
+  assert.equal(dateWords((400 * 86400) / YEAR_S, c), "036-1106");
+  const m = fromPackCalendar({ name: "Months", epoch_s: 0, day_s: 86400, year_days: 60, months: [{ name: "Thaw", days: 30 }, { name: "Frost", days: 30 }], format: "{d} {month} {year}" });
+  assert.equal(dateWords((45 * 86400) / YEAR_S, m), "16 Frost 1");
+});

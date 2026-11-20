@@ -1,0 +1,230 @@
+[
+  {
+    "bands": [
+      {
+        "band": "gamma",
+        "power_w": 0.0
+      },
+      {
+        "band": "xray",
+        "power_w": 1.514944283986544e-75
+      },
+      {
+        "band": "uv",
+        "power_w": 3.815072686876293e+25
+      },
+      {
+        "band": "visible",
+        "power_w": 1.6756931967817287e+26
+      },
+      {
+        "band": "near-ir",
+        "power_w": 1.7506939622605648e+26
+      },
+      {
+        "band": "mid-ir",
+        "power_w": 1.990880232178302e+24
+      },
+      {
+        "band": "far-ir",
+        "power_w": 1.87513942659812e+22
+      },
+      {
+        "band": "mm",
+        "power_w": 7.078805389562865e+18
+      },
+      {
+        "band": "radio",
+        "power_w": 304300399717928.3
+      }
+    ],
+    "peak_m": 5.623413251903467e-7,
+    "samples_hash": "2f4b88cc7d69088e1d09d7489134513934beeadcaf176ada5aed927f21094dec",
+    "slices": [
+      {
+        "band": "blue",
+        "power_w": 5.153647595993984e+25
+      },
+      {
+        "band": "green",
+        "power_w": 4.447799991723039e+25
+      },
+      {
+        "band": "red",
+        "power_w": 7.1554797902751644e+25
+      }
+    ],
+    "total_w": 3.827990814785462e+26
+  },
+  {
+    "bands": [
+      {
+        "band": "gamma",
+        "power_w": 0.0
+      },
+      {
+        "band": "xray",
+        "power_w": 0.0
+      },
+      {
+        "band": "uv",
+        "power_w": 0.0
+      },
+      {
+        "band": "visible",
+        "power_w": 0.0
+      },
+      {
+        "band": "near-ir",
+        "power_w": 2.355199691648923e-29
+      },
+      {
+        "band": "mid-ir",
+        "power_w": 1.181402553294781e+19
+      },
+      {
+        "band": "far-ir",
+        "power_w": 7.331340398299663e+27
+      },
+      {
+        "band": "mm",
+        "power_w": 1.7410899153536722e+27
+      },
+      {
+        "band": "radio",
+        "power_w": 1.68745208744056e+23
+      }
+    ],
+    "peak_m": 0.00017782794100389235,
+    "samples_hash": "160a1393a260b2d043f955fe73f5d13003e4ad1382e3dff1340a0e47fca46933",
+    "slices": [
+      {
+        "band": "blue",
+        "power_w": 0.0
+      },
+      {
+        "band": "green",
+        "power_w": 0.0
+      },
+      {
+        "band": "red",
+        "power_w": 0.0
+      }
+    ],
+    "total_w": 9.072599070676105e+27
+  },
+  {
+    "bands": [
+      {
+        "band": "gamma",
+        "power_w": 1.6114429022123564e-144
+      },
+      {
+        "band": "xray",
+        "power_w": 4.33162872832251e+30
+      },
+      {
+        "band": "uv",
+        "power_w": 4.4594421707608124e+29
+      },
+      {
+        "band": "visible",
+        "power_w": 2.3390452842373373e+27
+      },
+      {
+        "band": "near-ir",
+        "power_w": 1.4111304931585414e+27
+      },
+      {
+        "band": "mid-ir",
+        "power_w": 3.973896640137468e+25
+      },
+      {
+        "band": "far-ir",
+        "power_w": 4.980495224130473e+23
+      },
+      {
+        "band": "mm",
+        "power_w": 2.0061460467441897e+20
+      },
+      {
+        "band": "radio",
+        "power_w": 8665118393029285.0
+      }
+    ],
+    "peak_m": 1.77827941003892e-9,
+    "samples_hash": "76283c27d3d9b909bf35de86aa97d70a7b0fe2c61dd5bf97f73a5856d164ddaa",
+    "slices": [
+      {
+        "band": "blue",
+        "power_w": 1.1267620003593168e+27
+      },
+      {
+        "band": "green",
+        "power_w": 5.6318372772225375e+26
+      },
+      {
+        "band": "red",
+        "power_w": 6.490995061527047e+26
+      }
+    ],
+    "total_w": 4.7813633583925336e+30
+  },
+  {
+    "bands": [
+      {
+        "band": "gamma",
+        "power_w": 0.0
+      },
+      {
+        "band": "xray",
+        "power_w": 0.0
+      },
+      {
+        "band": "uv",
+        "power_w": 0.0
+      },
+      {
+        "band": "visible",
+        "power_w": 1000000000.0
+      },
+      {
+        "band": "near-ir",
+        "power_w": 0.0
+      },
+      {
+        "band": "mid-ir",
+        "power_w": 0.0
+      },
+      {
+        "band": "far-ir",
+        "power_w": 0.0
+      },
+      {
+        "band": "mm",
+        "power_w": 0.0
+      },
+      {
+        "band": "radio",
+        "power_w": 100000000000.0
+      }
+    ],
+    "peak_m": 7.4989420933245485,
+    "samples_hash": "1e43fe30ec8b70097ac04359b58ee754872ba713d47b44c778c0152eec104cae",
+    "slices": [
+      {
+        "band": "blue",
+        "power_w": 0.0
+      },
+      {
+        "band": "green",
+        "power_w": 1000000000.0
+      },
+      {
+        "band": "red",
+        "power_w": 0.0
+      }
+    ],
+    "total_w": 101000000000.0
+  }
+]

@@ -6,7 +6,7 @@ import type { Cost } from "../../contracts/src/index.ts";
 import type { IntentSchema } from "./intent.ts";
 import type { Mark } from "./mark.ts";
 import type { SceneSubject, SystemScene } from "./scene.ts";
-import type { DeriveRef, ViewSession } from "./session.ts";
+import type { DeriveRef, PackCalendar, ViewSession } from "./session.ts";
 import type { ChangeRequest } from "./physics.ts";
 import type { Json } from "./json.ts";
 import type { Lens } from "./lens.ts";
@@ -77,6 +77,8 @@ export interface Workspace {
   campaign_now_yr?: number;
   /** Where the campaign's calendar starts (day 1 of year 1) on this system's time: its present when the campaign opened. */
   campaign_epoch_yr?: number;
+  /** The top pack's calendar, when a pack gives one (kernel `calendar`); the ruler counts dates in it. */
+  pack_calendar?: PackCalendar | null;
   mode: "edit" | "view";
   /** Values applied by intents in this session, keyed "address#field", shown until scenes come from the kernel. */
   applied: Record<string, { value: Json; display: string; event_id: string }>;

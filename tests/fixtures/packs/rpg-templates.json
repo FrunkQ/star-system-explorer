@@ -1,0 +1,43 @@
+{
+  "format": "sse.pack/1",
+  "id": "test.rpg-templates",
+  "version": "0.1.0",
+  "kind": ["game-system"],
+  "kernel_range": "^0.1",
+  "licence": "Apache-2.0",
+  "provides": {
+    "other": {
+      "record": {
+        "kept": [
+          {"id": "ship.hull", "shape": "number", "range": [0.0, 100.0], "default": 100, "tier": "scanned",
+           "writers": ["gm", "template.raider", "template.freighter", "effect.wreck"], "describes": "hull points left"},
+          {"id": "ship.cargo_t", "shape": "number", "range": [0.0, 1000000.0], "default": 0, "tier": "scanned",
+           "writers": ["gm", "template.freighter"], "describes": "cargo aboard, tonnes"}
+        ]
+      },
+      "templates": {
+        "templates": [
+          {"id": "raider", "kind": "ship", "label": "Raider",
+           "facts": {"sensor.range_m": 3.0e8, "ship.class": "corsair"},
+           "kept": {"ship.hull": 60},
+           "tags": ["ship", "raider"], "programs": ["pirate"],
+           "explain": "a small fast corsair (the pirate of design 6.1)"},
+          {"id": "freighter", "kind": "ship", "label": "Freighter",
+           "facts": {"sensor.range_m": 1.0e8},
+           "kept": {"ship.hull": 80, "ship.cargo_t": 200},
+           "tags": ["ship", "crewed"], "programs": ["trader"]},
+          {"id": "wreck", "kind": "wreck", "label": "Wreck", "tags": ["wreck"]}
+        ]
+      },
+      "triggers": {
+        "rules": [
+          {"id": "wreck",
+           "when": {"on_condition": {"condition": {"if": "range", "field": "ship.hull", "max": 0.0}, "hold_s": 0}},
+           "scope": {"tag": "ship"},
+           "effects": [{"effect": "create", "template": "wreck", "name": "wreck of {subject}"}, {"effect": "retire"}],
+           "explain": "a ship with no hull left breaks up"}
+        ]
+      }
+    }
+  }
+}

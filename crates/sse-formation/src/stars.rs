@@ -230,3 +230,105 @@ pub fn form_stars(
     }
     Ok(stars)
 }
+
+/// Mardling and Aarseth 2001 eq. 90: the smallest outer-to-inner
+/// semi-major-axis ratio at which a hierarchical triple stays stable, for
+/// outer mass ratio `q_out` = m_outer / m_inner pair, outer eccentricity
+/// `e_out` and mutual inclination `incl_rad`.
+pub fn critical_ratio(q_out: f64, e_out: f64, incl_rad: f64) -> f64 {
+    let e = e_out.clamp(0.0, 0.999);
+    2.8 * m::pow((1.0 + q_out) * (1.0 + e) / m::sqrt(1.0 - e), 0.4) * (1.0 - 0.3 * incl_rad / m::PI)
+}
+
+/// Stability of one outer orbit around the stars inside it.
+#[derive(Clone, PartialEq, Debug, Serialize, Deserialize)]
+pub struct Stability {
+    /// a_outer / a_inner.
+    pub ratio: f64,
+    /// The Mardling and Aarseth critical ratio.
+    pub critical: f64,
+    pub stable: bool,
+    pub why: String,
+}
+
+/// Tag every outer orbit of a hierarchical multiple (generated or authored):
+/// each companion after the second is tested against the orbit inside it.
+/// Unstable configurations are tagged, never refused.
+pub fn stability(stars: &[Star]) -> Vec<Option<Stability>> {
+    let mut out = vec![];
+    let mut inner: Option<&BinaryOrbit> = None;
+    for s in stars {
+        let tag = match (&s.orbit, inner) {
+            (Some(o), Some(i)) if i.semi_major_axis_au > 0.0 => {
+                let ratio = o.semi_major_axis_au / i.semi_major_axis_au;
+                let crit = critical_ratio(s.mass / o.inner_mass.max(1e-9), o.eccentricity, 0.0);
+                let stable = ratio > crit;
+                Some(Stability {
+                    ratio,
+                    critical: crit,
+                    stable,
+                    why: format!(
+                        "outer orbit {ratio:.1} times the inner one; {} needs more than {crit:.1} (Mardling and Aarseth 2001){}",
+                        if stable { "stable: it" } else { "unstable: it" },
+                        if stable { "" } else { "; the system would break up within a few outer orbits" }
+                    ),
+                })
+            }
+            _ => None,
+        };
+        out.push(tag);
+        if s.orbit.is_some() {
+            inner = s.orbit.as_ref();
+        }
+    }
+    out
+}
+
+#[cfg(test)]
+mod stability_tests {
+    use super::*;
+    use crate::hurley::Fits;
+
+    fn star(i: u64, mass: f64, orbit: Option<(f64, f64, f64)>) -> Star {
+        let fits = Fits::new(0.0142);
+        Star {
+            address: "u:t/sys:0"
+                .parse::<Address>()
+                .unwrap()
+                .child("star", i)
+                .unwrap(),
+            mass,
+            life: LifeLine::new(&fits, mass).unwrap(),
+            orbit: orbit.map(|(a, e, inner)| BinaryOrbit {
+                period_days: 0.0,
+                semi_major_axis_au: a,
+                eccentricity: e,
+                inner_mass: inner,
+            }),
+        }
+    }
+
+    #[test]
+    fn mardling_aarseth_tags_unstable_triples() {
+        // Equal masses, circular: the critical ratio is 2.8 × 1.5^0.4 ≈ 3.3.
+        let c = critical_ratio(0.5, 0.0, 0.0);
+        assert!((c - 2.8 * m::pow(1.5, 0.4)).abs() < 1e-12, "{c}");
+        // Alpha Centauri-like: a 23 au pair with Proxima at 8700 au is stable.
+        let ok = stability(&[
+            star(0, 1.1, None),
+            star(1, 0.9, Some((23.0, 0.52, 1.1))),
+            star(2, 0.12, Some((8700.0, 0.5, 2.0))),
+        ]);
+        assert!(ok[0].is_none() && ok[1].is_none());
+        assert!(ok[2].as_ref().unwrap().stable);
+        // An authored triple with the third star at twice the inner orbit is
+        // tagged unstable, not refused.
+        let bad = stability(&[
+            star(0, 1.0, None),
+            star(1, 1.0, Some((1.0, 0.0, 1.0))),
+            star(2, 1.0, Some((2.0, 0.1, 2.0))),
+        ]);
+        let t = bad[2].as_ref().unwrap();
+        assert!(!t.stable && t.why.contains("unstable"), "{t:?}");
+    }
+}

@@ -26,6 +26,7 @@ use serde::{Deserialize, Serialize};
 use sse_chronicle::UniverseTime;
 use sse_core::cbor::Value;
 use sse_core::{math as m, Address, Dimension};
+use sse_nebula as nebula;
 use sse_resolve::{
     Budget, CountSpec, Distribution, Envelope, FieldSpec, PartitionSpec, Resolved, Weights,
 };
@@ -129,6 +130,18 @@ pub struct Conditions {
     pub ia_sn_so_far_pc3: f64,
     pub mean_birth_mass_msun: f64,
     pub cc_sn_per_msun: f64,
+    /// Stars ending as white dwarfs now, per Gyr per pc^3 (each throws off a
+    /// planetary nebula), and the mean envelope each sheds (solar masses).
+    pub wd_birth_gyr_pc3: f64,
+    pub pn_envelope_msun: f64,
+    /// Stars heavy enough to light an H II region, alive now, per pc^3.
+    pub ionising_stars_pc3: f64,
+    /// Expected glowing nebulae in the patch volume now (steady state: rate
+    /// times how long each stays visible). Counts, not placements.
+    pub expected_planetary_nebulae: f64,
+    pub expected_cc_remnants: f64,
+    pub expected_ia_remnants: f64,
+    pub expected_ionising_stars: f64,
     pub cohorts: Vec<CohortState>,
 }
 
@@ -306,6 +319,21 @@ pub fn conditions(model: &PatchModel, site: &Site) -> Conditions {
         })
         .sum();
 
+    let g = glow_rates(model, &cohorts, t);
+    let v = site.volume_pc3();
+    let pn_life = nebula::planetary_fades_after(
+        g.envelope_msun * MSUN_KG,
+        model.glows.ambient_h_m3,
+        &nebula::PnSettings::default(),
+    );
+    let (cc_remnants, ia_remnants) = nebula::expected_remnants(
+        cc,
+        ia_rate,
+        model.glows.ambient_h_m3,
+        v,
+        &nebula::SnrSettings::default(),
+    );
+
     let rocky =
         feh_ism_reaches(model, r, model.rocky_feh).and_then(|at| (at < t).then_some(t - at));
 
@@ -327,7 +355,81 @@ pub fn conditions(model: &PatchModel, site: &Site) -> Conditions {
         ia_sn_so_far_pc3: tidy(ia_so_far),
         mean_birth_mass_msun: tidy(mean_mass),
         cc_sn_per_msun: tidy(cc_per_msun),
+        wd_birth_gyr_pc3: tidy(g.wd_rate),
+        pn_envelope_msun: tidy(g.envelope_msun),
+        ionising_stars_pc3: tidy(g.ionising),
+        expected_planetary_nebulae: tidy(nebula::expected_count(g.wd_rate, pn_life, v)),
+        expected_cc_remnants: tidy(cc_remnants),
+        expected_ia_remnants: tidy(ia_remnants),
+        expected_ionising_stars: tidy(g.ionising * v),
         cohorts,
+    }
+}
+
+struct GlowRates {
+    wd_rate: f64,
+    envelope_msun: f64,
+    ionising: f64,
+}
+
+/// Dying and massive stars from the cohorts. A cohort forms its stars at a
+/// steady rate n / span over its span, so stars of mass M die now if their
+/// lifetime falls between the cohort's youngest and oldest ages: the death
+/// rate is (n / span) x the IMF share in that mass range. Stars alive now of
+/// mass M are (n / span) x pdf(M) x the part of the span younger than their
+/// lifetime. Mass bins are 64 per range, log spaced.
+fn glow_rates(model: &PatchModel, cohorts: &[CohortState], t: f64) -> GlowRates {
+    let g = &model.glows;
+    let imf = &model.imf;
+    let cdf = |x: f64| imf.cdf(x).expect("numeric");
+    let life = |mass: f64| g.sun_life_gyr * m::pow(mass, -g.lifetime_slope);
+    let mass_at = |life_gyr: f64| m::pow(life_gyr / g.sun_life_gyr, -1.0 / g.lifetime_slope);
+    let cc_min = model.cc_sn_min_mass;
+    let top = 150.0_f64;
+    const BINS: usize = 64;
+    let (mut wd_rate, mut shed, mut ionising) = (0.0, 0.0, 0.0);
+    for c in cohorts {
+        let span = c.to_gyr - c.from_gyr;
+        if span <= 0.0 || c.density_pc3 <= 0.0 {
+            continue;
+        }
+        let per_gyr = c.density_pc3 / span;
+        let young = (t - c.to_gyr).max(1e-6);
+        let old = t - c.from_gyr;
+        // Dying now, below the core-collapse floor: white dwarfs.
+        let lo = mass_at(old);
+        let hi = mass_at(young).min(cc_min);
+        if hi > lo {
+            let step = m::ln(hi / lo) / BINS as f64;
+            for i in 0..BINS {
+                let a = lo * m::exp(step * i as f64);
+                let b = lo * m::exp(step * (i + 1) as f64);
+                let share = cdf(b) - cdf(a);
+                let mid = m::sqrt(a * b);
+                let rate = per_gyr * share;
+                wd_rate += rate;
+                shed += rate * (mid - (g.wd_a * mid + g.wd_b)).max(0.0);
+            }
+        }
+        // Alive now and ionising.
+        let lo = g.ionising_min_msun;
+        if top > lo {
+            let step = m::ln(top / lo) / BINS as f64;
+            for i in 0..BINS {
+                let a = lo * m::exp(step * i as f64);
+                let b = lo * m::exp(step * (i + 1) as f64);
+                let tau = life(m::sqrt(a * b));
+                // Birth times inside both the cohort and the last tau.
+                let born_from = c.from_gyr.max(t - tau);
+                let overlap = (c.to_gyr.min(t) - born_from).max(0.0);
+                ionising += per_gyr * (cdf(b) - cdf(a)) * overlap;
+            }
+        }
+    }
+    GlowRates {
+        wd_rate,
+        envelope_msun: if wd_rate > 0.0 { shed / wd_rate } else { 0.0 },
+        ionising,
     }
 }
 
@@ -368,6 +470,14 @@ pub fn patch_envelope(model: &PatchModel, address: Address, site: &Site) -> (Env
         ("patch.ia_sn_gyr_pc3", c.ia_sn_gyr_pc3),
         ("patch.sterilising_sn_per_gyr", c.sterilising_sn_per_gyr),
         ("patch.encounters_per_myr", c.encounters_per_myr),
+        ("patch.wd_birth_gyr_pc3", c.wd_birth_gyr_pc3),
+        ("patch.ionising_stars_pc3", c.ionising_stars_pc3),
+        (
+            "patch.expected_planetary_nebulae",
+            c.expected_planetary_nebulae,
+        ),
+        ("patch.expected_cc_remnants", c.expected_cc_remnants),
+        ("patch.expected_ia_remnants", c.expected_ia_remnants),
     ] {
         facts.insert(k.to_string(), f(x));
     }
