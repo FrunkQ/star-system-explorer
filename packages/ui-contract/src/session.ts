@@ -126,6 +126,8 @@ export interface ViewSession {
   readWorldStack(by: { body?: string; fixture?: string }): Promise<{ ok: true; result: WorldStackRead } | { ok: false; code: string; message: string }>;
   /** A world's six level-0 surface tiles (S1, at the GM's disclosure), through resolved_system. Heavy: about 8 MB and a second or more. */
   surfaceTiles(system: string, body: string): Promise<{ ok: true; tiles: SurfaceTile[]; refused: Json[]; regime?: string } | { ok: false; code: string; message: string }>;
+  /** A world's one climate (W7a), from a quick survey (kernel `survey_surface`, about half a second, cached by the kernel); GM only. */
+  surveyClimate(system: string, body: string): Promise<{ ok: true; climate: import("./climate.ts").ClimateSummary } | { ok: false; code: string; message: string }>;
   /** The open universe as a document to keep (U10, kernel `export_chronicle`); GM only. */
   exportChronicle(): Promise<{ ok: true; export: Json } | { ok: false; code: string; message: string }>;
   /** Replace the open universe with a kept one (U10, kernel `import_chronicle`). */
@@ -549,6 +551,15 @@ export class Session implements ViewSession {
     if (r.type !== "system_resolved") return { ok: false, code: String(r.code ?? "unexpected"), message: String(r.message ?? JSON.stringify(r)) };
     const x = r as unknown as { tiles?: SurfaceTile[]; refused?: Json[]; surfaces?: { address: string; regime_label?: string }[] };
     return { ok: true, tiles: x.tiles ?? [], refused: x.refused ?? [], regime: x.surfaces?.find((s2) => s2.address === body)?.regime_label };
+  }
+
+  async surveyClimate(system: string, body: string): Promise<{ ok: true; climate: import("./climate.ts").ClimateSummary } | { ok: false; code: string; message: string }> {
+    if (this.seat.authority !== "gm") return { ok: false, code: "not_gm", message: "only the game master surveys a world" };
+    // quick: the Orbit level, the same world the globe shows; limit 1: the feature register is not wanted here.
+    const r = await this.#call({ op: "survey_surface", system, body, quick: true, limit: 1 });
+    if (r.type !== "surface_surveyed") return { ok: false, code: String(r.code ?? "unexpected"), message: String(r.message ?? JSON.stringify(r)) };
+    const c = (r as unknown as { survey?: { climate?: import("./climate.ts").ClimateSummary } }).survey?.climate;
+    return c ? { ok: true, climate: c } : { ok: false, code: "no_climate", message: "this world has no climate in its survey" };
   }
 
   /** The open universe as a document to keep (kernel `export_chronicle`, `sse.chronicle-export/1`); GM only. Open branches are not in it. */
