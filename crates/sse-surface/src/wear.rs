@@ -46,6 +46,15 @@ pub struct WearSettings {
     pub dune_pressure_bar: f64,
     pub dune_slope: f64,
     pub fill_epsilon_m: f64,
+    /// Sediment reaching the sea builds out a shelf to this depth below sea
+    /// level, then spills to deeper water (the mean shelf break, about 130 m;
+    /// Kennett 1982, Marine Geology).
+    #[serde(default = "shelf_depth")]
+    pub shelf_depth_m: f64,
+}
+
+fn shelf_depth() -> f64 {
+    130.0
 }
 
 /// When the world had surface water, and how much.
@@ -99,6 +108,8 @@ pub struct Wear {
     /// In a filled depression (a lake when wet, a dry basin otherwise).
     pub pit: Vec<bool>,
     pub incision_m: Vec<f64>,
+    /// Sediment still lying where it was laid by the epoch, metres: rivers
+    /// and creep strip it before they cut the rock beneath.
     pub sediment_m: Vec<f64>,
     pub glaciated: Vec<bool>,
     pub dunes: Vec<bool>,
@@ -191,6 +202,85 @@ fn route(g: &Grid, nb: &[[usize; 4]], h: &[f64], sea: Option<f64>, eps: f64) -> 
     }
 }
 
+const RHO_ROCK: f64 = 2700.0;
+const RHO_SEDIMENT: f64 = 2300.0;
+const RHO_MANTLE: f64 = 3300.0;
+const YOUNG_PA: f64 = 7.0e10;
+const POISSON: f64 = 0.25;
+/// The base of the elastic lithosphere sits near the 450 °C isotherm
+/// (McNutt 1984, JGR 89, 11180; Watts 2001, Isostasy and Flexure of the
+/// Lithosphere), at conductivity about 3 W/m/K.
+const T_ELASTIC_K: f64 = 723.15;
+const K_ROCK: f64 = 3.0;
+
+/// How fully the lithosphere answers a load the size of the wearing grid's
+/// features (two cells), 0 to 1: Airy isostasy filtered by flexure,
+/// C = 1 / (1 + D k⁴ / (ρ_m g)), with D = E Te³ / 12(1 − ν²) and the
+/// elastic thickness Te from today's heat flow (Turcotte and Schubert 2014,
+/// Geodynamics, 3.17). Earth's continents come out about three quarters
+/// compensated at that size; Mars's thick, cold lid barely at all.
+pub fn compensation(env: &SurfaceEnvelope, cells: usize) -> f64 {
+    let q = env
+        .timeline
+        .last()
+        .map(|x| x.heat_flow_w_m2[1])
+        .unwrap_or(0.0);
+    if q <= 0.0 {
+        return 0.0;
+    }
+    let te = (K_ROCK * (T_ELASTIC_K - env.t_surface_now_k).max(0.0) / q).max(1.0);
+    let d = YOUNG_PA * te * te * te / (12.0 * (1.0 - POISSON * POISSON));
+    let r = env.reference_radius_m.max(1.0);
+    let cell = m::sqrt(4.0 * m::PI * r * r / cells.max(1) as f64);
+    let k = 2.0 * m::PI / (2.0 * cell);
+    let g = env.gravity_m_s2.max(1e-3);
+    1.0 / (1.0 + d * k * k * k * k / (RHO_MANTLE * g))
+}
+
+/// What rivers bring to the sea builds a shelf: each mouth's load fills the
+/// sea floor up to `top` (the shelf break below sea level), nearest cells
+/// first through the sea, and spreads on until it is laid. Nothing is lost:
+/// a load that fills its whole sea to the shelf stays at the mouth.
+fn shelf_out(
+    nb: &[[usize; 4]],
+    h: &[f64],
+    sea_level: f64,
+    top: f64,
+    area: f64,
+    flux: &[f64],
+    put: &mut [f64],
+) {
+    let nc = h.len();
+    let mut mark = vec![usize::MAX; nc];
+    for mouth in 0..nc {
+        let mut rest = flux[mouth];
+        if rest <= 0.0 || h[mouth] >= sea_level {
+            continue;
+        }
+        // Breadth first through the sea from the mouth.
+        let mut queue = std::collections::VecDeque::from([mouth]);
+        mark[mouth] = mouth;
+        while let Some(c) = queue.pop_front() {
+            let room = ((top - h[c]) * area - put[c]).max(0.0);
+            let d = rest.min(room);
+            put[c] += d;
+            rest -= d;
+            if rest <= 0.0 {
+                break;
+            }
+            for &x in &nb[c] {
+                if mark[x] != mouth && h[x] + put[x] / area < sea_level {
+                    mark[x] = mouth;
+                    queue.push_back(x);
+                }
+            }
+        }
+        if rest > 0.0 {
+            put[mouth] += rest;
+        }
+    }
+}
+
 /// Heights on a cell grid for wearing: the plate history's when its plates
 /// moved, else the regime sketch sampled at the same cells (raw datum).
 pub fn base_heights(
@@ -231,6 +321,7 @@ pub fn wear(
     climate: &WorldClimate,
     from_myr: f64,
     to_myr: f64,
+    steady: bool,
 ) -> Wear {
     let w = &s.wear;
     let g = Grid::new(n);
@@ -259,9 +350,12 @@ pub fn wear(
         .collect();
     // The one climate's rain in the wet epochs, m a year.
     let rain: Vec<f64> = lat.iter().map(|la| climate.precip_m_yr(*la)).collect();
+    let comp = compensation(env, g.len());
     let mut h = heights0.to_vec();
     let mut eroded_total = 0.0;
     let mut deposited = vec![0.0; nc];
+    // Sediment still lying where it was laid: later erosion strips it first.
+    let mut standing = vec![0.0; nc];
     let mut epochs = vec![];
     let mut last_q = vec![0.0; nc];
     let mut glaciated = vec![false; nc];
@@ -281,6 +375,8 @@ pub fn wear(
             None
         };
         sl_now = sl;
+        let start = h.clone();
+        let mut laid = vec![0.0; nc];
         net = route(&g, &nb, &h, sl, w.fill_epsilon_m);
         let dt = dt_myr * 1.0e6;
         let mut eroded_epoch = 0.0;
@@ -322,8 +418,14 @@ pub fn wear(
             let mut put = vec![0.0; nc];
             for &c in net.order.iter().rev() {
                 let rc = net.receiver[c];
-                let in_sea = sl.is_some_and(|x| h[c] < x);
-                let room = if rc == c || in_sea {
+                let in_sea = sl.is_some_and(|x| old[c] < x);
+                // Room is the depression as it stood before this epoch's
+                // cutting: a cell's own incision is not a hole to refill.
+                if in_sea {
+                    // Laid down in the sea below (shelf_out, after the loop).
+                    continue;
+                }
+                let room = if rc == c {
                     f64::INFINITY
                 } else {
                     ((net.filled[c] - h[c]) * area).max(0.0)
@@ -335,8 +437,31 @@ pub fn wear(
                     flux[rc] += rest;
                 }
             }
+            if let Some(x) = sl {
+                shelf_out(&nb, &old, x, x - w.shelf_depth_m, area, &flux, &mut put);
+            }
+            // Net worn off each cell: its cut less what was laid back in it.
+            let off: Vec<f64> = (0..nc)
+                .map(|c| (old[c] - h[c] - put[c] / area).max(0.0))
+                .collect();
             for c in 0..nc {
-                h[c] += put[c] / area;
+                // Sediment left lying: what was laid less what was cut, the
+                // old cover going first.
+                let cut = (old[c] - h[c]).max(0.0);
+                standing[c] = (standing[c] + put[c] / area - cut).max(0.0);
+            }
+            if !steady {
+                // The crust answers its unloading (isostasy, filtered by
+                // flexure): a rebound for what was worn off.
+                for c in 0..nc {
+                    h[c] += comp * RHO_ROCK / RHO_MANTLE * off[c];
+                }
+            }
+            for c in 0..nc {
+                // What this epoch left lying here, net of its own cut.
+                laid[c] = (put[c] / area - (old[c] - h[c]).max(0.0)).max(0.0)
+                    * (1.0 - comp * RHO_SEDIMENT / RHO_MANTLE);
+                h[c] += put[c] / area * (1.0 - comp * RHO_SEDIMENT / RHO_MANTLE);
                 deposited[c] += put[c];
             }
             last_q = q;
@@ -359,6 +484,23 @@ pub fn wear(
             }
             for c in 0..nc {
                 h[c] += dh[c];
+                // Creep strips the cover where slopes lower and lays it
+                // where they fill.
+                standing[c] = (standing[c] + dh[c]).max(0.0);
+            }
+        }
+        if steady {
+            // On a world whose plates move, the plate history's heights are
+            // already the balance of uplift and wear (S2 wears its belts
+            // down), so the land is raised as fast as it is worn here
+            // (steady state, Whipple and Tucker 1999): rivers carry the load
+            // and lay it down, but the continents keep their height and
+            // shape, and rise only by what is laid on them (creep included:
+            // the plate heights already hold it).
+            for c in 0..nc {
+                if sl.is_none_or(|x| start[c] >= x) {
+                    h[c] = start[c] + laid[c];
+                }
             }
         }
         eroded_total += eroded_epoch;
@@ -417,7 +559,7 @@ pub fn wear(
             .map(|c| final_net.filled[c] - h[c] > 2.0 * w.fill_epsilon_m)
             .collect(),
         incision_m: (0..nc).map(|c| (heights0[c] - h[c]).max(0.0)).collect(),
-        sediment_m: deposited.iter().map(|d| d / area).collect(),
+        sediment_m: standing,
         dunes: (0..nc)
             .map(|c| {
                 land(c)
@@ -453,5 +595,15 @@ pub fn wear_world(
     } else {
         magma_end_myr.min(to)
     };
-    wear(s, env, plates.n, &h0, water, climate, from, to)
+    wear(
+        s,
+        env,
+        plates.n,
+        &h0,
+        water,
+        climate,
+        from,
+        to,
+        plates.steps > 0,
+    )
 }

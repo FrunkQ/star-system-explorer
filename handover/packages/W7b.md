@@ -55,7 +55,7 @@ Weather review section 8, package W7b, under the processes-not-classes rule. Rea
 ## Goldens changed (on purpose)
 surface-cover, surface-wear, weather, weather-storms, weather-swap, weather-aerosols and the survey and weather lines of
 contract. Reason: the Rhines wind now follows the thermal wind, surface fixtures carry their real spins and tilts, and
-formation and V3 worlds carry theirs.
+formation and V3 worlds carry theirs. Main (with S3b's sediment budget) was merged in first, so this is one bless for both.
 
 ## Known limits (docs/fudges.md, W7b table)
 - The strength curve of super-rotation is ours (the paper gives only the onset).

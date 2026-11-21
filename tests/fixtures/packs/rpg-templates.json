@@ -7,6 +7,7 @@
   "licence": "Apache-2.0",
   "provides": {
     "other": {
+      "tags": {"about": "Tags this pack names (tags design, TG1): labels only, never an input to physics.", "groups": [], "tags": [{"id": "ship", "label": "ship"}, {"id": "raider", "label": "raider"}, {"id": "crewed", "label": "crewed"}, {"id": "wreck", "label": "wreck"}]},
       "record": {
         "kept": [
           {"id": "ship.hull", "shape": "number", "range": [0.0, 100.0], "default": 100, "tier": "scanned",
