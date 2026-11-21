@@ -7,6 +7,7 @@
   "licence": "Apache-2.0",
   "provides": {
     "other": {
+      "tags": {"about": "Tags this pack names (tags design, TG1): labels only, never an input to physics.", "groups": [], "tags": [{"id": "habitable", "label": "habitable"}, {"id": "garden", "label": "garden"}, {"id": "roche-danger", "label": "roche danger"}, {"id": "port", "label": "port"}]},
       "rules": [
         { "id": "habitable.v1", "tag": "habitable", "applies_to": ["body"],
           "when": { "if": "all", "of": [

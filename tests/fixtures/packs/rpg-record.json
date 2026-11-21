@@ -183,6 +183,32 @@
       "describes": "whom an actor or place answers to"
      }
     ]
+   },
+   "tags": {
+    "about": "Tags this pack names (tags design, TG1): labels only, never an input to physics.",
+    "groups": [],
+    "tags": [
+     {
+      "id": "habitable",
+      "label": "habitable"
+     },
+     {
+      "id": "port",
+      "label": "port"
+     },
+     {
+      "id": "hazard",
+      "label": "hazard"
+     },
+     {
+      "id": "garden",
+      "label": "garden"
+     },
+     {
+      "id": "ancient-ruins",
+      "label": "ancient ruins"
+     }
+    ]
    }
   }
  }

@@ -13,7 +13,12 @@ export type Response = { "type": "hello", kernel_version: string, protocol: stri
  * Set when a universe is open and the stack changed: the change is
  * chronicled, so it moves the state hash and replays.
  */
-adopted?: StackAdopted, } | { "type": "stack_rejected", report: string, issues: Array<string>, } | { "type": "universe_opened", root: string, manifest_id: string, } | { "type": "authored", event_id: string, affected: Array<string>, state_hash: string, } | { "type": "history", events: Array<EventSummary>, } | { "type": "state_hash", hash: string, } | { "type": "derived", values: { [key in string]: DerivedValue }, work_units: number, } | { "type": "explanation", explanation: unknown, fictional: boolean, } | { "type": "drawn", 
+adopted?: StackAdopted, } | { "type": "stack_rejected", report: string, issues: Array<string>, } | { "type": "universe_opened", root: string, manifest_id: string, } | { "type": "authored", event_id: string, affected: Array<string>, state_hash: string, 
+/**
+ * A freely typed tag (`tag.<name>`) the stack did not declare: it
+ * joined the campaign's own tags (TG1).
+ */
+declared_tag?: string, } | { "type": "history", events: Array<EventSummary>, } | { "type": "state_hash", hash: string, } | { "type": "derived", values: { [key in string]: DerivedValue }, work_units: number, } | { "type": "explanation", explanation: unknown, fictional: boolean, } | { "type": "drawn", 
 /**
  * The raw u64 as 16 hex digits (JSON numbers cannot hold it exactly).
  */
@@ -67,4 +72,4 @@ record_hash: string, } | { "type": "kept_set", change_id: string, previous: unkn
  * The date read, seconds; absent for "latest" (no date given and no
  * `system.now_year`).
  */
-at_s?: number, facts: unknown, evidence: unknown, spec?: unknown, surfaces: unknown[], tiles: unknown[], refused: unknown[], clouds?: unknown[], } | { "type": "classify_previewed", scheme: string, atlas_hash: string, at_s?: number, bodies: unknown[], unclassified: number, failing_examples: Array<string>, } | { "type": "codes", sheet: string, readings: unknown[], } | { "type": "sector_import", import: unknown, summary: string, events: Array<string>, state_hash?: string, } | { "type": "sector_export", text: string, written: number, skipped: Array<string>, } | { "type": "error", code: string, message: string, } | { "type": "halo_celled", cell: unknown, } | { "type": "star_celled", cell: unknown, } | { "type": "star_promoted", address: string, already: boolean, event_id?: string, description: unknown, state_hash: string, };
+at_s?: number, facts: unknown, evidence: unknown, spec?: unknown, surfaces: unknown[], tiles: unknown[], refused: unknown[], clouds?: unknown[], } | { "type": "classify_previewed", scheme: string, atlas_hash: string, at_s?: number, bodies: unknown[], unclassified: number, failing_examples: Array<string>, } | { "type": "codes", sheet: string, readings: unknown[], } | { "type": "sector_import", import: unknown, summary: string, events: Array<string>, state_hash?: string, } | { "type": "sector_export", text: string, written: number, skipped: Array<string>, } | { "type": "error", code: string, message: string, } | { "type": "halo_celled", cell: unknown, } | { "type": "star_celled", cell: unknown, } | { "type": "campaign_tags_listed", pack: unknown, } | { "type": "star_promoted", address: string, already: boolean, event_id?: string, description: unknown, state_hash: string, };
