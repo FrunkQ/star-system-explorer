@@ -418,10 +418,12 @@ fn the_gm_overrules_a_rule_tag_in_scenes_conditions_and_sifters() {
         parent: state.facts[&a.parent().unwrap()].clone(),
         ..Default::default()
     };
-    let t =
-        k.observe
-            .rules
-            .apply_authored(&subject, &Default::default(), &sse_sift::authored_tags(f));
+    let t = k.observe.rules.apply_authored(
+        &subject,
+        &Default::default(),
+        &sse_sift::authored_tags(f),
+        None,
+    );
     assert_eq!(t["habitable"].rule, sse_sift::AUTHORED);
     assert_eq!(t["habitable"].evidence[0].field, "tag.habitable");
     assert_eq!(
