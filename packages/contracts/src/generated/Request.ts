@@ -39,7 +39,7 @@ pins?: unknown, } | { "op": "read_world_stack", body?: string,
 /**
  * `earth`, `europa`, `mars`, `tarn`, `titan` or `venus`.
  */
-fixture?: string, stack?: unknown, } | { "op": "weather", want: string, world?: string, system?: string, body?: string, at_s?: bigint, conditions?: unknown, day?: number, tile?: [number, number, number, number], n?: number, lat?: number, lon?: number, pins?: unknown[], 
+fixture?: string, stack?: unknown, } | { "op": "weather", want: string, world?: string, system?: string, body?: string, at_s?: number, conditions?: unknown, day?: number, tile?: [number, number, number, number], n?: number, lat?: number, lon?: number, pins?: unknown[], 
 /**
  * Smoke, ash and smog sources (volcanoes, eruptions, impacts,
  * fires, industry), `sse_weather::aerosols::Sources`.

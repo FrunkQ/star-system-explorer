@@ -385,7 +385,7 @@ pub enum Request {
         #[ts(optional)]
         body: Option<String>,
         #[serde(default)]
-        #[ts(optional)]
+        #[ts(optional, type = "number")]
         at_s: Option<i64>,
         #[serde(default)]
         #[ts(optional, type = "unknown")]
