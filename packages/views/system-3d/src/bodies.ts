@@ -24,6 +24,60 @@ export function fromSystemScene(scene: SystemScene, mark: (s: SceneSubject) => M
     .map((s) => ({ id: s.address, parent: s === star ? null : (s.parent ?? star?.address ?? null), name: s.label, a_m: s.orbit ? s.orbit.a_au * KM_PER_AU * 1000 : null, phase_deg: s.orbit?.phase_deg ?? 0, phase_known: true, mark: mark(s) }));
 }
 
+/** A belt, disc or cloud round the star: drawn flat (a disc) or as a shell all round (a sphere, the Oort cloud). */
+export interface Band3D {
+  id: string;
+  name: string;
+  a_in_m: number;
+  a_out_m: number;
+  shape: "disc" | "sphere";
+}
+
+export function bandsFromScene(scene: SystemScene): Band3D[] {
+  const star = primaryOf(scene);
+  return scene.subjects
+    .filter((s) => s.kind === "belt" && s.band_au && (!s.parent || s.parent === star?.address))
+    .map((s) => ({ id: s.address, name: s.label, a_in_m: s.band_au![0] * KM_PER_AU * 1000, a_out_m: s.band_au![1] * KM_PER_AU * 1000, shape: s.shape ?? "disc" }));
+}
+
+/**
+ * The lines that draw a flat band in its frame (display units, centre at the origin): its inner and outer edge in
+ * the plane. `dist` maps metres to display units; nothing is drawn past `cap`.
+ */
+export function bandLines(b: Band3D, dist: (a_m: number) => number, cap: number, seg = 96): [number, number, number][][] {
+  if (b.shape !== "disc") return [];
+  const circle = (r: number): [number, number, number][] => {
+    const out: [number, number, number][] = [];
+    for (let i = 0; i <= seg; i++) {
+      const a = (i / seg) * 2 * Math.PI;
+      out.push([r * Math.cos(a), r * Math.sin(a), 0]);
+    }
+    return out;
+  };
+  return [circle(Math.min(cap, dist(b.a_in_m))), circle(Math.min(cap, dist(b.a_out_m)))];
+}
+
+/**
+ * A shell (the Oort cloud) as a sparse round haze of points (night-sky design section 10): spread evenly over the
+ * sphere by the golden angle, at radii from its inner edge outward to `cap`. Deterministic: the same shell always
+ * draws the same points.
+ */
+export function shellDots(b: Band3D, dist: (a_m: number) => number, cap: number, n = 420): [number, number, number][] {
+  if (b.shape !== "sphere") return [];
+  const r0 = Math.min(cap - 1, dist(b.a_in_m));
+  const golden = Math.PI * (3 - Math.sqrt(5));
+  const out: [number, number, number][] = [];
+  for (let i = 0; i < n; i++) {
+    const z = 1 - (2 * (i + 0.5)) / n;
+    const ring = Math.sqrt(1 - z * z);
+    const t = i * golden;
+    // Depth through the shell from a second low-discrepancy sequence, so the haze has thickness without randomness.
+    const r = r0 + (cap - r0) * ((i * 0.618033988749895) % 1);
+    out.push([r * ring * Math.cos(t), r * ring * Math.sin(t), r * z]);
+  }
+  return out;
+}
+
 export function fromPlayerScene(scene: PlayerScene, field: string, mark?: (s: PlayerSubject) => Mark): Body3D[] {
   const out: Body3D[] = [];
   const kids = new Map<string, number>();
@@ -49,6 +103,8 @@ export interface FrameLayout {
   ring: Map<string, number>;
   inner_m: number;
   outer_m: number;
+  /** Metres from the centre to display units, the scale the rings use. */
+  dist: (a_m: number) => number;
 }
 
 /** Display units: orbits between 1.5 and 10, log-spaced. */
@@ -69,7 +125,7 @@ export function layout(bodies: readonly Body3D[], centreId: string): FrameLayout
     ring.set(b.id, d);
     nodes.push({ id: b.id, parent: centre.id, local: [d * Math.cos(t), d * Math.sin(t), 0] });
   }
-  return { centre, placed, unplaced, nodes, ring, inner_m: inner, outer_m: outer };
+  return { centre, placed, unplaced, nodes, ring, inner_m: inner, outer_m: outer, dist: r };
 }
 
 export const hasChildren = (bodies: readonly Body3D[], id: string) => bodies.some((b) => b.parent === id && b.a_m !== null);

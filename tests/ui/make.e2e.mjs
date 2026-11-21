@@ -63,7 +63,7 @@ try {
     await report.waitFor({ timeout: 8000 });
     assert.match(await report.innerText(), /1 system, 3 bodies, 1 constructs, 85 facts/);
     assert.equal(await report.getAttribute("data-outside"), "1");
-    assert.equal(await report.locator("tr[data-within=false] td").first().innerText(), "Moon");
+    assert.equal(await report.locator("tr[data-within=false] td").first().innerText(), "Moon (sample)");
     await dlg.locator(".preview .body").first().waitFor({ timeout: 8000 });
     assert.ok(await dlg.locator('.preview .body[aria-label^="Earth"]').count(), "Earth on the preview chart");
     await shot(gm, "v13-import");

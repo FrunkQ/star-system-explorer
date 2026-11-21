@@ -10,7 +10,7 @@
 <script lang="ts">
   import { onDestroy } from "svelte";
   import { basis, project, startGpu, tree, type Camera, type Gpu, type Vec3 } from "../../../renderer/src/index.ts";
-  import { hasChildren, layout, type Body3D } from "./bodies.ts";
+  import { bandLines, hasChildren, layout, shellDots, type Band3D, type Body3D } from "./bodies.ts";
 
   let {
     bodies,
@@ -20,7 +20,8 @@
     tier = "auto",
     labels = true,
     distanceNote = "",
-  }: { bodies: Body3D[]; selection: string | null; onselect: (id: string) => void; title: string; tier?: string; labels?: boolean; distanceNote?: string } = $props();
+    bands = [],
+  }: { bands?: Band3D[]; bodies: Body3D[]; selection: string | null; onselect: (id: string) => void; title: string; tier?: string; labels?: boolean; distanceNote?: string } = $props();
 
   const root = $derived(bodies.find((b) => b.parent === null)?.id ?? bodies[0]?.id ?? "");
   let frame = $state<string | null>(null);
@@ -100,6 +101,10 @@
     return [Math.fround(n.local[0] - cam.eye[0]), Math.fround(n.local[1] - cam.eye[1]), Math.fround(n.local[2] - cam.eye[2])];
   };
   const shown = $derived(lay ? [lay.centre, ...lay.placed] : []);
+  // Belts and the Oort cloud belong to the star's frame; a sphere far out is drawn just past the outermost orbit.
+  const bandLocal = $derived(lay && centreId === root ? bands.flatMap((b) => bandLines(b, lay!.dist, 11.5, SEG).map((pts) => ({ b, pts }))) : []);
+  const shellLocal = $derived(lay && centreId === root ? bands.map((b) => ({ b, pts: shellDots(b, lay!.dist, 14) })).filter((x) => x.pts.length) : []);
+  const rel = (p: [number, number, number]): Vec3 => [Math.fround(p[0] - cam.eye[0]), Math.fround(p[1] - cam.eye[1]), Math.fround(p[2] - cam.eye[2])];
   const pins = $derived(shown.map((b) => ({ b, p: project(t, cam, b.id) })));
 
   let canvas: HTMLCanvasElement | undefined = $state();
@@ -133,13 +138,19 @@
     const ink = token("--sse-ink");
     const faint = token("--sse-ink-faint", "--sse-ink-muted");
     const accent = token("--sse-accent");
+    // A shell's haze is faint ink: it surrounds everything and must not crowd the orbits.
+    const haze = token("--sse-ink-faint", "--sse-ink-muted");
     const ground = token("--sse-ground", "--sse-ground-raised");
     const colour = (b: Body3D) => b.mark?.colour ?? ink;
     if (using === "gpu" && gpu) {
       const { f, u } = basis(cam.eye, cam.look);
       gpu.draw({
         items: shown.map((b) => ({ id: b.id, rel: relOf(b.id), radius: sizeOf(b, b === lay!.centre), colour: colour(b), ring: b.mark?.ring ?? false, selected: b.id === selection })),
-        rings: lay.placed.map((b) => ({ points: ringPoints(lay!.ring.get(b.id)!), colour: b.id === selection ? accent : faint })),
+        rings: [
+          ...bandLocal.map(({ b, pts }) => ({ points: pts.map(rel), colour: b.id === selection ? accent : faint })),
+          ...lay.placed.map((b) => ({ points: ringPoints(lay!.ring.get(b.id)!), colour: b.id === selection ? accent : faint })),
+        ],
+        dots: shellLocal.map(({ b, pts }) => ({ points: pts.map(rel), colour: b.id === selection ? accent : haze })),
         forward: f,
         up: u,
         fovY: cam.fovY,
@@ -154,6 +165,29 @@
       const g = canvas2d.getContext("2d")!;
       g.setTransform(dpr, 0, 0, dpr, 0, 0);
       g.clearRect(0, 0, w, h);
+      // Belts and the Oort cloud first, dotted and faint, under the orbits.
+      g.setLineDash([2, 4]);
+      for (const { b, pts } of bandLocal) {
+        g.beginPath();
+        let started = false;
+        for (const q of pts) {
+          const p = project(t, cam, lay.centre.id, q);
+          if (!p) continue;
+          if (started) g.lineTo(p.x, p.y);
+          else (g.moveTo(p.x, p.y), (started = true));
+        }
+        g.strokeStyle = b.id === selection ? accent : faint;
+        g.lineWidth = 1;
+        g.stroke();
+      }
+      g.setLineDash([]);
+      for (const { b, pts } of shellLocal) {
+        g.fillStyle = b.id === selection ? accent : haze;
+        for (const q of pts) {
+          const p = project(t, cam, lay.centre.id, q);
+          if (p) g.fillRect(p.x - 0.75, p.y - 0.75, 1.5, 1.5);
+        }
+      }
       // Orbits as projected polylines, in the same camera-relative arithmetic.
       for (const b of lay.placed) {
         const r = lay.ring.get(b.id)!;

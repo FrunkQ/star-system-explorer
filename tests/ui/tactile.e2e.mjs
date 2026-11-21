@@ -7,7 +7,7 @@
 import { spawn } from "node:child_process";
 import { mkdirSync } from "node:fs";
 import assert from "node:assert/strict";
-import { go, more } from "./nav.mjs";
+import { desk, go, more } from "./nav.mjs";
 import { createRequire } from "node:module";
 
 const { chromium, firefox, webkit } = createRequire(import.meta.url)("playwright");
@@ -89,6 +89,51 @@ try {
       }
       await page.waitForTimeout(400);
       assert.match(await ruler.locator(".tl").first().innerText(), /Year|day/);
+
+      // Switches at rest (the desk, the depth): every option's first letter is uncovered, and the chosen one carries
+      // its own ink. A trailer capture once showed "uild" for Build, the sliding ink measured too wide.
+      const switchesClear = (when) =>
+        page.evaluate((when) => {
+          const bad = [];
+          for (const seg of document.querySelectorAll(".seg")) {
+            if (!seg.getClientRects().length) continue;
+            const ink = seg.querySelector("[data-ink]");
+            if (ink && getComputedStyle(ink).opacity !== "0") bad.push(`${seg.getAttribute("aria-label")}: sliding ink still showing at rest`);
+            const ir = ink && getComputedStyle(ink).opacity !== "0" ? ink.getBoundingClientRect() : null;
+            for (const b of seg.querySelectorAll("button")) {
+              const r = b.getBoundingClientRect();
+              const range = document.createRange();
+              range.selectNodeContents(b);
+              const t = range.getBoundingClientRect();
+              if (t.left < r.left - 0.5 || t.right > r.right + 0.5) bad.push(`${b.textContent}: text runs outside its button`);
+              const hit = document.elementFromPoint(t.left + 1.5, t.top + t.height / 2);
+              if (hit !== b) bad.push(`${b.textContent}: its first letter is covered (${hit?.className || hit?.tagName})`);
+              if (ir && b.getAttribute("aria-pressed") !== "true" && ir.right > t.left + 0.5 && ir.left < t.right - 0.5) bad.push(`${b.textContent}: the ink lies over its letters`);
+              if (b.getAttribute("aria-pressed") === "true" && getComputedStyle(b).backgroundColor === "rgba(0, 0, 0, 0)") bad.push(`${b.textContent}: chosen but not inked`);
+            }
+          }
+          // Nothing in the bar overlaps anything else in it (a long place name once ran under the kicker).
+          const items = [...document.querySelectorAll("header.bar > *, header.bar .place > *")].filter((e) => e.getClientRects().length && getComputedStyle(e).visibility !== "hidden");
+          for (const x of items)
+            for (const y of items) {
+              if (x === y || x.contains(y) || y.contains(x) || x.compareDocumentPosition(y) & Node.DOCUMENT_POSITION_PRECEDING) continue;
+              const a = x.getBoundingClientRect();
+              const c = y.getBoundingClientRect();
+              if (a.width && c.width && a.right > c.left + 1 && c.right > a.left + 1 && a.bottom > c.top + 1 && c.bottom > a.top + 1) bad.push(`bar: ${x.className || x.tagName} overlaps ${y.className || y.tagName}`);
+            }
+          return bad.map((x) => `${when}: ${x}`);
+        }, when);
+      for (const width of [1920, 1536, 1440, 1280, 1100, 390]) {
+        await page.setViewportSize({ width, height: 900 });
+        await page.waitForTimeout(100);
+        assert.deepEqual(await switchesClear(`${width} px`), []);
+      }
+      await page.setViewportSize({ width: 1440, height: 900 });
+      for (const d of ["Build", "Run", "Explore"]) {
+        await desk(page, d);
+        await page.waitForTimeout(500);
+        assert.deepEqual(await switchesClear(`after ${d}`), []);
+      }
       await context.close();
     }
     assert.deepEqual(errors, []);

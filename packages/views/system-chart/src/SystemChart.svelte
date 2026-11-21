@@ -6,8 +6,8 @@
   centre and its moons about it (handover/rendering-rules.md), in kilometres.
 -->
 <script lang="ts">
-  import { KM_PER_AU, asPlayers, distanceWords, lightWords, separation, hasLayer, hasTool, childrenOf, commitEdit, frameFor, legendFor, primaryOf, sig, subjectOf, type Json, type SceneSubject, type SystemScene, type ViewContext } from "../../../ui-contract/src/index.ts";
-  import { System3D, fromSystemScene } from "../../system-3d/src/index.ts";
+  import { KM_PER_AU, isShell, asPlayers, distanceWords, lightWords, separation, hasLayer, hasTool, childrenOf, commitEdit, frameFor, legendFor, primaryOf, sig, subjectOf, type Json, type SceneSubject, type SystemScene, type ViewContext } from "../../../ui-contract/src/index.ts";
+  import { System3D, bandsFromScene, fromSystemScene } from "../../system-3d/src/index.ts";
   import { ChartGround, HatchDefs, Hatch, Ink, Legend, Mark, Stamp, markExtent, SurveyGrid, distanceAt, easing, fitScale, motionMs, polar, radius } from "../../../chart-grammar/src/index.ts";
 
   let { ctx, scene, params }: { ctx: ViewContext; scene: SystemScene; params: Record<string, Json> } = $props();
@@ -67,9 +67,12 @@
     if (back) ctx.workspace.select(back);
   }
   const bands = $derived(frame ? [] : scene.subjects.filter((s) => s.band_au));
+  // A system read from a V3 save is authored there: its names (even "Earth") and values are the save's, not the physics'.
+  const authoredImport = $derived(!scene.fixture && scene.subjects.some((s) => s.stamps.includes("imported")));
   const scale = $derived(
     fitScale(
-      [...orbiting.map((s) => s.orbit!.a_au), ...bands.flatMap((b) => b.band_au!)],
+      // A sphere round the system (the Oort cloud) reaches far past everything else; the chart shows where it begins.
+      [...orbiting.map((s) => s.orbit!.a_au), ...bands.flatMap((b) => (isShell(b) ? [b.band_au![0]] : b.band_au!))],
       narrow ? 22 : 34,
       Math.max(60, Math.min(w, h) * (narrow ? 0.47 : 0.44) * zoom),
     ),
@@ -188,6 +191,7 @@
   // V6: the same frame in 3D (view only; edits stay on the 2D chart).
   let dims = $state<"2d" | "3d">("2d");
   const bodies3d = $derived(dims === "3d" ? fromSystemScene(scene, ctx.mark) : []);
+  const bands3d = $derived(dims === "3d" && on("zones") ? bandsFromScene(scene) : []);
   // Measure (V14): pick two bodies; the chart draws the line and says how far apart they are now.
   let measuring = $state(false);
   let picks = $state<string[]>([]);
@@ -214,7 +218,7 @@
 
 <div class="chart" bind:clientWidth={w} bind:clientHeight={h}>
   {#if dims === "3d"}
-    <System3D bodies={bodies3d} selection={ctx.workspace.selection} onselect={(id) => ctx.workspace.select(id)} title={scene.title} />
+    <System3D bodies={bodies3d} bands={bands3d} selection={ctx.workspace.selection} onselect={(id) => ctx.workspace.select(id)} title={scene.title} />
   {:else}
   <ChartGround>
     {#if w > 0 && h > 0}
@@ -241,6 +245,13 @@
           {@const r1 = r(b.band_au![1])}
           {#if b.kind === "zone"}
             <Ink circle={{ cx, cy, r: (r0 + r1) / 2 }} tone="zone" width={r1 - r0} />
+          {:else if isShell(b)}
+            <!-- A sphere seen from above: a haze from its inner edge out past the chart, not a ring in the plane. -->
+            {@const edge = Math.min(r1, Math.hypot(w, h))}
+            <!-- Its near and far sides lie over the whole system too, so the disc inside the inner edge is tinted, more faintly. -->
+            <circle class="shell-in" cx={cx} cy={cy} r={r0} />
+            <circle class="shell" cx={cx} cy={cy} r={(r0 + edge) / 2} stroke-width={Math.max(1, edge - r0)} data-shape="sphere" data-address={b.address} />
+            <Ink circle={{ cx, cy, r: r0 }} tone="muted" dash="dotted" />
           {:else}
             <Ink circle={{ cx, cy, r: (r0 + r1) / 2 }} tone="muted" dash="belt" />
           {/if}
@@ -258,8 +269,8 @@
           {/if}
         {/each}
         {#each on("zones") && on("labels") ? bands : [] as b (b.address)}
-          {@const [lx, ly] = polar(cx, cy, r(b.band_au![1]) + 10, b.kind === "zone" ? -62 : 58)}
-          <text class="band {b.kind}" x={lx} y={ly} aria-hidden="true">{label(b)}</text>
+          {@const [lx, ly] = polar(cx, cy, isShell(b) ? r(b.band_au![0]) + 14 : r(b.band_au![1]) + 10, b.kind === "zone" ? -62 : isShell(b) ? 132 : 58)}
+          <text class="band {b.kind}" class:sphere={isShell(b)} x={lx} y={ly} aria-hidden="true">{label(b)}{isShell(b) ? " · sphere" : ""}</text>
         {/each}
         {#each all as s, i (s.address)}
           {@const atCentre = s === centre}
@@ -348,6 +359,7 @@
       <p id="chart-drag-hint" class="sr">Drag along the radius, or press Page Up or Page Down, to move the orbit.</p>
       {#if problem}<p class="problem" role="alert">{problem}</p>{/if}
       <div class="legend">
+        {#if authoredImport}<span class="authored-import" data-authored-import><Stamp kind="authored" title="Every name and value here was written in a V3 save, not modelled by SSE4's physics. A body called Earth is the save's Earth, not the real one." /><span class="words">As written in a V3 save, not modelled</span></span>{/if}
         {#if scene.fixture}<Stamp kind="fixture" title="The sample system's inputs are fixture data; every derived value comes from the kernel's base-physics pack." />{/if}
         <span>Distances on a log scale{frame ? ", in kilometres" : ""}</span>
         {#if through}<span class="through" data-known-count={knownCount}>{L?.label}: {knownCount} of {bodyCount} known</span>{/if}
@@ -569,6 +581,30 @@
   .through {
     color: var(--sse-accent-ink);
   }
+  /* The legend is a caption laid over the chart: its words never take a tap meant for a body. */
+  .legend {
+    pointer-events: none;
+  }
+  .legend :global(.stamp),
+  .legend .key {
+    pointer-events: auto;
+  }
+  .authored-import {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+  }
+  .shell-in {
+    fill: var(--sse-ink-muted);
+    fill-opacity: 0.03;
+    pointer-events: none;
+  }
+  .shell {
+    fill: none;
+    stroke: var(--sse-ink-muted);
+    stroke-opacity: 0.07;
+    pointer-events: none;
+  }
   .band.zone {
     fill: var(--sse-zone-ink);
   }
@@ -669,6 +705,9 @@
       top: 12px;
     }
     .frame span {
+      display: none;
+    }
+    .authored-import .words {
       display: none;
     }
     .legend {
