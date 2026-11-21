@@ -667,6 +667,7 @@ dependencies = [
  "serde_json",
  "sse-atoms",
  "sse-chronicle",
+ "sse-climate",
  "sse-core",
  "sse-observe",
  "sse-pack",
