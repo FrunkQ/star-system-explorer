@@ -828,6 +828,20 @@
       "dgf_kj": -181.75,
       "dhf_kj": -288.3,
       "source": "thauer"
+     },
+     {
+      "id": "ch2o",
+      "label": "organic carbon (as one sixth of glucose)",
+      "phase": "aq",
+      "elements": {
+       "C": 1,
+       "H": 2,
+       "O": 1
+      },
+      "charge": 0,
+      "dgf_kj": -152.87,
+      "dhf_kj": -210.37,
+      "source": "thauer"
      }
     ],
     "reactions": [
@@ -1224,6 +1238,224 @@
       "electrons": 1,
       "published_kj": -44.2,
       "source": "stumm"
+     },
+     {
+      "id": "h2-oxidation-aq",
+      "label": "dissolved hydrogen oxidised with dissolved oxygen",
+      "terms": [
+       [
+        "h2_aq",
+        -1
+       ],
+       [
+        "o2_aq",
+        -0.5
+       ],
+       [
+        "h2o",
+        1
+       ]
+      ],
+      "electrons": 2
+     },
+     {
+      "id": "methanogenesis-aq",
+      "label": "methanogenesis from dissolved hydrogen and bicarbonate",
+      "terms": [
+       [
+        "h2_aq",
+        -4
+       ],
+       [
+        "hco3-",
+        -1
+       ],
+       [
+        "h+",
+        -1
+       ],
+       [
+        "ch4_aq",
+        1
+       ],
+       [
+        "h2o",
+        3
+       ]
+      ],
+      "electrons": 8
+     },
+     {
+      "id": "sulfate-reduction-aq",
+      "label": "sulfate reduced with dissolved hydrogen",
+      "terms": [
+       [
+        "h2_aq",
+        -4
+       ],
+       [
+        "so4-2",
+        -1
+       ],
+       [
+        "h+",
+        -1
+       ],
+       [
+        "hs-",
+        1
+       ],
+       [
+        "h2o",
+        4
+       ]
+      ],
+      "electrons": 8
+     },
+     {
+      "id": "methane-oxidation-aq",
+      "label": "dissolved methane oxidised with dissolved oxygen",
+      "terms": [
+       [
+        "ch4_aq",
+        -1
+       ],
+       [
+        "o2_aq",
+        -2
+       ],
+       [
+        "hco3-",
+        1
+       ],
+       [
+        "h+",
+        1
+       ],
+       [
+        "h2o",
+        1
+       ]
+      ],
+      "electrons": 8
+     },
+     {
+      "id": "iron-oxidation-aq",
+      "label": "ferrous iron oxidised with dissolved oxygen",
+      "terms": [
+       [
+        "fe+2",
+        -1
+       ],
+       [
+        "o2_aq",
+        -0.25
+       ],
+       [
+        "h+",
+        -1
+       ],
+       [
+        "fe+3",
+        1
+       ],
+       [
+        "h2o",
+        0.5
+       ]
+      ],
+      "electrons": 1
+     },
+     {
+      "id": "sulfide-oxidation-aq",
+      "label": "bisulfide oxidised with dissolved oxygen",
+      "terms": [
+       [
+        "hs-",
+        -1
+       ],
+       [
+        "o2_aq",
+        -2
+       ],
+       [
+        "so4-2",
+        1
+       ],
+       [
+        "h+",
+        1
+       ]
+      ],
+      "electrons": 8
+     },
+     {
+      "id": "aerobic-respiration",
+      "label": "organic carbon respired with dissolved oxygen",
+      "terms": [
+       [
+        "ch2o",
+        -1
+       ],
+       [
+        "o2_aq",
+        -1
+       ],
+       [
+        "hco3-",
+        1
+       ],
+       [
+        "h+",
+        1
+       ]
+      ],
+      "electrons": 4
+     },
+     {
+      "id": "organic-sulfate-reduction",
+      "label": "organic carbon respired with sulfate",
+      "terms": [
+       [
+        "ch2o",
+        -2
+       ],
+       [
+        "so4-2",
+        -1
+       ],
+       [
+        "hs-",
+        1
+       ],
+       [
+        "hco3-",
+        2
+       ],
+       [
+        "h+",
+        1
+       ]
+      ],
+      "electrons": 8
+     },
+     {
+      "id": "organic-methanogenesis",
+      "label": "organic carbon fermented to methane and carbon dioxide",
+      "terms": [
+       [
+        "ch2o",
+        -2
+       ],
+       [
+        "ch4_aq",
+        1
+       ],
+       [
+        "co2_aq",
+        1
+       ]
+      ]
      }
     ],
     "sources": {
@@ -1233,6 +1465,245 @@
      "strous": "Strous, M. et al. 1999, Nature 400, 446: missing lithotroph identified as new planctomycete (anammox, -357 kJ per mol). https://doi.org/10.1038/22749",
      "kelly": "Kelly, D. P. 1999, Archives of Microbiology 171, 219: thermodynamic aspects of energy conservation by chemolithotrophic sulfur bacteria (about -798 kJ per mol for sulfide to sulfate). https://doi.org/10.1007/s002030050703 (recalled, to verify)",
      "stumm": "Stumm, W. and Morgan, J. J. 1996, Aquatic Chemistry, 3rd ed., Wiley: Fe3+/Fe2+ standard potential +0.77 V, O2/H2O +1.23 V, so -44.2 kJ per mol at pH 0 (textbook)"
+    }
+   },
+   "life_gradients": {
+    "about": "The gradient catalogue (evolution design section 3, stage E1): what free energy each habitat offers, from light, from redox pairs it supplies and from organic carbon arriving from producers, with the three tests (energy per turnover, power against maintenance, materials). Used when life_budget.life_model is gradients/1; the listed model stays the default until the fidelity contract is reviewed.",
+    "min_quantum_kj": 20.0,
+    "maintenance_w_per_cmol": 1.25,
+    "maintenance_ea_j_mol": 69400.0,
+    "maintenance_ref_k": 298.15,
+    "min_population_cmol": 1e-09,
+    "growth_efficiency": 0.2,
+    "supplies": {
+     "h2_mol_yr": "h2_aq",
+     "reductant_mol_yr": "h2_aq",
+     "fe2_mol_yr": "fe+2",
+     "o2_mol_yr": "o2_aq",
+     "ch4_mol_yr": "ch4_aq",
+     "h2s_mol_yr": "hs-",
+     "nh4_mol_yr": "nh4+",
+     "so4_mol_yr": "so4-2",
+     "no3_mol_yr": "no3-"
+    },
+    "activities": {
+     "liquid": {
+      "h2_aq": 1e-08,
+      "o2_aq": 0.00025,
+      "fe+2": 5e-05,
+      "fe+3": 1e-18,
+      "hco3-": 0.002,
+      "so4-2": 0.028,
+      "ch4_aq": 1e-06,
+      "hs-": 1e-06,
+      "nh4+": 1e-06,
+      "no3-": 3e-05,
+      "no2-": 1e-07,
+      "co2_aq": 1e-05,
+      "ch2o": 0.0001
+     },
+     "subsurface": {
+      "h2_aq": 1e-08,
+      "o2_aq": 0.00025,
+      "fe+2": 5e-05,
+      "fe+3": 1e-18,
+      "hco3-": 0.002,
+      "so4-2": 0.028,
+      "ch4_aq": 1e-06,
+      "hs-": 1e-06,
+      "nh4+": 1e-06,
+      "no3-": 3e-05,
+      "no2-": 1e-07,
+      "co2_aq": 1e-05,
+      "ch2o": 0.0001
+     },
+     "surface": {
+      "h2_aq": 1e-08,
+      "o2_aq": 0.00025,
+      "fe+2": 5e-05,
+      "fe+3": 1e-18,
+      "hco3-": 0.002,
+      "so4-2": 0.028,
+      "ch4_aq": 1e-06,
+      "hs-": 1e-06,
+      "nh4+": 1e-06,
+      "no3-": 3e-05,
+      "no2-": 1e-07,
+      "co2_aq": 1e-05,
+      "ch2o": 0.0001
+     },
+     "cloud": {
+      "h2_aq": 1e-08,
+      "o2_aq": 0.00025,
+      "fe+2": 5e-05,
+      "fe+3": 1e-18,
+      "hco3-": 0.002,
+      "so4-2": 0.028,
+      "ch4_aq": 1e-06,
+      "hs-": 1e-06,
+      "nh4+": 1e-06,
+      "no3-": 3e-05,
+      "no2-": 1e-07,
+      "co2_aq": 1e-05,
+      "ch2o": 0.0001
+     }
+    },
+    "abundant_above": 0.001,
+    "ph": {
+     "liquid": 8.1,
+     "subsurface": 7.0,
+     "surface": 7.0,
+     "cloud": 7.0
+    },
+    "oxic_channels": [
+     "oxidant"
+    ],
+    "oxygen": "o2_aq",
+    "organic": "ch2o",
+    "export": {
+     "ocean-sunlit": {
+      "ocean-interior": 0.2
+     },
+     "land-surface": {
+      "soil": 0.9
+     },
+     "lake": {
+      "sea-floor": 0.2
+     }
+    },
+    "light": [
+     {
+      "id": "oxygenic",
+      "band_nm": [
+       400.0,
+       700.0
+      ],
+      "efficiency": 0.006,
+      "high_power": true,
+      "media": [
+       "liquid",
+       "surface",
+       "cloud"
+      ],
+      "matches": "oxygenic"
+     },
+     {
+      "id": "anoxygenic-iron",
+      "band_nm": [
+       400.0,
+       1100.0
+      ],
+      "efficiency": 0.006,
+      "donor": "fe+2",
+      "c_per_donor": 0.25,
+      "media": [
+       "liquid"
+      ],
+      "matches": "anoxygenic-iron"
+     },
+     {
+      "id": "anoxygenic-hydrogen",
+      "band_nm": [
+       400.0,
+       1100.0
+      ],
+      "efficiency": 0.006,
+      "donor": "h2_aq",
+      "c_per_donor": 0.5,
+      "media": [
+       "liquid",
+       "surface"
+      ],
+      "matches": "anoxygenic-hydrogen"
+     }
+    ],
+    "reactions": [
+     {
+      "reaction": "h2-oxidation-aq",
+      "kind": "redox",
+      "media": [
+       "liquid",
+       "subsurface"
+      ],
+      "matches": "aerobic-chemolithotroph"
+     },
+     {
+      "reaction": "methanogenesis-aq",
+      "kind": "redox",
+      "media": [
+       "liquid",
+       "subsurface"
+      ],
+      "matches": "methanogen"
+     },
+     {
+      "reaction": "sulfate-reduction-aq",
+      "kind": "redox",
+      "media": [
+       "liquid",
+       "subsurface"
+      ]
+     },
+     {
+      "reaction": "methane-oxidation-aq",
+      "kind": "redox",
+      "media": [
+       "liquid",
+       "subsurface"
+      ]
+     },
+     {
+      "reaction": "iron-oxidation-aq",
+      "kind": "redox",
+      "media": [
+       "liquid",
+       "subsurface"
+      ],
+      "fast_above_ph": 6.0,
+      "fast_why": "at this pH ferrous iron rusts on its own within minutes where oxygen is present, so iron oxidisers need acid or nearly oxygen-free water (Stumm and Morgan 1996)"
+     },
+     {
+      "reaction": "sulfide-oxidation-aq",
+      "kind": "redox",
+      "media": [
+       "liquid",
+       "subsurface"
+      ]
+     },
+     {
+      "reaction": "aerobic-respiration",
+      "kind": "organic",
+      "media": [
+       "liquid",
+       "subsurface",
+       "surface"
+      ]
+     },
+     {
+      "reaction": "organic-sulfate-reduction",
+      "kind": "organic",
+      "media": [
+       "liquid",
+       "subsurface"
+      ]
+     },
+     {
+      "reaction": "organic-methanogenesis",
+      "kind": "organic",
+      "media": [
+       "liquid",
+       "subsurface"
+      ]
+     }
+    ],
+    "cap": 32,
+    "sources": {
+     "min_quantum_kj": "Schink, B. 1997, Microbiology and Molecular Biology Reviews 61, 262: energetics of syntrophic cooperation in methanogenic degradation (about -20 kJ per mol per turnover). https://doi.org/10.1128/mmbr.61.2.262-280.1997 (recalled; Hoehler 2004 argues lower)",
+     "maintenance": "Tijhuis, L., van Loosdrecht, M. C. M. and Heijnen, J. J. 1993, Biotechnology and Bioengineering 42, 509: a thermodynamically based correlation for maintenance Gibbs energy requirements in aerobic and anaerobic chemotrophic growth (4.5 kJ per C-mol per hour at 298 K, activation energy 69.4 kJ per mol). https://doi.org/10.1002/bit.260420509 (recalled, to verify); natural settings run far lower (LaRowe and Amend 2015), so the power test uses a minimal population only",
+     "growth_efficiency": "Calibrated: 0.2 of the catabolic free energy built into biomass reproduces L1a's growth yields (about 0.1 C per H2 aerobically, 0.01 C per H2 for methanogens; McCollom and Amend 2005). Roden and Jin 2011 find yield rises in step with energy, which this assumes; their slope is to be read (fudge register)",
+     "activities": "Typical modern seawater and pore water: dissolved O2 near air saturation, nanomolar H2, millimolar bicarbonate, 28 mM sulfate, micromolar reduced species; Fe2+ at Archean-ocean levels (about 50 micromolar). Assumptions to replace with world chemistry; a habitat may set activity.<species>",
+     "export": "Ocean: about a fifth of sunlit production sinks out of the surface layer (biological pump, about 10 of 50 Gt C per year; Henson et al. 2011, https://doi.org/10.1029/2011GL046735, recalled); land: nearly all plant production reaches the soil as litter and roots (Schlesinger and Andrews 2000, https://doi.org/10.1023/A:1006247623877, recalled)",
+     "supplies": "reductant_mol_yr is read as hydrogen, the reductant Chyba and Hand 2001 and serpentinisation supply; a pack with better chemistry maps it elsewhere"
     }
    },
    "life_history": {

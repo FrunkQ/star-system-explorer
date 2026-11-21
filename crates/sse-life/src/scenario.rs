@@ -90,6 +90,23 @@ pub fn archean_earth() -> HabitatGraph {
     earth_with(&[("fe2_mol_yr", 1.0e15)])
 }
 
+/// Archean Earth with volcanic hydrogen as well (mol per year; Kharecha et
+/// al. 2005 put it near 1e12 to 1e13) and the Archean ocean's trace of
+/// sulfate (under 2.5 micromolar; Crowe et al. 2014).
+pub fn archean_with_hydrogen(h2_mol_yr: f64) -> HabitatGraph {
+    let (_, s) = WORLDS.iter().find(|(n, _)| *n == "earth").expect("earth");
+    let mut v: serde_json::Value = serde_json::from_str(s).expect("earth json");
+    for sh in v["shells"].as_array_mut().expect("shells") {
+        if sh["key"] == "ocean" {
+            sh["properties"]["material.fe2_mol_yr"] = serde_json::json!(1.0e15);
+            sh["properties"]["material.h2_mol_yr"] = serde_json::json!(h2_mol_yr);
+            sh["properties"]["activity.so4-2"] = serde_json::json!(1.0e-6);
+        }
+    }
+    let w = WorldStack::from_json(&v.to_string()).expect("archean world");
+    HabitatGraph::derive(&w, &base_rules()).expect("archean graph")
+}
+
 /// Earth's fixture with extra ocean supplies (mol per year).
 fn earth_with(extra: &[(&str, f64)]) -> HabitatGraph {
     let (_, s) = WORLDS.iter().find(|(n, _)| *n == "earth").expect("earth");
