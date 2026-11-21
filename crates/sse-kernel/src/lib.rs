@@ -1395,7 +1395,8 @@ impl Kernel {
                             units: &stack.units,
                         };
                         let mut flows = BTreeMap::new();
-                        let mut problems: Vec<String> = Vec::new();
+                        // TG2: physics flows never read tags or kept values.
+                        let mut problems: Vec<String> = tags::physics_wall(&stack);
                         // Boxes (J3): each one's own golden cases, then flows
                         // compiled with the stack's boxes inlined.
                         for (id, b) in &stack.boxes {
