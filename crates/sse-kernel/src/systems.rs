@@ -37,15 +37,11 @@ pub(crate) fn import_v3(save: &str, universe_id: Option<&str>, reconstruct: Opti
             }
         }
     }
-    let facts: serde_json::Map<String, serde_json::Value> = im
-        .facts
-        .iter()
-        .map(|(a, f)| (a.to_string(), to_json(f)))
-        .collect();
+    let mut v = im.to_value();
     Ok(Response::V3Imported {
         universe: im.universe.to_string(),
-        facts: serde_json::Value::Object(facts),
-        report: to_json(&im.report),
+        facts: v["facts"].take(),
+        report: v["report"].take(),
         reconstructed,
     })
 }

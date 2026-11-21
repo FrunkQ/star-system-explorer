@@ -537,6 +537,16 @@ dependencies = [
 ]
 
 [[package]]
+name = "sse-convert-wasm"
+version = "0.1.0"
+dependencies = [
+ "serde_json",
+ "sse-import-v3",
+ "sse-kernel",
+ "wasm-bindgen",
+]
+
+[[package]]
 name = "sse-core"
 version = "0.1.0"
 dependencies = [

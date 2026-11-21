@@ -10,6 +10,7 @@
 #![forbid(unsafe_code)]
 
 mod classify;
+#[cfg(feature = "reconstruct")]
 pub mod reconstruct;
 
 use classify::{body_class, starmap_class, system_class, Class};
@@ -109,6 +110,23 @@ pub struct Import {
 }
 
 impl Import {
+    /// The import as plain JSON: `{universe, facts, report}`, facts keyed by
+    /// address. This is the body of the kernel's `v3_imported` response
+    /// (without `reconstructed`), and what the converter's browser module
+    /// returns, built here once so the two cannot drift.
+    pub fn to_value(&self) -> Json {
+        let facts: Map<String, Json> = self
+            .facts
+            .iter()
+            .map(|(a, f)| (a.to_string(), serde_json::to_value(f).expect("plain data")))
+            .collect();
+        serde_json::json!({
+            "universe": self.universe.to_string(),
+            "facts": Json::Object(facts),
+            "report": serde_json::to_value(&self.report).expect("plain data"),
+        })
+    }
+
     /// Authored events for the chronicle: one per address and evidence class,
     /// in address order, all at the universe origin.
     pub fn events(&self) -> Vec<Event> {

@@ -252,6 +252,7 @@ fn real_save_findings_are_explained_and_classified() {
 
 /// F9: an imported V3 system gains a labelled reconstructed history with its
 /// planets pinned (the Moon, a moon of Earth, is not a planet pin).
+#[cfg(feature = "reconstruct")]
 #[test]
 fn imported_system_gains_a_reconstructed_history() {
     let im = imported();
