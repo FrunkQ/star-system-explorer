@@ -398,7 +398,7 @@ Alex, 21 Nov 2026, 20:51: "yes to all". Every question below is decided as recom
 12. **Keep fitted and tuned model numbers off the sheet, in their own packs and the fudge register, linked from "used by"?** Recommended: yes. The sheet stays "what nature gives us"; mixing in our own tuning would blur the line the honesty marks exist to keep.
 13. **Call the screen "Reference" (pages: Constants, Elements, Substances, Mixtures)?** Recommended: yes; "Matter" no longer fits once constants are on it.
 
-### Added 21 Nov 22:35, open with Alex (build to the recommendations until he rules)
+### Added 21 Nov 22:35, and decided as recommended (Alex, 21 Nov 22:49: "Yes to all")
 
 14. **Calendars get a page on the Reference screen, grouped with Units as "This setting's measures" and kept apart from the Nature pages?** Recommended: yes. It gives calendars the home SSE 3 had, without blurring "what nature gives" with "how this setting counts".
 15. **Several calendars loaded at once: one is the campaign's, others can be shown beside it or chosen by a lens or a player view?** Recommended: yes. Today only the top pack's calendar exists.
