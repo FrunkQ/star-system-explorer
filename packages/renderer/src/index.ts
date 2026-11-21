@@ -29,5 +29,6 @@ export type { MediaItem } from "./media.ts";
 export { applyEdits, editableSettings, tierCosts } from "./recipe-edit.ts";
 export type { EditContext, EditResult, RecipeEdit, TierCost } from "./recipe-edit.ts";
 // R5a: stars drawn from their physics (photosphere, spots, corona in X-rays).
-export { coronaScaleHeight, CORONA_K, drawStar, limbDarkening, narrateStar, SPOT_DELTA_K, spotsFor, STAR_REFERENCES } from "./star.ts";
-export type { Spot, StarDraw } from "./star.ts";
+// O10 convection: granules drawn where the disc resolves them.
+export { coronaScaleHeight, CORONA_K, drawStar, GRANULE_DT, granulesFor, granulesShow, limbDarkening, narrateGranules, narrateStar, SPOT_DELTA_K, spotsFor, STAR_REFERENCES } from "./star.ts";
+export type { Convection, Granules, Spot, StarDraw } from "./star.ts";
