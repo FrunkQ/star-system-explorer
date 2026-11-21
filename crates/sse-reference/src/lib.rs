@@ -25,9 +25,55 @@ use serde_json::{Map, Value as J};
 use sse_core::math as m;
 use std::collections::BTreeMap;
 
+pub mod expr;
+
+/// Relative tolerance between a sheet unit and the built-in one of the
+/// same id.
+const UNIT_TOL: f64 = 1e-9;
+
+/// A unit row's dimension: `dim` (seven SI exponents) or a named `measures`.
+fn unit_dim(row: &Map<String, J>) -> Option<sse_core::Dimension> {
+    use sse_core::Dimension as D;
+    if let Some(a) = row.get("dim").and_then(J::as_array) {
+        let v: Vec<i8> = a
+            .iter()
+            .filter_map(|x| x.as_i64())
+            .map(|x| x as i8)
+            .collect();
+        return <[i8; 7]>::try_from(v).ok().map(D);
+    }
+    Some(match row.get("measures").and_then(J::as_str)? {
+        "dimensionless" | "angle" => D::NONE,
+        "length" => D::LENGTH,
+        "mass" => D::MASS,
+        "time" => D::TIME,
+        "temperature" => D::TEMPERATURE,
+        "current" => D([0, 0, 0, 1, 0, 0, 0]),
+        "amount" => D([0, 0, 0, 0, 0, 1, 0]),
+        "luminous_intensity" => D([0, 0, 0, 0, 0, 0, 1]),
+        "power" => D::POWER,
+        "energy" => D([2, 1, -2, 0, 0, 0, 0]),
+        "force" => D([1, 1, -2, 0, 0, 0, 0]),
+        "frequency" => D([0, 0, -1, 0, 0, 0, 0]),
+        "pressure" => D::PRESSURE,
+        "flux" => D::FLUX,
+        "velocity" => D::VELOCITY,
+        "acceleration" => D::ACCELERATION,
+        "density" => D::DENSITY,
+        "magnetic_field" => D::MAGNETIC_FIELD,
+        "magnetic_moment" => D::MAGNETIC_MOMENT,
+        _ => return None,
+    })
+}
+
+/// Relative tolerance between a derived constant's stored value and the one
+/// worked out from its formula.
+const DERIVED_TOL: f64 = 1e-9;
+
 /// The tables, in the order they are checked.
-pub const TABLES: [&str; 6] = [
+pub const TABLES: [&str; 7] = [
     "constants",
+    "units",
     "elements",
     "isotopes",
     "substances",
@@ -230,13 +276,234 @@ impl Reference {
             .unwrap_or(0.0)
     }
 
+    /// A constant's value in SI. A derived constant (`derived_from`) is
+    /// worked out from its formula every time, never read as typed, so a
+    /// changed input moves it (design section 7A.1).
+    pub fn constant(&self, id: &str) -> Option<f64> {
+        self.constant_at(id, 0).ok()
+    }
+
+    fn constant_at(&self, id: &str, depth: u32) -> Result<f64, String> {
+        if depth > 16 {
+            return Err(format!("constant {id}: its formula goes round in a circle"));
+        }
+        let row = self
+            .row("constants", id)
+            .ok_or_else(|| format!("names {id}, which is not a constant"))?;
+        match row.get("derived_from").and_then(J::as_str) {
+            Some(f) => {
+                let mut err = None;
+                let v = expr::eval(f, |n| match self.constant_at(n, depth + 1) {
+                    Ok(v) => Some(v),
+                    Err(e) => {
+                        err.get_or_insert(e);
+                        None
+                    }
+                });
+                match (v, err) {
+                    (Ok(v), _) => Ok(v),
+                    (Err(_), Some(e)) => Err(e),
+                    (Err(e), None) => Err(e),
+                }
+            }
+            None => num(row.get("value")).ok_or_else(|| format!("constant {id} has no value")),
+        }
+    }
+
+    /// Whether a derived constant and every input it names come from one
+    /// pack, so its typed copy stands for it.
+    fn one_pack(&self, id: &str, f: &str) -> bool {
+        std::iter::once(id.to_string())
+            .chain(expr::names(f))
+            .all(|n| {
+                self.origin
+                    .get(&format!("constants/{n}"))
+                    .is_none_or(|o| o.len() == 1)
+            })
+    }
+
+    /// The constants handle blocks read (`sse_core::constants`), from the
+    /// sheet: each id the sheet holds replaces the compiled value. A derived
+    /// constant uses its typed copy while nothing it rests on was edited
+    /// (so an unedited sheet gives the compiled values bit for bit), and its
+    /// worked-out value once something was.
+    pub fn handle(&self) -> sse_core::constants::Constants {
+        let mut c = sse_core::constants::Constants::REAL;
+        for id in sse_core::constants::Constants::IDS {
+            let Some(row) = self.row("constants", id) else {
+                continue;
+            };
+            let v = match row.get("derived_from").and_then(J::as_str) {
+                Some(f) if !self.one_pack(id, f) => self.constant(id),
+                _ => num(row.get("value")).or_else(|| self.constant(id)),
+            };
+            if let Some(v) = v {
+                c.set(id, v);
+            }
+        }
+        c
+    }
+
+    /// A unit's factor to SI: worked out from `factor_from` (a formula
+    /// over constants) when it has one, else its typed `factor`.
+    pub fn unit_factor(&self, id: &str) -> Result<f64, String> {
+        let row = self
+            .row("units", id)
+            .ok_or_else(|| format!("no unit {id}"))?;
+        match row.get("factor_from").and_then(J::as_str) {
+            Some(f) => {
+                let mut miss = None;
+                let v = expr::eval(f, |n| match self.constant_at(n, 1) {
+                    Ok(v) => Some(v),
+                    Err(e) => {
+                        miss.get_or_insert(e);
+                        None
+                    }
+                });
+                v.map_err(|e| miss.unwrap_or(e))
+            }
+            None => num(row.get("factor")).ok_or_else(|| format!("unit {id} has no factor")),
+        }
+    }
+
+    /// The units the sheet adds to the session, and the built-in units it
+    /// moves because a constant behind them was edited (design 7A.6: change
+    /// c and the light year follows). A built-in unit the sheet agrees with
+    /// is left as compiled, bit for bit.
+    pub fn units(&self) -> Vec<sse_core::quantity::Unit> {
+        let standard = sse_core::Units::standard();
+        let empty = BTreeMap::new();
+        let mut out = vec![];
+        for (id, row) in self.tables.get("units").unwrap_or(&empty) {
+            let (Ok(factor), Some(dim)) = (self.unit_factor(id), unit_dim(row)) else {
+                continue;
+            };
+            let offset = num(row.get("offset")).unwrap_or(0.0);
+            if let Ok(b) = standard.get(id) {
+                if ((b.scale - factor) / b.scale).abs() <= UNIT_TOL && b.offset == offset {
+                    continue;
+                }
+            }
+            out.push(sse_core::quantity::Unit {
+                id: id.clone(),
+                symbol: row
+                    .get("symbol")
+                    .and_then(J::as_str)
+                    .unwrap_or(id)
+                    .to_string(),
+                dim,
+                scale: factor,
+                offset,
+            });
+        }
+        out
+    }
+
     /// The load checks of design section 4.6.
     fn check(&self) -> Vec<String> {
         let mut p = vec![];
+        let empty_c = BTreeMap::new();
         // Element origins (design 8.1): shares name legend entries and sum
         // to 1; every source named resolves.
-        for (id, row) in self.tables.get("elements").into_iter().flatten() {
+        for (id, row) in self.tables.get("elements").unwrap_or(&empty_c) {
             p.extend(self.check_origin(id, row));
+        }
+        // Units (design 7A.6): a known dimension, a factor that resolves,
+        // a typed copy that agrees with its formula, and no redefinition of
+        // a unit the kernel already has while nothing behind it was edited.
+        let standard = sse_core::Units::standard();
+        for (id, row) in self.tables.get("units").unwrap_or(&empty_c) {
+            let Some(dim) = unit_dim(row) else {
+                p.push(format!(
+                    "unit {id}: measures {:?} is not a dimension the reader knows (or give dim as seven exponents)",
+                    row.get("measures").and_then(J::as_str).unwrap_or("")
+                ));
+                continue;
+            };
+            let factor = match self.unit_factor(id) {
+                Ok(f) => f,
+                Err(e) => {
+                    p.push(format!("unit {id}: {e}"));
+                    continue;
+                }
+            };
+            let f = row.get("factor_from").and_then(J::as_str).unwrap_or("");
+            let one_pack = self.one_pack(&format!("@unit:{id}"), f)
+                && self
+                    .origin
+                    .get(&format!("units/{id}"))
+                    .is_none_or(|o| o.len() == 1);
+            if let (Some(typed), false) = (num(row.get("factor")), f.is_empty()) {
+                if one_pack && ((typed - factor) / factor).abs() > DERIVED_TOL {
+                    p.push(format!(
+                        "unit {id}: factor typed as {typed:e} but {f} gives {factor:e}"
+                    ));
+                }
+            }
+            if let Ok(b) = standard.get(id) {
+                if b.dim != dim {
+                    p.push(format!(
+                        "unit {id} measures something else than the built-in {id}"
+                    ));
+                } else if one_pack && ((b.scale - factor) / b.scale).abs() > UNIT_TOL {
+                    p.push(format!(
+                        "unit {id} redefines the built-in unit: {factor:e} against {:e} (add a unit with a new id instead)",
+                        b.scale
+                    ));
+                }
+            }
+        }
+        for (id, row) in self.tables.get("constants").unwrap_or(&empty_c) {
+            // `checked_by`: a relation the typed value must meet on the sheet
+            // as shipped, never used to work it out (M_sun against GM_sun / G:
+            // doubling G keeps the Sun's mass).
+            if let Some(f) = row.get("checked_by").and_then(J::as_str) {
+                let typed = num(row.get("value"));
+                let mut miss = None;
+                let worked = expr::eval(f, |n| match self.constant_at(n, 1) {
+                    Ok(v) => Some(v),
+                    Err(e) => {
+                        miss.get_or_insert(e);
+                        None
+                    }
+                });
+                match (typed, worked) {
+                    (_, Err(e)) => p.push(format!(
+                        "constant {id}: checked_by \"{f}\" {}",
+                        miss.unwrap_or(e)
+                    )),
+                    (Some(t), Ok(w))
+                        if self.one_pack(id, f) && ((t - w) / w).abs() > DERIVED_TOL =>
+                    {
+                        p.push(format!("constant {id}: typed as {t:e} but {f} gives {w:e}"))
+                    }
+                    _ => {}
+                }
+            }
+            let Some(f) = row.get("derived_from").and_then(J::as_str) else {
+                if num(row.get("value")).is_none() {
+                    p.push(format!("constant {id} has no value"));
+                }
+                continue;
+            };
+            let worked = match self.constant_at(id, 0) {
+                Ok(v) => v,
+                Err(e) => {
+                    p.push(format!("constant {id}: derived_from \"{f}\" {e}"));
+                    continue;
+                }
+            };
+            // The typed copy must agree while it and every input come from
+            // one pack. Once a later pack edits an input, the worked-out
+            // value is the constant and the typed copy is only a note.
+            let one_pack = self.one_pack(id, f);
+            if let Some(typed) = num(row.get("value")) {
+                if one_pack && ((typed - worked) / worked).abs() > DERIVED_TOL {
+                    p.push(format!(
+                        "constant {id}: typed as {typed:e} but {f} gives {worked:e}"
+                    ));
+                }
+            }
         }
         // Every value names a source.
         for (table, rows) in &self.tables {
@@ -394,6 +661,18 @@ impl Reference {
             "used_by": [],
             "skipped_by": [],
         });
+        if table == "constants" {
+            if let Some(f) = row.get("derived_from").and_then(J::as_str) {
+                if let Some(v) = self.constant(id) {
+                    out["worked"] = serde_json::json!({"value": {"v": v, "from": f}});
+                }
+            }
+        }
+        if table == "units" {
+            if let Ok(f) = self.unit_factor(id) {
+                out["worked"] = serde_json::json!({"factor": {"v": f, "from": row.get("factor_from").cloned().unwrap_or(J::Null)}});
+            }
+        }
         if table == "substances" {
             if let Some(mm) = self.molar_mass_kg_mol(id) {
                 out["worked"] = serde_json::json!({"molar_mass": {"v": mm, "unit": "kg/mol", "from": "formula and atomic weights"}});
