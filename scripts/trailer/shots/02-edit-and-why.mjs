@@ -4,7 +4,8 @@ export default {
   title: "Change a world, then ask why",
   feature: "Edit in place, derived values, Why? with Science (U2, U3)",
   trailers: ["features", "intro"],
-  async setup(page) {
+  async setup(page, d, nav) {
+    await nav.desk(page, "Build");
     await page.locator('.area-chart .body[aria-label^="Tarn"]').first().click();
     await page.locator("section[aria-label='Tarn']").waitFor();
   },
