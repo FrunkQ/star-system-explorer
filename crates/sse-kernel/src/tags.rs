@@ -375,3 +375,59 @@ pub fn reserved_kept(ms: &[sse_pack::PackManifest]) -> Vec<String> {
     }
     out
 }
+
+/// Blocks that read the game layer: tags and the record's kept values.
+pub const GAME_READERS: [&str; 2] = ["world.has_tag", "world.read_kept"];
+
+/// TG2, the physics wall: a physics flow (or a box it uses) that reads a
+/// tag or a kept value is refused when the stack loads. Tags and the record
+/// can reach physics only through an explicit, marked pin (record design).
+pub fn physics_wall(stack: &sse_pack::ResolvedStack) -> Vec<String> {
+    let mut out = vec![];
+    for (id, af) in &stack.flows {
+        let mut seen: Vec<String> = vec![];
+        wall_nodes(
+            &af.doc.nodes,
+            stack,
+            &format!("flow {id}"),
+            &mut seen,
+            &mut |m| out.push(format!("{}: {m}", af.pack)),
+        );
+    }
+    out
+}
+
+fn wall_nodes(
+    nodes: &[sse_flow::flow::NodeDoc],
+    stack: &sse_pack::ResolvedStack,
+    at: &str,
+    seen: &mut Vec<String>,
+    report: &mut dyn FnMut(String),
+) {
+    for n in nodes {
+        if let Some(a) = n.atom.as_deref().filter(|a| GAME_READERS.contains(a)) {
+            report(format!(
+                "{at}: node {} reads {a}; physics never reads tags or kept values (tags design, the physics wall)",
+                n.id
+            ));
+        }
+        if let Some(b) = &n.r#box {
+            let id = b.split('@').next().unwrap_or(b);
+            if seen.iter().any(|s| s == id) {
+                continue;
+            }
+            seen.push(id.to_string());
+            for (key, doc) in &stack.boxes {
+                if key == id || key.split('@').next() == Some(id) || doc.id == id {
+                    wall_nodes(
+                        &doc.nodes,
+                        stack,
+                        &format!("{at} (box {})", doc.id),
+                        seen,
+                        report,
+                    );
+                }
+            }
+        }
+    }
+}
