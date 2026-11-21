@@ -353,6 +353,14 @@
      {
       "text": "Lancaster 1988, Development of linear dunes in the southwestern Kalahari, southern Africa, Journal of Arid Environments 14, 233 (dune mobility index; read through Lancaster and Helm 2000, Earth Surface Processes and Landforms 25, 197)",
       "doi": "10.1002/(SICI)1096-9837(200002)25:2<197::AID-ESP82>3.0.CO;2-H"
+     },
+     {
+      "text": "Zeebe 2022, Reduced variations in Earth's and Mars' orbital inclination and Earth's obliquity from 58 to 48 Myr ago due to solar system chaos, Astronomical Journal 164, 107 (arXiv 2207.04006)",
+      "url": "https://arxiv.org/abs/2207.04006"
+     },
+     {
+      "text": "Huybers 2006, Early Pleistocene glacial cycles and the integrated summer insolation forcing, Science 313, 508",
+      "doi": "10.1126/science.1125249"
      }
     ],
     "strengths": {
@@ -607,6 +615,19 @@
       "wet": "Wet"
      },
      "source": "Koppen-Geiger criteria of Kottek et al. 2006 (Table 1 and eq. 2.1), applied to each place's own temperatures and rain, after the ice balance (physics) and with plain labels for worlds whose liquid is not water. A label is read off the numbers; nothing reads it back."
+    },
+    "forcing": {
+     "earth_ellipticity": 0.00327381,
+     "ellipticity_spin_power": 2.0,
+     "moon_geometry": 1.0,
+     "window_yr": 400000.0,
+     "sample_yr": 2000.0,
+     "step_yr": 100.0,
+     "summer_threshold_w_m2": 275.0,
+     "year_steps": 72,
+     "probe_obliquity_deg": 1.0,
+     "drawn_inclination_deg": 3.0,
+     "source": "Spin axis s' = alpha (n.s)(s x n), alpha = K (kappa + beta), K = (3/2) E_d GM/(omega a^3), kappa = (1-e^2)^-3/2, beta = g_L (a/a_L)^3 m_L/M (Zeebe 2022 eqs. 1-5; Earth E_d 0.00327381, Table 1). Summer energy over days of at least 275 W/m2 (Huybers 2006). E_d scaled as spin squared, g_L 1 (it reproduces Earth's 50.4 arcsec/yr with the Moon), the linear ice-balance response to summer energy, the 400 kyr window and the drawn sibling inclinations are ours (docs/fudges.md)."
     }
    }
   }

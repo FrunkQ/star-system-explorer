@@ -351,3 +351,57 @@ fn rivers_glaciers_and_dunes_read_the_one_climates_water_and_wind() {
     assert!(m.runoff_m_yr.iter().all(|x| *x == 0.0));
     assert!(m.dunes.iter().any(|x| *x), "Mars has dunes");
 }
+
+/// W9 part 2: with an orbit history, the ice edge advances and retreats:
+/// cells near it spend part of each cycle under ice and record advances
+/// (moraines), cells far inside or outside it record none.
+#[test]
+fn an_orbit_history_moves_the_ice_edge() {
+    use sse_climate::forcing::{MoonPull, OrbitTrack, TrackSample};
+    let s = settings();
+    let (b, e) = env_of(&s, "Earth");
+    let h = history(&s, &e, &seed(), b.age_gyr);
+    let water = WaterHistory::steady(b.oceans, b.pressure_bar, b.age_gyr);
+    let mut cl = wet(&s, &b, &e, &water, 23.93);
+    let s3 = -18.85 / 3600.0 * sse_core::math::PI / 180.0;
+    let track = OrbitTrack {
+        samples: (0..=200)
+            .map(|k| {
+                let t = f64::from(k) * 2000.0;
+                TrackSample {
+                    t_yr: t,
+                    e: 0.0167,
+                    varpi: 0.0,
+                    incl: 0.035,
+                    node: s3 * t,
+                }
+            })
+            .collect(),
+        source: "one inclination mode".into(),
+    };
+    let moon = [MoonPull {
+        mass_kg: 7.342e22,
+        a_m: 3.844e8,
+    }];
+    cl.ice_ages = Some(crate::climate::ice_ages(
+        &s,
+        &b,
+        &cl,
+        &track,
+        &moon,
+        b.age_gyr * 1000.0,
+    ));
+    let w = wear_world(&s, &e, &seed(), &h, &water, &cl, b.magma_end_myr);
+    let nc = w.heights.len();
+    let edge = (0..nc)
+        .filter(|&c| w.heights[c] >= 0.0 && w.ice_share[c] > 0.0 && w.ice_share[c] < 1.0)
+        .count();
+    let moraines = (0..nc)
+        .filter(|&c| w.glacial_advances_per_myr[c] > 0.0)
+        .count();
+    assert!(edge > 0 && moraines > 0, "edge {edge} moraines {moraines}");
+    // Advances only where the ice comes and goes.
+    assert!((0..nc)
+        .all(|c| w.glacial_advances_per_myr[c] == 0.0
+            || (w.ice_share[c] > 0.0 && w.ice_share[c] < 1.0)));
+}

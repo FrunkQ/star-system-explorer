@@ -129,6 +129,13 @@ pub struct Wear {
     /// empty under the sea). Nothing reads it back.
     #[serde(default)]
     pub areas: Vec<String>,
+    /// W9 part 2: the share of the ice-age cycle each cell lay under growing
+    /// ice in the last wet epoch, and its glacial advances per million years
+    /// (moraines for S10), when the world has an orbit history.
+    #[serde(default)]
+    pub ice_share: Vec<f64>,
+    #[serde(default)]
+    pub glacial_advances_per_myr: Vec<f64>,
     pub eroded_m3: f64,
     pub deposited_m3: f64,
     pub epochs: Vec<WearEpoch>,
@@ -377,6 +384,8 @@ pub fn wear(
     let mut epochs = vec![];
     let mut last_q = vec![0.0; nc];
     let mut glaciated = vec![false; nc];
+    let mut ice_share = vec![0.0; nc];
+    let mut advances = vec![0.0; nc];
     let span = (to_myr - from_myr).max(0.0);
     let steps = m::ceil(span / w.epoch_myr.max(1.0)).max(0.0) as u32;
     let dt_myr = if steps > 0 { span / steps as f64 } else { 0.0 };
@@ -421,7 +430,25 @@ pub fn wear(
                 }
             }
             for c in 0..nc {
-                glaciated[c] = cell_water[c].ice_balance_m_yr > 0.0 && sl.is_none_or(|x| h[c] >= x);
+                let land_c = sl.is_none_or(|x| h[c] >= x);
+                // W9 part 2: with an orbit history, the share of the ice-age
+                // cycle the cell spends under growing ice.
+                ice_share[c] = match (&climate.ice_ages, land_c) {
+                    (_, false) => 0.0,
+                    (Some(ia), true) => {
+                        let x = ia.at(
+                            &s.climate,
+                            &climate.climate,
+                            climate.lapse_k_km,
+                            lat_deg[c],
+                            h[c] - datum,
+                        );
+                        advances[c] = x.advances_per_myr;
+                        x.glaciated_share
+                    }
+                    (None, true) => f64::from(u8::from(cell_water[c].ice_balance_m_yr > 0.0)),
+                };
+                glaciated[c] = ice_share[c] >= 0.5;
             }
             // Implicit stream power, outlets first.
             let old = h.clone();
@@ -430,7 +457,8 @@ pub fn wear(
                 if rc == c || sl.is_some_and(|x| h[c] < x) {
                     continue;
                 }
-                let kf = w.k_stream * if glaciated[c] { w.glacial_factor } else { 1.0 };
+                // Glaciers cut harder for the share of the time they cover it.
+                let kf = w.k_stream * (1.0 + (w.glacial_factor - 1.0) * ice_share[c]);
                 // Q / (1 m/yr) is the drainage area a metre of rain a year would fill.
                 let f = kf * m::pow(q[c], w.m) * dt / dist(c, rc);
                 let new = (h[c] + f * h[rc]) / (1.0 + f);
@@ -634,6 +662,8 @@ pub fn wear(
         snow_m_yr: water_now.iter().map(|x| x.snow_m_yr).collect(),
         ice_balance_m_yr: water_now.iter().map(|x| x.ice_balance_m_yr).collect(),
         dune_activity: activity,
+        ice_share,
+        glacial_advances_per_myr: advances,
         areas: (0..nc)
             .map(|c| {
                 if land(c) {
