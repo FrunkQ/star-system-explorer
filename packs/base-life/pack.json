@@ -1574,6 +1574,8 @@
     "light": [
      {
       "id": "oxygenic",
+      "reach": 3,
+      "dial": "oxygenic",
       "band_nm": [
        400.0,
        700.0
@@ -1589,6 +1591,7 @@
      },
      {
       "id": "anoxygenic-iron",
+      "reach": 1,
       "band_nm": [
        400.0,
        1100.0
@@ -1603,6 +1606,7 @@
      },
      {
       "id": "anoxygenic-hydrogen",
+      "reach": 1,
       "band_nm": [
        400.0,
        1100.0
@@ -1620,6 +1624,7 @@
     "reactions": [
      {
       "reaction": "h2-oxidation-aq",
+      "reach": 1,
       "kind": "redox",
       "media": [
        "liquid",
@@ -1629,6 +1634,7 @@
      },
      {
       "reaction": "methanogenesis-aq",
+      "reach": 0,
       "kind": "redox",
       "media": [
        "liquid",
@@ -1638,6 +1644,7 @@
      },
      {
       "reaction": "sulfate-reduction-aq",
+      "reach": 1,
       "kind": "redox",
       "media": [
        "liquid",
@@ -1646,6 +1653,7 @@
      },
      {
       "reaction": "methane-oxidation-aq",
+      "reach": 1,
       "kind": "redox",
       "media": [
        "liquid",
@@ -1654,6 +1662,7 @@
      },
      {
       "reaction": "iron-oxidation-aq",
+      "reach": 1,
       "kind": "redox",
       "media": [
        "liquid",
@@ -1664,6 +1673,7 @@
      },
      {
       "reaction": "sulfide-oxidation-aq",
+      "reach": 1,
       "kind": "redox",
       "media": [
        "liquid",
@@ -1672,6 +1682,7 @@
      },
      {
       "reaction": "aerobic-respiration",
+      "reach": 1,
       "kind": "organic",
       "media": [
        "liquid",
@@ -1681,6 +1692,7 @@
      },
      {
       "reaction": "organic-sulfate-reduction",
+      "reach": 1,
       "kind": "organic",
       "media": [
        "liquid",
@@ -1689,6 +1701,7 @@
      },
      {
       "reaction": "organic-methanogenesis",
+      "reach": 0,
       "kind": "organic",
       "media": [
        "liquid",
@@ -1698,6 +1711,7 @@
     ],
     "cap": 32,
     "sources": {
+     "reach": "E2 (evolution design 5.1): new chemical steps beyond a biosphere's existing ones. 0 for the oldest metabolisms (hydrogen-using methanogenesis and fermentation-like organic methanogenesis; Weiss et al. 2016, LUCA was a hydrogen-dependent anaerobe); 1 for one new pathway (anoxygenic photosynthesis by 3.4 Gyr ago, Tice and Lowe 2004; sulfate reduction by 3.47 Gyr ago, Shen et al. 2001; aerobic respiration and the aerobic chemolithotrophs, whose oxygen reductases descend from older nitric oxide reductases, Ducluzeau et al. 2014); 3 for oxygenic photosynthesis, which couples two photosystems to a water-splitting manganese cluster (Fischer, Hemp and Johnson 2016). The steps are counts judged from those sources, not measurements.",
      "min_quantum_kj": "Schink, B. 1997, Microbiology and Molecular Biology Reviews 61, 262: energetics of syntrophic cooperation in methanogenic degradation (about -20 kJ per mol per turnover). https://doi.org/10.1128/mmbr.61.2.262-280.1997 (recalled; Hoehler 2004 argues lower)",
      "maintenance": "Tijhuis, L., van Loosdrecht, M. C. M. and Heijnen, J. J. 1993, Biotechnology and Bioengineering 42, 509: a thermodynamically based correlation for maintenance Gibbs energy requirements in aerobic and anaerobic chemotrophic growth (4.5 kJ per C-mol per hour at 298 K, activation energy 69.4 kJ per mol). https://doi.org/10.1002/bit.260420509 (recalled, to verify); natural settings run far lower (LaRowe and Amend 2015), so the power test uses a minimal population only",
      "growth_efficiency": "Calibrated: 0.2 of the catabolic free energy built into biomass reproduces L1a's growth yields (about 0.1 C per H2 aerobically, 0.01 C per H2 for methanogens; McCollom and Amend 2005). Roden and Jin 2011 find yield rises in step with energy, which this assumes; their slope is to be read (fudge register)",
@@ -1914,6 +1928,21 @@
     "diversity_floor_gc_yr": 1000000.0,
     "oxidant_fact": "o2_fraction",
     "history_every_myr": 50.0,
+    "metabolic": {
+     "base_rate": 0.3,
+     "reach_factor": 0.1,
+     "prize_exponent": 0.5,
+     "prize_cap": 1000.0,
+     "floor_w": 1.0e9,
+     "origin_reach": 0.0,
+     "power_gate": "complex_cells",
+     "sources": {
+      "rule": "E2 (evolution design 5.1 and 5.3): under life_model gradients/1 a metabolism is a capability generated from an open gradient; its rate per Earth-Myr of opportunity is base_rate x dial x reach_factor^reach x prize, prize = (power it would add / (power the biosphere runs on + floor_w))^prize_exponent, at most prize_cap. A gradient worth a thousand times the current budget is found fast; one worth a thousandth may never be.",
+      "base_rate": "Set so a reach-1 gradient worth about the current budget arrives at the listed model's anoxygenic pace (0.3 per Earth-Myr; Tice and Lowe 2004).",
+      "reach_factor": "Each new chemical step makes a metabolism ten times slower to find: an assumption, tuned with base_rate on the Earth timeline (fudge register).",
+      "power_gate": "Complex cells need the power of an oxygen-using metabolism: large genomes need far more energy per gene than a prokaryote's membrane supplies (Lane and Martin 2010, plausible)."
+     }
+    },
     "sources": {
      "origin_rate_per_myr": "The honest unknown. Set so an Earth-like early world most often has life within a few hundred million years (life by about 3.7 Gyr ago: Rosing 1999, Ohtomo et al. 2014); the origin dial runs from Rare (0.01) through Earth-like pace (1) to Common (100)",
      "settings": "Alkaline vents (Russell and Martin 2004; Lane 2015), wet-dry pools (Damer and Deamer 2020), delivered organics (Chyba and Sagan 1992), mineral catalysts (Hazen and Sverjensky 2010); factors are relative weights, each switchable",

@@ -64,8 +64,8 @@
       "oxygenic": 1780.0,
       "sex": 4530.0
     },
-    "hash": "d54e372dba58550a08218fd9636912cb63badecf2b55da64225352ac477e24b7",
-    "manifest_hash": "b3f829400d4843ff09c7a39cbbf3d5f958a9081a9525e0a8b95bd3f6365a8e46",
+    "hash": "bec75a52c4ec79118f8e07ea25cecedad8497f9d3d245cfbe2d28e115e2e0d29",
+    "manifest_hash": "631d80eed6a860774ad11bf5cdda2b46295486371b1b5fe3e8fb7a8919e1a5dc",
     "oxygenated_myr": 2545.0
   },
   "reduced": {
@@ -131,8 +131,8 @@
       "dormancy": 1265.0,
       "oxygenic": 1780.0
     },
-    "hash": "265410f503290a57f1e647fccbc52e6c7c4275d52fe11c359ea33af6459ce960",
-    "manifest_hash": "28b0daf59f5989a3d7545bf0d741047d2f29c59af99d73da41bf643d7d6c0f6c",
+    "hash": "33c821b7353039297075682344e3341b624ce929266fd4e0e1fb6fd150f7a438",
+    "manifest_hash": "c7dbdc06d73ebc8468a318f2d1670264ea0ddc1a1125d6bd56a3387bc2c8e104",
     "oxygenated_myr": null
   }
 }
