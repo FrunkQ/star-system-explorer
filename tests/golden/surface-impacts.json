@@ -44,17 +44,17 @@
     },
     {
       "body": "Ganymede",
-      "craters": 46,
+      "craters": 16,
       "erased": {
-        "resurfaced by the regime": 1128
+        "resurfaced by the regime": 1158
       },
-      "features": "d032dd3e60c6b4194c3a993279c80d03ca53dd39a42f3132c7ef200dd328a94e",
+      "features": "015f3dd15c5f4dfdfed8b29d5b2b6bf08084c52d485ae3133e0f73b64bf9da9e",
       "listed_d_km": 105.24892,
       "plains": 0,
       "shields": 0,
       "tiles": [
-        "f3d43a6401960ec3742397441fa3deee4cd1e1775880b184985deb960486f270",
-        "7aabcc98d12ac21d52571d75bd59708ae52e3321d36119c4c77330aaa0356b91"
+        "012d6b7e6bf384d81084cda7e621a62e8b6ddac707aa3f2dabdad814e56a5fc2",
+        "e9a3c551748a68c8f678101ccf001b95e537f814ccdbace323def98aad7950ed"
       ]
     }
   ]

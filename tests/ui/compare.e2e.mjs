@@ -104,8 +104,8 @@ try {
     await cmp2.getByRole("button", { name: "From the campaign" }).click();
     const camp = cmp2.getByRole("group", { name: "Add from the campaign" });
     await camp.getByRole("heading", { name: "Sol" }).waitFor({ timeout: 15000 });
-    await camp.getByRole("button", { name: "Earth", exact: true }).click();
-    assert.match(await cmp2.locator("tbody").innerText(), /Earth\n[^\n]*\n\s*Sol\s+6,371 km/);
+    await camp.getByRole("button", { name: "Earth (sample)", exact: true }).click();
+    assert.match(await cmp2.locator("tbody").innerText(), /Earth \(sample\)\n[^\n]*\n\s*Sol \(sample\)\s+6,371 km/);
     await cmp2.getByRole("button", { name: "Surprise me" }).click();
     assert.equal(Number(await cmp2.getAttribute("data-compare")), start + 3);
     assert.equal(await gm.locator("[data-state-hash]").getAttribute("data-state-hash") !== h0, true, "adding Sol wrote history");

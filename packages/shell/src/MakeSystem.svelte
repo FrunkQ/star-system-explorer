@@ -101,6 +101,8 @@
     if (tab === "import") return imported && pick ? sceneFromImport(imported, pick) : null;
     return grown ? sceneFromFormation(grown, grownSeed) : null;
   });
+  // V3 belts read as shells (the Oort cloud): said in the import report, because V3 itself drew them as rings.
+  const shells = $derived(tab === "import" && preview ? preview.subjects.filter((x) => x.shape === "sphere").map((x) => x.label) : []);
   const ws = createWorkspace(0);
   ws.mode = "view";
   const handles: ViewHandle[] = [];
@@ -143,6 +145,9 @@
           {summary.within} recomputed {summary.within === 1 ? "value agrees" : "values agree"} with V3 within tolerance{#if summary.outside.length}; <b>{summary.outside.length} {summary.outside.length === 1 ? "differs" : "differ"}</b>, listed below{/if}.
           {#if imported.report.honesty_marks.length}{imported.report.honesty_marks.length} {imported.report.honesty_marks.length === 1 ? "body carries" : "bodies carry"} an honesty mark (a value set against the physics in V3).{/if}
         </p>
+        {#if shells.length}
+          <p data-shells={shells.length}>{shells.join(", ")} {shells.length === 1 ? "is" : "are"} drawn as a sphere round the system, not a ring: V3 gives a belt no shape, and one named for the Oort cloud or starting beyond 1,000 AU is a shell (night-sky design, section 10).</p>
+        {/if}
         {#if systems.length > 1}
           <label>System to preview <select bind:value={pick} aria-label="System to preview">{#each systems as s (s.address)}<option value={s.address}>{s.name} ({s.bodies})</option>{/each}</select></label>
         {/if}

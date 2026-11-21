@@ -2,7 +2,7 @@
 // device has no WebGPU). It is handed camera-relative positions only, already
 // narrowed from f64 (frames.ts), and draws with the camera at the origin, so
 // no large number ever reaches the GPU (rendering rule 3).
-import { BufferGeometry, Color, Float32BufferAttribute, Line, LineBasicMaterial, Mesh, MeshBasicMaterial, PerspectiveCamera, Scene, SphereGeometry, TorusGeometry, Vector3 } from "three";
+import { BufferGeometry, Color, Float32BufferAttribute, Line, LineBasicMaterial, Mesh, MeshBasicMaterial, PerspectiveCamera, Points, PointsMaterial, Scene, SphereGeometry, TorusGeometry, Vector3 } from "three";
 import { WebGPURenderer } from "three/webgpu";
 import type { Vec3 } from "./frames.ts";
 
@@ -22,9 +22,15 @@ export interface GpuRing {
   colour: string;
 }
 
+/** A haze of single-pixel points (a shell such as the Oort cloud), camera-relative like everything else. */
+export interface GpuDots {
+  points: Vec3[];
+  colour: string;
+}
+
 export interface Gpu {
   readonly backend: "webgpu" | "webgl2";
-  draw(o: { items: GpuItem[]; rings: GpuRing[]; forward: Vec3; up: Vec3; fovY: number; width: number; height: number; ground: string }): void;
+  draw(o: { items: GpuItem[]; rings: GpuRing[]; dots?: GpuDots[]; forward: Vec3; up: Vec3; fovY: number; width: number; height: number; ground: string }): void;
   dispose(): void;
 }
 
@@ -44,6 +50,8 @@ export async function createGpu(canvas: HTMLCanvasElement): Promise<Gpu | null> 
   const mats = new Map<string, MeshBasicMaterial>();
   const lineMats = new Map<string, LineBasicMaterial>();
   const mat = (c: string) => mats.get(c) ?? (mats.set(c, new MeshBasicMaterial({ color: new Color(c) })), mats.get(c)!);
+  const dotMats = new Map<string, PointsMaterial>();
+  const dotMat = (c: string) => dotMats.get(c) ?? (dotMats.set(c, new PointsMaterial({ color: new Color(c), size: 1, sizeAttenuation: false })), dotMats.get(c)!);
   const lineMat = (c: string) => lineMats.get(c) ?? (lineMats.set(c, new LineBasicMaterial({ color: new Color(c) })), lineMats.get(c)!);
   return {
     backend,
@@ -67,6 +75,11 @@ export async function createGpu(canvas: HTMLCanvasElement): Promise<Gpu | null> 
         g.setAttribute("position", new Float32BufferAttribute(ring.points.flat(), 3));
         scene.add(new Line(g, lineMat(ring.colour)));
       }
+      for (const d of o.dots ?? []) {
+        const g = new BufferGeometry();
+        g.setAttribute("position", new Float32BufferAttribute(d.points.flat(), 3));
+        scene.add(new Points(g, dotMat(d.colour)));
+      }
       camera.fov = (o.fovY * 180) / Math.PI;
       camera.aspect = o.width / Math.max(1, o.height);
       camera.position.set(0, 0, 0);
@@ -75,13 +88,14 @@ export async function createGpu(canvas: HTMLCanvasElement): Promise<Gpu | null> 
       camera.updateProjectionMatrix();
       renderer.setSize(o.width, o.height, false);
       renderer.render(scene, camera);
-      scene.traverse((x) => (x as Line).geometry !== sphere && (x as Line).geometry !== torus && x instanceof Line && x.geometry.dispose());
+      scene.traverse((x) => (x instanceof Line || x instanceof Points) && x.geometry.dispose());
     },
     dispose() {
       sphere.dispose();
       torus.dispose();
       mats.forEach((m) => m.dispose());
       lineMats.forEach((m) => m.dispose());
+      dotMats.forEach((m) => m.dispose());
       renderer.dispose();
     },
   };

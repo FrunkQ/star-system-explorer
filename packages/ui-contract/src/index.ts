@@ -28,7 +28,7 @@ export type { Mark, Binding, Channel, Shape, Pattern, Scale, SymbologyDoc, Marke
 export { parseV3Palette, symbologyFromV3Palette, coloursFromV3Save, withV3TagColours, objectColourSummary, campaignCopy, v3SaveText } from "./v3-colours.ts";
 export type { V3TokenMap, V3ImportLine, V3PaletteImport, V3ObjectColour, V3SaveColours } from "./v3-colours.ts";
 export type { SystemScene, SceneSubject, SceneFact, SceneEvent, FactSource } from "./scene.ts";
-export { KM_PER_AU, primaryOf, childrenOf, systemOrder, frameFor } from "./scene.ts";
+export { KM_PER_AU, primaryOf, childrenOf, systemOrder, frameFor, isShell } from "./scene.ts";
 export { describeFact, wordsFor, fact, subjectName, parentOf, sentence, checkPlayerScene } from "./player-scene.ts";
 export type { PlayerScene, PlayerSubject, PlayerFact, Vocab, FieldWords, FactText } from "./player-scene.ts";
 export { packSummary, previewStack, stackPacks, checkPackDoc } from "./packs-edit.ts";
@@ -47,8 +47,8 @@ export { SOUND_SCENE_SCHEMA, SOUND_RECIPE_SCHEMA, SOUND_LABELS, SOUND_LAYERS, NO
 export type { SoundLabel, SoundLayer, SoundTier, SoundSource, ScoreNote, SoundScene, Voice, NodeType, RecipeNode, SoundRecipe, SoundSettings } from "./sound.ts";
 export { LIGHT_SCHEMA, BANDS, LINES, HONESTY_WORDS, SYMBOLS, DRAPER_K, planck, thermalColour, checkLightRecipe, paint, describeLight, litFromSystem, litFromPlayers, teffFromSpectral, readLight } from "./light.ts";
 export type { BandRecipe, Honesty, LightDescription, LitBody } from "./light.ts";
-export { importedSystems, sceneFromImport, reportSummary, sceneFromFormation, worldWords, noWorldsWhy, sceneFromResolved, listedTitle } from "./make.ts";
-export type { V3Imported, ImportReport, ImportDifference, ImportedSystem, FormationRan, FormationRequest, FormationWorld, Adopted, SystemResolved, ListedSystem } from "./make.ts";
+export { importedSystems, sceneFromImport, reportSummary, sceneFromFormation, worldWords, noWorldsWhy, sceneFromResolved, listedTitle, cloudShape, cloudSubjects, v3BeltShape } from "./make.ts";
+export type { V3Imported, ImportReport, ImportDifference, ImportedSystem, FormationRan, FormationRequest, FormationWorld, Adopted, SystemResolved, ListedSystem, LeftoverCloud } from "./make.ts";
 export { specFromScene, sceneAt, snapshotAt, fateEvents, subjectNames, fmtAge, KIND_WORDS, PHASE_WORDS, Z_SUN } from "./fate.ts";
 export type { SystemSpec, LookedAhead, FateEvent, FateSnapshot } from "./fate.ts";
 export { checkWorldStack, formatKm, kindPhrase, ladder, regionCounts, cutRadius } from "./world.ts";

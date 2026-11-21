@@ -71,6 +71,12 @@ try {
     await dlg.getByRole("alert").waitFor({ timeout: 8000 });
     assert.match(await dlg.getByRole("alert").innerText(), /already in the campaign/);
 
+    // A system whose giants stirred its belts has an Oort cloud, drawn as a sphere round it, not a ring in its plane.
+    await dlg.getByRole("textbox", { name: "Seed" }).fill("cold harbour");
+    await dlg.getByRole("button", { name: "Grow it" }).click();
+    await dlg.locator("[data-shape=sphere]").first().waitFor({ timeout: 20000 });
+    assert.ok((await dlg.locator("text.band").allTextContents()).some((t) => /Oort cloud/i.test(t)), "the Oort cloud is named on the chart");
+
     // The sample V3 save.
     await dlg.getByRole("tab", { name: "Import a V3 save" }).click();
     await dlg.getByRole("button", { name: "Try a sample save" }).click();
@@ -80,7 +86,7 @@ try {
     await gm.locator('.area-chart .body[aria-label^="Earth"]').first().waitFor({ timeout: 8000 });
     await gm.waitForFunction(() => document.querySelectorAll("[aria-label='System on the chart'] option").length === 3, null, { timeout: 15000 }).catch(() => {});
     assert.equal(await onChart().locator("option").count(), 3);
-    assert.equal(await gm.locator("header h1").innerText(), "Sol");
+    assert.equal(await gm.locator("header h1").innerText(), "Sol (sample)", "the sample save says it is a sample, not the real Sol");
 
     // Look ahead on Sol with the kernel's own spec; keep and move now: the Sun read back has aged.
     const sunLum = async () => {
