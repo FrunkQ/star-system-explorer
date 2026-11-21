@@ -9,6 +9,7 @@ pub mod air;
 pub mod chem;
 pub mod climate;
 pub mod common;
+pub mod convection;
 pub mod heat;
 pub mod layers;
 pub mod light;
@@ -38,6 +39,7 @@ pub fn atoms() -> Vec<Box<dyn sse_flow::Atom>> {
         .chain(light::atoms())
         .chain(nebula::atoms())
         .chain(activity::atoms())
+        .chain(convection::atoms())
         .chain(air::atoms())
         .chain(chem::atoms())
         .collect()
@@ -318,6 +320,12 @@ pub const KIND_DESCRIPTIONS: &[(&str, &str)] = &[
     ("star.activity_cycle_period", "length of a star's spot and activity cycle"),
     ("flare.energy", "total energy released by a flare, all wavelengths"),
     ("flare.rate_above", "flares per unit time with at least the given energy"),
+    // surface convection
+    ("convection.cell_size", "diameter of a surface convection cell (granule)"),
+    ("convection.speed", "speed of the churning gas near the surface"),
+    ("convection.cell_lifetime", "how long one surface convection cell lasts"),
+    ("convection.supergranule_size", "diameter of the large slow cells that outline the magnetic network"),
+    ("convection.supergranule_lifetime", "how long one supergranule lasts"),
     // air optics
     ("light.wavelength", "a wavelength of light"),
     ("gas.refractivity", "refractive index minus one of a gas at its reference density"),
