@@ -683,6 +683,12 @@ fn adopt_age_and_read_back_a_system() {
         );
         assert!(lo > 0.0 && hi >= lo, "{c}");
         assert!(c["kind"].is_string() && c["address"].is_string(), "{c}");
+        let sphere = c["shape"] == "sphere";
+        assert!(sphere || c["shape"] == "disc", "{c}");
+        assert_eq!(sphere, c["i_sigma_deg"].is_null(), "{c}");
+        if c["kind"] == "oort" {
+            assert!(sphere, "{c}");
+        }
     }
     let world = surfaces[0]["address"].as_str().unwrap().to_string();
     let spec = r["spec"].clone();
@@ -2955,4 +2961,126 @@ fn one_clock_and_the_two_ways_to_accept() {
     let first = run(&mut k);
     let mut k2 = crate::Kernel::new();
     assert_eq!(first, run(&mut k2), "the same session gives the same bytes");
+}
+
+#[test]
+fn classify_preview_labels_the_campaign_under_a_candidate_stack() {
+    let mut k = crate::Kernel::new();
+    let time: serde_json::Value = serde_json::from_str(
+        &std::fs::read_to_string(root().join("packs/base-time/pack.json")).unwrap(),
+    )
+    .unwrap();
+    let atlas: serde_json::Value = serde_json::from_str(
+        &std::fs::read_to_string(root().join("packs/base-atlas/pack.json")).unwrap(),
+    )
+    .unwrap();
+    let no_universe = send(
+        &mut k,
+        serde_json::json!({"op":"classify_preview","packs":[atlas],"scheme":"physical"}),
+    );
+    assert_eq!(no_universe["code"], "no_universe", "{no_universe}");
+    send(
+        &mut k,
+        serde_json::json!({"op":"load_stack","packs":[time]}),
+    );
+    send(
+        &mut k,
+        serde_json::json!({"op":"open_universe","id":"home","seed":"home"}),
+    );
+    for (sys, m) in [("u:home/sys:5", 1.0), ("u:home/sys:6", 0.8)] {
+        let form =
+            serde_json::json!({"seed": sys, "system": sys, "star_pins": {"primary_mass": m}});
+        let r = send(&mut k, serde_json::json!({"op":"adopt","formation":form}));
+        assert_eq!(r["type"], "adopted", "{r}");
+    }
+    // A drafted table: worlds by mass alone (the shipped atlas also wants
+    // makeup facts that formation does not publish yet).
+    let table = serde_json::json!({
+        "format": "sse.pack/1", "id": "campaign.tables", "version": "0.1.0",
+        "kind": ["game-system"], "kernel_range": "^0.1", "licence": "Apache-2.0",
+        "provides": {"other": {
+            "axes": [["mass", {"field": "body.mass", "scale": "log", "span": [1.0e20, 1.0e32]}]],
+            "schemes": [{"id": "heft", "question": "how heavy?"}],
+            "classes": [
+                {"id": "heft/world", "scheme": "heft", "kind": "base",
+                 "region": [{"axis": "mass", "core": [1.0e20, 1.0e28], "fringe": [1.0e19, 2.0e28]}],
+                 "examples": [{"name": "Earth", "values": {"body.mass": 5.97e24}, "expect": "in"}]},
+                {"id": "heft/star", "scheme": "heft", "kind": "base",
+                 "region": [{"axis": "mass", "core": [1.0e29, 1.0e32], "fringe": [5.0e28, 2.0e32]}],
+                 "examples": [{"name": "Sun", "values": {"body.mass": 1.989e30}, "expect": "in"}]}
+            ]
+        }}
+    });
+    let base = send(
+        &mut k,
+        serde_json::json!({"op":"classify_preview","packs":[atlas],"scheme":"physical"}),
+    );
+    assert_eq!(base["type"], "classify_previewed", "{base}");
+    assert_eq!(base["failing_examples"], serde_json::json!([]));
+    let atlas = table;
+    let before = send(&mut k, serde_json::json!({"op":"state_hash"}));
+    let r = send(
+        &mut k,
+        serde_json::json!({"op":"classify_preview","packs":[atlas],"scheme":"heft"}),
+    );
+    assert_eq!(r["type"], "classify_previewed", "{r}");
+    let bodies = r["bodies"].as_array().unwrap();
+    assert!(bodies.len() >= 4, "{r}");
+    let labelled = bodies.iter().filter(|b| !b["base"].is_null()).count();
+    assert_eq!(labelled, bodies.len(), "{r}");
+    for b in bodies {
+        let star = b["address"].as_str().unwrap().contains("/star:");
+        assert_eq!(
+            b["base"],
+            if star { "heft/star" } else { "heft/world" },
+            "{b}"
+        );
+    }
+    assert_eq!(
+        r["unclassified"].as_u64().unwrap() as usize,
+        bodies.len() - labelled
+    );
+    assert_eq!(r["failing_examples"], serde_json::json!([]));
+    // Nothing loaded or written; the same ask gives the same answer.
+    assert_eq!(send(&mut k, serde_json::json!({"op":"state_hash"})), before);
+    assert_eq!(
+        send(
+            &mut k,
+            serde_json::json!({"op":"classify_preview","packs":[atlas],"scheme":"heft"})
+        ),
+        r
+    );
+    // Scope narrows to one system.
+    let one = send(
+        &mut k,
+        serde_json::json!({"op":"classify_preview","packs":[atlas],"scheme":"heft","scope":"u:home/sys:6"}),
+    );
+    let one = one["bodies"].as_array().unwrap();
+    assert!(!one.is_empty() && one.len() < bodies.len());
+    assert!(one
+        .iter()
+        .all(|b| b["address"].as_str().unwrap().starts_with("u:home/sys:6")));
+    // A draft whose example disagrees with its own regions is reported.
+    let mut bad = atlas.clone();
+    let classes = bad["provides"]["other"]["classes"].as_array_mut().unwrap();
+    let c = classes
+        .iter_mut()
+        .find(|c| c["id"] == "heft/world")
+        .expect("heft/world");
+    let ex = &mut c["examples"][0]["expect"];
+    *ex = if ex == "in" {
+        "out".into()
+    } else {
+        "in".into()
+    };
+    let r = send(
+        &mut k,
+        serde_json::json!({"op":"classify_preview","packs":[bad],"scheme":"heft"}),
+    );
+    assert_eq!(r["failing_examples"].as_array().unwrap().len(), 1, "{r}");
+    let unknown = send(
+        &mut k,
+        serde_json::json!({"op":"classify_preview","packs":[atlas],"scheme":"nope"}),
+    );
+    assert_eq!(unknown["code"], "unknown_scheme", "{unknown}");
 }

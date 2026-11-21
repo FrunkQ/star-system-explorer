@@ -87,6 +87,39 @@ pub fn survey_world(
     epoch_gyr: f64,
     opts: &SurveyOptions,
 ) -> Result<Survey, String> {
+    chain(s, body, seed, epoch_gyr, opts, true)
+}
+
+/// The Orbit detail level of `body` (S16): every stage but the feature
+/// register, on the coarse grid of `detail::orbit_settings`. Its plate run
+/// is the one a survey refines.
+pub fn orbit_world(
+    s: &SurfaceSettings,
+    body: &Body,
+    seed: &Seed,
+    epoch_gyr: f64,
+    opts: &SurveyOptions,
+) -> Result<Survey, String> {
+    let o = crate::detail::orbit_settings(s);
+    let mut sv = chain(&o, body, seed, epoch_gyr, opts, false)?;
+    if sv.atlas.has_plates() {
+        sv.atlas.address = sv
+            .envelope
+            .address
+            .child_key("shell", &format!("orbit@{}", sv.atlas.epoch_myr))
+            .expect("valid shell key");
+    }
+    Ok(sv)
+}
+
+fn chain(
+    s: &SurfaceSettings,
+    body: &Body,
+    seed: &Seed,
+    epoch_gyr: f64,
+    opts: &SurveyOptions,
+    named: bool,
+) -> Result<Survey, String> {
     let e = envelope(s, body);
     let rotation = day_hours(&e, body, opts.rotation_hours);
     let oceans = body.oceans > 0.0;
@@ -130,8 +163,18 @@ pub fn survey_world(
         pressure_bar: body.pressure_bar,
         plates: Some(&h),
     };
-    let (feat, field) = impacts(s, &e, seed, &ii, epoch_gyr)?;
-    let rs = regime_surface(s, &e, seed, &regime_in(Some(&feat)), epoch_gyr);
+    let (mut feat, field) = impacts(s, &e, seed, &ii, epoch_gyr)?;
+    let mut rs = regime_surface(s, &e, seed, &regime_in(Some(&feat)), epoch_gyr);
+    if !named {
+        // Orbit detail keeps only features at least two coarse cells across
+        // (S16: the largest craters and a few big landforms); smaller ones
+        // are left to the texture, never given a cause they have not had.
+        let cell_km =
+            e.reference_radius_m * (m::PI / 2.0) / s.plates.cells_per_face as f64 / 1000.0;
+        let min_km = 2.0 * cell_km;
+        feat.craters.retain(|c| c.d_km >= min_km);
+        rs.landforms.retain(|l| l.size_km >= min_km);
+    }
     let atlas = atlas.with_impacts(feat, field).with_regime(rs);
     let inp = CoverInputs {
         air,
@@ -144,6 +187,16 @@ pub fn survey_world(
     };
     let ly = layers(s, &e, seed, &atlas, &inp);
     let atlas = atlas.with_layers(ly);
+    if !named {
+        let stages = ["envelope", "plates", "wear", "impacts", "regime", "cover"];
+        return Ok(Survey {
+            envelope: e,
+            atlas,
+            register: None,
+            aerostat,
+            stages: stages.iter().map(|x| x.to_string()).collect(),
+        });
+    }
     let reg = register(
         &s.features,
         &e,

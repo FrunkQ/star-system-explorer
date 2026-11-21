@@ -900,6 +900,89 @@ impl Kernel {
 
     /// The `sift` op: the stack's sifters over the campaign, or over one
     /// audience's scene.
+    /// `classify_preview`: label the campaign's bodies with a candidate
+    /// stack's atlas, loading and writing nothing.
+    fn classify_preview(
+        &mut self,
+        packs: Vec<serde_json::Value>,
+        scheme: String,
+        scope: Option<String>,
+        at_s: Option<i64>,
+    ) -> Result<Response, Response> {
+        let mut ms = Vec::new();
+        for (i, p) in packs.iter().enumerate() {
+            ms.push(
+                serde_json::from_value::<sse_pack::PackManifest>(p.clone())
+                    .map_err(|e| err("bad_pack", format!("pack {i}: {e}")))?,
+            );
+        }
+        let atlas = sse_sift::load(&ms)
+            .map_err(|es| err("bad_stack", es.join("; ")))?
+            .atlas;
+        if !atlas.schemes.contains_key(&scheme) && !atlas.classes.iter().any(|c| c.scheme == scheme)
+        {
+            return Err(err(
+                "unknown_scheme",
+                format!("no pack in the candidate stack provides scheme {scheme}"),
+            ));
+        }
+        let u = self.universe()?;
+        let scope = match scope {
+            Some(a) => in_universe(&u.root, &a)?,
+            None => u.root.clone(),
+        };
+        let now = UniverseTime::seconds(at_s.unwrap_or(i64::MAX));
+        let mut state = u.chronicle.state_at(now);
+        for (a, f) in u.record.state_at(now).facts {
+            state.facts.entry(a).or_default().extend(f);
+        }
+        let mut bodies = vec![];
+        let mut unclassified = 0;
+        for (a, f) in &state.facts {
+            if !scope.contains(a) || !(f.contains_key("body.kind") || f.contains_key("body.mass")) {
+                continue;
+            }
+            let subject = sse_sift::Subject {
+                address: Some(a.clone()),
+                facts: f.clone(),
+                parent: a
+                    .parent()
+                    .and_then(|p| state.facts.get(&p).cloned())
+                    .unwrap_or_default(),
+                now_s: now.s,
+                ..Default::default()
+            };
+            let l = atlas.label(&scheme, &subject, None);
+            if l.base.is_none() {
+                unclassified += 1;
+            }
+            bodies.push(serde_json::json!({
+                "address": a.to_string(),
+                "base": l.base,
+                "fit": l.fit,
+                "modifiers": l.modifiers,
+            }));
+        }
+        let failing_examples = atlas
+            .check_examples()
+            .into_iter()
+            .filter(|m| {
+                atlas
+                    .classes
+                    .iter()
+                    .any(|c| c.scheme == scheme && m.starts_with(&format!("{}: ", c.id)))
+            })
+            .collect();
+        Ok(Response::ClassifyPreviewed {
+            scheme,
+            atlas_hash: atlas.content_hash().hex(),
+            at_s,
+            bodies,
+            unclassified,
+            failing_examples,
+        })
+    }
+
     fn sift(
         &mut self,
         ids: Option<Vec<serde_json::Value>>,
@@ -3202,6 +3285,12 @@ impl Kernel {
                 scope,
                 at_s,
             } => self.sift(sifters, audience, scope, at_s.unwrap_or(i64::MAX))?,
+            Request::ClassifyPreview {
+                packs,
+                scheme,
+                scope,
+                at_s,
+            } => self.classify_preview(packs, scheme, scope, at_s)?,
             Request::Programs { at_s } => {
                 let ps = self.observe.programs.clone();
                 let u = self.universe()?;

@@ -677,7 +677,15 @@ fn clouds_of(run: Option<&SystemRun>) -> Vec<serde_json::Value> {
     l.clouds
         .iter()
         .map(|c| {
+            // F5's inclination model: Rayleigh-distributed tilts make a disc
+            // (sigma in degrees); isotropic ones a sphere (the Oort cloud).
+            let (shape, i_sigma_deg) = match c.i {
+                sse_formation::leftovers::Tilt::Isotropic => ("sphere", None),
+                sse_formation::leftovers::Tilt::Rayleigh { sigma_deg } => ("disc", Some(sigma_deg)),
+            };
             serde_json::json!({
+                "shape": shape,
+                "i_sigma_deg": i_sigma_deg,
                 "address": c.address.to_string(),
                 "kind": c.kind,
                 "around": c.around,
@@ -813,11 +821,11 @@ pub(crate) type OrbitCache = Vec<(String, sse_surface::atlas::Atlas)>;
 fn orbit_atlas<'c>(
     cache: &'c mut OrbitCache,
     s: &sse_surface::SurfaceSettings,
+    body: &sse_surface::Body,
     env: &sse_surface::SurfaceEnvelope,
     seed: &Seed,
     epoch_gyr: f64,
-    oceans: f64,
-) -> &'c sse_surface::atlas::Atlas {
+) -> Result<&'c sse_surface::atlas::Atlas, String> {
     let key = sse_surface::detail::orbit_key(env, seed, epoch_gyr);
     match cache.iter().position(|(k, _)| *k == key) {
         Some(i) => {
@@ -825,14 +833,14 @@ fn orbit_atlas<'c>(
             cache.push(hit);
         }
         None => {
-            let a = sse_surface::detail::orbit_atlas(s, env, seed, epoch_gyr, oceans);
+            let a = sse_surface::detail::orbit_atlas(s, body, seed, epoch_gyr)?;
             if cache.len() >= ORBIT_CACHE_SIZE {
                 cache.remove(0);
             }
             cache.push((key, a));
         }
     }
-    &cache[cache.len() - 1].1
+    Ok(&cache[cache.len() - 1].1)
 }
 
 #[allow(clippy::too_many_arguments)]
@@ -878,20 +886,14 @@ pub(crate) fn resolved_system(
             (Some(key), Some((b, env))) => {
                 // Orbit detail (S16): the coarse plate run, the same world a
                 // survey later refines; reused while it is in the cache.
-                let atlas = orbit_atlas(
-                    orbits,
-                    &s,
-                    env,
-                    seed,
-                    (b.age_gyr + shift_gyr).max(0.0),
-                    b.oceans,
-                );
-                match atlas.tile(key, sse_surface::SurveyState::Surveyed) {
-                    Ok(tile) => {
+                let atlas = orbit_atlas(orbits, &s, b, env, seed, (b.age_gyr + shift_gyr).max(0.0));
+                match atlas.map(|a| a.tile(key, sse_surface::SurveyState::Surveyed)) {
+                    Ok(Ok(tile)) => {
                         out_tiles.push(serde_json::to_value(&tile).expect("plain data"));
                         None
                     }
-                    Err(r) => Some(format!("{r:?}")),
+                    Ok(Err(r)) => Some(format!("{r:?}")),
+                    Err(e) => Some(e),
                 }
             }
         };

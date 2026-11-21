@@ -556,6 +556,23 @@ pub enum Request {
         #[ts(optional)]
         tiles: Option<Vec<TileRequest>>,
     },
+    /// Preview a class atlas scheme over the open campaign (GM machine):
+    /// label every body in `scope` (default the whole universe) at `at_s`
+    /// (default the latest state) with `scheme`, from the atlas of the
+    /// candidate stack `packs` (bottom to top, as `load_stack`). Nothing is
+    /// loaded or written: the stack in use is unchanged. Also reports any
+    /// class example the candidate atlas gets wrong.
+    ClassifyPreview {
+        #[ts(type = "unknown[]")]
+        packs: Vec<serde_json::Value>,
+        scheme: String,
+        #[serde(default)]
+        #[ts(optional)]
+        scope: Option<String>,
+        #[serde(default)]
+        #[ts(optional, type = "number")]
+        at_s: Option<i64>,
+    },
     /// NAV (T3): candidate courses between two places, or the ways out
     /// for a drifting ship (no `to`). The system is a NAV `fixture` (`sol`),
     /// an inline `nav` system, or an adopted `system` read at `at_s` (its
@@ -1173,6 +1190,7 @@ impl Request {
             Request::WebSlice { .. } => "web_slice",
             Request::WindowView { .. } => "window_view",
             Request::Sift { .. } => "sift",
+            Request::ClassifyPreview { .. } => "classify_preview",
             Request::PlanDescent { .. } => "plan_descent",
             Request::Systems => "systems",
             Request::LifeView { .. } => "life_view",
@@ -1361,6 +1379,11 @@ pub fn ops() -> Vec<OpInfo> {
             "sift",
             Cost::Light,
             "GM machine only; linear in addresses x sifters within the scope (a campaign of a few systems: milliseconds), plus one scene for an audience",
+        ),
+        o(
+            "classify_preview",
+            Cost::Light,
+            "GM machine only; one atlas load plus one label per body in scope (a campaign of a few systems: milliseconds)",
         ),
         o(
             "window_view",
@@ -2045,7 +2068,9 @@ pub enum Response {
     /// SystemSpec (absent without a star mass and age). `surfaces`: S0
     /// envelopes. `tiles`: S1 tiles; `refused`: tiles not given, with why.
     /// `clouds`: a formation run's leftovers (F5), each `{address, kind,
-    /// around, source, a_min_au, a_max_au, largest_km, over_1km}`; `around`
+    /// around, source, a_min_au, a_max_au, largest_km, over_1km, shape,
+    /// i_sigma_deg}` (`shape` `disc` with a Rayleigh tilt spread, or
+    /// `sphere` for isotropic tilts with `i_sigma_deg` null); `around`
     /// is null for a cloud that orbits the star (belts, scattered disc,
     /// Oort), otherwise the world it orbits, with axes in AU around it.
     /// Absent when there are none.
@@ -2073,6 +2098,20 @@ pub enum Response {
         #[serde(default, skip_serializing_if = "Vec::is_empty")]
         #[ts(optional, type = "unknown[]")]
         clouds: Vec<serde_json::Value>,
+    },
+    /// `classify_preview`: one row per body in address order, `{address,
+    /// base, fit, modifiers}` (`base` null when nothing fits), with the
+    /// candidate atlas's hash and the scheme's class examples it gets wrong.
+    ClassifyPreviewed {
+        scheme: String,
+        atlas_hash: String,
+        #[serde(default, skip_serializing_if = "Option::is_none")]
+        #[ts(optional, type = "number")]
+        at_s: Option<i64>,
+        #[ts(type = "unknown[]")]
+        bodies: Vec<serde_json::Value>,
+        unclassified: u32,
+        failing_examples: Vec<String>,
     },
     /// `codes`: one entry per body, in address order:
     /// `{address, reading}` with the sse-codes `Reading` unchanged in shape.
