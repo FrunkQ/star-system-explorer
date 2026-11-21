@@ -278,6 +278,8 @@ SUBSTANCES = [
               chemical={"states": {"gas": gibbs(0.0, 0.0, "convention"), "dissolved": gibbs(17.72, -4.2, T)}}),
     substance("he", {"he": 1}, "helium", optical=gas_optics(3.5e-5, [1.0, 0.0, 0.0], "kaye-laby", "unverified", king_src="atom-isotropic")),
     substance("ne", {"ne": 1}, "neon", optical=gas_optics(6.71e-5, [1.0, 0.0, 0.0], "pdg-gas", "verified", king_src="atom-isotropic")),
+    substance("kr", {"kr": 1}, "krypton"),
+    substance("xe", {"xe": 1}, "xenon"),
     substance("so2", {"s": 1, "o": 2}, "sulphur dioxide", optical=gas_optics(6.86e-4, [1.0, 0.0, 0.0], "kaye-laby", "unverified", *KING_ONE)),
     substance("co", {"c": 1, "o": 1}, "carbon monoxide",
               optical=gas_optics(3.38e-4, [1.0, 0.0, 0.0], "kaye-laby", "unverified", *KING_ONE),
@@ -304,8 +306,8 @@ SUBSTANCES = [
 # ---------------------------------------------------------------- mixtures
 MIXTURES = [
     {"id": "dry-air", "names": {"physics": "dry air", "plain": "air", "story": "air"},
-     "recipe": {"n2": 0.78084, "o2": 0.209476, "ar": 0.00934, "co2": 0.000314}, "by": "volume", "src": "ussa1976", "check": "unverified",
-     "note": "molar mass is worked out from the recipe (the 1976 table gives 28.9644 g/mol with its trace gases); CO2 has risen since 1976",
+     "recipe": {"n2": 0.78084, "o2": 0.209476, "ar": 0.00934, "co2": 0.000314, "ne": 1.818e-5, "he": 5.24e-6, "ch4": 2e-6, "kr": 1.14e-6, "h2": 5e-7, "xe": 8.7e-8}, "by": "volume", "src": "ussa1976", "check": "unverified",
+     "note": "molar mass is worked out from the recipe (the 1976 table gives 28.9644 g/mol); CO2 has risen since 1976",
      "optical": {"refractivity_589nm": val(2.926e-4, "1", "peck-reeder1972", "unverified", at_k=273.15, at_pa=101325.0), "dispersion": "peck-reeder",
                  "king_factor": {"fit": "a + b lambda^-2 + c lambda^-4, lambda in um", "coeffs": [1.0469, 0.0, 0.0], "src": "bodhaine1999"}}},
     {"id": "giant-air", "names": {"physics": "hydrogen-helium envelope", "plain": "giant-planet air", "story": "giant air"},

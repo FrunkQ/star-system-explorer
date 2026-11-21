@@ -3216,6 +3216,28 @@
      }
     },
     {
+     "id": "kr",
+     "formula": {
+      "kr": 1
+     },
+     "names": {
+      "physics": "krypton",
+      "plain": "krypton",
+      "story": "krypton"
+     }
+    },
+    {
+     "id": "xe",
+     "formula": {
+      "xe": 1
+     },
+     "names": {
+      "physics": "xenon",
+      "plain": "xenon",
+      "story": "xenon"
+     }
+    },
+    {
      "id": "so2",
      "formula": {
       "s": 1,
@@ -3779,12 +3801,18 @@
       "n2": 0.78084,
       "o2": 0.209476,
       "ar": 0.00934,
-      "co2": 0.000314
+      "co2": 0.000314,
+      "ne": 1.818e-05,
+      "he": 5.24e-06,
+      "ch4": 2e-06,
+      "kr": 1.14e-06,
+      "h2": 5e-07,
+      "xe": 8.7e-08
      },
      "by": "volume",
      "src": "ussa1976",
      "check": "unverified",
-     "note": "molar mass is worked out from the recipe (the 1976 table gives 28.9644 g/mol with its trace gases); CO2 has risen since 1976",
+     "note": "molar mass is worked out from the recipe (the 1976 table gives 28.9644 g/mol); CO2 has risen since 1976",
      "optical": {
       "refractivity_589nm": {
        "v": 0.0002926,

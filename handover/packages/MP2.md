@@ -21,9 +21,9 @@ loader, kernel thread "Build kernel resolve and rules").
     `handover/packages/MP2-data/elements.csv` is the input table.
   - 34 isotopes: the 5 heat producers with today's shares and decay heat (Ruedas 2017), fuels, stable
     references and dating clocks.
-  - 27 substances: the 13 light gases, the 5 climate condensables and the 26 life species merged by
+  - 29 substances: the 13 light gases, krypton and xenon (dry air's traces), the 5 climate condensables and the 26 life species merged by
     substance (dissolved forms under `chemical.states.dissolved`). No molar mass is typed.
-  - 11 mixtures: dry air, giant air, surface rock, surface ice, magma, and the six formation materials.
+  - 11 mixtures: dry air (USSA 1976 recipe with its traces), giant air, surface rock, surface ice, magma, and the six formation materials.
   - 30 sources, each with a DOI or URL; register rows in `docs/citations/matter-reference.md`.
 - Nothing reads the pack yet (MP1 is the reader), so no behaviour or golden changes.
 - Honesty: a value with no `check` was read from its source. `unverified` means the source is named but the
