@@ -19,22 +19,31 @@ fn seed() -> Seed {
     Seed::from_text("sse4-wear-tests")
 }
 
+fn wet(
+    s: &SurfaceSettings,
+    b: &Body,
+    e: &SurfaceEnvelope,
+    water: &WaterHistory,
+    rot: f64,
+) -> crate::climate::WorldClimate {
+    let x = sse_climate::Extra {
+        rotation_hours: Some(rot),
+        ..Default::default()
+    };
+    crate::climate::wet_climate(s, b, e, water, &x, b.age_gyr * 1000.0)
+}
+
 fn earth(s: &SurfaceSettings) -> (Body, SurfaceEnvelope, PlateHistory, Wear) {
     let (b, e) = env_of(s, "Earth");
     let h = history(s, &e, &seed(), b.age_gyr);
-    let w = wear_world(
-        s,
-        &e,
-        &seed(),
-        &h,
-        &WaterHistory::steady(b.oceans, b.pressure_bar, b.age_gyr),
-        b.magma_end_myr,
-    );
+    let water = WaterHistory::steady(b.oceans, b.pressure_bar, b.age_gyr);
+    let cl = wet(s, &b, &e, &water, 23.93);
+    let w = wear_world(s, &e, &seed(), &h, &water, &cl, b.magma_end_myr);
     (b, e, h, w)
 }
 
 fn mars_at(s: &SurfaceSettings, t_gyr: f64) -> (SurfaceEnvelope, PlateHistory, Wear) {
-    let (_, e) = env_of(s, "Mars");
+    let (b, e) = env_of(s, "Mars");
     let h = history(s, &e, &seed(), t_gyr);
     let water = WaterHistory {
         wet_from_gyr: 0.0,
@@ -42,7 +51,8 @@ fn mars_at(s: &SurfaceSettings, t_gyr: f64) -> (SurfaceEnvelope, PlateHistory, W
         oceans: 0.05,
         pressure_bar: 0.006,
     };
-    let w = wear_world(s, &e, &seed(), &h, &water, 50.0);
+    let cl = wet(s, &b, &e, &water, 24.62);
+    let w = wear_world(s, &e, &seed(), &h, &water, &cl, 50.0);
     (e, h, w)
 }
 
@@ -109,7 +119,7 @@ fn drainage_is_dendritic_and_follows_hacks_law() {
 fn no_river_runs_uphill_in_a_thousand_worlds() {
     let mut s = settings();
     s.wear.epoch_myr = 100.0;
-    let (_, e) = env_of(&s, "Earth");
+    let (b, e) = env_of(&s, "Earth");
     let n = 8;
     let nc = 6 * n * n;
     for k in 0..1000u64 {
@@ -123,9 +133,10 @@ fn no_river_runs_uphill_in_a_thousand_worlds() {
             .collect();
         let oceans = [0.0, 0.3, 1.0, 3.0][(k % 4) as usize];
         let water = WaterHistory::steady(oceans, 1.0, 1.0);
+        let cl = wet(&s, &b, &e, &water, 23.93);
         // Every tenth world is also worn for 300 Myr.
         let to = if k % 10 == 0 { 300.0 } else { 0.0 };
-        let w = wear(&s, &e, n, &h0, &water, 0.0, to, k % 20 == 0);
+        let w = wear(&s, &e, n, &h0, &water, &cl, 0.0, to, k % 20 == 0);
         let h = &w.heights;
         for c in 0..nc as usize {
             // Downhill on the true surface wherever neither end is in a filled basin.

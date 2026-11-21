@@ -6,7 +6,8 @@
 //! - depressions are filled by priority-flood, so every land cell drains to the
 //!   sea or to a lake and no river runs uphill;
 //! - water is routed by steepest descent on the filled surface and
-//!   accumulated from rainfall (latitude bands, none on a dry world);
+//!   accumulated from the one climate's rain (W7a: the energy balance's own
+//!   rain by latitude, none on a dry world);
 //! - valleys are cut by the stream-power rule (incision grows with discharge
 //!   and slope; glaciers cut harder), solved implicitly in drainage order;
 //! - what is worn off is carried downstream and laid down in lakes and at river
@@ -18,6 +19,7 @@
 //! so only the last `plate_window_myr` is carved; elsewhere the whole history
 //! from the magma ocean's end is.
 
+use crate::climate::WorldClimate;
 use crate::plates::{sea_level, Grid, PlateHistory};
 use crate::sketch::SketchModel;
 use crate::{SurfaceEnvelope, SurfaceSettings};
@@ -32,14 +34,12 @@ pub const WEAR_VERSION: &str = "surface-wear-v1";
 pub struct WearSettings {
     pub epoch_myr: f64,
     pub plate_window_myr: f64,
-    pub rain_m_yr: f64,
-    pub rain_floor: f64,
-    pub rain_cells: u32,
     pub k_stream: f64,
     pub m: f64,
     pub glacial_factor: f64,
     pub ice_k: f64,
-    pub lapse_k_m: f64,
+    /// A world wet only in the past rains at least this warm while wet, K.
+    pub wet_floor_k: f64,
     pub diffusion_m2_yr: f64,
     pub river_area_cells: f64,
     pub dune_rain: f64,
@@ -309,13 +309,16 @@ pub fn base_heights(
     }
 }
 
-/// Wear a cell grid of heights from `from_myr` to `to_myr` (Myr since the world formed).
+/// Wear a cell grid of heights from `from_myr` to `to_myr` (Myr since the
+/// world formed), raining the wet epochs' climate.
+#[allow(clippy::too_many_arguments)]
 pub fn wear(
     s: &SurfaceSettings,
     env: &SurfaceEnvelope,
     n: u32,
     heights0: &[f64],
     water: &WaterHistory,
+    climate: &WorldClimate,
     from_myr: f64,
     to_myr: f64,
     steady: bool,
@@ -345,16 +348,8 @@ pub fn wear(
         .iter()
         .map(|d| m::asin(d[2].clamp(-1.0, 1.0)))
         .collect();
-    let rain: Vec<f64> = lat
-        .iter()
-        .map(|la| {
-            let b = 0.5 + 0.5 * m::cos(2.0 * w.rain_cells as f64 * la);
-            // Less water, less rain: scaled by the square root of the ocean volume (at most Earth's).
-            w.rain_m_yr
-                * m::sqrt(water.oceans.clamp(0.0, 1.0))
-                * (w.rain_floor + (1.0 - w.rain_floor) * b)
-        })
-        .collect();
+    // The one climate's rain in the wet epochs, m a year.
+    let rain: Vec<f64> = lat.iter().map(|la| climate.precip_m_yr(*la)).collect();
     let comp = compensation(env, g.len());
     let mut h = heights0.to_vec();
     let mut eroded_total = 0.0;
@@ -395,9 +390,7 @@ pub fn wear(
                 }
             }
             for c in 0..nc {
-                let t_k = env.t_surface_now_k + 20.0
-                    - 40.0 * m::sin(lat[c]) * m::sin(lat[c])
-                    - w.lapse_k_m * (h[c] - sl.unwrap_or(0.0)).max(0.0);
+                let t_k = climate.t_at(lat[c], h[c] - sl.unwrap_or(0.0));
                 glaciated[c] = t_k < w.ice_k && sl.is_none_or(|x| h[c] >= x);
             }
             // Implicit stream power, outlets first.
@@ -592,6 +585,7 @@ pub fn wear_world(
     seed: &Seed,
     plates: &PlateHistory,
     water: &WaterHistory,
+    climate: &WorldClimate,
     magma_end_myr: f64,
 ) -> Wear {
     let h0 = base_heights(s, env, seed, plates);
@@ -601,5 +595,5 @@ pub fn wear_world(
     } else {
         magma_end_myr.min(to)
     };
-    wear(s, env, plates.n, &h0, water, from, to, plates.steps > 0)
+    wear(s, env, plates.n, &h0, water, climate, from, to, plates.steps > 0)
 }

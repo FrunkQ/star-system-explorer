@@ -699,12 +699,10 @@ fn cloud_deck(
     let a = env.reference_radius_m;
     let ice = inputs.mass_earth > 0.0 && inputs.mass_earth < c.ice_giant_mass_earth;
     let u = if ice { c.wind_ice_m_s } else { c.wind_gas_m_s };
-    let jets = m::round(m::sqrt(a * omega / u)).clamp(1.0, 60.0) as u32;
-    // 2 × jets bands pole to pole, edges evenly spaced in sin(latitude).
+    // The one jet count and band layout (sse-climate, W7a).
+    let jets = sse_climate::circulation::giant_jets(a, omega, u);
     let nb = 2 * jets;
-    let edges: Vec<f64> = (0..=nb)
-        .map(|i| m::asin(-1.0 + 2.0 * i as f64 / nb as f64).to_degrees())
-        .collect();
+    let edges = sse_climate::circulation::giant_band_edges(jets);
     let winds: Vec<Jet> = (0..nb)
         .map(|i| {
             let lat = 0.5 * (edges[i as usize] + edges[i as usize + 1]);

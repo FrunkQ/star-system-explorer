@@ -159,7 +159,9 @@ pub fn wear_golden() -> serde_json::Value {
             } else {
                 WaterHistory::steady(f.body.oceans, f.body.pressure_bar, f.body.age_gyr)
             };
-            let w = wear_world(&s, &e, &seed, &h, &water, f.body.magma_end_myr.max(50.0));
+            let x = sse_climate::Extra { rotation_hours: Some(if f.body.label == "Mars" { 24.62 } else { 23.93 }), ..Default::default() };
+            let cl = crate::climate::wet_climate(&s, &f.body, &e, &water, &x, f.body.age_gyr * 1000.0);
+            let w = wear_world(&s, &e, &seed, &h, &water, &cl, f.body.magma_end_myr.max(50.0));
             let a = Atlas::from_worn(&s, &e, &seed, &h, &w, vec![]);
             let tiles: Vec<_> = [(0, 0, 0, 0), (3, 5, 9, 20)]
                 .iter()
@@ -281,21 +283,19 @@ pub fn cover_golden() -> serde_json::Value {
         let b = body("Earth");
         let e = envelope(&s, &b);
         let h = crate::plates::history(&s, &e, &seed, b.age_gyr);
-        let w = wear_world(
-            &s,
-            &e,
-            &seed,
-            &h,
-            &WaterHistory::steady(b.oceans, b.pressure_bar, b.age_gyr),
-            b.magma_end_myr,
-        );
+        let water = WaterHistory::steady(b.oceans, b.pressure_bar, b.age_gyr);
+        let x = sse_climate::Extra {
+            rotation_hours: Some(23.93),
+            ..Default::default()
+        };
+        let cl = crate::climate::wet_climate(&s, &b, &e, &water, &x, b.age_gyr * 1000.0);
+        let w = wear_world(&s, &e, &seed, &h, &water, &cl, b.magma_end_myr);
         let a = Atlas::from_worn(&s, &e, &seed, &h, &w, vec![]);
         let epoch = a.epoch_myr as f64;
         let inp = CoverInputs {
             air: Air::guess(&s.cover, &e, b.pressure_bar, true),
             water: true,
-            rotation_hours: Some(23.93),
-            obliquity_deg: None,
+            climate: &cl,
             life: 1.0,
             plates: Some(&h),
             reshape: vec![
@@ -336,11 +336,16 @@ pub fn cover_golden() -> serde_json::Value {
         };
         let (feat, field) = impacts(&s, &e, &seed, &ii, b.age_gyr).expect("known mechanisms");
         let a = Atlas::new(&s, &e, &seed, b.age_gyr, vec![]).with_impacts(feat, field);
+        let x = sse_climate::Extra {
+            rotation_hours: Some(655.7),
+            obliquity_deg: Some(1.54),
+            ..Default::default()
+        };
+        let cl = crate::climate::world_climate(&s, &b, &e, &x, b.age_gyr * 1000.0);
         let inp = CoverInputs {
             air: Air::guess(&s.cover, &e, 0.0, false),
             water: false,
-            rotation_hours: Some(655.7),
-            obliquity_deg: None,
+            climate: &cl,
             life: 0.0,
             plates: None,
             reshape: vec![],
@@ -383,7 +388,7 @@ fn world_json(
         .map(|&(f, l, x, y)| a.build(TileKey::new(f, l, x, y).expect("key")).hash)
         .collect();
     serde_json::json!({
-        "address": ly.address, "cells": ly.climate.cells, "contrast_k": ly.climate.contrast_k,
+        "address": ly.address, "cells": ly.climate.world.climate.circulation.cells, "climate": ly.climate.world.climate.key,
         "deposits": ly.deposits.len(), "built": ly.built.len(), "applied": ly.applied.len(),
         "layers": digest(ly), "features": kinds, "register": digest(reg),
         "first_names": reg.features.iter().take(5).map(|f| f.original_name.clone()).collect::<Vec<_>>(),

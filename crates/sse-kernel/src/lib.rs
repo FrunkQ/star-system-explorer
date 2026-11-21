@@ -294,6 +294,8 @@ pub struct Kernel {
     time: Option<sse_time::epoch::TimeSettings>,
     /// Recent `survey_surface` results.
     surveys: survey::Cache,
+    /// Orbit-level climates by key (W7a): the `weather` op reuses them.
+    climates: sse_climate::Cache,
 }
 
 impl Default for Kernel {
@@ -421,10 +423,59 @@ impl Kernel {
             codes: sse_codes::Codes::default(),
             universe: None,
             surveys: vec![],
+            climates: sse_climate::Cache::new(8),
             jobs: BTreeMap::new(),
             next_job: 1,
             time: None,
         }
+    }
+
+    /// The weather conditions of `body` in the adopted `system` (W7a): the
+    /// body read at `at_s` like `survey_surface`, its conditions built by
+    /// the function the surface's wear and cover use, so the weather and the
+    /// ground share one climate.
+    fn body_conditions(
+        &mut self,
+        system: &str,
+        body: &str,
+        at_s: Option<i64>,
+    ) -> Result<(serde_json::Value, f64), Response> {
+        let a: Address = system
+            .parse()
+            .map_err(|e| err("bad_address", format!("{e}")))?;
+        let u = self
+            .universe
+            .as_mut()
+            .ok_or_else(|| err("no_universe", "open a universe first"))?;
+        if !u.root.contains(&a) {
+            return Err(err(
+                "bad_address",
+                format!("{a} is not in universe {}", u.root),
+            ));
+        }
+        if !u.runs.contains_key(system) {
+            if let Some(req) = adopt::formation_request(&u.chronicle, &a) {
+                let (_, run, _) = systems::form(req.into())?;
+                u.runs.insert(system.to_string(), run);
+            }
+        }
+        let s = sse_surface::scenario::settings();
+        let w = adopt::worlds_at(&u.chronicle, &a, at_s, u.runs.get(system), &s)?;
+        let b = w
+            .bodies
+            .into_iter()
+            .find(|b| b.address.to_string() == body)
+            .ok_or_else(|| {
+                err(
+                    "no_surface_body",
+                    format!("{body} is not a surface body of {system}"),
+                )
+            })?;
+        let env = sse_surface::envelope(&s, &b);
+        let (c, _) = sse_surface::climate::conditions(&s, &b, &env, &Default::default());
+        // The epoch the survey reads the body at, so both keep one key.
+        let epoch_myr = (b.age_gyr + w.shift_gyr).max(0.0) * 1000.0;
+        Ok((serde_json::to_value(&c).expect("plain data"), epoch_myr))
     }
 
     /// Handle one JSON request; always returns one JSON response.
@@ -844,6 +895,68 @@ impl Kernel {
                 .state_at(UniverseTime::seconds(i64::MAX))
                 .hash()
                 .hex(),
+        })
+    }
+
+    /// `promote_star` (Y7a): draw a fill star once and store it whole.
+    fn promote_star(&mut self, address: &str) -> Result<Response, Response> {
+        let u = self.universe()?;
+        let a = in_universe(&u.root, address)?;
+        let state = u.chronicle.state_at(UniverseTime::seconds(i64::MAX));
+        let hash = |c: &Chronicle| c.state_at(UniverseTime::seconds(i64::MAX)).hash().hex();
+        if let Some(Value::Text(t)) = state
+            .facts
+            .get(&a)
+            .and_then(|f| f.get(cosmos::STAR_DESCRIPTION))
+        {
+            let description: serde_json::Value =
+                serde_json::from_str(t).map_err(|e| err("bad_record", format!("{e}")))?;
+            return Ok(Response::StarPromoted {
+                address: a.to_string(),
+                already: true,
+                event_id: None,
+                description,
+                state_hash: hash(&u.chronicle),
+            });
+        }
+        let drawn = cosmos::with_stars(&u.seed, &u.root, None, |st, _| {
+            let s = st
+                .draw_one(&a)
+                .map_err(|e| err("bad_address", e))?
+                .ok_or_else(|| err("not_found", format!("no star system drawn at {a}")))?;
+            Ok(st.promote(&s))
+        })?;
+        let text = serde_json::to_string(&drawn).expect("plain data");
+        let mut f = BTreeMap::new();
+        f.insert(cosmos::STAR_DESCRIPTION.to_string(), Value::Text(text));
+        // Searchable copies; the description is what is read back.
+        f.insert("star.mass_msun".to_string(), Value::Float(drawn.mass_msun));
+        f.insert("star.birth_gyr".to_string(), Value::Float(drawn.birth_gyr));
+        f.insert("star.feh".to_string(), Value::Float(drawn.feh));
+        f.insert(
+            "star.companions".to_string(),
+            Value::Int(drawn.companions.len() as i128),
+        );
+        let e = clock::timeless_set(
+            &u.chronicle,
+            &a,
+            f,
+            Evidence::Resolved,
+            vec![],
+            cosmos::STAR_PIN_KIND,
+            Publisher::new("sse.base-cosmology", "stars", "1"),
+        )
+        .map_err(|e| err("bad_event", e))?;
+        let id = u
+            .chronicle
+            .append(e)
+            .map_err(|e| err("chronicle", format!("{e}")))?;
+        Ok(Response::StarPromoted {
+            address: a.to_string(),
+            already: false,
+            event_id: Some(id.hex()),
+            description: serde_json::to_value(&drawn).expect("plain data"),
+            state_hash: hash(&u.chronicle),
         })
     }
 
@@ -1756,6 +1869,9 @@ impl Kernel {
             Request::Weather {
                 want,
                 world,
+                system,
+                body,
+                at_s,
                 conditions,
                 day,
                 tile,
@@ -1765,19 +1881,41 @@ impl Kernel {
                 pins,
                 sources,
                 block,
-            } => weather::weather(weather::Ask {
-                want,
-                world,
-                conditions,
-                day: day.unwrap_or(0.0),
-                tile,
-                n,
-                lat: lat.unwrap_or(0.0),
-                lon: lon.unwrap_or(0.0),
-                pins: pins.unwrap_or_default(),
-                sources,
-                block,
-            })?,
+            } => {
+                let mut epoch_myr = 0.0;
+                let conditions = match (conditions, system, body) {
+                    (Some(c), _, _) => Some(c),
+                    (None, Some(system), Some(body)) => {
+                        let (c, e) = self.body_conditions(&system, &body, at_s)?;
+                        epoch_myr = e;
+                        Some(c)
+                    }
+                    (None, Some(_), None) | (None, None, Some(_)) => {
+                        return Err(err(
+                            "bad_request",
+                            "give a system and one of its bodies together",
+                        ))
+                    }
+                    (None, None, None) => None,
+                };
+                weather::weather(
+                    weather::Ask {
+                        want,
+                        world,
+                        conditions,
+                        day: day.unwrap_or(0.0),
+                        tile,
+                        n,
+                        lat: lat.unwrap_or(0.0),
+                        lon: lon.unwrap_or(0.0),
+                        pins: pins.unwrap_or_default(),
+                        sources,
+                        block,
+                        epoch_myr,
+                    },
+                    &mut self.climates,
+                )?
+            }
             Request::ReadLight { fixture, bodies } => {
                 systems::read_light(fixture.as_deref(), bodies)?
             }
@@ -3631,6 +3769,17 @@ impl Kernel {
                 })?;
                 Response::HaloCelled { cell }
             }
+            Request::StarCell { cell, t_myr } => {
+                let u = self.universe()?;
+                let pins =
+                    cosmos::star_pins(&u.chronicle.state_at(UniverseTime::seconds(i64::MAX)))?;
+                let elapsed = clock::elapsed_myr(&u.chronicle);
+                let cell = cosmos::with_stars(&u.seed, &u.root, None, |st, now| {
+                    cosmos::star_cell(st, cell, t_myr.unwrap_or(now + elapsed), &pins)
+                })?;
+                Response::StarCelled { cell }
+            }
+            Request::PromoteStar { address } => self.promote_star(&address)?,
             Request::Manifest => {
                 let m = self.universe()?.manifest();
                 Response::Manifest {

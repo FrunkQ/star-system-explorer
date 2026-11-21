@@ -92,7 +92,7 @@ export interface FormationRan {
     notes: string[];
     growth: { events: FormationEvent[] };
     /** Stage 7's leftovers: belts, discs and clouds (F5); `around` names the world a ring or swarm belongs to. */
-    leftovers?: { clouds: { address: string; kind: string; around: string | null; a_min_au: number; a_max_au: number }[] };
+    leftovers?: { clouds: LeftoverCloud[] };
     history: {
       inheritance: { age_gyr: number; feh: number; fuv_g0: number };
       events: FormationEvent[];
@@ -114,6 +114,70 @@ const R_SUN_M = 695_700_000;
 const AU_M = KM_PER_AU * 1000;
 
 const round = (v: number, d = 3) => Number(v.toPrecision(d));
+
+/** One of F5's leftover clouds, as the formation run and `resolved_system` give it. */
+export interface LeftoverCloud {
+  address: string;
+  kind: string;
+  /** The world a ring or swarm belongs to; null round the star. */
+  around: string | null;
+  a_min_au: number;
+  a_max_au: number;
+  /**
+   * From F5's tilt model; absent from kernels before it. The kernel thread sends "disc" (Rayleigh tilts) or "sphere"
+   * (isotropic); the night-sky design (section 10) names them "ring", "thick-disc" and "shell". Both are read.
+   */
+  shape?: string;
+  i_sigma_deg?: number | null;
+}
+
+/** A cloud's shape: the kernel's when it gives one, else the Oort cloud is a sphere and the rest are discs. */
+export function cloudShape(c: Pick<LeftoverCloud, "kind" | "shape">): "disc" | "sphere" {
+  if (c.shape === "sphere" || c.shape === "shell") return "sphere";
+  if (c.shape === "disc" || c.shape === "ring" || c.shape === "thick-disc") return "disc";
+  return c.kind === "oort" ? "sphere" : "disc";
+}
+
+/**
+ * A V3 belt's shape. V3 has no shape, so a belt named for the Oort cloud, or one whose inner edge lies beyond
+ * 1,000 AU (where the Galaxy's tides have stirred every orbit's tilt), is a sphere.
+ */
+export function v3BeltShape(name: string, band: [number, number] | undefined): "disc" | "sphere" {
+  return /\boort\b/i.test(name) || (band !== undefined && band[0] > 1000) ? "sphere" : "disc";
+}
+
+/** Belts, discs and the Oort cloud round the star from F5's clouds; rings and Trojans belong to their worlds and are not drawn here. */
+export function cloudSubjects(clouds: readonly LeftoverCloud[], star: string | undefined): SceneSubject[] {
+  const out: SceneSubject[] = [];
+  for (const c of clouds) {
+    if (c.around || !(c.a_max_au > c.a_min_au) || c.kind === "scattered-disc") continue;
+    const name = c.kind === "oort" ? "Oort cloud" : c.kind.replace(/-/g, " ").replace(/^./, (x) => x.toUpperCase());
+    const shape = cloudShape(c);
+    // A system has one Oort cloud: F5 can fill it from several stirred belts, and those reservoirs are drawn as one shell.
+    const same = c.kind === "oort" ? out.find((x) => x.label === name) : undefined;
+    if (same) {
+      same.band_au = [Math.min(same.band_au![0], c.a_min_au), Math.max(same.band_au![1], c.a_max_au)];
+      same.subtitle = `Leftovers of formation · a sphere round the system, ${roughAu(same.band_au[0])} to ${roughAu(same.band_au[1])} AU`;
+      continue;
+    }
+    const span = `${roughAu(c.a_min_au)} to ${roughAu(c.a_max_au)} AU`;
+    out.push({
+      address: c.address,
+      kind: "belt",
+      label: name,
+      subtitle: `Leftovers of formation · ${shape === "sphere" ? `a sphere round the system, ${span}` : span}`,
+      ...(star ? { parent: star } : {}),
+      band_au: [c.a_min_au, c.a_max_au],
+      shape,
+      facts: [{ field: "name", label: "Name", value: name, display: name, editable: false, source: "derived" }],
+      stamps: ["generated"],
+      tags: [],
+    });
+  }
+  return out;
+}
+
+const roughAu = (a: number) => (a >= 100 ? Math.round(a).toLocaleString("en-GB") : a.toPrecision(2));
 
 /**
  * A belt's band on the chart, in AU from its star: its inner and outer edges when the save gives them at orbital scale
@@ -196,7 +260,7 @@ export function sceneFromImport(r: V3Imported, system: string): SystemScene {
       label: name,
       subtitle: `Imported from V3 · ${role(a)}`,
       ...(a !== primary && parent ? { parent } : {}),
-      ...(band ? { band_au: band } : a !== primary && sma !== undefined ? { orbit: { a_au: sma / AU_M, phase_deg: phase(i++) } } : {}),
+      ...(band ? { band_au: band, shape: v3BeltShape(name, band) } : a !== primary && sma !== undefined ? { orbit: { a_au: sma / AU_M, phase_deg: phase(i++) } } : {}),
       facts: out,
       stamps: ["authored", "imported", ...(marked ? ["impossible"] : [])],
       tags: mass !== undefined && kind !== "star" ? [sizeTag(mass / M_EARTH)] : [],
@@ -308,12 +372,8 @@ export function sceneFromFormation(r: FormationRan, seed: string): SystemScene {
       tags: [sizeTag(w.mass_earth)],
     });
   });
-  // Belts and discs round the star (F5 leftovers); rings and Trojans belong to their worlds and are not drawn here.
-  for (const c of r.run.leftovers?.clouds ?? []) {
-    if (c.around || !(c.a_max_au > c.a_min_au) || c.kind === "oort" || c.kind === "scattered-disc") continue;
-    const name = c.kind.replace(/-/g, " ").replace(/^./, (x) => x.toUpperCase());
-    subjects.push({ address: c.address, kind: "belt", label: name, subtitle: `Leftovers of formation · ${c.a_min_au.toPrecision(2)} to ${c.a_max_au.toPrecision(2)} AU`, ...(starAddr ? { parent: starAddr } : {}), band_au: [c.a_min_au, c.a_max_au], facts: [f("name", "Name", name)], stamps: ["generated"], tags: [] });
-  }
+  // Belts, discs and the Oort cloud round the star (F5 leftovers).
+  subjects.push(...cloudSubjects(r.run.leftovers?.clouds ?? [], starAddr));
   const events = [...h.events, ...r.run.events]
     .filter((e) => e.text)
     .map((e, i) => ({ id: `f${i}`, at_yr: e.t_myr * 1e6, label: e.text!.length > 60 ? e.text!.slice(0, 57) + "…" : e.text!, tone: "past" as const }));
@@ -380,6 +440,8 @@ export interface SystemResolved {
   surfaces: { address: string; kind: string; t_surface_now_k: number; regime_label?: string; speculative: boolean }[];
   tiles: Json[];
   refused: Json[];
+  /** F5's leftover clouds for a grown system (kernel PR 64); omitted when empty and for V3 and facts systems. */
+  clouds?: LeftoverCloud[];
 }
 
 /**
@@ -454,7 +516,7 @@ export function sceneFromResolved(r: SystemResolved, title?: string): SystemScen
         label: name,
         subtitle: `${grown ? "Grown" : r.source === "v3" ? "Imported from V3" : "From the universe's facts"} · ${kind}${aged(a) ? " · aged by a kept look-ahead" : ""}${s?.regime_label ? ` · ${s.regime_label.toLowerCase()}` : ""}`,
         ...(a !== primary && parent ? { parent } : {}),
-        ...(band ? { band_au: band } : a !== primary && sma !== undefined ? { orbit: { a_au: sma / AU_M, phase_deg: phase(i++) } } : {}),
+        ...(band ? { band_au: band, shape: v3BeltShape(name, band) } : a !== primary && sma !== undefined ? { orbit: { a_au: sma / AU_M, phase_deg: phase(i++) } } : {}),
         facts: out,
         stamps: r.evidence
           ? [grown ? "generated" : "imported", ...(classes(a).has("authored") ? ["authored"] : []), ...(classes(a).has("catalogued") ? ["catalogued"] : []), ...(classes(a).has("authored-impossible") ? ["authored", "impossible"] : []), ...(s?.speculative ? ["speculative"] : [])].filter((x, j, all) => all.indexOf(x) === j)
@@ -462,6 +524,8 @@ export function sceneFromResolved(r: SystemResolved, title?: string): SystemScen
         tags: mass !== undefined && kind !== "star" ? [sizeTag(mass / M_EARTH)] : [],
       };
     });
+  // A grown system's belts, discs and Oort cloud, from F5's clouds as the universe holds them.
+  subjects.push(...cloudSubjects((r.clouds ?? []).filter((c) => !subjects.some((x) => x.address === c.address)), primary));
   const age = num(system, "system.age");
   const now_yr = age !== undefined ? age / Number(YEAR_S) : 4.6e9;
   const far = Math.max(1, ...subjects.filter((s) => s.orbit && s.parent === primary).map((s) => s.orbit!.a_au));

@@ -71,7 +71,7 @@ const HEARD_KM: f64 = 15.0;
 
 fn level_bounds(c: &Conditions, s: &crate::WeatherSettings) -> [(f64, f64); 3] {
     let h = c.scale_height_m() / 1000.0;
-    let top = s.circulation.tropopause_scale_heights * h;
+    let top = s.climate.circulation.tropopause_scale_heights * h;
     [
         (0.0, 0.24 * h),
         (0.24 * h, 0.83 * h),

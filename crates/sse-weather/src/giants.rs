@@ -296,35 +296,31 @@ pub fn mass_earth(c: &Conditions) -> f64 {
     c.gravity_m_s2 * c.radius_m * c.radius_m / G / M_EARTH_KG
 }
 
-/// Jets from the Rhines scale, as the S6 cloud deck.
+/// Jets from the Rhines scale, as the S6 cloud deck (the one count, W7a).
 pub fn jets(a: f64, omega: f64, u: f64) -> u32 {
-    m::round(m::sqrt(a * omega / u)).clamp(1.0, 60.0) as u32
+    sse_climate::circulation::giant_jets(a, omega, u)
 }
 
 /// The S6 band edges, pole to pole: asin(−1 + 2i / 2J).
 pub fn band_edges(jets: u32) -> Vec<f64> {
-    let nb = 2 * jets;
-    (0..=nb)
-        .map(|i| m::asin(-1.0 + 2.0 * i as f64 / nb as f64) * DEG)
-        .collect()
+    sse_climate::circulation::giant_band_edges(jets)
 }
 
 /// Deformation radius N H / f at a latitude, m.
 pub fn deformation_m(gs: &GiantSettings, c: &Conditions, lat_deg: f64) -> f64 {
-    let f = 2.0 * c.omega() * m::sin(lat_deg.abs().max(1.0) / DEG);
+    let f = 2.0 * c.spin_rate() * m::sin(lat_deg.abs().max(1.0) / DEG);
     gs.stratification.brunt_s * c.scale_height_m() / f
 }
 
 /// Polar jet latitude: one polar Rhines length L = (U a² / 2Ω)^⅓ from the pole.
 pub fn polar_jet_lat(a: f64, omega: f64, u: f64) -> f64 {
-    let l = m::cbrt(u * a * a / (2.0 * omega));
-    (90.0 - l / a * DEG).max(0.0)
+    sse_climate::circulation::polar_jet_lat(a, omega, u)
 }
 
 pub fn layout(gs: &GiantSettings, c: &Conditions) -> GiantLayout {
     let b = &gs.bands;
     let a = c.radius_m;
-    let omega = c.omega();
+    let omega = c.spin_rate();
     let me = mass_earth(c);
     let ice = me > 0.0 && me < b.ice_giant_mass_earth;
     let u = if ice { b.wind_ice_m_s } else { b.wind_gas_m_s };

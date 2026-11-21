@@ -3,58 +3,9 @@
 //! Orac and a GM can see and change it.
 
 use serde::{Deserialize, Serialize};
+pub use sse_climate::settings::{Range, Reference, RegimeRule, Substance};
+use sse_climate::ClimateSettings;
 use std::collections::BTreeMap;
-
-#[derive(Clone, PartialEq, Debug, Serialize, Deserialize)]
-pub struct Reference {
-    pub text: String,
-    #[serde(default, skip_serializing_if = "Option::is_none")]
-    pub doi: Option<String>,
-    #[serde(default, skip_serializing_if = "Option::is_none")]
-    pub url: Option<String>,
-}
-
-#[derive(Clone, PartialEq, Debug, Serialize, Deserialize)]
-pub struct Range {
-    #[serde(default)]
-    pub min: Option<f64>,
-    #[serde(default)]
-    pub max: Option<f64>,
-}
-
-impl Range {
-    pub fn holds(&self, v: f64) -> bool {
-        self.min.is_none_or(|lo| v >= lo) && self.max.is_none_or(|hi| v < hi)
-    }
-}
-
-/// One circulation rule: the first whose conditions all hold names the regime.
-#[derive(Clone, PartialEq, Debug, Serialize, Deserialize)]
-pub struct RegimeRule {
-    pub regime: String,
-    pub when: BTreeMap<String, Range>,
-    pub because: String,
-}
-
-/// A substance that can condense into cloud: Clausius-Clapeyron from its
-/// triple point with a constant latent heat.
-#[derive(Clone, PartialEq, Debug, Serialize, Deserialize)]
-pub struct Substance {
-    /// Gas key in [`crate::Conditions::gases`] (`h2o`, `co2`, `ch4`, ...).
-    pub gas: String,
-    /// Name the field uses (`water`, `carbon dioxide`, `methane`, ...).
-    pub name: String,
-    pub triple_k: f64,
-    pub triple_pa: f64,
-    /// Latent heat of the phase change that forms the cloud, J/kg.
-    pub latent_j_kg: f64,
-    pub molar_kg: f64,
-    /// Density of the condensed phase, kg/m³ (turns a mass flux into depth).
-    pub condensed_kg_m3: f64,
-    /// Cloud colour, linear sRGB.
-    pub colour: [f64; 3],
-    pub source: String,
-}
 
 /// A cloud deck or haze made by chemistry rather than by condensation of a
 /// gas already in the air (sulphuric acid on Venus, organic haze on Titan).
@@ -77,20 +28,7 @@ pub struct Photochemical {
 }
 
 #[derive(Clone, PartialEq, Debug, Serialize, Deserialize)]
-pub struct Defaults {
-    pub rotation_hours: f64,
-    pub obliquity_deg: f64,
-    pub gases: BTreeMap<String, f64>,
-}
-
-#[derive(Clone, PartialEq, Debug, Serialize, Deserialize)]
 pub struct Circulation {
-    /// Wind scale in the Rhines length on worlds with a surface, m/s.
-    pub wind_m_s: f64,
-    /// Held and Hou: fractional equator-to-pole contrast of radiative
-    /// equilibrium temperature, and tropopause depth in scale heights.
-    pub delta_h: f64,
-    pub tropopause_scale_heights: f64,
     /// Width of the rising belt and of each storm track, as a fraction of its cell.
     pub itcz_width: f64,
     pub storm_width: f64,
@@ -105,48 +43,18 @@ pub struct Circulation {
 }
 
 #[derive(Clone, PartialEq, Debug, Serialize, Deserialize)]
-pub struct Supply {
-    /// Share of the sunlight reaching the ground that goes into evaporation
-    /// where the ground is wet.
-    pub latent_share: f64,
-    /// Sunlight reaching the ground: `earth_fraction` × (column / Earth's)^(−`column_power`).
-    pub earth_fraction: f64,
-    pub column_power: f64,
-    /// Relative humidity of air over open liquid.
-    pub humidity_over_liquid: f64,
-    /// Ocean fraction at which evaporation is no longer limited by wet area.
-    pub wet_saturation: f64,
-    /// Cloud cover from moisture supply: `cover_max` × (1 − exp(−latent / `latent_scale_w_m2`)).
-    pub cover_max: f64,
-    pub latent_scale_w_m2: f64,
-    /// Thin air: cover from frost and ice haze only.
-    pub thin_cover: f64,
-    pub source: String,
-}
-
-#[derive(Clone, PartialEq, Debug, Serialize, Deserialize)]
 pub struct WeatherSettings {
-    pub bands: u32,
     pub season_samples: u32,
-    pub defaults: Defaults,
     pub circulation: Circulation,
-    pub supply: Supply,
-    pub rules: Vec<RegimeRule>,
-    pub regimes: BTreeMap<String, String>,
-    pub substances: Vec<Substance>,
+    /// Thin air: cover from frost and ice haze only (drawing).
+    pub thin_cover: f64,
     pub photochemical: Vec<Photochemical>,
     pub references: Vec<Reference>,
+    /// The one climate this weather is drawn on (W7a): the climate pack in
+    /// the same stack, or the base climate pack.
+    #[serde(skip, default = "sse_climate::base_settings")]
+    pub climate: ClimateSettings,
 }
-
-/// Quantities a regime rule may test.
-pub const QUANTITIES: [&str; 6] = [
-    "pressure_bar",
-    "solid",
-    "star_locked",
-    "hadley_edge_deg",
-    "cells",
-    "solar_day_hours",
-];
 
 impl WeatherSettings {
     /// The last pack in the stack that provides `weather` wins.
@@ -156,22 +64,10 @@ impl WeatherSettings {
             .rev()
             .find_map(|p| p.provides.other.get("weather"))
             .ok_or("no pack provides weather settings")?;
-        let s: WeatherSettings = serde_json::to_value(v)
+        let mut s: WeatherSettings = serde_json::to_value(v)
             .and_then(serde_json::from_value)
             .map_err(|e| format!("weather settings: {e}"))?;
-        for r in &s.rules {
-            if !s.regimes.contains_key(&r.regime) {
-                return Err(format!("rule names unknown regime {}", r.regime));
-            }
-            for q in r.when.keys() {
-                if !QUANTITIES.contains(&q.as_str()) {
-                    return Err(format!("rule for {} reads unknown quantity {q}", r.regime));
-                }
-            }
-        }
-        if s.rules.last().is_none_or(|r| !r.when.is_empty()) {
-            return Err("the last weather rule must have no conditions (the fallback)".into());
-        }
+        s.climate = ClimateSettings::from_packs(stack)?;
         if s.references
             .iter()
             .any(|r| r.doi.is_none() && r.url.is_none())

@@ -65,7 +65,8 @@ try {
     await dlg.getByLabel("Import report").waitFor({ timeout: 8000 });
     await dlg.getByRole("button", { name: "Add this system to the campaign" }).click();
     await gm.locator('.area-chart .body[aria-label^="Earth"]').first().waitFor({ timeout: 15000 });
-    await gm.locator('.area-chart .body[aria-label^="Earth"]').first().click();
+    assert.equal(await gm.locator(".area-chart [data-authored-import]").count(), 1, "an imported V3 system says its names and values are authored, not modelled");
+    await gm.locator('.area-chart .body[aria-label^="Earth"]').first().locator(".hit").click();
     await go(gm, "body");
     const t0 = Date.now();
     await gm.waitForSelector("[data-body] [data-tier]:not([data-tier='']) canvas", { timeout: 30000 });
@@ -75,7 +76,7 @@ try {
     assert.ok(water > 40, `Earth is mostly under water: ${covers}`);
     assert.ok((await gm.locator("[data-regime]").innerText()).length > 0, "the regime is named");
     const globe = gm.locator("[data-body] [data-tier]");
-    assert.match(await globe.getAttribute("aria-label"), /Globe of Earth\. Earth: \d+% under water/);
+    assert.match(await globe.getAttribute("aria-label"), /Globe of Earth \(sample\)\. Earth \(sample\): \d+% under water/);
     // The disk is drawn (whatever the tier): its centre is not the page's ground.
     await gm.waitForTimeout(300);
     const px = await pixelsOf(gm, globe);

@@ -78,9 +78,6 @@ pub struct Lightning {
 
 #[derive(Clone, PartialEq, Debug, Serialize, Deserialize)]
 pub struct FormationSettings {
-    /// Equator-to-pole surface temperature contrast on an Earth-thick air, K;
-    /// scaled by (column / Earth's)^(−½).
-    pub t_contrast_k: f64,
     pub cyclones: Cyclones,
     pub tropical: Tropical,
     pub dust: Dust,
@@ -149,19 +146,15 @@ fn wrap(lon: f64) -> f64 {
     }
 }
 
-/// Near-surface temperature at a latitude and season, K.
-pub fn t_at(fs: &FormationSettings, c: &Conditions, lat: f64, phase: f64) -> f64 {
-    let col = (c.column_kg_m2() / crate::conditions::EARTH_COLUMN_KG_M2).max(1e-6);
-    let dt = fs.t_contrast_k / m::sqrt(col.max(1.0));
+/// Near-surface temperature at a latitude and season, K: the one climate's
+/// season (W7a). A star-locked world's heat follows the star, not latitude,
+/// so it reads the mean and the cell adds the day-night offset.
+pub fn t_at(p: &Prepared, c: &Conditions, lat: f64, phase: f64) -> f64 {
     if c.star_locked {
-        // Heat follows the star, not latitude; the cell adds the day-night offset.
         return c.t_surface_k;
     }
-    let cl = m::cos(rad(lat));
-    let decl = circulation::declination_deg(c, phase);
-    // Summer warms the hemisphere the sun stands over.
-    let season = 0.5 * dt * m::sin(rad(decl)) * m::sin(rad(lat)) * (1.0 - 0.6 * c.ocean_fraction);
-    c.t_surface_k + dt * (cl * cl - 2.0 / 3.0) + season
+    let sea = p.core.season_at(phase);
+    p.core.lerp(&sea.t_k, lat)
 }
 
 /// Weather draws are keyed by the world's address (which carries its
@@ -242,7 +235,7 @@ pub fn systems(
     if regime == "airless" || regime == "banded-giant" {
         return out;
     }
-    let omega = c.omega();
+    let omega = c.spin_rate();
     // Mid-latitude cyclones along every storm track.
     if p.cond.is_some() && !p.circ.storm_tracks_deg.is_empty() && regime != "thin-air" {
         let cy = &fs.cyclones;
@@ -250,7 +243,7 @@ pub fn systems(
         let life_max = cy.life_days * 1.4;
         for (ti, st) in p.circ.storm_tracks_deg.iter().enumerate() {
             let f = 2.0 * omega * m::sin(rad(*st));
-            let h = s.circulation.tropopause_scale_heights * c.scale_height_m();
+            let h = s.climate.circulation.tropopause_scale_heights * c.scale_height_m();
             let lambda = cy.eady_wavelengths * cy.n_s * h / f;
             let circ_km = 2.0 * m::PI * c.radius_m * m::cos(rad(*st));
             let waves = (circ_km / lambda).max(1.0);
@@ -320,7 +313,7 @@ pub fn systems(
                 let mut warm = 0.0;
                 for q in 0..18 {
                     let la = lo_lat + (hi_lat - lo_lat) * (q as f64 + 0.5) / 18.0;
-                    if t_at(fs, c, hemi * la, ph) >= tc.min_sst_k {
+                    if t_at(p, c, hemi * la, ph) >= tc.min_sst_k {
                         warm += m::cos(rad(la)) * rad((hi_lat - lo_lat) / 18.0) / 2.0;
                     }
                 }
@@ -337,7 +330,7 @@ pub fn systems(
                 }
                 // Born where the sea is warm enough.
                 let mut lat0 = hemi * (lo_lat + (hi_lat - lo_lat) * 0.5 * d.unit(i + 3));
-                if t_at(fs, c, lat0, ph) < tc.min_sst_k {
+                if t_at(p, c, lat0, ph) < tc.min_sst_k {
                     lat0 = hemi * (lo_lat + 2.0);
                 }
                 let lon0 = d.uniform(i + 4, -180.0, 180.0);
@@ -640,7 +633,7 @@ pub fn imprint(
     let ordered_clear = orders_here(c, systems, date, lat, lon, "order-clear");
     let deep = cell.layers[1].cloud_type == "cumulonimbus";
     if deep {
-        let top_km = s.circulation.tropopause_scale_heights * c.scale_height_m() / KM * 0.9;
+        let top_km = s.climate.circulation.tropopause_scale_heights * c.scale_height_m() / KM * 0.9;
         let ab = if ocean_w > 0.5 {
             fs.lightning.ocean
         } else {
@@ -673,7 +666,7 @@ pub fn imprint(
     }
     // What falls: snow where it is freezing.
     if cell.precip_mm_day > 0.0 && c.liquid.as_deref() == Some("water") {
-        let t = t_at(fs, c, lat, p.phase) + cell.temp_offset_k - 0.0065 * height.max(0.0);
+        let t = t_at(p, c, lat, p.phase) + cell.temp_offset_k - 0.0065 * height.max(0.0);
         cell.precip_kind = if t < 273.15 {
             "snow"
         } else if cell.precip_kind == "drizzle" {

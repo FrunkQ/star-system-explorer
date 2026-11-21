@@ -14,6 +14,7 @@
 //! surveyed worlds.
 
 pub mod atlas;
+pub mod climate;
 pub mod cover;
 pub mod detail;
 pub mod impacts;
@@ -114,6 +115,10 @@ pub struct SurfaceSettings {
     pub features: named::FeatureSettings,
     pub rules: Vec<Rule>,
     pub regimes: BTreeMap<String, RegimeDef>,
+    /// The one climate wear and cover read (W7a): the climate pack in the
+    /// same stack, or the base climate pack.
+    #[serde(skip, default = "sse_climate::base_settings")]
+    pub climate: sse_climate::ClimateSettings,
 }
 
 impl SurfaceSettings {
@@ -124,9 +129,10 @@ impl SurfaceSettings {
             .rev()
             .find_map(|p| p.provides.other.get("surface"))
             .ok_or("no pack provides surface settings")?;
-        let s: SurfaceSettings = serde_json::to_value(v)
+        let mut s: SurfaceSettings = serde_json::to_value(v)
             .and_then(serde_json::from_value)
             .map_err(|e| format!("surface settings: {e}"))?;
+        s.climate = sse_climate::ClimateSettings::from_packs(stack)?;
         for r in &s.rules {
             if !s.regimes.contains_key(&r.regime) {
                 return Err(format!("rule names unknown regime {}", r.regime));

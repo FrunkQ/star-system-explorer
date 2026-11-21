@@ -473,7 +473,7 @@ fn hemi(a: &AerosolSettings, src_lat: f64, lat: f64) -> f64 {
 }
 
 fn tropopause_m(w: &WeatherSettings, c: &Conditions) -> f64 {
-    w.circulation.tropopause_scale_heights * c.scale_height_m()
+    w.climate.circulation.tropopause_scale_heights * c.scale_height_m()
 }
 
 /// A sulphate veil from one eruption: (source latitude, Tg SO₂, years since).

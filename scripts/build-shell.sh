@@ -18,7 +18,8 @@ cp packages/shell/src/documents/kestrel.player-data.pack.json packages/shell/pub
 mkdir -p packages/shell/public/packs/samples
 cp packages/shell/src/documents/sample.warm-worlds.pack.json packages/shell/public/packs/samples/warm-worlds.json
 rm -rf packages/shell/public/samples && mkdir -p packages/shell/public/samples
-cp tests/fixtures/v3/synthetic-sol.json packages/shell/public/samples/
+# The sample save the Make a system dialog offers: the importer fixture with names that say "(sample)", so nobody takes it for the real Sol (Alex, 21 Nov).
+cp packages/shell/src/documents/sample-sol.v3.json packages/shell/public/samples/synthetic-sol.json
 rm -rf packages/shell/public/scenes
 # Documents the screens composer edits and previews (U5).
 rm -rf packages/shell/public/documents && mkdir -p packages/shell/public/documents

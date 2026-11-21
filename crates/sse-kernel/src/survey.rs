@@ -192,7 +192,27 @@ pub(crate) fn survey_surface(r: Request, cache: &mut Cache) -> Result<serde_json
         o.insert("aerostat_refused".into(), a.into());
     }
     if let Some(l) = ly {
-        o.insert("climate".into(), v(&l.climate));
+        // The one climate, summarised (the full climate comes from the
+        // `weather` op's `climate` want): its key, cells and why.
+        let k = &l.climate.world.climate;
+        o.insert(
+            "climate".into(),
+            serde_json::json!({
+                "key": k.key,
+                "regime": k.circulation.regime,
+                "cells": k.circulation.cells,
+                "hadley_edge_deg": k.circulation.hadley_edge_deg,
+                "lat_deg": k.lat_deg,
+                "t_k": k.t_k,
+                "precip_m_yr": k.precip_m_yr,
+                "lapse_k_km": l.climate.world.lapse_k_km,
+                "liquid": l.climate.liquid,
+                "water": l.climate.water,
+                "pressure_bar": l.climate.pressure_bar,
+                "assumed": l.climate.world.assumed,
+                "why": l.climate.why,
+            }),
+        );
         o.insert("air".into(), v(&l.air));
         let total = l.deposits.len();
         let mut order: Vec<usize> = (0..total).collect();

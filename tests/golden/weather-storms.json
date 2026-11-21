@@ -1,15 +1,14 @@
 {
   "report": [
     "Wind 16 km/h from the east",
-    "Sky mostly cloudy",
-    "Rain 1 mm a day",
-    "Visibility 34 km"
+    "Sky clear",
+    "Visibility 43 km"
   ],
   "systems": [
     {
-      "count": 10,
+      "count": 12,
       "day": 100.0,
-      "digest": "1c51365fe294f6cb49948a83c9b5b445464f03e122df00332e4e9a7de98ce3f3",
+      "digest": "821348ca202c711d51d1692081beed6d67043fb9834aa56e0b89da1228687649",
       "ids": [
         "cyclone-n0-93-0",
         "cyclone-n0-96-0",
@@ -20,13 +19,15 @@
         "cyclone-s0-97-0",
         "cyclone-s0-98-0",
         "cyclone-s0-99-0",
-        "polar-vortex-s-0"
+        "polar-vortex-s-0",
+        "tropical-n-99",
+        "tropical-s-98"
       ]
     },
     {
-      "count": 10,
+      "count": 11,
       "day": 250.5,
-      "digest": "8260eae2465fb437c27b1198d8553ee863eca8c4fad942b0ce7846419aa4027c",
+      "digest": "987e53784e21f6a58973799300cab8fe4522267af2396b27b99ccd820b6fe2af",
       "ids": [
         "cyclone-n0-245-0",
         "cyclone-n0-246-0",
@@ -37,9 +38,10 @@
         "cyclone-s0-247-0",
         "cyclone-s0-248-0",
         "cyclone-s0-249-0",
-        "polar-vortex-n-0"
+        "polar-vortex-n-0",
+        "tropical-n-246"
       ]
     }
   ],
-  "tile": "99dcb5c498fc47c0191da16b96cd728322b4952999c5aecf9e76e63d9092f2ee"
+  "tile": "7e8626aad6b6a872fcddd402c03bdb371db4df2171b21e0bef460fd9ce8047df"
 }

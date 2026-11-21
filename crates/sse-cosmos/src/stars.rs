@@ -72,6 +72,15 @@ pub struct StarParams {
     /// the circular speed at the Sun's radius), so nearby stars drift
     /// through them at their peculiar speeds, not at 220 km/s.
     pub cell_rotation_kms_kpc: f64,
+    /// Version of the fill's draw keys. Raising it redraws every unpinned
+    /// system (a change to the fill rules does the same); pins are read
+    /// from the record and never move (night sky design, Y7a).
+    #[serde(skip_serializing_if = "is_first_key")]
+    pub key_version: u32,
+}
+
+fn is_first_key(v: &u32) -> bool {
+    *v == 1
 }
 
 impl Default for StarParams {
@@ -116,6 +125,7 @@ impl Default for StarParams {
             cluster_min: 50.0,
             cluster_max: 1.0e5,
             cell_rotation_kms_kpc: 26.83,
+            key_version: 1,
         }
     }
 }
@@ -390,13 +400,14 @@ impl<'a> Stars<'a> {
         let count = Draws::new(
             self.seed,
             addr.clone(),
-            Stream::new("cosmos.stars.count.v1").map_err(|e| e.to_string())?,
+            Stream::new(&format!("cosmos.stars.count.v{}", p.key_version))
+                .map_err(|e| e.to_string())?,
         );
         let n = crate::haloes::poisson(&count, frame as u64, self.expected(cell, frame));
         let d = Draws::new(
             self.seed,
             addr.clone(),
-            Stream::new("cosmos.stars.v1").map_err(|e| e.to_string())?,
+            Stream::new(&format!("cosmos.stars.v{}", p.key_version)).map_err(|e| e.to_string())?,
         );
         let t0 = frame as f64 * p.frame_myr;
         let t_now_gyr = t0 / 1000.0;
@@ -551,6 +562,35 @@ impl<'a> Stars<'a> {
         out.extend(fill);
         out.sort_by(|a, b| a.address.cmp(&b.address));
         Ok(out)
+    }
+
+    /// The fill system at `address` (`<galaxy>/cell:<x>_<y>_<z>/sys:f<frame>k<slot>`)
+    /// as today's rules draw it, or `None` when the cell holds no such slot.
+    pub fn draw_one(&self, address: &Address) -> Result<Option<StarSystem>, String> {
+        let text = address.to_string();
+        let (head, sys) = text
+            .rsplit_once("/sys:")
+            .ok_or_else(|| format!("{text}: not a star system address"))?;
+        let (cell_head, key) = head
+            .rsplit_once("/cell:")
+            .ok_or_else(|| format!("{text}: no cell"))?;
+        if cell_head != self.galaxy.to_string() {
+            return Err(format!("{text}: not in galaxy {}", self.galaxy));
+        }
+        let n: Vec<i64> = key.split('_').filter_map(|x| x.parse().ok()).collect();
+        let (f, k) = sys
+            .strip_prefix('f')
+            .and_then(|x| x.split_once('k'))
+            .ok_or_else(|| format!("{text}: system key is f<frame>k<slot>"))?;
+        let (frame, slot): (i64, u64) = match (f.parse(), k.parse()) {
+            (Ok(f), Ok(k)) => (f, k),
+            _ => return Err(format!("{text}: system key is f<frame>k<slot>")),
+        };
+        if n.len() != 3 {
+            return Err(format!("{text}: cell key is <x>_<y>_<z>"));
+        }
+        let all = self.draw_all([n[0], n[1], n[2]], frame)?;
+        Ok(all.into_iter().find(|s| s.slot == slot))
     }
 
     /// Look at a fill system: it becomes permanent.

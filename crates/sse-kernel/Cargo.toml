@@ -26,6 +26,7 @@ sse-surface.workspace = true
 sse-nav.workspace = true
 sse-world.workspace = true
 sse-weather.workspace = true
+sse-climate.workspace = true
 sse-light = { path = "../sse-light" }
 sse-nebula = { path = "../sse-nebula" }
 sse-survey = { path = "../sse-survey" }
