@@ -5,6 +5,7 @@ export default {
   feature: "Route, the astrogation console (V8, T3)",
   trailers: ["features"],
   async run(page, d) {
+    await d.caption('Plan a voyage', 'Courses compared by time, fuel, radiation dose and what they pass.');
     await d.click(page.locator('.rail [data-go="route"]').first());
     const cards = page.locator("[data-course]");
     await cards.first().waitFor({ timeout: 60000 }).catch(() => {});

@@ -5,6 +5,7 @@ export default {
   feature: "Chart room and Night chart themes (U1)",
   trailers: ["features"],
   async run(page, d) {
+    await d.caption('Night chart', 'The same chart room, for a dark table.');
     await d.hold(1000);
     await d.click(page.getByRole("button", { name: "More", exact: true }));
     await d.click(page.getByRole("group", { name: "More" }).getByRole("button", { name: "Night chart" }));

@@ -5,6 +5,7 @@ export default {
   feature: "Story finder on the sift op (U8)",
   trailers: ["features", "intro"],
   async run(page, d) {
+    await d.caption("Find tonight's story", 'Sifters search the campaign for places worth a session.');
     await d.click(page.locator('.rail [data-go="stories"]').first());
     await d.hold(3000);
     const hit = page.locator("[data-hit]").first();

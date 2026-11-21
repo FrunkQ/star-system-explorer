@@ -5,6 +5,7 @@ export default {
   feature: "Window / Sky from here (V8 part 2a)",
   trailers: ["features", "intro"],
   async run(page, d) {
+    await d.caption('Sky from here', 'What the crew sees from beside Tarn: only what the eye can catch.');
     await d.click(page.locator('.rail [data-go="window"]').first());
     await d.hold(5000);
   },

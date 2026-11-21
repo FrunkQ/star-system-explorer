@@ -5,6 +5,7 @@ export default {
   feature: "Time ruler, campaign now, step and play (U11)",
   trailers: ["features"],
   async run(page, d) {
+    await d.caption('Human-scale time', 'One ruler from billions of years down to hours.');
     const ruler = page.locator(".area-ruler");
     await d.hold(800);
     const show = ruler.locator("select").nth(0);
@@ -19,6 +20,7 @@ export default {
     await d.click(fwd);
     await d.click(fwd, { ms: 200 });
     await d.click(page.getByRole("button", { name: "Play", exact: true }));
+    await d.caption("Play", "The worlds move along their orbits, day by day.");
     await d.glide({ x: 1450, y: 620 }, 1000);
     await d.hold(9000);
     await d.click(page.getByRole("button", { name: "Pause", exact: true }));

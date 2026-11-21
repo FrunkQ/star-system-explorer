@@ -9,6 +9,7 @@ export default {
     await page.locator("section[aria-label='Tarn']").waitFor();
   },
   async run(page, d) {
+    await d.caption('Move a world', 'Drag it outward and it cools: less starlight, a longer year.');
     await d.hold(800);
     const tarn = page.locator("[role=button][aria-label^='Tarn'] circle.hit").first();
     const star = await page.locator("[role=button][aria-label^='Kestrel'] circle.hit").first().boundingBox();
@@ -17,6 +18,7 @@ export default {
     await d.drag(tarn, dx * 0.45, dy * 0.45, 2200);
     await d.hold(2000);
     await page.keyboard.press("Control+z");
+    await d.caption("Undo", "Every change is kept on the campaign's record, and can be taken back.");
     await d.hold(1800);
   },
 };

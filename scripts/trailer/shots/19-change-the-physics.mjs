@@ -10,6 +10,7 @@ export default {
     await page.locator("section[aria-label='Tarn']").waitFor();
   },
   async run(page, d) {
+    await d.caption('Change the physics', 'Every rule is a small diagram you can open and edit.');
     const card = page.locator("section[aria-label='Tarn']");
     await d.hold(700);
     // To the Build desk, at Engine depth: where rules are changed.
@@ -22,6 +23,7 @@ export default {
     await why.locator(".formula").waitFor();
     await d.hold(1800);
     await d.click(why.getByRole("button", { name: "Open the flow" }));
+    await d.caption("The flow behind the value", "Opened at the node that worked it out.");
     const editor = page.locator("section[aria-label='Flow editor']");
     await editor.waitFor();
     await page.waitForFunction(() => /\d/.test(document.querySelector("[data-kind='planet.surface_temperature'] .val")?.textContent ?? ""));
@@ -35,6 +37,7 @@ export default {
     await param.press("Enter");
     const request = page.locator(".area-card [role=region][aria-label^='Request']");
     await request.getByText("Rejected").waitFor();
+    await d.caption("Refused, with the reason", "A change that breaks the rule's limits never reaches the campaign.");
     await d.glide(request, 700);
     await d.hold(2000);
     await d.click(param);
@@ -42,9 +45,11 @@ export default {
     await d.type("0.5", 200);
     await param.press("Enter");
     await request.getByText("Validated").waitFor();
+    await d.caption("Checked, then shown", "Its effect on every world, before you adopt it.");
     await d.glide(request.locator("table.effect").first(), 700);
     await d.hold(2200);
     await d.click(request.getByRole("button", { name: "Adopt" }));
+    await d.caption("Adopted", "The campaign now runs on your physics, and says so.");
     await page.waitForFunction(() => document.querySelector("[data-stack-hash]")?.getAttribute("data-physics") === "campaign");
     await d.hold(2500);
   },

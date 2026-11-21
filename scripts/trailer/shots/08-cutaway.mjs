@@ -5,6 +5,7 @@ export default {
   feature: "Cutaway from the kernel's world stack (V6)",
   trailers: ["features", "intro"],
   async run(page, d, nav) {
+    await d.caption('Cut a planet in half', 'Core, mantle, crust, ocean and air, each with the reason it is there.');
     await d.click(page.locator('.area-chart .body[aria-label^="Tarn"]').first());
     await d.click(page.locator('.rail [data-go="world"]').first());
     await nav.go(page, "cutaway");
