@@ -26,7 +26,7 @@ sse-record = { path = "crates/sse-record" }
 sse-flow = { path = "crates/sse-flow" }
 sse-pack = { path = "crates/sse-pack" }
 sse-atoms = { path = "crates/sse-atoms" }
-sse-import-v3 = { path = "crates/sse-import-v3" }
+sse-import-v3 = { path = "crates/sse-import-v3", default-features = false }
 sse-world = { path = "crates/sse-world" }
 sse-formation = { path = "crates/sse-formation" }
 sse-kernel = { path = "crates/sse-kernel" }

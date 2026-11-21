@@ -134,6 +134,8 @@ Milestone M1 "Proven core" = packages K0 to K6 (build plan section 3/4).
 | X3c: hex map view (`sse.view.hex-map`); sector formats (`sse-sector-io`); import through the code sheet (kernel op `import_sector`, preview or authored events); Travellermap fetch through the site Worker (`/tmap/*`) | done (Traveller pack track); GM screens wait on the screen hook | packages/X3c.md, packages/X3c-io.md |
 | X3d parts 1 to 3: gas mixes and what to wear outside; sensors, range bands and the knowledge ladder as triggers and grants (to each ship's own crew); stock ships, stations and sites as J7 templates | done (Traveller pack track); stock ships (J7) and jump-era physics (J6) next | packages/X3d.md |
 | S5 descent scene: entry heating, lift, parachutes, powered descent and touchdown; site slope, roughness and liquid from the height map; hazards in one shape; kernel op `plan_descent` | done | packages/S5.md |
+| B1 one body: self light on one mass axis, companion light, multiples as nested pairs with stability tags, one dynamo law (magnetic blocks) | in progress (B1a to B1d part 1 on main) | packages/B1.md |
+| Converter module `sse-convert-wasm`: the V3 importer as a small browser module for convert.starsystemx.com | done | packages/X-convert-wasm.md |
 | T3 NAV: candidate courses (Hohmann, Lambert grid, torch) with burns, fuel and reserve, dose, heat, grazes, belts, debris, delays and difficulty with reasons; a drifting ship's fate and ways out; kernel op `plan_route` | done | packages/T3.md |
 | R1 pass library, render recipes, degrade order, governor, quality badge (the Body globe runs on recipes: GPU, canvas, words) | done (renderer track) | packages/R1.md |
 
