@@ -93,6 +93,23 @@ try {
     await gm.waitForSelector("[data-cutaway]");
     await shot(gm, `globe-${name}`);
 
+    // "Why?" for the climate: asked for, read from the kernel's one climate (W7a).
+    const hashBefore = await gm.locator("[data-state-hash]").first().getAttribute("data-state-hash");
+    await gm.locator("[data-climate-toggle]").click();
+    const why = gm.locator("[data-climate-why]");
+    await why.waitFor({ timeout: 20000 });
+    assert.equal(await why.getAttribute("data-climate-why"), "earth-like");
+    assert.equal(await gm.locator("[data-climate-label]").innerText(), "Earth-like");
+    assert.equal(await why.locator("[data-climate-belts] tbody tr").count(), 6, "six 30° belts");
+    assert.match(await why.locator("[data-climate-belts]").innerText(), /Equator to 30° N\s+\d+ °C/);
+    assert.ok((await why.locator("[data-climate-lines] li").count()) > 0, "the kernel's why lines");
+    assert.ok((await why.locator("[data-climate-assumed] li").count()) > 0, "what it assumed");
+    await why.scrollIntoViewIfNeeded();
+    await shot(gm, `globe-climate-why-${name}`);
+    await why.getByRole("button", { name: "Close the climate explanation" }).click();
+    assert.equal(await why.count(), 0);
+    assert.equal(await gm.locator("[data-state-hash]").first().getAttribute("data-state-hash"), hashBefore, "reading the climate never changes the state hash");
+
     // Phone: the screen menu reaches the Body screen.
     const phone = await (await browser.newContext({ viewport: { width: 390, height: 844 }, hasTouch: true })).newPage();
     phone.on("pageerror", (e) => errors.push(e.message));
