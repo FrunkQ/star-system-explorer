@@ -1,4 +1,5 @@
 use crate::atlas::{downsample_error_m, face_of, Atlas, TileKey, COVERS};
+use crate::climate::WorldClimate;
 use crate::cover::*;
 use crate::impacts::{impacts, ImpactHistory, ImpactInputs};
 use crate::named::{register, AuthoredName, Rename};
@@ -28,18 +29,38 @@ fn body(name: &str) -> Body {
         .body
 }
 
+/// The one climate of a fixture at its age, with a spin.
+fn wc(s: &SurfaceSettings, b: &Body, e: &SurfaceEnvelope, rot: Option<f64>) -> WorldClimate {
+    wct(s, b, e, rot, None)
+}
+
+/// [`wc`] with a tilt too (the Moon's 1.54° keeps its polar shadows).
+fn wct(
+    s: &SurfaceSettings,
+    b: &Body,
+    e: &SurfaceEnvelope,
+    rot: Option<f64>,
+    tilt: Option<f64>,
+) -> WorldClimate {
+    let x = sse_climate::Extra {
+        rotation_hours: rot,
+        obliquity_deg: tilt,
+        ..Default::default()
+    };
+    crate::climate::world_climate(s, b, e, &x, b.age_gyr * 1000.0)
+}
+
 fn inputs<'a>(
     s: &SurfaceSettings,
     b: &Body,
     e: &SurfaceEnvelope,
     plates: Option<&'a PlateHistory>,
-    rot: Option<f64>,
+    climate: &'a WorldClimate,
 ) -> CoverInputs<'a> {
     CoverInputs {
         air: Air::guess(&s.cover, e, b.pressure_bar, b.oceans > 0.0),
         water: b.oceans > 0.0 || b.water_fraction > 0.0,
-        rotation_hours: rot,
-        obliquity_deg: None,
+        climate,
         life: 0.0,
         plates,
         reshape: vec![],
@@ -52,12 +73,14 @@ fn earth(s: &SurfaceSettings) -> (Body, SurfaceEnvelope, PlateHistory, Atlas) {
     let b = body("Earth");
     let e = envelope(s, &b);
     let h = history(s, &e, &seed(), b.age_gyr);
+    let cl = wc(s, &b, &e, Some(23.93));
     let w = wear_world(
         s,
         &e,
         &seed(),
         &h,
         &WaterHistory::steady(b.oceans, b.pressure_bar, b.age_gyr),
+        &cl,
         b.magma_end_myr,
     );
     let a = Atlas::from_worn(s, &e, &seed(), &h, &w, vec![]);
@@ -69,7 +92,8 @@ fn earth_layered(
     f: impl FnOnce(&mut CoverInputs),
 ) -> (SurfaceEnvelope, Atlas) {
     let (b, e, h, a) = earth(s);
-    let mut inp = inputs(s, &b, &e, Some(&h), Some(23.93));
+    let cl = wc(s, &b, &e, Some(23.93));
+    let mut inp = inputs(s, &b, &e, Some(&h), &cl);
     f(&mut inp);
     let ly = layers(s, &e, &seed(), &a, &inp);
     (e.clone(), a.with_layers(ly))
@@ -99,42 +123,64 @@ fn climate_follows_air_rotation_and_height() {
         let b = body(name);
         let e = envelope(&s, &b);
         let a = Atlas::new(&s, &e, &seed(), b.age_gyr, vec![]);
-        let inp = inputs(&s, &b, &e, None, Some(rot));
+        let cl = wc(&s, &b, &e, Some(rot));
+        let inp = inputs(&s, &b, &e, None, &cl);
         layers(&s, &e, &seed(), &a, &inp).climate
     };
+    let contrast = |c: &ClimateModel| c.t_at(0.0, 0.0) - c.t_at(m::PI / 2.0, 0.0);
     let earth = clim("Earth", 23.93);
-    assert_eq!(earth.cells, 3, "Earth has three cells a hemisphere");
-    let eq = earth.t_at(0.0, 0.0);
-    let pole = earth.t_at(m::PI / 2.0, 0.0);
+    assert_eq!(
+        earth.world.climate.circulation.cells, 3,
+        "Earth has three cells a hemisphere"
+    );
+    let (eq, pole) = (earth.t_at(0.0, 0.0), earth.t_at(m::PI / 2.0, 0.0));
+    // The energy balance's own contrast (about 40 K annual mean, North 1975).
     assert!(
-        (eq - pole - 42.0).abs() < 4.0,
+        (30.0..65.0).contains(&(eq - pole)),
         "Earth equator {eq} pole {pole}"
     );
-    assert!((earth.lapse_k_km - 6.5).abs() < 0.3, "{}", earth.lapse_k_km);
+    assert!(
+        (earth.lapse_k_km() - 6.5).abs() < 0.3,
+        "{}",
+        earth.lapse_k_km()
+    );
     // Equatorial snow line: where the mean falls to the land-ice threshold.
-    let snow_km = (eq - cs.land_ice_k) / earth.lapse_k_km;
-    assert!((4.5..6.5).contains(&snow_km), "snow line {snow_km} km");
-    let venus = clim("Venus", 5832.5);
+    let snow_km = (eq - cs.land_ice_k) / earth.lapse_k_km();
+    assert!((3.5..7.0).contains(&snow_km), "snow line {snow_km} km");
+    let venus = clim("Venus", -5832.5);
     assert_eq!(
-        venus.cells, 1,
+        venus.world.climate.circulation.cells, 1,
         "Venus turns too slowly for more than one cell"
     );
-    assert!(venus.contrast_k < 15.0, "{}", venus.contrast_k);
+    assert!(contrast(&venus) < 15.0, "{}", contrast(&venus));
     let mars = clim("Mars", 24.62);
-    assert!(mars.contrast_k > 80.0, "{}", mars.contrast_k);
-    assert_eq!(mars.lapse_k_km, 0.0, "air too thin for a lapse here");
+    assert!(
+        contrast(&mars) > 2.0 * contrast(&venus),
+        "{}",
+        contrast(&mars)
+    );
+    assert_eq!(mars.lapse_k_km(), 0.0, "air too thin for a lapse here");
     let titan = clim("Titan", 382.7);
-    assert!(titan.contrast_k < 5.0, "{}", titan.contrast_k);
-    assert_eq!(titan.cells, 1);
+    assert!(contrast(&titan) < 5.0, "{}", contrast(&titan));
+    assert_eq!(titan.world.climate.circulation.cells, 1);
     assert_eq!(
         titan.liquid.as_deref(),
         Some("hydrocarbon"),
         "Titan's seas are hydrocarbon"
     );
-    // Bands: wet at the equator, dry at 30°, wet at 60°, dry at the poles.
+    // Rain from the energy balance: wetter at the equator than at 30°, and
+    // nearly nothing at the poles.
     let w = |d: f64| earth.band_wetness(d.to_radians());
-    assert!(w(0.0) > 0.99 && w(30.0) < 0.01 && w(60.0) > 0.99 && w(90.0) < 0.01);
+    assert!(
+        w(0.0) > 0.9 && w(30.0) < w(0.0) && w(88.0) < 0.2,
+        "{} {} {}",
+        w(0.0),
+        w(30.0),
+        w(88.0)
+    );
     assert!(earth.easterly(10f64.to_radians()) && !earth.easterly(45f64.to_radians()));
+    // A backwards spin turns the prevailing winds.
+    assert!(!venus.easterly(10f64.to_radians()));
 }
 
 #[test]
@@ -182,7 +228,8 @@ fn ice_where_it_is_cold_enough() {
     let mars = body("Mars");
     let e = envelope(&s, &mars);
     let am = Atlas::new(&s, &e, &seed(), mars.age_gyr, vec![]);
-    let mut inp = inputs(&s, &mars, &e, None, Some(24.62));
+    let cl = wc(&s, &mars, &e, Some(24.62));
+    let mut inp = inputs(&s, &mars, &e, None, &cl);
     inp.water = true;
     let am = am.clone().with_layers(layers(&s, &e, &seed(), &am, &inp));
     let t = am.build(TileKey::new(4, 0, 0, 0).unwrap());
@@ -315,7 +362,8 @@ fn wetness_falls_inland_and_behind_mountains() {
 fn deposits_follow_the_history() {
     let s = quick();
     let (b, e, h, a) = earth(&s);
-    let mut inp = inputs(&s, &b, &e, Some(&h), Some(23.93));
+    let cl = wc(&s, &b, &e, Some(23.93));
+    let mut inp = inputs(&s, &b, &e, Some(&h), &cl);
     let lifeless = layers(&s, &e, &seed(), &a, &inp);
     inp.life = 1.0;
     let living = layers(&s, &e, &seed(), &a, &inp);
@@ -340,13 +388,8 @@ fn deposits_follow_the_history() {
     }
     // The Moon: ice only in polar craters that never see the Sun.
     let (mb, me, ma) = moon(&s);
-    let ml = layers(
-        &s,
-        &me,
-        &seed(),
-        &ma,
-        &inputs(&s, &mb, &me, None, Some(655.7)),
-    );
+    let cl = wct(&s, &mb, &me, Some(655.7), Some(1.54));
+    let ml = layers(&s, &me, &seed(), &ma, &inputs(&s, &mb, &me, None, &cl));
     let ice: Vec<_> = ml
         .deposits
         .iter()
@@ -521,7 +564,8 @@ fn gm_edits_are_dated_events_and_tagged_when_impossible() {
     let mars = body("Mars");
     let me = envelope(&s, &mars);
     let am = Atlas::new(&s, &me, &seed(), mars.age_gyr, vec![]);
-    let mut inp = inputs(&s, &mars, &me, None, Some(24.62));
+    let cl = wc(&s, &mars, &me, Some(24.62));
+    let mut inp = inputs(&s, &mars, &me, None, &cl);
     inp.reshape = vec![Reshape::FloodBasin {
         id: "gm:lake".into(),
         lat_deg: 0.0,
@@ -649,7 +693,8 @@ fn the_built_layer_follows_its_rules() {
     let (_, bare) = earth_layered(&s, |_| {});
     assert!(bare.layers().unwrap().built.is_empty());
     let (mb, me, ma) = moon(&s);
-    let mut inp = inputs(&s, &mb, &me, None, Some(655.7));
+    let cl = wct(&s, &mb, &me, Some(655.7), Some(1.54));
+    let mut inp = inputs(&s, &mb, &me, None, &cl);
     inp.settle = vec!["base".into()];
     let ml = layers(&s, &me, &seed(), &ma, &inp);
     assert!(!ml.built.is_empty() && ml.built.iter().all(|b| b.kind == "base"));

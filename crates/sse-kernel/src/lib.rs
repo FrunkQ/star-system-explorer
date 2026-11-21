@@ -294,6 +294,8 @@ pub struct Kernel {
     time: Option<sse_time::epoch::TimeSettings>,
     /// Recent `survey_surface` results.
     surveys: survey::Cache,
+    /// Orbit-level climates by key (W7a): the `weather` op reuses them.
+    climates: sse_climate::Cache,
 }
 
 impl Default for Kernel {
@@ -421,10 +423,59 @@ impl Kernel {
             codes: sse_codes::Codes::default(),
             universe: None,
             surveys: vec![],
+            climates: sse_climate::Cache::new(8),
             jobs: BTreeMap::new(),
             next_job: 1,
             time: None,
         }
+    }
+
+    /// The weather conditions of `body` in the adopted `system` (W7a): the
+    /// body read at `at_s` like `survey_surface`, its conditions built by
+    /// the function the surface's wear and cover use, so the weather and the
+    /// ground share one climate.
+    fn body_conditions(
+        &mut self,
+        system: &str,
+        body: &str,
+        at_s: Option<i64>,
+    ) -> Result<(serde_json::Value, f64), Response> {
+        let a: Address = system
+            .parse()
+            .map_err(|e| err("bad_address", format!("{e}")))?;
+        let u = self
+            .universe
+            .as_mut()
+            .ok_or_else(|| err("no_universe", "open a universe first"))?;
+        if !u.root.contains(&a) {
+            return Err(err(
+                "bad_address",
+                format!("{a} is not in universe {}", u.root),
+            ));
+        }
+        if !u.runs.contains_key(system) {
+            if let Some(req) = adopt::formation_request(&u.chronicle, &a) {
+                let (_, run, _) = systems::form(req.into())?;
+                u.runs.insert(system.to_string(), run);
+            }
+        }
+        let s = sse_surface::scenario::settings();
+        let w = adopt::worlds_at(&u.chronicle, &a, at_s, u.runs.get(system), &s)?;
+        let b = w
+            .bodies
+            .into_iter()
+            .find(|b| b.address.to_string() == body)
+            .ok_or_else(|| {
+                err(
+                    "no_surface_body",
+                    format!("{body} is not a surface body of {system}"),
+                )
+            })?;
+        let env = sse_surface::envelope(&s, &b);
+        let (c, _) = sse_surface::climate::conditions(&s, &b, &env, &Default::default());
+        // The epoch the survey reads the body at, so both keep one key.
+        let epoch_myr = (b.age_gyr + w.shift_gyr).max(0.0) * 1000.0;
+        Ok((serde_json::to_value(&c).expect("plain data"), epoch_myr))
     }
 
     /// Handle one JSON request; always returns one JSON response.
@@ -1818,6 +1869,9 @@ impl Kernel {
             Request::Weather {
                 want,
                 world,
+                system,
+                body,
+                at_s,
                 conditions,
                 day,
                 tile,
@@ -1827,19 +1881,41 @@ impl Kernel {
                 pins,
                 sources,
                 block,
-            } => weather::weather(weather::Ask {
-                want,
-                world,
-                conditions,
-                day: day.unwrap_or(0.0),
-                tile,
-                n,
-                lat: lat.unwrap_or(0.0),
-                lon: lon.unwrap_or(0.0),
-                pins: pins.unwrap_or_default(),
-                sources,
-                block,
-            })?,
+            } => {
+                let mut epoch_myr = 0.0;
+                let conditions = match (conditions, system, body) {
+                    (Some(c), _, _) => Some(c),
+                    (None, Some(system), Some(body)) => {
+                        let (c, e) = self.body_conditions(&system, &body, at_s)?;
+                        epoch_myr = e;
+                        Some(c)
+                    }
+                    (None, Some(_), None) | (None, None, Some(_)) => {
+                        return Err(err(
+                            "bad_request",
+                            "give a system and one of its bodies together",
+                        ))
+                    }
+                    (None, None, None) => None,
+                };
+                weather::weather(
+                    weather::Ask {
+                        want,
+                        world,
+                        conditions,
+                        day: day.unwrap_or(0.0),
+                        tile,
+                        n,
+                        lat: lat.unwrap_or(0.0),
+                        lon: lon.unwrap_or(0.0),
+                        pins: pins.unwrap_or_default(),
+                        sources,
+                        block,
+                        epoch_myr,
+                    },
+                    &mut self.climates,
+                )?
+            }
             Request::ReadLight { fixture, bodies } => {
                 systems::read_light(fixture.as_deref(), bodies)?
             }

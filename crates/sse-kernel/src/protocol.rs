@@ -368,13 +368,25 @@ pub enum Request {
     /// `climate`, `systems`, `field` (a cube-sphere `tile` [face, level, x,
     /// y], `n` × `n` cells), `report`, `column` (descent hazards) or `sound`,
     /// at `day` (days since the campaign epoch) and `lat`/`lon` where a place
-    /// is needed. The world is a weather fixture by `world` label or given
-    /// `conditions`; `pins` are recorded or GM-authored systems to honour.
+    /// is needed. The world is a weather fixture by `world` label, given
+    /// `conditions`, or a `body` of an adopted `system` (read at `at_s`, like
+    /// `survey_surface`), whose conditions are built by the same function the
+    /// surface's wear and cover use (W7a, one climate); `pins` are recorded or
+    /// GM-authored systems to honour.
     Weather {
         want: String,
         #[serde(default)]
         #[ts(optional)]
         world: Option<String>,
+        #[serde(default)]
+        #[ts(optional)]
+        system: Option<String>,
+        #[serde(default)]
+        #[ts(optional)]
+        body: Option<String>,
+        #[serde(default)]
+        #[ts(optional, type = "number")]
+        at_s: Option<i64>,
         #[serde(default)]
         #[ts(optional, type = "unknown")]
         conditions: Option<serde_json::Value>,

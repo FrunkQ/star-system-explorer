@@ -30,6 +30,7 @@ sse-import-v3 = { path = "crates/sse-import-v3", default-features = false }
 sse-world = { path = "crates/sse-world" }
 sse-formation = { path = "crates/sse-formation" }
 sse-kernel = { path = "crates/sse-kernel" }
+sse-climate = { path = "crates/sse-climate" }
 sse-surface = { path = "crates/sse-surface" }
 sse-weather = { path = "crates/sse-weather" }
 sse-nav = { path = "crates/sse-nav" }

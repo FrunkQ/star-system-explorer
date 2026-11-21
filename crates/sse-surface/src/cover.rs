@@ -5,14 +5,15 @@
 //! Everything here is a rule over facts the earlier stages already hold, so a
 //! tile stays a pure function of the world and its key:
 //!
-//! - **Climate**: mean temperature by latitude from a two-mode energy balance
-//!   (North 1975), its equator-to-pole contrast shrinking as the atmosphere's
-//!   radiative time constant grows (p / g T³), falling with height at the
-//!   adiabatic lapse rate g / c_p (moist worlds about two thirds of it).
-//! - **Wind cells and wetness**: Hadley-type cells per hemisphere from
-//!   sqrt(a Ω / U); rising branches wet, sinking branches dry; the prevailing
-//!   wind of each band carries moisture inland, losing it with distance from
-//!   the sea and over high ground (rain shadow).
+//! - **Climate**: the one climate (W7a, [`crate::climate`]): mean temperature
+//!   by latitude from the energy balance in `sse-climate` (North 1975),
+//!   falling with height at the adiabatic lapse rate g / c_p (moist worlds
+//!   about two thirds of it).
+//! - **Wind and wetness**: each band's wetness is the climate's rain against
+//!   its wettest band, and its prevailing wind is the shared circulation's
+//!   (reversed on a backward-spinning world); the wind carries moisture
+//!   inland, losing it with distance from the sea and over high ground (rain
+//!   shadow).
 //! - **Ice**: sea ice and land ice below thresholds of mean temperature (land
 //!   ice needs it colder where it is dry); on dry worlds ice survives only
 //!   where colder than a cold trap.
@@ -30,6 +31,7 @@
 //!   impossible when it contradicts the physics but kept.
 
 use crate::atlas::{Atlas, COVERS, MATERIALS};
+use crate::climate::WorldClimate;
 use crate::impacts::Crater;
 use crate::regimes::Landform;
 use crate::{Range, SurfaceEnvelope, SurfaceSettings};
@@ -52,7 +54,6 @@ pub const DEPOSITS: [&str; 7] = [
 ];
 
 const R_GAS: f64 = 8.314462618;
-const SECONDS_PER_HOUR: f64 = 3600.0;
 
 // ---------------------------------------------------------------- settings
 
@@ -116,18 +117,10 @@ pub const BUILT_NEEDS: [&str; 6] = ["t_k", "height_m", "lat_abs_deg", "land", "c
 
 #[derive(Clone, PartialEq, Debug, Serialize, Deserialize)]
 pub struct CoverSettings {
-    /// Equator-to-pole contrast of mean temperature with no heat transport, K.
-    pub contrast_k: f64,
-    /// Transport number x = p (9.81 / g) (288 / T)³ (bar) at which the contrast halves.
-    pub contrast_x: f64,
     /// Below this surface pressure there is no lapse with height, bar.
     pub lapse_min_bar: f64,
     pub moist_lapse_fraction: f64,
     pub tropopause_bar: f64,
-    /// Wind scale for the number of cells per hemisphere, sqrt(a Ω / U), m/s.
-    pub cell_wind_m_s: f64,
-    pub rotation_hours_default: f64,
-    pub obliquity_deg_default: f64,
     pub land_ice_k: f64,
     pub sea_ice_k: f64,
     /// Land ice needs this much colder where it is fully dry, K.
@@ -275,16 +268,11 @@ impl Air {
 
 // ---------------------------------------------------------------- climate
 
-/// The mean climate S7 reads cover from.
+/// The mean climate S7 reads cover from: the one climate (W7a) and the
+/// facts about the world's liquid cover needs.
 #[derive(Clone, PartialEq, Debug, Serialize, Deserialize)]
 pub struct ClimateModel {
-    pub t_mean_k: f64,
-    /// Equator minus pole, K.
-    pub contrast_k: f64,
-    pub lapse_k_km: f64,
-    /// Circulation cells per hemisphere.
-    pub cells: u32,
-    pub rotation_hours: f64,
+    pub world: WorldClimate,
     /// Liquid at the surface: "water", "hydrocarbon" or none.
     pub liquid: Option<String>,
     /// The world holds water at all (oceans or ice).
@@ -296,57 +284,60 @@ pub struct ClimateModel {
 impl ClimateModel {
     /// Mean temperature at latitude (radians) and height above the datum (m).
     pub fn t_at(&self, lat: f64, h_m: f64) -> f64 {
-        let x = m::sin(lat);
-        let p2 = 0.5 * (3.0 * x * x - 1.0);
-        self.t_mean_k - self.contrast_k / 1.5 * p2 - self.lapse_k_km * h_m.max(0.0) / 1000.0
+        self.world.t_at(lat, h_m)
     }
 
-    /// Wetness from the cells alone at a latitude: 1 under rising air, 0
-    /// under sinking air.
+    /// Wetness from the climate's rain alone at a latitude: 1 in the wettest
+    /// band, 0 where nothing falls.
     pub fn band_wetness(&self, lat: f64) -> f64 {
-        let k = self.cells as f64 * lat.abs() / (m::PI / 2.0);
-        0.5 + 0.5 * m::cos(m::PI * k)
+        self.world.wetness(lat)
     }
 
     /// Whether the prevailing surface wind at a latitude blows from the east.
     pub fn easterly(&self, lat: f64) -> bool {
-        let k = ((self.cells as f64 * lat.abs() / (m::PI / 2.0)) as u32).min(self.cells - 1);
-        k.is_multiple_of(2)
+        self.world.easterly(lat)
+    }
+
+    pub fn lapse_k_km(&self) -> f64 {
+        self.world.lapse_k_km
     }
 }
 
-fn climate(
-    s: &CoverSettings,
-    env: &SurfaceEnvelope,
-    air: &Air,
-    inp: &CoverInputs,
-    any_liquid: Option<String>,
-) -> ClimateModel {
-    let g = env.gravity_m_s2.max(1e-6);
-    let t = env.t_surface_now_k.max(1.0);
-    let x = air.pressure_bar * (9.81 / g) * m::pow(288.0 / t, 3.0);
-    let contrast = s.contrast_k / (1.0 + x / s.contrast_x);
-    let rot = inp.rotation_hours.unwrap_or(s.rotation_hours_default);
-    let omega = 2.0 * m::PI / (rot.abs().max(1e-3) * SECONDS_PER_HOUR);
-    let cells = (m::round(m::sqrt(env.reference_radius_m * omega / s.cell_wind_m_s)) as u32).max(1);
-    let lapse = air.lapse_k_km(s, g);
-    let why = vec![
+fn climate(w: &WorldClimate, inp: &CoverInputs, any_liquid: Option<String>) -> ClimateModel {
+    let k = &w.climate;
+    let n = k.lat_deg.len();
+    let c = &k.circulation;
+    let mut why = vec![
         format!(
-            "mean {:.0} K; equator to pole {:.1} K (transport number {:.3}: thicker, colder air on lower gravity carries more heat)",
-            t, contrast, x
+            "mean {:.0} K; equator {:.0} K, poles {:.0} K and {:.0} K (the one climate's energy balance, North 1975)",
+            k.conditions.t_surface_k,
+            k.t_k[n / 2],
+            k.t_k[0],
+            k.t_k[n - 1]
         ),
-        format!("{cells} circulation cell(s) per hemisphere from a rotation of {rot:.1} h"),
-        format!("air cools {lapse:.2} K per km with height ({})", air.gas),
+        format!(
+            "{} circulation cell(s) per hemisphere from a spin of {:.1} h{}",
+            c.cells,
+            k.conditions.rotation_hours.abs(),
+            if k.conditions.retrograde() {
+                " (backwards)"
+            } else {
+                ""
+            }
+        ),
+        format!(
+            "air cools {:.2} K per km with height ({})",
+            w.lapse_k_km, inp.air.gas
+        ),
     ];
+    for a in &w.assumed {
+        why.push(format!("assumed: {a}"));
+    }
     ClimateModel {
-        t_mean_k: t,
-        contrast_k: contrast,
-        lapse_k_km: lapse,
-        cells,
-        rotation_hours: rot,
+        world: w.clone(),
         liquid: any_liquid,
         water: inp.water,
-        pressure_bar: air.pressure_bar,
+        pressure_bar: inp.air.pressure_bar,
         why,
     }
 }
@@ -359,8 +350,8 @@ pub struct CoverInputs<'a> {
     pub air: Air,
     /// The world holds water (oceans now, or a water fraction).
     pub water: bool,
-    pub rotation_hours: Option<f64>,
-    pub obliquity_deg: Option<f64>,
+    /// The one climate (W7a): the same one wear read.
+    pub climate: &'a WorldClimate,
     /// Biosphere productivity relative to Earth's (0: lifeless).
     pub life: f64,
     pub plates: Option<&'a crate::plates::PlateHistory>,
@@ -629,7 +620,7 @@ pub fn layers(
     } else {
         Some("water".to_string())
     };
-    let cl = climate(cs, env, &inp.air, inp, liquid_kind.clone());
+    let cl = climate(inp.climate, inp, liquid_kind.clone());
     // Wetness by cell, marching upwind along each band's prevailing wind.
     let mut wet = vec![0u8; nlat * nlon];
     if any_liquid && solid {
@@ -702,7 +693,9 @@ pub fn layers(
     }
     // Point deposits from craters.
     let mut deposits = vec![];
-    let obl = inp.obliquity_deg.unwrap_or(cs.obliquity_deg_default);
+    // Tilt from the pole the spin runs about (a 177° tilt is 3° backwards).
+    let o = inp.climate.climate.conditions.obliquity_deg.abs();
+    let obl = o.min(180.0 - o).max(0.0);
     if let Some(f) = atlas.features() {
         for c in f.craters.iter().filter(|c| !c.ghost) {
             if c.d_km >= cs.impact_ore_km {
@@ -1315,7 +1308,7 @@ impl Layers {
                 t,
                 h_m,
                 self.climate.t_at(lat_deg.to_radians(), 0.0),
-                self.climate.lapse_k_km
+                self.climate.lapse_k_km()
             ));
             if !self.wet.is_empty() {
                 out.push(format!(

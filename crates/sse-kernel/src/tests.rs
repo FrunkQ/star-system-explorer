@@ -1099,6 +1099,35 @@ fn survey_surface_serves_layers_register_and_tiles() {
         serde_json::json!({"op": "survey_surface", "system": "u:home/sys:5", "body": "u:home/sys:5/body:999"}),
     );
     assert_eq!(e["code"], "no_surface_body");
+
+    // W7a: the weather of the same body, by address, is the ground's climate.
+    let w = send(
+        &mut k,
+        serde_json::json!({"op": "weather", "want": "climate", "system": "u:home/sys:5", "body": body}),
+    );
+    assert_eq!(w["type"], "weather_read", "{w}");
+    let core = &w["data"]["core"];
+    assert!(core["key"].as_str().unwrap().starts_with(body), "{core}");
+    let ground = &r["survey"]["climate"];
+    let wet_past = ground["assumed"]
+        .as_array()
+        .unwrap()
+        .iter()
+        .any(|a| a.as_str().unwrap().starts_with("while wet"));
+    assert!(!wet_past, "this body is no wetter in the past");
+    assert_eq!(core["key"], ground["key"]);
+    assert_eq!(core["t_k"], ground["t_k"]);
+    assert_eq!(core["precip_m_yr"], ground["precip_m_yr"]);
+    let again = send(
+        &mut k,
+        serde_json::json!({"op": "weather", "want": "climate", "system": "u:home/sys:5", "body": body}),
+    );
+    assert_eq!(again, w, "a re-read reuses the kept climate");
+    let e = send(
+        &mut k,
+        serde_json::json!({"op": "weather", "want": "climate", "system": "u:home/sys:5"}),
+    );
+    assert_eq!(e["code"], "bad_request");
 }
 
 /// J1 through the API: notes by audience, news that arrives later, kept

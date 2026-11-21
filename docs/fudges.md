@@ -567,7 +567,27 @@ Details per package in `handover/packages/W1.md` to `W6.md`.
 | `weather_aerosols` plume scaling to other worlds by gravity, density and stratification; buoyant to ballistic at 1e-4 bar | Mastin's Earth constant carried to other worlds | Only Earth calibrations exist | Buoyant plume model per atmosphere (Morton, Taylor and Turner with entrainment) | stand-in |
 | `weather_aerosols` veil 0.02 K per Tg SO₂, conversion 1/12 yr, response 0.7 yr | Cooling size not verified against a source | Placeholder for a radiative forcing calculation | Aerosol optical depth to forcing to climate response (Robock 2000 framework) | NOT verified |
 | `weather_aerosols.fire.min_o2` 0.15; impact thresholds and cooling; smog, spray and sulphur haze constants | Stand-ins, no number cited | No source read yet | Combustion limits (literature), impact-winter models, emission inventories | stand-in |
-| `weather_zonal` OLR slope 0.47 × blackbody, diffusion and other EBM constants | Fitted constants in the second block | Budyko's Earth fit, scaled | Radiative transfer per world | tuned |
+| `climate.olr` slope 0.47 × blackbody, `climate.diffusion` and other EBM constants (W7a: now the one climate in `packs/base-climate`, not the second block's) | Fitted constants | Budyko's Earth fit, scaled | Radiative transfer per world | tuned |
+
+### The one climate (W7a, `crates/sse-climate`, `packs/base-climate`)
+
+Moved here from the rows above: the 12 m/s Rhines wind, Held and Hou's contrast and tropopause, and `weather.supply` now
+live under `climate.circulation` and `climate.supply`, with the same values; `weather_formations.t_contrast_k` and the
+surface's own `cover.contrast_k`, `wear.rain_m_yr` and `wear.lapse_k_m` are gone (cover, wear and weather read the
+energy balance). Details in `handover/packages/W7a.md`.
+
+| Where | Instead of the physics | Why | Real physics to replace it | Status |
+|---|---|---|---|---|
+| `climate.heat_capacity.ground_inertia_si` 1500 | One ground thermal inertia for every world's land | Cover does not yet publish rock, regolith and ice per cell | Inertia per cell from S7 cover and S9 strata | stand-in until W7c |
+| `climate.heat_capacity.mixed_layer_m` 50 | One ocean mixed layer depth everywhere | The standard EBM value (North and Coakley 1979) | Mixed layer from wind and stratification | documented |
+| `climate.moisture.hadley_width_x` 0.3, scaled by sin(Hadley edge)/sin 30° | Siler et al. fit σ = 0.3 to Earth; the scaling to other worlds is ours | The paper is Earth only; a world's Hadley cell width is the natural stretch | A Hadley cell moisture budget from W7b's circulation | our extension, to review in W7b |
+| `climate.moisture.h_top_ratio` 1.06 | The cell top's moist static energy as 1.06 × the equator's | Siler et al.'s Earth value | Gross moist stability from the column | tuned (Earth) |
+| `climate.moisture.exchange_m_s` 0.0115 | One bulk exchange C_E·|U| for evaporation | Fitted to Earth's mean rain (about 1 m a year) | Surface wind from W7b times a drag law | tuned |
+| `climate.defaults` spin 10 h, tilt 20°, default air | A body with no published spin, tilt or air gets these, and the climate's `assumed` list says so | Formation runs do not yet hand spin and tilt to the surface `Body` | Spin and tilt from the formation run's `World` and V3 imports (marked "authored (V3)", ruling 5) | stand-in, next in W7b |
+| `wear.wet_floor_k` 275 K | A world wet only in the past (early Mars) rains at no less than 275 K | The atmosphere history publishes no past temperatures | Past climate from the volatile history (W8 and S17) | stand-in until W8 |
+| sse-surface `climate::conditions` flux 1361 / a² | Sunlight from a sun-like star when a body gives no flux | Surface bodies carry the star's climate fit but not its luminosity at the epoch | Flux from the star's luminosity at the epoch | stand-in |
+| locked worlds | Treated latitudinally (one zonal climate), not day and night | The EBM is zonal | Day-night two-box or 2D EBM (W7b) | stand-in until W7b |
+| moons | A moon's year is its orbit around the planet, so its seasons follow that orbit | `Body.orbit` is the moon's own | The planet's orbit around the star for insolation | known limit, to fix in W7c |
 
 ## Game-system packs
 
