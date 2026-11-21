@@ -152,6 +152,76 @@ CONSTANTS = [
 ]
 
 
+# ---------------------------------------------------------------- units (design section 7A.6)
+# (id, symbol, name, measures, group, factor_from formula | ("v", value, src), offset)
+UNITS = [
+    ("one", "", "one", "dimensionless", "si-base", ("v", 1.0, "si2019")),
+    ("m", "m", "metre", "length", "si-base", ("v", 1.0, "si2019")),
+    ("kg", "kg", "kilogram", "mass", "si-base", ("v", 1.0, "si2019")),
+    ("s", "s", "second", "time", "si-base", ("v", 1.0, "si2019")),
+    ("a", "A", "ampere", "current", "si-base", ("v", 1.0, "si2019")),
+    ("k", "K", "kelvin", "temperature", "si-base", ("v", 1.0, "si2019")),
+    ("mol", "mol", "mole", "amount", "si-base", ("v", 1.0, "si2019")),
+    ("cd", "cd", "candela", "luminous_intensity", "si-base", ("v", 1.0, "si2019")),
+    ("n", "N", "newton", "force", "si-named", ("v", 1.0, "si2019")),
+    ("pa", "Pa", "pascal", "pressure", "si-named", ("v", 1.0, "si2019")),
+    ("j", "J", "joule", "energy", "si-named", ("v", 1.0, "si2019")),
+    ("w", "W", "watt", "power", "si-named", ("v", 1.0, "si2019")),
+    ("hz", "Hz", "hertz", "frequency", "si-named", ("v", 1.0, "si2019")),
+    ("t", "T", "tesla", "magnetic_field", "si-named", ("v", 1.0, "si2019")),
+    ("km", "km", "kilometre", "length", "working", ("v", 1e3, "si2019")),
+    ("au", "au", "astronomical unit", "length", "working", "au"),
+    ("pc", "pc", "parsec", "length", "working", "au 648000 / pi"),
+    ("ly", "ly", "light year", "length", "working", "c yr_julian"),
+    ("r_sun", "R☉", "solar radius", "length", "working", "R_sun"),
+    ("r_earth", "R⊕", "Earth radius (equatorial)", "length", "working", "R_earth_equatorial"),
+    ("r_jupiter", "RJ", "Jupiter radius (equatorial)", "length", "working", "R_jup_equatorial"),
+    ("m_sun", "M☉", "solar mass", "mass", "working", "M_sun"),
+    ("m_earth", "M⊕", "Earth mass", "mass", "working", "M_earth"),
+    ("m_jupiter", "MJ", "Jupiter mass", "mass", "working", "M_jup"),
+    ("day", "d", "day", "time", "working", "day"),
+    ("yr", "yr", "Julian year", "time", "working", "yr_julian"),
+    ("myr", "Myr", "million years", "time", "working", "1e6 yr_julian"),
+    ("gyr", "Gyr", "billion years", "time", "working", "1e9 yr_julian"),
+    ("degc", "°C", "degree Celsius", "temperature", "working", ("v", 1.0, "si2019"), 273.15),
+    ("l_sun", "L☉", "solar luminosity", "power", "working", "L_sun"),
+    ("w_m2", "W/m²", "watt per square metre", "flux", "working", ("v", 1.0, "si2019")),
+    ("bar", "bar", "bar", "pressure", "working", ("v", 1e5, "si2019")),
+    ("atm", "atm", "standard atmosphere", "pressure", "working", "atm"),
+    ("ev", "eV", "electronvolt", "energy", "working", "e"),
+    ("gee", "g", "standard gravity", "acceleration", "working", "g0"),
+    ("degree", "°", "degree of arc", "angle", "working", "pi / 180"),
+    ("arcsec", "″", "arcsecond", "angle", "working", "pi / 648000"),
+    ("m_s", "m/s", "metre per second", "velocity", "working", ("v", 1.0, "si2019")),
+    ("km_s", "km/s", "kilometre per second", "velocity", "working", ("v", 1e3, "si2019")),
+    ("m_s2", "m/s²", "metre per second squared", "acceleration", "working", ("v", 1.0, "si2019")),
+    ("kg_m3", "kg/m³", "kilogram per cubic metre", "density", "working", ("v", 1.0, "si2019")),
+    ("g_cm3", "g/cm³", "gram per cubic centimetre", "density", "working", ("v", 1e3, "si2019")),
+    ("ut", "µT", "microtesla", "magnetic_field", "working", ("v", 1e-6, "si2019")),
+    ("gauss", "G", "gauss", "magnetic_field", "working", ("v", 1e-4, "si2019")),
+    ("a_m2", "A m²", "ampere square metre", "magnetic_moment", "working", ("v", 1.0, "si2019")),
+]
+
+CONVENTION_IDS = {"au", "yr_julian", "day", "atm", "g0", "T0C", "GM_sun", "R_sun", "L_sun", "T_sun", "S_sun",
+                  "GM_earth", "R_earth_equatorial", "R_earth_polar", "GM_jup", "R_jup_equatorial", "R_jup_polar"}
+FACTOR_IDS = {"pc", "ly"}
+
+
+def units():
+    out = []
+    for u in UNITS:
+        uid, sym, name, measures, group, f = u[:6]
+        row = {"id": uid, "symbol": sym, "name": name, "measures": measures, "group": group}
+        if isinstance(f, tuple):
+            row["factor"] = {"v": f[1], "src": f[2]}
+        else:
+            row["factor_from"] = f
+        if len(u) > 6:
+            row["offset"] = u[6]
+        out.append(row)
+    return out
+
+
 # ---------------------------------------------------------------- isotopes
 def iso(id_, element, a, half_life_yr=None, src="nubase2020", check="unverified", **extra):
     row = {"id": id_, "element": element, "a": a}
@@ -386,7 +456,8 @@ def elements():
 def build():
     consts = []
     for c in CONSTANTS:
-        row = {"id": c[0], "name": c[1], "value": c[2]}
+        group = "convention" if c[0] in CONVENTION_IDS else ("factor" if c[0] in FACTOR_IDS else "nature")
+        row = {"id": c[0], "name": c[1], "group": group, "value": c[2]}
         if len(c) > 3:
             # A mass worked out from a measured GM is checked against it, never recomputed after an
             # edit: doubling G is a what-if with the same masses and stronger gravity.
@@ -411,6 +482,7 @@ def build():
             "reference": {
                 "about": "The master data sheet (track MP, design handover/design/SSE4-matter-pack-design.md): constants of nature, conventions, reference objects, elements, isotopes, substances and mixtures, each value with its source. Built by scripts/build-base-reference.py; MP2 first wave. A value without \"check\" is verified against its source; \"unverified\" means the source is named but the number was not read from it; \"authored\" is a documented stand-in (docs/fudges.md).",
                 "constants": consts,
+                "units": units(),
                 "origin_legend": [{"id": k, "physics": v[0], "plain": v[1], "story": v[2]} for k, v in element_origins.SOURCE_NAMES.items()],
                 "elements": elements(),
                 "isotopes": ISOTOPES,
@@ -454,7 +526,7 @@ def validate(pack):
     for i in ref["isotopes"]:
         if i["element"] not in el_ids:
             errors.append(f"isotope {i['id']}: unknown element {i['element']}")
-    for table in ("constants", "elements", "isotopes", "substances", "mixtures", "sources"):
+    for table in ("constants", "units", "elements", "isotopes", "substances", "mixtures", "sources"):
         ids = [r["id"] for r in ref[table]]
         if len(ids) != len(set(ids)):
             errors.append(f"{table}: duplicate ids")

@@ -82,3 +82,15 @@ table.
 card say "about 40 mergers seeded this part of the galaxy". The citations track should check the heavy
 s-fractions against Bisterzo 2014 (VizieR J/ApJ/787/10) and the light rows against Kobayashi 2020's figure
 when a reader can open them.
+
+## Units (design section 7A.6)
+
+`provides.reference.units` holds 45 units, each `{id, symbol, name, measures, group, factor | factor_from,
+offset?}`, in three groups: `si-base` (7 plus "one"), `si-named` (newton, pascal, joule, watt, hertz, tesla)
+and `working`. Ids match the kernel's 34 built-in units, and every factor agrees with the built-in one to
+1e-9. A factor that follows from a constant is a formula (`c yr_julian`, `au 648000 / pi`, `e`, `R_sun`,
+`pi / 648000`); only pure decimal prefixes and SI identities are typed. New ids: a, mol, cd, n, j, hz, atm,
+ev, gee, degree, arcsec. Every constants row now has a `group` (nature, convention or factor). The exact SI
+constants stay under nature, flagged `exact`, because they are physics whose values the SI fixed. The au, the
+Julian year, the day, the atmosphere, standard gravity and the IAU nominal values are conventions. The parsec
+and light year are factors.
