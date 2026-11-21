@@ -17,3 +17,5 @@ Asked by the chart room shell: grown systems read back through
   V3 data directly).
 - Test: `adopt_age_and_read_back_a_system` (tests.rs) checks at least one star-orbiting
   cloud with a sensible span.
+
+- Follow-up (21 Nov, asked by the chart room): each cloud also carries `shape` (`disc` for Rayleigh-distributed tilts, with `i_sigma_deg`; `sphere` for isotropic ones, `i_sigma_deg` null), from F5's own `Tilt`. The Oort cloud comes out as a sphere.

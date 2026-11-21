@@ -108,7 +108,7 @@ fn every_atom_is_cited_explained_and_versioned() {
         }
     }
     assert_eq!(
-        n, 62,
+        n, 64,
         "first-wave atom count changed: update handover/packages/P1.md"
     );
 }
@@ -695,4 +695,44 @@ fn earth_rayleigh_scattering() {
     assert!((tau / 0.097_069 - 1.0).abs() < 0.005, "{tau}");
     let h = scale_height(288.15, 28.9595 * AMU, 9.80665);
     assert!((h - 8434.0).abs() < 10.0, "{h}");
+}
+
+// ---- chem (E0) -------------------------------------------------------------
+
+#[test]
+fn gibbs_blocks_reproduce_tabulated_values() {
+    // At 298.15 K the temperature correction changes nothing.
+    let g = run(
+        "sse.chem.standard_gibbs_at_temperature",
+        &[-131.0e3, -253.0e3, 298.15],
+    )[0];
+    close(g, -131.0e3, 1e-12, "no shift at 298.15 K");
+    // Hydrogenotrophic methanogenesis (4 H2 + CO2 -> CH4 + 2 H2O(l), gases):
+    // ΔH° = -252.9 kJ, ΔG° = -130.8 kJ. Exergonic reactions with a large
+    // entropy loss give up less as it warms.
+    let hot = run(
+        "sse.chem.standard_gibbs_at_temperature",
+        &[-130.8e3, -252.9e3, 358.15],
+    )[0];
+    close(
+        hot,
+        -252.9e3 - 358.15 * (-252.9e3 + 130.8e3) / 298.15,
+        1e-12,
+        "formula",
+    );
+    assert!(hot > -130.8e3);
+    // ΔG = ΔG° + RT ln Q. Ten times the product activity costs RT ln 10.
+    let r = run("sse.chem.reaction_gibbs", &[-100.0e3, 298.15, m::ln(10.0)])[0];
+    close(
+        r,
+        -100.0e3 + 8.314_462_618 * 298.15 * m::ln(10.0),
+        1e-12,
+        "RT ln Q",
+    );
+    // pH 7 as the H+ activity: 7 RT ln 10 at 298.15 K is 39.95 kJ (Thauer's
+    // table uses -39.87 for ΔG°f of H+ at pH 7).
+    let lnq = crate::chem::ln_quotient(&[(1.0, 1.0e-7)]).unwrap();
+    let h = run("sse.chem.reaction_gibbs", &[0.0, 298.15, lnq])[0];
+    close(h, -39.95e3, 0.002, "pH 7 hydrogen ion");
+    assert!(crate::chem::ln_quotient(&[(1.0, 0.0)]).is_err());
 }

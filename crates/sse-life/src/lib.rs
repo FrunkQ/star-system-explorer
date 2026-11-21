@@ -16,6 +16,7 @@
 
 pub mod biosphere;
 pub mod budget;
+pub mod chemistry;
 pub mod feedback;
 pub mod habitat;
 pub mod history;
@@ -232,6 +233,8 @@ pub trait LifeSuite {
 mod biosphere_tests;
 #[cfg(test)]
 mod budget_tests;
+#[cfg(test)]
+mod chemistry_tests;
 #[cfg(test)]
 mod feedback_tests;
 #[cfg(test)]
