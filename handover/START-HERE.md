@@ -142,6 +142,7 @@ Milestone M1 "Proven core" = packages K0 to K6 (build plan section 3/4).
 | Converter module `sse-convert-wasm`: the V3 importer as a small browser module for convert.starsystemx.com | done | packages/X-convert-wasm.md |
 | T3 NAV: candidate courses (Hohmann, Lambert grid, torch) with burns, fuel and reserve, dose, heat, grazes, belts, debris, delays and difficulty with reasons; a drifting ship's fate and ways out; kernel op `plan_route` | done | packages/T3.md |
 | R1 pass library, render recipes, degrade order, governor, quality badge (the Body globe runs on recipes: GPU, canvas, words) | done (renderer track) | packages/R1.md |
+| Y0 to Y9 the night sky (`design/SSE4-night-sky-design.md`, accepted 21 Nov): the sky from any world, instruments, fill-star count tree, galaxies in the sky, catalogue to resolve, real-sky pack; replaces V7 and G7's catalogue part | queued; Y0 (Oort cloud as a shell) with the chart room thread; Y7a before Y1 | |
 
 ## Parallel tracks (18 Nov, Alex: build in parallel, integrate later)
 | Track | Packages | Branch |
