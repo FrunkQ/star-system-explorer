@@ -31,8 +31,9 @@ pub const CAMPAIGN_FIELD: &str = "campaign.tag_decl.";
 pub const CAMPAIGN_KIND: &str = "tag.declared";
 
 /// Content blocks that may name tags, and what a reference there is called.
-const READERS: [(&str, &str); 9] = [
+const READERS: [(&str, &str); 10] = [
     ("rules", "rule"),
+    ("dressing", "dressing rule"),
     ("sifters", "sifter"),
     ("templates", "template"),
     ("triggers", "trigger"),
