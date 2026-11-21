@@ -1112,6 +1112,35 @@ pub enum Request {
     /// The campaign's own tag declarations (TG1), in the shape of a pack's
     /// `provides.other.tags`: tags the GM typed freely join it on first use.
     CampaignTags,
+    /// Dressing candidates (TG12, `provides.other.dressing`) for every world
+    /// at or under `scope` at `at_s` (default now): what the stack's universe
+    /// packs would place, each with its rule, template, where, explanation
+    /// and the facts its condition read. Stored nowhere; held-off and adopted
+    /// ones are left out. `orphans` lists placed objects whose pack or rule
+    /// left the stack. GM machine only.
+    Dressing {
+        scope: String,
+        #[serde(default)]
+        #[ts(optional)]
+        at_s: Option<i64>,
+    },
+    /// Adopt one dressing candidate: an authored object from its template
+    /// under the world, marked with the pack, rule and candidate. GM only.
+    AdoptDressing {
+        candidate: String,
+        #[serde(default)]
+        #[ts(optional)]
+        name: Option<String>,
+        at_s: i64,
+    },
+    /// Hold a dressing candidate off for its world (`held` false lets it
+    /// back). Kept in the record. GM only.
+    HoldDressing {
+        candidate: String,
+        #[serde(default)]
+        #[ts(optional)]
+        held: Option<bool>,
+    },
 }
 
 /// `adopt`'s formation request: the `run_formation` fields.
@@ -1251,6 +1280,9 @@ impl Request {
             Request::StarCell { .. } => "star_cell",
             Request::PromoteStar { .. } => "promote_star",
             Request::CampaignTags => "campaign_tags",
+            Request::Dressing { .. } => "dressing",
+            Request::AdoptDressing { .. } => "adopt_dressing",
+            Request::HoldDressing { .. } => "hold_dressing",
         }
     }
 }
@@ -1513,6 +1545,21 @@ pub fn ops() -> Vec<OpInfo> {
             "promote_star",
             Cost::Medium,
             "GM machine only in a session; draws the star once and stores its whole description in the record",
+        ),
+        o(
+            "dressing",
+            Cost::Light,
+            "GM machine only; one condition per rule per world in the scope (a system: well under a millisecond each)",
+        ),
+        o(
+            "adopt_dressing",
+            Cost::Light,
+            "GM machine only; one template creation",
+        ),
+        o(
+            "hold_dressing",
+            Cost::Trivial,
+            "GM machine only; one record fact",
         ),
     ]
 }
@@ -2208,6 +2255,22 @@ pub enum Response {
     CampaignTagsListed {
         #[ts(type = "unknown")]
         pack: serde_json::Value,
+    },
+    /// `dressing`: candidates `[{id, world, rule, pack, template, label,
+    /// where, explain, why: [{field, value}], tags?, faction?}]` and orphans
+    /// `[{address, pack, rule, touched}]`.
+    Dressed {
+        scope: String,
+        #[ts(type = "unknown[]")]
+        candidates: Vec<serde_json::Value>,
+        #[ts(type = "unknown[]")]
+        orphans: Vec<serde_json::Value>,
+    },
+    /// `hold_dressing`: the candidate and whether it is now held off.
+    DressingHeld {
+        candidate: String,
+        held: bool,
+        event_id: String,
     },
     /// `promote_star`: the stored description, the event that stored it
     /// (absent when the star was already pinned) and the state hash.
