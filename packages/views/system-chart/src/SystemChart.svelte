@@ -6,7 +6,7 @@
   centre and its moons about it (handover/rendering-rules.md), in kilometres.
 -->
 <script lang="ts">
-  import { KM_PER_AU, asPlayers, distanceWords, lightWords, separation, hasLayer, hasTool, childrenOf, commitEdit, frameFor, legendFor, primaryOf, sig, subjectOf, type Json, type SceneSubject, type SystemScene, type ViewContext } from "../../../ui-contract/src/index.ts";
+  import { KM_PER_AU, isShell, asPlayers, distanceWords, lightWords, separation, hasLayer, hasTool, childrenOf, commitEdit, frameFor, legendFor, primaryOf, sig, subjectOf, type Json, type SceneSubject, type SystemScene, type ViewContext } from "../../../ui-contract/src/index.ts";
   import { System3D, bandsFromScene, fromSystemScene } from "../../system-3d/src/index.ts";
   import { ChartGround, HatchDefs, Hatch, Ink, Legend, Mark, Stamp, markExtent, SurveyGrid, distanceAt, easing, fitScale, motionMs, polar, radius } from "../../../chart-grammar/src/index.ts";
 
@@ -70,7 +70,7 @@
   const scale = $derived(
     fitScale(
       // A sphere round the system (the Oort cloud) reaches far past everything else; the chart shows where it begins.
-      [...orbiting.map((s) => s.orbit!.a_au), ...bands.flatMap((b) => (b.shape === "sphere" ? [b.band_au![0]] : b.band_au!))],
+      [...orbiting.map((s) => s.orbit!.a_au), ...bands.flatMap((b) => (isShell(b) ? [b.band_au![0]] : b.band_au!))],
       narrow ? 22 : 34,
       Math.max(60, Math.min(w, h) * (narrow ? 0.47 : 0.44) * zoom),
     ),
@@ -243,7 +243,7 @@
           {@const r1 = r(b.band_au![1])}
           {#if b.kind === "zone"}
             <Ink circle={{ cx, cy, r: (r0 + r1) / 2 }} tone="zone" width={r1 - r0} />
-          {:else if b.shape === "sphere"}
+          {:else if isShell(b)}
             <!-- A sphere seen from above: a haze from its inner edge out past the chart, not a ring in the plane. -->
             {@const edge = Math.min(r1, Math.hypot(w, h))}
             <!-- Its near and far sides lie over the whole system too, so the disc inside the inner edge is tinted, more faintly. -->
@@ -267,8 +267,8 @@
           {/if}
         {/each}
         {#each on("zones") && on("labels") ? bands : [] as b (b.address)}
-          {@const [lx, ly] = polar(cx, cy, b.shape === "sphere" ? r(b.band_au![0]) + 14 : r(b.band_au![1]) + 10, b.kind === "zone" ? -62 : b.shape === "sphere" ? 132 : 58)}
-          <text class="band {b.kind}" class:sphere={b.shape === "sphere"} x={lx} y={ly} aria-hidden="true">{label(b)}{b.shape === "sphere" ? " · sphere" : ""}</text>
+          {@const [lx, ly] = polar(cx, cy, isShell(b) ? r(b.band_au![0]) + 14 : r(b.band_au![1]) + 10, b.kind === "zone" ? -62 : isShell(b) ? 132 : 58)}
+          <text class="band {b.kind}" class:sphere={isShell(b)} x={lx} y={ly} aria-hidden="true">{label(b)}{isShell(b) ? " · sphere" : ""}</text>
         {/each}
         {#each all as s, i (s.address)}
           {@const atCentre = s === centre}

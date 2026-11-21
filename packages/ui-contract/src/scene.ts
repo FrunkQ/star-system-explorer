@@ -61,6 +61,11 @@ export interface SceneSubject {
   world_fixture?: string;
 }
 
+/** True for a belt that is a sphere round the system (the Oort cloud), not a flat band. Data, not a mark's look. */
+export function isShell(s: Pick<SceneSubject, "shape">): boolean {
+  return s.shape === "sphere";
+}
+
 export interface SceneEvent {
   id: string;
   at_yr: number;
