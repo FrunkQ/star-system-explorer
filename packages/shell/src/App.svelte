@@ -1045,10 +1045,16 @@
   }
   .title {
     margin: 0;
+    min-width: 0;
     font-family: var(--sse-font-display);
     font-size: 26px;
     font-weight: 600;
     white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  .place > :not(.title) {
+    flex: none;
   }
   .place .up {
     font: inherit;
@@ -1235,9 +1241,10 @@
     padding: 0;
     color: var(--sse-accent);
   }
+  /* When the bar is full the kicker gives way first, then the place's name ends in "…"; nothing overlaps. */
   .kicker {
     min-width: 0;
-    flex: 0 1 auto;
+    flex: 0 100 auto;
     font-size: 12px;
     color: var(--sse-ink-muted);
     letter-spacing: 0.08em;
@@ -1378,6 +1385,7 @@
     display: flex;
     align-items: center;
     gap: 6px;
+    white-space: nowrap;
     font-size: 12px;
     color: var(--sse-ink-muted);
   }

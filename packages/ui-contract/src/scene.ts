@@ -41,6 +41,13 @@ export interface SceneSubject {
   orbit?: { a_au: number; phase_deg: number };
   /** Radial extent of a belt or zone, in AU. */
   band_au?: [number, number];
+  /**
+   * A belt's shape: a flat "disc" (the asteroid belt, the Kuiper belt) or a
+   * "sphere" all round the system (the Oort cloud). From the kernel's tilt
+   * model (F5: Rayleigh tilts are a disc, isotropic tilts a sphere); a disc
+   * when absent.
+   */
+  shape?: "disc" | "sphere";
   facts: SceneFact[];
   /** Evidence and honesty stamps (resolved, authored, impossible, fictional, ...). */
   stamps: string[];
