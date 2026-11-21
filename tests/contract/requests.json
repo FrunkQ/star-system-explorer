@@ -2762,5 +2762,160 @@
   "op": "commit_look_ahead",
   "branch": "0000",
   "accept": "campaign_now"
+ },
+ {
+  "op": "classify_preview",
+  "packs": [
+   {
+    "format": "sse.pack/1",
+    "id": "campaign.tables",
+    "version": "0.1.0",
+    "kind": [
+     "game-system"
+    ],
+    "kernel_range": "^0.1",
+    "licence": "Apache-2.0",
+    "provides": {
+     "other": {
+      "axes": [
+       [
+        "mass",
+        {
+         "field": "body.mass",
+         "scale": "log",
+         "span": [
+          1e+20,
+          1e+32
+         ]
+        }
+       ]
+      ],
+      "schemes": [
+       {
+        "id": "heft",
+        "question": "how heavy?"
+       }
+      ],
+      "classes": [
+       {
+        "id": "heft/world",
+        "scheme": "heft",
+        "kind": "base",
+        "region": [
+         {
+          "axis": "mass",
+          "core": [
+           1e+20,
+           1e+28
+          ],
+          "fringe": [
+           1e+19,
+           2e+28
+          ]
+         }
+        ]
+       },
+       {
+        "id": "heft/star",
+        "scheme": "heft",
+        "kind": "base",
+        "region": [
+         {
+          "axis": "mass",
+          "core": [
+           1e+29,
+           1e+32
+          ],
+          "fringe": [
+           5e+28,
+           2e+32
+          ]
+         }
+        ]
+       }
+      ]
+     }
+    }
+   }
+  ],
+  "scheme": "heft",
+  "scope": "u:aging/sys:1"
+ },
+ {
+  "op": "classify_preview",
+  "packs": [
+   {
+    "format": "sse.pack/1",
+    "id": "campaign.tables",
+    "version": "0.1.0",
+    "kind": [
+     "game-system"
+    ],
+    "kernel_range": "^0.1",
+    "licence": "Apache-2.0",
+    "provides": {
+     "other": {
+      "axes": [
+       [
+        "mass",
+        {
+         "field": "body.mass",
+         "scale": "log",
+         "span": [
+          1e+20,
+          1e+32
+         ]
+        }
+       ]
+      ],
+      "schemes": [
+       {
+        "id": "heft",
+        "question": "how heavy?"
+       }
+      ],
+      "classes": [
+       {
+        "id": "heft/world",
+        "scheme": "heft",
+        "kind": "base",
+        "region": [
+         {
+          "axis": "mass",
+          "core": [
+           1e+20,
+           1e+28
+          ],
+          "fringe": [
+           1e+19,
+           2e+28
+          ]
+         }
+        ]
+       },
+       {
+        "id": "heft/star",
+        "scheme": "heft",
+        "kind": "base",
+        "region": [
+         {
+          "axis": "mass",
+          "core": [
+           1e+29,
+           1e+32
+          ],
+          "fringe": [
+           5e+28,
+           2e+32
+          ]
+         }
+        ]
+       }
+      ]
+     }
+    }
+   }
+  ],
+  "scheme": "nope"
  }
 ]
