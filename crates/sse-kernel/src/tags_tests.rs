@@ -324,3 +324,114 @@ fn fifty_tags_on_sol_change_no_resolved_fact() {
     }
     assert_eq!(read(&mut k), before, "50 tags off");
 }
+
+#[test]
+fn the_gm_overrules_a_rule_tag_in_scenes_conditions_and_sifters() {
+    let mut k = crate::Kernel::new();
+    let r = load(
+        &mut k,
+        vec![
+            pack("tests/fixtures/packs/tarn-observe.json"),
+            pack("tests/fixtures/sift/rules-pack.json"),
+        ],
+    );
+    assert_eq!(r["type"], "stack_loaded", "{r}");
+    send(
+        &mut k,
+        serde_json::json!({"op": "open_universe", "id": "kestrel", "seed": "k"}),
+    );
+    let body = "u:kestrel/sys:0/body:3";
+    let set = |k: &mut crate::Kernel, a: &str, f: &str, v: serde_json::Value| {
+        let r = send(
+            k,
+            serde_json::json!({"op": "set_authored", "edit": {
+            "address": a, "field": f, "value": v, "occurred_at_s": 0}}),
+        );
+        assert_eq!(r["type"], "authored", "{r}");
+    };
+    for (f, v) in [
+        ("surface_temp_k", serde_json::json!(290.0)),
+        ("pressure_bar", serde_json::json!(1.0)),
+        ("has_ocean", serde_json::json!(true)),
+        ("o2_bar", serde_json::json!(0.2)),
+        ("orbit_m", serde_json::json!(1.0e7)),
+    ] {
+        set(&mut k, body, f, v);
+    }
+    set(
+        &mut k,
+        "u:kestrel/sys:0",
+        "roche_m",
+        serde_json::json!(2.0e7),
+    );
+    let scene_tags = |k: &mut crate::Kernel| {
+        let s = send(
+            k,
+            serde_json::json!({"op": "scene", "audience": "gm", "scope": "u:kestrel", "at_s": 0}),
+        );
+        s["scene"]["subjects"]
+            .as_array()
+            .unwrap()
+            .iter()
+            .find(|x| x["address"] == body)
+            .map(|x| x["tags"].clone())
+            .unwrap_or_default()
+    };
+    let hits = |k: &mut crate::Kernel| {
+        let r = send(
+            k,
+            serde_json::json!({"op": "sift", "sifters": ["moon-in-roche"], "at_s": 0}),
+        );
+        assert_eq!(r["type"], "sifted", "{r}");
+        r["hits"].as_array().unwrap().len()
+    };
+    // The rules' answer: habitable, garden (which builds on habitable) and
+    // inside the Roche zone, so the sifter fires.
+    let derived = scene_tags(&mut k);
+    assert_eq!(
+        derived,
+        serde_json::json!(["garden", "habitable", "roche-danger"])
+    );
+    assert_eq!(hits(&mut k), 1);
+    // Held off: gone from the scene, from the rule that reads it (garden)
+    // and from the sifter.
+    set(&mut k, body, "tag.habitable", serde_json::json!(false));
+    set(&mut k, body, "tag.roche-danger", serde_json::json!(false));
+    assert_eq!(scene_tags(&mut k), serde_json::json!([]));
+    assert_eq!(hits(&mut k), 0);
+    // Forced on where no rule holds: shown, with the authored mark.
+    set(&mut k, body, "surface_temp_k", serde_json::json!(500.0));
+    set(&mut k, body, "tag.habitable", serde_json::json!(true));
+    assert_eq!(
+        scene_tags(&mut k),
+        serde_json::json!(["garden", "habitable"])
+    );
+    let u = k.universe.as_ref().unwrap();
+    let state = u
+        .chronicle
+        .state_at(sse_chronicle::UniverseTime::seconds(0));
+    let a: sse_core::Address = body.parse().unwrap();
+    let f = &state.facts[&a];
+    let subject = sse_sift::Subject {
+        address: Some(a.clone()),
+        facts: f.clone(),
+        parent: state.facts[&a.parent().unwrap()].clone(),
+        ..Default::default()
+    };
+    let t =
+        k.observe
+            .rules
+            .apply_authored(&subject, &Default::default(), &sse_sift::authored_tags(f));
+    assert_eq!(t["habitable"].rule, sse_sift::AUTHORED);
+    assert_eq!(t["habitable"].evidence[0].field, "tag.habitable");
+    assert_eq!(
+        t["garden"].rule, "garden.v1",
+        "a rule still builds on a forced tag"
+    );
+    // Taking the authored facts away gives the rules' answer back.
+    set(&mut k, body, "surface_temp_k", serde_json::json!(290.0));
+    set(&mut k, body, "tag.habitable", serde_json::Value::Null);
+    set(&mut k, body, "tag.roche-danger", serde_json::Value::Null);
+    assert_eq!(scene_tags(&mut k), derived);
+    assert_eq!(hits(&mut k), 1);
+}
