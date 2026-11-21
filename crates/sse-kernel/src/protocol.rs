@@ -714,6 +714,36 @@ pub enum Request {
         extent_mpc: f64,
         n: u32,
     },
+    /// S14a's cave survey (Site level): survey a world as `survey_surface`
+    /// does (a `fixture`, or a `body` of an adopted `system` at `at_s`) and
+    /// place the lava-tube passages within `radius_km` (default 5, at most
+    /// the pack's window) of `lat_deg`, `lon_deg`. The same tube is the same
+    /// from any site. Read only.
+    SurveyCaves {
+        #[serde(default)]
+        #[ts(optional)]
+        system: Option<String>,
+        #[serde(default)]
+        #[ts(optional)]
+        body: Option<String>,
+        #[serde(default)]
+        #[ts(optional)]
+        fixture: Option<String>,
+        #[serde(default)]
+        #[ts(optional, type = "number")]
+        at_s: Option<i64>,
+        #[serde(default)]
+        #[ts(optional, type = "unknown")]
+        options: Option<serde_json::Value>,
+        #[serde(default)]
+        #[ts(optional)]
+        quick: Option<bool>,
+        lat_deg: f64,
+        lon_deg: f64,
+        #[serde(default)]
+        #[ts(optional)]
+        radius_km: Option<f64>,
+    },
     /// S5's descent scene: survey a world as `survey_surface` does (a
     /// `fixture`, or a `body` of an adopted `system` at `at_s`), judge the
     /// landing site at `lat_deg`, `lon_deg` (slope, roughness, liquid) and
@@ -1215,6 +1245,7 @@ impl Request {
             Request::Sift { .. } => "sift",
             Request::ClassifyPreview { .. } => "classify_preview",
             Request::PlanDescent { .. } => "plan_descent",
+            Request::SurveyCaves { .. } => "survey_caves",
             Request::Systems => "systems",
             Request::LifeView { .. } => "life_view",
             Request::ExportChronicle => "export_chronicle",
@@ -1420,6 +1451,11 @@ pub fn ops() -> Vec<OpInfo> {
             "plan_descent",
             Cost::Heavy,
             "a survey as survey_surface (cached for the same world), one site read of about 30 heights, and a descent at 0.1 s steps (well under 0.1 s native)",
+        ),
+        o(
+            "survey_caves",
+            Cost::Heavy,
+            "a survey as survey_surface (cached for the same world), then up to 40 steps of 5 height reads per passage near the site (tens of ms native)",
         ),
         o(
             "survey_surface",
@@ -1891,6 +1927,15 @@ pub enum Response {
     RoutePlanned {
         #[ts(type = "unknown")]
         plan: serde_json::Value,
+    },
+    /// `survey_caves`: `{body, label, source, at_s?, caves (version, lat_deg,
+    /// lon_deg, radius_km, level, spacing_m, fields, passages (id, field,
+    /// length_km, width_m, roof_m, depth_m, nodes (lat, lon, x_m, y_m,
+    /// ground_m, floor_m, entrance?), segments (from, to, length_m, width_m,
+    /// height_m, roofed, open?), entrances, speculative, cause), why)}`.
+    CavesSurveyed {
+        #[ts(type = "unknown")]
+        caves: serde_json::Value,
     },
     /// `plan_descent`: `{body, label, source, at_s?, lander, entry, site
     /// (level, spacing, height, slope, local slope, roughness, relief,

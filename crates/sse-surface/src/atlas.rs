@@ -589,24 +589,25 @@ impl Atlas {
     /// The height a tile at `level` gives at a direction, m (the same sum
     /// `build` makes for a sample there).
     pub fn height_at(&self, d: [f64; 3], level: u8) -> f64 {
+        self.heights(level).at(d)
+    }
+
+    /// A reader of heights at `level` that keeps each tile's features and
+    /// landforms once gathered, for many reads close together (a path).
+    pub fn heights(&self, level: u8) -> Heights<'_> {
+        Heights {
+            atlas: self,
+            level,
+            tiles: vec![],
+        }
+    }
+
+    fn tile_key_at(&self, d: [f64; 3], level: u8) -> TileKey {
         let (f, u, v) = face_of(d);
         let n = 1u64 << level;
         let ix = (((u + 1.0) * 0.5 * n as f64) as i64).clamp(0, n as i64 - 1) as u32;
         let iy = (((v + 1.0) * 0.5 * n as f64) as i64).clamp(0, n as i64 - 1) as u32;
-        let key = TileKey::new(f, level, ix, iy).expect("key in range");
-        let rk = self.radius_m / 1000.0;
-        let feats = self.tile_features(key);
-        let mut tags = vec![];
-        let lands = self.tile_landforms(key, &mut tags);
-        let (mut h, _) = self.height(d, self.octaves_at(level));
-        h += feats.height(d, rk);
-        for l in &lands.relief {
-            h += crate::regimes::landform_height(l, d, rk).0;
-        }
-        if let Some(c) = self.regime_layer.as_ref().and_then(|r| r.clouds.as_ref()) {
-            h += c.at(d, rk).1;
-        }
-        h
+        TileKey::new(f, level, ix, iy).expect("key in range")
     }
 
     /// Tile centre and half its diagonal (angle, with margin for the warp).
@@ -1441,5 +1442,40 @@ impl TileCache {
         }
         self.entries.insert(id, (self.tick, t.clone()));
         Ok(t)
+    }
+}
+
+/// Heights at one level, with each tile's gathered features kept (see
+/// [`Atlas::heights`]). The same sum as [`Atlas::height_at`].
+pub struct Heights<'a> {
+    atlas: &'a Atlas,
+    level: u8,
+    tiles: Vec<(TileKey, TileFeatures, TileLandforms)>,
+}
+
+impl Heights<'_> {
+    pub fn at(&mut self, d: [f64; 3]) -> f64 {
+        let a = self.atlas;
+        let key = a.tile_key_at(d, self.level);
+        let i = match self.tiles.iter().position(|t| t.0 == key) {
+            Some(i) => i,
+            None => {
+                let mut tags = vec![];
+                let lands = a.tile_landforms(key, &mut tags);
+                self.tiles.push((key, a.tile_features(key), lands));
+                self.tiles.len() - 1
+            }
+        };
+        let (_, feats, lands) = &self.tiles[i];
+        let rk = a.radius_m / 1000.0;
+        let (mut h, _) = a.height(d, a.octaves_at(self.level));
+        h += feats.height(d, rk);
+        for l in &lands.relief {
+            h += crate::regimes::landform_height(l, d, rk).0;
+        }
+        if let Some(c) = a.regime_layer.as_ref().and_then(|r| r.clouds.as_ref()) {
+            h += c.at(d, rk).1;
+        }
+        h
     }
 }

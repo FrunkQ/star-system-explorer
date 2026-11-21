@@ -6,6 +6,7 @@
 #![allow(clippy::result_large_err)]
 
 mod adopt;
+mod caves;
 mod clock;
 pub mod contract;
 mod cosmos;
@@ -2335,6 +2336,71 @@ impl Kernel {
                     }
                 };
                 Response::DescentPlanned { descent }
+            }
+            Request::SurveyCaves {
+                system,
+                body,
+                fixture,
+                at_s,
+                options,
+                quick,
+                lat_deg,
+                lon_deg,
+                radius_km,
+            } => {
+                let quick = quick.unwrap_or(false);
+                let ask = |from| caves::Ask {
+                    from,
+                    options: options.as_ref(),
+                    quick,
+                    lat_deg,
+                    lon_deg,
+                    radius_km,
+                };
+                let caves = match (fixture, system, body) {
+                    (Some(f), None, None) => {
+                        caves::survey_caves(ask(survey::From::Fixture(&f)), &mut self.surveys)?
+                    }
+                    (None, Some(system), Some(body)) => {
+                        let a: Address = system
+                            .parse()
+                            .map_err(|e| err("bad_address", format!("{e}")))?;
+                        let u = self
+                            .universe
+                            .as_mut()
+                            .ok_or_else(|| err("no_universe", "open a universe first"))?;
+                        if !u.root.contains(&a) {
+                            return Err(err(
+                                "bad_address",
+                                format!("{a} is not in universe {}", u.root),
+                            ));
+                        }
+                        if !u.runs.contains_key(&system) {
+                            if let Some(req) = adopt::formation_request(&u.chronicle, &a) {
+                                let (_, run, _) = systems::form(req.into())?;
+                                u.runs.insert(system.clone(), run);
+                            }
+                        }
+                        caves::survey_caves(
+                            ask(survey::From::System {
+                                ch: &u.chronicle,
+                                seed: &u.seed,
+                                system: &a,
+                                body: &body,
+                                at_s,
+                                run: u.runs.get(&system),
+                            }),
+                            &mut self.surveys,
+                        )?
+                    }
+                    _ => {
+                        return Err(err(
+                            "bad_request",
+                            "give a fixture, or a system and one of its bodies",
+                        ))
+                    }
+                };
+                Response::CavesSurveyed { caves }
             }
             Request::SurveySurface {
                 system,
