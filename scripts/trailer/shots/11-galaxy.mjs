@@ -5,6 +5,7 @@ export default {
   feature: "Galaxy chart and history edits (U6, G6)",
   trailers: ["features", "intro"],
   async run(page, d, nav) {
+    await d.caption('Out to the galaxy', 'Rings of history: what formed, what died, where life could start.');
     await d.click(page.locator('.rail [data-go="explore"]').first());
     const tab = page.locator("[data-section-tab=galaxy]");
     if (await tab.isVisible().catch(() => false)) await d.click(tab);
@@ -15,6 +16,7 @@ export default {
     await d.click(gal.locator("[data-layer=supernovae]"));
     await d.hold(1500);
     await gal.locator("[data-ink-kind]").selectOption("merger");
+    await d.caption("Rewrite its past", "Ink a merger eight billion years ago, and see what follows.");
     await gal.locator("[data-ink-t]").fill("8");
     await gal.locator("[data-ink-ratio]").selectOption({ label: "equal (1 : 1)" });
     await d.click(gal.locator("[data-ink-add]"));

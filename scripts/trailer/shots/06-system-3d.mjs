@@ -7,6 +7,7 @@ export default {
   notes: "Without a GPU the WebGPU view films blank; in the cloud it runs on the Canvas tier (no WebGL). Re-shoot with --gpu on a real GPU.",
   browserArgs: ["--disable-webgl", "--disable-webgl2", "--disable-3d-apis", "--disable-gpu"],
   async run(page, d) {
+    await d.caption('The system in 3D', 'Drawn on the GPU, with numbers relative to the camera so nothing jitters.');
     await d.hold(800);
     await d.click(page.getByRole("button", { name: "3D", exact: true }));
     const view = page.locator("[aria-roledescription='3D chart']");
@@ -21,6 +22,7 @@ export default {
     const vaultAny = (await vault.count()) ? vault : view.locator("[data-body]").nth(4);
     await d.click(vaultAny);
     await d.click(view.getByRole("button", { name: "Moons of Vault ›" }));
+    await d.caption("Into a planet's own frame", "Moons orbit the planet, not the star.");
     await d.hold(3500);
   },
 };

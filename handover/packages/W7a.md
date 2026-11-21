@@ -58,7 +58,7 @@ that cut a valley was not the rain on the weather map. Now there is one.
 weather lines of `contract.jsonl`. Reason: erosion, cover and weather now read the one seasonal energy-balance climate
 (the accepted W7a), instead of four separate models. PR 71 (S16a part 2, the Orbit-level chain) landed first; this
 package merged main and re-blessed once for both. `surface-regimes.json` is unchanged (the moved giant jet code is
-bit-identical).
+bit-identical). PR 82 (S0b icy bodies) then landed too; main was merged again and only `contract.jsonl`'s survey and weather lines needed one more bless, for the same reason.
 
 ## Known limits (all in `docs/fudges.md`)
 - Locked worlds are still one zonal climate, not day and night (W7b).

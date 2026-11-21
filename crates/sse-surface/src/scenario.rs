@@ -237,6 +237,7 @@ pub fn regimes_golden() -> serde_json::Value {
                 rotation_hours: rot,
                 mass_earth: f.body.mass_earth,
                 impacts: None,
+                craters: None,
             };
             let rs = regime_surface(&s, &e, &seed, &inp, f.body.age_gyr);
             let a = Atlas::new(&s, &e, &seed, f.body.age_gyr, vec![]).with_regime(rs.clone());

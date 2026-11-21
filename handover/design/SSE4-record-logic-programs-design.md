@@ -58,7 +58,7 @@ There is also a schema-free corner for the GM and Orac: any address can hold fie
 
 ### 2.2 Rules that keep the record honest
 
-1. **The record never feeds physics by accident.** No physics flow may read a kept value or a note. The only bridge is an explicit effect (5.2) that writes an authored pin on a physical quantity, which is then tagged `authored` or `authored-impossible` like any GM edit. A superweapon that turns a region barren is such an effect; a credit balance can never nudge a climate.
+1. **The record never feeds physics by accident.** No physics flow may read a kept value or a note. The only bridge is an explicit effect (5.2) that writes an authored pin on a physical quantity, which then carries the mark `authored` or `authored-impossible` like any GM edit. A superweapon that turns a region barren is such an effect; a credit balance can never nudge a climate.
 2. **The record never feeds RESOLVE.** Keyed draws for generating the universe take no input from it. What exists does not depend on what players did, unless a GM-visible authored event says so.
 3. **One writer rule**, the kept-value form of one publisher per quantity (H5.5): the active pack stack is rejected if two effects claim sole ownership of the same kept kind, and a write from anything not in `writers` is refused.
 4. **Removing a pack loses nothing.** Its kept values stay in the chronicle and show as "kept by a pack that is not loaded", readable and exportable.
@@ -77,6 +77,16 @@ Players can write notes: `add_note` is an intent. The default seat may send it, 
 - **Minerva** reads it within the audience's data view. This is her main raw material for "previously, in this campaign".
 - **Logic blocks and programs** read it (sections 3 and 5).
 - A **relations lens** draws actors and relations over the chart or hex map (allegiance colouring already assumes this).
+
+### 2.4 Tags, marks and resource amounts **[added 21 Nov from the accepted tags design]**
+
+`SSE4-tags-design.md` governs tags; this is what the record takes from it.
+
+- **A tag is a label only**: a name on an address or a note, present or absent, with no value inside (tags design, section 4). Anything with a value is a fact (physics), a kept value (game) or a note (words). Conditions may read `has tag`; nothing reads a number from one.
+- **Marks are not tags.** The honesty and source marks (`authored`, `authored-impossible`, `traveller-generated`, `estimated`, `retired`) are called **marks** throughout. "Tag" always means a label.
+- **Resource amounts are kept kinds, general by design.** Two kept kinds exist per resource kind on any address (body, settlement, station, hold): `extracted` (what has been taken from a body's natural inventory) and `stock` (what has been put or made there). What a place holds is `natural amount - extracted + stock`, where the natural amount is a physics fact and zero for made goods (tags design 5.5, 5.6). The `resource.*` label is derived from that sum, so a mined-out rock loses its label by itself.
+- **Transfers conserve.** Moving goods is one effect, `transfer`, which lowers the amount at one address and raises it by the same amount at another inside a single gate decision; it is refused if the source holds less than the amount. A program cannot raise stock from nothing; making and consuming goods are separate, named effects a pack declares (a refinery's conversion), so every change in a total has a visible cause. Built as TG11.
+- **Left open for the economy pack** (a 4.1 feature, build plan track EC): the kept-kind prefix `economy.` and the tag group `trade` stay unused. Its high-level design, EC0, starts once TG11, TG9, J6 and X3 have landed.
 
 ## 3. Logic blocks
 
@@ -173,7 +183,7 @@ A trigger says *when*. Four kinds, all evaluated at time boundaries on the GM's 
 
 A flow normally *publishes values*. An effect flow instead *proposes changes*. The closed list of effect kinds:
 
-`set_kept` · `add_note` · `grant` (data view to audience) · `tag` / `untag` · `send_intent` · `create` / `retire` an authored object from a template · `set_pin` (the one bridge to physics, rule 2.2.1)
+`set_kept` · `add_note` · `grant` (data view to audience) · `tag` / `untag` · `transfer` (a conserving move of a resource amount between two addresses, 2.4) · `send_intent` · `create` / `retire` an authored object from a template · `set_pin` (the one bridge to physics, rule 2.2.1)
 
 Effects never touch state directly. Each proposed effect goes through **one gate** on the GM's machine and becomes an ordinary event whose `causes` name the trigger event and whose `publisher` names the pack, program and version. So every automatic change answers "why did that happen?" and can be undone on a branch.
 
@@ -293,7 +303,20 @@ Nothing in the default session changes. A campaign with no turn declared never s
 
 H7A part 7 has stock ships and bases as templates for Traveller. Generalised: a pack declares **templates** (ship, unit, structure, module, station, faction) as a set of kept kinds with defaults, the tags it carries, the programs it may run, and optionally a `service_life` with what follows it (6.2). `create` makes an authored object from one, in the authored namespace. Traveller's constructs become the first use.
 
-## 8A. Secrecy: what each device receives **[added 19 Nov after Alex: "we will have to be careful we don't transmit too much to clients"]**
+### 8.1 Ships without numbers on tags (TG9) **[added 21 Nov]**
+
+V3 hid numbers inside tags: an owner tag carried tardiness and a status tag carried a readiness multiplier. In V4 a tag carries nothing (2.4), so:
+
+- **Discipline and readiness are kept kinds on the construct**: `ship.discipline` and `ship.readiness`, each a number from 0 to 1, tier `scanned` by default. The template gives the default (a navy cutter is disciplined, a tramp freighter less so). The GM, or a program inside its scope, may write them.
+- **Status tags act through a visible trigger, never by themselves.** A pack ships triggers such as "`on_event` tag `status.derelict` added, then `set_kept` readiness to 0" and "`status.damaged` added, then readiness at most 0.5". The trigger shows in "Why?" as the cause of the value. Because the tag and the value are separate, the GM can set readiness differently and leave the tag in place (a derelict someone has quietly made spaceworthy). Removing the tag does not restore readiness unless the pack ships a trigger that says so.
+- **Owner tags are labels.** `owner.*` says whose the ship is for conditions, lenses and the finder; it sets nothing.
+- **"In transit" and "adrift" are not tags.** They are read from the ship's program state and its motion.
+- **Drive ability is read from fitted hardware.** Whether a ship can jump, and how far, comes from the facts of the modules its template or refit lists (drive type, rating, fuel). There are no inherited drive tags; a fuel states what it can be made from as a condition.
+- **Programs read the values.** A patrol's reaction time scales with `ship.discipline`; a ship below a pack's readiness threshold refuses the `depart` order with a readable reason.
+
+Acceptance (the TG9 row of the tags design): a ship tagged `status.derelict` reaches readiness 0 through a visible trigger, the GM can set readiness differently without removing the tag, and a check over every pack program finds none reading a number from a tag. Designed here; built by the Traveller pack thread after TG1.
+
+## 8A. Secrecy: what each device receives **[added 19 Nov after Alex: "we will have to be careful we don't transmit too much to clients"; the table secret (8A.3) and the `competitive` level requiring sealed seats (8A.4) ruled by Alex 21 Nov: "Agree"]**
 
 ### 8A.1 The rule
 
@@ -388,11 +411,13 @@ Orac's scope (A2) widens to boxes, conditions, programs, triggers, templates and
 
 **Order.** J1, J2 and J3 need only parts that are already built and can start now on the kernel track. J4 waits for intents and approval (built in the UI, see Care 3). J6 waits for NAV. J6b waits for J6 and for T2's change to one campaign clock (`SSE4-top-level-ui-and-onboarding.md` 12.2). A 4X game pack is not a stage: it becomes possible after J8 and J9 as someone's pack, with the original author's agreement.
 
-## 11. Rulings **[all five accepted by Alex, 19 Nov; a sixth on 21 Nov]**
+## 11. Rulings **[all five accepted by Alex, 19 Nov; three more on 21 Nov]**
 
 1. **May players write notes themselves?** Yes: auto-approved for their own party journal, GM approval for the shared record.
 2. **May a program act without the GM approving each move?** Yes, inside a scope the GM sets when attaching it (its own ship), and ask for anything that creates, destroys or leaves the scope.
-3. **May the record change physics?** Only through the explicit `set_pin` effect, always asking the GM by default and always tagged. Never implicitly.
+3. **May the record change physics?** Only through the explicit `set_pin` effect, always asking the GM by default and always marked. Never implicitly.
 4. **Should classification be rebuilt as blocks?** No. It is an engine block (3.5): usable as a block anywhere, edited in the Class atlas, not in the block editor. Simple rules and guards still share the condition language.
 5. **When?** J1 to J3 now on the kernel track, because the Traveller pack and autopilot both lean on them; the rest follows V5 and T3.
 6. **Autopilots over long jumps in time?** Exact while the device can afford it, then "measure a few cycles and scale", stamped estimated, with exact always on offer; ships past a stated service life are retired with a note (6.2). Accepted 21 Nov.
+7. **What keys the dice?** A table secret held only on the GM's machine, never the universe seed, with a published fingerprint so the dice can be checked afterwards (8A.3). Accepted 21 Nov.
+8. **Must competitive games use sealed seats?** Yes. A pack that declares a campaign `competitive` requires sealed seats; the GM may knowingly override to an open table, which shows a standing banner on every seat (8A.4). Accepted 21 Nov.

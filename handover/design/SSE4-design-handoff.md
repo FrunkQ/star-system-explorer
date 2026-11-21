@@ -22,7 +22,7 @@ Principles, in priority order:
 
 1. Deterministic and procedural. Same universe seed, same packs, same authored edits, same engine version gives the same universe on every device. No hidden randomness, no wall clock, no dependence on what the UI looked at first.
 2. Lean into the physics. Every derived number can answer "why?" with the flow that produced it, its inputs, units and source.
-3. The GM can override anything. Physically impossible edits are allowed and tagged, never blocked **[decided]**.
+3. The GM can override anything. Physically impossible edits are allowed and marked, never blocked **[decided]**.
 4. Data, not code, is what users share. Flows, packs, screens and universes are declarative documents.
 5. Don't recreate V3. Improve it. Players command computers; they never hand-pilot.
 6. No scale is privileged. One system, five points across three galaxies, or a whole galaxy are equally valid **[decided]**.
@@ -226,7 +226,7 @@ Hard rules:
 
 Evolutionary galaxy model **[decided in outline]**: a patch's envelope at time T is produced by a simplified, editable flow from its earlier envelope and its neighbours' summaries: gas inflow, star formation, enrichment from stellar deaths, feedback. No particles. Stars that resolve carry positions and velocities and so move, pass each other and die; cross-patch effects (a supernova, a passing star) are events that modify the neighbouring envelopes going forward.
 
-Edits: a GM edit is an authored event with an `occurred_at`. It changes the patch from that time forward. It never rewrites earlier resolved facts. If it contradicts physics it is tagged `authored-impossible` and everything derived from it inherits a visible "impossible input" badge; the GM explains it as magic.
+Edits: a GM edit is an authored event with an `occurred_at`. It changes the patch from that time forward. It never rewrites earlier resolved facts. If it contradicts physics it is marked `authored-impossible` and everything derived from it inherits a visible "impossible input" badge; the GM explains it as magic.
 
 ### 6.2 DERIVE: flows
 
@@ -315,7 +315,7 @@ The engines above say what is true. This one remembers what was done and lets th
 - **Programs**: small state machines (sense through the owner's own sensors and audience, decide with a box of logic, act by sending an intent). A program is a seat driven by a flow, with the same `may_send` and `auto_approve` limits. Autopilot is the first use. Look-ahead runs programs forward.
 - **Turns and held orders** are optional and off by default.
 - **Secrecy**: the universe is shared, the record is need-to-know. The record is computed only on the GM's machine and each seat is sent only what its audience may see, as disclosures, never raw events. Dice use a table secret, not the universe seed. A pack may declare a campaign `competitive`, which requires sealed seats (8.7). Section 8A of the design file governs.
-- Two walls: the record never feeds RESOLVE, and never feeds physics except through an explicit, tagged `set_pin` effect. No LLM runs inside a program.
+- Two walls: the record never feeds RESOLVE, and never feeds physics except through an explicit, marked `set_pin` effect. No LLM runs inside a program.
 
 A game (a 4X, a trading game) is then a pack using these parts; SSE4 does not grow a separate game engine.
 
@@ -369,12 +369,12 @@ Published setting data (the official sectors) is **not bundled**. Users fetch it
 **1. Codes from physics (world to UWP).** Classification rules (section 7) read stored facts and publish: the UWP digits (starport, size, atmosphere, hydrographics, population, government, law, tech), trade codes, travel zone, bases, the PBG digits (population multiplier, belts, gas giants), and allegiance. Size comes from diameter, atmosphere from pressure and composition, hydrographics from ocean cover, population and the social digits from the technosphere facts or GM authoring. Every digit answers "why" through explain mode like any derived value, and digits update when the world changes or ages. Rule tables are data, so an edition is a table set (see licensing below).
 
 **2. Systems from codes (UWP to star system) (V3).** The reverse direction, which V3 users rely on. A UWP line, with PBG and stellar data when present, becomes a set of **pins and constraints** on the system's envelope: size digit to a diameter range, atmosphere digit to a pressure range and a gas-mix class, hydrographics to an ocean fraction band, PBG to the count of belts and gas giants, stellar data to the stars. RESOLVE then builds the rest of the system around them (orbits, the main world's position, moons, other worlds), choosing the most physically consistent arrangement that honours the codes.
-- Everything created this way carries the source tag **`traveller-generated`**, and each value keeps its evidence label. Where a code cannot be squared with physics (a tiny world holding a dense atmosphere, a water world outside any plausible zone), the code wins, the value is recorded as `authored-impossible`, and the GM view shows the honesty mark with the reason. Nothing is silently "fixed". **[Alex: tagged Traveller-created, to account for the dodgy physics]**
+- Everything created this way carries the source mark **`traveller-generated`**, and each value keeps its evidence label. Where a code cannot be squared with physics (a tiny world holding a dense atmosphere, a water world outside any plausible zone), the code wins, the value is recorded as `authored-impossible`, and the GM view shows the honesty mark with the reason. Nothing is silently "fixed". **[Alex: tagged Traveller-created, to account for the dodgy physics]**
 - A GM can ask for the opposite at any time: "make this physically sound" proposes the smallest changes to the codes that remove the impossible marks, as an Orac change request.
 - Random generation by the book (roll a subsector) is the same path with the dice replaced by keyed draws, so a generated subsector is reproducible from its seed.
 
 **3. Hex map as the default map (V3).** The **Hex map** is a view in the core stack (it is code, so it cannot live in a pack); the Traveller pack makes it the default map and configures it: one hex is one parsec, subsector 8 by 10, sector 32 by 40, hex numbering in the usual four-digit form, world glyphs for starport class, gas giant, bases, zone rings and allegiance borders, jump and trade routes, and jump-range highlighting from the selected ship. Other packs can use the same view with different hex sizes and glyphs. It follows symbology (8.4A) and lenses (8.6) like any view.
-- Flat maps and a 3D galaxy: an imported hex position is an authored 2D position. The pack places each system on a plane with a small deterministic offset in the third axis so the Sky and 3D views still work, tagged as authored. A campaign can instead project a real 3D patch onto hexes for a "Traveller-style map of a physical region".
+- Flat maps and a 3D galaxy: an imported hex position is an authored 2D position. The pack places each system on a plane with a small deterministic offset in the third axis so the Sky and 3D views still work, marked as authored. A campaign can instead project a real 3D patch onto hexes for a "Traveller-style map of a physical region".
 
 **4. Importers and exporters (V3).** UWP lines pasted or typed; sector and subsector files in the common community formats (legacy SEC, tab-delimited T5 second survey columns, sector metadata XML); and the **Travellermap importer (V3's importer agent)**: pick a sector or subsector by name, fetch it through that site's public API on the user's request, map it through part 2, and report what was imported, what was impossible and what was guessed. Orac assists only with irregular lines and never invents data silently. Export writes the same formats from any campaign, including poster-ready data for a subsector. Import is a set of authored events, so it can be undone and replayed.
 
@@ -390,7 +390,7 @@ Published setting data (the official sectors) is **not bundled**. Users fetch it
 
 **Naming and licensing [decided, Alex, 18 Nov].** The pack is called the **Traveller pack**, plainly. Alex's position: it adds to their game and the publisher is content with that. The one named limit: **the TAS logo must not be used**, anywhere (app, pack art, site, handouts). Still good practice, and kept: carry the trademark owner's fair-use notice in the pack's about text, do not bundle official sector data (users fetch it through the importer, with Travellermap's attribution), and use no other publisher artwork or logos. Edition differences (Classic, Mongoose, T5) are alternative table sets inside the same pack; which edition's tables ship as the default follows what V3 uses.
 
-**Stages** are X3a to X3d in the build plan. Evidence in brief: codes round-trip (world to UWP to world keeps every digit); a reference subsector imports with every impossible value tagged and none silently altered; the same seed rolls the same subsector on every device; jump shadows match hand-calculated cases; removing the pack leaves a valid campaign with the physical facts intact.
+**Stages** are X3a to X3d in the build plan. Evidence in brief: codes round-trip (world to UWP to world keeps every digit); a reference subsector imports with every impossible value marked and none silently altered; the same seed rolls the same subsector on every device; jump shadows match hand-calculated cases; removing the pack leaves a valid campaign with the physical facts intact.
 
 ---
 

@@ -7,6 +7,7 @@ export default {
   path: "players.html",
   waitFor: "body",
   async run(page, d) {
+    await d.caption("The players' screen", 'They see only what they have scanned. The GM holds the whole chart.');
     await d.hold(3000);
     const scanned = page.getByRole("group", { name: "Sensor data" }).getByRole("button", { name: "Scanned" });
     if (await scanned.isVisible().catch(() => false)) await d.click(scanned);

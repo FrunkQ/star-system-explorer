@@ -5,6 +5,7 @@ export default {
   feature: "Sizes and reference objects (V14)",
   trailers: ["features"],
   async run(page, d, nav) {
+    await d.caption('How big is it, really?', 'Worlds side by side at true scale.');
     await d.click(page.locator('.rail [data-go="compare"]').first());
     const cmp = page.getByRole("region", { name: "Size comparison" });
     await cmp.waitFor();
@@ -14,6 +15,7 @@ export default {
     await d.click(refs.getByRole("button", { name: "Jupiter", exact: true }));
     await d.hold(1500);
     await d.click(refs.getByRole("button", { name: "Typical neutron star", exact: true }));
+    await d.caption("Jupiter and a neutron star", "A star's core the size of a city, beside a giant planet.");
     await d.hold(1500);
     await d.click(cmp.getByRole("button", { name: "Log scale" }));
     await d.hold(2500);

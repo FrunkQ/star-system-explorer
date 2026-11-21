@@ -125,13 +125,14 @@ fn chain(
     let oceans = body.oceans > 0.0;
     let air = Air::guess(&s.cover, &e, body.pressure_bar, oceans);
     let aerostat = aerostat_band(&s.cover, &e, &air, opts.wind_m_s);
-    let regime_in = |f| RegimeInputs {
+    let regime_in = |f, c| RegimeInputs {
         rotation_hours: rotation,
         mass_earth: body.mass_earth,
         impacts: f,
+        craters: c,
     };
     if e.kind == "cloud-deck" {
-        let rs = regime_surface(s, &e, seed, &regime_in(None), epoch_gyr);
+        let rs = regime_surface(s, &e, seed, &regime_in(None, None), epoch_gyr);
         let atlas = Atlas::new(s, &e, seed, epoch_gyr, vec![]).with_regime(rs);
         return Ok(Survey {
             envelope: e,
@@ -164,7 +165,13 @@ fn chain(
         plates: Some(&h),
     };
     let (mut feat, field) = impacts(s, &e, seed, &ii, epoch_gyr)?;
-    let mut rs = regime_surface(s, &e, seed, &regime_in(Some(&feat)), epoch_gyr);
+    let mut rs = regime_surface(
+        s,
+        &e,
+        seed,
+        &regime_in(Some(&feat), Some(&field)),
+        epoch_gyr,
+    );
     if !named {
         // Orbit detail keeps only features at least two coarse cells across
         // (S16: the largest craters and a few big landforms); smaller ones

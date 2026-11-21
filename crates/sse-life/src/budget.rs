@@ -98,6 +98,18 @@ pub struct BudgetParams {
     pub min_viable_g_m2_yr: f64,
     pub low_power_levels: u32,
     pub metabolisms: Vec<Metabolism>,
+    /// `listed/1` (the metabolisms above) or `gradients/1` (the gradient
+    /// catalogue, E1). The listed model stays the default until the
+    /// fidelity contract (evolution design 3.5) is reviewed.
+    #[serde(default = "listed_model", skip_serializing_if = "is_listed")]
+    pub life_model: String,
+}
+
+fn listed_model() -> String {
+    "listed/1".into()
+}
+fn is_listed(s: &String) -> bool {
+    s == "listed/1"
 }
 
 impl BudgetParams {
@@ -137,6 +149,10 @@ pub struct HabitatBudget {
     pub biomass_gc: Option<f64>,
     pub feeding_levels: Option<u32>,
     pub missing: Vec<String>,
+    /// Heterotrophs' production on imported organic carbon, g C per year
+    /// (`gradients/1` only; not new carbon, so not in `production_gc_yr`).
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub secondary_gc_yr: Option<f64>,
 }
 
 #[derive(Clone, PartialEq, Debug, Serialize, Deserialize)]
@@ -239,6 +255,7 @@ pub fn habitat_budget(
         biomass_gc: None,
         feeding_levels: None,
         missing: vec![],
+        secondary_gc_yr: None,
     };
     if let Some(r) = closed_reason(p, bp) {
         out.closed = Some(r);
@@ -345,6 +362,19 @@ pub fn habitat_budget(
         return out;
     }
     let energy = best_light.unwrap_or(0.0) + supply;
+    finish(p, bp, out, energy, missing)
+}
+
+/// The rest of box B once a habitat's energy cap is known (g C per year):
+/// the nutrient cap (Liebig), production, power, biomass and feeding levels.
+/// Shared by the listed model and the gradient catalogue (E1).
+pub(crate) fn finish(
+    p: &LifeRequirementProfile,
+    bp: &BudgetParams,
+    mut out: HabitatBudget,
+    energy: f64,
+    mut missing: Vec<String>,
+) -> HabitatBudget {
     out.energy_cap_gc_yr = Some(energy);
     let nutrient = p.materials.get(&bp.p_material).map(|pn| {
         let reuse = bp.reuse.get(&p.kind).copied().unwrap_or(bp.default_reuse);
