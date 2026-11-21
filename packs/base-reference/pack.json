@@ -328,7 +328,7 @@
       "unit": "kg",
       "src": "iau2015b3"
      },
-     "derived_from": "GM_sun / G"
+     "checked_by": "GM_sun / G"
     },
     {
      "id": "R_sun",
@@ -388,7 +388,7 @@
       "unit": "kg",
       "src": "iau2015b3"
      },
-     "derived_from": "GM_earth / G"
+     "checked_by": "GM_earth / G"
     },
     {
      "id": "R_earth_equatorial",
@@ -437,7 +437,7 @@
       "unit": "kg",
       "src": "iau2015b3"
      },
-     "derived_from": "GM_jup / G"
+     "checked_by": "GM_jup / G"
     },
     {
      "id": "R_jup_equatorial",

@@ -372,7 +372,9 @@ def build():
     for c in CONSTANTS:
         row = {"id": c[0], "name": c[1], "value": c[2]}
         if len(c) > 3:
-            row["derived_from"] = c[3]
+            # A mass worked out from a measured GM is checked against it, never recomputed after an
+            # edit: doubling G is a what-if with the same masses and stronger gravity.
+            row["checked_by" if c[0] in ("M_sun", "M_earth", "M_jup") else "derived_from"] = c[3]
         consts.append(row)
     sources = []
     for sid, (text, doi, url, status) in sorted(SOURCES.items()):
