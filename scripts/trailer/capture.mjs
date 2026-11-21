@@ -10,7 +10,7 @@
 import { spawn, execFileSync } from "node:child_process";
 import { mkdirSync, writeFileSync, readdirSync, rmSync, existsSync } from "node:fs";
 import { join, dirname, resolve } from "node:path";
-import { fileURLToPath } from "node:url";
+import { fileURLToPath, pathToFileURL } from "node:url";
 import { createRequire } from "node:module";
 import { director } from "./director.mjs";
 import * as nav from "../../tests/ui/nav.mjs";
@@ -51,13 +51,13 @@ const commit = (() => {
 const files = readdirSync(join(here, "shots")).filter((f) => f.endsWith(".mjs")).sort();
 const shots = [];
 for (const f of files) {
-  const s = (await import(join(here, "shots", f))).default;
+  const s = (await import(pathToFileURL(join(here, "shots", f)).href)).default;
   if (!only?.length || only.includes(s.id)) shots.push(s);
 }
 mkdirSync(out, { recursive: true });
 
 const launch = (extra = []) =>
-  chromium.launch({ headless: !flag("headed"), args: ["--enable-unsafe-webgpu", "--ignore-gpu-blocklist", "--hide-scrollbars", ...extra] });
+  chromium.launch({ headless: !flag("headed"), channel: opt("channel", undefined), args: ["--enable-unsafe-webgpu", "--ignore-gpu-blocklist", "--hide-scrollbars", ...extra] });
 const browser = await launch();
 const report = [];
 try {

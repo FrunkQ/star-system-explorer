@@ -12,7 +12,9 @@ node scripts/trailer/capture.mjs --base https://v4.starsystemx.com/   # film the
 node scripts/trailer/capture.mjs --gpu --headed                       # on a machine with a real GPU (WebGPU shots)
 ```
 
-Options: `--fps 30` (output rate), `--scale 1` (2 films at 2x pixels for a 4K master; slower).
+Options: `--fps 30` (output rate), `--scale 1` (2 films at 2x pixels for a 4K master; slower), `--channel chrome`
+(film in the installed Chrome instead of Playwright's Chromium; needed on AC-ProArt, where Playwright's Chromium
+will not start). Works on Windows (needs ffmpeg on PATH, e.g. `winget install Gyan.FFmpeg`).
 
 Each shot writes `<id>.mp4` (H.264, constant rate), `<id>.png` (the last frame) and `<id>.json` (title, feature,
 which trailer it serves, commit or site filmed, time, real frame rate, pass or fail, page errors).
