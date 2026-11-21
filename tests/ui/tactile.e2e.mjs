@@ -7,6 +7,7 @@
 import { spawn } from "node:child_process";
 import { mkdirSync } from "node:fs";
 import assert from "node:assert/strict";
+import { go, more } from "./nav.mjs";
 import { createRequire } from "node:module";
 
 const { chromium, firefox, webkit } = createRequire(import.meta.url)("playwright");
@@ -59,7 +60,7 @@ try {
       assert.equal(await peek.count(), 0);
 
       // A dialog opens from its button.
-      await page.getByRole("button", { name: "Campaign…" }).click();
+      await more(page, "Campaign…");
       const dialog = page.getByRole("dialog", { name: "Campaign" });
       await dialog.waitFor();
       const dialogMoving = await moving(dialog);

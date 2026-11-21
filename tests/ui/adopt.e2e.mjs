@@ -8,6 +8,7 @@
 import { spawn } from "node:child_process";
 import { mkdirSync } from "node:fs";
 import assert from "node:assert/strict";
+import { go, more } from "./nav.mjs";
 import { createRequire } from "node:module";
 
 const { chromium, firefox, webkit } = createRequire(import.meta.url)("playwright");
@@ -35,7 +36,7 @@ try {
     const onChart = () => gm.getByLabel("System on the chart");
     const h0 = await hash();
     const open = async () => {
-      await gm.getByRole("button", { name: "Make a system" }).click();
+      await more(gm, "Make a system");
       return gm.getByRole("dialog", { name: "Make a system" });
     };
 
@@ -57,7 +58,7 @@ try {
     await gm.waitForFunction((n) => document.querySelectorAll('.area-chart .body[aria-label^="World"]').length === n, worlds, { timeout: 15000 }).catch(() => {});
     assert.equal(await gm.locator('.area-chart .body[aria-label^="World"]').count(), worlds, "the same worlds, read back from the universe");
     assert.match(await gm.locator("header .kicker").innerText(), /In the campaign/i);
-    assert.match(await gm.locator(".status [role=status]").innerText(), /Added Seed "first light" to the campaign/);
+    assert.match(await gm.locator(".ruler-side [role=status]").innerText(), /Added Seed "first light" to the campaign/);
     await shot(gm, "v13-adopted-grown");
 
     // The same system again is refused.
@@ -101,7 +102,7 @@ try {
     await panel.getByRole("button", { name: /^Keep and move now/ }).click();
     await gm.waitForSelector(".ahead:not([data-ahead])", { timeout: 15000 });
     await gm.waitForFunction((h) => document.querySelector("[data-state-hash]")?.getAttribute("data-state-hash") !== h, h1);
-    assert.match(await gm.locator(".status [role=status]").innerText(), /written back/);
+    assert.match(await gm.locator(".ruler-side [role=status]").innerText(), /written back/);
     await gm.waitForTimeout(500);
     const l1 = await sunLum();
     assert.ok(l1 > l0 * 1.2, `the Sun read back has aged: ${l0} -> ${l1}`);

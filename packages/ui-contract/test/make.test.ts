@@ -8,7 +8,7 @@ import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 import { Session } from "../src/session.ts";
 import { gmSeat, tableSeat } from "../src/seat.ts";
-import { importedSystems, noWorldsWhy, reportSummary, sceneFromFormation, sceneFromImport } from "../src/make.ts";
+import { beltBand, importedSystems, noWorldsWhy, reportSummary, sceneFromFormation, sceneFromImport } from "../src/make.ts";
 import { describeLight, litFromSystem } from "../src/light.ts";
 import { nodeKernel } from "./node-kernel.ts";
 
@@ -74,4 +74,13 @@ test("a generated system is a scene; the same seed gives the same system", async
   } finally {
     await k.close();
   }
+});
+
+test("a belt's band: its edges at orbital scale, else ±10 % about its orbit", () => {
+  const AU = 149_597_870_700;
+  assert.deepEqual(beltBand(undefined, 2 * AU, 3.3 * AU), [2, 3.3]);
+  const b = beltBand(2.7 * AU, undefined, undefined)!;
+  assert.ok(Math.abs(b[0] - 2.43) < 1e-9 && Math.abs(b[1] - 2.97) < 1e-9);
+  // A ring's radii (thousands of km) are not an orbital band: fall back to the orbit.
+  assert.deepEqual(beltBand(undefined, 7e7, 1.4e8), undefined);
 });

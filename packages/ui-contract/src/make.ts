@@ -91,6 +91,8 @@ export interface FormationRan {
     events: FormationEvent[];
     notes: string[];
     growth: { events: FormationEvent[] };
+    /** Stage 7's leftovers: belts, discs and clouds (F5); `around` names the world a ring or swarm belongs to. */
+    leftovers?: { clouds: { address: string; kind: string; around: string | null; a_min_au: number; a_max_au: number }[] };
     history: {
       inheritance: { age_gyr: number; feh: number; fuv_g0: number };
       events: FormationEvent[];
@@ -112,6 +114,16 @@ const R_SUN_M = 695_700_000;
 const AU_M = KM_PER_AU * 1000;
 
 const round = (v: number, d = 3) => Number(v.toPrecision(d));
+
+/**
+ * A belt's band on the chart, in AU from its star: its inner and outer edges when the save gives them at orbital scale
+ * (V3 belts carry radiusInnerKm and radiusOuterKm), else a band of ±10 % about its orbit. Undefined when neither is known.
+ */
+export function beltBand(sma_m: number | undefined, inner_m: number | undefined, outer_m: number | undefined): [number, number] | undefined {
+  if (inner_m !== undefined && outer_m !== undefined && outer_m > inner_m && outer_m > 1e9) return [inner_m / AU_M, outer_m / AU_M];
+  if (sma_m !== undefined && sma_m > 0) return [(sma_m * 0.9) / AU_M, (sma_m * 1.1) / AU_M];
+  return undefined;
+}
 function f(field: string, label: string, value: number | string, unit?: string, source: SceneFact["source"] = "authored"): SceneFact {
   const v = typeof value === "number" ? round(value) : value;
   return { field, label, value: v, ...(unit ? { unit } : {}), display: unit ? `${v} ${unit}` : String(v), editable: false, source };
@@ -177,13 +189,14 @@ export function sceneFromImport(r: V3Imported, system: string): SystemScene {
       if (day !== undefined) out.push(f("day_h", "Day", day / 3600, "h"));
     }
     const marked = r.report.honesty_marks.includes(a);
+    const band = kind === "belt" && (!parent || parent === primary) ? beltBand(sma, num(a, "body.radius_inner"), num(a, "body.radius_outer")) : undefined;
     return {
       address: a,
       kind,
       label: name,
       subtitle: `Imported from V3 · ${role(a)}`,
       ...(a !== primary && parent ? { parent } : {}),
-      ...(a !== primary && sma !== undefined ? { orbit: { a_au: sma / AU_M, phase_deg: phase(i++) } } : {}),
+      ...(band ? { band_au: band } : a !== primary && sma !== undefined ? { orbit: { a_au: sma / AU_M, phase_deg: phase(i++) } } : {}),
       facts: out,
       stamps: ["authored", "imported", ...(marked ? ["impossible"] : [])],
       tags: mass !== undefined && kind !== "star" ? [sizeTag(mass / M_EARTH)] : [],
@@ -295,6 +308,12 @@ export function sceneFromFormation(r: FormationRan, seed: string): SystemScene {
       tags: [sizeTag(w.mass_earth)],
     });
   });
+  // Belts and discs round the star (F5 leftovers); rings and Trojans belong to their worlds and are not drawn here.
+  for (const c of r.run.leftovers?.clouds ?? []) {
+    if (c.around || !(c.a_max_au > c.a_min_au) || c.kind === "oort" || c.kind === "scattered-disc") continue;
+    const name = c.kind.replace(/-/g, " ").replace(/^./, (x) => x.toUpperCase());
+    subjects.push({ address: c.address, kind: "belt", label: name, subtitle: `Leftovers of formation · ${c.a_min_au.toPrecision(2)} to ${c.a_max_au.toPrecision(2)} AU`, ...(starAddr ? { parent: starAddr } : {}), band_au: [c.a_min_au, c.a_max_au], facts: [f("name", "Name", name)], stamps: ["generated"], tags: [] });
+  }
   const events = [...h.events, ...r.run.events]
     .filter((e) => e.text)
     .map((e, i) => ({ id: `f${i}`, at_yr: e.t_myr * 1e6, label: e.text!.length > 60 ? e.text!.slice(0, 57) + "…" : e.text!, tone: "past" as const }));
@@ -399,7 +418,7 @@ export function sceneFromResolved(r: SystemResolved, title?: string): SystemScen
   const classes = (a: string) => new Set(Object.entries(r.evidence?.[a] ?? {}).filter(([k, e]) => !k.startsWith("v3.") || e.evidence === "authored-impossible").map(([, e]) => e.evidence));
   let i = 0;
   const subjects: SceneSubject[] = bodies
-    .filter((a) => a === primary || num(a, "orbit.semi_major_axis") !== undefined || role(a) === "star")
+    .filter((a) => a === primary || num(a, "orbit.semi_major_axis") !== undefined || role(a) === "star" || (ROLE_KIND[role(a)] === "belt" && num(a, "body.radius_outer") !== undefined))
     .map((a) => {
       const kind = ROLE_KIND[role(a)] ?? "planet";
       const name = nameOf(a);
@@ -428,13 +447,14 @@ export function sceneFromResolved(r: SystemResolved, title?: string): SystemScen
         if (day !== undefined) out.push(f("day_h", "Day", day / 3600, "h", srcOf(a, "body.rotation_period")));
         if (s) out.push(f("surface_k", "Surface", s.t_surface_now_k, "K", "derived"));
       }
+      const band = kind === "belt" && (!parent || parent === primary) ? beltBand(sma, num(a, "body.radius_inner"), num(a, "body.radius_outer")) : undefined;
       return {
         address: a,
         kind,
         label: name,
         subtitle: `${grown ? "Grown" : r.source === "v3" ? "Imported from V3" : "From the universe's facts"} · ${kind}${aged(a) ? " · aged by a kept look-ahead" : ""}${s?.regime_label ? ` · ${s.regime_label.toLowerCase()}` : ""}`,
         ...(a !== primary && parent ? { parent } : {}),
-        ...(a !== primary && sma !== undefined ? { orbit: { a_au: sma / AU_M, phase_deg: phase(i++) } } : {}),
+        ...(band ? { band_au: band } : a !== primary && sma !== undefined ? { orbit: { a_au: sma / AU_M, phase_deg: phase(i++) } } : {}),
         facts: out,
         stamps: r.evidence
           ? [grown ? "generated" : "imported", ...(classes(a).has("authored") ? ["authored"] : []), ...(classes(a).has("catalogued") ? ["catalogued"] : []), ...(classes(a).has("authored-impossible") ? ["authored", "impossible"] : []), ...(s?.speculative ? ["speculative"] : [])].filter((x, j, all) => all.indexOf(x) === j)

@@ -8,8 +8,33 @@
   "symbology": "sse.symbology.diagrammatic",
   "vocab": "physics",
   "items": [
-    { "view": "sse.view.system-chart", "area": "chart", "params": { "labels": "all", "unsurveyed_hatch": true } },
-    { "view": "sse.view.body-card", "area": "card", "params": { "columns": 2 } },
-    { "view": "sse.view.time-ruler", "area": "ruler" }
+    {
+      "view": "sse.view.system-chart",
+      "area": "chart",
+      "params": {
+        "labels": "all",
+        "unsurveyed_hatch": true
+      }
+    },
+    {
+      "view": "sse.view.body-card",
+      "area": "card",
+      "params": {
+        "columns": 2
+      }
+    },
+    {
+      "view": "sse.view.time-ruler",
+      "area": "ruler"
+    }
+  ],
+  "rail": [
+    {
+      "scale": "system",
+      "group": "look",
+      "label": "Chart",
+      "order": 1,
+      "hint": "The system drawn to scale: orbits, worlds and their facts"
+    }
   ]
 }

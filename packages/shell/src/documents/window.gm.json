@@ -1,0 +1,36 @@
+{
+  "schema": "sse.screen/1",
+  "audience": "gm",
+  "layout": "chart-room",
+  "theme": "chart-room",
+  "symbology": "sse.symbology.diagrammatic",
+  "vocab": "physics",
+  "id": "sse.workspace.gm.window",
+  "label": "Sky from here",
+  "items": [
+    {
+      "view": "sse.view.window",
+      "area": "chart"
+    },
+    {
+      "view": "sse.view.time-ruler",
+      "area": "ruler"
+    }
+  ],
+  "rail": [
+    {
+      "scale": "system",
+      "group": "look",
+      "label": "Sky from here",
+      "order": 3,
+      "hint": "Look out of the window: what eyes or a sensor would see"
+    },
+    {
+      "scale": "world",
+      "group": "look",
+      "label": "Sky from here",
+      "order": 4,
+      "hint": "The sky from beside this world"
+    }
+  ]
+}

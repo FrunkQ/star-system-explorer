@@ -8,6 +8,7 @@
 import { spawn } from "node:child_process";
 import { mkdirSync } from "node:fs";
 import assert from "node:assert/strict";
+import { go, more } from "./nav.mjs";
 import { createRequire } from "node:module";
 
 const { chromium, firefox, webkit } = createRequire(import.meta.url)("playwright");
@@ -43,7 +44,6 @@ try {
   for (const name of engines) {
     const browser = await { chromium, firefox, webkit }[name].launch();
     const errors = [];
-    const screenBtn = (page, n) => page.getByRole("group", { name: "Screen" }).getByRole("button", { name: n, exact: true });
     const gm = await (await browser.newContext({ viewport: { width: 1440, height: 900 } })).newPage();
     gm.on("pageerror", (e) => errors.push(e.message));
     await gm.goto(base);
@@ -51,14 +51,14 @@ try {
 
     // Tarn first: a fixture world has a Cutaway but no surface tiles.
     await gm.locator('.area-chart .body[aria-label^="Tarn"]').first().click();
-    await screenBtn(gm, "Body").click();
+    await go(gm, "body");
     await gm.waitForSelector('[data-body="no-surface"]', { timeout: 15000 });
     assert.match(await gm.locator("[data-body]").innerText(), /No surface for Tarn yet/);
     await gm.waitForSelector('[data-cutaway="u:kestrel/sys:1/body:3"]');
 
     // Add the sample Sol, pick Earth, open the Body screen.
-    await screenBtn(gm, "Chart").click();
-    await gm.getByRole("button", { name: "Make a system" }).click();
+    await go(gm, "system");
+    await more(gm, "Make a system");
     const dlg = gm.getByRole("dialog", { name: "Make a system" });
     await dlg.getByRole("tab", { name: "Import a V3 save" }).click();
     await dlg.getByRole("button", { name: "Try a sample save" }).click();
@@ -66,7 +66,7 @@ try {
     await dlg.getByRole("button", { name: "Add this system to the campaign" }).click();
     await gm.locator('.area-chart .body[aria-label^="Earth"]').first().waitFor({ timeout: 15000 });
     await gm.locator('.area-chart .body[aria-label^="Earth"]').first().click();
-    await screenBtn(gm, "Body").click();
+    await go(gm, "body");
     const t0 = Date.now();
     await gm.waitForSelector("[data-body] [data-tier]:not([data-tier='']) canvas", { timeout: 30000 });
     const built = Date.now() - t0;
@@ -97,11 +97,10 @@ try {
     phone.on("pageerror", (e) => errors.push(e.message));
     await phone.goto(base);
     await phone.waitForSelector("[data-state-hash]:not([data-state-hash=''])", { timeout: 20000 });
-    const menu = phone.getByLabel("Screen menu");
-    assert.ok(await menu.isVisible(), "the screen menu shows on a phone");
-    await menu.selectOption("body");
+    assert.ok(await phone.locator(".rail").isVisible(), "the instruments show on a phone");
+    await go(phone, "body");
     await phone.waitForSelector("[data-body]");
-    await menu.selectOption("symbols");
+    await go(phone, "symbols");
     await phone.waitForSelector('.stage[data-screen="symbols"]');
     const wide = await phone.evaluate(() => document.documentElement.scrollWidth);
     assert.ok(wide <= 390, `no sideways scroll on a phone: ${wide}`);

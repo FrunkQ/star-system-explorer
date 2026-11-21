@@ -32,6 +32,76 @@ export interface ScreenDoc {
   /** The data view the screen is seen through; absent uses the audience's own (H8.3). */
   data_view?: string;
   items: ScreenItem[];
+  /**
+   * Where the screen sits on the GM's instrument rail (top-level design 2.2): one entry per scale it serves. The rail is
+   * built from these, so adding a screen adds its entry, and packs, Orac and player screens can read the same list.
+   */
+  rail?: RailEntry[];
+}
+
+/** Scales the rail serves (the place line's steps), plus the Workshop: everything that changes the tool, not the universe. */
+export const RAIL_SCALES = ["system", "world", "workshop"] as const;
+export type RailScale = (typeof RAIL_SCALES)[number];
+/** The rail's groups, always in this order; "world" is "This world". */
+export const RAIL_GROUPS = ["look", "find", "world", "travel", "understand", "workshop"] as const;
+export type RailGroup = (typeof RAIL_GROUPS)[number];
+export const RAIL_GROUP_WORDS: Record<RailGroup, string> = { look: "Look", find: "Find", world: "This world", travel: "Travel", understand: "Understand", workshop: "Workshop" };
+/** At most this many entries at one scale (design 3.4 rule 4). */
+export const RAIL_MAX = 10;
+
+export interface RailEntry {
+  scale: RailScale;
+  group: RailGroup;
+  /** In words, as the rail shows it ("Sky from here"). */
+  label: string;
+  /** Order within the group, smallest first. */
+  order: number;
+  /** One line on what it shows. */
+  hint?: string;
+}
+
+/** One rail line: the screen it opens and how it is shown. */
+export interface RailLine extends RailEntry {
+  screen: string;
+}
+
+function checkRail(rail: unknown): string[] {
+  if (rail === undefined) return [];
+  if (!Array.isArray(rail)) return ["rail must be a list"];
+  const errors: string[] = [];
+  const seen = new Set<string>();
+  for (const r of rail as RailEntry[]) {
+    if (!r || typeof r !== "object") {
+      errors.push("a rail entry must be an object");
+      continue;
+    }
+    if (!RAIL_SCALES.includes(r.scale)) errors.push(`rail: unknown scale ${String(r.scale)}`);
+    if (!RAIL_GROUPS.includes(r.group)) errors.push(`rail: unknown group ${String(r.group)}`);
+    if (typeof r.label !== "string" || !r.label.trim()) errors.push("rail: an entry needs a label");
+    if (typeof r.order !== "number" || !Number.isFinite(r.order)) errors.push("rail: an entry needs a numeric order");
+    if (seen.has(r.scale)) errors.push(`rail: scale ${r.scale} is listed twice`);
+    seen.add(r.scale);
+  }
+  return errors;
+}
+
+/**
+ * The rail at one scale, from the screens' own entries: grouped in the fixed group order, ordered within each group.
+ * Screens are given as id → document; a screen without an entry for the scale is not on it.
+ */
+export function railOf(screens: Readonly<Record<string, Pick<ScreenDoc, "rail">>>, scale: RailScale): { group: RailGroup; words: string; lines: RailLine[] }[] {
+  const lines: RailLine[] = [];
+  for (const [screen, doc] of Object.entries(screens)) for (const r of doc.rail ?? []) if (r.scale === scale) lines.push({ ...r, screen });
+  return RAIL_GROUPS.map((group) => ({
+    group,
+    words: RAIL_GROUP_WORDS[group],
+    lines: lines.filter((l) => l.group === group).sort((a, b) => a.order - b.order || (a.label < b.label ? -1 : a.label > b.label ? 1 : 0)),
+  })).filter((g) => g.lines.length);
+}
+
+/** The scales a screen is on, in rail order. */
+export function scalesOf(doc: Pick<ScreenDoc, "rail">): RailScale[] {
+  return RAIL_SCALES.filter((s) => (doc.rail ?? []).some((r) => r.scale === s));
 }
 
 /** Areas each layout offers. */
@@ -62,6 +132,7 @@ export function checkScreen(doc: ScreenDoc, registry: readonly AnyView[], dataVi
   if (typeof doc.id !== "string" || !doc.id) errors.push("a screen needs an id");
   if (!Array.isArray(doc.items)) return { ok: false, errors: [...errors, "a screen needs a list of items"] };
   if (doc.data_view !== undefined && dataViews && !dataViews.includes(doc.data_view)) errors.push(`no data view ${doc.data_view} in this campaign (${dataViews.join(", ")})`);
+  errors.push(...checkRail(doc.rail));
   const areas = LAYOUT_AREAS[doc.layout];
   if (!areas) errors.push(`unknown layout ${doc.layout}`);
   const used = new Set<string>();

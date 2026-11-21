@@ -11,6 +11,7 @@ import { mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import assert from "node:assert/strict";
+import { go, more } from "./nav.mjs";
 import { createRequire } from "node:module";
 
 const { chromium, firefox, webkit } = createRequire(import.meta.url)("playwright");
@@ -44,7 +45,7 @@ try {
     assert.match(await gm.locator("[data-kept]").innerText(), /Kept \d\d:\d\d/);
 
     // Grow a system and add it.
-    await gm.getByRole("button", { name: "Make a system" }).click();
+    await more(gm, "Make a system");
     const dlg = gm.getByRole("dialog", { name: "Make a system" });
     await dlg.getByRole("tab", { name: "Grow a new system" }).click();
     await dlg.getByLabel("Seed").fill("first light");
@@ -80,7 +81,7 @@ try {
     await p.close();
 
     // Save campaign: a file.
-    await gm.getByRole("button", { name: "Campaign…" }).click();
+    await more(gm, "Campaign…");
     const cd = gm.getByRole("dialog", { name: "Campaign" });
     const dl = gm.waitForEvent("download");
     await cd.getByRole("button", { name: "Save campaign" }).click();
@@ -100,7 +101,7 @@ try {
     assert.equal(await gm.locator("[data-kept-note]").count(), 0);
 
     // A file that is not a save is refused.
-    await gm.getByRole("button", { name: "Campaign…" }).click();
+    await more(gm, "Campaign…");
     const od = gm.getByRole("dialog", { name: "Campaign" });
     const junk = join(tmpdir(), `u10-junk-${port}.json`);
     writeFileSync(junk, JSON.stringify({ hello: "world" }));
