@@ -5,6 +5,9 @@ on:
     branches: [main]
   pull_request:
   workflow_dispatch:
+  # Nightly full run of every job on main, to catch anything the PR skips miss (Alex, 21 Nov: "test periodically").
+  schedule:
+    - cron: '17 3 * * *'
 
 # A newer push to the same pull request cancels the older run. Runs on main are never cancelled.
 concurrency:
@@ -12,7 +15,7 @@ concurrency:
   cancel-in-progress: ${{ github.event_name == 'pull_request' }}
 
 jobs:
-  # Which parts a pull request touches. On main and manual runs everything runs.
+  # Which parts a pull request touches. On main, nightly and manual runs everything runs.
   #   docs only (docs/, handover/, any .md): no jobs beyond this one
   #   UI only (packages/, tests/ui/, package files): wasm and ui, no three-OS Rust matrix
   #   anything else (crates, packs, goldens, scripts, workflows ...): every job
