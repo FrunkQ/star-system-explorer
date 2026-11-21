@@ -162,6 +162,14 @@ Rule kept throughout: general mechanisms that make many features, each feature a
 
 **Why is this here?** "Nitrogen ice about 4 km deep, collected here because this basin, 3 km below its surroundings near the equator, is where nitrogen condenses most over Pluto's 2.8 Myr obliquity cycle (104° to 127°). Heated from below, it convects in cells about 30 km wide, moving a few cm a year and renewing the surface in about half a million years, so no crater older than about 10 Myr survives." (numbers from McKinnon et al. 2016 and Bertrand et al. 2018, read)
 
+**Split with weather [agreed 21 Nov with the weather review, `SSE4-weather-review.md` section 4].** Moving ices are designed once:
+- S17 owns the ice on the ground: the surface energy balance, caps, basin traps, glaciers, convection cells, pits, penitentes and layered deposits.
+- `sse.volatile.species` is one shared table in base-physics, read by both S17 and W1's clouds so they can never disagree. It holds the Fray and Schmitt vapour-pressure fits, latent heat, density and the N2 flow law.
+- `sse.volatile.exchange` is owned by weather. Per latitude band and season, it gives the mass flux between ground ice and air, and the surface pressure buffered by the coldest ice. S17 calls it orbit-averaged at D1 and seasonally at D2. Weather uses the same output for Mars's CO2 pressure swing and for Pluto's and Triton's pressure cycles.
+- `sse.wind.saltation` is shared and replaces `wear.dune_pressure_bar`.
+- `sse.tholin.production` feeds W4's haze. S19's dust colour feeds W2's dust storms.
+- Erosion (`wear.rs`) and ground cover (`cover.rs`) move onto weather's single climate crate (W7a). Its golden change lands together with S0b, so that surfaces move only once.
+
 ### M2. Ice-shell stresses (package S18a)
 
 **What it is.** A stress field on an ice shell from three sources: diurnal tides on an eccentric orbit, non-synchronous rotation, and **freezing of the ocean below** (water expands as it freezes, so a thickening shell stretches its surface). Plus diapirs: buoyant warm ice rising through a convecting shell. Built on the S0 heat flow, the T1 orbit and the S6 landform shapes.
