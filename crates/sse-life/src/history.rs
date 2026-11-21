@@ -342,6 +342,19 @@ pub struct StepFluxes {
     pub land_by_metabolism: BTreeMap<String, f64>,
     /// Life holds the land (weathering enhancement, cover).
     pub on_land: bool,
+    /// Each land-surface habitat as a soil region (E4): key, area, mid
+    /// temperature and its production.
+    #[serde(default)]
+    pub land: Vec<LandRegion>,
+}
+
+/// One land region for the soil box (E4).
+#[derive(Clone, PartialEq, Debug, Serialize, Deserialize, Default)]
+pub struct LandRegion {
+    pub key: String,
+    pub area_m2: f64,
+    pub temperature_k: Option<f64>,
+    pub npp_gc_yr: f64,
 }
 
 /// The physics side of a coupled run: at each step's start it receives the
@@ -739,6 +752,22 @@ pub fn history_model(
             last.alive = true;
             last.production_gc_yr = production;
             last.on_land = l.caps.contains_key("land");
+            last.land = g
+                .habitats
+                .iter()
+                .filter(|h| h.kind == "land-surface")
+                .map(|h| LandRegion {
+                    key: h.address.to_string(),
+                    area_m2: h.profile.area_m2.unwrap_or(0.0),
+                    temperature_k: h.profile.temperature_k.map(|r| 0.5 * (r.lo + r.hi)),
+                    npp_gc_yr: wb
+                        .habitats
+                        .iter()
+                        .filter(|b| b.habitat == h.address)
+                        .map(|b| b.by_metabolism.values().sum::<f64>())
+                        .sum(),
+                })
+                .collect();
             for h in &wb.habitats {
                 for (k, v) in &h.by_metabolism {
                     *last.by_metabolism.entry(k.clone()).or_default() += v;

@@ -24,6 +24,7 @@ pub mod history;
 pub mod scenario;
 pub mod sift;
 pub mod signatures;
+pub mod soil;
 mod suite;
 
 pub use habitat::{Footprint, Habitat, HabitatGraph, HabitatRule, Link};
@@ -246,3 +247,5 @@ mod history_e2_tests;
 mod history_tests;
 #[cfg(test)]
 mod signatures_tests;
+#[cfg(test)]
+mod soil_tests;
