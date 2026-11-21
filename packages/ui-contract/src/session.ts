@@ -146,6 +146,11 @@ export interface ViewSession {
   planRoute(ask: import("./route.ts").RouteAsk): Promise<{ ok: true; plan: import("./route.ts").RoutePlan } | { ok: false; code: string; message: string }>;
   /** One galaxy grown from the universe's seed (U6, kernel `galaxy_chart`, G1 to G4). Read only; GM only. */
   galaxyChart(ask: import("./galaxy.ts").GalaxyAsk): Promise<{ ok: true; chart: import("./galaxy.ts").GalaxyChart } | { ok: false; code: string; message: string }>;
+  /**
+   * Which body lands in which class of `scheme` under a candidate stack (kernel `classify_preview`), without loading it.
+   * Read only; GM only. Used to preview a drafted game table.
+   */
+  classifyPreview?(ask: ClassifyAsk): Promise<{ ok: true; result: ClassifyPreview } | { ok: false; code: string; message: string }>;
   /** The story finder (U8, kernel `sift`): sifters over the campaign, hits with evidence. GM only. */
   sift(ask: import("./story.ts").SiftAsk): Promise<{ ok: true; result: import("./story.ts").SiftResult } | { ok: false; code: string; message: string }>;
   /** What a ship's sensor sees from beside a body (V8 Window, kernel `window_view`). Read only; any seat, on the system it knows. */
@@ -209,6 +214,24 @@ export interface StackInfo {
   /** The campaign's own physics pack over the base, if one is adopted. */
   campaign: PackDoc | null;
   hash: string;
+}
+
+export interface ClassifyAsk {
+  scheme: string;
+  /** The stack to classify under; whatever it leaves out stays as it is in force. */
+  candidate?: StackCandidate;
+  scope?: string;
+  at_s?: number;
+}
+
+export interface ClassifyPreview {
+  scheme: string;
+  atlas_hash: string;
+  at_s?: number;
+  bodies: { address: string; base: string | null; fit: number; modifiers: string[] }[];
+  /** How many bodies in scope took no base class. */
+  unclassified: number;
+  failing_examples: string[];
 }
 
 export interface StackCandidate {
@@ -558,6 +581,14 @@ export class Session implements ViewSession {
     if (this.seat.authority !== "gm") return { ok: false, code: "not_gm", message: "the story finder reads the whole campaign, so it runs on the game master's machine" };
     const r = await this.#call({ op: "sift", ...ask });
     return r.type === "sifted" ? { ok: true, result: r as unknown as import("./story.ts").SiftResult } : { ok: false, code: String(r.code ?? "unexpected"), message: String(r.message ?? JSON.stringify(r)) };
+  }
+
+  async classifyPreview(ask: ClassifyAsk): Promise<{ ok: true; result: ClassifyPreview } | { ok: false; code: string; message: string }> {
+    if (this.seat.authority !== "gm") return { ok: false, code: "not_gm", message: "a classification preview reads the whole campaign, so it runs on the game master's machine" };
+    const added = ask.candidate?.added ?? this.#added;
+    const campaign = ask.candidate?.campaign === undefined ? this.#campaign : ask.candidate.campaign;
+    const r = await this.#call({ op: "classify_preview", packs: this.#packs(added, campaign), scheme: ask.scheme, ...(ask.scope ? { scope: ask.scope } : {}), ...(ask.at_s !== undefined ? { at_s: ask.at_s } : {}) });
+    return r.type === "classify_previewed" ? { ok: true, result: r as unknown as ClassifyPreview } : { ok: false, code: String(r.code ?? "unexpected"), message: String(r.message ?? JSON.stringify(r)) };
   }
 
   async readAirOptics(airs: Json[], wavelengths_m?: number[]): Promise<{ ok: true; airs: Json[] } | { ok: false; code: string; message: string }> {
