@@ -670,6 +670,20 @@ fn adopt_age_and_read_back_a_system() {
     let surfaces = r["surfaces"].as_array().unwrap();
     assert!(!surfaces.is_empty());
     assert_eq!(r["refused"].as_array().unwrap().len(), 1);
+    // F5's leftovers come with the run: at least one cloud round the star,
+    // each with a sensible span.
+    let clouds = r["clouds"]
+        .as_array()
+        .expect("a grown system has leftovers");
+    assert!(clouds.iter().any(|c| c["around"].is_null()), "{clouds:?}");
+    for c in clouds {
+        let (lo, hi) = (
+            c["a_min_au"].as_f64().unwrap(),
+            c["a_max_au"].as_f64().unwrap(),
+        );
+        assert!(lo > 0.0 && hi >= lo, "{c}");
+        assert!(c["kind"].is_string() && c["address"].is_string(), "{c}");
+    }
     let world = surfaces[0]["address"].as_str().unwrap().to_string();
     let spec = r["spec"].clone();
     // Facts and spec agree on the first world's orbit.

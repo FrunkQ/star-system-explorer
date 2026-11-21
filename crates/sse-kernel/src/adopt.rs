@@ -664,6 +664,31 @@ pub(crate) struct Resolved {
     pub surfaces: Vec<serde_json::Value>,
     pub tiles: Vec<serde_json::Value>,
     pub refused: Vec<serde_json::Value>,
+    pub clouds: Vec<serde_json::Value>,
+}
+
+/// F5's leftovers (belts, the scattered disc, the Oort cloud, Trojans,
+/// irregular moons and rings) as the formation run made them: read from the
+/// run, never written as events.
+fn clouds_of(run: Option<&SystemRun>) -> Vec<serde_json::Value> {
+    let Some(l) = run.and_then(|r| r.leftovers.as_ref()) else {
+        return vec![];
+    };
+    l.clouds
+        .iter()
+        .map(|c| {
+            serde_json::json!({
+                "address": c.address.to_string(),
+                "kind": c.kind,
+                "around": c.around,
+                "source": c.source,
+                "a_min_au": c.a_min_au,
+                "a_max_au": c.a_max_au,
+                "largest_km": c.largest_km,
+                "over_1km": c.over_1km,
+            })
+        })
+        .collect()
 }
 
 /// A system's worlds at a date: where they came from, the spec, the facts
@@ -857,6 +882,11 @@ pub(crate) fn resolved_system(
             .collect(),
         tiles: out_tiles,
         refused,
+        clouds: if source == "formation" {
+            clouds_of(run)
+        } else {
+            vec![]
+        },
     })
 }
 

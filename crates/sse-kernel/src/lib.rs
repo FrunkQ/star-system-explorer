@@ -1790,6 +1790,7 @@ impl Kernel {
                     surfaces: r.surfaces,
                     tiles: r.tiles,
                     refused: r.refused,
+                    clouds: r.clouds,
                 }
             }
             Request::PlanRoute {
