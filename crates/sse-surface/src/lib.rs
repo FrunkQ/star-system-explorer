@@ -14,6 +14,7 @@
 //! surveyed worlds.
 
 pub mod atlas;
+pub mod caves;
 pub mod climate;
 pub mod cover;
 pub mod detail;
@@ -117,6 +118,8 @@ pub struct SurfaceSettings {
     /// S14a lava tubes (the base pack's values are the defaults).
     #[serde(default)]
     pub tubes: tubes::TubeSettings,
+    #[serde(default)]
+    pub caves: caves::CaveSettings,
     pub rules: Vec<Rule>,
     pub regimes: BTreeMap<String, RegimeDef>,
     /// The one climate wear and cover read (W7a): the climate pack in the
@@ -770,6 +773,8 @@ pub fn envelopes_of(run: &SystemRun, s: &SurfaceSettings) -> Vec<SurfaceEnvelope
 
 #[cfg(test)]
 mod atlas_tests;
+#[cfg(test)]
+mod caves_tests;
 #[cfg(test)]
 mod cover_tests;
 #[cfg(test)]
