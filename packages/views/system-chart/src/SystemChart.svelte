@@ -67,6 +67,8 @@
     if (back) ctx.workspace.select(back);
   }
   const bands = $derived(frame ? [] : scene.subjects.filter((s) => s.band_au));
+  // A system read from a V3 save is authored there: its names (even "Earth") and values are the save's, not the physics'.
+  const authoredImport = $derived(!scene.fixture && scene.subjects.some((s) => s.stamps.includes("imported")));
   const scale = $derived(
     fitScale(
       // A sphere round the system (the Oort cloud) reaches far past everything else; the chart shows where it begins.
@@ -357,6 +359,7 @@
       <p id="chart-drag-hint" class="sr">Drag along the radius, or press Page Up or Page Down, to move the orbit.</p>
       {#if problem}<p class="problem" role="alert">{problem}</p>{/if}
       <div class="legend">
+        {#if authoredImport}<span class="authored-import" data-authored-import><Stamp kind="authored" title="Every name and value here was written in a V3 save, not modelled by SSE4's physics. A body called Earth is the save's Earth, not the real one." /><span class="words">As written in a V3 save, not modelled</span></span>{/if}
         {#if scene.fixture}<Stamp kind="fixture" title="The sample system's inputs are fixture data; every derived value comes from the kernel's base-physics pack." />{/if}
         <span>Distances on a log scale{frame ? ", in kilometres" : ""}</span>
         {#if through}<span class="through" data-known-count={knownCount}>{L?.label}: {knownCount} of {bodyCount} known</span>{/if}
@@ -578,6 +581,19 @@
   .through {
     color: var(--sse-accent-ink);
   }
+  /* The legend is a caption laid over the chart: its words never take a tap meant for a body. */
+  .legend {
+    pointer-events: none;
+  }
+  .legend :global(.stamp),
+  .legend .key {
+    pointer-events: auto;
+  }
+  .authored-import {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+  }
   .shell-in {
     fill: var(--sse-ink-muted);
     fill-opacity: 0.03;
@@ -689,6 +705,9 @@
       top: 12px;
     }
     .frame span {
+      display: none;
+    }
+    .authored-import .words {
       display: none;
     }
     .legend {

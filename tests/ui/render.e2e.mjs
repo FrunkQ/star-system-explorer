@@ -63,7 +63,7 @@ async function openEarth(page) {
   await dlg.getByRole("button", { name: "Add this system to the campaign" }).click();
   const earth = page.locator('.area-chart .body[aria-label^="Earth"]').first();
   await earth.waitFor({ timeout: 15000 });
-  await earth.click();
+  await earth.locator(".hit").click();
   await go(page, "body");
   await page.waitForSelector("[data-body] [data-tier]:not([data-tier='']):not([data-frames='0'])", { timeout: 30000 });
   return { hash: await page.locator("[data-state-hash]").first().getAttribute("data-state-hash"), before: hash };
@@ -100,7 +100,7 @@ try {
       await gm.waitForTimeout(400);
       if (t === "text") {
         const words = await gm.locator("[data-narration]").innerText();
-        assert.match(words, /^Earth, the face centred on 20° N, 0° E: \d+% under water/);
+        assert.match(words, /^Earth \(sample\), the face centred on 20° N, 0° E: \d+% under water/);
         assert.equal(await gm.locator("[data-body] [data-tier] canvas").count(), 0, "words only: no canvas");
       } else {
         assert.equal(await gm.locator(`[data-body] [data-tier] canvas[data-surface="${got === "gpu-basic" ? "gpu" : "canvas"}"]`).count(), 1);

@@ -86,7 +86,7 @@ try {
     await gm.locator('.area-chart .body[aria-label^="Earth"]').first().waitFor({ timeout: 8000 });
     await gm.waitForFunction(() => document.querySelectorAll("[aria-label='System on the chart'] option").length === 3, null, { timeout: 15000 }).catch(() => {});
     assert.equal(await onChart().locator("option").count(), 3);
-    assert.equal(await gm.locator("header h1").innerText(), "Sol");
+    assert.equal(await gm.locator("header h1").innerText(), "Sol (sample)", "the sample save says it is a sample, not the real Sol");
 
     // Look ahead on Sol with the kernel's own spec; keep and move now: the Sun read back has aged.
     const sunLum = async () => {
