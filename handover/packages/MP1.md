@@ -33,3 +33,14 @@ Matter pack design (`/mnt/project-files/sse4/SSE4-matter-pack-design.md`, repo P
 
 ## Goldens
 `tests/golden/contract.jsonl` was re-blessed on purpose for two new contract cases (`read_matter` with no sheet loaded, and an unknown row) and the new op in `hello`'s op list and in the unknown-op message. No other golden changed.
+
+## Origin legend (follow-up, 21 Nov)
+
+The matter sheet's next version (PR 103) adds `origin_legend` (where
+elements were made, in three wordings) and `origin` / `origin_story` on
+each element (design 8.1). The reader keeps the legend as a side table,
+checks that each element's `origin.shares` name legend entries and sum to
+1, and that `origin.src` and `origin.also` name known sources.
+`read_matter` with no table, or with `table: "origin_legend"`, returns the
+legend whole. Golden: the contract's `read_matter` listing response gains
+`"origin_legend":{}` (on purpose, this change).

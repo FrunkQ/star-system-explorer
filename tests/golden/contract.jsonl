@@ -288,5 +288,5 @@
 {"type":"dressed","scope":"u:aging","candidates":[],"orphans":[]}
 {"type":"error","code":"no_candidate","message":"u:aging/sys:0/body:1#giant-depot.v1#0 is not a candidate at that time (its rule does not hold, or it was held off or adopted)"}
 {"type":"error","code":"bad_candidate","message":"\"not a candidate\" is not a candidate id"}
-{"type":"matter","value":{"constants":[],"elements":[],"isotopes":[],"mixtures":[],"reactions":[],"sources":[],"substances":[]}}
+{"type":"matter","value":{"constants":[],"elements":[],"isotopes":[],"mixtures":[],"origin_legend":{},"reactions":[],"sources":[],"substances":[]}}
 {"type":"error","code":"no_row","message":"no row unobtainium in the master data sheet's substances table"}
