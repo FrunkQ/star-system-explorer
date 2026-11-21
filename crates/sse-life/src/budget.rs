@@ -65,12 +65,21 @@ pub struct Metabolism {
 /// Box B settings (`provides.other.life_budget`).
 #[derive(Clone, PartialEq, Debug, Serialize, Deserialize)]
 pub struct BudgetParams {
-    /// Solvents the pack has a chemistry for.
+    /// The stack's chemistries (E0): each names its solvent, window and
+    /// limits. Box B's closure tests read the one a habitat's solvent names.
+    #[serde(default, skip_serializing_if = "Vec::is_empty")]
+    pub chemistry: Vec<crate::chemistry::Chemistry>,
+    /// Pre-E0 packs and manifests: solvents with a chemistry, and the
+    /// water-carbon window and limits. Read only when `chemistry` is empty
+    /// (`chemistry::chemistry_for`).
+    #[serde(default, skip_serializing_if = "Vec::is_empty")]
     pub chemistries: Vec<String>,
-    /// Temperature window of the water-carbon chemistry, K.
-    pub window_k: (f64, f64),
-    pub water_triple_pa: f64,
-    pub min_water_activity: f64,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub window_k: Option<(f64, f64)>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub water_triple_pa: Option<f64>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub min_water_activity: Option<f64>,
     pub max_dose_msv_yr: f64,
     /// Free energy stored per gram of carbon fixed as carbohydrate, J.
     pub j_per_g_carbon: f64,
@@ -98,9 +107,13 @@ impl BudgetParams {
             .rev()
             .find_map(|p| p.provides.other.get("life_budget"))
             .ok_or("no pack provides life_budget")?;
-        serde_json::to_value(v)
+        let bp: BudgetParams = serde_json::to_value(v)
             .and_then(serde_json::from_value)
-            .map_err(|e| format!("life_budget: {e}"))
+            .map_err(|e| format!("life_budget: {e}"))?;
+        for c in &bp.chemistry {
+            c.check()?;
+        }
+        Ok(bp)
     }
 }
 
@@ -167,40 +180,40 @@ pub fn band_fraction(peak_nm: f64, lo_nm: f64, hi_nm: f64) -> f64 {
 }
 
 pub(crate) fn closed_reason(p: &LifeRequirementProfile, bp: &BudgetParams) -> Option<String> {
-    if !bp.chemistries.contains(&p.solvent) {
+    let Some(c) = crate::chemistry::chemistry_for(bp, &p.solvent) else {
         return Some(format!("no chemistry for {} in this pack stack", p.solvent));
-    }
+    };
     if let Some(t) = p.temperature_k {
-        if t.hi < bp.window_k.0 || t.lo > bp.window_k.1 {
+        if t.hi < c.window_k.0 || t.lo > c.window_k.1 {
             return Some(format!(
                 "{:.0} to {:.0} K is outside the {:.0} to {:.0} K window",
-                t.lo, t.hi, bp.window_k.0, bp.window_k.1
+                t.lo, t.hi, c.window_k.0, c.window_k.1
             ));
         }
     }
-    if p.solvent == "water" {
-        if let Some(pr) = p.pressure_pa {
-            if pr.hi < bp.water_triple_pa {
-                return Some(format!(
-                    "at {:.0} Pa water cannot be liquid (triple point {:.0} Pa)",
-                    pr.hi, bp.water_triple_pa
-                ));
-            }
+    if let (Some(min_pa), Some(pr)) = (c.liquid_min_pa, p.pressure_pa) {
+        if pr.hi < min_pa {
+            return Some(format!(
+                "at {:.0} Pa {} cannot be liquid (triple point {:.0} Pa)",
+                pr.hi, c.solvent, min_pa
+            ));
         }
-        if let Some(aw) = p.properties.get("water_activity") {
-            if *aw < bp.min_water_activity {
+    }
+    if let (Some(prop), Some(lim)) = (&c.activity_property, c.min_activity) {
+        if let Some(aw) = p.properties.get(prop) {
+            if *aw < lim {
                 return Some(format!(
-                    "water activity {aw} is below the {} limit",
-                    bp.min_water_activity
+                    "{} activity {aw} is below the {lim} limit",
+                    c.solvent
                 ));
             }
         }
     }
+    let max_dose = c.max_dose_msv_yr.unwrap_or(bp.max_dose_msv_yr);
     if let Some(d) = p.radiation_dose_msv_yr {
-        if d > bp.max_dose_msv_yr {
+        if d > max_dose {
             return Some(format!(
-                "a dose of {d:.0} mSv/yr is above the {:.0} limit",
-                bp.max_dose_msv_yr
+                "a dose of {d:.0} mSv/yr is above the {max_dose:.0} limit"
             ));
         }
     }

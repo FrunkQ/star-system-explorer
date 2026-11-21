@@ -6,6 +6,7 @@
 
 pub mod activity;
 pub mod air;
+pub mod chem;
 pub mod climate;
 pub mod common;
 pub mod heat;
@@ -38,6 +39,7 @@ pub fn atoms() -> Vec<Box<dyn sse_flow::Atom>> {
         .chain(nebula::atoms())
         .chain(activity::atoms())
         .chain(air::atoms())
+        .chain(chem::atoms())
         .collect()
 }
 
@@ -53,6 +55,27 @@ pub fn registry() -> AtomRegistry {
 /// missing here fails `every_port_kind_is_described`.
 pub const KIND_DESCRIPTIONS: &[(&str, &str)] = &[
     ("star.mass", "mass of a star"),
+    (
+        "chem.standard_gibbs_298",
+        "standard free energy of a reaction at 298.15 K, per mole of reaction as written",
+    ),
+    (
+        "chem.standard_enthalpy",
+        "standard enthalpy of a reaction, per mole of reaction as written",
+    ),
+    (
+        "chem.standard_gibbs",
+        "standard free energy of a reaction at the local temperature",
+    ),
+    ("chem.temperature", "temperature at which a reaction runs"),
+    (
+        "chem.ln_reaction_quotient",
+        "natural log of the reaction quotient Q from local activities",
+    ),
+    (
+        "chem.reaction_gibbs",
+        "free energy released (negative) or needed (positive) by a reaction under local conditions",
+    ),
     (
         "star.luminosity",
         "bolometric luminosity, typical for the star's mass on the main sequence",

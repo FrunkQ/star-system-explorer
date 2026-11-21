@@ -423,7 +423,10 @@ pub fn resolve(
     let solvent = g
         .habitats
         .first()
-        .map_or("water".into(), |h| h.profile.solvent.clone());
+        .map(|h| h.profile.solvent.clone())
+        .or_else(|| bp.chemistry.first().map(|c| c.solvent.clone()))
+        .or_else(|| bp.chemistries.first().cloned())
+        .unwrap_or_default();
     let traits = WorldTraits {
         photon_peak_nm: photon_peak,
         producer_colour: colour,
