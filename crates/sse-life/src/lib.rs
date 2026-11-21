@@ -26,6 +26,7 @@ pub mod sift;
 pub mod signatures;
 pub mod soil;
 mod suite;
+pub mod traits;
 
 pub use habitat::{Footprint, Habitat, HabitatGraph, HabitatRule, Link};
 pub use suite::{NoLifeModel, NO_MODEL};
@@ -249,3 +250,5 @@ mod history_tests;
 mod signatures_tests;
 #[cfg(test)]
 mod soil_tests;
+#[cfg(test)]
+mod traits_tests;
