@@ -194,6 +194,15 @@ Thermal contraction polygons, patterned ground, frost shattering (already in 5.3
 
 **Features**: Cthulhu, Charon's red pole, Iapetus's dichotomy (with M1's thermal runaway), Europa's and the Saturnian moons' hemisphere colours, lunar swirls (with a crustal field), Venus's radar-bright summits. Cheap: a colour term per tile, and every colour can say why.
 
+**Tholins as blocks [Alex, 21 Nov: "SSE 3 has tholins, need those as blocks"].** M7 is built as small cited blocks in the physics chain, one per step, so each can be edited, swapped and shown:
+1. `sse.tholin.production`: the haze production rate from the methane column (from the air stage, or M1's volatiles) times the UV and Lyman-alpha photon flux at the body. That flux is the star's own output from O10 plus the interplanetary background. Charged-particle dose (magnetosphere, O2) adds a radiolysis term.
+2. `sse.tholin.fallout`: haze settling to the surface. It is fast on geological time (Grundy et al. 2018) and evenly spread at first. Haze layers in the air go to the weather track's W4 haze, so Titan and Pluto get their sky colour from the same rate.
+3. `sse.tholin.surface`: colour and albedo from the deposited column, which is fallout rate × surface age (S4's ages). It is hidden where the surface is renewed: volatile ice cycling (M1), convection cells, cryovolcanic flows. That is why Cthulhu is dark red and Sputnik is white. Single-scattering albedo runs from about 0.98 on fresh volatile ice to about 0.16 on the reddest terrain (Protopapa et al. 2020, via the Consensus research).
+4. `sse.tholin.cold_trap`: methane cold-trapped at a winter pole and processed in place, as on Charon's red pole (Grundy et al. 2016). The supply can come from a neighbour's escaping air. Its reddening depends on peak summer temperature (Raut et al. 2022; Gimar et al. 2026).
+5. `sse.tholin.radiation_reddening`: slow darkening and reddening of exposed organic-bearing ice by radiation. This is the same space-weathering curve the airless-world colour uses.
+
+Each block's "why?" gives the rate, the age and the renewal ("dark red because 4 Gyr of haze has settled on ground nothing has renewed"). A V3 import that carries a tholin colour or tag is pinned to block 3's output: the V3 value is kept as authored, and the blocks explain or flag it. I could not find V3's tholin code in the checkout I can read (`sse-prod-310`: physics, data and the starter rule pack). Before S19 is built, the V3 source should be checked so the blocks cover everything V3 does.
+
 ### M8. Reorientation and spin history (small, with S2b)
 
 True polar wander when a large load (a basin filled by M1, a volcanic rise) moves off the axis (Nimmo et al. 2016); despinning fossil shapes. Rotating the surface frame is a dated event; features keep their addresses. Iapetus's ridge is offered as a **debated** option only.
