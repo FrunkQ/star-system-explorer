@@ -25,6 +25,12 @@ use serde_json::{Map, Value as J};
 use sse_core::math as m;
 use std::collections::BTreeMap;
 
+pub mod expr;
+
+/// Relative tolerance between a derived constant's stored value and the one
+/// worked out from its formula.
+const DERIVED_TOL: f64 = 1e-9;
+
 /// The tables, in the order they are checked.
 pub const TABLES: [&str; 6] = [
     "constants",
@@ -221,9 +227,130 @@ impl Reference {
             .unwrap_or(0.0)
     }
 
+    /// A constant's value in SI. A derived constant (`derived_from`) is
+    /// worked out from its formula every time, never read as typed, so a
+    /// changed input moves it (design section 7A.1).
+    pub fn constant(&self, id: &str) -> Option<f64> {
+        self.constant_at(id, 0).ok()
+    }
+
+    fn constant_at(&self, id: &str, depth: u32) -> Result<f64, String> {
+        if depth > 16 {
+            return Err(format!("constant {id}: its formula goes round in a circle"));
+        }
+        let row = self
+            .row("constants", id)
+            .ok_or_else(|| format!("names {id}, which is not a constant"))?;
+        match row.get("derived_from").and_then(J::as_str) {
+            Some(f) => {
+                let mut err = None;
+                let v = expr::eval(f, |n| match self.constant_at(n, depth + 1) {
+                    Ok(v) => Some(v),
+                    Err(e) => {
+                        err.get_or_insert(e);
+                        None
+                    }
+                });
+                match (v, err) {
+                    (Ok(v), _) => Ok(v),
+                    (Err(_), Some(e)) => Err(e),
+                    (Err(e), None) => Err(e),
+                }
+            }
+            None => num(row.get("value")).ok_or_else(|| format!("constant {id} has no value")),
+        }
+    }
+
+    /// Whether a derived constant and every input it names come from one
+    /// pack, so its typed copy stands for it.
+    fn one_pack(&self, id: &str, f: &str) -> bool {
+        std::iter::once(id.to_string())
+            .chain(expr::names(f))
+            .all(|n| {
+                self.origin
+                    .get(&format!("constants/{n}"))
+                    .is_none_or(|o| o.len() == 1)
+            })
+    }
+
+    /// The constants handle blocks read (`sse_core::constants`), from the
+    /// sheet: each id the sheet holds replaces the compiled value. A derived
+    /// constant uses its typed copy while nothing it rests on was edited
+    /// (so an unedited sheet gives the compiled values bit for bit), and its
+    /// worked-out value once something was.
+    pub fn handle(&self) -> sse_core::constants::Constants {
+        let mut c = sse_core::constants::Constants::REAL;
+        for id in sse_core::constants::Constants::IDS {
+            let Some(row) = self.row("constants", id) else {
+                continue;
+            };
+            let v = match row.get("derived_from").and_then(J::as_str) {
+                Some(f) if !self.one_pack(id, f) => self.constant(id),
+                _ => num(row.get("value")).or_else(|| self.constant(id)),
+            };
+            if let Some(v) = v {
+                c.set(id, v);
+            }
+        }
+        c
+    }
+
     /// The load checks of design section 4.6.
     fn check(&self) -> Vec<String> {
         let mut p = vec![];
+        let empty_c = BTreeMap::new();
+        for (id, row) in self.tables.get("constants").unwrap_or(&empty_c) {
+            // `checked_by`: a relation the typed value must meet on the sheet
+            // as shipped, never used to work it out (M_sun against GM_sun / G:
+            // doubling G keeps the Sun's mass).
+            if let Some(f) = row.get("checked_by").and_then(J::as_str) {
+                let typed = num(row.get("value"));
+                let mut miss = None;
+                let worked = expr::eval(f, |n| match self.constant_at(n, 1) {
+                    Ok(v) => Some(v),
+                    Err(e) => {
+                        miss.get_or_insert(e);
+                        None
+                    }
+                });
+                match (typed, worked) {
+                    (_, Err(e)) => p.push(format!(
+                        "constant {id}: checked_by \"{f}\" {}",
+                        miss.unwrap_or(e)
+                    )),
+                    (Some(t), Ok(w))
+                        if self.one_pack(id, f) && ((t - w) / w).abs() > DERIVED_TOL =>
+                    {
+                        p.push(format!("constant {id}: typed as {t:e} but {f} gives {w:e}"))
+                    }
+                    _ => {}
+                }
+            }
+            let Some(f) = row.get("derived_from").and_then(J::as_str) else {
+                if num(row.get("value")).is_none() {
+                    p.push(format!("constant {id} has no value"));
+                }
+                continue;
+            };
+            let worked = match self.constant_at(id, 0) {
+                Ok(v) => v,
+                Err(e) => {
+                    p.push(format!("constant {id}: derived_from \"{f}\" {e}"));
+                    continue;
+                }
+            };
+            // The typed copy must agree while it and every input come from
+            // one pack. Once a later pack edits an input, the worked-out
+            // value is the constant and the typed copy is only a note.
+            let one_pack = self.one_pack(id, f);
+            if let Some(typed) = num(row.get("value")) {
+                if one_pack && ((typed - worked) / worked).abs() > DERIVED_TOL {
+                    p.push(format!(
+                        "constant {id}: typed as {typed:e} but {f} gives {worked:e}"
+                    ));
+                }
+            }
+        }
         // Every value names a source.
         for (table, rows) in &self.tables {
             for (id, row) in rows {
@@ -380,6 +507,13 @@ impl Reference {
             "used_by": [],
             "skipped_by": [],
         });
+        if table == "constants" {
+            if let Some(f) = row.get("derived_from").and_then(J::as_str) {
+                if let Some(v) = self.constant(id) {
+                    out["worked"] = serde_json::json!({"value": {"v": v, "from": f}});
+                }
+            }
+        }
         if table == "substances" {
             if let Some(mm) = self.molar_mass_kg_mol(id) {
                 out["worked"] = serde_json::json!({"molar_mass": {"v": mm, "unit": "kg/mol", "from": "formula and atomic weights"}});

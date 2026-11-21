@@ -1112,6 +1112,18 @@ pub enum Request {
         #[ts(optional)]
         id: Option<String>,
     },
+    /// The reach report for a changed constant (MP1c, design section 7A.3):
+    /// every block in exactly one of three groups. `follows` (a formula that
+    /// reads the constant from the one handle), `estimated` (a table
+    /// rescaled by a cited law) and `cannot_follow` (computed with the real
+    /// constants). `value`, when given, is shown beside the stack's value.
+    /// Read-only, any seat.
+    ReadReach {
+        constant: String,
+        #[serde(default)]
+        #[ts(optional)]
+        value: Option<f64>,
+    },
     /// Dressing candidates (TG12, `provides.other.dressing`) for every world
     /// at or under `scope` at `at_s` (default now): what the stack's universe
     /// packs would place, each with its rule, template, where, explanation
@@ -1281,6 +1293,7 @@ impl Request {
             Request::PromoteStar { .. } => "promote_star",
             Request::CampaignTags => "campaign_tags",
             Request::ReadMatter { .. } => "read_matter",
+            Request::ReadReach { .. } => "read_reach",
             Request::Dressing { .. } => "dressing",
             Request::AdoptDressing { .. } => "adopt_dressing",
             Request::HoldDressing { .. } => "hold_dressing",
@@ -1551,6 +1564,11 @@ pub fn ops() -> Vec<OpInfo> {
             "read_matter",
             Cost::Light,
             "reads the master data sheet loaded with the stack; nothing is worked out but molar mass",
+        ),
+        o(
+            "read_reach",
+            Cost::Light,
+            "reads the blocks' declared reach; nothing is computed",
         ),
         o(
             "dressing",
@@ -2277,6 +2295,22 @@ pub enum Response {
     Matter {
         #[ts(type = "unknown")]
         value: serde_json::Value,
+    },
+    /// `read_reach`: the constant, its real and in-force values, the value
+    /// proposed, and the three groups of blocks.
+    Reach {
+        constant: String,
+        real: f64,
+        in_force: f64,
+        #[serde(skip_serializing_if = "Option::is_none")]
+        #[ts(optional)]
+        proposed: Option<f64>,
+        #[ts(type = "unknown[]")]
+        follows: Vec<serde_json::Value>,
+        #[ts(type = "unknown[]")]
+        estimated: Vec<serde_json::Value>,
+        #[ts(type = "unknown[]")]
+        cannot_follow: Vec<serde_json::Value>,
     },
     /// `hold_dressing`: the candidate and whether it is now held off.
     DressingHeld {
