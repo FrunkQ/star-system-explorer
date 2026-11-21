@@ -77,6 +77,12 @@ pub struct StarParams {
     /// from the record and never move (night sky design, Y7a).
     #[serde(skip_serializing_if = "is_first_key")]
     pub key_version: u32,
+    /// Y1, the count tree (`key_version` 2): luminosity class edges, L☉;
+    /// levels from a root block to a cell (6: 640 pc blocks of 10 pc cells);
+    /// and the keyed attempts a leaf draw makes to find a star of its class.
+    pub class_edges_lsun: Vec<f64>,
+    pub tree_depth: u32,
+    pub class_attempts: u64,
 }
 
 fn is_first_key(v: &u32) -> bool {
@@ -125,7 +131,10 @@ impl Default for StarParams {
             cluster_min: 50.0,
             cluster_max: 1.0e5,
             cell_rotation_kms_kpc: 26.83,
-            key_version: 1,
+            key_version: 2,
+            class_edges_lsun: vec![0.1, 1.0, 10.0, 100.0, 1000.0],
+            tree_depth: 6,
+            class_attempts: 65536,
         }
     }
 }
@@ -220,6 +229,21 @@ pub struct Stars<'a> {
 const KMS_PC_MYR: f64 = 1.022_712;
 const G_PC3: f64 = 4.498_502e-3;
 
+/// A birth time from the cumulative star formation and a unit draw.
+pub(crate) fn birth_from(cdf: &[(f64, f64)], acc: f64, u: f64, t_now_gyr: f64) -> f64 {
+    let target = u * acc;
+    cdf.windows(2)
+        .find(|w| w[1].1 >= target)
+        .map_or(t_now_gyr, |w| {
+            let f = if w[1].1 > w[0].1 {
+                (target - w[0].1) / (w[1].1 - w[0].1)
+            } else {
+                0.0
+            };
+            w[0].0 + f * (w[1].0 - w[0].0)
+        })
+}
+
 pub(crate) fn imf_quantile(p: &StarParams, u: f64) -> f64 {
     // Piecewise power law by number.
     let e = &p.imf_edges;
@@ -251,7 +275,7 @@ impl StarParams {
     pub fn lifetime_gyr(&self, mass: f64) -> f64 {
         (self.sun_life_gyr * m::pow(mass, -self.lifetime_slope)).max(0.003)
     }
-    fn multiplicity_at(&self, mass: f64) -> f64 {
+    pub(crate) fn multiplicity_at(&self, mass: f64) -> f64 {
         let t = &self.multiplicity;
         if mass <= t[0].0 {
             return t[0].1;
@@ -364,7 +388,7 @@ impl<'a> Stars<'a> {
     pub fn frame_of(&self, t_myr: f64) -> i64 {
         m::floor(t_myr / self.params.frame_myr) as i64
     }
-    fn cell_address(&self, cell: [i64; 3]) -> Result<Address, String> {
+    pub(crate) fn cell_address(&self, cell: [i64; 3]) -> Result<Address, String> {
         self.galaxy
             .child_key("cell", &format!("{}_{}_{}", cell[0], cell[1], cell[2]))
             .map_err(|e| format!("{e:?}"))
@@ -373,14 +397,17 @@ impl<'a> Stars<'a> {
     pub fn expected(&self, cell: [i64; 3], frame: i64) -> f64 {
         let c = self.params.cell_pc;
         let t0 = frame as f64 * self.params.frame_myr;
-        let [x, y, z] = self.from_grid(
-            [
-                (cell[0] as f64 + 0.5) * c,
-                (cell[1] as f64 + 0.5) * c,
-                (cell[2] as f64 + 0.5) * c,
-            ],
-            t0,
-        );
+        let g = [
+            (cell[0] as f64 + 0.5) * c,
+            (cell[1] as f64 + 0.5) * c,
+            (cell[2] as f64 + 0.5) * c,
+        ];
+        self.density_at(g, t0) * c * c * c
+    }
+
+    /// Systems per pc³ at a point of the grid (pc) at `t0` (Myr).
+    pub(crate) fn density_at(&self, g: [f64; 3], t0: f64) -> f64 {
+        let [x, y, z] = self.from_grid(g, t0);
         let t_gyr = t0 / 1000.0;
         let l = self.env.local(
             Place {
@@ -391,10 +418,13 @@ impl<'a> Stars<'a> {
             },
             &self.green,
         );
-        l.systems_pc3 * c * c * c
+        l.systems_pc3
     }
     /// Every system drawn for a cell and frame, before pins.
-    fn draw_all(&self, cell: [i64; 3], frame: i64) -> Result<Vec<StarSystem>, String> {
+    pub(crate) fn draw_all(&self, cell: [i64; 3], frame: i64) -> Result<Vec<StarSystem>, String> {
+        if self.params.key_version >= 2 {
+            return self.draw_tree(cell, frame, None);
+        }
         let p = &self.params;
         let addr = self.cell_address(cell)?;
         let count = Draws::new(
@@ -410,10 +440,30 @@ impl<'a> Stars<'a> {
             Stream::new(&format!("cosmos.stars.v{}", p.key_version)).map_err(|e| e.to_string())?,
         );
         let t0 = frame as f64 * p.frame_myr;
-        let t_now_gyr = t0 / 1000.0;
-        let c = p.cell_pc;
-        // The ring's star formation history at the cell's radius, for ages.
+        let (cdf, acc) = self.birth_cdf(cell, t0 / 1000.0);
+        let mut out = vec![];
+        for k in 0..n {
+            let i = |j: u64| {
+                (frame as u64)
+                    .wrapping_mul(1 << 20)
+                    .wrapping_add(k * 64 + j)
+            };
+            let birth = birth_from(&cdf, acc, d.unit(i(3)), t0 / 1000.0);
+            let mass = imf_quantile(p, d.unit(i(4)));
+            out.push(self.complete(&d, &i, &addr, cell, frame, k, mass, birth)?);
+        }
+        Ok(out)
+    }
+
+    /// The ring's cumulative star formation at a cell's radius up to
+    /// `t_now_gyr`, for birth times.
+    pub(crate) fn birth_cdf(&self, cell: [i64; 3], t_now_gyr: f64) -> (Vec<(f64, f64)>, f64) {
+        let c = self.params.cell_pc;
         let rc = m::hypot((cell[0] as f64 + 0.5) * c, (cell[1] as f64 + 0.5) * c) / 1000.0;
+        self.birth_cdf_at(rc, t_now_gyr)
+    }
+
+    pub(crate) fn birth_cdf_at(&self, rc: f64, t_now_gyr: f64) -> (Vec<(f64, f64)>, f64) {
         let steps = 200;
         let t_first = self.env.disc.t_start_gyr;
         let mut cdf = Vec::with_capacity(steps + 1);
@@ -424,113 +474,112 @@ impl<'a> Stars<'a> {
             acc += self.env.surface(rc, t).sfr.max(0.0);
             cdf.push((t, acc));
         }
-        let mut out = vec![];
-        for k in 0..n {
-            let i = |j: u64| {
-                (frame as u64)
-                    .wrapping_mul(1 << 20)
-                    .wrapping_add(k * 64 + j)
-            };
-            let [x, y, z] = self.from_grid(
-                [
-                    (cell[0] as f64 + d.unit(i(0))) * c,
-                    (cell[1] as f64 + d.unit(i(1))) * c,
-                    (cell[2] as f64 + d.unit(i(2))) * c,
-                ],
-                t0,
-            );
-            // Birth time from the cumulative star formation.
-            let target = d.unit(i(3)) * acc;
-            let birth = cdf
-                .windows(2)
-                .find(|w| w[1].1 >= target)
-                .map_or(t_now_gyr, |w| {
-                    let f = if w[1].1 > w[0].1 {
-                        (target - w[0].1) / (w[1].1 - w[0].1)
-                    } else {
-                        0.0
-                    };
-                    w[0].0 + f * (w[1].0 - w[0].0)
+        (cdf, acc)
+    }
+
+    /// Everything about a system but its mass and birth, drawn with the
+    /// star's own keys `i(0..=2)` and `i(5..=20)`.
+    #[allow(clippy::too_many_arguments)]
+    pub(crate) fn complete(
+        &self,
+        d: &Draws,
+        i: &dyn Fn(u64) -> u64,
+        addr: &Address,
+        cell: [i64; 3],
+        frame: i64,
+        k: u64,
+        mass: f64,
+        birth: f64,
+    ) -> Result<StarSystem, String> {
+        let p = &self.params;
+        let t0 = frame as f64 * p.frame_myr;
+        let t_now_gyr = t0 / 1000.0;
+        let c = p.cell_pc;
+        let rc = m::hypot((cell[0] as f64 + 0.5) * c, (cell[1] as f64 + 0.5) * c) / 1000.0;
+        let [x, y, z] = self.from_grid(
+            [
+                (cell[0] as f64 + d.unit(i(0))) * c,
+                (cell[1] as f64 + d.unit(i(1))) * c,
+                (cell[2] as f64 + d.unit(i(2))) * c,
+            ],
+            t0,
+        );
+        let mut companions = vec![];
+        if d.unit(i(5)) < p.multiplicity_at(mass) {
+            let n_c = if d.unit(i(6)) < p.triple_share { 2 } else { 1 };
+            for j in 0..n_c {
+                let q = p.q_min + (1.0 - p.q_min) * d.unit(i(7 + j));
+                let la = p.log_a_mean + p.log_a_sd * d.normal(i(10 + j));
+                companions.push(Companion {
+                    mass_msun: mass * q,
+                    a_au: m::pow(10.0, la),
                 });
-            let mass = imf_quantile(p, d.unit(i(4)));
-            let mut companions = vec![];
-            if d.unit(i(5)) < p.multiplicity_at(mass) {
-                let n_c = if d.unit(i(6)) < p.triple_share { 2 } else { 1 };
-                for j in 0..n_c {
-                    let q = p.q_min + (1.0 - p.q_min) * d.unit(i(7 + j));
-                    let la = p.log_a_mean + p.log_a_sd * d.normal(i(10 + j));
-                    companions.push(Companion {
-                        mass_msun: mass * q,
-                        a_au: m::pow(10.0, la),
-                    });
-                }
-                companions.sort_by(|a, b| a.a_au.total_cmp(&b.a_au));
             }
-            let lb = self.env.local(
-                Place {
-                    r_kpc: rc,
-                    phi: m::atan2(y, x),
-                    z_pc: 0.0,
-                    t_gyr: birth,
-                },
-                &self.green,
-            );
-            let feh = lb.feh + p.feh_scatter * d.normal(i(13));
-            let cluster = {
-                let u = d.unit(i(16));
-                let (a, b) = (1.0 / p.cluster_min, 1.0 / p.cluster_max);
-                1.0 / (a - u * (a - b))
-            };
-            // Orbit through (x, y, z) at t0.
-            let r0 = m::hypot(x, y);
-            let phi_now = m::atan2(y, x);
-            let age = (t_now_gyr - birth).max(0.0);
-            let grow = m::pow((age / 10.0).max(1.0e-3), p.sigma_exponent);
-            let sr = (p.sigma_r_10 * grow).max(p.sigma_floor) * KMS_PC_MYR;
-            let sz = (p.sigma_z_10 * grow).max(p.sigma_floor) * KMS_PC_MYR;
-            let omega = p.rotation_kms * KMS_PC_MYR / r0;
-            let kappa = m::sqrt(2.0) * omega;
-            let nu = m::sqrt(4.0 * m::PI * G_PC3 * p.midplane_density);
-            let rayleigh = |u: f64| m::sqrt(-2.0 * m::ln(u.max(1.0e-300)));
-            let amp_r = sr / kappa * rayleigh(d.unit(i(17)));
-            let phase_r = 2.0 * m::PI * d.unit(i(18));
-            let r_guide = r0 - amp_r * m::cos(phase_r);
-            let phi0 = phi_now + 2.0 * omega / kappa * amp_r / r_guide * m::sin(phase_r);
-            let amp_z = (sz / nu * rayleigh(d.unit(i(19)))).max(z.abs() * (1.0 + 1.0e-12));
-            let base = m::acos((z / amp_z).clamp(-1.0, 1.0));
-            let phase_z = if d.unit(i(20)) < 0.5 { base } else { -base };
-            out.push(StarSystem {
-                address: addr
-                    .child_key("sys", &format!("f{frame}k{k}"))
-                    .map_err(|e| format!("{e:?}"))?,
-                cell,
-                frame,
-                slot: k,
-                birth_gyr: birth,
-                mass_msun: mass,
-                companions,
-                feh,
-                alpha_fe: lb.alpha_fe,
-                c_o: lb.c_o,
-                r_fe: lb.r_fe,
-                k40_fe: lb.k40_fe,
-                cluster_mass_msun: cluster,
-                orbit: Orbit {
-                    r_guide_pc: r_guide,
-                    amp_r_pc: amp_r,
-                    amp_z_pc: amp_z,
-                    phase_r,
-                    phase_z,
-                    phi0,
-                    t0_myr: t0,
-                    omega,
-                    kappa,
-                    nu,
-                },
-                pinned: false,
-            });
+            companions.sort_by(|a, b| a.a_au.total_cmp(&b.a_au));
         }
-        Ok(out)
+        let lb = self.env.local(
+            Place {
+                r_kpc: rc,
+                phi: m::atan2(y, x),
+                z_pc: 0.0,
+                t_gyr: birth,
+            },
+            &self.green,
+        );
+        let feh = lb.feh + p.feh_scatter * d.normal(i(13));
+        let cluster = {
+            let u = d.unit(i(16));
+            let (a, b) = (1.0 / p.cluster_min, 1.0 / p.cluster_max);
+            1.0 / (a - u * (a - b))
+        };
+        // Orbit through (x, y, z) at t0.
+        let r0 = m::hypot(x, y);
+        let phi_now = m::atan2(y, x);
+        let age = (t_now_gyr - birth).max(0.0);
+        let grow = m::pow((age / 10.0).max(1.0e-3), p.sigma_exponent);
+        let sr = (p.sigma_r_10 * grow).max(p.sigma_floor) * KMS_PC_MYR;
+        let sz = (p.sigma_z_10 * grow).max(p.sigma_floor) * KMS_PC_MYR;
+        let omega = p.rotation_kms * KMS_PC_MYR / r0;
+        let kappa = m::sqrt(2.0) * omega;
+        let nu = m::sqrt(4.0 * m::PI * G_PC3 * p.midplane_density);
+        let rayleigh = |u: f64| m::sqrt(-2.0 * m::ln(u.max(1.0e-300)));
+        let amp_r = sr / kappa * rayleigh(d.unit(i(17)));
+        let phase_r = 2.0 * m::PI * d.unit(i(18));
+        let r_guide = r0 - amp_r * m::cos(phase_r);
+        let phi0 = phi_now + 2.0 * omega / kappa * amp_r / r_guide * m::sin(phase_r);
+        let amp_z = (sz / nu * rayleigh(d.unit(i(19)))).max(z.abs() * (1.0 + 1.0e-12));
+        let base = m::acos((z / amp_z).clamp(-1.0, 1.0));
+        let phase_z = if d.unit(i(20)) < 0.5 { base } else { -base };
+        Ok(StarSystem {
+            address: addr
+                .child_key("sys", &format!("f{frame}k{k}"))
+                .map_err(|e| format!("{e:?}"))?,
+            cell,
+            frame,
+            slot: k,
+            birth_gyr: birth,
+            mass_msun: mass,
+            companions,
+            feh,
+            alpha_fe: lb.alpha_fe,
+            c_o: lb.c_o,
+            r_fe: lb.r_fe,
+            k40_fe: lb.k40_fe,
+            cluster_mass_msun: cluster,
+            orbit: Orbit {
+                r_guide_pc: r_guide,
+                amp_r_pc: amp_r,
+                amp_z_pc: amp_z,
+                phase_r,
+                phase_z,
+                phi0,
+                t0_myr: t0,
+                omega,
+                kappa,
+                nu,
+            },
+            pinned: false,
+        })
     }
 
     /// The systems of a cell in a frame: fill drawn from the envelope, with

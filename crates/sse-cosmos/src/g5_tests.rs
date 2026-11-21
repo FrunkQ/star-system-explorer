@@ -197,7 +197,8 @@ fn pins_claim_their_share_of_the_budget() {
             }
         }
     }
-    let (mut cells_checked, mut pin_visits, mut exact) = (0usize, 0usize, 0usize);
+    let (mut cells_checked, mut pin_visits, mut exact, mut short) =
+        (0usize, 0usize, 0usize, 0usize);
     for f in now..now + 30 {
         let t = f as f64;
         let mut cells: Vec<[i64; 3]> = pins.iter().map(|p| st.cell_at(p.orbit.xyz(t), t)).collect();
@@ -214,6 +215,11 @@ fn pins_claim_their_share_of_the_budget() {
             if b.len() >= p {
                 assert_eq!(a.len(), b.len(), "frame {f} cell {c:?}");
                 exact += 1;
+            } else {
+                // A sparse cell far off the plane drew fewer systems than
+                // visit it (Poisson): the pins keep their place and the
+                // fill gives way.
+                short += 1;
             }
             let mut ids: Vec<String> = a.iter().map(|s| s.address.to_string()).collect();
             ids.sort();
@@ -221,8 +227,8 @@ fn pins_claim_their_share_of_the_budget() {
             assert_eq!(ids.len(), a.len(), "no system twice");
         }
     }
-    println!("{cells_checked} cells with pins checked, {pin_visits} pin visits, {exact} with exact closure");
-    assert!(cells_checked >= 200 && exact == cells_checked);
+    println!("{cells_checked} cells with pins checked, {pin_visits} pin visits, {exact} with exact closure, {short} with fewer drawn than pins");
+    assert!(cells_checked >= 200 && exact + short == cells_checked && short * 50 < cells_checked);
 }
 
 #[test]
@@ -262,7 +268,7 @@ fn a_pin_survives_a_change_to_the_fill_rules() {
     assert_eq!(stored, pin);
     let v2 = Stars {
         params: StarParams {
-            key_version: 2,
+            key_version: st.params.key_version + 1,
             ..st.params.clone()
         },
         env: st.env,
@@ -283,7 +289,8 @@ fn a_pin_survives_a_change_to_the_fill_rules() {
         serde_json::to_string(&v2.at(found[0], now as f64 + 50.0)).unwrap(),
         serde_json::to_string(&st.at(&pin, now as f64 + 50.0)).unwrap()
     );
-    // Version 1 is today's draw exactly (the G5 golden holds it too).
-    assert_eq!(StarParams::default().key_version, 1);
+    // Version 2 is Y1's count tree (the stars golden holds it); version 1,
+    // G5's per-cell draw, stays available for saves keyed to it.
+    assert_eq!(StarParams::default().key_version, 2);
     assert!(st.draw_one(&"u:g5/sys:1".parse().unwrap()).is_err());
 }
