@@ -17,11 +17,11 @@ export default {
   async run(page, d, nav) {
     await d.caption('A world in true colour', 'Drawn from its own air and ground.');
     await d.hold(600);
-    await d.click(page.locator('.area-chart .body[aria-label^="Earth"]').first());
+    await d.click(page.locator('.area-chart .body[aria-label^="Earth"]').first().locator(".hit"));
     await d.hold(600);
     await d.click(page.locator('.rail [data-go="world"]').first());
     await nav.go(page, "body");
-    await page.waitForSelector("[data-body] [data-tier]:not([data-tier='']):not([data-frames='0'])", { timeout: 60000 });
+    await page.waitForSelector("[data-body] [data-tier]:not([data-tier='']) canvas", { timeout: 60000 });
     if (!process.argv.includes("--gpu")) {
       const sel = page.getByLabel("Draw on");
       if (!(await sel.isVisible().catch(() => false))) await page.locator("[data-badge]").click();
