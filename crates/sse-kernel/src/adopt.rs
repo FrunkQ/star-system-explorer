@@ -650,6 +650,7 @@ fn bodies_from_facts(
                 host_msun,
             }),
             locked: None,
+            tidal_history: vec![],
         });
     }
     out

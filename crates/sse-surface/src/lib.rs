@@ -153,7 +153,7 @@ impl SurfaceSettings {
 }
 
 /// The quantities a rule may test, all evaluated at one date.
-pub const QUANTITIES: [&str; 13] = [
+pub const QUANTITIES: [&str; 16] = [
     "deep_envelope",
     "molten",
     "t_surface_k",
@@ -167,6 +167,9 @@ pub const QUANTITIES: [&str; 13] = [
     "mass_earth",
     "locked",
     "age_gyr",
+    "tidal_w_m2",
+    "round_ratio",
+    "shell_activity",
 ];
 
 // ---------------------------------------------------------------- bodies
@@ -250,6 +253,23 @@ pub struct Body {
     /// Spin-orbit locked; computed from the orbit when not given.
     #[serde(default)]
     pub locked: Option<bool>,
+    /// Past tidal heating beyond today's (a resonance passage, the years
+    /// after a capture): extra heat flow over spans of the world's life.
+    /// Imports and packs give it; formation fills it when F makes captures.
+    #[serde(default, skip_serializing_if = "Vec::is_empty")]
+    pub tidal_history: Vec<TidalSpan>,
+}
+
+/// Extra tidal heat flow over a span of a world's life.
+#[derive(Clone, PartialEq, Debug, Serialize, Deserialize)]
+pub struct TidalSpan {
+    /// Gyr since the world formed.
+    pub from_gyr: f64,
+    pub to_gyr: f64,
+    pub w_m2: f64,
+    /// Where the span comes from (a paper, an import, an authored story).
+    #[serde(default)]
+    pub source: String,
 }
 
 fn solar_c_o() -> f64 {
@@ -399,7 +419,8 @@ impl Ctx<'_> {
 
     fn quantities(&self, t_gyr: f64) -> BTreeMap<&'static str, f64> {
         let b = self.b;
-        let q = self.radiogenic(t_gyr) + self.tidal;
+        let tidal = self.tidal_at(t_gyr);
+        let q = self.radiogenic(t_gyr) + tidal;
         let flag = |x: bool| if x { 1.0 } else { 0.0 };
         BTreeMap::from([
             ("deep_envelope", flag(b.deep_envelope)),
@@ -415,7 +436,22 @@ impl Ctx<'_> {
             ("mass_earth", b.mass_earth),
             ("locked", flag(self.locked)),
             ("age_gyr", t_gyr),
+            ("tidal_w_m2", tidal),
+            ("round_ratio", round_ratio(b)),
+            ("shell_activity", shell_activity(self.t_surface(t_gyr), q)),
         ])
+    }
+
+    /// Tidal heat flow at a date: today's, plus any past span covering it.
+    fn tidal_at(&self, t_gyr: f64) -> f64 {
+        self.tidal
+            + self
+                .b
+                .tidal_history
+                .iter()
+                .filter(|x| t_gyr >= x.from_gyr && t_gyr < x.to_gyr)
+                .map(|x| x.w_m2)
+                .sum::<f64>()
     }
 
     /// Index of the first rule that holds at `t`.
@@ -427,6 +463,61 @@ impl Ctx<'_> {
             .position(|r| r.when.iter().all(|(k, range)| range.holds(q[k.as_str()])))
             .unwrap_or(self.s.rules.len() - 1)
     }
+}
+
+/// Strength of rock and of ice against self-gravity (Lineweaver and Norman
+/// 2010): calibrated so a body of rock (3500 kg/m³) rounds at about 300 km
+/// and one of ice (930 kg/m³) at about 200 km, from R² = 3σ / (2π G ρ²).
+const SIGMA_ROCK_PA: f64 = 1.54e8;
+const SIGMA_ICE_PA: f64 = 5.6e6;
+const RHO_ROCK: f64 = 3500.0;
+const RHO_ICE: f64 = 930.0;
+
+/// Radius over the radius at which self-gravity pulls the body round
+/// (gravity overcoming material strength, a real edge). The central
+/// pressure (2π/3) G ρ² R² must exceed the yield strength; the strength of
+/// an ice-rock mix is the geometric mean weighted by ice volume, since the
+/// weak phase carries the strain once it is a large share. Below 1 the body
+/// keeps the lumpy shape its accretion and impacts gave it.
+pub fn round_ratio(b: &Body) -> f64 {
+    let r = b.radius_earth * R_EARTH_M;
+    if r <= 0.0 {
+        return 0.0;
+    }
+    let rho = b.mass_earth * M_EARTH_KG / (4.0 / 3.0 * m::PI * r * r * r);
+    let w = b.water_fraction.clamp(0.0, 1.0);
+    let vi = w / RHO_ICE;
+    let vr = (1.0 - w) / RHO_ROCK;
+    let f = if vi + vr > 0.0 { vi / (vi + vr) } else { 0.0 };
+    let sigma = m::exp(f * m::ln(SIGMA_ICE_PA) + (1.0 - f) * m::ln(SIGMA_ROCK_PA));
+    let r_round = m::sqrt(3.0 * sigma / (2.0 * m::PI * G * rho * rho));
+    r / r_round
+}
+
+/// Ice's melting point at low pressure, K.
+const T_MELT_ICE_K: f64 = 273.15;
+/// Ice's conductivity k = 651 / T W m⁻¹ K⁻¹ (Petrenko and Whitworth 1999).
+const K_ICE_651: f64 = 651.0;
+/// Rudolph et al. 2022: cracks cross Enceladus's shell where it is thinner
+/// than about 15 km.
+const CRACK_THROUGH_M: f64 = 15_000.0;
+
+/// How active an ice shell's surface is, 0 to 1: whether tidal cracks can
+/// cross it. The shell's conductive thickness from the heat flowing through
+/// it, d = 651 ln(T_melt / T_surface) / q (k = 651/T), against the depth
+/// cracks reach, about 15 km (Rudolph et al. 2022). A thin, warm-based
+/// shell (Europa) breaks and renews its surface; a thick cold one
+/// (Callisto) is a lid that keeps its craters, even if it convects
+/// underneath. Smooth in (15 km / d)⁴, so the label read off it
+/// (ice-shell at 0.5 and above) is not the physics.
+pub fn shell_activity(t_surface_k: f64, q_w_m2: f64) -> f64 {
+    if t_surface_k >= T_MELT_ICE_K || q_w_m2 <= 0.0 {
+        return 0.0;
+    }
+    let d = K_ICE_651 * m::ln(T_MELT_ICE_K / t_surface_k.max(1.0)) / q_w_m2;
+    let x = CRACK_THROUGH_M / d.max(1.0);
+    let x4 = x * x * x * x;
+    x4 / (1.0 + x4)
 }
 
 /// Classify one world over its life.
@@ -538,7 +629,7 @@ pub fn envelope(s: &SurfaceSettings, b: &Body) -> SurfaceEnvelope {
 }
 
 fn span(cx: &Ctx, regime: &str, from: f64, to: f64) -> RegimeSpan {
-    let q = |t| cx.radiogenic(t) + cx.tidal;
+    let q = |t| cx.radiogenic(t) + cx.tidal_at(t);
     RegimeSpan {
         regime: regime.to_string(),
         from_gyr: from,
@@ -579,6 +670,15 @@ fn describe(k: &str, v: f64) -> String {
         "heat_flow_w_m2" => format!("heat flow {:.3} W/m²", v),
         "t_surface_k" => format!("surface {:.0} K", v),
         "age_gyr" => format!("age {:.2} Gyr", v),
+        "round_ratio" => format!(
+            "radius {:.2} times the size at which gravity pulls it round",
+            v
+        ),
+        "shell_activity" => format!(
+            "ice shell activity {:.2} (tidal cracks crossing the shell)",
+            v
+        ),
+        "tidal_w_m2" => format!("tidal heat {:.3} W/m²", v),
         _ => format!("{} {}", k.replace('_', " "), fmt_num(v)),
     }
 }
@@ -647,6 +747,7 @@ pub fn bodies_of(run: &SystemRun, s: &SurfaceSettings) -> Vec<Body> {
                     host_msun: star.mass,
                 }),
                 locked: None,
+                tidal_history: vec![],
             }
         })
         .collect()

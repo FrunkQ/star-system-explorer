@@ -68,11 +68,57 @@
     },
     {
       "body": "Ganymede",
-      "envelope": "fc7c64deb5e40078f69c4ccd6b39382a7f5ae1953441a45495523a92ea276d02",
+      "envelope": "77aaa79c907c0e7e6ba96ec8702300f365517c9ab53f07214dbbdf0e4f989b70",
+      "events": [
+        {
+          "t_gyr": 1.5,
+          "to": "ice-shell"
+        },
+        {
+          "t_gyr": 2.5,
+          "to": "cold-ice-lid"
+        }
+      ],
+      "kind": "solid",
+      "regime": "cold-ice-lid",
+      "sketch": "a78a8b59493a0541203863c20af9d675da9d051d0a71578b54bc203c93e9e296"
+    },
+    {
+      "body": "Callisto",
+      "envelope": "3127b8412767190150291714b9c25d06c682f23cb611332d8af86048ada1edcd",
+      "events": [
+        {
+          "t_gyr": 0.18081898987293243,
+          "to": "cold-ice-lid"
+        }
+      ],
+      "kind": "solid",
+      "regime": "cold-ice-lid",
+      "sketch": "275103bd2422946abee944effc938b00fa3b2438b7cf27777ba42a1153d219a6"
+    },
+    {
+      "body": "Enceladus",
+      "envelope": "83a16df7cff09e65b989af936a4d27e441416c2399f15b877e051001ec817288",
+      "events": [],
+      "kind": "solid",
+      "regime": "cold-ice-lid",
+      "sketch": "3939794815b28249c71f9e0fdf36cb921b008d495bb44b7725b8bff1f8b49f82"
+    },
+    {
+      "body": "Miranda",
+      "envelope": "4123eb91a300944c14a57e32476d3eafbf9dcf05e2bd016bed3e2d0841fda8b0",
+      "events": [],
+      "kind": "solid",
+      "regime": "cold-ice-lid",
+      "sketch": "a36f2aee430768fc0593fd8d13abae34e97a3dfddc50d17d6b5962909ccd28e2"
+    },
+    {
+      "body": "Triton",
+      "envelope": "ae79d9b02a00d316132a55507b3dabc2fc5075d2ab456edad0fb69bd7e8fe07e",
       "events": [],
       "kind": "ice-shell",
       "regime": "ice-shell",
-      "sketch": "83d2e87c25d7e46a19bfe44be069b75ef8698cb96f918415ebf33ecdf33335fb"
+      "sketch": "38eb8ba7276028b18e1848e64e5ef5186483504e963e1092a25a23f34a5fa3a2"
     },
     {
       "body": "Titan",
@@ -138,39 +184,39 @@
       "system": "u:g0/patch:9:solar/cohort:0/sys:0"
     },
     {
-      "digest": "7ea2573b4bc6c8b9a57062ce3d0b88065d0d6ef8ed680a0617fec7db51350062",
+      "digest": "628d89ea087969a6dc53d17ffa20a5b1d98fbe46779a5782bcb7876da7df6b32",
       "regimes": [
         "stagnant-lid",
-        "ice-shell",
-        "ice-shell",
-        "ice-shell",
-        "ice-shell",
-        "ice-shell",
-        "ice-shell",
-        "ice-shell",
-        "ice-shell",
-        "ice-shell",
-        "ice-shell",
-        "ice-shell"
+        "cold-ice-lid",
+        "cold-ice-lid",
+        "cold-ice-lid",
+        "cold-ice-lid",
+        "cold-ice-lid",
+        "cold-ice-lid",
+        "cold-ice-lid",
+        "cold-ice-lid",
+        "cold-ice-lid",
+        "cold-ice-lid",
+        "cold-ice-lid"
       ],
       "system": "u:g0/patch:9:solar/cohort:0/sys:1"
     },
     {
-      "digest": "60c68902f86dd18437460fc72daf230efa9f1735aa25514c76a632604d819e9d",
+      "digest": "cc8b206229af56587c744adc90b1d77b6992f3b49e46855832ddf9e1d7ecad8c",
       "regimes": [
         "stagnant-lid",
         "stagnant-lid",
         "stagnant-lid",
         "stagnant-lid",
         "stagnant-lid",
-        "ice-shell",
-        "ice-shell",
-        "ice-shell",
-        "ice-shell",
-        "ice-shell",
-        "ice-shell",
-        "ice-shell",
-        "ice-shell"
+        "cold-ice-lid",
+        "cold-ice-lid",
+        "cold-ice-lid",
+        "cold-ice-lid",
+        "cold-ice-lid",
+        "cold-ice-lid",
+        "cold-ice-lid",
+        "cold-ice-lid"
       ],
       "system": "u:g0/patch:9:solar/cohort:1/sys:0"
     },

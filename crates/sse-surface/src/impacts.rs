@@ -773,6 +773,14 @@ impl CraterField {
         area * n
     }
 
+    /// The chance that ground `d_km` across, made at `t0_myr`, is not yet
+    /// erased by craters at least its size by `t1_myr`: e^(−N/N_sat), the
+    /// same saturation law that thins old craters.
+    pub fn erasure_survival(&self, d_km: f64, t0_myr: f64, t1_myr: f64) -> f64 {
+        let d = d_km.max(1e-3);
+        m::exp(-self.n_prod(d, t0_myr, t1_myr.max(t0_myr)) / self.n_sat(d))
+    }
+
     /// Production of craters at least `d_km` across between two dates, per km².
     pub fn production(&self, d_km: f64, t0_myr: f64, t1_myr: f64) -> f64 {
         self.n_prod(d_km, t0_myr, t1_myr)
