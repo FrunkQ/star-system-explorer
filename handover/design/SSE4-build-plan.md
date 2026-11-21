@@ -117,6 +117,8 @@ Tracks can run in parallel once their dependencies are met. `needs` lists packag
 
 ### L: life suite. Stages L0, L1a, L1b, L1c, L1d, L2, L2b exactly as life document section 14, one package each. L0 needs K10 and P4; L1a needs P1; L2 needs T1.
 
+### E: evolution from energy gradients **[accepted 21 Nov]**. Stages E0 to E9 and UE1 exactly as `SSE4-evolution-design.md` section 14, one package each. It changes the inside of life boxes B, D, G and H and adds soil and biomes; read it with `SSE4-life-design.md`. Order: E3 first (competing oxygen sinks and fire, needs only L2), then E0, E1, E2, E4, E5 (functional traits only), E6, E8; E7 after E0 and E1 and the one-body work; E9 waits on Evolution Lab's own two sessions. V4 scope is "they exist": function and planetary effect, no appearance. Prefer the real calculation in the browser and fall back only on a measured need (section 13).
+
 ### C: classification. Stages C1 to C5 exactly as `SSE4-classification-design.md` section 12, one package each. C1 needs K5 and P1; C3 needs K8 and L0; C4 needs U3 and A2; C5 needs G5. The Traveller pack's codes (X3a) are schemes in this machinery, so X3a needs C1 and X3b needs C3.
 
 ### O: light and nebulae. Stages O1 to O15 exactly as `SSE4-nebulae-and-light-design.md` section 8, one package each. Light stays a spectrum until a per-view band recipe; nebulae are objects with causes and lifetimes.
@@ -165,6 +167,7 @@ Tracks can run in parallel once their dependencies are met. `needs` lists packag
 | M5b Traveller table | X3a to X3d, V12, O9 (after O1, O2, O8) | import a subsector from Travellermap onto a hex map, open any world as a full system with its impossible values marked, plan a jump with real jump shadows, hand players a UWP sheet |
 | M6 Living worlds | K10, L0 to L1d, U7 | open any world's biosphere and history |
 | M6b Surfaces | S0 to S7, R1 to R4, V11, N4, N5, W1 to W3, W5, O1, O2 | chart a world's terrain, ask why a range is there, watch continents drift, land on it in several styles |
+| M6d Worlds shaped by life | E0 to E6, E8, UE1 | see what energy a world offers and who lives on it; watch oxygen settle by fire and decay; grow soil on bare rock; see biomes arrange themselves by climate |
 | M7 Galaxy | K7, G1 to G6, U6, V9, C5, F8, N6, N7, O3 to O8, O11, O15 | chart a galaxy, ink a merger, find a home, survey a patch |
 | M6c Ground detail (later) | S9 to S13, W4, W6 | watch a layered canyon cut over millions of years; find a sea arch on approach; walk through alien forest; place landmarks and ruins; chart a country with borders and roads |
 | M8 Whole universe | G7, G8, V7, L2, L2b, S8, T4, X2, X3, X5 | real Milky Way skies; coupled living planets; share on the explorers site |
