@@ -2031,6 +2031,11 @@ pub enum Response {
     /// the kind of the event that set it (`time.aged` for a write-back). `spec`: an `sse-time`
     /// SystemSpec (absent without a star mass and age). `surfaces`: S0
     /// envelopes. `tiles`: S1 tiles; `refused`: tiles not given, with why.
+    /// `clouds`: a formation run's leftovers (F5), each `{address, kind,
+    /// around, source, a_min_au, a_max_au, largest_km, over_1km}`; `around`
+    /// is null for a cloud that orbits the star (belts, scattered disc,
+    /// Oort), otherwise the world it orbits, with axes in AU around it.
+    /// Absent when there are none.
     SystemResolved {
         system: String,
         source: String,
@@ -2052,6 +2057,9 @@ pub enum Response {
         tiles: Vec<serde_json::Value>,
         #[ts(type = "unknown[]")]
         refused: Vec<serde_json::Value>,
+        #[serde(default, skip_serializing_if = "Vec::is_empty")]
+        #[ts(optional, type = "unknown[]")]
+        clouds: Vec<serde_json::Value>,
     },
     /// `codes`: one entry per body, in address order:
     /// `{address, reading}` with the sse-codes `Reading` unchanged in shape.
