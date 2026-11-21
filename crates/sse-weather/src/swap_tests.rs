@@ -117,18 +117,17 @@ fn zonal_block_is_a_different_block_with_its_own_physics() {
             t.iter().cloned().fold(f64::MIN, f64::max) - t.iter().cloned().fold(f64::MAX, f64::min);
         assert!(spread < 2.0, "{name} spread {spread}");
     }
-    // Its rain comes from its own temperatures, not the rule block's belts.
+    // W7a: both blocks draw on the one climate, so their averages agree
+    // exactly; what differs is the weather they draw on top.
     let rb = crate::scenario::block().climate(&e);
     let zb = z.climate(&e);
-    let band_diff = rb
-        .bands
-        .iter()
-        .zip(&zb.bands)
-        .map(|(x, y)| (x.precip_m_yr - y.precip_m_yr).abs())
-        .fold(0.0, f64::max);
-    assert!(
-        band_diff > 0.1,
-        "zonal rain profile should differ: {band_diff}"
+    assert_eq!(rb, zb, "one climate under both blocks");
+    let key = sse_surface::atlas::TileKey::new(0, 1, 0, 0).unwrap();
+    let day = crate::contract::Date { day: 100.0 };
+    assert_ne!(
+        crate::scenario::block().field(&e, day, key, 8, &[]),
+        z.field(&e, day, key, 8, &[]),
+        "the drawing on top differs"
     );
     // Deterministic.
     assert_eq!(z.climate(&e), zonal().climate(&e));
@@ -149,28 +148,26 @@ fn zonal_block_agrees_within_tolerance_where_both_apply() {
 }
 
 #[test]
-fn where_the_zonal_model_cannot_follow_the_report_says_so() {
+fn where_a_block_reads_a_different_climate_the_report_says_so() {
+    // Since W7a the stock blocks share one climate, so a campaign swap is
+    // within tolerance everywhere. A block whose climate pack differs (here:
+    // half the evaporation) is still caught and reported.
     let r = crate::scenario::block();
-    let z = zonal();
-    for name in OUTSIDE {
-        let d = compare(&r, &z, &fixture(name));
-        assert!(!d.within(), "{name} unexpectedly within: {:?}", d.lines);
-        assert!(
-            d.lines.iter().any(|l| l.contains("outside tolerance")),
-            "{:?}",
-            d.lines
-        );
-    }
+    let mut z = zonal();
+    z.shared.climate.supply.latent_share *= 0.3;
+    let d = compare(&r, &z, &fixture("Earth"));
+    assert!(!d.within(), "{:?}", d.lines);
+    assert!(
+        d.lines.iter().any(|l| l.contains("outside tolerance")),
+        "{:?}",
+        d.lines
+    );
     let (m, worlds) = campaign();
     let rep = swap(&stack(), &m, &worlds, &ids().1).unwrap();
-    assert!(!rep.within_tolerance);
-    let last = rep.lines.last().unwrap();
-    assert!(
-        last.contains("Outside tolerance on Locked temperate world"),
-        "{last}"
-    );
-    for name in BOTH_APPLY {
-        assert!(!last.contains(name), "{name} reported outside: {last}");
+    assert!(rep.within_tolerance, "{:?}", rep.lines);
+    for name in OUTSIDE.iter().chain(BOTH_APPLY.iter()) {
+        let d = compare(&r, &zonal(), &fixture(name));
+        assert!(d.within(), "{name}: {:?}", d.lines);
     }
 }
 

@@ -301,7 +301,7 @@ fn most_random_giants_show_no_polygon_and_sides_follow_the_relation() {
     for c in &giants {
         let l = layout(&gs, c);
         // The relation, restated from the conditions.
-        let omega = c.omega();
+        let omega = c.spin_rate();
         let a = c.radius_m;
         let u = if l.ice {
             gs.bands.wind_ice_m_s

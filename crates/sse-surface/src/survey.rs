@@ -5,6 +5,7 @@
 //! `survey_surface` op serves; tests and goldens build the same chain.
 
 use crate::atlas::Atlas;
+use crate::climate::{wet_climate, WorldClimate};
 use crate::cover::{aerostat_band, layers, AerostatBand, Air, CoverInputs, Reshape};
 use crate::impacts::{impacts, ImpactHistory, ImpactInputs};
 use crate::named::{register, AuthoredName, Register, Rename};
@@ -42,6 +43,17 @@ pub struct SurveyOptions {
     pub wind_m_s: Option<f64>,
 }
 
+impl SurveyOptions {
+    /// The climate facts these options give: spin (signed) and tilt.
+    pub fn extra(&self, rotation_hours: Option<f64>) -> sse_climate::Extra {
+        sse_climate::Extra {
+            rotation_hours,
+            obliquity_deg: self.obliquity_deg,
+            ..Default::default()
+        }
+    }
+}
+
 /// One surveyed world.
 #[derive(Clone, Debug)]
 pub struct Survey {
@@ -50,6 +62,8 @@ pub struct Survey {
     /// None for a giant (no ground to name).
     pub register: Option<Register>,
     pub aerostat: Result<AerostatBand, String>,
+    /// The one climate the ground was worn and covered under (None for a giant).
+    pub climate: Option<WorldClimate>,
     /// The stages that ran, in order.
     pub stages: Vec<String>,
 }
@@ -91,12 +105,23 @@ pub fn survey_world(
             atlas,
             register: None,
             aerostat,
+            climate: None,
             stages: vec!["envelope".into(), "cloud-deck".into()],
         });
     }
     let h = crate::plates::history(s, &e, seed, epoch_gyr);
     let water = WaterHistory::steady(body.oceans, body.pressure_bar, epoch_gyr);
-    let w = wear_world(s, &e, seed, &h, &water, body.magma_end_myr);
+    // The one climate (W7a): wear's rain and cover's temperature read it.
+    let climate = wet_climate(
+        s,
+        body,
+        &e,
+        &water,
+        // The climate locks the spin itself from the year (as the weather does).
+        &opts.extra(opts.rotation_hours),
+        epoch_gyr * 1000.0,
+    );
+    let w = wear_world(s, &e, seed, &h, &water, &climate, body.magma_end_myr);
     let atlas = Atlas::from_worn(s, &e, seed, &h, &w, vec![]);
     let hist = ImpactHistory::lunar();
     let ii = ImpactInputs {
@@ -111,8 +136,7 @@ pub fn survey_world(
     let inp = CoverInputs {
         air,
         water: oceans || body.water_fraction > 0.0,
-        rotation_hours: rotation,
-        obliquity_deg: opts.obliquity_deg,
+        climate: &climate,
         life: opts.life,
         plates: Some(&h),
         reshape: opts.reshape.clone(),
@@ -136,6 +160,7 @@ pub fn survey_world(
         atlas,
         register: Some(reg),
         aerostat,
+        climate: Some(climate),
         stages: stages.iter().map(|x| x.to_string()).collect(),
     })
 }

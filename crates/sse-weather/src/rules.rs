@@ -67,12 +67,13 @@ fn empty_layer() -> Layer {
 /// Everything about a world the block works out once per call.
 pub struct Prepared {
     pub circ: Circulation,
+    /// The one climate (W7a) and its season at this date.
+    pub core: sse_climate::Climate,
+    pub season: sse_climate::ebm::Season,
     pub climate: ClimateAverages,
     pub cond: Option<circulation::Condensation>,
     pub itcz_deg: f64,
     pub phase: f64,
-    pub wet_norm: f64,
-    pub wet_peak: f64,
 }
 
 impl RuleBlock {
@@ -239,31 +240,21 @@ impl RuleBlock {
 
     pub fn prepare(&self, c: &Conditions, date: Date) -> Prepared {
         let s = &self.settings;
-        let circ = circulation::circulation(s, c);
-        let climate = circulation::climate(s, c);
+        let core = circulation::core(s, c);
+        let circ = core.circulation.clone();
+        let climate = circulation::averages(s, c, &core);
         let cond = circulation::condensation(s, c);
         let phase = year_phase(c, date);
         let itcz = circulation::itcz_deg(s, c, &circ, phase);
-        // Same normalisation as the annual profile, at this season.
-        let nb = s.bands;
-        let (mut sw, mut sa, mut pk) = (0.0, 0.0, 0.0f64);
-        for i in 0..nb {
-            let lat = -90.0 + 180.0 * (i as f64 + 0.5) / nb as f64;
-            let w = circulation::wetness(s, &circ, lat, itcz);
-            let a = m::cos(lat * m::PI / 180.0);
-            sw += w * a;
-            sa += a;
-            pk = pk.max(w);
-        }
-        let wet_norm = if sw > 0.0 { sa / sw } else { 1.0 };
+        let season = core.season_at(phase).clone();
         Prepared {
             circ,
+            season,
+            core,
             climate,
             cond,
             itcz_deg: itcz,
             phase,
-            wet_norm,
-            wet_peak: pk * wet_norm,
         }
     }
 
@@ -271,8 +262,15 @@ impl RuleBlock {
     pub fn zonal_cell(&self, c: &Conditions, p: &Prepared, lat: f64, lon: f64) -> Cell {
         let s = &self.settings;
         let mut layers: Vec<Layer> = (0..LAYERS.len()).map(|_| empty_layer()).collect();
-        let wet = circulation::wetness(s, &p.circ, lat, p.itcz_deg) * p.wet_norm;
-        let rel = wet / p.wet_peak.max(1e-9);
+        // Rain and cloud from the one climate's season at this latitude.
+        let sea = &p.season;
+        let at = |v: &[f64]| p.core.lerp(v, lat);
+        let peak = sea.precip.iter().cloned().fold(0.0, f64::max);
+        let rel = if peak > 0.0 {
+            (at(&sea.precip) / peak).clamp(0.0, 1.0)
+        } else {
+            0.0
+        };
         let u = if p.circ.regime == "airless" {
             0.0
         } else {
@@ -282,12 +280,12 @@ impl RuleBlock {
             // Winds strengthen with height toward the jets.
             l.wind_m_s = [u * (1.0 + 1.5 * k as f64), 0.0];
         }
-        let mut precip = p.climate.precip_mean_m_yr * wet * 1000.0 / 365.25;
+        // kg m⁻² s⁻¹ of liquid to mm a day.
+        let mut precip = at(&sea.precip).max(0.0) * 86_400.0 / p.core.liquid_kg_m3 * 1000.0;
         let mut kind = "none".to_string();
         if let Some(cd) = &p.cond {
-            let cover_mean = p.climate.cloud_cover_mean;
             let deck = circulation::deck_cover(s, c);
-            let cover = (cover_mean * (0.55 + 0.45 * rel) / 0.80).min(1.0);
+            let cover = at(&sea.cover).clamp(0.0, 1.0);
             let tau = 2.0 + 18.0 * rel;
             // Rising air: deep towers; sinking air: low cloud only.
             if rel > 0.6 && p.climate.precip_mean_m_yr > 0.0 {
@@ -319,7 +317,7 @@ impl RuleBlock {
         if precip > 0.0 {
             let liquid = c.liquid.clone().unwrap_or_default();
             kind = if liquid == "water" {
-                if c.t_surface_k + 25.0 * (m::cos(lat * m::PI / 180.0) - 0.75) < 273.15 {
+                if at(&sea.t_k) < 273.15 {
                     "snow".into()
                 } else {
                     "rain".into()

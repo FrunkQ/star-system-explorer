@@ -1,0 +1,302 @@
+{
+ "format": "sse.pack/1",
+ "id": "sse.base-climate",
+ "version": "0.1.0",
+ "kind": [
+  "base-physics"
+ ],
+ "kernel_range": "^0.1",
+ "licence": "Apache-2.0",
+ "provides": {
+  "other": {
+   "climate": {
+    "about": "The one climate under geology and weather (W7a): a diffusive energy balance in latitude and season (North 1975) with the moisture, cloud and wind it implies, plus the Held and Hou and Rhines numbers every reader shares. Surface wear and cover and both weather blocks read this and nothing else.",
+    "bands": 36,
+    "seasons": 12,
+    "iterations": 80,
+    "relax": 0.5,
+    "olr": {
+     "b_hat": 0.47,
+     "source": "Outgoing longwave linear in temperature, A + B T (Budyko 1969 eq. 1: I = a + B T - (a1 + B1 T) n with a 14.0, B 0.14, a1 3.0, B1 0.10 kcal cm-2 month-1, T in deg C). At cloudiness n 0.5 that is B = 1.43 W m-2 K-1 and 220 W m-2 at 288 K, so B T / (4 OLR) = 0.47 on Earth; the same dimensionless slope is used on every world (docs/fudges.md). A is set so the global mean temperature is the world's own."
+    },
+    "diffusion": {
+     "d_earth_w_m2_k": 0.45,
+     "column_power": 1.0,
+     "spin_power": 2.0,
+     "max_over_b": 10000.0,
+     "source": "Diffusive heat transport D (1/cos phi) d/dphi (cos phi dT/dphi) (North 1975). D on Earth fitted to an equator-to-pole contrast near 40 K; scaling with air column and (Omega_Earth / Omega)^2 is a stand-in for eddy transport theory (docs/fudges.md)."
+    },
+    "ice": {
+     "albedo_step": 0.3,
+     "t_ice_k": 263.15,
+     "width_k": 3.0,
+     "source": "Ice-albedo step on water worlds, smoothed; edge and step fitted, base albedo renormalised so the world's Bond albedo is kept (docs/fudges.md)."
+    },
+    "heat_capacity": {
+     "mixed_layer_m": 50.0,
+     "water_j_m3_k": 4180000.0,
+     "ground_inertia_si": 1500.0,
+     "steps_per_season": 4,
+     "spin_up_years": 6,
+     "source": "Seasonal energy balance with heat capacity, C dT/dt (North and Coakley 1979; North, Cahalan and Coakley 1981). C is the sea's mixed layer (about 50 m of water) over the sea fraction, the ground's seasonal skin, thermal inertia I times sqrt(year / pi) (Pierrehumbert 2010, ch. 7), over the land, plus the air column c_p p / g. One ground inertia (1500 SI, between dry regolith near 200 and wet rock near 2500) on every world until cover publishes it per cell (docs/fudges.md)."
+    },
+    "moisture": {
+     "exchange_m_s": 0.0115,
+     "humidity": 0.8,
+     "eddy_ratio": 1.0,
+     "hadley_width_x": 0.3,
+     "hadley_reference_deg": 30.0,
+     "h_top_ratio": 1.06,
+     "min_stability_k": 1.0,
+     "source": "Bulk evaporation rho C_E |U| q_sat (1 - RH), capped by the energy reaching wet ground; C_E |U| fitted to Earth's mean rain (docs/fudges.md). Transport after Siler, Roe and Armour 2018 (J. Climate 31, 7481): eddies diffuse moisture down its gradient; the Hadley cell carries the share w = exp(-x^2/sigma^2) of the moist static energy flux (x = sin latitude, sigma 0.3 on Earth), and its lower branch carries moisture toward the equator, F_q = -F_HC L q / (h_T - h), h_T = 1.06 h at the equator. sigma scales with the world's own Hadley edge (our extension, docs/fudges.md)."
+    },
+    "cloud": {
+     "cover_max": 0.8,
+     "latent_scale_w_m2": 25.0,
+     "gradient_cover": 0.25,
+     "gradient_scale_k_deg": 0.8,
+     "saturation_cover": 0.15,
+     "saturation_ln_scale": 2.0,
+     "min_pressure_bar": 1e-06,
+     "source": "Cloud from latent heat released and from baroclinic temperature gradients; frost cloud where a gas saturates at the band temperature. All constants fitted (docs/fudges.md)."
+    },
+    "thermal_depth_scale_heights": 1.8,
+    "surface_wind_share": 0.3,
+    "supply": {
+     "latent_share": 0.5,
+     "earth_fraction": 0.67,
+     "column_power": 0.75,
+     "humidity_over_liquid": 0.8,
+     "wet_saturation": 0.5,
+     "source": "Energy-limited precipitation: the latent heat flux, a share of the sunlight reaching wet ground, falls back as liquid (Pierrehumbert 2010, ch. 9 energy budget). Sunlight reaching the ground falls with air column, fitted to Earth, Venus and Titan; cloud cover from latent flux fitted to Earth (docs/fudges.md)."
+    },
+    "circulation": {
+     "wind_m_s": 12.0,
+     "delta_h": 0.3333,
+     "tropopause_scale_heights": 1.8,
+     "source": "Hadley edge from Held and Hou 1980 (small-angle form, phi_H = (5/3 g H dh / (Omega a)^2)^1/2); cells from the Rhines arrest wavenumber k = (beta/2U)^1/2 (Rhines 1975); trends checked against Kaspi and Showman 2015. The wind scale (one value for every world) and the contrast are tuned to Earth until W7b takes them from the forcing (docs/fudges.md). The regime is a label: the first rule whose conditions hold (W7b replaces the rules with process strengths).",
+     "rules": [
+      {
+       "regime": "airless",
+       "when": {
+        "pressure_bar": {
+         "max": 1e-06
+        }
+       },
+       "because": "Too little air for cloud or wind: no weather."
+      },
+      {
+       "regime": "banded-giant",
+       "when": {
+        "solid": {
+         "max": 0.5
+        }
+       },
+       "because": "No surface under the air: belts and zones between alternating jets, storms and polar features (W3)."
+      },
+      {
+       "regime": "tidally-locked",
+       "when": {
+        "star_locked": {
+         "min": 0.5
+        }
+       },
+       "because": "One face to the star: rising air and a permanent cloud shield under the star, clearer night side (Yang, Cowan and Abbot 2013; Showman and Polvani 2011)."
+      },
+      {
+       "regime": "thin-air",
+       "when": {
+        "pressure_bar": {
+         "max": 0.03
+        }
+       },
+       "because": "Air too thin for weather to organise into belts: thin ice cloud, frost, fog in basins and dust storms where there is dust (Zurek and Martin 1993)."
+      },
+      {
+       "regime": "slow-rotator",
+       "when": {
+        "hadley_edge_deg": {
+         "min": 60.0
+        }
+       },
+       "because": "Slow spin lets one overturning cell reach the pole in each hemisphere: weak jets and a broad cloud band (Held and Hou 1980; Kaspi and Showman 2015)."
+      },
+      {
+       "regime": "fast-rotator",
+       "when": {
+        "cells": {
+         "min": 4.0
+        }
+       },
+       "because": "Fast spin breaks each hemisphere into many narrow belts and jets (Rhines 1975; Kaspi and Showman 2015)."
+      },
+      {
+       "regime": "earth-like",
+       "when": {},
+       "because": "Moderate spin: a tropical cell, a mid-latitude storm track and a polar cell in each hemisphere."
+      }
+     ],
+     "regimes": {
+      "airless": "No weather",
+      "banded-giant": "Banded giant",
+      "tidally-locked": "Tidally locked",
+      "thin-air": "Thin air",
+      "slow-rotator": "Slow rotator",
+      "fast-rotator": "Fast rotator",
+      "earth-like": "Three cells"
+     }
+    },
+    "defaults": {
+     "rotation_hours": 10.0,
+     "obliquity_deg": 20.0,
+     "gases": {
+      "n2": 0.78,
+      "o2": 0.21,
+      "ar": 0.0093,
+      "co2": 0.0004,
+      "h2o": 0.0
+     }
+    },
+    "substances": [
+     {
+      "gas": "h2o",
+      "name": "water",
+      "triple_k": 273.16,
+      "triple_pa": 611.0,
+      "latent_j_kg": 2468000.0,
+      "molar_kg": 0.018015,
+      "condensed_kg_m3": 1000.0,
+      "colour": [
+       0.95,
+       0.95,
+       0.97
+      ],
+      "source": "NIST WebBook Antoine (273-303 K row): pressure at 273.16 K and latent heat from the slope at 288 K"
+     },
+     {
+      "gas": "co2",
+      "name": "carbon dioxide",
+      "triple_k": 216.58,
+      "triple_pa": 518500.0,
+      "latent_j_kg": 573000.0,
+      "molar_kg": 0.04401,
+      "condensed_kg_m3": 1560.0,
+      "colour": [
+       0.97,
+       0.97,
+       1.0
+      ],
+      "source": "NIST WebBook: triple point; sublimation enthalpy 25.2 kJ/mol at 195 K"
+     },
+     {
+      "gas": "ch4",
+      "name": "methane",
+      "triple_k": 90.67,
+      "triple_pa": 11690.0,
+      "latent_j_kg": 531000.0,
+      "molar_kg": 0.016043,
+      "condensed_kg_m3": 450.0,
+      "colour": [
+       0.9,
+       0.9,
+       0.95
+      ],
+      "source": "NIST WebBook: triple point; vaporisation enthalpy 8.519 kJ/mol at 99.5 K"
+     },
+     {
+      "gas": "nh3",
+      "name": "ammonia",
+      "triple_k": 194.95,
+      "triple_pa": 6060.0,
+      "latent_j_kg": 1832000.0,
+      "molar_kg": 0.017031,
+      "condensed_kg_m3": 820.0,
+      "colour": [
+       0.98,
+       0.96,
+       0.9
+      ],
+      "source": "NIST WebBook: melting point and triple-point pressure; sublimation enthalpy 31.2 kJ/mol"
+     },
+     {
+      "gas": "n2",
+      "name": "nitrogen",
+      "triple_k": 63.14,
+      "triple_pa": 12520.0,
+      "latent_j_kg": 200000.0,
+      "molar_kg": 0.028014,
+      "condensed_kg_m3": 800.0,
+      "colour": [
+       0.97,
+       0.97,
+       0.97
+      ],
+      "source": "NIST WebBook: triple point; vaporisation enthalpy 5.6 kJ/mol at 77 K"
+     }
+    ],
+    "references": [
+     {
+      "text": "North, G. R. 1975, Theory of energy-balance climate models, J. Atmos. Sci. 32, 2033-2043",
+      "doi": "10.1175/1520-0469(1975)032<2033:TOEBCM>2.0.CO;2"
+     },
+     {
+      "text": "North, G. R. 1975, Analytical solution to a simple climate model with diffusive heat transport, J. Atmos. Sci. 32, 1301-1307",
+      "doi": "10.1175/1520-0469(1975)032<1301:ASTASC>2.0.CO;2"
+     },
+     {
+      "text": "Budyko, M. I. 1969, The effect of solar radiation variations on the climate of the Earth, Tellus 21(5), 611-619",
+      "url": "https://www.atmosp.physics.utoronto.ca/~dbj/PHY392/Budyko1969.pdf"
+     },
+     {
+      "text": "Held, I. M. and Hou, A. Y. 1980, Nonlinear axially symmetric circulations in a nearly inviscid atmosphere, J. Atmos. Sci. 37, 515-533",
+      "doi": "10.1175/1520-0469(1980)037<0515:NASCIA>2.0.CO;2"
+     },
+     {
+      "text": "Rhines, P. B. 1975, Waves and turbulence on a beta-plane, J. Fluid Mech. 69, 417",
+      "doi": "10.1017/S0022112075001504"
+     },
+     {
+      "text": "Kaspi, Y. and Showman, A. P. 2015, Atmospheric dynamics of terrestrial exoplanets over a wide range of orbital and atmospheric parameters, ApJ 804, 60",
+      "doi": "10.1088/0004-637X/804/1/60"
+     },
+     {
+      "text": "Pierrehumbert, R. T. 2010, Principles of Planetary Climate, Cambridge University Press",
+      "doi": "10.1017/CBO9780511780783"
+     },
+     {
+      "text": "NIST Chemistry WebBook, phase change data: water",
+      "url": "https://webbook.nist.gov/cgi/cbook.cgi?ID=C7732185&Mask=4"
+     },
+     {
+      "text": "NIST Chemistry WebBook, phase change data: carbon dioxide",
+      "url": "https://webbook.nist.gov/cgi/cbook.cgi?ID=C124389&Mask=4"
+     },
+     {
+      "text": "NIST Chemistry WebBook, phase change data: methane",
+      "url": "https://webbook.nist.gov/cgi/cbook.cgi?ID=C74828&Mask=4"
+     },
+     {
+      "text": "NIST Chemistry WebBook, phase change data: ammonia",
+      "url": "https://webbook.nist.gov/cgi/cbook.cgi?ID=C7664417&Mask=4"
+     },
+     {
+      "text": "NIST Chemistry WebBook, phase change data: nitrogen",
+      "url": "https://webbook.nist.gov/cgi/cbook.cgi?ID=C7727379&Mask=4"
+     },
+     {
+      "text": "North, G. R. and Coakley, J. A. 1979, Differences between seasonal and mean annual energy balance model calculations of climate and climate sensitivity, J. Atmos. Sci. 36, 1189-1204",
+      "url": "https://www.scilit.com/publications/e5e2208af0c7508757f7ca07d504802b"
+     },
+     {
+      "text": "North, G. R., Cahalan, R. F. and Coakley, J. A. 1981, Energy balance climate models, Rev. Geophys. 19, 91-121",
+      "url": "https://eisenman.ucsd.edu/courses/2024-sioc224/files/north-1981.pdf"
+     },
+     {
+      "text": "Siler, N., Roe, G. H. and Armour, K. C. 2018, Insights into the zonal-mean response of the hydrologic cycle to global warming from a diffusive energy balance model, J. Climate 31, 7481-7493",
+      "doi": "10.1175/JCLI-D-18-0081.1"
+     }
+    ]
+   }
+  }
+ }
+}
