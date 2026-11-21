@@ -162,5 +162,8 @@ fn no_second_climate_outside_the_crate() {
             }
         }
     }
-    assert!(found.is_empty(), "climate code outside sse-climate: {found:#?}");
+    assert!(
+        found.is_empty(),
+        "climate code outside sse-climate: {found:#?}"
+    );
 }

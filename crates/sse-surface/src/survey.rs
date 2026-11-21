@@ -194,6 +194,7 @@ fn chain(
             atlas,
             register: None,
             aerostat,
+            climate: Some(climate),
             stages: stages.iter().map(|x| x.to_string()).collect(),
         });
     }
