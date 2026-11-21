@@ -104,7 +104,7 @@ pub fn atoms() -> Vec<Box<dyn Atom>> {
             f: |i, _| {
                 let l = positive(i[0], "luminosity")?;
                 let r = positive(i[1], "radius")?;
-                Ok(vec![m::pow(l / (4.0 * m::PI * r * r * STEFAN_BOLTZMANN), 0.25)])
+                Ok(vec![m::pow(l / (4.0 * m::PI * r * r * sse_core::constants::sigma_sb()), 0.25)])
             },
         }
         .build(),

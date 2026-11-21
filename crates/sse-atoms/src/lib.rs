@@ -17,6 +17,7 @@ pub mod magnetic;
 pub mod nebula;
 pub mod orbit;
 pub mod planet;
+pub mod reach;
 pub mod star;
 pub mod tides;
 

@@ -2952,5 +2952,10 @@
   "op": "read_matter",
   "table": "substances",
   "id": "unobtainium"
+ },
+ {
+  "op": "read_reach",
+  "constant": "G",
+  "value": 1.33486e-10
  }
 ]

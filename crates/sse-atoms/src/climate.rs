@@ -2,7 +2,6 @@
 
 use crate::common::*;
 use sse_core::math as m;
-use sse_core::quantity::consts::*;
 use sse_core::Dimension as D;
 use sse_flow::{Atom, CostClass};
 
@@ -59,7 +58,7 @@ pub fn atoms() -> Vec<Box<dyn Atom>> {
                 if absorbed < 0.0 {
                     return Err(sse_flow::AtomError("albedo above 1".into()));
                 }
-                Ok(vec![m::pow(absorbed / STEFAN_BOLTZMANN, 0.25)])
+                Ok(vec![m::pow(absorbed / sse_core::constants::sigma_sb(), 0.25)])
             },
         }
         .build(),
@@ -105,7 +104,7 @@ pub fn atoms() -> Vec<Box<dyn Atom>> {
                 let t = positive(i[0], "temperature")?;
                 let mu = positive(i[1], "mean molecular weight")?;
                 let g = positive(i[2], "gravity")?;
-                Ok(vec![k::BOLTZMANN * t / (mu * k::AMU * g)])
+                Ok(vec![sse_core::constants::k_b() * t / (mu * k::AMU * g)])
             },
         }
         .build(),
@@ -151,7 +150,7 @@ pub fn atoms() -> Vec<Box<dyn Atom>> {
                 let r = positive(i[1], "exobase radius")?;
                 let t = positive(i[2], "exobase temperature")?;
                 let mp = positive(i[3], "particle mass")? * k::AMU;
-                Ok(vec![G * mm * mp / (k::BOLTZMANN * t * r)])
+                Ok(vec![sse_core::constants::g() * mm * mp / (sse_core::constants::k_b() * t * r)])
             },
         }
         .build(),
