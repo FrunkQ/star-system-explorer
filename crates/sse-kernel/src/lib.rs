@@ -1203,19 +1203,13 @@ impl Kernel {
                     now_s: at_s,
                     ..Default::default()
                 };
-                let mut t = self.observe.rules.apply(&subject, &BTreeMap::new());
-                for (k, v) in f {
-                    if let (Some(tag), Value::Bool(true)) = (k.strip_prefix(TAG_FIELD), v) {
-                        t.entry(tag.to_string()).or_insert_with(|| TagState {
-                            tag: tag.to_string(),
-                            rule: "authored".into(),
-                            evidence: vec![sse_sift::Read {
-                                field: k.clone(),
-                                value: v.clone(),
-                            }],
-                        });
-                    }
-                }
+                // TG3: the GM's `tag.x = true` forces a tag on (with the
+                // authored mark), `false` holds a rule's tag off.
+                let t = self.observe.rules.apply_authored(
+                    &subject,
+                    &BTreeMap::new(),
+                    &sse_sift::authored_tags(f),
+                );
                 if !t.is_empty() {
                     tags.insert(a.clone(), t);
                 }
@@ -1890,22 +1884,19 @@ impl Kernel {
                     .ok_or_else(|| err("no_universe", "open a universe first"))?;
                 let mut state = u.chronicle.state_at(UniverseTime::seconds(at_s));
                 // Authored tags out of the facts; rule tags from the stack.
+                // TG3: authored true forces a tag, authored false holds a
+                // rule's tag off; both come out of the facts.
                 let mut tags: BTreeMap<Address, std::collections::BTreeSet<String>> =
                     BTreeMap::new();
+                let mut authored: BTreeMap<Address, BTreeMap<String, bool>> = BTreeMap::new();
                 for (a, f) in state.facts.iter_mut() {
-                    let keys: Vec<String> = f
-                        .keys()
-                        .filter(|k| k.starts_with(TAG_FIELD))
-                        .cloned()
-                        .collect();
-                    for k in keys {
-                        if f.remove(&k) == Some(Value::Bool(true)) {
-                            tags.entry(a.clone())
-                                .or_default()
-                                .insert(k[TAG_FIELD.len()..].to_string());
-                        }
+                    let mine = sse_sift::authored_tags(f);
+                    f.retain(|k, _| !k.starts_with(TAG_FIELD));
+                    if !mine.is_empty() {
+                        authored.insert(a.clone(), mine);
                     }
                 }
+                let none = BTreeMap::new();
                 for (a, f) in &state.facts {
                     let subject = sse_sift::Subject {
                         address: Some(a.clone()),
@@ -1920,7 +1911,11 @@ impl Kernel {
                     for t in self
                         .observe
                         .rules
-                        .apply(&subject, &BTreeMap::new())
+                        .apply_authored(
+                            &subject,
+                            &BTreeMap::new(),
+                            authored.get(a).unwrap_or(&none),
+                        )
                         .into_keys()
                     {
                         tags.entry(a.clone()).or_default().insert(t);

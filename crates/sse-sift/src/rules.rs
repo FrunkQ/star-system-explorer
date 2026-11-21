@@ -50,6 +50,20 @@ impl std::fmt::Display for RuleError {
     }
 }
 
+/// The rule name a GM-forced tag carries: the authored mark.
+pub const AUTHORED: &str = "authored";
+
+/// The GM's authored tags among a subject's facts: `tag.<name>` true or false.
+pub fn authored_tags(facts: &BTreeMap<String, sse_core::cbor::Value>) -> BTreeMap<String, bool> {
+    facts
+        .iter()
+        .filter_map(|(k, v)| match (k.strip_prefix("tag."), v) {
+            (Some(t), sse_core::cbor::Value::Bool(b)) => Some((t.to_string(), *b)),
+            _ => None,
+        })
+        .collect()
+}
+
 impl RuleSet {
     pub fn validate(&self) -> Result<(), RuleError> {
         let mut ids = BTreeSet::new();
@@ -81,10 +95,32 @@ impl RuleSet {
         s: &Subject,
         held: &BTreeMap<String, TagState>,
     ) -> BTreeMap<String, TagState> {
+        self.apply_authored(s, held, &BTreeMap::new())
+    }
+
+    /// As [`apply`](Self::apply), under the GM's authored tags (tags design
+    /// section 4, TG3): `true` forces a tag on and `false` holds it off,
+    /// whatever its rules say, and rules that read it see the authored
+    /// answer. A forced tag carries the authored mark (rule `authored`, the
+    /// fact as its evidence) in place of the rule's. Taking the authored
+    /// fact away gives the rule's answer back, with its evidence.
+    pub fn apply_authored(
+        &self,
+        s: &Subject,
+        held: &BTreeMap<String, TagState>,
+        authored: &BTreeMap<String, bool>,
+    ) -> BTreeMap<String, TagState> {
         let mut out: BTreeMap<String, TagState> = BTreeMap::new();
         let mut subj = s.clone();
+        for (t, on) in authored {
+            if *on {
+                subj.tags.insert(t.clone());
+            } else {
+                subj.tags.remove(t);
+            }
+        }
         for r in self.rules.iter().filter(|r| Self::applies(r, s)) {
-            if out.contains_key(&r.tag) {
+            if out.contains_key(&r.tag) || authored.contains_key(&r.tag) {
                 continue;
             }
             let was = held.get(&r.tag).is_some_and(|h| h.rule == r.id);
@@ -104,6 +140,19 @@ impl RuleSet {
                     },
                 );
             }
+        }
+        for (t, on) in authored.iter().filter(|(_, on)| **on) {
+            out.insert(
+                t.clone(),
+                TagState {
+                    tag: t.clone(),
+                    rule: AUTHORED.into(),
+                    evidence: vec![Read {
+                        field: format!("tag.{t}"),
+                        value: sse_core::cbor::Value::Bool(*on),
+                    }],
+                },
+            );
         }
         out
     }

@@ -15,7 +15,7 @@ pub mod sifter;
 pub use classify::{Atlas, Axis, Bound, Class, ClassFit, ClassKind, Label, Scale};
 pub use pack::{load, SiftContent};
 pub use predicate::{Eval, Op, Predicate, Read, Subject};
-pub use rules::{Rule, RuleSet, TagChange, TagState};
+pub use rules::{authored_tags, Rule, RuleSet, TagChange, TagState, AUTHORED};
 pub use sifter::{score, sift, Hit, Pattern, Persistence, Reach, Sifter, SignificanceSpec, World};
 
 use sse_flow::CostClass;
