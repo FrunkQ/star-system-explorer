@@ -15,6 +15,7 @@
 
 pub mod atlas;
 pub mod cover;
+pub mod detail;
 pub mod impacts;
 pub mod named;
 pub mod plates;
@@ -660,6 +661,8 @@ pub fn envelopes_of(run: &SystemRun, s: &SurfaceSettings) -> Vec<SurfaceEnvelope
 mod atlas_tests;
 #[cfg(test)]
 mod cover_tests;
+#[cfg(test)]
+mod detail_tests;
 #[cfg(test)]
 mod impacts_tests;
 #[cfg(test)]

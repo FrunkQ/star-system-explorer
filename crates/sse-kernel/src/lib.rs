@@ -48,6 +48,9 @@ struct Universe {
     /// machine only and never broadcast (record design 8A); its own chronicle,
     /// so record activity never moves the universe state hash.
     record: Chronicle,
+    /// Recent Orbit-level atlases (S16) by `sse_surface::detail::orbit_key`:
+    /// reuse before computing. A cache only; dropped with the universe.
+    orbits: adopt::OrbitCache,
 }
 
 /// Event kind for a pack stack change in an open universe.
@@ -1235,6 +1238,7 @@ impl Kernel {
                     looks: BTreeMap::new(),
                     runs: BTreeMap::new(),
                     record: Chronicle::new(),
+                    orbits: vec![],
                 };
                 let manifest_id = u.manifest().id().hex();
                 self.universe = Some(u);
@@ -1779,6 +1783,7 @@ impl Kernel {
                     at_s,
                     tiles.as_deref().unwrap_or(&[]),
                     u.runs.get(&system),
+                    &mut u.orbits,
                 )?;
                 Response::SystemResolved {
                     system,
@@ -2153,6 +2158,7 @@ impl Kernel {
                     looks: BTreeMap::new(),
                     runs: BTreeMap::new(),
                     record,
+                    orbits: vec![],
                 };
                 let r = Response::ChronicleImported {
                     root: root.to_string(),

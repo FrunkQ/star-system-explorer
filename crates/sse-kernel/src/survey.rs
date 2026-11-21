@@ -61,7 +61,8 @@ pub(crate) fn surveyed<'c>(
     };
     let mut s = sse_surface::scenario::settings();
     if quick {
-        s.plates.cells_per_face = 16;
+        // Quick is the Orbit level (S16): the coarse run a full survey refines.
+        s = sse_surface::detail::orbit_settings(&s);
         s.atlas.tile_samples = 32;
     }
     let (source, body, seed, epoch_gyr, at_s): (String, Body, Seed, f64, Option<i64>) = match from {
