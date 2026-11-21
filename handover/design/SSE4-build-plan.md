@@ -152,6 +152,10 @@ New fixtures: Pluto, Charon, Triton, Enceladus, Miranda, Mimas, Ceres, Iapetus a
 
 ### J: the campaign record, logic blocks, boxes and programs **[decided 19 Nov]**. Stages J1 to J9 and J6b exactly as `SSE4-record-logic-programs-design.md` section 10, one package each. J1 (needs K3, K5, K9), J2 (K4, K8) and J3 (K4, K5) can start now. Read that file's section 9 first: it lists five points of care against code already built (flow document hashes, note filtering in scenes, the intent list moving into the kernel, X3d building on J4 and J7, and record data leaving the peer-to-peer broadcast). Section 8A (secrecy: what each device receives) binds every J package.
 
+### TG: tags **[accepted 21 Nov]**. Stages TG1 to TG11 exactly as `SSE4-tags-design.md` section 7, and TG12 to TG15 (universe packs, in V1 by Alex's word 21 Nov: dressing rules that place a setting's constructs and bases on worlds that fit, two shipped packs, chart room controls, pack shelves on the Explorers site) as its section 5.7, one package each, with the owner thread named on each row. A tag is only a label: no value, never an input to physics. TG1 (declarations and the load-time check) first, then TG2 (the physics wall) and TG3 together, TG6 (V3 tag import), TG11 (resource inventory, extraction and stock). TG11 and TG9 carry the economy placeholders listed under EC.
+
+### EC: economy **[Alex 21 Nov: a 4.1 feature, after 4.0; placeholders now, high-level design once enough is in place]**. A separate pack over the real distribution of resources, with people taking part eventually. Nothing is built for it in 4.0 beyond the placeholders in `SSE4-tags-design.md` section 5.6: resource kinds as pack data, natural inventory by body, `stock` on any address, transfers that conserve (all TG11), ship discipline and readiness as kept values (TG9), and the carrying cost NAV already gives. EC0, the high-level economy design, starts when TG11, TG9, J6 (programs) and the Traveller trade data (X3) have landed; it is a design package on Fable and blocks nothing in 4.0.
+
 ### A: agents
 
 | Id | Package | Needs | Acceptance checks |
@@ -194,6 +198,8 @@ New fixtures: Pluto, Charon, Triton, Enceladus, Miranda, Mimas, Ceres, Iapetus a
 | M7 Galaxy | K7, G1 to G6, U6, V9, C5, F8, N6, N7, O3 to O8, O11, O15 | chart a galaxy, ink a merger, find a home, survey a patch |
 | M6c Ground detail (later) | S9 to S13, W4, W6 | watch a layered canyon cut over millions of years; find a sea arch on approach; walk through alien forest; place landmarks and ruins; chart a country with borders and roads |
 | M8 Whole universe | G7, G8, V7, L2, L2b, S8, T4, X2, X3, X5 | real Milky Way skies; coupled living planets; share on the explorers site |
+| M5e Tags and universe packs | TG1 to TG15 | import a V3 map and keep every label you set; survey a rock and see what is worth mining, mine it out and watch the label go; stack a setting pack and adopt its bases onto worlds that fit |
+| 4.1 Economy (after 4.0) | EC0 design, then its own packages | goods priced by where they are scarce and what it costs to carry them; trade ships; players buying, selling and hauling |
 
 M6 and M7 are independent of each other and of M5 after M2, so they can run in parallel.
 
