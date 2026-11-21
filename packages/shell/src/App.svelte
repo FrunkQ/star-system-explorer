@@ -29,7 +29,7 @@
   import { showReference } from "../../ui-contract/src/index.ts";
   import { oracMay } from "../../agents/src/orac.ts";
   import { atomIssueTarget, flowEntries, lensEntries, lensTarget, loadAtoms, physicsTarget } from "../../agents/src/orac-targets.ts";
-  import { programTarget, ruleEntries } from "../../agents/src/orac-rules.ts";
+  import { programTarget, ruleEntries, sifterEntries, sifterTarget } from "../../agents/src/orac-rules.ts";
   import { dataViewEntries, dataViewTarget, lookEntries, screenTarget, styleTarget, symbologyTarget } from "../../agents/src/orac-looks.ts";
   import { orbitScene, voicesFromSystem } from "../../ui-contract/src/index.ts";
   import { orbitBodies, phasesFrom, withPhases, yearsToSeconds } from "../../ui-contract/src/index.ts";
@@ -562,9 +562,10 @@
           return r.status === "applied" ? null : r.status === "refused" ? r.reason : `not applied (${r.status})`;
         } }),
         programTarget(s, ws),
+        sifterTarget(s, ws, (factsDoc as unknown as AuthoredFacts).scope),
         atomIssueTarget((u) => window.open(u, "_blank", "noopener")),
       ],
-      catalogue: () => [...flowEntries(s, atoms), ...lensEntries(lenses, fields()), ...lookEntries({ views: [...REGISTRY, ...PLAYER_STACK] as never, styles: styleHost.registry(), symbologies: symbols.registry() }), ...dataViewEntries(observeOf(s.stack().base)?.setup ?? null), ...ruleEntries(s)],
+      catalogue: () => [...flowEntries(s, atoms), ...lensEntries(lenses, fields()), ...lookEntries({ views: [...REGISTRY, ...PLAYER_STACK] as never, styles: styleHost.registry(), symbologies: symbols.registry() }), ...dataViewEntries(observeOf(s.stack().base)?.setup ?? null), ...ruleEntries(s), ...sifterEntries(s, STORY_STARTERS)],
       here: () => [agentContext, ws.bench ? `Flow on the bench: ${ws.bench.flow}${ws.bench.node ? `, node ${ws.bench.node}` : ""}` : "", `Lens in use: ${lens.label}`].filter(Boolean).join("\n"),
     };
   });
