@@ -7,6 +7,7 @@
 import { spawn } from "node:child_process";
 import { mkdirSync } from "node:fs";
 import assert from "node:assert/strict";
+import { go, more } from "./nav.mjs";
 import { createRequire } from "node:module";
 
 const { chromium, firefox, webkit } = createRequire(import.meta.url)("playwright");
@@ -30,8 +31,7 @@ try {
     gm.on("pageerror", (e) => errors.push(e.message));
     await gm.goto(base);
     await gm.waitForSelector("[data-state-hash]:not([data-state-hash=''])", { timeout: 20000 });
-    await gm.getByRole("button", { name: "Explore", exact: true }).click();
-    await gm.locator("[data-section-tab=window]").click();
+    await go(gm, "window");
     await gm.waitForSelector(".win[data-window^='eye:']", { timeout: 30000 });
     const win = gm.locator(".win");
     assert.match(await win.locator("[data-lede]").innerText(), /The star is a disc, blinding/);
@@ -62,7 +62,7 @@ try {
       assert.ok((await win.locator("[data-missed]").count()) >= 1);
     }
 
-    await gm.getByRole("button", { name: "Night chart" }).click();
+    await more(gm, "Night chart");
     await gm.waitForTimeout(400);
     await win.locator("[data-target]").selectOption("star");
     await gm.waitForTimeout(200);
@@ -72,8 +72,7 @@ try {
     phone.on("pageerror", (e) => errors.push(`phone: ${e.message}`));
     await phone.goto(base);
     await phone.waitForSelector("[data-state-hash]:not([data-state-hash=''])", { timeout: 20000 });
-    await phone.getByLabel("Screen menu").selectOption("explore");
-    await phone.locator("[data-section-tab=window]").click();
+    await go(phone, "window");
     await phone.waitForSelector(".win[data-window^='eye:']", { timeout: 30000 });
     const over = await phone.evaluate(() => document.documentElement.scrollWidth - window.innerWidth);
     assert.ok(over <= 1, `no sideways scroll on a phone (${over}px over)`);

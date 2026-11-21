@@ -8,7 +8,22 @@
   "symbology": "sse.symbology.diagrammatic",
   "vocab": "physics",
   "items": [
-    { "view": "sse.view.data-views", "area": "chart" },
-    { "view": "sse.view.time-ruler", "area": "ruler" }
+    {
+      "view": "sse.view.data-views",
+      "area": "chart"
+    },
+    {
+      "view": "sse.view.time-ruler",
+      "area": "ruler"
+    }
+  ],
+  "rail": [
+    {
+      "scale": "workshop",
+      "group": "workshop",
+      "label": "Player data",
+      "order": 4,
+      "hint": "What players know: data views and the Scanned button"
+    }
   ]
 }

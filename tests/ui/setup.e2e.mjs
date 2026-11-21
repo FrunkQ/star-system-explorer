@@ -14,6 +14,7 @@
 import { spawn } from "node:child_process";
 import { mkdirSync } from "node:fs";
 import assert from "node:assert/strict";
+import { go, more } from "./nav.mjs";
 import { createRequire } from "node:module";
 
 const { chromium, firefox, webkit } = createRequire(import.meta.url)("playwright");
@@ -36,10 +37,9 @@ try {
     await page.goto(url);
     await page.waitForSelector("[data-state-hash]:not([data-state-hash=''])");
     const stateHash = await page.getAttribute("[data-state-hash]", "data-state-hash");
-    const screenBtn = (n) => page.getByRole("group", { name: "Screen" }).getByRole("button", { name: n });
 
     // Packs.
-    await screenBtn("Packs").click();
+    await go(page, "packs");
     const packs = page.locator("[role=region][aria-label=Packs]");
     await packs.getByRole("button", { name: "Check stack" }).click();
     await packs.locator(".verdict").getByText("Validated").waitFor();
@@ -53,7 +53,7 @@ try {
     await proposal.getByRole("button", { name: "Accept" }).click();
     await page.waitForFunction(() => [...document.querySelectorAll("[data-pack]")].some((e) => e.dataset.pack === "sample.warm-worlds"));
     await page.waitForFunction((h) => document.querySelector("[data-state-hash]")?.getAttribute("data-state-hash") !== h, stateHash);
-    await screenBtn("Chart").click();
+    await go(page, "system");
     await page.locator("[role=button][aria-label^='Tarn']").click();
     const tarn = page.locator("section[aria-label='Tarn']");
     await tarn.locator(".stamp", { hasText: "Fictional" }).waitFor();
@@ -61,7 +61,7 @@ try {
     assert.match(surface, /fictional/i);
 
     // Player data.
-    await screenBtn("Player data").click();
+    await go(page, "data");
     const dv = page.locator("[role=region][aria-label='Player data']");
     const pcard = dv.locator("[data-view='sse.view.card'] article");
     const massOf = async () => squash(await pcard.locator("[data-field='mass_kg'] dd").innerText());
@@ -90,7 +90,7 @@ try {
     await page.waitForFunction(() => /270 to 290 K/.test(document.querySelector("[aria-label='Player data'] [data-field='surface.temp_mean_k'] dd")?.textContent ?? ""));
 
     // Screens.
-    await screenBtn("Screens").click();
+    await go(page, "screens");
     const comp = page.locator("[role=region][aria-label='Screens composer']");
     await comp.locator("[data-view='sse.view.card'] article").waitFor();
     assert.equal(await comp.locator(".preview [data-view]").count(), 6, "the Bridge screen's six items drawn");

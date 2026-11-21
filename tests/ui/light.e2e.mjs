@@ -57,7 +57,7 @@ try {
     await gm.waitForSelector("[data-state-hash]:not([data-state-hash=''])", { timeout: 20000 });
     await gm.waitForTimeout(1200);
     const hash = () => gm.locator("[data-state-hash]").getAttribute("data-state-hash");
-    const control = gm.locator(".status .light");
+    const control = gm.locator(".ruler-side .light");
     const starMark = () => gm.locator(`.area-chart .body[data-address="${STAR}"] [data-mark]`).first().getAttribute("data-mark");
     assert.equal(await control.getAttribute("data-light"), "symbols", "opens on the chart's own colours");
     const before = await starMark();

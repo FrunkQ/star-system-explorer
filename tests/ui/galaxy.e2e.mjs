@@ -9,6 +9,7 @@
 import { spawn } from "node:child_process";
 import { mkdirSync } from "node:fs";
 import assert from "node:assert/strict";
+import { go, more } from "./nav.mjs";
 import { createRequire } from "node:module";
 
 const { chromium, firefox, webkit } = createRequire(import.meta.url)("playwright");
@@ -32,7 +33,7 @@ try {
     gm.on("pageerror", (e) => errors.push(e.message));
     await gm.goto(base);
     await gm.waitForSelector("[data-state-hash]:not([data-state-hash=''])", { timeout: 20000 });
-    await gm.getByRole("button", { name: "Explore", exact: true }).click();
+    await go(gm, "explore");
     await gm.locator("[data-section-tab=galaxy]").click();
     await gm.waitForSelector(".gal [data-ring]", { timeout: 30000 });
     const gal = gm.locator(".gal");
@@ -82,7 +83,7 @@ try {
     await gal.locator("[data-ink-clear]").click();
     await gm.waitForFunction(() => !document.querySelector(".gal [data-inked]") && !document.querySelector(".gal path.ghost"), null, { timeout: 30000 });
 
-    await gm.getByRole("button", { name: "Night chart" }).click();
+    await more(gm, "Night chart");
     await gm.waitForTimeout(300);
     await shot(gm, "u6-galaxy-night");
 
@@ -90,7 +91,7 @@ try {
     phone.on("pageerror", (e) => errors.push(`phone: ${e.message}`));
     await phone.goto(base);
     await phone.waitForSelector("[data-state-hash]:not([data-state-hash=''])", { timeout: 20000 });
-    await phone.getByLabel("Screen menu").selectOption("explore");
+    await go(phone, "explore");
     await phone.locator("[data-section-tab=galaxy]").click();
     await phone.waitForSelector(".gal [data-ring]", { timeout: 30000 });
     const over = await phone.evaluate(() => document.documentElement.scrollWidth - window.innerWidth);
