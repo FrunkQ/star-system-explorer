@@ -160,3 +160,60 @@ fn the_reach_report_lists_every_block_once() {
     );
     assert_eq!(r["type"], "error", "{r}");
 }
+
+/// MP1c (design 7A.6): a unit added on the sheet can be typed like any
+/// built-in one.
+#[test]
+fn a_unit_from_the_sheet_can_be_typed() {
+    let mut k = crate::Kernel::new();
+    let r = send(
+        &mut k,
+        serde_json::json!({"op": "load_stack", "packs": [
+        pack("packs/base-physics/pack.json"), pack("tests/fixtures/packs/reference-toy.json")]}),
+    );
+    assert_eq!(r["type"], "stack_loaded", "{r}");
+    let orbit = |a: serde_json::Value| {
+        serde_json::json!({
+        "host_mass": {"value": 1, "unit": "m_sun"}, "body_mass": {"value": 1, "unit": "m_earth"},
+        "semi_major_axis": a, "eccentricity": {"value": 0.0}})
+    };
+    let by_league = derive(
+        &mut k,
+        "sse.base.orbit-basics",
+        orbit(serde_json::json!({"value": 1.0e6, "unit": "league"})),
+    );
+    let by_m = derive(
+        &mut k,
+        "sse.base.orbit-basics",
+        orbit(serde_json::json!({"value": 4.828032e9, "unit": "m"})),
+    );
+    assert_eq!(
+        by_league["orbit.period"]["value"],
+        by_m["orbit.period"]["value"]
+    );
+}
+
+/// The shipped sheet (or the one `SSE_BASE_REFERENCE` names) loads in a
+/// stack, its units included, and does not move a constant.
+#[test]
+fn the_base_sheet_loads_in_a_stack() {
+    let path = std::env::var("SSE_BASE_REFERENCE")
+        .map(PathBuf::from)
+        .unwrap_or_else(|_| root().join("packs/base-reference/pack.json"));
+    let Ok(s) = std::fs::read_to_string(&path) else {
+        return;
+    };
+    let sheet: serde_json::Value = serde_json::from_str(&s).unwrap();
+    let mut k = crate::Kernel::new();
+    let r = send(
+        &mut k,
+        serde_json::json!({"op": "load_stack", "packs": [
+            pack("tests/fixtures/packs/base-physics.json"), sheet]}),
+    );
+    assert_eq!(r["type"], "stack_loaded", "{r}");
+    let g = send(
+        &mut k,
+        serde_json::json!({"op": "read_reach", "constant": "g"}),
+    );
+    assert_eq!(g["in_force"], g["real"], "{g}");
+}

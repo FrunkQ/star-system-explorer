@@ -274,3 +274,92 @@ fn checked_by_checks_but_never_works_out() {
     let e = Reference::from_json(&[("base".into(), bad)]).unwrap_err();
     assert!(e[0].contains("M_sun"), "{e:#?}");
 }
+
+fn with_units(units: J) -> J {
+    let mut g = constants(json!([
+        {"id": "yr_julian", "name": "Julian year", "value": {"v": 31557600.0, "unit": "s", "src": "codata-2018"}}
+    ]));
+    g["units"] = units;
+    g
+}
+
+#[test]
+fn units_follow_their_constants_and_cannot_be_redefined() {
+    let ly =
+        json!({"id": "ly", "symbol": "ly", "measures": "length", "factor_from": "c yr_julian"});
+    let league = json!({"id": "league", "symbol": "lea", "measures": "length", "factor": {"v": 4828.032, "src": "codata-2018"}});
+    let r = Reference::from_json(&[(
+        "base".into(),
+        with_units(json!([ly.clone(), league.clone()])),
+    )])
+    .unwrap();
+    // The light year agrees with the built-in one, so only the league is new.
+    let added: Vec<String> = r.units().into_iter().map(|u| u.id).collect();
+    assert_eq!(added, vec!["league".to_string()]);
+    assert_eq!(r.unit_factor("ly").unwrap(), 299_792_458.0 * 31_557_600.0);
+    // A kilometre that is not 1000 m is refused.
+    let km = json!({"id": "km", "symbol": "km", "measures": "length", "factor": {"v": 999.0, "src": "codata-2018"}});
+    let e = Reference::from_json(&[("base".into(), with_units(json!([km])))]).unwrap_err();
+    assert!(e[0].contains("redefines the built-in unit"), "{e:#?}");
+    // An unknown dimension is refused.
+    let odd =
+        json!({"id": "smoot", "measures": "charm", "factor": {"v": 1.7018, "src": "codata-2018"}});
+    let e = Reference::from_json(&[("base".into(), with_units(json!([odd])))]).unwrap_err();
+    assert!(e[0].contains("charm"), "{e:#?}");
+    // Halve c in a what-if: the metre stays, the light year follows.
+    let slow = json!({"constants": [{"id": "c", "value": {"v": 149896229.0, "unit": "m s-1", "src": "codata-2018", "replaces": "base"}}]});
+    let r = Reference::from_json(&[
+        ("base".into(), with_units(json!([ly, league]))),
+        ("what-if".into(), slow),
+    ])
+    .unwrap();
+    let ly = r
+        .units()
+        .into_iter()
+        .find(|u| u.id == "ly")
+        .expect("ly follows c");
+    assert_eq!(ly.scale, 149_896_229.0 * 31_557_600.0);
+}
+
+#[test]
+fn element_origins_name_the_legend_and_sum_to_one() {
+    let block = |shares: J, also: J| {
+        json!({
+            "sources": [{"id": "k2020", "text": "Kobayashi et al. 2020"}],
+            "origin_legend": [
+                {"id": "massive_stars", "physics": "core collapse", "plain": "exploding massive stars", "story": "giants that blew apart"},
+                {"id": "white_dwarfs", "physics": "Type Ia", "plain": "white dwarfs", "story": "dead stars that detonated"}
+            ],
+            "elements": [{"id": "Fe", "z": 26, "symbol": "Fe",
+                "origin": {"shares": shares, "src": "k2020", "also": also, "check": "authored"}}]
+        })
+    };
+    let good = Reference::from_json(&[(
+        "p".into(),
+        block(
+            json!({"massive_stars": 0.5, "white_dwarfs": 0.5}),
+            json!([]),
+        ),
+    )]);
+    assert!(good.is_ok(), "{:#?}", good.err());
+    let legend = good.unwrap().listing(Some("origin_legend"));
+    assert_eq!(
+        legend["origin_legend"]["white_dwarfs"]["plain"],
+        "white dwarfs"
+    );
+    let bad = Reference::from_json(&[(
+        "p".into(),
+        block(
+            json!({"massive_stars": 0.5, "neutron_stars": 0.3}),
+            json!(["nobody"]),
+        ),
+    )])
+    .unwrap_err();
+    let all = bad.join("\n");
+    assert!(
+        all.contains("neutron_stars is not in origin_legend"),
+        "{all}"
+    );
+    assert!(all.contains("sum to 0.8"), "{all}");
+    assert!(all.contains("source nobody"), "{all}");
+}

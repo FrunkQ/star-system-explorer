@@ -1080,11 +1080,12 @@ impl Kernel {
                 })?,
             (t, None) => {
                 if let Some(t) = t {
-                    if !sse_reference::TABLES.contains(&t) && t != "sources" {
+                    if !sse_reference::TABLES.contains(&t) && t != "sources" && t != "origin_legend"
+                    {
                         return Err(err(
                             "no_table",
                             format!(
-                                "the master data sheet has no table {t} (tables: {}, sources)",
+                                "the master data sheet has no table {t} (tables: {}, sources, origin_legend)",
                                 sse_reference::TABLES.join(", ")
                             ),
                         ));
@@ -1696,6 +1697,37 @@ impl Kernel {
                                 });
                             }
                         };
+                        // MP1c (design 7A.6): the sheet's units join the
+                        // session's; a pack unit of the same id must agree.
+                        let mut stack = stack;
+                        let standard = sse_core::Units::standard();
+                        let mut clashes = vec![];
+                        for u in observe.reference.units() {
+                            if let Ok(have) = stack.units.get(&u.id) {
+                                let built_in = standard.get(&u.id).is_ok();
+                                if !built_in && (have.scale != u.scale || have.dim != u.dim) {
+                                    clashes.push(format!(
+                                        "unit {} on the master data sheet disagrees with the pack unit of that id",
+                                        u.id
+                                    ));
+                                    continue;
+                                }
+                            }
+                            stack.units.insert(u);
+                        }
+                        if !clashes.is_empty() {
+                            let issues: Vec<sse_pack::StackIssue> = clashes
+                                .iter()
+                                .map(|m| sse_pack::StackIssue {
+                                    pack: "reference".into(),
+                                    message: m.clone(),
+                                })
+                                .collect();
+                            return Ok(Response::StackRejected {
+                                report: sse_pack::report(&issues),
+                                issues: clashes,
+                            });
+                        }
                         let codes = match sse_codes::Codes::load(&ms) {
                             Ok(c) => c,
                             Err(problems) => {

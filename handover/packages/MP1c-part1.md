@@ -28,6 +28,14 @@ Tests are in `sse-reference/src/tests.rs` and `sse-kernel/src/matter_tests.rs`. 
 
   `climate.rs`, `orbit.rs` and `tides.rs` no longer import the compiled constants at all.
 - **Reach declarations.** `sse_atoms::reach::DECLARED` lists each block that follows, and which constants it reads. It holds the converted blocks above plus the pure formulas that read no constant (Hill radius, Roche limit, apsides and the rest). Every other block "cannot follow", the honest default, so a block moves up only with a test.
+- **Units beside Constants** (design 7A.6, added on Alex's word on 21 Nov). The table is `provides.reference.units`, with rows `{id, symbol, name, measures, group, factor | factor_from, offset?}`.
+  - `measures` names a dimension, or `dim` gives the seven SI exponents.
+  - `factor_from` is a formula over constants (`c yr_julian` for the light year), so a unit cannot drift from the constant behind it. A typed copy beside a formula is checked against it.
+  - A row with a built-in unit's id must agree with it to 1e-9, or the stack is refused as a redefinition ("add a unit with a new id instead"). A pack unit of the same id must agree too.
+  - New units join the session's registry, so a league typed in `derive` is a league.
+  - While nothing behind a unit is edited, the built-in factor stays bit for bit. Halve c in a what-if and the metre stays while the light year follows.
+  - `read_matter` shows a unit's worked-out factor.
+  - Units only ever change how a number is shown and typed. The kernel works in SI.
 - **`read_reach {constant, value?}`** returns `reach {constant, real, in_force, proposed?, follows, estimated, cannot_follow}`, with every registered block in exactly one group. A follows entry says whether it uses that constant.
 
 ## Not yet (part 2), and why
@@ -42,7 +50,13 @@ Tests are in `sse-reference/src/tests.rs` and `sse-kernel/src/matter_tests.rs`. 
 - `the_base_sheet_loads_clean`: PR 93's sheet loads. Once sigma_SB is typed as CODATA's 5.670374419e-8, its handle equals the compiled constants bit for bit. That is the precondition for every golden staying identical. The citations thread was asked for that change.
 - `doubling_g_shortens_the_year_by_root_two_and_doubles_gravity`: on the base physics stack with a fictional twice-G pack, Earth's orbital period is 1/√2 of the real one to 1e-12, and its surface gravity doubles. The real kernel is untouched afterwards.
 - `the_reach_report_lists_every_block_once`: every atom appears exactly once, every declared block is a real atom, and an unknown constant is refused.
+- `units_follow_their_constants_and_cannot_be_redefined`: the light year agrees with the built-in one and is not re-added, a league is added, a 999 m kilometre and an unknown dimension are refused, and halving c moves the light year.
+- `a_unit_from_the_sheet_can_be_typed` (kernel): a semi-major axis of a million leagues gives the same period as 4.828032e9 m.
 - `with_sets_and_restores` (sse-core).
 
 ## Goldens
 `tests/golden/contract.jsonl` was re-blessed on purpose for one new contract case (`read_reach` for G) and the op lists. Every other golden is identical: the handle holds the compiled values, which is MP1c's acceptance test.
+
+Golden: the contract's `read_matter` listing response gains `"units":[]`
+(the units table is new here) and `"origin_legend":{}` (from MP1's
+legend follow-up). Both on purpose.

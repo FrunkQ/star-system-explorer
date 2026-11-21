@@ -27,13 +27,53 @@ use std::collections::BTreeMap;
 
 pub mod expr;
 
+/// Relative tolerance between a sheet unit and the built-in one of the
+/// same id.
+const UNIT_TOL: f64 = 1e-9;
+
+/// A unit row's dimension: `dim` (seven SI exponents) or a named `measures`.
+fn unit_dim(row: &Map<String, J>) -> Option<sse_core::Dimension> {
+    use sse_core::Dimension as D;
+    if let Some(a) = row.get("dim").and_then(J::as_array) {
+        let v: Vec<i8> = a
+            .iter()
+            .filter_map(|x| x.as_i64())
+            .map(|x| x as i8)
+            .collect();
+        return <[i8; 7]>::try_from(v).ok().map(D);
+    }
+    Some(match row.get("measures").and_then(J::as_str)? {
+        "dimensionless" | "angle" => D::NONE,
+        "length" => D::LENGTH,
+        "mass" => D::MASS,
+        "time" => D::TIME,
+        "temperature" => D::TEMPERATURE,
+        "current" => D([0, 0, 0, 1, 0, 0, 0]),
+        "amount" => D([0, 0, 0, 0, 0, 1, 0]),
+        "luminous_intensity" => D([0, 0, 0, 0, 0, 0, 1]),
+        "power" => D::POWER,
+        "energy" => D([2, 1, -2, 0, 0, 0, 0]),
+        "force" => D([1, 1, -2, 0, 0, 0, 0]),
+        "frequency" => D([0, 0, -1, 0, 0, 0, 0]),
+        "pressure" => D::PRESSURE,
+        "flux" => D::FLUX,
+        "velocity" => D::VELOCITY,
+        "acceleration" => D::ACCELERATION,
+        "density" => D::DENSITY,
+        "magnetic_field" => D::MAGNETIC_FIELD,
+        "magnetic_moment" => D::MAGNETIC_MOMENT,
+        _ => return None,
+    })
+}
+
 /// Relative tolerance between a derived constant's stored value and the one
 /// worked out from its formula.
 const DERIVED_TOL: f64 = 1e-9;
 
 /// The tables, in the order they are checked.
-pub const TABLES: [&str; 6] = [
+pub const TABLES: [&str; 7] = [
     "constants",
+    "units",
     "elements",
     "isotopes",
     "substances",
@@ -62,6 +102,9 @@ pub struct Reference {
     /// Table name to rows by id.
     pub tables: BTreeMap<String, BTreeMap<String, Map<String, J>>>,
     pub sources: BTreeMap<String, Map<String, J>>,
+    /// Where elements were made (design 8.1): source id to its name in the
+    /// three wordings. Element rows point at these from `origin.shares`.
+    pub origin_legend: BTreeMap<String, Map<String, J>>,
     /// The pack each row came from (`table/id`), and the packs that changed it.
     pub origin: BTreeMap<String, Vec<String>>,
 }
@@ -135,10 +178,12 @@ impl Reference {
                 if table == "about" && rows.is_string() {
                     continue;
                 }
-                let known = TABLES.contains(&table.as_str()) || table == "sources";
+                let known = TABLES.contains(&table.as_str())
+                    || table == "sources"
+                    || table == "origin_legend";
                 if !known {
                     problems.push(format!(
-                        "{pack}: reference table {table} is not one of {}, sources",
+                        "{pack}: reference table {table} is not one of {}, sources, origin_legend",
                         TABLES.join(", ")
                     ));
                     continue;
@@ -158,6 +203,10 @@ impl Reference {
                     };
                     if table == "sources" {
                         r.sources.insert(id.to_string(), row.clone());
+                        continue;
+                    }
+                    if table == "origin_legend" {
+                        r.origin_legend.insert(id.to_string(), row.clone());
                         continue;
                     }
                     let key = format!("{table}/{id}");
@@ -295,10 +344,115 @@ impl Reference {
         c
     }
 
+    /// A unit's factor to SI: worked out from `factor_from` (a formula
+    /// over constants) when it has one, else its typed `factor`.
+    pub fn unit_factor(&self, id: &str) -> Result<f64, String> {
+        let row = self
+            .row("units", id)
+            .ok_or_else(|| format!("no unit {id}"))?;
+        match row.get("factor_from").and_then(J::as_str) {
+            Some(f) => {
+                let mut miss = None;
+                let v = expr::eval(f, |n| match self.constant_at(n, 1) {
+                    Ok(v) => Some(v),
+                    Err(e) => {
+                        miss.get_or_insert(e);
+                        None
+                    }
+                });
+                v.map_err(|e| miss.unwrap_or(e))
+            }
+            None => num(row.get("factor")).ok_or_else(|| format!("unit {id} has no factor")),
+        }
+    }
+
+    /// The units the sheet adds to the session, and the built-in units it
+    /// moves because a constant behind them was edited (design 7A.6: change
+    /// c and the light year follows). A built-in unit the sheet agrees with
+    /// is left as compiled, bit for bit.
+    pub fn units(&self) -> Vec<sse_core::quantity::Unit> {
+        let standard = sse_core::Units::standard();
+        let empty = BTreeMap::new();
+        let mut out = vec![];
+        for (id, row) in self.tables.get("units").unwrap_or(&empty) {
+            let (Ok(factor), Some(dim)) = (self.unit_factor(id), unit_dim(row)) else {
+                continue;
+            };
+            let offset = num(row.get("offset")).unwrap_or(0.0);
+            if let Ok(b) = standard.get(id) {
+                if ((b.scale - factor) / b.scale).abs() <= UNIT_TOL && b.offset == offset {
+                    continue;
+                }
+            }
+            out.push(sse_core::quantity::Unit {
+                id: id.clone(),
+                symbol: row
+                    .get("symbol")
+                    .and_then(J::as_str)
+                    .unwrap_or(id)
+                    .to_string(),
+                dim,
+                scale: factor,
+                offset,
+            });
+        }
+        out
+    }
+
     /// The load checks of design section 4.6.
     fn check(&self) -> Vec<String> {
         let mut p = vec![];
         let empty_c = BTreeMap::new();
+        // Element origins (design 8.1): shares name legend entries and sum
+        // to 1; every source named resolves.
+        for (id, row) in self.tables.get("elements").unwrap_or(&empty_c) {
+            p.extend(self.check_origin(id, row));
+        }
+        // Units (design 7A.6): a known dimension, a factor that resolves,
+        // a typed copy that agrees with its formula, and no redefinition of
+        // a unit the kernel already has while nothing behind it was edited.
+        let standard = sse_core::Units::standard();
+        for (id, row) in self.tables.get("units").unwrap_or(&empty_c) {
+            let Some(dim) = unit_dim(row) else {
+                p.push(format!(
+                    "unit {id}: measures {:?} is not a dimension the reader knows (or give dim as seven exponents)",
+                    row.get("measures").and_then(J::as_str).unwrap_or("")
+                ));
+                continue;
+            };
+            let factor = match self.unit_factor(id) {
+                Ok(f) => f,
+                Err(e) => {
+                    p.push(format!("unit {id}: {e}"));
+                    continue;
+                }
+            };
+            let f = row.get("factor_from").and_then(J::as_str).unwrap_or("");
+            let one_pack = self.one_pack(&format!("@unit:{id}"), f)
+                && self
+                    .origin
+                    .get(&format!("units/{id}"))
+                    .is_none_or(|o| o.len() == 1);
+            if let (Some(typed), false) = (num(row.get("factor")), f.is_empty()) {
+                if one_pack && ((typed - factor) / factor).abs() > DERIVED_TOL {
+                    p.push(format!(
+                        "unit {id}: factor typed as {typed:e} but {f} gives {factor:e}"
+                    ));
+                }
+            }
+            if let Ok(b) = standard.get(id) {
+                if b.dim != dim {
+                    p.push(format!(
+                        "unit {id} measures something else than the built-in {id}"
+                    ));
+                } else if one_pack && ((b.scale - factor) / b.scale).abs() > UNIT_TOL {
+                    p.push(format!(
+                        "unit {id} redefines the built-in unit: {factor:e} against {:e} (add a unit with a new id instead)",
+                        b.scale
+                    ));
+                }
+            }
+        }
         for (id, row) in self.tables.get("constants").unwrap_or(&empty_c) {
             // `checked_by`: a relation the typed value must meet on the sheet
             // as shipped, never used to work it out (M_sun against GM_sun / G:
@@ -514,6 +668,11 @@ impl Reference {
                 }
             }
         }
+        if table == "units" {
+            if let Ok(f) = self.unit_factor(id) {
+                out["worked"] = serde_json::json!({"factor": {"v": f, "from": row.get("factor_from").cloned().unwrap_or(J::Null)}});
+            }
+        }
         if table == "substances" {
             if let Some(mm) = self.molar_mass_kg_mol(id) {
                 out["worked"] = serde_json::json!({"molar_mass": {"v": mm, "unit": "kg/mol", "from": "formula and atomic weights"}});
@@ -537,6 +696,14 @@ impl Reference {
             out.insert(
                 "sources".into(),
                 serde_json::json!(self.sources.keys().collect::<Vec<_>>()),
+            );
+        }
+        // The legend is seven short rows, so it comes whole: the Reference
+        // screen colours elements by it.
+        if table.is_none_or(|x| x == "origin_legend") {
+            out.insert(
+                "origin_legend".into(),
+                serde_json::json!(self.origin_legend),
             );
         }
         J::Object(out)
@@ -568,6 +735,47 @@ pub fn vapour_pressure_pa(fit: &J, t: f64) -> Option<f64> {
             Some(p0 * m::exp(-l / R_GAS * (1.0 / t - 1.0 / t0)))
         }
         _ => None,
+    }
+}
+
+impl Reference {
+    fn check_origin(&self, id: &str, row: &Map<String, J>) -> Vec<String> {
+        let mut p = vec![];
+        let Some(o) = row.get("origin").and_then(J::as_object) else {
+            return p;
+        };
+        if let Some(shares) = o.get("shares").and_then(J::as_object) {
+            let mut sum = 0.0;
+            for (k, v) in shares {
+                if !self.origin_legend.contains_key(k) {
+                    p.push(format!(
+                        "element {id}: origin share {k} is not in origin_legend"
+                    ));
+                }
+                match v.as_f64() {
+                    Some(x) if (0.0..=1.0).contains(&x) => sum += x,
+                    _ => p.push(format!("element {id}: origin share {k} is not a fraction")),
+                }
+            }
+            if !shares.is_empty() && (sum - 1.0).abs() > RECIPE_TOL {
+                p.push(format!("element {id}: origin shares sum to {sum}, not 1"));
+            }
+        }
+        let named = o.get("src").and_then(J::as_str).into_iter().chain(
+            o.get("also")
+                .and_then(J::as_array)
+                .into_iter()
+                .flatten()
+                .filter_map(J::as_str),
+        );
+        for s in named {
+            if !self.sources.contains_key(s) {
+                p.push(format!(
+                    "element {id}: origin names source {s}, which is not in sources"
+                ));
+            }
+        }
+        p
     }
 }
 
