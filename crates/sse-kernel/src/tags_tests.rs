@@ -418,10 +418,12 @@ fn the_gm_overrules_a_rule_tag_in_scenes_conditions_and_sifters() {
         parent: state.facts[&a.parent().unwrap()].clone(),
         ..Default::default()
     };
-    let t =
-        k.observe
-            .rules
-            .apply_authored(&subject, &Default::default(), &sse_sift::authored_tags(f));
+    let t = k.observe.rules.apply_authored(
+        &subject,
+        &Default::default(),
+        &sse_sift::authored_tags(f),
+        None,
+    );
     assert_eq!(t["habitable"].rule, sse_sift::AUTHORED);
     assert_eq!(t["habitable"].evidence[0].field, "tag.habitable");
     assert_eq!(
@@ -434,4 +436,160 @@ fn the_gm_overrules_a_rule_tag_in_scenes_conditions_and_sifters() {
     set(&mut k, body, "tag.roche-danger", serde_json::Value::Null);
     assert_eq!(scene_tags(&mut k), derived);
     assert_eq!(hits(&mut k), 1);
+}
+
+/// TG5: tags level with facts in data views. One neutral marker one rung
+/// short, nothing further; a per-object tier; one redaction point, walked
+/// through every reply a player can be sent.
+#[test]
+fn hidden_tags_give_one_marker_and_a_gm_only_tag_reaches_no_player() {
+    let tag = |id: &str| serde_json::json!({"id": id, "label": id});
+    let view = |id: &str, tiers: &[&str]| {
+        serde_json::json!({"id": id, "label": id, "show_tiers": tiers,
+            "tags": {"mode": "all"}, "unknown_style": "placeholder"})
+    };
+    let observe = serde_json::json!({
+        "format": "sse.pack/1",
+        "id": "test.tg5-observe",
+        "version": "0.1.0",
+        "kind": ["game-system"],
+        "kernel_range": "^0.1",
+        "licence": "Apache-2.0",
+        "provides": {"other": {
+            "tags": {"groups": [], "tags": [
+                tag("cache"), tag("wreck"), tag("cult"), tag("plot"), tag("beacon")]},
+            "observe": {
+                "disclosure": {
+                    "fields": {"name": "obvious"},
+                    "tags": {"cache": "surveyed", "wreck": "surveyed", "cult": "surveyed",
+                             "plot": "secret", "beacon": "obvious"}
+                },
+                "views": [view("near", &["obvious", "scanned"]), view("far", &["obvious"])],
+                "campaign": {"default_view": "near", "before": "far", "after": "near"}
+            },
+            "sifters": [{"id": "marked-world", "label": "a marked world", "applies_to": ["body"],
+                "pattern": {"match": "facts", "when": {"if": "tag", "tag": "plot"}},
+                "significance": {"persistence": {"from": "fixed", "s": 1.0},
+                    "reach": {"from": "fixed", "n": 1}, "reversibility": 0.5}}]
+        }}
+    });
+    let mut k = crate::Kernel::new();
+    let r = load(
+        &mut k,
+        vec![pack("tests/fixtures/packs/base-physics.json"), observe],
+    );
+    assert_eq!(r["type"], "stack_loaded", "{r}");
+    send(
+        &mut k,
+        serde_json::json!({"op": "open_universe", "id": "tg5", "seed": "tg5"}),
+    );
+    let body = "u:tg5/sys:0/body:1";
+    let set = |k: &mut crate::Kernel, f: &str, v: serde_json::Value| {
+        let r = send(
+            k,
+            serde_json::json!({"op": "set_authored", "edit": {
+                "address": body, "field": f, "value": v, "occurred_at_s": 0}}),
+        );
+        assert_eq!(r["type"], "authored", "{r}");
+    };
+    set(&mut k, "name", serde_json::json!("Halt"));
+    for t in ["cache", "wreck", "cult", "plot", "beacon"] {
+        set(&mut k, &format!("tag.{t}"), serde_json::json!(true));
+    }
+    let r = send(
+        &mut k,
+        serde_json::json!({"op": "grant", "address": body, "audience": "far-crew",
+            "view": "far", "at_s": 0}),
+    );
+    assert_eq!(r["type"], "granted", "{r}");
+    let r = send(
+        &mut k,
+        serde_json::json!({"op": "add_note", "address": body, "text": "a beacon calls here",
+            "tags": ["beacon", "plot"], "audience": "everyone", "at_s": 0}),
+    );
+    assert!(r["type"] != "error", "{r}");
+    let subject = |k: &mut crate::Kernel, audience: &str| {
+        let r = send(
+            k,
+            serde_json::json!({"op": "scene", "audience": audience, "scope": "u:tg5", "at_s": 0}),
+        );
+        assert_eq!(r["type"], "scene", "{r}");
+        r["scene"]["subjects"]
+            .as_array()
+            .unwrap()
+            .iter()
+            .find(|x| x["address"] == body)
+            .cloned()
+            .unwrap()
+    };
+    // One rung short: three hidden tags, one marker, and the marker is a bare
+    // flag (no id, colour or count).
+    let near = subject(&mut k, "crew");
+    assert_eq!(near["tags"], serde_json::json!(["beacon"]), "{near}");
+    assert_eq!(near["undisclosed"], serde_json::json!(true));
+    // Two rungs short: nothing at all.
+    let far = subject(&mut k, "far-crew");
+    assert_eq!(far["tags"], serde_json::json!(["beacon"]), "{far}");
+    assert!(far.get("undisclosed").is_none(), "{far}");
+    // The GM sees every tag and no marker.
+    let gm = subject(&mut k, "gm");
+    assert_eq!(gm["tags"].as_array().unwrap().len(), 5);
+    assert!(gm.get("undisclosed").is_none());
+    // Per-object override: this world's cache is openly known, its wreck is
+    // GM-only, its cult one rung up from obvious. The override is an
+    // `observe.*` fact, so no scene shows it.
+    set(
+        &mut k,
+        "observe.tag_tier.cache",
+        serde_json::json!("scanned"),
+    );
+    set(
+        &mut k,
+        "observe.tag_tier.wreck",
+        serde_json::json!("secret"),
+    );
+    let near = subject(&mut k, "crew");
+    assert_eq!(near["tags"], serde_json::json!(["beacon", "cache"]));
+    assert_eq!(near["undisclosed"], serde_json::json!(true));
+    set(
+        &mut k,
+        "observe.tag_tier.cult",
+        serde_json::json!("scanned"),
+    );
+    let far = subject(&mut k, "far-crew");
+    assert_eq!(far["undisclosed"], serde_json::json!(true), "{far}");
+    let near = subject(&mut k, "crew");
+    assert_eq!(near["tags"], serde_json::json!(["beacon", "cache", "cult"]));
+    assert!(near.get("undisclosed").is_none(), "{near}");
+    // The GM-only tag reaches no player: every reply a player can be sent,
+    // walked for its name.
+    for audience in ["crew", "far-crew"] {
+        let replies = [
+            serde_json::json!({"op": "scene", "audience": audience, "scope": "u:tg5", "at_s": 0}),
+            serde_json::json!({"op": "disclosures", "audience": audience, "at_s": 0}),
+            serde_json::json!({"op": "sift", "audience": audience, "at_s": 0}),
+            serde_json::json!({"op": "sift", "audience": audience, "at_s": 0,
+                "sifters": ["marked-world"]}),
+        ];
+        for q in replies {
+            let r = send(&mut k, q.clone());
+            assert!(r["type"] != "error", "{q}: {r}");
+            if r["type"] == "sifted" {
+                assert_eq!(r["hits"], serde_json::json!([]), "{q}: {r}");
+            }
+            let text = r.to_string();
+            for secret in ["plot", "wreck", "observe.tag_tier"] {
+                assert!(!text.contains(secret), "{q} leaks {secret}: {text}");
+            }
+        }
+    }
+    // The GM's own sift finds it.
+    let r = send(
+        &mut k,
+        serde_json::json!({"op": "sift", "at_s": 0, "sifters": ["marked-world"]}),
+    );
+    assert_eq!(r["hits"].as_array().map(Vec::len), Some(1), "{r}");
+    // The note still reaches players, with only the tags they may see.
+    let near = subject(&mut k, "crew");
+    assert_eq!(near["notes"][0]["tags"], serde_json::json!(["beacon"]));
 }

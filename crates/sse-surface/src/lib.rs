@@ -271,6 +271,18 @@ pub struct Body {
     /// Imports and packs give it; formation fills it when F makes captures.
     #[serde(default, skip_serializing_if = "Vec::is_empty")]
     pub tidal_history: Vec<TidalSpan>,
+    /// Sidereal spin, hours; negative spins backwards (W7a's signed spin).
+    /// Formation's settled spin or an import's value; the climate's default
+    /// when absent.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub spin_hours: Option<f64>,
+    /// Axial tilt, degrees.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub obliquity_deg: Option<f64>,
+    /// Where spin and tilt come from: "formation", "authored (V3)" or
+    /// "authored" (ruling 5: V3 values keep their mark).
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub spin_source: Option<String>,
 }
 
 /// Extra tidal heat flow over a span of a world's life.
@@ -712,10 +724,15 @@ pub fn bodies_of(run: &SystemRun, s: &SurfaceSettings) -> Vec<Body> {
     let inh = &h.inheritance;
     let star = &h.stars[0];
     let now_myr = inh.age_gyr * 1000.0;
+    // Settled spins and tilts from the violent phase (F4, Kokubo and Genda
+    // 2010), one per world in body order; Classic runs have none.
+    let spins = run.leftovers.as_ref().map(|l| &l.worlds);
     run.worlds
         .iter()
         .zip(&run.protoplanets)
-        .map(|(w, p)| {
+        .enumerate()
+        .map(|(i, (w, p))| {
+            let spin = spins.and_then(|v| v.get(i)).filter(|x| x.spin_hours > 0.0);
             let volatiles = w.surface_water_oceans >= 0.05 || w.co2_bar >= 0.1;
             Body {
                 address: w.address.clone(),
@@ -761,6 +778,9 @@ pub fn bodies_of(run: &SystemRun, s: &SurfaceSettings) -> Vec<Body> {
                 }),
                 locked: None,
                 tidal_history: vec![],
+                spin_hours: spin.map(|x| x.spin_hours),
+                obliquity_deg: spin.map(|x| x.obliquity_deg),
+                spin_source: spin.map(|_| "formation".to_string()),
             }
         })
         .collect()

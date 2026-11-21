@@ -834,6 +834,40 @@ fn adopt_age_and_read_back_a_system() {
         .find(|s| s["label"] == "Earth")
         .expect("Earth's surface");
     assert_eq!(earth["regime_now"], "mobile-lid", "{earth:.400}");
+    // W7b: the imported Earth's climate spins at V3's own day, marked authored (V3).
+    let w = send(
+        &mut k,
+        serde_json::json!({"op": "weather", "want": "climate", "system": sys, "body": earth["address"]}),
+    );
+    let c = &w["data"]["core"]["conditions"];
+    assert!(
+        (c["rotation_hours"].as_f64().unwrap() - 23.9345).abs() < 1e-9,
+        "{c}"
+    );
+    let sv = send(
+        &mut k,
+        serde_json::json!({"op": "survey_surface", "system": sys, "body": earth["address"], "quick": true}),
+    );
+    let assumed = sv["survey"]["climate"]["assumed"].to_string();
+    assert!(assumed.contains("authored (V3)"), "{assumed}");
+    // A formation world spins at its settled spin.
+    let f = send(
+        &mut k,
+        serde_json::json!({"op": "resolved_system", "system": "u:home/sys:5"}),
+    );
+    let fb = f["surfaces"]
+        .as_array()
+        .unwrap()
+        .iter()
+        .find(|e| e["kind"] != "cloud-deck")
+        .expect("a solid world")["address"]
+        .clone();
+    let sv = send(
+        &mut k,
+        serde_json::json!({"op": "survey_surface", "system": "u:home/sys:5", "body": fb, "quick": true}),
+    );
+    let assumed = sv["survey"]["climate"]["assumed"].to_string();
+    assert!(assumed.contains("(formation)"), "{assumed}");
     // Errors.
     assert_eq!(
         send(&mut k, serde_json::json!({"op": "adopt"}))["code"],

@@ -18,6 +18,7 @@ pub mod climate;
 pub mod conditions;
 pub mod ebm;
 pub mod settings;
+pub mod strengths;
 
 pub use circulation::Circulation;
 pub use climate::{glance, orbit, Cache, Climate, Glance, Level};
@@ -37,5 +38,7 @@ pub fn base_settings() -> ClimateSettings {
     ClimateSettings::from_packs(&[base_pack()]).expect("climate settings")
 }
 
+#[cfg(test)]
+mod strengths_tests;
 #[cfg(test)]
 mod tests;

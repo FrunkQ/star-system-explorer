@@ -11,6 +11,9 @@ mod clock;
 pub mod contract;
 mod cosmos;
 mod descent;
+mod dressing;
+#[cfg(test)]
+mod dressing_tests;
 mod nav;
 mod orbits;
 pub mod protocol;
@@ -151,6 +154,21 @@ fn load_observe(ms: &[sse_pack::PackManifest]) -> Result<Observe, Vec<String>> {
             ));
         }
     }
+    let mut found = Vec::new();
+    for p in ms {
+        if let Some(v) = p.provides.other.get("dressing") {
+            let j =
+                serde_json::to_value(v).map_err(|e| vec![format!("{}: dressing: {e}", p.id)])?;
+            found.push((p.id.clone(), j));
+        }
+    }
+    let dressing = match dressing::Dressing::from_packs(&found, &templates) {
+        Ok(d) => d,
+        Err(e) => {
+            problems.extend(e);
+            dressing::Dressing::default()
+        }
+    };
     if !problems.is_empty() {
         return Err(problems);
     }
@@ -193,6 +211,7 @@ fn load_observe(ms: &[sse_pack::PackManifest]) -> Result<Observe, Vec<String>> {
         intents,
         templates,
         programs,
+        dressing,
     })
 }
 
@@ -359,6 +378,8 @@ struct Observe {
     templates: sse_trigger::templates::Templates,
     /// Programs (`provides.other.programs`, J6).
     programs: sse_trigger::programs::Programs,
+    /// Dressing rules (`provides.other.dressing`, TG12).
+    dressing: dressing::Dressing,
 }
 
 pub struct Kernel {
@@ -978,6 +999,181 @@ impl Kernel {
         })
     }
 
+    /// Universe and record state at `at_s` with every address's tags (rule
+    /// tags under the GM's authored ones, TG3 and TG4), as the GM sees it.
+    fn tagged_state(
+        &self,
+        at_s: i64,
+    ) -> Result<
+        (
+            sse_chronicle::State,
+            BTreeMap<Address, std::collections::BTreeSet<String>>,
+        ),
+        Response,
+    > {
+        let u = self
+            .universe
+            .as_ref()
+            .ok_or_else(|| err("no_universe", "open a universe first"))?;
+        let at = UniverseTime::seconds(at_s);
+        let mut state = u.chronicle.state_at(at);
+        for (a, f) in u.record.state_at(at).facts {
+            state.facts.entry(a).or_default().extend(f);
+        }
+        let mut tags = BTreeMap::new();
+        for (a, f) in &state.facts {
+            let subject = sse_sift::Subject {
+                address: Some(a.clone()),
+                facts: f.clone(),
+                parent: a
+                    .parent()
+                    .and_then(|p| state.facts.get(&p).cloned())
+                    .unwrap_or_default(),
+                now_s: at_s,
+                ..Default::default()
+            };
+            let t: std::collections::BTreeSet<String> = self
+                .observe
+                .rules
+                .apply_authored(
+                    &subject,
+                    &BTreeMap::new(),
+                    &sse_sift::authored_tags(f),
+                    Some(&u.seed),
+                )
+                .into_keys()
+                .collect();
+            if !t.is_empty() {
+                tags.insert(a.clone(), t);
+            }
+        }
+        Ok((state, tags))
+    }
+
+    /// `dressing` (TG12): the candidates and orphans under `scope`.
+    fn dressing(&self, scope: &str, at_s: i64) -> Result<Response, Response> {
+        let (state, tags) = self.tagged_state(at_s)?;
+        let u = self.universe.as_ref().expect("checked");
+        let scope_a = in_universe(&u.root, scope)?;
+        Ok(Response::Dressed {
+            scope: scope_a.to_string(),
+            candidates: dressing::candidates(
+                &self.observe.dressing,
+                &self.observe.templates,
+                &state,
+                &tags,
+                &u.seed,
+                &scope_a,
+                at_s,
+            ),
+            orphans: dressing::orphans(&self.observe.dressing, &u.chronicle, &state, &scope_a),
+        })
+    }
+
+    /// The live candidate `id`, or why it is not one.
+    fn live_candidate(&self, id: &str, at_s: i64) -> Result<(Address, String), Response> {
+        let (world, rule, _) = dressing::parse_candidate(id)
+            .ok_or_else(|| err("bad_candidate", format!("{id:?} is not a candidate id")))?;
+        let (state, tags) = self.tagged_state(at_s)?;
+        let u = self.universe.as_ref().expect("checked");
+        let found = dressing::candidates(
+            &self.observe.dressing,
+            &self.observe.templates,
+            &state,
+            &tags,
+            &u.seed,
+            &world,
+            at_s,
+        )
+        .into_iter()
+        .any(|c| c["id"] == id);
+        if !found {
+            return Err(err(
+                "no_candidate",
+                format!("{id} is not a candidate at that time (its rule does not hold, or it was held off or adopted)"),
+            ));
+        }
+        Ok((world, rule))
+    }
+
+    /// `adopt_dressing` (TG12): make the candidate an authored object.
+    fn adopt_dressing(
+        &mut self,
+        id: &str,
+        name: Option<&str>,
+        at_s: i64,
+    ) -> Result<Response, Response> {
+        let (world, rule) = self.live_candidate(id, at_s)?;
+        let (pack, r) = self.observe.dressing.get(&rule).cloned().expect("live");
+        let t = self
+            .observe
+            .templates
+            .get(&r.place)
+            .cloned()
+            .expect("checked at load");
+        let t = dressing::adopt_template(&t, &pack, &r, id);
+        let reg = self.observe.record.clone();
+        let u = self.universe()?;
+        let (c, _) = sse_trigger::templates::create(
+            &mut u.chronicle,
+            &mut u.record,
+            &reg,
+            &u.root,
+            &t,
+            &world,
+            None,
+            name,
+            UniverseTime::seconds(at_s),
+            vec![],
+        )
+        .map_err(|e| err("create_refused", e))?;
+        Ok(Response::Created {
+            address: c.address,
+            event_id: c.event,
+            kept: c.kept,
+            state_hash: latest_hash(&u.chronicle),
+            record_hash: record_hash(u),
+        })
+    }
+
+    /// `hold_dressing` (TG12): hold a candidate off its world, or let it back.
+    fn hold_dressing(&mut self, id: &str, held: bool) -> Result<Response, Response> {
+        let (world, rule, n) = dressing::parse_candidate(id)
+            .ok_or_else(|| err("bad_candidate", format!("{id:?} is not a candidate id")))?;
+        if self.observe.dressing.get(&rule).is_none() {
+            return Err(err(
+                "no_candidate",
+                format!("no dressing rule {rule} in the stack"),
+            ));
+        }
+        let u = self.universe()?;
+        let world = in_universe(&u.root, &world.to_string())?;
+        let mut f = BTreeMap::new();
+        f.insert(
+            format!("{}{rule}#{n}", dressing::HELD_PREFIX),
+            Value::Bool(held),
+        );
+        let e = clock::timeless_set(
+            &u.record,
+            &world,
+            f,
+            Evidence::Authored,
+            vec![],
+            "dressing.hold",
+            Publisher::new("gm", "dressing", "1"),
+        )
+        .map_err(|e| err("bad_event", e))?;
+        let id_hash = u
+            .record
+            .append(e)
+            .map_err(|e| err("chronicle", format!("{e}")))?;
+        Ok(Response::DressingHeld {
+            candidate: id.to_string(),
+            held,
+            event_id: id_hash.hex(),
+        })
+    }
+
     /// `promote_star` (Y7a): draw a fill star once and store it whole.
     fn promote_star(&mut self, address: &str) -> Result<Response, Response> {
         let u = self.universe()?;
@@ -1210,6 +1406,7 @@ impl Kernel {
                     &subject,
                     &BTreeMap::new(),
                     &sse_sift::authored_tags(f),
+                    Some(&u.seed),
                 );
                 if !t.is_empty() {
                     tags.insert(a.clone(), t);
@@ -1916,6 +2113,7 @@ impl Kernel {
                             &subject,
                             &BTreeMap::new(),
                             authored.get(a).unwrap_or(&none),
+                            Some(&u.seed),
                         )
                         .into_keys()
                     {
@@ -3964,6 +4162,15 @@ impl Kernel {
                 Response::StarCelled { cell }
             }
             Request::PromoteStar { address } => self.promote_star(&address)?,
+            Request::Dressing { scope, at_s } => self.dressing(&scope, at_s.unwrap_or(i64::MAX))?,
+            Request::AdoptDressing {
+                candidate,
+                name,
+                at_s,
+            } => self.adopt_dressing(&candidate, name.as_deref(), at_s)?,
+            Request::HoldDressing { candidate, held } => {
+                self.hold_dressing(&candidate, held.unwrap_or(true))?
+            }
             Request::Manifest => {
                 let m = self.universe()?.manifest();
                 Response::Manifest {

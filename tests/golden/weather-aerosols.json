@@ -4,12 +4,12 @@
       "aerosols": [
         {
           "colour": [
-            0.15999999999999998,
-            0.14999999999999997,
+            0.16,
+            0.15,
             0.14
           ],
           "kind": "ash",
-          "optical_depth": 20.000000008937473
+          "optical_depth": 20.00000000759203
         },
         {
           "colour": [
@@ -18,15 +18,15 @@
             0.93
           ],
           "kind": "spray",
-          "optical_depth": 0.02372140884904262
+          "optical_depth": 0.022946015772687293
         }
       ],
       "lat": 15.1,
       "lon": 120.3,
       "out": {
         "acid_rain": false,
-        "ash_fall_mm": 95.85914653730828,
-        "ground_darkening": 0.9999999952817568
+        "ash_fall_mm": 96.95816706610869,
+        "ground_darkening": 0.9999999962127794
       }
     },
     {
@@ -38,15 +38,15 @@
             0.93
           ],
           "kind": "spray",
-          "optical_depth": 0.02372140884904262
+          "optical_depth": 0.022946015772687293
         }
       ],
       "lat": 15.1,
       "lon": 125.0,
       "out": {
         "acid_rain": false,
-        "ash_fall_mm": 2.9370270150929745e-8,
-        "ground_darkening": 5.874054020971187e-9
+        "ash_fall_mm": 2.5058653207470028e-8,
+        "ground_darkening": 5.0117305860908345e-9
       }
     },
     {
@@ -54,11 +54,11 @@
         {
           "colour": [
             0.15999999999999998,
-            0.15,
+            0.14999999999999997,
             0.14
           ],
           "kind": "ash",
-          "optical_depth": 2.5502467607630557
+          "optical_depth": 2.5352021612303957
         },
         {
           "colour": [
@@ -67,15 +67,15 @@
             0.93
           ],
           "kind": "spray",
-          "optical_depth": 0.01813138938200704
+          "optical_depth": 0.017421351708479416
         }
       ],
       "lat": 45.0,
       "lon": 14.0,
       "out": {
         "acid_rain": false,
-        "ash_fall_mm": 12.229216437077337,
-        "ground_darkening": 0.9133469693281528
+        "ash_fall_mm": 12.295748250008586,
+        "ground_darkening": 0.914492368524715
       }
     },
     {
@@ -116,7 +116,7 @@
             0.93
           ],
           "kind": "spray",
-          "optical_depth": 0.024812609382329875
+          "optical_depth": 0.02402445859540852
         }
       ],
       "lat": 19.4,

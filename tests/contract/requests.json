@@ -2954,5 +2954,18 @@
  },
  {
   "op": "campaign_tags"
+ },
+ {
+  "op": "dressing",
+  "scope": "u:aging"
+ },
+ {
+  "op": "adopt_dressing",
+  "candidate": "u:aging/sys:0/body:1#giant-depot.v1#0",
+  "at_s": 0
+ },
+ {
+  "op": "hold_dressing",
+  "candidate": "not a candidate"
  }
 ]

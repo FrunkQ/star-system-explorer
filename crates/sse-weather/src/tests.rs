@@ -171,7 +171,17 @@ fn venus_titan_mars_get_their_skies() {
     let key = TileKey::new(4, 0, 0, 0).unwrap();
     let tile = b.field(&fixture("Titan"), Date { day: 0.0 }, key, 2, &[]);
     assert!(tile.cells[0].aerosols.iter().any(|a| a.kind == "haze"));
-    assert!(tile.cells[0].precip_kind.contains("methane"));
+    // Methane rain falls somewhere on Titan (W7b: the rain belt follows the
+    // season, so at the equinox it is wettest toward the poles, as Cassini
+    // found the lakes).
+    let rains = (0..6u8).any(|f| {
+        let k = TileKey::new(f, 0, 0, 0).unwrap();
+        b.field(&fixture("Titan"), Date { day: 0.0 }, k, 4, &[])
+            .cells
+            .iter()
+            .any(|c| c.precip_kind.contains("methane"))
+    });
+    assert!(rains, "methane rain somewhere on Titan");
     let m = b.climate(&fixture("Mars"));
     assert_eq!(m.precip_mean_m_yr, 0.0);
     assert!(m.cloud_cover_mean <= 0.15);

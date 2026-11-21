@@ -38,9 +38,15 @@ pub fn conditions(
         365.256_363 * m::sqrt(a_au * a_au * a_au / host.max(1e-12))
     });
     let locked = env.locked;
+    let src = b.spin_source.as_deref().unwrap_or("authored");
     let rotation_hours = x.rotation_hours.unwrap_or_else(|| {
         if locked {
             year_days * 24.0
+        } else if let Some(h) = b.spin_hours {
+            if src != "authored" {
+                assumed.push(format!("spin {h:.2} h ({src})"));
+            }
+            h
         } else {
             assumed.push(format!(
                 "spin {} h (not yet published for this body)",
@@ -49,9 +55,17 @@ pub fn conditions(
             d.rotation_hours
         }
     });
-    let obliquity_deg = x.obliquity_deg.unwrap_or_else(|| {
-        assumed.push(format!("tilt {}° (not yet published)", d.obliquity_deg));
-        d.obliquity_deg
+    let obliquity_deg = x.obliquity_deg.unwrap_or_else(|| match b.obliquity_deg {
+        Some(o) => {
+            if src != "authored" {
+                assumed.push(format!("tilt {o:.1}° ({src})"));
+            }
+            o
+        }
+        None => {
+            assumed.push(format!("tilt {}° (not yet published)", d.obliquity_deg));
+            d.obliquity_deg
+        }
     });
     let flux = x.flux_w_m2.unwrap_or_else(|| {
         assumed.push("sunlight from a sun-like star at the orbit".into());
@@ -92,6 +106,7 @@ pub fn conditions(
         obliquity_deg,
         year_days,
         eccentricity: b.orbit.as_ref().map(|o| o.e).unwrap_or(0.0),
+        perihelion_lon_deg: x.perihelion_lon_deg.unwrap_or(0.0),
         flux_w_m2: flux,
         albedo,
         t_surface_k: t,

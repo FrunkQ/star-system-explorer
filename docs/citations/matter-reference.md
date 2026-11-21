@@ -26,6 +26,25 @@ sheet is filled, and each sheet row records that check.
 | adams2008 | Adams, F. C. 2008, JCAP 08, 010: Stars in other universes, stellar structure with different fundamental constants. doi:10.1088/1475-7516/2008/08/010 | which blocks follow a changed constant (design section 7A) | verified (metadata) | arXiv 0807.3697 abstract page, which gives the DOI |
 | nist-webbook | NIST Chemistry WebBook, SRD 69. https://webbook.nist.gov/chemistry/ | gas phase points, formation enthalpies | textbook | standard reference database; per-substance pages checked when each row is filled |
 
+## A2. Further sources the first-wave sheet cites
+
+| Id | Reference | Relied on | Status | Checked |
+|---|---|---|---|---|
+| si2019 | SI Brochure, 9th edition 2019, BIPM. https://www.bipm.org/en/publications/si-brochure | the seven exact defining constants | verified (values) | CODATA 2018 Table I read verbatim: c, h, e, k, N_A exact values |
+| nubase2020 | Kondev, F. G. et al. 2021, Chinese Phys. C 45, 030001: the NUBASE2020 evaluation. doi:10.1088/1674-1137/abddae | half-lives beyond the heat producers | verified (metadata); values unverified | CPC landing page for the DOI in search results |
+| iau2012b2 | IAU 2012 Resolution B2 (au = 149 597 870 700 m). https://www.iau.org/static/resolutions/IAU2012_English.pdf | astronomical unit | unverified | URL from memory; the value matches every code copy (MP0) |
+| iau2015b2 | IAU 2015 Resolution B2 (parsec = 648000/π au). https://www.iau.org/static/resolutions/IAU2015_English.pdf | parsec | unverified | as stated in the Prša 2016 summary read; resolution not read |
+| oberg2011 | Öberg, Murray-Clay and Bergin 2011, ApJL 743, L16. doi:10.1088/2041-8205/743/1/L16 | ice lines 135, 47, 20 K | unverified | DOI from memory; already in orbits-formation register as "from memory" |
+| peck-reeder1972 | Peck, E. R. and Reeder, K. 1972, JOSA 62, 958: dispersion of air. doi:10.1364/JOSA.62.000958 | dry-air refractivity 2.926e-4 | unverified | DOI from memory |
+| bodhaine1999 | Bodhaine, B. A. et al. 1999, J. Atmos. Oceanic Technol. 16, 1854. doi:10.1175/1520-0426(1999)016<1854:ORODC>2.0.CO;2 | King factors for N2, O2, CO2, air | verified | carried from the light register |
+| atom-isotropic | King factor 1 for a spherically symmetric atom (Ar, He, Ne) | King factor | textbook | physics: an isotropic polarisability gives no depolarisation |
+| thauer1977 | Thauer, Jungermann and Decker 1977, Bacteriol. Rev. 41, 100. https://pmc.ncbi.nlm.nih.gov/articles/PMC413997 | free energies and enthalpies of formation | verified (metadata) | PMC record in search results; values carried from base-life |
+| ussa1976 | U.S. Standard Atmosphere 1976. https://ntrs.nasa.gov/citations/19770009539 | dry-air composition | verified (metadata); recipe unverified | NTRS record in search results |
+| lineweaver2010 | Lineweaver, C. H. and Norman, M. 2010: the potato radius, a lower minimum size for dwarf planets. https://arxiv.org/abs/1004.1091 | rock and ice yield strengths | verified (metadata) | arXiv PDF 1004.1091 in search results under that title |
+| nssdca-earth, -moon, -jupiter | NASA NSSDCA planetary fact sheets | mean radii, Moon mass and distance | textbook | standard fact sheets; values match the MP0 canonical column |
+| cgpm1901, cgpm1954 | CGPM resolutions on standard gravity and the standard atmosphere | g0, atm | textbook | exact by definition |
+| fudge-register | docs/fudges.md | authored stand-ins | authored | each authored value says why in the fudge register |
+
 ## B. The four "from memory" gas refractivities
 
 `packs/base-light/pack.json` gases, note: "Ammonia, sulphur dioxide, carbon monoxide and neon: refractivity

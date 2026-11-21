@@ -19,12 +19,12 @@
       "applied": 2,
       "built": 72,
       "cells": 3,
-      "climate": "u:sol/sys:0/body:3|climate-v1|orbit|4500|8d5d18d02de5da6a",
+      "climate": "u:sol/sys:0/body:3|climate-v1|orbit|4500|d4a155eedf52bfa6",
       "deposits": 0,
       "features": {
         "continent": 7,
         "deep": 1,
-        "ice-cap": 13,
+        "ice-cap": 15,
         "island": 20,
         "mine": 20,
         "ocean": 1,
@@ -41,12 +41,12 @@
         "Sea of Zenorna",
         "Sea of Isis"
       ],
-      "layers": "bd38834dbdf11f263f4d83d2c330c703cf04cd505ccbbc10d81d0b5553c3c1c5",
-      "register": "2401a6578296a2554fb75445bda02c0de095bd9576f83aa6135aa0a5126c569e",
+      "layers": "a37ab8956c96edbaf6e02c2c8c516016cd0f2a860ae237d79cdbba0e4ea14d19",
+      "register": "263f7b7481636b3db46cf293d44bde1eeac493f340f6784871e8d59b0a79e3f2",
       "tiles": [
-        "6e24743740bf59a2d2efda40bb4eb7faed1d22153551a26332a69d136e58aca6",
-        "fcae7c5bea5a9500cc9f21592ced27fe195026343c48fc24f1205d9dfdd163f9",
-        "290cea8a2f0a09b1f62f4553b4e83fff2e1215128c9abd57f34cffc5d235ec7d"
+        "49de9c7c80e73afdeeb0816045c7001da4319f7915ea912c79083a8b0d77a2bf",
+        "e11db82de4a1e7d67e6be825d16460b0768158d3e9a48a67e4187e59b56b1d38",
+        "de6066ca9e60916e29700034f4af5178b2297168bfb21e8e72a04689a12b9aff"
       ]
     },
     {
@@ -54,7 +54,7 @@
       "applied": 0,
       "built": 2,
       "cells": 1,
-      "climate": "u:sol/sys:0/body:3/moon:1|climate-v1|orbit|4500|9df2feea37580611",
+      "climate": "u:sol/sys:0/body:3/moon:1|climate-v1|orbit|4500|8394ae7f9dc40604",
       "deposits": 600,
       "features": {
         "base": 2,
@@ -71,7 +71,7 @@
         "Mount Mior",
         "Ororbe Range"
       ],
-      "layers": "695ef05d21726258d105d333a3dd7eb8d424b9efa64c4ab2665453eb8b7f084b",
+      "layers": "97c49d768343aea9fcd6d13a55c515898bf8cb4ca4f843cee4d8036f76c787db",
       "register": "d3cfadd63ca3cddec94a3b4e4a2711a57252c66ffed189f883cd157d3c2608ff",
       "tiles": [
         "e32dc7c73d1a3f5914ce6e1fdf2b429f2499894dd993800888eeddd057f14fdf",
