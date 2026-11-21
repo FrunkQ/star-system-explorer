@@ -49,6 +49,8 @@ pub fn base_settings() -> ClimateSettings {
 #[cfg(test)]
 mod forcing_tests;
 #[cfg(test)]
+mod species_tests;
+#[cfg(test)]
 mod strengths_tests;
 #[cfg(test)]
 mod tests;

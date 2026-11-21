@@ -5150,6 +5150,29 @@
        "src": "petrenko1999",
        "at_k": 273.15,
        "note": "ice Ih"
+      },
+      "vapour_pressure": {
+       "fit": "feistel-wagner-2007",
+       "coeffs": [
+        273.16,
+        611.657,
+        20.9969665107897,
+        3.72437478271362,
+        -13.9205483215524,
+        29.6988765013566,
+        -40.1972392635944,
+        29.7880481050215,
+        -9.13050963547721
+       ],
+       "valid_k": [
+        50.0,
+        273.16
+       ],
+       "src": "fray2009",
+       "also": [
+        "lisse2021"
+       ],
+       "note": "ln(P/Pt) = 1.5 ln(T/Tt) + (1 - Tt/T) sum e_i (T/Tt)^i; coeffs [Tt, Pt Pa, e0..e6]"
       }
      },
      "thermal": {
@@ -5249,6 +5272,43 @@
        "unit": "kg m-3",
        "src": "nist-webbook",
        "check": "unverified"
+      },
+      "vapour_pressure": {
+       "fit": "fray-schmitt-2009",
+       "coeffs": [
+        18.61,
+        -4154.0,
+        104100.0
+       ],
+       "valid_k": [
+        194.7,
+        216.58
+       ],
+       "src": "fray2009",
+       "also": [
+        "lisse2021"
+       ],
+       "note": "CO2-2"
+      },
+      "vapour_pressure_low": {
+       "fit": "fray-schmitt-2009",
+       "coeffs": [
+        14.76,
+        -2571.0,
+        -77810.0,
+        4325000.0,
+        -120700000.0,
+        1350000000.0
+       ],
+       "valid_k": [
+        40.0,
+        194.7
+       ],
+       "src": "fray2009",
+       "also": [
+        "lisse2021"
+       ],
+       "note": "CO2-1"
       }
      },
      "optical": {
@@ -5357,6 +5417,32 @@
        "src": "nist-webbook",
        "check": "unverified",
        "at_k": 90.7
+      },
+      "density_solid": {
+       "v": 494.0,
+       "unit": "kg m-3",
+       "src": "fudge-register",
+       "check": "unverified",
+       "note": "methane ice as the climate's sand grain (Telfer et al. 2018 use it); not read from a measurement"
+      },
+      "vapour_pressure": {
+       "fit": "fray-schmitt-2009",
+       "coeffs": [
+        10.51,
+        -1110.0,
+        -4341.0,
+        103500.0,
+        -791000.0
+       ],
+       "valid_k": [
+        20.0,
+        90.67
+       ],
+       "src": "fray2009",
+       "also": [
+        "lisse2021"
+       ],
+       "note": "CH4-1"
       }
      },
      "optical": {
@@ -5375,6 +5461,16 @@
         0.0,
         0.0
        ],
+       "src": "fudge-register",
+       "check": "authored"
+      },
+      "condensed_colour_rgb": {
+       "v": [
+        0.9,
+        0.9,
+        0.95
+       ],
+       "unit": "1",
        "src": "fudge-register",
        "check": "authored"
       }
@@ -5447,6 +5543,25 @@
        "unit": "kg m-3",
        "src": "nist-webbook",
        "check": "unverified"
+      },
+      "vapour_pressure": {
+       "fit": "fray-schmitt-2009",
+       "coeffs": [
+        15.96,
+        -3537.0,
+        -33100.0,
+        1742000.0,
+        -29950000.0
+       ],
+       "valid_k": [
+        15.0,
+        195.4
+       ],
+       "src": "fray2009",
+       "also": [
+        "lisse2021"
+       ],
+       "note": "NH3-1"
       }
      },
      "optical": {
@@ -5464,6 +5579,16 @@
         0.0,
         0.0
        ],
+       "src": "fudge-register",
+       "check": "authored"
+      },
+      "condensed_colour_rgb": {
+       "v": [
+        0.98,
+        0.96,
+        0.9
+       ],
+       "unit": "1",
        "src": "fudge-register",
        "check": "authored"
       }
@@ -5504,6 +5629,52 @@
        "check": "unverified",
        "at_k": 77.0,
        "note": "808 kg/m3 at 77 K"
+      },
+      "density_solid": {
+       "v": 1027.0,
+       "unit": "kg m-3",
+       "src": "fudge-register",
+       "check": "unverified",
+       "note": "alpha nitrogen ice near 20 K, from memory; not read"
+      },
+      "vapour_pressure": {
+       "fit": "fray-schmitt-2009",
+       "coeffs": [
+        8.514,
+        -458.4,
+        -19870.0,
+        480000.0,
+        -4524000.0
+       ],
+       "valid_k": [
+        35.61,
+        63.14
+       ],
+       "src": "fray2009",
+       "also": [
+        "lisse2021"
+       ],
+       "note": "N2-2, beta nitrogen"
+      },
+      "vapour_pressure_low": {
+       "fit": "fray-schmitt-2009",
+       "coeffs": [
+        12.4,
+        -807.4,
+        -3926.0,
+        62970.0,
+        -463300.0,
+        1325000.0
+       ],
+       "valid_k": [
+        20.0,
+        35.61
+       ],
+       "src": "fray2009",
+       "also": [
+        "lisse2021"
+       ],
+       "note": "N2-1, alpha nitrogen"
       }
      },
      "optical": {
@@ -5523,6 +5694,16 @@
         0.0
        ],
        "src": "bodhaine1999"
+      },
+      "condensed_colour_rgb": {
+       "v": [
+        0.97,
+        0.97,
+        0.97
+       ],
+       "unit": "1",
+       "src": "fudge-register",
+       "check": "authored"
       }
      },
      "chemical": {
@@ -5616,6 +5797,46 @@
       "plain": "argon",
       "story": "argon"
      },
+     "phases": {
+      "triple_point_k": {
+       "v": 83.81,
+       "unit": "K",
+       "src": "nist-webbook",
+       "check": "unverified"
+      },
+      "triple_point_pa": {
+       "v": 68900.0,
+       "unit": "Pa",
+       "src": "nist-webbook",
+       "check": "unverified"
+      },
+      "density_solid": {
+       "v": 1616.0,
+       "unit": "kg m-3",
+       "src": "fudge-register",
+       "check": "unverified",
+       "note": "from memory; not read"
+      },
+      "vapour_pressure": {
+       "fit": "fray-schmitt-2009",
+       "coeffs": [
+        10.69,
+        -893.2,
+        -3567.0,
+        65740.0,
+        -428000.0
+       ],
+       "valid_k": [
+        21.0,
+        83.81
+       ],
+       "src": "fray2009",
+       "also": [
+        "lisse2021"
+       ],
+       "note": "Ar-1"
+      }
+     },
      "optical": {
       "refractivity_589nm": {
        "v": 0.000281,
@@ -5633,6 +5854,16 @@
         0.0
        ],
        "src": "atom-isotropic"
+      },
+      "condensed_colour_rgb": {
+       "v": [
+        0.97,
+        0.97,
+        0.97
+       ],
+       "unit": "1",
+       "src": "fudge-register",
+       "check": "authored"
       }
      }
     },
@@ -5823,6 +6054,65 @@
       "plain": "carbon monoxide",
       "story": "carbon monoxide"
      },
+     "phases": {
+      "triple_point_k": {
+       "v": 68.13,
+       "unit": "K",
+       "src": "nist-webbook",
+       "check": "unverified"
+      },
+      "triple_point_pa": {
+       "v": 15370.0,
+       "unit": "Pa",
+       "src": "nist-webbook",
+       "check": "unverified"
+      },
+      "density_solid": {
+       "v": 929.0,
+       "unit": "kg m-3",
+       "src": "fudge-register",
+       "check": "unverified",
+       "note": "from memory; not read"
+      },
+      "vapour_pressure": {
+       "fit": "fray-schmitt-2009",
+       "coeffs": [
+        10.25,
+        -748.2,
+        -5843.0,
+        39390.0
+       ],
+       "valid_k": [
+        61.55,
+        68.13
+       ],
+       "src": "fray2009",
+       "also": [
+        "lisse2021"
+       ],
+       "note": "CO-2, beta carbon monoxide"
+      },
+      "vapour_pressure_low": {
+       "fit": "fray-schmitt-2009",
+       "coeffs": [
+        10.43,
+        -721.3,
+        -10740.0,
+        234100.0,
+        -2392000.0,
+        9478000.0
+       ],
+       "valid_k": [
+        14.0,
+        61.55
+       ],
+       "src": "fray2009",
+       "also": [
+        "lisse2021"
+       ],
+       "note": "CO-1, alpha carbon monoxide"
+      }
+     },
      "optical": {
       "refractivity_589nm": {
        "v": 0.000338,
@@ -5839,6 +6129,16 @@
         0.0,
         0.0
        ],
+       "src": "fudge-register",
+       "check": "authored"
+      },
+      "condensed_colour_rgb": {
+       "v": [
+        0.97,
+        0.97,
+        0.97
+       ],
+       "unit": "1",
        "src": "fudge-register",
        "check": "authored"
       }
@@ -6704,6 +7004,12 @@
      "url": "https://arxiv.org/abs/1912.01132"
     },
     {
+     "id": "fray2009",
+     "text": "Fray, N. and Schmitt, B. 2009, Planet. Space Sci. 57, 2053: sublimation of ices of astrophysical interest, a bibliographic review (recommended fits ln P[bar] = A0 + sum A_i / T^i; water by Feistel and Wagner 2007). Coefficients read from Lisse et al. 2021's reproduction of the table (SOM Table 2); which fit covers which range checked against each ice's triple point",
+     "status": "verified",
+     "doi": "10.1016/j.pss.2009.09.011"
+    },
+    {
      "id": "fudge-register",
      "text": "SSE4 fudge register: an authored stand-in kept because no measured value fits (reason in docs/fudges.md)",
      "status": "authored",
@@ -6768,6 +7074,12 @@
      "text": "Lineweaver, C. H. and Norman, M. 2010, Proc. 9th Australian Space Science Conference: the potato radius, rock and ice yield strengths (calibrated stand-in; docs/fudges.md)",
      "status": "unverified",
      "url": "https://arxiv.org/abs/1004.1091"
+    },
+    {
+     "id": "lisse2021",
+     "text": "Lisse, C. M. et al. 2021, Icarus 356, 114072: on the origin and thermal stability of Arrokoth's and Pluto's ices; Supplementary Online Material Table 2 reproduces Fray and Schmitt 2009's sublimation fits",
+     "status": "verified",
+     "url": "https://ntrs.nasa.gov/api/citations/20210019502/downloads/Supplementary%20Online%20Material%2020210019502.pdf"
     },
     {
      "id": "lodders2003",

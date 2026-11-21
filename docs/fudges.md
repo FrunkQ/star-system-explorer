@@ -635,6 +635,16 @@ energy balance). Details in `handover/packages/W7a.md`.
 | no sand supply | Dunes wherever the wind and dryness allow | Venus's dune fields are few (Magellan) because its sand is scarce | Sand budget from geology (S9) | to add |
 | Titan's dunes | Our Titan mean wind near 0.5 m/s never reaches its 2 m/s threshold, so no dunes yet | Titan's dunes are built by rare strong equinox winds | W10 storms as strengths | known gap, W10 |
 
+### Volatile species (W8 part 1 and matter pack MP3: `sse.volatile.species`, `crates/sse-climate/src/settings.rs`, `ebm::p_sat`, `packs/base-reference`)
+
+| Where | Instead of the physics | Why | Real physics to replace it | Status |
+|---|---|---|---|---|
+| `sse_reference::sublimation_pa` below a fit's range | Clausius-Clapeyron with the slope at the lowest fit's lower edge | Fray and Schmitt's polynomials run away outside their data (CO2's A5/T⁵ overflows near 1 K) | Measured curves to lower temperatures, or the third-law extrapolation Fray and Schmitt describe | documented |
+| `ebm::p_sat` above the triple point | Clausius-Clapeyron over the liquid from the triple point with one heat of vaporisation | As before W8; Earth's warm bands keep their numbers | Liquid vapour curves on the sheet (NIST's Antoine fits) | documented |
+| sheet `density_solid` of N2 (1027), CO (929), Ar (1616) and CH4 (494) kg/m³ | Values from memory, marked unverified on the sheet | Needed only to turn a mass of ice into a depth | Read from a measurement compilation (MP13) | stand-in |
+| sheet condensed colours of CH4, NH3, N2, CO and Ar | Near-white authored colours (the climate pack's, moved) | No measured cloud colours yet | Optical constants per ice (MP13) | authored |
+| one latent heat per cloud substance | `latent_j_kg` is the heat of vaporisation where the sheet has one, else of sublimation, else the curve's slope at the triple point | The cloud's latent flux uses one number; frost points read the curve itself | Phase-resolved latent heat (liquid or solid by the band's temperature) | documented |
+
 ### Orbital forcing and ice ages (W9 part 2, `crates/sse-climate/src/forcing.rs`, `climate.forcing`, `crates/sse-kernel/src/ice_ages.rs`)
 
 | Where | Instead of the physics | Why | Real physics to replace it | Status |
