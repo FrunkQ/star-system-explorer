@@ -285,6 +285,38 @@ Everything at every level can be recomputed from the world's key, so caches can 
   - Worlds with recorded sites are evicted last.
   - Caches are kept in browser storage (OPFS) across sessions, within the budget.
 
+### 5.9 Exogeology: Pluto, icy moons, small bodies and exoplanet theory (packages S0b, S17 to S21) **[accepted 21 Nov, Alex: yes to all, on the recommendations]**
+
+Full research, gap table, run results and sources: `SSE4-exogeology-gaps.md`. In brief:
+
+- **Pluto fails today.** Run through the built code, it is classed as an ice-shell world and gets 58 Europa-style ridges and 8 bands about 3.2 Gyr old plus 742 craters. It has none of its real landforms, because SSE4 has no volatile ices (N2, CH4, CO, CO2) that sublime, condense, flow and convect.
+- **Four small fixes first (S0b)**, done with S16a because they change the same goldens on purpose:
+  - the ice-shell rule needs an active shell, and other icy worlds become a "cold ice lid" (Callisto now gets 587 ridges and loses 96% of its craters);
+  - roundness by material, about 200 km for ice and 300 km for rock (Lineweaver and Norman 2010; Enceladus and Miranda now come out lumpy);
+  - crater renewal only where the regime is active;
+  - a moon's tidal history as an input (Triton).
+- **M1 volatile ices (S17)**: one rule block for every ice that moves as vapour. It fits the detail levels:
+  - D0: one vapour-pressure check per species;
+  - D1: equilibrium caps and basin plains from orbit- and obliquity-averaged insolation, cheap;
+  - D2: seasons, N2 glaciers on S3's routing, convection cells, pit fields, polar layered deposits as S9 strata, and solid-state greenhouse jets through W4's plume code;
+  - D3: penitentes and pits as S10 flourishes.
+
+  This one block makes about twenty features: Sputnik Planitia and its cells, bladed terrain, Triton's cap and geysers, Mars's CO2 caps, spiders and Swiss-cheese terrain, Callisto's knobs, Mercury's hollows, comet pits, Iapetus's ice migration, night-side ice on locked worlds, and mineral frost on lava worlds.
+- **M2 and M3, ice-shell stresses and cryovolcanism (S18a, S18b)**:
+  - stresses from tides, non-synchronous rotation and a freezing ocean, plus diapirs: cycloids, tiger stripes, Charon's chasms, lenticulae, Miranda's coronae, cantaloupe terrain, and viscous crater relaxation;
+  - pressurised-ocean and brine eruptions: Wright Mons, Vulcan Planitia, Ahuna Mons, Occator's faculae, plumes.
+- **Later**:
+  - **S19** colour from chemistry and exposure: tholins, radiation, exogenic dust, Venus's metal frost;
+  - **S20** small-body physics: YORP top shapes, binaries, ponds, contact binaries;
+  - **S21** water released from a crust: Mars outflow channels and chaos, on the water-table rule already accepted;
+  - small additions: true polar wander, and exoplanet regimes (rock-vapour lava shores, hemispheric tectonics, eyeball ice, high-pressure ice floors, carbon worlds without plates), all labelled theoretical.
+- **Consensus research (21 Nov, afternoon)** supplies the numbers: vapour-pressure fits per ice, the convection and glacier flow laws, pit and jet rates, the eruption conditions, freezing extension, and the lava-world rules. Details are in section 10 of `SSE4-exogeology-gaps.md`. It changes five things:
+  - convection cells can be driven by sublimation from above, so they do not need interior heat;
+  - glaciers are near steady state, so their thickness comes from a balance rather than from time steps (cheaper);
+  - penitentes need air, so on Europa they are off by default and labelled contested;
+  - Enceladus erupts by boiling, and cracking and eruption are separate rules;
+  - an old surface does not rule out an ocean (Mimas), so S0b keeps "is there an ocean?" separate from "is the shell active?".
+
 ---
 
 ## 6. Can a browser carry all this?
@@ -330,6 +362,12 @@ So: no reason we cannot go well beyond Rock 3. The limits are ones we chose, and
    4. **S9** strata with hardness-aware wear (5.2, 5.3). **S15b** (global impact layers) goes with it. Reefs, coal, salt and glacial deposits all arrive in this step too.
    5. **S14b** karst and acid caves, which need strata and a water table.
    6. **S10** flourishes with lifespans.
+   *Additions from the exogeology review (5.9), accepted 21 Nov:*
+   - 0b. **S0b** regime fixes (active ice shells, cold ice lid, roundness by material, renewal only where active, tidal history), built with S16a.
+   - 7. **S17a** volatile ices at D0 and D1 (caps, basin plains, pressure), right after S14a in practice, because Pluto, Triton and Mars depend on it and it is cheap.
+   - 8. **S18a** ice-shell stresses and **S18b** cryovolcanism.
+   - 9. **S17b** volatile ices at D2 and D3 (seasons, glaciers, convection cells, pits, jets, penitentes; needs S9 and S10 for layered deposits and flourishes).
+   - 10. **S19** surface colour, **S20** small bodies, **S21** water released from a crust, then true polar wander and the exoplanet regime notes as they come.
 
    Climate catch-up (5.4) goes to the weather thread in parallel. Map export (5.6) is small and can go any time.
 3. **Live preview.** *Recommendation*: the coarse deterministic preview (6.2), not a GPU path.
@@ -338,6 +376,14 @@ So: no reason we cannot go well beyond Rock 3. The limits are ones we chose, and
 6. **Impactor provenance: drawn per crater, or a share only.** *Recommendation*: listed and site-resolved craters draw a named source. Small craters keep a per-cell population share until someone looks closer. Provenance only splits S4's total and never changes its counts, so existing goldens stay put except for the added fields.
 7. **Detail levels.** *Recommendation*: coarse grid 32 a face at 100 Myr for D1; automatic by attention and device with a per-world override; at least 95% land-and-sea agreement between levels; the budgets above as defaults. Every world gets D0. D1 only when a world is opened or approached, and higher levels only on real need, after checking for an existing result (Alex's two rules above).
 8. **Which thread owns it.** *Recommendation*: the physics thread ("Build SSE4 proven core") owns S16, S2b, S9, S10, S14 and S15 as kernel work; the renderer thread owns the cave survey map and later the 3D volume; the weather thread owns 5.4.
+
+*Questions 9 to 13 come from the exogeology review (5.9), accepted 21 Nov on each recommendation (question 13 as amended by the Consensus research: Europa's penitentes off by default):*
+
+9. **A new "volatile" regime, or a layer over regimes?** *Recommendation*: a layer (S17) that runs on every solid world, because Mars, Triton and Pluto sit in three different regimes and all need it. The only regime change is S0b.
+10. **Order.** *Recommendation*: as added to question 2.
+11. **Mars recurring slope lineae.** *Recommendation*: dry granular flows by default (Dundas et al. 2017), with brine as a GM switch, and the debate stated in "why?".
+12. **Pluto and kin as test fixtures.** *Recommendation*: add Pluto, Charon, Triton, Enceladus, Miranda, Ceres, Iapetus and Callisto to the surface fixtures with expected regimes and per-mechanism checks. Pluto becomes S17's showcase world.
+13. **Debated mechanisms** (Iapetus's ridge, Europa's penitentes, hycean worlds). *Recommendation*: labelled options with the competing explanations in "why?", on by default only where our own blocks produce them.
 
 ---
 
@@ -356,6 +402,12 @@ So: no reason we cannot go well beyond Rock 3. The limits are ones we chose, and
 | S16b | the D2 run guided by D1 (16 children a cell, shared plates and events, sub-cell boundaries) | S16a, S2b | D2 averaged to D1 within tolerance; at least 95% land and sea agreement; every D1 feature keeps its address and name; replay identical |
 | S8a | equirectangular map export per layer | S1 | exported height map round-trips to tile heights within tolerance |
 | W7 (weather thread) | land and sea heat capacity, local albedo, current rules, retrograde winds, ice-age cycles | W1, S7 | coastal versus interior seasonal range on the Earth fixture in the observed sense; a retrograde fixture's winds flip |
+| S0b (accepted, 5.9; processes, not classes 21 Nov) | replace first-match regime rules with process-strength blocks (`SSE4-processes-not-classes.md` 2.1): active shell from Rayleigh number and tidal stress, roundness from strength against gravity, renewal from active processes only, tidal history input; `regime` kept as a derived label | S0, S4, S6 | Callisto keeps a saturated crater count and no ridges; Enceladus and Miranda round, Vesta lumpy; Europa and Ganymede unchanged; golden changes logged with reasons |
+| S17a | volatile species table (vapour pressure, latent heat, albedo, flow law); D0 mobility check; D1 equilibrium caps and basin plains from averaged insolation; surface pressure from the coldest ice | S0, S7, T1 | a Pluto fixture puts N2 in a low-latitude basin and not at the poles; Mars keeps CO2 at the south pole; Triton gets a cap; surface pressure matches each species' vapour pressure at the ice temperature |
+| S17b | seasonal transport by latitude band and basin; N2 glaciers on S3 routing; convection cells by Rayleigh number; sublimation pits and lag; polar layered deposits as S9 strata; solid-state greenhouse jets; penitentes and pits as flourishes | S17a, S3, S9, S10, W4 | Sputnik-like plain crater-free with cells 10 to 40 km; glaciers flow downhill only; penitentes only above 0.1 Pa or where sublimation beats sputtering; layered deposits count obliquity cycles |
+| S18a | ice-shell stress field (diurnal tides, non-synchronous rotation, freezing); cycloids; tiger stripes; extensional chasmata; diapirs (lenticulae, coronae, cantaloupe); viscous crater relaxation | S6, T1 | Europa lineae curve as cycloids; an eccentric small moon fractures at the poles; a freezing-ocean fixture opens chasmata; old large craters on warm ice lose relief |
+| S18b | cryovolcanism from pressurised oceans and brines: domes, flows, plains, faculae, plumes | S18a, S15a | eruptions only where the crack reaches liquid and the pressure suffices; every edifice answers why |
+| S19, S20, S21 | colour from chemistry and exposure; small-body physics; water released from a crust | S7, O10; S0, F5; S3, S9, water table | see `SSE4-exogeology-gaps.md` section 4 |
 
 ---
 
@@ -363,4 +415,5 @@ So: no reason we cannot go well beyond Rock 3. The limits are ones we chose, and
 
 - Rock 3, Insight Games, Steam store page: https://store.steampowered.com/app/1892520/Rock_3/ (read 21 Nov 2026). Feature list from the developer's Reddit post as pasted by Alex.
 - SSE4 package logs S0 to S7 and W1 to W6 in `handover/packages/`.
+- Exogeology review (section 5.9, questions 9 to 13): `SSE4-exogeology-gaps.md` in the same folder, with its own sources marked read or found, the Pluto run results and the probe at `exogeology/pluto_probe.rs`.
 - Named for builders to check: Stock and Montgomery 1999 (JGR, stream power and lithology); Crosby and Whipple 2006 (Geomorphology, knickpoints); Molnar and England 1990 (Nature, erosional rebound); Gerya 2012 (Tectonophysics, transform faults); Bruthans et al. 2014 (Nature Geoscience, sandstone arches); Sauro et al. 2020 (Earth-Science Reviews, lava tubes on Earth, Moon and Mars); Blair et al. 2017 (Icarus, lunar lava tube stability); Haruyama et al. 2009 (GRL, Marius Hills skylight); Keszthelyi 1995 (JGR, lava tube thermal budget); Palmer 1991 (GSA Bulletin, limestone caves); Cornet et al. 2015 (JGR Planets, Titan karst); Malaska et al. 2020 (Icarus, Titan labyrinth terrain); Schmidt et al. 2011 (Nature, Europa chaos and shallow water); Haitjema and Mitchell-Bruker 2005 (Ground Water, water table); Walther 1894 (facies law); Öpik 1951 and Wetherill 1967 (collision probabilities); Gault and Wedekind 1978 and Bottke et al. 2000 (oblique impacts, elliptical craters); Alvarez et al. 1980 (Science, iridium layer); Elkins-Tanton et al. 2020 (JGR Planets, Psyche); Knie et al. 2004 and Wallner et al. 2016 (iron-60 from nearby supernovae).
