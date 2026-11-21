@@ -21,8 +21,9 @@ export interface StoryHit {
   significance: { score: number; persistence_s: number; reach: number; reversibility: number; rarity_p: number | null; components: [number, number, number, number] };
 }
 
-export interface SiftAsk { scope?: string; at_s?: number; sifters?: SifterDoc[] }
-export interface SiftResult { scope: string; sifters: string[]; hits: StoryHit[] }
+/** `audience`: sift only what that audience's scene shows (event patterns are skipped and named in `skipped`). */
+export interface SiftAsk { scope?: string; at_s?: number; sifters?: (SifterDoc | string)[]; audience?: string }
+export interface SiftResult { scope: string; sifters: string[]; hits: StoryHit[]; audience?: string; skipped?: string[] }
 
 export const SIGNIFICANCE_PARTS = ["lasts", "reaches", "can't be undone", "rare"] as const;
 

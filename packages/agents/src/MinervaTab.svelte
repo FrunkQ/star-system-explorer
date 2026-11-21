@@ -8,8 +8,8 @@
 <script lang="ts">
   import { asker, estimate, linked, type AgentsState, type LedgerRow } from "./agents.ts";
   import type { LoopResult } from "./loop.ts";
-  import { factsBundle, hiddenFrom, minervaRequest, minervaSystem, runMinerva, type FactsBundle, type MinervaNotes, type Narrative } from "./minerva.ts";
-  import type { PlayerScene, Vocab } from "../../ui-contract/src/index.ts";
+  import { factsBundle, hiddenFrom, hitsFor, minervaRequest, minervaSystem, runMinerva, type FactsBundle, type MinervaNotes, type Narrative } from "./minerva.ts";
+  import type { PlayerScene, SiftResult, Vocab } from "../../ui-contract/src/index.ts";
 
   export interface MinervaHost {
     audiences: () => { id: string; label: string }[];
@@ -17,6 +17,8 @@
     scene: (audience?: string) => Promise<PlayerScene | null>;
     vocab: Vocab;
     title: string;
+    /** The kernel's sifter hits over what one audience is shown (never the GM's), or null when it cannot say. */
+    sift?: (audience: string) => Promise<SiftResult | null>;
   }
 
   let { st, host, onrow }: { st: AgentsState; host?: MinervaHost; onrow: (r: LedgerRow) => void } = $props();
@@ -31,8 +33,8 @@
   $effect(() => {
     const a = audience;
     bundle = null;
-    host?.scene(a).then((s) => {
-      if (a === audience) bundle = s ? factsBundle(s, host!.vocab, { title: host!.title }) : null;
+    build(a).then((b) => {
+      if (a === audience) bundle = b;
     });
   });
   const est = $derived(
@@ -50,18 +52,24 @@
   );
   const money = (x: number) => `$${x < 0.01 ? x.toFixed(4) : x.toFixed(2)}`;
 
+  /** The audience's facts, with the sifter hits over what they are shown. */
+  async function build(a: string): Promise<FactsBundle | null> {
+    if (!host) return null;
+    const [s, r] = await Promise.all([host.scene(a), host.sift ? host.sift(a) : Promise.resolve(null)]);
+    return s ? factsBundle(s, host.vocab, { title: host.title, hits: hitsFor(r, a, s) }) : null;
+  }
+
   async function write(e: SubmitEvent) {
     e.preventDefault();
     if (!host) return;
     running = true;
     result = null;
     problem = "";
-    const [theirs, gm] = await Promise.all([host.scene(audience), host.scene()]);
-    if (!theirs || !gm) {
+    const [theirs, gm, b] = await Promise.all([host.scene(audience), host.scene(), build(audience)]);
+    if (!theirs || !gm || !b) {
       running = false;
       return void (problem = "The scene for that audience could not be built.");
     }
-    const b = factsBundle(theirs, host.vocab, { title: host.title });
     const snap = JSON.parse(JSON.stringify(st)) as AgentsState;
     result = await runMinerva({ bundle: b, hidden: hiddenFrom(gm, theirs), notes, ask: asker(snap, "describing", { max_out: 1500, temperature: 0.7, onRow: onrow }) });
     running = false;

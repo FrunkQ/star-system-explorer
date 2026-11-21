@@ -6,7 +6,7 @@
 <script lang="ts">
   import { untrack } from "svelte";
   import { railOf, scalesOf, type RailScale } from "../../ui-contract/src/index.ts";
-  import { applyEdits, applySetup, type AtomInfo, enterFacts, observeOf, type AuthoredFacts, checkScreen, deriveScene, gmSeat, redoEdit, subjectOf, systemOrder, undoEdit, type CheckedScreen, type DerivationDoc, type ScreenDoc, type SystemScene, type ViewHandle, type ViewModule, type ViewSession } from "../../ui-contract/src/index.ts";
+  import { applyEdits, applySetup, type AtomInfo, type SifterDoc, enterFacts, observeOf, type AuthoredFacts, checkScreen, deriveScene, gmSeat, redoEdit, subjectOf, systemOrder, undoEdit, type CheckedScreen, type DerivationDoc, type ScreenDoc, type SystemScene, type ViewHandle, type ViewModule, type ViewSession } from "../../ui-contract/src/index.ts";
   import { openBrowserSession } from "../../ui-contract/src/host-browser.ts";
   import { createShare, type Share } from "./share.svelte.ts";
   import { clearStored, download, readStored, setAside, writeStored } from "./campaign-store.ts";
@@ -25,9 +25,11 @@
   import type { MinervaHost } from "../../agents/src/MinervaTab.svelte";
   import type { TarsHost } from "../../agents/src/TarsTab.svelte";
   import { whyPassage } from "../../agents/src/tars.ts";
+  import storyStarters from "../../views/story-finder/src/starters.json";
   import { showReference } from "../../ui-contract/src/index.ts";
   import { oracMay } from "../../agents/src/orac.ts";
   import { atomIssueTarget, flowEntries, lensEntries, lensTarget, loadAtoms, physicsTarget } from "../../agents/src/orac-targets.ts";
+  import { programTarget, ruleEntries } from "../../agents/src/orac-rules.ts";
   import { dataViewEntries, dataViewTarget, lookEntries, screenTarget, styleTarget, symbologyTarget } from "../../agents/src/orac-looks.ts";
   import { orbitScene, voicesFromSystem } from "../../ui-contract/src/index.ts";
   import { orbitBodies, phasesFrom, withPhases, yearsToSeconds } from "../../ui-contract/src/index.ts";
@@ -527,9 +529,10 @@
           const r = await applySetup(s, ws, x);
           return r.status === "applied" ? null : r.status === "refused" ? r.reason : `not applied (${r.status})`;
         } }),
+        programTarget(s, ws),
         atomIssueTarget((u) => window.open(u, "_blank", "noopener")),
       ],
-      catalogue: () => [...flowEntries(s, atoms), ...lensEntries(lenses, fields()), ...lookEntries({ views: [...REGISTRY, ...PLAYER_STACK] as never, styles: styleHost.registry(), symbologies: symbols.registry() }), ...dataViewEntries(observeOf(s.stack().base)?.setup ?? null)],
+      catalogue: () => [...flowEntries(s, atoms), ...lensEntries(lenses, fields()), ...lookEntries({ views: [...REGISTRY, ...PLAYER_STACK] as never, styles: styleHost.registry(), symbologies: symbols.registry() }), ...dataViewEntries(observeOf(s.stack().base)?.setup ?? null), ...ruleEntries(s)],
       here: () => [agentContext, ws.bench ? `Flow on the bench: ${ws.bench.flow}${ws.bench.node ? `, node ${ws.bench.node}` : ""}` : "", `Lens in use: ${lens.label}`].filter(Boolean).join("\n"),
     };
   });
@@ -555,6 +558,7 @@
       },
     };
   });
+  const STORY_STARTERS = storyStarters.sifters as unknown as SifterDoc[];
   // A3: Minerva reads one audience's scene (K9) and nothing else; the GM's scene is used only to check her text.
   const minervaHost = $derived.by((): MinervaHost | undefined => {
     const s = session;
@@ -568,6 +572,11 @@
       },
       vocab: plainVocab as unknown as Vocab,
       title: `${scene.title}: ${scene.subtitle}`,
+      // The stack's sifters and the story finder's starters, over what that audience is shown.
+      sift: async (audience) => {
+        const r = await s.sift({ scope, audience, sifters: STORY_STARTERS });
+        return r.ok ? r.result : null;
+      },
     };
   });
   const differences = $derived(ws.branch ? compareScenes(mainScene, scene, ws.branch.applied) : []);

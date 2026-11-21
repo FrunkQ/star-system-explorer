@@ -54,6 +54,11 @@ try {
     const facts = await dlg.locator("[data-facts]").textContent({ timeout: 20000 });
     assert.match(facts, /Tarn: .*Not known to them: .*not yet scanned/);
     assert.ok(!/pirate/i.test(facts), "the table's facts hold no secret");
+    // Sifter hits over what the table is shown: the rumour, never the GM's ruins or secret.
+    await gm.waitForFunction(() => /Worth a story/.test(document.querySelector("[data-facts]")?.textContent ?? ""), null, { timeout: 20000 });
+    const withHits = await dlg.locator("[data-facts]").textContent();
+    assert.match(withHits, /Worth a story:\s*- A rumour to chase/);
+    assert.ok(!/ruins|garden world/i.test(withHits), "no hit on what the table has not been shown");
     await dlg.getByLabel("What about").fill("the approach to Tarn");
     await dlg.getByRole("button", { name: "Write" }).click();
     await dlg.locator("[data-minerva-result]").waitFor({ timeout: 30000 });
@@ -70,7 +75,7 @@ try {
     await shot(gm, "a3-minerva");
     assert.deepEqual(errors, []);
     await browser.close();
-    console.log(`PASS ${name}: Minerva wrote for the table from its own facts; invented number sent back and never shown; no secret sent`);
+    console.log(`PASS ${name}: Minerva wrote for the table from its own facts; invented number sent back and never shown; no secret sent; sifter hits only from the table's scene`);
   }
 } finally {
   server.kill();

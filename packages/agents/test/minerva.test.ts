@@ -10,7 +10,7 @@ import { gmSeat } from "../../ui-contract/src/seat.ts";
 import { enterFacts, type AuthoredFacts, type PackDoc, type Vocab } from "../../ui-contract/src/index.ts";
 import { nodeKernel } from "../../ui-contract/test/node-kernel.ts";
 import { asker, emptyAgents, type AgentsState } from "../src/agents.ts";
-import { checkNarrative, factsBundle, hiddenFrom, leaks, numbersIn, runMinerva, strayNumbers } from "../src/minerva.ts";
+import { checkNarrative, factsBundle, hiddenFrom, hitsFor, leaks, numbersIn, runMinerva, strayNumbers } from "../src/minerva.ts";
 // @ts-expect-error plain JS test helper
 import { mockProvider } from "./mock-provider.mjs";
 
@@ -87,5 +87,30 @@ test("a draft that keeps inventing numbers is never shown", async () => {
     assert.equal(r.failed[0]!.value, undefined);
   } finally {
     await p.close();
+  }
+});
+
+test("sifter hits come from what the audience is shown, never the GM's", async () => {
+  const k = nodeKernel();
+  try {
+    const s = await Session.open(k.client, gmSeat(), facts.universe, [base, playerData], k.scratch);
+    assert.equal(await enterFacts(s, facts), null);
+    const starters = json("packages/views/story-finder/src/starters.json").sifters;
+    const table = await s.scene(facts.scope, { audience: "everyone" });
+    assert.ok(table.ok);
+    const theirs = await s.sift({ scope: facts.scope, sifters: starters, audience: "everyone" });
+    const gms = await s.sift({ scope: facts.scope, sifters: starters });
+    assert.ok(theirs.ok && gms.ok);
+    assert.ok(gms.result.hits.some((h) => h.sifter === "story.secret"), "the GM's sift finds the secret");
+    // The GM's hits are refused for an audience (as an older kernel that ignored the audience would send).
+    assert.deepEqual(hitsFor(gms.result, "everyone", table.scene), []);
+    const hits = hitsFor(theirs.result, "everyone", table.scene);
+    assert.deepEqual(hits.map((h) => h.title), ["A rumour to chase, at " + hits[0]!.title.split(", at ")[1]]);
+    assert.match(hits[0]!.evidence[0]!, /third moon sings/);
+    const bundle = factsBundle(table.scene, vocab, { title: "Kestrel Reach", hits });
+    assert.match(bundle.text, /Worth a story:\n- A rumour to chase/);
+    assert.ok(!/Pirate|ruins|garden/i.test(bundle.text), "nothing the table has not been shown");
+  } finally {
+    await k.close();
   }
 });
