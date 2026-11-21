@@ -317,6 +317,42 @@
      {
       "text": "Wordsworth, R. 2015, Atmospheric heat redistribution and collapse on tidally locked rocky planets, ApJ 806, 180",
       "url": "https://arxiv.org/abs/1412.5575"
+     },
+     {
+      "text": "Jennings, Winchell, Livneh and Molotch 2018, Spatial variation of the rain-snow temperature threshold across the Northern Hemisphere, Nature Communications 9, 1148",
+      "doi": "10.1038/s41467-018-03629-7"
+     },
+     {
+      "text": "Calov and Greve 2005, A semi-analytical solution for the positive degree-day model with stochastic temperature variations, Journal of Glaciology 51, 173",
+      "doi": "10.3189/172756505781829601"
+     },
+     {
+      "text": "Braithwaite 1995, Positive degree-day factors for ablation on the Greenland ice sheet studied by energy-balance modelling, Journal of Glaciology 41, 153",
+      "doi": "10.3189/S0022143000017846"
+     },
+     {
+      "text": "Zhang, Hickel, Dawes, Chiew, Western and Briggs 2004, A rational function approach for estimating mean annual evapotranspiration (Fu's equation, omega 2.6), Water Resources Research 40, W02502",
+      "doi": "10.1029/2003WR002710"
+     },
+     {
+      "text": "Kok, Parteli, Michaels and Karam 2012, The physics of wind-blown sand and dust, Reports on Progress in Physics 75, 106901",
+      "doi": "10.1088/0034-4885/75/10/106901"
+     },
+     {
+      "text": "Kok 2010, Difference in the wind speeds required for initiation versus continuation of sand transport on Mars, Physical Review Letters 104, 074502",
+      "doi": "10.1103/PhysRevLett.104.074502"
+     },
+     {
+      "text": "Telfer et al. 2018, Dunes on Pluto, Science 360, 992",
+      "doi": "10.1126/science.aao2975"
+     },
+     {
+      "text": "Kottek, Grieser, Beck, Rudolf and Rubel 2006, World Map of the Koppen-Geiger climate classification updated, Meteorologische Zeitschrift 15, 259",
+      "doi": "10.1127/0941-2948/2006/0130"
+     },
+     {
+      "text": "Lancaster 1988, Development of linear dunes in the southwestern Kalahari, southern Africa, Journal of Arid Environments 14, 233 (dune mobility index; read through Lancaster and Helm 2000, Earth Surface Processes and Landforms 25, 197)",
+      "doi": "10.1002/(SICI)1096-9837(200002)25:2<197::AID-ESP82>3.0.CO;2-H"
      }
     ],
     "strengths": {
@@ -367,6 +403,210 @@
        "by": "Haqq-Misra et al. 2018 covered synchronous rotators of about 1 to 100 days"
       }
      ]
+    },
+    "water": {
+     "snow_offset_k": 1.0,
+     "sigma_k": 5.0,
+     "ddf_snow_mm": 3.2,
+     "ddf_ice_mm": 8.0,
+     "fu_omega": 2.6,
+     "source": "Snow below freezing + 1.0 K, the mean 50% rain-snow threshold over 6883 Northern Hemisphere stations (Jennings et al. 2018). Air temperature scatters 5 K about a season's mean, the value of Calov and Greve 2005's Greenland example. Melt by positive degree days (Calov and Greve 2005), 8 mm per K per day on ice and 3.2 on snow (Braithwaite 1995: ice about 8, snow 36-44% of ice). Evaporation and runoff by Fu's Budyko curve, omega 2.6 (Zhang et al. 2004). Potential evaporation is the energy-limited flux of supply.latent_share (docs/fudges.md)."
+    },
+    "saltation": {
+     "a_n": 0.111,
+     "cohesion_n_m": 0.00029,
+     "impact_ratio": 0.82,
+     "impact_reference_kg_m3": 1.2,
+     "karman": 0.4,
+     "wind_height_m": 10.0,
+     "roughness_per_diameter": 0.0333333333333,
+     "weibull_k": 2.0,
+     "ten_metre_share": 0.5,
+     "gust_share": 0.04,
+     "gusts_per_year": 52596.0,
+     "lofting_width": 0.03,
+     "grains": [
+      {
+       "name": "methane-ice sand",
+       "diameter_m": 0.00025,
+       "density_kg_m3": 494.0,
+       "below_k": 90.67
+      },
+      {
+       "name": "water-ice sand",
+       "diameter_m": 0.00025,
+       "density_kg_m3": 920.0,
+       "below_k": 180.0
+      },
+      {
+       "name": "rock sand",
+       "diameter_m": 0.00025,
+       "density_kg_m3": 2650.0
+      }
+     ],
+     "mobility": {
+      "inactive": 50.0,
+      "active": 200.0,
+      "aridity_floor": 0.01
+     },
+     "source": "Fluid threshold of Shao and Lu 2000 (A_N 0.111, cohesion 2.9e-4 N/m from Kok and Renno 2006) as given by Kok et al. 2012; impact threshold 0.82 of it on Earth and about Earth's value in thin air (Kok 2010); law of the wall with z0 = D/30 (Kok et al. 2012); Weibull gusts k = 2 (Kok 2010); transport, once started by one ten-minute wind above the fluid threshold in a year or by lofting, runs while the wind is above the impact threshold (Kok 2010 hysteresis); grains lofted by subliming ice where the main gas freezes out (Telfer et al. 2018, Pluto: methane ice 494 kg/m3, 210-310 micron); dune activity by Lancaster's (1988) mobility index, inactive below 50 and fully active above 200. The ten-metre share (Earth's band winds of about 12 m/s to the observed 6-7 m/s over the sea), the gust share (Venus and Titan near 1 m/s at the ground) and its cube-root fall with air density, lofting width, the aridity floor and the grain by temperature are ours (docs/fudges.md)."
+    },
+    "areas": {
+     "rules": [
+      {
+       "area": "ice-cap",
+       "when": {
+        "ice_balance_m_yr": {
+         "min": 1e-06
+        }
+       },
+       "because": "Snow outlasts the summer here, so ice builds up."
+      },
+      {
+       "area": "rainless",
+       "when": {
+        "precip_m_yr": {
+         "max": 0.0001
+        }
+       },
+       "because": "Almost nothing falls here."
+      },
+      {
+       "area": "frost",
+       "when": {
+        "liquid_water": {
+         "min": 1
+        },
+        "t_warm_c": {
+         "max": 0
+        }
+       },
+       "because": "Even the warmest season stays below freezing (Koppen EF)."
+      },
+      {
+       "area": "tundra",
+       "when": {
+        "liquid_water": {
+         "min": 1
+        },
+        "t_warm_c": {
+         "max": 10
+        }
+       },
+       "because": "The warmest season stays below 10 C (Koppen ET)."
+      },
+      {
+       "area": "desert",
+       "when": {
+        "liquid_water": {
+         "min": 1
+        },
+        "p_over_pth": {
+         "max": 0.5
+        }
+       },
+       "because": "Rain is less than half of what the heat would dry (Koppen BW)."
+      },
+      {
+       "area": "steppe",
+       "when": {
+        "liquid_water": {
+         "min": 1
+        },
+        "p_over_pth": {
+         "max": 1.0
+        }
+       },
+       "because": "Rain is less than the heat would dry (Koppen BS)."
+      },
+      {
+       "area": "rainforest",
+       "when": {
+        "liquid_water": {
+         "min": 1
+        },
+        "t_cold_c": {
+         "min": 18
+        },
+        "aridity": {
+         "min": 1.0
+        }
+       },
+       "because": "Warm all year and wetter than evaporation can take (Koppen A; wet by P/PE rather than the driest month)."
+      },
+      {
+       "area": "savanna",
+       "when": {
+        "liquid_water": {
+         "min": 1
+        },
+        "t_cold_c": {
+         "min": 18
+        }
+       },
+       "because": "Warm all year with a dry spell (Koppen A)."
+      },
+      {
+       "area": "continental",
+       "when": {
+        "liquid_water": {
+         "min": 1
+        },
+        "t_cold_c": {
+         "max": -3
+        }
+       },
+       "because": "Winters freeze below -3 C (Koppen D)."
+      },
+      {
+       "area": "temperate",
+       "when": {
+        "liquid_water": {
+         "min": 1
+        }
+       },
+       "because": "Mild winters between -3 C and 18 C (Koppen C)."
+      },
+      {
+       "area": "frozen",
+       "when": {
+        "t_warm_over_freeze_k": {
+         "max": 0
+        }
+       },
+       "because": "Its liquid never thaws here."
+      },
+      {
+       "area": "dry",
+       "when": {
+        "aridity": {
+         "max": 0.5
+        }
+       },
+       "because": "Less falls than its liquid could evaporate."
+      },
+      {
+       "area": "wet",
+       "when": {},
+       "because": "More falls than its liquid can evaporate."
+      }
+     ],
+     "labels": {
+      "ice-cap": "Ice cap",
+      "rainless": "Rainless",
+      "frost": "Frost",
+      "tundra": "Tundra",
+      "desert": "Desert",
+      "steppe": "Steppe",
+      "rainforest": "Rainforest",
+      "savanna": "Savanna",
+      "continental": "Continental",
+      "temperate": "Temperate",
+      "frozen": "Frozen",
+      "dry": "Dry",
+      "wet": "Wet"
+     },
+     "source": "Koppen-Geiger criteria of Kottek et al. 2006 (Table 1 and eq. 2.1), applied to each place's own temperatures and rain, after the ice balance (physics) and with plain labels for worlds whose liquid is not water. A label is read off the numbers; nothing reads it back."
     }
    }
   }

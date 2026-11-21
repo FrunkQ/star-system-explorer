@@ -218,6 +218,102 @@ pub struct Tested {
     pub by: String,
 }
 
+/// The water a place receives (W9, `water.rs`).
+#[derive(Clone, PartialEq, Debug, Serialize, Deserialize)]
+pub struct WaterSettings {
+    /// Snow falls below the freezing point plus this, K (Jennings et al. 2018).
+    pub snow_offset_k: f64,
+    /// Scatter of the air temperature about a season's mean, K.
+    pub sigma_k: f64,
+    /// Degree-day melt factors, mm of water per K per day (Braithwaite 1995).
+    pub ddf_snow_mm: f64,
+    pub ddf_ice_mm: f64,
+    /// Fu's ω (2.6 matches Budyko's curve, Zhang et al. 2004).
+    pub fu_omega: f64,
+    pub source: String,
+}
+
+/// A sand grain saltation reads.
+#[derive(Clone, PartialEq, Debug, Serialize, Deserialize)]
+pub struct Grain {
+    pub name: String,
+    pub diameter_m: f64,
+    pub density_kg_m3: f64,
+    /// Ground colder than this is made of this grain (the last has none).
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub below_k: Option<f64>,
+}
+
+/// Lancaster's dune mobility index bounds.
+#[derive(Clone, PartialEq, Debug, Serialize, Deserialize)]
+pub struct Mobility {
+    pub inactive: f64,
+    pub active: f64,
+    /// Least P / PE the index divides by.
+    pub aridity_floor: f64,
+}
+
+/// `sse.wind.saltation` (W9, `saltation.rs`).
+#[derive(Clone, PartialEq, Debug, Serialize, Deserialize)]
+pub struct SaltationSettings {
+    /// Shao and Lu 2000 (Kok et al. 2012 eq. 2.8): u*ft = A_N sqrt(...), and the cohesion γ, N/m.
+    pub a_n: f64,
+    pub cohesion_n_m: f64,
+    /// Impact over fluid threshold for loose sand on Earth (Kok 2010).
+    pub impact_ratio: f64,
+    /// The impact threshold is evaluated with air no thinner than this, kg/m³.
+    pub impact_reference_kg_m3: f64,
+    pub karman: f64,
+    pub wind_height_m: f64,
+    /// z0 = D × this (Kok et al. 2012: D/30).
+    pub roughness_per_diameter: f64,
+    /// Weibull shape of the wind about its mean (Kok 2010: k = 2).
+    pub weibull_k: f64,
+    /// The reference-height wind as a share of the climate's near-ground wind.
+    pub ten_metre_share: f64,
+    /// Share of the eddy wind felt as gusts near the ground (in air as dense as Earth's).
+    pub gust_share: f64,
+    /// Independent winds a year (ten-minute means: 52,596).
+    pub gusts_per_year: f64,
+    /// Width of the lofting step as a share of the main gas's frost point.
+    pub lofting_width: f64,
+    pub grains: Vec<Grain>,
+    pub mobility: Mobility,
+    pub source: String,
+}
+
+/// One area rule: the first whose conditions all hold names the area.
+#[derive(Clone, PartialEq, Debug, Serialize, Deserialize)]
+pub struct AreaRule {
+    pub area: String,
+    pub when: BTreeMap<String, Range>,
+    pub because: String,
+}
+
+/// Per-area climate labels (W9): rules over a place's water supply.
+#[derive(Clone, PartialEq, Debug, Serialize, Deserialize)]
+pub struct Areas {
+    pub rules: Vec<AreaRule>,
+    pub labels: BTreeMap<String, String>,
+    pub source: String,
+}
+
+/// Quantities an area rule may test (`water::quantity`).
+pub const AREA_QUANTITIES: [&str; 12] = [
+    "liquid",
+    "liquid_water",
+    "ice_balance_m_yr",
+    "precip_m_yr",
+    "runoff_m_yr",
+    "aridity",
+    "p_over_pth",
+    "t_cold_c",
+    "t_warm_c",
+    "t_mean_c",
+    "t_warm_over_freeze_k",
+    "snow_share",
+];
+
 #[derive(Clone, PartialEq, Debug, Serialize, Deserialize)]
 pub struct Circulation {
     /// Held and Hou: fractional equator-to-pole contrast of radiative
@@ -250,6 +346,9 @@ pub struct ClimateSettings {
     pub supply: Supply,
     pub circulation: Circulation,
     pub strengths: StrengthSettings,
+    pub water: WaterSettings,
+    pub saltation: SaltationSettings,
+    pub areas: Areas,
     pub defaults: Defaults,
     pub substances: Vec<Substance>,
     pub references: Vec<Reference>,
@@ -286,6 +385,23 @@ impl ClimateSettings {
         if cc.rules.last().is_none_or(|r| !r.when.is_empty()) {
             return Err("the last circulation rule must have no conditions (the fallback)".into());
         }
+        for r in &s.areas.rules {
+            if !s.areas.labels.contains_key(&r.area) {
+                return Err(format!("area rule names unknown area {}", r.area));
+            }
+            for q in r.when.keys() {
+                if !AREA_QUANTITIES.contains(&q.as_str()) {
+                    return Err(format!(
+                        "area rule for {} reads unknown quantity {q}",
+                        r.area
+                    ));
+                }
+            }
+        }
+        if s.areas.rules.last().is_none_or(|r| !r.when.is_empty()) {
+            return Err("the last area rule must have no conditions (the fallback)".into());
+        }
+        crate::saltation::check(&s.saltation)?;
         if s.substances.is_empty() {
             return Err("climate needs at least one substance".into());
         }
