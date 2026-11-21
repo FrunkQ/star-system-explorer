@@ -1,7 +1,9 @@
 <!--
   Body view (V6 part 4, handoff 8.2): the selected world as a globe drawn
   from the kernel's S1 surface tiles (six level-0 tiles, one per cube face),
-  on a 2D canvas, lit from the upper left. Drag or use the arrow keys to
+  by a render recipe (R1, packages/renderer): on the GPU, a 2D canvas or in
+  words, hill-shaded from the elevation layer. The quality badge says how it
+  was drawn and what the governor reduced. Drag or use the arrow keys to
   turn it. Beside it the same surface in words: how much lies under water
   (or magma, or hydrocarbon), the highest and lowest ground, the main bare
   materials, the regime, the epoch, and what the kernel says is still
@@ -10,13 +12,18 @@
 -->
 <script module lang="ts">
   import type { SurfaceTile } from "../../../ui-contract/src/index.ts";
+  import type { AirFacts } from "../../../renderer/src/index.ts";
   // Tiles take about a second to build; keep them per system and body for the page's life.
-  const cache = new Map<string, { tiles: SurfaceTile[]; regime?: string; refused: number }>();
+  const cache = new Map<string, { tiles: SurfaceTile[]; regime?: string; refused: number; air: AirFacts | null }>();
 </script>
 
 <script lang="ts">
-  import { globeStats, sampleAt, sampleColour, viewToWorld, type Globe, type Json, type SystemScene, type ViewContext } from "../../../ui-contract/src/index.ts";
+  import { globeStats, type Globe, type Json, type SystemScene, type ViewContext } from "../../../ui-contract/src/index.ts";
+  import { untrack } from "svelte";
+  import { airFactsOf, airFromOptics, airRequest, applyEdits, editableSettings, keepPhoto, listPhotos, LIBRARY, mountGlobe, photograph, removePhoto, type GlobeRun, type MediaItem, type RecipeDoc, type RecipeEdit, type GlobeRunOptions, type GlobeStatus } from "../../../renderer/src/index.ts";
+  import { SHIPPED_RECIPES } from "../../../renderer/src/recipes.ts";
   import Cutaway from "../../cutaway/src/Cutaway.svelte";
+  import StarDisc from "./StarDisc.svelte";
 
   let { ctx, scene, params }: { ctx: ViewContext; scene: SystemScene; params: Record<string, Json> } = $props();
 
@@ -24,7 +31,7 @@
   const subject = $derived(scene.subjects.find((s) => s.address === ws.selection));
   const size = $derived(Math.round(Math.min(640, Math.max(160, Number(params.size_px ?? 320)))));
 
-  let got = $state<{ tiles: SurfaceTile[]; regime?: string; refused: number } | null>(null);
+  let got = $state<{ tiles: SurfaceTile[]; regime?: string; refused: number; air: AirFacts | null } | null>(null);
   let loading = $state(false);
   let failed = $state<string | null>(null);
   let gen = 0;
@@ -45,14 +52,27 @@
     (async () => {
       const r = await ctx.session.surfaceTiles(sys, sub.address);
       if (g !== gen) return;
-      loading = false;
       if (!r.ok) {
+        loading = false;
         failed = r.message;
         return;
       }
-      const v = { tiles: r.tiles, regime: r.regime, refused: r.refused.length };
+      // The air the atmosphere pass draws: the kernel's surface pressure, temperature, gravity and gas mix.
+      const rs = await ctx.session.resolvedSystem(sys);
+      if (g !== gen) return;
+      const surf = rs.ok ? (rs.result.surfaces.find((x) => x.address === sub.address) as Parameters<typeof airFactsOf>[1]) : undefined;
+      const facts = rs.ok ? airFactsOf(rs.result.facts[sub.address], surf) : null;
+      // The optics themselves come from the kernel (light track, read_air_optics).
+      const req = facts ? airRequest(sub.address, facts) : null;
+      if (facts && req) {
+        const ao = await ctx.session.readAirOptics([req.air]);
+        if (g !== gen) return;
+        facts.optics = ao.ok && ao.airs[0] ? airFromOptics(ao.airs[0] as Parameters<typeof airFromOptics>[0], req) : null;
+      }
+      const v = { tiles: r.tiles, regime: r.regime, refused: r.refused.length, air: facts };
       cache.set(key, v);
       got = v;
+      loading = false;
     })();
   });
 
@@ -64,43 +84,148 @@
 
   let lon = $state(0);
   let lat = $state(20);
-  let canvas = $state<HTMLCanvasElement | undefined>();
-  // Light from the upper left, towards the viewer.
-  const L = (() => {
-    const v = [-0.5, 0.55, 0.67];
-    const l = Math.hypot(v[0]!, v[1]!, v[2]!);
-    return [v[0]! / l, v[1]! / l, v[2]! / l] as const;
-  })();
+  let host = $state<HTMLElement | undefined>();
+  let run: GlobeRun | null = null;
+  let gs = $state<GlobeStatus | null>(null);
+  let badgeOpen = $state(false);
+  // The user's own choices on this device, over the view's settings (the probe can be overridden: rendering report 6.2).
+  let ovRecipe = $state<string | null>(null);
+  let ovTier = $state<string | null>(null);
+  let ovSpin = $state<boolean | null>(null);
+  // R4: recipes edited on this device. Kept in this browser (a per-viewer look), never in the campaign or the kernel.
+  const MINE = "sse-recipes-mine";
+  const loadMine = (): RecipeDoc[] => {
+    try {
+      const x = JSON.parse(localStorage.getItem(MINE) ?? "[]");
+      return Array.isArray(x) ? x : [];
+    } catch {
+      return [];
+    }
+  };
+  let mine = $state<RecipeDoc[]>(loadMine());
+  let editing = $state(false);
+  let edits = $state<RecipeEdit[]>([]);
+  let editName = $state("");
+  const registry = $derived<RecipeDoc[]>([...SHIPPED_RECIPES, ...mine]);
+  const baseRecipe = $derived(registry.find((r) => r.id === (ovRecipe ?? String(params.recipe ?? "survey-relief"))) ?? SHIPPED_RECIPES[0]!);
+  const draft = $derived(editing && edits.length ? applyEdits(baseRecipe, editName.trim() && editName.trim() !== baseRecipe.name ? [...edits, { op: "name", name: editName.trim() }] : edits, { library: LIBRARY, pixels: size * size, budget_ms: Number(params.budget_ms ?? 33.3), id: baseRecipe.derived_from ? baseRecipe.id : `${baseRecipe.id}-mine-${mine.length + 1}` }) : null);
+  function setEdit(use: string, param: string, value: number | string) {
+    edits = [...edits.filter((e) => !(e.op === "set" && e.use === use && e.param === param)), { op: "set", use, param, value }];
+  }
+  function keepDraft() {
+    const d = draft;
+    if (!d?.ok) return;
+    mine = [...mine.filter((r) => r.id !== d.doc.id), d.doc];
+    try {
+      localStorage.setItem(MINE, JSON.stringify(mine));
+    } catch {
+      /* kept for this page only */
+    }
+    ovRecipe = d.doc.id;
+    editing = false;
+    edits = [];
+  }
+  function forget(id: string) {
+    mine = mine.filter((r) => r.id !== id);
+    try {
+      localStorage.setItem(MINE, JSON.stringify(mine));
+    } catch {
+      /* ignore */
+    }
+    if (ovRecipe === id) ovRecipe = null;
+  }
+
+  const runOpts = $derived({
+    registry: draft?.ok ? [...registry.filter((r) => r.id !== draft.doc.id), draft.doc] : registry,
+    library: LIBRARY,
+    recipe: draft?.ok ? draft.doc.id : (ovRecipe ?? String(params.recipe ?? "survey-relief")),
+    tier: (ovTier ?? String(params.tier ?? "auto")) as GlobeRunOptions["tier"],
+    knobs: { relief: Number(params.relief ?? 0.5), detail: Number(params.detail ?? 0.5) },
+    budget_ms: Number(params.budget_ms ?? 33.3),
+    governor: params.governor !== false,
+    spin: ovSpin ?? params.spin === true,
+    size_px: size,
+    label: subject?.label ?? "",
+    air: got?.air ?? null,
+  });
+  // One runtime per globe element; settings and turns are passed to it.
   $effect(() => {
-    const c = canvas;
-    if (!c || !has) return;
-    const n = size;
+    const h = host;
+    if (!h) return;
+    const r = mountGlobe(h, untrack(() => runOpts), (st) => {
+      gs = st;
+      if (st.lon !== lon) lon = st.lon;
+    });
+    run = r;
+    return () => {
+      r.dispose();
+      run = null;
+      gs = null;
+    };
+  });
+  $effect(() => {
+    const o = runOpts;
+    untrack(() => run)?.update(o);
+  });
+  $effect(() => {
+    const g = globe;
+    if (has) untrack(() => run)?.setGlobe(g);
+  });
+  $effect(() => {
     const lo = lon;
     const la = lat;
-    const g = globe;
-    const cx = c.getContext("2d");
-    if (!cx) return;
-    const img = cx.createImageData(n, n);
-    const R = n / 2;
-    for (let py = 0; py < n; py++) {
-      const y = (R - py - 0.5) / R;
-      for (let px = 0; px < n; px++) {
-        const x = (px + 0.5 - R) / R;
-        const d = viewToWorld(x, y, lo, la);
-        if (!d) continue;
-        const s = sampleAt(g, d);
-        const o = (py * n + px) * 4;
-        const z = Math.sqrt(Math.max(0, 1 - x * x - y * y));
-        const light = 0.25 + 0.75 * Math.max(0, x * L[0] + y * L[1] + z * L[2]);
-        const rgb = s ? sampleColour(s.tile, s.i, light) : [40, 40, 40];
-        img.data[o] = rgb[0]!;
-        img.data[o + 1] = rgb[1]!;
-        img.data[o + 2] = rgb[2]!;
-        img.data[o + 3] = 255;
-      }
-    }
-    cx.putImageData(img, 0, 0);
+    const st = untrack(() => gs);
+    if (st && st.lon === lo && st.lat === la) return;
+    untrack(() => run)?.setView(lo, la);
   });
+  // R3: take a photograph (the still tier, off screen), keep it on this device, save it as a PNG.
+  let shooting = $state<string | null>(null);
+  let shotNote = $state<string | null>(null);
+  let photos = $state<{ item: MediaItem; url: string }[]>([]);
+  $effect(() => {
+    const a = subject?.address;
+    if (!a) return;
+    let live = true;
+    void listPhotos(a).then((l) => {
+      if (!live) return;
+      for (const p of untrack(() => photos)) URL.revokeObjectURL(p.url);
+      photos = l.map((item) => ({ item, url: URL.createObjectURL(item.png) }));
+    });
+    return () => {
+      live = false;
+    };
+  });
+  const stamp = (d: Date) => d.toISOString().slice(0, 16).replace("T", " ");
+  async function takePhoto() {
+    const s = subject;
+    if (!s || !has || shooting) return;
+    shooting = "Starting…";
+    shotNote = null;
+    try {
+      const o = runOpts;
+      const shot = await photograph({ registry: o.registry, library: o.library, recipe: o.recipe, knobs: o.knobs, globe, air: o.air, label: s.label, lon, lat, size: 1024, frames: 16, onProgress: (d, n) => (shooting = `Refining ${d} of ${n}…`) });
+      const png = await new Promise<Blob>((res, rej) => shot.canvas.toBlob((b) => (b ? res(b) : rej(new Error("the browser would not encode the picture"))), "image/png"));
+      const now = new Date();
+      const caption = `${s.label}, centred on ${lat.toFixed(0)}° ${lon.toFixed(0)}°. ${shot.note} Made in ${(shot.ms / 1000).toFixed(1)} s.`;
+      const item: MediaItem = { id: `${s.address}@${now.getTime()}`, title: `${s.label} ${stamp(now)}`, subject: s.address, caption, created: now.toISOString(), png, width: shot.canvas.width, height: shot.canvas.height };
+      const where = await keepPhoto(item);
+      photos = [{ item, url: URL.createObjectURL(png) }, ...photos];
+      shotNote = `${caption} ${where === "device" ? "Kept on this device." : "This browser will not keep it after the page closes: save it."}`;
+    } catch (e) {
+      shotNote = `No photograph: ${e instanceof Error ? e.message : String(e)}`;
+    } finally {
+      shooting = null;
+    }
+  }
+  async function dropPhoto(id: string) {
+    await removePhoto(id);
+    const gone = photos.find((p) => p.item.id === id);
+    if (gone) URL.revokeObjectURL(gone.url);
+    photos = photos.filter((p) => p.item.id !== id);
+  }
+  const fileName = (m: MediaItem) => `${m.title.replace(/[^A-Za-z0-9 _-]+/g, "").replace(/ +/g, "-")}.png`;
+  const tierChoices: [string, string][] = [["auto", "This device's choice"], ["gpu-high", "GPU, high"], ["gpu-basic", "GPU"], ["canvas", "2D canvas"], ["text", "Words only"]];
+  const tierWords: Record<string, string> = { still: "Photograph", "gpu-high": "GPU high", "gpu-basic": "GPU", canvas: "Canvas", text: "Text" };
 
   let drag: { x: number; y: number; lon: number; lat: number } | null = null;
   function down(e: PointerEvent) {
@@ -129,7 +254,7 @@
 
   const pct = (x: number) => (x >= 0.995 ? "all" : x < 0.005 ? "none" : `${Math.round(x * 100)}%`);
   const km = (m: number) => (m < 0 ? "−" : "") + (Math.abs(m) >= 1000 ? `${(Math.abs(m) / 1000).toFixed(1)} km` : `${Math.round(Math.abs(m))} m`);
-  const coverWords: Record<string, string> = { water: "under water", magma: "under magma", hydrocarbon: "under hydrocarbon seas" };
+  const coverWords: Record<string, string> = { water: "under water", magma: "under magma", hydrocarbon: "under hydrocarbon seas", ice: "under ice" };
   const covers = $derived(stats ? Object.entries(stats.covered).filter(([k, v]) => k !== "none" && v > 0).sort((a, b) => b[1] - a[1]) : []);
   const summary = $derived.by(() => {
     if (!stats || !subject) return "";
@@ -144,27 +269,42 @@
   {#if !subject}
     <p class="note">Pick a world on the chart to see its globe.</p>
   {:else if subject.kind === "star"}
-    <p class="note">{subject.label} is a star; the Body view shows worlds.</p>
+    <StarDisc {ctx} {scene} address={subject.address} label={subject.label} {size} />
   {:else}
     <div class="top">
       <div class="globe" style:width="{size}px" style:height="{size}px">
         {#if loading}
           <p class="note">Building the surface of {subject.label}… (about a second)</p>
         {:else if has}
-          <canvas
-            bind:this={canvas}
-            width={size}
-            height={size}
+          <!-- svelte-ignore a11y_no_noninteractive_tabindex, a11y_no_noninteractive_element_interactions (a turnable globe: keys and drag, named by its label) -->
+          <div
+            class="surface"
+            bind:this={host}
+            role="application"
+            aria-roledescription="globe"
             tabindex="0"
-            aria-label={`Globe of ${subject.label}. ${summary} Drag or use the arrow keys to turn it.`}
+            aria-label={`Globe of ${subject.label}. ${summary} ${gs?.narration ?? ""} Drag or use the arrow keys to turn it.`}
             data-lon={Math.round(lon)}
             data-lat={Math.round(lat)}
+            data-tier={gs?.tier ?? ""}
+            data-backend={gs?.backend ?? ""}
+            data-level={gs?.level ?? 0}
+            data-max={gs?.max ?? 0}
+            data-recipe={gs?.recipe ?? ""}
+            data-frame-ms={gs && Number.isFinite(gs.ewma_ms) ? gs.ewma_ms.toFixed(1) : ""}
+            data-budget-ms={gs?.budget_ms ?? ""}
+            data-frames={gs?.frames ?? 0}
+            data-work-ms={gs ? gs.work_ms.toFixed(1) : ""}
             onpointerdown={down}
             onpointermove={move}
             onpointerup={() => (drag = null)}
             onpointercancel={() => (drag = null)}
             onkeydown={key}
-          ></canvas>
+          >
+            {#if gs?.tier === "text"}
+              <p class="words" data-narration>{gs.narration}</p>
+            {/if}
+          </div>
         {:else}
           <p class="note" data-why>
             No surface for {subject.label} yet.
@@ -174,6 +314,82 @@
       </div>
       {#if stats}
         <dl class="facts" data-globe-stats>
+          <dt>Drawn</dt>
+          <dd>
+            <button class="badge" class:reduced={gs?.badge.reduced} data-badge={gs?.badge.reduced ? "reduced" : "full"} aria-expanded={badgeOpen} onclick={() => (badgeOpen = !badgeOpen)}>
+              {gs ? `${tierWords[gs.tier] ?? gs.tier}${gs.backend === "webgpu" ? " (WebGPU)" : gs.backend === "webgl2" ? " (WebGL2)" : ""} · ${gs.badge.short}` : "Starting…"}
+            </button>
+            {#if badgeOpen && gs}
+              <div class="badge-detail" data-badge-detail>
+                <p>{gs.tier_note}</p>
+                {#if gs.plan.passes.some((x) => x.pass === "atmosphere")}<p data-air-note>{gs.air_note}</p>{/if}
+                {#each gs.badge.detail as line (line)}<p>{line}</p>{/each}
+                {#if gs.badge.reduced}<p>{gs.badge.lift}</p>{/if}
+                <p>Recipe {gs.recipe}, level {gs.level} of {gs.max}. {Number.isFinite(gs.ewma_ms) ? `Frames about ${Math.round(gs.ewma_ms)} ms; budget ${Math.round(gs.budget_ms)} ms.` : ""}</p>
+                <div class="drawing">
+                  <label>Recipe <select value={runOpts.recipe} onchange={(e) => (ovRecipe = e.currentTarget.value)}>{#each registry as r (r.id)}<option value={r.id}>{r.name}</option>{/each}</select></label>
+                  <label>Draw on <select value={runOpts.tier} onchange={(e) => (ovTier = e.currentTarget.value)}>{#each tierChoices as [v, w] (v)}<option value={v}>{w}</option>{/each}</select></label>
+                  <label><input type="checkbox" checked={runOpts.spin} onchange={(e) => (ovSpin = e.currentTarget.checked)} /> Spin</label>
+                </div>
+                <div class="drawing">
+                  <button class="link" data-edit-recipe aria-expanded={editing} onclick={() => ((editing = !editing), (edits = []), (editName = baseRecipe.derived_from ? baseRecipe.name : `My ${baseRecipe.name.toLowerCase()}`))}>{editing ? "Stop editing" : "Edit this recipe"}</button>
+                  {#if baseRecipe.derived_from}<button class="link" onclick={() => forget(baseRecipe.id)}>Forget {baseRecipe.name}</button>{/if}
+                </div>
+                {#if editing}
+                  <div class="editor" data-recipe-editor>
+                    <label>Name <input value={editName} oninput={(e) => (editName = e.currentTarget.value)} /></label>
+                    {#each editableSettings(baseRecipe, LIBRARY).filter((u) => u.tiers.includes(gs?.tier ?? "canvas")) as u (u.use)}
+                      <fieldset>
+                        <legend>{u.name}</legend>
+                        {#each u.settings.filter((x) => x.type === "number" || x.type === "integer" || x.type === "enum") as st (st.name)}
+                          {@const now = (edits.find((e) => e.op === "set" && e.use === u.use && e.param === st.name) as { value?: unknown } | undefined)?.value ?? st.value}
+                          <label title={st.meaning}>
+                            {st.name.replace(/_/g, " ")}{st.unit ? ` (${st.unit})` : ""}
+                            {#if st.type === "enum"}
+                              <select value={String(now)} onchange={(e) => setEdit(u.use, st.name, e.currentTarget.value)}>{#each st.options ?? [] as o (o)}<option value={o}>{o}</option>{/each}</select>
+                            {:else}
+                              <input type="number" value={Number(now)} min={st.range?.[0]} max={st.range?.[1]} step={st.type === "integer" ? 1 : "any"} disabled={!!st.knob} data-setting={`${u.use}.${st.name}`} onchange={(e) => setEdit(u.use, st.name, st.type === "integer" ? Math.round(Number(e.currentTarget.value)) : Number(e.currentTarget.value))} />
+                            {/if}
+                            {#if st.knob}<small>(the {st.knob} knob sets this)</small>{/if}
+                          </label>
+                        {/each}
+                      </fieldset>
+                    {/each}
+                    {#if draft}
+                      {#if draft.ok}
+                        <ul data-edit-changes>{#each draft.changes as c (c)}<li>{c}</li>{/each}</ul>
+                        <ul data-edit-cost>
+                          {#each draft.cost.filter((c) => c.tier !== "text") as c (c.tier)}
+                            <li class:over={!c.fits}>{tierWords[c.tier] ?? c.tier}: about {c.before_ms?.toFixed(1)} ms, now {c.after_ms?.toFixed(1)} ms a frame of {Math.round(c.budget_ms)} ms{c.fits ? "" : " (over: the governor will reduce it here)"}</li>
+                          {/each}
+                        </ul>
+                        <p>The globe above is drawing the edited recipe now.</p>
+                        <button class="badge" data-keep-recipe onclick={keepDraft}>Keep as my recipe</button>
+                      {:else}
+                        <p class="over" data-edit-errors>{draft.errors.join(" ")}</p>
+                      {/if}
+                    {/if}
+                  </div>
+                {/if}
+              </div>
+            {/if}
+          </dd>
+          <dt>Photograph</dt>
+          <dd data-photo>
+            <button class="badge" data-take-photo disabled={!!shooting} onclick={takePhoto}>{shooting ?? "Take photograph"}</button>
+            {#if shotNote}<p class="shot-note" data-photo-note>{shotNote}</p>{/if}
+            {#if photos.length}
+              <ul class="photos" data-photos>
+                {#each photos.slice(0, 6) as p (p.item.id)}
+                  <li>
+                    <img src={p.url} alt={p.item.caption} width="48" height="48" />
+                    <a href={p.url} download={fileName(p.item)}>Save</a>
+                    <button class="link" onclick={() => dropPhoto(p.item.id)} aria-label={`Remove ${p.item.title}`}>Remove</button>
+                  </li>
+                {/each}
+              </ul>
+            {/if}
+          </dd>
           <dt>Surface</dt>
           <dd data-covers>{covers.length ? covers.map(([k, v]) => `${pct(v)} ${coverWords[k] ?? k}`).join(", ") : "No surface liquid"}</dd>
           <dt>Highest</dt>
@@ -228,13 +444,58 @@
     align-items: center;
     justify-content: center;
   }
-  canvas {
+  .surface {
     max-width: 100%;
-    border-radius: 50%;
     cursor: grab;
     touch-action: none;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
   }
-  canvas:focus-visible {
+  .surface :global(canvas) {
+    max-width: 100%;
+    border-radius: 50%;
+    display: block;
+  }
+  .words {
+    font-size: 13px;
+    max-width: 30em;
+    margin: 0;
+  }
+  .badge {
+    font: inherit;
+    font-size: 12px;
+    color: var(--sse-ink);
+    background: none;
+    border: 1px solid var(--sse-line);
+    border-radius: 3px;
+    padding: 1px 6px;
+    cursor: pointer;
+    text-align: left;
+  }
+  .badge.reduced {
+    border-color: var(--sse-accent);
+  }
+  .badge-detail {
+    font-size: 12px;
+    color: var(--sse-ink-muted);
+    margin-top: 4px;
+  }
+  .drawing {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 4px 12px;
+    margin-top: 4px;
+    color: var(--sse-ink);
+  }
+  .drawing select {
+    font: inherit;
+  }
+  .badge-detail p {
+    margin: 2px 0;
+  }
+  .surface:focus-visible {
     outline: 2px solid var(--sse-accent);
     outline-offset: 4px;
   }
@@ -257,5 +518,65 @@
   }
   dd {
     margin: 0;
+  }
+  .editor {
+    margin-top: 6px;
+    color: var(--sse-ink);
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+  }
+  .editor fieldset {
+    border: 1px solid var(--sse-line);
+    border-radius: 3px;
+    padding: 2px 6px 4px;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 2px 10px;
+  }
+  .editor input,
+  .editor select {
+    font: inherit;
+    width: 6em;
+  }
+  .editor ul {
+    margin: 2px 0;
+    padding-left: 16px;
+  }
+  .over {
+    color: var(--sse-accent);
+  }
+  .shot-note {
+    font-size: 12px;
+    color: var(--sse-ink-muted);
+    margin: 4px 0 0;
+  }
+  .photos {
+    list-style: none;
+    padding: 0;
+    margin: 6px 0 0;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+  .photos li {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 2px;
+    font-size: 11px;
+  }
+  .photos img {
+    border-radius: 50%;
+    background: var(--sse-line);
+  }
+  .photos a,
+  .link {
+    font: inherit;
+    color: var(--sse-accent);
+    background: none;
+    border: 0;
+    padding: 0;
+    cursor: pointer;
   }
 </style>

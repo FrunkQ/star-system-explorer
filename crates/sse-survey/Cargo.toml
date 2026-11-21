@@ -1,0 +1,13 @@
+[package]
+name = "sse-survey"
+description = "SSE4 remote survey (track O13): finding planets from afar by transit, wobble, position wobble, direct imaging and timing, from geometry, instrument, distance, watch time and stellar noise"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+authors.workspace = true
+
+[dependencies]
+sse-core.workspace = true
+sse-flow.workspace = true
+serde.workspace = true
+serde_json.workspace = true

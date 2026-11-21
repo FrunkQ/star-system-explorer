@@ -12,6 +12,7 @@ sse-chronicle.workspace = true
 sse-flow.workspace = true
 sse-pack.workspace = true
 sse-resolve = { path = "../sse-resolve" }
+sse-nebula = { path = "../sse-nebula" }
 sse-atoms.workspace = true
 serde.workspace = true
 serde_json.workspace = true

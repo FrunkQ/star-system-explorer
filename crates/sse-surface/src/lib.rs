@@ -14,11 +14,15 @@
 //! surveyed worlds.
 
 pub mod atlas;
+pub mod cover;
 pub mod impacts;
+pub mod named;
 pub mod plates;
 pub mod regimes;
 pub mod scenario;
+pub mod site;
 pub mod sketch;
+pub mod survey;
 pub mod wear;
 
 use serde::{Deserialize, Serialize};
@@ -105,6 +109,8 @@ pub struct SurfaceSettings {
     pub wear: wear::WearSettings,
     pub impacts: impacts::ImpactSettings,
     pub regime_features: regimes::RegimeSettings,
+    pub cover: cover::CoverSettings,
+    pub features: named::FeatureSettings,
     pub rules: Vec<Rule>,
     pub regimes: BTreeMap<String, RegimeDef>,
 }
@@ -137,6 +143,7 @@ impl SurfaceSettings {
                 }
             }
         }
+        s.cover.check()?;
         if s.rules.last().is_none_or(|r| !r.when.is_empty()) {
             return Err("the last rule must have no conditions (the fallback)".into());
         }
@@ -178,7 +185,20 @@ pub enum Climate {
         greenhouse_k: f64,
         /// Myr after the star's birth that the world formed.
         formed_myr: f64,
+        /// B1b: every other luminous body lighting this world (companion
+        /// stars, a glowing host giant), each with its own life line.
+        #[serde(default, skip_serializing_if = "Vec::is_empty")]
+        others: Vec<OtherLight>,
     },
+}
+
+/// Another body's light on a world.
+#[derive(Clone, PartialEq, Debug, Serialize, Deserialize)]
+pub struct OtherLight {
+    pub life: Box<LifeLine>,
+    /// Orbit-averaged distance, AU: √(a_companion² + a_world²) for a world and
+    /// a companion on unrelated circular orbits (the mean of d²).
+    pub d_au: f64,
 }
 
 #[derive(Clone, PartialEq, Debug, Serialize, Deserialize)]
@@ -351,11 +371,16 @@ impl Ctx<'_> {
                 albedo,
                 greenhouse_k,
                 formed_myr,
+                others,
                 ..
             } => {
                 let fits = self.fits.as_ref().expect("fits for a star climate");
-                let l = life.state_at(fits, formed_myr + t_gyr * 1000.0).luminosity;
-                let flux = l / (a_au * a_au);
+                let age = formed_myr + t_gyr * 1000.0;
+                let l = life.state_at(fits, age).luminosity;
+                let mut flux = l / (a_au * a_au);
+                for o in others {
+                    flux += o.life.state_at(fits, age).luminosity / (o.d_au * o.d_au);
+                }
                 278.6 * m::pow(flux.max(0.0), 0.25) * m::pow((1.0 - albedo).max(0.0), 0.25)
                     + greenhouse_k
             }
@@ -603,6 +628,16 @@ pub fn bodies_of(run: &SystemRun, s: &SurfaceSettings) -> Vec<Body> {
                     albedo: s.albedo_default,
                     greenhouse_k: if volatiles { s.greenhouse_k } else { 0.0 },
                     formed_myr: p.formed_myr,
+                    others: h.stars[1..]
+                        .iter()
+                        .filter_map(|c| {
+                            let a_c = c.orbit.as_ref()?.semi_major_axis_au;
+                            Some(OtherLight {
+                                life: Box::new(c.life.clone()),
+                                d_au: m::sqrt(a_c * a_c + p.a_au * p.a_au),
+                            })
+                        })
+                        .collect(),
                 },
                 tidal_w_m2: None,
                 orbit: Some(Orbit {
@@ -624,11 +659,15 @@ pub fn envelopes_of(run: &SystemRun, s: &SurfaceSettings) -> Vec<SurfaceEnvelope
 #[cfg(test)]
 mod atlas_tests;
 #[cfg(test)]
+mod cover_tests;
+#[cfg(test)]
 mod impacts_tests;
 #[cfg(test)]
 mod plates_tests;
 #[cfg(test)]
 mod regimes_tests;
+#[cfg(test)]
+mod survey_tests;
 #[cfg(test)]
 mod tests;
 #[cfg(test)]

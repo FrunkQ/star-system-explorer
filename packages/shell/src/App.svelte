@@ -4,7 +4,7 @@
   kernel only through the session, the same client API a player app uses.
 -->
 <script lang="ts">
-  import { applyEdits, enterFacts, observeOf, type AuthoredFacts, checkScreen, deriveScene, gmSeat, redoEdit, subjectOf, systemOrder, undoEdit, type CheckedScreen, type DerivationDoc, type ScreenDoc, type SystemScene, type ViewHandle, type ViewModule, type ViewSession } from "../../ui-contract/src/index.ts";
+  import { applyEdits, applySetup, type AtomInfo, enterFacts, observeOf, type AuthoredFacts, checkScreen, deriveScene, gmSeat, redoEdit, subjectOf, systemOrder, undoEdit, type CheckedScreen, type DerivationDoc, type ScreenDoc, type SystemScene, type ViewHandle, type ViewModule, type ViewSession } from "../../ui-contract/src/index.ts";
   import { openBrowserSession } from "../../ui-contract/src/host-browser.ts";
   import { createShare, type Share } from "./share.svelte.ts";
   import { clearStored, download, readStored, setAside, writeStored } from "./campaign-store.ts";
@@ -19,9 +19,18 @@
   import lightDoc from "./documents/light.recipes.json";
   import { SYMBOLS, checkLightRecipe, describeLight, litFromSystem, paint, type BandRecipe, type Mark } from "../../ui-contract/src/index.ts";
   import AgentsPanel from "../../agents/src/AgentsPanel.svelte";
+  import type { OracHost } from "../../agents/src/OracTab.svelte";
+  import type { MinervaHost } from "../../agents/src/MinervaTab.svelte";
+  import type { TarsHost } from "../../agents/src/TarsTab.svelte";
+  import { whyPassage } from "../../agents/src/tars.ts";
+  import { showReference } from "../../ui-contract/src/index.ts";
+  import { oracMay } from "../../agents/src/orac.ts";
+  import { atomIssueTarget, flowEntries, lensEntries, lensTarget, loadAtoms, physicsTarget } from "../../agents/src/orac-targets.ts";
+  import { dataViewEntries, dataViewTarget, lookEntries, screenTarget, styleTarget, symbologyTarget } from "../../agents/src/orac-looks.ts";
   import { orbitScene, voicesFromSystem } from "../../ui-contract/src/index.ts";
+  import { orbitBodies, phasesFrom, withPhases, yearsToSeconds } from "../../ui-contract/src/index.ts";
   import { compareScenes, dropWhatIf, keepWhatIf, openWhatIf } from "../../ui-contract/src/index.ts";
-  import { allLenses, checkLens, defaultLens, hasTool, lensAudience, type Lens } from "../../ui-contract/src/index.ts";
+  import { allLenses, checkLens, defaultLens, hasTool, lensAudience, type Lens, type Vocab } from "../../ui-contract/src/index.ts";
   import { themeCss, THEMES } from "../../skins/chart-room/src/index.ts";
   import { ALL_THEMES } from "../../skins/player/src/index.ts";
   import { Segmented, ToolButton, formatYears } from "../../chart-grammar/src/index.ts";
@@ -43,7 +52,9 @@
   import derivationsDoc from "./documents/derivations.base.json";
   import stackDoc from "./documents/stack.json";
   import factsDoc from "./documents/kestrel.player-facts.json";
+  import plainVocab from "./documents/vocab.plain.json";
   import { REGISTRY } from "./registry.ts";
+  import { MORE_SCREENS } from "./screens.more.ts";
   import { createWorkspace } from "./workspace.svelte.ts";
   import { loadPref, savePref } from "./prefs.ts";
   import { createSymbols } from "./symbols.svelte.ts";
@@ -59,13 +70,14 @@
   let scene = $state<SystemScene>(base);
 
   // Each screen document is checked before anything mounts; the GM switches between them.
-  const SCREENS: Record<string, ScreenDoc> = { system: workspaceDoc as unknown as ScreenDoc, physics: physicsDoc as unknown as ScreenDoc, packs: packsDoc as unknown as ScreenDoc, screens: screensDoc as unknown as ScreenDoc, data: dataDoc as unknown as ScreenDoc, symbols: symbolsDoc as unknown as ScreenDoc, body: bodyDoc as unknown as ScreenDoc, compare: compareDoc as unknown as ScreenDoc, life: lifeDoc as unknown as ScreenDoc, styles: stylesScreenDoc as unknown as ScreenDoc };
+  const SCREENS: Record<string, ScreenDoc> = { system: workspaceDoc as unknown as ScreenDoc, physics: physicsDoc as unknown as ScreenDoc, packs: packsDoc as unknown as ScreenDoc, screens: screensDoc as unknown as ScreenDoc, data: dataDoc as unknown as ScreenDoc, symbols: symbolsDoc as unknown as ScreenDoc, body: bodyDoc as unknown as ScreenDoc, compare: compareDoc as unknown as ScreenDoc, life: lifeDoc as unknown as ScreenDoc, styles: stylesScreenDoc as unknown as ScreenDoc, ...Object.fromEntries(MORE_SCREENS.map((m) => [m.value, m.doc])) };
   const SCREEN_TABS = [
     { value: "system", label: "Chart", key: "P" },
     { value: "physics", label: "Physics", key: "P" },
     { value: "body", label: "Body" },
     { value: "compare", label: "Sizes" },
     { value: "life", label: "Life" },
+    ...MORE_SCREENS.filter((m) => m.tab).map((m) => ({ value: m.value, label: m.label })),
     { value: "screens", label: "Screens" },
     { value: "data", label: "Player data" },
     { value: "symbols", label: "Symbols" },
@@ -110,7 +122,7 @@
       // U10: the campaign kept in this browser reopens first; players then join from it.
       const reopened = await reopenKept(s);
       const packs = [...opened, ...s.stack().added, ...(s.stack().campaign ? [s.stack().campaign] : [])];
-      share = await createShare(s, { universe: base.universe, packs, ...(reopened ? { opening_export: reopened } : {}), clock_yr: ws.now_yr, views: () => observeOf(s.stack().base)?.setup.views.map((v) => v.id) ?? [], scope: (factsDoc as unknown as AuthoredFacts).scope });
+      share = await createShare(s, { universe: base.universe, packs, ...(reopened ? { opening_export: reopened } : {}), clock_yr: ws.campaign_now_yr ?? ws.now_yr, views: () => observeOf(s.stack().base)?.setup.views.map((v) => v.id) ?? [], scope: (factsDoc as unknown as AuthoredFacts).scope });
       // The player-facing facts the GM has recorded, entered when a fresh campaign opens (a reopened one has them).
       if (!reopened) {
         const bad = await enterFacts(s, factsDoc as unknown as AuthoredFacts);
@@ -151,6 +163,8 @@
     ws.undo = save.workspace.undo;
     ws.redo = save.workspace.redo;
     ws.now_yr = save.workspace.now_yr;
+    ws.campaign_now_yr = save.workspace.campaign_now_yr ?? save.workspace.now_yr;
+    ws.campaign_epoch_yr = save.workspace.campaign_epoch_yr ?? base.now_yr;
     savedAt = save.saved_at;
     const events = savedEvents(save);
     keptNote = `Reopened the campaign kept ${new Date(save.saved_at).toLocaleString("en-GB", { dateStyle: "medium", timeStyle: "short" })}: ${events} ${events === 1 ? "event" : "events"}.`;
@@ -169,7 +183,7 @@
       root: ROOT,
       state_hash: await s.stateHash(),
       export: ex.export,
-      workspace: JSON.parse(JSON.stringify({ applied: ws.applied, undo: ws.undo, redo: ws.redo, now_yr: ws.now_yr })) as CampaignSave["workspace"],
+      workspace: JSON.parse(JSON.stringify({ applied: ws.applied, undo: ws.undo, redo: ws.redo, now_yr: ws.now_yr, campaign_now_yr: ws.campaign_now_yr, campaign_epoch_yr: ws.campaign_epoch_yr })) as CampaignSave["workspace"],
       saved_at: new Date().toISOString(),
       ...(st.added.length || st.campaign ? { stack: { added: st.added as unknown as Json[], campaign: (st.campaign ?? null) as unknown as Json } } : {}),
     });
@@ -180,6 +194,7 @@
     void status.hash;
     void status.stack;
     void ws.now_yr;
+    void ws.campaign_now_yr;
     void ws.undo.length;
     void ws.redo.length;
     if (!session || !status.hash) return;
@@ -304,7 +319,49 @@
   // U4 part 2: with a look-ahead open, the views show the snapshot the scrubber is on.
   let ahead = $state<LookedAhead | null>(null);
   let aheadAt = $state(0);
-  const shown = $derived(ahead && ahead.snapshots[aheadAt] ? sceneAt(scene, ahead, ahead.snapshots[aheadAt]!) : scene);
+  // The device's tier on the page, so basic devices drop motion (U12).
+  $effect(() => {
+    if (status.tier) document.documentElement.dataset.tier = status.tier;
+  });
+  // U11 part 2: every body where it is on the day being viewed, from the kernel's orbits_at (two-body Kepler, local
+  // to each host). Views draw from the scene, so the phases go onto it and the chart, 3D view and sound move together.
+  // A fixture scene sends its own elements, with its drawn phases as their places at the campaign's start.
+  let phases = $state<Map<string, number> | null>(null);
+  // Play asks ten times a second: one call at a time, and only the latest time waits.
+  let orbitsFor = "";
+  let orbitsBusy = false;
+  let orbitsWant: { s: ViewSession; sc: SystemScene; at: bigint; epoch: bigint; key: string } | null = null;
+  function pumpOrbits() {
+    if (orbitsBusy || !orbitsWant) return;
+    const w = orbitsWant;
+    orbitsWant = null;
+    orbitsBusy = true;
+    w.s.orbitsAt(w.sc.system, [w.at], orbitBodies(w.sc, w.epoch)).then((r) => {
+      orbitsBusy = false;
+      if (r.ok && orbitsFor === w.key) phases = phasesFrom(r.bodies);
+      pumpOrbits();
+    });
+  }
+  $effect(() => {
+    const s = session;
+    const sc = scene;
+    const at = yearsToSeconds(ws.now_yr);
+    const epoch = yearsToSeconds(ws.campaign_epoch_yr ?? base.now_yr);
+    if (!s) return;
+    const key = `${sc.system}|${sc.fixture ? "f" : "k"}`;
+    if (key !== orbitsFor) ((orbitsFor = key), (phases = null));
+    orbitsWant = { s, sc, at, epoch, key };
+    pumpOrbits();
+  });
+  // A pack's calendar (kernel calendar), read again whenever the pack stack changes.
+  $effect(() => {
+    const s = session;
+    void status.stack;
+    if (!s) return;
+    s.calendar().then((r) => (ws.pack_calendar = r.ok ? (r.calendar ?? null) : null));
+  });
+  const timed = $derived(withPhases(scene, phases));
+  const shown = $derived(ahead && ahead.snapshots[aheadAt] ? sceneAt(timed, ahead, ahead.snapshots[aheadAt]!) : timed);
   const lit = $derived(describeLight(litFromSystem(shown)));
   const lightNames = $derived(new Map(shown.subjects.map((x) => [x.address, x.label])));
   const lightColours = $derived.by(() => {
@@ -315,18 +372,28 @@
   const soundScene = $derived(orbitScene(shown.system, voicesFromSystem(shown)));
   const lensKinds = $derived([...new Set(scene.subjects.filter((x) => x.facts.length).map((x) => x.kind))]);
 
-  // The session clock travels to players with the GM's time ruler.
+  // The campaign's clock travels to players (U11): its now, not whatever time the GM is viewing.
   $effect(() => {
-    const yr = ws.now_yr;
+    const yr = ws.campaign_now_yr ?? ws.now_yr;
     if (share?.state.link) share.setClock(yr);
   });
+  // Physics changes over thousands of years, not hours: scenes re-derive when the viewed time moves by a kyr or more,
+  // so stepping and playing through days does not call the kernel's derivations at every frame.
+  const deriveNow = $derived(Math.abs(ws.now_yr - base.now_yr) < 1 ? base.now_yr : Math.round(ws.now_yr / 1000) * 1000);
+  /** Move the campaign's clock to another system's present, keeping the time elapsed in the campaign. */
+  function shiftCampaign(present: number) {
+    const elapsed = (ws.campaign_now_yr ?? ws.now_yr) - (ws.campaign_epoch_yr ?? ws.now_yr);
+    ws.campaign_epoch_yr = present;
+    ws.campaign_now_yr = present + elapsed;
+    ws.now_yr = ws.campaign_now_yr;
+  }
 
   // Scenes come from the kernel's derivations over the authored values; any
   // edit or a move of the ruler re-derives (K9 moves this into the kernel).
   let generation = 0;
   $effect(() => {
     void ws.revision;
-    const now = ws.now_yr;
+    const now = deriveNow;
     const applied = { ...ws.applied };
     const s = session;
     if (!s) return;
@@ -344,7 +411,7 @@
         if (!r.ok) return void (whatNote = `Could not read ${v.title} back: ${r.message}`);
         const read = sceneFromResolved(r.result, v.title);
         const now_yr = v.fresh ? read.now_yr : now;
-        if (v.fresh) ((v.fresh = false), (ws.now_yr = read.now_yr));
+        if (v.fresh) ((v.fresh = false), shiftCampaign(read.now_yr));
         viewingSpec = r.result.spec ?? null;
         mainScene = scene = { ...read, now_yr, span_yr: [read.span_yr[0], Math.max(read.span_yr[1], now_yr * 1.25)] };
       });
@@ -369,7 +436,7 @@
     const a = adoptedSystems.find((x) => x.system === system);
     ws.select(null);
     if (a) ((viewing = { ...a, fresh: true }), (ws.mode = "view"));
-    else ((viewing = null), (viewingSpec = null), (ws.now_yr = base.now_yr));
+    else ((viewing = null), (viewingSpec = null), shiftCampaign(base.now_yr));
     ws.revision++;
   }
   function adopted(systems: { system: string; title: string }[], note: string, hash: string) {
@@ -390,6 +457,81 @@
     const sub = scene.subjects.find((x) => x.address === ws.selection);
     const head = `${scene.title}: ${scene.subtitle}.`;
     return sub ? `${head}\nSelected: ${sub.label}${sub.subtitle ? ` (${sub.subtitle})` : ""}.\n${sub.facts.map((f) => `${f.label}: ${f.display} (${f.source})`).join("\n")}` : head;
+  });
+  // The kernel's atoms (parameter ranges and units) for Orac's catalogue, read once a session is open.
+  let atoms = $state.raw<readonly AtomInfo[]>([]);
+  $effect(() => {
+    const s = session;
+    if (s && oracMay(s.seat)) loadAtoms(s).then((a) => (atoms = a));
+  });
+  /** An accepted Orac screen goes to the players page on this device, as the composer's Show to players does. */
+  function openOracScreen(d: ScreenDoc) {
+    try {
+      localStorage.setItem("sse4.composed-screen", JSON.stringify(d));
+      const page = "players.html?screen=composed";
+      window.open(new URL(page, document.baseURI).href, "_blank", "noopener");
+    } catch {
+      /* A browser that keeps nothing: the composer's download is the way. */
+    }
+  }
+  // A2: Orac's targets go through the GM's own paths (the kernel's checks, the Physics screen's queue, the lens list).
+  const oracHost = $derived.by((): OracHost | undefined => {
+    const s = session;
+    if (!s || !oracMay(s.seat)) return undefined;
+    const fields = () => Object.fromEntries(Object.entries(lensFields).filter(([k]) => k !== "*").map(([k, v]) => [k, v.map((f) => f.id)]));
+    return {
+      targets: () => [
+        physicsTarget(s, ws),
+        lensTarget({ taken: () => lenses.map((l) => l.id), fields, save: saveLens }),
+        styleTarget({ registry: styleHost.registry, views: styleHost.views, tier: styleHost.tier, keep: styleHost.keep }),
+        screenTarget({ views: () => PLAYER_STACK, taken: () => [], dataViews: () => observeOf(s.stack().base)?.setup.views.map((v) => v.id), styles: () => ({ registry: styleHost.registry(), tier: styleHost.tier() }), themes: () => ALL_THEMES.map((t) => t.id), symbologies: () => symbols.registry().map((d) => d.id), open: openOracScreen }),
+        symbologyTarget({ registry: symbols.registry, keep: symbols.keep }),
+        dataViewTarget({ setup: () => observeOf(s.stack().base)?.setup ?? null, apply: async (x) => {
+          const r = await applySetup(s, ws, x);
+          return r.status === "applied" ? null : r.status === "refused" ? r.reason : `not applied (${r.status})`;
+        } }),
+        atomIssueTarget((u) => window.open(u, "_blank", "noopener")),
+      ],
+      catalogue: () => [...flowEntries(s, atoms), ...lensEntries(lenses, fields()), ...lookEntries({ views: [...REGISTRY, ...PLAYER_STACK] as never, styles: styleHost.registry(), symbologies: symbols.registry() }), ...dataViewEntries(observeOf(s.stack().base)?.setup ?? null)],
+      here: () => [agentContext, ws.bench ? `Flow on the bench: ${ws.bench.flow}${ws.bench.node ? `, node ${ws.bench.node}` : ""}` : "", `Lens in use: ${lens.label}`].filter(Boolean).join("\n"),
+    };
+  });
+  // A4: Tars reads SSE's help passages and the kernel's "why?" for the selected body's derived values.
+  const tarsHost = $derived.by((): TarsHost => {
+    const s = session;
+    const sub = scene.subjects.find((x) => x.address === ws.selection);
+    return {
+      here: () => agentContext,
+      why: async () => {
+        if (!s || !sub) return [];
+        const derived = sub.facts.filter((f) => f.why).slice(0, 8);
+        const out = await Promise.all(
+          derived.map(async (f) => {
+            const r = await s.explain(f.why!, f.why!.kind);
+            if (!r.ok) return null;
+            const x = r.explanation;
+            const refs = x.references.map(showReference);
+            return whyPassage({ subject: sub.label, field: f.field, label: f.label, display: f.display, curious: x.lenses.curious, science: x.lenses.science, validity: x.validity, references: refs });
+          }),
+        );
+        return out.filter((p) => p !== null);
+      },
+    };
+  });
+  // A3: Minerva reads one audience's scene (K9) and nothing else; the GM's scene is used only to check her text.
+  const minervaHost = $derived.by((): MinervaHost | undefined => {
+    const s = session;
+    if (!s || !oracMay(s.seat)) return undefined;
+    const scope = (factsDoc as unknown as AuthoredFacts).scope;
+    return {
+      audiences: () => (share?.state.plan.audiences ?? [{ id: "everyone", label: "Everyone" }]).map((a) => ({ id: a.id, label: a.label })),
+      scene: async (audience) => {
+        const r = await s.scene(scope, audience ? { audience } : {});
+        return r.ok ? r.scene : null;
+      },
+      vocab: plainVocab as unknown as Vocab,
+      title: `${scene.title}: ${scene.subtitle}`,
+    };
   });
   const differences = $derived(ws.branch ? compareScenes(mainScene, scene, ws.branch.applied) : []);
   async function whatIf(action: "open" | "keep" | "drop") {
@@ -582,7 +724,7 @@
           <button type="button" class="linkbtn" onclick={() => whatIf("drop")}>Throw away</button>
         {:else}
           {#if !ahead && !viewing}<button type="button" class="linkbtn quiet" onclick={() => whatIf("open")} title="Try changes on a branch; the chart's history does not move until you keep them">What if…</button>{/if}
-          <LookAhead {session} {scene} given={viewing ? viewingSpec : null} writeBack={!!viewing} bind:ahead bind:at={aheadAt} onkept={(note, now_myr, h) => ((whatNote = note), now_myr !== null && (ws.now_yr = now_myr * 1e6), (status = { ...status, hash: h }), ws.revision++)} />
+          <LookAhead {session} {scene} given={viewing ? viewingSpec : null} writeBack={!!viewing} bind:ahead bind:at={aheadAt} onkept={(note, now_myr, h) => ((whatNote = note), now_myr !== null && (ws.now_yr = ws.campaign_now_yr = ws.campaign_epoch_yr = now_myr * 1e6), (status = { ...status, hash: h }), ws.revision++)} />
         {/if}
         {#if whatNote}<span role="status">{whatNote}</span>{/if}
       </span>
@@ -664,7 +806,7 @@
 </dialog>
 
 <dialog bind:this={agentsDialog} class="help seats-dialog" aria-label="Agents" onclose={() => (agentsOpen = !!agentsDialog?.open)}>
-  {#if agentsOpen}<AgentsPanel context={agentContext} />{/if}
+  {#if agentsOpen}<AgentsPanel tars={tarsHost} orac={oracHost} minerva={minervaHost} />{/if}
   <form method="dialog"><button type="submit">Close</button></form>
 </dialog>
 
@@ -730,9 +872,31 @@
     outline: 2px solid var(--sse-focus);
     outline-offset: 2px;
   }
+  /* Tactility (handover/interface-style.md): every control answers a touch at once, quietly. */
+  :global(button, select, [role="button"]) {
+    transition:
+      background-color var(--sse-motion-quick) var(--sse-ease),
+      color var(--sse-motion-quick) var(--sse-ease),
+      box-shadow var(--sse-motion-quick) var(--sse-ease),
+      transform var(--sse-motion-quick) var(--sse-ease);
+  }
+  :global(button:not(:disabled):active) {
+    transform: translateY(1px);
+  }
+  /* Basic-tier devices drop motion too (interface-style rule 8). */
+  :global([data-tier="basic"] *) {
+    --sse-motion-quick: 0ms !important;
+    --sse-motion: 0ms !important;
+  }
+  @media (prefers-reduced-motion: reduce) {
+    :global(*) {
+      --sse-motion-quick: 0ms !important;
+      --sse-motion: 0ms !important;
+    }
+  }
   .app {
     display: grid;
-    grid-template-rows: 64px minmax(0, 1fr) 76px 28px;
+    grid-template-rows: 64px minmax(0, 1fr) 96px 28px;
     height: 100vh;
     height: 100dvh;
     overflow: hidden;
@@ -1033,7 +1197,7 @@
   /* Phone: the same card and ruler without the wide chart (H8.5). */
   @media (max-width: 760px) {
     .app {
-      grid-template-rows: 56px auto auto 64px auto;
+      grid-template-rows: 56px auto auto auto auto;
       height: auto;
       min-height: 100dvh;
       overflow: visible;
@@ -1049,7 +1213,15 @@
       text-overflow: ellipsis;
       white-space: nowrap;
     }
+    /* The header holds the lens, the screen menu, the mode switch and the night button; on a narrow phone the two menus
+       give way (they shrink, their text clips) so the bar never runs past the screen edge. */
+    .lens,
+    .screen-menu {
+      flex: 0 1 auto;
+      min-width: 56px;
+    }
     .lens select {
+      width: 100%;
       max-width: 92px;
       height: 44px;
     }
@@ -1064,6 +1236,7 @@
       display: block;
     }
     .screen-menu select {
+      width: 100%;
       height: 44px;
       max-width: 110px;
       border: var(--sse-line) solid var(--sse-ink);
@@ -1124,6 +1297,8 @@
       width: auto;
       max-height: none;
       overflow: visible;
+      /* A card opening from its body (U12) slides a little sideways; it must never make the page scroll. */
+      overflow-x: clip;
       margin: 16px 16px 24px;
       padding: 0 6px 6px 0;
     }
@@ -1131,6 +1306,8 @@
       position: sticky;
       bottom: 0;
       z-index: 2;
+      min-width: 0;
+      overflow-x: clip;
     }
     .status {
       flex-wrap: wrap;

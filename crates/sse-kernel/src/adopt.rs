@@ -26,6 +26,14 @@ pub const TIME_AGED: &str = "time.aged";
 
 /// Masses as the importer uses them.
 pub const M_SUN_KG: f64 = 1.988_47e30;
+
+/// The serde name of a plain enum value (kebab-case labels).
+fn json_name<T: serde::Serialize>(v: &T) -> String {
+    serde_json::to_value(v)
+        .ok()
+        .and_then(|x| x.as_str().map(str::to_string))
+        .unwrap_or_default()
+}
 pub const M_EARTH_KG: f64 = 5.972_2e24;
 /// Metal mass fraction assumed when a system has no `star.metallicity_z` fact.
 pub const DEFAULT_Z: f64 = 0.0142;
@@ -238,6 +246,7 @@ pub(crate) fn run_facts(run: &SystemRun) -> Facts {
     row.insert("system.pipeline".to_string(), t(&run.pipeline));
     out.insert(sys.clone(), row);
     let fits = sse_formation::hurley::Fits::new(h.inheritance.z);
+    let tags = sse_formation::stars::stability(&h.stars);
     for (k, star) in h.stars.iter().enumerate() {
         let s = star.life.state_at(&fits, spec.age_myr);
         let mut row = BTreeMap::new();
@@ -248,6 +257,14 @@ pub(crate) fn run_facts(run: &SystemRun) -> Facts {
         row.insert("star.effective_temperature".to_string(), f(s.teff));
         row.insert("star.luminosity".to_string(), f(s.luminosity * L_SUN));
         row.insert("star.phase".to_string(), t(s.phase.label()));
+        let own =
+            sse_formation::body::self_light(&fits, star.life.initial_mass, spec.age_myr, None);
+        row.insert("body.light_source".to_string(), t(&json_name(&own.source)));
+        if let Some(tag) = &tags[k] {
+            let word = if tag.stable { "stable" } else { "unstable" };
+            row.insert("orbit.stability".to_string(), t(word));
+            row.insert("orbit.stability_why".to_string(), t(&tag.why));
+        }
         if k > 0 {
             if let Some(o) = &star.orbit {
                 row.insert("orbit.host".to_string(), t(&h.stars[0].address.to_string()));
@@ -289,6 +306,22 @@ pub(crate) fn run_facts(run: &SystemRun) -> Facts {
             f(deg(ps.mean_longitude_deg - ps.varpi_deg)),
         );
         row.insert("body.oceans".to_string(), Value::Bool(ps.oceans));
+        // B1: the same light rule as the stars, on one mass axis. Giant
+        // planets glow with the heat of their formation; rocky worlds do not.
+        let own = sse_formation::body::self_light(
+            &fits,
+            ps.mass_me * M_EARTH_KG / M_SUN_KG,
+            spec.age_myr,
+            Some(w.radius * R_EARTH / R_SUN),
+        );
+        if own.luminosity_lsun > 0.0 {
+            row.insert(
+                "star.luminosity".to_string(),
+                f(own.luminosity_lsun * L_SUN),
+            );
+            row.insert("star.effective_temperature".to_string(), f(own.teff_k));
+            row.insert("body.light_source".to_string(), t(&json_name(&own.source)));
+        }
         out.insert(p.address.clone(), row);
     }
     out
@@ -633,20 +666,25 @@ pub(crate) struct Resolved {
     pub refused: Vec<serde_json::Value>,
 }
 
-pub(crate) fn resolved_system(
+/// A system's worlds at a date: where they came from, the spec, the facts
+/// read and how far past the system's "now" the date is.
+pub(crate) struct Worlds {
+    pub source: &'static str,
+    pub spec: Option<SystemSpec>,
+    pub bodies: Vec<sse_surface::Body>,
+    pub facts: Facts,
+    pub at_s: i64,
+    /// How far past the system's own "now" the asked date is, Gyr.
+    pub shift_gyr: f64,
+}
+
+pub(crate) fn worlds_at(
     ch: &Chronicle,
-    seed: &Seed,
     system: &Address,
     at_s: Option<i64>,
-    tiles: &[TileRequest],
     run: Option<&SystemRun>,
-) -> Result<Resolved, Response> {
-    if tiles.len() > MAX_TILES {
-        return Err(err(
-            "too_many_tiles",
-            format!("at most {MAX_TILES} tiles per request"),
-        ));
-    }
+    s: &sse_surface::SurfaceSettings,
+) -> Result<Worlds, Response> {
     let all = ch.state_at(UniverseTime::seconds(i64::MAX));
     let now_s = all
         .get(system, "system.now_year")
@@ -666,7 +704,6 @@ pub(crate) fn resolved_system(
             format!("{system} has no facts in this universe"),
         ));
     }
-    let s = sse_surface::scenario::settings();
     let (source, spec, bodies) = match run {
         Some(run) => {
             let spec = sse_time::generated::spec_from_run(run);
@@ -675,7 +712,7 @@ pub(crate) fn resolved_system(
                 .filter(|(_, r)| r.get("body.engulfed") == Some(&Value::Bool(true)))
                 .map(|(a, _)| a)
                 .collect();
-            let bodies: Vec<sse_surface::Body> = sse_surface::bodies_of(run, &s)
+            let bodies: Vec<sse_surface::Body> = sse_surface::bodies_of(run, s)
                 .into_iter()
                 .filter(|b| !gone.contains(&&b.address))
                 .collect();
@@ -685,7 +722,7 @@ pub(crate) fn resolved_system(
             let spec = spec_from_facts(&facts, system);
             let bodies = spec
                 .as_ref()
-                .map(|sp| bodies_from_facts(&facts, sp, &s))
+                .map(|sp| bodies_from_facts(&facts, sp, s))
                 .unwrap_or_default();
             let source = if adopted_v3(ch, system) {
                 "v3"
@@ -695,7 +732,6 @@ pub(crate) fn resolved_system(
             (source, spec, bodies)
         }
     };
-    // How far past the system's own "now" the asked date is, Gyr.
     let shift_gyr = match (&spec, at_s) {
         (Some(sp), a) if a != i64::MAX => {
             let now_year = sp.birth_year as f64 + sp.age_myr * 1.0e6;
@@ -703,6 +739,39 @@ pub(crate) fn resolved_system(
         }
         _ => 0.0,
     };
+    Ok(Worlds {
+        source,
+        spec,
+        bodies,
+        facts,
+        at_s,
+        shift_gyr,
+    })
+}
+
+pub(crate) fn resolved_system(
+    ch: &Chronicle,
+    seed: &Seed,
+    system: &Address,
+    at_s: Option<i64>,
+    tiles: &[TileRequest],
+    run: Option<&SystemRun>,
+) -> Result<Resolved, Response> {
+    if tiles.len() > MAX_TILES {
+        return Err(err(
+            "too_many_tiles",
+            format!("at most {MAX_TILES} tiles per request"),
+        ));
+    }
+    let s = sse_surface::scenario::settings();
+    let Worlds {
+        source,
+        spec,
+        bodies,
+        facts,
+        at_s,
+        shift_gyr,
+    } = worlds_at(ch, system, at_s, run, &s)?;
     let envelopes: Vec<sse_surface::SurfaceEnvelope> = bodies
         .iter()
         .map(|b| sse_surface::envelope(&s, b))

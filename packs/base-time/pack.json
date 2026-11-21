@@ -41,7 +41,7 @@
      "window_rewrite_da": "above the short-period swing of osculating semi-major axes in the Solar System (Saturn about 0.4 percent across a window), so only real changes such as scattering are written back",
      "window_steps_per_orbit": "fourth-order steps per innermost orbit; the integrator's own precession, about (2 pi / steps)^4 rad per orbit, stays below secular rates",
      "horizon_myr": "Laskar 1989 and 1994: the inner Solar System's Lyapunov time is about 5 Myr, so individual orbits are unpredictable beyond some tens of Myr",
-     "runaway_greenhouse_flux": "Kopparapu et al. 2013: moist greenhouse at about 1.015 and runaway at about 1.06 times Earth's insolation; 1.1 used as the point oceans are lost (Wolf and Toon 2015 find a stable moist state up to about 1.1)",
+     "runaway_greenhouse_flux": "Kopparapu et al. 2014 (ApJL 787, L29, table 1): runaway greenhouse at 1.107 times Earth's insolation for an Earth-mass planet round a Sun-like star (the 2013 paper's 1.06 was corrected there); 1.1 used as the point oceans are lost (Wolf and Toon 2015 find a stable moist state up to about 1.1)",
      "colours": "blackbody colour names by effective temperature (pack data, change freely)",
      "pollution_delay_myr": "Mustill et al. 2018 and Veras 2016: scattering onto white dwarfs begins within about 100 Myr of the planetary nebula and continues for Gyr"
     }

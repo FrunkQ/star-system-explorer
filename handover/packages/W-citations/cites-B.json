@@ -1,0 +1,443 @@
+[
+ {
+  "n": 1,
+  "status": "verified",
+  "authors": "Mastin L.G., Guffanti M., Servranckx R., Webley P., Barsotti S., Dean K., Durant A., Ewert J.W., Neri A., Rose W.I., Schneider D., Siebert L., Stunder B., Swanson G., Tupper A., Volentik A., Waythomas C.F.",
+  "year": 2009,
+  "title": "A multidisciplinary effort to assign realistic source parameters to models of volcanic ash-cloud transport and dispersion during eruptions",
+  "journal": "Journal of Volcanology and Geothermal Research",
+  "volume": "186",
+  "pages": "10-21",
+  "doi": "10.1016/j.jvolgeores.2009.01.008",
+  "url": "https://www.pages.mtu.edu/~raman/papers/MastinetalJVGR09.pdf",
+  "notes": "Metadata from Semantic Scholar; equation from author PDF.",
+  "quantitative": "Eq.1: H = 2.00 V^0.241 (PDF text 'H = 2:00 V0:241', extraction artefact). H = plume height above the vent in km (Fig.1: 'plume height HT or HU (km)', caption 'Plume height above the vent'); V = 'volumetric flow rate (m3 DRE per second)'. DRE conversion uses magma density 2500 kg/m3. No r^2 given for Eq.1; 50% confidence envelope ~factor of 4 in eruption rate. Cross-check: Aubry et al. 2023 GRL Table 1 gives the mass form '0.304 MER^0.241' (MER kg/s, H km) = 2.00*(1/2500)^0.241."
+ },
+ {
+  "n": 2,
+  "status": "verified",
+  "authors": "Sparks R.S.J.",
+  "year": 1986,
+  "title": "The dimensions and dynamics of volcanic eruption columns",
+  "journal": "Bulletin of Volcanology",
+  "volume": "48",
+  "pages": "3-15",
+  "doi": "10.1007/BF01073509",
+  "url": "https://api.semanticscholar.org/graph/v1/paper/DOI:10.1007/BF01073509",
+  "notes": "Metadata verified (Semantic Scholar). Full text not fetched (paywalled; web-fetch budget ran out).",
+  "quantitative": "UNCONFIRMED: the H = 8.2 Q^0.25 constant and Q units could not be confirmed from any fetched page. Do not cite the constant from this source without checking."
+ },
+ {
+  "n": 3,
+  "status": "verified",
+  "authors": "Morton B.R., Taylor G.I., Turner J.S.",
+  "year": 1956,
+  "title": "Turbulent gravitational convection from maintained and instantaneous sources",
+  "journal": "Proceedings of the Royal Society of London. Series A, Mathematical and Physical Sciences",
+  "volume": "234",
+  "pages": "1-23",
+  "doi": "10.1098/rspa.1956.0011",
+  "url": "https://api.semanticscholar.org/graph/v1/paper/DOI:10.1098/rspa.1956.0011",
+  "notes": "Metadata verified (Semantic Scholar).",
+  "quantitative": "Scaling H proportional to MER^0.25 N^-0.75 confirmed only via a secondary source: Aubry et al. 2023 GRL Table 1, 'Morton et al. (1956) model: a MER^0.25 N^-0.75' with fitted a = 0.0087-0.0096 (units not stated; MER kg/s, H km). Not read from MTT 1956 itself."
+ },
+ {
+  "n": 4,
+  "status": "verified",
+  "authors": "McEwen A.S., Soderblom L.A.",
+  "year": 1983,
+  "title": "Two classes of volcanic plumes on Io",
+  "journal": "Icarus",
+  "volume": "55",
+  "pages": "191-217",
+  "doi": "10.1016/0019-1035(83)90075-1",
+  "url": "https://pubs.usgs.gov/publication/70011210",
+  "notes": "Issue 2. Metadata from Semantic Scholar and USGS Pubs Warehouse.",
+  "quantitative": "Abstract (USGS): Prometheus-type small plumes 'erupt at velocities of ~0.5 km sec-1', bright whitish deposits, equatorial belt, eruption duration 'at least several years'. Pele-type large plumes 'erupt at ~1.0 km sec-1', darker red deposits, restricted to 240-360 W, duration 'of the order of days to weeks'. Plume HEIGHTS (~100 / ~300 km) are NOT in the abstract: unconfirmed from this source."
+ },
+ {
+  "n": 5,
+  "status": "verified",
+  "authors": "Robock A.",
+  "year": 2000,
+  "title": "Volcanic eruptions and climate",
+  "journal": "Reviews of Geophysics",
+  "volume": "38",
+  "pages": "191-219",
+  "doi": "10.1029/1998RG000054",
+  "url": "https://geodynamicsprogram.whoi.edu/wp-content/uploads/sites/14/2018/10/Robock_2000_49079.pdf",
+  "notes": "Issue 2.",
+  "quantitative": "Sulfate aerosol 'e-folding residence time of about 1 year'. Large explosive eruptions 'certainly produce global or hemispheric cooling for 2 or 3 years'. Superposed composite of six eruptions: cooling ~0.1-0.2 C with 'the maximum cooling is found approximately 1 year following the eruptions'. Winter warming: 'The winter following a large tropical eruption is warmer over the NH continents'. A Pinatubo-specific ~0.5 K figure was NOT found in the fetched text: unconfirmed."
+ },
+ {
+  "n": 6,
+  "status": "verified",
+  "authors": "Gray W.M.",
+  "year": 1968,
+  "title": "Global view of the origin of tropical disturbances and storms",
+  "journal": "Monthly Weather Review",
+  "volume": "96",
+  "pages": "669-700",
+  "doi": "10.1175/1520-0493(1968)096<0669:GVOTOO>2.0.CO;2",
+  "url": "https://api.semanticscholar.org/graph/v1/paper/DOI:10.1175/1520-0493(1968)096<0669:GVOTOO>2.0.CO;2",
+  "notes": "Metadata verified. Full text not fetched.",
+  "quantitative": "See n=17; 26.5 C threshold not confirmed from this paper's text."
+ },
+ {
+  "n": 7,
+  "status": "verified",
+  "authors": "Emanuel K.",
+  "year": 2003,
+  "title": "Tropical cyclones",
+  "journal": "Annual Review of Earth and Planetary Sciences",
+  "volume": "31",
+  "pages": "75-104",
+  "doi": "10.1146/annurev.earth.31.100901.141259",
+  "url": "https://texmex.mit.edu/pub/emanuel/PAPERS/annrev.pdf",
+  "notes": "Metadata from MIT CS3 publication page (cs3.mit.edu/publication/14671); text from author's preprint.",
+  "quantitative": "'tropical cyclones generally develop over ocean water whose surface temperature exceeds 26 C' (sec 2c); 'Palmen (1948) established that tropical cyclones form only over ocean water with temperatures greater than about 26 C' (sec 7); 'Tropical cyclones seldom form equatorward of 5 degrees latitude; the record lowest latitude appears to be 1.6 N'; 'Gray (1968) showed that genesis only occurs in environments characterized by small vertical shear of the horizontal wind'."
+ },
+ {
+  "n": 8,
+  "status": "verified",
+  "authors": "Roe G.H.",
+  "year": 2005,
+  "title": "Orographic precipitation",
+  "journal": "Annual Review of Earth and Planetary Sciences",
+  "volume": "33",
+  "pages": "645-671",
+  "doi": "10.1146/annurev.earth.33.092203.122541",
+  "url": "https://earthweb.ess.washington.edu/roe/Publications/Roe_OrogPrec_AnnRev05.pdf",
+  "notes": "From author PDF header.",
+  "quantitative": ""
+ },
+ {
+  "n": 9,
+  "status": "verified",
+  "authors": "Price C., Rind D.",
+  "year": 1992,
+  "title": "A simple lightning parameterization for calculating global lightning distributions",
+  "journal": "Journal of Geophysical Research",
+  "volume": "97",
+  "pages": "9919-9933",
+  "doi": "10.1029/92JD00719",
+  "url": "https://www.giss.nasa.gov/pubs/abs/pr06100c.html",
+  "notes": "JGR Atmospheres, issue D9. Formulas not on abstract page; confirmed from secondary sources.",
+  "quantitative": "Karagiannidis et al. 2019 (Atmos. Res.) quoting P&R92: continental 'Fc = 3.44 x 10^-5 H^4.9 where Fc is the flash rate and H the thunderstorm height in km', 'in flashes per minute'; maritime 'Fc = 6.4 x 10^-4 H^1.73'. NOAA HWRF code module_ltng_cpmpr92z.F uses 3.44E-5*zkm**4.9/60 (zkm = cloud-top height AGL km, /60 -> per second); its marine branch uses 6.57E-6*zkm**4.9 attributed to Michalon 1999, not P&R."
+ },
+ {
+  "n": 10,
+  "status": "verified",
+  "authors": "Klein S.A., Hartmann D.L.",
+  "year": 1993,
+  "title": "The seasonal cycle of low stratiform clouds",
+  "journal": "Journal of Climate",
+  "volume": "6",
+  "pages": "1587-1606",
+  "doi": "10.1175/1520-0442(1993)006<1587:TSCOLS>2.0.CO;2",
+  "url": "https://api.semanticscholar.org/graph/v1/paper/DOI:10.1175/1520-0442(1993)006<1587:TSCOLS>2.0.CO;2",
+  "notes": "Metadata verified. Original text not fetched.",
+  "quantitative": "~6%/K slope UNCONFIRMED. Secondary only: UW ATMS 547 lecture defines 'LTS = theta(700 hPa) - theta(1000 hPa) (Klein and Hartmann 1993)'; Brueck et al. 2015 (JAS 72:1428) applying the KH relation gives CClow ~10% at LTS 12 K and ~24% at 14 K (implies ~7%/K, my arithmetic)."
+ },
+ {
+  "n": 11,
+  "status": "corrected",
+  "authors": "Lawrence M.G.",
+  "year": 2005,
+  "title": "The relationship between relative humidity and the dewpoint temperature in moist air: A simple conversion and applications",
+  "journal": "Bulletin of the American Meteorological Society",
+  "volume": "86",
+  "pages": "225-233",
+  "doi": "10.1175/BAMS-86-2-225",
+  "url": "https://api.semanticscholar.org/graph/v1/paper/DOI:10.1175/BAMS-86-2-225",
+  "notes": "Title has subtitle 'A simple conversion and applications'.",
+  "quantitative": ""
+ },
+ {
+  "n": 12,
+  "status": "verified",
+  "authors": "Murphy D.M., Koop T.",
+  "year": 2005,
+  "title": "Review of the vapour pressures of ice and supercooled water for atmospheric applications",
+  "journal": "Quarterly Journal of the Royal Meteorological Society",
+  "volume": "131",
+  "pages": "1539-1565",
+  "doi": "10.1256/qj.04.94",
+  "url": "https://radiativetransfer.org/misc/typhon/doc/generated/typhon.physics.e_eq_ice_mk.html",
+  "notes": "Issue 608. Volume from Semantic Scholar; pages/issue from typhon docs citation.",
+  "quantitative": ""
+ },
+ {
+  "n": 13,
+  "status": "verified",
+  "authors": "Eady E.T.",
+  "year": 1949,
+  "title": "Long waves and cyclone waves",
+  "journal": "Tellus",
+  "volume": "1(3)",
+  "pages": "33-52",
+  "doi": "10.1111/j.2153-3490.1949.tb01265.x",
+  "url": "https://api.semanticscholar.org/graph/v1/paper/DOI:10.1111/j.2153-3490.1949.tb01265.x",
+  "notes": "Both DOIs exist: Semantic Scholar resolves 10.1111/j.2153-3490.1949.tb01265.x (pages 33-52; Wikipedia uses this one); 10.3402/tellusa.v1i3.8507 is the Taylor&Francis/Tellus A re-registration (seen on synapsesocial). Prefer the 10.1111 DOI.",
+  "quantitative": ""
+ },
+ {
+  "n": 14,
+  "status": "verified",
+  "authors": "Chang E.K.M., Lee S., Swanson K.L.",
+  "year": 2002,
+  "title": "Storm track dynamics",
+  "journal": "Journal of Climate",
+  "volume": "15",
+  "pages": "2163-2183",
+  "doi": "10.1175/1520-0442(2002)015<02163:STD>2.0.CO;2",
+  "url": "https://api.semanticscholar.org/graph/v1/paper/DOI:10.1175/1520-0442(2002)015<02163:STD>2.0.CO;2",
+  "notes": "",
+  "quantitative": ""
+ },
+ {
+  "n": 15,
+  "status": "verified",
+  "authors": "Webster P.J., Magana V.O., Palmer T.N., Shukla J., Tomas R.A., Yanai M., Yasunari T.",
+  "year": 1998,
+  "title": "Monsoons: Processes, predictability, and the prospects for prediction",
+  "journal": "Journal of Geophysical Research: Oceans",
+  "volume": "103",
+  "pages": "14451-14510",
+  "doi": "10.1029/97JC02719",
+  "url": "https://api.semanticscholar.org/graph/v1/paper/DOI:10.1029/97JC02719",
+  "notes": "",
+  "quantitative": ""
+ },
+ {
+  "n": 16,
+  "status": "verified",
+  "authors": "NIST Chemistry WebBook, SRD 69 (Linstrom & Mallard, eds.)",
+  "year": null,
+  "title": "Phase change data",
+  "journal": "NIST Standard Reference Database 69",
+  "volume": "",
+  "pages": "",
+  "doi": "",
+  "url": "https://webbook.nist.gov/chemistry/",
+  "notes": "Antoine form on every page: log10(P) = A - (B / (T + C)), P in bar, T in K. Antoine rows are columns [T range K, A, B, C, reference]. Most rows: 'Coefficents calculated by NIST from author's data.' Values as summarised by the fetch tool from each page; quoted per page.",
+  "quantitative": {
+   "methane (CH4, CAS 74-82-8)": {
+    "url": "https://webbook.nist.gov/cgi/cbook.cgi?ID=C74828&Mask=4",
+    "antoine": [
+     [
+      "90.99-189.99",
+      3.9895,
+      443.028,
+      -0.49,
+      "Prydz and Goodwin, 1972"
+     ],
+     [
+      "96.89-110.19",
+      2.00253,
+      125.819,
+      -48.823,
+      "Regnier, 1972"
+     ],
+     [
+      "93.04-107.84",
+      3.80235,
+      403.106,
+      -5.479,
+      "Cutler and Morrison, 1965"
+     ],
+     [
+      "110.00-190.5",
+      4.22061,
+      516.689,
+      11.223,
+      "Hestermans and White, 1961"
+     ]
+    ],
+    "Ttriple_K": "90.67 +/- 0.03",
+    "Ptriple_bar": "0.1169 +/- 0.0006",
+    "dHvap_kJmol": "8.519 at 99.54 K (Vogt and Pitzer 1976); 8.17 at 111.7 K (Majer and Svoboda 1985); 8.5+/-0.1 at 99 K (Frank and Clusius 1939); others 8.1-8.7 at 101-175 K",
+    "dHsub_kJmol": "9.62 at 77 K (Stull 1947); 9.7 at 72 K (Stephenson and Malanowski 1987)"
+   },
+   "ammonia (NH3, CAS 7664-41-7)": {
+    "url": "https://webbook.nist.gov/cgi/cbook.cgi?ID=C7664417&Mask=4",
+    "antoine": [
+     [
+      "164.0-239.6",
+      3.18757,
+      506.713,
+      -80.78,
+      "Stull, 1947"
+     ],
+     [
+      "239.6-371.5",
+      4.86886,
+      1113.928,
+      -10.409,
+      "Stull, 1947"
+     ]
+    ],
+    "Ttriple_K": "not listed; Tfus = 194.95 K (Timmermans 1921, +/-0.3 K)",
+    "Ptriple_bar": "0.06060 (Fonseca and Lobo 1989)",
+    "dHvap_kJmol": "23.5 at 239 K (Overstreet and Giauque 1937); 23.4 at 239 K (same, calorimetric); 22.7 at 308 K (Zander and Thomas 1979)",
+    "dHsub_kJmol": "31.2 at 177-195 K (Overstreet and Giauque 1937)"
+   },
+   "carbon dioxide (CO2, CAS 124-38-9)": {
+    "url": "https://webbook.nist.gov/cgi/cbook.cgi?ID=C124389&Mask=4",
+    "antoine": [
+     [
+      "154.26-195.89 (solid, sublimation)",
+      6.81228,
+      1301.679,
+      -3.494,
+      "Giauque and Egan, 1937"
+     ]
+    ],
+    "Ttriple_K": "216.58 (Marsh 1987; Angus et al. 1976)",
+    "Ptriple_bar": "5.185 (Angus et al. 1976)",
+    "dHvap_kJmol": "16.7 at 288 K; 16.4 at 258 K (Stephenson and Malanowski 1987); 16.5 at 282 K (Boublik and Aim 1972)",
+    "dHsub_kJmol": "25.2 at 195 K (Giauque and Egan 1937); 26.1 at 207 K; 25.9 at 188 K (Ambrose 1956); 26.3 at 167 K (Stull 1947); 27.2+/-0.4 at 70-102 K (Bryson et al. 1974)"
+   },
+   "nitrogen (N2, CAS 7727-37-9)": {
+    "url": "https://webbook.nist.gov/cgi/cbook.cgi?ID=C7727379&Mask=4",
+    "antoine": [
+     [
+      "63.14-126.",
+      3.7362,
+      264.651,
+      -6.788,
+      "Edejer and Thodos, 1967"
+     ],
+     [
+      "63.14-78.00",
+      3.63792,
+      257.877,
+      -6.344,
+      "Moussa, Muijlwijk, et al., 1966"
+     ]
+    ],
+    "Ttriple_K": "63.14 (Jacobsen et al. 1986; Angus et al. 1979)",
+    "Ptriple_bar": "0.1252 (Jacobsen et al. 1986); 0.1253 (Angus et al. 1979)",
+    "dHvap_kJmol": "6.1 at 78 K (Edejer and Thodos 1967); 5.6 at 77 K (Giauque and Clayton 1933)",
+    "dHsub_kJmol": "not listed"
+   },
+   "water (H2O, CAS 7732-18-5)": {
+    "url": "https://webbook.nist.gov/cgi/cbook.cgi?ID=C7732185&Mask=4",
+    "antoine": [
+     [
+      "379.-573.",
+      3.55959,
+      643.748,
+      -198.043,
+      "Liu and Lindsay, 1970"
+     ],
+     [
+      "273.-303.",
+      5.40221,
+      1838.675,
+      -31.737,
+      "Bridgeman and Aldrich, 1964"
+     ],
+     [
+      "304.-333.",
+      5.20389,
+      1733.926,
+      -39.485,
+      "Bridgeman and Aldrich, 1964"
+     ],
+     [
+      "334.-363.",
+      5.0768,
+      1659.793,
+      -45.854,
+      "Bridgeman and Aldrich, 1964"
+     ],
+     [
+      "344.-373.",
+      5.08354,
+      1663.125,
+      -45.622,
+      "Bridgeman and Aldrich, 1964"
+     ],
+     [
+      "293.-343.",
+      6.20963,
+      2354.731,
+      7.559,
+      "Gubkov, Fermor, et al., 1964"
+     ],
+     [
+      "255.9-373.",
+      4.6543,
+      1435.264,
+      -64.848,
+      "Stull, 1947"
+     ]
+    ],
+    "Ttriple_K": "not listed on this page",
+    "Ptriple_bar": "0.0061 (Sato, Watanabe, et al. 1991)",
+    "dHvap_kJmol": "not listed on the phase-change page (Mask=4)",
+    "dHsub_kJmol": "not listed",
+    "Tboil_K": "373.17 +/- 0.04"
+   },
+   "ethane (C2H6, CAS 74-84-0)": {
+    "url": "https://webbook.nist.gov/cgi/cbook.cgi?ID=C74840&Mask=4",
+    "antoine": [
+     [
+      "91.33-144.13",
+      4.50706,
+      791.3,
+      -6.422,
+      "Carruth and Kobayashi, 1973"
+     ],
+     [
+      "135.74-199.91",
+      3.93835,
+      659.739,
+      -16.719,
+      "Loomis and Walters, 1926"
+     ]
+    ],
+    "Ttriple_K": "91. +/- 6. (AVG of 10 values)",
+    "Ptriple_bar": "0.000011 (Younglove and Ely 1987)",
+    "dHvap_kJmol": "14.703 at 184.1 K (Witt and Kemp 1937); 14.7 at 184 K; 15.3 at 185 K (Loomis and Walters); 17.1 at 129 K; 17.7 at 114 K; 14.9 at 214/259 K",
+    "dHsub_kJmol": "22.6 at 85 K (Regnier 1972); 20.5 at 90 K (Bondi 1963)"
+   },
+   "sulfur dioxide (SO2, CAS 7446-09-5)": {
+    "url": "https://webbook.nist.gov/cgi/cbook.cgi?ID=C7446095&Mask=4",
+    "antoine": [
+     [
+      "177.7-263.",
+      3.48586,
+      668.225,
+      -72.252,
+      "Stull, 1947"
+     ],
+     [
+      "263.-414.9",
+      4.37798,
+      966.575,
+      -42.071,
+      "Stull, 1947"
+     ]
+    ],
+    "Ttriple_K": "197.64 (Giauque and Stephenson 1938)",
+    "Ptriple_bar": "0.0167 (Giauque and Stephenson 1938)"
+   }
+  }
+ },
+ {
+  "n": 17,
+  "status": "corrected",
+  "authors": "Emanuel K.",
+  "year": 2003,
+  "title": "Tropical cyclones",
+  "journal": "Annual Review of Earth and Planetary Sciences",
+  "volume": "31",
+  "pages": "75-104",
+  "doi": "10.1146/annurev.earth.31.100901.141259",
+  "url": "https://texmex.mit.edu/pub/emanuel/PAPERS/annrev.pdf",
+  "notes": "#7 Emanuel 2003 states both conditions, but with 26 C (not 26.5 C) and attributes the SST threshold to Palmen (1948), not Gray. Gray 1968 is cited by Emanuel for the low vertical wind shear condition. The 26.5 C figure was not found in any fetched text (likely Gray 1968/1979; unconfirmed).",
+  "quantitative": "'tropical cyclones generally develop over ocean water whose surface temperature exceeds 26 C'; 'Tropical cyclones seldom form equatorward of 5 degrees latitude; the record lowest latitude appears to be 1.6 N'."
+ }
+]

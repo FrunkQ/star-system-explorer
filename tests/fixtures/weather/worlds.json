@@ -1,0 +1,228 @@
+{
+ "source": "Solar System values from the NASA Planetary Fact Sheets (https://nssdc.gsfc.nasa.gov/planetary/factsheet/); two made-up worlds test regimes",
+ "worlds": [
+  {
+   "expect": "earth-like",
+   "conditions": {
+    "address": "u:sol/sys:0/body:3",
+    "label": "Earth",
+    "radius_m": 6371000.0,
+    "gravity_m_s2": 9.81,
+    "solid_surface": true,
+    "rotation_hours": 23.934,
+    "star_locked": false,
+    "obliquity_deg": 23.44,
+    "year_days": 365.256,
+    "eccentricity": 0.0167,
+    "flux_w_m2": 1361.0,
+    "albedo": 0.306,
+    "t_surface_k": 288.0,
+    "pressure_bar": 1.013,
+    "mean_molar_kg": 0.02897,
+    "gases": {
+     "n2": 0.78,
+     "o2": 0.21,
+     "ar": 0.0093,
+     "co2": 0.00042
+    },
+    "liquid": "water",
+    "ocean_fraction": 0.71,
+    "internal_flux_w_m2": 0.0
+   }
+  },
+  {
+   "expect": "thin-air",
+   "conditions": {
+    "address": "u:sol/sys:0/body:4",
+    "label": "Mars",
+    "radius_m": 3389500.0,
+    "gravity_m_s2": 3.71,
+    "solid_surface": true,
+    "rotation_hours": 24.62,
+    "star_locked": false,
+    "obliquity_deg": 25.19,
+    "year_days": 686.98,
+    "eccentricity": 0.0935,
+    "flux_w_m2": 586.0,
+    "albedo": 0.25,
+    "t_surface_k": 210.0,
+    "pressure_bar": 0.006,
+    "mean_molar_kg": 0.04334,
+    "gases": {
+     "co2": 0.95,
+     "n2": 0.028,
+     "ar": 0.02,
+     "h2o": 0.00021
+    },
+    "liquid": null,
+    "ocean_fraction": 0.0,
+    "internal_flux_w_m2": 0.0
+   }
+  },
+  {
+   "expect": "slow-rotator",
+   "conditions": {
+    "address": "u:sol/sys:0/body:2",
+    "label": "Venus",
+    "radius_m": 6051800.0,
+    "gravity_m_s2": 8.87,
+    "solid_surface": true,
+    "rotation_hours": 5832.5,
+    "star_locked": false,
+    "obliquity_deg": 2.64,
+    "year_days": 224.7,
+    "eccentricity": 0.0068,
+    "flux_w_m2": 2601.0,
+    "albedo": 0.76,
+    "t_surface_k": 737.0,
+    "pressure_bar": 92.0,
+    "mean_molar_kg": 0.04345,
+    "gases": {
+     "co2": 0.965,
+     "n2": 0.035,
+     "so2": 0.00015,
+     "h2o": 2e-05
+    },
+    "liquid": null,
+    "ocean_fraction": 0.0,
+    "internal_flux_w_m2": 0.0
+   }
+  },
+  {
+   "expect": "slow-rotator",
+   "conditions": {
+    "address": "u:sol/sys:0/body:6/moon:6",
+    "label": "Titan",
+    "radius_m": 2574700.0,
+    "gravity_m_s2": 1.352,
+    "solid_surface": true,
+    "rotation_hours": 382.69,
+    "star_locked": false,
+    "obliquity_deg": 26.7,
+    "year_days": 10759.0,
+    "eccentricity": 0.0565,
+    "flux_w_m2": 14.8,
+    "albedo": 0.265,
+    "t_surface_k": 94.0,
+    "pressure_bar": 1.467,
+    "mean_molar_kg": 0.0279,
+    "gases": {
+     "n2": 0.95,
+     "ch4": 0.049
+    },
+    "liquid": "methane",
+    "ocean_fraction": 0.02,
+    "internal_flux_w_m2": 0.0
+   }
+  },
+  {
+   "expect": "tidally-locked",
+   "conditions": {
+    "address": "u:fixtures/sys:w/body:2",
+    "label": "Locked temperate world",
+    "radius_m": 6800000.0,
+    "gravity_m_s2": 10.5,
+    "solid_surface": true,
+    "rotation_hours": 268.6,
+    "star_locked": true,
+    "obliquity_deg": 0.0,
+    "year_days": 11.19,
+    "eccentricity": 0.0,
+    "flux_w_m2": 885.0,
+    "albedo": 0.3,
+    "t_surface_k": 260.0,
+    "pressure_bar": 1.0,
+    "mean_molar_kg": 0.029,
+    "gases": {
+     "n2": 0.95,
+     "co2": 0.05
+    },
+    "liquid": "water",
+    "ocean_fraction": 0.7,
+    "internal_flux_w_m2": 0.0
+   }
+  },
+  {
+   "expect": "fast-rotator",
+   "conditions": {
+    "address": "u:fixtures/sys:w/body:1",
+    "label": "Fast-spinning Earth",
+    "radius_m": 6371000.0,
+    "gravity_m_s2": 9.81,
+    "solid_surface": true,
+    "rotation_hours": 6.0,
+    "star_locked": false,
+    "obliquity_deg": 23.44,
+    "year_days": 365.256,
+    "eccentricity": 0.0167,
+    "flux_w_m2": 1361.0,
+    "albedo": 0.306,
+    "t_surface_k": 288.0,
+    "pressure_bar": 1.013,
+    "mean_molar_kg": 0.02897,
+    "gases": {
+     "n2": 0.78,
+     "o2": 0.21,
+     "ar": 0.0093,
+     "co2": 0.00042
+    },
+    "liquid": "water",
+    "ocean_fraction": 0.71,
+    "internal_flux_w_m2": 0.0
+   }
+  },
+  {
+   "expect": "airless",
+   "conditions": {
+    "address": "u:sol/sys:0/body:3/moon:1",
+    "label": "Moon",
+    "radius_m": 1737400.0,
+    "gravity_m_s2": 1.62,
+    "solid_surface": true,
+    "rotation_hours": 655.7,
+    "star_locked": false,
+    "obliquity_deg": 1.54,
+    "year_days": 365.256,
+    "eccentricity": 0.0167,
+    "flux_w_m2": 1361.0,
+    "albedo": 0.11,
+    "t_surface_k": 250.0,
+    "pressure_bar": 3e-15,
+    "mean_molar_kg": 0.04,
+    "gases": {},
+    "liquid": null,
+    "ocean_fraction": 0.0,
+    "internal_flux_w_m2": 0.0
+   }
+  },
+  {
+   "expect": "banded-giant",
+   "conditions": {
+    "address": "u:sol/sys:0/body:5",
+    "label": "Jupiter",
+    "radius_m": 69911000.0,
+    "gravity_m_s2": 24.79,
+    "solid_surface": false,
+    "rotation_hours": 9.925,
+    "star_locked": false,
+    "obliquity_deg": 3.13,
+    "year_days": 4332.6,
+    "eccentricity": 0.0489,
+    "flux_w_m2": 50.26,
+    "albedo": 0.343,
+    "t_surface_k": 165.0,
+    "pressure_bar": 1.0,
+    "mean_molar_kg": 0.00227,
+    "gases": {
+     "h2": 0.898,
+     "he": 0.102,
+     "ch4": 0.003,
+     "nh3": 0.00026
+    },
+    "liquid": null,
+    "ocean_fraction": 0.0,
+    "internal_flux_w_m2": 5.4
+   }
+  }
+ ]
+}

@@ -1,0 +1,68 @@
+{
+  "format": "sse.flow/1",
+  "id": "sse.base.body-magnetism",
+  "version": "0.1.0",
+  "hook": "body.magnetism",
+  "inputs": [
+    { "name": "dynamo_density", "kind": "interior.dynamo_density" },
+    { "name": "dynamo_heat_flux", "kind": "interior.dynamo_heat_flux" },
+    { "name": "dynamo_radius", "kind": "interior.dynamo_radius" },
+    { "name": "radius", "kind": "body.radius" }
+  ],
+  "nodes": [
+    { "id": "dynamo", "atom": "sse.magnetic.dynamo_field" },
+    { "id": "dipole", "atom": "sse.magnetic.surface_dipole" }
+  ],
+  "wires": [
+    { "from": "in.dynamo_density", "to": "dynamo.density" },
+    { "from": "in.dynamo_heat_flux", "to": "dynamo.flux" },
+    { "from": "dynamo.field", "to": "dipole.field" },
+    { "from": "in.dynamo_radius", "to": "dipole.dynamo_radius" },
+    { "from": "in.radius", "to": "dipole.radius" }
+  ],
+  "publishes": [
+    { "kind": "magnetic.dynamo_field", "from": "dynamo.field" },
+    { "kind": "body.surface_magnetic_field", "from": "dipole.surface_field" },
+    { "kind": "body.magnetic_moment", "from": "dipole.moment" }
+  ],
+  "tests": [
+    {
+      "name": "Earth: 10 TW out of the core (Lay et al. 2008, 5 to 15 TW) gives a dipole moment near the measured 7.7e22 A m² (IGRF-13)",
+      "inputs": {
+        "dynamo_density": { "value": 10900.0, "unit": "kg_m3" },
+        "dynamo_heat_flux": { "value": 0.0657, "unit": "w_m2" },
+        "dynamo_radius": { "value": 3480.0, "unit": "km" },
+        "radius": { "value": 6371.0, "unit": "km" }
+      },
+      "expect": {
+        "body.magnetic_moment": { "value": 7.7e22, "unit": "a_m2", "tol": 1.5e22 },
+        "body.surface_magnetic_field": { "value": 30.0, "unit": "ut", "tol": 8.0 }
+      }
+    },
+    {
+      "name": "Jupiter: Juno's 7.5 W/m² internal flux (Li et al. 2018) through a metallic-hydrogen dynamo at 0.85 R_J gives about 4 G at the equator (JRM09)",
+      "inputs": {
+        "dynamo_density": { "value": 1960.0, "unit": "kg_m3" },
+        "dynamo_heat_flux": { "value": 10.36, "unit": "w_m2" },
+        "dynamo_radius": { "value": 0.85, "unit": "r_jupiter" },
+        "radius": { "value": 1.0, "unit": "r_jupiter" }
+      },
+      "expect": {
+        "body.magnetic_moment": { "value": 1.56e27, "unit": "a_m2", "tol": 0.4e27 },
+        "body.surface_magnetic_field": { "value": 4.1, "unit": "gauss", "tol": 1.2 }
+      }
+    },
+    {
+      "name": "No convected heat, no dynamo (Mars and Venus today)",
+      "inputs": {
+        "dynamo_density": { "value": 7000.0, "unit": "kg_m3" },
+        "dynamo_heat_flux": { "value": 0.0, "unit": "w_m2" },
+        "dynamo_radius": { "value": 1830.0, "unit": "km" },
+        "radius": { "value": 3389.5, "unit": "km" }
+      },
+      "expect": {
+        "body.magnetic_moment": { "value": 0.0, "unit": "a_m2", "tol": 1.0 }
+      }
+    }
+  ]
+}

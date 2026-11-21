@@ -43,6 +43,10 @@ impl Dimension {
     pub const ACCELERATION: Dimension = Dimension([1, 0, -2, 0, 0, 0, 0]);
     pub const DENSITY: Dimension = Dimension([-3, 1, 0, 0, 0, 0, 0]);
     pub const GRAV_PARAM: Dimension = Dimension([3, 0, -2, 0, 0, 0, 0]);
+    /// Tesla: kg s^-2 A^-1.
+    pub const MAGNETIC_FIELD: Dimension = Dimension([0, 1, -2, -1, 0, 0, 0]);
+    /// A m² (magnetic dipole moment).
+    pub const MAGNETIC_MOMENT: Dimension = Dimension([2, 0, 0, 1, 0, 0, 0]);
 
     pub fn mul(self, o: Dimension) -> Dimension {
         let mut r = [0i8; 7];
@@ -275,6 +279,10 @@ impl Units {
         add("m_s2", "m/s²", D::ACCELERATION, 1.0, 0.0);
         add("kg_m3", "kg/m³", D::DENSITY, 1.0, 0.0);
         add("g_cm3", "g/cm³", D::DENSITY, 1e3, 0.0);
+        add("t", "T", D::MAGNETIC_FIELD, 1.0, 0.0);
+        add("ut", "µT", D::MAGNETIC_FIELD, 1e-6, 0.0);
+        add("gauss", "G", D::MAGNETIC_FIELD, 1e-4, 0.0);
+        add("a_m2", "A m²", D::MAGNETIC_MOMENT, 1.0, 0.0);
         s
     }
 }

@@ -59,8 +59,8 @@ Pick a world (and a height, for gas giants and thick atmospheres), pick a clip o
 The listener's situation is a switch: bare ear (hypothetically), through a helmet microphone, or inside a pressurised hull.
 
 Sources to build from, cited the way physics blocks are:
-- Leighton, T. G. and Petculescu, A., "The sounds of music and voices in space", parts 1 and 2, *Acoustics Today* 5(3), July 2009. Theory and worked examples for voices and instruments on Mars, Venus and Titan. **[existence checked]**
-- Maurice, S. et al., "In situ recording of Mars soundscape", *Nature* 605, 653 (2022). Perseverance microphones: sound speed near 240 m/s, two speeds either side of about 240 Hz, strong high-frequency loss. **[existence checked]**
+- Leighton, T. G. and Petculescu, A., "The sound of music and voices in space", part 1: theory (pp. 17–26) and part 2, *Acoustics Today* 5(3), July 2009. Theory and worked examples for voices and instruments on Mars, Venus and Titan. **[existence checked]**
+- Maurice, S. et al., "In situ recording of Mars soundscape", *Nature* 605, 653 (2022), doi:10.1038/s41586-022-04679-0. Perseverance microphones: sound speed near 240 m/s, two speeds either side of about 240 Hz, strong high-frequency loss. **[existence checked]**
 - Petculescu, A. and Lueptow, R. M., "Atmospheric acoustics of Titan, Mars, Venus, and Earth", *Icarus* 186 (2007). Absorption and sound speed models by gas mix. **[from memory, verify before use]**
 - Bass, H. E. and Chambers, J. P., "Absorption of sound in the Martian atmosphere", *J. Acoust. Soc. Am.* 109 (2001). **[from memory, verify before use]**
 - For Earth-like air, the standard atmospheric absorption model (ISO 9613-1) as the golden case.
@@ -94,9 +94,9 @@ Not composition. A slow, tonal bed whose every property comes from a fact about 
 - Rules for staying in the background: slow attack and release, narrow loudness range, nothing rhythmic enough to tap to, no high sharp sounds, automatic ducking under speech, and silence is a valid result for an empty view.
 
 Sources and prior work:
-- Tamayo, D. et al. (2017), *Astrophysical Journal Letters*, on TRAPPIST-1's resonant chain, with the SYSTEM Sounds project (Matt Russo and colleagues) turning that chain into music by raising orbital frequencies into hearing. The model for the period-to-pitch mapping. **[project and paper existence checked; exact title to confirm]**
-- Zanella, A. et al., "Sonification and sound design for astronomy research, education and public engagement", *Nature Astronomy* (2022), arXiv 2206.13536. A review of about a hundred astronomy sonification projects, with guidance on mappings and accessibility. **[existence checked]**
-- Hermann, T., Hunt, A. and Neuhoff, J. (eds), *The Sonification Handbook* (2011), free online; and the ICAD conference proceedings. Parameter-mapping practice and its pitfalls. **[from memory, verify]**
+- Tamayo, D. et al. (2017), "Convergent Migration Renders TRAPPIST-1 Long-lived", *Astrophysical Journal Letters* 840, L19 (arXiv 1704.02957), on TRAPPIST-1's resonant chain, with the SYSTEM Sounds project (Matt Russo and colleagues) turning that chain into music by raising orbital frequencies into hearing. The model for the period-to-pitch mapping. **[project and paper existence checked; title confirmed 19 Nov]**
+- Zanella, A. et al., "Sonification and sound design for astronomy research, education and public engagement", *Nature Astronomy* (2022), doi:10.1038/s41550-022-01848-z, arXiv 2206.13536. A review of about a hundred astronomy sonification projects, with guidance on mappings and accessibility. **[existence checked]**
+- Hermann, T., Hunt, A. and Neuhoff, J. (eds), *The Sonification Handbook* (Logos Verlag, Berlin, 2011, ISBN 978-3-8325-2819-5), free online; and the ICAD conference proceedings. Parameter-mapping practice and its pitfalls. **[existence checked]**
 - NASA Chandra sonifications (Arcand, Russo and others) as examples of translating images to sound with stated rules. **[from memory, verify]**
 - Alex's own reference for the sound he has in mind (18 Nov): https://www.youtube.com/watch?v=WS5UxLHbUKc It is a SYSTEM Sounds video (Alex, 18 Nov), his example of "background sonification": the same project and the same period-to-pitch approach cited above, so the mapping in this section is the intended one. **[not viewable from the design session; the build session should watch it before tuning the music recipe]**
 - The generative ambient tradition (slow independent loops that never repeat exactly) as the model for unobtrusiveness.

@@ -4,25 +4,26 @@
   it is waiting for. Every run shows its estimate first and its cost after.
 -->
 <script lang="ts">
-  import { JOBS, PROVIDER_KINDS, STORE_KEY, chat, estimate, linked, listModels, readAgents, tarsSystem, type AgentsState, type ChatMessage, type JobId, type ModelInfo, type Provider, type ProviderKind } from "./agents.ts";
+  import { JOBS, PROVIDER_KINDS, memoryStore, listModels, loadAgents, newProvider, readLoaded, saveAgents, type AgentsState, type JobId, type ModelInfo, type Provider, type ProviderKind } from "./agents.ts";
 
-  let { context = "", onchange }: { context?: string; onchange?: (s: AgentsState) => void } = $props();
+  import OracTab, { type OracHost } from "./OracTab.svelte";
+  import MinervaTab, { type MinervaHost } from "./MinervaTab.svelte";
+  import TarsTab, { type TarsHost } from "./TarsTab.svelte";
 
-  function load(): AgentsState {
+  let { tars, orac, minerva, onchange }: { tars?: TarsHost; orac?: OracHost; minerva?: MinervaHost; onchange?: (s: AgentsState) => void } = $props();
+
+  // Settings in "sse4.agents", each key in its own entry (Ovid saves its links without keys).
+  const store = (() => {
     try {
-      return readAgents(localStorage.getItem(STORE_KEY));
+      return localStorage ?? memoryStore();
     } catch {
-      return readAgents(null);
+      return memoryStore();
     }
-  }
-  let st = $state<AgentsState>(load());
-  function save() {
+  })();
+  let st = $state<AgentsState>(loadAgents(store));
+  function save(removed: string[] = []) {
     const snap = $state.snapshot(st) as AgentsState;
-    try {
-      localStorage.setItem(STORE_KEY, JSON.stringify(snap));
-    } catch {
-      /* private window: settings last for this page only */
-    }
+    saveAgents(store, snap, removed);
     onchange?.(snap);
   }
 
@@ -51,11 +52,9 @@
   }
   async function add(e: SubmitEvent) {
     e.preventDefault();
-    if (!/^https?:\/\//.test(base)) return void (problem = "The address must start with http:// or https://, and usually ends in /v1.");
-    if (PROVIDER_KINDS[kind].key === "required" && !key.trim()) return void (problem = `${PROVIDER_KINDS[kind].label} needs a key.`);
-    let id: string = kind;
-    for (let n = 2; st.providers.some((p) => p.id === id); n++) id = `${kind}-${n}`;
-    const p: Provider = { id, kind, label: label.trim() || PROVIDER_KINDS[kind].label, base: base.trim(), ...(key.trim() ? { key: key.trim() } : {}) };
+    const made = newProvider($state.snapshot(st) as AgentsState, kind, label, base, key);
+    if ("problem" in made) return void (problem = made.problem);
+    const p: Provider = made;
     st.providers.push(p);
     key = "";
     save();
@@ -64,44 +63,27 @@
   function remove(id: string) {
     st.providers = st.providers.filter((p) => p.id !== id);
     for (const j of Object.keys(st.links) as JobId[]) if (st.links[j]?.provider === id) delete st.links[j];
-    save();
+    save([id]);
   }
-  function link(job: JobId, provider: string, model: string) {
+  async function link(job: JobId, provider: string, model: string) {
     if (!provider || !model) {
       delete st.links[job];
     } else {
       const m = models[provider]?.find((x) => x.id === model);
-      st.links[job] = { provider, model, ...(m?.context ? { context: m.context } : {}), ...(m?.price ? { price: m.price } : {}) };
+      st.links[job] = { provider, model, ...(m?.context ? { context: m.context } : {}), ...(m?.price ? { price: m.price } : {}), ...(m?.varies ? { varies: true as const } : {}) };
+      // A local model plans with what it is loaded with, never the most it could take.
+      const p = st.providers.find((x) => x.id === provider);
+      const loaded = p ? await readLoaded($state.snapshot(p) as Provider, model) : null;
+      if (loaded && st.links[job]?.model === model) st.links[job]!.loaded = loaded;
     }
     save();
   }
   const today = new Date().toISOString().slice(0, 10);
   const spent = $derived(st.ledger.filter((r) => r.day === today).reduce((a, r) => a + (r.usd ?? 0), 0));
   const runs = $derived(st.ledger.filter((r) => r.day === today).length);
+  // Money a provider did not report and no listed price covers stays unknown, never counted as zero.
+  const unpriced = $derived(st.ledger.filter((r) => r.day === today && r.ok !== false && r.usd === undefined).length);
 
-  // Tars.
-  let question = $state("");
-  let answer = $state("");
-  let asking = $state(false);
-  let note = $state("");
-  const messages = $derived<ChatMessage[]>([
-    { role: "system", content: tarsSystem(st.humour, context || "(nothing selected)") },
-    { role: "user", content: question },
-  ]);
-  const est = $derived(estimate(st, "support", messages, 600));
-  async function ask(e: SubmitEvent) {
-    e.preventDefault();
-    if (!question.trim()) return;
-    asking = true;
-    note = "";
-    const r = await chat($state.snapshot(st) as AgentsState, "support", messages);
-    asking = false;
-    if (!r.ok) return void (note = r.message);
-    answer = r.text;
-    st.ledger.push(r.row);
-    save();
-    note = `${r.row.tokens_in} tokens in, ${r.row.tokens_out} out${r.row.usd !== undefined ? `, $${r.row.usd.toFixed(4)}` : ", price not given by the provider"}.`;
-  }
   const money = (x: number) => `$${x < 0.01 ? x.toFixed(4) : x.toFixed(2)}`;
 </script>
 
@@ -121,7 +103,7 @@
           {#each st.providers as p (p.id)}
             <li data-provider={p.id}>
               <span class="name">{p.label}</span>
-              <span class="meta">{p.base}{p.key ? " · key kept in this browser" : ""}</span>
+              <span class="meta">{p.base}{p.key ? " · key kept in this browser only" : ""}</span>
               <span class="row">
                 <button type="button" class="linkbtn" onclick={() => check(p)} disabled={checking === p.id}>{checking === p.id ? "Checking…" : models[p.id] ? `${models[p.id]!.length} models` : "Check"}</button>
                 <button type="button" class="linkbtn" onclick={() => remove(p.id)}>Remove</button>
@@ -168,35 +150,16 @@
       </table>
       <p class="row">
         <label>Daily cap, US dollars <input type="number" min="0" step="0.5" value={st.cap_usd ?? ""} aria-label="Daily cap" onchange={(e) => ((st.cap_usd = e.currentTarget.value === "" ? null : Number(e.currentTarget.value)), save())} /></label>
-        <span class="meta" data-spent={spent}>Today: {runs} {runs === 1 ? "run" : "runs"}, {money(spent)}</span>
+        <span class="meta" data-spent={spent}>Today: {runs} {runs === 1 ? "run" : "runs"}, {money(spent)}{unpriced ? ` (and ${unpriced} with no price given)` : ""}</span>
       </p>
       {#if problem}<p class="problem" role="alert">{problem}</p>{/if}
     </div>
   {:else if tab === "tars"}
-    <div role="tabpanel" aria-label="Tars">
-      <p>Tars answers questions about SSE and the body you have selected. Read only, and allowed to be funny.</p>
-      {#if !linked(st, "support")}
-        <p class="hint" data-agent-off="tars">No model is linked for Support. Link one under Link models; until then Tars stays quiet and nothing else changes.</p>
-      {/if}
-      <label class="slider">Humour <input type="range" min="0" max="1" step="0.05" bind:value={st.humour} onchange={save} aria-label="Humour" /></label>
-      <form class="ask" onsubmit={ask}>
-        <label>Ask Tars <textarea bind:value={question} rows="3" aria-label="Ask Tars"></textarea></label>
-        <p class="meta" data-estimate={est.tokens_in}>Before sending: about {est.tokens_in} tokens in, up to {est.max_out} out{est.usd !== undefined ? `, up to ${money(est.usd)}` : ""}{est.context ? `, the model holds ${est.context}` : ""}.{est.fits ? "" : " Too long for this model."}</p>
-        <button type="submit" class="primary" disabled={asking || !linked(st, "support") || !question.trim()}>{asking ? "Asking…" : "Ask"}</button>
-      </form>
-      {#if answer}<blockquote class="answer" data-answer>{answer}</blockquote>{/if}
-      {#if note}<p class="meta" role="status">{note}</p>{/if}
-    </div>
+    <TarsTab st={$state.snapshot(st) as AgentsState} host={tars} onrow={(r) => (st.ledger.push(r), save())} onhumour={(h) => ((st.humour = h), save())} />
   {:else if tab === "orac"}
-    <div role="tabpanel" aria-label="Orac">
-      <p>{JOBS.building.what}</p>
-      <p class="hint" data-agent-off="orac">{linked(st, "building") ? `Linked: ${st.links.building!.model}.` : "No model is linked for Building."} Orac's change-request loop (plan, draft, check, fix up to three times) arrives with package A2, built on Ovid's agent loop once its source is read. Until then the change requests on the Physics screen are fixtures.</p>
-    </div>
+    <OracTab st={$state.snapshot(st) as AgentsState} host={orac} onrow={(r) => (st.ledger.push(r), save())} />
   {:else}
-    <div role="tabpanel" aria-label="Minerva">
-      <p>{JOBS.describing.what}</p>
-      <p class="hint" data-agent-off="minerva">{linked(st, "describing") ? `Linked: ${st.links.describing!.model}.` : "No model is linked for Describing."} Minerva's narrative arrives with package A3, after the story finder (sifter hits) she reads from.</p>
-    </div>
+    <MinervaTab st={$state.snapshot(st) as AgentsState} host={minerva} onrow={(r) => (st.ledger.push(r), save())} />
   {/if}
 </section>
 
@@ -217,8 +180,8 @@
     margin-top: 16px;
     font-size: 17px;
   }
-  .hint,
-  .meta {
+  .ag :global(.hint),
+  .ag :global(.meta) {
     color: var(--sse-ink-muted);
     font-size: 12px;
   }
@@ -263,13 +226,13 @@
     flex-wrap: wrap;
   }
   .add,
-  .ask {
+  .ag :global(.ask) {
     display: grid;
     gap: 6px;
   }
-  input:not([type="range"]),
-  select,
-  textarea {
+  .ag :global(input:not([type="range"])),
+  .ag :global(select),
+  .ag :global(textarea) {
     display: block;
     width: 100%;
     margin-top: 3px;
@@ -281,10 +244,10 @@
     font: inherit;
     box-sizing: border-box;
   }
-  textarea {
+  .ag :global(textarea) {
     padding: 6px 8px;
   }
-  input[type="range"] {
+  .ag :global(input[type="range"]) {
     accent-color: var(--sse-accent);
   }
   .jobs {
@@ -297,7 +260,7 @@
     font-weight: normal;
     padding: 4px 8px 4px 0;
   }
-  .linkbtn {
+  .ag :global(.linkbtn) {
     color: var(--sse-accent);
     font: inherit;
     background: none;
@@ -306,7 +269,7 @@
     cursor: pointer;
     text-decoration: underline;
   }
-  .primary {
+  .ag :global(.primary) {
     justify-self: start;
     height: 38px;
     padding: 0 16px;
@@ -316,11 +279,11 @@
     font: inherit;
     cursor: pointer;
   }
-  .primary:disabled {
+  .ag :global(.primary):disabled {
     opacity: 0.45;
     cursor: default;
   }
-  .answer {
+  .ag :global(.answer) {
     margin: 10px 0;
     padding: 8px 12px;
     border-left: 2px solid var(--sse-accent);
@@ -329,7 +292,7 @@
     line-height: 1.5;
     white-space: pre-wrap;
   }
-  .problem {
+  .ag :global(.problem) {
     color: var(--sse-accent-ink);
   }
 </style>

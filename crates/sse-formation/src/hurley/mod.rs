@@ -476,7 +476,7 @@ impl Fits {
         };
         let mut r = rz * pw(10.0, xx);
         if mass < self.zpars[1] - 0.3 {
-            // Degenerate low-mass floor (Tout, in hrdiag), Y = 0.24 + 2Z.
+            // Degenerate low-mass floor (HPT00 eq. 24, after Tout et al. 1997), X = 0.76 - 3Z.
             let rdgen = 0.0258 * pw(1.0 + self.zpars[11], 5.0 / 3.0) * pw(mass, -1.0 / 3.0);
             r = r.max(rdgen);
         }

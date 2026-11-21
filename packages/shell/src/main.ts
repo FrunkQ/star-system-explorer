@@ -8,5 +8,7 @@ import "@fontsource/ibm-plex-mono/400.css";
 import "@fontsource/ibm-plex-mono/500.css";
 import { mount } from "svelte";
 import App from "./App.svelte";
+import { tactileDialogs } from "../../chart-grammar/src/motion.ts";
 
 mount(App, { target: document.getElementById("app")! });
+tactileDialogs();

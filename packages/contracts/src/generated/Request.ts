@@ -3,6 +3,7 @@ import type { AuthoredEdit } from "./AuthoredEdit";
 import type { FormationRequest } from "./FormationRequest";
 import type { InputSpec } from "./InputSpec";
 import type { JobSpec } from "./JobSpec";
+import type { SurfaceTile } from "./SurfaceTile";
 import type { TileRequest } from "./TileRequest";
 
 export type Request = { "op": "hello" } | { "op": "load_stack", packs: unknown[], } | { "op": "open_universe", id: string, seed: string, } | { "op": "set_authored", edit: AuthoredEdit, } | { "op": "history", address: string, } | { "op": "state_hash", scope?: string, at_s: bigint, } | { "op": "derive", flow: string, inputs: { [key in string]: InputSpec }, } | { "op": "explain", flow: string, inputs: { [key in string]: InputSpec }, kind: string, } | { "op": "draw", address: string, stream: string, counter: number, } | { "op": "branch", label: string, } | { "op": "branch_set", branch: string, edit: AuthoredEdit, } | { "op": "branch_state_hash", branch: string, at_s: bigint, } | { "op": "commit", branch: string, at_s: bigint, } | { "op": "discard", branch: string, } | { "op": "start_job", job: JobSpec, } | { "op": "step_job", job: number, budget: number, } | { "op": "cancel_job", job: number, } | { "op": "manifest" } | { "op": "scene", audience: string, scope: string, data_view?: string, at_s: bigint, 
@@ -34,7 +35,27 @@ pins?: unknown, } | { "op": "read_world_stack", body?: string,
 /**
  * `earth`, `europa`, `mars`, `tarn`, `titan` or `venus`.
  */
-fixture?: string, stack?: unknown, } | { "op": "adopt", import_v3?: string, formation?: FormationRequest, occurred_at_s?: number, } | { "op": "resolved_system", system: string, at_s?: number, tiles?: Array<TileRequest>, } | { "op": "systems" } | { "op": "life_view", body?: string, fixture?: string, } | { "op": "export_chronicle" } | { "op": "import_chronicle", export: unknown, } | { "op": "add_note", address: string, links?: Array<string>, text: string, tags?: Array<string>, 
+fixture?: string, stack?: unknown, } | { "op": "weather", want: string, world?: string, conditions?: unknown, day?: number, tile?: [number, number, number, number], n?: number, lat?: number, lon?: number, pins?: unknown[], 
+/**
+ * Smoke, ash and smog sources (volcanoes, eruptions, impacts,
+ * fires, industry), `sse_weather::aerosols::Sources`.
+ */
+sources?: unknown, 
+/**
+ * Which weather block, `{id, version, level}`; default the rule block.
+ */
+block?: unknown, } | { "op": "read_light", fixture?: string, bodies?: unknown[], } | { "op": "detect", targets: unknown[], sensors: unknown[], radar?: unknown, } | { "op": "read_air_optics", airs: unknown[], wavelengths_m?: Array<number>, } | { "op": "read_spectrum", targets: unknown[], observer?: unknown, } | { "op": "read_activity", stars: unknown[], seed?: string, at_s?: number, window?: unknown, } | { "op": "survey_planets", survey: unknown, } | { "op": "read_nebulae", at_s: number, seed?: string, deaths?: unknown[], planetary?: unknown[], remnants?: unknown[], glows?: unknown[], } | { "op": "adopt", import_v3?: string, formation?: FormationRequest, occurred_at_s?: number, } | { "op": "resolved_system", system: string, at_s?: number, tiles?: Array<TileRequest>, } | { "op": "plan_route", fixture?: string, nav?: unknown, system?: string, at_s?: number, ports?: Array<string>, ship: unknown, from: unknown, to?: unknown, depart_s?: number, window_days?: number, prefer?: string, rescue?: unknown, } | { "op": "sift", scope?: string, at_s?: number, sifters?: unknown[], audience?: string, } | { "op": "window_view", fixture?: string, nav?: unknown, at_s?: number, from?: string, at_au?: [number, number, number], sensor?: string, } | { "op": "galaxy_chart", halo?: string, mass_msun?: number, at_gyr?: number, place_kpc?: number, place_phi?: number, 
+/**
+ * History edits to preview (galaxy design 11, G6): `{kind: "merger", t_gyr, ratio}`,
+ * `{kind: "remove_merger", index}`, `{kind: "starburst", t_gyr, gas_fraction}`,
+ * `{kind: "quiet_nucleus", from_gyr, to_gyr}`.
+ */
+edits?: unknown[], 
+/**
+ * A halo cell's index (from `halo_cell`): `halo` is then one of its
+ * catalogued haloes (`halo:3` or its full address), with its own history.
+ */
+cell?: [bigint, bigint, bigint], } | { "op": "web_slice", z?: number, t_gyr?: number, centre?: [number, number, number], extent_mpc: number, n: number, } | { "op": "plan_descent", system?: string, body?: string, fixture?: string, at_s?: number, options?: unknown, quick?: boolean, lander: unknown, lat_deg: number, lon_deg: number, entry?: unknown, } | { "op": "survey_surface", system?: string, body?: string, fixture?: string, at_s?: number, options?: unknown, tiles?: Array<SurfaceTile>, quick?: boolean, limit?: number, } | { "op": "systems" } | { "op": "life_view", body?: string, fixture?: string, } | { "op": "export_chronicle" } | { "op": "import_chronicle", export: unknown, } | { "op": "add_note", address: string, links?: Array<string>, text: string, tags?: Array<string>, 
 /**
  * The writing seat (default `gm`).
  */
@@ -47,4 +68,10 @@ narrative?: boolean, at_s: bigint,
  * When the news reaches its audience (default `at_s`); not shown or
  * disclosed before then.
  */
-arrives_at_s?: bigint, } | { "op": "set_kept", address: string, kind: string, value: unknown, writer?: string, reason?: string, at_s: bigint, } | { "op": "add_actor", id: string, parent?: string, name: string, kind: string, at_s: bigint, } | { "op": "record", address: string, at_s?: bigint, } | { "op": "disclosures", audience: string, at_s: bigint, } | { "op": "rules_step", at_s: bigint, } | { "op": "rules_pending" } | { "op": "rules_decide", proposal: string, approve: boolean, at_s?: bigint, } | { "op": "rules_policy", rule: string, approval: unknown, at_s: bigint, } | { "op": "rules" };
+arrives_at_s?: bigint, } | { "op": "set_kept", address: string, kind: string, value: unknown, writer?: string, reason?: string, at_s: bigint, } | { "op": "add_actor", id: string, parent?: string, name: string, kind: string, at_s: bigint, } | { "op": "record", address: string, at_s?: bigint, } | { "op": "disclosures", audience: string, at_s: bigint, } | { "op": "rules_step", at_s: bigint, } | { "op": "rules_pending" } | { "op": "rules_decide", proposal: string, approve: boolean, at_s?: bigint, } | { "op": "rules_policy", rule: string, approval: unknown, at_s: bigint, } | { "op": "rules" } | { "op": "orbits_at", system: string, at_s: Array<bigint>, bodies?: unknown[], } | { "op": "set_campaign_now", at_s: bigint, } | { "op": "campaign_now" } | { "op": "calendar" } | { "op": "intents" } | { "op": "set_seats", seats: unknown[], at_s: bigint, } | { "op": "send_intent", seat: string, intent: unknown, at_s: bigint, check_only?: boolean, } | { "op": "templates" } | { "op": "create", template: string, under: string, key?: string, name?: string, at_s: bigint, } | { "op": "retire", address: string, reason?: string, at_s: bigint, } | { "op": "intent_decide", proposal: string, approve: boolean, at_s?: bigint, } | { "op": "programs", at_s?: bigint, } | { "op": "attach_program", address: string, program: string, seat: string, at_s: bigint, } | { "op": "detach_program", address: string, at_s: bigint, } | { "op": "programs_step", at_s: bigint, } | { "op": "codes", scope: string, sheet?: string, at_s: bigint, } | { "op": "import_sector", text: string, format?: string, sheet?: string, apply: boolean, 
+/**
+ * With `apply`: grow each world's whole system first (formation
+ * pinned to the coded main world, giant and belt counts searched),
+ * adopt it, and write the coded facts on the grown main world.
+ */
+grow: boolean, at_s: bigint, } | { "op": "export_sector", scope: string, format: string, sheet?: string, at_s: bigint, } | { "op": "halo_cell", cell?: [bigint, bigint, bigint], min_mass_msun?: number, limit?: number, };

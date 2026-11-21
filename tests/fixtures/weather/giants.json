@@ -1,0 +1,101 @@
+{
+ "source": "NASA Planetary Fact Sheets (https://nssdc.gsfc.nasa.gov/planetary/factsheet/): values typed from memory, not fetched (spot-check welcome). Temperature at 1 bar, Bond albedo, internal heat flux in W/m2 (Jupiter about 5.4, Saturn about 2.0, Uranus about 0.04, Neptune about 0.43). Mean molar mass from the fact sheet gas mix.",
+ "worlds": [
+  {
+   "expect": "cyclone-ring",
+   "conditions": {
+    "address": "u:sol/sys:0/body:5",
+    "label": "Jupiter",
+    "radius_m": 69911000.0,
+    "gravity_m_s2": 24.79,
+    "solid_surface": false,
+    "rotation_hours": 9.925,
+    "star_locked": false,
+    "obliquity_deg": 3.13,
+    "year_days": 4332.6,
+    "eccentricity": 0.0489,
+    "flux_w_m2": 50.26,
+    "albedo": 0.343,
+    "t_surface_k": 165.0,
+    "pressure_bar": 1.0,
+    "mean_molar_kg": 0.00227,
+    "gases": { "h2": 0.898, "he": 0.102, "ch4": 0.003, "nh3": 0.00026 },
+    "liquid": null,
+    "ocean_fraction": 0.0,
+    "internal_flux_w_m2": 5.4
+   }
+  },
+  {
+   "expect": "single-vortex",
+   "conditions": {
+    "address": "u:sol/sys:0/body:6",
+    "label": "Saturn",
+    "radius_m": 58232000.0,
+    "gravity_m_s2": 10.44,
+    "solid_surface": false,
+    "rotation_hours": 10.656,
+    "star_locked": false,
+    "obliquity_deg": 26.73,
+    "year_days": 10759.0,
+    "eccentricity": 0.0565,
+    "flux_w_m2": 14.82,
+    "albedo": 0.342,
+    "t_surface_k": 134.0,
+    "pressure_bar": 1.0,
+    "mean_molar_kg": 0.00207,
+    "gases": { "h2": 0.963, "he": 0.0325, "ch4": 0.0045, "nh3": 0.000125 },
+    "liquid": null,
+    "ocean_fraction": 0.0,
+    "internal_flux_w_m2": 2.0
+   }
+  },
+  {
+   "expect": "diffuse-cap",
+   "conditions": {
+    "address": "u:sol/sys:0/body:7",
+    "label": "Uranus",
+    "radius_m": 25362000.0,
+    "gravity_m_s2": 8.87,
+    "solid_surface": false,
+    "rotation_hours": 17.24,
+    "star_locked": false,
+    "obliquity_deg": 97.77,
+    "year_days": 30687.0,
+    "eccentricity": 0.046,
+    "flux_w_m2": 3.69,
+    "albedo": 0.3,
+    "t_surface_k": 76.0,
+    "pressure_bar": 1.0,
+    "mean_molar_kg": 0.00264,
+    "gases": { "h2": 0.825, "he": 0.152, "ch4": 0.023 },
+    "liquid": null,
+    "ocean_fraction": 0.0,
+    "internal_flux_w_m2": 0.04
+   }
+  },
+  {
+   "expect": "single-vortex",
+   "conditions": {
+    "address": "u:sol/sys:0/body:8",
+    "label": "Neptune",
+    "radius_m": 24622000.0,
+    "gravity_m_s2": 11.15,
+    "solid_surface": false,
+    "rotation_hours": 16.11,
+    "star_locked": false,
+    "obliquity_deg": 28.32,
+    "year_days": 60190.0,
+    "eccentricity": 0.01,
+    "flux_w_m2": 1.51,
+    "albedo": 0.29,
+    "t_surface_k": 72.0,
+    "pressure_bar": 1.0,
+    "mean_molar_kg": 0.00261,
+    "gases": { "h2": 0.8, "he": 0.19, "ch4": 0.015 },
+    "liquid": null,
+    "ocean_fraction": 0.0,
+    "internal_flux_w_m2": 0.43
+   }
+  }
+ ]
+}

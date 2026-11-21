@@ -327,6 +327,153 @@ pub enum Request {
         #[ts(optional, type = "unknown")]
         stack: Option<serde_json::Value>,
     },
+    /// Weather from the rule-based weather block (weather track): `want` is
+    /// `climate`, `systems`, `field` (a cube-sphere `tile` [face, level, x,
+    /// y], `n` × `n` cells), `report`, `column` (descent hazards) or `sound`,
+    /// at `day` (days since the campaign epoch) and `lat`/`lon` where a place
+    /// is needed. The world is a weather fixture by `world` label or given
+    /// `conditions`; `pins` are recorded or GM-authored systems to honour.
+    Weather {
+        want: String,
+        #[serde(default)]
+        #[ts(optional)]
+        world: Option<String>,
+        #[serde(default)]
+        #[ts(optional, type = "unknown")]
+        conditions: Option<serde_json::Value>,
+        #[serde(default)]
+        #[ts(optional)]
+        day: Option<f64>,
+        #[serde(default)]
+        #[ts(optional)]
+        tile: Option<[u32; 4]>,
+        #[serde(default)]
+        #[ts(optional)]
+        n: Option<u32>,
+        #[serde(default)]
+        #[ts(optional)]
+        lat: Option<f64>,
+        #[serde(default)]
+        #[ts(optional)]
+        lon: Option<f64>,
+        #[serde(default)]
+        #[ts(optional, type = "unknown[]")]
+        pins: Option<Vec<serde_json::Value>>,
+        /// Smoke, ash and smog sources (volcanoes, eruptions, impacts,
+        /// fires, industry), `sse_weather::aerosols::Sources`.
+        #[serde(default)]
+        #[ts(optional, type = "unknown")]
+        sources: Option<serde_json::Value>,
+        /// Which weather block, `{id, version, level}`; default the rule block.
+        #[serde(default)]
+        #[ts(optional, type = "unknown")]
+        block: Option<serde_json::Value>,
+    },
+    /// Light from bodies (O2): each body's spectrum (own glow, reflected
+    /// light, auroral radio, discs, coronae, radiators, transmitters, lamps)
+    /// and its power in every band, from conditions (`sse_light::emit::Conditions`,
+    /// keyed on conditions, never on kind). `fixture: "solar-system"` serves
+    /// the Solar System; given `bodies` are described instead.
+    ReadLight {
+        #[serde(default)]
+        #[ts(optional)]
+        fixture: Option<String>,
+        #[serde(default)]
+        #[ts(optional, type = "unknown[]")]
+        bodies: Option<Vec<serde_json::Value>>,
+    },
+    /// Sensing (O9): for each target (light given as `conditions` or a ready
+    /// `light`, distance, dust as A_V, bright neighbours with their sky
+    /// separation) and each sensor (band, aperture, noise, stare,
+    /// threshold), whether it is detected, S/N, the stare needed and the
+    /// range at which it would be. With `radar`, how far a radar sees by its
+    /// echo against how far its pulse is heard.
+    Detect {
+        #[ts(type = "unknown[]")]
+        targets: Vec<serde_json::Value>,
+        #[ts(type = "unknown[]")]
+        sensors: Vec<serde_json::Value>,
+        #[serde(default)]
+        #[ts(optional, type = "unknown")]
+        radar: Option<serde_json::Value>,
+    },
+    /// Air optics (light track, for the renderer's sky): for each air (gas
+    /// fractions by number, surface pressure, temperature, gravity), Rayleigh
+    /// cross-section, scattering per metre and optical depth at
+    /// `wavelengths_m` (default 680, 550 and 440 nm) and across the visible
+    /// slices, with scale height and surface density.
+    ReadAirOptics {
+        #[ts(type = "unknown[]")]
+        airs: Vec<serde_json::Value>,
+        #[serde(default)]
+        #[ts(optional)]
+        wavelengths_m: Option<Vec<f64>>,
+    },
+    /// Spectrum as it reaches an observer (O12): each target is one or more
+    /// components (`conditions` as for `read_light`, or a ready `light`
+    /// description), each with a line-of-sight speed; the observer gives the
+    /// wavelength ranges its instruments cover (none: everything) and a
+    /// resolving power. Returns flux samples with coverage, band fluxes,
+    /// emission and absorption lines where they arrive, and readings
+    /// (temperature from the peak, speeds, doubled lines) with Why.
+    ReadSpectrum {
+        #[ts(type = "unknown[]")]
+        targets: Vec<serde_json::Value>,
+        #[serde(default)]
+        #[ts(optional, type = "unknown")]
+        observer: Option<serde_json::Value>,
+    },
+    /// Stellar activity (O10): for each star (conditions: mass, radius,
+    /// power, temperature, age, and spin or a close companion's orbit), its
+    /// activity level, cycle, spots and coronal X-rays, the state at `at_s`
+    /// (default: the star's age), and, with `window`, its flares and mass
+    /// ejections as keyed events, each ejection hitting or missing the
+    /// star's `targets` by geometry.
+    ReadActivity {
+        #[ts(type = "unknown[]")]
+        stars: Vec<serde_json::Value>,
+        #[serde(default)]
+        #[ts(optional)]
+        seed: Option<String>,
+        #[serde(default)]
+        #[ts(optional)]
+        at_s: Option<f64>,
+        #[serde(default)]
+        #[ts(optional, type = "unknown")]
+        window: Option<serde_json::Value>,
+    },
+    /// Planet finding from afar (O13): one star, its planets, an observer
+    /// (direction and distance), an instrument and a watch time. Returns
+    /// what each method (transit, wobble, position wobble, direct imaging,
+    /// timing) finds, with what players would measure and why. Mass from a
+    /// wobble is the minimum mass, as in reality. GM-side: the planets are
+    /// the truth the survey is run against.
+    SurveyPlanets {
+        #[ts(type = "unknown")]
+        survey: serde_json::Value,
+    },
+    /// Nebulae at a date (O3): planetary nebulae from stars' deaths (or given
+    /// inputs), supernova remnants and star-forming glows, each a descriptor
+    /// (shells, lobes, surroundings, lighting stars, light, decoration seed).
+    /// Nebulae not yet born or already faded are listed in `absent`.
+    ReadNebulae {
+        at_s: f64,
+        #[serde(default)]
+        #[ts(optional)]
+        seed: Option<String>,
+        #[serde(default)]
+        #[ts(optional, type = "unknown[]")]
+        deaths: Option<Vec<serde_json::Value>>,
+        #[serde(default)]
+        #[ts(optional, type = "unknown[]")]
+        planetary: Option<Vec<serde_json::Value>>,
+        #[serde(default)]
+        #[ts(optional, type = "unknown[]")]
+        remnants: Option<Vec<serde_json::Value>>,
+        #[serde(default)]
+        #[ts(optional, type = "unknown[]")]
+        glows: Option<Vec<serde_json::Value>>,
+    },
     /// Bring a system into the open universe as facts: an SSE 3 save
     /// (`import_v3`, its text) or a formation run (`formation`, the same
     /// fields as `run_formation`; its `system` must be in the universe). The
@@ -359,6 +506,215 @@ pub enum Request {
         #[serde(default)]
         #[ts(optional)]
         tiles: Option<Vec<TileRequest>>,
+    },
+    /// NAV (T3): candidate courses between two places, or the ways out
+    /// for a drifting ship (no `to`). The system is a NAV `fixture` (`sol`),
+    /// an inline `nav` system, or an adopted `system` read at `at_s` (its
+    /// planets; `ports` names bodies with ports for rescue). `ship` is a
+    /// template id from the base-nav pack or a ship object; `from` and `to`
+    /// are a body address or name, or `{r_m, v_m_s}` around the star;
+    /// `prefer` is `fastest`, `save-fuel` or `balanced`.
+    PlanRoute {
+        #[serde(default)]
+        #[ts(optional)]
+        fixture: Option<String>,
+        #[serde(default)]
+        #[ts(optional, type = "unknown")]
+        nav: Option<serde_json::Value>,
+        #[serde(default)]
+        #[ts(optional)]
+        system: Option<String>,
+        #[serde(default)]
+        #[ts(optional, type = "number")]
+        at_s: Option<i64>,
+        #[serde(default)]
+        #[ts(optional)]
+        ports: Option<Vec<String>>,
+        #[ts(type = "unknown")]
+        ship: serde_json::Value,
+        #[ts(type = "unknown")]
+        from: serde_json::Value,
+        #[serde(default)]
+        #[ts(optional, type = "unknown")]
+        to: Option<serde_json::Value>,
+        #[serde(default)]
+        #[ts(optional)]
+        depart_s: Option<f64>,
+        #[serde(default)]
+        #[ts(optional)]
+        window_days: Option<f64>,
+        #[serde(default)]
+        #[ts(optional)]
+        prefer: Option<String>,
+        #[serde(default)]
+        #[ts(optional, type = "unknown")]
+        rescue: Option<serde_json::Value>,
+    },
+    /// The story finder (U8) and the agents' sift: run sifters over every
+    /// address at or under `scope` (default the universe) at `at_s` (default
+    /// now). `sifters` holds names of the stack's sifters
+    /// (`provides.other.sifters`) and inline sifter objects: with no names,
+    /// every stack sifter runs, plus the inline ones; with names, only those
+    /// named, plus the inline ones. With `audience`, only what that
+    /// audience's scene shows is sifted and event patterns are skipped
+    /// (players never see the chronicle). Hits come best first, each with its
+    /// evidence and significance. GM machine only.
+    Sift {
+        #[serde(default)]
+        #[ts(optional)]
+        scope: Option<String>,
+        #[serde(default)]
+        #[ts(optional, type = "number")]
+        at_s: Option<i64>,
+        #[serde(default)]
+        #[ts(optional, type = "unknown[]")]
+        sifters: Option<Vec<serde_json::Value>>,
+        #[serde(default)]
+        #[ts(optional)]
+        audience: Option<String>,
+    },
+    /// The Window (V8): what a `sensor` (`eye`, `binoculars`, `telescope` in
+    /// base-nav) picks up at `at_s` from beside body `from`, or from the point
+    /// `at_au` around the star, in a NAV `fixture` or inline `nav` system:
+    /// each object's sky position, size, brightness, phase, whether it is
+    /// seen and whether its disc shows. Read only.
+    WindowView {
+        #[serde(default)]
+        #[ts(optional)]
+        fixture: Option<String>,
+        #[serde(default)]
+        #[ts(optional, type = "unknown")]
+        nav: Option<serde_json::Value>,
+        #[serde(default)]
+        #[ts(optional)]
+        at_s: Option<f64>,
+        #[serde(default)]
+        #[ts(optional)]
+        from: Option<String>,
+        #[serde(default)]
+        #[ts(optional)]
+        at_au: Option<[f64; 3]>,
+        #[serde(default)]
+        #[ts(optional)]
+        sensor: Option<String>,
+    },
+    /// G1 to G4 for the galaxy chart (U6): one galaxy grown from the open
+    /// universe's seed, a named `halo` (`dwarf`, `milky-way-like`, `group`) or
+    /// a halo `mass_msun`; its history curves, rings now (abundances, deaths,
+    /// rates), green band through time, the cosmic epochs, and the
+    /// conditions at `place_kpc` (and `place_phi`, radians) at `at_gyr`. Read only.
+    GalaxyChart {
+        #[serde(default)]
+        #[ts(optional)]
+        halo: Option<String>,
+        #[serde(default)]
+        #[ts(optional)]
+        mass_msun: Option<f64>,
+        #[serde(default)]
+        #[ts(optional)]
+        at_gyr: Option<f64>,
+        #[serde(default)]
+        #[ts(optional)]
+        place_kpc: Option<f64>,
+        #[serde(default)]
+        #[ts(optional)]
+        place_phi: Option<f64>,
+        /// History edits to preview (galaxy design 11, G6): `{kind: "merger", t_gyr, ratio}`,
+        /// `{kind: "remove_merger", index}`, `{kind: "starburst", t_gyr, gas_fraction}`,
+        /// `{kind: "quiet_nucleus", from_gyr, to_gyr}`.
+        #[serde(default)]
+        #[ts(optional, type = "unknown[]")]
+        edits: Option<Vec<serde_json::Value>>,
+        /// A halo cell's index (from `halo_cell`): `halo` is then one of its
+        /// catalogued haloes (`halo:3` or its full address), with its own history.
+        #[serde(default)]
+        #[ts(optional)]
+        cell: Option<[i64; 3]>,
+    },
+    /// G1 for the foam and cluster maps (V9): a square slice of the cosmic
+    /// web from the open universe's seed, `n` samples a side over
+    /// `extent_mpc` around `centre` (Mpc, default the origin), at redshift
+    /// `z` or cosmic time `t_gyr` (default now). Read only.
+    WebSlice {
+        #[serde(default)]
+        #[ts(optional)]
+        z: Option<f64>,
+        #[serde(default)]
+        #[ts(optional)]
+        t_gyr: Option<f64>,
+        #[serde(default)]
+        #[ts(optional)]
+        centre: Option<[f64; 3]>,
+        extent_mpc: f64,
+        n: u32,
+    },
+    /// S5's descent scene: survey a world as `survey_surface` does (a
+    /// `fixture`, or a `body` of an adopted `system` at `at_s`), judge the
+    /// landing site at `lat_deg`, `lon_deg` (slope, roughness, liquid) and
+    /// fly `lander` (a base-nav template id or a lander object) down to it
+    /// from `entry` (`{altitude_m, speed_m_s, flight_path_deg}`; default the
+    /// top of the air at orbital speed, or a low orbit on an airless world).
+    PlanDescent {
+        #[serde(default)]
+        #[ts(optional)]
+        system: Option<String>,
+        #[serde(default)]
+        #[ts(optional)]
+        body: Option<String>,
+        #[serde(default)]
+        #[ts(optional)]
+        fixture: Option<String>,
+        #[serde(default)]
+        #[ts(optional, type = "number")]
+        at_s: Option<i64>,
+        #[serde(default)]
+        #[ts(optional, type = "unknown")]
+        options: Option<serde_json::Value>,
+        #[serde(default)]
+        #[ts(optional)]
+        quick: Option<bool>,
+        #[ts(type = "unknown")]
+        lander: serde_json::Value,
+        lat_deg: f64,
+        lon_deg: f64,
+        #[serde(default)]
+        #[ts(optional, type = "unknown")]
+        entry: Option<serde_json::Value>,
+    },
+    /// S2 to S7 in order for one world: a surface `fixture` (`Earth`,
+    /// `Moon`, ...; no universe needed) or a `body` of an adopted `system`
+    /// at `at_s`. `options` is sse-surface's `SurveyOptions` (rotation_hours,
+    /// obliquity_deg, life, settle, reshape, names, renames, wind_m_s);
+    /// `tiles` are S1 tiles of this world with S7's layers; `quick` uses a
+    /// coarse plate grid and 32-sample tiles (tests, weak devices). `limit`
+    /// caps the features and deposits listed (default 200, 0 for all):
+    /// remarkable features first, then the named landscape, then craters by
+    /// size; deposits by size. Totals are always given.
+    SurveySurface {
+        #[serde(default)]
+        #[ts(optional)]
+        system: Option<String>,
+        #[serde(default)]
+        #[ts(optional)]
+        body: Option<String>,
+        #[serde(default)]
+        #[ts(optional)]
+        fixture: Option<String>,
+        #[serde(default)]
+        #[ts(optional, type = "number")]
+        at_s: Option<i64>,
+        #[serde(default)]
+        #[ts(optional, type = "unknown")]
+        options: Option<serde_json::Value>,
+        #[serde(default)]
+        #[ts(optional)]
+        tiles: Option<Vec<SurfaceTile>>,
+        #[serde(default)]
+        #[ts(optional)]
+        quick: Option<bool>,
+        #[serde(default)]
+        #[ts(optional)]
+        limit: Option<u32>,
     },
     /// The open universe's systems: every `<root>/sys:*` with facts, where it
     /// came from (`v3`, `formation` or `facts`), its name and adopt event.
@@ -497,6 +853,175 @@ pub enum Request {
     /// The loaded rules with their effective policies, and the record's
     /// `rules.*` trail (GM only).
     Rules,
+    /// Bodies at or under `system` placed on their orbits at each time
+    /// (universe seconds, at most 64): position relative to the host in
+    /// metres, longitude in degrees, period. Reads the universe's facts, or
+    /// `bodies` (`[{address, facts}]`) when given. A body with no dated phase
+    /// takes a keyed draw (`phase_source: resolved`); one missing anything
+    /// else comes back unplaced with `missing` named, never guessed.
+    OrbitsAt {
+        system: String,
+        at_s: Vec<i64>,
+        #[serde(default)]
+        #[ts(optional, type = "unknown[]")]
+        bodies: Option<Vec<serde_json::Value>>,
+    },
+    /// Set the campaign's now (`campaign.now_s` on the universe root, a
+    /// `time.campaign_now` event). It moves forwards or back.
+    SetCampaignNow {
+        at_s: i64,
+    },
+    /// The campaign's now (absent if never set).
+    CampaignNow,
+    /// The top pack's calendar (`provides.other.calendar`), checked at load.
+    Calendar,
+    /// The intent registry (J5): built-in kinds and the stack's
+    /// (`provides.other.intents`), with their fields, who applies them and
+    /// whether they ever apply without the GM; the seat plan in force; and
+    /// intents waiting for the GM. GM machine only.
+    Intents,
+    /// Store the seat plan (as the chart room's `SeatPlan.seats`, plus
+    /// `program` for a program-driven seat). A GM seat is always present.
+    SetSeats {
+        #[ts(type = "unknown[]")]
+        seats: Vec<serde_json::Value>,
+        at_s: i64,
+    },
+    /// A seat sends an intent (`{kind, ...fields}`). The kernel checks it
+    /// against the registry and the seat, then applies it, queues it for the
+    /// GM, or refuses it, as the chart room's `decide`. `check_only` decides
+    /// and writes nothing.
+    SendIntent {
+        seat: String,
+        #[ts(type = "unknown")]
+        intent: serde_json::Value,
+        at_s: i64,
+        #[serde(default)]
+        #[ts(optional)]
+        check_only: Option<bool>,
+    },
+    /// The stack's templates (J7, `provides.other.templates`).
+    Templates,
+    /// Make an authored object from a template under `under`
+    /// (`<under>/<kind>:<key>`, the next free number when no key): its facts,
+    /// tags and programs in one universe event, its kept values in the record.
+    /// GM machine only.
+    Create {
+        template: String,
+        under: String,
+        #[serde(default)]
+        #[ts(optional)]
+        key: Option<String>,
+        #[serde(default)]
+        #[ts(optional)]
+        name: Option<String>,
+        at_s: i64,
+    },
+    /// Take an object made from a template out of play (`retired`). Nothing is deleted.
+    Retire {
+        address: String,
+        #[serde(default)]
+        #[ts(optional)]
+        reason: Option<String>,
+        at_s: i64,
+    },
+    /// The GM answers a queued intent; yes applies it at `at_s` (default: when it was sent).
+    IntentDecide {
+        proposal: String,
+        approve: bool,
+        #[serde(default)]
+        #[ts(optional)]
+        at_s: Option<i64>,
+    },
+    /// The stack's programs (`provides.other.programs`, J6), the campaign's
+    /// limit and the programs running at `at_s` (default: latest).
+    Programs {
+        #[serde(default)]
+        #[ts(optional)]
+        at_s: Option<i64>,
+    },
+    /// Start `program` on `address` (an object whose template lists it),
+    /// driving `seat` (a program seat naming that program). GM machine only.
+    AttachProgram {
+        address: String,
+        program: String,
+        seat: String,
+        at_s: i64,
+    },
+    /// Stop the program on `address`. GM machine only.
+    DetachProgram {
+        address: String,
+        at_s: i64,
+    },
+    /// One tick for every running program at `at_s`: follow transitions,
+    /// then sense through the seat's audience, pick and send the state's
+    /// intent; then run the rules so its effects land. GM machine only.
+    ProgramsStep {
+        at_s: i64,
+    },
+    /// Game-system codes (handoff 7A part 1) for every body at or under
+    /// `scope` at `at_s`, read by a pack's code sheet (`sheet`, or the first
+    /// one in the stack): each digit with its why, the lines (a UWP), and the
+    /// rule groups (trade codes, zones). Count digits count bodies in the
+    /// same system. Read-only; GM machine (it reads every fact).
+    Codes {
+        scope: String,
+        #[serde(default)]
+        #[ts(optional)]
+        sheet: Option<String>,
+        at_s: i64,
+    },
+    /// Import a community sector file (handoff 7A part 4) into the open
+    /// universe through a code sheet: UWP lines, legacy SEC or T5
+    /// tab-delimited text (`format`: `t5_tab`, `sec`, `uwp_lines`; detected
+    /// when left out). Without `apply` it is a preview and changes nothing;
+    /// with it every world becomes authored events at `at_s` (one for its
+    /// facts, one more for any impossible ones, kept and marked), so the
+    /// import can be undone and replayed.
+    ImportSector {
+        text: String,
+        #[serde(default)]
+        #[ts(optional)]
+        format: Option<String>,
+        #[serde(default)]
+        #[ts(optional)]
+        sheet: Option<String>,
+        #[serde(default)]
+        apply: bool,
+        /// With `apply`: grow each world's whole system first (formation
+        /// pinned to the coded main world, giant and belt counts searched),
+        /// adopt it, and write the coded facts on the grown main world.
+        #[serde(default)]
+        grow: bool,
+        at_s: i64,
+    },
+    /// Write a campaign's mapped systems (those with `map.hex`) at or under
+    /// `scope` as a sector file (`format`: `t5_tab`, `sec`, `uwp_lines`):
+    /// each system's main world (the body carrying `provenance.code`, or
+    /// tagged `main_world`) read through the code sheet at `at_s`.
+    ExportSector {
+        scope: String,
+        format: String,
+        #[serde(default)]
+        #[ts(optional)]
+        sheet: Option<String>,
+        at_s: i64,
+    },
+    /// G2 for V9's cluster map: one halo cell (8 Mpc a side at pack
+    /// defaults) of the open universe, its haloes biggest first down to
+    /// `min_mass_msun` (default 1e10, the catalogue floor), at most `limit` (default 300), with
+    /// the mass function they were drawn from. Read only.
+    HaloCell {
+        #[serde(default)]
+        #[ts(optional)]
+        cell: Option<[i64; 3]>,
+        #[serde(default)]
+        #[ts(optional)]
+        min_mass_msun: Option<f64>,
+        #[serde(default)]
+        #[ts(optional)]
+        limit: Option<u32>,
+    },
 }
 
 /// `adopt`'s formation request: the `run_formation` fields.
@@ -528,6 +1053,16 @@ pub struct FormationRequest {
     #[serde(default, skip_serializing_if = "Option::is_none")]
     #[ts(optional, type = "unknown")]
     pub pins: Option<serde_json::Value>,
+}
+
+/// One S1 tile of the world `survey_surface` is reading.
+#[derive(Clone, PartialEq, Debug, Serialize, Deserialize, TS)]
+#[ts(export)]
+pub struct SurfaceTile {
+    pub face: u8,
+    pub level: u8,
+    pub x: u32,
+    pub y: u32,
 }
 
 /// One S1 tile of one world: cube face 0 to 5, level, x and y.
@@ -571,8 +1106,23 @@ impl Request {
             Request::ImportV3 { .. } => "import_v3",
             Request::RunFormation { .. } => "run_formation",
             Request::ReadWorldStack { .. } => "read_world_stack",
+            Request::Weather { .. } => "weather",
+            Request::ReadLight { .. } => "read_light",
+            Request::ReadNebulae { .. } => "read_nebulae",
+            Request::SurveyPlanets { .. } => "survey_planets",
+            Request::ReadActivity { .. } => "read_activity",
+            Request::ReadSpectrum { .. } => "read_spectrum",
+            Request::ReadAirOptics { .. } => "read_air_optics",
+            Request::Detect { .. } => "detect",
             Request::Adopt { .. } => "adopt",
             Request::ResolvedSystem { .. } => "resolved_system",
+            Request::SurveySurface { .. } => "survey_surface",
+            Request::PlanRoute { .. } => "plan_route",
+            Request::GalaxyChart { .. } => "galaxy_chart",
+            Request::WebSlice { .. } => "web_slice",
+            Request::WindowView { .. } => "window_view",
+            Request::Sift { .. } => "sift",
+            Request::PlanDescent { .. } => "plan_descent",
             Request::Systems => "systems",
             Request::LifeView { .. } => "life_view",
             Request::ExportChronicle => "export_chronicle",
@@ -587,6 +1137,25 @@ impl Request {
             Request::RulesDecide { .. } => "rules_decide",
             Request::RulesPolicy { .. } => "rules_policy",
             Request::Rules => "rules",
+            Request::OrbitsAt { .. } => "orbits_at",
+            Request::SetCampaignNow { .. } => "set_campaign_now",
+            Request::CampaignNow => "campaign_now",
+            Request::Calendar => "calendar",
+            Request::Intents => "intents",
+            Request::SetSeats { .. } => "set_seats",
+            Request::SendIntent { .. } => "send_intent",
+            Request::IntentDecide { .. } => "intent_decide",
+            Request::Templates => "templates",
+            Request::Create { .. } => "create",
+            Request::Retire { .. } => "retire",
+            Request::Programs { .. } => "programs",
+            Request::AttachProgram { .. } => "attach_program",
+            Request::DetachProgram { .. } => "detach_program",
+            Request::ProgramsStep { .. } => "programs_step",
+            Request::Codes { .. } => "codes",
+            Request::ImportSector { .. } => "import_sector",
+            Request::ExportSector { .. } => "export_sector",
+            Request::HaloCell { .. } => "halo_cell",
         }
     }
 }
@@ -664,6 +1233,46 @@ pub fn ops() -> Vec<OpInfo> {
             "one stack: validation, the depth ladder and a few atom evaluations",
         ),
         o(
+            "weather",
+            Cost::Light,
+            "rules and keyed draws only: a 16 x 16 field tile or a report is milliseconds on any device",
+        ),
+        o(
+            "detect",
+            Cost::Light,
+            "per target and sensor: two band integrals and closed-form noise",
+        ),
+        o(
+            "read_air_optics",
+            Cost::Trivial,
+            "per air and wavelength: a few closed-form blocks",
+        ),
+        o(
+            "read_spectrum",
+            Cost::Light,
+            "per target: the grid, band integrals and a 400-point peak scan per covered range",
+        ),
+        o(
+            "read_activity",
+            Cost::Light,
+            "per star: a few block evaluations; flares are one draw per time bin per energy decade, capped at 2000 listed",
+        ),
+        o(
+            "survey_planets",
+            Cost::Light,
+            "per planet and method: closed-form signal and noise, no integration",
+        ),
+        o(
+            "read_nebulae",
+            Cost::Light,
+            "per nebula: a few block evaluations; a remnant's fading date is a 200-step bisection",
+        ),
+        o(
+            "read_light",
+            Cost::Light,
+            "per body: one small flow run and about 2,000 Planck evaluations",
+        ),
+        o(
             "adopt",
             Cost::Medium,
             "GM machine only in a session; an import or one formation run, then one event per evidence class",
@@ -672,6 +1281,41 @@ pub fn ops() -> Vec<OpInfo> {
             "resolved_system",
             Cost::Medium,
             "a formation re-run for formation-adopted systems (cached), plus about 0.1 s per 256-sample tile; at most 24 tiles",
+        ),
+        o(
+            "plan_route",
+            Cost::Medium,
+            "about a thousand Lambert solves on the departure and flight-time grid plus torch flights; drift asks plan once per body and port (about 0.1 to 1 s native)",
+        ),
+        o(
+            "galaxy_chart",
+            Cost::Medium,
+            "one galaxy grown over cosmic time plus 24 rings of chemical evolution and a green band every half Gyr (about 0.1 to 0.5 s native)",
+        ),
+        o(
+            "web_slice",
+            Cost::Medium,
+            "n by n web samples at four octaves (n = 128: about 0.2 s native)",
+        ),
+        o(
+            "sift",
+            Cost::Light,
+            "GM machine only; linear in addresses x sifters within the scope (a campaign of a few systems: milliseconds), plus one scene for an audience",
+        ),
+        o(
+            "window_view",
+            Cost::Light,
+            "one Kepler solve and one brightness per body (microseconds)",
+        ),
+        o(
+            "plan_descent",
+            Cost::Heavy,
+            "a survey as survey_surface (cached for the same world), one site read of about 30 heights, and a descent at 0.1 s steps (well under 0.1 s native)",
+        ),
+        o(
+            "survey_surface",
+            Cost::Heavy,
+            "every surface stage for one world: about 1 to 5 s native at pack defaults (plates, wear, register), well under 1 s with quick; plus about 0.2 s per tile, at most 24",
         ),
         o("systems", Cost::Light, "linear in the universe's facts"),
         o("life_view", Cost::Light, "one fixture's signatures, epochs and hooks"),
@@ -699,6 +1343,53 @@ pub fn ops() -> Vec<OpInfo> {
         o("rules_decide", Cost::Light, "GM machine only; one fold and the proposal's effects"),
         o("rules_policy", Cost::Trivial, "GM machine only; one record event"),
         o("rules", Cost::Light, "GM machine only; linear in the record events"),
+        o(
+            "orbits_at",
+            Cost::Light,
+            "linear in bodies x times (at most 64 times); 16 Newton steps each",
+        ),
+        o("set_campaign_now", Cost::Trivial, "one universe event"),
+        o("campaign_now", Cost::Trivial, "a scan of the universe events"),
+        o("calendar", Cost::Trivial, "read at load"),
+        o("intents", Cost::Light, "GM machine only; linear in the record events"),
+        o("set_seats", Cost::Trivial, "GM machine only; one record event"),
+        o(
+            "send_intent",
+            Cost::Light,
+            "GM machine only; one fold for a validity condition, then the intent's own request",
+        ),
+        o("intent_decide", Cost::Light, "GM machine only; the intent's own request"),
+        o("templates", Cost::Trivial, "read at load"),
+        o("create", Cost::Light, "GM machine only; one universe event and one record event per kept value"),
+        o("retire", Cost::Trivial, "GM machine only; one universe event"),
+        o("programs", Cost::Trivial, "read at load, plus a fold of the record"),
+        o("attach_program", Cost::Trivial, "GM machine only; one record event"),
+        o("detach_program", Cost::Trivial, "GM machine only; one record event"),
+        o(
+            "programs_step",
+            Cost::Light,
+            "GM machine only; per running program (at most the campaign's limit) one scene, a few conditions and one intent, then a rules step",
+        ),
+        o(
+            "codes",
+            Cost::Light,
+            "GM machine only; one classification per digit per body, rules per body, linear in the system",
+        ),
+        o(
+            "import_sector",
+            Cost::Light,
+            "GM machine only; one code-sheet plan per world line; with grow, up to 6 pinned formation runs per world (heavy for a whole sector)",
+        ),
+        o(
+            "export_sector",
+            Cost::Light,
+            "GM machine only; one code reading per mapped system",
+        ),
+        o(
+            "halo_cell",
+            Cost::Medium,
+            "one cell's haloes drawn from the mass function, each placed on the web and given a growth history and mergers (about 0.1 to 1 s native)",
+        ),
     ]
 }
 
@@ -888,6 +1579,16 @@ pub enum Response {
         #[ts(type = "unknown[]")]
         surfaces: Vec<serde_json::Value>,
     },
+    /// `weather`: the data asked for (`want`), the world's label, and which
+    /// block made it (`provenance`: block id, version, level, evidence).
+    WeatherRead {
+        want: String,
+        world: String,
+        #[ts(type = "unknown")]
+        provenance: serde_json::Value,
+        #[ts(type = "unknown")]
+        data: serde_json::Value,
+    },
     /// `read_world_stack`: `source` is `fixture:<name>` or `given`; `ladder`
     /// is the "above, on and within" strip (`depth`, `text`, `where`, `key`);
     /// `notes` what the atoms computed; `problems` what physics says cannot be
@@ -904,6 +1605,56 @@ pub enum Response {
         problems: Vec<serde_json::Value>,
         #[ts(type = "unknown[]")]
         invalid: Vec<serde_json::Value>,
+    },
+    /// `read_light`: `source` is `fixture:<name>` or `given`; `table` is the
+    /// band set, visible slices and line table in force; each of `bodies` is
+    /// `sse_light::emit::BodyLight` (address, name, facts, light: description,
+    /// bands, visible_slices, total_w, samples, peak_m).
+    LightRead {
+        source: String,
+        #[ts(type = "unknown")]
+        table: serde_json::Value,
+        #[ts(type = "unknown[]")]
+        bodies: Vec<serde_json::Value>,
+    },
+    /// `detect`: each of `detections` is `sse_sense::Detection` (target by
+    /// sensor, in order); `radar` is `sse_sense::RadarRanges` when asked.
+    Detected {
+        #[ts(type = "unknown[]")]
+        detections: Vec<serde_json::Value>,
+        #[ts(optional, type = "unknown")]
+        radar: Option<serde_json::Value>,
+    },
+    /// `read_air_optics`: each of `airs` is `sse_light::air::AirOptics`.
+    AirOpticsRead {
+        #[ts(type = "unknown[]")]
+        airs: Vec<serde_json::Value>,
+    },
+    /// `read_spectrum`: each of `spectra` is `sse_light::observe::Spectrum`.
+    SpectrumRead {
+        #[ts(type = "unknown[]")]
+        spectra: Vec<serde_json::Value>,
+    },
+    /// `read_activity`: each of `stars` is `{ activity, moment, flares? }`
+    /// with `sse_activity::Activity`, `Moment` and `Flares`.
+    ActivityRead {
+        #[ts(type = "unknown[]")]
+        stars: Vec<serde_json::Value>,
+    },
+    /// `survey_planets`: `result` is `sse_survey::SurveyResult` (findings
+    /// per planet and method with verdict, signal to noise, measured values
+    /// and why; the addresses found; references).
+    PlanetsSurveyed {
+        #[ts(type = "unknown")]
+        result: serde_json::Value,
+    },
+    /// `read_nebulae`: each of `nebulae` is `sse_nebula::Descriptor`;
+    /// `absent` lists the addresses asked about that do not exist at `at_s`.
+    NebulaeRead {
+        at_s: f64,
+        #[ts(type = "unknown[]")]
+        nebulae: Vec<serde_json::Value>,
+        absent: Vec<String>,
     },
     /// `adopt`: the events written (the first carries the report), the
     /// systems adopted and the number of facts.
@@ -934,6 +1685,66 @@ pub enum Response {
         state_hash: String,
         manifest_id: String,
         stack_matches: bool,
+    },
+    /// `galaxy_chart`: `{halo, key, halo_mass_msun, morphology, barred,
+    /// t_start_gyr, now_gyr, at_gyr, now, history, active_nuclei,
+    /// sun_radius_kpc, rings, core_collapse_per_century, ia_per_century,
+    /// green_bands, epochs, place, model}`.
+    GalaxyCharted {
+        #[ts(type = "unknown")]
+        chart: serde_json::Value,
+    },
+    /// `web_slice`: `{t_gyr, z, now_gyr, slice, model}` (`slice` is sse-cosmos's `Slice`).
+    WebSliced {
+        #[ts(type = "unknown")]
+        web: serde_json::Value,
+    },
+    /// `window_view`: sse-nav's `WindowView` (`seen`: lon/lat, distance,
+    /// angular diameter, magnitude, phase, lit fraction, detected, resolved,
+    /// light time, why; `sensor`; `missed`; `model`).
+    /// `sift`: hits best first (`sifter`, `label`, `subject`, `evidence`
+    /// [{address, field, value, event}], `significance` {score, persistence_s,
+    /// reach, reversibility, rarity_p, components}), the sifters run, the scope.
+    /// With an `audience`, `skipped` names the sifters not run for it.
+    Sifted {
+        scope: String,
+        sifters: Vec<String>,
+        #[ts(type = "unknown")]
+        hits: serde_json::Value,
+        #[ts(optional)]
+        #[serde(default, skip_serializing_if = "Option::is_none")]
+        audience: Option<String>,
+        #[serde(default, skip_serializing_if = "Vec::is_empty")]
+        skipped: Vec<String>,
+    },
+    WindowViewed {
+        #[ts(type = "unknown")]
+        view: serde_json::Value,
+    },
+    /// `plan_route`: sse-nav's `RoutePlan` (`candidates` best first by the
+    /// preference, each with burns, days, Δv, propellant and reserve, peak g,
+    /// dose, solar-storm chance, peak flux, delays, hazards, difficulty with
+    /// reasons and a track; `refused` with why; `drift` for ways out).
+    RoutePlanned {
+        #[ts(type = "unknown")]
+        plan: serde_json::Value,
+    },
+    /// `plan_descent`: `{body, label, source, at_s?, lander, entry, site
+    /// (level, spacing, height, slope, local slope, roughness, relief,
+    /// under_liquid, ok, why), air_at_site, gravity_m_s2, hazards (kind,
+    /// level, why), verdict, descent (outcome, events, telemetry)}`.
+    DescentPlanned {
+        #[ts(type = "unknown")]
+        descent: serde_json::Value,
+    },
+    /// `survey_surface`: `{body, label, source (fixture:<name>, formation, v3
+    /// or facts), version, epoch_myr, at_s?, stages, envelope, deposit_kinds,
+    /// climate?, air?, deposits?, deposits_total?, built?, built_kinds?, applied?, register? (with features_total),
+    /// aerostat? or aerostat_refused, tiles, refused}`. A giant has no layers
+    /// or register.
+    SurfaceSurveyed {
+        #[ts(type = "unknown")]
+        survey: serde_json::Value,
     },
     /// `add_note`: the note's event and who it is for (send the event to
     /// ordinary seats of these audiences only; the GM sees every note).
@@ -1014,6 +1825,119 @@ pub enum Response {
         #[ts(type = "unknown[]")]
         trail: Vec<serde_json::Value>,
     },
+    /// `intents`: `kinds` `[{kind, meaning, fields, subject?, valid?, never_auto?, pack, applied_by}]`,
+    /// `seats` (the plan in force) and `pending` `[{id, seat, intent, at_s}]`.
+    IntentsListed {
+        #[ts(type = "unknown[]")]
+        kinds: Vec<serde_json::Value>,
+        #[ts(type = "unknown[]")]
+        seats: Vec<serde_json::Value>,
+        #[ts(type = "unknown[]")]
+        pending: Vec<serde_json::Value>,
+    },
+    SeatsSet {
+        event_id: String,
+        record_hash: String,
+    },
+    /// `send_intent`: `decision` `{action: apply | ask_gm | refuse, reason?}`;
+    /// `applied_by` `kernel` (with the request's response in `applied`),
+    /// `record` (`intent.<kind>` written) or `session` (the session applies
+    /// it); `proposal` when it waits for the GM.
+    IntentSent {
+        #[ts(type = "unknown")]
+        decision: serde_json::Value,
+        #[serde(default, skip_serializing_if = "Option::is_none")]
+        #[ts(optional)]
+        applied_by: Option<String>,
+        #[serde(default, skip_serializing_if = "Option::is_none")]
+        #[ts(optional)]
+        proposal: Option<String>,
+        #[serde(default, skip_serializing_if = "Option::is_none")]
+        #[ts(optional, type = "unknown")]
+        applied: Option<serde_json::Value>,
+    },
+    /// `intent_decide`: the answer's event, the intent, and what a yes applied.
+    IntentDecided {
+        event_id: String,
+        seat: String,
+        #[ts(type = "unknown")]
+        intent: serde_json::Value,
+        #[serde(default, skip_serializing_if = "Option::is_none")]
+        #[ts(optional)]
+        applied_by: Option<String>,
+        #[serde(default, skip_serializing_if = "Option::is_none")]
+        #[ts(optional, type = "unknown")]
+        applied: Option<serde_json::Value>,
+    },
+    /// `templates`: `[{id, kind, label, facts?, kept?, tags?, programs?, explain?, pack, version}]`.
+    TemplatesListed {
+        #[ts(type = "unknown[]")]
+        templates: Vec<serde_json::Value>,
+    },
+    /// `create`: the new address, its universe event and the kept values' record events.
+    Created {
+        address: String,
+        event_id: String,
+        kept: Vec<String>,
+        state_hash: String,
+        record_hash: String,
+    },
+    Retired {
+        event_id: String,
+        state_hash: String,
+    },
+    /// `programs`: `programs: [{id, label, params, start, states, budget, explain, pack}]`,
+    /// `limit`, and `running: [{address, program, seat, state, since_s}]`.
+    ProgramsListed {
+        #[ts(type = "unknown[]")]
+        programs: Vec<serde_json::Value>,
+        limit: u32,
+        #[ts(type = "unknown[]")]
+        running: Vec<serde_json::Value>,
+    },
+    ProgramAttached {
+        event_id: String,
+        record_hash: String,
+    },
+    ProgramDetached {
+        event_id: String,
+        record_hash: String,
+    },
+    /// `programs_step`: per program `{address, program, from, to, moves,
+    /// sensed, picked?, intent?, decision?, applied_by?, proposal?, skipped?}`,
+    /// then the rules step's report.
+    ProgramsStepped {
+        #[ts(type = "unknown[]")]
+        programs: Vec<serde_json::Value>,
+        #[ts(type = "unknown")]
+        rules: serde_json::Value,
+        record_hash: String,
+    },
+    /// `orbits_at`: per body `{address, placed, parent?, period_s?,
+    /// phase_source?, missing?, at: [{at_s, r_m: [x, y, z], phase_deg}]}`.
+    OrbitsPlaced {
+        system: String,
+        #[ts(type = "unknown[]")]
+        bodies: Vec<serde_json::Value>,
+    },
+    /// `set_campaign_now` and `campaign_now`.
+    CampaignNowIs {
+        #[serde(default, skip_serializing_if = "Option::is_none")]
+        #[ts(optional)]
+        at_s: Option<i64>,
+        #[serde(default, skip_serializing_if = "Option::is_none")]
+        #[ts(optional)]
+        event_id: Option<String>,
+        #[serde(default, skip_serializing_if = "Option::is_none")]
+        #[ts(optional)]
+        state_hash: Option<String>,
+    },
+    /// `calendar`: `{name, epoch_s, epoch_year, day_s, year_days, months?, format}`, or absent.
+    CalendarIs {
+        #[serde(default, skip_serializing_if = "Option::is_none")]
+        #[ts(optional, type = "unknown")]
+        calendar: Option<serde_json::Value>,
+    },
     /// `systems`: one entry per system, `{system, source, name?, addresses,
     /// adopted_event?}`.
     SystemsListed {
@@ -1048,9 +1972,43 @@ pub enum Response {
         #[ts(type = "unknown[]")]
         refused: Vec<serde_json::Value>,
     },
+    /// `codes`: one entry per body, in address order:
+    /// `{address, reading}` with the sse-codes `Reading` unchanged in shape.
+    Codes {
+        sheet: String,
+        #[ts(type = "unknown[]")]
+        readings: Vec<serde_json::Value>,
+    },
+    /// `import_sector`: the sse-codes `Import` (worlds, plans, what was
+    /// impossible, guessed or differs, a summary) and, when applied, the
+    /// events written.
+    SectorImport {
+        #[ts(type = "unknown")]
+        import: serde_json::Value,
+        summary: String,
+        events: Vec<String>,
+        #[serde(default, skip_serializing_if = "Option::is_none")]
+        #[ts(optional)]
+        state_hash: Option<String>,
+    },
+    /// `export_sector`: the file's text, the systems written, and those
+    /// skipped (no main world found), by address.
+    SectorExport {
+        text: String,
+        written: u32,
+        skipped: Vec<String>,
+    },
     Error {
         code: String,
         message: String,
+    },
+    /// `halo_cell`: `{address, index, side_mpc, origin_mpc, delta_l, mass_msun,
+    /// halo_mass_msun, total, above_min, haloes: [{address, key, mass_msun,
+    /// position_mpc, half_mass_gyr, spin, mergers, major_mergers, last_major_gyr,
+    /// neighbour}], bins, now_gyr, model}`.
+    HaloCelled {
+        #[ts(type = "unknown")]
+        cell: serde_json::Value,
     },
 }
 

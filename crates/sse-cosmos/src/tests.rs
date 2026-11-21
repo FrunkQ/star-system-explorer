@@ -293,3 +293,39 @@ fn conditions_follow_place_and_time() {
 fn golden_digest() {
     crate::golden::check("cosmos.json", &crate::scenario::golden());
 }
+
+/// Dying and massive stars near the Sun against what is counted there.
+#[test]
+fn glows_near_the_sun() {
+    let m = model();
+    let site = Site::solar(&m);
+    let c = conditions(&m, &site);
+    let v = site.volume_pc3();
+    // White dwarf birth rate near the Sun: about 1e-12 per pc^3 per year
+    // (Liebert, Bergeron and Holberg 2005); within a factor of two.
+    let per_yr = c.wd_birth_gyr_pc3 * 1e-9;
+    assert!((0.5e-12..=2e-12).contains(&per_yr), "{per_yr}");
+    // A solar-type star sheds most of its mass: envelopes of 0.5 to 3 solar masses.
+    assert!(
+        (0.5..=3.0).contains(&c.pn_envelope_msun),
+        "{}",
+        c.pn_envelope_msun
+    );
+    // Planetary nebulae near the Sun: about 25 per kpc^3 (Frew 2008);
+    // within a factor of three.
+    let pn_kpc3 = c.expected_planetary_nebulae / v * 1e9;
+    assert!((25.0 / 3.0..=75.0).contains(&pn_kpc3), "{pn_kpc3}");
+    // Lifetime implied: tens of thousands of years (observed 10 to 50 kyr).
+    let life_yr = c.expected_planetary_nebulae / v / per_yr;
+    assert!((1e4..=5e4).contains(&life_yr), "{life_yr}");
+    // Remnants and ionising stars are rare in a small box; present and positive.
+    assert!(c.expected_cc_remnants > c.expected_ia_remnants);
+    assert!(c.ionising_stars_pc3 > 1e-8 && c.ionising_stars_pc3 < 1e-6);
+    // A box with no young stars has no ionising stars and no new remnants.
+    let mut old = m.clone();
+    old.cohorts.retain(|k| k.to_gyr < m.now_gyr - 1.0);
+    let c_old = conditions(&old, &Site::solar(&old));
+    assert_eq!(c_old.ionising_stars_pc3, 0.0);
+    assert_eq!(c_old.expected_cc_remnants, 0.0);
+    assert!(c_old.expected_planetary_nebulae > 0.0);
+}

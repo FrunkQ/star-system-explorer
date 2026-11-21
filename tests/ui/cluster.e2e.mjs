@@ -1,0 +1,95 @@
+// V9 part 2 in a real browser, against the built shell (scripts/build-shell.sh
+// first). Usage: node tests/ui/cluster.e2e.mjs [chromium firefox webkit] [--screens <dir>]
+// Explore > Galaxies nearby draws one halo cell from the kernel's halo_cell:
+// haloes as dots over the web, the biggest picked with its ledger and the
+// mass function. A smaller halo is picked; a neighbouring cell and a higher
+// floor redraw; "Chart this galaxy" opens that very halo in the galaxy chart.
+// Night chart and phone (no sideways scroll) too.
+import { spawn } from "node:child_process";
+import { mkdirSync } from "node:fs";
+import assert from "node:assert/strict";
+import { createRequire } from "node:module";
+
+const { chromium, firefox, webkit } = createRequire(import.meta.url)("playwright");
+const args = process.argv.slice(2);
+const si = args.indexOf("--screens");
+const screens = si >= 0 ? args.splice(si, 2)[1] : null;
+const engines = args.length ? args : ["chromium"];
+const port = 9700 + Math.floor(Math.random() * 90);
+const base = `http://localhost:${port}/`;
+const server = spawn(process.execPath, ["scripts/serve.mjs", "packages/shell/dist", String(port)], { stdio: "ignore" });
+await new Promise((r) => setTimeout(r, 400));
+const shot = async (page, n, full = false) => {
+  if (screens) (mkdirSync(screens, { recursive: true }), await page.screenshot({ path: `${screens}/${n}.png`, fullPage: full }));
+};
+
+try {
+  for (const name of engines) {
+    const browser = await { chromium, firefox, webkit }[name].launch();
+    const errors = [];
+    const gm = await (await browser.newContext({ viewport: { width: 1440, height: 900 }, deviceScaleFactor: screens ? 2 : 1 })).newPage();
+    gm.on("pageerror", (e) => errors.push(e.message));
+    await gm.goto(base);
+    await gm.waitForSelector("[data-state-hash]:not([data-state-hash=''])", { timeout: 20000 });
+    await gm.getByRole("button", { name: "Explore", exact: true }).click();
+    await gm.locator("[data-section-tab=cluster]").click();
+    await gm.waitForSelector(".clu [data-halo-dot]", { timeout: 30000 });
+    const clu = gm.locator(".clu");
+    assert.equal(await clu.getAttribute("data-cell"), "0.0.0");
+    const n = await clu.locator("[data-halo-dot]").count();
+    assert.ok(n >= 5, `haloes drawn (${n})`);
+    assert.equal(await clu.locator("circle.halo.big").count(), 1, "the biggest marked");
+    assert.match(await clu.locator("[data-lede]").innerText(), /megaparsecs.*haloes/);
+    assert.ok((await clu.locator("[data-mass-function] rect.drawn").count()) >= 3, "mass function bars");
+    const top = await clu.locator("[data-halo-ledger]").getAttribute("data-halo-ledger");
+    assert.ok(top, "the biggest halo is picked");
+    await gm.waitForFunction(() => document.querySelector(".clu canvas") !== null);
+    await gm.waitForTimeout(600);
+    await shot(gm, "v9-cluster");
+
+    // Another halo: its ledger.
+    const other = await clu.locator("[data-halo-dot]").first().getAttribute("data-halo-dot");
+    await clu.locator(`[data-halo-dot='${other}']`).dispatchEvent("click");
+    await gm.waitForFunction((k) => document.querySelector(".clu [data-halo-ledger]")?.getAttribute("data-halo-ledger") === k, other);
+    // A neighbouring cell, then back; a higher floor shows fewer.
+    await clu.locator("[data-move='x+']").click();
+    await gm.waitForFunction(() => document.querySelector(".clu")?.getAttribute("data-cell") === "1.0.0", null, { timeout: 30000 });
+    await clu.locator("[data-move='x-']").click();
+    await gm.waitForFunction(() => document.querySelector(".clu")?.getAttribute("data-cell") === "0.0.0", null, { timeout: 30000 });
+    await clu.locator("[data-min]").selectOption("1e11");
+    await gm.waitForFunction((k) => document.querySelectorAll(".clu [data-halo-dot]").length < k, n, { timeout: 30000 });
+
+    // Chart this galaxy: the galaxy chart opens on that very halo.
+    const key = await clu.locator("[data-halo-ledger]").getAttribute("data-halo-ledger");
+    await clu.locator("[data-chart-galaxy]").click();
+    await gm.waitForSelector(".gal [data-ring]", { timeout: 30000 });
+    await gm.waitForFunction((k) => new RegExp(`cell:0\\.0\\.0/halo:${k}$`).test(document.querySelector(".gal")?.getAttribute("data-galaxy") ?? ""), key, { timeout: 30000 });
+    assert.match(await gm.locator(".gal h2").innerText(), new RegExp(`Halo ${key}, cell 0\\.0\\.0`));
+    await shot(gm, "v9-cluster-charted");
+    // And back to the cluster map, which keeps the halo picked.
+    await gm.locator("[data-section-tab=cluster]").click();
+    await gm.waitForFunction((k) => document.querySelector(".clu [data-halo-ledger]")?.getAttribute("data-halo-ledger") === k, key, { timeout: 30000 });
+
+    await gm.getByRole("button", { name: "Night chart" }).click();
+    await gm.waitForTimeout(400);
+    await shot(gm, "v9-cluster-night");
+
+    const phone = await (await browser.newContext({ viewport: { width: 390, height: 844 }, deviceScaleFactor: 2 })).newPage();
+    phone.on("pageerror", (e) => errors.push(`phone: ${e.message}`));
+    await phone.goto(base);
+    await phone.waitForSelector("[data-state-hash]:not([data-state-hash=''])", { timeout: 20000 });
+    await phone.getByLabel("Screen menu").selectOption("explore");
+    await phone.locator("[data-section-tab=cluster]").click();
+    await phone.waitForSelector(".clu [data-halo-dot]", { timeout: 30000 });
+    await phone.waitForTimeout(600);
+    const over = await phone.evaluate(() => document.documentElement.scrollWidth - window.innerWidth);
+    assert.ok(over <= 1, `no sideways scroll on a phone (${over}px over)`);
+    await shot(phone, "v9-cluster-phone", true);
+
+    assert.deepEqual(errors, []);
+    await browser.close();
+    console.log(`${name}: cluster map from halo_cell: haloes over the web, biggest picked, ledger, mass function, neighbour cell, floor, chart this galaxy, night chart, phone`);
+  }
+} finally {
+  server.kill();
+}

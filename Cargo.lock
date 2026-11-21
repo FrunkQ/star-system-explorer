@@ -482,6 +482,18 @@ dependencies = [
 ]
 
 [[package]]
+name = "sse-activity"
+version = "0.1.0"
+dependencies = [
+ "serde",
+ "serde_json",
+ "sse-atoms",
+ "sse-core",
+ "sse-flow",
+ "sse-light",
+]
+
+[[package]]
 name = "sse-atoms"
 version = "0.1.0"
 dependencies = [
@@ -511,6 +523,20 @@ dependencies = [
 ]
 
 [[package]]
+name = "sse-codes"
+version = "0.1.0"
+dependencies = [
+ "serde",
+ "serde_json",
+ "sse-atoms",
+ "sse-core",
+ "sse-formation",
+ "sse-pack",
+ "sse-sector-io",
+ "sse-sift",
+]
+
+[[package]]
 name = "sse-core"
 version = "0.1.0"
 dependencies = [
@@ -532,6 +558,7 @@ dependencies = [
  "sse-chronicle",
  "sse-core",
  "sse-flow",
+ "sse-nebula",
  "sse-pack",
  "sse-resolve",
 ]
@@ -581,22 +608,31 @@ version = "0.1.0"
 dependencies = [
  "serde",
  "serde_json",
+ "sse-activity",
  "sse-atoms",
  "sse-chronicle",
+ "sse-codes",
  "sse-core",
  "sse-cosmos",
  "sse-flow",
  "sse-formation",
  "sse-import-v3",
  "sse-life",
+ "sse-light",
  "sse-logic",
+ "sse-nav",
+ "sse-nebula",
  "sse-observe",
  "sse-pack",
  "sse-record",
+ "sse-sector-io",
+ "sse-sense",
  "sse-sift",
  "sse-surface",
+ "sse-survey",
  "sse-time",
  "sse-trigger",
+ "sse-weather",
  "sse-world",
  "ts-rs",
 ]
@@ -616,6 +652,18 @@ dependencies = [
 ]
 
 [[package]]
+name = "sse-light"
+version = "0.1.0"
+dependencies = [
+ "serde",
+ "serde_json",
+ "sse-atoms",
+ "sse-core",
+ "sse-flow",
+ "sse-pack",
+]
+
+[[package]]
 name = "sse-logic"
 version = "0.1.0"
 dependencies = [
@@ -626,6 +674,27 @@ dependencies = [
  "sse-life",
  "sse-place",
  "sse-sift",
+]
+
+[[package]]
+name = "sse-nav"
+version = "0.1.0"
+dependencies = [
+ "serde",
+ "serde_json",
+ "sse-core",
+ "sse-pack",
+]
+
+[[package]]
+name = "sse-nebula"
+version = "0.1.0"
+dependencies = [
+ "serde",
+ "serde_json",
+ "sse-atoms",
+ "sse-core",
+ "sse-light",
 ]
 
 [[package]]
@@ -691,6 +760,25 @@ dependencies = [
 ]
 
 [[package]]
+name = "sse-sector-io"
+version = "0.1.0"
+dependencies = [
+ "serde",
+ "serde_json",
+]
+
+[[package]]
+name = "sse-sense"
+version = "0.1.0"
+dependencies = [
+ "serde",
+ "serde_json",
+ "sse-core",
+ "sse-flow",
+ "sse-light",
+]
+
+[[package]]
 name = "sse-sift"
 version = "0.1.0"
 dependencies = [
@@ -724,6 +812,16 @@ dependencies = [
  "sse-core",
  "sse-formation",
  "sse-pack",
+]
+
+[[package]]
+name = "sse-survey"
+version = "0.1.0"
+dependencies = [
+ "serde",
+ "serde_json",
+ "sse-core",
+ "sse-flow",
 ]
 
 [[package]]
@@ -761,6 +859,7 @@ dependencies = [
  "sse-formation",
  "sse-kernel",
  "sse-life",
+ "sse-nav",
  "sse-observe",
  "sse-place",
  "sse-resolve",
@@ -769,6 +868,17 @@ dependencies = [
  "sse-surface",
  "sse-time",
  "wasm-bindgen",
+]
+
+[[package]]
+name = "sse-weather"
+version = "0.1.0"
+dependencies = [
+ "serde",
+ "serde_json",
+ "sse-core",
+ "sse-pack",
+ "sse-surface",
 ]
 
 [[package]]

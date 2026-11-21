@@ -182,6 +182,60 @@ What that gives the table, with no special rules:
 - **Active sensing has a cost**: a pulse reveals the sender. The console shows that trade before the player commits.
 - Game-system packs may simplify the result into range bands or dice modifiers; the physical answer stays underneath for those who want it. Fictional sensors and cloaks are physics-pack items and carry the fictional label.
 
+## 5B. Remote survey: the spectrum chart, and finding planets from afar **[Alex, 19 Nov]**
+
+Alex's point: since every object's light is stored across the whole spectrum, showing it is almost free, and it should be the first thing a survey gives you. And planets round distant stars should be discoverable the way they are today: by the dimming when one crosses its star, or by the star's wobble. All of this is simple, exact arithmetic on facts the kernel already holds, so it is cheap, deterministic and runs anywhere.
+
+### The spectrum chart: the first survey result for anything
+
+A view in the core stack (**Spectrum**), available for any body under the one-body ruling (`SSE4-star-census.md`): star, planet, nebula, ship, galaxy.
+
+- Brightness against wavelength, from radio to gamma rays on one stretched axis, drawn from the object's light description as it arrives at the observer (after distance, dust in between and any shift).
+- The smooth curve and what it tells you: its peak gives temperature; its level with distance gives size and power.
+- Lines marked and named: each is an element or molecule, so composition is read off the chart. A line's displacement gives speed towards or away; its width gives spin or turbulence; doubled lines betray a second star; a changing displacement over days is a wobble (below).
+- Shaded strips show which bands **this observer's instruments** cover, so a party with only an optical telescope sees a narrow window of the chart and the rest greyed.
+- Every reading on the chart is clickable for "Why?", and the chart is the natural teaching screen for the education purpose: this is how astronomers know what stars are made of.
+- What a first look yields without going there: class and temperature, power, rough size, metal content, an age estimate from activity and spin (4A), whether it is double, how active and dangerous it is, and a dust glow in infrared that means belts or a disc.
+
+### Finding planets: the real methods
+
+Whether a planet is found depends on **geometry** (where the observer is: a different vantage sees different transits), **the instrument** (aperture, bands, precision, as construct data), **distance**, **how long it watches**, and **the star's own noise** (spots and flares from 4A hide small signals). The kernel computes the signal and the noise; the result is found, candidate (marginal, firmed up or dismissed by more watching) or missed.
+
+| Method | The arithmetic | Finds best | Gives | Verdict |
+|---|---|---|---|---|
+| **Transit** | the orbit must cross the star's face from where you are (a fact here, not a chance); dimming equals the planet's area over the star's; needs two or three passes to fix the period | large planets close in, round small quiet stars | size, period, orbit distance; with a spectrum taken during the crossing, the **air's composition** | include first |
+| **Wobble** (radial velocity) | the star's line shift swings with a size set by the planet's mass, period and the tilt of the orbit; needs about one full orbit | heavy planets close in | period, orbit shape, a **minimum** mass (true mass only if the tilt is known) | include first |
+| **Transit and wobble together** | size plus mass gives density | | what it is made of, so a class from the class atlas with honest error bars ("probably rocky") | falls out |
+| **Position wobble** (astrometry) | the star's tiny circle on the sky, larger for heavy planets on wide orbits and for nearby stars | giants far out, near the observer | true mass and tilt | include; it fills the gap the first two leave |
+| **Direct imaging** | the planet must be far enough from its star on the sky for the telescope's sharpness, and bright enough against the star's glare; young hot giants in infrared are easiest | wide, young, large; anything at all with a big enough instrument | its own light, so its own spectrum chart, seasons, even a map over time | include; in settings with great telescopes it becomes the main method, and it uses the band recipes directly |
+| **Timing** | regular clocks arriving early and late: pulsars, eclipsing pairs, and transits shifting because another planet tugs | planets round pulsars; unseen neighbours | mass and period of the unseen body | include as a small rule; same maths as the wobble |
+| **Microlensing** | a foreground mass briefly brightening a background star | cold planets, rogue planets, dark remnants | a mass, once, with no repeat | later, as rare drawn events during long surveys; the only way to stumble on rogues |
+
+Free extras from the same light: an **infrared excess** means dust and belts; a white dwarf with metals in its spectrum has been eating its planets; the day-side temperature from the dip when a planet passes behind its star; **signs of life** (oxygen with methane, a vegetation edge) and **signs of industry** (waste heat, radio leakage, night-side lights, manufactured gases), which is the long-range version of sensing (5A) and a gift for stories.
+
+The built-in biases are the real ones, and they should be: big planets close to small stars are found first; an Earth twin needs years of watching and a fine instrument; face-on systems show no transits and little wobble.
+
+### How knowledge grows: plugging into the ladder, data views and seats
+
+The disclosure ladder (H6 OBSERVE, H7A part 6) gains rungs below "long-range", and it is kept **per audience** (H8.7), so two parties can know different things about the same system:
+
+| Rung | Got by | What the party's view shows |
+|---|---|---|
+| Catalogued | a sky position and brightness | a point of light |
+| Spectrum taken | one look with a spectrograph | the star's nature, activity, companions, dust |
+| Surveyed from afar | a survey campaign: an instrument, a duration | some planets, each with what the method measured and its error bars; the rest of the system blank |
+| Characterised | longer, better, or several methods | densities and likely classes, air composition, signs of life or industry |
+| Long-range, scanned, surveyed | being there (as already designed) | as already designed |
+
+- **Players see measurements, not truth.** A wobble planet shows its minimum mass with the caveat; error bars shrink with more watching; a candidate can turn out to be nothing. The GM always sees the truth alongside what each audience knows, through lenses (H8.6).
+- **A survey is an action with a cost in time**, taken as an intent from a science seat ("watch these forty stars for six months with the main array") and resolved by the kernel into a dated list of finds. It makes a fine downtime activity and a reason to own a better telescope.
+- **Old catalogues are pack data**: "the Second Survey lists three planets here" can be wrong or incomplete in exactly the ways its instruments would make it so, generated by running the survey rules with that era's equipment.
+- **Light takes time [decided, Alex 19 Nov: on by default, with a campaign switch].** A system a thousand light-years away is seen as it was a thousand years ago. The kernel honours this exactly, since it has every system's timeline: remote observation reads the target at the date its light left. With faster-than-light travel in the setting this is a real source of surprises (the catalogue says a quiet star; you arrive to a nebula), and it works in reverse: jump to another galaxy, look back, and see Earth as it was millions of years ago. The view states the look-back time.
+
+The magnetic field overlay wanted today (improved over V3) belongs with the band views: field lines and belts drawn from the field model, lit by the radio and auroral emission they cause. It is specified with the body overlays, and is noted here because its radio glow appears on the spectrum chart.
+
+Sources **[from memory, verify]**: Seager and Mallén-Ornelas (2003) for transit geometry and what it measures; Winn (2010), "Transits and Occultations", in *Exoplanets* (ed. S. Seager; arXiv 1001.2010); Lovis and Fischer (2010) for the wobble method; Perryman, *The Exoplanet Handbook*, for all methods and their limits; Gaudi (2012) for microlensing; Wolszczan and Frail (1992) for pulsar planets.
+
 ## 6. Rendering, tiers and determinism
 
 - New passes in the render pass library (research report section 5): `emission-volume` (raymarched glow with dust absorption), `shell-billboards` (layered sheets for mid tiers), `nebula-sprite` (a baked image per vantage and band recipe for low tiers), `band-map` (the recipe as a final colour stage on any view), `shift` (Doppler, beaming, redshift, applied before `band-map`). Text tier: Minerva describes it from the same descriptor.
@@ -192,13 +246,13 @@ What that gives the table, with no special rules:
 
 ## 7. Sources to build from **[all from memory; verify titles before use, as for physics blocks]**
 
-- Strömgren (1939) on ionised regions round hot stars; Osterbrock and Ferland, *Astrophysics of Gaseous Nebulae and Active Galactic Nuclei*, the standard text for line emission.
-- Ferland et al., the Cloudy photoionisation code and its release papers, as the source of the line-strength grid; Allen et al. (2008) MAPPINGS shock model library for remnants.
+- Strömgren (1939) on ionised regions round hot stars; Osterbrock and Ferland, *Astrophysics of Gaseous Nebulae and Active Galactic Nuclei* (2nd ed., University Science Books, 2006), the standard text for line emission.
+- Ferland et al., the Cloudy photoionisation code and its release papers (latest checked: "The 2017 Release of Cloudy", RMxAA 53, 385), as the source of the line-strength grid; Allen et al. (2008) MAPPINGS shock model library for remnants.
 - Kwok, Purton and Fitzgerald (1978) for the interacting-winds picture of planetary nebulae; Balick (1987) for the shape sequence; Balick and Frank (2002) review of shapes and shaping, including companions.
 - Sedov and Taylor for the blast wave; Cioffi, McKee and Bertschinger (1988) for the later cooling phases; Weaver et al. (1977) for wind-blown bubbles.
 - Toomre and Toomre (1972) for tidal tails and bridges; Lynds and Toomre (1976) for ring galaxies; Gunn and Gott (1972) for stripping in clusters.
 - Rybicki and Lightman, *Radiative Processes in Astrophysics*, for Doppler shift, beaming and synchrotron light.
-- For colour practice: the Hubble palette as used for the Eagle Nebula image (1995), and observatory guidance on representative colour.
+- For colour practice: the Hubble palette as used for the Eagle Nebula image (released 1995; Hester et al. 1996, AJ 111, 2349, doi:10.1086/117968), and observatory guidance on representative colour.
 
 ## 8. Stages (track O, for optics)
 
@@ -215,3 +269,7 @@ What that gives the table, with no special rules:
 | O9 | Sensing (5A): emission by band for ships, bases and natural objects; sensor data on constructs; detection range and stare time against background and intervening dust; contacts feeding the disclosure ladder; active-pulse exposure | O2, O8, T3, V5 | a hot ship is detected in infrared at the range the arithmetic gives and a cold one is not; a target in front of the star is lost in visible; dust blocks visible but not infrared; a radar pulse makes the sender detectable further than it can see; every result answers why |
 | O10 | Stellar activity (4A): activity level from mass, age and rotation; cycles; spots, prominences, corona and wind; flares and mass ejections as keyed events with light by band; consequences for atmospheres, life, aurorae, hazards, sensing and sound | O2, F0, F7 | Sun fixture: cycle length, X-ray brightness and flare rates within stated ranges; a young red dwarf fixture is saturated; flare energies follow the stated power law; an ejection hits or misses a planet by geometry; same events on every device |
 | O11 | Jets at every scale from accretion episodes; power, length and on-off history; beaming through the shift pass; star-surface render passes under any band recipe | O3, O7, O10 | jet length and brightness follow the feeding history in fixtures; approaching and receding jets differ by the beaming formula; a star's hydrogen-light and X-ray views differ as specified |
+| O12 | Spectrum view (5B): chart of any body's light as it reaches the observer, named lines, readings with Why, instrument coverage strips | O1, O2, V1 | Sun fixture: temperature from the peak and listed lines match; a double star shows doubled lines; an observer without a band sees it greyed |
+| O13 | Planet finding from afar: transit, wobble, position wobble, direct imaging and timing, each from geometry, instrument, distance, watch time and stellar noise; candidates; infrared excess, life and industry signs | O12, O9, O10, F0 | Solar System seen from fixed vantages: Jupiter by wobble and position, Earth by transit only from near the orbit plane and only with the stated precision and years; results change correctly when the observer moves; same result on every device |
+| O14 | Knowledge ladder rungs below long-range, per audience; survey as a timed intent; measured values with error bars in player views; old catalogues generated by rule; light-time option | O13, K9, V5, V10 | two audiences hold different knowledge of one system; a wobble planet shows minimum mass to players and true mass to the GM; with light-time on, a remote view reads the earlier date |
+| O15 | Microlensing and other rare survey events (later) | O13, G6 | event rates per survey match the stated odds; a rogue planet can be found this way |

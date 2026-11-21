@@ -6,7 +6,7 @@ import type { Cost } from "../../contracts/src/index.ts";
 import type { IntentSchema } from "./intent.ts";
 import type { Mark } from "./mark.ts";
 import type { SceneSubject, SystemScene } from "./scene.ts";
-import type { DeriveRef, ViewSession } from "./session.ts";
+import type { DeriveRef, PackCalendar, ViewSession } from "./session.ts";
 import type { ChangeRequest } from "./physics.ts";
 import type { Json } from "./json.ts";
 import type { Lens } from "./lens.ts";
@@ -67,7 +67,18 @@ export interface WhatIf {
 
 export interface Workspace {
   selection: string | null;
+  /** The time being viewed (the ruler's stroke); views derive and draw at it. */
   now_yr: number;
+  /**
+   * The campaign's own now (U11): the date in the story, which players'
+   * screens follow. Viewing another time never moves it; setCampaignNow does.
+   * Optional so views built before it keep working.
+   */
+  campaign_now_yr?: number;
+  /** Where the campaign's calendar starts (day 1 of year 1) on this system's time: its present when the campaign opened. */
+  campaign_epoch_yr?: number;
+  /** The top pack's calendar, when a pack gives one (kernel `calendar`); the ruler counts dates in it. */
+  pack_calendar?: PackCalendar | null;
   mode: "edit" | "view";
   /** Values applied by intents in this session, keyed "address#field", shown until scenes come from the kernel. */
   applied: Record<string, { value: Json; display: string; event_id: string }>;
@@ -99,6 +110,8 @@ export interface Workspace {
   /** The physics in force changed: re-derive everything. */
   notePhysics(): void;
   setTime(yr: number): void;
+  /** Move the campaign's now (U11). */
+  setCampaignNow?(yr: number): void;
   /** Record an applied edit. `as` says whether it is a new edit (clears redo), an undo or a redo. */
   noteApplied(edit: AppliedEdit, as?: "edit" | "undo" | "redo"): void;
 }

@@ -1,0 +1,14 @@
+[package]
+name = "sse-sense"
+description = "SSE4 sensing (track O9): what a sensor can detect, by band, against background, glare and dust; active radar exposure"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+authors.workspace = true
+
+[dependencies]
+sse-core.workspace = true
+sse-flow.workspace = true
+sse-light = { path = "../sse-light" }
+serde.workspace = true
+serde_json.workspace = true

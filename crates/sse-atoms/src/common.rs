@@ -112,4 +112,8 @@ pub mod dims {
     pub const SPECIFIC_POWER: D = D([2, 0, -3, 0, 0, 0, 0]);
     /// J kg^-1 (energy per unit mass).
     pub const SPECIFIC_ENERGY: D = D([2, 0, -2, 0, 0, 0, 0]);
+    /// Tesla.
+    pub const MAGNETIC_FIELD: D = D::MAGNETIC_FIELD;
+    /// A m².
+    pub const MAGNETIC_MOMENT: D = D::MAGNETIC_MOMENT;
 }

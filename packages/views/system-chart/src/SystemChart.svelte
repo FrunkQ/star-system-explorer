@@ -8,7 +8,7 @@
 <script lang="ts">
   import { KM_PER_AU, asPlayers, distanceWords, lightWords, separation, hasLayer, hasTool, childrenOf, commitEdit, frameFor, legendFor, primaryOf, sig, subjectOf, type Json, type SceneSubject, type SystemScene, type ViewContext } from "../../../ui-contract/src/index.ts";
   import { System3D, fromSystemScene } from "../../system-3d/src/index.ts";
-  import { ChartGround, HatchDefs, Hatch, Ink, Legend, Mark, Stamp, markExtent, SurveyGrid, distanceAt, fitScale, polar, radius } from "../../../chart-grammar/src/index.ts";
+  import { ChartGround, HatchDefs, Hatch, Ink, Legend, Mark, Stamp, markExtent, SurveyGrid, distanceAt, easing, fitScale, motionMs, polar, radius } from "../../../chart-grammar/src/index.ts";
 
   let { ctx, scene, params }: { ctx: ViewContext; scene: SystemScene; params: Record<string, Json> } = $props();
 
@@ -40,13 +40,28 @@
       if (f !== frame) frame = f;
     }
   });
+  // Entering a planet's frame grows the chart out of the planet; leaving shrinks back into the system (U12).
+  function frameMotion(into: boolean, from?: [number, number]) {
+    const el = svgEl;
+    const ms = motionMs(el ?? null);
+    if (!el || ms <= 0 || typeof el.animate !== "function") return;
+    const [ox, oy] = from ?? [cx, cy];
+    el.animate(
+      into
+        ? [{ transformOrigin: `${ox}px ${oy}px`, transform: "scale(0.4)", opacity: 0 }, { transformOrigin: `${ox}px ${oy}px`, transform: "none", opacity: 1 }]
+        : [{ transformOrigin: `${cx}px ${cy}px`, transform: "scale(1.6)", opacity: 0 }, { transformOrigin: `${cx}px ${cy}px`, transform: "none", opacity: 1 }],
+      { duration: ms * 1.4, easing: easing(el) },
+    );
+  }
   function openFrame(s: SceneSubject) {
+    frameMotion(true, pos(s));
     frame = s.address;
     zoom = Number(params.zoom);
     ctx.workspace.select(s.address);
   }
   function closeFrame() {
     const back = frame;
+    frameMotion(false);
     frame = null;
     zoom = Number(params.zoom);
     if (back) ctx.workspace.select(back);
@@ -190,6 +205,11 @@
     return s === centre ? [cx, cy] : pos(s);
   };
   const zoomBy = (f: number) => (zoom = Math.min(6, Math.max(0.5, zoom * f)));
+  // Hover peek (dynamic minimalism): with a mouse, resting on a body shows its
+  // name and kind beside it; the card is one click away. Not on touch, and not
+  // for the body already selected, which the card already describes.
+  let peek = $state<{ address: string; x: number; y: number; r: number } | null>(null);
+  const peeked = $derived(peek && peek.address !== ctx.workspace.selection && !drag && !measuring ? all.find((s) => s.address === peek!.address) : undefined);
 </script>
 
 <div class="chart" bind:clientWidth={w} bind:clientHeight={h}>
@@ -262,6 +282,8 @@
             aria-describedby={editable(s) ? "chart-drag-hint" : undefined}
             onpointerdown={(e) => (measuring ? measurePick(s) : editable(s) && !atCentre ? startDrag(e, s) : ctx.workspace.select(s.address))}
             ondblclick={() => moons > 0 && openFrame(s)}
+            onpointerenter={(e) => e.pointerType === "mouse" && (peek = { address: s.address, x, y, r: markExtent(m) })}
+            onpointerleave={() => peek?.address === s.address && (peek = null)}
             onkeydown={(e) => onkey(e, i, s)}
             data-moons={moons || undefined}
           >
@@ -292,6 +314,13 @@
           {#if p0 && p1}<line class="mline" x1={p0[0]} y1={p0[1]} x2={p1[0]} y2={p1[1]} />{/if}
         {/if}
       </svg>
+      {#if peeked && peek}
+        {#key peek.address}
+          <div class="peek" class:up={peek.y > h - 90} style="left: {peek.x}px; top: {peek.y}px; --off: {peek.r + 14}px" aria-hidden="true" data-peek={peek.address}>
+            <b>{label(peeked)}</b>{#if peeked.subtitle}<span>{peeked.subtitle}</span>{/if}
+          </div>
+        {/key}
+      {/if}
       {#if measuring}
         <div class="measure" role="status" aria-label="Measurement" data-measure={sep ? sep.now_au : picks.length}>
           {#if sep}
@@ -458,6 +487,54 @@
     stroke: var(--sse-accent);
     stroke-width: 1.2;
     stroke-dasharray: 2 3;
+    transform-box: fill-box;
+    transform-origin: center;
+    animation: sel-in var(--sse-motion) var(--sse-ease);
+  }
+  /* The selection ring closes in on the body chosen. */
+  @keyframes sel-in {
+    from {
+      transform: scale(1.7);
+      opacity: 0;
+    }
+  }
+  .body:hover .hit {
+    fill: var(--sse-rule);
+    fill-opacity: 0.45;
+  }
+  .peek {
+    position: absolute;
+    transform: translate(-50%, var(--off));
+    display: flex;
+    align-items: center;
+    flex-direction: column;
+    gap: 1px;
+    padding: 5px 9px;
+    background: var(--sse-panel-ground);
+    color: var(--sse-panel-ink);
+    border: var(--sse-frame-width) solid var(--sse-frame-line);
+    box-shadow: 3px 3px 0 var(--sse-frame-line);
+    font-size: 12px;
+    pointer-events: none;
+    white-space: nowrap;
+    z-index: 2;
+    animation: peek-in var(--sse-motion-quick) var(--sse-ease);
+  }
+  @keyframes peek-in {
+    from {
+      opacity: 0;
+    }
+  }
+  .peek.up {
+    transform: translate(-50%, calc(-100% - var(--off)));
+  }
+  .peek b {
+    font-family: var(--sse-title-font);
+    font-weight: 600;
+    font-size: 13px;
+  }
+  .peek span {
+    color: var(--sse-panel-muted);
   }
   .name {
     fill: var(--sse-ink);

@@ -7,7 +7,7 @@ export { audienceOf, decide, gmSeat, tableSeat, sharedTableSeat, within } from "
 export type { Seat, AutoApprove, Decision } from "./seat.ts";
 export { EVERYONE, defaultPlan, isDefaultPlan, slug, grantField, addSeat, removeSeat, checkSeats, startIntents, discoverIntent, joinLink, sealedLink, fogViews } from "./seats.ts";
 export type { Audience, SeatPlan } from "./seats.ts";
-export type { ViewSession, IntentResult, HistoryEvent, DeviceEdge, DeriveRef, InputValue, Derived, Explanation, StackInfo, TrialResult, StackCandidate, Probe, SceneOptions } from "./session.ts";
+export type { ViewSession, IntentResult, HistoryEvent, DeviceEdge, DeriveRef, InputValue, Derived, Explanation, StackInfo, TrialResult, StackCandidate, Probe, SceneOptions, AtomInfo, PackCalendar } from "./session.ts";
 export { CAMPAIGN_PACK, flowParams, editFlow, diffFlow, providerOf, campaignPack, packFor, checkRequest, flowColumns, paramText, siText } from "./physics.ts";
 export { draftId, adopted, draftParam, candidateFor, previewRequest, adoptRequest, withdrawRequest, declineRequest, benchRef } from "./physics-edit.ts";
 export type { Preview } from "./physics-edit.ts";
@@ -63,3 +63,18 @@ export { CAMPAIGN_SCHEMA, checkCampaignSave, makeCampaignSave, publicExport, sav
 export type { CampaignSave } from "./campaign.ts";
 export { LIFE_EXAMPLES, MARKED_KINDS, carbonWords, confidenceWords, epochBands, foodWeb, productionPath, scanTiers, timeAxis, words as lifeWords } from "./life.ts";
 export type { LifeEpoch, LifeEvent, LifeGuild, LifeHook, LifePoint, LifeSignatures, LifeView, WebLink, WebNode } from "./life.ts";
+export { GREGORIAN, calendarOf, checkCalendar, dateOf, epochOf, formatDate, isLong, parseDate, startOf, yearLength } from "./calendar.ts";
+export type { Anchor, Calendar, CalendarDate } from "./calendar.ts";
+export { termsOf, word } from "./words.ts";
+export type { Terms } from "./words.ts";
+export { fetchSector, sectorPath } from "./sector-fetch.ts";
+export type { SectorText } from "./sector-fetch.ts";
+export { STOCK_SHIPS, navFromScene, safestFirst, shortlist, DIFFICULTY_STEPS, difficultyPips, daysWords, dvWords, doseWords, delayWords, fromNowWords, fuelLeft, routeFrame, trackPath, trackPoint, orbitEllipse, trackIndexAt } from "./route.ts";
+export type { NavShip, NavBody, NavSystem, Prefer, RouteAsk, RoutePlan, Course, RouteBurn, RouteHazard, WayOut, NavFromScene, RouteFrame } from "./route.ts";
+export { NAMED_HALOES, MORPHOLOGY_WORDS, GROUP_WORDS, LAYER_WORDS, discFrame, armPath, ringAt, ringShades, greenAt, cosmicAxis, logCurve, sci, timesSun, dex, epochTicks, foamCells, editWords, toggleRemoval, cellHalo, projectHalo, haloRadius, overdensityWords } from "./galaxy.ts";
+export type { GalaxyAsk, GalaxyChart, GalaxyRing, GalaxyState, Group, CosmicEpoch, PlaceLocal, PlaceGreen, SliceAsk, WebSlice, DiscFrame, RingLayer, CurveAxis, GalaxyEdit, GalaxyEventMark, HistoryCompare, HaloCellAsk, HaloCell, CellHalo, Projection } from "./galaxy.ts";
+export { SENSORS, camera, project, discPx, pointPx, towards, magWords, angleWords } from "./window.ts";
+export type { WindowAsk, WindowView, Seen, Camera } from "./window.ts";
+export { SIGNIFICANCE_PARTS, valueWords, fieldWords, storyBrief } from "./story.ts";
+export type { SifterDoc, StoryEvidence, StoryHit, SiftAsk, SiftResult } from "./story.ts";
+export * from "./orbits.ts";

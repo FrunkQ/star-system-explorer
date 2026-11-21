@@ -23,7 +23,16 @@ sse-formation.workspace = true
 sse-import-v3.workspace = true
 sse-cosmos = { path = "../sse-cosmos" }
 sse-surface.workspace = true
+sse-nav.workspace = true
 sse-world.workspace = true
+sse-weather.workspace = true
+sse-light = { path = "../sse-light" }
+sse-nebula = { path = "../sse-nebula" }
+sse-survey = { path = "../sse-survey" }
+sse-activity = { path = "../sse-activity" }
+sse-sense = { path = "../sse-sense" }
+sse-codes = { path = "../sse-codes" }
+sse-sector-io = { path = "../sse-sector-io" }
 serde.workspace = true
 serde_json.workspace = true
 ts-rs = { version = "=12.0.1", features = ["serde-json-impl"] }

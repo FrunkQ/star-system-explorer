@@ -1,0 +1,15 @@
+[package]
+name = "sse-activity"
+description = "SSE4 stellar activity (track O10): activity level from mass and spin, cycles, spots, coronal X-rays, flares and mass ejections as keyed events with light"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+authors.workspace = true
+
+[dependencies]
+sse-core.workspace = true
+sse-atoms.workspace = true
+sse-flow.workspace = true
+sse-light = { path = "../sse-light" }
+serde.workspace = true
+serde_json.workspace = true

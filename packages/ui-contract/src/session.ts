@@ -2,6 +2,17 @@
 // shells receive a ViewSession and never see the kernel client behind it.
 // Only this file and host-browser.ts may import the kernel client (checked by
 // tests/ui/boundary.test.ts).
+import type { OrbitPlaced } from "./orbits.ts";
+/** A pack's calendar as the kernel serves it (`provides.other.calendar`). */
+export interface PackCalendar {
+  name: string;
+  epoch_s: number;
+  epoch_year?: number;
+  day_s: number;
+  year_days: number;
+  months?: { name: string; days: number }[];
+  format: string;
+}
 import type { KernelClient } from "../../kernel-client/src/index.ts";
 import { encodeRequest, type Json } from "./json.ts";
 import { checkIntent, intentToRequest, secondsToYears, yearsToSeconds, type Intent } from "./intent.ts";
@@ -73,6 +84,18 @@ export interface DeviceEdge {
 }
 
 /** What a view or shell may do. Nothing here can reach the kernel another way. */
+/** One atom as the kernel describes it (op `atoms`). */
+export interface AtomInfo {
+  id: string;
+  version: string;
+  cost_class: string;
+  inputs: { name: string; kind: string; dim: string; valid: [number, number] | null }[];
+  outputs: { name: string; kind: string; dim: string; valid: [number, number] | null }[];
+  params: { name: string; default: number; range: [number, number] | null; dim: string; description: string }[];
+  references: { text: string; doi?: string; url?: string }[];
+  explain: { curious?: string; science?: string; formula?: string };
+}
+
 export interface ViewSession {
   readonly seat: Readonly<Seat>;
   readonly universe: Readonly<{ id: string; seed: string; root: string }>;
@@ -109,10 +132,34 @@ export interface ViewSession {
   importChronicle(doc: Json): Promise<{ ok: true; state_hash: string; events: number; stack_matches: boolean } | { ok: false; code: string; message: string }>;
   /** One world's life (U7, kernel `life_view`): a body once systems carry habitat graphs, or one of the example fixtures. GM only. */
   lifeView(by: { body?: string; fixture?: string }): Promise<{ ok: true; source: string; view: LifeView } | { ok: false; code: string; message: string }>;
+  /** Bodies on their orbits at given times (kernel `orbits_at`, U11 part 2): relative to each host, up to 64 times. `bodies` places a scene the kernel does not hold. */
+  orbitsAt(system: string, at_s: readonly bigint[], bodies?: { address: string; facts: Record<string, number | string | bigint> }[]): Promise<{ ok: true; bodies: OrbitPlaced[] } | { ok: false; code: string; message: string }>;
+  /** The campaign's now kept in the universe (kernel `campaign_now`); absent if never set. */
+  campaignNow(): Promise<{ ok: true; at_s?: bigint } | { ok: false; code: string; message: string }>;
+  /** Move the campaign's now (kernel `set_campaign_now`); GM only. */
+  setCampaignNow(at_s: bigint): Promise<{ ok: true; state_hash: string } | { ok: false; code: string; message: string }>;
+  /** The top pack's calendar (kernel `calendar`), if any pack gives one. */
+  calendar(): Promise<{ ok: true; calendar?: PackCalendar } | { ok: false; code: string; message: string }>;
   /** Every system in the open universe that has facts (kernel `systems`): adopted ones and authored ones. */
   listSystems(): Promise<{ ok: true; systems: ListedSystem[] } | { ok: false; code: string; message: string }>;
+  /** Candidate courses (V8, kernel `plan_route`, T3): from an inline system any seat may ask about; an adopted `system` is GM only. Writes nothing. */
+  planRoute(ask: import("./route.ts").RouteAsk): Promise<{ ok: true; plan: import("./route.ts").RoutePlan } | { ok: false; code: string; message: string }>;
+  /** One galaxy grown from the universe's seed (U6, kernel `galaxy_chart`, G1 to G4). Read only; GM only. */
+  galaxyChart(ask: import("./galaxy.ts").GalaxyAsk): Promise<{ ok: true; chart: import("./galaxy.ts").GalaxyChart } | { ok: false; code: string; message: string }>;
+  /** The story finder (U8, kernel `sift`): sifters over the campaign, hits with evidence. GM only. */
+  sift(ask: import("./story.ts").SiftAsk): Promise<{ ok: true; result: import("./story.ts").SiftResult } | { ok: false; code: string; message: string }>;
+  /** What a ship's sensor sees from beside a body (V8 Window, kernel `window_view`). Read only; any seat, on the system it knows. */
+  windowView(ask: import("./window.ts").WindowAsk): Promise<{ ok: true; view: import("./window.ts").WindowView } | { ok: false; code: string; message: string }>;
+  /** One halo cell's galaxies (V9 cluster map, kernel `halo_cell`, G2). Read only; GM only. */
+  haloCell(ask: import("./galaxy.ts").HaloCellAsk): Promise<{ ok: true; cell: import("./galaxy.ts").HaloCell } | { ok: false; code: string; message: string }>;
+  /** A slice of the cosmic web at one epoch (V9, kernel `web_slice`, G1). Read only; GM only. */
+  webSlice(ask: import("./galaxy.ts").SliceAsk): Promise<{ ok: true; web: import("./galaxy.ts").WebSlice } | { ok: false; code: string; message: string }>;
   /** A system as the universe now holds it: facts, a SystemSpec for look-ahead, and S0 surfaces. */
   resolvedSystem(system: string, at_s?: number): Promise<{ ok: true; result: SystemResolved } | { ok: false; code: string; message: string }>;
+  /** Air optics for the renderer's sky (kernel `read_air_optics`, light track): Rayleigh scattering and optical depth per wavelength. Read only; any seat. */
+  readAirOptics(airs: Json[], wavelengths_m?: number[]): Promise<{ ok: true; airs: Json[] } | { ok: false; code: string; message: string }>;
+  /** Stellar activity (kernel `read_activity`, light track O10): regime, spin, X-rays, spots, cycle, and flares in a window. Read only; any seat. */
+  readActivity(ask: { stars: Json[]; seed?: string; at_s?: number; window?: { from_s: number; to_s: number; min_energy_j?: number } }): Promise<{ ok: true; stars: Json[] } | { ok: false; code: string; message: string }>;
   kernelVersion(): Promise<string>;
   /** Derived values of a flow (read only; no event). */
   derive(ref: DeriveRef): Promise<{ ok: true; values: Record<string, Derived> } | { ok: false; message: string }>;
@@ -120,6 +167,8 @@ export interface ViewSession {
   explain(ref: DeriveRef, kind: string): Promise<{ ok: true; explanation: Explanation } | { ok: false; message: string }>;
   /** Flows the loaded pack stack offers. */
   flows(): readonly string[];
+  /** The atoms the kernel knows (kernel `atoms`): inputs, outputs and parameters with their ranges, cost, references. Read only. */
+  atoms?(ids?: readonly string[]): Promise<{ ok: true; atoms: AtomInfo[] } | { ok: false; message: string }>;
   device(): DeviceEdge | undefined;
   /** Intents waiting for the GM (V5 carries them; here they wait locally). */
   pending(): readonly Intent[];
@@ -304,6 +353,12 @@ export class Session implements ViewSession {
   async derive(ref: DeriveRef) {
     const r = await this.#call({ op: "derive", flow: ref.flow, inputs: ref.inputs });
     if (r.type === "derived") return { ok: true as const, values: r.values as Record<string, Derived> };
+    return { ok: false as const, message: String(r.message ?? JSON.stringify(r)) };
+  }
+
+  async atoms(ids?: readonly string[]) {
+    const r = await this.#call({ op: "atoms", ...(ids ? { ids: [...ids] } : {}) });
+    if (r.type === "atoms") return { ok: true as const, atoms: r.atoms as AtomInfo[] };
     return { ok: false as const, message: String(r.message ?? JSON.stringify(r)) };
   }
 
@@ -493,10 +548,80 @@ export class Session implements ViewSession {
     return { ok: true, state_hash: String(x.state_hash), events: Array.isArray(x.events) ? x.events.length : Number(x.events), stack_matches: x.stack_matches !== false };
   }
 
+  async planRoute(ask: import("./route.ts").RouteAsk): Promise<{ ok: true; plan: import("./route.ts").RoutePlan } | { ok: false; code: string; message: string }> {
+    if (ask.system !== undefined && this.seat.authority !== "gm") return { ok: false, code: "not_gm", message: "only the game master plans against a system's full record; players plan from what they know" };
+    const r = await this.#call({ op: "plan_route", ...ask });
+    return r.type === "route_planned" ? { ok: true, plan: (r as unknown as { plan: import("./route.ts").RoutePlan }).plan } : { ok: false, code: String(r.code ?? "unexpected"), message: String(r.message ?? JSON.stringify(r)) };
+  }
+
+  async sift(ask: import("./story.ts").SiftAsk): Promise<{ ok: true; result: import("./story.ts").SiftResult } | { ok: false; code: string; message: string }> {
+    if (this.seat.authority !== "gm") return { ok: false, code: "not_gm", message: "the story finder reads the whole campaign, so it runs on the game master's machine" };
+    const r = await this.#call({ op: "sift", ...ask });
+    return r.type === "sifted" ? { ok: true, result: r as unknown as import("./story.ts").SiftResult } : { ok: false, code: String(r.code ?? "unexpected"), message: String(r.message ?? JSON.stringify(r)) };
+  }
+
+  async readAirOptics(airs: Json[], wavelengths_m?: number[]): Promise<{ ok: true; airs: Json[] } | { ok: false; code: string; message: string }> {
+    const r = await this.#call({ op: "read_air_optics", airs, ...(wavelengths_m ? { wavelengths_m } : {}) });
+    return r.type === "air_optics_read" ? { ok: true, airs: (r as unknown as { airs: Json[] }).airs } : { ok: false, code: String(r.code ?? "unexpected"), message: String(r.message ?? JSON.stringify(r)) };
+  }
+
+  async readActivity(ask: { stars: Json[]; seed?: string; at_s?: number; window?: { from_s: number; to_s: number; min_energy_j?: number } }): Promise<{ ok: true; stars: Json[] } | { ok: false; code: string; message: string }> {
+    const r = await this.#call({ op: "read_activity", ...ask } as Json);
+    return r.type === "activity_read" ? { ok: true, stars: (r as unknown as { stars: Json[] }).stars } : { ok: false, code: String(r.code ?? "unexpected"), message: String(r.message ?? JSON.stringify(r)) };
+  }
+
+  async windowView(ask: import("./window.ts").WindowAsk): Promise<{ ok: true; view: import("./window.ts").WindowView } | { ok: false; code: string; message: string }> {
+    const r = await this.#call({ op: "window_view", ...ask });
+    return r.type === "window_viewed" ? { ok: true, view: (r as unknown as { view: import("./window.ts").WindowView }).view } : { ok: false, code: String(r.code ?? "unexpected"), message: String(r.message ?? JSON.stringify(r)) };
+  }
+
+  async galaxyChart(ask: import("./galaxy.ts").GalaxyAsk): Promise<{ ok: true; chart: import("./galaxy.ts").GalaxyChart } | { ok: false; code: string; message: string }> {
+    if (this.seat.authority !== "gm") return { ok: false, code: "not_gm", message: "the galaxy's history is the game master's chart; players see it through data views" };
+    const r = await this.#call({ op: "galaxy_chart", ...ask });
+    return r.type === "galaxy_charted" ? { ok: true, chart: (r as unknown as { chart: import("./galaxy.ts").GalaxyChart }).chart } : { ok: false, code: String(r.code ?? "unexpected"), message: String(r.message ?? JSON.stringify(r)) };
+  }
+
+  async haloCell(ask: import("./galaxy.ts").HaloCellAsk): Promise<{ ok: true; cell: import("./galaxy.ts").HaloCell } | { ok: false; code: string; message: string }> {
+    if (this.seat.authority !== "gm") return { ok: false, code: "not_gm", message: "the universe's galaxies are charted on the game master's machine" };
+    const r = await this.#call({ op: "halo_cell", ...ask });
+    return r.type === "halo_celled" ? { ok: true, cell: (r as unknown as { cell: import("./galaxy.ts").HaloCell }).cell } : { ok: false, code: String(r.code ?? "unexpected"), message: String(r.message ?? JSON.stringify(r)) };
+  }
+
+  async webSlice(ask: import("./galaxy.ts").SliceAsk): Promise<{ ok: true; web: import("./galaxy.ts").WebSlice } | { ok: false; code: string; message: string }> {
+    if (this.seat.authority !== "gm") return { ok: false, code: "not_gm", message: "the cosmic web is read on the game master's machine" };
+    const r = await this.#call({ op: "web_slice", ...ask });
+    return r.type === "web_sliced" ? { ok: true, web: (r as unknown as { web: import("./galaxy.ts").WebSlice }).web } : { ok: false, code: String(r.code ?? "unexpected"), message: String(r.message ?? JSON.stringify(r)) };
+  }
+
   async lifeView(by: { body?: string; fixture?: string }): Promise<{ ok: true; source: string; view: LifeView } | { ok: false; code: string; message: string }> {
     if (this.seat.authority !== "gm") return { ok: false, code: "not_gm", message: "only the game master reads a world's whole biosphere; players see it through data views" };
     const r = await this.#call({ op: "life_view", ...(by.body !== undefined ? { body: by.body } : {}), ...(by.fixture !== undefined ? { fixture: by.fixture } : {}) });
     return r.type === "life_viewed" ? { ok: true, source: String(r.source), view: (r as unknown as { view: LifeView }).view } : { ok: false, code: String(r.code ?? "unexpected"), message: String(r.message ?? JSON.stringify(r)) };
+  }
+
+  async orbitsAt(system: string, at_s: readonly bigint[], bodies?: { address: string; facts: Record<string, number | string | bigint> }[]): Promise<{ ok: true; bodies: OrbitPlaced[] } | { ok: false; code: string; message: string }> {
+    const r = await this.#call({ op: "orbits_at", system, at_s: [...at_s], ...(bodies ? { bodies } : {}) });
+    return r.type === "orbits_placed" ? { ok: true, bodies: (r as unknown as { bodies: OrbitPlaced[] }).bodies } : { ok: false, code: String(r.code ?? "unexpected"), message: String(r.message ?? JSON.stringify(r)) };
+  }
+
+  async campaignNow(): Promise<{ ok: true; at_s?: bigint } | { ok: false; code: string; message: string }> {
+    const r = await this.#call({ op: "campaign_now" });
+    if (r.type !== "campaign_now_is") return { ok: false, code: String(r.code ?? "unexpected"), message: String(r.message ?? JSON.stringify(r)) };
+    const at = (r as unknown as { at_s?: number | bigint | string }).at_s;
+    return at === undefined || at === null ? { ok: true } : { ok: true, at_s: BigInt(at) };
+  }
+
+  async setCampaignNow(at_s: bigint): Promise<{ ok: true; state_hash: string } | { ok: false; code: string; message: string }> {
+    if (this.seat.authority !== "gm") return { ok: false, code: "not_gm", message: "only the game master moves the campaign's now" };
+    const r = await this.#call({ op: "set_campaign_now", at_s });
+    return r.type === "campaign_now_is" ? { ok: true, state_hash: String((r as unknown as { state_hash?: string }).state_hash ?? "") } : { ok: false, code: String(r.code ?? "unexpected"), message: String(r.message ?? JSON.stringify(r)) };
+  }
+
+  async calendar(): Promise<{ ok: true; calendar?: PackCalendar } | { ok: false; code: string; message: string }> {
+    const r = await this.#call({ op: "calendar" });
+    if (r.type !== "calendar_is") return { ok: false, code: String(r.code ?? "unexpected"), message: String(r.message ?? JSON.stringify(r)) };
+    const c = (r as unknown as { calendar?: PackCalendar }).calendar;
+    return c ? { ok: true, calendar: c } : { ok: true };
   }
 
   async listSystems(): Promise<{ ok: true; systems: ListedSystem[] } | { ok: false; code: string; message: string }> {

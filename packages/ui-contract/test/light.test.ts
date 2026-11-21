@@ -30,8 +30,8 @@ test("a thermal source gives the published blackbody colour", () => {
   }
   // Wien: a hotter source is bluer.
   assert.ok(rgb(thermalColour(4000))[2]! < rgb(thermalColour(8000))[2]!);
-  // Planck at the Sun's peak, about 2.6e13 W sr⁻¹ m⁻³ near 500 nm.
-  assert.ok(Math.abs(planck(500e-9, 5772) / 2.64e13 - 1) < 0.02);
+  // Planck at 500 nm and 5772 K: 2hc²/λ⁵ / (exp(hc/λkT) − 1) = 2.6239e13 W sr⁻¹ m⁻³.
+  assert.ok(Math.abs(planck(500e-9, 5772) / 2.6239e13 - 1) < 1e-4);
   assert.equal(planck(1e-12, 300), 0, "no overflow far in the Wien tail");
 });
 

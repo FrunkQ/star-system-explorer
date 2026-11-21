@@ -4,7 +4,7 @@
 // With no key every agent says it is not linked and the chart works as ever.
 // Link a provider (a local mock with a key), check it, link Support, and ask
 // Tars: the answer arrives with its cost. The key travels only to that
-// provider and is stored only under sse4.agents; the state hash never moves.
+// provider and is stored only in its own entry, never in the settings; the state hash never moves.
 import { spawn } from "node:child_process";
 import { mkdirSync } from "node:fs";
 import assert from "node:assert/strict";
@@ -21,7 +21,8 @@ const base = `http://localhost:${port}/`;
 const server = spawn(process.execPath, ["scripts/serve.mjs", "packages/shell/dist", String(port)], { stdio: "ignore" });
 await new Promise((r) => setTimeout(r, 400));
 const KEY = "sk-e2e-secret-4242";
-const provider = await mockProvider({ key: KEY, priced: true, context: 16000 });
+// Tars answers in JSON, citing a passage he was given (A4).
+const provider = await mockProvider({ key: KEY, priced: true, context: 16000, replies: () => "```json\n" + JSON.stringify({ words: "Open the Physics screen and type a new parameter on a block; the kernel checks it before you adopt it.", sources: ["physics"] }) + "\n```" });
 const shot = async (page, n) => {
   if (screens) (mkdirSync(screens, { recursive: true }), await page.screenshot({ path: `${screens}/${n}.png` }));
 };
@@ -29,6 +30,7 @@ const shot = async (page, n) => {
 try {
   for (const name of engines) {
     const engine = { chromium, firefox, webkit }[name];
+    provider.seen.length = 0; // one mock serves every engine: count from this engine's start
     const browser = await engine.launch();
     const errors = [];
     const gm = await browser.newPage({ viewport: { width: 1440, height: 900 } });
@@ -46,8 +48,13 @@ try {
     await gm.getByRole("button", { name: "Agents" }).click();
     const dlg = gm.getByRole("dialog", { name: "Agents" });
     await dlg.getByRole("tab", { name: "Tars" }).click();
-    assert.ok(await dlg.locator("[data-agent-off=tars]").isVisible(), "no key: Tars says it is not linked");
-    assert.ok(await dlg.getByRole("button", { name: "Ask" }).isDisabled());
+    assert.ok(await dlg.locator("[data-agent-off=tars]").isVisible(), "no key: Tars says he answers from SSE's own passages");
+    // With no key Tars still answers, from the best passage, and cites it.
+    await dlg.getByLabel("Ask Tars").fill("How do I change the physics?");
+    await dlg.getByRole("button", { name: "Ask" }).click();
+    await dlg.locator("[data-answer][data-by=rules]").waitFor();
+    assert.match(await dlg.locator("[data-sources]").innerText(), /From: Changing the physics \(Physics \(key P\)\) · Tars's own pages/);
+    assert.equal(provider.seen.length, 0, "nothing sent with no key");
 
     await dlg.getByRole("tab", { name: "Link models" }).click();
     await dlg.getByLabel("Provider kind").selectOption("other");
@@ -61,25 +68,27 @@ try {
     await shot(gm, "a1-link");
 
     await dlg.getByRole("tab", { name: "Tars" }).click();
-    await dlg.getByLabel("Ask Tars").fill("What is Tarn like?");
+    await dlg.getByLabel("Ask Tars").fill("How do I change the physics?");
     assert.match(await dlg.locator("[data-estimate]").innerText(), /Before sending: about \d+ tokens in/);
     await dlg.getByRole("button", { name: "Ask" }).click();
-    await dlg.locator("[data-answer]").waitFor();
-    assert.match(await dlg.locator("[data-answer]").innerText(), /Mock answer to: What is Tarn like\?/);
+    await dlg.locator("[data-answer][data-by=model]").waitFor();
+    assert.match(await dlg.locator("[data-answer]").innerText(), /type a new parameter on a block/);
+    assert.match(await dlg.locator("[data-sources]").innerText(), /From: Changing the physics/, "the answer cites its passage");
     assert.match(await dlg.getByRole("status").innerText(), /120 tokens in, 12 out, \$0\.0001/);
-    // Tars was told about the selected body.
+    // Tars was told about the selected body, and given the why? of its values.
     const sent = JSON.parse(provider.seen.find((x) => x.path.endsWith("/chat/completions")).body);
-    assert.match(sent.messages[0].content, /Selected: Tarn/);
+    assert.match(sent.messages[1].content, /Selected: Tarn/);
+    assert.match(sent.messages[1].content, /\[physics\] Changing the physics/);
     await shot(gm, "a1-tars");
 
-    // The key went only to the provider, is stored only under sse4.agents, and the state hash did not move.
+    // The key went only to the provider, is stored only in its own entry, never in the settings, and the state hash did not move.
     assert.ok(carried.length >= 2 && carried.every((u) => u.startsWith(provider.base)), `key carried only to the provider: ${carried.join(", ")}`);
     const stored = await gm.evaluate((k) => Object.keys(localStorage).filter((x) => localStorage.getItem(x).includes(k)), KEY);
-    assert.deepEqual(stored, ["sse4.agents"]);
+    assert.deepEqual(stored, ["sse4.agents.key.other"], "the key has its own entry; the settings never hold it");
     assert.equal(await gm.locator("[data-state-hash]").getAttribute("data-state-hash"), h0);
     assert.deepEqual(errors, []);
     await browser.close();
-    console.log(`PASS ${name}: no key works; Tars answered through the provider; key only to ${provider.base} and only in sse4.agents`);
+    console.log(`PASS ${name}: no key works; Tars answered through the provider; key only to ${provider.base} and only in its own entry`);
   }
 } finally {
   server.kill();

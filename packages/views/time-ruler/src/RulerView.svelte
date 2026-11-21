@@ -1,7 +1,7 @@
-<!-- Time ruler view: scene events plus the kernel's history of this system. -->
+<!-- Time ruler view: scene events plus the kernel's history of this system, and the campaign's clock (U11). -->
 <script lang="ts">
   import { KIND_WORDS, type HistoryEvent, type Json, type SystemScene, type ViewContext } from "../../../ui-contract/src/index.ts";
-  import { TimeRuler, type RulerEvent } from "../../../chart-grammar/src/index.ts";
+  import { TimeRuler, defaultCalendar, fromPackCalendar, type RulerEvent } from "../../../chart-grammar/src/index.ts";
 
   let { ctx, scene, params }: { ctx: ViewContext; scene: SystemScene; params: Record<string, Json> } = $props();
   let history = $state<HistoryEvent[]>([]);
@@ -30,4 +30,4 @@
   }
 </script>
 
-<TimeRuler from={scene.span_yr[0]} to={scene.span_yr[1]} now={ctx.workspace.now_yr} {events} label="System time" onchange={(yr) => ctx.workspace.setTime(yr)} />
+<TimeRuler from={scene.span_yr[0]} to={scene.span_yr[1]} now={ctx.workspace.now_yr} campaignNow={params.campaign_clock === false ? undefined : ctx.workspace.campaign_now_yr} calendar={ctx.workspace.pack_calendar ? fromPackCalendar(ctx.workspace.pack_calendar) : defaultCalendar(ctx.workspace.campaign_epoch_yr ?? ctx.workspace.campaign_now_yr ?? ctx.workspace.now_yr)} {events} label="System time" onchange={(yr) => ctx.workspace.setTime(yr)} onmakenow={(yr) => ctx.workspace.setCampaignNow?.(yr)} />

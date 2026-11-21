@@ -1,0 +1,886 @@
+{
+ "format": "sse.pack/1",
+ "id": "sse.base-weather",
+ "version": "0.1.0",
+ "kind": [
+  "base-physics"
+ ],
+ "kernel_range": "^0.1",
+ "licence": "Apache-2.0",
+ "provides": {
+  "other": {
+   "about": "The rule-based weather block (track W; weather design): circulation regimes, what condenses, climate averages for slow physics, formations by rule and drawn storm systems behind one swappable contract.",
+   "weather": {
+    "bands": 36,
+    "season_samples": 12,
+    "defaults": {
+     "rotation_hours": 10.0,
+     "obliquity_deg": 20.0,
+     "gases": {
+      "n2": 0.78,
+      "o2": 0.21,
+      "ar": 0.0093,
+      "co2": 0.0004,
+      "h2o": 0.0
+     }
+    },
+    "circulation": {
+     "wind_m_s": 12.0,
+     "delta_h": 0.3333,
+     "tropopause_scale_heights": 1.8,
+     "itcz_width": 0.25,
+     "storm_width": 0.3,
+     "itcz_weight": 3.0,
+     "storm_weight": 1.5,
+     "rain_floor": 0.3,
+     "itcz_follow_ocean": 0.35,
+     "itcz_follow_land": 0.6,
+     "source": "Hadley edge from Held and Hou 1980 (small-angle form, phi_H = (5/3 g H dh / (Omega a)^2)^1/2); cells from the Rhines arrest wavenumber k = (beta/2U)^1/2 (Rhines 1975); trends checked against Kaspi and Showman 2015. Wind scale, contrast, tropopause depth and the rain profile weights are tuned to Earth (docs/fudges.md)."
+    },
+    "supply": {
+     "latent_share": 0.5,
+     "earth_fraction": 0.67,
+     "column_power": 0.75,
+     "humidity_over_liquid": 0.8,
+     "wet_saturation": 0.5,
+     "cover_max": 0.75,
+     "latent_scale_w_m2": 35.0,
+     "thin_cover": 0.1,
+     "source": "Energy-limited precipitation: the latent heat flux, a share of the sunlight reaching wet ground, falls back as liquid (Pierrehumbert 2010, ch. 9 energy budget). Sunlight reaching the ground falls with air column, fitted to Earth, Venus and Titan; cloud cover from latent flux fitted to Earth (docs/fudges.md)."
+    },
+    "rules": [
+     {
+      "regime": "airless",
+      "when": {
+       "pressure_bar": {
+        "max": 1e-06
+       }
+      },
+      "because": "Too little air for cloud or wind: no weather."
+     },
+     {
+      "regime": "banded-giant",
+      "when": {
+       "solid": {
+        "max": 0.5
+       }
+      },
+      "because": "No surface under the air: belts and zones between alternating jets, storms and polar features (W3)."
+     },
+     {
+      "regime": "tidally-locked",
+      "when": {
+       "star_locked": {
+        "min": 0.5
+       }
+      },
+      "because": "One face to the star: rising air and a permanent cloud shield under the star, clearer night side (Yang, Cowan and Abbot 2013; Showman and Polvani 2011)."
+     },
+     {
+      "regime": "thin-air",
+      "when": {
+       "pressure_bar": {
+        "max": 0.03
+       }
+      },
+      "because": "Air too thin for weather to organise into belts: thin ice cloud, frost, fog in basins and dust storms where there is dust (Zurek and Martin 1993)."
+     },
+     {
+      "regime": "slow-rotator",
+      "when": {
+       "hadley_edge_deg": {
+        "min": 60.0
+       }
+      },
+      "because": "Slow spin lets one overturning cell reach the pole in each hemisphere: weak jets and a broad cloud band (Held and Hou 1980; Kaspi and Showman 2015)."
+     },
+     {
+      "regime": "fast-rotator",
+      "when": {
+       "cells": {
+        "min": 4.0
+       }
+      },
+      "because": "Fast spin breaks each hemisphere into many narrow belts and jets (Rhines 1975; Kaspi and Showman 2015)."
+     },
+     {
+      "regime": "earth-like",
+      "when": {},
+      "because": "Moderate spin: a tropical cell, a mid-latitude storm track and a polar cell in each hemisphere."
+     }
+    ],
+    "regimes": {
+     "airless": "No weather",
+     "banded-giant": "Banded giant",
+     "tidally-locked": "Tidally locked",
+     "thin-air": "Thin air",
+     "slow-rotator": "Slow rotator",
+     "fast-rotator": "Fast rotator",
+     "earth-like": "Three cells"
+    },
+    "substances": [
+     {
+      "gas": "h2o",
+      "name": "water",
+      "triple_k": 273.16,
+      "triple_pa": 611.0,
+      "latent_j_kg": 2468000.0,
+      "molar_kg": 0.018015,
+      "condensed_kg_m3": 1000.0,
+      "colour": [
+       0.95,
+       0.95,
+       0.97
+      ],
+      "source": "NIST WebBook Antoine (273-303 K row): pressure at 273.16 K and latent heat from the slope at 288 K"
+     },
+     {
+      "gas": "co2",
+      "name": "carbon dioxide",
+      "triple_k": 216.58,
+      "triple_pa": 518500.0,
+      "latent_j_kg": 573000.0,
+      "molar_kg": 0.04401,
+      "condensed_kg_m3": 1560.0,
+      "colour": [
+       0.97,
+       0.97,
+       1.0
+      ],
+      "source": "NIST WebBook: triple point; sublimation enthalpy 25.2 kJ/mol at 195 K"
+     },
+     {
+      "gas": "ch4",
+      "name": "methane",
+      "triple_k": 90.67,
+      "triple_pa": 11690.0,
+      "latent_j_kg": 531000.0,
+      "molar_kg": 0.016043,
+      "condensed_kg_m3": 450.0,
+      "colour": [
+       0.9,
+       0.9,
+       0.95
+      ],
+      "source": "NIST WebBook: triple point; vaporisation enthalpy 8.519 kJ/mol at 99.5 K"
+     },
+     {
+      "gas": "nh3",
+      "name": "ammonia",
+      "triple_k": 194.95,
+      "triple_pa": 6060.0,
+      "latent_j_kg": 1832000.0,
+      "molar_kg": 0.017031,
+      "condensed_kg_m3": 820.0,
+      "colour": [
+       0.98,
+       0.96,
+       0.9
+      ],
+      "source": "NIST WebBook: melting point and triple-point pressure; sublimation enthalpy 31.2 kJ/mol"
+     },
+     {
+      "gas": "n2",
+      "name": "nitrogen",
+      "triple_k": 63.14,
+      "triple_pa": 12520.0,
+      "latent_j_kg": 200000.0,
+      "molar_kg": 0.028014,
+      "condensed_kg_m3": 800.0,
+      "colour": [
+       0.97,
+       0.97,
+       0.97
+      ],
+      "source": "NIST WebBook: triple point; vaporisation enthalpy 5.6 kJ/mol at 77 K"
+     }
+    ],
+    "photochemical": [
+     {
+      "makes": "sulphuric acid",
+      "needs": {
+       "so2": 1e-05,
+       "h2o": 1e-06
+      },
+      "min_flux_w_m2": 100.0,
+      "min_pressure_bar": 1.0,
+      "cloud_type": "deck",
+      "layer": 1,
+      "cover": 1.0,
+      "optical_depth": 30.0,
+      "colour": [
+       0.93,
+       0.88,
+       0.7
+      ],
+      "source": "Venus's world-wide sulphuric acid deck from sulphur dioxide and water under sunlight (Sánchez-Lavega et al. 2017); optical depth a stand-in (docs/fudges.md)"
+     },
+     {
+      "makes": "organic haze",
+      "needs": {
+       "ch4": 0.005
+      },
+      "min_flux_w_m2": 1.0,
+      "min_pressure_bar": 0.1,
+      "cloud_type": "haze",
+      "layer": 2,
+      "cover": 1.0,
+      "optical_depth": 3.0,
+      "colour": [
+       0.85,
+       0.55,
+       0.25
+      ],
+      "source": "Titan's orange photochemical haze from methane under ultraviolet (Mitchell and Lora 2016); optical depth a stand-in (docs/fudges.md)"
+     }
+    ],
+    "references": [
+     {
+      "text": "Held, I. M. and Hou, A. Y. 1980, Nonlinear axially symmetric circulations in a nearly inviscid atmosphere, J. Atmos. Sci. 37, 515-533",
+      "doi": "10.1175/1520-0469(1980)037<0515:NASCIA>2.0.CO;2"
+     },
+     {
+      "text": "Rhines, P. B. 1975, Waves and turbulence on a beta-plane, J. Fluid Mech. 69, 417",
+      "doi": "10.1017/S0022112075001504"
+     },
+     {
+      "text": "Kaspi, Y. and Showman, A. P. 2015, Atmospheric dynamics of terrestrial exoplanets over a wide range of orbital and atmospheric parameters, ApJ 804, 60",
+      "doi": "10.1088/0004-637X/804/1/60"
+     },
+     {
+      "text": "Yang, J., Cowan, N. B. and Abbot, D. S. 2013, Stabilizing cloud feedback dramatically expands the habitable zone of tidally locked planets, ApJL 771, L45",
+      "doi": "10.1088/2041-8205/771/2/L45"
+     },
+     {
+      "text": "Showman, A. P. and Polvani, L. M. 2011, Equatorial superrotation on tidally locked exoplanets, ApJ 738, 71",
+      "doi": "10.1088/0004-637X/738/1/71"
+     },
+     {
+      "text": "Sánchez-Lavega, A. et al. 2017, The atmospheric dynamics of Venus, Space Sci. Rev. 212, 1541-1616",
+      "doi": "10.1007/s11214-017-0389-x"
+     },
+     {
+      "text": "Mitchell, J. L. and Lora, J. M. 2016, The climate of Titan, Annu. Rev. Earth Planet. Sci. 44, 353-380",
+      "doi": "10.1146/annurev-earth-060115-012428"
+     },
+     {
+      "text": "Zurek, R. W. and Martin, L. J. 1993, Interannual variability of planet-encircling dust storms on Mars, JGR 98(E2), 3247-3259",
+      "doi": "10.1029/92JE02936"
+     },
+     {
+      "text": "Pierrehumbert, R. T. 2010, Principles of Planetary Climate, Cambridge University Press",
+      "doi": "10.1017/CBO9780511780783"
+     },
+     {
+      "text": "Emanuel, K. 2003, Tropical cyclones, Annu. Rev. Earth Planet. Sci. 31, 75",
+      "doi": "10.1146/annurev.earth.31.100901.141259"
+     },
+     {
+      "text": "NIST Chemistry WebBook, phase change data: water",
+      "url": "https://webbook.nist.gov/cgi/cbook.cgi?ID=C7732185&Mask=4"
+     },
+     {
+      "text": "NIST Chemistry WebBook, phase change data: carbon dioxide",
+      "url": "https://webbook.nist.gov/cgi/cbook.cgi?ID=C124389&Mask=4"
+     },
+     {
+      "text": "NIST Chemistry WebBook, phase change data: methane",
+      "url": "https://webbook.nist.gov/cgi/cbook.cgi?ID=C74828&Mask=4"
+     },
+     {
+      "text": "NIST Chemistry WebBook, phase change data: ammonia",
+      "url": "https://webbook.nist.gov/cgi/cbook.cgi?ID=C7664417&Mask=4"
+     },
+     {
+      "text": "NIST Chemistry WebBook, phase change data: nitrogen",
+      "url": "https://webbook.nist.gov/cgi/cbook.cgi?ID=C7727379&Mask=4"
+     }
+    ]
+   },
+   "weather_formations": {
+    "t_contrast_k": 40.0,
+    "cyclones": {
+     "n_s": 0.012,
+     "eady_wavelengths": 3.9,
+     "life_days": 5.0,
+     "peak_wind_m_s": 25.0,
+     "winter_boost": 0.3,
+     "source": "Storm-track cyclones as baroclinic waves (Eady 1949; Chang, Lee and Swanson 2002): wavelength 3.9 N H / f; life, wind and winter boost are Earth-like stand-ins (docs/fudges.md)"
+    },
+    "tropical": {
+     "min_sst_k": 299.15,
+     "min_lat_deg": 5.0,
+     "per_year_earth": 80.0,
+     "earth_warm_fraction": 0.1,
+     "life_days": 7.0,
+     "peak_wind_m_s": 50.0,
+     "size_km": 600.0,
+     "source": "Genesis over sea above 26 °C and at least 5° from the equator (Emanuel 2003, after Palmén 1948); yearly count, life and size are Earth-like stand-ins (docs/fudges.md)"
+    },
+    "dust": {
+     "global_per_year": 0.33,
+     "season_phase": 0.69,
+     "regional_per_year": 6.0,
+     "optical_depth": 3.0,
+     "source": "Planet-encircling dust storms come in some years, in the southern spring and summer near perihelion (Zurek and Martin 1993); chance and depth are stand-ins (docs/fudges.md)"
+    },
+    "orography": {
+     "rain_per_m_s": 20.0,
+     "sample_km": 100.0,
+     "cap_cloud_m": 4000.0,
+     "source": "Rain from forced uplift on windward slopes and a rain shadow behind (Roe 2005); the uplift coefficient is a stand-in (docs/fudges.md)"
+    },
+    "lightning": {
+     "storms_per_1e4_km2": 0.5,
+     "land": [
+      3.44e-05,
+      4.9
+     ],
+     "ocean": [
+      0.00064,
+      1.73
+     ],
+     "source": "Flash rate from cloud-top height, continental and marine (Price and Rind 1992); storm density is a stand-in (docs/fudges.md)"
+    },
+    "marine_layer": 0.35,
+    "clear_visibility_km": 50.0,
+    "references": [
+     {
+      "text": "Eady, E. T. 1949, Long waves and cyclone waves, Tellus 1(3), 33-52",
+      "doi": "10.1111/j.2153-3490.1949.tb01265.x"
+     },
+     {
+      "text": "Chang, E. K. M., Lee, S. and Swanson, K. L. 2002, Storm track dynamics, J. Climate 15, 2163",
+      "doi": "10.1175/1520-0442(2002)015<02163:STD>2.0.CO;2"
+     },
+     {
+      "text": "Emanuel, K. 2003, Tropical cyclones, Annu. Rev. Earth Planet. Sci. 31, 75",
+      "doi": "10.1146/annurev.earth.31.100901.141259"
+     },
+     {
+      "text": "Zurek, R. W. and Martin, L. J. 1993, Interannual variability of planet-encircling dust storms on Mars, JGR 98(E2), 3247-3259",
+      "doi": "10.1029/92JE02936"
+     },
+     {
+      "text": "Roe, G. H. 2005, Orographic precipitation, Annu. Rev. Earth Planet. Sci. 33, 645",
+      "doi": "10.1146/annurev.earth.33.092203.122541"
+     },
+     {
+      "text": "Price, C. and Rind, D. 1992, A simple lightning parameterization for calculating global lightning distributions, JGR 97, 9919",
+      "doi": "10.1029/92JD00719"
+     },
+     {
+      "text": "Klein, S. A. and Hartmann, D. L. 1993, The seasonal cycle of low stratiform clouds, J. Climate 6, 1587",
+      "doi": "10.1175/1520-0442(1993)006<1587:TSCOLS>2.0.CO;2"
+     },
+     {
+      "text": "Webster, P. J. et al. 1998, Monsoons: processes, predictability, and the prospects for prediction, JGR 103, 14451",
+      "doi": "10.1029/97JC02719"
+     }
+    ]
+   },
+   "weather_giants": {
+    "bands": {
+     "wind_gas_m_s": 150.0,
+     "wind_ice_m_s": 400.0,
+     "ice_giant_mass_earth": 50.0,
+     "retrograde_ratio": 0.5,
+     "equator_gas": 0.6,
+     "equator_ice": -1.0,
+     "equatorial_bands_gas": 1,
+     "equatorial_bands_ice": 99,
+     "source": "Same jets and band edges as the surface pack's S6 cloud deck (base-surface regime_features.clouds): jets = round(sqrt(a Omega / U)) from the Rhines scale (Rhines 1975), U about 150 m/s on gas giants and 400 m/s on ice giants (below 50 Earth masses), 2 x jets bands with edges evenly spaced in sin(latitude), retrograde jets half the prograde. Zones (anticyclonic shear) and belts (cyclonic) alternate from an equatorial zone, so prograde jets sit on the poleward edge of zones (Vasavada and Showman 2005). Gas giants superrotate at the equator; ice giants have one broad retrograde equatorial jet and prograde jets at high latitude (Vasavada and Showman 2005; Smith et al. 1989). Equatorial speed factors are a cartoon (docs/fudges.md)."
+    },
+    "stratification": {
+     "brunt_s": 0.0148,
+     "source": "Deformation radius L_d = N H / f (f = 2 Omega at the pole), H the pressure scale height at 1 bar. One Brunt-Vaisala frequency N for every giant, fitted so Saturn's polar Burger number (L_d / a)^2 is 1.6e-3, the Saturn-regime value quoted by Brueshaber and Sayanagi 2021 (docs/fudges.md)."
+    },
+    "polar": {
+     "ring_bu_max": 0.000625,
+     "single_bu_min": 0.001111,
+     "diffuse_bu_min": 0.004,
+     "diffuse_internal_max_w_m2": 0.1,
+     "ring_counts": [
+      5,
+      6,
+      7,
+      8,
+      9
+     ],
+     "ring_cyclone_ld": 4.0,
+     "ring_gap": 0.5,
+     "vortex_ld": 2.0,
+     "polar_jet_u": 0.8,
+     "source": "The Burger number Bu = (L_d / a)^2 is the parameter that decides a giant's polar regime: lowering it goes from one polar cyclone (Saturn-like) to many circumpolar cyclones (Jupiter-like), and the forcing energy hardly changes that (Brueshaber, Sayanagi and Dowling 2019). O'Neill, Emanuel and Flierl 2015: a / L_d <= 30 gives one strong polar cyclone, >= 40 many vortices (so Bu <= 6.25e-4 ring, Bu >= 1.111e-3 single, between drawn), and weak convective forcing gives a diffuse pole with no polar cyclone (internal heat below 0.1 W/m2 here). Diffuse cap from Bu >= 4e-3, the geometric mean of the Saturn-regime 1.6e-3 and ice-giant 1e-2 values quoted by Brueshaber and Sayanagi 2021. Ring counts 5 to 9 around Juno's 8 (north) and 5 (south) (Adriani et al. 2018). Cyclone sizes in deformation radii and the ring gap fitted to Jupiter's north ring; polar jet 0.8 of the wind scale (docs/fudges.md)."
+    },
+    "polar_jet": {
+     "source": "The circumpolar jet sits one polar Rhines length from the pole: on the polar gamma-plane f = 2 Omega (1 - r^2 / 2a^2) the Rhines arrest gives L = (U a^2 / 2 Omega)^(1/3) (kernel derivation from Rhines 1975, docs/fudges.md). Saturn: 78.6 degrees, against the hexagon's about 78 degrees N (Godfrey 1988)."
+    },
+    "polygon": {
+     "regimes": [
+      "single-vortex"
+     ],
+     "min_lat_deg": 70.0,
+     "wavelength_ld": 5.07,
+     "min_sides": 3,
+     "max_sides": 8,
+     "min_jet_m_s": 100.0,
+     "source": "Rule fitted to Saturn's hexagon at about 78 degrees N (Godfrey 1988). A strong, narrow circumpolar jet settles into a stable meander whose number of sides is set by the deformation radius against the jet (laboratory wavenumber 6: Barbosa Aguiar et al. 2010; numerical 3 to 8 sides with jet width, strength and curvature: Morales-Juberias et al. 2015). Here: a polygon only on a coherent circumpolar jet (single polar vortex regime), at or above 70 degrees, of at least 100 m/s, and narrow enough that its latitude circle holds 3 to 8 waves; sides n = round(2 pi r_jet / (k L_d)), clamped 3 to 8, with k fitted so Saturn gives 6 (docs/fudges.md)."
+    },
+    "ovals": {
+     "kind": "oval",
+     "applies": "gas",
+     "per_year": 0.02,
+     "window_days": 3652.5,
+     "life_years": [
+      10.0,
+      300.0
+     ],
+     "size_band": [
+      0.5,
+      0.9
+     ],
+     "size_km": [
+      0.0,
+      0.0
+     ],
+     "strength_u": [
+      0.6,
+      1.0
+     ],
+     "members": [
+      1,
+      1
+     ],
+     "lat_deg": [
+      0.0,
+      0.0
+     ],
+     "because": "a great oval, a long-lived anticyclone in a zone, where the shear between the neighbouring jets turns the same way as the storm",
+     "source": "Great ovals live in the anticyclonic shear zones between jets and drift with the local wind (Vasavada and Showman 2005). Rate and life (log-uniform 10 to 300 years) tuned so a Jupiter-like giant usually carries one or two, like the Great Red Spot and Oval BA (docs/fudges.md)."
+    },
+    "strings": {
+     "kind": "oval",
+     "applies": "gas",
+     "per_year": 0.15,
+     "window_days": 730.5,
+     "life_years": [
+      0.5,
+      8.0
+     ],
+     "size_band": [
+      0.12,
+      0.25
+     ],
+     "size_km": [
+      0.0,
+      0.0
+     ],
+     "strength_u": [
+      0.3,
+      0.6
+     ],
+     "members": [
+      4,
+      9
+     ],
+     "lat_deg": [
+      0.0,
+      0.0
+     ],
+     "because": "a string of small ovals, anticyclones lined up along one zone like Jupiter's String of Pearls",
+     "source": "Strings of small anticyclonic ovals form along zones (Vasavada and Showman 2005); rate, life and spacing tuned (docs/fudges.md)."
+    },
+    "dark_spots": {
+     "kind": "dark-spot",
+     "applies": "ice",
+     "per_year": 0.2,
+     "window_days": 730.5,
+     "life_years": [
+      1.0,
+      6.0
+     ],
+     "size_band": [
+      0.0,
+      0.0
+     ],
+     "size_km": [
+      4000.0,
+      13000.0
+     ],
+     "strength_u": [
+      0.2,
+      0.4
+     ],
+     "members": [
+      1,
+      1
+     ],
+     "lat_deg": [
+      15.0,
+      45.0
+     ],
+     "because": "a dark spot, an anticyclone on an ice giant that clears the high methane cloud so the deeper, darker air shows, with bright companion clouds on its poleward side",
+     "source": "Neptune's Great Dark Spot, an anticyclone near 22 degrees S about 13000 km across with bright companion clouds (Smith et al. 1989); such spots last years. Rate (0.2 a year) and life (log-uniform 1 to 6 years) tuned (docs/fudges.md)."
+    },
+    "outbreaks": {
+     "max_t_k": 150.0,
+     "chance_per_cycle": 0.85,
+     "duration_days": 200.0,
+     "encircle_days": 55.0,
+     "head_km": 10000.0,
+     "band_km": 8000.0,
+     "lat_max_deg": 60.0,
+     "strength_m_s": 100.0,
+     "because": "a planet-circling outbreak: on a cooler gas giant moist convection is held back for years, then breaks out as a great white spot whose tail wraps the planet",
+     "source": "Saturn's Great White Spots, giant convective storms about every 30 years (about once per Saturn year) whose disturbance encircled the planet within weeks (Sanchez-Lavega et al. 2011). Here: gas giants colder than 150 K at 1 bar, one chance per orbit; the temperature cut, chance, duration, size and encircling time are tuned to Saturn's 2010 storm (docs/fudges.md)."
+    },
+    "clouds": {
+     "zone_cover": 0.95,
+     "belt_cover": 0.55,
+     "zone_tau": 6.0,
+     "belt_tau": 1.5,
+     "mid_cover": 0.8,
+     "mid_tau": 4.0,
+     "low_cover": 0.6,
+     "low_tau": 10.0,
+     "cap_tau": 1.5,
+     "chemistry": [
+      {
+       "max_k": 90.0,
+       "layers": [
+        "ammonium hydrosulphide",
+        "hydrogen sulphide ice",
+        "methane ice"
+       ]
+      },
+      {
+       "max_k": 200.0,
+       "layers": [
+        "water",
+        "ammonium hydrosulphide",
+        "ammonia ice"
+       ]
+      },
+      {
+       "max_k": 500.0,
+       "layers": [
+        "water",
+        "water",
+        "water ice"
+       ]
+      },
+      {
+       "max_k": 1000.0,
+       "layers": [
+        "silicate",
+        "sulphide",
+        "alkali haze"
+       ]
+      },
+      {
+       "max_k": 100000.0,
+       "layers": [
+        "iron",
+        "silicate",
+        "silicate"
+       ]
+      }
+     ],
+     "source": "Cloud classes by temperature after Sudarsky et al. 2000 (as the S6 cloud deck); zones carry thick high cloud, belts thin high cloud that shows the layers below; covers and optical depths are stand-ins (docs/fudges.md)."
+    },
+    "references": [
+     {
+      "text": "Rhines, P. B. 1975, Waves and turbulence on a beta-plane, J. Fluid Mech. 69, 417",
+      "doi": "10.1017/S0022112075001504"
+     },
+     {
+      "text": "Vasavada, A. R. and Showman, A. P. 2005, Jovian atmospheric dynamics: an update after Galileo and Cassini, Rep. Prog. Phys. 68, 1935",
+      "doi": "10.1088/0034-4885/68/8/R06"
+     },
+     {
+      "text": "Sudarsky, D., Burrows, A. and Pinto, P. 2000, Albedo and reflection spectra of extrasolar giant planets, ApJ 538, 885",
+      "doi": "10.1086/309160"
+     },
+     {
+      "text": "Sanchez-Lavega, A. et al. 2011, Deep winds beneath Saturn's upper clouds from a seasonal long-lived planetary-scale storm, Nature 475, 71-74",
+      "doi": "10.1038/nature10203"
+     },
+     {
+      "text": "Smith, B. A. et al. 1989, Voyager 2 at Neptune: imaging science results, Science 246, 1422-1449",
+      "doi": "10.1126/science.246.4936.1422"
+     },
+     {
+      "text": "Brueshaber, S. R., Sayanagi, K. M. and Dowling, T. E. 2019, Dynamical regimes of giant planet polar vortices, Icarus 323, 46",
+      "doi": "10.1016/j.icarus.2019.02.001"
+     },
+     {
+      "text": "O'Neill, M. E., Emanuel, K. A. and Flierl, G. R. 2015, Polar vortex formation in giant-planet atmospheres due to moist convection, Nature Geoscience 8, 523",
+      "doi": "10.1038/ngeo2459"
+     },
+     {
+      "text": "Adriani, A. et al. 2018, Clusters of cyclones encircling Jupiter's poles, Nature 555, 216",
+      "doi": "10.1038/nature25491"
+     },
+     {
+      "text": "Godfrey, D. A. 1988, A hexagonal feature around Saturn's north pole, Icarus 76, 335-356",
+      "doi": "10.1016/0019-1035(88)90075-9"
+     },
+     {
+      "text": "Barbosa Aguiar, A. C. et al. 2010, A laboratory model of Saturn's North Polar Hexagon, Icarus 206, 755-763",
+      "doi": "10.1016/j.icarus.2009.10.022"
+     },
+     {
+      "text": "Morales-Juberias, R. et al. 2015, Meandering shallow atmospheric jet as a model of Saturn's north-polar hexagon, ApJL 806, L18",
+      "doi": "10.1088/2041-8205/806/1/L18"
+     }
+    ]
+   },
+   "weather_zonal": {
+    "bands": 36,
+    "seasons": 12,
+    "iterations": 80,
+    "relax": 0.5,
+    "olr": {
+     "b_hat": 0.47,
+     "source": "Outgoing longwave linear in temperature, A + B T (Budyko 1969 eq. 1: I = a + B T - (a1 + B1 T) n with a 14.0, B 0.14, a1 3.0, B1 0.10 kcal cm-2 month-1, T in deg C). At cloudiness n 0.5 that is B = 1.43 W m-2 K-1 and 220 W m-2 at 288 K, so B T / (4 OLR) = 0.47 on Earth; the same dimensionless slope is used on every world (docs/fudges.md). A is set so the global mean temperature is the world's own."
+    },
+    "diffusion": {
+     "d_earth_w_m2_k": 0.45,
+     "column_power": 1.0,
+     "spin_power": 2.0,
+     "max_over_b": 10000.0,
+     "moisture_ratio": 1.0,
+     "source": "Diffusive heat transport D (1/cos phi) d/dphi (cos phi dT/dphi) (North 1975). D on Earth fitted to an equator-to-pole contrast near 40 K; scaling with air column and (Omega_Earth / Omega)^2 is a stand-in for eddy transport theory (docs/fudges.md)."
+    },
+    "ice": {
+     "albedo_step": 0.3,
+     "t_ice_k": 263.15,
+     "width_k": 3.0,
+     "source": "Ice-albedo step on water worlds, smoothed; edge and step fitted, base albedo renormalised so the world's Bond albedo is kept (docs/fudges.md)."
+    },
+    "moisture": {
+     "exchange_m_s": 0.0115,
+     "humidity": 0.8,
+     "source": "Bulk evaporation rho C_E |U| q_sat (1 - RH), capped by the energy reaching wet ground; C_E |U| fitted to Earth's mean rain (docs/fudges.md)."
+    },
+    "cloud": {
+     "cover_max": 0.8,
+     "latent_scale_w_m2": 25.0,
+     "gradient_cover": 0.25,
+     "gradient_scale_k_deg": 0.8,
+     "saturation_cover": 0.15,
+     "saturation_ln_scale": 2.0,
+     "min_pressure_bar": 1e-06,
+     "source": "Cloud from latent heat released and from baroclinic temperature gradients; frost cloud where a gas saturates at the band temperature. All constants fitted (docs/fudges.md)."
+    },
+    "storms": {
+     "max_day_hours": 48.0,
+     "min_gradient_k_deg": 0.3,
+     "every_days": 3.0,
+     "life_days": 5.0,
+     "size_km": 1800.0,
+     "peak_wind_m_s": 22.0,
+     "steering": 2.5,
+     "source": "One cyclone per hemisphere every few days at the steepest temperature gradient; a deliberately simple stand-in (docs/fudges.md)."
+    },
+    "thermal_depth_scale_heights": 1.8,
+    "surface_wind_share": 0.3,
+    "references": [
+     {
+      "text": "North, G. R. 1975, Theory of energy-balance climate models, J. Atmos. Sci. 32, 2033-2043",
+      "doi": "10.1175/1520-0469(1975)032<2033:TOEBCM>2.0.CO;2"
+     },
+     {
+      "text": "North, G. R. 1975, Analytical solution to a simple climate model with diffusive heat transport, J. Atmos. Sci. 32, 1301-1307",
+      "doi": "10.1175/1520-0469(1975)032<1301:ASTASC>2.0.CO;2"
+     },
+     {
+      "text": "Budyko, M. I. 1969, The effect of solar radiation variations on the climate of the Earth, Tellus 21(5), 611-619",
+      "url": "https://www.atmosp.physics.utoronto.ca/~dbj/PHY392/Budyko1969.pdf"
+     }
+    ]
+   },
+   "weather_aerosols": {
+    "thin_air_bar": 0.0001,
+    "thin_air_source": "Below this surface pressure a vent's plume is ballistic, not buoyant (fudge, docs/fudges.md)",
+    "magma_dre_kg_m3": 2500.0,
+    "mastin": {
+     "coef_km": 2.0,
+     "exponent": 0.241,
+     "source": "Earth eruption column height H = 2.00 V^0.241 km above the vent, V the dense-rock-equivalent rate in m3/s with magma at 2500 kg/m3; mass form 0.304 MER^0.241 (Mastin et al. 2009)"
+    },
+    "earth": {
+     "gravity_m_s2": 9.80665,
+     "molar_kg": 0.02897,
+     "t_strat_k": 214.4,
+     "density_kg_m3": 1.225,
+     "source": "Earth reference for scaling Mastin's heights: standard gravity and sea-level density; stratosphere at the skin temperature T_eff/2^(1/4) of a 255 K world"
+    },
+    "scaling_source": "Other worlds: H scales as (g/g_E)^(1/4) (rho_E/rho)^(1/4) (N_E/N)^(3/4), from the buoyant plume rise H proportional to F^(1/4) N^(-3/4) with buoyancy flux F proportional to g MER / rho (Morton, Taylor and Turner 1956); N^2 = g^2/(c_p T) for an isothermal stratosphere at the skin temperature, c_p = 3.5 R/M. The constant is Earth's (Mastin); carrying it to other worlds this way is a fudge (docs/fudges.md)",
+    "ballistic": {
+     "steady_speed_m_s": 500.0,
+     "eruption_speed_m_s": 1000.0,
+     "source": "Thin or no air: plume height v^2/(2g); vent speeds about 0.5 km/s for long-lived Prometheus-type plumes and about 1.0 km/s for short Pele-type eruptions on Io (McEwen and Soderblom 1983). Heights follow from the formula, not from the paper"
+    },
+    "ash": {
+     "settle_m_s": 0.5,
+     "spread_per_km": 0.15,
+     "umbrella_per_height": 2.0,
+     "tau_ref": 3.0,
+     "mer_ref_kg_s": 1000000.0,
+     "tau_max": 20.0,
+     "deposit_kg_m3": 1000.0,
+     "linger_days": 3.0,
+     "darkening_mm": 5.0,
+     "min_streak_km": 50.0,
+     "min_width_km": 5.0,
+     "default_mer_kg_s": 10000.0,
+     "colour": [
+      0.16,
+      0.15,
+      0.14
+     ],
+     "source": "Ash streak blown down the local zonal wind at plume height, falling out over (height / settling speed) of travel and widening sideways; vent optical depth tau_ref (MER/mer_ref)^(1/2); ash fall conserves the erupted mass. All constants are stand-ins (fudge, docs/fudges.md)"
+    },
+    "vog": {
+     "tau_per_kg_s": 0.005,
+     "tau_max": 1.0,
+     "acid_tau": 0.05,
+     "length_km": 300.0,
+     "colour": [
+      0.8,
+      0.75,
+      0.55
+     ],
+     "source": "Steady outgassing makes a low sulphate haze downwind and acid rain where it rains through it; strength and reach are stand-ins (fudge, docs/fudges.md)"
+    },
+    "veil": {
+     "conversion_years": 0.0833,
+     "residence_years": 1.0,
+     "response_years": 0.7,
+     "cooling_k_per_tg_so2": 0.02,
+     "max_cooling_k": 5.0,
+     "tau_per_tg_so2": 0.007,
+     "tropics_deg": 20.0,
+     "other_hemisphere": 0.3,
+     "colour": [
+      0.92,
+      0.92,
+      0.96
+     ],
+     "source": "A stratospheric sulphate veil: sulphate aerosol e-folding residence about 1 year; large eruptions cool the globe (tropical) or a hemisphere for 2 to 3 years, most about 1 year after (Robock 2000). SO2-to-sulphate conversion time, the climate response time (set so the cooling peaks near a year), cooling per Tg SO2 (about 0.4 K for Pinatubo's 20 Tg; NOT verified), optical depth per Tg, the tropical band and the other hemisphere's share are fudges (docs/fudges.md)"
+    },
+    "impact": {
+     "density_kg_m3": 3000.0,
+     "speed_m_s": 20000.0,
+     "fireball_j": 4184000000000000.0,
+     "regional_j": 4.184e+18,
+     "winter_j": 4.184e+21,
+     "plume_km_at_fireball": 10.0,
+     "fireball_days": 1.0,
+     "regional_radius_km": 300.0,
+     "regional_tau": 2.0,
+     "regional_days": 30.0,
+     "winter_tau": 5.0,
+     "winter_k": 3.0,
+     "winter_k_per_decade": 3.0,
+     "max_cooling_k": 20.0,
+     "rise_years": 0.01,
+     "residence_years": 0.5,
+     "response_years": 0.2,
+     "dust_colour": [
+      0.45,
+      0.38,
+      0.3
+     ],
+     "soot_colour": [
+      0.08,
+      0.07,
+      0.06
+     ],
+     "source": "Impacts: a fireball plume above 1 Mt TNT, a regional dust veil above 1 Gt, a world-wide soot and dust veil and impact winter above 10^6 Mt; heights, radii, depths, cooling and its timing are all stand-ins (fudge, docs/fudges.md)"
+    },
+    "fire": {
+     "min_o2": 0.15,
+     "dry_ratio": 0.8,
+     "plume_km_ref": 4.0,
+     "area_ref_km2": 1000.0,
+     "tau_ref": 2.0,
+     "tau_max": 8.0,
+     "settle_m_s": 0.05,
+     "colour": [
+      0.36,
+      0.3,
+      0.24
+     ],
+     "source": "Wildfire smoke plumes and regional haze; no fire below an oxygen mixing ratio of min_o2 (an unverified stand-in for the flammability limit), only in the dry part of the year where the rain is below dry_ratio of its yearly mean; plume height, depth and reach are stand-ins (fudge, docs/fudges.md)"
+    },
+    "smog": {
+     "tau_ref": 0.1,
+     "radius_km_ref": 40.0,
+     "inversion_boost": 1.0,
+     "inversion_width_deg": 10.0,
+     "basin_boost": 1.0,
+     "colour": [
+      0.4,
+      0.27,
+      0.12
+     ],
+     "source": "Industrial smog over settlements: depth tau_ref (population/1e6)^(1/2) 4 t (1 - t) for tech level t (none before industry, little after clean technology), trapped more under subsiding subtropical air and in basins; all stand-ins (fudge, docs/fudges.md)"
+    },
+    "spray": {
+     "u_min_m_s": 3.0,
+     "tau_per_m_s": 0.02,
+     "tau_max": 0.3,
+     "colour": [
+      0.9,
+      0.91,
+      0.93
+     ],
+     "source": "Sea spray and salt haze over open liquid in wind; threshold and depth are stand-ins (fudge, docs/fudges.md)"
+    },
+    "photochemical": [
+     {
+      "makes": "sulphur haze",
+      "needs": {
+       "so2": 1e-06
+      },
+      "min_flux_w_m2": 100.0,
+      "min_pressure_bar": 0.01,
+      "cloud_type": "haze",
+      "layer": 2,
+      "cover": 1.0,
+      "optical_depth": 0.3,
+      "colour": [
+       0.95,
+       0.9,
+       0.6
+      ],
+      "source": "Sulphur haze from sulphur dioxide under sunlight, counting gas from steady outgassing mixed through the column; optical depth a stand-in (fudge, docs/fudges.md)"
+     }
+    ],
+    "outgassing_mix_years": 1.0,
+    "tau_min": 0.01,
+    "references": [
+     {
+      "text": "Mastin, L. G. et al. 2009, A multidisciplinary effort to assign realistic source parameters to models of volcanic ash-cloud transport and dispersion during eruptions, J. Volcanol. Geotherm. Res. 186, 10-21",
+      "doi": "10.1016/j.jvolgeores.2009.01.008"
+     },
+     {
+      "text": "Morton, B. R., Taylor, G. I. and Turner, J. S. 1956, Turbulent gravitational convection from maintained and instantaneous sources, Proc. R. Soc. A 234, 1-23",
+      "doi": "10.1098/rspa.1956.0011"
+     },
+     {
+      "text": "McEwen, A. S. and Soderblom, L. A. 1983, Two classes of volcanic plumes on Io, Icarus 55, 191",
+      "doi": "10.1016/0019-1035(83)90075-1"
+     },
+     {
+      "text": "Robock, A. 2000, Volcanic eruptions and climate, Rev. Geophys. 38, 191",
+      "doi": "10.1029/1998RG000054"
+     }
+    ]
+   }
+  }
+ }
+}
