@@ -5,6 +5,7 @@ export default {
   feature: "Cosmic web foam with time play (V9)",
   trailers: ["intro", "features"],
   async run(page, d) {
+    await d.caption('The cosmic web', 'Gravity draws matter into filaments, from the first billion years to today.');
     await d.click(page.locator('.rail [data-go="explore"]').first());
     await d.click(page.locator("[data-section-tab=foam]"));
     const foam = page.locator(".foam");

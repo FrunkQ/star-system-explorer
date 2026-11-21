@@ -4,11 +4,13 @@ export default {
   title: "Change a world, then ask why",
   feature: "Edit in place, derived values, Why? with Science (U2, U3)",
   trailers: ["features", "intro"],
-  async setup(page) {
+  async setup(page, d, nav) {
+    await nav.desk(page, "Build");
     await page.locator('.area-chart .body[aria-label^="Tarn"]').first().click();
     await page.locator("section[aria-label='Tarn']").waitFor();
   },
   async run(page, d) {
+    await d.caption('Change a world', 'Type a new mass; the values that depend on it follow.');
     const card = page.locator("section[aria-label='Tarn']");
     await d.hold(800);
     const mass = card.locator(".field").filter({ hasText: /^mass/i }).locator("input").first();
@@ -19,10 +21,12 @@ export default {
     await d.hold(1500);
     const why = card.locator(".field").filter({ hasText: /^surface/i }).getByRole("button", { name: /why/i });
     await d.click(why);
+    await d.caption('Ask why', 'The formula, its inputs, and the papers it comes from.');
     const panel = page.locator("[role=region][aria-label^='Why']");
     await panel.locator(".formula").waitFor();
     await d.hold(1800);
     await d.click(panel.getByRole("tab", { name: "Science" }));
+    await d.caption('Three depths', 'Curious, Science and Engine: the same fact, told for each reader.');
     await d.hold(2500);
     await d.click(panel.getByRole("button", { name: "why?" }).first());
     await d.hold(2500);

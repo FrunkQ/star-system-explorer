@@ -5,6 +5,7 @@ export default {
   feature: "Look ahead on a branch, star ageing (U4, T1, T2)",
   trailers: ["intro", "features"],
   async run(page, d) {
+    await d.caption('Look ahead', 'Age the system on a branch, without touching the campaign.');
     await d.hold(800);
     await d.click(page.getByRole("button", { name: "Look ahead…" }));
     const panel = page.getByRole("group", { name: "Look ahead" });
@@ -15,6 +16,7 @@ export default {
     await d.click(panel.getByRole("button", { name: "Look ahead", exact: true }));
     const scrub = panel.getByLabel("Age shown");
     await scrub.waitFor({ timeout: 60000 });
+    await d.caption("Forty billion years", "The star swells, sheds its outer layers and leaves a white dwarf.");
     await d.hold(800);
     // Slide the scrubber end to end so the chart ages on screen.
     const box = await scrub.boundingBox();
