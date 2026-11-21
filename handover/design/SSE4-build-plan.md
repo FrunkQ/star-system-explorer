@@ -5,7 +5,7 @@ Date 17 Nov 2026. Audience: a coordinating session planning the work, and the bu
 ## 0. Read in this order
 
 1. `SSE4-design-handoff.md` : the architecture, contracts, decisions. The authority.
-2. `SSE4-galaxy-design.md`, `SSE4-life-design.md`, `SSE4-surface-design.md`, `SSE4-classification-design.md`, `SSE4-system-formation-design.md`, `SSE4-sound-design.md`, `SSE4-weather-design.md` `SSE4-nebulae-and-light-design.md` and `SSE4-record-logic-programs-design.md` : the domain designs in detail. `SSE4-top-level-ui-and-onboarding.md` (accepted 21 Nov: the place line, instrument rail, three desks, onboarding, the Explorers library, one campaign clock) and `interface-style.md` (dynamic minimalism, standing) must be read before any U or V package. `SSE4-rock3-comparison.md` (accepted 21 Nov) extends the surface stages; read it before any S package from S2b on. `SSE4-surfaces-and-rendering.md` is the research report on browser photorealism, hardware scaling and software choices; it is the authority for rendering and must be read before any R or V package.
+2. `SSE4-galaxy-design.md`, `SSE4-life-design.md`, `SSE4-surface-design.md`, `SSE4-classification-design.md`, `SSE4-system-formation-design.md`, `SSE4-sound-design.md`, `SSE4-weather-design.md` `SSE4-nebulae-and-light-design.md` and `SSE4-record-logic-programs-design.md` : the domain designs in detail. `SSE4-top-level-ui-and-onboarding.md` (accepted 21 Nov: the place line, instrument rail, three desks, onboarding, the Explorers library, one campaign clock) and `interface-style.md` (dynamic minimalism, standing) must be read before any U or V package. `SSE4-rock3-comparison.md` (accepted 21 Nov) extends the surface stages; read it before any S package from S2b on. `SSE4-exogeology-gaps.md` (accepted 21 Nov) is the research behind its section 5.9; read it before S0b and S17 to S21. `SSE4-surfaces-and-rendering.md` is the research report on browser photorealism, hardware scaling and software choices; it is the authority for rendering and must be read before any R or V package.
 3. The "SSE4 mockups" canvas : every screen. Chart room board is the reference for the GM look.
 4. "SSE4 decisions for Alex" : the reasoning trail, if a decision seems odd.
 5. On Alex's machine under `C:\Development`: the V3 source (for parity and import), `ovid-next` (agent system to reuse), `evolution-lab` and `evolution-lab-design` (contracts, UI components, experiments).
@@ -125,6 +125,15 @@ Tracks can run in parallel once their dependencies are met. `needs` lists packag
 7. S10 flourishes with lifespans.
 
 S8a (map export) can go at any time. Alex's rule binds every surface stage: "best calc is NO calc". Reuse any existing result first (this device, then the GM or a peer, then a pack). Raise the detail level only on approach, stay or an explicit request. A world that only gets a click never costs a full run. Climate catch-up (W7: land and sea, local albedo, current rules, retrograde winds, ice ages) belongs to the weather track.
+
+**Exogeology additions [accepted 21 Nov]**: stages S0b, S17a, S17b, S18a, S18b, S19, S20 and S21, exactly as `SSE4-rock3-comparison.md` section 5.9 and section 8. Questions 9 to 13 there bind them. The research, the gap table, the numbers and the sources are in `SSE4-exogeology-gaps.md`, which must be read before any of these stages (section 10 carries the Consensus research's changes). Build order, fitted into the list above:
+- S0b goes with S16a, because both change the S0 and S1 goldens on purpose. Its fixes: an ice shell only where the shell is active, and a cold ice lid otherwise; "is there an ocean?" kept apart from "is the shell active?"; roundness by material; crater renewal only where the regime is active; a moon's tidal history as an input.
+- S17a, moving ices at D0 and D1, comes right after S14a.
+- S18a ice-shell stresses and S18b cryovolcanism come next.
+- S17b, moving ices at D2 and D3, comes after S9 and S10.
+- S19 (surface colour from radiation and dust), S20 (small bodies) and S21 (water released from a crust, on the water-table rule) follow.
+
+New fixtures: Pluto, Charon, Triton, Enceladus, Miranda, Mimas, Ceres, Iapetus and Callisto. A probe that runs them through the S0 to S6 code as built is at `handover/design/exogeology/pluto_probe.rs`. To run it, copy it into `crates/sse-surface/src/` and add it as a test module. The Consensus research report sits beside it.
 
 ### L: life suite. Stages L0, L1a, L1b, L1c, L1d, L2, L2b exactly as life document section 14, one package each. L0 needs K10 and P4; L1a needs P1; L2 needs T1.
 
