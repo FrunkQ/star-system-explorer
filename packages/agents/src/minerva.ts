@@ -14,7 +14,7 @@
 //   holds and the audience's does not (hidden names and secret notes).
 //
 // V3's AI context fields (seedText, style, length) carry over as the GM's notes.
-import { describeFact, subjectName, type PlayerScene, type Vocab } from "../../ui-contract/src/index.ts";
+import { describeFact, fieldWords, subjectName, valueWords, type PlayerScene, type SiftResult, type Vocab } from "../../ui-contract/src/index.ts";
 import { draftLoop, type Ask, type LoopResult } from "./loop.ts";
 
 export interface StoryEvent {
@@ -27,6 +27,28 @@ export interface StoryEvent {
 export interface StoryHit {
   title: string;
   evidence: string[];
+}
+
+/** How many sifter hits go in a bundle: the best first, as the kernel orders them. */
+export const HITS = 5;
+
+/**
+ * The kernel's sifter hits for one audience, in Minerva's words. Hits are
+ * used only when the kernel says it sifted for exactly that audience (an
+ * older kernel that ignored the audience would hand back the GM's hits, so
+ * those are dropped, never used).
+ */
+export function hitsFor(r: SiftResult | null, audience: string, scene: PlayerScene): StoryHit[] {
+  if (!r || r.audience !== audience) return [];
+  const name = (a: string) => {
+    const s = scene.subjects.find((x) => x.address === a);
+    return s ? subjectName(s) : null;
+  };
+  return r.hits.slice(0, HITS).flatMap((h) => {
+    const at = name(h.subject);
+    if (!at) return [];
+    return [{ title: `${h.label}, at ${at}`, evidence: h.evidence.map((e) => `${name(e.address) ?? at}: ${fieldWords(e.field)} ${valueWords(e.value)}`) }];
+  });
 }
 
 export interface FactsBundle {

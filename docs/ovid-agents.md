@@ -47,6 +47,6 @@ data view (K9), so she never writes a fact the audience may not see. V3's AI con
 
 ## 5. For Alex to confirm
 
-1. Relicensing each lifted Ovid file to Apache-2.0 at A1, with a `NOTICE` line. Recommend yes.
+1. Relicensing each lifted Ovid file to Apache-2.0 at A1, with a `NOTICE` line. Confirmed by Alex, 21 Nov 2026.
 2. A fourth job, Deciding, for cheap checks (for example "does this story hit fit this audience"). Recommend yes; it
    keeps Minerva's and Orac's expensive models for the work that needs them.

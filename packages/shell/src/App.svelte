@@ -4,7 +4,7 @@
   kernel only through the session, the same client API a player app uses.
 -->
 <script lang="ts">
-  import { applyEdits, applySetup, type AtomInfo, enterFacts, observeOf, type AuthoredFacts, checkScreen, deriveScene, gmSeat, redoEdit, subjectOf, systemOrder, undoEdit, type CheckedScreen, type DerivationDoc, type ScreenDoc, type SystemScene, type ViewHandle, type ViewModule, type ViewSession } from "../../ui-contract/src/index.ts";
+  import { applyEdits, applySetup, type AtomInfo, type SifterDoc, enterFacts, observeOf, type AuthoredFacts, checkScreen, deriveScene, gmSeat, redoEdit, subjectOf, systemOrder, undoEdit, type CheckedScreen, type DerivationDoc, type ScreenDoc, type SystemScene, type ViewHandle, type ViewModule, type ViewSession } from "../../ui-contract/src/index.ts";
   import { openBrowserSession } from "../../ui-contract/src/host-browser.ts";
   import { createShare, type Share } from "./share.svelte.ts";
   import { clearStored, download, readStored, setAside, writeStored } from "./campaign-store.ts";
@@ -23,6 +23,7 @@
   import type { MinervaHost } from "../../agents/src/MinervaTab.svelte";
   import type { TarsHost } from "../../agents/src/TarsTab.svelte";
   import { whyPassage } from "../../agents/src/tars.ts";
+  import storyStarters from "../../views/story-finder/src/starters.json";
   import { showReference } from "../../ui-contract/src/index.ts";
   import { oracMay } from "../../agents/src/orac.ts";
   import { atomIssueTarget, flowEntries, lensEntries, lensTarget, loadAtoms, physicsTarget } from "../../agents/src/orac-targets.ts";
@@ -518,6 +519,7 @@
       },
     };
   });
+  const STORY_STARTERS = storyStarters.sifters as unknown as SifterDoc[];
   // A3: Minerva reads one audience's scene (K9) and nothing else; the GM's scene is used only to check her text.
   const minervaHost = $derived.by((): MinervaHost | undefined => {
     const s = session;
@@ -531,6 +533,11 @@
       },
       vocab: plainVocab as unknown as Vocab,
       title: `${scene.title}: ${scene.subtitle}`,
+      // The stack's sifters and the story finder's starters, over what that audience is shown.
+      sift: async (audience) => {
+        const r = await s.sift({ scope, audience, sifters: STORY_STARTERS });
+        return r.ok ? r.result : null;
+      },
     };
   });
   const differences = $derived(ws.branch ? compareScenes(mainScene, scene, ws.branch.applied) : []);
