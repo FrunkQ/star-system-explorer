@@ -24,7 +24,7 @@ fn the_orbit_globe_is_the_surveyed_world() {
     let s = settings();
     let b = body("Earth");
     let e = envelope(&s, &b);
-    let orbit = orbit_atlas(&s, &e, &seed(), b.age_gyr, b.oceans);
+    let orbit = orbit_atlas(&s, &b, &seed(), b.age_gyr).unwrap();
     assert!(orbit.has_plates());
     assert!(
         orbit.address.to_string().contains("shell:orbit@"),
@@ -58,14 +58,38 @@ fn the_orbit_globe_is_the_surveyed_world() {
 }
 
 #[test]
-fn a_world_without_plates_is_one_sketch_at_every_level() {
+fn a_world_without_plates_is_one_world_at_every_level() {
+    // No plates ever moved: the regime sketch is the height source at both
+    // levels, worn on each level's grid, so the heights must still match.
     let s = settings();
     for name in ["Mars", "Venus", "Moon"] {
         let b = body(name);
-        let e = envelope(&s, &b);
-        let a = orbit_atlas(&s, &e, &seed(), b.age_gyr, b.oceans);
-        assert!(!a.has_plates(), "{name}");
-        assert!(a.address.to_string().contains("shell:sketch@"), "{name}");
+        let orbit = orbit_atlas(&s, &b, &seed(), b.age_gyr).unwrap();
+        let sv = survey_world(&s, &b, &seed(), b.age_gyr, &SurveyOptions::default()).unwrap();
+        let hs = |a: &atlas::Atlas| -> Vec<f64> {
+            (0..6u8)
+                .flat_map(|f| {
+                    a.build(atlas::TileKey::new(f, 0, 0, 0).unwrap())
+                        .elevation_dm
+                        .into_iter()
+                        .map(|h| h as f64)
+                })
+                .collect()
+        };
+        let (x, y) = (hs(&orbit), hs(&sv.atlas));
+        let n = x.len() as f64;
+        let (mx, my) = (x.iter().sum::<f64>() / n, y.iter().sum::<f64>() / n);
+        let (mut sxy, mut sxx, mut syy) = (0.0, 0.0, 0.0);
+        for (a, b) in x.iter().zip(&y) {
+            sxy += (a - mx) * (b - my);
+            sxx += (a - mx) * (a - mx);
+            syy += (b - my) * (b - my);
+        }
+        let r = sxy / sse_core::math::sqrt(sxx * syy).max(1e-12);
+        assert!(
+            r > 0.8,
+            "{name}: Orbit and surveyed heights correlate at {r:.3}"
+        );
     }
 }
 
@@ -78,8 +102,8 @@ fn orbit_atlases_reuse_by_key() {
     assert_eq!(k, orbit_key(&e, &seed(), b.age_gyr));
     assert_ne!(k, orbit_key(&e, &seed(), b.age_gyr - 0.1));
     assert_ne!(k, orbit_key(&e, &Seed::from_text("other"), b.age_gyr));
-    let a = orbit_atlas(&s, &e, &seed(), b.age_gyr, b.oceans);
-    let c = orbit_atlas(&s, &e, &seed(), b.age_gyr, b.oceans);
+    let a = orbit_atlas(&s, &b, &seed(), b.age_gyr).unwrap();
+    let c = orbit_atlas(&s, &b, &seed(), b.age_gyr).unwrap();
     let key = atlas::TileKey::new(2, 0, 0, 0).unwrap();
     assert_eq!(a.build(key), c.build(key));
 }

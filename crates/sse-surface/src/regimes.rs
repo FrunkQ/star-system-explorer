@@ -249,7 +249,13 @@ struct Clock<'a> {
     s: &'a SurfaceSettings,
     epoch: f64,
     t_from: f64,
+    /// Integrated renewal at `CLOCK_STEPS` + 1 even dates from `t_from` to
+    /// `epoch` (worked out once; every landform's date reads it).
+    table: Vec<f64>,
 }
+
+/// Steps of the renewal integral from the surface's start to the epoch.
+const CLOCK_STEPS: usize = 1024;
 
 impl Clock<'_> {
     fn heat_at(&self, t: f64) -> f64 {
@@ -269,23 +275,35 @@ impl Clock<'_> {
             .unwrap_or("")
     }
 
-    /// Integrated renewal from the surface's start to t (S4's rule).
-    fn z(&self, t: f64) -> f64 {
-        let mut z = 0.0;
-        let steps = 400u32;
-        let dt = (t - self.t_from).max(0.0) / steps as f64;
-        for k in 0..steps {
-            let tt = self.t_from + (k as f64 + 0.5) * dt;
-            if let Some(r) = self.s.impacts.resurface.get(self.regime_at(tt)) {
+    /// Renewal rate at t (S4's rule), per Myr.
+    fn rate(&self, tt: f64) -> f64 {
+        match self.s.impacts.resurface.get(self.regime_at(tt)) {
+            Some(r) => {
                 let q = self.heat_at(tt);
-                z +=
-                    dt * m::pow(
-                        (q / r.q_ref_w_m2.max(1e-12)).max(0.0),
-                        self.s.impacts.resurface_exponent,
-                    ) / r.myr.max(1e-9);
+                m::pow(
+                    (q / r.q_ref_w_m2.max(1e-12)).max(0.0),
+                    self.s.impacts.resurface_exponent,
+                ) / r.myr.max(1e-9)
             }
+            None => 0.0,
         }
-        z
+    }
+
+    fn tabulate(&mut self) {
+        let dt = (self.epoch - self.t_from).max(0.0) / CLOCK_STEPS as f64;
+        let mut z = 0.0;
+        let mut table = Vec::with_capacity(CLOCK_STEPS + 1);
+        table.push(0.0);
+        for k in 0..CLOCK_STEPS {
+            z += dt * self.rate(self.t_from + (k as f64 + 0.5) * dt);
+            table.push(z);
+        }
+        self.table = table;
+    }
+
+    /// Integrated renewal from the surface's start to the epoch.
+    fn z_total(&self) -> f64 {
+        self.table.last().copied().unwrap_or(0.0)
     }
 
     /// A date for a landform: renewal-weighted (steady state) when the regime
@@ -295,16 +313,19 @@ impl Clock<'_> {
         if ztot > 0.0 && (driver == "heat" || driver == "heat-now") {
             let e = m::exp(-ztot);
             let target = ztot + m::ln((u * (1.0 - e) + e).max(1e-300));
-            let (mut a, mut b) = (lo, hi);
-            for _ in 0..40 {
-                let mid = 0.5 * (a + b);
-                if self.z(mid) < target {
-                    a = mid;
-                } else {
-                    b = mid;
-                }
-            }
-            return 0.5 * (a + b);
+            // Invert the tabulated integral, linear within a step.
+            let k = self
+                .table
+                .partition_point(|z| *z < target)
+                .clamp(1, CLOCK_STEPS);
+            let (za, zb) = (self.table[k - 1], self.table[k]);
+            let f = if zb > za {
+                ((target - za) / (zb - za)).clamp(0.0, 1.0)
+            } else {
+                0.5
+            };
+            let dt = (hi - lo) / CLOCK_STEPS as f64;
+            return lo + dt * ((k - 1) as f64 + f);
         }
         lo + (hi - lo) * u
     }
@@ -350,12 +371,14 @@ pub fn regime_surface(
         .filter(|x| x.0 <= epoch && x.2 != regime)
         .map(|x| x.1.min(epoch))
         .fold(0.0, f64::max);
-    let clock = Clock {
+    let mut clock = Clock {
         spans,
         s,
         epoch,
         t_from,
+        table: vec![],
     };
+    clock.tabulate();
     let def = s.regimes.get(&regime);
     let mut out = RegimeSurface {
         address: env.address.to_string(),
@@ -386,7 +409,7 @@ pub fn regime_surface(
         out.clouds = Some(cloud_deck(s, env, &d, inputs, epoch));
         return out;
     }
-    let ztot = clock.z(epoch);
+    let ztot = clock.z_total();
     let q_now = clock.heat_at(epoch);
     let q0 = clock.heat_at(t_from);
     let rules = rs.landforms.get(&regime).cloned().unwrap_or_default();
