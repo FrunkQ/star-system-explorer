@@ -3,6 +3,7 @@
 
 pub mod address;
 pub mod cbor;
+pub mod constants;
 pub mod draw;
 pub mod harness;
 pub mod hash;

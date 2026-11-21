@@ -1,0 +1,103 @@
+{
+ "format": "sse.pack/1",
+ "id": "test.reference-toy",
+ "version": "0.1.0",
+ "kind": [
+  "physics"
+ ],
+ "kernel_range": "^0.1",
+ "licence": "Apache-2.0",
+ "provides": {
+  "reference": {
+   "sources": [
+    {
+     "id": "ciaaw-2021",
+     "text": "CIAAW standard atomic weights 2021"
+    },
+    {
+     "id": "nist-sp811",
+     "text": "NIST Special Publication 811 (2008), Guide for the Use of the International System of Units, appendix B",
+     "url": "https://www.nist.gov/pml/special-publication-811"
+    }
+   ],
+   "elements": [
+    {
+     "id": "h",
+     "z": 1,
+     "atomic_weight": {
+      "v": 1.008,
+      "unit": "g/mol",
+      "src": "ciaaw-2021"
+     }
+    },
+    {
+     "id": "o",
+     "z": 8,
+     "atomic_weight": {
+      "v": 15.999,
+      "unit": "g/mol",
+      "src": "ciaaw-2021"
+     }
+    }
+   ],
+   "substances": [
+    {
+     "id": "h2o",
+     "formula": {
+      "h": 2,
+      "o": 1
+     },
+     "names": {
+      "physics": "water",
+      "plain": "water",
+      "story": "water"
+     }
+    },
+    {
+     "id": "h2",
+     "formula": {
+      "h": 2
+     }
+    },
+    {
+     "id": "o2",
+     "formula": {
+      "o": 2
+     }
+    }
+   ],
+   "reactions": [
+    {
+     "id": "burn-hydrogen",
+     "terms": [
+      [
+       "h2",
+       -2
+      ],
+      [
+       "o2",
+       -1
+      ],
+      [
+       "h2o",
+       2
+      ]
+     ]
+    }
+   ],
+   "units": [
+    {
+     "id": "league",
+     "symbol": "lea",
+     "name": "league (statute)",
+     "measures": "length",
+     "group": "factor",
+     "factor": {
+      "v": 4828.032,
+      "src": "nist-sp811"
+     }
+    }
+   ]
+  }
+ }
+}

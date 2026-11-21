@@ -73,6 +73,10 @@ pub struct AirParams {
     /// as `(1 + h) / (1 + h r / r_pal)` (1 at and below today's level, whose
     /// burial efficiency the base fraction already holds); `h` 0 switches them off.
     pub decomposer_h: f64,
+    /// E4: the soil box. When set, land weathering is its derived factor
+    /// instead of `land_weathering_factor`, and soil carbon joins the ledger.
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub soil: Option<crate::soil::SoilParams>,
     pub sources: Vec<String>,
 }
 
@@ -100,6 +104,7 @@ impl Default for AirParams {
             ignition_max: 5.0,
             photorespiration: 0.5,
             decomposer_h: 1.0,
+            soil: None,
             sources: vec![],
         }
     }
@@ -128,11 +133,20 @@ pub struct Ledger {
     /// the carbon went back to the air as CO2, so no O2 moved).
     #[serde(default)]
     pub burial_suppressed: f64,
+    /// Organic carbon put into soil this step, moles (E4): its O2 stays in
+    /// the air. Negative when soil loses carbon and takes the O2 back.
+    #[serde(default, skip_serializing_if = "is_zero")]
+    pub soil_store: f64,
+}
+
+fn is_zero(x: &f64) -> bool {
+    *x == 0.0
 }
 
 impl Ledger {
     pub fn residual(&self) -> f64 {
-        self.change - (self.burial + self.escape - self.reductants - self.weathering)
+        self.change
+            - (self.burial + self.soil_store + self.escape - self.reductants - self.weathering)
     }
 }
 
@@ -165,6 +179,11 @@ pub struct AirBox {
     pub series: Vec<AirPoint>,
     /// Largest |residual| over all steps, moles.
     pub worst_residual: f64,
+    /// E4: the soil and its record, when the soil box is on.
+    #[serde(default, skip_serializing_if = "std::collections::BTreeMap::is_empty")]
+    pub soil: BTreeMap<String, crate::soil::Soil>,
+    #[serde(default, skip_serializing_if = "Vec::is_empty")]
+    pub soil_series: Vec<crate::soil::SoilPoint>,
 }
 
 impl AirBox {
@@ -177,6 +196,8 @@ impl AirBox {
             totals: Ledger::default(),
             series: vec![],
             worst_residual: 0.0,
+            soil: BTreeMap::new(),
+            soil_series: vec![],
         }
     }
 
@@ -229,7 +250,7 @@ struct Trial {
 impl AirBox {
     /// Run one step with the oxic or anoxic chemistry set by `f_guess`, the
     /// O2 fraction assumed over the step.
-    fn trial(&self, fl: &StepFluxes, f_guess: f64) -> Trial {
+    fn trial(&self, fl: &StepFluxes, f_guess: f64, soil_store: f64) -> Trial {
         let p = &self.p;
         let dt = fl.dt_myr * YR_PER_MYR;
         let anoxic_weight = 1.0 / (1.0 + f_guess / p.o2_switch_fraction);
@@ -266,8 +287,11 @@ impl AirBox {
         let demand = self.reductants_at(fl.at_myr) * dt;
         let escape_all = k_esc * ch4_mol * dt;
         let escape = escape_all.min(demand);
-        let avail = self.o2_mol + burial + escape;
+        // Soil can only take back the O2 there is (E4).
+        let soil_store = soil_store.max(-(self.o2_mol + burial + escape));
+        let avail = self.o2_mol + burial + escape + soil_store;
         let mut l = Ledger {
+            soil_store,
             burial,
             escape,
             escape_to_crust: escape_all - escape,
@@ -310,17 +334,50 @@ impl Boundary for AirBox {
         // state a unique fixed point; find it by bisection instead of letting
         // an explicit switch flip between oxic and anoxic every step.
         let air = self.p.air_mol;
-        let hi0 = self.trial(fl, 0.0).o2_mol / air;
+        // E4: the soil for this step, from last step's land production and
+        // this step's start oxygen (explicit in O2, so the bisection below
+        // sees a fixed store).
+        let new_soil: Option<BTreeMap<String, crate::soil::Soil>> =
+            self.p.soil.as_ref().map(|sp| {
+                let r_pal = self.p.pal_mol / self.p.air_mol;
+                let o2_rel = if r_pal > 0.0 {
+                    self.o2_fraction() / r_pal
+                } else {
+                    0.0
+                };
+                fl.land
+                    .iter()
+                    .map(|r| {
+                        let prev = self.soil.get(&r.key).cloned().unwrap_or_default();
+                        let s = sp.step(
+                            &prev,
+                            &crate::soil::SoilStep {
+                                dt_myr: fl.dt_myr,
+                                land_area_m2: r.area_m2,
+                                temperature_k: r.temperature_k.unwrap_or(sp.t_ref_k),
+                                land_npp_gc_yr: r.npp_gc_yr,
+                                o2_rel,
+                            },
+                        );
+                        (r.key.clone(), s)
+                    })
+                    .collect()
+            });
+        let held: f64 = self.soil.values().map(|s| s.carbon_mol).sum();
+        let store = new_soil.as_ref().map_or(0.0, |s| {
+            s.values().map(|x| x.carbon_mol).sum::<f64>() - held
+        });
+        let hi0 = self.trial(fl, 0.0, store).o2_mol / air;
         let (mut lo, mut hi) = (0.0_f64, hi0);
         for _ in 0..STATE_ITERATIONS {
             let mid = 0.5 * (lo + hi);
-            if self.trial(fl, mid).o2_mol / air > mid {
+            if self.trial(fl, mid, store).o2_mol / air > mid {
                 lo = mid;
             } else {
                 hi = mid;
             }
         }
-        let t = self.trial(fl, 0.5 * (lo + hi));
+        let t = self.trial(fl, 0.5 * (lo + hi), store);
         let l = t.ledger;
         self.o2_mol = t.o2_mol;
         self.ch4_mol = t.ch4_mol;
@@ -336,11 +393,45 @@ impl Boundary for AirBox {
             (&mut self.totals.carbon_buried, l.carbon_buried),
             (&mut self.totals.burial_land, l.burial_land),
             (&mut self.totals.burial_suppressed, l.burial_suppressed),
+            (&mut self.totals.soil_store, l.soil_store),
         ] {
             *tot += v;
         }
+        // E4: the soil keeps the carbon the air could give it.
+        if let (Some(mut regions), Some(sp)) = (new_soil, self.p.soil.clone()) {
+            // When the air could not give all the carbon back (soil losing
+            // carbon with too little O2), every region keeps the same share
+            // of what it was going to lose.
+            let want = store;
+            if want != l.soil_store && want < 0.0 {
+                let keep = 1.0 - l.soil_store / want;
+                for (k, s) in regions.iter_mut() {
+                    let before = self.soil.get(k).map_or(0.0, |x| x.carbon_mol);
+                    if s.carbon_mol < before {
+                        s.carbon_mol += (before - s.carbon_mol) * keep;
+                    }
+                }
+            }
+            for (k, s) in regions.iter_mut() {
+                if let Some(r) = fl.land.iter().find(|r| &r.key == k) {
+                    if r.area_m2 > 0.0 {
+                        s.organic_c_kg_m2 = s.carbon_mol * 12.011 / 1000.0 / r.area_m2;
+                    }
+                }
+            }
+            let all = crate::soil::Soil::area_mean(&regions, &fl.land);
+            self.co2_rel = 1.0 / all.weathering_factor;
+            self.soil_series.push(crate::soil::SoilPoint {
+                at_myr: fl.at_myr + fl.dt_myr,
+                soil: all,
+                delta_t_k: sp.temperature_change_k(self.co2_rel),
+            });
+            self.soil = regions;
+        }
         // Land life speeds silicate weathering and draws CO2 down.
-        self.co2_rel = if fl.on_land {
+        self.co2_rel = if self.p.soil.is_some() {
+            self.co2_rel
+        } else if fl.on_land {
             1.0 / self.p.land_weathering_factor
         } else {
             1.0

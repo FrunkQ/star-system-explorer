@@ -278,3 +278,76 @@ fn sediment_lies_where_it_was_left_and_shelves_stay_under_water() {
         "sediment-covered share of land {covered}"
     );
 }
+
+/// W9: rivers carry runoff, glaciers sit where snow outlasts the summer, and
+/// dunes lie where the wind moves sand on dry ground, on wet and dry worlds.
+#[test]
+fn rivers_glaciers_and_dunes_read_the_one_climates_water_and_wind() {
+    let s = settings();
+    let (_, _, _, w) = earth(&s);
+    let g = Grid::new(w.n);
+    let lat = |c: usize| sse_core::math::asin(g.dirs[c][2].clamp(-1.0, 1.0)).to_degrees();
+    let nc = w.heights.len();
+    let land: Vec<usize> = (0..nc).filter(|&c| w.heights[c] >= 0.0).collect();
+    let dunes: Vec<f64> = land
+        .iter()
+        .filter(|&&c| w.dunes[c])
+        .map(|&c| lat(c))
+        .collect();
+    let ice: Vec<f64> = land
+        .iter()
+        .filter(|&&c| w.glaciated[c])
+        .map(|&c| lat(c))
+        .collect();
+    eprintln!(
+        "Earth land {} dunes {} (lat {:?}) glaciated {} rivers {}",
+        land.len(),
+        dunes.len(),
+        dunes
+            .iter()
+            .map(|x| x.round())
+            .collect::<Vec<_>>()
+            .get(..dunes.len().min(20)),
+        ice.len(),
+        w.river.iter().filter(|x| **x).count()
+    );
+    assert!(!dunes.is_empty(), "Earth's deserts have dunes");
+    assert!(
+        dunes.iter().all(|l| l.abs() < 45.0),
+        "dunes in the dry belts"
+    );
+    // Glaciers: a larger share of the land poleward, and near the equator
+    // only on high mountains (the tropical snow line is near 5 km).
+    let share = |lo: f64, hi: f64| {
+        let cs: Vec<usize> = land
+            .iter()
+            .cloned()
+            .filter(|&c| (lo..hi).contains(&lat(c).abs()))
+            .collect();
+        cs.iter().filter(|&&c| w.glaciated[c]).count() as f64 / cs.len().max(1) as f64
+    };
+    assert!(share(60.0, 90.0) > 0.9 && share(0.0, 15.0) < share(30.0, 45.0));
+    let tropical_low = land
+        .iter()
+        .filter(|&&c| lat(c).abs() < 15.0 && w.glaciated[c])
+        .map(|&c| w.heights[c])
+        .fold(f64::INFINITY, f64::min);
+    assert!(
+        tropical_low > 4000.0,
+        "tropical glacier at {tropical_low} m"
+    );
+    assert!(!ice.is_empty());
+    assert!(land.iter().any(|&c| w.runoff_m_yr[c] > 0.0));
+    // Each land cell's climate label, read off its own numbers.
+    for a in ["ice-cap", "rainforest", "temperate"] {
+        assert!(land.iter().any(|&c| w.areas[c] == a), "Earth has {a}");
+    }
+    assert!(land
+        .iter()
+        .any(|&c| w.areas[c] == "desert" || w.areas[c] == "rainless"));
+    assert!((0..nc).all(|c| w.heights[c] >= 0.0 || w.areas[c].is_empty()));
+    // Mars, dry for 3.5 Gyr: no runoff now, dunes from the wind alone.
+    let (_, _, m) = mars_at(&s, 4.5);
+    assert!(m.runoff_m_yr.iter().all(|x| *x == 0.0));
+    assert!(m.dunes.iter().any(|x| *x), "Mars has dunes");
+}

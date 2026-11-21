@@ -196,6 +196,30 @@ pub(crate) fn survey_surface(r: Request, cache: &mut Cache) -> Result<serde_json
         // The one climate, summarised (the full climate comes from the
         // `weather` op's `climate` want): its key, cells and why.
         let k = &l.climate.world.climate;
+        // W9: what each band receives at the datum, and its area label.
+        let cs = &sse_surface::scenario::settings().climate;
+        let ss = &cs.saltation;
+        let places: Vec<serde_json::Value> = k
+            .lat_deg
+            .iter()
+            .map(|&lat| {
+                let w = l.climate.world.water_at(cs, lat, 0.0);
+                let sa = sse_climate::saltation::at(ss, k, lat, sse_climate::saltation::grain_for(ss, w.t_k));
+                let (area, because) = sse_climate::water::area(cs, &w);
+                serde_json::json!({
+                    "lat_deg": lat,
+                    "area": area,
+                    "label": cs.areas.labels.get(area).cloned().unwrap_or_default(),
+                    "because": because,
+                    "rain_m_yr": w.rain_m_yr,
+                    "snow_m_yr": w.snow_m_yr,
+                    "runoff_m_yr": w.runoff_m_yr,
+                    "ice_balance_m_yr": w.ice_balance_m_yr,
+                    "sand_moving": sa.transport_share,
+                    "dunes": sse_climate::saltation::dune_activity(ss, sa.transport_share, w.aridity),
+                })
+            })
+            .collect();
         o.insert(
             "climate".into(),
             serde_json::json!({
@@ -212,6 +236,7 @@ pub(crate) fn survey_surface(r: Request, cache: &mut Cache) -> Result<serde_json
                 "pressure_bar": l.climate.pressure_bar,
                 "assumed": l.climate.world.assumed,
                 "why": l.climate.why,
+                "places": places,
             }),
         );
         o.insert("air".into(), v(&l.air));
