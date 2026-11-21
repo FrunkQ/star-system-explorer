@@ -1,12 +1,56 @@
 name: ci
 on:
+  # Pull requests run once each (no second run for the branch push); main runs after every merge.
   push:
+    branches: [main]
   pull_request:
   workflow_dispatch:
+  # Nightly full run of every job on main, to catch anything the PR skips miss (Alex, 21 Nov: "test periodically").
+  schedule:
+    - cron: '17 3 * * *'
+
+# A newer push to the same pull request cancels the older run. Runs on main are never cancelled.
+concurrency:
+  group: ci-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
 
 jobs:
+  # Which parts a pull request touches. On main, nightly and manual runs everything runs.
+  #   docs only (docs/, handover/, any .md): no jobs beyond this one
+  #   UI only (packages/, tests/ui/, package files): wasm and ui, no three-OS Rust matrix
+  #   anything else (crates, packs, goldens, scripts, workflows ...): every job
+  changes:
+    runs-on: ubuntu-latest
+    outputs:
+      rust: ${{ steps.f.outputs.rust }}
+      web: ${{ steps.f.outputs.web }}
+    steps:
+      - uses: actions/checkout@v4
+        with: { fetch-depth: 0 }
+      - id: f
+        shell: bash
+        run: |
+          if [ "${{ github.event_name }}" != "pull_request" ]; then
+            echo "rust=true" >> "$GITHUB_OUTPUT"; echo "web=true" >> "$GITHUB_OUTPUT"; exit 0
+          fi
+          files=$(git diff --name-only "${{ github.event.pull_request.base.sha }}" "${{ github.event.pull_request.head.sha }}")
+          echo "$files"
+          rust=false; web=false
+          while IFS= read -r f; do
+            [ -z "$f" ] && continue
+            case "$f" in
+              docs/*|handover/*|*.md) ;;
+              packages/*|tests/ui/*|package.json|package-lock.json|tsconfig*.json) web=true ;;
+              *) rust=true; web=true ;;
+            esac
+          done <<< "$files"
+          echo "rust=$rust" >> "$GITHUB_OUTPUT"; echo "web=$web" >> "$GITHUB_OUTPUT"
+          echo "rust=$rust web=$web"
+
   rust:
     name: rust (${{ matrix.os }})
+    needs: changes
+    if: needs.changes.outputs.rust == 'true'
     strategy:
       fail-fast: false
       matrix:
@@ -16,6 +60,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - run: rustup show
+      - uses: Swatinem/rust-cache@v2
       - if: matrix.os == 'ubuntu-latest'
         run: cargo fmt --all --check
       - if: matrix.os == 'ubuntu-latest'
@@ -28,12 +73,16 @@ jobs:
 
   wasm:
     name: wasm (node + browsers)
+    needs: changes
+    if: needs.changes.outputs.web == 'true'
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
-        with: { node-version: 22 }
+        with: { node-version: 22, cache: npm }
       - run: rustup show
+      - uses: Swatinem/rust-cache@v2
+        with: { cache-bin: true }
       - run: cargo install wasm-bindgen-cli --version 0.2.130 --locked
       - run: npm ci
       - run: scripts/build-harness.sh
@@ -45,12 +94,16 @@ jobs:
 
   ui:
     name: ui (GM shell, U0 and U1 checks)
+    needs: changes
+    if: needs.changes.outputs.web == 'true'
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
-        with: { node-version: 22 }
+        with: { node-version: 22, cache: npm }
       - run: rustup show
+      - uses: Swatinem/rust-cache@v2
+        with: { cache-bin: true }
       - run: cargo install wasm-bindgen-cli --version 0.2.130 --locked
       - run: npm ci
       - run: scripts/build-wasm.sh
