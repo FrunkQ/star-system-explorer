@@ -24,7 +24,7 @@
 //! chains, and rare floods of lava cover whole provinces. A snapshot of every
 //! cell's plate is kept every few steps so the time ruler can show the drift.
 
-use crate::atlas::{direction, face_of};
+use crate::atlas::{direction, face_tangents};
 use crate::sketch::dot;
 use crate::{SurfaceEnvelope, SurfaceSettings};
 use serde::{Deserialize, Serialize};
@@ -33,7 +33,10 @@ use sse_core::math as m;
 use sse_core::Address;
 use std::collections::BTreeMap;
 
-pub const PLATES_VERSION: &str = "surface-plates-v1";
+pub const PLATES_VERSION: &str = "surface-plates-v2";
+
+/// Samples along a step when dating new sea floor at a ridge.
+const BIRTH_SAMPLES: u32 = 8;
 
 #[derive(Clone, PartialEq, Debug, Serialize, Deserialize)]
 pub struct PlateSettings {
@@ -70,6 +73,9 @@ pub struct PlateSettings {
     pub continent_base_m: f64,
     pub airy: f64,
     pub snapshot_every: u32,
+    /// The coarse Orbit run this run refines (S16); None runs free.
+    #[serde(default)]
+    pub guide: Option<PlateGuide>,
 }
 
 #[derive(Clone, PartialEq, Debug, Serialize, Deserialize)]
@@ -135,6 +141,9 @@ pub struct PlateHistory {
     /// Myr since the world formed.
     pub epoch_myr: f64,
     pub steps: u32,
+    /// The coarse grid (cells a face) this history was pinned to, if any.
+    #[serde(default)]
+    pub guided_by: Option<u32>,
     pub plates: Vec<Plate>,
     pub plumes: Vec<[f64; 3]>,
     pub cells: Vec<Cell>,
@@ -150,6 +159,10 @@ pub struct PlateHistory {
 pub struct Grid {
     pub n: u32,
     pub dirs: Vec<[f64; 3]>,
+    nb: Vec<[usize; 4]>,
+    /// Cell edges along a face as tangents of the warped coordinate, so
+    /// `cell_at` finds a cell by comparison instead of two arctangents.
+    edges: Vec<f64>,
 }
 
 impl Grid {
@@ -164,7 +177,17 @@ impl Grid {
                 }
             }
         }
-        Grid { n, dirs }
+        let edges = (1..n)
+            .map(|i| m::tan((-1.0 + 2.0 * i as f64 / n as f64) * m::PI / 4.0))
+            .collect();
+        let mut g = Grid {
+            n,
+            dirs,
+            nb: vec![],
+            edges,
+        };
+        g.nb = (0..g.dirs.len()).map(|c| g.neighbours_of(c)).collect();
+        g
     }
 
     pub fn len(&self) -> usize {
@@ -176,15 +199,18 @@ impl Grid {
     }
 
     pub fn cell_at(&self, d: [f64; 3]) -> usize {
-        let (f, u, v) = face_of(d);
-        let n = self.n as f64;
-        let i = (((u + 1.0) * 0.5 * n) as i64).clamp(0, self.n as i64 - 1) as usize;
-        let j = (((v + 1.0) * 0.5 * n) as i64).clamp(0, self.n as i64 - 1) as usize;
+        let (f, a, b) = face_tangents(d);
+        let i = self.edges.partition_point(|e| *e <= a);
+        let j = self.edges.partition_point(|e| *e <= b);
         (f as usize) * (self.n * self.n) as usize + j * self.n as usize + i
     }
 
     /// The four neighbours (left, right, down, up), across face edges.
     pub fn neighbours(&self, c: usize) -> [usize; 4] {
+        self.nb[c]
+    }
+
+    fn neighbours_of(&self, c: usize) -> [usize; 4] {
         let nn = (self.n * self.n) as usize;
         let f = (c / nn) as u8;
         let r = c % nn;
@@ -268,6 +294,10 @@ struct Run<'a> {
     cells: Vec<Cell>,
     events: Vec<PlateEvent>,
     draw_i: u64,
+    /// The plates as they moved in the last step, before that step's
+    /// events turned or split them: the boundaries are classified by the
+    /// motion that made the crust beside them.
+    moved: Vec<Plate>,
 }
 
 impl Run<'_> {
@@ -294,22 +324,52 @@ impl Run<'_> {
     }
 }
 
+/// The coarse run that guides a fine one (S16, detail levels): the Orbit
+/// level's grid and step. A fine run with a guide takes its plates, their
+/// poles and speeds and every dated event from the coarse run, so the world
+/// seen from orbit and the surveyed world are the same world.
+#[derive(Clone, PartialEq, Debug, Serialize, Deserialize)]
+pub struct PlateGuide {
+    pub cells_per_face: u32,
+    pub step_myr: f64,
+}
+
+/// The plate settings of the coarse (Orbit) run that guides `p`, or None
+/// when `p` runs free (no guide, or a guide no coarser than `p`).
+pub fn guide_settings(p: &PlateSettings) -> Option<PlateSettings> {
+    // A guide must be coarser than the run it guides; otherwise run free.
+    let g = p
+        .guide
+        .as_ref()
+        .filter(|g| g.cells_per_face < p.cells_per_face)?;
+    let mut c = p.clone();
+    c.cells_per_face = g.cells_per_face;
+    c.step_myr = g.step_myr;
+    c.guide = None;
+    Some(c)
+}
+
 /// Run the plate history of a world up to `epoch_gyr` (Gyr since it formed).
 /// Worlds with no mobile-lid span get a single still plate and no steps.
+///
+/// With `plates.guide` set, the run is the Survey level of S16: the coarse
+/// Orbit run (`guide_settings`) is stepped, and the fine grid moves with the
+/// same plates inside each coarse step, then is pinned to it (see `pin`).
+/// Without, the run is free: one grid, its own events.
 pub fn history(
     s: &SurfaceSettings,
     env: &SurfaceEnvelope,
     seed: &Seed,
     epoch_gyr: f64,
 ) -> PlateHistory {
-    let p = &s.plates;
+    let coarse_p = guide_settings(&s.plates);
+    let p = coarse_p.as_ref().unwrap_or(&s.plates);
+    let fine_p = coarse_p.as_ref().map(|_| &s.plates);
     let d = Draws::new(
         *seed,
         env.address.clone(),
         Stream::new("surface.plates.v1").expect("valid"),
     );
-    let grid = Grid::new(p.cells_per_face);
-    let nc = grid.len();
     let r = env.reference_radius_m.max(1.0);
     let end = env.timeline.last().map(|x| x.to_gyr).unwrap_or(0.0);
     let epoch = epoch_gyr.clamp(0.0, end);
@@ -321,12 +381,13 @@ pub fn history(
     let mut run = Run {
         p,
         d,
-        grid,
+        grid: Grid::new(p.cells_per_face),
         plates: vec![],
         next_id: 0,
         cells: vec![],
         events: vec![],
         draw_i: 0,
+        moved: vec![],
     };
     let plumes: Vec<[f64; 3]> = (0..p.plumes)
         .map(|i| unit(&run.d, 20_000 + i as u64))
@@ -359,8 +420,123 @@ pub fn history(
             )
         })
         .collect();
-    let score: Vec<f64> = run
-        .grid
+    let t0_myr = start.unwrap_or(0.0) * 1000.0;
+    let ids: Vec<u16> = run.plates.iter().map(|x| x.id).collect();
+    run.cells = initial_cells(&run.grid, p, &seeds, &ids, &nuclei, t0_myr);
+    // The fine run, when guided: the same seeds on its own grid. It draws
+    // nothing of its own.
+    let mut fine = fine_p.map(|fp| {
+        let grid = Grid::new(fp.cells_per_face);
+        let cells = initial_cells(&grid, fp, &seeds, &ids, &nuclei, t0_myr);
+        Run {
+            p: fp,
+            d: run.d.clone(),
+            grid,
+            plates: run.plates.clone(),
+            next_id: run.next_id,
+            cells,
+            events: vec![],
+            draw_i: 0,
+            moved: vec![],
+        }
+    });
+    let snap = |x: &Run, t: f64| Snapshot {
+        t_myr: t,
+        plate: x.cells.iter().map(|c| c.plate).collect(),
+        continental: x.cells.iter().map(|c| c.continental).collect(),
+    };
+    let mut snapshots = vec![];
+    let mut steps = 0u32;
+    let shown_every = fine_p.unwrap_or(p).snapshot_every.max(1);
+    if !still {
+        let end_myr = epoch * 1000.0;
+        let mut t = start.expect("start") * 1000.0;
+        snapshots.push(snap(fine.as_ref().unwrap_or(&run), t));
+        let ratio = fine_p.map_or(1, |fp| (m::round(p.step_myr / fp.step_myr) as u32).max(1));
+        // Whole coarse steps, then one shorter step that lands on the epoch
+        // exactly, so the coarse and fine runs end at the same date.
+        while t < end_myr - 1e-9 {
+            let dt = p.step_myr.min(end_myr - t);
+            let t_gyr = t / 1000.0;
+            let t1 = t + dt;
+            if mobile_at(env, t_gyr) {
+                let q = heat_at(env, t_gyr);
+                match fine.as_mut() {
+                    Some(f) => {
+                        let k = (m::ceil(dt / p.step_myr * ratio as f64 - 1e-9) as u32).max(1);
+                        let fdt = dt / k as f64;
+                        f.plates = run.plates.clone();
+                        f.moved = run.plates.clone();
+                        for i in 1..=k {
+                            let (next, _) = drift(f, &plumes, t + fdt * i as f64, fdt);
+                            f.cells = next;
+                            steps += 1;
+                            if i < k && steps.is_multiple_of(shown_every) {
+                                snapshots.push(snap(f, t + fdt * i as f64));
+                            }
+                        }
+                        step_once(&mut run, &plumes, t1, dt, q, r);
+                        pin(f, &run, t1);
+                        if steps.is_multiple_of(shown_every) {
+                            snapshots.push(snap(f, t1));
+                        }
+                    }
+                    None => {
+                        step_once(&mut run, &plumes, t1, dt, q, r);
+                        steps += 1;
+                        if steps.is_multiple_of(shown_every) {
+                            snapshots.push(snap(&run, t1));
+                        }
+                    }
+                }
+            }
+            t = t1;
+        }
+        // The time ruler always ends on the epoch itself.
+        if snapshots.last().is_some_and(|x| x.t_myr < end_myr - 1e-9) {
+            snapshots.push(snap(fine.as_ref().unwrap_or(&run), end_myr));
+        }
+    }
+    let guided_by = fine.as_ref().map(|_| p.cells_per_face);
+    let out = match fine {
+        Some(mut f) => {
+            f.events = std::mem::take(&mut run.events);
+            f
+        }
+        None => run,
+    };
+    let boundaries = if still {
+        vec![[None, None, None]; out.grid.len()]
+    } else {
+        boundaries(&out, r)
+    };
+    PlateHistory {
+        address: env.address.clone(),
+        n: out.p.cells_per_face,
+        epoch_myr: epoch * 1000.0,
+        steps,
+        guided_by,
+        plates: out.plates,
+        plumes,
+        cells: out.cells,
+        events: out.events,
+        snapshots,
+        boundaries,
+    }
+}
+
+/// Every cell of `grid` at the start: its plate from the weighted Voronoi
+/// seeds, continent where the nuclei field is highest.
+fn initial_cells(
+    grid: &Grid,
+    p: &PlateSettings,
+    seeds: &[([f64; 3], f64)],
+    ids: &[u16],
+    nuclei: &[([f64; 3], f64)],
+    t0_myr: f64,
+) -> Vec<Cell> {
+    let nc = grid.len();
+    let score: Vec<f64> = grid
         .dirs
         .iter()
         .map(|v| {
@@ -377,10 +553,9 @@ pub fn history(
     for &c in order.iter().take(ncont) {
         is_cont[c] = true;
     }
-    let t0_myr = start.unwrap_or(0.0) * 1000.0;
-    run.cells = (0..nc)
+    (0..nc)
         .map(|c| {
-            let v = run.grid.dirs[c];
+            let v = grid.dirs[c];
             let pl = seeds
                 .iter()
                 .enumerate()
@@ -392,7 +567,7 @@ pub fn history(
                 .map(|x| x.0)
                 .unwrap_or(0);
             Cell {
-                plate: run.plates[pl].id,
+                plate: ids[pl],
                 continental: is_cont[c],
                 born_myr: t0_myr,
                 thickness_km: if is_cont[c] {
@@ -407,55 +582,103 @@ pub fn history(
                 flood_myr: None,
             }
         })
+        .collect()
+}
+
+/// Pin the fine run to the coarse one at the end of a coarse step (S16:
+/// "the coarser level is a pin for the finer one"). Plates, poles and speeds
+/// are the coarse ones. A fine cell inside a coarse cell whose four
+/// neighbours share its plate and crust kind takes that plate and crust
+/// kind; near a coarse boundary or coast the fine cell keeps what its own
+/// steps made, so belts and coasts get their fine shape but move by at most
+/// one coarse cell. Floods the coarse run stamped are stamped here too.
+fn pin(fine: &mut Run, coarse: &Run, t: f64) {
+    let newborn: Vec<u16> = coarse
+        .plates
+        .iter()
+        .map(|x| x.id)
+        .filter(|id| !fine.plates.iter().any(|y| y.id == *id))
         .collect();
-    let mut snapshots = vec![];
-    let mut steps = 0u32;
-    if !still {
-        let mut t = start.expect("start") * 1000.0;
-        let step = p.step_myr;
-        snapshots.push(Snapshot {
-            t_myr: t,
-            plate: run.cells.iter().map(|c| c.plate).collect(),
-            continental: run.cells.iter().map(|c| c.continental).collect(),
-        });
-        while t + step <= epoch * 1000.0 + 1e-9 {
-            let t_gyr = t / 1000.0;
-            t += step;
-            if !mobile_at(env, t_gyr) {
-                continue;
-            }
-            let q = heat_at(env, t_gyr);
-            step_once(&mut run, &plumes, t, step, q, r);
-            steps += 1;
-            if steps.is_multiple_of(p.snapshot_every.max(1)) {
-                snapshots.push(Snapshot {
-                    t_myr: t,
-                    plate: run.cells.iter().map(|c| c.plate).collect(),
-                    continental: run.cells.iter().map(|c| c.continental).collect(),
-                });
+    fine.plates = coarse.plates.clone();
+    fine.next_id = coarse.next_id;
+    let interior: Vec<bool> = (0..coarse.grid.len())
+        .map(|c| {
+            let a = &coarse.cells[c];
+            coarse.grid.neighbours(c).iter().all(|&n| {
+                coarse.cells[n].plate == a.plate && coarse.cells[n].continental == a.continental
+            })
+        })
+        .collect();
+    let spacing = (m::PI / 2.0) / coarse.grid.n as f64;
+    for i in 0..fine.grid.len() {
+        let pc = coarse.grid.cell_at(fine.grid.dirs[i]);
+        let par = &coarse.cells[pc];
+        let f = &mut fine.cells[i];
+        let alive = coarse.plates.iter().any(|x| x.id == f.plate);
+        if (interior[pc] || newborn.contains(&par.plate) || !alive) && f.plate != par.plate {
+            // The fine run put this material on another plate: the coarse
+            // run's crust is the one that is here.
+            f.plate = par.plate;
+            if f.continental == par.continental {
+                f.born_myr = par.born_myr;
+                f.thickness_km = par.thickness_km;
             }
         }
-    }
-    let boundaries = if still {
-        vec![[None, None, None]; nc]
-    } else {
-        boundaries(&run, r)
-    };
-    PlateHistory {
-        address: env.address.clone(),
-        n: p.cells_per_face,
-        epoch_myr: epoch * 1000.0,
-        steps,
-        plates: run.plates,
-        plumes,
-        cells: run.cells,
-        events: run.events,
-        snapshots,
-        boundaries,
+        // Crust kind from the coarse field around the cell: clear land or
+        // clear sea takes the coarse kind; only the band within about half a
+        // coarse cell of a coarse coast keeps the fine run's own shape.
+        let v = fine.grid.dirs[i];
+        let (mut sw, mut sc) = (0.0, 0.0);
+        for k in std::iter::once(pc).chain(coarse.grid.neighbours(pc)) {
+            let ang = m::sqrt((2.0 * (1.0 - dot(v, coarse.grid.dirs[k]))).max(0.0));
+            let w = (1.5 * spacing - ang).max(0.0);
+            sw += w;
+            if coarse.cells[k].continental {
+                sc += w;
+            }
+        }
+        let land = if sw > 0.0 { sc / sw } else { 0.5 };
+        let kind = if interior[pc] || land >= 0.6 {
+            Some(if interior[pc] { par.continental } else { true })
+        } else if land <= 0.4 {
+            Some(false)
+        } else {
+            None
+        };
+        if let Some(k) = kind {
+            if f.continental != k {
+                f.continental = k;
+                if par.continental == k {
+                    f.thickness_km = par.thickness_km;
+                    f.born_myr = par.born_myr;
+                } else {
+                    let p = fine.p;
+                    f.thickness_km = if k { p.continental_km } else { p.oceanic_km };
+                    f.born_myr = t;
+                }
+            }
+        }
+        if par.flood_myr == Some(t) {
+            f.flood_myr = Some(t);
+        }
     }
 }
 
 fn step_once(run: &mut Run, plumes: &[[f64; 3]], t: f64, dt: f64, q: f64, r: f64) {
+    run.moved = run.plates.clone();
+    let (next, collisions) = drift(run, plumes, t, dt);
+    events(run, next, collisions, plumes, t, dt, q, r);
+}
+
+/// One step of motion: every cell asks each plate where its material came
+/// from; ridges, trenches, arcs and collisions follow; plumes stamp the
+/// cells above them. Draws nothing, so a guided fine run can take it alone.
+fn drift(
+    run: &Run,
+    plumes: &[[f64; 3]],
+    t: f64,
+    dt: f64,
+) -> (Vec<Cell>, BTreeMap<(u16, u16), usize>) {
     let p = run.p;
     let nc = run.grid.len();
     let turns: Vec<(u16, [f64; 3], f64, f64)> = run
@@ -466,10 +689,38 @@ fn step_once(run: &mut Run, plumes: &[[f64; 3]], t: f64, dt: f64, q: f64, r: f64
             (pl.id, pl.pole, m::cos(a), m::sin(a))
         })
         .collect();
-    let prev = run.cells.clone();
+    let prev = &run.cells;
+    // Which plates can claim each cell: turn every cell forward with its own
+    // plate and mark where it lands. A plate claims a cell only if the cell
+    // turned back lands on that plate's ground, and turning is an isometry,
+    // so the claimant's forward mark falls in the cell or one beside it
+    // (diagonals included). Only those plates are tested below.
+    let masks: Option<Vec<u64>> = (turns.len() <= 64).then(|| {
+        let mut hit = vec![0u64; nc];
+        for (c, cell) in prev.iter().enumerate() {
+            if let Some(ti) = turns.iter().position(|x| x.0 == cell.plate) {
+                let (_, k, co, si) = turns[ti];
+                hit[run.grid.cell_at(rotate(run.grid.dirs[c], k, co, -si))] |= 1u64 << ti;
+            }
+        }
+        (0..nc)
+            .map(|c| {
+                let nb = run.grid.neighbours(c);
+                let mut mk = hit[c];
+                for &x in &nb {
+                    mk |= hit[x];
+                }
+                for &x in &[nb[0], nb[1]] {
+                    let n2 = run.grid.neighbours(x);
+                    mk |= hit[n2[2]] | hit[n2[3]];
+                }
+                mk
+            })
+            .collect()
+    });
     // Plate order for convergence: more continent first, then younger ocean.
     let mut stats: BTreeMap<u16, (usize, usize, f64)> = BTreeMap::new();
-    for c in &prev {
+    for c in prev {
         let e = stats.entry(c.plate).or_insert((0, 0, 0.0));
         e.0 += 1;
         if c.continental {
@@ -496,7 +747,10 @@ fn step_once(run: &mut Run, plumes: &[[f64; 3]], t: f64, dt: f64, q: f64, r: f64
     for c in 0..nc {
         let v = run.grid.dirs[c];
         let mut cands: Vec<(u16, usize)> = vec![];
-        for &(id, k, co, si) in &turns {
+        for (ti, &(id, k, co, si)) in turns.iter().enumerate() {
+            if masks.as_ref().is_some_and(|mk| mk[c] & (1u64 << ti) == 0) {
+                continue;
+            }
             let src = run.grid.cell_at(rotate(v, k, co, si));
             if prev[src].plate == id {
                 cands.push((id, src));
@@ -504,11 +758,35 @@ fn step_once(run: &mut Run, plumes: &[[f64; 3]], t: f64, dt: f64, q: f64, r: f64
         }
         let cell = match cands.len() {
             0 => {
-                // The plates pulled apart: new ocean crust at a ridge.
+                // The plates pulled apart: new ocean crust at a ridge. The
+                // ridge stays where the plates' old boundary was, so the crust
+                // here was born when its plate's motion carried it off that
+                // boundary: trace it back along the plate's turn to where it
+                // leaves the plate's old ground. Without this a long step
+                // would date a whole strip of sea floor to the step's end.
+                let own = prev[c].plate;
+                let born = match run.plates.iter().find(|x| x.id == own) {
+                    Some(pl) => {
+                        let a = -pl.rate * dt;
+                        let mut s_out = 1.0;
+                        for k in 1..=BIRTH_SAMPLES {
+                            let s = k as f64 / BIRTH_SAMPLES as f64;
+                            let src =
+                                run.grid
+                                    .cell_at(rotate(v, pl.pole, m::cos(a * s), m::sin(a * s)));
+                            if prev[src].plate != own {
+                                s_out = (k as f64 - 0.5) / BIRTH_SAMPLES as f64;
+                                break;
+                            }
+                        }
+                        t - s_out * dt
+                    }
+                    None => t,
+                };
                 Cell {
-                    plate: prev[c].plate,
+                    plate: own,
                     continental: false,
-                    born_myr: t,
+                    born_myr: born,
                     thickness_km: p.oceanic_km,
                     orogeny: vec![],
                     arc_myr: None,
@@ -590,6 +868,24 @@ fn step_once(run: &mut Run, plumes: &[[f64; 3]], t: f64, dt: f64, q: f64, r: f64
         let c = run.grid.cell_at(*pl);
         push_capped(&mut next[c].volcanic, (t, i as u16), 6);
     }
+    (next, collisions)
+}
+
+/// The step's events, all drawn: floods, sutures and collision turns,
+/// consumed plates, pole jumps and splits.
+#[allow(clippy::too_many_arguments)]
+fn events(
+    run: &mut Run,
+    mut next: Vec<Cell>,
+    collisions: BTreeMap<(u16, u16), usize>,
+    plumes: &[[f64; 3]],
+    t: f64,
+    dt: f64,
+    q: f64,
+    r: f64,
+) {
+    let p = run.p;
+    let nc = run.grid.len();
     // Rare flood eruptions.
     let i = run.next();
     if run.d.unit(60_000 + i) < p.lip_per_gyr * dt / 1000.0 && !plumes.is_empty() {
@@ -764,8 +1060,13 @@ fn step_once(run: &mut Run, plumes: &[[f64; 3]], t: f64, dt: f64, q: f64, r: f64
 
 fn boundaries(run: &Run, r: f64) -> Vec<[Option<Boundary>; 3]> {
     let nc = run.grid.len();
+    let motion = if run.moved.is_empty() {
+        &run.plates
+    } else {
+        &run.moved
+    };
     let vel = |id: u16, x: [f64; 3]| {
-        let pl = run.plates.iter().find(|p| p.id == id);
+        let pl = motion.iter().find(|p| p.id == id);
         match pl {
             Some(p) => {
                 let w = cross(p.pole, x);

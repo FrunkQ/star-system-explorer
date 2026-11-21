@@ -22,15 +22,15 @@
       "contrast_k": 42.10660600254136,
       "deposits": 0,
       "features": {
-        "continent": 3,
+        "continent": 7,
         "deep": 1,
-        "ice-cap": 11,
-        "island": 29,
+        "ice-cap": 16,
+        "island": 20,
         "mine": 20,
         "ocean": 1,
-        "peak": 6,
+        "peak": 17,
         "port": 12,
-        "range": 7,
+        "range": 18,
         "sea": 4,
         "settlement": 40
       },
@@ -41,12 +41,12 @@
         "Sea of Zenorna",
         "Sea of Isis"
       ],
-      "layers": "d6308a1ae97150c98ad5fc94af70019ce3d4391ab532fa3f099ab38cd09e9c79",
-      "register": "da161592e3eac84eb91a3c071981cf92b3e13ff9c0cda2e54d083b8085bd53e2",
+      "layers": "44df6dea612789a83cea3be4b8130310730950ad1a0f33310f68601bba2e82fe",
+      "register": "df10c0757f4831f7b10261a8a86087ba5e1a36a6b5ba2e08c1b09d2a225bea41",
       "tiles": [
-        "aa822d7632a0f8cbce835dbe7faef3f37db9754485d06e414a97685e9df9df64",
-        "bf373b3d270a7fb80a6f7555e6c74e6ace7648db333535fb4c1c7d41fb09cd98",
-        "bfe90b96be16f6caccff995c37567bb70f8a1d07df981fc9ff9c5562bf6f46aa"
+        "6ca943d0884ca15556489acac9d3ef348ed5c5ab9557c3daba69dbc8ac7d5621",
+        "ae69eabd416683e5ef7fda90b7a2a424c46c15c4b8c92850a217c7fa1186e992",
+        "3e8aa58ca7fe66814ab71ada2fde083e43cd5529c2ba8563215845b284d95824"
       ]
     },
     {

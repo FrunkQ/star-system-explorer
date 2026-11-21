@@ -169,9 +169,12 @@ fn replays_bit_identically_and_drifts() {
     let (b, e) = env_of(&s, "Earth");
     let full = history(&s, &e, &seed(), b.age_gyr);
     assert_eq!(full, history(&s, &e, &seed(), b.age_gyr));
-    // A run to an earlier date is a prefix of the full run.
+    // A run to an earlier date is a prefix of the full run, up to its last
+    // whole step (it then takes one shorter step to land on its epoch).
     let early = history(&s, &e, &seed(), 2.1);
-    assert_eq!(full.snapshots[..early.snapshots.len()], early.snapshots[..]);
+    let n = early.snapshots.len() - 1;
+    assert!(n > 10);
+    assert_eq!(full.snapshots[..n], early.snapshots[..n]);
     let last = early.snapshots.last().unwrap();
     assert_eq!(last.t_myr, early.epoch_myr);
     assert_eq!(
@@ -260,4 +263,77 @@ fn a_world_without_plates_keeps_its_sketch_atlas() {
     let a = Atlas::from_plates(&s, &e, &seed(), &h, b.oceans, vec![]);
     assert!(!a.has_plates());
     assert!(a.address.to_string().contains("shell:sketch@"));
+}
+
+#[test]
+fn the_surveyed_world_refines_the_orbit_world() {
+    // S16: the Orbit run (D1) and the surveyed run (D2) are one world. D2
+    // takes D1's plates and dated events and is pinned to it every step.
+    let s = settings();
+    let (b, e) = env_of(&s, "Earth");
+    let mut orbit = s.clone();
+    orbit.plates = guide_settings(&s.plates).expect("the base pack guides the survey");
+    let d1 = history(&orbit, &e, &seed(), b.age_gyr);
+    let d2 = history(&s, &e, &seed(), b.age_gyr);
+    assert_eq!(d1.guided_by, None);
+    assert_eq!(d2.guided_by, Some(d1.n));
+    assert_eq!(d2.events, d1.events);
+    assert_eq!(d2.plates, d1.plates);
+    let (g1, g2) = (grid_for(&d1), grid_for(&d2));
+    // A coarse cell is a coast or plate edge if a neighbour differs.
+    let edge: Vec<bool> = (0..g1.len())
+        .map(|c| {
+            g1.neighbours(c).iter().any(|&n| {
+                d1.cells[n].continental != d1.cells[c].continental
+                    || d1.cells[n].plate != d1.cells[c].plate
+            })
+        })
+        .collect();
+    let mut same = 0usize;
+    let mut frac = vec![(0usize, 0usize); g1.len()];
+    for (i, c) in d2.cells.iter().enumerate() {
+        let j = g1.cell_at(g2.dirs[i]);
+        frac[j].1 += 1;
+        if c.continental {
+            frac[j].0 += 1;
+        }
+        if c.continental == d1.cells[j].continental {
+            same += 1;
+        } else {
+            assert!(
+                edge[j],
+                "fine cell {i} differs from coarse cell {j} away from any coast"
+            );
+        }
+    }
+    let per_cell = same as f64 / d2.cells.len() as f64;
+    let averaged = frac
+        .iter()
+        .zip(&d1.cells)
+        .filter(|(f, c)| (2 * f.0 > f.1) == c.continental)
+        .count() as f64
+        / g1.len() as f64;
+    assert!(
+        per_cell >= 0.95,
+        "land and sea agree on {per_cell:.3} of the fine cells"
+    );
+    assert!(
+        averaged >= 0.95,
+        "averaged back, land and sea agree on {averaged:.3}"
+    );
+    // A free fine run (no guide) is a different world: the reason for S16.
+    let mut free = s.clone();
+    free.plates.guide = None;
+    let f = history(&free, &e, &seed(), b.age_gyr);
+    let free_same = f
+        .cells
+        .iter()
+        .enumerate()
+        .filter(|(i, c)| c.continental == d1.cells[g1.cell_at(g2.dirs[*i])].continental)
+        .count() as f64
+        / f.cells.len() as f64;
+    assert!(
+        free_same < per_cell,
+        "free {free_same:.3} against guided {per_cell:.3}"
+    );
 }

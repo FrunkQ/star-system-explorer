@@ -749,6 +749,39 @@ pub(crate) fn worlds_at(
     })
 }
 
+/// Orbit atlases kept so that reopening a world reuses its plate run.
+pub const ORBIT_CACHE_SIZE: usize = 8;
+
+/// Recent Orbit-level atlases by key, newest last.
+pub(crate) type OrbitCache = Vec<(String, sse_surface::atlas::Atlas)>;
+
+/// The Orbit atlas of one world from the cache, or worked out and kept.
+fn orbit_atlas<'c>(
+    cache: &'c mut OrbitCache,
+    s: &sse_surface::SurfaceSettings,
+    env: &sse_surface::SurfaceEnvelope,
+    seed: &Seed,
+    epoch_gyr: f64,
+    oceans: f64,
+) -> &'c sse_surface::atlas::Atlas {
+    let key = sse_surface::detail::orbit_key(env, seed, epoch_gyr);
+    match cache.iter().position(|(k, _)| *k == key) {
+        Some(i) => {
+            let hit = cache.remove(i);
+            cache.push(hit);
+        }
+        None => {
+            let a = sse_surface::detail::orbit_atlas(s, env, seed, epoch_gyr, oceans);
+            if cache.len() >= ORBIT_CACHE_SIZE {
+                cache.remove(0);
+            }
+            cache.push((key, a));
+        }
+    }
+    &cache[cache.len() - 1].1
+}
+
+#[allow(clippy::too_many_arguments)]
 pub(crate) fn resolved_system(
     ch: &Chronicle,
     seed: &Seed,
@@ -756,6 +789,7 @@ pub(crate) fn resolved_system(
     at_s: Option<i64>,
     tiles: &[TileRequest],
     run: Option<&SystemRun>,
+    orbits: &mut OrbitCache,
 ) -> Result<Resolved, Response> {
     if tiles.len() > MAX_TILES {
         return Err(err(
@@ -788,8 +822,16 @@ pub(crate) fn resolved_system(
             (None, _) => Some("bad tile key".to_string()),
             (_, None) => Some("no surface body at that address".to_string()),
             (Some(key), Some((b, env))) => {
-                let atlas =
-                    sse_surface::atlas::Atlas::new(&s, env, seed, b.age_gyr + shift_gyr, vec![]);
+                // Orbit detail (S16): the coarse plate run, the same world a
+                // survey later refines; reused while it is in the cache.
+                let atlas = orbit_atlas(
+                    orbits,
+                    &s,
+                    env,
+                    seed,
+                    (b.age_gyr + shift_gyr).max(0.0),
+                    b.oceans,
+                );
                 match atlas.tile(key, sse_surface::SurveyState::Surveyed) {
                     Ok(tile) => {
                         out_tiles.push(serde_json::to_value(&tile).expect("plain data"));

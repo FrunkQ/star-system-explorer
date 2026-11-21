@@ -685,8 +685,9 @@ pub enum Request {
     /// `Moon`, ...; no universe needed) or a `body` of an adopted `system`
     /// at `at_s`. `options` is sse-surface's `SurveyOptions` (rotation_hours,
     /// obliquity_deg, life, settle, reshape, names, renames, wind_m_s);
-    /// `tiles` are S1 tiles of this world with S7's layers; `quick` uses a
-    /// coarse plate grid and 32-sample tiles (tests, weak devices). `limit`
+    /// `tiles` are S1 tiles of this world with S7's layers; `quick` is the
+    /// Orbit detail level (S16): the coarse plate run a full survey refines,
+    /// so the same continents, and 32-sample tiles (tests, weak devices). `limit`
     /// caps the features and deposits listed (default 200, 0 for all):
     /// remarkable features first, then the named landscape, then craters by
     /// size; deposits by size. Totals are always given.

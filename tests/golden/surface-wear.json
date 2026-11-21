@@ -4,14 +4,14 @@
     {
       "body": "Earth",
       "epochs": 1,
-      "eroded_m3": 7.758320138756932e+17,
+      "eroded_m3": 7.83256619718967e+17,
       "lakes": 18,
       "rivers": 28,
       "tiles": [
-        "997be033d0c7e2d857b1df8a464747805e2b9dac59355f0da1d056006e5264a0",
-        "1274bc3ca757e81859c32bed400997c4d05435c60a418a7cdbb3f5532580e7df"
+        "69193891051482a334fb159384c1197b5e4049155946e50c2c5f1064321f56e0",
+        "199dfbed1d0b57df3a1dbf476b8dabee9ee2bfb9d91aa4a3a426e12474734f71"
       ],
-      "wear": "0094eaa82fed15d67b88549384cf40eaa1297fec01b420a4311eff42779614e4"
+      "wear": "114856548fd39c87e761e4823a8da112d557a6a865ee3645e113750c6b61867b"
     },
     {
       "body": "Mars",

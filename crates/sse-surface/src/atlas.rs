@@ -265,6 +265,13 @@ pub fn direction(face: u8, u: f64, v: f64) -> [f64; 3] {
 
 /// The face and (u, v) a direction falls on.
 pub fn face_of(d: [f64; 3]) -> (u8, f64, f64) {
+    let (f, a, b) = face_tangents(d);
+    (f, m::atan(a) * 4.0 / m::PI, m::atan(b) * 4.0 / m::PI)
+}
+
+/// The face a direction falls on and its two tangent coordinates (before
+/// the warp `face_of` undoes).
+pub fn face_tangents(d: [f64; 3]) -> (u8, f64, f64) {
     let mut best = 0u8;
     let mut bv = f64::NEG_INFINITY;
     for (i, f) in FACES.iter().enumerate() {
@@ -276,8 +283,11 @@ pub fn face_of(d: [f64; 3]) -> (u8, f64, f64) {
     }
     let (n, r, t) = FACES[best as usize];
     let k = crate::sketch::dot(d, n);
-    let (a, b) = (crate::sketch::dot(d, r) / k, crate::sketch::dot(d, t) / k);
-    (best, m::atan(a) * 4.0 / m::PI, m::atan(b) * 4.0 / m::PI)
+    (
+        best,
+        crate::sketch::dot(d, r) / k,
+        crate::sketch::dot(d, t) / k,
+    )
 }
 
 fn mix(mut z: u64) -> u64 {

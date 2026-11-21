@@ -1,23 +1,23 @@
 {
-  "version": "surface-plates-v1",
+  "version": "surface-plates-v2",
   "worlds": [
     {
       "body": "Earth",
       "events": 369,
-      "history": "e138ffb62aa79f30a4e9ab1e5c11eff3e61721c7c89a79b34f9fca29a608e786",
+      "history": "e0d9f835a199acf954bc07089c3e18207f38dfedd1e3f86b389ca4cc50b91c49",
       "plates": 8,
       "snapshots": 45,
       "steps": 176,
       "tiles": [
-        "7bc557832be86c1b80f7fce76503bfcea9efb98deacc7e46a72acaccfd23ac9d",
-        "4e50a638f366156cf68d3e6eb183713c4666e082f8b596b72434486e0fa61f8b",
-        "e90e25a8c0f7face1967320cae30d807c89fc8bd649598f3cc6bd2b5070b27ed"
+        "e1beb30d581d4aa2692d130d5fcc70706663af9660321d192e2a7140c2751961",
+        "d35b4351ffbfa2e200ed01078c1a954729e911614d00c84486e6ca1a04d3cbaf",
+        "47a3fa951b4e4b16b2ea2e77b269d59e1bc166fbd02a33151abd48125a1cccc4"
       ]
     },
     {
       "body": "Mars",
       "events": 0,
-      "history": "c1c9aa0b77f0feee384c369e46a7e22330c9504e86da235d15116dbb7df563de",
+      "history": "0e34942e767f74ec17d6b5066581a9f463da633d442291d5e68e73377d316be0",
       "plates": 1,
       "snapshots": 0,
       "steps": 0,
@@ -30,7 +30,7 @@
     {
       "body": "Wet super-Earth",
       "events": 0,
-      "history": "4a9ebb5ba436e3f46ec9b14d3154393bbda807558dbf7070ba331d1ead75fcc1",
+      "history": "23738cab9994383184f66d0576f9ebc97d77d316e5316effb749d8e61fe72e00",
       "plates": 1,
       "snapshots": 0,
       "steps": 0,

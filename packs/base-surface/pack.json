@@ -390,7 +390,11 @@
      "continent_base_m": 400.0,
      "airy": 0.18,
      "snapshot_every": 4,
-     "suture_fraction": 0.002
+     "suture_fraction": 0.002,
+     "guide": {
+      "cells_per_face": 32,
+      "step_myr": 25.0
+     }
     },
     "wear": {
      "epoch_myr": 100.0,
