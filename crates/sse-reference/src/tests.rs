@@ -158,6 +158,167 @@ fn the_base_sheet_loads_clean() {
     let m: sse_pack::PackManifest = serde_json::from_str(&s).unwrap();
     let r = Reference::from_packs(&[m]);
     assert!(r.is_ok(), "{:#?}", r.err());
+    // Unedited, the sheet's handle is the compiled constants bit for bit,
+    // which is what keeps every golden the same (MP1c).
+    let h = r.unwrap().handle();
+    for id in sse_core::constants::Constants::IDS {
+        assert_eq!(
+            h.get(id).map(f64::to_bits),
+            sse_core::constants::Constants::REAL
+                .get(id)
+                .map(f64::to_bits),
+            "{id}: sheet {:?}, compiled {:?}",
+            h.get(id),
+            sse_core::constants::Constants::REAL.get(id)
+        );
+    }
+}
+
+fn constants(extra: J) -> J {
+    let mut g = json!({
+        "sources": [{"id": "codata-2018", "text": "CODATA 2018"}],
+        "constants": [
+            {"id": "c", "name": "speed of light", "value": {"v": 299792458.0, "unit": "m s-1", "src": "codata-2018"}},
+            {"id": "h", "name": "Planck constant", "value": {"v": 6.62607015e-34, "unit": "J s", "src": "codata-2018"}},
+            {"id": "k_B", "name": "Boltzmann constant", "value": {"v": 1.380649e-23, "unit": "J K-1", "src": "codata-2018"}},
+            {"id": "sigma_SB", "name": "Stefan-Boltzmann constant", "derived_from": "2 pi^5 k_B^4 / (15 h^3 c^2)",
+             "value": {"v": 5.670374419e-8, "unit": "W m-2 K-4", "src": "codata-2018"}}
+        ]
+    });
+    if let Some(e) = extra.as_array() {
+        g["constants"]
+            .as_array_mut()
+            .unwrap()
+            .extend(e.iter().cloned());
+    }
+    g
+}
+
+#[test]
+fn derived_constants_are_worked_out_and_checked() {
+    let r = Reference::from_json(&[("base".into(), constants(json!([])))]).unwrap();
+    let s = r.constant("sigma_SB").unwrap();
+    assert!((s / 5.670374419e-8 - 1.0).abs() < 1e-9, "{s}");
+    // A typed copy that disagrees is refused.
+    let bad = constants(
+        json!([{"id": "two_c", "name": "x", "derived_from": "2 c", "value": {"v": 6e8, "unit": "m s-1", "src": "codata-2018"}}]),
+    );
+    let e = Reference::from_json(&[("base".into(), bad)]).unwrap_err();
+    assert_eq!(e.len(), 1, "{e:#?}");
+    assert!(e[0].contains("typed as"), "{}", e[0]);
+    // A formula naming an unknown constant is refused.
+    let bad = constants(
+        json!([{"id": "q", "name": "x", "derived_from": "c / zeta", "value": {"v": 1.0, "unit": "1", "src": "codata-2018"}}]),
+    );
+    let e = Reference::from_json(&[("base".into(), bad)]).unwrap_err();
+    assert!(e[0].contains("zeta"), "{e:#?}");
+}
+
+#[test]
+fn halving_h_moves_stefan_boltzmann_by_eight() {
+    // sigma goes as h^-3: halving h multiplies it by 8.
+    let half = json!({"constants": [{"id": "h", "value": {"v": 3.313035075e-34, "unit": "J s", "src": "codata-2018", "replaces": "base"}}]});
+    let r = Reference::from_json(&[
+        ("base".into(), constants(json!([]))),
+        ("what-if".into(), half),
+    ])
+    .unwrap();
+    let s = r.constant("sigma_SB").unwrap();
+    assert!((s / (8.0 * 5.670374419e-8) - 1.0).abs() < 1e-9, "{s}");
+    // The handle follows the edit too.
+    assert_eq!(r.handle().sigma_sb, s);
+    // Unedited, the handle holds the typed copy.
+    let r = Reference::from_json(&[("base".into(), constants(json!([])))]).unwrap();
+    assert_eq!(r.handle().sigma_sb, 5.670374419e-8);
+}
+
+#[test]
+fn formulas_parse_as_written() {
+    let look = |n: &str| match n {
+        "a" => Some(2.0),
+        "b" => Some(3.0),
+        _ => None,
+    };
+    assert_eq!(expr::eval("a b", look).unwrap(), 6.0);
+    assert_eq!(expr::eval("a^b / (a b)", look).unwrap(), 8.0 / 6.0);
+    assert_eq!(expr::eval("-a + 1.5e1", look).unwrap(), 13.0);
+    assert_eq!(expr::eval("a 648000 / b", look).unwrap(), 432000.0);
+    assert!(expr::eval("(a", look).is_err());
+    assert_eq!(
+        expr::names("2 pi^5 k_B^4 / (15 h^3 c^2)"),
+        vec!["c", "h", "k_B"]
+    );
+}
+
+#[test]
+fn checked_by_checks_but_never_works_out() {
+    let g = |extra: J| {
+        let mut b = constants(json!([
+            {"id": "G", "name": "G", "value": {"v": 6.6743e-11, "unit": "m3 kg-1 s-2", "src": "codata-2018"}},
+            {"id": "GM_sun", "name": "GM", "value": {"v": 1.3271244e20, "unit": "m3 s-2", "src": "codata-2018"}},
+            {"id": "M_sun", "name": "Sun", "checked_by": "GM_sun / G", "value": {"v": 1.988409870698051e30, "unit": "kg", "src": "codata-2018"}}
+        ]));
+        if !extra.is_null() {
+            b["constants"].as_array_mut().unwrap().push(extra);
+        }
+        b
+    };
+    assert!(Reference::from_json(&[("base".into(), g(J::Null))]).is_ok());
+    let twice = json!({"constants": [{"id": "G", "value": {"v": 1.33486e-10, "unit": "m3 kg-1 s-2", "src": "codata-2018", "replaces": "base"}}]});
+    let r =
+        Reference::from_json(&[("base".into(), g(J::Null)), ("what-if".into(), twice)]).unwrap();
+    // Doubling G keeps the Sun's mass.
+    assert_eq!(r.constant("M_sun").unwrap(), 1.988409870698051e30);
+    let mut bad = g(J::Null);
+    bad["constants"][6]["value"]["v"] = json!(2.0e30);
+    let e = Reference::from_json(&[("base".into(), bad)]).unwrap_err();
+    assert!(e[0].contains("M_sun"), "{e:#?}");
+}
+
+fn with_units(units: J) -> J {
+    let mut g = constants(json!([
+        {"id": "yr_julian", "name": "Julian year", "value": {"v": 31557600.0, "unit": "s", "src": "codata-2018"}}
+    ]));
+    g["units"] = units;
+    g
+}
+
+#[test]
+fn units_follow_their_constants_and_cannot_be_redefined() {
+    let ly =
+        json!({"id": "ly", "symbol": "ly", "measures": "length", "factor_from": "c yr_julian"});
+    let league = json!({"id": "league", "symbol": "lea", "measures": "length", "factor": {"v": 4828.032, "src": "codata-2018"}});
+    let r = Reference::from_json(&[(
+        "base".into(),
+        with_units(json!([ly.clone(), league.clone()])),
+    )])
+    .unwrap();
+    // The light year agrees with the built-in one, so only the league is new.
+    let added: Vec<String> = r.units().into_iter().map(|u| u.id).collect();
+    assert_eq!(added, vec!["league".to_string()]);
+    assert_eq!(r.unit_factor("ly").unwrap(), 299_792_458.0 * 31_557_600.0);
+    // A kilometre that is not 1000 m is refused.
+    let km = json!({"id": "km", "symbol": "km", "measures": "length", "factor": {"v": 999.0, "src": "codata-2018"}});
+    let e = Reference::from_json(&[("base".into(), with_units(json!([km])))]).unwrap_err();
+    assert!(e[0].contains("redefines the built-in unit"), "{e:#?}");
+    // An unknown dimension is refused.
+    let odd =
+        json!({"id": "smoot", "measures": "charm", "factor": {"v": 1.7018, "src": "codata-2018"}});
+    let e = Reference::from_json(&[("base".into(), with_units(json!([odd])))]).unwrap_err();
+    assert!(e[0].contains("charm"), "{e:#?}");
+    // Halve c in a what-if: the metre stays, the light year follows.
+    let slow = json!({"constants": [{"id": "c", "value": {"v": 149896229.0, "unit": "m s-1", "src": "codata-2018", "replaces": "base"}}]});
+    let r = Reference::from_json(&[
+        ("base".into(), with_units(json!([ly, league]))),
+        ("what-if".into(), slow),
+    ])
+    .unwrap();
+    let ly = r
+        .units()
+        .into_iter()
+        .find(|u| u.id == "ly")
+        .expect("ly follows c");
+    assert_eq!(ly.scale, 149_896_229.0 * 31_557_600.0);
 }
 
 #[test]

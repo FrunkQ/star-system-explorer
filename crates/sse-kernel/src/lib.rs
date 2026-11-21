@@ -601,10 +601,12 @@ impl Kernel {
     }
 
     pub fn handle(&mut self, req: Request) -> Response {
-        match self.dispatch(req) {
+        // MP1c: the stack's constants are in force for the whole call.
+        let c = self.observe.reference.handle();
+        sse_core::constants::with(c, || match self.dispatch(req) {
             Ok(r) => r,
             Err(r) => r,
-        }
+        })
     }
 
     /// Carry out an applied intent: a built-in becomes its kernel request
@@ -1060,6 +1062,51 @@ impl Kernel {
             }
         }
         Ok((state, tags))
+    }
+
+    /// `read_reach` (MP1c): every block of the registry in one of the three
+    /// groups for a change to `constant`.
+    fn read_reach(&self, constant: &str, value: Option<f64>) -> Result<Response, Response> {
+        use sse_atoms::reach::{self, Reach};
+        use sse_core::constants::Constants;
+        let real = Constants::REAL.get(constant).ok_or_else(|| {
+            err(
+                "no_constant",
+                format!(
+                    "{constant} is not a constant blocks read through the handle (they read {})",
+                    Constants::IDS.join(", ")
+                ),
+            )
+        })?;
+        let in_force = self
+            .observe
+            .reference
+            .handle()
+            .get(constant)
+            .unwrap_or(real);
+        let (mut follows, mut estimated, mut cannot) = (vec![], vec![], vec![]);
+        for d in self.atoms.decls() {
+            match reach::of(&d.id) {
+                Some(Reach::Follows(reads)) => follows.push(serde_json::json!({
+                    "block": d.id, "reads": reads, "uses_it": reads.contains(&constant),
+                })),
+                Some(Reach::Estimated { reads, law }) => estimated.push(serde_json::json!({
+                    "block": d.id, "reads": reads, "law": law,
+                })),
+                None => {
+                    cannot.push(serde_json::json!({"block": d.id, "why": reach::CANNOT_FOLLOW}))
+                }
+            }
+        }
+        Ok(Response::Reach {
+            constant: constant.to_string(),
+            real,
+            in_force,
+            proposed: value,
+            follows,
+            estimated,
+            cannot_follow: cannot,
+        })
     }
 
     /// `read_matter` (MP1): one row of the master data sheet with its
@@ -1701,6 +1748,37 @@ impl Kernel {
                                 });
                             }
                         };
+                        // MP1c (design 7A.6): the sheet's units join the
+                        // session's; a pack unit of the same id must agree.
+                        let mut stack = stack;
+                        let standard = sse_core::Units::standard();
+                        let mut clashes = vec![];
+                        for u in observe.reference.units() {
+                            if let Ok(have) = stack.units.get(&u.id) {
+                                let built_in = standard.get(&u.id).is_ok();
+                                if !built_in && (have.scale != u.scale || have.dim != u.dim) {
+                                    clashes.push(format!(
+                                        "unit {} on the master data sheet disagrees with the pack unit of that id",
+                                        u.id
+                                    ));
+                                    continue;
+                                }
+                            }
+                            stack.units.insert(u);
+                        }
+                        if !clashes.is_empty() {
+                            let issues: Vec<sse_pack::StackIssue> = clashes
+                                .iter()
+                                .map(|m| sse_pack::StackIssue {
+                                    pack: "reference".into(),
+                                    message: m.clone(),
+                                })
+                                .collect();
+                            return Ok(Response::StackRejected {
+                                report: sse_pack::report(&issues),
+                                issues: clashes,
+                            });
+                        }
                         let codes = match sse_codes::Codes::load(&ms) {
                             Ok(c) => c,
                             Err(problems) => {
@@ -4148,6 +4226,7 @@ impl Kernel {
                 Response::StarCelled { cell }
             }
             Request::PromoteStar { address } => self.promote_star(&address)?,
+            Request::ReadReach { constant, value } => self.read_reach(&constant, value)?,
             Request::ReadMatter { table, id } => {
                 self.read_matter(table.as_deref(), id.as_deref())?
             }

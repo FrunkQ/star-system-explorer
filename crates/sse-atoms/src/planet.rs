@@ -91,7 +91,7 @@ pub fn atoms() -> Vec<Box<dyn Atom>> {
             formula: "g = G M / R²",
             f: |i, _| {
                 let r = positive(i[1], "radius")?;
-                Ok(vec![G * positive(i[0], "mass")? / (r * r)])
+                Ok(vec![sse_core::constants::g() * positive(i[0], "mass")? / (r * r)])
             },
         }
         .build(),
@@ -108,7 +108,7 @@ pub fn atoms() -> Vec<Box<dyn Atom>> {
             formula: "v = √(2 G M / R)",
             f: |i, _| {
                 let r = positive(i[1], "radius")?;
-                Ok(vec![m::sqrt(2.0 * G * positive(i[0], "mass")? / r)])
+                Ok(vec![m::sqrt(2.0 * sse_core::constants::g() * positive(i[0], "mass")? / r)])
             },
         }
         .build(),

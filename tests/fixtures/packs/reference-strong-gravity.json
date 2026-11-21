@@ -1,0 +1,33 @@
+{
+ "format": "sse.pack/1",
+ "id": "test.strong-gravity",
+ "version": "0.1.0",
+ "kind": [
+  "physics"
+ ],
+ "kernel_range": "^0.1",
+ "licence": "Apache-2.0",
+ "provides": {
+  "reference": {
+   "about": "MP1c fixture: a universe with twice the real G (fictional), for the reach checks.",
+   "sources": [
+    {
+     "id": "what-if",
+     "text": "Fictional: twice CODATA 2018's G, for teaching"
+    }
+   ],
+   "constants": [
+    {
+     "id": "G",
+     "name": "Newtonian constant of gravitation",
+     "value": {
+      "v": 1.33486e-10,
+      "unit": "m3 kg-1 s-2",
+      "src": "what-if",
+      "check": "authored"
+     }
+    }
+   ]
+  }
+ }
+}
