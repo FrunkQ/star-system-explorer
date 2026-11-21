@@ -246,3 +246,104 @@ fn significance_components() {
 fn golden_digest() {
     crate::golden::check("sift.json", &crate::scenario::golden());
 }
+
+/// TG4: a rule's chance is drawn from the universe seed, the address and the
+/// rule id only.
+#[test]
+fn seeded_chance_depends_only_on_seed_address_and_rule() {
+    use crate::rules::{Rule, RuleSet};
+    let rule = |id: &str, chance: f64| -> Rule {
+        serde_json::from_value(serde_json::json!({
+            "id": id, "tag": id.split('.').next().unwrap(), "applies_to": ["body"],
+            "when": {"if": "has", "field": "mass_kg"}, "chance": chance
+        }))
+        .unwrap()
+    };
+    let base = vec![
+        rule("legend.v1", 0.3),
+        rule("rumour.v1", 0.5),
+        rule("never.v1", 0.0),
+        rule("always.v1", 1.0),
+    ];
+    let seed = sse_core::Seed::from_text("tg4");
+    let subjects: Vec<Subject> = (0..500)
+        .map(|n| Subject {
+            address: Some(body(n)),
+            facts: facts(&[("mass_kg", Value::Float(1e24))]),
+            ..Default::default()
+        })
+        .collect();
+    let run = |rules: Vec<Rule>, seed: &sse_core::Seed| -> Vec<BTreeMap<String, TagState>> {
+        let rs = RuleSet { rules };
+        rs.validate().unwrap();
+        subjects
+            .iter()
+            .map(|s| rs.apply_authored(s, &BTreeMap::new(), &BTreeMap::new(), Some(seed)))
+            .collect()
+    };
+    let only = |all: &[BTreeMap<String, TagState>], keep: &[&str]| -> Vec<Vec<String>> {
+        all.iter()
+            .map(|t| {
+                t.keys()
+                    .filter(|k| keep.contains(&k.as_str()))
+                    .cloned()
+                    .collect()
+            })
+            .collect()
+    };
+    let first = run(base.clone(), &seed);
+    // 0 is never, 1 is always.
+    assert!(first
+        .iter()
+        .all(|t| !t.contains_key("never") && t.contains_key("always")));
+    // The odds come through, roughly.
+    let legends = first.iter().filter(|t| t.contains_key("legend")).count();
+    assert!(
+        (110..=190).contains(&legends),
+        "{legends} legends of 500 at 0.3"
+    );
+    // Shuffled rule order, an added rule, a disabled one: no other tag moves.
+    let mut shuffled = base.clone();
+    shuffled.reverse();
+    shuffled.swap(0, 2);
+    let mut added = base.clone();
+    added.insert(1, rule("treasure.v1", 0.4));
+    let without: Vec<Rule> = base
+        .iter()
+        .filter(|r| r.id != "rumour.v1")
+        .cloned()
+        .collect();
+    let keep = ["legend", "never", "always"];
+    let want = only(&first, &keep);
+    assert_eq!(only(&run(shuffled, &seed), &keep), want);
+    assert_eq!(only(&run(added, &seed), &keep), want);
+    assert_eq!(only(&run(without, &seed), &keep), want);
+    assert_eq!(
+        only(&run(base.clone(), &seed), &["rumour"]),
+        only(&first, &["rumour"])
+    );
+    // A different universe rolls differently.
+    assert_ne!(
+        only(
+            &run(base.clone(), &sse_core::Seed::from_text("other")),
+            &keep
+        ),
+        want
+    );
+    // The "Why?" says it was rolled, and at what odds.
+    let hit = first.iter().find_map(|t| t.get("legend")).unwrap();
+    assert!(hit
+        .evidence
+        .iter()
+        .any(|r| r.field == "chance" && r.value == Value::Float(0.3)));
+    assert!(hit.evidence.iter().any(|r| r.field == "mass_kg"));
+    // Odds outside 0..1 are refused.
+    let bad = RuleSet {
+        rules: vec![rule("bad.v1", 1.5)],
+    };
+    assert!(bad.validate().unwrap_err().0.contains("between 0 and 1"));
+    // No seed: nothing to roll, so only certain odds fire.
+    let rs = RuleSet { rules: base };
+    let t = rs.apply_authored(&subjects[0], &BTreeMap::new(), &BTreeMap::new(), None);
+    assert_eq!(t.keys().collect::<Vec<_>>(), vec!["always"]);
+}
