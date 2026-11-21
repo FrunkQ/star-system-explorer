@@ -435,6 +435,7 @@
      "dune_rain": 0.1,
      "dune_pressure_bar": 0.005,
      "fill_epsilon_m": 0.01,
+     "shelf_depth_m": 130.0,
      "dune_slope": 0.0005
     },
     "impacts": {

@@ -125,7 +125,7 @@ fn no_river_runs_uphill_in_a_thousand_worlds() {
         let water = WaterHistory::steady(oceans, 1.0, 1.0);
         // Every tenth world is also worn for 300 Myr.
         let to = if k % 10 == 0 { 300.0 } else { 0.0 };
-        let w = wear(&s, &e, n, &h0, &water, 0.0, to);
+        let w = wear(&s, &e, n, &h0, &water, 0.0, to, k % 20 == 0);
         let h = &w.heights;
         for c in 0..nc as usize {
             // Downhill on the true surface wherever neither end is in a filled basin.
@@ -233,5 +233,37 @@ fn golden_wear() {
         text.replace("\r\n", "\n"),
         want.replace("\r\n", "\n"),
         "golden surface-wear changed"
+    );
+}
+
+/// On a world whose plates move, wear routes water and lays sediment but
+/// keeps the plate history's continents; sediment counts only where it
+/// still lies, and what reaches the sea builds shelves, never islands.
+#[test]
+fn sediment_lies_where_it_was_left_and_shelves_stay_under_water() {
+    let s = settings();
+    let (b, e, h, w) = earth(&s);
+    let h0 = base_heights(&s, &e, &seed(), &h);
+    let sl0 = sea_level(&h0, e.reference_radius_m, b.oceans).expect("a sea");
+    let nc = h0.len();
+    let land0 = (0..nc).filter(|&c| h0[c] >= sl0).count();
+    let land = (0..nc).filter(|&c| w.heights[c] >= 0.0).count();
+    assert!(
+        (land as f64 - land0 as f64).abs() <= 0.02 * land0 as f64,
+        "land kept: {land0} -> {land}"
+    );
+    // No cell that started under the sea is raised above it by sediment.
+    let raised = (0..nc)
+        .filter(|&c| h0[c] < sl0 && w.heights[c] >= 0.0 && w.sediment_m[c] > 10.0)
+        .count();
+    assert!(raised <= nc / 1000, "{raised} sea cells built into land");
+    // Bare land: a cover of sediment on part of it, crystalline rock elsewhere.
+    let covered = (0..nc)
+        .filter(|&c| w.heights[c] >= 0.0 && w.sediment_m[c] > 10.0)
+        .count() as f64
+        / land.max(1) as f64;
+    assert!(
+        (0.15..0.7).contains(&covered),
+        "sediment-covered share of land {covered}"
     );
 }
