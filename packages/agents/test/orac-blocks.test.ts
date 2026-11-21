@@ -8,7 +8,7 @@ import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 import { Session } from "../../ui-contract/src/session.ts";
 import { gmSeat } from "../../ui-contract/src/seat.ts";
-import type { PackDoc } from "../../ui-contract/src/index.ts";
+import { enterFacts, type PackDoc } from "../../ui-contract/src/index.ts";
 import { nodeKernel } from "../../ui-contract/test/node-kernel.ts";
 import { plainWorkspace } from "../../ui-contract/test/workspace.ts";
 import { asker, emptyAgents, type AgentsState } from "../src/agents.ts";
@@ -93,7 +93,22 @@ test("tables: a game table becomes a class scheme; the atlas refuses an unknown 
     assert.match(misfiled.problems[0]!, /filed under scheme physical/);
     const good = await t.check(pull(), made);
     assert.deepEqual(good.problems, []);
-    assert.match(t.summary(good.value!), /^How heavy does it feel to stand there\?: 3 rows \(L, S, H\) over gravity\./);
+    assert.match(t.summary(good.value!), /^How heavy does it feel to stand there\?: 3 rows \(L, S, H\) over gravity\. No body in the campaign has the facts to place yet\./);
+    // Three worlds with gravity facts: the kernel places them under the draft, before anything is stacked.
+    const w = (n: number) => `u:${scene.universe.id}/sys:1/body:${n}`;
+    const facts = [[1, 0.38], [2, 1.0], [3, 2.4]].flatMap(([n, g]) => [
+      { address: w(n!), field: "body.kind", value: "planet" },
+      { address: w(n!), field: "body.surface_gravity", value: g! * 9.80665 },
+    ]);
+    assert.equal(await enterFacts(s, { schema: "sse.authored-facts/0", universe: scene.universe, scope: w(1), at_yr: 0, facts } as never), null);
+    const placed = await t.check(pull(), made);
+    assert.deepEqual(placed.problems, []);
+    assert.match(t.summary(placed.value!), /In the campaign now: light 1, standard 1, heavy 1\./);
+    // A row whose own example disagrees with it goes back in the kernel's words.
+    const flipped = pull();
+    (flipped.classes[0] as Record<string, unknown>).examples = [{ name: "Earth", values: { "body.kind": "planet", "body.surface_gravity": 9.8 }, expect: "in" }];
+    const wrong = await t.check(flipped, made);
+    assert.ok(wrong.problems.some((p) => /mine\.pull\/light: example Earth should be in/.test(p)), wrong.problems.join("; "));
     assert.ok(!s.stack().added.some((p) => p.id === TABLES_PACK), "nothing stacked before accept");
     assert.equal(await t.accept(good.value!), null);
     assert.ok(s.stack().added.some((p) => p.id === TABLES_PACK));
