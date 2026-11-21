@@ -28,3 +28,9 @@ export async function more(page, name) {
   if ((await toggle.getAttribute("aria-expanded")) !== "true") await toggle.click();
   await page.getByRole("group", { name: "More" }).getByRole("button", { name }).click();
 }
+
+/** Choose a desk: "Explore" (look), "Build" (change) or "Run" (the table). A fresh browser opens on Explore. */
+export async function desk(page, name) {
+  const b = page.getByRole("group", { name: "Desk" }).getByRole("button", { name, exact: true });
+  if ((await b.getAttribute("aria-pressed")) !== "true") await b.click();
+}

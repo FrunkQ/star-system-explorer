@@ -10,7 +10,7 @@
 import { spawn } from "node:child_process";
 import { mkdirSync } from "node:fs";
 import assert from "node:assert/strict";
-import { go, more } from "./nav.mjs";
+import { desk, go, more } from "./nav.mjs";
 import { createRequire } from "node:module";
 import { Session } from "../../packages/ui-contract/src/session.ts";
 import { decide, gmSeat, tableSeat } from "../../packages/ui-contract/src/seat.ts";
@@ -73,6 +73,7 @@ try {
     page.on("pageerror", (e) => errors.push(e.message));
     await page.goto(url);
     await page.waitForSelector("[data-state-hash]:not([data-state-hash=''])", { timeout: 20000 });
+    await desk(page, "Build");
     // The campaign opens with its recorded player-facing facts, inked at year 0; count edits after them.
     await page.waitForFunction(() => document.querySelectorAll("[data-event-id]").length > 0);
     const opening = await page.locator("[data-event-id]").count();
@@ -249,6 +250,7 @@ try {
         p.on("pageerror", (e) => errors.push(e.message));
         await p.goto(url);
         await p.waitForSelector("[data-state-hash]:not([data-state-hash=''])", { timeout: 20000 });
+        await desk(p, "Build");
         await p.locator("[role=button][aria-label^='Tarn']").click();
         await p.waitForSelector("section[aria-label='Tarn']");
         if (form === "phone") {

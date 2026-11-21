@@ -7,12 +7,12 @@ import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 import { Session } from "../../ui-contract/src/session.ts";
 import { gmSeat } from "../../ui-contract/src/seat.ts";
-import type { PackDoc } from "../../ui-contract/src/index.ts";
+import { enterFacts, type AuthoredFacts, type PackDoc } from "../../ui-contract/src/index.ts";
 import { nodeKernel } from "../../ui-contract/test/node-kernel.ts";
 import { plainWorkspace } from "../../ui-contract/test/workspace.ts";
 import { asker, emptyAgents, type AgentsState } from "../src/agents.ts";
 import { runOrac } from "../src/orac.ts";
-import { PROGRAMS_PACK, programTarget, ruleEntries } from "../src/orac-rules.ts";
+import { PROGRAMS_PACK, SIFTERS_PACK, programTarget, ruleEntries, sifterEntries, sifterTarget } from "../src/orac-rules.ts";
 // @ts-expect-error plain JS test helper
 import { mockProvider } from "./mock-provider.mjs";
 
@@ -83,6 +83,33 @@ test("Orac drafts a program: an undeclared intent goes back, the fix is offered"
     assert.ok(!s.stack().added.some((x) => x.id === PROGRAMS_PACK), "nothing stacked before accept");
   } finally {
     await p.close();
+    await k.close();
+  }
+});
+
+test("sifters: the kernel runs the draft once, refuses a malformed one; accept stacks the campaign's sifters", async () => {
+  const k = nodeKernel();
+  try {
+    const facts: AuthoredFacts = json("packages/shell/src/documents/kestrel.player-facts.json");
+    const s = await Session.open(k.client, gmSeat(), facts.universe, [base, json("packages/shell/src/documents/kestrel.player-data.pack.json")], k.scratch);
+    assert.equal(await enterFacts(s, facts), null);
+    const t = sifterTarget(s, plainWorkspace(scene.now_yr), facts.scope);
+    const crowded = { id: "mine.crowded", label: "A crowded world", applies_to: ["body"], pattern: { match: "facts", when: { if: "range", field: "settlements.count", min: 2 } }, significance: { persistence: { from: "fixed", s: 3.15576e9 }, reach: { from: "fixed", n: 100 }, reversibility: 0.3 } };
+    const bad = await t.check({ id: "mine.x", label: "x" }, made);
+    assert.ok(bad.problems.length === 1 && bad.problems[0]!.length > 5, "the kernel refuses a sifter with no pattern");
+    const stack0 = s.stack().hash;
+    const good = await t.check(crowded, made);
+    assert.deepEqual(good.problems, []);
+    assert.match(t.summary(good.value!), /^A crowded world: 1 hit in the campaign now/);
+    assert.equal(s.stack().hash, stack0, "running it once stacks nothing");
+    assert.equal(await t.accept(good.value!), null);
+    assert.ok(s.stack().added.some((p) => p.id === SIFTERS_PACK));
+    assert.deepEqual((await t.check(crowded, made)).problems, ["there is already a sifter mine.crowded"]);
+    // The stack's sifter now runs for everyone with no names given (the story finder and Minerva).
+    const r = await s.sift({ scope: facts.scope });
+    assert.ok(r.ok && r.result.hits.some((h) => h.sifter === "mine.crowded"));
+    assert.ok(sifterEntries(s, []).some((e) => e.key === "sifter:mine.crowded"));
+  } finally {
     await k.close();
   }
 });

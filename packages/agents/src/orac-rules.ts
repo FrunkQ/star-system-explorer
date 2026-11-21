@@ -7,7 +7,7 @@
 // refusals, in its own words. Accepting stacks that pack like any pack the
 // GM adds, chronicled as a stack change. Nothing runs until the GM attaches
 // the program to an object whose template lists it.
-import { stackPacks, type PackDoc, type ViewSession, type Workspace } from "../../ui-contract/src/index.ts";
+import { stackPacks, type PackDoc, type SifterDoc, type StoryHit, type ViewSession, type Workspace } from "../../ui-contract/src/index.ts";
 import type { Entry, OracTarget } from "./orac.ts";
 
 /** The pack that carries the campaign's own programs. */
@@ -97,4 +97,54 @@ export function ruleEntries(session: ViewSession): Entry[] {
     ...programs.map((p) => ({ key: `program:${p.id}`, line: `${p.label ?? p.id}${p.explain ? `: ${p.explain}` : ""}`, full: JSON.stringify(p) })),
     ...templates.map((t) => ({ key: `template:${t.id}`, line: `object template ${t.label ?? t.id}`, full: JSON.stringify(t) })),
   ];
+}
+
+/** The pack that carries the campaign's own sifters (the story finder's patterns). */
+export const SIFTERS_PACK = "campaign.sifters";
+
+/**
+ * Sifters (U8, K8): a pattern over facts or events and how much a hit
+ * matters. The check is the kernel's: the draft is run once, inline, by
+ * `sift` over the campaign (GM side, read only), which refuses a malformed
+ * sifter (`bad_sifter`) and says what it finds. Accepting stacks it in the
+ * campaign's sifters pack, so the story finder and Minerva use it from then
+ * on (Minerva only over what her audience is shown).
+ */
+export function sifterTarget(session: ViewSession, ws: Workspace, scope: string): OracTarget<{ doc: SifterDoc; hits: StoryHit[]; added: PackDoc[] }> {
+  return {
+    kind: "sifter",
+    what: "A sifter for the story finder: a pattern over facts (or events) that marks something worth a story, and how much a hit matters. SSE runs it once over the campaign before you see it. Read a shipped one first (need sifter:<id>).",
+    form: [
+      '{"id": "<lower-case.id>", "label": "<what a hit is, in a few words>", "applies_to": ["body" | "star" | ...], "pattern": {"match": "facts", "when": <condition>}, "significance": {"persistence": {"from": "fixed", "s": <seconds it lasts>}, "reach": {"from": "fixed", "n": <how many it touches>}, "reversibility": <0 to 1>}}',
+      CONDITIONS,
+    ].join("\n"),
+    async check(doc) {
+      if (!obj(doc)) return { problems: ["a sifter is one JSON object"] };
+      const d = doc as unknown as SifterDoc;
+      if (typeof d.id !== "string" || !d.id) return { problems: ["a sifter needs an id"] };
+      const taken = packsOf(session).flatMap((p) => ((p.provides?.other as { sifters?: SifterDoc[] } | undefined)?.sifters ?? []).map((x) => x.id));
+      if (taken.includes(d.id)) return { problems: [`there is already a sifter ${d.id}`] };
+      const r = await session.sift({ scope, sifters: [d] });
+      if (!r.ok) return { problems: [r.message] };
+      const st = session.stack();
+      const mine = st.added.find((p) => p.id === SIFTERS_PACK);
+      const list = [...((mine?.provides?.other as { sifters?: SifterDoc[] } | undefined)?.sifters ?? []), d];
+      const pack = { format: "sse.pack/1", id: SIFTERS_PACK, version: bump(mine?.version ?? "0.0.0"), kind: ["game-system"], kernel_range: "^0.1", licence: "Apache-2.0", provides: { other: { sifters: structuredClone(list) } } } as unknown as PackDoc;
+      const added = [...st.added.filter((p) => p.id !== SIFTERS_PACK), pack];
+      const t = await session.trial({ added }, async () => true);
+      if (!t.ok) return { problems: t.issues.length ? t.issues : [t.report] };
+      return { problems: [], value: { doc: d, hits: r.result.hits.filter((h) => h.sifter === d.id), added } };
+    },
+    summary: ({ doc, hits }) => `${doc.label}: ${hits.length ? `${hits.length} ${hits.length === 1 ? "hit" : "hits"} in the campaign now` : "no hits in the campaign yet"}. Accept adds it to the campaign's sifters, for the story finder and Minerva.`,
+    async accept({ added }) {
+      const r = await stackPacks(session, ws, added);
+      return r.status === "applied" ? null : r.status === "refused" ? r.reason : r.status === "error" ? r.message : "waiting for approval";
+    },
+  };
+}
+
+/** Shipped sifters as catalogue entries (the story finder's starters and the stack's). */
+export function sifterEntries(session: ViewSession, starters: readonly SifterDoc[]): Entry[] {
+  const stack = packsOf(session).flatMap((p) => (p.provides?.other as { sifters?: SifterDoc[] } | undefined)?.sifters ?? []);
+  return [...starters, ...stack].map((d) => ({ key: `sifter:${d.id}`, line: d.label, full: JSON.stringify(d) }));
 }

@@ -11,6 +11,7 @@
 import { spawn } from "node:child_process";
 import { mkdirSync, writeFileSync } from "node:fs";
 import assert from "node:assert/strict";
+import { desk } from "./nav.mjs";
 import { createRequire } from "node:module";
 
 const { chromium, firefox, webkit } = createRequire(import.meta.url)("playwright");
@@ -53,7 +54,7 @@ try {
     assert.match(await tarn.getAttribute("aria-label"), /^Tarn/);
     const all = await fields();
     assert.ok(all.length >= 8, `Advanced shows every field (${all.length})`);
-    assert.ok(await gm.getByRole("button", { name: "Undo" }).count(), "Advanced has the undo tool");
+    assert.equal(await gm.getByRole("button", { name: "Undo" }).count(), 0, "the Explore desk has no undo: nothing changes there");
 
     // Basic: three headline facts, the same selection, time and data.
     await choose("basic");
@@ -90,7 +91,8 @@ try {
     assert.equal(await hash(), h0);
     await shot(gm, "u9-through-scanned");
 
-    // Honesty: an authored value keeps its stamp in a lens with evidence stamps off.
+    // Honesty: an authored value keeps its stamp in a lens with evidence stamps off (typed on the Build desk).
+    await desk(gm, "Build");
     await choose("advanced");
     const mass = gm.locator(".area-card .field", { hasText: "Mass" }).locator("input");
     await mass.fill("0.95");
