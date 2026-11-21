@@ -143,6 +143,17 @@ impl WorldClimate {
         self.climate.precip_at(lat * 180.0 / m::PI)
     }
 
+    /// W9: the water a place at `lat_deg` and `height_m` above the datum
+    /// receives (rain, snow, melt, evaporation, runoff, ice balance).
+    pub fn water_at(
+        &self,
+        cs: &sse_climate::ClimateSettings,
+        lat_deg: f64,
+        height_m: f64,
+    ) -> sse_climate::water::WaterSupply {
+        sse_climate::water::water_at(cs, &self.climate, self.lapse_k_km, lat_deg, height_m)
+    }
+
     /// Rain relative to the wettest band, 0 to 1, at a latitude (radians).
     pub fn wetness(&self, lat: f64) -> f64 {
         self.climate.wetness_at(lat * 180.0 / m::PI)
