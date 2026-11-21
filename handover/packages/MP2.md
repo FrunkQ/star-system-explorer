@@ -10,8 +10,25 @@ loader, kernel thread "Build kernel resolve and rules").
 - Done: the four "from memory" gas refractivities in `packs/base-light`. Ammonia (3.76e-4) and neon (6.71e-5,
   the pack rounds to 6.7e-5) match Kaye and Laby through the PDG gas pages. Carbon monoxide and sulphur
   dioxide are still unverified: no page with a value was reached.
-- Waiting: the rows themselves wait for MP1's schema. Values come from `handover/packages/MP0-audit.md`
-  section A's canonical column, and from the pack tables listed in MP0 section C.
+- Done: the first-wave sheet, `packs/base-reference/pack.json`, in the shape agreed with the kernel thread
+  (design section 4; tables under `provides.reference`). Built by `scripts/build-base-reference.py`
+  (`--check` fails if the pack is stale; the script also checks that every `src` names a source in the pack,
+  every formula names an element, every recipe names a substance, and ids are unique).
+  - 48 constants (the 7 SI defining constants, CODATA 2018, units and conventions, the Sun, Earth, Jupiter
+    and Moon; masses derived from IAU GM over G, never typed).
+  - 118 elements: IUPAC 2021 standard atomic weights (conventional values for the 14 interval elements;
+    none for the 34 without a standard weight), Lodders 2021 protosolar abundances for the 81 she lists.
+    `handover/packages/MP2-data/elements.csv` is the input table.
+  - 34 isotopes: the 5 heat producers with today's shares and decay heat (Ruedas 2017), fuels, stable
+    references and dating clocks.
+  - 27 substances: the 13 light gases, the 5 climate condensables and the 26 life species merged by
+    substance (dissolved forms under `chemical.states.dissolved`). No molar mass is typed.
+  - 11 mixtures: dry air, giant air, surface rock, surface ice, magma, and the six formation materials.
+  - 30 sources, each with a DOI or URL; register rows in `docs/citations/matter-reference.md`.
+- Nothing reads the pack yet (MP1 is the reader), so no behaviour or golden changes.
+- Honesty: a value with no `check` was read from its source. `unverified` means the source is named but the
+  number was not read from it in this pass (CODATA's non-exact constants, the NUBASE half-lives beyond the
+  heat producers, most Kaye and Laby refractivities). `authored` is a stand-in in the fudge register.
 
 ## Values that will change when readers move to the sheet
 
@@ -30,3 +47,9 @@ value. Nothing changes until MP3 to MP6 move each reader.
 | standard gravity | 9.81 (14 places) | 9.80665 | exact by definition |
 | gas constant | 8.314 (2 places) | 8.314462618 | exact |
 | neon refractivity | 6.7e-5 | 6.71e-5 | Kaye and Laby via PDG |
+| ammonia triple point | 194.95 K (base-climate) | 195.4 K | 194.95 K is the melting point; NIST's triple point is 195.4 K |
+| dry air molar mass, worked out | 28.9595 g/mol (base-light) | 28.965 g/mol from the USSA 1976 recipe without trace gases | USSA 1976 quotes 28.9644 with its traces |
+| sulphur dioxide molar mass, worked out | 64.066 g/mol (base-light) | 64.058 g/mol | sulphur's 2021 conventional weight is 32.06 (was 32.065) |
+| argon molar mass, worked out | 39.948 g/mol (base-light) | 39.95 g/mol | argon's 2021 conventional weight; the standard weight is an interval |
+| ice density | 930 kg/m3 (sse-surface) | 917 kg/m3 for pure ice Ih; 930 kept as the authored "surface ice" mixture | the round-body calibration uses 930 |
+| other worked-out molar masses | 5 to 7 digits in base-light and base-climate | from formula and IUPAC 2021 weights | all within 6e-5 relative |
