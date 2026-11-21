@@ -45,6 +45,17 @@ sheet is filled, and each sheet row records that check.
 | cgpm1901, cgpm1954 | CGPM resolutions on standard gravity and the standard atmosphere | g0, atm | textbook | exact by definition |
 | fudge-register | docs/fudges.md | authored stand-ins | authored | each authored value says why in the fudge register |
 
+## A3. Where each element was made (origin shares and stories)
+
+| Id | Reference | Relied on | Status | Checked |
+|---|---|---|---|---|
+| kobayashi2020 | Kobayashi, Karakas and Lugaro 2020, ApJ 900, 179. doi:10.3847/1538-4357/abae65 | group statements for C, N, F (about half AGB) and the iron peak (about half Type Ia); the r-process shortfall | verified (text) | arXiv 2008.04660 introduction and abstract read verbatim |
+| johnson-origins | Johnson, J. A., Origin of the Elements in the Solar System (CC BY-SA 4.0). https://www.astronomy.ohio-state.edu/johnson.3064/nucleo/index.html | the six-source legend | verified (page) | page and the SDSS blog post (2017-01-09) read; shares exist only as image areas, no data |
+| bisterzo2014 | Bisterzo, S. et al. 2014, ApJ 787, 10. doi:10.1088/0004-637X/787/1/10 | heavy-element s-process shares | unverified (values) | ar5iv read to the introduction (weak s about 10% of Sr; LEPP about 8% Sr, 18% Y and Zr); the per-element table was not reached; VizieR J/ApJ/787/10 holds it |
+| kasen2017 | Kasen, D. et al. 2017, Nature 551, 80. doi:10.1038/nature24453 | a neutron-star merger making heavy elements, seen once | verified (metadata) | DOI in the RePEc record in search results |
+| abbott2017 | Abbott, B. P. et al. 2017, PRL 119, 161101. doi:10.1103/PhysRevLett.119.161101 | GW170817 | verified (metadata) | ADS 2017PhRvL.119p1101A |
+| fields2020 | Fields, Olive, Yeh and Young 2020, JCAP 03, 010. https://arxiv.org/abs/1912.01132 | primordial helium; the lithium problem | verified (metadata) | arXiv record under that title |
+
 ## B. The four "from memory" gas refractivities
 
 `packs/base-light/pack.json` gases, note: "Ammonia, sulphur dioxide, carbon monoxide and neon: refractivity

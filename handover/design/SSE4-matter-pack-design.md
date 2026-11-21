@@ -238,6 +238,35 @@ Units go on the same sheet, as a page beside Constants. Today about 34 units are
 - **What a changed constant does to units.** The SI units are our fixed measuring stick. Change c in a what-if and the metre stays put, while the light year, which is defined through c, changes length; the page shows that as "follows your change". This is the honest reading of "what if light were slower": everything else is held still.
 - **Display only.** Units never change a result. The kernel works in SI throughout; a unit is how a number is shown and typed.
 
+### 7A.7 Your own units, as a setting (added on Alex's word, 21 Nov 22:35)
+Two things, both display only:
+
+- **Units you define.** On the Units page, "Add a unit" takes a name, a symbol, what it measures and its size in an existing unit ("1 klick = 1 km", "1 jump = 1 parsec", "1 cycle = 28 hours"). It is saved in the campaign pack, can be shared in any pack, and from then on is offered wherever that kind of quantity is shown or typed. It is add-only, as above.
+- **A unit scheme for the campaign.** One setting says which unit each kind of quantity is shown in by default: distances inside a system, distances between stars, mass, temperature, pressure, speed, time spans. SSE4 ships a few schemes (Astronomer's, SI, Everyday, and Traveller's from its pack) and a setting can save its own, mixing built-in units with its own. A lens or a player view may choose a different scheme, so the GM can read kelvin while the crew's console shows the setting's own degrees. Nothing stored changes: the kernel keeps SI, and switching scheme changes no hash.
+
+## 7B. Calendars (added on Alex's question, 21 Nov 22:35: is Reference the place to add calendars, as SSE 3 had?)
+
+**Recommendation: yes, with one condition.** A calendar is a setting's way of counting time, exactly as a unit is its way of counting distance. Neither is a fact about nature and neither ever touches physics. So calendars belong on the Reference screen beside Units, in a second group kept visibly apart from the first:
+
+| Group | Pages | What it is |
+|---|---|---|
+| **Nature** | Constants, Elements, Substances, Mixtures | what the universe gives; real unless marked |
+| **This setting's measures** | Units, Calendars | how this campaign counts and shows things; a convention, shown with the pack it came from |
+
+The honesty marks (real, authored, fictional) stay on the Nature group. A measure only says where it came from: built in, a named pack, or this campaign.
+
+**What exists today.** SSE 3 let the GM make and edit calendars, all tied to one time anchor, with shown time kept apart from actual time. SSE4 keeps the idea underneath: time is seconds from one origin, and a calendar is data that turns those seconds into a date (name, epoch, day length, days in a year, months, weeks, named days, leap rules, a date format). But today a calendar can only arrive inside a pack, only the top pack's calendar is used, and the chart room has no place to see or edit one. (This is from SSE4's code and its V3 parity notes; I did not read the V3 source for this.)
+
+**What the Calendars page adds.**
+
+1. **A list of every calendar the stack offers**, with the pack each came from: Earth's Gregorian calendar, the Traveller pack's Imperial calendar, and any the campaign has made.
+2. **Make and edit one**, saved in the campaign pack. The form is the existing calendar data and nothing more, so anything made here can be shared in a pack.
+3. **Make a calendar from a world.** Pick a body and the page reads its real day (from its spin), its real year (from its orbit) and its moons' months, and proposes a calendar that fits, with the leap rule that keeps it in step. A colony on a world with a 31-hour day and a 502-day year gets a calendar that works, with "Why?" on each figure. The GM then names the months. This is the physics earning its place on the page.
+4. **Several calendars at once.** One is the campaign's and drives the time ruler. Any other can be shown beside it, and a lens or a player view may show a different one, so two cultures can each read the same moment in their own dates. Changing which calendar is shown changes nothing stored.
+5. **One anchor.** Every calendar hangs off the same universe clock. A date is never stored, only the moment. "Today in each calendar" is shown down the page, which also makes the anchor easy to check.
+
+**What does not move.** The time ruler stays where it is and still shows the campaign's calendar. The campaign's "now" stays a record event. Calendars from V3 saves keep importing through the importer's existing `temporal` mapping, and now land where the GM can see and edit them.
+
 ---
 
 ## 8. The Reference screen
@@ -311,6 +340,7 @@ One pull request each, with its evidence packet. Prefix MP. Design is by this th
 | MP10 | **Reference screen.** Constants and Units pages in their three groups; periodic table with the campaign row and five lenses, "where was it made" as the default with cells filled by source share and the one origin legend reused on composition bars and resource cards; origin stories at Curious depth that quote the selected star's own merger and supernova counts; substance browser with phase diagram and world dots, mixtures, edit and reset, "Why?" at three depths; cards open from air, cutaway and resource labels | Rebuild the chart room's top level | MP1, MP2 for reading; MP9 for editing; a mockup first | screenshots at desktop and phone in both GM modes; a `rail` entry and no tab; an edited value shows the real one beside it; "as players see it" shows no fictional or authored mark; keyboard operable |
 | MP11 | **Orac drafts matter.** Element and substance rows from a sentence, by analogy, validated by the kernel before display; default "resource only" | Build Orac, Minerva and Tars | MP9 | an invalid draft never reaches accept; every drafted value names what it was modelled on; nothing changes without accept |
 | MP12 | **Packs and Explorers.** Universe packs may carry matter rows; a "deposit" template for dressing rules; the pack listing says "adds 2 fictional elements, changes 1 real value" | Build Traveller pack (inside TG13), Integrate Explorers site with SSE4 (inside TG15) | MP9, TG12 | one of the two shipped universe packs carries a fictional element and a dressed deposit; the listing shows the counts from the manifest |
+| MP15 | **Measures: your own units, unit schemes and calendars.** "Add a unit" into the campaign pack; unit schemes as pack data with a campaign default and an override per lens and player view; the stack offers every pack's calendar instead of only the top one, with one chosen as the campaign's; the Units and Calendars pages, grouped as "This setting's measures"; make, edit and "make a calendar from this world" | Build kernel resolve and rules (calendar list, schemes, checks), Rebuild the chart room's top level (pages), Build Traveller pack (its scheme; it owns the date formatter) | MP1c; the pack calendar work already on main | a unit added in the campaign pack is offered on every display of that dimension and refused if it redefines an existing unit; switching scheme or shown calendar changes no state hash; two stacked calendars both list, and one moment reads correctly in each; a calendar made from the Earth fixture proposes a 24-hour day, a 365-day year and the Gregorian leap rule to within its stated tolerance, and one made from Mars a 24.66-hour day and a 668.6-day year; a player view set to another calendar shows the same moment as the GM's; a V3 save's custom calendar imports and appears on the page; screenshots at desktop and phone in both GM modes |
 | MP13 | **Data, later waves**, each landing with the stage that reads it: minerals and rock types with hardness (S9), compression curves (interiors), salts (S21, ocean chemistry), organics and tholin (S19), absorption bands per gas (greenhouse) | Verify physics citations, with the reading thread | MP2 | per wave: every value sourced; the reading stage's own checks |
 | MP14 | **Smooth condensation (later).** Formation shares each element by its own condensation curve instead of six steps | Build SSE4 proven core | MP6 | Sol fixture still matches; the six-material fudge is removed from the register |
 
@@ -367,5 +397,12 @@ Alex, 21 Nov 2026, 20:51: "yes to all". Every question below is decided as recom
 11. **Changed constants work as section 7A says: three kinds of block (follows, estimated, cannot follow), a reach report before the change is accepted, and what-if branches as the usual place to try one?** Recommended: yes. It lets people change G and learn something true, and never pretends the tables followed.
 12. **Keep fitted and tuned model numbers off the sheet, in their own packs and the fudge register, linked from "used by"?** Recommended: yes. The sheet stays "what nature gives us"; mixing in our own tuning would blur the line the honesty marks exist to keep.
 13. **Call the screen "Reference" (pages: Constants, Elements, Substances, Mixtures)?** Recommended: yes; "Matter" no longer fits once constants are on it.
+
+### Added 21 Nov 22:35, open with Alex (build to the recommendations until he rules)
+
+14. **Calendars get a page on the Reference screen, grouped with Units as "This setting's measures" and kept apart from the Nature pages?** Recommended: yes. It gives calendars the home SSE 3 had, without blurring "what nature gives" with "how this setting counts".
+15. **Several calendars loaded at once: one is the campaign's, others can be shown beside it or chosen by a lens or a player view?** Recommended: yes. Today only the top pack's calendar exists.
+16. **"Make a calendar from this world": propose day, year, months and leap rule from a body's real spin, orbit and moons?** Recommended: yes. It is cheap, it is real physics, and no other tool does it.
+17. **Unit schemes: one campaign default for which units are shown, with a lens or player view able to choose another?** Recommended: yes.
 
 Synced to `handover/design/` with track MP in the build plan (PR 89, then the rulings in a second PR). Next from this thread: the Reference screen mockup (ruling 9), before MP10 is built.
