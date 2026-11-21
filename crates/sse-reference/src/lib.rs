@@ -56,6 +56,9 @@ pub struct Reference {
     /// Table name to rows by id.
     pub tables: BTreeMap<String, BTreeMap<String, Map<String, J>>>,
     pub sources: BTreeMap<String, Map<String, J>>,
+    /// Where elements were made (design 8.1): source id to its name in the
+    /// three wordings. Element rows point at these from `origin.shares`.
+    pub origin_legend: BTreeMap<String, Map<String, J>>,
     /// The pack each row came from (`table/id`), and the packs that changed it.
     pub origin: BTreeMap<String, Vec<String>>,
 }
@@ -129,10 +132,12 @@ impl Reference {
                 if table == "about" && rows.is_string() {
                     continue;
                 }
-                let known = TABLES.contains(&table.as_str()) || table == "sources";
+                let known = TABLES.contains(&table.as_str())
+                    || table == "sources"
+                    || table == "origin_legend";
                 if !known {
                     problems.push(format!(
-                        "{pack}: reference table {table} is not one of {}, sources",
+                        "{pack}: reference table {table} is not one of {}, sources, origin_legend",
                         TABLES.join(", ")
                     ));
                     continue;
@@ -152,6 +157,10 @@ impl Reference {
                     };
                     if table == "sources" {
                         r.sources.insert(id.to_string(), row.clone());
+                        continue;
+                    }
+                    if table == "origin_legend" {
+                        r.origin_legend.insert(id.to_string(), row.clone());
                         continue;
                     }
                     let key = format!("{table}/{id}");
@@ -224,6 +233,11 @@ impl Reference {
     /// The load checks of design section 4.6.
     fn check(&self) -> Vec<String> {
         let mut p = vec![];
+        // Element origins (design 8.1): shares name legend entries and sum
+        // to 1; every source named resolves.
+        for (id, row) in self.tables.get("elements").into_iter().flatten() {
+            p.extend(self.check_origin(id, row));
+        }
         // Every value names a source.
         for (table, rows) in &self.tables {
             for (id, row) in rows {
@@ -405,6 +419,14 @@ impl Reference {
                 serde_json::json!(self.sources.keys().collect::<Vec<_>>()),
             );
         }
+        // The legend is seven short rows, so it comes whole: the Reference
+        // screen colours elements by it.
+        if table.is_none_or(|x| x == "origin_legend") {
+            out.insert(
+                "origin_legend".into(),
+                serde_json::json!(self.origin_legend),
+            );
+        }
         J::Object(out)
     }
 }
@@ -434,6 +456,47 @@ pub fn vapour_pressure_pa(fit: &J, t: f64) -> Option<f64> {
             Some(p0 * m::exp(-l / R_GAS * (1.0 / t - 1.0 / t0)))
         }
         _ => None,
+    }
+}
+
+impl Reference {
+    fn check_origin(&self, id: &str, row: &Map<String, J>) -> Vec<String> {
+        let mut p = vec![];
+        let Some(o) = row.get("origin").and_then(J::as_object) else {
+            return p;
+        };
+        if let Some(shares) = o.get("shares").and_then(J::as_object) {
+            let mut sum = 0.0;
+            for (k, v) in shares {
+                if !self.origin_legend.contains_key(k) {
+                    p.push(format!(
+                        "element {id}: origin share {k} is not in origin_legend"
+                    ));
+                }
+                match v.as_f64() {
+                    Some(x) if (0.0..=1.0).contains(&x) => sum += x,
+                    _ => p.push(format!("element {id}: origin share {k} is not a fraction")),
+                }
+            }
+            if !shares.is_empty() && (sum - 1.0).abs() > RECIPE_TOL {
+                p.push(format!("element {id}: origin shares sum to {sum}, not 1"));
+            }
+        }
+        let named = o.get("src").and_then(J::as_str).into_iter().chain(
+            o.get("also")
+                .and_then(J::as_array)
+                .into_iter()
+                .flatten()
+                .filter_map(J::as_str),
+        );
+        for s in named {
+            if !self.sources.contains_key(s) {
+                p.push(format!(
+                    "element {id}: origin names source {s}, which is not in sources"
+                ));
+            }
+        }
+        p
     }
 }
 

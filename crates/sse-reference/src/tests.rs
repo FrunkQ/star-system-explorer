@@ -159,3 +159,46 @@ fn the_base_sheet_loads_clean() {
     let r = Reference::from_packs(&[m]);
     assert!(r.is_ok(), "{:#?}", r.err());
 }
+
+#[test]
+fn element_origins_name_the_legend_and_sum_to_one() {
+    let block = |shares: J, also: J| {
+        json!({
+            "sources": [{"id": "k2020", "text": "Kobayashi et al. 2020"}],
+            "origin_legend": [
+                {"id": "massive_stars", "physics": "core collapse", "plain": "exploding massive stars", "story": "giants that blew apart"},
+                {"id": "white_dwarfs", "physics": "Type Ia", "plain": "white dwarfs", "story": "dead stars that detonated"}
+            ],
+            "elements": [{"id": "Fe", "z": 26, "symbol": "Fe",
+                "origin": {"shares": shares, "src": "k2020", "also": also, "check": "authored"}}]
+        })
+    };
+    let good = Reference::from_json(&[(
+        "p".into(),
+        block(
+            json!({"massive_stars": 0.5, "white_dwarfs": 0.5}),
+            json!([]),
+        ),
+    )]);
+    assert!(good.is_ok(), "{:#?}", good.err());
+    let legend = good.unwrap().listing(Some("origin_legend"));
+    assert_eq!(
+        legend["origin_legend"]["white_dwarfs"]["plain"],
+        "white dwarfs"
+    );
+    let bad = Reference::from_json(&[(
+        "p".into(),
+        block(
+            json!({"massive_stars": 0.5, "neutron_stars": 0.3}),
+            json!(["nobody"]),
+        ),
+    )])
+    .unwrap_err();
+    let all = bad.join("\n");
+    assert!(
+        all.contains("neutron_stars is not in origin_legend"),
+        "{all}"
+    );
+    assert!(all.contains("sum to 0.8"), "{all}");
+    assert!(all.contains("source nobody"), "{all}");
+}

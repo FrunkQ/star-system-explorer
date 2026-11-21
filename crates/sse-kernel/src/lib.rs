@@ -1084,11 +1084,12 @@ impl Kernel {
                 })?,
             (t, None) => {
                 if let Some(t) = t {
-                    if !sse_reference::TABLES.contains(&t) && t != "sources" {
+                    if !sse_reference::TABLES.contains(&t) && t != "sources" && t != "origin_legend"
+                    {
                         return Err(err(
                             "no_table",
                             format!(
-                                "the master data sheet has no table {t} (tables: {}, sources)",
+                                "the master data sheet has no table {t} (tables: {}, sources, origin_legend)",
                                 sse_reference::TABLES.join(", ")
                             ),
                         ));
