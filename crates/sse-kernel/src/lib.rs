@@ -898,6 +898,68 @@ impl Kernel {
         })
     }
 
+    /// `promote_star` (Y7a): draw a fill star once and store it whole.
+    fn promote_star(&mut self, address: &str) -> Result<Response, Response> {
+        let u = self.universe()?;
+        let a = in_universe(&u.root, address)?;
+        let state = u.chronicle.state_at(UniverseTime::seconds(i64::MAX));
+        let hash = |c: &Chronicle| c.state_at(UniverseTime::seconds(i64::MAX)).hash().hex();
+        if let Some(Value::Text(t)) = state
+            .facts
+            .get(&a)
+            .and_then(|f| f.get(cosmos::STAR_DESCRIPTION))
+        {
+            let description: serde_json::Value =
+                serde_json::from_str(t).map_err(|e| err("bad_record", format!("{e}")))?;
+            return Ok(Response::StarPromoted {
+                address: a.to_string(),
+                already: true,
+                event_id: None,
+                description,
+                state_hash: hash(&u.chronicle),
+            });
+        }
+        let drawn = cosmos::with_stars(&u.seed, &u.root, None, |st, _| {
+            let s = st
+                .draw_one(&a)
+                .map_err(|e| err("bad_address", e))?
+                .ok_or_else(|| err("not_found", format!("no star system drawn at {a}")))?;
+            Ok(st.promote(&s))
+        })?;
+        let text = serde_json::to_string(&drawn).expect("plain data");
+        let mut f = BTreeMap::new();
+        f.insert(cosmos::STAR_DESCRIPTION.to_string(), Value::Text(text));
+        // Searchable copies; the description is what is read back.
+        f.insert("star.mass_msun".to_string(), Value::Float(drawn.mass_msun));
+        f.insert("star.birth_gyr".to_string(), Value::Float(drawn.birth_gyr));
+        f.insert("star.feh".to_string(), Value::Float(drawn.feh));
+        f.insert(
+            "star.companions".to_string(),
+            Value::Int(drawn.companions.len() as i128),
+        );
+        let e = clock::timeless_set(
+            &u.chronicle,
+            &a,
+            f,
+            Evidence::Resolved,
+            vec![],
+            cosmos::STAR_PIN_KIND,
+            Publisher::new("sse.base-cosmology", "stars", "1"),
+        )
+        .map_err(|e| err("bad_event", e))?;
+        let id = u
+            .chronicle
+            .append(e)
+            .map_err(|e| err("chronicle", format!("{e}")))?;
+        Ok(Response::StarPromoted {
+            address: a.to_string(),
+            already: false,
+            event_id: Some(id.hex()),
+            description: serde_json::to_value(&drawn).expect("plain data"),
+            state_hash: hash(&u.chronicle),
+        })
+    }
+
     /// The `sift` op: the stack's sifters over the campaign, or over one
     /// audience's scene.
     /// `classify_preview`: label the campaign's bodies with a candidate
@@ -3707,6 +3769,17 @@ impl Kernel {
                 })?;
                 Response::HaloCelled { cell }
             }
+            Request::StarCell { cell, t_myr } => {
+                let u = self.universe()?;
+                let pins =
+                    cosmos::star_pins(&u.chronicle.state_at(UniverseTime::seconds(i64::MAX)))?;
+                let elapsed = clock::elapsed_myr(&u.chronicle);
+                let cell = cosmos::with_stars(&u.seed, &u.root, None, |st, now| {
+                    cosmos::star_cell(st, cell, t_myr.unwrap_or(now + elapsed), &pins)
+                })?;
+                Response::StarCelled { cell }
+            }
+            Request::PromoteStar { address } => self.promote_star(&address)?,
             Request::Manifest => {
                 let m = self.universe()?.manifest();
                 Response::Manifest {

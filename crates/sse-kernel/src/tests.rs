@@ -683,11 +683,11 @@ fn adopt_age_and_read_back_a_system() {
         );
         assert!(lo > 0.0 && hi >= lo, "{c}");
         assert!(c["kind"].is_string() && c["address"].is_string(), "{c}");
-        let sphere = c["shape"] == "sphere";
-        assert!(sphere || c["shape"] == "disc", "{c}");
-        assert_eq!(sphere, c["i_sigma_deg"].is_null(), "{c}");
+        let shell = c["shape"] == "shell";
+        assert!(shell || c["shape"] == "disc", "{c}");
+        assert_eq!(shell, c["i_sigma_deg"].is_null(), "{c}");
         if c["kind"] == "oort" {
-            assert!(sphere, "{c}");
+            assert!(shell, "{c}");
         }
     }
     let world = surfaces[0]["address"].as_str().unwrap().to_string();

@@ -1089,6 +1089,26 @@ pub enum Request {
         #[ts(optional)]
         limit: Option<u32>,
     },
+    /// G5 through the kernel (night sky design, Y7a): one 10 pc star cell of
+    /// the campaign's galaxy at `t_myr` (default the campaign's now), its
+    /// fill as today's rules draw it and the campaign's promoted stars read
+    /// back as stored. With no `cell`, the cell at the Sun's radius. Read only.
+    StarCell {
+        #[serde(default)]
+        #[ts(optional)]
+        cell: Option<[i64; 3]>,
+        #[serde(default)]
+        #[ts(optional)]
+        t_myr: Option<f64>,
+    },
+    /// Make a fill star permanent: its whole drawn description (address,
+    /// cell, frame and slot, birth, mass, companions, abundances, orbit) is
+    /// written to the record, so no later change to the fill rules can move
+    /// or change it (Y7a). Promoting a pinned star again writes nothing.
+    /// GM machine only.
+    PromoteStar {
+        address: String,
+    },
 }
 
 /// `adopt`'s formation request: the `run_formation` fields.
@@ -1225,6 +1245,8 @@ impl Request {
             Request::ImportSector { .. } => "import_sector",
             Request::ExportSector { .. } => "export_sector",
             Request::HaloCell { .. } => "halo_cell",
+            Request::StarCell { .. } => "star_cell",
+            Request::PromoteStar { .. } => "promote_star",
         }
     }
 }
@@ -1472,6 +1494,16 @@ pub fn ops() -> Vec<OpInfo> {
             "halo_cell",
             Cost::Medium,
             "one cell's haloes drawn from the mass function, each placed on the web and given a growth history and mergers (about 0.1 to 1 s native)",
+        ),
+        o(
+            "star_cell",
+            Cost::Medium,
+            "grows the campaign's galaxy, then draws one 10 pc cell (tens of systems) with its pins; read only",
+        ),
+        o(
+            "promote_star",
+            Cost::Medium,
+            "GM machine only in a session; draws the star once and stores its whole description in the record",
         ),
     ]
 }
@@ -2150,6 +2182,25 @@ pub enum Response {
     HaloCelled {
         #[ts(type = "unknown")]
         cell: serde_json::Value,
+    },
+    /// `star_cell`: `{galaxy, cell, frame, t_myr, cell_pc, expected, pins,
+    /// systems: [{address, pinned, drawn_in {cell, frame, slot}, mass_msun,
+    /// companions, birth_gyr, feh, xyz_pc, state}], model}`.
+    StarCelled {
+        #[ts(type = "unknown")]
+        cell: serde_json::Value,
+    },
+    /// `promote_star`: the stored description, the event that stored it
+    /// (absent when the star was already pinned) and the state hash.
+    StarPromoted {
+        address: String,
+        already: bool,
+        #[serde(default, skip_serializing_if = "Option::is_none")]
+        #[ts(optional)]
+        event_id: Option<String>,
+        #[ts(type = "unknown")]
+        description: serde_json::Value,
+        state_hash: String,
     },
 }
 
