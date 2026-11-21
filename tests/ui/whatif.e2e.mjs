@@ -8,6 +8,7 @@
 import { spawn } from "node:child_process";
 import { mkdirSync } from "node:fs";
 import assert from "node:assert/strict";
+import { desk } from "./nav.mjs";
 import { createRequire } from "node:module";
 
 const { chromium, firefox, webkit } = createRequire(import.meta.url)("playwright");
@@ -32,6 +33,7 @@ try {
     gm.on("pageerror", (e) => errors.push(e.message));
     await gm.goto(base);
     await gm.waitForSelector("[data-state-hash]:not([data-state-hash=''])", { timeout: 20000 });
+    await desk(gm, "Build");
     const hash = () => gm.locator("[data-state-hash]").getAttribute("data-state-hash");
     const field = (label) => gm.locator(".area-card .field", { has: gm.locator(`label:text-is("${label}")`) });
     const value = async (label) => {

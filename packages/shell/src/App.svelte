@@ -281,21 +281,53 @@
     }
   }
   let mine = $state<Lens[]>(loadMine());
-  let lensId = $state(loadPref("lens") ?? "");
+  // Desks (top-level design 2.3): what the GM is doing. The desk arms the verbs (Build edits, Explore and Run do not) and
+  // picks the lens it opens with; "See as" changes the lens for this desk only, remembered on this device.
+  type Desk = "explore" | "build" | "run";
+  const DESKS: { value: Desk; label: string; key: string; hint: string }[] = [
+    { value: "explore", label: "Explore", key: "V", hint: "Look around: nothing changes by accident (V)" },
+    { value: "build", label: "Build", key: "E", hint: "Change things: values edit, bodies drag, undo and redo (E)" },
+    { value: "run", label: "Run", key: "R", hint: "At the table: what players know, their screens and requests (R)" },
+  ];
+  const DESK_MODE: Record<Desk, "edit" | "view"> = { explore: "view", build: "edit", run: "view" };
+  const deskLensDefault = (d: Desk) => (d === "build" ? "building" : d === "run" ? "running" : defaultLens(session?.device()?.tier));
+  const storedDesk = loadPref("desk");
+  let desk = $state<Desk>(storedDesk === "build" || storedDesk === "run" ? storedDesk : "explore");
+  let deskLens = $state<Partial<Record<Desk, string>>>(((): Partial<Record<Desk, string>> => {
+    try {
+      return JSON.parse(loadPref("desk-lens") ?? "{}") as Partial<Record<Desk, string>>;
+    } catch {
+      return {};
+    }
+  })());
+  const lensId = $derived(deskLens[desk] ?? deskLensDefault(desk));
+  function chooseDesk(d: Desk) {
+    desk = d;
+    savePref("desk", d);
+  }
+  // A system read back from the universe is looked at, never edited in place, whatever the desk.
+  $effect(() => {
+    // The Workshop changes the tool, not the universe, so its screens are always armed.
+    ws.mode = viewing ? "view" : railScale === "workshop" ? "edit" : DESK_MODE[desk];
+  });
   const lenses = $derived.by(() => {
     void ws.revision;
     const s = session;
     const st = s?.stack();
     return allLenses(mine, st ? [...st.base, ...st.added] : [], st ? observeOf(st.base)?.setup : undefined, share?.state.plan);
   });
-  const lens = $derived(lenses.find((l) => l.id === lensId) ?? lenses.find((l) => l.id === defaultLens(session?.device()?.tier))!);
+  const lens = $derived(lenses.find((l) => l.id === lensId) ?? lenses.find((l) => l.id === deskLensDefault(desk)) ?? lenses.find((l) => l.id === defaultLens(session?.device()?.tier))!);
   $effect(() => {
     ws.lens = lens;
   });
   function chooseLens(id: string) {
     if (id === "__make") return void ((lensOpen = true), lensDialog?.showModal());
-    lensId = id;
-    savePref("lens", id);
+    // Choosing the desk's own lens clears the override, so the desk follows its default again.
+    const next = { ...deskLens };
+    if (id === deskLensDefault(desk)) delete next[desk];
+    else next[desk] = id;
+    deskLens = next;
+    savePref("desk-lens", JSON.stringify(next));
   }
   function saveLens(l: Lens) {
     mine = [...mine.filter((x) => x.id !== l.id), l];
@@ -474,7 +506,7 @@
   function showSystem(system: string) {
     const a = adoptedSystems.find((x) => x.system === system);
     ws.select(null);
-    if (a) ((viewing = { ...a, fresh: true }), (ws.mode = "view"));
+    if (a) viewing = { ...a, fresh: true };
     else ((viewing = null), (viewingSpec = null), shiftCampaign(base.now_yr));
     ws.revision++;
   }
@@ -643,9 +675,10 @@
     }
     if (e.ctrlKey || e.metaKey || e.altKey) return;
     const keys: Record<string, () => void> = {
-      e: () => (ws.mode = "edit"),
+      e: () => chooseDesk("build"),
+      r: () => chooseDesk("run"),
       p: () => (ws.screen = ws.screen === "physics" ? "system" : "physics"),
-      v: () => (ws.mode = "view"),
+      v: () => chooseDesk("explore"),
       n: () => (theme = theme === "chart-room" ? "night-chart" : "chart-room"),
       t: () => document.querySelector<HTMLElement>("[role=slider]")?.focus(),
       c: () => document.querySelector<HTMLElement>(".area-chart [role=button][aria-pressed=true], .area-chart [role=button]")?.focus(),
@@ -700,27 +733,21 @@
     </nav>
     <div class="kicker">{scene.subtitle} · {formatYears(ws.now_yr)}</div>
     <div class="spacer"></div>
+    <!-- What (2.3): the desk. Explore looks, Build changes, Run is the table. -->
+    <Segmented label="Desk" value={desk} options={DESKS} onchange={chooseDesk} slide />
     {#if session}
-      <label class="lens" title="Lens: what the chart and cards show (L)">
-        <span class="lens-k">Lens</span>
+      <!-- The desk's own small menu: see the same place through another lens, for this desk only. -->
+      <label class="lens" title="See as: what the chart and cards show at this desk (L)">
+        <span class="lens-k">See as</span>
         <select value={lens.id} onchange={(e) => { chooseLens(e.currentTarget.value); e.currentTarget.value = lens.id; }} aria-label="Lens" data-lens={lens.id}>
           {#each [["shipped", "For the job"], ["mine", "Your own"], ["pack", "From packs"], ["players", "As players see it"]] as [o, group] (o)}
             {@const ls = lenses.filter((x) => x.origin === o)}
-            {#if ls.length}<optgroup label={group}>{#each ls as l (l.id)}<option value={l.id}>{l.label}</option>{/each}</optgroup>{/if}
+            {#if ls.length}<optgroup label={group}>{#each ls as l (l.id)}<option value={l.id}>{l.label}{l.id === deskLensDefault(desk) ? " (this desk)" : ""}</option>{/each}</optgroup>{/if}
           {/each}
           <option value="__make">{lens.origin === "mine" ? "Change this lens…" : "Make your own…"}</option>
         </select>
       </label>
     {/if}
-    <Segmented
-      label="Mode"
-      value={ws.mode}
-      options={[
-        { value: "edit", label: "Edit", key: "E" },
-        { value: "view", label: "View", key: "V" },
-      ]}
-      onchange={(v) => (ws.mode = v)}
-    />
     <!-- Ask (2.5): the agents, promoted from the status line. Tars needs no key. -->
     <button type="button" class="barbtn ask" onclick={() => ((agentsOpen = true), agentsDialog?.showModal())} title="Ask Tars, Orac or Minerva: what can I do here?">Ask</button>
     <div class="more">
@@ -770,12 +797,12 @@
         {#if railScale !== "workshop"}<button type="button" class="door" data-go="workshop" onclick={toWorkshop} title="Physics flows, packs, player screens and data, symbols, styles: everything that changes the tool">Workshop ›</button>{/if}
       </nav>
       {#key ws.screen}
-      <main class="stage" data-screen={ws.screen} data-page={mountFor("card") ? undefined : ""} data-lens={lens.id} data-branch={ws.branch ? "open" : ahead ? "ahead" : undefined}>
+      <main class="stage" data-desk={desk} data-screen={ws.screen} data-page={mountFor("card") ? undefined : ""} data-lens={lens.id} data-branch={ws.branch ? "open" : ahead ? "ahead" : undefined}>
         {#if ws.branch}<div class="branch-stamp" aria-hidden="true">What if · not kept</div>{/if}
         <div class="area-chart">{#if mountFor("chart")}<div class="fill" use:view={mountFor("chart")!}></div>{/if}</div>
         <nav class="tools" aria-label="Tools">
           <ToolButton label="Select" icon="M5 3l14 8-6 2-2 6z" pressed={true} />
-          {#if hasTool(ws.lens, "undo")}<ToolButton label="Undo" icon="M9 14L4 9l5-5M4 9h11a5 5 0 0 1 0 10h-3" keyhint="Control+Z" disabled={ws.undo.length === 0 || ws.mode !== "edit" || !!ws.branch} onclick={() => undo(true)} />
+          {#if hasTool(ws.lens, "undo") && (desk === "build" || ws.branch)}<ToolButton label="Undo" icon="M9 14L4 9l5-5M4 9h11a5 5 0 0 1 0 10h-3" keyhint="Control+Z" disabled={ws.undo.length === 0 || ws.mode !== "edit" || !!ws.branch} onclick={() => undo(true)} />
           <ToolButton label="Redo" icon="M15 14l5-5-5-5M20 9H9a5 5 0 0 0 0 10h3" keyhint="Control+Shift+Z" disabled={ws.redo.length === 0 || ws.mode !== "edit" || !!ws.branch} onclick={() => undo(false)} />{/if}
           <ToolButton label="Keyboard shortcuts" icon="M3 7h18v10H3zM7 11h1M11 11h1M15 11h2M7 14h10" keyhint="?" onclick={() => help?.showModal()} />
         </nav>
@@ -927,13 +954,13 @@
     <dt>[ and ]</dt><dd>Previous or next body</dd>
     <dt>C, T</dt><dd>Go to the chart, go to the time ruler</dd>
     <dt>Page Up, Page Down, Home, End</dt><dd>On the ruler, larger steps</dd>
-    <dt>Drag a body, or Page Up, Page Down on it</dt><dd>Move its orbit out or in (edit mode)</dd>
+    <dt>Drag a body, or Page Up, Page Down on it</dt><dd>Move its orbit out or in (Build desk)</dd>
     <dt>Ctrl+Z, Ctrl+Shift+Z</dt><dd>Undo, redo (each is a new correction on the chart's history)</dd>
     <dt>why?</dt><dd>On any value: where it came from, at three depths (Curious, Science, Engine); "Open the flow" puts its physics on the bench</dd>
     <dt>P</dt><dd>Chart or Physics: the flow editor and change requests</dd>
-    <dt>E, V</dt><dd>Edit or view</dd>
+    <dt>V, E, R</dt><dd>Desk: Explore (look), Build (change), Run (the table)</dd>
     <dt>N</dt><dd>Chart room or Night chart</dd>
-    <dt>L</dt><dd>Next lens: what the chart and cards show for the job in hand (Basic, Advanced, Building, Running, as players see it)</dd>
+    <dt>L</dt><dd>See the desk through the next lens (Basic, Advanced, Building, Running, as players see it)</dd>
   </dl>
   <form method="dialog"><button type="submit">Close</button></form>
 </dialog>
@@ -1557,8 +1584,20 @@
     }
     .lens select {
       width: 100%;
-      max-width: 92px;
+      max-width: 72px;
       height: 44px;
+    }
+    /* The narrowest phones keep the place, the desk and More; "See as" waits for a wider screen. */
+    @media (max-width: 370px) {
+      .lens {
+        display: none;
+      }
+    }
+    /* The desk switch stays whole on a phone (design 4), only tighter. */
+    .bar :global(.seg button) {
+      height: 44px;
+      padding: 0 9px;
+      font-size: 12px;
     }
     .barbtn {
       height: 44px;
