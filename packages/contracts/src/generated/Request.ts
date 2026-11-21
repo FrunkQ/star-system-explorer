@@ -78,4 +78,4 @@ arrives_at_s?: bigint, } | { "op": "set_kept", address: string, kind: string, va
  * pinned to the coded main world, giant and belt counts searched),
  * adopt it, and write the coded facts on the grown main world.
  */
-grow: boolean, at_s: bigint, } | { "op": "export_sector", scope: string, format: string, sheet?: string, at_s: bigint, } | { "op": "halo_cell", cell?: [bigint, bigint, bigint], min_mass_msun?: number, limit?: number, } | { "op": "star_cell", cell?: [bigint, bigint, bigint], t_myr?: number, } | { "op": "promote_star", address: string, } | { "op": "campaign_tags" };
+grow: boolean, at_s: bigint, } | { "op": "export_sector", scope: string, format: string, sheet?: string, at_s: bigint, } | { "op": "halo_cell", cell?: [bigint, bigint, bigint], min_mass_msun?: number, limit?: number, } | { "op": "star_cell", cell?: [bigint, bigint, bigint], t_myr?: number, } | { "op": "promote_star", address: string, } | { "op": "campaign_tags" } | { "op": "dressing", scope: string, at_s?: bigint, } | { "op": "adopt_dressing", candidate: string, name?: string, at_s: bigint, } | { "op": "hold_dressing", candidate: string, held?: boolean, };
