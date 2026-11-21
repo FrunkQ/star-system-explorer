@@ -61,6 +61,12 @@ pub struct Provides {
     /// screens, skins, vocab, catalogues...). Carried and hashed.
     #[serde(default)]
     pub other: BTreeMap<String, Value>,
+    /// The master data sheet (matter pack design, MP1): tables of
+    /// constants, elements, isotopes, substances, mixtures, reactions and
+    /// sources, read by `sse-reference`. Left out when empty, so a pack
+    /// without it hashes as before.
+    #[serde(default, skip_serializing_if = "BTreeMap::is_empty")]
+    pub reference: BTreeMap<String, Value>,
 }
 
 #[derive(Clone, PartialEq, Debug, Serialize, Deserialize)]
