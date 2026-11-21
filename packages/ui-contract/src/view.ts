@@ -100,6 +100,8 @@ export interface Workspace {
   branch?: WhatIf | null;
   /** The GM's lens (H8.6): which layers, card fields and tools show. Never changes data. */
   lens?: Lens;
+  /** How much every card, number and why? says (top-level design 2.4). Presentation only; Science when absent. */
+  depth?: import("./depth.ts").Depth;
   /** The scene the lens looks through, for lenses that show what an audience knows; null while none is needed. */
   lensScene?: PlayerScene | null;
   select(address: string | null): void;

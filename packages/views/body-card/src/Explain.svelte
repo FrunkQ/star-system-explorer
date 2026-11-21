@@ -13,10 +13,13 @@
     label,
     onclose,
     onopenflow,
-  }: { session: ViewSession; why: DeriveRef & { kind: string }; label: string; onclose: () => void; onopenflow?: (node: string) => void } = $props();
+    depth = "curious",
+  }: { depth?: "curious" | "science" | "engine"; session: ViewSession; why: DeriveRef & { kind: string }; label: string; onclose: () => void; onopenflow?: (node: string) => void } = $props();
 
   let trail = $state<{ ref: string; label: string }[]>([]);
-  let lens = $state<"curious" | "science" | "engine">("curious");
+  // Opens at the app's depth (top-level design 2.4); its own tabs still move freely.
+  // svelte-ignore state_referenced_locally
+  let lens = $state<"curious" | "science" | "engine">(depth);
   let result = $state<{ ok: true; explanation: Explanation } | { ok: false; message: string } | null>(null);
   const kind = $derived(trail.length ? trail[trail.length - 1]!.ref : why.kind);
 

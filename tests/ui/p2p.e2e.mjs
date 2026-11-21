@@ -39,7 +39,7 @@ try {
     await gm.goto(base);
     await gm.waitForSelector("[data-state-hash]:not([data-state-hash=''])");
     await chooseDesk(gm, "Build");
-    const gmHash = () => gm.getAttribute(".status [data-state-hash]", "data-state-hash");
+    const gmHash = () => gm.getAttribute("[data-state-hash]", "data-state-hash");
 
     // V10: a session that is not shared shows no seat UI at all.
     assert.equal(await gm.getByRole("button", { name: /seats/i }).count(), 0, "no seat UI before sharing");
@@ -72,7 +72,7 @@ try {
     const before = await gmHash();
     await gm.locator("[role=button][aria-label^='Tarn']").focus();
     await gm.keyboard.press("PageUp");
-    await gm.waitForFunction((h) => document.querySelector(".status [data-state-hash]")?.getAttribute("data-state-hash") !== h, before);
+    await gm.waitForFunction((h) => document.querySelector("[data-state-hash]")?.getAttribute("data-state-hash") !== h, before);
     const after = await gmHash();
     for (const p of [desk, phone]) await p.waitForFunction((h) => document.querySelector("footer[data-state-hash]")?.getAttribute("data-state-hash") === h, after, { timeout: 15000 });
     await shot(phone, "p2p-phone-live");
@@ -90,7 +90,7 @@ try {
     await shot(gm, "p5-gm-request");
     await req.getByRole("button", { name: "Approve" }).click();
     await desk.waitForSelector("[data-own-request='approved']", { timeout: 15000 });
-    await gm.waitForFunction((h) => document.querySelector(".status [data-state-hash]")?.getAttribute("data-state-hash") !== h, after);
+    await gm.waitForFunction((h) => document.querySelector("[data-state-hash]")?.getAttribute("data-state-hash") !== h, after);
     const named = await gmHash();
     let discovered = "";
     let orun = null;
@@ -104,7 +104,7 @@ try {
     await panel.getByRole("button", { name: "Add seat" }).click();
     await panel.locator("[data-seats='2']").waitFor();
     // Adding a fog-of-war seat chronicles its starting view (one event); the table's scene does not change.
-    await gm.waitForFunction((h) => document.querySelector(".status [data-state-hash]")?.getAttribute("data-state-hash") !== h, named);
+    await gm.waitForFunction((h) => document.querySelector("[data-state-hash]")?.getAttribute("data-state-hash") !== h, named);
     const seated = await gmHash();
     const veshLink = await panel.locator("[data-seat-link='empire-vesh']").getAttribute("href");
     assert.match(veshLink, /join=[a-z0-9]+&seat=empire-vesh$/);
@@ -122,7 +122,7 @@ try {
     for (const p of [vesh1, vesh2]) assert.doesNotMatch(await shows(p), /Haven|Vault/, "Vesh starts knowing nothing");
     assert.match(await shows(desk), /Vault/, "the table still sees what everyone has been shown");
     await panel.getByLabel(/Tarn known to Empire: Vesh/).check();
-    await gm.waitForFunction((h) => document.querySelector(".status [data-state-hash]")?.getAttribute("data-state-hash") !== h, seated);
+    await gm.waitForFunction((h) => document.querySelector("[data-state-hash]")?.getAttribute("data-state-hash") !== h, seated);
     discovered = await gmHash();
     for (const p of [vesh1, vesh2, desk, phone]) await p.waitForFunction((h) => document.querySelector("footer[data-state-hash]")?.getAttribute("data-state-hash") === h, discovered, { timeout: 15000 });
     for (const p of [vesh1, vesh2]) {

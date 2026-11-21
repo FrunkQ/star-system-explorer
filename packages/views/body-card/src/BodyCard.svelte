@@ -4,7 +4,7 @@
   derived values are read-only and open the kernel's explanation.
 -->
 <script lang="ts">
-  import { HONESTY_MARKS, asPlayers, cardFacts, cardFor, commitEdit, gmStamps, hasTool, primaryOf, type Json, type PlayerContext, type SceneFact, type SystemScene, type ViewContext, type Vocab } from "../../../ui-contract/src/index.ts";
+  import { CURIOUS_FACTS, HONESTY_MARKS, asPlayers, curiousDisplay, curiousSentence, headline, cardFacts, cardFor, commitEdit, gmStamps, hasTool, primaryOf, type Json, type PlayerContext, type SceneFact, type SystemScene, type ViewContext, type Vocab } from "../../../ui-contract/src/index.ts";
   import PlayerCard from "../../player-stack/src/PlayerCard.svelte";
   import { Card, CardField, Stamp, opensFrom } from "../../../chart-grammar/src/index.ts";
   import { parseFact } from "./parse.ts";
@@ -18,6 +18,15 @@
   const L = $derived(ws.lens);
   const rule = $derived(cardFor(L, subject?.kind ?? "*"));
   const shown = $derived(subject ? cardFacts(rule, subject.facts.filter((f) => f.field !== "name" || ws.mode === "edit")) : []);
+  // Depth (top-level design 2.4): Curious leads with a sentence and four headline facts in words, one tap from the rest;
+  // Science is every value; Engine adds addresses and who published each value. On the Build desk the card keeps every
+  // field it can edit, in the units you type, whatever the depth.
+  const depth = $derived(ws.depth ?? "science");
+  const curious = $derived(depth === "curious" && ws.mode !== "edit");
+  let allFacts = $state(false);
+  const listed = $derived(curious && !allFacts ? headline(shown) : shown);
+  const sentence = $derived(subject && depth === "curious" ? curiousSentence(subject, scene.subjects.find((x) => x.address === subject.parent)?.label) : null);
+  const published = $derived(subject && depth === "engine" ? shown.filter((f) => f.publisher) : []);
   const cols = $derived(rule.density === "full" ? Number(params.columns) : 2);
   // Evidence stamps follow the lens; honesty stamps always show on the GM view.
   const stamps = $derived(subject ? (params.stamps === false ? subject.stamps.filter((k) => HONESTY_MARKS.includes(k)) : gmStamps(L, subject.stamps)) : []);
@@ -37,6 +46,7 @@
   $effect(() => {
     void ws.selection;
     why = null;
+    allFacts = false;
     note = null;
   });
 
@@ -79,11 +89,13 @@
         <p class="as" data-through={L?.id}>{L?.label}{through.subjects.some((x) => x.address === theirs) ? "" : ": not known to them"}</p>
         {#if pctx && through.subjects.some((x) => x.address === theirs)}<div class="theirs"><PlayerCard ctx={pctx} scene={through} /></div>{/if}
       {:else}
+      {#if sentence}<p class="sentence" data-depth="curious">{sentence}</p>{/if}
+      {#if depth === "engine"}<p class="address" data-depth="engine" title="This body's address in the universe">{subject.address}</p>{/if}
       <div class="grid" class:line={rule.density === "line"} style="--cols: {cols}">
-        {#each shown as f (f.field)}
+        {#each listed as f (f.field)}
           <CardField
             label={f.label}
-            display={f.display}
+            display={curious ? curiousDisplay(f) : f.display}
             set={f.source === "authored"}
             derived={f.source === "derived"}
             flagged={f.validity !== undefined && f.validity !== "in-range"}
@@ -95,15 +107,23 @@
           />
           {#if why === f.field}
             {#if f.why}
-              <Explain session={ctx.session} why={f.why} label={f.label} onclose={() => (why = null)} onopenflow={ws.mode === "edit" && hasTool(L, "flows") && ctx.session.seat.authority === "gm" ? (node) => ws.openFlow(f.why!.flow, { node, ref: { flow: f.why!.flow, inputs: f.why!.inputs }, label: `${subject.label} · ${f.label.toLowerCase()}` }) : undefined} />
+              <Explain session={ctx.session} {depth} why={f.why} label={f.label} onclose={() => (why = null)} onopenflow={ws.mode === "edit" && hasTool(L, "flows") && ctx.session.seat.authority === "gm" ? (node) => ws.openFlow(f.why!.flow, { node, ref: { flow: f.why!.flow, inputs: f.why!.inputs }, label: `${subject.label} · ${f.label.toLowerCase()}` }) : undefined} />
             {:else}
               <p class="why" role="note">Why {f.label.toLowerCase()} is {f.display}: {whyText(f)}</p>
             {/if}
           {/if}
         {/each}
       </div>
+      {#if curious && shown.length > CURIOUS_FACTS}
+        <button type="button" class="all" aria-expanded={allFacts} onclick={() => (allFacts = !allFacts)}>{allFacts ? "Fewer facts" : `All ${shown.length} facts ›`}</button>
       {/if}
-      {#if params.prose && rule.density === "full" && subject.prose && !through}<p class="prose">{subject.prose}</p>{/if}
+      {#if published.length}
+        <ul class="published" data-depth="engine" aria-label="Who published each value">
+          {#each published as f (f.field)}<li><span>{f.label}</span> <code>{f.publisher}</code></li>{/each}
+        </ul>
+      {/if}
+      {/if}
+      {#if params.prose && depth !== "curious" && rule.density === "full" && subject.prose && !through}<p class="prose">{subject.prose}</p>{/if}
       {#if note}<p class="note" aria-live="polite">{note}</p>{/if}
     </Card>
   {:else}
@@ -142,6 +162,50 @@
   }
   .grid > :global(.field) {
     border-bottom: var(--sse-line) solid var(--sse-rule);
+  }
+  .sentence {
+    margin: 0;
+    padding: 12px 18px 10px;
+    font-family: var(--sse-font-display);
+    font-size: 16px;
+    line-height: 1.45;
+    border-bottom: var(--sse-line) solid var(--sse-rule);
+  }
+  .address {
+    margin: 0;
+    padding: 8px 18px;
+    font-family: var(--sse-font-mono);
+    font-size: 11px;
+    color: var(--sse-ink-muted);
+    border-bottom: var(--sse-line) solid var(--sse-rule);
+    overflow-wrap: anywhere;
+  }
+  .all {
+    display: block;
+    width: 100%;
+    min-height: 40px;
+    padding: 8px 18px;
+    border: 0;
+    background: transparent;
+    text-align: left;
+    font-family: var(--sse-font-body);
+    font-size: 13px;
+    color: var(--sse-accent-ink);
+    cursor: pointer;
+  }
+  .all:hover {
+    text-decoration: underline;
+  }
+  .published {
+    list-style: none;
+    margin: 0;
+    padding: 8px 18px 10px;
+    font-size: 11px;
+    color: var(--sse-ink-muted);
+  }
+  .published code {
+    font-family: var(--sse-font-mono);
+    overflow-wrap: anywhere;
   }
   .why {
     grid-column: 1 / -1;

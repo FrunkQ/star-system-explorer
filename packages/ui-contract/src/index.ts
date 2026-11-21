@@ -66,6 +66,8 @@ export type { LifeEpoch, LifeEvent, LifeGuild, LifeHook, LifePoint, LifeSignatur
 export { GREGORIAN, calendarOf, checkCalendar, dateOf, epochOf, formatDate, isLong, parseDate, startOf, yearLength } from "./calendar.ts";
 export type { Anchor, Calendar, CalendarDate } from "./calendar.ts";
 export { termsOf, word } from "./words.ts";
+export { DEPTHS, CURIOUS_FACTS, headline, isDepth, roughly, curiousDisplay, curiousSentence } from "./depth.ts";
+export type { Depth } from "./depth.ts";
 export type { Terms } from "./words.ts";
 export { fetchSector, sectorPath } from "./sector-fetch.ts";
 export type { SectorText } from "./sector-fetch.ts";

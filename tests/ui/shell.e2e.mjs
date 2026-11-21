@@ -164,7 +164,7 @@ try {
     const effect = (await request.locator("table.effect tr.moved").allInnerTexts()).map((t) => t.replace(/\s+/g, " ").trim());
     assert.ok(effect.some((t) => t.startsWith("surface temperature")), `effect rows: ${effect}`);
     await request.getByRole("button", { name: "Adopt" }).click();
-    await page.waitForFunction(() => /campaign/.test(document.querySelector("[data-stack-hash]")?.textContent ?? ""));
+    await page.waitForFunction(() => document.querySelector("[data-stack-hash]")?.getAttribute("data-physics") === "campaign");
     await page.waitForFunction((b) => (document.querySelector("[data-kind='planet.surface_temperature'] .val")?.textContent ?? "").trim() !== b, chipBefore);
     const chipAfter = (await surfChip.innerText()).trim();
     // Adopting physics is chronicled (a stack.adopt event), so the state hash moves.
