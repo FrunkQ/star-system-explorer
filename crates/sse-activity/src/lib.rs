@@ -109,6 +109,13 @@ pub struct Settings {
     pub active_latitude_deg: f64,
     /// Most flares listed in one answer; smaller ones are summarised.
     pub max_flares: usize,
+    /// Surface convection blocks' parameters (`sse.convection.*`).
+    pub photosphere_mu: f64,
+    pub granule_factor: f64,
+    pub convective_v_sun: f64,
+    pub granule_life_k: f64,
+    pub supergranule_ratio: f64,
+    pub supergranule_flow_share: f64,
 }
 
 impl Default for Settings {
@@ -142,6 +149,12 @@ impl Default for Settings {
             cme_half_width_deg: 30.0,
             active_latitude_deg: 30.0,
             max_flares: 2000,
+            photosphere_mu: 1.3,
+            granule_factor: 10.0,
+            convective_v_sun: 2000.0,
+            granule_life_k: 0.5,
+            supergranule_ratio: 25.0,
+            supergranule_flow_share: 0.2,
         }
     }
 }
@@ -156,6 +169,24 @@ pub struct Cycle {
 }
 
 /// A star's activity: the fact the rest of the model reads.
+/// Surface convection: granules and supergranules (what the renderer animates,
+/// and the network that spots and flares rise through).
+#[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
+pub struct Convection {
+    pub surface_gravity_m_s2: f64,
+    pub pressure_scale_height_m: f64,
+    pub granule_size_m: f64,
+    pub speed_m_s: f64,
+    pub sound_speed_m_s: f64,
+    pub granule_lifetime_s: f64,
+    pub supergranule_size_m: f64,
+    pub supergranule_lifetime_s: f64,
+    /// Granules across the star's diameter, and supergranules (network cells)
+    /// over its whole surface.
+    pub granules_across: f64,
+    pub network_cells: f64,
+}
+
 #[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
 pub struct Activity {
     pub address: String,
@@ -174,6 +205,10 @@ pub struct Activity {
     pub spot_coverage: f64,
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub cycle: Option<Cycle>,
+    /// The churning surface, if it has one (any body cooler than the
+    /// granulation boundary, remnants included).
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub convection: Option<Convection>,
     pub flares: bool,
     pub why: Vec<String>,
     #[serde(default, skip_serializing_if = "Vec::is_empty")]
@@ -216,6 +251,19 @@ pub fn activity(seed: &Seed, s: &Star, set: &Settings) -> Result<Activity, Strin
         }
     };
     let compact = s.radius_m < set.compact_below_rsun * R_SUN;
+    let convection = surface_convection(s, set);
+    if let Some(c) = &convection {
+        why.push(surface_why(c, s));
+        stand_ins.push("granules are ten pressure scale heights across and live half a crossing time; supergranules 25 granules across with flows a fifth of the granule speed; convective speed from flux with a fixed photospheric opacity (all fitted on the Sun)".into());
+        for x in sse_atoms::convection::atoms()
+            .iter()
+            .flat_map(|a| a.decl().references.clone())
+        {
+            if !refs.contains(&x) {
+                refs.push(x);
+            }
+        }
+    }
     let refs_w11 = || sse_atoms::activity::atoms()[0].decl().references.clone();
     let base =
         |regime: &str, rx: f64, why: Vec<String>, stand_ins: Vec<String>, refs: Vec<Reference>| {
@@ -230,6 +278,7 @@ pub fn activity(seed: &Seed, s: &Star, set: &Settings) -> Result<Activity, Strin
                 xray_w: rx * s.luminosity_w,
                 spot_coverage: 0.0,
                 cycle: None,
+                convection: convection.clone(),
                 flares: false,
                 why,
                 stand_ins,
@@ -328,6 +377,70 @@ pub fn activity(seed: &Seed, s: &Star, set: &Settings) -> Result<Activity, Strin
     a.cycle = cycle;
     a.flares = true;
     Ok(a)
+}
+
+/// Surface convection from the star's own temperature, gravity and size;
+/// `None` above the granulation boundary.
+pub fn surface_convection(s: &Star, set: &Settings) -> Option<Convection> {
+    use sse_atoms::convection as cv;
+    if s.teff_k >= set.convective_below_k {
+        return None;
+    }
+    let g = sse_core::quantity::consts::G * s.mass_kg / (s.radius_m * s.radius_m);
+    let h = sse_atoms::air::scale_height(s.teff_k, set.photosphere_mu * sse_atoms::air::AMU, g);
+    let d = cv::granule_size(h, set.granule_factor);
+    let v = cv::convective_speed(s.teff_k, g, set.convective_v_sun, set.photosphere_mu);
+    let big = d * set.supergranule_ratio;
+    let area = 4.0 * m::PI * s.radius_m * s.radius_m;
+    Some(Convection {
+        surface_gravity_m_s2: g,
+        pressure_scale_height_m: h,
+        granule_size_m: d,
+        speed_m_s: v,
+        sound_speed_m_s: cv::sound_speed(s.teff_k, set.photosphere_mu),
+        granule_lifetime_s: cv::cell_lifetime(d, v, set.granule_life_k),
+        supergranule_size_m: big,
+        supergranule_lifetime_s: cv::cell_lifetime(big, v * set.supergranule_flow_share, 1.0),
+        granules_across: 2.0 * s.radius_m / d,
+        network_cells: area / (big * big),
+    })
+}
+
+fn span(t: f64) -> String {
+    if t < 3600.0 {
+        format!("{:.0} minutes", t / 60.0)
+    } else if t < 2.0 * DAY {
+        format!("{:.0} hours", t / 3600.0)
+    } else if t < 2.0 * JULIAN_YEAR {
+        format!("{:.0} days", t / DAY)
+    } else {
+        format!("{:.1} years", t / JULIAN_YEAR)
+    }
+}
+
+fn length(x: f64) -> String {
+    if x < 1e6 {
+        format!("{:.0} km", x / 1e3)
+    } else if x < 0.1 * R_SUN {
+        format!("{:.0} thousand km", x / 1e6)
+    } else {
+        format!("{:.1} Sun-widths", x / (2.0 * R_SUN))
+    }
+}
+
+fn surface_why(c: &Convection, s: &Star) -> String {
+    let near_sound = c.speed_m_s >= 0.99 * c.sound_speed_m_s;
+    format!(
+        "Its {:.0} K surface boils in granules about {} across, each living about {}{}, about {:.0} across the star; larger cells about {} wide, lasting about {}, sweep its magnetic field into a net of about {:.0} cells.",
+        s.teff_k,
+        length(c.granule_size_m),
+        span(c.granule_lifetime_s),
+        if near_sound { " and churning near the speed of sound" } else { "" },
+        c.granules_across,
+        length(c.supergranule_size_m),
+        span(c.supergranule_lifetime_s),
+        c.network_cells
+    )
 }
 
 /// The activity multiplier at time `t_s` (age): 1 + A sin(2π (t/P + φ)), or 1 without a cycle.

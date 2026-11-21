@@ -1835,6 +1835,76 @@
         "range": null
       },
       {
+        "description": "how long one surface convection cell lasts",
+        "dim": [
+          0,
+          0,
+          1,
+          0,
+          0,
+          0,
+          0
+        ],
+        "id": "convection.cell_lifetime",
+        "range": null
+      },
+      {
+        "description": "diameter of a surface convection cell (granule)",
+        "dim": [
+          1,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0
+        ],
+        "id": "convection.cell_size",
+        "range": null
+      },
+      {
+        "description": "speed of the churning gas near the surface",
+        "dim": [
+          1,
+          0,
+          -1,
+          0,
+          0,
+          0,
+          0
+        ],
+        "id": "convection.speed",
+        "range": null
+      },
+      {
+        "description": "how long one supergranule lasts",
+        "dim": [
+          0,
+          0,
+          1,
+          0,
+          0,
+          0,
+          0
+        ],
+        "id": "convection.supergranule_lifetime",
+        "range": null
+      },
+      {
+        "description": "diameter of the large slow cells that outline the magnetic network",
+        "dim": [
+          1,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0
+        ],
+        "id": "convection.supergranule_size",
+        "range": null
+      },
+      {
         "description": "mass thrown out by an explosion",
         "dim": [
           0,
