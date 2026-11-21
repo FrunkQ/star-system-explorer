@@ -5,7 +5,7 @@ Date 17 Nov 2026. Audience: a coordinating session planning the work, and the bu
 ## 0. Read in this order
 
 1. `SSE4-design-handoff.md` : the architecture, contracts, decisions. The authority.
-2. `SSE4-galaxy-design.md`, `SSE4-life-design.md`, `SSE4-surface-design.md`, `SSE4-classification-design.md`, `SSE4-system-formation-design.md`, `SSE4-sound-design.md`, `SSE4-weather-design.md` `SSE4-nebulae-and-light-design.md` and `SSE4-record-logic-programs-design.md` : the domain designs in detail. `SSE4-top-level-ui-and-onboarding.md` (accepted 21 Nov: the place line, instrument rail, three desks, onboarding, the Explorers library, one campaign clock) and `interface-style.md` (dynamic minimalism, standing) must be read before any U or V package. `SSE4-surfaces-and-rendering.md` is the research report on browser photorealism, hardware scaling and software choices; it is the authority for rendering and must be read before any R or V package.
+2. `SSE4-galaxy-design.md`, `SSE4-life-design.md`, `SSE4-surface-design.md`, `SSE4-classification-design.md`, `SSE4-system-formation-design.md`, `SSE4-sound-design.md`, `SSE4-weather-design.md` `SSE4-nebulae-and-light-design.md` and `SSE4-record-logic-programs-design.md` : the domain designs in detail. `SSE4-top-level-ui-and-onboarding.md` (accepted 21 Nov: the place line, instrument rail, three desks, onboarding, the Explorers library, one campaign clock) and `interface-style.md` (dynamic minimalism, standing) must be read before any U or V package. `SSE4-rock3-comparison.md` (accepted 21 Nov) extends the surface stages; read it before any S package from S2b on. `SSE4-surfaces-and-rendering.md` is the research report on browser photorealism, hardware scaling and software choices; it is the authority for rendering and must be read before any R or V package.
 3. The "SSE4 mockups" canvas : every screen. Chart room board is the reference for the GM look.
 4. "SSE4 decisions for Alex" : the reasoning trail, if a decision seems odd.
 5. On Alex's machine under `C:\Development`: the V3 source (for parity and import), `ovid-next` (agent system to reuse), `evolution-lab` and `evolution-lab-design` (contracts, UI components, experiments).
@@ -114,6 +114,17 @@ Tracks can run in parallel once their dependencies are met. `needs` lists packag
 ### G: cosmos suite. Stages G0 to G8 exactly as galaxy document section 12, one package each. G0 early (needs K7); G1 needs K4; then in order.
 
 ### S and R: surfaces and rendering. Stages S0 to S13 and R1 to R4 exactly as `SSE4-surface-design.md` section 9 (merged with the research report `SSE4-surfaces-and-rendering.md`), one package each, with the dependencies listed there. Renderer base is three.js `WebGPURenderer` with a WebGL2 fallback.
+
+**Surface additions [accepted 21 Nov]**: stages S16a, S16b, S2b, S14a, S14b, S15a, S15b and S8a, and the extended S9 and S10, exactly as `SSE4-rock3-comparison.md` section 8. Its section 7 rulings bind them. Build order:
+1. S16a, the detail levels D0 and D1. It comes first, because every later stage runs inside it and it removes the mismatch between the sketch globe and the surveyed globe.
+2. S14a lava tubes.
+3. S15a impactor provenance.
+4. S2b tectonics, with S16b (the guided fine run).
+5. S9 strata with hardness-aware wear, with S15b.
+6. S14b karst and other caves.
+7. S10 flourishes with lifespans.
+
+S8a (map export) can go at any time. Alex's rule binds every surface stage: "best calc is NO calc". Reuse any existing result first (this device, then the GM or a peer, then a pack). Raise the detail level only on approach, stay or an explicit request. A world that only gets a click never costs a full run. Climate catch-up (W7: land and sea, local albedo, current rules, retrograde winds, ice ages) belongs to the weather track.
 
 ### L: life suite. Stages L0, L1a, L1b, L1c, L1d, L2, L2b exactly as life document section 14, one package each. L0 needs K10 and P4; L1a needs P1; L2 needs T1.
 
