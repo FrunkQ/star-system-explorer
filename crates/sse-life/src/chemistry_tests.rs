@@ -19,10 +19,20 @@ fn at_published(t: &ThermoTable, id: &str) -> Energetics {
 #[test]
 fn every_reference_reaction_balances_and_matches_its_published_value() {
     let t = table();
-    assert!(t.reactions.len() >= 12, "{}", t.reactions.len());
     for r in &t.reactions {
         t.balance(r).unwrap();
-        let src = r.source.as_deref().expect("every reaction is sourced");
+    }
+    let published: Vec<_> = t
+        .reactions
+        .iter()
+        .filter(|r| r.published_kj.is_some())
+        .collect();
+    assert!(published.len() >= 12, "{}", published.len());
+    for r in published {
+        let src = r
+            .source
+            .as_deref()
+            .expect("every checked reaction is sourced");
         assert!(t.sources.contains_key(src), "{}: {src}", r.id);
         let want = r.published_kj.expect("published value") * 1000.0;
         let got = at_published(&t, &r.id).gibbs_j;

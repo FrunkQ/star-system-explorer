@@ -18,6 +18,7 @@ pub mod biosphere;
 pub mod budget;
 pub mod chemistry;
 pub mod feedback;
+pub mod gradients;
 pub mod habitat;
 pub mod history;
 pub mod scenario;
@@ -237,6 +238,8 @@ mod budget_tests;
 mod chemistry_tests;
 #[cfg(test)]
 mod feedback_tests;
+#[cfg(test)]
+mod gradients_tests;
 #[cfg(test)]
 mod history_tests;
 #[cfg(test)]
