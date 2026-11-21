@@ -14,6 +14,7 @@
     {
      "id": "c",
      "name": "speed of light in vacuum",
+     "group": "nature",
      "value": {
       "v": 299792458.0,
       "unit": "m s-1",
@@ -24,6 +25,7 @@
     {
      "id": "h",
      "name": "Planck constant",
+     "group": "nature",
      "value": {
       "v": 6.62607015e-34,
       "unit": "J s",
@@ -34,6 +36,7 @@
     {
      "id": "hbar",
      "name": "reduced Planck constant",
+     "group": "nature",
      "value": {
       "v": 1.054571817e-34,
       "unit": "J s",
@@ -45,6 +48,7 @@
     {
      "id": "e",
      "name": "elementary charge",
+     "group": "nature",
      "value": {
       "v": 1.602176634e-19,
       "unit": "C",
@@ -55,6 +59,7 @@
     {
      "id": "k_B",
      "name": "Boltzmann constant",
+     "group": "nature",
      "value": {
       "v": 1.380649e-23,
       "unit": "J K-1",
@@ -65,6 +70,7 @@
     {
      "id": "N_A",
      "name": "Avogadro constant",
+     "group": "nature",
      "value": {
       "v": 6.02214076e+23,
       "unit": "mol-1",
@@ -75,6 +81,7 @@
     {
      "id": "R_gas",
      "name": "molar gas constant",
+     "group": "nature",
      "value": {
       "v": 8.31446261815324,
       "unit": "J mol-1 K-1",
@@ -85,6 +92,7 @@
     {
      "id": "sigma_SB",
      "name": "Stefan-Boltzmann constant",
+     "group": "nature",
      "value": {
       "v": 5.670374419e-08,
       "unit": "W m-2 K-4",
@@ -96,6 +104,7 @@
     {
      "id": "a_rad",
      "name": "radiation density constant",
+     "group": "nature",
      "value": {
       "v": 7.565733250280007e-16,
       "unit": "J m-3 K-4",
@@ -106,6 +115,7 @@
     {
      "id": "G",
      "name": "Newtonian constant of gravitation",
+     "group": "nature",
      "value": {
       "v": 6.6743e-11,
       "unit": "m3 kg-1 s-2",
@@ -117,6 +127,7 @@
     {
      "id": "m_e",
      "name": "electron mass",
+     "group": "nature",
      "value": {
       "v": 9.1093837015e-31,
       "unit": "kg",
@@ -127,6 +138,7 @@
     {
      "id": "m_p",
      "name": "proton mass",
+     "group": "nature",
      "value": {
       "v": 1.67262192369e-27,
       "unit": "kg",
@@ -137,6 +149,7 @@
     {
      "id": "m_n",
      "name": "neutron mass",
+     "group": "nature",
      "value": {
       "v": 1.67492749804e-27,
       "unit": "kg",
@@ -147,6 +160,7 @@
     {
      "id": "m_u",
      "name": "atomic mass constant",
+     "group": "nature",
      "value": {
       "v": 1.6605390666e-27,
       "unit": "kg",
@@ -157,6 +171,7 @@
     {
      "id": "alpha",
      "name": "fine-structure constant",
+     "group": "nature",
      "value": {
       "v": 0.0072973525693,
       "unit": "1",
@@ -167,6 +182,7 @@
     {
      "id": "eps0",
      "name": "vacuum electric permittivity",
+     "group": "nature",
      "value": {
       "v": 8.8541878128e-12,
       "unit": "F m-1",
@@ -177,6 +193,7 @@
     {
      "id": "mu0",
      "name": "vacuum magnetic permeability",
+     "group": "nature",
      "value": {
       "v": 1.25663706212e-06,
       "unit": "N A-2",
@@ -187,6 +204,7 @@
     {
      "id": "R_inf",
      "name": "Rydberg constant",
+     "group": "nature",
      "value": {
       "v": 10973731.56816,
       "unit": "m-1",
@@ -197,6 +215,7 @@
     {
      "id": "a0",
      "name": "Bohr radius",
+     "group": "nature",
      "value": {
       "v": 5.29177210903e-11,
       "unit": "m",
@@ -207,6 +226,7 @@
     {
      "id": "sigma_T",
      "name": "Thomson cross section",
+     "group": "nature",
      "value": {
       "v": 6.6524587321e-29,
       "unit": "m2",
@@ -217,6 +237,7 @@
     {
      "id": "b_wien",
      "name": "Wien wavelength displacement constant",
+     "group": "nature",
      "value": {
       "v": 0.002897771955,
       "unit": "m K",
@@ -227,6 +248,7 @@
     {
      "id": "au",
      "name": "astronomical unit",
+     "group": "convention",
      "value": {
       "v": 149597870700.0,
       "unit": "m",
@@ -238,6 +260,7 @@
     {
      "id": "pc",
      "name": "parsec",
+     "group": "factor",
      "value": {
       "v": 3.085677581491367e+16,
       "unit": "m",
@@ -249,6 +272,7 @@
     {
      "id": "yr_julian",
      "name": "Julian year",
+     "group": "convention",
      "value": {
       "v": 31557600.0,
       "unit": "s",
@@ -260,6 +284,7 @@
     {
      "id": "ly",
      "name": "light year",
+     "group": "factor",
      "value": {
       "v": 9460730472580800.0,
       "unit": "m",
@@ -271,6 +296,7 @@
     {
      "id": "day",
      "name": "day",
+     "group": "convention",
      "value": {
       "v": 86400.0,
       "unit": "s",
@@ -281,6 +307,7 @@
     {
      "id": "atm",
      "name": "standard atmosphere",
+     "group": "convention",
      "value": {
       "v": 101325.0,
       "unit": "Pa",
@@ -292,6 +319,7 @@
     {
      "id": "g0",
      "name": "standard acceleration of gravity",
+     "group": "convention",
      "value": {
       "v": 9.80665,
       "unit": "m s-2",
@@ -303,6 +331,7 @@
     {
      "id": "T0C",
      "name": "zero degrees Celsius",
+     "group": "convention",
      "value": {
       "v": 273.15,
       "unit": "K",
@@ -313,6 +342,7 @@
     {
      "id": "GM_sun",
      "name": "nominal solar mass parameter",
+     "group": "convention",
      "value": {
       "v": 1.3271244e+20,
       "unit": "m3 s-2",
@@ -323,6 +353,7 @@
     {
      "id": "M_sun",
      "name": "solar mass",
+     "group": "nature",
      "value": {
       "v": 1.988409870698051e+30,
       "unit": "kg",
@@ -333,6 +364,7 @@
     {
      "id": "R_sun",
      "name": "nominal solar radius",
+     "group": "convention",
      "value": {
       "v": 695700000.0,
       "unit": "m",
@@ -343,6 +375,7 @@
     {
      "id": "L_sun",
      "name": "nominal solar luminosity",
+     "group": "convention",
      "value": {
       "v": 3.828e+26,
       "unit": "W",
@@ -353,6 +386,7 @@
     {
      "id": "T_sun",
      "name": "nominal solar effective temperature",
+     "group": "convention",
      "value": {
       "v": 5772.0,
       "unit": "K",
@@ -363,6 +397,7 @@
     {
      "id": "S_sun",
      "name": "nominal total solar irradiance",
+     "group": "convention",
      "value": {
       "v": 1361.0,
       "unit": "W m-2",
@@ -373,6 +408,7 @@
     {
      "id": "GM_earth",
      "name": "nominal Earth mass parameter",
+     "group": "convention",
      "value": {
       "v": 398600400000000.0,
       "unit": "m3 s-2",
@@ -383,6 +419,7 @@
     {
      "id": "M_earth",
      "name": "Earth mass",
+     "group": "nature",
      "value": {
       "v": 5.972167867791379e+24,
       "unit": "kg",
@@ -393,6 +430,7 @@
     {
      "id": "R_earth_equatorial",
      "name": "nominal Earth equatorial radius",
+     "group": "convention",
      "value": {
       "v": 6378100.0,
       "unit": "m",
@@ -403,6 +441,7 @@
     {
      "id": "R_earth_polar",
      "name": "nominal Earth polar radius",
+     "group": "convention",
      "value": {
       "v": 6356800.0,
       "unit": "m",
@@ -413,6 +452,7 @@
     {
      "id": "R_earth_mean",
      "name": "Earth volumetric mean radius",
+     "group": "nature",
      "value": {
       "v": 6371000.0,
       "unit": "m",
@@ -422,6 +462,7 @@
     {
      "id": "GM_jup",
      "name": "nominal Jupiter mass parameter",
+     "group": "convention",
      "value": {
       "v": 1.2668653e+17,
       "unit": "m3 s-2",
@@ -432,6 +473,7 @@
     {
      "id": "M_jup",
      "name": "Jupiter mass",
+     "group": "nature",
      "value": {
       "v": 1.8981245973360505e+27,
       "unit": "kg",
@@ -442,6 +484,7 @@
     {
      "id": "R_jup_equatorial",
      "name": "nominal Jupiter equatorial radius",
+     "group": "convention",
      "value": {
       "v": 71492000.0,
       "unit": "m",
@@ -452,6 +495,7 @@
     {
      "id": "R_jup_polar",
      "name": "nominal Jupiter polar radius",
+     "group": "convention",
      "value": {
       "v": 66854000.0,
       "unit": "m",
@@ -462,6 +506,7 @@
     {
      "id": "R_jup_mean",
      "name": "Jupiter volumetric mean radius",
+     "group": "nature",
      "value": {
       "v": 69911000.0,
       "unit": "m",
@@ -471,6 +516,7 @@
     {
      "id": "M_moon",
      "name": "Moon mass",
+     "group": "nature",
      "value": {
       "v": 7.346e+22,
       "unit": "kg",
@@ -480,6 +526,7 @@
     {
      "id": "R_moon",
      "name": "Moon mean radius",
+     "group": "nature",
      "value": {
       "v": 1737400.0,
       "unit": "m",
@@ -489,11 +536,497 @@
     {
      "id": "a_moon",
      "name": "Moon semi-major axis",
+     "group": "nature",
      "value": {
       "v": 384400000.0,
       "unit": "m",
       "src": "nssdca-moon"
      }
+    }
+   ],
+   "units": [
+    {
+     "id": "one",
+     "symbol": "",
+     "name": "one",
+     "measures": "dimensionless",
+     "group": "si-base",
+     "factor": {
+      "v": 1.0,
+      "src": "si2019"
+     }
+    },
+    {
+     "id": "m",
+     "symbol": "m",
+     "name": "metre",
+     "measures": "length",
+     "group": "si-base",
+     "factor": {
+      "v": 1.0,
+      "src": "si2019"
+     }
+    },
+    {
+     "id": "kg",
+     "symbol": "kg",
+     "name": "kilogram",
+     "measures": "mass",
+     "group": "si-base",
+     "factor": {
+      "v": 1.0,
+      "src": "si2019"
+     }
+    },
+    {
+     "id": "s",
+     "symbol": "s",
+     "name": "second",
+     "measures": "time",
+     "group": "si-base",
+     "factor": {
+      "v": 1.0,
+      "src": "si2019"
+     }
+    },
+    {
+     "id": "a",
+     "symbol": "A",
+     "name": "ampere",
+     "measures": "current",
+     "group": "si-base",
+     "factor": {
+      "v": 1.0,
+      "src": "si2019"
+     }
+    },
+    {
+     "id": "k",
+     "symbol": "K",
+     "name": "kelvin",
+     "measures": "temperature",
+     "group": "si-base",
+     "factor": {
+      "v": 1.0,
+      "src": "si2019"
+     }
+    },
+    {
+     "id": "mol",
+     "symbol": "mol",
+     "name": "mole",
+     "measures": "amount",
+     "group": "si-base",
+     "factor": {
+      "v": 1.0,
+      "src": "si2019"
+     }
+    },
+    {
+     "id": "cd",
+     "symbol": "cd",
+     "name": "candela",
+     "measures": "luminous_intensity",
+     "group": "si-base",
+     "factor": {
+      "v": 1.0,
+      "src": "si2019"
+     }
+    },
+    {
+     "id": "n",
+     "symbol": "N",
+     "name": "newton",
+     "measures": "force",
+     "group": "si-named",
+     "factor": {
+      "v": 1.0,
+      "src": "si2019"
+     }
+    },
+    {
+     "id": "pa",
+     "symbol": "Pa",
+     "name": "pascal",
+     "measures": "pressure",
+     "group": "si-named",
+     "factor": {
+      "v": 1.0,
+      "src": "si2019"
+     }
+    },
+    {
+     "id": "j",
+     "symbol": "J",
+     "name": "joule",
+     "measures": "energy",
+     "group": "si-named",
+     "factor": {
+      "v": 1.0,
+      "src": "si2019"
+     }
+    },
+    {
+     "id": "w",
+     "symbol": "W",
+     "name": "watt",
+     "measures": "power",
+     "group": "si-named",
+     "factor": {
+      "v": 1.0,
+      "src": "si2019"
+     }
+    },
+    {
+     "id": "hz",
+     "symbol": "Hz",
+     "name": "hertz",
+     "measures": "frequency",
+     "group": "si-named",
+     "factor": {
+      "v": 1.0,
+      "src": "si2019"
+     }
+    },
+    {
+     "id": "t",
+     "symbol": "T",
+     "name": "tesla",
+     "measures": "magnetic_field",
+     "group": "si-named",
+     "factor": {
+      "v": 1.0,
+      "src": "si2019"
+     }
+    },
+    {
+     "id": "km",
+     "symbol": "km",
+     "name": "kilometre",
+     "measures": "length",
+     "group": "working",
+     "factor": {
+      "v": 1000.0,
+      "src": "si2019"
+     }
+    },
+    {
+     "id": "au",
+     "symbol": "au",
+     "name": "astronomical unit",
+     "measures": "length",
+     "group": "working",
+     "factor_from": "au"
+    },
+    {
+     "id": "pc",
+     "symbol": "pc",
+     "name": "parsec",
+     "measures": "length",
+     "group": "working",
+     "factor_from": "au 648000 / pi"
+    },
+    {
+     "id": "ly",
+     "symbol": "ly",
+     "name": "light year",
+     "measures": "length",
+     "group": "working",
+     "factor_from": "c yr_julian"
+    },
+    {
+     "id": "r_sun",
+     "symbol": "R☉",
+     "name": "solar radius",
+     "measures": "length",
+     "group": "working",
+     "factor_from": "R_sun"
+    },
+    {
+     "id": "r_earth",
+     "symbol": "R⊕",
+     "name": "Earth radius (equatorial)",
+     "measures": "length",
+     "group": "working",
+     "factor_from": "R_earth_equatorial"
+    },
+    {
+     "id": "r_jupiter",
+     "symbol": "RJ",
+     "name": "Jupiter radius (equatorial)",
+     "measures": "length",
+     "group": "working",
+     "factor_from": "R_jup_equatorial"
+    },
+    {
+     "id": "m_sun",
+     "symbol": "M☉",
+     "name": "solar mass",
+     "measures": "mass",
+     "group": "working",
+     "factor_from": "M_sun"
+    },
+    {
+     "id": "m_earth",
+     "symbol": "M⊕",
+     "name": "Earth mass",
+     "measures": "mass",
+     "group": "working",
+     "factor_from": "M_earth"
+    },
+    {
+     "id": "m_jupiter",
+     "symbol": "MJ",
+     "name": "Jupiter mass",
+     "measures": "mass",
+     "group": "working",
+     "factor_from": "M_jup"
+    },
+    {
+     "id": "day",
+     "symbol": "d",
+     "name": "day",
+     "measures": "time",
+     "group": "working",
+     "factor_from": "day"
+    },
+    {
+     "id": "yr",
+     "symbol": "yr",
+     "name": "Julian year",
+     "measures": "time",
+     "group": "working",
+     "factor_from": "yr_julian"
+    },
+    {
+     "id": "myr",
+     "symbol": "Myr",
+     "name": "million years",
+     "measures": "time",
+     "group": "working",
+     "factor_from": "1e6 yr_julian"
+    },
+    {
+     "id": "gyr",
+     "symbol": "Gyr",
+     "name": "billion years",
+     "measures": "time",
+     "group": "working",
+     "factor_from": "1e9 yr_julian"
+    },
+    {
+     "id": "degc",
+     "symbol": "°C",
+     "name": "degree Celsius",
+     "measures": "temperature",
+     "group": "working",
+     "factor": {
+      "v": 1.0,
+      "src": "si2019"
+     },
+     "offset": 273.15
+    },
+    {
+     "id": "l_sun",
+     "symbol": "L☉",
+     "name": "solar luminosity",
+     "measures": "power",
+     "group": "working",
+     "factor_from": "L_sun"
+    },
+    {
+     "id": "w_m2",
+     "symbol": "W/m²",
+     "name": "watt per square metre",
+     "measures": "flux",
+     "group": "working",
+     "factor": {
+      "v": 1.0,
+      "src": "si2019"
+     }
+    },
+    {
+     "id": "bar",
+     "symbol": "bar",
+     "name": "bar",
+     "measures": "pressure",
+     "group": "working",
+     "factor": {
+      "v": 100000.0,
+      "src": "si2019"
+     }
+    },
+    {
+     "id": "atm",
+     "symbol": "atm",
+     "name": "standard atmosphere",
+     "measures": "pressure",
+     "group": "working",
+     "factor_from": "atm"
+    },
+    {
+     "id": "ev",
+     "symbol": "eV",
+     "name": "electronvolt",
+     "measures": "energy",
+     "group": "working",
+     "factor_from": "e"
+    },
+    {
+     "id": "gee",
+     "symbol": "g",
+     "name": "standard gravity",
+     "measures": "acceleration",
+     "group": "working",
+     "factor_from": "g0"
+    },
+    {
+     "id": "degree",
+     "symbol": "°",
+     "name": "degree of arc",
+     "measures": "angle",
+     "group": "working",
+     "factor_from": "pi / 180"
+    },
+    {
+     "id": "arcsec",
+     "symbol": "″",
+     "name": "arcsecond",
+     "measures": "angle",
+     "group": "working",
+     "factor_from": "pi / 648000"
+    },
+    {
+     "id": "m_s",
+     "symbol": "m/s",
+     "name": "metre per second",
+     "measures": "velocity",
+     "group": "working",
+     "factor": {
+      "v": 1.0,
+      "src": "si2019"
+     }
+    },
+    {
+     "id": "km_s",
+     "symbol": "km/s",
+     "name": "kilometre per second",
+     "measures": "velocity",
+     "group": "working",
+     "factor": {
+      "v": 1000.0,
+      "src": "si2019"
+     }
+    },
+    {
+     "id": "m_s2",
+     "symbol": "m/s²",
+     "name": "metre per second squared",
+     "measures": "acceleration",
+     "group": "working",
+     "factor": {
+      "v": 1.0,
+      "src": "si2019"
+     }
+    },
+    {
+     "id": "kg_m3",
+     "symbol": "kg/m³",
+     "name": "kilogram per cubic metre",
+     "measures": "density",
+     "group": "working",
+     "factor": {
+      "v": 1.0,
+      "src": "si2019"
+     }
+    },
+    {
+     "id": "g_cm3",
+     "symbol": "g/cm³",
+     "name": "gram per cubic centimetre",
+     "measures": "density",
+     "group": "working",
+     "factor": {
+      "v": 1000.0,
+      "src": "si2019"
+     }
+    },
+    {
+     "id": "ut",
+     "symbol": "µT",
+     "name": "microtesla",
+     "measures": "magnetic_field",
+     "group": "working",
+     "factor": {
+      "v": 1e-06,
+      "src": "si2019"
+     }
+    },
+    {
+     "id": "gauss",
+     "symbol": "G",
+     "name": "gauss",
+     "measures": "magnetic_field",
+     "group": "working",
+     "factor": {
+      "v": 0.0001,
+      "src": "si2019"
+     }
+    },
+    {
+     "id": "a_m2",
+     "symbol": "A m²",
+     "name": "ampere square metre",
+     "measures": "magnetic_moment",
+     "group": "working",
+     "factor": {
+      "v": 1.0,
+      "src": "si2019"
+     }
+    }
+   ],
+   "origin_legend": [
+    {
+     "id": "big_bang",
+     "physics": "Big Bang nucleosynthesis",
+     "plain": "the Big Bang",
+     "story": "the first three minutes of the universe"
+    },
+    {
+     "id": "cosmic_rays",
+     "physics": "cosmic-ray spallation",
+     "plain": "cosmic rays breaking heavier atoms",
+     "story": "fast particles shattering atoms in the space between the stars"
+    },
+    {
+     "id": "low_mass_stars",
+     "physics": "asymptotic giant branch stars (the s-process and hot-bottom burning)",
+     "plain": "dying low-mass stars",
+     "story": "old, swollen giant stars, the kind the Sun will one day become, puffing their outer layers away"
+    },
+    {
+     "id": "massive_stars",
+     "physics": "massive stars and their core-collapse supernovae",
+     "plain": "exploding massive stars",
+     "story": "giant stars that burned out in a few million years and blew themselves apart"
+    },
+    {
+     "id": "white_dwarfs",
+     "physics": "Type Ia supernovae",
+     "plain": "exploding white dwarfs",
+     "story": "dead stars that took on too much matter and detonated"
+    },
+    {
+     "id": "neutron_star_mergers",
+     "physics": "the r-process (here given to neutron-star mergers)",
+     "plain": "merging neutron stars",
+     "story": "two dead stars, each heavier than the Sun and smaller than a city, spiralling together"
+    },
+    {
+     "id": "human_made",
+     "physics": "synthesis in reactors and accelerators",
+     "plain": "people, in reactors and particle accelerators",
+     "story": "people, in reactors and accelerators, a few atoms at a time"
     }
    ],
    "elements": [
@@ -512,6 +1045,22 @@
       "v": 25200000000.0,
       "unit": "atoms per 1e6 Si",
       "src": "lodders2021"
+     },
+     "origin": {
+      "shares": {
+       "big_bang": 1.0
+      },
+      "src": "fields2020",
+      "also": [
+       "lodders2021"
+      ],
+      "check": "authored",
+      "note": "approximate shares of the Sun's birth-cloud abundance, rounded; MP7 replaces them with the galaxy model's own ledger"
+     },
+     "origin_story": {
+      "physics": "Hydrogen nuclei are protons left over from the first minutes after the Big Bang, when the universe cooled too fast to fuse most of them. Stars have been burning it ever since, so the Sun's share is slightly less than the primordial one.",
+      "plain": "Almost every hydrogen atom was made in the Big Bang, 13.8 billion years ago. It is the oldest thing you will ever touch.",
+      "story": "Every drop of water holds atoms that are as old as time itself, left over from the first minutes of the universe."
      }
     },
     {
@@ -529,6 +1078,24 @@
       "unit": "atoms per 1e6 Si",
       "src": "lodders2021",
       "sigma": 120000000.0
+     },
+     "origin": {
+      "shares": {
+       "big_bang": 0.91,
+       "low_mass_stars": 0.04,
+       "massive_stars": 0.05
+      },
+      "src": "fields2020",
+      "also": [
+       "lodders2021"
+      ],
+      "check": "authored",
+      "note": "approximate shares of the Sun's birth-cloud abundance, rounded; MP7 replaces them with the galaxy model's own ledger"
+     },
+     "origin_story": {
+      "physics": "About nine tenths of the Sun's helium is primordial (Big Bang nucleosynthesis set a helium mass fraction near 0.247); the rest was fused in stars of earlier generations and returned to the gas.",
+      "plain": "Most helium was made in the Big Bang. The rest was made in older stars, which turn hydrogen into helium as they shine.",
+      "story": "Most of it is as old as the universe; a little was forged inside stars that lived and died before the Sun was born."
      }
     },
     {
@@ -547,6 +1114,25 @@
       "unit": "atoms per 1e6 Si",
       "src": "lodders2021",
       "sigma": 3.4
+     },
+     "origin": {
+      "shares": {
+       "big_bang": 0.2,
+       "cosmic_rays": 0.2,
+       "low_mass_stars": 0.6
+      },
+      "src": "fields2020",
+      "also": [
+       "kobayashi2020"
+      ],
+      "check": "authored",
+      "note": "approximate shares of the Sun's birth-cloud abundance, rounded; MP7 replaces them with the galaxy model's own ledger",
+      "argued": "how much stellar lithium comes from giant stars and how much from novae is argued; the Big Bang should have made about three times more lithium than old stars show (the cosmological lithium problem)"
+     },
+     "origin_story": {
+      "physics": "Lithium has three sources: Big Bang nucleosynthesis, cosmic-ray spallation and stars (giants and novae). The Big Bang should have made about three times more lithium than the oldest stars show; this cosmological lithium problem is unsolved.",
+      "plain": "Some lithium was made in the Big Bang, some by cosmic rays, and most by stars. Oddly, old stars have less lithium than the Big Bang should have made, a puzzle nobody has solved.",
+      "story": "The lightest metal carries an unsolved mystery: the oldest stars have less of it than the birth of the universe should have left."
      }
     },
     {
@@ -564,6 +1150,20 @@
       "unit": "atoms per 1e6 Si",
       "src": "lodders2021",
       "sigma": 0.044
+     },
+     "origin": {
+      "shares": {
+       "cosmic_rays": 1.0
+      },
+      "src": "johnson-origins",
+      "also": [],
+      "check": "authored",
+      "note": "approximate shares of the Sun's birth-cloud abundance, rounded; MP7 replaces them with the galaxy model's own ledger"
+     },
+     "origin_story": {
+      "physics": "Beryllium is made by cosmic-ray spallation: fast protons and alpha particles break carbon, nitrogen and oxygen nuclei in the interstellar gas.",
+      "plain": "Beryllium is made when cosmic rays smash into heavier atoms in space and break them apart.",
+      "story": "It is made by collisions in the empty space between stars, never inside them: stars destroy it."
      }
     },
     {
@@ -583,6 +1183,21 @@
       "src": "lodders2021",
       "check": "unverified",
       "note": "N worked out from A(E)o; the printed N was garbled in the copy read"
+     },
+     "origin": {
+      "shares": {
+       "cosmic_rays": 0.8,
+       "massive_stars": 0.2
+      },
+      "src": "johnson-origins",
+      "also": [],
+      "check": "authored",
+      "note": "approximate shares of the Sun's birth-cloud abundance, rounded; MP7 replaces them with the galaxy model's own ledger"
+     },
+     "origin_story": {
+      "physics": "The Sun's boron: 80% from cosmic-ray spallation and 20% from massive stars and their core-collapse supernovae.",
+      "plain": "Most of the boron was made by cosmic rays breaking heavier atoms; the rest came from exploding massive stars.",
+      "story": "Its atoms were made by fast particles shattering atoms in the space between the stars, with a share from exploding massive stars."
      }
     },
     {
@@ -601,6 +1216,23 @@
       "unit": "atoms per 1e6 Si",
       "src": "lodders2021",
       "sigma": 180000.0
+     },
+     "origin": {
+      "shares": {
+       "low_mass_stars": 0.5,
+       "massive_stars": 0.5
+      },
+      "src": "kobayashi2020",
+      "also": [
+       "johnson-origins"
+      ],
+      "check": "authored",
+      "note": "approximate shares of the Sun's birth-cloud abundance, rounded; MP7 replaces them with the galaxy model's own ledger"
+     },
+     "origin_story": {
+      "physics": "Carbon comes from helium burning (the triple-alpha reaction). About half of it was returned by asymptotic-giant-branch stars, the other half by the winds and supernovae of massive stars.",
+      "plain": "Carbon is made when stars fuse helium. About half came from dying low-mass stars puffing it out, and half from massive stars.",
+      "story": "The carbon in every living thing was cooked from helium inside old stars and breathed out into space as they died."
      }
     },
     {
@@ -619,6 +1251,23 @@
       "unit": "atoms per 1e6 Si",
       "src": "lodders2021",
       "sigma": 9700.0
+     },
+     "origin": {
+      "shares": {
+       "low_mass_stars": 0.5,
+       "massive_stars": 0.5
+      },
+      "src": "kobayashi2020",
+      "also": [
+       "johnson-origins"
+      ],
+      "check": "authored",
+      "note": "approximate shares of the Sun's birth-cloud abundance, rounded; MP7 replaces them with the galaxy model's own ledger"
+     },
+     "origin_story": {
+      "physics": "The Sun's nitrogen: 50% from asymptotic giant branch stars (the s-process and hot-bottom burning) and 50% from massive stars and their core-collapse supernovae.",
+      "plain": "About half of the nitrogen was made by dying low-mass stars; the rest came from exploding massive stars.",
+      "story": "Its atoms were made by old, swollen giant stars, the kind the Sun will one day become, puffing their outer layers away, with a share from exploding massive stars."
      }
     },
     {
@@ -637,6 +1286,22 @@
       "unit": "atoms per 1e6 Si",
       "src": "lodders2021",
       "sigma": 130000.0
+     },
+     "origin": {
+      "shares": {
+       "massive_stars": 1.0
+      },
+      "src": "kobayashi2020",
+      "also": [
+       "johnson-origins"
+      ],
+      "check": "authored",
+      "note": "approximate shares of the Sun's birth-cloud abundance, rounded; MP7 replaces them with the galaxy model's own ledger"
+     },
+     "origin_story": {
+      "physics": "Oxygen is made by helium and carbon burning in massive stars and is thrown out when they explode as core-collapse supernovae. It is the third most common element in the cosmos.",
+      "plain": "Nearly all oxygen was made inside massive stars and blown out when they exploded.",
+      "story": "Every breath is the ash of giant stars that exploded long before the Sun formed."
      }
     },
     {
@@ -656,6 +1321,24 @@
       "sigma": 275.0,
       "check": "unverified",
       "note": "printed N and A(E)o disagree by 0.09 dex; check against the paper"
+     },
+     "origin": {
+      "shares": {
+       "low_mass_stars": 0.5,
+       "massive_stars": 0.5
+      },
+      "src": "kobayashi2020",
+      "also": [
+       "johnson-origins"
+      ],
+      "check": "authored",
+      "note": "approximate shares of the Sun's birth-cloud abundance, rounded; MP7 replaces them with the galaxy model's own ledger",
+      "argued": "fluorine's sources (giant stars, massive stars' winds, neutrinos in supernovae) are argued"
+     },
+     "origin_story": {
+      "physics": "The Sun's fluorine: 50% from asymptotic giant branch stars (the s-process and hot-bottom burning) and 50% from massive stars and their core-collapse supernovae. Argued: fluorine's sources (giant stars, massive stars' winds, neutrinos in supernovae) are argued.",
+      "plain": "About half of the fluorine was made by dying low-mass stars; the rest came from exploding massive stars. Scientists still argue about part of this.",
+      "story": "Its atoms were made by old, swollen giant stars, the kind the Sun will one day become, puffing their outer layers away, with a share from exploding massive stars."
      }
     },
     {
@@ -673,6 +1356,22 @@
       "unit": "atoms per 1e6 Si",
       "src": "lodders2021",
       "sigma": 1130000.0
+     },
+     "origin": {
+      "shares": {
+       "massive_stars": 1.0
+      },
+      "src": "kobayashi2020",
+      "also": [
+       "johnson-origins"
+      ],
+      "check": "authored",
+      "note": "approximate shares of the Sun's birth-cloud abundance, rounded; MP7 replaces them with the galaxy model's own ledger"
+     },
+     "origin_story": {
+      "physics": "The Sun's neon: 100% from massive stars and their core-collapse supernovae.",
+      "plain": "Almost all of the neon was made by exploding massive stars.",
+      "story": "Its atoms were made by giant stars that burned out in a few million years and blew themselves apart."
      }
     },
     {
@@ -690,6 +1389,23 @@
       "unit": "atoms per 1e6 Si",
       "src": "lodders2021",
       "sigma": 4700.0
+     },
+     "origin": {
+      "shares": {
+       "low_mass_stars": 0.1,
+       "massive_stars": 0.9
+      },
+      "src": "kobayashi2020",
+      "also": [
+       "johnson-origins"
+      ],
+      "check": "authored",
+      "note": "approximate shares of the Sun's birth-cloud abundance, rounded; MP7 replaces them with the galaxy model's own ledger"
+     },
+     "origin_story": {
+      "physics": "The Sun's sodium: 90% from massive stars and their core-collapse supernovae and 10% from asymptotic giant branch stars (the s-process and hot-bottom burning).",
+      "plain": "Most of the sodium was made by exploding massive stars; the rest came from dying low-mass stars.",
+      "story": "Its atoms were made by giant stars that burned out in a few million years and blew themselves apart, with a share from dying low-mass stars."
      }
     },
     {
@@ -708,6 +1424,23 @@
       "unit": "atoms per 1e6 Si",
       "src": "lodders2021",
       "sigma": 44000.0
+     },
+     "origin": {
+      "shares": {
+       "massive_stars": 0.95,
+       "white_dwarfs": 0.05
+      },
+      "src": "kobayashi2020",
+      "also": [
+       "johnson-origins"
+      ],
+      "check": "authored",
+      "note": "approximate shares of the Sun's birth-cloud abundance, rounded; MP7 replaces them with the galaxy model's own ledger"
+     },
+     "origin_story": {
+      "physics": "The Sun's magnesium: 95% from massive stars and their core-collapse supernovae and 5% from Type Ia supernovae.",
+      "plain": "Almost all of the magnesium was made by exploding massive stars; the rest came from exploding white dwarfs.",
+      "story": "Its atoms were made by giant stars that burned out in a few million years and blew themselves apart, with a share from exploding white dwarfs."
      }
     },
     {
@@ -725,6 +1458,22 @@
       "unit": "atoms per 1e6 Si",
       "src": "lodders2021",
       "sigma": 6110.0
+     },
+     "origin": {
+      "shares": {
+       "massive_stars": 1.0
+      },
+      "src": "kobayashi2020",
+      "also": [
+       "johnson-origins"
+      ],
+      "check": "authored",
+      "note": "approximate shares of the Sun's birth-cloud abundance, rounded; MP7 replaces them with the galaxy model's own ledger"
+     },
+     "origin_story": {
+      "physics": "The Sun's aluminium: 100% from massive stars and their core-collapse supernovae.",
+      "plain": "Almost all of the aluminium was made by exploding massive stars.",
+      "story": "Its atoms were made by giant stars that burned out in a few million years and blew themselves apart."
      }
     },
     {
@@ -743,6 +1492,23 @@
       "unit": "atoms per 1e6 Si",
       "src": "lodders2021",
       "sigma": 34000.0
+     },
+     "origin": {
+      "shares": {
+       "massive_stars": 0.8,
+       "white_dwarfs": 0.2
+      },
+      "src": "kobayashi2020",
+      "also": [
+       "johnson-origins"
+      ],
+      "check": "authored",
+      "note": "approximate shares of the Sun's birth-cloud abundance, rounded; MP7 replaces them with the galaxy model's own ledger"
+     },
+     "origin_story": {
+      "physics": "The Sun's silicon: 80% from massive stars and their core-collapse supernovae and 20% from Type Ia supernovae.",
+      "plain": "Most of the silicon was made by exploding massive stars; the rest came from exploding white dwarfs.",
+      "story": "Its atoms were made by giant stars that burned out in a few million years and blew themselves apart, with a share from exploding white dwarfs."
      }
     },
     {
@@ -760,6 +1526,22 @@
       "unit": "atoms per 1e6 Si",
       "src": "lodders2021",
       "sigma": 530.0
+     },
+     "origin": {
+      "shares": {
+       "massive_stars": 1.0
+      },
+      "src": "kobayashi2020",
+      "also": [
+       "johnson-origins"
+      ],
+      "check": "authored",
+      "note": "approximate shares of the Sun's birth-cloud abundance, rounded; MP7 replaces them with the galaxy model's own ledger"
+     },
+     "origin_story": {
+      "physics": "The Sun's phosphorus: 100% from massive stars and their core-collapse supernovae.",
+      "plain": "Almost all of the phosphorus was made by exploding massive stars.",
+      "story": "Its atoms were made by giant stars that burned out in a few million years and blew themselves apart."
      }
     },
     {
@@ -778,6 +1560,23 @@
       "unit": "atoms per 1e6 Si",
       "src": "lodders2021",
       "sigma": 26000.0
+     },
+     "origin": {
+      "shares": {
+       "massive_stars": 0.75,
+       "white_dwarfs": 0.25
+      },
+      "src": "kobayashi2020",
+      "also": [
+       "johnson-origins"
+      ],
+      "check": "authored",
+      "note": "approximate shares of the Sun's birth-cloud abundance, rounded; MP7 replaces them with the galaxy model's own ledger"
+     },
+     "origin_story": {
+      "physics": "The Sun's sulfur: 75% from massive stars and their core-collapse supernovae and 25% from Type Ia supernovae.",
+      "plain": "Most of the sulfur was made by exploding massive stars; the rest came from exploding white dwarfs.",
+      "story": "Its atoms were made by giant stars that burned out in a few million years and blew themselves apart, with a share from exploding white dwarfs."
      }
     },
     {
@@ -796,6 +1595,23 @@
       "unit": "atoms per 1e6 Si",
       "src": "lodders2021",
       "sigma": 810.0
+     },
+     "origin": {
+      "shares": {
+       "massive_stars": 0.9,
+       "white_dwarfs": 0.1
+      },
+      "src": "kobayashi2020",
+      "also": [
+       "johnson-origins"
+      ],
+      "check": "authored",
+      "note": "approximate shares of the Sun's birth-cloud abundance, rounded; MP7 replaces them with the galaxy model's own ledger"
+     },
+     "origin_story": {
+      "physics": "The Sun's chlorine: 90% from massive stars and their core-collapse supernovae and 10% from Type Ia supernovae.",
+      "plain": "Most of the chlorine was made by exploding massive stars; the rest came from exploding white dwarfs.",
+      "story": "Its atoms were made by giant stars that burned out in a few million years and blew themselves apart, with a share from exploding white dwarfs."
      }
     },
     {
@@ -814,6 +1630,23 @@
       "unit": "atoms per 1e6 Si",
       "src": "lodders2021",
       "sigma": 25300.0
+     },
+     "origin": {
+      "shares": {
+       "massive_stars": 0.7,
+       "white_dwarfs": 0.3
+      },
+      "src": "kobayashi2020",
+      "also": [
+       "johnson-origins"
+      ],
+      "check": "authored",
+      "note": "approximate shares of the Sun's birth-cloud abundance, rounded; MP7 replaces them with the galaxy model's own ledger"
+     },
+     "origin_story": {
+      "physics": "The Sun's argon: 70% from massive stars and their core-collapse supernovae and 30% from Type Ia supernovae.",
+      "plain": "Most of the argon was made by exploding massive stars; the rest came from exploding white dwarfs.",
+      "story": "Its atoms were made by giant stars that burned out in a few million years and blew themselves apart, with a share from exploding white dwarfs."
      }
     },
     {
@@ -831,6 +1664,22 @@
       "unit": "atoms per 1e6 Si",
       "src": "lodders2021",
       "sigma": 190.0
+     },
+     "origin": {
+      "shares": {
+       "massive_stars": 1.0
+      },
+      "src": "kobayashi2020",
+      "also": [
+       "johnson-origins"
+      ],
+      "check": "authored",
+      "note": "approximate shares of the Sun's birth-cloud abundance, rounded; MP7 replaces them with the galaxy model's own ledger"
+     },
+     "origin_story": {
+      "physics": "The Sun's potassium: 100% from massive stars and their core-collapse supernovae.",
+      "plain": "Almost all of the potassium was made by exploding massive stars.",
+      "story": "Its atoms were made by giant stars that burned out in a few million years and blew themselves apart."
      }
     },
     {
@@ -848,6 +1697,23 @@
       "unit": "atoms per 1e6 Si",
       "src": "lodders2021",
       "sigma": 4500.0
+     },
+     "origin": {
+      "shares": {
+       "massive_stars": 0.7,
+       "white_dwarfs": 0.3
+      },
+      "src": "kobayashi2020",
+      "also": [
+       "johnson-origins"
+      ],
+      "check": "authored",
+      "note": "approximate shares of the Sun's birth-cloud abundance, rounded; MP7 replaces them with the galaxy model's own ledger"
+     },
+     "origin_story": {
+      "physics": "The Sun's calcium: 70% from massive stars and their core-collapse supernovae and 30% from Type Ia supernovae.",
+      "plain": "Most of the calcium was made by exploding massive stars; the rest came from exploding white dwarfs.",
+      "story": "Its atoms were made by giant stars that burned out in a few million years and blew themselves apart, with a share from exploding white dwarfs."
      }
     },
     {
@@ -865,6 +1731,22 @@
       "unit": "atoms per 1e6 Si",
       "src": "lodders2021",
       "sigma": 2.2
+     },
+     "origin": {
+      "shares": {
+       "massive_stars": 1.0
+      },
+      "src": "kobayashi2020",
+      "also": [
+       "johnson-origins"
+      ],
+      "check": "authored",
+      "note": "approximate shares of the Sun's birth-cloud abundance, rounded; MP7 replaces them with the galaxy model's own ledger"
+     },
+     "origin_story": {
+      "physics": "The Sun's scandium: 100% from massive stars and their core-collapse supernovae.",
+      "plain": "Almost all of the scandium was made by exploding massive stars.",
+      "story": "Its atoms were made by giant stars that burned out in a few million years and blew themselves apart."
      }
     },
     {
@@ -882,6 +1764,24 @@
       "unit": "atoms per 1e6 Si",
       "src": "lodders2021",
       "sigma": 150.0
+     },
+     "origin": {
+      "shares": {
+       "massive_stars": 0.8,
+       "white_dwarfs": 0.2
+      },
+      "src": "kobayashi2020",
+      "also": [
+       "johnson-origins"
+      ],
+      "check": "authored",
+      "note": "approximate shares of the Sun's birth-cloud abundance, rounded; MP7 replaces them with the galaxy model's own ledger",
+      "argued": "models make too little titanium, so its sources are still argued"
+     },
+     "origin_story": {
+      "physics": "The Sun's titanium: 80% from massive stars and their core-collapse supernovae and 20% from Type Ia supernovae. Argued: models make too little titanium, so its sources are still argued.",
+      "plain": "Most of the titanium was made by exploding massive stars; the rest came from exploding white dwarfs. Scientists still argue about part of this.",
+      "story": "Its atoms were made by giant stars that burned out in a few million years and blew themselves apart, with a share from exploding white dwarfs."
      }
     },
     {
@@ -899,6 +1799,23 @@
       "unit": "atoms per 1e6 Si",
       "src": "lodders2021",
       "sigma": 18.0
+     },
+     "origin": {
+      "shares": {
+       "massive_stars": 0.5,
+       "white_dwarfs": 0.5
+      },
+      "src": "kobayashi2020",
+      "also": [
+       "johnson-origins"
+      ],
+      "check": "authored",
+      "note": "approximate shares of the Sun's birth-cloud abundance, rounded; MP7 replaces them with the galaxy model's own ledger"
+     },
+     "origin_story": {
+      "physics": "The Sun's vanadium: 50% from massive stars and their core-collapse supernovae and 50% from Type Ia supernovae.",
+      "plain": "About half of the vanadium was made by exploding massive stars; the rest came from exploding white dwarfs.",
+      "story": "Its atoms were made by giant stars that burned out in a few million years and blew themselves apart, with a share from exploding white dwarfs."
      }
     },
     {
@@ -916,6 +1833,23 @@
       "unit": "atoms per 1e6 Si",
       "src": "lodders2021",
       "sigma": 460.0
+     },
+     "origin": {
+      "shares": {
+       "massive_stars": 0.5,
+       "white_dwarfs": 0.5
+      },
+      "src": "kobayashi2020",
+      "also": [
+       "johnson-origins"
+      ],
+      "check": "authored",
+      "note": "approximate shares of the Sun's birth-cloud abundance, rounded; MP7 replaces them with the galaxy model's own ledger"
+     },
+     "origin_story": {
+      "physics": "The Sun's chromium: 50% from massive stars and their core-collapse supernovae and 50% from Type Ia supernovae.",
+      "plain": "About half of the chromium was made by exploding massive stars; the rest came from exploding white dwarfs.",
+      "story": "Its atoms were made by giant stars that burned out in a few million years and blew themselves apart, with a share from exploding white dwarfs."
      }
     },
     {
@@ -933,6 +1867,23 @@
       "unit": "atoms per 1e6 Si",
       "src": "lodders2021",
       "sigma": 620.0
+     },
+     "origin": {
+      "shares": {
+       "massive_stars": 0.5,
+       "white_dwarfs": 0.5
+      },
+      "src": "kobayashi2020",
+      "also": [
+       "johnson-origins"
+      ],
+      "check": "authored",
+      "note": "approximate shares of the Sun's birth-cloud abundance, rounded; MP7 replaces them with the galaxy model's own ledger"
+     },
+     "origin_story": {
+      "physics": "The Sun's manganese: 50% from massive stars and their core-collapse supernovae and 50% from Type Ia supernovae.",
+      "plain": "About half of the manganese was made by exploding massive stars; the rest came from exploding white dwarfs.",
+      "story": "Its atoms were made by giant stars that burned out in a few million years and blew themselves apart, with a share from exploding white dwarfs."
      }
     },
     {
@@ -950,6 +1901,23 @@
       "unit": "atoms per 1e6 Si",
       "src": "lodders2021",
       "sigma": 38000.0
+     },
+     "origin": {
+      "shares": {
+       "massive_stars": 0.5,
+       "white_dwarfs": 0.5
+      },
+      "src": "kobayashi2020",
+      "also": [
+       "johnson-origins"
+      ],
+      "check": "authored",
+      "note": "approximate shares of the Sun's birth-cloud abundance, rounded; MP7 replaces them with the galaxy model's own ledger"
+     },
+     "origin_story": {
+      "physics": "Iron is the end of fusion's energy road. About half of the Sun's iron came from Type Ia supernovae and half from core-collapse supernovae, mostly as nickel-56 that decayed to iron.",
+      "plain": "Iron comes from two kinds of exploding star: white dwarfs that detonated and massive stars that collapsed. Each gave about half.",
+      "story": "The iron in blood and in planets' cores was made as radioactive nickel in exploding stars, and turned to iron over a few months."
      }
     },
     {
@@ -967,6 +1935,23 @@
       "unit": "atoms per 1e6 Si",
       "src": "lodders2021",
       "sigma": 100.0
+     },
+     "origin": {
+      "shares": {
+       "massive_stars": 0.5,
+       "white_dwarfs": 0.5
+      },
+      "src": "kobayashi2020",
+      "also": [
+       "johnson-origins"
+      ],
+      "check": "authored",
+      "note": "approximate shares of the Sun's birth-cloud abundance, rounded; MP7 replaces them with the galaxy model's own ledger"
+     },
+     "origin_story": {
+      "physics": "The Sun's cobalt: 50% from massive stars and their core-collapse supernovae and 50% from Type Ia supernovae.",
+      "plain": "About half of the cobalt was made by exploding massive stars; the rest came from exploding white dwarfs.",
+      "story": "Its atoms were made by giant stars that burned out in a few million years and blew themselves apart, with a share from exploding white dwarfs."
      }
     },
     {
@@ -984,6 +1969,23 @@
       "unit": "atoms per 1e6 Si",
       "src": "lodders2021",
       "sigma": 2940.0
+     },
+     "origin": {
+      "shares": {
+       "massive_stars": 0.5,
+       "white_dwarfs": 0.5
+      },
+      "src": "kobayashi2020",
+      "also": [
+       "johnson-origins"
+      ],
+      "check": "authored",
+      "note": "approximate shares of the Sun's birth-cloud abundance, rounded; MP7 replaces them with the galaxy model's own ledger"
+     },
+     "origin_story": {
+      "physics": "The Sun's nickel: 50% from massive stars and their core-collapse supernovae and 50% from Type Ia supernovae.",
+      "plain": "About half of the nickel was made by exploding massive stars; the rest came from exploding white dwarfs.",
+      "story": "Its atoms were made by giant stars that burned out in a few million years and blew themselves apart, with a share from exploding white dwarfs."
      }
     },
     {
@@ -1001,6 +2003,23 @@
       "unit": "atoms per 1e6 Si",
       "src": "lodders2021",
       "sigma": 50.0
+     },
+     "origin": {
+      "shares": {
+       "massive_stars": 0.5,
+       "white_dwarfs": 0.5
+      },
+      "src": "kobayashi2020",
+      "also": [
+       "johnson-origins"
+      ],
+      "check": "authored",
+      "note": "approximate shares of the Sun's birth-cloud abundance, rounded; MP7 replaces them with the galaxy model's own ledger"
+     },
+     "origin_story": {
+      "physics": "The Sun's copper: 50% from massive stars and their core-collapse supernovae and 50% from Type Ia supernovae.",
+      "plain": "About half of the copper was made by exploding massive stars; the rest came from exploding white dwarfs.",
+      "story": "Its atoms were made by giant stars that burned out in a few million years and blew themselves apart, with a share from exploding white dwarfs."
      }
     },
     {
@@ -1018,6 +2037,23 @@
       "unit": "atoms per 1e6 Si",
       "src": "lodders2021",
       "sigma": 180.0
+     },
+     "origin": {
+      "shares": {
+       "massive_stars": 0.5,
+       "white_dwarfs": 0.5
+      },
+      "src": "kobayashi2020",
+      "also": [
+       "johnson-origins"
+      ],
+      "check": "authored",
+      "note": "approximate shares of the Sun's birth-cloud abundance, rounded; MP7 replaces them with the galaxy model's own ledger"
+     },
+     "origin_story": {
+      "physics": "The Sun's zinc: 50% from massive stars and their core-collapse supernovae and 50% from Type Ia supernovae.",
+      "plain": "About half of the zinc was made by exploding massive stars; the rest came from exploding white dwarfs.",
+      "story": "Its atoms were made by giant stars that burned out in a few million years and blew themselves apart, with a share from exploding white dwarfs."
      }
     },
     {
@@ -1035,6 +2071,23 @@
       "unit": "atoms per 1e6 Si",
       "src": "lodders2021",
       "sigma": 1.8
+     },
+     "origin": {
+      "shares": {
+       "low_mass_stars": 0.1,
+       "massive_stars": 0.9
+      },
+      "src": "bisterzo2014",
+      "also": [
+       "kobayashi2020"
+      ],
+      "check": "authored",
+      "note": "approximate shares of the Sun's birth-cloud abundance, rounded; MP7 replaces them with the galaxy model's own ledger"
+     },
+     "origin_story": {
+      "physics": "The Sun's gallium: 90% from massive stars and their core-collapse supernovae and 10% from asymptotic giant branch stars (the s-process and hot-bottom burning).",
+      "plain": "Most of the gallium was made by exploding massive stars; the rest came from dying low-mass stars.",
+      "story": "Its atoms were made by giant stars that burned out in a few million years and blew themselves apart, with a share from dying low-mass stars."
      }
     },
     {
@@ -1052,6 +2105,23 @@
       "unit": "atoms per 1e6 Si",
       "src": "lodders2021",
       "sigma": 7.0
+     },
+     "origin": {
+      "shares": {
+       "low_mass_stars": 0.15,
+       "massive_stars": 0.85
+      },
+      "src": "bisterzo2014",
+      "also": [
+       "kobayashi2020"
+      ],
+      "check": "authored",
+      "note": "approximate shares of the Sun's birth-cloud abundance, rounded; MP7 replaces them with the galaxy model's own ledger"
+     },
+     "origin_story": {
+      "physics": "The Sun's germanium: 85% from massive stars and their core-collapse supernovae and 15% from asymptotic giant branch stars (the s-process and hot-bottom burning).",
+      "plain": "Most of the germanium was made by exploding massive stars; the rest came from dying low-mass stars.",
+      "story": "Its atoms were made by giant stars that burned out in a few million years and blew themselves apart, with a share from dying low-mass stars."
      }
     },
     {
@@ -1069,6 +2139,25 @@
       "unit": "atoms per 1e6 Si",
       "src": "lodders2021",
       "sigma": 0.5
+     },
+     "origin": {
+      "shares": {
+       "massive_stars": 0.6,
+       "neutron_star_mergers": 0.4
+      },
+      "src": "bisterzo2014",
+      "also": [
+       "kobayashi2020",
+       "kasen2017"
+      ],
+      "check": "authored",
+      "note": "approximate shares of the Sun's birth-cloud abundance, rounded; MP7 replaces them with the galaxy model's own ledger",
+      "argued": "the rapid neutron-capture share is given to merging neutron stars, which have been seen making heavy elements once (GW170817); how much rare kinds of supernova add is argued"
+     },
+     "origin_story": {
+      "physics": "The Sun's arsenic: 60% from massive stars and their core-collapse supernovae and 40% from the r-process (here given to neutron-star mergers). Argued: the rapid neutron-capture share is given to merging neutron stars, which have been seen making heavy elements once (GW170817); how much rare kinds of supernova add is argued.",
+      "plain": "A little over half of the arsenic was made by exploding massive stars; the rest came from merging neutron stars. Scientists still argue about part of this.",
+      "story": "Its atoms were made by giant stars that burned out in a few million years and blew themselves apart, with a share from merging neutron stars."
      }
     },
     {
@@ -1086,6 +2175,25 @@
       "unit": "atoms per 1e6 Si",
       "src": "lodders2021",
       "sigma": 5.0
+     },
+     "origin": {
+      "shares": {
+       "massive_stars": 0.5,
+       "neutron_star_mergers": 0.5
+      },
+      "src": "bisterzo2014",
+      "also": [
+       "kobayashi2020",
+       "kasen2017"
+      ],
+      "check": "authored",
+      "note": "approximate shares of the Sun's birth-cloud abundance, rounded; MP7 replaces them with the galaxy model's own ledger",
+      "argued": "the rapid neutron-capture share is given to merging neutron stars, which have been seen making heavy elements once (GW170817); how much rare kinds of supernova add is argued"
+     },
+     "origin_story": {
+      "physics": "The Sun's selenium: 50% from massive stars and their core-collapse supernovae and 50% from the r-process (here given to neutron-star mergers). Argued: the rapid neutron-capture share is given to merging neutron stars, which have been seen making heavy elements once (GW170817); how much rare kinds of supernova add is argued.",
+      "plain": "About half of the selenium was made by exploding massive stars; the rest came from merging neutron stars. Scientists still argue about part of this.",
+      "story": "Its atoms were made by giant stars that burned out in a few million years and blew themselves apart, with a share from merging neutron stars."
      }
     },
     {
@@ -1104,6 +2212,25 @@
       "unit": "atoms per 1e6 Si",
       "src": "lodders2021",
       "sigma": 2.9
+     },
+     "origin": {
+      "shares": {
+       "massive_stars": 0.4,
+       "neutron_star_mergers": 0.6
+      },
+      "src": "bisterzo2014",
+      "also": [
+       "kobayashi2020",
+       "kasen2017"
+      ],
+      "check": "authored",
+      "note": "approximate shares of the Sun's birth-cloud abundance, rounded; MP7 replaces them with the galaxy model's own ledger",
+      "argued": "the rapid neutron-capture share is given to merging neutron stars, which have been seen making heavy elements once (GW170817); how much rare kinds of supernova add is argued"
+     },
+     "origin_story": {
+      "physics": "The Sun's bromine: 60% from the r-process (here given to neutron-star mergers) and 40% from massive stars and their core-collapse supernovae. Argued: the rapid neutron-capture share is given to merging neutron stars, which have been seen making heavy elements once (GW170817); how much rare kinds of supernova add is argued.",
+      "plain": "A little over half of the bromine was made by merging neutron stars; the rest came from exploding massive stars. Scientists still argue about part of this.",
+      "story": "Its atoms were made by two dead stars, each heavier than the Sun and smaller than a city, spiralling together, with a share from exploding massive stars."
      }
     },
     {
@@ -1121,6 +2248,26 @@
       "unit": "atoms per 1e6 Si",
       "src": "lodders2021",
       "sigma": 10.4
+     },
+     "origin": {
+      "shares": {
+       "low_mass_stars": 0.2,
+       "massive_stars": 0.4,
+       "neutron_star_mergers": 0.4
+      },
+      "src": "bisterzo2014",
+      "also": [
+       "kobayashi2020",
+       "kasen2017"
+      ],
+      "check": "authored",
+      "note": "approximate shares of the Sun's birth-cloud abundance, rounded; MP7 replaces them with the galaxy model's own ledger",
+      "argued": "the rapid neutron-capture share is given to merging neutron stars, which have been seen making heavy elements once (GW170817); how much rare kinds of supernova add is argued"
+     },
+     "origin_story": {
+      "physics": "The Sun's krypton: 40% from massive stars and their core-collapse supernovae, 40% from the r-process (here given to neutron-star mergers) and 20% from asymptotic giant branch stars (the s-process and hot-bottom burning). Argued: the rapid neutron-capture share is given to merging neutron stars, which have been seen making heavy elements once (GW170817); how much rare kinds of supernova add is argued.",
+      "plain": "About a third of the krypton was made by exploding massive stars; the rest came from merging neutron stars and dying low-mass stars. Scientists still argue about part of this.",
+      "story": "Its atoms were made by giant stars that burned out in a few million years and blew themselves apart, with a share from merging neutron stars and dying low-mass stars."
      }
     },
     {
@@ -1138,6 +2285,26 @@
       "unit": "atoms per 1e6 Si",
       "src": "lodders2021",
       "sigma": 0.47
+     },
+     "origin": {
+      "shares": {
+       "low_mass_stars": 0.3,
+       "massive_stars": 0.2,
+       "neutron_star_mergers": 0.5
+      },
+      "src": "bisterzo2014",
+      "also": [
+       "kobayashi2020",
+       "kasen2017"
+      ],
+      "check": "authored",
+      "note": "approximate shares of the Sun's birth-cloud abundance, rounded; MP7 replaces them with the galaxy model's own ledger",
+      "argued": "the rapid neutron-capture share is given to merging neutron stars, which have been seen making heavy elements once (GW170817); how much rare kinds of supernova add is argued"
+     },
+     "origin_story": {
+      "physics": "The Sun's rubidium: 50% from the r-process (here given to neutron-star mergers), 30% from asymptotic giant branch stars (the s-process and hot-bottom burning) and 20% from massive stars and their core-collapse supernovae. Argued: the rapid neutron-capture share is given to merging neutron stars, which have been seen making heavy elements once (GW170817); how much rare kinds of supernova add is argued.",
+      "plain": "About half of the rubidium was made by merging neutron stars; the rest came from dying low-mass stars and exploding massive stars. Scientists still argue about part of this.",
+      "story": "Its atoms were made by two dead stars, each heavier than the Sun and smaller than a city, spiralling together, with a share from dying low-mass stars and exploding massive stars."
      }
     },
     {
@@ -1155,6 +2322,26 @@
       "unit": "atoms per 1e6 Si",
       "src": "lodders2021",
       "sigma": 1.3
+     },
+     "origin": {
+      "shares": {
+       "low_mass_stars": 0.6,
+       "massive_stars": 0.1,
+       "neutron_star_mergers": 0.3
+      },
+      "src": "bisterzo2014",
+      "also": [
+       "kobayashi2020",
+       "kasen2017"
+      ],
+      "check": "authored",
+      "note": "approximate shares of the Sun's birth-cloud abundance, rounded; MP7 replaces them with the galaxy model's own ledger",
+      "argued": "the rapid neutron-capture share is given to merging neutron stars, which have been seen making heavy elements once (GW170817); how much rare kinds of supernova add is argued"
+     },
+     "origin_story": {
+      "physics": "The Sun's strontium: 60% from asymptotic giant branch stars (the s-process and hot-bottom burning), 30% from the r-process (here given to neutron-star mergers) and 10% from massive stars and their core-collapse supernovae. Argued: the rapid neutron-capture share is given to merging neutron stars, which have been seen making heavy elements once (GW170817); how much rare kinds of supernova add is argued.",
+      "plain": "A little over half of the strontium was made by dying low-mass stars; the rest came from merging neutron stars and exploding massive stars. Scientists still argue about part of this.",
+      "story": "Its atoms were made by old, swollen giant stars, the kind the Sun will one day become, puffing their outer layers away, with a share from merging neutron stars and exploding massive stars."
      }
     },
     {
@@ -1172,6 +2359,26 @@
       "unit": "atoms per 1e6 Si",
       "src": "lodders2021",
       "sigma": 0.24
+     },
+     "origin": {
+      "shares": {
+       "low_mass_stars": 0.65,
+       "massive_stars": 0.05,
+       "neutron_star_mergers": 0.3
+      },
+      "src": "bisterzo2014",
+      "also": [
+       "kobayashi2020",
+       "kasen2017"
+      ],
+      "check": "authored",
+      "note": "approximate shares of the Sun's birth-cloud abundance, rounded; MP7 replaces them with the galaxy model's own ledger",
+      "argued": "the rapid neutron-capture share is given to merging neutron stars, which have been seen making heavy elements once (GW170817); how much rare kinds of supernova add is argued"
+     },
+     "origin_story": {
+      "physics": "The Sun's yttrium: 65% from asymptotic giant branch stars (the s-process and hot-bottom burning), 30% from the r-process (here given to neutron-star mergers) and 5% from massive stars and their core-collapse supernovae. Argued: the rapid neutron-capture share is given to merging neutron stars, which have been seen making heavy elements once (GW170817); how much rare kinds of supernova add is argued.",
+      "plain": "A little over half of the yttrium was made by dying low-mass stars; the rest came from merging neutron stars and exploding massive stars. Scientists still argue about part of this.",
+      "story": "Its atoms were made by old, swollen giant stars, the kind the Sun will one day become, puffing their outer layers away, with a share from merging neutron stars and exploding massive stars."
      }
     },
     {
@@ -1190,6 +2397,26 @@
       "unit": "atoms per 1e6 Si",
       "src": "lodders2021",
       "sigma": 1.0
+     },
+     "origin": {
+      "shares": {
+       "low_mass_stars": 0.6,
+       "massive_stars": 0.05,
+       "neutron_star_mergers": 0.35
+      },
+      "src": "bisterzo2014",
+      "also": [
+       "kobayashi2020",
+       "kasen2017"
+      ],
+      "check": "authored",
+      "note": "approximate shares of the Sun's birth-cloud abundance, rounded; MP7 replaces them with the galaxy model's own ledger",
+      "argued": "the rapid neutron-capture share is given to merging neutron stars, which have been seen making heavy elements once (GW170817); how much rare kinds of supernova add is argued"
+     },
+     "origin_story": {
+      "physics": "The Sun's zirconium: 60% from asymptotic giant branch stars (the s-process and hot-bottom burning), 35% from the r-process (here given to neutron-star mergers) and 5% from massive stars and their core-collapse supernovae. Argued: the rapid neutron-capture share is given to merging neutron stars, which have been seen making heavy elements once (GW170817); how much rare kinds of supernova add is argued.",
+      "plain": "A little over half of the zirconium was made by dying low-mass stars; the rest came from merging neutron stars and exploding massive stars. Scientists still argue about part of this.",
+      "story": "Its atoms were made by old, swollen giant stars, the kind the Sun will one day become, puffing their outer layers away, with a share from merging neutron stars and exploding massive stars."
      }
     },
     {
@@ -1207,6 +2434,25 @@
       "unit": "atoms per 1e6 Si",
       "src": "lodders2021",
       "sigma": 0.07
+     },
+     "origin": {
+      "shares": {
+       "low_mass_stars": 0.6,
+       "neutron_star_mergers": 0.4
+      },
+      "src": "bisterzo2014",
+      "also": [
+       "kobayashi2020",
+       "kasen2017"
+      ],
+      "check": "authored",
+      "note": "approximate shares of the Sun's birth-cloud abundance, rounded; MP7 replaces them with the galaxy model's own ledger",
+      "argued": "the rapid neutron-capture share is given to merging neutron stars, which have been seen making heavy elements once (GW170817); how much rare kinds of supernova add is argued"
+     },
+     "origin_story": {
+      "physics": "The Sun's niobium: 60% from asymptotic giant branch stars (the s-process and hot-bottom burning) and 40% from the r-process (here given to neutron-star mergers). Argued: the rapid neutron-capture share is given to merging neutron stars, which have been seen making heavy elements once (GW170817); how much rare kinds of supernova add is argued.",
+      "plain": "A little over half of the niobium was made by dying low-mass stars; the rest came from merging neutron stars. Scientists still argue about part of this.",
+      "story": "Its atoms were made by old, swollen giant stars, the kind the Sun will one day become, puffing their outer layers away, with a share from merging neutron stars."
      }
     },
     {
@@ -1224,6 +2470,26 @@
       "unit": "atoms per 1e6 Si",
       "src": "lodders2021",
       "sigma": 0.26
+     },
+     "origin": {
+      "shares": {
+       "low_mass_stars": 0.5,
+       "massive_stars": 0.2,
+       "neutron_star_mergers": 0.3
+      },
+      "src": "bisterzo2014",
+      "also": [
+       "kobayashi2020",
+       "kasen2017"
+      ],
+      "check": "authored",
+      "note": "approximate shares of the Sun's birth-cloud abundance, rounded; MP7 replaces them with the galaxy model's own ledger",
+      "argued": "the rapid neutron-capture share is given to merging neutron stars, which have been seen making heavy elements once (GW170817); how much rare kinds of supernova add is argued"
+     },
+     "origin_story": {
+      "physics": "The Sun's molybdenum: 50% from asymptotic giant branch stars (the s-process and hot-bottom burning), 30% from the r-process (here given to neutron-star mergers) and 20% from massive stars and their core-collapse supernovae. Argued: the rapid neutron-capture share is given to merging neutron stars, which have been seen making heavy elements once (GW170817); how much rare kinds of supernova add is argued.",
+      "plain": "About half of the molybdenum was made by dying low-mass stars; the rest came from merging neutron stars and exploding massive stars. Scientists still argue about part of this.",
+      "story": "Its atoms were made by old, swollen giant stars, the kind the Sun will one day become, puffing their outer layers away, with a share from merging neutron stars and exploding massive stars."
      }
     },
     {
@@ -1231,7 +2497,21 @@
      "symbol": "Tc",
      "name": "Technetium",
      "z": 43,
-     "no_standard_weight": true
+     "no_standard_weight": true,
+     "origin": {
+      "shares": {
+       "human_made": 1.0
+      },
+      "src": "nubase2020",
+      "also": [],
+      "check": "authored",
+      "note": "approximate shares of the Sun's birth-cloud abundance, rounded; MP7 replaces them with the galaxy model's own ledger"
+     },
+     "origin_story": {
+      "physics": "Technetium has no stable isotope; the longest-lived lasts a few million years, so any made before the Sun formed is gone. Its lines in some red giants were the first proof that stars make elements (Merrill 1952).",
+      "plain": "Technetium has no stable form, so the Earth's original supply is long gone. People make it in reactors. Some giant stars show it in their light, which proved that stars make elements.",
+      "story": "None survives from the stars. What exists was made by people, though some giant stars are making it right now."
+     }
     },
     {
      "id": "ru",
@@ -1248,6 +2528,26 @@
       "unit": "atoms per 1e6 Si",
       "src": "lodders2021",
       "sigma": 0.02
+     },
+     "origin": {
+      "shares": {
+       "low_mass_stars": 0.3,
+       "massive_stars": 0.1,
+       "neutron_star_mergers": 0.6
+      },
+      "src": "bisterzo2014",
+      "also": [
+       "kobayashi2020",
+       "kasen2017"
+      ],
+      "check": "authored",
+      "note": "approximate shares of the Sun's birth-cloud abundance, rounded; MP7 replaces them with the galaxy model's own ledger",
+      "argued": "the rapid neutron-capture share is given to merging neutron stars, which have been seen making heavy elements once (GW170817); how much rare kinds of supernova add is argued"
+     },
+     "origin_story": {
+      "physics": "The Sun's ruthenium: 60% from the r-process (here given to neutron-star mergers), 30% from asymptotic giant branch stars (the s-process and hot-bottom burning) and 10% from massive stars and their core-collapse supernovae. Argued: the rapid neutron-capture share is given to merging neutron stars, which have been seen making heavy elements once (GW170817); how much rare kinds of supernova add is argued.",
+      "plain": "A little over half of the ruthenium was made by merging neutron stars; the rest came from dying low-mass stars and exploding massive stars. Scientists still argue about part of this.",
+      "story": "Its atoms were made by two dead stars, each heavier than the Sun and smaller than a city, spiralling together, with a share from dying low-mass stars and exploding massive stars."
      }
     },
     {
@@ -1265,6 +2565,25 @@
       "unit": "atoms per 1e6 Si",
       "src": "lodders2021",
       "sigma": 0.015
+     },
+     "origin": {
+      "shares": {
+       "low_mass_stars": 0.15,
+       "neutron_star_mergers": 0.85
+      },
+      "src": "bisterzo2014",
+      "also": [
+       "kobayashi2020",
+       "kasen2017"
+      ],
+      "check": "authored",
+      "note": "approximate shares of the Sun's birth-cloud abundance, rounded; MP7 replaces them with the galaxy model's own ledger",
+      "argued": "the rapid neutron-capture share is given to merging neutron stars, which have been seen making heavy elements once (GW170817); how much rare kinds of supernova add is argued"
+     },
+     "origin_story": {
+      "physics": "The Sun's rhodium: 85% from the r-process (here given to neutron-star mergers) and 15% from asymptotic giant branch stars (the s-process and hot-bottom burning). Argued: the rapid neutron-capture share is given to merging neutron stars, which have been seen making heavy elements once (GW170817); how much rare kinds of supernova add is argued.",
+      "plain": "Most of the rhodium was made by merging neutron stars; the rest came from dying low-mass stars. Scientists still argue about part of this.",
+      "story": "Its atoms were made by two dead stars, each heavier than the Sun and smaller than a city, spiralling together, with a share from dying low-mass stars."
      }
     },
     {
@@ -1282,6 +2601,25 @@
       "unit": "atoms per 1e6 Si",
       "src": "lodders2021",
       "sigma": 0.07
+     },
+     "origin": {
+      "shares": {
+       "low_mass_stars": 0.45,
+       "neutron_star_mergers": 0.55
+      },
+      "src": "bisterzo2014",
+      "also": [
+       "kobayashi2020",
+       "kasen2017"
+      ],
+      "check": "authored",
+      "note": "approximate shares of the Sun's birth-cloud abundance, rounded; MP7 replaces them with the galaxy model's own ledger",
+      "argued": "the rapid neutron-capture share is given to merging neutron stars, which have been seen making heavy elements once (GW170817); how much rare kinds of supernova add is argued"
+     },
+     "origin_story": {
+      "physics": "The Sun's palladium: 55% from the r-process (here given to neutron-star mergers) and 45% from asymptotic giant branch stars (the s-process and hot-bottom burning). Argued: the rapid neutron-capture share is given to merging neutron stars, which have been seen making heavy elements once (GW170817); how much rare kinds of supernova add is argued.",
+      "plain": "A little over half of the palladium was made by merging neutron stars; the rest came from dying low-mass stars. Scientists still argue about part of this.",
+      "story": "Its atoms were made by two dead stars, each heavier than the Sun and smaller than a city, spiralling together, with a share from dying low-mass stars."
      }
     },
     {
@@ -1299,6 +2637,25 @@
       "unit": "atoms per 1e6 Si",
       "src": "lodders2021",
       "sigma": 0.022
+     },
+     "origin": {
+      "shares": {
+       "low_mass_stars": 0.2,
+       "neutron_star_mergers": 0.8
+      },
+      "src": "bisterzo2014",
+      "also": [
+       "kobayashi2020",
+       "kasen2017"
+      ],
+      "check": "authored",
+      "note": "approximate shares of the Sun's birth-cloud abundance, rounded; MP7 replaces them with the galaxy model's own ledger",
+      "argued": "the rapid neutron-capture share is given to merging neutron stars, which have been seen making heavy elements once (GW170817); how much rare kinds of supernova add is argued"
+     },
+     "origin_story": {
+      "physics": "The Sun's silver: 80% from the r-process (here given to neutron-star mergers) and 20% from asymptotic giant branch stars (the s-process and hot-bottom burning). Argued: the rapid neutron-capture share is given to merging neutron stars, which have been seen making heavy elements once (GW170817); how much rare kinds of supernova add is argued.",
+      "plain": "Most of the silver was made by merging neutron stars; the rest came from dying low-mass stars. Scientists still argue about part of this.",
+      "story": "Its atoms were made by two dead stars, each heavier than the Sun and smaller than a city, spiralling together, with a share from dying low-mass stars."
      }
     },
     {
@@ -1316,6 +2673,25 @@
       "unit": "atoms per 1e6 Si",
       "src": "lodders2021",
       "sigma": 0.06
+     },
+     "origin": {
+      "shares": {
+       "low_mass_stars": 0.65,
+       "neutron_star_mergers": 0.35
+      },
+      "src": "bisterzo2014",
+      "also": [
+       "kobayashi2020",
+       "kasen2017"
+      ],
+      "check": "authored",
+      "note": "approximate shares of the Sun's birth-cloud abundance, rounded; MP7 replaces them with the galaxy model's own ledger",
+      "argued": "the rapid neutron-capture share is given to merging neutron stars, which have been seen making heavy elements once (GW170817); how much rare kinds of supernova add is argued"
+     },
+     "origin_story": {
+      "physics": "The Sun's cadmium: 65% from asymptotic giant branch stars (the s-process and hot-bottom burning) and 35% from the r-process (here given to neutron-star mergers). Argued: the rapid neutron-capture share is given to merging neutron stars, which have been seen making heavy elements once (GW170817); how much rare kinds of supernova add is argued.",
+      "plain": "A little over half of the cadmium was made by dying low-mass stars; the rest came from merging neutron stars. Scientists still argue about part of this.",
+      "story": "Its atoms were made by old, swollen giant stars, the kind the Sun will one day become, puffing their outer layers away, with a share from merging neutron stars."
      }
     },
     {
@@ -1333,6 +2709,25 @@
       "unit": "atoms per 1e6 Si",
       "src": "lodders2021",
       "sigma": 0.008
+     },
+     "origin": {
+      "shares": {
+       "low_mass_stars": 0.6,
+       "neutron_star_mergers": 0.4
+      },
+      "src": "bisterzo2014",
+      "also": [
+       "kobayashi2020",
+       "kasen2017"
+      ],
+      "check": "authored",
+      "note": "approximate shares of the Sun's birth-cloud abundance, rounded; MP7 replaces them with the galaxy model's own ledger",
+      "argued": "the rapid neutron-capture share is given to merging neutron stars, which have been seen making heavy elements once (GW170817); how much rare kinds of supernova add is argued"
+     },
+     "origin_story": {
+      "physics": "The Sun's indium: 60% from asymptotic giant branch stars (the s-process and hot-bottom burning) and 40% from the r-process (here given to neutron-star mergers). Argued: the rapid neutron-capture share is given to merging neutron stars, which have been seen making heavy elements once (GW170817); how much rare kinds of supernova add is argued.",
+      "plain": "A little over half of the indium was made by dying low-mass stars; the rest came from merging neutron stars. Scientists still argue about part of this.",
+      "story": "Its atoms were made by old, swollen giant stars, the kind the Sun will one day become, puffing their outer layers away, with a share from merging neutron stars."
      }
     },
     {
@@ -1350,6 +2745,25 @@
       "unit": "atoms per 1e6 Si",
       "src": "lodders2021",
       "sigma": 0.22
+     },
+     "origin": {
+      "shares": {
+       "low_mass_stars": 0.7,
+       "neutron_star_mergers": 0.3
+      },
+      "src": "bisterzo2014",
+      "also": [
+       "kobayashi2020",
+       "kasen2017"
+      ],
+      "check": "authored",
+      "note": "approximate shares of the Sun's birth-cloud abundance, rounded; MP7 replaces them with the galaxy model's own ledger",
+      "argued": "the rapid neutron-capture share is given to merging neutron stars, which have been seen making heavy elements once (GW170817); how much rare kinds of supernova add is argued"
+     },
+     "origin_story": {
+      "physics": "The Sun's tin: 70% from asymptotic giant branch stars (the s-process and hot-bottom burning) and 30% from the r-process (here given to neutron-star mergers). Argued: the rapid neutron-capture share is given to merging neutron stars, which have been seen making heavy elements once (GW170817); how much rare kinds of supernova add is argued.",
+      "plain": "Most of the tin was made by dying low-mass stars; the rest came from merging neutron stars. Scientists still argue about part of this.",
+      "story": "Its atoms were made by old, swollen giant stars, the kind the Sun will one day become, puffing their outer layers away, with a share from merging neutron stars."
      }
     },
     {
@@ -1367,6 +2781,25 @@
       "unit": "atoms per 1e6 Si",
       "src": "lodders2021",
       "sigma": 0.045
+     },
+     "origin": {
+      "shares": {
+       "low_mass_stars": 0.25,
+       "neutron_star_mergers": 0.75
+      },
+      "src": "bisterzo2014",
+      "also": [
+       "kobayashi2020",
+       "kasen2017"
+      ],
+      "check": "authored",
+      "note": "approximate shares of the Sun's birth-cloud abundance, rounded; MP7 replaces them with the galaxy model's own ledger",
+      "argued": "the rapid neutron-capture share is given to merging neutron stars, which have been seen making heavy elements once (GW170817); how much rare kinds of supernova add is argued"
+     },
+     "origin_story": {
+      "physics": "The Sun's antimony: 75% from the r-process (here given to neutron-star mergers) and 25% from asymptotic giant branch stars (the s-process and hot-bottom burning). Argued: the rapid neutron-capture share is given to merging neutron stars, which have been seen making heavy elements once (GW170817); how much rare kinds of supernova add is argued.",
+      "plain": "Most of the antimony was made by merging neutron stars; the rest came from dying low-mass stars. Scientists still argue about part of this.",
+      "story": "Its atoms were made by two dead stars, each heavier than the Sun and smaller than a city, spiralling together, with a share from dying low-mass stars."
      }
     },
     {
@@ -1384,6 +2817,25 @@
       "unit": "atoms per 1e6 Si",
       "src": "lodders2021",
       "sigma": 0.23
+     },
+     "origin": {
+      "shares": {
+       "low_mass_stars": 0.2,
+       "neutron_star_mergers": 0.8
+      },
+      "src": "bisterzo2014",
+      "also": [
+       "kobayashi2020",
+       "kasen2017"
+      ],
+      "check": "authored",
+      "note": "approximate shares of the Sun's birth-cloud abundance, rounded; MP7 replaces them with the galaxy model's own ledger",
+      "argued": "the rapid neutron-capture share is given to merging neutron stars, which have been seen making heavy elements once (GW170817); how much rare kinds of supernova add is argued"
+     },
+     "origin_story": {
+      "physics": "The Sun's tellurium: 80% from the r-process (here given to neutron-star mergers) and 20% from asymptotic giant branch stars (the s-process and hot-bottom burning). Argued: the rapid neutron-capture share is given to merging neutron stars, which have been seen making heavy elements once (GW170817); how much rare kinds of supernova add is argued.",
+      "plain": "Most of the tellurium was made by merging neutron stars; the rest came from dying low-mass stars. Scientists still argue about part of this.",
+      "story": "Its atoms were made by two dead stars, each heavier than the Sun and smaller than a city, spiralling together, with a share from dying low-mass stars."
      }
     },
     {
@@ -1401,6 +2853,25 @@
       "unit": "atoms per 1e6 Si",
       "src": "lodders2021",
       "sigma": 0.64
+     },
+     "origin": {
+      "shares": {
+       "low_mass_stars": 0.05,
+       "neutron_star_mergers": 0.95
+      },
+      "src": "bisterzo2014",
+      "also": [
+       "kobayashi2020",
+       "kasen2017"
+      ],
+      "check": "authored",
+      "note": "approximate shares of the Sun's birth-cloud abundance, rounded; MP7 replaces them with the galaxy model's own ledger",
+      "argued": "the rapid neutron-capture share is given to merging neutron stars, which have been seen making heavy elements once (GW170817); how much rare kinds of supernova add is argued"
+     },
+     "origin_story": {
+      "physics": "The Sun's iodine: 95% from the r-process (here given to neutron-star mergers) and 5% from asymptotic giant branch stars (the s-process and hot-bottom burning). Argued: the rapid neutron-capture share is given to merging neutron stars, which have been seen making heavy elements once (GW170817); how much rare kinds of supernova add is argued.",
+      "plain": "Almost all of the iodine was made by merging neutron stars; the rest came from dying low-mass stars. Scientists still argue about part of this.",
+      "story": "Its atoms were made by two dead stars, each heavier than the Sun and smaller than a city, spiralling together, with a share from dying low-mass stars."
      }
     },
     {
@@ -1418,6 +2889,25 @@
       "unit": "atoms per 1e6 Si",
       "src": "lodders2021",
       "sigma": 1.11
+     },
+     "origin": {
+      "shares": {
+       "low_mass_stars": 0.2,
+       "neutron_star_mergers": 0.8
+      },
+      "src": "bisterzo2014",
+      "also": [
+       "kobayashi2020",
+       "kasen2017"
+      ],
+      "check": "authored",
+      "note": "approximate shares of the Sun's birth-cloud abundance, rounded; MP7 replaces them with the galaxy model's own ledger",
+      "argued": "the rapid neutron-capture share is given to merging neutron stars, which have been seen making heavy elements once (GW170817); how much rare kinds of supernova add is argued"
+     },
+     "origin_story": {
+      "physics": "The Sun's xenon: 80% from the r-process (here given to neutron-star mergers) and 20% from asymptotic giant branch stars (the s-process and hot-bottom burning). Argued: the rapid neutron-capture share is given to merging neutron stars, which have been seen making heavy elements once (GW170817); how much rare kinds of supernova add is argued.",
+      "plain": "Most of the xenon was made by merging neutron stars; the rest came from dying low-mass stars. Scientists still argue about part of this.",
+      "story": "Its atoms were made by two dead stars, each heavier than the Sun and smaller than a city, spiralling together, with a share from dying low-mass stars."
      }
     },
     {
@@ -1435,6 +2925,25 @@
       "unit": "atoms per 1e6 Si",
       "src": "lodders2021",
       "sigma": 0.043
+     },
+     "origin": {
+      "shares": {
+       "low_mass_stars": 0.15,
+       "neutron_star_mergers": 0.85
+      },
+      "src": "bisterzo2014",
+      "also": [
+       "kobayashi2020",
+       "kasen2017"
+      ],
+      "check": "authored",
+      "note": "approximate shares of the Sun's birth-cloud abundance, rounded; MP7 replaces them with the galaxy model's own ledger",
+      "argued": "the rapid neutron-capture share is given to merging neutron stars, which have been seen making heavy elements once (GW170817); how much rare kinds of supernova add is argued"
+     },
+     "origin_story": {
+      "physics": "The Sun's caesium: 85% from the r-process (here given to neutron-star mergers) and 15% from asymptotic giant branch stars (the s-process and hot-bottom burning). Argued: the rapid neutron-capture share is given to merging neutron stars, which have been seen making heavy elements once (GW170817); how much rare kinds of supernova add is argued.",
+      "plain": "Most of the caesium was made by merging neutron stars; the rest came from dying low-mass stars. Scientists still argue about part of this.",
+      "story": "Its atoms were made by two dead stars, each heavier than the Sun and smaller than a city, spiralling together, with a share from dying low-mass stars."
      }
     },
     {
@@ -1452,6 +2961,24 @@
       "unit": "atoms per 1e6 Si",
       "src": "lodders2021",
       "sigma": 0.27
+     },
+     "origin": {
+      "shares": {
+       "low_mass_stars": 0.85,
+       "neutron_star_mergers": 0.15
+      },
+      "src": "bisterzo2014",
+      "also": [
+       "kobayashi2020",
+       "kasen2017"
+      ],
+      "check": "authored",
+      "note": "approximate shares of the Sun's birth-cloud abundance, rounded; MP7 replaces them with the galaxy model's own ledger"
+     },
+     "origin_story": {
+      "physics": "Barium is about 85% s-process: slow neutron capture in the helium-burning shells of asymptotic-giant-branch stars, over thousands of years.",
+      "plain": "Most barium was made slowly, over thousands of years, inside dying low-mass stars.",
+      "story": "It was built atom by atom in the deep layers of old giant stars, one neutron at a time."
      }
     },
     {
@@ -1469,6 +2996,24 @@
       "unit": "atoms per 1e6 Si",
       "src": "lodders2021",
       "sigma": 0.024
+     },
+     "origin": {
+      "shares": {
+       "low_mass_stars": 0.75,
+       "neutron_star_mergers": 0.25
+      },
+      "src": "bisterzo2014",
+      "also": [
+       "kobayashi2020",
+       "kasen2017"
+      ],
+      "check": "authored",
+      "note": "approximate shares of the Sun's birth-cloud abundance, rounded; MP7 replaces them with the galaxy model's own ledger"
+     },
+     "origin_story": {
+      "physics": "The Sun's lanthanum: 75% from asymptotic giant branch stars (the s-process and hot-bottom burning) and 25% from the r-process (here given to neutron-star mergers).",
+      "plain": "Most of the lanthanum was made by dying low-mass stars; the rest came from merging neutron stars.",
+      "story": "Its atoms were made by old, swollen giant stars, the kind the Sun will one day become, puffing their outer layers away, with a share from merging neutron stars."
      }
     },
     {
@@ -1486,6 +3031,24 @@
       "unit": "atoms per 1e6 Si",
       "src": "lodders2021",
       "sigma": 0.05
+     },
+     "origin": {
+      "shares": {
+       "low_mass_stars": 0.8,
+       "neutron_star_mergers": 0.2
+      },
+      "src": "bisterzo2014",
+      "also": [
+       "kobayashi2020",
+       "kasen2017"
+      ],
+      "check": "authored",
+      "note": "approximate shares of the Sun's birth-cloud abundance, rounded; MP7 replaces them with the galaxy model's own ledger"
+     },
+     "origin_story": {
+      "physics": "The Sun's cerium: 80% from asymptotic giant branch stars (the s-process and hot-bottom burning) and 20% from the r-process (here given to neutron-star mergers).",
+      "plain": "Most of the cerium was made by dying low-mass stars; the rest came from merging neutron stars.",
+      "story": "Its atoms were made by old, swollen giant stars, the kind the Sun will one day become, puffing their outer layers away, with a share from merging neutron stars."
      }
     },
     {
@@ -1503,6 +3066,25 @@
       "unit": "atoms per 1e6 Si",
       "src": "lodders2021",
       "sigma": 0.012
+     },
+     "origin": {
+      "shares": {
+       "low_mass_stars": 0.5,
+       "neutron_star_mergers": 0.5
+      },
+      "src": "bisterzo2014",
+      "also": [
+       "kobayashi2020",
+       "kasen2017"
+      ],
+      "check": "authored",
+      "note": "approximate shares of the Sun's birth-cloud abundance, rounded; MP7 replaces them with the galaxy model's own ledger",
+      "argued": "the rapid neutron-capture share is given to merging neutron stars, which have been seen making heavy elements once (GW170817); how much rare kinds of supernova add is argued"
+     },
+     "origin_story": {
+      "physics": "The Sun's praseodymium: 50% from asymptotic giant branch stars (the s-process and hot-bottom burning) and 50% from the r-process (here given to neutron-star mergers). Argued: the rapid neutron-capture share is given to merging neutron stars, which have been seen making heavy elements once (GW170817); how much rare kinds of supernova add is argued.",
+      "plain": "About half of the praseodymium was made by dying low-mass stars; the rest came from merging neutron stars. Scientists still argue about part of this.",
+      "story": "Its atoms were made by old, swollen giant stars, the kind the Sun will one day become, puffing their outer layers away, with a share from merging neutron stars."
      }
     },
     {
@@ -1520,6 +3102,25 @@
       "unit": "atoms per 1e6 Si",
       "src": "lodders2021",
       "sigma": 0.022
+     },
+     "origin": {
+      "shares": {
+       "low_mass_stars": 0.55,
+       "neutron_star_mergers": 0.45
+      },
+      "src": "bisterzo2014",
+      "also": [
+       "kobayashi2020",
+       "kasen2017"
+      ],
+      "check": "authored",
+      "note": "approximate shares of the Sun's birth-cloud abundance, rounded; MP7 replaces them with the galaxy model's own ledger",
+      "argued": "the rapid neutron-capture share is given to merging neutron stars, which have been seen making heavy elements once (GW170817); how much rare kinds of supernova add is argued"
+     },
+     "origin_story": {
+      "physics": "The Sun's neodymium: 55% from asymptotic giant branch stars (the s-process and hot-bottom burning) and 45% from the r-process (here given to neutron-star mergers). Argued: the rapid neutron-capture share is given to merging neutron stars, which have been seen making heavy elements once (GW170817); how much rare kinds of supernova add is argued.",
+      "plain": "A little over half of the neodymium was made by dying low-mass stars; the rest came from merging neutron stars. Scientists still argue about part of this.",
+      "story": "Its atoms were made by old, swollen giant stars, the kind the Sun will one day become, puffing their outer layers away, with a share from merging neutron stars."
      }
     },
     {
@@ -1527,7 +3128,21 @@
      "symbol": "Pm",
      "name": "Promethium",
      "z": 61,
-     "no_standard_weight": true
+     "no_standard_weight": true,
+     "origin": {
+      "shares": {
+       "human_made": 1.0
+      },
+      "src": "nubase2020",
+      "also": [],
+      "check": "authored",
+      "note": "approximate shares of the Sun's birth-cloud abundance, rounded; MP7 replaces them with the galaxy model's own ledger"
+     },
+     "origin_story": {
+      "physics": "Promethium has no isotope long-lived enough to survive from the stars; what exists was made by synthesis in reactors and accelerators.",
+      "plain": "Promethium is made by people, in reactors and particle accelerators. None is left from the stars.",
+      "story": "It does not occur in nature: it was made by people, in reactors and accelerators, a few atoms at a time."
+     }
     },
     {
      "id": "sm",
@@ -1544,6 +3159,25 @@
       "unit": "atoms per 1e6 Si",
       "src": "lodders2021",
       "sigma": 0.012
+     },
+     "origin": {
+      "shares": {
+       "low_mass_stars": 0.3,
+       "neutron_star_mergers": 0.7
+      },
+      "src": "bisterzo2014",
+      "also": [
+       "kobayashi2020",
+       "kasen2017"
+      ],
+      "check": "authored",
+      "note": "approximate shares of the Sun's birth-cloud abundance, rounded; MP7 replaces them with the galaxy model's own ledger",
+      "argued": "the rapid neutron-capture share is given to merging neutron stars, which have been seen making heavy elements once (GW170817); how much rare kinds of supernova add is argued"
+     },
+     "origin_story": {
+      "physics": "The Sun's samarium: 70% from the r-process (here given to neutron-star mergers) and 30% from asymptotic giant branch stars (the s-process and hot-bottom burning). Argued: the rapid neutron-capture share is given to merging neutron stars, which have been seen making heavy elements once (GW170817); how much rare kinds of supernova add is argued.",
+      "plain": "Most of the samarium was made by merging neutron stars; the rest came from dying low-mass stars. Scientists still argue about part of this.",
+      "story": "Its atoms were made by two dead stars, each heavier than the Sun and smaller than a city, spiralling together, with a share from dying low-mass stars."
      }
     },
     {
@@ -1561,6 +3195,25 @@
       "unit": "atoms per 1e6 Si",
       "src": "lodders2021",
       "sigma": 0.005
+     },
+     "origin": {
+      "shares": {
+       "low_mass_stars": 0.05,
+       "neutron_star_mergers": 0.95
+      },
+      "src": "bisterzo2014",
+      "also": [
+       "kobayashi2020",
+       "kasen2017"
+      ],
+      "check": "authored",
+      "note": "approximate shares of the Sun's birth-cloud abundance, rounded; MP7 replaces them with the galaxy model's own ledger",
+      "argued": "the rapid neutron-capture share is given to merging neutron stars, which have been seen making heavy elements once (GW170817); how much rare kinds of supernova add is argued"
+     },
+     "origin_story": {
+      "physics": "Europium is the classic r-process tracer: about 95% of the Sun's europium is r-process. Its rise in old stars is too early for mergers alone, which is why rare magneto-rotational supernovae are argued to add a share (Kobayashi et al. 2020).",
+      "plain": "Europium was made almost entirely by the rapid process, mostly in merging neutron stars. It appears so early in the galaxy that some must also come from rare supernovae, which is still argued.",
+      "story": "Astronomers follow europium to trace the galaxy's history of star collisions."
      }
     },
     {
@@ -1579,6 +3232,25 @@
       "unit": "atoms per 1e6 Si",
       "src": "lodders2021",
       "sigma": 0.013
+     },
+     "origin": {
+      "shares": {
+       "low_mass_stars": 0.15,
+       "neutron_star_mergers": 0.85
+      },
+      "src": "bisterzo2014",
+      "also": [
+       "kobayashi2020",
+       "kasen2017"
+      ],
+      "check": "authored",
+      "note": "approximate shares of the Sun's birth-cloud abundance, rounded; MP7 replaces them with the galaxy model's own ledger",
+      "argued": "the rapid neutron-capture share is given to merging neutron stars, which have been seen making heavy elements once (GW170817); how much rare kinds of supernova add is argued"
+     },
+     "origin_story": {
+      "physics": "The Sun's gadolinium: 85% from the r-process (here given to neutron-star mergers) and 15% from asymptotic giant branch stars (the s-process and hot-bottom burning). Argued: the rapid neutron-capture share is given to merging neutron stars, which have been seen making heavy elements once (GW170817); how much rare kinds of supernova add is argued.",
+      "plain": "Most of the gadolinium was made by merging neutron stars; the rest came from dying low-mass stars. Scientists still argue about part of this.",
+      "story": "Its atoms were made by two dead stars, each heavier than the Sun and smaller than a city, spiralling together, with a share from dying low-mass stars."
      }
     },
     {
@@ -1596,6 +3268,25 @@
       "unit": "atoms per 1e6 Si",
       "src": "lodders2021",
       "sigma": 0.0025
+     },
+     "origin": {
+      "shares": {
+       "low_mass_stars": 0.07,
+       "neutron_star_mergers": 0.93
+      },
+      "src": "bisterzo2014",
+      "also": [
+       "kobayashi2020",
+       "kasen2017"
+      ],
+      "check": "authored",
+      "note": "approximate shares of the Sun's birth-cloud abundance, rounded; MP7 replaces them with the galaxy model's own ledger",
+      "argued": "the rapid neutron-capture share is given to merging neutron stars, which have been seen making heavy elements once (GW170817); how much rare kinds of supernova add is argued"
+     },
+     "origin_story": {
+      "physics": "The Sun's terbium: 93% from the r-process (here given to neutron-star mergers) and 7% from asymptotic giant branch stars (the s-process and hot-bottom burning). Argued: the rapid neutron-capture share is given to merging neutron stars, which have been seen making heavy elements once (GW170817); how much rare kinds of supernova add is argued.",
+      "plain": "Most of the terbium was made by merging neutron stars; the rest came from dying low-mass stars. Scientists still argue about part of this.",
+      "story": "Its atoms were made by two dead stars, each heavier than the Sun and smaller than a city, spiralling together, with a share from dying low-mass stars."
      }
     },
     {
@@ -1613,6 +3304,25 @@
       "unit": "atoms per 1e6 Si",
       "src": "lodders2021",
       "sigma": 0.016
+     },
+     "origin": {
+      "shares": {
+       "low_mass_stars": 0.12,
+       "neutron_star_mergers": 0.88
+      },
+      "src": "bisterzo2014",
+      "also": [
+       "kobayashi2020",
+       "kasen2017"
+      ],
+      "check": "authored",
+      "note": "approximate shares of the Sun's birth-cloud abundance, rounded; MP7 replaces them with the galaxy model's own ledger",
+      "argued": "the rapid neutron-capture share is given to merging neutron stars, which have been seen making heavy elements once (GW170817); how much rare kinds of supernova add is argued"
+     },
+     "origin_story": {
+      "physics": "The Sun's dysprosium: 88% from the r-process (here given to neutron-star mergers) and 12% from asymptotic giant branch stars (the s-process and hot-bottom burning). Argued: the rapid neutron-capture share is given to merging neutron stars, which have been seen making heavy elements once (GW170817); how much rare kinds of supernova add is argued.",
+      "plain": "Most of the dysprosium was made by merging neutron stars; the rest came from dying low-mass stars. Scientists still argue about part of this.",
+      "story": "Its atoms were made by two dead stars, each heavier than the Sun and smaller than a city, spiralling together, with a share from dying low-mass stars."
      }
     },
     {
@@ -1630,6 +3340,25 @@
       "unit": "atoms per 1e6 Si",
       "src": "lodders2021",
       "sigma": 0.0035
+     },
+     "origin": {
+      "shares": {
+       "low_mass_stars": 0.08,
+       "neutron_star_mergers": 0.92
+      },
+      "src": "bisterzo2014",
+      "also": [
+       "kobayashi2020",
+       "kasen2017"
+      ],
+      "check": "authored",
+      "note": "approximate shares of the Sun's birth-cloud abundance, rounded; MP7 replaces them with the galaxy model's own ledger",
+      "argued": "the rapid neutron-capture share is given to merging neutron stars, which have been seen making heavy elements once (GW170817); how much rare kinds of supernova add is argued"
+     },
+     "origin_story": {
+      "physics": "The Sun's holmium: 92% from the r-process (here given to neutron-star mergers) and 8% from asymptotic giant branch stars (the s-process and hot-bottom burning). Argued: the rapid neutron-capture share is given to merging neutron stars, which have been seen making heavy elements once (GW170817); how much rare kinds of supernova add is argued.",
+      "plain": "Most of the holmium was made by merging neutron stars; the rest came from dying low-mass stars. Scientists still argue about part of this.",
+      "story": "Its atoms were made by two dead stars, each heavier than the Sun and smaller than a city, spiralling together, with a share from dying low-mass stars."
      }
     },
     {
@@ -1647,6 +3376,25 @@
       "unit": "atoms per 1e6 Si",
       "src": "lodders2021",
       "sigma": 0.009
+     },
+     "origin": {
+      "shares": {
+       "low_mass_stars": 0.15,
+       "neutron_star_mergers": 0.85
+      },
+      "src": "bisterzo2014",
+      "also": [
+       "kobayashi2020",
+       "kasen2017"
+      ],
+      "check": "authored",
+      "note": "approximate shares of the Sun's birth-cloud abundance, rounded; MP7 replaces them with the galaxy model's own ledger",
+      "argued": "the rapid neutron-capture share is given to merging neutron stars, which have been seen making heavy elements once (GW170817); how much rare kinds of supernova add is argued"
+     },
+     "origin_story": {
+      "physics": "The Sun's erbium: 85% from the r-process (here given to neutron-star mergers) and 15% from asymptotic giant branch stars (the s-process and hot-bottom burning). Argued: the rapid neutron-capture share is given to merging neutron stars, which have been seen making heavy elements once (GW170817); how much rare kinds of supernova add is argued.",
+      "plain": "Most of the erbium was made by merging neutron stars; the rest came from dying low-mass stars. Scientists still argue about part of this.",
+      "story": "Its atoms were made by two dead stars, each heavier than the Sun and smaller than a city, spiralling together, with a share from dying low-mass stars."
      }
     },
     {
@@ -1664,6 +3412,25 @@
       "unit": "atoms per 1e6 Si",
       "src": "lodders2021",
       "sigma": 0.0014
+     },
+     "origin": {
+      "shares": {
+       "low_mass_stars": 0.13,
+       "neutron_star_mergers": 0.87
+      },
+      "src": "bisterzo2014",
+      "also": [
+       "kobayashi2020",
+       "kasen2017"
+      ],
+      "check": "authored",
+      "note": "approximate shares of the Sun's birth-cloud abundance, rounded; MP7 replaces them with the galaxy model's own ledger",
+      "argued": "the rapid neutron-capture share is given to merging neutron stars, which have been seen making heavy elements once (GW170817); how much rare kinds of supernova add is argued"
+     },
+     "origin_story": {
+      "physics": "The Sun's thulium: 87% from the r-process (here given to neutron-star mergers) and 13% from asymptotic giant branch stars (the s-process and hot-bottom burning). Argued: the rapid neutron-capture share is given to merging neutron stars, which have been seen making heavy elements once (GW170817); how much rare kinds of supernova add is argued.",
+      "plain": "Most of the thulium was made by merging neutron stars; the rest came from dying low-mass stars. Scientists still argue about part of this.",
+      "story": "Its atoms were made by two dead stars, each heavier than the Sun and smaller than a city, spiralling together, with a share from dying low-mass stars."
      }
     },
     {
@@ -1681,6 +3448,25 @@
       "unit": "atoms per 1e6 Si",
       "src": "lodders2021",
       "sigma": 0.009
+     },
+     "origin": {
+      "shares": {
+       "low_mass_stars": 0.4,
+       "neutron_star_mergers": 0.6
+      },
+      "src": "bisterzo2014",
+      "also": [
+       "kobayashi2020",
+       "kasen2017"
+      ],
+      "check": "authored",
+      "note": "approximate shares of the Sun's birth-cloud abundance, rounded; MP7 replaces them with the galaxy model's own ledger",
+      "argued": "the rapid neutron-capture share is given to merging neutron stars, which have been seen making heavy elements once (GW170817); how much rare kinds of supernova add is argued"
+     },
+     "origin_story": {
+      "physics": "The Sun's ytterbium: 60% from the r-process (here given to neutron-star mergers) and 40% from asymptotic giant branch stars (the s-process and hot-bottom burning). Argued: the rapid neutron-capture share is given to merging neutron stars, which have been seen making heavy elements once (GW170817); how much rare kinds of supernova add is argued.",
+      "plain": "A little over half of the ytterbium was made by merging neutron stars; the rest came from dying low-mass stars. Scientists still argue about part of this.",
+      "story": "Its atoms were made by two dead stars, each heavier than the Sun and smaller than a city, spiralling together, with a share from dying low-mass stars."
      }
     },
     {
@@ -1699,6 +3485,25 @@
       "unit": "atoms per 1e6 Si",
       "src": "lodders2021",
       "sigma": 0.0018
+     },
+     "origin": {
+      "shares": {
+       "low_mass_stars": 0.3,
+       "neutron_star_mergers": 0.7
+      },
+      "src": "bisterzo2014",
+      "also": [
+       "kobayashi2020",
+       "kasen2017"
+      ],
+      "check": "authored",
+      "note": "approximate shares of the Sun's birth-cloud abundance, rounded; MP7 replaces them with the galaxy model's own ledger",
+      "argued": "the rapid neutron-capture share is given to merging neutron stars, which have been seen making heavy elements once (GW170817); how much rare kinds of supernova add is argued"
+     },
+     "origin_story": {
+      "physics": "The Sun's lutetium: 70% from the r-process (here given to neutron-star mergers) and 30% from asymptotic giant branch stars (the s-process and hot-bottom burning). Argued: the rapid neutron-capture share is given to merging neutron stars, which have been seen making heavy elements once (GW170817); how much rare kinds of supernova add is argued.",
+      "plain": "Most of the lutetium was made by merging neutron stars; the rest came from dying low-mass stars. Scientists still argue about part of this.",
+      "story": "Its atoms were made by two dead stars, each heavier than the Sun and smaller than a city, spiralling together, with a share from dying low-mass stars."
      }
     },
     {
@@ -1716,6 +3521,25 @@
       "unit": "atoms per 1e6 Si",
       "src": "lodders2021",
       "sigma": 0.011
+     },
+     "origin": {
+      "shares": {
+       "low_mass_stars": 0.55,
+       "neutron_star_mergers": 0.45
+      },
+      "src": "bisterzo2014",
+      "also": [
+       "kobayashi2020",
+       "kasen2017"
+      ],
+      "check": "authored",
+      "note": "approximate shares of the Sun's birth-cloud abundance, rounded; MP7 replaces them with the galaxy model's own ledger",
+      "argued": "the rapid neutron-capture share is given to merging neutron stars, which have been seen making heavy elements once (GW170817); how much rare kinds of supernova add is argued"
+     },
+     "origin_story": {
+      "physics": "The Sun's hafnium: 55% from asymptotic giant branch stars (the s-process and hot-bottom burning) and 45% from the r-process (here given to neutron-star mergers). Argued: the rapid neutron-capture share is given to merging neutron stars, which have been seen making heavy elements once (GW170817); how much rare kinds of supernova add is argued.",
+      "plain": "A little over half of the hafnium was made by dying low-mass stars; the rest came from merging neutron stars. Scientists still argue about part of this.",
+      "story": "Its atoms were made by old, swollen giant stars, the kind the Sun will one day become, puffing their outer layers away, with a share from merging neutron stars."
      }
     },
     {
@@ -1733,6 +3557,25 @@
       "unit": "atoms per 1e6 Si",
       "src": "lodders2021",
       "sigma": 0.001
+     },
+     "origin": {
+      "shares": {
+       "low_mass_stars": 0.4,
+       "neutron_star_mergers": 0.6
+      },
+      "src": "bisterzo2014",
+      "also": [
+       "kobayashi2020",
+       "kasen2017"
+      ],
+      "check": "authored",
+      "note": "approximate shares of the Sun's birth-cloud abundance, rounded; MP7 replaces them with the galaxy model's own ledger",
+      "argued": "the rapid neutron-capture share is given to merging neutron stars, which have been seen making heavy elements once (GW170817); how much rare kinds of supernova add is argued"
+     },
+     "origin_story": {
+      "physics": "The Sun's tantalum: 60% from the r-process (here given to neutron-star mergers) and 40% from asymptotic giant branch stars (the s-process and hot-bottom burning). Argued: the rapid neutron-capture share is given to merging neutron stars, which have been seen making heavy elements once (GW170817); how much rare kinds of supernova add is argued.",
+      "plain": "A little over half of the tantalum was made by merging neutron stars; the rest came from dying low-mass stars. Scientists still argue about part of this.",
+      "story": "Its atoms were made by two dead stars, each heavier than the Sun and smaller than a city, spiralling together, with a share from dying low-mass stars."
      }
     },
     {
@@ -1750,6 +3593,25 @@
       "unit": "atoms per 1e6 Si",
       "src": "lodders2021",
       "sigma": 0.013
+     },
+     "origin": {
+      "shares": {
+       "low_mass_stars": 0.55,
+       "neutron_star_mergers": 0.45
+      },
+      "src": "bisterzo2014",
+      "also": [
+       "kobayashi2020",
+       "kasen2017"
+      ],
+      "check": "authored",
+      "note": "approximate shares of the Sun's birth-cloud abundance, rounded; MP7 replaces them with the galaxy model's own ledger",
+      "argued": "the rapid neutron-capture share is given to merging neutron stars, which have been seen making heavy elements once (GW170817); how much rare kinds of supernova add is argued"
+     },
+     "origin_story": {
+      "physics": "The Sun's tungsten: 55% from asymptotic giant branch stars (the s-process and hot-bottom burning) and 45% from the r-process (here given to neutron-star mergers). Argued: the rapid neutron-capture share is given to merging neutron stars, which have been seen making heavy elements once (GW170817); how much rare kinds of supernova add is argued.",
+      "plain": "A little over half of the tungsten was made by dying low-mass stars; the rest came from merging neutron stars. Scientists still argue about part of this.",
+      "story": "Its atoms were made by old, swollen giant stars, the kind the Sun will one day become, puffing their outer layers away, with a share from merging neutron stars."
      }
     },
     {
@@ -1767,6 +3629,25 @@
       "unit": "atoms per 1e6 Si",
       "src": "lodders2021",
       "sigma": 0.0042
+     },
+     "origin": {
+      "shares": {
+       "low_mass_stars": 0.1,
+       "neutron_star_mergers": 0.9
+      },
+      "src": "bisterzo2014",
+      "also": [
+       "kobayashi2020",
+       "kasen2017"
+      ],
+      "check": "authored",
+      "note": "approximate shares of the Sun's birth-cloud abundance, rounded; MP7 replaces them with the galaxy model's own ledger",
+      "argued": "the rapid neutron-capture share is given to merging neutron stars, which have been seen making heavy elements once (GW170817); how much rare kinds of supernova add is argued"
+     },
+     "origin_story": {
+      "physics": "The Sun's rhenium: 90% from the r-process (here given to neutron-star mergers) and 10% from asymptotic giant branch stars (the s-process and hot-bottom burning). Argued: the rapid neutron-capture share is given to merging neutron stars, which have been seen making heavy elements once (GW170817); how much rare kinds of supernova add is argued.",
+      "plain": "Most of the rhenium was made by merging neutron stars; the rest came from dying low-mass stars. Scientists still argue about part of this.",
+      "story": "Its atoms were made by two dead stars, each heavier than the Sun and smaller than a city, spiralling together, with a share from dying low-mass stars."
      }
     },
     {
@@ -1784,6 +3665,25 @@
       "unit": "atoms per 1e6 Si",
       "src": "lodders2021",
       "sigma": 0.04
+     },
+     "origin": {
+      "shares": {
+       "low_mass_stars": 0.1,
+       "neutron_star_mergers": 0.9
+      },
+      "src": "bisterzo2014",
+      "also": [
+       "kobayashi2020",
+       "kasen2017"
+      ],
+      "check": "authored",
+      "note": "approximate shares of the Sun's birth-cloud abundance, rounded; MP7 replaces them with the galaxy model's own ledger",
+      "argued": "the rapid neutron-capture share is given to merging neutron stars, which have been seen making heavy elements once (GW170817); how much rare kinds of supernova add is argued"
+     },
+     "origin_story": {
+      "physics": "The Sun's osmium: 90% from the r-process (here given to neutron-star mergers) and 10% from asymptotic giant branch stars (the s-process and hot-bottom burning). Argued: the rapid neutron-capture share is given to merging neutron stars, which have been seen making heavy elements once (GW170817); how much rare kinds of supernova add is argued.",
+      "plain": "Most of the osmium was made by merging neutron stars; the rest came from dying low-mass stars. Scientists still argue about part of this.",
+      "story": "Its atoms were made by two dead stars, each heavier than the Sun and smaller than a city, spiralling together, with a share from dying low-mass stars."
      }
     },
     {
@@ -1801,6 +3701,25 @@
       "unit": "atoms per 1e6 Si",
       "src": "lodders2021",
       "sigma": 0.029
+     },
+     "origin": {
+      "shares": {
+       "low_mass_stars": 0.02,
+       "neutron_star_mergers": 0.98
+      },
+      "src": "bisterzo2014",
+      "also": [
+       "kobayashi2020",
+       "kasen2017"
+      ],
+      "check": "authored",
+      "note": "approximate shares of the Sun's birth-cloud abundance, rounded; MP7 replaces them with the galaxy model's own ledger",
+      "argued": "the rapid neutron-capture share is given to merging neutron stars, which have been seen making heavy elements once (GW170817); how much rare kinds of supernova add is argued"
+     },
+     "origin_story": {
+      "physics": "The Sun's iridium: 98% from the r-process (here given to neutron-star mergers) and 2% from asymptotic giant branch stars (the s-process and hot-bottom burning). Argued: the rapid neutron-capture share is given to merging neutron stars, which have been seen making heavy elements once (GW170817); how much rare kinds of supernova add is argued.",
+      "plain": "Almost all of the iridium was made by merging neutron stars; the rest came from dying low-mass stars. Scientists still argue about part of this.",
+      "story": "Its atoms were made by two dead stars, each heavier than the Sun and smaller than a city, spiralling together, with a share from dying low-mass stars."
      }
     },
     {
@@ -1818,6 +3737,25 @@
       "unit": "atoms per 1e6 Si",
       "src": "lodders2021",
       "sigma": 0.1
+     },
+     "origin": {
+      "shares": {
+       "low_mass_stars": 0.05,
+       "neutron_star_mergers": 0.95
+      },
+      "src": "bisterzo2014",
+      "also": [
+       "kobayashi2020",
+       "kasen2017"
+      ],
+      "check": "authored",
+      "note": "approximate shares of the Sun's birth-cloud abundance, rounded; MP7 replaces them with the galaxy model's own ledger",
+      "argued": "the rapid neutron-capture share is given to merging neutron stars, which have been seen making heavy elements once (GW170817); how much rare kinds of supernova add is argued"
+     },
+     "origin_story": {
+      "physics": "Platinum is about 95% r-process. A merger making heavy elements has been seen once (GW170817); how much rare supernovae add is argued.",
+      "plain": "Platinum was made almost entirely in merging neutron stars, like gold. Whether rare supernovae also make some is still argued.",
+      "story": "Like gold, it was born in the crash of two dead stars and scattered across the galaxy."
      }
     },
     {
@@ -1835,6 +3773,25 @@
       "unit": "atoms per 1e6 Si",
       "src": "lodders2021",
       "sigma": 0.016
+     },
+     "origin": {
+      "shares": {
+       "low_mass_stars": 0.06,
+       "neutron_star_mergers": 0.94
+      },
+      "src": "bisterzo2014",
+      "also": [
+       "kobayashi2020",
+       "kasen2017"
+      ],
+      "check": "authored",
+      "note": "approximate shares of the Sun's birth-cloud abundance, rounded; MP7 replaces them with the galaxy model's own ledger",
+      "argued": "the rapid neutron-capture share is given to merging neutron stars, which have been seen making heavy elements once (GW170817); how much rare kinds of supernova add is argued"
+     },
+     "origin_story": {
+      "physics": "Gold is almost entirely an r-process element: about 94% of the Sun's gold came from rapid neutron capture, here given to neutron-star mergers, and about 6% from the s-process in giant stars. A merger making heavy elements has been seen once directly (GW170817 and its kilonova). Whether mergers make nearly all the gold, or rare supernovae such as collapsars add a share, is still argued.",
+      "plain": "Almost all gold was made in about a second, when two dead stars, each heavier than the Sun and smaller than a city, spiralled together and merged. The wreck probably collapsed into a black hole. Scientists still argue whether some gold also comes from rare kinds of supernova.",
+      "story": "Every ring was forged in a collision of two dead stars, so dense a teaspoon weighed a billion tonnes. The gold was flung out, drifted for hundreds of millions of years, and was swept into the cloud that made this star."
      }
     },
     {
@@ -1852,6 +3809,25 @@
       "unit": "atoms per 1e6 Si",
       "src": "lodders2021",
       "sigma": 0.156
+     },
+     "origin": {
+      "shares": {
+       "low_mass_stars": 0.6,
+       "neutron_star_mergers": 0.4
+      },
+      "src": "bisterzo2014",
+      "also": [
+       "kobayashi2020",
+       "kasen2017"
+      ],
+      "check": "authored",
+      "note": "approximate shares of the Sun's birth-cloud abundance, rounded; MP7 replaces them with the galaxy model's own ledger",
+      "argued": "the rapid neutron-capture share is given to merging neutron stars, which have been seen making heavy elements once (GW170817); how much rare kinds of supernova add is argued"
+     },
+     "origin_story": {
+      "physics": "The Sun's mercury: 60% from asymptotic giant branch stars (the s-process and hot-bottom burning) and 40% from the r-process (here given to neutron-star mergers). Argued: the rapid neutron-capture share is given to merging neutron stars, which have been seen making heavy elements once (GW170817); how much rare kinds of supernova add is argued.",
+      "plain": "A little over half of the mercury was made by dying low-mass stars; the rest came from merging neutron stars. Scientists still argue about part of this.",
+      "story": "Its atoms were made by old, swollen giant stars, the kind the Sun will one day become, puffing their outer layers away, with a share from merging neutron stars."
      }
     },
     {
@@ -1870,6 +3846,24 @@
       "unit": "atoms per 1e6 Si",
       "src": "lodders2021",
       "sigma": 0.015
+     },
+     "origin": {
+      "shares": {
+       "low_mass_stars": 0.75,
+       "neutron_star_mergers": 0.25
+      },
+      "src": "bisterzo2014",
+      "also": [
+       "kobayashi2020",
+       "kasen2017"
+      ],
+      "check": "authored",
+      "note": "approximate shares of the Sun's birth-cloud abundance, rounded; MP7 replaces them with the galaxy model's own ledger"
+     },
+     "origin_story": {
+      "physics": "The Sun's thallium: 75% from asymptotic giant branch stars (the s-process and hot-bottom burning) and 25% from the r-process (here given to neutron-star mergers).",
+      "plain": "Most of the thallium was made by dying low-mass stars; the rest came from merging neutron stars.",
+      "story": "Its atoms were made by old, swollen giant stars, the kind the Sun will one day become, puffing their outer layers away, with a share from merging neutron stars."
      }
     },
     {
@@ -1888,6 +3882,24 @@
       "unit": "atoms per 1e6 Si",
       "src": "lodders2021",
       "sigma": 0.2
+     },
+     "origin": {
+      "shares": {
+       "low_mass_stars": 0.8,
+       "neutron_star_mergers": 0.2
+      },
+      "src": "bisterzo2014",
+      "also": [
+       "kobayashi2020",
+       "kasen2017"
+      ],
+      "check": "authored",
+      "note": "approximate shares of the Sun's birth-cloud abundance, rounded; MP7 replaces them with the galaxy model's own ledger"
+     },
+     "origin_story": {
+      "physics": "The Sun's lead: 80% from asymptotic giant branch stars (the s-process and hot-bottom burning) and 20% from the r-process (here given to neutron-star mergers).",
+      "plain": "Most of the lead was made by dying low-mass stars; the rest came from merging neutron stars.",
+      "story": "Its atoms were made by old, swollen giant stars, the kind the Sun will one day become, puffing their outer layers away, with a share from merging neutron stars."
      }
     },
     {
@@ -1905,6 +3917,25 @@
       "unit": "atoms per 1e6 Si",
       "src": "lodders2021",
       "sigma": 0.01
+     },
+     "origin": {
+      "shares": {
+       "low_mass_stars": 0.2,
+       "neutron_star_mergers": 0.8
+      },
+      "src": "bisterzo2014",
+      "also": [
+       "kobayashi2020",
+       "kasen2017"
+      ],
+      "check": "authored",
+      "note": "approximate shares of the Sun's birth-cloud abundance, rounded; MP7 replaces them with the galaxy model's own ledger",
+      "argued": "the rapid neutron-capture share is given to merging neutron stars, which have been seen making heavy elements once (GW170817); how much rare kinds of supernova add is argued"
+     },
+     "origin_story": {
+      "physics": "The Sun's bismuth: 80% from the r-process (here given to neutron-star mergers) and 20% from asymptotic giant branch stars (the s-process and hot-bottom burning). Argued: the rapid neutron-capture share is given to merging neutron stars, which have been seen making heavy elements once (GW170817); how much rare kinds of supernova add is argued.",
+      "plain": "Most of the bismuth was made by merging neutron stars; the rest came from dying low-mass stars. Scientists still argue about part of this.",
+      "story": "Its atoms were made by two dead stars, each heavier than the Sun and smaller than a city, spiralling together, with a share from dying low-mass stars."
      }
     },
     {
@@ -1912,42 +3943,138 @@
      "symbol": "Po",
      "name": "Polonium",
      "z": 84,
-     "no_standard_weight": true
+     "no_standard_weight": true,
+     "origin": {
+      "shares": {
+       "neutron_star_mergers": 1.0
+      },
+      "src": "kasen2017",
+      "also": [
+       "nubase2020"
+      ],
+      "check": "authored",
+      "note": "approximate shares of the Sun's birth-cloud abundance, rounded; MP7 replaces them with the galaxy model's own ledger"
+     },
+     "origin_story": {
+      "physics": "Present in nature only briefly, as a step in the decay of uranium and thorium, which were made by the r-process.",
+      "plain": "It exists in nature only fleetingly, made as uranium and thorium decay.",
+      "story": "It flickers into being inside uranium ores and soon decays away."
+     }
     },
     {
      "id": "at",
      "symbol": "At",
      "name": "Astatine",
      "z": 85,
-     "no_standard_weight": true
+     "no_standard_weight": true,
+     "origin": {
+      "shares": {
+       "neutron_star_mergers": 1.0
+      },
+      "src": "kasen2017",
+      "also": [
+       "nubase2020"
+      ],
+      "check": "authored",
+      "note": "approximate shares of the Sun's birth-cloud abundance, rounded; MP7 replaces them with the galaxy model's own ledger"
+     },
+     "origin_story": {
+      "physics": "Present in nature only briefly, as a step in the decay of uranium and thorium, which were made by the r-process.",
+      "plain": "It exists in nature only fleetingly, made as uranium and thorium decay.",
+      "story": "It flickers into being inside uranium ores and soon decays away."
+     }
     },
     {
      "id": "rn",
      "symbol": "Rn",
      "name": "Radon",
      "z": 86,
-     "no_standard_weight": true
+     "no_standard_weight": true,
+     "origin": {
+      "shares": {
+       "neutron_star_mergers": 1.0
+      },
+      "src": "kasen2017",
+      "also": [
+       "nubase2020"
+      ],
+      "check": "authored",
+      "note": "approximate shares of the Sun's birth-cloud abundance, rounded; MP7 replaces them with the galaxy model's own ledger"
+     },
+     "origin_story": {
+      "physics": "Present in nature only briefly, as a step in the decay of uranium and thorium, which were made by the r-process.",
+      "plain": "It exists in nature only fleetingly, made as uranium and thorium decay.",
+      "story": "It flickers into being inside uranium ores and soon decays away."
+     }
     },
     {
      "id": "fr",
      "symbol": "Fr",
      "name": "Francium",
      "z": 87,
-     "no_standard_weight": true
+     "no_standard_weight": true,
+     "origin": {
+      "shares": {
+       "neutron_star_mergers": 1.0
+      },
+      "src": "kasen2017",
+      "also": [
+       "nubase2020"
+      ],
+      "check": "authored",
+      "note": "approximate shares of the Sun's birth-cloud abundance, rounded; MP7 replaces them with the galaxy model's own ledger"
+     },
+     "origin_story": {
+      "physics": "Present in nature only briefly, as a step in the decay of uranium and thorium, which were made by the r-process.",
+      "plain": "It exists in nature only fleetingly, made as uranium and thorium decay.",
+      "story": "It flickers into being inside uranium ores and soon decays away."
+     }
     },
     {
      "id": "ra",
      "symbol": "Ra",
      "name": "Radium",
      "z": 88,
-     "no_standard_weight": true
+     "no_standard_weight": true,
+     "origin": {
+      "shares": {
+       "neutron_star_mergers": 1.0
+      },
+      "src": "kasen2017",
+      "also": [
+       "nubase2020"
+      ],
+      "check": "authored",
+      "note": "approximate shares of the Sun's birth-cloud abundance, rounded; MP7 replaces them with the galaxy model's own ledger"
+     },
+     "origin_story": {
+      "physics": "Present in nature only briefly, as a step in the decay of uranium and thorium, which were made by the r-process.",
+      "plain": "It exists in nature only fleetingly, made as uranium and thorium decay.",
+      "story": "It flickers into being inside uranium ores and soon decays away."
+     }
     },
     {
      "id": "ac",
      "symbol": "Ac",
      "name": "Actinium",
      "z": 89,
-     "no_standard_weight": true
+     "no_standard_weight": true,
+     "origin": {
+      "shares": {
+       "neutron_star_mergers": 1.0
+      },
+      "src": "kasen2017",
+      "also": [
+       "nubase2020"
+      ],
+      "check": "authored",
+      "note": "approximate shares of the Sun's birth-cloud abundance, rounded; MP7 replaces them with the galaxy model's own ledger"
+     },
+     "origin_story": {
+      "physics": "Present in nature only briefly, as a step in the decay of uranium and thorium, which were made by the r-process.",
+      "plain": "It exists in nature only fleetingly, made as uranium and thorium decay.",
+      "story": "It flickers into being inside uranium ores and soon decays away."
+     }
     },
     {
      "id": "th",
@@ -1964,6 +4091,23 @@
       "unit": "atoms per 1e6 Si",
       "src": "lodders2021",
       "sigma": 0.0021
+     },
+     "origin": {
+      "shares": {
+       "neutron_star_mergers": 1.0
+      },
+      "src": "kasen2017",
+      "also": [
+       "kobayashi2020"
+      ],
+      "check": "authored",
+      "note": "approximate shares of the Sun's birth-cloud abundance, rounded; MP7 replaces them with the galaxy model's own ledger",
+      "argued": "the rapid neutron-capture share is given to merging neutron stars, which have been seen making heavy elements once (GW170817); how much rare kinds of supernova add is argued"
+     },
+     "origin_story": {
+      "physics": "The Sun's thorium: 100% from the r-process (here given to neutron-star mergers). Argued: the rapid neutron-capture share is given to merging neutron stars, which have been seen making heavy elements once (GW170817); how much rare kinds of supernova add is argued.",
+      "plain": "Almost all of the thorium was made by merging neutron stars. Scientists still argue about part of this.",
+      "story": "Its atoms were made by two dead stars, each heavier than the Sun and smaller than a city, spiralling together."
      }
     },
     {
@@ -1975,6 +4119,22 @@
       "v": 231.03588,
       "unit": "1",
       "src": "iupac2021"
+     },
+     "origin": {
+      "shares": {
+       "neutron_star_mergers": 1.0
+      },
+      "src": "kasen2017",
+      "also": [
+       "nubase2020"
+      ],
+      "check": "authored",
+      "note": "approximate shares of the Sun's birth-cloud abundance, rounded; MP7 replaces them with the galaxy model's own ledger"
+     },
+     "origin_story": {
+      "physics": "Present in nature only briefly, as a step in the decay of uranium and thorium, which were made by the r-process.",
+      "plain": "It exists in nature only fleetingly, made as uranium and thorium decay.",
+      "story": "It flickers into being inside uranium ores and soon decays away."
      }
     },
     {
@@ -1992,6 +4152,23 @@
       "unit": "atoms per 1e6 Si",
       "src": "lodders2021",
       "sigma": 0.0017
+     },
+     "origin": {
+      "shares": {
+       "neutron_star_mergers": 1.0
+      },
+      "src": "kasen2017",
+      "also": [
+       "kobayashi2020"
+      ],
+      "check": "authored",
+      "note": "approximate shares of the Sun's birth-cloud abundance, rounded; MP7 replaces them with the galaxy model's own ledger",
+      "argued": "the rapid neutron-capture share is given to merging neutron stars, which have been seen making heavy elements once (GW170817); how much rare kinds of supernova add is argued"
+     },
+     "origin_story": {
+      "physics": "Uranium is made only by the r-process. It decays (uranium-238 half-life 4.47 billion years), so the uranium in a world is a clock: there was nearly twice as much when the Sun formed.",
+      "plain": "Uranium was made in merging neutron stars and has been slowly decaying ever since. Scientists still argue whether rare supernovae also make some.",
+      "story": "Its atoms are slowly running down. The uranium in this world has been ticking since before the Sun was born."
      }
     },
     {
@@ -1999,182 +4176,546 @@
      "symbol": "Np",
      "name": "Neptunium",
      "z": 93,
-     "no_standard_weight": true
+     "no_standard_weight": true,
+     "origin": {
+      "shares": {
+       "human_made": 1.0
+      },
+      "src": "nubase2020",
+      "also": [],
+      "check": "authored",
+      "note": "approximate shares of the Sun's birth-cloud abundance, rounded; MP7 replaces them with the galaxy model's own ledger"
+     },
+     "origin_story": {
+      "physics": "Neptunium has no isotope long-lived enough to survive from the stars; what exists was made by synthesis in reactors and accelerators.",
+      "plain": "Neptunium is made by people, in reactors and particle accelerators. None is left from the stars.",
+      "story": "It does not occur in nature: it was made by people, in reactors and accelerators, a few atoms at a time."
+     }
     },
     {
      "id": "pu",
      "symbol": "Pu",
      "name": "Plutonium",
      "z": 94,
-     "no_standard_weight": true
+     "no_standard_weight": true,
+     "origin": {
+      "shares": {
+       "human_made": 1.0
+      },
+      "src": "nubase2020",
+      "also": [],
+      "check": "authored",
+      "note": "approximate shares of the Sun's birth-cloud abundance, rounded; MP7 replaces them with the galaxy model's own ledger"
+     },
+     "origin_story": {
+      "physics": "Plutonium has no isotope long-lived enough to survive from the stars; what exists was made by synthesis in reactors and accelerators.",
+      "plain": "Plutonium is made by people, in reactors and particle accelerators. None is left from the stars.",
+      "story": "It does not occur in nature: it was made by people, in reactors and accelerators, a few atoms at a time."
+     }
     },
     {
      "id": "am",
      "symbol": "Am",
      "name": "Americium",
      "z": 95,
-     "no_standard_weight": true
+     "no_standard_weight": true,
+     "origin": {
+      "shares": {
+       "human_made": 1.0
+      },
+      "src": "nubase2020",
+      "also": [],
+      "check": "authored",
+      "note": "approximate shares of the Sun's birth-cloud abundance, rounded; MP7 replaces them with the galaxy model's own ledger"
+     },
+     "origin_story": {
+      "physics": "Americium has no isotope long-lived enough to survive from the stars; what exists was made by synthesis in reactors and accelerators.",
+      "plain": "Americium is made by people, in reactors and particle accelerators. None is left from the stars.",
+      "story": "It does not occur in nature: it was made by people, in reactors and accelerators, a few atoms at a time."
+     }
     },
     {
      "id": "cm",
      "symbol": "Cm",
      "name": "Curium",
      "z": 96,
-     "no_standard_weight": true
+     "no_standard_weight": true,
+     "origin": {
+      "shares": {
+       "human_made": 1.0
+      },
+      "src": "nubase2020",
+      "also": [],
+      "check": "authored",
+      "note": "approximate shares of the Sun's birth-cloud abundance, rounded; MP7 replaces them with the galaxy model's own ledger"
+     },
+     "origin_story": {
+      "physics": "Curium has no isotope long-lived enough to survive from the stars; what exists was made by synthesis in reactors and accelerators.",
+      "plain": "Curium is made by people, in reactors and particle accelerators. None is left from the stars.",
+      "story": "It does not occur in nature: it was made by people, in reactors and accelerators, a few atoms at a time."
+     }
     },
     {
      "id": "bk",
      "symbol": "Bk",
      "name": "Berkelium",
      "z": 97,
-     "no_standard_weight": true
+     "no_standard_weight": true,
+     "origin": {
+      "shares": {
+       "human_made": 1.0
+      },
+      "src": "nubase2020",
+      "also": [],
+      "check": "authored",
+      "note": "approximate shares of the Sun's birth-cloud abundance, rounded; MP7 replaces them with the galaxy model's own ledger"
+     },
+     "origin_story": {
+      "physics": "Berkelium has no isotope long-lived enough to survive from the stars; what exists was made by synthesis in reactors and accelerators.",
+      "plain": "Berkelium is made by people, in reactors and particle accelerators. None is left from the stars.",
+      "story": "It does not occur in nature: it was made by people, in reactors and accelerators, a few atoms at a time."
+     }
     },
     {
      "id": "cf",
      "symbol": "Cf",
      "name": "Californium",
      "z": 98,
-     "no_standard_weight": true
+     "no_standard_weight": true,
+     "origin": {
+      "shares": {
+       "human_made": 1.0
+      },
+      "src": "nubase2020",
+      "also": [],
+      "check": "authored",
+      "note": "approximate shares of the Sun's birth-cloud abundance, rounded; MP7 replaces them with the galaxy model's own ledger"
+     },
+     "origin_story": {
+      "physics": "Californium has no isotope long-lived enough to survive from the stars; what exists was made by synthesis in reactors and accelerators.",
+      "plain": "Californium is made by people, in reactors and particle accelerators. None is left from the stars.",
+      "story": "It does not occur in nature: it was made by people, in reactors and accelerators, a few atoms at a time."
+     }
     },
     {
      "id": "es",
      "symbol": "Es",
      "name": "Einsteinium",
      "z": 99,
-     "no_standard_weight": true
+     "no_standard_weight": true,
+     "origin": {
+      "shares": {
+       "human_made": 1.0
+      },
+      "src": "nubase2020",
+      "also": [],
+      "check": "authored",
+      "note": "approximate shares of the Sun's birth-cloud abundance, rounded; MP7 replaces them with the galaxy model's own ledger"
+     },
+     "origin_story": {
+      "physics": "Einsteinium has no isotope long-lived enough to survive from the stars; what exists was made by synthesis in reactors and accelerators.",
+      "plain": "Einsteinium is made by people, in reactors and particle accelerators. None is left from the stars.",
+      "story": "It does not occur in nature: it was made by people, in reactors and accelerators, a few atoms at a time."
+     }
     },
     {
      "id": "fm",
      "symbol": "Fm",
      "name": "Fermium",
      "z": 100,
-     "no_standard_weight": true
+     "no_standard_weight": true,
+     "origin": {
+      "shares": {
+       "human_made": 1.0
+      },
+      "src": "nubase2020",
+      "also": [],
+      "check": "authored",
+      "note": "approximate shares of the Sun's birth-cloud abundance, rounded; MP7 replaces them with the galaxy model's own ledger"
+     },
+     "origin_story": {
+      "physics": "Fermium has no isotope long-lived enough to survive from the stars; what exists was made by synthesis in reactors and accelerators.",
+      "plain": "Fermium is made by people, in reactors and particle accelerators. None is left from the stars.",
+      "story": "It does not occur in nature: it was made by people, in reactors and accelerators, a few atoms at a time."
+     }
     },
     {
      "id": "md",
      "symbol": "Md",
      "name": "Mendelevium",
      "z": 101,
-     "no_standard_weight": true
+     "no_standard_weight": true,
+     "origin": {
+      "shares": {
+       "human_made": 1.0
+      },
+      "src": "nubase2020",
+      "also": [],
+      "check": "authored",
+      "note": "approximate shares of the Sun's birth-cloud abundance, rounded; MP7 replaces them with the galaxy model's own ledger"
+     },
+     "origin_story": {
+      "physics": "Mendelevium has no isotope long-lived enough to survive from the stars; what exists was made by synthesis in reactors and accelerators.",
+      "plain": "Mendelevium is made by people, in reactors and particle accelerators. None is left from the stars.",
+      "story": "It does not occur in nature: it was made by people, in reactors and accelerators, a few atoms at a time."
+     }
     },
     {
      "id": "no",
      "symbol": "No",
      "name": "Nobelium",
      "z": 102,
-     "no_standard_weight": true
+     "no_standard_weight": true,
+     "origin": {
+      "shares": {
+       "human_made": 1.0
+      },
+      "src": "nubase2020",
+      "also": [],
+      "check": "authored",
+      "note": "approximate shares of the Sun's birth-cloud abundance, rounded; MP7 replaces them with the galaxy model's own ledger"
+     },
+     "origin_story": {
+      "physics": "Nobelium has no isotope long-lived enough to survive from the stars; what exists was made by synthesis in reactors and accelerators.",
+      "plain": "Nobelium is made by people, in reactors and particle accelerators. None is left from the stars.",
+      "story": "It does not occur in nature: it was made by people, in reactors and accelerators, a few atoms at a time."
+     }
     },
     {
      "id": "lr",
      "symbol": "Lr",
      "name": "Lawrencium",
      "z": 103,
-     "no_standard_weight": true
+     "no_standard_weight": true,
+     "origin": {
+      "shares": {
+       "human_made": 1.0
+      },
+      "src": "nubase2020",
+      "also": [],
+      "check": "authored",
+      "note": "approximate shares of the Sun's birth-cloud abundance, rounded; MP7 replaces them with the galaxy model's own ledger"
+     },
+     "origin_story": {
+      "physics": "Lawrencium has no isotope long-lived enough to survive from the stars; what exists was made by synthesis in reactors and accelerators.",
+      "plain": "Lawrencium is made by people, in reactors and particle accelerators. None is left from the stars.",
+      "story": "It does not occur in nature: it was made by people, in reactors and accelerators, a few atoms at a time."
+     }
     },
     {
      "id": "rf",
      "symbol": "Rf",
      "name": "Rutherfordium",
      "z": 104,
-     "no_standard_weight": true
+     "no_standard_weight": true,
+     "origin": {
+      "shares": {
+       "human_made": 1.0
+      },
+      "src": "nubase2020",
+      "also": [],
+      "check": "authored",
+      "note": "approximate shares of the Sun's birth-cloud abundance, rounded; MP7 replaces them with the galaxy model's own ledger"
+     },
+     "origin_story": {
+      "physics": "Rutherfordium has no isotope long-lived enough to survive from the stars; what exists was made by synthesis in reactors and accelerators.",
+      "plain": "Rutherfordium is made by people, in reactors and particle accelerators. None is left from the stars.",
+      "story": "It does not occur in nature: it was made by people, in reactors and accelerators, a few atoms at a time."
+     }
     },
     {
      "id": "db",
      "symbol": "Db",
      "name": "Dubnium",
      "z": 105,
-     "no_standard_weight": true
+     "no_standard_weight": true,
+     "origin": {
+      "shares": {
+       "human_made": 1.0
+      },
+      "src": "nubase2020",
+      "also": [],
+      "check": "authored",
+      "note": "approximate shares of the Sun's birth-cloud abundance, rounded; MP7 replaces them with the galaxy model's own ledger"
+     },
+     "origin_story": {
+      "physics": "Dubnium has no isotope long-lived enough to survive from the stars; what exists was made by synthesis in reactors and accelerators.",
+      "plain": "Dubnium is made by people, in reactors and particle accelerators. None is left from the stars.",
+      "story": "It does not occur in nature: it was made by people, in reactors and accelerators, a few atoms at a time."
+     }
     },
     {
      "id": "sg",
      "symbol": "Sg",
      "name": "Seaborgium",
      "z": 106,
-     "no_standard_weight": true
+     "no_standard_weight": true,
+     "origin": {
+      "shares": {
+       "human_made": 1.0
+      },
+      "src": "nubase2020",
+      "also": [],
+      "check": "authored",
+      "note": "approximate shares of the Sun's birth-cloud abundance, rounded; MP7 replaces them with the galaxy model's own ledger"
+     },
+     "origin_story": {
+      "physics": "Seaborgium has no isotope long-lived enough to survive from the stars; what exists was made by synthesis in reactors and accelerators.",
+      "plain": "Seaborgium is made by people, in reactors and particle accelerators. None is left from the stars.",
+      "story": "It does not occur in nature: it was made by people, in reactors and accelerators, a few atoms at a time."
+     }
     },
     {
      "id": "bh",
      "symbol": "Bh",
      "name": "Bohrium",
      "z": 107,
-     "no_standard_weight": true
+     "no_standard_weight": true,
+     "origin": {
+      "shares": {
+       "human_made": 1.0
+      },
+      "src": "nubase2020",
+      "also": [],
+      "check": "authored",
+      "note": "approximate shares of the Sun's birth-cloud abundance, rounded; MP7 replaces them with the galaxy model's own ledger"
+     },
+     "origin_story": {
+      "physics": "Bohrium has no isotope long-lived enough to survive from the stars; what exists was made by synthesis in reactors and accelerators.",
+      "plain": "Bohrium is made by people, in reactors and particle accelerators. None is left from the stars.",
+      "story": "It does not occur in nature: it was made by people, in reactors and accelerators, a few atoms at a time."
+     }
     },
     {
      "id": "hs",
      "symbol": "Hs",
      "name": "Hassium",
      "z": 108,
-     "no_standard_weight": true
+     "no_standard_weight": true,
+     "origin": {
+      "shares": {
+       "human_made": 1.0
+      },
+      "src": "nubase2020",
+      "also": [],
+      "check": "authored",
+      "note": "approximate shares of the Sun's birth-cloud abundance, rounded; MP7 replaces them with the galaxy model's own ledger"
+     },
+     "origin_story": {
+      "physics": "Hassium has no isotope long-lived enough to survive from the stars; what exists was made by synthesis in reactors and accelerators.",
+      "plain": "Hassium is made by people, in reactors and particle accelerators. None is left from the stars.",
+      "story": "It does not occur in nature: it was made by people, in reactors and accelerators, a few atoms at a time."
+     }
     },
     {
      "id": "mt",
      "symbol": "Mt",
      "name": "Meitnerium",
      "z": 109,
-     "no_standard_weight": true
+     "no_standard_weight": true,
+     "origin": {
+      "shares": {
+       "human_made": 1.0
+      },
+      "src": "nubase2020",
+      "also": [],
+      "check": "authored",
+      "note": "approximate shares of the Sun's birth-cloud abundance, rounded; MP7 replaces them with the galaxy model's own ledger"
+     },
+     "origin_story": {
+      "physics": "Meitnerium has no isotope long-lived enough to survive from the stars; what exists was made by synthesis in reactors and accelerators.",
+      "plain": "Meitnerium is made by people, in reactors and particle accelerators. None is left from the stars.",
+      "story": "It does not occur in nature: it was made by people, in reactors and accelerators, a few atoms at a time."
+     }
     },
     {
      "id": "ds",
      "symbol": "Ds",
      "name": "Darmstadtium",
      "z": 110,
-     "no_standard_weight": true
+     "no_standard_weight": true,
+     "origin": {
+      "shares": {
+       "human_made": 1.0
+      },
+      "src": "nubase2020",
+      "also": [],
+      "check": "authored",
+      "note": "approximate shares of the Sun's birth-cloud abundance, rounded; MP7 replaces them with the galaxy model's own ledger"
+     },
+     "origin_story": {
+      "physics": "Darmstadtium has no isotope long-lived enough to survive from the stars; what exists was made by synthesis in reactors and accelerators.",
+      "plain": "Darmstadtium is made by people, in reactors and particle accelerators. None is left from the stars.",
+      "story": "It does not occur in nature: it was made by people, in reactors and accelerators, a few atoms at a time."
+     }
     },
     {
      "id": "rg",
      "symbol": "Rg",
      "name": "Roentgenium",
      "z": 111,
-     "no_standard_weight": true
+     "no_standard_weight": true,
+     "origin": {
+      "shares": {
+       "human_made": 1.0
+      },
+      "src": "nubase2020",
+      "also": [],
+      "check": "authored",
+      "note": "approximate shares of the Sun's birth-cloud abundance, rounded; MP7 replaces them with the galaxy model's own ledger"
+     },
+     "origin_story": {
+      "physics": "Roentgenium has no isotope long-lived enough to survive from the stars; what exists was made by synthesis in reactors and accelerators.",
+      "plain": "Roentgenium is made by people, in reactors and particle accelerators. None is left from the stars.",
+      "story": "It does not occur in nature: it was made by people, in reactors and accelerators, a few atoms at a time."
+     }
     },
     {
      "id": "cn",
      "symbol": "Cn",
      "name": "Copernicium",
      "z": 112,
-     "no_standard_weight": true
+     "no_standard_weight": true,
+     "origin": {
+      "shares": {
+       "human_made": 1.0
+      },
+      "src": "nubase2020",
+      "also": [],
+      "check": "authored",
+      "note": "approximate shares of the Sun's birth-cloud abundance, rounded; MP7 replaces them with the galaxy model's own ledger"
+     },
+     "origin_story": {
+      "physics": "Copernicium has no isotope long-lived enough to survive from the stars; what exists was made by synthesis in reactors and accelerators.",
+      "plain": "Copernicium is made by people, in reactors and particle accelerators. None is left from the stars.",
+      "story": "It does not occur in nature: it was made by people, in reactors and accelerators, a few atoms at a time."
+     }
     },
     {
      "id": "nh",
      "symbol": "Nh",
      "name": "Nihonium",
      "z": 113,
-     "no_standard_weight": true
+     "no_standard_weight": true,
+     "origin": {
+      "shares": {
+       "human_made": 1.0
+      },
+      "src": "nubase2020",
+      "also": [],
+      "check": "authored",
+      "note": "approximate shares of the Sun's birth-cloud abundance, rounded; MP7 replaces them with the galaxy model's own ledger"
+     },
+     "origin_story": {
+      "physics": "Nihonium has no isotope long-lived enough to survive from the stars; what exists was made by synthesis in reactors and accelerators.",
+      "plain": "Nihonium is made by people, in reactors and particle accelerators. None is left from the stars.",
+      "story": "It does not occur in nature: it was made by people, in reactors and accelerators, a few atoms at a time."
+     }
     },
     {
      "id": "fl",
      "symbol": "Fl",
      "name": "Flerovium",
      "z": 114,
-     "no_standard_weight": true
+     "no_standard_weight": true,
+     "origin": {
+      "shares": {
+       "human_made": 1.0
+      },
+      "src": "nubase2020",
+      "also": [],
+      "check": "authored",
+      "note": "approximate shares of the Sun's birth-cloud abundance, rounded; MP7 replaces them with the galaxy model's own ledger"
+     },
+     "origin_story": {
+      "physics": "Flerovium has no isotope long-lived enough to survive from the stars; what exists was made by synthesis in reactors and accelerators.",
+      "plain": "Flerovium is made by people, in reactors and particle accelerators. None is left from the stars.",
+      "story": "It does not occur in nature: it was made by people, in reactors and accelerators, a few atoms at a time."
+     }
     },
     {
      "id": "mc",
      "symbol": "Mc",
      "name": "Moscovium",
      "z": 115,
-     "no_standard_weight": true
+     "no_standard_weight": true,
+     "origin": {
+      "shares": {
+       "human_made": 1.0
+      },
+      "src": "nubase2020",
+      "also": [],
+      "check": "authored",
+      "note": "approximate shares of the Sun's birth-cloud abundance, rounded; MP7 replaces them with the galaxy model's own ledger"
+     },
+     "origin_story": {
+      "physics": "Moscovium has no isotope long-lived enough to survive from the stars; what exists was made by synthesis in reactors and accelerators.",
+      "plain": "Moscovium is made by people, in reactors and particle accelerators. None is left from the stars.",
+      "story": "It does not occur in nature: it was made by people, in reactors and accelerators, a few atoms at a time."
+     }
     },
     {
      "id": "lv",
      "symbol": "Lv",
      "name": "Livermorium",
      "z": 116,
-     "no_standard_weight": true
+     "no_standard_weight": true,
+     "origin": {
+      "shares": {
+       "human_made": 1.0
+      },
+      "src": "nubase2020",
+      "also": [],
+      "check": "authored",
+      "note": "approximate shares of the Sun's birth-cloud abundance, rounded; MP7 replaces them with the galaxy model's own ledger"
+     },
+     "origin_story": {
+      "physics": "Livermorium has no isotope long-lived enough to survive from the stars; what exists was made by synthesis in reactors and accelerators.",
+      "plain": "Livermorium is made by people, in reactors and particle accelerators. None is left from the stars.",
+      "story": "It does not occur in nature: it was made by people, in reactors and accelerators, a few atoms at a time."
+     }
     },
     {
      "id": "ts",
      "symbol": "Ts",
      "name": "Tennessine",
      "z": 117,
-     "no_standard_weight": true
+     "no_standard_weight": true,
+     "origin": {
+      "shares": {
+       "human_made": 1.0
+      },
+      "src": "nubase2020",
+      "also": [],
+      "check": "authored",
+      "note": "approximate shares of the Sun's birth-cloud abundance, rounded; MP7 replaces them with the galaxy model's own ledger"
+     },
+     "origin_story": {
+      "physics": "Tennessine has no isotope long-lived enough to survive from the stars; what exists was made by synthesis in reactors and accelerators.",
+      "plain": "Tennessine is made by people, in reactors and particle accelerators. None is left from the stars.",
+      "story": "It does not occur in nature: it was made by people, in reactors and accelerators, a few atoms at a time."
+     }
     },
     {
      "id": "og",
      "symbol": "Og",
      "name": "Oganesson",
      "z": 118,
-     "no_standard_weight": true
+     "no_standard_weight": true,
+     "origin": {
+      "shares": {
+       "human_made": 1.0
+      },
+      "src": "nubase2020",
+      "also": [],
+      "check": "authored",
+      "note": "approximate shares of the Sun's birth-cloud abundance, rounded; MP7 replaces them with the galaxy model's own ledger"
+     },
+     "origin_story": {
+      "physics": "Oganesson has no isotope long-lived enough to survive from the stars; what exists was made by synthesis in reactors and accelerators.",
+      "plain": "Oganesson is made by people, in reactors and particle accelerators. None is left from the stars.",
+      "story": "It does not occur in nature: it was made by people, in reactors and accelerators, a few atoms at a time."
+     }
     }
    ],
    "isotopes": [
@@ -4109,10 +6650,22 @@
    ],
    "sources": [
     {
+     "id": "abbott2017",
+     "text": "Abbott, B. P. et al. (LIGO and Virgo) 2017, Phys. Rev. Lett. 119, 161101: GW170817, observation of gravitational waves from a binary neutron star inspiral",
+     "status": "verified",
+     "doi": "10.1103/PhysRevLett.119.161101"
+    },
+    {
      "id": "atom-isotropic",
      "text": "A spherically symmetric atom has no anisotropic polarisability, so its King correction factor is exactly 1 (Bodhaine et al. 1999 discussion of depolarisation)",
      "status": "textbook",
      "doi": "10.1175/1520-0426(1999)016<1854:ORODC>2.0.CO;2"
+    },
+    {
+     "id": "bisterzo2014",
+     "text": "Bisterzo, S. et al. 2014, ApJ 787, 10: Galactic chemical evolution and solar s-process abundances, dependence on the 13C-pocket structure (s-process percentages per isotope, Kr to Bi)",
+     "status": "verified",
+     "doi": "10.1088/0004-637X/787/1/10"
     },
     {
      "id": "bodhaine1999",
@@ -4145,6 +6698,12 @@
      "url": "https://goldbook.iupac.org/"
     },
     {
+     "id": "fields2020",
+     "text": "Fields, B. D., Olive, K. A., Yeh, T.-H. and Young, C. 2020, JCAP 03, 010: Big-Bang nucleosynthesis after Planck (primordial helium and the lithium problem)",
+     "status": "verified",
+     "url": "https://arxiv.org/abs/1912.01132"
+    },
+    {
      "id": "fudge-register",
      "text": "SSE4 fudge register: an authored stand-in kept because no measured value fits (reason in docs/fudges.md)",
      "status": "authored",
@@ -4175,6 +6734,18 @@
      "doi": "10.1515/pac-2019-0603"
     },
     {
+     "id": "johnson-origins",
+     "text": "Johnson, J. A., Origin of the Elements in the Solar System: periodic table colour-coded by origin (Ohio State University, CC BY-SA 4.0; the six-source legend)",
+     "status": "verified",
+     "url": "https://www.astronomy.ohio-state.edu/johnson.3064/nucleo/index.html"
+    },
+    {
+     "id": "kasen2017",
+     "text": "Kasen, D. et al. 2017, Nature 551, 80: origin of the heavy elements in binary neutron-star mergers from a gravitational-wave event (the GW170817 kilonova)",
+     "status": "verified",
+     "doi": "10.1038/nature24453"
+    },
+    {
      "id": "kaye-laby",
      "text": "Kaye and Laby, Tables of Physical and Chemical Constants, section 2.5.7 refractive index of gases (online edition, NPL; now offline)",
      "status": "unverified",
@@ -4185,6 +6756,12 @@
      "text": "Kita, N. T. et al. 2013, Meteoritics and Planetary Science 48, 1383: 26Al-26Mg isotope systematics of the first solids in the early solar system",
      "status": "verified",
      "doi": "10.1111/maps.12141"
+    },
+    {
+     "id": "kobayashi2020",
+     "text": "Kobayashi, C., Karakas, A. I. and Lugaro, M. 2020, ApJ 900, 179: the origin of elements from carbon to uranium (half of C, N and F from AGB stars; half of the iron-peak elements from Type Ia supernovae; the r-process shortfall)",
+     "status": "verified",
+     "doi": "10.3847/1538-4357/abae65"
     },
     {
      "id": "lineweaver2010",
