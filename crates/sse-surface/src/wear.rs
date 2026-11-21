@@ -595,5 +595,15 @@ pub fn wear_world(
     } else {
         magma_end_myr.min(to)
     };
-    wear(s, env, plates.n, &h0, water, climate, from, to, plates.steps > 0)
+    wear(
+        s,
+        env,
+        plates.n,
+        &h0,
+        water,
+        climate,
+        from,
+        to,
+        plates.steps > 0,
+    )
 }
