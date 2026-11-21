@@ -1969,6 +1969,7 @@ impl Kernel {
                                 .to_string(),
                             fictional: stack.is_fictional(k),
                             publisher: format!("{pack}/{}@{}", f.doc.id, f.doc.version),
+                            estimated: estimated_laws(&ev.upstream_atoms(k)),
                         };
                         (k.to_string(), v)
                     })
@@ -4397,4 +4398,21 @@ fn export_at(
     }
     file.worlds.sort_by(|a, b| a.hex.cmp(&b.hex));
     (file, skipped)
+}
+
+/// MP1c: the laws of the rescaled blocks a value rests on, while the
+/// constants in force differ from ours (empty otherwise).
+fn estimated_laws(atoms: &[String]) -> Option<Vec<String>> {
+    if !sse_core::constants::now().edited() {
+        return None;
+    }
+    let mut out: Vec<String> = atoms
+        .iter()
+        .filter_map(|a| match sse_atoms::reach::of(a) {
+            Some(sse_atoms::reach::Reach::Estimated { law, .. }) => Some(format!("{a}: {law}")),
+            _ => None,
+        })
+        .collect();
+    out.dedup();
+    (!out.is_empty()).then_some(out)
 }

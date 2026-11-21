@@ -6,9 +6,10 @@
 //! with the real constants and keeps the real-universe result. That is the
 //! honest default, so a block moves up only with a test.
 //!
-//! **Estimated** (a tabulated result rescaled by a cited law, stamped
-//! ESTIMATED) has no member yet: the main-sequence relations move there
-//! when their homology scalings (Adams 2008) are built.
+//! **Estimated** (a fitted or tabulated result rescaled by a cited law,
+//! stamped ESTIMATED): the main-sequence luminosity and radius, rescaled by
+//! stellar homology (Adams 2008). The lifetime and the age brightening are
+//! formulas on the luminosity, so they follow it.
 
 /// One block's declared reach.
 #[derive(Clone, Copy, PartialEq, Debug)]
@@ -55,6 +56,24 @@ pub const DECLARED: &[(&str, Reach)] = &[
         "sse.star.effective_temperature",
         Reach::Follows(&["sigma_SB"]),
     ),
+    (
+        "sse.star.ms_luminosity",
+        Reach::Estimated {
+            reads: &["G", "sigma_SB", "k_B"],
+            law: "stellar homology, L ∝ σ G⁴ M³ / k_B⁴ (Adams 2008, doi:10.1088/1475-7516/2008/08/010)",
+        },
+    ),
+    (
+        "sse.star.ms_radius",
+        Reach::Estimated {
+            reads: &["G"],
+            law: "stellar homology, R ∝ G M at a fixed ignition energy (Adams 2008, doi:10.1088/1475-7516/2008/08/010)",
+        },
+    ),
+    // t = t☉ (M/M☉)/(L/L☉): the energy per kilogram of fuel is nuclear, so
+    // the lifetime moves only through the luminosity it is given.
+    ("sse.star.ms_lifetime", Reach::Follows(&[])),
+    ("sse.star.ms_luminosity_at_age", Reach::Follows(&[])),
 ];
 
 /// A block's reach: `None` is "cannot follow".
