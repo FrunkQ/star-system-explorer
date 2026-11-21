@@ -24,6 +24,7 @@ use crate::chemistry::{chemistry_for, ThermoTable, HYDROGEN_ION};
 use crate::habitat::HabitatGraph;
 use crate::*;
 use sse_core::math as m;
+use std::collections::BTreeSet;
 
 pub const MODEL: &str = "gradients/1";
 const YEAR_S: f64 = 3.155_76e7;
@@ -50,6 +51,12 @@ pub struct LightGradient {
     /// The listed metabolism it regenerates (fidelity contract, 3.5).
     #[serde(default)]
     pub matches: Option<String>,
+    /// New chemical steps a biosphere needs to use it (E2, evolution design 5.1).
+    #[serde(default)]
+    pub reach: Option<f64>,
+    /// The hard-step dial that scales its waiting time (E2).
+    #[serde(default)]
+    pub dial: Option<String>,
 }
 
 /// A redox or organic gradient (`life_gradients.reactions`).
@@ -70,6 +77,12 @@ pub struct ReactionGradient {
     pub fast_why: Option<String>,
     #[serde(default)]
     pub matches: Option<String>,
+    /// New chemical steps a biosphere needs to use it (E2, evolution design 5.1).
+    #[serde(default)]
+    pub reach: Option<f64>,
+    /// The hard-step dial that scales its waiting time (E2).
+    #[serde(default)]
+    pub dial: Option<String>,
 }
 
 /// `provides.other.life_gradients`.
@@ -258,6 +271,21 @@ pub fn habitat_catalogue(
     table: &ThermoTable,
     supply: &BTreeMap<String, f64>,
     organic_mol_yr: f64,
+) -> (Catalogue, HabitatBudget) {
+    habitat_catalogue_using(p, bp, gp, table, supply, organic_mol_yr, None)
+}
+
+/// As [`habitat_catalogue`], with only the gradients in `usable` tapped
+/// (E2: the metabolisms a biosphere has evolved). The rest stay in the
+/// catalogue with their tests, but draw nothing and produce nothing.
+pub fn habitat_catalogue_using(
+    p: &LifeRequirementProfile,
+    bp: &BudgetParams,
+    gp: &GradientParams,
+    table: &ThermoTable,
+    supply: &BTreeMap<String, f64>,
+    organic_mol_yr: f64,
+    usable: Option<&BTreeSet<String>>,
 ) -> (Catalogue, HabitatBudget) {
     let mut out = HabitatBudget {
         habitat: p.habitat.clone(),
@@ -528,7 +556,9 @@ pub fn habitat_catalogue(
     let mut order: Vec<usize> = (0..gradients.len())
         .filter(|i| {
             let g = &gradients[*i];
-            g.open && (g.kind != "light" || g.limiting.is_some())
+            g.open
+                && (g.kind != "light" || g.limiting.is_some())
+                && usable.is_none_or(|u| u.contains(&g.id))
         })
         .collect();
     order.sort_by(|a, b| {
@@ -584,6 +614,17 @@ pub fn habitat_catalogue(
     let mut chemical = 0.0;
     let mut secondary = 0.0;
     let mut any = false;
+    if let Some(u) = usable {
+        // Open but not yet evolved: nothing drawn, nothing made.
+        for g in gradients
+            .iter_mut()
+            .filter(|g| g.open && !u.contains(&g.id))
+        {
+            g.production_gc_yr = Some(0.0);
+            g.power_w = Some(0.0);
+            g.max_biomass_gc = Some(0.0);
+        }
+    }
     for g in gradients.iter().filter(|g| g.open) {
         let Some(gc) = g.production_gc_yr else {
             continue;
@@ -668,12 +709,23 @@ pub fn world_catalogue(
     gp: &GradientParams,
     table: &ThermoTable,
 ) -> (Vec<Catalogue>, WorldBudget) {
+    world_catalogue_using(g, bp, gp, table, None)
+}
+
+/// As [`world_catalogue`], with only the gradients in `usable` tapped (E2).
+pub fn world_catalogue_using(
+    g: &HabitatGraph,
+    bp: &BudgetParams,
+    gp: &GradientParams,
+    table: &ThermoTable,
+    usable: Option<&BTreeSet<String>>,
+) -> (Vec<Catalogue>, WorldBudget) {
     let sup = supplies(g, gp);
     let first: Vec<(Catalogue, HabitatBudget)> = g
         .habitats
         .iter()
         .zip(&sup)
-        .map(|(h, s)| habitat_catalogue(&h.profile, bp, gp, table, s, 0.0))
+        .map(|(h, s)| habitat_catalogue_using(&h.profile, bp, gp, table, s, 0.0, usable))
         .collect();
     let production: Vec<Option<f64>> = first.iter().map(|(_, b)| b.production_gc_yr).collect();
     let imports = organic_imports(g, gp, &production);
@@ -682,7 +734,7 @@ pub fn world_catalogue(
         .iter()
         .zip(&sup)
         .zip(&imports)
-        .map(|((h, s), imp)| habitat_catalogue(&h.profile, bp, gp, table, s, *imp))
+        .map(|((h, s), imp)| habitat_catalogue_using(&h.profile, bp, gp, table, s, *imp, usable))
         .collect();
     let high_power = pairs.iter().any(|(c, b)| {
         c.gradients.iter().any(|x| {
