@@ -1209,6 +1209,7 @@ impl Kernel {
                     &subject,
                     &BTreeMap::new(),
                     &sse_sift::authored_tags(f),
+                    Some(&u.seed),
                 );
                 if !t.is_empty() {
                     tags.insert(a.clone(), t);
@@ -1915,6 +1916,7 @@ impl Kernel {
                             &subject,
                             &BTreeMap::new(),
                             authored.get(a).unwrap_or(&none),
+                            Some(&u.seed),
                         )
                         .into_keys()
                     {
