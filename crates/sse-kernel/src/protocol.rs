@@ -1611,6 +1611,11 @@ pub struct DerivedValue {
     /// Depends on fictional physics (a pack flagged fictional, H7).
     pub fictional: bool,
     pub publisher: String,
+    /// MP1c: with constants that differ from ours, the cited law each
+    /// rescaled block it rests on used (ESTIMATED). Left out otherwise.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    #[ts(optional)]
+    pub estimated: Option<Vec<String>>,
 }
 
 #[derive(Clone, PartialEq, Debug, Serialize, Deserialize, TS)]

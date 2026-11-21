@@ -1118,6 +1118,31 @@ impl Evaluation<'_> {
         out.dedup();
         Some(out)
     }
+    /// Every atom a published kind rests on, its own included, sorted (MP1c:
+    /// a value is ESTIMATED when one of them is a rescaled table).
+    pub fn upstream_atoms(&self, kind: &str) -> Vec<String> {
+        let Some(&(n, _)) = self.flow.published.get(kind) else {
+            return vec![];
+        };
+        let mut seen = BTreeSet::new();
+        let mut stack = vec![n];
+        let mut out = BTreeSet::new();
+        while let Some(k) = stack.pop() {
+            if !seen.insert(k) {
+                continue;
+            }
+            let d = &self.flow.doc.nodes[k];
+            if let Some(a) = d.atom.as_ref().or(d.solve.as_ref().map(|s| &s.atom)) {
+                out.insert(a.clone());
+            }
+            for s in &self.flow.nodes[k].sources {
+                if let Source::Node(d, _) = s {
+                    stack.push(*d);
+                }
+            }
+        }
+        out.into_iter().collect()
+    }
     pub fn validity_of(&self, kind: &str) -> Option<Validity> {
         let (n, _) = *self.flow.published.get(kind)?;
         Some(self.outs[n].validity)

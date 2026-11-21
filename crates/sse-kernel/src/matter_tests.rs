@@ -217,3 +217,53 @@ fn the_base_sheet_loads_in_a_stack() {
     );
     assert_eq!(g["in_force"], g["real"], "{g}");
 }
+
+/// MP1c part 2: with twice G the Sun is 16 times as bright and twice as
+/// wide by stellar homology, its lifetime a sixteenth, and each of those
+/// values carries the ESTIMATED law. The real kernel stamps nothing. (At
+/// the real age of 4.57 Gyr such a Sun would be gone: 0.625 Gyr of life.)
+#[test]
+fn doubling_g_makes_the_sun_estimated_sixteen_times_brighter() {
+    let sun = serde_json::json!({"mass": {"value": 1, "unit": "m_sun"}, "age": {"value": 0.1, "unit": "gyr"}});
+    let base = || pack("packs/base-physics/pack.json");
+    let mut real = crate::Kernel::new();
+    send(
+        &mut real,
+        serde_json::json!({"op": "load_stack", "packs": [base()]}),
+    );
+    let mut strong = crate::Kernel::new();
+    send(
+        &mut strong,
+        serde_json::json!({"op": "load_stack", "packs": [
+        base(), pack("tests/fixtures/packs/reference-strong-gravity.json")]}),
+    );
+    let a = derive(&mut real, "sse.base.star-main-sequence", sun.clone());
+    let b = derive(&mut strong, "sse.base.star-main-sequence", sun);
+    let ratio = |q: &str| b[q]["value"].as_f64().unwrap() / a[q]["value"].as_f64().unwrap();
+    assert!((ratio("star.luminosity") - 16.0).abs() < 1e-9, "{b}");
+    assert!((ratio("star.radius") - 2.0).abs() < 1e-12, "{b}");
+    assert!(
+        (ratio("star.main_sequence_lifetime") - 1.0 / 16.0).abs() < 1e-12,
+        "{b}"
+    );
+    // T_eff ∝ (L / R²)^¼ = (16 / 4)^¼ = √2.
+    assert!(
+        (ratio("star.effective_temperature") - std::f64::consts::SQRT_2).abs() < 1e-9,
+        "{b}"
+    );
+    for q in [
+        "star.luminosity",
+        "star.radius",
+        "star.effective_temperature",
+        "star.main_sequence_lifetime",
+    ] {
+        let e = b[q]["estimated"]
+            .as_array()
+            .unwrap_or_else(|| panic!("{q}: {b}"));
+        assert!(
+            e.iter().any(|l| l.as_str().unwrap().contains("Adams 2008")),
+            "{q}: {b}"
+        );
+        assert!(a[q].get("estimated").is_none(), "{q}: {a}");
+    }
+}
