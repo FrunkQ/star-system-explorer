@@ -301,15 +301,68 @@
    ],
    "life_budget": {
     "about": "Box B (life design section 3, L1a): energy and nutrient caps per habitat. Production is the smaller of the energy cap and the nutrient cap (Liebig); biomass is production times a residence time; feeding levels follow from production density and a 10% transfer efficiency.",
-    "chemistries": [
-     "water"
+    "chemistry": [
+     {
+      "id": "carbon-water",
+      "label": "carbon in water",
+      "solvent": "water",
+      "scaffold": "C",
+      "window_k": [
+       253.0,
+       395.0
+      ],
+      "liquid_min_pa": 611.657,
+      "activity_property": "water_activity",
+      "min_activity": 0.585,
+      "recipe": {
+       "C": 106.0,
+       "N": 16.0,
+       "P": 1.0
+      },
+      "build_j_per_g": 39900.0,
+      "light_bands_nm": [
+       [
+        400.0,
+        700.0
+       ],
+       [
+        700.0,
+        1100.0
+       ]
+      ],
+      "redox_species": [
+       "h2",
+       "h2_aq",
+       "ch4",
+       "ch4_aq",
+       "co",
+       "h2s_aq",
+       "hs-",
+       "s",
+       "nh4+",
+       "no2-",
+       "fe+2",
+       "acetate-",
+       "glucose",
+       "ethanol",
+       "o2",
+       "o2_aq",
+       "no3-",
+       "fe+3",
+       "so4-2",
+       "co2",
+       "co2_aq",
+       "hco3-"
+      ],
+      "evidence": "observed",
+      "origin_dial": 1.0,
+      "sources": [
+       "One example: Earth's life. Window, water activity and dose limits as box B's sources (window_k, min_water_activity, max_dose_msv_yr); recipe: Redfield 1958 (106 C : 16 N : 1 P); build cost as j_per_g_carbon",
+       "Bains, W. 2004, Astrobiology 4, 137: many chemistries could be used to build living systems. doi:10.1089/153110704323175124",
+       "Benner, S. A., Ricardo, A. and Carrigan, M. A. 2004, Current Opinion in Chemical Biology 8, 672: is there a common chemical model for life in the universe? doi:10.1016/j.cbpa.2004.10.003"
+      ]
+     }
     ],
-    "window_k": [
-     253.0,
-     395.0
-    ],
-    "water_triple_pa": 611.657,
-    "min_water_activity": 0.585,
     "max_dose_msv_yr": 1000000.0,
     "j_per_g_carbon": 39900.0,
     "p_material": "p_new_mol_yr",
@@ -450,6 +503,736 @@
      "residence_yr": "Marine phytoplankton turn over in days to weeks (about 6 Gt C standing against about 50 Gt C per year; Bar-On et al. 2018, Field et al. 1998); land plants about 10 years (450 Gt C against about 56 Gt C per year); deep subsurface cells turn over in centuries to millennia (Hoehler and Jorgensen 2013)",
      "transfer_efficiency": "About 10% of production passes from one feeding level to the next (Lindeman 1942; Pauly and Christensen 1995)",
      "low_power_levels": "Without oxygen, anaerobic metabolisms release about a tenth of the energy, so food chains stay short (Catling et al. 2005)"
+    }
+   },
+   "life_chemistry": {
+    "about": "Reaction energetics (evolution design sections 3 and 4, stage E0): standard free energies and enthalpies of formation of the species the life suite tracks, and reference reactions checked against published values. The gradient catalogue (E1) computes every reaction's energy from this table, moved to the local temperature and activities by the sse.chem blocks.",
+    "reference_t_k": 298.15,
+    "species": [
+     {
+      "id": "h2o",
+      "label": "water",
+      "phase": "l",
+      "elements": {
+       "H": 2,
+       "O": 1
+      },
+      "charge": 0,
+      "dgf_kj": -237.18,
+      "dhf_kj": -285.83,
+      "source": "thauer"
+     },
+     {
+      "id": "h+",
+      "label": "hydrogen ion",
+      "phase": "aq",
+      "elements": {
+       "H": 1
+      },
+      "charge": 1,
+      "dgf_kj": 0.0,
+      "dhf_kj": 0.0,
+      "source": "convention"
+     },
+     {
+      "id": "h2",
+      "label": "hydrogen",
+      "phase": "g",
+      "elements": {
+       "H": 2
+      },
+      "charge": 0,
+      "dgf_kj": 0.0,
+      "dhf_kj": 0.0,
+      "source": "convention"
+     },
+     {
+      "id": "h2_aq",
+      "label": "dissolved hydrogen",
+      "phase": "aq",
+      "elements": {
+       "H": 2
+      },
+      "charge": 0,
+      "dgf_kj": 17.72,
+      "dhf_kj": -4.2,
+      "source": "thauer"
+     },
+     {
+      "id": "o2",
+      "label": "oxygen",
+      "phase": "g",
+      "elements": {
+       "O": 2
+      },
+      "charge": 0,
+      "dgf_kj": 0.0,
+      "dhf_kj": 0.0,
+      "source": "convention"
+     },
+     {
+      "id": "o2_aq",
+      "label": "dissolved oxygen",
+      "phase": "aq",
+      "elements": {
+       "O": 2
+      },
+      "charge": 0,
+      "dgf_kj": 16.32,
+      "dhf_kj": -11.7,
+      "source": "thauer"
+     },
+     {
+      "id": "n2",
+      "label": "nitrogen",
+      "phase": "g",
+      "elements": {
+       "N": 2
+      },
+      "charge": 0,
+      "dgf_kj": 0.0,
+      "dhf_kj": 0.0,
+      "source": "convention"
+     },
+     {
+      "id": "co2",
+      "label": "carbon dioxide",
+      "phase": "g",
+      "elements": {
+       "C": 1,
+       "O": 2
+      },
+      "charge": 0,
+      "dgf_kj": -394.36,
+      "dhf_kj": -393.51,
+      "source": "thauer"
+     },
+     {
+      "id": "co2_aq",
+      "label": "dissolved carbon dioxide",
+      "phase": "aq",
+      "elements": {
+       "C": 1,
+       "O": 2
+      },
+      "charge": 0,
+      "dgf_kj": -386.02,
+      "dhf_kj": -413.8,
+      "source": "thauer"
+     },
+     {
+      "id": "hco3-",
+      "label": "bicarbonate",
+      "phase": "aq",
+      "elements": {
+       "H": 1,
+       "C": 1,
+       "O": 3
+      },
+      "charge": -1,
+      "dgf_kj": -586.85,
+      "dhf_kj": -691.99,
+      "source": "thauer"
+     },
+     {
+      "id": "ch4",
+      "label": "methane",
+      "phase": "g",
+      "elements": {
+       "C": 1,
+       "H": 4
+      },
+      "charge": 0,
+      "dgf_kj": -50.75,
+      "dhf_kj": -74.81,
+      "source": "thauer"
+     },
+     {
+      "id": "ch4_aq",
+      "label": "dissolved methane",
+      "phase": "aq",
+      "elements": {
+       "C": 1,
+       "H": 4
+      },
+      "charge": 0,
+      "dgf_kj": -34.39,
+      "dhf_kj": -89.04,
+      "source": "thauer"
+     },
+     {
+      "id": "co",
+      "label": "carbon monoxide",
+      "phase": "g",
+      "elements": {
+       "C": 1,
+       "O": 1
+      },
+      "charge": 0,
+      "dgf_kj": -137.15,
+      "dhf_kj": -110.53,
+      "source": "thauer"
+     },
+     {
+      "id": "h2s_aq",
+      "label": "dissolved hydrogen sulfide",
+      "phase": "aq",
+      "elements": {
+       "H": 2,
+       "S": 1
+      },
+      "charge": 0,
+      "dgf_kj": -27.87,
+      "dhf_kj": -39.7,
+      "source": "thauer"
+     },
+     {
+      "id": "hs-",
+      "label": "bisulfide",
+      "phase": "aq",
+      "elements": {
+       "H": 1,
+       "S": 1
+      },
+      "charge": -1,
+      "dgf_kj": 12.05,
+      "dhf_kj": -17.6,
+      "source": "thauer"
+     },
+     {
+      "id": "s",
+      "label": "sulfur",
+      "phase": "s",
+      "elements": {
+       "S": 1
+      },
+      "charge": 0,
+      "dgf_kj": 0.0,
+      "dhf_kj": 0.0,
+      "source": "convention"
+     },
+     {
+      "id": "so4-2",
+      "label": "sulfate",
+      "phase": "aq",
+      "elements": {
+       "S": 1,
+       "O": 4
+      },
+      "charge": -2,
+      "dgf_kj": -744.6,
+      "dhf_kj": -909.27,
+      "source": "thauer"
+     },
+     {
+      "id": "nh4+",
+      "label": "ammonium",
+      "phase": "aq",
+      "elements": {
+       "N": 1,
+       "H": 4
+      },
+      "charge": 1,
+      "dgf_kj": -79.37,
+      "dhf_kj": -132.51,
+      "source": "thauer"
+     },
+     {
+      "id": "no2-",
+      "label": "nitrite",
+      "phase": "aq",
+      "elements": {
+       "N": 1,
+       "O": 2
+      },
+      "charge": -1,
+      "dgf_kj": -37.2,
+      "dhf_kj": -104.6,
+      "source": "thauer"
+     },
+     {
+      "id": "no3-",
+      "label": "nitrate",
+      "phase": "aq",
+      "elements": {
+       "N": 1,
+       "O": 3
+      },
+      "charge": -1,
+      "dgf_kj": -111.34,
+      "dhf_kj": -205.0,
+      "source": "thauer"
+     },
+     {
+      "id": "fe+2",
+      "label": "ferrous iron",
+      "phase": "aq",
+      "elements": {
+       "Fe": 1
+      },
+      "charge": 2,
+      "dgf_kj": -78.87,
+      "dhf_kj": -89.1,
+      "source": "thauer"
+     },
+     {
+      "id": "fe+3",
+      "label": "ferric iron",
+      "phase": "aq",
+      "elements": {
+       "Fe": 1
+      },
+      "charge": 3,
+      "dgf_kj": -4.6,
+      "dhf_kj": -48.5,
+      "source": "thauer"
+     },
+     {
+      "id": "acetate-",
+      "label": "acetate",
+      "phase": "aq",
+      "elements": {
+       "C": 2,
+       "H": 3,
+       "O": 2
+      },
+      "charge": -1,
+      "dgf_kj": -369.41,
+      "dhf_kj": -486.01,
+      "source": "thauer"
+     },
+     {
+      "id": "glucose",
+      "label": "glucose",
+      "phase": "aq",
+      "elements": {
+       "C": 6,
+       "H": 12,
+       "O": 6
+      },
+      "charge": 0,
+      "dgf_kj": -917.22,
+      "dhf_kj": -1262.19,
+      "source": "thauer"
+     },
+     {
+      "id": "ethanol",
+      "label": "ethanol",
+      "phase": "aq",
+      "elements": {
+       "C": 2,
+       "H": 6,
+       "O": 1
+      },
+      "charge": 0,
+      "dgf_kj": -181.75,
+      "dhf_kj": -288.3,
+      "source": "thauer"
+     }
+    ],
+    "reactions": [
+     {
+      "id": "knallgas",
+      "label": "hydrogen burned with oxygen",
+      "terms": [
+       [
+        "h2",
+        -1
+       ],
+       [
+        "o2",
+        -0.5
+       ],
+       [
+        "h2o",
+        1
+       ]
+      ],
+      "electrons": 2,
+      "published_kj": -237.2,
+      "source": "thauer"
+     },
+     {
+      "id": "methanogenesis",
+      "label": "methanogenesis from hydrogen and carbon dioxide",
+      "terms": [
+       [
+        "h2",
+        -4
+       ],
+       [
+        "co2",
+        -1
+       ],
+       [
+        "ch4",
+        1
+       ],
+       [
+        "h2o",
+        2
+       ]
+      ],
+      "electrons": 8,
+      "published_kj": -130.7,
+      "source": "thauer"
+     },
+     {
+      "id": "methanogenesis-bicarbonate",
+      "label": "methanogenesis from hydrogen and bicarbonate",
+      "terms": [
+       [
+        "h2",
+        -4
+       ],
+       [
+        "hco3-",
+        -1
+       ],
+       [
+        "h+",
+        -1
+       ],
+       [
+        "ch4",
+        1
+       ],
+       [
+        "h2o",
+        3
+       ]
+      ],
+      "electrons": 8,
+      "published_kj": -135.6,
+      "published_ph": 7.0,
+      "source": "thauer"
+     },
+     {
+      "id": "acetoclastic-methanogenesis",
+      "label": "methane from acetate",
+      "terms": [
+       [
+        "acetate-",
+        -1
+       ],
+       [
+        "h2o",
+        -1
+       ],
+       [
+        "ch4",
+        1
+       ],
+       [
+        "hco3-",
+        1
+       ]
+      ],
+      "published_kj": -31.0,
+      "published_ph": 7.0,
+      "source": "thauer"
+     },
+     {
+      "id": "sulfate-reduction",
+      "label": "sulfate reduced with hydrogen",
+      "terms": [
+       [
+        "h2",
+        -4
+       ],
+       [
+        "so4-2",
+        -1
+       ],
+       [
+        "h+",
+        -1
+       ],
+       [
+        "hs-",
+        1
+       ],
+       [
+        "h2o",
+        4
+       ]
+      ],
+      "electrons": 8,
+      "published_kj": -152.2,
+      "published_ph": 7.0,
+      "source": "thauer"
+     },
+     {
+      "id": "acetogenesis",
+      "label": "acetate from hydrogen and bicarbonate",
+      "terms": [
+       [
+        "h2",
+        -4
+       ],
+       [
+        "hco3-",
+        -2
+       ],
+       [
+        "h+",
+        -1
+       ],
+       [
+        "acetate-",
+        1
+       ],
+       [
+        "h2o",
+        4
+       ]
+      ],
+      "electrons": 8,
+      "published_kj": -104.6,
+      "published_ph": 7.0,
+      "source": "thauer"
+     },
+     {
+      "id": "denitrification",
+      "label": "nitrate reduced to nitrogen with hydrogen",
+      "terms": [
+       [
+        "h2",
+        -5
+       ],
+       [
+        "no3-",
+        -2
+       ],
+       [
+        "h+",
+        -2
+       ],
+       [
+        "n2",
+        1
+       ],
+       [
+        "h2o",
+        6
+       ]
+      ],
+      "electrons": 10,
+      "published_kj": -1120.5,
+      "published_ph": 7.0,
+      "source": "thauer"
+     },
+     {
+      "id": "methane-oxidation",
+      "label": "methane burned with oxygen",
+      "terms": [
+       [
+        "ch4",
+        -1
+       ],
+       [
+        "o2",
+        -2
+       ],
+       [
+        "co2",
+        1
+       ],
+       [
+        "h2o",
+        2
+       ]
+      ],
+      "electrons": 8,
+      "published_kj": -818.0,
+      "source": "thauer"
+     },
+     {
+      "id": "glucose-respiration",
+      "label": "aerobic respiration of glucose",
+      "terms": [
+       [
+        "glucose",
+        -1
+       ],
+       [
+        "o2",
+        -6
+       ],
+       [
+        "co2",
+        6
+       ],
+       [
+        "h2o",
+        6
+       ]
+      ],
+      "electrons": 24,
+      "published_kj": -2870.0,
+      "source": "thauer"
+     },
+     {
+      "id": "alcoholic-fermentation",
+      "label": "glucose fermented to ethanol",
+      "terms": [
+       [
+        "glucose",
+        -1
+       ],
+       [
+        "ethanol",
+        2
+       ],
+       [
+        "co2",
+        2
+       ]
+      ],
+      "published_kj": -235.0,
+      "source": "thauer"
+     },
+     {
+      "id": "ammonium-oxidation",
+      "label": "ammonium oxidised to nitrite",
+      "terms": [
+       [
+        "nh4+",
+        -1
+       ],
+       [
+        "o2",
+        -1.5
+       ],
+       [
+        "no2-",
+        1
+       ],
+       [
+        "h2o",
+        1
+       ],
+       [
+        "h+",
+        2
+       ]
+      ],
+      "electrons": 6,
+      "published_kj": -275.0,
+      "published_ph": 7.0,
+      "source": "bock"
+     },
+     {
+      "id": "nitrite-oxidation",
+      "label": "nitrite oxidised to nitrate",
+      "terms": [
+       [
+        "no2-",
+        -1
+       ],
+       [
+        "o2",
+        -0.5
+       ],
+       [
+        "no3-",
+        1
+       ]
+      ],
+      "electrons": 2,
+      "published_kj": -74.1,
+      "published_ph": 7.0,
+      "source": "thauer"
+     },
+     {
+      "id": "anammox",
+      "label": "ammonium oxidised with nitrite",
+      "terms": [
+       [
+        "nh4+",
+        -1
+       ],
+       [
+        "no2-",
+        -1
+       ],
+       [
+        "n2",
+        1
+       ],
+       [
+        "h2o",
+        2
+       ]
+      ],
+      "electrons": 3,
+      "published_kj": -357.0,
+      "published_ph": 7.0,
+      "source": "strous"
+     },
+     {
+      "id": "sulfide-oxidation",
+      "label": "bisulfide oxidised to sulfate",
+      "terms": [
+       [
+        "hs-",
+        -1
+       ],
+       [
+        "o2",
+        -2
+       ],
+       [
+        "so4-2",
+        1
+       ],
+       [
+        "h+",
+        1
+       ]
+      ],
+      "electrons": 8,
+      "published_kj": -798.0,
+      "published_ph": 7.0,
+      "source": "kelly"
+     },
+     {
+      "id": "iron-oxidation",
+      "label": "ferrous iron oxidised with oxygen",
+      "terms": [
+       [
+        "fe+2",
+        -1
+       ],
+       [
+        "o2",
+        -0.25
+       ],
+       [
+        "h+",
+        -1
+       ],
+       [
+        "fe+3",
+        1
+       ],
+       [
+        "h2o",
+        0.5
+       ]
+      ],
+      "electrons": 1,
+      "published_kj": -44.2,
+      "source": "stumm"
+     }
+    ],
+    "sources": {
+     "thauer": "Thauer, R. K., Jungermann, K. and Decker, K. 1977, Bacteriological Reviews 41, 100: energy conservation in chemotrophic anaerobic bacteria; free energies of formation (appendix) and reaction free energies at pH 7. https://doi.org/10.1128/br.41.1.100-180.1977 (enthalpies of formation from the NBS tables, Wagman et al. 1982, J. Phys. Chem. Ref. Data 11, suppl. 2; values recalled, to verify: package log E0)",
+     "convention": "Elements in their standard state and the hydrogen ion at activity 1 have zero free energy and enthalpy of formation by convention",
+     "bock": "Bock, E. and Wagner, M. 2006, in The Prokaryotes, vol. 2, 457: oxidation of inorganic nitrogen compounds as an energy source (about -275 kJ per mol for ammonium to nitrite at pH 7). https://doi.org/10.1007/0-387-30742-7_16 (recalled, to verify)",
+     "strous": "Strous, M. et al. 1999, Nature 400, 446: missing lithotroph identified as new planctomycete (anammox, -357 kJ per mol). https://doi.org/10.1038/22749",
+     "kelly": "Kelly, D. P. 1999, Archives of Microbiology 171, 219: thermodynamic aspects of energy conservation by chemolithotrophic sulfur bacteria (about -798 kJ per mol for sulfide to sulfate). https://doi.org/10.1007/s002030050703 (recalled, to verify)",
+     "stumm": "Stumm, W. and Morgan, J. J. 1996, Aquatic Chemistry, 3rd ed., Wiley: Fe3+/Fe2+ standard potential +0.77 V, O2/H2O +1.23 V, so -44.2 kJ per mol at pH 0 (textbook)"
     }
    },
    "life_history": {

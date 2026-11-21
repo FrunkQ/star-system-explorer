@@ -35,7 +35,7 @@ try {
     const gm = await context.newPage();
     gm.on("pageerror", (e) => errors.push(e.message));
     const ready = async () => gm.waitForSelector("[data-state-hash]:not([data-state-hash=''])", { timeout: 20000 });
-    const hash = () => gm.locator(".status [data-state-hash]").getAttribute("data-state-hash");
+    const hash = () => gm.locator("[data-state-hash]").getAttribute("data-state-hash");
     const kept = () => gm.evaluate(() => JSON.parse(localStorage.getItem("sse4.campaign") ?? "null"));
     const keptWith = (h) => gm.waitForFunction((x) => JSON.parse(localStorage.getItem("sse4.campaign") ?? "null")?.state_hash === x, h, { timeout: 15000 });
     await gm.goto(base);
@@ -63,7 +63,7 @@ try {
     // Reload: the same campaign.
     await gm.reload();
     await ready();
-    await gm.waitForFunction((h) => document.querySelector(".status [data-state-hash]")?.getAttribute("data-state-hash") === h, h1, { timeout: 20000 });
+    await gm.waitForFunction((h) => document.querySelector("[data-state-hash]")?.getAttribute("data-state-hash") === h, h1, { timeout: 20000 });
     assert.match(await gm.locator("[data-kept-note]").innerText(), /Reopened the campaign kept .*: \d+ events\./);
     assert.ok((await gm.locator("[aria-label='System on the chart'] option").allInnerTexts()).some((t) => /first light/i.test(t)), "the grown system is still on the chart");
     await shot(gm, "u10-reopened");
@@ -96,7 +96,7 @@ try {
     await shot(gm, "u10-campaign-dialog");
     await Promise.all([gm.waitForEvent("load"), cd.getByRole("button", { name: "Forget it and start fresh" }).click()]);
     await ready();
-    await gm.waitForFunction((h) => document.querySelector(".status [data-state-hash]")?.getAttribute("data-state-hash") === h, h0, { timeout: 20000 });
+    await gm.waitForFunction((h) => document.querySelector("[data-state-hash]")?.getAttribute("data-state-hash") === h, h0, { timeout: 20000 });
     assert.equal(await gm.locator("[aria-label='System on the chart']").count(), 0, "no grown system after starting fresh");
     assert.equal(await gm.locator("[data-kept-note]").count(), 0);
 
@@ -116,7 +116,7 @@ try {
     await shot(gm, "u10-open-campaign");
     await Promise.all([gm.waitForEvent("load"), od.getByRole("button", { name: "Open it" }).click()]);
     await ready();
-    await gm.waitForFunction((h) => document.querySelector(".status [data-state-hash]")?.getAttribute("data-state-hash") === h, h1, { timeout: 20000 });
+    await gm.waitForFunction((h) => document.querySelector("[data-state-hash]")?.getAttribute("data-state-hash") === h, h1, { timeout: 20000 });
     assert.ok((await gm.locator("[aria-label='System on the chart'] option").allInnerTexts()).some((t) => /first light/i.test(t)));
 
     // A damaged kept save is set aside, and a fresh campaign opens.
@@ -127,7 +127,7 @@ try {
     });
     await gm.reload();
     await ready();
-    await gm.waitForFunction((h) => document.querySelector(".status [data-state-hash]")?.getAttribute("data-state-hash") === h, h0, { timeout: 20000 });
+    await gm.waitForFunction((h) => document.querySelector("[data-state-hash]")?.getAttribute("data-state-hash") === h, h0, { timeout: 20000 });
     assert.match(await gm.locator("[data-kept-note]").innerText(), /could not be reopened .* set aside/);
     assert.ok(await gm.evaluate(() => localStorage.getItem("sse4.campaign.set-aside") !== null), "the damaged save is kept aside");
 

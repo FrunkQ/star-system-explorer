@@ -11,7 +11,7 @@
 import { spawn } from "node:child_process";
 import { mkdirSync, writeFileSync } from "node:fs";
 import assert from "node:assert/strict";
-import { desk } from "./nav.mjs";
+import { depth, desk } from "./nav.mjs";
 import { createRequire } from "node:module";
 
 const { chromium, firefox, webkit } = createRequire(import.meta.url)("playwright");
@@ -46,6 +46,8 @@ try {
       if (!id.startsWith("__")) await gm.waitForFunction((v) => document.querySelector("main.stage")?.getAttribute("data-lens") === v, id);
     };
     assert.equal(await lensOf(), "advanced", "a desktop opens in Advanced");
+    // Lenses choose the fields; Science shows every one of them (Curious leads with four, in words).
+    await depth(gm, "Science");
     const h0 = await hash();
     const kicker = await gm.locator(".kicker").innerText();
 
