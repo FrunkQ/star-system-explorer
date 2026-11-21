@@ -9,6 +9,7 @@
 import { spawn } from "node:child_process";
 import { mkdirSync } from "node:fs";
 import assert from "node:assert/strict";
+import { desk as chooseDesk } from "./nav.mjs";
 import { createRequire } from "node:module";
 
 const { chromium, firefox, webkit } = createRequire(import.meta.url)("playwright");
@@ -37,6 +38,7 @@ try {
     gm.on("pageerror", (e) => errors.push(`gm: ${e.message}`));
     await gm.goto(base);
     await gm.waitForSelector("[data-state-hash]:not([data-state-hash=''])");
+    await chooseDesk(gm, "Build");
     const gmHash = () => gm.getAttribute(".status [data-state-hash]", "data-state-hash");
 
     // V10: a session that is not shared shows no seat UI at all.
