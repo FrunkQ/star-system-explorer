@@ -5,7 +5,7 @@ Date 17 Nov 2026. Audience: a coordinating session planning the work, and the bu
 ## 0. Read in this order
 
 1. `SSE4-design-handoff.md` : the architecture, contracts, decisions. The authority.
-2. `SSE4-galaxy-design.md`, `SSE4-life-design.md`, `SSE4-surface-design.md`, `SSE4-classification-design.md`, `SSE4-system-formation-design.md`, `SSE4-sound-design.md`, `SSE4-weather-design.md` `SSE4-nebulae-and-light-design.md` and `SSE4-record-logic-programs-design.md` : the domain designs in detail. `SSE4-surfaces-and-rendering.md` is the research report on browser photorealism, hardware scaling and software choices; it is the authority for rendering and must be read before any R or V package.
+2. `SSE4-galaxy-design.md`, `SSE4-life-design.md`, `SSE4-surface-design.md`, `SSE4-classification-design.md`, `SSE4-system-formation-design.md`, `SSE4-sound-design.md`, `SSE4-weather-design.md` `SSE4-nebulae-and-light-design.md` and `SSE4-record-logic-programs-design.md` : the domain designs in detail. `SSE4-top-level-ui-and-onboarding.md` (accepted 21 Nov: the place line, instrument rail, three desks, onboarding, the Explorers library, one campaign clock) and `interface-style.md` (dynamic minimalism, standing) must be read before any U or V package. `SSE4-surfaces-and-rendering.md` is the research report on browser photorealism, hardware scaling and software choices; it is the authority for rendering and must be read before any R or V package.
 3. The "SSE4 mockups" canvas : every screen. Chart room board is the reference for the GM look.
 4. "SSE4 decisions for Alex" : the reasoning trail, if a decision seems odd.
 5. On Alex's machine under `C:\Development`: the V3 source (for parity and import), `ovid-next` (agent system to reuse), `evolution-lab` and `evolution-lab-design` (contracts, UI components, experiments).
@@ -117,6 +117,8 @@ Tracks can run in parallel once their dependencies are met. `needs` lists packag
 
 ### L: life suite. Stages L0, L1a, L1b, L1c, L1d, L2, L2b exactly as life document section 14, one package each. L0 needs K10 and P4; L1a needs P1; L2 needs T1.
 
+### E: evolution from energy gradients **[accepted 21 Nov]**. Stages E0 to E9 and UE1 exactly as `SSE4-evolution-design.md` section 14, one package each. It changes the inside of life boxes B, D, G and H and adds soil and biomes; read it with `SSE4-life-design.md`. Order: E3 first (competing oxygen sinks and fire, needs only L2), then E0, E1, E2, E4, E5 (functional traits only), E6, E8; E7 after E0 and E1 and the one-body work; E9 waits on Evolution Lab's own two sessions. V4 scope is "they exist": function and planetary effect, no appearance. Prefer the real calculation in the browser and fall back only on a measured need (section 13).
+
 ### C: classification. Stages C1 to C5 exactly as `SSE4-classification-design.md` section 12, one package each. C1 needs K5 and P1; C3 needs K8 and L0; C4 needs U3 and A2; C5 needs G5. The Traveller pack's codes (X3a) are schemes in this machinery, so X3a needs C1 and X3b needs C3.
 
 ### O: light and nebulae. Stages O1 to O15 exactly as `SSE4-nebulae-and-light-design.md` section 8, one package each. Light stays a spectrum until a per-view band recipe; nebulae are objects with causes and lifetimes.
@@ -125,7 +127,7 @@ Tracks can run in parallel once their dependencies are met. `needs` lists packag
 
 ### N: sound. Stages N1 to N7 exactly as `SSE4-sound-design.md` section 7, one package each. Off by default, synthesised from data-only recipes, no baked audio.
 
-### J: the campaign record, logic blocks, boxes and programs **[decided 19 Nov]**. Stages J1 to J9 exactly as `SSE4-record-logic-programs-design.md` section 10, one package each. J1 (needs K3, K5, K9), J2 (K4, K8) and J3 (K4, K5) can start now. Read that file's section 9 first: it lists five points of care against code already built (flow document hashes, note filtering in scenes, the intent list moving into the kernel, X3d building on J4 and J7, and record data leaving the peer-to-peer broadcast). Section 8A (secrecy: what each device receives) binds every J package.
+### J: the campaign record, logic blocks, boxes and programs **[decided 19 Nov]**. Stages J1 to J9 and J6b exactly as `SSE4-record-logic-programs-design.md` section 10, one package each. J1 (needs K3, K5, K9), J2 (K4, K8) and J3 (K4, K5) can start now. Read that file's section 9 first: it lists five points of care against code already built (flow document hashes, note filtering in scenes, the intent list moving into the kernel, X3d building on J4 and J7, and record data leaving the peer-to-peer broadcast). Section 8A (secrecy: what each device receives) binds every J package.
 
 ### A: agents
 
@@ -160,11 +162,12 @@ Tracks can run in parallel once their dependencies are met. `needs` lists packag
 | M4 Players | K9, V1 to V6, U5, U9, X1 | run a session with themed player screens and the Scanned button |
 | M4b Sound | N1 to N3 | turn sound on, hear a system's background tones change from world to world, hear the astrogation console |
 | M5 Time and travel | T1 to T3, U4, V8, U8, A1 to A4, F7, O10 (after O1, O2), O12 to O14 | age the Solar System; plot courses; agents on his own key |
-| M5c Living campaign | J1 to J7, J9 | jot a note on a statue and find it on the timeline; track factions and what they think of the party; set a mining drone's autopilot and look ahead to see what it does |
+| M5c Living campaign | J1 to J7, J6b, J9 | jot a note on a statue and find it on the timeline; track factions and what they think of the party; set a mining drone's autopilot and look ahead to see what it does |
 | M5d Turns (later) | J8 | run a week of downtime or a turn-based game with sealed orders |
 | M5b Traveller table | X3a to X3d, V12, O9 (after O1, O2, O8) | import a subsector from Travellermap onto a hex map, open any world as a full system with its impossible values marked, plan a jump with real jump shadows, hand players a UWP sheet |
 | M6 Living worlds | K10, L0 to L1d, U7 | open any world's biosphere and history |
 | M6b Surfaces | S0 to S7, R1 to R4, V11, N4, N5, W1 to W3, W5, O1, O2 | chart a world's terrain, ask why a range is there, watch continents drift, land on it in several styles |
+| M6d Worlds shaped by life | E0 to E6, E8, UE1 | see what energy a world offers and who lives on it; watch oxygen settle by fire and decay; grow soil on bare rock; see biomes arrange themselves by climate |
 | M7 Galaxy | K7, G1 to G6, U6, V9, C5, F8, N6, N7, O3 to O8, O11, O15 | chart a galaxy, ink a merger, find a home, survey a patch |
 | M6c Ground detail (later) | S9 to S13, W4, W6 | watch a layered canyon cut over millions of years; find a sea arch on approach; walk through alien forest; place landmarks and ruins; chart a country with borders and roads |
 | M8 Whole universe | G7, G8, V7, L2, L2b, S8, T4, X2, X3, X5 | real Milky Way skies; coupled living planets; share on the explorers site |

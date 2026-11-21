@@ -8,6 +8,7 @@
 import { spawn } from "node:child_process";
 import { mkdirSync } from "node:fs";
 import assert from "node:assert/strict";
+import { go, more } from "./nav.mjs";
 import { createRequire } from "node:module";
 
 const { chromium, firefox, webkit } = createRequire(import.meta.url)("playwright");
@@ -27,7 +28,6 @@ try {
   for (const name of engines) {
     const browser = await { chromium, firefox, webkit }[name].launch();
     const errors = [];
-    const screenBtn = (page, n) => page.getByRole("group", { name: "Screen" }).getByRole("button", { name: n, exact: true });
     const gm = await (await browser.newContext({ viewport: { width: 1440, height: 900 } })).newPage();
     gm.on("pageerror", (e) => errors.push(e.message));
     await gm.goto(base);
@@ -36,7 +36,7 @@ try {
     const h0 = await gm.locator("[data-state-hash]").getAttribute("data-state-hash");
 
     // Nothing selected yet: the Body screen offers the worlds that have a stack.
-    await screenBtn(gm, "Body").click();
+    await go(gm, "body");
     await gm.waitForSelector("[data-cutaway]");
     assert.equal(await gm.locator("[data-cutaway]").getAttribute("data-cutaway"), "none");
     await gm.locator("[data-cutaway]").getByRole("button", { name: "Tarn" }).click();
@@ -59,9 +59,9 @@ try {
     await shot(gm, `cutaway-${name}`);
 
     // A body with no stack says so.
-    await screenBtn(gm, "Chart").click();
+    await go(gm, "system");
     await gm.locator('.area-chart .body[aria-label^="Kestrel"]').first().click();
-    await screenBtn(gm, "Body").click();
+    await go(gm, "body");
     await gm.waitForSelector('[data-cutaway="none"]');
     assert.match(await gm.locator("[data-cutaway]").innerText(), /no cutaway yet/);
     assert.equal(await gm.locator("[data-state-hash]").getAttribute("data-state-hash"), h0, "looking inside changes nothing");
@@ -73,7 +73,7 @@ try {
     await phone.waitForSelector("[data-state-hash]:not([data-state-hash=''])", { timeout: 20000 });
     await phone.waitForTimeout(500);
     await phone.locator('.area-chart .body[aria-label^="Tarn"]').first().click();
-    await phone.evaluate(() => [...document.querySelectorAll("[aria-label='Screen'] button")].find((b) => b.textContent.trim() === "Body")?.click());
+    await go(phone, "body");
     await phone.waitForSelector('[data-cutaway="u:kestrel/sys:1/body:3"]');
     assert.ok(await phone.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth + 1), "no sideways scroll at phone width");
     await shot(phone, `cutaway-phone-${name}`);

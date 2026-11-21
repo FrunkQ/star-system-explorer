@@ -13,6 +13,7 @@
 import { spawn } from "node:child_process";
 import { mkdirSync, writeFileSync } from "node:fs";
 import assert from "node:assert/strict";
+import { go, more } from "./nav.mjs";
 import { createRequire } from "node:module";
 
 const { chromium, firefox, webkit, devices } = createRequire(import.meta.url)("playwright");
@@ -54,10 +55,7 @@ async function openEarth(page) {
   await page.goto(base);
   await page.waitForSelector("[data-state-hash]:not([data-state-hash=''])", { timeout: 20000 });
   const hash = await page.locator("[data-state-hash]").first().getAttribute("data-state-hash");
-  const menu = page.getByLabel("Screen menu");
-  const phone = await menu.isVisible().catch(() => false);
-  const go = async (n, v) => (phone ? menu.selectOption(v) : page.getByRole("group", { name: "Screen" }).getByRole("button", { name: n, exact: true }).click());
-  await page.getByRole("button", { name: "Make a system" }).click();
+  await more(page, "Make a system");
   const dlg = page.getByRole("dialog", { name: "Make a system" });
   await dlg.getByRole("tab", { name: "Import a V3 save" }).click();
   await dlg.getByRole("button", { name: "Try a sample save" }).click();
@@ -66,7 +64,7 @@ async function openEarth(page) {
   const earth = page.locator('.area-chart .body[aria-label^="Earth"]').first();
   await earth.waitFor({ timeout: 15000 });
   await earth.click();
-  await go("Body", "body");
+  await go(page, "body");
   await page.waitForSelector("[data-body] [data-tier]:not([data-tier='']):not([data-frames='0'])", { timeout: 30000 });
   return { hash: await page.locator("[data-state-hash]").first().getAttribute("data-state-hash"), before: hash };
 }
@@ -216,18 +214,17 @@ try {
     await drawOn(gm, "auto");
     await useRecipe(gm, "survey-relief");
     if (auto.tier === "gpu-basic") await gm.waitForFunction(() => document.querySelector("[data-body] [data-tier]")?.getAttribute("data-tier") === "gpu-basic", null, { timeout: 10000 });
-    await gm.getByRole("button", { name: "Night chart" }).click();
+    await more(gm, "Night chart");
     await gm.waitForTimeout(500);
     await shot(gm, `render-night-${name}`);
-    await gm.getByRole("button", { name: "Chart room" }).click();
+    await more(gm, "Night chart");
     assert.equal(await gm.locator("[data-state-hash]").first().getAttribute("data-state-hash"), hash, "drawing never changes the state hash");
 
     // R5a: a star on the Body screen, drawn from the kernel's facts and activity, in visible light and X-rays.
     {
-      const screen = gm.getByRole("group", { name: "Screen" });
-      await screen.getByRole("button", { name: "Chart", exact: true }).click();
+      await go(gm, "system");
       await gm.locator('.area-chart .body[aria-label^="Sun"]').first().click();
-      await screen.getByRole("button", { name: "Body", exact: true }).click();
+      await go(gm, "body");
       const disc = gm.locator("[data-star] [data-band]");
       await disc.waitFor({ timeout: 20000 });
       const regime = await gm.locator("[data-star] [data-regime]").innerText();

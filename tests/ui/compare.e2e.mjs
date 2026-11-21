@@ -8,6 +8,7 @@
 import { spawn } from "node:child_process";
 import { mkdirSync } from "node:fs";
 import assert from "node:assert/strict";
+import { go, more } from "./nav.mjs";
 import { createRequire } from "node:module";
 
 const { chromium, firefox, webkit } = createRequire(import.meta.url)("playwright");
@@ -27,7 +28,6 @@ try {
   for (const name of engines) {
     const browser = await { chromium, firefox, webkit }[name].launch();
     const errors = [];
-    const screenBtn = (page, n) => page.getByRole("group", { name: "Screen" }).getByRole("button", { name: n, exact: true });
     const gm = await (await browser.newContext({ viewport: { width: 1440, height: 900 } })).newPage();
     gm.on("pageerror", (e) => errors.push(e.message));
     await gm.goto(base);
@@ -51,7 +51,7 @@ try {
     assert.equal(await gm.locator(".mline").count(), 0);
 
     // Sizes: Kestrel Reach's own bodies with a radius.
-    await screenBtn(gm, "Sizes").click();
+    await go(gm, "compare");
     const cmp = gm.getByRole("region", { name: "Size comparison" });
     await cmp.waitFor();
     const start = Number(await cmp.getAttribute("data-compare"));
@@ -84,13 +84,13 @@ try {
     assert.match(await cmp.locator('tr[data-row="ref:jupiter"]').innerText(), /\d+ × Tarn/);
 
     // The lineup survives a trip to another screen.
-    await screenBtn(gm, "Chart").click();
-    await screenBtn(gm, "Sizes").click();
+    await go(gm, "system");
+    await go(gm, "compare");
     assert.equal(Number(await gm.getByRole("region", { name: "Size comparison" }).getAttribute("data-compare")), start + 1);
 
     // Add the sample Sol, come back to Kestrel Reach, and pull in Sol's Earth from the campaign.
-    await screenBtn(gm, "Chart").click();
-    await gm.getByRole("button", { name: "Make a system" }).click();
+    await go(gm, "system");
+    await more(gm, "Make a system");
     const dlg = gm.getByRole("dialog", { name: "Make a system" });
     await dlg.getByRole("tab", { name: "Import a V3 save" }).click();
     await dlg.getByRole("button", { name: "Try a sample save" }).click();
@@ -99,7 +99,7 @@ try {
     await gm.locator('.area-chart .body[aria-label^="Earth"]').first().waitFor({ timeout: 15000 });
     await gm.getByLabel("System on the chart").selectOption("");
     await gm.locator('.area-chart .body[aria-label^="Tarn"]').first().waitFor({ timeout: 8000 });
-    await screenBtn(gm, "Sizes").click();
+    await go(gm, "compare");
     const cmp2 = gm.getByRole("region", { name: "Size comparison" });
     await cmp2.getByRole("button", { name: "From the campaign" }).click();
     const camp = cmp2.getByRole("group", { name: "Add from the campaign" });
@@ -115,7 +115,7 @@ try {
     phone.on("pageerror", (e) => errors.push(e.message));
     await phone.goto(base);
     await phone.waitForSelector("[data-state-hash]:not([data-state-hash=''])", { timeout: 20000 });
-    await phone.getByLabel("Screen menu").selectOption("compare");
+    await go(phone, "compare");
     await phone.getByRole("region", { name: "Size comparison" }).waitFor();
     const wide = await phone.evaluate(() => document.documentElement.scrollWidth);
     assert.ok(wide <= 390, `no sideways scroll on a phone: ${wide}`);

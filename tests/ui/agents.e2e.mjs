@@ -8,6 +8,7 @@
 import { spawn } from "node:child_process";
 import { mkdirSync } from "node:fs";
 import assert from "node:assert/strict";
+import { go, more } from "./nav.mjs";
 import { createRequire } from "node:module";
 import { mockProvider } from "../../packages/agents/test/mock-provider.mjs";
 
@@ -45,7 +46,7 @@ try {
     const h0 = await gm.locator("[data-state-hash]").getAttribute("data-state-hash");
     await gm.locator(".area-chart [role=button]", { hasText: "Tarn" }).first().click();
 
-    await gm.getByRole("button", { name: "Agents" }).click();
+    await gm.getByRole("button", { name: "Ask", exact: true }).click();
     const dlg = gm.getByRole("dialog", { name: "Agents" });
     await dlg.getByRole("tab", { name: "Tars" }).click();
     assert.ok(await dlg.locator("[data-agent-off=tars]").isVisible(), "no key: Tars says he answers from SSE's own passages");

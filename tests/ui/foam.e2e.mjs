@@ -8,6 +8,7 @@
 import { spawn } from "node:child_process";
 import { mkdirSync } from "node:fs";
 import assert from "node:assert/strict";
+import { go, more } from "./nav.mjs";
 import { createRequire } from "node:module";
 
 const { chromium, firefox, webkit } = createRequire(import.meta.url)("playwright");
@@ -31,7 +32,7 @@ try {
     gm.on("pageerror", (e) => errors.push(e.message));
     await gm.goto(base);
     await gm.waitForSelector("[data-state-hash]:not([data-state-hash=''])", { timeout: 20000 });
-    await gm.getByRole("button", { name: "Explore", exact: true }).click();
+    await go(gm, "explore");
     await gm.locator("[data-section-tab=foam]").click();
     await gm.waitForSelector(".foam[data-web^='200:']", { timeout: 60000 });
     const foam = gm.locator(".foam");
@@ -59,7 +60,7 @@ try {
     await gm.waitForSelector(".foam[data-web^='100:']", { timeout: 60000 });
     await shot(gm, "v9-foam-environment");
 
-    await gm.getByRole("button", { name: "Night chart" }).click();
+    await more(gm, "Night chart");
     await gm.waitForTimeout(400);
     const dark = await corner();
     assert.ok(dark.mean < light.mean, `night chart redraws the ground darker (${dark.mean} < ${light.mean})`);
@@ -71,7 +72,7 @@ try {
     phone.on("pageerror", (e) => errors.push(`phone: ${e.message}`));
     await phone.goto(base);
     await phone.waitForSelector("[data-state-hash]:not([data-state-hash=''])", { timeout: 20000 });
-    await phone.getByLabel("Screen menu").selectOption("explore");
+    await go(phone, "explore");
     await phone.locator("[data-section-tab=foam]").click();
     await phone.waitForSelector(".foam[data-web^='200:']", { timeout: 60000 });
     const over = await phone.evaluate(() => document.documentElement.scrollWidth - window.innerWidth);

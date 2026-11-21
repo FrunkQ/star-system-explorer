@@ -8,7 +8,22 @@
   "symbology": "sse.symbology.diagrammatic",
   "vocab": "physics",
   "items": [
-    { "view": "sse.view.styles", "area": "chart" },
-    { "view": "sse.view.time-ruler", "area": "ruler" }
+    {
+      "view": "sse.view.styles",
+      "area": "chart"
+    },
+    {
+      "view": "sse.view.time-ruler",
+      "area": "ruler"
+    }
+  ],
+  "rail": [
+    {
+      "scale": "workshop",
+      "group": "workshop",
+      "label": "Styles",
+      "order": 6,
+      "hint": "Saved settings for views, checked for this device"
+    }
   ]
 }

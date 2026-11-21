@@ -249,6 +249,32 @@ The pirate can be fooled: it sees only what its sensors reveal, so a ship runnin
 
 Where programs run: on the GM's machine only. A program's document is pack data and so is public; its parameters, current state, target and plans are kept values owned by its actor and are disclosed only to that actor's audience. A seat that owns a program sees its state and can ask the GM's machine for a preview of what it will do; the preview is built from that seat's knowledge only.
 
+### 6.2 Programs and ships over a time jump **[decided 21 Nov, Alex: "measure a few cycles and scale" for decades, exact as an option; from `SSE4-top-level-ui-and-onboarding.md` sections 12.2 and 13]**
+
+A ship on a course needs no simulating: a course is arcs and burns with a closed formula, so where a ship is at any time on its current leg is a look-up. The cost of a jump in time is only in the decisions programs make along the way. So the rule goes by the size of the jump, and the app always says which rule it used.
+
+| Jump | What happens | Stamp on the resulting record entries |
+|---|---|---|
+| Up to the end of every ship's current leg (usually days) | Exact and instant. Positions from the course formula; no decision was due | none |
+| Longer, while the count of program decisions fits the device's budget (days to a few years for a handful of ships) | Exact. Every tick runs in order under 5.4: the patrol turns, the drone unloads, the pirate meets the freighter. Progress in work units, cancellable | none |
+| Too long to run exactly (decades) | **Estimated.** Each program's loop is run exactly for a few cycles to measure its rates (ore per year, encounters per year, chance of loss); the totals are scaled to the gap with keyed dice; each surviving ship is placed at a keyed point in its loop on the arrival date | `estimated`, with the measured rates and the number of cycles in its "why" |
+| Beyond a service life (centuries and more) | The ship and its crew are retired with a note in the record ("lost to time", or a fate from the dice). Only physics carries on | `retired` |
+
+Rules:
+
+1. **One mechanism, not a rule per program.** Measure a few cycles, then scale. A program needs no special code to be jumped over. A program with no repeating loop within the measuring budget (it never returns to a state it has been in) is not estimated: it is run exactly if the budget allows and otherwise retired with the reason "could not be estimated", never guessed.
+2. **What is measured.** For each kept value the program or its triggers write: the net change per cycle and its spread. For each kind of event its loop raises (an engagement, a loss, a note): the rate per cycle. The cycle length. These are the estimate's inputs and are stored on the `estimated` entry, so "why does the depot hold 4,100 tonnes?" answers "37 cycles a year measured over 5 cycles, times 90 years, less two drones lost in years 31 and 64".
+3. **Interactions are inside the measurement.** Programs that meet (pirate, patrol, freighter in one system) are measured together as one group, so the engagement rule of 6.1 shows up as rates of loss and capture, not as something ignored. Groups are formed by system; programs in different systems are measured apart.
+4. **Deterministic.** The measuring cycles are ordinary exact ticks. The scaling dice are keyed draws on the table secret (8A.3) with the stream `jump.<program id>.v1` and the jump's start and end times as the counter, so the same jump gives the same result on every replay.
+5. **Estimates write totals, not histories.** An estimated jump writes one `record.set` per changed kept value and one summary `record.note` per actor ("90 years of patrols: 212 interceptions, 3 ships lost"), each stamped `estimated`. It does not invent 212 dated events. Losses and retirements that the dice place do get a dated entry each, because a GM will want to find the wreck.
+6. **Service life.** A template (8) may state `service_life` and what follows it (`retire`, or `replace` with a successor from the same template for fleets an actor would keep up). An actor with no stated service life is never retired by time alone. Retirement is an effect through the gate (5.2) with approval `auto`, stamped `retired`, and it never removes history: the ship's record stays readable.
+7. **Exact is always on offer.** Before a long jump the dialog says what it will do and what it will cost: "90 years: 3 ships estimated, 2 retired, about 4 seconds". "Run it exactly" is offered whenever the device's tier can afford it, with its cost shown. The choice is recorded on the jump.
+8. **Only moving the campaign's now resolves programs.** Dragging the ruler to look around never runs a program: ships are drawn on their current course, or hidden past its end. A look-ahead branch (H6.3) does run the programs of the system in view, under this same table, and is thrown away unless accepted as "make this the campaign's now". "Make this system this old, today" moves a birth date, not the clock, so it runs no programs at all.
+9. **Player ships are never estimated or retired silently.** Anything owned by a player seat's audience, or inside an `ask_if` scope, stops the jump dialog with the list before the jump is applied, and the GM decides each: run exactly, estimate, hand-set, or leave as it is.
+10. **Secrecy is unchanged.** Jumps run on the GM's machine only; seats receive the resulting disclosures under 8A, including the stamp, so a player sees that their depot's total is an estimate.
+
+`estimated` and `retired` are labels on record entries, shown as honesty stamps on the GM view like `authored` and `impossible` (they join that family; they are not new evidence kinds for physics). The estimate is a documented fudge with a stated reason and goes in the fudge register.
+
 Agents and programs: Orac *writes* programs and boxes as change requests. No LLM runs inside one. A program is fixed logic and enters the state hash; an LLM never does (H13).
 
 ## 7. Turns and held orders (optional, off by default)
@@ -265,7 +291,7 @@ Nothing in the default session changes. A campaign with no turn declared never s
 
 ## 8. Templates
 
-H7A part 7 has stock ships and bases as templates for Traveller. Generalised: a pack declares **templates** (ship, unit, structure, module, station, faction) as a set of kept kinds with defaults, the tags it carries and the programs it may run. `create` makes an authored object from one, in the authored namespace. Traveller's constructs become the first use.
+H7A part 7 has stock ships and bases as templates for Traveller. Generalised: a pack declares **templates** (ship, unit, structure, module, station, faction) as a set of kept kinds with defaults, the tags it carries, the programs it may run, and optionally a `service_life` with what follows it (6.2). `create` makes an authored object from one, in the authored namespace. Traveller's constructs become the first use.
 
 ## 8A. Secrecy: what each device receives **[added 19 Nov after Alex: "we will have to be careful we don't transmit too much to clients"]**
 
@@ -353,18 +379,20 @@ One package each. `needs` uses build-plan ids.
 | J4 | Triggers, effects, the gate and approval policies | J1, J2, V5 | the sensor ladder fixture moves a body up at the right range and time; an `ask` effect changes nothing until approved; triggers and effects run on the GM's machine only and a player device receives results, never inputs it may not see; a run replays bit-identically; pass limit reported with its chain |
 | J5 | Intent registry in the kernel, pack-declared intent kinds, program-driven seats | J4, V10 | the five existing intents behave as before through the registry; a pack adds an intent with a validity condition; a program seat cannot send outside its `may_send` or scope |
 | J6 | Programs: state machines, sensing through the owner's audience, ticks, look-ahead | J3, J5, T3 | the mining drone fixture surveys, travels, mines and returns; it never acts on a fact its sensors have not revealed (checked by state inspection); a look-ahead branch equals the committed run; the pirate, patrol and engagement fixture of 6.1 runs for a simulated year with background fights resolved, a player-ship fight stopped for approval, and the program limit enforced |
-| J7 | Templates and `create` / `retire` | J1 | a ship made from a template carries its kept values and may run only its listed programs; removing the pack leaves the object valid |
+| J7 | Templates and `create` / `retire`, including `service_life` | J1 | a ship made from a template carries its kept values and may run only its listed programs; removing the pack leaves the object valid |
+| J6b | Programs over a time jump (6.2): exact by leg, exact by budget, estimated by measured cycles, retired past service life; the jump dialog's forecast; stamps | J6, J7, T2 | a jump inside every leg runs no program tick; a two-year jump of the 6.1 fixture equals the same span run tick by tick; a 90-year jump is stamped `estimated`, carries its measured rates, and its totals fall within the stated spread of an exact run of the same fixture; the same jump replays bit-identically; a ship past its service life is `retired` with a dated note and its record still reads; a program with no repeating loop is not estimated; a player-owned ship stops the dialog; dragging the ruler runs nothing |
 | J8 | Turns and held orders | J4, V10 | three-seat fixture at `competitive` level: an ordinary seat link is refused; held orders never leave the GM's machine and are absent from other seats' devices before and after resolution; no seat can obtain a turn's dice before it resolves; the resolved state is identical for every arrival order; each seat's turn report holds only what it may see |
 | J9 | Interface: record on cards and the time ruler, note entry for GM and players, relations lens, condition and box editing in the flow editor, program editor (state view), approval queue for effects | U2, U3, U4, J1 to J6 | screenshots at desktop and phone widths in both GM modes; a note added by a player appears for the GM and that seat only; a program edited by Orac shows as a diff before accept |
 
 Orac's scope (A2) widens to boxes, conditions, programs, triggers, templates and kept kinds, all as validated change requests.
 
-**Order.** J1, J2 and J3 need only parts that are already built and can start now on the kernel track. J4 waits for intents and approval (built in the UI, see Care 3). J6 waits for NAV. A 4X game pack is not a stage: it becomes possible after J8 and J9 as someone's pack, with the original author's agreement.
+**Order.** J1, J2 and J3 need only parts that are already built and can start now on the kernel track. J4 waits for intents and approval (built in the UI, see Care 3). J6 waits for NAV. J6b waits for J6 and for T2's change to one campaign clock (`SSE4-top-level-ui-and-onboarding.md` 12.2). A 4X game pack is not a stage: it becomes possible after J8 and J9 as someone's pack, with the original author's agreement.
 
-## 11. Rulings **[all five accepted by Alex, 19 Nov]**
+## 11. Rulings **[all five accepted by Alex, 19 Nov; a sixth on 21 Nov]**
 
 1. **May players write notes themselves?** Yes: auto-approved for their own party journal, GM approval for the shared record.
 2. **May a program act without the GM approving each move?** Yes, inside a scope the GM sets when attaching it (its own ship), and ask for anything that creates, destroys or leaves the scope.
 3. **May the record change physics?** Only through the explicit `set_pin` effect, always asking the GM by default and always tagged. Never implicitly.
 4. **Should classification be rebuilt as blocks?** No. It is an engine block (3.5): usable as a block anywhere, edited in the Class atlas, not in the block editor. Simple rules and guards still share the condition language.
 5. **When?** J1 to J3 now on the kernel track, because the Traveller pack and autopilot both lean on them; the rest follows V5 and T3.
+6. **Autopilots over long jumps in time?** Exact while the device can afford it, then "measure a few cycles and scale", stamped estimated, with exact always on offer; ships past a stated service life are retired with a note (6.2). Accepted 21 Nov.

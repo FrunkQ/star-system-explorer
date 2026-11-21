@@ -8,8 +8,26 @@
   "symbology": "sse.symbology.diagrammatic",
   "vocab": "physics",
   "items": [
-    { "view": "sse.view.biosphere", "area": "chart" },
-    { "view": "sse.view.body-card", "area": "card" },
-    { "view": "sse.view.time-ruler", "area": "ruler" }
+    {
+      "view": "sse.view.biosphere",
+      "area": "chart"
+    },
+    {
+      "view": "sse.view.body-card",
+      "area": "card"
+    },
+    {
+      "view": "sse.view.time-ruler",
+      "area": "ruler"
+    }
+  ],
+  "rail": [
+    {
+      "scale": "world",
+      "group": "world",
+      "label": "Life",
+      "order": 1,
+      "hint": "Its living world through time: food web, air and signatures"
+    }
   ]
 }

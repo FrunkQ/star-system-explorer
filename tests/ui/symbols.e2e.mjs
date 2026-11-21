@@ -9,6 +9,7 @@
 import { spawn } from "node:child_process";
 import { mkdirSync } from "node:fs";
 import assert from "node:assert/strict";
+import { go, more } from "./nav.mjs";
 import { createRequire } from "node:module";
 import { ALL_THEMES } from "../../packages/skins/player/src/index.ts";
 
@@ -34,7 +35,6 @@ try {
     await page.goto(base);
     await page.waitForSelector("[data-state-hash]:not([data-state-hash=''])");
     const hash = await page.getAttribute("[data-state-hash]", "data-state-hash");
-    const screenBtn = (n) => page.getByRole("group", { name: "Screen" }).getByRole("button", { name: n });
     const chartMark = (body) => page.locator(`.area-chart [role=button][aria-label^='${body}'] [data-mark]`).getAttribute("data-mark");
 
     // Diagrammatic on the chart, with a key generated from the marks.
@@ -49,7 +49,7 @@ try {
     await shot(page, "chart-key");
 
     // The Symbols screen: colour-coded, then a colour of the GM's own.
-    await screenBtn("Symbols").click();
+    await go(page, "symbols");
     const sym = page.getByRole("region", { name: "Symbols" });
     await sym.getByRole("radio", { name: /^Colour-coded/ }).click();
     await sym.getByText(/SSE 3's own colours/).first().waitFor();
@@ -70,12 +70,12 @@ try {
     await sym.getByLabel("Take shading from").selectOption({ label: "Diagrammatic" });
     await shot(page, "symbols-desktop");
     assert.equal(await page.getAttribute("[data-state-hash]", "data-state-hash"), hash, "symbols never change the state hash");
-    await screenBtn("Chart").click();
+    await go(page, "system");
     assert.equal(await chartMark("Tarn"), "disc band #123456", "the chart draws the GM's colour over the diagrammatic shading");
     assert.match(await chartMark("Ember"), /^disc solid #cc6600$/i, "Ember is a hot rock: V3's terrestrial colour");
 
     // SSE 3's colours: a pasted palette override, then a save's tag categories.
-    await screenBtn("Symbols").click();
+    await go(page, "symbols");
     await sym.getByText("Colours from SSE 3").click();
     await sym.getByLabel("SSE 3 palette overrides").fill(JSON.stringify({ "--body-gas-giant": "#224466", "--bg": "#000000" }));
     await sym.getByRole("button", { name: "Apply palette" }).click();
@@ -86,11 +86,11 @@ try {
     assert.match(await rep.innerText(), /1 tag category[\s\S]*1 authored object colour[\s\S]*1 derived true colour/);
     await shot(page, "symbols-v3-import");
     assert.equal(await page.getAttribute("[data-state-hash]", "data-state-hash"), hash, "importing colours never changes the state hash");
-    await screenBtn("Chart").click();
+    await go(page, "system");
     assert.match(await chartMark("Vault"), /#224466/i, "the chart draws the imported gas-giant colour");
 
     // Back to the shipped symbols.
-    await screenBtn("Symbols").click();
+    await go(page, "symbols");
     await sym.getByRole("button", { name: "Back to the shipped symbols" }).click();
     assert.equal(await sym.getByRole("radio", { name: /^Diagrammatic/ }).getAttribute("aria-checked"), "true");
 
@@ -99,7 +99,7 @@ try {
     phone.on("pageerror", (e) => errors.push(e.message));
     await phone.goto(base);
     await phone.waitForSelector("[data-state-hash]:not([data-state-hash=''])");
-    await phone.evaluate(() => document.querySelector("[aria-label='Screen'] button:last-child")?.click());
+    await go(phone, "symbols");
     const pw = await phone.evaluate(() => document.scrollingElement.scrollWidth);
     assert.ok(pw <= 390, `phone scrolls sideways (${pw}px)`);
 

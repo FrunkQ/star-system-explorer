@@ -8,6 +8,7 @@
 import { spawn } from "node:child_process";
 import { mkdirSync, readFileSync } from "node:fs";
 import assert from "node:assert/strict";
+import { go, more } from "./nav.mjs";
 import { createRequire } from "node:module";
 import { Session } from "../../packages/ui-contract/src/session.ts";
 import { gmSeat } from "../../packages/ui-contract/src/seat.ts";
@@ -48,7 +49,7 @@ try {
     await gm.waitForSelector("[data-state-hash]:not([data-state-hash=''])", { timeout: 20000 });
     const hash = () => gm.locator("[data-state-hash]").getAttribute("data-state-hash");
     const h0 = await hash();
-    await gm.getByRole("button", { name: "Make a system" }).click();
+    await more(gm, "Make a system");
     const dlg = gm.getByRole("dialog", { name: "Make a system" });
 
     // Not a save: refused in words.

@@ -10,6 +10,7 @@
 import { spawn } from "node:child_process";
 import { mkdirSync } from "node:fs";
 import assert from "node:assert/strict";
+import { go, more } from "./nav.mjs";
 import { createRequire } from "node:module";
 import { Session } from "../../packages/ui-contract/src/session.ts";
 import { decide, gmSeat, tableSeat } from "../../packages/ui-contract/src/seat.ts";
@@ -266,8 +267,7 @@ try {
           await p.screenshot({ path: `${screens}/${theme}-${form}.png`, fullPage: form === "phone" });
         }
         // The physics screen with a draft change, at both widths.
-        if (form === "phone") await p.getByLabel("Screen menu").selectOption("physics");
-        else await p.getByRole("group", { name: "Screen" }).getByRole("button", { name: "Physics" }).click();
+        await go(p, "physics");
         const ed = p.locator("section[aria-label='Flow editor']");
         await ed.waitFor();
         await ed.getByRole("button", { name: /^Node teq/ }).click();

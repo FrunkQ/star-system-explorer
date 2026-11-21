@@ -9,6 +9,7 @@
 import { spawn } from "node:child_process";
 import { mkdirSync } from "node:fs";
 import assert from "node:assert/strict";
+import { go, more } from "./nav.mjs";
 import { createRequire } from "node:module";
 
 const { chromium, firefox, webkit } = createRequire(import.meta.url)("playwright");
@@ -30,8 +31,7 @@ try {
     await page.goto(base);
     await page.waitForSelector("[data-state-hash]:not([data-state-hash=''])");
     const hash = await page.getAttribute("[data-state-hash]", "data-state-hash");
-    const screenBtn = (n) => page.getByRole("group", { name: "Screen" }).getByRole("button", { name: n, exact: true });
-    await screenBtn("Styles").click();
+    await go(page, "styles");
     const sty = page.getByRole("region", { name: "Styles" });
 
     // Every view exposes its schema.
@@ -85,7 +85,7 @@ try {
     await sty.getByRole("radio", { name: /^Across the table \(mine\)/ }).waitFor();
 
     // The composer names a style for an item; its promoted settings render from the schema.
-    await screenBtn("Screens").click();
+    await go(page, "screens");
     const comp = page.locator("[role=region][aria-label='Screens composer']");
     await comp.locator("[data-view='sse.view.card'] article").waitFor();
     const chartItem = comp.locator(".items li").first();
@@ -105,7 +105,7 @@ try {
     phone.on("pageerror", (e) => errors.push(e.message));
     await phone.goto(base);
     await phone.waitForSelector("[data-state-hash]:not([data-state-hash=''])");
-    await phone.evaluate(() => [...document.querySelectorAll("[aria-label='Screen'] button")].find((b) => b.textContent.trim() === "Styles")?.click());
+    await go(phone, "styles");
     const pw = await phone.evaluate(() => document.scrollingElement.scrollWidth);
     assert.ok(pw <= 390, `phone scrolls sideways (${pw}px)`);
     assert.deepEqual(errors, []);

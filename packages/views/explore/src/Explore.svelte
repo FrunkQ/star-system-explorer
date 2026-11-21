@@ -8,7 +8,7 @@
   import type { SystemScene, ViewContext, ViewHandle, ViewModule } from "../../../ui-contract/src/index.ts";
 
   let { ctx, scene, sections }: { ctx: ViewContext; scene: SystemScene; sections: readonly { id: string; label: string; view: ViewModule }[] } = $props();
-  const KEY = "sse.explore.section";
+  const KEY = untrack(() => `sse.explore.section${sections.length < 6 ? `.${sections.map((s) => s.id).join("+")}` : ""}`);
   const stored = (() => {
     try {
       return localStorage.getItem(KEY);
