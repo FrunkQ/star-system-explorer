@@ -230,3 +230,97 @@ fn the_economy_names_are_reserved_and_declarations_must_agree() {
         "{r}"
     );
 }
+
+#[test]
+fn a_physics_flow_that_reads_a_tag_is_refused() {
+    let mut k = crate::Kernel::new();
+    let base = pack("tests/fixtures/packs/base-physics.json");
+    let toy = pack("tests/fixtures/packs/base-toy.json");
+    assert_eq!(
+        load(&mut k, vec![base.clone(), toy.clone()])["type"],
+        "stack_loaded"
+    );
+    for atom in ["world.has_tag", "world.read_kept"] {
+        let mut bad = toy.clone();
+        bad["provides"]["flows"][0]["nodes"]
+            .as_array_mut()
+            .unwrap()
+            .push(serde_json::json!({"id": "cursed", "atom": atom, "config": {"tag": "cursed", "kind": "curse"}}));
+        let r = load(&mut k, vec![base.clone(), bad]);
+        assert_eq!(r["type"], "stack_rejected", "{r}");
+        let text = r["issues"].to_string();
+        assert!(
+            text.contains(&format!(
+                "sse.base-toy: flow toy.star-and-planet: node cursed reads {atom}"
+            )),
+            "{text}"
+        );
+    }
+}
+
+#[test]
+fn fifty_tags_on_sol_change_no_resolved_fact() {
+    let mut k = crate::Kernel::new();
+    assert_eq!(
+        load(&mut k, vec![pack("packs/base-time/pack.json")])["type"],
+        "stack_loaded"
+    );
+    send(
+        &mut k,
+        serde_json::json!({"op": "open_universe", "id": "home", "seed": "home"}),
+    );
+    let save = include_str!("../../../tests/fixtures/v3/synthetic-sol.json");
+    let r = send(
+        &mut k,
+        serde_json::json!({"op": "adopt", "import_v3": save}),
+    );
+    assert_eq!(r["type"], "adopted", "{r}");
+    let sys = r["systems"][0].as_str().unwrap().to_string();
+    let read = |k: &mut crate::Kernel| {
+        let mut v = send(
+            k,
+            serde_json::json!({"op": "resolved_system", "system": sys}),
+        );
+        // The labels themselves are the only thing allowed to differ.
+        for f in v["facts"].as_object_mut().unwrap().values_mut() {
+            f.as_object_mut()
+                .unwrap()
+                .retain(|k, _| !k.starts_with("tag."));
+        }
+        for f in v["evidence"]
+            .as_object_mut()
+            .into_iter()
+            .flat_map(|m| m.values_mut())
+        {
+            f.as_object_mut()
+                .unwrap()
+                .retain(|k, _| !k.starts_with("tag."));
+        }
+        v.as_object_mut().unwrap().remove("state_hash");
+        v
+    };
+    let before = read(&mut k);
+    let bodies: Vec<String> = before["facts"]
+        .as_object()
+        .unwrap()
+        .keys()
+        .cloned()
+        .collect();
+    assert!(!bodies.is_empty());
+    let tag = |k: &mut crate::Kernel, i: usize, on: bool| {
+        let r = send(
+            k,
+            serde_json::json!({"op": "set_authored", "edit": {
+            "address": bodies[i % bodies.len()], "field": format!("tag.label-{i}"), "value": on, "occurred_at_s": 0}}),
+        );
+        assert_eq!(r["type"], "authored", "{r}");
+    };
+    for i in 0..50 {
+        tag(&mut k, i, true);
+    }
+    assert_eq!(read(&mut k), before, "50 tags on");
+    for i in 0..50 {
+        tag(&mut k, i, false);
+    }
+    assert_eq!(read(&mut k), before, "50 tags off");
+}
