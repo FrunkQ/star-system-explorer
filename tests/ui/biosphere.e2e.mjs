@@ -9,6 +9,7 @@
 import { spawn } from "node:child_process";
 import { mkdirSync } from "node:fs";
 import assert from "node:assert/strict";
+import { go, more } from "./nav.mjs";
 import { createRequire } from "node:module";
 
 const { chromium, firefox, webkit } = createRequire(import.meta.url)("playwright");
@@ -32,7 +33,7 @@ try {
     gm.on("pageerror", (e) => errors.push(e.message));
     await gm.goto(base);
     await gm.waitForSelector("[data-state-hash]:not([data-state-hash=''])", { timeout: 20000 });
-    await gm.getByRole("button", { name: "Life", exact: true }).click();
+    await go(gm, "life");
     await gm.waitForSelector("[data-biosphere='fixture:earth']", { timeout: 15000 });
     const bio = gm.locator(".bio");
     assert.match(await bio.locator("h2").innerText(), /The living world of Earth today/);
@@ -69,15 +70,15 @@ try {
     assert.match(await bio.locator("[data-tier=surveyed] + dd").innerText(), /no biosphere found/);
 
     // A world on the chart: the kernel has no biosphere for it yet, and says so.
-    await gm.getByRole("button", { name: "Chart", exact: true }).click();
+    await go(gm, "system");
     await gm.locator('.area-chart .body[aria-label^="Tarn"]').first().click();
-    await gm.getByRole("button", { name: "Life", exact: true }).click();
+    await go(gm, "life");
     await gm.locator("[data-body-note]").waitFor({ timeout: 15000 });
     assert.match(await gm.locator("[data-body-note]").innerText(), /no biosphere for Tarn yet/);
     await gm.waitForSelector("[data-biosphere^='fixture:']");
 
     // Night chart.
-    await gm.getByRole("button", { name: "Night chart" }).click();
+    await more(gm, "Night chart");
     await gm.waitForTimeout(200);
     await shot(gm, "u7-night");
 
@@ -86,7 +87,7 @@ try {
     phone.on("pageerror", (e) => errors.push(`phone: ${e.message}`));
     await phone.goto(base);
     await phone.waitForSelector("[data-state-hash]:not([data-state-hash=''])", { timeout: 20000 });
-    await phone.getByLabel("Screen menu").selectOption("life");
+    await go(phone, "life");
     await phone.waitForSelector("[data-biosphere='fixture:earth']", { timeout: 15000 });
     const over = await phone.evaluate(() => document.documentElement.scrollWidth - window.innerWidth);
     assert.ok(over <= 1, `no sideways scroll on a phone (${over}px over)`);

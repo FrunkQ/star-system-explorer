@@ -24,6 +24,9 @@ test("a grown system adopts as one event and reads back as the same worlds", asy
     const ran = await s.runFormation(req);
     assert.ok(ran.ok);
     const preview = sceneFromFormation(ran.result, req.seed);
+    // Its leftovers round the star are drawn as belts (a tester found grown and imported systems had none).
+    const belts = preview.subjects.filter((b) => b.kind === "belt");
+    assert.ok(belts.length >= 1 && belts.every((b) => b.band_au && b.band_au[1] > b.band_au[0] && !b.orbit), JSON.stringify(belts));
     const a = await s.adopt({ formation: req });
     assert.ok(a.ok, JSON.stringify(a));
     assert.equal(a.result.events.length, 1);

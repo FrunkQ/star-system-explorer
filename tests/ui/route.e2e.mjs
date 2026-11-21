@@ -9,6 +9,7 @@
 import { spawn } from "node:child_process";
 import { mkdirSync } from "node:fs";
 import assert from "node:assert/strict";
+import { go, more } from "./nav.mjs";
 import { createRequire } from "node:module";
 
 const { chromium, firefox, webkit } = createRequire(import.meta.url)("playwright");
@@ -32,8 +33,7 @@ try {
     gm.on("pageerror", (e) => errors.push(e.message));
     await gm.goto(base);
     await gm.waitForSelector("[data-state-hash]:not([data-state-hash=''])", { timeout: 20000 });
-    await gm.getByRole("button", { name: "Explore", exact: true }).click();
-    await gm.locator("[data-section-tab=route]").click();
+    await go(gm, "route");
     const route = gm.locator(".route");
     await gm.waitForSelector(".route [data-course]", { timeout: 20000 });
     assert.equal(await route.locator("[data-from]").inputValue(), "u:kestrel/sys:1/body:3", "from Tarn, the world in the temperate zone");
@@ -67,23 +67,22 @@ try {
     await route.locator("[data-want=balanced]").click();
 
     // Night chart.
-    await gm.getByRole("button", { name: "Night chart" }).click();
+    await more(gm, "Night chart");
     await gm.waitForTimeout(300);
     await shot(gm, "v8-route-night");
-    await gm.getByRole("button", { name: "Chart room" }).click();
+    await more(gm, "Night chart");
 
     // Phone, both modes.
     const phone = await (await browser.newContext({ viewport: { width: 390, height: 844 }, deviceScaleFactor: 2 })).newPage();
     phone.on("pageerror", (e) => errors.push(`phone: ${e.message}`));
     await phone.goto(base);
     await phone.waitForSelector("[data-state-hash]:not([data-state-hash=''])", { timeout: 20000 });
-    await phone.getByLabel("Screen menu").selectOption("explore");
-    await phone.locator("[data-section-tab=route]").click();
+    await go(phone, "route");
     await phone.waitForSelector(".route [data-course]", { timeout: 20000 });
     const over = await phone.evaluate(() => document.documentElement.scrollWidth - window.innerWidth);
     assert.ok(over <= 1, `no sideways scroll on a phone (${over}px over)`);
     await shot(phone, "v8-route-phone", true);
-    await phone.getByRole("button", { name: "Night chart" }).click().catch(() => {});
+    await more(phone, "Night chart").catch(() => {});
     await phone.waitForTimeout(300);
     await shot(phone, "v8-route-phone-night", true);
 

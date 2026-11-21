@@ -8,8 +8,33 @@
   "symbology": "sse.symbology.diagrammatic",
   "vocab": "physics",
   "items": [
-    { "view": "sse.view.compare", "area": "chart" },
-    { "view": "sse.view.body-card", "area": "card" },
-    { "view": "sse.view.time-ruler", "area": "ruler" }
+    {
+      "view": "sse.view.compare",
+      "area": "chart"
+    },
+    {
+      "view": "sse.view.body-card",
+      "area": "card"
+    },
+    {
+      "view": "sse.view.time-ruler",
+      "area": "ruler"
+    }
+  ],
+  "rail": [
+    {
+      "scale": "system",
+      "group": "look",
+      "label": "Sizes",
+      "order": 2,
+      "hint": "Worlds and stars side by side, with stock references"
+    },
+    {
+      "scale": "world",
+      "group": "look",
+      "label": "Sizes",
+      "order": 3,
+      "hint": "This world beside others and stock references"
+    }
   ]
 }

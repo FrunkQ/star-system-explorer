@@ -10,6 +10,7 @@
 import { spawn } from "node:child_process";
 import { mkdirSync } from "node:fs";
 import assert from "node:assert/strict";
+import { go, more } from "./nav.mjs";
 import { createRequire } from "node:module";
 import { mockProvider } from "../../packages/agents/test/mock-provider.mjs";
 
@@ -53,7 +54,7 @@ try {
     await gm.waitForSelector("[data-state-hash]:not([data-state-hash=''])", { timeout: 20000 });
     const h0 = await gm.locator("[data-state-hash]").getAttribute("data-state-hash");
 
-    await gm.getByRole("button", { name: "Agents" }).click();
+    await gm.getByRole("button", { name: "Ask", exact: true }).click();
     const dlg = gm.getByRole("dialog", { name: "Agents" });
     await dlg.getByRole("tab", { name: "Orac" }).click();
     assert.ok(await dlg.locator("[data-agent-off=orac]").isVisible(), "no model: Orac says so");
@@ -97,11 +98,11 @@ try {
     await shot(gm, "a2-physics");
 
     // Part 2: a data view. Player data's own check refuses a GM-only tier; the fix is applied only on Accept.
-    await gm.getByRole("group", { name: "Screen" }).getByRole("button", { name: "Player data" }).click();
+    await go(gm, "data");
     const dv = gm.locator("[role=region][aria-label='Player data']");
     await dv.waitFor();
     assert.ok(!(await dv.innerText()).includes("Orbits only"));
-    await gm.getByRole("button", { name: "Agents" }).click();
+    await gm.getByRole("button", { name: "Ask", exact: true }).click();
     await dlg.getByRole("tab", { name: "Orac" }).click();
     await dlg.getByLabel("Ask Orac").fill("A data view for a ship with only long-range sensors.");
     await dlg.getByRole("button", { name: "Draft" }).click();

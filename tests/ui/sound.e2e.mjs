@@ -69,12 +69,12 @@ try {
     await gm.goto(base);
     await gm.waitForSelector("[data-state-hash]:not([data-state-hash=''])", { timeout: 20000 });
     const hash = () => gm.locator("[data-state-hash]").getAttribute("data-state-hash");
-    const control = gm.locator(".status .sound");
+    const control = gm.locator(".ruler-side .sound");
     await gm.waitForTimeout(1500);
     assert.equal(await control.getAttribute("data-sound"), "off", "off by default");
     assert.equal(await gm.evaluate(() => window.__audio), 0, "no audio made before the user turns sound on");
     // The derived scene settles after the kernel answers; wait for the fingerprint to match Node's.
-    await gm.waitForFunction((h) => document.querySelector(".status .sound")?.getAttribute("data-score-hash") === h, expected, { timeout: 10000 }).catch(() => {});
+    await gm.waitForFunction((h) => document.querySelector(".ruler-side .sound")?.getAttribute("data-score-hash") === h, expected, { timeout: 10000 }).catch(() => {});
     assert.equal(await control.getAttribute("data-score-hash"), expected, "the browser's score equals Node's for the same scene");
     assert.equal(await control.getAttribute("data-sources"), "5");
     const h0 = await hash();
@@ -85,7 +85,7 @@ try {
     await panel.getByLabel("Sound on").check();
     assert.equal(await gm.evaluate(() => window.__audio), 1);
     assert.equal(await control.getAttribute("data-sound"), "on");
-    await gm.waitForSelector(".status .sound .caption", { timeout: 8000 });
+    await gm.waitForSelector(".ruler-side .sound .caption", { timeout: 8000 });
     await panel.getByLabel("music level").fill("0.6");
     await panel.getByLabel("True ratios to settled").fill("1");
     assert.equal(await control.getAttribute("data-score-hash"), await nodeScore(1), "the settled dial: same score as Node");

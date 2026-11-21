@@ -1,14 +1,37 @@
 {
   "schema": "sse.screen/1",
   "id": "sse.workspace.gm.explore",
-  "label": "Explore",
+  "label": "Out to the galaxy",
   "audience": "gm",
   "layout": "chart-room",
   "theme": "chart-room",
   "symbology": "sse.symbology.diagrammatic",
   "vocab": "physics",
   "items": [
-    { "view": "sse.view.explore", "area": "chart" },
-    { "view": "sse.view.time-ruler", "area": "ruler" }
+    {
+      "view": "sse.view.explore",
+      "area": "chart",
+      "params": {
+        "section": "galaxy",
+        "sections": [
+          "galaxy",
+          "cluster",
+          "foam"
+        ]
+      }
+    },
+    {
+      "view": "sse.view.time-ruler",
+      "area": "ruler"
+    }
+  ],
+  "rail": [
+    {
+      "scale": "system",
+      "group": "look",
+      "label": "Out to the galaxy",
+      "order": 4,
+      "hint": "The galaxy around this system, the galaxies nearby and the cosmic web"
+    }
   ]
 }

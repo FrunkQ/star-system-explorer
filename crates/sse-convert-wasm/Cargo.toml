@@ -1,0 +1,19 @@
+[package]
+name = "sse-convert-wasm"
+description = "SSE4's V3 save importer as a small browser module for the converter (convert.starsystemx.com)"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+authors.workspace = true
+
+[lib]
+crate-type = ["cdylib", "rlib"]
+
+[dependencies]
+# The importer without F9's reconstruct, so formation stays out of the module.
+sse-import-v3 = { workspace = true, default-features = false }
+serde_json.workspace = true
+wasm-bindgen = "=0.2.130"
+
+[dev-dependencies]
+sse-kernel.workspace = true

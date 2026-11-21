@@ -9,6 +9,7 @@
 import { spawn } from "node:child_process";
 import { mkdirSync } from "node:fs";
 import assert from "node:assert/strict";
+import { go, more } from "./nav.mjs";
 import { createRequire } from "node:module";
 import { mockProvider } from "../../packages/agents/test/mock-provider.mjs";
 
@@ -39,7 +40,7 @@ try {
     await gm.goto(base);
     await gm.waitForSelector("[data-state-hash]:not([data-state-hash=''])", { timeout: 20000 });
     const h0 = await gm.locator("[data-state-hash]").getAttribute("data-state-hash");
-    await gm.getByRole("button", { name: "Agents" }).click();
+    await gm.getByRole("button", { name: "Ask", exact: true }).click();
     const dlg = gm.getByRole("dialog", { name: "Agents" });
     await dlg.getByRole("tab", { name: "Link models" }).click();
     await dlg.getByLabel("Provider kind").selectOption("other");

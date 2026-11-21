@@ -8,6 +8,7 @@
 import { spawn } from "node:child_process";
 import { mkdirSync } from "node:fs";
 import assert from "node:assert/strict";
+import { go, more } from "./nav.mjs";
 import { createRequire } from "node:module";
 
 const { chromium, firefox, webkit } = createRequire(import.meta.url)("playwright");
@@ -31,8 +32,7 @@ try {
     gm.on("pageerror", (e) => errors.push(e.message));
     await gm.goto(base);
     await gm.waitForSelector("[data-state-hash]:not([data-state-hash=''])", { timeout: 20000 });
-    await gm.getByRole("button", { name: "Explore", exact: true }).click();
-    await gm.locator("[data-section-tab=stories]").click();
+    await go(gm, "stories");
     await gm.waitForSelector(".story [data-hit]", { timeout: 30000 });
     const story = gm.locator(".story");
     const ids = () => story.locator("[data-hit]").evaluateAll((hs) => hs.map((h) => h.getAttribute("data-hit")));
@@ -57,7 +57,7 @@ try {
     await story.locator("[data-hit='story.danger-at-home'] button.link").click();
     assert.match(await story.locator("[data-brief-text]").innerText(), /Story hook: Danger where people live, at Tarn/);
 
-    await gm.getByRole("button", { name: "Night chart" }).click();
+    await more(gm, "Night chart");
     await gm.waitForTimeout(300);
     await shot(gm, "u8-stories-night");
 
@@ -65,8 +65,7 @@ try {
     phone.on("pageerror", (e) => errors.push(`phone: ${e.message}`));
     await phone.goto(base);
     await phone.waitForSelector("[data-state-hash]:not([data-state-hash=''])", { timeout: 20000 });
-    await phone.getByLabel("Screen menu").selectOption("explore");
-    await phone.locator("[data-section-tab=stories]").click();
+    await go(phone, "stories");
     await phone.waitForSelector(".story [data-hit]", { timeout: 30000 });
     const over = await phone.evaluate(() => document.documentElement.scrollWidth - window.innerWidth);
     assert.ok(over <= 1, `no sideways scroll on a phone (${over}px over)`);

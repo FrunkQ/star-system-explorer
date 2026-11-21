@@ -8,7 +8,22 @@
   "symbology": "sse.symbology.diagrammatic",
   "vocab": "physics",
   "items": [
-    { "view": "sse.view.symbols", "area": "chart" },
-    { "view": "sse.view.time-ruler", "area": "ruler" }
+    {
+      "view": "sse.view.symbols",
+      "area": "chart"
+    },
+    {
+      "view": "sse.view.time-ruler",
+      "area": "ruler"
+    }
+  ],
+  "rail": [
+    {
+      "scale": "workshop",
+      "group": "workshop",
+      "label": "Symbols",
+      "order": 5,
+      "hint": "How marks are drawn: shapes, colours, patterns"
+    }
   ]
 }

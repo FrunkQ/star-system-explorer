@@ -29,10 +29,15 @@ export const explore: ViewModule = {
   version: "0.1.0",
   tiers: ["text", "canvas"],
   inputs: [{ event_kinds: ["authored.set", "adopt.v3", "adopt.formation", "time.aged"] }],
-  params: [{ name: "section", type: "enum", default: "route", options: EXPLORE_SECTIONS.map((s) => s.id), meaning: "The section the screen opens on.", promoted: true, group: "behaviour" }],
+  params: [
+    { name: "section", type: "enum", default: "route", options: EXPLORE_SECTIONS.map((s) => s.id), meaning: "The section the screen opens on.", promoted: true, group: "behaviour" },
+    { name: "sections", type: "list", default: [], meaning: "The sections this screen offers, by id; empty offers them all.", group: "content" },
+  ],
   intents: [],
   mount(el, ctx, scene) {
-    const props = $state({ ctx, scene, sections: EXPLORE_SECTIONS });
+    const only = Array.isArray(ctx.params.sections) ? ctx.params.sections.map(String) : [];
+    const sections = only.length ? EXPLORE_SECTIONS.filter((s) => only.includes(s.id)) : EXPLORE_SECTIONS;
+    const props = $state({ ctx, scene, sections });
     const c = mount(Explore, { target: el, props });
     return {
       update(s) {

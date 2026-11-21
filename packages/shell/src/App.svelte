@@ -4,6 +4,8 @@
   kernel only through the session, the same client API a player app uses.
 -->
 <script lang="ts">
+  import { untrack } from "svelte";
+  import { railOf, scalesOf, type RailScale } from "../../ui-contract/src/index.ts";
   import { applyEdits, applySetup, type AtomInfo, type SifterDoc, enterFacts, observeOf, type AuthoredFacts, checkScreen, deriveScene, gmSeat, redoEdit, subjectOf, systemOrder, undoEdit, type CheckedScreen, type DerivationDoc, type ScreenDoc, type SystemScene, type ViewHandle, type ViewModule, type ViewSession } from "../../ui-contract/src/index.ts";
   import { openBrowserSession } from "../../ui-contract/src/host-browser.ts";
   import { createShare, type Share } from "./share.svelte.ts";
@@ -46,6 +48,10 @@
   import compareDoc from "./documents/compare.gm.json";
   import lifeDoc from "./documents/life.gm.json";
   import stylesScreenDoc from "./documents/styles.gm.json";
+  import routeDoc from "./documents/route.gm.json";
+  import windowDoc from "./documents/window.gm.json";
+  import storiesDoc from "./documents/stories.gm.json";
+  import cutawayDoc from "./documents/cutaway.gm.json";
   import { createStyles } from "./styles.svelte.ts";
   import { PLAYER_STACK } from "../../views/player-stack/src/index.ts";
   import oracDoc from "./documents/orac.requests.json";
@@ -72,20 +78,7 @@
   let scene = $state<SystemScene>(base);
 
   // Each screen document is checked before anything mounts; the GM switches between them.
-  const SCREENS: Record<string, ScreenDoc> = { system: workspaceDoc as unknown as ScreenDoc, physics: physicsDoc as unknown as ScreenDoc, packs: packsDoc as unknown as ScreenDoc, screens: screensDoc as unknown as ScreenDoc, data: dataDoc as unknown as ScreenDoc, symbols: symbolsDoc as unknown as ScreenDoc, body: bodyDoc as unknown as ScreenDoc, compare: compareDoc as unknown as ScreenDoc, life: lifeDoc as unknown as ScreenDoc, styles: stylesScreenDoc as unknown as ScreenDoc, ...Object.fromEntries(MORE_SCREENS.map((m) => [m.value, m.doc])) };
-  const SCREEN_TABS = [
-    { value: "system", label: "Chart", key: "P" },
-    { value: "physics", label: "Physics", key: "P" },
-    { value: "body", label: "Body" },
-    { value: "compare", label: "Sizes" },
-    { value: "life", label: "Life" },
-    ...MORE_SCREENS.filter((m) => m.tab).map((m) => ({ value: m.value, label: m.label })),
-    { value: "screens", label: "Screens" },
-    { value: "data", label: "Player data" },
-    { value: "symbols", label: "Symbols" },
-    { value: "styles", label: "Styles" },
-    { value: "packs", label: "Packs" },
-  ];
+  const SCREENS: Record<string, ScreenDoc> = { system: workspaceDoc as unknown as ScreenDoc, physics: physicsDoc as unknown as ScreenDoc, packs: packsDoc as unknown as ScreenDoc, screens: screensDoc as unknown as ScreenDoc, data: dataDoc as unknown as ScreenDoc, symbols: symbolsDoc as unknown as ScreenDoc, body: bodyDoc as unknown as ScreenDoc, compare: compareDoc as unknown as ScreenDoc, life: lifeDoc as unknown as ScreenDoc, styles: stylesScreenDoc as unknown as ScreenDoc, route: routeDoc as unknown as ScreenDoc, window: windowDoc as unknown as ScreenDoc, stories: storiesDoc as unknown as ScreenDoc, cutaway: cutawayDoc as unknown as ScreenDoc, ...Object.fromEntries(MORE_SCREENS.map((m) => [m.value, m.doc])) };
   const checks = Object.fromEntries(Object.entries(SCREENS).map(([k, d]) => [k, checkScreen(d, REGISTRY)]));
   const badScreens = Object.values(checks).flatMap((c) => (c.ok ? [] : c.errors));
   const screen = $derived.by((): CheckedScreen | null => {
@@ -93,6 +86,39 @@
     return c.ok && !badScreens.length ? c.screen : null;
   });
   const mountFor = (area: string) => screen?.mounts.find((m) => m.area === area);
+
+  // The instrument rail (top-level design 2.2) at the scale in view: system, world, or the Workshop.
+  let railScale = $state<RailScale>("system");
+  const rail = $derived(railOf(SCREENS, railScale));
+  // A screen opened from elsewhere (a why?'s "Open the flow", a key) takes the rail to a scale that lists it.
+  $effect(() => {
+    const on = scalesOf(SCREENS[ws.screen] ?? {});
+    untrack(() => {
+      if (on.length && !on.includes(railScale)) railScale = on[0]!;
+    });
+  });
+  function go(id: string) {
+    ws.screen = id;
+  }
+  /** Down a step: the world selected (or the one given), on a world instrument. */
+  function toWorld(address?: string) {
+    if (address) ws.select(address);
+    railScale = "world";
+    if (!scalesOf(SCREENS[ws.screen] ?? {}).includes("world")) ws.screen = "body";
+  }
+  /** Up to the whole system, on a system instrument. */
+  function toSystem() {
+    railScale = "system";
+    if (!scalesOf(SCREENS[ws.screen] ?? {}).includes("system")) ws.screen = "system";
+  }
+  function toWorkshop() {
+    railScale = "workshop";
+  }
+  function goTo(v: string) {
+    if (v === "@system") return toSystem();
+    if (v) toWorld(v);
+  }
+  let moreOpen = $state(false);
 
   let theme = $state(loadPref("theme") === "night-chart" ? "night-chart" : "chart-room");
   // Symbols are chosen apart from the theme (H8.4A); the theme only says what it can carry.
@@ -372,6 +398,17 @@
   });
   const lightMark = (m: Mark, address: string): Mark => (lightColours ? { ...m, colour: lightColours.get(address) ?? null } : m);
   const soundScene = $derived(orbitScene(shown.system, voicesFromSystem(shown)));
+  const selName = $derived(scene.subjects.find((x) => x.address === ws.selection)?.label ?? null);
+  // The place line's list: every body in tree order, moons set in under their planets.
+  const placeBodies = $derived.by(() => {
+    const order = systemOrder(scene);
+    const depth = (a: string | undefined): number => {
+      let d = 0;
+      for (let p = scene.subjects.find((x) => x.address === a)?.parent; p; p = scene.subjects.find((x) => x.address === p)?.parent) d++;
+      return d;
+    };
+    return order.map((b) => ({ address: b.address, label: b.label, depth: Math.max(0, depth(b.address) - 1) }));
+  });
   const lensKinds = $derived([...new Set(scene.subjects.filter((x) => x.facts.length).map((x) => x.kind))]);
 
   // The campaign's clock travels to players (U11): its now, not whatever time the GM is viewing.
@@ -619,7 +656,8 @@
         chooseLens(lenses[(i + 1) % lenses.length]!.id);
       },
       "?": () => help?.showModal(),
-      Escape: () => ws.select(null),
+      // Esc clears the selection, then goes up a step.
+      Escape: () => (ws.selection ? ws.select(null) : railScale !== "system" && toSystem()),
     };
     const f = keys[e.key];
     if (f) {
@@ -629,11 +667,37 @@
   }
 </script>
 
-<svelte:window {onkeydown} />
+<svelte:window {onkeydown} onpointerdown={(e) => moreOpen && !(e.target as HTMLElement).closest(".more") && (moreOpen = false)} />
 
 <div class="app">
   <header class="bar">
-    <h1 class="title">{scene.title}</h1>
+    <!-- Where (top-level design 2.1): the place line is the title, from the largest scale shown to the one in view. -->
+    <nav class="place" aria-label="Place" data-scale={railScale}>
+      {#if adoptedSystems.length}
+        <label class="onchart"><span class="sr">System on the chart</span>
+          <select aria-label="System on the chart" value={viewing?.system ?? ""} onchange={(e) => (showSystem(e.currentTarget.value), toSystem())} data-viewing={viewing?.system ?? ""}>
+            <option value="">{base.title}</option>
+            {#each adoptedSystems as a (a.system)}<option value={a.system}>{a.title}</option>{/each}
+          </select>
+        </label>
+        <span class="sep" aria-hidden="true">›</span>
+      {/if}
+      {#if railScale === "world"}
+        <button type="button" class="up" onclick={toSystem} data-go="system" title="Up to the whole system (Esc)"><span class="up-arrow" aria-hidden="true">‹ </span><span class="up-name">{scene.title}</span></button>
+        <span class="sep up-sep" aria-hidden="true">›</span>
+        <h1 class="title" data-place="world">{selName ?? "A world"}</h1>
+      {:else}
+        <h1 class="title" data-place="system">{scene.title}</h1>
+      {/if}
+      <label class="goto">
+        <span class="sr">Go to a body</span>
+        <select aria-label="Go to a body" value="" onchange={(e) => { goTo(e.currentTarget.value); e.currentTarget.value = ""; }}>
+          <option value="" disabled>{placeBodies.length} {placeBodies.length === 1 ? "body" : "bodies"}</option>
+          <option value="@system">The whole system</option>
+          {#each placeBodies as b (b.address)}<option value={b.address}>{b.depth ? "\u00a0\u00a0".repeat(b.depth) : ""}{b.label}</option>{/each}
+        </select>
+      </label>
+    </nav>
     <div class="kicker">{scene.subtitle} · {formatYears(ws.now_yr)}</div>
     <div class="spacer"></div>
     {#if session}
@@ -648,21 +712,6 @@
         </select>
       </label>
     {/if}
-    <div class="screens">
-      <Segmented
-        label="Screen"
-        value={ws.screen}
-        options={SCREEN_TABS}
-        onchange={(v) => (ws.screen = v)}
-      />
-    </div>
-    <!-- Phone: the same screens as a menu, since the tabs do not fit. -->
-    <label class="screen-menu">
-      <span class="sr">Screen</span>
-      <select value={ws.screen} onchange={(e) => (ws.screen = e.currentTarget.value)} aria-label="Screen menu">
-        {#each SCREEN_TABS as t (t.value)}<option value={t.value}>{t.label}</option>{/each}
-      </select>
-    </label>
     <Segmented
       label="Mode"
       value={ws.mode}
@@ -672,20 +721,21 @@
       ]}
       onchange={(v) => (ws.mode = v)}
     />
-    <div class="themes">
-      <Segmented
-        label="Chart style"
-        value={theme}
-        options={[
-          { value: "chart-room", label: "Chart room", key: "N" },
-          { value: "night-chart", label: "Night chart", key: "N" },
-        ]}
-        onchange={(v) => (theme = v)}
-      />
+    <!-- Ask (2.5): the agents, promoted from the status line. Tars needs no key. -->
+    <button type="button" class="barbtn ask" onclick={() => ((agentsOpen = true), agentsDialog?.showModal())} title="Ask Tars, Orac or Minerva: what can I do here?">Ask</button>
+    <div class="more">
+      <button type="button" class="barbtn" aria-expanded={moreOpen} aria-controls="more-menu" onclick={() => (moreOpen = !moreOpen)}>More</button>
+      {#if moreOpen}
+        <div class="menu" id="more-menu" role="group" aria-label="More">
+          <button type="button" class="ask-more" onclick={() => ((moreOpen = false), (agentsOpen = true), agentsDialog?.showModal())}>Ask Tars, Orac or Minerva</button>
+          <button type="button" onclick={() => ((moreOpen = false), toWorkshop())}>Workshop</button>
+          <button type="button" onclick={() => ((moreOpen = false), (offered = null), (confirmFresh = false), campaignDialog?.showModal())}>Campaign… <small>save, open, start fresh</small></button>
+          <button type="button" onclick={() => ((moreOpen = false), (makeOpen = true), makeDialog?.showModal())} title="Import a V3 save or grow a new system, and add it to the campaign">Make a system…</button>
+          <button type="button" aria-pressed={theme === "night-chart"} onclick={() => ((moreOpen = false), (theme = theme === "chart-room" ? "night-chart" : "chart-room"))}>Night chart <kbd>N</kbd></button>
+          <button type="button" onclick={() => ((moreOpen = false), help?.showModal())}>Keyboard shortcuts <kbd>?</kbd></button>
+        </div>
+      {/if}
     </div>
-    <button type="button" class="night compact" aria-label="Switch between Chart room and Night chart" onclick={() => (theme = theme === "chart-room" ? "night-chart" : "chart-room")}>
-      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" aria-hidden="true"><path d="M20 14.5A8 8 0 0 1 9.5 4a8 8 0 1 0 10.5 10.5z" /></svg>
-    </button>
   </header>
 
   {#if !screen}
@@ -701,58 +751,69 @@
   {:else if !session}
     <main class="problem" aria-busy="true"><p>Opening the chart…</p></main>
   {:else}
-    {#key ws.screen}
-    <main class="stage" data-screen={ws.screen} data-lens={lens.id} data-branch={ws.branch ? "open" : ahead ? "ahead" : undefined}>
-      {#if ws.branch}<div class="branch-stamp" aria-hidden="true">What if · not kept</div>{/if}
-      <div class="area-chart">{#if mountFor("chart")}<div class="fill" use:view={mountFor("chart")!}></div>{/if}</div>
-      <nav class="tools" aria-label="Tools">
-        <ToolButton label="Select" icon="M5 3l14 8-6 2-2 6z" pressed={true} />
-        {#if hasTool(ws.lens, "undo")}<ToolButton label="Undo" icon="M9 14L4 9l5-5M4 9h11a5 5 0 0 1 0 10h-3" keyhint="Control+Z" disabled={ws.undo.length === 0 || ws.mode !== "edit" || !!ws.branch} onclick={() => undo(true)} />
-        <ToolButton label="Redo" icon="M15 14l5-5-5-5M20 9H9a5 5 0 0 0 0 10h3" keyhint="Control+Shift+Z" disabled={ws.redo.length === 0 || ws.mode !== "edit" || !!ws.branch} onclick={() => undo(false)} />{/if}
-        <ToolButton label="Keyboard shortcuts" icon="M3 7h18v10H3zM7 11h1M11 11h1M15 11h2M7 14h10" keyhint="?" onclick={() => help?.showModal()} />
+    <div class="middle">
+      <!-- How (2.2): every way of looking at the place in view, in words, built from the screens' own rail entries. -->
+      <nav class="rail" aria-label="Instruments" data-scale={railScale}>
+        {#if railScale === "workshop"}
+          <button type="button" class="door back" data-go="back" onclick={toSystem}>‹ Back to {scene.title}</button>
+        {:else if railScale === "system"}
+          <button type="button" class="door open" data-go="world" onclick={() => toWorld()} title={selName ? `Look at ${selName} itself: globe, cutaway, life` : "Pick a world to look at closely"}>{selName ? `Open ${selName}` : "Open a world"} ›</button>
+        {/if}
+        {#each rail as g (g.group)}
+          <div class="group" role="group" aria-label={g.words}>
+            <h2>{g.words}</h2>
+            {#each g.lines as l (l.screen)}
+              <button type="button" class="inst" aria-pressed={ws.screen === l.screen} data-go={l.screen} title={l.hint} onclick={() => go(l.screen)}>{l.label}</button>
+            {/each}
+          </div>
+        {/each}
+        {#if railScale !== "workshop"}<button type="button" class="door" data-go="workshop" onclick={toWorkshop} title="Physics flows, packs, player screens and data, symbols, styles: everything that changes the tool">Workshop ›</button>{/if}
       </nav>
-      {#if undoNote}<p class="undo-note" role="status">{undoNote}</p>{/if}
-      <aside class="area-card" aria-label={ws.screen === "physics" ? "Change requests" : "Selected body"}>{#if mountFor("card")}<div use:view={mountFor("card")!}></div>{/if}</aside>
-    </main>
-    <footer class="area-ruler" aria-label="Time">{#if mountFor("ruler")}<div class="fill" use:view={mountFor("ruler")!}></div>{/if}</footer>
-    {/key}
+      {#key ws.screen}
+      <main class="stage" data-screen={ws.screen} data-page={mountFor("card") ? undefined : ""} data-lens={lens.id} data-branch={ws.branch ? "open" : ahead ? "ahead" : undefined}>
+        {#if ws.branch}<div class="branch-stamp" aria-hidden="true">What if · not kept</div>{/if}
+        <div class="area-chart">{#if mountFor("chart")}<div class="fill" use:view={mountFor("chart")!}></div>{/if}</div>
+        <nav class="tools" aria-label="Tools">
+          <ToolButton label="Select" icon="M5 3l14 8-6 2-2 6z" pressed={true} />
+          {#if hasTool(ws.lens, "undo")}<ToolButton label="Undo" icon="M9 14L4 9l5-5M4 9h11a5 5 0 0 1 0 10h-3" keyhint="Control+Z" disabled={ws.undo.length === 0 || ws.mode !== "edit" || !!ws.branch} onclick={() => undo(true)} />
+          <ToolButton label="Redo" icon="M15 14l5-5-5-5M20 9H9a5 5 0 0 0 0 10h3" keyhint="Control+Shift+Z" disabled={ws.redo.length === 0 || ws.mode !== "edit" || !!ws.branch} onclick={() => undo(false)} />{/if}
+          <ToolButton label="Keyboard shortcuts" icon="M3 7h18v10H3zM7 11h1M11 11h1M15 11h2M7 14h10" keyhint="?" onclick={() => help?.showModal()} />
+        </nav>
+        {#if undoNote}<p class="undo-note" role="status">{undoNote}</p>{/if}
+        <aside class="area-card" aria-label={ws.screen === "physics" ? "Change requests" : "Selected body"}>{#if mountFor("card")}<div use:view={mountFor("card")!}></div>{/if}</aside>
+      </main>
+      {/key}
+    </div>
+    <footer class="area-ruler" aria-label="Time">
+      {#key ws.screen}<div class="ruler-view">{#if mountFor("ruler")}<div class="fill" use:view={mountFor("ruler")!}></div>{/if}</div>{/key}
+      <!-- What if and Look ahead live on the ruler (2.7): both are about time. Light and Sound sit with them, as modifiers of any instrument. -->
+      <div class="ruler-side" aria-label="Time tools" role="group">
+        <span class="whatif" data-branch={ws.branch?.id}>
+          {#if ws.branch}
+            <b>{ws.branch.label}</b>
+            <span data-whatif-edits={ws.branch.edits.length}>{ws.branch.edits.length} {ws.branch.edits.length === 1 ? "change" : "changes"}</span>
+            {#if branchHash}<span class="engine" title="What-if state hash: {branchHash}" data-branch-hash={branchHash}>what-if {branchHash.slice(0, 10)}</span>{/if}
+            <button type="button" class="linkbtn" onclick={() => compareDialog?.showModal()}>Compare</button>
+            <button type="button" class="linkbtn" onclick={() => whatIf("keep")} disabled={!ws.branch.edits.length}>Keep it</button>
+            <button type="button" class="linkbtn" onclick={() => whatIf("drop")}>Throw away</button>
+          {:else}
+            {#if !ahead && !viewing}<button type="button" class="linkbtn quiet" onclick={() => whatIf("open")} title="Try changes on a branch; the chart's history does not move until you keep them">What if…</button>{/if}
+            <LookAhead {session} {scene} given={viewing ? viewingSpec : null} writeBack={!!viewing} bind:ahead bind:at={aheadAt} onkept={(note, now_myr, h) => ((whatNote = note), now_myr !== null && (ws.now_yr = ws.campaign_now_yr = ws.campaign_epoch_yr = now_myr * 1e6), (status = { ...status, hash: h }), ws.revision++)} />
+          {/if}
+          {#if whatNote}<span class="note" role="status" title={whatNote}>{whatNote}</span>{/if}
+        </span>
+        <span class="strip">
+          <LightControl recipes={LIGHT_RECIPES} lights={lit.lights} missing={lit.missing} names={lightNames} bind:value={lightId} key="light.gm" />
+          <SoundControl scene={soundScene} deviceTier={status.tier} seed={base.universe.seed} key="sound.gm" />
+        </span>
+      </div>
+    </footer>
     {#if keptNote}<p class="kept-note" role="status" data-kept-note>{keptNote} <button type="button" class="linkbtn" onclick={() => (keptNote = null)}>OK</button></p>{/if}
     <div class="status" aria-label="Session">
       <span>Seat: {session.seat.label}</span>
-      <span>kernel {status.kernel}</span>
-      <span title="Measured capability tier of this device">tier {status.tier}</span>
-      <span title="State hash: {status.hash}" data-state-hash={status.hash}>state {status.hash.slice(0, 10)}</span>
-      <span title="Pack stack hash: {status.stack}" data-stack-hash={status.stack}>physics {status.campaign ? "campaign" : "base"} {status.stack.slice(0, 8)}</span>
-      <span class="whatif" data-branch={ws.branch?.id}>
-        {#if ws.branch}
-          <b>{ws.branch.label}</b>
-          <span data-whatif-edits={ws.branch.edits.length}>{ws.branch.edits.length} {ws.branch.edits.length === 1 ? "change" : "changes"}</span>
-          {#if branchHash}<span title="What-if state hash: {branchHash}" data-branch-hash={branchHash}>what-if {branchHash.slice(0, 10)}</span>{/if}
-          <button type="button" class="linkbtn" onclick={() => compareDialog?.showModal()}>Compare</button>
-          <button type="button" class="linkbtn" onclick={() => whatIf("keep")} disabled={!ws.branch.edits.length}>Keep it</button>
-          <button type="button" class="linkbtn" onclick={() => whatIf("drop")}>Throw away</button>
-        {:else}
-          {#if !ahead && !viewing}<button type="button" class="linkbtn quiet" onclick={() => whatIf("open")} title="Try changes on a branch; the chart's history does not move until you keep them">What if…</button>{/if}
-          <LookAhead {session} {scene} given={viewing ? viewingSpec : null} writeBack={!!viewing} bind:ahead bind:at={aheadAt} onkept={(note, now_myr, h) => ((whatNote = note), now_myr !== null && (ws.now_yr = ws.campaign_now_yr = ws.campaign_epoch_yr = now_myr * 1e6), (status = { ...status, hash: h }), ws.revision++)} />
-        {/if}
-        {#if whatNote}<span role="status">{whatNote}</span>{/if}
-      </span>
-      {#if adoptedSystems.length}
-        <label class="onchart">On the chart
-          <select aria-label="System on the chart" value={viewing?.system ?? ""} onchange={(e) => showSystem(e.currentTarget.value)} data-viewing={viewing?.system ?? ""}>
-            <option value="">{base.title}</option>
-            {#each adoptedSystems as a (a.system)}<option value={a.system}>{a.title}</option>{/each}
-          </select>
-        </label>
-      {/if}
-      <button type="button" class="linkbtn quiet" onclick={() => ((makeOpen = true), makeDialog?.showModal())} title="Import a V3 save or grow a new system, and add it to the campaign">Make a system</button>
-      <button type="button" class="linkbtn quiet" onclick={() => ((agentsOpen = true), agentsDialog?.showModal())} title="Tars, Orac and Minerva, on your own key">Agents</button>
       <span class="kept">
         <span data-kept={savedAt ?? ""} title={saveProblem ?? "The campaign is kept in this browser after every change"}>{saveProblem ? "Not kept" : savedWords}</span>
-        <button type="button" class="linkbtn quiet" onclick={() => ((offered = null), (confirmFresh = false), campaignDialog?.showModal())} title="Save the campaign as a file, open one, or start fresh">Campaign…</button>
       </span>
-      <LightControl recipes={LIGHT_RECIPES} lights={lit.lights} missing={lit.missing} names={lightNames} bind:value={lightId} key="light.gm" />
-      <SoundControl scene={soundScene} deviceTier={status.tier} seed={base.universe.seed} key="sound.gm" />
       {#if share}
         <span class="share" aria-label="Players">
           {#if share.state.link}
@@ -775,6 +836,13 @@
           {/if}
         </span>
       {/if}
+      <!-- The engine's own numbers, quiet at the end of the line (Engine depth will carry them in step 2). -->
+      <span class="engine-line">
+        <span>kernel {status.kernel}</span>
+        <span title="Measured capability tier of this device">tier {status.tier}</span>
+        <span title="State hash: {status.hash}" data-state-hash={status.hash}>state {status.hash.slice(0, 10)}</span>
+        <span title="Pack stack hash: {status.stack}" data-stack-hash={status.stack}>physics {status.campaign ? "campaign" : "base"} {status.stack.slice(0, 8)}</span>
+      </span>
     </div>
   {/if}
 </div>
@@ -919,11 +987,203 @@
     background: var(--sse-ground);
     min-width: 0;
   }
+  .place {
+    display: flex;
+    align-items: baseline;
+    gap: 8px;
+    min-width: 0;
+  }
   .title {
     margin: 0;
     font-family: var(--sse-font-display);
     font-size: 26px;
     font-weight: 600;
+    white-space: nowrap;
+  }
+  .place .up {
+    font: inherit;
+    font-family: var(--sse-font-display);
+    font-size: 17px;
+    color: var(--sse-accent);
+    background: none;
+    border: 0;
+    padding: 0;
+    cursor: pointer;
+    white-space: nowrap;
+  }
+  .place .up:hover {
+    text-decoration: underline;
+  }
+  .sep {
+    color: var(--sse-ink-muted);
+  }
+  .up-arrow {
+    display: none;
+  }
+  .goto select,
+  .onchart select {
+    font: inherit;
+    font-size: 12px;
+    color: var(--sse-ink-muted);
+    background: transparent;
+    border: 0;
+    border-bottom: 1px dotted var(--sse-rule);
+    cursor: pointer;
+    max-width: 12em;
+  }
+  .barbtn {
+    height: 32px;
+    padding: 0 14px;
+    border: var(--sse-line) solid var(--sse-ink);
+    background: transparent;
+    color: var(--sse-ink);
+    font-family: var(--sse-font-body);
+    font-size: 13px;
+    cursor: pointer;
+  }
+  .barbtn:hover,
+  .barbtn[aria-expanded="true"] {
+    background: var(--sse-ink);
+    color: var(--sse-on-ink);
+  }
+  .more {
+    position: relative;
+  }
+  .menu {
+    position: absolute;
+    right: 0;
+    top: calc(100% + 6px);
+    z-index: 20;
+    display: flex;
+    flex-direction: column;
+    min-width: 200px;
+    padding: 6px 0;
+    border: var(--sse-line) solid var(--sse-ink);
+    background: var(--sse-ground-raised);
+    box-shadow: var(--sse-card-shadow);
+    animation: menu-in var(--sse-motion) var(--sse-ease);
+    transform-origin: top right;
+  }
+  @keyframes menu-in {
+    from {
+      opacity: 0;
+      transform: translateY(-4px) scale(0.97);
+    }
+  }
+  .menu button {
+    display: flex;
+    justify-content: space-between;
+    gap: 16px;
+    text-align: left;
+    font: inherit;
+    font-size: 14px;
+    padding: 8px 16px;
+    border: 0;
+    background: none;
+    color: var(--sse-ink);
+    cursor: pointer;
+  }
+  .menu button:hover {
+    background: var(--sse-ground);
+  }
+  .menu button[aria-pressed="true"] {
+    color: var(--sse-accent-ink);
+  }
+  .menu .ask-more {
+    display: none;
+  }
+  .menu small {
+    font-size: 11px;
+    color: var(--sse-ink-muted);
+  }
+  .menu kbd {
+    font-family: var(--sse-font-mono);
+    font-size: 11px;
+    color: var(--sse-ink-muted);
+  }
+  .middle {
+    display: grid;
+    grid-template-columns: 172px minmax(0, 1fr);
+    min-height: 0;
+  }
+  .rail {
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+    padding: 18px 12px 18px 18px;
+    border-right: var(--sse-line) solid var(--sse-rule);
+    overflow: auto;
+  }
+  .rail .group {
+    display: flex;
+    flex-direction: column;
+    gap: 1px;
+  }
+  .rail h2 {
+    margin: 0 0 4px;
+    font-family: var(--sse-font-mono);
+    font-size: 10px;
+    font-weight: normal;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--sse-ink-muted);
+  }
+  .rail .inst {
+    position: relative;
+    text-align: left;
+    font: inherit;
+    font-size: 14px;
+    padding: 5px 8px;
+    margin-left: -8px;
+    border: 0;
+    background: none;
+    color: var(--sse-ink);
+    cursor: pointer;
+  }
+  .rail .inst:hover {
+    background: var(--sse-ground-raised);
+  }
+  .rail .inst[aria-pressed="true"] {
+    font-weight: 600;
+  }
+  .rail .inst[aria-pressed="true"]::before {
+    content: "";
+    position: absolute;
+    left: -6px;
+    top: 6px;
+    bottom: 6px;
+    width: 3px;
+    background: var(--sse-accent);
+    animation: rail-in var(--sse-motion) var(--sse-ease);
+  }
+  @keyframes rail-in {
+    from {
+      transform: scaleY(0);
+    }
+  }
+  .rail .door {
+    text-align: left;
+    font: inherit;
+    font-size: 13px;
+    padding: 6px 10px;
+    border: var(--sse-line) solid var(--sse-ink);
+    background: transparent;
+    color: var(--sse-ink);
+    cursor: pointer;
+  }
+  .rail .door.open {
+    background: var(--sse-ink);
+    color: var(--sse-on-ink);
+  }
+  .rail .door[data-go="workshop"] {
+    margin-top: auto;
+    border-color: var(--sse-rule);
+    color: var(--sse-ink-muted);
+  }
+  .rail .door.back {
+    border: 0;
+    padding: 0;
+    color: var(--sse-accent);
   }
   .kicker {
     font-size: 12px;
@@ -936,10 +1196,6 @@
   }
   .spacer {
     flex: 1;
-  }
-  .compact,
-  .screen-menu {
-    display: none;
   }
   .sr {
     position: absolute;
@@ -1064,10 +1320,24 @@
   }
   /* The cutaway sits between the tools and the card instead of under them. */
   .stage[data-screen="body"] .area-chart,
+  .stage[data-screen="cutaway"] .area-chart,
   .stage[data-screen="compare"] .area-chart,
   .stage[data-screen="life"] .area-chart {
     inset: 24px 428px 24px 96px;
     overflow: auto;
+  }
+  /* A screen with no card is a page: its one view scrolls in the stage. */
+  .stage[data-page] .area-chart {
+    inset: 24px 24px 24px 96px;
+    overflow: auto;
+  }
+  .stage[data-page] .area-chart .fill {
+    height: auto;
+    min-height: 100%;
+    padding: 0 0 24px;
+  }
+  .stage[data-page] .area-card {
+    display: none;
   }
   .tools {
     position: absolute;
@@ -1095,11 +1365,49 @@
     padding: 0 6px 6px 0;
   }
   .area-ruler {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
     border-top: var(--sse-line) solid var(--sse-ink);
     min-width: 0;
   }
-  .share {
+  .ruler-view {
+    min-width: 0;
+  }
+  .ruler-side {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    gap: 6px;
+    max-width: 340px;
+    padding: 6px 18px;
+    border-left: var(--sse-line) solid var(--sse-rule);
+    font-size: 12px;
+    color: var(--sse-ink-muted);
+  }
+  .ruler-side .whatif {
+    flex-wrap: wrap;
+    gap: 4px 12px;
+  }
+  .ruler-side .note {
+    flex-basis: 100%;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    color: var(--sse-ink);
+  }
+  .strip {
+    display: inline-flex;
+    flex-wrap: wrap;
+    gap: 4px 14px;
+    align-items: center;
+  }
+  .engine-line {
     margin-left: auto;
+    display: inline-flex;
+    gap: 14px;
+    opacity: 0.75;
+  }
+  .share {
     display: inline-flex;
     gap: 10px;
     align-items: center;
@@ -1222,10 +1530,28 @@
       text-overflow: ellipsis;
       white-space: nowrap;
     }
-    /* The header holds the lens, the screen menu, the mode switch and the night button; on a narrow phone the two menus
-       give way (they shrink, their text clips) so the bar never runs past the screen edge. */
-    .lens,
-    .screen-menu {
+    /* The header holds the place line, the lens, the mode switch, Ask and More; the place line gives way first. */
+    .place {
+      flex: 1 1 auto;
+      overflow: hidden;
+    }
+    .place .up {
+      font-size: 22px;
+      line-height: 1;
+    }
+    .up-arrow {
+      display: inline;
+    }
+    .up-name,
+    .up-sep {
+      display: none;
+    }
+    .goto,
+    .onchart,
+    .onchart + .sep {
+      display: none;
+    }
+    .lens {
       flex: 0 1 auto;
       min-width: 56px;
     }
@@ -1234,34 +1560,66 @@
       max-width: 92px;
       height: 44px;
     }
+    .barbtn {
+      height: 44px;
+      padding: 0 10px;
+    }
+    /* Ask moves into More on a phone, so the place line keeps room for its name. */
+    .barbtn.ask {
+      display: none;
+    }
+    .menu .ask-more {
+      display: flex;
+    }
+    .place {
+      min-width: 64px;
+    }
     .lens-k,
     .kicker,
-    .themes,
-    .screens,
     .tools {
       display: none;
     }
-    .screen-menu {
-      display: block;
+    /* The rail becomes one row of chips that scrolls sideways (design 4). */
+    .middle {
+      display: contents;
     }
-    .screen-menu select {
-      width: 100%;
-      height: 44px;
-      max-width: 110px;
-      border: var(--sse-line) solid var(--sse-ink);
-      background: transparent;
-      color: var(--sse-ink);
-      font-family: var(--sse-font-body);
-    }
-    .compact {
-      display: flex;
+    .rail {
+      flex-direction: row;
       align-items: center;
-      justify-content: center;
-      width: 44px;
-      height: 44px;
-      border: var(--sse-line) solid var(--sse-ink);
-      background: transparent;
-      color: var(--sse-ink);
+      gap: 6px;
+      padding: 8px 12px;
+      border-right: 0;
+      border-bottom: var(--sse-line) solid var(--sse-rule);
+      overflow-x: auto;
+      overflow-y: hidden;
+      white-space: nowrap;
+      scrollbar-width: none;
+    }
+    .rail .group {
+      flex-direction: row;
+      gap: 6px;
+    }
+    .rail h2 {
+      display: none;
+    }
+    .rail .inst {
+      margin: 0;
+      min-height: 36px;
+      padding: 0 12px;
+      border: 1px solid var(--sse-rule);
+    }
+    .rail .inst[aria-pressed="true"] {
+      border-color: var(--sse-ink);
+    }
+    .rail .inst[aria-pressed="true"]::before {
+      display: none;
+    }
+    .rail .door {
+      min-height: 36px;
+      white-space: nowrap;
+    }
+    .rail .door[data-go="workshop"] {
+      margin-top: 0;
     }
     .stage {
       display: contents;
@@ -1281,15 +1639,17 @@
     .stage:not([data-screen="system"]) .area-chart .fill {
       overflow: auto;
     }
-    .stage:is([data-screen="physics"], [data-screen="body"], [data-screen="compare"], [data-screen="life"]) .area-chart {
+    .stage:is([data-screen="physics"], [data-screen="body"], [data-screen="cutaway"], [data-screen="compare"], [data-screen="life"], [data-page]) .area-chart {
       height: auto;
     }
-    .stage:is([data-screen="physics"], [data-screen="body"], [data-screen="compare"], [data-screen="life"]) .area-chart .fill {
+    .stage:is([data-screen="physics"], [data-screen="body"], [data-screen="cutaway"], [data-screen="compare"], [data-screen="life"], [data-page]) .area-chart .fill {
       position: relative;
     }
     .stage[data-screen="body"] .area-chart,
+    .stage[data-screen="cutaway"] .area-chart,
     .stage[data-screen="compare"] .area-chart,
-    .stage[data-screen="life"] .area-chart {
+    .stage[data-screen="life"] .area-chart,
+    .stage[data-page] .area-chart {
       inset: auto;
       padding: 12px 16px;
     }
@@ -1317,6 +1677,16 @@
       z-index: 2;
       min-width: 0;
       overflow-x: clip;
+      grid-template-columns: minmax(0, 1fr);
+      background: var(--sse-ground);
+    }
+    .ruler-side {
+      max-width: none;
+      flex-direction: row;
+      flex-wrap: wrap;
+      padding: 4px 12px 6px;
+      border-left: 0;
+      border-top: 1px solid var(--sse-rule);
     }
     .status {
       flex-wrap: wrap;
