@@ -2944,5 +2944,13 @@
  {
   "op": "hold_dressing",
   "candidate": "not a candidate"
+ },
+ {
+  "op": "read_matter"
+ },
+ {
+  "op": "read_matter",
+  "table": "substances",
+  "id": "unobtainium"
  }
 ]
