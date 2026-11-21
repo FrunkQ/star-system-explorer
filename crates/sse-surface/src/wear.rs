@@ -6,8 +6,11 @@
 //! - depressions are filled by priority-flood, so every land cell drains to the
 //!   sea or to a lake and no river runs uphill;
 //! - water is routed by steepest descent on the filled surface and
-//!   accumulated from the one climate's rain (W7a: the energy balance's own
-//!   rain by latitude, none on a dry world);
+//!   accumulated from each cell's own runoff (W9: the one climate's rain and
+//!   snowmelt at the cell's latitude and height, less what evaporates, by
+//!   Fu's Budyko curve; none on a dry world);
+//! - a cell is glaciated where its snow outlasts the summer (W9's ice
+//!   balance at its height), not below a fixed temperature;
 //! - valleys are cut by the stream-power rule (incision grows with discharge
 //!   and slope; glaciers cut harder), solved implicitly in drainage order;
 //! - what is worn off is carried downstream and laid down in lakes and at river
@@ -37,13 +40,12 @@ pub struct WearSettings {
     pub k_stream: f64,
     pub m: f64,
     pub glacial_factor: f64,
-    pub ice_k: f64,
     /// A world wet only in the past rains at least this warm while wet, K.
     pub wet_floor_k: f64,
     pub diffusion_m2_yr: f64,
     pub river_area_cells: f64,
-    pub dune_rain: f64,
-    pub dune_pressure_bar: f64,
+    /// Dunes where Lancaster's mobility (W9 `sse.wind.saltation`) is at least this.
+    pub dune_activity: f64,
     pub dune_slope: f64,
     pub fill_epsilon_m: f64,
     /// Sediment reaching the sea builds out a shelf to this depth below sea
@@ -113,6 +115,20 @@ pub struct Wear {
     pub sediment_m: Vec<f64>,
     pub glaciated: Vec<bool>,
     pub dunes: Vec<bool>,
+    /// W9: each land cell's water in the last epoch (m of liquid a year):
+    /// runoff, snow and the ice balance, and its dune activity (0 to 1).
+    #[serde(default)]
+    pub runoff_m_yr: Vec<f64>,
+    #[serde(default)]
+    pub snow_m_yr: Vec<f64>,
+    #[serde(default)]
+    pub ice_balance_m_yr: Vec<f64>,
+    #[serde(default)]
+    pub dune_activity: Vec<f64>,
+    /// Each land cell's climate label (W9, the climate pack's area rules;
+    /// empty under the sea). Nothing reads it back.
+    #[serde(default)]
+    pub areas: Vec<String>,
     pub eroded_m3: f64,
     pub deposited_m3: f64,
     pub epochs: Vec<WearEpoch>,
@@ -348,8 +364,10 @@ pub fn wear(
         .iter()
         .map(|d| m::asin(d[2].clamp(-1.0, 1.0)))
         .collect();
-    // The one climate's rain in the wet epochs, m a year.
-    let rain: Vec<f64> = lat.iter().map(|la| climate.precip_m_yr(*la)).collect();
+    let lat_deg: Vec<f64> = lat.iter().map(|x| x * 180.0 / m::PI).collect();
+    // W9: the one climate's water at each cell's latitude and height.
+    let supply = |c: usize, above_m: f64| climate.water_at(&s.climate, lat_deg[c], above_m);
+    let mut cell_water: Vec<sse_climate::water::WaterSupply> = vec![Default::default(); nc];
     let comp = compensation(env, g.len());
     let mut h = heights0.to_vec();
     let mut eroded_total = 0.0;
@@ -381,8 +399,21 @@ pub fn wear(
         let dt = dt_myr * 1.0e6;
         let mut eroded_epoch = 0.0;
         if wet {
-            // Discharge, accumulated upstream to downstream.
-            let mut q: Vec<f64> = (0..nc).map(|c| rain[c] * area).collect();
+            let datum = sl.unwrap_or(0.0);
+            for c in 0..nc {
+                cell_water[c] = supply(c, h[c] - datum);
+            }
+            // Discharge from each land cell's runoff, accumulated upstream to
+            // downstream (the sea's own rain does not run off).
+            let mut q: Vec<f64> = (0..nc)
+                .map(|c| {
+                    if sl.is_some_and(|x| h[c] < x) {
+                        0.0
+                    } else {
+                        cell_water[c].runoff_m_yr * area
+                    }
+                })
+                .collect();
             for &c in net.order.iter().rev() {
                 let rc = net.receiver[c];
                 if rc != c {
@@ -390,8 +421,7 @@ pub fn wear(
                 }
             }
             for c in 0..nc {
-                let t_k = climate.t_at(lat[c], h[c] - sl.unwrap_or(0.0));
-                glaciated[c] = t_k < w.ice_k && sl.is_none_or(|x| h[c] >= x);
+                glaciated[c] = cell_water[c].ice_balance_m_yr > 0.0 && sl.is_none_or(|x| h[c] >= x);
             }
             // Implicit stream power, outlets first.
             let old = h.clone();
@@ -535,6 +565,43 @@ pub fn wear(
     let land = |c: usize| sea.is_none_or(|x| h[c] >= x);
     let dry_now = sea.is_none();
     let datum = sea.unwrap_or(0.0);
+    // W9: the water and the wind on the final surface. A world dry now reads
+    // today's climate (no liquid: no water at all).
+    let water_now: Vec<sse_climate::water::WaterSupply> = (0..nc)
+        .map(|c| {
+            if land(c) && !dry_now {
+                supply(c, h[c] - datum)
+            } else if land(c) {
+                // Dry now: today's temperatures, no water.
+                let x = supply(c, h[c] - datum);
+                sse_climate::water::WaterSupply {
+                    t_k: x.t_k,
+                    t_cold_k: x.t_cold_k,
+                    t_warm_k: x.t_warm_k,
+                    ..Default::default()
+                }
+            } else {
+                Default::default()
+            }
+        })
+        .collect();
+    let activity: Vec<f64> = (0..nc)
+        .map(|c| {
+            if !land(c) || glaciated[c] {
+                return 0.0;
+            }
+            let ss = &s.climate.saltation;
+            let t = water_now[c].t_k;
+            let sa = sse_climate::saltation::at(
+                ss,
+                &climate.climate,
+                lat_deg[c],
+                sse_climate::saltation::grain_for(ss, t),
+            );
+            sse_climate::saltation::dune_activity(ss, sa.transport_share, water_now[c].aridity)
+        })
+        .collect();
+    let _ = &cell_water;
     let slope = |c: usize| {
         let rc = final_net.receiver[c];
         if rc == c {
@@ -561,11 +628,21 @@ pub fn wear(
         incision_m: (0..nc).map(|c| (heights0[c] - h[c]).max(0.0)).collect(),
         sediment_m: standing,
         dunes: (0..nc)
+            .map(|c| activity[c] >= w.dune_activity && slope(c) < w.dune_slope)
+            .collect(),
+        runoff_m_yr: water_now.iter().map(|x| x.runoff_m_yr).collect(),
+        snow_m_yr: water_now.iter().map(|x| x.snow_m_yr).collect(),
+        ice_balance_m_yr: water_now.iter().map(|x| x.ice_balance_m_yr).collect(),
+        dune_activity: activity,
+        areas: (0..nc)
             .map(|c| {
-                land(c)
-                    && dry_now
-                    && water.pressure_bar >= w.dune_pressure_bar
-                    && slope(c) < w.dune_slope
+                if land(c) {
+                    sse_climate::water::area(&s.climate, &water_now[c])
+                        .0
+                        .to_string()
+                } else {
+                    String::new()
+                }
             })
             .collect(),
         glaciated,
