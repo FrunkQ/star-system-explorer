@@ -233,6 +233,31 @@ pub struct WaterSettings {
     pub source: String,
 }
 
+/// Orbital forcing and ice ages (W9 part 2, `forcing.rs`).
+#[derive(Clone, PartialEq, Debug, Serialize, Deserialize)]
+pub struct ForcingSettings {
+    /// Earth's dynamical ellipticity (C − A)/C (Zeebe 2022 Table 1).
+    pub earth_ellipticity: f64,
+    /// E_d scales as (ω / ω_Earth)^this (hydrostatic: 2).
+    pub ellipticity_spin_power: f64,
+    /// g_L in β = g_L (a/a_L)³ (m_L/M) (Zeebe 2022 eq. 5).
+    pub moon_geometry: f64,
+    /// Window of the history read for one epoch, years, sampled every
+    /// `sample_yr` and integrated in steps of `step_yr`.
+    pub window_yr: f64,
+    pub sample_yr: f64,
+    pub step_yr: f64,
+    /// Huybers 2006: summer days are those of at least this insolation, W/m².
+    pub summer_threshold_w_m2: f64,
+    /// Steps through the year for the summer energy.
+    pub year_steps: u32,
+    /// The sensitivity probe: the climate at this much less tilt, degrees.
+    pub probe_obliquity_deg: f64,
+    /// Inclinations not published for a sibling are drawn up to this, degrees.
+    pub drawn_inclination_deg: f64,
+    pub source: String,
+}
+
 /// A sand grain saltation reads.
 #[derive(Clone, PartialEq, Debug, Serialize, Deserialize)]
 pub struct Grain {
@@ -349,6 +374,7 @@ pub struct ClimateSettings {
     pub water: WaterSettings,
     pub saltation: SaltationSettings,
     pub areas: Areas,
+    pub forcing: ForcingSettings,
     pub defaults: Defaults,
     pub substances: Vec<Substance>,
     pub references: Vec<Reference>,

@@ -11,3 +11,6 @@ sse-core.workspace = true
 sse-pack.workspace = true
 serde.workspace = true
 serde_json.workspace = true
+
+[dev-dependencies]
+sse-time = { path = "../sse-time" }

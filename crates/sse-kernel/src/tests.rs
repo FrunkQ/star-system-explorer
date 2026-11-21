@@ -868,6 +868,18 @@ fn adopt_age_and_read_back_a_system() {
     );
     let assumed = sv["survey"]["climate"]["assumed"].to_string();
     assert!(assumed.contains("(formation)"), "{assumed}");
+    // W9 part 2: a formation world reads its ice ages from T1's secular
+    // theory over its siblings, and each band says how often ice advances.
+    let ia = &sv["survey"]["climate"]["ice_ages"];
+    assert!(
+        ia["source"].as_str().unwrap().contains("T1 secular"),
+        "{ia}"
+    );
+    let swing =
+        ia["obliquity_max_deg"].as_f64().unwrap() - ia["obliquity_min_deg"].as_f64().unwrap();
+    assert!(swing > 0.0 && swing < 30.0, "{ia}");
+    let places = sv["survey"]["climate"]["places"].as_array().unwrap();
+    assert!(places.iter().all(|p| p["ice_share"].is_number()));
     // Errors.
     assert_eq!(
         send(&mut k, serde_json::json!({"op": "adopt"}))["code"],
