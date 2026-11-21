@@ -1751,6 +1751,90 @@
         "range": null
       },
       {
+        "description": "natural log of the reaction quotient Q from local activities",
+        "dim": [
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0
+        ],
+        "id": "chem.ln_reaction_quotient",
+        "range": null
+      },
+      {
+        "description": "free energy released (negative) or needed (positive) by a reaction under local conditions",
+        "dim": [
+          2,
+          1,
+          -2,
+          0,
+          0,
+          -1,
+          0
+        ],
+        "id": "chem.reaction_gibbs",
+        "range": null
+      },
+      {
+        "description": "standard enthalpy of a reaction, per mole of reaction as written",
+        "dim": [
+          2,
+          1,
+          -2,
+          0,
+          0,
+          -1,
+          0
+        ],
+        "id": "chem.standard_enthalpy",
+        "range": null
+      },
+      {
+        "description": "standard free energy of a reaction at the local temperature",
+        "dim": [
+          2,
+          1,
+          -2,
+          0,
+          0,
+          -1,
+          0
+        ],
+        "id": "chem.standard_gibbs",
+        "range": null
+      },
+      {
+        "description": "standard free energy of a reaction at 298.15 K, per mole of reaction as written",
+        "dim": [
+          2,
+          1,
+          -2,
+          0,
+          0,
+          -1,
+          0
+        ],
+        "id": "chem.standard_gibbs_298",
+        "range": null
+      },
+      {
+        "description": "temperature at which a reaction runs",
+        "dim": [
+          0,
+          0,
+          0,
+          0,
+          1,
+          0,
+          0
+        ],
+        "id": "chem.temperature",
+        "range": null
+      },
+      {
         "description": "mass thrown out by an explosion",
         "dim": [
           0,
