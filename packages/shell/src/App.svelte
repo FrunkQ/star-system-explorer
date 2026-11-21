@@ -5,7 +5,7 @@
 -->
 <script lang="ts">
   import { untrack } from "svelte";
-  import { railOf, scalesOf, type RailScale } from "../../ui-contract/src/index.ts";
+  import { railOf, scalesOf, type RailScale, DEPTHS, isDepth, type Depth } from "../../ui-contract/src/index.ts";
   import { applyEdits, applySetup, type AtomInfo, type SifterDoc, enterFacts, observeOf, type AuthoredFacts, checkScreen, deriveScene, gmSeat, redoEdit, subjectOf, systemOrder, undoEdit, type CheckedScreen, type DerivationDoc, type ScreenDoc, type SystemScene, type ViewHandle, type ViewModule, type ViewSession } from "../../ui-contract/src/index.ts";
   import { openBrowserSession } from "../../ui-contract/src/host-browser.ts";
   import { createShare, type Share } from "./share.svelte.ts";
@@ -305,6 +305,16 @@
     desk = d;
     savePref("desk", d);
   }
+  // Depth (2.4): how much every card, number and why? says. A new visitor starts at Curious; remembered on this device.
+  const storedDepth = loadPref("depth");
+  let depth = $state<Depth>(isDepth(storedDepth) ? storedDepth : "curious");
+  function chooseDepth(d: Depth) {
+    depth = d;
+    savePref("depth", d);
+  }
+  $effect(() => {
+    ws.depth = depth;
+  });
   // A system read back from the universe is looked at, never edited in place, whatever the desk.
   $effect(() => {
     // The Workshop changes the tool, not the universe, so its screens are always armed.
@@ -679,6 +689,7 @@
       r: () => chooseDesk("run"),
       p: () => (ws.screen = ws.screen === "physics" ? "system" : "physics"),
       v: () => chooseDesk("explore"),
+      d: () => chooseDepth(DEPTHS[(DEPTHS.findIndex((x) => x.value === depth) + 1) % DEPTHS.length]!.value),
       n: () => (theme = theme === "chart-room" ? "night-chart" : "chart-room"),
       t: () => document.querySelector<HTMLElement>("[role=slider]")?.focus(),
       c: () => document.querySelector<HTMLElement>(".area-chart [role=button][aria-pressed=true], .area-chart [role=button]")?.focus(),
@@ -702,7 +713,7 @@
 
 <svelte:window {onkeydown} onpointerdown={(e) => moreOpen && !(e.target as HTMLElement).closest(".more") && (moreOpen = false)} />
 
-<div class="app">
+<div class="app" data-depth={depth} data-state-hash={status.hash} data-stack-hash={status.stack} data-physics={status.campaign ? "campaign" : "base"}>
   <header class="bar">
     <!-- Where (top-level design 2.1): the place line is the title, from the largest scale shown to the one in view. -->
     <nav class="place" aria-label="Place" data-scale={railScale}>
@@ -748,6 +759,8 @@
         </select>
       </label>
     {/if}
+    <!-- How much (2.4): the depth. On a phone it lives in More. -->
+    <div class="depth-bar"><Segmented label="Depth" value={depth} options={DEPTHS} onchange={chooseDepth} slide /></div>
     <!-- Ask (2.5): the agents, promoted from the status line. Tars needs no key. -->
     <button type="button" class="barbtn ask" onclick={() => ((agentsOpen = true), agentsDialog?.showModal())} title="Ask Tars, Orac or Minerva: what can I do here?">Ask</button>
     <div class="more">
@@ -755,6 +768,7 @@
       {#if moreOpen}
         <div class="menu" id="more-menu" role="group" aria-label="More">
           <button type="button" class="ask-more" onclick={() => ((moreOpen = false), (agentsOpen = true), agentsDialog?.showModal())}>Ask Tars, Orac or Minerva</button>
+          <div class="depth-more"><span class="depth-k">Depth</span><Segmented label="Depth in More" value={depth} options={DEPTHS} onchange={chooseDepth} /></div>
           <button type="button" onclick={() => ((moreOpen = false), toWorkshop())}>Workshop</button>
           <button type="button" onclick={() => ((moreOpen = false), (offered = null), (confirmFresh = false), campaignDialog?.showModal())}>Campaign… <small>save, open, start fresh</small></button>
           <button type="button" onclick={() => ((moreOpen = false), (makeOpen = true), makeDialog?.showModal())} title="Import a V3 save or grow a new system, and add it to the campaign">Make a system…</button>
@@ -863,13 +877,17 @@
           {/if}
         </span>
       {/if}
-      <!-- The engine's own numbers, quiet at the end of the line (Engine depth will carry them in step 2). -->
-      <span class="engine-line">
-        <span>kernel {status.kernel}</span>
-        <span title="Measured capability tier of this device">tier {status.tier}</span>
-        <span title="State hash: {status.hash}" data-state-hash={status.hash}>state {status.hash.slice(0, 10)}</span>
-        <span title="Pack stack hash: {status.stack}" data-stack-hash={status.stack}>physics {status.campaign ? "campaign" : "base"} {status.stack.slice(0, 8)}</span>
-      </span>
+      <!-- The engine's own numbers by depth (2.4): Science adds the device tier, Engine the kernel and the hashes. -->
+      {#if depth !== "curious"}
+        <span class="engine-line">
+          {#if depth === "engine"}<span>kernel {status.kernel}</span>{/if}
+          <span title="Measured capability tier of this device">tier {status.tier}</span>
+          {#if depth === "engine"}
+            <span title="State hash: {status.hash}" data-engine="state">state {status.hash.slice(0, 10)}</span>
+            <span title="Pack stack hash: {status.stack}" data-engine="physics">physics {status.campaign ? "campaign" : "base"} {status.stack.slice(0, 8)}</span>
+          {/if}
+        </span>
+      {/if}
     </div>
   {/if}
 </div>
@@ -959,6 +977,7 @@
     <dt>why?</dt><dd>On any value: where it came from, at three depths (Curious, Science, Engine); "Open the flow" puts its physics on the bench</dd>
     <dt>P</dt><dd>Chart or Physics: the flow editor and change requests</dd>
     <dt>V, E, R</dt><dd>Desk: Explore (look), Build (change), Run (the table)</dd>
+    <dt>D</dt><dd>Depth: Curious, Science, Engine (how much every card and number says)</dd>
     <dt>N</dt><dd>Chart room or Night chart</dd>
     <dt>L</dt><dd>See the desk through the next lens (Basic, Advanced, Building, Running, as players see it)</dd>
   </dl>
@@ -1213,6 +1232,8 @@
     color: var(--sse-accent);
   }
   .kicker {
+    min-width: 0;
+    flex: 0 1 auto;
     font-size: 12px;
     color: var(--sse-ink-muted);
     letter-spacing: 0.08em;
@@ -1314,6 +1335,40 @@
   .diff .how {
     color: var(--sse-ink-muted);
     font-size: 11px;
+  }
+  /* Depth sits in the bar on a wide screen and in More otherwise (design 2.4 and board 4). */
+  .depth-bar :global(.seg button) {
+    height: 32px;
+    padding: 0 10px;
+    font-size: 12px;
+  }
+  .depth-more {
+    display: none;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    padding: 8px 16px;
+    border-bottom: var(--sse-line) solid var(--sse-rule);
+  }
+  .depth-more .depth-k {
+    font-size: 12px;
+    color: var(--sse-ink-muted);
+  }
+  .menu .depth-more :global(.seg button) {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    height: 36px;
+    padding: 0 10px;
+    font-size: 12px;
+  }
+  @media (max-width: 1279px) {
+    .depth-bar {
+      display: none;
+    }
+    .depth-more {
+      display: flex;
+    }
   }
   .lens {
     display: flex;
@@ -1718,6 +1773,10 @@
       overflow-x: clip;
       grid-template-columns: minmax(0, 1fr);
       background: var(--sse-ground);
+    }
+    /* The ruler takes the height it needs on a phone, so it never runs over the time tools below it. */
+    .area-ruler .fill {
+      height: auto;
     }
     .ruler-side {
       max-width: none;

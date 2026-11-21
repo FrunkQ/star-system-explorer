@@ -34,3 +34,17 @@ export async function desk(page, name) {
   const b = page.getByRole("group", { name: "Desk" }).getByRole("button", { name, exact: true });
   if ((await b.getAttribute("aria-pressed")) !== "true") await b.click();
 }
+
+/** Choose a depth: "Curious", "Science" or "Engine". A fresh browser opens at Curious. In the bar on a wide screen, in More otherwise. */
+export async function depth(page, name) {
+  if ((await page.locator(".app").getAttribute("data-depth")) === name.toLowerCase()) return;
+  const bar = page.getByRole("group", { name: "Depth", exact: true });
+  if (await bar.isVisible()) await bar.getByRole("button", { name, exact: true }).click();
+  else {
+    const toggle = page.getByRole("button", { name: "More", exact: true });
+    if ((await toggle.getAttribute("aria-expanded")) !== "true") await toggle.click();
+    await page.getByRole("group", { name: "Depth in More" }).getByRole("button", { name, exact: true }).click();
+    await toggle.click();
+  }
+  await page.waitForFunction((d) => document.querySelector(".app")?.getAttribute("data-depth") === d, name.toLowerCase());
+}
