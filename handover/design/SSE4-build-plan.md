@@ -20,6 +20,7 @@ The design sessions did **not** read the V3 or Ovid source. Work package K0 fixe
 - Deterministic paths contain no wall clock, no unordered iteration, no platform maths, no LLM output.
 - Each new physics atom starts as a GitHub issue with its spec (declaration, formula, validity, citations, golden cases), then tests, then code.
 - If the design is wrong or silent, write an ADR in `/docs/adr`, say so in the evidence packet, and ask Alex when it changes what users see. Do not quietly diverge.
+- **Processes, not classes** **[decided 21 Nov, Alex: "LEAN INTO THE PHYSICS!"]**: no physics stage may gate on a class or a typed cut-off. Each process computes its own 0-to-1 strength from the physical ratio that governs it, all processes run weighted by strength (near-zero ones are skipped), the class is a label read off the result by the class atlas, and hard edges exist only where nature has one (phase boundaries, force balances), computed from composition and given their natural width. Read `SSE4-processes-not-classes.md` (audit of today's surface gates and the replacements).
 - Published relations named in the design must be checked against their source before they are relied on; record the citation. If a named relation turns out to be misremembered, replace it and note it.
 
 ## 2. How a work package runs
@@ -126,7 +127,7 @@ Tracks can run in parallel once their dependencies are met. `needs` lists packag
 
 S8a (map export) can go at any time. Alex's rule binds every surface stage: "best calc is NO calc". Reuse any existing result first (this device, then the GM or a peer, then a pack). Raise the detail level only on approach, stay or an explicit request. A world that only gets a click never costs a full run. Climate catch-up (W7: land and sea, local albedo, current rules, retrograde winds, ice ages) belongs to the weather track.
 
-**Exogeology additions [accepted 21 Nov]**: stages S0b, S17a, S17b, S18a, S18b, S19, S20 and S21, exactly as `SSE4-rock3-comparison.md` section 5.9 and section 8. Questions 9 to 13 there bind them. The research, the gap table, the numbers and the sources are in `SSE4-exogeology-gaps.md`, which must be read before any of these stages (section 10 carries the Consensus research's changes). Build order, fitted into the list above:
+**Exogeology additions [accepted 21 Nov]** (S0b is now "process strengths for regimes", per `SSE4-processes-not-classes.md` section 3): stages S0b, S17a, S17b, S18a, S18b, S19, S20 and S21, exactly as `SSE4-rock3-comparison.md` section 5.9 and section 8. Questions 9 to 13 there bind them. The research, the gap table, the numbers and the sources are in `SSE4-exogeology-gaps.md`, which must be read before any of these stages (section 10 carries the Consensus research's changes). Build order, fitted into the list above:
 - S0b goes with S16a, because both change the S0 and S1 goldens on purpose. Its fixes: an ice shell only where the shell is active, and a cold ice lid otherwise; "is there an ocean?" kept apart from "is the shell active?"; roundness by material; crater renewal only where the regime is active; a moon's tidal history as an input.
 - S17a, moving ices at D0 and D1, comes right after S14a.
 - S18a ice-shell stresses and S18b cryovolcanism come next.
