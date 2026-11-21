@@ -633,6 +633,19 @@ energy balance). Details in `handover/packages/W7a.md`.
 | no sand supply | Dunes wherever the wind and dryness allow | Venus's dune fields are few (Magellan) because its sand is scarce | Sand budget from geology (S9) | to add |
 | Titan's dunes | Our Titan mean wind near 0.5 m/s never reaches its 2 m/s threshold, so no dunes yet | Titan's dunes are built by rare strong equinox winds | W10 storms as strengths | known gap, W10 |
 
+### Orbital forcing and ice ages (W9 part 2, `crates/sse-climate/src/forcing.rs`, `climate.forcing`, `crates/sse-kernel/src/ice_ages.rs`)
+
+| Where | Instead of the physics | Why | Real physics to replace it | Status |
+|---|---|---|---|---|
+| `forcing.ellipticity_spin_power` 2 | Dynamical ellipticity E_d = Earth's 0.00327381 × (ω/ω_Earth)² | A hydrostatic bulge grows as the spin squared; Mars's real E_d is larger (Tharsis), so non-hydrostatic worlds are off | E_d from the interior model and loads (S2) | ours |
+| `forcing.moon_geometry` 1 | g_L = 1 in Zeebe's β | Reproduces Earth's 50.4″ a year with the Moon (test) | g_L from the moon's orbit inclination and eccentricity | tuned (Earth) |
+| kernel `ice_ages.rs` drawn angles | Siblings' inclinations (up to 3°), nodes and perihelia drawn from each planet's address | Formation does not publish them; a coplanar draw would give no tilt cycles at all | Inclinations and angles from the formation run (F4) | stand-in, labelled in the track's source |
+| Laplace-Lagrange (T1) | Secular theory only: no resonances, no chaos (Mars's tilt swings far wider in reality), no spin-orbit resonance capture | T1's quiet-stretch theory | Symplectic windows with the spin equations (T1's n-body) | documented |
+| forcing.rs linear ice response | The ice balance at a place moves linearly with its summer energy, measured from one climate run at 1° less tilt | One extra climate per world instead of one per sample | Ice-sheet mass balance with ice-albedo and elevation feedback (ice sheets integrate, so real ice ages beat at 41 and 100 kyr) | ours |
+| `forcing.window_yr` 400 kyr, `sample_yr` 2 kyr | One window read for the whole epoch | The review: ice ages are an average over the epoch's insolation, not stepped | The window chosen at the epoch's own time in T1's history | ours |
+| advances counted as upward zero crossings | Each crossing of the ice balance from loss to gain is one advance | No hysteresis or minimum ice volume | Ice volume integrated through the window | ours |
+| moons and lone worlds | A moon, or a planet with no siblings, gets no orbit track and so no cycles | A lone planet has no secular forcing; a moon's own forcing (its planet's wobble) is not modelled | Satellite secular theory | documented |
+
 ## Game-system packs
 
 Codes that a game reads from physics. Where a code's band had to be drawn on the physics, the line is a choice,
