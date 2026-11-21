@@ -7,56 +7,56 @@
   "version": "weather-v1",
   "worlds": [
     {
-      "climate": "f31f97dbad7b6cc611b9f0073c94699153db955c0fbed3550e7f1464b5ab86e4",
+      "climate": "54545aae1329027f86295278a7ba132d825e72ceaed289f3b4f4fb85749fe3fb",
       "condensate": "water",
-      "field": "4f864c673d97701854d753a8385166d7d28195ab08c1dd161a3c06e23f64754b",
+      "field": "a78bc1356b7e97a6a05f8bad1011f2643f7271aaf9e585042dff111e07a31869",
       "regime": "earth-like",
       "world": "Earth"
     },
     {
-      "climate": "6966014c20010595edf9b6c3453165fa69c24e9c0990af1998679146223f7f43",
+      "climate": "8eb07c6afabbb7983530f99127a9955d926c968a35da3325ecbf3319648e8477",
       "condensate": "water",
-      "field": "78d02b5299cfba3c1dbe9bd15e04b29e570f738a3f0d6c0240049809d0403da6",
+      "field": "bcb842d5d56eefe9a754f8a13bf1981a68fd521c93adb2a69fc9460cff067abd",
       "regime": "thin-air",
       "world": "Mars"
     },
     {
-      "climate": "4a2aff87fa71be3dc704a249a38aefcf18bab738308aa40053b1731975945e39",
+      "climate": "5f87e0398920848c8bd13652662bf1ef6abd51812bfbe038facd4270b980de18",
       "condensate": "sulphuric acid",
-      "field": "35600d2663e68fcb8814857f87c16877f3123396e207329b0931a93d4320cd05",
+      "field": "7e16a2df368c6f374d493849f514945376ea81dfdc9e152da6663d64d1936bbf",
       "regime": "slow-rotator",
       "world": "Venus"
     },
     {
-      "climate": "b94d6d0c3eac21742039f5c0e79912c20400911e420590a412237b18ba9b278a",
+      "climate": "076b6d5e513591c7fd7a70cfb46f62da1bfa87d3737ef5734180e9312118a524",
       "condensate": "methane",
-      "field": "f46999223e02f285c15dea790d796182b9167e4287aa3b5ca552d1faf876b96b",
+      "field": "56a9befcc6c462ccaff82d1ff5b1aec962e5134efa0924f0695d83d4f69e8784",
       "regime": "slow-rotator",
       "world": "Titan"
     },
     {
-      "climate": "1b889e1bb9a64efafb0f344b4ea4f43b484533e53b75a2ded4fbc599de8913ac",
+      "climate": "9fb3e2e1cf8c60366dae735a69a5170b97826654333d3f472120c59475d87fa3",
       "condensate": "water",
-      "field": "2194a42d8bb621caef09d74fec7cde986dd620ee242dd2b0837a297e176cb2ef",
+      "field": "6d1b57b42552e7c73701def7b0a74b9741fbd91fc931c61810e869128ba14ba2",
       "regime": "tidally-locked",
       "world": "Locked temperate world"
     },
     {
-      "climate": "b764400dae0963ae93a960153c259219f6dadffae3bcab52eb1dc368da612204",
+      "climate": "de273e48cd0b7390a326feebbadf44b027353ad2a650c3bf667825edb78158fa",
       "condensate": "water",
-      "field": "bba16f84dd1c607b1742f59bd271a1c053ef5d0d91c411503ba5e16592340097",
+      "field": "1c9041281d50f065d8e5bb2f25929ec8b50851d5508b72c65be6489ea2fd9478",
       "regime": "fast-rotator",
       "world": "Fast-spinning Earth"
     },
     {
-      "climate": "84c4eadc786bfd666eb82fd299e736b9d773992c44129d977f55b63c7e6d4dea",
+      "climate": "3700ec75728cbec0e1a60cb703c5f331d7e8780d8aecaa65824210ee9fe5d28b",
       "condensate": "",
       "field": "e59db713555f97598a23418e0be820fd95d2335b0dd7b2e4bea59c2057f89308",
       "regime": "airless",
       "world": "Moon"
     },
     {
-      "climate": "91c27f228aadec1e2df8f13aa17cf7911ccf034de00ee1e38ac3bdbc433861b2",
+      "climate": "a70a39e250b2e60a9ba288e05deab467f4b93758163a2873b22ccc9be853db5e",
       "condensate": "ammonia",
       "field": "eba2188d6346ac197cd8cd6b79e66d5a1674d803e2f11b9b01ad8b5c10b42391",
       "regime": "banded-giant",

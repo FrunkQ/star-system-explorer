@@ -160,19 +160,66 @@ pub struct RegimeRule {
 }
 
 /// Quantities a regime rule may test.
-pub const QUANTITIES: [&str; 6] = [
+/// What a label rule may read: facts and the strengths (W7b). The physics
+/// never reads the label.
+pub const QUANTITIES: [&str; 13] = [
     "pressure_bar",
     "solid",
     "star_locked",
     "hadley_edge_deg",
     "cells",
     "solar_day_hours",
+    "radiative_days",
+    "super_rotation",
+    "baroclinic",
+    "day_night",
+    "collapse",
+    "collisional",
+    "thermal_rossby",
 ];
+
+/// The process strength constants (W7b, `strengths.rs`).
+#[derive(Clone, PartialEq, Debug, Serialize, Deserialize)]
+pub struct StrengthSettings {
+    /// Eddy wind as a share of the thermal wind scale (the Rhines length's U).
+    pub eddy_share: f64,
+    /// Super-rotation: Ro_T where the strength is ½, and how steeply it turns on.
+    pub super_rotation_critical: f64,
+    pub super_rotation_steepness: f64,
+    /// Lindzen and Farrell's 0.31 in σ = 0.31 f (dU/dz) / N.
+    pub lindzen_farrell: f64,
+    /// N² as a share of the isothermal (g/T)(g/c_p).
+    pub stable_share: f64,
+    /// Surface drag coefficient C_D and Komacek and Showman's Δln p.
+    pub drag_coefficient: f64,
+    pub log_pressure_span: f64,
+    /// Wordsworth 2015's grey opacity κ, m²/kg.
+    pub thin_opacity_m2_kg: f64,
+    /// Width of the collapse step as a share of the condensation temperature.
+    pub collapse_width: f64,
+    /// Kinetic diameter of an air molecule, m (N₂ 3.7e-10).
+    pub molecule_diameter_m: f64,
+    /// The range each process's paper tested; a world outside it is marked.
+    #[serde(default)]
+    pub tested: Vec<Tested>,
+    pub source: String,
+}
+
+/// One tested range: `process` was checked by `by` for `quantity` within
+/// [min, max] (either bound may be open).
+#[derive(Clone, PartialEq, Debug, Serialize, Deserialize)]
+pub struct Tested {
+    pub process: String,
+    pub quantity: String,
+    #[serde(default)]
+    pub min: Option<f64>,
+    #[serde(default)]
+    pub max: Option<f64>,
+    pub by: String,
+}
 
 #[derive(Clone, PartialEq, Debug, Serialize, Deserialize)]
 pub struct Circulation {
-    /// Wind scale in the Rhines length, m/s (one value until W7b).
-    pub wind_m_s: f64,
     /// Held and Hou: fractional equator-to-pole contrast of radiative
     /// equilibrium temperature, and tropopause depth in scale heights.
     pub delta_h: f64,
@@ -202,6 +249,7 @@ pub struct ClimateSettings {
     pub surface_wind_share: f64,
     pub supply: Supply,
     pub circulation: Circulation,
+    pub strengths: StrengthSettings,
     pub defaults: Defaults,
     pub substances: Vec<Substance>,
     pub references: Vec<Reference>,

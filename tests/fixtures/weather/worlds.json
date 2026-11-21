@@ -27,7 +27,8 @@
     },
     "liquid": "water",
     "ocean_fraction": 0.71,
-    "internal_flux_w_m2": 0.0
+    "internal_flux_w_m2": 0.0,
+    "perihelion_lon_deg": 283.0
    }
   },
   {
@@ -56,7 +57,8 @@
     },
     "liquid": null,
     "ocean_fraction": 0.0,
-    "internal_flux_w_m2": 0.0
+    "internal_flux_w_m2": 0.0,
+    "perihelion_lon_deg": 251.0
    }
   },
   {

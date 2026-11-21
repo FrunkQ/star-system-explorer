@@ -70,7 +70,8 @@ pub struct Survey {
 
 /// The day length the climate reads: given, else a locked world's orbital period.
 pub fn day_hours(env: &SurfaceEnvelope, body: &Body, given: Option<f64>) -> Option<f64> {
-    given.or_else(|| {
+    // A regime reads the length of the day, not its sense.
+    given.or(body.spin_hours.map(f64::abs)).or_else(|| {
         let o = body.orbit.as_ref()?;
         env.locked.then(|| {
             let years = m::sqrt(o.a_au * o.a_au * o.a_au / o.host_msun.max(1e-12));

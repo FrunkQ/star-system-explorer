@@ -651,6 +651,29 @@ fn bodies_from_facts(
             }),
             locked: None,
             tidal_history: vec![],
+            spin_hours: r
+                .get("body.rotation_period")
+                .and_then(as_f64)
+                .map(|t| t / 3600.0),
+            obliquity_deg: r
+                .get("body.obliquity")
+                .or_else(|| r.get("body.axial_tilt"))
+                .and_then(as_f64)
+                .map(|x| x * 180.0 / m::PI),
+            spin_source: r
+                .keys()
+                .any(|k| {
+                    k.starts_with("body.rotation_period")
+                        || k.starts_with("body.obliquity")
+                        || k.starts_with("body.axial_tilt")
+                })
+                .then(|| {
+                    if r.keys().any(|k| k.starts_with("v3.")) {
+                        "authored (V3)".to_string()
+                    } else {
+                        "authored".to_string()
+                    }
+                }),
         });
     }
     out

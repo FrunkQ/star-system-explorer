@@ -7,7 +7,7 @@
   "swap": [
     "Weather block sse.weather.rules 1 (rule) -> sse.weather.zonal-ebm 1 (simulated).",
     "Earth: cloud 0.63 -> 0.63 (+0.00, within tolerance of ±0.10).",
-    "Earth: rain 0.848 -> 0.848 m/yr (+0 %, within tolerance of ±25 %).",
+    "Earth: rain 0.847 -> 0.847 m/yr (+0 %, within tolerance of ±25 %).",
     "Locked temperate world: cloud 0.25 -> 0.25 (+0.00, within tolerance of ±0.10).",
     "Locked temperate world: rain 0.137 -> 0.137 m/yr (+0 %, within tolerance of ±25 %).",
     "Mars: cloud 0.03 -> 0.03 (+0.00, within tolerance of ±0.10).",
@@ -24,23 +24,23 @@
   ],
   "worlds": [
     {
-      "climate": "f31f97dbad7b6cc611b9f0073c94699153db955c0fbed3550e7f1464b5ab86e4",
+      "climate": "54545aae1329027f86295278a7ba132d825e72ceaed289f3b4f4fb85749fe3fb",
       "cloud": [
-        0.6336348126769693,
-        0.6336348126769693
+        0.6343768936612331,
+        0.6343768936612331
       ],
       "precip_m_yr": [
-        0.8478474779901402,
-        0.8478474779901402
+        0.8474744286261722,
+        0.8474744286261722
       ],
       "within": true,
       "world": "Earth"
     },
     {
-      "climate": "6966014c20010595edf9b6c3453165fa69c24e9c0990af1998679146223f7f43",
+      "climate": "8eb07c6afabbb7983530f99127a9955d926c968a35da3325ecbf3319648e8477",
       "cloud": [
-        0.033900926699968484,
-        0.033900926699968484
+        0.034437708370718016,
+        0.034437708370718016
       ],
       "precip_m_yr": [
         0.0,
@@ -50,7 +50,7 @@
       "world": "Mars"
     },
     {
-      "climate": "4a2aff87fa71be3dc704a249a38aefcf18bab738308aa40053b1731975945e39",
+      "climate": "5f87e0398920848c8bd13652662bf1ef6abd51812bfbe038facd4270b980de18",
       "cloud": [
         1.0,
         1.0
@@ -63,46 +63,46 @@
       "world": "Venus"
     },
     {
-      "climate": "b94d6d0c3eac21742039f5c0e79912c20400911e420590a412237b18ba9b278a",
+      "climate": "076b6d5e513591c7fd7a70cfb46f62da1bfa87d3737ef5734180e9312118a524",
       "cloud": [
-        0.0010005090504488733,
-        0.0010005090504488733
+        0.0010022082331955797,
+        0.0010022082331955797
       ],
       "precip_m_yr": [
-        0.004124359762863751,
-        0.004124359762863751
+        0.00413096776385374,
+        0.00413096776385374
       ],
       "within": true,
       "world": "Titan"
     },
     {
-      "climate": "1b889e1bb9a64efafb0f344b4ea4f43b484533e53b75a2ded4fbc599de8913ac",
+      "climate": "9fb3e2e1cf8c60366dae735a69a5170b97826654333d3f472120c59475d87fa3",
       "cloud": [
-        0.2514651890624351,
-        0.2514651890624351
+        0.2514662723019177,
+        0.2514662723019177
       ],
       "precip_m_yr": [
-        0.13665006013024178,
-        0.13665006013024178
+        0.13665006013024183,
+        0.13665006013024183
       ],
       "within": true,
       "world": "Locked temperate world"
     },
     {
-      "climate": "b764400dae0963ae93a960153c259219f6dadffae3bcab52eb1dc368da612204",
+      "climate": "de273e48cd0b7390a326feebbadf44b027353ad2a650c3bf667825edb78158fa",
       "cloud": [
-        0.6919079130444851,
-        0.6919079130444851
+        0.6774277075811226,
+        0.6774277075811226
       ],
       "precip_m_yr": [
-        0.8259799290972025,
-        0.8259799290972025
+        0.8260941663381733,
+        0.8260941663381733
       ],
       "within": true,
       "world": "Fast-spinning Earth"
     },
     {
-      "climate": "84c4eadc786bfd666eb82fd299e736b9d773992c44129d977f55b63c7e6d4dea",
+      "climate": "3700ec75728cbec0e1a60cb703c5f331d7e8780d8aecaa65824210ee9fe5d28b",
       "cloud": [
         0.0,
         0.0
@@ -115,10 +115,10 @@
       "world": "Moon"
     },
     {
-      "climate": "91c27f228aadec1e2df8f13aa17cf7911ccf034de00ee1e38ac3bdbc433861b2",
+      "climate": "a70a39e250b2e60a9ba288e05deab467f4b93758163a2873b22ccc9be853db5e",
       "cloud": [
-        0.0016804605775774866,
-        0.0016804605775774866
+        0.0017071540799379814,
+        0.0017071540799379814
       ],
       "precip_m_yr": [
         0.0,

@@ -273,8 +273,9 @@ pub fn cycle(cs: &ClimateSettings, c: &Conditions) -> Vec<Season> {
         .map(|k| {
             let phase = (k as f64 + 0.5) / steps as f64;
             let decl = declination_deg(c, phase);
+            let near = orbit_at(c, phase).1;
             lat.iter()
-                .map(|l| insolation(c.flux_w_m2, *l, decl))
+                .map(|l| insolation(c.flux_w_m2 * near, *l, decl))
                 .collect()
         })
         .collect();
@@ -439,15 +440,29 @@ fn moisture(
         let sigma = mo.hadley_width_x * m::sin(rad(hadley.clamp(1.0, 90.0)))
             / m::sin(rad(mo.hadley_reference_deg));
         let h: Vec<f64> = (0..n).map(|j| t[j] + hq[j]).collect();
-        let h_eq = 0.5 * (h[(n - 1) / 2] + h[n / 2]);
-        let h_top = mo.h_top_ratio * h_eq;
+        // The rising branch sits where the moist static energy peaks this
+        // season (the energy-flux equator), not on the geographic equator, so
+        // on a steeply tilted world the rain belt chases the overhead sun.
+        // The peak is placed between bands by a parabola through the top three.
+        let jm = (0..n).fold(0, |b, j| if h[j] > h[b] { j } else { b });
+        let (x0, h_peak) = if jm > 0 && jm + 1 < n {
+            let (a, b, cc) = (h[jm - 1], h[jm], h[jm + 1]);
+            let den = a - 2.0 * b + cc;
+            let off = if den < 0.0 { 0.5 * (a - cc) / den } else { 0.0 };
+            let off = off.clamp(-0.5, 0.5);
+            let lat0 = lat[jm] + off * (lat[1] - lat[0]);
+            (m::sin(rad(lat0)), b - 0.25 * (a - cc) * off)
+        } else {
+            (m::sin(rad(lat[jm])), h[jm])
+        };
+        let h_top = mo.h_top_ratio * h_peak;
         // Northward fluxes at the band edges, in the temperature units the
         // energy balance diffuses (times D), zero at the poles.
         let flux_q: Vec<f64> = (0..n.saturating_sub(1))
             .map(|j| {
                 let x = m::sin(rad(-90.0 + 180.0 * (j as f64 + 1.0) / n as f64));
                 let wh = if sigma > 0.0 {
-                    m::exp(-(x * x) / (sigma * sigma))
+                    m::exp(-((x - x0) * (x - x0)) / (sigma * sigma))
                 } else {
                     0.0
                 };
@@ -521,7 +536,35 @@ fn moisture(
 /// Sun's latitude overhead on this fraction of the year (0 = northern spring).
 pub fn declination_deg(c: &Conditions, year_phase: f64) -> f64 {
     let e = c.obliquity_deg * m::PI / 180.0;
-    m::asin(m::sin(e) * m::sin(2.0 * m::PI * year_phase)) * 180.0 / m::PI
+    m::asin(m::sin(e) * m::sin(rad(orbit_at(c, year_phase).0))) * 180.0 / m::PI
+}
+
+/// Where the world is at a fraction of its year counted from the northern
+/// spring equinox (so dates keep their seasons whatever the orbit): its
+/// solar longitude (degrees from that equinox) and the sunlight factor
+/// (a / r)². Kepler's equation M = E − e sin E by Newton's method (a fixed
+/// 12 steps, so every device gets the same answer).
+pub fn orbit_at(c: &Conditions, year_phase: f64) -> (f64, f64) {
+    let e = c.eccentricity.clamp(0.0, 0.95);
+    // Mean anomaly at the equinox, where the true anomaly is −ϖ.
+    let nu0 = -rad(c.perihelion_lon_deg);
+    let e0 = 2.0
+        * m::atan2(
+            m::sqrt(1.0 - e) * m::sin(nu0 / 2.0),
+            m::sqrt(1.0 + e) * m::cos(nu0 / 2.0),
+        );
+    let mm = e0 - e * m::sin(e0) + 2.0 * m::PI * year_phase;
+    let mut ea = if e > 0.8 { m::PI } else { mm };
+    for _ in 0..12 {
+        ea -= (ea - e * m::sin(ea) - mm) / (1.0 - e * m::cos(ea));
+    }
+    let nu = 2.0
+        * m::atan2(
+            m::sqrt(1.0 + e) * m::sin(ea / 2.0),
+            m::sqrt(1.0 - e) * m::cos(ea / 2.0),
+        );
+    let r = 1.0 - e * m::cos(ea);
+    (nu * 180.0 / m::PI + c.perihelion_lon_deg, 1.0 / (r * r))
 }
 
 /// The mean of several seasons, band by band.
