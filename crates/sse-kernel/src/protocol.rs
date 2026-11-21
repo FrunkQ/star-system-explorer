@@ -246,10 +246,47 @@ pub enum Request {
         #[ts(optional, type = "unknown")]
         settings: Option<serde_json::Value>,
     },
-    /// Commit a look-ahead branch. With `move_now_myr`, the system's "now"
-    /// moves to that star age (an authored `system.now_year` fact).
+    /// "Make this system this old, today" (top-level design 12.2 and 17.1):
+    /// the campaign's now stays put and this system's star is made `age_myr`
+    /// old at it (older or younger), by an authored `system.age_shift_myr`.
+    /// The kernel then works back one plausible birthplace and path for the
+    /// star in the galaxy (a `system.origin` event, evidence resolved), unless
+    /// the GM has pinned one (`origin.pinned`). `composition`: `follow`
+    /// (default: its [Fe/H] becomes the gas of that birthplace, written as
+    /// `star.metallicity_z`; the planets are not re-derived yet) or `keep`
+    /// (birthplaces weighed by it, marked unusual when no birthplace of that
+    /// age explains it). IMPOSSIBLE (allowed, stamped with why) only when no
+    /// origin fits. GM machine only.
+    SetSystemAge {
+        system: String,
+        age_myr: f64,
+        #[serde(default)]
+        #[ts(optional)]
+        composition: Option<String>,
+    },
+    /// Commit a look-ahead branch (top-level design 12.2). `accept` names
+    /// what accepting means, at star age `move_now_myr` (default the
+    /// look-ahead's target):
+    /// - `campaign_now`: "make this the campaign's now". The one campaign
+    ///   clock moves on by the years between, so every system is that much
+    ///   older; the branch is kept as this system's future.
+    /// - `system_age`: "make this system this old, today". The clock stays;
+    ///   this star's birth moves earlier instead (the look-ahead is run again
+    ///   from the earlier birth, so its events fall before today), with a
+    ///   reconstructed origin as `set_system_age`. The default when only
+    ///   `move_now_myr` is given.
+    ///
+    /// With neither, the branch is kept as history and nothing moves.
+    /// (T2's per-system `system.now_year` is no longer written.)
     CommitLookAhead {
         branch: String,
+        #[serde(default)]
+        #[ts(optional)]
+        accept: Option<String>,
+        /// For `system_age`: `follow` (default) or `keep`, as `set_system_age`.
+        #[serde(default)]
+        #[ts(optional)]
+        composition: Option<String>,
         #[serde(default)]
         #[ts(optional)]
         move_now_myr: Option<f64>,
@@ -1103,6 +1140,7 @@ impl Request {
             Request::Atoms { .. } => "atoms",
             Request::LookAhead { .. } => "look_ahead",
             Request::CommitLookAhead { .. } => "commit_look_ahead",
+            Request::SetSystemAge { .. } => "set_system_age",
             Request::ImportV3 { .. } => "import_v3",
             Request::RunFormation { .. } => "run_formation",
             Request::ReadWorldStack { .. } => "read_world_stack",
@@ -1216,7 +1254,16 @@ pub fn ops() -> Vec<OpInfo> {
             Cost::Medium,
             "GM edit: a Solar System run to a cold white dwarf is about 0.2 M work units; weak devices ask the GM machine",
         ),
-        o("commit_look_ahead", Cost::Trivial, "GM machine only in a session"),
+        o(
+            "commit_look_ahead",
+            Cost::Trivial,
+            "GM machine only in a session; with accept system_age, the look-ahead again plus set_system_age",
+        ),
+        o(
+            "set_system_age",
+            Cost::Medium,
+            "GM machine only; the campaign's galaxy grown once (about a second native) and a few hundred ring reads",
+        ),
         o(
             "import_v3",
             Cost::Light,
@@ -1485,6 +1532,40 @@ pub enum Response {
         #[serde(default, skip_serializing_if = "Option::is_none")]
         #[ts(optional)]
         aged_at_myr: Option<f64>,
+        /// `accept: campaign_now`: the campaign's new now, seconds.
+        #[serde(default, skip_serializing_if = "Option::is_none")]
+        #[ts(optional, type = "number")]
+        campaign_now_s: Option<i64>,
+        /// `accept: system_age`: what `set_system_age` answers.
+        #[serde(default, skip_serializing_if = "Option::is_none")]
+        #[ts(optional, type = "unknown")]
+        system_age: Option<serde_json::Value>,
+    },
+    /// `set_system_age`: ages before and after (Myr), the system's age shift,
+    /// the authored event, the origin (`origin`: label, birth_gyr, age_gyr,
+    /// birth_r_kpc, birth_phi_deg, now_r_kpc, migrated_kpc, sigma_kpc,
+    /// feh_gas, feh, composition, unusual?, impossible?, path [[t_gyr, r_kpc,
+    /// phi_deg]], why, references) and its event, `impossible` when no origin
+    /// fits, and the composition change.
+    SystemAgeSet {
+        system: String,
+        before_myr: f64,
+        age_myr: f64,
+        shift_myr: f64,
+        event_id: String,
+        #[serde(default, skip_serializing_if = "Option::is_none")]
+        #[ts(optional)]
+        origin_event: Option<String>,
+        #[serde(default, skip_serializing_if = "Option::is_none")]
+        #[ts(optional, type = "unknown")]
+        origin: Option<serde_json::Value>,
+        #[serde(default, skip_serializing_if = "Option::is_none")]
+        #[ts(optional)]
+        impossible: Option<String>,
+        /// `{mode, feh_before, feh_after, z_before, z_after, rederive}`.
+        #[ts(type = "unknown")]
+        composition: serde_json::Value,
+        state_hash: String,
     },
     Discarded {
         branch: String,

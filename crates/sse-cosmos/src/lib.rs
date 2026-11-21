@@ -13,6 +13,7 @@ pub mod galaxy;
 pub mod haloes;
 pub mod model;
 pub mod nucleus;
+pub mod origin;
 pub mod patch;
 pub mod rings;
 pub mod scenario;
@@ -145,3 +146,5 @@ mod g6_tests;
 
 #[cfg(test)]
 mod nucleus_tests;
+#[cfg(test)]
+mod origin_tests;

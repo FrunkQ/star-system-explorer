@@ -21,7 +21,19 @@ hex: string, unit: number, } | { "type": "branch_opened", branch: string, } | { 
 /**
  * `commit_look_ahead` with `write_back`: the aged-state event and its star age.
  */
-aged_event?: string, aged_at_myr?: number, } | { "type": "discarded", branch: string, } | { "type": "job_started", job: number, total_units: number, cost: Cost, } | { "type": "job_progress", job: number, done_units: number, total_units: number, } | { "type": "job_done", job: number, done_units: number, result: unknown, } | { "type": "job_cancelled", job: number, } | { "type": "manifest", manifest: unknown, manifest_id: string, } | { "type": "scene", scene: unknown, scene_hash: string, } | { "type": "atoms", atoms: unknown[], } | { "type": "scan_toggled", event_id: string, 
+aged_event?: string, aged_at_myr?: number, 
+/**
+ * `accept: campaign_now`: the campaign's new now, seconds.
+ */
+campaign_now_s?: number, 
+/**
+ * `accept: system_age`: what `set_system_age` answers.
+ */
+system_age?: unknown, } | { "type": "system_age_set", system: string, before_myr: number, age_myr: number, shift_myr: number, event_id: string, origin_event?: string, origin?: unknown, impossible?: string, 
+/**
+ * `{mode, feh_before, feh_after, z_before, z_after, rederive}`.
+ */
+composition: unknown, state_hash: string, } | { "type": "discarded", branch: string, } | { "type": "job_started", job: number, total_units: number, cost: Cost, } | { "type": "job_progress", job: number, done_units: number, total_units: number, } | { "type": "job_done", job: number, done_units: number, result: unknown, } | { "type": "job_cancelled", job: number, } | { "type": "manifest", manifest: unknown, manifest_id: string, } | { "type": "scene", scene: unknown, scene_hash: string, } | { "type": "atoms", atoms: unknown[], } | { "type": "scan_toggled", event_id: string, 
 /**
  * The view now in force for the audience at that address.
  */

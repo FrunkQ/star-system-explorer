@@ -6,6 +6,7 @@
 #![allow(clippy::result_large_err)]
 
 mod adopt;
+mod clock;
 pub mod contract;
 mod cosmos;
 mod descent;
@@ -655,6 +656,194 @@ impl Kernel {
         })
     }
 
+    /// A system's spec as resolved now (with the one clock's shifts).
+    fn system_spec(&mut self, a: &Address) -> Result<sse_time::epoch::SystemSpec, Response> {
+        let u = self.universe()?;
+        if !u.root.contains(a) {
+            return Err(err(
+                "bad_address",
+                format!("{a} is not in universe {}", u.root),
+            ));
+        }
+        let key = a.to_string();
+        if !u.runs.contains_key(&key) {
+            if let Some(req) = adopt::formation_request(&u.chronicle, a) {
+                let (_, run, _) = systems::form(req.into())?;
+                u.runs.insert(key.clone(), run);
+            }
+        }
+        let s = sse_surface::scenario::settings();
+        let w = adopt::worlds_at(&u.chronicle, a, None, u.runs.get(&key), &s)?;
+        w.spec.ok_or_else(|| {
+            err(
+                "no_star",
+                format!("{a} has no star with a mass and an age to set"),
+            )
+        })
+    }
+
+    /// "Make this system this old, today" (top-level design 12.2, 17.1).
+    fn set_system_age(
+        &mut self,
+        a: &Address,
+        age_myr: f64,
+        composition: Option<&str>,
+        causes: Vec<ContentHash>,
+        fallback: Option<sse_time::epoch::SystemSpec>,
+    ) -> Result<Response, Response> {
+        if !age_myr.is_finite() || age_myr < 0.0 {
+            return Err(err(
+                "bad_age",
+                format!("age {age_myr} Myr must be 0 or more"),
+            ));
+        }
+        let keep = match composition.unwrap_or("follow") {
+            "follow" => false,
+            "keep" => true,
+            other => {
+                return Err(err(
+                    "bad_composition",
+                    format!("composition {other:?}: follow or keep"),
+                ))
+            }
+        };
+        // The kernel's own reading of the system; a look-ahead's spec when the
+        // universe holds no facts for it (a system given whole by the client).
+        let spec = match (self.system_spec(a), fallback) {
+            (Ok(s), _) => s,
+            (Err(_), Some(f)) => f,
+            (Err(e), None) => return Err(e),
+        };
+        let before = spec.age_myr;
+        let u = self.universe()?;
+        let all = u.chronicle.state_at(UniverseTime::seconds(i64::MAX));
+        let shift = clock::age_shift_myr(&all, a) + (age_myr - before);
+        let feh_before = sse_core::math::log10(spec.z / adopt::DEFAULT_Z);
+        let pinned = all.get(a, clock::ORIGIN_PINNED) == Some(&Value::Bool(true));
+        let place = |k: &str| all.get(a, k).and_then(clock::as_f64);
+        let origin = if pinned {
+            None
+        } else {
+            Some(cosmos::reconstruct_origin(
+                &u.seed,
+                &u.root,
+                cosmos::OriginAt {
+                    age_gyr: age_myr / 1000.0,
+                    elapsed_gyr: clock::elapsed_myr(&u.chronicle) / 1000.0,
+                    r_now_kpc: place("system.galactic_r_kpc"),
+                    phi_now_deg: place("system.galactic_phi_deg"),
+                    keep_feh: keep.then_some(feh_before),
+                },
+            )?)
+        };
+        let impossible = origin.as_ref().and_then(|o| o.impossible.clone());
+        let feh_after = match (&origin, keep, &impossible) {
+            (Some(o), false, None) => o.feh,
+            _ => feh_before,
+        };
+        let z_after = adopt::DEFAULT_Z * sse_core::math::pow(10.0, feh_after);
+        let mut f = BTreeMap::new();
+        f.insert(clock::AGE_SHIFT.to_string(), Value::Float(shift));
+        match &impossible {
+            Some(why) => {
+                f.insert(clock::AGE_IMPOSSIBLE.to_string(), Value::Text(why.clone()));
+            }
+            None if all.get(a, clock::AGE_IMPOSSIBLE).is_some() => {
+                f.insert(clock::AGE_IMPOSSIBLE.to_string(), Value::Null);
+            }
+            None => {}
+        }
+        let rederive = !keep && impossible.is_none() && origin.is_some() && feh_after != feh_before;
+        if rederive {
+            f.insert("star.metallicity_z".to_string(), Value::Float(z_after));
+        }
+        let e = clock::timeless_set(
+            &u.chronicle,
+            a,
+            f,
+            if impossible.is_some() {
+                Evidence::AuthoredImpossible
+            } else {
+                Evidence::Authored
+            },
+            causes,
+            "",
+            Publisher::new("gm", "age-system", "1"),
+        )
+        .map_err(|e| err("bad_event", e))?;
+        let id = u
+            .chronicle
+            .append(e)
+            .map_err(|e| err("chronicle", format!("{e}")))?;
+        let mut origin_event = None;
+        if let (Some(o), None) = (&origin, &impossible) {
+            let mut g = BTreeMap::new();
+            let fl = |x: f64| Value::Float(x);
+            g.insert("origin.label".to_string(), Value::Text(o.label.clone()));
+            g.insert("origin.birth_gyr".to_string(), fl(o.birth_gyr));
+            g.insert("origin.age_gyr".to_string(), fl(o.age_gyr));
+            g.insert("origin.birth_r_kpc".to_string(), fl(o.birth_r_kpc));
+            g.insert("origin.birth_phi_deg".to_string(), fl(o.birth_phi_deg));
+            g.insert("origin.now_r_kpc".to_string(), fl(o.now_r_kpc));
+            g.insert("origin.migrated_kpc".to_string(), fl(o.migrated_kpc));
+            g.insert("origin.feh_gas".to_string(), fl(o.feh_gas));
+            g.insert("origin.feh".to_string(), fl(o.feh));
+            g.insert(
+                "origin.composition".to_string(),
+                Value::Text(o.composition.clone()),
+            );
+            g.insert("origin.why".to_string(), Value::Text(o.why.clone()));
+            g.insert(
+                "origin.unusual".to_string(),
+                o.unusual.clone().map_or(Value::Null, Value::Text),
+            );
+            g.insert(
+                "origin.path".to_string(),
+                Value::Text(serde_json::to_string(&o.path).expect("plain data")),
+            );
+            let e = clock::timeless_set(
+                &u.chronicle,
+                a,
+                g,
+                Evidence::Resolved,
+                vec![id],
+                clock::ORIGIN_KIND,
+                Publisher::new("sse.base-cosmology", "origin", "1"),
+            )
+            .map_err(|e| err("bad_event", e))?;
+            origin_event = Some(
+                u.chronicle
+                    .append(e)
+                    .map_err(|e| err("chronicle", format!("{e}")))?
+                    .hex(),
+            );
+        }
+        Ok(Response::SystemAgeSet {
+            system: a.to_string(),
+            before_myr: before,
+            age_myr,
+            shift_myr: shift,
+            event_id: id.hex(),
+            origin_event,
+            origin: origin.map(|o| serde_json::to_value(o).expect("plain data")),
+            impossible,
+            composition: serde_json::json!({
+                "mode": if keep { "keep" } else { "follow" },
+                "pinned_origin": pinned,
+                "feh_before": feh_before,
+                "feh_after": feh_after,
+                "z_before": spec.z,
+                "z_after": if rederive { z_after } else { spec.z },
+                "rederive": rederive,
+            }),
+            state_hash: u
+                .chronicle
+                .state_at(UniverseTime::seconds(i64::MAX))
+                .hash()
+                .hex(),
+        })
+    }
+
     /// The `sift` op: the stack's sifters over the campaign, or over one
     /// audience's scene.
     fn sift(
@@ -1260,6 +1449,8 @@ impl Kernel {
                 Response::Committed {
                     aged_event: None,
                     aged_at_myr: None,
+                    campaign_now_s: None,
+                    system_age: None,
                     event_id: id.hex(),
                     state_hash: u
                         .chronicle
@@ -2458,23 +2649,64 @@ impl Kernel {
             }
             Request::CommitLookAhead {
                 branch,
+                accept,
+                composition,
                 move_now_myr,
                 write_back,
             } => {
+                let mode = match accept.as_deref() {
+                    Some(m @ ("campaign_now" | "system_age")) => Some(m.to_string()),
+                    Some(other) => {
+                        return Err(err(
+                            "bad_accept",
+                            format!("accept {other:?}: campaign_now or system_age"),
+                        ))
+                    }
+                    None => move_now_myr.map(|_| "system_age".to_string()),
+                };
                 let u = self.universe()?;
-                let look = u.looks.remove(&branch).ok_or_else(|| {
+                let mut look = u.looks.remove(&branch).ok_or_else(|| {
                     err(
                         "unknown_branch",
                         format!("{branch} is not an open look-ahead"),
                     )
                 })?;
                 u.branches.remove(&branch);
-                let id = sse_time::branch::commit(&mut u.chronicle, &look, move_now_myr)
+                let sp = look.request.system.clone();
+                let target = move_now_myr.unwrap_or(look.request.target_myr);
+                if mode.is_some() && (!target.is_finite() || target < sp.age_myr) {
+                    return Err(err(
+                        "bad_target",
+                        format!(
+                            "move to {target} Myr: before the star's age now ({} Myr)",
+                            sp.age_myr
+                        ),
+                    ));
+                }
+                let delta = target - sp.age_myr;
+                if mode.as_deref() == Some("system_age") {
+                    // Run the same future again from a birth moved earlier, so
+                    // its events fall before today; the first branch goes.
+                    u.chronicle
+                        .discard(&look.branch)
+                        .map_err(|e| err("chronicle", format!("{e}")))?;
+                    let mut sp2 = sp.clone();
+                    sp2.birth_year -= sse_core::math::round(delta * 1.0e6) as i64;
+                    let req = sse_time::branch::Request::new(
+                        sp2,
+                        look.request.settings.clone(),
+                        look.request.target_myr,
+                    );
+                    look = sse_time::branch::look_ahead(&mut u.chronicle, req, &mut |_| true)
+                        .map_err(|e| err("look_ahead", e))?
+                        .ok_or_else(|| err("look_ahead", "cancelled"))?;
+                }
+                let id = sse_time::branch::commit(&mut u.chronicle, &look, None)
                     .map_err(|e| err("chronicle", e))?;
                 let mut aged = None;
                 if write_back.unwrap_or(false) {
                     if let Some((e, age)) =
-                        adopt::aged_event(&u.chronicle, &look, move_now_myr, id)?
+                        adopt::aged_event(&u.chronicle, &look, mode.as_ref().map(|_| target), id)?
                     {
                         let eid = u
                             .chronicle
@@ -2483,6 +2715,47 @@ impl Kernel {
                         aged = Some((eid.hex(), age));
                     }
                 }
+                let mut campaign_now_s = None;
+                let mut system_age = None;
+                match mode.as_deref() {
+                    Some("campaign_now") => {
+                        let root = u.root.clone();
+                        let last = match clock::campaign_span_s(&u.chronicle) {
+                            Some((_, last)) => last,
+                            None => {
+                                // The clock starts here: its first reading is the epoch.
+                                let e = orbits::campaign_now_event(&u.chronicle, &root, 0)?;
+                                u.chronicle
+                                    .append(e)
+                                    .map_err(|e| err("chronicle", format!("{e}")))?;
+                                0
+                            }
+                        };
+                        // Whole years, as look-ahead dates are.
+                        let at = last + sse_core::math::round(delta * 1.0e6) as i64 * 31_557_600;
+                        let e = orbits::campaign_now_event(&u.chronicle, &root, at)?;
+                        u.chronicle
+                            .append(e)
+                            .map_err(|e| err("chronicle", format!("{e}")))?;
+                        campaign_now_s = Some(at);
+                    }
+                    Some(_) => {
+                        let a: Address = sp
+                            .system
+                            .parse()
+                            .map_err(|e| err("bad_address", format!("{e}")))?;
+                        let r = self.set_system_age(
+                            &a,
+                            target,
+                            composition.as_deref(),
+                            vec![id],
+                            Some(sp.clone()),
+                        )?;
+                        system_age = Some(serde_json::to_value(&r).expect("plain data"));
+                    }
+                    None => {}
+                }
+                let u = self.universe()?;
                 Response::Committed {
                     aged_event: aged.as_ref().map(|a| a.0.clone()),
                     aged_at_myr: aged.map(|a| a.1),
@@ -2492,7 +2765,19 @@ impl Kernel {
                         .state_at(UniverseTime::seconds(i64::MAX))
                         .hash()
                         .hex(),
+                    campaign_now_s,
+                    system_age,
                 }
+            }
+            Request::SetSystemAge {
+                system,
+                age_myr,
+                composition,
+            } => {
+                let a: Address = system
+                    .parse()
+                    .map_err(|e| err("bad_address", format!("{e}")))?;
+                self.set_system_age(&a, age_myr, composition.as_deref(), vec![], None)?
             }
             Request::Grant {
                 address,
