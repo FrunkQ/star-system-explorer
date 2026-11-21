@@ -435,6 +435,15 @@
      "shelf_depth_m": 130.0,
      "dune_slope": 0.0005
     },
+    "tubes": {
+     "earth_width_m": [10.0, 30.0],
+     "roof_over_width": 0.25,
+     "slope_best_deg": 2.0,
+     "slope_factor": 2.5,
+     "km_per_km2": 0.05,
+     "wear_m_myr_per_m_rain": 20.0,
+     "skylights_per_km_lost": 2.0
+    },
     "impacts": {
      "mechanisms": {
       "chronology": "neukum-2001",

@@ -781,6 +781,12 @@ impl CraterField {
         m::exp(-self.n_prod(d, t0_myr, t1_myr.max(t0_myr)) / self.n_sat(d))
     }
 
+    /// The share of ground made at `t_myr` that no regime has resurfaced
+    /// since (buried under later lava or ice, or recycled).
+    pub fn renewal_kept(&self, t_myr: f64) -> f64 {
+        self.renewal_survival(t_myr)
+    }
+
     /// Production of craters at least `d_km` across between two dates, per km².
     pub fn production(&self, d_km: f64, t0_myr: f64, t1_myr: f64) -> f64 {
         self.n_prod(d_km, t0_myr, t1_myr)

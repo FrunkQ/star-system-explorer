@@ -178,6 +178,7 @@ pub(crate) fn survey_surface(r: Request, cache: &mut Cache) -> Result<serde_json
         "stages": sv.stages,
         "envelope": v(&sv.envelope),
         "deposit_kinds": sse_surface::cover::DEPOSITS,
+        "tubes": v(&sv.tubes),
         "tiles": tiles,
         "refused": refused,
     });
