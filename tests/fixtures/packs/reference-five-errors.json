@@ -1,0 +1,160 @@
+{
+ "format": "sse.pack/1",
+ "id": "test.reference-five-errors",
+ "version": "0.1.0",
+ "kind": [
+  "physics"
+ ],
+ "kernel_range": "^0.1",
+ "licence": "Apache-2.0",
+ "provides": {
+  "reference": {
+   "sources": [
+    {
+     "id": "ciaaw-2021",
+     "text": "CIAAW standard atomic weights 2021"
+    },
+    {
+     "id": "fray-schmitt-2009",
+     "text": "Fray and Schmitt 2009, Sublimation of ices of astrophysical interest",
+     "doi": "10.1016/j.pss.2009.09.011"
+    }
+   ],
+   "elements": [
+    {
+     "id": "h",
+     "z": 1,
+     "atomic_weight": {
+      "v": 1.008,
+      "unit": "g/mol",
+      "src": "ciaaw-2021"
+     }
+    },
+    {
+     "id": "o",
+     "z": 8,
+     "atomic_weight": {
+      "v": 15.999,
+      "unit": "g/mol",
+      "src": "ciaaw-2021"
+     }
+    },
+    {
+     "id": "c",
+     "z": 6,
+     "atomic_weight": {
+      "v": 12.011,
+      "unit": "g/mol",
+      "src": "ciaaw-2021"
+     }
+    }
+   ],
+   "substances": [
+    {
+     "id": "h2o",
+     "formula": {
+      "h": 2,
+      "o": 1
+     },
+     "molar_mass": {
+      "v": 0.02,
+      "unit": "kg/mol",
+      "src": "ciaaw-2021"
+     }
+    },
+    {
+     "id": "h2",
+     "formula": {
+      "h": 2
+     }
+    },
+    {
+     "id": "o2",
+     "formula": {
+      "o": 2
+     }
+    },
+    {
+     "id": "co2",
+     "formula": {
+      "c": 1,
+      "o": 2
+     },
+     "phases": {
+      "triple_point_k": {
+       "v": 216.58,
+       "unit": "K",
+       "src": "fray-schmitt-2009"
+      },
+      "triple_point_pa": {
+       "v": 51800,
+       "unit": "Pa",
+       "src": "fray-schmitt-2009"
+      },
+      "vapour_pressure": {
+       "fit": "clausius-clapeyron",
+       "coeffs": [
+        5180,
+        216.58,
+        26000
+       ],
+       "valid_k": [
+        150,
+        216.58
+       ],
+       "src": "fray-schmitt-2009"
+      }
+     }
+    }
+   ],
+   "mixtures": [
+    {
+     "id": "fizz",
+     "recipe": {
+      "h2o": {
+       "v": 0.9,
+       "src": "ciaaw-2021"
+      }
+     }
+    }
+   ],
+   "reactions": [
+    {
+     "id": "burn-hydrogen",
+     "terms": [
+      [
+       "h2",
+       -1
+      ],
+      [
+       "o2",
+       -1
+      ],
+      [
+       "h2o",
+       2
+      ]
+     ]
+    },
+    {
+     "id": "ghost-burn",
+     "terms": [
+      [
+       "unobtainium",
+       -1
+      ],
+      [
+       "o2",
+       -1
+      ],
+      [
+       "co2",
+       1
+      ]
+     ]
+    }
+   ]
+  }
+ },
+ "about": "MP1 fixture: five mistakes, one per load check (wrong molar mass, a vapour curve missing its triple point, a recipe summing to 0.9, an unbalanced reaction, an undeclared substance id); each gives one readable message."
+}

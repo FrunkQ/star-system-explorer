@@ -1100,6 +1100,18 @@ pub enum Request {
     /// The campaign's own tag declarations (TG1), in the shape of a pack's
     /// `provides.other.tags`: tags the GM typed freely join it on first use.
     CampaignTags,
+    /// The master data sheet (MP1, `provides.reference`): with `table` and
+    /// `id`, one row with its sources, the packs that set it and its
+    /// worked-out values; with `id` alone, the first table holding it; with
+    /// neither, every table's row ids. Read-only, any seat.
+    ReadMatter {
+        #[serde(default)]
+        #[ts(optional)]
+        table: Option<String>,
+        #[serde(default)]
+        #[ts(optional)]
+        id: Option<String>,
+    },
     /// Dressing candidates (TG12, `provides.other.dressing`) for every world
     /// at or under `scope` at `at_s` (default now): what the stack's universe
     /// packs would place, each with its rule, template, where, explanation
@@ -1268,6 +1280,7 @@ impl Request {
             Request::StarCell { .. } => "star_cell",
             Request::PromoteStar { .. } => "promote_star",
             Request::CampaignTags => "campaign_tags",
+            Request::ReadMatter { .. } => "read_matter",
             Request::Dressing { .. } => "dressing",
             Request::AdoptDressing { .. } => "adopt_dressing",
             Request::HoldDressing { .. } => "hold_dressing",
@@ -1533,6 +1546,11 @@ pub fn ops() -> Vec<OpInfo> {
             "promote_star",
             Cost::Medium,
             "GM machine only in a session; draws the star once and stores its whole description in the record",
+        ),
+        o(
+            "read_matter",
+            Cost::Light,
+            "reads the master data sheet loaded with the stack; nothing is worked out but molar mass",
         ),
         o(
             "dressing",
@@ -2253,6 +2271,12 @@ pub enum Response {
         candidates: Vec<serde_json::Value>,
         #[ts(type = "unknown[]")]
         orphans: Vec<serde_json::Value>,
+    },
+    /// `read_matter`: a row (`{table, id, row, sources, packs, worked?,
+    /// used_by, skipped_by}`) or a listing of ids by table.
+    Matter {
+        #[ts(type = "unknown")]
+        value: serde_json::Value,
     },
     /// `hold_dressing`: the candidate and whether it is now held off.
     DressingHeld {

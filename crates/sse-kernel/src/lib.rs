@@ -13,6 +13,8 @@ mod descent;
 mod dressing;
 #[cfg(test)]
 mod dressing_tests;
+#[cfg(test)]
+mod matter_tests;
 mod nav;
 mod orbits;
 pub mod protocol;
@@ -168,6 +170,14 @@ fn load_observe(ms: &[sse_pack::PackManifest]) -> Result<Observe, Vec<String>> {
             dressing::Dressing::default()
         }
     };
+    // MP1: the master data sheet, merged bottom to top and checked.
+    let reference = match sse_reference::Reference::from_packs(ms) {
+        Ok(r) => r,
+        Err(e) => {
+            problems.extend(e);
+            sse_reference::Reference::default()
+        }
+    };
     if !problems.is_empty() {
         return Err(problems);
     }
@@ -211,6 +221,7 @@ fn load_observe(ms: &[sse_pack::PackManifest]) -> Result<Observe, Vec<String>> {
         templates,
         programs,
         dressing,
+        reference,
     })
 }
 
@@ -379,6 +390,8 @@ struct Observe {
     programs: sse_trigger::programs::Programs,
     /// Dressing rules (`provides.other.dressing`, TG12).
     dressing: dressing::Dressing,
+    /// The master data sheet (`provides.reference`, MP1).
+    reference: sse_reference::Reference,
 }
 
 pub struct Kernel {
@@ -996,6 +1009,44 @@ impl Kernel {
             }
         }
         Ok((state, tags))
+    }
+
+    /// `read_matter` (MP1): one row of the master data sheet with its
+    /// sources and packs, or each table's ids.
+    fn read_matter(&self, table: Option<&str>, id: Option<&str>) -> Result<Response, Response> {
+        let r = &self.observe.reference;
+        let value = match (table, id) {
+            (Some(t), Some(i)) => r.describe(t, i).ok_or_else(|| {
+                err(
+                    "no_row",
+                    format!("no row {i} in the master data sheet's {t} table"),
+                )
+            })?,
+            (None, Some(i)) => sse_reference::TABLES
+                .iter()
+                .find_map(|t| r.describe(t, i))
+                .ok_or_else(|| {
+                    err(
+                        "no_row",
+                        format!("no row {i} in any table of the master data sheet"),
+                    )
+                })?,
+            (t, None) => {
+                if let Some(t) = t {
+                    if !sse_reference::TABLES.contains(&t) && t != "sources" {
+                        return Err(err(
+                            "no_table",
+                            format!(
+                                "the master data sheet has no table {t} (tables: {}, sources)",
+                                sse_reference::TABLES.join(", ")
+                            ),
+                        ));
+                    }
+                }
+                r.listing(t)
+            }
+        };
+        Ok(Response::Matter { value })
     }
 
     /// `dressing` (TG12): the candidates and orphans under `scope`.
@@ -4020,6 +4071,9 @@ impl Kernel {
                 Response::StarCelled { cell }
             }
             Request::PromoteStar { address } => self.promote_star(&address)?,
+            Request::ReadMatter { table, id } => {
+                self.read_matter(table.as_deref(), id.as_deref())?
+            }
             Request::Dressing { scope, at_s } => self.dressing(&scope, at_s.unwrap_or(i64::MAX))?,
             Request::AdoptDressing {
                 candidate,
