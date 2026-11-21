@@ -11,19 +11,22 @@
   no globe.
 -->
 <script module lang="ts">
-  import type { SurfaceTile } from "../../../ui-contract/src/index.ts";
+  import type { ClimateSummary, SurfaceTile } from "../../../ui-contract/src/index.ts";
   import type { AirFacts } from "../../../renderer/src/index.ts";
   // Tiles take about a second to build; keep them per system and body for the page's life.
   const cache = new Map<string, { tiles: SurfaceTile[]; regime?: string; refused: number; air: AirFacts | null }>();
+  // The climate comes only when asked for (a quick survey, about half a second); kept the same way.
+  const climates = new Map<string, ClimateSummary>();
 </script>
 
 <script lang="ts">
-  import { globeStats, type Globe, type Json, type SystemScene, type ViewContext } from "../../../ui-contract/src/index.ts";
+  import { globeStats, regimeWords, type Globe, type Json, type SystemScene, type ViewContext } from "../../../ui-contract/src/index.ts";
   import { untrack } from "svelte";
   import { airFactsOf, airFromOptics, airRequest, applyEdits, editableSettings, keepPhoto, listPhotos, LIBRARY, mountGlobe, photograph, removePhoto, type GlobeRun, type MediaItem, type RecipeDoc, type RecipeEdit, type GlobeRunOptions, type GlobeStatus } from "../../../renderer/src/index.ts";
   import { SHIPPED_RECIPES } from "../../../renderer/src/recipes.ts";
   import Cutaway from "../../cutaway/src/Cutaway.svelte";
   import StarDisc from "./StarDisc.svelte";
+  import ClimateWhy from "./ClimateWhy.svelte";
 
   let { ctx, scene, params }: { ctx: ViewContext; scene: SystemScene; params: Record<string, Json> } = $props();
 
@@ -75,6 +78,40 @@
       loading = false;
     })();
   });
+
+  // "Why?" for the climate (W7a): asked for, never fetched on a click of the world alone.
+  let climate = $state<ClimateSummary | null>(null);
+  let climateOpen = $state(false);
+  let climateBusy = $state(false);
+  let climateFailed = $state<string | null>(null);
+  let climateBtn = $state<HTMLElement | undefined>();
+  $effect(() => {
+    const key = `${scene.system}|${subject?.address}`;
+    untrack(() => {
+      climate = climates.get(key) ?? null;
+      climateOpen = false;
+      climateBusy = false;
+      climateFailed = null;
+    });
+  });
+  async function toggleClimate() {
+    if (climateOpen) return void (climateOpen = false);
+    climateOpen = true;
+    const sub = subject;
+    if (climate || !sub) return;
+    const key = `${scene.system}|${sub.address}`;
+    climateBusy = true;
+    climateFailed = null;
+    const r = await ctx.session.surveyClimate(scene.system, sub.address);
+    if (ws.selection !== sub.address) return;
+    climateBusy = false;
+    if (!r.ok) {
+      climateFailed = r.message;
+      return;
+    }
+    climates.set(key, r.climate);
+    climate = r.climate;
+  }
 
   const globe = $derived<Globe>(got ? [0, 1, 2, 3, 4, 5].map((f) => got!.tiles.find((t) => t.key.face === f && t.key.level === 0)) : []);
   const has = $derived(globe.some((t) => t));
@@ -404,6 +441,18 @@
             <dt>Regime</dt>
             <dd data-regime>{got.regime}</dd>
           {/if}
+          <dt>Climate</dt>
+          <dd data-climate>
+            {#if climate}<span data-climate-label>{regimeWords(climate.regime)}</span>{/if}
+            <button class="link" bind:this={climateBtn} aria-expanded={climateOpen} data-climate-toggle onclick={toggleClimate}>{climateBusy ? "Reading the climate…" : "Why?"}</button>
+          </dd>
+          {#if climateOpen && climate}
+            <div class="span">
+              <ClimateWhy {climate} label={subject.label} depth={ws.depth ?? "science"} from={() => climateBtn} onclose={() => (climateOpen = false)} />
+            </div>
+          {:else if climateOpen && climateFailed}
+            <p class="note span" data-climate-failed>No climate: {climateFailed}</p>
+          {/if}
           {#if epoch !== undefined}
             <dt>As of</dt>
             <dd>{epoch.toLocaleString("en-GB", { maximumFractionDigits: 1 })} Myr</dd>
@@ -512,6 +561,9 @@
     margin: 0;
     min-width: 200px;
     max-width: 360px;
+  }
+  .facts .span {
+    grid-column: 1 / -1;
   }
   dt {
     color: var(--sse-ink-muted);
