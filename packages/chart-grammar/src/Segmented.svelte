@@ -1,6 +1,9 @@
 <!-- A row of mutually exclusive options drawn as one inked frame. With `slide`, the ink slides to the chosen option (U14:
-     a switch that reads as a switch, not as links). Motion is transform only and stops under reduced motion. -->
+     a switch that reads as a switch, not as links). Motion is transform only and stops under reduced motion.
+     At rest the chosen button paints its own ink, so a measurement taken before a web font arrived (or on a scaled
+     display) can never leave the ink over the next option's first letter; the sliding bar exists only while it moves. -->
 <script lang="ts" generics="T extends string">
+  import { motionMs } from "./motion.ts";
   let {
     label,
     options,
@@ -11,6 +14,23 @@
 
   let frame = $state<HTMLDivElement | null>(null);
   let ink = $state<{ x: number; w: number } | null>(null);
+  // True only while the ink travels from one option to another.
+  let moving = $state(false);
+  let shown: T | undefined;
+  let timer: ReturnType<typeof setTimeout> | undefined;
+  $effect(() => {
+    const v = value;
+    const ms = shown !== undefined && shown !== v && slide ? motionMs(frame) : 0;
+    if (ms > 0) {
+      moving = true;
+      clearTimeout(timer);
+      timer = setTimeout(() => (moving = false), ms + 40);
+    }
+    shown = v;
+    return () => clearTimeout(timer);
+  });
+  // The ink is measured from the chosen button's box, and measured again whenever any button changes size (a web font
+  // arriving, a label changing, the bar narrowing), so it never covers the next option's first letter.
   $effect(() => {
     void value;
     void options.length;
@@ -18,17 +38,27 @@
     if (!slide || !el) return;
     const measure = () => {
       const b = el.querySelector<HTMLButtonElement>('button[aria-pressed="true"]');
-      ink = b ? { x: b.offsetLeft, w: b.offsetWidth } : null;
+      if (!b) return void (ink = null);
+      const f = el.getBoundingClientRect();
+      const r = b.getBoundingClientRect();
+      ink = { x: r.left - f.left - el.clientLeft, w: r.width };
     };
     measure();
     const ro = new ResizeObserver(measure);
     ro.observe(el);
-    return () => ro.disconnect();
+    for (const b of el.querySelectorAll("button")) ro.observe(b);
+    const fonts = typeof document !== "undefined" ? document.fonts : undefined;
+    fonts?.ready.then(measure);
+    fonts?.addEventListener("loadingdone", measure);
+    return () => {
+      ro.disconnect();
+      fonts?.removeEventListener("loadingdone", measure);
+    };
   });
 </script>
 
-<div class="seg" class:slide role="group" aria-label={label} bind:this={frame}>
-  {#if slide && ink}<span class="ink" aria-hidden="true" style="transform: translateX({ink.x}px) scaleX({ink.w})"></span>{/if}
+<div class="seg" class:slide class:moving role="group" aria-label={label} bind:this={frame}>
+  {#if slide && ink}<span class="ink" data-ink aria-hidden="true" style="transform: translateX({ink.x}px) scaleX({ink.w})"></span>{/if}
   {#each options as o (o.value)}
     <button
       type="button"
@@ -82,8 +112,16 @@
   .slide button + button {
     border-left-color: transparent;
   }
-  .slide button[aria-pressed="true"] {
+  .slide .ink {
+    opacity: 0;
+  }
+  .slide.moving .ink {
+    opacity: 1;
+  }
+  .slide.moving button[aria-pressed="true"] {
     background: transparent;
+  }
+  .slide button[aria-pressed="true"] {
     transition: color var(--sse-motion) var(--sse-ease);
   }
 </style>

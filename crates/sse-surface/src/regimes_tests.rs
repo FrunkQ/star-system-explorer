@@ -22,6 +22,7 @@ fn surface_with(
         rotation_hours: rot,
         mass_earth: b.mass_earth,
         impacts,
+        craters: None,
     };
     (
         regime_surface(
@@ -310,6 +311,7 @@ fn regime_atlas(name: &str, rot: Option<f64>) -> crate::atlas::Atlas {
         rotation_hours: rot,
         mass_earth: b.mass_earth,
         impacts: None,
+        craters: None,
     };
     let rs = regime_surface(&s, &e, &seed, &inp, b.age_gyr);
     crate::atlas::Atlas::new(&s, &e, &seed, b.age_gyr, vec![]).with_regime(rs)
@@ -437,6 +439,7 @@ fn giant_bands_mirror_about_the_equator() {
         rotation_hours: Some(9.93),
         mass_earth: b.mass_earth,
         impacts: None,
+        craters: None,
     };
     let rs = regime_surface(&s, &e, &Seed::from_text("mirror"), &inp, b.age_gyr);
     let mut d = rs.clouds.expect("a cloud deck");
@@ -457,4 +460,33 @@ fn giant_bands_mirror_about_the_equator() {
         assert!((w[i].wind_m_s - w[nb - 1 - i].wind_m_s).abs() < 1e-9, "{i}");
     }
     assert!(w[nb / 2].wind_m_s > 0.0 && w[nb / 2 - 1].wind_m_s > 0.0);
+}
+
+/// Landforms from an earlier regime survive only what came after them:
+/// Ganymede keeps the grooves of its resonance passage, while Callisto's
+/// earliest cracks, from the heavy bombardment, are cratered away.
+#[test]
+fn fossil_landforms_survive_later_quiet_but_not_heavy_bombardment() {
+    let s = settings();
+    let fossils = |n: &str| {
+        let b = body(n);
+        let sv = crate::survey::orbit_world(
+            &s,
+            &b,
+            &Seed::from_text("fossils"),
+            b.age_gyr,
+            &Default::default(),
+        )
+        .expect("orbit world");
+        let rs = sv.atlas.regime_surface().expect("regime surface").clone();
+        assert_eq!(rs.regime, "cold-ice-lid", "{n}");
+        rs.landforms.iter().filter(|l| l.id.contains('@')).count()
+    };
+    let ganymede = fossils("Ganymede");
+    assert!(ganymede > 20, "Ganymede keeps its grooves: {ganymede}");
+    assert_eq!(
+        fossils("Callisto"),
+        0,
+        "Callisto's early cracks are cratered away"
+    );
 }
