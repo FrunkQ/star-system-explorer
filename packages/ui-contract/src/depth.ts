@@ -8,7 +8,7 @@ import type { SceneFact, SceneSubject } from "./scene.ts";
 
 export type Depth = "curious" | "science" | "engine";
 
-export const DEPTHS: readonly { value: Depth; label: string; hint: string }[] = [
+export const DEPTHS: { value: Depth; label: string; hint: string }[] = [
   { value: "curious", label: "Curious", hint: "A sentence and the headline facts, in words: about 15 °C, 365 days" },
   { value: "science", label: "Science", hint: "Every value, set or derived, with its evidence and honest precision" },
   { value: "engine", label: "Engine", hint: "Addresses, who published each value, the kernel's hashes" },
