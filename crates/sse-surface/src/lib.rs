@@ -25,6 +25,7 @@ pub mod scenario;
 pub mod site;
 pub mod sketch;
 pub mod survey;
+pub mod tubes;
 pub mod wear;
 
 use serde::{Deserialize, Serialize};
@@ -113,6 +114,9 @@ pub struct SurfaceSettings {
     pub regime_features: regimes::RegimeSettings,
     pub cover: cover::CoverSettings,
     pub features: named::FeatureSettings,
+    /// S14a lava tubes (the base pack's values are the defaults).
+    #[serde(default)]
+    pub tubes: tubes::TubeSettings,
     pub rules: Vec<Rule>,
     pub regimes: BTreeMap<String, RegimeDef>,
     /// The one climate wear and cover read (W7a): the climate pack in the
@@ -780,5 +784,7 @@ mod regimes_tests;
 mod survey_tests;
 #[cfg(test)]
 mod tests;
+#[cfg(test)]
+mod tubes_tests;
 #[cfg(test)]
 mod wear_tests;
