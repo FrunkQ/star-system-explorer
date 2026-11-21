@@ -1,0 +1,4294 @@
+{
+ "format": "sse.pack/1",
+ "id": "sse.base-reference",
+ "version": "0.1.0",
+ "kind": [
+  "base-physics"
+ ],
+ "kernel_range": "^0.1",
+ "licence": "Apache-2.0",
+ "provides": {
+  "reference": {
+   "about": "The master data sheet (track MP, design handover/design/SSE4-matter-pack-design.md): constants of nature, conventions, reference objects, elements, isotopes, substances and mixtures, each value with its source. Built by scripts/build-base-reference.py; MP2 first wave. A value without \"check\" is verified against its source; \"unverified\" means the source is named but the number was not read from it; \"authored\" is a documented stand-in (docs/fudges.md).",
+   "constants": [
+    {
+     "id": "c",
+     "name": "speed of light in vacuum",
+     "value": {
+      "v": 299792458.0,
+      "unit": "m s-1",
+      "src": "si2019",
+      "exact": true
+     }
+    },
+    {
+     "id": "h",
+     "name": "Planck constant",
+     "value": {
+      "v": 6.62607015e-34,
+      "unit": "J s",
+      "src": "si2019",
+      "exact": true
+     }
+    },
+    {
+     "id": "hbar",
+     "name": "reduced Planck constant",
+     "value": {
+      "v": 1.054571817e-34,
+      "unit": "J s",
+      "src": "codata2018",
+      "note": "CODATA 2018 published figure"
+     },
+     "derived_from": "h / (2 pi)"
+    },
+    {
+     "id": "e",
+     "name": "elementary charge",
+     "value": {
+      "v": 1.602176634e-19,
+      "unit": "C",
+      "src": "si2019",
+      "exact": true
+     }
+    },
+    {
+     "id": "k_B",
+     "name": "Boltzmann constant",
+     "value": {
+      "v": 1.380649e-23,
+      "unit": "J K-1",
+      "src": "si2019",
+      "exact": true
+     }
+    },
+    {
+     "id": "N_A",
+     "name": "Avogadro constant",
+     "value": {
+      "v": 6.02214076e+23,
+      "unit": "mol-1",
+      "src": "si2019",
+      "exact": true
+     }
+    },
+    {
+     "id": "R_gas",
+     "name": "molar gas constant",
+     "value": {
+      "v": 8.31446261815324,
+      "unit": "J mol-1 K-1",
+      "src": "si2019"
+     },
+     "derived_from": "N_A k_B"
+    },
+    {
+     "id": "sigma_SB",
+     "name": "Stefan-Boltzmann constant",
+     "value": {
+      "v": 5.670374419e-08,
+      "unit": "W m-2 K-4",
+      "src": "codata2018",
+      "note": "CODATA 2018 published figure; the worked-out value agrees to 3e-11"
+     },
+     "derived_from": "2 pi^5 k_B^4 / (15 h^3 c^2)"
+    },
+    {
+     "id": "a_rad",
+     "name": "radiation density constant",
+     "value": {
+      "v": 7.565733250280007e-16,
+      "unit": "J m-3 K-4",
+      "src": "si2019"
+     },
+     "derived_from": "4 sigma_SB / c"
+    },
+    {
+     "id": "G",
+     "name": "Newtonian constant of gravitation",
+     "value": {
+      "v": 6.6743e-11,
+      "unit": "m3 kg-1 s-2",
+      "src": "codata2018",
+      "check": "unverified",
+      "uncertainty": 1.5e-15
+     }
+    },
+    {
+     "id": "m_e",
+     "name": "electron mass",
+     "value": {
+      "v": 9.1093837015e-31,
+      "unit": "kg",
+      "src": "codata2018",
+      "check": "unverified"
+     }
+    },
+    {
+     "id": "m_p",
+     "name": "proton mass",
+     "value": {
+      "v": 1.67262192369e-27,
+      "unit": "kg",
+      "src": "codata2018",
+      "check": "unverified"
+     }
+    },
+    {
+     "id": "m_n",
+     "name": "neutron mass",
+     "value": {
+      "v": 1.67492749804e-27,
+      "unit": "kg",
+      "src": "codata2018",
+      "check": "unverified"
+     }
+    },
+    {
+     "id": "m_u",
+     "name": "atomic mass constant",
+     "value": {
+      "v": 1.6605390666e-27,
+      "unit": "kg",
+      "src": "codata2018",
+      "check": "unverified"
+     }
+    },
+    {
+     "id": "alpha",
+     "name": "fine-structure constant",
+     "value": {
+      "v": 0.0072973525693,
+      "unit": "1",
+      "src": "codata2018",
+      "check": "unverified"
+     }
+    },
+    {
+     "id": "eps0",
+     "name": "vacuum electric permittivity",
+     "value": {
+      "v": 8.8541878128e-12,
+      "unit": "F m-1",
+      "src": "codata2018",
+      "check": "unverified"
+     }
+    },
+    {
+     "id": "mu0",
+     "name": "vacuum magnetic permeability",
+     "value": {
+      "v": 1.25663706212e-06,
+      "unit": "N A-2",
+      "src": "codata2018",
+      "check": "unverified"
+     }
+    },
+    {
+     "id": "R_inf",
+     "name": "Rydberg constant",
+     "value": {
+      "v": 10973731.56816,
+      "unit": "m-1",
+      "src": "codata2018",
+      "check": "unverified"
+     }
+    },
+    {
+     "id": "a0",
+     "name": "Bohr radius",
+     "value": {
+      "v": 5.29177210903e-11,
+      "unit": "m",
+      "src": "codata2018",
+      "check": "unverified"
+     }
+    },
+    {
+     "id": "sigma_T",
+     "name": "Thomson cross section",
+     "value": {
+      "v": 6.6524587321e-29,
+      "unit": "m2",
+      "src": "codata2018",
+      "check": "unverified"
+     }
+    },
+    {
+     "id": "b_wien",
+     "name": "Wien wavelength displacement constant",
+     "value": {
+      "v": 0.002897771955,
+      "unit": "m K",
+      "src": "codata2018",
+      "check": "unverified"
+     }
+    },
+    {
+     "id": "au",
+     "name": "astronomical unit",
+     "value": {
+      "v": 149597870700.0,
+      "unit": "m",
+      "src": "iau2012b2",
+      "check": "unverified",
+      "exact": true
+     }
+    },
+    {
+     "id": "pc",
+     "name": "parsec",
+     "value": {
+      "v": 3.085677581491367e+16,
+      "unit": "m",
+      "src": "iau2015b2",
+      "check": "unverified"
+     },
+     "derived_from": "au 648000 / pi"
+    },
+    {
+     "id": "yr_julian",
+     "name": "Julian year",
+     "value": {
+      "v": 31557600.0,
+      "unit": "s",
+      "src": "iau2012b2",
+      "check": "textbook",
+      "exact": true
+     }
+    },
+    {
+     "id": "ly",
+     "name": "light year",
+     "value": {
+      "v": 9460730472580800.0,
+      "unit": "m",
+      "src": "iau2012b2",
+      "check": "textbook"
+     },
+     "derived_from": "c yr_julian"
+    },
+    {
+     "id": "day",
+     "name": "day",
+     "value": {
+      "v": 86400.0,
+      "unit": "s",
+      "src": "si2019",
+      "exact": true
+     }
+    },
+    {
+     "id": "atm",
+     "name": "standard atmosphere",
+     "value": {
+      "v": 101325.0,
+      "unit": "Pa",
+      "src": "cgpm1954",
+      "check": "textbook",
+      "exact": true
+     }
+    },
+    {
+     "id": "g0",
+     "name": "standard acceleration of gravity",
+     "value": {
+      "v": 9.80665,
+      "unit": "m s-2",
+      "src": "cgpm1901",
+      "check": "textbook",
+      "exact": true
+     }
+    },
+    {
+     "id": "T0C",
+     "name": "zero degrees Celsius",
+     "value": {
+      "v": 273.15,
+      "unit": "K",
+      "src": "si2019",
+      "exact": true
+     }
+    },
+    {
+     "id": "GM_sun",
+     "name": "nominal solar mass parameter",
+     "value": {
+      "v": 1.3271244e+20,
+      "unit": "m3 s-2",
+      "src": "iau2015b3",
+      "exact": true
+     }
+    },
+    {
+     "id": "M_sun",
+     "name": "solar mass",
+     "value": {
+      "v": 1.988409870698051e+30,
+      "unit": "kg",
+      "src": "iau2015b3"
+     },
+     "checked_by": "GM_sun / G"
+    },
+    {
+     "id": "R_sun",
+     "name": "nominal solar radius",
+     "value": {
+      "v": 695700000.0,
+      "unit": "m",
+      "src": "iau2015b3",
+      "exact": true
+     }
+    },
+    {
+     "id": "L_sun",
+     "name": "nominal solar luminosity",
+     "value": {
+      "v": 3.828e+26,
+      "unit": "W",
+      "src": "iau2015b3",
+      "exact": true
+     }
+    },
+    {
+     "id": "T_sun",
+     "name": "nominal solar effective temperature",
+     "value": {
+      "v": 5772.0,
+      "unit": "K",
+      "src": "iau2015b3",
+      "exact": true
+     }
+    },
+    {
+     "id": "S_sun",
+     "name": "nominal total solar irradiance",
+     "value": {
+      "v": 1361.0,
+      "unit": "W m-2",
+      "src": "iau2015b3",
+      "exact": true
+     }
+    },
+    {
+     "id": "GM_earth",
+     "name": "nominal Earth mass parameter",
+     "value": {
+      "v": 398600400000000.0,
+      "unit": "m3 s-2",
+      "src": "iau2015b3",
+      "exact": true
+     }
+    },
+    {
+     "id": "M_earth",
+     "name": "Earth mass",
+     "value": {
+      "v": 5.972167867791379e+24,
+      "unit": "kg",
+      "src": "iau2015b3"
+     },
+     "checked_by": "GM_earth / G"
+    },
+    {
+     "id": "R_earth_equatorial",
+     "name": "nominal Earth equatorial radius",
+     "value": {
+      "v": 6378100.0,
+      "unit": "m",
+      "src": "iau2015b3",
+      "exact": true
+     }
+    },
+    {
+     "id": "R_earth_polar",
+     "name": "nominal Earth polar radius",
+     "value": {
+      "v": 6356800.0,
+      "unit": "m",
+      "src": "iau2015b3",
+      "exact": true
+     }
+    },
+    {
+     "id": "R_earth_mean",
+     "name": "Earth volumetric mean radius",
+     "value": {
+      "v": 6371000.0,
+      "unit": "m",
+      "src": "nssdca-earth"
+     }
+    },
+    {
+     "id": "GM_jup",
+     "name": "nominal Jupiter mass parameter",
+     "value": {
+      "v": 1.2668653e+17,
+      "unit": "m3 s-2",
+      "src": "iau2015b3",
+      "exact": true
+     }
+    },
+    {
+     "id": "M_jup",
+     "name": "Jupiter mass",
+     "value": {
+      "v": 1.8981245973360505e+27,
+      "unit": "kg",
+      "src": "iau2015b3"
+     },
+     "checked_by": "GM_jup / G"
+    },
+    {
+     "id": "R_jup_equatorial",
+     "name": "nominal Jupiter equatorial radius",
+     "value": {
+      "v": 71492000.0,
+      "unit": "m",
+      "src": "iau2015b3",
+      "exact": true
+     }
+    },
+    {
+     "id": "R_jup_polar",
+     "name": "nominal Jupiter polar radius",
+     "value": {
+      "v": 66854000.0,
+      "unit": "m",
+      "src": "iau2015b3",
+      "exact": true
+     }
+    },
+    {
+     "id": "R_jup_mean",
+     "name": "Jupiter volumetric mean radius",
+     "value": {
+      "v": 69911000.0,
+      "unit": "m",
+      "src": "nssdca-jupiter"
+     }
+    },
+    {
+     "id": "M_moon",
+     "name": "Moon mass",
+     "value": {
+      "v": 7.346e+22,
+      "unit": "kg",
+      "src": "nssdca-moon"
+     }
+    },
+    {
+     "id": "R_moon",
+     "name": "Moon mean radius",
+     "value": {
+      "v": 1737400.0,
+      "unit": "m",
+      "src": "nssdca-moon"
+     }
+    },
+    {
+     "id": "a_moon",
+     "name": "Moon semi-major axis",
+     "value": {
+      "v": 384400000.0,
+      "unit": "m",
+      "src": "nssdca-moon"
+     }
+    }
+   ],
+   "elements": [
+    {
+     "id": "h",
+     "symbol": "H",
+     "name": "Hydrogen",
+     "z": 1,
+     "atomic_weight": {
+      "v": 1.008,
+      "unit": "1",
+      "src": "iupac2021",
+      "note": "IUPAC 2021 conventional value (the standard weight is an interval)"
+     },
+     "abundance_protosolar": {
+      "v": 25200000000.0,
+      "unit": "atoms per 1e6 Si",
+      "src": "lodders2021"
+     }
+    },
+    {
+     "id": "he",
+     "symbol": "He",
+     "name": "Helium",
+     "z": 2,
+     "atomic_weight": {
+      "v": 4.002602,
+      "unit": "1",
+      "src": "iupac2021"
+     },
+     "abundance_protosolar": {
+      "v": 2510000000.0,
+      "unit": "atoms per 1e6 Si",
+      "src": "lodders2021",
+      "sigma": 120000000.0
+     }
+    },
+    {
+     "id": "li",
+     "symbol": "Li",
+     "name": "Lithium",
+     "z": 3,
+     "atomic_weight": {
+      "v": 6.94,
+      "unit": "1",
+      "src": "iupac2021",
+      "note": "IUPAC 2021 conventional value (the standard weight is an interval)"
+     },
+     "abundance_protosolar": {
+      "v": 56.9,
+      "unit": "atoms per 1e6 Si",
+      "src": "lodders2021",
+      "sigma": 3.4
+     }
+    },
+    {
+     "id": "be",
+     "symbol": "Be",
+     "name": "Beryllium",
+     "z": 4,
+     "atomic_weight": {
+      "v": 9.0121831,
+      "unit": "1",
+      "src": "iupac2021"
+     },
+     "abundance_protosolar": {
+      "v": 0.637,
+      "unit": "atoms per 1e6 Si",
+      "src": "lodders2021",
+      "sigma": 0.044
+     }
+    },
+    {
+     "id": "b",
+     "symbol": "B",
+     "name": "Boron",
+     "z": 5,
+     "atomic_weight": {
+      "v": 10.81,
+      "unit": "1",
+      "src": "iupac2021",
+      "note": "IUPAC 2021 conventional value (the standard weight is an interval)"
+     },
+     "abundance_protosolar": {
+      "v": 17.86,
+      "unit": "atoms per 1e6 Si",
+      "src": "lodders2021",
+      "check": "unverified",
+      "note": "N worked out from A(E)o; the printed N was garbled in the copy read"
+     }
+    },
+    {
+     "id": "c",
+     "symbol": "C",
+     "name": "Carbon",
+     "z": 6,
+     "atomic_weight": {
+      "v": 12.011,
+      "unit": "1",
+      "src": "iupac2021",
+      "note": "IUPAC 2021 conventional value (the standard weight is an interval)"
+     },
+     "abundance_protosolar": {
+      "v": 9120000.0,
+      "unit": "atoms per 1e6 Si",
+      "src": "lodders2021",
+      "sigma": 180000.0
+     }
+    },
+    {
+     "id": "n",
+     "symbol": "N",
+     "name": "Nitrogen",
+     "z": 7,
+     "atomic_weight": {
+      "v": 14.007,
+      "unit": "1",
+      "src": "iupac2021",
+      "note": "IUPAC 2021 conventional value (the standard weight is an interval)"
+     },
+     "abundance_protosolar": {
+      "v": 2190000.0,
+      "unit": "atoms per 1e6 Si",
+      "src": "lodders2021",
+      "sigma": 9700.0
+     }
+    },
+    {
+     "id": "o",
+     "symbol": "O",
+     "name": "Oxygen",
+     "z": 8,
+     "atomic_weight": {
+      "v": 15.999,
+      "unit": "1",
+      "src": "iupac2021",
+      "note": "IUPAC 2021 conventional value (the standard weight is an interval)"
+     },
+     "abundance_protosolar": {
+      "v": 16600000.0,
+      "unit": "atoms per 1e6 Si",
+      "src": "lodders2021",
+      "sigma": 130000.0
+     }
+    },
+    {
+     "id": "f",
+     "symbol": "F",
+     "name": "Fluorine",
+     "z": 9,
+     "atomic_weight": {
+      "v": 18.998403162,
+      "unit": "1",
+      "src": "iupac2021"
+     },
+     "abundance_protosolar": {
+      "v": 1270.0,
+      "unit": "atoms per 1e6 Si",
+      "src": "lodders2021",
+      "sigma": 275.0,
+      "check": "unverified",
+      "note": "printed N and A(E)o disagree by 0.09 dex; check against the paper"
+     }
+    },
+    {
+     "id": "ne",
+     "symbol": "Ne",
+     "name": "Neon",
+     "z": 10,
+     "atomic_weight": {
+      "v": 20.1797,
+      "unit": "1",
+      "src": "iupac2021"
+     },
+     "abundance_protosolar": {
+      "v": 4370000.0,
+      "unit": "atoms per 1e6 Si",
+      "src": "lodders2021",
+      "sigma": 1130000.0
+     }
+    },
+    {
+     "id": "na",
+     "symbol": "Na",
+     "name": "Sodium",
+     "z": 11,
+     "atomic_weight": {
+      "v": 22.98976928,
+      "unit": "1",
+      "src": "iupac2021"
+     },
+     "abundance_protosolar": {
+      "v": 57800.0,
+      "unit": "atoms per 1e6 Si",
+      "src": "lodders2021",
+      "sigma": 4700.0
+     }
+    },
+    {
+     "id": "mg",
+     "symbol": "Mg",
+     "name": "Magnesium",
+     "z": 12,
+     "atomic_weight": {
+      "v": 24.305,
+      "unit": "1",
+      "src": "iupac2021",
+      "note": "IUPAC 2021 conventional value (the standard weight is an interval)"
+     },
+     "abundance_protosolar": {
+      "v": 1030000.0,
+      "unit": "atoms per 1e6 Si",
+      "src": "lodders2021",
+      "sigma": 44000.0
+     }
+    },
+    {
+     "id": "al",
+     "symbol": "Al",
+     "name": "Aluminium",
+     "z": 13,
+     "atomic_weight": {
+      "v": 26.9815384,
+      "unit": "1",
+      "src": "iupac2021"
+     },
+     "abundance_protosolar": {
+      "v": 81820.0,
+      "unit": "atoms per 1e6 Si",
+      "src": "lodders2021",
+      "sigma": 6110.0
+     }
+    },
+    {
+     "id": "si",
+     "symbol": "Si",
+     "name": "Silicon",
+     "z": 14,
+     "atomic_weight": {
+      "v": 28.085,
+      "unit": "1",
+      "src": "iupac2021",
+      "note": "IUPAC 2021 conventional value (the standard weight is an interval)"
+     },
+     "abundance_protosolar": {
+      "v": 1000000.0,
+      "unit": "atoms per 1e6 Si",
+      "src": "lodders2021",
+      "sigma": 34000.0
+     }
+    },
+    {
+     "id": "p",
+     "symbol": "P",
+     "name": "Phosphorus",
+     "z": 15,
+     "atomic_weight": {
+      "v": 30.973761998,
+      "unit": "1",
+      "src": "iupac2021"
+     },
+     "abundance_protosolar": {
+      "v": 8260.0,
+      "unit": "atoms per 1e6 Si",
+      "src": "lodders2021",
+      "sigma": 530.0
+     }
+    },
+    {
+     "id": "s",
+     "symbol": "S",
+     "name": "Sulfur",
+     "z": 16,
+     "atomic_weight": {
+      "v": 32.06,
+      "unit": "1",
+      "src": "iupac2021",
+      "note": "IUPAC 2021 conventional value (the standard weight is an interval)"
+     },
+     "abundance_protosolar": {
+      "v": 437000.0,
+      "unit": "atoms per 1e6 Si",
+      "src": "lodders2021",
+      "sigma": 26000.0
+     }
+    },
+    {
+     "id": "cl",
+     "symbol": "Cl",
+     "name": "Chlorine",
+     "z": 17,
+     "atomic_weight": {
+      "v": 35.45,
+      "unit": "1",
+      "src": "iupac2021",
+      "note": "IUPAC 2021 conventional value (the standard weight is an interval)"
+     },
+     "abundance_protosolar": {
+      "v": 5290.0,
+      "unit": "atoms per 1e6 Si",
+      "src": "lodders2021",
+      "sigma": 810.0
+     }
+    },
+    {
+     "id": "ar",
+     "symbol": "Ar",
+     "name": "Argon",
+     "z": 18,
+     "atomic_weight": {
+      "v": 39.95,
+      "unit": "1",
+      "src": "iupac2021",
+      "note": "IUPAC 2021 conventional value (the standard weight is an interval)"
+     },
+     "abundance_protosolar": {
+      "v": 97700.0,
+      "unit": "atoms per 1e6 Si",
+      "src": "lodders2021",
+      "sigma": 25300.0
+     }
+    },
+    {
+     "id": "k",
+     "symbol": "K",
+     "name": "Potassium",
+     "z": 19,
+     "atomic_weight": {
+      "v": 39.0983,
+      "unit": "1",
+      "src": "iupac2021"
+     },
+     "abundance_protosolar": {
+      "v": 3611.0,
+      "unit": "atoms per 1e6 Si",
+      "src": "lodders2021",
+      "sigma": 190.0
+     }
+    },
+    {
+     "id": "ca",
+     "symbol": "Ca",
+     "name": "Calcium",
+     "z": 20,
+     "atomic_weight": {
+      "v": 40.078,
+      "unit": "1",
+      "src": "iupac2021"
+     },
+     "abundance_protosolar": {
+      "v": 57234.0,
+      "unit": "atoms per 1e6 Si",
+      "src": "lodders2021",
+      "sigma": 4500.0
+     }
+    },
+    {
+     "id": "sc",
+     "symbol": "Sc",
+     "name": "Scandium",
+     "z": 21,
+     "atomic_weight": {
+      "v": 44.955907,
+      "unit": "1",
+      "src": "iupac2021"
+     },
+     "abundance_protosolar": {
+      "v": 33.7,
+      "unit": "atoms per 1e6 Si",
+      "src": "lodders2021",
+      "sigma": 2.2
+     }
+    },
+    {
+     "id": "ti",
+     "symbol": "Ti",
+     "name": "Titanium",
+     "z": 22,
+     "atomic_weight": {
+      "v": 47.867,
+      "unit": "1",
+      "src": "iupac2021"
+     },
+     "abundance_protosolar": {
+      "v": 2459.0,
+      "unit": "atoms per 1e6 Si",
+      "src": "lodders2021",
+      "sigma": 150.0
+     }
+    },
+    {
+     "id": "v",
+     "symbol": "V",
+     "name": "Vanadium",
+     "z": 23,
+     "atomic_weight": {
+      "v": 50.9415,
+      "unit": "1",
+      "src": "iupac2021"
+     },
+     "abundance_protosolar": {
+      "v": 275.0,
+      "unit": "atoms per 1e6 Si",
+      "src": "lodders2021",
+      "sigma": 18.0
+     }
+    },
+    {
+     "id": "cr",
+     "symbol": "Cr",
+     "name": "Chromium",
+     "z": 24,
+     "atomic_weight": {
+      "v": 51.9961,
+      "unit": "1",
+      "src": "iupac2021"
+     },
+     "abundance_protosolar": {
+      "v": 13130.0,
+      "unit": "atoms per 1e6 Si",
+      "src": "lodders2021",
+      "sigma": 460.0
+     }
+    },
+    {
+     "id": "mn",
+     "symbol": "Mn",
+     "name": "Manganese",
+     "z": 25,
+     "atomic_weight": {
+      "v": 54.938043,
+      "unit": "1",
+      "src": "iupac2021"
+     },
+     "abundance_protosolar": {
+      "v": 9090.0,
+      "unit": "atoms per 1e6 Si",
+      "src": "lodders2021",
+      "sigma": 620.0
+     }
+    },
+    {
+     "id": "fe",
+     "symbol": "Fe",
+     "name": "Iron",
+     "z": 26,
+     "atomic_weight": {
+      "v": 55.845,
+      "unit": "1",
+      "src": "iupac2021"
+     },
+     "abundance_protosolar": {
+      "v": 872000.0,
+      "unit": "atoms per 1e6 Si",
+      "src": "lodders2021",
+      "sigma": 38000.0
+     }
+    },
+    {
+     "id": "co",
+     "symbol": "Co",
+     "name": "Cobalt",
+     "z": 27,
+     "atomic_weight": {
+      "v": 58.933194,
+      "unit": "1",
+      "src": "iupac2021"
+     },
+     "abundance_protosolar": {
+      "v": 2260.0,
+      "unit": "atoms per 1e6 Si",
+      "src": "lodders2021",
+      "sigma": 100.0
+     }
+    },
+    {
+     "id": "ni",
+     "symbol": "Ni",
+     "name": "Nickel",
+     "z": 28,
+     "atomic_weight": {
+      "v": 58.6934,
+      "unit": "1",
+      "src": "iupac2021"
+     },
+     "abundance_protosolar": {
+      "v": 48670.0,
+      "unit": "atoms per 1e6 Si",
+      "src": "lodders2021",
+      "sigma": 2940.0
+     }
+    },
+    {
+     "id": "cu",
+     "symbol": "Cu",
+     "name": "Copper",
+     "z": 29,
+     "atomic_weight": {
+      "v": 63.546,
+      "unit": "1",
+      "src": "iupac2021"
+     },
+     "abundance_protosolar": {
+      "v": 535.0,
+      "unit": "atoms per 1e6 Si",
+      "src": "lodders2021",
+      "sigma": 50.0
+     }
+    },
+    {
+     "id": "zn",
+     "symbol": "Zn",
+     "name": "Zinc",
+     "z": 30,
+     "atomic_weight": {
+      "v": 65.38,
+      "unit": "1",
+      "src": "iupac2021"
+     },
+     "abundance_protosolar": {
+      "v": 1260.0,
+      "unit": "atoms per 1e6 Si",
+      "src": "lodders2021",
+      "sigma": 180.0
+     }
+    },
+    {
+     "id": "ga",
+     "symbol": "Ga",
+     "name": "Gallium",
+     "z": 31,
+     "atomic_weight": {
+      "v": 69.723,
+      "unit": "1",
+      "src": "iupac2021"
+     },
+     "abundance_protosolar": {
+      "v": 36.2,
+      "unit": "atoms per 1e6 Si",
+      "src": "lodders2021",
+      "sigma": 1.8
+     }
+    },
+    {
+     "id": "ge",
+     "symbol": "Ge",
+     "name": "Germanium",
+     "z": 32,
+     "atomic_weight": {
+      "v": 72.63,
+      "unit": "1",
+      "src": "iupac2021"
+     },
+     "abundance_protosolar": {
+      "v": 120.0,
+      "unit": "atoms per 1e6 Si",
+      "src": "lodders2021",
+      "sigma": 7.0
+     }
+    },
+    {
+     "id": "as",
+     "symbol": "As",
+     "name": "Arsenic",
+     "z": 33,
+     "atomic_weight": {
+      "v": 74.921595,
+      "unit": "1",
+      "src": "iupac2021"
+     },
+     "abundance_protosolar": {
+      "v": 6.07,
+      "unit": "atoms per 1e6 Si",
+      "src": "lodders2021",
+      "sigma": 0.5
+     }
+    },
+    {
+     "id": "se",
+     "symbol": "Se",
+     "name": "Selenium",
+     "z": 34,
+     "atomic_weight": {
+      "v": 78.971,
+      "unit": "1",
+      "src": "iupac2021"
+     },
+     "abundance_protosolar": {
+      "v": 67.6,
+      "unit": "atoms per 1e6 Si",
+      "src": "lodders2021",
+      "sigma": 5.0
+     }
+    },
+    {
+     "id": "br",
+     "symbol": "Br",
+     "name": "Bromine",
+     "z": 35,
+     "atomic_weight": {
+      "v": 79.904,
+      "unit": "1",
+      "src": "iupac2021",
+      "note": "IUPAC 2021 conventional value (the standard weight is an interval)"
+     },
+     "abundance_protosolar": {
+      "v": 12.3,
+      "unit": "atoms per 1e6 Si",
+      "src": "lodders2021",
+      "sigma": 2.9
+     }
+    },
+    {
+     "id": "kr",
+     "symbol": "Kr",
+     "name": "Krypton",
+     "z": 36,
+     "atomic_weight": {
+      "v": 83.798,
+      "unit": "1",
+      "src": "iupac2021"
+     },
+     "abundance_protosolar": {
+      "v": 51.3,
+      "unit": "atoms per 1e6 Si",
+      "src": "lodders2021",
+      "sigma": 10.4
+     }
+    },
+    {
+     "id": "rb",
+     "symbol": "Rb",
+     "name": "Rubidium",
+     "z": 37,
+     "atomic_weight": {
+      "v": 85.4678,
+      "unit": "1",
+      "src": "iupac2021"
+     },
+     "abundance_protosolar": {
+      "v": 7.17,
+      "unit": "atoms per 1e6 Si",
+      "src": "lodders2021",
+      "sigma": 0.47
+     }
+    },
+    {
+     "id": "sr",
+     "symbol": "Sr",
+     "name": "Strontium",
+     "z": 38,
+     "atomic_weight": {
+      "v": 87.62,
+      "unit": "1",
+      "src": "iupac2021"
+     },
+     "abundance_protosolar": {
+      "v": 23.3,
+      "unit": "atoms per 1e6 Si",
+      "src": "lodders2021",
+      "sigma": 1.3
+     }
+    },
+    {
+     "id": "y",
+     "symbol": "Y",
+     "name": "Yttrium",
+     "z": 39,
+     "atomic_weight": {
+      "v": 88.905838,
+      "unit": "1",
+      "src": "iupac2021"
+     },
+     "abundance_protosolar": {
+      "v": 4.35,
+      "unit": "atoms per 1e6 Si",
+      "src": "lodders2021",
+      "sigma": 0.24
+     }
+    },
+    {
+     "id": "zr",
+     "symbol": "Zr",
+     "name": "Zirconium",
+     "z": 40,
+     "atomic_weight": {
+      "v": 91.224,
+      "unit": "1",
+      "src": "iupac2021",
+      "note": "IUPAC 2021 (CIAAW revised it in 2024)"
+     },
+     "abundance_protosolar": {
+      "v": 10.9,
+      "unit": "atoms per 1e6 Si",
+      "src": "lodders2021",
+      "sigma": 1.0
+     }
+    },
+    {
+     "id": "nb",
+     "symbol": "Nb",
+     "name": "Niobium",
+     "z": 41,
+     "atomic_weight": {
+      "v": 92.90637,
+      "unit": "1",
+      "src": "iupac2021"
+     },
+     "abundance_protosolar": {
+      "v": 0.78,
+      "unit": "atoms per 1e6 Si",
+      "src": "lodders2021",
+      "sigma": 0.07
+     }
+    },
+    {
+     "id": "mo",
+     "symbol": "Mo",
+     "name": "Molybdenum",
+     "z": 42,
+     "atomic_weight": {
+      "v": 95.95,
+      "unit": "1",
+      "src": "iupac2021"
+     },
+     "abundance_protosolar": {
+      "v": 2.6,
+      "unit": "atoms per 1e6 Si",
+      "src": "lodders2021",
+      "sigma": 0.26
+     }
+    },
+    {
+     "id": "tc",
+     "symbol": "Tc",
+     "name": "Technetium",
+     "z": 43,
+     "no_standard_weight": true
+    },
+    {
+     "id": "ru",
+     "symbol": "Ru",
+     "name": "Ruthenium",
+     "z": 44,
+     "atomic_weight": {
+      "v": 101.07,
+      "unit": "1",
+      "src": "iupac2021"
+     },
+     "abundance_protosolar": {
+      "v": 1.81,
+      "unit": "atoms per 1e6 Si",
+      "src": "lodders2021",
+      "sigma": 0.02
+     }
+    },
+    {
+     "id": "rh",
+     "symbol": "Rh",
+     "name": "Rhodium",
+     "z": 45,
+     "atomic_weight": {
+      "v": 102.90549,
+      "unit": "1",
+      "src": "iupac2021"
+     },
+     "abundance_protosolar": {
+      "v": 0.338,
+      "unit": "atoms per 1e6 Si",
+      "src": "lodders2021",
+      "sigma": 0.015
+     }
+    },
+    {
+     "id": "pd",
+     "symbol": "Pd",
+     "name": "Palladium",
+     "z": 46,
+     "atomic_weight": {
+      "v": 106.42,
+      "unit": "1",
+      "src": "iupac2021"
+     },
+     "abundance_protosolar": {
+      "v": 1.38,
+      "unit": "atoms per 1e6 Si",
+      "src": "lodders2021",
+      "sigma": 0.07
+     }
+    },
+    {
+     "id": "ag",
+     "symbol": "Ag",
+     "name": "Silver",
+     "z": 47,
+     "atomic_weight": {
+      "v": 107.8682,
+      "unit": "1",
+      "src": "iupac2021"
+     },
+     "abundance_protosolar": {
+      "v": 0.497,
+      "unit": "atoms per 1e6 Si",
+      "src": "lodders2021",
+      "sigma": 0.022
+     }
+    },
+    {
+     "id": "cd",
+     "symbol": "Cd",
+     "name": "Cadmium",
+     "z": 48,
+     "atomic_weight": {
+      "v": 112.414,
+      "unit": "1",
+      "src": "iupac2021"
+     },
+     "abundance_protosolar": {
+      "v": 1.58,
+      "unit": "atoms per 1e6 Si",
+      "src": "lodders2021",
+      "sigma": 0.06
+     }
+    },
+    {
+     "id": "in",
+     "symbol": "In",
+     "name": "Indium",
+     "z": 49,
+     "atomic_weight": {
+      "v": 114.818,
+      "unit": "1",
+      "src": "iupac2021"
+     },
+     "abundance_protosolar": {
+      "v": 0.179,
+      "unit": "atoms per 1e6 Si",
+      "src": "lodders2021",
+      "sigma": 0.008
+     }
+    },
+    {
+     "id": "sn",
+     "symbol": "Sn",
+     "name": "Tin",
+     "z": 50,
+     "atomic_weight": {
+      "v": 118.71,
+      "unit": "1",
+      "src": "iupac2021"
+     },
+     "abundance_protosolar": {
+      "v": 3.59,
+      "unit": "atoms per 1e6 Si",
+      "src": "lodders2021",
+      "sigma": 0.22
+     }
+    },
+    {
+     "id": "sb",
+     "symbol": "Sb",
+     "name": "Antimony",
+     "z": 51,
+     "atomic_weight": {
+      "v": 121.76,
+      "unit": "1",
+      "src": "iupac2021"
+     },
+     "abundance_protosolar": {
+      "v": 0.359,
+      "unit": "atoms per 1e6 Si",
+      "src": "lodders2021",
+      "sigma": 0.045
+     }
+    },
+    {
+     "id": "te",
+     "symbol": "Te",
+     "name": "Tellurium",
+     "z": 52,
+     "atomic_weight": {
+      "v": 127.6,
+      "unit": "1",
+      "src": "iupac2021"
+     },
+     "abundance_protosolar": {
+      "v": 4.72,
+      "unit": "atoms per 1e6 Si",
+      "src": "lodders2021",
+      "sigma": 0.23
+     }
+    },
+    {
+     "id": "i",
+     "symbol": "I",
+     "name": "Iodine",
+     "z": 53,
+     "atomic_weight": {
+      "v": 126.90447,
+      "unit": "1",
+      "src": "iupac2021"
+     },
+     "abundance_protosolar": {
+      "v": 1.59,
+      "unit": "atoms per 1e6 Si",
+      "src": "lodders2021",
+      "sigma": 0.64
+     }
+    },
+    {
+     "id": "xe",
+     "symbol": "Xe",
+     "name": "Xenon",
+     "z": 54,
+     "atomic_weight": {
+      "v": 131.293,
+      "unit": "1",
+      "src": "iupac2021"
+     },
+     "abundance_protosolar": {
+      "v": 5.5,
+      "unit": "atoms per 1e6 Si",
+      "src": "lodders2021",
+      "sigma": 1.11
+     }
+    },
+    {
+     "id": "cs",
+     "symbol": "Cs",
+     "name": "Caesium",
+     "z": 55,
+     "atomic_weight": {
+      "v": 132.90545196,
+      "unit": "1",
+      "src": "iupac2021"
+     },
+     "abundance_protosolar": {
+      "v": 0.368,
+      "unit": "atoms per 1e6 Si",
+      "src": "lodders2021",
+      "sigma": 0.043
+     }
+    },
+    {
+     "id": "ba",
+     "symbol": "Ba",
+     "name": "Barium",
+     "z": 56,
+     "atomic_weight": {
+      "v": 137.327,
+      "unit": "1",
+      "src": "iupac2021"
+     },
+     "abundance_protosolar": {
+      "v": 4.55,
+      "unit": "atoms per 1e6 Si",
+      "src": "lodders2021",
+      "sigma": 0.27
+     }
+    },
+    {
+     "id": "la",
+     "symbol": "La",
+     "name": "Lanthanum",
+     "z": 57,
+     "atomic_weight": {
+      "v": 138.90547,
+      "unit": "1",
+      "src": "iupac2021"
+     },
+     "abundance_protosolar": {
+      "v": 0.459,
+      "unit": "atoms per 1e6 Si",
+      "src": "lodders2021",
+      "sigma": 0.024
+     }
+    },
+    {
+     "id": "ce",
+     "symbol": "Ce",
+     "name": "Cerium",
+     "z": 58,
+     "atomic_weight": {
+      "v": 140.116,
+      "unit": "1",
+      "src": "iupac2021"
+     },
+     "abundance_protosolar": {
+      "v": 1.16,
+      "unit": "atoms per 1e6 Si",
+      "src": "lodders2021",
+      "sigma": 0.05
+     }
+    },
+    {
+     "id": "pr",
+     "symbol": "Pr",
+     "name": "Praseodymium",
+     "z": 59,
+     "atomic_weight": {
+      "v": 140.90766,
+      "unit": "1",
+      "src": "iupac2021"
+     },
+     "abundance_protosolar": {
+      "v": 0.175,
+      "unit": "atoms per 1e6 Si",
+      "src": "lodders2021",
+      "sigma": 0.012
+     }
+    },
+    {
+     "id": "nd",
+     "symbol": "Nd",
+     "name": "Neodymium",
+     "z": 60,
+     "atomic_weight": {
+      "v": 144.242,
+      "unit": "1",
+      "src": "iupac2021"
+     },
+     "abundance_protosolar": {
+      "v": 0.864,
+      "unit": "atoms per 1e6 Si",
+      "src": "lodders2021",
+      "sigma": 0.022
+     }
+    },
+    {
+     "id": "pm",
+     "symbol": "Pm",
+     "name": "Promethium",
+     "z": 61,
+     "no_standard_weight": true
+    },
+    {
+     "id": "sm",
+     "symbol": "Sm",
+     "name": "Samarium",
+     "z": 62,
+     "atomic_weight": {
+      "v": 150.36,
+      "unit": "1",
+      "src": "iupac2021"
+     },
+     "abundance_protosolar": {
+      "v": 0.273,
+      "unit": "atoms per 1e6 Si",
+      "src": "lodders2021",
+      "sigma": 0.012
+     }
+    },
+    {
+     "id": "eu",
+     "symbol": "Eu",
+     "name": "Europium",
+     "z": 63,
+     "atomic_weight": {
+      "v": 151.964,
+      "unit": "1",
+      "src": "iupac2021"
+     },
+     "abundance_protosolar": {
+      "v": 0.1,
+      "unit": "atoms per 1e6 Si",
+      "src": "lodders2021",
+      "sigma": 0.005
+     }
+    },
+    {
+     "id": "gd",
+     "symbol": "Gd",
+     "name": "Gadolinium",
+     "z": 64,
+     "atomic_weight": {
+      "v": 157.25,
+      "unit": "1",
+      "src": "iupac2021",
+      "note": "IUPAC 2021 (CIAAW revised it in 2024)"
+     },
+     "abundance_protosolar": {
+      "v": 0.346,
+      "unit": "atoms per 1e6 Si",
+      "src": "lodders2021",
+      "sigma": 0.013
+     }
+    },
+    {
+     "id": "tb",
+     "symbol": "Tb",
+     "name": "Terbium",
+     "z": 65,
+     "atomic_weight": {
+      "v": 158.925354,
+      "unit": "1",
+      "src": "iupac2021"
+     },
+     "abundance_protosolar": {
+      "v": 0.0625,
+      "unit": "atoms per 1e6 Si",
+      "src": "lodders2021",
+      "sigma": 0.0025
+     }
+    },
+    {
+     "id": "dy",
+     "symbol": "Dy",
+     "name": "Dysprosium",
+     "z": 66,
+     "atomic_weight": {
+      "v": 162.5,
+      "unit": "1",
+      "src": "iupac2021"
+     },
+     "abundance_protosolar": {
+      "v": 0.407,
+      "unit": "atoms per 1e6 Si",
+      "src": "lodders2021",
+      "sigma": 0.016
+     }
+    },
+    {
+     "id": "ho",
+     "symbol": "Ho",
+     "name": "Holmium",
+     "z": 67,
+     "atomic_weight": {
+      "v": 164.930329,
+      "unit": "1",
+      "src": "iupac2021"
+     },
+     "abundance_protosolar": {
+      "v": 0.0891,
+      "unit": "atoms per 1e6 Si",
+      "src": "lodders2021",
+      "sigma": 0.0035
+     }
+    },
+    {
+     "id": "er",
+     "symbol": "Er",
+     "name": "Erbium",
+     "z": 68,
+     "atomic_weight": {
+      "v": 167.259,
+      "unit": "1",
+      "src": "iupac2021"
+     },
+     "abundance_protosolar": {
+      "v": 0.256,
+      "unit": "atoms per 1e6 Si",
+      "src": "lodders2021",
+      "sigma": 0.009
+     }
+    },
+    {
+     "id": "tm",
+     "symbol": "Tm",
+     "name": "Thulium",
+     "z": 69,
+     "atomic_weight": {
+      "v": 168.934219,
+      "unit": "1",
+      "src": "iupac2021"
+     },
+     "abundance_protosolar": {
+      "v": 0.0403,
+      "unit": "atoms per 1e6 Si",
+      "src": "lodders2021",
+      "sigma": 0.0014
+     }
+    },
+    {
+     "id": "yb",
+     "symbol": "Yb",
+     "name": "Ytterbium",
+     "z": 70,
+     "atomic_weight": {
+      "v": 173.045,
+      "unit": "1",
+      "src": "iupac2021"
+     },
+     "abundance_protosolar": {
+      "v": 0.252,
+      "unit": "atoms per 1e6 Si",
+      "src": "lodders2021",
+      "sigma": 0.009
+     }
+    },
+    {
+     "id": "lu",
+     "symbol": "Lu",
+     "name": "Lutetium",
+     "z": 71,
+     "atomic_weight": {
+      "v": 174.9668,
+      "unit": "1",
+      "src": "iupac2021",
+      "note": "IUPAC 2021 (CIAAW revised it in 2024)"
+     },
+     "abundance_protosolar": {
+      "v": 0.0381,
+      "unit": "atoms per 1e6 Si",
+      "src": "lodders2021",
+      "sigma": 0.0018
+     }
+    },
+    {
+     "id": "hf",
+     "symbol": "Hf",
+     "name": "Hafnium",
+     "z": 72,
+     "atomic_weight": {
+      "v": 178.486,
+      "unit": "1",
+      "src": "iupac2021"
+     },
+     "abundance_protosolar": {
+      "v": 0.155,
+      "unit": "atoms per 1e6 Si",
+      "src": "lodders2021",
+      "sigma": 0.011
+     }
+    },
+    {
+     "id": "ta",
+     "symbol": "Ta",
+     "name": "Tantalum",
+     "z": 73,
+     "atomic_weight": {
+      "v": 180.94788,
+      "unit": "1",
+      "src": "iupac2021"
+     },
+     "abundance_protosolar": {
+      "v": 0.0215,
+      "unit": "atoms per 1e6 Si",
+      "src": "lodders2021",
+      "sigma": 0.001
+     }
+    },
+    {
+     "id": "w",
+     "symbol": "W",
+     "name": "Tungsten",
+     "z": 74,
+     "atomic_weight": {
+      "v": 183.84,
+      "unit": "1",
+      "src": "iupac2021"
+     },
+     "abundance_protosolar": {
+      "v": 0.144,
+      "unit": "atoms per 1e6 Si",
+      "src": "lodders2021",
+      "sigma": 0.013
+     }
+    },
+    {
+     "id": "re",
+     "symbol": "Re",
+     "name": "Rhenium",
+     "z": 75,
+     "atomic_weight": {
+      "v": 186.207,
+      "unit": "1",
+      "src": "iupac2021"
+     },
+     "abundance_protosolar": {
+      "v": 0.0547,
+      "unit": "atoms per 1e6 Si",
+      "src": "lodders2021",
+      "sigma": 0.0042
+     }
+    },
+    {
+     "id": "os",
+     "symbol": "Os",
+     "name": "Osmium",
+     "z": 76,
+     "atomic_weight": {
+      "v": 190.23,
+      "unit": "1",
+      "src": "iupac2021"
+     },
+     "abundance_protosolar": {
+      "v": 0.652,
+      "unit": "atoms per 1e6 Si",
+      "src": "lodders2021",
+      "sigma": 0.04
+     }
+    },
+    {
+     "id": "ir",
+     "symbol": "Ir",
+     "name": "Iridium",
+     "z": 77,
+     "atomic_weight": {
+      "v": 192.217,
+      "unit": "1",
+      "src": "iupac2021"
+     },
+     "abundance_protosolar": {
+      "v": 0.633,
+      "unit": "atoms per 1e6 Si",
+      "src": "lodders2021",
+      "sigma": 0.029
+     }
+    },
+    {
+     "id": "pt",
+     "symbol": "Pt",
+     "name": "Platinum",
+     "z": 78,
+     "atomic_weight": {
+      "v": 195.084,
+      "unit": "1",
+      "src": "iupac2021"
+     },
+     "abundance_protosolar": {
+      "v": 1.24,
+      "unit": "atoms per 1e6 Si",
+      "src": "lodders2021",
+      "sigma": 0.1
+     }
+    },
+    {
+     "id": "au",
+     "symbol": "Au",
+     "name": "Gold",
+     "z": 79,
+     "atomic_weight": {
+      "v": 196.96657,
+      "unit": "1",
+      "src": "iupac2021"
+     },
+     "abundance_protosolar": {
+      "v": 0.195,
+      "unit": "atoms per 1e6 Si",
+      "src": "lodders2021",
+      "sigma": 0.016
+     }
+    },
+    {
+     "id": "hg",
+     "symbol": "Hg",
+     "name": "Mercury",
+     "z": 80,
+     "atomic_weight": {
+      "v": 200.592,
+      "unit": "1",
+      "src": "iupac2021"
+     },
+     "abundance_protosolar": {
+      "v": 0.376,
+      "unit": "atoms per 1e6 Si",
+      "src": "lodders2021",
+      "sigma": 0.156
+     }
+    },
+    {
+     "id": "tl",
+     "symbol": "Tl",
+     "name": "Thallium",
+     "z": 81,
+     "atomic_weight": {
+      "v": 204.38,
+      "unit": "1",
+      "src": "iupac2021",
+      "note": "IUPAC 2021 conventional value (the standard weight is an interval)"
+     },
+     "abundance_protosolar": {
+      "v": 0.179,
+      "unit": "atoms per 1e6 Si",
+      "src": "lodders2021",
+      "sigma": 0.015
+     }
+    },
+    {
+     "id": "pb",
+     "symbol": "Pb",
+     "name": "Lead",
+     "z": 82,
+     "atomic_weight": {
+      "v": 207.2,
+      "unit": "1",
+      "src": "iupac2021",
+      "note": "IUPAC 2021 conventional value (the standard weight is an interval)"
+     },
+     "abundance_protosolar": {
+      "v": 3.31,
+      "unit": "atoms per 1e6 Si",
+      "src": "lodders2021",
+      "sigma": 0.2
+     }
+    },
+    {
+     "id": "bi",
+     "symbol": "Bi",
+     "name": "Bismuth",
+     "z": 83,
+     "atomic_weight": {
+      "v": 208.9804,
+      "unit": "1",
+      "src": "iupac2021"
+     },
+     "abundance_protosolar": {
+      "v": 0.141,
+      "unit": "atoms per 1e6 Si",
+      "src": "lodders2021",
+      "sigma": 0.01
+     }
+    },
+    {
+     "id": "po",
+     "symbol": "Po",
+     "name": "Polonium",
+     "z": 84,
+     "no_standard_weight": true
+    },
+    {
+     "id": "at",
+     "symbol": "At",
+     "name": "Astatine",
+     "z": 85,
+     "no_standard_weight": true
+    },
+    {
+     "id": "rn",
+     "symbol": "Rn",
+     "name": "Radon",
+     "z": 86,
+     "no_standard_weight": true
+    },
+    {
+     "id": "fr",
+     "symbol": "Fr",
+     "name": "Francium",
+     "z": 87,
+     "no_standard_weight": true
+    },
+    {
+     "id": "ra",
+     "symbol": "Ra",
+     "name": "Radium",
+     "z": 88,
+     "no_standard_weight": true
+    },
+    {
+     "id": "ac",
+     "symbol": "Ac",
+     "name": "Actinium",
+     "z": 89,
+     "no_standard_weight": true
+    },
+    {
+     "id": "th",
+     "symbol": "Th",
+     "name": "Thorium",
+     "z": 90,
+     "atomic_weight": {
+      "v": 232.0377,
+      "unit": "1",
+      "src": "iupac2021"
+     },
+     "abundance_protosolar": {
+      "v": 0.0421,
+      "unit": "atoms per 1e6 Si",
+      "src": "lodders2021",
+      "sigma": 0.0021
+     }
+    },
+    {
+     "id": "pa",
+     "symbol": "Pa",
+     "name": "Protactinium",
+     "z": 91,
+     "atomic_weight": {
+      "v": 231.03588,
+      "unit": "1",
+      "src": "iupac2021"
+     }
+    },
+    {
+     "id": "u",
+     "symbol": "U",
+     "name": "Uranium",
+     "z": 92,
+     "atomic_weight": {
+      "v": 238.02891,
+      "unit": "1",
+      "src": "iupac2021"
+     },
+     "abundance_protosolar": {
+      "v": 0.02389,
+      "unit": "atoms per 1e6 Si",
+      "src": "lodders2021",
+      "sigma": 0.0017
+     }
+    },
+    {
+     "id": "np",
+     "symbol": "Np",
+     "name": "Neptunium",
+     "z": 93,
+     "no_standard_weight": true
+    },
+    {
+     "id": "pu",
+     "symbol": "Pu",
+     "name": "Plutonium",
+     "z": 94,
+     "no_standard_weight": true
+    },
+    {
+     "id": "am",
+     "symbol": "Am",
+     "name": "Americium",
+     "z": 95,
+     "no_standard_weight": true
+    },
+    {
+     "id": "cm",
+     "symbol": "Cm",
+     "name": "Curium",
+     "z": 96,
+     "no_standard_weight": true
+    },
+    {
+     "id": "bk",
+     "symbol": "Bk",
+     "name": "Berkelium",
+     "z": 97,
+     "no_standard_weight": true
+    },
+    {
+     "id": "cf",
+     "symbol": "Cf",
+     "name": "Californium",
+     "z": 98,
+     "no_standard_weight": true
+    },
+    {
+     "id": "es",
+     "symbol": "Es",
+     "name": "Einsteinium",
+     "z": 99,
+     "no_standard_weight": true
+    },
+    {
+     "id": "fm",
+     "symbol": "Fm",
+     "name": "Fermium",
+     "z": 100,
+     "no_standard_weight": true
+    },
+    {
+     "id": "md",
+     "symbol": "Md",
+     "name": "Mendelevium",
+     "z": 101,
+     "no_standard_weight": true
+    },
+    {
+     "id": "no",
+     "symbol": "No",
+     "name": "Nobelium",
+     "z": 102,
+     "no_standard_weight": true
+    },
+    {
+     "id": "lr",
+     "symbol": "Lr",
+     "name": "Lawrencium",
+     "z": 103,
+     "no_standard_weight": true
+    },
+    {
+     "id": "rf",
+     "symbol": "Rf",
+     "name": "Rutherfordium",
+     "z": 104,
+     "no_standard_weight": true
+    },
+    {
+     "id": "db",
+     "symbol": "Db",
+     "name": "Dubnium",
+     "z": 105,
+     "no_standard_weight": true
+    },
+    {
+     "id": "sg",
+     "symbol": "Sg",
+     "name": "Seaborgium",
+     "z": 106,
+     "no_standard_weight": true
+    },
+    {
+     "id": "bh",
+     "symbol": "Bh",
+     "name": "Bohrium",
+     "z": 107,
+     "no_standard_weight": true
+    },
+    {
+     "id": "hs",
+     "symbol": "Hs",
+     "name": "Hassium",
+     "z": 108,
+     "no_standard_weight": true
+    },
+    {
+     "id": "mt",
+     "symbol": "Mt",
+     "name": "Meitnerium",
+     "z": 109,
+     "no_standard_weight": true
+    },
+    {
+     "id": "ds",
+     "symbol": "Ds",
+     "name": "Darmstadtium",
+     "z": 110,
+     "no_standard_weight": true
+    },
+    {
+     "id": "rg",
+     "symbol": "Rg",
+     "name": "Roentgenium",
+     "z": 111,
+     "no_standard_weight": true
+    },
+    {
+     "id": "cn",
+     "symbol": "Cn",
+     "name": "Copernicium",
+     "z": 112,
+     "no_standard_weight": true
+    },
+    {
+     "id": "nh",
+     "symbol": "Nh",
+     "name": "Nihonium",
+     "z": 113,
+     "no_standard_weight": true
+    },
+    {
+     "id": "fl",
+     "symbol": "Fl",
+     "name": "Flerovium",
+     "z": 114,
+     "no_standard_weight": true
+    },
+    {
+     "id": "mc",
+     "symbol": "Mc",
+     "name": "Moscovium",
+     "z": 115,
+     "no_standard_weight": true
+    },
+    {
+     "id": "lv",
+     "symbol": "Lv",
+     "name": "Livermorium",
+     "z": 116,
+     "no_standard_weight": true
+    },
+    {
+     "id": "ts",
+     "symbol": "Ts",
+     "name": "Tennessine",
+     "z": 117,
+     "no_standard_weight": true
+    },
+    {
+     "id": "og",
+     "symbol": "Og",
+     "name": "Oganesson",
+     "z": 118,
+     "no_standard_weight": true
+    }
+   ],
+   "isotopes": [
+    {
+     "id": "u238",
+     "element": "u",
+     "a": 238,
+     "half_life_s": {
+      "v": 1.409993568e+17,
+      "unit": "s",
+      "src": "ruedas2017",
+      "note": "year taken as the Julian year"
+     },
+     "daughter": "pb206",
+     "share_today": {
+      "v": 0.9929,
+      "unit": "1",
+      "src": "ruedas2017",
+      "note": "mass share of the element today"
+     },
+     "decay_heat_w_per_kg": {
+      "v": 9.46e-05,
+      "unit": "W kg-1",
+      "src": "ruedas2017"
+     }
+    },
+    {
+     "id": "u235",
+     "element": "u",
+     "a": 235,
+     "half_life_s": {
+      "v": 2.22165504e+16,
+      "unit": "s",
+      "src": "ruedas2017",
+      "note": "year taken as the Julian year"
+     },
+     "daughter": "pb207",
+     "share_today": {
+      "v": 0.00711,
+      "unit": "1",
+      "src": "ruedas2017",
+      "note": "mass share of the element today"
+     },
+     "decay_heat_w_per_kg": {
+      "v": 0.000569,
+      "unit": "W kg-1",
+      "src": "ruedas2017"
+     }
+    },
+    {
+     "id": "th232",
+     "element": "th",
+     "a": 232,
+     "half_life_s": {
+      "v": 4.4338428e+17,
+      "unit": "s",
+      "src": "nubase2020",
+      "check": "unverified",
+      "note": "year taken as the Julian year"
+     },
+     "daughter": "pb208",
+     "note": "ENSDF 14.05 Gyr as the code holds; Ruedas 2017 lists 14.0 Gyr",
+     "share_today": {
+      "v": 1.0,
+      "unit": "1",
+      "src": "ruedas2017"
+     },
+     "decay_heat_w_per_kg": {
+      "v": 2.64e-05,
+      "unit": "W kg-1",
+      "src": "ruedas2017"
+     }
+    },
+    {
+     "id": "k40",
+     "element": "k",
+     "a": 40,
+     "half_life_s": {
+      "v": 3.93838848e+16,
+      "unit": "s",
+      "src": "ruedas2017",
+      "note": "year taken as the Julian year"
+     },
+     "daughter": "ar40 ca40",
+     "share_today": {
+      "v": 0.000119,
+      "unit": "1",
+      "src": "ruedas2017",
+      "note": "mass share of the element today"
+     },
+     "decay_heat_w_per_kg": {
+      "v": 2.92e-05,
+      "unit": "W kg-1",
+      "src": "ruedas2017"
+     }
+    },
+    {
+     "id": "al26",
+     "element": "al",
+     "a": 26,
+     "half_life_s": {
+      "v": 22626799200000.0,
+      "unit": "s",
+      "src": "ruedas2017",
+      "note": "year taken as the Julian year"
+     },
+     "daughter": "mg26",
+     "share_at_sun_birth": {
+      "v": 5.25e-05,
+      "unit": "1",
+      "src": "kita2013",
+      "note": "26Al/27Al by number in the first solids"
+     },
+     "decay_heat_w_per_kg": {
+      "v": 0.3583,
+      "unit": "W kg-1",
+      "src": "ruedas2017"
+     }
+    },
+    {
+     "id": "h1",
+     "element": "h",
+     "a": 1,
+     "stable": true
+    },
+    {
+     "id": "h2",
+     "element": "h",
+     "a": 2,
+     "stable": true
+    },
+    {
+     "id": "h3",
+     "element": "h",
+     "a": 3,
+     "half_life_s": {
+      "v": 388789632.0,
+      "unit": "s",
+      "src": "nubase2020",
+      "check": "unverified",
+      "note": "year taken as the Julian year"
+     },
+     "daughter": "he3"
+    },
+    {
+     "id": "he3",
+     "element": "he",
+     "a": 3,
+     "stable": true
+    },
+    {
+     "id": "he4",
+     "element": "he",
+     "a": 4,
+     "stable": true
+    },
+    {
+     "id": "li6",
+     "element": "li",
+     "a": 6,
+     "stable": true
+    },
+    {
+     "id": "li7",
+     "element": "li",
+     "a": 7,
+     "stable": true
+    },
+    {
+     "id": "c12",
+     "element": "c",
+     "a": 12,
+     "stable": true
+    },
+    {
+     "id": "c13",
+     "element": "c",
+     "a": 13,
+     "stable": true
+    },
+    {
+     "id": "c14",
+     "element": "c",
+     "a": 14,
+     "half_life_s": {
+      "v": 179878320000.0,
+      "unit": "s",
+      "src": "nubase2020",
+      "check": "unverified",
+      "note": "year taken as the Julian year"
+     },
+     "daughter": "n14"
+    },
+    {
+     "id": "n14",
+     "element": "n",
+     "a": 14,
+     "stable": true
+    },
+    {
+     "id": "n15",
+     "element": "n",
+     "a": 15,
+     "stable": true
+    },
+    {
+     "id": "o16",
+     "element": "o",
+     "a": 16,
+     "stable": true
+    },
+    {
+     "id": "o18",
+     "element": "o",
+     "a": 18,
+     "stable": true
+    },
+    {
+     "id": "be10",
+     "element": "be",
+     "a": 10,
+     "half_life_s": {
+      "v": 43770391200000.0,
+      "unit": "s",
+      "src": "nubase2020",
+      "check": "unverified",
+      "note": "year taken as the Julian year"
+     },
+     "daughter": "b10"
+    },
+    {
+     "id": "cl36",
+     "element": "cl",
+     "a": 36,
+     "half_life_s": {
+      "v": 9498837600000.0,
+      "unit": "s",
+      "src": "nubase2020",
+      "check": "unverified",
+      "note": "year taken as the Julian year"
+     },
+     "daughter": "ar36"
+    },
+    {
+     "id": "fe60",
+     "element": "fe",
+     "a": 60,
+     "half_life_s": {
+      "v": 82680912000000.0,
+      "unit": "s",
+      "src": "nubase2020",
+      "check": "unverified",
+      "note": "year taken as the Julian year"
+     },
+     "daughter": "ni60"
+    },
+    {
+     "id": "i129",
+     "element": "i",
+     "a": 129,
+     "half_life_s": {
+      "v": 508077360000000.0,
+      "unit": "s",
+      "src": "nubase2020",
+      "check": "unverified",
+      "note": "year taken as the Julian year"
+     },
+     "daughter": "xe129"
+    },
+    {
+     "id": "hf182",
+     "element": "hf",
+     "a": 182,
+     "half_life_s": {
+      "v": 280862640000000.0,
+      "unit": "s",
+      "src": "nubase2020",
+      "check": "unverified",
+      "note": "year taken as the Julian year"
+     },
+     "daughter": "w182"
+    },
+    {
+     "id": "pu244",
+     "element": "pu",
+     "a": 244,
+     "half_life_s": {
+      "v": 2565632880000000.0,
+      "unit": "s",
+      "src": "nubase2020",
+      "check": "unverified",
+      "note": "year taken as the Julian year"
+     },
+     "daughter": "fission"
+    },
+    {
+     "id": "rb87",
+     "element": "rb",
+     "a": 87,
+     "half_life_s": {
+      "v": 1.56841272e+18,
+      "unit": "s",
+      "src": "nubase2020",
+      "check": "unverified",
+      "note": "year taken as the Julian year"
+     },
+     "daughter": "sr87"
+    },
+    {
+     "id": "sm147",
+     "element": "sm",
+     "a": 147,
+     "half_life_s": {
+      "v": 3.3451056e+18,
+      "unit": "s",
+      "src": "nubase2020",
+      "check": "unverified",
+      "note": "year taken as the Julian year"
+     },
+     "daughter": "nd143"
+    },
+    {
+     "id": "u234",
+     "element": "u",
+     "a": 234,
+     "half_life_s": {
+      "v": 7747390800000.0,
+      "unit": "s",
+      "src": "nubase2020",
+      "check": "unverified",
+      "note": "year taken as the Julian year"
+     },
+     "daughter": "th230"
+    },
+    {
+     "id": "th230",
+     "element": "th",
+     "a": 230,
+     "half_life_s": {
+      "v": 2379443040000.0,
+      "unit": "s",
+      "src": "nubase2020",
+      "check": "unverified",
+      "note": "year taken as the Julian year"
+     },
+     "daughter": "ra226"
+    },
+    {
+     "id": "ra226",
+     "element": "ra",
+     "a": 226,
+     "half_life_s": {
+      "v": 50492160000.0,
+      "unit": "s",
+      "src": "nubase2020",
+      "check": "unverified",
+      "note": "year taken as the Julian year"
+     },
+     "daughter": "rn222"
+    },
+    {
+     "id": "rn222",
+     "element": "rn",
+     "a": 222,
+     "half_life_s": {
+      "v": 330350.4,
+      "unit": "s",
+      "src": "nubase2020",
+      "check": "unverified",
+      "note": "year taken as the Julian year"
+     },
+     "daughter": "po218"
+    },
+    {
+     "id": "pb206",
+     "element": "pb",
+     "a": 206,
+     "stable": true
+    },
+    {
+     "id": "pb207",
+     "element": "pb",
+     "a": 207,
+     "stable": true
+    },
+    {
+     "id": "pb208",
+     "element": "pb",
+     "a": 208,
+     "stable": true
+    }
+   ],
+   "substances": [
+    {
+     "id": "h2o",
+     "formula": {
+      "h": 2,
+      "o": 1
+     },
+     "names": {
+      "physics": "water",
+      "plain": "water",
+      "story": "water"
+     },
+     "phases": {
+      "triple_point_k": {
+       "v": 273.16,
+       "unit": "K",
+       "src": "nist-webbook"
+      },
+      "triple_point_pa": {
+       "v": 611.657,
+       "unit": "Pa",
+       "src": "nist-webbook"
+      },
+      "latent_vaporisation": {
+       "v": 2468000.0,
+       "unit": "J kg-1",
+       "src": "nist-webbook",
+       "at_k": 288.0,
+       "note": "from the slope of the NIST Antoine fit, 273-303 K row"
+      },
+      "density_liquid": {
+       "v": 1000.0,
+       "unit": "kg m-3",
+       "src": "nist-webbook",
+       "at_k": 277.0
+      },
+      "density_solid": {
+       "v": 917.0,
+       "unit": "kg m-3",
+       "src": "petrenko1999",
+       "at_k": 273.15,
+       "note": "ice Ih"
+      }
+     },
+     "thermal": {
+      "conductivity_solid": {
+       "fit": "k = a / T",
+       "coeffs": [
+        651.0
+       ],
+       "valid_k": [
+        100.0,
+        273.15
+       ],
+       "unit": "W m-1 K-1",
+       "src": "petrenko1999"
+      }
+     },
+     "optical": {
+      "refractivity_589nm": {
+       "v": 0.000256,
+       "unit": "1",
+       "src": "kaye-laby",
+       "check": "unverified",
+       "at_k": 273.15,
+       "at_pa": 101325.0
+      },
+      "king_factor": {
+       "fit": "a + b lambda^-2 + c lambda^-4, lambda in um",
+       "coeffs": [
+        1.0,
+        0.0,
+        0.0
+       ],
+       "src": "fudge-register",
+       "check": "authored"
+      },
+      "condensed_colour_rgb": {
+       "v": [
+        0.95,
+        0.95,
+        0.97
+       ],
+       "unit": "1",
+       "src": "fudge-register",
+       "check": "authored"
+      }
+     },
+     "chemical": {
+      "states": {
+       "liquid": {
+        "dgf": {
+         "v": -237180.0,
+         "unit": "J mol-1",
+         "src": "thauer1977",
+         "at_k": 298.15
+        },
+        "dhf": {
+         "v": -285830.0,
+         "unit": "J mol-1",
+         "src": "thauer1977",
+         "at_k": 298.15
+        }
+       }
+      }
+     }
+    },
+    {
+     "id": "co2",
+     "formula": {
+      "c": 1,
+      "o": 2
+     },
+     "names": {
+      "physics": "carbon dioxide",
+      "plain": "carbon dioxide",
+      "story": "carbon dioxide"
+     },
+     "phases": {
+      "triple_point_k": {
+       "v": 216.58,
+       "unit": "K",
+       "src": "nist-webbook"
+      },
+      "triple_point_pa": {
+       "v": 518500.0,
+       "unit": "Pa",
+       "src": "nist-webbook"
+      },
+      "latent_sublimation": {
+       "v": 573000.0,
+       "unit": "J kg-1",
+       "src": "nist-webbook",
+       "at_k": 195.0,
+       "note": "25.2 kJ/mol"
+      },
+      "density_solid": {
+       "v": 1560.0,
+       "unit": "kg m-3",
+       "src": "nist-webbook",
+       "check": "unverified"
+      }
+     },
+     "optical": {
+      "refractivity_589nm": {
+       "v": 0.000449,
+       "unit": "1",
+       "src": "pdg-gas",
+       "at_k": 273.15,
+       "at_pa": 101325.0
+      },
+      "king_factor": {
+       "fit": "a + b lambda^-2 + c lambda^-4, lambda in um",
+       "coeffs": [
+        1.15,
+        0.0,
+        0.0
+       ],
+       "src": "bodhaine1999"
+      },
+      "condensed_colour_rgb": {
+       "v": [
+        0.97,
+        0.97,
+        1.0
+       ],
+       "unit": "1",
+       "src": "fudge-register",
+       "check": "authored"
+      }
+     },
+     "chemical": {
+      "states": {
+       "gas": {
+        "dgf": {
+         "v": -394360.0,
+         "unit": "J mol-1",
+         "src": "thauer1977",
+         "at_k": 298.15
+        },
+        "dhf": {
+         "v": -393510.0,
+         "unit": "J mol-1",
+         "src": "thauer1977",
+         "at_k": 298.15
+        }
+       },
+       "dissolved": {
+        "dgf": {
+         "v": -386020.0,
+         "unit": "J mol-1",
+         "src": "thauer1977",
+         "at_k": 298.15
+        },
+        "dhf": {
+         "v": -413800.0,
+         "unit": "J mol-1",
+         "src": "thauer1977",
+         "at_k": 298.15
+        }
+       }
+      }
+     },
+     "cosmochemical": {
+      "ice_line_k": {
+       "v": 47.0,
+       "unit": "K",
+       "src": "oberg2011",
+       "check": "unverified"
+      }
+     }
+    },
+    {
+     "id": "ch4",
+     "formula": {
+      "c": 1,
+      "h": 4
+     },
+     "names": {
+      "physics": "methane",
+      "plain": "methane",
+      "story": "methane"
+     },
+     "phases": {
+      "triple_point_k": {
+       "v": 90.67,
+       "unit": "K",
+       "src": "nist-webbook",
+       "check": "unverified",
+       "note": "NIST lists 90.69 K"
+      },
+      "triple_point_pa": {
+       "v": 11690.0,
+       "unit": "Pa",
+       "src": "nist-webbook"
+      },
+      "latent_vaporisation": {
+       "v": 531000.0,
+       "unit": "J kg-1",
+       "src": "nist-webbook",
+       "at_k": 99.5,
+       "note": "8.519 kJ/mol"
+      },
+      "density_liquid": {
+       "v": 450.0,
+       "unit": "kg m-3",
+       "src": "nist-webbook",
+       "check": "unverified",
+       "at_k": 90.7
+      }
+     },
+     "optical": {
+      "refractivity_589nm": {
+       "v": 0.000444,
+       "unit": "1",
+       "src": "kaye-laby",
+       "check": "unverified",
+       "at_k": 273.15,
+       "at_pa": 101325.0
+      },
+      "king_factor": {
+       "fit": "a + b lambda^-2 + c lambda^-4, lambda in um",
+       "coeffs": [
+        1.0,
+        0.0,
+        0.0
+       ],
+       "src": "fudge-register",
+       "check": "authored"
+      }
+     },
+     "chemical": {
+      "states": {
+       "gas": {
+        "dgf": {
+         "v": -50750.0,
+         "unit": "J mol-1",
+         "src": "thauer1977",
+         "at_k": 298.15
+        },
+        "dhf": {
+         "v": -74810.0,
+         "unit": "J mol-1",
+         "src": "thauer1977",
+         "at_k": 298.15
+        }
+       },
+       "dissolved": {
+        "dgf": {
+         "v": -34390.0,
+         "unit": "J mol-1",
+         "src": "thauer1977",
+         "at_k": 298.15
+        },
+        "dhf": {
+         "v": -89040.0,
+         "unit": "J mol-1",
+         "src": "thauer1977",
+         "at_k": 298.15
+        }
+       }
+      }
+     }
+    },
+    {
+     "id": "nh3",
+     "formula": {
+      "n": 1,
+      "h": 3
+     },
+     "names": {
+      "physics": "ammonia",
+      "plain": "ammonia",
+      "story": "ammonia"
+     },
+     "phases": {
+      "triple_point_k": {
+       "v": 195.4,
+       "unit": "K",
+       "src": "nist-webbook",
+       "check": "unverified",
+       "note": "the climate pack holds 194.95 K, the melting point"
+      },
+      "triple_point_pa": {
+       "v": 6060.0,
+       "unit": "Pa",
+       "src": "nist-webbook"
+      },
+      "latent_sublimation": {
+       "v": 1832000.0,
+       "unit": "J kg-1",
+       "src": "nist-webbook",
+       "note": "31.2 kJ/mol"
+      },
+      "density_solid": {
+       "v": 820.0,
+       "unit": "kg m-3",
+       "src": "nist-webbook",
+       "check": "unverified"
+      }
+     },
+     "optical": {
+      "refractivity_589nm": {
+       "v": 0.000376,
+       "unit": "1",
+       "src": "pdg-gas",
+       "at_k": 273.15,
+       "at_pa": 101325.0
+      },
+      "king_factor": {
+       "fit": "a + b lambda^-2 + c lambda^-4, lambda in um",
+       "coeffs": [
+        1.0,
+        0.0,
+        0.0
+       ],
+       "src": "fudge-register",
+       "check": "authored"
+      }
+     }
+    },
+    {
+     "id": "n2",
+     "formula": {
+      "n": 2
+     },
+     "names": {
+      "physics": "nitrogen",
+      "plain": "nitrogen",
+      "story": "nitrogen"
+     },
+     "phases": {
+      "triple_point_k": {
+       "v": 63.14,
+       "unit": "K",
+       "src": "nist-webbook"
+      },
+      "triple_point_pa": {
+       "v": 12520.0,
+       "unit": "Pa",
+       "src": "nist-webbook"
+      },
+      "latent_vaporisation": {
+       "v": 200000.0,
+       "unit": "J kg-1",
+       "src": "nist-webbook",
+       "at_k": 77.0,
+       "note": "5.6 kJ/mol"
+      },
+      "density_liquid": {
+       "v": 800.0,
+       "unit": "kg m-3",
+       "src": "nist-webbook",
+       "check": "unverified",
+       "at_k": 77.0,
+       "note": "808 kg/m3 at 77 K"
+      }
+     },
+     "optical": {
+      "refractivity_589nm": {
+       "v": 0.000298,
+       "unit": "1",
+       "src": "kaye-laby",
+       "check": "unverified",
+       "at_k": 273.15,
+       "at_pa": 101325.0
+      },
+      "king_factor": {
+       "fit": "a + b lambda^-2 + c lambda^-4, lambda in um",
+       "coeffs": [
+        1.034,
+        0.000317,
+        0.0
+       ],
+       "src": "bodhaine1999"
+      }
+     },
+     "chemical": {
+      "states": {
+       "gas": {
+        "dgf": {
+         "v": 0.0,
+         "unit": "J mol-1",
+         "src": "convention",
+         "at_k": 298.15
+        },
+        "dhf": {
+         "v": 0.0,
+         "unit": "J mol-1",
+         "src": "convention",
+         "at_k": 298.15
+        }
+       }
+      }
+     }
+    },
+    {
+     "id": "o2",
+     "formula": {
+      "o": 2
+     },
+     "names": {
+      "physics": "oxygen",
+      "plain": "oxygen",
+      "story": "oxygen"
+     },
+     "optical": {
+      "refractivity_589nm": {
+       "v": 0.000271,
+       "unit": "1",
+       "src": "kaye-laby",
+       "check": "unverified",
+       "at_k": 273.15,
+       "at_pa": 101325.0
+      },
+      "king_factor": {
+       "fit": "a + b lambda^-2 + c lambda^-4, lambda in um",
+       "coeffs": [
+        1.096,
+        0.001385,
+        0.0001448
+       ],
+       "src": "bodhaine1999"
+      }
+     },
+     "chemical": {
+      "states": {
+       "gas": {
+        "dgf": {
+         "v": 0.0,
+         "unit": "J mol-1",
+         "src": "convention",
+         "at_k": 298.15
+        },
+        "dhf": {
+         "v": 0.0,
+         "unit": "J mol-1",
+         "src": "convention",
+         "at_k": 298.15
+        }
+       },
+       "dissolved": {
+        "dgf": {
+         "v": 16320.0,
+         "unit": "J mol-1",
+         "src": "thauer1977",
+         "at_k": 298.15
+        },
+        "dhf": {
+         "v": -11700.0,
+         "unit": "J mol-1",
+         "src": "thauer1977",
+         "at_k": 298.15
+        }
+       }
+      }
+     }
+    },
+    {
+     "id": "ar",
+     "formula": {
+      "ar": 1
+     },
+     "names": {
+      "physics": "argon",
+      "plain": "argon",
+      "story": "argon"
+     },
+     "optical": {
+      "refractivity_589nm": {
+       "v": 0.000281,
+       "unit": "1",
+       "src": "kaye-laby",
+       "check": "unverified",
+       "at_k": 273.15,
+       "at_pa": 101325.0
+      },
+      "king_factor": {
+       "fit": "a + b lambda^-2 + c lambda^-4, lambda in um",
+       "coeffs": [
+        1.0,
+        0.0,
+        0.0
+       ],
+       "src": "atom-isotropic"
+      }
+     }
+    },
+    {
+     "id": "h2",
+     "formula": {
+      "h": 2
+     },
+     "names": {
+      "physics": "hydrogen",
+      "plain": "hydrogen",
+      "story": "hydrogen"
+     },
+     "optical": {
+      "refractivity_589nm": {
+       "v": 0.000132,
+       "unit": "1",
+       "src": "kaye-laby",
+       "check": "unverified",
+       "at_k": 273.15,
+       "at_pa": 101325.0
+      },
+      "king_factor": {
+       "fit": "a + b lambda^-2 + c lambda^-4, lambda in um",
+       "coeffs": [
+        1.0,
+        0.0,
+        0.0
+       ],
+       "src": "fudge-register",
+       "check": "authored"
+      }
+     },
+     "chemical": {
+      "states": {
+       "gas": {
+        "dgf": {
+         "v": 0.0,
+         "unit": "J mol-1",
+         "src": "convention",
+         "at_k": 298.15
+        },
+        "dhf": {
+         "v": 0.0,
+         "unit": "J mol-1",
+         "src": "convention",
+         "at_k": 298.15
+        }
+       },
+       "dissolved": {
+        "dgf": {
+         "v": 17720.0,
+         "unit": "J mol-1",
+         "src": "thauer1977",
+         "at_k": 298.15
+        },
+        "dhf": {
+         "v": -4200.0,
+         "unit": "J mol-1",
+         "src": "thauer1977",
+         "at_k": 298.15
+        }
+       }
+      }
+     }
+    },
+    {
+     "id": "he",
+     "formula": {
+      "he": 1
+     },
+     "names": {
+      "physics": "helium",
+      "plain": "helium",
+      "story": "helium"
+     },
+     "optical": {
+      "refractivity_589nm": {
+       "v": 3.5e-05,
+       "unit": "1",
+       "src": "kaye-laby",
+       "check": "unverified",
+       "at_k": 273.15,
+       "at_pa": 101325.0
+      },
+      "king_factor": {
+       "fit": "a + b lambda^-2 + c lambda^-4, lambda in um",
+       "coeffs": [
+        1.0,
+        0.0,
+        0.0
+       ],
+       "src": "atom-isotropic"
+      }
+     }
+    },
+    {
+     "id": "ne",
+     "formula": {
+      "ne": 1
+     },
+     "names": {
+      "physics": "neon",
+      "plain": "neon",
+      "story": "neon"
+     },
+     "optical": {
+      "refractivity_589nm": {
+       "v": 6.71e-05,
+       "unit": "1",
+       "src": "pdg-gas",
+       "at_k": 273.15,
+       "at_pa": 101325.0
+      },
+      "king_factor": {
+       "fit": "a + b lambda^-2 + c lambda^-4, lambda in um",
+       "coeffs": [
+        1.0,
+        0.0,
+        0.0
+       ],
+       "src": "atom-isotropic"
+      }
+     }
+    },
+    {
+     "id": "kr",
+     "formula": {
+      "kr": 1
+     },
+     "names": {
+      "physics": "krypton",
+      "plain": "krypton",
+      "story": "krypton"
+     }
+    },
+    {
+     "id": "xe",
+     "formula": {
+      "xe": 1
+     },
+     "names": {
+      "physics": "xenon",
+      "plain": "xenon",
+      "story": "xenon"
+     }
+    },
+    {
+     "id": "so2",
+     "formula": {
+      "s": 1,
+      "o": 2
+     },
+     "names": {
+      "physics": "sulphur dioxide",
+      "plain": "sulphur dioxide",
+      "story": "sulphur dioxide"
+     },
+     "optical": {
+      "refractivity_589nm": {
+       "v": 0.000686,
+       "unit": "1",
+       "src": "kaye-laby",
+       "check": "unverified",
+       "at_k": 273.15,
+       "at_pa": 101325.0
+      },
+      "king_factor": {
+       "fit": "a + b lambda^-2 + c lambda^-4, lambda in um",
+       "coeffs": [
+        1.0,
+        0.0,
+        0.0
+       ],
+       "src": "fudge-register",
+       "check": "authored"
+      }
+     }
+    },
+    {
+     "id": "co",
+     "formula": {
+      "c": 1,
+      "o": 1
+     },
+     "names": {
+      "physics": "carbon monoxide",
+      "plain": "carbon monoxide",
+      "story": "carbon monoxide"
+     },
+     "optical": {
+      "refractivity_589nm": {
+       "v": 0.000338,
+       "unit": "1",
+       "src": "kaye-laby",
+       "check": "unverified",
+       "at_k": 273.15,
+       "at_pa": 101325.0
+      },
+      "king_factor": {
+       "fit": "a + b lambda^-2 + c lambda^-4, lambda in um",
+       "coeffs": [
+        1.0,
+        0.0,
+        0.0
+       ],
+       "src": "fudge-register",
+       "check": "authored"
+      }
+     },
+     "chemical": {
+      "states": {
+       "gas": {
+        "dgf": {
+         "v": -137150.0,
+         "unit": "J mol-1",
+         "src": "thauer1977",
+         "at_k": 298.15
+        },
+        "dhf": {
+         "v": -110530.0,
+         "unit": "J mol-1",
+         "src": "thauer1977",
+         "at_k": 298.15
+        }
+       }
+      }
+     },
+     "cosmochemical": {
+      "ice_line_k": {
+       "v": 20.0,
+       "unit": "K",
+       "src": "oberg2011",
+       "check": "unverified"
+      }
+     }
+    },
+    {
+     "id": "h2s",
+     "formula": {
+      "h": 2,
+      "s": 1
+     },
+     "names": {
+      "physics": "hydrogen sulfide",
+      "plain": "hydrogen sulfide",
+      "story": "hydrogen sulfide"
+     },
+     "chemical": {
+      "states": {
+       "dissolved": {
+        "dgf": {
+         "v": -27870.0,
+         "unit": "J mol-1",
+         "src": "thauer1977",
+         "at_k": 298.15
+        },
+        "dhf": {
+         "v": -39700.0,
+         "unit": "J mol-1",
+         "src": "thauer1977",
+         "at_k": 298.15
+        }
+       }
+      }
+     }
+    },
+    {
+     "id": "h+",
+     "formula": {
+      "h": 1
+     },
+     "charge": 1,
+     "names": {
+      "physics": "hydrogen ion",
+      "plain": "hydrogen ion",
+      "story": "hydrogen ion"
+     },
+     "chemical": {
+      "states": {
+       "dissolved": {
+        "dgf": {
+         "v": 0.0,
+         "unit": "J mol-1",
+         "src": "convention",
+         "at_k": 298.15
+        },
+        "dhf": {
+         "v": 0.0,
+         "unit": "J mol-1",
+         "src": "convention",
+         "at_k": 298.15
+        }
+       }
+      }
+     }
+    },
+    {
+     "id": "hco3-",
+     "formula": {
+      "h": 1,
+      "c": 1,
+      "o": 3
+     },
+     "charge": -1,
+     "names": {
+      "physics": "bicarbonate",
+      "plain": "bicarbonate",
+      "story": "bicarbonate"
+     },
+     "chemical": {
+      "states": {
+       "dissolved": {
+        "dgf": {
+         "v": -586850.0,
+         "unit": "J mol-1",
+         "src": "thauer1977",
+         "at_k": 298.15
+        },
+        "dhf": {
+         "v": -691990.0,
+         "unit": "J mol-1",
+         "src": "thauer1977",
+         "at_k": 298.15
+        }
+       }
+      }
+     }
+    },
+    {
+     "id": "hs-",
+     "formula": {
+      "h": 1,
+      "s": 1
+     },
+     "charge": -1,
+     "names": {
+      "physics": "bisulfide",
+      "plain": "bisulfide",
+      "story": "bisulfide"
+     },
+     "chemical": {
+      "states": {
+       "dissolved": {
+        "dgf": {
+         "v": 12050.0,
+         "unit": "J mol-1",
+         "src": "thauer1977",
+         "at_k": 298.15
+        },
+        "dhf": {
+         "v": -17600.0,
+         "unit": "J mol-1",
+         "src": "thauer1977",
+         "at_k": 298.15
+        }
+       }
+      }
+     }
+    },
+    {
+     "id": "s",
+     "formula": {
+      "s": 1
+     },
+     "names": {
+      "physics": "sulfur",
+      "plain": "sulfur",
+      "story": "sulfur"
+     },
+     "chemical": {
+      "states": {
+       "solid": {
+        "dgf": {
+         "v": 0.0,
+         "unit": "J mol-1",
+         "src": "convention",
+         "at_k": 298.15
+        },
+        "dhf": {
+         "v": 0.0,
+         "unit": "J mol-1",
+         "src": "convention",
+         "at_k": 298.15
+        }
+       }
+      }
+     }
+    },
+    {
+     "id": "so4-2",
+     "formula": {
+      "s": 1,
+      "o": 4
+     },
+     "charge": -2,
+     "names": {
+      "physics": "sulfate",
+      "plain": "sulfate",
+      "story": "sulfate"
+     },
+     "chemical": {
+      "states": {
+       "dissolved": {
+        "dgf": {
+         "v": -744600.0,
+         "unit": "J mol-1",
+         "src": "thauer1977",
+         "at_k": 298.15
+        },
+        "dhf": {
+         "v": -909270.0,
+         "unit": "J mol-1",
+         "src": "thauer1977",
+         "at_k": 298.15
+        }
+       }
+      }
+     }
+    },
+    {
+     "id": "nh4+",
+     "formula": {
+      "n": 1,
+      "h": 4
+     },
+     "charge": 1,
+     "names": {
+      "physics": "ammonium",
+      "plain": "ammonium",
+      "story": "ammonium"
+     },
+     "chemical": {
+      "states": {
+       "dissolved": {
+        "dgf": {
+         "v": -79370.0,
+         "unit": "J mol-1",
+         "src": "thauer1977",
+         "at_k": 298.15
+        },
+        "dhf": {
+         "v": -132510.0,
+         "unit": "J mol-1",
+         "src": "thauer1977",
+         "at_k": 298.15
+        }
+       }
+      }
+     }
+    },
+    {
+     "id": "no2-",
+     "formula": {
+      "n": 1,
+      "o": 2
+     },
+     "charge": -1,
+     "names": {
+      "physics": "nitrite",
+      "plain": "nitrite",
+      "story": "nitrite"
+     },
+     "chemical": {
+      "states": {
+       "dissolved": {
+        "dgf": {
+         "v": -37200.0,
+         "unit": "J mol-1",
+         "src": "thauer1977",
+         "at_k": 298.15
+        },
+        "dhf": {
+         "v": -104600.0,
+         "unit": "J mol-1",
+         "src": "thauer1977",
+         "at_k": 298.15
+        }
+       }
+      }
+     }
+    },
+    {
+     "id": "no3-",
+     "formula": {
+      "n": 1,
+      "o": 3
+     },
+     "charge": -1,
+     "names": {
+      "physics": "nitrate",
+      "plain": "nitrate",
+      "story": "nitrate"
+     },
+     "chemical": {
+      "states": {
+       "dissolved": {
+        "dgf": {
+         "v": -111340.0,
+         "unit": "J mol-1",
+         "src": "thauer1977",
+         "at_k": 298.15
+        },
+        "dhf": {
+         "v": -205000.0,
+         "unit": "J mol-1",
+         "src": "thauer1977",
+         "at_k": 298.15
+        }
+       }
+      }
+     }
+    },
+    {
+     "id": "fe+2",
+     "formula": {
+      "fe": 1
+     },
+     "charge": 2,
+     "names": {
+      "physics": "ferrous iron",
+      "plain": "ferrous iron",
+      "story": "ferrous iron"
+     },
+     "chemical": {
+      "states": {
+       "dissolved": {
+        "dgf": {
+         "v": -78870.0,
+         "unit": "J mol-1",
+         "src": "thauer1977",
+         "at_k": 298.15
+        },
+        "dhf": {
+         "v": -89100.0,
+         "unit": "J mol-1",
+         "src": "thauer1977",
+         "at_k": 298.15
+        }
+       }
+      }
+     }
+    },
+    {
+     "id": "fe+3",
+     "formula": {
+      "fe": 1
+     },
+     "charge": 3,
+     "names": {
+      "physics": "ferric iron",
+      "plain": "ferric iron",
+      "story": "ferric iron"
+     },
+     "chemical": {
+      "states": {
+       "dissolved": {
+        "dgf": {
+         "v": -4600.0,
+         "unit": "J mol-1",
+         "src": "thauer1977",
+         "at_k": 298.15
+        },
+        "dhf": {
+         "v": -48500.0,
+         "unit": "J mol-1",
+         "src": "thauer1977",
+         "at_k": 298.15
+        }
+       }
+      }
+     }
+    },
+    {
+     "id": "acetate-",
+     "formula": {
+      "c": 2,
+      "h": 3,
+      "o": 2
+     },
+     "charge": -1,
+     "names": {
+      "physics": "acetate",
+      "plain": "acetate",
+      "story": "acetate"
+     },
+     "chemical": {
+      "states": {
+       "dissolved": {
+        "dgf": {
+         "v": -369410.0,
+         "unit": "J mol-1",
+         "src": "thauer1977",
+         "at_k": 298.15
+        },
+        "dhf": {
+         "v": -486010.0,
+         "unit": "J mol-1",
+         "src": "thauer1977",
+         "at_k": 298.15
+        }
+       }
+      }
+     }
+    },
+    {
+     "id": "glucose",
+     "formula": {
+      "c": 6,
+      "h": 12,
+      "o": 6
+     },
+     "names": {
+      "physics": "glucose",
+      "plain": "glucose",
+      "story": "glucose"
+     },
+     "chemical": {
+      "states": {
+       "dissolved": {
+        "dgf": {
+         "v": -917220.0,
+         "unit": "J mol-1",
+         "src": "thauer1977",
+         "at_k": 298.15
+        },
+        "dhf": {
+         "v": -1262190.0,
+         "unit": "J mol-1",
+         "src": "thauer1977",
+         "at_k": 298.15
+        }
+       }
+      }
+     }
+    },
+    {
+     "id": "ethanol",
+     "formula": {
+      "c": 2,
+      "h": 6,
+      "o": 1
+     },
+     "names": {
+      "physics": "ethanol",
+      "plain": "ethanol",
+      "story": "ethanol"
+     },
+     "chemical": {
+      "states": {
+       "dissolved": {
+        "dgf": {
+         "v": -181750.0,
+         "unit": "J mol-1",
+         "src": "thauer1977",
+         "at_k": 298.15
+        },
+        "dhf": {
+         "v": -288300.0,
+         "unit": "J mol-1",
+         "src": "thauer1977",
+         "at_k": 298.15
+        }
+       }
+      }
+     }
+    },
+    {
+     "id": "ch2o",
+     "formula": {
+      "c": 1,
+      "h": 2,
+      "o": 1
+     },
+     "names": {
+      "physics": "organic carbon (one sixth of glucose)",
+      "plain": "organic matter",
+      "story": "organic matter"
+     },
+     "chemical": {
+      "states": {
+       "dissolved": {
+        "dgf": {
+         "v": -152870.0,
+         "unit": "J mol-1",
+         "src": "thauer1977",
+         "at_k": 298.15
+        },
+        "dhf": {
+         "v": -210370.0,
+         "unit": "J mol-1",
+         "src": "thauer1977",
+         "at_k": 298.15
+        }
+       }
+      }
+     }
+    }
+   ],
+   "mixtures": [
+    {
+     "id": "dry-air",
+     "names": {
+      "physics": "dry air",
+      "plain": "air",
+      "story": "air"
+     },
+     "recipe": {
+      "n2": 0.78084,
+      "o2": 0.209476,
+      "ar": 0.00934,
+      "co2": 0.000314,
+      "ne": 1.818e-05,
+      "he": 5.24e-06,
+      "ch4": 2e-06,
+      "kr": 1.14e-06,
+      "h2": 5e-07,
+      "xe": 8.7e-08
+     },
+     "by": "volume",
+     "src": "ussa1976",
+     "check": "unverified",
+     "note": "molar mass is worked out from the recipe (the 1976 table gives 28.9644 g/mol); CO2 has risen since 1976",
+     "optical": {
+      "refractivity_589nm": {
+       "v": 0.0002926,
+       "unit": "1",
+       "src": "peck-reeder1972",
+       "check": "unverified",
+       "at_k": 273.15,
+       "at_pa": 101325.0
+      },
+      "dispersion": "peck-reeder",
+      "king_factor": {
+       "fit": "a + b lambda^-2 + c lambda^-4, lambda in um",
+       "coeffs": [
+        1.0469,
+        0.0,
+        0.0
+       ],
+       "src": "bodhaine1999"
+      }
+     }
+    },
+    {
+     "id": "giant-air",
+     "names": {
+      "physics": "hydrogen-helium envelope",
+      "plain": "giant-planet air",
+      "story": "giant air"
+     },
+     "recipe": {
+      "h2": 0.86,
+      "he": 0.14
+     },
+     "by": "volume",
+     "src": "fudge-register",
+     "check": "authored",
+     "note": "the weather pack's giant air at 0.0023 kg/mol; the reader's worked-out molar mass replaces it"
+    },
+    {
+     "id": "surface-rock",
+     "names": {
+      "physics": "generic silicate rock",
+      "plain": "rock",
+      "story": "rock"
+     },
+     "recipe": {},
+     "by": "mass",
+     "density": {
+      "v": 3500.0,
+      "unit": "kg m-3",
+      "src": "fudge-register",
+      "check": "authored"
+     },
+     "yield_strength": {
+      "v": 154000000.0,
+      "unit": "Pa",
+      "src": "lineweaver2010",
+      "check": "unverified",
+      "note": "calibrated so rock rounds at about 300 km"
+     }
+    },
+    {
+     "id": "surface-ice",
+     "names": {
+      "physics": "water ice with some rock",
+      "plain": "ice",
+      "story": "ice"
+     },
+     "recipe": {
+      "h2o": 1.0
+     },
+     "by": "mass",
+     "density": {
+      "v": 930.0,
+      "unit": "kg m-3",
+      "src": "fudge-register",
+      "check": "authored",
+      "note": "pure ice Ih is 917 kg/m3 (water's density_solid)"
+     },
+     "yield_strength": {
+      "v": 5600000.0,
+      "unit": "Pa",
+      "src": "lineweaver2010",
+      "check": "unverified",
+      "note": "calibrated so ice rounds at about 200 km"
+     },
+     "melting_point": {
+      "v": 273.15,
+      "unit": "K",
+      "src": "nist-webbook",
+      "note": "at low pressure"
+     }
+    },
+    {
+     "id": "magma-dre",
+     "names": {
+      "physics": "magma, dense-rock equivalent",
+      "plain": "magma",
+      "story": "magma"
+     },
+     "recipe": {},
+     "by": "mass",
+     "density": {
+      "v": 2500.0,
+      "unit": "kg m-3",
+      "src": "mastin2009"
+     }
+    },
+    {
+     "id": "formation-metal",
+     "names": {
+      "physics": "iron and nickel",
+      "plain": "iron and nickel",
+      "story": "iron and nickel"
+     },
+     "recipe": {},
+     "by": "mass",
+     "cosmochemical": {
+      "condenses_below_k": {
+       "v": 1400.0,
+       "unit": "K",
+       "src": "lodders2003"
+      },
+      "share_of_solar_gas": {
+       "v": 0.0018,
+       "unit": "1",
+       "src": "fudge-register",
+       "check": "authored",
+       "note": "split of protosolar Z by carrier (Asplund 2009, Oberg 2011)"
+      }
+     },
+     "density": {
+      "v": 7800.0,
+      "unit": "kg m-3",
+      "src": "fudge-register",
+      "check": "authored"
+     }
+    },
+    {
+     "id": "formation-rock",
+     "names": {
+      "physics": "silicates and oxides",
+      "plain": "silicates and oxides",
+      "story": "silicates and oxides"
+     },
+     "recipe": {},
+     "by": "mass",
+     "cosmochemical": {
+      "condenses_below_k": {
+       "v": 1400.0,
+       "unit": "K",
+       "src": "lodders2003"
+      },
+      "share_of_solar_gas": {
+       "v": 0.0035,
+       "unit": "1",
+       "src": "fudge-register",
+       "check": "authored",
+       "note": "split of protosolar Z by carrier (Asplund 2009, Oberg 2011)"
+      }
+     },
+     "density": {
+      "v": 3000.0,
+      "unit": "kg m-3",
+      "src": "fudge-register",
+      "check": "authored"
+     }
+    },
+    {
+     "id": "formation-carbon",
+     "names": {
+      "physics": "refractory carbon and organics",
+      "plain": "refractory carbon and organics",
+      "story": "refractory carbon and organics"
+     },
+     "recipe": {},
+     "by": "mass",
+     "cosmochemical": {
+      "condenses_below_k": {
+       "v": 500.0,
+       "unit": "K",
+       "src": "fudge-register",
+       "check": "authored"
+      },
+      "share_of_solar_gas": {
+       "v": 0.001,
+       "unit": "1",
+       "src": "fudge-register",
+       "check": "authored",
+       "note": "split of protosolar Z by carrier (Asplund 2009, Oberg 2011)"
+      }
+     },
+     "density": {
+      "v": 2000.0,
+      "unit": "kg m-3",
+      "src": "fudge-register",
+      "check": "authored"
+     }
+    },
+    {
+     "id": "formation-water",
+     "names": {
+      "physics": "water ice",
+      "plain": "water ice",
+      "story": "water ice"
+     },
+     "recipe": {},
+     "by": "mass",
+     "cosmochemical": {
+      "condenses_below_k": {
+       "v": 135.0,
+       "unit": "K",
+       "src": "oberg2011",
+       "check": "unverified"
+      },
+      "share_of_solar_gas": {
+       "v": 0.0045,
+       "unit": "1",
+       "src": "fudge-register",
+       "check": "authored",
+       "note": "split of protosolar Z by carrier (Asplund 2009, Oberg 2011)"
+      }
+     },
+     "density": {
+      "v": 1000.0,
+      "unit": "kg m-3",
+      "src": "fudge-register",
+      "check": "authored"
+     }
+    },
+    {
+     "id": "formation-co2",
+     "names": {
+      "physics": "carbon dioxide ice",
+      "plain": "carbon dioxide ice",
+      "story": "carbon dioxide ice"
+     },
+     "recipe": {},
+     "by": "mass",
+     "cosmochemical": {
+      "condenses_below_k": {
+       "v": 47.0,
+       "unit": "K",
+       "src": "oberg2011",
+       "check": "unverified"
+      },
+      "share_of_solar_gas": {
+       "v": 0.0008,
+       "unit": "1",
+       "src": "fudge-register",
+       "check": "authored",
+       "note": "split of protosolar Z by carrier (Asplund 2009, Oberg 2011)"
+      }
+     },
+     "density": {
+      "v": 1500.0,
+      "unit": "kg m-3",
+      "src": "fudge-register",
+      "check": "authored"
+     }
+    },
+    {
+     "id": "formation-co",
+     "names": {
+      "physics": "carbon monoxide ice",
+      "plain": "carbon monoxide ice",
+      "story": "carbon monoxide ice"
+     },
+     "recipe": {},
+     "by": "mass",
+     "cosmochemical": {
+      "condenses_below_k": {
+       "v": 20.0,
+       "unit": "K",
+       "src": "oberg2011",
+       "check": "unverified"
+      },
+      "share_of_solar_gas": {
+       "v": 0.0022,
+       "unit": "1",
+       "src": "fudge-register",
+       "check": "authored",
+       "note": "split of protosolar Z by carrier (Asplund 2009, Oberg 2011)"
+      }
+     },
+     "density": {
+      "v": 900.0,
+      "unit": "kg m-3",
+      "src": "fudge-register",
+      "check": "authored"
+     }
+    }
+   ],
+   "sources": [
+    {
+     "id": "atom-isotropic",
+     "text": "A spherically symmetric atom has no anisotropic polarisability, so its King correction factor is exactly 1 (Bodhaine et al. 1999 discussion of depolarisation)",
+     "status": "textbook",
+     "doi": "10.1175/1520-0426(1999)016<1854:ORODC>2.0.CO;2"
+    },
+    {
+     "id": "bodhaine1999",
+     "text": "Bodhaine, B. A., Wood, N. B., Dutton, E. G. and Slusser, J. R. 1999, J. Atmos. Oceanic Technol. 16, 1854: on Rayleigh optical depth calculations (King factors)",
+     "status": "verified",
+     "doi": "10.1175/1520-0426(1999)016<1854:ORODC>2.0.CO;2"
+    },
+    {
+     "id": "cgpm1901",
+     "text": "3rd CGPM 1901, Resolution 2: standard acceleration of gravity 980.665 cm/s2",
+     "status": "textbook",
+     "url": "https://www.bipm.org/en/committees/cg/cgpm/3-1901/resolution-2"
+    },
+    {
+     "id": "cgpm1954",
+     "text": "10th CGPM 1954, Resolution 4: standard atmosphere 101 325 Pa",
+     "status": "textbook",
+     "url": "https://www.bipm.org/en/committees/cg/cgpm/10-1954/resolution-4"
+    },
+    {
+     "id": "codata2018",
+     "text": "Tiesinga, E., Mohr, P. J., Newell, D. B. and Taylor, B. N. 2021, Rev. Mod. Phys. 93, 025010: CODATA recommended values of the fundamental physical constants, 2018",
+     "status": "verified",
+     "doi": "10.1103/RevModPhys.93.025010"
+    },
+    {
+     "id": "convention",
+     "text": "Elements in their standard state and the hydrogen ion at unit activity have zero free energy and enthalpy of formation by convention",
+     "status": "textbook",
+     "url": "https://goldbook.iupac.org/"
+    },
+    {
+     "id": "fudge-register",
+     "text": "SSE4 fudge register: an authored stand-in kept because no measured value fits (reason in docs/fudges.md)",
+     "status": "authored",
+     "url": "https://github.com/FrunkQ/star-system-explorer/blob/main/docs/fudges.md"
+    },
+    {
+     "id": "iau2012b2",
+     "text": "IAU 2012 Resolution B2: re-definition of the astronomical unit of length, 149 597 870 700 m exactly",
+     "status": "unverified",
+     "url": "https://www.iau.org/static/resolutions/IAU2012_English.pdf"
+    },
+    {
+     "id": "iau2015b2",
+     "text": "IAU 2015 Resolution B2: the parsec is 648000/π au",
+     "status": "unverified",
+     "url": "https://www.iau.org/static/resolutions/IAU2015_English.pdf"
+    },
+    {
+     "id": "iau2015b3",
+     "text": "Prša, A. et al. 2016, AJ 152, 41: nominal values for selected solar and planetary quantities, IAU 2015 Resolution B3",
+     "status": "verified",
+     "doi": "10.3847/0004-6256/152/2/41"
+    },
+    {
+     "id": "iupac2021",
+     "text": "Prohaska, T. et al. 2022, Pure Appl. Chem. 94, 573: standard atomic weights of the elements 2021 (IUPAC Technical Report)",
+     "status": "verified",
+     "doi": "10.1515/pac-2019-0603"
+    },
+    {
+     "id": "kaye-laby",
+     "text": "Kaye and Laby, Tables of Physical and Chemical Constants, section 2.5.7 refractive index of gases (online edition, NPL; now offline)",
+     "status": "unverified",
+     "url": "https://pdg.lbl.gov/2023/AtomicNuclearProperties/explain_gas.html"
+    },
+    {
+     "id": "kita2013",
+     "text": "Kita, N. T. et al. 2013, Meteoritics and Planetary Science 48, 1383: 26Al-26Mg isotope systematics of the first solids in the early solar system",
+     "status": "verified",
+     "doi": "10.1111/maps.12141"
+    },
+    {
+     "id": "lineweaver2010",
+     "text": "Lineweaver, C. H. and Norman, M. 2010, Proc. 9th Australian Space Science Conference: the potato radius, rock and ice yield strengths (calibrated stand-in; docs/fudges.md)",
+     "status": "unverified",
+     "url": "https://arxiv.org/abs/1004.1091"
+    },
+    {
+     "id": "lodders2003",
+     "text": "Lodders, K. 2003, ApJ 591, 1220: solar system abundances and condensation temperatures of the elements",
+     "status": "verified",
+     "doi": "10.1086/375492"
+    },
+    {
+     "id": "lodders2021",
+     "text": "Lodders, K. 2021, Space Sci. Rev. 217, 44: relative atomic solar system abundances, mass fractions, and atomic masses of the elements and their isotopes (Table 3, proto-solar columns)",
+     "status": "verified",
+     "doi": "10.1007/s11214-021-00825-8"
+    },
+    {
+     "id": "mastin2009",
+     "text": "Mastin, L. G. et al. 2009, J. Volcanol. Geotherm. Res. 186, 10: eruption column heights, magma at 2500 kg/m3 dense-rock equivalent",
+     "status": "verified",
+     "doi": "10.1016/j.jvolgeores.2009.01.008"
+    },
+    {
+     "id": "nist-webbook",
+     "text": "NIST Chemistry WebBook, NIST Standard Reference Database 69 (phase-change data and thermochemistry per substance)",
+     "status": "textbook",
+     "url": "https://webbook.nist.gov/chemistry/"
+    },
+    {
+     "id": "nssdca-earth",
+     "text": "NASA NSSDCA Earth fact sheet (volumetric mean radius 6371.000 km)",
+     "status": "verified",
+     "url": "https://nssdc.gsfc.nasa.gov/planetary/factsheet/earthfact.html"
+    },
+    {
+     "id": "nssdca-jupiter",
+     "text": "NASA NSSDCA Jupiter fact sheet (volumetric mean radius 69911 km)",
+     "status": "verified",
+     "url": "https://nssdc.gsfc.nasa.gov/planetary/factsheet/jupiterfact.html"
+    },
+    {
+     "id": "nssdca-moon",
+     "text": "NASA NSSDCA Moon fact sheet (mass 0.07346e24 kg, mean radius 1737.4 km, semi-major axis 0.3844e6 km)",
+     "status": "verified",
+     "url": "https://nssdc.gsfc.nasa.gov/planetary/factsheet/moonfact.html"
+    },
+    {
+     "id": "nubase2020",
+     "text": "Kondev, F. G., Wang, M., Huang, W. J., Naimi, S. and Audi, G. 2021, Chinese Phys. C 45, 030001: the NUBASE2020 evaluation of nuclear physics properties",
+     "status": "verified",
+     "doi": "10.1088/1674-1137/abddae"
+    },
+    {
+     "id": "oberg2011",
+     "text": "Öberg, K. I., Murray-Clay, R. and Bergin, E. A. 2011, ApJL 743, L16: the effects of snowlines on C/O in planetary atmospheres (H2O 135 K, CO2 47 K, CO 20 K)",
+     "status": "unverified",
+     "doi": "10.1088/2041-8205/743/1/L16"
+    },
+    {
+     "id": "pdg-gas",
+     "text": "Particle Data Group, Atomic and Nuclear Properties of Materials: gas refractive indices (n-1) at 0 °C, 1 atm, 589.3 nm, from Kaye and Laby",
+     "status": "verified",
+     "url": "https://pdg.lbl.gov/2023/AtomicNuclearProperties/explain_gas.html"
+    },
+    {
+     "id": "peck-reeder1972",
+     "text": "Peck, E. R. and Reeder, K. 1972, J. Opt. Soc. Am. 62, 958: dispersion of air",
+     "status": "unverified",
+     "doi": "10.1364/JOSA.62.000958"
+    },
+    {
+     "id": "petrenko1999",
+     "text": "Petrenko, V. F. and Whitworth, R. W. 1999, Physics of Ice, Oxford University Press (ice Ih density and conductivity k = 651/T)",
+     "status": "verified",
+     "doi": "10.1093/acprof:oso/9780198518945.001.0001"
+    },
+    {
+     "id": "ruedas2017",
+     "text": "Ruedas, T. 2017, Geochem. Geophys. Geosyst. 18, 3530: radioactive heat production of six geologically important nuclides",
+     "status": "verified",
+     "doi": "10.1002/2017GC006997"
+    },
+    {
+     "id": "si2019",
+     "text": "The International System of Units (SI), 9th edition 2019, BIPM: the seven defining constants are exact (CODATA 2018 Table I)",
+     "status": "verified",
+     "url": "https://www.bipm.org/en/publications/si-brochure"
+    },
+    {
+     "id": "thauer1977",
+     "text": "Thauer, R. K., Jungermann, K. and Decker, K. 1977, Bacteriological Reviews 41, 100: energy conservation in chemotrophic anaerobic bacteria (appendix: free energies and enthalpies of formation at 298.15 K)",
+     "status": "verified",
+     "url": "https://pmc.ncbi.nlm.nih.gov/articles/PMC413997"
+    },
+    {
+     "id": "ussa1976",
+     "text": "U.S. Standard Atmosphere 1976, NOAA/NASA/USAF (sea-level dry-air composition by volume)",
+     "status": "verified",
+     "url": "https://ntrs.nasa.gov/citations/19770009539"
+    }
+   ]
+  }
+ }
+}
