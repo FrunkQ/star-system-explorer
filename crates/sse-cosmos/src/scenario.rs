@@ -76,6 +76,8 @@ pub struct CosmologyPack {
     pub events: crate::events::EventParams,
     #[serde(default)]
     pub nucleus: crate::nucleus::NucleusParams,
+    #[serde(default)]
+    pub origin: crate::origin::OriginParams,
 }
 
 impl CosmologyPack {

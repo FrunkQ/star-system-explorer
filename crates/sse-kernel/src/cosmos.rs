@@ -414,6 +414,60 @@ pub(crate) fn halo_cell(a: CellAsk) -> Result<serde_json::Value, Response> {
     }))
 }
 
+/// What `set_system_age` pins for a reconstructed origin (17.1).
+pub(crate) struct OriginAt {
+    pub age_gyr: f64,
+    /// Campaign time elapsed since the clock was first set, Gyr.
+    pub elapsed_gyr: f64,
+    pub r_now_kpc: Option<f64>,
+    pub phi_now_deg: Option<f64>,
+    pub keep_feh: Option<f64>,
+}
+
+/// One plausible past for a star made older or younger, in the campaign's
+/// galaxy. Until G7 gives a campaign its own galaxy, that is the median
+/// Milky-Way-like galaxy grown from the universe's seed (as the galaxy
+/// chart's default), and a star with no galactic place is put at the Sun's
+/// radius (fudge register).
+pub(crate) fn reconstruct_origin(
+    seed: &Seed,
+    root: &Address,
+    a: OriginAt,
+) -> Result<sse_cosmos::origin::Origin, Response> {
+    let cp = settings()?;
+    let c = Cosmology::new(cp.params.clone());
+    let w = web(&c, &cp, seed, root)?;
+    let hs = Haloes {
+        cosmo: &c,
+        web: &w,
+        params: cp.haloes.clone(),
+        seed: *seed,
+        universe: root.clone(),
+    };
+    let h = named_halo(&hs, None, None)?;
+    let g = sse_cosmos::galaxy::evolve(&c, &cp.galaxy, &h);
+    let addr: Address = h
+        .address
+        .parse()
+        .map_err(|e| err("bad_address", format!("{e:?}")))?;
+    let d = rings::evolve(&g, &cp.galaxy, &cp.rings, *seed, &addr);
+    let env = GalaxyEnvelope {
+        galaxy: &g,
+        disc: &d,
+        params: cp.envelope.clone(),
+        seed: *seed,
+        address: addr,
+    };
+    let ask = sse_cosmos::origin::OriginAsk {
+        now_gyr: g.now.t_gyr + a.elapsed_gyr,
+        age_gyr: a.age_gyr,
+        r_now_kpc: a.r_now_kpc.unwrap_or_else(|| env.sun_radius_kpc()),
+        phi_now_deg: a.phi_now_deg.unwrap_or(0.0),
+        keep_feh: a.keep_feh,
+    };
+    Ok(sse_cosmos::origin::reconstruct(&env, &cp.origin, &ask))
+}
+
 #[cfg(test)]
 mod tests {
     use crate::Kernel;

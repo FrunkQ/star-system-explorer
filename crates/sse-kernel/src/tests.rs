@@ -2697,3 +2697,219 @@ fn sift_finds_story_hooks_with_their_evidence() {
     );
     assert_eq!(bad["code"], "bad_sifter", "{bad}");
 }
+
+/// One clock for the universe (top-level design 12.2 and 17.1): the two named
+/// ways to accept a look-ahead, and ageing one system with a reconstructed origin.
+#[test]
+fn one_clock_and_the_two_ways_to_accept() {
+    let send = |k: &mut crate::Kernel, v: serde_json::Value| -> serde_json::Value {
+        serde_json::from_str(&k.handle_json(&v.to_string())).unwrap()
+    };
+    let pack: serde_json::Value = serde_json::from_str(
+        &std::fs::read_to_string(root().join("packs/base-time/pack.json")).unwrap(),
+    )
+    .unwrap();
+    let run = |k: &mut crate::Kernel| -> Vec<serde_json::Value> {
+        let mut log = vec![];
+        send(k, serde_json::json!({"op": "load_stack", "packs": [pack]}));
+        send(
+            k,
+            serde_json::json!({"op": "open_universe", "id": "clock", "seed": "clock"}),
+        );
+        for (sys, m) in [("u:clock/sys:5", 1.0), ("u:clock/sys:6", 0.8)] {
+            let r = send(
+                k,
+                serde_json::json!({"op": "adopt", "formation": {"seed": sys, "system": sys, "star_pins": {"primary_mass": m}}}),
+            );
+            assert_eq!(r["type"], "adopted", "{r}");
+        }
+        let spec = |k: &mut crate::Kernel, s: &str| {
+            send(k, serde_json::json!({"op": "resolved_system", "system": s}))["spec"].clone()
+        };
+        let a0 = spec(k, "u:clock/sys:5");
+        let b0 = spec(k, "u:clock/sys:6");
+        let (aa, ba) = (
+            a0["age_myr"].as_f64().unwrap(),
+            b0["age_myr"].as_f64().unwrap(),
+        );
+
+        // "Make this system this old, today": only A changes, the clock stays.
+        let la = send(
+            k,
+            serde_json::json!({"op": "look_ahead", "system": a0, "target_myr": aa + 3000.0}),
+        );
+        let c = send(
+            k,
+            serde_json::json!({"op": "commit_look_ahead", "branch": la["branch"],
+            "accept": "system_age", "move_now_myr": aa + 2000.0, "write_back": true}),
+        );
+        assert_eq!(c["type"], "committed", "{c}");
+        let sa = &c["system_age"];
+        assert_eq!(sa["type"], "system_age_set", "{sa}");
+        assert!(
+            (sa["shift_myr"].as_f64().unwrap() - 2000.0).abs() < 1e-6,
+            "{sa}"
+        );
+        assert!(sa["impossible"].is_null(), "{sa}");
+        let o = &sa["origin"];
+        assert_eq!(o["label"], "one plausible past");
+        assert!(
+            o["why"].as_str().unwrap().contains("One plausible past"),
+            "{o}"
+        );
+        assert!(
+            c.get("campaign_now_s").is_none(),
+            "the clock did not move: {c}"
+        );
+        let a1 = spec(k, "u:clock/sys:5");
+        assert!(
+            (a1["age_myr"].as_f64().unwrap() - (aa + 2000.0)).abs() < 1e-6,
+            "{a1}"
+        );
+        assert_eq!(
+            a1["birth_year"].as_i64().unwrap(),
+            a0["birth_year"].as_i64().unwrap() - 2_000_000_000,
+            "born 2 Gyr earlier"
+        );
+        assert_eq!(
+            spec(k, "u:clock/sys:6"),
+            b0,
+            "the other system is untouched"
+        );
+        let read = send(
+            k,
+            serde_json::json!({"op": "resolved_system", "system": "u:clock/sys:5"}),
+        );
+        assert!(
+            read["at_s"].as_i64().is_some(),
+            "read at its present, not the kept future: {read}"
+        );
+        let h = send(
+            k,
+            serde_json::json!({"op": "history", "address": "u:clock/sys:5"}),
+        );
+        let kinds: Vec<&str> = h["events"]
+            .as_array()
+            .unwrap()
+            .iter()
+            .map(|e| e["kind"].as_str().unwrap())
+            .collect();
+        assert!(
+            kinds.contains(&"system.origin") && kinds.contains(&"time.request"),
+            "{kinds:?}"
+        );
+        log.push(c);
+
+        // "Make this the campaign's now": the clock moves, so A ages too.
+        let la = send(
+            k,
+            serde_json::json!({"op": "look_ahead", "system": b0, "target_myr": ba + 1000.0}),
+        );
+        let c = send(
+            k,
+            serde_json::json!({"op": "commit_look_ahead", "branch": la["branch"],
+            "accept": "campaign_now", "move_now_myr": ba + 500.0}),
+        );
+        assert_eq!(
+            c["campaign_now_s"].as_i64().unwrap(),
+            500_000_000 * 31_557_600,
+            "{c}"
+        );
+        let now = send(k, serde_json::json!({"op": "campaign_now"}));
+        assert_eq!(now["at_s"], c["campaign_now_s"]);
+        let a2 = spec(k, "u:clock/sys:5");
+        let b2 = spec(k, "u:clock/sys:6");
+        assert!(
+            (a2["age_myr"].as_f64().unwrap() - (aa + 2500.0)).abs() < 1e-6,
+            "{a2}"
+        );
+        assert!(
+            (b2["age_myr"].as_f64().unwrap() - (ba + 500.0)).abs() < 1e-6,
+            "{b2}"
+        );
+        assert_eq!(
+            b2["birth_year"], b0["birth_year"],
+            "the clock moves, births stay"
+        );
+        log.push(c);
+
+        // Directly: keep the composition, then an age no galaxy could give.
+        let kept = send(
+            k,
+            serde_json::json!({"op": "set_system_age", "system": "u:clock/sys:6", "age_myr": 9000.0, "composition": "keep"}),
+        );
+        assert_eq!(kept["type"], "system_age_set", "{kept}");
+        assert_eq!(kept["composition"]["mode"], "keep");
+        assert_eq!(kept["composition"]["rederive"], false);
+        assert_eq!(kept["origin"]["composition"], "kept");
+        let follow = send(
+            k,
+            serde_json::json!({"op": "set_system_age", "system": "u:clock/sys:6", "age_myr": 11000.0}),
+        );
+        assert_eq!(follow["composition"]["mode"], "follow");
+        assert!(
+            follow["origin"]["birth_r_kpc"].as_f64().unwrap()
+                < follow["origin"]["now_r_kpc"].as_f64().unwrap(),
+            "{follow}"
+        );
+        let b3 = spec(k, "u:clock/sys:6");
+        assert!(
+            (b3["age_myr"].as_f64().unwrap() - 11000.0).abs() < 1e-6,
+            "{b3}"
+        );
+        if follow["composition"]["rederive"] == true {
+            assert!(
+                (b3["z"].as_f64().unwrap() - follow["composition"]["z_after"].as_f64().unwrap())
+                    .abs()
+                    < 1e-12
+            );
+        }
+        let bad = send(
+            k,
+            serde_json::json!({"op": "set_system_age", "system": "u:clock/sys:6", "age_myr": 20000.0}),
+        );
+        assert!(
+            bad["impossible"].as_str().unwrap().contains("Big Bang"),
+            "{bad}"
+        );
+        let ev = send(
+            k,
+            serde_json::json!({"op": "resolved_system", "system": "u:clock/sys:6"}),
+        );
+        assert_eq!(
+            ev["evidence"]["u:clock/sys:6"]["system.age_shift_myr"]["evidence"],
+            "authored-impossible",
+            "{}",
+            ev["evidence"]["u:clock/sys:6"]
+        );
+        // Younger again: allowed, and the stamp goes.
+        let young = send(
+            k,
+            serde_json::json!({"op": "set_system_age", "system": "u:clock/sys:6", "age_myr": 1000.0}),
+        );
+        assert!(young["impossible"].is_null(), "{young}");
+        log.push(young);
+        // Refusals.
+        let r = send(
+            k,
+            serde_json::json!({"op": "set_system_age", "system": "u:clock/sys:6", "age_myr": 1000.0, "composition": "swap"}),
+        );
+        assert_eq!(r["code"], "bad_composition");
+        let b4 = spec(k, "u:clock/sys:6");
+        let la = send(
+            k,
+            serde_json::json!({"op": "look_ahead", "system": b4, "target_myr": 2000.0}),
+        );
+        let r = send(
+            k,
+            serde_json::json!({"op": "commit_look_ahead", "branch": la["branch"], "accept": "tomorrow"}),
+        );
+        assert_eq!(r["code"], "bad_accept");
+        log.push(send(k, serde_json::json!({"op": "state_hash"})));
+        log
+    };
+    let mut k = crate::Kernel::new();
+    let first = run(&mut k);
+    let mut k2 = crate::Kernel::new();
+    assert_eq!(first, run(&mut k2), "the same session gives the same bytes");
+}

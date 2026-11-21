@@ -690,7 +690,18 @@ pub(crate) fn worlds_at(
         .get(system, "system.now_year")
         .and_then(as_f64)
         .map(|y| y as i64 * 31_557_600);
-    let at_s = at_s.or(now_s).unwrap_or(i64::MAX);
+    // Once the one clock has moved this system (its own age shift, or campaign
+    // time elapsed), "now" is its present on its own dates, not the latest
+    // event: a kept look-ahead's future must not read as the present.
+    let moved =
+        crate::clock::age_shift_myr(&all, system) != 0.0 || crate::clock::elapsed_myr(ch) != 0.0;
+    let present_s = match (at_s, now_s) {
+        (None, None) if moved => worlds_at(ch, system, Some(i64::MAX), run, s)?
+            .spec
+            .map(|sp| m::round((sp.birth_year as f64 + sp.age_myr * 1.0e6) * 31_557_600.0) as i64),
+        _ => None,
+    };
+    let at_s = at_s.or(now_s).or(present_s).unwrap_or(i64::MAX);
     let st = ch.state_at(UniverseTime::seconds(at_s));
     let facts: Facts = st
         .facts
@@ -732,13 +743,31 @@ pub(crate) fn worlds_at(
             (source, spec, bodies)
         }
     };
-    let shift_gyr = match (&spec, at_s) {
+    let mut shift_gyr = match (&spec, at_s) {
         (Some(sp), a) if a != i64::MAX => {
             let now_year = sp.birth_year as f64 + sp.age_myr * 1.0e6;
             (a as f64 / 31_557_600.0 - now_year) / 1.0e9
         }
         _ => 0.0,
     };
+    // One clock (top-level design 12.2): the system's own age shift makes it
+    // older at every date; campaign time elapsed makes "now" later.
+    let age_shift = crate::clock::age_shift_myr(&all, system);
+    let elapsed = crate::clock::elapsed_myr(ch);
+    shift_gyr += age_shift / 1000.0;
+    if at_s == i64::MAX {
+        shift_gyr += elapsed / 1000.0;
+    }
+    let spec = spec.map(|mut sp| {
+        sp.age_myr += age_shift + elapsed;
+        sp.birth_year -= m::round(age_shift * 1.0e6) as i64;
+        if run.is_some() {
+            if let Some(z) = all.get(system, "star.metallicity_z").and_then(as_f64) {
+                sp.z = z;
+            }
+        }
+        sp
+    });
     Ok(Worlds {
         source,
         spec,

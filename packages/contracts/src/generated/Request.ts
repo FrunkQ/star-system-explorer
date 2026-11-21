@@ -11,7 +11,11 @@ export type Request = { "op": "hello" } | { "op": "load_stack", packs: unknown[]
  * A draft `provides.other.observe` setup to build with instead of
  * the stack's (a preview before Apply). Nothing is recorded.
  */
-observe?: unknown, } | { "op": "atoms", ids?: Array<string>, } | { "op": "scan_toggle", address: string, audience: string, at_s: bigint, } | { "op": "grant", address: string, audience: string, view?: string, default?: boolean, at_s: bigint, } | { "op": "look_ahead", system: unknown, target_myr: number, settings?: unknown, } | { "op": "commit_look_ahead", branch: string, move_now_myr?: number, 
+observe?: unknown, } | { "op": "atoms", ids?: Array<string>, } | { "op": "scan_toggle", address: string, audience: string, at_s: bigint, } | { "op": "grant", address: string, audience: string, view?: string, default?: boolean, at_s: bigint, } | { "op": "look_ahead", system: unknown, target_myr: number, settings?: unknown, } | { "op": "set_system_age", system: string, age_myr: number, composition?: string, } | { "op": "commit_look_ahead", branch: string, accept?: string, 
+/**
+ * For `system_age`: `follow` (default) or `keep`, as `set_system_age`.
+ */
+composition?: string, move_now_myr?: number, 
 /**
  * Also write the aged state as facts under the usual field names
  * (`orbit.semi_major_axis`, `orbit.eccentricity`, `orbit.inclination`,
