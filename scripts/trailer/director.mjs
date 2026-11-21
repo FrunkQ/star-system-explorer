@@ -34,17 +34,63 @@ const CURSOR = `
   };
 })();`;
 
+// The caption card: a chart-room card in the lower left, in the page's own heading and body faces,
+// so it reads as part of the interface rather than a video title. It fades in and out (200 ms).
+const CAPTION = `
+(() => {
+  if (document.getElementById("trailer-caption")) return;
+  const head = getComputedStyle(document.querySelector("h1, h2, .card h2, section h2") ?? document.body).fontFamily;
+  const body = getComputedStyle(document.body).fontFamily;
+  const s = document.createElement("style");
+  s.textContent = \`
+    #trailer-caption { position: fixed; left: 196px; bottom: 140px; max-width: 560px; z-index: 2147483645;
+      background: #f6f2e8; color: #1c2230; border: 1.5px solid #1c2230; box-shadow: 6px 6px 0 #1c2230;
+      padding: 14px 20px 15px; opacity: 0; transform: translateY(8px); transition: opacity .2s ease-out, transform .2s ease-out;
+      pointer-events: none; }
+    #trailer-caption.on { opacity: 1; transform: none; }
+    #trailer-caption .t { font-family: \${head}; font-size: 26px; line-height: 1.2; }
+    #trailer-caption .l { font-family: \${body}; font-size: 16px; line-height: 1.4; margin-top: 6px; color: #3a4252; }
+    #trailer-caption .l:empty { display: none; }\`;
+  document.head.appendChild(s);
+  const c = document.createElement("div");
+  c.id = "trailer-caption";
+  c.innerHTML = '<div class="t"></div><div class="l"></div>';
+  document.body.appendChild(c);
+  window.__trailerCaption = (t, l) => {
+    if (!t) { c.classList.remove("on"); return; }
+    const show = () => { c.querySelector(".t").textContent = t; c.querySelector(".l").textContent = l ?? ""; c.classList.add("on"); };
+    if (c.classList.contains("on")) { c.classList.remove("on"); setTimeout(show, 200); } else show();
+  };
+})();`;
+
 const ease = (t) => (t < 0.5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2);
 
-export function director(page) {
+export function director(page, { captions: paintCaptions = true } = {}) {
   let pos = { x: 960, y: 540 };
+  const captions = [];
+  let t0 = null;
   let down = false;
   const paint = () => page.evaluate(([x, y, d]) => window.__trailerPointer?.(x, y, d), [pos.x, pos.y, down]).catch(() => {});
   const d = {
-    /** Paint the pointer (call after every navigation). */
+    captions,
+    /** Paint the pointer and the caption card (call after every navigation). */
     async ready() {
       await page.evaluate(CURSOR);
+      await page.evaluate(CAPTION);
       await paint();
+    },
+    /** Filming starts now (the runner calls this); caption times are counted from here. */
+    rolling() {
+      t0 = Date.now();
+    },
+    /** Say what is on screen: a short title and an optional line. caption(null) clears it.
+     *  Every caption also goes to <id>.srt, so an editor can restyle or drop the burned-in card. */
+    async caption(title, line = "") {
+      const t = t0 ? (Date.now() - t0) / 1000 : 0;
+      const open = captions.at(-1);
+      if (open && open.end == null) open.end = t;
+      if (title) captions.push({ start: t, end: null, title, line });
+      if (paintCaptions) await page.evaluate(([a, b]) => window.__trailerCaption?.(a, b), [title, line]).catch(() => {});
     },
     /** Hold the frame still. */
     hold: (ms) => page.waitForTimeout(ms),

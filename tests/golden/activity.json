@@ -9,16 +9,60 @@
     "xray_fraction": 0.0007413102413009177,
     "xray_w": 3.6890562848098867e+21,
     "spot_coverage": 0.10767658039350161,
+    "convection": {
+      "surface_gravity_m_s2": 716.2778426968118,
+      "pressure_scale_height_m": 29466.14053701194,
+      "granule_size_m": 294661.4053701194,
+      "speed_m_s": 571.9236576775415,
+      "sound_speed_m_s": 5930.984119639841,
+      "granule_lifetime_s": 257.605540017942,
+      "supergranule_size_m": 7366535.134252984,
+      "supergranule_lifetime_s": 64401.3850044855,
+      "granules_across": 1652.7105047513764,
+      "network_cells": 13729.77532184305
+    },
     "flares": true,
     "why": [
+      "Its 3300 K surface boils in granules about 295 km across, each living about 4 minutes, about 1653 across the star; larger cells about 7 thousand km wide, lasting about 18 hours, sweep its magnetic field into a net of about 13730 cells.",
       "Its outer layer turns over in 58.2 days and it spins in 4.4: Rossby number 0.075, so saturated: heavily spotted, flaring constantly; X-rays are 7.4e-4 of its power (3.69e21 W).",
       "Saturated stars show no clean cycle; their activity is steady and high."
     ],
     "stand_ins": [
+      "granules are ten pressure scale heights across and live half a crossing time; supergranules 25 granules across with flows a fifth of the granule speed; convective speed from flux with a fixed photospheric opacity (all fitted on the Sun)",
       "regime words: active above 10⁻⁴ of the star's power in X-rays, moderate above 3×10⁻⁷, quiet below (labels only; the numbers carry the physics)",
       "spot coverage scales as the square root of the X-ray fraction from the Sun's 0.3 %, capped at half the disc"
     ],
     "references": [
+      {
+        "text": "Trampedach, R., Asplund, M., Collet, R., Nordlund, Å. and Stein, R. F. 2013, A grid of three-dimensional stellar atmosphere models of solar metallicity. I. General properties, granulation, and atmospheric expansion, ApJ 769, 18: granule size scales with the surface pressure scale height across the grid.",
+        "doi": "10.1088/0004-637X/769/1/18",
+        "url": "https://doi.org/10.1088/0004-637X/769/1/18"
+      },
+      {
+        "text": "Schwarzschild, M. 1975, On the scale of photospheric convection in red giants and supergiants, ApJ 195, 137: cell size follows the pressure scale height, so giants' cells are huge.",
+        "doi": "10.1086/153313",
+        "url": "https://doi.org/10.1086/153313"
+      },
+      {
+        "text": "Nordlund, Å., Stein, R. F. and Asplund, M. 2009, Solar surface convection, Living Rev. Solar Phys. 6, 2: granules about 1 to 2 Mm across living minutes, with upflows of a few km/s near the surface.",
+        "doi": "10.12942/lrsp-2009-2",
+        "url": "https://doi.org/10.12942/lrsp-2009-2"
+      },
+      {
+        "text": "Freytag, B., Steffen, M. and Dorch, B. 2002, Spots on the surface of Betelgeuse: results from new 3D stellar convection models, Astron. Nachr. 323, 213: red supergiants have only a few giant convection cells across their faces.",
+        "doi": "10.1002/1521-3994(200208)323:3/4<213::AID-ASNA213>3.0.CO;2-H",
+        "url": "https://doi.org/10.1002/1521-3994(200208)323:3/4<213::AID-ASNA213>3.0.CO;2-H"
+      },
+      {
+        "text": "Rieutord, M. and Rincon, F. 2010, The Sun's supergranulation, Living Rev. Solar Phys. 7, 2: cells about 30 Mm across, lifetimes one to two days, horizontal flows about 300 to 400 m/s, outlined by the magnetic network.",
+        "doi": "10.12942/lrsp-2010-2",
+        "url": "https://doi.org/10.12942/lrsp-2010-2"
+      },
+      {
+        "text": "Gray, D. F. and Nagel, T. 1989, The granulation boundary in the H-R diagram, ApJ 341, 421: no granulation in stars hotter than about early F.",
+        "doi": "10.1086/167505",
+        "url": "https://doi.org/10.1086/167505"
+      },
       {
         "text": "Wright, N. J., Drake, J. J., Mamajek, E. E. and Henry, G. W. 2011, The stellar-activity-rotation relationship and the evolution of stellar dynamos, ApJ 743, 48: log τ = 1.16 − 1.49 log(M/M☉) − 0.54 log²(M/M☉) days (0.09 to 1.36 M☉); saturated log(L_X/L_bol) = −3.13 below Ro = 0.13; slope β = −2.70 above it (unbiased sample); Sun log(L_X/L_bol) = −6.24.",
         "url": "https://arxiv.org/abs/1109.4634"

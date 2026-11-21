@@ -236,3 +236,88 @@ fn golden() {
     let want = std::fs::read_to_string(path).expect("golden exists (bless with SSE_BLESS=1)");
     assert_eq!(text, want);
 }
+
+fn star(mass: f64, radius: f64, teff: f64) -> Star {
+    let lum =
+        4.0 * sse_core::math::PI * radius * radius * 5.670_374e-8 * (teff * teff) * (teff * teff);
+    Star {
+        address: "u:x/sys:0/star:0".into(),
+        mass_kg: mass * M_SUN,
+        radius_m: radius * R_SUN,
+        luminosity_w: lum * R_SUN * R_SUN,
+        teff_k: teff,
+        age_s: 1e9 * JULIAN_YEAR,
+        rotation_period_s: Some(30.0 * DAY),
+        companion_period_s: None,
+        cycle_period_s: None,
+    }
+}
+
+/// Surface cells against the Sun's granules (Nordlund et al. 2009: 1 to 2
+/// Mm, minutes) and supergranules (Rieutord and Rincon 2010: about 30 Mm,
+/// one to two days); a few giant cells across Betelgeuse (Freytag et al.
+/// 2002; Chiavassa et al. 2010); none above the granulation boundary (Gray
+/// and Nagel 1989); kilometre cells on a cool white dwarf (Tremblay et al. 2013).
+#[test]
+fn surface_cells_from_temperature_and_gravity() {
+    let set = Settings::default();
+    let c = surface_convection(&sun(), &set).expect("the Sun boils");
+    assert!(
+        (1.0e6..=2.0e6).contains(&c.granule_size_m),
+        "{}",
+        c.granule_size_m
+    );
+    assert!(
+        (240.0..=900.0).contains(&c.granule_lifetime_s),
+        "{}",
+        c.granule_lifetime_s
+    );
+    assert!(
+        (20e6..=40e6).contains(&c.supergranule_size_m),
+        "{}",
+        c.supergranule_size_m
+    );
+    assert!(
+        (0.5 * DAY..=2.5 * DAY).contains(&c.supergranule_lifetime_s),
+        "{}",
+        c.supergranule_lifetime_s
+    );
+    assert!(
+        (2000.0..=10000.0).contains(&c.network_cells),
+        "{}",
+        c.network_cells
+    );
+    // Betelgeuse: 18 solar masses, 764 solar radii, 3600 K (Joyce et al. 2020).
+    let b = surface_convection(&star(18.0, 764.0, 3600.0), &set).unwrap();
+    // The large cells number only a handful over the face and live years;
+    // the smaller granules beneath them are tens across and live weeks.
+    assert!(b.network_cells < 30.0, "{}", b.network_cells);
+    assert!(
+        b.supergranule_lifetime_s > JULIAN_YEAR,
+        "{}",
+        b.supergranule_lifetime_s
+    );
+    assert!(b.granules_across < 100.0, "{}", b.granules_across);
+    assert!(
+        b.granule_lifetime_s > 10.0 * DAY,
+        "{}",
+        b.granule_lifetime_s
+    );
+    assert!(b.speed_m_s <= b.sound_speed_m_s);
+    // A young red dwarf: many small cells, slow churning.
+    let m = surface_convection(&ev_lac(), &set).unwrap();
+    assert!(m.granule_size_m < 0.3 * c.granule_size_m && m.speed_m_s < c.speed_m_s);
+    // Vega-like A star: no surface convection.
+    assert!(surface_convection(&star(2.1, 2.4, 9600.0), &set).is_none());
+    // A cool white dwarf: granules about a kilometre across.
+    let w = surface_convection(&star(0.6, 0.0125, 6000.0), &set).unwrap();
+    assert!(
+        (0.1e3..=10e3).contains(&w.granule_size_m),
+        "{}",
+        w.granule_size_m
+    );
+    // It reaches the activity read-out, with its why line.
+    let a = activity(&seed(), &sun(), &set).unwrap();
+    assert!(a.convection.is_some());
+    assert!(a.why.iter().any(|w| w.contains("granules")));
+}

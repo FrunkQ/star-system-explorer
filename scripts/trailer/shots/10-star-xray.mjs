@@ -16,8 +16,10 @@ export default {
     await page.locator("[data-star] [data-band]").waitFor({ timeout: 30000 });
   },
   async run(page, d) {
+    await d.caption('The Sun, from physics', 'Spots, activity and flares worked out from its mass and spin.');
     await d.hold(2500);
     await d.click(page.locator("[data-star]").getByRole("button", { name: "X-ray" }));
+    await d.caption("The same star in X-rays", "What shows is the million-degree corona, not the surface.");
     await page.waitForFunction(() => document.querySelector("[data-star] [data-band]")?.getAttribute("data-band") === "xray");
     await d.hold(3500);
   },

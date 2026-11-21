@@ -5,6 +5,7 @@ export default {
   feature: "Formation run with preview (F0-F9, V13)",
   trailers: ["features", "intro"],
   async run(page, d) {
+    await d.caption('Grow a system', 'From a cloud of gas and a seed: the worlds form, migrate and collide.');
     await d.click(page.getByRole("button", { name: "More", exact: true }));
     await d.click(page.getByRole("group", { name: "More" }).getByRole("button", { name: "Make a system" }));
     const dlg = page.getByRole("dialog", { name: "Make a system" });

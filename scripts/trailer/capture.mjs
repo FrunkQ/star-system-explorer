@@ -10,7 +10,7 @@
 import { spawn, execFileSync } from "node:child_process";
 import { mkdirSync, writeFileSync, readdirSync, rmSync, existsSync } from "node:fs";
 import { join, dirname, resolve } from "node:path";
-import { fileURLToPath } from "node:url";
+import { fileURLToPath, pathToFileURL } from "node:url";
 import { createRequire } from "node:module";
 import { director } from "./director.mjs";
 import * as nav from "../../tests/ui/nav.mjs";
@@ -51,13 +51,13 @@ const commit = (() => {
 const files = readdirSync(join(here, "shots")).filter((f) => f.endsWith(".mjs")).sort();
 const shots = [];
 for (const f of files) {
-  const s = (await import(join(here, "shots", f))).default;
+  const s = (await import(pathToFileURL(join(here, "shots", f)).href)).default;
   if (!only?.length || only.includes(s.id)) shots.push(s);
 }
 mkdirSync(out, { recursive: true });
 
 const launch = (extra = []) =>
-  chromium.launch({ headless: !flag("headed"), args: ["--enable-unsafe-webgpu", "--ignore-gpu-blocklist", "--hide-scrollbars", ...extra] });
+  chromium.launch({ headless: !flag("headed"), channel: opt("channel", undefined), args: ["--enable-unsafe-webgpu", "--ignore-gpu-blocklist", "--hide-scrollbars", ...extra] });
 const browser = await launch();
 const report = [];
 try {
@@ -76,7 +76,7 @@ try {
     // Load and settle off camera, then start filming.
     await page.goto(new URL(shot.path ?? "", base).href);
     if (shot.waitFor !== false) await page.waitForSelector(shot.waitFor ?? "[data-state-hash]:not([data-state-hash=''])", { timeout: 60000 });
-    const d = director(page);
+    const d = director(page, { captions: !flag("no-captions") });
     await d.ready();
     if (shot.setup) await shot.setup(page, d, nav);
     await page.waitForTimeout(400);
@@ -92,6 +92,7 @@ try {
     });
     await cdp.send("Page.startScreencast", { format: "jpeg", quality: 92, maxWidth: vp.width * scale, maxHeight: vp.height * scale, everyNthFrame: 1 });
     const t0 = Date.now() / 1000;
+    d.rolling();
     let failure = null;
     try {
       await shot.run(page, d, nav);
@@ -100,6 +101,17 @@ try {
       failure = e.message.split("\n")[0];
     }
     const t1 = Date.now() / 1000;
+    // Captions as subtitles, timed from the first filmed frame.
+    if (d.captions.length) {
+      const lead = frames.length ? Math.max(0, frames[0].t - t0) : 0;
+      const ts = (x) => {
+        const ms = Math.max(0, Math.round((x - lead) * 1000));
+        const p = (n, w = 2) => String(n).padStart(w, "0");
+        return `${p(Math.floor(ms / 3600000))}:${p(Math.floor(ms / 60000) % 60)}:${p(Math.floor(ms / 1000) % 60)},${p(ms % 1000, 3)}`;
+      };
+      const srt = d.captions.map((c, i) => `${i + 1}\n${ts(c.start)} --> ${ts(c.end ?? t1 - t0)}\n${c.title}${c.line ? "\n" + c.line : ""}\n`);
+      writeFileSync(join(out, `${shot.id}.srt`), srt.join("\n"));
+    }
     await cdp.send("Page.stopScreencast").catch(() => {});
     await page.screenshot({ path: join(out, `${shot.id}.png`) }).catch(() => {});
 

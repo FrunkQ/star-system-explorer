@@ -9,7 +9,7 @@
 //   mechanism the Traveller pack's codes use. The kernel's load checks the
 //   atlas: unknown axis, parent cycle, a class with no bands, an id defined
 //   twice. Accepting stacks the pack like any pack the GM adds, chronicled.
-import { stackPacks, type PackDoc, type ViewSession, type Workspace } from "../../ui-contract/src/index.ts";
+import { stackPacks, type ClassifyPreview, type PackDoc, type ViewSession, type Workspace } from "../../ui-contract/src/index.ts";
 import type { Entry, OracTarget } from "./orac.ts";
 
 export const BOXES_PACK = "campaign.boxes";
@@ -108,7 +108,7 @@ export function boxTarget(session: ViewSession, ws: Workspace): OracTarget<{ doc
   };
 }
 
-export function tableTarget(session: ViewSession, ws: Workspace): OracTarget<{ doc: TableDraft; added: PackDoc[] }> {
+export function tableTarget(session: ViewSession, ws: Workspace, scope?: string): OracTarget<{ doc: TableDraft; added: PackDoc[]; preview?: ClassifyPreview }> {
   return {
     kind: "table",
     what: "A game table as classes: a rule-book lookup (a size code from diameter, a temperature band, a danger rating) becomes a scheme in the class atlas, one class per row, each a region over named axes that read the world's facts. Codes are then derived from physics and answer \"why\" like any other label; they update when the world changes. Use the axes in force where one fits (need axes), add an axis only for a fact none reads, and read a shipped scheme first (need scheme:<id>).",
@@ -131,18 +131,34 @@ export function tableTarget(session: ViewSession, ws: Workspace): OracTarget<{ d
         return { ...pr, other: { ...o, schemes: [...listOf(o.schemes), d.scheme], axes: [...listOf(o.axes), ...(d.axes ?? [])], classes: [...listOf(o.classes), ...d.classes] } };
       });
       const t = await session.trial({ added }, async () => true);
-      return t.ok ? { problems: [], value: { doc: d, added } } : { problems: issues(t) };
+      if (!t.ok) return { problems: issues(t) };
+      // The kernel labels the campaign's bodies under the candidate stack (GM side, read only) and runs the rows' examples.
+      const p = session.classifyPreview ? await session.classifyPreview({ scheme: d.scheme.id, candidate: { added }, ...(scope ? { scope } : {}) }) : null;
+      if (p && !p.ok && p.code !== "no_universe") return { problems: [p.message] };
+      if (p?.ok && p.result.failing_examples.length) return { problems: p.result.failing_examples };
+      return { problems: [], value: { doc: d, added, ...(p?.ok ? { preview: p.result } : {}) } };
     },
-    summary: ({ doc: d }) => {
+    summary: ({ doc: d, preview }) => {
       const axes = [...new Set(d.classes.flatMap((c) => c.region.map((b) => b.axis)))].join(", ");
       const rows = d.classes.map((c) => c.names?.physics || c.id.split("/").pop()).join(", ");
       const fresh = d.axes?.length ? `; new ${d.axes.length === 1 ? "axis" : "axes"} ${d.axes.map(([id]) => id).join(", ")}` : "";
-      return `${d.scheme.question || d.scheme.id}: ${d.classes.length} ${d.classes.length === 1 ? "row" : "rows"} (${rows}) over ${axes}${fresh}. Accept adds it to the class atlas, so the codes are worked out from each world's facts.`;
+      return `${d.scheme.question || d.scheme.id}: ${d.classes.length} ${d.classes.length === 1 ? "row" : "rows"} (${rows}) over ${axes}${fresh}. ${preview ? previewLine(d, preview) : ""}Accept adds it to the class atlas, so the codes are worked out from each world's facts.`;
     },
     async accept({ added }) {
       return refusal(await stackPacks(session, ws, added));
     },
   };
+}
+
+/** "In the campaign now: standard 2, heavy 1; 3 fit no row." */
+function previewLine(d: TableDraft, p: ClassifyPreview): string {
+  if (!p.bodies.length) return "No body in the campaign has the facts to place yet. ";
+  const name = (id: string) => d.classes.find((c) => c.id === id)?.names?.plain || id.split("/").pop() || id;
+  const counts = new Map<string, number>();
+  for (const b of p.bodies) if (b.base) counts.set(b.base, (counts.get(b.base) ?? 0) + 1);
+  const rows = d.classes.filter((c) => counts.has(c.id)).map((c) => `${name(c.id)} ${counts.get(c.id)}`);
+  const none = p.unclassified ? `${rows.length ? "; " : ""}${p.unclassified} ${p.unclassified === 1 ? "fits" : "fit"} no row` : "";
+  return `In the campaign now: ${rows.join(", ")}${none}. `;
 }
 
 /** Boxes, axes and schemes in force, for the catalogue. */

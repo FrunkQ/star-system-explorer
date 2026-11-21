@@ -4,7 +4,7 @@ export default {
   title: "A world in true colour, from its own air and ground",
   feature: "V3 import, Body globe on render recipes, air from kernel facts (V13, R1, R2a)",
   trailers: ["features", "intro"],
-  notes: "Without a GPU the WebGPU globe films blank; the cloud take uses the 2D canvas tier. Re-shoot with --gpu on a real GPU for the hero take.",
+  notes: "HOLD (Alex 21 Nov): no clouds, air or ice caps yet, the V3 sample is not a modelled Earth, surface mix looks wrong (passed to the physics stream), and the cutaway is missing. Re-shoot when those land; never caption the sample as Earth. Without a GPU the WebGPU globe films blank; the cloud take uses the 2D canvas tier. Re-shoot with --gpu on a real GPU for the hero take.",
   async setup(page, d, nav) {
     await nav.more(page, "Make a system");
     const dlg = page.getByRole("dialog", { name: "Make a system" });
@@ -15,6 +15,7 @@ export default {
     await page.locator('.area-chart .body[aria-label^="Earth"]').first().waitFor({ timeout: 20000 });
   },
   async run(page, d, nav) {
+    await d.caption('A world in true colour', 'Drawn from its own air and ground.');
     await d.hold(600);
     await d.click(page.locator('.area-chart .body[aria-label^="Earth"]').first());
     await d.hold(600);

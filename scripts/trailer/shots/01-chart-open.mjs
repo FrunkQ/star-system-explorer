@@ -5,6 +5,7 @@ export default {
   feature: "System chart (U1, U2), tactility (U12)",
   trailers: ["intro", "features"],
   async run(page, d) {
+    await d.caption('The chart room', 'A star system on a paper chart. Every world is worked out from physics.');
     await d.hold(1200);
     await d.glide(page.locator('.area-chart .body[aria-label^="Vault"]').first(), 1200);
     await d.hold(900);
@@ -12,6 +13,7 @@ export default {
     await d.hold(700);
     await d.click(page.locator('.area-chart .body[aria-label^="Tarn"]').first(), { ms: 900 });
     await page.locator("section[aria-label='Tarn']").waitFor();
+    await d.caption('Pick a world', 'Its card opens from it: words first, then numbers with honest precision.');
     await d.hold(2500);
   },
 };
