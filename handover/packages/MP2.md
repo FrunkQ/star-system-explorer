@@ -53,3 +53,44 @@ value. Nothing changes until MP3 to MP6 move each reader.
 | argon molar mass, worked out | 39.948 g/mol (base-light) | 39.95 g/mol | argon's 2021 conventional weight; the standard weight is an interval |
 | ice density | 930 kg/m3 (sse-surface) | 917 kg/m3 for pure ice Ih; 930 kept as the authored "surface ice" mixture | the round-body calibration uses 930 |
 | other worked-out molar masses | 5 to 7 digits in base-light and base-climate | from formula and IUPAC 2021 weights | all within 6e-5 relative |
+
+## Where each element was made (design section 8.1, Alex 21 Nov)
+
+Every element row now carries `origin` (shares by source, adding to 1) and `origin_story` (physics, plain,
+story). `provides.reference.origin_legend` is the one seven-entry legend the whole app uses (Big Bang, cosmic
+rays, dying low-mass stars, exploding massive stars, exploding white dwarfs, merging neutron stars, made by
+people). Input: `handover/packages/MP2-data/origins.csv`; stories in `scripts/element_origins.py` (13
+written by hand, for H, He, Li, Be, C, O, Fe, Ba, Eu, Pt, Au, U and Tc; the rest built from the shares).
+
+**Honesty.** Every share is `check: authored`: an approximate, rounded first pass, not a number read from a
+table.
+- No per-element table of shares could be read. Johnson's origin chart exists only as images. Kobayashi et
+  al. 2020 shows its shares in a figure, and its text gives only group statements (about half of C, N and F
+  from AGB stars; about half of the iron-peak elements from Type Ia supernovae), which the light-element
+  rows follow.
+- Bisterzo et al. 2014's per-element s-process table lies beyond what the fetch tool could read. The heavy
+  rows use the classic solar s/r split, as remembered. Check them against that table.
+- 49 rows carry an `argued` line, and their stories say so. They cover:
+  - every element with a large rapid-process share (given here to neutron-star mergers, seen once in
+    GW170817, while rare supernovae may add a share);
+  - lithium (the cosmological lithium problem);
+  - fluorine and titanium.
+- The `decay` rows (Po to Pa) exist only as decay products of uranium and thorium. The rows marked as made
+  by people (Tc, Pm and Np onward) have no isotope that survived from the stars.
+
+**Next.** MP7 replaces these static shares with the galaxy model's own ledger per star, which is what lets a
+card say "about 40 mergers seeded this part of the galaxy". The citations track should check the heavy
+s-fractions against Bisterzo 2014 (VizieR J/ApJ/787/10) and the light rows against Kobayashi 2020's figure
+when a reader can open them.
+
+## Units (design section 7A.6)
+
+`provides.reference.units` holds 45 units, each `{id, symbol, name, measures, group, factor | factor_from,
+offset?}`, in three groups: `si-base` (7 plus "one"), `si-named` (newton, pascal, joule, watt, hertz, tesla)
+and `working`. Ids match the kernel's 34 built-in units, and every factor agrees with the built-in one to
+1e-9. A factor that follows from a constant is a formula (`c yr_julian`, `au 648000 / pi`, `e`, `R_sun`,
+`pi / 648000`); only pure decimal prefixes and SI identities are typed. New ids: a, mol, cd, n, j, hz, atm,
+ev, gee, degree, arcsec. Every constants row now has a `group` (nature, convention or factor). The exact SI
+constants stay under nature, flagged `exact`, because they are physics whose values the SI fixed. The au, the
+Julian year, the day, the atmosphere, standard gravity and the IAU nominal values are conventions. The parsec
+and light year are factors.

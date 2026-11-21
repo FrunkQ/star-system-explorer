@@ -27,6 +27,10 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parent.parent
 OUT = ROOT / "packs/base-reference/pack.json"
 ELEMENTS_CSV = ROOT / "handover/packages/MP2-data/elements.csv"
+ORIGINS_CSV = ROOT / "handover/packages/MP2-data/origins.csv"
+
+sys.path.insert(0, str(Path(__file__).resolve().parent))
+import element_origins  # noqa: E402
 
 JULIAN_YEAR_S = 31557600.0
 
@@ -71,6 +75,12 @@ SOURCES = {
     "atom-isotropic": ("A spherically symmetric atom has no anisotropic polarisability, so its King correction factor is exactly 1 (Bodhaine et al. 1999 discussion of depolarisation)", "10.1175/1520-0426(1999)016<1854:ORODC>2.0.CO;2", None, "textbook"),
     "mastin2009": ("Mastin, L. G. et al. 2009, J. Volcanol. Geotherm. Res. 186, 10: eruption column heights, magma at 2500 kg/m3 dense-rock equivalent", "10.1016/j.jvolgeores.2009.01.008", None, "verified"),
     "ussa1976": ("U.S. Standard Atmosphere 1976, NOAA/NASA/USAF (sea-level dry-air composition by volume)", None, "https://ntrs.nasa.gov/citations/19770009539", "verified"),
+    "kobayashi2020": ("Kobayashi, C., Karakas, A. I. and Lugaro, M. 2020, ApJ 900, 179: the origin of elements from carbon to uranium (half of C, N and F from AGB stars; half of the iron-peak elements from Type Ia supernovae; the r-process shortfall)", "10.3847/1538-4357/abae65", None, "verified"),
+    "johnson-origins": ("Johnson, J. A., Origin of the Elements in the Solar System: periodic table colour-coded by origin (Ohio State University, CC BY-SA 4.0; the six-source legend)", None, "https://www.astronomy.ohio-state.edu/johnson.3064/nucleo/index.html", "verified"),
+    "bisterzo2014": ("Bisterzo, S. et al. 2014, ApJ 787, 10: Galactic chemical evolution and solar s-process abundances, dependence on the 13C-pocket structure (s-process percentages per isotope, Kr to Bi)", "10.1088/0004-637X/787/1/10", None, "verified"),
+    "kasen2017": ("Kasen, D. et al. 2017, Nature 551, 80: origin of the heavy elements in binary neutron-star mergers from a gravitational-wave event (the GW170817 kilonova)", "10.1038/nature24453", None, "verified"),
+    "abbott2017": ("Abbott, B. P. et al. (LIGO and Virgo) 2017, Phys. Rev. Lett. 119, 161101: GW170817, observation of gravitational waves from a binary neutron star inspiral", "10.1103/PhysRevLett.119.161101", None, "verified"),
+    "fields2020": ("Fields, B. D., Olive, K. A., Yeh, T.-H. and Young, C. 2020, JCAP 03, 010: Big-Bang nucleosynthesis after Planck (primordial helium and the lithium problem)", None, "https://arxiv.org/abs/1912.01132", "verified"),
     "fudge-register": ("SSE4 fudge register: an authored stand-in kept because no measured value fits (reason in docs/fudges.md)", None, "https://github.com/FrunkQ/star-system-explorer/blob/main/docs/fudges.md", "authored"),
 }
 
@@ -140,6 +150,76 @@ CONSTANTS = [
     ("R_moon", "Moon mean radius", val(1.7374e6, "m", "nssdca-moon")),
     ("a_moon", "Moon semi-major axis", val(3.844e8, "m", "nssdca-moon")),
 ]
+
+
+# ---------------------------------------------------------------- units (design section 7A.6)
+# (id, symbol, name, measures, group, factor_from formula | ("v", value, src), offset)
+UNITS = [
+    ("one", "", "one", "dimensionless", "si-base", ("v", 1.0, "si2019")),
+    ("m", "m", "metre", "length", "si-base", ("v", 1.0, "si2019")),
+    ("kg", "kg", "kilogram", "mass", "si-base", ("v", 1.0, "si2019")),
+    ("s", "s", "second", "time", "si-base", ("v", 1.0, "si2019")),
+    ("a", "A", "ampere", "current", "si-base", ("v", 1.0, "si2019")),
+    ("k", "K", "kelvin", "temperature", "si-base", ("v", 1.0, "si2019")),
+    ("mol", "mol", "mole", "amount", "si-base", ("v", 1.0, "si2019")),
+    ("cd", "cd", "candela", "luminous_intensity", "si-base", ("v", 1.0, "si2019")),
+    ("n", "N", "newton", "force", "si-named", ("v", 1.0, "si2019")),
+    ("pa", "Pa", "pascal", "pressure", "si-named", ("v", 1.0, "si2019")),
+    ("j", "J", "joule", "energy", "si-named", ("v", 1.0, "si2019")),
+    ("w", "W", "watt", "power", "si-named", ("v", 1.0, "si2019")),
+    ("hz", "Hz", "hertz", "frequency", "si-named", ("v", 1.0, "si2019")),
+    ("t", "T", "tesla", "magnetic_field", "si-named", ("v", 1.0, "si2019")),
+    ("km", "km", "kilometre", "length", "working", ("v", 1e3, "si2019")),
+    ("au", "au", "astronomical unit", "length", "working", "au"),
+    ("pc", "pc", "parsec", "length", "working", "au 648000 / pi"),
+    ("ly", "ly", "light year", "length", "working", "c yr_julian"),
+    ("r_sun", "R☉", "solar radius", "length", "working", "R_sun"),
+    ("r_earth", "R⊕", "Earth radius (equatorial)", "length", "working", "R_earth_equatorial"),
+    ("r_jupiter", "RJ", "Jupiter radius (equatorial)", "length", "working", "R_jup_equatorial"),
+    ("m_sun", "M☉", "solar mass", "mass", "working", "M_sun"),
+    ("m_earth", "M⊕", "Earth mass", "mass", "working", "M_earth"),
+    ("m_jupiter", "MJ", "Jupiter mass", "mass", "working", "M_jup"),
+    ("day", "d", "day", "time", "working", "day"),
+    ("yr", "yr", "Julian year", "time", "working", "yr_julian"),
+    ("myr", "Myr", "million years", "time", "working", "1e6 yr_julian"),
+    ("gyr", "Gyr", "billion years", "time", "working", "1e9 yr_julian"),
+    ("degc", "°C", "degree Celsius", "temperature", "working", ("v", 1.0, "si2019"), 273.15),
+    ("l_sun", "L☉", "solar luminosity", "power", "working", "L_sun"),
+    ("w_m2", "W/m²", "watt per square metre", "flux", "working", ("v", 1.0, "si2019")),
+    ("bar", "bar", "bar", "pressure", "working", ("v", 1e5, "si2019")),
+    ("atm", "atm", "standard atmosphere", "pressure", "working", "atm"),
+    ("ev", "eV", "electronvolt", "energy", "working", "e"),
+    ("gee", "g", "standard gravity", "acceleration", "working", "g0"),
+    ("degree", "°", "degree of arc", "angle", "working", "pi / 180"),
+    ("arcsec", "″", "arcsecond", "angle", "working", "pi / 648000"),
+    ("m_s", "m/s", "metre per second", "velocity", "working", ("v", 1.0, "si2019")),
+    ("km_s", "km/s", "kilometre per second", "velocity", "working", ("v", 1e3, "si2019")),
+    ("m_s2", "m/s²", "metre per second squared", "acceleration", "working", ("v", 1.0, "si2019")),
+    ("kg_m3", "kg/m³", "kilogram per cubic metre", "density", "working", ("v", 1.0, "si2019")),
+    ("g_cm3", "g/cm³", "gram per cubic centimetre", "density", "working", ("v", 1e3, "si2019")),
+    ("ut", "µT", "microtesla", "magnetic_field", "working", ("v", 1e-6, "si2019")),
+    ("gauss", "G", "gauss", "magnetic_field", "working", ("v", 1e-4, "si2019")),
+    ("a_m2", "A m²", "ampere square metre", "magnetic_moment", "working", ("v", 1.0, "si2019")),
+]
+
+CONVENTION_IDS = {"au", "yr_julian", "day", "atm", "g0", "T0C", "GM_sun", "R_sun", "L_sun", "T_sun", "S_sun",
+                  "GM_earth", "R_earth_equatorial", "R_earth_polar", "GM_jup", "R_jup_equatorial", "R_jup_polar"}
+FACTOR_IDS = {"pc", "ly"}
+
+
+def units():
+    out = []
+    for u in UNITS:
+        uid, sym, name, measures, group, f = u[:6]
+        row = {"id": uid, "symbol": sym, "name": name, "measures": measures, "group": group}
+        if isinstance(f, tuple):
+            row["factor"] = {"v": f[1], "src": f[2]}
+        else:
+            row["factor_from"] = f
+        if len(u) > 6:
+            row["offset"] = u[6]
+        out.append(row)
+    return out
 
 
 # ---------------------------------------------------------------- isotopes
@@ -343,6 +423,9 @@ for gid, name, t_k, t_src, rho, share in [
 
 
 # ---------------------------------------------------------------- elements
+ORIGINS = element_origins.load(ORIGINS_CSV)
+
+
 def elements():
     rows = []
     with open(ELEMENTS_CSV, newline="") as f:
@@ -363,6 +446,9 @@ def elements():
                     ab["check"] = "unverified"
                     ab["note"] = r["check"]
                 row["abundance_protosolar"] = ab
+            o = ORIGINS[row["id"]]
+            row["origin"] = element_origins.origin_value(row["id"], o)
+            row["origin_story"] = element_origins.story(row["id"], row["name"], o)
             rows.append(row)
     return rows
 
@@ -370,7 +456,8 @@ def elements():
 def build():
     consts = []
     for c in CONSTANTS:
-        row = {"id": c[0], "name": c[1], "value": c[2]}
+        group = "convention" if c[0] in CONVENTION_IDS else ("factor" if c[0] in FACTOR_IDS else "nature")
+        row = {"id": c[0], "name": c[1], "group": group, "value": c[2]}
         if len(c) > 3:
             # A mass worked out from a measured GM is checked against it, never recomputed after an
             # edit: doubling G is a what-if with the same masses and stronger gravity.
@@ -395,6 +482,8 @@ def build():
             "reference": {
                 "about": "The master data sheet (track MP, design handover/design/SSE4-matter-pack-design.md): constants of nature, conventions, reference objects, elements, isotopes, substances and mixtures, each value with its source. Built by scripts/build-base-reference.py; MP2 first wave. A value without \"check\" is verified against its source; \"unverified\" means the source is named but the number was not read from it; \"authored\" is a documented stand-in (docs/fudges.md).",
                 "constants": consts,
+                "units": units(),
+                "origin_legend": [{"id": k, "physics": v[0], "plain": v[1], "story": v[2]} for k, v in element_origins.SOURCE_NAMES.items()],
                 "elements": elements(),
                 "isotopes": ISOTOPES,
                 "substances": SUBSTANCES,
@@ -414,8 +503,11 @@ def validate(pack):
 
     def walk(o, where):
         if isinstance(o, dict):
-            if "src" in o and o["src"] not in src_ids:
+            if "src" in o and isinstance(o["src"], str) and o["src"] not in src_ids:
                 errors.append(f"{where}: unknown source {o['src']}")
+            for extra in o.get("also", []) if isinstance(o.get("also"), list) else []:
+                if extra not in src_ids:
+                    errors.append(f"{where}: unknown source {extra}")
             for k, v in o.items():
                 walk(v, f"{where}.{k}")
         elif isinstance(o, list):
@@ -434,10 +526,17 @@ def validate(pack):
     for i in ref["isotopes"]:
         if i["element"] not in el_ids:
             errors.append(f"isotope {i['id']}: unknown element {i['element']}")
-    for table in ("constants", "elements", "isotopes", "substances", "mixtures", "sources"):
+    for table in ("constants", "units", "elements", "isotopes", "substances", "mixtures", "sources"):
         ids = [r["id"] for r in ref[table]]
         if len(ids) != len(set(ids)):
             errors.append(f"{table}: duplicate ids")
+    for e in ref["elements"]:
+        t = sum(e["origin"]["shares"].values())
+        if abs(t - 1.0) > 1e-9:
+            errors.append(f"element {e['id']}: origin shares sum to {t}")
+        for k in e["origin"]["shares"]:
+            if k not in element_origins.SOURCE_NAMES:
+                errors.append(f"element {e['id']}: unknown origin {k}")
     if len(ref["elements"]) != 118:
         errors.append("elements: expected 118 rows")
     return errors
