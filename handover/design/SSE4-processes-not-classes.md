@@ -65,7 +65,7 @@ Not gates: Poisson sampling cut-overs (`lam < 30`), the cube-sphere geometry, an
 
 ## 3. What changes in the build plan
 
-- **S0b** becomes "process strengths for regimes": replace the first-match `rules` list with the strength blocks in 2.1. It keeps `regime` as a derived label, adds the fixtures from the exogeology review, and changes golden hashes once, on purpose. It runs with S16a, as already accepted.
+- **S0b** becomes "process strengths for regimes": replace the first-match `rules` list with the strength blocks in 2.1. It keeps `regime` as a derived label, adds the fixtures from the exogeology review, and changes golden hashes once, on purpose. It runs with S16a, as already accepted. Weather's W7a (one climate crate under erosion and cover, `SSE4-weather-review.md`) changes the surface goldens too, so W7a, S0b and S16a land together and surfaces move once.
 - **S17 to S21** (volatile ices, ice-shell stresses, cryovolcanism, colour and tholins, small bodies, water release) are written as strength blocks from the start. M1's vapour-pressure block also serves the cold trap, land ice and shadow ice rows above.
 - **Every other track** applies the rule when its next package touches a gate: weather regimes (W), life and biomes (E), stellar activity (O, granulation and Rossby-number spots and flares, 21 Nov), and classification (C, which becomes the reader of strengths).
 - The citations thread checks each relation named here before it is relied on, as the standing rule requires.
