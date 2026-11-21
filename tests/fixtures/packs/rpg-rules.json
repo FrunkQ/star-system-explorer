@@ -7,6 +7,7 @@
   "licence": "Apache-2.0",
   "provides": {
     "other": {
+      "tags": {"about": "Tags this pack names (tags design, TG1): labels only, never an input to physics.", "groups": [], "tags": [{"id": "ship", "label": "ship"}, {"id": "insult", "label": "insult"}]},
       "triggers": {
         "rules": [
           {

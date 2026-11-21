@@ -15,6 +15,9 @@ mod orbits;
 pub mod protocol;
 mod survey;
 mod systems;
+mod tags;
+#[cfg(test)]
+mod tags_tests;
 mod weather;
 
 use protocol::*;
@@ -159,7 +162,27 @@ fn load_observe(ms: &[sse_pack::PackManifest]) -> Result<Observe, Vec<String>> {
         return Err(issues);
     }
     let calendar = orbits::load_calendar(ms)?;
+    // TG1: every tag named anywhere in the stack is declared.
+    let tags = tags::declarations(ms)?;
+    let mut problems = tags::check(&tags::references(ms), &tags);
+    problems.extend(tags::reserved_kept(ms));
+    if !problems.is_empty() {
+        return Err(problems);
+    }
+    // A declaration's tier is the tag's default disclosure tier.
+    let mut setup = setup;
+    if let Some(s) = setup.as_mut() {
+        for (_, t) in tags.tags.values() {
+            if let Some(tier) = &t.tier {
+                s.disclosure
+                    .tags
+                    .entry(t.id.clone())
+                    .or_insert_with(|| tier.clone());
+            }
+        }
+    }
     Ok(Observe {
+        tags,
         setup,
         rules,
         sifters,
@@ -170,6 +193,60 @@ fn load_observe(ms: &[sse_pack::PackManifest]) -> Result<Observe, Vec<String>> {
         templates,
         programs,
     })
+}
+
+/// The stack's tag declarations plus the campaign's own (kept in the
+/// record at the universe root, TG1). A pack loaded later that declares a
+/// tag the campaign already had wins; the campaign's copy is ignored.
+fn campaign_tags(u: &Universe, stack: &tags::TagSet) -> Result<tags::TagSet, Response> {
+    let mut set = stack.clone();
+    let rec = u.record.state_at(UniverseTime::seconds(i64::MAX));
+    let mut block = tags::TagBlock::default();
+    for (f, v) in rec.facts.get(&u.root).into_iter().flatten() {
+        if let (Some(id), Value::Text(t)) = (f.strip_prefix(tags::CAMPAIGN_FIELD), v) {
+            if !set.declared(id) {
+                block.tags.push(
+                    serde_json::from_str(t).map_err(|e| err("bad_record", format!("{f}: {e}")))?,
+                );
+            }
+        }
+    }
+    let mut errs = vec![];
+    set.add("campaign", block, &mut errs);
+    Ok(set)
+}
+
+/// Add a freely typed tag to the campaign's own declarations.
+fn declare_campaign_tag(u: &mut Universe, tag: &str) -> Result<(), Response> {
+    let d = tags::TagDecl {
+        id: tag.to_string(),
+        label: tag.to_string(),
+        about: None,
+        group: None,
+        source: tags::Source::Authored,
+        tier: None,
+        colour: None,
+    };
+    let mut f = BTreeMap::new();
+    f.insert(
+        format!("{}{tag}", tags::CAMPAIGN_FIELD),
+        Value::Text(serde_json::to_string(&d).expect("plain data")),
+    );
+    let root = u.root.clone();
+    let e = clock::timeless_set(
+        &u.record,
+        &root,
+        f,
+        Evidence::Authored,
+        vec![],
+        tags::CAMPAIGN_KIND,
+        Publisher::new("gm", "tags", "1"),
+    )
+    .map_err(|e| err("bad_event", e))?;
+    u.record
+        .append(e)
+        .map_err(|e| err("chronicle", format!("{e}")))?;
+    Ok(())
 }
 
 /// The disclosure a scene uses: the stack's, plus each kept kind at its own
@@ -263,6 +340,8 @@ struct Job {
 /// (`provides.other.observe`) and the rule pack's tags (`provides.other.rules`).
 #[derive(Default)]
 struct Observe {
+    /// Tag declarations from the stack (`provides.other.tags`, TG1).
+    tags: tags::TagSet,
     setup: Option<sse_observe::ObserveSetup>,
     rules: sse_sift::RuleSet,
     /// Sifters (`provides.other.sifters`): the story finder's patterns (U8).
@@ -1444,13 +1523,43 @@ impl Kernel {
                 }
             }
             Request::SetAuthored { edit } => {
+                let stack_tags = self.observe.tags.clone();
                 let u = self.universe()?;
                 let e = Self::edit_event(u, &edit, u.chronicle.next_stamp())?;
+                // TG1: a tag set on: exclusive groups hold, and a name no pack
+                // declares joins the campaign's own tags.
+                let mut declare = None;
+                if let (Some(tag), serde_json::Value::Bool(true)) =
+                    (edit.field.strip_prefix("tag."), &edit.value)
+                {
+                    let set = campaign_tags(u, &stack_tags)?;
+                    let a = in_universe(&u.root, &edit.address)?;
+                    let state = u
+                        .chronicle
+                        .state_at(UniverseTime::seconds(edit.occurred_at_s));
+                    let have: Vec<String> = state
+                        .facts
+                        .get(&a)
+                        .into_iter()
+                        .flatten()
+                        .filter(|(_, v)| **v == Value::Bool(true))
+                        .filter_map(|(f, _)| f.strip_prefix("tag.").map(str::to_string))
+                        .collect();
+                    if let Some(m) = set.exclusive_clash(tag, &have) {
+                        return Err(err("exclusive_tag", format!("{a}: {m}")));
+                    }
+                    if !set.declared(tag) {
+                        declare = Some(tag.to_string());
+                    }
+                }
                 let affected = e.body.subject.iter().map(|a| a.to_string()).collect();
                 let id = u
                     .chronicle
                     .append(e)
                     .map_err(|e| err("chronicle", format!("{e}")))?;
+                if let Some(t) = &declare {
+                    declare_campaign_tag(u, t)?;
+                }
                 Response::Authored {
                     event_id: id.hex(),
                     affected,
@@ -1459,6 +1568,18 @@ impl Kernel {
                         .state_at(UniverseTime::seconds(i64::MAX))
                         .hash()
                         .hex(),
+                    declared_tag: declare,
+                }
+            }
+            Request::CampaignTags => {
+                let stack_tags = self.observe.tags.clone();
+                let u = self.universe()?;
+                let set = campaign_tags(u, &stack_tags)?;
+                Response::CampaignTagsListed {
+                    pack: serde_json::json!({
+                        "id": "campaign",
+                        "tags": set.block_of("campaign"),
+                    }),
                 }
             }
             Request::History { address } => {
@@ -1612,6 +1733,7 @@ impl Kernel {
                     event_id: id.hex(),
                     affected,
                     state_hash: st.hash().hex(),
+                    declared_tag: None,
                 }
             }
             Request::BranchStateHash { branch, at_s } => {

@@ -1109,6 +1109,9 @@ pub enum Request {
     PromoteStar {
         address: String,
     },
+    /// The campaign's own tag declarations (TG1), in the shape of a pack's
+    /// `provides.other.tags`: tags the GM typed freely join it on first use.
+    CampaignTags,
 }
 
 /// `adopt`'s formation request: the `run_formation` fields.
@@ -1247,6 +1250,7 @@ impl Request {
             Request::HaloCell { .. } => "halo_cell",
             Request::StarCell { .. } => "star_cell",
             Request::PromoteStar { .. } => "promote_star",
+            Request::CampaignTags => "campaign_tags",
         }
     }
 }
@@ -1501,6 +1505,11 @@ pub fn ops() -> Vec<OpInfo> {
             "grows the campaign's galaxy, then draws one 10 pc cell (tens of systems) with its pins; read only",
         ),
         o(
+            "campaign_tags",
+            Cost::Light,
+            "reads the campaign's own tag declarations from the record",
+        ),
+        o(
             "promote_star",
             Cost::Medium,
             "GM machine only in a session; draws the star once and stores its whole description in the record",
@@ -1566,6 +1575,11 @@ pub enum Response {
         event_id: String,
         affected: Vec<String>,
         state_hash: String,
+        /// A freely typed tag (`tag.<name>`) the stack did not declare: it
+        /// joined the campaign's own tags (TG1).
+        #[serde(default, skip_serializing_if = "Option::is_none")]
+        #[ts(optional)]
+        declared_tag: Option<String>,
     },
     History {
         events: Vec<EventSummary>,
@@ -2189,6 +2203,11 @@ pub enum Response {
     StarCelled {
         #[ts(type = "unknown")]
         cell: serde_json::Value,
+    },
+    /// `campaign_tags`: `{id: "campaign", tags: {groups, tags}}`.
+    CampaignTagsListed {
+        #[ts(type = "unknown")]
+        pack: serde_json::Value,
     },
     /// `promote_star`: the stored description, the event that stored it
     /// (absent when the star was already pinned) and the state hash.
