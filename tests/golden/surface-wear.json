@@ -4,26 +4,26 @@
     {
       "body": "Earth",
       "epochs": 1,
-      "eroded_m3": 7.009377634185494e+17,
+      "eroded_m3": 7.663485966644343e+17,
       "lakes": 22,
       "rivers": 29,
       "tiles": [
-        "a6a454baa0cab453b982c4ce89c46584209ee555fd1f2477de88bf9ee661f7dd",
+        "77644ddd620ae55183131272e54985ddb9adda6417fa2c5c16690d7bbd6d859c",
         "199dfbed1d0b57df3a1dbf476b8dabee9ee2bfb9d91aa4a3a426e12474734f71"
       ],
-      "wear": "83e9ff911b10a3dc80f0e135456527325e0f036c7bfb4c03e0f5a5f29c345229"
+      "wear": "521da623355e62ba38c793f7f2e6da540d1f6e76fc4ec0ed28de409899c3ce32"
     },
     {
       "body": "Mars",
       "epochs": 45,
-      "eroded_m3": 1.8266834904873121e+18,
+      "eroded_m3": 1.8319917807444232e+18,
       "lakes": 0,
       "rivers": 0,
       "tiles": [
-        "da16e36a0dfa0528fd7a08cc3c9350443d8eed35aaceaa75283b1b113226dc06",
-        "a9181beee393bbd00d6111a885bdb971b13370740bb6fd1073b80af81e88bc61"
+        "0a142c8a8140ef25bbe201eaff7bfd482a74a36629d593b82c21770fe3bc3b0c",
+        "5455ab63b38df5b3e39c9a0161484a3ce66cd64b882918ceee4fd87f8d679d6c"
       ],
-      "wear": "1efc6010bb47049575645d6c97a85344be4d81a021a9ab5072d20a474878a1c1"
+      "wear": "e276fcea1a47b0185814004649b485b0987e209526f880385c8f898fc7a430e0"
     }
   ]
 }

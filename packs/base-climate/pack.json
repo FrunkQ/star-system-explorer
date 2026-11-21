@@ -71,19 +71,18 @@
      "source": "Energy-limited precipitation: the latent heat flux, a share of the sunlight reaching wet ground, falls back as liquid (Pierrehumbert 2010, ch. 9 energy budget). Sunlight reaching the ground falls with air column, fitted to Earth, Venus and Titan; cloud cover from latent flux fitted to Earth (docs/fudges.md)."
     },
     "circulation": {
-     "wind_m_s": 12.0,
      "delta_h": 0.3333,
      "tropopause_scale_heights": 1.8,
-     "source": "Hadley edge from Held and Hou 1980 (small-angle form, phi_H = (5/3 g H dh / (Omega a)^2)^1/2); cells from the Rhines arrest wavenumber k = (beta/2U)^1/2 (Rhines 1975); trends checked against Kaspi and Showman 2015. The wind scale (one value for every world) and the contrast are tuned to Earth until W7b takes them from the forcing (docs/fudges.md). The regime is a label: the first rule whose conditions hold (W7b replaces the rules with process strengths).",
+     "source": "Hadley edge from Held and Hou 1980 (small-angle form, phi_H = (5/3 g H dh / (Omega a)^2)^1/2); cells from the Rhines arrest wavenumber k = (beta/2U)^1/2 (Rhines 1975); trends checked against Kaspi and Showman 2015. The wind scale comes from the thermal wind (W7b, strengths); the contrast is tuned to Earth (docs/fudges.md). The regime is a label read off the strengths and facts: the first rule whose conditions hold. The physics never reads it.",
      "rules": [
       {
        "regime": "airless",
        "when": {
-        "pressure_bar": {
-         "max": 1e-06
+        "collisional": {
+         "max": 0.5
         }
        },
-       "because": "Too little air for cloud or wind: no weather."
+       "because": "The air is too thin to act as a fluid (Knudsen number above 1): an exosphere, no weather."
       },
       {
        "regime": "banded-giant",
@@ -106,20 +105,20 @@
       {
        "regime": "thin-air",
        "when": {
-        "pressure_bar": {
-         "max": 0.03
+        "radiative_days": {
+         "max": 10.0
         }
        },
-       "because": "Air too thin for weather to organise into belts: thin ice cloud, frost, fog in basins and dust storms where there is dust (Zurek and Martin 1993)."
+       "because": "Air so thin it heats and cools in days (radiative time under 10 days): thin ice cloud, frost, fog in basins and dust storms where there is dust (Zurek and Martin 1993)."
       },
       {
        "regime": "slow-rotator",
        "when": {
-        "hadley_edge_deg": {
-         "min": 60.0
+        "super_rotation": {
+         "min": 0.5
         }
        },
-       "because": "Slow spin lets one overturning cell reach the pole in each hemisphere: weak jets and a broad cloud band (Held and Hou 1980; Kaspi and Showman 2015)."
+       "because": "Slow spin for the air's warmth (thermal Rossby number above about 1): one overturning cell reaches the pole and the upper air super-rotates (Mitchell and Vallis 2010; Held and Hou 1980)."
       },
       {
        "regime": "fast-rotator",
@@ -294,8 +293,81 @@
      {
       "text": "Siler, N., Roe, G. H. and Armour, K. C. 2018, Insights into the zonal-mean response of the hydrologic cycle to global warming from a diffusive energy balance model, J. Climate 31, 7481-7493",
       "doi": "10.1175/JCLI-D-18-0081.1"
+     },
+     {
+      "text": "Mitchell, J. L. and Vallis, G. K. 2010, The transition to superrotation in terrestrial atmospheres, J. Geophys. Res. 115, E12008",
+      "url": "https://arxiv.org/abs/1008.1996"
+     },
+     {
+      "text": "Lindzen, R. S. and Farrell, B. 1980, A simple approximate result for the maximum growth rate of baroclinic instabilities, J. Atmos. Sci. 37, 1648-1654",
+      "doi": "10.1175/1520-0469(1980)037<1648:ASARFT>2.0.CO;2"
+     },
+     {
+      "text": "Komacek, T. D. and Showman, A. P. 2016, Atmospheric circulation of hot Jupiters: dayside-nightside temperature differences, ApJ 821, 16",
+      "url": "https://arxiv.org/abs/1601.00069"
+     },
+     {
+      "text": "Koll, D. D. B. and Abbot, D. S. 2016, Temperature structure and atmospheric circulation of dry tidally locked rocky exoplanets, ApJ 825, 99",
+      "url": "https://arxiv.org/abs/1605.01066"
+     },
+     {
+      "text": "Haqq-Misra, J. et al. 2018, Demarcating circulation regimes of synchronously rotating terrestrial planets within the habitable zone, ApJ 852, 67",
+      "url": "https://arxiv.org/abs/1710.00435"
+     },
+     {
+      "text": "Wordsworth, R. 2015, Atmospheric heat redistribution and collapse on tidally locked rocky planets, ApJ 806, 180",
+      "url": "https://arxiv.org/abs/1412.5575"
      }
-    ]
+    ],
+    "strengths": {
+     "eddy_share": 0.4,
+     "super_rotation_critical": 1.0,
+     "super_rotation_steepness": 2.0,
+     "lindzen_farrell": 0.31,
+     "stable_share": 0.35,
+     "drag_coefficient": 0.001,
+     "log_pressure_span": 1.0,
+     "thin_opacity_m2_kg": 5e-05,
+     "collapse_width": 0.05,
+     "molecule_diameter_m": 3.7e-10,
+     "source": "Process strengths (W7b): thermal Rossby number and super-rotation onset near 1 (Mitchell and Vallis 2010; the strength curve's shape is ours); baroclinic growth 0.31 f dU/dz / N (Lindzen and Farrell 1980) against the radiative time c_p p/(g sigma T^3) (Koll and Abbot 2016); day-night contrast from the timescale ratio (Komacek and Showman 2016, eq. 31) with drag C_D a/H (Koll and Abbot 2016); collapse from the night side, no colder than Wordsworth 2015's thin radiator, against the main gas's frost point; collisional air from the Knudsen number; deformation and Rhines lengths against the radius (Haqq-Misra et al. 2018). Eddy share 0.4 fitted so Earth keeps three cells (docs/fudges.md).",
+     "tested": [
+      {
+       "process": "super-rotation",
+       "quantity": "thermal_rossby",
+       "min": 0.02,
+       "max": 10.5,
+       "by": "Mitchell and Vallis 2010 ran Ro_T 0.02 to 10.5"
+      },
+      {
+       "process": "day-night contrast",
+       "quantity": "solid",
+       "max": 0.5,
+       "by": "Komacek and Showman 2016 is a theory of hot Jupiters; on a world with a surface it is carried over"
+      },
+      {
+       "process": "collapse",
+       "quantity": "pressure_bar",
+       "min": 0.01,
+       "max": 10.0,
+       "by": "Wordsworth 2015 sampled 0.01 to 10 bar"
+      },
+      {
+       "process": "collapse",
+       "quantity": "flux_w_m2",
+       "min": 272.0,
+       "max": 4080.0,
+       "by": "Wordsworth 2015 sampled 0.2 to 3 times Earth's sunlight"
+      },
+      {
+       "process": "regime lengths",
+       "quantity": "rotation_days",
+       "min": 1.0,
+       "max": 100.0,
+       "by": "Haqq-Misra et al. 2018 covered synchronous rotators of about 1 to 100 days"
+      }
+     ]
+    }
    }
   }
  }

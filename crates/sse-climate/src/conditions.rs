@@ -35,7 +35,12 @@ pub struct Conditions {
     pub year_days: f64,
     #[serde(default)]
     pub eccentricity: f64,
-    /// Mean stellar flux at the orbit, W/m².
+    /// Where the closest approach falls in the seasons: the planet's solar
+    /// longitude at perihelion, degrees from the northern spring equinox.
+    #[serde(default)]
+    pub perihelion_lon_deg: f64,
+    /// Stellar flux at the orbit's semi-major axis, W/m² (the flux at each
+    /// moment is this times (a/r)²).
     pub flux_w_m2: f64,
     /// Bond albedo.
     pub albedo: f64,
@@ -131,6 +136,8 @@ pub struct Extra {
     pub obliquity_deg: Option<f64>,
     #[serde(default)]
     pub year_days: Option<f64>,
+    #[serde(default)]
+    pub perihelion_lon_deg: Option<f64>,
     #[serde(default)]
     pub flux_w_m2: Option<f64>,
     #[serde(default)]

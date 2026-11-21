@@ -588,11 +588,29 @@ energy balance). Details in `handover/packages/W7a.md`.
 | `climate.moisture.hadley_width_x` 0.3, scaled by sin(Hadley edge)/sin 30° | Siler et al. fit σ = 0.3 to Earth; the scaling to other worlds is ours | The paper is Earth only; a world's Hadley cell width is the natural stretch | A Hadley cell moisture budget from W7b's circulation | our extension, to review in W7b |
 | `climate.moisture.h_top_ratio` 1.06 | The cell top's moist static energy as 1.06 × the equator's | Siler et al.'s Earth value | Gross moist stability from the column | tuned (Earth) |
 | `climate.moisture.exchange_m_s` 0.0115 | One bulk exchange C_E·|U| for evaporation | Fitted to Earth's mean rain (about 1 m a year) | Surface wind from W7b times a drag law | tuned |
-| `climate.defaults` spin 10 h, tilt 20°, default air | A body with no published spin, tilt or air gets these, and the climate's `assumed` list says so | Formation runs do not yet hand spin and tilt to the surface `Body` | Spin and tilt from the formation run's `World` and V3 imports (marked "authored (V3)", ruling 5) | stand-in, next in W7b |
+| `climate.defaults` spin 10 h, tilt 20°, default air | A body with no published spin, tilt or air gets these, and the climate's `assumed` list says so | W7b: formation runs (F4's settled spin, Kokubo and Genda 2010) and V3 imports (marked "authored (V3)") now hand spin and tilt to the `Body`; the defaults remain for Classic runs and bodies with no value | Tidal despinning over the world's life (formation's spins are primordial) | stand-in for missing values |
 | `wear.wet_floor_k` 275 K | A world wet only in the past (early Mars) rains at no less than 275 K | The atmosphere history publishes no past temperatures | Past climate from the volatile history (W8 and S17) | stand-in until W8 |
 | sse-surface `climate::conditions` flux 1361 / a² | Sunlight from a sun-like star when a body gives no flux | Surface bodies carry the star's climate fit but not its luminosity at the epoch | Flux from the star's luminosity at the epoch | stand-in |
 | locked worlds | Treated latitudinally (one zonal climate), not day and night | The EBM is zonal | Day-night two-box or 2D EBM (W7b) | stand-in until W7b |
 | moons | A moon's year is its orbit around the planet, so its seasons follow that orbit | `Body.orbit` is the moon's own | The planet's orbit around the star for insolation | known limit, to fix in W7c |
+
+### Circulation strengths (W7b, `crates/sse-climate/src/strengths.rs`, `climate.strengths`)
+
+| Where | Instead of the physics | Why | Real physics to replace it | Status |
+|---|---|---|---|---|
+| `climate.strengths.eddy_share` 0.4 | The Rhines eddy wind is 0.4 × the thermal wind scale | Replaces W7a's one 12 m/s with a speed that follows each world's forcing; 0.4 keeps Earth's three cells | Eddy kinetic energy from the baroclinic energy budget | tuned (Earth), editable |
+| strengths.rs wind cap sqrt(R T Δ_H) | Where Ro_T ≫ 1 the thermal wind R T Δ_H/(2Ωa) is capped at the speed the contrast drives with no spin | The thermal wind diverges as Ω → 0 | Cyclostrophic balance and angular momentum budget of the slow rotator | our construction |
+| `super_rotation_critical` 1, `super_rotation_steepness` 2 | Strength x²/(1+x²), x = Ro_T | Mitchell and Vallis give the onset near Ro_T ≈ 1 (1.3 in their transition run) but no strength curve | Fit to a GCM sweep of Ro_T | onset cited, curve ours |
+| `stable_share` 0.35 | N² = 0.35 (g/T)(g/c_p) for every troposphere | Gives Earth's N ≈ 0.011 s⁻¹ | N from a radiative-convective column | tuned (Earth) |
+| `lindzen_farrell` 0.31 | The factor in σ = 0.31 f dU/dz / N | Confirmed only by a citing source (NCAR NCL); the paper is a scan | Read the paper | unverified |
+| `drag_coefficient` 0.001, `log_pressure_span` 1 | Komacek and Showman's hot-Jupiter timescale ratio used on rocky worlds, drag from Koll and Abbot's C_D a / H, Δln p = 1 | The only closed form for day-night contrast across both | Koll and Abbot 2016's rocky-planet theory (optically thin and thick nights) | to review; it gives Earth-air locked worlds very small contrasts and thin CO₂ air softer contrasts than Wordsworth 2015's GCM |
+| night-side temperature T⁴(1 − A), floor at Wordsworth's thin radiator | A simple blend of full redistribution and none | Needs only A; the floor is the paper's own lower limit | Two-column day-night energy balance (W7c) | our construction |
+| `collapse_width` 0.05 | Collapse turns on over ±5 % of the frost point | A smooth step instead of a gate | Night-side frost deposition rate against transport (exchange block, W8) | ours |
+| `molecule_diameter_m` 3.7e-10 | One molecule size for every air | N₂'s kinetic diameter; Kn spans many decades so the size barely matters | Per-gas diameters | documented |
+| label rules: airless when collisional < 0.5, thin-air when the radiative time is under 10 days, slow-rotator when super-rotation > 0.5 | Labels read off strengths | Labels only: the layout and winds never read them (weather formations still do, until W10) | None needed for labels | permanent for labels |
+| sse-surface `climate::conditions` perihelion at 0° | A body's perihelion falls at its northern spring equinox | `Body.orbit` has no longitude of perihelion | Read it from the orbit (formation and imports), then precess it (W9) | stand-in |
+| ebm.rs rising branch at the season's moist-static-energy peak, placed by a parabola through the top three bands | The Hadley share's centre follows the energy-flux equator | Siler et al. centre it on the equator for Earth's annual mean; a seasonal, tilted world needs it to move | Energy-flux-equator theory with the cross-equatorial cell (Bischoff and Schneider 2014) | our extension |
+| cell layout (Hadley at least 8°, 8° per poleward cell, rounding) | Integer cells from the Rhines count | A layout needs whole cells | Jets from the zonal momentum budget | registered (review section 3) |
 
 ## Game-system packs
 

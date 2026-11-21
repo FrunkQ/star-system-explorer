@@ -9,13 +9,16 @@
 //! - Cells per hemisphere from the Rhines scale (Rhines 1975): the arrest
 //!   wavenumber is k_β = (β / 2U)^½, β = 2Ω / a, jets sit π / k_β apart, so a
 //!   hemisphere holds ½ sqrt(a Ω / U).
-//! - The regime is a label, the first pack rule whose conditions hold
-//!   (W7b replaces the rules with process strengths).
+//! - The wind scale U is the thermal wind (W7b, [`crate::strengths`]), so the
+//!   cell count follows each world's own forcing, not one tuned speed.
+//! - The layout reads only these numbers; the regime is a label read off the
+//!   strengths and facts afterwards, the first pack rule whose conditions hold.
 //!
 //! Lengths and rates read the spin's magnitude; its sign turns the winds.
 
 use crate::conditions::Conditions;
 use crate::settings::ClimateSettings;
+use crate::strengths::{strengths, Strengths};
 use serde::{Deserialize, Serialize};
 use sse_core::math as m;
 
@@ -47,6 +50,8 @@ pub struct Circulation {
     pub wind_m_s: f64,
     /// Tropopause height used, m.
     pub tropopause_m: f64,
+    /// The process strengths (W7b) the layout and winds read.
+    pub strengths: Strengths,
     /// Every step, in words, for "Why?".
     pub why: Vec<String>,
 }
@@ -65,7 +70,9 @@ pub fn circulation(cs: &ClimateSettings, c: &Conditions) -> Circulation {
     let hadley_raw = deg(phi_h).min(90.0);
     // Rhines: k_β = (β / 2U)^½ with β = 2Ω/a; jets sit π / k_β apart, so a
     // quarter circumference (π a / 2) holds ½ sqrt(a Ω / U) of them.
-    let n_raw = 0.5 * m::sqrt(a * omega / cc.wind_m_s);
+    let st = strengths(cs, c);
+    let wind = st.eddy_wind_m_s.max(1e-6);
+    let n_raw = 0.5 * m::sqrt(a * omega / wind);
     let cells = (m::round(n_raw) as u32).clamp(1, 20);
     let day = c.solar_day_hours();
     let q = |k: &str| -> f64 {
@@ -76,6 +83,13 @@ pub fn circulation(cs: &ClimateSettings, c: &Conditions) -> Circulation {
             "hadley_edge_deg" => hadley_raw,
             "cells" => cells as f64,
             "solar_day_hours" => day,
+            "radiative_days" => st.radiative_s / 86400.0,
+            "super_rotation" => st.super_rotation,
+            "baroclinic" => st.baroclinic,
+            "day_night" => st.day_night,
+            "collapse" => st.collapse,
+            "collisional" => st.collisional,
+            "thermal_rossby" => st.thermal_rossby,
             _ => f64::NAN,
         }
     };
@@ -94,20 +108,18 @@ pub fn circulation(cs: &ClimateSettings, c: &Conditions) -> Circulation {
             a / 1000.0
         ),
         format!(
-            "{n_raw:.1} cells per hemisphere from the Rhines scale with winds of {:.0} m/s (Rhines 1975).",
-            cc.wind_m_s
+            "{n_raw:.1} cells per hemisphere from the Rhines scale with eddy winds of {wind:.1} m/s from the thermal wind (Rhines 1975).",
         ),
         rule.because.clone(),
     ];
-    // Lay out the cells. A one-cell or slow world reaches the pole.
-    let (cells_n, hadley) = match rule.regime.as_str() {
-        "slow-rotator" | "tidally-locked" => (1, 90.0),
-        "thin-air" | "airless" => (cells.min(3), hadley_raw.min(90.0)),
-        _ if cells <= 1 => (1, 90.0),
-        _ => {
-            let room = 90.0 - 8.0 * (cells - 1) as f64;
-            (cells, hadley_raw.min(room).max(8.0))
-        }
+    // Lay out the cells from the numbers alone: a cell that reaches the pole,
+    // or a single Rhines cell, is one cell; otherwise the Hadley cell keeps at
+    // least 8° and leaves 8° for each cell poleward (a registered layout rule).
+    let (cells_n, hadley) = if hadley_raw >= 90.0 || cells <= 1 {
+        (1, 90.0)
+    } else {
+        let room = 90.0 - 8.0 * (cells - 1) as f64;
+        (cells, hadley_raw.min(room).max(8.0))
     };
     let mut edges = vec![0.0, hadley];
     for i in 1..cells_n {
@@ -155,9 +167,10 @@ pub fn circulation(cs: &ClimateSettings, c: &Conditions) -> Circulation {
         storm_tracks_deg: storms,
         solar_day_hours: day,
         spin_sign,
-        wind_m_s: cc.wind_m_s,
+        wind_m_s: wind,
         tropopause_m: h,
-        why,
+        why: why.into_iter().chain(st.why.iter().cloned()).collect(),
+        strengths: st,
     }
 }
 
@@ -166,9 +179,6 @@ impl Circulation {
     /// the rising cells, westerlies in the eddy-driven ones (sign alternates
     /// cell by cell), all reversed on a backward-spinning world.
     pub fn prevailing_wind(&self, lat_deg: f64) -> f64 {
-        if self.regime == "airless" {
-            return 0.0;
-        }
         let a = lat_deg.abs();
         let e = &self.edges_deg;
         for i in 0..e.len().saturating_sub(1) {
@@ -176,7 +186,13 @@ impl Circulation {
                 let f = (a - e[i]) / (e[i + 1] - e[i]).max(1e-9);
                 let shape = m::sin(f * m::PI);
                 let sign = if i % 2 == 0 { -1.0 } else { 1.0 };
-                return self.spin_sign * sign * 0.4 * self.wind_m_s * shape;
+                // Air that is not a fluid moves no wind (collisional strength).
+                return self.spin_sign
+                    * sign
+                    * 0.4
+                    * self.wind_m_s
+                    * shape
+                    * self.strengths.collisional;
             }
         }
         0.0

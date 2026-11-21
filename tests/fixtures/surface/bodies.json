@@ -1,6 +1,6 @@
 {
  "format": "sse.surface-fixtures/1",
- "sources": "Masses, radii, surface temperatures and pressures from the NASA planetary fact sheets; Io's heat flow about 2.5 W/m2 (Veeder et al. 1994); Europa's tidal heat order 0.05 W/m2; 55 Cancri e from Bourrier et al. 2018 and Demory et al. 2016. Water fractions are rounded literature values for the icy moons. Enceladus's tidal heat about 0.02 W/m2 averaged over the globe (15.8 GW, Howett et al. 2011, JGR 116, E03003, doi:10.1029/2010JE003718). Triton's 0.1 W/m2 is authored to give its young surface, about 10 to 100 Myr (Schenk and Zahnle 2007, Icarus 192, 135, doi:10.1016/j.icarus.2007.07.004); the heat source is disputed (obliquity tides, Nimmo and Spencer 2015, Icarus 246, 2, doi:10.1016/j.icarus.2014.01.044).",
+ "sources": "Masses, radii, surface temperatures and pressures from the NASA planetary fact sheets; Io's heat flow about 2.5 W/m2 (Veeder et al. 1994); Europa's tidal heat order 0.05 W/m2; 55 Cancri e from Bourrier et al. 2018 and Demory et al. 2016. Water fractions are rounded literature values for the icy moons. Enceladus's tidal heat about 0.02 W/m2 averaged over the globe (15.8 GW, Howett et al. 2011, JGR 116, E03003, doi:10.1029/2010JE003718). Triton's 0.1 W/m2 is authored to give its young surface, about 10 to 100 Myr (Schenk and Zahnle 2007, Icarus 192, 135, doi:10.1016/j.icarus.2007.07.004); the heat source is disputed (obliquity tides, Nimmo and Spencer 2015, Icarus 246, 2, doi:10.1016/j.icarus.2014.01.044). Spins and tilts (Earth, Venus backwards, Mars, Mercury, the Moon's tilt, Vesta, Jupiter) from the NASA planetary fact sheets (W7b).",
  "bodies": [
   {
    "expect": "mobile-lid",
@@ -18,7 +18,10 @@
     "water_fraction": 0.00023,
     "oceans": 1.0,
     "pressure_bar": 1.0,
-    "magma_end_myr": 100
+    "magma_end_myr": 100,
+    "spin_hours": 23.934,
+    "obliquity_deg": 23.44,
+    "spin_source": "authored"
    }
   },
   {
@@ -35,7 +38,10 @@
      "t_surface_k": 737
     },
     "pressure_bar": 92.0,
-    "magma_end_myr": 100
+    "magma_end_myr": 100,
+    "spin_hours": -5832.5,
+    "obliquity_deg": 2.64,
+    "spin_source": "authored"
    }
   },
   {
@@ -51,7 +57,10 @@
      "from": "fixed",
      "t_surface_k": 210
     },
-    "pressure_bar": 0.006
+    "pressure_bar": 0.006,
+    "spin_hours": 24.623,
+    "obliquity_deg": 25.19,
+    "spin_source": "authored"
    }
   },
   {
@@ -66,7 +75,10 @@
     "climate": {
      "from": "fixed",
      "t_surface_k": 440
-    }
+    },
+    "spin_hours": 1407.6,
+    "obliquity_deg": 0.034,
+    "spin_source": "authored"
    }
   },
   {
@@ -82,7 +94,9 @@
      "from": "fixed",
      "t_surface_k": 250
     },
-    "locked": true
+    "locked": true,
+    "obliquity_deg": 1.54,
+    "spin_source": "authored"
    }
   },
   {
@@ -246,7 +260,10 @@
     "climate": {
      "from": "fixed",
      "t_surface_k": 180
-    }
+    },
+    "spin_hours": 5.342,
+    "obliquity_deg": 29.0,
+    "spin_source": "authored"
    }
   },
   {
@@ -262,7 +279,10 @@
      "from": "fixed",
      "t_surface_k": 165
     },
-    "deep_envelope": true
+    "deep_envelope": true,
+    "spin_hours": 9.925,
+    "obliquity_deg": 3.13,
+    "spin_source": "authored"
    }
   },
   {
