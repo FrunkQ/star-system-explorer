@@ -82,7 +82,8 @@ test("Earth from the kernel, narrated: water, highs and lows in view, and where 
     assert.equal(p.samples, globe.reduce((n, x) => n + x!.samples * x!.samples, 0));
     assert.ok(p.highest_m > 0);
     const full = narrate(p, "Earth", 0, 20, "full", lightDir(315, 40));
-    assert.match(full, /^Earth, the face centred on 20° N, 0° E: \d+% under water, the rest bare ground\. The highest ground in view, [\d.]+ km, lies (to the|near)/);
+    // The Orbit globe carries cover (S16a part 2), so polar and sea ice may be named.
+    assert.match(full, /^Earth, the face centred on 20° N, 0° E: \d+% under water, (\d+% ice, )?the rest bare ground\. The highest ground in view, [\d.]+ km, lies (to the|near)/);
     assert.match(full, /Light falls from the upper left\.$/);
     assert.equal(narrate(p, "Earth", 0, 20, "brief").split(". ").length, 1);
     // Turning changes what is in view.

@@ -3,9 +3,10 @@
 //! Most worlds are glanced at and skipped, so a world is worked out only as
 //! far as someone looks at it:
 //! - **Glance** (D0): the envelope and regime, already made for every world.
-//! - **Orbit** (D1): the same plate code on a coarse grid (the base pack's
-//!   `plates.guide`, 32 cells a face), heights from it; no wear, craters or
-//!   cover yet (later parts of S16).
+//! - **Orbit** (D1): every surface stage but the feature register, on a
+//!   coarse grid (the base pack's `plates.guide`, 32 cells a face): plates,
+//!   wear, the craters and landforms at least two cells across, cover and
+//!   climate.
 //! - **Survey** (D2): every stage (`survey::survey_world`), its plate run
 //!   pinned to the Orbit run, so the continents seen from orbit are still
 //!   there after the survey.
@@ -19,8 +20,9 @@
 //! request; a click, a hover or a list never starts Survey work).
 
 use crate::atlas::Atlas;
-use crate::plates::{guide_settings, history, PLATES_VERSION};
-use crate::{SurfaceEnvelope, SurfaceSettings};
+use crate::plates::{guide_settings, PLATES_VERSION};
+use crate::survey::{SurveyOptions, SURVEY_VERSION};
+use crate::{Body, SurfaceEnvelope, SurfaceSettings};
 use serde::{Deserialize, Serialize};
 use sse_core::draw::Seed;
 use sse_core::math as m;
@@ -72,37 +74,25 @@ pub fn orbit_settings(s: &SurfaceSettings) -> SurfaceSettings {
 /// and the level. Equal keys give identical atlases.
 pub fn orbit_key(env: &SurfaceEnvelope, seed: &Seed, epoch_gyr: f64) -> String {
     format!(
-        "{DETAIL_VERSION}/{PLATES_VERSION}/orbit/{}/{}/{}",
+        "{DETAIL_VERSION}/{PLATES_VERSION}/{SURVEY_VERSION}/orbit/{}/{}/{}",
         serde_json::to_string(seed).expect("plain data"),
         env.address,
         m::round(epoch_gyr * 1.0e6) as i64
     )
 }
 
-/// The Orbit-level atlas of a world at `epoch_gyr`: heights from the coarse
-/// plate run for a world that ever had moving plates, the regime sketch for
-/// one that never did (its plates never moved, so the sketch is the height
-/// source at every level, as `Atlas::from_plates` already rules). Its tiles
-/// live under `shell:orbit@`, apart from the surveyed `shell:surface@`.
+/// The Orbit-level atlas of `body` at `epoch_gyr`: every surface stage but
+/// the feature register, on the coarse grid (`survey::orbit_world`), with
+/// only features at least two coarse cells across. A world that ever had
+/// moving plates gets heights from the coarse plate run, the run a survey
+/// refines, under `shell:orbit@`; one that never did keeps the regime
+/// sketch as its height source at every level (`shell:sketch@`).
 pub fn orbit_atlas(
     s: &SurfaceSettings,
-    env: &SurfaceEnvelope,
+    body: &Body,
     seed: &Seed,
     epoch_gyr: f64,
-    oceans: f64,
-) -> Atlas {
-    let o = orbit_settings(s);
-    let mobile = env.timeline.iter().any(|x| x.regime == "mobile-lid");
-    if !mobile {
-        return Atlas::new(&o, env, seed, epoch_gyr, vec![]);
-    }
-    let h = history(&o, env, seed, epoch_gyr);
-    let mut a = Atlas::from_plates(&o, env, seed, &h, oceans, vec![]);
-    if a.has_plates() {
-        a.address = env
-            .address
-            .child_key("shell", &format!("orbit@{}", a.epoch_myr))
-            .expect("valid shell key");
-    }
-    a
+) -> Result<Atlas, String> {
+    crate::survey::orbit_world(s, body, seed, epoch_gyr, &SurveyOptions::default())
+        .map(|sv| sv.atlas)
 }
