@@ -46,6 +46,7 @@
     screen: "Opened on the players page on this device. Open it in the Screens composer to share it.",
     symbology: "Kept with your symbols: choose it on the Symbols screen.",
     data_view: "Applied to the campaign's player data: it is on the Player data screen now.",
+    program: "Added to the campaign's programs. It runs once you attach it to an object whose template lists it.",
   };
   async function accept(i: number) {
     const c = result?.passed[i]?.value;
@@ -62,7 +63,7 @@
 </script>
 
 <div role="tabpanel" aria-label="Orac">
-  <p>Orac drafts changes from a sentence: physics, lenses, styles, player screens, symbols, data views, and new physics blocks as issues. SSE checks every draft and sends problems back to Orac, up to three times. Only drafts that pass can be accepted, and nothing changes until you accept.</p>
+  <p>Orac drafts changes from a sentence: physics, lenses, styles, player screens, symbols, data views, programs (autopilots), and new physics blocks as issues. SSE checks every draft and sends problems back to Orac, up to three times. Only drafts that pass can be accepted, and nothing changes until you accept.</p>
   {#if !host}
     <p class="hint" data-agent-off="orac">Orac works on the GM's chart room only.</p>
   {:else}
