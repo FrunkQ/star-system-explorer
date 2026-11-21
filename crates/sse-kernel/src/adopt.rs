@@ -677,7 +677,15 @@ fn clouds_of(run: Option<&SystemRun>) -> Vec<serde_json::Value> {
     l.clouds
         .iter()
         .map(|c| {
+            // F5's inclination model: Rayleigh-distributed tilts make a disc
+            // (sigma in degrees); isotropic ones a sphere (the Oort cloud).
+            let (shape, i_sigma_deg) = match c.i {
+                sse_formation::leftovers::Tilt::Isotropic => ("sphere", None),
+                sse_formation::leftovers::Tilt::Rayleigh { sigma_deg } => ("disc", Some(sigma_deg)),
+            };
             serde_json::json!({
+                "shape": shape,
+                "i_sigma_deg": i_sigma_deg,
                 "address": c.address.to_string(),
                 "kind": c.kind,
                 "around": c.around,
