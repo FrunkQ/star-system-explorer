@@ -27,6 +27,7 @@
   import Cutaway from "../../cutaway/src/Cutaway.svelte";
   import StarDisc from "./StarDisc.svelte";
   import ClimateWhy from "./ClimateWhy.svelte";
+  import BodyTimeline from "./BodyTimeline.svelte";
 
   let { ctx, scene, params }: { ctx: ViewContext; scene: SystemScene; params: Record<string, Json> } = $props();
 
@@ -259,15 +260,6 @@
     const key = `${scene.system}|${subject?.address}`;
     if (untrack(() => lapseKey) && key !== untrack(() => lapseKey)) untrack(() => lapse.close());
   });
-  const lapseLimits = $derived.by(() => {
-    const l = lapse.layers.find((x) => x.id === lapse.layer);
-    return l ? [l.limits, ...l.pending].map((x) => x.trim().replace(/([^.])$/, "$1.")).join(" ") : "";
-  });
-  const ago = (t: number) => {
-    const last = lapse.frames.times[lapse.frames.times.length - 1] ?? t;
-    const a = last - t;
-    return a < 0.5 ? "today" : a >= 1000 ? `${(a / 1000).toFixed(2)} billion years ago` : `${Math.round(a)} million years ago`;
-  };
 
   // One runtime per globe element; settings and turns are passed to it.
   $effect(() => {
@@ -435,19 +427,8 @@
         {/if}
       </div>
       {#if has}
-        <!-- Interim time-lapse control; the chart room's BodyTimeline replaces this one node. -->
-        <div class="lapse" data-lapse-controls data-lapse={lapse.loaded ? "on" : lapse.loading ? "loading" : "off"} data-lapse-layer={lapse.layer} data-lapse-t={lapse.t_myr}>
-          {#if !lapse.loaded}
-            <button type="button" class="link" disabled={lapse.loading} onclick={() => lapse.load()}>{lapse.loading ? "Reading its history…" : "Through time"}</button>
-            {#if lapse.error}<small data-lapse-error>{lapse.error}</small>{/if}
-          {:else}
-            <label>Layer <select value={lapse.layer} onchange={(e) => lapse.setLayer(e.currentTarget.value)}>{#each lapse.layers as l (l.id)}<option value={l.id} disabled={!l.available}>{l.label}</option>{/each}</select></label>
-            <label>When <input type="range" min={lapse.frames.times[0] ?? 0} max={lapse.frames.times[lapse.frames.times.length - 1] ?? 0} step="10" value={lapse.t_myr} oninput={(e) => lapse.setTime(Number(e.currentTarget.value))} /></label>
-            <span data-lapse-when>{ago(lapse.t_myr)}</span>
-            <button type="button" class="link" onclick={() => lapse.close()}>Back to today</button>
-            <small data-lapse-limits>{lapseLimits}</small>
-          {/if}
-        </div>
+        <!-- The time lapse's controls (U22): layer toggles, scrubber with event marks, Play, and the why card. -->
+        <BodyTimeline {lapse} depth={ws.depth ?? "science"} label={subject.label} />
       {/if}
       {#if stats}
         <dl class="facts" data-globe-stats>
@@ -630,23 +611,6 @@
     font-size: 12px;
     color: var(--sse-ink-muted);
     margin-top: 4px;
-  }
-  .lapse {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 6px 12px;
-    align-items: center;
-    font-size: 13px;
-    margin: 8px 0;
-    max-width: 100%;
-  }
-  .lapse input[type="range"] {
-    width: min(260px, 60vw);
-  }
-  .lapse small {
-    flex-basis: 100%;
-    color: var(--sse-ink-muted);
-    font-size: 12px;
   }
   .drawing {
     display: flex;
