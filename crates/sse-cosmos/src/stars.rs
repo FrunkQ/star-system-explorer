@@ -619,12 +619,45 @@ impl<'a> Stars<'a> {
         frame: i64,
         pins: &[StarSystem],
     ) -> Result<Vec<StarSystem>, String> {
+        let fill = self.draw_all(cell, frame)?;
+        Ok(self.with_pins(cell, frame, pins, fill))
+    }
+
+    /// Several cells in one frame, each exactly as `cell` gives it. The
+    /// cells share one walk of the census tree, so the blocks and splits
+    /// above them are worked out once (a voyage reads 27 cells).
+    pub fn cells(
+        &self,
+        cells: &[[i64; 3]],
+        frame: i64,
+        pins: &[StarSystem],
+    ) -> Result<Vec<Vec<StarSystem>>, String> {
+        let walk =
+            (self.params.key_version >= 2).then(|| crate::star_tree::TreeWalk::new(self, frame));
+        cells
+            .iter()
+            .map(|&c| {
+                let fill = match &walk {
+                    Some(w) => w.draw(c, None)?,
+                    None => self.draw_all(c, frame)?,
+                };
+                Ok(self.with_pins(c, frame, pins, fill))
+            })
+            .collect()
+    }
+
+    fn with_pins(
+        &self,
+        cell: [i64; 3],
+        frame: i64,
+        pins: &[StarSystem],
+        mut fill: Vec<StarSystem>,
+    ) -> Vec<StarSystem> {
         let t0 = frame as f64 * self.params.frame_myr;
         let here: Vec<&StarSystem> = pins
             .iter()
             .filter(|s| self.cell_at(s.orbit.xyz(t0), t0) == cell)
             .collect();
-        let mut fill = self.draw_all(cell, frame)?;
         // Pins drawn from this cell and frame keep their slot.
         let own: Vec<u64> = here
             .iter()
@@ -638,7 +671,7 @@ impl<'a> Stars<'a> {
         let mut out: Vec<StarSystem> = here.into_iter().cloned().collect();
         out.extend(fill);
         out.sort_by(|a, b| a.address.cmp(&b.address));
-        Ok(out)
+        out
     }
 
     /// The fill system at `address` (`<galaxy>/cell:<x>_<y>_<z>/sys:f<frame>k<slot>`)
