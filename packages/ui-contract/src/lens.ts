@@ -33,6 +33,7 @@ export const TOOLS = [
   { id: "undo", label: "Undo and redo" },
   { id: "drag", label: "Drag orbits" },
   { id: "flows", label: "Open the flow from a why" },
+  { id: "clip", label: "Copy and paste bodies" },
 ] as const;
 export type ToolId = (typeof TOOLS)[number]["id"];
 
@@ -80,7 +81,7 @@ export const SHIPPED_LENSES: readonly Lens[] = [
       { subject_kind: "*", fields: ["a_au", "mass_earth", "surface_k"], density: "compact" },
     ],
     layers: ["orbits", "zones", "labels"],
-    tools: ["undo"],
+    tools: ["undo", "clip"],
     cost: "light",
   }),
   lens({
