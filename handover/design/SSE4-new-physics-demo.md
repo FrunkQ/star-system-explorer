@@ -1,6 +1,8 @@
 # SSE4: the new-physics demo (track ND, video G)
 
-Status: **proposed 22 Nov 2026**, feasibility and plan only. Nothing here is built or filmed yet. Asked for by
+Status: **accepted by Alex, 22 Nov 2026** (all seven questions of section 5 answered yes, 15:23 to 16:03 UTC).
+Nothing here is built or filmed yet; the packages of section 3 are with their owner threads and the film
+(ND10) is made near the end. Asked for by
 Alex on 22 Nov: a short video, made near the end, that shows SSE4's core capability end to end. A user hands
 Orac a paper, Orac works out how to express it as visible, editable, cited blocks, and the result is saved as a
 pack that anyone can load, so only one person pays for the expensive model.
@@ -174,7 +176,7 @@ features (say so, do not invent); and a body whose "surface" is a level in the g
 
 ## 3. Proposed packages (track ND)
 
-One package each, owner suggested. ND1 to ND3 are general kernel work that should ride with B3 and O4 when
+One package each, with its owner thread (handed out 22 Nov). ND1 to ND3 are general kernel work that should ride with B3 and O4 when
 those threads reach them; ND4 to ND8 are the capability itself; ND9 and ND10 are the proof.
 
 | Id | Package | Owner | Needs | Acceptance |
@@ -219,9 +221,9 @@ Filmable today: shot 1, and the refusal-and-fix half of shot 4 (as in clip 19). 
 Rules that bind the film: nothing faked, so Orac really does the job on camera with a real key and the real
 cost shown; the pack in the film is the pack published; the reduced model is named as one on screen.
 
-## 5. Open questions for Alex
+## 5. Questions for Alex: all answered yes, 22 Nov
 
-Each with a recommendation.
+Kept as asked, with the answers. Questions 3 to 7 were accepted together at 16:03 ("agree to your proposals").
 
 1. **Accept "no new code for this paper" in place of "no new blocks"?** The demo needs general pieces built
    first (ND1 to ND3). Recommended: yes. It is the honest claim and still one nobody else can make.
@@ -245,6 +247,13 @@ Each with a recommendation.
 6. **Write to the authors near filming time?** They offer model spectra on request, which would tighten the
    reproduction, and a pack built from their paper is a courtesy to mention. Recommended: yes, from you, once
    the pack exists. Not before.
+   **Accepted.** Alex also asked whether to write now; the advice given was to wait until there is a rough
+   working result to show. **Licence point:** the paper and its tables are CC BY 4.0, but spectra the authors
+   send on request are not covered by that licence. Anything derived from them may ship in a pack only with
+   the authors' explicit permission, recorded with the pack's sources. Without it they may be used to check
+   the pack privately, not to fill it.
 7. **Packs carry their own fudges, sources and a reproduction report (ND6)?** Recommended: yes. It is the
    piece that turns a shared pack from "trust me" into something checkable, and it serves every pack, not
    only this one.
+
+Questions 3, 4, 5 and 7: **accepted by Alex, 22 Nov**, as recommended.
