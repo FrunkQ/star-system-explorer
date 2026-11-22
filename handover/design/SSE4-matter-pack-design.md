@@ -143,7 +143,7 @@ Today's row knows three phases: one solid, one liquid, one gas. Real water has f
 | id, names | `h2o.ice_vii`, "ice VII", in the three wordings |
 | kind | solid, glass (amorphous), liquid, gas, supercritical fluid, ionic fluid, superionic solid, metallic fluid. A label read by nothing: blocks read the properties below |
 | properties of this phase | density as a compression curve, heat capacity, thermal conductivity, **electrical conductivity**, viscosity or creep law, strength, optics. The thermal, mechanical and optical groups of section 4.3 are now held per phase |
-| evidence | **measured**, **computed** (from published quantum simulations, where no laboratory reaches) or **extrapolated**, with the pressure and temperature range it holds for. Shown on the card; a computed boundary is drawn dashed |
+| evidence | **measured**, **computed** (from published quantum simulations, where no laboratory reaches) or **extrapolated**, with the pressure and temperature range it holds for. Shown on the card; a computed boundary is drawn dashed, says "computed", and links to the paper that computed it wherever it appears (Alex, 22 Nov) |
 | stability | stable, or metastable (it exists, but is not what forms on a slow path; drawn only when asked) |
 
 **A boundary** joins two named phases: a curve (fit or table) with its range, the latent heat and the volume change across it, and its source. Load checks: three boundaries that meet must meet at one point, and that point is the triple point (never typed twice); every stable point in the covered range belongs to exactly one phase; the old triple point, critical point and vapour curve are simply the boundaries of the three familiar phases, so nothing that reads them today changes.
@@ -570,14 +570,14 @@ Alex, 21 Nov 2026, 20:51: "yes to all". Every question below is decided as recom
 
 21. **Rating and count handled as section 7A.8 now says: the rating is a fact on the ship ("Jump-2", a real reach in Traveller, a sizeless compared number in settings that want one), the count is the counted value on the route ("2 jumps"), the pack's rule joins them, and each has its own fixed wording?** Recommended: yes. It adds one choice to a counted measure (adds up, or is compared) and nothing else.
 
-### Added 22 Nov 00:55, open with Alex (build to the recommendations until he rules)
+### Added 22 Nov 00:55, and decided (Alex, 22 Nov 01:08: "computed and link to source; rest fine")
 
 22. **Show the stable ices on the diagram by default, and keep the ordered and metastable ones (Ic, IV, IX, XI to XVII, XIX) as listed rows behind a "show every known ice" switch?** Recommended: yes. All are in the data; the default picture stays the map of what a world actually contains.
-23. **Where no laboratory reaches, use published calculations, drawn dashed and marked "computed" with their source, instead of leaving the deep interior blank?** Recommended: yes. It is how the science itself is done for ice giants, and the mark keeps it honest.
+23. **Where no laboratory reaches, use published calculations, drawn dashed and marked "computed" with their source, instead of leaving the deep interior blank?** Recommended: yes. It is how the science itself is done for ice giants, and the mark keeps it honest. **Alex: yes, marked "computed" and with a link to the source.** So every computed boundary and value carries the link to the paper that calculated it right where it is shown: on the diagram's dashed line, on the cutaway band, and on the Look up block's "Why?", not only in the register.
 24. **Magnetic fields come from one test on every layer of every world (does it conduct, does it turn over), with no list of field-making materials, so iron, metallic hydrogen, ionic water and anything fictional are treated alike?** Recommended: yes. It is "processes, not classes", and the dynamo flow in the code is already written that way.
 25. **Order of the later waves: hydrogen and helium first (Jupiter and Saturn), then the outer-system ices (nitrogen, methane, ammonia, carbon dioxide), then iron, mantle rock and carbon?** Recommended: yes. Water alone gives the icy moons and the ice giants; the giants' fields come next for the least data.
 
-### Added 22 Nov 01:05, open with Alex (build to the recommendation until he rules)
+### Added 22 Nov 01:05, open with Alex (he asked on 22 Nov 01:08 for it to be explained in more detail; the block is built, the CI check waits for his own yes)
 
 26. **One Look up block for everything on the sheet (constants, elements, substances, mixtures), as section 3A, with the check that fails the build when any block or code types its own copy of a material number or constant?** Recommended: yes. The check is a CI change, so it needs your own yes; without it the block is still built and the audit is run by hand.
 
