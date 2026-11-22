@@ -93,7 +93,7 @@ impl Default for StarParams {
     fn default() -> Self {
         StarParams {
             cell_pc: 10.0,
-            frame_myr: 1.0,
+            frame_myr: 0.1,
             imf_edges: vec![0.08, 0.5, 150.0],
             imf_alphas: vec![1.3, 2.3],
             sun_life_gyr: 10.0,
@@ -132,7 +132,9 @@ impl Default for StarParams {
             cluster_max: 1.0e5,
             cell_rotation_kms_kpc: 26.83,
             key_version: 2,
-            class_edges_lsun: vec![0.1, 1.0, 10.0, 100.0, 1000.0],
+            class_edges_lsun: vec![
+                0.1, 1.0, 10.0, 100.0, 300.0, 1.0e3, 3.0e3, 1.0e4, 3.0e4, 1.0e5, 3.0e5,
+            ],
             tree_depth: 6,
             class_attempts: 65536,
         }

@@ -38,7 +38,7 @@ fn census(
 }
 
 macro_rules! setup {
-    ($st:ident, $now:ident, $sun:ident) => {
+    ($st:ident, $now:ident, $sun:ident, $now_myr:ident) => {
         let (c, w) = world();
         let (g, d) = milky_way_like(&c, &w);
         let env = GalaxyEnvelope {
@@ -56,14 +56,16 @@ macro_rules! setup {
             galaxy: Address::universe("g5").unwrap(),
         };
         let $now = $st.frame_of(g.now.t_gyr * 1000.0);
+        #[allow(unused)]
+        let $now_myr = $now as f64 * $st.params.frame_myr;
         let $sun = [env.sun_radius_kpc() * 1000.0, 0.0, 0.0];
     };
 }
 
 #[test]
 fn the_suns_neighbourhood_against_observation() {
-    setup!(st, now, sun);
-    let t = now as f64 * st.params.frame_myr;
+    setup!(st, now, sun, now_myr);
+    let t = now_myr;
     let all = census(&st, sun, 10.0, now, &[]);
     let states: Vec<StarState> = all.iter().map(|s| st.at(s, t).state).collect();
     let n = all.len() as f64;
@@ -93,9 +95,9 @@ fn the_suns_neighbourhood_against_observation() {
 
 #[test]
 fn older_stars_wander_further_from_the_plane() {
-    setup!(st, now, sun);
+    setup!(st, now, sun, now_myr);
     let all = census(&st, sun, 20.0, now, &[]);
-    let t = now as f64 * st.params.frame_myr;
+    let t = now_myr;
     let sz = |lo: f64, hi: f64| {
         let v: Vec<f64> = all
             .iter()
@@ -111,8 +113,8 @@ fn older_stars_wander_further_from_the_plane() {
 
 #[test]
 fn order_independent_and_deterministic() {
-    setup!(st, now, sun);
-    let base = st.cell_at(st.from_grid(sun, now as f64), now as f64);
+    setup!(st, now, sun, now_myr);
+    let base = st.cell_at(st.from_grid(sun, now_myr), now_myr);
     let cells: Vec<[i64; 3]> = (0..4).map(|k| [base[0] + k, base[1], base[2]]).collect();
     let fwd: Vec<Vec<StarSystem>> = cells
         .iter()
@@ -136,8 +138,8 @@ fn order_independent_and_deterministic() {
 
 #[test]
 fn a_promoted_system_is_the_same_at_every_time() {
-    setup!(st, now, sun);
-    let base = st.cell_at(st.from_grid(sun, now as f64), now as f64);
+    setup!(st, now, sun, now_myr);
+    let base = st.cell_at(st.from_grid(sun, now_myr), now_myr);
     let fill = st.cell(base, now, &[]).unwrap();
     let pin = st.promote(&fill[fill.len() / 2]);
     // Its own frame shows the same system, once.
@@ -151,7 +153,7 @@ fn a_promoted_system_is_the_same_at_every_time() {
         sse_core::Stream::new("test.order.v1").unwrap(),
     );
     let times: Vec<f64> = (0..20)
-        .map(|k| now as f64 - 4000.0 + 200.0 * k as f64 + d.unit(k))
+        .map(|k| now_myr - 4000.0 + 200.0 * k as f64 + d.unit(k))
         .collect();
     let mut order: Vec<usize> = (0..20).collect();
     for k in (1..20).rev() {
@@ -172,16 +174,16 @@ fn a_promoted_system_is_the_same_at_every_time() {
         );
     }
     // It is at its drawn place at its frame, and it moves on its orbit.
-    let p0 = pin.orbit.xyz(now as f64);
-    assert_eq!(st.cell_at(p0, now as f64), base);
-    let p1 = pin.orbit.xyz(now as f64 + 100.0);
+    let p0 = pin.orbit.xyz(now_myr);
+    assert_eq!(st.cell_at(p0, now_myr), base);
+    let p1 = pin.orbit.xyz(now_myr + 100.0);
     assert!((0..3).map(|k| (p1[k] - p0[k]).abs()).sum::<f64>() > 100.0);
 }
 
 #[test]
 fn pins_claim_their_share_of_the_budget() {
-    setup!(st, now, sun);
-    let base = st.cell_at(st.from_grid(sun, now as f64), now as f64);
+    setup!(st, now, sun, now_myr);
+    let base = st.cell_at(st.from_grid(sun, now_myr), now_myr);
     // Promote systems from a block of cells; follow every cell that holds a
     // pin over the next 30 frames.
     let mut pins = vec![];
@@ -199,8 +201,9 @@ fn pins_claim_their_share_of_the_budget() {
     }
     let (mut cells_checked, mut pin_visits, mut exact, mut short) =
         (0usize, 0usize, 0usize, 0usize);
-    for f in now..now + 30 {
-        let t = f as f64;
+    // Every tenth frame, so the pins spread over 30 Myr.
+    for f in (now..now + 300).step_by(10) {
+        let t = f as f64 * st.params.frame_myr;
         let mut cells: Vec<[i64; 3]> = pins.iter().map(|p| st.cell_at(p.orbit.xyz(t), t)).collect();
         cells.sort();
         cells.dedup();
@@ -233,17 +236,13 @@ fn pins_claim_their_share_of_the_budget() {
 
 #[test]
 fn birth_feeds_formation() {
-    setup!(st, now, sun);
+    setup!(st, now, sun, now_myr);
     let s = &st
-        .cell(
-            st.cell_at(st.from_grid(sun, now as f64), now as f64),
-            now,
-            &[],
-        )
+        .cell(st.cell_at(st.from_grid(sun, now_myr), now_myr), now, &[])
         .unwrap()[0];
     let b = st.birth(s);
     assert_eq!(b.address, s.address);
-    assert!(b.mass_msun >= s.mass_msun && b.feh.is_finite() && b.birth_gyr < now as f64 / 1000.0);
+    assert!(b.mass_msun >= s.mass_msun && b.feh.is_finite() && b.birth_gyr < now_myr / 1000.0);
 }
 
 #[test]
@@ -258,8 +257,8 @@ fn pack_and_golden() {
 fn a_pin_survives_a_change_to_the_fill_rules() {
     // Y7a: a promoted system is stored whole, so new draw keys (standing in
     // for any change to the fill rules) redraw the fill but never the pin.
-    setup!(st, now, sun);
-    let base = st.cell_at(st.from_grid(sun, now as f64), now as f64);
+    setup!(st, now, sun, now_myr);
+    let base = st.cell_at(st.from_grid(sun, now_myr), now_myr);
     let fill = st.cell(base, now, &[]).unwrap();
     let chosen = &fill[fill.len() / 2];
     assert_eq!(st.draw_one(&chosen.address).unwrap().as_ref(), Some(chosen));
@@ -286,8 +285,8 @@ fn a_pin_survives_a_change_to_the_fill_rules() {
         .collect();
     assert_eq!(found, vec![&pin]);
     assert_eq!(
-        serde_json::to_string(&v2.at(found[0], now as f64 + 50.0)).unwrap(),
-        serde_json::to_string(&st.at(&pin, now as f64 + 50.0)).unwrap()
+        serde_json::to_string(&v2.at(found[0], now_myr + 50.0)).unwrap(),
+        serde_json::to_string(&st.at(&pin, now_myr + 50.0)).unwrap()
     );
     // Version 2 is Y1's count tree (the stars golden holds it); version 1,
     // G5's per-cell draw, stays available for saves keyed to it.

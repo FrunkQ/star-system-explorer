@@ -7,7 +7,7 @@ use crate::stars::*;
 use sse_core::{Address, Seed};
 
 macro_rules! setup {
-    ($st:ident, $now:ident, $sun:ident) => {
+    ($st:ident, $now:ident, $sun:ident, $now_myr:ident) => {
         let (c, w) = world();
         let (g, d) = milky_way_like(&c, &w);
         let env = GalaxyEnvelope {
@@ -25,6 +25,8 @@ macro_rules! setup {
             galaxy: Address::universe("g5").unwrap(),
         };
         let $now = $st.frame_of(g.now.t_gyr * 1000.0);
+        #[allow(unused)]
+        let $now_myr = $now as f64 * $st.params.frame_myr;
         let $sun = [env.sun_radius_kpc() * 1000.0, 0.0, 0.0];
     };
 }
@@ -33,10 +35,10 @@ macro_rules! setup {
 /// 4,000 cells, and the totals agree.
 #[test]
 fn cell_counts_are_poisson_about_the_envelope() {
-    setup!(st, now, sun);
+    setup!(st, now, sun, now_myr);
     let walk = TreeWalk::new(&st, now);
     let classes = st.params.class_edges_lsun.len() + 1;
-    let c0 = st.cell_at(st.from_grid(sun, now as f64), now as f64);
+    let c0 = st.cell_at(st.from_grid(sun, now_myr), now_myr);
     let (mut chi2, mut n_sum, mut mu_sum, mut cells) = (0.0, 0.0, 0.0, 0usize);
     // A slab through the plane, so the counts run from crowded to sparse.
     for dx in 0..20 {
@@ -73,15 +75,18 @@ fn cell_counts_are_poisson_about_the_envelope() {
 /// gives there, and of the class the walk asked for.
 #[test]
 fn a_bright_star_found_from_afar_is_the_cell_draws_star() {
-    setup!(st, now, sun);
-    let bright = st.params.class_edges_lsun.len() - 1;
+    setup!(st, now, sun, now_myr);
+    // The class from 1,000 L☉ up to the next edge.
+    let bright = 1 + st
+        .params
+        .class_edges_lsun
+        .iter()
+        .position(|e| *e == 1000.0)
+        .unwrap();
     let walk = TreeWalk::new(&st, now);
     let found = walk.cells_within(bright, sun, 1000.0).unwrap();
-    assert!(
-        !found.is_empty(),
-        "no stars brighter than 100 L☉ within 1 kpc"
-    );
-    let t0 = now as f64 * st.params.frame_myr;
+    assert!(!found.is_empty(), "no stars of 1,000 L☉ class within 1 kpc");
+    let t0 = now_myr;
     for (cell, n) in found.iter().take(5) {
         let only = TreeWalk::new(&st, now).draw(*cell, Some(bright)).unwrap();
         assert_eq!(only.len() as u64, *n);
@@ -99,13 +104,18 @@ fn a_bright_star_found_from_afar_is_the_cell_draws_star() {
 /// reads per star found stay within the eight children read per level.
 #[test]
 fn a_sky_walk_costs_what_it_finds() {
-    setup!(st, now, sun);
-    let brightest = st.params.class_edges_lsun.len();
+    setup!(st, now, sun, now_myr);
+    let bright = 1 + st
+        .params
+        .class_edges_lsun
+        .iter()
+        .position(|e| *e == 1000.0)
+        .unwrap();
     let mut rows = vec![];
     for r in [250.0, 500.0] {
         let walk = TreeWalk::new(&st, now);
         let found: u64 = walk
-            .cells_within(brightest, sun, r)
+            .cells_within(bright, sun, r)
             .unwrap()
             .iter()
             .map(|x| x.1)
@@ -129,11 +139,34 @@ fn a_sky_walk_costs_what_it_finds() {
     assert!(per_star(b) < 1.5 * per_star(a), "{rows:?}");
 }
 
+/// A rare bright class is drawn inside its class, never by the fallback:
+/// the search keeps to the corner of mass and age where the class lives.
+#[test]
+fn a_rare_bright_class_is_drawn_in_its_class() {
+    setup!(st, now, sun, now_myr);
+    let rare = 1 + st
+        .params
+        .class_edges_lsun
+        .iter()
+        .position(|e| *e == 3.0e4)
+        .unwrap();
+    let walk = TreeWalk::new(&st, now);
+    let found = walk.cells_within(rare, sun, 1500.0).unwrap();
+    assert!(!found.is_empty(), "no star over 30,000 L☉ within 1.5 kpc");
+    let t0 = now_myr;
+    for (cell, _) in found.iter().take(8) {
+        for s in walk.draw(*cell, Some(rare)).unwrap() {
+            let l = st.at(&s, t0).state.luminosity_lsun;
+            assert_eq!(st.params.class_of(l), rare, "L {l}");
+        }
+    }
+}
+
 /// Cells drawn in any order, in one walk or many, give the same stars.
 #[test]
 fn the_tree_is_order_independent() {
-    setup!(st, now, sun);
-    let c0 = st.cell_at(st.from_grid(sun, now as f64), now as f64);
+    setup!(st, now, sun, now_myr);
+    let c0 = st.cell_at(st.from_grid(sun, now_myr), now_myr);
     let cells = [
         c0,
         [c0[0] + 70, c0[1] - 3, c0[2] + 1],

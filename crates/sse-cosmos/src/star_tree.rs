@@ -46,7 +46,35 @@ pub struct TreeWalk<'s, 'a> {
     pub stars: &'s Stars<'a>,
     pub frame: i64,
     expect: RefCell<BTreeMap<Node, f64>>,
-    shares: RefCell<BTreeMap<[i64; 3], Vec<f64>>>,
+    shares: RefCell<BTreeMap<[i64; 3], ClassMix>>,
+}
+
+/// A root block's mix of classes: each class's share of its systems, and
+/// the corner of mass and age where that class lives, so a leaf draw
+/// conditioned on a rare bright class searches only there.
+#[derive(Clone, Debug)]
+pub struct ClassMix {
+    pub share: Vec<f64>,
+    /// Lowest IMF unit (mass quantile) any member can have, with a margin.
+    pub u_floor: Vec<f64>,
+    /// Greatest age any member can have, Gyr, with a margin.
+    pub age_ceiling_gyr: Vec<f64>,
+}
+
+/// Share of a birth history's stars born by `t` (Gyr).
+fn born_by(cdf: &[(f64, f64)], acc: f64, t: f64) -> f64 {
+    if acc <= 0.0 {
+        return 0.0;
+    }
+    let v = match cdf.windows(2).find(|w| w[1].0 >= t) {
+        None => acc,
+        Some(w) if t <= w[0].0 => w[0].1,
+        Some(w) => {
+            let f = (t - w[0].0) / (w[1].0 - w[0].0).max(1e-300);
+            w[0].1 + f * (w[1].1 - w[0].1)
+        }
+    };
+    (v / acc).clamp(0.0, 1.0)
 }
 
 impl TreeWalk<'_, '_> {
@@ -187,6 +215,11 @@ impl<'s, 'a> TreeWalk<'s, 'a> {
     /// Share of each class among a root block's systems: a quadrature over
     /// the IMF (fine in the bright tail) and the birth history.
     pub fn class_shares(&self, root: [i64; 3]) -> Vec<f64> {
+        self.class_mix(root).share
+    }
+
+    /// The class shares with each class's corner of mass and age.
+    pub fn class_mix(&self, root: [i64; 3]) -> ClassMix {
         if let Some(v) = self.shares.borrow().get(&root) {
             return v.clone();
         }
@@ -201,20 +234,7 @@ impl<'s, 'a> TreeWalk<'s, 'a> {
         let (cdf, acc) = st.birth_cdf_at(rc, t_now);
         // Ages on a log grid, so the short lives of bright stars are
         // resolved, each bin weighted by the births in it.
-        let born_by = |t: f64| -> f64 {
-            if acc <= 0.0 {
-                return 0.0;
-            }
-            let v = match cdf.windows(2).find(|w| w[1].0 >= t) {
-                None => acc,
-                Some(w) if t <= w[0].0 => w[0].1,
-                Some(w) => {
-                    let f = (t - w[0].0) / (w[1].0 - w[0].0).max(1e-300);
-                    w[0].1 + f * (w[1].1 - w[0].1)
-                }
-            };
-            v / acc
-        };
+        let born_by = |t: f64| born_by(&cdf, acc, t);
         let oldest = (t_now - st.env.disc.t_start_gyr).max(1e-3);
         let na = 48;
         let edges: Vec<f64> = (0..=na)
@@ -226,29 +246,39 @@ impl<'s, 'a> TreeWalk<'s, 'a> {
                 }
             })
             .collect();
-        let bins: Vec<(f64, f64)> = edges
+        // (mid age, births, the next bin's outer edge as the age margin)
+        let bins: Vec<(f64, f64, f64)> = edges
             .windows(2)
-            .map(|e| {
+            .enumerate()
+            .map(|(k, e)| {
                 let mid = if e[0] > 0.0 {
                     m::sqrt(e[0] * e[1])
                 } else {
                     0.5 * e[1]
                 };
-                (mid, born_by(t_now - e[0]) - born_by(t_now - e[1]))
+                let margin = edges[(k + 2).min(na)];
+                (mid, born_by(t_now - e[0]) - born_by(t_now - e[1]), margin)
             })
             .filter(|b| b.1 > 0.0)
             .collect();
         let classes = p.class_edges_lsun.len() + 1;
         let mut w = vec![0.0; classes];
+        let mut u_floor = vec![1.0f64; classes];
+        let mut ceiling = vec![0.0f64; classes];
         // Three grids in the IMF's unit: the bulk, the brightest per cent and
         // the brightest per mille.
         for (lo, hi, nm) in [(0.0, 0.99, 256), (0.99, 0.999, 128), (0.999, 1.0, 128)] {
             let du = (hi - lo) / nm as f64;
             for i in 0..nm {
-                let mass = imf_quantile(p, lo + (i as f64 + 0.5) * du);
-                for (age, share) in &bins {
+                let u = lo + (i as f64 + 0.5) * du;
+                let mass = imf_quantile(p, u);
+                for (age, share, margin) in &bins {
                     let l = p.state(mass, *age).luminosity_lsun;
-                    w[p.class_of(l)] += du * share;
+                    let c = p.class_of(l);
+                    w[c] += du * share;
+                    // Two grid steps below, one age bin beyond.
+                    u_floor[c] = u_floor[c].min(u - 2.5 * du);
+                    ceiling[c] = ceiling[c].max(*margin);
                 }
             }
         }
@@ -258,8 +288,16 @@ impl<'s, 'a> TreeWalk<'s, 'a> {
                 *v /= total;
             }
         }
-        self.shares.borrow_mut().insert(root, w.clone());
-        w
+        let mix = ClassMix {
+            share: w,
+            u_floor: u_floor.into_iter().map(|u| u.clamp(0.0, 1.0)).collect(),
+            age_ceiling_gyr: ceiling
+                .into_iter()
+                .map(|a| if a > 0.0 { a } else { oldest })
+                .collect(),
+        };
+        self.shares.borrow_mut().insert(root, mix.clone());
+        mix
     }
 
     fn node_address(&self, n: Node) -> Result<Address, String> {
@@ -412,6 +450,7 @@ impl<'s, 'a> TreeWalk<'s, 'a> {
         let t_now = t0 / 1000.0;
         let (cdf, acc) = st.birth_cdf(cell, t_now);
         let classes = p.class_edges_lsun.len() + 1;
+        let mix = self.class_mix(self.node_of(cell, 0).1);
         let mut out = vec![];
         let mut slot = 0u64;
         for c in 0..classes {
@@ -426,6 +465,13 @@ impl<'s, 'a> TreeWalk<'s, 'a> {
                 Stream::new(&format!("cosmos.stars.c{c}.v{}", p.key_version))
                     .map_err(|e| e.to_string())?,
             );
+            // Search only the corner of mass and age where the class lives.
+            let fu = if mix.u_floor[c] < 1.0 {
+                mix.u_floor[c]
+            } else {
+                0.0
+            };
+            let fb = born_by(&cdf, acc, t_now - mix.age_ceiling_gyr[c]);
             for j in 0..n {
                 let i = |f: u64| {
                     (frame as u64)
@@ -437,8 +483,8 @@ impl<'s, 'a> TreeWalk<'s, 'a> {
                 let mut found = None;
                 for a in 0..p.class_attempts {
                     let ia = |f: u64| i((1 + a) * 64 + f);
-                    let birth = birth_from(&cdf, acc, d.unit(ia(3)), t_now);
-                    let mass = imf_quantile(p, d.unit(ia(4)));
+                    let birth = birth_from(&cdf, acc, fb + (1.0 - fb) * d.unit(ia(3)), t_now);
+                    let mass = imf_quantile(p, fu + (1.0 - fu) * d.unit(ia(4)));
                     let l = p.state(mass, t_now - birth).luminosity_lsun;
                     if p.class_of(l) == c {
                         found = Some((mass, birth));
