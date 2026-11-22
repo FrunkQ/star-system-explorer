@@ -33,6 +33,7 @@ fn body(address: &str, r: f64, mom: f64, d_au: f64) -> Body {
         plasma_source_kg_s: 0.0,
         pedersen_conductance_s: 0.0,
         moons: vec![],
+        rings_outer_m: 0.0,
     }
 }
 
@@ -290,14 +291,17 @@ fn aurorae_follow_the_drivers() {
         MoonOrbit {
             address: "io".into(),
             orbit_m: 5.9 * R_J,
+            radius_m: 0.0,
         },
         MoonOrbit {
             address: "callisto".into(),
             orbit_m: 26.3 * R_J,
+            radius_m: 0.0,
         },
         MoonOrbit {
             address: "far".into(),
             orbit_m: 300.0 * R_J,
+            radius_m: 0.0,
         },
     ];
     let a = read(&j, &set).unwrap().aurora.unwrap();
@@ -336,4 +340,106 @@ fn aurorae_follow_the_drivers() {
     });
     v.surface_gravity_m_s2 = 8.87;
     assert!(read(&v, &set).unwrap().aurora.unwrap().diffuse);
+}
+
+fn sheet() -> Settings {
+    // Electron mass, charge and ε₀ (CODATA 2018), typed only in tests.
+    Settings {
+        electron: Some(Electron {
+            mass_kg: 9.109_383_701_5e-31,
+            charge_c: 1.602_176_634e-19,
+            eps0: 8.854_187_812_8e-12,
+        }),
+        ..Settings::default()
+    }
+}
+
+/// Belts (MF7 part 2). Earth's run from the top of the air to about 7
+/// radii and peak in the outer zone; Saturn's begin at the rings; a moon
+/// sweeps a gap; a world without a field has none; without the sheet's
+/// constants none are computed.
+#[test]
+fn belts_where_field_lines_close() {
+    let set = sheet();
+    let mut e = body("earth", 6.371e6, 8.0e22, 1.0);
+    e.air = Some(Air {
+        surface_pressure_pa: 101325.0,
+        scale_height_m: 8500.0,
+    });
+    e.surface_gravity_m_s2 = 9.81;
+    e.orbits_m = vec![6.771e6, 2.6560e7, 4.2164e7];
+    let f = read(&e, &set).unwrap();
+    let b = f.belts.expect("Earth has belts");
+    assert_eq!(b.inner_set_by, "air");
+    assert!(
+        (1.1..=1.2).contains(&(b.inner_m / 6.371e6)),
+        "{}",
+        b.inner_m
+    );
+    assert!(
+        (6.0..=8.5).contains(&(b.outer_m / 6.371e6)),
+        "{}",
+        b.outer_m
+    );
+    // Mauk and Fox Figure 5: near 2e3 to 4e3 per cm² s sr keV at 1 MeV, L 5.
+    let l5 = b
+        .shells
+        .iter()
+        .min_by(|a, c| (a.l - 5.0).abs().total_cmp(&(c.l - 5.0).abs()))
+        .unwrap();
+    assert!(
+        (5e2..=2e4).contains(&(l5.intensity_1mev * m::pow(l5.l / 5.0, 4.0))),
+        "{}",
+        l5.intensity_1mev
+    );
+    // Shielding: each thicker shield lets less through.
+    assert!(l5.dose_sv_h[0] > l5.dose_sv_h[1] && l5.dose_sv_h[1] > l5.dose_sv_h[2]);
+    // No sheet, no belts; no field, no belts.
+    assert!(read(&e, &Settings::default()).unwrap().belts.is_none());
+    assert!(read(&body("mars", 3.39e6, 0.0, 1.52), &set)
+        .unwrap()
+        .belts
+        .is_none());
+
+    // Saturn: belts begin at the main rings' edge (2.27 radii).
+    let mut s = body("saturn", R_S, moment(2.1e-5, R_S), 9.5);
+    s.rings_outer_m = 2.27 * R_S;
+    let sb = read(&s, &set).unwrap().belts.unwrap();
+    assert_eq!(sb.inner_set_by, "rings");
+    assert!((sb.inner_m / R_S - 2.27).abs() < 1e-9);
+}
+
+/// Jupiter: the moons' plasma confines the waves (D = 3), the spectrum stays
+/// hard, Io sweeps a gap, and Europa's orbit gets far more dose than
+/// Callisto's.
+#[test]
+fn jupiter_belts_and_moons() {
+    let set = sheet();
+    let mut j = body("jupiter", R_J, moment(4.17e-4, R_J), 5.2);
+    j.plasma_source_kg_s = 1000.0;
+    j.moons = [
+        ("io", 5.9, 1.8216e6),
+        ("europa", 9.4, 1.5608e6),
+        ("ganymede", 15.0, 2.6341e6),
+        ("callisto", 26.3, 2.4103e6),
+    ]
+    .iter()
+    .map(|(n, a, rad)| MoonOrbit {
+        address: (*n).into(),
+        orbit_m: a * R_J,
+        radius_m: *rad,
+    })
+    .collect();
+    let b = read(&j, &set).unwrap().belts.unwrap();
+    assert_eq!(b.wave_path, "confined");
+    assert!(b.gaps.iter().any(|g| g.by == "io"));
+    let dose = |n: &str| {
+        b.orbits
+            .iter()
+            .find(|o| o.moon.as_deref() == Some(n))
+            .unwrap()
+            .dose_sv_h[1]
+    };
+    let ratio = dose("europa") / dose("callisto");
+    assert!(ratio > 10.0, "{ratio}");
 }

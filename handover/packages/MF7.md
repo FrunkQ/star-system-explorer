@@ -49,12 +49,69 @@ One free-space dose for every star and galaxy place; a centred untilted dipole; 
 sea-level parameters at every depth, recalled from memory and to verify; no Pfotzer peak; the muon share
 fitted to Earth.
 
-## Next (part 2 and readers)
+## Part 2: electron belts (`read_field` gains `belts`)
 
-- Belts: `sse.belts.zone` (closed field lines clear of air, rings and the bubble), `sse.belts.intensity`
-  (the Kennel and Petschek limit), sources (cosmic-ray neutron splash, wind injection, plasma tori from
-  eruptive moons), gaps swept by moons and rings; dose behind three shield thicknesses. This also brings
-  the plasma that inflates Jupiter's bubble to 60 to 90 radii.
+Source paper: Mauk and Fox 2010 (doi:10.1029/2010JA015660), supplied by Alex on 22 Nov.
+
+- Atoms (`crates/sse-atoms/src/belts.rs`):
+  - `sse.belts.kp_limit`: the relativistic, differential Kennel-Petschek limit. The whistler growth rate is
+    Summers et al. 2009's form (Mauk and Fox appendix A, eqs. A1 to A9), integrated numerically along each
+    cyclotron resonance curve for the spectrum C E^-index / (1 + (E/E0)^break) sin^(2S)α (their eq. 7,
+    kT = 0). It solves D R_p γ = 3 V_g (their eq. 6) for C. The cap is the lowest C_K over strictly
+    parallel resonant energies 0.1 to 1 MeV, in a dense plasma (ω_pe = 300 Ω), where the limit no longer
+    depends on the cold density and scales exactly as B / (D R_p). Electron mass, charge and ε₀ are
+    inputs, read from the data sheet by the kernel (`constant.m_e`, `constant.e`, `constant.eps0`).
+  - `sse.belts.electron_range`: Katz and Penfold 1952 range, inverted to the energy that crosses a shield.
+- `sse-field::belts` (`Belts` on `FieldRead`):
+  - Zone from the top of the air (100 scale heights), the rings' outer edge (`Body.rings_outer_m`) or the
+    surface, out to the last closed drift shell at 0.7 of the stand-off.
+  - Wave path D = L, or min(L, 3) radii when moons load the field with plasma (`plasma_source_kg_s` > 0:
+    Mauk and Fox use D = 3 at Jupiter after Summers et al.). Such a "spun" belt keeps a hard spectrum
+    (break 2,500 keV, index 1.75, as Garrett's Jupiter fit); a wind-fed one breaks at 1,500 keV, index 6
+    (Earth and Uranus fits).
+  - Filled to 0.6 of the cap at and beyond the source shell, and kept at the source shell's value inward.
+    The source shell is half the stand-off (wind-fed) or the innermost moon in the zone (spun).
+  - Moons sweep gaps of their own width (`MoonOrbit.radius_m`). A moon's own dose uses the unswept belt.
+  - Per shell (16, log spaced): field, the limit C_K and the belt's C, intensity at 1 MeV, flux above
+    1 MeV, and dose (Sv/h) behind 0.3, 1 and 3 g/cm². The same is given at each `orbits_m` and each moon.
+  - Without the sheet's constants (`Settings.electron` is None) no belts are computed, and a why line says so.
+
+### Checks
+
+- `sse-atoms` `belts_reach_the_kennel_petschek_limit`: Earth L 5 storm spectrum (Mauk and Fox Table 1) at
+  0.4 to 0.8 of the limit (theirs 0.60; ours 0.55); the cap scales as B/D; Earth's storm cap within 10 % of
+  3.8e6; Neptune near the limit at 0.1 MeV and under a tenth of it at 1 MeV (theirs: 30 times below).
+  Katz-Penfold range at 1 MeV 0.412 g/cm².
+- `sse-field` `belts_where_field_lines_close`: Earth's belts from 1.13 to 6.9 radii, set by the air;
+  intensity at 1 MeV near L 5 is 3.0e3 per cm² s sr keV (Mauk and Fox Figure 5: 2.4e3 for their storm);
+  doses fall with each shield; none without the sheet's constants, none for Mars. Saturn's start at the
+  rings (2.27 radii).
+- `jupiter_belts_and_moons`: Io sweeps a gap; Europa's orbit takes 22 times Callisto's dose behind 1 g/cm²
+  (6.5 against 0.30 Sv/h).
+- Contract: Saturn with rings and Enceladus added to the `read_field` case; golden changed on purpose (new
+  `belts` blocks, and the pack's two new atoms move the stack hash).
+
+### Gaps (fudge F40)
+
+- The design's check "dose at Europa's orbit hundreds of times Callisto's" is not met: 22 times. The cap
+  falls as B (L^-3) outward when D is fixed at 3; Garrett et al.'s Galileo fit falls about 26 times from 8
+  to 16 radii, steeper than the cap, so real belts fill less of it outward.
+- "Earth has two belts and a slot" is not met yet: no proton belt (cosmic-ray neutron decay) and no slot
+  from hiss inside the plasmasphere. The inner zone keeps the L 5 electron intensity, far above the real
+  inner zone at 1 MeV.
+- Neptune (quiet, no injections) and Saturn (Enceladus gas and dust) get a belt at the limit; real ones sit
+  20 to 30 times lower at 1 MeV.
+- Doses are for a belt filled after strong injections (often ten times quiet levels): Earth's geostationary
+  orbit gets 0.29 Sv/h behind 1 g/cm². No bremsstrahlung; constant stopping power 1.85 MeV cm²/g.
+
+## Next (part 2b and readers)
+
+- Proton belt from cosmic-ray albedo neutron decay, its outer edge where protons stop being adiabatic
+  (field-line curvature scattering; the threshold needs a citable value), and the slot from plasmaspheric
+  hiss. Losses to gas and dust (Saturn), and quiet magnetospheres that never fill (Neptune).
+
+- Sources that set how full each belt gets (wind injection, plasma tori from eruptive moons), and the plasma
+  that inflates Jupiter's bubble to 60 to 90 radii.
 - The star's particle storms from O10's events through the same cut-off.
 - Readers: life's `radiation_dose_msv_yr` (kernel resolve thread) and NAV's belt hazard (travel screens
-  thread) read `shield`, once MF2 publishes each world's field.
+  thread) read `shield` and `belts`, once MF2 publishes each world's field.

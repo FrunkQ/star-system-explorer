@@ -108,7 +108,7 @@ fn every_atom_is_cited_explained_and_versioned() {
         }
     }
     assert_eq!(
-        n, 80,
+        n, 82,
         "first-wave atom count changed: update handover/packages/P1.md"
     );
 }
@@ -782,4 +782,64 @@ fn aurora_footprints_and_hill_distance() {
     let h = hill_distance(0.14, 4.264e-4, rj, 1000.0) / rj;
     assert!((h - 30.0).abs() < 1.5, "Hill distance {h}");
     assert!(hill_distance(0.14, 4.264e-4, rj, 0.0).is_infinite());
+}
+
+/// Mauk and Fox 2010: the Earth L = 5 storm spectrum (C 2.38e6, index 0.978,
+/// E₀ 1748 keV, 7.04; their Table 1) sits at about 0.6 of the limit for a
+/// storm field of 149 nT and D = L (their Figure 5); the limit's cap for the
+/// E⁻¹ shape falls in proportion to B / (D R_p) in a dense plasma; Neptune's
+/// spectrum (L 7.4) is about 30 times below the limit at 1 MeV.
+#[test]
+fn belts_reach_the_kennel_petschek_limit() {
+    use crate::belts::*;
+    // Test values typed here (tests are outside the sheet audit).
+    let q = Electron {
+        mass_kg: 9.109_383_701_5e-31,
+        charge_c: 1.602_176_634e-19,
+        eps0: 8.854_187_812_8e-12,
+    };
+    let re = 6.371e6;
+    let earth = Shape {
+        index: 0.978,
+        break_kev: 1748.0,
+        break_index: 7.036,
+        anisotropy: 0.3,
+    };
+    // Sheeley et al. 2001 trough density near 10 per cm³ at L = 5.
+    let b = 149e-9;
+    let wpe = m::sqrt(10e6 * q.charge_c * q.charge_c / (q.eps0 * q.mass_kg))
+        / (q.charge_c * b / q.mass_kg);
+    let ratio = (2.38e6 / kp_normalisation(b, 5.0 * re, 200.0, wpe, 3.0, &earth, &q)).max(0.0);
+    assert!((0.4..=0.8).contains(&ratio), "Earth L5 Cm/CK {ratio}");
+    // Dense-limit cap for the E⁻¹ shape scales as B / D.
+    let lim = Shape {
+        index: 1.0,
+        break_kev: 1500.0,
+        break_index: 6.0,
+        anisotropy: 0.3,
+    };
+    let c1 = kp_cap(b, 5.0 * re, 300.0, 3.0, &lim, &q);
+    let c2 = kp_cap(4.0 * b, 2.0 * re, 300.0, 3.0, &lim, &q);
+    close(c2 / c1, 10.0, 1e-6, "B/D scaling");
+    close(c1 / 3.83e6, 1.0, 0.1, "Earth storm cap");
+    // Neptune: near the limit at 0.1 MeV, far under at 1 MeV.
+    let rn = 2.4764e7;
+    let nep = Shape {
+        index: 1.56,
+        break_kev: 625.0,
+        break_index: 2.745,
+        anisotropy: 0.3,
+    };
+    let bn = 1.42e-5 / m::pow(7.4, 3.0);
+    let at = |e: f64| 5.49e6 / kp_normalisation(bn, 7.4 * rn, e, 300.0, 3.0, &nep, &q);
+    assert!(at(100.0) > 0.5, "Neptune 0.1 MeV {}", at(100.0));
+    assert!(at(1000.0) < 0.1, "Neptune 1 MeV {}", at(1000.0));
+    // Katz-Penfold: 1 MeV goes about 0.41 g/cm²; 1 g/cm² needs about 2 MeV.
+    close(electron_range(1.0), 4.12, 1e-9, "range 1 MeV");
+    close(
+        penetration_energy(electron_range(1.7)),
+        1.7,
+        1e-6,
+        "inverse",
+    );
 }
