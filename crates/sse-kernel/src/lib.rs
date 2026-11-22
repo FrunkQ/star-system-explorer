@@ -2764,6 +2764,7 @@ impl Kernel {
                     window_days,
                     prefer: prefer.as_deref(),
                     rescue: rescue.as_ref(),
+                    sheet: &self.observe.reference,
                 };
                 let plan = match (fixture.as_deref(), nav.as_ref(), system) {
                     (Some(f), None, None) => nav::plan_route(ask(nav::Source::Fixture(f)))?,
@@ -4725,6 +4726,7 @@ impl Kernel {
                     depart_s,
                     minimise: voyage::minimise(minimise.as_deref())?,
                     visited: &visited,
+                    sheet: &self.observe.reference,
                 };
                 let voyage = match (fixture.as_deref(), nav.as_ref(), system) {
                     (Some(f), None, None) => nav::plan_voyage(nav::Source::Fixture(f), ask)?,

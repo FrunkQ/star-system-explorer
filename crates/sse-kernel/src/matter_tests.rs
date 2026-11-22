@@ -532,6 +532,12 @@ fn dark_matter_is_marked_theoretical_on_the_sheet() {
         assert!(row["mark_note"].as_str().unwrap().len() > 40, "{id}");
         assert_eq!(row["group"], "cosmos");
     }
+    // A group note's sources read by id (MP10 asks for their text and DOI).
+    let s = send(
+        &mut k,
+        serde_json::json!({"op": "read_matter", "table": "sources", "id": "clowe2006"}),
+    );
+    assert_eq!(s["value"]["row"]["doi"], "10.1086/508162", "{s}");
     for id in ["H0", "Omega_b", "sigma8", "T_cmb"] {
         let m = send(
             &mut k,
