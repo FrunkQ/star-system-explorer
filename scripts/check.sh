@@ -5,6 +5,8 @@ cd "$(dirname "$0")/.."
 cargo fmt --all
 cargo clippy --workspace --all-targets -q -- -D warnings
 cargo test --workspace -q
+# The master data sheet must match its sources (scripts/build-base-reference.py).
+python3 scripts/build-base-reference.py --check
 # The importer must still build without formation (the converter module).
 cargo build -q -p sse-convert-wasm
 echo "all checks passed"

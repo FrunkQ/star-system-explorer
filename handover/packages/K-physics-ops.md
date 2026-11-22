@@ -109,3 +109,11 @@ air profile, and flies `sse_nav::descent::descend`. `lander` is a base-nav templ
 `descent_planned {descent: {body, label, source, at_s?, lander, entry, site, air_at_site, gravity_m_s2, hazards,
 verdict, descent: {outcome, events, telemetry}}}`. Errors: `unknown_lander`, `no_ground`, `bad_request`, plus the
 survey's. Heavy. See packages/S5.md.
+
+## survey_caves (21 Nov, S14a part 2)
+`{op: "survey_caves", fixture | system + body, at_s?, options?, quick?, lat_deg, lon_deg, radius_km?}`.
+Surveys through the `survey_surface` cache and places the lava-tube passages within `radius_km` (default 5,
+at most 25) of the site from the world's tube fields (`sse_surface::caves::passages`). Returns
+`caves_surveyed {caves: {body, label, source, at_s?, caves: {version, lat_deg, lon_deg, radius_km, level,
+spacing_m, fields, passages, why}}}`. Errors: `no_ground`, `bad_request`, plus the survey's. Heavy (the survey;
+the passages are tens of ms). See packages/S14a.md.
