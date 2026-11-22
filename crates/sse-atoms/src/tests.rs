@@ -108,7 +108,7 @@ fn every_atom_is_cited_explained_and_versioned() {
         }
     }
     assert_eq!(
-        n, 73,
+        n, 77,
         "first-wave atom count changed: update handover/packages/P1.md"
     );
 }
@@ -735,4 +735,20 @@ fn gibbs_blocks_reproduce_tabulated_values() {
     let h = run("sse.chem.reaction_gibbs", &[0.0, 298.15, lnq])[0];
     close(h, -39.95e3, 0.002, "pH 7 hydrogen ion");
     assert!(crate::chem::ln_quotient(&[(1.0, 0.0)]).is_err());
+}
+
+#[test]
+fn stormer_cutoff_matches_earth() {
+    use crate::shield::*;
+    // Earth's dipole, 8.0e22 A m² (IGRF 2020), at the ground.
+    let eq = cutoff_rigidity(8.0e22, 6.371e6, 0.0) * 1e-9;
+    assert!((eq - 14.9).abs() < 0.5, "equator {eq} GV");
+    assert!(cutoff_rigidity(8.0e22, 6.371e6, m::PI / 2.0) * 1e-9 < 1e-6);
+    // Falls as 1/r².
+    let up = cutoff_rigidity(8.0e22, 2.0 * 6.371e6, 0.0) * 1e-9;
+    assert!((up * 4.0 - eq).abs() < 1e-9);
+    assert!((space_share(0.0, 2.0, 1.7) - 1.0).abs() < 1e-15);
+    assert!((ground_share(0.0, 10.0, 1.0) - 1.0).abs() < 1e-15);
+    let g = ground_share(15e9, 10.0, 1.0);
+    assert!(g > 0.4 && g < 0.6, "ground share at 15 GV {g}");
 }

@@ -26,6 +26,9 @@ fn body(address: &str, r: f64, mom: f64, d_au: f64) -> Body {
         wind: wind(d_au),
         host: None,
         layers: vec![],
+        surface_gravity_m_s2: 0.0,
+        free_space_dose_msv_day: None,
+        orbits_m: vec![],
     }
 }
 
@@ -164,4 +167,93 @@ fn oceans_answer_a_changing_field() {
     let fresh = read(&e, &set).unwrap().induced[0].amplitude;
     assert!(fresh < 0.1, "{fresh}");
     assert!(f.references.iter().any(|r| r.text.contains("Zimmer")));
+}
+
+fn within(got: f64, want: f64, factor: f64, what: &str) {
+    assert!(
+        got > want / factor && got < want * factor,
+        "{what}: got {got}, want {want} within a factor of {factor}"
+    );
+}
+
+/// Cut-off and dose against measurement. Earth: 14.9 GV at the magnetic
+/// equator (Smart and Shea 2005); about 0.39 mSv a year from cosmic rays at
+/// sea level (UNSCEAR 2008). Mars: 0.64 mSv a day on the surface at Gale
+/// (Hassler et al. 2014, doi:10.1126/science.1244797). Moon: 1.37 mSv a day
+/// on the surface (Zhang et al. 2020, doi:10.1126/sciadv.aaz1334).
+#[test]
+fn cosmic_ray_dose_follows_field_and_air() {
+    let set = Settings::default();
+    let mut e = body("earth", 6.371e6, 8.0e22, 1.0);
+    e.air = Some(Air {
+        surface_pressure_pa: 101_325.0,
+        scale_height_m: 8_500.0,
+    });
+    e.surface_gravity_m_s2 = 9.81;
+    e.orbits_m = vec![6.771e6, 4.2164e7, 1.0e9];
+    let s = read(&e, &set).unwrap().shield.unwrap();
+    within(
+        s.by_latitude[0].cutoff_gv,
+        14.9,
+        1.05,
+        "Earth equatorial cut-off",
+    );
+    assert!(s.by_latitude[6].cutoff_gv < 1e-6);
+    within(s.surface_mean_msv_yr, 0.39, 2.0, "Earth sea-level dose");
+    assert!(s.by_latitude[6].surface_dose_msv_yr > s.by_latitude[0].surface_dose_msv_yr);
+    // In orbit: low orbit below free space, beyond the bubble nothing turns them aside.
+    let low = &s.orbits[0];
+    assert!(low.equator_msv_yr < low.pole_msv_yr && low.mean_msv_yr < s.free_space_msv_yr);
+    assert!(
+        s.orbits[2].cutoff_equator_gv == 0.0,
+        "beyond the magnetopause"
+    );
+    assert!(s.orbits[0].mean_msv_yr > s.surface_mean_msv_yr * 100.0);
+
+    let mut mars = body("mars", 3.3895e6, 0.0, 1.52);
+    mars.air = Some(Air {
+        surface_pressure_pa: 610.0,
+        scale_height_m: 11_100.0,
+    });
+    mars.surface_gravity_m_s2 = 3.721;
+    let s = read(&mars, &set).unwrap().shield.unwrap();
+    within(
+        s.surface_mean_msv_yr / 365.25,
+        0.64,
+        2.0,
+        "Mars surface dose per day",
+    );
+
+    let moon = read(&body("moon", 1.7374e6, 0.0, 1.0), &set)
+        .unwrap()
+        .shield
+        .unwrap();
+    within(
+        moon.surface_mean_msv_yr / 365.25,
+        1.37,
+        2.0,
+        "Moon surface dose per day",
+    );
+
+    // Air without gravity: no dose, said so.
+    let mut bare = e.clone();
+    bare.surface_gravity_m_s2 = 0.0;
+    let r = read(&bare, &set).unwrap();
+    assert!(r.shield.is_none() && r.why.iter().any(|w| w.contains("surface gravity")));
+}
+
+/// A moon deep in a host's bubble is shielded by the host's field too.
+#[test]
+fn host_field_shields_its_moons() {
+    let set = Settings::default();
+    let mut eu = body("europa", 1.5608e6, 0.0, 5.2);
+    eu.host = Some(jupiter_host(9.38, 0.0));
+    let r = read(&eu, &set).unwrap();
+    let s = r.shield.unwrap();
+    assert!(s.host_cutoff_gv > 10.0, "{}", s.host_cutoff_gv);
+    let bare = read(&body("rock", 1.5608e6, 0.0, 5.2), &set)
+        .unwrap()
+        .shield
+        .unwrap();
+    assert!(s.surface_mean_msv_yr < bare.surface_mean_msv_yr * 0.2);
 }

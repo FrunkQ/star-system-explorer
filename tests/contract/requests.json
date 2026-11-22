@@ -1569,7 +1569,10 @@
     "address": "u:sol/sys:0/body:2",
     "radius_m": 6371000.0,
     "moment_a_m2": 8e+22,
-    "wind": { "density_kg_m3": 8.36e-21, "speed_m_s": 440000.0 }
+    "wind": { "density_kg_m3": 8.36e-21, "speed_m_s": 440000.0 },
+    "air": { "surface_pressure_pa": 101325.0, "scale_height_m": 8500.0 },
+    "surface_gravity_m_s2": 9.81,
+    "orbits_m": [6771000.0]
    },
    {
     "address": "u:sol/sys:0/body:5/moon:1",
