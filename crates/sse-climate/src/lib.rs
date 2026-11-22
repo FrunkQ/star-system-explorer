@@ -9,6 +9,11 @@
 //!   prevailing winds every reader shares.
 //! - [`climate`]: the per-world result at a detail level (Glance, Orbit),
 //!   keyed by world, code version, level and epoch, with a reuse cache.
+//! - [`water`] (W9): rain, snow, melt, evaporation and runoff at any place and
+//!   height, and the per-area climate label read off them.
+//! - [`saltation`] (W9): `sse.wind.saltation`, how often the wind moves sand.
+//! - [`forcing`] (W9 part 2): the spin axis under the orbit's secular wobble,
+//!   summer energy and the ice ages it drives.
 //!
 //! `sse-surface` (wear, cover) and `sse-weather` (both blocks) depend on this
 //! crate and compute none of it themselves.
@@ -17,8 +22,11 @@ pub mod circulation;
 pub mod climate;
 pub mod conditions;
 pub mod ebm;
+pub mod forcing;
+pub mod saltation;
 pub mod settings;
 pub mod strengths;
+pub mod water;
 
 pub use circulation::Circulation;
 pub use climate::{glance, orbit, Cache, Climate, Glance, Level};
@@ -39,6 +47,12 @@ pub fn base_settings() -> ClimateSettings {
 }
 
 #[cfg(test)]
+mod forcing_tests;
+#[cfg(test)]
+mod species_tests;
+#[cfg(test)]
 mod strengths_tests;
 #[cfg(test)]
 mod tests;
+#[cfg(test)]
+mod water_tests;

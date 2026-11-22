@@ -130,6 +130,10 @@ pub struct WorldClimate {
     pub lapse_k_km: f64,
     /// Facts the climate assumed because the body does not publish them.
     pub assumed: Vec<String>,
+    /// W9 part 2: the ice-age response to the orbit's secular history, when
+    /// the world has one.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub ice_ages: Option<sse_climate::forcing::IceAgeModel>,
 }
 
 impl WorldClimate {
@@ -141,6 +145,17 @@ impl WorldClimate {
     /// Rain and snow reaching the ground at a latitude (radians), m a year.
     pub fn precip_m_yr(&self, lat: f64) -> f64 {
         self.climate.precip_at(lat * 180.0 / m::PI)
+    }
+
+    /// W9: the water a place at `lat_deg` and `height_m` above the datum
+    /// receives (rain, snow, melt, evaporation, runoff, ice balance).
+    pub fn water_at(
+        &self,
+        cs: &sse_climate::ClimateSettings,
+        lat_deg: f64,
+        height_m: f64,
+    ) -> sse_climate::water::WaterSupply {
+        sse_climate::water::water_at(cs, &self.climate, self.lapse_k_km, lat_deg, height_m)
     }
 
     /// Rain relative to the wettest band, 0 to 1, at a latitude (radians).
@@ -168,6 +183,7 @@ pub fn world_climate(
         climate: sse_climate::orbit(&s.climate, &c, epoch_myr),
         lapse_k_km: air.lapse_k_km(&s.cover, env.gravity_m_s2.max(1e-6)),
         assumed,
+        ice_ages: None,
     }
 }
 
@@ -206,4 +222,36 @@ pub fn wet_climate(
         water.oceans, water.pressure_bar, s.wear.wet_floor_k
     ));
     w
+}
+
+/// W9 part 2: the ice-age model of a world's climate under an orbit track:
+/// the spin axis precessing from the body's tilt and perihelion now, with the
+/// star's and moons' torques on its bulge.
+pub fn ice_ages(
+    s: &SurfaceSettings,
+    b: &Body,
+    w: &WorldClimate,
+    track: &sse_climate::forcing::OrbitTrack,
+    moons: &[sse_climate::forcing::MoonPull],
+    epoch_myr: f64,
+) -> sse_climate::forcing::IceAgeModel {
+    use sse_climate::forcing as fc;
+    let cs = &s.climate;
+    let c = &w.climate.conditions;
+    let (a_au, host) = b
+        .orbit
+        .as_ref()
+        .map(|o| (o.a_au, o.host_msun))
+        .unwrap_or((1.0, 1.0));
+    let kb = fc::precession_parts(cs, c, fc::star_kg(host), a_au, moons);
+    let f = &cs.forcing;
+    let spin = fc::spin_history(
+        track,
+        c.obliquity_deg,
+        c.perihelion_lon_deg,
+        kb,
+        f.step_yr,
+        f.sample_yr,
+    );
+    fc::ice_age_model(cs, &w.climate, epoch_myr, spin, &track.source)
 }

@@ -1131,6 +1131,46 @@ pub enum Request {
         #[ts(optional)]
         t_myr: Option<f64>,
     },
+    /// Voyages between stars (V8 part 3): the cheapest chain of legs for one
+    /// ship from a star system `from` to `to`, or with no `to` the nearest
+    /// system not in `visited` (ties go to the shorter path, then to the one
+    /// farther from `home`). Legs are jumps (the ship's jump drive, a pack
+    /// rule) or flights there for real (special relativity). `known_fuel`
+    /// maps system addresses to the fuel the crew knows of there; `surveyed`
+    /// lists systems known to be dry; `sensed_fuel` gives the odds (0 to 1)
+    /// of fuel where the ship's sensors have looked (else the star's own
+    /// giant-planet odds); `gambles` lets a plan hope for fuel in unsurveyed
+    /// systems at odds above the pack's floor. `minimise` is `home_time`, `ship_time`, `fuel` or
+    /// `legs`. Read only; refusals come back in words.
+    PlanVoyage {
+        from: String,
+        #[serde(default)]
+        #[ts(optional)]
+        to: Option<String>,
+        #[serde(default)]
+        #[ts(optional)]
+        home: Option<String>,
+        #[ts(type = "unknown")]
+        ship: serde_json::Value,
+        #[serde(default)]
+        #[ts(optional)]
+        minimise: Option<String>,
+        #[serde(default)]
+        #[ts(optional)]
+        visited: Option<Vec<String>>,
+        #[serde(default)]
+        #[ts(optional)]
+        known_fuel: Option<std::collections::BTreeMap<String, Vec<String>>>,
+        #[serde(default)]
+        #[ts(optional)]
+        sensed_fuel: Option<std::collections::BTreeMap<String, f64>>,
+        #[serde(default)]
+        #[ts(optional)]
+        surveyed: Option<Vec<String>>,
+        #[serde(default)]
+        #[ts(optional)]
+        gambles: Option<bool>,
+    },
     /// Make a fill star permanent: its whole drawn description (address,
     /// cell, frame and slot, birth, mass, companions, abundances, orbit) is
     /// written to the record, so no later change to the fill rules can move
@@ -1142,6 +1182,30 @@ pub enum Request {
     /// The campaign's own tag declarations (TG1), in the shape of a pack's
     /// `provides.other.tags`: tags the GM typed freely join it on first use.
     CampaignTags,
+    /// The master data sheet (MP1, `provides.reference`): with `table` and
+    /// `id`, one row with its sources, the packs that set it and its
+    /// worked-out values; with `id` alone, the first table holding it; with
+    /// neither, every table's row ids. Read-only, any seat.
+    ReadMatter {
+        #[serde(default)]
+        #[ts(optional)]
+        table: Option<String>,
+        #[serde(default)]
+        #[ts(optional)]
+        id: Option<String>,
+    },
+    /// The reach report for a changed constant (MP1c, design section 7A.3):
+    /// every block in exactly one of three groups. `follows` (a formula that
+    /// reads the constant from the one handle), `estimated` (a table
+    /// rescaled by a cited law) and `cannot_follow` (computed with the real
+    /// constants). `value`, when given, is shown beside the stack's value.
+    /// Read-only, any seat.
+    ReadReach {
+        constant: String,
+        #[serde(default)]
+        #[ts(optional)]
+        value: Option<f64>,
+    },
     /// Dressing candidates (TG12, `provides.other.dressing`) for every world
     /// at or under `scope` at `at_s` (default now): what the stack's universe
     /// packs would place, each with its rule, template, where, explanation
@@ -1309,8 +1373,11 @@ impl Request {
             Request::ExportSector { .. } => "export_sector",
             Request::HaloCell { .. } => "halo_cell",
             Request::StarCell { .. } => "star_cell",
+            Request::PlanVoyage { .. } => "plan_voyage",
             Request::PromoteStar { .. } => "promote_star",
             Request::CampaignTags => "campaign_tags",
+            Request::ReadMatter { .. } => "read_matter",
+            Request::ReadReach { .. } => "read_reach",
             Request::Dressing { .. } => "dressing",
             Request::AdoptDressing { .. } => "adopt_dressing",
             Request::HoldDressing { .. } => "hold_dressing",
@@ -1573,6 +1640,11 @@ pub fn ops() -> Vec<OpInfo> {
             "grows the campaign's galaxy, then draws one 10 pc cell (tens of systems) with its pins; read only",
         ),
         o(
+            "plan_voyage",
+            Cost::Medium,
+            "draws the star cells around the start and the destination (up to 125), then searches legs with fuel carried; read only",
+        ),
+        o(
             "campaign_tags",
             Cost::Light,
             "reads the campaign's own tag declarations from the record",
@@ -1581,6 +1653,16 @@ pub fn ops() -> Vec<OpInfo> {
             "promote_star",
             Cost::Medium,
             "GM machine only in a session; draws the star once and stores its whole description in the record",
+        ),
+        o(
+            "read_matter",
+            Cost::Light,
+            "reads the master data sheet loaded with the stack; nothing is worked out but molar mass",
+        ),
+        o(
+            "read_reach",
+            Cost::Light,
+            "reads the blocks' declared reach; nothing is computed",
         ),
         o(
             "dressing",
@@ -1611,6 +1693,11 @@ pub struct DerivedValue {
     /// Depends on fictional physics (a pack flagged fictional, H7).
     pub fictional: bool,
     pub publisher: String,
+    /// MP1c: with constants that differ from ours, the cited law each
+    /// rescaled block it rests on used (ESTIMATED). Left out otherwise.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    #[ts(optional)]
+    pub estimated: Option<Vec<String>>,
 }
 
 #[derive(Clone, PartialEq, Debug, Serialize, Deserialize, TS)]
@@ -2289,12 +2376,23 @@ pub enum Response {
         #[ts(type = "unknown")]
         cell: serde_json::Value,
     },
-    /// `star_cell`: `{galaxy, cell, frame, t_myr, cell_pc, expected, pins,
+    /// `star_cell`: `{galaxy, cell, frame, frame_start_myr, t_myr, cell_pc, expected, pins,
     /// systems: [{address, pinned, drawn_in {cell, frame, slot}, mass_msun,
     /// companions, birth_gyr, feh, xyz_pc, state}], model}`.
     StarCelled {
         #[ts(type = "unknown")]
         cell: serde_json::Value,
+    },
+    /// `plan_voyage`: `{ship, means, searched, cells, t_myr, systems: [{address,
+    /// name, xyz_pc, fuel, surveyed, visited}], voyage: {from, to, minimise,
+    /// legs: [{from, to, means, distance_pc, counted_pc?, home_days, ship_days,
+    /// jump_fuel_t, propellant_t, peak_beta?, coast, fictional, gamble,
+    /// refuel?, jump_fuel_left_t, propellant_left_t, words}], distance_pc,
+    /// home_days, ship_days, jump_fuel_t, propellant_t, refuels, gambles,
+    /// fictional, needs?} | null, refusals: [text], model}`.
+    VoyagePlanned {
+        #[ts(type = "unknown")]
+        voyage: serde_json::Value,
     },
     /// `campaign_tags`: `{id: "campaign", tags: {groups, tags}}`.
     CampaignTagsListed {
@@ -2310,6 +2408,28 @@ pub enum Response {
         candidates: Vec<serde_json::Value>,
         #[ts(type = "unknown[]")]
         orphans: Vec<serde_json::Value>,
+    },
+    /// `read_matter`: a row (`{table, id, row, sources, packs, worked?,
+    /// used_by, skipped_by}`) or a listing of ids by table.
+    Matter {
+        #[ts(type = "unknown")]
+        value: serde_json::Value,
+    },
+    /// `read_reach`: the constant, its real and in-force values, the value
+    /// proposed, and the three groups of blocks.
+    Reach {
+        constant: String,
+        real: f64,
+        in_force: f64,
+        #[serde(skip_serializing_if = "Option::is_none")]
+        #[ts(optional)]
+        proposed: Option<f64>,
+        #[ts(type = "unknown[]")]
+        follows: Vec<serde_json::Value>,
+        #[ts(type = "unknown[]")]
+        estimated: Vec<serde_json::Value>,
+        #[ts(type = "unknown[]")]
+        cannot_follow: Vec<serde_json::Value>,
     },
     /// `hold_dressing`: the candidate and whether it is now held off.
     DressingHeld {

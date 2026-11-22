@@ -54,7 +54,7 @@ pub(crate) fn surveyed<'c>(
     quick: bool,
     cache: &'c mut Cache,
 ) -> Result<(String, Body, Option<i64>, &'c Survey), Response> {
-    let opts: SurveyOptions = match options {
+    let mut opts: SurveyOptions = match options {
         Some(v) => serde_json::from_value(v.clone())
             .map_err(|e| err("bad_request", format!("options: {e}")))?,
         None => SurveyOptions::default(),
@@ -99,8 +99,9 @@ pub(crate) fn surveyed<'c>(
             let w = worlds_at(ch, system, at_s, run, &s)?;
             let b = w
                 .bodies
-                .into_iter()
+                .iter()
                 .find(|b| b.address.to_string() == body)
+                .cloned()
                 .ok_or_else(|| {
                     err(
                         "no_surface_body",
@@ -108,6 +109,15 @@ pub(crate) fn surveyed<'c>(
                     )
                 })?;
             let age = (b.age_gyr + w.shift_gyr).max(0.0);
+            // W9 part 2: the orbit's wobble from its siblings (T1), unless
+            // the caller gave one.
+            if opts.orbit_track.is_none() {
+                let (track, moons) = crate::ice_ages::orbit_inputs(&s.climate, seed, &w.bodies, &b);
+                opts.orbit_track = track;
+                if opts.moons.is_empty() {
+                    opts.moons = moons;
+                }
+            }
             (
                 w.source.to_string(),
                 b,
@@ -196,6 +206,38 @@ pub(crate) fn survey_surface(r: Request, cache: &mut Cache) -> Result<serde_json
         // The one climate, summarised (the full climate comes from the
         // `weather` op's `climate` want): its key, cells and why.
         let k = &l.climate.world.climate;
+        // W9: what each band receives at the datum, and its area label.
+        let cs = &sse_surface::scenario::settings().climate;
+        let ss = &cs.saltation;
+        let places: Vec<serde_json::Value> = k
+            .lat_deg
+            .iter()
+            .map(|&lat| {
+                let w = l.climate.world.water_at(cs, lat, 0.0);
+                let sa = sse_climate::saltation::at(ss, k, lat, sse_climate::saltation::grain_for(ss, w.t_k));
+                let (area, because) = sse_climate::water::area(cs, &w);
+                let ia = l
+                    .climate
+                    .world
+                    .ice_ages
+                    .as_ref()
+                    .map(|m| m.at(cs, k, l.climate.world.lapse_k_km, lat, 0.0));
+                serde_json::json!({
+                    "lat_deg": lat,
+                    "area": area,
+                    "label": cs.areas.labels.get(area).cloned().unwrap_or_default(),
+                    "because": because,
+                    "rain_m_yr": w.rain_m_yr,
+                    "snow_m_yr": w.snow_m_yr,
+                    "runoff_m_yr": w.runoff_m_yr,
+                    "ice_balance_m_yr": w.ice_balance_m_yr,
+                    "sand_moving": sa.transport_share,
+                    "dunes": sse_climate::saltation::dune_activity(ss, sa.transport_share, w.aridity),
+                    "ice_share": ia.as_ref().map(|x| x.glaciated_share),
+                    "glacial_advances_per_myr": ia.as_ref().map(|x| x.advances_per_myr),
+                })
+            })
+            .collect();
         o.insert(
             "climate".into(),
             serde_json::json!({
@@ -212,6 +254,16 @@ pub(crate) fn survey_surface(r: Request, cache: &mut Cache) -> Result<serde_json
                 "pressure_bar": l.climate.pressure_bar,
                 "assumed": l.climate.world.assumed,
                 "why": l.climate.why,
+                "places": places,
+                "ice_ages": l.climate.world.ice_ages.as_ref().map(|m| {
+                    let (lo, hi) = m.obliquity_range();
+                    serde_json::json!({
+                        "source": m.source,
+                        "obliquity_min_deg": lo,
+                        "obliquity_max_deg": hi,
+                        "window_yr": m.spin.last().map(|x| x.t_yr).unwrap_or(0.0),
+                    })
+                }),
             }),
         );
         o.insert("air".into(), v(&l.air));

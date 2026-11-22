@@ -41,6 +41,13 @@ pub struct SurveyOptions {
     /// Cloud-level wind for the aerostat band, m/s (the pack's default when absent).
     #[serde(default)]
     pub wind_m_s: Option<f64>,
+    /// W9: the orbit's secular history (from T1, built by the kernel from the
+    /// world's siblings) and the moons that pull on its bulge. Without a
+    /// track the world has no ice-age cycles.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub orbit_track: Option<sse_climate::forcing::OrbitTrack>,
+    #[serde(default, skip_serializing_if = "Vec::is_empty")]
+    pub moons: Vec<sse_climate::forcing::MoonPull>,
 }
 
 impl SurveyOptions {
@@ -162,6 +169,17 @@ fn chain(
         &opts.extra(opts.rotation_hours),
         epoch_gyr * 1000.0,
     );
+    let mut climate = climate;
+    if let Some(track) = &opts.orbit_track {
+        climate.ice_ages = Some(crate::climate::ice_ages(
+            s,
+            body,
+            &climate,
+            track,
+            &opts.moons,
+            epoch_gyr * 1000.0,
+        ));
+    }
     let w = wear_world(s, &e, seed, &h, &water, &climate, body.magma_end_myr);
     let atlas = Atlas::from_worn(s, &e, seed, &h, &w, vec![]);
     let hist = ImpactHistory::lunar();

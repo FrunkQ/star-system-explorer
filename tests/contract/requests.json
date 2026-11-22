@@ -2945,6 +2945,18 @@
   "op": "star_cell"
  },
  {
+  "op": "plan_voyage",
+  "from": "u:aging/halo:milky-way-like/cell:988_0_0/sys:f13787k0",
+  "ship": "jump-courier",
+  "minimise": "legs"
+ },
+ {
+  "op": "plan_voyage",
+  "from": "u:aging/halo:milky-way-like/cell:988_0_0/sys:f13787k0",
+  "ship": "jump-courier",
+  "minimise": "sideways"
+ },
+ {
   "op": "promote_star",
   "address": "u:aging/halo:milky-way-like/cell:988_0_0/sys:f13787k0"
  },
@@ -2967,5 +2979,18 @@
  {
   "op": "hold_dressing",
   "candidate": "not a candidate"
+ },
+ {
+  "op": "read_matter"
+ },
+ {
+  "op": "read_matter",
+  "table": "substances",
+  "id": "unobtainium"
+ },
+ {
+  "op": "read_reach",
+  "constant": "G",
+  "value": 1.33486e-10
  }
 ]

@@ -27,6 +27,10 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parent.parent
 OUT = ROOT / "packs/base-reference/pack.json"
 ELEMENTS_CSV = ROOT / "handover/packages/MP2-data/elements.csv"
+ORIGINS_CSV = ROOT / "handover/packages/MP2-data/origins.csv"
+
+sys.path.insert(0, str(Path(__file__).resolve().parent))
+import element_origins  # noqa: E402
 
 JULIAN_YEAR_S = 31557600.0
 
@@ -42,6 +46,8 @@ def val(v, unit, src, check="verified", **extra):
 # ---------------------------------------------------------------- sources
 # id -> (text, doi, url, register status). The register is docs/citations/matter-reference.md.
 SOURCES = {
+    "fray2009": ("Fray, N. and Schmitt, B. 2009, Planet. Space Sci. 57, 2053: sublimation of ices of astrophysical interest, a bibliographic review (recommended fits ln P[bar] = A0 + sum A_i / T^i; water by Feistel and Wagner 2007). Coefficients read from Lisse et al. 2021's reproduction of the table (SOM Table 2); which fit covers which range checked against each ice's triple point", "10.1016/j.pss.2009.09.011", None, "verified"),
+    "lisse2021": ("Lisse, C. M. et al. 2021, Icarus 356, 114072: on the origin and thermal stability of Arrokoth's and Pluto's ices; Supplementary Online Material Table 2 reproduces Fray and Schmitt 2009's sublimation fits", None, "https://ntrs.nasa.gov/api/citations/20210019502/downloads/Supplementary%20Online%20Material%2020210019502.pdf", "verified"),
     "codata2018": ("Tiesinga, E., Mohr, P. J., Newell, D. B. and Taylor, B. N. 2021, Rev. Mod. Phys. 93, 025010: CODATA recommended values of the fundamental physical constants, 2018", "10.1103/RevModPhys.93.025010", None, "verified"),
     "si2019": ("The International System of Units (SI), 9th edition 2019, BIPM: the seven defining constants are exact (CODATA 2018 Table I)", None, "https://www.bipm.org/en/publications/si-brochure", "verified"),
     "iau2015b3": ("Prša, A. et al. 2016, AJ 152, 41: nominal values for selected solar and planetary quantities, IAU 2015 Resolution B3", "10.3847/0004-6256/152/2/41", None, "verified"),
@@ -71,6 +77,12 @@ SOURCES = {
     "atom-isotropic": ("A spherically symmetric atom has no anisotropic polarisability, so its King correction factor is exactly 1 (Bodhaine et al. 1999 discussion of depolarisation)", "10.1175/1520-0426(1999)016<1854:ORODC>2.0.CO;2", None, "textbook"),
     "mastin2009": ("Mastin, L. G. et al. 2009, J. Volcanol. Geotherm. Res. 186, 10: eruption column heights, magma at 2500 kg/m3 dense-rock equivalent", "10.1016/j.jvolgeores.2009.01.008", None, "verified"),
     "ussa1976": ("U.S. Standard Atmosphere 1976, NOAA/NASA/USAF (sea-level dry-air composition by volume)", None, "https://ntrs.nasa.gov/citations/19770009539", "verified"),
+    "kobayashi2020": ("Kobayashi, C., Karakas, A. I. and Lugaro, M. 2020, ApJ 900, 179: the origin of elements from carbon to uranium (half of C, N and F from AGB stars; half of the iron-peak elements from Type Ia supernovae; the r-process shortfall)", "10.3847/1538-4357/abae65", None, "verified"),
+    "johnson-origins": ("Johnson, J. A., Origin of the Elements in the Solar System: periodic table colour-coded by origin (Ohio State University, CC BY-SA 4.0; the six-source legend)", None, "https://www.astronomy.ohio-state.edu/johnson.3064/nucleo/index.html", "verified"),
+    "bisterzo2014": ("Bisterzo, S. et al. 2014, ApJ 787, 10: Galactic chemical evolution and solar s-process abundances, dependence on the 13C-pocket structure (s-process percentages per isotope, Kr to Bi)", "10.1088/0004-637X/787/1/10", None, "verified"),
+    "kasen2017": ("Kasen, D. et al. 2017, Nature 551, 80: origin of the heavy elements in binary neutron-star mergers from a gravitational-wave event (the GW170817 kilonova)", "10.1038/nature24453", None, "verified"),
+    "abbott2017": ("Abbott, B. P. et al. (LIGO and Virgo) 2017, Phys. Rev. Lett. 119, 161101: GW170817, observation of gravitational waves from a binary neutron star inspiral", "10.1103/PhysRevLett.119.161101", None, "verified"),
+    "fields2020": ("Fields, B. D., Olive, K. A., Yeh, T.-H. and Young, C. 2020, JCAP 03, 010: Big-Bang nucleosynthesis after Planck (primordial helium and the lithium problem)", None, "https://arxiv.org/abs/1912.01132", "verified"),
     "fudge-register": ("SSE4 fudge register: an authored stand-in kept because no measured value fits (reason in docs/fudges.md)", None, "https://github.com/FrunkQ/star-system-explorer/blob/main/docs/fudges.md", "authored"),
 }
 
@@ -140,6 +152,76 @@ CONSTANTS = [
     ("R_moon", "Moon mean radius", val(1.7374e6, "m", "nssdca-moon")),
     ("a_moon", "Moon semi-major axis", val(3.844e8, "m", "nssdca-moon")),
 ]
+
+
+# ---------------------------------------------------------------- units (design section 7A.6)
+# (id, symbol, name, measures, group, factor_from formula | ("v", value, src), offset)
+UNITS = [
+    ("one", "", "one", "dimensionless", "si-base", ("v", 1.0, "si2019")),
+    ("m", "m", "metre", "length", "si-base", ("v", 1.0, "si2019")),
+    ("kg", "kg", "kilogram", "mass", "si-base", ("v", 1.0, "si2019")),
+    ("s", "s", "second", "time", "si-base", ("v", 1.0, "si2019")),
+    ("a", "A", "ampere", "current", "si-base", ("v", 1.0, "si2019")),
+    ("k", "K", "kelvin", "temperature", "si-base", ("v", 1.0, "si2019")),
+    ("mol", "mol", "mole", "amount", "si-base", ("v", 1.0, "si2019")),
+    ("cd", "cd", "candela", "luminous_intensity", "si-base", ("v", 1.0, "si2019")),
+    ("n", "N", "newton", "force", "si-named", ("v", 1.0, "si2019")),
+    ("pa", "Pa", "pascal", "pressure", "si-named", ("v", 1.0, "si2019")),
+    ("j", "J", "joule", "energy", "si-named", ("v", 1.0, "si2019")),
+    ("w", "W", "watt", "power", "si-named", ("v", 1.0, "si2019")),
+    ("hz", "Hz", "hertz", "frequency", "si-named", ("v", 1.0, "si2019")),
+    ("t", "T", "tesla", "magnetic_field", "si-named", ("v", 1.0, "si2019")),
+    ("km", "km", "kilometre", "length", "working", ("v", 1e3, "si2019")),
+    ("au", "au", "astronomical unit", "length", "working", "au"),
+    ("pc", "pc", "parsec", "length", "working", "au 648000 / pi"),
+    ("ly", "ly", "light year", "length", "working", "c yr_julian"),
+    ("r_sun", "R☉", "solar radius", "length", "working", "R_sun"),
+    ("r_earth", "R⊕", "Earth radius (equatorial)", "length", "working", "R_earth_equatorial"),
+    ("r_jupiter", "RJ", "Jupiter radius (equatorial)", "length", "working", "R_jup_equatorial"),
+    ("m_sun", "M☉", "solar mass", "mass", "working", "M_sun"),
+    ("m_earth", "M⊕", "Earth mass", "mass", "working", "M_earth"),
+    ("m_jupiter", "MJ", "Jupiter mass", "mass", "working", "M_jup"),
+    ("day", "d", "day", "time", "working", "day"),
+    ("yr", "yr", "Julian year", "time", "working", "yr_julian"),
+    ("myr", "Myr", "million years", "time", "working", "1e6 yr_julian"),
+    ("gyr", "Gyr", "billion years", "time", "working", "1e9 yr_julian"),
+    ("degc", "°C", "degree Celsius", "temperature", "working", ("v", 1.0, "si2019"), 273.15),
+    ("l_sun", "L☉", "solar luminosity", "power", "working", "L_sun"),
+    ("w_m2", "W/m²", "watt per square metre", "flux", "working", ("v", 1.0, "si2019")),
+    ("bar", "bar", "bar", "pressure", "working", ("v", 1e5, "si2019")),
+    ("atm", "atm", "standard atmosphere", "pressure", "working", "atm"),
+    ("ev", "eV", "electronvolt", "energy", "working", "e"),
+    ("gee", "g", "standard gravity", "acceleration", "working", "g0"),
+    ("degree", "°", "degree of arc", "angle", "working", "pi / 180"),
+    ("arcsec", "″", "arcsecond", "angle", "working", "pi / 648000"),
+    ("m_s", "m/s", "metre per second", "velocity", "working", ("v", 1.0, "si2019")),
+    ("km_s", "km/s", "kilometre per second", "velocity", "working", ("v", 1e3, "si2019")),
+    ("m_s2", "m/s²", "metre per second squared", "acceleration", "working", ("v", 1.0, "si2019")),
+    ("kg_m3", "kg/m³", "kilogram per cubic metre", "density", "working", ("v", 1.0, "si2019")),
+    ("g_cm3", "g/cm³", "gram per cubic centimetre", "density", "working", ("v", 1e3, "si2019")),
+    ("ut", "µT", "microtesla", "magnetic_field", "working", ("v", 1e-6, "si2019")),
+    ("gauss", "G", "gauss", "magnetic_field", "working", ("v", 1e-4, "si2019")),
+    ("a_m2", "A m²", "ampere square metre", "magnetic_moment", "working", ("v", 1.0, "si2019")),
+]
+
+CONVENTION_IDS = {"au", "yr_julian", "day", "atm", "g0", "T0C", "GM_sun", "R_sun", "L_sun", "T_sun", "S_sun",
+                  "GM_earth", "R_earth_equatorial", "R_earth_polar", "GM_jup", "R_jup_equatorial", "R_jup_polar"}
+FACTOR_IDS = {"pc", "ly"}
+
+
+def units():
+    out = []
+    for u in UNITS:
+        uid, sym, name, measures, group, f = u[:6]
+        row = {"id": uid, "symbol": sym, "name": name, "measures": measures, "group": group}
+        if isinstance(f, tuple):
+            row["factor"] = {"v": f[1], "src": f[2]}
+        else:
+            row["factor_from"] = f
+        if len(u) > 6:
+            row["offset"] = u[6]
+        out.append(row)
+    return out
 
 
 # ---------------------------------------------------------------- isotopes
@@ -217,6 +299,17 @@ def gas_optics(n589, king, src_n, check_n="verified", king_src="bodhaine1999", k
     }
 
 
+FS = "fray2009"
+
+
+def fs_fit(coeffs, lo, hi, note=None):
+    """A Fray and Schmitt 2009 sublimation fit, ln P[bar] = A0 + sum A_i / T^i."""
+    d = {"fit": "fray-schmitt-2009", "coeffs": coeffs, "valid_k": [lo, hi], "src": FS, "also": ["lisse2021"]}
+    if note:
+        d["note"] = note
+    return d
+
+
 KING_ONE = ("fudge-register", "authored")  # King factor 1: molecular depolarisation not yet tabulated
 T = "thauer1977"
 NIST = "nist-webbook"
@@ -229,6 +322,7 @@ SUBSTANCES = [
                   "latent_vaporisation": val(2.468e6, "J kg-1", NIST, "verified", at_k=288.0, note="from the slope of the NIST Antoine fit, 273-303 K row"),
                   "density_liquid": val(1000.0, "kg m-3", NIST, "verified", at_k=277.0),
                   "density_solid": val(917.0, "kg m-3", "petrenko1999", "verified", at_k=273.15, note="ice Ih"),
+                  "vapour_pressure": {"fit": "feistel-wagner-2007", "coeffs": [273.16, 611.657, 20.9969665107897, 3.72437478271362, -13.9205483215524, 29.6988765013566, -40.1972392635944, 29.7880481050215, -9.13050963547721], "valid_k": [50.0, 273.16], "src": FS, "also": ["lisse2021"], "note": "ln(P/Pt) = 1.5 ln(T/Tt) + (1 - Tt/T) sum e_i (T/Tt)^i; coeffs [Tt, Pt Pa, e0..e6]"},
               },
               thermal={"conductivity_solid": {"fit": "k = a / T", "coeffs": [651.0], "valid_k": [100.0, 273.15], "unit": "W m-1 K-1", "src": "petrenko1999"}},
               optical={**gas_optics(2.56e-4, [1.0, 0.0, 0.0], "kaye-laby", "unverified", *KING_ONE), "condensed_colour_rgb": val([0.95, 0.95, 0.97], "1", "fudge-register", "authored")},
@@ -239,6 +333,8 @@ SUBSTANCES = [
                   "triple_point_pa": val(518500.0, "Pa", NIST),
                   "latent_sublimation": val(573000.0, "J kg-1", NIST, at_k=195.0, note="25.2 kJ/mol"),
                   "density_solid": val(1560.0, "kg m-3", NIST, "unverified"),
+                  "vapour_pressure": fs_fit([18.61, -4154.0, 1.041e5], 194.7, 216.58, "CO2-2"),
+                  "vapour_pressure_low": fs_fit([14.76, -2571.0, -7.781e4, 4.325e6, -1.207e8, 1.350e9], 40.0, 194.7, "CO2-1"),
               },
               optical={**gas_optics(4.49e-4, [1.15, 0.0, 0.0], "pdg-gas"), "condensed_colour_rgb": val([0.97, 0.97, 1.0], "1", "fudge-register", "authored")},
               chemical={"states": {"gas": gibbs(-394.36, -393.51, T), "dissolved": gibbs(-386.02, -413.8, T)}},
@@ -249,8 +345,10 @@ SUBSTANCES = [
                   "triple_point_pa": val(11690.0, "Pa", NIST),
                   "latent_vaporisation": val(531000.0, "J kg-1", NIST, at_k=99.5, note="8.519 kJ/mol"),
                   "density_liquid": val(450.0, "kg m-3", NIST, "unverified", at_k=90.7),
+                  "density_solid": val(494.0, "kg m-3", "fudge-register", "unverified", note="methane ice as the climate's sand grain (Telfer et al. 2018 use it); not read from a measurement"),
+                  "vapour_pressure": fs_fit([10.51, -1110.0, -4341.0, 1.035e5, -7.910e5], 20.0, 90.67, "CH4-1"),
               },
-              optical=gas_optics(4.44e-4, [1.0, 0.0, 0.0], "kaye-laby", "unverified", *KING_ONE),
+              optical={**gas_optics(4.44e-4, [1.0, 0.0, 0.0], "kaye-laby", "unverified", *KING_ONE), "condensed_colour_rgb": val([0.9, 0.9, 0.95], "1", "fudge-register", "authored")},
               chemical={"states": {"gas": gibbs(-50.75, -74.81, T), "dissolved": gibbs(-34.39, -89.04, T)}}),
     substance("nh3", {"n": 1, "h": 3}, "ammonia",
               phases={
@@ -258,21 +356,32 @@ SUBSTANCES = [
                   "triple_point_pa": val(6060.0, "Pa", NIST),
                   "latent_sublimation": val(1832000.0, "J kg-1", NIST, note="31.2 kJ/mol"),
                   "density_solid": val(820.0, "kg m-3", NIST, "unverified"),
+                  "vapour_pressure": fs_fit([15.96, -3537.0, -3.310e4, 1.742e6, -2.995e7], 15.0, 195.4, "NH3-1"),
               },
-              optical=gas_optics(3.76e-4, [1.0, 0.0, 0.0], "pdg-gas", "verified", *KING_ONE)),
+              optical={**gas_optics(3.76e-4, [1.0, 0.0, 0.0], "pdg-gas", "verified", *KING_ONE), "condensed_colour_rgb": val([0.98, 0.96, 0.9], "1", "fudge-register", "authored")}),
     substance("n2", {"n": 2}, "nitrogen",
               phases={
                   "triple_point_k": val(63.14, "K", NIST),
                   "triple_point_pa": val(12520.0, "Pa", NIST),
                   "latent_vaporisation": val(200000.0, "J kg-1", NIST, at_k=77.0, note="5.6 kJ/mol"),
                   "density_liquid": val(800.0, "kg m-3", NIST, "unverified", at_k=77.0, note="808 kg/m3 at 77 K"),
+                  "density_solid": val(1027.0, "kg m-3", "fudge-register", "unverified", note="alpha nitrogen ice near 20 K, from memory; not read"),
+                  "vapour_pressure": fs_fit([8.514, -458.4, -1.987e4, 4.800e5, -4.524e6], 35.61, 63.14, "N2-2, beta nitrogen"),
+                  "vapour_pressure_low": fs_fit([12.40, -807.4, -3926.0, 6.297e4, -4.633e5, 1.325e6], 20.0, 35.61, "N2-1, alpha nitrogen"),
               },
-              optical=gas_optics(2.98e-4, [1.034, 3.17e-4, 0.0], "kaye-laby", "unverified"),
+              optical={**gas_optics(2.98e-4, [1.034, 3.17e-4, 0.0], "kaye-laby", "unverified"), "condensed_colour_rgb": val([0.97, 0.97, 0.97], "1", "fudge-register", "authored")},
               chemical={"states": {"gas": gibbs(0.0, 0.0, "convention")}}),
     substance("o2", {"o": 2}, "oxygen",
               optical=gas_optics(2.71e-4, [1.096, 1.385e-3, 1.448e-4], "kaye-laby", "unverified"),
               chemical={"states": {"gas": gibbs(0.0, 0.0, "convention"), "dissolved": gibbs(16.32, -11.7, T)}}),
-    substance("ar", {"ar": 1}, "argon", optical=gas_optics(2.81e-4, [1.0, 0.0, 0.0], "kaye-laby", "unverified", king_src="atom-isotropic")),
+    substance("ar", {"ar": 1}, "argon",
+              phases={
+                  "triple_point_k": val(83.81, "K", NIST, "unverified"),
+                  "triple_point_pa": val(68900.0, "Pa", NIST, "unverified"),
+                  "density_solid": val(1616.0, "kg m-3", "fudge-register", "unverified", note="from memory; not read"),
+                  "vapour_pressure": fs_fit([10.69, -893.2, -3567.0, 6.574e4, -4.280e5], 21.0, 83.81, "Ar-1"),
+              },
+              optical={**gas_optics(2.81e-4, [1.0, 0.0, 0.0], "kaye-laby", "unverified", king_src="atom-isotropic"), "condensed_colour_rgb": val([0.97, 0.97, 0.97], "1", "fudge-register", "authored")}),
     substance("h2", {"h": 2}, "hydrogen",
               optical=gas_optics(1.32e-4, [1.0, 0.0, 0.0], "kaye-laby", "unverified", *KING_ONE),
               chemical={"states": {"gas": gibbs(0.0, 0.0, "convention"), "dissolved": gibbs(17.72, -4.2, T)}}),
@@ -282,7 +391,14 @@ SUBSTANCES = [
     substance("xe", {"xe": 1}, "xenon"),
     substance("so2", {"s": 1, "o": 2}, "sulphur dioxide", optical=gas_optics(6.86e-4, [1.0, 0.0, 0.0], "kaye-laby", "unverified", *KING_ONE)),
     substance("co", {"c": 1, "o": 1}, "carbon monoxide",
-              optical=gas_optics(3.38e-4, [1.0, 0.0, 0.0], "kaye-laby", "unverified", *KING_ONE),
+              phases={
+                  "triple_point_k": val(68.13, "K", NIST, "unverified"),
+                  "triple_point_pa": val(15370.0, "Pa", NIST, "unverified"),
+                  "density_solid": val(929.0, "kg m-3", "fudge-register", "unverified", note="from memory; not read"),
+                  "vapour_pressure": fs_fit([10.25, -748.2, -5843.0, 3.939e4], 61.55, 68.13, "CO-2, beta carbon monoxide"),
+                  "vapour_pressure_low": fs_fit([10.43, -721.3, -1.074e4, 2.341e5, -2.392e6, 9.478e6], 14.0, 61.55, "CO-1, alpha carbon monoxide"),
+              },
+              optical={**gas_optics(3.38e-4, [1.0, 0.0, 0.0], "kaye-laby", "unverified", *KING_ONE), "condensed_colour_rgb": val([0.97, 0.97, 0.97], "1", "fudge-register", "authored")},
               chemical={"states": {"gas": gibbs(-137.15, -110.53, T)}},
               cosmochemical={"ice_line_k": val(20.0, "K", "oberg2011", "unverified")}),
     substance("h2s", {"h": 2, "s": 1}, "hydrogen sulfide", chemical={"states": {"dissolved": gibbs(-27.87, -39.7, T)}}),
@@ -343,6 +459,9 @@ for gid, name, t_k, t_src, rho, share in [
 
 
 # ---------------------------------------------------------------- elements
+ORIGINS = element_origins.load(ORIGINS_CSV)
+
+
 def elements():
     rows = []
     with open(ELEMENTS_CSV, newline="") as f:
@@ -363,6 +482,9 @@ def elements():
                     ab["check"] = "unverified"
                     ab["note"] = r["check"]
                 row["abundance_protosolar"] = ab
+            o = ORIGINS[row["id"]]
+            row["origin"] = element_origins.origin_value(row["id"], o)
+            row["origin_story"] = element_origins.story(row["id"], row["name"], o)
             rows.append(row)
     return rows
 
@@ -370,7 +492,8 @@ def elements():
 def build():
     consts = []
     for c in CONSTANTS:
-        row = {"id": c[0], "name": c[1], "value": c[2]}
+        group = "convention" if c[0] in CONVENTION_IDS else ("factor" if c[0] in FACTOR_IDS else "nature")
+        row = {"id": c[0], "name": c[1], "group": group, "value": c[2]}
         if len(c) > 3:
             # A mass worked out from a measured GM is checked against it, never recomputed after an
             # edit: doubling G is a what-if with the same masses and stronger gravity.
@@ -395,6 +518,8 @@ def build():
             "reference": {
                 "about": "The master data sheet (track MP, design handover/design/SSE4-matter-pack-design.md): constants of nature, conventions, reference objects, elements, isotopes, substances and mixtures, each value with its source. Built by scripts/build-base-reference.py; MP2 first wave. A value without \"check\" is verified against its source; \"unverified\" means the source is named but the number was not read from it; \"authored\" is a documented stand-in (docs/fudges.md).",
                 "constants": consts,
+                "units": units(),
+                "origin_legend": [{"id": k, "physics": v[0], "plain": v[1], "story": v[2]} for k, v in element_origins.SOURCE_NAMES.items()],
                 "elements": elements(),
                 "isotopes": ISOTOPES,
                 "substances": SUBSTANCES,
@@ -414,8 +539,11 @@ def validate(pack):
 
     def walk(o, where):
         if isinstance(o, dict):
-            if "src" in o and o["src"] not in src_ids:
+            if "src" in o and isinstance(o["src"], str) and o["src"] not in src_ids:
                 errors.append(f"{where}: unknown source {o['src']}")
+            for extra in o.get("also", []) if isinstance(o.get("also"), list) else []:
+                if extra not in src_ids:
+                    errors.append(f"{where}: unknown source {extra}")
             for k, v in o.items():
                 walk(v, f"{where}.{k}")
         elif isinstance(o, list):
@@ -434,10 +562,17 @@ def validate(pack):
     for i in ref["isotopes"]:
         if i["element"] not in el_ids:
             errors.append(f"isotope {i['id']}: unknown element {i['element']}")
-    for table in ("constants", "elements", "isotopes", "substances", "mixtures", "sources"):
+    for table in ("constants", "units", "elements", "isotopes", "substances", "mixtures", "sources"):
         ids = [r["id"] for r in ref[table]]
         if len(ids) != len(set(ids)):
             errors.append(f"{table}: duplicate ids")
+    for e in ref["elements"]:
+        t = sum(e["origin"]["shares"].values())
+        if abs(t - 1.0) > 1e-9:
+            errors.append(f"element {e['id']}: origin shares sum to {t}")
+        for k in e["origin"]["shares"]:
+            if k not in element_origins.SOURCE_NAMES:
+                errors.append(f"element {e['id']}: unknown origin {k}")
     if len(ref["elements"]) != 118:
         errors.append("elements: expected 118 rows")
     return errors

@@ -20,6 +20,7 @@ const EKER: &str = "Eker, Z. et al. 2018, MNRAS 479, 5491: interrelated main-seq
 const DK91: &str = "Demircan, O. and Kahraman, G. 1991, Ap&SS 181, 313: stellar mass-luminosity and mass-radius relations https://ui.adsabs.harvard.edu/abs/1991Ap%26SS.181..313D";
 const GOUGH: &str =
     "Gough, D. O. 1981, Solar Physics 74, 21: solar interior structure and luminosity variations. doi:10.1007/BF00151270";
+const ADAMS: &str = "Adams, F. C. 2008, JCAP 08, 010: stars in other universes, stellar structure with different fundamental constants (homology scalings of luminosity and radius). doi:10.1088/1475-7516/2008/08/010";
 const HKT: &str = "Hansen, C. J., Kawaler, S. D. and Trimble, V. 2004, Stellar Interiors, 2nd edn, Springer, section 1.4 (main-sequence lifetime scaling). doi:10.1007/978-1-4419-9110-2";
 
 /// Eker et al. 2018 six-piece mass-luminosity relation, (upper mass bound in
@@ -42,6 +43,35 @@ pub fn luminosity_solar(m_solar: f64) -> f64 {
     m::pow(10.0, seg.1 * lm + seg.2)
 }
 
+/// MP1c, ESTIMATED: the luminosity a fitted relation gives, rescaled for
+/// constants that differ from ours by stellar homology (Adams 2008). With
+/// radiative diffusion and a fixed opacity per mass, L ∝ (a c / κ)
+/// (G μ m_p / k_B)^4 M^3, and a c = 4σ, so at fixed mass L ∝ σ G^4 / k_B^4.
+/// It is exactly 1 for the real constants.
+pub fn homology_luminosity_factor() -> f64 {
+    let real = sse_core::constants::Constants::REAL;
+    let now = sse_core::constants::now();
+    let gr = now.g / real.g;
+    let kr = now.k_b / real.k_b;
+    if gr == 1.0 && kr == 1.0 && now.sigma_sb == real.sigma_sb {
+        return 1.0;
+    }
+    (now.sigma_sb / real.sigma_sb) * (gr * gr * gr * gr) / (kr * kr * kr * kr)
+}
+
+/// MP1c, ESTIMATED: the radius rescaled by homology. Hydrogen ignites at a
+/// core thermal energy set by nuclear physics (k_B T_c fixed), and the
+/// virial theorem gives k_B T_c ∝ G M μ m_p / R, so at fixed mass R ∝ G.
+pub fn homology_radius_factor() -> f64 {
+    let real = sse_core::constants::Constants::REAL;
+    let now = sse_core::constants::now();
+    if now.g == real.g {
+        1.0
+    } else {
+        now.g / real.g
+    }
+}
+
 pub fn radius_solar(m_solar: f64) -> f64 {
     if m_solar < 1.66 {
         1.06 * m::pow(m_solar, 0.945)
@@ -60,13 +90,13 @@ pub fn atoms() -> Vec<Box<dyn Atom>> {
             outputs: vec![port("luminosity", "star.luminosity", D::POWER, None)],
             params: vec![],
             cost: CostClass::Trivial,
-            references: &[EKER],
+            references: &[EKER, ADAMS],
             curious: "Heavier stars squeeze their cores harder and burn far brighter: twice the Sun's mass is about twenty times as bright.",
             science: "Empirical six-piece power law fitted to 509 main-sequence components of detached eclipsing binaries with masses and radii good to 15 percent. It gives a typical main-sequence luminosity for the mass, averaged over age and solar-neighbourhood metallicity.",
-            formula: "log L/L☉ = a log M/M☉ + b, (a, b) by mass range",
+            formula: "log L/L☉ = a log M/M☉ + b, (a, b) by mass range; × (σ/σ₀)(G/G₀)⁴(k_B₀/k_B)⁴ with changed constants (ESTIMATED)",
             f: |i, _| {
                 let ms = positive(i[0], "mass")? / M_SUN;
-                Ok(vec![L_SUN * luminosity_solar(ms)])
+                Ok(vec![L_SUN * luminosity_solar(ms) * homology_luminosity_factor()])
             },
         }
         .build(),
@@ -77,13 +107,13 @@ pub fn atoms() -> Vec<Box<dyn Atom>> {
             outputs: vec![port("radius", "star.radius", D::LENGTH, None)],
             params: vec![],
             cost: CostClass::Trivial,
-            references: &[DK91],
+            references: &[DK91, ADAMS],
             curious: "Bigger stars are bigger, but not in proportion: ten Suns' worth of mass makes a star only about five times as wide.",
             science: "Two-piece power-law fit to detached binary components, valid for typical main-sequence ages. Stars swell as they age, so a young or old star of the same mass differs by tens of percent.",
-            formula: "R/R☉ = 1.06 (M/M☉)^0.945 below 1.66 M☉, 1.33 (M/M☉)^0.555 above",
+            formula: "R/R☉ = 1.06 (M/M☉)^0.945 below 1.66 M☉, 1.33 (M/M☉)^0.555 above; × G/G₀ with changed constants (ESTIMATED)",
             f: |i, _| {
                 let ms = positive(i[0], "mass")? / M_SUN;
-                Ok(vec![R_SUN * radius_solar(ms)])
+                Ok(vec![R_SUN * radius_solar(ms) * homology_radius_factor()])
             },
         }
         .build(),
@@ -104,7 +134,7 @@ pub fn atoms() -> Vec<Box<dyn Atom>> {
             f: |i, _| {
                 let l = positive(i[0], "luminosity")?;
                 let r = positive(i[1], "radius")?;
-                Ok(vec![m::pow(l / (4.0 * m::PI * r * r * STEFAN_BOLTZMANN), 0.25)])
+                Ok(vec![m::pow(l / (4.0 * m::PI * r * r * sse_core::constants::sigma_sb()), 0.25)])
             },
         }
         .build(),

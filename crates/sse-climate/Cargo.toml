@@ -9,5 +9,9 @@ authors.workspace = true
 [dependencies]
 sse-core.workspace = true
 sse-pack.workspace = true
+sse-reference.workspace = true
 serde.workspace = true
 serde_json.workspace = true
+
+[dev-dependencies]
+sse-time = { path = "../sse-time" }

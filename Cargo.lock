@@ -530,6 +530,8 @@ dependencies = [
  "serde_json",
  "sse-core",
  "sse-pack",
+ "sse-reference",
+ "sse-time",
 ]
 
 [[package]]
@@ -646,6 +648,7 @@ dependencies = [
  "sse-observe",
  "sse-pack",
  "sse-record",
+ "sse-reference",
  "sse-sector-io",
  "sse-sense",
  "sse-sift",
@@ -666,6 +669,7 @@ dependencies = [
  "serde_json",
  "sse-atoms",
  "sse-chronicle",
+ "sse-climate",
  "sse-core",
  "sse-observe",
  "sse-pack",
@@ -766,6 +770,16 @@ dependencies = [
  "serde_json",
  "sse-chronicle",
  "sse-core",
+]
+
+[[package]]
+name = "sse-reference"
+version = "0.1.0"
+dependencies = [
+ "serde",
+ "serde_json",
+ "sse-core",
+ "sse-pack",
 ]
 
 [[package]]
