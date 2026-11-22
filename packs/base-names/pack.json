@@ -482,6 +482,2146 @@
        "stream",
        "summit"
       ]
+     },
+     {
+      "id": "english",
+      "label": "English-sounding",
+      "kind": "list",
+      "about": "Names built the way English place names are: a first element and an ending, each a real Old English or Norse place-name element with what it meant (Ash + ton, 'ash tree farmstead'), sometimes with Great, Little, North or Upper before it. Craters may take the surnames of long-dead British astronomers and explorers. The meanings are our own short glosses, citing Blackie 1887. First pass, corrections welcome.",
+      "lists": {
+       "first": [
+        {
+         "name": "Ash",
+         "means": "ash tree",
+         "source": "Blackie, C. 1887, Geographical Etymology, 3rd ed. (Project Gutenberg #69018)"
+        },
+        {
+         "name": "Ac",
+         "means": "oak",
+         "source": "Blackie, C. 1887, Geographical Etymology, 3rd ed. (Project Gutenberg #69018)"
+        },
+        {
+         "name": "Elm",
+         "means": "elm",
+         "source": "Blackie, C. 1887, Geographical Etymology, 3rd ed. (Project Gutenberg #69018)"
+        },
+        {
+         "name": "Birk",
+         "means": "birch",
+         "source": "Blackie, C. 1887, Geographical Etymology, 3rd ed. (Project Gutenberg #69018)"
+        },
+        {
+         "name": "Thorn",
+         "means": "thorn bush",
+         "source": "Blackie, C. 1887, Geographical Etymology, 3rd ed. (Project Gutenberg #69018)"
+        },
+        {
+         "name": "Hasel",
+         "means": "hazel",
+         "source": "Blackie, C. 1887, Geographical Etymology, 3rd ed. (Project Gutenberg #69018)"
+        },
+        {
+         "name": "Aller",
+         "means": "alder",
+         "source": "Blackie, C. 1887, Geographical Etymology, 3rd ed. (Project Gutenberg #69018)"
+        },
+        {
+         "name": "Sal",
+         "means": "willow",
+         "source": "Blackie, C. 1887, Geographical Etymology, 3rd ed. (Project Gutenberg #69018)"
+        },
+        {
+         "name": "Lind",
+         "means": "lime tree",
+         "source": "Blackie, C. 1887, Geographical Etymology, 3rd ed. (Project Gutenberg #69018)"
+        },
+        {
+         "name": "Brack",
+         "means": "bracken",
+         "source": "Blackie, C. 1887, Geographical Etymology, 3rd ed. (Project Gutenberg #69018)"
+        },
+        {
+         "name": "Fern",
+         "means": "fern",
+         "source": "Blackie, C. 1887, Geographical Etymology, 3rd ed. (Project Gutenberg #69018)"
+        },
+        {
+         "name": "Brom",
+         "means": "broom",
+         "source": "Blackie, C. 1887, Geographical Etymology, 3rd ed. (Project Gutenberg #69018)"
+        },
+        {
+         "name": "Hay",
+         "means": "hedged land",
+         "source": "Blackie, C. 1887, Geographical Etymology, 3rd ed. (Project Gutenberg #69018)"
+        },
+        {
+         "name": "Rush",
+         "means": "rushes",
+         "source": "Blackie, C. 1887, Geographical Etymology, 3rd ed. (Project Gutenberg #69018)"
+        },
+        {
+         "name": "Reed",
+         "means": "reeds",
+         "source": "Blackie, C. 1887, Geographical Etymology, 3rd ed. (Project Gutenberg #69018)"
+        },
+        {
+         "name": "Holly",
+         "means": "holly",
+         "source": "Blackie, C. 1887, Geographical Etymology, 3rd ed. (Project Gutenberg #69018)"
+        },
+        {
+         "name": "Rowan",
+         "means": "rowan",
+         "source": "Blackie, C. 1887, Geographical Etymology, 3rd ed. (Project Gutenberg #69018)"
+        },
+        {
+         "name": "Bly",
+         "means": "blackthorn",
+         "source": "Blackie, C. 1887, Geographical Etymology, 3rd ed. (Project Gutenberg #69018)"
+        },
+        {
+         "name": "Wheat",
+         "means": "wheat",
+         "source": "Blackie, C. 1887, Geographical Etymology, 3rd ed. (Project Gutenberg #69018)"
+        },
+        {
+         "name": "Bar",
+         "means": "barley",
+         "source": "Blackie, C. 1887, Geographical Etymology, 3rd ed. (Project Gutenberg #69018)"
+        },
+        {
+         "name": "Rye",
+         "means": "rye",
+         "source": "Blackie, C. 1887, Geographical Etymology, 3rd ed. (Project Gutenberg #69018)"
+        },
+        {
+         "name": "Flax",
+         "means": "flax",
+         "source": "Blackie, C. 1887, Geographical Etymology, 3rd ed. (Project Gutenberg #69018)"
+        },
+        {
+         "name": "Kers",
+         "means": "watercress",
+         "source": "Blackie, C. 1887, Geographical Etymology, 3rd ed. (Project Gutenberg #69018)"
+        },
+        {
+         "name": "Ivy",
+         "means": "ivy",
+         "source": "Blackie, C. 1887, Geographical Etymology, 3rd ed. (Project Gutenberg #69018)"
+        },
+        {
+         "name": "Wood",
+         "means": "wood",
+         "source": "Blackie, C. 1887, Geographical Etymology, 3rd ed. (Project Gutenberg #69018)"
+        },
+        {
+         "name": "Heath",
+         "means": "heathland",
+         "source": "Blackie, C. 1887, Geographical Etymology, 3rd ed. (Project Gutenberg #69018)"
+        },
+        {
+         "name": "Moor",
+         "means": "moor",
+         "source": "Blackie, C. 1887, Geographical Etymology, 3rd ed. (Project Gutenberg #69018)"
+        },
+        {
+         "name": "Marsh",
+         "means": "marsh",
+         "source": "Blackie, C. 1887, Geographical Etymology, 3rd ed. (Project Gutenberg #69018)"
+        },
+        {
+         "name": "Fen",
+         "means": "fen",
+         "source": "Blackie, C. 1887, Geographical Etymology, 3rd ed. (Project Gutenberg #69018)"
+        },
+        {
+         "name": "Mere",
+         "means": "lake",
+         "source": "Blackie, C. 1887, Geographical Etymology, 3rd ed. (Project Gutenberg #69018)"
+        },
+        {
+         "name": "Brook",
+         "means": "brook",
+         "source": "Blackie, C. 1887, Geographical Etymology, 3rd ed. (Project Gutenberg #69018)"
+        },
+        {
+         "name": "Wel",
+         "means": "spring",
+         "source": "Blackie, C. 1887, Geographical Etymology, 3rd ed. (Project Gutenberg #69018)"
+        },
+        {
+         "name": "Burn",
+         "means": "stream",
+         "source": "Blackie, C. 1887, Geographical Etymology, 3rd ed. (Project Gutenberg #69018)"
+        },
+        {
+         "name": "Beck",
+         "means": "stream",
+         "source": "Blackie, C. 1887, Geographical Etymology, 3rd ed. (Project Gutenberg #69018)"
+        },
+        {
+         "name": "Ford",
+         "means": "river crossing",
+         "source": "Blackie, C. 1887, Geographical Etymology, 3rd ed. (Project Gutenberg #69018)"
+        },
+        {
+         "name": "Dene",
+         "means": "valley",
+         "source": "Blackie, C. 1887, Geographical Etymology, 3rd ed. (Project Gutenberg #69018)"
+        },
+        {
+         "name": "Comb",
+         "means": "deep valley",
+         "source": "Blackie, C. 1887, Geographical Etymology, 3rd ed. (Project Gutenberg #69018)"
+        },
+        {
+         "name": "Hope",
+         "means": "hidden valley",
+         "source": "Blackie, C. 1887, Geographical Etymology, 3rd ed. (Project Gutenberg #69018)"
+        },
+        {
+         "name": "Clif",
+         "means": "cliff",
+         "source": "Blackie, C. 1887, Geographical Etymology, 3rd ed. (Project Gutenberg #69018)"
+        },
+        {
+         "name": "Nes",
+         "means": "headland",
+         "source": "Blackie, C. 1887, Geographical Etymology, 3rd ed. (Project Gutenberg #69018)"
+        },
+        {
+         "name": "Holm",
+         "means": "river island",
+         "source": "Blackie, C. 1887, Geographical Etymology, 3rd ed. (Project Gutenberg #69018)"
+        },
+        {
+         "name": "Ey",
+         "means": "island",
+         "source": "Blackie, C. 1887, Geographical Etymology, 3rd ed. (Project Gutenberg #69018)"
+        },
+        {
+         "name": "Knap",
+         "means": "hilltop",
+         "source": "Blackie, C. 1887, Geographical Etymology, 3rd ed. (Project Gutenberg #69018)"
+        },
+        {
+         "name": "Edge",
+         "means": "escarpment",
+         "source": "Blackie, C. 1887, Geographical Etymology, 3rd ed. (Project Gutenberg #69018)"
+        },
+        {
+         "name": "Tor",
+         "means": "rocky hill",
+         "source": "Blackie, C. 1887, Geographical Etymology, 3rd ed. (Project Gutenberg #69018)"
+        },
+        {
+         "name": "Crag",
+         "means": "crag",
+         "source": "Blackie, C. 1887, Geographical Etymology, 3rd ed. (Project Gutenberg #69018)"
+        },
+        {
+         "name": "Scar",
+         "means": "rock face",
+         "source": "Blackie, C. 1887, Geographical Etymology, 3rd ed. (Project Gutenberg #69018)"
+        },
+        {
+         "name": "Sand",
+         "means": "sand",
+         "source": "Blackie, C. 1887, Geographical Etymology, 3rd ed. (Project Gutenberg #69018)"
+        },
+        {
+         "name": "Chal",
+         "means": "chalk",
+         "source": "Blackie, C. 1887, Geographical Etymology, 3rd ed. (Project Gutenberg #69018)"
+        },
+        {
+         "name": "Clay",
+         "means": "clay",
+         "source": "Blackie, C. 1887, Geographical Etymology, 3rd ed. (Project Gutenberg #69018)"
+        },
+        {
+         "name": "Flint",
+         "means": "flint",
+         "source": "Blackie, C. 1887, Geographical Etymology, 3rd ed. (Project Gutenberg #69018)"
+        },
+        {
+         "name": "Stan",
+         "means": "stone",
+         "source": "Blackie, C. 1887, Geographical Etymology, 3rd ed. (Project Gutenberg #69018)"
+        },
+        {
+         "name": "Pen",
+         "means": "hill",
+         "source": "Blackie, C. 1887, Geographical Etymology, 3rd ed. (Project Gutenberg #69018)"
+        },
+        {
+         "name": "Dun",
+         "means": "hill",
+         "source": "Blackie, C. 1887, Geographical Etymology, 3rd ed. (Project Gutenberg #69018)"
+        },
+        {
+         "name": "Bryn",
+         "means": "hill",
+         "source": "Blackie, C. 1887, Geographical Etymology, 3rd ed. (Project Gutenberg #69018)"
+        },
+        {
+         "name": "Bran",
+         "means": "steep slope",
+         "source": "Blackie, C. 1887, Geographical Etymology, 3rd ed. (Project Gutenberg #69018)"
+        },
+        {
+         "name": "Wath",
+         "means": "ford",
+         "source": "Blackie, C. 1887, Geographical Etymology, 3rd ed. (Project Gutenberg #69018)"
+        },
+        {
+         "name": "Fleet",
+         "means": "creek",
+         "source": "Blackie, C. 1887, Geographical Etymology, 3rd ed. (Project Gutenberg #69018)"
+        },
+        {
+         "name": "Sea",
+         "means": "sea",
+         "source": "Blackie, C. 1887, Geographical Etymology, 3rd ed. (Project Gutenberg #69018)"
+        },
+        {
+         "name": "Lake",
+         "means": "stream",
+         "source": "Blackie, C. 1887, Geographical Etymology, 3rd ed. (Project Gutenberg #69018)"
+        },
+        {
+         "name": "Pool",
+         "means": "pool",
+         "source": "Blackie, C. 1887, Geographical Etymology, 3rd ed. (Project Gutenberg #69018)"
+        },
+        {
+         "name": "Mar",
+         "means": "boundary",
+         "source": "Blackie, C. 1887, Geographical Etymology, 3rd ed. (Project Gutenberg #69018)"
+        },
+        {
+         "name": "Slade",
+         "means": "valley",
+         "source": "Blackie, C. 1887, Geographical Etymology, 3rd ed. (Project Gutenberg #69018)"
+        },
+        {
+         "name": "Hale",
+         "means": "nook of land",
+         "source": "Blackie, C. 1887, Geographical Etymology, 3rd ed. (Project Gutenberg #69018)"
+        },
+        {
+         "name": "Rid",
+         "means": "cleared land",
+         "source": "Blackie, C. 1887, Geographical Etymology, 3rd ed. (Project Gutenberg #69018)"
+        },
+        {
+         "name": "Strat",
+         "means": "paved road",
+         "source": "Blackie, C. 1887, Geographical Etymology, 3rd ed. (Project Gutenberg #69018)"
+        },
+        {
+         "name": "Wal",
+         "means": "wall",
+         "source": "Blackie, C. 1887, Geographical Etymology, 3rd ed. (Project Gutenberg #69018)"
+        },
+        {
+         "name": "Win",
+         "means": "pasture",
+         "source": "Blackie, C. 1887, Geographical Etymology, 3rd ed. (Project Gutenberg #69018)"
+        },
+        {
+         "name": "Field",
+         "means": "open land",
+         "source": "Blackie, C. 1887, Geographical Etymology, 3rd ed. (Project Gutenberg #69018)"
+        },
+        {
+         "name": "Hol",
+         "means": "hollow",
+         "source": "Blackie, C. 1887, Geographical Etymology, 3rd ed. (Project Gutenberg #69018)"
+        },
+        {
+         "name": "Hart",
+         "means": "stag",
+         "source": "Blackie, C. 1887, Geographical Etymology, 3rd ed. (Project Gutenberg #69018)"
+        },
+        {
+         "name": "Buck",
+         "means": "buck",
+         "source": "Blackie, C. 1887, Geographical Etymology, 3rd ed. (Project Gutenberg #69018)"
+        },
+        {
+         "name": "Ox",
+         "means": "oxen",
+         "source": "Blackie, C. 1887, Geographical Etymology, 3rd ed. (Project Gutenberg #69018)"
+        },
+        {
+         "name": "Swin",
+         "means": "pigs",
+         "source": "Blackie, C. 1887, Geographical Etymology, 3rd ed. (Project Gutenberg #69018)"
+        },
+        {
+         "name": "Shep",
+         "means": "sheep",
+         "source": "Blackie, C. 1887, Geographical Etymology, 3rd ed. (Project Gutenberg #69018)"
+        },
+        {
+         "name": "Gos",
+         "means": "geese",
+         "source": "Blackie, C. 1887, Geographical Etymology, 3rd ed. (Project Gutenberg #69018)"
+        },
+        {
+         "name": "Cran",
+         "means": "cranes",
+         "source": "Blackie, C. 1887, Geographical Etymology, 3rd ed. (Project Gutenberg #69018)"
+        },
+        {
+         "name": "Ern",
+         "means": "eagle",
+         "source": "Blackie, C. 1887, Geographical Etymology, 3rd ed. (Project Gutenberg #69018)"
+        },
+        {
+         "name": "Craw",
+         "means": "crows",
+         "source": "Blackie, C. 1887, Geographical Etymology, 3rd ed. (Project Gutenberg #69018)"
+        },
+        {
+         "name": "Hawk",
+         "means": "hawks",
+         "source": "Blackie, C. 1887, Geographical Etymology, 3rd ed. (Project Gutenberg #69018)"
+        },
+        {
+         "name": "Wolf",
+         "means": "wolves",
+         "source": "Blackie, C. 1887, Geographical Etymology, 3rd ed. (Project Gutenberg #69018)"
+        },
+        {
+         "name": "Fox",
+         "means": "foxes",
+         "source": "Blackie, C. 1887, Geographical Etymology, 3rd ed. (Project Gutenberg #69018)"
+        },
+        {
+         "name": "Brock",
+         "means": "badger",
+         "source": "Blackie, C. 1887, Geographical Etymology, 3rd ed. (Project Gutenberg #69018)"
+        },
+        {
+         "name": "Otter",
+         "means": "otters",
+         "source": "Blackie, C. 1887, Geographical Etymology, 3rd ed. (Project Gutenberg #69018)"
+        },
+        {
+         "name": "Hen",
+         "means": "wild birds",
+         "source": "Blackie, C. 1887, Geographical Etymology, 3rd ed. (Project Gutenberg #69018)"
+        },
+        {
+         "name": "Duck",
+         "means": "ducks",
+         "source": "Blackie, C. 1887, Geographical Etymology, 3rd ed. (Project Gutenberg #69018)"
+        },
+        {
+         "name": "Beo",
+         "means": "bees",
+         "source": "Blackie, C. 1887, Geographical Etymology, 3rd ed. (Project Gutenberg #69018)"
+        },
+        {
+         "name": "Lark",
+         "means": "larks",
+         "source": "Blackie, C. 1887, Geographical Etymology, 3rd ed. (Project Gutenberg #69018)"
+        },
+        {
+         "name": "Ram",
+         "means": "rams",
+         "source": "Blackie, C. 1887, Geographical Etymology, 3rd ed. (Project Gutenberg #69018)"
+        },
+        {
+         "name": "Hind",
+         "means": "hinds",
+         "source": "Blackie, C. 1887, Geographical Etymology, 3rd ed. (Project Gutenberg #69018)"
+        },
+        {
+         "name": "Cat",
+         "means": "wild cats",
+         "source": "Blackie, C. 1887, Geographical Etymology, 3rd ed. (Project Gutenberg #69018)"
+        },
+        {
+         "name": "Hun",
+         "means": "hounds",
+         "source": "Blackie, C. 1887, Geographical Etymology, 3rd ed. (Project Gutenberg #69018)"
+        },
+        {
+         "name": "Pid",
+         "means": "peewits",
+         "source": "Blackie, C. 1887, Geographical Etymology, 3rd ed. (Project Gutenberg #69018)"
+        },
+        {
+         "name": "Fin",
+         "means": "woodpecker",
+         "source": "Blackie, C. 1887, Geographical Etymology, 3rd ed. (Project Gutenberg #69018)"
+        },
+        {
+         "name": "Swan",
+         "means": "swans",
+         "source": "Blackie, C. 1887, Geographical Etymology, 3rd ed. (Project Gutenberg #69018)"
+        },
+        {
+         "name": "Red",
+         "means": "red",
+         "source": "Blackie, C. 1887, Geographical Etymology, 3rd ed. (Project Gutenberg #69018)"
+        },
+        {
+         "name": "Black",
+         "means": "black",
+         "source": "Blackie, C. 1887, Geographical Etymology, 3rd ed. (Project Gutenberg #69018)"
+        },
+        {
+         "name": "White",
+         "means": "white",
+         "source": "Blackie, C. 1887, Geographical Etymology, 3rd ed. (Project Gutenberg #69018)"
+        },
+        {
+         "name": "Grey",
+         "means": "grey",
+         "source": "Blackie, C. 1887, Geographical Etymology, 3rd ed. (Project Gutenberg #69018)"
+        },
+        {
+         "name": "Green",
+         "means": "green",
+         "source": "Blackie, C. 1887, Geographical Etymology, 3rd ed. (Project Gutenberg #69018)"
+        },
+        {
+         "name": "Brad",
+         "means": "broad",
+         "source": "Blackie, C. 1887, Geographical Etymology, 3rd ed. (Project Gutenberg #69018)"
+        },
+        {
+         "name": "Long",
+         "means": "long",
+         "source": "Blackie, C. 1887, Geographical Etymology, 3rd ed. (Project Gutenberg #69018)"
+        },
+        {
+         "name": "Cold",
+         "means": "cold",
+         "source": "Blackie, C. 1887, Geographical Etymology, 3rd ed. (Project Gutenberg #69018)"
+        },
+        {
+         "name": "Fair",
+         "means": "fair",
+         "source": "Blackie, C. 1887, Geographical Etymology, 3rd ed. (Project Gutenberg #69018)"
+        },
+        {
+         "name": "High",
+         "means": "high",
+         "source": "Blackie, C. 1887, Geographical Etymology, 3rd ed. (Project Gutenberg #69018)"
+        },
+        {
+         "name": "Mid",
+         "means": "middle",
+         "source": "Blackie, C. 1887, Geographical Etymology, 3rd ed. (Project Gutenberg #69018)"
+        },
+        {
+         "name": "Nor",
+         "means": "north",
+         "source": "Blackie, C. 1887, Geographical Etymology, 3rd ed. (Project Gutenberg #69018)"
+        },
+        {
+         "name": "Sut",
+         "means": "south",
+         "source": "Blackie, C. 1887, Geographical Etymology, 3rd ed. (Project Gutenberg #69018)"
+        },
+        {
+         "name": "Eas",
+         "means": "east",
+         "source": "Blackie, C. 1887, Geographical Etymology, 3rd ed. (Project Gutenberg #69018)"
+        },
+        {
+         "name": "Wes",
+         "means": "west",
+         "source": "Blackie, C. 1887, Geographical Etymology, 3rd ed. (Project Gutenberg #69018)"
+        },
+        {
+         "name": "New",
+         "means": "new",
+         "source": "Blackie, C. 1887, Geographical Etymology, 3rd ed. (Project Gutenberg #69018)"
+        },
+        {
+         "name": "Ald",
+         "means": "old",
+         "source": "Blackie, C. 1887, Geographical Etymology, 3rd ed. (Project Gutenberg #69018)"
+        },
+        {
+         "name": "Lang",
+         "means": "long",
+         "source": "Blackie, C. 1887, Geographical Etymology, 3rd ed. (Project Gutenberg #69018)"
+        },
+        {
+         "name": "Mickle",
+         "means": "great",
+         "source": "Blackie, C. 1887, Geographical Etymology, 3rd ed. (Project Gutenberg #69018)"
+        },
+        {
+         "name": "Lit",
+         "means": "little",
+         "source": "Blackie, C. 1887, Geographical Etymology, 3rd ed. (Project Gutenberg #69018)"
+        },
+        {
+         "name": "Hor",
+         "means": "muddy",
+         "source": "Blackie, C. 1887, Geographical Etymology, 3rd ed. (Project Gutenberg #69018)"
+        },
+        {
+         "name": "Smal",
+         "means": "narrow",
+         "source": "Blackie, C. 1887, Geographical Etymology, 3rd ed. (Project Gutenberg #69018)"
+        },
+        {
+         "name": "Ful",
+         "means": "foul",
+         "source": "Blackie, C. 1887, Geographical Etymology, 3rd ed. (Project Gutenberg #69018)"
+        },
+        {
+         "name": "Bright",
+         "means": "bright",
+         "source": "Blackie, C. 1887, Geographical Etymology, 3rd ed. (Project Gutenberg #69018)"
+        },
+        {
+         "name": "Sheer",
+         "means": "bright",
+         "source": "Blackie, C. 1887, Geographical Etymology, 3rd ed. (Project Gutenberg #69018)"
+        },
+        {
+         "name": "Wet",
+         "means": "wet",
+         "source": "Blackie, C. 1887, Geographical Etymology, 3rd ed. (Project Gutenberg #69018)"
+        },
+        {
+         "name": "Drey",
+         "means": "dry",
+         "source": "Blackie, C. 1887, Geographical Etymology, 3rd ed. (Project Gutenberg #69018)"
+        },
+        {
+         "name": "Wind",
+         "means": "windy",
+         "source": "Blackie, C. 1887, Geographical Etymology, 3rd ed. (Project Gutenberg #69018)"
+        },
+        {
+         "name": "Kings",
+         "means": "the king's",
+         "source": "Blackie, C. 1887, Geographical Etymology, 3rd ed. (Project Gutenberg #69018)"
+        },
+        {
+         "name": "Earls",
+         "means": "the earl's",
+         "source": "Blackie, C. 1887, Geographical Etymology, 3rd ed. (Project Gutenberg #69018)"
+        },
+        {
+         "name": "Knigh",
+         "means": "young men's",
+         "source": "Blackie, C. 1887, Geographical Etymology, 3rd ed. (Project Gutenberg #69018)"
+        },
+        {
+         "name": "Charl",
+         "means": "free farmers'",
+         "source": "Blackie, C. 1887, Geographical Etymology, 3rd ed. (Project Gutenberg #69018)"
+        },
+        {
+         "name": "Shire",
+         "means": "shire",
+         "source": "Blackie, C. 1887, Geographical Etymology, 3rd ed. (Project Gutenberg #69018)"
+        },
+        {
+         "name": "Salt",
+         "means": "salt",
+         "source": "Blackie, C. 1887, Geographical Etymology, 3rd ed. (Project Gutenberg #69018)"
+        },
+        {
+         "name": "Mil",
+         "means": "mill",
+         "source": "Blackie, C. 1887, Geographical Etymology, 3rd ed. (Project Gutenberg #69018)"
+        },
+        {
+         "name": "Kirk",
+         "means": "church",
+         "source": "Blackie, C. 1887, Geographical Etymology, 3rd ed. (Project Gutenberg #69018)"
+        },
+        {
+         "name": "Chip",
+         "means": "market",
+         "source": "Blackie, C. 1887, Geographical Etymology, 3rd ed. (Project Gutenberg #69018)"
+        },
+        {
+         "name": "Smith",
+         "means": "smiths'",
+         "source": "Blackie, C. 1887, Geographical Etymology, 3rd ed. (Project Gutenberg #69018)"
+        },
+        {
+         "name": "Wool",
+         "means": "wool",
+         "source": "Blackie, C. 1887, Geographical Etymology, 3rd ed. (Project Gutenberg #69018)"
+        },
+        {
+         "name": "Brew",
+         "means": "brew house",
+         "source": "Blackie, C. 1887, Geographical Etymology, 3rd ed. (Project Gutenberg #69018)"
+        },
+        {
+         "name": "Hythe",
+         "means": "landing place",
+         "source": "Blackie, C. 1887, Geographical Etymology, 3rd ed. (Project Gutenberg #69018)"
+        }
+       ],
+       "end": [
+        {
+         "name": "ton",
+         "means": "farmstead",
+         "source": "Blackie, C. 1887, Geographical Etymology, 3rd ed. (Project Gutenberg #69018)"
+        },
+        {
+         "name": "ham",
+         "means": "homestead",
+         "source": "Blackie, C. 1887, Geographical Etymology, 3rd ed. (Project Gutenberg #69018)"
+        },
+        {
+         "name": "ley",
+         "means": "woodland clearing",
+         "source": "Blackie, C. 1887, Geographical Etymology, 3rd ed. (Project Gutenberg #69018)"
+        },
+        {
+         "name": "by",
+         "means": "farm",
+         "source": "Blackie, C. 1887, Geographical Etymology, 3rd ed. (Project Gutenberg #69018)"
+        },
+        {
+         "name": "thorpe",
+         "means": "outlying farm",
+         "source": "Blackie, C. 1887, Geographical Etymology, 3rd ed. (Project Gutenberg #69018)"
+        },
+        {
+         "name": "wick",
+         "means": "dairy farm",
+         "source": "Blackie, C. 1887, Geographical Etymology, 3rd ed. (Project Gutenberg #69018)"
+        },
+        {
+         "name": "worth",
+         "means": "enclosure",
+         "source": "Blackie, C. 1887, Geographical Etymology, 3rd ed. (Project Gutenberg #69018)"
+        },
+        {
+         "name": "field",
+         "means": "open land",
+         "source": "Blackie, C. 1887, Geographical Etymology, 3rd ed. (Project Gutenberg #69018)"
+        },
+        {
+         "name": "ford",
+         "means": "river crossing",
+         "source": "Blackie, C. 1887, Geographical Etymology, 3rd ed. (Project Gutenberg #69018)"
+        },
+        {
+         "name": "bury",
+         "means": "fort",
+         "source": "Blackie, C. 1887, Geographical Etymology, 3rd ed. (Project Gutenberg #69018)"
+        },
+        {
+         "name": "chester",
+         "means": "old fort",
+         "source": "Blackie, C. 1887, Geographical Etymology, 3rd ed. (Project Gutenberg #69018)"
+        },
+        {
+         "name": "stead",
+         "means": "place",
+         "source": "Blackie, C. 1887, Geographical Etymology, 3rd ed. (Project Gutenberg #69018)"
+        },
+        {
+         "name": "stow",
+         "means": "meeting place",
+         "source": "Blackie, C. 1887, Geographical Etymology, 3rd ed. (Project Gutenberg #69018)"
+        },
+        {
+         "name": "wold",
+         "means": "high forest",
+         "source": "Blackie, C. 1887, Geographical Etymology, 3rd ed. (Project Gutenberg #69018)"
+        },
+        {
+         "name": "wood",
+         "means": "wood",
+         "source": "Blackie, C. 1887, Geographical Etymology, 3rd ed. (Project Gutenberg #69018)"
+        },
+        {
+         "name": "hurst",
+         "means": "wooded hill",
+         "source": "Blackie, C. 1887, Geographical Etymology, 3rd ed. (Project Gutenberg #69018)"
+        },
+        {
+         "name": "den",
+         "means": "valley",
+         "source": "Blackie, C. 1887, Geographical Etymology, 3rd ed. (Project Gutenberg #69018)"
+        },
+        {
+         "name": "dale",
+         "means": "valley",
+         "source": "Blackie, C. 1887, Geographical Etymology, 3rd ed. (Project Gutenberg #69018)"
+        },
+        {
+         "name": "combe",
+         "means": "deep valley",
+         "source": "Blackie, C. 1887, Geographical Etymology, 3rd ed. (Project Gutenberg #69018)"
+        },
+        {
+         "name": "mere",
+         "means": "lake",
+         "source": "Blackie, C. 1887, Geographical Etymology, 3rd ed. (Project Gutenberg #69018)"
+        },
+        {
+         "name": "mouth",
+         "means": "river mouth",
+         "source": "Blackie, C. 1887, Geographical Etymology, 3rd ed. (Project Gutenberg #69018)"
+        },
+        {
+         "name": "holm",
+         "means": "river island",
+         "source": "Blackie, C. 1887, Geographical Etymology, 3rd ed. (Project Gutenberg #69018)"
+        },
+        {
+         "name": "ness",
+         "means": "headland",
+         "source": "Blackie, C. 1887, Geographical Etymology, 3rd ed. (Project Gutenberg #69018)"
+        },
+        {
+         "name": "ey",
+         "means": "island",
+         "source": "Blackie, C. 1887, Geographical Etymology, 3rd ed. (Project Gutenberg #69018)"
+        },
+        {
+         "name": "well",
+         "means": "spring",
+         "source": "Blackie, C. 1887, Geographical Etymology, 3rd ed. (Project Gutenberg #69018)"
+        },
+        {
+         "name": "bourne",
+         "means": "stream",
+         "source": "Blackie, C. 1887, Geographical Etymology, 3rd ed. (Project Gutenberg #69018)"
+        },
+        {
+         "name": "brook",
+         "means": "brook",
+         "source": "Blackie, C. 1887, Geographical Etymology, 3rd ed. (Project Gutenberg #69018)"
+        },
+        {
+         "name": "beck",
+         "means": "stream",
+         "source": "Blackie, C. 1887, Geographical Etymology, 3rd ed. (Project Gutenberg #69018)"
+        },
+        {
+         "name": "thwaite",
+         "means": "clearing",
+         "source": "Blackie, C. 1887, Geographical Etymology, 3rd ed. (Project Gutenberg #69018)"
+        },
+        {
+         "name": "garth",
+         "means": "enclosure",
+         "source": "Blackie, C. 1887, Geographical Etymology, 3rd ed. (Project Gutenberg #69018)"
+        },
+        {
+         "name": "toft",
+         "means": "homestead",
+         "source": "Blackie, C. 1887, Geographical Etymology, 3rd ed. (Project Gutenberg #69018)"
+        },
+        {
+         "name": "hope",
+         "means": "hidden valley",
+         "source": "Blackie, C. 1887, Geographical Etymology, 3rd ed. (Project Gutenberg #69018)"
+        },
+        {
+         "name": "ridge",
+         "means": "ridge",
+         "source": "Blackie, C. 1887, Geographical Etymology, 3rd ed. (Project Gutenberg #69018)"
+        },
+        {
+         "name": "don",
+         "means": "hill",
+         "source": "Blackie, C. 1887, Geographical Etymology, 3rd ed. (Project Gutenberg #69018)"
+        },
+        {
+         "name": "low",
+         "means": "burial mound",
+         "source": "Blackie, C. 1887, Geographical Etymology, 3rd ed. (Project Gutenberg #69018)"
+        },
+        {
+         "name": "hithe",
+         "means": "landing place",
+         "source": "Blackie, C. 1887, Geographical Etymology, 3rd ed. (Project Gutenberg #69018)"
+        },
+        {
+         "name": "wich",
+         "means": "salt works",
+         "source": "Blackie, C. 1887, Geographical Etymology, 3rd ed. (Project Gutenberg #69018)"
+        },
+        {
+         "name": "port",
+         "means": "market town",
+         "source": "Blackie, C. 1887, Geographical Etymology, 3rd ed. (Project Gutenberg #69018)"
+        },
+        {
+         "name": "mead",
+         "means": "meadow",
+         "source": "Blackie, C. 1887, Geographical Etymology, 3rd ed. (Project Gutenberg #69018)"
+        },
+        {
+         "name": "ing",
+         "means": "people of",
+         "source": "Blackie, C. 1887, Geographical Etymology, 3rd ed. (Project Gutenberg #69018)"
+        },
+        {
+         "name": "ingham",
+         "means": "home of the people of",
+         "source": "Blackie, C. 1887, Geographical Etymology, 3rd ed. (Project Gutenberg #69018)"
+        },
+        {
+         "name": "bridge",
+         "means": "bridge",
+         "source": "Blackie, C. 1887, Geographical Etymology, 3rd ed. (Project Gutenberg #69018)"
+        },
+        {
+         "name": "gate",
+         "means": "road",
+         "source": "Blackie, C. 1887, Geographical Etymology, 3rd ed. (Project Gutenberg #69018)"
+        },
+        {
+         "name": "shaw",
+         "means": "copse",
+         "source": "Blackie, C. 1887, Geographical Etymology, 3rd ed. (Project Gutenberg #69018)"
+        },
+        {
+         "name": "stoke",
+         "means": "outlying farm",
+         "source": "Blackie, C. 1887, Geographical Etymology, 3rd ed. (Project Gutenberg #69018)"
+        },
+        {
+         "name": "cote",
+         "means": "cottage",
+         "source": "Blackie, C. 1887, Geographical Etymology, 3rd ed. (Project Gutenberg #69018)"
+        },
+        {
+         "name": "hall",
+         "means": "hall",
+         "source": "Blackie, C. 1887, Geographical Etymology, 3rd ed. (Project Gutenberg #69018)"
+        },
+        {
+         "name": "ock",
+         "means": "little",
+         "source": "Blackie, C. 1887, Geographical Etymology, 3rd ed. (Project Gutenberg #69018)"
+        },
+        {
+         "name": "fold",
+         "means": "animal pen",
+         "source": "Blackie, C. 1887, Geographical Etymology, 3rd ed. (Project Gutenberg #69018)"
+        },
+        {
+         "name": "lea",
+         "means": "meadow",
+         "source": "Blackie, C. 1887, Geographical Etymology, 3rd ed. (Project Gutenberg #69018)"
+        },
+        {
+         "name": "marsh",
+         "means": "marsh",
+         "source": "Blackie, C. 1887, Geographical Etymology, 3rd ed. (Project Gutenberg #69018)"
+        },
+        {
+         "name": "moor",
+         "means": "moor",
+         "source": "Blackie, C. 1887, Geographical Etymology, 3rd ed. (Project Gutenberg #69018)"
+        },
+        {
+         "name": "pool",
+         "means": "pool",
+         "source": "Blackie, C. 1887, Geographical Etymology, 3rd ed. (Project Gutenberg #69018)"
+        },
+        {
+         "name": "side",
+         "means": "hillside",
+         "source": "Blackie, C. 1887, Geographical Etymology, 3rd ed. (Project Gutenberg #69018)"
+        },
+        {
+         "name": "stone",
+         "means": "stone",
+         "source": "Blackie, C. 1887, Geographical Etymology, 3rd ed. (Project Gutenberg #69018)"
+        },
+        {
+         "name": "tor",
+         "means": "rocky hill",
+         "source": "Blackie, C. 1887, Geographical Etymology, 3rd ed. (Project Gutenberg #69018)"
+        },
+        {
+         "name": "nell",
+         "means": "knoll",
+         "source": "Blackie, C. 1887, Geographical Etymology, 3rd ed. (Project Gutenberg #69018)"
+        },
+        {
+         "name": "hay",
+         "means": "hedged enclosure",
+         "source": "Blackie, C. 1887, Geographical Etymology, 3rd ed. (Project Gutenberg #69018)"
+        },
+        {
+         "name": "ridding",
+         "means": "cleared land",
+         "source": "Blackie, C. 1887, Geographical Etymology, 3rd ed. (Project Gutenberg #69018)"
+        },
+        {
+         "name": "wardine",
+         "means": "enclosed farm",
+         "source": "Blackie, C. 1887, Geographical Etymology, 3rd ed. (Project Gutenberg #69018)"
+        },
+        {
+         "name": "cliffe",
+         "means": "cliff",
+         "source": "Blackie, C. 1887, Geographical Etymology, 3rd ed. (Project Gutenberg #69018)"
+        }
+       ],
+       "pre": [
+        {
+         "name": "Great",
+         "means": "great",
+         "source": "Blackie, C. 1887, Geographical Etymology, 3rd ed. (Project Gutenberg #69018)"
+        },
+        {
+         "name": "Little",
+         "means": "little",
+         "source": "Blackie, C. 1887, Geographical Etymology, 3rd ed. (Project Gutenberg #69018)"
+        },
+        {
+         "name": "North",
+         "means": "north",
+         "source": "Blackie, C. 1887, Geographical Etymology, 3rd ed. (Project Gutenberg #69018)"
+        },
+        {
+         "name": "South",
+         "means": "south",
+         "source": "Blackie, C. 1887, Geographical Etymology, 3rd ed. (Project Gutenberg #69018)"
+        },
+        {
+         "name": "East",
+         "means": "east",
+         "source": "Blackie, C. 1887, Geographical Etymology, 3rd ed. (Project Gutenberg #69018)"
+        },
+        {
+         "name": "West",
+         "means": "west",
+         "source": "Blackie, C. 1887, Geographical Etymology, 3rd ed. (Project Gutenberg #69018)"
+        },
+        {
+         "name": "Upper",
+         "means": "upper",
+         "source": "Blackie, C. 1887, Geographical Etymology, 3rd ed. (Project Gutenberg #69018)"
+        },
+        {
+         "name": "Lower",
+         "means": "lower",
+         "source": "Blackie, C. 1887, Geographical Etymology, 3rd ed. (Project Gutenberg #69018)"
+        },
+        {
+         "name": "Nether",
+         "means": "lower",
+         "source": "Blackie, C. 1887, Geographical Etymology, 3rd ed. (Project Gutenberg #69018)"
+        },
+        {
+         "name": "Long",
+         "means": "long",
+         "source": "Blackie, C. 1887, Geographical Etymology, 3rd ed. (Project Gutenberg #69018)"
+        },
+        {
+         "name": "High",
+         "means": "high",
+         "source": "Blackie, C. 1887, Geographical Etymology, 3rd ed. (Project Gutenberg #69018)"
+        },
+        {
+         "name": "Old",
+         "means": "old",
+         "source": "Blackie, C. 1887, Geographical Etymology, 3rd ed. (Project Gutenberg #69018)"
+        },
+        {
+         "name": "New",
+         "means": "new",
+         "source": "Blackie, C. 1887, Geographical Etymology, 3rd ed. (Project Gutenberg #69018)"
+        },
+        {
+         "name": "Far",
+         "means": "far",
+         "source": "Blackie, C. 1887, Geographical Etymology, 3rd ed. (Project Gutenberg #69018)"
+        }
+       ],
+       "person": [
+        {
+         "name": "Halley",
+         "means": "Edmond Halley (1656-1742), astronomer",
+         "source": "Blackie, C. 1887, Geographical Etymology, 3rd ed. (Project Gutenberg #69018)"
+        },
+        {
+         "name": "Flamsteed",
+         "means": "John Flamsteed (1646-1719), astronomer",
+         "source": "Blackie, C. 1887, Geographical Etymology, 3rd ed. (Project Gutenberg #69018)"
+        },
+        {
+         "name": "Bradley",
+         "means": "James Bradley (1693-1762), astronomer",
+         "source": "Blackie, C. 1887, Geographical Etymology, 3rd ed. (Project Gutenberg #69018)"
+        },
+        {
+         "name": "Herschel",
+         "means": "William Herschel (1738-1822), astronomer",
+         "source": "Blackie, C. 1887, Geographical Etymology, 3rd ed. (Project Gutenberg #69018)"
+        },
+        {
+         "name": "Horrocks",
+         "means": "Jeremiah Horrocks (1618-1641), astronomer",
+         "source": "Blackie, C. 1887, Geographical Etymology, 3rd ed. (Project Gutenberg #69018)"
+        },
+        {
+         "name": "Hooke",
+         "means": "Robert Hooke (1635-1703), natural philosopher",
+         "source": "Blackie, C. 1887, Geographical Etymology, 3rd ed. (Project Gutenberg #69018)"
+        },
+        {
+         "name": "Maskelyne",
+         "means": "Nevil Maskelyne (1732-1811), astronomer",
+         "source": "Blackie, C. 1887, Geographical Etymology, 3rd ed. (Project Gutenberg #69018)"
+        },
+        {
+         "name": "Airy",
+         "means": "George Airy (1801-1892), astronomer",
+         "source": "Blackie, C. 1887, Geographical Etymology, 3rd ed. (Project Gutenberg #69018)"
+        },
+        {
+         "name": "Adams",
+         "means": "John Couch Adams (1819-1892), astronomer",
+         "source": "Blackie, C. 1887, Geographical Etymology, 3rd ed. (Project Gutenberg #69018)"
+        },
+        {
+         "name": "Lassell",
+         "means": "William Lassell (1799-1880), astronomer",
+         "source": "Blackie, C. 1887, Geographical Etymology, 3rd ed. (Project Gutenberg #69018)"
+        },
+        {
+         "name": "Huggins",
+         "means": "William Huggins (1824-1910), astronomer",
+         "source": "Blackie, C. 1887, Geographical Etymology, 3rd ed. (Project Gutenberg #69018)"
+        },
+        {
+         "name": "Lockyer",
+         "means": "Norman Lockyer (1836-1920), astronomer",
+         "source": "Blackie, C. 1887, Geographical Etymology, 3rd ed. (Project Gutenberg #69018)"
+        },
+        {
+         "name": "Harriot",
+         "means": "Thomas Harriot (1560-1621), astronomer",
+         "source": "Blackie, C. 1887, Geographical Etymology, 3rd ed. (Project Gutenberg #69018)"
+        },
+        {
+         "name": "Digges",
+         "means": "Thomas Digges (1546-1595), astronomer",
+         "source": "Blackie, C. 1887, Geographical Etymology, 3rd ed. (Project Gutenberg #69018)"
+        },
+        {
+         "name": "Goodricke",
+         "means": "John Goodricke (1764-1786), astronomer",
+         "source": "Blackie, C. 1887, Geographical Etymology, 3rd ed. (Project Gutenberg #69018)"
+        },
+        {
+         "name": "Pigott",
+         "means": "Edward Pigott (1753-1825), astronomer",
+         "source": "Blackie, C. 1887, Geographical Etymology, 3rd ed. (Project Gutenberg #69018)"
+        },
+        {
+         "name": "Michell",
+         "means": "John Michell (1724-1793), natural philosopher",
+         "source": "Blackie, C. 1887, Geographical Etymology, 3rd ed. (Project Gutenberg #69018)"
+        },
+        {
+         "name": "Somerville",
+         "means": "Mary Somerville (1780-1872), astronomer",
+         "source": "Blackie, C. 1887, Geographical Etymology, 3rd ed. (Project Gutenberg #69018)"
+        },
+        {
+         "name": "Eddington",
+         "means": "Arthur Eddington (1882-1944), astrophysicist",
+         "source": "Blackie, C. 1887, Geographical Etymology, 3rd ed. (Project Gutenberg #69018)"
+        },
+        {
+         "name": "Jeans",
+         "means": "James Jeans (1877-1946), astrophysicist",
+         "source": "Blackie, C. 1887, Geographical Etymology, 3rd ed. (Project Gutenberg #69018)"
+        },
+        {
+         "name": "Hind",
+         "means": "John Russell Hind (1823-1895), astronomer",
+         "source": "Blackie, C. 1887, Geographical Etymology, 3rd ed. (Project Gutenberg #69018)"
+        },
+        {
+         "name": "Challis",
+         "means": "James Challis (1803-1882), astronomer",
+         "source": "Blackie, C. 1887, Geographical Etymology, 3rd ed. (Project Gutenberg #69018)"
+        },
+        {
+         "name": "Cook",
+         "means": "James Cook (1728-1779), navigator",
+         "source": "Blackie, C. 1887, Geographical Etymology, 3rd ed. (Project Gutenberg #69018)"
+        },
+        {
+         "name": "Franklin",
+         "means": "John Franklin (1786-1847), explorer",
+         "source": "Blackie, C. 1887, Geographical Etymology, 3rd ed. (Project Gutenberg #69018)"
+        },
+        {
+         "name": "Flinders",
+         "means": "Matthew Flinders (1774-1814), navigator",
+         "source": "Blackie, C. 1887, Geographical Etymology, 3rd ed. (Project Gutenberg #69018)"
+        },
+        {
+         "name": "Vancouver",
+         "means": "George Vancouver (1757-1798), navigator",
+         "source": "Blackie, C. 1887, Geographical Etymology, 3rd ed. (Project Gutenberg #69018)"
+        },
+        {
+         "name": "Hudson",
+         "means": "Henry Hudson (c.1565-1611), navigator",
+         "source": "Blackie, C. 1887, Geographical Etymology, 3rd ed. (Project Gutenberg #69018)"
+        },
+        {
+         "name": "Frobisher",
+         "means": "Martin Frobisher (c.1535-1594), navigator",
+         "source": "Blackie, C. 1887, Geographical Etymology, 3rd ed. (Project Gutenberg #69018)"
+        },
+        {
+         "name": "Dampier",
+         "means": "William Dampier (1651-1715), navigator",
+         "source": "Blackie, C. 1887, Geographical Etymology, 3rd ed. (Project Gutenberg #69018)"
+        },
+        {
+         "name": "Parry",
+         "means": "William Parry (1790-1855), explorer",
+         "source": "Blackie, C. 1887, Geographical Etymology, 3rd ed. (Project Gutenberg #69018)"
+        },
+        {
+         "name": "Shackleton",
+         "means": "Ernest Shackleton (1874-1922), explorer",
+         "source": "Blackie, C. 1887, Geographical Etymology, 3rd ed. (Project Gutenberg #69018)"
+        },
+        {
+         "name": "Livingstone",
+         "means": "David Livingstone (1813-1873), explorer",
+         "source": "Blackie, C. 1887, Geographical Etymology, 3rd ed. (Project Gutenberg #69018)"
+        },
+        {
+         "name": "Bird",
+         "means": "Isabella Bird (1831-1904), explorer",
+         "source": "Blackie, C. 1887, Geographical Etymology, 3rd ed. (Project Gutenberg #69018)"
+        },
+        {
+         "name": "Kingsley",
+         "means": "Mary Kingsley (1862-1900), explorer",
+         "source": "Blackie, C. 1887, Geographical Etymology, 3rd ed. (Project Gutenberg #69018)"
+        },
+        {
+         "name": "Bass",
+         "means": "George Bass (1771-1803), navigator",
+         "source": "Blackie, C. 1887, Geographical Etymology, 3rd ed. (Project Gutenberg #69018)"
+        },
+        {
+         "name": "Speke",
+         "means": "John Hanning Speke (1827-1864), explorer",
+         "source": "Blackie, C. 1887, Geographical Etymology, 3rd ed. (Project Gutenberg #69018)"
+        }
+       ]
+      },
+      "forms": {
+       "default": [
+        [
+         "{list:first}{list:end}",
+         6
+        ],
+        [
+         "{list:pre} {list:first}{list:end}",
+         1
+        ]
+       ],
+       "planet": [
+        [
+         "{list:first}{list:end}",
+         6
+        ],
+        [
+         "{list:pre} {list:first}{list:end}",
+         1
+        ]
+       ],
+       "star": [
+        [
+         "{list:first}{list:end}",
+         1
+        ]
+       ],
+       "moon": [
+        [
+         "{list:first}{list:end}",
+         1
+        ]
+       ],
+       "continent": [
+        [
+         "{list:first}{list:end}",
+         1
+        ]
+       ],
+       "settlement": [
+        [
+         "{list:first}{list:end}",
+         6
+        ],
+        [
+         "{list:pre} {list:first}{list:end}",
+         2
+        ]
+       ],
+       "peak": [
+        [
+         "Mount {list:first}{list:end}",
+         3
+        ],
+        [
+         "{list:first}{list:end} Pike",
+         1
+        ],
+        [
+         "{list:first}{list:end} Fell",
+         1
+        ]
+       ],
+       "summit": [
+        [
+         "Mount {list:first}{list:end}",
+         1
+        ]
+       ],
+       "shield": [
+        [
+         "Mount {list:first}{list:end}",
+         1
+        ]
+       ],
+       "range": [
+        [
+         "{list:first}{list:end} Hills",
+         2
+        ],
+        [
+         "{list:first}{list:end} Fells",
+         1
+        ],
+        [
+         "{list:first}{list:end} Range",
+         1
+        ]
+       ],
+       "ocean": [
+        [
+         "{list:first}{list:end} Ocean",
+         1
+        ]
+       ],
+       "sea": [
+        [
+         "Sea of {list:first}{list:end}",
+         1
+        ],
+        [
+         "{list:first}{list:end} Sea",
+         1
+        ]
+       ],
+       "lake": [
+        [
+         "Lake {list:first}{list:end}",
+         1
+        ],
+        [
+         "{list:first}{list:end} Water",
+         1
+        ]
+       ],
+       "island": [
+        [
+         "{list:first}{list:end} Island",
+         1
+        ],
+        [
+         "{list:first}{list:end} Isle",
+         1
+        ]
+       ],
+       "crater": [
+        [
+         "{list:person}",
+         2
+        ],
+        [
+         "{list:first}{list:end}",
+         1
+        ]
+       ],
+       "deep": [
+        [
+         "{list:first}{list:end} Deep",
+         1
+        ]
+       ],
+       "ice-cap": [
+        [
+         "{list:first}{list:end} Ice",
+         1
+        ]
+       ],
+       "plains": [
+        [
+         "{list:first}{list:end} Plain",
+         1
+        ],
+        [
+         "{list:first}{list:end} Flats",
+         1
+        ]
+       ],
+       "rift": [
+        [
+         "{list:first}{list:end} Rift",
+         1
+        ]
+       ],
+       "chasma": [
+        [
+         "{list:first}{list:end} Gorge",
+         1
+        ]
+       ],
+       "scarp": [
+        [
+         "{list:first}{list:end} Edge",
+         1
+        ],
+        [
+         "{list:first}{list:end} Scar",
+         1
+        ]
+       ],
+       "port": [
+        [
+         "Port {list:first}{list:end}",
+         1
+        ]
+       ],
+       "mine": [
+        [
+         "{list:first}{list:end} Mine",
+         1
+        ],
+        [
+         "{list:first}{list:end} Pit",
+         1
+        ]
+       ],
+       "base": [
+        [
+         "{list:first}{list:end} Base",
+         1
+        ]
+       ]
+      }
+     },
+     {
+      "id": "oluen",
+      "label": "Oluen",
+      "kind": "invented",
+      "script": "latin",
+      "about": "A soft, flowing tongue of open syllables and long vowels, with no hard stops. The thing comes first and the describing word after it. An original invented language (base-names, NM3d); not from any published setting.",
+      "sounds": {
+       "classes": {
+        "C": [
+         [
+          "l",
+          5
+         ],
+         [
+          "n",
+          5
+         ],
+         [
+          "m",
+          4
+         ],
+         [
+          "s",
+          4
+         ],
+         [
+          "r",
+          4
+         ],
+         [
+          "th",
+          3
+         ],
+         [
+          "v",
+          3
+         ],
+         [
+          "sh",
+          2
+         ],
+         [
+          "y",
+          2
+         ],
+         [
+          "h",
+          2
+         ]
+        ],
+        "V": [
+         [
+          "a",
+          6
+         ],
+         [
+          "e",
+          5
+         ],
+         [
+          "i",
+          4
+         ],
+         [
+          "o",
+          3
+         ],
+         [
+          "u",
+          2
+         ],
+         [
+          "ae",
+          2
+         ],
+         [
+          "ia",
+          2
+         ],
+         [
+          "ue",
+          1
+         ]
+        ],
+        "E": [
+         [
+          "n",
+          4
+         ],
+         [
+          "l",
+          4
+         ],
+         [
+          "s",
+          2
+         ],
+         [
+          "th",
+          2
+         ],
+         [
+          "r",
+          3
+         ]
+        ]
+       },
+       "shapes": [
+        [
+         "V",
+         1
+        ],
+        [
+         "CV",
+         5
+        ],
+        [
+         "CVE",
+         3
+        ],
+        [
+         "VE",
+         1
+        ]
+       ],
+       "length": [
+        2,
+        4
+       ],
+       "never": [
+        [
+         "a",
+         "a"
+        ],
+        [
+         "e",
+         "e"
+        ],
+        [
+         "i",
+         "i"
+        ],
+        [
+         "o",
+         "o"
+        ],
+        [
+         "u",
+         "u"
+        ],
+        [
+         "ae",
+         "a"
+        ],
+        [
+         "ae",
+         "e"
+        ],
+        [
+         "ia",
+         "a"
+        ],
+        [
+         "ia",
+         "i"
+        ],
+        [
+         "ue",
+         "e"
+        ],
+        [
+         "ue",
+         "u"
+        ],
+        [
+         "h",
+         "h"
+        ]
+       ],
+       "stress": "penult",
+       "say": {
+        "th": "th as in thin",
+        "sh": "sh as in ship",
+        "y": "y as in yes",
+        "r": "a light tap",
+        "ae": "like the word eye",
+        "ia": "ee-ah, run together",
+        "ue": "weh",
+        "a": "ah",
+        "e": "eh",
+        "i": "ee",
+        "o": "oh",
+        "u": "oo"
+       },
+       "ipa": {
+        "l": "l",
+        "m": "m",
+        "n": "n",
+        "s": "s",
+        "th": "θ",
+        "v": "v",
+        "y": "j",
+        "r": "ɾ",
+        "h": "h",
+        "sh": "ʃ",
+        "a": "a",
+        "e": "e",
+        "i": "i",
+        "o": "o",
+        "u": "u",
+        "ae": "aɪ",
+        "ia": "ja",
+        "ue": "we"
+       }
+      },
+      "means": {
+       "red": "sora",
+       "dark": "nol",
+       "light": "lia",
+       "cold": "yeth",
+       "great": "vael",
+       "small": "ni",
+       "new": "nae",
+       "old": "oth",
+       "deep": "lomu",
+       "first": "an",
+       "second": "es",
+       "third": "ir",
+       "mountain": "thael",
+       "stone": "ren",
+       "water": "mial",
+       "sea": "vuen",
+       "river": "rial",
+       "ice": "yel",
+       "sand": "sia",
+       "plain": "lan",
+       "fire": "shira",
+       "wind": "hae",
+       "storm": "vorus",
+       "sky": "lue",
+       "star": "sil",
+       "sun": "aeli",
+       "moon": "miel",
+       "home": "ena",
+       "grove": "losha",
+       "mother": "ama",
+       "north": "ith",
+       "south": "osa"
+      },
+      "forms": {
+       "star": [
+        [
+         "{word}",
+         1
+        ]
+       ],
+       "planet": [
+        [
+         "{word}",
+         1
+        ]
+       ],
+       "moon": [
+        [
+         "{means:moon} {parent}",
+         1
+        ]
+       ],
+       "belt": [
+        [
+         "{means:stone}{means:sky} {word}",
+         1
+        ]
+       ],
+       "peak": [
+        [
+         "{means:mountain}{means:colour?}",
+         1
+        ],
+        [
+         "{means:mountain} {word}",
+         1
+        ]
+       ],
+       "range": [
+        [
+         "{word} {means:mountain}{means:great}",
+         1
+        ]
+       ],
+       "sea": [
+        [
+         "{means:sea} {word}",
+         1
+        ]
+       ],
+       "ocean": [
+        [
+         "{means:sea}{means:great}",
+         1
+        ]
+       ],
+       "lake": [
+        [
+         "{means:water}{means:small} {word}",
+         1
+        ]
+       ],
+       "river": [
+        [
+         "{means:river} {word}",
+         1
+        ]
+       ],
+       "crater": [
+        [
+         "{word}",
+         1
+        ]
+       ],
+       "plains": [
+        [
+         "{means:plain} {word}",
+         1
+        ]
+       ],
+       "settlement": [
+        [
+         "{means:home} {word}",
+         1
+        ]
+       ],
+       "port": [
+        [
+         "{means:home}{means:sky} {word}",
+         1
+        ]
+       ],
+       "base": [
+        [
+         "{word} {means:grove}",
+         1
+        ]
+       ],
+       "default": [
+        [
+         "{word}",
+         1
+        ]
+       ]
+      },
+      "follow": [
+       "moon"
+      ]
+     },
+     {
+      "id": "vesh",
+      "label": "Vesh",
+      "kind": "invented",
+      "script": "latin",
+      "about": "A hive-building people's tongue. Guttural, with one click and doubled stops. Short hard words; the describing word comes first, the thing last. An original invented language (base-names, NM3d); not from any published setting.",
+      "sounds": {
+       "classes": {
+        "C": [
+         [
+          "k",
+          5
+         ],
+         [
+          "kh",
+          4
+         ],
+         [
+          "r",
+          4
+         ],
+         [
+          "z",
+          4
+         ],
+         [
+          "g",
+          3
+         ],
+         [
+          "q",
+          3
+         ],
+         [
+          "gh",
+          2
+         ],
+         [
+          "tk",
+          2
+         ],
+         [
+          "x",
+          1
+         ]
+        ],
+        "V": [
+         [
+          "a",
+          6
+         ],
+         [
+          "i",
+          3
+         ],
+         [
+          "u",
+          3
+         ],
+         [
+          "aa",
+          2
+         ]
+        ],
+        "E": [
+         [
+          "k",
+          4
+         ],
+         [
+          "z",
+          3
+         ],
+         [
+          "kh",
+          3
+         ],
+         [
+          "q",
+          2
+         ],
+         [
+          "rr",
+          2
+         ]
+        ]
+       },
+       "shapes": [
+        [
+         "CV",
+         4
+        ],
+        [
+         "CVE",
+         5
+        ],
+        [
+         "VE",
+         1
+        ]
+       ],
+       "length": [
+        2,
+        3
+       ],
+       "never": [
+        [
+         "aa",
+         "aa"
+        ],
+        [
+         "aa",
+         "a"
+        ],
+        [
+         "a",
+         "aa"
+        ],
+        [
+         "a",
+         "a"
+        ],
+        [
+         "i",
+         "i"
+        ],
+        [
+         "u",
+         "u"
+        ],
+        [
+         "x",
+         "x"
+        ],
+        [
+         "k",
+         "k"
+        ],
+        [
+         "k",
+         "kh"
+        ],
+        [
+         "kh",
+         "kh"
+        ],
+        [
+         "q",
+         "q"
+        ],
+        [
+         "z",
+         "z"
+        ],
+        [
+         "rr",
+         "r"
+        ],
+        [
+         "rr",
+         "rr"
+        ]
+       ],
+       "stress": "first",
+       "say": {
+        "kh": "ch as in loch",
+        "gh": "a voiced kh, like a gargle",
+        "q": "a k made far back in the throat",
+        "r": "a single tap",
+        "rr": "a rolled r",
+        "tk": "t and k at once",
+        "x": "a sharp tongue click",
+        "aa": "a long ah",
+        "a": "ah",
+        "i": "ee",
+        "u": "oo"
+       },
+       "ipa": {
+        "k": "k",
+        "kh": "x",
+        "g": "ɡ",
+        "gh": "ɣ",
+        "q": "q",
+        "r": "ɾ",
+        "rr": "r",
+        "z": "z",
+        "tk": "t͡k",
+        "x": "ǂ",
+        "a": "a",
+        "i": "i",
+        "u": "u",
+        "aa": "aː"
+       }
+      },
+      "means": {
+       "red": "khaz",
+       "dark": "ghuk",
+       "light": "xi",
+       "cold": "kiz",
+       "great": "gaarr",
+       "small": "zi",
+       "new": "tki",
+       "old": "ghaarr",
+       "deep": "guq",
+       "first": "ka",
+       "second": "zu",
+       "third": "ri",
+       "mountain": "rak",
+       "stone": "rakh",
+       "water": "tkiz",
+       "sea": "zuq",
+       "river": "ziq",
+       "ice": "xikh",
+       "sand": "zak",
+       "plain": "gaz",
+       "fire": "ghaz",
+       "wind": "ruz",
+       "storm": "ghurr",
+       "sky": "xaak",
+       "star": "qirr",
+       "sun": "qaaz",
+       "moon": "qi",
+       "home": "uq",
+       "hive": "tkuq",
+       "mother": "aaq",
+       "north": "ukh",
+       "south": "az"
+      },
+      "forms": {
+       "star": [
+        [
+         "{word}",
+         1
+        ]
+       ],
+       "planet": [
+        [
+         "{word}",
+         1
+        ]
+       ],
+       "moon": [
+        [
+         "{word}",
+         1
+        ]
+       ],
+       "belt": [
+        [
+         "{word} {means:stone}",
+         1
+        ]
+       ],
+       "peak": [
+        [
+         "{means:colour?}{means:mountain}",
+         1
+        ],
+        [
+         "{word}{means:mountain}",
+         1
+        ]
+       ],
+       "range": [
+        [
+         "{means:great}{means:mountain} {word}",
+         1
+        ]
+       ],
+       "sea": [
+        [
+         "{word}{means:sea}",
+         1
+        ]
+       ],
+       "ocean": [
+        [
+         "{means:great}{means:sea}",
+         1
+        ]
+       ],
+       "lake": [
+        [
+         "{means:small}{means:water} {word}",
+         1
+        ]
+       ],
+       "river": [
+        [
+         "{word}{means:river}",
+         1
+        ]
+       ],
+       "crater": [
+        [
+         "{word}",
+         1
+        ]
+       ],
+       "plains": [
+        [
+         "{word}{means:plain}",
+         1
+        ]
+       ],
+       "settlement": [
+        [
+         "{word}{means:home}",
+         1
+        ]
+       ],
+       "port": [
+        [
+         "{means:sky}{means:home} {word}",
+         1
+        ]
+       ],
+       "base": [
+        [
+         "{word}{means:hive}",
+         1
+        ]
+       ],
+       "default": [
+        [
+         "{word}",
+         1
+        ]
+       ]
+      },
+      "follow": []
      }
     ],
     "avoid": [
