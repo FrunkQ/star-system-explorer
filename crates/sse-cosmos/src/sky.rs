@@ -54,17 +54,8 @@ pub struct SkyParams {
 #[derive(Clone, PartialEq, Debug, Serialize, Deserialize)]
 #[serde(default)]
 pub struct SatelliteParams {
-    /// Unevolved subhalo mass function, dN/d ln ψ = N0 x^-α exp(-k x³),
-    /// x = ψ / α, ψ = m_acc / M0 (Giocoli, Tormen and van den Bosch 2008,
-    /// eq. 2, doi:10.1111/j.1365-2966.2008.13182.x): N0 0.21, α 0.8, k 6.283.
-    pub shmf_n0: f64,
-    pub shmf_alpha: f64,
-    pub shmf_k: f64,
-    /// Smallest subhalo drawn, as ψ (1e-3 of a 1e12 M☉ host is 1e9 M☉,
-    /// about where galaxies brighter than the classical dwarfs live).
-    pub psi_min: f64,
-    /// ln ψ bins per decade for the keyed Poisson counts.
-    pub bins_per_decade: u32,
+    // The subhaloes themselves come from the host's assembly tree
+    // (`assembly::tree`, GH1); these are the processes acting on them.
     /// Merging by dynamical friction after infall (Boylan-Kolchin, Ma and
     /// Quataert 2008, eqs. 5 and 6, doi:10.1111/j.1365-2966.2007.12530.x):
     /// τ/τ_dyn = A (M/m)^b / ln(1 + M/m) exp(c η) (r_c/r_vir)^d with
@@ -91,15 +82,8 @@ pub struct SatelliteParams {
 }
 
 impl Default for SatelliteParams {
-    // 6.283 is Giocoli's fitted constant as printed, not 2π.
-    #[allow(clippy::approx_constant)]
     fn default() -> Self {
         SatelliteParams {
-            shmf_n0: 0.21,
-            shmf_alpha: 0.8,
-            shmf_k: 6.283,
-            psi_min: 1.0e-3,
-            bins_per_decade: 8,
             df_a: 0.216,
             df_b: 1.3,
             df_c: 1.9,

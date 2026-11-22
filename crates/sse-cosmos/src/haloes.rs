@@ -50,6 +50,9 @@ pub struct HaloParams {
     pub merger_z_max: f64,
     /// Neighbour search radius, Mpc.
     pub neighbour_mpc: f64,
+    /// GH1: how each halo's assembly tree is drawn.
+    #[serde(default)]
+    pub assembly: crate::assembly::AssemblyParams,
 }
 
 impl Default for HaloParams {
@@ -67,6 +70,7 @@ impl Default for HaloParams {
             major_ratio: 0.25,
             merger_z_max: 6.0,
             neighbour_mpc: 3.0,
+            assembly: Default::default(),
         }
     }
 }
@@ -350,6 +354,12 @@ impl Haloes<'_> {
     /// its own keyed mergers (for reference galaxies and volume sums).
     pub fn median(&self, mass: f64, key: &str) -> Halo {
         let addr = self.universe.child_key("halo", key).expect("valid key");
+        self.median_at(mass, &addr)
+    }
+
+    /// As `median`, at a given address (a progenitor in an assembly tree).
+    pub fn median_at(&self, mass: f64, addr: &Address) -> Halo {
+        let addr = addr.clone();
         let (alpha, beta) = correa(self.cosmo, mass, 0.0);
         let mut h = Halo {
             address: addr.to_string(),
