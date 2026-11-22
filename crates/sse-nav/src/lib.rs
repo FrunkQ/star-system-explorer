@@ -33,7 +33,7 @@ use std::collections::BTreeMap;
 pub const NAV_VERSION: &str = "nav-v1";
 pub const M_SUN_KG: f64 = 1.988_47e30;
 pub const M_EARTH_KG: f64 = 5.972_2e24;
-pub const G0: f64 = 9.806_65;
+pub const G0: f64 = sse_core::sheet::G0;
 
 // ------------------------------------------------------------------ settings
 

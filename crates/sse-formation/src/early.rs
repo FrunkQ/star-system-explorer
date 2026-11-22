@@ -15,11 +15,11 @@ use sse_core::math as m;
 use sse_core::Address;
 
 pub const M_EARTH_KG: f64 = 5.972_2e24;
-pub const R_EARTH_M: f64 = 6.371_0e6;
+pub const R_EARTH_M: f64 = sse_core::sheet::R_EARTH_MEAN;
 const MSUN_IN_EARTH: f64 = 332_946.0;
-const G: f64 = 6.674_30e-11;
-const AU_M: f64 = 1.495_978_707e11;
-const L_SUN_W: f64 = 3.828e26;
+const G: f64 = sse_core::sheet::G;
+const AU_M: f64 = sse_core::sheet::AU;
+const L_SUN_W: f64 = sse_core::sheet::L_SUN;
 const MYR_S: f64 = 3.155_76e13;
 /// Earth's ocean mass, kg.
 pub const EARTH_OCEAN_KG: f64 = 1.4e21;

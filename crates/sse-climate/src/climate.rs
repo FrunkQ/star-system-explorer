@@ -124,7 +124,7 @@ pub struct Climate {
     pub why: Vec<String>,
 }
 
-const YEAR_S: f64 = 3.15576e7;
+const YEAR_S: f64 = sse_core::sheet::YR_JULIAN;
 
 /// D1: the one climate of a world at an epoch.
 pub fn orbit(cs: &ClimateSettings, c: &Conditions, epoch_myr: f64) -> Climate {

@@ -41,10 +41,10 @@ use sse_core::{Address, Draws, Seed, Stream};
 use std::collections::BTreeMap;
 
 const M_SUN_KG: f64 = 1.988_47e30;
-const C_M_S: f64 = 299_792_458.0;
-const G_SI: f64 = 6.674_30e-11;
-const SIGMA_SB: f64 = 5.670_374_419e-8;
-const YEAR_S: f64 = 31_557_600.0;
+const C_M_S: f64 = sse_core::sheet::C;
+const G_SI: f64 = sse_core::sheet::G;
+const SIGMA_SB: f64 = sse_core::sheet::SIGMA_SB;
+const YEAR_S: f64 = sse_core::sheet::YR_JULIAN;
 /// Eddington luminosity per solar mass (ionised hydrogen), W.
 pub const L_EDD_PER_MSUN: f64 = 1.257e31;
 /// Eddington time sigma_T c / (4 pi G m_p), Gyr.

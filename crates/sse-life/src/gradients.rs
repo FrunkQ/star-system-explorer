@@ -27,7 +27,7 @@ use sse_core::math as m;
 use std::collections::BTreeSet;
 
 pub const MODEL: &str = "gradients/1";
-const YEAR_S: f64 = 3.155_76e7;
+const YEAR_S: f64 = sse_core::sheet::YR_JULIAN;
 const R_GAS: f64 = sse_atoms::chem::R_GAS;
 
 /// A light gradient (`life_gradients.light`).
