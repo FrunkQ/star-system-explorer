@@ -595,3 +595,57 @@ fn a_drifting_g_changes_the_year_by_keplers_factor_at_each_date() {
         );
     }
 }
+
+/// ND3: an Equation reads G through a visible Look up block, so a what-if
+/// that changes G on the sheet changes its result with no edit to the pack;
+/// with the real sheet it gives the formula's own value.
+#[test]
+fn an_equation_follows_a_looked_up_constant() {
+    let speed = |edit: bool| {
+        let mut packs = vec![
+            pack("tests/fixtures/packs/base-physics.json"),
+            pack("packs/base-reference/pack.json"),
+            pack("tests/fixtures/packs/equation-flows.json"),
+        ];
+        if edit {
+            let mut g = pack("tests/fixtures/packs/reference-strong-gravity.json");
+            g["provides"]["reference"]["constants"][0]["value"]["replaces"] =
+                "sse.base-reference".into();
+            packs.push(g);
+        }
+        let mut k = crate::Kernel::new();
+        let r = send(
+            &mut k,
+            serde_json::json!({"op": "load_stack", "packs": packs}),
+        );
+        assert_eq!(r["type"], "stack_loaded", "{r}");
+        let v = derive(
+            &mut k,
+            "test.escape-speed",
+            serde_json::json!({"mass": {"value": 1, "unit": "m_earth"}, "radius": {"value": 6371, "unit": "km"}}),
+        );
+        v["test.escape_speed"]["value"].as_f64().unwrap()
+    };
+    let (real, strong) = (speed(false), speed(true));
+    let g = sse_core::quantity::consts::G;
+    let want = sse_core::math::sqrt(2.0 * g * (sse_core::quantity::consts::GM_EARTH / g) / 6.371e6);
+    assert_eq!(real, want);
+    assert!(
+        (strong / real - std::f64::consts::SQRT_2).abs() < 1e-12,
+        "{strong} / {real}"
+    );
+    // An Equation with a letter typed in its formula, or a missing source, is
+    // refused when the stack loads.
+    let mut p = pack("tests/fixtures/packs/equation-flows.json");
+    p["provides"]["flows"][0]["nodes"][1]["config"]["formula"] =
+        "v = sqrt(2 * G * M / 6371000)".into();
+    let mut k = crate::Kernel::new();
+    let r = send(
+        &mut k,
+        serde_json::json!({"op": "load_stack", "packs": [
+            pack("tests/fixtures/packs/base-physics.json"),
+            pack("packs/base-reference/pack.json"), p]}),
+    );
+    assert_eq!(r["type"], "stack_rejected", "{r}");
+    assert!(r.to_string().contains("give this letter a source"), "{r}");
+}

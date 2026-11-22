@@ -74,6 +74,138 @@ impl Dimension {
     }
 }
 
+/// A unit written as text, as an Equation's ports and the sheet write them:
+/// symbols with an optional power (`m3`, `m-3`, `m^3`), separated by spaces
+/// or `*`, and an optional `/` after which every symbol divides (`g/cm3`,
+/// `eV cm3/g`, `W m-2 K-4`, `m3 kg-1 s-2`). `1` or nothing is a pure number.
+/// SI symbols take the prefixes G M k c m u µ n p f; a few others are known
+/// by name (g, eV, erg, bar, au, pc, ly, yr, day). Returns the scale to SI
+/// and the dimension. Units with an offset (degrees Celsius) are not units
+/// here. The scale is built by plain multiplication, the same on every device.
+pub fn parse_unit(text: &str) -> Result<(f64, Dimension), String> {
+    use consts::*;
+    use Dimension as D;
+    const A: D = D([0, 0, 0, 1, 0, 0, 0]);
+    const MOL: D = D([0, 0, 0, 0, 0, 1, 0]);
+    const CD: D = D([0, 0, 0, 0, 0, 0, 1]);
+    const ENERGY: D = D([2, 1, -2, 0, 0, 0, 0]);
+    // (symbol, scale, dimension, takes prefixes)
+    let base: [(&str, f64, D, bool); 28] = [
+        ("m", 1.0, D::LENGTH, true),
+        ("g", 1e-3, D::MASS, true),
+        ("s", 1.0, D::TIME, true),
+        ("A", 1.0, A, true),
+        ("K", 1.0, D::TEMPERATURE, true),
+        ("mol", 1.0, MOL, true),
+        ("cd", 1.0, CD, false),
+        ("J", 1.0, ENERGY, true),
+        ("W", 1.0, D::POWER, true),
+        ("N", 1.0, D([1, 1, -2, 0, 0, 0, 0]), true),
+        ("Pa", 1.0, D::PRESSURE, true),
+        ("Hz", 1.0, D([0, 0, -1, 0, 0, 0, 0]), true),
+        ("C", 1.0, D([0, 0, 1, 1, 0, 0, 0]), true),
+        ("V", 1.0, D([2, 1, -3, -1, 0, 0, 0]), true),
+        ("S", 1.0, D([-2, -1, 3, 2, 0, 0, 0]), true),
+        ("T", 1.0, D::MAGNETIC_FIELD, true),
+        ("H", 1.0, D([2, 1, -2, -2, 0, 0, 0]), true),
+        ("F", 1.0, D([-2, -1, 4, 2, 0, 0, 0]), true),
+        ("Wb", 1.0, D([2, 1, -2, -1, 0, 0, 0]), true),
+        ("ohm", 1.0, D([2, 1, -3, -2, 0, 0, 0]), true),
+        ("eV", crate::sheet::E, ENERGY, true),
+        ("erg", 1e-7, ENERGY, false),
+        ("bar", 1e5, D::PRESSURE, true),
+        ("au", AU, D::LENGTH, false),
+        ("pc", 648_000.0 / crate::math::PI * AU, D::LENGTH, true),
+        ("ly", C * JULIAN_YEAR, D::LENGTH, false),
+        ("yr", JULIAN_YEAR, D::TIME, true),
+        ("day", DAY, D::TIME, false),
+    ];
+    let prefixes: [(&str, f64); 11] = [
+        ("G", 1e9),
+        ("M", 1e6),
+        ("k", 1e3),
+        ("c", 1e-2),
+        ("m", 1e-3),
+        ("u", 1e-6),
+        ("µ", 1e-6),
+        ("n", 1e-9),
+        ("p", 1e-12),
+        ("f", 1e-15),
+        ("", 1.0),
+    ];
+    let find = |sym: &str| -> Option<(f64, D)> {
+        if let Some(b) = base.iter().find(|b| b.0 == sym) {
+            return Some((b.1, b.2));
+        }
+        for (p, f) in prefixes.iter().filter(|p| !p.0.is_empty()) {
+            if let Some(rest) = sym.strip_prefix(p) {
+                if let Some(b) = base.iter().find(|b| b.0 == rest && b.3) {
+                    return Some((f * b.1, b.2));
+                }
+            }
+        }
+        None
+    };
+    let (num, den) = match text.split_once('/') {
+        Some((_, b)) if b.contains('/') => {
+            return Err(format!("unit {text:?}: write one `/` at most"));
+        }
+        Some((a, b)) => (a, b),
+        None => (text, ""),
+    };
+    let mut scale = 1.0;
+    let mut dim = D::NONE;
+    for (part, sign) in [(num, 1i8), (den, -1i8)] {
+        for tok in part.split(|c: char| c.is_whitespace() || c == '*' || c == '·') {
+            if tok.is_empty() || tok == "1" {
+                continue;
+            }
+            let split = tok
+                .find(|c: char| c == '-' || c == '^' || c.is_ascii_digit())
+                .unwrap_or(tok.len());
+            let (sym, exp) = tok.split_at(split);
+            let exp = exp.strip_prefix('^').unwrap_or(exp);
+            let n: i8 = if exp.is_empty() {
+                1
+            } else {
+                exp.parse()
+                    .map_err(|_| format!("unit {text:?}: cannot read the power in {tok:?}"))?
+            };
+            let (f, d) = find(sym)
+                .ok_or_else(|| format!("unit {text:?}: {sym:?} is not a unit this reader knows"))?;
+            let n = n * sign;
+            dim = dim.mul(d.powi(n));
+            for _ in 0..n.unsigned_abs() {
+                if n > 0 {
+                    scale *= f;
+                } else {
+                    scale /= f;
+                }
+            }
+        }
+    }
+    Ok((scale, dim))
+}
+
+/// A dimension written as a unit [`parse_unit`] reads back (`m3 kg-1 s-2`).
+pub fn si_unit(d: Dimension) -> String {
+    if d == Dimension::NONE {
+        return "1".into();
+    }
+    d.0.iter()
+        .zip(BASE)
+        .filter(|(e, _)| **e != 0)
+        .map(|(e, b)| {
+            if *e == 1 {
+                b.to_string()
+            } else {
+                format!("{b}{e}")
+            }
+        })
+        .collect::<Vec<_>>()
+        .join(" ")
+}
+
 impl fmt::Display for Dimension {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         if *self == Dimension::NONE {

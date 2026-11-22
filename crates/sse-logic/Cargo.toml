@@ -14,3 +14,6 @@ sse-place = { path = "../sse-place" }
 sse-life = { path = "../sse-life" }
 serde.workspace = true
 serde_json.workspace = true
+
+[dev-dependencies]
+sse-light = { path = "../sse-light" }

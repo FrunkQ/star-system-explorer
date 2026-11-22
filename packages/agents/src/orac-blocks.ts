@@ -21,7 +21,7 @@ export interface BoxDraft {
   version?: string;
   inputs?: { name: string; kind: string }[];
   outputs: { name: string; from: string }[];
-  nodes: { id: string; atom?: string; box?: string; params?: Record<string, unknown> }[];
+  nodes: { id: string; atom?: string; box?: string; params?: Record<string, unknown>; config?: Record<string, unknown> }[];
   wires?: { from: string; to: string }[];
   promoted_params?: { name: string; node: string; param: string }[];
   explain?: { curious?: string; science?: string; formula?: string };
@@ -81,6 +81,7 @@ export function boxTarget(session: ViewSession, ws: Workspace): OracTarget<{ doc
     form: [
       '{"format": "sse.box/1", "id": "<lower-case.id>", "version": "1.0.0", "inputs": [{"name": "<in>", "kind": "<quantity kind>"}], "outputs": [{"name": "<out>", "from": "<node>.<port>" | "in.<in>"}], "nodes": [{"id": "<node>", "atom": "<atom id>"} | {"id": "<node>", "box": "<box id>@^1"}], "wires": [{"from": "in.<in>" | "<node>.<port>", "to": "<node>.<port>"}], "promoted_params": [{"name": "<p>", "node": "<node>", "param": "<atom param>"}], "explain": {"curious": "<one plain sentence>", "science": "<the physics>", "formula": "<formula>"}, "tests": [{"name": "<case>", "inputs": {"<in>": {"value": <n>, "unit": "<unit>"}}, "expect": {"<out>": {"value": <n>, "unit": "<unit>", "tol": <relative>}}}]}',
       "Every input port of every node must be wired. Give at least one test from a published value (a fact sheet, a paper), and cite it in references.",
+      'A relation from a paper that no atom computes is an Equation node: {"id": "<node>", "atom": "sse.math.equation", "config": {"name": "<what happens, in words, such as Speed needed to escape>", "formula": "<out> = <expression>" (several lines allowed; + - * / ^, brackets, exp expm1 ln log10 sqrt abs min max clamp sin cos tan atan2, pi, if <a < b and ...> then x else y), "inputs": {"<letter>": {"kind": "<quantity kind>", "unit": "<unit, e.g. kg m-3 or g/cm3>", "name": "<the letter in words>", "valid": [<lo>, <hi>]}}, "outputs": {"<letter>": {"kind": "<kind>", "unit": "<unit>"}}, "source": {"text": "<paper>", "doi": "<doi>" | "url": "<address>", "where": "<eq. 3>"}, "explain": {"curious": "<sentence>", "science": "<the law>"}, "examples": [{"<letter>": <n in its unit>, "<out>": <n from the paper>, "tolerance": <relative>}]}}. Every letter is an input with a wire: from a block, from a Look up node for a constant of nature ({"atom": "sse.reference.lookup", "config": {"what": "constants/G", "property": ""}}), or from a Model number node for a number of the model ({"atom": "sse.model.number", "config": {"name": "<in words>", "value": <n>, "unit": "<unit>", "range": [<lo>, <hi>], "grade": "derived" | "measured" | "fitted" | "assumed", "source": {"text": "<paper>", "doi": "<doi>", "where": "<table 2>"}}}). Only whole numbers 0 to 32 and their ratios may be typed in a formula; never type a constant. Units must agree through the formula; at most 64 operations.',
     ].join("\n"),
     async check(doc) {
       if (!obj(doc)) return { problems: ["a box is one JSON object"] };
