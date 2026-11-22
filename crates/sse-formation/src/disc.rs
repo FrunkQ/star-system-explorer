@@ -30,13 +30,13 @@ pub const REF_AL94: &str = "Artymowicz, P. and Lubow, S. H. 1994, ApJ 421, 651: 
 /// One budget unit: 1e-12 solar masses (about 2e18 kg; a u64 holds 1.8e7 solar masses).
 pub const MASS_UNIT: f64 = 1.0e-12;
 
-const G: f64 = 6.674_30e-11;
-const SIGMA_SB: f64 = 5.670_374_419e-8;
-const K_B: f64 = 1.380_649e-23;
+const G: f64 = sse_core::sheet::G;
+const SIGMA_SB: f64 = sse_core::sheet::SIGMA_SB;
+const K_B: f64 = sse_core::sheet::K_B;
 const M_H: f64 = 1.673_5e-27;
-const AU_M: f64 = 1.495_978_707e11;
+const AU_M: f64 = sse_core::sheet::AU;
 const MSUN_KG: f64 = 1.988_47e30;
-const YR_S: f64 = 3.155_76e7;
+const YR_S: f64 = sse_core::sheet::YR_JULIAN;
 const MYR_S: f64 = 3.155_76e13;
 /// Mean molecular weight of disc gas.
 const MU: f64 = 2.34;
