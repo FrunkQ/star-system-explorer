@@ -37,3 +37,7 @@ export { bracket, cellOf, eventsBetween, FIELDS, LAYERS, layerColour, layersFor,
 export type { FieldName, Frame, FrameEvent, LayerSpec, RawFrames, TimeLapse } from "./timelapse.ts";
 export { addLayers, CLOUD_G, cloudReflectance, HAZE_G, liveSystems, narrateWeather, readWeather, slabReflectance, stormAt, WEATHER_REFS, weatherAt, withWeather } from "./weather.ts";
 export type { WeatherCell, WeatherLayer, WeatherMap, WeatherSystem, WeatherTile } from "./weather.ts";
+export { ang2pixRing, drawSky, exposureFor, glowLevel, glowPixel, glowSample, narrateSky, pickStar, pix2angRing, pointSpread, projectSky, readSky, skyCamera, skyView, systemView, toGalactic, toSystem, SKY_POINTS_MAX, SKY_WHITE_MAG_ARCSEC2, starRgb, tempFromBV, unprojectSky } from "./sky.ts";
+export type { Sky, SkyCamera, SkyGlowBand, SkyStar, SkyView, SystemFrame } from "./sky.ts";
+export { bubbleOutline, chartCut, compressed, cutPaths, degreeOf, dipole, dipoleAxis, dipoleB0, drawField3D, FIELD_LINES, FIELD_REFS, fieldAt, inBubble, insideBubble, lineBuffers, narrateField, project3D, schmidt, seeds, traceField, traceLine } from "./field.ts";
+export type { Bubble, ChartCut, FieldCamera, FieldLine, FieldModel, FieldTrace, Pen, Run, TraceOptions } from "./field.ts";

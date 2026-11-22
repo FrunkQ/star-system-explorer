@@ -190,6 +190,41 @@ impl Cosmology {
         m::pow(10.0, 0.5 * (lo + hi))
     }
 
+    /// Comoving distance light covers from scale factor `a` to now, Mpc:
+    /// c / H0 times the integral of da / (a² E(a)) from a to 1 (Hogg 1999,
+    /// arXiv:astro-ph/9905116, eq. 15), by fixed quadrature in ln a.
+    pub fn comoving_mpc(&self, a: f64) -> f64 {
+        if a >= 1.0 {
+            return 0.0;
+        }
+        let c_mpc_gyr = sse_core::quantity::consts::C * YEAR_S * 1.0e9 / MPC_M;
+        let la = m::ln(a.max(1.0e-12));
+        // da / (a² E) = d(ln a) / (a E).
+        let f = |x: f64| {
+            let aa = m::exp(x);
+            1.0 / (aa * self.e(aa))
+        };
+        quad(&f, la, 0.0, 64) * c_mpc_gyr * self.hubble_time_gyr
+    }
+
+    /// The scale factor at which light now arriving from comoving distance
+    /// `d_mpc` set out (fixed 60-step bisection in ln a).
+    pub fn scale_at_comoving(&self, d_mpc: f64) -> f64 {
+        if d_mpc <= 0.0 {
+            return 1.0;
+        }
+        let (mut lo, mut hi) = (-12.0_f64, 0.0_f64);
+        for _ in 0..60 {
+            let mid = 0.5 * (lo + hi);
+            if self.comoving_mpc(m::exp(mid)) > d_mpc {
+                lo = mid;
+            } else {
+                hi = mid;
+            }
+        }
+        m::exp(0.5 * (lo + hi))
+    }
+
     pub fn age_gyr(&self) -> f64 {
         self.time_of_scale(1.0)
     }

@@ -76,6 +76,9 @@ pub struct CosmologyPack {
     pub events: crate::events::EventParams,
     #[serde(default)]
     pub nucleus: crate::nucleus::NucleusParams,
+    /// Y2: the sky draw.
+    #[serde(default)]
+    pub sky: crate::sky::SkyParams,
     #[serde(default)]
     pub origin: crate::origin::OriginParams,
 }

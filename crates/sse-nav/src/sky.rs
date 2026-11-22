@@ -246,7 +246,7 @@ pub fn window(
             "positions from Kepler orbits around the star (the same orbits NAV flies)".into(),
             format!("brightness: reflected starlight off a Lambert sphere at albedo {} for every body (the chart has no albedos yet)", w.default_albedo),
             "the star's brightness scales with its luminosity (bolometric), not its visual band".into(),
-            "background stars and moons are not drawn yet".into(),
+            "moons are not drawn yet; the stars and glow behind come from sky_from_here and sky_glow, placed with the system's frame".into(),
         ],
     })
 }

@@ -40,6 +40,27 @@ pub struct StarParams {
     pub lifetime_slope: f64,
     /// Giant phase length as a share of the main-sequence life.
     pub giant_share: f64,
+    /// Giant luminosity = giant_l_factor x the main-sequence luminosity +
+    /// giant_l_floor_lsun, at giant_teff_k (fudge F-S11). The floor is the
+    /// red clump, where a low-mass giant spends most of its giant life:
+    /// about 50 L☉ at 4,500 to 4,800 K (Girardi 2016,
+    /// doi:10.1146/annurev-astro-081915-023354). A massive star leaves the
+    /// main sequence about twice as bright as it began (Hurley, Pols and
+    /// Tout 2000, doi:10.1046/j.1365-8711.2000.03426.x) and crosses to a
+    /// supergiant at about that luminosity.
+    pub giant_l_factor: f64,
+    pub giant_l_floor_lsun: f64,
+    pub giant_teff_k: f64,
+    /// Eker et al. 2018's relation is fitted up to 31 M☉; above it the
+    /// main-sequence luminosity grows as M^mlr_top_slope, which meets the
+    /// Geneva tracks (Ekström et al. 2012, doi:10.1051/0004-6361/201117751:
+    /// log L about 6.2 at 120 M☉) instead of Eker's extrapolated 7.
+    pub mlr_top_msun: f64,
+    pub mlr_top_slope: f64,
+    /// No cool supergiant is brighter than the Humphreys-Davidson limit,
+    /// log L about 5.8 (Humphreys and Davidson 1979, doi:10.1086/157301):
+    /// a star whose giant phase would pass it stays hot instead.
+    pub cool_limit_lsun: f64,
     /// White dwarf mass = wd_a x M + wd_b (Kalirai et al. 2008).
     pub wd_a: f64,
     pub wd_b: f64,
@@ -99,6 +120,12 @@ impl Default for StarParams {
             sun_life_gyr: 10.0,
             lifetime_slope: 2.5,
             giant_share: 0.1,
+            giant_l_factor: 2.0,
+            giant_l_floor_lsun: 50.0,
+            giant_teff_k: 4500.0,
+            mlr_top_msun: 31.0,
+            mlr_top_slope: 1.5,
+            cool_limit_lsun: 6.3e5,
             wd_a: 0.109,
             wd_b: 0.394,
             ns_min_msun: 8.0,
@@ -133,7 +160,7 @@ impl Default for StarParams {
             cell_rotation_kms_kpc: 26.83,
             key_version: 2,
             class_edges_lsun: vec![
-                0.1, 1.0, 10.0, 100.0, 300.0, 1.0e3, 3.0e3, 1.0e4, 3.0e4, 1.0e5, 3.0e5,
+                0.1, 1.0, 3.0, 10.0, 30.0, 100.0, 300.0, 1.0e3, 3.0e3, 1.0e4, 3.0e4, 1.0e5, 3.0e5,
             ],
             tree_depth: 6,
             class_attempts: 65536,
@@ -246,7 +273,7 @@ pub(crate) fn birth_from(cdf: &[(f64, f64)], acc: f64, u: f64, t_now_gyr: f64) -
         })
 }
 
-pub(crate) fn imf_quantile(p: &StarParams, u: f64) -> f64 {
+pub fn imf_quantile(p: &StarParams, u: f64) -> f64 {
     // Piecewise power law by number.
     let e = &p.imf_edges;
     let a = &p.imf_alphas;
@@ -295,7 +322,12 @@ impl StarParams {
         let life = self.lifetime_gyr(mass);
         // Eker et al. 2018 six-piece MLR and Demircan and Kahraman 1991 radii,
         // the same relations as the base-physics atoms.
-        let ms_l = sse_atoms::star::luminosity_solar(mass);
+        let ms_l = if mass > self.mlr_top_msun {
+            sse_atoms::star::luminosity_solar(self.mlr_top_msun)
+                * m::pow(mass / self.mlr_top_msun, self.mlr_top_slope)
+        } else {
+            sse_atoms::star::luminosity_solar(mass)
+        };
         let ms_r = sse_atoms::star::radius_solar(mass);
         let teff = |l: f64, r: f64| 5772.0 * m::pow(l / (r * r), 0.25);
         if age_gyr < 0.0 {
@@ -317,13 +349,17 @@ impl StarParams {
             };
         }
         if age_gyr < life * (1.0 + self.giant_share) {
-            let l = ms_l * 30.0 + 50.0;
-            let r = ms_r * 20.0;
+            let l = ms_l * self.giant_l_factor + self.giant_l_floor_lsun;
+            let cool = l <= self.cool_limit_lsun;
             return StarState {
-                phase: "giant".into(),
+                phase: if cool { "giant" } else { "hot supergiant" }.into(),
                 mass_msun: mass,
                 luminosity_lsun: l,
-                teff_k: teff(l, r),
+                teff_k: if cool {
+                    self.giant_teff_k
+                } else {
+                    teff(ms_l, ms_r)
+                },
                 age_gyr,
             };
         }
@@ -411,16 +447,12 @@ impl<'a> Stars<'a> {
     pub(crate) fn density_at(&self, g: [f64; 3], t0: f64) -> f64 {
         let [x, y, z] = self.from_grid(g, t0);
         let t_gyr = t0 / 1000.0;
-        let l = self.env.local(
-            Place {
-                r_kpc: m::hypot(x, y) / 1000.0,
-                phi: m::atan2(y, x),
-                z_pc: z,
-                t_gyr,
-            },
-            &self.green,
-        );
-        l.systems_pc3
+        self.env.systems_pc3(Place {
+            r_kpc: m::hypot(x, y) / 1000.0,
+            phi: m::atan2(y, x),
+            z_pc: z,
+            t_gyr,
+        })
     }
     /// Every system drawn for a cell and frame, before pins.
     pub(crate) fn draw_all(&self, cell: [i64; 3], frame: i64) -> Result<Vec<StarSystem>, String> {
@@ -519,16 +551,10 @@ impl<'a> Stars<'a> {
             }
             companions.sort_by(|a, b| a.a_au.total_cmp(&b.a_au));
         }
-        let lb = self.env.local(
-            Place {
-                r_kpc: rc,
-                phi: m::atan2(y, x),
-                z_pc: 0.0,
-                t_gyr: birth,
-            },
-            &self.green,
-        );
-        let feh = lb.feh + p.feh_scatter * d.normal(i(13));
+        // The gas's mix at its birth ring and time (`local`'s arithmetic,
+        // without the hazards it also works out).
+        let sb = self.env.surface(rc, birth);
+        let feh = sb.feh + p.feh_scatter * d.normal(i(13));
         let cluster = {
             let u = d.unit(i(16));
             let (a, b) = (1.0 / p.cluster_min, 1.0 / p.cluster_max);
@@ -563,10 +589,10 @@ impl<'a> Stars<'a> {
             mass_msun: mass,
             companions,
             feh,
-            alpha_fe: lb.alpha_fe,
-            c_o: lb.c_o,
-            r_fe: lb.r_fe,
-            k40_fe: lb.k40_fe,
+            alpha_fe: sb.alpha_h - sb.feh,
+            c_o: 0.55 * m::pow(10.0, sb.cn_h - sb.alpha_h),
+            r_fe: sb.r_h - sb.feh,
+            k40_fe: sb.k40_h - sb.feh,
             cluster_mass_msun: cluster,
             orbit: Orbit {
                 r_guide_pc: r_guide,
@@ -640,7 +666,14 @@ impl<'a> Stars<'a> {
         if n.len() != 3 {
             return Err(format!("{text}: cell key is <x>_<y>_<z>"));
         }
-        let all = self.draw_all([n[0], n[1], n[2]], frame)?;
+        let cell = [n[0], n[1], n[2]];
+        let all = if self.params.key_version >= 2 {
+            // The slot names its class (count tree slots interleave them).
+            let classes = self.params.class_edges_lsun.len() as u64 + 1;
+            self.draw_tree(cell, frame, Some((slot % classes) as usize))?
+        } else {
+            self.draw_all(cell, frame)?
+        };
         Ok(all.into_iter().find(|s| s.slot == slot))
     }
 

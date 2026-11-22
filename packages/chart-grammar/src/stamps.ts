@@ -8,6 +8,8 @@ export const STAMP_LABELS: Record<string, string> = {
   "one-plausible-future": "One plausible future",
   unsurveyed: "Unsurveyed",
   fixture: "Fixture data",
+  catalogued: "Catalogued",
+  unverified: "Unverified",
   "out-of-range": "Out of range",
   "changed-physics": "Changed physics",
   validated: "Validated",

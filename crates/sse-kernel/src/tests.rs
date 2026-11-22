@@ -2193,6 +2193,9 @@ fn templates_through_the_api() {
         &mut k,
         serde_json::json!({"op":"resolved_system","system":sys}),
     );
+    assert_eq!(v["frame"]["evidence"], "drawn", "{v}");
+    let to_g = &v["frame"]["to_galactic"];
+    assert_eq!(to_g.as_array().map(|r| r.len()), Some(3), "{v}");
     let f = &v["facts"];
     assert_eq!(f[&ship]["retired"], true, "{v}");
     assert_eq!(f[&ship]["name"], "Black Gull");
@@ -3129,4 +3132,24 @@ fn classify_preview_labels_the_campaign_under_a_candidate_stack() {
         serde_json::json!({"op":"classify_preview","packs":[atlas],"scheme":"nope"}),
     );
     assert_eq!(unknown["code"], "unknown_scheme", "{unknown}");
+}
+
+#[test]
+fn the_window_says_how_its_frame_sits_in_the_galaxy() {
+    let mut k = crate::Kernel::new();
+    let v = send(
+        &mut k,
+        serde_json::json!({"op":"window_view","fixture":"sol","from":"Earth"}),
+    );
+    let f = &v["view"]["frame"];
+    assert_eq!(f["evidence"], "measured", "{v}");
+    let pl = f["pole_l_deg"].as_f64().unwrap();
+    assert!((pl - 96.38).abs() < 0.01, "{f}");
+    // An inline system with no open universe has no keyed frame.
+    let nav = serde_json::to_value(sse_nav::scenario::sol()).unwrap();
+    let v = send(
+        &mut k,
+        serde_json::json!({"op":"window_view","nav":nav,"from":"Earth","system":"u:x/sys:1"}),
+    );
+    assert!(v["view"]["frame"].is_null(), "{v}");
 }

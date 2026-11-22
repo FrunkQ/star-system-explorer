@@ -62,6 +62,76 @@ try {
       assert.ok((await win.locator("[data-missed]").count()) >= 1);
     }
 
+    // Y5: the stars beyond, from sky_from_here and sky_glow, in their own panel; a band switch redraws it and never the hash.
+    {
+      const hash = await gm.locator("[data-state-hash]").first().getAttribute("data-state-hash");
+      const sb = gm.locator("[data-sky-beyond]");
+      await sb.getByRole("button", { name: "Show the night sky from here" }).click();
+      await gm.waitForSelector("[data-sky-beyond=on], [data-sky-error]", { timeout: 120000 });
+      assert.equal(await sb.locator("[data-sky-error]").count(), 0, (await sb.locator("[data-sky-error]").count()) ? await sb.locator("[data-sky-error]").innerText() : "");
+      const words = await sb.locator("[data-sky-words]").innerText();
+      assert.match(words, /^[\d,]+ stars brighter than magnitude 5 in V; brightest: magnitude/, words);
+      assert.match(words, /as a glow, adds up to magnitude -?[\d.]+ in V over the whole sky/, words);
+      const lum = await sb.locator("[data-sky-canvas]").evaluate((c) => {
+        const d = c.getContext("2d").getImageData(0, 0, c.width, c.height).data;
+        let mid = 0, top = 0;
+        for (let x = 0; x < c.width; x++) {
+          mid += d[(Math.floor(c.height / 2) * c.width + x) * 4 + 1];
+          top += d[(4 * c.width + x) * 4 + 1];
+        }
+        return { mid: mid / c.width, top: top / c.width };
+      });
+      assert.ok(lum.mid > lum.top, `the Milky Way's band across the middle (${lum.mid.toFixed(1)}) is brighter than high latitudes (${lum.top.toFixed(1)})`);
+      await sb.locator("[data-sky-canvas]").scrollIntoViewIfNeeded();
+      await shot(gm, "y5-sky-visible");
+      // A click on the brightest drawn star picks it.
+      const box = await sb.locator("[data-sky-canvas]").boundingBox();
+      const spot = await sb.locator("[data-sky-canvas]").evaluate((c) => {
+        const d = c.getContext("2d").getImageData(0, 0, c.width, c.height).data;
+        let best = 0, at = [0, 0];
+        for (let y = 2; y < c.height - 2; y++) for (let x = 2; x < c.width - 2; x++) {
+          const v = d[(y * c.width + x) * 4] + d[(y * c.width + x) * 4 + 1] + d[(y * c.width + x) * 4 + 2];
+          if (v > best) ((best = v), (at = [x / c.width, y / c.height]));
+        }
+        return at;
+      });
+      await sb.locator("[data-sky-canvas]").click({ position: { x: spot[0] * box.width, y: spot[1] * box.height } });
+      await gm.waitForSelector("[data-sky-picked]", { timeout: 5000 });
+      assert.match(await sb.locator("[data-sky-picked]").innerText(), /^Picked: a star of magnitude/);
+      await sb.getByRole("button", { name: "Near infrared" }).click();
+      await gm.waitForSelector("[data-sky-beyond=on][data-sky-band=Ks]", { timeout: 5000 });
+      await gm.waitForFunction(() => /shown in Ks; brightest in Ks:/.test(document.querySelector("[data-sky-words]")?.textContent ?? ""), null, { timeout: 5000 });
+      await shot(gm, "y5-sky-infrared");
+      assert.equal(await gm.locator("[data-state-hash]").first().getAttribute("data-state-hash"), hash, "the sky never changes the state hash");
+      console.log(`  sky: ${words.slice(0, 240)}`);
+    }
+
+    // Y5 part 2: the stars behind the system's own lights, through the Window's camera, turned by the kernel's frame.
+    {
+      const hash = await gm.locator("[data-state-hash]").first().getAttribute("data-state-hash");
+      await win.locator("[data-target]").selectOption("star");
+      await gm.waitForTimeout(200);
+      const mean = () => win.locator("canvas[data-sky]").evaluate((c) => {
+        const d = c.getContext("2d").getImageData(0, 0, c.width, c.height).data;
+        let t = 0;
+        for (let i = 0; i < d.length; i += 4) t += d[i] + d[i + 1] + d[i + 2];
+        return t / (d.length / 4) / 3;
+      });
+      const chartMean = await mean();
+      await win.getByLabel("Stars behind").check();
+      await gm.waitForSelector("[data-stars-behind=on]", { timeout: 180000 });
+      await gm.waitForTimeout(300);
+      const skyMean = await mean();
+      assert.ok(skyMean < chartMean - 40, `the night sky replaces the chart ground (${skyMean.toFixed(0)} against ${chartMean.toFixed(0)})`);
+      const words = await win.locator("[data-stars-behind-words]").innerText();
+      assert.match(words, /^[\d,]+ stars to magnitude [\d.]+( \(the kernel's list stops there, so some faint stars are missing\))? and the Milky Way's glow, in true colour\. This system's plane is drawn at random/, words);
+      await win.locator("canvas[data-sky]").scrollIntoViewIfNeeded();
+      await shot(gm, "y5-window-stars-behind");
+      assert.equal(await gm.locator("[data-state-hash]").first().getAttribute("data-state-hash"), hash, "the stars behind never change the state hash");
+      console.log(`  stars behind: ${words.slice(0, 220)}`);
+      await win.getByLabel("Stars behind").uncheck();
+    }
+
     await more(gm, "Night chart");
     await gm.waitForTimeout(400);
     await win.locator("[data-target]").selectOption("star");

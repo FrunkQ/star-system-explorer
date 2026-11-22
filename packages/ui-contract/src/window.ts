@@ -10,6 +10,8 @@ export interface WindowAsk {
   from?: string;
   at_au?: [number, number, number];
   sensor?: string;
+  /** The system's address, so the kernel can say how an inline nav's system sits in the galaxy (`frame`). */
+  system?: string;
 }
 
 export interface Seen {
@@ -38,6 +40,17 @@ export interface WindowView {
   seen: Seen[];
   missed: number;
   model: string[];
+  /** How the system's own frame sits in the galaxy (kernel, `frame.rs`): null when the kernel cannot say. */
+  frame?: {
+    pole_l_deg: number;
+    pole_b_deg: number;
+    zero_l_deg?: number;
+    zero_b_deg?: number;
+    node_l_deg?: number;
+    to_galactic: [[number, number, number], [number, number, number], [number, number, number]];
+    evidence: string;
+    source?: string;
+  } | null;
 }
 
 export const SENSORS: readonly { id: string; label: string }[] = [
@@ -79,6 +92,13 @@ export function project(c: Camera, lon_deg: number, lat_deg: number, margin = 0)
   const lim = c.half + margin / c.scale;
   if (Math.abs(x) > lim || Math.abs(y) > lim) return null;
   return { x: c.size / 2 + x * c.scale, y: c.size / 2 - y * c.scale };
+}
+
+/** The sky direction (a unit vector in the camera's frame) under a picture point: the inverse of `project`. */
+export function unprojectCamera(c: Camera, x: number, y: number): V3 {
+  const a = (x - c.size / 2) / c.scale;
+  const b = (c.size / 2 - y) / c.scale;
+  return norm([c.f[0] + a * c.r[0] + b * c.u[0], c.f[1] + a * c.r[1] + b * c.u[1], c.f[2] + a * c.r[2] + b * c.u[2]]);
 }
 
 /** A disc's radius in pixels at the picture's centre scale. */

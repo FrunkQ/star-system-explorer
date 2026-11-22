@@ -17,6 +17,7 @@ Python standard library only; deterministic.
                                      with packs/base-reference
 """
 import json
+import math
 import os
 import sys
 
@@ -36,7 +37,38 @@ SOURCES = [
 ] + [
     {"id": "iau2015b3", "text": "Prša, A. et al. 2016, AJ 152, 41: Nominal values for selected solar and planetary quantities, IAU 2015 Resolution B3",
      "status": "verified", "doi": "10.3847/0004-6256/152/2/41"},
+    {"id": "hipparcos1997", "text": "ESA 1997, The Hipparcos and Tycho Catalogues, ESA SP-1200, vol. 1, sec. 1.5.3: the ICRS to galactic matrix A_G",
+     "status": "verified", "url": "https://www.cosmos.esa.int/documents/532822/552851/vol1_all.pdf"},
+    {"id": "hilton2006", "text": "Hilton, J. L. et al. 2006, Celest. Mech. Dyn. Astron. 94, 351: Report of the IAU Division I Working Group on Precession and the Ecliptic (obliquity at J2000, 84381.406 arcsec)",
+     "status": "verified", "doi": "10.1007/s10569-006-0001-2"},
 ]
+
+# ICRS to galactic (Hipparcos A_G, rows are galactic x, y, z) and the J2000
+# obliquity: the Sol fixture's elements are J2000 ecliptic, so its frame in
+# the galaxy is the ecliptic pole and the equinox turned into l and b.
+A_G = [(-0.0548755604, -0.8734370902, -0.4838350155),
+       (+0.4941094279, -0.4448296300, +0.7469822445),
+       (-0.8676661490, -0.1980763734, +0.4559837762)]
+OBLIQUITY_ARCSEC = 84381.406
+
+
+def galactic(v):
+    g = [sum(r[i] * v[i] for i in range(3)) for r in A_G]
+    l = math.degrees(math.atan2(g[1], g[0])) % 360.0
+    return round(l, 4), round(math.degrees(math.asin(g[2])), 4)
+
+
+def sun_frame():
+    e = math.radians(OBLIQUITY_ARCSEC / 3600.0)
+    pl, pb = galactic((0.0, -math.sin(e), math.cos(e)))
+    zl, zb = galactic((1.0, 0.0, 0.0))
+    note = "J2000 ecliptic %s in galactic coordinates, from the obliquity (hilton2006) and A_G"
+    return {
+        "system.frame.pole_l_deg": val(pl, "deg", "hipparcos1997", note=note % "north pole"),
+        "system.frame.pole_b_deg": val(pb, "deg", "hipparcos1997", note=note % "north pole"),
+        "system.frame.zero_l_deg": val(zl, "deg", "hipparcos1997", note=note % "equinox (longitude zero)"),
+        "system.frame.zero_b_deg": val(zb, "deg", "hipparcos1997", note=note % "equinox (longitude zero)"),
+    }
 
 # name, id, kind, host, mass (1e24 kg), mean radius (km), a (1e6 km), e,
 # sidereal rotation (h, as printed: negative = retrograde), Bond albedo,
@@ -98,6 +130,7 @@ def build():
         "star.effective_temperature": val(5772.0, "K", "nssdca-sun", note="equals the IAU nominal temperature"),
     }}
     sun["values"].update(sol_extra.SUN_AGE)
+    sun["values"].update(sun_frame())
     bodies = [sun] + [planet_row(*p) for p in PLANETS] + sol_extra.BODIES
     sources = sorted(SOURCES + sol_extra.SOURCES, key=lambda s: s["id"])
     regions = sol_extra.regions({b["id"]: b for b in bodies})
