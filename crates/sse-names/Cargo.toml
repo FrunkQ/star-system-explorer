@@ -1,0 +1,12 @@
+[package]
+name = "sse-names"
+description = "SSE4 naming engine (track NM): name schemes as pack data (list, sounds, number, pattern, mix makers), keyed draws on their own stream, the fold, the avoid list and text safety"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+authors.workspace = true
+
+[dependencies]
+sse-core.workspace = true
+serde.workspace = true
+serde_json.workspace = true

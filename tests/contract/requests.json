@@ -3138,5 +3138,35 @@
   "op": "restore",
   "address": "u:aging/sys:90/body:2",
   "at_s": 20
+ },
+ {
+  "op": "load_stack",
+  "packs": ["$pack:base-toy", "$pack:names-toy"]
+ },
+ {
+  "op": "name_sample",
+  "scheme": "vesh",
+  "kind": "planet",
+  "count": 10000
+ },
+ {
+  "op": "name_sample",
+  "scheme": "vesh",
+  "kind": "peak",
+  "count": 3,
+  "facts": {"colour": "red"}
+ },
+ {
+  "op": "name_sample",
+  "scheme": "catalogue",
+  "kind": "planet",
+  "layer": "designation",
+  "count": 12,
+  "parent": "KS 0102"
+ },
+ {
+  "op": "name_sample",
+  "scheme": "nobody",
+  "kind": "planet"
  }
 ]

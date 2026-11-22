@@ -110,4 +110,12 @@ stars?: boolean, } | { "op": "sky_glow", position_pc?: [number, number, number],
  * inline `nav` system or an adopted `system` (read at `at_s`, with
  * `ports`), and `from` and `to` are bodies (or `belt:<name>`).
  */
-fixture?: string, nav?: unknown, system?: string, at_s?: number, ports?: Array<string>, depart_s?: number, } | { "op": "promote_star", address: string, } | { "op": "campaign_tags" } | { "op": "read_matter", table?: string, id?: string, } | { "op": "phase_at", substance: string, p_pa: number, t_k: number, } | { "op": "read_reach", constant: string, value?: number, } | { "op": "dressing", scope: string, at_s?: bigint, } | { "op": "adopt_dressing", candidate: string, name?: string, at_s: bigint, } | { "op": "hold_dressing", candidate: string, held?: boolean, };
+fixture?: string, nav?: unknown, system?: string, at_s?: number, ports?: Array<string>, depart_s?: number, } | { "op": "promote_star", address: string, } | { "op": "campaign_tags" } | { "op": "read_matter", table?: string, id?: string, } | { "op": "phase_at", substance: string, p_pa: number, t_k: number, } | { "op": "read_reach", constant: string, value?: number, } | { "op": "dressing", scope: string, at_s?: bigint, } | { "op": "adopt_dressing", candidate: string, name?: string, at_s: bigint, } | { "op": "hold_dressing", candidate: string, held?: boolean, } | { "op": "name_sample", scheme: string, kind: string, layer?: string, count?: number, start?: number, seed?: string, 
+/**
+ * The parent's name, for forms that follow it.
+ */
+parent?: string, 
+/**
+ * Facts as words, for forms that read them (`colour`: `red`).
+ */
+facts?: { [key in string]: string }, };

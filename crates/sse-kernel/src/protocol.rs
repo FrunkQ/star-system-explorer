@@ -1463,6 +1463,35 @@ pub enum Request {
         #[ts(optional)]
         held: Option<bool>,
     },
+    /// Sample names from a scheme on the stack (NM1, naming design 4.12): up
+    /// to 10,000 names for one kind at sample addresses from `start`, the
+    /// first twelve with their faces and parts, and a digest of them all
+    /// (the same on every device). Read-only, any seat; names never feed
+    /// physics.
+    NameSample {
+        scheme: String,
+        kind: String,
+        #[serde(default)]
+        #[ts(optional)]
+        layer: Option<String>,
+        #[serde(default)]
+        #[ts(optional)]
+        count: Option<u32>,
+        #[serde(default)]
+        #[ts(optional)]
+        start: Option<u32>,
+        #[serde(default)]
+        #[ts(optional)]
+        seed: Option<String>,
+        /// The parent's name, for forms that follow it.
+        #[serde(default)]
+        #[ts(optional)]
+        parent: Option<String>,
+        /// Facts as words, for forms that read them (`colour`: `red`).
+        #[serde(default)]
+        #[ts(optional)]
+        facts: Option<BTreeMap<String, String>>,
+    },
 }
 
 /// `adopt`'s formation request: the `run_formation` fields.
@@ -1618,6 +1647,7 @@ impl Request {
             Request::Dressing { .. } => "dressing",
             Request::AdoptDressing { .. } => "adopt_dressing",
             Request::HoldDressing { .. } => "hold_dressing",
+            Request::NameSample { .. } => "name_sample",
         }
     }
 }
@@ -1960,6 +1990,11 @@ pub fn ops() -> Vec<OpInfo> {
             "hold_dressing",
             Cost::Trivial,
             "GM machine only; one record fact",
+        ),
+        o(
+            "name_sample",
+            Cost::Light,
+            "up to 10,000 keyed draws from one name scheme, each a few table picks; read only",
         ),
     ]
 }
@@ -2748,6 +2783,12 @@ pub enum Response {
     /// `read_matter`: a row (`{table, id, row, sources, packs, worked?,
     /// used_by, skipped_by}`) or a listing of ids by table.
     Matter {
+        #[ts(type = "unknown")]
+        value: serde_json::Value,
+    },
+    /// `name_sample`: `{scheme, kind, layer, count, digest, names: [...],
+    /// avoid_hits}`, each name with its form, faces and parts.
+    Names {
         #[ts(type = "unknown")]
         value: serde_json::Value,
     },
