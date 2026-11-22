@@ -5173,6 +5173,2643 @@
         "lisse2021"
        ],
        "note": "ln(P/Pt) = 1.5 ln(T/Tt) + (1 - Tt/T) sum e_i (T/Tt)^i; coeffs [Tt, Pt Pa, e0..e6]"
+      },
+      "forms": [
+       {
+        "id": "h2o.vapour",
+        "names": {
+         "physics": "water vapour",
+         "plain": "steam",
+         "story": "water vapour"
+        },
+        "kind": "gas",
+        "stability": "stable",
+        "evidence": {
+         "grade": "measured",
+         "t_k": [
+          10.0,
+          10000.0
+         ],
+         "p_pa": [
+          1e-10,
+          22064000.0
+         ],
+         "src": "iapws2011-meltsub",
+         "also": [
+          "iapws1992-sat"
+         ]
+        },
+        "props": {}
+       },
+       {
+        "id": "h2o.liquid",
+        "names": {
+         "physics": "liquid water",
+         "plain": "water",
+         "story": "water"
+        },
+        "kind": "liquid",
+        "stability": "stable",
+        "evidence": {
+         "grade": "measured",
+         "t_k": [
+          251.165,
+          647.096
+         ],
+         "p_pa": [
+          611.657,
+          20000000000.0
+         ],
+         "src": "iapws1992-sat",
+         "also": [
+          "iapws2011-meltsub"
+         ]
+        },
+        "props": {
+         "density": {
+          "v": 999.789,
+          "unit": "kg m-3",
+          "src": "iapws1992-sat",
+          "at_k": 273.16,
+          "at_pa": 611.657,
+          "note": "saturated liquid at the triple point (the release's check value)"
+         },
+         "sigma_elec": {
+          "v": 5.5e-06,
+          "unit": "S m-1",
+          "src": "recalled",
+          "check": "unverified",
+          "at_k": 298.15,
+          "note": "pure water, from its own ions; any dissolved salt raises it by orders of magnitude"
+         }
+        }
+       },
+       {
+        "id": "h2o.supercritical",
+        "names": {
+         "physics": "supercritical water",
+         "plain": "supercritical water: neither liquid nor gas",
+         "story": "a hot dense fluid with no surface between sea and sky"
+        },
+        "kind": "supercritical fluid",
+        "stability": "stable",
+        "evidence": {
+         "grade": "measured",
+         "t_k": [
+          647.096,
+          10000.0
+         ],
+         "p_pa": [
+          22064000.0,
+          1000000000000.0
+         ],
+         "src": "iapws1992-sat",
+         "note": "above the critical point there is no phase change; the name changes by convention"
+        },
+        "props": {}
+       },
+       {
+        "id": "h2o.ionic_fluid",
+        "names": {
+         "physics": "ionic water",
+         "plain": "water split into ions",
+         "story": "a hot fluid that conducts electricity, deep inside ice giants"
+        },
+        "kind": "ionic fluid",
+        "stability": "stable",
+        "evidence": {
+         "grade": "computed",
+         "t_k": [
+          2000.0,
+          10000.0
+         ],
+         "p_pa": [
+          20000000000.0,
+          1000000000000.0
+         ],
+         "src": "redmer2011",
+         "also": [
+          "mattsson2006"
+         ],
+         "note": "a gradual crossover; the 2000 K, 20 GPa edge is recalled from these papers' figures and must be checked"
+        },
+        "props": {
+         "sigma_elec": {
+          "v": 10000.0,
+          "unit": "S m-1",
+          "src": "redmer2011",
+          "check": "unverified",
+          "note": "order of magnitude, recalled"
+         }
+        }
+       },
+       {
+        "id": "h2o.ice_ih",
+        "names": {
+         "physics": "ice Ih",
+         "plain": "ordinary ice",
+         "story": "ice"
+        },
+        "kind": "solid",
+        "stability": "stable",
+        "evidence": {
+         "grade": "measured",
+         "t_k": [
+          72.0,
+          273.16
+         ],
+         "p_pa": [
+          0.0,
+          212900000.0
+         ],
+         "src": "iapws2011-meltsub",
+         "also": [
+          "chaplin-lsbu"
+         ]
+        },
+        "props": {
+         "density": {
+          "v": 916.7,
+          "unit": "kg m-3",
+          "src": "chaplin-lsbu",
+          "at_k": 273.15,
+          "at_pa": 101325.0,
+          "note": "LSBU phase diagram page, 0.9167 g/cm3"
+         }
+        }
+       },
+       {
+        "id": "h2o.ice_xi",
+        "names": {
+         "physics": "ice XI",
+         "plain": "ordered ice (below 72 K)",
+         "story": "the coldest form of ordinary ice"
+        },
+        "kind": "solid",
+        "stability": "stable",
+        "evidence": {
+         "grade": "measured",
+         "t_k": [
+          10.0,
+          72.0
+         ],
+         "p_pa": [
+          0.0,
+          70000000.0
+         ],
+         "src": "chaplin-lsbu",
+         "note": "hydrogen-ordered partner of ice Ih; forms very slowly"
+        },
+        "props": {
+         "density": {
+          "v": 920.0,
+          "unit": "kg m-3",
+          "src": "chaplin-lsbu",
+          "note": "experimental density at the phase's own conditions (LSBU structural table, column a)"
+         }
+        }
+       },
+       {
+        "id": "h2o.ice_ii",
+        "names": {
+         "physics": "ice II",
+         "plain": "ice II",
+         "story": "dense ice"
+        },
+        "kind": "solid",
+        "stability": "stable",
+        "evidence": {
+         "grade": "measured",
+         "t_k": [
+          10.0,
+          248.85
+         ],
+         "p_pa": [
+          15000000.0,
+          1050000000.0
+         ],
+         "src": "chaplin-lsbu",
+         "note": "hydrogen-ordered with no disordered partner; never in contact with liquid water"
+        },
+        "props": {
+         "density": {
+          "v": 1170.0,
+          "unit": "kg m-3",
+          "src": "chaplin-lsbu",
+          "note": "experimental density at the phase's own conditions (LSBU structural table, column a)"
+         }
+        }
+       },
+       {
+        "id": "h2o.ice_iii",
+        "names": {
+         "physics": "ice III",
+         "plain": "ice III",
+         "story": "dense ice"
+        },
+        "kind": "solid",
+        "stability": "stable",
+        "evidence": {
+         "grade": "measured",
+         "t_k": [
+          238.45,
+          256.164
+         ],
+         "p_pa": [
+          208566000.0,
+          350100000.0
+         ],
+         "src": "iapws2011-meltsub",
+         "also": [
+          "chaplin-lsbu",
+          "journaux2020"
+         ]
+        },
+        "props": {
+         "density": {
+          "v": 1140.0,
+          "unit": "kg m-3",
+          "src": "chaplin-lsbu",
+          "note": "experimental density at the phase's own conditions (LSBU structural table, column a)"
+         },
+         "compression": {
+          "form": "journaux2020-mie-gruneisen",
+          "v0_m3_mol": 1.549e-05,
+          "k0_pa": 9900000000.0,
+          "k0_prime": 6.0,
+          "gamma0": 1.0,
+          "q": 1.0,
+          "src": "journaux2020",
+          "note": "Table 3; V0, K0 and K0' at 1 bar and 0 K"
+         }
+        }
+       },
+       {
+        "id": "h2o.ice_v",
+        "names": {
+         "physics": "ice V",
+         "plain": "ice V",
+         "story": "dense ice"
+        },
+        "kind": "solid",
+        "stability": "stable",
+        "evidence": {
+         "grade": "measured",
+         "t_k": [
+          218.0,
+          273.31
+         ],
+         "p_pa": [
+          344300000.0,
+          632400000.0
+         ],
+         "src": "iapws2011-meltsub",
+         "also": [
+          "chaplin-lsbu",
+          "journaux2020"
+         ]
+        },
+        "props": {
+         "density": {
+          "v": 1230.0,
+          "unit": "kg m-3",
+          "src": "chaplin-lsbu",
+          "note": "experimental density at the phase's own conditions (LSBU structural table, column a)"
+         },
+         "compression": {
+          "form": "journaux2020-mie-gruneisen",
+          "v0_m3_mol": 1.448e-05,
+          "k0_pa": 13200000000.0,
+          "k0_prime": 6.0,
+          "gamma0": 1.1,
+          "q": 1.0,
+          "src": "journaux2020",
+          "note": "Table 3; V0, K0 and K0' at 1 bar and 0 K"
+         }
+        }
+       },
+       {
+        "id": "h2o.ice_vi",
+        "names": {
+         "physics": "ice VI",
+         "plain": "ice VI",
+         "story": "the dense ice floor under an icy moon's ocean"
+        },
+        "kind": "solid",
+        "stability": "stable",
+        "evidence": {
+         "grade": "measured",
+         "t_k": [
+          130.0,
+          355.0
+         ],
+         "p_pa": [
+          620000000.0,
+          2216000000.0
+         ],
+         "src": "iapws2011-meltsub",
+         "also": [
+          "chaplin-lsbu",
+          "journaux2020"
+         ]
+        },
+        "props": {
+         "density": {
+          "v": 1310.0,
+          "unit": "kg m-3",
+          "src": "chaplin-lsbu",
+          "note": "experimental density at the phase's own conditions (LSBU structural table, column a)"
+         },
+         "compression": {
+          "form": "journaux2020-mie-gruneisen",
+          "v0_m3_mol": 1.362e-05,
+          "k0_pa": 15200000000.0,
+          "k0_prime": 6.5,
+          "gamma0": 1.4,
+          "q": 1.0,
+          "src": "journaux2020",
+          "note": "Table 3; V0, K0 and K0' at 1 bar and 0 K"
+         }
+        }
+       },
+       {
+        "id": "h2o.ice_xv",
+        "names": {
+         "physics": "ice XV",
+         "plain": "ordered ice VI (below 130 K)",
+         "story": "very cold dense ice"
+        },
+        "kind": "solid",
+        "stability": "stable",
+        "evidence": {
+         "grade": "measured",
+         "t_k": [
+          10.0,
+          130.0
+         ],
+         "p_pa": [
+          800000000.0,
+          1500000000.0
+         ],
+         "src": "chaplin-lsbu",
+         "note": "hydrogen-ordered partner of ice VI; the 130 K edge is approximate"
+        },
+        "props": {
+         "density": {
+          "v": 1300.0,
+          "unit": "kg m-3",
+          "src": "chaplin-lsbu",
+          "note": "experimental density at the phase's own conditions (LSBU structural table, column a)"
+         }
+        }
+       },
+       {
+        "id": "h2o.ice_vii",
+        "names": {
+         "physics": "ice VII",
+         "plain": "ice VII: ice that stays solid when hot",
+         "story": "ice so squeezed it stays solid at hundreds of degrees"
+        },
+        "kind": "solid",
+        "stability": "stable",
+        "evidence": {
+         "grade": "measured",
+         "t_k": [
+          100.0,
+          852.2978623518472
+         ],
+         "p_pa": [
+          2100000000.0,
+          62000000000.0
+         ],
+         "src": "iapws2011-meltsub",
+         "also": [
+          "frank2004",
+          "lin2005"
+         ],
+         "note": "found as inclusions in diamonds"
+        },
+        "props": {
+         "density": {
+          "v": 1500.0,
+          "unit": "kg m-3",
+          "src": "chaplin-lsbu",
+          "note": "experimental density at the phase's own conditions (LSBU structural table, column a)"
+         }
+        }
+       },
+       {
+        "id": "h2o.ice_viii",
+        "names": {
+         "physics": "ice VIII",
+         "plain": "ordered ice VII (below about 278 K)",
+         "story": "cold squeezed ice"
+        },
+        "kind": "solid",
+        "stability": "stable",
+        "evidence": {
+         "grade": "measured",
+         "t_k": [
+          10.0,
+          278.0
+         ],
+         "p_pa": [
+          1500000000.0,
+          62000000000.0
+         ],
+         "src": "chaplin-lsbu",
+         "note": "hydrogen-ordered partner of ice VII"
+        },
+        "props": {
+         "density": {
+          "v": 1460.0,
+          "unit": "kg m-3",
+          "src": "chaplin-lsbu",
+          "note": "experimental density at the phase's own conditions (LSBU structural table, column a); the LSBU phase-diagram page gives 1490"
+         }
+        }
+       },
+       {
+        "id": "h2o.ice_x",
+        "names": {
+         "physics": "ice X",
+         "plain": "ice X: hydrogen shared evenly between oxygens",
+         "story": "ice crushed until its molecules lose their shape"
+        },
+        "kind": "solid",
+        "stability": "stable",
+        "evidence": {
+         "grade": "measured",
+         "t_k": [
+          10.0,
+          2000.0
+         ],
+         "p_pa": [
+          37767889678.44328,
+          1000000000000.0
+         ],
+         "src": "lin2005",
+         "also": [
+          "chaplin-lsbu"
+         ],
+         "note": "above about 60 GPa; measured at room temperature and below, its high-temperature edge is computed"
+        },
+        "props": {
+         "density": {
+          "v": 2510.0,
+          "unit": "kg m-3",
+          "src": "chaplin-lsbu",
+          "note": "experimental density at the phase's own conditions (LSBU structural table, column a)"
+         }
+        }
+       },
+       {
+        "id": "h2o.ice_xx",
+        "names": {
+         "physics": "superionic ice (bcc, ice XX)",
+         "plain": "superionic ice: solid oxygen, flowing hydrogen",
+         "story": "ice that is solid and liquid at once: the oxygen holds still while the hydrogen flows through it"
+        },
+        "kind": "superionic solid",
+        "stability": "stable",
+        "evidence": {
+         "grade": "computed",
+         "t_k": [
+          852.2978623518472,
+          2592.9592461579387
+         ],
+         "p_pa": [
+          35000000000.0,
+          75000000000.0
+         ],
+         "src": "cheng2021",
+         "also": [
+          "millot2019"
+         ],
+         "note": "seen in diamond-anvil and shock experiments; its boundaries are computed and contested"
+        },
+        "props": {
+         "sigma_elec": {
+          "v": 10000.0,
+          "unit": "S m-1",
+          "src": "millot2019",
+          "note": "simulations in Millot et al. 2019: ionic conductivity above 100 S/cm"
+         }
+        }
+       },
+       {
+        "id": "h2o.ice_xviii",
+        "names": {
+         "physics": "superionic ice (fcc, ice XVIII)",
+         "plain": "superionic ice: solid oxygen, flowing hydrogen",
+         "story": "the ice thought to fill the deep insides of Uranus and Neptune"
+        },
+        "kind": "superionic solid",
+        "stability": "stable",
+        "evidence": {
+         "grade": "measured",
+         "t_k": [
+          2000.0,
+          10000.0
+         ],
+         "p_pa": [
+          75000000000.0,
+          1000000000000.0
+         ],
+         "src": "millot2019",
+         "also": [
+          "cheng2021",
+          "millot2018"
+         ],
+         "note": "seen for billionths of a second in laser-shock experiments at 100 to 400 GPa and 2000 to 3000 K; above 400 GPa an hcp form is computed to take over (Cheng et al. 2021), not drawn here"
+        },
+        "props": {
+         "sigma_elec": {
+          "v": 10000.0,
+          "unit": "S m-1",
+          "src": "millot2019",
+          "note": "simulations in Millot et al. 2019: ionic conductivity above 100 S/cm"
+         }
+        }
+       },
+       {
+        "id": "h2o.ice_ic",
+        "names": {
+         "physics": "ice Ic",
+         "plain": "cubic ice",
+         "story": "cubic ice"
+        },
+        "kind": "solid",
+        "stability": "metastable",
+        "evidence": {
+         "grade": "measured",
+         "src": "chaplin-lsbu",
+         "also": [
+          "wikipedia-ice-phases"
+         ],
+         "note": "made by vapour deposition or from amorphous ice between about 130 and 220 K; turns to Ih near 240 K"
+        },
+        "props": {
+         "density": {
+          "v": 930.0,
+          "unit": "kg m-3",
+          "src": "chaplin-lsbu",
+          "note": "experimental density at the phase's own conditions (LSBU structural table, column a)"
+         }
+        }
+       },
+       {
+        "id": "h2o.ice_iv",
+        "names": {
+         "physics": "ice IV",
+         "plain": "ice IV",
+         "story": "ice IV"
+        },
+        "kind": "solid",
+        "stability": "metastable",
+        "evidence": {
+         "grade": "measured",
+         "src": "chaplin-lsbu",
+         "also": [
+          "wikipedia-ice-phases"
+         ],
+         "note": "metastable inside ice V's field; made from high-density amorphous ice near 810 MPa"
+        },
+        "props": {
+         "density": {
+          "v": 1270.0,
+          "unit": "kg m-3",
+          "src": "chaplin-lsbu",
+          "note": "experimental density at the phase's own conditions (LSBU structural table, column a)"
+         }
+        }
+       },
+       {
+        "id": "h2o.ice_ix",
+        "names": {
+         "physics": "ice IX",
+         "plain": "ordered ice III",
+         "story": "ordered ice III"
+        },
+        "kind": "solid",
+        "stability": "metastable",
+        "evidence": {
+         "grade": "measured",
+         "src": "chaplin-lsbu",
+         "also": [
+          "wikipedia-ice-phases"
+         ],
+         "note": "hydrogen-ordered ice III, made by cooling ice III below about 165 K; metastable in ice II's field"
+        },
+        "props": {
+         "density": {
+          "v": 1160.0,
+          "unit": "kg m-3",
+          "src": "chaplin-lsbu",
+          "note": "experimental density at the phase's own conditions (LSBU structural table, column a)"
+         }
+        }
+       },
+       {
+        "id": "h2o.ice_xii",
+        "names": {
+         "physics": "ice XII",
+         "plain": "ice XII",
+         "story": "ice XII"
+        },
+        "kind": "solid",
+        "stability": "metastable",
+        "evidence": {
+         "grade": "measured",
+         "src": "chaplin-lsbu",
+         "also": [
+          "wikipedia-ice-phases"
+         ],
+         "note": "metastable inside ice V's field, from liquid near 260 K and 0.55 GPa"
+        },
+        "props": {
+         "density": {
+          "v": 1290.0,
+          "unit": "kg m-3",
+          "src": "chaplin-lsbu",
+          "note": "experimental density at the phase's own conditions (LSBU structural table, column a)"
+         }
+        }
+       },
+       {
+        "id": "h2o.ice_xiii",
+        "names": {
+         "physics": "ice XIII",
+         "plain": "ordered ice V",
+         "story": "ordered ice V"
+        },
+        "kind": "solid",
+        "stability": "metastable",
+        "evidence": {
+         "grade": "measured",
+         "src": "chaplin-lsbu",
+         "also": [
+          "wikipedia-ice-phases"
+         ],
+         "note": "hydrogen-ordered ice V, needs acid doping"
+        },
+        "props": {
+         "density": {
+          "v": 1230.0,
+          "unit": "kg m-3",
+          "src": "chaplin-lsbu",
+          "note": "experimental density at the phase's own conditions (LSBU structural table, column a)"
+         }
+        }
+       },
+       {
+        "id": "h2o.ice_xiv",
+        "names": {
+         "physics": "ice XIV",
+         "plain": "ordered ice XII",
+         "story": "ordered ice XII"
+        },
+        "kind": "solid",
+        "stability": "metastable",
+        "evidence": {
+         "grade": "measured",
+         "src": "chaplin-lsbu",
+         "also": [
+          "wikipedia-ice-phases"
+         ],
+         "note": "hydrogen-ordered ice XII, needs acid doping"
+        },
+        "props": {
+         "density": {
+          "v": 1290.0,
+          "unit": "kg m-3",
+          "src": "chaplin-lsbu",
+          "note": "experimental density at the phase's own conditions (LSBU structural table, column a)"
+         }
+        }
+       },
+       {
+        "id": "h2o.ice_xvi",
+        "names": {
+         "physics": "ice XVI",
+         "plain": "empty clathrate ice",
+         "story": "empty clathrate ice"
+        },
+        "kind": "solid",
+        "stability": "metastable",
+        "evidence": {
+         "grade": "measured",
+         "src": "salzmann2019",
+         "also": [
+          "chaplin-lsbu"
+         ],
+         "note": "made by pumping neon out of a clathrate at 142 K; the least dense crystalline ice"
+        },
+        "props": {
+         "density": {
+          "v": 810.0,
+          "unit": "kg m-3",
+          "src": "chaplin-lsbu",
+          "note": "experimental density at the phase's own conditions (LSBU structural table, column a)"
+         }
+        }
+       },
+       {
+        "id": "h2o.ice_xvii",
+        "names": {
+         "physics": "ice XVII",
+         "plain": "empty hydrogen-clathrate ice",
+         "story": "empty hydrogen-clathrate ice"
+        },
+        "kind": "solid",
+        "stability": "metastable",
+        "evidence": {
+         "grade": "measured",
+         "src": "salzmann2019",
+         "also": [
+          "chaplin-lsbu"
+         ],
+         "note": "made by pumping hydrogen out of a filled ice below 120 K"
+        },
+        "props": {
+         "density": {
+          "v": 850.0,
+          "unit": "kg m-3",
+          "src": "chaplin-lsbu",
+          "note": "experimental density at the phase's own conditions (LSBU structural table, column a)"
+         }
+        }
+       },
+       {
+        "id": "h2o.ice_xix",
+        "names": {
+         "physics": "ice XIX",
+         "plain": "another ordered ice VI",
+         "story": "another ordered ice VI"
+        },
+        "kind": "solid",
+        "stability": "metastable",
+        "evidence": {
+         "grade": "measured",
+         "src": "chaplin-lsbu",
+         "also": [
+          "wikipedia-ice-phases"
+         ],
+         "note": "a second hydrogen-ordered form of ice VI, from acid-doped ice VI cooled at about 2 GPa"
+        },
+        "props": {
+         "density": {
+          "v": 1320.0,
+          "unit": "kg m-3",
+          "src": "chaplin-lsbu",
+          "note": "experimental density at the phase's own conditions (LSBU structural table, column a)"
+         }
+        }
+       },
+       {
+        "id": "h2o.amorphous_lda",
+        "names": {
+         "physics": "low-density amorphous ice",
+         "plain": "glassy ice",
+         "story": "glassy ice"
+        },
+        "kind": "glass",
+        "stability": "metastable",
+        "evidence": {
+         "grade": "measured",
+         "src": "chaplin-lsbu",
+         "also": [
+          "wikipedia-ice-phases"
+         ],
+         "note": "a glass made by vapour deposition below about 120 K; the frost on very cold comets and outer-system grains; turns crystalline above about 130 to 136 K"
+        },
+        "props": {
+         "density": {
+          "v": 925.0,
+          "unit": "kg m-3",
+          "src": "chaplin-lsbu",
+          "note": "experimental density at the phase's own conditions (LSBU structural table, column a)"
+         }
+        }
+       },
+       {
+        "id": "h2o.amorphous_hda",
+        "names": {
+         "physics": "high-density amorphous ice",
+         "plain": "dense glassy ice",
+         "story": "dense glassy ice"
+        },
+        "kind": "glass",
+        "stability": "metastable",
+        "evidence": {
+         "grade": "measured",
+         "src": "salzmann2019",
+         "also": [
+          "chaplin-lsbu"
+         ],
+         "note": "made by squeezing ice Ih at 77 K (about 1.6 GPa)"
+        },
+        "props": {
+         "density": {
+          "v": 1170.0,
+          "unit": "kg m-3",
+          "src": "chaplin-lsbu",
+          "note": "experimental density at the phase's own conditions (LSBU structural table, column a)"
+         }
+        }
+       },
+       {
+        "id": "h2o.amorphous_vhda",
+        "names": {
+         "physics": "very-high-density amorphous ice",
+         "plain": "densest glassy ice",
+         "story": "densest glassy ice"
+        },
+        "kind": "glass",
+        "stability": "metastable",
+        "evidence": {
+         "grade": "measured",
+         "src": "chaplin-lsbu",
+         "also": [
+          "wikipedia-ice-phases"
+         ],
+         "note": "made by heating high-density amorphous ice to about 160 K at 1 to 2 GPa (1.26 at 77 K in another table)"
+        },
+        "props": {
+         "density": {
+          "v": 1250.0,
+          "unit": "kg m-3",
+          "src": "chaplin-lsbu",
+          "note": "experimental density at the phase's own conditions (LSBU structural table, column a)"
+         }
+        }
+       }
+      ],
+      "boundaries": [
+       {
+        "between": [
+         "h2o.ice_ih",
+         "h2o.vapour"
+        ],
+        "curve": {
+         "form": "points",
+         "points": [
+          [
+           9.04583194e-25,
+           72.0
+          ],
+          [
+           9.4522139e-23,
+           76.2974614
+          ],
+          [
+           7.66375922e-21,
+           80.8514252
+          ],
+          [
+           4.88959096e-19,
+           85.6772013
+          ],
+          [
+           2.48757394e-17,
+           90.7910133
+          ],
+          [
+           1.02181743e-15,
+           96.2100532
+          ],
+          [
+           3.42905395e-14,
+           101.952539
+          ],
+          [
+           9.50593533e-13,
+           108.037777
+          ],
+          [
+           2.19974779e-11,
+           114.486223
+          ],
+          [
+           4.29124976e-10,
+           121.319558
+          ],
+          [
+           7.12286497e-09,
+           128.560755
+          ],
+          [
+           1.01479459e-07,
+           136.234156
+          ],
+          [
+           1.25119414e-06,
+           144.365559
+          ],
+          [
+           1.34541167e-05,
+           152.982301
+          ],
+          [
+           0.000127096013,
+           162.11335
+          ],
+          [
+           0.00106201211,
+           171.789403
+          ],
+          [
+           0.00790031999,
+           182.042991
+          ],
+          [
+           0.0526388306,
+           192.908584
+          ],
+          [
+           0.315924666,
+           204.422712
+          ],
+          [
+           1.71709833,
+           216.624083
+          ],
+          [
+           8.49408859,
+           229.553717
+          ],
+          [
+           38.4227635,
+           243.255081
+          ],
+          [
+           159.632881,
+           257.774238
+          ],
+          [
+           611.657,
+           273.16
+          ]
+         ]
+        },
+        "evidence": {
+         "grade": "measured"
+        },
+        "src": "iapws2011-meltsub",
+        "fit": {
+         "form": "iapws2011_subl",
+         "coeffs": [
+          273.16,
+          611.657,
+          -21.2144006,
+          27.3203819,
+          -6.1059813,
+          0.00333333333,
+          1.20666667,
+          1.70333333
+         ],
+         "t_k": [
+          72.0,
+          273.16
+         ]
+        },
+        "note": "the release holds it from 50 K; the data reach 130 K and below that it rests on Feistel and Wagner 2007's model"
+       },
+       {
+        "between": [
+         "h2o.ice_xi",
+         "h2o.vapour"
+        ],
+        "curve": {
+         "form": "points",
+         "points": [
+          [
+           4.03925565e-241,
+           10.0
+          ],
+          [
+           1.2729172e-220,
+           10.8962065
+          ],
+          [
+           8.53248704e-202,
+           11.8727316
+          ],
+          [
+           1.6683034e-184,
+           12.9367736
+          ],
+          [
+           1.27143968e-168,
+           14.0961757
+          ],
+          [
+           4.92841455e-154,
+           15.3594841
+          ],
+          [
+           1.24050094e-140,
+           16.7360111
+          ],
+          [
+           2.53716116e-128,
+           18.2359033
+          ],
+          [
+           5.18025247e-117,
+           19.8702169
+          ],
+          [
+           1.27543769e-106,
+           21.6509987
+          ],
+          [
+           4.50391444e-97,
+           23.5913753
+          ],
+          [
+           2.67470468e-88,
+           25.7056497
+          ],
+          [
+           3.09150573e-80,
+           28.0094068
+          ],
+          [
+           7.95266418e-73,
+           30.5196281
+          ],
+          [
+           5.14939486e-66,
+           33.2548171
+          ],
+          [
+           9.39631534e-60,
+           36.2351354
+          ],
+          [
+           5.35966124e-54,
+           39.4825519
+          ],
+          [
+           1.05101643e-48,
+           43.0210039
+          ],
+          [
+           7.73186652e-44,
+           46.8765744
+          ],
+          [
+           2.31177852e-39,
+           51.0776835
+          ],
+          [
+           3.02349003e-35,
+           55.6552988
+          ],
+          [
+           1.85032388e-31,
+           60.6431629
+          ],
+          [
+           5.63661121e-28,
+           66.0780427
+          ],
+          [
+           9.04583194e-25,
+           72.0
+          ]
+         ]
+        },
+        "evidence": {
+         "grade": "extrapolated"
+        },
+        "src": "iapws2011-meltsub",
+        "fit": {
+         "form": "iapws2011_subl",
+         "coeffs": [
+          273.16,
+          611.657,
+          -21.2144006,
+          27.3203819,
+          -6.1059813,
+          0.00333333333,
+          1.20666667,
+          1.70333333
+         ],
+         "t_k": [
+          10.0,
+          72.0
+         ]
+        },
+        "note": "ice Ih's sublimation curve carried below 50 K and onto ice XI; the vapour pressure there is below 1e-15 Pa"
+       },
+       {
+        "between": [
+         "h2o.liquid",
+         "h2o.vapour"
+        ],
+        "curve": {
+         "form": "points",
+         "points": [
+          [
+           611.65707,
+           273.16
+          ],
+          [
+           1265.40391,
+           283.597212
+          ],
+          [
+           2531.74646,
+           294.433221
+          ],
+          [
+           4904.99133,
+           305.683264
+          ],
+          [
+           9213.78502,
+           317.363162
+          ],
+          [
+           16802.4608,
+           329.489339
+          ],
+          [
+           29784.7985,
+           342.078847
+          ],
+          [
+           51387.119,
+           355.14939
+          ],
+          [
+           86397.5148,
+           368.719346
+          ],
+          [
+           141737.023,
+           382.8078
+          ],
+          [
+           227167.11,
+           397.434561
+          ],
+          [
+           356146.698,
+           412.620198
+          ],
+          [
+           546852.172,
+           428.386066
+          ],
+          [
+           823376.571,
+           444.754334
+          ],
+          [
+           1217131.38,
+           461.748019
+          ],
+          [
+           1768488.83,
+           479.391019
+          ],
+          [
+           2528730.59,
+           497.708143
+          ],
+          [
+           3562423.43,
+           516.725149
+          ],
+          [
+           4950454.67,
+           536.468779
+          ],
+          [
+           6794205.58,
+           556.966795
+          ],
+          [
+           9221916.19,
+           578.248024
+          ],
+          [
+           12399828.2,
+           600.34239
+          ],
+          [
+           16555922.2,
+           623.280963
+          ],
+          [
+           22064000.0,
+           647.096
+          ]
+         ]
+        },
+        "evidence": {
+         "grade": "measured"
+        },
+        "src": "iapws1992-sat",
+        "fit": {
+         "form": "iapws1992_sat",
+         "coeffs": [
+          647.096,
+          22064000.0,
+          -7.85951783,
+          1.84408259,
+          -11.7866497,
+          22.6807411,
+          -15.9618719,
+          1.80122502
+         ],
+         "t_k": [
+          273.16,
+          647.096
+         ]
+        }
+       },
+       {
+        "between": [
+         "h2o.ice_ih",
+         "h2o.liquid"
+        ],
+        "curve": {
+         "form": "iapws_melt",
+         "tn": 273.16,
+         "pn": 611.657,
+         "log": false,
+         "terms": [
+          [
+           1195393.37,
+           3.0
+          ],
+          [
+           80818.3159,
+           25.75
+          ],
+          [
+           3338.2686,
+           103.75
+          ]
+         ],
+         "valid_k": [
+          251.165,
+          273.16
+         ]
+        },
+        "evidence": {
+         "grade": "measured"
+        },
+        "src": "iapws2011-meltsub",
+        "uncertainty": "2% in p (k=2)"
+       },
+       {
+        "between": [
+         "h2o.ice_iii",
+         "h2o.liquid"
+        ],
+        "curve": {
+         "form": "iapws_melt",
+         "tn": 251.165,
+         "pn": 208566000.0,
+         "log": false,
+         "terms": [
+          [
+           -0.299948,
+           60.0
+          ]
+         ],
+         "valid_k": [
+          251.165,
+          256.164
+         ]
+        },
+        "evidence": {
+         "grade": "measured"
+        },
+        "src": "iapws2011-meltsub",
+        "uncertainty": "3% in p (k=2)"
+       },
+       {
+        "between": [
+         "h2o.ice_v",
+         "h2o.liquid"
+        ],
+        "curve": {
+         "form": "iapws_melt",
+         "tn": 256.164,
+         "pn": 350100000.0,
+         "log": false,
+         "terms": [
+          [
+           -1.18721,
+           8.0
+          ]
+         ],
+         "valid_k": [
+          256.164,
+          273.31
+         ]
+        },
+        "evidence": {
+         "grade": "measured"
+        },
+        "src": "iapws2011-meltsub",
+        "uncertainty": "3% in p (k=2)"
+       },
+       {
+        "between": [
+         "h2o.ice_vi",
+         "h2o.liquid"
+        ],
+        "curve": {
+         "form": "iapws_melt",
+         "tn": 273.31,
+         "pn": 632400000.0,
+         "log": false,
+         "terms": [
+          [
+           -1.07476,
+           4.6
+          ]
+         ],
+         "valid_k": [
+          273.31,
+          355.0
+         ]
+        },
+        "evidence": {
+         "grade": "measured"
+        },
+        "src": "iapws2011-meltsub",
+        "uncertainty": "3% in p (k=2)"
+       },
+       {
+        "between": [
+         "h2o.ice_vii",
+         "h2o.liquid"
+        ],
+        "curve": {
+         "form": "points",
+         "points": [
+          [
+           2216000000.0,
+           355.0
+          ],
+          [
+           2314763440.0,
+           362.802017
+          ],
+          [
+           2417722610.0,
+           370.775503
+          ],
+          [
+           2525297980.0,
+           378.924227
+          ],
+          [
+           2637985110.0,
+           387.252039
+          ],
+          [
+           2756368390.0,
+           395.762876
+          ],
+          [
+           2881137610.0,
+           404.460759
+          ],
+          [
+           3013107980.0,
+           413.349801
+          ],
+          [
+           3153244470.0,
+           422.434202
+          ],
+          [
+           3302691630.0,
+           431.718255
+          ],
+          [
+           3462810230.0,
+           441.206349
+          ],
+          [
+           3635222610.0,
+           450.902967
+          ],
+          [
+           3821868970.0,
+           460.812693
+          ],
+          [
+           4025077940.0,
+           470.94021
+          ],
+          [
+           4247654990.0,
+           481.290304
+          ],
+          [
+           4492994100.0,
+           491.867868
+          ],
+          [
+           4765218920.0,
+           502.677901
+          ],
+          [
+           5069361620.0,
+           513.725511
+          ],
+          [
+           5411589080.0,
+           525.01592
+          ],
+          [
+           5799487380.0,
+           536.554464
+          ],
+          [
+           6242415290.0,
+           548.346597
+          ],
+          [
+           6751932920.0,
+           560.397892
+          ],
+          [
+           7342297730.0,
+           572.714044
+          ],
+          [
+           8030985010.0,
+           585.300874
+          ],
+          [
+           8157062880.0,
+           587.860623
+          ],
+          [
+           8285540100.0,
+           590.431566
+          ],
+          [
+           8416462320.0,
+           593.013753
+          ],
+          [
+           8549876080.0,
+           595.607232
+          ],
+          [
+           8685828790.0,
+           598.212055
+          ],
+          [
+           8824368780.0,
+           600.828269
+          ],
+          [
+           8965545270.0,
+           603.455924
+          ],
+          [
+           9109408440.0,
+           606.095072
+          ],
+          [
+           9256009430.0,
+           608.745761
+          ],
+          [
+           9405400330.0,
+           611.408043
+          ],
+          [
+           9557634240.0,
+           614.081969
+          ],
+          [
+           9712765260.0,
+           616.767588
+          ],
+          [
+           9870848530.0,
+           619.464952
+          ],
+          [
+           10031940200.0,
+           622.174114
+          ],
+          [
+           10196097600.0,
+           624.895123
+          ],
+          [
+           10363379000.0,
+           627.628033
+          ],
+          [
+           10533843900.0,
+           630.372894
+          ],
+          [
+           10707552800.0,
+           633.12976
+          ],
+          [
+           10884567600.0,
+           635.898683
+          ],
+          [
+           11064951000.0,
+           638.679715
+          ],
+          [
+           11248767300.0,
+           641.47291
+          ],
+          [
+           11436081700.0,
+           644.27832
+          ],
+          [
+           11626960800.0,
+           647.096
+          ]
+         ]
+        },
+        "evidence": {
+         "grade": "measured"
+        },
+        "src": "iapws2011-meltsub",
+        "fit": {
+         "form": "segments",
+         "parts": [
+          {
+           "form": "iapws2011_vii",
+           "coeffs": [
+            355.0,
+            2216000000.0,
+            1.73683,
+            -0.0544606,
+            8.06106e-08
+           ],
+           "t_k": [
+            355.0,
+            585.3008742018092
+           ],
+           "src": "iapws2011-meltsub"
+          },
+          {
+           "form": "simon",
+           "coeffs": [
+            2170000000.0,
+            764000000.0,
+            355.0,
+            4.32
+           ],
+           "t_k": [
+            585.3008742018092,
+            647.096
+           ],
+           "src": "frank2004"
+          }
+         ]
+        },
+        "also": [
+         "frank2004"
+        ],
+        "uncertainty": "7% in p (k=2) for the IAPWS part",
+        "note": "IAPWS to where it meets Frank et al.'s Simon fit near 590 K (they agree there to 0.1%); measurements disagree by up to about 80 K at 13 GPa (Lin et al. 2004)"
+       },
+       {
+        "between": [
+         "h2o.ice_vii",
+         "h2o.supercritical"
+        ],
+        "curve": {
+         "form": "iapws_melt",
+         "tn": 355.0,
+         "pn": 2170000000.0,
+         "log": false,
+         "terms": [
+          [
+           -0.35207373271889403,
+           4.32
+          ]
+         ],
+         "valid_k": [
+          647.096,
+          852.2978623518472
+         ],
+         "note": "Simon fit p = p0 + A((T/T0)^c - 1) written in the iapws_melt form"
+        },
+        "evidence": {
+         "grade": "measured"
+        },
+        "src": "frank2004",
+        "note": "Frank et al.'s fit holds 3 to 60 GPa"
+       },
+       {
+        "between": [
+         "h2o.ice_xx",
+         "h2o.supercritical"
+        ],
+        "curve": {
+         "form": "points",
+         "points": [
+          [
+           35000000000.0,
+           852.297862
+          ],
+          [
+           57850599400.0,
+           2000.0
+          ]
+         ]
+        },
+        "evidence": {
+         "grade": "computed"
+        },
+        "src": "cheng2021",
+        "also": [
+         "lin2005"
+        ]
+       },
+       {
+        "between": [
+         "h2o.ice_xx",
+         "h2o.ionic_fluid"
+        ],
+        "curve": {
+         "form": "points",
+         "points": [
+          [
+           57850599400.0,
+           2000.0
+          ],
+          [
+           75000000000.0,
+           2592.95925
+          ]
+         ]
+        },
+        "evidence": {
+         "grade": "computed"
+        },
+        "src": "cheng2021"
+       },
+       {
+        "between": [
+         "h2o.ice_xviii",
+         "h2o.ionic_fluid"
+        ],
+        "curve": {
+         "form": "points",
+         "points": [
+          [
+           75000000000.0,
+           2592.95925
+          ],
+          [
+           100000000000.0,
+           3250.0
+          ],
+          [
+           190000000000.0,
+           5000.0
+          ],
+          [
+           1000000000000.0,
+           9527.94581
+          ]
+         ]
+        },
+        "evidence": {
+         "grade": "computed"
+        },
+        "src": "cheng2021",
+        "also": [
+         "millot2018"
+        ],
+        "check": "unverified",
+        "note": "3250 K at 100 GPa is Cheng et al.'s; 5000 K at 190 GPa is recalled from Millot et al. 2018 and must be checked; beyond 190 GPa extrapolated"
+       },
+       {
+        "between": [
+         "h2o.liquid",
+         "h2o.supercritical"
+        ],
+        "curve": {
+         "form": "points",
+         "points": [
+          [
+           22064000.0,
+           647.096
+          ],
+          [
+           11626960800.0,
+           647.096
+          ]
+         ]
+        },
+        "evidence": {
+         "grade": "convention"
+        },
+        "src": "iapws1992-sat",
+        "fit": {
+         "form": "isotherm",
+         "t_k": 647.096,
+         "p_pa": [
+          22064000.0,
+          11626960814.590782
+         ]
+        }
+       },
+       {
+        "between": [
+         "h2o.supercritical",
+         "h2o.vapour"
+        ],
+        "curve": {
+         "form": "points",
+         "points": [
+          [
+           22064000.0,
+           647.096
+          ],
+          [
+           22064000.0,
+           10000.0
+          ]
+         ]
+        },
+        "evidence": {
+         "grade": "convention"
+        },
+        "src": "iapws1992-sat",
+        "fit": {
+         "form": "isobar",
+         "p_pa": 22064000.0,
+         "t_k": [
+          647.096,
+          10000.0
+         ]
+        }
+       },
+       {
+        "between": [
+         "h2o.ionic_fluid",
+         "h2o.supercritical"
+        ],
+        "curve": {
+         "form": "points",
+         "points": [
+          [
+           57850599400.0,
+           2000.0
+          ],
+          [
+           20000000000.0,
+           2000.0
+          ],
+          [
+           20000000000.0,
+           10000.0
+          ]
+         ]
+        },
+        "evidence": {
+         "grade": "computed"
+        },
+        "src": "redmer2011",
+        "fit": {
+         "form": "segments",
+         "parts": [
+          {
+           "form": "isotherm",
+           "t_k": 2000.0,
+           "p_pa": [
+            57850599408.843216,
+            20000000000.0
+           ]
+          },
+          {
+           "form": "isobar",
+           "p_pa": 20000000000.0,
+           "t_k": [
+            2000.0,
+            10000.0
+           ]
+          }
+         ]
+        },
+        "also": [
+         "mattsson2006"
+        ],
+        "check": "unverified",
+        "note": "a smooth crossover, not a phase change; the edge is recalled and must be checked"
+       },
+       {
+        "between": [
+         "h2o.ice_ih",
+         "h2o.ice_xi"
+        ],
+        "curve": {
+         "form": "points",
+         "points": [
+          [
+           9.04583194e-25,
+           72.0
+          ],
+          [
+           70000000.0,
+           73.4
+          ]
+         ]
+        },
+        "evidence": {
+         "grade": "measured"
+        },
+        "src": "chaplin-lsbu",
+        "note": "gas-Ih-XI at about 72 K (LSBU 72.15 K); Ih-II-XI given as 73.4 K, 70 MPa or 75.05 K, 89.6 MPa"
+       },
+       {
+        "between": [
+         "h2o.ice_ih",
+         "h2o.ice_ii"
+        ],
+        "curve": {
+         "form": "points",
+         "points": [
+          [
+           70000000.0,
+           73.4
+          ],
+          [
+           212900000.0,
+           238.45
+          ]
+         ]
+        },
+        "evidence": {
+         "grade": "measured"
+        },
+        "src": "chaplin-lsbu",
+        "note": "straight between the two triple points"
+       },
+       {
+        "between": [
+         "h2o.ice_ii",
+         "h2o.ice_xi"
+        ],
+        "curve": {
+         "form": "points",
+         "points": [
+          [
+           45659941.9,
+           10.0
+          ],
+          [
+           70000000.0,
+           73.4
+          ]
+         ]
+        },
+        "evidence": {
+         "grade": "extrapolated"
+        },
+        "src": "chaplin-lsbu",
+        "note": "the Ih-II line carried below 73.4 K"
+       },
+       {
+        "between": [
+         "h2o.ice_ih",
+         "h2o.ice_iii"
+        ],
+        "curve": {
+         "form": "points",
+         "points": [
+          [
+           212900000.0,
+           238.45
+          ],
+          [
+           208566000.0,
+           251.165
+          ]
+         ]
+        },
+        "evidence": {
+         "grade": "measured"
+        },
+        "src": "chaplin-lsbu"
+       },
+       {
+        "between": [
+         "h2o.ice_ii",
+         "h2o.ice_iii"
+        ],
+        "curve": {
+         "form": "points",
+         "points": [
+          [
+           212900000.0,
+           238.45
+          ],
+          [
+           344300000.0,
+           248.85
+          ]
+         ]
+        },
+        "evidence": {
+         "grade": "measured"
+        },
+        "src": "chaplin-lsbu"
+       },
+       {
+        "between": [
+         "h2o.ice_iii",
+         "h2o.ice_v"
+        ],
+        "curve": {
+         "form": "points",
+         "points": [
+          [
+           344300000.0,
+           248.85
+          ],
+          [
+           350100000.0,
+           256.164
+          ]
+         ]
+        },
+        "evidence": {
+         "grade": "measured"
+        },
+        "src": "chaplin-lsbu"
+       },
+       {
+        "between": [
+         "h2o.ice_ii",
+         "h2o.ice_v"
+        ],
+        "curve": {
+         "form": "points",
+         "points": [
+          [
+           620000000.0,
+           218.0
+          ],
+          [
+           344300000.0,
+           248.85
+          ]
+         ]
+        },
+        "evidence": {
+         "grade": "measured"
+        },
+        "src": "chaplin-lsbu",
+        "note": "II-V-VI is given as about 218 K, 620 MPa (one study 201.9 K, 670.8 MPa)"
+       },
+       {
+        "between": [
+         "h2o.ice_v",
+         "h2o.ice_vi"
+        ],
+        "curve": {
+         "form": "points",
+         "points": [
+          [
+           620000000.0,
+           218.0
+          ],
+          [
+           632400000.0,
+           273.31
+          ]
+         ]
+        },
+        "evidence": {
+         "grade": "measured"
+        },
+        "src": "chaplin-lsbu"
+       },
+       {
+        "between": [
+         "h2o.ice_ii",
+         "h2o.ice_vi"
+        ],
+        "curve": {
+         "form": "points",
+         "points": [
+          [
+           800000000.0,
+           130.0
+          ],
+          [
+           620000000.0,
+           218.0
+          ]
+         ]
+        },
+        "evidence": {
+         "grade": "measured"
+        },
+        "src": "chaplin-lsbu"
+       },
+       {
+        "between": [
+         "h2o.ice_ii",
+         "h2o.ice_xv"
+        ],
+        "curve": {
+         "form": "points",
+         "points": [
+          [
+           1132510430.0,
+           10.0
+          ],
+          [
+           800000000.0,
+           130.0
+          ]
+         ]
+        },
+        "evidence": {
+         "grade": "extrapolated"
+        },
+        "src": "chaplin-lsbu",
+        "note": "the II-VI line carried below 130 K"
+       },
+       {
+        "between": [
+         "h2o.ice_vi",
+         "h2o.ice_xv"
+        ],
+        "curve": {
+         "form": "points",
+         "points": [
+          [
+           800000000.0,
+           130.0
+          ],
+          [
+           1500000000.0,
+           130.0
+          ]
+         ]
+        },
+        "evidence": {
+         "grade": "measured"
+        },
+        "src": "chaplin-lsbu",
+        "fit": {
+         "form": "isotherm",
+         "t_k": 130.0,
+         "p_pa": [
+          800000000.0,
+          1500000000.0
+         ]
+        },
+        "note": "about 130 K; approximate"
+       },
+       {
+        "between": [
+         "h2o.ice_vi",
+         "h2o.ice_viii"
+        ],
+        "curve": {
+         "form": "points",
+         "points": [
+          [
+           1500000000.0,
+           130.0
+          ],
+          [
+           2100000000.0,
+           278.0
+          ]
+         ]
+        },
+        "evidence": {
+         "grade": "measured"
+        },
+        "src": "chaplin-lsbu"
+       },
+       {
+        "between": [
+         "h2o.ice_viii",
+         "h2o.ice_xv"
+        ],
+        "curve": {
+         "form": "points",
+         "points": [
+          [
+           1500000000.0,
+           10.0
+          ],
+          [
+           1500000000.0,
+           130.0
+          ]
+         ]
+        },
+        "evidence": {
+         "grade": "extrapolated"
+        },
+        "src": "chaplin-lsbu",
+        "fit": {
+         "form": "isobar",
+         "p_pa": 1500000000.0,
+         "t_k": [
+          10.0,
+          130.0
+         ]
+        }
+       },
+       {
+        "between": [
+         "h2o.ice_vi",
+         "h2o.ice_vii"
+        ],
+        "curve": {
+         "form": "points",
+         "points": [
+          [
+           2100000000.0,
+           278.0
+          ],
+          [
+           2216000000.0,
+           355.0
+          ]
+         ]
+        },
+        "evidence": {
+         "grade": "measured"
+        },
+        "src": "chaplin-lsbu",
+        "also": [
+         "haldemann2020"
+        ],
+        "note": "AQUA's fit (Haldemann et al. 2020, Eq. 22) runs about 30 K warmer at 2.1 GPa; the triple points are kept"
+       },
+       {
+        "between": [
+         "h2o.ice_vii",
+         "h2o.ice_viii"
+        ],
+        "curve": {
+         "form": "points",
+         "points": [
+          [
+           2100000000.0,
+           278.0
+          ],
+          [
+           62000000000.0,
+           100.0
+          ]
+         ]
+        },
+        "evidence": {
+         "grade": "measured"
+        },
+        "src": "chaplin-lsbu",
+        "check": "unverified",
+        "note": "straight in T and log p between the two triple points; the real line is flatter near 270 K at moderate pressure"
+       },
+       {
+        "between": [
+         "h2o.ice_viii",
+         "h2o.ice_x"
+        ],
+        "curve": {
+         "form": "points",
+         "points": [
+          [
+           62000000000.0,
+           10.0
+          ],
+          [
+           62000000000.0,
+           100.0
+          ]
+         ]
+        },
+        "evidence": {
+         "grade": "extrapolated"
+        },
+        "src": "chaplin-lsbu",
+        "fit": {
+         "form": "isobar",
+         "p_pa": 62000000000.0,
+         "t_k": [
+          10.0,
+          100.0
+         ]
+        }
+       },
+       {
+        "between": [
+         "h2o.ice_vii",
+         "h2o.ice_x"
+        ],
+        "curve": {
+         "form": "points",
+         "points": [
+          [
+           62000000000.0,
+           100.0
+          ],
+          [
+           60000000000.0,
+           300.0
+          ],
+          [
+           37767889700.0,
+           935.50528
+          ]
+         ]
+        },
+        "evidence": {
+         "grade": "measured"
+        },
+        "src": "lin2005",
+        "note": "60 GPa at 300 K (Goncharov et al. 1999, quoted by Lin et al. 2005), then the negative slope Lin et al. propose, until the superionic onset"
+       },
+       {
+        "between": [
+         "h2o.ice_vii",
+         "h2o.ice_xx"
+        ],
+        "curve": {
+         "form": "points",
+         "points": [
+          [
+           35000000000.0,
+           852.297862
+          ],
+          [
+           37767889700.0,
+           935.50528
+          ]
+         ]
+        },
+        "evidence": {
+         "grade": "computed"
+        },
+        "src": "cheng2021",
+        "also": [
+         "lin2005"
+        ]
+       },
+       {
+        "between": [
+         "h2o.ice_x",
+         "h2o.ice_xx"
+        ],
+        "curve": {
+         "form": "points",
+         "points": [
+          [
+           37767889700.0,
+           935.50528
+          ],
+          [
+           75000000000.0,
+           1685.49593
+          ]
+         ]
+        },
+        "evidence": {
+         "grade": "computed"
+        },
+        "src": "cheng2021"
+       },
+       {
+        "between": [
+         "h2o.ice_x",
+         "h2o.ice_xviii"
+        ],
+        "curve": {
+         "form": "points",
+         "points": [
+          [
+           75000000000.0,
+           1685.49593
+          ],
+          [
+           100000000000.0,
+           2000.0
+          ],
+          [
+           1000000000000.0,
+           2000.0
+          ]
+         ]
+        },
+        "evidence": {
+         "grade": "computed"
+        },
+        "src": "cheng2021",
+        "also": [
+         "millot2019"
+        ]
+       },
+       {
+        "between": [
+         "h2o.ice_xviii",
+         "h2o.ice_xx"
+        ],
+        "curve": {
+         "form": "points",
+         "points": [
+          [
+           75000000000.0,
+           1685.49593
+          ],
+          [
+           75000000000.0,
+           2592.95925
+          ]
+         ]
+        },
+        "evidence": {
+         "grade": "computed"
+        },
+        "src": "cheng2021",
+        "fit": {
+         "form": "isobar",
+         "p_pa": 75000000000.0,
+         "t_k": [
+          1685.4959313477725,
+          2592.9592461579387
+         ]
+        },
+        "note": "Cheng et al.: bcc below about 75 GPa; Millot et al. 2019 saw bcc turn fcc on compression and heating"
+       }
+      ],
+      "meets": [
+       {
+        "phases": [
+         "h2o.ice_ih",
+         "h2o.liquid",
+         "h2o.vapour"
+        ],
+        "t_k": 273.16,
+        "p_pa": 611.657,
+        "src": "iapws2011-meltsub"
+       },
+       {
+        "phases": [
+         "h2o.ice_ih",
+         "h2o.ice_iii",
+         "h2o.liquid"
+        ],
+        "t_k": 251.165,
+        "p_pa": 208566000.0,
+        "src": "iapws2011-meltsub"
+       },
+       {
+        "phases": [
+         "h2o.ice_iii",
+         "h2o.ice_v",
+         "h2o.liquid"
+        ],
+        "t_k": 256.164,
+        "p_pa": 350100000.0,
+        "src": "iapws2011-meltsub"
+       },
+       {
+        "phases": [
+         "h2o.ice_v",
+         "h2o.ice_vi",
+         "h2o.liquid"
+        ],
+        "t_k": 273.31,
+        "p_pa": 632400000.0,
+        "src": "iapws2011-meltsub"
+       },
+       {
+        "phases": [
+         "h2o.ice_vi",
+         "h2o.ice_vii",
+         "h2o.liquid"
+        ],
+        "t_k": 355.0,
+        "p_pa": 2216000000.0,
+        "src": "iapws2011-meltsub"
+       },
+       {
+        "phases": [
+         "h2o.ice_ih",
+         "h2o.ice_ii",
+         "h2o.ice_iii"
+        ],
+        "t_k": 238.45,
+        "p_pa": 212900000.0,
+        "src": "chaplin-lsbu"
+       },
+       {
+        "phases": [
+         "h2o.ice_ii",
+         "h2o.ice_iii",
+         "h2o.ice_v"
+        ],
+        "t_k": 248.85,
+        "p_pa": 344300000.0,
+        "src": "chaplin-lsbu"
+       },
+       {
+        "phases": [
+         "h2o.ice_ii",
+         "h2o.ice_v",
+         "h2o.ice_vi"
+        ],
+        "t_k": 218.0,
+        "p_pa": 620000000.0,
+        "src": "chaplin-lsbu"
+       },
+       {
+        "phases": [
+         "h2o.ice_ii",
+         "h2o.ice_vi",
+         "h2o.ice_xv"
+        ],
+        "t_k": 130.0,
+        "p_pa": 800000000.0,
+        "src": "chaplin-lsbu"
+       },
+       {
+        "phases": [
+         "h2o.ice_vi",
+         "h2o.ice_viii",
+         "h2o.ice_xv"
+        ],
+        "t_k": 130.0,
+        "p_pa": 1500000000.0,
+        "src": "chaplin-lsbu"
+       },
+       {
+        "phases": [
+         "h2o.ice_vi",
+         "h2o.ice_vii",
+         "h2o.ice_viii"
+        ],
+        "t_k": 278.0,
+        "p_pa": 2100000000.0,
+        "src": "chaplin-lsbu"
+       },
+       {
+        "phases": [
+         "h2o.ice_vii",
+         "h2o.ice_viii",
+         "h2o.ice_x"
+        ],
+        "t_k": 100.0,
+        "p_pa": 62000000000.0,
+        "src": "chaplin-lsbu"
+       },
+       {
+        "phases": [
+         "h2o.ice_ih",
+         "h2o.ice_ii",
+         "h2o.ice_xi"
+        ],
+        "t_k": 73.4,
+        "p_pa": 70000000.0,
+        "src": "chaplin-lsbu"
+       },
+       {
+        "phases": [
+         "h2o.ice_ih",
+         "h2o.ice_xi",
+         "h2o.vapour"
+        ],
+        "t_k": 72.0,
+        "p_pa": 9.04583194e-25,
+        "src": "chaplin-lsbu"
+       },
+       {
+        "phases": [
+         "h2o.ice_vii",
+         "h2o.ice_xx",
+         "h2o.supercritical"
+        ],
+        "t_k": 852.297862,
+        "p_pa": 35000000000.0,
+        "src": "lin2005",
+        "note": "contested: placed from 14.6 GPa, 850 K to about 47 GPa, 1000 K by different studies; here at Lin et al. 2005's 35 GPa, on Frank et al.'s melting curve"
+       },
+       {
+        "phases": [
+         "h2o.ice_vii",
+         "h2o.ice_x",
+         "h2o.ice_xx"
+        ],
+        "t_k": 935.50528,
+        "p_pa": 37767889700.0,
+        "src": "cheng2021"
+       },
+       {
+        "phases": [
+         "h2o.ice_x",
+         "h2o.ice_xviii",
+         "h2o.ice_xx"
+        ],
+        "t_k": 1685.495931,
+        "p_pa": 75000000000.0,
+        "src": "cheng2021"
+       },
+       {
+        "phases": [
+         "h2o.ice_xviii",
+         "h2o.ice_xx",
+         "h2o.ionic_fluid"
+        ],
+        "t_k": 2592.959246,
+        "p_pa": 75000000000.0,
+        "src": "cheng2021"
+       },
+       {
+        "phases": [
+         "h2o.ice_xx",
+         "h2o.ionic_fluid",
+         "h2o.supercritical"
+        ],
+        "t_k": 2000.0,
+        "p_pa": 57850599400.0,
+        "src": "redmer2011"
+       },
+       {
+        "phases": [
+         "h2o.liquid",
+         "h2o.supercritical",
+         "h2o.vapour"
+        ],
+        "t_k": 647.096,
+        "p_pa": 22064000.0,
+        "src": "iapws1992-sat",
+        "note": "the critical point: the end of the boiling curve, where the convention lines start"
+       },
+       {
+        "phases": [
+         "h2o.ice_vii",
+         "h2o.liquid",
+         "h2o.supercritical"
+        ],
+        "t_k": 647.096,
+        "p_pa": 11626960800.0,
+        "src": "frank2004",
+        "note": "not a true triple point: where ice VII's melting curve crosses the critical temperature"
+       }
+      ],
+      "table": {
+       "log10_p_pa": {
+        "lo": -10.0,
+        "hi": 12.0,
+        "n": 4401
+       },
+       "log10_t_k": {
+        "lo": 1.0,
+        "hi": 4.0,
+        "n": 1501
+       },
+       "phases": [
+        "h2o.vapour",
+        "h2o.liquid",
+        "h2o.supercritical",
+        "h2o.ionic_fluid",
+        "h2o.ice_ih",
+        "h2o.ice_xi",
+        "h2o.ice_ii",
+        "h2o.ice_iii",
+        "h2o.ice_v",
+        "h2o.ice_vi",
+        "h2o.ice_xv",
+        "h2o.ice_vii",
+        "h2o.ice_viii",
+        "h2o.ice_x",
+        "h2o.ice_xx",
+        "h2o.ice_xviii"
+       ],
+       "order": "pressure outer (low first), temperature inner (low first)",
+       "encoding": "rle: rows split by '/', runs by ' '; run = phase digit (base 36) then length (base 36)",
+       "built_by": "scripts/water_phases.py",
+       "rle": "5bz 42x 0qt/5bz 42x 0qt/5bz 42x 0qt/5bz 42x 0qt/5bz 42x 0qt/5bz 42x 0qt/5bz 42x 0qt/5bz 42y 0qs/5bz 42y 0qs/5bz 42y 0qs/5bz 42y 0qs/5bz 42y 0qs/5bz 42y 0qs/5bz 42y 0qs/5bz 42y 0qs/5bz 42y 0qs/5bz 42y 0qs/5bz 42y 0qs/5bz 42y 0qs/5bz 42y 0qs/5bz 42y 0qs/5bz 42y 0qs/5bz 42y 0qs/5bz 42y 0qs/5bz 42y 0qs/5bz 42y 0qs/5bz 42y 0qs/5bz 42z 0qr/5bz 42z 0qr/5bz 42z 0qr/5bz 42z 0qr/5bz 42z 0qr/5bz 42z 0qr/5bz 42z 0qr/5bz 42z 0qr/5bz 42z 0qr/5bz 42z 0qr/5bz 42z 0qr/5bz 42z 0qr/5bz 42z 0qr/5bz 42z 0qr/5bz 42z 0qr/5bz 42z 0qr/5bz 42z 0qr/5bz 42z 0qr/5bz 42z 0qr/5bz 42z 0qr/5bz 430 0qq/5bz 430 0qq/5bz 430 0qq/5bz 430 0qq/5bz 430 0qq/5bz 430 0qq/5bz 430 0qq/5bz 430 0qq/5bz 430 0qq/5bz 430 0qq/5bz 430 0qq/5bz 430 0qq/5bz 430 0qq/5bz 430 0qq/5bz 430 0qq/5bz 430 0qq/5bz 430 0qq/5bz 430 0qq/5bz 430 0qq/5bz 430 0qq/5bz 430 0qq/5bz 431 0qp/5bz 431 0qp/5bz 431 0qp/5bz 431 0qp/5bz 431 0qp/5bz 431 0qp/5bz 431 0qp/5bz 431 0qp/5bz 431 0qp/5bz 431 0qp/5bz 431 0qp/5bz 431 0qp/5bz 431 0qp/5bz 431 0qp/5bz 431 0qp/5bz 431 0qp/5bz 431 0qp/5bz 431 0qp/5bz 431 0qp/5bz 431 0qp/5bz 432 0qo/5bz 432 0qo/5bz 432 0qo/5bz 432 0qo/5bz 432 0qo/5bz 432 0qo/5bz 432 0qo/5bz 432 0qo/5bz 432 0qo/5bz 432 0qo/5bz 432 0qo/5bz 432 0qo/5bz 432 0qo/5bz 432 0qo/5bz 432 0qo/5bz 432 0qo/5bz 432 0qo/5bz 432 0qo/5bz 432 0qo/5bz 432 0qo/5bz 433 0qn/5bz 433 0qn/5bz 433 0qn/5bz 433 0qn/5bz 433 0qn/5bz 433 0qn/5bz 433 0qn/5bz 433 0qn/5bz 433 0qn/5bz 433 0qn/5bz 433 0qn/5bz 433 0qn/5bz 433 0qn/5bz 433 0qn/5bz 433 0qn/5bz 433 0qn/5bz 433 0qn/5bz 433 0qn/5bz 433 0qn/5bz 433 0qn/5bz 434 0qm/5bz 434 0qm/5bz 434 0qm/5bz 434 0qm/5bz 434 0qm/5bz 434 0qm/5bz 434 0qm/5bz 434 0qm/5bz 434 0qm/5bz 434 0qm/5bz 434 0qm/5bz 434 0qm/5bz 434 0qm/5bz 434 0qm/5bz 434 0qm/5bz 434 0qm/5bz 434 0qm/5bz 434 0qm/5bz 434 0qm/5bz 434 0qm/5bz 435 0ql/5bz 435 0ql/5bz 435 0ql/5bz 435 0ql/5bz 435 0ql/5bz 435 0ql/5bz 435 0ql/5bz 435 0ql/5bz 435 0ql/5bz 435 0ql/5bz 435 0ql/5bz 435 0ql/5bz 435 0ql/5bz 435 0ql/5bz 435 0ql/5bz 435 0ql/5bz 435 0ql/5bz 435 0ql/5bz 435 0ql/5bz 436 0qk/5bz 436 0qk/5bz 436 0qk/5bz 436 0qk/5bz 436 0qk/5bz 436 0qk/5bz 436 0qk/5bz 436 0qk/5bz 436 0qk/5bz 436 0qk/5bz 436 0qk/5bz 436 0qk/5bz 436 0qk/5bz 436 0qk/5bz 436 0qk/5bz 436 0qk/5bz 436 0qk/5bz 436 0qk/5bz 436 0qk/5bz 436 0qk/5bz 437 0qj/5bz 437 0qj/5bz 437 0qj/5bz 437 0qj/5bz 437 0qj/5bz 437 0qj/5bz 437 0qj/5bz 437 0qj/5bz 437 0qj/5bz 437 0qj/5bz 437 0qj/5bz 437 0qj/5bz 437 0qj/5bz 437 0qj/5bz 437 0qj/5bz 437 0qj/5bz 437 0qj/5bz 437 0qj/5bz 437 0qj/5bz 437 0qj/5bz 438 0qi/5bz 438 0qi/5bz 438 0qi/5bz 438 0qi/5bz 438 0qi/5bz 438 0qi/5bz 438 0qi/5bz 438 0qi/5bz 438 0qi/5bz 438 0qi/5bz 438 0qi/5bz 438 0qi/5bz 438 0qi/5bz 438 0qi/5bz 438 0qi/5bz 438 0qi/5bz 438 0qi/5bz 438 0qi/5bz 438 0qi/5bz 439 0qh/5bz 439 0qh/5bz 439 0qh/5bz 439 0qh/5bz 439 0qh/5bz 439 0qh/5bz 439 0qh/5bz 439 0qh/5bz 439 0qh/5bz 439 0qh/5bz 439 0qh/5bz 439 0qh/5bz 439 0qh/5bz 439 0qh/5bz 439 0qh/5bz 439 0qh/5bz 439 0qh/5bz 439 0qh/5bz 439 0qh/5bz 439 0qh/5bz 43a 0qg/5bz 43a 0qg/5bz 43a 0qg/5bz 43a 0qg/5bz 43a 0qg/5bz 43a 0qg/5bz 43a 0qg/5bz 43a 0qg/5bz 43a 0qg/5bz 43a 0qg/5bz 43a 0qg/5bz 43a 0qg/5bz 43a 0qg/5bz 43a 0qg/5bz 43a 0qg/5bz 43a 0qg/5bz 43a 0qg/5bz 43a 0qg/5bz 43a 0qg/5bz 43b 0qf/5bz 43b 0qf/5bz 43b 0qf/5bz 43b 0qf/5bz 43b 0qf/5bz 43b 0qf/5bz 43b 0qf/5bz 43b 0qf/5bz 43b 0qf/5bz 43b 0qf/5bz 43b 0qf/5bz 43b 0qf/5bz 43b 0qf/5bz 43b 0qf/5bz 43b 0qf/5bz 43b 0qf/5bz 43b 0qf/5bz 43b 0qf/5bz 43b 0qf/5bz 43c 0qe/5bz 43c 0qe/5bz 43c 0qe/5bz 43c 0qe/5bz 43c 0qe/5bz 43c 0qe/5bz 43c 0qe/5bz 43c 0qe/5bz 43c 0qe/5bz 43c 0qe/5bz 43c 0qe/5bz 43c 0qe/5bz 43c 0qe/5bz 43c 0qe/5bz 43c 0qe/5bz 43c 0qe/5bz 43c 0qe/5bz 43c 0qe/5bz 43c 0qe/5bz 43c 0qe/5bz 43d 0qd/5bz 43d 0qd/5bz 43d 0qd/5bz 43d 0qd/5bz 43d 0qd/5bz 43d 0qd/5bz 43d 0qd/5bz 43d 0qd/5bz 43d 0qd/5bz 43d 0qd/5bz 43d 0qd/5bz 43d 0qd/5bz 43d 0qd/5bz 43d 0qd/5bz 43d 0qd/5bz 43d 0qd/5bz 43d 0qd/5bz 43d 0qd/5bz 43d 0qd/5bz 43e 0qc/5bz 43e 0qc/5bz 43e 0qc/5bz 43e 0qc/5bz 43e 0qc/5bz 43e 0qc/5bz 43e 0qc/5bz 43e 0qc/5bz 43e 0qc/5bz 43e 0qc/5bz 43e 0qc/5bz 43e 0qc/5bz 43e 0qc/5bz 43e 0qc/5bz 43e 0qc/5bz 43e 0qc/5bz 43e 0qc/5bz 43e 0qc/5bz 43e 0qc/5bz 43f 0qb/5bz 43f 0qb/5bz 43f 0qb/5bz 43f 0qb/5bz 43f 0qb/5bz 43f 0qb/5bz 43f 0qb/5bz 43f 0qb/5bz 43f 0qb/5bz 43f 0qb/5bz 43f 0qb/5bz 43f 0qb/5bz 43f 0qb/5bz 43f 0qb/5bz 43f 0qb/5bz 43f 0qb/5bz 43f 0qb/5bz 43f 0qb/5bz 43f 0qb/5bz 43g 0qa/5bz 43g 0qa/5bz 43g 0qa/5bz 43g 0qa/5bz 43g 0qa/5bz 43g 0qa/5bz 43g 0qa/5bz 43g 0qa/5bz 43g 0qa/5bz 43g 0qa/5bz 43g 0qa/5bz 43g 0qa/5bz 43g 0qa/5bz 43g 0qa/5bz 43g 0qa/5bz 43g 0qa/5bz 43g 0qa/5bz 43g 0qa/5bz 43h 0q9/5bz 43h 0q9/5bz 43h 0q9/5bz 43h 0q9/5bz 43h 0q9/5bz 43h 0q9/5bz 43h 0q9/5bz 43h 0q9/5bz 43h 0q9/5bz 43h 0q9/5bz 43h 0q9/5bz 43h 0q9/5bz 43h 0q9/5bz 43h 0q9/5bz 43h 0q9/5bz 43h 0q9/5bz 43h 0q9/5bz 43h 0q9/5bz 43h 0q9/5bz 43i 0q8/5bz 43i 0q8/5bz 43i 0q8/5bz 43i 0q8/5bz 43i 0q8/5bz 43i 0q8/5bz 43i 0q8/5bz 43i 0q8/5bz 43i 0q8/5bz 43i 0q8/5bz 43i 0q8/5bz 43i 0q8/5bz 43i 0q8/5bz 43i 0q8/5bz 43i 0q8/5bz 43i 0q8/5bz 43i 0q8/5bz 43i 0q8/5bz 43i 0q8/5bz 43j 0q7/5bz 43j 0q7/5bz 43j 0q7/5bz 43j 0q7/5bz 43j 0q7/5bz 43j 0q7/5bz 43j 0q7/5bz 43j 0q7/5bz 43j 0q7/5bz 43j 0q7/5bz 43j 0q7/5bz 43j 0q7/5bz 43j 0q7/5bz 43j 0q7/5bz 43j 0q7/5bz 43j 0q7/5bz 43j 0q7/5bz 43j 0q7/5bz 43k 0q6/5bz 43k 0q6/5bz 43k 0q6/5bz 43k 0q6/5bz 43k 0q6/5bz 43k 0q6/5bz 43k 0q6/5bz 43k 0q6/5bz 43k 0q6/5bz 43k 0q6/5bz 43k 0q6/5bz 43k 0q6/5bz 43k 0q6/5bz 43k 0q6/5bz 43k 0q6/5bz 43k 0q6/5bz 43k 0q6/5bz 43k 0q6/5bz 43k 0q6/5bz 43l 0q5/5bz 43l 0q5/5bz 43l 0q5/5bz 43l 0q5/5bz 43l 0q5/5bz 43l 0q5/5bz 43l 0q5/5bz 43l 0q5/5bz 43l 0q5/5bz 43l 0q5/5bz 43l 0q5/5bz 43l 0q5/5bz 43l 0q5/5bz 43l 0q5/5bz 43l 0q5/5bz 43l 0q5/5bz 43l 0q5/5bz 43l 0q5/5bz 43m 0q4/5bz 43m 0q4/5bz 43m 0q4/5bz 43m 0q4/5bz 43m 0q4/5bz 43m 0q4/5bz 43m 0q4/5bz 43m 0q4/5bz 43m 0q4/5bz 43m 0q4/5bz 43m 0q4/5bz 43m 0q4/5bz 43m 0q4/5bz 43m 0q4/5bz 43m 0q4/5bz 43m 0q4/5bz 43m 0q4/5bz 43m 0q4/5bz 43m 0q4/5bz 43n 0q3/5bz 43n 0q3/5bz 43n 0q3/5bz 43n 0q3/5bz 43n 0q3/5bz 43n 0q3/5bz 43n 0q3/5bz 43n 0q3/5bz 43n 0q3/5bz 43n 0q3/5bz 43n 0q3/5bz 43n 0q3/5bz 43n 0q3/5bz 43n 0q3/5bz 43n 0q3/5bz 43n 0q3/5bz 43n 0q3/5bz 43n 0q3/5bz 43o 0q2/5bz 43o 0q2/5bz 43o 0q2/5bz 43o 0q2/5bz 43o 0q2/5bz 43o 0q2/5bz 43o 0q2/5bz 43o 0q2/5bz 43o 0q2/5bz 43o 0q2/5bz 43o 0q2/5bz 43o 0q2/5bz 43o 0q2/5bz 43o 0q2/5bz 43o 0q2/5bz 43o 0q2/5bz 43o 0q2/5bz 43o 0q2/5bz 43p 0q1/5bz 43p 0q1/5bz 43p 0q1/5bz 43p 0q1/5bz 43p 0q1/5bz 43p 0q1/5bz 43p 0q1/5bz 43p 0q1/5bz 43p 0q1/5bz 43p 0q1/5bz 43p 0q1/5bz 43p 0q1/5bz 43p 0q1/5bz 43p 0q1/5bz 43p 0q1/5bz 43p 0q1/5bz 43p 0q1/5bz 43p 0q1/5bz 43q 0q0/5bz 43q 0q0/5bz 43q 0q0/5bz 43q 0q0/5bz 43q 0q0/5bz 43q 0q0/5bz 43q 0q0/5bz 43q 0q0/5bz 43q 0q0/5bz 43q 0q0/5bz 43q 0q0/5bz 43q 0q0/5bz 43q 0q0/5bz 43q 0q0/5bz 43q 0q0/5bz 43q 0q0/5bz 43q 0q0/5bz 43q 0q0/5bz 43r 0pz/5bz 43r 0pz/5bz 43r 0pz/5bz 43r 0pz/5bz 43r 0pz/5bz 43r 0pz/5bz 43r 0pz/5bz 43r 0pz/5bz 43r 0pz/5bz 43r 0pz/5bz 43r 0pz/5bz 43r 0pz/5bz 43r 0pz/5bz 43r 0pz/5bz 43r 0pz/5bz 43r 0pz/5bz 43r 0pz/5bz 43r 0pz/5bz 43s 0py/5bz 43s 0py/5bz 43s 0py/5bz 43s 0py/5bz 43s 0py/5bz 43s 0py/5bz 43s 0py/5bz 43s 0py/5bz 43s 0py/5bz 43s 0py/5bz 43s 0py/5bz 43s 0py/5bz 43s 0py/5bz 43s 0py/5bz 43s 0py/5bz 43s 0py/5bz 43s 0py/5bz 43s 0py/5bz 43t 0px/5bz 43t 0px/5bz 43t 0px/5bz 43t 0px/5bz 43t 0px/5bz 43t 0px/5bz 43t 0px/5bz 43t 0px/5bz 43t 0px/5bz 43t 0px/5bz 43t 0px/5bz 43t 0px/5bz 43t 0px/5bz 43t 0px/5bz 43t 0px/5bz 43t 0px/5bz 43t 0px/5bz 43t 0px/5bz 43u 0pw/5bz 43u 0pw/5bz 43u 0pw/5bz 43u 0pw/5bz 43u 0pw/5bz 43u 0pw/5bz 43u 0pw/5bz 43u 0pw/5bz 43u 0pw/5bz 43u 0pw/5bz 43u 0pw/5bz 43u 0pw/5bz 43u 0pw/5bz 43u 0pw/5bz 43u 0pw/5bz 43u 0pw/5bz 43u 0pw/5bz 43u 0pw/5bz 43v 0pv/5bz 43v 0pv/5bz 43v 0pv/5bz 43v 0pv/5bz 43v 0pv/5bz 43v 0pv/5bz 43v 0pv/5bz 43v 0pv/5bz 43v 0pv/5bz 43v 0pv/5bz 43v 0pv/5bz 43v 0pv/5bz 43v 0pv/5bz 43v 0pv/5bz 43v 0pv/5bz 43v 0pv/5bz 43v 0pv/5bz 43w 0pu/5bz 43w 0pu/5bz 43w 0pu/5bz 43w 0pu/5bz 43w 0pu/5bz 43w 0pu/5bz 43w 0pu/5bz 43w 0pu/5bz 43w 0pu/5bz 43w 0pu/5bz 43w 0pu/5bz 43w 0pu/5bz 43w 0pu/5bz 43w 0pu/5bz 43w 0pu/5bz 43w 0pu/5bz 43w 0pu/5bz 43w 0pu/5bz 43x 0pt/5bz 43x 0pt/5bz 43x 0pt/5bz 43x 0pt/5bz 43x 0pt/5bz 43x 0pt/5bz 43x 0pt/5bz 43x 0pt/5bz 43x 0pt/5bz 43x 0pt/5bz 43x 0pt/5bz 43x 0pt/5bz 43x 0pt/5bz 43x 0pt/5bz 43x 0pt/5bz 43x 0pt/5bz 43x 0pt/5bz 43y 0ps/5bz 43y 0ps/5bz 43y 0ps/5bz 43y 0ps/5bz 43y 0ps/5bz 43y 0ps/5bz 43y 0ps/5bz 43y 0ps/5bz 43y 0ps/5bz 43y 0ps/5bz 43y 0ps/5bz 43y 0ps/5bz 43y 0ps/5bz 43y 0ps/5bz 43y 0ps/5bz 43y 0ps/5bz 43y 0ps/5bz 43y 0ps/5bz 43z 0pr/5bz 43z 0pr/5bz 43z 0pr/5bz 43z 0pr/5bz 43z 0pr/5bz 43z 0pr/5bz 43z 0pr/5bz 43z 0pr/5bz 43z 0pr/5bz 43z 0pr/5bz 43z 0pr/5bz 43z 0pr/5bz 43z 0pr/5bz 43z 0pr/5bz 43z 0pr/5bz 43z 0pr/5bz 43z 0pr/5bz 440 0pq/5bz 440 0pq/5bz 440 0pq/5bz 440 0pq/5bz 440 0pq/5bz 440 0pq/5bz 440 0pq/5bz 440 0pq/5bz 440 0pq/5bz 440 0pq/5bz 440 0pq/5bz 440 0pq/5bz 440 0pq/5bz 440 0pq/5c0 43z 0pq/5c0 43z 0pq/5c0 43z 0pq/5c0 440 0pp/5c0 440 0pp/5c0 440 0pp/5c0 440 0pp/5c0 440 0pp/5c0 440 0pp/5c0 440 0pp/5c0 440 0pp/5c0 440 0pp/5c0 440 0pp/5c0 440 0pp/5c0 440 0pp/5c0 440 0pp/5c0 440 0pp/5c0 440 0pp/5c0 440 0pp/5c0 440 0pp/5c0 440 0pp/5c0 441 0po/5c0 441 0po/5c0 441 0po/5c0 441 0po/5c0 441 0po/5c0 441 0po/5c0 441 0po/5c0 441 0po/5c0 441 0po/5c0 441 0po/5c0 441 0po/5c0 441 0po/5c0 441 0po/5c0 441 0po/5c0 441 0po/5c0 441 0po/5c0 441 0po/5c0 442 0pn/5c0 442 0pn/5c0 442 0pn/5c0 442 0pn/5c0 442 0pn/5c0 442 0pn/5c0 442 0pn/5c0 442 0pn/5c0 442 0pn/5c0 442 0pn/5c0 442 0pn/5c0 442 0pn/5c0 442 0pn/5c0 442 0pn/5c0 442 0pn/5c0 442 0pn/5c0 442 0pn/5c0 443 0pm/5c0 443 0pm/5c0 443 0pm/5c0 443 0pm/5c0 443 0pm/5c0 443 0pm/5c0 443 0pm/5c0 443 0pm/5c0 443 0pm/5c0 443 0pm/5c0 443 0pm/5c0 443 0pm/5c0 443 0pm/5c0 443 0pm/5c0 443 0pm/5c0 443 0pm/5c0 443 0pm/5c0 444 0pl/5c0 444 0pl/5c0 444 0pl/5c0 444 0pl/5c0 444 0pl/5c0 444 0pl/5c0 444 0pl/5c0 444 0pl/5c0 444 0pl/5c0 444 0pl/5c0 444 0pl/5c0 444 0pl/5c0 444 0pl/5c0 444 0pl/5c0 444 0pl/5c0 444 0pl/5c0 445 0pk/5c0 445 0pk/5c0 445 0pk/5c0 445 0pk/5c0 445 0pk/5c0 445 0pk/5c0 445 0pk/5c0 445 0pk/5c0 445 0pk/5c0 445 0pk/5c0 445 0pk/5c0 445 0pk/5c0 445 0pk/5c0 445 0pk/5c0 445 0pk/5c0 445 0pk/5c0 445 0pk/5c0 446 0pj/5c0 446 0pj/5c0 446 0pj/5c0 446 0pj/5c0 446 0pj/5c0 446 0pj/5c0 446 0pj/5c0 446 0pj/5c0 446 0pj/5c0 446 0pj/5c0 446 0pj/5c0 446 0pj/5c0 446 0pj/5c0 446 0pj/5c0 446 0pj/5c0 446 0pj/5c0 446 0pj/5c0 447 0pi/5c0 447 0pi/5c0 447 0pi/5c0 447 0pi/5c0 447 0pi/5c0 447 0pi/5c0 447 0pi/5c0 447 0pi/5c0 447 0pi/5c0 447 0pi/5c0 447 0pi/5c0 447 0pi/5c0 447 0pi/5c0 447 0pi/5c0 447 0pi/5c0 447 0pi/5c0 447 0pi/5c0 448 0ph/5c0 448 0ph/5c0 448 0ph/5c0 448 0ph/5c0 448 0ph/5c0 448 0ph/5c0 448 0ph/5c0 448 0ph/5c0 448 0ph/5c0 448 0ph/5c0 448 0ph/5c0 448 0ph/5c0 448 0ph/5c0 448 0ph/5c0 448 0ph/5c0 448 0ph/5c0 449 0pg/5c0 449 0pg/5c0 449 0pg/5c0 449 0pg/5c0 449 0pg/5c0 449 0pg/5c0 449 0pg/5c0 449 0pg/5c0 449 0pg/5c0 449 0pg/5c0 449 0pg/5c0 449 0pg/5c0 449 0pg/5c0 449 0pg/5c0 449 0pg/5c0 449 0pg/5c0 449 0pg/5c0 44a 0pf/5c0 44a 0pf/5c0 44a 0pf/5c0 44a 0pf/5c0 44a 0pf/5c0 44a 0pf/5c0 44a 0pf/5c0 44a 0pf/5c0 44a 0pf/5c0 44a 0pf/5c0 44a 0pf/5c0 44a 0pf/5c0 44a 0pf/5c0 44a 0pf/5c0 44a 0pf/5c0 44a 0pf/5c0 44b 0pe/5c0 44b 0pe/5c0 44b 0pe/5c0 44b 0pe/5c0 44b 0pe/5c0 44b 0pe/5c0 44b 0pe/5c0 44b 0pe/5c0 44b 0pe/5c0 44b 0pe/5c0 44b 0pe/5c0 44b 0pe/5c0 44b 0pe/5c0 44b 0pe/5c0 44b 0pe/5c0 44b 0pe/5c0 44c 0pd/5c0 44c 0pd/5c0 44c 0pd/5c0 44c 0pd/5c0 44c 0pd/5c0 44c 0pd/5c0 44c 0pd/5c0 44c 0pd/5c0 44c 0pd/5c0 44c 0pd/5c0 44c 0pd/5c0 44c 0pd/5c0 44c 0pd/5c0 44c 0pd/5c0 44c 0pd/5c0 44c 0pd/5c0 44c 0pd/5c0 44d 0pc/5c0 44d 0pc/5c0 44d 0pc/5c0 44d 0pc/5c0 44d 0pc/5c0 44d 0pc/5c0 44d 0pc/5c0 44d 0pc/5c0 44d 0pc/5c0 44d 0pc/5c0 44d 0pc/5c0 44d 0pc/5c0 44d 0pc/5c0 44d 0pc/5c0 44d 0pc/5c0 44d 0pc/5c0 44e 0pb/5c0 44e 0pb/5c0 44e 0pb/5c0 44e 0pb/5c0 44e 0pb/5c0 44e 0pb/5c0 44e 0pb/5c0 44e 0pb/5c0 44e 0pb/5c0 44e 0pb/5c0 44e 0pb/5c0 44e 0pb/5c0 44e 0pb/5c0 44e 0pb/5c0 44e 0pb/5c0 44e 0pb/5c0 44f 0pa/5c0 44f 0pa/5c0 44f 0pa/5c0 44f 0pa/5c0 44f 0pa/5c0 44f 0pa/5c0 44f 0pa/5c0 44f 0pa/5c0 44f 0pa/5c0 44f 0pa/5c0 44f 0pa/5c0 44f 0pa/5c0 44f 0pa/5c0 44f 0pa/5c0 44f 0pa/5c0 44f 0pa/5c0 44g 0p9/5c0 44g 0p9/5c0 44g 0p9/5c0 44g 0p9/5c0 44g 0p9/5c0 44g 0p9/5c0 44g 0p9/5c0 44g 0p9/5c0 44g 0p9/5c0 44g 0p9/5c0 44g 0p9/5c0 44g 0p9/5c0 44g 0p9/5c0 44g 0p9/5c0 44g 0p9/5c0 44g 0p9/5c0 44h 0p8/5c0 44h 0p8/5c0 44h 0p8/5c0 44h 0p8/5c0 44h 0p8/5c0 44h 0p8/5c0 44h 0p8/5c0 44h 0p8/5c0 44h 0p8/5c0 44h 0p8/5c0 44h 0p8/5c0 44h 0p8/5c0 44h 0p8/5c0 44h 0p8/5c0 44h 0p8/5c0 44h 0p8/5c0 44i 0p7/5c0 44i 0p7/5c0 44i 0p7/5c0 44i 0p7/5c0 44i 0p7/5c0 44i 0p7/5c0 44i 0p7/5c0 44i 0p7/5c0 44i 0p7/5c0 44i 0p7/5c0 44i 0p7/5c0 44i 0p7/5c0 44i 0p7/5c0 44i 0p7/5c0 44i 0p7/5c0 44i 0p7/5c0 44j 0p6/5c0 44j 0p6/5c0 44j 0p6/5c0 44j 0p6/5c0 44j 0p6/5c0 44j 0p6/5c0 44j 0p6/5c0 44j 0p6/5c0 44j 0p6/5c0 44j 0p6/5c0 44j 0p6/5c0 44j 0p6/5c0 44j 0p6/5c0 44j 0p6/5c0 44j 0p6/5c0 44j 0p6/5c0 44k 0p5/5c0 44k 0p5/5c0 44k 0p5/5c0 44k 0p5/5c0 44k 0p5/5c0 44k 0p5/5c0 44k 0p5/5c0 44k 0p5/5c0 44k 0p5/5c0 44k 0p5/5c0 44k 0p5/5c0 44k 0p5/5c0 44k 0p5/5c0 44k 0p5/5c0 44k 0p5/5c0 44l 0p4/5c0 44l 0p4/5c0 44l 0p4/5c0 44l 0p4/5c0 44l 0p4/5c0 44l 0p4/5c0 44l 0p4/5c0 44l 0p4/5c0 44l 0p4/5c0 44l 0p4/5c0 44l 0p4/5c0 44l 0p4/5c0 44l 0p4/5c0 44l 0p4/5c0 44l 0p4/5c0 44l 0p4/5c0 44m 0p3/5c0 44m 0p3/5c0 44m 0p3/5c0 44m 0p3/5c0 44m 0p3/5c0 44m 0p3/5c0 44m 0p3/5c0 44m 0p3/5c0 44m 0p3/5c0 44m 0p3/5c0 44m 0p3/5c0 44m 0p3/5c0 44m 0p3/5c0 44m 0p3/5c0 44m 0p3/5c0 44m 0p3/5c0 44n 0p2/5c0 44n 0p2/5c0 44n 0p2/5c0 44n 0p2/5c0 44n 0p2/5c0 44n 0p2/5c0 44n 0p2/5c0 44n 0p2/5c0 44n 0p2/5c0 44n 0p2/5c0 44n 0p2/5c0 44n 0p2/5c0 44n 0p2/5c0 44n 0p2/5c0 44n 0p2/5c0 44o 0p1/5c0 44o 0p1/5c0 44o 0p1/5c0 44o 0p1/5c0 44o 0p1/5c0 44o 0p1/5c0 44o 0p1/5c0 44o 0p1/5c0 44o 0p1/5c0 44o 0p1/5c0 44o 0p1/5c0 44o 0p1/5c0 44o 0p1/5c0 44o 0p1/5c0 44o 0p1/5c0 44o 0p1/5c0 44p 0p0/5c0 44p 0p0/5c0 44p 0p0/5c0 44p 0p0/5c0 44p 0p0/5c0 44p 0p0/5c0 44p 0p0/5c0 44p 0p0/5c0 44p 0p0/5c0 44p 0p0/5c0 44p 0p0/5c0 44p 0p0/5c0 44p 0p0/5c0 44p 0p0/5c0 44p 0p0/5c0 44q 0oz/5c0 44q 0oz/5c0 44q 0oz/5c0 44q 0oz/5c0 44q 0oz/5c0 44q 0oz/5c0 44q 0oz/5c0 44q 0oz/5c0 44q 0oz/5c0 44q 0oz/5c0 44q 0oz/5c0 44q 0oz/5c0 44q 0oz/5c0 44q 0oz/5c0 44q 0oz/5c0 44r 0oy/5c0 44r 0oy/5c0 44r 0oy/5c0 44r 0oy/5c0 44r 0oy/5c0 44r 0oy/5c0 44r 0oy/5c0 44r 0oy/5c0 44r 0oy/5c0 44r 0oy/5c0 44r 0oy/5c0 44r 0oy/5c0 44r 0oy/5c0 44r 0oy/5c0 44r 0oy/5c0 44s 0ox/5c0 44s 0ox/5c0 44s 0ox/5c0 44s 0ox/5c0 44s 0ox/5c0 44s 0ox/5c0 44s 0ox/5c0 44s 0ox/5c0 44s 0ox/5c0 44s 0ox/5c0 44s 0ox/5c0 44s 0ox/5c0 44s 0ox/5c0 44s 0ox/5c0 44s 0ox/5c0 44s 0ox/5c0 44t 0ow/5c0 44t 0ow/5c0 44t 0ow/5c0 44t 0ow/5c0 44t 0ow/5c0 44t 0ow/5c0 44t 0ow/5c0 44t 0ow/5c0 44t 0ow/5c0 44t 0ow/5c0 44t 0ow/5c0 44t 0ow/5c0 44t 0ow/5c0 44t 0ow/5c0 44t 0ow/5c0 44u 0ov/5c0 44u 0ov/5c0 44u 0ov/5c0 44u 0ov/5c0 44u 0ov/5c0 44u 0ov/5c0 44u 0ov/5c0 44u 0ov/5c0 44u 0ov/5c0 44u 0ov/5c0 44u 0ov/5c0 44u 0ov/5c0 44u 0ov/5c0 44u 0ov/5c0 44u 0ov/5c0 44v 0ou/5c0 44v 0ou/5c0 44v 0ou/5c0 44v 0ou/5c0 44v 0ou/5c0 44v 0ou/5c0 44v 0ou/5c0 44v 0ou/5c0 44v 0ou/5c0 44v 0ou/5c0 44v 0ou/5c0 44v 0ou/5c0 44v 0ou/5c0 44v 0ou/5c0 44v 0ou/5c0 44w 0ot/5c0 44w 0ot/5c0 44w 0ot/5c0 44w 0ot/5c0 44w 0ot/5c0 44w 0ot/5c0 44w 0ot/5c0 44w 0ot/5c0 44w 0ot/5c0 44w 0ot/5c0 44w 0ot/5c0 44w 0ot/5c0 44w 0ot/5c0 44w 0ot/5c0 44w 0ot/5c0 44x 0os/5c0 44x 0os/5c0 44x 0os/5c0 44x 0os/5c0 44x 0os/5c0 44x 0os/5c0 44x 0os/5c0 44x 0os/5c0 44x 0os/5c0 44x 0os/5c0 44x 0os/5c0 44x 0os/5c0 44x 0os/5c0 44x 0os/5c0 44y 0or/5c0 44y 0or/5c0 44y 0or/5c0 44y 0or/5c0 44y 0or/5c0 44y 0or/5c0 44y 0or/5c0 44y 0or/5c0 44y 0or/5c0 44y 0or/5c0 44y 0or/5c0 44y 0or/5c0 44y 0or/5c0 44y 0or/5c0 44y 0or/5c0 44z 0oq/5c0 44z 0oq/5c0 44z 0oq/5c0 44z 0oq/5c0 44z 0oq/5c0 44z 0oq/5c0 44z 0oq/5c0 44z 0oq/5c0 44z 0oq/5c0 44z 0oq/5c0 44z 0oq/5c0 44z 0oq/5c0 44z 0oq/5c0 44z 0oq/5c0 44z 0oq/5c0 450 0op/5c0 450 0op/5c0 450 0op/5c0 450 0op/5c0 450 0op/5c0 450 0op/5c0 450 0op/5c0 450 0op/5c0 450 0op/5c0 450 0op/5c0 450 0op/5c0 450 0op/5c0 450 0op/5c0 450 0op/5c0 451 0oo/5c0 451 0oo/5c0 451 0oo/5c0 451 0oo/5c0 451 0oo/5c0 451 0oo/5c0 451 0oo/5c0 451 0oo/5c0 451 0oo/5c0 451 0oo/5c0 451 0oo/5c0 451 0oo/5c0 451 0oo/5c0 451 0oo/5c0 451 0oo/5c0 452 0on/5c0 452 0on/5c0 452 0on/5c0 452 0on/5c0 452 0on/5c0 452 0on/5c0 452 0on/5c0 452 0on/5c0 452 0on/5c0 452 0on/5c0 452 0on/5c0 452 0on/5c0 452 0on/5c0 452 0on/5c0 452 0on/5c0 453 0om/5c0 453 0om/5c0 453 0om/5c0 453 0om/5c0 453 0om/5c0 453 0om/5c0 453 0om/5c0 453 0om/5c0 453 0om/5c0 453 0om/5c0 453 0om/5c0 453 0om/5c0 453 0om/5c0 453 0om/5c0 454 0ol/5c0 454 0ol/5c0 454 0ol/5c0 454 0ol/5c0 454 0ol/5c0 454 0ol/5c0 454 0ol/5c0 454 0ol/5c0 454 0ol/5c0 454 0ol/5c0 454 0ol/5c0 454 0ol/5c0 454 0ol/5c0 454 0ol/5c0 455 0ok/5c0 455 0ok/5c0 455 0ok/5c0 455 0ok/5c0 455 0ok/5c0 455 0ok/5c0 455 0ok/5c0 455 0ok/5c0 455 0ok/5c0 455 0ok/5c0 455 0ok/5c0 455 0ok/5c0 455 0ok/5c0 455 0ok/5c0 455 0ok/5c0 456 0oj/5c0 456 0oj/5c0 456 0oj/5c0 456 0oj/5c0 456 0oj/5c0 456 0oj/5c0 456 0oj/5c0 456 0oj/5c0 456 0oj/5c0 456 0oj/5c0 456 0oj/5c0 456 0oj/5c0 456 0oj/5c0 456 0oj/5c0 457 0oi/5c0 457 0oi/5c0 457 0oi/5c0 457 0oi/5c0 457 0oi/5c0 457 0oi/5c0 457 0oi/5c0 457 0oi/5c0 457 0oi/5c0 457 0oi/5c0 457 0oi/5c0 457 0oi/5c0 457 0oi/5c0 457 0oi/5c0 458 0oh/5c0 458 0oh/5c0 458 0oh/5c0 458 0oh/5c0 458 0oh/5c0 458 0oh/5c0 458 0oh/5c0 458 0oh/5c0 458 0oh/5c0 458 0oh/5c0 458 0oh/5c0 458 0oh/5c0 458 0oh/5c0 458 0oh/5c0 459 0og/5c0 459 0og/5c0 459 0og/5c0 459 0og/5c0 459 0og/5c0 459 0og/5c0 459 0og/5c0 459 0og/5c0 459 0og/5c0 459 0og/5c0 459 0og/5c0 459 0og/5c0 459 0og/5c0 459 0og/5c0 45a 0of/5c0 45a 0of/5c0 45a 0of/5c0 45a 0of/5c0 45a 0of/5c0 45a 0of/5c0 45a 0of/5c0 45a 0of/5c0 45a 0of/5c0 45a 0of/5c0 45a 0of/5c0 45a 0of/5c0 45a 0of/5c0 45a 0of/5c0 45b 0oe/5c0 45b 0oe/5c0 45b 0oe/5c0 45b 0oe/5c0 45b 0oe/5c0 45b 0oe/5c0 45b 0oe/5c0 45b 0oe/5c0 45b 0oe/5c0 45b 0oe/5c0 45b 0oe/5c0 45b 0oe/5c0 45b 0oe/5c0 45b 0oe/5c0 45c 0od/5c0 45c 0od/5c0 45c 0od/5c0 45c 0od/5c0 45c 0od/5c0 45c 0od/5c0 45c 0od/5c0 45c 0od/5c0 45c 0od/5c0 45c 0od/5c0 45c 0od/5c0 45c 0od/5c0 45c 0od/5c0 45c 0od/5c0 45d 0oc/5c0 45d 0oc/5c0 45d 0oc/5c0 45d 0oc/5c0 45d 0oc/5c0 45d 0oc/5c0 45d 0oc/5c0 45d 0oc/5c0 45d 0oc/5c0 45d 0oc/5c0 45d 0oc/5c0 45d 0oc/5c0 45d 0oc/5c0 45d 0oc/5c0 45e 0ob/5c0 45e 0ob/5c0 45e 0ob/5c0 45e 0ob/5c0 45e 0ob/5c0 45e 0ob/5c0 45e 0ob/5c0 45e 0ob/5c0 45e 0ob/5c0 45e 0ob/5c0 45e 0ob/5c0 45e 0ob/5c0 45e 0ob/5c0 45e 0ob/5c0 45f 0oa/5c0 45f 0oa/5c0 45f 0oa/5c0 45f 0oa/5c0 45f 0oa/5c0 45f 0oa/5c0 45f 0oa/5c0 45f 0oa/5c0 45f 0oa/5c0 45f 0oa/5c0 45f 0oa/5c0 45f 0oa/5c0 45f 0oa/5c0 45g 0o9/5c0 45g 0o9/5c0 45g 0o9/5c0 45g 0o9/5c0 45g 0o9/5c0 45g 0o9/5c0 45g 0o9/5c0 45g 0o9/5c0 45g 0o9/5c0 45g 0o9/5c0 45g 0o9/5c0 45g 0o9/5c0 45g 0o9/5c0 45g 0o9/5c0 45h 0o8/5c0 45h 0o8/5c0 45h 0o8/5c0 45h 0o8/5c0 45h 0o8/5c0 45h 0o8/5c0 45h 0o8/5c0 45h 0o8/5c0 45h 0o8/5c0 45h 0o8/5c0 45h 0o8/5c0 45h 0o8/5c0 45h 0o8/5c0 45i 0o7/5c0 45i 0o7/5c0 45i 0o7/5c0 45i 0o7/5c0 45i 0o7/5c0 45i 0o7/5c0 45i 0o7/5c0 45i 0o7/5c0 45i 0o7/5c0 45i 0o7/5c0 45i 0o7/5c0 45i 0o7/5c0 45i 0o7/5c0 45i 0o7/5c0 45j 0o6/5c0 45j 0o6/5c0 45j 0o6/5c0 45j 0o6/5c0 45j 0o6/5c0 45j 0o6/5c0 45j 0o6/5c0 45j 0o6/5c0 45j 0o6/5c0 45j 0o6/5c0 45j 0o6/5c0 45j 0o6/5c0 45j 0o6/5c0 45k 0o5/5c0 45k 0o5/5c0 45k 0o5/5c0 45k 0o5/5c0 45k 0o5/5c0 45k 0o5/5c0 45k 0o5/5c0 45k 0o5/5c0 45k 0o5/5c0 45k 0o5/5c0 45k 0o5/5c0 45k 0o5/5c0 45k 0o5/5c0 45k 0o5/5c0 45l 0o4/5c0 45l 0o4/5c0 45l 0o4/5c0 45l 0o4/5c0 45l 0o4/5c0 45l 0o4/5c0 45l 0o4/5c0 45l 0o4/5c0 45l 0o4/5c0 45l 0o4/5c0 45l 0o4/5c0 45l 0o4/5c0 45l 0o4/5c0 45m 0o3/5c0 45m 0o3/5c0 45m 0o3/5c0 45m 0o3/5c0 45m 0o3/5c0 45m 0o3/5c0 45m 0o3/5c0 45m 0o3/5c0 45m 0o3/5c0 45m 0o3/5c0 45m 0o3/5c0 45m 0o3/5c0 45m 0o3/5c0 45n 0o2/5c0 45n 0o2/5c0 45n 0o2/5c0 45n 0o2/5c0 45n 0o2/5c0 45n 0o2/5c0 45n 0o2/5c0 45n 0o2/5c0 45n 0o2/5c0 45n 0o2/5c0 45n 0o2/5c0 45n 0o2/5c0 45n 0o2/5c0 45o 0o1/5c0 45o 0o1/5c0 45o 0o1/5c0 45o 0o1/5c0 45o 0o1/5c0 45o 0o1/5c0 45o 0o1/5c0 45o 0o1/5c0 45o 0o1/5c0 45o 0o1/5c0 45o 0o1/5c0 45o 0o1/5c0 45o 0o1/5c0 45o 0o1/5c0 45p 0o0/5c0 45p 0o0/5c0 45p 0o0/5c0 45p 0o0/5c0 45p 0o0/5c0 45p 0o0/5c0 45p 0o0/5c0 45p 0o0/5c0 45p 0o0/5c0 45p 0o0/5c0 45p 0o0/5c0 45p 0o0/5c0 45p 0o0/5c0 45q 0nz/5c0 45q 0nz/5c0 45q 0nz/5c0 45q 0nz/5c0 45q 0nz/5c0 45q 0nz/5c0 45q 0nz/5c0 45q 0nz/5c0 45q 0nz/5c0 45q 0nz/5c0 45q 0nz/5c0 45q 0nz/5c0 45q 0nz/5c0 45r 0ny/5c0 45r 0ny/5c0 45r 0ny/5c0 45r 0ny/5c0 45r 0ny/5c0 45r 0ny/5c0 45r 0ny/5c0 45r 0ny/5c0 45r 0ny/5c0 45r 0ny/5c0 45r 0ny/5c0 45r 0ny/5c0 45r 0ny/5c0 45s 0nx/5c0 45s 0nx/5c0 45s 0nx/5c0 45s 0nx/5c0 45s 0nx/5c0 45s 0nx/5c0 45s 0nx/5c0 45s 0nx/5c0 45s 0nx/5c0 45s 0nx/5c0 45s 0nx/5c0 45s 0nx/5c0 45s 0nx/5c0 45t 0nw/5c0 45t 0nw/5c0 45t 0nw/5c0 45t 0nw/5c0 45t 0nw/5c0 45t 0nw/5c0 45t 0nw/5c0 45t 0nw/5c0 45t 0nw/5c0 45t 0nw/5c0 45t 0nw/5c0 45t 0nw/5c0 45u 0nv/5c0 45u 0nv/5c0 45u 0nv/5c0 45u 0nv/5c0 45u 0nv/5c0 45u 0nv/5c0 45u 0nv/5c0 45u 0nv/5c0 45u 0nv/5c0 45u 0nv/5c0 45u 0nv/5c0 45u 0nv/5c0 45u 0nv/5c0 45v 0nu/5c0 45v 0nu/5c0 45v 0nu/5c0 45v 0nu/5c0 45v 0nu/5c0 45v 0nu/5c0 45v 0nu/5c0 45v 0nu/5c0 45v 0nu/5c0 45v 0nu/5c0 45v 0nu/5c0 45v 0nu/5c0 45v 0nu/5c0 45w 0nt/5c0 45w 0nt/5c0 45w 0nt/5c0 45w 0nt/5c0 45w 0nt/5c0 45w 0nt/5c0 45w 0nt/5c0 45w 0nt/5c0 45w 0nt/5c0 45w 0nt/5c0 45w 0nt/5c0 45w 0nt/5c0 45w 0nt/5c0 45x 0ns/5c0 45x 0ns/5c0 45x 0ns/5c0 45x 0ns/5c0 45x 0ns/5c0 45x 0ns/5c0 45x 0ns/5c0 45x 0ns/5c0 45x 0ns/5c0 45x 0ns/5c0 45x 0ns/5c0 45x 0ns/5c0 45y 0nr/5c0 45y 0nr/5c0 45y 0nr/5c0 45y 0nr/5c0 45y 0nr/5c0 45y 0nr/5c0 45y 0nr/5c0 45y 0nr/5c0 45y 0nr/5c0 45y 0nr/5c0 45y 0nr/5c0 45y 0nr/5c0 45y 0nr/5c0 45z 0nq/5c0 45z 0nq/5c0 45z 0nq/5c0 45z 0nq/5c0 45z 0nq/5c0 45z 0nq/5c0 45z 0nq/5c0 45z 0nq/5c0 45z 0nq/5c0 45z 0nq/5c0 45z 0nq/5c0 45z 0nq/5c0 460 0np/5c0 460 0np/5c0 460 0np/5c0 460 0np/5c0 460 0np/5c0 460 0np/5c0 460 0np/5c0 460 0np/5c0 460 0np/5c0 460 0np/5c0 460 0np/5c0 460 0np/5c0 460 0np/5c0 461 0no/5c0 461 0no/5c0 461 0no/5c0 461 0no/5c0 461 0no/5c0 461 0no/5c0 461 0no/5c0 461 0no/5c0 461 0no/5c0 461 0no/5c0 461 0no/5c0 461 0no/5c0 462 0nn/5c0 462 0nn/5c0 462 0nn/5c0 462 0nn/5c0 462 0nn/5c0 462 0nn/5c0 462 0nn/5c0 462 0nn/5c0 462 0nn/5c0 462 0nn/5c0 462 0nn/5c0 462 0nn/5c0 463 0nm/5c0 463 0nm/5c0 463 0nm/5c0 463 0nm/5c0 463 0nm/5c0 463 0nm/5c0 463 0nm/5c0 463 0nm/5c0 463 0nm/5c0 463 0nm/5c0 463 0nm/5c0 463 0nm/5c0 463 0nm/5c0 464 0nl/5c0 464 0nl/5c0 464 0nl/5c0 464 0nl/5c0 464 0nl/5c0 464 0nl/5c0 464 0nl/5c0 464 0nl/5c0 464 0nl/5c0 464 0nl/5c0 464 0nl/5c0 464 0nl/5c0 465 0nk/5c0 465 0nk/5c0 465 0nk/5c0 465 0nk/5c0 465 0nk/5c0 465 0nk/5c0 465 0nk/5c0 465 0nk/5c0 465 0nk/5c0 465 0nk/5c0 465 0nk/5c0 465 0nk/5c0 466 0nj/5c0 466 0nj/5c0 466 0nj/5c0 466 0nj/5c0 466 0nj/5c0 466 0nj/5c0 466 0nj/5c0 466 0nj/5c0 466 0nj/5c0 466 0nj/5c0 466 0nj/5c0 466 0nj/5c0 467 0ni/5c0 467 0ni/5c0 467 0ni/5c0 467 0ni/5c0 467 0ni/5c0 467 0ni/5c0 467 0ni/5c0 467 0ni/5c0 467 0ni/5c0 467 0ni/5c0 467 0ni/5c0 467 0ni/5c0 468 0nh/5c0 468 0nh/5c0 468 0nh/5c0 468 0nh/5c0 468 0nh/5c0 468 0nh/5c0 468 0nh/5c0 468 0nh/5c0 468 0nh/5c0 468 0nh/5c0 468 0nh/5c0 468 0nh/5c0 469 0ng/5c0 469 0ng/5c0 469 0ng/5c0 469 0ng/5c0 469 0ng/5c0 469 0ng/5c0 469 0ng/5c0 469 0ng/5c0 469 0ng/5c0 469 0ng/5c0 469 0ng/5c0 469 0ng/5c0 46a 0nf/5c0 46a 0nf/5c0 46a 0nf/5c0 46a 0nf/5c0 46a 0nf/5c0 46a 0nf/5c0 46a 0nf/5c0 46a 0nf/5c0 46a 0nf/5c0 46a 0nf/5c0 46a 0nf/5c0 46a 0nf/5c0 46b 0ne/5c0 46b 0ne/5c0 46b 0ne/5c0 46b 0ne/5c0 46b 0ne/5c0 46b 0ne/5c0 46b 0ne/5c0 46b 0ne/5c0 46b 0ne/5c0 46b 0ne/5c0 46b 0ne/5c0 46b 0ne/5c0 46c 0nd/5c0 46c 0nd/5c0 46c 0nd/5c0 46c 0nd/5c0 46c 0nd/5c0 46c 0nd/5c0 46c 0nd/5c0 46c 0nd/5c0 46c 0nd/5c0 46c 0nd/5c0 46c 0nd/5c0 46c 0nd/5c0 46d 0nc/5c0 46d 0nc/5c0 46d 0nc/5c0 46d 0nc/5c0 46d 0nc/5c0 46d 0nc/5c0 46d 0nc/5c0 46d 0nc/5c0 46d 0nc/5c0 46d 0nc/5c0 46d 0nc/5c0 46e 0nb/5c0 46e 0nb/5c0 46e 0nb/5c0 46e 0nb/5c0 46e 0nb/5c0 46e 0nb/5c0 46e 0nb/5c0 46e 0nb/5c0 46e 0nb/5c0 46e 0nb/5c0 46e 0nb/5c0 46e 0nb/5c0 46f 0na/5c0 46f 0na/5c0 46f 0na/5c0 46f 0na/5c0 46f 0na/5c0 46f 0na/5c0 46f 0na/5c0 46f 0na/5c0 46f 0na/5c0 46f 0na/5c0 46f 0na/5c0 46f 0na/5c0 46g 0n9/5c0 46g 0n9/5c0 46g 0n9/5c0 46g 0n9/5c0 46g 0n9/5c0 46g 0n9/5c0 46g 0n9/5c0 46g 0n9/5c0 46g 0n9/5c0 46g 0n9/5c0 46g 0n9/5c0 46h 0n8/5c0 46h 0n8/5c0 46h 0n8/5c0 46h 0n8/5c0 46h 0n8/5c0 46h 0n8/5c0 46h 0n8/5c0 46h 0n8/5c0 46h 0n8/5c0 46h 0n8/5c0 46h 0n8/5c0 46h 0n8/5c0 46i 0n7/5c0 46i 0n7/5c0 46i 0n7/5c0 46i 0n7/5c0 46i 0n7/5c0 46i 0n7/5c0 46i 0n7/5c0 46i 0n7/5c0 46i 0n7/5c0 46i 0n7/5c0 46i 0n7/5c0 46j 0n6/5c0 46j 0n6/5c0 46j 0n6/5c0 46j 0n6/5c0 46j 0n6/5c0 46j 0n6/5c0 46j 0n6/5c0 46j 0n6/5c0 46j 0n6/5c0 46j 0n6/5c0 46j 0n6/5c0 46j 0n6/5c0 46k 0n5/5c0 46k 0n5/5c0 46k 0n5/5c0 46k 0n5/5c0 46k 0n5/5c0 46k 0n5/5c0 46k 0n5/5c0 46k 0n5/5c0 46k 0n5/5c0 46k 0n5/5c0 46k 0n5/5c0 46l 0n4/5c0 46l 0n4/5c0 46l 0n4/5c0 46l 0n4/5c0 46l 0n4/5c0 46l 0n4/5c0 46l 0n4/5c0 46l 0n4/5c0 46l 0n4/5c0 46l 0n4/5c0 46l 0n4/5c0 46m 0n3/5c0 46m 0n3/5c0 46m 0n3/5c0 46m 0n3/5c0 46m 0n3/5c0 46m 0n3/5c0 46m 0n3/5c0 46m 0n3/5c0 46m 0n3/5c0 46m 0n3/5c0 46m 0n3/5c0 46m 0n3/5c0 46n 0n2/5c0 46n 0n2/5c0 46n 0n2/5c0 46n 0n2/5c0 46n 0n2/5c0 46n 0n2/5c0 46n 0n2/5c0 46n 0n2/5c0 46n 0n2/5c0 46n 0n2/5c0 46n 0n2/5c0 46o 0n1/5c0 46o 0n1/5c0 46o 0n1/5c0 46o 0n1/5c0 46o 0n1/5c0 46o 0n1/5c0 46o 0n1/5c0 46o 0n1/5c0 46o 0n1/5c0 46o 0n1/5c0 46o 0n1/5c0 46p 0n0/5c0 46p 0n0/5c0 46p 0n0/5c0 46p 0n0/5c0 46p 0n0/5c0 46p 0n0/5c0 46p 0n0/5c0 46p 0n0/5c0 46p 0n0/5c0 46p 0n0/5c0 46p 0n0/5c0 46q 0mz/5c0 46q 0mz/5c0 46q 0mz/5c0 46q 0mz/5c0 46q 0mz/5c0 46q 0mz/5c0 46q 0mz/5c0 46q 0mz/5c0 46q 0mz/5c0 46q 0mz/5c0 46q 0mz/5c0 46r 0my/5c0 46r 0my/5c0 46r 0my/5c0 46r 0my/5c0 46r 0my/5c0 46r 0my/5c0 46r 0my/5c0 46r 0my/5c0 46r 0my/5c0 46r 0my/5c0 46r 0my/5c0 46s 0mx/5c0 46s 0mx/5c0 46s 0mx/5c0 46s 0mx/5c0 46s 0mx/5c0 46s 0mx/5c0 46s 0mx/5c0 46s 0mx/5c0 46s 0mx/5c0 46s 0mx/5c0 46s 0mx/5c0 46t 0mw/5c0 46t 0mw/5c0 46t 0mw/5c0 46t 0mw/5c0 46t 0mw/5c0 46t 0mw/5c0 46t 0mw/5c0 46t 0mw/5c0 46t 0mw/5c0 46t 0mw/5c0 46t 0mw/5c0 46u 0mv/5c0 46u 0mv/5c0 46u 0mv/5c0 46u 0mv/5c0 46u 0mv/5c0 46u 0mv/5c0 46u 0mv/5c0 46u 0mv/5c0 46u 0mv/5c0 46u 0mv/5c0 46u 0mv/5c0 46v 0mu/5c0 46v 0mu/5c0 46v 0mu/5c0 46v 0mu/5c0 46v 0mu/5c0 46v 0mu/5c0 46v 0mu/5c0 46v 0mu/5c0 46v 0mu/5c0 46v 0mu/5c0 46v 0mu/5c0 46w 0mt/5c0 46w 0mt/5c0 46w 0mt/5c0 46w 0mt/5c0 46w 0mt/5c0 46w 0mt/5c0 46w 0mt/5c0 46w 0mt/5c0 46w 0mt/5c0 46w 0mt/5c0 46w 0mt/5c0 46x 0ms/5c0 46x 0ms/5c0 46x 0ms/5c0 46x 0ms/5c0 46x 0ms/5c0 46x 0ms/5c0 46x 0ms/5c0 46x 0ms/5c0 46x 0ms/5c0 46x 0ms/5c0 46y 0mr/5c0 46y 0mr/5c0 46y 0mr/5c0 46y 0mr/5c0 46y 0mr/5c0 46y 0mr/5c0 46y 0mr/5c0 46y 0mr/5c0 46y 0mr/5c0 46y 0mr/5c0 46y 0mr/5c0 46z 0mq/5c0 46z 0mq/5c0 46z 0mq/5c0 46z 0mq/5c0 46z 0mq/5c0 46z 0mq/5c0 46z 0mq/5c0 46z 0mq/5c0 46z 0mq/5c0 46z 0mq/5c0 46z 0mq/5c0 470 0mp/5c0 470 0mp/5c0 470 0mp/5c0 470 0mp/5c0 470 0mp/5c0 470 0mp/5c0 470 0mp/5c0 470 0mp/5c0 470 0mp/5c0 470 0mp/5c0 471 0mo/5c0 471 0mo/5c0 471 0mo/5c0 471 0mo/5c0 471 0mo/5c0 471 0mo/5c0 471 0mo/5c0 471 0mo/5c0 471 0mo/5c0 471 0mo/5c0 471 0mo/5c0 472 0mn/5c0 472 0mn/5c0 472 0mn/5c0 472 0mn/5c0 472 0mn/5c0 472 0mn/5c0 472 0mn/5c0 472 0mn/5c0 472 0mn/5c0 472 0mn/5c0 473 0mm/5c0 473 0mm/5c0 473 0mm/5c0 473 0mm/5c0 473 0mm/5c0 473 0mm/5c0 473 0mm/5c0 473 0mm/5c0 473 0mm/5c0 473 0mm/5c0 473 0mm/5c0 474 0ml/5c0 474 0ml/5c0 474 0ml/5c0 474 0ml/5c0 474 0ml/5c0 474 0ml/5c0 474 0ml/5c0 474 0ml/5c0 474 0ml/5c0 474 0ml/5c1 474 0mk/5c1 474 0mk/5c1 474 0mk/5c1 474 0mk/5c1 474 0mk/5c1 474 0mk/5c1 474 0mk/5c1 474 0mk/5c1 474 0mk/5c1 474 0mk/5c1 475 0mj/5c1 475 0mj/5c1 475 0mj/5c1 475 0mj/5c1 475 0mj/5c1 475 0mj/5c1 475 0mj/5c1 475 0mj/5c1 475 0mj/5c1 475 0mj/5c1 475 0mj/5c1 476 0mi/5c1 476 0mi/5c1 476 0mi/5c1 476 0mi/5c1 476 0mi/5c1 476 0mi/5c1 476 0mi/5c1 476 0mi/5c1 476 0mi/5c1 476 0mi/5c1 477 0mh/5c1 477 0mh/5c1 477 0mh/5c1 477 0mh/5c1 477 0mh/5c1 477 0mh/5c1 477 0mh/5c1 477 0mh/5c1 477 0mh/5c1 477 0mh/5c1 478 0mg/5c1 478 0mg/5c1 478 0mg/5c1 478 0mg/5c1 478 0mg/5c1 478 0mg/5c1 478 0mg/5c1 478 0mg/5c1 478 0mg/5c1 478 0mg/5c1 479 0mf/5c1 479 0mf/5c1 479 0mf/5c1 479 0mf/5c1 479 0mf/5c1 479 0mf/5c1 479 0mf/5c1 479 0mf/5c1 479 0mf/5c1 479 0mf/5c1 47a 0me/5c1 47a 0me/5c1 47a 0me/5c1 47a 0me/5c1 47a 0me/5c1 47a 0me/5c1 47a 0me/5c1 47a 0me/5c1 47a 0me/5c1 47a 0me/5c1 47b 0md/5c1 47b 0md/5c1 47b 0md/5c1 47b 0md/5c1 47b 0md/5c1 47b 0md/5c1 47b 0md/5c1 47b 0md/5c1 47b 0md/5c1 47b 0md/5c1 47c 0mc/5c1 47c 0mc/5c1 47c 0mc/5c1 47c 0mc/5c1 47c 0mc/5c1 47c 0mc/5c1 47c 0mc/5c1 47c 0mc/5c1 47c 0mc/5c1 47c 0mc/5c1 47d 0mb/5c1 47d 0mb/5c1 47d 0mb/5c1 47d 0mb/5c1 47d 0mb/5c1 47d 0mb/5c1 47d 0mb/5c1 47d 0mb/5c1 47d 0mb/5c1 47d 0mb/5c1 47e 0ma/5c1 47e 0ma/5c1 47e 0ma/5c1 47e 0ma/5c1 47e 0ma/5c1 47e 0ma/5c1 47e 0ma/5c1 47e 0ma/5c1 47e 0ma/5c1 47e 0ma/5c1 47f 0m9/5c1 47f 0m9/5c1 47f 0m9/5c1 47f 0m9/5c1 47f 0m9/5c1 47f 0m9/5c1 47f 0m9/5c1 47f 0m9/5c1 47f 0m9/5c1 47f 0m9/5c1 47g 0m8/5c1 47g 0m8/5c1 47g 0m8/5c1 47g 0m8/5c1 47g 0m8/5c1 47g 0m8/5c1 47g 0m8/5c1 47g 0m8/5c1 47g 0m8/5c1 47g 0m8/5c1 47h 0m7/5c1 47h 0m7/5c1 47h 0m7/5c1 47h 0m7/5c1 47h 0m7/5c1 47h 0m7/5c1 47h 0m7/5c1 47h 0m7/5c1 47h 0m7/5c1 47i 0m6/5c1 47i 0m6/5c1 47i 0m6/5c1 47i 0m6/5c1 47i 0m6/5c1 47i 0m6/5c1 47i 0m6/5c1 47i 0m6/5c1 47i 0m6/5c1 47i 0m6/5c1 47j 0m5/5c1 47j 0m5/5c1 47j 0m5/5c1 47j 0m5/5c1 47j 0m5/5c1 47j 0m5/5c1 47j 0m5/5c1 47j 0m5/5c1 47j 0m5/5c1 47j 0m5/5c1 47k 0m4/5c1 47k 0m4/5c1 47k 0m4/5c1 47k 0m4/5c1 47k 0m4/5c1 47k 0m4/5c1 47k 0m4/5c1 47k 0m4/5c1 47k 0m4/5c1 47l 0m3/5c1 47l 0m3/5c1 47l 0m3/5c1 47l 0m3/5c1 47l 0m3/5c1 47l 0m3/5c1 47l 0m3/5c1 47l 0m3/5c1 47l 0m3/5c1 47l 0m3/5c1 47m 0m2/5c1 47m 0m2/5c1 47m 0m2/5c1 47m 0m2/5c1 47m 0m2/5c1 47m 0m2/5c1 47m 0m2/5c1 47m 0m2/5c1 47m 0m2/5c1 47n 0m1/5c1 47n 0m1/5c1 47n 0m1/5c1 47n 0m1/5c1 47n 0m1/5c1 47n 0m1/5c1 47n 0m1/5c1 47n 0m1/5c1 47n 0m1/5c1 47n 0m1/5c1 47o 0m0/5c1 47o 0m0/5c1 47o 0m0/5c1 47o 0m0/5c1 47o 0m0/5c1 47o 0m0/5c1 47o 0m0/5c1 47o 0m0/5c1 47o 0m0/5c1 47p 0lz/5c1 47p 0lz/5c1 47p 0lz/5c1 47p 0lz/5c1 47p 0lz/5c1 47p 0lz/5c1 47p 0lz/5c1 47p 0lz/5c1 47p 0lz/5c1 47p 0lz/5c1 47q 0ly/5c1 47q 0ly/5c1 47q 0ly/5c1 47q 0ly/5c1 47q 0ly/5c1 47q 0ly/5c1 47q 0ly/5c1 47q 0ly/5c1 47q 0ly/5c1 47r 0lx/5c1 47r 0lx/5c1 47r 0lx/5c1 47r 0lx/5c1 47r 0lx/5c1 47r 0lx/5c1 47r 0lx/5c1 47r 0lx/5c1 47r 0lx/5c1 47s 0lw/5c1 47s 0lw/5c1 47s 0lw/5c1 47s 0lw/5c1 47s 0lw/5c1 47s 0lw/5c1 47s 0lw/5c1 47s 0lw/5c1 47s 0lw/5c1 47t 0lv/5c1 47t 0lv/5c1 47t 0lv/5c1 47t 0lv/5c1 47t 0lv/5c1 47t 0lv/5c1 47t 0lv/5c1 47t 0lv/5c1 47t 0lv/5c1 47t 0lv/5c1 47u 0lu/5c1 47u 0lu/5c1 47u 0lu/5c1 47u 0lu/5c1 47u 0lu/5c1 47u 0lu/5c1 47u 0lu/5c1 47u 0lu/5c1 47u 0lu/5c1 47v 0lt/5c1 47v 0lt/5c1 47v 0lt/5c1 47v 0lt/5c1 47v 0lt/5c1 47v 0lt/5c1 47v 0lt/5c1 47v 0lt/5c1 47v 0lt/5c1 47w 0ls/5c1 47w 0ls/5c1 47w 0ls/5c1 47w 0ls/5c1 47w 0ls/5c1 47w 0ls/5c1 47w 0ls/5c1 47w 0ls/5c1 47w 0ls/5c1 47x 0lr/5c1 47x 0lr/5c1 47x 0lr/5c1 47x 0lr/5c1 47x 0lr/5c1 47x 0lr/5c1 47x 0lr/5c1 47x 0lr/5c1 47x 0lr/5c1 47y 0lq/5c1 47y 0lq/5c1 47y 0lq/5c1 47y 0lq/5c1 47y 0lq/5c1 47y 0lq/5c1 47y 0lq/5c1 47y 0lq/5c1 47y 11 0lp/5c1 47y 11 0lp/5c1 47y 11 0lp/5c1 47y 11 0lp/5c1 47y 11 0lp/5c1 47y 11 0lp/5c1 47y 11 0lp/5c1 47y 11 0lp/5c1 47y 12 0lo/5c1 47y 12 0lo/5c1 47y 12 0lo/5c1 47y 12 0lo/5c1 47y 12 0lo/5c1 47y 12 0lo/5c1 47y 12 0lo/5c1 47y 12 0lo/5c1 47y 13 0ln/5c1 47y 13 0ln/5c1 47y 13 0ln/5c1 47y 13 0ln/5c1 47y 13 0ln/5c1 47y 13 0ln/5c1 47y 13 0ln/5c1 47y 13 0ln/5c1 47y 14 0lm/5c1 47y 14 0lm/5c1 47y 14 0lm/5c1 47y 14 0lm/5c1 47y 14 0lm/5c1 47y 14 0lm/5c1 47y 14 0lm/5c1 47y 15 0ll/5c1 47y 15 0ll/5c1 47y 15 0ll/5c1 47y 15 0ll/5c1 47y 15 0ll/5c1 47y 15 0ll/5c1 47y 15 0ll/5c1 47y 15 0ll/5c1 47y 16 0lk/5c1 47y 16 0lk/5c1 47y 16 0lk/5c1 47y 16 0lk/5c1 47y 16 0lk/5c1 47y 16 0lk/5c1 47y 16 0lk/5c1 47y 16 0lk/5c1 47y 17 0lj/5c1 47y 17 0lj/5c1 47y 17 0lj/5c1 47y 17 0lj/5c1 47y 17 0lj/5c1 47y 17 0lj/5c1 47y 17 0lj/5c1 47y 18 0li/5c1 47y 18 0li/5c1 47y 18 0li/5c1 47y 18 0li/5c1 47y 18 0li/5c1 47y 18 0li/5c1 47y 18 0li/5c1 47y 18 0li/5c1 47y 19 0lh/5c1 47y 19 0lh/5c1 47y 19 0lh/5c1 47y 19 0lh/5c1 47y 19 0lh/5c1 47y 19 0lh/5c1 47y 19 0lh/5c1 47y 1a 0lg/5c1 47y 1a 0lg/5c1 47y 1a 0lg/5c1 47y 1a 0lg/5c1 47y 1a 0lg/5c1 47y 1a 0lg/5c1 47y 1a 0lg/5c1 47y 1a 0lg/5c1 47y 1b 0lf/5c1 47y 1b 0lf/5c1 47y 1b 0lf/5c1 47y 1b 0lf/5c1 47y 1b 0lf/5c1 47y 1b 0lf/5c1 47y 1b 0lf/5c1 47y 1c 0le/5c1 47y 1c 0le/5c1 47y 1c 0le/5c1 47y 1c 0le/5c1 47y 1c 0le/5c1 47y 1c 0le/5c1 47y 1c 0le/5c1 47y 1c 0le/5c1 47y 1d 0ld/5c1 47y 1d 0ld/5c1 47y 1d 0ld/5c1 47y 1d 0ld/5c1 47y 1d 0ld/5c1 47y 1d 0ld/5c1 47y 1d 0ld/5c1 47y 1e 0lc/5c1 47y 1e 0lc/5c1 47y 1e 0lc/5c1 47y 1e 0lc/5c1 47y 1e 0lc/5c1 47y 1e 0lc/5c1 47y 1e 0lc/5c1 47y 1f 0lb/5c1 47y 1f 0lb/5c1 47y 1f 0lb/5c1 47y 1f 0lb/5c1 47y 1f 0lb/5c1 47y 1f 0lb/5c1 47y 1f 0lb/5c1 47y 1f 0lb/5c1 47y 1g 0la/5c1 47y 1g 0la/5c1 47y 1g 0la/5c1 47y 1g 0la/5c1 47y 1g 0la/5c1 47y 1g 0la/5c1 47y 1g 0la/5c1 47y 1h 0l9/5c1 47y 1h 0l9/5c1 47y 1h 0l9/5c1 47y 1h 0l9/5c1 47y 1h 0l9/5c1 47y 1h 0l9/5c1 47y 1h 0l9/5c1 47y 1i 0l8/5c1 47y 1i 0l8/5c1 47y 1i 0l8/5c1 47y 1i 0l8/5c1 47y 1i 0l8/5c1 47y 1i 0l8/5c1 47y 1i 0l8/5c1 47y 1j 0l7/5c1 47y 1j 0l7/5c1 47y 1j 0l7/5c1 47y 1j 0l7/5c1 47y 1j 0l7/5c1 47y 1j 0l7/5c1 47y 1j 0l7/5c1 47y 1k 0l6/5c1 47y 1k 0l6/5c1 47y 1k 0l6/5c1 47y 1k 0l6/5c1 47y 1k 0l6/5c1 47y 1k 0l6/5c1 47y 1k 0l6/5c1 47y 1l 0l5/5c1 47y 1l 0l5/5c1 47y 1l 0l5/5c1 47y 1l 0l5/5c1 47y 1l 0l5/5c1 47y 1l 0l5/5c1 47y 1l 0l5/5c1 47y 1m 0l4/5c1 47y 1m 0l4/5c1 47y 1m 0l4/5c1 47y 1m 0l4/5c1 47y 1m 0l4/5c1 47y 1m 0l4/5c1 47y 1m 0l4/5c1 47y 1n 0l3/5c1 47y 1n 0l3/5c1 47y 1n 0l3/5c1 47y 1n 0l3/5c1 47y 1n 0l3/5c1 47y 1n 0l3/5c1 47y 1n 0l3/5c1 47y 1o 0l2/5c1 47y 1o 0l2/5c1 47y 1o 0l2/5c1 47y 1o 0l2/5c1 47y 1o 0l2/5c1 47y 1o 0l2/5c1 47y 1o 0l2/5c1 47y 1p 0l1/5c1 47y 1p 0l1/5c1 47y 1p 0l1/5c1 47y 1p 0l1/5c1 47y 1p 0l1/5c1 47y 1p 0l1/5c1 47y 1p 0l1/5c1 47y 1q 0l0/5c1 47y 1q 0l0/5c1 47y 1q 0l0/5c1 47y 1q 0l0/5c1 47y 1q 0l0/5c1 47y 1q 0l0/5c1 47y 1q 0l0/5c1 47y 1r 0kz/5c1 47y 1r 0kz/5c1 47y 1r 0kz/5c1 47y 1r 0kz/5c1 47y 1r 0kz/5c1 47y 1r 0kz/5c1 47y 1r 0kz/5c1 47y 1s 0ky/5c1 47y 1s 0ky/5c1 47y 1s 0ky/5c1 47y 1s 0ky/5c1 47y 1s 0ky/5c1 47y 1s 0ky/5c1 47y 1t 0kx/5c1 47y 1t 0kx/5c1 47y 1t 0kx/5c1 47y 1t 0kx/5c1 47y 1t 0kx/5c1 47y 1t 0kx/5c1 47y 1t 0kx/5c1 47y 1u 0kw/5c1 47y 1u 0kw/5c1 47y 1u 0kw/5c1 47y 1u 0kw/5c1 47y 1u 0kw/5c1 47y 1u 0kw/5c1 47y 1u 0kw/5c1 47y 1v 0kv/5c1 47y 1v 0kv/5c1 47y 1v 0kv/5c1 47y 1v 0kv/5c1 47y 1v 0kv/5c1 47y 1v 0kv/5c1 47y 1w 0ku/5c1 47y 1w 0ku/5c1 47y 1w 0ku/5c1 47y 1w 0ku/5c1 47y 1w 0ku/5c1 47y 1w 0ku/5c1 47y 1w 0ku/5c1 47y 1x 0kt/5c1 47y 1x 0kt/5c1 47y 1x 0kt/5c1 47y 1x 0kt/5c1 47y 1x 0kt/5c1 47y 1x 0kt/5c1 47y 1y 0ks/5c1 47y 1y 0ks/5c1 47y 1y 0ks/5c1 47y 1y 0ks/5c1 47y 1y 0ks/5c1 47y 1y 0ks/5c1 47y 1y 0ks/5c1 47y 1z 0kr/5c1 47y 1z 0kr/5c1 47y 1z 0kr/5c1 47y 1z 0kr/5c1 47y 1z 0kr/5c1 47y 1z 0kr/5c1 47y 110 0kq/5c1 47y 110 0kq/5c1 47y 110 0kq/5c1 47y 110 0kq/5c1 47y 110 0kq/5c1 47y 110 0kq/5c1 47y 110 0kq/5c1 47y 111 0kp/5c1 47y 111 0kp/5c1 47y 111 0kp/5c1 47y 111 0kp/5c1 47y 111 0kp/5c1 47y 111 0kp/5c1 47y 112 0ko/5c1 47y 112 0ko/5c1 47y 112 0ko/5c1 47y 112 0ko/5c1 47y 112 0ko/5c1 47y 112 0ko/5c1 47y 113 0kn/5c1 47y 113 0kn/5c1 47y 113 0kn/5c1 47y 113 0kn/5c1 47y 113 0kn/5c1 47y 113 0kn/5c1 47y 113 0kn/5c1 47y 114 0km/5c1 47y 114 0km/5c1 47y 114 0km/5c1 47y 114 0km/5c1 47y 114 0km/5c1 47y 114 0km/5c1 47y 115 0kl/5c1 47y 115 0kl/5c1 47y 115 0kl/5c1 47y 115 0kl/5c1 47y 115 0kl/5c1 47y 115 0kl/5c1 47y 116 0kk/5c1 47y 116 0kk/5c1 47y 116 0kk/5c1 47y 116 0kk/5c1 47y 116 0kk/5c1 47y 116 0kk/5c1 47y 116 0kk/5c1 47y 117 0kj/5c1 47y 117 0kj/5c1 47y 117 0kj/5c1 47y 117 0kj/5c1 47y 117 0kj/5c1 47y 117 0kj/5c1 47y 118 0ki/5c1 47y 118 0ki/5c1 47y 118 0ki/5c1 47y 118 0ki/5c1 47y 118 0ki/5c1 47y 118 0ki/5c1 47y 119 0kh/5c1 47y 119 0kh/5c1 47y 119 0kh/5c1 47y 119 0kh/5c1 47y 119 0kh/5c1 47y 119 0kh/5c1 47y 11a 0kg/5c1 47y 11a 0kg/5c1 47y 11a 0kg/5c1 47y 11a 0kg/5c1 47y 11a 0kg/5c1 47y 11a 0kg/5c1 47y 11b 0kf/5c1 47y 11b 0kf/5c1 47y 11b 0kf/5c1 47y 11b 0kf/5c1 47y 11b 0kf/5c1 47y 11b 0kf/5c1 47y 11c 0ke/5c1 47y 11c 0ke/5c1 47y 11c 0ke/5c1 47y 11c 0ke/5c1 47y 11c 0ke/5c1 47y 11c 0ke/5c1 47y 11d 0kd/5c1 47y 11d 0kd/5c1 47y 11d 0kd/5c1 47y 11d 0kd/5c1 47y 11d 0kd/5c1 47y 11d 0kd/5c1 47y 11e 0kc/5c1 47y 11e 0kc/5c1 47y 11e 0kc/5c1 47y 11e 0kc/5c1 47y 11e 0kc/5c1 47y 11e 0kc/5c1 47y 11f 0kb/5c1 47y 11f 0kb/5c1 47y 11f 0kb/5c1 47y 11f 0kb/5c1 47y 11f 0kb/5c1 47y 11f 0kb/5c1 47y 11g 0ka/5c1 47y 11g 0ka/5c1 47y 11g 0ka/5c1 47y 11g 0ka/5c1 47y 11g 0ka/5c1 47y 11h 0k9/5c1 47y 11h 0k9/5c1 47y 11h 0k9/5c1 47y 11h 0k9/5c1 47y 11h 0k9/5c1 47y 11h 0k9/5c1 47y 11i 0k8/5c1 47y 11i 0k8/5c1 47y 11i 0k8/5c1 47y 11i 0k8/5c1 47y 11i 0k8/5c1 47y 11i 0k8/5c1 47y 11j 0k7/5c1 47y 11j 0k7/5c1 47y 11j 0k7/5c1 47y 11j 0k7/5c1 47y 11j 0k7/5c1 47y 11j 0k7/5c1 47y 11k 0k6/5c1 47y 11k 0k6/5c1 47y 11k 0k6/5c1 47y 11k 0k6/5c1 47y 11k 0k6/5c1 47y 11k 0k6/5c1 47y 11l 0k5/5c1 47y 11l 0k5/5c1 47y 11l 0k5/5c1 47y 11l 0k5/5c1 47y 11l 0k5/5c1 47y 11m 0k4/5c1 47y 11m 0k4/5c1 47y 11m 0k4/5c1 47y 11m 0k4/5c1 47y 11m 0k4/5c1 47y 11m 0k4/5c1 47y 11n 0k3/5c1 47y 11n 0k3/5c1 47y 11n 0k3/5c1 47y 11n 0k3/5c1 47y 11n 0k3/5c1 47y 11o 0k2/5c1 47y 11o 0k2/5c1 47y 11o 0k2/5c1 47y 11o 0k2/5c1 47y 11o 0k2/5c1 47y 11o 0k2/5c1 47y 11p 0k1/5c1 47y 11p 0k1/5c1 47y 11p 0k1/5c1 47y 11p 0k1/5c1 47y 11p 0k1/5c1 47y 11p 0k1/5c1 47y 11q 0k0/5c1 47y 11q 0k0/5c1 47y 11q 0k0/5c1 47y 11q 0k0/5c1 47y 11q 0k0/5c1 47y 11r 0jz/5c1 47y 11r 0jz/5c1 47y 11r 0jz/5c1 47y 11r 0jz/5c1 47y 11r 0jz/5c1 47y 11s 0jy/5c1 47y 11s 0jy/5c1 47y 11s 0jy/5c1 47y 11s 0jy/5c1 47y 11s 0jy/5c1 47y 11s 0jy/5c1 47y 11t 0jx/5c1 47y 11t 0jx/5c1 47y 11t 0jx/5c1 47y 11t 0jx/5c1 47y 11t 0jx/5c1 47y 11u 0jw/5c1 47y 11u 0jw/5c1 47y 11u 0jw/5c1 47y 11u 0jw/5c1 47y 11u 0jw/5c1 47y 11u 0jw/5c1 47y 11v 0jv/5c1 47y 11v 0jv/5c1 47y 11v 0jv/5c1 47y 11v 0jv/5c1 47y 11v 0jv/5c1 47y 11w 0ju/5c1 47y 11w 0ju/5c1 47y 11w 0ju/5c1 47y 11w 0ju/5c1 47y 11w 0ju/5c1 47y 11x 0jt/5c1 47y 11x 0jt/5c1 47y 11x 0jt/5c1 47y 11x 0jt/5c1 47y 11x 0jt/5c1 47y 11x 0jt/5c1 47y 11y 0js/5c1 47y 11y 0js/5c1 47y 11y 0js/5c1 47y 11y 0js/5c1 47y 11y 0js/5c1 47y 11z 0jr/5c1 47y 11z 0jr/5c1 47y 11z 0jr/5c1 47y 11z 0jr/5c1 47y 11z 0jr/5c1 47y 120 0jq/5c1 47y 120 0jq/5c1 47y 120 0jq/5c1 47y 120 0jq/5c1 47y 120 0jq/5c1 47y 121 0jp/5c1 47y 121 0jp/5c1 47y 121 0jp/5c1 47y 121 0jp/5c1 47y 121 0jp/5c1 47y 122 0jo/5c1 47y 122 0jo/5c1 47y 122 0jo/5c1 47y 122 0jo/5c1 47y 122 0jo/5c1 47y 122 0jo/5c1 47y 123 0jn/5c1 47y 123 0jn/5c1 47y 123 0jn/5c1 47y 123 0jn/5c1 47y 123 0jn/5c1 47y 124 0jm/5c1 47y 124 0jm/5c1 47y 124 0jm/5c1 47y 124 0jm/5c1 47y 124 0jm/5c1 47y 125 0jl/5c1 47y 125 0jl/5c1 47y 125 0jl/5c1 47y 125 0jl/5c1 47y 125 0jl/5c1 47y 126 0jk/5c1 47y 126 0jk/5c1 47y 126 0jk/5c1 47y 126 0jk/5c1 47y 126 0jk/5c1 47y 127 0jj/5c1 47y 127 0jj/5c1 47y 127 0jj/5c1 47y 127 0jj/5c1 47y 127 0jj/5c1 47y 128 0ji/5c1 47y 128 0ji/5c1 47y 128 0ji/5c1 47y 128 0ji/5c1 47y 128 0ji/5c1 47y 129 0jh/5c1 47y 129 0jh/5c1 47y 129 0jh/5c1 47y 129 0jh/5c1 47y 129 0jh/5c1 47y 12a 0jg/5c1 47y 12a 0jg/5c1 47y 12a 0jg/5c1 47y 12a 0jg/5c1 47y 12b 0jf/5c1 47y 12b 0jf/5c1 47y 12b 0jf/5c1 47y 12b 0jf/5c1 47y 12b 0jf/5c1 47y 12c 0je/5c1 47y 12c 0je/5c1 47y 12c 0je/5c1 47y 12c 0je/5c1 47y 12c 0je/5c1 47y 12d 0jd/5c1 47y 12d 0jd/5c1 47y 12d 0jd/5c1 47y 12d 0jd/5c1 47y 12d 0jd/5c1 47y 12e 0jc/5c1 47y 12e 0jc/5c1 47y 12e 0jc/5c1 47y 12e 0jc/5c1 47y 12e 0jc/5c1 47y 12f 0jb/5c1 47y 12f 0jb/5c1 47y 12f 0jb/5c1 47y 12f 0jb/5c1 47y 12g 0ja/5c1 47y 12g 0ja/5c1 47y 12g 0ja/5c1 47y 12g 0ja/5c1 47y 12g 0ja/5c1 47y 12h 0j9/5c1 47y 12h 0j9/5c1 47y 12h 0j9/5c1 47y 12h 0j9/5c1 47y 12h 0j9/5c1 47y 12i 0j8/5c1 47y 12i 0j8/5c1 47y 12i 0j8/5c1 47y 12i 0j8/5c1 47y 12i 0j8/5c1 47y 12j 0j7/5c1 47y 12j 0j7/5c1 47y 12j 0j7/5c1 47y 12j 0j7/5c1 47y 12k 0j6/5c1 47y 12k 0j6/5c1 47y 12k 0j6/5c1 47y 12k 0j6/5c1 47y 12k 0j6/5c1 47y 12l 0j5/5c1 47y 12l 0j5/5c1 47y 12l 0j5/5c1 47y 12l 0j5/5c1 47y 12m 0j4/5c1 47y 12m 0j4/5c1 47y 12m 0j4/5c1 47y 12m 0j4/5c1 47y 12m 0j4/5c1 47y 12n 0j3/5c1 47y 12n 0j3/5c1 47y 12n 0j3/5c1 47y 12n 0j3/5c1 47y 12o 0j2/5c1 47y 12o 0j2/5c1 47y 12o 0j2/5c1 47y 12o 0j2/5c1 47y 12o 0j2/5c1 47y 12p 0j1/5c1 47y 12p 0j1/5c1 47y 12p 0j1/5c1 47y 12p 0j1/5c1 47y 12q 0j0/5c1 47y 12q 0j0/5c1 47y 12q 0j0/5c1 47y 12q 0j0/5c1 47y 12q 0j0/5c1 47y 12r 0iz/5c1 47y 12r 0iz/5c1 47y 12r 0iz/5c1 47y 12r 0iz/5c1 47y 12s 0iy/5c1 47y 12s 0iy/5c1 47y 12s 0iy/5c1 47y 12s 0iy/5c1 47y 12s 0iy/5c1 47y 12t 0ix/5c1 47y 12t 0ix/5c1 47y 12t 0ix/5c1 47y 12t 0ix/5c1 47y 12u 0iw/5c1 47y 12u 0iw/5c1 47y 12u 0iw/5c1 47y 12u 0iw/5c1 47y 12v 0iv/5c1 47y 12v 0iv/5c1 47y 12v 0iv/5c1 47y 12v 0iv/5c1 47y 12v 0iv/5c1 47y 12w 0iu/5c1 47y 12w 0iu/5c1 47y 12w 0iu/5c1 47y 12w 0iu/5c1 47y 12x 0it/5c1 47y 12x 0it/5c1 47y 12x 0it/5c1 47y 12x 0it/5c1 47y 12y 0is/5c1 47y 12y 0is/5c1 47y 12y 0is/5c1 47y 12y 0is/5c1 47y 12y 0is/5c1 47y 12z 0ir/5c1 47y 12z 0ir/5c1 47y 12z 0ir/5c1 47y 12z 0ir/5c1 47y 130 0iq/5c1 47y 130 0iq/5c1 47y 130 0iq/5c1 47y 130 0iq/5c1 47y 131 0ip/5c1 47y 131 0ip/5c1 47y 131 0ip/5c1 47y 131 0ip/5c1 47y 132 0io/5c1 47y 132 0io/5c1 47y 132 0io/5c1 47y 132 0io/5c1 47y 133 0in/5c1 47y 133 0in/5c1 47y 133 0in/5c1 47y 133 0in/5c1 47y 133 0in/5c1 47y 134 0im/5c1 47y 134 0im/5c1 47y 134 0im/5c1 47y 134 0im/5c1 47y 135 0il/5c1 47y 135 0il/5c1 47y 135 0il/5c1 47y 135 0il/5c1 47y 136 0ik/5c1 47y 136 0ik/5c1 47y 136 0ik/5c1 47y 136 0ik/5c1 47y 137 0ij/5c1 47y 137 0ij/5c1 47y 137 0ij/5c1 47y 137 0ij/5c1 47y 138 0ii/5c1 47y 138 0ii/5c1 47y 138 0ii/5c1 47y 138 0ii/5c1 47y 139 0ih/5c1 47y 139 0ih/5c1 47y 139 0ih/5c1 47y 139 0ih/5c1 47y 13a 0ig/5c1 47y 13a 0ig/5c1 47y 13a 0ig/5c1 47y 13a 0ig/5c1 47y 13b 0if/5c1 47y 13b 0if/5c1 47y 13b 0if/5c1 47y 13b 0if/5c1 47y 13c 0ie/5c1 47y 13c 0ie/5c1 47y 13c 0ie/5c1 47y 13c 0ie/5c1 47y 13d 0id/5c1 47y 13d 0id/5c1 47y 13d 0id/5c1 47y 13d 0id/5c1 47y 13e 0ic/5c1 47y 13e 0ic/5c1 47y 13e 0ic/5c1 47y 13e 0ic/5c1 47y 13f 0ib/5c1 47y 13f 0ib/5c1 47y 13f 0ib/5c1 47y 13g 0ia/5c1 47y 13g 0ia/5c1 47y 13g 0ia/5c1 47y 13g 0ia/5c1 47y 13h 0i9/5c1 47y 13h 0i9/5c1 47y 13h 0i9/5c1 47y 13h 0i9/5c1 47y 13i 0i8/5c1 47y 13i 0i8/5c1 47y 13i 0i8/5c1 47y 13i 0i8/5c1 47y 13j 0i7/5c1 47y 13j 0i7/5c1 47y 13j 0i7/5c1 47y 13j 0i7/5c1 47y 13k 0i6/5c1 47y 13k 0i6/5c1 47y 13k 0i6/5c1 47y 13k 0i6/5c1 47y 13l 0i5/5c1 47y 13l 0i5/5c1 47y 13l 0i5/5c1 47y 13m 0i4/5c1 47y 13m 0i4/5c1 47y 13m 0i4/5c1 47y 13m 0i4/5c1 47y 13n 0i3/5c1 47y 13n 0i3/5c1 47y 13n 0i3/5c1 47y 13n 0i3/5c1 47y 13o 0i2/5c1 47y 13o 0i2/5c1 47y 13o 0i2/5c1 47y 13p 0i1/5c1 47y 13p 0i1/5c1 47y 13p 0i1/5c1 47y 13p 0i1/5c1 47y 13q 0i0/5c1 47y 13q 0i0/5c1 47y 13q 0i0/5c1 47y 13q 0i0/5c1 47y 13r 0hz/5c1 47y 13r 0hz/5c1 47y 13r 0hz/5c1 47y 13s 0hy/5c1 47y 13s 0hy/5c1 47y 13s 0hy/5c1 47y 13s 0hy/5c1 47y 13t 0hx/5c1 47y 13t 0hx/5c1 47y 13t 0hx/5c1 47y 13t 0hx/5c1 47x 13v 0hw/5c1 47x 13v 0hw/5c1 47x 13v 0hw/5c1 47x 13w 0hv/5c1 47x 13w 0hv/5c1 47x 13w 0hv/5c1 47x 13w 0hv/5c1 47x 13x 0hu/5c1 47x 13x 0hu/5c1 47x 13x 0hu/5c1 47x 13y 0ht/5c1 47x 13y 0ht/5c1 47x 13y 0ht/5c1 47x 13y 0ht/5c1 47x 13z 0hs/5c1 47x 13z 0hs/5c1 47x 13z 0hs/5c1 47x 140 0hr/5c1 47x 140 0hr/5c1 47x 140 0hr/5c1 47x 140 0hr/5c1 47x 141 0hq/5c1 47x 141 0hq/5c1 47x 141 0hq/5c1 47x 142 0hp/5c1 47x 142 0hp/5c1 47x 142 0hp/5c1 47x 142 0hp/5c1 47x 143 0ho/5c1 47x 143 0ho/5c1 47x 143 0ho/5c1 47x 144 0hn/5c1 47x 144 0hn/5c1 47x 144 0hn/5c1 47x 144 0hn/5c1 47x 145 0hm/5c1 47x 145 0hm/5c1 47x 145 0hm/5c1 47x 146 0hl/5c1 47x 146 0hl/5c1 47x 146 0hl/5c1 47x 147 0hk/5c1 47x 147 0hk/5c1 47x 147 0hk/5c1 47x 147 0hk/5c1 47x 148 0hj/5c1 47x 148 0hj/5c1 47x 148 0hj/5c1 47x 149 0hi/5c1 47x 149 0hi/5c1 47x 149 0hi/5c1 47x 149 0hi/5c1 47x 14a 0hh/5c1 47x 14a 0hh/5c1 47x 14a 0hh/5c1 47x 14b 0hg/5c1 47x 14b 0hg/5c1 47x 14b 0hg/5c1 47x 14c 0hf/5c1 47x 14c 0hf/5c1 47x 14c 0hf/5c1 47x 14c 0hf/5c1 47x 14d 0he/5c1 47x 14d 0he/5c1 47x 14d 0he/5c1 47x 14e 0hd/5c1 47x 14e 0hd/5c1 47x 14e 0hd/5c1 47x 14f 0hc/5c1 47x 14f 0hc/5c1 47x 14f 0hc/5c1 47x 14g 0hb/5c1 47x 14g 0hb/5c1 47x 14g 0hb/5c1 47x 14g 0hb/5c1 47x 14h 0ha/5c1 47x 14h 0ha/5c1 47x 14h 0ha/5c1 47x 14i 0h9/5c1 47x 14i 0h9/5c1 47x 14i 0h9/5c1 47x 14j 0h8/5c1 47x 14j 0h8/5c1 47x 14j 0h8/5c1 47x 14k 0h7/5c1 47x 14k 0h7/5c1 47x 14k 0h7/5c1 47x 14l 0h6/5c1 47x 14l 0h6/5c1 47x 14l 0h6/5c1 47x 14l 0h6/5c1 47x 14m 0h5/5c1 47x 14m 0h5/5c1 47x 14m 0h5/5c1 47x 14n 0h4/5c1 47x 14n 0h4/5c1 47x 14n 0h4/5c1 47x 14o 0h3/5c1 47x 14o 0h3/5c1 47x 14o 0h3/5c1 47x 14p 0h2/5c1 47x 14p 0h2/5c1 47x 14p 0h2/5c1 47x 14q 0h1/5c1 47x 14q 0h1/5c1 47x 14q 0h1/5c1 47x 14r 0h0/5c1 47x 14r 0h0/5c1 47x 14r 0h0/5c1 47x 14r 0h0/5c1 47x 14s 0gz/5c1 47x 14s 0gz/5c1 47x 14s 0gz/5c1 47x 14t 0gy/5c1 47x 14t 0gy/5c1 47x 14t 0gy/5c1 47x 14u 0gx/5c1 47x 14u 0gx/5c1 47x 14u 0gx/5c1 47x 14v 0gw/5c1 47x 14v 0gw/5c1 47x 14v 0gw/5c1 47x 14w 0gv/5c1 47x 14w 0gv/5c1 47x 14w 0gv/5c1 47x 14x 0gu/5c1 47x 14x 0gu/5c1 47x 14x 0gu/5c1 47x 14y 0gt/5c1 47x 14y 0gt/5c1 47x 14y 0gt/5c1 47x 14z 0gs/5c1 47x 14z 0gs/5c1 47x 14z 0gs/5c1 47x 150 0gr/5c1 47x 150 0gr/5c1 47x 150 0gr/5c1 47x 151 0gq/5c1 47x 151 0gq/5c1 47x 151 0gq/5c1 47x 152 0gp/5c1 47x 152 0gp/5c1 47x 152 0gp/5c1 47x 153 0go/5c1 47x 153 0go/5c1 47x 153 0go/5c1 47x 154 0gn/5c1 47x 154 0gn/5c1 47x 154 0gn/5c1 47x 154 0gn/5c1 47w 156 0gm/5c1 47w 156 0gm/5c1 47w 156 0gm/5c1 47w 157 0gl/5c1 47w 157 0gl/5c1 47w 157 0gl/5c1 47w 158 0gk/5c1 47w 158 0gk/5c1 47w 158 0gk/5c1 47w 159 0gj/5c1 47w 159 2gj/5c1 47w 159 2gj/5c1 47w 159 2gj/5c1 47w 159 2gj/5c1 47w 159 2gj/5c1 47w 159 2gj/5c1 47w 159 2gj/5c1 47w 159 2gj/5c1 47w 159 2gj/5c1 47w 159 2gj/5c1 47w 159 2gj/5c1 47w 159 2gj/5c1 47w 159 2gj/5c1 47w 159 2gj/5c1 47w 159 2gj/5c1 47w 159 2gj/5c1 47w 159 2gj/5c1 47w 159 2gj/5c1 47w 159 2gj/5c1 47w 159 2gj/5c1 47w 159 2gj/5c1 47w 159 2gj/5c1 47w 159 2gj/5c1 47w 159 2gj/5c1 47w 159 2gj/5c1 47w 159 2gj/5c1 47w 159 2gj/5c1 47w 159 2gj/5c1 47w 159 2gj/5c1 47w 159 2gj/5c1 47w 159 2gj/5c1 47w 159 2gj/5c1 47w 159 2gj/5c1 47w 159 2gj/5c1 47w 159 2gj/5c1 47w 159 2gj/5c1 47w 159 2gj/5c1 47w 159 2gj/5c1 47w 159 2gj/5c1 47w 159 2gj/5c1 47v 15a 2gj/5c1 47v 15a 2gj/5c1 47v 15a 2gj/5c1 47v 15a 2gj/5c1 47v 15a 2gj/5c1 47v 15a 2gj/5c1 47v 15a 2gj/5c1 47v 15a 2gj/5c1 47v 15a 2gj/5c1 47v 15a 2gj/5c1 47v 15a 2gj/5c1 47v 15a 2gj/5c1 47v 15a 2gj/5c1 47v 15a 2gj/5c1 47v 15a 2gj/5c1 47v 15a 2gj/5c1 47v 15a 2gj/5c1 47v 15a 2gj/5c1 47v 15a 2gj/5c1 47v 15a 2gj/5c1 47v 15a 2gj/5c1 47v 15a 2gj/5c1 47v 15a 2gj/64 5bx 47v 15a 2gj/612 5az 47v 15a 2gj/61v 5a6 47v 15a 2gj/62l 59g 47v 15a 2gj/638 58t 47v 15a 2gj/63s 589 47v 15a 2gj/64b 57q 47u 15b 2gj/64t 578 47u 15b 2gj/659 56s 47u 15b 2gj/65o 56d 47u 15b 2gj/662 55z 47u 15b 2gj/66f 55m 47u 15b 2gj/66s 559 47u 15b 2gj/674 54x 47u 15b 2gj/67f 54m 47u 15b 2gj/67p 54c 47u 15b 2gj/67z 542 47u 15b 2gj/689 53s 47u 15b 2gj/68i 53j 47u 15b 2gj/68r 53a 47u 15b 2gj/690 531 47u 15b 2gj/698 52t 47u 15b 2gj/69g 52l 47u 15b 2gj/69o 52d 47u 15b 2gj/69v 526 47u 15b 2gj/6a2 51z 47u 15b 2gj/6a9 51s 47u 15b 2gj/6ag 51l 47u 15b 2gj/6am 51f 47t 15c 2gj/6as 519 47t 15c 2gj/6az 512 47t 15c 2gj/6b5 5w 47t 15c 2gj/6ba 5r 47t 15c 2gj/6bg 5l 47t 15c 2gj/6bm 5f 47t 15c 2gj/6br 5a 47t 15c 2gj/6bw 55 47t 15c 2gj/6c1 47t 15c 2gj/6c6 47o 15c 2gj/6cb 47j 15c 2gj/6cg 47e 15c 2gj/6cl 479 15c 2gj/6cp 475 15c 2gj/6cu 470 15c 2gj/6cy 46v 15d 2gj/6d2 46r 15d 2gj/6d7 46m 15d 2gj/6db 46i 15d 2gj/6df 46e 15d 2gj/6dj 46a 15d 2gj/6dn 466 15d 2gj/6dr 462 15d 2gj/6du 45z 15d 2gj/6dy 45v 15d 2gj/6e2 45r 15d 2gj/6e5 45o 15d 2gj/6e9 45k 15d 2gj/6ec 45g 15e 2gj/6eg 45c 15e 2gj/6ej 459 15e 2gj/6em 456 15e 2gj/6eq 452 15e 2gj/6et 44z 15e 2gj/6ew 44w 15e 2gj/6ez 44t 15e 2gj/6f2 44q 15e 2gj/6f5 44n 15e 2gj/6f8 44k 15e 2gj/6fb 44g 15f 2gj/6fe 44d 15f 2gj/6fh 44a 15f 2gj/6fk 447 15f 2gj/6fn 444 15f 2gj/6fp 442 15f 2gj/6fs 43z 15f 2gj/6fv 43w 15f 2gj/6fy 43t 15f 2gj/6g0 43r 15f 2gj/6g3 43n 15g 2gj/6g5 43l 15g 2gj/6g8 43i 15g 2gj/6ga 43g 15g 2gj/6gd 43d 15g 2gj/6gf 43b 15g 2gj/6gi 438 15g 2gj/6gk 436 15g 2gj/6gn 432 15h 2gj/6gp 430 15h 2gj/6gr 42y 15h 2gj/6gu 42v 15h 2gj/6gw 42t 15h 2gj/6gy 42r 15h 2gj/6h0 42p 15h 2gj/6h2 42m 15i 2gj/6h5 42j 15i 2gj/6h7 42h 15i 2gj/6h9 42f 15i 2gj/6hb 42d 15i 2gj/6hd 42b 15i 2gj/6hf 429 15i 2gj/6hh 426 15j 2gj/6hj 424 15j 2gj/6hl 422 15j 2gj/6hn 420 15j 2gj/6hp 41y 15j 2gj/6hr 41w 15j 2gj/6ht 41t 15k 2gj/6hv 41r 15k 2gj/6hx 41p 15k 2gj/6hz 41n 15k 2gj/6i1 41l 15k 2gj/6i3 41i 15l 2gj/6i5 41g 15l 2gj/6i6 41f 15l 2gj/6i8 41d 15l 2gj/6ia 41b 15l 2gj/6ic 418 15m 2gj/6ie 416 15m 2gj/6if 415 15m 2gj/6ih 413 15m 2gj/6ij 410 15n 2gj/6il 4y 15n 2gj/6im 4x 15n 2gj/6io 4v 15n 2gj/6iq 4t 15n 2gj/6ir 4r 15o 2gj/6it 4p 15o 2gj/6iv 4n 15o 2gj/6iw 4m 15o 2gj/6iy 4j 15p 2gj/6iz 4i 15p 2gj/6j1 4g 15p 2gj/6j3 4d 71 15p 2gj/6j4 45 78 15p 2gj/6j5 7c 15p 2gj/6j6 7b 15p 2gj/6j6 7b 15p 2gj/6j6 7b 15p 2gj/6j6 7b 15p 2gj/6j6 7b 15p 2gj/6j7 7b 15o 2gj/6j7 7b 15o 2gj/6j7 7b 15o 2gj/6j7 7b 15o 2gj/6j8 7a 15o 2gj/6j8 7a 15o 2gj/6j8 7a 15o 2gj/6j8 7a 15o 2gj/6j8 7a 15o 2gj/6j9 79 15o 2gj/6j9 7a 15n 2gj/6j9 7a 15n 2gj/6j9 7a 15n 2gj/6ja 79 15n 2gj/6ja 79 15n 2gj/6ja 79 15n 2gj/6ja 79 15n 2gj/6ja 79 15n 2gj/6jb 78 15n 2gj/6jb 78 15n 2gj/6jb 78 15n 2gj/6jb 79 15m 2gj/6jc 78 15m 2gj/6jc 78 15m 2gj/6jc 78 15m 2gj/6jc 78 15m 2gj/6jc 78 15m 2gj/6jd 77 15m 2gj/6jd 77 15m 2gj/6jd 77 15m 2gj/6jd 77 15m 2gj/6je 76 15m 2gj/6je 76 15m 2gj/6je 76 15m 2gj/6je 77 15l 2gj/6je 77 15l 2gj/6je 83 74 15l 2gj/6je 87 15l 2gj/6jd 88 15l 2gj/6jd 88 15l 2gj/6jc 8a 15k 2gj/6jb 8b 15k 2gj/6jb 8b 15k 2gj/6ja 8c 15k 2gj/6ja 8d 15j 2gj/6j9 8e 15j 2gj/6j9 8e 15j 2gj/6j8 8f 15j 2gj/6j8 8g 15i 2gj/6j7 8h 15i 2gj/6j7 8h 15i 2gj/6j6 8j 15h 2gj/6j6 8j 15h 2gj/6j5 8k 15h 2gj/6j4 8l 15h 2gj/6j4 8m 15g 2gj/6j3 8n 15g 2gj/6j3 8n 15g 2gj/6j2 8o 15g 2gj/6j2 8p 15f 2gj/6j1 8q 15f 2gj/6j1 8q 15f 2gj/6j0 8s 15e 2gj/6iz 8t 15e 2gj/6iz 8t 15e 2gj/6iy 8u 15e 2gj/6iy 8v 15d 2gj/6ix 8w 15d 2gj/6ix 8w 15d 2gj/6iw 8x 15d 2gj/6iv 8z 15c 2gj/6iv 8z 15c 2gj/6iu 810 15c 2gj/6iu 811 15b 2gj/6it 812 15b 2gj/6it 812 15b 2gj/6is 813 15b 2gj/6ir 815 15a 2gj/6ir 815 15a 2gj/6iq 816 15a 2gj/6iq 817 159 2gj/6ip 818 159 2gj/6io 819 159 2gj/6io 819 159 2gj/6in 81b 158 2gj/6in 81b 158 2gj/6im 81c 158 2gj/6ik 9i 8w 158 2gj/6ig 91e 85 157 2gj/6ic 91n 157 2gj/6i7 91t 156 2gj/6i3 91x 156 2gj/6hz 922 155 2gj/6hu 927 155 2gj/6hq 92c 154 2gj/6hl 92h 154 2gj/6hg 92n 153 2gj/6hb 92s 153 2gj/6h7 92x 152 2gj/6h1 933 152 2gj/6gw 939 151 2gj/6gr 93e 151 2gj/6gl 93l 150 2gj/6gg 93q 150 2gj/6ga 93x 14z 2gj/6g4 943 14z 2gj/6fy 94a 14y 2gj/6fs 94g 14y 2gj/6fm 94n 14x 2gj/6ff a2 94s 14x 2gj/6f8 a9 94t 14w 2gj/6f1 ag 94t 14w 2gj/6eu an 94u 14v 2gj/6em av 94u 14v 2gj/6ee a13 94v 14u 2gj/6e6 a1b 94w 14t 2gj/6dy a1j 94w 14t 2gj/6dp a1s 94x 14s 2gj/6dg a21 94x 14s 2gj/6d7 a2a 94y 14r 2gj/6cx a2k 94y 14r 2gj/6cm a2v 94z 14q 2gj/6cb a36 94z 14q 2gj/6c0 a3h 950 14p 2gj/6bn a3u 950 14p 2gj/6bb a46 951 14o 2gj/6ax a4k 951 14o 2gj/6ai a4z 952 14n 2gj/6a2 a5f 952 14n 2gj/69m a5v 953 14m 2gj/693 a6e 953 14m 2gj/68j a6y 954 14l 2gj/67x a7k 954 14l 2gj/678 a89 955 14k 2gj/66h a90 955 14k 2gj/65l a9w 956 14j 2gj/64j aay 956 14j 2gj/63a ac7 957 14i 2gj/61p ads 957 14i 2gj/afh 958 14h 2gj/afh 958 14h 2gj/afh 959 14g 2gj/afh 95a 14f 2gj/afh 95a 14f 2gj/afh 95b 14e 2gj/afh 95b 14e 2gj/afh 95c 14d 2gj/afh 95c 14d 2gj/afh 95d 14c 2gj/afh 95d 14c 2gj/afh 95e 14b 2gj/afh 95e 14b 2gj/afh 95f 14a 2gj/afh 95f 14a 2gj/afh 95g 149 2gj/afh 95g 149 2gj/afh 95h 148 2gj/afh 95h 148 2gj/afh 95i 147 2gj/afh 95i 147 2gj/afh 95j 146 2gj/afh 95j 146 2gj/afh 95k 145 2gj/afh 95l 144 2gj/cfo 95e 144 2gj/cfw 957 143 2gj/cg4 94z 143 2gj/cgb 94t 142 2gj/cgj 94l 142 2gj/cgq 94f 141 2gj/cgw 949 141 2gj/ch3 943 140 2gj/ch9 93x 140 2gj/chg 93r 13z 2gj/chm 93l 13z 2gj/chr 93h 13y 2gj/chx 93b 13y 2gj/ci3 936 13x 2gj/ci8 931 13x 2gj/cie 92w 13w 2gj/cij 92s 13v 2gj/cio 92n 13v 2gj/cit 92j 13u 2gj/ciy 92e 13u 2gj/cj2 92b 13t 2gj/cj7 926 13t 2gj/cjb 923 13s 2gj/cjg 91y 13s 2gj/cjk 91v 13r 2gj/cjo 91r 13r 2gj/cjt 91n 13q 2gj/cjx 91j 13q 2gj/ck1 91g 13p 2gj/ck2 b8 917 13p 2gj/ck2 bk 9w 13o 2gj/ck1 bw 9l 13o 2gj/ck1 b17 9b 13n 2gj/ck0 b1i 92 13m 2gj/ck0 b1l 13l 2gj/cjz b1n 13k 2gj/cjz b1o 13j 2gj/cjy b1q 13i 2gj/cjy b1s 13g 2gj/cjx b1u 13f 2gj/cjx b1v 13e 2gj/cjx b1w 13d 2gj/cjw b1z 13b 2gj/cjw b20 13a 2gj/cjv b22 139 2gj/cjv b23 138 2gj/cju b26 136 2gj/cju b27 135 2gj/cjt b29 134 2gj/cjt b2a 133 2gj/cjs b2d 131 2gj/cjs b2e 130 2gj/cjr b2g 12z 2gj/cjr b2h 12y 2gj/cjq b2k 12w 2gj/cjq b2l 12v 2gj/cjp b2n 12u 2gj/cjp b2o 12t 2gj/cjo b2q 12s 2gj/cjo b2s 12q 2gj/cjn b2u 12p 2gj/cjn b2v 12o 2gj/cjm b2x 12n 2gj/cjm b2y 12m 2gj/cjl b31 12k 2gj/cjl b32 12j 2gj/cjk b34 12i 2gj/cjj b36 12h 2gj/cjj b37 12g 2gj/cji b3a 12e 2gj/cji b3b 12d 2gj/cjh b3d 12c 2gj/cjh b3e 12b 2gj/cjg b3g 12a 2gj/cjg b3h 129 2gj/cjf b3j 128 2gj/cjf b3k 127 2gj/cje b3n 125 2gj/cje b3o 124 2gj/cjd b3q 123 2gj/cjd b3r 122 2gj/cjc b3t 121 2gj/cjc b3u 120 2gj/cjb b3w 11z 2gj/cjb b3x 11y 2gj/cja b3z 11x 2gj/cj9 b41 11w 2gj/cj9 b42 11v 2gj/cj8 b44 11u 2gj/cj8 b45 11t 2gj/cj7 b47 11s 2gj/cj7 b48 11r 2gj/cj6 b4a 11q 2gj/cj6 b4b 11p 2gj/cj5 b4d 11o 2gj/cj5 b4e 11n 2gj/cj4 b4g 11m 2gj/cj3 b4i 11l 2gj/cj3 b4j 11k 2gj/cj2 b4l 11j 2gj/cj2 b4l 11j 2gj/cj1 b4n 11i 2gj/cj1 b4o 11h 2gj/cj0 b4q 11g 2gj/ciz b4s 11f 2gj/ciz b4t 11e 2gj/ciy b4v 11d 2gj/ciy b4w 11c 2gj/cix b4x 11c 2gj/cix b4y 11b 2gj/ciw b50 11a 2gj/civ b52 119 2gj/civ b53 118 2gj/ciu b54 118 2gj/ciu b55 117 2gj/cit b57 116 2gj/cit b58 115 2gj/cis b5a 114 2gj/cir b5b 114 2gj/cir b5c 113 2gj/ciq b5e 112 2gj/ciq b5f 111 2gj/cip b5g 111 2gj/cio b5i 110 2gj/cio b5j 1z 2gj/cin b5k 1z 2gj/cin b5l 1y 2gj/cim b5n 1x 2gj/cil b5o 1x 2gj/cil b5p 1w 2gj/cik b5r 1v 2gj/cik b5r 1v 2gj/cij b5t 1u 2gj/cii b5v 1t 2gj/cii b5v 1t 2gj/cih b5x 1s 2gj/cih b5y 1r 2gj/cig b5z 1r 2gj/cif b61 1q 2gj/cif b62 1p 2gj/cie b63 1p 2gj/cid b65 1o 2gj/cid b65 1o 2gj/cic b67 1n 2gj/cic b68 1m 2gj/cib b69 1m 2gj/cia b6b 1l 2gj/cia b6c 1k 2gj/ci9 b6d 1k 2gj/ci8 b6f 1j 2gj/ci8 b6g 1i 2gj/ci7 b6h 1i 2gj/ci6 b6j 1h 2gj/ci6 b6k 1g 2gj/ci5 b6l 1g 2gj/ci5 b6m 1f 2gj/ci4 b6o 1e 2gj/ci3 b6q 1d 2gj/ci3 b6q 1d 2gj/ci2 b6s 1c 2gj/ci1 b6u 1b 2gj/ci1 b6u 1b 2gj/ci0 b6w 1a 2gj/chz b6y 19 2gj/chz b6y 19 2gj/chy b70 18 2gj/chx b72 17 2gj/chx b72 17 2gj/chw b74 16 2gj/chv b76 15 2gj/chu b77 15 2gj/chu b78 14 2gj/cht b7a 13 2gj/chs b7b 13 2gj/chs b7c 12 2gj/chr b7e 11 2gj/chq b7f 11 2gj/chq b7g 2gj/chp b7i 2gi/cho b7j 2gi/cho b7k 2gh/chn b7m 2gg/chm b7n 2gg/chl b7p 2gf/chl b7q 2ge/chk b7r 2ge/chj b7t 2gd/chj b7t 2gd/chi b7v 2gc/chh b7x 2gb/chg b7y 2gb/chg b7z 2ga/chf b81 2g9/che b82 2g9/chd b84 2g8/chd b85 2g7/chc b86 2g7/chb b88 2g6/cha b8a 2g5/cha b8a 2g5/ch9 b8c 2g4/ch8 b8d 2g4/ch7 b8f 2g3/ch7 b8g 2g2/ch6 b8h 2g2/ch5 b8j 2g1/ch4 b8l 2g0/ch4 b8l 2g0/ch3 b8n 2fz/ch2 b8p 2fy/ch1 b8q 2fy/ch0 b8s 2fx/ch0 b8s 2fx/cgz b8u 2fw/cgy b8w 2fv/cgx b8x 2fv/cgx b8y 2fu/cgw b90 2ft/cgv b91 2ft/cgu b93 2fs/cgt b94 2fs/cgs b96 2fr/cgs b97 2fq/cgr b98 2fq/cgq b9a 2fp/cgp b9c 25y 39q/cgo b9d 25y 39q/cgo b9e 25x 39q/cgn b9f 25x 39q/cgm b9h 25w 39q/cgl b9j 25v 39q/cgk b9k 25v 39q/cgj b9m 25u 39q/cgi b9o 25t 39q/cgi b9o 25t 39q/cgh b9q 25s 39q/cgg b9r 25s 39q/cgf b9t 25r 39q/cge b9v 25q 39q/cgd b9w 25q 39q/cgc b9y 25p 39q/cgc b9y 25p 39q/cgb ba0 25o 39q/cga ba2 25n 39q/cg9 ba3 25n 39q/cg8 ba5 25m 39q/cg7 ba7 25l 39q/cg6 ba8 25l 39q/cg5 baa 25k 39q/cg4 bab 25k 39q/cg3 bad 25j 39q/cg3 bae 25i 39q/cg2 baf 25i 39q/cg1 bah 25h 39q/cg0 bai 25h 39q/cfz bak 25g 39q/cfy bam 25f 39q/cfx ban 25f 39q/cfw bap 25e 39q/cfv baq 25e 39q/cfu bas 25d 39q/cft bau 25c 39q/cfs bav 25c 39q/cfr bax 25b 39q/cfq bay 25b 39q/cfp bb0 25a 39q/cfo bb2 259 39q/cfn bb3 259 39q/cfm bb5 258 39q/cfl bb6 258 39q/cfk bb8 257 39q/cfj bba 256 39q/cfi bbb 256 39q/cfh bbd e1 254 39q/cfg bbi e4 24x 39q/cff bbm e7 24r 39q/cfe bbq ea 24l 39q/cfd bbu ed 24f 39q/cfc bby eg 249 39q/cfb bc2 ej 243 39q/cfa bc2 d4 el 23y 39q/cf9 bbz db eo 23s 39q/cf8 bbw dh er 23n 39q/cf7 bbt do et 23i 39q/cf6 bbr du ev 23d 39q/cf5 bbo d11 ex 238 39q/cf4 bbk d18 e10 233 39q/cf3 bbh d1f e12 22y 39q/cf2 bbe d1m e13 22u 39q/cf1 bbb d1s e16 22p 39q/cez bb8 d20 e17 22l 39q/cey bb5 d26 e1a 22g 39q/cex bb1 d2e e1b 22c 39q/cew bax d2l e1d 228 39q/cev bau d2s e1e 224 39q/ceu baq d2z e1g 220 39q/cet bam d37 e1h 21w 39q/ces bai d3e e1j 21s 39q/cer bad d3m e1l 21o 39q/cep baa d3u e1l 21l 39q/ceo ba5 d42 e1n 21h 39q/cen ba1 d49 e1p 21d 39q/cem b9w d4i e1p 21a 39q/cel b9r d4q e1r 216 39q/cek b9m d4y e1s 213 39q/cei b9h d57 e1u 2z 39q/ceh b9c d5f e1v 2w 39q/ceg b96 d5p e1v 2t 39q/cef b90 d5y e1w 2q 39q/cee b8u d67 e1y 2m 39q/cec b8o d6h e1z 2j 39q/ceb b8h d6r e20 2g 39q/cea b8a d71 e21 2d 39q/ce9 b83 d7b e22 2a 39q/ce7 b7w d7m e23 27 39q/ce6 b7o d7x e24 24 39q/ce5 b7g d88 e25 21 39q/ce4 b77 d8k e26 39o/ce2 b6z d8w e26 39m/ce1 b6p d99 e27 39j/ce0 b5z da2 e28 39g/cdy b49 dbv e2a 39d/cdx b1q deh e2a 39b/du6 e2b 398/du8 e2c 395/dua e2c 393/duc e2d 390/dud e2e 38y/duf e2f 38v/duh e2f 38t/duj e2g 38q/duk e2h 38o/dum e2h 38m/duo e2i 38j/duq e2i 38h/dur e2j 38f/dut e2k 38c/duv e2k 38a/duw e2l 388/duy e2l 386/duz f2n 383/dv1 f2n 381/dv3 f2n 37z/dv4 f2o 37x/dv6 f2o 37v/dv7 f2p 37t/dv9 f2p 37r/dva f2q 37p/dvc f2q 37n/dvd f2r 37l/dvf f2r 37j/dvg f2s 37h/dvi f2s 37f/dvj f2t 37d/dvl f2t 37b/dvm f2u 379/dvo f2u 377/dvp f2v 375/dvr f2v 373/dvs f2v 372/dvt f2w 370/dvv f2w 36y/dvw f2x 36w/dvy f2x 36u/dvz f2x 36t/dvz f30 36q/dvz f32 36o/dvz f34 36m/dvz f36 36k/dvz f38 36i/dvz f3a 36g/dvz f3c 36e/dvz f3e 36c/dvz f3g 36a/dvz f3h 369/dvz f3j 367/dvz f3l 365/dvz f3n 363/dvz f3p 361/dvz f3r 35z/dvz f3t 35x/dvz f3u 35w/dvz f3w 35u/dvz f3y 35s/dvz f40 35q/dvz f42 35o/dvz f43 35n/dvz f45 35l/dvz f47 35j/dvz f48 35i/dvz f4a 35g/dvz f4c 35e/dvz f4d 35d/dvz f4f 35b/dvz f4h 359/dvz f4i 358/dvz f4k 356/dvz f4m 354/dvz f4n 353/dvz f4p 351/dvz f4q 350/dvz f4s 34y/dvz f4t 34x/dvz f4v 34v/dvz f4w 34u/dvz f4y 34s/dvz f4z 34r/dvz f51 34p/dvz f52 34o/dvz f54 34m/dvz f55 34l/dvz f57 34j/dvz f58 34i/dvz f5a 34g/dvz f5b 34f/dvz f5c 34e/dvz f5e 34c/dvz f5f 34b/dvz f5h 349/dvz f5i 348/dvz f5j 347/dvz f5l 345/dvz f5m 344/dvz f5n 343/dvz f5p 341/dvz f5q 340/dvz f5r 33z/dvz f5t 33x/dvz f5u 33w/dvz f5v 33v/dvz f5x 33t/dvz f5y 33s/dvz f5z 33r/dvz f60 33q/dvz f62 33o/dvz f63 33n/dvz f64 33m/dvz f65 33l/dvz f67 33j/dvz f68 33i/dvz f69 33h/dvz f6a 33g/dvz f6b 33f/dvz f6d 33d/dvz f6e 33c/dvz f6f 33b/dvz f6g 33a/dvz f6h 339/dvz f6i 338/dvz f6k 336/dvz f6l 335/dvz f6m 334/dvz f6n 333/dvz f6o 332/dvz f6p 331/dvz f6q 330/dvz f6s 32y/dvz f6t 32x/dvz f6u 32w/dvz f6v 32v/dvz f6w 32u/dvz f6x 32t/dvz f6y 32s/dvz f6z 32r/dvz f70 32q/dvz f71 32p/dvz f72 32o/dvz f73 32n/dvz f74 32m/dvz f75 32l/dvz f77 32j/dvz f78 32i/dvz f79 32h/dvz f7a 32g/dvz f7b 32f/dvz f7c 32e/dvz f7d 32d/dvz f7e 32c/dvz f7f 32b/dvz f7g 32a/dvz f7h 329/dvz f7i 328/dvz f7j 327/dvz f7k 326/dvz f7l 325/dvz f7m 324/dvz f7n 323/dvz f7n 323/dvz f7o 322/dvz f7p 321/dvz f7q 320/dvz f7r 31z/dvz f7s 31y/dvz f7t 31x/dvz f7u 31w/dvz f7v 31v/dvz f7w 31u/dvz f7x 31t/dvz f7y 31s/dvz f7z 31r/dvz f80 31q/dvz f80 31q/dvz f81 31p/dvz f82 31o/dvz f83 31n/dvz f84 31m/dvz f85 31l/dvz f86 31k/dvz f87 31j/dvz f88 31i/dvz f88 31i/dvz f89 31h/dvz f8a 31g/dvz f8b 31f/dvz f8c 31e/dvz f8d 31d/dvz f8e 31c/dvz f8e 31c/dvz f8f 31b/dvz f8g 31a/dvz f8h 319/dvz f8i 318/dvz f8j 317/dvz f8j 317/dvz f8k 316/dvz f8l 315/dvz f8m 314/dvz f8n 313/dvz f8o 312/dvz f8o 312/dvz f8p 311/dvz f8q 310/dvz f8r 3z/dvz f8s 3y/dvz f8s 3y/dvz f8t 3x/dvz f8u 3w/dvz f8v 3v/dvz f8w 3u/dvz f8w 3u/dvz f8x 3t/dvz f8y 3s/dvz f8z 3r/dvz f8z 3r/dvz f90 3q/dvz f91 3p/dvz f92 3o/dvz f92 3o/dvz f93 3n/dvz f94 3m/dvz f95 3l/dvz f95 3l/dvz f96 3k/dvz f97 3j/dvz f98 3i/dvz f98 3i/dvz f99 3h/dvz f9a 3g/dvz f9b 3f/dvz f9b 3f/dvz f9c 3e/dvz f9d 3d/dvz f9e 3c/dvz f9e 3c/dvz f9f 3b"
       }
      },
      "thermal": {
@@ -6986,6 +9623,18 @@
      "url": "https://www.bipm.org/en/committees/cg/cgpm/10-1954/resolution-4"
     },
     {
+     "id": "chaplin-lsbu",
+     "text": "Chaplin, M., Water Structure and Science (London South Bank University): the water phase diagram page (triple points, with its references) and the ice phases page (structural table: densities, ordering, space groups). A curated secondary source; each triple point cites a primary paper there",
+     "status": "verified",
+     "url": "https://water.lsbu.ac.uk/water/water_phase_diagram.html"
+    },
+    {
+     "id": "cheng2021",
+     "text": "Cheng, B., Bethkenhagen, M., Pickard, C. J. and Hamel, S. 2021, arXiv:2103.09035 (Nature Physics 17, 1228): predicting the phase behaviors of superionic water at planetary conditions (bcc stable below about 75 GPa and 2500 K; superionic onset near 2000 K; melting 3250 K at 100 GPa). Text read; boundaries only in figures",
+     "status": "verified",
+     "url": "https://arxiv.org/abs/2103.09035"
+    },
+    {
      "id": "codata2018",
      "text": "Tiesinga, E., Mohr, P. J., Newell, D. B. and Taylor, B. N. 2021, Rev. Mod. Phys. 93, 025010: CODATA recommended values of the fundamental physical constants, 2018",
      "status": "verified",
@@ -7004,6 +9653,12 @@
      "url": "https://arxiv.org/abs/1912.01132"
     },
     {
+     "id": "frank2004",
+     "text": "Frank, M. R., Fei, Y. and Hu, J. 2004, Geochim. Cosmochim. Acta 68, 2781: constraining the equation of state of fluid H2O to 80 GPa using the melting curve, bulk modulus and thermal expansivity of ice VII. Simon fit (P - 2.17)/0.764 = (T/355)^4.32 - 1, P in GPa, 3 to 60 GPa, read from the paper; its Table 2 points reproduce within their errors",
+     "status": "verified",
+     "url": "https://www.cfa.harvard.edu/~lzeng/papers/frank_fei_hu_2004.pdf"
+    },
+    {
      "id": "fray2009",
      "text": "Fray, N. and Schmitt, B. 2009, Planet. Space Sci. 57, 2053: sublimation of ices of astrophysical interest, a bibliographic review (recommended fits ln P[bar] = A0 + sum A_i / T^i; water by Feistel and Wagner 2007). Coefficients read from Lisse et al. 2021's reproduction of the table (SOM Table 2); which fit covers which range checked against each ice's triple point",
      "status": "verified",
@@ -7014,6 +9669,26 @@
      "text": "SSE4 fudge register: an authored stand-in kept because no measured value fits (reason in docs/fudges.md)",
      "status": "authored",
      "url": "https://github.com/FrunkQ/star-system-explorer/blob/main/docs/fudges.md"
+    },
+    {
+     "id": "haldemann2020",
+     "text": "Haldemann, J., Alibert, Y., Mordasini, C. and Benz, W. 2020, A&A 643, A105: AQUA, a collection of H2O equations of state for planetary models (the ice VI-VII fit, Eq. 22 and Table 2, read from arXiv 2009.10098)",
+     "status": "verified",
+     "url": "https://arxiv.org/abs/2009.10098"
+    },
+    {
+     "id": "iapws1992-sat",
+     "text": "IAPWS SR1-86(1992), Revised Supplementary Release on Saturation Properties of Ordinary Water Substance (Wagner and Pruss 1993, J. Phys. Chem. Ref. Data 22, 783). Coefficients read from the NIST reprint; the check values at 273.16 K and 373.1243 K reproduce",
+     "status": "verified",
+     "doi": "10.1063/1.555926",
+     "url": "https://srd.nist.gov/jpcrdreprint/1.555926.pdf"
+    },
+    {
+     "id": "iapws2011-meltsub",
+     "text": "IAPWS R14-08(2011), Revised Release on the Pressure along the Melting and Sublimation Curves of Ordinary Water Substance (Wagner, Riethmann, Feistel and Harvey 2011, J. Phys. Chem. Ref. Data 40, 043103). Coefficients and the six check values read from the release; all six reproduce",
+     "status": "verified",
+     "doi": "10.1063/1.3657937",
+     "url": "https://iapws.org/documents/release/MeltSub"
     },
     {
      "id": "iau2012b2",
@@ -7046,6 +9721,13 @@
      "url": "https://www.astronomy.ohio-state.edu/johnson.3064/nucleo/index.html"
     },
     {
+     "id": "journaux2020",
+     "text": "Journaux, B. et al. 2020, J. Geophys. Res. Planets 125, e2019JE006176: holistic approach for studying planetary hydrospheres, Gibbs representation of ices thermodynamics, elasticity and the water phase diagram to 2,300 MPa (SeaFreeze). Table 3 (ices III, V, VI) read from the arXiv version, 1907.09598",
+     "status": "verified",
+     "doi": "10.1029/2019JE006176",
+     "url": "https://arxiv.org/abs/1907.09598"
+    },
+    {
      "id": "kasen2017",
      "text": "Kasen, D. et al. 2017, Nature 551, 80: origin of the heavy elements in binary neutron-star mergers from a gravitational-wave event (the GW170817 kilonova)",
      "status": "verified",
@@ -7068,6 +9750,12 @@
      "text": "Kobayashi, C., Karakas, A. I. and Lugaro, M. 2020, ApJ 900, 179: the origin of elements from carbon to uranium (half of C, N and F from AGB stars; half of the iron-peak elements from Type Ia supernovae; the r-process shortfall)",
      "status": "verified",
      "doi": "10.3847/1538-4357/abae65"
+    },
+    {
+     "id": "lin2005",
+     "text": "Lin, J.-F., Gregoryanz, E., Struzhkin, V. V., Somayazulu, M., Mao, H.-k. and Hemley, R. J. 2005, Geophys. Res. Lett. 32, L11306: melting behavior of H2O at high pressures and temperatures (a break in the melting curve at about 35 GPa and 1040 K; ice VII to X from 60 GPa at 300 K, quoting Goncharov et al. 1999)",
+     "status": "verified",
+     "doi": "10.1029/2005GL022499"
     },
     {
      "id": "lineweaver2010",
@@ -7098,6 +9786,24 @@
      "text": "Mastin, L. G. et al. 2009, J. Volcanol. Geotherm. Res. 186, 10: eruption column heights, magma at 2500 kg/m3 dense-rock equivalent",
      "status": "verified",
      "doi": "10.1016/j.jvolgeores.2009.01.008"
+    },
+    {
+     "id": "mattsson2006",
+     "text": "Mattsson, T. R. and Desjarlais, M. P. 2006, Phys. Rev. Lett. 97, 017801: phase diagram and electrical conductivity of high energy-density water from density functional theory. Not read; recalled",
+     "status": "unverified",
+     "doi": "10.1103/PhysRevLett.97.017801"
+    },
+    {
+     "id": "millot2018",
+     "text": "Millot, M. et al. 2018, Nature Physics 14, 297: experimental evidence for superionic water ice using shock compression. Not read; its melting point near 5000 K at 190 GPa is recalled",
+     "status": "unverified",
+     "doi": "10.1038/s41567-017-0017-4"
+    },
+    {
+     "id": "millot2019",
+     "text": "Millot, M., Coppari, F., Rygg, J. R., Correa Barrios, A., Hamel, S., Swift, D. C. and Eggert, J. H. 2019, Nature 569, 251: nanosecond X-ray diffraction of shock-compressed superionic water ice (fcc superionic ice XVIII at 100 to 400 GPa and 2000 to 3000 K; simulated ionic conductivity above 100 S/cm). Abstract read; body paywalled",
+     "status": "verified",
+     "doi": "10.1038/s41586-019-1114-6"
     },
     {
      "id": "nist-webbook",
@@ -7154,10 +9860,27 @@
      "doi": "10.1093/acprof:oso/9780198518945.001.0001"
     },
     {
+     "id": "recalled",
+     "text": "A value recalled from textbooks and not yet read from a source; listed so the citations track can find it",
+     "status": "unverified"
+    },
+    {
+     "id": "redmer2011",
+     "text": "Redmer, R., Mattsson, T. R., Nettelmann, N. and French, M. 2011, Icarus 211, 798: the phase diagram of water and the magnetic fields of Uranus and Neptune. Not read; the ionic-fluid edge and conductivity are recalled from it",
+     "status": "unverified",
+     "doi": "10.1016/j.icarus.2010.08.008"
+    },
+    {
      "id": "ruedas2017",
      "text": "Ruedas, T. 2017, Geochem. Geophys. Geosyst. 18, 3530: radioactive heat production of six geologically important nuclides",
      "status": "verified",
      "doi": "10.1002/2017GC006997"
+    },
+    {
+     "id": "salzmann2019",
+     "text": "Salzmann, C. G. 2019, J. Chem. Phys. 150, 060901: advances in the experimental exploration of water's phase diagram (ices XVI and XVII, amorphous ices, hydrogen order)",
+     "status": "verified",
+     "doi": "10.1063/1.5085163"
     },
     {
      "id": "si2019",
@@ -7176,6 +9899,12 @@
      "text": "U.S. Standard Atmosphere 1976, NOAA/NASA/USAF (sea-level dry-air composition by volume)",
      "status": "verified",
      "url": "https://ntrs.nasa.gov/citations/19770009539"
+    },
+    {
+     "id": "wikipedia-ice-phases",
+     "text": "Wikipedia, Phases of ice (read 22 Nov 2026): table of phases with formation conditions; used only where it agrees with the LSBU tables",
+     "status": "verified",
+     "url": "https://en.wikipedia.org/wiki/Phases_of_ice"
     }
    ]
   }
