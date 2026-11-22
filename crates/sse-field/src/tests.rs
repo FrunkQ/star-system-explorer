@@ -443,3 +443,49 @@ fn jupiter_belts_and_moons() {
     let ratio = dose("europa") / dose("callisto");
     assert!(ratio > 10.0, "{ratio}");
 }
+
+/// The Solar System fixture: six magnetised planets from base-sol and the
+/// measured-fields fixture. Earth's dipole points south at about 30 µT
+/// (IGRF-13 g10 is −29.4 µT), Jupiter's north; Earth's belts start at its
+/// air, Saturn's at the A ring; Io sweeps a gap.
+#[test]
+fn solar_system_fixture() {
+    let set = sheet();
+    let all = solar_system(&set, 1.672_621_923_69e-27).unwrap();
+    let ids: Vec<&str> = all.iter().map(|b| b.read.address.as_str()).collect();
+    assert_eq!(
+        ids,
+        [
+            "sol/mercury",
+            "sol/earth",
+            "sol/jupiter",
+            "sol/saturn",
+            "sol/uranus",
+            "sol/neptune"
+        ]
+    );
+    let get = |id: &str| all.iter().find(|b| b.read.address == id).unwrap();
+    let e = get("sol/earth");
+    assert!(
+        (-31e-6..=-28e-6).contains(&e.field.g10_t),
+        "{}",
+        e.field.g10_t
+    );
+    assert!(e.field.g11_t < 0.0);
+    assert!((8.0..=12.0).contains(&e.read.obstacle.standoff_radii));
+    assert_eq!(e.read.belts.as_ref().unwrap().inner_set_by, "air");
+    let j = get("sol/jupiter");
+    assert!(j.field.g10_t > 4.0e-4, "{}", j.field.g10_t);
+    let jb = j.read.belts.as_ref().unwrap();
+    assert!(jb.gaps.iter().any(|g| g.by == "sol/io"));
+    assert_eq!(
+        get("sol/saturn").read.belts.as_ref().unwrap().inner_set_by,
+        "rings"
+    );
+    let u = get("sol/uranus");
+    assert!((u.field.tilt_deg - 58.6).abs() < 1e-9);
+    // Degree-1 strength is the dipole's equatorial field at the reference radius.
+    let b0 = m::sqrt(u.field.g10_t * u.field.g10_t + u.field.g11_t * u.field.g11_t);
+    assert!((b0 - 2.28e-5).abs() / 2.28e-5 < 0.05, "{b0}");
+    assert!(!e.field.source.is_empty() && !e.field.polarity_source.is_empty());
+}

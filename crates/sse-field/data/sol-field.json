@@ -1,0 +1,117 @@
+{
+ "about": "What read_field's Solar System fixture adds to packs/base-sol (radii, orbits) and tests/fixtures/magnetic/measured-fields.json (moments, tilts, offsets): the solar wind, polarity, rings, air, plasma sources and moons. Every value is read from the source beside it, 22 Nov 2026; worked-out values say how.",
+ "wind": {
+  "speed_m_s": 468000.0,
+  "proton_density_1au_m3": 8700000.0,
+  "falls_as": "inverse square of distance",
+  "src": "ECSS-E-ST-10-04C (2008) Space engineering: space environment, Table 8-2 Solar wind parameters (mean 468 km/s, 8.7 per cm³) and 8.1.5 (density falls as r^-2, speed does not change). https://spenvis.oma.be/ecss/e_st_10_04c/ecss_08_02_10.htm",
+  "radial_field_1au_t": 3.1e-09,
+  "radial_field_src": {
+   "what": "Smith and Balogh 1995, Ulysses: the radial field times r squared is the same at all latitudes, about 3.1 nT at 1 au",
+   "doi": "10.1029/95GL02826"
+  },
+  "sun_sidereal_rotation_s": 2192832.0,
+  "sun_rotation_src": {
+   "what": "NSSDCA Sun fact sheet, sidereal rotation period 609.12 h",
+   "url": "https://nssdc.gsfc.nasa.gov/planetary/factsheet/sunfact.html"
+  },
+  "spiral_src": {
+   "what": "Parker 1958, the spiral: B_phi = -B_r Omega r / v in the ecliptic",
+   "doi": "10.1086/146579"
+  }
+ },
+ "polarity_src": {
+  "earth": "Alken, P. et al. 2021, International Geomagnetic Reference Field: the thirteenth generation, Earth Planets Space 73, 49: g10 negative (the dipole points south). doi:10.1186/s40623-020-01288-x",
+  "mercury": "Anderson, B. J. et al. 2011, The global magnetic field of Mercury from MESSENGER orbital observations, Science 333, 1859: dipole of the same sense as Earth's. doi:10.1126/science.1211001",
+  "giants": "Connerney, J. E. P. 1993, Magnetic fields of the outer planets, J. Geophys. Res. 98, 18659: g10 positive for Jupiter, Saturn, Uranus and Neptune. doi:10.1029/93JE00980"
+ },
+ "bodies": {
+  "mercury": {
+   "polarity": -1
+  },
+  "earth": {
+   "polarity": -1,
+   "air": {
+    "surface_pressure_pa": 101400.0,
+    "scale_height_m": 8500.0
+   },
+   "surface_gravity_m_s2": 9.8,
+   "air_src": "NASA NSSDCA Earth Fact Sheet: surface pressure 1014 mb, scale height 8.5 km, mean surface gravity 9.80 m/s². https://nssdc.gsfc.nasa.gov/planetary/factsheet/earthfact.html",
+   "moons_from_base_sol": [
+    "moon"
+   ]
+  },
+  "jupiter": {
+   "polarity": 1,
+   "plasma_source_kg_s": 1000.0,
+   "plasma_src": "Bagenal, F. and Dols, V. 2020, The space environment of Io and Europa, J. Geophys. Res. Space Physics 125, e2019JA027485: Io supplies about a tonne of plasma a second. doi:10.1029/2019JA027485",
+   "moons": [
+    {
+     "id": "io",
+     "orbit_m": 421800000.0,
+     "radius_m": 1821500.0
+    },
+    {
+     "id": "europa",
+     "orbit_m": 671100000.0,
+     "radius_m": 1560800.0
+    },
+    {
+     "id": "ganymede",
+     "orbit_m": 1070400000.0,
+     "radius_m": 2631200.0
+    },
+    {
+     "id": "callisto",
+     "orbit_m": 1882700000.0,
+     "radius_m": 2410300.0
+    }
+   ],
+   "moons_src": "NASA NSSDCA Jovian Satellite Fact Sheet (updated 6 Dec 2023): semi-major axis and radius. https://nssdc.gsfc.nasa.gov/planetary/factsheet/joviansatfact.html"
+  },
+  "saturn": {
+   "polarity": 1,
+   "rings_outer_m": 136780000.0,
+   "rings_src": "NASA NSSDCA Saturnian Rings Fact Sheet: A ring outer edge 136,780 km. https://nssdc.gsfc.nasa.gov/planetary/factsheet/satringfact.html",
+   "moons": [
+    {
+     "id": "mimas",
+     "orbit_m": 185520000.0,
+     "radius_m": 198700.0
+    },
+    {
+     "id": "enceladus",
+     "orbit_m": 238020000.0,
+     "radius_m": 252000.0
+    },
+    {
+     "id": "tethys",
+     "orbit_m": 294660000.0,
+     "radius_m": 530700.0
+    },
+    {
+     "id": "dione",
+     "orbit_m": 377400000.0,
+     "radius_m": 561300.0
+    },
+    {
+     "id": "rhea",
+     "orbit_m": 527040000.0,
+     "radius_m": 763300.0
+    },
+    {
+     "id": "titan",
+     "orbit_m": 1221870000.0,
+     "radius_m": 2575000.0
+    }
+   ],
+   "moons_src": "NASA NSSDCA Saturnian Satellite Fact Sheet (updated 22 Jul 2025): semi-major axis; radius worked out as the mean of the three printed axes (Titan as printed). https://nssdc.gsfc.nasa.gov/planetary/factsheet/saturniansatfact.html"
+  },
+  "uranus": {
+   "polarity": 1
+  },
+  "neptune": {
+   "polarity": 1
+  }
+ }
+}
