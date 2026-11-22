@@ -315,6 +315,7 @@ pub(crate) fn sky_from_here(
             &world.cp.galaxy,
             st,
             sky,
+            world.host,
             crate::galaxies::GalaxyAsk {
                 observer_pc: obs,
                 axes: &ax,

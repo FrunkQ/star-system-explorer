@@ -513,6 +513,8 @@ pub(crate) struct World<'a> {
     pub c: &'a Cosmology,
     pub hs: &'a Haloes<'a>,
     pub cp: &'a CosmologyPack,
+    /// Our galaxy's own halo.
+    pub host: &'a sse_cosmos::haloes::Halo,
 }
 
 /// As `with_stars`, with the world around the galaxy too.
@@ -557,6 +559,7 @@ pub(crate) fn with_world<R>(
         c: &c,
         hs: &hs,
         cp: &cp,
+        host: &h,
     };
     f(&st, &world, g.now.t_gyr * 1000.0)
 }
@@ -931,7 +934,9 @@ mod tests {
             .to_string(),
         );
         let sun_v = sun["stars"][0]["magnitudes"][0]["m_vega"].as_f64().unwrap();
-        let g = &gs[0];
+        // The brightest galaxy beyond our own halo (satellites are tested
+        // apart).
+        let g = gs.iter().find(|g| g["satellite"] != true).unwrap();
         let d = g["distance_mpc"].as_f64().unwrap();
         let z = g["redshift"].as_f64().unwrap();
         let v = g["magnitudes"][1]["m_vega"].as_f64().unwrap();
@@ -1093,5 +1098,66 @@ mod tests {
         // Bad addresses are refused.
         let bad = ask(&mut k, r#"{"op":"promote_star","address":"u:g3/sys:1"}"#);
         assert_eq!(bad["type"], "error", "{bad}");
+    }
+
+    #[test]
+    fn our_galaxy_s_satellites_are_its_surviving_subhaloes() {
+        let mut k = open();
+        let r = ask(
+            &mut k,
+            r#"{"op":"sky_from_here","limit_mag":13,"bands":["V"],"stars":false}"#,
+        );
+        let sky = &r["sky"];
+        let walk = &sky["galaxy_walk"]["satellites"];
+        let r200 = walk["r200_kpc"].as_f64().unwrap();
+        // A 1e12 halo's r_200 is about 200 kpc.
+        assert!(r200 > 180.0 && r200 < 240.0, "{walk}");
+        // Giocoli 2008 above psi 1e-3: about 54.6 subhaloes ever accreted.
+        let drawn = walk["subhaloes"].as_f64().unwrap();
+        assert!((drawn - 54.6).abs() < 4.0 * 54.6_f64.sqrt(), "{walk}");
+        let merged = walk["merged"].as_f64().unwrap();
+        assert!(merged > 0.0 && merged < drawn, "{walk}");
+        let sats: Vec<&serde_json::Value> = sky["galaxies"]
+            .as_array()
+            .unwrap()
+            .iter()
+            .filter(|g| g["satellite"] == true)
+            .collect();
+        let now = r["sky"]["t_myr"].as_f64().unwrap() / 1000.0;
+        let mut classical = 0;
+        for g in &sats {
+            let rc = g["from_centre_kpc"].as_f64().unwrap();
+            assert!(rc <= r200 * 1.000001, "{g}");
+            // Quenched: no star formation once the delay after infall is past.
+            let infall = g["infall_gyr"].as_f64().unwrap();
+            if infall + 3.0 < now {
+                assert_eq!(g["sfr_msun_yr"].as_f64(), Some(0.0), "{g}");
+            }
+            // Light time inside our halo is under a Myr.
+            assert!(g["lookback_myr"].as_f64().unwrap() < 1.0, "{g}");
+            if g["absolute"][0]["m_vega"].as_f64().unwrap() < -8.0 {
+                classical += 1;
+            }
+        }
+        // The Milky Way has about a dozen satellites brighter than M_V -8
+        // (the classical dwarfs and the Magellanic Clouds); hosts like it
+        // in simulations scatter by a factor of a few.
+        assert!(
+            (3..=40).contains(&classical),
+            "{classical} of {}",
+            sats.len()
+        );
+        // The same satellite through a 3 degree cone around it.
+        let s0 = sats[0];
+        let q = serde_json::json!({"op":"sky_from_here","limit_mag":13,"bands":["V"],"stars":false,
+            "cone":{"l_deg":s0["l_deg"],"b_deg":s0["b_deg"],"half_angle_deg":3.0}});
+        let c = ask(&mut k, &q.to_string());
+        let again = c["sky"]["galaxies"]
+            .as_array()
+            .unwrap()
+            .iter()
+            .find(|g| g["address"] == s0["address"])
+            .cloned();
+        assert_eq!(again.as_ref(), Some(s0));
     }
 }

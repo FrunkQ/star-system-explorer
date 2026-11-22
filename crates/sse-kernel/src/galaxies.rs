@@ -153,6 +153,7 @@ pub(crate) fn galaxies_seen(
     gp: &sse_cosmos::galaxy::GalaxyParams,
     st: &Stars,
     sky: &SkyParams,
+    host: &Halo,
     ask: GalaxyAsk,
 ) -> Result<(Vec<(f64, serde_json::Value)>, serde_json::Value), Response> {
     let ssp = Ssp::of(&st.params);
@@ -201,6 +202,8 @@ pub(crate) fn galaxies_seen(
             }
         }
     }
+    let (sats, sat_walk) = satellites_seen(c, hs, gp, st, sky, &ssp, host, &ask)?;
+    out.extend(sats);
     // Brightest first; ties by address.
     out.sort_by(|a, b| {
         a.0.total_cmp(&b.0)
@@ -208,7 +211,7 @@ pub(crate) fn galaxies_seen(
     });
     Ok((
         out,
-        serde_json::json!({"cells": cells, "haloes": haloes, "reach_mpc": reach, "home_mpc": home}),
+        serde_json::json!({"cells": cells, "haloes": haloes, "reach_mpc": reach, "home_mpc": home, "satellites": sat_walk}),
     ))
 }
 
@@ -244,6 +247,58 @@ fn seen(
             return Ok(None);
         }
     }
+    let g = sse_cosmos::galaxy::evolve(c, gp, h);
+    look(
+        c,
+        st,
+        sky,
+        ssp,
+        Look {
+            rel_pc: rel,
+            g: &g,
+            quench_gyr: None,
+            address: &h.address,
+            halo_mass: h.mass,
+        },
+        pc_m,
+        now_gyr,
+        t_obs_gyr,
+        ask,
+    )
+}
+
+/// One galaxy to look at: where it is from the observer (pc), its grown
+/// history, and when (if ever) its star formation stopped.
+struct Look<'a> {
+    rel_pc: [f64; 3],
+    g: &'a Galaxy,
+    quench_gyr: Option<f64>,
+    address: &'a str,
+    halo_mass: f64,
+}
+
+#[allow(clippy::too_many_arguments)]
+fn look(
+    c: &Cosmology,
+    st: &Stars,
+    sky: &SkyParams,
+    ssp: &Ssp,
+    lk: Look,
+    pc_m: f64,
+    now_gyr: f64,
+    t_obs_gyr: f64,
+    ask: &GalaxyAsk,
+) -> Result<Option<(f64, serde_json::Value)>, Response> {
+    let o = ask.observer_pc;
+    let (rel, g) = (lk.rel_pc, lk.g);
+    let d_pc = m::sqrt(dot(rel, rel));
+    let d_mpc = d_pc / 1.0e6;
+    let dir = [rel[0] / d_pc, rel[1] / d_pc, rel[2] / d_pc];
+    if let Some((axis, cos_max)) = ask.cone {
+        if dot(dir, axis) < cos_max {
+            return Ok(None);
+        }
+    }
     // When its light left: the light cone, on the web's clock, shifted to
     // the campaign's own now.
     let a_emit = c.scale_at_comoving(d_mpc);
@@ -253,12 +308,17 @@ fn seen(
     if t_emit <= 0.0 {
         return Ok(None);
     }
-    let g = sse_cosmos::galaxy::evolve(c, gp, h);
-    let then = state_at(&g, t_emit);
+    // A satellite stops forming stars a while after it falls in (its gas
+    // is stripped): its stars are those born by then, aged to t_emit.
+    let t_stop = lk.quench_gyr.map_or(t_emit, |q| q.min(t_emit));
+    let then = state_at(g, t_stop);
     if then.stars <= 0.0 {
         return Ok(None);
     }
-    let born = births(&g, t_emit);
+    let born: Vec<(f64, f64)> = births(g, t_stop)
+        .into_iter()
+        .map(|(age, mass)| (age + (t_emit - t_stop), mass))
+        .collect();
     // Rest-frame L_λ (W per m).
     let l_rest = |lam: f64| -> f64 {
         born.iter()
@@ -318,7 +378,7 @@ fn seen(
     );
     // Shape: an exponential disc's half-light radius is 1.678 scale lengths;
     // tilt and turn keyed by the halo, isotropic.
-    let addr: sse_core::Address = h
+    let addr: sse_core::Address = lk
         .address
         .parse()
         .map_err(|e| err("bad_address", format!("{e:?}")))?;
@@ -344,8 +404,8 @@ fn seen(
     Ok(Some((
         lim,
         serde_json::json!({
-            "address": h.address,
-            "halo_mass_msun": h.mass,
+            "address": lk.address,
+            "halo_mass_msun": lk.halo_mass,
             "distance_mpc": d_mpc,
             "redshift": z,
             "lookback_myr": lookback * 1000.0,
@@ -356,7 +416,7 @@ fn seen(
             "a_v": a_v,
             "stellar_mass_msun": then.stars,
             "stellar_mass_now_msun": g.now.stars,
-            "sfr_msun_yr": then.sfr,
+            "sfr_msun_yr": if t_stop < t_emit { 0.0 } else { then.sfr },
             "morphology": morph,
             "half_light_kpc": r_half_kpc,
             "half_light_arcmin": ang_arcmin,
@@ -369,4 +429,172 @@ fn seen(
             "absolute": abs.magnitudes,
         }),
     )))
+}
+
+/// Y4 part 2: the satellites of our own galaxy, seen from an observer in it.
+///
+/// Subhaloes are drawn from the unevolved subhalo mass function of the host
+/// as it is at the campaign's time (keyed Poisson counts per ln ψ bin).
+/// Each falls in when the host had grown to a matching share of its mass
+/// (accretion follows the host's growth), and is gone if dynamical friction
+/// has merged it since. Survivors sit on the Aquarius radial profile,
+/// isotropic about the centre. Each satellite's galaxy is G3 grown on a
+/// halo that had the subhalo's mass at infall; it stops forming stars a
+/// delay after infall. Fudge F39.
+#[allow(clippy::too_many_arguments)]
+pub(crate) fn satellites_seen(
+    c: &Cosmology,
+    hs: &Haloes,
+    gp: &sse_cosmos::galaxy::GalaxyParams,
+    st: &Stars,
+    sky: &SkyParams,
+    ssp: &Ssp,
+    host: &Halo,
+    ask: &GalaxyAsk,
+) -> Result<(Vec<(f64, serde_json::Value)>, serde_json::Value), Response> {
+    let sp = &sky.satellites;
+    let pc_m = MPC_M / 1.0e6;
+    let now_gyr = c.age_gyr();
+    let t_obs = ask.t_myr / 1000.0;
+    let a_obs = c.scale_of_time(t_obs.max(1.0e-3)).min(1.0);
+    let z_obs = 1.0 / a_obs - 1.0;
+    let m_host = host.mass_at(z_obs);
+    let r200_kpc = gp.virial(c, m_host, a_obs).0;
+    let host_addr: sse_core::Address = host
+        .address
+        .parse()
+        .map_err(|e| err("bad_address", format!("{e:?}")))?;
+    let d = sse_core::Draws::new(
+        st.seed,
+        host_addr,
+        sse_core::Stream::new("cosmos.galaxy.satellite.v1")
+            .map_err(|e| err("bad_request", e.to_string()))?,
+    );
+    // The radial profile's inverse CDF: number density n(x) ∝
+    // exp(-2/α ((x/x₂)^α - 1)), weighted by x², from r_min to r_200.
+    let (ea, e2) = (sp.einasto_alpha, sp.einasto_r2_frac);
+    let n_grid = 128usize;
+    let xs: Vec<f64> = (0..=n_grid)
+        .map(|i| sp.r_min_frac + (1.0 - sp.r_min_frac) * i as f64 / n_grid as f64)
+        .collect();
+    let w = |x: f64| x * x * m::exp(-2.0 / ea * (m::pow(x / e2, ea) - 1.0));
+    let mut cdf = vec![0.0];
+    for k in 1..xs.len() {
+        let last = cdf[k - 1];
+        cdf.push(last + 0.5 * (w(xs[k - 1]) + w(xs[k])) * (xs[k] - xs[k - 1]));
+    }
+    let total = cdf[n_grid];
+    let radius = |u: f64| -> f64 {
+        let target = u * total;
+        let k = cdf.partition_point(|v| *v < target).clamp(1, n_grid);
+        let f = (target - cdf[k - 1]) / (cdf[k] - cdf[k - 1]).max(1e-300);
+        xs[k - 1] + f * (xs[k] - xs[k - 1])
+    };
+    let shmf = |ln_psi: f64| {
+        let x = m::exp(ln_psi) / sp.shmf_alpha;
+        sp.shmf_n0 * m::pow(x, -sp.shmf_alpha) * m::exp(-sp.shmf_k * x * x * x)
+    };
+    let decades = -m::log10(sp.psi_min);
+    let n_bins = m::ceil(decades * f64::from(sp.bins_per_decade)).max(1.0) as u64;
+    let step = decades * m::ln(10.0) / n_bins as f64;
+    let ln_min = m::ln(sp.psi_min);
+    let mut out = vec![];
+    let (mut drawn, mut merged) = (0u64, 0u64);
+    for j in 0..n_bins {
+        let lo = ln_min + step * j as f64;
+        let lambda = sse_cosmos::cosmology::quad(&shmf, lo, lo + step, 8);
+        let count = sse_cosmos::haloes::poisson(&d, j * 4096, lambda).min(400);
+        for i in 0..count {
+            drawn += 1;
+            let k0 = j * 4096 + 16 + i * 8;
+            let psi = m::exp(lo + step * d.unit(k0));
+            let m_sat = psi * m_host;
+            // Infall: when the host held a share f of today's mass, f
+            // uniform above ψ (accretion follows the host's growth).
+            let f = psi + (1.0 - psi) * d.unit(k0 + 1);
+            let (mut zl, mut zh) = (z_obs, 20.0_f64);
+            for _ in 0..60 {
+                let mid = 0.5 * (zl + zh);
+                if host.mass_at(mid) > f * m_host {
+                    zl = mid;
+                } else {
+                    zh = mid;
+                }
+            }
+            let z_acc = 0.5 * (zl + zh);
+            let a_acc = 1.0 / (1.0 + z_acc);
+            let t_acc = c.time_of_scale(a_acc);
+            // Dynamical friction since infall (BK08).
+            let ratio = (host.mass_at(z_acc) / m_sat).max(1.0);
+            let eta = sp.eta_range[0] + (sp.eta_range[1] - sp.eta_range[0]) * d.unit(k0 + 2);
+            let rc = sp.rc_range[0] + (sp.rc_range[1] - sp.rc_range[0]) * d.unit(k0 + 3);
+            let tau_dyn = 0.1 * c.hubble_time_gyr / c.e(a_acc);
+            let tau = tau_dyn * sp.df_a * m::pow(ratio, sp.df_b) / m::ln(1.0 + ratio)
+                * m::exp(sp.df_c * eta)
+                * m::pow(rc, sp.df_d);
+            if t_acc + tau < t_obs {
+                merged += 1;
+                continue;
+            }
+            // Where it is now.
+            let r_kpc = radius(d.unit(k0 + 4)) * r200_kpc;
+            let cos_t = 2.0 * d.unit(k0 + 5) - 1.0;
+            let sin_t = m::sqrt((1.0 - cos_t * cos_t).max(0.0));
+            let phi = 2.0 * m::PI * d.unit(k0 + 6);
+            let pos = [
+                r_kpc * 1000.0 * sin_t * m::cos(phi),
+                r_kpc * 1000.0 * sin_t * m::sin(phi),
+                r_kpc * 1000.0 * cos_t,
+            ];
+            let o = ask.observer_pc;
+            let rel = [pos[0] - o[0], pos[1] - o[1], pos[2] - o[2]];
+            let dist = m::sqrt(dot(rel, rel));
+            if let Some((axis, cos_max)) = ask.cone {
+                let dir = [rel[0] / dist, rel[1] / dist, rel[2] / dist];
+                if dot(dir, axis) < cos_max {
+                    continue;
+                }
+            }
+            // Its galaxy: a halo with the subhalo's mass at infall.
+            let mut m0 = m_sat;
+            for _ in 0..12 {
+                let (al, be) = sse_cosmos::haloes::correa(c, m0, 0.0);
+                m0 = m_sat / (m::pow(1.0 + z_acc, al) * m::exp(be * z_acc));
+            }
+            let halo = hs.median(m0, &format!("sat-{j}-{i}"));
+            let g = sse_cosmos::galaxy::evolve(c, gp, &halo);
+            let seen = look(
+                c,
+                st,
+                sky,
+                ssp,
+                Look {
+                    rel_pc: rel,
+                    g: &g,
+                    quench_gyr: Some(t_acc + sp.quench_delay_gyr),
+                    address: &halo.address,
+                    halo_mass: m_sat,
+                },
+                pc_m,
+                now_gyr,
+                t_obs,
+                ask,
+            )?;
+            if let Some((mag, mut v)) = seen {
+                v["satellite"] = true.into();
+                v["distance_kpc"] = (dist / 1000.0).into();
+                v["from_centre_kpc"] = r_kpc.into();
+                v["infall_gyr"] = t_acc.into();
+                v["infall_halo_mass_msun"] = m_sat.into();
+                out.push((mag, v));
+            }
+        }
+    }
+    Ok((
+        out,
+        serde_json::json!({
+            "host_mass_msun": m_host, "r200_kpc": r200_kpc,
+            "subhaloes": drawn, "merged": merged,
+        }),
+    ))
 }

@@ -46,6 +46,72 @@ pub struct SkyParams {
     pub home_mpc: [f64; 3],
     pub galaxy_reach_mpc: f64,
     pub home_exclusion_mpc: f64,
+    /// Y4 part 2: our galaxy's satellites.
+    pub satellites: SatelliteParams,
+}
+
+/// How our galaxy's satellites are drawn (Y4 part 2, fudge F39).
+#[derive(Clone, PartialEq, Debug, Serialize, Deserialize)]
+#[serde(default)]
+pub struct SatelliteParams {
+    /// Unevolved subhalo mass function, dN/d ln ψ = N0 x^-α exp(-k x³),
+    /// x = ψ / α, ψ = m_acc / M0 (Giocoli, Tormen and van den Bosch 2008,
+    /// eq. 2, doi:10.1111/j.1365-2966.2008.13182.x): N0 0.21, α 0.8, k 6.283.
+    pub shmf_n0: f64,
+    pub shmf_alpha: f64,
+    pub shmf_k: f64,
+    /// Smallest subhalo drawn, as ψ (1e-3 of a 1e12 M☉ host is 1e9 M☉,
+    /// about where galaxies brighter than the classical dwarfs live).
+    pub psi_min: f64,
+    /// ln ψ bins per decade for the keyed Poisson counts.
+    pub bins_per_decade: u32,
+    /// Merging by dynamical friction after infall (Boylan-Kolchin, Ma and
+    /// Quataert 2008, eqs. 5 and 6, doi:10.1111/j.1365-2966.2007.12530.x):
+    /// τ/τ_dyn = A (M/m)^b / ln(1 + M/m) exp(c η) (r_c/r_vir)^d with
+    /// τ_dyn = 0.1 / H(z); A 0.216, b 1.3, c 1.9, d 1.0.
+    pub df_a: f64,
+    pub df_b: f64,
+    pub df_c: f64,
+    pub df_d: f64,
+    /// Orbit ranges drawn uniformly: circularity η and r_c / r_vir.
+    pub eta_range: [f64; 2],
+    pub rc_range: [f64; 2],
+    /// Radial number density of surviving subhaloes, Einasto with shape α
+    /// and r_-2 as a fraction of r_200 (Springel et al. 2008, Aquarius,
+    /// doi:10.1111/j.1365-2966.2008.14066.x): 0.678 and 0.81. Drawn
+    /// between `r_min_frac` and 1 of r_200.
+    pub einasto_alpha: f64,
+    pub einasto_r2_frac: f64,
+    pub r_min_frac: f64,
+    /// Star formation goes on this long after infall, then stops ("delayed
+    /// then rapid": satellite star formation "unaffected for 2-4 Gyr after
+    /// infall", then quenched in under 0.8 Gyr, Wetzel et al. 2013,
+    /// doi:10.1093/mnras/stt469; here one delay for every mass, fudge F39).
+    pub quench_delay_gyr: f64,
+}
+
+impl Default for SatelliteParams {
+    // 6.283 is Giocoli's fitted constant as printed, not 2π.
+    #[allow(clippy::approx_constant)]
+    fn default() -> Self {
+        SatelliteParams {
+            shmf_n0: 0.21,
+            shmf_alpha: 0.8,
+            shmf_k: 6.283,
+            psi_min: 1.0e-3,
+            bins_per_decade: 8,
+            df_a: 0.216,
+            df_b: 1.3,
+            df_c: 1.9,
+            df_d: 1.0,
+            eta_range: [0.3, 1.0],
+            rc_range: [0.5, 1.0],
+            einasto_alpha: 0.678,
+            einasto_r2_frac: 0.81,
+            r_min_frac: 0.05,
+            quench_delay_gyr: 3.0,
+        }
+    }
 }
 
 impl Default for SkyParams {
@@ -59,6 +125,7 @@ impl Default for SkyParams {
             home_mpc: [4.0, 4.0, 4.0],
             galaxy_reach_mpc: 12.0,
             home_exclusion_mpc: 0.3,
+            satellites: SatelliteParams::default(),
         }
     }
 }
