@@ -22,7 +22,7 @@
         }
       ],
       "case": "chemical",
-      "plan": "06e9b276e08d0e37c51f6179ae4dc424fa2c7de0cc5378c305023689590e3819",
+      "plan": "f9a84d8a0d3104499b9ddd1a4f62c125b1640cc75c8a4d606bf0d6d493be22dd",
       "refused": 0,
       "ways_out": []
     },
@@ -72,7 +72,7 @@
         }
       ],
       "case": "torch",
-      "plan": "6b12beb4634c06538e4289fd48b8b321210a5dfcd7efec75331c8a6491dfb1fe",
+      "plan": "0ee75d881d9a1125d9b579afed632ec6c205727db733677d17cc90fe4189e504",
       "refused": 0,
       "ways_out": []
     },

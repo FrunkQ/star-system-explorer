@@ -22,11 +22,13 @@
 <script lang="ts">
   import { globeStats, regimeWords, type Globe, type Json, type SystemScene, type ViewContext } from "../../../ui-contract/src/index.ts";
   import { untrack } from "svelte";
-  import { airFactsOf, airFromOptics, airRequest, applyEdits, editableSettings, keepPhoto, listPhotos, LIBRARY, mountGlobe, photograph, readFrames, removePhoto, type GlobeRun, type RawFrames, type MediaItem, type RecipeDoc, type RecipeEdit, type GlobeRunOptions, type GlobeStatus } from "../../../renderer/src/index.ts";
+  import { DAY_S } from "../../../chart-grammar/src/calendar.ts";
+  import { airFactsOf, airFromOptics, airRequest, applyEdits, editableSettings, keepPhoto, listPhotos, LIBRARY, mountGlobe, photograph, readFrames, readWeather, removePhoto, type GlobeRun, type RawFrames, type WeatherSystem, type WeatherTile, type MediaItem, type RecipeDoc, type RecipeEdit, type GlobeRunOptions, type GlobeStatus } from "../../../renderer/src/index.ts";
   import { SHIPPED_RECIPES } from "../../../renderer/src/recipes.ts";
   import Cutaway from "../../cutaway/src/Cutaway.svelte";
   import StarDisc from "./StarDisc.svelte";
   import ClimateWhy from "./ClimateWhy.svelte";
+  import BodyTimeline from "./BodyTimeline.svelte";
 
   let { ctx, scene, params }: { ctx: ViewContext; scene: SystemScene; params: Record<string, Json> } = $props();
 
@@ -200,6 +202,8 @@
     setLayer(id: string): void;
     setTime(t_myr: number): void;
     pick(lon_deg: number, lat_deg: number): ReturnType<GlobeRun["pick"]>;
+    /** Turn the globe to face a point (a clicked event mark brings its place into view). */
+    view(lon_deg: number, lat_deg: number): void;
   };
   let lapseData: RawFrames | null = null;
   let lapseKey = "";
@@ -240,6 +244,10 @@
       run?.setTime(t);
     },
     pick: (lo: number, la: number) => run?.pick(lo, la) ?? null,
+    view(lo: number, la: number) {
+      lon = ((lo % 360) + 360) % 360;
+      lat = Math.max(-90, Math.min(90, la));
+    },
   });
   /** Hand the loaded frames to the current globe runtime (again after the globe remounts). */
   function attachLapse() {
@@ -259,15 +267,63 @@
     const key = `${scene.system}|${subject?.address}`;
     if (untrack(() => lapseKey) && key !== untrack(() => lapseKey)) untrack(() => lapse.close());
   });
-  const lapseLimits = $derived.by(() => {
-    const l = lapse.layers.find((x) => x.id === lapse.layer);
-    return l ? [l.limits, ...l.pending].map((x) => x.trim().replace(/([^.])$/, "$1.")).join(" ") : "";
+
+  // Weather (R2b): today's clouds and haze from the kernel's weather op, on the campaign's day. `weather` is reactive,
+  // like `lapse`, so the chart room's controls can drive it; a time lapse shows its own past instead.
+  const WX_N = 32;
+  type Weather = { on: boolean; loading: boolean; error: string | null; day: number | null; show(): Promise<void>; hide(): void };
+  let wxKey = "";
+  let wxData: ReturnType<typeof readWeather> | null = null;
+  const weather: Weather = $state({
+    on: false,
+    loading: false,
+    error: null,
+    day: null,
+    async show() {
+      const sub = subject;
+      if (!sub || weather.loading) return;
+      const key = `${scene.system}|${sub.address}`;
+      weather.loading = true;
+      weather.error = null;
+      const now = await ctx.session.campaignNow();
+      const at_s = now.ok && now.at_s !== undefined ? Number(now.at_s) : undefined;
+      const day = at_s !== undefined ? at_s / DAY_S : 0;
+      const where = { system: scene.system, body: sub.address, ...(at_s !== undefined ? { at_s } : {}), day };
+      const tiles: WeatherTile[] = [];
+      let fail: string | null = null;
+      let meta = { block: "", evidence: "" };
+      for (const face of [0, 1, 2, 3, 4, 5]) {
+        const r = await ctx.session.weather({ want: "field", ...where, tile: [face, 0, 0, 0], n: WX_N });
+        if (!r.ok) {
+          fail = r.message;
+          break;
+        }
+        tiles.push(r.data as unknown as WeatherTile);
+        const pv = r.provenance as { block?: { id?: string }; evidence?: string };
+        meta = { block: pv.block?.id ?? "", evidence: pv.evidence ?? "" };
+      }
+      const sy = fail ? null : await ctx.session.weather({ want: "systems", ...where });
+      weather.loading = false;
+      if (key !== `${scene.system}|${subject?.address}`) return;
+      if (fail) return void (weather.error = fail);
+      wxData = readWeather(tiles, sy?.ok ? (sy.data as unknown as WeatherSystem[]) : [], { day, ...meta });
+      wxKey = key;
+      weather.day = day;
+      weather.on = true;
+      run?.setWeather(wxData);
+    },
+    hide() {
+      wxData = null;
+      wxKey = "";
+      weather.on = false;
+      weather.day = null;
+      run?.setWeather(null);
+    },
   });
-  const ago = (t: number) => {
-    const last = lapse.frames.times[lapse.frames.times.length - 1] ?? t;
-    const a = last - t;
-    return a < 0.5 ? "today" : a >= 1000 ? `${(a / 1000).toFixed(2)} billion years ago` : `${Math.round(a)} million years ago`;
-  };
+  $effect(() => {
+    const key = `${scene.system}|${subject?.address}`;
+    if (untrack(() => wxKey) && key !== untrack(() => wxKey)) untrack(() => weather.hide());
+  });
 
   // One runtime per globe element; settings and turns are passed to it.
   $effect(() => {
@@ -279,6 +335,7 @@
     });
     run = r;
     untrack(() => attachLapse());
+    if (wxData) r.setWeather(wxData);
     return () => {
       r.dispose();
       run = null;
@@ -435,19 +492,13 @@
         {/if}
       </div>
       {#if has}
-        <!-- Interim time-lapse control; the chart room's BodyTimeline replaces this one node. -->
-        <div class="lapse" data-lapse-controls data-lapse={lapse.loaded ? "on" : lapse.loading ? "loading" : "off"} data-lapse-layer={lapse.layer} data-lapse-t={lapse.t_myr}>
-          {#if !lapse.loaded}
-            <button type="button" class="link" disabled={lapse.loading} onclick={() => lapse.load()}>{lapse.loading ? "Reading its history…" : "Through time"}</button>
-            {#if lapse.error}<small data-lapse-error>{lapse.error}</small>{/if}
-          {:else}
-            <label>Layer <select value={lapse.layer} onchange={(e) => lapse.setLayer(e.currentTarget.value)}>{#each lapse.layers as l (l.id)}<option value={l.id} disabled={!l.available}>{l.label}</option>{/each}</select></label>
-            <label>When <input type="range" min={lapse.frames.times[0] ?? 0} max={lapse.frames.times[lapse.frames.times.length - 1] ?? 0} step="10" value={lapse.t_myr} oninput={(e) => lapse.setTime(Number(e.currentTarget.value))} /></label>
-            <span data-lapse-when>{ago(lapse.t_myr)}</span>
-            <button type="button" class="link" onclick={() => lapse.close()}>Back to today</button>
-            <small data-lapse-limits>{lapseLimits}</small>
-          {/if}
-        </div>
+        <!-- The time lapse's controls (U22): layer toggles, scrubber with event marks, Play, and the why card. -->
+        <BodyTimeline {lapse} depth={ws.depth ?? "science"} label={subject.label} />
+        <!-- Interim weather control; the chart room's controls replace it. A time lapse shows its own past, so this hides then. -->
+        {#if !lapse.loaded}<div class="weather" data-weather-controls data-weather={weather.on ? "on" : weather.loading ? "loading" : "off"}>
+          {#if weather.on}<button type="button" class="link" onclick={() => weather.hide()}>Clear the weather</button>{:else}<button type="button" class="link" disabled={weather.loading} onclick={() => weather.show()}>{weather.loading ? "Reading the weather…" : "Today's weather"}</button>{/if}
+          {#if weather.error}<small data-weather-error>{weather.error}</small>{/if}
+        </div>{/if}
       {/if}
       {#if stats}
         <dl class="facts" data-globe-stats>
@@ -631,19 +682,15 @@
     color: var(--sse-ink-muted);
     margin-top: 4px;
   }
-  .lapse {
+  .weather {
     display: flex;
     flex-wrap: wrap;
     gap: 6px 12px;
     align-items: center;
     font-size: 13px;
     margin: 8px 0;
-    max-width: 100%;
   }
-  .lapse input[type="range"] {
-    width: min(260px, 60vw);
-  }
-  .lapse small {
+  .weather small {
     flex-basis: 100%;
     color: var(--sse-ink-muted);
     font-size: 12px;

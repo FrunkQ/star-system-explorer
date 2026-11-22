@@ -231,7 +231,7 @@ try {
       assert.equal(lerr, "", "the kernel gave the world's history");
       const secs = (Date.now() - t0) / 1000;
       const today = await pixelsOf(gm, globe(gm));
-      await lc.getByLabel("Layer").selectOption("plates");
+      await lc.getByRole("radiogroup", { name: "Layer" }).getByRole("radio", { name: "Plates" }).click();
       await gm.waitForTimeout(800);
       await shot(gm, `render-lapse-plates-today-${name}`);
       const slider = lc.getByLabel("When");
@@ -240,17 +240,54 @@ try {
       await gm.waitForTimeout(800);
       await shot(gm, `render-lapse-plates-early-${name}`);
       assert.match(await lc.locator("[data-lapse-when]").innerText(), /billion years ago/);
-      await lc.getByLabel("Layer").selectOption("ice");
+      await lc.getByRole("radiogroup", { name: "Layer" }).getByRole("radio", { name: "Ice and glaciers" }).click();
       await gm.waitForTimeout(800);
       const iceEarly = await pixelsOf(gm, globe(gm));
       await shot(gm, `render-lapse-ice-early-${name}`);
       assert.notDeepEqual(iceEarly.centre, today.centre, "the past is drawn, not today's surface");
       const label = await globe(gm).getAttribute("aria-label");
       assert.match(label, /billion years ago, ice and glaciers: land \d+% of the surface/, label);
+      // U22: the events are marked on the scrubber; a mark moves time to it and opens the why card with what lay there.
+      assert.ok(Number(await lc.locator("[data-lapse-marks]").getAttribute("data-lapse-marks")) > 10, "the world's dated events are marked");
+      await lc.locator(".mark.violent").first().click();
+      const why = lc.locator("[data-lapse-why]");
+      await why.waitFor();
+      assert.ok((await why.locator(".said").innerText()).length > 5, "the event in words");
+      await shot(gm, `render-lapse-why-${name}`);
+      // Play steps forward through the keyframes.
+      const before = Number(await lc.getAttribute("data-lapse-t"));
+      await lc.getByRole("button", { name: "Play" }).click();
+      await gm.waitForTimeout(1300);
+      await lc.getByRole("button", { name: "Pause" }).click();
+      assert.ok(Number(await lc.getAttribute("data-lapse-t")) > before, "Play moves time forward");
       await lc.getByRole("button", { name: "Back to today" }).click();
       await gm.waitForSelector('[data-lapse-controls][data-lapse="off"]');
       assert.equal(await gm.locator("[data-state-hash]").first().getAttribute("data-state-hash"), hash, "time lapse never changes the state hash");
       console.log(`  time lapse: Earth's history read in ${secs.toFixed(1)} s; ${label.split("Drag")[0].slice(-220)}`);
+    }
+
+    // R2b: today's weather. The kernel's weather op on the campaign's day lays clouds and haze over the same globe,
+    // the words name the cover and the storms, and nothing changes the state hash.
+    {
+      const wc = gm.locator("[data-weather-controls]");
+      const before = await pixelsOf(gm, globe(gm));
+      const t0 = Date.now();
+      await wc.getByRole("button", { name: "Today's weather" }).click();
+      await gm.waitForSelector('[data-weather-controls][data-weather="on"], [data-weather-error]', { timeout: 30000 });
+      const werr = await wc.locator("[data-weather-error]").count() ? await wc.locator("[data-weather-error]").innerText() : "";
+      assert.equal(werr, "", "the kernel gave today's weather");
+      const secs = (Date.now() - t0) / 1000;
+      await gm.waitForTimeout(800);
+      const cloudy = await pixelsOf(gm, globe(gm));
+      await shot(gm, `render-weather-${name}`);
+      const lum = (c) => 0.2126 * c[0] + 0.7152 * c[1] + 0.0722 * c[2];
+      assert.ok(lum(cloudy.centre) + lum(cloudy.upper) > lum(before.centre) + lum(before.upper), `the clouds brighten the globe: ${cloudy.centre} ${cloudy.upper} (clear ${before.centre} ${before.upper})`);
+      const label = await globe(gm).getAttribute("aria-label");
+      assert.match(label, /weather on day [\d,]+: cloud over about \d+% of the globe/, label);
+      await wc.getByRole("button", { name: "Clear the weather" }).click();
+      await gm.waitForSelector('[data-weather-controls][data-weather="off"]');
+      assert.equal(await gm.locator("[data-state-hash]").first().getAttribute("data-state-hash"), hash, "the weather never changes the state hash");
+      console.log(`  weather: read in ${secs.toFixed(1)} s; ${label.slice(label.indexOf("weather on day"), label.indexOf("weather on day") + 260)}`);
     }
 
     // R5a: a star on the Body screen, drawn from the kernel's facts and activity, in visible light and X-rays.
