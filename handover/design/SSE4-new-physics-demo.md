@@ -252,6 +252,11 @@ Kept as asked, with the answers. Questions 3 to 7 were accepted together at 16:0
    send on request are not covered by that licence. Anything derived from them may ship in a pack only with
    the authors' explicit permission, recorded with the pack's sources. Without it they may be used to check
    the pack privately, not to fill it.
+   **When the email goes out (Alex, 22 Nov):** "it would be good to have SSE working kinda right, as they
+   might like to see and play with it themselves." So not when the light-through-gas block passes its tests,
+   but when the live site shows their stars roughly right and is fit for an outside astronomer to open and
+   try: a direct link to one of their stars (the green WD J1330+6435 is the natural one), its chain of blocks
+   readable, its "Why?" working, and the rest of the app steady enough not to embarrass the claim.
 7. **Packs carry their own fudges, sources and a reproduction report (ND6)?** Recommended: yes. It is the
    piece that turns a shared pack from "trust me" into something checkable, and it serves every pack, not
    only this one.
