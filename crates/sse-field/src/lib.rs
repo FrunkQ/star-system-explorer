@@ -12,6 +12,7 @@
 //! interior); so is the air. Field history (`read_field_history`) waits on MF3.
 
 use serde::{Deserialize, Serialize};
+use sse_atoms::aurora as au;
 use sse_atoms::field as fb;
 use sse_atoms::light::{magnetopause_radius, MU0};
 use sse_atoms::shield as sh;
@@ -96,6 +97,25 @@ pub struct Body {
     /// Orbits (distance from the centre, m) to give a dose for.
     #[serde(default)]
     pub orbits_m: Vec<f64>,
+    /// Angle between the magnetic and spin axes, degrees.
+    #[serde(default)]
+    pub magnetic_tilt_deg: f64,
+    /// Plasma added each second by moons' volcanoes or geysers, kg/s (Io
+    /// gives Jupiter about a tonne), and the ionosphere's effective
+    /// Pedersen conductance of one hemisphere, S. Both make the spin-driven oval.
+    #[serde(default)]
+    pub plasma_source_kg_s: f64,
+    #[serde(default)]
+    pub pedersen_conductance_s: f64,
+    /// Moons whose field lines may land as aurora spots.
+    #[serde(default)]
+    pub moons: Vec<MoonOrbit>,
+}
+
+#[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
+pub struct MoonOrbit {
+    pub address: String,
+    pub orbit_m: f64,
 }
 
 #[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
@@ -157,6 +177,38 @@ pub struct OrbitDose {
     pub mean_msv_yr: f64,
 }
 
+/// An auroral oval: where one driver's currents come down into the air.
+#[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
+pub struct Oval {
+    /// "wind" (open and closed field lines meet) or "spin" (corotation fails).
+    pub driver: String,
+    /// Where its field lines cross the magnetic equator, m.
+    pub maps_to_m: f64,
+    /// Magnetic latitude of the oval, degrees, for the mean wind.
+    pub magnetic_latitude_deg: f64,
+    /// For a wind oval: from a gusty (strong) to a quiet wind, degrees.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub latitude_range_deg: Option<[f64; 2]>,
+    /// Nearest and furthest the oval comes to the spin equator, degrees of
+    /// spin latitude (the magnetic axis is tilted).
+    pub spin_latitude_range_deg: [f64; 2],
+}
+
+#[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
+pub struct Footprint {
+    pub moon: String,
+    pub magnetic_latitude_deg: f64,
+}
+
+/// Where aurorae glow: ovals and moon spots, or a diffuse glow over the
+/// night side for a world with air and no field holding the wind off.
+#[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
+pub struct Aurora {
+    pub ovals: Vec<Oval>,
+    pub footprints: Vec<Footprint>,
+    pub diffuse: bool,
+}
+
 /// Cosmic-ray shielding: what the field turns aside and the air absorbs.
 #[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
 pub struct Shield {
@@ -212,6 +264,8 @@ pub struct FieldRead {
     pub induced: Vec<Induced>,
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub shield: Option<Shield>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub aurora: Option<Aurora>,
     pub why: Vec<String>,
     pub stand_ins: Vec<String>,
     pub references: Vec<Reference>,
@@ -223,6 +277,7 @@ fn refs_of(ids: &[&str]) -> Vec<Reference> {
         .iter()
         .chain(sse_atoms::light::atoms().iter())
         .chain(sse_atoms::shield::atoms().iter())
+        .chain(sse_atoms::aurora::atoms().iter())
     {
         let d = a.decl();
         if ids.contains(&d.id.as_str()) {
@@ -413,6 +468,7 @@ pub fn read(b: &Body, set: &Settings) -> Result<FieldRead, String> {
             "sse.shield.air_dose",
         ]);
     }
+    let aurora = aurora_of(b, set, &obstacle, inside, &mut why, &mut used);
     Ok(FieldRead {
         address: b.address.clone(),
         pressed_by: pressed_by.into(),
@@ -423,9 +479,104 @@ pub fn read(b: &Body, set: &Settings) -> Result<FieldRead, String> {
         host_bubble,
         induced,
         shield,
+        aurora,
         why,
         stand_ins,
         references: refs_of(&used),
+    })
+}
+
+fn deg(rad: f64) -> f64 {
+    rad * 180.0 / m::PI
+}
+
+/// Ovals from each driver that lands inside the bubble, moon spots, or a
+/// diffuse glow.
+fn aurora_of(
+    b: &Body,
+    set: &Settings,
+    obstacle: &Obstacle,
+    inside: bool,
+    why: &mut Vec<String>,
+    used: &mut Vec<&'static str>,
+) -> Option<Aurora> {
+    let r = b.radius_m;
+    if obstacle.kind != "field" {
+        if b.air.is_some() && obstacle.kind == "air" {
+            why.push(format!("Aurora: with no field holding the {} off, it lights the top of the air as a faint diffuse glow over the night side, not a ring.", if inside { "host field" } else { "wind" }));
+            return Some(Aurora {
+                ovals: vec![],
+                footprints: vec![],
+                diffuse: true,
+            });
+        }
+        return None;
+    }
+    used.push("sse.aurora.footprint");
+    let tilt = b.magnetic_tilt_deg.abs();
+    // An oval at magnetic colatitude c round a pole tilted t from the spin
+    // pole spans spin colatitudes |t − c| to t + c.
+    let spin_range = |lat: f64| {
+        let c = 90.0 - lat;
+        [90.0 - (tilt + c), 90.0 - (tilt - c).abs()]
+    };
+    let mut ovals = vec![];
+    let nose = obstacle.standoff_m;
+    let lat = deg(au::footprint_latitude(nose, r));
+    let mut range = None;
+    if !inside && b.wind.ram() > 0.0 {
+        let at = |gust: f64| {
+            let s =
+                magnetopause_radius(b.moment_a_m2, b.wind.density_kg_m3 * gust, b.wind.speed_m_s);
+            deg(au::footprint_latitude(s, r))
+        };
+        range = Some([at(set.gust[1]), at(set.gust[0])]);
+    }
+    ovals.push(Oval {
+        driver: "wind".into(),
+        maps_to_m: nose,
+        magnetic_latitude_deg: lat,
+        latitude_range_deg: range,
+        spin_latitude_range_deg: spin_range(lat),
+    });
+    why.push(match range {
+        Some([lo, hi]) => format!("Aurora: the {} drives an oval at {:.0}° magnetic latitude, where the field line through the bubble's nose comes down; it moves from {:.0}° in a quiet wind to {:.0}° in a gusty one.", if inside { "host's flow" } else { "wind" }, lat, hi, lo),
+        None => format!("Aurora: an oval at {:.0}° magnetic latitude, where the field line through the bubble's nose comes down.", lat),
+    });
+    if b.plasma_source_kg_s > 0.0 && b.pedersen_conductance_s > 0.0 {
+        used.push("sse.aurora.hill_distance");
+        let b_eq = MU0 * b.moment_a_m2 / (4.0 * m::PI * r * r * r);
+        let h = au::hill_distance(b.pedersen_conductance_s, b_eq, r, b.plasma_source_kg_s);
+        if h > r && h < nose {
+            let l = deg(au::footprint_latitude(h, r));
+            ovals.push(Oval {
+                driver: "spin".into(),
+                maps_to_m: h,
+                magnetic_latitude_deg: l,
+                latitude_range_deg: None,
+                spin_latitude_range_deg: spin_range(l),
+            });
+            why.push(format!("Its moons load {:.0} kg of gas a second; beyond {:.0} of its radii that gas lags the spinning field, and the currents that drag it round light a main oval at {:.0}°, inside the wind's.", b.plasma_source_kg_s, h / r, l));
+        }
+    }
+    if tilt > 0.0 {
+        why.push(format!("Its magnetic axis is tilted {tilt:.0}° from its spin axis, so the ovals circle the magnetic poles, swinging between {:.0}° and {:.0}° of spin latitude.", ovals[0].spin_latitude_range_deg[0], ovals[0].spin_latitude_range_deg[1]));
+    }
+    let mut footprints = vec![];
+    for mo in &b.moons {
+        if mo.orbit_m > r && mo.orbit_m < nose {
+            let l = deg(au::footprint_latitude(mo.orbit_m, r));
+            why.push(format!("{}'s field line lands at {:.0}°: a spot and trail in the aurora that follows the moon.", mo.address, l));
+            footprints.push(Footprint {
+                moon: mo.address.clone(),
+                magnetic_latitude_deg: l,
+            });
+        }
+    }
+    Some(Aurora {
+        ovals,
+        footprints,
+        diffuse: false,
     })
 }
 
