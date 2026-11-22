@@ -57,6 +57,26 @@ sheet is filled, and each sheet row records that check.
 | abbott2017 | Abbott, B. P. et al. 2017, PRL 119, 161101. doi:10.1103/PhysRevLett.119.161101 | GW170817 | verified (metadata) | ADS 2017PhRvL.119p1101A |
 | fields2020 | Fields, Olive, Yeh and Young 2020, JCAP 03, 010. https://arxiv.org/abs/1912.01132 | primordial helium; the lithium problem | verified (metadata) | arXiv record under that title |
 
+## A4. Water's phases (MP18)
+
+| Id | Reference | Relied on | Status | Checked |
+|---|---|---|---|---|
+| iapws2011-meltsub | IAPWS R14-08(2011); Wagner, Riethmann, Feistel and Harvey 2011, J. Phys. Chem. Ref. Data 40, 043103. doi:10.1063/1.3657937 | melting curves of Ih, III, V, VI and VII; sublimation of Ih; the four liquid triple points | verified | release text read (iapws.org MeltSub download); all six check values reproduce |
+| iapws1992-sat | IAPWS SR1-86(1992); Wagner and Pruss 1993, J. Phys. Chem. Ref. Data 22, 783. doi:10.1063/1.555926 | boiling curve, critical point, saturated liquid density at 273.16 K | verified | NIST reprint read; check values at 273.16 K and 373.1243 K reproduce (a5 = -15.9618719) |
+| frank2004 | Frank, Fei and Hu 2004, Geochim. Cosmochim. Acta 68, 2781 | ice VII melting above 585 K (Simon fit, 3 to 60 GPa) | verified (fit) | paper read (cfa.harvard.edu copy); Table 2 points reproduce; DOI not printed in that copy |
+| lin2005 | Lin et al. 2005, Geophys. Res. Lett. 32, L11306. doi:10.1029/2005GL022499 | break in the melting curve near 35 GPa; ice VII to X at 60 GPa, 300 K (quoting Goncharov 1999) | verified | paper read |
+| journaux2020 | Journaux et al. 2020, JGR Planets 125, e2019JE006176. doi:10.1029/2019JE006176 | compression of ices III, V, VI (Table 3) | verified (values) | arXiv 1907.09598 read; DOI from the journal citation (not printed in the arXiv copy) |
+| chaplin-lsbu | Chaplin, Water Structure and Science (LSBU): phase diagram and ice phases pages | solid-solid triple points; densities, ordering of every ice | verified (secondary) | pages read; each triple point names a primary paper there, not yet read one by one |
+| wikipedia-ice-phases | Wikipedia, Phases of ice | cross-check only | verified (secondary) | read 22 Nov 2026 |
+| salzmann2019 | Salzmann 2019, J. Chem. Phys. 150, 060901. doi:10.1063/1.5085163 | ices XVI, XVII; amorphous ices; hydrogen order | verified | UCL copy read; it holds no triple-point table |
+| millot2019 | Millot et al. 2019, Nature 569, 251. doi:10.1038/s41586-019-1114-6 | fcc superionic ice XVIII at 100-400 GPa, 2000-3000 K; ionic conductivity above 100 S/cm | verified (abstract) | abstract read; body paywalled |
+| millot2018 | Millot et al. 2018, Nature Physics 14, 297. doi:10.1038/s41567-017-0017-4 | superionic melting near 5000 K at 190 GPa | unverified | not read; the point is recalled |
+| cheng2021 | Cheng, Bethkenhagen, Pickard and Hamel 2021, arXiv:2103.09035 (Nature Physics 17, 1228) | bcc below about 75 GPa; onset near 2000 K; melting 3250 K at 100 GPa | verified (text) | arXiv read; boundaries only in figures; journal DOI not printed |
+| haldemann2020 | Haldemann, Alibert, Mordasini and Benz 2020, A&A 643, A105 (AQUA) | ice VI-VII fit as a cross-check | verified (text) | arXiv 2009.10098 read; its melting fits came through garbled and are not used |
+| redmer2011 | Redmer, Mattsson, Nettelmann and French 2011, Icarus 211, 798. doi:10.1016/j.icarus.2010.08.008 | ionic-fluid edge; ionic water conductivity | unverified | not read; recalled |
+| mattsson2006 | Mattsson and Desjarlais 2006, PRL 97, 017801. doi:10.1103/PhysRevLett.97.017801 | ionic-fluid edge | unverified | not read; recalled |
+| recalled | (none) | pure water's conductivity, 5.5e-6 S/m at 25 C | unverified | textbook figure, to read from a source |
+
 ## B. The four "from memory" gas refractivities
 
 `packs/base-light/pack.json` gases, note: "Ammonia, sulphur dioxide, carbon monoxide and neon: refractivity
