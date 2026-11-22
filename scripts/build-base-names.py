@@ -30,6 +30,7 @@ only. Packs and the GM add their own.
 """
 import json
 import os
+import re
 import sys
 
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
@@ -346,6 +347,210 @@ def english():
     }
 
 
+# NM3c, Many nations (design 4.8 C). Real words only, from two CC BY 4.0
+# datasets that scripts/fetch-name-sources.py extracts into
+# sources/many-nations.tsv. The romanisation rules below are ours (a first
+# pass by non-speakers), so every row also carries its own script and IPA.
+MN_TSV = os.path.join(ROOT, "packs", "base-names", "sources", "many-nations.tsv")
+MN_SOURCES = {
+    "northeuralex": "NorthEuraLex 0.9, Dellert et al. 2020, Lang Resources & Evaluation 54, 273, "
+                    "doi:10.1007/s10579-019-09480-6 (CC BY 4.0)",
+    "wold": "World Loanword Database, Haspelmath and Tadmor (eds.) 2009, https://wold.clld.org (CC BY 4.0)",
+}
+MN_LANGS = [
+    # id, label, romanisation
+    ("en", "English", "as written"),
+    ("zh", "Mandarin", "Hanyu Pinyin with tone marks, from WOLD's numbered pinyin"),
+    ("hi", "Hindi", "Hunterian, with long vowels marked, from the IPA"),
+    ("es", "Spanish", "as written"),
+    ("ar", "Arabic", "close to ALA-LC (ḥ, ṣ, ḍ, ṭ, ẓ, ʿ, ʾ, long vowels marked), from the IPA"),
+    ("fr", "French", "as written"),
+    ("pt", "Portuguese", "as written"),
+    ("ru", "Russian", "BGN/PCGN, without the soft and hard signs"),
+    ("ja", "Japanese", "Hepburn with macrons, as WOLD gives it"),
+    ("sw", "Swahili", "as written"),
+]
+# Mix presets (design decision 8). Even is the default: the pack makes no
+# claim about who inherits the stars.
+MN_PRESETS = {
+    "even": ("Many nations", {l: 1 for l, _, _ in MN_LANGS},
+             "Each of the ten languages equally."),
+    # Rounded total speakers in millions, Ethnologue 26th ed. (2023), as an approximate weighting.
+    "speakers": ("Many nations, by speakers", {"en": 1456, "zh": 1138, "hi": 610, "es": 559, "ar": 274,
+                                              "fr": 310, "pt": 264, "ru": 255, "ja": 123, "sw": 72},
+                 "Weighted by total speakers today (Ethnologue 2023, rounded): a fictional future, not a forecast."),
+    # Languages of agencies that had sent a craft to the Moon or beyond by
+    # 2025: NASA, Roscosmos (and the Soviet programme), JAXA, CNSA, ISRO,
+    # ESA (French and English) and the UAE's Hope mission.
+    "agencies": ("Many nations, today's space agencies", {"en": 2, "ru": 1, "ja": 1, "zh": 1, "hi": 1, "fr": 1,
+                                                         "ar": 1, "es": 0, "pt": 0, "sw": 0},
+                 "The languages of agencies that had sent a craft to the Moon or beyond by 2025 (authored)."),
+}
+
+TONES = {"a": "āáǎà", "e": "ēéěè", "i": "īíǐì", "o": "ōóǒò", "u": "ūúǔù", "ü": "ǖǘǚǜ"}
+
+
+def pinyin(numbered):
+    """'xing1xing' -> 'xīngxing', 'hai3an4' -> "hǎi'àn" (the standard tone rules)."""
+    out = []
+    for syl, tone in re.findall(r"([a-zü]+)(\d?)", numbered.replace("v", "ü")):
+        t = int(tone) if tone else 5
+        if 1 <= t <= 4:
+            at = next((v for v in ("a", "e") if v in syl), None)
+            if at is None:
+                at = "o" if "ou" in syl else [c for c in syl if c in TONES][-1]
+            i = syl.index(at) if at in ("a", "e") or "ou" in syl else syl.rindex(at)
+            syl = syl[:i] + TONES[at][t - 1] + syl[i + 1:]
+        if out and syl[0] in "aeoāáǎàēéěèōóǒò":
+            syl = "'" + syl
+        out.append(syl)
+    return "".join(out)
+
+
+RU = dict(zip("абвгдезийклмнопрстуфхцчшщыэ", "a b v g d e z i y k l m n o p r s t u f kh ts ch sh shch y e".split()))
+RU.update({"ё": "yo", "ж": "zh", "ю": "yu", "я": "ya", "ъ": "", "ь": ""})
+
+
+def russian(word):
+    out, prev = [], ""
+    for c in word.lower():
+        if c == "е" and (not prev or prev in "аеёиоуыэюяъь"):
+            out.append("ye")
+        else:
+            out.append(RU[c])
+        prev = c
+    return "".join(out)
+
+
+# IPA symbols to letters. Longest first; a following "ː" on a vowel marks
+# it long and on a consonant doubles it.
+HI_CONS = {"t͡ʃʰ": "chh", "t͡ʃ": "ch", "d͡ʒʰ": "jh", "d͡ʒ": "j", "ɖʰ": "dh", "ʈʰ": "th", "kʰ": "kh", "ɡʰ": "gh",
+           "tʰ": "th", "dʰ": "dh", "pʰ": "ph", "bʰ": "bh", "ʈ": "t", "ɖ": "d", "ɳ": "n", "ɽ": "r", "ɕ": "sh",
+           "ʃ": "sh", "ʂ": "sh", "ɡ": "g", "ŋ": "n", "ɲ": "n", "ʋ": "v", "w": "v", "j": "y", "ɦ": "h", "x": "kh",
+           "r̥": "ri", "tt͡ʃ": "chch"}
+HI_CONS.update({c: c for c in "kgtdpbmnlrsshzfqv"})
+HI_VOW = {"aː": "ā", "iː": "ī", "uː": "ū", "eː": "e", "oː": "o", "ɛː": "ai", "ɔː": "au", "ə": "a", "ɪ": "i",
+          "ʊ": "u", "a": "a", "i": "i", "u": "u", "e": "e", "o": "o", "ɛ": "ai", "ɔ": "au"}
+AR_CONS = {"d͡ʒ": "j", "sˤ": "ṣ", "dˤ": "ḍ", "tˤ": "ṭ", "ðˤ": "ẓ", "ħ": "ḥ", "ʕ": "ʿ", "ʔ": "ʾ", "x": "kh",
+           "ɣ": "gh", "θ": "th", "ð": "dh", "ʃ": "sh", "j": "y"}
+AR_CONS.update({c: c for c in "btdrzsfqklmnhw"})
+AR_VOW = {"aː": "ā", "iː": "ī", "uː": "ū", "ɨː": "ī", "ɑː": "ā", "a": "a", "i": "i", "u": "u", "ɑ": "a", "ɨ": "i"}
+
+
+def from_ipa(ipa, cons, vow):
+    ipa = ipa.replace("ˑ", "").replace("\u0303ː", "ː\u0303").replace("\u0303", "n")  # nasal vowels written with an n, as Hunterian does
+    keys = sorted(list(cons) + list(vow), key=len, reverse=True)
+    out, i = [], 0
+    while i < len(ipa):
+        k = next((k for k in keys if ipa.startswith(k, i)), None)
+        if k is None:
+            out.append(ipa[i])
+            i += 1
+            continue
+        i += len(k)
+        if k in cons:
+            letter = cons[k]
+            if ipa.startswith("ː", i):  # a doubled consonant: an aspirate doubles its plain stop
+                out.append(letter[0] if "ʰ" in k else letter)
+                i += 1
+            out.append(letter)
+        else:
+            out.append(vow[k])
+    return "".join(out)
+
+
+def arabic(native, ipa):
+    if "ظ" in native and "ض" not in native:
+        ipa = ipa.replace("dˤ", "ðˤ")  # the source writes ẓ as ḍ
+    ipa = ipa.replace("ɑ", "a")
+    word = from_ipa(ipa.replace("au", "aw").replace("ai", "ay").replace("uw", "uː"), AR_CONS, AR_VOW)
+    if native.endswith("ى") and word.endswith("an"):
+        word = word[:-2] + "ā"  # alif maqṣūra, not the case ending
+    if word.endswith("u") and not native.endswith("و"):
+        word = word[:-1]  # the case ending some colour words carry
+    return word.lstrip("ʾ")
+
+
+def romanise(lang, native, given, ipa):
+    if lang in ("en", "es", "fr", "pt", "sw"):
+        return native
+    if lang == "ja":
+        return given
+    if lang == "zh":
+        return pinyin(given)
+    if lang == "ru":
+        return russian(native)
+    if lang == "hi":
+        return from_ipa(ipa, HI_CONS, HI_VOW)
+    return arabic(native, ipa)
+
+
+def title(word):
+    i = 1 if word[:1] in "ʿʾ" else 0
+    return word[:i] + word[i:i + 1].upper() + word[i + 1:]
+
+
+def many_nations():
+    with open(MN_TSV, encoding="utf-8") as f:
+        lines = [l.rstrip("\n").split("\t") for l in f if l.strip()]
+    head, rows = lines[0], lines[1:]
+    assert head == ["language", "concept", "gloss", "native", "romanised", "ipa", "source"], head
+    by_lang = {l: [] for l, _, _ in MN_LANGS}
+    labels = {l: label for l, label, _ in MN_LANGS}
+    for lang, _concept, gloss, native, given, ipa, src in rows:
+        name = title(romanise(lang, native, given, ipa))
+        row = {"name": name, "means": gloss, "language": labels[lang], "source": MN_SOURCES[src]}
+        if native.lower() != name.lower():
+            row["native"] = native
+        if ipa:
+            row["ipa"] = ipa
+        same = next((r for r in by_lang[lang] if r["name"] == name), None)
+        if same:  # one word for two concepts (snow and ice): one row, both meanings
+            if gloss not in same["means"].split("; "):
+                same["means"] += "; " + gloss
+            continue
+        by_lang[lang].append(row)
+    w = "{list:word}"
+    forms = {
+        "default": [[w, 1]], "planet": [[w, 1]], "star": [[w, 1]], "moon": [[w, 1]], "continent": [[w, 1]],
+        "settlement": [[w, 1]], "crater": [[w, 1]],
+        "peak": [["Mount " + w, 1]], "summit": [["Mount " + w, 1]], "shield": [["Mount " + w, 1]],
+        "range": [[w + " Mountains", 1], [w + " Range", 1]],
+        "ocean": [[w + " Ocean", 1]], "sea": [[w + " Sea", 1]], "lake": [["Lake " + w, 1]],
+        "island": [[w + " Island", 1]], "deep": [[w + " Deep", 1]], "ice-cap": [[w + " Ice", 1]],
+        "plains": [[w + " Plain", 1]], "rift": [[w + " Rift", 1]], "chasma": [[w + " Gorge", 1]],
+        "scarp": [[w + " Scarp", 1]], "port": [["Port " + w, 1]], "mine": [[w + " Mine", 1]],
+        "base": [[w + " Base", 1]],
+    }
+    out = []
+    for lang, label, how in MN_LANGS:
+        words = sorted(by_lang[lang], key=lambda r: (r["name"].lower(), r["means"]))
+        out.append({
+            "id": "nations-" + lang,
+            "label": "Many nations (%s)" % label,
+            "kind": "real",
+            "script": "latin",
+            "about": (
+                "%d real %s words for nature, sky, land, water, seasons and colours, each with its meaning, its "
+                "own script and its source. Romanised: %s. Not yet reviewed by a speaker: first pass, "
+                "corrections welcome." % (len(words), label, how)
+            ),
+            "lists": {"word": words},
+            "forms": forms,
+        })
+    for key, (label, weights, about) in MN_PRESETS.items():
+        out.append({
+            "id": "many-nations" if key == "even" else "many-nations-" + key,
+            "label": label,
+            "kind": "real",
+            "about": about + " Each system is named in one language, with one name in ten from another. "
+                     "Feature names put an English term round the word (Mount, Lake), as international maps do.",
+            "mix": {"of": [["nations-" + l, weights[l]] for l, _, _ in MN_LANGS], "clump": "sys",
+                    "strays_permille": 100},
+        })
+    return out
+
+
 def build():
     return {
         "format": "sse.pack/1",
@@ -357,13 +562,15 @@ def build():
         "provides": {
             "other": {
                 "names": {
-                    "schemes": [catalogue(False), catalogue(True), english()] + invented(),
+                    "schemes": [catalogue(False), catalogue(True), english()] + invented() + many_nations(),
                     "avoid": sorted(set(AVOID_WORDS + AVOID_BRANDS)),
                 }
             }
         },
         "about": (
-            "SSE4's built-in name schemes (naming design 4.8): Catalogue designations in two forms, and the avoid "
+            "SSE4's built-in name schemes (naming design 4.8): Catalogue designations in two forms, English-sounding, "
+            "Many nations (ten real languages, mixed by system, in three presets), the invented languages Vesh and "
+            "Oluen, and the avoid "
             "list that generated names are checked against (best effort: no list catches every word in every "
             "language or every trade mark, so every name can be renamed by hand). Built by scripts/build-base-names.py."
         ),
@@ -372,6 +579,10 @@ def build():
             "Working Group for Planetary System Nomenclature (a U.S. Government work).",
             "Designation conventions: International Astronomical Union (CC BY 4.0); Washington Double Star Catalog, "
             "U.S. Naval Observatory.",
+            "Many nations words (sources/many-nations.tsv): NorthEuraLex 0.9, Dellert et al. 2020 (CC BY 4.0), "
+            "and the World Loanword Database, Haspelmath and Tadmor (eds.) 2009 (CC BY 4.0). Rows were chosen, "
+            "some were left out on review, and the romanisation of Mandarin, Hindi, Arabic and Russian is ours.",
+            "English-sounding element meanings: our own glosses, citing Blackie 1887 (public domain).",
         ],
     }
 
