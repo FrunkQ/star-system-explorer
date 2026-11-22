@@ -69,6 +69,9 @@ jobs:
       - if: matrix.os == 'ubuntu-latest'
         name: generated TypeScript types are committed and current
         run: git diff --exit-code packages/contracts/src/generated
+      - if: matrix.os == 'ubuntu-latest'
+        name: master data sheet is current with its sources
+        run: python3 scripts/build-base-reference.py --check
       - run: cargo run -q -p sse-cli --release -- harness
 
   wasm:

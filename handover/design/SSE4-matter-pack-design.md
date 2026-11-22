@@ -68,6 +68,35 @@ The weather review already planned a shared volatile table (`sse.volatile.specie
 
 **Every block declares what it reads.** A climate block says "I need a vapour-pressure curve and a latent heat". The kernel then knows, for any substance, which blocks can use it and which will skip it, and can say so in "Why?".
 
+### 3A. The Look up block: one small block that everything wires in (Alex, 22 Nov 01:03: "a special lookup block for all these things, rather than in code or in a massive block, as getting the physical properties for a material is a basic thing probably used everywhere")
+
+The sheet is reached through **one small block, "Look up"** (`sse.reference.lookup`), which sits in the node editor like any other block and is the only way a flow gets a fact about nature.
+
+| | |
+|---|---|
+| **You set or wire** | *what*: any row on the sheet (a constant, an element, a substance, a mixture, a reference object), chosen on the block or wired in when a flow loops over substances. *property*: "density", "vapour pressure", "electrical conductivity", "latent heat of melting". *conditions*, optional: pressure and temperature |
+| **It gives** | the *value*, in its unit; the *phase* the substance is in at those conditions (section 4.3A, so "density of water at 20,000 bar and 300 K" answers for ice VI without the flow knowing ice VI exists); *known*, which is false when the row lacks that property, so the flow skips that substance and says so; *in range*, false when the conditions lie outside what the source covers |
+| **On its face** | the current answer and a small phase chip, live as the inputs change. Constants show as the same block with no conditions |
+| **"Why?"** | the source with its DOI or URL, the check status, the evidence grade (measured, computed, extrapolated), the range it holds for, and, where a pack has changed the value, the real one beside it |
+| **Editing** | on the block you change which row and which property it asks for. The *value* is changed in one place only, the Reference screen, which the block links to. So there is never a second copy to drift |
+
+Rules that make it the only door:
+
+- **No block carries its own number about matter or nature.** No density, latent heat, molar mass, G or solar mass typed inside a flow, a big block or compiled code. The MP0 audit script already finds these; it runs in CI over packs and crates and fails on a new one (how the existing ones are retired is set out below). Fitted model numbers (a parametrisation's tuning) are the stated exception and stay in their own pack's fudge register.
+- **Big blocks and compiled code use the same door.** A heavy block that needs properties thousands of times (the interior walk, the climate step) calls the same reader the Look up block wraps, and lists what it asks for so it appears in "used by". It may not keep a private table.
+- **"Used by" and "skipped by" are read off the wiring.** Because every read goes through Look up, the kernel knows which flows read which property of which row from the flows themselves. This replaces hand-written declarations: nothing to keep in step.
+- **Cheap and exact.** A lookup is a table read with a stated interpolation, the same on every device, using `sse_core::math`. A world that only gets a click asks for nothing.
+- **Fictional and changed matter need nothing extra.** The block returns whatever the stacked packs say and carries the mark along its wire, which is how a world ends up marked "uses edited matter".
+
+**Getting there without stopping the build (Alex, 22 Nov 01:09: "we need to do this, it will hit every bit of code, so label and change them as you touch code, with an end clear up").**
+
+1. **Label.** The MP0 audit's list of every typed constant and material number becomes a checked-in ledger (`handover/packages/MP0-typed-copies.txt`: file, line pattern, which sheet row it should read). Those are the *labelled* copies.
+2. **The check, from day one**, fails the build on any typed copy that is **not** in the ledger, so no new ones appear. It lets the labelled ones through and prints how many remain ("typed copies left: 212").
+3. **Change as you touch.** Any package that edits a file with labelled copies moves them to the Look up block or the reader in the same change and deletes their ledger lines. The ledger may only shrink: the check also fails if a line is added.
+4. **End clear-up.** One closing package (MP22) removes whatever is left, empties the ledger, and switches the check to allow none. The count goes on the build state page so the remaining work is visible.
+
+So "getting a property of a material" is one block, shown once in the palette (also findable as "Constant" and "Material property"), and the sheet behind it is one table.
+
 **Three honesty states per value**, GM view only:
 
 | State | Meaning | What the GM sees |
@@ -109,6 +138,68 @@ Mass number, share of its element at the Sun's birth, half-life, decay heat, dau
 | cosmochemical | which formation material it counts in, condensation temperature at disc pressure (checked against its own vapour curve) | formation |
 
 Dissolved forms are states of the substance, not separate rows: `h2_aq` becomes hydrogen in the "dissolved" state. Ions are their own rows.
+
+### 4.3A Many phases per substance (added on Alex's word, 22 Nov 00:50: "we need a LOT more ice types all overlaid on Water, others may need that. The ice that created Neptune's mag field should be calculable, and worked out from that table")
+
+Today's row knows three phases: one solid, one liquid, one gas. Real water has far more, and which one is present decides what a world's inside does. So the `phases` group becomes a **list of phases with the boundaries between them**, for any substance, by one mechanism.
+
+**A phase row holds**
+
+| Field | Holds |
+|---|---|
+| id, names | `h2o.ice_vii`, "ice VII", in the three wordings |
+| kind | solid, glass (amorphous), liquid, gas, supercritical fluid, ionic fluid, superionic solid, metallic fluid. A label read by nothing: blocks read the properties below |
+| properties of this phase | density as a compression curve, heat capacity, thermal conductivity, **electrical conductivity**, viscosity or creep law, strength, optics. The thermal, mechanical and optical groups of section 4.3 are now held per phase |
+| evidence | **measured**, **computed** (from published quantum simulations, where no laboratory reaches) or **extrapolated**, with the pressure and temperature range it holds for. Shown on the card; a computed boundary is drawn dashed, says "computed", and links to the paper that computed it wherever it appears (Alex, 22 Nov) |
+| stability | stable, or metastable (it exists, but is not what forms on a slow path; drawn only when asked) |
+
+**A boundary** joins two named phases: a curve (fit or table) with its range, the latent heat and the volume change across it, and its source. Load checks: three boundaries that meet must meet at one point, and that point is the triple point (never typed twice); every stable point in the covered range belongs to exactly one phase; the old triple point, critical point and vapour curve are simply the boundaries of the three familiar phases, so nothing that reads them today changes.
+
+**One question, asked by everyone:** `phase_at(substance, pressure, temperature)` gives the phase, and from it any property. The kernel answers from a table built at pack-build time from the boundaries (heavy physics as tabulated results; deterministic, the same on every device), so asking is a lookup. A mixture's layer asks for its main substance and applies the mixture's stated rule.
+
+**Water, first wave (what is on the card)**
+
+| Phase | Where it matters | Evidence |
+|---|---|---|
+| Ice Ih | every surface ice, shells of icy moons, glaciers | measured |
+| Amorphous ice (glass) | very cold comets and outer-system frost laid down below about 130 K; shows in the spectrum | measured |
+| Ice II, III, V, VI | inside Ganymede, Callisto, Titan and large icy bodies: a floor of dense ice under the ocean, between water and rock | measured |
+| Ice VII, ice X | deep inside water-rich super-Earths and sub-Neptunes; ice VII stays solid at hundreds of kelvin | measured, then computed at the top end |
+| Liquid, vapour, supercritical fluid | oceans, air, hot deep envelopes with no surface between sea and sky | measured |
+| Ionic fluid | the outer deep layer of Uranus and Neptune: water split into ions, an electrical conductor that still flows | computed, with shock experiments |
+| Superionic ice (ice XVIII) | deeper still: oxygen atoms locked in a lattice, protons flowing through it. Conducts, but barely flows | seen in laser-shock experiments in 2018 and 2019; boundaries computed |
+| Ic, IV, IX, XI to XVII, XIX | ordered or metastable forms; listed for completeness, off the map unless "show every known ice" is on | measured |
+
+**Neptune's field, worked out and not asserted.** The magnetism flow already asks one question of any body, star or planet: is there a region that convects and conducts, how dense is it, how much heat does it carry (`sse.base.body-magnetism`, Christensen, Holzwarth and Reiners 2009). Today its three inputs are handed to it. With phases they are found:
+
+1. The interior block walks pressure and temperature down through the body and asks `phase_at` at each step, so each layer has a named phase.
+2. A layer is a **dynamo candidate** when its phase's electrical conductivity is high enough for field to grow faster than it leaks away, and its viscosity lets it convect under the heat passing through. Both are smooth numbers from the phase row (a magnetic Reynolds number), not a list of allowed phases. Iron in Earth's outer core, metallic hydrogen in Jupiter and ionic water in Neptune all pass by the same test.
+3. The layer's depth, thickness and density feed the existing flow. A thin conducting shell over a layer that conducts but does not turn over gives a lopsided, many-poled field; a thick shell round a small centre gives a tidy dipole. That is the published explanation for why Uranus and Neptune have tilted, off-centre fields and Earth and Jupiter do not, and here it falls out of where the superionic layer starts.
+
+What the card says about certainty, as the origin stories do: superionic ice has been made for billionths of a second in the laboratory; that Uranus and Neptune hold a deep layer of it is the leading explanation and not a measurement, because their insides are known only from gravity and one flyby each; the field itself is made in the flowing ionic layer above it, with the superionic layer shaping it. The explanation is argued: a rival holds that the ices separate into layers that do not mix (Militzer 2024), and neither accounts for Uranus giving off almost no heat. The magnetic fields design (`SSE4-magnetic-fields-design.md`, track MF) ships the thin shell as the default and the rival as a swappable interior block; the sheet serves both.
+
+**What the magnetic fields design asks of the sheet (its section 10; agreed 22 Nov).** Beyond the per-phase properties above: (1) a stated, registered rule for the electrical conductivity of mixtures (hydrogen with helium; water with ammonia and methane; iron with sulphur or silicon), held on the mixture row as section 4.4 already allows; (2) melting curves of iron alloys and how light elements share between solid and liquid iron, for the freezing of an inner core; (3) Curie temperature and magnetic susceptibility on mineral rows (magnetite, hematite, pyrrhotite, iron metal), for magnetism frozen into crust; (4) the evidence grade handed to the reader with every value, which the Look up block's "Why?" and `in range` already carry, because the conductivities of core iron and ionic water are the most disputed inputs; (5) the magnetic constant, the elementary charge and the electron mass on the Constants page (the magnetic constant is typed in `sse-atoms/src/magnetic.rs` today and moves in MP1c's sweep). Items 1 and 4 land with MP17 and MP17a, item 5 with MP1c, item 3 with MP13's minerals wave, item 2 with MP21's iron wave. The magnetic design's MF16 is these rows, done inside those packages.
+
+**The cutaway shows the zones (Alex, 22 Nov 00:53: "the planet cutaway should show the various ice zones").** The interior block's walk in step 1 is kept as the world's **phase profile**: a list of zones from the top down, each with its substance, phase, the depths it spans, and the pressure and temperature at its top and foot. The cutaway on the Body screen draws one band per zone, to scale, named in plain words ("ice shell, ice Ih, 0 to 150 km"; "ocean"; "ice VI floor"; "ionic water"; "superionic ice"). Each band answers "why is this here?" from the profile itself: "below 150 km the pressure passes 2,000 bar and the path crosses water's melting line, so the ice gives way to liquid; at 800 km it crosses back into ice VI." Tapping a band opens that substance's card with this world's path drawn on its diagram, and a zone drawn from computed boundaries carries the same dashed edge and "computed" note there. The dynamo layer, when there is one, is marked on the cutaway as the place the field is made. Nothing is walked until a world is opened at Survey level or its cutaway is asked for, and the profile is cached with the world.
+
+**Other substances, same mechanism (later waves)**
+
+| Substance | Phases worth having | What they switch on |
+|---|---|---|
+| Hydrogen | molecular gas and fluid, metallic fluid | Jupiter's and Saturn's fields, by the same test; brown dwarfs |
+| Helium (in hydrogen) | mixed, and separating into droplets | helium rain: Saturn's extra heat and its oddly tidy field |
+| Ammonia | ices I to V, ionic and superionic forms | antifreeze in icy-moon oceans; part of the conducting layer in ice giants |
+| Methane | ices I and up, then breaking into heavier hydrocarbons and carbon | "diamond rain" as a heat source in ice giants (argued; marked so) |
+| Nitrogen | alpha and beta ice | Pluto's and Triton's glaciers: beta is the soft one that flows and convects |
+| Carbon dioxide | ice I ("dry ice"), high-pressure forms | Mars's caps; deep CO2 on carbon-rich worlds |
+| Carbon monoxide, ethane | their low-pressure ices | Pluto, Titan, comets |
+| Iron | alpha, gamma, epsilon, liquid | solid inner core against liquid outer core; where a rocky world's dynamo sits and when it freezes out |
+| Mantle silicates | olivine, the two spinel forms, bridgmanite, post-perovskite | the steps in a rocky mantle; whether a super-Earth's mantle turns over in one piece |
+| Carbon | graphite, diamond, liquid | carbon worlds; the diamond in the methane row |
+
+**Fictional matter gets this for free.** A made-up substance may declare phases too. An unobtainium phase that conducts at room temperature would be offered to the dynamo test like any other, and the card would say which worlds gain a field because of it.
+
+**With changed constants** (section 7A) phase tables are "cannot follow": they were computed or measured with the real ones, and say so.
 
 ### 4.4 Mixture
 
@@ -332,7 +423,7 @@ Three rules keep these honest:
 - **Written once, as data.** The stories live on the element rows in the three wordings (physics, plain, story), so packs can reword them, Minerva can quote them, Tars can answer from them, and a fictional element gets a story from whatever source its row names.
 
 ### 8.2 Substance browser
-A searchable list with filters built from the data (has a vapour curve, is a mineral, is fictional, is used by weather). The card's centrepiece is the **phase diagram**, with the selected world's surface, cloud tops and sea floor plotted as dots. "Why does it rain methane on Titan?" is answered by where the dot sits. Below it: every property group with values, and "used by" and "skipped by" lists.
+A searchable list with filters built from the data (has a vapour curve, is a mineral, is fictional, is used by weather). The card's centrepiece is the **phase diagram**, with the selected world's surface, cloud tops and sea floor plotted as dots. "Why does it rain methane on Titan?" is answered by where the dot sits. With section 4.3A the diagram shows **every stable phase** as a named region (computed boundaries dashed), its pressure axis runs from the near-vacuum of a comet to the centre of a giant planet, and a selected world is drawn as a **path** from its cloud tops or surface to its centre, not only a dot, with each layer it passes through named ("Neptune: vapour, supercritical fluid, ionic fluid, superionic ice"). A "near the surface" and "whole planet" switch sets the range; "show every known ice" adds the metastable ones. Below it: every property group with values, and "used by" and "skipped by" lists.
 
 ### 8.3 Mixtures
 Rocks, airs, seas and the six formation materials, each shown as a recipe bar that opens into its substances.
@@ -394,6 +485,14 @@ One pull request each, with its evidence packet. Prefix MP. Design is by this th
 | MP12 | **Packs and Explorers.** Universe packs may carry matter rows; a "deposit" template for dressing rules; the pack listing says "adds 2 fictional elements, changes 1 real value" | Build Traveller pack (inside TG13), Integrate Explorers site with SSE4 (inside TG15) | MP9, TG12 | one of the two shipped universe packs carries a fictional element and a dressed deposit; the listing shows the counts from the manifest |
 | MP15 | **Measures: your own units, unit schemes and calendars.** "Add a unit" into the campaign pack; unit schemes as pack data with a campaign default and an override per lens and player view; the stack offers every pack's calendar instead of only the top one, with one chosen as the campaign's; the Units and Calendars pages, grouped as "This setting's measures"; make, edit and "make a calendar from this world" | Build kernel resolve and rules (calendar list, schemes, checks), Rebuild the chart room's top level (pages), Build Traveller pack (its scheme; it owns the date formatter) | MP1c; the pack calendar work already on main | a unit added in the campaign pack is offered on every display of that dimension and refused if it redefines an existing unit; switching scheme or shown calendar changes no state hash; two stacked calendars both list, and one moment reads correctly in each; a calendar made from the Earth fixture proposes a 24-hour day, a 365-day year and the Gregorian leap rule to within its stated tolerance, and one made from Mars a 24.66-hour day and a 668.6-day year; a player view set to another calendar shows the same moment as the GM's; a V3 save's custom calendar imports and appears on the page; screenshots at desktop and phone in both GM modes |
 | MP16 | **Counted measures and routes.** Measures declared as pack data with a kind (unit or counted); counted values as kept values on routes; a pack rule for the default with hand override; sums along a path; the route finder takes any measure as its weight; the Units page lists them apart from units; a route card shows the counted value beside the measured distance; Traveller's jump as the first one, with its default rule and "a jump takes about a week" | Build kernel resolve and rules (declarations, kept values on routes, path sums, the wall), Build galaxy charts and travel screens (route finder and route card), Build Traveller pack (jump, its rules, sector routes), Rebuild the chart room's top level (the Units page list) | MP15; TG3 (authored overrules derived); routes from X3c | a route between two worlds 7.3 pc apart set to 2 jumps shows both figures on the GM view and only the jumps on a default player view; moving one world changes the parsecs and not the jumps; with a jump-2 ship the rule proposes 4 jumps, a typed 2 overrules it, and clearing the typed value restores 4 with its "Why?"; a three-route path sums correctly and "fewest jumps" picks a different path from "shortest" on a fixture built for it, the same on two devices; the same route gives 4 jumps to a Jump-2 ship and 2 to a Jump-4 ship; a route whose longest gap is 3 parsecs reads "needs Jump-3" and the finder refuses it to a Jump-2 ship with the reason; a sizeless rating (a gate class) compares against a typed need the same way; the autopilot plans a jump leg only for a ship whose rating meets the need, and a relativistic leg only for a ship whose thrust and fuel reach it, each refusal naming the missing capability; no screen or export shows a rating in the count's wording or the reverse (a test over every player-facing reply); asking to convert jumps to parsecs is refused with a readable message; a physics flow that reads a counted measure is refused at load; setting 50 values changes no resolved fact and no golden hash; one jump advances the campaign clock by the pack's week |
+| MP17 | **Many phases per substance.** The `phases` list and boundaries of section 4.3A in the schema; per-phase property groups; the evidence and stability fields; load checks (boundaries meet at one triple point, one phase per stable point, old three-phase readers unchanged); `phase_at` answered from a table built at pack-build time | Build kernel resolve and rules | MP1, MP3 | every existing fixture and golden unchanged (the three familiar phases read the same values); `phase_at` for water returns the right phase at test points taken from the IAPWS and SeaFreeze publications; the same answers on two devices; a row with one phase still loads |
+| MP17a | **The Look up block.** `sse.reference.lookup` as a node over the `sse-reference` reader (section 3A): what, property, optional pressure and temperature in; value, phase, known and in-range out; its face readout and "Why?"; marks carried on its wire; "used by" and "skipped by" derived from wiring; the audit script as a CI check over packs and crates (the CI change needs Alex's yes) | Build kernel resolve and rules, with Rebuild the chart room's top level for the block's face in the node editor | MP1; phase output once MP17 lands | a flow that looks up water's latent heat gives the value the typed copy gave; changing a value on the sheet changes every flow output that reads it and no other; a row lacking the property gives known = false and the flow skips it with a reason; the card's "used by" equals the set of flows wiring the block; the audit fails on a fixture flow with a typed density |
+| MP22 | **Typed copies: ledger, check and final clear-up.** The audit list as a checked-in ledger; the CI check that fails on any unlabelled typed constant or material number, tolerates labelled ones, prints the count, and fails if the ledger grows (Alex's own yes for this CI change, 22 Nov 01:09); every thread removes labelled copies in files it touches; a closing sweep empties the ledger and sets the check to allow none | Build the master matter data sheet owns the ledger, the check and the final sweep; Build kernel resolve and rules wires the check into CI with MP17a; every build thread shrinks the ledger as it goes | MP0, MP17a | a fixture with a new typed density fails; a labelled one passes and is counted; adding a ledger line fails; after the sweep the ledger is empty and the count is 0 |
+| MP18 | **Water's ices, the data wave.** The stable phases and boundaries of water from the sources in section 11, each boundary and property with its evidence grade; the metastable ices as listed rows; the built lookup table checked into the pack with the script that makes it | Build the master matter data sheet, with Verify physics citations | MP17 | every value sourced and checked; triple points among Ih, III, V, VI, VII and liquid within the published uncertainty; the CI step that fails on a stale data sheet covers the table |
+| MP19 | **Interiors name their phases.** The interior block asks `phase_at` down each body, so layers carry a phase and its properties, kept as the world's phase profile (`read_phase_profile`: zones with substance, phase, depth range, pressure and temperature at each edge, evidence grade, and the "why" for each boundary); a high-pressure ice floor under an ocean appears where the path crosses it | Build SSE4 proven core | MP17, MP18, MP6 | Ganymede: ice Ih shell, ocean, ice VI floor in that order; Europa: no high-pressure ice (too small); a 5 Earth-mass half-water world reaches ice VII; Earth unchanged; detail levels respected (nothing walked until a world is opened) |
+| MP19b | **The cutaway draws the zones.** One band per zone of the phase profile, to scale, with plain names, depths, "why is this here?", a dashed edge for computed boundaries, the dynamo layer marked, and a tap through to the substance card with this world's path on it | Rebuild the chart room's top level (the cutaway is on its Body screen) | MP19 | Ganymede's cutaway shows three water bands in the right order with depths from the profile; Neptune's shows ionic water over superionic ice; Earth's is unchanged; every band's "why" names the boundary crossed; works on a phone and in Night chart |
+| MP20 | **Dynamo regions found, not handed over.** A layer's conduction and convection test from its phase's properties; the dynamo layer's depth, thickness and density feed `sse.base.body-magnetism`; field shape (tidy dipole or lopsided) from shell geometry | Build SSE4 proven core, with Build light and nebulae reading the result for aurorae and radio. The thread "Design magnetic fields from fundamentals" (started 22 Nov) owns the field physics; this package supplies it the per-phase conductivity and the layer geometry and follows its design where the two differ | MP19 | Earth and Jupiter still match their existing tests with the inputs now found; Neptune and Uranus: field strength within a factor of 2 of Voyager 2's and classed many-poled; Mars and Venus: none today; no list of "phases that make fields" anywhere in code |
+| MP21 | **Phases, later waves**, in the order of question 25: hydrogen and helium; nitrogen, methane, ammonia, carbon dioxide and the other ices; iron, mantle silicates and carbon | Build the master matter data sheet, with the reading thread | MP17 | per wave: every value sourced with its evidence grade; Saturn's field and heat with helium rain; Pluto's nitrogen plains use beta ice's flow law |
 | MP13 | **Data, later waves**, each landing with the stage that reads it: minerals and rock types with hardness (S9), compression curves (interiors), salts (S21, ocean chemistry), organics and tholin (S19), absorption bands per gas (greenhouse) | Verify physics citations, with the reading thread | MP2 | per wave: every value sourced; the reading stage's own checks |
 | MP14 | **Smooth condensation (later).** Formation shares each element by its own condensation curve instead of six steps | Build SSE4 proven core | MP6 | Sol fixture still matches; the six-material fudge is removed from the register |
 
@@ -429,6 +528,17 @@ As recalled by this thread; each is checked against the source by the citations 
 - Thermochemistry: CODATA key values (Cox, Wagman and Medvedev 1989); Thauer (already registered); Holland and Powell 2011 for minerals, doi:10.1111/j.1525-1314.2010.00923.x
 - Phase and thermal data: NIST Chemistry WebBook, https://webbook.nist.gov
 - Gas absorption: HITRAN2020, Gordon et al. 2022, doi:10.1016/j.jqsrt.2021.107949
+- Water, the working equation of state: IAPWS-95, Wagner and Pruss 2002, doi:10.1063/1.1461829; melting and sublimation curves of ice Ih, III, V, VI, VII: Wagner, Riethmann, Feistel and Harvey 2011, doi:10.1063/1.3657937
+- Ices Ih, II, III, V, VI, their properties and boundaries for icy-world interiors: Journaux et al. 2020 (the SeaFreeze tables), doi:10.1029/2019JE006176; boundaries among the high-pressure ices up to VII: Dunaeva, Antsyshkin and Kuskov 2010, doi:10.1134/S0038094610030044
+- The whole map of known ices, stable and metastable: Salzmann 2019, doi:10.1063/1.5085163
+- Water across planetary pressures and temperatures in one table, with its phases (ice VII, X, superionic, ionic fluid): Haldemann, Alibert, Mordasini and Benz 2020 (AQUA), doi:10.1051/0004-6361/202038367; Mazevet, Licari, Chabrier and Potekhin 2019, doi:10.1051/0004-6361/201833963
+- Superionic ice: predicted, Cavazzoni et al. 1999, doi:10.1126/science.283.5398.44 (which also treats ammonia); seen, Millot et al. 2018, doi:10.1038/s41567-017-0017-4, and Millot et al. 2019, doi:10.1038/s41586-019-1114-6; its conductivity, French, Mattsson and Redmer 2010, doi:10.1103/PhysRevB.82.174108
+- Water's phases and the fields of Uranus and Neptune: Redmer, Mattsson, Nettelmann and French 2011, doi:10.1016/j.icarus.2010.08.008; the thin-shell explanation of their shape: Stanley and Bloxham 2004, doi:10.1038/nature02376
+- Dynamo strength from heat and density (already in the code): Christensen, Holzwarth and Reiners 2009, doi:10.1038/nature07626; Christensen 2010, doi:10.1007/s11214-009-9553-2
+- The rival account of the ice giants' interiors: Militzer 2024, doi:10.1073/pnas.2403981121 (as given by the magnetic fields design thread)
+- Hydrogen and helium at depth: Chabrier, Mazevet and Soubiran 2019, doi:10.3847/1538-4357/aaf99f; conductivity along Jupiter's interior, French et al. 2012, doi:10.1088/0067-0049/202/1/5
+- Methane breaking down to diamond: Kraus et al. 2017, doi:10.1038/s41550-017-0219-9
+- Still to find by the citations track (not recalled well enough to cite): nitrogen's alpha to beta boundary and beta ice's flow law, carbon dioxide's high-pressure phases, iron's and the mantle silicates' boundaries (Holland and Powell above covers part)
 - Heat isotopes: Ruedas 2017 and Turcotte and Schubert 2014 (already registered)
 
 ---
@@ -467,5 +577,16 @@ Alex, 21 Nov 2026, 20:51: "yes to all". Every question below is decided as recom
 ### Added 21 Nov 23:10, and decided as recommended (Alex, 21 Nov 23:11: "Yes. Autopilot will be able to do jumps/FTL/relativistic speeds - if capable")
 
 21. **Rating and count handled as section 7A.8 now says: the rating is a fact on the ship ("Jump-2", a real reach in Traveller, a sizeless compared number in settings that want one), the count is the counted value on the route ("2 jumps"), the pack's rule joins them, and each has its own fixed wording?** Recommended: yes. It adds one choice to a counted measure (adds up, or is compared) and nothing else.
+
+### Added 22 Nov 00:55, and decided (Alex, 22 Nov 01:08: "computed and link to source; rest fine")
+
+22. **Show the stable ices on the diagram by default, and keep the ordered and metastable ones (Ic, IV, IX, XI to XVII, XIX) as listed rows behind a "show every known ice" switch?** Recommended: yes. All are in the data; the default picture stays the map of what a world actually contains.
+23. **Where no laboratory reaches, use published calculations, drawn dashed and marked "computed" with their source, instead of leaving the deep interior blank?** Recommended: yes. It is how the science itself is done for ice giants, and the mark keeps it honest. **Alex: yes, marked "computed" and with a link to the source.** So every computed boundary and value carries the link to the paper that calculated it right where it is shown: on the diagram's dashed line, on the cutaway band, and on the Look up block's "Why?", not only in the register.
+24. **Magnetic fields come from one test on every layer of every world (does it conduct, does it turn over), with no list of field-making materials, so iron, metallic hydrogen, ionic water and anything fictional are treated alike?** Recommended: yes. It is "processes, not classes", and the dynamo flow in the code is already written that way.
+25. **Order of the later waves: hydrogen and helium first (Jupiter and Saturn), then the outer-system ices (nitrogen, methane, ammonia, carbon dioxide), then iron, mantle rock and carbon?** Recommended: yes. Water alone gives the icy moons and the ice giants; the giants' fields come next for the least data.
+
+### Added 22 Nov 01:05, and decided (Alex, 22 Nov 01:09: "we need to do this... label and change them as you touch code with an end clear up")
+
+26. **One Look up block for everything on the sheet (constants, elements, substances, mixtures), as section 3A, with the check that fails the build when any block or code types its own copy of a material number or constant?** Recommended: yes. **Alex: yes, done gradually**: label the existing copies, fail only on new ones, change them as code is touched, clear up at the end (section 3A, package MP22). This is his own yes for the CI change.
 
 Synced to `handover/design/` with track MP in the build plan (PR 89, then the rulings in a second PR). Next from this thread: the Reference screen mockup (ruling 9), before MP10 is built.

@@ -1914,6 +1914,29 @@
   "lon_deg": 0.0
  },
  {
+  "op": "survey_caves",
+  "fixture": "Moon",
+  "quick": true,
+  "lat_deg": -5.862,
+  "lon_deg": -171.954,
+  "radius_km": 25.0
+ },
+ {
+  "op": "survey_caves",
+  "fixture": "Moon",
+  "quick": true,
+  "lat_deg": -9.587,
+  "lon_deg": -138.999,
+  "radius_km": 25.0
+ },
+ {
+  "op": "survey_caves",
+  "fixture": "Jupiter",
+  "quick": true,
+  "lat_deg": 0.0,
+  "lon_deg": 0.0
+ },
+ {
   "op": "export_chronicle"
  },
  {

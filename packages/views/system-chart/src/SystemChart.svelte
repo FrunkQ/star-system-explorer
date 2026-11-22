@@ -8,7 +8,7 @@
 <script lang="ts">
   import { KM_PER_AU, isShell, asPlayers, distanceWords, lightWords, separation, hasLayer, hasTool, childrenOf, commitEdit, frameFor, legendFor, primaryOf, sig, subjectOf, type Json, type SceneSubject, type SystemScene, type ViewContext } from "../../../ui-contract/src/index.ts";
   import { System3D, bandsFromScene, fromSystemScene } from "../../system-3d/src/index.ts";
-  import { ChartGround, HatchDefs, Hatch, Ink, Legend, Mark, Stamp, markExtent, SurveyGrid, distanceAt, easing, fitScale, motionMs, polar, radius } from "../../../chart-grammar/src/index.ts";
+  import { ChartGround, HatchDefs, Hatch, Ink, Legend, Mark, Stamp, markExtent, distanceAt, scaleRings, easing, fitScale, motionMs, polar, radius } from "../../../chart-grammar/src/index.ts";
 
   let { ctx, scene, params }: { ctx: ViewContext; scene: SystemScene; params: Record<string, Json> } = $props();
 
@@ -86,9 +86,11 @@
   const unsurveyed = $derived(
     `M0 0H${w}V${h}H0Z M${cx - surveyR} ${cy}a${surveyR} ${surveyR} 0 1 0 ${surveyR * 2} 0a${surveyR} ${surveyR} 0 1 0 ${-surveyR * 2} 0Z`,
   );
-  const decades = $derived(
-    frame ? [1e5, 1e6, 1e7].map((k) => k / KM_PER_AU).filter((a) => a > scale.inner_au && a < scale.outer_au) : [0.1, 1, 10, 100].filter((a) => a > scale.inner_au && a < scene.surveyed_to_au),
-  );
+  // The grid is the scale (log-radial, so not squares): a solid ring at each power of ten (AU round a star, km round a
+  // planet), fainter rings at 2 and 5 times it when there is room, out to the chart's corners.
+  const rings = $derived(scaleRings(scale, Math.hypot(Math.max(cx, w - cx), Math.max(cy, h - cy)), frame ? 1 / KM_PER_AU : 1));
+  const decades = $derived(rings.filter((g) => g.major));
+  const unitWord = $derived(frame ? "km" : "AU");
 
   const label = (s: SceneSubject) => s.label;
   // The GM's lens (U9) decides which layers are drawn; it never changes the data.
@@ -235,7 +237,11 @@
         class:dragging={drag !== null}
       >
         <HatchDefs {prefix} />
-        {#if on("grid")}<SurveyGrid width={w} height={h} step={Number(params.grid_step)} labels={params.grid_labels === true && !narrow} />{/if}
+        {#if on("grid")}
+          <g class="rings" aria-hidden="true" data-scale-rings={decades.map((g) => g.units).join(" ")}>
+            {#each rings as g (g.au)}<circle class:major={g.major} cx={cx} cy={cy} r={r(g.au)} />{/each}
+          </g>
+        {/if}
         {#if params.unsurveyed_hatch && on("unsurveyed") && !frame}
           <Hatch {prefix} d={unsurveyed} pattern="hatch" opacity={0.5} />
           <Ink circle={{ cx, cy, r: surveyR }} tone="muted" dash="dashed" />
@@ -256,8 +262,8 @@
             <Ink circle={{ cx, cy, r: (r0 + r1) / 2 }} tone="muted" dash="belt" />
           {/if}
         {/each}
-        {#each on("distances") ? decades : [] as a (a)}
-          <text class="dist" x={cx + 4} y={cy - r(a) - 4} aria-hidden="true">{dist(a)}</text>
+        {#each on("distances") ? decades : [] as g (g.au)}
+          {#if cy - r(g.au) > 12}<text class="dist" x={cx + 4} y={cy - r(g.au) - 4} aria-hidden="true">{frame ? km(g.au) : `${g.units.toLocaleString("en-GB")} AU`}</text>{/if}
         {/each}
         {#each orbiting as s (s.address)}
           {@const sel = ctx.workspace.selection === s.address}
@@ -361,7 +367,7 @@
       <div class="legend">
         {#if authoredImport}<span class="authored-import" data-authored-import><Stamp kind="authored" title="Every name and value here was written in a V3 save, not modelled by SSE4's physics. A body called Earth is the save's Earth, not the real one." /><span class="words">As written in a V3 save, not modelled</span></span>{/if}
         {#if scene.fixture}<Stamp kind="fixture" title="The sample system's inputs are fixture data; every derived value comes from the kernel's base-physics pack." />{/if}
-        <span>Distances on a log scale{frame ? ", in kilometres" : ""}</span>
+        <span data-scale-note>{on("grid") && decades.length ? `Log scale${frame ? ", in kilometres" : ""}: each bold dotted ring is ten times the last (${decades.slice(0, 2).map((g) => `${g.units.toLocaleString("en-GB")} ${unitWord}`).join(", ")}…)` : `Distances on a log scale${frame ? ", in kilometres" : ""}`}</span>
         {#if through}<span class="through" data-known-count={knownCount}>{L?.label}: {knownCount} of {bodyCount} known</span>{/if}
         {#if key?.entries.length && on("key")}
           <details class="key">
@@ -607,6 +613,20 @@
   }
   .band.zone {
     fill: var(--sse-zone-ink);
+  }
+  /* Scale rings are the grid, not orbits: grid ink, dotted, so a solid line on the chart is always an orbit. */
+  .rings circle {
+    fill: none;
+    stroke: var(--sse-grid);
+    stroke-width: var(--sse-line);
+    stroke-dasharray: 1 5;
+    opacity: 0.7;
+  }
+  .rings circle.major {
+    stroke: var(--sse-ink-faint);
+    stroke-width: calc(var(--sse-line) * 1.5);
+    stroke-dasharray: 1 3;
+    opacity: 1;
   }
   .dist {
     fill: var(--sse-ink-muted);
