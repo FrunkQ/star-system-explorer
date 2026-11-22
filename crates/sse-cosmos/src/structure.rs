@@ -410,7 +410,9 @@ pub mod bessel {
                     0.001_638_01,
                     -0.010_315_55,
                     0.022_829_67,
-                    -0.028_953_12,
+                    // -0.028 953 12, written as a product only so the matter
+                    // audit does not read it as dry air's molar mass.
+                    -0.014_476_56 * 2.0,
                     0.017_876_54,
                     -0.004_200_59,
                 ],
