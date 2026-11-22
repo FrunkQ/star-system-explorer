@@ -32,8 +32,7 @@ try {
     gm.on("pageerror", (e) => errors.push(e.message));
     await gm.goto(base + "#chart");
     await gm.waitForSelector("[data-state-hash]:not([data-state-hash=''])", { timeout: 20000 });
-    await go(gm, "explore");
-    await gm.locator("[data-section-tab=foam]").click();
+    await go(gm, "web");
     await gm.waitForSelector(".foam[data-web^='200:']", { timeout: 60000 });
     const foam = gm.locator(".foam");
     assert.match(await foam.locator("[data-lede]").innerText(), /^Today/);
@@ -72,8 +71,7 @@ try {
     phone.on("pageerror", (e) => errors.push(`phone: ${e.message}`));
     await phone.goto(base + "#chart");
     await phone.waitForSelector("[data-state-hash]:not([data-state-hash=''])", { timeout: 20000 });
-    await go(phone, "explore");
-    await phone.locator("[data-section-tab=foam]").click();
+    await go(phone, "web");
     await phone.waitForSelector(".foam[data-web^='200:']", { timeout: 60000 });
     const over = await phone.evaluate(() => document.documentElement.scrollWidth - window.innerWidth);
     assert.ok(over <= 1, `no sideways scroll on a phone (${over}px over)`);
