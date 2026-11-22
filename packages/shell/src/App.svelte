@@ -37,7 +37,7 @@
   import { orbitScene, voicesFromSystem } from "../../ui-contract/src/index.ts";
   import { orbitBodies, phasesFrom, withPhases, yearsToSeconds } from "../../ui-contract/src/index.ts";
   import { compareScenes, dropWhatIf, keepWhatIf, openWhatIf } from "../../ui-contract/src/index.ts";
-  import { AU_M, copyClip, missingPacks, placeClip, primaryOf, readClip, clipWords, type Clip } from "../../ui-contract/src/index.ts";
+  import { AU_M, placeBodies as placePasted, withdrawBodies, copyClip, missingPacks, placeClip, primaryOf, readClip, clipWords, type Clip } from "../../ui-contract/src/index.ts";
   import { allLenses, checkLens, defaultLens, hasTool, lensAudience, type Lens, type Vocab } from "../../ui-contract/src/index.ts";
   import { themeCss, THEMES } from "../../skins/chart-room/src/index.ts";
   import { ALL_THEMES } from "../../skins/player/src/index.ts";
@@ -504,14 +504,33 @@
     }
     // A now moved by a kept look-ahead can pass the fixture's ruler: the ruler grows to keep it in view.
     const at = { ...base, now_yr: now, span_yr: [base.span_yr[0], Math.max(base.span_yr[1], now * 1.25)] as [number, number] };
-    const main = deriveScene(s, applyEdits(at, applied), derivations);
-    const what = b ? deriveScene(s, applyEdits(at, { ...applied, ...b.applied }), derivations) : main;
+    // Bodies pasted into the campaign's own system live in the universe, not the fixture: they are read back from it
+    // and set in beside the fixture's (a withdrawn one, by Undo or Cut, has left the read-back).
+    const added = pastedSubjects(s, at);
+    const main = added.then((x) => deriveScene(s, applyEdits(x, applied), derivations));
+    const what = b ? added.then((x) => deriveScene(s, applyEdits(x, { ...applied, ...b.applied }), derivations)) : main;
     Promise.all([main, what]).then(([m, w]) => {
       if (g !== generation) return;
       mainScene = m;
       scene = w;
     });
   });
+  async function pastedSubjects(s: ViewSession, at: SystemScene): Promise<SystemScene> {
+    const r = await s.resolvedSystem(at.system);
+    if (!r.ok) return at;
+    const have = new Set(at.subjects.map((x) => x.address));
+    const read = sceneFromResolved(r.result).subjects.filter((x) => !have.has(x.address));
+    if (!read.length) return at;
+    // Read back alone, a pasted star would be taken for the system's primary: its host and orbit come from its facts.
+    const placed = read.map((x) => {
+      const f = r.result.facts[x.address] ?? {};
+      const host = typeof f["orbit.host"] === "string" ? (f["orbit.host"] as string) : x.parent;
+      const sma = f["orbit.semi_major_axis"];
+      const orbit = x.orbit ?? (typeof sma === "number" && !x.band_au ? { a_au: sma / AU_M, phase_deg: 0 } : undefined);
+      return { ...x, subtitle: `Pasted · ${x.kind}`, stamps: x.stamps.filter((t) => t !== "imported"), ...(host ? { parent: host } : {}), ...(orbit ? { orbit } : {}) };
+    });
+    return { ...at, subjects: [...at.subjects, ...placed] };
+  }
   let mainScene = $state<SystemScene>(base);
   // V13 part 2: systems adopted into the campaign this session, and the one on the chart (null: the campaign's own).
   let adoptedSystems = $state<{ system: string; title: string }[]>([]);
@@ -693,11 +712,11 @@
   }
 
   // Copy and paste (top-level design 8.2). Copy takes the selected body and everything under it as a clip on the
-  // clipboard; Paste reads one on the Build desk and shows where it would land. Placing it as one undo step comes with
-  // the kernel's batch edit (part 2).
+  // clipboard; Paste reads one on the Build desk, shows where it would land, and places it as one change (the kernel's
+  // batch edit), so one Undo takes the whole paste back. Cut is Copy, then the body is withdrawn, as one change too.
   let clipNote = $state<string | null>(null);
   let clipDialog: HTMLDialogElement | undefined = $state();
-  let pasted = $state<{ clip: Clip; words: string; host: string; hostLabel: string; a_au?: number; missing: { id: string; version: string; have?: string }[]; placed: { address: string; label: string; kind: string }[] } | null>(null);
+  let pasted = $state<{ clip: Clip; words: string; host: string; hostKind: string; hostLabel: string; a_au?: number; missing: { id: string; version: string; have?: string }[]; placed: { address: string; label: string; kind: string }[] } | null>(null);
   const clipArmed = $derived(desk === "build" && railScale !== "workshop" && hasTool(ws.lens, "clip"));
   const stackPacks = () => (session?.stack().base ?? []).map((p) => ({ id: p.id, version: p.version }));
   function copyText(): { text: string; words: string; left: string[] } | null {
@@ -732,6 +751,20 @@
     e.preventDefault();
     copiedNote(c);
   }
+  function oncut(e: ClipboardEvent) {
+    const t = e.target as HTMLElement;
+    if (!clipArmed || !cuttable || t.closest?.("input, textarea, select, dialog") || (window.getSelection()?.toString() ?? "")) return;
+    const c = copyText();
+    if (!c || !e.clipboardData) return;
+    e.clipboardData.setData("text/plain", c.text);
+    e.preventDefault();
+    const a = ws.selection!;
+    void withdrawBodies(session!, ws, { roots: [a], words: c.words }).then((r) => {
+      if (r.status !== "applied") return void (clipNote = `Could not cut it: ${r.status === "refused" ? r.reason : r.status === "error" ? r.message : "sent to the game master"}.`);
+      ws.select(null);
+      clipNote = `Cut ${c.words}. Paste it anywhere on the Build desk; Undo puts it back.`;
+    });
+  }
   function onpaste(e: ClipboardEvent) {
     const t = e.target as HTMLElement;
     if (t.closest?.("input, textarea, select, dialog")) return;
@@ -764,9 +797,57 @@
     if (!host) return void (clipNote = "There is no star here to paste around.");
     const a = r.clip.events.find((x) => x.node === r.clip.root && x.field === "orbit.semi_major_axis")?.value;
     const p = placeClip(r.clip, { system: scene.system, host: host.address, hostKind: host.kind, taken: scene.subjects.map((x) => x.address) });
-    pasted = { clip: r.clip, words: clipWords(r.clip), host: host.address, hostLabel: host.label, ...(typeof a === "number" ? { a_au: a / AU_M } : {}), missing: missingPacks(r.clip, stackPacks()), placed: p.placed };
+    pasted = { clip: r.clip, words: clipWords(r.clip), host: host.address, hostKind: host.kind, hostLabel: host.label, ...(typeof a === "number" ? { a_au: a / AU_M } : {}), missing: missingPacks(r.clip, stackPacks()), placed: p.placed };
     clipNote = null;
     clipDialog?.showModal();
+  }
+
+  // An address once used keeps its history, withdrawn or not, so a paste never takes one with any.
+  async function placement(clip: Clip, host: { address: string; kind: string }) {
+    const taken = scene.subjects.map((x) => x.address);
+    for (let i = 0; i < 64; i++) {
+      const p = placeClip(clip, { system: scene.system, host: host.address, hostKind: host.kind, taken });
+      const root = p.placed[0]!.address;
+      if (!session || !(await session.history(root)).length) return p;
+      taken.push(root);
+    }
+    return null;
+  }
+  let placing = $state(false);
+  async function placePaste() {
+    const p0 = pasted;
+    if (!session || !p0 || placing) return;
+    placing = true;
+    try {
+      const p = await placement(p0.clip, { address: p0.host, kind: p0.hostKind });
+      if (!p) return void (clipNote = "Could not find a free place for it.");
+      const roots = p.placed.filter((x) => x.parent === p0.host).map((x) => x.address);
+      const r = await placePasted(session, ws, { edits: p.edits, roots, words: p0.words });
+      clipDialog?.close();
+      if (r.status !== "applied") return void (clipNote = `Could not paste it: ${r.status === "refused" ? r.reason : r.status === "error" ? r.message : "sent to the game master"}.`);
+      clipNote = `Pasted ${p0.words}, orbiting ${p0.hostLabel}. Undo takes it back.`;
+      ws.select(roots[0]!);
+    } finally {
+      placing = false;
+    }
+  }
+  // Bodies in the universe rather than the fixture (pasted ones) can be cut; the sample's own are drawn from its file.
+  const baseAddrs = new Set(base.subjects.map((x) => x.address));
+  const cuttable = $derived(!viewing && !!ws.selection && !baseAddrs.has(ws.selection) && scene.subjects.some((x) => x.address === ws.selection));
+  async function cutBody() {
+    if (!session || !cuttable) return void (clipNote = "Only a pasted body can be cut for now; the sample's own bodies come from its file.");
+    const a = ws.selection!;
+    const c = copyText();
+    if (!c) return;
+    try {
+      await navigator.clipboard.writeText(c.text);
+    } catch {
+      return void (clipNote = "The browser would not let the chart room use the clipboard, so nothing was cut.");
+    }
+    const r = await withdrawBodies(session, ws, { roots: [a], words: c.words });
+    if (r.status !== "applied") return void (clipNote = `Could not cut it: ${r.status === "refused" ? r.reason : r.status === "error" ? r.message : "sent to the game master"}.`);
+    ws.select(null);
+    clipNote = `Cut ${c.words}. Paste it anywhere on the Build desk; Undo puts it back.`;
   }
 
   function view(node: HTMLElement, m: { module: ViewModule; params: Record<string, Json> }) {
@@ -837,7 +918,7 @@
   }
 </script>
 
-<svelte:window {onkeydown} {oncopy} {onpaste} onpointerdown={(e) => moreOpen && !(e.target as HTMLElement).closest(".more") && (moreOpen = false)} />
+<svelte:window {onkeydown} {oncopy} {oncut} {onpaste} onpointerdown={(e) => moreOpen && !(e.target as HTMLElement).closest(".more") && (moreOpen = false)} />
 
 {#if startOpen}<StartSheet doc={startDoc as never} built={STARTED} {carryOn} sample={base.title === "Kestrel" ? "Kestrel Reach" : base.title} ready={!!session} onopen={fromStart} />{/if}
 <div class="app" inert={startOpen} data-depth={depth} data-state-hash={status.hash} data-stack-hash={status.stack} data-physics={status.campaign ? "campaign" : "base"}>
@@ -898,6 +979,7 @@
           <div class="depth-more"><span class="depth-k">Depth</span><Segmented label="Depth in More" value={depth} options={DEPTHS} onchange={chooseDepth} /></div>
           {#if clipArmed}
             <button type="button" data-more-copy disabled={!ws.selection} onclick={() => ((moreOpen = false), void copyBody())}>Copy {selName ?? "a body"} <kbd>Ctrl+C</kbd></button>
+            {#if cuttable}<button type="button" data-more-cut onclick={() => ((moreOpen = false), void cutBody())}>Cut {selName} <kbd>Ctrl+X</kbd></button>{/if}
             <button type="button" data-more-paste onclick={pasteFromMenu}>Paste <kbd>Ctrl+V</kbd></button>
           {/if}
           <button type="button" onclick={() => ((moreOpen = false), toWorkshop())}>Workshop</button>
@@ -951,6 +1033,7 @@
           {#if hasTool(ws.lens, "undo") && (desk === "build" || ws.branch)}<ToolButton label="Undo" icon="M9 14L4 9l5-5M4 9h11a5 5 0 0 1 0 10h-3" keyhint="Control+Z" disabled={ws.undo.length === 0 || ws.mode !== "edit" || !!ws.branch} onclick={() => undo(true)} />
           <ToolButton label="Redo" icon="M15 14l5-5-5-5M20 9H9a5 5 0 0 0 0 10h3" keyhint="Control+Shift+Z" disabled={ws.redo.length === 0 || ws.mode !== "edit" || !!ws.branch} onclick={() => undo(false)} />{/if}
           {#if clipArmed}<ToolButton label="Copy" icon="M8 8h11v11H8zM5 16V5h11" keyhint="Control+C" disabled={!ws.selection} onclick={copyBody} />{/if}
+          {#if clipArmed && cuttable}<ToolButton label="Cut" icon="M6 4l12 16M18 4L6 20M4 18a2 2 0 1 0 4 0M16 18a2 2 0 1 0 4 0" keyhint="Control+X" onclick={cutBody} />{/if}
           <ToolButton label="Keyboard shortcuts" icon="M3 7h18v10H3zM7 11h1M11 11h1M15 11h2M7 14h10" keyhint="?" onclick={() => help?.showModal()} />
         </nav>
         {#if undoNote}<p class="undo-note" role="status">{undoNote}</p>{/if}
@@ -1106,9 +1189,13 @@
       <p data-paste-missing>It was made with {pasted.missing.map((m) => (m.have ? `${m.id} ${m.version} (this campaign has ${m.have})` : `${m.id} ${m.version}`)).join(", ")}, not stacked here as made. Values {pasted.missing.length === 1 ? "that pack sets" : "those packs set"} would be stamped IMPOSSIBLE until {pasted.missing.length === 1 ? "it is" : "they are"} stacked.</p>
     {/if}
     {#if depth === "engine"}<ul class="engine" data-depth="engine">{#each pasted.placed as b (b.address)}<li>{b.label} ({b.kind}) at {b.address}</li>{/each}</ul>{/if}
-    <p class="hint" data-paste-waits>Placing it comes next: the kernel will take the whole paste as one change, so one Undo takes it back.</p>
+    <p class="hint">It goes in as one change: one Undo takes the whole paste back.</p>
   {/if}
-  <form method="dialog"><button type="submit">Close</button></form>
+  <form method="dialog" class="paste-actions">
+    <button type="button" class="primary" data-paste-place disabled={placing || !!ws.branch} onclick={placePaste}>{placing ? "Pasting…" : "Paste here"}</button>
+    <button type="submit">Close</button>
+  </form>
+  {#if ws.branch}<p class="hint">A what-if is open: keep it or throw it away, then paste.</p>{/if}
 </dialog>
 
 <dialog bind:this={help} class="help" aria-labelledby="help-title">
@@ -1122,7 +1209,7 @@
     <dt>C, T</dt><dd>Go to the chart, go to the time ruler</dd>
     <dt>Page Up, Page Down, Home, End</dt><dd>On the ruler, larger steps</dd>
     <dt>Drag a body, or Page Up, Page Down on it</dt><dd>Move its orbit out or in (Build desk)</dd>
-    <dt>Ctrl+C, Ctrl+V</dt><dd>Copy the selected body with everything that orbits it; paste a copied body (Build desk)</dd>
+    <dt>Ctrl+C, Ctrl+X, Ctrl+V</dt><dd>Copy the selected body with everything that orbits it; cut a pasted body; paste a copied body (Build desk)</dd>
     <dt>Ctrl+Z, Ctrl+Shift+Z</dt><dd>Undo, redo (each is a new correction on the chart's history)</dd>
     <dt>why?</dt><dd>On any value: where it came from, at three depths (Curious, Science, Engine); "Open the flow" puts its physics on the bench</dd>
     <dt>P</dt><dd>Chart or Physics: the flow editor and change requests</dd>
@@ -1723,6 +1810,22 @@
   }
   .seats-dialog form[method="dialog"] {
     margin-top: 16px;
+  }
+  .paste-actions {
+    display: flex;
+    gap: 10px;
+  }
+  .paste-actions .primary {
+    background: var(--sse-ink);
+    color: var(--sse-ground);
+    border: var(--sse-line) solid var(--sse-ink);
+    padding: 6px 14px;
+    font: inherit;
+    cursor: pointer;
+  }
+  .paste-actions .primary:disabled {
+    opacity: 0.5;
+    cursor: progress;
   }
   .quiet {
     color: var(--sse-ink-muted);

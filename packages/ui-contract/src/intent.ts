@@ -35,11 +35,23 @@ export type Intent =
    * tags and the defaults. `default` sets the audience's starting view
    * instead (address: the universe root). Only the GM applies it.
    */
-  | { kind: "grant"; address: string; audience: string; view: string | null; default?: boolean; at_yr: number };
+  | { kind: "grant"; address: string; audience: string; view: string | null; default?: boolean; at_yr: number }
+  /**
+   * Set many fields of many subjects as one authored event (kernel
+   * set_authored_batch): a paste places its bodies this way, so one Undo
+   * takes the whole paste back. `evidence` "catalogued" (with a `source`)
+   * marks values read from a real catalogue. Impossible and possible values
+   * go in separate intents. Only the GM applies it.
+   */
+  | { kind: "set_values"; edits: { address: string; field: string; value: Json; impossible?: boolean }[]; at_yr: number; evidence?: "authored" | "catalogued"; source?: string }
+  /** Take a subject and everything under it out of the universe from `at_yr` on (Cut, or Undo of a paste). Its facts are kept. */
+  | { kind: "withdraw"; address: string; at_yr: number }
+  /** Bring a withdrawn subject back from `at_yr` on, with every fact it had (Redo of a paste, Undo of a cut). */
+  | { kind: "restore"; address: string; at_yr: number };
 
 export type IntentKind = Intent["kind"];
 
-export const INTENT_KINDS: readonly IntentKind[] = ["set_value", "adopt_physics", "stack_packs", "scan_toggle", "grant"];
+export const INTENT_KINDS: readonly IntentKind[] = ["set_value", "adopt_physics", "stack_packs", "scan_toggle", "grant", "set_values", "withdraw", "restore"];
 
 /** Machine-readable description of an intent a view may send (H8.1 `intents`). */
 export interface IntentSchema {
@@ -105,6 +117,24 @@ export function checkIntent(i: Intent): string | null {
     if (!Number.isFinite(i.at_yr)) return "time must be finite";
     return null;
   }
+  if (i.kind === "set_values") {
+    if (!Array.isArray(i.edits) || i.edits.length === 0) return "a batch needs at least one edit";
+    for (const e of i.edits) {
+      if (typeof e.address !== "string" || !e.address.startsWith("u:")) return "address must start with u:";
+      if (typeof e.field !== "string" || !/^[a-z][a-z0-9_.-]*$/.test(e.field)) return "field must be a lower-case name";
+    }
+    const imp = i.edits.filter((e) => e.impossible).length;
+    if (imp && imp !== i.edits.length) return "impossible and possible values go in separate batches";
+    if (i.evidence !== undefined && i.evidence !== "authored" && i.evidence !== "catalogued") return "evidence must be authored or catalogued";
+    if (i.evidence === "catalogued" && (imp || !i.source?.trim())) return "catalogued values need a source and cannot be impossible";
+    if (!Number.isFinite(i.at_yr)) return "time must be finite";
+    return null;
+  }
+  if (i.kind === "withdraw" || i.kind === "restore") {
+    if (!i.address.startsWith("u:")) return "address must start with u:";
+    if (!Number.isFinite(i.at_yr)) return "time must be finite";
+    return null;
+  }
   if (i.kind !== "set_value") return `unknown intent kind ${(i as { kind: string }).kind}`;
   if (!i.address.startsWith("u:")) return "address must start with u:";
   if (!/^[a-z][a-z0-9_.-]*$/.test(i.field)) return "field must be a lower-case name";
@@ -123,6 +153,15 @@ export function intentToRequest(i: Intent, stack: { opening: readonly unknown[];
   if (i.kind === "stack_packs") return { op: "load_stack" as const, packs: [...stack.opening, ...i.packs, ...top(stack.campaign)] };
   if (i.kind === "scan_toggle") return { op: "scan_toggle" as const, address: i.address, audience: i.audience, at_s: yearsToSeconds(i.at_yr) };
   if (i.kind === "grant") return { op: "grant" as const, address: i.address, audience: i.audience, ...(i.view !== null ? { view: i.view } : {}), ...(i.default ? { default: true } : {}), at_s: yearsToSeconds(i.at_yr) };
+  if (i.kind === "set_values")
+    return {
+      op: "set_authored_batch" as const,
+      edits: i.edits.map((e) => ({ address: e.address, field: e.field, value: e.value, ...(e.impossible ? { impossible: true } : {}) })),
+      occurred_at_s: yearsToSeconds(i.at_yr),
+      ...(i.evidence ? { evidence: i.evidence } : {}),
+      ...(i.source ? { source: i.source } : {}),
+    };
+  if (i.kind === "withdraw" || i.kind === "restore") return { op: i.kind, address: i.address, at_s: yearsToSeconds(i.at_yr) };
   return {
     op: "set_authored" as const,
     edit: {
