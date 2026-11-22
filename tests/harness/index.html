@@ -18,6 +18,9 @@
   td { border-top:1px solid var(--line); padding:6px 4px; vertical-align:top; }
   td:first-child { white-space:nowrap; padding-right:12px; }
   .x { color:var(--bad); } .muted { color:var(--muted); }
+  h2 { font-size:1.15rem; margin:28px 0 4px; }
+  input { font:inherit; padding:5px 8px; border:1px solid var(--line); background:transparent; color:var(--ink); border-radius:4px; }
+  td.n { text-align:right; font-family: ui-monospace, Menlo, Consolas, monospace; font-size:.82rem; }
   button { font:inherit; padding:6px 12px; border:1px solid var(--line); background:transparent; color:var(--ink); border-radius:4px; cursor:pointer; }
 </style>
 </head>
@@ -34,6 +37,17 @@
   <p class="muted" id="timing"></p>
   <button id="copy" type="button">Copy result</button>
   <details><summary>Digests per category</summary><table id="table" aria-label="Digests per category"></table></details>
+  <section id="bench" aria-label="Bench" hidden>
+    <h2>Bench: how fast this device is, part by part</h2>
+    <p class="sub">Times the same engine work on every device, three times each (about a minute on a laptop, a few minutes on a phone), grouped into the big parts of the app. Nothing is sent anywhere; a report is made only when you copy or save it. Used for the minimum spec.</p>
+    <button id="benchgo" type="button">Run the bench</button> <span id="benchnote" class="muted"></span>
+    <table id="benchtable" aria-label="Bench by part"></table>
+    <p id="benchacts" hidden>
+      <label>This device <input id="benchlabel" type="text" placeholder="e.g. my phone" maxlength="60"></label>
+      <button id="benchcopy" type="button">Copy report</button>
+      <button id="benchsave" type="button">Save</button>
+    </p>
+  </section>
 </main>
 <script type="module" src="./harness.js"></script>
 </body>

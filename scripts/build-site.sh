@@ -24,5 +24,5 @@ rm -rf dist
 mkdir -p dist/harness
 cp -r packages/shell/dist/. dist/
 cp -r tests/harness/. dist/harness/
-rm -f dist/harness/run-node.mjs dist/harness/run-browsers.mjs
+rm -f dist/harness/run-node.mjs dist/harness/run-browsers.mjs dist/harness/bench.mjs
 echo "site ready in dist/"
