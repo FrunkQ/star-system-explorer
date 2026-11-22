@@ -2,7 +2,8 @@
 // recipe, draws it, measures every frame, lets the governor walk the degrade
 // order, and reports what it did so the view can show the quality badge.
 // Presentation only: nothing here reaches the kernel or the state hash.
-import type { Globe, Tier } from "../../ui-contract/src/index.ts";
+import { cubeDirection, type Globe, type Tier } from "../../ui-contract/src/index.ts";
+import { layersFor, narrateFrame, pickAt, recolour, type LayerSpec, type TimeLapse } from "./timelapse.ts";
 import { badge, Governor, type Badge } from "./governor.ts";
 import { DEFAULT_BUDGET_MS, estimateMs, maxLevel, pickRecipe, plan, TIER_ORDER, type PassSpec, type Plan, type RecipeDoc } from "./recipe.ts";
 import { drawCanvas } from "./canvas.ts";
@@ -62,6 +63,18 @@ export interface GlobeStatus {
 
 export interface GlobeRun {
   setGlobe(globe: Globe): void;
+  /** Time lapse (the kernel's surface_frames, read): null returns to the present-day surface. */
+  setTimeLapse(tl: TimeLapse | null): void;
+  /** Which layer colours the globe in a time lapse (an id from layers()). */
+  setLayer(id: string): void;
+  /** The time shown, Myr from the world's formation (the frames' clock). */
+  setTime(t_myr: number): void;
+  /** The layers this time lapse can show: id, label, legend, limits, and whether its fields are present or pending. */
+  layers(): { id: string; label: string; legend: LayerSpec["legend"]; limits: string; available: boolean; pending: string[] }[];
+  /** Keyframe times and dated events, for the scrubber's marks. */
+  frames(): { times: number[]; events: { t_myr: number; kind: string; label: string; lon?: number; lat?: number }[] };
+  /** What lies under a point on the globe at the time shown: field values, the nearest event and the kernel's why lines. */
+  pick(lon_deg: number, lat_deg: number): ReturnType<typeof pickAt> | null;
   setView(lon: number, lat: number): void;
   update(o: Partial<GlobeRunOptions>): void;
   /** Recent frame times in ms, newest last (for tests and the badge). */
@@ -77,6 +90,11 @@ export function mountGlobe(host: HTMLElement, opts: GlobeRunOptions, onStatus: (
   let globe: Globe | null = null;
   let prepared: Prepared | null = null;
   let preparedKey = "";
+  let lapse: TimeLapse | null = null;
+  let lapseLayer = "land";
+  let lapseT = 0;
+  let shown: Prepared | null = null;
+  let shownKey = "";
   let lon = 0;
   let lat = 20;
   let canvas: HTMLCanvasElement | null = null;
@@ -207,6 +225,12 @@ export function mountGlobe(host: HTMLElement, opts: GlobeRunOptions, onStatus: (
     const relief = pl.passes.find((x) => x.pass === "relief-globe")?.params ?? {};
     const pkey = `${String(relief.colour ?? "survey")}|${String(relief.exaggeration ?? 12)}`;
     if (!prepared || preparedKey !== pkey || prepared.globe !== globe) ((prepared = prepare(globe, String(relief.colour ?? "survey"), Number(relief.exaggeration ?? 12))), (preparedKey = pkey));
+    // A time lapse recolours the same samples (both tiers draw from them); recoloured once per layer and time.
+    if (lapse) {
+      const k = `${preparedKey}|${lapseLayer}|${lapseT}`;
+      if (!shown || shownKey !== k || shown.globe !== globe) ((shown = recolour(prepared, lapse, lapseLayer, lapseT, cubeDirection)), (shownKey = k));
+    } else shown = prepared;
+    const drawn = shown!;
     const want = pl.tier === "gpu-basic" || pl.tier === "gpu-high" ? "gpu" : pl.tier === "canvas" ? "canvas" : "text";
     const atm = pl.passes.find((x) => x.pass === "atmosphere")?.params;
     const airNow = atm && airPhys ? airRender(airPhys, Number(atm.thickness ?? 1)) : null;
@@ -215,11 +239,11 @@ export function mountGlobe(host: HTMLElement, opts: GlobeRunOptions, onStatus: (
     let drew = false;
     if (want === "canvas" && canvas) {
       if (canvas.style.width !== `${o.size_px}px`) canvas.style.width = canvas.style.height = `${o.size_px}px`;
-      drawCanvas(canvas, prepared, pl, lon, lat, full(), scratch, airNow);
+      drawCanvas(canvas, drawn, pl, lon, lat, full(), scratch, airNow);
       drew = true;
     } else if (want === "gpu" && gpu && canvas && !switching) {
       if (canvas.style.width !== `${o.size_px}px`) canvas.style.width = canvas.style.height = `${o.size_px}px`;
-      gpu.draw(prepared, pl, lon, lat, full(), airNow);
+      gpu.draw(drawn, pl, lon, lat, full(), airNow);
       drew = true;
     }
     const work = performance.now() - t0;
@@ -248,7 +272,7 @@ export function mountGlobe(host: HTMLElement, opts: GlobeRunOptions, onStatus: (
       lastEmit = now;
       const narr = c2.plan.passes.find((x) => x.kind === "text");
       const L = lightDir(Number(relief.sun_azimuth_deg ?? 315), Number(relief.sun_elevation_deg ?? 40));
-      const narration = narrate(prepared, o.label, lon, lat, String(narr?.params.detail ?? "full"), L);
+      const narration = lapse ? narrateFrame(lapse, lapseLayer, lapseT, o.label) : narrate(prepared, o.label, lon, lat, String(narr?.params.detail ?? "full"), L);
       onStatus({
       tier: c2.plan.tier,
       backend: c2.plan.tier === "gpu-basic" || c2.plan.tier === "gpu-high" ? (gpu?.backend ?? "none") : c2.plan.tier === "canvas" ? "canvas2d" : "none",
@@ -286,6 +310,37 @@ export function mountGlobe(host: HTMLElement, opts: GlobeRunOptions, onStatus: (
       globe = g;
       dirty = true;
       void ready.then(kick);
+    },
+    setTimeLapse(tl) {
+      lapse = tl;
+      shown = null;
+      if (tl) lapseT = tl.frames[tl.frames.length - 1]!.t_myr;
+      dirty = true;
+      kick();
+    },
+    setLayer(id) {
+      lapseLayer = id;
+      dirty = true;
+      kick();
+    },
+    setTime(t) {
+      lapseT = t;
+      dirty = true;
+      kick();
+    },
+    layers() {
+      return lapse ? layersFor(lapse).map((l) => ({ id: l.spec.id, label: l.spec.label, legend: l.spec.legend, limits: l.spec.limits, available: l.available, pending: l.pending })) : [];
+    },
+    frames() {
+      if (!lapse) return { times: [], events: [] };
+      const ll = (d: readonly number[]) => ({ lon: (Math.atan2(d[1]!, d[0]!) * 180) / Math.PI, lat: (Math.asin(Math.max(-1, Math.min(1, d[2]!))) * 180) / Math.PI });
+      return { times: lapse.frames.map((f) => f.t_myr), events: lapse.events.map((e) => ({ t_myr: e.t_myr, kind: e.kind, label: e.text, ...(e.dir ? ll(e.dir) : {}) })) };
+    },
+    pick(lo, la) {
+      if (!lapse) return null;
+      const a = (lo * Math.PI) / 180;
+      const b = (la * Math.PI) / 180;
+      return pickAt(lapse, [Math.cos(b) * Math.cos(a), Math.cos(b) * Math.sin(a), Math.sin(b)], lapseT);
     },
     setView(lo, la) {
       lon = lo;
