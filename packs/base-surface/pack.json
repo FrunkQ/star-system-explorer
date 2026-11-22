@@ -442,6 +442,17 @@
      "wear_m_myr_per_m_rain": 20.0,
      "skylights_per_km_lost": 2.0
     },
+    "caves": {
+     "cell_km": 10.0,
+     "length_km": [0.5, 15.0],
+     "steps_max": 40,
+     "step_m": [50.0, 400.0],
+     "turn_max_deg": 40.0,
+     "height_over_width": 0.6,
+     "width_sigma": 0.25,
+     "fallen_run": 2.0,
+     "window_max_km": 25.0
+    },
     "impacts": {
      "mechanisms": {
       "chronology": "neukum-2001",
