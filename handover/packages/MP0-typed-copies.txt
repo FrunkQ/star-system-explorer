@@ -172,6 +172,7 @@ crates/sse-kernel/src/ice_ages.rs	constant:M_earth	const M_EARTH_KG: f64 = 5.972
 crates/sse-kernel/src/ice_ages.rs	constant:M_earth	const M_EARTH_MSUN: f64 = 3.003_489_6e-6;
 crates/sse-kernel/src/ice_ages.rs	constant:au	const AU_M: f64 = 1.495_978_707e11;
 crates/sse-kernel/src/orbits.rs	constant:G	const G: f64 = 6.674_30e-11;
+crates/sse-kernel/src/voyage.rs	constant:T_sun	let t = 5772.0 / at.state.teff_k;
 crates/sse-life/src/biosphere.rs	constant:g0	const EARTH_G: f64 = 9.81;
 crates/sse-life/src/biosphere.rs	new:earth_air	const EARTH_AIR: f64 = 1.225;
 crates/sse-life/src/budget.rs	constant:b_wien	const WIEN_NM_K: f64 = 2.897_771_955e6;
@@ -207,6 +208,9 @@ crates/sse-nav/src/scenario.rs	constant:R_gas	let r = 8.314_462_618 / molar;
 crates/sse-nav/src/scenario.rs	constant:R_moon	1737.4,
 crates/sse-nav/src/scenario.rs	constant:g0	9.81,
 crates/sse-nav/src/sky.rs	constant:c	const C_M_S: f64 = 299_792_458.0;
+crates/sse-nav/src/voyage.rs	constant:GM_sun	const GM_SUN: f64 = 1.327_124_4e20;
+crates/sse-nav/src/voyage.rs	constant:R_sun	const R_SUN: f64 = 6.957e8;
+crates/sse-nav/src/voyage.rs	constant:au	const AU: f64 = 1.495_978_707e11;
 crates/sse-nav/src/voyage.rs	constant:pc	pub const PC_M: f64 = 3.085_677_581_491_367e16;
 crates/sse-nebula/src/lib.rs	constant:M_sun	pub const MSUN_KG: f64 = 1.988_41e30;
 crates/sse-nebula/src/lib.rs	constant:pc	pub const PC_M: f64 = 648_000.0 / m::PI * sse_core::quantity::consts::AU;
