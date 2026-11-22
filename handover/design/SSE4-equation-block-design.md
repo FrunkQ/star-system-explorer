@@ -3,8 +3,8 @@
 Status: **go-ahead from Alex, 22 Nov 2026** ("blocks should be able to do basic math! power, exponential or
 logarithm blocks are valid. We can create them if needed. Or just have a general purpose equation, which is
 what I thought we had"). This is the short design the new-physics demo plan asked for
-(`SSE4-new-physics-demo.md`, question 2). Owner: Build kernel resolve and rules. Section 9 has three small
-questions with recommendations; none blocks a start.
+(`SSE4-new-physics-demo.md`, question 2). Owner: Build kernel resolve and rules. All of section 9 was accepted by Alex on
+22 Nov, with the 5 % timing rule of section 8B.
 
 ## 1. Why
 
@@ -186,7 +186,7 @@ no flow or save breaks. Owner: Build kernel resolve and rules, with each physics
   same `sse_core::math` calls, so results are identical to the last bit. The pack format, the hash and what
   a person sees do not change; this is a kernel detail and can be added later without touching any pack.
 
-## 9. Questions for Alex
+## 9. Questions for Alex: all answered yes, 22 Nov
 
 1. **The bare-number rule in section 4** (only small whole numbers and their ratios; everything else is a letter
    with a source)? Recommended: yes. It is stricter than a spreadsheet, and it is what keeps a
@@ -196,7 +196,7 @@ no flow or save breaks. Owner: Build kernel resolve and rules, with each physics
    bits do not change? Recommended: yes, later, as a shrinking list like the typed-constants ledger; not part
    of ND3. It would make most of the base physics readable and editable as formulas, not only parameters.
    **Accepted by Alex, 22 Nov** (section 8A, package ND3b).
-3. **Its name on screen: "Equation"?** Recommended: yes.
+3. **Its name on screen: "Equation"?** Recommended: yes. **Accepted by Alex, 22 Nov.**
 
 ## 10. Acceptance (ND3)
 
