@@ -74,7 +74,7 @@ pub fn insolation(s0: f64, lat_deg: f64, decl_deg: f64) -> f64 {
 }
 
 /// Solve the tridiagonal system `-lo[j] x[j-1] + di[j] x[j] - up[j] x[j+1] = r[j]`.
-fn thomas(lo: &[f64], di: &[f64], up: &[f64], r: &[f64]) -> Vec<f64> {
+pub(crate) fn thomas(lo: &[f64], di: &[f64], up: &[f64], r: &[f64]) -> Vec<f64> {
     let n = di.len();
     let mut c = vec![0.0; n];
     let mut d = vec![0.0; n];
@@ -152,14 +152,14 @@ pub fn season(cs: &ClimateSettings, c: &Conditions, decl_deg: f64) -> Season {
     diagnose(cs, c, &q, &t, &alb)
 }
 
-struct Grid {
-    w: Vec<f64>,
-    lo: Vec<f64>,
-    up: Vec<f64>,
-    b: f64,
+pub(crate) struct Grid {
+    pub(crate) w: Vec<f64>,
+    pub(crate) lo: Vec<f64>,
+    pub(crate) up: Vec<f64>,
+    pub(crate) b: f64,
 }
 
-fn grid(cs: &ClimateSettings, c: &Conditions) -> Grid {
+pub(crate) fn grid(cs: &ClimateSettings, c: &Conditions) -> Grid {
     let lat = lats(cs);
     let n = lat.len();
     let dphi = m::PI / n as f64;
@@ -192,7 +192,13 @@ fn grid(cs: &ClimateSettings, c: &Conditions) -> Grid {
 
 /// Ice fraction and albedo for band temperatures, with the base albedo set
 /// so the sunlight-weighted albedo is the world's Bond albedo.
-fn albedo(cs: &ClimateSettings, c: &Conditions, g: &Grid, q: &[f64], t: &[f64]) -> Vec<f64> {
+pub(crate) fn albedo(
+    cs: &ClimateSettings,
+    c: &Conditions,
+    g: &Grid,
+    q: &[f64],
+    t: &[f64],
+) -> Vec<f64> {
     let water = liquid(cs, c).is_some_and(|s| s.name == "water");
     let ice: Vec<f64> = t
         .iter()
@@ -213,7 +219,7 @@ fn albedo(cs: &ClimateSettings, c: &Conditions, g: &Grid, q: &[f64], t: &[f64]) 
 }
 
 /// The steady state under sunlight `q`: relaxed tridiagonal solves.
-fn steady(cs: &ClimateSettings, c: &Conditions, q: &[f64]) -> (Vec<f64>, Vec<f64>) {
+pub(crate) fn steady(cs: &ClimateSettings, c: &Conditions, q: &[f64]) -> (Vec<f64>, Vec<f64>) {
     let g = grid(cs, c);
     let n = q.len();
     let di: Vec<f64> = (0..n).map(|j| g.b + g.lo[j] + g.up[j]).collect();
