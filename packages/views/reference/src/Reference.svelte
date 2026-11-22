@@ -9,17 +9,18 @@
   import { tick, untrack } from "svelte";
   import { dimensionless, formatUnit, formatValue, measureWords, readConstantsPage, readRow, readSource, rowNote, showReference, siUnits, sourceName, unitFactor, type ConstantRow, type ConstantsPage, type Json, type RowDetail, type SheetSource, type SystemScene, type UnitRow, type ViewContext } from "../../../ui-contract/src/index.ts";
   import { Stamp } from "../../../chart-grammar/src/index.ts";
+  import Elements from "./Elements.svelte";
 
   let { ctx, params }: { ctx: ViewContext; scene: SystemScene; params: Record<string, Json> } = $props();
   const depth = $derived(ctx.workspace.depth ?? "science");
   const full = $derived(depth !== "curious");
 
-  type PageId = "constants" | "units";
+  type PageId = "constants" | "elements" | "units";
   const PAGES: { group: string; pages: { id: PageId; label: string }[] }[] = [
-    { group: "Nature", pages: [{ id: "constants", label: "Constants" }] },
+    { group: "Nature", pages: [{ id: "constants", label: "Constants" }, { id: "elements", label: "Elements" }] },
     { group: "This setting", pages: [{ id: "units", label: "Units" }] },
   ];
-  let page = $state<PageId>(untrack(() => (params.page === "units" ? "units" : "constants")));
+  let page = $state<PageId>(untrack(() => (params.page === "units" || params.page === "elements" ? params.page : "constants")));
 
   let sheet = $state.raw<ConstantsPage | null>(null);
   let failed = $state<string | null>(null);
@@ -78,18 +79,20 @@
   const sentence = (s: string) => (s ? s[0]!.toUpperCase() + s.slice(1) : s);
 </script>
 
-<!-- Escape closes the card first; only with no card open does it reach the shell (which then goes up a step). -->
-<!-- svelte-ignore a11y_no_noninteractive_element_interactions -->
-<section
-  class="reference"
-  aria-label="Reference"
-  onkeydown={(e) => {
+<!-- Escape closes the card first, wherever focus is; only with no card open does it reach the shell (which goes up a step). -->
+<svelte:window
+  onkeydowncapture={(e) => {
     if (open && e.key === "Escape") {
       e.stopPropagation();
       e.preventDefault();
       void close();
     }
   }}
+/>
+
+<section
+  class="reference"
+  aria-label="Reference"
   data-reference={sheet ? page : failed ? "failed" : "loading"} data-depth={depth}>
   <header>
     <div class="title">
@@ -106,7 +109,9 @@
     </nav>
   </header>
 
-  {#if failed}
+  {#if page === "elements"}
+    <div class="body"><Elements session={ctx.session} {depth} /></div>
+  {:else if failed}
     <p class="note" data-reference-error>Could not read the data sheet: {failed}</p>
   {:else if !sheet}
     <p class="note" aria-busy="true">Reading the data sheet…</p>

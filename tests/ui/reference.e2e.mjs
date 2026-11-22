@@ -59,6 +59,7 @@ try {
     assert.match(await ref.locator('[data-row="c"] .how').innerText(), /exact/);
     assert.ok((await ref.locator("[data-group-notes] li").count()) >= 4, "cosmos notes");
     assert.match(await ref.locator("[data-group-notes]").innerText(), /Clowe 2006/);
+    await ref.locator("[data-group-notes] a[href^='https://doi.org/']").first().waitFor({ timeout: 10000 });
 
     // A row opens its card, with the source linked; Escape closes it and gives focus back.
     await ref.locator('[data-row="G"] .row').click();
@@ -106,6 +107,45 @@ try {
       await marked.waitFor();
       await gm.locator('[data-group="cosmos"]').scrollIntoViewIfNeeded();
       await shot(gm, "constants-night-desk");
+    }
+    // Elements: the table by origin, one legend, a card with the story at each depth.
+    await gm.locator('[data-page="elements"]').click();
+    const els = gm.locator('[data-elements="ready"]');
+    await els.waitFor({ timeout: 20000 });
+    assert.equal(await els.locator(".table [data-el]").count(), 118);
+    assert.equal(await els.locator("[data-origin-legend] li").count(), 7);
+    const inks = await els.locator("[data-origin-legend] .sw").evaluateAll((s) => new Set(s.map((x) => getComputedStyle(x).backgroundColor)).size);
+    assert.equal(inks, 7, "seven origin colours, all different");
+    const goldBar = await els.locator('[data-el="au"] .bar').evaluate((b) => getComputedStyle(b).backgroundImage);
+    assert.match(goldBar, /linear-gradient/);
+    await shot(gm, `elements-${vp}`);
+    await depth(gm, "Curious");
+    await els.locator('.table [data-el="au"]').click({ force: vp === "phone" });
+    const au = gm.locator('[data-element-card="au"]');
+    await au.waitFor();
+    assert.match(await au.locator("[data-shares]").innerText(), /Merging neutron stars, about 94 parts in 100/);
+    assert.match(await au.locator("[data-story]").innerText(), /^Almost all gold was made in about a second/);
+    assert.match(await au.locator("[data-argued]").innerText(), /How sure is this\?.*argued/s);
+    assert.equal(await au.locator(".facts").count(), 0, "no figures at Curious");
+    await depth(gm, "Science");
+    await gm.locator('[data-element-card="au"] .facts').waitFor();
+    assert.match(await au.locator("[data-story]").innerText(), /r-process/);
+    assert.match(await au.innerText(), /Atomic weight\s+196\.966 57/);
+    await au.locator("[data-source]").first().waitFor({ timeout: 10000 });
+    if (vp === "phone") {
+      assert.ok((await els.locator("[data-strip]").count()) === 7, "a strip of seven full cells");
+      assert.ok(await els.locator('[data-strip="au"]').isVisible());
+      const over = await gm.evaluate(() => document.documentElement.scrollWidth - window.innerWidth);
+      assert.ok(over <= 0, `elements overflow by ${over} px`);
+    }
+    await shot(gm, `elements-gold-${vp}`);
+    await gm.keyboard.press("Escape");
+    await au.waitFor({ state: "detached" });
+    if (vp === "desk") {
+      await els.locator('.table [data-el="fe"]').click();
+      await gm.locator('[data-element-card="fe"]').waitFor();
+      await shot(gm, "elements-iron-night-desk");
+      await gm.keyboard.press("Escape");
     }
     assert.equal(await gm.locator("[data-state-hash]").first().getAttribute("data-state-hash"), hash0, "reading the sheet writes nothing");
     assert.deepEqual(errors, []);
