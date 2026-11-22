@@ -264,6 +264,22 @@ pub(crate) fn survey_surface(r: Request, cache: &mut Cache) -> Result<serde_json
                         "window_yr": m.spin.last().map(|x| x.t_yr).unwrap_or(0.0),
                     })
                 }),
+                // W8: the main gas's ice moving between ground and air.
+                "volatile": k.exchange.as_ref().map(|e| {
+                    serde_json::json!({
+                        "gas": e.gas,
+                        "name": e.name,
+                        "p_mean_pa": e.p_mean_pa,
+                        "p_min_pa": e.p_min_pa,
+                        "p_max_pa": e.p_max_pa,
+                        "p_swing": e.p_swing,
+                        "p_pa": e.seasons.iter().map(|x| x.p_pa).collect::<Vec<_>>(),
+                        "frost_k": e.seasons.iter().map(|x| x.frost_k).collect::<Vec<_>>(),
+                        "ice_kg_m2": e.ice_mean_kg_m2,
+                        "perennial": e.perennial,
+                        "buffered": e.buffered,
+                    })
+                }),
             }),
         );
         o.insert("air".into(), v(&l.air));

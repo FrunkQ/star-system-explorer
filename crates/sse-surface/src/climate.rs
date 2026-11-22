@@ -116,6 +116,7 @@ pub fn conditions(
         liquid,
         ocean_fraction,
         internal_flux_w_m2: x.internal_flux_w_m2.unwrap_or(0.0),
+        ground_ice_kg_m2: Default::default(),
     };
     (c, assumed)
 }

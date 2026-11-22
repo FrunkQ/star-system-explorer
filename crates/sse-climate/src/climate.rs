@@ -113,6 +113,10 @@ pub struct Climate {
     pub condensate: String,
     /// Density of the surface liquid the rain is measured in, kg/m³.
     pub liquid_kg_m3: f64,
+    /// Ice of the main gas moving between ground and air (W8), when its
+    /// frost point is within reach.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub exchange: Option<crate::exchange::Exchange>,
     pub why: Vec<String>,
 }
 
@@ -121,7 +125,13 @@ const YEAR_S: f64 = 3.15576e7;
 /// D1: the one climate of a world at an epoch.
 pub fn orbit(cs: &ClimateSettings, c: &Conditions, epoch_myr: f64) -> Climate {
     let ns = cs.seasons.max(1);
-    let seasons: Vec<Season> = ebm::cycle(cs, c);
+    let mut seasons: Vec<Season> = ebm::cycle(cs, c);
+    let mut exchange = None;
+    if let Some((sub, x)) = crate::exchange::candidate(cs, c, &seasons) {
+        let (s, ex) = crate::exchange::cycle(cs, c, sub, x);
+        seasons = s;
+        exchange = Some(ex);
+    }
     let annual = ebm::mean(&seasons);
     let n = annual.lat_deg.len();
     let rho = ebm::liquid(cs, c)
@@ -168,6 +178,9 @@ pub fn orbit(cs: &ClimateSettings, c: &Conditions, epoch_myr: f64) -> Climate {
                 .unwrap_or("rain")
         ));
     }
+    if let Some(ex) = &exchange {
+        why.extend(ex.why.iter().cloned());
+    }
     if c.retrograde() {
         why.push("It spins backwards, so its winds and storms turn the other way.".into());
     }
@@ -189,6 +202,7 @@ pub fn orbit(cs: &ClimateSettings, c: &Conditions, epoch_myr: f64) -> Climate {
         seasons,
         annual,
         liquid_kg_m3: rho,
+        exchange,
         why,
     }
 }
