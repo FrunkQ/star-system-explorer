@@ -2320,7 +2320,8 @@ pub enum Response {
     /// `galaxy_chart`: `{halo, key, halo_mass_msun, morphology, barred,
     /// t_start_gyr, now_gyr, at_gyr, now, history, active_nuclei,
     /// sun_radius_kpc, rings, core_collapse_per_century, ia_per_century,
-    /// green_bands, epochs, place, model}`.
+    /// green_bands, epochs, place, rotation_curve {structure, points, at_sun,
+    /// dark_density_at_sun_msun_pc3, v_max_kms, r_v_max_kpc}, model}`.
     GalaxyCharted {
         #[ts(type = "unknown")]
         chart: serde_json::Value,

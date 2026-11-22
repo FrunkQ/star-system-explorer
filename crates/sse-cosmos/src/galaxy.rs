@@ -99,6 +99,9 @@ pub struct GalaxyParams {
     pub bar_threshold: f64,
     /// Steps between stored history points.
     pub history_every: u32,
+    /// DM4: the dark matter profile and the rotation curve.
+    #[serde(default)]
+    pub structure: crate::structure::StructureParams,
 }
 
 fn exsitu_black_hole_default() -> f64 {
@@ -141,6 +144,7 @@ impl Default for GalaxyParams {
             disc_factor: 0.6,
             bar_threshold: 1.1,
             history_every: 5,
+            structure: Default::default(),
         }
     }
 }

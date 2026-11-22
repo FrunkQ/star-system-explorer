@@ -247,6 +247,7 @@ fn galaxy_chart_of(
         let gr = env.green(&l, &cp.green);
         serde_json::json!({ "local": l, "green": gr, "ring": d.ring_at(r).radius_kpc })
     });
+    let rotation = rotation_curve(c, &cp.galaxy.structure, &h, &g.now, sun_r);
     Ok(serde_json::json!({
         "halo": h.address,
         "key": h.address.rsplit_once("/halo:").map_or(h.address.as_str(), |x| x.1),
@@ -273,13 +274,42 @@ fn galaxy_chart_of(
         "events": events,
         "edits": a.edits,
         "compare": compare,
+        "rotation_curve": rotation,
         "model": [
             "galaxy: a halo's median growth, gas and star formation by published relations (G3), not a simulation",
             "rings: chemical evolution ring by ring with delayed type Ia and neutron-star mergers",
             "green band: the G4 criteria (metals, supernovae, passages, bursts, a quiet nucleus, time)",
             "inked history (G6): each edit acts from its own time on; everything before the earliest edit is unchanged",
+            "rotation curve (DM4): dark matter on a profile set by the halo's own growth and reshaped by its galaxy, plus discs, bulge, hot gas and black hole; the galaxy now, at the halo's mass now",
         ],
     }))
+}
+
+/// DM4's rotation curve card: the halo's structure now and the circular
+/// speed by part on log-spaced radii out to r200 (at most 100 kpc).
+fn rotation_curve(
+    c: &Cosmology,
+    sp: &sse_cosmos::structure::StructureParams,
+    h: &sse_cosmos::haloes::Halo,
+    now: &sse_cosmos::galaxy::GalaxyState,
+    sun_kpc: f64,
+) -> serde_json::Value {
+    let a = c.scale_of_time(now.t_gyr).min(1.0);
+    let s = sse_cosmos::structure::Structure::new(c, sp, &|z| h.mass_at(z), now, a);
+    let outer = s.r200_kpc.min(100.0);
+    let points: Vec<_> = (0..=48)
+        .map(|k| s.speeds(0.1 * m::pow(outer / 0.1, f64::from(k) / 48.0)))
+        .collect();
+    let (v_max, r_max) = s.v_max();
+    serde_json::json!({
+        "structure": s,
+        "points": points,
+        "at_sun": s.speeds(sun_kpc),
+        "dark_density_at_sun_msun_pc3": s.dark_density(sun_kpc) * 1.0e-9,
+        "v_max_kms": v_max,
+        "r_v_max_kpc": r_max,
+        "units": "radii kpc, speeds km/s, masses solar masses",
+    })
 }
 
 pub(crate) struct SliceAsk<'a> {
