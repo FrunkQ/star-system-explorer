@@ -264,7 +264,7 @@ export function placeClip(
   for (const n of c.nodes) {
     const a = addr.get(n.id)!;
     edits.push({ address: a, field: "body.kind", value: n.kind, impossible: false });
-    edits.push({ address: a, field: "parent", value: n.parent === null ? at.host : addr.get(n.parent)!, impossible: false });
+    edits.push({ address: a, field: "orbit.host", value: n.parent === null ? at.host : addr.get(n.parent)!, impossible: false });
   }
   for (const e of c.events) {
     const value = e.node === c.root && e.field === "orbit.semi_major_axis" && at.a_au !== undefined ? at.a_au * AU_M : e.value;
