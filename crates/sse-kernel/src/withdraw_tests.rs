@@ -133,3 +133,56 @@ fn a_bad_edit_refuses_the_whole_batch() {
     );
     assert_eq!(r["type"], "error", "{r}");
 }
+
+/// The start sheet's Sol enters as one catalogued batch with its citation,
+/// and resolved_system stamps each fact catalogued with that source.
+#[test]
+fn a_catalogued_batch_carries_its_source() {
+    let mut k = kernel();
+    let src = "NASA Planetary Fact Sheet, https://nssdc.gsfc.nasa.gov/planetary/factsheet/";
+    let r = send(
+        &mut k,
+        serde_json::json!({"op":"set_authored_batch","occurred_at_s":0,
+            "evidence":"catalogued","source":src,
+            "edits":[{"address":B3,"field":"name","value":"Earth"},
+                     {"address":B3,"field":"mass_kg","value":5.972e24}]}),
+    );
+    assert_eq!(r["type"], "authored", "{r}");
+    let r = send(
+        &mut k,
+        serde_json::json!({"op":"resolved_system","system":"u:kestrel/sys:0"}),
+    );
+    let who = &r["evidence"][B3];
+    for f in ["name", "mass_kg"] {
+        assert_eq!(who[f]["evidence"], "catalogued", "{r}");
+        assert_eq!(who[f]["source"], src, "{r}");
+    }
+    // A plain batch stays authored, with no source.
+    send(
+        &mut k,
+        serde_json::json!({"op":"set_authored_batch","occurred_at_s":0,
+            "edits":[{"address":B3,"field":"name","value":"Tarn"}]}),
+    );
+    let r = send(
+        &mut k,
+        serde_json::json!({"op":"resolved_system","system":"u:kestrel/sys:0"}),
+    );
+    assert_eq!(r["evidence"][B3]["name"]["evidence"], "authored", "{r}");
+    assert!(r["evidence"][B3]["name"].get("source").is_none(), "{r}");
+    assert_eq!(
+        r["evidence"][B3]["mass_kg"]["evidence"], "catalogued",
+        "{r}"
+    );
+    // Catalogued and impossible do not mix; unknown labels and blank sources are refused.
+    for extra in [
+        serde_json::json!({"evidence":"catalogued","edits":[{"address":B3,"field":"x","value":1,"impossible":true}]}),
+        serde_json::json!({"evidence":"resolved","edits":[{"address":B3,"field":"x","value":1}]}),
+        serde_json::json!({"source":" ","edits":[{"address":B3,"field":"x","value":1}]}),
+    ] {
+        let mut req = extra.clone();
+        req["op"] = "set_authored_batch".into();
+        req["occurred_at_s"] = 0.into();
+        let r = send(&mut k, req);
+        assert_eq!(r["type"], "error", "{extra} {r}");
+    }
+}

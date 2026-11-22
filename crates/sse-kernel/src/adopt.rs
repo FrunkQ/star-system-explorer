@@ -990,11 +990,21 @@ pub(crate) fn evidence_of(ch: &Chronicle, system: &Address, at_s: i64) -> serde_
                 continue;
             }
             let row = who.entry(a.to_string()).or_default();
+            let cited = match &e.body.payload.data {
+                Some(Value::Map(d)) if e.body.kind == sse_chronicle::kinds::AUTHORED_SET => {
+                    match d.get("source") {
+                        Some(Value::Text(t)) => Some(t.clone()),
+                        _ => None,
+                    }
+                }
+                _ => None,
+            };
             for k in fields.keys() {
-                row.insert(
-                    k.clone(),
-                    serde_json::json!({"evidence": evidence_label(e.body.evidence), "by": e.body.kind}),
-                );
+                let mut who = serde_json::json!({"evidence": evidence_label(e.body.evidence), "by": e.body.kind});
+                if let Some(t) = &cited {
+                    who["source"] = serde_json::Value::String(t.clone());
+                }
+                row.insert(k.clone(), who);
             }
         }
         for (a, fields) in &e.body.payload.unset {

@@ -144,9 +144,19 @@ pub enum Request {
     /// event (a paste on the Build desk is one undo step). The whole batch
     /// is refused if any address is outside the universe or any value is
     /// malformed. Impossible and possible edits go in separate batches.
+    /// `evidence` is `authored` (the default) or `catalogued`, for facts
+    /// entered from a published catalogue (the start sheet's Sol); a
+    /// catalogued batch may hold no impossible edit. `source` is the
+    /// citation, kept on the event and shown in `resolved_system`'s evidence.
     SetAuthoredBatch {
         edits: Vec<BatchEdit>,
         occurred_at_s: i64,
+        #[serde(default)]
+        #[ts(optional)]
+        evidence: Option<String>,
+        #[serde(default)]
+        #[ts(optional)]
+        source: Option<String>,
     },
     /// Withdraw a subject and everything under it from `at_s` on (Undo of
     /// a paste): it drops out of scene, resolved_system and systems. Nothing

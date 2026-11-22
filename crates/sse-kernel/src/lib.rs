@@ -1642,6 +1642,8 @@ impl Kernel {
         &mut self,
         edits: &[crate::protocol::BatchEdit],
         occurred_at_s: i64,
+        evidence: Option<&str>,
+        source: Option<String>,
     ) -> Result<Response, Response> {
         if edits.is_empty() {
             return Err(err("empty_batch", "a batch needs at least one edit"));
@@ -1651,6 +1653,28 @@ impl Kernel {
             return Err(err(
                 "mixed_batch",
                 "a batch is either all impossible edits or none: send the impossible ones as their own batch",
+            ));
+        }
+        let catalogued = match evidence.unwrap_or("authored") {
+            "authored" => false,
+            "catalogued" => true,
+            other => {
+                return Err(err(
+                    "bad_evidence",
+                    format!("a batch's evidence is authored or catalogued, not {other:?}"),
+                ))
+            }
+        };
+        if catalogued && impossible {
+            return Err(err(
+                "mixed_batch",
+                "a catalogued batch holds facts from a catalogue, so none can be impossible",
+            ));
+        }
+        if source.as_deref().is_some_and(|s| s.trim().is_empty()) {
+            return Err(err(
+                "bad_source",
+                "a source, when given, names the catalogue",
             ));
         }
         let stack_tags = self.observe.tags.clone();
@@ -1693,10 +1717,14 @@ impl Kernel {
             causes: vec![],
             payload: Payload {
                 set,
+                data: source
+                    .map(|t| Value::Map(BTreeMap::from([("source".to_string(), Value::Text(t))]))),
                 ..Default::default()
             },
             evidence: if impossible {
                 Evidence::AuthoredImpossible
+            } else if catalogued {
+                Evidence::Catalogued
             } else {
                 Evidence::Authored
             },
@@ -2018,7 +2046,9 @@ impl Kernel {
             Request::SetAuthoredBatch {
                 edits,
                 occurred_at_s,
-            } => self.set_authored_batch(&edits, occurred_at_s)?,
+                evidence,
+                source,
+            } => self.set_authored_batch(&edits, occurred_at_s, evidence.as_deref(), source)?,
             Request::Withdraw { address, at_s } => self.set_withdrawn(&address, at_s, true)?,
             Request::Restore { address, at_s } => self.set_withdrawn(&address, at_s, false)?,
             Request::CampaignTags => {
