@@ -30,7 +30,7 @@ functions of its own, no input or output, and always finishes.
 ```json
 { "atom": "sse.math.equation",
   "config": {
-    "name": "Swan band shift",
+    "name": "How far carbon's colours shift when squeezed",
     "formula": "shift = alpha * density",
     "inputs":  { "density": { "kind": "atmosphere.photosphere_density", "unit": "g/cm3", "valid": [0, 2] } },
     "params":  { "alpha": { "value": 0.2, "unit": "eV cm3/g", "range": [0.1, 1.6], "grade": "fitted",
@@ -44,6 +44,9 @@ functions of its own, no input or output, and always finishes.
 
 Illustrative only: the sources are named as the white dwarf paper cites them, and their DOIs go in through
 the usual citations check, not from memory.
+
+This example uses no constant of nature. One that does (escape speed, say) has an input named for the
+constant, wired on the flow from a Look up block; nothing about the constant is written in the Equation.
 
 ## 3. The language
 
@@ -62,9 +65,13 @@ the usual citations check, not from memory.
 
 ## 4. Numbers in a formula
 
-- A constant of nature or a property of a substance never appears as a number. It comes in on an input wired
-  from the Look up block (`sse.reference.lookup`), so the "no typed constants" check holds for packs as it
-  does for code, and a what-if that changes G reaches every Equation by itself.
+- A constant of nature or a property of a substance never appears inside an Equation, as a number or as a
+  hidden reference. It arrives on a **visible wire from a Look up block** (`sse.reference.lookup`) that sits
+  on the flow beside it (Alex, 22 Nov: "constants called by a box into this box"). A reader sees a block
+  named, say, "The gravitational constant (data sheet)" with a wire into "Speed needed to escape". The
+  Equation has an input for it like any other input. So the "no typed constants" check holds for packs as it
+  does for code, one Look up can feed several Equations, and a what-if that changes G shows on the flow
+  exactly where it enters and reaches every Equation by itself.
 - A number that belongs to the model (a fitted slope, an exponent from a paper) is a **parameter**: named,
   with a unit, a range, a source and a grade (`derived`, `measured`, `fitted`, `assumed`). It shows as an
   editable control like any other parameter. `fitted` and `assumed` parameters are listed automatically in
@@ -109,6 +116,32 @@ a paper being transcribed wrongly, by a person or by Orac.
 - Cost: at most 64 operations per Equation (cost class trivial); over a list, at most the existing list limit
   of 4096 entries (light). Larger is refused at load: split it into a box.
 
+## 8A. Names that mean something (Alex, 22 Nov)
+
+Alex: "this will probably impact most current blocks, as they are able to have their maths moved into one
+and assigned a name that means something. Reading an SSE4 flow should be readable by a keen amateur, and they
+kind of know the process by looking at the block names."
+
+So the name is a required part of every Equation, and it is the first thing on the block's face.
+
+- A name says what happens in the world, in ordinary words: "Heat a world receives from its star",
+  "Speed needed to escape", "How far carbon's colours shift when squeezed". Not the symbol, not the author
+  of the law, not a code id. The law's usual name goes in the Science line ("the Stefan-Boltzmann law").
+- Input and output names are words too ("distance from the star", not `a`). The formula keeps short symbols;
+  each symbol is tied to its worded name on the block.
+- Test for a flow: read only the block names, top to bottom, and you should be able to say what the flow
+  works out and in what order. Reviewers and Orac's check both apply it; a name that is only a symbol or an
+  id is refused at load.
+- Names are text for people and can be translated or reworded by a pack's vocabulary. The id stays fixed.
+
+**Moving the existing blocks over (package ND3b, after ND3).** Most of the 80 Rust atoms on main are one
+formula each. Each moves into an Equation in its base pack, under a name by the rule above, behind a test
+that every result and every golden hash is unchanged. Done gradually as a shrinking list, like the typed-
+constants ledger, one family at a time (`sse.star.*`, `sse.orbit.*`, `sse.planet.*`, `sse.heat.*` first: they
+are plain formulas). A block stays in Rust only if it truly cannot be a formula (it iterates, or is a Big
+Block), and says why in `docs/fudges.md`. While moving, the block's id, ports and results do not change, so
+no flow or save breaks. Owner: Build kernel resolve and rules, with each physics thread for its own family.
+
 ## 9. Questions for Alex
 
 1. **The bare-number rule in section 4** (only small whole numbers and their ratios; everything else is a
@@ -117,6 +150,7 @@ a paper being transcribed wrongly, by a person or by Orac.
 2. **Move existing Rust atoms over to Equations in the base packs, gradually**, each behind a test that the
    bits do not change? Recommended: yes, later, as a shrinking list like the typed-constants ledger; not part
    of ND3. It would make most of the base physics readable and editable as formulas, not only parameters.
+   **Accepted by Alex, 22 Nov** (section 8A, package ND3b).
 3. **Its name on screen: "Equation"?** Recommended: yes.
 
 ## 10. Acceptance (ND3)
@@ -128,3 +162,6 @@ a paper being transcribed wrongly, by a person or by Orac.
 - An Equation and its expansion into blocks give identical results and identical "Why?" evidence.
 - Orac drafts a box containing an Equation from a sentence; an invalid one never reaches Accept.
 - A what-if that changes a looked-up constant changes the Equation's result with no edit to the pack.
+- An Equation that names a data sheet row inside itself, or has a constant's value typed in, is refused at
+  load; every constant it uses shows as a wire from a Look up block.
+- Every Equation has a worded name; a flow of Equations passes the read-the-names test (section 8A).
