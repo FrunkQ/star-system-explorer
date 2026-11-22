@@ -220,6 +220,39 @@ try {
     await more(gm, "Night chart");
     assert.equal(await gm.locator("[data-state-hash]").first().getAttribute("data-state-hash"), hash, "drawing never changes the state hash");
 
+    // R6: Earth through time. The kernel's surface_frames on the same globe: layers recolour it, the scrubber moves it
+    // through the keyframes, and nothing changes the state hash.
+    {
+      const lc = gm.locator("[data-lapse-controls]");
+      const t0 = Date.now();
+      await lc.getByRole("button", { name: "Through time" }).click();
+      await gm.waitForSelector('[data-lapse-controls][data-lapse="on"], [data-lapse-error]', { timeout: 30000 });
+      const lerr = await lc.locator("[data-lapse-error]").count() ? await lc.locator("[data-lapse-error]").innerText() : "";
+      assert.equal(lerr, "", "the kernel gave the world's history");
+      const secs = (Date.now() - t0) / 1000;
+      const today = await pixelsOf(gm, globe(gm));
+      await lc.getByLabel("Layer").selectOption("plates");
+      await gm.waitForTimeout(800);
+      await shot(gm, `render-lapse-plates-today-${name}`);
+      const slider = lc.getByLabel("When");
+      const min = Number(await slider.getAttribute("min"));
+      await slider.fill(String(min + 600));
+      await gm.waitForTimeout(800);
+      await shot(gm, `render-lapse-plates-early-${name}`);
+      assert.match(await lc.locator("[data-lapse-when]").innerText(), /billion years ago/);
+      await lc.getByLabel("Layer").selectOption("ice");
+      await gm.waitForTimeout(800);
+      const iceEarly = await pixelsOf(gm, globe(gm));
+      await shot(gm, `render-lapse-ice-early-${name}`);
+      assert.notDeepEqual(iceEarly.centre, today.centre, "the past is drawn, not today's surface");
+      const label = await globe(gm).getAttribute("aria-label");
+      assert.match(label, /billion years ago, ice and glaciers: land \d+% of the surface/, label);
+      await lc.getByRole("button", { name: "Back to today" }).click();
+      await gm.waitForSelector('[data-lapse-controls][data-lapse="off"]');
+      assert.equal(await gm.locator("[data-state-hash]").first().getAttribute("data-state-hash"), hash, "time lapse never changes the state hash");
+      console.log(`  time lapse: Earth's history read in ${secs.toFixed(1)} s; ${label.split("Drag")[0].slice(-220)}`);
+    }
+
     // R5a: a star on the Body screen, drawn from the kernel's facts and activity, in visible light and X-rays.
     {
       await go(gm, "system");

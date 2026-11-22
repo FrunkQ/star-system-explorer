@@ -1563,6 +1563,28 @@
   ]
  },
  {
+  "op": "read_field",
+  "bodies": [
+   {
+    "address": "u:sol/sys:0/body:2",
+    "radius_m": 6371000.0,
+    "moment_a_m2": 8e+22,
+    "wind": { "density_kg_m3": 8.36e-21, "speed_m_s": 440000.0 }
+   },
+   {
+    "address": "u:sol/sys:0/body:5/moon:1",
+    "radius_m": 1561000.0,
+    "wind": { "density_kg_m3": 3.09e-22, "speed_m_s": 440000.0 },
+    "host": { "address": "u:sol/sys:0/body:5", "radius_m": 71492000.0, "moment_a_m2": 1.52e+27, "orbit_m": 671000000.0, "varying_field_t": 2.3e-07, "varying_period_s": 39960.0 },
+    "layers": [ { "name": "salty ocean", "conductivity_s_m": 2.75, "thickness_m": 100000.0, "outer_radius_m": 1541000.0 } ]
+   }
+  ]
+ },
+ {
+  "op": "read_field",
+  "bodies": [ { "address": "u:t/sys:3/body:0", "radius_m": -1.0, "wind": { "density_kg_m3": 1e-21, "speed_m_s": 4e5 } } ]
+ },
+ {
   "op": "read_activity",
   "seed": "contract",
   "stars": [

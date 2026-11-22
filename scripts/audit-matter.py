@@ -187,7 +187,28 @@ def to_float(lit):
         return None
 
 
+def _tracked():
+    """The repo's files, tracked or new but not ignored (so built, gitignored
+    copies are never read),
+    or None outside a git checkout."""
+    import subprocess
+    try:
+        r = subprocess.run(["git", "-C", ROOT, "ls-files", "-z", "--cached", "--others", "--exclude-standard", "--"] + SCAN_DIRS, capture_output=True)
+    except OSError:
+        return None
+    if r.returncode != 0 or not os.path.isdir(os.path.join(ROOT, ".git")) and not r.stdout:
+        return None
+    return set(r.stdout.decode("utf-8").split("\0")) - {""}
+
+
 def walk():
+    tracked = _tracked()
+    for path in _walk_all():
+        if tracked is None or path.replace(os.sep, "/") in tracked:
+            yield path
+
+
+def _walk_all():
     for top in SCAN_DIRS:
         base = os.path.join(ROOT, top)
         for d, dirs, files in os.walk(base):
