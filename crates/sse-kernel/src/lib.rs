@@ -2641,7 +2641,9 @@ impl Kernel {
                 at_s,
                 window,
             } => systems::read_activity(stars, seed.as_deref(), at_s, window)?,
-            Request::ReadField { bodies } => systems::read_field(bodies, &self.observe.reference)?,
+            Request::ReadField { bodies, fixture } => {
+                systems::read_field(bodies, fixture.as_deref(), &self.observe.reference)?
+            }
             Request::ReadPhotometry { stars, bands } => {
                 systems::read_photometry(stars, bands.unwrap_or_default())?
             }

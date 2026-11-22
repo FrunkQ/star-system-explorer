@@ -1,0 +1,16 @@
+[package]
+name = "gh0bench"
+version = "0.0.0"
+edition = "2021"
+
+[lib]
+crate-type = ["cdylib", "rlib"]
+
+[dependencies]
+sse-core = { path = "../../../crates/sse-core" }
+sse-cosmos = { path = "../../../crates/sse-cosmos" }
+
+[profile.release]
+opt-level = 3
+
+[workspace]

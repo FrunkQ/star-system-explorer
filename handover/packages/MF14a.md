@@ -74,18 +74,26 @@ Measured in Chromium (Playwright). The phone figures use the Moto G4 profile wit
 
 A phone traces fewer lines (`FIELD_LINES`). The trace runs on a change, never per frame.
 
+## Part 1b: the kernel's measured Solar System fields
+
+- `session.readField({ fixture: "solar-system" })` (ui-contract) reads `read_field`'s fixture (light thread, PR 172).
+  It needs `base-reference` loaded. Each body comes back with `name`, `field` (reference radius, g10, g11, h11,
+  tilt, offset, grade and sources) and `wind_field` (Parker's spiral in the ecliptic, away sector).
+- `fieldFromRead(body)` turns one into `{ model, bubble, notes }`.
+  - In the body frame, z is the spin axis and x points to the star.
+  - The wind's field is radial along −x. Its azimuthal part follows the star's spin, which is the orbit's prograde
+    sense, −y here.
+  - The offset's direction is not published yet, so it is drawn along the magnetic axis and said so in `notes`.
+  - A body whose air or surface holds the wind off gets no bubble, and the lines are drawn to their own reach.
+- Check: Earth's B0 is 30.6 µT, within 1.5 µT. Its stand-off lies between 7 and 12 radii, and Parker's spiral is
+  near 45°. Earth traces closed and open lines. Mercury, Jupiter, Saturn, Uranus and Neptune all trace on the
+  canvas tier.
+
 ## Pictures (`MF14-screens/`)
 
 These are `mf14a-earth.png`, `mf14a-jupiter.png`, `mf14a-uranus.png` and `mf14a-neptune.png`. Each shows the Chart
-cut, the 3D layer and the words. They were made with a scratch script from these inputs:
-
-- the measured-fields fixture (moment, tilt and offset);
-- the kernel's stand-off from `read_light` (fixture solar-system);
-- Parker's spiral for the wind's field.
-
-The tilt direction and offset direction are drawn: the fixture does not hold them yet. Part 1b replaces all this
-with `read_field`'s own Solar System fixture, which the light thread is adding (reference radius, g10, g11 and h11,
-the tilt direction, the offset, and the wind). Then the pictures will come from a test.
+cut, the 3D layer and the words, all from `read_field`'s fixture through `fieldFromRead`. Jupiter's open cap is
+smaller than the first ring of seeds, so its words honestly say "0 open". The pole's longitude is 0 in the fixture.
 
 ## Fudge register
 
@@ -94,8 +102,7 @@ mirror, and seeding by dipole flux.
 
 ## Next
 
-- **Part 1b.** Read `read_field {fixture: "solar-system"}` into a FieldModel and Bubble (`fieldFromRead`), and
-  regenerate the pictures from a test. Add the Sun and a pulsar once stellar coefficients are published.
+- Add the Sun and a pulsar once stellar coefficients are published, and stippled belts from read_field's `belts`.
 - **Part 2.** The 3D style's tubes, belts and the bubble shell in the GPU pass, and True's band emissions: aurora
   glow on the night side, a giant's radio belts and X-ray loops. Then particles drifting along lines at a stated
   speed-up.
