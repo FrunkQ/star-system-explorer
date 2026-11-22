@@ -83,7 +83,7 @@ pub fn circulation(cs: &ClimateSettings, c: &Conditions) -> Circulation {
             "hadley_edge_deg" => hadley_raw,
             "cells" => cells as f64,
             "solar_day_hours" => day,
-            "radiative_days" => st.radiative_s / 86400.0,
+            "radiative_days" => st.radiative_s / sse_core::sheet::DAY,
             "super_rotation" => st.super_rotation,
             "baroclinic" => st.baroclinic,
             "day_night" => st.day_night,

@@ -1436,8 +1436,9 @@ pub fn aerostat_band(
     let (t_lo, p_lo) = air.profile(s, g, lo);
     let (t_hi, p_hi) = air.profile(s, g, hi);
     let wind = wind_m_s.unwrap_or(a.wind_m_s);
-    let circuit =
-        2.0 * m::PI * (env.reference_radius_m + 0.5 * (lo + hi)) / wind.max(1e-6) / 86400.0;
+    let circuit = 2.0 * m::PI * (env.reference_radius_m + 0.5 * (lo + hi))
+        / wind.max(1e-6)
+        / sse_core::sheet::DAY;
     let mut below = vec![];
     if !air.giant {
         below.push(format!(

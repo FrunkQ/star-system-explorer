@@ -270,7 +270,7 @@ pub fn cycle(
     let (mut t, _) = ebm::steady(cs, c, &q_year);
     let t_bar = c.t_surface_k;
     let cap = ebm::heat_capacity(cs, c);
-    let year_s = (c.year_days * 86_400.0).max(1.0);
+    let year_s = (c.year_days * sse_core::sheet::DAY).max(1.0);
     let dt = year_s / steps as f64;
     let k = cap / dt;
     let alb0 = ebm::albedo(cs, c, &g, &q_year, &t);

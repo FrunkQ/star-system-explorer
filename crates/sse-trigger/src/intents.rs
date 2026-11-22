@@ -48,7 +48,7 @@ pub mod kinds {
 }
 
 /// Seconds in a Julian year: the built-in kinds carry `at_yr` as the chart room's time ruler does.
-pub const YEAR_S: i64 = 31_557_600;
+pub const YEAR_S: i64 = sse_core::sheet::YR_JULIAN as i64;
 
 /// Kind names a pack may not take (record event names would collide).
 const RESERVED: [&str; 3] = ["proposed", "decided", "seats"];

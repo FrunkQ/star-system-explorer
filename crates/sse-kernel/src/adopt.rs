@@ -561,7 +561,7 @@ fn bodies_from_facts(
     let teff = srow
         .get("star.effective_temperature")
         .and_then(as_f64)
-        .unwrap_or(5772.0);
+        .unwrap_or(sse_core::sheet::T_SUN);
     let r_star = srow.get("body.radius").and_then(as_f64).unwrap_or(R_SUN);
     let host_of = |r: &BTreeMap<String, Value>| -> Option<Address> {
         r.get("orbit.host").and_then(as_text)?.parse().ok()
@@ -748,7 +748,7 @@ pub(crate) fn worlds_at(
     let now_s = all
         .get(system, "system.now_year")
         .and_then(as_f64)
-        .map(|y| y as i64 * 31_557_600);
+        .map(|y| y as i64 * (sse_core::sheet::YR_JULIAN as i64));
     // Once the one clock has moved this system (its own age shift, or campaign
     // time elapsed), "now" is its present on its own dates, not the latest
     // event: a kept look-ahead's future must not read as the present.
@@ -757,7 +757,10 @@ pub(crate) fn worlds_at(
     let present_s = match (at_s, now_s) {
         (None, None) if moved => worlds_at(ch, system, Some(i64::MAX), run, s)?
             .spec
-            .map(|sp| m::round((sp.birth_year as f64 + sp.age_myr * 1.0e6) * 31_557_600.0) as i64),
+            .map(|sp| {
+                m::round((sp.birth_year as f64 + sp.age_myr * 1.0e6) * sse_core::sheet::YR_JULIAN)
+                    as i64
+            }),
         _ => None,
     };
     let at_s = at_s.or(now_s).or(present_s).unwrap_or(i64::MAX);
@@ -807,7 +810,7 @@ pub(crate) fn worlds_at(
     let mut shift_gyr = match (&spec, at_s) {
         (Some(sp), a) if a != i64::MAX => {
             let now_year = sp.birth_year as f64 + sp.age_myr * 1.0e6;
-            (a as f64 / 31_557_600.0 - now_year) / 1.0e9
+            (a as f64 / sse_core::sheet::YR_JULIAN - now_year) / 1.0e9
         }
         _ => 0.0,
     };

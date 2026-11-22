@@ -197,7 +197,7 @@ fn track(
     while t <= ends + 1e-9 {
         out.push([t, lat, lon]);
         let (ue, vn) = v(lat, t - born);
-        let s = dt * 86_400.0;
+        let s = dt * sse_core::sheet::DAY;
         lat = (lat + vn * s / c.radius_m * 180.0 / m::PI).clamp(-89.0, 89.0);
         let cl = m::cos(rad(lat)).max(0.05);
         lon = wrap(lon + ue * s / (c.radius_m * cl) * 180.0 / m::PI);
@@ -356,7 +356,7 @@ pub fn systems(
                     count: 0,
                     why: format!(
                         "A tropical cyclone: sea above {:.0} °C, at least {:.0}° from the equator where spin can organise it (Emanuel 2003).",
-                        tc.min_sst_k - 273.15,
+                        tc.min_sst_k - sse_core::sheet::T0C,
                         tc.min_lat_deg
                     ),
                     evidence: "drawn".into(),
@@ -461,7 +461,7 @@ pub fn systems(
                 lat_deg: 90.0 * h,
                 lon_deg: 0.0,
                 track: vec![],
-                size_km: 2500.0 * c.radius_m / 6.371e6,
+                size_km: 2500.0 * c.radius_m / sse_core::sheet::R_EARTH_MEAN,
                 strength: 1.0,
                 born: m::floor(day / c.year_days) * c.year_days,
                 ends: (m::floor(day / c.year_days) + 1.0) * c.year_days,
@@ -667,7 +667,7 @@ pub fn imprint(
     // What falls: snow where it is freezing.
     if cell.precip_mm_day > 0.0 && c.liquid.as_deref() == Some("water") {
         let t = t_at(p, c, lat, p.phase) + cell.temp_offset_k - 0.0065 * height.max(0.0);
-        cell.precip_kind = if t < 273.15 {
+        cell.precip_kind = if t < sse_core::sheet::T0C {
             "snow"
         } else if cell.precip_kind == "drizzle" {
             "drizzle"

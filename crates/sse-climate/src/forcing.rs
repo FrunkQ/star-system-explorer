@@ -261,7 +261,7 @@ pub fn spin_history(
 /// mean insolation is at least `threshold`, J/m².
 pub fn summer_energy(c: &Conditions, lat_deg: f64, threshold: f64, steps: u32) -> f64 {
     let n = steps.max(4);
-    let dt = c.year_days.max(1e-6) * 86_400.0 / n as f64;
+    let dt = c.year_days.max(1e-6) * sse_core::sheet::DAY / n as f64;
     let eps = c.obliquity_deg * m::PI / 180.0;
     let mut j = 0.0;
     for k in 0..n {

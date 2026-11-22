@@ -69,17 +69,16 @@ pub fn conditions(
     });
     let flux = x.flux_w_m2.unwrap_or_else(|| {
         assumed.push("sunlight from a sun-like star at the orbit".into());
-        1361.0 / (a_au * a_au)
+        sse_core::sheet::S_SUN / (a_au * a_au)
     });
     let gases = x.gases.clone().unwrap_or_else(|| {
         assumed.push("air of the default mix".into());
         d.gases.clone()
     });
     let t = env.t_surface_now_k;
-    let liquid = x
-        .liquid
-        .clone()
-        .or_else(|| (b.oceans > 0.0 && t > 273.15 && t < 373.0).then(|| "water".to_string()));
+    let liquid = x.liquid.clone().or_else(|| {
+        (b.oceans > 0.0 && t > sse_core::sheet::T0C && t < 373.0).then(|| "water".to_string())
+    });
     // Earth's 1 ocean covers 71 % of its surface; a fuller ocean drowns more.
     let ocean_fraction = x.ocean_fraction.unwrap_or(if liquid.is_some() {
         (0.71 * m::pow(b.oceans.max(0.0), 0.25)).min(1.0)

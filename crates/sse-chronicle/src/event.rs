@@ -25,7 +25,7 @@ impl UniverseTime {
     /// Whole Julian years (365.25 days) from the origin.
     pub fn years(y: i64) -> Self {
         UniverseTime {
-            s: y * 31_557_600,
+            s: y * (sse_core::sheet::YR_JULIAN as i64),
             ns: 0,
         }
     }

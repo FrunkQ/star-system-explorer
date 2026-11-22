@@ -329,7 +329,7 @@ impl StarParams {
             sse_atoms::star::luminosity_solar(mass)
         };
         let ms_r = sse_atoms::star::radius_solar(mass);
-        let teff = |l: f64, r: f64| 5772.0 * m::pow(l / (r * r), 0.25);
+        let teff = |l: f64, r: f64| sse_core::sheet::T_SUN * m::pow(l / (r * r), 0.25);
         if age_gyr < 0.0 {
             return StarState {
                 phase: "unborn".into(),

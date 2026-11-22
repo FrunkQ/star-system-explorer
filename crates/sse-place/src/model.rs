@@ -311,16 +311,16 @@ impl Model {
             (if ok { c.liquid_inventory } else { 0.0 }, 0.0)
         } else {
             let boil = 1.0 / (1.0 / 373.15 - 8.314 * m::ln(p_bar.max(1e-12) / 1.01325) / 40660.0);
-            if p_pa >= 611.657 && tsurf >= 273.15 && tsurf <= boil {
+            if p_pa >= 611.657 && tsurf >= sse_core::sheet::T0C && tsurf <= boil {
                 (c.liquid_inventory, 0.0)
-            } else if tsurf < 273.15 {
+            } else if tsurf < sse_core::sheet::T0C {
                 (0.0, c.liquid_inventory)
             } else {
                 (0.0, 0.0)
             }
         };
         // Ice-rich bodies below freezing are ice to the surface.
-        let ice = if c.ice >= 0.15 && tsurf < 273.15 {
+        let ice = if c.ice >= 0.15 && tsurf < sse_core::sheet::T0C {
             1.0
         } else {
             ice

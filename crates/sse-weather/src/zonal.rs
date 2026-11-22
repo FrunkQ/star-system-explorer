@@ -191,7 +191,8 @@ impl ZonalBlock {
                 let mut track = vec![];
                 let mut t = born;
                 while t <= ends + 1e-9 {
-                    let dl = u * (t - born) * 86_400.0 / (c.radius_m * m::cos(rad(lat)).max(0.05))
+                    let dl = u * (t - born) * sse_core::sheet::DAY
+                        / (c.radius_m * m::cos(rad(lat)).max(0.05))
                         * 180.0
                         / m::PI;
                     let lon = m::fmod(lon0 + dl + 540.0, 360.0);
@@ -257,7 +258,7 @@ impl ZonalBlock {
         let j = (((lat + 90.0) / 180.0 * n as f64) as usize).min(n - 1);
         let cover = zs.cover[j];
         let rho_l = self.liquid_density(c);
-        let mut precip = zs.precip[j] * 86_400.0 / rho_l * 1000.0;
+        let mut precip = zs.precip[j] * sse_core::sheet::DAY / rho_l * 1000.0;
         let cond = zs.condensate.clone();
         let mut layers: Vec<Layer> = (0..LAYERS.len())
             .map(|k| Layer {
@@ -352,7 +353,7 @@ impl ZonalBlock {
             "none".to_string()
         } else {
             match self.liquid(c).map(|s| s.name.as_str()) {
-                Some("water") if zs.t_k[j] < 273.15 => "snow".into(),
+                Some("water") if zs.t_k[j] < sse_core::sheet::T0C => "snow".into(),
                 Some("water") => "rain".into(),
                 Some(l) => format!("{l} rain"),
                 None => "none".into(),
