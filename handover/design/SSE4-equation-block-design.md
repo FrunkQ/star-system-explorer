@@ -88,6 +88,25 @@ input must have a visible wire on the flow from one of three kinds of source:
 - Bare numbers allowed in the text: small whole numbers and their ratios (2, 4, 1/2, 3/2), because they are
   part of the mathematics. Anything else is refused at load with "give this letter a source".
 
+### 4.1 Worked example: a block that exists today (Alex's screenshot, 22 Nov)
+
+`sse.climate.equilibrium_temperature` shows this in its Explain panel: `T_eq = (f S (1 - A) / σ)^¼`. Today
+that line is display text; the sum is done in Rust beside it, and σ is inside the code. As an Equation
+(under ND3b) the same line is the thing that is computed:
+
+| In the formula | What it is | Its line comes from |
+|---|---|---|
+| `S` | starlight arriving at the world | dynamic: the flux block upstream |
+| `A` | how much of it the world reflects (albedo) | dynamic: the world's surface and cloud |
+| `f` | how much of the sphere shares the heat | Model number: 1/4 for a fast spinner to 2/3 for a locked one, with its source; the editable control |
+| `σ` | the Stefan-Boltzmann constant | reference: Look up on the data sheet |
+| `1` and `¼` | part of the mathematics | nothing: they are just the formula and read as such |
+
+Name on the block: "How warm a bare world would be". Alex: "small numbers in formulas is just the formula and
+can be read as such... 1/4 is part of the equation; every letter should have a line from a source, dynamic or
+a reference." So the formula a person reads in Explain and the formula the kernel runs become one text, which
+is the best place for it.
+
 ## 5. Units
 
 Every input and output declares a unit, and the kernel checks that the block at the other end of each wire
@@ -172,6 +191,7 @@ no flow or save breaks. Owner: Build kernel resolve and rules, with each physics
 1. **The bare-number rule in section 4** (only small whole numbers and their ratios; everything else is a letter
    with a source)? Recommended: yes. It is stricter than a spreadsheet, and it is what keeps a
    shared pack honest.
+   **Accepted by Alex, 22 Nov** ("small numbers in formulas is just the formula").
 2. **Move existing Rust atoms over to Equations in the base packs, gradually**, each behind a test that the
    bits do not change? Recommended: yes, later, as a shrinking list like the typed-constants ledger; not part
    of ND3. It would make most of the base physics readable and editable as formulas, not only parameters.
