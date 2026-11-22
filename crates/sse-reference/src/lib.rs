@@ -26,6 +26,8 @@ use sse_core::math as m;
 use std::collections::BTreeMap;
 
 pub mod expr;
+pub mod lookup;
+pub mod phases;
 
 /// Relative tolerance between a sheet unit and the built-in one of the
 /// same id.
@@ -107,6 +109,9 @@ pub struct Reference {
     pub origin_legend: BTreeMap<String, Map<String, J>>,
     /// The pack each row came from (`table/id`), and the packs that changed it.
     pub origin: BTreeMap<String, Vec<String>>,
+    /// Each substance's phase table, decoded at load (MP17).
+    #[serde(skip)]
+    pub phase_tables: BTreeMap<String, phases::PhaseTable>,
 }
 
 fn is_value(v: &J) -> bool {
@@ -236,6 +241,16 @@ impl Reference {
         }
         problems.extend(r.check());
         if problems.is_empty() {
+            // Phase tables decoded once (MP17), so `phase_at` is a lookup.
+            let mut built = BTreeMap::new();
+            for (id, row) in r.tables.get("substances").into_iter().flatten() {
+                if let Some(t) = row.get("phases").and_then(|p| p.get("table")) {
+                    if let Ok(t) = phases::PhaseTable::from_json(t) {
+                        built.insert(id.clone(), t);
+                    }
+                }
+            }
+            r.phase_tables = built;
             Ok(r)
         } else {
             Err(problems)
@@ -554,6 +569,15 @@ impl Reference {
             }
             if let Some(ph) = row.get("phases").and_then(J::as_object) {
                 p.extend(check_vapour(id, ph, self.molar_mass_kg_mol(id)));
+                let known: std::collections::BTreeSet<String> =
+                    self.sources.keys().cloned().collect();
+                let linked: std::collections::BTreeSet<String> = self
+                    .sources
+                    .iter()
+                    .filter(|(_, r)| r.contains_key("doi") || r.contains_key("url"))
+                    .map(|(k, _)| k.clone())
+                    .collect();
+                p.extend(phases::check(id, ph, &known, &linked));
             }
         }
         let substances = self.tables.get("substances").unwrap_or(&empty);
@@ -916,5 +940,9 @@ fn check_vapour(id: &str, ph: &Map<String, J>, molar_kg: Option<f64>) -> Vec<Str
     p
 }
 
+#[cfg(test)]
+mod lookup_tests;
+#[cfg(test)]
+mod phases_tests;
 #[cfg(test)]
 mod tests;

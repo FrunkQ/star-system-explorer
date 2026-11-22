@@ -1,0 +1,36 @@
+{
+ "format": "sse.pack/1",
+ "id": "test.lookup-edit",
+ "version": "0.1.0",
+ "kind": [
+  "physics"
+ ],
+ "kernel_range": "^0.1",
+ "licence": "Apache-2.0",
+ "fictional": true,
+ "provides": {
+  "reference": {
+   "about": "MP17a fixture: water's latent heat of vaporisation changed, to see which flows follow.",
+   "sources": [
+    {
+     "id": "what-if-water",
+     "text": "Fictional: water's latent heat doubled, for teaching"
+    }
+   ],
+   "substances": [
+    {
+     "id": "h2o",
+     "phases": {
+      "latent_vaporisation": {
+       "v": 4936000.0,
+       "unit": "J kg-1",
+       "src": "what-if-water",
+       "check": "authored",
+       "replaces": "sse.base-reference"
+      }
+     }
+    }
+   ]
+  }
+ }
+}
