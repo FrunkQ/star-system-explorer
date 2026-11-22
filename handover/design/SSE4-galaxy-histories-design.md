@@ -13,7 +13,7 @@ Alex, 22 Nov 12:39: "how can we mass and energy balance galactic filaments and g
 3. **"Formation again through a different lens": mostly yes.** About two thirds of this design is reuse (section 11). The record, the pins, the fidelity ladder, "clouds until looked at", the budgets, the events on the ruler and the detail levels all carry over from system formation almost word for word. Three things are different in kind and need new blocks: galaxies are made of galaxies (so the history is a tree and the mechanism calls itself), stars and dark matter pass through each other (so the leftovers are orbits, not bodies), and the building has not finished (two galaxies are being eaten by ours today).
 4. **One mechanism does all of it.** Every galaxy has one **assembly tree**: the list of smaller haloes it swallowed, each with its own small galaxy grown by the code we already have. Each swallowed galaxy then runs the same four processes (sinking, tidal stripping, gas stripping, heating). Satellites, dwarfs, ultra-faint dwarfs, streams, shells, ancient patches, accreted globular clusters, a thick disc, galaxies that lost their dark matter and galaxies that are nearly all dark matter are what that mechanism leaves behind. None is a special case, and each name is a label read off the result.
 5. **It fits a browser.** No particle simulation. A Milky Way history at chart level is about 55 swallowed haloes and costs tens of milliseconds on top of what Y4 already does. The full survey (about 2,000 haloes down to the smallest that can hold stars) is a second or two, once, and then stored (estimates, to be measured in GH0). What a browser cannot do is listed in section 10 with what stands in for it.
-6. **One honest warning about "battle-worn".** From outside, in true colour, the Milky Way would still look like a fairly tidy barred spiral with a warp and two bright companions. Its scars are faint light, odd orbits and odd chemistry. Real deep images show streams around most large spirals only at very long exposure. So Chart style inks the scars, and True style shows them when the exposure is deepened (section 9.3). That is how the real thing behaves.
+6. **"Battle-worn" comes in two kinds.** Damage to the disc is bright and shows in true colour: the warp, ripples, driven arms, a punched ring, bursts, companions (section 9.4). The remains of old meals out in the halo are faint light, odd orbits and odd chemistry, and real images show them only at very long exposure. So Chart style inks those, and True style shows them when the exposure is deepened (section 9.3).
 
 ---
 
@@ -350,6 +350,40 @@ The kernel hands the renderer a data-only list: satellites, components with thei
 - **True style** shows what a camera would. Streams around real spirals appear near 28 magnitudes per square arcsecond and fainter, about a thousandth of the disc's brightness (Martínez-Delgado et al. 2010, doi:10.1088/0004-6256/140/4/962; Morales et al. 2018, doi:10.1051/0004-6361/201732271). So True gets an exposure control, and the scars come up as it deepens.
 - **A dark matter layer**, at Science depth and on the GM view: the halo, its lumps, and the stretched shape.
 
+### 9.4 Every collision leaves its mark (Alex, 22 Nov 13:14: "we will need some cool realism renderer work to show damaged galaxies - the fact the MW is twisted and has ripples along its disc ... each collision should leave its mark. High speed ones can literally punch a hole. slower ones will stay around forever orbiting like the LMC")
+
+This corrects section 1 point 6, which was too gloomy. The **faint** scars are the old ones out in the halo (streams, shells, mixed remains). Damage to the **disc** is bright and shows in True style with no help: a warp, ripples, a ring, a burst, a bridge to a companion are all made of ordinary bright stars and gas.
+
+Each merger response in 7.5 writes a **mark** into the record, and the renderer draws marks and nothing else:
+
+```
+Mark { kind, caused by (the event), began, strength 0 to 1, shape numbers, fades over }
+```
+
+| Mark | Made by | Looks like | Lasts |
+|---|---|---|---|
+| **Warp** | a massive companion pulling on the outer disc | the disc's edge bent up on one side and down on the other, an integral sign seen edge-on | while the companion is near, then about a Gyr |
+| **Ripples** | a satellite passing through or close by the disc | waves up and down across the disc, a few hundred parsecs high and several kiloparsecs apart, growing outward; rings of slightly different height and brightness seen face-on | fade over about a Gyr as stars drift out of step; each new pass adds a set (Antoja et al. 2018; Laporte et al. 2018; Xu et al. 2015, doi:10.1088/0004-637X/801/2/105) |
+| **Tilt and twist** | a heavy merger | disc plane at an angle to the outer halo and to the old remains; the outer disc turned against the inner | billions of years |
+| **Thick disc** | early heavy mergers | a fat, old, redder layer around the thin one, plain edge-on | for good |
+| **Driven arms, a bridge, a tail** | a close, slowish pass, forwards | two strong arms, one reaching to the companion, a long tail opposite | a few hundred Myr to a Gyr |
+| **A punched hole and ring** | a fast, nearly straight pass through the disc | an expanding ring of new blue stars with an emptied middle, sometimes spokes, the culprit a little way off on the axis | 100 to 500 Myr (Lynds and Toomre 1976; Appleton and Struck-Marcell 1996) |
+| **A small hole** | a dwarf or a dark halo through the gas layer | a gap in the gas with young stars round its rim | tens of Myr; argued as a cause of real gas holes (Bekki and Chiba 2006, doi:10.1086/499812) |
+| **Burst knots** | gas squeezed by any pass | bright blue clumps and pink gas clouds along the disturbed side | tens of Myr each |
+| **Lopsided disc, nucleus off-centre or double** | a recent meal | the disc heavier on one side; two bright points at the core | a Gyr or so |
+| **Shells, streams, plumes** | 7.6 | faint arcs and loops in the halo | Gyrs, fading |
+| **A gas trail** | a gas-rich satellite losing gas | a long ribbon of gas behind the companion, seen in radio | while it orbits |
+| **A warm side** | a massive companion squeezing the hot halo | one half of the X-ray halo brighter | 100 Myr or so |
+
+Notes for the renderer thread (GH9):
+- **Satellites are small galaxies and glow as such.** Each is drawn from its own G3 result: a blue, clumpy one still forming stars (like the Large Cloud), a faint red smudge for a dead one, and nothing at all for a dark halo unless the dark matter layer is on.
+- **Speed decides the mark, as Alex says.** Fast and straight through: a hole and a ring, and the intruder leaves. Slow: it is captured, sinks and keeps disturbing the disc at every pass. How long it lasts depends on its mass. A small satellite does orbit almost for ever. A heavy one is dragged in: the Large Cloud itself is predicted to merge in about 2.5 Gyr (Cautun et al. 2019), which look-ahead will show.
+- Marks overlap and add. Strength falls with age by the "fades over" time, so scrubbing the ruler shows a galaxy being damaged and healing.
+- Each mark is a formula over the disc (a bend, a wave, a ring), so it costs a few numbers, works at every detail level and needs no particles. The exact shapes are stand-ins for the disc's real response (section 10) and go on the register.
+- Some marks belong to a view style other than visible light (gas trail in radio, warm side in X-rays), which fits the one-switch view styles design.
+
+Citations in this section other than those already listed are from memory, for GH0.
+
 A mockup of the galaxy chart with its history should come before GH8, as the Reference screen's did.
 
 ---
@@ -451,13 +485,13 @@ Owners are suggestions for the coordinator. Each package adds its own fudge regi
 | DM6 | Constants with a history: a time law (constant, drift, step) on any Constants row, read by date; G first; the "particle route" lines on the Cosmos page | DM1 | matter data sheet; kernel | with every law constant, all hashes identical; a drifting G changes a year's length by the Kepler factor at each date; a stepped G shows a star's brightness change with the ESTIMATED stamp; reach report lists what cannot follow |
 | GH1 | One assembly tree: pins, fill, recursion, levels; the record of section 6 | G2, Y4 | kernel | no double counting (accreted mass closes); deeper levels never change members already drawn; Y4's satellites above the old floor unchanged where the budget allows; order independence |
 | GH2 | Orbits and the four processes; `satellites_at(time)`; labels | GH1, DM4 | kernel | section 7.3 checks; energy drift bound on the leapfrog; identical on rerun and across devices; retires F39's limits |
-| GH3 | Progenitors feed the host: stars, gas, holes; merger responses | GH2 | kernel | stellar halo mass and metals against biggest progenitor; share of stars not born here against mass (Rodriguez-Gomez et al. 2016, used in G3); a Gaia-Sausage-like history gives a thick disc and two chemical families; G3 goldens re-blessed on purpose |
+| GH3 | Progenitors feed the host: stars, gas, holes; merger responses, each writing a dated mark (9.4) | GH2 | kernel | stellar halo mass and metals against biggest progenitor; share of stars not born here against mass (Rodriguez-Gomez et al. 2016, used in G3); a Gaia-Sausage-like history gives a thick disc and two chemical families; G3 goldens re-blessed on purpose |
 | GH4 | Components in the envelope, cells, origins, count tree and glow | GH3 | kernel; light and nebulae | section 7.6 checks; budget closure with components; a promoted star keeps its origin at any time read; G4, G5 and sky goldens re-blessed on purpose |
 | GH5 | Clusters: birth, loss, arrival; a cluster as a place | GH3 | kernel | section 7.8 checks |
 | GH6 | Satellite collisions, tidal dwarfs, stripped nuclei, pristine pockets; galaxy labels in the class atlas | GH2, GH5 | kernel | rates stated and bounded; each event reproduces from its manifest; honesty marks present |
 | GH7 | Milky Way pack: pinned history, Local Group, named satellites and clusters, grades | GH3, GH5 | kernel; citations | pins survive and claim budget; fill adds no second copy of a pinned object; licence rule of section 8 kept; mends F37's placement |
 | GH8 | Galaxy chart: satellites and orbits, streams, clusters, family tree on the ruler, rotation curve, dark matter layer, "where was this star born" | GH4, a mockup | galaxy charts | screenshots desk and phone, both schemes; no heavy work on a click |
-| GH9 | Renderer: battle-worn galaxies from the data list; exposure control in True | GH4, V9 | photoreal renderer | the same galaxy in Chart and True; scars appear with depth |
+| GH9 | Renderer: damaged galaxies from the mark list of 9.4 (warp, ripples, tilt, thick disc, driven arms and bridges, punched ring, burst knots, lopsidedness), satellites as small galaxies, halo remains with an exposure control in True | GH3, GH4, V9 | photoreal renderer | each mark kind has a fixture and a screenshot face-on and edge-on; scrubbing shows a mark appear and fade; the same galaxy in Chart and True; phone tier keeps warp, ring and satellites at least |
 | GH10 | Sky: satellites move, streams in deep exposures, clusters as objects | GH4, Y5 | kernel; galaxy charts | no double counting in magnitude counts |
 | GH11 | Story and search: sifters over assembly events; outcome-first queries ("a galaxy that lost its dark matter", "a world inside a globular cluster", "a stream crossing a habitable band") | GH6 | agents; kernel | hits carry evidence |
 | GH12 | Later: stream gaps from dark lumps; cluster scale (gas torn from dark matter in colliding clusters, light between galaxies, galaxies stripped into "jellyfish"); the fuller merger tree; a stretched halo; far future with G8 | | | |
@@ -476,7 +510,7 @@ Order: GH0 and DM1 now. DM2, DM3 and DM4 are independent of each other. GH1 to G
 4. **Dark energy**: no frig. It is already in. Add its two pressure rows and a "real size" switch so the expansion is seen. **Recommend yes.**
 5. **One assembly tree** replaces the separate major-merger and satellite draws, with major mergers as pins. Three packages will change galaxy and star goldens on purpose. **Recommend yes.**
 6. **Satellite orbits by stepping each one as a single test body** in a smooth potential, our own code, stored as slices. I read this as inside "no particle simulation". **Recommend yes.**
-7. **Battle-worn, honestly**: Chart style inks the scars; True style shows them only as the exposure deepens. The galaxy chart opens in a state that shows them. **Recommend yes.**
+7. **Battle-worn**: answered by Alex 22 Nov 13:14, see section 9.4. Every collision leaves a dated mark the renderer draws; disc damage shows in True style as it is; only the faint halo remains need the exposure control or Chart's ink.
 8. **Milky Way pack**: pin the known history with grades. Where experts disagree (the date of the big collision, whether Kraken was a separate galaxy), take the majority view and offer the other as a one-click what-if. Published findings go in the base pack; Gaia catalogue values stay in the optional pack. **Recommend yes**, and say if you want the licence reading checked by someone qualified.
 9. **Pristine pockets and late metal-free stars**: on by default, rare, marked plausible early and speculative today, found only in dark haloes at the outskirts and in voids. **Recommend yes.**
 10. **Two readings to confirm.** "Micro galaxies" I have taken as the ultra-faint dwarfs, down to a few hundred stars. "Every mid-universe galaxy" I have taken as every ordinary galaxy anywhere, at any time between the first ones and the far future, not only ours. **Recommend both.**
