@@ -239,6 +239,10 @@ try {
       // In X-rays the photosphere does not show; what is seen is the hot corona in front of it, on the mapped (violet) scale.
       assert.ok(xr.centre[2] > xr.centre[1] + 30 && vis.centre[1] - xr.centre[1] > 40, `the X-ray view is the corona's mapped colour: ${xr.centre} (visible ${vis.centre})`);
       await shot(gm, `render-star-xray-${name}`);
+      // O10 cells: the Sun's granules (about 1,000 across) are far below a pixel on this disc, so it is drawn plain and says so.
+      const gw = await gm.locator("[data-star] [data-granule-words]").innerText();
+      assert.ok(/Granules about 1,3\d\d km wide/.test(gw) && /too small to draw/.test(gw), `the Sun's granules in words: ${gw}`);
+      assert.equal(await gm.locator("[data-star] [data-granules]").getAttribute("data-granules"), "0");
       console.log(`  star: Sun ${regime}; ${await gm.locator("[data-star] [data-spot-words]").innerText()}; ${await gm.locator("[data-star] [data-flares]").innerText()}`);
       assert.equal(await gm.locator("[data-state-hash]").first().getAttribute("data-state-hash"), hash, "drawing a star never changes the state hash");
     }

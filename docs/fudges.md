@@ -509,6 +509,8 @@ The owner wants the physics in chain blocks (except big blocks) with a UI elemen
 | `star.ts` CORONA_K | Corona at 1.5 MK for every star | No coronal temperature in the kernel yet | Coronal temperature from L_X (Güdel 2004 relation) published by read_activity | Stand-in |
 | `star.ts` X-ray view | Active regions are Gaussian brightenings over spots; flares drawn at a spot; log emission-measure mapped to violet | X-ray images are mapped colour by nature; loops not modelled | Loop models (RTV scaling) over the spot map; flare sites from the kernel | Stand-in (the colour map is permanent and labelled) |
 | `star.ts` limbDarkening | Grey atmosphere (Eddington) in every band | Physics-derived, no tables | Wavelength-dependent coefficients (Claret 2000 tables) by Teff and log g | To review |
+| `star.ts` GRANULE_DT (O10 cells) | Granules are a temperature spread of 3.1% of Teff (rms) for every star, set from the Sun's measured 14% intensity contrast | The kernel publishes granule size, life and speed, not contrast | Contrast from the convective flux and Mach number (or simulation tables, e.g. Magic et al. 2013 Stagger grid) published by read_activity | Stand-in |
+| `star.ts` granulesFor | Cell places: a jittered Fibonacci lattice per generation, a new set each granule lifetime (no motion within a life); cells keep their contrast up to the limb; supergranules and the network are not drawn | Places carry no physics (only size and count do); a few pixels per cell cannot show flows | Cells that drift and split over their life; contrast falling toward the limb from 3D models; network faculae near the limb | Stand-in |
 
 
 ### 3. Kernel light track (light thread, PR 24)
