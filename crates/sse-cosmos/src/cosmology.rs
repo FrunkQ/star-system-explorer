@@ -22,7 +22,9 @@ pub const MPC_M: f64 = 3.085_677_581_491_367e22;
 /// Critical density today per h^2, solar masses per cubic Mpc (3 H^2 / 8 pi G with H = 100 km/s/Mpc).
 pub const RHO_CRIT_H2: f64 = 2.775_366e11;
 
-/// Pack parameters (`provides.other.cosmology`), defaults Planck 2018 (TT,TE,EE+lowE+lensing+BAO, table 2 last column).
+/// The universe's parameters. The measured ones are the master data
+/// sheet's Cosmos group (DM1), read through the constants handle; only
+/// `now_gyr`, a model setting, comes from `provides.other.cosmology`.
 #[derive(Clone, PartialEq, Debug, Serialize, Deserialize)]
 pub struct Params {
     /// Hubble constant, km/s/Mpc.
@@ -39,18 +41,26 @@ pub struct Params {
     pub now_gyr: f64,
 }
 
-impl Default for Params {
-    fn default() -> Self {
+impl Params {
+    /// The measured parameters from the Cosmos group `c`, with `now_gyr`.
+    pub fn from_cosmos(c: &sse_core::constants::Cosmos, now_gyr: f64) -> Self {
         Params {
-            h0: 67.66,
-            omega_m: 0.3111,
-            omega_b: 0.04897,
-            sigma8: 0.8102,
-            n_s: 0.9665,
-            t_cmb: 2.7255,
-            n_eff: 3.046,
-            now_gyr: 13.8,
+            h0: c.h0,
+            omega_m: c.omega_m,
+            omega_b: c.omega_b,
+            sigma8: c.sigma8,
+            n_s: c.n_s,
+            t_cmb: c.t_cmb,
+            n_eff: c.n_eff,
+            now_gyr,
         }
+    }
+}
+
+impl Default for Params {
+    /// The real universe (the sheet's values as compiled), now at 13.8 Gyr.
+    fn default() -> Self {
+        Self::from_cosmos(&sse_core::constants::Cosmos::REAL, 13.8)
     }
 }
 

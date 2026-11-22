@@ -77,6 +77,35 @@ sheet is filled, and each sheet row records that check.
 | mattsson2006 | Mattsson and Desjarlais 2006, PRL 97, 017801. doi:10.1103/PhysRevLett.97.017801 | ionic-fluid edge | unverified | not read; recalled |
 | recalled | (none) | pure water's conductivity, 5.5e-6 S/m at 25 C | unverified | textbook figure, to read from a source |
 
+## A5. The Cosmos group (DM1)
+
+Galaxy histories design section 3.2 (`handover/design/SSE4-galaxy-histories-design.md`). Checked 22 Nov 2026:
+metadata from api.crossref.org/works/<doi> (first author, year, journal, volume, page and title all as cited);
+Planck's numbers read from the journal's own Table 2 page.
+
+| Id | Reference | Relied on | Status | Checked |
+|---|---|---|---|---|
+| planck2018 | Planck Collaboration 2020, A&A 641, A6: Planck 2018 results VI, cosmological parameters. doi:10.1051/0004-6361/201833910 | H0, Omega_b, Omega_c, Omega_m, sigma8, n_s, Omega_Lambda (check) | verified (numbers) | aanda.org full_html/2020/09/aa33910-18/T2.html, last column (TT,TE,EE+lowE+lensing+BAO): Omega_b h2 0.02242, Omega_c h2 0.11933, n_s 0.9665, H0 67.66, Omega_Lambda 0.6889, Omega_m 0.3111, Omega_m h2 0.14240, sigma8 0.8102. One 0.06 eV neutrino (section 2.1, arXiv text). **Correction to the design:** its Omega_c 0.2621 with Omega_c h2 0.1200 is the lensing-only column; the column the cosmology has always used gives 0.2607 |
+| fixsen2009 | Fixsen, D. J. 2009, ApJ 707, 916. doi:10.1088/0004-637X/707/2/916 | T_cmb 2.7255 K | verified (metadata) | Crossref; the value is from memory |
+| mangano2005 | Mangano, G. et al. 2005, Nucl. Phys. B 729, 221. doi:10.1016/j.nuclphysb.2005.09.041 | N_eff 3.046; Omega_nu h2 = sum of masses / 93.14 eV | verified (metadata); numbers unverified | Crossref. Planck's abstract quotes 3.046 as the Standard Model prediction |
+| chevallier2001 | Chevallier, M. and Polarski, D. 2001, Int. J. Mod. Phys. D 10, 213. doi:10.1142/S0218271801000822 | the w0, wa form | verified (metadata) | Crossref |
+| linder2003 | Linder, E. V. 2003, Phys. Rev. Lett. 90, 091301. doi:10.1103/PhysRevLett.90.091301 | the w0, wa form | verified (metadata) | Crossref |
+| desi2024 | DESI Collaboration (Adame, A. G. et al.) 2025, JCAP 02, 021: DESI 2024 VI. doi:10.1088/1475-7516/2025/02/021 | evolving dark energy is argued | verified (metadata) | Crossref |
+| schneider2012 | Schneider, A. et al. 2012, MNRAS 424, 684. doi:10.1111/j.1365-2966.2012.21252.x | half-mode mass (warm dark matter) | verified (metadata) | Crossref |
+| irsic2017 | Iršič, V. et al. 2017, Phys. Rev. D 96, 023522. doi:10.1103/PhysRevD.96.023522 | warm dark matter limit | verified (metadata) | Crossref; the 5 to 6.5 keV figures are from the design, unverified |
+| nadler2021 | Nadler, E. O. et al. 2021, Phys. Rev. Lett. 126, 091101. doi:10.1103/PhysRevLett.126.091101 | warm dark matter limit | verified (metadata) | Crossref |
+| rocha2013 | Rocha, M. et al. 2013, MNRAS 430, 81. doi:10.1093/mnras/sts514 | self-interaction gives a core | verified (metadata) | Crossref |
+| harvey2015 | Harvey, D. et al. 2015, Science 347, 1462. doi:10.1126/science.1261381 | cluster limit on self-interaction | verified (metadata) | Crossref |
+| randall2008 | Randall, S. W. et al. 2008, ApJ. doi:10.1086/587859 | cluster limit on self-interaction | unverified | Crossref refused the fetch (rate limit); volume and page are from memory |
+| kaplinghat2016 | Kaplinghat, M., Tulin, S. and Yu, H.-B. 2016, Phys. Rev. Lett. 116, 041302. doi:10.1103/PhysRevLett.116.041302 | velocity-dependent self-interaction | verified (metadata) | Crossref |
+| hui2017 | Hui, L. et al. 2017, Phys. Rev. D 95, 043541. doi:10.1103/PhysRevD.95.043541 | fuzzy dark matter | verified (metadata) | Crossref |
+| clowe2006 | Clowe, D. et al. 2006, ApJ 648, L109. doi:10.1086/508162 | the particle route: mass apart from gas | verified (metadata) | Crossref |
+| boran2018 | Boran, S. et al. 2018, Phys. Rev. D 97, 041501. doi:10.1103/PhysRevD.97.041501 | the particle route: GW170817 | verified (metadata) | Crossref |
+| des2025 | DES Collaboration (Abbott, T. M. C. et al.) 2025, Phys. Rev. D 112, 083535. doi:10.1103/3dzh-d8f5 | the standard picture passes new tests | verified (metadata) | Crossref; the "16,000 clusters" figure is from the design, unverified |
+| vijaykumar2021 | Vijaykumar, A., Kapadia, S. J. and Ajith, P. 2021, Phys. Rev. Lett. 126, 141104. doi:10.1103/PhysRevLett.126.141104 | G has not changed with time | verified (metadata) | Crossref (title: binary neutron stars) |
+| sakstein2026 | Sakstein, J. and Desmond, H. 2026, arXiv:2610.04048 | red dwarfs rule out recent steps in G | verified | arXiv abstract page: steps excluded at 3.1 and 4.0 sigma |
+| mcgaugh2016 | McGaugh, S. S., Lelli, F. and Schombert, J. M. 2016, Phys. Rev. Lett. 117, 201101. doi:10.1103/PhysRevLett.117.201101 | the check on haloes (radial acceleration relation) | verified (metadata) | Crossref |
+
 ## B. The four "from memory" gas refractivities
 
 `packs/base-light/pack.json` gases, note: "Ammonia, sulphur dioxide, carbon monoxide and neon: refractivity
