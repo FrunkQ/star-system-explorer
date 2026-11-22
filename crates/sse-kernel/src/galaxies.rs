@@ -460,6 +460,15 @@ pub(crate) fn satellites_seen(
     let z_obs = 1.0 / a_obs - 1.0;
     let m_host = host.mass_at(z_obs);
     let r200_kpc = gp.virial(c, m_host, a_obs).0;
+    let tree = sse_cosmos::assembly::tree(
+        c,
+        st.seed,
+        host,
+        z_obs,
+        &hs.params.assembly,
+        sse_cosmos::assembly::Level::Chart,
+    )
+    .map_err(|e| err("bad_address", e))?;
     let host_addr: sse_core::Address = host
         .address
         .parse()
@@ -467,7 +476,7 @@ pub(crate) fn satellites_seen(
     let d = sse_core::Draws::new(
         st.seed,
         host_addr,
-        sse_core::Stream::new("cosmos.galaxy.satellite.v1")
+        sse_core::Stream::new(sse_cosmos::assembly::FILL_STREAM)
             .map_err(|e| err("bad_request", e.to_string()))?,
     );
     // The radial profile's inverse CDF: number density n(x) ∝
@@ -490,40 +499,16 @@ pub(crate) fn satellites_seen(
         let f = (target - cdf[k - 1]) / (cdf[k] - cdf[k - 1]).max(1e-300);
         xs[k - 1] + f * (xs[k] - xs[k - 1])
     };
-    let shmf = |ln_psi: f64| {
-        let x = m::exp(ln_psi) / sp.shmf_alpha;
-        sp.shmf_n0 * m::pow(x, -sp.shmf_alpha) * m::exp(-sp.shmf_k * x * x * x)
-    };
-    let decades = -m::log10(sp.psi_min);
-    let n_bins = m::ceil(decades * f64::from(sp.bins_per_decade)).max(1.0) as u64;
-    let step = decades * m::ln(10.0) / n_bins as f64;
-    let ln_min = m::ln(sp.psi_min);
     let mut out = vec![];
     let (mut drawn, mut merged) = (0u64, 0u64);
-    for j in 0..n_bins {
-        let lo = ln_min + step * j as f64;
-        let lambda = sse_cosmos::cosmology::quad(&shmf, lo, lo + step, 8);
-        let count = sse_cosmos::haloes::poisson(&d, j * 4096, lambda).min(400);
-        for i in 0..count {
+    for p in &tree.progenitors {
+        {
             drawn += 1;
-            let k0 = j * 4096 + 16 + i * 8;
-            let psi = m::exp(lo + step * d.unit(k0));
-            let m_sat = psi * m_host;
-            // Infall: when the host held a share f of today's mass, f
-            // uniform above ψ (accretion follows the host's growth).
-            let f = psi + (1.0 - psi) * d.unit(k0 + 1);
-            let (mut zl, mut zh) = (z_obs, 20.0_f64);
-            for _ in 0..60 {
-                let mid = 0.5 * (zl + zh);
-                if host.mass_at(mid) > f * m_host {
-                    zl = mid;
-                } else {
-                    zh = mid;
-                }
-            }
-            let z_acc = 0.5 * (zl + zh);
+            let k0 = p.draw_base;
+            let m_sat = p.mass_at_infall_msun;
+            let z_acc = p.z_infall;
             let a_acc = 1.0 / (1.0 + z_acc);
-            let t_acc = c.time_of_scale(a_acc);
+            let t_acc = p.t_infall_gyr;
             // Dynamical friction since infall (BK08).
             let ratio = (host.mass_at(z_acc) / m_sat).max(1.0);
             let eta = sp.eta_range[0] + (sp.eta_range[1] - sp.eta_range[0]) * d.unit(k0 + 2);
@@ -555,13 +540,14 @@ pub(crate) fn satellites_seen(
                     continue;
                 }
             }
-            // Its galaxy: a halo with the subhalo's mass at infall.
-            let mut m0 = m_sat;
-            for _ in 0..12 {
-                let (al, be) = sse_cosmos::haloes::correa(c, m0, 0.0);
-                m0 = m_sat / (m::pow(1.0 + z_acc, al) * m::exp(be * z_acc));
-            }
-            let halo = hs.median(m0, &format!("sat-{j}-{i}"));
+            // Its galaxy: the progenitor as a halo of its own, with the
+            // mass at infall it fell in with.
+            let m0 = sse_cosmos::assembly::mass_today_for(c, m_sat, z_acc);
+            let paddr: sse_core::Address = p
+                .address
+                .parse()
+                .map_err(|e| err("bad_address", format!("{e:?}")))?;
+            let halo = hs.median_at(m0, &paddr);
             let g = sse_cosmos::galaxy::evolve(c, gp, &halo);
             let seen = look(
                 c,
@@ -595,6 +581,8 @@ pub(crate) fn satellites_seen(
         serde_json::json!({
             "host_mass_msun": m_host, "r200_kpc": r200_kpc,
             "subhaloes": drawn, "merged": merged,
+            "expected": tree.expected, "accreted_share": tree.accreted_psi,
+            "pinned": tree.progenitors.iter().filter(|p| p.pinned).count(),
         }),
     ))
 }

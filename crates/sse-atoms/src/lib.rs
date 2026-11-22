@@ -166,7 +166,18 @@ pub const KIND_DESCRIPTIONS: &[(&str, &str)] = &[
     ),
     (
         "interior.dynamo_heat_flux",
-        "heat flux carried out of the dynamo region by convection",
+        "power stirring the dynamo region, as a heat flux: convected heat plus compositional buoyancy",
+    ),
+    ("interior.core_heat_flux", "heat flux leaving the top of the core"),
+    ("interior.core_top_temperature", "temperature at the top of the core"),
+    ("interior.core_top_gravity", "gravity at the top of the core"),
+    (
+        "interior.convected_flux",
+        "heat flux at the core's top beyond what conduction along the adiabat carries",
+    ),
+    (
+        "interior.light_element_flux",
+        "mass flux of buoyant light elements let out into the liquid core, per area of its top",
     ),
     (
         "magnetic.dynamo_field",

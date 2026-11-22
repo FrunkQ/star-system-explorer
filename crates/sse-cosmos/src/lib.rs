@@ -4,6 +4,7 @@
 //! populations and events above it.
 #![forbid(unsafe_code)]
 
+pub mod assembly;
 pub mod birth;
 pub mod cosmology;
 pub mod envelope;

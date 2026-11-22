@@ -17,6 +17,7 @@ export const clusterMap: ViewModule = {
   inputs: [{ event_kinds: [] }],
   params: [
     { name: "min_mass", type: "enum", default: "1e10", options: ["1e10", "1e11", "1e12"], meaning: "Smallest halo shown, solar masses.", promoted: true, group: "content" },
+    { name: "place", type: "string", default: "", meaning: "The cell to open on (cell:x.y.z), or a galaxy's halo address to open with it picked; from a link on the place line.", group: "content" },
     { name: "web", type: "boolean", default: true, meaning: "Draw the cosmic web through the cell's middle behind the haloes.", group: "look", cost: "medium" },
   ],
   intents: [],
