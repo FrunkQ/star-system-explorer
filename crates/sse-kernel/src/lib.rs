@@ -410,6 +410,9 @@ pub struct Kernel {
     time: Option<sse_time::epoch::TimeSettings>,
     /// Recent `survey_surface` results.
     surveys: survey::Cache,
+    /// W7c part 2a: land and coasts by latitude read for the weather op,
+    /// by body and date, newest last.
+    land: Vec<(String, sse_climate::Extra)>,
     /// Orbit-level climates by key (W7a): the `weather` op reuses them.
     climates: sse_climate::Cache,
 }
@@ -539,6 +542,7 @@ impl Kernel {
             codes: sse_codes::Codes::default(),
             universe: None,
             surveys: vec![],
+            land: vec![],
             climates: sse_climate::Cache::new(8),
             jobs: BTreeMap::new(),
             next_job: 1,
@@ -588,9 +592,32 @@ impl Kernel {
                 )
             })?;
         let env = sse_surface::envelope(&s, &b);
-        let (c, _) = sse_surface::climate::conditions(&s, &b, &env, &Default::default());
         // The epoch the survey reads the body at, so both keep one key.
-        let epoch_myr = (b.age_gyr + w.shift_gyr).max(0.0) * 1000.0;
+        let epoch_gyr = (b.age_gyr + w.shift_gyr).max(0.0);
+        let epoch_myr = epoch_gyr * 1000.0;
+        // W7c part 2a: the land and coasts the survey reads off the
+        // Orbit-level map, kept by body and date so a re-read reuses them.
+        let lkey = serde_json::to_string(&(&u.seed, &b, epoch_gyr)).expect("plain data");
+        let x = match self.land.iter().position(|(k, _)| *k == lkey) {
+            Some(i) => self.land[i].1.clone(),
+            None => {
+                let x = sse_surface::climate::land_extra(
+                    &s,
+                    &env,
+                    &u.seed,
+                    epoch_gyr,
+                    b.oceans,
+                    &Default::default(),
+                    None,
+                );
+                self.land.push((lkey, x.clone()));
+                if self.land.len() > 8 {
+                    self.land.remove(0);
+                }
+                x
+            }
+        };
+        let (c, _) = sse_surface::climate::conditions(&s, &b, &env, &x);
         Ok((serde_json::to_value(&c).expect("plain data"), epoch_myr))
     }
 
