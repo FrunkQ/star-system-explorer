@@ -373,7 +373,11 @@ fn a_log_temperature_axis_reads() {
 #[test]
 fn water_on_the_sheet_reads_at_published_points() {
     let path = std::env::var("SSE_BASE_REFERENCE").unwrap_or_else(|_| {
-        concat!(env!("CARGO_MANIFEST_DIR"), "/../../packs/base-reference/pack.json").into()
+        concat!(
+            env!("CARGO_MANIFEST_DIR"),
+            "/../../packs/base-reference/pack.json"
+        )
+        .into()
     });
     let v: J = serde_json::from_str(&std::fs::read_to_string(path).unwrap()).unwrap();
     let r = load(v["provides"]["reference"].clone()).expect("the sheet loads");
@@ -401,12 +405,18 @@ fn water_on_the_sheet_reads_at_published_points() {
     // Deep in an ice giant: a conducting form, with the paper behind it
     // (superionic ice was seen in laser-shock runs; its edges are computed).
     let deep = at(2.0e11, 4000.0);
-    let kind = deep.form.as_ref().unwrap()["kind"].as_str().unwrap().to_string();
+    let kind = deep.form.as_ref().unwrap()["kind"]
+        .as_str()
+        .unwrap()
+        .to_string();
     assert!(
         kind == "superionic solid" || kind == "ionic fluid",
         "{deep:?}"
     );
-    assert!(matches!(deep.grade.as_deref(), Some("measured" | "computed")), "{deep:?}");
+    assert!(
+        matches!(deep.grade.as_deref(), Some("measured" | "computed")),
+        "{deep:?}"
+    );
     let s = deep.source.unwrap();
     assert!(s.get("doi").is_some() || s.get("url").is_some());
 }
