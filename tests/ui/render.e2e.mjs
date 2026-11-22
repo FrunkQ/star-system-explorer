@@ -253,6 +253,30 @@ try {
       console.log(`  time lapse: Earth's history read in ${secs.toFixed(1)} s; ${label.split("Drag")[0].slice(-220)}`);
     }
 
+    // R2b: today's weather. The kernel's weather op on the campaign's day lays clouds and haze over the same globe,
+    // the words name the cover and the storms, and nothing changes the state hash.
+    {
+      const wc = gm.locator("[data-weather-controls]");
+      const before = await pixelsOf(gm, globe(gm));
+      const t0 = Date.now();
+      await wc.getByRole("button", { name: "Today's weather" }).click();
+      await gm.waitForSelector('[data-weather-controls][data-weather="on"], [data-weather-error]', { timeout: 30000 });
+      const werr = await wc.locator("[data-weather-error]").count() ? await wc.locator("[data-weather-error]").innerText() : "";
+      assert.equal(werr, "", "the kernel gave today's weather");
+      const secs = (Date.now() - t0) / 1000;
+      await gm.waitForTimeout(800);
+      const cloudy = await pixelsOf(gm, globe(gm));
+      await shot(gm, `render-weather-${name}`);
+      const lum = (c) => 0.2126 * c[0] + 0.7152 * c[1] + 0.0722 * c[2];
+      assert.ok(lum(cloudy.centre) + lum(cloudy.upper) > lum(before.centre) + lum(before.upper), `the clouds brighten the globe: ${cloudy.centre} ${cloudy.upper} (clear ${before.centre} ${before.upper})`);
+      const label = await globe(gm).getAttribute("aria-label");
+      assert.match(label, /weather on day [\d,]+: cloud over about \d+% of the globe/, label);
+      await wc.getByRole("button", { name: "Clear the weather" }).click();
+      await gm.waitForSelector('[data-weather-controls][data-weather="off"]');
+      assert.equal(await gm.locator("[data-state-hash]").first().getAttribute("data-state-hash"), hash, "the weather never changes the state hash");
+      console.log(`  weather: read in ${secs.toFixed(1)} s; ${label.slice(label.indexOf("weather on day"), label.indexOf("weather on day") + 260)}`);
+    }
+
     // R5a: a star on the Body screen, drawn from the kernel's facts and activity, in visible light and X-rays.
     {
       await go(gm, "system");
