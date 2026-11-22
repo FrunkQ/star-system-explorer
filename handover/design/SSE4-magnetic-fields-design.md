@@ -310,6 +310,39 @@ One layer, called **Field**, offered in every view style (Chart, 3D, True, Wiref
 
 **Reference screen.** The Constants page already promises "change G and see". The same for μ₀ and for any phase's conductivity: change ionic water's conductivity and watch Neptune's field fade, with the worlds affected listed.
 
+### 9A. The Field instrument on True views (Alex, 22 Nov 12:49: "an 'instrument' to see magnetic fields on the photoreal views as lines or halos")
+
+**Proposed 22 Nov, questions 14 to 16.** True style shows what is really visible, and the view styles ruling is one picture at a time, never the diagram laid over a photograph. A magnetic field is not light, so the way in is the way real science does it: **an instrument whose reading is the picture**. It sits in the same switch as the light bands, because that switch already means "which instrument am I looking through".
+
+`Visible · Infrared · Ultraviolet · X-ray · Radio · Field`
+
+- **The light bands already show fields where nature does**: aurora glow, a giant's radio belts, a star's X-ray loops (which really do trace field lines). Those are true halos and need no instrument.
+- **Field is a magnetometer's reading drawn as light.** Choosing it replaces the visible picture, as choosing X-ray does: the world stays in place as a dim ghost for bearings, and the field is what glows. No ink, no labels, no chart symbols, so it is still one picture. The badge says "Instrument: magnetometer. A measured field, drawn in false colour."
+- **Three readings**, one small control beside the switch:
+  - *Lines*: field lines as fine luminous threads in real 3D, hidden behind the body where they pass behind it, brighter where the field is stronger, two colours for the two polarities (orange and blue, which also reads for colour-blind users). Open lines fade down the tail.
+  - *Halo*: a soft glow whose brightness is the field's strength (its pressure), so a tidy dipole reads as a smooth cocoon squeezed on the wind side, Neptune's as a lopsided one, a Mars-like world as faint patches over old crust. Belts appear in it as their own brighter band when "particles" is ticked.
+  - *Surface*: the field through the surface as a two-colour map on the globe, exactly what a solar magnetogram or a Juno field map is. On a star it shows the spot groups' polarities.
+- **How far it draws is physics, not a setting.** A magnetometer cannot tell a world's field from the wind's own once the two are equal. So the reading stops at the instrument's floor above the ambient field, which is near the bubble's edge for a good instrument and closer in for a poor one. That gives a natural extent and a natural cost limit.
+- **What a seat may see follows what has been measured.** The GM sees the whole field. A player's instrument shows what their ship's magnetometer could have measured: from one flyby, the dipole only (lines, no fine structure); after a survey from orbit, the many-poled detail and crustal patches. Same data, cut by the knowledge ladder (MF15, O9). No magnetometer aboard, no Field entry in their switch.
+- **Editing and "why" still work**: as in True generally, hover names a thing and a click opens its card; nothing else is drawn over the picture.
+- **It follows time** like the rest of the layer: scrub the ruler and the threads thin, flip and die.
+- **Not on weak devices by itself.** Lines run on any GPU tier. Halo needs gpu-high; below that the control offers Lines and Surface and says why. On canvas and text tiers the Field entry opens Chart style's Field layer instead, with one line saying so.
+
+### 9B. Is all this practical in a browser?
+
+Yes, because nothing here simulates a dynamo. The expensive physics (the turbulent fluid) was done by the people cited in section 3; the app uses their scaling laws and small tables.
+
+| Step | Work | Cost |
+|---|---|---|
+| Heat history | one ordinary differential equation per world | measured by the proven core thread: about 0.5 ms a world, once, cached |
+| Ledger (make, keep, squeeze) | a few closed-form numbers per layer, for about 5 to 20 layers | microseconds; estimate |
+| Shape | up to 24 coefficients (degree 4), 80 at degree 8 | microseconds; estimate |
+| Bubble, cut-off, belts, aurora, radio | closed forms and short sums | well under 1 ms; estimate |
+| Field lines for drawing | about 60 lines of 200 steps traced from the coefficients, once per change of field or wind, not per frame | a few ms in the view; to be measured in MF14a |
+| Halo | a 32-cube table of field strength baked once (about 33,000 samples), sampled in the existing air pass | one bake of a few ms; per-frame cost like a thin atmosphere; to be measured in MF14c |
+
+Nothing is computed for a world that only gets a click (section 7). The real risks are not speed. They are (1) the data: conductivities of iron alloys and ionic water are the disputed inputs, so calibration against the eight planets will take iterations; (2) shape, which will be right in family and wrong in detail, as the marks say; (3) breadth: sixteen packages across seven threads. The order in section 11 puts a real field on every world (MF0 to MF3) before any of the long tail.
+
 ---
 
 ## 10. What the data sheet must hold (for the "Design master data sheet" thread)
@@ -339,6 +372,7 @@ Order: MF0 and MF1 first (they unblock everything); MF2 to MF4 give a real field
 | MF12 | Formation hooks: young star's field sets the disc inner edge and birth spin | MF4 | Build SSE4 proven core (formation) | inner planets pile up near a spread of periods around 3 to 10 days, not all at 8; growth.rs fudge retired; formation goldens re-blessed on purpose |
 | MF13 | Galactic field model; radio glow and cosmic-ray flux by place | G3, Y3 | Build galaxy charts and travel screens | Milky Way pack: a few µG at the Sun; cosmic-ray flux higher toward the centre |
 | MF14a | Field layer, data to picture: shared line tracer, layer recipes for Chart and 3D, readable scaling, band emissions for True (radio belts, aurora glow, corona structure) | MF3, MF6 (starts on the Solar System fixture) | Build photoreal renderer (its R2c and R5) | Earth, Jupiter, Neptune, Sun and a pulsar screenshots; tracer matches a dipole analytically; phone tier draws the cut; frame budget held |
+| MF14c | The Field instrument on True views (9A): Field entry in the band switch; Lines, Halo and Surface readings; extent from the instrument floor; ghosted world; tier fallbacks; badge. Seats see what their magnetometer has measured once MF15 lands (GM sees all until then) | MF14a, MF6; the band switch (O1 light control) | Build photoreal renderer for the readings; Rebuild the chart room's top level for the switch entry | Earth, Neptune, a Mars-like world, the Sun and a pulsar in each reading; lines pass behind the globe; a poorer instrument draws a smaller extent; halo held inside the frame budget on gpu-high, absent with a reason below it; nothing but the instrument's picture and the badge on screen |
 | MF14b | Field layer on the Body screen and system chart: layer control, lines into the cutaway, tap for why, time ruler following, words tier | MF14a, MP19b | Rebuild the chart room's top level | browser checks on desk, phone and Night chart; every element has a why; evidence marks on GM view only |
 | MF15 | Game hooks: magnetometer as a sensor kind (finds oceans and fields), record events (storm, reversal, giant flare, compass swing), sound signals | MF6, MF9, O9, J1 | Build kernel resolve and rules, with Build Traveller pack for the sensor table | a pass by a Europa-like moon with a magnetometer reveals "conducting ocean"; without one it does not |
 | MF16 | **Folded into the matter pack** (agreed with its design thread, 22 Nov; matter pack 4.3A "What the magnetic fields design asks of the sheet"): mixture conductivity rule and evidence grades in MP17 and MP17a; μ₀, e and mₑ in MP1c; Curie temperature and susceptibility in MP13's minerals wave; iron alloy melting and partition in MP21's iron wave | those packages | their owners | changing ionic water's conductivity changes Neptune's field in a test |
@@ -366,6 +400,12 @@ Drawn reversal and cycle statistics; drawn incidence of fossil fields and of mag
 11. **Scope for 4.0: MF0 to MF10 and MF14 (planets, stars, consequences, the overlay); remnants, formation hooks, the galaxy and game hooks (MF11 to MF13, MF15) follow as their owner threads reach them?** Recommended: yes.
 12. **A magnetometer as a real survey instrument that can reveal a buried ocean (MF15)?** Recommended: yes. It is how Europa's ocean was found, and it is a good reason to fly past a moon.
 13. **Shall I draw the Field layer as a mockup (Earth, Neptune with its cutaway, a Mars-like world four billion years apart, a red dwarf) before MF14 is built?** Recommended: yes, once 8 and 9 are answered.
+
+### Follow-up, 22 Nov 12:49 (the Field instrument; open)
+
+14. **Bring fields into True views as an instrument in the band switch (Visible, Infrared, X-ray, Radio, Field), whose reading replaces the visible picture, so it stays one picture at a time?** Recommended: yes. It keeps your "one or the other" rule, and it is how real field maps are made.
+15. **Three readings: Lines, Halo and Surface, with Lines the default and Halo only on strong GPUs?** Recommended: yes.
+16. **Players get the Field instrument only if their ship carries a magnetometer, and see only what it has measured (a flyby gives the dipole, a survey gives the detail)?** Recommended: yes, once MF15 lands; until then the GM alone has it.
 
 ---
 
