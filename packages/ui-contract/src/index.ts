@@ -84,3 +84,5 @@ export type { SifterDoc, StoryEvidence, StoryHit, SiftAsk, SiftResult } from "./
 export * from "./orbits.ts";
 export { climateBelts, isExtrapolation, regimeWords } from "./climate.ts";
 export type { ClimateBelt, ClimateSummary } from "./climate.ts";
+export { bandWords, replayAt, replayClock, replayModel } from "./replay.ts";
+export type { ReplayBody, ReplayCloud, ReplayEvent, ReplayFrame, ReplayModel, ReplayStage } from "./replay.ts";

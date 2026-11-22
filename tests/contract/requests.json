@@ -2946,13 +2946,13 @@
  },
  {
   "op": "plan_voyage",
-  "from": "u:aging/halo:milky-way-like/cell:988_0_0/sys:f13787k0",
+  "from": "u:aging/halo:milky-way-like/cell:988_0_0/sys:f137879k0",
   "ship": "jump-courier",
   "minimise": "legs"
  },
  {
   "op": "plan_voyage",
-  "from": "u:aging/halo:milky-way-like/cell:988_0_0/sys:f13787k0",
+  "from": "u:aging/halo:milky-way-like/cell:988_0_0/sys:f137879k0",
   "ship": "jump-courier",
   "minimise": "sideways"
  },
@@ -2965,7 +2965,7 @@
  },
  {
   "op": "promote_star",
-  "address": "u:aging/halo:milky-way-like/cell:988_0_0/sys:f13787k0"
+  "address": "u:aging/halo:milky-way-like/cell:988_0_0/sys:f137879k0"
  },
  {
   "op": "promote_star",
