@@ -86,3 +86,5 @@ export { climateBelts, isExtrapolation, regimeWords } from "./climate.ts";
 export type { ClimateBelt, ClimateSummary } from "./climate.ts";
 export { bandWords, replayAt, replayClock, replayModel } from "./replay.ts";
 export type { ReplayBody, ReplayCloud, ReplayEvent, ReplayFrame, ReplayModel, ReplayStage } from "./replay.ts";
+export { copyClip, readClip, placeClip, clipWords, missingPacks, subtree, CLIP_VERSION } from "./clip.ts";
+export type { Clip, ClipNode, ClipEvent, ClipSource, ClipRead, Copied, PlacedBody } from "./clip.ts";
