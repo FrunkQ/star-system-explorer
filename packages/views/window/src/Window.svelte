@@ -7,6 +7,7 @@
 -->
 <script lang="ts">
   import { untrack } from "svelte";
+  import SkyBeyond from "./SkyBeyond.svelte";
   import { SENSORS, YEAR_S, angleWords, camera, discPx, lightWords, magWords, navFromScene, pointPx, project, towards, type Json, type Seen, type SystemScene, type ViewContext, type WindowView } from "../../../ui-contract/src/index.ts";
 
   let { ctx, scene, params }: { ctx: ViewContext; scene: SystemScene; params: Record<string, Json> } = $props();
@@ -267,6 +268,7 @@
       {/if}
     </aside>
   </div>
+  <SkyBeyond {ctx} {scene} />
 </div>
 
 <style>
