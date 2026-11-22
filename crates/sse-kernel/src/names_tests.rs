@@ -110,3 +110,18 @@ fn an_unknown_scheme_or_count_is_a_plain_error() {
         assert_eq!(r["type"], "error", "{r}");
     }
 }
+
+/// NM3a: the shipped base-names pack loads with the stack, and its
+/// Catalogue planets come back numbered under their parent.
+#[test]
+fn base_names_loads_with_the_stack() {
+    let mut k = kernel(vec![base(), pack("packs/base-names/pack.json")]);
+    let r = send(
+        &mut k,
+        serde_json::json!({"op": "name_sample", "scheme": "catalogue", "kind": "planet",
+            "count": 3, "parent": "SX 000102"}),
+    );
+    assert_eq!(r["type"], "names", "{r}");
+    let text = r.to_string();
+    assert!(text.contains("SX 000102 I"), "{text}");
+}
