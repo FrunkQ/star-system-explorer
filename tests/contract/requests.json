@@ -1930,6 +1930,15 @@
   "radius_km": 25.0
  },
  {
+  "op": "surface_frames",
+  "fixture": "Mars",
+  "frames_max": 1
+ },
+ {
+  "op": "surface_frames",
+  "fixture": "Jupiter"
+ },
+ {
   "op": "survey_caves",
   "fixture": "Jupiter",
   "quick": true,

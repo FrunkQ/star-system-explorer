@@ -118,6 +118,10 @@ pub struct Snapshot {
     pub t_myr: f64,
     pub plate: Vec<u16>,
     pub continental: Vec<bool>,
+    /// Every cell's crust at the date, kept only by [`history_recorded`]
+    /// (the time-lapse frames); never serialised.
+    #[serde(skip)]
+    pub cells: Vec<Cell>,
 }
 
 #[derive(Clone, Copy, PartialEq, Eq, Debug, Serialize, Deserialize)]
@@ -362,6 +366,27 @@ pub fn history(
     seed: &Seed,
     epoch_gyr: f64,
 ) -> PlateHistory {
+    run_history(s, env, seed, epoch_gyr, false)
+}
+
+/// [`history`], keeping every cell's crust at each snapshot (for frames).
+/// The same run: recording changes nothing it computes.
+pub fn history_recorded(
+    s: &SurfaceSettings,
+    env: &SurfaceEnvelope,
+    seed: &Seed,
+    epoch_gyr: f64,
+) -> PlateHistory {
+    run_history(s, env, seed, epoch_gyr, true)
+}
+
+fn run_history(
+    s: &SurfaceSettings,
+    env: &SurfaceEnvelope,
+    seed: &Seed,
+    epoch_gyr: f64,
+    record: bool,
+) -> PlateHistory {
     let coarse_p = guide_settings(&s.plates);
     let p = coarse_p.as_ref().unwrap_or(&s.plates);
     let fine_p = coarse_p.as_ref().map(|_| &s.plates);
@@ -444,6 +469,7 @@ pub fn history(
         t_myr: t,
         plate: x.cells.iter().map(|c| c.plate).collect(),
         continental: x.cells.iter().map(|c| c.continental).collect(),
+        cells: if record { x.cells.clone() } else { vec![] },
     };
     let mut snapshots = vec![];
     let mut steps = 0u32;
@@ -1148,11 +1174,14 @@ fn boundaries(run: &Run, r: f64) -> Vec<[Option<Boundary>; 3]> {
 /// isostasy, mountain belts, arcs, trenches and plume volcanoes worn down
 /// with their age.
 pub fn cell_heights(s: &SurfaceSettings, h: &PlateHistory, gravity: f64) -> Vec<f64> {
-    let p = &s.plates;
-    let now = h.epoch_myr;
+    cells_heights(&s.plates, &h.cells, h.epoch_myr, gravity)
+}
+
+/// Heights of `cells` at `now` Myr (before wear), metres from the raw datum.
+pub fn cells_heights(p: &PlateSettings, cells: &[Cell], now: f64, gravity: f64) -> Vec<f64> {
     let g = (9.81 / gravity.max(0.1)).clamp(0.5, 3.0);
     let cap = p.max_relief_m * g;
-    h.cells
+    cells
         .iter()
         .map(|c| {
             let (mut z, thick) = if c.continental {
