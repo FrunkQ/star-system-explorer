@@ -7,10 +7,11 @@
 // hidden. Nothing here computes physics: a subject with no radius fact is
 // left out and says so.
 import type { SceneSubject } from "./scene.ts";
+import { constant } from "./sheet.ts";
 
-export const R_EARTH_KM = 6371.0;
-export const R_JUPITER_KM = 69911;
-export const R_SUN_KM = 695700;
+export const R_EARTH_KM = constant("R_earth_mean") / 1000;
+export const R_JUPITER_KM = constant("R_jup_mean") / 1000;
+export const R_SUN_KM = constant("R_sun") / 1000;
 
 export interface ReferenceObject {
   id: string;

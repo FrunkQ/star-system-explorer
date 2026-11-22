@@ -5,10 +5,11 @@
 // the kernel's (rendering rule 5); this file only builds the request and reads
 // the reply.
 import type { SceneSubject, SystemScene } from "./scene.ts";
+import { constant } from "./sheet.ts";
 
-export const M_SUN = 1.98847e30;
-export const M_EARTH = 5.9722e24;
-export const AU_M = 149_597_870_700;
+export const M_SUN = constant("M_sun");
+export const M_EARTH = constant("M_earth");
+export const AU_M = constant("au");
 
 export interface OrbitPlaced {
   address: string;

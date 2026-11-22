@@ -24,6 +24,55 @@ pub struct Constants {
     pub sigma_sb: f64,
     /// Boltzmann constant, J K-1.
     pub k_b: f64,
+    /// The Cosmos group (DM1, galaxy histories design section 3.2): the
+    /// measured parameters of the universe, read by the cosmos chain.
+    pub cosmos: Cosmos,
+}
+
+/// The Cosmos group's values in force (Planck 2018 VI, table 2,
+/// TT,TE,EE+lowE+lensing+BAO; the sheet's `cosmos` rows). Dark matter and
+/// dark energy are the sheet's "theoretical" rows: their amounts are
+/// measured through gravity, their nature is unknown.
+#[derive(Clone, Copy, PartialEq, Debug)]
+pub struct Cosmos {
+    /// Hubble constant, km s-1 Mpc-1 (as astronomers quote it).
+    pub h0: f64,
+    /// Ordinary matter today, Omega_b.
+    pub omega_b: f64,
+    /// Dark matter today, Omega_c (theoretical).
+    pub omega_c: f64,
+    /// Massive neutrinos today, Omega_nu.
+    pub omega_nu: f64,
+    /// All matter, Omega_m = Omega_b + Omega_c + Omega_nu (worked out on the sheet).
+    pub omega_m: f64,
+    /// Fluctuation size on 8 Mpc/h, sigma_8.
+    pub sigma8: f64,
+    /// Tilt of the primordial spectrum, n_s.
+    pub n_s: f64,
+    /// Background temperature today, K.
+    pub t_cmb: f64,
+    /// Effective number of neutrino species.
+    pub n_eff: f64,
+    /// Dark energy pressure today and its drift, w = w0 + wa (1 - a) (theoretical).
+    pub w0: f64,
+    pub wa: f64,
+}
+
+impl Cosmos {
+    /// The compiled values, equal to the base sheet's rows bit for bit.
+    pub const REAL: Cosmos = Cosmos {
+        h0: 67.66,
+        omega_b: 0.048_97,
+        omega_c: 0.260_722_8,
+        omega_nu: 0.001_407_2,
+        omega_m: 0.3111,
+        sigma8: 0.8102,
+        n_s: 0.9665,
+        t_cmb: 2.7255,
+        n_eff: 3.046,
+        w0: -1.0,
+        wa: 0.0,
+    };
 }
 
 impl Constants {
@@ -34,10 +83,14 @@ impl Constants {
         c: k::C,
         sigma_sb: k::STEFAN_BOLTZMANN,
         k_b: 1.380_649e-23,
+        cosmos: Cosmos::REAL,
     };
 
     /// The sheet's id for each field, for the reader and the reach report.
-    pub const IDS: [&'static str; 4] = ["G", "c", "sigma_SB", "k_B"];
+    pub const IDS: [&'static str; 15] = [
+        "G", "c", "sigma_SB", "k_B", "H0", "Omega_b", "Omega_c", "Omega_nu", "Omega_m", "sigma8",
+        "n_s", "T_cmb", "N_eff", "w0", "wa",
+    ];
 
     pub fn get(&self, id: &str) -> Option<f64> {
         match id {
@@ -45,6 +98,17 @@ impl Constants {
             "c" => Some(self.c),
             "sigma_SB" => Some(self.sigma_sb),
             "k_B" => Some(self.k_b),
+            "H0" => Some(self.cosmos.h0),
+            "Omega_b" => Some(self.cosmos.omega_b),
+            "Omega_c" => Some(self.cosmos.omega_c),
+            "Omega_nu" => Some(self.cosmos.omega_nu),
+            "Omega_m" => Some(self.cosmos.omega_m),
+            "sigma8" => Some(self.cosmos.sigma8),
+            "n_s" => Some(self.cosmos.n_s),
+            "T_cmb" => Some(self.cosmos.t_cmb),
+            "N_eff" => Some(self.cosmos.n_eff),
+            "w0" => Some(self.cosmos.w0),
+            "wa" => Some(self.cosmos.wa),
             _ => None,
         }
     }
@@ -55,6 +119,17 @@ impl Constants {
             "c" => self.c = v,
             "sigma_SB" => self.sigma_sb = v,
             "k_B" => self.k_b = v,
+            "H0" => self.cosmos.h0 = v,
+            "Omega_b" => self.cosmos.omega_b = v,
+            "Omega_c" => self.cosmos.omega_c = v,
+            "Omega_nu" => self.cosmos.omega_nu = v,
+            "Omega_m" => self.cosmos.omega_m = v,
+            "sigma8" => self.cosmos.sigma8 = v,
+            "n_s" => self.cosmos.n_s = v,
+            "T_cmb" => self.cosmos.t_cmb = v,
+            "N_eff" => self.cosmos.n_eff = v,
+            "w0" => self.cosmos.w0 = v,
+            "wa" => self.cosmos.wa = v,
             _ => return false,
         }
         true
@@ -99,6 +174,11 @@ pub fn k_b() -> f64 {
 /// Speed of light in force.
 pub fn c() -> f64 {
     now().c
+}
+
+/// The Cosmos group in force.
+pub fn cosmos() -> Cosmos {
+    now().cosmos
 }
 
 /// Run `f` with `c` in force, then restore what was there (also on a panic).
