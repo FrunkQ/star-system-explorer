@@ -21,7 +21,9 @@ use sse_core::quantity::consts::{DAY, JULIAN_YEAR};
 use sse_flow::Reference;
 
 mod belts;
+mod sol;
 pub use belts::{BeltDose, BeltGap, BeltSettings, BeltShell, Belts};
+pub use sol::{solar_system, MeasuredField, SolField, WindField};
 pub use sse_atoms::belts::Electron;
 
 /// The stellar wind at a body (or at its host).

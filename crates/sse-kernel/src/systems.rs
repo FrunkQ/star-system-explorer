@@ -473,7 +473,11 @@ pub(crate) fn read_spectrum(
 
 /// What stops the wind at each body (MF6 part 1), its shielding (MF7) and
 /// belts (MF7 part 2, with the electron's constants from the data sheet).
-pub(crate) fn read_field(bodies: Vec<serde_json::Value>, sheet: &sse_reference::Reference) -> Out {
+pub(crate) fn read_field(
+    bodies: Vec<serde_json::Value>,
+    fixture: Option<&str>,
+    sheet: &sse_reference::Reference,
+) -> Out {
     let electron = match (
         sheet.constant("m_e"),
         sheet.constant("e"),
@@ -490,6 +494,33 @@ pub(crate) fn read_field(bodies: Vec<serde_json::Value>, sheet: &sse_reference::
         electron,
         ..sse_field::Settings::default()
     };
+    match (fixture, bodies.is_empty()) {
+        (Some("solar-system"), true) => {
+            let mp = sheet
+                .constant("m_p")
+                .ok_or_else(|| err("bad_field", "the data sheet has no proton mass"))?;
+            let all = sse_field::solar_system(&set, mp).map_err(|e| err("bad_field", e))?;
+            let out = all
+                .into_iter()
+                .map(|b| {
+                    let mut v = serde_json::to_value(&b.read).expect("serialisable");
+                    v["name"] = serde_json::Value::String(b.name);
+                    v["field"] = serde_json::to_value(&b.field).expect("serialisable");
+                    v["wind_field"] = serde_json::to_value(&b.wind_field).expect("serialisable");
+                    v
+                })
+                .collect();
+            return Ok(Response::FieldRead { bodies: out });
+        }
+        (Some(f), _) => {
+            return Err(err(
+                "bad_field",
+                format!("no field fixture {f}; fixtures: solar-system, given without bodies"),
+            ))
+        }
+        (None, true) => return Err(err("bad_field", "give bodies or fixture: solar-system")),
+        _ => {}
+    }
     let mut out = vec![];
     for (n, v) in bodies.into_iter().enumerate() {
         let b: sse_field::Body =

@@ -205,6 +205,8 @@ export interface ViewSession {
   skyGlow(ask: Omit<SkyAsk, "observer"> & { nside?: number }): Promise<{ ok: true; glow: Json } | { ok: false; code: string; message: string }>;
   weather(ask: WeatherAsk): Promise<{ ok: true; want: string; world: string; provenance: Json; data: Json } | { ok: false; code: string; message: string }>;
   readActivity(ask: { stars: Json[]; seed?: string; at_s?: number; window?: { from_s: number; to_s: number; min_energy_j?: number } }): Promise<{ ok: true; stars: Json[] } | { ok: false; code: string; message: string }>;
+  /** What stops the wind at each body, and its field (read only): `fixture: "solar-system"` or handed `bodies`. */
+  readField(ask: { fixture?: string; bodies?: Json[] }): Promise<{ ok: true; bodies: Json[] } | { ok: false; code: string; message: string }>;
   kernelVersion(): Promise<string>;
   /** Derived values of a flow (read only; no event). */
   derive(ref: DeriveRef): Promise<{ ok: true; values: Record<string, Derived> } | { ok: false; message: string }>;
@@ -672,6 +674,11 @@ export class Session implements ViewSession {
   async readActivity(ask: { stars: Json[]; seed?: string; at_s?: number; window?: { from_s: number; to_s: number; min_energy_j?: number } }): Promise<{ ok: true; stars: Json[] } | { ok: false; code: string; message: string }> {
     const r = await this.#call({ op: "read_activity", ...ask } as Json);
     return r.type === "activity_read" ? { ok: true, stars: (r as unknown as { stars: Json[] }).stars } : { ok: false, code: String(r.code ?? "unexpected"), message: String(r.message ?? JSON.stringify(r)) };
+  }
+
+  async readField(ask: { fixture?: string; bodies?: Json[] }): Promise<{ ok: true; bodies: Json[] } | { ok: false; code: string; message: string }> {
+    const r = await this.#call({ op: "read_field", ...ask } as Json);
+    return r.type === "field_read" ? { ok: true, bodies: (r as unknown as { bodies: Json[] }).bodies } : { ok: false, code: String(r.code ?? "unexpected"), message: String(r.message ?? JSON.stringify(r)) };
   }
 
   async windowView(ask: import("./window.ts").WindowAsk): Promise<{ ok: true; view: import("./window.ts").WindowView } | { ok: false; code: string; message: string }> {

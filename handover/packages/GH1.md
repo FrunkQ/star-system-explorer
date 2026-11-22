@@ -2,7 +2,7 @@
 
 Track GH (`design/SSE4-galaxy-histories-design.md`, section 7.1), built 22 Nov 2026 by the kernel thread. It replaces Y4 part 2's separate satellite draw: the satellites are now the members of the host's tree.
 
-## What it does (`crates/sse-cosmos/src/assembly.rs`, fudge F41)
+## What it does (`crates/sse-cosmos/src/assembly.rs`, fudge F42)
 - `assembly::tree(cosmology, seed, halo, z_read, params, level)` gives every halo the haloes it swallowed, largest first, each with its address (`…/prog:m{k}` for a pin, `…/prog:b{bin}-{i}` for a fill member), ψ, mass at infall, infall time and where its own keyed draws start.
 - **Pins.** G2's major mergers before the time read are members first. FMBK's ξ is the smaller over the larger progenitor and its rate is per descendant mass, so the smaller one held ξ/(1+ξ) of the halo at the merger. (G2's chronicle text is unchanged.)
 - **Fill.** Giocoli et al. 2008's unevolved subhalo mass function, in bins of ψ anchored at 10⁻³ (8 per decade), keyed Poisson counts on Y4's own stream and counters, each bin's mean less the pins that fall in it. Drawn top down.

@@ -714,3 +714,48 @@ export const FIELD_LINES: Record<"gpu-high" | "gpu-basic" | "canvas" | "text", {
   canvas: { perHemisphere: 10, meridians: 4 },
   text: null,
 };
+
+/** The parts of a read_field body (fixture "solar-system", or MF2's facts later) the layer reads. */
+export interface FieldReadJson {
+  address: string;
+  name?: string;
+  obstacle: { kind: string; standoff_radii: number };
+  flaring?: number;
+  field?: { reference_radius_m: number; g10_t: number; g11_t: number; h11_t: number; offset_radii?: number; tilt_deg?: number; grade?: string; stand_ins?: string[] };
+  wind_field?: { radial_t: number; azimuthal_t: number; sector?: string };
+}
+
+/**
+ * A read_field body to the layer's model and bubble. The body frame has z along the spin axis and x toward the
+ * star (the wind blows along −x); the ecliptic is taken as the spin equator. The wind's field is Parker's spiral:
+ * radial along −x (away from the star) for an away sector, and azimuthal along the star's spin, which is the
+ * orbit's prograde sense, −y in this frame (z × −x).
+ * Null when the body has no field block (no facts yet) or its own field is not what holds the wind off.
+ */
+export function fieldFromRead(r: FieldReadJson): { model: FieldModel; bubble: Bubble | null; notes: string[] } | null {
+  const f = r.field;
+  if (!f) return null;
+  const g = [[], [f.g10_t, f.g11_t]];
+  const h = [[], [0, f.h11_t]];
+  const base: FieldModel = { radius_m: f.reference_radius_m, g, h };
+  const notes = [...(f.stand_ins ?? [])];
+  let model = base;
+  if (f.offset_radii && f.offset_radii > 0) {
+    // The offset's direction is not published yet: drawn along the magnetic axis, toward the pole the field leaves.
+    const ax = dipoleAxis(base);
+    model = { ...base, offset: [-ax[0] * f.offset_radii, -ax[1] * f.offset_radii, -ax[2] * f.offset_radii] };
+    notes.push("the centre's offset is drawn along the magnetic axis, toward the pole the field leaves; its real direction is not published yet");
+  }
+  const own = r.obstacle.kind === "field";
+  const w = r.wind_field;
+  const bubble: Bubble | null = own
+    ? {
+        standoff_radii: r.obstacle.standoff_radii,
+        flaring: r.flaring ?? 0.5,
+        sunward: [1, 0, 0],
+        ...(w ? { wind_field_t: [-w.radial_t, -w.azimuthal_t, 0] as V3 } : {}),
+      }
+    : null;
+  if (!own) notes.push(`its ${r.obstacle.kind}, not its field, holds the wind off, so the lines are drawn to their own reach`);
+  return { model, bubble, notes };
+}
