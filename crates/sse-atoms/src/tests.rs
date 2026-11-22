@@ -108,7 +108,7 @@ fn every_atom_is_cited_explained_and_versioned() {
         }
     }
     assert_eq!(
-        n, 77,
+        n, 78,
         "first-wave atom count changed: update handover/packages/P1.md"
     );
 }
@@ -751,4 +751,18 @@ fn stormer_cutoff_matches_earth() {
     assert!((ground_share(0.0, 10.0, 1.0) - 1.0).abs() < 1e-15);
     let g = ground_share(15e9, 10.0, 1.0);
     assert!(g > 0.4 && g < 0.6, "ground share at 15 GV {g}");
+}
+
+#[test]
+fn dust_reddens_as_ccm89() {
+    use crate::extinction::ccm_ratio;
+    // V is the reference; B about 1 + 1/R_V (E(B−V) = A_V / R_V); K about a tenth.
+    close(ccm_ratio(0.549e-6, 3.1), 1.0, 0.01, "A_V/A_V");
+    let b = ccm_ratio(0.44e-6, 3.1);
+    assert!((b - 1.32).abs() < 0.03, "A_B/A_V {b}");
+    let k = ccm_ratio(2.2e-6, 3.1);
+    assert!((k - 0.114).abs() < 0.01, "A_K/A_V {k}");
+    // The 217.5 nm bump stands above its sides.
+    assert!(ccm_ratio(217.5e-9, 3.1) > ccm_ratio(170e-9, 3.1) * 0.95);
+    assert!(ccm_ratio(217.5e-9, 3.1) > ccm_ratio(260e-9, 3.1));
 }
