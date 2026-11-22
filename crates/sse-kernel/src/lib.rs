@@ -4271,6 +4271,20 @@ impl Kernel {
             }
             Request::PromoteStar { address } => self.promote_star(&address)?,
             Request::ReadReach { constant, value } => self.read_reach(&constant, value)?,
+            Request::PhaseAt {
+                substance,
+                p_pa,
+                t_k,
+            } => {
+                let at = self
+                    .observe
+                    .reference
+                    .phase_at(&substance, p_pa, t_k)
+                    .map_err(|e| err("no_phase", e))?;
+                Response::Matter {
+                    value: serde_json::to_value(at).expect("plain data"),
+                }
+            }
             Request::ReadMatter { table, id } => {
                 self.read_matter(table.as_deref(), id.as_deref())?
             }

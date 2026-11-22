@@ -218,6 +218,38 @@ fn the_base_sheet_loads_in_a_stack() {
     assert_eq!(g["in_force"], g["real"], "{g}");
 }
 
+/// MP17: `phase_at` through the kernel. The base sheet has no phase tables
+/// yet, so water answers from its familiar three phases, and says so.
+#[test]
+fn phase_at_answers_through_the_kernel() {
+    let path = root().join("packs/base-reference/pack.json");
+    let sheet: serde_json::Value =
+        serde_json::from_str(&std::fs::read_to_string(&path).unwrap()).unwrap();
+    let mut k = crate::Kernel::new();
+    let r = send(
+        &mut k,
+        serde_json::json!({"op": "load_stack", "packs": [
+            pack("tests/fixtures/packs/base-physics.json"), sheet]}),
+    );
+    assert_eq!(r["type"], "stack_loaded", "{r}");
+    let at = |k: &mut crate::Kernel, p: f64, t: f64| {
+        send(
+            k,
+            serde_json::json!({"op": "phase_at", "substance": "h2o", "p_pa": p, "t_k": t}),
+        )
+    };
+    let r = at(&mut k, 101_325.0, 300.0);
+    assert_eq!(r["type"], "matter", "{r}");
+    assert_eq!(r["value"]["phase"], "h2o.liquid", "{r}");
+    assert_eq!(r["value"]["from"], "familiar", "{r}");
+    assert_eq!(at(&mut k, 101_325.0, 250.0)["value"]["phase"], "h2o.solid");
+    let r = send(
+        &mut k,
+        serde_json::json!({"op": "phase_at", "substance": "unobtainium", "p_pa": 1.0, "t_k": 300.0}),
+    );
+    assert_eq!(r["type"], "error", "{r}");
+}
+
 /// MP1c part 2: with twice G the Sun is 16 times as bright and twice as
 /// wide by stellar homology, its lifetime a sixteenth, and each of those
 /// values carries the ESTIMATED law. The real kernel stamps nothing. (At

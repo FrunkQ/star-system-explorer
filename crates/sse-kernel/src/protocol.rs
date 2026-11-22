@@ -1164,6 +1164,15 @@ pub enum Request {
         #[ts(optional)]
         id: Option<String>,
     },
+    /// The phase of a substance at a pressure and temperature (MP17, matter
+    /// pack design section 4.3A), with the phase's row: read from the
+    /// substance's phase table, or from its triple point and vapour curve
+    /// when it has none. Read-only, any seat.
+    PhaseAt {
+        substance: String,
+        p_pa: f64,
+        t_k: f64,
+    },
     /// The reach report for a changed constant (MP1c, design section 7A.3):
     /// every block in exactly one of three groups. `follows` (a formula that
     /// reads the constant from the one handle), `estimated` (a table
@@ -1346,6 +1355,7 @@ impl Request {
             Request::PromoteStar { .. } => "promote_star",
             Request::CampaignTags => "campaign_tags",
             Request::ReadMatter { .. } => "read_matter",
+            Request::PhaseAt { .. } => "phase_at",
             Request::ReadReach { .. } => "read_reach",
             Request::Dressing { .. } => "dressing",
             Request::AdoptDressing { .. } => "adopt_dressing",
@@ -1622,6 +1632,11 @@ pub fn ops() -> Vec<OpInfo> {
             "read_matter",
             Cost::Light,
             "reads the master data sheet loaded with the stack; nothing is worked out but molar mass",
+        ),
+        o(
+            "phase_at",
+            Cost::Light,
+            "one lookup in a table built at pack-build time (or the familiar three phases)",
         ),
         o(
             "read_reach",

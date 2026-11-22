@@ -2969,5 +2969,17 @@
   "op": "read_reach",
   "constant": "G",
   "value": 1.33486e-10
+ },
+ {
+  "op": "phase_at",
+  "substance": "h2o",
+  "p_pa": 101325.0,
+  "t_k": 300.0
+ },
+ {
+  "op": "phase_at",
+  "substance": "unobtainium",
+  "p_pa": 1.0,
+  "t_k": 300.0
  }
 ]
