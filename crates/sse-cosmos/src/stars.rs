@@ -85,13 +85,14 @@ pub struct StarParams {
     pub sigma_exponent: f64,
     /// Midplane density for vertical oscillation, solar masses per pc^3.
     pub midplane_density: f64,
-    pub rotation_kms: f64,
     /// Birth cluster mass function ~ M^-2 between these (solar masses).
     pub cluster_min: f64,
     pub cluster_max: f64,
-    /// Cells co-rotate with the galaxy at this angular speed (km/s/kpc;
-    /// the circular speed at the Sun's radius), so nearby stars drift
-    /// through them at their peculiar speeds, not at 220 km/s.
+    /// Cells co-rotate with the galaxy at this angular speed (km/s/kpc), so
+    /// nearby stars drift through them slowly. This is a frame convention,
+    /// not a measured speed: the grid's turn fixes where every cell is at
+    /// every time, so it stays at its first value (220 km/s at 8.2 kpc)
+    /// whatever the galaxy's rotation curve says (DM4 log).
     pub cell_rotation_kms_kpc: f64,
     /// Version of the fill's draw keys. Raising it redraws every unpinned
     /// system (a change to the fill rules does the same); pins are read
@@ -154,7 +155,6 @@ impl Default for StarParams {
             sigma_floor: 5.0,
             sigma_exponent: 0.35,
             midplane_density: 0.1,
-            rotation_kms: 220.0,
             cluster_min: 50.0,
             cluster_max: 1.0e5,
             cell_rotation_kms_kpc: 26.83,
@@ -567,8 +567,11 @@ impl<'a> Stars<'a> {
         let grow = m::pow((age / 10.0).max(1.0e-3), p.sigma_exponent);
         let sr = (p.sigma_r_10 * grow).max(p.sigma_floor) * KMS_PC_MYR;
         let sz = (p.sigma_z_10 * grow).max(p.sigma_floor) * KMS_PC_MYR;
-        let omega = p.rotation_kms * KMS_PC_MYR / r0;
-        let kappa = m::sqrt(2.0) * omega;
+        // Angular and epicyclic frequencies from the galaxy's rotation
+        // curve (DM4): κ² = 2 Ω² (1 + d ln v / d ln r).
+        let (v_c, slope) = self.env.circular(r0 / 1000.0);
+        let omega = v_c * KMS_PC_MYR / r0;
+        let kappa = m::sqrt(2.0 * (1.0 + slope).max(0.05)) * omega;
         let nu = m::sqrt(4.0 * m::PI * G_PC3 * p.midplane_density);
         let rayleigh = |u: f64| m::sqrt(-2.0 * m::ln(u.max(1.0e-300)));
         let amp_r = sr / kappa * rayleigh(d.unit(i(17)));

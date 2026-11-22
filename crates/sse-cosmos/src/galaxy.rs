@@ -99,6 +99,9 @@ pub struct GalaxyParams {
     pub bar_threshold: f64,
     /// Steps between stored history points.
     pub history_every: u32,
+    /// DM4: the dark matter profile and the rotation curve.
+    #[serde(default)]
+    pub structure: crate::structure::StructureParams,
 }
 
 fn exsitu_black_hole_default() -> f64 {
@@ -141,6 +144,7 @@ impl Default for GalaxyParams {
             disc_factor: 0.6,
             bar_threshold: 1.1,
             history_every: 5,
+            structure: Default::default(),
         }
     }
 }
@@ -192,6 +196,10 @@ pub struct Galaxy {
     pub returned: Vec<f64>,
     pub step_gyr: f64,
     pub t_start_gyr: f64,
+    /// DM4: the circular speed now, (r kpc, v km/s) on log-spaced radii
+    /// from 0.05 kpc to r200 (`structure::Structure::speeds`).
+    #[serde(default)]
+    pub rotation: Vec<(f64, f64)>,
 }
 
 /// a(t) on the galaxy's grid, by stepping the cosmology's time integral in log a.
@@ -489,9 +497,18 @@ pub fn evolve_with(c: &Cosmology, p: &GalaxyParams, halo: &Halo, edits: &[Edit])
     }
     let now_state = state.expect("at least one step");
     let disc_mass = (now_state.stars - now_state.bulge) + now_state.gas;
+    // The rotation curve now (DM4), and its peak for the bar test.
+    let structure = crate::structure::Structure::new(
+        c,
+        &p.structure,
+        &|z| halo.mass_at(z),
+        &now_state,
+        1.0 / (1.0 + now_state.z),
+    );
+    let rotation = crate::structure::curve_table(&structure);
+    let v_max = rotation.iter().map(|e| e.1).fold(0.0, f64::max);
     // Efstathiou, Lake and Negroponte 1982: v_max / sqrt(G M_d / R_d) below about 1.1 is bar-unstable.
-    let enl =
-        1.1 * now_state.v_c / m::sqrt(G_KPC * disc_mass.max(1.0) / now_state.disc_kpc.max(1.0e-3));
+    let enl = v_max / m::sqrt(G_KPC * disc_mass.max(1.0) / now_state.disc_kpc.max(1.0e-3));
     let barred = enl < p.bar_threshold && now_state.stars > 1.0e9;
     let morphology = classify(&now_state, barred);
     Galaxy {
@@ -505,6 +522,7 @@ pub fn evolve_with(c: &Cosmology, p: &GalaxyParams, halo: &Halo, edits: &[Edit])
         returned: returned_steps,
         step_gyr: dt,
         t_start_gyr: t0,
+        rotation,
     }
 }
 

@@ -49,8 +49,7 @@
      "feh_sd": 0.1,
      "unusual_sd": 3.0,
      "step_kpc": 0.05,
-     "path_points": 9,
-     "rotation_kms": 220.0
+     "path_points": 9
     },
     "sources": {
      "haloes": "Sheth and Tormen 1999 mass function and bias; growth M(z) = M0 (1+z)^alpha exp(beta z) (McBride et al. 2009) with alpha, beta from Correa et al. 2015 (paper I, MNRAS 450, 1514, doi:10.1093/mnras/stv689, eqs. 14, 15 and 20 to 23); spin Bullock et al. 2001; major mergers Fakhouri, Ma and Boylan-Kolchin 2010; formation scatter and environment shift are rough (sketch)",
@@ -149,7 +148,6 @@
      "mean_star_msun": 0.5,
      "pattern_kms_kpc": 25.0,
      "pitch_deg": 12.0,
-     "rotation_kms": 220.0,
      "sigma_kms": 35.0,
      "sterilising_pc": 10.0,
      "texture_cell_pc": 50.0,
@@ -228,7 +226,6 @@
      "sigma_floor": 5.0,
      "sigma_exponent": 0.35,
      "midplane_density": 0.1,
-     "rotation_kms": 220.0,
      "cluster_min": 50.0,
      "cluster_max": 100000.0,
      "cell_rotation_kms_kpc": 26.83

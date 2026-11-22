@@ -22,6 +22,7 @@ pub mod scenario;
 pub mod sky;
 pub mod star_tree;
 pub mod stars;
+pub mod structure;
 pub mod web;
 
 pub use birth::SystemBirth;
