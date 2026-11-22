@@ -142,6 +142,21 @@ are plain formulas). A block stays in Rust only if it truly cannot be a formula 
 Block), and says why in `docs/fudges.md`. While moving, the block's id, ports and results do not change, so
 no flow or save breaks. Owner: Build kernel resolve and rules, with each physics thread for its own family.
 
+## 8B. Speed (Alex, 22 Nov: "this won't impact speed; I guess we could compile if necessary")
+
+- A formula is parsed and unit-checked once, when its pack loads, into a short list of steps. Running it is
+  a walk down that list: no text is read at run time.
+- Heavy inner work stays in Rust: orbit stepping, the formation pipeline, surface tiles, large tables, the
+  Big Blocks. Equations are for the one-formula relations.
+- **Timing condition for ND3b.** Each family that moves carries a timing check beside its unchanged-results
+  check: the kernel's benchmark flows for that family (a system resolve, a galaxy patch, a year of orbits)
+  must run within 5 % of their time before the move, on the desktop and the phone tier. A family that fails
+  does not move until the fallback below is in.
+- **Fallback: compile at load.** If walking the list is ever too slow, the kernel compiles each formula at
+  load into a closure (or a block of WebAssembly), keeping exactly the order of operations as written and the
+  same `sse_core::math` calls, so results are identical to the last bit. The pack format, the hash and what
+  a person sees do not change; this is a kernel detail and can be added later without touching any pack.
+
 ## 9. Questions for Alex
 
 1. **The bare-number rule in section 4** (only small whole numbers and their ratios; everything else is a
@@ -164,4 +179,5 @@ no flow or save breaks. Owner: Build kernel resolve and rules, with each physics
 - A what-if that changes a looked-up constant changes the Equation's result with no edit to the pack.
 - An Equation that names a data sheet row inside itself, or has a constant's value typed in, is refused at
   load; every constant it uses shows as a wire from a Look up block.
+- ND3b: each moved family passes its timing check (section 8B) as well as its unchanged-results check.
 - Every Equation has a worded name; a flow of Equations passes the read-the-names test (section 8A).
