@@ -430,7 +430,8 @@
     position: absolute;
     left: 92px;
     right: 16px;
-    top: 16px;
+    /* Below the shell's view controls (interface style rule 12), which sit at the top of the stage. */
+    top: 84px;
     flex-wrap: wrap;
     display: flex;
     align-items: center;
@@ -464,7 +465,7 @@
   .problem {
     position: absolute;
     left: 24px;
-    top: 60px;
+    top: 128px;
     margin: 0;
     padding: 6px 10px;
     border: var(--sse-line) solid var(--sse-accent-ink);

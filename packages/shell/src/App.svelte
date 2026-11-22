@@ -2184,6 +2184,14 @@
       flex: 1 1 auto;
       overflow: hidden;
     }
+    /* The name gives way first on a phone (the desktop rule keeps it whole and shrinks the far steps). */
+    .place .title {
+      flex: 0 1 auto;
+    }
+    .place .step {
+      flex: none;
+      min-width: 0;
+    }
     .place .up {
       font-size: 22px;
       line-height: 1;
