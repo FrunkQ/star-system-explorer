@@ -108,7 +108,7 @@ fn every_atom_is_cited_explained_and_versioned() {
         }
     }
     assert_eq!(
-        n, 78,
+        n, 80,
         "first-wave atom count changed: update handover/packages/P1.md"
     );
 }
@@ -765,4 +765,21 @@ fn dust_reddens_as_ccm89() {
     // The 217.5 nm bump stands above its sides.
     assert!(ccm_ratio(217.5e-9, 3.1) > ccm_ratio(170e-9, 3.1) * 0.95);
     assert!(ccm_ratio(217.5e-9, 3.1) > ccm_ratio(260e-9, 3.1));
+}
+
+#[test]
+fn aurora_footprints_and_hill_distance() {
+    use crate::aurora::*;
+    let deg = 180.0 / m::PI;
+    // Earth's nose near 10 radii lands near 72°; Io's line (5.9 R_J) near 66°.
+    let e = footprint_latitude(10.0, 1.0) * deg;
+    assert!((e - 71.6).abs() < 0.1, "{e}");
+    let io = footprint_latitude(5.9, 1.0) * deg;
+    assert!((io - 65.7).abs() < 0.2, "{io}");
+    assert_eq!(footprint_latitude(0.5, 1.0), 0.0);
+    // Jupiter, Σ* 0.14 S, Ṁ 1000 kg/s: about 30 R_J (Nichols 2011, after Hill 2001).
+    let rj = 7.1373e7;
+    let h = hill_distance(0.14, 4.264e-4, rj, 1000.0) / rj;
+    assert!((h - 30.0).abs() < 1.5, "Hill distance {h}");
+    assert!(hill_distance(0.14, 4.264e-4, rj, 0.0).is_infinite());
 }
