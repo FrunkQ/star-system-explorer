@@ -24,11 +24,46 @@ export interface Edge {
 
 const COST_ORDER: Cost[] = ["trivial", "light", "medium", "heavy"];
 
+/**
+ * One kernel call as the performance readout sees it (PF1). Times are read
+ * on the page and in the worker, never inside the kernel, and never enter a
+ * hash. `kernel_ms` is the kernel's own time; `total_ms` adds the trip to
+ * the worker and any wait behind earlier calls.
+ */
+export interface CallTiming {
+  op: string;
+  /** The request's `detail` or `level`, when it names one (Orbit, Survey, ...). */
+  detail?: string;
+  /** A job (start, steps and finish together) rather than one call. */
+  job: boolean;
+  total_ms: number;
+  kernel_ms?: number;
+  bytes_in: number;
+  bytes_out: number;
+  /** The kernel's WebAssembly memory after the call, bytes. */
+  wasm_bytes?: number;
+}
+
+let observer: ((t: CallTiming) => void) | null = null;
+
+/** Watch every kernel call from every client on this page; null stops. Off by default: unwatched calls cost nothing extra. */
+export function setCallObserver(fn: ((t: CallTiming) => void) | null): void {
+  observer = fn;
+}
+
+const clock = () => (typeof performance !== "undefined" ? performance.now() : 0);
+// Every caller writes the top-level op first, so a match near the start is enough for a readout
+// (and a pack load of several megabytes is never scanned whole).
+const opOf = (req: string) => /"op"\s*:\s*"([a-z_]+)"/.exec(req.slice(0, 256))?.[1] ?? "unknown";
+const detailOf = (req: string) => /"(?:detail|level)"\s*:\s*"([A-Za-z_-]+)"/.exec(req.slice(0, 512))?.[1];
+
+type Done = { response: string; ms?: number; mem?: number };
+
 /** Typed client for a kernel behind a worker port. */
 export class KernelClient {
   private port: Port;
   private next = 1;
-  private pending = new Map<number, { resolve: (s: string) => void; progress?: (d: number, t: number) => void }>();
+  private pending = new Map<number, { resolve: (d: Done) => void; progress?: (d: number, t: number) => void }>();
   private ready: Promise<void>;
   private hello?: Extract<Response, { type: "hello" }>;
   capability?: Capability;
@@ -45,7 +80,7 @@ export class KernelClient {
         if (m.kind === "progress") p.progress?.(m.done, m.total);
         else {
           this.pending.delete(m.id);
-          p.resolve(m.response);
+          p.resolve(m);
         }
       });
     });
@@ -60,10 +95,14 @@ export class KernelClient {
   async callRaw(request: string): Promise<string> {
     await this.ready;
     const id = this.next++;
-    return new Promise((resolve) => {
+    const watch = observer;
+    const t0 = watch ? clock() : 0;
+    const done = await new Promise<Done>((resolve) => {
       this.pending.set(id, { resolve });
       this.send({ kind: "call", id, request });
     });
+    if (watch) watch({ op: opOf(request), detail: detailOf(request), job: false, total_ms: clock() - t0, kernel_ms: done.ms, bytes_in: request.length, bytes_out: done.response.length, wasm_bytes: done.mem });
+    return done.response;
   }
 
   async call(request: Request): Promise<Response> {
@@ -74,12 +113,16 @@ export class KernelClient {
   async runJob(job: JobSpec, opts: JobOptions = {}): Promise<Response> {
     await this.ready;
     const id = this.next++;
-    const text = new Promise<string>((resolve) => {
+    const watch = observer;
+    const t0 = watch ? clock() : 0;
+    const text = new Promise<Done>((resolve) => {
       this.pending.set(id, { resolve, progress: opts.onProgress });
     });
     opts.signal?.addEventListener("abort", () => this.send({ kind: "cancel", id }), { once: true });
     this.send({ kind: "job", id, job, budget: opts.budget ?? 10_000 });
-    return JSON.parse(await text) as Response;
+    const done = await text;
+    if (watch) watch({ op: `job:${job.kind}`, job: true, total_ms: clock() - t0, kernel_ms: done.ms, bytes_in: 0, bytes_out: done.response.length, wasm_bytes: done.mem });
+    return JSON.parse(done.response) as Response;
   }
 
   /** Kernel facts: version, ops with cost classes, tiers. */

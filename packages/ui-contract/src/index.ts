@@ -92,3 +92,5 @@ export type { Clip, ClipNode, ClipEvent, ClipSource, ClipRead, Copied, PlacedBod
 export { pickLine, shownLines, opensKey, checkStartLines } from "./start.ts";
 export type { StartLine, StartLinesDoc, StartOpens } from "./start.ts";
 export { readSol, solBatches, solSourceText, SOL_TITLE, type SolSheet } from "./sol.ts";
+// The performance readout and its reports (PF1).
+export * from "./perf.ts";

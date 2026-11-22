@@ -72,6 +72,8 @@
   import { createWorkspace } from "./workspace.svelte.ts";
   import { loadPref, savePref } from "./prefs.ts";
   import { createSymbols } from "./symbols.svelte.ts";
+  import PerfReadout from "./PerfReadout.svelte";
+  import { perf } from "../../ui-contract/src/index.ts";
   import type { ChangeRequest, Json } from "../../ui-contract/src/index.ts";
 
   // World stacks (P4) ride on their subjects; until the kernel serves them they come from a fixture document.
@@ -125,6 +127,15 @@
     if (v) toWorld(v);
   }
   let moreOpen = $state(false);
+  // The performance readout (PF1): off by default, remembered per device.
+  let perfOn = $state(loadPref("perf.readout") === "on");
+  // At once, so a readout left on also times the start-up calls.
+  perf.setEnabled(loadPref("perf.readout") === "on");
+  let moreBtn = $state<HTMLElement | null>(null);
+  $effect(() => {
+    perf.setEnabled(perfOn);
+    savePref("perf.readout", perfOn ? "on" : "off");
+  });
 
   let theme = $state(loadPref("theme") === "night-chart" ? "night-chart" : "chart-room");
   // Symbols are chosen apart from the theme (H8.4A); the theme only says what it can carry.
@@ -144,7 +155,9 @@
   let failure = $state<string | null>(null);
   let status = $state({ kernel: "", tier: "", hash: "", stack: "", campaign: false });
   async function loadPacks(): Promise<unknown[]> {
-    return Promise.all(stackDoc.packs.map(async (p) => (await fetch(new URL(p, document.baseURI))).json()));
+    const packs = await Promise.all(stackDoc.packs.map(async (p) => (await fetch(new URL(p, document.baseURI))).json()));
+    perf.stamp("startup.packs", performance.now());
+    return packs;
   }
 
   // Sharing with players (V4): recording starts as the campaign opens, before any fact is entered.
@@ -168,6 +181,7 @@
       if (listed.ok) adoptedSystems = listed.systems.filter((x) => x.system !== base.system && (x.source !== "facts" || x.system === `u:${base.universe.id}/sys:sol`)).map((x) => ({ system: x.system, title: listedTitle(x) }));
       session = s;
       status = { kernel: await s.kernelVersion(), tier: s.device()?.tier ?? "unmeasured", hash: await s.stateHash(), stack: s.stack().hash, campaign: false };
+      perf.stamp("startup.first_chart", performance.now());
     })
     .catch((e) => (failure = String(e)));
 
@@ -1015,7 +1029,7 @@
     <!-- Ask (2.5): the agents, promoted from the status line. Tars needs no key. -->
     <button type="button" class="barbtn ask" onclick={() => ((agentsOpen = true), agentsDialog?.showModal())} title="Ask Tars, Orac or Minerva: what can I do here?">Ask</button>
     <div class="more">
-      <button type="button" class="barbtn" aria-expanded={moreOpen} aria-controls="more-menu" onclick={() => (moreOpen = !moreOpen)}>More</button>
+      <button type="button" class="barbtn" bind:this={moreBtn} aria-expanded={moreOpen} aria-controls="more-menu" onclick={() => (moreOpen = !moreOpen)}>More</button>
       {#if moreOpen}
         <div class="menu" id="more-menu" role="group" aria-label="More">
           <button type="button" class="ask-more" onclick={() => ((moreOpen = false), (agentsOpen = true), agentsDialog?.showModal())}>Ask Tars, Orac or Minerva</button>
@@ -1031,6 +1045,7 @@
           <button type="button" data-more-start onclick={() => ((moreOpen = false), (startOpen = true))}>Start sheet</button>
           <button type="button" aria-pressed={theme === "night-chart"} onclick={() => ((moreOpen = false), (theme = theme === "chart-room" ? "night-chart" : "chart-room"))}>Night chart <kbd>N</kbd></button>
           <button type="button" onclick={() => ((moreOpen = false), help?.showModal())}>Keyboard shortcuts <kbd>?</kbd></button>
+          <button type="button" data-more-perf aria-pressed={perfOn} onclick={() => ((moreOpen = false), (perfOn = !perfOn))} title="Time every chunk of the app on this device, for the minimum spec">Performance readout <small>{perfOn ? "on" : "off"}</small></button>
         </div>
       {/if}
     </div>
@@ -1151,6 +1166,10 @@
     </div>
   {/if}
 </div>
+
+{#if perfOn}
+  <PerfReadout kernel={status.kernel} edge={session?.device()} from={() => moreBtn} onclose={() => (perfOn = false)} />
+{/if}
 
 <dialog bind:this={seatsDialog} class="help seats-dialog" aria-label="Seats" onclose={() => (seatsOpen = !!seatsDialog?.open)}>
   {#if seatsOpen && share && session}
