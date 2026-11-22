@@ -26,6 +26,27 @@ fn settings() -> Result<CosmologyPack, Response> {
     CosmologyPack::from_packs(&[base_cosmology_pack()]).map_err(|e| err("bad_pack", e))
 }
 
+/// The cosmology and its tables (the sigma(M) table is 281 integrals, about
+/// a quarter of a second in a browser). Every galaxy, web and star request
+/// builds one from the same parameters, so the last one is kept: the tables
+/// are a pure function of the parameters, so keeping them changes no answer.
+pub(crate) fn cosmology(p: &sse_cosmos::cosmology::Params) -> Cosmology {
+    thread_local! {
+        static LAST: std::cell::RefCell<Option<Cosmology>> = const { std::cell::RefCell::new(None) };
+    }
+    LAST.with(|l| {
+        let mut l = l.borrow_mut();
+        match l.as_ref() {
+            Some(c) if &c.p == p => c.clone(),
+            _ => {
+                let c = Cosmology::new(p.clone());
+                *l = Some(c.clone());
+                c
+            }
+        }
+    })
+}
+
 /// The sky draw's settings (Y2).
 pub(crate) fn sky_params() -> Result<sse_cosmos::sky::SkyParams, Response> {
     Ok(settings()?.sky)
@@ -63,7 +84,7 @@ pub(crate) struct GalaxyAsk<'a> {
 /// place when asked.
 pub(crate) fn galaxy_chart(a: GalaxyAsk) -> Result<serde_json::Value, Response> {
     let cp = settings()?;
-    let c = Cosmology::new(cp.params.clone());
+    let c = cosmology(&cp.params);
     let w = web(&c, &cp, a.seed, a.root)?;
     let hs = Haloes {
         cosmo: &c,
@@ -304,7 +325,7 @@ pub(crate) fn web_slice(a: SliceAsk) -> Result<serde_json::Value, Response> {
         ));
     }
     let cp = settings()?;
-    let c = Cosmology::new(cp.params.clone());
+    let c = cosmology(&cp.params);
     let w = web(&c, &cp, a.seed, a.root)?;
     let scale = match (a.z, a.t_gyr) {
         (Some(z), None) if z > -0.99 => 1.0 / (1.0 + z),
@@ -347,7 +368,7 @@ pub(crate) fn halo_cell(a: CellAsk) -> Result<serde_json::Value, Response> {
         return Err(err("bad_request", "limit must be 1 to 1000"));
     }
     let cp = settings()?;
-    let c = Cosmology::new(cp.params.clone());
+    let c = cosmology(&cp.params);
     let w = web(&c, &cp, a.seed, a.root)?;
     let hs = Haloes {
         cosmo: &c,
@@ -440,7 +461,7 @@ pub(crate) fn reconstruct_origin(
     a: OriginAt,
 ) -> Result<sse_cosmos::origin::Origin, Response> {
     let cp = settings()?;
-    let c = Cosmology::new(cp.params.clone());
+    let c = cosmology(&cp.params);
     let w = web(&c, &cp, seed, root)?;
     let hs = Haloes {
         cosmo: &c,
@@ -525,7 +546,7 @@ pub(crate) fn with_world<R>(
     f: impl FnOnce(&sse_cosmos::stars::Stars, &World, f64) -> Result<R, Response>,
 ) -> Result<R, Response> {
     let cp = settings()?;
-    let c = Cosmology::new(cp.params.clone());
+    let c = cosmology(&cp.params);
     let w = web(&c, &cp, seed, root)?;
     let hs = Haloes {
         cosmo: &c,
