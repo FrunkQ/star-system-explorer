@@ -22,7 +22,7 @@
 <script lang="ts">
   import { globeStats, regimeWords, type Globe, type Json, type SystemScene, type ViewContext } from "../../../ui-contract/src/index.ts";
   import { untrack } from "svelte";
-  import { airFactsOf, airFromOptics, airRequest, applyEdits, editableSettings, keepPhoto, listPhotos, LIBRARY, mountGlobe, photograph, removePhoto, type GlobeRun, type MediaItem, type RecipeDoc, type RecipeEdit, type GlobeRunOptions, type GlobeStatus } from "../../../renderer/src/index.ts";
+  import { airFactsOf, airFromOptics, airRequest, applyEdits, editableSettings, keepPhoto, listPhotos, LIBRARY, mountGlobe, photograph, readFrames, removePhoto, type GlobeRun, type RawFrames, type MediaItem, type RecipeDoc, type RecipeEdit, type GlobeRunOptions, type GlobeStatus } from "../../../renderer/src/index.ts";
   import { SHIPPED_RECIPES } from "../../../renderer/src/recipes.ts";
   import Cutaway from "../../cutaway/src/Cutaway.svelte";
   import StarDisc from "./StarDisc.svelte";
@@ -185,6 +185,90 @@
     label: subject?.label ?? "",
     air: got?.air ?? null,
   });
+  // Time lapse (R6): the kernel's surface_frames for this world, played on the same globe. `lapse` is the API the
+  // chart room's timeline (BodyTimeline) drives; it is reactive, so a scrubber follows changes made anywhere.
+  type Lapse = {
+    loaded: boolean;
+    loading: boolean;
+    error: string | null;
+    layer: string;
+    t_myr: number;
+    layers: ReturnType<GlobeRun["layers"]>;
+    frames: ReturnType<GlobeRun["frames"]>;
+    load(): Promise<void>;
+    close(): void;
+    setLayer(id: string): void;
+    setTime(t_myr: number): void;
+    pick(lon_deg: number, lat_deg: number): ReturnType<GlobeRun["pick"]>;
+  };
+  let lapseData: RawFrames | null = null;
+  let lapseKey = "";
+  const lapse: Lapse = $state({
+    loaded: false,
+    loading: false,
+    error: null,
+    layer: "land",
+    t_myr: 0,
+    layers: [],
+    frames: { times: [], events: [] },
+    async load() {
+      const sub = subject;
+      if (!sub || lapse.loading) return;
+      const key = `${scene.system}|${sub.address}`;
+      lapse.loading = true;
+      lapse.error = null;
+      const r = await ctx.session.surfaceFrames({ system: scene.system, body: sub.address, detail: "orbit" });
+      lapse.loading = false;
+      if (key !== `${scene.system}|${subject?.address}`) return;
+      if (!r.ok) return void (lapse.error = r.message);
+      lapseData = r.frames as unknown as RawFrames;
+      lapseKey = key;
+      attachLapse();
+    },
+    close() {
+      lapseData = null;
+      lapseKey = "";
+      lapse.loaded = false;
+      run?.setTimeLapse(null);
+    },
+    setLayer(id: string) {
+      lapse.layer = id;
+      run?.setLayer(id);
+    },
+    setTime(t: number) {
+      lapse.t_myr = t;
+      run?.setTime(t);
+    },
+    pick: (lo: number, la: number) => run?.pick(lo, la) ?? null,
+  });
+  /** Hand the loaded frames to the current globe runtime (again after the globe remounts). */
+  function attachLapse() {
+    const r = run;
+    if (!r || !lapseData) return;
+    r.setTimeLapse(readFrames(lapseData));
+    lapse.layers = r.layers();
+    lapse.frames = r.frames();
+    const times = lapse.frames.times;
+    if (!lapse.loaded) lapse.t_myr = times[times.length - 1] ?? 0;
+    r.setLayer(lapse.layer);
+    r.setTime(lapse.t_myr);
+    lapse.loaded = true;
+  }
+  // A different world closes the time lapse.
+  $effect(() => {
+    const key = `${scene.system}|${subject?.address}`;
+    if (untrack(() => lapseKey) && key !== untrack(() => lapseKey)) untrack(() => lapse.close());
+  });
+  const lapseLimits = $derived.by(() => {
+    const l = lapse.layers.find((x) => x.id === lapse.layer);
+    return l ? [l.limits, ...l.pending].map((x) => x.trim().replace(/([^.])$/, "$1.")).join(" ") : "";
+  });
+  const ago = (t: number) => {
+    const last = lapse.frames.times[lapse.frames.times.length - 1] ?? t;
+    const a = last - t;
+    return a < 0.5 ? "today" : a >= 1000 ? `${(a / 1000).toFixed(2)} billion years ago` : `${Math.round(a)} million years ago`;
+  };
+
   // One runtime per globe element; settings and turns are passed to it.
   $effect(() => {
     const h = host;
@@ -194,6 +278,7 @@
       if (st.lon !== lon) lon = st.lon;
     });
     run = r;
+    untrack(() => attachLapse());
     return () => {
       r.dispose();
       run = null;
@@ -349,6 +434,21 @@
           </p>
         {/if}
       </div>
+      {#if has}
+        <!-- Interim time-lapse control; the chart room's BodyTimeline replaces this one node. -->
+        <div class="lapse" data-lapse-controls data-lapse={lapse.loaded ? "on" : lapse.loading ? "loading" : "off"} data-lapse-layer={lapse.layer} data-lapse-t={lapse.t_myr}>
+          {#if !lapse.loaded}
+            <button type="button" class="link" disabled={lapse.loading} onclick={() => lapse.load()}>{lapse.loading ? "Reading its history…" : "Through time"}</button>
+            {#if lapse.error}<small data-lapse-error>{lapse.error}</small>{/if}
+          {:else}
+            <label>Layer <select value={lapse.layer} onchange={(e) => lapse.setLayer(e.currentTarget.value)}>{#each lapse.layers as l (l.id)}<option value={l.id} disabled={!l.available}>{l.label}</option>{/each}</select></label>
+            <label>When <input type="range" min={lapse.frames.times[0] ?? 0} max={lapse.frames.times[lapse.frames.times.length - 1] ?? 0} step="10" value={lapse.t_myr} oninput={(e) => lapse.setTime(Number(e.currentTarget.value))} /></label>
+            <span data-lapse-when>{ago(lapse.t_myr)}</span>
+            <button type="button" class="link" onclick={() => lapse.close()}>Back to today</button>
+            <small data-lapse-limits>{lapseLimits}</small>
+          {/if}
+        </div>
+      {/if}
       {#if stats}
         <dl class="facts" data-globe-stats>
           <dt>Drawn</dt>
@@ -530,6 +630,23 @@
     font-size: 12px;
     color: var(--sse-ink-muted);
     margin-top: 4px;
+  }
+  .lapse {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px 12px;
+    align-items: center;
+    font-size: 13px;
+    margin: 8px 0;
+    max-width: 100%;
+  }
+  .lapse input[type="range"] {
+    width: min(260px, 60vw);
+  }
+  .lapse small {
+    flex-basis: 100%;
+    color: var(--sse-ink-muted);
+    font-size: 12px;
   }
   .drawing {
     display: flex;
