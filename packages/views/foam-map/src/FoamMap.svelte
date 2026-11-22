@@ -8,13 +8,16 @@
 -->
 <script lang="ts">
   import { untrack } from "svelte";
-  import { foamCells, sci, type Json, type SystemScene, type ViewContext, type WebSlice } from "../../../ui-contract/src/index.ts";
+  import { announcePlace, foamCells, parseWebId, sci, webId, type Json, type SystemScene, type ViewContext, type WebSlice } from "../../../ui-contract/src/index.ts";
 
   let { ctx, params }: { ctx: ViewContext; scene: SystemScene; params: Record<string, Json> } = $props();
   const first = untrack(() => ({ extent: String(params.extent_mpc ?? "200"), n: Number(params.samples ?? 96) }));
   const EXTENTS = ["50", "100", "200", "400"] as const;
   const STEPS = [0.6, 1, 1.5, 2, 3, 4, 5, 6, 8, 10, 12, 13.8];
-  let extent = $state<string>(EXTENTS.includes(first.extent as (typeof EXTENTS)[number]) ? first.extent : "200");
+  // A link's place (U24, `web:<side>`) opens first, then the screen's own side.
+  const linked = untrack(() => parseWebId(params.place));
+  const ok = (e: string | null): e is string => !!e && EXTENTS.includes(e as (typeof EXTENTS)[number]);
+  let extent = $state<string>(ok(linked) ? linked : ok(first.extent) ? first.extent : "200");
   const n = Math.max(16, Math.min(160, Math.round(first.n) || 96));
   let step = $state(STEPS.length - 1);
   let show = $state<"density" | "environment">("density");
@@ -61,6 +64,13 @@
     }
     playing = false;
   }
+
+  // The place line: this slice of the web is the place in view (the galaxies nearby are the scale below).
+  let root = $state<HTMLDivElement | null>(null);
+  $effect(() => {
+    const e = extent;
+    if (root) announcePlace(root, { scale: "web", id: webId(e), name: `The cosmic web, ${e} Mpc across` });
+  });
 
   // Shares of space in each environment.
   const shares = $derived.by(() => {
@@ -153,7 +163,7 @@
   });
 </script>
 
-<div class="foam" data-web={web ? `${web.slice.extent}:${web.t_gyr.toFixed(2)}` : ""}>
+<div class="foam" data-web={web ? `${web.slice.extent}:${web.t_gyr.toFixed(2)}` : ""} bind:this={root}>
   <div class="bar">
     <span class="seg" role="group" aria-label="Slice size">
       {#each EXTENTS as e (e)}

@@ -30,10 +30,16 @@ try {
     const errors = [];
     const gm = await (await browser.newContext({ viewport: { width: 1440, height: 900 }, deviceScaleFactor: screens ? 2 : 1 })).newPage();
     gm.on("pageerror", (e) => errors.push(e.message));
+    // The place line hears where the view is (sse:place).
+    await gm.addInitScript(() => {
+      window.__places = [];
+      document.addEventListener("sse:place", (e) => window.__places.push(e.detail));
+    });
     await gm.goto(base + "#chart");
     await gm.waitForSelector("[data-state-hash]:not([data-state-hash=''])", { timeout: 20000 });
     await go(gm, "web");
     await gm.waitForSelector(".foam[data-web^='200:']", { timeout: 60000 });
+    assert.deepEqual(await gm.evaluate(() => window.__places.at(-1)), { scale: "web", id: "web:200", name: "The cosmic web, 200 Mpc across" }, "the web map says where it is");
     const foam = gm.locator(".foam");
     assert.match(await foam.locator("[data-lede]").innerText(), /^Today/);
     const share = async (k) => Number((await foam.locator(`[data-env=${k}] dd`).innerText()).replace("%", ""));
@@ -57,6 +63,7 @@ try {
     await foam.locator("[data-show=environment]").click();
     await foam.locator("[data-extent='100']").click();
     await gm.waitForSelector(".foam[data-web^='100:']", { timeout: 60000 });
+    assert.equal(await gm.evaluate(() => window.__places.at(-1).id), "web:100");
     await shot(gm, "v9-foam-environment");
 
     await more(gm, "Night chart");
