@@ -5,7 +5,7 @@
 -->
 <script lang="ts">
   import { untrack } from "svelte";
-  import { railOf, scalesOf, type RailScale, DEPTHS, isDepth, type Depth, cellHalo, isPlaceScale, nextTrail, parsePlaceHash, placeHash, placeRank, placeSteps, readRecent, rememberPlace, samePlace, PLACE_SCALES, PLACE_WORDS, type Place, type PlaceScale } from "../../ui-contract/src/index.ts";
+  import { railOf, scalesOf, type RailScale, DEPTHS, isDepth, type Depth, cellHalo, readViewChoice, type ViewChoice, isPlaceScale, nextTrail, parsePlaceHash, placeHash, placeRank, placeSteps, readRecent, rememberPlace, samePlace, PLACE_SCALES, PLACE_WORDS, type Place, type PlaceScale } from "../../ui-contract/src/index.ts";
   import { PLACE_SCREENS } from "./documents/scales.ts";
   import { applyEdits, applySetup, type AtomInfo, type SifterDoc, enterFacts, observeOf, type AuthoredFacts, checkScreen, deriveScene, gmSeat, redoEdit, subjectOf, systemOrder, undoEdit, type CheckedScreen, type DerivationDoc, type ScreenDoc, type SystemScene, type ViewHandle, type ViewModule, type ViewSession } from "../../ui-contract/src/index.ts";
   import { openBrowserSession } from "../../ui-contract/src/host-browser.ts";
@@ -43,7 +43,7 @@
   import { allLenses, checkLens, defaultLens, hasTool, lensAudience, type Lens, type Vocab } from "../../ui-contract/src/index.ts";
   import { themeCss, THEMES } from "../../skins/chart-room/src/index.ts";
   import { ALL_THEMES } from "../../skins/player/src/index.ts";
-  import { Segmented, ToolButton, formatYears } from "../../chart-grammar/src/index.ts";
+  import { Segmented, ToolButton, ViewControls, formatYears } from "../../chart-grammar/src/index.ts";
   import workspaceDoc from "./documents/workspace.gm.json";
   import physicsDoc from "./documents/physics.gm.json";
   import packsDoc from "./documents/packs.gm.json";
@@ -82,6 +82,16 @@
   const base = { ...(sceneDoc as unknown as SystemScene), subjects: (sceneDoc as unknown as SystemScene).subjects.map((x) => (worlds.has(x.address) ? { ...x, world_fixture: worlds.get(x.address) } : x)) };
   const derivations = derivationsDoc as unknown as DerivationDoc;
   const ws = createWorkspace(base.now_yr);
+  // The standard view controls (rule 12): the viewer's view style and "seen from", kept on this device for every
+  // diagram; a view turned by hand becomes Free.
+  ws.view = readViewChoice(loadPref("view"));
+  function setView(c: ViewChoice) {
+    ws.view = c;
+    savePref("view", JSON.stringify(c));
+  }
+  ws.turned = () => {
+    if (ws.view?.seen !== "free") setView({ ...ws.view!, seen: "free" });
+  };
   // Orac is not connected yet (A2): its sample requests come from a fixture document.
   for (const r of (oracDoc as unknown as { requests: ChangeRequest[] }).requests) ws.fileRequest(r);
   let scene = $state<SystemScene>(base);
@@ -95,6 +105,8 @@
     return c.ok && !badScreens.length ? c.screen : null;
   });
   const mountFor = (area: string) => screen?.mounts.find((m) => m.area === area);
+  /** What the chart's view draws in each view style, when it is a diagram (rule 12). */
+  const viewSpec = $derived(mountFor("chart")?.module.controls);
 
   // The instrument rail (top-level design 2.2) at the scale in view: system, world, or the Workshop.
   let railScale = $state<RailScale>("system");
@@ -630,6 +642,8 @@
     const i = placeRank(railScale as PlaceScale);
     if (i > 0 && railScale !== "system") toScale(PLACE_SCALES[i - 1]!);
   }
+  /** The steps above a system in a word each, for a narrower bar. */
+  const SHORT_WORDS: Partial<Record<PlaceScale, string>> = { web: "Web", cluster: "Nearby" };
   /** The step below this one when it is a scale of its own (the cosmic web → the galaxies nearby → the galaxy). */
   const downScale = $derived<PlaceScale | null>(railScale === "web" ? "cluster" : railScale === "cluster" ? "galaxy" : null);
   const recentElsewhere = $derived(place ? recent.filter((r) => !samePlace(r, place)) : recent);
@@ -1122,7 +1136,7 @@
             </select>
           </label>
         {:else}
-          <button type="button" class="step" class:up={parent} class:below={s.below} class:far={!s.below && !parent} data-place-step={s.scale} data-go={s.scale === "system" ? "system" : undefined} onclick={() => goPlace(s.place)} title={s.below ? `Back down to ${s.label}` : `Up to ${s.label}${parent ? " (Esc)" : ""}`}>{#if parent}<span class="up-arrow" aria-hidden="true">‹ </span>{/if}<span class="up-name">{s.label}</span></button>
+          <button type="button" class="step" class:up={parent} class:below={s.below} class:far={!s.below && !parent} data-place-step={s.scale} data-go={s.scale === "system" ? "system" : undefined} onclick={() => goPlace(s.place)} title={s.below ? `Back down to ${s.label}` : `Up to ${s.label}${parent ? " (Esc)" : ""}`}>{#if parent}<span class="up-arrow" aria-hidden="true">‹ </span>{/if}<span class="up-name"><span class="long">{s.label}</span>{#if SHORT_WORDS[s.scale] && s.label === PLACE_WORDS[s.scale]}<span class="short" aria-hidden="true">{SHORT_WORDS[s.scale]}</span>{/if}</span></button>
         {/if}
         {#if i < steps.length - 1}<span class="sep" class:up-sep={parent} class:far={!s.below && !parent && !s.current} class:below={s.below} aria-hidden="true">›</span>{/if}
       {:else}
@@ -1209,8 +1223,9 @@
         {#if railScale !== "workshop"}<button type="button" class="door" data-go="workshop" onclick={toWorkshop} title="Physics flows, packs, player screens and data, symbols, styles: everything that changes the tool">Workshop ›</button>{/if}
       </nav>
       {#key ws.screen}
-      <main class="stage" data-desk={desk} data-screen={ws.screen} data-page={mountFor("card") ? undefined : ""} data-lens={lens.id} data-branch={ws.branch ? "open" : ahead ? "ahead" : undefined}>
+      <main class="stage" data-viewbar={viewSpec ? "" : undefined} data-desk={desk} data-screen={ws.screen} data-page={mountFor("card") ? undefined : ""} data-lens={lens.id} data-branch={ws.branch ? "open" : ahead ? "ahead" : undefined}>
         {#if ws.branch}<div class="branch-stamp" aria-hidden="true">What if · not kept</div>{/if}
+        {#if viewSpec && ws.view}<div class="viewbar"><ViewControls spec={viewSpec} choice={ws.view} onchange={setView} /></div>{/if}
         <div class="area-chart">{#if mountFor("chart")}<div class="fill" use:view={mountFor("chart")!}></div>{/if}</div>
         <nav class="tools" aria-label="Tools">
           <ToolButton label="Select" icon="M5 3l14 8-6 2-2 6z" pressed={true} />
@@ -1338,7 +1353,7 @@
 </dialog>
 
 <dialog bind:this={makeDialog} class="help make-dialog" aria-label="Make a system" onclose={() => (makeOpen = !!makeDialog?.open)}>
-  {#if makeOpen && session}<MakeSystem {session} start={makeStart} onadopted={(sys, note, hash) => (adopted(sys, note, hash), sys[0] && (makeDialog?.close(), showSystem(sys[0].system)))} context={{ mark: (s) => symbols.marker().mark(subjectOf(s)), symbology: symbols, styles: styleHost }} />{/if}
+  {#if makeOpen && session}<MakeSystem {session} start={makeStart} view={ws.view} onview={setView} onadopted={(sys, note, hash) => (adopted(sys, note, hash), sys[0] && (makeDialog?.close(), showSystem(sys[0].system)))} context={{ mark: (s) => symbols.marker().mark(subjectOf(s)), symbology: symbols, styles: styleHost }} />{/if}
   <form method="dialog"><button type="submit">Close</button></form>
 </dialog>
 
@@ -1492,6 +1507,23 @@
     text-decoration: underline;
   }
   /* The steps above the place in view are quiet; the ones below it are the way back to where the GM was. */
+  /* The name keeps its room: the steps above it give way first, then the list beside it. */
+  .place .title {
+    flex: 0 0.1 auto;
+  }
+  .place .step {
+    flex: 0 8 auto;
+    min-width: 2.5em;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  .place .sep {
+    flex: none;
+  }
+  .place .goto {
+    flex: 0 4 auto;
+    min-width: 3em;
+  }
   .place .step:not(.up) {
     font: inherit;
     font-size: 13px;
@@ -1531,6 +1563,18 @@
   .goto-mark {
     display: none;
   }
+  .place .short {
+    display: none;
+  }
+  /* Narrower: the far steps say it in a word; narrower still, only the step above shows. */
+  @media (max-width: 1600px) {
+    .place .step.far:has(.short) .long {
+      display: none;
+    }
+    .place .step.far .short {
+      display: inline;
+    }
+  }
   @media (max-width: 1180px) {
     .place .step.far,
     .sep.far {
@@ -1552,7 +1596,7 @@
     border: 0;
     border-bottom: 1px dotted var(--sse-rule);
     cursor: pointer;
-    max-width: 12em;
+    max-width: 7.5em;
   }
   .barbtn {
     height: 32px;
@@ -1711,7 +1755,8 @@
   /* When the bar is full the kicker gives way first, then the place's name ends in "…"; nothing overlaps. */
   .kicker {
     min-width: 0;
-    flex: 0 100 auto;
+    /* Only the room the place line leaves. */
+    flex: 1 1 0;
     font-size: 12px;
     color: var(--sse-ink-muted);
     letter-spacing: 0.08em;
@@ -1899,6 +1944,27 @@
   }
   .stage[data-page] .area-card {
     display: none;
+  }
+  /* The view controls (rule 12): always at the top of the stage, beside the tools, on every diagram. */
+  .viewbar {
+    position: absolute;
+    left: 96px;
+    top: 16px;
+    right: 440px;
+    z-index: 2;
+    pointer-events: none;
+  }
+  .viewbar > :global(*) {
+    pointer-events: auto;
+    width: fit-content;
+  }
+  .stage[data-viewbar] .undo-note {
+    top: 84px;
+  }
+  .stage[data-viewbar][data-screen="body"] .area-chart,
+  .stage[data-viewbar][data-screen="cutaway"] .area-chart,
+  .stage[data-viewbar][data-page] .area-chart {
+    top: 84px;
   }
   .tools {
     position: absolute;
@@ -2118,6 +2184,14 @@
       flex: 1 1 auto;
       overflow: hidden;
     }
+    /* The name gives way first on a phone (the desktop rule keeps it whole and shrinks the far steps). */
+    .place .title {
+      flex: 0 1 auto;
+    }
+    .place .step {
+      flex: none;
+      min-width: 0;
+    }
     .place .up {
       font-size: 22px;
       line-height: 1;
@@ -2136,8 +2210,9 @@
       display: none;
     }
     /* Down is a small ▾ beside the name; the list opens over it. */
-    .goto {
+    .place .goto {
       flex: none;
+      min-width: 0;
       width: 22px;
       height: 32px;
       display: inline-grid;
@@ -2240,6 +2315,12 @@
     }
     .stage {
       display: contents;
+    }
+    /* The view controls sit over the chart they set, one row, labels dropped. */
+    .viewbar {
+      position: static;
+      padding: 8px 12px 6px;
+      pointer-events: auto;
     }
     .area-chart {
       position: relative;

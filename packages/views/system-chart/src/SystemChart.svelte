@@ -6,7 +6,8 @@
   centre and its moons about it (handover/rendering-rules.md), in kilometres.
 -->
 <script lang="ts">
-  import { KM_PER_AU, isShell, asPlayers, distanceWords, lightWords, separation, hasLayer, hasTool, childrenOf, commitEdit, frameFor, legendFor, primaryOf, sig, subjectOf, type Json, type SceneSubject, type SystemScene, type ViewContext } from "../../../ui-contract/src/index.ts";
+  import { KM_PER_AU, isShell, asPlayers, distanceWords, lightWords, separation, hasLayer, hasTool, childrenOf, commitEdit, frameFor, legendFor, primaryOf, sig, subjectOf, viewOptions, DEFAULT_VIEW, type Json, type SceneSubject, type SystemScene, type ViewContext } from "../../../ui-contract/src/index.ts";
+  import { SYSTEM_CHART_CONTROLS } from "./controls.ts";
   import { System3D, bandsFromScene, fromSystemScene } from "../../system-3d/src/index.ts";
   import { ChartGround, HatchDefs, Hatch, Ink, Legend, Mark, Stamp, markExtent, distanceAt, scaleRings, easing, fitScale, motionMs, polar, radius } from "../../../chart-grammar/src/index.ts";
 
@@ -192,7 +193,10 @@
   const selected = $derived(scene.subjects.find((s) => s.address === ctx.workspace.selection));
   const canOpen = $derived(!frame && selected && selected !== star && moonsOf(selected) > 0 ? selected : undefined);
   // V6: the same frame in 3D (view only; edits stay on the 2D chart).
-  let dims = $state<"2d" | "3d">("2d");
+  // The standard view controls (rule 12) choose it: Chart is this flat log chart, 3D turns. A view without a shell's
+  // choice (a screen document elsewhere) stays on Chart.
+  const shownView = $derived(viewOptions(SYSTEM_CHART_CONTROLS, ctx.workspace.view ?? DEFAULT_VIEW).shown);
+  const dims = $derived(shownView.style === "3d" ? "3d" : "2d");
   const bodies3d = $derived(dims === "3d" ? fromSystemScene(scene, ctx.mark) : []);
   const bands3d = $derived(dims === "3d" && on("zones") ? bandsFromScene(scene) : []);
   // Measure (V14): pick two bodies; the chart draws the line and says how far apart they are now.
@@ -221,7 +225,7 @@
 
 <div class="chart" bind:clientWidth={w} bind:clientHeight={h}>
   {#if dims === "3d"}
-    <System3D bodies={bodies3d} bands={bands3d} selection={ctx.workspace.selection} onselect={(id) => ctx.workspace.select(id)} title={scene.title} />
+    <System3D bodies={bodies3d} bands={bands3d} selection={ctx.workspace.selection} onselect={(id) => ctx.workspace.select(id)} title={scene.title} seen={shownView.seen} onturned={() => ctx.workspace.turned?.()} />
   {:else}
   <ChartGround>
     {#if w > 0 && h > 0}
@@ -388,10 +392,6 @@
     {/if}
   </ChartGround>
   {/if}
-  <div class="dims" role="group" aria-label="Chart in 2D or 3D">
-    <button type="button" aria-pressed={dims === "2d"} onclick={() => (dims = "2d")}>2D</button>
-    <button type="button" aria-pressed={dims === "3d"} onclick={() => (dims = "3d")}>3D</button>
-  </div>
 </div>
 
 <style>
@@ -399,31 +399,6 @@
     position: relative;
     width: 100%;
     height: 100%;
-  }
-  .dims {
-    position: absolute;
-    right: 236px;
-    bottom: 16px;
-    display: flex;
-    border: var(--sse-line) solid var(--sse-ink);
-    background: var(--sse-ground-raised);
-  }
-  .dims button {
-    min-width: 44px;
-    height: 40px;
-    border: 0;
-    background: transparent;
-    color: var(--sse-ink);
-    font-family: var(--sse-font-body);
-    font-size: 13px;
-    cursor: pointer;
-  }
-  .dims button + button {
-    border-left: var(--sse-line) solid var(--sse-ink);
-  }
-  .dims button[aria-pressed="true"] {
-    background: var(--sse-ink);
-    color: var(--sse-on-ink);
   }
   svg {
     display: block;
@@ -455,7 +430,8 @@
     position: absolute;
     left: 92px;
     right: 16px;
-    top: 16px;
+    /* Below the shell's view controls (interface style rule 12), which sit at the top of the stage. */
+    top: 84px;
     flex-wrap: wrap;
     display: flex;
     align-items: center;
@@ -489,7 +465,7 @@
   .problem {
     position: absolute;
     left: 24px;
-    top: 60px;
+    top: 128px;
     margin: 0;
     padding: 6px 10px;
     border: var(--sse-line) solid var(--sse-accent-ink);
@@ -717,11 +693,6 @@
     border-left: var(--sse-line) solid var(--sse-ink);
   }
   @media (max-width: 760px) {
-    .dims {
-      right: 12px;
-      bottom: auto;
-      top: 12px;
-    }
     .frame {
       left: 16px;
       top: 12px;

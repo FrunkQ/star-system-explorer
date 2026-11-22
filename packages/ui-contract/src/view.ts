@@ -67,6 +67,10 @@ export interface WhatIf {
 
 export interface Workspace {
   selection: string | null;
+  /** The viewer's view style and "seen from" (rule 12), kept on the device; a view draws `viewOptions(spec, view).shown`. */
+  view?: import("./view-controls.ts").ViewChoice;
+  /** A view says the viewer turned it by hand: the choice becomes Free. */
+  turned?(): void;
   /** The time being viewed (the ruler's stroke); views derive and draw at it. */
   now_yr: number;
   /**
@@ -178,6 +182,8 @@ export interface ViewModule<S = SystemScene, C = ViewContext> {
   scene?: "system" | "player";
   /** "fill": the view sizes itself to a box the screen gives it a height for (a chart); "content" (default): it grows with what it shows. */
   box?: "fill" | "content";
+  /** The standard view controls (interface style rule 12): what it draws in each view style and from where. Absent: not a diagram, no controls. */
+  controls?: import("./view-controls.ts").ViewControlsSpec;
   mount(el: HTMLElement, ctx: C, scene: S): ViewHandle<S>;
 }
 

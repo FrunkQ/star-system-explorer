@@ -10,6 +10,7 @@
 <script lang="ts">
   import { onDestroy } from "svelte";
   import { basis, project, startGpu, tree, type Camera, type Gpu, type Vec3 } from "../../../renderer/src/index.ts";
+  import { SEEN_ELEVATION, type SeenFrom } from "../../../ui-contract/src/index.ts";
   import { bandLines, hasChildren, layout, shellDots, type Band3D, type Body3D } from "./bodies.ts";
 
   let {
@@ -21,7 +22,9 @@
     labels = true,
     distanceNote = "",
     bands = [],
-  }: { bands?: Band3D[]; bodies: Body3D[]; selection: string | null; onselect: (id: string) => void; title: string; tier?: string; labels?: boolean; distanceNote?: string } = $props();
+    seen = "free",
+    onturned,
+  }: { bands?: Band3D[]; bodies: Body3D[]; selection: string | null; onselect: (id: string) => void; title: string; tier?: string; labels?: boolean; distanceNote?: string; seen?: SeenFrom; onturned?: () => void } = $props();
 
   const root = $derived(bodies.find((b) => b.parent === null)?.id ?? bodies[0]?.id ?? "");
   let frame = $state<string | null>(null);
@@ -43,14 +46,23 @@
   let yaw = $state(-0.6);
   let pitch = $state(0.55);
   let dist = $state(26);
+  // Slide (rule 11): where the camera looks, in this frame's display units.
+  let pan = $state<[number, number]>([0, 0]);
+  // "Seen from" (rule 12): a fixed view sets the camera's height and puts the slide back; Free keeps what the hands did.
+  $effect(() => {
+    const s = seen;
+    if (s === "free") return;
+    pitch = SEEN_ELEVATION[s];
+    pan = [0, 0];
+  });
   const MIN = 4;
   const MAX = 60;
   let w = $state(0);
   let h = $state(0);
   const cam = $derived<Camera>({
     frame: centreId,
-    eye: [dist * Math.cos(pitch) * Math.cos(yaw), dist * Math.cos(pitch) * Math.sin(yaw), dist * Math.sin(pitch)],
-    look: [0, 0, 0],
+    eye: [pan[0] + dist * Math.cos(pitch) * Math.cos(yaw), pan[1] + dist * Math.cos(pitch) * Math.sin(yaw), dist * Math.sin(pitch)],
+    look: [pan[0], pan[1], 0],
     fovY: (45 * Math.PI) / 180,
     width: Math.max(1, w),
     height: Math.max(1, h),
@@ -216,16 +228,38 @@
   });
 
   // Dragging turns the camera about the centre.
-  let dragFrom: { x: number; y: number; yaw: number; pitch: number } | null = null;
+  // With a mouse, dragging turns it and says so (the choice becomes Free); Shift-drag slides. On touch, one finger
+  // scrolls the page until Free is chosen, so the chart never traps a scroll; in Free, two fingers slide.
+  let dragFrom: { x: number; y: number; yaw: number; pitch: number; pan: [number, number]; slide: boolean } | null = null;
+  const touches = new Map<number, { x: number; y: number }>();
   function down(e: PointerEvent) {
     if ((e.target as HTMLElement).closest("button")) return;
-    dragFrom = { x: e.clientX, y: e.clientY, yaw, pitch };
+    if (e.pointerType === "touch") {
+      if (seen !== "free") return;
+      touches.set(e.pointerId, { x: e.clientX, y: e.clientY });
+    }
+    dragFrom = { x: e.clientX, y: e.clientY, yaw, pitch, pan: [...pan], slide: e.shiftKey || touches.size >= 2 };
     (e.currentTarget as HTMLElement).setPointerCapture(e.pointerId);
   }
   function move(e: PointerEvent) {
     if (!dragFrom) return;
-    yaw = dragFrom.yaw - (e.clientX - dragFrom.x) * 0.008;
-    pitch = Math.min(1.45, Math.max(-1.45, dragFrom.pitch + (e.clientY - dragFrom.y) * 0.008));
+    const dx = e.clientX - dragFrom.x;
+    const dy = e.clientY - dragFrom.y;
+    if (Math.abs(dx) + Math.abs(dy) > 3 && seen !== "free") onturned?.();
+    if (dragFrom.slide || touches.size >= 2) {
+      // Slide along the plane, in the direction the screen moved.
+      const k = dist / Math.max(1, h);
+      const c = Math.cos(yaw);
+      const s2 = Math.sin(yaw);
+      pan = [dragFrom.pan[0] + (dx * s2 + dy * c) * k, dragFrom.pan[1] + (-dx * c + dy * s2) * k];
+      return;
+    }
+    yaw = dragFrom.yaw - dx * 0.008;
+    pitch = Math.min(1.45, Math.max(-1.45, dragFrom.pitch + dy * 0.008));
+  }
+  function up(e: PointerEvent) {
+    touches.delete(e.pointerId);
+    dragFrom = null;
   }
   function wheel(e: WheelEvent) {
     e.preventDefault();
@@ -233,6 +267,7 @@
   }
   function key(e: KeyboardEvent) {
     const k = e.key;
+    if (k.startsWith("Arrow") && seen !== "free") onturned?.();
     if (k === "ArrowLeft") yaw -= 0.12;
     else if (k === "ArrowRight") yaw += 0.12;
     else if (k === "ArrowUp") pitch = Math.min(1.45, pitch + 0.1);
@@ -260,9 +295,11 @@
   tabindex="0"
   onpointerdown={down}
   onpointermove={move}
-  onpointerup={() => (dragFrom = null)}
-  onpointercancel={() => (dragFrom = null)}
+  onpointerup={up}
+  onpointercancel={up}
   onwheel={wheel}
+  data-seen={seen}
+  style:touch-action={seen === "free" ? "none" : "pan-y"}
   onkeydown={key}
   data-tier={using}
   data-frame={centreId}
