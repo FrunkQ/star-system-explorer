@@ -233,6 +233,7 @@ crates/sse-surface/src/cover.rs	constant:atm	1.0 / (1.0 / 373.15 - R_GAS / l * m
 crates/sse-surface/src/cover.rs	constant:day	2.0 * m::PI * (env.reference_radius_m + 0.5 * (lo + hi)) / wind.max(1e-6) / 86400.0;
 crates/sse-surface/src/cover.rs	constant:g0	let max_relief_m = s.impacts.volcanism.shield_height_m * (9.81 / g);
 crates/sse-surface/src/cover.rs	substance:h2o/phases.triple_point_pa	} else if p * 1e5 < 611.657 {
+crates/sse-surface/src/frames.rs	substance:h2o/phases.density_solid	const RHO_ICE: f64 = 917.0;
 crates/sse-surface/src/impacts.rs	constant:M_earth	const M_EARTH_KG: f64 = 5.972e24;
 crates/sse-surface/src/impacts.rs	constant:R_earth_mean	const R_EARTH_KM: f64 = 6371.0;
 crates/sse-surface/src/impacts.rs	constant:g0	let h = v.shield_height_m * (9.81 / field.g) * grow.max(0.05);
