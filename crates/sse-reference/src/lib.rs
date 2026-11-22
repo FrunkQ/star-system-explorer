@@ -830,6 +830,16 @@ impl Reference {
     /// One row as `read_matter` shows it: the row, its worked-out values
     /// (molar mass), its sources and the packs it came from.
     pub fn describe(&self, table: &str, id: &str) -> Option<J> {
+        // A source by id (its text, DOI or URL and status), so a page can
+        // cite a group note's `src` and `also`, which carry only ids.
+        if table == "sources" {
+            let row = self.sources.get(id)?;
+            return Some(serde_json::json!({
+                "table": table,
+                "id": id,
+                "row": row,
+            }));
+        }
         let row = self.row(table, id)?;
         let mut vs = vec![];
         values(row, "", &mut vs);

@@ -1,6 +1,8 @@
 # SSE4: the new-physics demo (track ND, video G)
 
-Status: **proposed 22 Nov 2026**, feasibility and plan only. Nothing here is built or filmed yet. Asked for by
+Status: **accepted by Alex, 22 Nov 2026** (all seven questions of section 5 answered yes, 15:23 to 16:03 UTC).
+Nothing here is built or filmed yet; the packages of section 3 are with their owner threads and the film
+(ND10) is made near the end. Asked for by
 Alex on 22 Nov: a short video, made near the end, that shows SSE4's core capability end to end. A user hands
 Orac a paper, Orac works out how to express it as visible, editable, cited blocks, and the result is saved as a
 pack that anyone can load, so only one person pays for the expensive model.
@@ -174,7 +176,7 @@ features (say so, do not invent); and a body whose "surface" is a level in the g
 
 ## 3. Proposed packages (track ND)
 
-One package each, owner suggested. ND1 to ND3 are general kernel work that should ride with B3 and O4 when
+One package each, with its owner thread (handed out 22 Nov). ND1 to ND3 are general kernel work that should ride with B3 and O4 when
 those threads reach them; ND4 to ND8 are the capability itself; ND9 and ND10 are the proof.
 
 | Id | Package | Owner | Needs | Acceptance |
@@ -182,6 +184,7 @@ those threads reach them; ND4 to ND8 are the capability itself; ND9 and ND10 are
 | ND1 | Atmosphere facts on any body that holds gas, stars included (the one-body rule): gas mix, traces, pressure and density where the light leaves. For a white dwarf the traces are fed by the dated debris event and by core dredge-up. Facts only; no colour consequence | Build SSE4 proven core (inside B1 and B3) | B1 | a polluted white dwarf carries the elements of what fell in; a planet and a star answer the same atmosphere read; spectral type is a label read off the facts |
 | ND2 | Gas absorption as one general mechanism (section 2.6): absorption features per gas as cited rows on the data sheet (bands, collision-induced pairs, how width grows with density); a spectrum on a wire; general light blocks: thermal continuum, "light through gas" (any mix, reflected light or the body's own glow), colour to the eye (CIE, moved from `light.ts` into the kernel as a fact), limb law per channel. No body type is named anywhere in it | Build light and nebulae (with O4 and the air optics), data rows with the matter data sheet thread | O1, O12, MP4 | the Sun and a 10 000 K hydrogen white dwarf reproduce the paper's section 2.4 values; the same block gives a methane-rich giant its blue-green; a star on screen reads its colour from the kernel, not the blackbody stub |
 | ND3 | Maths in a box, exactly as `SSE4-equation-block-design.md`: power, exponential, logarithm, root and trigonometry blocks, and the Equation block (a formula as pack data, units checked on load, constants only through Look up, sourced, with worked examples) | Build kernel resolve and rules | J3, MP17a | that design's section 10: a Planck curve as an Equation matches `sse-light` to the last bit; a unit mismatch is refused at load in words |
+| ND3b | Move the existing one-formula Rust atoms into named Equations in their base packs, family by family, as a shrinking list; ids, ports, results and golden hashes unchanged (equation design section 8A; accepted by Alex 22 Nov) | Build kernel resolve and rules, with each physics thread for its family | ND3 | every moved block gives identical bits; a keen amateur can follow a base flow from its block names |
 | ND4 | Orac reads a paper: PDF or text dropped on the Orac tab, text extracted in the browser, sent as labelled data; Orac first answers with a plan in words (what the paper claims, what exists, what it will add, what is missing) before drafting | Build Orac, Minerva and Tars | A2 | nothing in the paper is treated as an instruction; a model too small for it is refused before sending; the plan names every missing piece |
 | ND5 | Orac assembles one job as a set: boxes, a flow change that adds and wires nodes, light-table rows, data sheet rows (MP11), each kernel-checked, accepted together or not at all | Build Orac, Minerva and Tars, with the chart room's flow editor | ND4, MP11 | an invalid set never reaches Accept; one Undo withdraws the whole set |
 | ND6 | Packs carry their own citations, fudge list and reproduction report; the Packs screen shows them before the pack is added | Build kernel resolve and rules, chart room | K5 | a pack whose worked examples fail is refused with the numbers side by side |
@@ -218,9 +221,9 @@ Filmable today: shot 1, and the refusal-and-fix half of shot 4 (as in clip 19). 
 Rules that bind the film: nothing faked, so Orac really does the job on camera with a real key and the real
 cost shown; the pack in the film is the pack published; the reduced model is named as one on screen.
 
-## 5. Open questions for Alex
+## 5. Questions for Alex: all answered yes, 22 Nov
 
-Each with a recommendation.
+Kept as asked, with the answers. Questions 3 to 7 were accepted together at 16:03 ("agree to your proposals").
 
 1. **Accept "no new code for this paper" in place of "no new blocks"?** The demo needs general pieces built
    first (ND1 to ND3). Recommended: yes. It is the honest claim and still one nobody else can make.
@@ -244,6 +247,18 @@ Each with a recommendation.
 6. **Write to the authors near filming time?** They offer model spectra on request, which would tighten the
    reproduction, and a pack built from their paper is a courtesy to mention. Recommended: yes, from you, once
    the pack exists. Not before.
+   **Accepted.** Alex also asked whether to write now; the advice given was to wait until there is a rough
+   working result to show. **Licence point:** the paper and its tables are CC BY 4.0, but spectra the authors
+   send on request are not covered by that licence. Anything derived from them may ship in a pack only with
+   the authors' explicit permission, recorded with the pack's sources. Without it they may be used to check
+   the pack privately, not to fill it.
+   **When the email goes out (Alex, 22 Nov):** "it would be good to have SSE working kinda right, as they
+   might like to see and play with it themselves." So not when the light-through-gas block passes its tests,
+   but when the live site shows their stars roughly right and is fit for an outside astronomer to open and
+   try: a direct link to one of their stars (the green WD J1330+6435 is the natural one), its chain of blocks
+   readable, its "Why?" working, and the rest of the app steady enough not to embarrass the claim.
 7. **Packs carry their own fudges, sources and a reproduction report (ND6)?** Recommended: yes. It is the
    piece that turns a shared pack from "trust me" into something checkable, and it serves every pack, not
    only this one.
+
+Questions 3, 4, 5 and 7: **accepted by Alex, 22 Nov**, as recommended.

@@ -9,6 +9,7 @@ pub mod harness;
 pub mod hash;
 pub mod math;
 pub mod quantity;
+pub mod sheet;
 
 pub use address::Address;
 pub use draw::{Draws, Seed, Stream};
