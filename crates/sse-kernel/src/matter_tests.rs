@@ -218,8 +218,7 @@ fn the_base_sheet_loads_in_a_stack() {
     assert_eq!(g["in_force"], g["real"], "{g}");
 }
 
-/// MP17: `phase_at` through the kernel. The base sheet has no phase tables
-/// yet, so water answers from its familiar three phases, and says so.
+/// MP17: `phase_at` through the kernel, reading water's map (MP18).
 #[test]
 fn phase_at_answers_through_the_kernel() {
     let path = root().join("packs/base-reference/pack.json");
@@ -241,8 +240,11 @@ fn phase_at_answers_through_the_kernel() {
     let r = at(&mut k, 101_325.0, 300.0);
     assert_eq!(r["type"], "matter", "{r}");
     assert_eq!(r["value"]["phase"], "h2o.liquid", "{r}");
-    assert_eq!(r["value"]["from"], "familiar", "{r}");
-    assert_eq!(at(&mut k, 101_325.0, 250.0)["value"]["phase"], "h2o.solid");
+    assert_eq!(r["value"]["from"], "table", "{r}");
+    assert_eq!(r["value"]["grade"], "measured", "{r}");
+    assert_eq!(at(&mut k, 101_325.0, 250.0)["value"]["phase"], "h2o.ice_ih");
+    // Ice VI under Ganymede's ocean, by the same question.
+    assert_eq!(at(&mut k, 1.0e9, 270.0)["value"]["phase"], "h2o.ice_vi");
     let r = send(
         &mut k,
         serde_json::json!({"op": "phase_at", "substance": "unobtainium", "p_pa": 1.0, "t_k": 300.0}),

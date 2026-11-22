@@ -258,8 +258,8 @@ fn a_row_with_one_phase_still_loads_and_answers() {
     );
 }
 
-/// The base sheet has no phase tables yet: water answers from its triple
-/// point, sublimation line and latent heat, and nothing else changes.
+/// Water with its phase table taken away answers from its triple point,
+/// sublimation line and latent heat.
 #[test]
 fn the_base_sheet_answers_from_the_familiar_three() {
     let s = std::fs::read_to_string(concat!(
@@ -267,7 +267,20 @@ fn the_base_sheet_answers_from_the_familiar_three() {
         "/../../packs/base-reference/pack.json"
     ))
     .unwrap();
-    let v: J = serde_json::from_str(&s).unwrap();
+    let mut v: J = serde_json::from_str(&s).unwrap();
+    // Without its phase list and table (MP18 adds them), water still
+    // answers from the familiar three.
+    for row in v["provides"]["reference"]["substances"]
+        .as_array_mut()
+        .unwrap()
+    {
+        if row["id"] == "h2o" {
+            let ph = row["phases"].as_object_mut().unwrap();
+            for k in ["forms", "boundaries", "meets", "table"] {
+                ph.remove(k);
+            }
+        }
+    }
     let r = load(v["provides"]["reference"].clone()).expect("the base sheet loads");
     let at = |p: f64, t: f64| r.phase_at("h2o", p, t).unwrap().phase;
     assert_eq!(at(1.013e5, 250.0), "h2o.solid");
