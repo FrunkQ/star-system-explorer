@@ -1933,6 +1933,20 @@
         "range": null
       },
       {
+        "description": "how much dust dims light at a wavelength, relative to the V band (A_λ / A_V)",
+        "dim": [
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0
+        ],
+        "id": "dust.extinction_ratio",
+        "range": null
+      },
+      {
         "description": "mass thrown out by an explosion",
         "dim": [
           0,

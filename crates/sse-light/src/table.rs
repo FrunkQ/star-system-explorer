@@ -90,6 +90,24 @@ pub struct Gases {
     pub list: Vec<GasDef>,
 }
 
+/// A photometric band for magnitudes (U, B, V, ... Ks).
+#[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
+pub struct Passband {
+    pub id: String,
+    pub name: String,
+    /// Effective wavelength, m.
+    pub effective_m: f64,
+    /// m_AB − m_Vega for this band.
+    pub ab_minus_vega: f64,
+}
+
+#[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
+pub struct Passbands {
+    #[serde(default)]
+    pub note: String,
+    pub list: Vec<Passband>,
+}
+
 #[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
 pub struct Grid {
     pub from_m: f64,
@@ -109,6 +127,8 @@ pub struct LightTable {
     pub absorption: Option<Absorption>,
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub gases: Option<Gases>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub passbands: Option<Passbands>,
     #[serde(default)]
     pub references: Vec<Reference>,
 }
@@ -171,6 +191,20 @@ impl LightTable {
                 }
             }
         }
+        if let Some(p) = &self.passbands {
+            let mut ids: Vec<&str> = p.list.iter().map(|b| b.id.as_str()).collect();
+            ids.sort_unstable();
+            if ids.windows(2).any(|w| w[0] == w[1]) {
+                return Err("passband ids repeat".into());
+            }
+            if let Some(b) = p
+                .list
+                .iter()
+                .find(|b| b.effective_m.is_nan() || b.effective_m <= 0.0)
+            {
+                return Err(format!("passband {} needs a positive wavelength", b.id));
+            }
+        }
         if self.steps_per_decade < 8 || self.grid.points < 2 {
             return Err(
                 "steps_per_decade must be at least 8 and the grid at least 2 points".into(),
@@ -181,6 +215,10 @@ impl LightTable {
 
     pub fn line(&self, id: &str) -> Option<&LineDef> {
         self.lines.iter().find(|l| l.id == id)
+    }
+
+    pub fn passband(&self, id: &str) -> Option<&Passband> {
+        self.passbands.as_ref()?.list.iter().find(|b| b.id == id)
     }
 
     pub fn band(&self, id: &str) -> Option<&Band> {

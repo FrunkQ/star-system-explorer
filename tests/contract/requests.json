@@ -1584,6 +1584,18 @@
   ]
  },
  {
+  "op": "read_photometry",
+  "stars": [
+   { "temperature_k": 5772.0, "radius_m": 6.957e8, "distance_m": 3.0856775814913674e17 },
+   { "temperature_k": 3500.0, "luminosity_w": 1.5e25, "distance_m": 3.0856775814913674e18, "a_v": 1.0 }
+  ],
+  "bands": ["B", "V", "Ks"]
+ },
+ {
+  "op": "read_photometry",
+  "stars": [ { "temperature_k": 5772.0, "distance_m": 1.0 } ]
+ },
+ {
   "op": "read_field",
   "bodies": [ { "address": "u:t/sys:3/body:0", "radius_m": -1.0, "wind": { "density_kg_m3": 1e-21, "speed_m_s": 4e5 } } ]
  },

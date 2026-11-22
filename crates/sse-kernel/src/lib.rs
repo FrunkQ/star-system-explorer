@@ -2582,6 +2582,9 @@ impl Kernel {
                 window,
             } => systems::read_activity(stars, seed.as_deref(), at_s, window)?,
             Request::ReadField { bodies } => systems::read_field(bodies)?,
+            Request::ReadPhotometry { stars, bands } => {
+                systems::read_photometry(stars, bands.unwrap_or_default())?
+            }
             Request::Adopt {
                 import_v3,
                 formation,
