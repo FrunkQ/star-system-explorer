@@ -102,7 +102,7 @@ SOURCES = {
     "vijaykumar2021": ("Vijaykumar, A., Kapadia, S. J. and Ajith, P. 2021, Phys. Rev. Lett. 126, 141104: constraints on the time variation of the gravitational constant using gravitational-wave observations of binary neutron stars", "10.1103/PhysRevLett.126.141104", None, "verified"),
     "sakstein2026": ("Sakstein, J. and Desmond, H. 2026, arXiv:2610.04048: stars would remember a recent gravitational transition, testing G-step resolutions of the Hubble tension with red dwarfs (excluded at 3.1 and 4.0 sigma)", None, "https://arxiv.org/abs/2610.04048", "verified"),
     "mcgaugh2016": ("McGaugh, S. S., Lelli, F. and Schombert, J. M. 2016, Phys. Rev. Lett. 117, 201101: radial acceleration relation in rotationally supported galaxies", "10.1103/PhysRevLett.117.201101", None, "verified"),
-    "randall2008": ("Randall, S. W. et al. 2008, ApJ 679, 1173: constraints on the self-interaction cross section of dark matter from the Bullet Cluster", "10.1086/587859", None, "unverified"),
+    "randall2008": ("Randall, S. W. et al. 2008, ApJ 679, 1173: constraints on the self-interaction cross section of dark matter from the Bullet Cluster", "10.1086/587859", None, "verified"),
     "desi2024": ("DESI Collaboration (Adame, A. G. et al.) 2025, JCAP 02, 021: DESI 2024 VI, cosmological constraints from baryon acoustic oscillations", "10.1088/1475-7516/2025/02/021", None, "verified"),
     "fudge-register": ("SSE4 fudge register: an authored stand-in kept because no measured value fits (reason in docs/fudges.md)", None, "https://github.com/FrunkQ/star-system-explorer/blob/main/docs/fudges.md", "authored"),
 }

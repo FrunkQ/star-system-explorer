@@ -547,3 +547,45 @@ fn dark_matter_is_marked_theoretical_on_the_sheet() {
         .unwrap()
         .contains("particle route"));
 }
+
+/// DM6: with G drifting (fictional fixture), a year's length at each date
+/// follows Kepler's factor P ∝ G^(-1/2), read from the stack's sheet by
+/// date; today's year is the real one, and the stack without the law gives
+/// the same handle at every date.
+#[test]
+fn a_drifting_g_changes_the_year_by_keplers_factor_at_each_date() {
+    let sheet = |extra: Option<&str>| {
+        let mut packs = vec![serde_json::from_value::<sse_pack::PackManifest>(pack(
+            "packs/base-reference/pack.json",
+        ))
+        .unwrap()];
+        if let Some(p) = extra {
+            packs.push(serde_json::from_value(pack(p)).unwrap());
+        }
+        sse_reference::Reference::from_packs(&packs).unwrap()
+    };
+    let atoms = sse_atoms::atoms();
+    let period = atoms
+        .iter()
+        .find(|a| a.decl().id == "sse.orbit.period")
+        .unwrap();
+    let year = |r: &sse_reference::Reference, t: f64| {
+        sse_core::constants::with(r.handle_on(t), || {
+            period
+                .eval(&[1.495_978_707e11, 1.988_409_870_698_051e30], &[])
+                .unwrap()[0]
+        })
+    };
+    let real = sheet(None);
+    let drift = sheet(Some("tests/fixtures/packs/reference-drifting-g.json"));
+    let now = year(&real, 13.8);
+    assert_eq!(year(&drift, 13.8), now);
+    assert_eq!(year(&real, 12.8), now, "no law, no history");
+    for (t, g_ratio) in [(12.8, 1.1), (13.3, 1.05), (8.8, 1.5)] {
+        let ratio = year(&drift, t) / now;
+        assert!(
+            (ratio - 1.0 / sse_core::math::sqrt(g_ratio)).abs() < 1e-12,
+            "{t}: {ratio}"
+        );
+    }
+}

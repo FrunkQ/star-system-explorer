@@ -1,1 +1,1 @@
-{"schema": "sse.stack/0", "packs": ["packs/base-physics.json", "packs/base-time.json", "packs/kestrel-player-data.json"], "catalogues": {"sol": "packs/base-sol.json"}}
+{"schema": "sse.stack/0", "packs": ["packs/base-physics.json", "packs/base-time.json", "packs/base-reference.json", "packs/kestrel-player-data.json"], "catalogues": {"sol": "packs/base-sol.json"}}
