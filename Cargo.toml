@@ -62,6 +62,10 @@ opt-level = 2
 [profile.dev.package.sse-core]
 opt-level = 2
 
+# The glow map integrates 12,288 sight lines of 96 steps.
+[profile.dev.package.sse-sky]
+opt-level = 2
+
 [profile.dev.package.sse-atoms]
 opt-level = 2
 

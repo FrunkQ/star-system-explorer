@@ -1273,6 +1273,34 @@ pub enum Request {
         #[ts(optional)]
         max_stars: Option<u32>,
     },
+    /// Y3: the glow of every star the sky draw does not show, as a HEALPix
+    /// map (RING order, galactic l and b from the observer) per passband:
+    /// each class's light beyond the distance it is drawn to, plus the
+    /// stars inside it too faint for the limit, dimmed by the dust in front.
+    /// Ask it with the same `limit_mag` and `band` as `sky_from_here` and
+    /// the two add up to the whole sky. `nside` a power of two up to 64
+    /// (default 32). Read
+    /// only.
+    SkyGlow {
+        #[serde(default)]
+        #[ts(optional)]
+        position_pc: Option<[f64; 3]>,
+        #[serde(default)]
+        #[ts(optional)]
+        t_myr: Option<f64>,
+        #[serde(default)]
+        #[ts(optional)]
+        limit_mag: Option<f64>,
+        #[serde(default)]
+        #[ts(optional)]
+        band: Option<String>,
+        #[serde(default)]
+        #[ts(optional)]
+        bands: Option<Vec<String>>,
+        #[serde(default)]
+        #[ts(optional)]
+        nside: Option<u64>,
+    },
     /// Voyages between stars (V8 part 3): the cheapest chain of legs for one
     /// ship from a star system `from` to `to`, or with no `to` the nearest
     /// system not in `visited` (ties go to the shorter path, then to the one
@@ -1554,6 +1582,7 @@ impl Request {
             Request::HaloCell { .. } => "halo_cell",
             Request::StarCell { .. } => "star_cell",
             Request::SkyFromHere { .. } => "sky_from_here",
+            Request::SkyGlow { .. } => "sky_glow",
             Request::PlanVoyage { .. } => "plan_voyage",
             Request::PromoteStar { .. } => "promote_star",
             Request::CampaignTags => "campaign_tags",
@@ -1850,6 +1879,11 @@ pub fn ops() -> Vec<OpInfo> {
             "sky_from_here",
             Cost::Medium,
             "grows the campaign's galaxy, walks the count tree inside each class's visibility radius and gives each star found its magnitudes through dust; read only",
+        ),
+        o(
+            "sky_glow",
+            Cost::Medium,
+            "integrates the light of the undrawn stars and the dust in front along every HEALPix pixel of the sky (nside 32: 12,288 lines of 96 steps); read only",
         ),
         o(
             "star_cell",
@@ -2640,6 +2674,13 @@ pub enum Response {
     Sky {
         #[ts(type = "unknown")]
         sky: serde_json::Value,
+    },
+    /// `sky_glow`: `{nside, order, frame, limit_mag, limit_band,
+    /// observer_pc, t_myr, radii_pc, bands: [{band, intensity, mag_arcsec2,
+    /// whole_sky_ab, whole_sky_mag}], a_v, units}`.
+    SkyGlowed {
+        #[ts(type = "unknown")]
+        glow: serde_json::Value,
     },
     /// `plan_voyage`: `{ship, means, searched, cells, t_myr, systems: [{address,
     /// name, xyz_pc, fuel, surveyed, visited}], voyage: {from, to, minimise,

@@ -15,6 +15,7 @@ mod dressing;
 #[cfg(test)]
 mod dressing_tests;
 mod frames;
+mod glow;
 mod ice_ages;
 #[cfg(test)]
 mod matter_tests;
@@ -4628,6 +4629,32 @@ impl Kernel {
                     )
                 })?;
                 Response::Sky { sky }
+            }
+            Request::SkyGlow {
+                position_pc,
+                t_myr,
+                limit_mag,
+                band,
+                bands,
+                nside,
+            } => {
+                let u = self.universe()?;
+                let elapsed = clock::elapsed_myr(&u.chronicle);
+                let glow = cosmos::with_stars(&u.seed, &u.root, None, |st, now| {
+                    glow::sky_glow(
+                        st,
+                        &cosmos::sky_params()?,
+                        glow::Ask {
+                            position_pc,
+                            t_myr: t_myr.unwrap_or(now + elapsed),
+                            limit_mag: limit_mag.unwrap_or(6.5),
+                            band: band.as_deref().unwrap_or("V"),
+                            bands: bands.unwrap_or_default(),
+                            nside: nside.unwrap_or(32),
+                        },
+                    )
+                })?;
+                Response::SkyGlowed { glow }
             }
             Request::PlanVoyage {
                 from,

@@ -29,6 +29,7 @@ sse-world.workspace = true
 sse-weather.workspace = true
 sse-climate.workspace = true
 sse-light = { path = "../sse-light" }
+sse-sky = { path = "../sse-sky" }
 sse-nebula = { path = "../sse-nebula" }
 sse-survey = { path = "../sse-survey" }
 sse-activity = { path = "../sse-activity" }

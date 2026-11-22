@@ -10,6 +10,7 @@ pub mod envelope;
 pub mod epochs;
 pub mod events;
 pub mod galaxy;
+pub mod glow_mix;
 pub mod haloes;
 pub mod model;
 pub mod nucleus;

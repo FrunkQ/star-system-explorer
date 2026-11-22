@@ -9,3 +9,6 @@ authors.workspace = true
 [dependencies]
 sse-core.workspace = true
 serde.workspace = true
+sse-atoms.workspace = true
+sse-cosmos = { path = "../sse-cosmos" }
+sse-light = { path = "../sse-light" }

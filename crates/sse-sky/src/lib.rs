@@ -3,6 +3,7 @@
 //! (Y2, `sky_from_here`) gives the drawn classes to subtract.
 #![forbid(unsafe_code)]
 
+pub mod glow;
 pub mod healpix;
 
 #[cfg(test)]
