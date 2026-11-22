@@ -1583,6 +1583,20 @@
         "range": null
       },
       {
+        "description": "kinetic energy of an electron, MeV",
+        "dim": [
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0
+        ],
+        "id": "belts.electron_energy_mev",
+        "range": null
+      },
+      {
         "description": "magnetic field strength where a field line crosses the magnetic equator",
         "dim": [
           0,
@@ -1622,6 +1636,20 @@
           0
         ],
         "id": "belts.penetration_energy_mev",
+        "range": null
+      },
+      {
+        "description": "share of a stopping electron's energy given off as X-rays",
+        "dim": [
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0
+        ],
+        "id": "belts.radiation_yield",
         "range": null
       },
       {

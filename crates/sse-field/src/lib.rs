@@ -22,7 +22,7 @@ use sse_flow::Reference;
 
 mod belts;
 mod sol;
-pub use belts::{BeltDose, BeltGap, BeltSettings, BeltShell, Belts};
+pub use belts::{BeltDose, BeltGap, BeltSettings, BeltShell, Belts, ShieldData};
 pub use sol::{solar_system, MeasuredField, SolField, WindField};
 pub use sse_atoms::belts::Electron;
 

@@ -368,7 +368,7 @@ Mark { kind, caused by (the event), began, strength 0 to 1, shape numbers, fades
 | **Thick disc** | early heavy mergers | a fat, old, redder layer around the thin one, plain edge-on | for good |
 | **Driven arms, a bridge, a tail** | a close, slowish pass, forwards | two strong arms, one reaching to the companion, a long tail opposite | a few hundred Myr to a Gyr |
 | **A punched hole and ring** | a fast, nearly straight pass through the disc | an expanding ring of new blue stars with an emptied middle, sometimes spokes, the culprit a little way off on the axis | 100 to 500 Myr (Lynds and Toomre 1976; Appleton and Struck-Marcell 1996) |
-| **A small hole** | a dwarf or a dark halo through the gas layer | a gap in the gas with young stars round its rim | tens of Myr; argued as a cause of real gas holes (Bekki and Chiba 2006, doi:10.1086/499812) |
+| **A small hole** | a dwarf or a dark halo through the gas layer | a gap in the gas with young stars round its rim | tens of Myr; argued as a cause of real gas holes (Bekki and Chiba 2006, doi:10.1086/500304) |
 | **Burst knots** | gas squeezed by any pass | bright blue clumps and pink gas clouds along the disturbed side | tens of Myr each |
 | **Lopsided disc, nucleus off-centre or double** | a recent meal | the disc heavier on one side; two bright points at the core | a Gyr or so |
 | **Shells, streams, plumes** | 7.6 | faint arcs and loops in the halo | Gyrs, fading |

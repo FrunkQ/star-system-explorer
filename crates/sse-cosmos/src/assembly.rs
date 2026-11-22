@@ -9,7 +9,7 @@
 //! member already drawn. Each progenitor falls in when the host held a
 //! share of its mass uniform above ψ (accretion follows the host's growth).
 //! A progenitor is itself a halo: its own tree is the same function at its
-//! address, read at its infall. Fudge F42.
+//! address, read at its infall. Fudge F43.
 
 use crate::cosmology::Cosmology;
 use crate::haloes::{poisson, Halo};
@@ -183,7 +183,7 @@ pub fn tree(
             let k0 = cj * 4096 + 16 + i * 8;
             let psi = m::exp(lo + step * d.unit(k0));
             // Closure: a member fits only with room left for the mass
-            // expected under it (fudge F42).
+            // expected under it (fudge F43).
             if psi + reserve_under(j) > budget {
                 continue;
             }

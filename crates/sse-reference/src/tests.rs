@@ -464,3 +464,79 @@ fn an_edit_reaches_through_derived_rows() {
         .unwrap();
     assert_eq!(r.constant("d"), Some(6.0));
 }
+
+/// DM6: a constant may carry a time law. A drift and a step read by date,
+/// worked-out rows follow their inputs at each date, a law is never real,
+/// and with no laws the dated handle is the handle bit for bit.
+#[test]
+fn constants_with_a_history_read_by_date() {
+    let base = constants(json!([
+        {"id": "G", "name": "G", "value": {"v": 6.6743e-11, "unit": "m3 kg-1 s-2", "src": "codata-2018"}},
+        {"id": "G2", "name": "twice G", "derived_from": "2 G", "value": {"v": 1.33486e-10, "unit": "m3 kg-1 s-2", "src": "codata-2018"}}
+    ]));
+    let r = Reference::from_json(&[("base".into(), base.clone())]).unwrap();
+    for t in [0.5, 7.0, 13.8] {
+        let (a, b) = (r.handle_on(t), r.handle());
+        for id in sse_core::constants::Constants::IDS {
+            assert_eq!(
+                a.get(id).map(f64::to_bits),
+                b.get(id).map(f64::to_bits),
+                "{id}"
+            );
+        }
+    }
+    assert!(!r.has_history("G"));
+    let law = |l: J| {
+        json!({"sources": [{"id": "what-if", "text": "a teaching what-if"}],
+               "constants": [{"id": "G", "law": l}]})
+    };
+    // Gravity 10% stronger a billion years ago, drifting to today's value.
+    let drift = law(
+        json!({"kind": "drift", "per_yr": -1.0e-10, "anchor_gyr": 13.8, "mark": "fictional", "src": "what-if"}),
+    );
+    let r =
+        Reference::from_json(&[("base".into(), base.clone()), ("what-if".into(), drift)]).unwrap();
+    assert!(r.has_history("G") && r.has_history("G2") && !r.has_history("c"));
+    let g = |t: f64| r.constant_on("G", t).unwrap();
+    assert_eq!(g(13.8), 6.6743e-11);
+    assert!((g(12.8) / 6.6743e-11 - 1.1).abs() < 1e-12);
+    assert!((r.constant_on("G2", 12.8).unwrap() / g(12.8) - 2.0).abs() < 1e-12);
+    assert!((r.handle_on(12.8).g / 6.6743e-11 - 1.1).abs() < 1e-12);
+    // A step: 4% stronger before 13.7 Gyr.
+    let step = law(
+        json!({"kind": "step", "at_gyr": 13.7, "before": 6.941272e-11, "mark": "authored", "src": "what-if"}),
+    );
+    let r =
+        Reference::from_json(&[("base".into(), base.clone()), ("what-if".into(), step)]).unwrap();
+    assert_eq!(r.constant_on("G", 13.69), Some(6.941272e-11));
+    assert_eq!(r.constant_on("G", 13.7), Some(6.6743e-11));
+    // Never real, and never on a worked-out row.
+    for (bad, says) in [
+        (
+            json!({"kind": "drift", "per_yr": 1e-13, "anchor_gyr": 13.8, "src": "what-if"}),
+            "never real",
+        ),
+        (
+            json!({"kind": "drift", "anchor_gyr": 13.8, "mark": "fictional", "src": "what-if"}),
+            "per_yr",
+        ),
+        (
+            json!({"kind": "wobble", "mark": "fictional", "src": "what-if"}),
+            "wobble",
+        ),
+        (
+            json!({"kind": "step", "at_gyr": 1.0, "before": 1.0, "mark": "fictional", "src": "nobody"}),
+            "nobody",
+        ),
+    ] {
+        let e =
+            Reference::from_json(&[("base".into(), base.clone()), ("what-if".into(), law(bad))])
+                .unwrap_err();
+        assert!(e.iter().any(|m| m.contains(says)), "{says}: {e:?}");
+    }
+    let on_derived = json!({"sources": [{"id": "what-if", "text": "x"}], "constants": [{"id": "G2",
+        "law": {"kind": "step", "at_gyr": 1.0, "before": 1.0, "mark": "fictional", "src": "what-if"}}]});
+    let e =
+        Reference::from_json(&[("base".into(), base), ("what-if".into(), on_derived)]).unwrap_err();
+    assert!(e.iter().any(|m| m.contains("measured row")), "{e:?}");
+}
