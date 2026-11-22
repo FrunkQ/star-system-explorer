@@ -1,0 +1,104 @@
+# SSE4 voyages between stars: the voyage finder and the autopilot
+
+Status: proposed 21 Nov 2026, second UI track ("Build galaxy charts and travel screens"). It builds on the matter-pack design's section 7A.8 (ratings and counts, MP16), the programs design's section 6 (autopilot is a seat driven by a flow, J6), the night sky design (catalogue, then resolve, track Y) and NAV (`sse-nav`, T3).
+
+## 1. What Alex asked for (21 Nov, 23:11 to 23:13)
+
+- "Autopilot will be able to do jumps/FTL/relativistic speeds - if capable."
+- "An explorer ship gradually scanning systems spiralling outwards."
+- "Or set a destination and it charts a course - refuels on route (distant surveys to gas skim) and detailed surveys to destination."
+
+The standing rule still holds: players never hand-pilot. They tell the ship's computer where to go and what to do, and they read its plan.
+
+## 2. The pieces
+
+| Piece | What it does | Where it lives |
+|---|---|---|
+| **Drive facts** | What one ship can do: thrust, exhaust speed, propellant, a jump rating, another FTL rating | on the ship (template facts), read by NAV's `Ship` |
+| **Leg** | One move between two star systems by one means: jump, other FTL, or flying there for real (relativistic or not) | `sse-nav` `voyage.rs` |
+| **Voyage finder** | The cheapest chain of legs between systems for one ship, with fuel carried and refuel stops; or the nearest unvisited system it can reach | `sse-nav` `voyage.rs`, kernel op `plan_voyage` |
+| **Stops** | What happens at a system: refuel (skim a gas giant, ice or water, buy at a port), survey (from afar, or detailed) | pack rules and the survey ladder |
+| **Autopilot program** | Chains legs and stops: "explore outward", "go to X, refuel on the way, survey there" | track J programs (J6 part 2, kernel thread) using the finder, plus this track's screens |
+
+## 3. Legs: three ways to cross between stars
+
+**Jump** (a pack's FTL, marked fictional on the GM view). A ship rated Jump-N may make one jump of up to N parsecs. The pack's rule gives the fuel for a jump and the time it takes (Traveller: fuel of 10% of the hull per parsec of the jump; about a week whatever the length). On a drawn route the count the GM typed wins (MP16); off the drawn routes the pack's default rule gives it from the real distance.
+
+**Other FTL** (warp factors, gate classes). The same as a jump in shape: a rating on the ship, compared with a need on the leg, the cost and time from the pack's rule. Until a pack declares such a rule the finder refuses the leg and says which rule is missing.
+
+**Flying there for real** (physics, never marked fictional). A sustained drive burns at constant proper acceleration, turns over and brakes. The finder works it with special relativity: proper time aboard and time at home both, the peak speed, and the propellant from the relativistic rocket equation (the rapidity change times c over the exhaust speed gives the log of the mass ratio). If the propellant cannot reach the turnover speed, the ship coasts in the middle at the best speed it can afford. At low speeds this is the same answer NAV's torch courses give. A ship without a sustained drive, or whose propellant cannot stop it at the far end, is not offered the leg, and the refusal says so ("the Kestrel Wren cannot brake at Tau Ceti: 0.4% of the Δv it needs").
+
+### 3.1 In-system legs, and how the two scales join (Alex, 23:27: "This all has to work in system too ... Hohmann transfers and asteroid belts")
+
+There is one finder and one kind of voyage. What changes with scale is only what a **place** is and which **leg-maker** prices the move:
+
+| Place | Example | Leg-maker between two places of this kind |
+|---|---|---|
+| A body | Mars, Ceres, a moon, a station on a body | NAV's courses (`plan_route`, T3): Hohmann and Lambert transfers with launch windows for coasting ships, brachistochrone torch courses for sustained drives, patched-conic escape and capture, hazards and difficulty |
+| A belt region | a stretch of the main belt or a Kuiper belt band, from the belt clouds the kernel already resolves | the same courses, to the region's mean orbit; the bodies in it resolve when surveyed (night sky rule) |
+| A star system | Tau Ceti | this design's interstellar legs: jump, other FTL, relativistic flight |
+
+The two scales join at a system's **edge**. An interstellar leg leaves from and arrives at the system as a whole (for a jump, the pack's jump distance from the star; for a flight, the system's barycentre). Getting from a body out to that edge, and from the far edge in to a body, is an in-system leg like any other. So "Mars to a moon of a gas giant at Tau Ceti" is one chain: Mars to the edge (NAV course), the jump or flight, the edge in to the gas giant (NAV course), skim, then on to the moon. The finder searches across all of it at once with the same weights, the same carried fuel and the same refusals.
+
+For a hard-science game with no FTL the search simply never leaves the system: a miner's or a patrol's whole life is in-system legs, with real launch windows, so "wait 7 months for the window to Jupiter" is part of the plan and its time at home. Refuel stops in-system are the same pack rules (skim a giant, crack ice on a moon or belt body, buy at a port), and asteroid belts are both places to go (mining) and something courses are checked against (the hazards NAV already flags).
+
+Each leg carries its distance in parsecs (physics, with "Why?"), its count where a counted measure applies ("2 jumps"), its time at home, its time aboard, its fuel, and whether it is fictional.
+
+## 4. The voyage finder
+
+One search over one graph, as MP16 asks: nodes are star systems (from the star cells around the start, Y7a, and later the sector maps and drawn routes), edges are legs the ship can make, and the weight is what the GM or the program chose: **time at home**, **time aboard**, **fuel**, **number of legs**, or a **counted measure** (fewest jumps).
+
+- **Fuel is carried.** The finder tracks the fuel left after each leg, refuels to full at a stop that offers fuel the crew knows about, and never plans a leg the tank cannot pay for. A tank is drawn as the number of jumps or parsecs it holds.
+- **Refuel stops are what the crew knows, not what the GM knows.** A system offers fuel if its crew's knowledge (the program seat's audience, as J6 senses) shows a gas giant to skim, water or ice to crack, or a port that sells it. From afar that comes from the remote survey (night sky catalogue and O12 to O15: a gas giant found by its wobble or transit with this ship's instruments). An unsurveyed system is assumed dry (question 3).
+- **Refusals name the missing capability.** "Needs Jump-3, the Kestrel Wren is Jump-2"; "no known fuel within Jump-2 of Barnard's Star"; "a relativistic leg needs a sustained drive".
+- **Nearest unvisited.** Given a ship, a start, its fuel and the list of systems already visited, the finder answers "the nearest system this ship can reach that it has not visited", with the chain of legs to it. This is what the explorer program calls at each step.
+
+## 5. The two programs Alex described
+
+**Explore outward.** Repeat: ask the finder for the nearest unvisited reachable system (ties go to the one farther from home, so the path spirals out instead of doubling back); fly there; survey it (resolve it the night sky way, recorded with who found it); if the tank is low, refuel where the survey found fuel; go on. Stops when nothing is reachable, after N systems, or when a GM-set boundary is reached.
+
+**Go to a destination.** Ask the finder for the chain of legs to the destination with refuel stops. At each refuel stop: a quick survey to find and skim the gas giant, then go on. At the destination: a detailed survey of every world (surface surveys where the ship's instruments allow). The plan is shown before it runs, as the Route console already shows courses: legs, stops, fuel left, time at home and aboard.
+
+Both are programs (track J): they act through intents within the GM-set scope, sense only through their crew's audience, and advance the campaign clock by home time; each leg ends a tick, as J6 part 2 plans for NAV travel.
+
+### 5.1 The other roles (Alex, 23:15: "Mining, trading (economy driven eventually), patrolling, pirating, etc.")
+
+These are not new machinery. Every role is a program (J6's states, picks and intents) and every move between places is a voyage leg from the same finder, so a role is pack data, not code:
+
+| Role | Picks (from what its crew knows) | Acts at each stop | Already exists |
+|---|---|---|---|
+| Explorer | nearest unvisited reachable system | survey, refuel when low | the finder (this design) |
+| Courier or passage | the destination it was given | refuel, deliver | the finder |
+| Miner | the richest body it has surveyed within reach | mine (real amounts from physics, which run out), return, unload | J6's miner fixture, in-system |
+| Trader | the best margin between ports it knows, net of fuel and time | buy, sell | new: prices from a pack table now, the economy pack later through the same kept values |
+| Patrol | the next waypoint of its beat; a sensed suspect | inspect, pursue, report | J6 part 2's patrol fixture |
+| Pirate | the weakest ship it has sensed on a lane it watches | intercept, demand, flee | J6 part 2's pirate fixture |
+
+What this track adds for all of them: the finder as the one way any role moves between systems (in-system courses stay NAV's `plan_route`), and the screens that show any role's plan before it runs. Trading needs prices; until the economy pack exists they are a pack table of base prices per port (the "placeholder" that the economy replaces without changing the trader program).
+
+## 6. Screens
+
+- **Route console, "Between stars"**: pick a ship and a destination (or "nearest unvisited"), choose what to minimise, see the legs on a small star map with fuel left after each, refuel stops marked, times at home and aboard, and every refusal in words.
+- **Galaxies nearby and the hex map** get "plan a voyage to here" on a star.
+- **The player console**: the crew asks the ship's computer for a voyage and reads its plan; they never pick legs by hand. The GM's approval rules apply as for any intent.
+
+## 7. Packages
+
+| Package | What | Owner |
+|---|---|---|
+| V8 part 3 | `sse-nav` voyage legs (jump, relativistic; other FTL refused until a pack rule), the finder with fuel and refuel stops, nearest unvisited with the outward tie-break; kernel op `plan_voyage` over star cells; Route console "Between stars" on the GM screen | this track (starts now) |
+| V8 part 3b | In-system voyages through the same finder: bodies and belt regions as places, NAV courses as the leg-maker (windows included), refuel and mining stops; the join at each system's edge so a voyage can run body to body across stars | this track, straight after part 3 |
+| V8 part 4 | Counted jumps on drawn routes and "fewest jumps" (needs MP16's declarations and kept values); "plan a voyage to here" from the maps | this track, after the kernel's MP16 part |
+| J6 part 2 (voyage) | The `voyage` intent and the two programs as pack data; ticks at each leg's end; survey at stops; the clock advances by home time | kernel thread, with this track's finder |
+| V8 part 5 | The player console's voyage requests and a seat's preview of what its autopilot will do | this track, after J6 part 2 |
+
+## 8. Questions for Alex (with recommendations)
+
+1. **Fuel for jumps.** Recommended: a ship's jump drive declares fuel per parsec jumped and a tank size; the Traveller pack fills them with its rule (10% of the hull per parsec). Other settings set their own numbers or none (no fuel limit).
+2. **What counts as a refuel stop.** Recommended: three kinds, each a pack rule: a gas giant to skim, water or ice to crack, a port that sells fuel. The finder uses only what the crew knows.
+3. **Unsurveyed systems.** Answered 23:26: an informed risk, not a blind gamble. Built: each unsurveyed system has odds of holding fuel, from the ship's sensors when it has sensed the system, otherwise from its star (giant-planet odds rise with the star's mass and metallicity, Johnson et al. 2010, editable in the pack). Gambles are a GM switch; a plan takes one only when the odds reach a pack floor (50% to start), and the plan shows each gamble's odds and the chance they all pay off. Original recommendation: assumed dry, so a plan never depends on fuel nobody has seen. A GM switch "allow gambles" lets a program jump to an unsurveyed system hoping for fuel, and such a leg is marked as a gamble.
+4. **The explorer's order.** Recommended: nearest unvisited by the chosen cost, ties to the one farther from home. It spirals out on its own and wastes no fuel. A strict geometric spiral would sometimes skip a near star and come back for it.
+5. **Relativistic time.** Answered 23:26: yes, and each crew member's own age matters (plot points). Recommended: the campaign clock moves by time at home; each crew member ages by time aboard (kept on the ship), and the plan shows both. Messages home take the light time, as the night sky already honours.
+6. **What a survey does at each stop.** Recommended: on arrival, a system survey (every body resolved and recorded with who found it, catalogue-to-resolve); a detailed survey (surfaces, `survey_surface`) only at the destination or where the program names it, because it is the costly one.
+7. **Approval.** Recommended: an autopilot voyage runs within its GM-set scope like any program. Leaving surveyed space and gambles for fuel each need the GM's yes unless the scope says otherwise.
+8. **Roles as starter programs.** Answered 23:26: yes, with as much as possible editable by people or by Orac (every rule above is pack data for that reason). Recommended: explorer, courier, miner, trader, patrol and pirate ship as starter programs in one "ship roles" pack, each editable and copyable like any pack data, with no role written in code. V3's roles are a checklist of what to cover, not a copy.

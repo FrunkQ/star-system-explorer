@@ -368,13 +368,25 @@ pub enum Request {
     /// `climate`, `systems`, `field` (a cube-sphere `tile` [face, level, x,
     /// y], `n` × `n` cells), `report`, `column` (descent hazards) or `sound`,
     /// at `day` (days since the campaign epoch) and `lat`/`lon` where a place
-    /// is needed. The world is a weather fixture by `world` label or given
-    /// `conditions`; `pins` are recorded or GM-authored systems to honour.
+    /// is needed. The world is a weather fixture by `world` label, given
+    /// `conditions`, or a `body` of an adopted `system` (read at `at_s`, like
+    /// `survey_surface`), whose conditions are built by the same function the
+    /// surface's wear and cover use (W7a, one climate); `pins` are recorded or
+    /// GM-authored systems to honour.
     Weather {
         want: String,
         #[serde(default)]
         #[ts(optional)]
         world: Option<String>,
+        #[serde(default)]
+        #[ts(optional)]
+        system: Option<String>,
+        #[serde(default)]
+        #[ts(optional)]
+        body: Option<String>,
+        #[serde(default)]
+        #[ts(optional, type = "number")]
+        at_s: Option<i64>,
         #[serde(default)]
         #[ts(optional, type = "unknown")]
         conditions: Option<serde_json::Value>,
@@ -1077,6 +1089,122 @@ pub enum Request {
         #[ts(optional)]
         limit: Option<u32>,
     },
+    /// G5 through the kernel (night sky design, Y7a): one 10 pc star cell of
+    /// the campaign's galaxy at `t_myr` (default the campaign's now), its
+    /// fill as today's rules draw it and the campaign's promoted stars read
+    /// back as stored. With no `cell`, the cell at the Sun's radius. Read only.
+    StarCell {
+        #[serde(default)]
+        #[ts(optional)]
+        cell: Option<[i64; 3]>,
+        #[serde(default)]
+        #[ts(optional)]
+        t_myr: Option<f64>,
+    },
+    /// Voyages between stars (V8 part 3): the cheapest chain of legs for one
+    /// ship from a star system `from` to `to`, or with no `to` the nearest
+    /// system not in `visited` (ties go to the shorter path, then to the one
+    /// farther from `home`). Legs are jumps (the ship's jump drive, a pack
+    /// rule) or flights there for real (special relativity). `known_fuel`
+    /// maps system addresses to the fuel the crew knows of there; `surveyed`
+    /// lists systems known to be dry; `sensed_fuel` gives the odds (0 to 1)
+    /// of fuel where the ship's sensors have looked (else the star's own
+    /// giant-planet odds); `gambles` lets a plan hope for fuel in unsurveyed
+    /// systems at odds above the pack's floor. `minimise` is `home_time`, `ship_time`, `fuel` or
+    /// `legs`. Read only; refusals come back in words.
+    PlanVoyage {
+        from: String,
+        #[serde(default)]
+        #[ts(optional)]
+        to: Option<String>,
+        #[serde(default)]
+        #[ts(optional)]
+        home: Option<String>,
+        #[ts(type = "unknown")]
+        ship: serde_json::Value,
+        #[serde(default)]
+        #[ts(optional)]
+        minimise: Option<String>,
+        #[serde(default)]
+        #[ts(optional)]
+        visited: Option<Vec<String>>,
+        #[serde(default)]
+        #[ts(optional)]
+        known_fuel: Option<std::collections::BTreeMap<String, Vec<String>>>,
+        #[serde(default)]
+        #[ts(optional)]
+        sensed_fuel: Option<std::collections::BTreeMap<String, f64>>,
+        #[serde(default)]
+        #[ts(optional)]
+        surveyed: Option<Vec<String>>,
+        #[serde(default)]
+        #[ts(optional)]
+        gambles: Option<bool>,
+    },
+    /// Make a fill star permanent: its whole drawn description (address,
+    /// cell, frame and slot, birth, mass, companions, abundances, orbit) is
+    /// written to the record, so no later change to the fill rules can move
+    /// or change it (Y7a). Promoting a pinned star again writes nothing.
+    /// GM machine only.
+    PromoteStar {
+        address: String,
+    },
+    /// The campaign's own tag declarations (TG1), in the shape of a pack's
+    /// `provides.other.tags`: tags the GM typed freely join it on first use.
+    CampaignTags,
+    /// The master data sheet (MP1, `provides.reference`): with `table` and
+    /// `id`, one row with its sources, the packs that set it and its
+    /// worked-out values; with `id` alone, the first table holding it; with
+    /// neither, every table's row ids. Read-only, any seat.
+    ReadMatter {
+        #[serde(default)]
+        #[ts(optional)]
+        table: Option<String>,
+        #[serde(default)]
+        #[ts(optional)]
+        id: Option<String>,
+    },
+    /// The reach report for a changed constant (MP1c, design section 7A.3):
+    /// every block in exactly one of three groups. `follows` (a formula that
+    /// reads the constant from the one handle), `estimated` (a table
+    /// rescaled by a cited law) and `cannot_follow` (computed with the real
+    /// constants). `value`, when given, is shown beside the stack's value.
+    /// Read-only, any seat.
+    ReadReach {
+        constant: String,
+        #[serde(default)]
+        #[ts(optional)]
+        value: Option<f64>,
+    },
+    /// Dressing candidates (TG12, `provides.other.dressing`) for every world
+    /// at or under `scope` at `at_s` (default now): what the stack's universe
+    /// packs would place, each with its rule, template, where, explanation
+    /// and the facts its condition read. Stored nowhere; held-off and adopted
+    /// ones are left out. `orphans` lists placed objects whose pack or rule
+    /// left the stack. GM machine only.
+    Dressing {
+        scope: String,
+        #[serde(default)]
+        #[ts(optional)]
+        at_s: Option<i64>,
+    },
+    /// Adopt one dressing candidate: an authored object from its template
+    /// under the world, marked with the pack, rule and candidate. GM only.
+    AdoptDressing {
+        candidate: String,
+        #[serde(default)]
+        #[ts(optional)]
+        name: Option<String>,
+        at_s: i64,
+    },
+    /// Hold a dressing candidate off for its world (`held` false lets it
+    /// back). Kept in the record. GM only.
+    HoldDressing {
+        candidate: String,
+        #[serde(default)]
+        #[ts(optional)]
+        held: Option<bool>,
+    },
 }
 
 /// `adopt`'s formation request: the `run_formation` fields.
@@ -1213,6 +1341,15 @@ impl Request {
             Request::ImportSector { .. } => "import_sector",
             Request::ExportSector { .. } => "export_sector",
             Request::HaloCell { .. } => "halo_cell",
+            Request::StarCell { .. } => "star_cell",
+            Request::PlanVoyage { .. } => "plan_voyage",
+            Request::PromoteStar { .. } => "promote_star",
+            Request::CampaignTags => "campaign_tags",
+            Request::ReadMatter { .. } => "read_matter",
+            Request::ReadReach { .. } => "read_reach",
+            Request::Dressing { .. } => "dressing",
+            Request::AdoptDressing { .. } => "adopt_dressing",
+            Request::HoldDressing { .. } => "hold_dressing",
         }
     }
 }
@@ -1461,6 +1598,51 @@ pub fn ops() -> Vec<OpInfo> {
             Cost::Medium,
             "one cell's haloes drawn from the mass function, each placed on the web and given a growth history and mergers (about 0.1 to 1 s native)",
         ),
+        o(
+            "star_cell",
+            Cost::Medium,
+            "grows the campaign's galaxy, then draws one 10 pc cell (tens of systems) with its pins; read only",
+        ),
+        o(
+            "plan_voyage",
+            Cost::Medium,
+            "draws the star cells around the start and the destination (up to 125), then searches legs with fuel carried; read only",
+        ),
+        o(
+            "campaign_tags",
+            Cost::Light,
+            "reads the campaign's own tag declarations from the record",
+        ),
+        o(
+            "promote_star",
+            Cost::Medium,
+            "GM machine only in a session; draws the star once and stores its whole description in the record",
+        ),
+        o(
+            "read_matter",
+            Cost::Light,
+            "reads the master data sheet loaded with the stack; nothing is worked out but molar mass",
+        ),
+        o(
+            "read_reach",
+            Cost::Light,
+            "reads the blocks' declared reach; nothing is computed",
+        ),
+        o(
+            "dressing",
+            Cost::Light,
+            "GM machine only; one condition per rule per world in the scope (a system: well under a millisecond each)",
+        ),
+        o(
+            "adopt_dressing",
+            Cost::Light,
+            "GM machine only; one template creation",
+        ),
+        o(
+            "hold_dressing",
+            Cost::Trivial,
+            "GM machine only; one record fact",
+        ),
     ]
 }
 
@@ -1475,6 +1657,11 @@ pub struct DerivedValue {
     /// Depends on fictional physics (a pack flagged fictional, H7).
     pub fictional: bool,
     pub publisher: String,
+    /// MP1c: with constants that differ from ours, the cited law each
+    /// rescaled block it rests on used (ESTIMATED). Left out otherwise.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    #[ts(optional)]
+    pub estimated: Option<Vec<String>>,
 }
 
 #[derive(Clone, PartialEq, Debug, Serialize, Deserialize, TS)]
@@ -1522,6 +1709,11 @@ pub enum Response {
         event_id: String,
         affected: Vec<String>,
         state_hash: String,
+        /// A freely typed tag (`tag.<name>`) the stack did not declare: it
+        /// joined the campaign's own tags (TG1).
+        #[serde(default, skip_serializing_if = "Option::is_none")]
+        #[ts(optional)]
+        declared_tag: Option<String>,
     },
     History {
         events: Vec<EventSummary>,
@@ -2138,6 +2330,79 @@ pub enum Response {
     HaloCelled {
         #[ts(type = "unknown")]
         cell: serde_json::Value,
+    },
+    /// `star_cell`: `{galaxy, cell, frame, frame_start_myr, t_myr, cell_pc, expected, pins,
+    /// systems: [{address, pinned, drawn_in {cell, frame, slot}, mass_msun,
+    /// companions, birth_gyr, feh, xyz_pc, state}], model}`.
+    StarCelled {
+        #[ts(type = "unknown")]
+        cell: serde_json::Value,
+    },
+    /// `plan_voyage`: `{ship, means, searched, cells, t_myr, systems: [{address,
+    /// name, xyz_pc, fuel, surveyed, visited}], voyage: {from, to, minimise,
+    /// legs: [{from, to, means, distance_pc, counted_pc?, home_days, ship_days,
+    /// jump_fuel_t, propellant_t, peak_beta?, coast, fictional, gamble,
+    /// refuel?, jump_fuel_left_t, propellant_left_t, words}], distance_pc,
+    /// home_days, ship_days, jump_fuel_t, propellant_t, refuels, gambles,
+    /// fictional, needs?} | null, refusals: [text], model}`.
+    VoyagePlanned {
+        #[ts(type = "unknown")]
+        voyage: serde_json::Value,
+    },
+    /// `campaign_tags`: `{id: "campaign", tags: {groups, tags}}`.
+    CampaignTagsListed {
+        #[ts(type = "unknown")]
+        pack: serde_json::Value,
+    },
+    /// `dressing`: candidates `[{id, world, rule, pack, template, label,
+    /// where, explain, why: [{field, value}], tags?, faction?}]` and orphans
+    /// `[{address, pack, rule, touched}]`.
+    Dressed {
+        scope: String,
+        #[ts(type = "unknown[]")]
+        candidates: Vec<serde_json::Value>,
+        #[ts(type = "unknown[]")]
+        orphans: Vec<serde_json::Value>,
+    },
+    /// `read_matter`: a row (`{table, id, row, sources, packs, worked?,
+    /// used_by, skipped_by}`) or a listing of ids by table.
+    Matter {
+        #[ts(type = "unknown")]
+        value: serde_json::Value,
+    },
+    /// `read_reach`: the constant, its real and in-force values, the value
+    /// proposed, and the three groups of blocks.
+    Reach {
+        constant: String,
+        real: f64,
+        in_force: f64,
+        #[serde(skip_serializing_if = "Option::is_none")]
+        #[ts(optional)]
+        proposed: Option<f64>,
+        #[ts(type = "unknown[]")]
+        follows: Vec<serde_json::Value>,
+        #[ts(type = "unknown[]")]
+        estimated: Vec<serde_json::Value>,
+        #[ts(type = "unknown[]")]
+        cannot_follow: Vec<serde_json::Value>,
+    },
+    /// `hold_dressing`: the candidate and whether it is now held off.
+    DressingHeld {
+        candidate: String,
+        held: bool,
+        event_id: String,
+    },
+    /// `promote_star`: the stored description, the event that stored it
+    /// (absent when the star was already pinned) and the state hash.
+    StarPromoted {
+        address: String,
+        already: bool,
+        #[serde(default, skip_serializing_if = "Option::is_none")]
+        #[ts(optional)]
+        event_id: Option<String>,
+        #[ts(type = "unknown")]
+        description: serde_json::Value,
+        state_hash: String,
     },
 }
 

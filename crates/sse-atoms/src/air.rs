@@ -44,7 +44,7 @@ pub fn column_optical_depth(pressure_pa: f64, sigma_m2: f64, mean_mass_kg: f64, 
 
 /// Pressure scale height, m: H = kT / (m̄ g).
 pub fn scale_height(t_k: f64, mean_mass_kg: f64, g: f64) -> f64 {
-    K_B * t_k / (mean_mass_kg * g)
+    sse_core::constants::k_b() * t_k / (mean_mass_kg * g)
 }
 
 pub fn atoms() -> Vec<Box<dyn Atom>> {

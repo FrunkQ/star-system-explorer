@@ -650,6 +650,30 @@ fn bodies_from_facts(
                 host_msun,
             }),
             locked: None,
+            tidal_history: vec![],
+            spin_hours: r
+                .get("body.rotation_period")
+                .and_then(as_f64)
+                .map(|t| t / 3600.0),
+            obliquity_deg: r
+                .get("body.obliquity")
+                .or_else(|| r.get("body.axial_tilt"))
+                .and_then(as_f64)
+                .map(|x| x * 180.0 / m::PI),
+            spin_source: r
+                .keys()
+                .any(|k| {
+                    k.starts_with("body.rotation_period")
+                        || k.starts_with("body.obliquity")
+                        || k.starts_with("body.axial_tilt")
+                })
+                .then(|| {
+                    if r.keys().any(|k| k.starts_with("v3.")) {
+                        "authored (V3)".to_string()
+                    } else {
+                        "authored".to_string()
+                    }
+                }),
         });
     }
     out
@@ -678,9 +702,10 @@ fn clouds_of(run: Option<&SystemRun>) -> Vec<serde_json::Value> {
         .iter()
         .map(|c| {
             // F5's inclination model: Rayleigh-distributed tilts make a disc
-            // (sigma in degrees); isotropic ones a sphere (the Oort cloud).
+            // (sigma in degrees); isotropic ones a shell between a_min and a_max
+            // (the Oort cloud; "shell" is the night sky design's Y0 name).
             let (shape, i_sigma_deg) = match c.i {
-                sse_formation::leftovers::Tilt::Isotropic => ("sphere", None),
+                sse_formation::leftovers::Tilt::Isotropic => ("shell", None),
                 sse_formation::leftovers::Tilt::Rayleigh { sigma_deg } => ("disc", Some(sigma_deg)),
             };
             serde_json::json!({

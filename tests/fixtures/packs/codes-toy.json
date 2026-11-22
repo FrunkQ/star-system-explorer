@@ -9,6 +9,7 @@
  "licence": "Apache-2.0",
  "provides": {
   "other": {
+      "tags": {"about": "Tags this pack names (tags design, TG1): labels only, never an input to physics.", "groups": [], "tags": [{"id": "toy.large", "label": "large"}, {"id": "toy.note.big", "label": "big"}, {"id": "toy-generated", "label": "toy generated"}]},
    "schemes": [
     {
      "id": "toy.size",

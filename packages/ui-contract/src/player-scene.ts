@@ -23,6 +23,8 @@ export interface PlayerSubject {
   view: string;
   facts: PlayerFact[];
   tags: string[];
+  /** Something undisclosed here: at least one tag one rung above this view (tags design TG5). One neutral marker, no name, colour or count. */
+  undisclosed?: boolean;
 }
 
 export interface PlayerScene {

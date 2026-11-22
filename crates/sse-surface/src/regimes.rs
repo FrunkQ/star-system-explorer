@@ -28,7 +28,7 @@
 //! width, so the atlas band-limits it like a crater: it appears at a level
 //! only when four samples cross its width.
 
-use crate::impacts::Features;
+use crate::impacts::{CraterField, Features};
 use crate::sketch::dot;
 use crate::{SurfaceEnvelope, SurfaceSettings};
 use serde::{Deserialize, Serialize};
@@ -186,6 +186,8 @@ pub struct RegimeInputs<'a> {
     pub mass_earth: f64,
     /// S4's features: rifts open beside the tallest shield.
     pub impacts: Option<&'a Features>,
+    /// S4's crater field: later craters garden away fossil landforms.
+    pub craters: Option<&'a CraterField>,
 }
 
 fn unit_dir(d: &Draws, i: u64) -> [f64; 3] {
@@ -301,6 +303,18 @@ impl Clock<'_> {
         self.table = table;
     }
 
+    /// Integrated renewal between two dates, any regime (for fossils).
+    fn renewal_between(&self, a: f64, b: f64) -> f64 {
+        if b <= a {
+            return 0.0;
+        }
+        let steps = m::ceil((b - a) / 25.0).max(1.0) as u32;
+        let dt = (b - a) / steps as f64;
+        (0..steps)
+            .map(|k| dt * self.rate(a + (k as f64 + 0.5) * dt))
+            .sum()
+    }
+
     /// Integrated renewal from the surface's start to the epoch.
     fn z_total(&self) -> f64 {
         self.table.last().copied().unwrap_or(0.0)
@@ -328,6 +342,129 @@ impl Clock<'_> {
             return lo + dt * ((k - 1) as f64 + f);
         }
         lo + (hi - lo) * u
+    }
+}
+
+/// One regime's landforms over the clock's span (its start to its end).
+#[allow(clippy::too_many_arguments)]
+fn grow(
+    s: &SurfaceSettings,
+    d: &Draws,
+    clock: &Clock,
+    regime: &str,
+    epoch_now: f64,
+    radius_km: f64,
+    area_mkm2: f64,
+    base_hi: u64,
+    id_prefix: &str,
+    out: &mut Vec<Landform>,
+) {
+    let rs = &s.regime_features;
+    let epoch = clock.epoch;
+    let ztot = clock.z_total();
+    let q_now = clock.heat_at(epoch);
+    let q0 = clock.heat_at(clock.t_from);
+    let rules = rs.landforms.get(regime).cloned().unwrap_or_default();
+    for (ri, rule) in rules.iter().enumerate() {
+        let base = base_hi | ((ri as u64 + 1) << 40);
+        // How much of the landform the world holds now.
+        let activity = match rule.driver.as_str() {
+            "heat" if ztot > 0.0 => 1.0 - m::exp(-ztot),
+            "heat" | "heat-now" => {
+                let r = s.impacts.resurface.get(regime);
+                let q_ref = r.map(|x| x.q_ref_w_m2).unwrap_or(0.05);
+                m::pow((q_now / q_ref).max(0.0), 3.0).min(1.0)
+            }
+            "cooling" => ((q0 - q_now) / q0.max(1e-12)).clamp(0.0, 1.0),
+            _ => 1.0,
+        };
+        if activity <= 0.0 {
+            continue;
+        }
+        let r_scale = rule.radius_ref_km.map(|x| radius_km / x).unwrap_or(1.0);
+        let band_area_frac = rule
+            .lat_deg
+            .map(|[a, b]| (m::sin(b.to_radians()) - m::sin(a.to_radians())).abs())
+            .unwrap_or(1.0);
+        let mean_area = |lo: f64, hi: f64| {
+            // Mean of π (D/2)² over log-uniform D, km² (round landforms).
+            m::PI / 4.0 * (hi * hi - lo * lo) / (2.0 * m::ln(hi / lo).max(1e-9))
+        };
+        let count = match rule.cover_fraction {
+            Some(f) => {
+                let a = f * activity * area_mkm2 * 1e6;
+                poisson(d, base, a / mean_area(rule.size_km[0], rule.size_km[1]))
+            }
+            None => poisson(
+                d,
+                base,
+                rule.per_mkm2 * activity * area_mkm2 * band_area_frac,
+            ),
+        }
+        .min(rs.max_per_kind as u64);
+        for j in 0..count {
+            let k = |x: u64| base + 16 * (j + 1) + x;
+            let size = log_uniform(rule.size_km[0], rule.size_km[1], d.unit(k(0)));
+            let width = rule.width_ratio.map(|w| w * size).unwrap_or(size);
+            let mag = log_uniform(rule.height_m[0], rule.height_m[1], d.unit(k(1))) * r_scale;
+            let height = if rule.height_m[0] < 0.0 { -mag } else { mag };
+            let dir = match rule.lat_deg {
+                Some([a, b]) => {
+                    let (sa, sb) = (m::sin(a.to_radians()), m::sin(b.to_radians()));
+                    let z = sa + (sb - sa) * d.unit(k(2));
+                    let lat = m::asin(z).to_degrees();
+                    let lat = if d.unit(k(3)) < rule.north_share {
+                        lat
+                    } else {
+                        -lat
+                    };
+                    from_lat_lon(lat, 360.0 * d.unit(k(4)) - 180.0)
+                }
+                None => unit_dir(d, k(5)),
+            };
+            let axis = rule.width_ratio.map(|_| {
+                // Ice-shell lineae trend about 45° from east (tidal stress);
+                // other linear landforms any way.
+                let east = norm(cross([0.0, 0.0, 1.0], dir));
+                let north = cross(dir, east);
+                let az = if regime == "ice-shell" {
+                    let sgn = if d.unit(k(6)) < 0.5 { 1.0 } else { -1.0 };
+                    sgn * 45f64.to_radians() + 0.26 * d.normal(k(7))
+                } else {
+                    m::PI * d.unit(k(6))
+                };
+                norm([
+                    m::cos(az) * east[0] + m::sin(az) * north[0],
+                    m::cos(az) * east[1] + m::sin(az) * north[1],
+                    m::cos(az) * east[2] + m::sin(az) * north[2],
+                ])
+            });
+            let t = clock.date(&rule.driver, ztot, d.unit(k(8)));
+            let (lat, lon) = lat_lon(dir);
+            let cause = format!(
+                "{} {:.2} Gyr ago: {} Heat flow then {:.3} W/m² under a {}.",
+                rule.kind.replace('-', " "),
+                (epoch_now - t) / 1000.0,
+                rule.source,
+                clock.heat_at(t),
+                regime.replace('-', " ")
+            );
+            out.push(Landform {
+                id: format!("{}{}:{}", id_prefix, rule.kind, j),
+                kind: rule.kind.clone(),
+                dir,
+                axis,
+                lat_deg: lat,
+                lon_deg: lon,
+                size_km: size,
+                width_km: width,
+                height_m: height,
+                formed_myr: t,
+                cover: rule.cover.clone(),
+                material: rule.material.clone(),
+                cause,
+            });
+        }
     }
 }
 
@@ -410,108 +547,76 @@ pub fn regime_surface(
         return out;
     }
     let ztot = clock.z_total();
-    let q_now = clock.heat_at(epoch);
-    let q0 = clock.heat_at(t_from);
-    let rules = rs.landforms.get(&regime).cloned().unwrap_or_default();
-    for (ri, rule) in rules.iter().enumerate() {
-        let base = (ri as u64 + 1) << 40;
-        // How much of the landform the world holds now.
-        let activity = match rule.driver.as_str() {
-            "heat" if ztot > 0.0 => 1.0 - m::exp(-ztot),
-            "heat" | "heat-now" => {
-                let r = s.impacts.resurface.get(&regime);
-                let q_ref = r.map(|x| x.q_ref_w_m2).unwrap_or(0.05);
-                m::pow((q_now / q_ref).max(0.0), 3.0).min(1.0)
-            }
-            "cooling" => ((q0 - q_now) / q0.max(1e-12)).clamp(0.0, 1.0),
-            _ => 1.0,
-        };
-        if activity <= 0.0 {
+    grow(
+        s,
+        &d,
+        &clock,
+        &regime,
+        epoch,
+        radius_km,
+        area_mkm2,
+        0,
+        "",
+        &mut out.landforms,
+    );
+    // Fossil landforms: what earlier regimes built (Ganymede's grooved
+    // terrain from its resonance passage) stays unless a later regime
+    // renews the surface over it.
+    let mut past: Vec<(f64, f64, String)> = vec![];
+    for x in clock
+        .spans
+        .iter()
+        .filter(|x| x.1 <= t_from + 1e-9 && x.2 != regime)
+    {
+        match past.last_mut() {
+            Some(p) if p.2 == x.2 && (p.1 - x.0).abs() < 1e-9 => p.1 = x.1,
+            _ => past.push((x.0, x.1, x.2.clone())),
+        }
+    }
+    for (pi, (a, b, r)) in past.iter().enumerate() {
+        if !rs.landforms.contains_key(r) {
             continue;
         }
-        let r_scale = rule.radius_ref_km.map(|x| radius_km / x).unwrap_or(1.0);
-        let band_area_frac = rule
-            .lat_deg
-            .map(|[a, b]| (m::sin(b.to_radians()) - m::sin(a.to_radians())).abs())
-            .unwrap_or(1.0);
-        let mean_area = |lo: f64, hi: f64| {
-            // Mean of π (D/2)² over log-uniform D, km² (round landforms).
-            m::PI / 4.0 * (hi * hi - lo * lo) / (2.0 * m::ln(hi / lo).max(1e-9))
+        let mut c = Clock {
+            spans: clock.spans.clone(),
+            s,
+            epoch: *b,
+            t_from: *a,
+            table: vec![],
         };
-        let count = match rule.cover_fraction {
-            Some(f) => {
-                let a = f * activity * area_mkm2 * 1e6;
-                poisson(&d, base, a / mean_area(rule.size_km[0], rule.size_km[1]))
+        c.tabulate();
+        let mut fossils = vec![];
+        let tag = format!("{r}@{a:.0}:");
+        grow(
+            s,
+            &d,
+            &c,
+            r,
+            epoch,
+            radius_km,
+            area_mkm2,
+            (pi as u64 + 1) << 52,
+            &tag,
+            &mut fossils,
+        );
+        for (j, mut l) in fossils.into_iter().enumerate() {
+            // Survives the renewal of everything after it, and the craters
+            // that came after it: a landform is erased like a crater of its
+            // own width under saturation (Gault 1970; Hartmann 1984), so a
+            // fossil from the heavy bombardment is cratered away and one
+            // from a later, quieter era is kept.
+            let z = clock.renewal_between(l.formed_myr, epoch);
+            let kept = inputs
+                .craters
+                .map(|f| f.erasure_survival(l.width_km, l.formed_myr, epoch))
+                .unwrap_or(1.0);
+            if d.unit(((pi as u64 + 1) << 52) | (1 << 39) | j as u64) < m::exp(-z) * kept {
+                l.cause = format!(
+                    "{} Fossil: no later regime has renewed it, and the craters since have not erased it.",
+                    l.cause
+                );
+                out.landforms.push(l);
             }
-            None => poisson(
-                &d,
-                base,
-                rule.per_mkm2 * activity * area_mkm2 * band_area_frac,
-            ),
-        }
-        .min(rs.max_per_kind as u64);
-        for j in 0..count {
-            let k = |x: u64| base + 16 * (j + 1) + x;
-            let size = log_uniform(rule.size_km[0], rule.size_km[1], d.unit(k(0)));
-            let width = rule.width_ratio.map(|w| w * size).unwrap_or(size);
-            let mag = log_uniform(rule.height_m[0], rule.height_m[1], d.unit(k(1))) * r_scale;
-            let height = if rule.height_m[0] < 0.0 { -mag } else { mag };
-            let dir = match rule.lat_deg {
-                Some([a, b]) => {
-                    let (sa, sb) = (m::sin(a.to_radians()), m::sin(b.to_radians()));
-                    let z = sa + (sb - sa) * d.unit(k(2));
-                    let lat = m::asin(z).to_degrees();
-                    let lat = if d.unit(k(3)) < rule.north_share {
-                        lat
-                    } else {
-                        -lat
-                    };
-                    from_lat_lon(lat, 360.0 * d.unit(k(4)) - 180.0)
-                }
-                None => unit_dir(&d, k(5)),
-            };
-            let axis = rule.width_ratio.map(|_| {
-                // Ice-shell lineae trend about 45° from east (tidal stress);
-                // other linear landforms any way.
-                let east = norm(cross([0.0, 0.0, 1.0], dir));
-                let north = cross(dir, east);
-                let az = if regime == "ice-shell" {
-                    let sgn = if d.unit(k(6)) < 0.5 { 1.0 } else { -1.0 };
-                    sgn * 45f64.to_radians() + 0.26 * d.normal(k(7))
-                } else {
-                    m::PI * d.unit(k(6))
-                };
-                norm([
-                    m::cos(az) * east[0] + m::sin(az) * north[0],
-                    m::cos(az) * east[1] + m::sin(az) * north[1],
-                    m::cos(az) * east[2] + m::sin(az) * north[2],
-                ])
-            });
-            let t = clock.date(&rule.driver, ztot, d.unit(k(8)));
-            let (lat, lon) = lat_lon(dir);
-            let cause = format!(
-                "{} {:.2} Gyr ago: {} Heat flow then {:.3} W/m² under a {}.",
-                rule.kind.replace('-', " "),
-                (epoch - t) / 1000.0,
-                rule.source,
-                clock.heat_at(t),
-                regime.replace('-', " ")
-            );
-            out.landforms.push(Landform {
-                id: format!("{}:{}", rule.kind, j),
-                kind: rule.kind.clone(),
-                dir,
-                axis,
-                lat_deg: lat,
-                lon_deg: lon,
-                size_km: size,
-                width_km: width,
-                height_m: height,
-                formed_myr: t,
-                cover: rule.cover.clone(),
-                material: rule.material.clone(),
-                cause,
-            });
         }
     }
     // Rift systems open beside the tallest shield (Valles Marineris beside Tharsis).
@@ -594,12 +699,10 @@ fn cloud_deck(
     let a = env.reference_radius_m;
     let ice = inputs.mass_earth > 0.0 && inputs.mass_earth < c.ice_giant_mass_earth;
     let u = if ice { c.wind_ice_m_s } else { c.wind_gas_m_s };
-    let jets = m::round(m::sqrt(a * omega / u)).clamp(1.0, 60.0) as u32;
-    // 2 × jets bands pole to pole, edges evenly spaced in sin(latitude).
+    // The one jet count and band layout (sse-climate, W7a).
+    let jets = sse_climate::circulation::giant_jets(a, omega, u);
     let nb = 2 * jets;
-    let edges: Vec<f64> = (0..=nb)
-        .map(|i| m::asin(-1.0 + 2.0 * i as f64 / nb as f64).to_degrees())
-        .collect();
+    let edges = sse_climate::circulation::giant_band_edges(jets);
     let winds: Vec<Jet> = (0..nb)
         .map(|i| {
             let lat = 0.5 * (edges[i as usize] + edges[i as usize + 1]);

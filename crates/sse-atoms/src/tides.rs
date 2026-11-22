@@ -2,7 +2,6 @@
 
 use crate::common::*;
 use sse_core::math as m;
-use sse_core::quantity::consts::*;
 use sse_core::Dimension as D;
 use sse_flow::{Atom, CostClass};
 
@@ -39,10 +38,10 @@ pub fn atoms() -> Vec<Box<dyn Atom>> {
                 let r = positive(i[1], "radius")?;
                 let a = positive(i[2], "semi-major axis")?;
                 let e = i[3];
-                let n = m::sqrt(G * mh / (a * a * a));
+                let n = m::sqrt(sse_core::constants::g() * mh / (a * a * a));
                 let r5 = r * r * r * r * r;
                 let a6 = a * a * a * a * a * a;
-                Ok(vec![10.5 * p[0] * G * mh * mh * r5 * n * e * e / a6])
+                Ok(vec![10.5 * p[0] * sse_core::constants::g() * mh * mh * r5 * n * e * e / a6])
             },
         }
         .build(),
@@ -76,7 +75,7 @@ pub fn atoms() -> Vec<Box<dyn Atom>> {
                 let inertia = p[2] * mb * r * r;
                 let a6 = a * a * a * a * a * a;
                 let r5 = r * r * r * r * r;
-                Ok(vec![w * a6 * inertia * p[0] / (3.0 * G * mh * mh * p[1] * r5)])
+                Ok(vec![w * a6 * inertia * p[0] / (3.0 * sse_core::constants::g() * mh * mh * p[1] * r5)])
             },
         }
         .build(),

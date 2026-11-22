@@ -2,7 +2,6 @@
 
 use crate::common::*;
 use sse_core::math as m;
-use sse_core::quantity::consts::*;
 use sse_core::Dimension as D;
 use sse_flow::{Atom, AtomError, CostClass};
 
@@ -77,7 +76,7 @@ pub fn atoms() -> Vec<Box<dyn Atom>> {
             f: |i, _| {
                 let a = positive(i[0], "semi-major axis")?;
                 let mt = positive(i[1], "total mass")?;
-                Ok(vec![m::TAU * m::sqrt(a * a * a / (G * mt))])
+                Ok(vec![m::TAU * m::sqrt(a * a * a / (sse_core::constants::g() * mt))])
             },
         }
         .build(),
@@ -98,7 +97,7 @@ pub fn atoms() -> Vec<Box<dyn Atom>> {
             f: |i, _| {
                 let p = positive(i[0], "period")?;
                 let mt = positive(i[1], "total mass")?;
-                Ok(vec![m::cbrt(G * mt * p * p / (4.0 * m::PI * m::PI))])
+                Ok(vec![m::cbrt(sse_core::constants::g() * mt * p * p / (4.0 * m::PI * m::PI))])
             },
         }
         .build(),

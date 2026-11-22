@@ -523,6 +523,18 @@ dependencies = [
 ]
 
 [[package]]
+name = "sse-climate"
+version = "0.1.0"
+dependencies = [
+ "serde",
+ "serde_json",
+ "sse-core",
+ "sse-pack",
+ "sse-reference",
+ "sse-time",
+]
+
+[[package]]
 name = "sse-codes"
 version = "0.1.0"
 dependencies = [
@@ -621,6 +633,7 @@ dependencies = [
  "sse-activity",
  "sse-atoms",
  "sse-chronicle",
+ "sse-climate",
  "sse-codes",
  "sse-core",
  "sse-cosmos",
@@ -635,6 +648,7 @@ dependencies = [
  "sse-observe",
  "sse-pack",
  "sse-record",
+ "sse-reference",
  "sse-sector-io",
  "sse-sense",
  "sse-sift",
@@ -655,6 +669,7 @@ dependencies = [
  "serde_json",
  "sse-atoms",
  "sse-chronicle",
+ "sse-climate",
  "sse-core",
  "sse-observe",
  "sse-pack",
@@ -758,6 +773,16 @@ dependencies = [
 ]
 
 [[package]]
+name = "sse-reference"
+version = "0.1.0"
+dependencies = [
+ "serde",
+ "serde_json",
+ "sse-core",
+ "sse-pack",
+]
+
+[[package]]
 name = "sse-resolve"
 version = "0.1.0"
 dependencies = [
@@ -820,6 +845,7 @@ version = "0.1.0"
 dependencies = [
  "serde",
  "serde_json",
+ "sse-climate",
  "sse-core",
  "sse-formation",
  "sse-pack",
@@ -887,6 +913,7 @@ version = "0.1.0"
 dependencies = [
  "serde",
  "serde_json",
+ "sse-climate",
  "sse-core",
  "sse-pack",
  "sse-surface",

@@ -27,7 +27,8 @@
     },
     "liquid": "water",
     "ocean_fraction": 0.71,
-    "internal_flux_w_m2": 0.0
+    "internal_flux_w_m2": 0.0,
+    "perihelion_lon_deg": 283.0
    }
   },
   {
@@ -56,7 +57,8 @@
     },
     "liquid": null,
     "ocean_fraction": 0.0,
-    "internal_flux_w_m2": 0.0
+    "internal_flux_w_m2": 0.0,
+    "perihelion_lon_deg": 251.0
    }
   },
   {
@@ -67,7 +69,7 @@
     "radius_m": 6051800.0,
     "gravity_m_s2": 8.87,
     "solid_surface": true,
-    "rotation_hours": 5832.5,
+    "rotation_hours": -5832.5,
     "star_locked": false,
     "obliquity_deg": 2.64,
     "year_days": 224.7,

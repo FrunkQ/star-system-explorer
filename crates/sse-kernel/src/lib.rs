@@ -10,11 +10,21 @@ mod clock;
 pub mod contract;
 mod cosmos;
 mod descent;
+mod dressing;
+#[cfg(test)]
+mod dressing_tests;
+mod ice_ages;
+#[cfg(test)]
+mod matter_tests;
 mod nav;
 mod orbits;
 pub mod protocol;
 mod survey;
 mod systems;
+mod tags;
+#[cfg(test)]
+mod tags_tests;
+mod voyage;
 mod weather;
 
 use protocol::*;
@@ -147,6 +157,29 @@ fn load_observe(ms: &[sse_pack::PackManifest]) -> Result<Observe, Vec<String>> {
             ));
         }
     }
+    let mut found = Vec::new();
+    for p in ms {
+        if let Some(v) = p.provides.other.get("dressing") {
+            let j =
+                serde_json::to_value(v).map_err(|e| vec![format!("{}: dressing: {e}", p.id)])?;
+            found.push((p.id.clone(), j));
+        }
+    }
+    let dressing = match dressing::Dressing::from_packs(&found, &templates) {
+        Ok(d) => d,
+        Err(e) => {
+            problems.extend(e);
+            dressing::Dressing::default()
+        }
+    };
+    // MP1: the master data sheet, merged bottom to top and checked.
+    let reference = match sse_reference::Reference::from_packs(ms) {
+        Ok(r) => r,
+        Err(e) => {
+            problems.extend(e);
+            sse_reference::Reference::default()
+        }
+    };
     if !problems.is_empty() {
         return Err(problems);
     }
@@ -159,7 +192,27 @@ fn load_observe(ms: &[sse_pack::PackManifest]) -> Result<Observe, Vec<String>> {
         return Err(issues);
     }
     let calendar = orbits::load_calendar(ms)?;
+    // TG1: every tag named anywhere in the stack is declared.
+    let tags = tags::declarations(ms)?;
+    let mut problems = tags::check(&tags::references(ms), &tags);
+    problems.extend(tags::reserved_kept(ms));
+    if !problems.is_empty() {
+        return Err(problems);
+    }
+    // A declaration's tier is the tag's default disclosure tier.
+    let mut setup = setup;
+    if let Some(s) = setup.as_mut() {
+        for (_, t) in tags.tags.values() {
+            if let Some(tier) = &t.tier {
+                s.disclosure
+                    .tags
+                    .entry(t.id.clone())
+                    .or_insert_with(|| tier.clone());
+            }
+        }
+    }
     Ok(Observe {
+        tags,
         setup,
         rules,
         sifters,
@@ -169,7 +222,63 @@ fn load_observe(ms: &[sse_pack::PackManifest]) -> Result<Observe, Vec<String>> {
         intents,
         templates,
         programs,
+        dressing,
+        reference,
     })
+}
+
+/// The stack's tag declarations plus the campaign's own (kept in the
+/// record at the universe root, TG1). A pack loaded later that declares a
+/// tag the campaign already had wins; the campaign's copy is ignored.
+fn campaign_tags(u: &Universe, stack: &tags::TagSet) -> Result<tags::TagSet, Response> {
+    let mut set = stack.clone();
+    let rec = u.record.state_at(UniverseTime::seconds(i64::MAX));
+    let mut block = tags::TagBlock::default();
+    for (f, v) in rec.facts.get(&u.root).into_iter().flatten() {
+        if let (Some(id), Value::Text(t)) = (f.strip_prefix(tags::CAMPAIGN_FIELD), v) {
+            if !set.declared(id) {
+                block.tags.push(
+                    serde_json::from_str(t).map_err(|e| err("bad_record", format!("{f}: {e}")))?,
+                );
+            }
+        }
+    }
+    let mut errs = vec![];
+    set.add("campaign", block, &mut errs);
+    Ok(set)
+}
+
+/// Add a freely typed tag to the campaign's own declarations.
+fn declare_campaign_tag(u: &mut Universe, tag: &str) -> Result<(), Response> {
+    let d = tags::TagDecl {
+        id: tag.to_string(),
+        label: tag.to_string(),
+        about: None,
+        group: None,
+        source: tags::Source::Authored,
+        tier: None,
+        colour: None,
+    };
+    let mut f = BTreeMap::new();
+    f.insert(
+        format!("{}{tag}", tags::CAMPAIGN_FIELD),
+        Value::Text(serde_json::to_string(&d).expect("plain data")),
+    );
+    let root = u.root.clone();
+    let e = clock::timeless_set(
+        &u.record,
+        &root,
+        f,
+        Evidence::Authored,
+        vec![],
+        tags::CAMPAIGN_KIND,
+        Publisher::new("gm", "tags", "1"),
+    )
+    .map_err(|e| err("bad_event", e))?;
+    u.record
+        .append(e)
+        .map_err(|e| err("chronicle", format!("{e}")))?;
+    Ok(())
 }
 
 /// The disclosure a scene uses: the stack's, plus each kept kind at its own
@@ -263,6 +372,8 @@ struct Job {
 /// (`provides.other.observe`) and the rule pack's tags (`provides.other.rules`).
 #[derive(Default)]
 struct Observe {
+    /// Tag declarations from the stack (`provides.other.tags`, TG1).
+    tags: tags::TagSet,
     setup: Option<sse_observe::ObserveSetup>,
     rules: sse_sift::RuleSet,
     /// Sifters (`provides.other.sifters`): the story finder's patterns (U8).
@@ -279,6 +390,10 @@ struct Observe {
     templates: sse_trigger::templates::Templates,
     /// Programs (`provides.other.programs`, J6).
     programs: sse_trigger::programs::Programs,
+    /// Dressing rules (`provides.other.dressing`, TG12).
+    dressing: dressing::Dressing,
+    /// The master data sheet (`provides.reference`, MP1).
+    reference: sse_reference::Reference,
 }
 
 pub struct Kernel {
@@ -294,6 +409,8 @@ pub struct Kernel {
     time: Option<sse_time::epoch::TimeSettings>,
     /// Recent `survey_surface` results.
     surveys: survey::Cache,
+    /// Orbit-level climates by key (W7a): the `weather` op reuses them.
+    climates: sse_climate::Cache,
 }
 
 impl Default for Kernel {
@@ -421,10 +538,59 @@ impl Kernel {
             codes: sse_codes::Codes::default(),
             universe: None,
             surveys: vec![],
+            climates: sse_climate::Cache::new(8),
             jobs: BTreeMap::new(),
             next_job: 1,
             time: None,
         }
+    }
+
+    /// The weather conditions of `body` in the adopted `system` (W7a): the
+    /// body read at `at_s` like `survey_surface`, its conditions built by
+    /// the function the surface's wear and cover use, so the weather and the
+    /// ground share one climate.
+    fn body_conditions(
+        &mut self,
+        system: &str,
+        body: &str,
+        at_s: Option<i64>,
+    ) -> Result<(serde_json::Value, f64), Response> {
+        let a: Address = system
+            .parse()
+            .map_err(|e| err("bad_address", format!("{e}")))?;
+        let u = self
+            .universe
+            .as_mut()
+            .ok_or_else(|| err("no_universe", "open a universe first"))?;
+        if !u.root.contains(&a) {
+            return Err(err(
+                "bad_address",
+                format!("{a} is not in universe {}", u.root),
+            ));
+        }
+        if !u.runs.contains_key(system) {
+            if let Some(req) = adopt::formation_request(&u.chronicle, &a) {
+                let (_, run, _) = systems::form(req.into())?;
+                u.runs.insert(system.to_string(), run);
+            }
+        }
+        let s = sse_surface::scenario::settings();
+        let w = adopt::worlds_at(&u.chronicle, &a, at_s, u.runs.get(system), &s)?;
+        let b = w
+            .bodies
+            .into_iter()
+            .find(|b| b.address.to_string() == body)
+            .ok_or_else(|| {
+                err(
+                    "no_surface_body",
+                    format!("{body} is not a surface body of {system}"),
+                )
+            })?;
+        let env = sse_surface::envelope(&s, &b);
+        let (c, _) = sse_surface::climate::conditions(&s, &b, &env, &Default::default());
+        // The epoch the survey reads the body at, so both keep one key.
+        let epoch_myr = (b.age_gyr + w.shift_gyr).max(0.0) * 1000.0;
+        Ok((serde_json::to_value(&c).expect("plain data"), epoch_myr))
     }
 
     /// Handle one JSON request; always returns one JSON response.
@@ -437,10 +603,12 @@ impl Kernel {
     }
 
     pub fn handle(&mut self, req: Request) -> Response {
-        match self.dispatch(req) {
+        // MP1c: the stack's constants are in force for the whole call.
+        let c = self.observe.reference.handle();
+        sse_core::constants::with(c, || match self.dispatch(req) {
             Ok(r) => r,
             Err(r) => r,
-        }
+        })
     }
 
     /// Carry out an applied intent: a built-in becomes its kernel request
@@ -847,6 +1015,327 @@ impl Kernel {
         })
     }
 
+    /// Universe and record state at `at_s` with every address's tags (rule
+    /// tags under the GM's authored ones, TG3 and TG4), as the GM sees it.
+    fn tagged_state(
+        &self,
+        at_s: i64,
+    ) -> Result<
+        (
+            sse_chronicle::State,
+            BTreeMap<Address, std::collections::BTreeSet<String>>,
+        ),
+        Response,
+    > {
+        let u = self
+            .universe
+            .as_ref()
+            .ok_or_else(|| err("no_universe", "open a universe first"))?;
+        let at = UniverseTime::seconds(at_s);
+        let mut state = u.chronicle.state_at(at);
+        for (a, f) in u.record.state_at(at).facts {
+            state.facts.entry(a).or_default().extend(f);
+        }
+        let mut tags = BTreeMap::new();
+        for (a, f) in &state.facts {
+            let subject = sse_sift::Subject {
+                address: Some(a.clone()),
+                facts: f.clone(),
+                parent: a
+                    .parent()
+                    .and_then(|p| state.facts.get(&p).cloned())
+                    .unwrap_or_default(),
+                now_s: at_s,
+                ..Default::default()
+            };
+            let t: std::collections::BTreeSet<String> = self
+                .observe
+                .rules
+                .apply_authored(
+                    &subject,
+                    &BTreeMap::new(),
+                    &sse_sift::authored_tags(f),
+                    Some(&u.seed),
+                )
+                .into_keys()
+                .collect();
+            if !t.is_empty() {
+                tags.insert(a.clone(), t);
+            }
+        }
+        Ok((state, tags))
+    }
+
+    /// `read_reach` (MP1c): every block of the registry in one of the three
+    /// groups for a change to `constant`.
+    fn read_reach(&self, constant: &str, value: Option<f64>) -> Result<Response, Response> {
+        use sse_atoms::reach::{self, Reach};
+        use sse_core::constants::Constants;
+        let real = Constants::REAL.get(constant).ok_or_else(|| {
+            err(
+                "no_constant",
+                format!(
+                    "{constant} is not a constant blocks read through the handle (they read {})",
+                    Constants::IDS.join(", ")
+                ),
+            )
+        })?;
+        let in_force = self
+            .observe
+            .reference
+            .handle()
+            .get(constant)
+            .unwrap_or(real);
+        let (mut follows, mut estimated, mut cannot) = (vec![], vec![], vec![]);
+        for d in self.atoms.decls() {
+            match reach::of(&d.id) {
+                Some(Reach::Follows(reads)) => follows.push(serde_json::json!({
+                    "block": d.id, "reads": reads, "uses_it": reads.contains(&constant),
+                })),
+                Some(Reach::Estimated { reads, law }) => estimated.push(serde_json::json!({
+                    "block": d.id, "reads": reads, "law": law,
+                })),
+                None => {
+                    cannot.push(serde_json::json!({"block": d.id, "why": reach::CANNOT_FOLLOW}))
+                }
+            }
+        }
+        Ok(Response::Reach {
+            constant: constant.to_string(),
+            real,
+            in_force,
+            proposed: value,
+            follows,
+            estimated,
+            cannot_follow: cannot,
+        })
+    }
+
+    /// `read_matter` (MP1): one row of the master data sheet with its
+    /// sources and packs, or each table's ids.
+    fn read_matter(&self, table: Option<&str>, id: Option<&str>) -> Result<Response, Response> {
+        let r = &self.observe.reference;
+        let value = match (table, id) {
+            (Some(t), Some(i)) => r.describe(t, i).ok_or_else(|| {
+                err(
+                    "no_row",
+                    format!("no row {i} in the master data sheet's {t} table"),
+                )
+            })?,
+            (None, Some(i)) => sse_reference::TABLES
+                .iter()
+                .find_map(|t| r.describe(t, i))
+                .ok_or_else(|| {
+                    err(
+                        "no_row",
+                        format!("no row {i} in any table of the master data sheet"),
+                    )
+                })?,
+            (t, None) => {
+                if let Some(t) = t {
+                    if !sse_reference::TABLES.contains(&t) && t != "sources" && t != "origin_legend"
+                    {
+                        return Err(err(
+                            "no_table",
+                            format!(
+                                "the master data sheet has no table {t} (tables: {}, sources, origin_legend)",
+                                sse_reference::TABLES.join(", ")
+                            ),
+                        ));
+                    }
+                }
+                r.listing(t)
+            }
+        };
+        Ok(Response::Matter { value })
+    }
+
+    /// `dressing` (TG12): the candidates and orphans under `scope`.
+    fn dressing(&self, scope: &str, at_s: i64) -> Result<Response, Response> {
+        let (state, tags) = self.tagged_state(at_s)?;
+        let u = self.universe.as_ref().expect("checked");
+        let scope_a = in_universe(&u.root, scope)?;
+        Ok(Response::Dressed {
+            scope: scope_a.to_string(),
+            candidates: dressing::candidates(
+                &self.observe.dressing,
+                &self.observe.templates,
+                &state,
+                &tags,
+                &u.seed,
+                &scope_a,
+                at_s,
+            ),
+            orphans: dressing::orphans(&self.observe.dressing, &u.chronicle, &state, &scope_a),
+        })
+    }
+
+    /// The live candidate `id`, or why it is not one.
+    fn live_candidate(&self, id: &str, at_s: i64) -> Result<(Address, String), Response> {
+        let (world, rule, _) = dressing::parse_candidate(id)
+            .ok_or_else(|| err("bad_candidate", format!("{id:?} is not a candidate id")))?;
+        let (state, tags) = self.tagged_state(at_s)?;
+        let u = self.universe.as_ref().expect("checked");
+        let found = dressing::candidates(
+            &self.observe.dressing,
+            &self.observe.templates,
+            &state,
+            &tags,
+            &u.seed,
+            &world,
+            at_s,
+        )
+        .into_iter()
+        .any(|c| c["id"] == id);
+        if !found {
+            return Err(err(
+                "no_candidate",
+                format!("{id} is not a candidate at that time (its rule does not hold, or it was held off or adopted)"),
+            ));
+        }
+        Ok((world, rule))
+    }
+
+    /// `adopt_dressing` (TG12): make the candidate an authored object.
+    fn adopt_dressing(
+        &mut self,
+        id: &str,
+        name: Option<&str>,
+        at_s: i64,
+    ) -> Result<Response, Response> {
+        let (world, rule) = self.live_candidate(id, at_s)?;
+        let (pack, r) = self.observe.dressing.get(&rule).cloned().expect("live");
+        let t = self
+            .observe
+            .templates
+            .get(&r.place)
+            .cloned()
+            .expect("checked at load");
+        let t = dressing::adopt_template(&t, &pack, &r, id);
+        let reg = self.observe.record.clone();
+        let u = self.universe()?;
+        let (c, _) = sse_trigger::templates::create(
+            &mut u.chronicle,
+            &mut u.record,
+            &reg,
+            &u.root,
+            &t,
+            &world,
+            None,
+            name,
+            UniverseTime::seconds(at_s),
+            vec![],
+        )
+        .map_err(|e| err("create_refused", e))?;
+        Ok(Response::Created {
+            address: c.address,
+            event_id: c.event,
+            kept: c.kept,
+            state_hash: latest_hash(&u.chronicle),
+            record_hash: record_hash(u),
+        })
+    }
+
+    /// `hold_dressing` (TG12): hold a candidate off its world, or let it back.
+    fn hold_dressing(&mut self, id: &str, held: bool) -> Result<Response, Response> {
+        let (world, rule, n) = dressing::parse_candidate(id)
+            .ok_or_else(|| err("bad_candidate", format!("{id:?} is not a candidate id")))?;
+        if self.observe.dressing.get(&rule).is_none() {
+            return Err(err(
+                "no_candidate",
+                format!("no dressing rule {rule} in the stack"),
+            ));
+        }
+        let u = self.universe()?;
+        let world = in_universe(&u.root, &world.to_string())?;
+        let mut f = BTreeMap::new();
+        f.insert(
+            format!("{}{rule}#{n}", dressing::HELD_PREFIX),
+            Value::Bool(held),
+        );
+        let e = clock::timeless_set(
+            &u.record,
+            &world,
+            f,
+            Evidence::Authored,
+            vec![],
+            "dressing.hold",
+            Publisher::new("gm", "dressing", "1"),
+        )
+        .map_err(|e| err("bad_event", e))?;
+        let id_hash = u
+            .record
+            .append(e)
+            .map_err(|e| err("chronicle", format!("{e}")))?;
+        Ok(Response::DressingHeld {
+            candidate: id.to_string(),
+            held,
+            event_id: id_hash.hex(),
+        })
+    }
+
+    /// `promote_star` (Y7a): draw a fill star once and store it whole.
+    fn promote_star(&mut self, address: &str) -> Result<Response, Response> {
+        let u = self.universe()?;
+        let a = in_universe(&u.root, address)?;
+        let state = u.chronicle.state_at(UniverseTime::seconds(i64::MAX));
+        let hash = |c: &Chronicle| c.state_at(UniverseTime::seconds(i64::MAX)).hash().hex();
+        if let Some(Value::Text(t)) = state
+            .facts
+            .get(&a)
+            .and_then(|f| f.get(cosmos::STAR_DESCRIPTION))
+        {
+            let description: serde_json::Value =
+                serde_json::from_str(t).map_err(|e| err("bad_record", format!("{e}")))?;
+            return Ok(Response::StarPromoted {
+                address: a.to_string(),
+                already: true,
+                event_id: None,
+                description,
+                state_hash: hash(&u.chronicle),
+            });
+        }
+        let drawn = cosmos::with_stars(&u.seed, &u.root, None, |st, _| {
+            let s = st
+                .draw_one(&a)
+                .map_err(|e| err("bad_address", e))?
+                .ok_or_else(|| err("not_found", format!("no star system drawn at {a}")))?;
+            Ok(st.promote(&s))
+        })?;
+        let text = serde_json::to_string(&drawn).expect("plain data");
+        let mut f = BTreeMap::new();
+        f.insert(cosmos::STAR_DESCRIPTION.to_string(), Value::Text(text));
+        // Searchable copies; the description is what is read back.
+        f.insert("star.mass_msun".to_string(), Value::Float(drawn.mass_msun));
+        f.insert("star.birth_gyr".to_string(), Value::Float(drawn.birth_gyr));
+        f.insert("star.feh".to_string(), Value::Float(drawn.feh));
+        f.insert(
+            "star.companions".to_string(),
+            Value::Int(drawn.companions.len() as i128),
+        );
+        let e = clock::timeless_set(
+            &u.chronicle,
+            &a,
+            f,
+            Evidence::Resolved,
+            vec![],
+            cosmos::STAR_PIN_KIND,
+            Publisher::new("sse.base-cosmology", "stars", "1"),
+        )
+        .map_err(|e| err("bad_event", e))?;
+        let id = u
+            .chronicle
+            .append(e)
+            .map_err(|e| err("chronicle", format!("{e}")))?;
+        Ok(Response::StarPromoted {
+            address: a.to_string(),
+            already: false,
+            event_id: Some(id.hex()),
+            description: serde_json::to_value(&drawn).expect("plain data"),
+            state_hash: hash(&u.chronicle),
+        })
+    }
+
     /// The `sift` op: the stack's sifters over the campaign, or over one
     /// audience's scene.
     /// `classify_preview`: label the campaign's bodies with a candidate
@@ -1011,19 +1500,14 @@ impl Kernel {
                     now_s: at_s,
                     ..Default::default()
                 };
-                let mut t = self.observe.rules.apply(&subject, &BTreeMap::new());
-                for (k, v) in f {
-                    if let (Some(tag), Value::Bool(true)) = (k.strip_prefix(TAG_FIELD), v) {
-                        t.entry(tag.to_string()).or_insert_with(|| TagState {
-                            tag: tag.to_string(),
-                            rule: "authored".into(),
-                            evidence: vec![sse_sift::Read {
-                                field: k.clone(),
-                                value: v.clone(),
-                            }],
-                        });
-                    }
-                }
+                // TG3: the GM's `tag.x = true` forces a tag on (with the
+                // authored mark), `false` holds a rule's tag off.
+                let t = self.observe.rules.apply_authored(
+                    &subject,
+                    &BTreeMap::new(),
+                    &sse_sift::authored_tags(f),
+                    Some(&u.seed),
+                );
                 if !t.is_empty() {
                     tags.insert(a.clone(), t);
                 }
@@ -1203,7 +1687,8 @@ impl Kernel {
                             units: &stack.units,
                         };
                         let mut flows = BTreeMap::new();
-                        let mut problems: Vec<String> = Vec::new();
+                        // TG2: physics flows never read tags or kept values.
+                        let mut problems: Vec<String> = tags::physics_wall(&stack);
                         // Boxes (J3): each one's own golden cases, then flows
                         // compiled with the stack's boxes inlined.
                         for (id, b) in &stack.boxes {
@@ -1265,6 +1750,37 @@ impl Kernel {
                                 });
                             }
                         };
+                        // MP1c (design 7A.6): the sheet's units join the
+                        // session's; a pack unit of the same id must agree.
+                        let mut stack = stack;
+                        let standard = sse_core::Units::standard();
+                        let mut clashes = vec![];
+                        for u in observe.reference.units() {
+                            if let Ok(have) = stack.units.get(&u.id) {
+                                let built_in = standard.get(&u.id).is_ok();
+                                if !built_in && (have.scale != u.scale || have.dim != u.dim) {
+                                    clashes.push(format!(
+                                        "unit {} on the master data sheet disagrees with the pack unit of that id",
+                                        u.id
+                                    ));
+                                    continue;
+                                }
+                            }
+                            stack.units.insert(u);
+                        }
+                        if !clashes.is_empty() {
+                            let issues: Vec<sse_pack::StackIssue> = clashes
+                                .iter()
+                                .map(|m| sse_pack::StackIssue {
+                                    pack: "reference".into(),
+                                    message: m.clone(),
+                                })
+                                .collect();
+                            return Ok(Response::StackRejected {
+                                report: sse_pack::report(&issues),
+                                issues: clashes,
+                            });
+                        }
                         let codes = match sse_codes::Codes::load(&ms) {
                             Ok(c) => c,
                             Err(problems) => {
@@ -1331,13 +1847,43 @@ impl Kernel {
                 }
             }
             Request::SetAuthored { edit } => {
+                let stack_tags = self.observe.tags.clone();
                 let u = self.universe()?;
                 let e = Self::edit_event(u, &edit, u.chronicle.next_stamp())?;
+                // TG1: a tag set on: exclusive groups hold, and a name no pack
+                // declares joins the campaign's own tags.
+                let mut declare = None;
+                if let (Some(tag), serde_json::Value::Bool(true)) =
+                    (edit.field.strip_prefix("tag."), &edit.value)
+                {
+                    let set = campaign_tags(u, &stack_tags)?;
+                    let a = in_universe(&u.root, &edit.address)?;
+                    let state = u
+                        .chronicle
+                        .state_at(UniverseTime::seconds(edit.occurred_at_s));
+                    let have: Vec<String> = state
+                        .facts
+                        .get(&a)
+                        .into_iter()
+                        .flatten()
+                        .filter(|(_, v)| **v == Value::Bool(true))
+                        .filter_map(|(f, _)| f.strip_prefix("tag.").map(str::to_string))
+                        .collect();
+                    if let Some(m) = set.exclusive_clash(tag, &have) {
+                        return Err(err("exclusive_tag", format!("{a}: {m}")));
+                    }
+                    if !set.declared(tag) {
+                        declare = Some(tag.to_string());
+                    }
+                }
                 let affected = e.body.subject.iter().map(|a| a.to_string()).collect();
                 let id = u
                     .chronicle
                     .append(e)
                     .map_err(|e| err("chronicle", format!("{e}")))?;
+                if let Some(t) = &declare {
+                    declare_campaign_tag(u, t)?;
+                }
                 Response::Authored {
                     event_id: id.hex(),
                     affected,
@@ -1346,6 +1892,18 @@ impl Kernel {
                         .state_at(UniverseTime::seconds(i64::MAX))
                         .hash()
                         .hex(),
+                    declared_tag: declare,
+                }
+            }
+            Request::CampaignTags => {
+                let stack_tags = self.observe.tags.clone();
+                let u = self.universe()?;
+                let set = campaign_tags(u, &stack_tags)?;
+                Response::CampaignTagsListed {
+                    pack: serde_json::json!({
+                        "id": "campaign",
+                        "tags": set.block_of("campaign"),
+                    }),
                 }
             }
             Request::History { address } => {
@@ -1413,6 +1971,7 @@ impl Kernel {
                                 .to_string(),
                             fictional: stack.is_fictional(k),
                             publisher: format!("{pack}/{}@{}", f.doc.id, f.doc.version),
+                            estimated: estimated_laws(&ev.upstream_atoms(k)),
                         };
                         (k.to_string(), v)
                     })
@@ -1499,6 +2058,7 @@ impl Kernel {
                     event_id: id.hex(),
                     affected,
                     state_hash: st.hash().hex(),
+                    declared_tag: None,
                 }
             }
             Request::BranchStateHash { branch, at_s } => {
@@ -1654,22 +2214,19 @@ impl Kernel {
                     .ok_or_else(|| err("no_universe", "open a universe first"))?;
                 let mut state = u.chronicle.state_at(UniverseTime::seconds(at_s));
                 // Authored tags out of the facts; rule tags from the stack.
+                // TG3: authored true forces a tag, authored false holds a
+                // rule's tag off; both come out of the facts.
                 let mut tags: BTreeMap<Address, std::collections::BTreeSet<String>> =
                     BTreeMap::new();
+                let mut authored: BTreeMap<Address, BTreeMap<String, bool>> = BTreeMap::new();
                 for (a, f) in state.facts.iter_mut() {
-                    let keys: Vec<String> = f
-                        .keys()
-                        .filter(|k| k.starts_with(TAG_FIELD))
-                        .cloned()
-                        .collect();
-                    for k in keys {
-                        if f.remove(&k) == Some(Value::Bool(true)) {
-                            tags.entry(a.clone())
-                                .or_default()
-                                .insert(k[TAG_FIELD.len()..].to_string());
-                        }
+                    let mine = sse_sift::authored_tags(f);
+                    f.retain(|k, _| !k.starts_with(TAG_FIELD));
+                    if !mine.is_empty() {
+                        authored.insert(a.clone(), mine);
                     }
                 }
+                let none = BTreeMap::new();
                 for (a, f) in &state.facts {
                     let subject = sse_sift::Subject {
                         address: Some(a.clone()),
@@ -1684,7 +2241,12 @@ impl Kernel {
                     for t in self
                         .observe
                         .rules
-                        .apply(&subject, &BTreeMap::new())
+                        .apply_authored(
+                            &subject,
+                            &BTreeMap::new(),
+                            authored.get(a).unwrap_or(&none),
+                            Some(&u.seed),
+                        )
                         .into_keys()
                     {
                         tags.entry(a.clone()).or_default().insert(t);
@@ -1756,6 +2318,9 @@ impl Kernel {
             Request::Weather {
                 want,
                 world,
+                system,
+                body,
+                at_s,
                 conditions,
                 day,
                 tile,
@@ -1765,19 +2330,41 @@ impl Kernel {
                 pins,
                 sources,
                 block,
-            } => weather::weather(weather::Ask {
-                want,
-                world,
-                conditions,
-                day: day.unwrap_or(0.0),
-                tile,
-                n,
-                lat: lat.unwrap_or(0.0),
-                lon: lon.unwrap_or(0.0),
-                pins: pins.unwrap_or_default(),
-                sources,
-                block,
-            })?,
+            } => {
+                let mut epoch_myr = 0.0;
+                let conditions = match (conditions, system, body) {
+                    (Some(c), _, _) => Some(c),
+                    (None, Some(system), Some(body)) => {
+                        let (c, e) = self.body_conditions(&system, &body, at_s)?;
+                        epoch_myr = e;
+                        Some(c)
+                    }
+                    (None, Some(_), None) | (None, None, Some(_)) => {
+                        return Err(err(
+                            "bad_request",
+                            "give a system and one of its bodies together",
+                        ))
+                    }
+                    (None, None, None) => None,
+                };
+                weather::weather(
+                    weather::Ask {
+                        want,
+                        world,
+                        conditions,
+                        day: day.unwrap_or(0.0),
+                        tile,
+                        n,
+                        lat: lat.unwrap_or(0.0),
+                        lon: lon.unwrap_or(0.0),
+                        pins: pins.unwrap_or_default(),
+                        sources,
+                        block,
+                        epoch_myr,
+                    },
+                    &mut self.climates,
+                )?
+            }
             Request::ReadLight { fixture, bodies } => {
                 systems::read_light(fixture.as_deref(), bodies)?
             }
@@ -3631,6 +4218,71 @@ impl Kernel {
                 })?;
                 Response::HaloCelled { cell }
             }
+            Request::StarCell { cell, t_myr } => {
+                let u = self.universe()?;
+                let pins =
+                    cosmos::star_pins(&u.chronicle.state_at(UniverseTime::seconds(i64::MAX)))?;
+                let elapsed = clock::elapsed_myr(&u.chronicle);
+                let cell = cosmos::with_stars(&u.seed, &u.root, None, |st, now| {
+                    cosmos::star_cell(st, cell, t_myr.unwrap_or(now + elapsed), &pins)
+                })?;
+                Response::StarCelled { cell }
+            }
+            Request::PlanVoyage {
+                from,
+                to,
+                home,
+                ship,
+                minimise,
+                visited,
+                known_fuel,
+                sensed_fuel,
+                surveyed,
+                gambles,
+            } => {
+                let u = self.universe()?;
+                let pins =
+                    cosmos::star_pins(&u.chronicle.state_at(UniverseTime::seconds(i64::MAX)))?;
+                let elapsed = clock::elapsed_myr(&u.chronicle);
+                let (visited, surveyed) =
+                    (visited.unwrap_or_default(), surveyed.unwrap_or_default());
+                let known_fuel = known_fuel.unwrap_or_default();
+                let sensed_fuel = sensed_fuel.unwrap_or_default();
+                let voyage = cosmos::with_stars(&u.seed, &u.root, None, |st, now| {
+                    voyage::plan_voyage(
+                        st,
+                        now + elapsed,
+                        &pins,
+                        voyage::Ask {
+                            from: &from,
+                            to: to.as_deref(),
+                            home: home.as_deref(),
+                            ship: &ship,
+                            minimise: minimise.as_deref(),
+                            visited: &visited,
+                            known_fuel: &known_fuel,
+                            sensed_fuel: &sensed_fuel,
+                            surveyed: &surveyed,
+                            gambles: gambles.unwrap_or(false),
+                        },
+                    )
+                })?;
+                Response::VoyagePlanned { voyage }
+            }
+            Request::PromoteStar { address } => self.promote_star(&address)?,
+            Request::ReadReach { constant, value } => self.read_reach(&constant, value)?,
+            Request::ReadMatter { table, id } => {
+                self.read_matter(table.as_deref(), id.as_deref())?
+            }
+            Request::Dressing { scope, at_s } => self.dressing(&scope, at_s.unwrap_or(i64::MAX))?,
+            Request::AdoptDressing {
+                candidate,
+                name,
+                at_s,
+            } => self.adopt_dressing(&candidate, name.as_deref(), at_s)?,
+            Request::HoldDressing { candidate, held } => {
+                self.hold_dressing(&candidate, held.unwrap_or(true))?
+            }
             Request::Manifest => {
                 let m = self.universe()?.manifest();
                 Response::Manifest {
@@ -3789,4 +4441,21 @@ fn export_at(
     }
     file.worlds.sort_by(|a, b| a.hex.cmp(&b.hex));
     (file, skipped)
+}
+
+/// MP1c: the laws of the rescaled blocks a value rests on, while the
+/// constants in force differ from ours (empty otherwise).
+fn estimated_laws(atoms: &[String]) -> Option<Vec<String>> {
+    if !sse_core::constants::now().edited() {
+        return None;
+    }
+    let mut out: Vec<String> = atoms
+        .iter()
+        .filter_map(|a| match sse_atoms::reach::of(a) {
+            Some(sse_atoms::reach::Reach::Estimated { law, .. }) => Some(format!("{a}: {law}")),
+            _ => None,
+        })
+        .collect();
+    out.dedup();
+    (!out.is_empty()).then_some(out)
 }

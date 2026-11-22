@@ -247,3 +247,43 @@ fn pack_and_golden() {
     assert_eq!(cp.stars, StarParams::default());
     crate::golden::check("stars.json", &crate::scenario::stars_golden());
 }
+
+#[test]
+fn a_pin_survives_a_change_to_the_fill_rules() {
+    // Y7a: a promoted system is stored whole, so new draw keys (standing in
+    // for any change to the fill rules) redraw the fill but never the pin.
+    setup!(st, now, sun);
+    let base = st.cell_at(st.from_grid(sun, now as f64), now as f64);
+    let fill = st.cell(base, now, &[]).unwrap();
+    let chosen = &fill[fill.len() / 2];
+    assert_eq!(st.draw_one(&chosen.address).unwrap().as_ref(), Some(chosen));
+    let pin = st.promote(chosen);
+    let stored: StarSystem = serde_json::from_str(&serde_json::to_string(&pin).unwrap()).unwrap();
+    assert_eq!(stored, pin);
+    let v2 = Stars {
+        params: StarParams {
+            key_version: 2,
+            ..st.params.clone()
+        },
+        env: st.env,
+        green: st.green.clone(),
+        seed: st.seed,
+        galaxy: st.galaxy.clone(),
+    };
+    let refill = v2.cell(base, now, &[]).unwrap();
+    assert_ne!(refill, fill, "new keys redraw the fill");
+    assert_ne!(v2.draw_one(&chosen.address).unwrap().as_ref(), Some(chosen));
+    let with_pin = v2.cell(base, now, std::slice::from_ref(&stored)).unwrap();
+    let found: Vec<&StarSystem> = with_pin
+        .iter()
+        .filter(|s| s.address == pin.address)
+        .collect();
+    assert_eq!(found, vec![&pin]);
+    assert_eq!(
+        serde_json::to_string(&v2.at(found[0], now as f64 + 50.0)).unwrap(),
+        serde_json::to_string(&st.at(&pin, now as f64 + 50.0)).unwrap()
+    );
+    // Version 1 is today's draw exactly (the G5 golden holds it too).
+    assert_eq!(StarParams::default().key_version, 1);
+    assert!(st.draw_one(&"u:g5/sys:1".parse().unwrap()).is_err());
+}

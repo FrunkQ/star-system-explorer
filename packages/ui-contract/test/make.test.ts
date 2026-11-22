@@ -8,7 +8,7 @@ import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 import { Session } from "../src/session.ts";
 import { gmSeat, tableSeat } from "../src/seat.ts";
-import { beltBand, importedSystems, noWorldsWhy, reportSummary, sceneFromFormation, sceneFromImport } from "../src/make.ts";
+import { beltBand, cloudShape, cloudSubjects, v3BeltShape, importedSystems, noWorldsWhy, reportSummary, sceneFromFormation, sceneFromImport } from "../src/make.ts";
 import { describeLight, litFromSystem } from "../src/light.ts";
 import { nodeKernel } from "./node-kernel.ts";
 
@@ -83,4 +83,48 @@ test("a belt's band: its edges at orbital scale, else ±10 % about its orbit", (
   assert.ok(Math.abs(b[0] - 2.43) < 1e-9 && Math.abs(b[1] - 2.97) < 1e-9);
   // A ring's radii (thousands of km) are not an orbital band: fall back to the orbit.
   assert.deepEqual(beltBand(undefined, 7e7, 1.4e8), undefined);
+});
+
+test("the Oort cloud is a sphere round the system; belts and the Kuiper belt are discs", () => {
+  assert.equal(cloudShape({ kind: "oort" }), "sphere", "before the kernel sends a shape, the Oort cloud is a sphere");
+  assert.equal(cloudShape({ kind: "kuiper-belt" }), "disc");
+  assert.equal(cloudShape({ kind: "oort", shape: "disc" }), "disc", "the kernel's shape wins");
+  assert.equal(cloudShape({ kind: "x", shape: "shell" }), "sphere", "the night-sky design's names are read too");
+  assert.equal(cloudShape({ kind: "oort", shape: "thick-disc" }), "disc");
+  const s = cloudSubjects(
+    [
+      { address: "a", kind: "asteroid-belt", around: null, a_min_au: 2.1, a_max_au: 3.3, shape: "disc", i_sigma_deg: 8 },
+      { address: "o", kind: "oort", around: null, a_min_au: 2000, a_max_au: 100000, shape: "sphere", i_sigma_deg: null },
+      { address: "o2", kind: "oort", around: null, a_min_au: 3000, a_max_au: 120000, shape: "sphere", i_sigma_deg: null },
+      { address: "r", kind: "ring", around: "w", a_min_au: 0.001, a_max_au: 0.002 },
+      { address: "d", kind: "scattered-disc", around: null, a_min_au: 30, a_max_au: 1000 },
+    ],
+    "star",
+  );
+  assert.deepEqual(s.map((x) => [x.label, x.shape, x.parent]), [["Asteroid belt", "disc", "star"], ["Oort cloud", "sphere", "star"]]);
+  assert.match(s[1]!.subtitle!, /a sphere round the system, 2,000 to 120,000 AU/);
+  assert.deepEqual(s[1]!.band_au, [2000, 120000], "a system's Oort reservoirs are one shell");
+  assert.equal(v3BeltShape("Oort Cloud", [2000, 100000]), "sphere");
+  assert.equal(v3BeltShape("Outer cloud", [5000, 50000]), "sphere", "beyond 1,000 AU every tilt is stirred");
+  assert.equal(v3BeltShape("Main Belt", [2.1, 3.3]), "disc");
+});
+
+test("a V3 Oort cloud imports as a sphere round the system, its asteroid belt as a disc", async () => {
+  const k = nodeKernel();
+  try {
+    const s = await Session.open(k.client, gmSeat(), { id: "kestrel", seed: "k" }, [base]);
+    const doc = JSON.parse(save);
+    const AU_KM = 149_597_870.7;
+    const belt = (id: string, name: string, a: number, inner: number, outer: number) => ({ id, name, parentId: "sun", kind: "body", roleHint: "belt", radiusInnerKm: inner * AU_KM, radiusOuterKm: outer * AU_KM, orbit: { hostId: "sun", t0: 0, hostMu: 1.32712440018e20, elements: { a_AU: a, e: 0, i_deg: 0, Omega_deg: 0, omega_deg: 0, M0_rad: 0 }, seed: id } });
+    doc.systems[0].system.nodes.push(belt("main-belt", "Asteroid Belt", 2.7, 2.1, 3.3), belt("oort", "Oort Cloud", 50000, 2000, 100000));
+    const r = await s.importV3(JSON.stringify(doc));
+    assert.ok(r.ok, JSON.stringify(r));
+    const scene = sceneFromImport(r.result, importedSystems(r.result)[0]!.address);
+    const shape = (n: string) => scene.subjects.find((x) => x.label === n);
+    assert.equal(shape("Asteroid Belt")?.shape, "disc");
+    assert.deepEqual(shape("Asteroid Belt")?.band_au?.map((x) => Math.round(x * 10) / 10), [2.1, 3.3]);
+    assert.equal(shape("Oort Cloud")?.shape, "sphere");
+  } finally {
+    await k.close();
+  }
 });

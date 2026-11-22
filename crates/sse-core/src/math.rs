@@ -14,7 +14,7 @@ macro_rules! unary {
 }
 unary!(
     sin, cos, tan, asin, acos, atan, exp, exp2, expm1, log, log2, log10, log1p, cbrt, sinh, cosh,
-    tanh, asinh, acosh, atanh, floor, ceil, round, trunc
+    tanh, asinh, acosh, atanh, floor, ceil, round, trunc, erf, erfc, tgamma
 );
 
 /// Natural logarithm (alias of `log`, for readability in formulas).

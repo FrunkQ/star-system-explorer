@@ -19,12 +19,12 @@
       "applied": 2,
       "built": 72,
       "cells": 3,
-      "contrast_k": 42.10660600254136,
+      "climate": "u:sol/sys:0/body:3|climate-v1|orbit|4500|d4a155eedf52bfa6",
       "deposits": 0,
       "features": {
         "continent": 7,
         "deep": 1,
-        "ice-cap": 16,
+        "ice-cap": 15,
         "island": 20,
         "mine": 20,
         "ocean": 1,
@@ -41,12 +41,12 @@
         "Sea of Zenorna",
         "Sea of Isis"
       ],
-      "layers": "44df6dea612789a83cea3be4b8130310730950ad1a0f33310f68601bba2e82fe",
-      "register": "df10c0757f4831f7b10261a8a86087ba5e1a36a6b5ba2e08c1b09d2a225bea41",
+      "layers": "3b34c3bf9bd7047b35f53ea5a4adf67ef6d2f226dee157aeff7b74aa6b071a81",
+      "register": "5fd73ea145c574fb8b1a24e282758ccb5bf019705167be2b6fffdfc53ebf1653",
       "tiles": [
-        "6ca943d0884ca15556489acac9d3ef348ed5c5ab9557c3daba69dbc8ac7d5621",
-        "ae69eabd416683e5ef7fda90b7a2a424c46c15c4b8c92850a217c7fa1186e992",
-        "3e8aa58ca7fe66814ab71ada2fde083e43cd5529c2ba8563215845b284d95824"
+        "47f961ba707335b26d0de3e4c0fa424c906252d3fe0fd0b6335eecd1fd1ceb08",
+        "e307cc1a46fbfa3ebddbb2883ce474bd414aea491c1b0bdbab4e3c9a2869a62b",
+        "a470a119bce749269536a65fa7b87a70ab16a603556e5df51c4e8c96408a00f2"
       ]
     },
     {
@@ -54,7 +54,7 @@
       "applied": 0,
       "built": 2,
       "cells": 1,
-      "contrast_k": 120.0,
+      "climate": "u:sol/sys:0/body:3/moon:1|climate-v1|orbit|4500|8394ae7f9dc40604",
       "deposits": 600,
       "features": {
         "base": 2,
@@ -71,7 +71,7 @@
         "Mount Mior",
         "Ororbe Range"
       ],
-      "layers": "fe6e2da3664796a38281e7f01e11755066e9c7c50839fea18a35dbdc57904b34",
+      "layers": "97c49d768343aea9fcd6d13a55c515898bf8cb4ca4f843cee4d8036f76c787db",
       "register": "d3cfadd63ca3cddec94a3b4e4a2711a57252c66ffed189f883cd157d3c2608ff",
       "tiles": [
         "e32dc7c73d1a3f5914ce6e1fdf2b429f2499894dd993800888eeddd057f14fdf",

@@ -415,3 +415,39 @@ fn golden_impacts() {
         "golden surface-impacts changed"
     );
 }
+
+#[test]
+fn cold_ice_lids_keep_their_craters_and_young_shells_lose_them() {
+    // Exogeology review bugs (21 Nov): Callisto lost 96% of its craters to
+    // renewal, and Triton kept hundreds on a surface tens of Myr old.
+    let (ca, _) = run_for("Callisto");
+    let (tr, _) = run_for("Triton");
+    let erased = |f: &Features| {
+        f.erased
+            .get("resurfaced by the regime")
+            .copied()
+            .unwrap_or(0)
+    };
+    eprintln!(
+        "Callisto kept {} (expected {:.0}), renewed {}; Triton kept {}, renewed {}",
+        ca.craters.len(),
+        ca.expected_listed,
+        erased(&ca),
+        tr.craters.len(),
+        erased(&tr)
+    );
+    // Callisto: saturated within Poisson error, like the airless rock lids;
+    // only the shell's first ~0.2 Gyr, while radiogenic heat thinned it, renews.
+    assert!(
+        (ca.craters.len() as f64) > 0.7 * ca.expected_listed,
+        "Callisto kept {} of {:.0}",
+        ca.craters.len(),
+        ca.expected_listed
+    );
+    // Triton: a cracking shell renews it; few listed craters stay.
+    assert!(
+        tr.craters.len() * 10 < ca.craters.len(),
+        "Triton kept {}",
+        tr.craters.len()
+    );
+}

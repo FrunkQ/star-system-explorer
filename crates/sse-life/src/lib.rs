@@ -17,13 +17,18 @@
 pub mod biosphere;
 pub mod budget;
 pub mod chemistry;
+pub mod cover;
+pub mod disequilibrium;
 pub mod feedback;
+pub mod gradients;
 pub mod habitat;
 pub mod history;
 pub mod scenario;
 pub mod sift;
 pub mod signatures;
+pub mod soil;
 mod suite;
+pub mod traits;
 
 pub use habitat::{Footprint, Habitat, HabitatGraph, HabitatRule, Link};
 pub use suite::{NoLifeModel, NO_MODEL};
@@ -236,8 +241,20 @@ mod budget_tests;
 #[cfg(test)]
 mod chemistry_tests;
 #[cfg(test)]
+mod cover_tests;
+#[cfg(test)]
+mod disequilibrium_tests;
+#[cfg(test)]
 mod feedback_tests;
+#[cfg(test)]
+mod gradients_tests;
+#[cfg(test)]
+mod history_e2_tests;
 #[cfg(test)]
 mod history_tests;
 #[cfg(test)]
 mod signatures_tests;
+#[cfg(test)]
+mod soil_tests;
+#[cfg(test)]
+mod traits_tests;

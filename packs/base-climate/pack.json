@@ -1,0 +1,558 @@
+{
+ "format": "sse.pack/1",
+ "id": "sse.base-climate",
+ "version": "0.1.0",
+ "kind": [
+  "base-physics"
+ ],
+ "kernel_range": "^0.1",
+ "licence": "Apache-2.0",
+ "provides": {
+  "other": {
+   "climate": {
+    "about": "The one climate under geology and weather (W7a): a diffusive energy balance in latitude and season (North 1975) with the moisture, cloud and wind it implies, plus the Held and Hou and Rhines numbers every reader shares. Surface wear and cover and both weather blocks read this and nothing else.",
+    "bands": 36,
+    "seasons": 12,
+    "iterations": 80,
+    "relax": 0.5,
+    "olr": {
+     "b_hat": 0.47,
+     "source": "Outgoing longwave linear in temperature, A + B T (Budyko 1969 eq. 1: I = a + B T - (a1 + B1 T) n with a 14.0, B 0.14, a1 3.0, B1 0.10 kcal cm-2 month-1, T in deg C). At cloudiness n 0.5 that is B = 1.43 W m-2 K-1 and 220 W m-2 at 288 K, so B T / (4 OLR) = 0.47 on Earth; the same dimensionless slope is used on every world (docs/fudges.md). A is set so the global mean temperature is the world's own."
+    },
+    "diffusion": {
+     "d_earth_w_m2_k": 0.45,
+     "column_power": 1.0,
+     "spin_power": 2.0,
+     "max_over_b": 10000.0,
+     "source": "Diffusive heat transport D (1/cos phi) d/dphi (cos phi dT/dphi) (North 1975). D on Earth fitted to an equator-to-pole contrast near 40 K; scaling with air column and (Omega_Earth / Omega)^2 is a stand-in for eddy transport theory (docs/fudges.md)."
+    },
+    "ice": {
+     "albedo_step": 0.3,
+     "t_ice_k": 263.15,
+     "width_k": 3.0,
+     "source": "Ice-albedo step on water worlds, smoothed; edge and step fitted, base albedo renormalised so the world's Bond albedo is kept (docs/fudges.md)."
+    },
+    "heat_capacity": {
+     "mixed_layer_m": 50.0,
+     "water_j_m3_k": 4180000.0,
+     "ground_inertia_si": 1500.0,
+     "steps_per_season": 4,
+     "spin_up_years": 6,
+     "source": "Seasonal energy balance with heat capacity, C dT/dt (North and Coakley 1979; North, Cahalan and Coakley 1981). C is the sea's mixed layer (about 50 m of water) over the sea fraction, the ground's seasonal skin, thermal inertia I times sqrt(year / pi) (Pierrehumbert 2010, ch. 7), over the land, plus the air column c_p p / g. One ground inertia (1500 SI, between dry regolith near 200 and wet rock near 2500) on every world until cover publishes it per cell (docs/fudges.md)."
+    },
+    "moisture": {
+     "exchange_m_s": 0.0115,
+     "humidity": 0.8,
+     "eddy_ratio": 1.0,
+     "hadley_width_x": 0.3,
+     "hadley_reference_deg": 30.0,
+     "h_top_ratio": 1.06,
+     "min_stability_k": 1.0,
+     "source": "Bulk evaporation rho C_E |U| q_sat (1 - RH), capped by the energy reaching wet ground; C_E |U| fitted to Earth's mean rain (docs/fudges.md). Transport after Siler, Roe and Armour 2018 (J. Climate 31, 7481): eddies diffuse moisture down its gradient; the Hadley cell carries the share w = exp(-x^2/sigma^2) of the moist static energy flux (x = sin latitude, sigma 0.3 on Earth), and its lower branch carries moisture toward the equator, F_q = -F_HC L q / (h_T - h), h_T = 1.06 h at the equator. sigma scales with the world's own Hadley edge (our extension, docs/fudges.md)."
+    },
+    "cloud": {
+     "cover_max": 0.8,
+     "latent_scale_w_m2": 25.0,
+     "gradient_cover": 0.25,
+     "gradient_scale_k_deg": 0.8,
+     "saturation_cover": 0.15,
+     "saturation_ln_scale": 2.0,
+     "min_pressure_bar": 1e-06,
+     "source": "Cloud from latent heat released and from baroclinic temperature gradients; frost cloud where a gas saturates at the band temperature. All constants fitted (docs/fudges.md)."
+    },
+    "thermal_depth_scale_heights": 1.8,
+    "surface_wind_share": 0.3,
+    "supply": {
+     "latent_share": 0.5,
+     "earth_fraction": 0.67,
+     "column_power": 0.75,
+     "humidity_over_liquid": 0.8,
+     "wet_saturation": 0.5,
+     "source": "Energy-limited precipitation: the latent heat flux, a share of the sunlight reaching wet ground, falls back as liquid (Pierrehumbert 2010, ch. 9 energy budget). Sunlight reaching the ground falls with air column, fitted to Earth, Venus and Titan; cloud cover from latent flux fitted to Earth (docs/fudges.md)."
+    },
+    "circulation": {
+     "delta_h": 0.3333,
+     "tropopause_scale_heights": 1.8,
+     "source": "Hadley edge from Held and Hou 1980 (small-angle form, phi_H = (5/3 g H dh / (Omega a)^2)^1/2); cells from the Rhines arrest wavenumber k = (beta/2U)^1/2 (Rhines 1975); trends checked against Kaspi and Showman 2015. The wind scale comes from the thermal wind (W7b, strengths); the contrast is tuned to Earth (docs/fudges.md). The regime is a label read off the strengths and facts: the first rule whose conditions hold. The physics never reads it.",
+     "rules": [
+      {
+       "regime": "airless",
+       "when": {
+        "collisional": {
+         "max": 0.5
+        }
+       },
+       "because": "The air is too thin to act as a fluid (Knudsen number above 1): an exosphere, no weather."
+      },
+      {
+       "regime": "banded-giant",
+       "when": {
+        "solid": {
+         "max": 0.5
+        }
+       },
+       "because": "No surface under the air: belts and zones between alternating jets, storms and polar features (W3)."
+      },
+      {
+       "regime": "tidally-locked",
+       "when": {
+        "star_locked": {
+         "min": 0.5
+        }
+       },
+       "because": "One face to the star: rising air and a permanent cloud shield under the star, clearer night side (Yang, Cowan and Abbot 2013; Showman and Polvani 2011)."
+      },
+      {
+       "regime": "thin-air",
+       "when": {
+        "radiative_days": {
+         "max": 10.0
+        }
+       },
+       "because": "Air so thin it heats and cools in days (radiative time under 10 days): thin ice cloud, frost, fog in basins and dust storms where there is dust (Zurek and Martin 1993)."
+      },
+      {
+       "regime": "slow-rotator",
+       "when": {
+        "super_rotation": {
+         "min": 0.5
+        }
+       },
+       "because": "Slow spin for the air's warmth (thermal Rossby number above about 1): one overturning cell reaches the pole and the upper air super-rotates (Mitchell and Vallis 2010; Held and Hou 1980)."
+      },
+      {
+       "regime": "fast-rotator",
+       "when": {
+        "cells": {
+         "min": 4.0
+        }
+       },
+       "because": "Fast spin breaks each hemisphere into many narrow belts and jets (Rhines 1975; Kaspi and Showman 2015)."
+      },
+      {
+       "regime": "earth-like",
+       "when": {},
+       "because": "Moderate spin: a tropical cell, a mid-latitude storm track and a polar cell in each hemisphere."
+      }
+     ],
+     "regimes": {
+      "airless": "No weather",
+      "banded-giant": "Banded giant",
+      "tidally-locked": "Tidally locked",
+      "thin-air": "Thin air",
+      "slow-rotator": "Slow rotator",
+      "fast-rotator": "Fast rotator",
+      "earth-like": "Three cells"
+     }
+    },
+    "defaults": {
+     "rotation_hours": 10.0,
+     "obliquity_deg": 20.0,
+     "gases": {
+      "n2": 0.78,
+      "o2": 0.21,
+      "ar": 0.0093,
+      "co2": 0.0004,
+      "h2o": 0.0
+     }
+    },
+    "references": [
+     {
+      "text": "North, G. R. 1975, Theory of energy-balance climate models, J. Atmos. Sci. 32, 2033-2043",
+      "doi": "10.1175/1520-0469(1975)032<2033:TOEBCM>2.0.CO;2"
+     },
+     {
+      "text": "North, G. R. 1975, Analytical solution to a simple climate model with diffusive heat transport, J. Atmos. Sci. 32, 1301-1307",
+      "doi": "10.1175/1520-0469(1975)032<1301:ASTASC>2.0.CO;2"
+     },
+     {
+      "text": "Budyko, M. I. 1969, The effect of solar radiation variations on the climate of the Earth, Tellus 21(5), 611-619",
+      "url": "https://www.atmosp.physics.utoronto.ca/~dbj/PHY392/Budyko1969.pdf"
+     },
+     {
+      "text": "Held, I. M. and Hou, A. Y. 1980, Nonlinear axially symmetric circulations in a nearly inviscid atmosphere, J. Atmos. Sci. 37, 515-533",
+      "doi": "10.1175/1520-0469(1980)037<0515:NASCIA>2.0.CO;2"
+     },
+     {
+      "text": "Rhines, P. B. 1975, Waves and turbulence on a beta-plane, J. Fluid Mech. 69, 417",
+      "doi": "10.1017/S0022112075001504"
+     },
+     {
+      "text": "Kaspi, Y. and Showman, A. P. 2015, Atmospheric dynamics of terrestrial exoplanets over a wide range of orbital and atmospheric parameters, ApJ 804, 60",
+      "doi": "10.1088/0004-637X/804/1/60"
+     },
+     {
+      "text": "Pierrehumbert, R. T. 2010, Principles of Planetary Climate, Cambridge University Press",
+      "doi": "10.1017/CBO9780511780783"
+     },
+     {
+      "text": "NIST Chemistry WebBook, phase change data: water",
+      "url": "https://webbook.nist.gov/cgi/cbook.cgi?ID=C7732185&Mask=4"
+     },
+     {
+      "text": "NIST Chemistry WebBook, phase change data: carbon dioxide",
+      "url": "https://webbook.nist.gov/cgi/cbook.cgi?ID=C124389&Mask=4"
+     },
+     {
+      "text": "NIST Chemistry WebBook, phase change data: methane",
+      "url": "https://webbook.nist.gov/cgi/cbook.cgi?ID=C74828&Mask=4"
+     },
+     {
+      "text": "NIST Chemistry WebBook, phase change data: ammonia",
+      "url": "https://webbook.nist.gov/cgi/cbook.cgi?ID=C7664417&Mask=4"
+     },
+     {
+      "text": "NIST Chemistry WebBook, phase change data: nitrogen",
+      "url": "https://webbook.nist.gov/cgi/cbook.cgi?ID=C7727379&Mask=4"
+     },
+     {
+      "text": "North, G. R. and Coakley, J. A. 1979, Differences between seasonal and mean annual energy balance model calculations of climate and climate sensitivity, J. Atmos. Sci. 36, 1189-1204",
+      "url": "https://www.scilit.com/publications/e5e2208af0c7508757f7ca07d504802b"
+     },
+     {
+      "text": "North, G. R., Cahalan, R. F. and Coakley, J. A. 1981, Energy balance climate models, Rev. Geophys. 19, 91-121",
+      "url": "https://eisenman.ucsd.edu/courses/2024-sioc224/files/north-1981.pdf"
+     },
+     {
+      "text": "Siler, N., Roe, G. H. and Armour, K. C. 2018, Insights into the zonal-mean response of the hydrologic cycle to global warming from a diffusive energy balance model, J. Climate 31, 7481-7493",
+      "doi": "10.1175/JCLI-D-18-0081.1"
+     },
+     {
+      "text": "Mitchell, J. L. and Vallis, G. K. 2010, The transition to superrotation in terrestrial atmospheres, J. Geophys. Res. 115, E12008",
+      "url": "https://arxiv.org/abs/1008.1996"
+     },
+     {
+      "text": "Lindzen, R. S. and Farrell, B. 1980, A simple approximate result for the maximum growth rate of baroclinic instabilities, J. Atmos. Sci. 37, 1648-1654",
+      "doi": "10.1175/1520-0469(1980)037<1648:ASARFT>2.0.CO;2"
+     },
+     {
+      "text": "Komacek, T. D. and Showman, A. P. 2016, Atmospheric circulation of hot Jupiters: dayside-nightside temperature differences, ApJ 821, 16",
+      "url": "https://arxiv.org/abs/1601.00069"
+     },
+     {
+      "text": "Koll, D. D. B. and Abbot, D. S. 2016, Temperature structure and atmospheric circulation of dry tidally locked rocky exoplanets, ApJ 825, 99",
+      "url": "https://arxiv.org/abs/1605.01066"
+     },
+     {
+      "text": "Haqq-Misra, J. et al. 2018, Demarcating circulation regimes of synchronously rotating terrestrial planets within the habitable zone, ApJ 852, 67",
+      "url": "https://arxiv.org/abs/1710.00435"
+     },
+     {
+      "text": "Wordsworth, R. 2015, Atmospheric heat redistribution and collapse on tidally locked rocky planets, ApJ 806, 180",
+      "url": "https://arxiv.org/abs/1412.5575"
+     },
+     {
+      "text": "Jennings, Winchell, Livneh and Molotch 2018, Spatial variation of the rain-snow temperature threshold across the Northern Hemisphere, Nature Communications 9, 1148",
+      "doi": "10.1038/s41467-018-03629-7"
+     },
+     {
+      "text": "Calov and Greve 2005, A semi-analytical solution for the positive degree-day model with stochastic temperature variations, Journal of Glaciology 51, 173",
+      "doi": "10.3189/172756505781829601"
+     },
+     {
+      "text": "Braithwaite 1995, Positive degree-day factors for ablation on the Greenland ice sheet studied by energy-balance modelling, Journal of Glaciology 41, 153",
+      "doi": "10.3189/S0022143000017846"
+     },
+     {
+      "text": "Zhang, Hickel, Dawes, Chiew, Western and Briggs 2004, A rational function approach for estimating mean annual evapotranspiration (Fu's equation, omega 2.6), Water Resources Research 40, W02502",
+      "doi": "10.1029/2003WR002710"
+     },
+     {
+      "text": "Kok, Parteli, Michaels and Karam 2012, The physics of wind-blown sand and dust, Reports on Progress in Physics 75, 106901",
+      "doi": "10.1088/0034-4885/75/10/106901"
+     },
+     {
+      "text": "Kok 2010, Difference in the wind speeds required for initiation versus continuation of sand transport on Mars, Physical Review Letters 104, 074502",
+      "doi": "10.1103/PhysRevLett.104.074502"
+     },
+     {
+      "text": "Telfer et al. 2018, Dunes on Pluto, Science 360, 992",
+      "doi": "10.1126/science.aao2975"
+     },
+     {
+      "text": "Kottek, Grieser, Beck, Rudolf and Rubel 2006, World Map of the Koppen-Geiger climate classification updated, Meteorologische Zeitschrift 15, 259",
+      "doi": "10.1127/0941-2948/2006/0130"
+     },
+     {
+      "text": "Lancaster 1988, Development of linear dunes in the southwestern Kalahari, southern Africa, Journal of Arid Environments 14, 233 (dune mobility index; read through Lancaster and Helm 2000, Earth Surface Processes and Landforms 25, 197)",
+      "doi": "10.1002/(SICI)1096-9837(200002)25:2<197::AID-ESP82>3.0.CO;2-H"
+     },
+     {
+      "text": "Zeebe 2022, Reduced variations in Earth's and Mars' orbital inclination and Earth's obliquity from 58 to 48 Myr ago due to solar system chaos, Astronomical Journal 164, 107 (arXiv 2207.04006)",
+      "url": "https://arxiv.org/abs/2207.04006"
+     },
+     {
+      "text": "Huybers 2006, Early Pleistocene glacial cycles and the integrated summer insolation forcing, Science 313, 508",
+      "doi": "10.1126/science.1125249"
+     }
+    ],
+    "strengths": {
+     "eddy_share": 0.4,
+     "super_rotation_critical": 1.0,
+     "super_rotation_steepness": 2.0,
+     "lindzen_farrell": 0.31,
+     "stable_share": 0.35,
+     "drag_coefficient": 0.001,
+     "log_pressure_span": 1.0,
+     "thin_opacity_m2_kg": 5e-05,
+     "collapse_width": 0.05,
+     "molecule_diameter_m": 3.7e-10,
+     "source": "Process strengths (W7b): thermal Rossby number and super-rotation onset near 1 (Mitchell and Vallis 2010; the strength curve's shape is ours); baroclinic growth 0.31 f dU/dz / N (Lindzen and Farrell 1980) against the radiative time c_p p/(g sigma T^3) (Koll and Abbot 2016); day-night contrast from the timescale ratio (Komacek and Showman 2016, eq. 31) with drag C_D a/H (Koll and Abbot 2016); collapse from the night side, no colder than Wordsworth 2015's thin radiator, against the main gas's frost point; collisional air from the Knudsen number; deformation and Rhines lengths against the radius (Haqq-Misra et al. 2018). Eddy share 0.4 fitted so Earth keeps three cells (docs/fudges.md).",
+     "tested": [
+      {
+       "process": "super-rotation",
+       "quantity": "thermal_rossby",
+       "min": 0.02,
+       "max": 10.5,
+       "by": "Mitchell and Vallis 2010 ran Ro_T 0.02 to 10.5"
+      },
+      {
+       "process": "day-night contrast",
+       "quantity": "solid",
+       "max": 0.5,
+       "by": "Komacek and Showman 2016 is a theory of hot Jupiters; on a world with a surface it is carried over"
+      },
+      {
+       "process": "collapse",
+       "quantity": "pressure_bar",
+       "min": 0.01,
+       "max": 10.0,
+       "by": "Wordsworth 2015 sampled 0.01 to 10 bar"
+      },
+      {
+       "process": "collapse",
+       "quantity": "flux_w_m2",
+       "min": 272.0,
+       "max": 4080.0,
+       "by": "Wordsworth 2015 sampled 0.2 to 3 times Earth's sunlight"
+      },
+      {
+       "process": "regime lengths",
+       "quantity": "rotation_days",
+       "min": 1.0,
+       "max": 100.0,
+       "by": "Haqq-Misra et al. 2018 covered synchronous rotators of about 1 to 100 days"
+      }
+     ]
+    },
+    "water": {
+     "snow_offset_k": 1.0,
+     "sigma_k": 5.0,
+     "ddf_snow_mm": 3.2,
+     "ddf_ice_mm": 8.0,
+     "fu_omega": 2.6,
+     "source": "Snow below freezing + 1.0 K, the mean 50% rain-snow threshold over 6883 Northern Hemisphere stations (Jennings et al. 2018). Air temperature scatters 5 K about a season's mean, the value of Calov and Greve 2005's Greenland example. Melt by positive degree days (Calov and Greve 2005), 8 mm per K per day on ice and 3.2 on snow (Braithwaite 1995: ice about 8, snow 36-44% of ice). Evaporation and runoff by Fu's Budyko curve, omega 2.6 (Zhang et al. 2004). Potential evaporation is the energy-limited flux of supply.latent_share (docs/fudges.md)."
+    },
+    "saltation": {
+     "a_n": 0.111,
+     "cohesion_n_m": 0.00029,
+     "impact_ratio": 0.82,
+     "impact_reference_kg_m3": 1.2,
+     "karman": 0.4,
+     "wind_height_m": 10.0,
+     "roughness_per_diameter": 0.0333333333333,
+     "weibull_k": 2.0,
+     "ten_metre_share": 0.5,
+     "gust_share": 0.04,
+     "gusts_per_year": 52596.0,
+     "lofting_width": 0.03,
+     "grains": [
+      {
+       "name": "methane-ice sand",
+       "diameter_m": 0.00025,
+       "density_kg_m3": 494.0,
+       "below_k": 90.67
+      },
+      {
+       "name": "water-ice sand",
+       "diameter_m": 0.00025,
+       "density_kg_m3": 920.0,
+       "below_k": 180.0
+      },
+      {
+       "name": "rock sand",
+       "diameter_m": 0.00025,
+       "density_kg_m3": 2650.0
+      }
+     ],
+     "mobility": {
+      "inactive": 50.0,
+      "active": 200.0,
+      "aridity_floor": 0.01
+     },
+     "source": "Fluid threshold of Shao and Lu 2000 (A_N 0.111, cohesion 2.9e-4 N/m from Kok and Renno 2006) as given by Kok et al. 2012; impact threshold 0.82 of it on Earth and about Earth's value in thin air (Kok 2010); law of the wall with z0 = D/30 (Kok et al. 2012); Weibull gusts k = 2 (Kok 2010); transport, once started by one ten-minute wind above the fluid threshold in a year or by lofting, runs while the wind is above the impact threshold (Kok 2010 hysteresis); grains lofted by subliming ice where the main gas freezes out (Telfer et al. 2018, Pluto: methane ice 494 kg/m3, 210-310 micron); dune activity by Lancaster's (1988) mobility index, inactive below 50 and fully active above 200. The ten-metre share (Earth's band winds of about 12 m/s to the observed 6-7 m/s over the sea), the gust share (Venus and Titan near 1 m/s at the ground) and its cube-root fall with air density, lofting width, the aridity floor and the grain by temperature are ours (docs/fudges.md)."
+    },
+    "areas": {
+     "rules": [
+      {
+       "area": "ice-cap",
+       "when": {
+        "ice_balance_m_yr": {
+         "min": 1e-06
+        }
+       },
+       "because": "Snow outlasts the summer here, so ice builds up."
+      },
+      {
+       "area": "rainless",
+       "when": {
+        "precip_m_yr": {
+         "max": 0.0001
+        }
+       },
+       "because": "Almost nothing falls here."
+      },
+      {
+       "area": "frost",
+       "when": {
+        "liquid_water": {
+         "min": 1
+        },
+        "t_warm_c": {
+         "max": 0
+        }
+       },
+       "because": "Even the warmest season stays below freezing (Koppen EF)."
+      },
+      {
+       "area": "tundra",
+       "when": {
+        "liquid_water": {
+         "min": 1
+        },
+        "t_warm_c": {
+         "max": 10
+        }
+       },
+       "because": "The warmest season stays below 10 C (Koppen ET)."
+      },
+      {
+       "area": "desert",
+       "when": {
+        "liquid_water": {
+         "min": 1
+        },
+        "p_over_pth": {
+         "max": 0.5
+        }
+       },
+       "because": "Rain is less than half of what the heat would dry (Koppen BW)."
+      },
+      {
+       "area": "steppe",
+       "when": {
+        "liquid_water": {
+         "min": 1
+        },
+        "p_over_pth": {
+         "max": 1.0
+        }
+       },
+       "because": "Rain is less than the heat would dry (Koppen BS)."
+      },
+      {
+       "area": "rainforest",
+       "when": {
+        "liquid_water": {
+         "min": 1
+        },
+        "t_cold_c": {
+         "min": 18
+        },
+        "aridity": {
+         "min": 1.0
+        }
+       },
+       "because": "Warm all year and wetter than evaporation can take (Koppen A; wet by P/PE rather than the driest month)."
+      },
+      {
+       "area": "savanna",
+       "when": {
+        "liquid_water": {
+         "min": 1
+        },
+        "t_cold_c": {
+         "min": 18
+        }
+       },
+       "because": "Warm all year with a dry spell (Koppen A)."
+      },
+      {
+       "area": "continental",
+       "when": {
+        "liquid_water": {
+         "min": 1
+        },
+        "t_cold_c": {
+         "max": -3
+        }
+       },
+       "because": "Winters freeze below -3 C (Koppen D)."
+      },
+      {
+       "area": "temperate",
+       "when": {
+        "liquid_water": {
+         "min": 1
+        }
+       },
+       "because": "Mild winters between -3 C and 18 C (Koppen C)."
+      },
+      {
+       "area": "frozen",
+       "when": {
+        "t_warm_over_freeze_k": {
+         "max": 0
+        }
+       },
+       "because": "Its liquid never thaws here."
+      },
+      {
+       "area": "dry",
+       "when": {
+        "aridity": {
+         "max": 0.5
+        }
+       },
+       "because": "Less falls than its liquid could evaporate."
+      },
+      {
+       "area": "wet",
+       "when": {},
+       "because": "More falls than its liquid can evaporate."
+      }
+     ],
+     "labels": {
+      "ice-cap": "Ice cap",
+      "rainless": "Rainless",
+      "frost": "Frost",
+      "tundra": "Tundra",
+      "desert": "Desert",
+      "steppe": "Steppe",
+      "rainforest": "Rainforest",
+      "savanna": "Savanna",
+      "continental": "Continental",
+      "temperate": "Temperate",
+      "frozen": "Frozen",
+      "dry": "Dry",
+      "wet": "Wet"
+     },
+     "source": "Koppen-Geiger criteria of Kottek et al. 2006 (Table 1 and eq. 2.1), applied to each place's own temperatures and rain, after the ice balance (physics) and with plain labels for worlds whose liquid is not water. A label is read off the numbers; nothing reads it back."
+    },
+    "forcing": {
+     "earth_ellipticity": 0.00327381,
+     "ellipticity_spin_power": 2.0,
+     "moon_geometry": 1.0,
+     "window_yr": 400000.0,
+     "sample_yr": 2000.0,
+     "step_yr": 100.0,
+     "summer_threshold_w_m2": 275.0,
+     "year_steps": 72,
+     "probe_obliquity_deg": 1.0,
+     "drawn_inclination_deg": 3.0,
+     "source": "Spin axis s' = alpha (n.s)(s x n), alpha = K (kappa + beta), K = (3/2) E_d GM/(omega a^3), kappa = (1-e^2)^-3/2, beta = g_L (a/a_L)^3 m_L/M (Zeebe 2022 eqs. 1-5; Earth E_d 0.00327381, Table 1). Summer energy over days of at least 275 W/m2 (Huybers 2006). E_d scaled as spin squared, g_L 1 (it reproduces Earth's 50.4 arcsec/yr with the Moon), the linear ice-balance response to summer energy, the 400 kyr window and the drawn sibling inclinations are ours (docs/fudges.md)."
+    }
+   }
+  }
+ }
+}

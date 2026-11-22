@@ -24,9 +24,11 @@ pub(crate) struct Ask {
     pub pins: Vec<serde_json::Value>,
     pub sources: Option<serde_json::Value>,
     pub block: Option<serde_json::Value>,
+    /// The epoch the climate is kept under (a body's age, Myr; 0 otherwise).
+    pub epoch_myr: f64,
 }
 
-pub(crate) fn weather(a: Ask) -> Out {
+pub(crate) fn weather(a: Ask, climates: &mut sse_climate::Cache) -> Out {
     let sources: sse_weather::aerosols::Sources = match a.sources {
         Some(v) => serde_json::from_value(v)
             .map_err(|e| err("bad_sources", format!("not weather sources: {e}")))?,
@@ -69,7 +71,7 @@ pub(crate) fn weather(a: Ask) -> Out {
         (None, None) => {
             return Err(err(
                 "no_weather_world",
-                "give `world` (a fixture label) or `conditions`",
+                "give `world` (a fixture label), `conditions`, or a `system` and `body`",
             ))
         }
     };
@@ -96,8 +98,17 @@ pub(crate) fn weather(a: Ask) -> Out {
     };
     let data = match a.want.as_str() {
         "climate" => {
-            let circ = sse_weather::circulation::circulation(&block.settings, &c);
-            serde_json::json!({ "climate": to_json(&chosen.climate(&c)), "circulation": to_json(&circ) })
+            // The one climate (W7a), kept by key so a re-read reuses it.
+            let core = climates.orbit(&block.settings.climate, &c, a.epoch_myr);
+            let averages = match &other {
+                Some(b) => b.climate(&c),
+                None => sse_weather::circulation::averages(&block.settings, &c, core),
+            };
+            serde_json::json!({
+                "climate": to_json(&averages),
+                "circulation": to_json(&core.circulation),
+                "core": to_json(core),
+            })
         }
         "systems" => to_json(&chosen.systems(&c, date, &pins)),
         "field" => {

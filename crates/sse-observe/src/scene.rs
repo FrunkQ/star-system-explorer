@@ -41,7 +41,22 @@ pub struct SceneSubject {
     /// (J1). Left out when none, so scenes without notes hash as before.
     #[serde(default, skip_serializing_if = "Vec::is_empty")]
     pub notes: Vec<SceneNote>,
+    /// Something undisclosed here (tags design TG5): at least one tag sits
+    /// one rung above what the view shows. One neutral marker per object,
+    /// however many tags are hidden: no id, colour or count. Tags further
+    /// up, and GM-only tags, give nothing.
+    #[serde(default, skip_serializing_if = "is_false")]
+    pub undisclosed: bool,
 }
+
+fn is_false(b: &bool) -> bool {
+    !*b
+}
+
+/// The authored fact that moves one tag on one object to another tier
+/// (`observe.tag_tier.<tag>`, a tier name): the per-object override. It is
+/// an `observe.*` field, so no scene shows it.
+pub const TAG_TIER_PREFIX: &str = "observe.tag_tier.";
 
 /// A note as a scene shows it.
 #[derive(Clone, PartialEq, Debug, Serialize, Deserialize)]
@@ -210,26 +225,47 @@ fn subject(inp: &SceneInput, a: &Address, v: &DataView, audience: &str) -> Optio
             });
         }
     }
+    // Tags: the one redaction point (TG5). A tag sits at a tier exactly as a
+    // fact does: its declared tier, or this object's own override.
+    let tag_tier = |t: &str| -> &str {
+        match inp.state.get(a, &format!("{TAG_TIER_PREFIX}{t}")) {
+            Some(Value::Text(x)) if d.ladder.rank(x).is_some() => x.as_str(),
+            _ => d.tag_tier(t),
+        }
+    };
+    // Shown, held back one rung (the marker), or nothing.
+    let tag_seen = |t: &String| -> (bool, bool) {
+        let ov = v
+            .overrides
+            .iter()
+            .find(|o| o.target == Target::Tag(t.clone()));
+        if let Some(o) = ov {
+            return (o.show, false);
+        }
+        let listed = match v.tags.mode {
+            TagMode::All => true,
+            TagMode::None => false,
+            TagMode::Listed => v.tags.list.contains(t),
+        };
+        let tier = tag_tier(t);
+        if v.show_tiers.iter().any(|x| x == tier) {
+            return (listed, false);
+        }
+        let next = v.unknown_style == UnknownStyle::Placeholder
+            && d.ladder.rank(tier) == Some(next_rank)
+            && next_rank < secret_rank;
+        (false, listed && next)
+    };
+    let mut undisclosed = false;
     let tags: Vec<String> = inp
         .tags
         .get(a)
         .into_iter()
         .flatten()
         .filter(|t| {
-            let ov = v
-                .overrides
-                .iter()
-                .find(|o| o.target == Target::Tag((*t).clone()));
-            if let Some(o) = ov {
-                return o.show;
-            }
-            let tier_ok = v.show_tiers.iter().any(|x| x == d.tag_tier(t));
-            tier_ok
-                && match v.tags.mode {
-                    TagMode::All => true,
-                    TagMode::None => false,
-                    TagMode::Listed => v.tags.list.contains(t),
-                }
+            let (shown, held) = tag_seen(t);
+            undisclosed |= held;
+            shown
         })
         .cloned()
         .collect();
@@ -241,7 +277,20 @@ fn subject(inp: &SceneInput, a: &Address, v: &DataView, audience: &str) -> Optio
             id: (audience == GM).then(|| n.id.clone()),
             at_s: n.at_s,
             text: n.text.clone(),
-            tags: n.tags.clone(),
+            // A note's tags pass the same filter as the subject's where the
+            // tag has a tier (declared, or this object's override). A tag
+            // with no tier anywhere, such as one a seat typed on its own
+            // note, goes where the note goes.
+            tags: n
+                .tags
+                .iter()
+                .filter(|t| {
+                    let tiered = d.tags.contains_key(*t)
+                        || inp.state.get(a, &format!("{TAG_TIER_PREFIX}{t}")).is_some();
+                    !tiered || tag_seen(t).0
+                })
+                .cloned()
+                .collect(),
             by: n.by.clone(),
             links: n.subjects.iter().filter(|s| *s != a).cloned().collect(),
         })
@@ -253,6 +302,7 @@ fn subject(inp: &SceneInput, a: &Address, v: &DataView, audience: &str) -> Optio
         facts,
         tags,
         notes,
+        undisclosed,
     })
 }
 

@@ -29,6 +29,7 @@ use crate::habitat::HabitatGraph;
 use crate::*;
 use sse_core::math as m;
 use sse_core::{Draws, Seed, Stream};
+use std::collections::BTreeSet;
 
 /// An origin setting (`provides.other.life_history.settings`).
 #[derive(Clone, PartialEq, Debug, Serialize, Deserialize)]
@@ -100,6 +101,106 @@ pub struct HistoryParams {
     /// atmosphere): its epoch value counts only once one does.
     pub oxidant_fact: String,
     pub history_every_myr: f64,
+    /// Metabolic capabilities generated from open gradients (E2), used
+    /// under the `gradients/1` life model.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub metabolic: Option<MetabolicParams>,
+}
+
+/// E2 (evolution design 5.1 and 5.3): a metabolism is a capability whose
+/// rate per unit of opportunity is `base_rate x dial x reach_factor^reach x
+/// prize`, where prize = (power the gradient would add / (power the
+/// biosphere runs on + floor_w))^prize_exponent, at most prize_cap.
+#[derive(Clone, PartialEq, Debug, Serialize, Deserialize)]
+pub struct MetabolicParams {
+    pub base_rate: f64,
+    pub reach_factor: f64,
+    pub prize_exponent: f64,
+    pub prize_cap: f64,
+    pub floor_w: f64,
+    /// Gradients of at most this reach are used from origin.
+    pub origin_reach: f64,
+    /// The capability that needs an oxygen-using metabolism tapped (the
+    /// power gate on complex cells, Lane and Martin 2010).
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub power_gate: Option<String>,
+    #[serde(default, skip_serializing_if = "BTreeMap::is_empty")]
+    pub sources: BTreeMap<String, String>,
+}
+
+/// The gradient catalogue a `gradients/1` history runs on (E2).
+#[derive(Clone, Copy)]
+pub struct GradientModel<'a> {
+    pub gp: &'a crate::gradients::GradientParams,
+    pub table: &'a crate::chemistry::ThermoTable,
+}
+
+/// Prefix of a metabolic capability's id: `metabolism:<gradient id>`.
+pub const METABOLISM: &str = "metabolism:";
+
+/// One gradient a lineage can learn to use.
+struct MetDef {
+    id: String,
+    reach: f64,
+    dial: Option<String>,
+    /// Consumes the free-oxygen species: usable only once oxygen stands.
+    oxic: bool,
+}
+
+fn met_defs(gm: &GradientModel) -> Vec<MetDef> {
+    let mut v: Vec<MetDef> = gm
+        .gp
+        .light
+        .iter()
+        .map(|l| MetDef {
+            id: l.id.clone(),
+            reach: l.reach.unwrap_or(1.0),
+            dial: l.dial.clone(),
+            oxic: false,
+        })
+        .collect();
+    for r in &gm.gp.reactions {
+        let oxic = gm.table.reaction(&r.reaction).is_some_and(|x| {
+            x.terms
+                .iter()
+                .any(|(sp, nu)| *sp == gm.gp.oxygen && *nu < 0.0)
+        });
+        v.push(MetDef {
+            id: r.reaction.clone(),
+            reach: r.reach.unwrap_or(1.0),
+            dial: r.dial.clone(),
+            oxic,
+        });
+    }
+    v.sort_by(|a, b| a.id.cmp(&b.id));
+    v.dedup_by(|a, b| a.id == b.id);
+    v
+}
+
+/// The power a biosphere runs on in a catalogue: per habitat, the best
+/// light gradient (they share the photons) plus every chemical and organic
+/// one, heterotrophs included.
+fn tapped_power(cats: &[crate::gradients::Catalogue]) -> f64 {
+    cats.iter()
+        .map(|c| {
+            let (mut light, mut other) = (0.0_f64, 0.0);
+            for g in c.gradients.iter().filter(|g| g.open) {
+                let p = g.power_w.unwrap_or(0.0);
+                if g.kind == "light" {
+                    light = light.max(p);
+                } else {
+                    other += p;
+                }
+            }
+            light + other
+        })
+        .sum()
+}
+
+fn key_of(id: &str) -> u64 {
+    let mut h = sse_core::hash::Hasher::new("sse.life.metabolism-key.v1");
+    h.update(id.as_bytes());
+    u64::from_be_bytes(h.finish().0[..8].try_into().expect("8 bytes"))
 }
 
 impl HistoryParams {
@@ -241,6 +342,19 @@ pub struct StepFluxes {
     pub land_by_metabolism: BTreeMap<String, f64>,
     /// Life holds the land (weathering enhancement, cover).
     pub on_land: bool,
+    /// Each land-surface habitat as a soil region (E4): key, area, mid
+    /// temperature and its production.
+    #[serde(default)]
+    pub land: Vec<LandRegion>,
+}
+
+/// One land region for the soil box (E4).
+#[derive(Clone, PartialEq, Debug, Serialize, Deserialize, Default)]
+pub struct LandRegion {
+    pub key: String,
+    pub area_m2: f64,
+    pub temperature_k: Option<f64>,
+    pub npp_gc_yr: f64,
 }
 
 /// The physics side of a coupled run: at each step's start it receives the
@@ -265,8 +379,45 @@ pub fn history_with(
     bp: &BudgetParams,
     hp: &HistoryParams,
     seed: Seed,
+    boundary: Option<&mut dyn Boundary>,
+) -> Result<LifeHistory, String> {
+    history_model(w, bp, hp, None, seed, boundary)
+}
+
+/// As `history_with`, on the gradient catalogue when `model` is given (E2):
+/// metabolisms are capabilities generated from open gradients instead of
+/// the pack's listed ones, and box B is the catalogue with only the evolved
+/// gradients tapped.
+pub fn history_model(
+    w: &WorldTimeline,
+    bp: &BudgetParams,
+    hp: &HistoryParams,
+    model: Option<&GradientModel>,
+    seed: Seed,
     mut boundary: Option<&mut dyn Boundary>,
 ) -> Result<LifeHistory, String> {
+    let mp = match model {
+        Some(_) => Some(
+            hp.metabolic
+                .as_ref()
+                .ok_or("the gradients model needs life_history.metabolic")?,
+        ),
+        None => None,
+    };
+    let defs = model.map(met_defs).unwrap_or_default();
+    let met_stream = Stream::new("life.metabolism.v1").map_err(|e| e.to_string())?;
+    let met_draws = Draws::new(seed, w.body.clone(), met_stream);
+    // Listed metabolic capabilities give way to generated ones; the rest
+    // (complex cells, multicellularity, land, ...) stay.
+    let caps_used: Vec<(usize, &Capability)> = hp
+        .capabilities
+        .iter()
+        .enumerate()
+        .filter(|(_, c)| model.is_none() || c.at_origin || c.unlocks_metabolisms.is_empty())
+        .collect();
+    let mut origin_mets: BTreeSet<String> = BTreeSet::new();
+    let mut oxic = false;
+    let mut gcache: BTreeMap<String, (WorldBudget, BTreeMap<String, f64>)> = BTreeMap::new();
     let mut last = StepFluxes::default();
     let mut world: BTreeMap<String, f64> = BTreeMap::new();
     let k_ev = 8.617_333e-5;
@@ -395,6 +546,7 @@ pub fn history_with(
                     .filter(|(id, (since, _))| {
                         c.at_myr - since < hp.fragile_myr
                             && !hp.capabilities.iter().any(|x| &x.id == *id && x.at_origin)
+                            && !origin_mets.contains(*id)
                     })
                     .map(|(id, _)| id.clone())
                     .collect();
@@ -479,6 +631,17 @@ pub fn history_with(
                     caps.insert(c.id.clone(), (t1, id.clone()));
                     first.entry(c.id.clone()).or_insert(t1);
                 }
+                if let Some(mp) = mp {
+                    for d in defs
+                        .iter()
+                        .filter(|d| d.reach <= mp.origin_reach && !d.oxic)
+                    {
+                        let cid = format!("{METABOLISM}{}", d.id);
+                        caps.insert(cid.clone(), (t1, id.clone()));
+                        first.entry(cid.clone()).or_insert(t1);
+                        origin_mets.insert(cid);
+                    }
+                }
                 life = Some(Life {
                     caps,
                     opportunity: 0.0,
@@ -505,6 +668,72 @@ pub fn history_with(
                 media.extend(c.unlocks_media.clone());
             }
             let key = format!("{ei}|{}|{}", mets.join(","), media.join(","));
+            // E2: the catalogue with the evolved gradients tapped, and what
+            // each untapped one would add.
+            let mut prizes: BTreeMap<String, f64> = BTreeMap::new();
+            let mut biosphere_w = 0.0;
+            let gwb = if let Some(gm) = model {
+                let usable: BTreeSet<String> = defs
+                    .iter()
+                    .filter(|d| {
+                        l.caps.contains_key(&format!("{METABOLISM}{}", d.id)) && (oxic || !d.oxic)
+                    })
+                    .map(|d| d.id.clone())
+                    .collect();
+                let gkey = format!(
+                    "{ei}|{oxic}|{}|{}",
+                    usable.iter().cloned().collect::<Vec<_>>().join(","),
+                    media.join(",")
+                );
+                let entry = gcache.entry(gkey).or_insert_with(|| {
+                    // Life reaches only the media it holds (land comes later).
+                    let mut gp2 = gm.gp.clone();
+                    for x in &mut gp2.light {
+                        x.media.retain(|m| media.contains(m));
+                    }
+                    for x in &mut gp2.reactions {
+                        x.media.retain(|m| media.contains(m));
+                    }
+                    let (bcats, base) = crate::gradients::world_catalogue_using(
+                        g,
+                        bp,
+                        &gp2,
+                        gm.table,
+                        Some(&usable),
+                    );
+                    let base_power = tapped_power(&bcats);
+                    let mut gain = BTreeMap::new();
+                    for d in defs
+                        .iter()
+                        .filter(|d| !usable.contains(&d.id) && (oxic || !d.oxic))
+                    {
+                        let mut with = usable.clone();
+                        with.insert(d.id.clone());
+                        let p = tapped_power(
+                            &crate::gradients::world_catalogue_using(
+                                g,
+                                bp,
+                                &gp2,
+                                gm.table,
+                                Some(&with),
+                            )
+                            .0,
+                        );
+                        let add = p - base_power;
+                        if add > 0.0 {
+                            gain.insert(d.id.clone(), add);
+                        }
+                    }
+                    gain.insert(String::new(), base_power);
+                    (base, gain)
+                });
+                prizes = entry.1.clone();
+                biosphere_w = prizes.remove("").unwrap_or(0.0);
+
+                Some(entry.0.clone())
+            } else {
+                None
+            };
             let wb = cache.entry(key).or_insert_with(|| {
                 let mut bp2 = bp.clone();
                 for mb in &mut bp2.metabolisms {
@@ -518,10 +747,27 @@ pub fn history_with(
                 }
                 budget::world_budget(g, &bp2, &mets)
             });
+            let wb = gwb.as_ref().unwrap_or(wb);
             production = wb.production_gc_yr;
             last.alive = true;
             last.production_gc_yr = production;
             last.on_land = l.caps.contains_key("land");
+            last.land = g
+                .habitats
+                .iter()
+                .filter(|h| h.kind == "land-surface")
+                .map(|h| LandRegion {
+                    key: h.address.to_string(),
+                    area_m2: h.profile.area_m2.unwrap_or(0.0),
+                    temperature_k: h.profile.temperature_k.map(|r| 0.5 * (r.lo + r.hi)),
+                    npp_gc_yr: wb
+                        .habitats
+                        .iter()
+                        .filter(|b| b.habitat == h.address)
+                        .map(|b| b.by_metabolism.values().sum::<f64>())
+                        .sum(),
+                })
+                .collect();
             for h in &wb.habitats {
                 for (k, v) in &h.by_metabolism {
                     *last.by_metabolism.entry(k.clone()).or_default() += v;
@@ -539,6 +785,9 @@ pub fn history_with(
                 hp.oxidant_fact.clone(),
                 if wb.high_power { ox } else { 0.0 },
             );
+            // Free oxygen stands from the next step on: the oxygen-using
+            // gradients open (E2).
+            oxic = wb.high_power && ox > 0.0;
             facts.insert("high_power".into(), if wb.high_power { 1.0 } else { 0.0 });
             facts.insert("production_gc_yr".into(), production);
             let has = |ch: &str| {
@@ -605,8 +854,60 @@ pub fn history_with(
                     pending_recovery = None;
                 }
             }
-            for (ci, c) in hp.capabilities.iter().enumerate() {
+            // E2: metabolisms from open gradients, opportunity x prize x reach.
+            if let Some(mp) = mp {
+                let base_w = biosphere_w;
+                for d in &defs {
+                    let cid = format!("{METABOLISM}{}", d.id);
+                    if l.caps.contains_key(&cid) {
+                        continue;
+                    }
+                    let Some(add) = prizes.get(&d.id).copied() else {
+                        continue;
+                    };
+                    let prize = m::pow(
+                        (add / (base_w + mp.floor_w)).min(mp.prize_cap),
+                        mp.prize_exponent,
+                    );
+                    let dial = d.dial.as_ref().map_or(1.0, |x| hp.dial(x));
+                    let rate = mp.base_rate * dial * m::pow(mp.reach_factor, d.reach) * prize;
+                    let p = cap_progress.entry(cid.clone()).or_default();
+                    *p += rate * d_opp;
+                    let a = cap_attempt.get(&cid).copied().unwrap_or(0);
+                    let u = met_draws.unit(key_of(&format!("{}#{a}", d.id)));
+                    if *p >= -m::ln(u.max(1e-300)) {
+                        let id = push(
+                            &mut events,
+                            LifeEvent {
+                                id: String::new(),
+                                at_myr: t1,
+                                kind: "capability".into(),
+                                subject: cid.clone(),
+                                causes: vec![l.origin_event.clone(), format!("epoch:{}", ep.id)],
+                                why: format!(
+                                    "a lineage learns to use {}: it would add {:.2e} W to the {:.2e} W the biosphere runs on (prize {:.2}, reach {}, after {:.1} Earth-Myr of opportunity)",
+                                    d.id, add, base_w, prize, d.reach, l.opportunity
+                                ),
+                                dials: d.dial.iter().cloned().collect(),
+                            },
+                        );
+                        l.caps.insert(cid.clone(), (t1, id));
+                        first.entry(cid).or_insert(t1);
+                    }
+                }
+            }
+            let oxidative = defs
+                .iter()
+                .any(|d| d.oxic && oxic && l.caps.contains_key(&format!("{METABOLISM}{}", d.id)));
+            for &(ci, c) in &caps_used {
                 if l.caps.contains_key(&c.id) || c.at_origin {
+                    continue;
+                }
+                // The power gate (Lane and Martin 2010): large genomes need
+                // the power of an oxygen-using metabolism.
+                if mp.is_some_and(|mp| mp.power_gate.as_deref() == Some(c.id.as_str()))
+                    && !oxidative
+                {
                     continue;
                 }
                 let ready = c.needs.iter().all(|n| l.caps.contains_key(n))

@@ -19,22 +19,31 @@ fn seed() -> Seed {
     Seed::from_text("sse4-wear-tests")
 }
 
+fn wet(
+    s: &SurfaceSettings,
+    b: &Body,
+    e: &SurfaceEnvelope,
+    water: &WaterHistory,
+    rot: f64,
+) -> crate::climate::WorldClimate {
+    let x = sse_climate::Extra {
+        rotation_hours: Some(rot),
+        ..Default::default()
+    };
+    crate::climate::wet_climate(s, b, e, water, &x, b.age_gyr * 1000.0)
+}
+
 fn earth(s: &SurfaceSettings) -> (Body, SurfaceEnvelope, PlateHistory, Wear) {
     let (b, e) = env_of(s, "Earth");
     let h = history(s, &e, &seed(), b.age_gyr);
-    let w = wear_world(
-        s,
-        &e,
-        &seed(),
-        &h,
-        &WaterHistory::steady(b.oceans, b.pressure_bar, b.age_gyr),
-        b.magma_end_myr,
-    );
+    let water = WaterHistory::steady(b.oceans, b.pressure_bar, b.age_gyr);
+    let cl = wet(s, &b, &e, &water, 23.93);
+    let w = wear_world(s, &e, &seed(), &h, &water, &cl, b.magma_end_myr);
     (b, e, h, w)
 }
 
 fn mars_at(s: &SurfaceSettings, t_gyr: f64) -> (SurfaceEnvelope, PlateHistory, Wear) {
-    let (_, e) = env_of(s, "Mars");
+    let (b, e) = env_of(s, "Mars");
     let h = history(s, &e, &seed(), t_gyr);
     let water = WaterHistory {
         wet_from_gyr: 0.0,
@@ -42,7 +51,8 @@ fn mars_at(s: &SurfaceSettings, t_gyr: f64) -> (SurfaceEnvelope, PlateHistory, W
         oceans: 0.05,
         pressure_bar: 0.006,
     };
-    let w = wear_world(s, &e, &seed(), &h, &water, 50.0);
+    let cl = wet(s, &b, &e, &water, 24.62);
+    let w = wear_world(s, &e, &seed(), &h, &water, &cl, 50.0);
     (e, h, w)
 }
 
@@ -109,7 +119,7 @@ fn drainage_is_dendritic_and_follows_hacks_law() {
 fn no_river_runs_uphill_in_a_thousand_worlds() {
     let mut s = settings();
     s.wear.epoch_myr = 100.0;
-    let (_, e) = env_of(&s, "Earth");
+    let (b, e) = env_of(&s, "Earth");
     let n = 8;
     let nc = 6 * n * n;
     for k in 0..1000u64 {
@@ -123,9 +133,10 @@ fn no_river_runs_uphill_in_a_thousand_worlds() {
             .collect();
         let oceans = [0.0, 0.3, 1.0, 3.0][(k % 4) as usize];
         let water = WaterHistory::steady(oceans, 1.0, 1.0);
+        let cl = wet(&s, &b, &e, &water, 23.93);
         // Every tenth world is also worn for 300 Myr.
         let to = if k % 10 == 0 { 300.0 } else { 0.0 };
-        let w = wear(&s, &e, n, &h0, &water, 0.0, to);
+        let w = wear(&s, &e, n, &h0, &water, &cl, 0.0, to, k % 20 == 0);
         let h = &w.heights;
         for c in 0..nc as usize {
             // Downhill on the true surface wherever neither end is in a filled basin.
@@ -234,4 +245,163 @@ fn golden_wear() {
         want.replace("\r\n", "\n"),
         "golden surface-wear changed"
     );
+}
+
+/// On a world whose plates move, wear routes water and lays sediment but
+/// keeps the plate history's continents; sediment counts only where it
+/// still lies, and what reaches the sea builds shelves, never islands.
+#[test]
+fn sediment_lies_where_it_was_left_and_shelves_stay_under_water() {
+    let s = settings();
+    let (b, e, h, w) = earth(&s);
+    let h0 = base_heights(&s, &e, &seed(), &h);
+    let sl0 = sea_level(&h0, e.reference_radius_m, b.oceans).expect("a sea");
+    let nc = h0.len();
+    let land0 = (0..nc).filter(|&c| h0[c] >= sl0).count();
+    let land = (0..nc).filter(|&c| w.heights[c] >= 0.0).count();
+    assert!(
+        (land as f64 - land0 as f64).abs() <= 0.02 * land0 as f64,
+        "land kept: {land0} -> {land}"
+    );
+    // No cell that started under the sea is raised above it by sediment.
+    let raised = (0..nc)
+        .filter(|&c| h0[c] < sl0 && w.heights[c] >= 0.0 && w.sediment_m[c] > 10.0)
+        .count();
+    assert!(raised <= nc / 1000, "{raised} sea cells built into land");
+    // Bare land: a cover of sediment on part of it, crystalline rock elsewhere.
+    let covered = (0..nc)
+        .filter(|&c| w.heights[c] >= 0.0 && w.sediment_m[c] > 10.0)
+        .count() as f64
+        / land.max(1) as f64;
+    assert!(
+        (0.15..0.7).contains(&covered),
+        "sediment-covered share of land {covered}"
+    );
+}
+
+/// W9: rivers carry runoff, glaciers sit where snow outlasts the summer, and
+/// dunes lie where the wind moves sand on dry ground, on wet and dry worlds.
+#[test]
+fn rivers_glaciers_and_dunes_read_the_one_climates_water_and_wind() {
+    let s = settings();
+    let (_, _, _, w) = earth(&s);
+    let g = Grid::new(w.n);
+    let lat = |c: usize| sse_core::math::asin(g.dirs[c][2].clamp(-1.0, 1.0)).to_degrees();
+    let nc = w.heights.len();
+    let land: Vec<usize> = (0..nc).filter(|&c| w.heights[c] >= 0.0).collect();
+    let dunes: Vec<f64> = land
+        .iter()
+        .filter(|&&c| w.dunes[c])
+        .map(|&c| lat(c))
+        .collect();
+    let ice: Vec<f64> = land
+        .iter()
+        .filter(|&&c| w.glaciated[c])
+        .map(|&c| lat(c))
+        .collect();
+    eprintln!(
+        "Earth land {} dunes {} (lat {:?}) glaciated {} rivers {}",
+        land.len(),
+        dunes.len(),
+        dunes
+            .iter()
+            .map(|x| x.round())
+            .collect::<Vec<_>>()
+            .get(..dunes.len().min(20)),
+        ice.len(),
+        w.river.iter().filter(|x| **x).count()
+    );
+    assert!(!dunes.is_empty(), "Earth's deserts have dunes");
+    assert!(
+        dunes.iter().all(|l| l.abs() < 45.0),
+        "dunes in the dry belts"
+    );
+    // Glaciers: a larger share of the land poleward, and near the equator
+    // only on high mountains (the tropical snow line is near 5 km).
+    let share = |lo: f64, hi: f64| {
+        let cs: Vec<usize> = land
+            .iter()
+            .cloned()
+            .filter(|&c| (lo..hi).contains(&lat(c).abs()))
+            .collect();
+        cs.iter().filter(|&&c| w.glaciated[c]).count() as f64 / cs.len().max(1) as f64
+    };
+    assert!(share(60.0, 90.0) > 0.9 && share(0.0, 15.0) < share(30.0, 45.0));
+    let tropical_low = land
+        .iter()
+        .filter(|&&c| lat(c).abs() < 15.0 && w.glaciated[c])
+        .map(|&c| w.heights[c])
+        .fold(f64::INFINITY, f64::min);
+    assert!(
+        tropical_low > 4000.0,
+        "tropical glacier at {tropical_low} m"
+    );
+    assert!(!ice.is_empty());
+    assert!(land.iter().any(|&c| w.runoff_m_yr[c] > 0.0));
+    // Each land cell's climate label, read off its own numbers.
+    for a in ["ice-cap", "rainforest", "temperate"] {
+        assert!(land.iter().any(|&c| w.areas[c] == a), "Earth has {a}");
+    }
+    assert!(land
+        .iter()
+        .any(|&c| w.areas[c] == "desert" || w.areas[c] == "rainless"));
+    assert!((0..nc).all(|c| w.heights[c] >= 0.0 || w.areas[c].is_empty()));
+    // Mars, dry for 3.5 Gyr: no runoff now, dunes from the wind alone.
+    let (_, _, m) = mars_at(&s, 4.5);
+    assert!(m.runoff_m_yr.iter().all(|x| *x == 0.0));
+    assert!(m.dunes.iter().any(|x| *x), "Mars has dunes");
+}
+
+/// W9 part 2: with an orbit history, the ice edge advances and retreats:
+/// cells near it spend part of each cycle under ice and record advances
+/// (moraines), cells far inside or outside it record none.
+#[test]
+fn an_orbit_history_moves_the_ice_edge() {
+    use sse_climate::forcing::{MoonPull, OrbitTrack, TrackSample};
+    let s = settings();
+    let (b, e) = env_of(&s, "Earth");
+    let h = history(&s, &e, &seed(), b.age_gyr);
+    let water = WaterHistory::steady(b.oceans, b.pressure_bar, b.age_gyr);
+    let mut cl = wet(&s, &b, &e, &water, 23.93);
+    let s3 = -18.85 / 3600.0 * sse_core::math::PI / 180.0;
+    let track = OrbitTrack {
+        samples: (0..=200)
+            .map(|k| {
+                let t = f64::from(k) * 2000.0;
+                TrackSample {
+                    t_yr: t,
+                    e: 0.0167,
+                    varpi: 0.0,
+                    incl: 0.035,
+                    node: s3 * t,
+                }
+            })
+            .collect(),
+        source: "one inclination mode".into(),
+    };
+    let moon = [MoonPull {
+        mass_kg: 7.342e22,
+        a_m: 3.844e8,
+    }];
+    cl.ice_ages = Some(crate::climate::ice_ages(
+        &s,
+        &b,
+        &cl,
+        &track,
+        &moon,
+        b.age_gyr * 1000.0,
+    ));
+    let w = wear_world(&s, &e, &seed(), &h, &water, &cl, b.magma_end_myr);
+    let nc = w.heights.len();
+    let edge = (0..nc)
+        .filter(|&c| w.heights[c] >= 0.0 && w.ice_share[c] > 0.0 && w.ice_share[c] < 1.0)
+        .count();
+    let moraines = (0..nc)
+        .filter(|&c| w.glacial_advances_per_myr[c] > 0.0)
+        .count();
+    assert!(edge > 0 && moraines > 0, "edge {edge} moraines {moraines}");
+    // Advances only where the ice comes and goes.
+    assert!((0..nc)
+        .all(|c| w.glacial_advances_per_myr[c] == 0.0
+            || (w.ice_share[c] > 0.0 && w.ice_share[c] < 1.0)));
 }

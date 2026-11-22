@@ -92,11 +92,66 @@ fn earth_has_three_cells_and_belts_in_the_right_places() {
 }
 
 #[test]
-fn averages_keep_the_erosion_terms_form() {
-    // S3's rain term reads `rain_cells`; Earth's must equal the surface pack's value.
-    let surf = sse_surface::scenario::settings();
+fn the_ground_and_the_sky_read_one_climate() {
+    // W7a: the rain that wore the ground, the climate cover read, and both
+    // weather blocks' averages are the same numbers, to the last bit.
+    let ss = sse_surface::detail::orbit_settings(&sse_surface::scenario::settings());
+    let zonal =
+        crate::zonal::ZonalBlock::from_packs(&[crate::scenario::base_weather_pack()]).unwrap();
+    let b = block();
+    for (name, rot) in [
+        ("Earth", 23.93),
+        ("Mars", 24.62),
+        ("Venus", -5832.5),
+        ("Titan", 382.7),
+    ] {
+        let body = sse_surface::scenario::fixtures()
+            .into_iter()
+            .find(|f| f.body.label == name)
+            .unwrap()
+            .body;
+        let opts = sse_surface::survey::SurveyOptions {
+            rotation_hours: Some(rot),
+            ..Default::default()
+        };
+        let seed = sse_core::draw::Seed::from_text("one-climate");
+        let sv = sse_surface::survey::survey_world(&ss, &body, &seed, body.age_gyr, &opts).unwrap();
+        let ground = sv.climate.as_ref().expect("a solid world has a climate");
+        let cover = &sv.atlas.layers().expect("layers").climate.world;
+        assert_eq!(ground, cover, "{name}: wear and cover read one climate");
+        let x = opts.extra(Some(rot));
+        let (c, _) = crate::conditions::from_surface(&ss, &body, &sv.envelope, &x);
+        assert_eq!(c, ground.climate.conditions, "{name}: one set of facts");
+        for blk in [&b as &dyn WeatherBlock, &zonal] {
+            let cl = blk.climate(&c);
+            let rain: Vec<f64> = cl.bands.iter().map(|x| x.precip_m_yr).collect();
+            assert_eq!(
+                rain, ground.climate.precip_m_yr,
+                "{name}: the sky's rain is the ground's"
+            );
+        }
+        let p = b.prepare(&c, Date { day: 100.0 });
+        assert_eq!(p.core.t_k, ground.climate.t_k, "{name}: one temperature");
+    }
+}
+
+#[test]
+fn a_backwards_spin_turns_the_weather_winds() {
+    let b = block();
+    let mut v = fixture("Earth");
+    let fwd = b.climate(&v);
+    v.rotation_hours = -v.rotation_hours;
+    let back = b.climate(&v);
+    for (f, k) in fwd.bands.iter().zip(&back.bands) {
+        assert_eq!(f.wind_m_s, -k.wind_m_s);
+        assert_eq!(f.precip_m_yr, k.precip_m_yr);
+    }
+    assert!(fwd.bands.iter().any(|x| x.wind_m_s.abs() > 1.0));
+}
+
+#[test]
+fn averages_keep_sunlight_at_the_ground() {
     let cl = block().climate(&fixture("Earth"));
-    assert_eq!(cl.rain_cells, surf.wear.rain_cells);
     assert!((0.6..0.75).contains(&cl.surface_sun_fraction));
 }
 
@@ -116,7 +171,17 @@ fn venus_titan_mars_get_their_skies() {
     let key = TileKey::new(4, 0, 0, 0).unwrap();
     let tile = b.field(&fixture("Titan"), Date { day: 0.0 }, key, 2, &[]);
     assert!(tile.cells[0].aerosols.iter().any(|a| a.kind == "haze"));
-    assert!(tile.cells[0].precip_kind.contains("methane"));
+    // Methane rain falls somewhere on Titan (W7b: the rain belt follows the
+    // season, so at the equinox it is wettest toward the poles, as Cassini
+    // found the lakes).
+    let rains = (0..6u8).any(|f| {
+        let k = TileKey::new(f, 0, 0, 0).unwrap();
+        b.field(&fixture("Titan"), Date { day: 0.0 }, k, 4, &[])
+            .cells
+            .iter()
+            .any(|c| c.precip_kind.contains("methane"))
+    });
+    assert!(rains, "methane rain somewhere on Titan");
     let m = b.climate(&fixture("Mars"));
     assert_eq!(m.precip_mean_m_yr, 0.0);
     assert!(m.cloud_cover_mean <= 0.15);

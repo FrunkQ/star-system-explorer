@@ -36,6 +36,32 @@ fn fixture_worlds_are_classed_correctly() {
 }
 
 #[test]
+fn gravity_rounds_ice_sooner_than_rock() {
+    // Lineweaver and Norman 2010: about 200 km for ice, 300 km for rock.
+    let s = settings();
+    let f = fixtures();
+    let get = |n: &str| f.iter().find(|x| x.body.label == n).unwrap().body.clone();
+    for (n, round) in [("Enceladus", true), ("Miranda", true), ("Vesta", false)] {
+        let b = get(n);
+        let r = round_ratio(&b);
+        assert_eq!(r > 1.0, round, "{n}: {r:.2}");
+        assert_eq!(envelope(&s, &b).regime_now == "small-body", !round, "{n}");
+    }
+    assert!(round_ratio(&get("Earth")) > 10.0);
+}
+
+#[test]
+fn ice_shells_are_active_only_when_cracks_cross_them() {
+    // Europa's shell is thin (tidal heat); Callisto's is thick and cold.
+    let eu = shell_activity(102.0, 0.058);
+    let ca = shell_activity(134.0, 0.0074);
+    assert!(eu > 0.7 && ca < 0.01, "Europa {eu:.3}, Callisto {ca:.3}");
+    assert_eq!(shell_activity(280.0, 0.1), 0.0);
+    // Smooth: more heat, a thinner shell, more activity.
+    assert!(shell_activity(102.0, 0.03) < shell_activity(102.0, 0.04));
+}
+
+#[test]
 fn regime_changes_have_dated_causes() {
     let s = settings();
     let earth = fixtures()

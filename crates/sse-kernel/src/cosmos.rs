@@ -468,8 +468,130 @@ pub(crate) fn reconstruct_origin(
     Ok(sse_cosmos::origin::reconstruct(&env, &cp.origin, &ask))
 }
 
+/// Event kind and fact of a promoted star (night sky design, Y7a): the
+/// whole drawn description is stored, so later fill rules never move it.
+pub const STAR_PIN_KIND: &str = "star.pin";
+pub const STAR_DESCRIPTION: &str = "star.description";
+
+/// Every promoted star in a chronicle state: the stored descriptions, read
+/// back exactly (address order). This is the loader rule for saves: a pin
+/// is never redrawn.
+pub(crate) fn star_pins(
+    state: &sse_chronicle::State,
+) -> Result<Vec<sse_cosmos::stars::StarSystem>, Response> {
+    let mut out = vec![];
+    for f in state.facts.values() {
+        if let Some(sse_core::cbor::Value::Text(t)) = f.get(STAR_DESCRIPTION) {
+            out.push(
+                serde_json::from_str(t)
+                    .map_err(|e| err("bad_record", format!("stored star: {e}")))?,
+            );
+        }
+    }
+    Ok(out)
+}
+
+/// The campaign's galaxy (as `reconstruct_origin`: the median Milky-Way-like
+/// galaxy until G7) with G5's stars over it, and the galaxy's now in Myr.
+pub(crate) fn with_stars<R>(
+    seed: &Seed,
+    root: &Address,
+    params: Option<sse_cosmos::stars::StarParams>,
+    f: impl FnOnce(&sse_cosmos::stars::Stars, f64) -> Result<R, Response>,
+) -> Result<R, Response> {
+    let cp = settings()?;
+    let c = Cosmology::new(cp.params.clone());
+    let w = web(&c, &cp, seed, root)?;
+    let hs = Haloes {
+        cosmo: &c,
+        web: &w,
+        params: cp.haloes.clone(),
+        seed: *seed,
+        universe: root.clone(),
+    };
+    let h = named_halo(&hs, None, None)?;
+    let g = sse_cosmos::galaxy::evolve(&c, &cp.galaxy, &h);
+    let addr: Address = h
+        .address
+        .parse()
+        .map_err(|e| err("bad_address", format!("{e:?}")))?;
+    let d = rings::evolve(&g, &cp.galaxy, &cp.rings, *seed, &addr);
+    let env = GalaxyEnvelope {
+        galaxy: &g,
+        disc: &d,
+        params: cp.envelope.clone(),
+        seed: *seed,
+        address: addr.clone(),
+    };
+    let st = sse_cosmos::stars::Stars {
+        env: &env,
+        green: cp.green.clone(),
+        params: params.unwrap_or_else(|| cp.stars.clone()),
+        seed: *seed,
+        galaxy: addr,
+    };
+    f(&st, g.now.t_gyr * 1000.0)
+}
+
+/// One 10 pc cell's systems at a time: the fill as today's rules draw it,
+/// with the campaign's pins claiming their share first. With no cell, the
+/// cell at the Sun's radius.
+pub(crate) fn star_cell(
+    st: &sse_cosmos::stars::Stars,
+    cell: Option<[i64; 3]>,
+    t_myr: f64,
+    pins: &[sse_cosmos::stars::StarSystem],
+) -> Result<serde_json::Value, Response> {
+    if !t_myr.is_finite() || t_myr < 0.0 {
+        return Err(err("bad_request", "t_myr must be 0 or more"));
+    }
+    let frame = st.frame_of(t_myr);
+    let cell = cell.unwrap_or_else(|| {
+        st.cell_at(
+            st.from_grid([st.env.sun_radius_kpc() * 1000.0, 0.0, 0.0], t_myr),
+            t_myr,
+        )
+    });
+    let systems = st
+        .cell(cell, frame, pins)
+        .map_err(|e| err("bad_request", e))?;
+    let rows: Vec<serde_json::Value> = systems
+        .iter()
+        .map(|s| {
+            let at = st.at(s, t_myr);
+            serde_json::json!({
+                "address": s.address.to_string(),
+                "pinned": s.pinned,
+                "drawn_in": {"cell": s.cell, "frame": s.frame, "slot": s.slot},
+                "mass_msun": s.mass_msun,
+                "companions": s.companions,
+                "birth_gyr": s.birth_gyr,
+                "feh": s.feh,
+                "xyz_pc": at.xyz_pc,
+                "state": at.state,
+            })
+        })
+        .collect();
+    Ok(serde_json::json!({
+        "galaxy": st.galaxy.to_string(),
+        "cell": cell,
+        "frame": frame,
+        "frame_start_myr": frame as f64 * st.params.frame_myr,
+        "t_myr": t_myr,
+        "cell_pc": st.params.cell_pc,
+        "expected": st.expected(cell, frame),
+        "pins": systems.iter().filter(|s| s.pinned).count(),
+        "systems": rows,
+        "model": [
+            "fill: a Poisson count from the G4 envelope at the cell's centre, then per system its birth, Kroupa IMF mass, companions, abundances and an epicyclic orbit, keyed by cell and frame (G5)",
+            "pins: promoted systems are stored whole in the record and read back as stored; they claim their share of the cell's count first, so nothing is counted twice",
+        ],
+    }))
+}
+
 #[cfg(test)]
 mod tests {
+    use super::{settings, star_cell, star_pins, with_stars};
     use crate::Kernel;
 
     fn open() -> Kernel {
@@ -622,5 +744,93 @@ mod tests {
         assert!((g["chart"]["halo_mass_msun"].as_f64().unwrap() - m[0]).abs() < 1.0);
         let bad = k.handle_json(r#"{"op":"galaxy_chart","cell":[0,0,0],"halo":"halo:99999"}"#);
         assert!(bad.contains("unknown_halo"), "{bad}");
+    }
+
+    #[test]
+    fn a_promoted_star_is_stored_whole_and_survives_new_fill_rules() {
+        let mut k = open();
+        let c = ask(&mut k, r#"{"op":"star_cell"}"#);
+        assert_eq!(c["type"], "star_celled", "{c}");
+        let cell = &c["cell"];
+        let systems = cell["systems"].as_array().unwrap();
+        assert!(systems.len() > 3, "{cell}");
+        assert_eq!(cell["pins"], 0);
+        let pick = systems[systems.len() / 2]["address"]
+            .as_str()
+            .unwrap()
+            .to_string();
+        let p = ask(
+            &mut k,
+            &format!(r#"{{"op":"promote_star","address":"{pick}"}}"#),
+        );
+        assert_eq!(p["type"], "star_promoted", "{p}");
+        assert_eq!(p["already"], false);
+        assert!(p["event_id"].is_string());
+        // Read again: the same systems, one now pinned, the same numbers.
+        let again = ask(&mut k, r#"{"op":"star_cell"}"#);
+        let rows = again["cell"]["systems"].as_array().unwrap();
+        assert_eq!(rows.len(), systems.len());
+        for (a, b) in rows.iter().zip(systems) {
+            assert_eq!(a["address"], b["address"]);
+            assert_eq!(a["mass_msun"], b["mass_msun"]);
+            assert_eq!(a["xyz_pc"], b["xyz_pc"]);
+            assert_eq!(a["pinned"], a["address"] == pick.as_str());
+        }
+        // Promoting it again writes nothing.
+        let twice = ask(
+            &mut k,
+            &format!(r#"{{"op":"promote_star","address":"{pick}"}}"#),
+        );
+        assert_eq!(twice["already"], true);
+        assert_eq!(twice["state_hash"], p["state_hash"]);
+        assert_eq!(twice["description"], p["description"]);
+        // A save with the pin loads it unchanged.
+        let ex = ask(&mut k, r#"{"op":"export_chronicle"}"#);
+        let mut k2 = Kernel::new();
+        let r = k2.handle_json(
+            &serde_json::json!({"op": "import_chronicle", "export": ex["export"]}).to_string(),
+        );
+        assert!(!r.contains("\"error\""), "{r}");
+        let loaded = ask(&mut k2, r#"{"op":"star_cell"}"#);
+        assert_eq!(loaded["cell"], again["cell"]);
+        // New fill rules (new draw keys) redraw the fill, never the pin.
+        let u = k.universe().unwrap();
+        let pins = star_pins(
+            &u.chronicle
+                .state_at(sse_chronicle::UniverseTime::seconds(i64::MAX)),
+        )
+        .unwrap();
+        assert_eq!(pins.len(), 1);
+        let stored: sse_cosmos::stars::StarSystem =
+            serde_json::from_value(p["description"].clone()).unwrap();
+        assert_eq!(pins[0], stored);
+        let t = again["cell"]["t_myr"].as_f64().unwrap();
+        let cell_ix: [i64; 3] = serde_json::from_value(again["cell"]["cell"].clone()).unwrap();
+        let v2 = sse_cosmos::stars::StarParams {
+            key_version: 2,
+            ..settings().unwrap().stars
+        };
+        let redrawn = with_stars(&u.seed, &u.root, Some(v2), |st, _| {
+            star_cell(st, Some(cell_ix), t, &pins)
+        })
+        .unwrap();
+        let r2 = redrawn["systems"].as_array().unwrap();
+        let mine: Vec<&serde_json::Value> = r2
+            .iter()
+            .filter(|s| s["address"] == pick.as_str())
+            .collect();
+        assert_eq!(mine.len(), 1);
+        let before = rows.iter().find(|s| s["address"] == pick.as_str()).unwrap();
+        assert_eq!(mine[0], before, "the pin reads bit-identical");
+        let others = |v: &[serde_json::Value]| -> Vec<serde_json::Value> {
+            v.iter()
+                .filter(|s| s["address"] != pick.as_str())
+                .map(|s| s["mass_msun"].clone())
+                .collect()
+        };
+        assert_ne!(others(r2), others(rows), "the fill was redrawn");
+        // Bad addresses are refused.
+        let bad = ask(&mut k, r#"{"op":"promote_star","address":"u:g3/sys:1"}"#);
+        assert_eq!(bad["type"], "error", "{bad}");
     }
 }

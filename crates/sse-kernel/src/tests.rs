@@ -683,11 +683,11 @@ fn adopt_age_and_read_back_a_system() {
         );
         assert!(lo > 0.0 && hi >= lo, "{c}");
         assert!(c["kind"].is_string() && c["address"].is_string(), "{c}");
-        let sphere = c["shape"] == "sphere";
-        assert!(sphere || c["shape"] == "disc", "{c}");
-        assert_eq!(sphere, c["i_sigma_deg"].is_null(), "{c}");
+        let shell = c["shape"] == "shell";
+        assert!(shell || c["shape"] == "disc", "{c}");
+        assert_eq!(shell, c["i_sigma_deg"].is_null(), "{c}");
         if c["kind"] == "oort" {
-            assert!(sphere, "{c}");
+            assert!(shell, "{c}");
         }
     }
     let world = surfaces[0]["address"].as_str().unwrap().to_string();
@@ -834,6 +834,52 @@ fn adopt_age_and_read_back_a_system() {
         .find(|s| s["label"] == "Earth")
         .expect("Earth's surface");
     assert_eq!(earth["regime_now"], "mobile-lid", "{earth:.400}");
+    // W7b: the imported Earth's climate spins at V3's own day, marked authored (V3).
+    let w = send(
+        &mut k,
+        serde_json::json!({"op": "weather", "want": "climate", "system": sys, "body": earth["address"]}),
+    );
+    let c = &w["data"]["core"]["conditions"];
+    assert!(
+        (c["rotation_hours"].as_f64().unwrap() - 23.9345).abs() < 1e-9,
+        "{c}"
+    );
+    let sv = send(
+        &mut k,
+        serde_json::json!({"op": "survey_surface", "system": sys, "body": earth["address"], "quick": true}),
+    );
+    let assumed = sv["survey"]["climate"]["assumed"].to_string();
+    assert!(assumed.contains("authored (V3)"), "{assumed}");
+    // A formation world spins at its settled spin.
+    let f = send(
+        &mut k,
+        serde_json::json!({"op": "resolved_system", "system": "u:home/sys:5"}),
+    );
+    let fb = f["surfaces"]
+        .as_array()
+        .unwrap()
+        .iter()
+        .find(|e| e["kind"] != "cloud-deck")
+        .expect("a solid world")["address"]
+        .clone();
+    let sv = send(
+        &mut k,
+        serde_json::json!({"op": "survey_surface", "system": "u:home/sys:5", "body": fb, "quick": true}),
+    );
+    let assumed = sv["survey"]["climate"]["assumed"].to_string();
+    assert!(assumed.contains("(formation)"), "{assumed}");
+    // W9 part 2: a formation world reads its ice ages from T1's secular
+    // theory over its siblings, and each band says how often ice advances.
+    let ia = &sv["survey"]["climate"]["ice_ages"];
+    assert!(
+        ia["source"].as_str().unwrap().contains("T1 secular"),
+        "{ia}"
+    );
+    let swing =
+        ia["obliquity_max_deg"].as_f64().unwrap() - ia["obliquity_min_deg"].as_f64().unwrap();
+    assert!(swing > 0.0 && swing < 30.0, "{ia}");
+    let places = sv["survey"]["climate"]["places"].as_array().unwrap();
+    assert!(places.iter().all(|p| p["ice_share"].is_number()));
     // Errors.
     assert_eq!(
         send(&mut k, serde_json::json!({"op": "adopt"}))["code"],
@@ -1099,6 +1145,35 @@ fn survey_surface_serves_layers_register_and_tiles() {
         serde_json::json!({"op": "survey_surface", "system": "u:home/sys:5", "body": "u:home/sys:5/body:999"}),
     );
     assert_eq!(e["code"], "no_surface_body");
+
+    // W7a: the weather of the same body, by address, is the ground's climate.
+    let w = send(
+        &mut k,
+        serde_json::json!({"op": "weather", "want": "climate", "system": "u:home/sys:5", "body": body}),
+    );
+    assert_eq!(w["type"], "weather_read", "{w}");
+    let core = &w["data"]["core"];
+    assert!(core["key"].as_str().unwrap().starts_with(body), "{core}");
+    let ground = &r["survey"]["climate"];
+    let wet_past = ground["assumed"]
+        .as_array()
+        .unwrap()
+        .iter()
+        .any(|a| a.as_str().unwrap().starts_with("while wet"));
+    assert!(!wet_past, "this body is no wetter in the past");
+    assert_eq!(core["key"], ground["key"]);
+    assert_eq!(core["t_k"], ground["t_k"]);
+    assert_eq!(core["precip_m_yr"], ground["precip_m_yr"]);
+    let again = send(
+        &mut k,
+        serde_json::json!({"op": "weather", "want": "climate", "system": "u:home/sys:5", "body": body}),
+    );
+    assert_eq!(again, w, "a re-read reuses the kept climate");
+    let e = send(
+        &mut k,
+        serde_json::json!({"op": "weather", "want": "climate", "system": "u:home/sys:5"}),
+    );
+    assert_eq!(e["code"], "bad_request");
 }
 
 /// J1 through the API: notes by audience, news that arrives later, kept

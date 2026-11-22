@@ -1,0 +1,17 @@
+[package]
+name = "sse-climate"
+description = "SSE4 climate (W7a): the one climate under geology and weather. Conditions, the diffusive energy balance in latitude and season, and the circulation numbers every reader shares"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+authors.workspace = true
+
+[dependencies]
+sse-core.workspace = true
+sse-pack.workspace = true
+sse-reference.workspace = true
+serde.workspace = true
+serde_json.workspace = true
+
+[dev-dependencies]
+sse-time = { path = "../sse-time" }

@@ -12,4 +12,9 @@ dim: string, validity: string,
 /**
  * Depends on fictional physics (a pack flagged fictional, H7).
  */
-fictional: boolean, publisher: string, };
+fictional: boolean, publisher: string, 
+/**
+ * MP1c: with constants that differ from ours, the cited law each
+ * rescaled block it rests on used (ESTIMATED). Left out otherwise.
+ */
+estimated?: Array<string>, };

@@ -1,0 +1,119 @@
+id,big_bang,cosmic_rays,low_mass_stars,massive_stars,white_dwarfs,neutron_star_mergers,human_made,basis,argued
+h,1,0,0,0,0,0,0,bbn,
+he,0.91,0,0.04,0.05,0,0,0,bbn: primordial Y about 0.247 against protosolar 0.27,
+li,0.2,0.2,0.6,0,0,0,0,bbn+cr,how much stellar lithium comes from giant stars and how much from novae is argued; the Big Bang should have made about three times more lithium than old stars show (the cosmological lithium problem)
+be,0,1,0,0,0,0,0,cr,
+b,0,0.8,0,0.2,0,0,0,cr: boron-11 partly from neutrinos in supernovae,
+c,0,0,0.5,0.5,0,0,0,kobayashi2020,
+n,0,0,0.5,0.5,0,0,0,kobayashi2020,
+o,0,0,0,1,0,0,0,kobayashi2020,
+f,0,0,0.5,0.5,0,0,0,kobayashi2020,"fluorine's sources (giant stars, massive stars' winds, neutrinos in supernovae) are argued"
+ne,0,0,0,1,0,0,0,kobayashi2020,
+al,0,0,0,1,0,0,0,kobayashi2020,
+p,0,0,0,1,0,0,0,kobayashi2020,
+k,0,0,0,1,0,0,0,kobayashi2020,
+sc,0,0,0,1,0,0,0,kobayashi2020,
+na,0,0,0.1,0.9,0,0,0,kobayashi2020,
+mg,0,0,0,0.95,0.05,0,0,kobayashi2020,
+si,0,0,0,0.8,0.2,0,0,kobayashi2020,
+s,0,0,0,0.75,0.25,0,0,kobayashi2020,
+cl,0,0,0,0.9,0.1,0,0,kobayashi2020,
+ar,0,0,0,0.7,0.3,0,0,kobayashi2020,
+ca,0,0,0,0.7,0.3,0,0,kobayashi2020,
+ti,0,0,0,0.8,0.2,0,0,kobayashi2020,"models make too little titanium, so its sources are still argued"
+v,0,0,0,0.5,0.5,0,0,kobayashi2020,
+cr,0,0,0,0.5,0.5,0,0,kobayashi2020,
+mn,0,0,0,0.5,0.5,0,0,kobayashi2020,
+fe,0,0,0,0.5,0.5,0,0,kobayashi2020,
+co,0,0,0,0.5,0.5,0,0,kobayashi2020,
+ni,0,0,0,0.5,0.5,0,0,kobayashi2020,
+cu,0,0,0,0.5,0.5,0,0,kobayashi2020,
+zn,0,0,0,0.5,0.5,0,0,kobayashi2020,
+ga,0,0,0.1,0.9,0,0,0,weak s,
+ge,0,0,0.15,0.85,0,0,0,weak s,
+as,0,0,0.0,0.6,0,0.4,0,s/r split,"the rapid neutron-capture share is given to merging neutron stars, which have been seen making heavy elements once (GW170817); how much rare kinds of supernova add is argued"
+se,0,0,0.0,0.5,0,0.5,0,s/r split,"the rapid neutron-capture share is given to merging neutron stars, which have been seen making heavy elements once (GW170817); how much rare kinds of supernova add is argued"
+br,0,0,0.0,0.4,0,0.6,0,s/r split,"the rapid neutron-capture share is given to merging neutron stars, which have been seen making heavy elements once (GW170817); how much rare kinds of supernova add is argued"
+kr,0,0,0.2,0.4,0,0.4,0,s/r split,"the rapid neutron-capture share is given to merging neutron stars, which have been seen making heavy elements once (GW170817); how much rare kinds of supernova add is argued"
+rb,0,0,0.3,0.2,0,0.5,0,s/r split,"the rapid neutron-capture share is given to merging neutron stars, which have been seen making heavy elements once (GW170817); how much rare kinds of supernova add is argued"
+sr,0,0,0.6,0.1,0,0.3,0,s/r split,"the rapid neutron-capture share is given to merging neutron stars, which have been seen making heavy elements once (GW170817); how much rare kinds of supernova add is argued"
+y,0,0,0.65,0.05,0,0.3,0,s/r split,"the rapid neutron-capture share is given to merging neutron stars, which have been seen making heavy elements once (GW170817); how much rare kinds of supernova add is argued"
+zr,0,0,0.6,0.05,0,0.35,0,s/r split,"the rapid neutron-capture share is given to merging neutron stars, which have been seen making heavy elements once (GW170817); how much rare kinds of supernova add is argued"
+nb,0,0,0.6,0.0,0,0.4,0,s/r split,"the rapid neutron-capture share is given to merging neutron stars, which have been seen making heavy elements once (GW170817); how much rare kinds of supernova add is argued"
+mo,0,0,0.5,0.2,0,0.3,0,s/r split,"the rapid neutron-capture share is given to merging neutron stars, which have been seen making heavy elements once (GW170817); how much rare kinds of supernova add is argued"
+ru,0,0,0.3,0.1,0,0.6,0,s/r split,"the rapid neutron-capture share is given to merging neutron stars, which have been seen making heavy elements once (GW170817); how much rare kinds of supernova add is argued"
+rh,0,0,0.15,0.0,0,0.85,0,s/r split,"the rapid neutron-capture share is given to merging neutron stars, which have been seen making heavy elements once (GW170817); how much rare kinds of supernova add is argued"
+pd,0,0,0.45,0.0,0,0.55,0,s/r split,"the rapid neutron-capture share is given to merging neutron stars, which have been seen making heavy elements once (GW170817); how much rare kinds of supernova add is argued"
+ag,0,0,0.2,0.0,0,0.8,0,s/r split,"the rapid neutron-capture share is given to merging neutron stars, which have been seen making heavy elements once (GW170817); how much rare kinds of supernova add is argued"
+cd,0,0,0.65,0.0,0,0.35,0,s/r split,"the rapid neutron-capture share is given to merging neutron stars, which have been seen making heavy elements once (GW170817); how much rare kinds of supernova add is argued"
+in,0,0,0.6,0.0,0,0.4,0,s/r split,"the rapid neutron-capture share is given to merging neutron stars, which have been seen making heavy elements once (GW170817); how much rare kinds of supernova add is argued"
+sn,0,0,0.7,0.0,0,0.3,0,s/r split,"the rapid neutron-capture share is given to merging neutron stars, which have been seen making heavy elements once (GW170817); how much rare kinds of supernova add is argued"
+sb,0,0,0.25,0.0,0,0.75,0,s/r split,"the rapid neutron-capture share is given to merging neutron stars, which have been seen making heavy elements once (GW170817); how much rare kinds of supernova add is argued"
+te,0,0,0.2,0.0,0,0.8,0,s/r split,"the rapid neutron-capture share is given to merging neutron stars, which have been seen making heavy elements once (GW170817); how much rare kinds of supernova add is argued"
+i,0,0,0.05,0.0,0,0.95,0,s/r split,"the rapid neutron-capture share is given to merging neutron stars, which have been seen making heavy elements once (GW170817); how much rare kinds of supernova add is argued"
+xe,0,0,0.2,0.0,0,0.8,0,s/r split,"the rapid neutron-capture share is given to merging neutron stars, which have been seen making heavy elements once (GW170817); how much rare kinds of supernova add is argued"
+cs,0,0,0.15,0.0,0,0.85,0,s/r split,"the rapid neutron-capture share is given to merging neutron stars, which have been seen making heavy elements once (GW170817); how much rare kinds of supernova add is argued"
+ba,0,0,0.85,0.0,0,0.15,0,s/r split,
+la,0,0,0.75,0.0,0,0.25,0,s/r split,
+ce,0,0,0.8,0.0,0,0.2,0,s/r split,
+pr,0,0,0.5,0.0,0,0.5,0,s/r split,"the rapid neutron-capture share is given to merging neutron stars, which have been seen making heavy elements once (GW170817); how much rare kinds of supernova add is argued"
+nd,0,0,0.55,0.0,0,0.45,0,s/r split,"the rapid neutron-capture share is given to merging neutron stars, which have been seen making heavy elements once (GW170817); how much rare kinds of supernova add is argued"
+sm,0,0,0.3,0.0,0,0.7,0,s/r split,"the rapid neutron-capture share is given to merging neutron stars, which have been seen making heavy elements once (GW170817); how much rare kinds of supernova add is argued"
+eu,0,0,0.05,0.0,0,0.95,0,s/r split,"the rapid neutron-capture share is given to merging neutron stars, which have been seen making heavy elements once (GW170817); how much rare kinds of supernova add is argued"
+gd,0,0,0.15,0.0,0,0.85,0,s/r split,"the rapid neutron-capture share is given to merging neutron stars, which have been seen making heavy elements once (GW170817); how much rare kinds of supernova add is argued"
+tb,0,0,0.07,0.0,0,0.93,0,s/r split,"the rapid neutron-capture share is given to merging neutron stars, which have been seen making heavy elements once (GW170817); how much rare kinds of supernova add is argued"
+dy,0,0,0.12,0.0,0,0.88,0,s/r split,"the rapid neutron-capture share is given to merging neutron stars, which have been seen making heavy elements once (GW170817); how much rare kinds of supernova add is argued"
+ho,0,0,0.08,0.0,0,0.92,0,s/r split,"the rapid neutron-capture share is given to merging neutron stars, which have been seen making heavy elements once (GW170817); how much rare kinds of supernova add is argued"
+er,0,0,0.15,0.0,0,0.85,0,s/r split,"the rapid neutron-capture share is given to merging neutron stars, which have been seen making heavy elements once (GW170817); how much rare kinds of supernova add is argued"
+tm,0,0,0.13,0.0,0,0.87,0,s/r split,"the rapid neutron-capture share is given to merging neutron stars, which have been seen making heavy elements once (GW170817); how much rare kinds of supernova add is argued"
+yb,0,0,0.4,0.0,0,0.6,0,s/r split,"the rapid neutron-capture share is given to merging neutron stars, which have been seen making heavy elements once (GW170817); how much rare kinds of supernova add is argued"
+lu,0,0,0.3,0.0,0,0.7,0,s/r split,"the rapid neutron-capture share is given to merging neutron stars, which have been seen making heavy elements once (GW170817); how much rare kinds of supernova add is argued"
+hf,0,0,0.55,0.0,0,0.45,0,s/r split,"the rapid neutron-capture share is given to merging neutron stars, which have been seen making heavy elements once (GW170817); how much rare kinds of supernova add is argued"
+ta,0,0,0.4,0.0,0,0.6,0,s/r split,"the rapid neutron-capture share is given to merging neutron stars, which have been seen making heavy elements once (GW170817); how much rare kinds of supernova add is argued"
+w,0,0,0.55,0.0,0,0.45,0,s/r split,"the rapid neutron-capture share is given to merging neutron stars, which have been seen making heavy elements once (GW170817); how much rare kinds of supernova add is argued"
+re,0,0,0.1,0.0,0,0.9,0,s/r split,"the rapid neutron-capture share is given to merging neutron stars, which have been seen making heavy elements once (GW170817); how much rare kinds of supernova add is argued"
+os,0,0,0.1,0.0,0,0.9,0,s/r split,"the rapid neutron-capture share is given to merging neutron stars, which have been seen making heavy elements once (GW170817); how much rare kinds of supernova add is argued"
+ir,0,0,0.02,0.0,0,0.98,0,s/r split,"the rapid neutron-capture share is given to merging neutron stars, which have been seen making heavy elements once (GW170817); how much rare kinds of supernova add is argued"
+pt,0,0,0.05,0.0,0,0.95,0,s/r split,"the rapid neutron-capture share is given to merging neutron stars, which have been seen making heavy elements once (GW170817); how much rare kinds of supernova add is argued"
+au,0,0,0.06,0.0,0,0.94,0,s/r split,"the rapid neutron-capture share is given to merging neutron stars, which have been seen making heavy elements once (GW170817); how much rare kinds of supernova add is argued"
+hg,0,0,0.6,0.0,0,0.4,0,s/r split,"the rapid neutron-capture share is given to merging neutron stars, which have been seen making heavy elements once (GW170817); how much rare kinds of supernova add is argued"
+tl,0,0,0.75,0.0,0,0.25,0,s/r split,
+pb,0,0,0.8,0.0,0,0.2,0,s/r split,
+bi,0,0,0.2,0.0,0,0.8,0,s/r split,"the rapid neutron-capture share is given to merging neutron stars, which have been seen making heavy elements once (GW170817); how much rare kinds of supernova add is argued"
+th,0,0,0,0,0,1,0,r only,"the rapid neutron-capture share is given to merging neutron stars, which have been seen making heavy elements once (GW170817); how much rare kinds of supernova add is argued"
+u,0,0,0,0,0,1,0,r only,"the rapid neutron-capture share is given to merging neutron stars, which have been seen making heavy elements once (GW170817); how much rare kinds of supernova add is argued"
+po,0,0,0,0,0,1,0,decay,
+at,0,0,0,0,0,1,0,decay,
+rn,0,0,0,0,0,1,0,decay,
+fr,0,0,0,0,0,1,0,decay,
+ra,0,0,0,0,0,1,0,decay,
+ac,0,0,0,0,0,1,0,decay,
+pa,0,0,0,0,0,1,0,decay,
+tc,0,0,0,0,0,0,1,made,
+pm,0,0,0,0,0,0,1,made,
+np,0,0,0,0,0,0,1,made,
+pu,0,0,0,0,0,0,1,made,
+am,0,0,0,0,0,0,1,made,
+cm,0,0,0,0,0,0,1,made,
+bk,0,0,0,0,0,0,1,made,
+cf,0,0,0,0,0,0,1,made,
+es,0,0,0,0,0,0,1,made,
+fm,0,0,0,0,0,0,1,made,
+md,0,0,0,0,0,0,1,made,
+no,0,0,0,0,0,0,1,made,
+lr,0,0,0,0,0,0,1,made,
+rf,0,0,0,0,0,0,1,made,
+db,0,0,0,0,0,0,1,made,
+sg,0,0,0,0,0,0,1,made,
+bh,0,0,0,0,0,0,1,made,
+hs,0,0,0,0,0,0,1,made,
+mt,0,0,0,0,0,0,1,made,
+ds,0,0,0,0,0,0,1,made,
+rg,0,0,0,0,0,0,1,made,
+cn,0,0,0,0,0,0,1,made,
+nh,0,0,0,0,0,0,1,made,
+fl,0,0,0,0,0,0,1,made,
+mc,0,0,0,0,0,0,1,made,
+lv,0,0,0,0,0,0,1,made,
+ts,0,0,0,0,0,0,1,made,
+og,0,0,0,0,0,0,1,made,
