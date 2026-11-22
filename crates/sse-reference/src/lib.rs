@@ -553,7 +553,7 @@ impl Reference {
                 }
             }
             if let Some(ph) = row.get("phases").and_then(J::as_object) {
-                p.extend(check_vapour(id, ph));
+                p.extend(check_vapour(id, ph, self.molar_mass_kg_mol(id)));
             }
         }
         let substances = self.tables.get("substances").unwrap_or(&empty);
@@ -729,6 +729,20 @@ pub fn vapour_pressure_pa(fit: &J, t: f64) -> Option<f64> {
             }
             Some(m::exp(lnp) * 1e5)
         }
+        // Water ice, Feistel and Wagner 2007 as Fray and Schmitt 2009 give
+        // it: ln(P/Pt) = 1.5 ln(T/Tt) + (1 − Tt/T) Σ e_i (T/Tt)^i, with
+        // coeffs [Tt K, Pt Pa, e0..e6].
+        "feistel-wagner-2007" => {
+            let (tt, pt) = (*coeffs.first()?, *coeffs.get(1)?);
+            let th = t / tt;
+            let mut h = 0.0;
+            let mut x = 1.0;
+            for e in &coeffs[2..] {
+                h += e * x;
+                x *= th;
+            }
+            Some(pt * m::exp(1.5 * m::ln(th) + (1.0 - 1.0 / th) * h))
+        }
         // [p_ref Pa, t_ref K, latent heat J/mol].
         "clausius-clapeyron" => {
             let (p0, t0, l) = (*coeffs.first()?, *coeffs.get(1)?, *coeffs.get(2)?);
@@ -736,6 +750,49 @@ pub fn vapour_pressure_pa(fit: &J, t: f64) -> Option<f64> {
         }
         _ => None,
     }
+}
+
+fn valid_lo(fit: &J) -> Option<f64> {
+    fit.get("valid_k")
+        .and_then(J::as_array)
+        .and_then(|a| a.first())
+        .and_then(J::as_f64)
+}
+
+/// Sublimation pressure in Pa of a substance's solid at `t` K from its
+/// `phases` group: `vapour_pressure` (the fit that reaches the triple point)
+/// or, below that fit's range, `vapour_pressure_low` where the row has one
+/// (alpha nitrogen under beta, for instance). Below the lowest fit's range
+/// the curve goes on as Clausius-Clapeyron with the slope at the range's
+/// edge: the polynomials are not made to be read outside their data and
+/// run away there (CO2's A5/T⁵ overflows near 1 K).
+pub fn sublimation_pa(phases: &Map<String, J>, t: f64) -> Option<f64> {
+    let main = phases.get("vapour_pressure")?;
+    let lo = valid_lo(main);
+    let (fit, edge) = match (phases.get("vapour_pressure_low"), lo) {
+        (Some(low), Some(lo)) if t < lo => (low, valid_lo(low)),
+        _ => (main, lo),
+    };
+    match edge {
+        Some(e) if t < e && t > 0.0 => {
+            let h = 1e-3 * e;
+            let pe = vapour_pressure_pa(fit, e)?;
+            let a = vapour_pressure_pa(fit, e - h)?;
+            let b = vapour_pressure_pa(fit, e + h)?;
+            let slope = (m::ln(b) - m::ln(a)) / (1.0 / (e + h) - 1.0 / (e - h));
+            Some(pe * m::exp(slope * (1.0 / t - 1.0 / e)))
+        }
+        _ => vapour_pressure_pa(fit, t),
+    }
+}
+
+/// Latent heat of sublimation in J/mol from a substance's own vapour curve
+/// at `t` K (Clausius-Clapeyron: L = −R d ln P / d(1/T)).
+pub fn sublimation_latent_j_mol(phases: &Map<String, J>, t: f64) -> Option<f64> {
+    let h = 1e-3 * t;
+    let a = sublimation_pa(phases, t - h)?;
+    let b = sublimation_pa(phases, t + h)?;
+    Some(-R_GAS * (m::ln(b) - m::ln(a)) / (1.0 / (t + h) - 1.0 / (t - h)))
 }
 
 impl Reference {
@@ -779,7 +836,7 @@ impl Reference {
     }
 }
 
-fn check_vapour(id: &str, ph: &Map<String, J>) -> Vec<String> {
+fn check_vapour(id: &str, ph: &Map<String, J>, molar_kg: Option<f64>) -> Vec<String> {
     let mut p = vec![];
     let Some(fit) = ph.get("vapour_pressure") else {
         return p;
@@ -800,6 +857,45 @@ fn check_vapour(id: &str, ph: &Map<String, J>) -> Vec<String> {
         p.push(format!(
             "substance {id}: vapour curve gives {at:.4e} Pa at the triple point ({tt} K), not the triple-point pressure {pt:.4e} Pa"
         ));
+    }
+    // A low-temperature piece meets the main fit where the main one starts.
+    if let Some(low) = ph.get("vapour_pressure_low") {
+        let lo = fit
+            .get("valid_k")
+            .and_then(J::as_array)
+            .and_then(|a| a.first())
+            .and_then(J::as_f64);
+        match (lo, lo.and_then(|t| vapour_pressure_pa(low, t))) {
+            (Some(t), Some(a)) => {
+                let b = vapour_pressure_pa(fit, t).unwrap_or(f64::NAN);
+                let gap = m::ln(a / b).abs();
+                if gap.is_nan() || gap > TRIPLE_TOL {
+                    p.push(format!(
+                        "substance {id}: its two vapour curves disagree where they meet ({t} K): {a:.4e} Pa against {b:.4e} Pa"
+                    ));
+                }
+            }
+            _ => p.push(format!(
+                "substance {id}: vapour_pressure_low needs vapour_pressure to have a valid_k range and a fit the reader knows"
+            )),
+        }
+    }
+    // A typed sublimation heat (J/kg) agrees with the curve's slope where it
+    // was measured.
+    if let (Some(l), Some(mk)) = (num(ph.get("latent_sublimation")), molar_kg) {
+        let at = ph
+            .get("latent_sublimation")
+            .and_then(|v| v.get("at_k"))
+            .and_then(J::as_f64)
+            .unwrap_or(tt);
+        if let Some(from_curve) = sublimation_latent_j_mol(ph, at) {
+            let typed = l * mk;
+            if ((from_curve - typed) / typed).abs() > LATENT_TOL {
+                p.push(format!(
+                    "substance {id}: sublimation heat {typed:.0} J/mol at {at} K disagrees with the vapour curve's slope, which gives {from_curve:.0} J/mol"
+                ));
+            }
+        }
     }
     // The latent heat agrees with the curve's slope: d ln P / d(1/T) = -L/R.
     if let Some(l) = num(ph.get("latent_heat_sublimation_j_mol")) {
