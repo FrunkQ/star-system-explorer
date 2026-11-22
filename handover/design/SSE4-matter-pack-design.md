@@ -348,6 +348,16 @@ Orac first, people second. "A dense violet metal made in neutron-star mergers, a
 
 A mockup of this screen should be drawn before MP10 is built (question 9).
 
+### 8.6 The mockup, and how the screen behaves on a phone and in Night chart (Alex, 22 Nov: "Ref screen mockups look great, ensure they work on mobile and in dark scheme")
+The mockup is the Design artifact "SSE4 Reference screen mockup" (https://claude.ai/artifact/7xpcYZrMxnmmQp6et5YvPV, private to Alex): five desktop boards (Elements, Constants, Substances, Units and calendars, Adding an element), the same five in Night chart, and five phone boards in both schemes. MP10 builds to it. What the phone and night boards settle:
+
+- **Night chart is colours only.** Every board uses the theme tokens in `packages/skins/chart-room/src/themes.ts` and nothing else, so the two schemes share one layout. The seven origin colours keep their hues and take a lighter step for three of them (massive stars, neutron-star mergers, the grey) so they read on the dark ground; they are theme tokens too, so a later theme can restate them.
+- **Phone: pages become a row of chips that scrolls sideways**, in the same two groups (Nature, This setting). Units and Calendars are separate pages on a phone. A card is a sheet that rises from the foot, as everywhere else in the app.
+- **Phone periodic table: the whole table stays on screen as a small coloured map** (each cell filled with its origin shares, no letters), with a strip of full-size cells beneath it for the row around the chosen element. Tapping the map moves the strip; the strip swipes. Nobody has to hit an 18-pixel target.
+- **Phone tables turn each row into two lines** (name and note above, value and unit below), so no value is cut and nothing scrolls sideways except the chip rows.
+- **Adding an element is one page in three steps**: describe it, check the draft (every drafted value with its "modelled on" reason, and the load checks passed), see which worlds change. Beside the draft sits the ladder from section 6 with each rung on or off and what to fill in to switch on the next.
+- Every control is at least 44 px tall on the phone boards.
+
 ---
 
 ## 9. Standing rules this design keeps
