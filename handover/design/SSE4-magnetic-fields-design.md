@@ -118,7 +118,7 @@ Grades used below and on every card: **settled** (measured and understood), **em
 
 | Question | Grade | What is known | Source |
 |---|---|---|---|
-| Galactic fields | empirical | A few microgauss, following the spiral arms, about as much energy as the gas turbulence. Maintained by a large dynamo | Beck 2015 [G1]; Brandenburg and Subramanian 2005 [G2]; Jansson and Farrar 2012 [G3] |
+| Galactic fields | empirical | A few microgauss, following the spiral arms, about as much energy as the gas turbulence. Maintained by a large dynamo | Beck 2016 [G1]; Brandenburg and Subramanian 2005 [G2]; Jansson and Farrar 2012 [G3] |
 | What they do | settled | Hold cosmic rays in, make the galaxy glow in radio, shape nebulae, help decide whether clouds collapse | Crutcher 2012 [G4] |
 | Where the first field came from | **open** | Seeds from the early universe or from the first stars | Subramanian 2016 [G5]; Neronov and Vovk 2010 [G6] |
 | The star's bubble in the galaxy | settled in outline | The wind's own field keeps out most low-energy cosmic rays; the dose at a world depends on the star's wind and on where it is in the galaxy | Potgieter 2013 [G7] |
@@ -375,7 +375,7 @@ Checked 22 Nov by web search: **(a)** the DOI itself was seen on the publisher's
 
 **Planets and moons**
 - [P1] Stevenson 2003, Planetary magnetic fields, EPSL 208, 1. doi:10.1016/S0012-821X(02)01126-3
-- [P2] Christensen and Aubert 2006, GJI 166, 97. doi:10.1111/j.1365-246X.2006.02972.x (in the code)
+- [P2] Christensen and Aubert 2006, GJI 166, 97. doi:10.1111/j.1365-246X.2006.03009.x (the code had 02972.x; corrected in MF0)
 - [P3] Christensen, Holzwarth and Reiners 2009, Nature 457, 167. doi:10.1038/nature07626 (in the code)
 - [P4] Christensen 2010, Space Sci. Rev. 152, 565. doi:10.1007/s11214-009-9553-2 (in the code)
 - [P5] Olson and Christensen 2006, Dipole moment scaling for convection-driven planetary dynamos, EPSL 250, 561. doi:10.1016/j.epsl.2006.08.008 (b)
@@ -485,7 +485,7 @@ Checked 22 Nov by web search: **(a)** the DOI itself was seen on the publisher's
 - [R12] Hurley et al. 2005, An exceptionally bright flare from SGR 1806-20, Nature 434, 1098. doi:10.1038/nature03519
 
 **Galaxies**
-- [G1] Beck 2015, Magnetic fields in spiral galaxies, A&A Rev. 24, 4. doi:10.1007/s00159-015-0084-4
+- [G1] Beck 2016, Magnetic fields in spiral galaxies, A&A Rev. 24, 4. doi:10.1007/s00159-015-0084-4
 - [G2] Brandenburg and Subramanian 2005, Astrophysical magnetic fields and nonlinear dynamo theory, Physics Reports 417, 1. doi:10.1016/j.physrep.2005.06.005
 - [G3] Jansson and Farrar 2012, A new model of the Galactic magnetic field, ApJ 757, 14. doi:10.1088/0004-637X/757/1/14
 - [G4] Crutcher 2012, Magnetic fields in molecular clouds, ARA&A 50, 29. doi:10.1146/annurev-astro-081811-125514
