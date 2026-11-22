@@ -19,6 +19,7 @@ pub mod nebula;
 pub mod orbit;
 pub mod planet;
 pub mod reach;
+pub mod shield;
 pub mod star;
 pub mod tides;
 
@@ -43,6 +44,7 @@ pub fn atoms() -> Vec<Box<dyn sse_flow::Atom>> {
         .chain(activity::atoms())
         .chain(convection::atoms())
         .chain(field::atoms())
+        .chain(shield::atoms())
         .chain(air::atoms())
         .chain(chem::atoms())
         .collect()
@@ -333,6 +335,16 @@ pub const KIND_DESCRIPTIONS: &[(&str, &str)] = &[
     ("layer.outer_radius", "radius of a layer's top"),
     ("field.change_period", "period with which the outside magnetic field seen by a body changes"),
     ("induction.amplitude", "strength of a conducting layer's induced field relative to a perfect conductor's"),
+    // cosmic-ray shielding and dose (MF7)
+    ("shield.distance", "distance from a body's centre at which shielding is asked for"),
+    ("shield.magnetic_latitude", "latitude measured from a body's magnetic equator"),
+    ("shield.cutoff_rigidity", "least momentum per charge a cosmic ray needs to arrive (Størmer cut-off)"),
+    ("shield.space_share", "share of the free-space cosmic-ray dose carried by particles above the cut-off"),
+    ("shield.ground_share", "share of the no-cut-off ground dose left under a thick air at the cut-off"),
+    ("shield.free_space_dose_rate", "cosmic-ray dose rate in open space at the body's orbit, unshielded"),
+    ("atmosphere.column_mass", "mass of air above a unit area of ground"),
+    ("shield.open_sky", "share of the sky not blocked by the body itself"),
+    ("shield.dose_rate", "cosmic-ray dose rate after field and air"),
     // surface convection
     ("convection.cell_size", "diameter of a surface convection cell (granule)"),
     ("convection.speed", "speed of the churning gas near the surface"),
