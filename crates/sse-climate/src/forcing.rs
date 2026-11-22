@@ -428,6 +428,43 @@ impl IceAgeModel {
     }
 }
 
+impl IceAgeModel {
+    /// The dated onsets of the ice advances at `lat_deg` and `height_m`:
+    /// the sample times, years from the window's start as [`SpinSample`]
+    /// counts them, at which the ice balance turns from losing to gaining.
+    /// The same series [`IceAgeModel::at`] counts, so `len()` equals its
+    /// `advances`.
+    pub fn onsets_yr(
+        &self,
+        cs: &ClimateSettings,
+        cl: &Climate,
+        lapse_k_km: f64,
+        lat_deg: f64,
+        height_m: f64,
+    ) -> Vec<f64> {
+        let b0 = crate::water::water_at(cs, cl, lapse_k_km, lat_deg, height_m).ice_balance_m_yr;
+        let b1 =
+            crate::water::water_at(cs, &self.probe, lapse_k_km, lat_deg, height_m).ice_balance_m_yr;
+        let j0 = cl.lerp(&self.energy_now, lat_deg);
+        let j1 = cl.lerp(&self.energy_probe, lat_deg);
+        if (j1 - j0).abs() <= 1e-6 * j0.abs().max(1.0) {
+            return vec![];
+        }
+        let slope = (b1 - b0) / (j1 - j0);
+        let series: Vec<f64> = self
+            .energy
+            .iter()
+            .map(|e| b0 + slope * (cl.lerp(e, lat_deg) - j0))
+            .collect();
+        series
+            .windows(2)
+            .zip(self.spin.windows(2))
+            .filter(|(w, _)| w[0] <= 0.0 && w[1] > 0.0)
+            .map(|(_, s)| s[1].t_yr)
+            .collect()
+    }
+}
+
 /// The star's mass in kg from solar masses (for [`precession_parts`]).
 pub fn star_kg(msun: f64) -> f64 {
     msun * M_SUN_KG
