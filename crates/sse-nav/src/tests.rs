@@ -86,6 +86,7 @@ fn ideal() -> NavSystem {
         varpi_deg: 0.0,
         mean_longitude_deg: l,
         port: true,
+        magnetic_moment_a_m2: None,
     };
     NavSystem {
         name: "ideal".into(),
@@ -419,4 +420,70 @@ fn golden_nav() {
     }
     let want = std::fs::read_to_string(&path).expect("run with SSE_BLESS=1 once");
     assert_eq!(got, want, "nav golden changed");
+}
+
+#[test]
+fn radiation_belts_follow_the_magnetopause_not_a_mass_gate() {
+    let s = settings();
+    let sys = sol();
+    let rs = &s.radiation;
+    let reach = |n: &str| {
+        let b = sys.bodies.iter().find(|b| b.name == n).unwrap();
+        crate::hazards::belt_reach_radii(b, rs)
+    };
+    // Earth's magnetopause stands near 10 radii (Chapman and Ferraro).
+    let earth = reach("Earth").expect("Earth has belts");
+    assert!((8.0..13.0).contains(&earth), "Earth {earth}");
+    assert!(reach("Saturn").is_some(), "Saturn has belts");
+    assert!(reach("Jupiter").is_some());
+    assert!(reach("Uranus").is_some() && reach("Neptune").is_some());
+    // Mercury's field barely holds the wind off its surface; Mars and Venus have none.
+    assert!(reach("Mercury").is_none(), "Mercury {:?}", reach("Mercury"));
+    assert!(reach("Mars").is_none() && reach("Venus").is_none());
+}
+
+#[test]
+fn belt_dose_scales_with_the_field() {
+    let s = settings();
+    let sys = sol();
+    let st = |n: &str| {
+        crate::hazards::belt_strength(
+            sys.bodies.iter().find(|b| b.name == n).unwrap(),
+            &s.radiation,
+        )
+    };
+    assert!(
+        (st("Jupiter") - 1.0).abs() < 0.1,
+        "Jupiter {}",
+        st("Jupiter")
+    );
+    assert!(st("Earth") < 0.1 && st("Saturn") < 0.1);
+}
+
+#[test]
+fn leaving_earth_crosses_its_belts_briefly() {
+    let s = settings();
+    let sys = sol();
+    let r = req(
+        s.ships["chemical-transfer"].clone(),
+        body("Earth"),
+        Some(body("Mars")),
+        Prefer::SaveFuel,
+    );
+    let p = plan(&s, &sys, &r).unwrap();
+    let c = &p.candidates[0];
+    let h = c
+        .hazards
+        .iter()
+        .find(|h| h.kind == "belts" && h.text.contains("Earth"))
+        .expect("Earth's belts listed");
+    assert!(h.text.contains(" mSv"), "{}", h.text);
+    assert!(
+        !c.difficulty
+            .reasons
+            .iter()
+            .any(|r| r.contains("radiation belts")),
+        "{:?}",
+        c.difficulty.reasons
+    );
 }

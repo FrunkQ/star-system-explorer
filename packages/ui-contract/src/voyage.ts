@@ -33,13 +33,22 @@ export interface VoyageAsk {
   sensed_fuel?: Record<string, number>;
   surveyed?: string[];
   gambles?: boolean;
+  /** In one system (part 3b): a NAV fixture, an inline NAV system or an adopted system; from and to are bodies or belt:<name>. */
+  fixture?: string;
+  nav?: unknown;
+  system?: string;
+  at_s?: number;
+  depart_s?: number;
 }
 
 export interface VoyageLeg {
   from: string;
   to: string;
-  means: "jump" | "flight";
+  means: "jump" | "flight" | "course";
   distance_pc: number;
+  /** In-system legs: the NAV course (hohmann, lambert, torch) and the days waited for its window. */
+  course?: string;
+  wait_days?: number;
   counted_pc?: number;
   home_days: number;
   ship_days: number;
@@ -166,4 +175,42 @@ export function voyageFrame(w: number, h: number, points: readonly (readonly num
   const cx = (x0 + x1) / 2;
   const cy = (y0 + y1) / 2;
   return { scale, at: (p) => ({ x: w / 2 + (p[0]! - cx) * scale, y: h / 2 - (p[1]! - cy) * scale }) };
+}
+
+/** Ships for voyages inside one system (the base-nav pack's stock ships). */
+export const IN_SYSTEM_SHIPS: readonly { id: string; name: string; drive: string }[] = [
+  { id: "chemical-transfer", name: "Chemical transfer ship", drive: "chemical, coasts between burns" },
+  { id: "nuclear-thermal", name: "Nuclear thermal ship", drive: "nuclear thermal, coasts between burns" },
+  { id: "fusion-torch", name: "Fusion torch", drive: "1 g sustained (fictional)" },
+  { id: "rescue-cutter", name: "Rescue cutter", drive: "2 g sustained (fictional)" },
+];
+
+/** A place inside a system, as plan_voyage lists it. */
+export interface SystemPlace {
+  address: string;
+  name: string;
+  a_au: number;
+  fuel: string[];
+  belt: boolean;
+  visited: boolean;
+}
+
+/** plan_voyage's answer inside one system. */
+export interface SystemVoyagePlan {
+  scale: "system";
+  system: string;
+  ship: string;
+  depart_s: number;
+  places: SystemPlace[];
+  voyage: Voyage | null;
+  refusals: string[];
+  model: string[];
+}
+
+/** A log-radius axis: x for an orbit's size in au, so inner worlds and the Kuiper belt fit one line. */
+export function orbitAxis(w: number, places: readonly { a_au: number }[], pad = 28): (a_au: number) => number {
+  const as = places.map((p) => p.a_au).filter((a) => a > 0);
+  const lo = Math.log10(Math.min(...as, 0.3) * 0.8);
+  const hi = Math.log10(Math.max(...as, 2) * 1.15);
+  return (a) => pad + ((Math.log10(Math.max(a, 1e-3)) - lo) / (hi - lo || 1)) * (w - 2 * pad);
 }
