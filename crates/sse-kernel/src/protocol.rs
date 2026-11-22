@@ -2100,7 +2100,7 @@ pub enum Response {
     },
     /// `surface_frames`: `{body, label, source, at_s?, frames (version, detail,
     /// epoch_myr, grid {n, cells}, dirs (x y z per cell), frames (t_myr,
-    /// sea_level_m, plate, continental, elevation_m, vent, ice_m, temp_k,
+    /// sea_level_m, plate, continental, elevation_m, vent, arc, ridge, ice_m, temp_k,
     /// rain_m_yr, runoff_m_yr, why), events (t_myr, kind, text, dir?,
     /// plates?, radius_km?, diameter_km?, why), pending, why)}`.
     FramesMade {

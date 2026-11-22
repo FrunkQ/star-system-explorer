@@ -39,6 +39,8 @@ fn earth_frames_span_its_history() {
         for v in [
             &fr.elevation_m,
             &fr.vent,
+            &fr.arc,
+            &fr.ridge,
             &fr.ice_m,
             &fr.temp_k,
             &fr.rain_m_yr,
@@ -48,7 +50,9 @@ fn earth_frames_span_its_history() {
             assert!(v.iter().all(|x| x.is_finite()));
         }
         assert_eq!(fr.plate.len(), nc);
-        assert!(fr.vent.iter().all(|v| (0.0..=1.0).contains(v)));
+        for v in [&fr.vent, &fr.arc, &fr.ridge] {
+            assert!(v.iter().all(|v| (0.0..=1.0).contains(v)));
+        }
         assert!(fr.ice_m.iter().all(|v| *v >= 0.0));
         assert!(!fr.why.is_empty());
     }

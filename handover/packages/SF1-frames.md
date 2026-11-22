@@ -14,7 +14,7 @@ frames, events, pending, why}}}`.
   Orbit is the coarse grid (32 a face at pack defaults); Survey is the fine one (64).
 - **dirs**: the cell centres as unit vectors, x y z per cell, given once.
 - **frames**: one per plate snapshot, every `snapshot_every` steps (Earth: 45 frames over 4.5 Gyr). Each holds
-  t_myr, sea_level_m, plate (u16), continental, elevation_m, vent (0 to 1), ice_m, temp_k, rain_m_yr,
+  t_myr, sea_level_m, plate (u16), continental, elevation_m, vent, arc, ridge (each 0 to 1), ice_m, temp_k, rain_m_yr,
   runoff_m_yr and why. A world whose plates never moved gets 13 evenly spaced frames on one fixed surface.
 - **frames_max** thins the frames evenly and always keeps the last (the contract asks for 1 to keep its golden small).
 - **events**, in date order: the plate events (S2: rift, collision and the rest, with plates), eruptions (shield
@@ -28,8 +28,8 @@ frames, events, pending, why}}}`.
   (`Snapshot.cells`, never serialised). Recording changes nothing the run computes, so the surface goldens hold.
 - Elevation is `plates::cells_heights` (split out of `cell_heights`) at the snapshot date, taken from that date's
   sea level for today's ocean volume. These are tectonic heights: S3 wears only the last window.
-- Vent is the most recent of a cell's arc (counted at half), plume and flood dates, decaying as exp(−Δt / span),
-  where span is the time between frames. Shields active at the date and plains laid within the span also light
+- Vent is the most recent of a cell's plume and flood dates; arc its last date over a trench; ridge its ocean crust's
+  birth. Each decays as exp(−Δt / span), where span is the time between frames. Shields active at the date and plains laid within the span also light
   their footprints.
 - Climate is the one climate (`climate::world_climate`) at the frame's own date. The world's age is set to the
   date, so the host star's light and the envelope's mean temperature are those of then. Each cell's values come

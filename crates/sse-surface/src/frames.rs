@@ -10,9 +10,10 @@
 //! - **elevation_m**: the plate grid's tectonic heights at the date (S2's
 //!   ocean-floor ages, orogens, arcs, trenches and plumes), from that date's
 //!   sea level. S3 wears only the last window, so earlier frames are unworn.
-//! - **vent**, 0 to 1: how recently the cell erupted, from its arcs, plume
-//!   and flood dates and the shields and lava plains active then, decaying
-//!   over the time between frames.
+//! - **vent**, **arc**, **ridge**, 0 to 1 each: how recently the cell
+//!   erupted (plumes, floods, and the shields and lava plains active then),
+//!   stood on a volcanic arc over a sinking plate, or was made as new ocean
+//!   crust at a ridge, decaying over the time between frames.
 //! - **temp_k**, **rain_m_yr**, **runoff_m_yr**: the climate at the date,
 //!   read at each cell's latitude and height (W7a, W9).
 //! - **ice_m**: land whose ice balance is above zero holds an ice sheet,
@@ -57,7 +58,12 @@ pub struct Frame {
     pub plate: Vec<u16>,
     pub continental: Vec<bool>,
     pub elevation_m: Vec<f32>,
+    /// Plume, flood, shield and plains eruptions, 0 to 1.
     pub vent: Vec<f32>,
+    /// Arc volcanism over a sinking plate, 0 to 1.
+    pub arc: Vec<f32>,
+    /// New ocean crust at a spreading ridge, 0 to 1.
+    pub ridge: Vec<f32>,
     pub ice_m: Vec<f32>,
     pub temp_k: Vec<f32>,
     pub rain_m_yr: Vec<f32>,
@@ -100,8 +106,10 @@ fn f32s(v: impl Iterator<Item = f64>) -> Vec<f32> {
     v.map(|x| x as f32).collect()
 }
 
-/// How recently a cell erupted, 0 to 1, decaying over `span` Myr.
-fn vent_of(c: &Cell, t: f64, span: f64) -> f64 {
+/// How recently a cell erupted, 0 to 1 each, decaying over `span` Myr:
+/// (plume and flood eruptions, arc volcanism over a trench, new ocean crust
+/// at a ridge).
+fn vent_of(c: &Cell, t: f64, span: f64) -> (f64, f64, f64) {
     let k = |date: f64| {
         if date > t + 1e-9 {
             0.0
@@ -110,16 +118,15 @@ fn vent_of(c: &Cell, t: f64, span: f64) -> f64 {
         }
     };
     let mut v: f64 = 0.0;
-    if let Some(a) = c.arc_myr {
-        v = v.max(0.5 * k(a));
-    }
     for (d, _) in &c.volcanic {
         v = v.max(k(*d));
     }
     if let Some(f) = c.flood_myr {
         v = v.max(k(f));
     }
-    v
+    let arc = c.arc_myr.map(k).unwrap_or(0.0);
+    let ridge = if c.continental { 0.0 } else { k(c.born_myr) };
+    (v, arc, ridge)
 }
 
 fn angle(a: [f64; 3], b: [f64; 3]) -> f64 {
@@ -272,9 +279,16 @@ pub fn surface_frames(
         let elev: Vec<f64> = raw.iter().map(|z| z - sl.unwrap_or(0.0)).collect();
         // Vents: the cell's own eruptions, then the shields and plains
         // erupting at the date.
-        let mut vent: Vec<f64> = match cells {
-            Some(cs) => cs.iter().map(|c| vent_of(c, t, span)).collect(),
-            None => vec![0.0; nc],
+        let (mut vent, arc, ridge): (Vec<f64>, Vec<f64>, Vec<f64>) = match cells {
+            Some(cs) => {
+                let v: Vec<(f64, f64, f64)> = cs.iter().map(|c| vent_of(c, t, span)).collect();
+                (
+                    v.iter().map(|x| x.0).collect(),
+                    v.iter().map(|x| x.1).collect(),
+                    v.iter().map(|x| x.2).collect(),
+                )
+            }
+            None => (vec![0.0; nc], vec![0.0; nc], vec![0.0; nc]),
         };
         let mut lit = |dir: [f64; 3], radius_km: f64, v: f64| {
             let a = radius_km * 1000.0 / r;
@@ -326,6 +340,8 @@ pub fn surface_frames(
             continental,
             elevation_m: f32s(elev.into_iter()),
             vent: f32s(vent.into_iter()),
+            arc: f32s(arc.into_iter()),
+            ridge: f32s(ridge.into_iter()),
             ice_m: f32s(ice.into_iter()),
             temp_k: f32s(temp.into_iter()),
             rain_m_yr: f32s(rain.into_iter()),
