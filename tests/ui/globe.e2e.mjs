@@ -46,7 +46,7 @@ try {
     const errors = [];
     const gm = await (await browser.newContext({ viewport: { width: 1440, height: 900 } })).newPage();
     gm.on("pageerror", (e) => errors.push(e.message));
-    await gm.goto(base);
+    await gm.goto(base + "#chart");
     await gm.waitForSelector("[data-state-hash]:not([data-state-hash=''])", { timeout: 20000 });
 
     // Tarn first: a fixture world has a Cutaway but no surface tiles.
@@ -113,7 +113,7 @@ try {
     // Phone: the screen menu reaches the Body screen.
     const phone = await (await browser.newContext({ viewport: { width: 390, height: 844 }, hasTouch: true })).newPage();
     phone.on("pageerror", (e) => errors.push(e.message));
-    await phone.goto(base);
+    await phone.goto(base + "#chart");
     await phone.waitForSelector("[data-state-hash]:not([data-state-hash=''])", { timeout: 20000 });
     assert.ok(await phone.locator(".rail").isVisible(), "the instruments show on a phone");
     await go(phone, "body");

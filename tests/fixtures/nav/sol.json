@@ -1,5 +1,5 @@
 {
- "about": "The Solar System for NAV tests: JPL approximate Keplerian elements at J2000 (Standish; https://ssd.jpl.nasa.gov/planets/approx_pos.html, values written from memory, to verify), masses in Earth masses and mean radii. t0 is J2000 in universe seconds since the year 0 (2000 Julian years).",
+ "about": "The Solar System for NAV tests: JPL approximate Keplerian elements at J2000 (Standish; https://ssd.jpl.nasa.gov/planets/approx_pos.html, values written from memory, to verify), masses in Earth masses and mean radii. t0 is J2000 in universe seconds since the year 0 (2000 Julian years). Magnetic dipole moments (A m², from the equatorial surface field times R³ 4π/μ0): Mercury Anderson et al. 2011, Science 333, 1859 (195 nT R_M³); Earth IGRF-13 (Alken et al. 2021, 7.7e22); Jupiter JRM09 (Connerney et al. 2018, 4.17 G); Saturn Dougherty et al. 2018, Science 362, eaat5434 (0.21 G); Uranus and Neptune Ness et al. 1986 and 1989 (0.23 and 0.14 G). Venus and Mars have no global field.",
  "name": "Sol",
  "star_mass_msun": 1.0,
  "star_luminosity_lsun": 1.0,
@@ -17,7 +17,8 @@
    "node_deg": 48.33076593,
    "varpi_deg": 77.45779628,
    "mean_longitude_deg": 252.2503235,
-   "port": false
+   "port": false,
+   "magnetic_moment_a_m2": 2.8e+19
   },
   {
    "address": "u:sol/sys:sun/body:venus",
@@ -43,7 +44,8 @@
    "node_deg": 0.0,
    "varpi_deg": 102.93768193,
    "mean_longitude_deg": 100.46457166,
-   "port": true
+   "port": true,
+   "magnetic_moment_a_m2": 7.7e+22
   },
   {
    "address": "u:sol/sys:sun/body:mars",
@@ -69,7 +71,8 @@
    "node_deg": 100.47390909,
    "varpi_deg": 14.72847983,
    "mean_longitude_deg": 34.39644051,
-   "port": false
+   "port": false,
+   "magnetic_moment_a_m2": 1.52e+27
   },
   {
    "address": "u:sol/sys:sun/body:saturn",
@@ -82,7 +85,8 @@
    "node_deg": 113.66242448,
    "varpi_deg": 92.59887831,
    "mean_longitude_deg": 49.95424423,
-   "port": false
+   "port": false,
+   "magnetic_moment_a_m2": 4.6e+25
   },
   {
    "address": "u:sol/sys:sun/body:uranus",
@@ -95,7 +99,8 @@
    "node_deg": 74.01692503,
    "varpi_deg": 170.9542763,
    "mean_longitude_deg": 313.23810451,
-   "port": false
+   "port": false,
+   "magnetic_moment_a_m2": 3.8e+24
   },
   {
    "address": "u:sol/sys:sun/body:neptune",
@@ -108,7 +113,8 @@
    "node_deg": 131.78422574,
    "varpi_deg": 44.96476227,
    "mean_longitude_deg": -55.12002969,
-   "port": false
+   "port": false,
+   "magnetic_moment_a_m2": 2.1e+24
   }
  ],
  "belts": [

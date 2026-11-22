@@ -67,6 +67,15 @@ pub struct Conditions {
     /// out of its air).
     #[serde(default, skip_serializing_if = "BTreeMap::is_empty")]
     pub ground_ice_kg_m2: BTreeMap<String, f64>,
+    /// W7c: land fraction in equal strips of latitude, south to north,
+    /// resampled onto the climate's bands. Empty: every band holds the
+    /// world's own land fraction.
+    #[serde(default, skip_serializing_if = "Vec::is_empty")]
+    pub land_by_lat: Vec<f64>,
+    /// W7c: coasts crossed going once round each strip of latitude, as
+    /// `land_by_lat`. Empty: the pack's `coasts_per_band`.
+    #[serde(default, skip_serializing_if = "Vec::is_empty")]
+    pub coasts_by_lat: Vec<f64>,
 }
 
 impl Conditions {
@@ -158,4 +167,11 @@ pub struct Extra {
     pub ocean_fraction: Option<f64>,
     #[serde(default)]
     pub internal_flux_w_m2: Option<f64>,
+    /// W7c: land fraction in equal latitude strips (see
+    /// [`Conditions::land_by_lat`]).
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub land_by_lat: Option<Vec<f64>>,
+    /// W7c: coasts crossed going round each strip.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub coasts_by_lat: Option<Vec<f64>>,
 }

@@ -71,7 +71,7 @@ try {
     // Desktop, keyboard only.
     const page = await browser.newPage({ viewport: { width: 1440, height: 900 } });
     page.on("pageerror", (e) => errors.push(e.message));
-    await page.goto(url);
+    await page.goto(url + "#chart");
     await page.waitForSelector("[data-state-hash]:not([data-state-hash=''])", { timeout: 20000 });
     await desk(page, "Build");
     // The campaign opens with its recorded player-facing facts, inked at year 0; count edits after them.
@@ -80,7 +80,8 @@ try {
     const tabsToTarn = await tabTo(page, () => document.activeElement?.getAttribute("aria-label")?.startsWith("Tarn"));
     await page.keyboard.press("Enter");
     await page.waitForSelector("section[aria-label='Tarn']");
-    const tabsToMass = await tabTo(page, () => document.activeElement?.id && document.querySelector(`label[for='${document.activeElement.id}']`)?.textContent?.startsWith("Mass"), 20);
+    // From Tarn the way to Mass passes the Build tool bar (Undo, Redo, Copy, Keyboard) and the card's fields before it.
+    const tabsToMass = await tabTo(page, () => document.activeElement?.id && document.querySelector(`label[for='${document.activeElement.id}']`)?.textContent?.startsWith("Mass"), 24);
     await page.keyboard.press(process.platform === "darwin" ? "Meta+A" : "Control+A");
     await page.keyboard.type("0.9");
     await page.keyboard.press("Enter");
@@ -248,7 +249,7 @@ try {
         await ctx.addInitScript((t) => localStorage.setItem("sse4.theme", t), theme);
         const p = await ctx.newPage();
         p.on("pageerror", (e) => errors.push(e.message));
-        await p.goto(url);
+        await p.goto(url + "#chart");
         await p.waitForSelector("[data-state-hash]:not([data-state-hash=''])", { timeout: 20000 });
         await desk(p, "Build");
         await p.locator("[role=button][aria-label^='Tarn']").click();

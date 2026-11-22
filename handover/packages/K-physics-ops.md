@@ -117,3 +117,9 @@ at most 25) of the site from the world's tube fields (`sse_surface::caves::passa
 `caves_surveyed {caves: {body, label, source, at_s?, caves: {version, lat_deg, lon_deg, radius_km, level,
 spacing_m, fields, passages, why}}}`. Errors: `no_ground`, `bad_request`, plus the survey's. Heavy (the survey;
 the passages are tens of ms). See packages/S14a.md.
+
+## surface_frames (22 Nov, SF1)
+`{op: "surface_frames", fixture | system + body, at_s?, options?, detail?: "orbit" | "survey"}`. Records the plate
+run at every snapshot and returns `frames_made {frames: {body, label, source, at_s?, frames: {version, detail,
+epoch_myr, grid, dirs, frames, events, pending, why}}}`. Errors: `no_ground` (a giant), `bad_request`, plus the
+world's. Heavy (about 1 to 2 s at Orbit). See packages/SF1-frames.md.

@@ -1,0 +1,546 @@
+{
+ "schema": "sse.start-lines/0",
+ "note": "The opening line on the start sheet (top-level design 16). It changes by itself: the first three visits show lines 1 to 3, then a weighted pick, never the same twice running, preferring what this person has not opened. A line whose `needs` are not all built is held back. `opens` says what Show me does: a screen at system scale, a world screen (on the selected world, else the first), a desk, a dialog, a door of the sheet, or a link. Packs may add lines later. `atlas` is the sheet's \"What it can do\" list: ten verbs, each opening the real thing (tours come with top-level step 5).",
+ "lines": [
+  {
+   "id": "l1",
+   "headline": "Your sci-fi campaign, on real physics.",
+   "sentence": "Build the systems your players fly through, then share a screen that shows only what they have found.",
+   "opens": {
+    "desk": "run"
+   },
+   "weight": "first",
+   "audience": "table"
+  },
+  {
+   "id": "l2",
+   "headline": "A universe that works out its own physics.",
+   "sentence": "Go anywhere, at any time, and ask why.",
+   "opens": {
+    "door": "sol"
+   },
+   "weight": "first",
+   "needs": [
+    "sol"
+   ],
+   "audience": "learn"
+  },
+  {
+   "id": "l3",
+   "headline": "Come for the role-playing game. Leave with the astrophysics.",
+   "sentence": "Every number opens to the physics behind it, and to the paper behind that.",
+   "opens": {
+    "dialog": "ask"
+   },
+   "weight": "first",
+   "audience": "learn"
+  },
+  {
+   "id": "l4",
+   "headline": "Players see only what they have scanned.",
+   "sentence": "You hold the whole chart. Their screen fills in as they explore.",
+   "opens": {
+    "desk": "run"
+   },
+   "weight": "common",
+   "audience": "table"
+  },
+  {
+   "id": "l5",
+   "headline": "How long to Mars, and will the crew survive it?",
+   "sentence": "Courses compared by fuel, time, radiation dose and what they pass on the way.",
+   "opens": {
+    "screen": "route"
+   },
+   "weight": "common",
+   "audience": "table"
+  },
+  {
+   "id": "l6",
+   "headline": "What does the sky look like from there?",
+   "sentence": "Stand on any world and look up, through eyes, binoculars or a telescope.",
+   "opens": {
+    "screen": "window"
+   },
+   "weight": "common",
+   "audience": "table"
+  },
+  {
+   "id": "l7",
+   "headline": "Find tonight's story.",
+   "sentence": "Ask for the places worth a session: a world about to lose its oceans, a moon nobody has surveyed.",
+   "opens": {
+    "screen": "stories"
+   },
+   "weight": "common",
+   "audience": "table"
+  },
+  {
+   "id": "l8",
+   "headline": "Dress the bridge.",
+   "sentence": "Give players a green-screen terminal, a glass cockpit or a paper chart, all showing the same system.",
+   "opens": {
+    "screen": "screens"
+   },
+   "weight": "common",
+   "audience": "table"
+  },
+  {
+   "id": "l9",
+   "headline": "A Traveller sector, turned into real systems.",
+   "sentence": "Import the codes and get worlds whose physics agrees with them, with the ones that cannot flagged.",
+   "opens": {
+    "dialog": "bring"
+   },
+   "weight": "common",
+   "needs": [
+    "traveller-import"
+   ],
+   "audience": "table"
+  },
+  {
+   "id": "l10",
+   "headline": "Run an empire game with real fog of war.",
+   "sentence": "Each side sees only what it has discovered, on its own screen.",
+   "opens": {
+    "dialog": "share"
+   },
+   "weight": "common",
+   "audience": "table"
+  },
+  {
+   "id": "l11",
+   "headline": "Give the pirates something to do.",
+   "sentence": "Patrols, raiders and drones carry on by their own rules while the players are elsewhere.",
+   "opens": {
+    "desk": "run"
+   },
+   "weight": "common",
+   "needs": [
+    "programs"
+   ],
+   "audience": "table"
+  },
+  {
+   "id": "l12",
+   "headline": "The same universe on every screen at the table.",
+   "sentence": "No server holds your campaign. Each device works out the same result from the same seed.",
+   "opens": {
+    "dialog": "share"
+   },
+   "weight": "common",
+   "audience": "table"
+  },
+  {
+   "id": "l13",
+   "headline": "Build a world. Then find out what it does.",
+   "sentence": "Set a mass and an orbit. The air, the oceans and the seasons follow.",
+   "opens": {
+    "desk": "build"
+   },
+   "weight": "common",
+   "audience": "world"
+  },
+  {
+   "id": "l14",
+   "headline": "No excuse for bad physics.",
+   "sentence": "Make your setting as strange as you like. Where it breaks the rules, it says so and tells you why.",
+   "opens": {
+    "desk": "build"
+   },
+   "weight": "common",
+   "needs": [
+    "examples"
+   ],
+   "audience": "world"
+  },
+  {
+   "id": "l15",
+   "headline": "The universe is weirder than anything you would invent.",
+   "sentence": "Tar seas, moons heated from inside, stars that swallow their planets. They turn up without being asked.",
+   "opens": {
+    "screen": "stories"
+   },
+   "weight": "common",
+   "audience": "world"
+  },
+  {
+   "id": "l16",
+   "headline": "Grow a solar system from a cloud of gas.",
+   "sentence": "Watch the worlds form, migrate and collide, with every stage of the history kept.",
+   "opens": {
+    "dialog": "grow"
+   },
+   "weight": "common",
+   "audience": "world"
+  },
+  {
+   "id": "l17",
+   "headline": "Find a home.",
+   "sentence": "Ask for an ocean world with one moon and a quiet star, and be shown where one could be.",
+   "opens": {
+    "dialog": "find"
+   },
+   "weight": "common",
+   "needs": [
+    "find"
+   ],
+   "audience": "world"
+  },
+  {
+   "id": "l18",
+   "headline": "Design a planet nobody has thought of.",
+   "sentence": "Place it on the class chart and see what kind of world that combination makes.",
+   "opens": {
+    "screen": "classes"
+   },
+   "weight": "common",
+   "needs": [
+    "class-atlas"
+   ],
+   "audience": "world"
+  },
+  {
+   "id": "l19",
+   "headline": "Writing a novel? Check the voyage.",
+   "sentence": "How long it takes, what it costs in fuel, and what the crew sees on arrival.",
+   "opens": {
+    "screen": "route"
+   },
+   "weight": "common",
+   "audience": "world"
+  },
+  {
+   "id": "l20",
+   "headline": "Borrow someone else's galaxy.",
+   "sentence": "Open a campaign from the Explorers library, or take one world from it for your own.",
+   "opens": {
+    "dialog": "explorers"
+   },
+   "weight": "common",
+   "needs": [
+    "explorers-shelf"
+   ],
+   "audience": "world"
+  },
+  {
+   "id": "l21",
+   "headline": "Bring your old maps.",
+   "sentence": "Saves from version 3, Universe Sandbox and SpaceEngine come in with a report of what changed.",
+   "opens": {
+    "dialog": "bring"
+   },
+   "weight": "common",
+   "needs": [
+    "converter"
+   ],
+   "audience": "world"
+  },
+  {
+   "id": "l22",
+   "headline": "Ten billion years on one slider.",
+   "sentence": "Age the Sun and watch what happens to Earth.",
+   "opens": {
+    "door": "sol"
+   },
+   "weight": "common",
+   "needs": [
+    "sol"
+   ],
+   "audience": "learn"
+  },
+  {
+   "id": "l23",
+   "headline": "Cut a planet in half.",
+   "sentence": "Core, mantle, crust, ocean and air, each with the reason it is there.",
+   "opens": {
+    "world": "cutaway"
+   },
+   "weight": "common",
+   "audience": "learn"
+  },
+  {
+   "id": "l24",
+   "headline": "See it in X-rays.",
+   "sentence": "Switch the light you look in and the same star becomes a different object.",
+   "opens": {
+    "control": "light"
+   },
+   "weight": "common",
+   "audience": "learn"
+  },
+  {
+   "id": "l25",
+   "headline": "Why is this planet here at all?",
+   "sentence": "Follow one world back through its history to the dust it formed from.",
+   "opens": {
+    "dialog": "grow"
+   },
+   "weight": "common",
+   "audience": "learn"
+  },
+  {
+   "id": "l26",
+   "headline": "Is anything alive down there?",
+   "sentence": "How a living world got its air, and what lives on what.",
+   "opens": {
+    "world": "life"
+   },
+   "weight": "common",
+   "audience": "learn"
+  },
+  {
+   "id": "l27",
+   "headline": "How big is it, really?",
+   "sentence": "Put any worlds and stars side by side at true scale.",
+   "opens": {
+    "screen": "compare"
+   },
+   "weight": "common",
+   "audience": "learn"
+  },
+  {
+   "id": "l28",
+   "headline": "What if Jupiter were closer?",
+   "sentence": "Try it on a branch. Keep the result or throw it away.",
+   "opens": {
+    "door": "sol"
+   },
+   "weight": "common",
+   "needs": [
+    "sol"
+   ],
+   "audience": "learn"
+  },
+  {
+   "id": "l29",
+   "headline": "Could we have found this planet from Earth?",
+   "sentence": "Try the real methods: the dip as it crosses its star, the wobble it gives it.",
+   "opens": {
+    "screen": "survey"
+   },
+   "weight": "common",
+   "needs": [
+    "survey-from-afar"
+   ],
+   "audience": "learn"
+  },
+  {
+   "id": "l30",
+   "headline": "Read a star's light.",
+   "sentence": "A spectrum of anything, with the lines labelled and what they tell you.",
+   "opens": {
+    "screen": "spectrum"
+   },
+   "weight": "common",
+   "needs": [
+    "spectrum"
+   ],
+   "audience": "learn"
+  },
+  {
+   "id": "l31",
+   "headline": "Change the physics.",
+   "sentence": "Each rule is a small diagram you can open, edit and trace to its source.",
+   "opens": {
+    "screen": "physics"
+   },
+   "weight": "common",
+   "audience": "learn"
+  },
+  {
+   "id": "l32",
+   "headline": "Teach a class with it.",
+   "sentence": "Make a tour of saved places with your own captions, and hand out the link.",
+   "opens": {
+    "dialog": "tours"
+   },
+   "weight": "common",
+   "needs": [
+    "tours"
+   ],
+   "audience": "learn"
+  },
+  {
+   "id": "l33",
+   "headline": "Settle an argument.",
+   "sentence": "What would Earth be like at the distance of Mars? Move it and see.",
+   "opens": {
+    "door": "sol"
+   },
+   "weight": "common",
+   "needs": [
+    "sol"
+   ],
+   "audience": "learn"
+  },
+  {
+   "id": "l34",
+   "headline": "Just wander.",
+   "sentence": "There is always another system, and nobody has looked at most of them.",
+   "opens": {
+    "screen": "explore"
+   },
+   "weight": "medium",
+   "audience": "play"
+  },
+  {
+   "id": "l35",
+   "headline": "Break it.",
+   "sentence": "Every example can be wrecked and put back with one button.",
+   "opens": {
+    "door": "example"
+   },
+   "weight": "medium",
+   "needs": [
+    "examples"
+   ],
+   "audience": "play"
+  },
+  {
+   "id": "l36",
+   "headline": "Zoom out until galaxies are dots.",
+   "sentence": "From one world to the cosmic web, and back again.",
+   "opens": {
+    "screen": "explore"
+   },
+   "weight": "medium",
+   "audience": "play"
+  },
+  {
+   "id": "l37",
+   "headline": "Take its photograph.",
+   "sentence": "A world in true colour, drawn from its own air and ground.",
+   "opens": {
+    "world": "body"
+   },
+   "weight": "medium",
+   "audience": "play"
+  },
+  {
+   "id": "l38",
+   "headline": "Listen to a solar system.",
+   "sentence": "Orbits as sound, off until you ask for it.",
+   "opens": {
+    "control": "sound"
+   },
+   "weight": "medium",
+   "audience": "play"
+  },
+  {
+   "id": "l39",
+   "headline": "Ask it anything.",
+   "sentence": "Tars answers from the physics in front of you, and says where the answer came from.",
+   "opens": {
+    "dialog": "ask"
+   },
+   "weight": "medium",
+   "audience": "play"
+  },
+  {
+   "id": "l40",
+   "headline": "Tell it what you want built.",
+   "sentence": "Describe a screen, a lens or a rule in a sentence and Orac drafts it for you to check.",
+   "opens": {
+    "dialog": "ask"
+   },
+   "weight": "medium",
+   "audience": "play"
+  },
+  {
+   "id": "l41",
+   "headline": "Build your own game on it.",
+   "sentence": "The engine is open source and repeatable: the same seed gives the same universe on every device.",
+   "opens": {
+    "link": "https://github.com/FrunkQ/star-system-explorer"
+   },
+   "weight": "seldom",
+   "audience": "rare"
+  },
+  {
+   "id": "l42",
+   "headline": "Need a starship screen for your film?",
+   "sentence": "Themed displays driven by a real system make convincing background screens.",
+   "opens": {
+    "screen": "screens"
+   },
+   "weight": "seldom",
+   "audience": "rare"
+  }
+ ],
+ "atlas": [
+  {
+   "verb": "Age the Sun",
+   "hint": "Ten billion years on one slider",
+   "opens": {
+    "door": "sol"
+   },
+   "needs": [
+    "sol"
+   ]
+  },
+  {
+   "verb": "Cut a world open",
+   "hint": "Its shells from core to sky",
+   "opens": {
+    "world": "cutaway"
+   }
+  },
+  {
+   "verb": "Take a photograph",
+   "hint": "A world in its own light and air",
+   "opens": {
+    "world": "body"
+   }
+  },
+  {
+   "verb": "See in other light",
+   "hint": "Infrared, ultraviolet, X-rays, radio",
+   "opens": {
+    "control": "light"
+   }
+  },
+  {
+   "verb": "Follow life",
+   "hint": "What lives on what, and the air it makes",
+   "opens": {
+    "world": "life"
+   }
+  },
+  {
+   "verb": "Plan a trip",
+   "hint": "Time, fuel and dose between worlds",
+   "opens": {
+    "screen": "route"
+   }
+  },
+  {
+   "verb": "Look out of the window",
+   "hint": "The sky from any world",
+   "opens": {
+    "screen": "window"
+   }
+  },
+  {
+   "verb": "Zoom all the way out",
+   "hint": "To the galaxy and the cosmic web",
+   "opens": {
+    "screen": "explore"
+   }
+  },
+  {
+   "verb": "Ask why",
+   "hint": "Tars answers from the physics in view",
+   "opens": {
+    "dialog": "ask"
+   }
+  },
+  {
+   "verb": "Run a game",
+   "hint": "Share a players' screen that fills in as they explore",
+   "opens": {
+    "desk": "run"
+   }
+  }
+ ]
+}

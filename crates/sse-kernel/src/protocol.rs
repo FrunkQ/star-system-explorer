@@ -725,6 +725,36 @@ pub enum Request {
         extent_mpc: f64,
         n: u32,
     },
+    /// Time-lapse frames: a world's surface (a `fixture`, or a `body` of an
+    /// adopted `system` at `at_s`) as keyframes on the S2 plate grid at its
+    /// plate snapshot dates, from its first plates to the epoch, with dated
+    /// events. `detail` is `orbit` (the coarse grid, default) or `survey`;
+    /// `frames_max` thins the frames evenly (the last always kept).
+    /// Read only.
+    SurfaceFrames {
+        #[serde(default)]
+        #[ts(optional)]
+        system: Option<String>,
+        #[serde(default)]
+        #[ts(optional)]
+        body: Option<String>,
+        #[serde(default)]
+        #[ts(optional)]
+        fixture: Option<String>,
+        #[serde(default)]
+        #[ts(optional, type = "number")]
+        at_s: Option<i64>,
+        #[serde(default)]
+        #[ts(optional, type = "unknown")]
+        options: Option<serde_json::Value>,
+        #[serde(default)]
+        #[ts(optional)]
+        detail: Option<String>,
+        /// At most this many frames, evenly spaced, always ending on the epoch.
+        #[serde(default)]
+        #[ts(optional)]
+        frames_max: Option<u32>,
+    },
     /// S14a's cave survey (Site level): survey a world as `survey_surface`
     /// does (a `fixture`, or a `body` of an adopted `system` at `at_s`) and
     /// place the lava-tube passages within `radius_km` (default 5, at most
@@ -1152,7 +1182,9 @@ pub enum Request {
     /// of fuel where the ship's sensors have looked (else the star's own
     /// giant-planet odds); `gambles` lets a plan hope for fuel in unsurveyed
     /// systems at odds above the pack's floor. `minimise` is `home_time`, `ship_time`, `fuel` or
-    /// `legs`. Read only; refusals come back in words.
+    /// `legs`. Inside one system (a `fixture`, `nav` or `system` given) the
+    /// places are its bodies and belts and the legs are NAV's courses with
+    /// their windows. Read only; refusals come back in words.
     PlanVoyage {
         from: String,
         #[serde(default)]
@@ -1181,6 +1213,27 @@ pub enum Request {
         #[serde(default)]
         #[ts(optional)]
         gambles: Option<bool>,
+        /// In-system voyages (part 3b): give one of a NAV `fixture`, an
+        /// inline `nav` system or an adopted `system` (read at `at_s`, with
+        /// `ports`), and `from` and `to` are bodies (or `belt:<name>`).
+        #[serde(default)]
+        #[ts(optional)]
+        fixture: Option<String>,
+        #[serde(default)]
+        #[ts(optional, type = "unknown")]
+        nav: Option<serde_json::Value>,
+        #[serde(default)]
+        #[ts(optional)]
+        system: Option<String>,
+        #[serde(default)]
+        #[ts(optional, type = "number")]
+        at_s: Option<i64>,
+        #[serde(default)]
+        #[ts(optional)]
+        ports: Option<Vec<String>>,
+        #[serde(default)]
+        #[ts(optional)]
+        depart_s: Option<f64>,
     },
     /// Make a fill star permanent: its whole drawn description (address,
     /// cell, frame and slot, birth, mass, companions, abundances, orbit) is
@@ -1351,6 +1404,7 @@ impl Request {
             Request::ClassifyPreview { .. } => "classify_preview",
             Request::PlanDescent { .. } => "plan_descent",
             Request::SurveyCaves { .. } => "survey_caves",
+            Request::SurfaceFrames { .. } => "surface_frames",
             Request::Systems => "systems",
             Request::LifeView { .. } => "life_view",
             Request::ExportChronicle => "export_chronicle",
@@ -1569,6 +1623,11 @@ pub fn ops() -> Vec<OpInfo> {
             "a survey as survey_surface (cached for the same world), one site read of about 30 heights, and a descent at 0.1 s steps (well under 0.1 s native)",
         ),
         o(
+            "surface_frames",
+            Cost::Heavy,
+            "the plate run recorded at every snapshot, the impacts, and one climate per frame: about 1 to 2 s native at the Orbit level; the Survey grid is four times the cells",
+        ),
+        o(
             "survey_caves",
             Cost::Heavy,
             "a survey as survey_surface (cached for the same world), then up to 40 steps of 5 height reads per passage near the site (tens of ms native)",
@@ -1659,7 +1718,7 @@ pub fn ops() -> Vec<OpInfo> {
         o(
             "plan_voyage",
             Cost::Medium,
-            "draws the star cells around the start and the destination (up to 125), then searches legs with fuel carried; read only",
+            "between stars: draws the star cells around the start and the destination (up to 125), then searches legs with fuel carried; in a system: one NAV course plan per place per step (about 0.1 to 2 s native); read only",
         ),
         o(
             "campaign_tags",
@@ -2086,6 +2145,15 @@ pub enum Response {
         #[ts(type = "unknown")]
         plan: serde_json::Value,
     },
+    /// `surface_frames`: `{body, label, source, at_s?, frames (version, detail,
+    /// epoch_myr, grid {n, cells}, dirs (x y z per cell), frames (t_myr,
+    /// sea_level_m, plate, continental, elevation_m, vent, arc, ridge, ice_m, temp_k,
+    /// rain_m_yr, runoff_m_yr, why), events (t_myr, kind, text, dir?,
+    /// plates?, radius_km?, diameter_km?, why), pending, why)}`.
+    FramesMade {
+        #[ts(type = "unknown")]
+        frames: serde_json::Value,
+    },
     /// `survey_caves`: `{body, label, source, at_s?, caves (version, lat_deg,
     /// lon_deg, radius_km, level, spacing_m, fields, passages (id, field,
     /// length_km, width_m, roof_m, depth_m, nodes (lat, lon, x_m, y_m,
@@ -2413,7 +2481,10 @@ pub enum Response {
     /// jump_fuel_t, propellant_t, peak_beta?, coast, fictional, gamble,
     /// refuel?, jump_fuel_left_t, propellant_left_t, words}], distance_pc,
     /// home_days, ship_days, jump_fuel_t, propellant_t, refuels, gambles,
-    /// fictional, needs?} | null, refusals: [text], model}`.
+    /// fictional, needs?} | null, refusals: [text], model}`; inside a system
+    /// `{scale: "system", system, ship, depart_s, places: [{address, name,
+    /// a_au, fuel, belt, visited}], voyage | null, refusals, model}`, its legs
+    /// with `means: "course"`, `course` and `wait_days`.
     VoyagePlanned {
         #[ts(type = "unknown")]
         voyage: serde_json::Value,

@@ -16,6 +16,8 @@
   import SoundControl from "../../sound/src/SoundControl.svelte";
   import LightControl from "./LightControl.svelte";
   import MakeSystem from "./MakeSystem.svelte";
+  import StartSheet, { type StartAction } from "./StartSheet.svelte";
+  import startDoc from "./documents/start.lines.json";
   import LookAhead from "./LookAhead.svelte";
   import { listedTitle, sceneAt, sceneFromResolved, type LookedAhead, type SystemSpec } from "../../ui-contract/src/index.ts";
   import lightDoc from "./documents/light.recipes.json";
@@ -35,6 +37,7 @@
   import { orbitScene, voicesFromSystem } from "../../ui-contract/src/index.ts";
   import { orbitBodies, phasesFrom, withPhases, yearsToSeconds } from "../../ui-contract/src/index.ts";
   import { compareScenes, dropWhatIf, keepWhatIf, openWhatIf } from "../../ui-contract/src/index.ts";
+  import { AU_M, copyClip, missingPacks, placeClip, primaryOf, readClip, clipWords, type Clip } from "../../ui-contract/src/index.ts";
   import { allLenses, checkLens, defaultLens, hasTool, lensAudience, type Lens, type Vocab } from "../../ui-contract/src/index.ts";
   import { themeCss, THEMES } from "../../skins/chart-room/src/index.ts";
   import { ALL_THEMES } from "../../skins/player/src/index.ts";
@@ -535,6 +538,43 @@
   let agentsOpen = $state(false);
   let makeDialog: HTMLDialogElement | undefined = $state();
   let makeOpen = $state(false);
+  let makeStart = $state<"import" | "generate">("import");
+  function openMake(tab: "import" | "generate") {
+    makeStart = tab;
+    makeOpen = true;
+    makeDialog?.showModal();
+  }
+
+  // The start sheet (top-level design 3.1, step 3): what the app opens on, unless this device asked to skip it or the
+  // address ends in #chart. Features the sheet may name once they are built ("sol", "tours", "find", ...): none yet.
+  const STARTED: ReadonlySet<string> = new Set();
+  let startOpen = $state(typeof location !== "undefined" && location.hash !== "#chart" && loadPref("start") !== "skip");
+  const keptSave = readStored(`u:${base.universe.id}`).save;
+  const carryOn = keptSave ? { title: keptSave.title, when: new Date(keptSave.saved_at).toLocaleString("en-GB", { dateStyle: "medium", timeStyle: "short" }) } : null;
+  /** A world for the world instruments when none is selected: the selected body's world, else the first planet. */
+  function someWorld(): string | undefined {
+    const sel = scene.subjects.find((x) => x.address === ws.selection);
+    if (sel && sel.kind !== "star") return sel.address;
+    return systemOrder(scene).find((x) => x.kind === "planet")?.address;
+  }
+  function fromStart(a: StartAction) {
+    startOpen = false;
+    queueMicrotask(() => {
+      if ("door" in a) {
+        if (a.door === "grow") openMake("generate");
+        else if (a.door === "bring") campaignDialog?.showModal();
+      } else if ("desk" in a) chooseDesk(a.desk);
+      else if ("screen" in a) (toSystem(), go(a.screen));
+      else if ("world" in a) (toWorld(someWorld()), (ws.screen = a.world));
+      else if ("dialog" in a) {
+        if (a.dialog === "ask") ((agentsOpen = true), agentsDialog?.showModal());
+        else if (a.dialog === "grow") openMake("generate");
+        else if (a.dialog === "bring") campaignDialog?.showModal();
+        else if (a.dialog === "share" && share) window.open(share.start(), "_blank", "noopener");
+      } else if ("control" in a) document.querySelector<HTMLButtonElement>(a.control === "light" ? ".light .toggle" : ".sound .toggle")?.click();
+      else if ("link" in a) window.open(a.link, "_blank", "noopener");
+    });
+  }
   const agentContext = $derived.by(() => {
     const sub = scene.subjects.find((x) => x.address === ws.selection);
     const head = `${scene.title}: ${scene.subtitle}.`;
@@ -652,6 +692,83 @@
     undoNote = r === null ? (back ? "Nothing to undo." : "Nothing to redo.") : r.status === "applied" ? null : "Could not change it back.";
   }
 
+  // Copy and paste (top-level design 8.2). Copy takes the selected body and everything under it as a clip on the
+  // clipboard; Paste reads one on the Build desk and shows where it would land. Placing it as one undo step comes with
+  // the kernel's batch edit (part 2).
+  let clipNote = $state<string | null>(null);
+  let clipDialog: HTMLDialogElement | undefined = $state();
+  let pasted = $state<{ clip: Clip; words: string; host: string; hostLabel: string; a_au?: number; missing: { id: string; version: string; have?: string }[]; placed: { address: string; label: string; kind: string }[] } | null>(null);
+  const clipArmed = $derived(desk === "build" && railScale !== "workshop" && hasTool(ws.lens, "clip"));
+  const stackPacks = () => (session?.stack().base ?? []).map((p) => ({ id: p.id, version: p.version }));
+  function copyText(): { text: string; words: string; left: string[] } | null {
+    const a = ws.selection;
+    if (!a) return null;
+    const c = copyClip(scene, a, { packs: stackPacks() });
+    return c ? { text: c.text, words: c.words, left: c.left } : null;
+  }
+  function copiedNote(c: { words: string; left: string[] }) {
+    clipNote = `Copied ${c.words}. Paste it on the Build desk of any campaign${c.left.length ? `; ${c.left.slice(0, 3).join(", ").toLowerCase()}${c.left.length > 3 ? " and more" : ""} will be worked out again where it lands` : ""}.`;
+  }
+  async function copyBody() {
+    const c = copyText();
+    if (!c) return void (clipNote = "Select a body to copy.");
+    try {
+      await navigator.clipboard.writeText(c.text);
+      copiedNote(c);
+    } catch {
+      // No clipboard permission (an insecure page, or a refused prompt): the copy event carries it instead.
+      copyFallback = c;
+      if (!document.execCommand("copy")) clipNote = "The browser would not let the chart room use the clipboard. Select the body and press Ctrl+C.";
+    }
+  }
+  let copyFallback: { text: string; words: string; left: string[] } | null = null;
+  function oncopy(e: ClipboardEvent) {
+    const t = e.target as HTMLElement;
+    if (!copyFallback && (!clipArmed || t.closest?.("input, textarea, select, dialog") || (window.getSelection()?.toString() ?? ""))) return;
+    const c = copyFallback ?? copyText();
+    copyFallback = null;
+    if (!c || !e.clipboardData) return;
+    e.clipboardData.setData("text/plain", c.text);
+    e.preventDefault();
+    copiedNote(c);
+  }
+  function onpaste(e: ClipboardEvent) {
+    const t = e.target as HTMLElement;
+    if (t.closest?.("input, textarea, select, dialog")) return;
+    const text = e.clipboardData?.getData("text/plain") ?? "";
+    const r = readClip(text);
+    if (!r.ok && !r.v3 && desk !== "build") return;
+    e.preventDefault();
+    pasteText(text);
+  }
+  async function pasteFromMenu() {
+    moreOpen = false;
+    try {
+      pasteText(await navigator.clipboard.readText());
+    } catch {
+      clipNote = "The browser would not let the chart room read the clipboard. Press Ctrl+V on the chart instead.";
+    }
+  }
+  function pasteText(text: string) {
+    const r = readClip(text);
+    if (desk === "explore") return void (clipNote = "Paste works on the Build desk. Press E to switch to Build.");
+    if (desk === "run") return void (clipNote = "On the Run desk only ships and stations from stock can be pasted. Press E to paste on the Build desk.");
+    if (!r.ok) return void (clipNote = r.why);
+    const sel = scene.subjects.find((x) => x.address === ws.selection);
+    const primary = primaryOf(scene);
+    // What it orbits: a moon goes round the selected planet (or the planet of a selected moon); anything else goes
+    // round the selected star, else the system's primary. The clip's own distance is kept.
+    const rootKind = r.clip.nodes[0]!.kind;
+    const planetOf = (x: typeof sel) => (x?.kind === "planet" ? x : x?.kind === "moon" ? scene.subjects.find((y) => y.address === x.parent) : undefined);
+    const host = rootKind === "moon" ? (planetOf(sel) ?? primary) : sel?.kind === "star" ? sel : primary;
+    if (!host) return void (clipNote = "There is no star here to paste around.");
+    const a = r.clip.events.find((x) => x.node === r.clip.root && x.field === "orbit.semi_major_axis")?.value;
+    const p = placeClip(r.clip, { system: scene.system, host: host.address, hostKind: host.kind, taken: scene.subjects.map((x) => x.address) });
+    pasted = { clip: r.clip, words: clipWords(r.clip), host: host.address, hostLabel: host.label, ...(typeof a === "number" ? { a_au: a / AU_M } : {}), missing: missingPacks(r.clip, stackPacks()), placed: p.placed };
+    clipNote = null;
+    clipDialog?.showModal();
+  }
+
   function view(node: HTMLElement, m: { module: ViewModule; params: Record<string, Json> }) {
     const h = m.module.mount(node, { session: session!, workspace: ws, params: m.params, mark: (s) => lightMark(symbols.marker().mark(subjectOf(s)), s.address), symbology: symbols, styles: styleHost }, shown);
     handles.push(h);
@@ -675,6 +792,11 @@
   }
 
   function onkeydown(e: KeyboardEvent) {
+    // The start sheet takes no chart keys; Escape leaves it for the chart.
+    if (startOpen) {
+      if (e.key === "Escape") ((startOpen = false), e.preventDefault());
+      return;
+    }
     const t = e.target as HTMLElement;
     if (t.closest("input, textarea, select, dialog")) return;
     if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === "z") {
@@ -715,9 +837,10 @@
   }
 </script>
 
-<svelte:window {onkeydown} onpointerdown={(e) => moreOpen && !(e.target as HTMLElement).closest(".more") && (moreOpen = false)} />
+<svelte:window {onkeydown} {oncopy} {onpaste} onpointerdown={(e) => moreOpen && !(e.target as HTMLElement).closest(".more") && (moreOpen = false)} />
 
-<div class="app" data-depth={depth} data-state-hash={status.hash} data-stack-hash={status.stack} data-physics={status.campaign ? "campaign" : "base"}>
+{#if startOpen}<StartSheet doc={startDoc as never} built={STARTED} {carryOn} sample={base.title === "Kestrel" ? "Kestrel Reach" : base.title} ready={!!session} onopen={fromStart} />{/if}
+<div class="app" inert={startOpen} data-depth={depth} data-state-hash={status.hash} data-stack-hash={status.stack} data-physics={status.campaign ? "campaign" : "base"}>
   <header class="bar">
     <!-- Where (top-level design 2.1): the place line is the title, from the largest scale shown to the one in view. -->
     <nav class="place" aria-label="Place" data-scale={railScale}>
@@ -773,9 +896,14 @@
         <div class="menu" id="more-menu" role="group" aria-label="More">
           <button type="button" class="ask-more" onclick={() => ((moreOpen = false), (agentsOpen = true), agentsDialog?.showModal())}>Ask Tars, Orac or Minerva</button>
           <div class="depth-more"><span class="depth-k">Depth</span><Segmented label="Depth in More" value={depth} options={DEPTHS} onchange={chooseDepth} /></div>
+          {#if clipArmed}
+            <button type="button" data-more-copy disabled={!ws.selection} onclick={() => ((moreOpen = false), void copyBody())}>Copy {selName ?? "a body"} <kbd>Ctrl+C</kbd></button>
+            <button type="button" data-more-paste onclick={pasteFromMenu}>Paste <kbd>Ctrl+V</kbd></button>
+          {/if}
           <button type="button" onclick={() => ((moreOpen = false), toWorkshop())}>Workshop</button>
           <button type="button" onclick={() => ((moreOpen = false), (offered = null), (confirmFresh = false), campaignDialog?.showModal())}>Campaign… <small>save, open, start fresh</small></button>
-          <button type="button" onclick={() => ((moreOpen = false), (makeOpen = true), makeDialog?.showModal())} title="Import a V3 save or grow a new system, and add it to the campaign">Make a system…</button>
+          <button type="button" onclick={() => ((moreOpen = false), openMake("import"))} title="Import a V3 save or grow a new system, and add it to the campaign">Make a system…</button>
+          <button type="button" data-more-start onclick={() => ((moreOpen = false), (startOpen = true))}>Start sheet</button>
           <button type="button" aria-pressed={theme === "night-chart"} onclick={() => ((moreOpen = false), (theme = theme === "chart-room" ? "night-chart" : "chart-room"))}>Night chart <kbd>N</kbd></button>
           <button type="button" onclick={() => ((moreOpen = false), help?.showModal())}>Keyboard shortcuts <kbd>?</kbd></button>
         </div>
@@ -822,9 +950,11 @@
           <ToolButton label="Select" icon="M5 3l14 8-6 2-2 6z" pressed={true} />
           {#if hasTool(ws.lens, "undo") && (desk === "build" || ws.branch)}<ToolButton label="Undo" icon="M9 14L4 9l5-5M4 9h11a5 5 0 0 1 0 10h-3" keyhint="Control+Z" disabled={ws.undo.length === 0 || ws.mode !== "edit" || !!ws.branch} onclick={() => undo(true)} />
           <ToolButton label="Redo" icon="M15 14l5-5-5-5M20 9H9a5 5 0 0 0 0 10h3" keyhint="Control+Shift+Z" disabled={ws.redo.length === 0 || ws.mode !== "edit" || !!ws.branch} onclick={() => undo(false)} />{/if}
+          {#if clipArmed}<ToolButton label="Copy" icon="M8 8h11v11H8zM5 16V5h11" keyhint="Control+C" disabled={!ws.selection} onclick={copyBody} />{/if}
           <ToolButton label="Keyboard shortcuts" icon="M3 7h18v10H3zM7 11h1M11 11h1M15 11h2M7 14h10" keyhint="?" onclick={() => help?.showModal()} />
         </nav>
         {#if undoNote}<p class="undo-note" role="status">{undoNote}</p>{/if}
+        {#if clipNote}<p class="undo-note clip-note" role="status" data-clip-note>{clipNote}</p>{/if}
         <aside class="area-card" aria-label={ws.screen === "physics" ? "Change requests" : "Selected body"}>{#if mountFor("card")}<div use:view={mountFor("card")!}></div>{/if}</aside>
       </main>
       {/key}
@@ -937,7 +1067,7 @@
 </dialog>
 
 <dialog bind:this={makeDialog} class="help make-dialog" aria-label="Make a system" onclose={() => (makeOpen = !!makeDialog?.open)}>
-  {#if makeOpen && session}<MakeSystem {session} onadopted={(sys, note, hash) => (adopted(sys, note, hash), sys[0] && (makeDialog?.close(), showSystem(sys[0].system)))} context={{ mark: (s) => symbols.marker().mark(subjectOf(s)), symbology: symbols, styles: styleHost }} />{/if}
+  {#if makeOpen && session}<MakeSystem {session} start={makeStart} onadopted={(sys, note, hash) => (adopted(sys, note, hash), sys[0] && (makeDialog?.close(), showSystem(sys[0].system)))} context={{ mark: (s) => symbols.marker().mark(subjectOf(s)), symbology: symbols, styles: styleHost }} />{/if}
   <form method="dialog"><button type="submit">Close</button></form>
 </dialog>
 
@@ -948,6 +1078,7 @@
   <h3>Open a campaign</h3>
   <p class="hint">A file from Save campaign. It replaces the campaign open now; save that first if you want to keep it. Players' screens reload into the opened campaign.</p>
   <label class="row">Campaign file <input type="file" accept=".json,application/json" onchange={pickFile} /></label>
+  <p class="row hint">A save from Star System Explorer 3? <button type="button" class="linkbtn" data-bring-v3 onclick={() => (campaignDialog?.close(), openMake("import"))}>Bring it in with Make a system ›</button></p>
   {#if offered}
     {#if offered.save}
       <p data-offered={offered.save.saved_at}><b>{offered.save.title}</b>, kept {new Date(offered.save.saved_at).toLocaleString("en-GB", { dateStyle: "medium", timeStyle: "short" })}: {savedEvents(offered.save)} events.</p>
@@ -966,6 +1097,20 @@
   <form method="dialog"><button type="submit">Close</button></form>
 </dialog>
 
+<dialog bind:this={clipDialog} class="help seats-dialog" aria-labelledby="paste-title" data-paste onclose={() => !clipDialog?.open && (pasted = null)}>
+  {#if pasted}
+    <h2 id="paste-title">Paste {pasted.words}</h2>
+    <p>{pasted.placed.length === 1 ? "It" : `The ${pasted.placed.length} bodies`} would join {scene.title}, orbiting <b>{pasted.hostLabel}</b>{pasted.a_au !== undefined ? ` at ${Number(pasted.a_au.toPrecision(3))} AU, as copied` : ""}, at {formatYears(ws.now_yr)} on the ruler.</p>
+    {#if pasted.clip.source.site !== "sse4" || pasted.clip.source.creditChain.length}<p class="hint">From {pasted.clip.source.site}{pasted.clip.source.creditChain.length ? `, made by ${pasted.clip.source.creditChain.join(", then ")}` : ""}.</p>{/if}
+    {#if pasted.missing.length}
+      <p data-paste-missing>It was made with {pasted.missing.map((m) => (m.have ? `${m.id} ${m.version} (this campaign has ${m.have})` : `${m.id} ${m.version}`)).join(", ")}, not stacked here as made. Values {pasted.missing.length === 1 ? "that pack sets" : "those packs set"} would be stamped IMPOSSIBLE until {pasted.missing.length === 1 ? "it is" : "they are"} stacked.</p>
+    {/if}
+    {#if depth === "engine"}<ul class="engine" data-depth="engine">{#each pasted.placed as b (b.address)}<li>{b.label} ({b.kind}) at {b.address}</li>{/each}</ul>{/if}
+    <p class="hint" data-paste-waits>Placing it comes next: the kernel will take the whole paste as one change, so one Undo takes it back.</p>
+  {/if}
+  <form method="dialog"><button type="submit">Close</button></form>
+</dialog>
+
 <dialog bind:this={help} class="help" aria-labelledby="help-title">
   <h2 id="help-title">Keyboard</h2>
   <dl>
@@ -977,6 +1122,7 @@
     <dt>C, T</dt><dd>Go to the chart, go to the time ruler</dd>
     <dt>Page Up, Page Down, Home, End</dt><dd>On the ruler, larger steps</dd>
     <dt>Drag a body, or Page Up, Page Down on it</dt><dd>Move its orbit out or in (Build desk)</dd>
+    <dt>Ctrl+C, Ctrl+V</dt><dd>Copy the selected body with everything that orbits it; paste a copied body (Build desk)</dd>
     <dt>Ctrl+Z, Ctrl+Shift+Z</dt><dd>Undo, redo (each is a new correction on the chart's history)</dd>
     <dt>why?</dt><dd>On any value: where it came from, at three depths (Curious, Science, Engine); "Open the flow" puts its physics on the bench</dd>
     <dt>P</dt><dd>Chart or Physics: the flow editor and change requests</dd>
@@ -1449,6 +1595,12 @@
     font-size: 13px;
     color: var(--sse-ink-muted);
   }
+  .clip-note {
+    top: 48px;
+    padding: 4px 8px;
+    background: var(--sse-ground);
+    max-width: min(560px, calc(100% - 520px));
+  }
   .area-card {
     position: absolute;
     right: 24px;
@@ -1802,6 +1954,13 @@
       flex-wrap: wrap;
       gap: 4px 12px;
       padding: 6px 12px;
+    }
+  }
+  @media (max-width: 760px) {
+    .clip-note {
+      position: static;
+      max-width: none;
+      margin: 8px 16px;
     }
   }
 </style>

@@ -59,7 +59,11 @@ edits?: unknown[],
  * A halo cell's index (from `halo_cell`): `halo` is then one of its
  * catalogued haloes (`halo:3` or its full address), with its own history.
  */
-cell?: [bigint, bigint, bigint], } | { "op": "web_slice", z?: number, t_gyr?: number, centre?: [number, number, number], extent_mpc: number, n: number, } | { "op": "survey_caves", system?: string, body?: string, fixture?: string, at_s?: number, options?: unknown, quick?: boolean, lat_deg: number, lon_deg: number, radius_km?: number, } | { "op": "plan_descent", system?: string, body?: string, fixture?: string, at_s?: number, options?: unknown, quick?: boolean, lander: unknown, lat_deg: number, lon_deg: number, entry?: unknown, } | { "op": "survey_surface", system?: string, body?: string, fixture?: string, at_s?: number, options?: unknown, tiles?: Array<SurfaceTile>, quick?: boolean, limit?: number, } | { "op": "systems" } | { "op": "life_view", body?: string, fixture?: string, } | { "op": "export_chronicle" } | { "op": "import_chronicle", export: unknown, } | { "op": "add_note", address: string, links?: Array<string>, text: string, tags?: Array<string>, 
+cell?: [bigint, bigint, bigint], } | { "op": "web_slice", z?: number, t_gyr?: number, centre?: [number, number, number], extent_mpc: number, n: number, } | { "op": "surface_frames", system?: string, body?: string, fixture?: string, at_s?: number, options?: unknown, detail?: string, 
+/**
+ * At most this many frames, evenly spaced, always ending on the epoch.
+ */
+frames_max?: number, } | { "op": "survey_caves", system?: string, body?: string, fixture?: string, at_s?: number, options?: unknown, quick?: boolean, lat_deg: number, lon_deg: number, radius_km?: number, } | { "op": "plan_descent", system?: string, body?: string, fixture?: string, at_s?: number, options?: unknown, quick?: boolean, lander: unknown, lat_deg: number, lon_deg: number, entry?: unknown, } | { "op": "survey_surface", system?: string, body?: string, fixture?: string, at_s?: number, options?: unknown, tiles?: Array<SurfaceTile>, quick?: boolean, limit?: number, } | { "op": "systems" } | { "op": "life_view", body?: string, fixture?: string, } | { "op": "export_chronicle" } | { "op": "import_chronicle", export: unknown, } | { "op": "add_note", address: string, links?: Array<string>, text: string, tags?: Array<string>, 
 /**
  * The writing seat (default `gm`).
  */
@@ -78,4 +82,10 @@ arrives_at_s?: bigint, } | { "op": "set_kept", address: string, kind: string, va
  * pinned to the coded main world, giant and belt counts searched),
  * adopt it, and write the coded facts on the grown main world.
  */
-grow: boolean, at_s: bigint, } | { "op": "export_sector", scope: string, format: string, sheet?: string, at_s: bigint, } | { "op": "halo_cell", cell?: [bigint, bigint, bigint], min_mass_msun?: number, limit?: number, } | { "op": "star_cell", cell?: [bigint, bigint, bigint], t_myr?: number, } | { "op": "plan_voyage", from: string, to?: string, home?: string, ship: unknown, minimise?: string, visited?: Array<string>, known_fuel?: { [key in string]: Array<string> }, sensed_fuel?: { [key in string]: number }, surveyed?: Array<string>, gambles?: boolean, } | { "op": "promote_star", address: string, } | { "op": "campaign_tags" } | { "op": "read_matter", table?: string, id?: string, } | { "op": "read_reach", constant: string, value?: number, } | { "op": "dressing", scope: string, at_s?: bigint, } | { "op": "adopt_dressing", candidate: string, name?: string, at_s: bigint, } | { "op": "hold_dressing", candidate: string, held?: boolean, };
+grow: boolean, at_s: bigint, } | { "op": "export_sector", scope: string, format: string, sheet?: string, at_s: bigint, } | { "op": "halo_cell", cell?: [bigint, bigint, bigint], min_mass_msun?: number, limit?: number, } | { "op": "star_cell", cell?: [bigint, bigint, bigint], t_myr?: number, } | { "op": "plan_voyage", from: string, to?: string, home?: string, ship: unknown, minimise?: string, visited?: Array<string>, known_fuel?: { [key in string]: Array<string> }, sensed_fuel?: { [key in string]: number }, surveyed?: Array<string>, gambles?: boolean, 
+/**
+ * In-system voyages (part 3b): give one of a NAV `fixture`, an
+ * inline `nav` system or an adopted `system` (read at `at_s`, with
+ * `ports`), and `from` and `to` are bodies (or `belt:<name>`).
+ */
+fixture?: string, nav?: unknown, system?: string, at_s?: number, ports?: Array<string>, depart_s?: number, } | { "op": "promote_star", address: string, } | { "op": "campaign_tags" } | { "op": "read_matter", table?: string, id?: string, } | { "op": "read_reach", constant: string, value?: number, } | { "op": "dressing", scope: string, at_s?: bigint, } | { "op": "adopt_dressing", candidate: string, name?: string, at_s: bigint, } | { "op": "hold_dressing", candidate: string, held?: boolean, };
