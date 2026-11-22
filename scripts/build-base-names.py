@@ -70,7 +70,7 @@ SURVEY = "SX"  # SSE4's own survey prefix: fictional, so it names no real catalo
 def catalogue(letters):
     """The Catalogue scheme; `letters` picks the real-practice planet form."""
     planet = "{parent} {letter}" if letters else "{parent} {roman}"
-    moon = "{parent} {roman}" if letters else "{parent} {letter}"
+    moon = "{parent} {roman}" if letters else "{parent} {letter:a}"
     forms = {
         "star": [[SURVEY + " {serial:6}", 1]],
         "star-sky": [[SURVEY + " {coord}", 1]],
@@ -94,7 +94,7 @@ def catalogue(letters):
             "Formal designations, as surveys write them. "
             + ("Planets take letters from b (the IAU's form) and their moons Roman numerals (as Kepler-1625 b I). "
                if letters else
-               "Planets take Roman numerals by orbit (the default) and their moons letters. ")
+               "Planets take Roman numerals by orbit (the default) and their moons letters from a (Sol III a). ")
             + "Stars are SX and a running number, or SX J and their sky position; the components of a multiple star are A, B, C; "
             "surface features take the IAU's Latin descriptor terms with the world's name and a number. "
             "Every designation follows its parent's name when that is renamed. Sources: IAU naming rules, "
@@ -564,6 +564,8 @@ def build():
                 "names": {
                     "schemes": [catalogue(False), catalogue(True), english()] + invented() + many_nations(),
                     "avoid": sorted(set(AVOID_WORDS + AVOID_BRANDS)),
+                    # Designations are on by default. Common names are the GM's choice of scheme.
+                    "defaults": {"designation": "catalogue"},
                 }
             }
         },

@@ -29,9 +29,8 @@ sheet thread on NM1's engine (PR 207). Sources and licences are in NM0 and `docs
 ## Choices (open to tweak)
 
 1. The survey prefix is `SX`. A universe pack replaces the scheme to use its own prefix.
-2. A moon after a numeral starts at **b** ("SX 000102 V b"), because NM1's `{letter}` starts at b, as planet
-   letters do. The design's example has "a". That would need a letter-from-a token in the engine, so it was
-   asked of the kernel thread. Until it lands, b keeps one letter rule for every body.
+2. A moon after a numeral starts at **a** ("SX 000102 V a"), using NM2's `{letter:a}` token. Until 22 Nov
+   evening it started at b. Planet letters still start at b.
 3. Circumbinary planets ("(AB) b", Hessman et al. 2010) need the parent to be the pair. That is NM2's address
    work, so no form here.
 
@@ -48,3 +47,9 @@ sheet thread on NM1's engine (PR 207). Sources and licences are in NM0 and `docs
 - `base_names_loads_with_the_stack` (kernel) checks that `name_sample` answers from the shipped pack.
 
 Goldens: none change. Nothing in the shell's stack loads `base-names` yet. NM4 puts it there.
+
+## Follow-up (22 Nov, after NM2)
+
+- Catalogue moons use `{letter:a}`.
+- `base-names` sets `defaults: {"designation": "catalogue"}`. Every object has a designation by default, and
+  common names wait for the GM to choose a scheme.

@@ -525,10 +525,10 @@ fn base_names_designates_sol_as_real_practice_does() {
     assert_eq!(roman[7], "SX 000102 VIII");
     assert_eq!(letter[0], "SX 000102 b");
     assert_eq!(letter[4], "SX 000102 f");
-    // Moons: a letter after a numeral, a numeral after a letter (Kepler-1625 b I).
+    // Moons: a letter from a after a numeral (Sol III a), a numeral after a letter (Kepler-1625 b I).
     let io = addr("u:t/sys:0/body:0/body:4/body:0");
     let m = name(&l, &req(&seed, &io, "catalogue", "moon", &none)).unwrap();
-    assert_eq!(m.show(Some("SX 000102 V"), None), "SX 000102 V b");
+    assert_eq!(m.show(Some("SX 000102 V"), None), "SX 000102 V a");
     let m = name(&l, &req(&seed, &io, "catalogue-letters", "moon", &none)).unwrap();
     assert_eq!(m.show(Some("SX 000102 f"), None), "SX 000102 f I");
     // Components of a multiple star.
@@ -551,7 +551,7 @@ fn base_names_designates_sol_as_real_practice_does() {
         name(&l, &req(&seed, &io, "catalogue", "moon", &none))
             .unwrap()
             .show(Some("Sol V"), None),
-        "Sol V b"
+        "Sol V a"
     );
 }
 
