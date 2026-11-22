@@ -7,6 +7,8 @@ cargo clippy --workspace --all-targets -q -- -D warnings
 cargo test --workspace -q
 # The master data sheet must match its sources (scripts/build-base-reference.py).
 python3 scripts/build-base-reference.py --check
+# The catalogued Solar System must match its sources and agree with the sheet.
+python3 scripts/build-base-sol.py --check
 # MP22: no new typed constant or material number, and the ledger only shrinks.
 python3 scripts/test-audit-matter.py >/dev/null
 if git rev-parse -q --verify origin/main >/dev/null; then

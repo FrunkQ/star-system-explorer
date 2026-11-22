@@ -52,7 +52,9 @@ EXTS = {".rs", ".ts", ".json", ".svelte", ".mjs"}
 # The one crate allowed to type constants once MP1c lands.
 HOME = os.path.join("crates", "sse-reference")
 # Where the sheet itself lives: values here are the source, not copies.
-SHEET_HOMES = (HOME, os.path.join("packs", "base-reference"))
+# packs/base-sol is the catalogued Solar System: measured body facts, each
+# cited, checked against the sheet by scripts/build-base-sol.py.
+SHEET_HOMES = (HOME, os.path.join("packs", "base-reference"), os.path.join("packs", "base-sol"))
 
 # Quantity catalogue: id, name, canonical value, unit, source, relative
 # tolerance for a match, and the unit scales the code might write it in.
