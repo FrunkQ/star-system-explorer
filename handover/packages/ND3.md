@@ -64,7 +64,11 @@ Track ND, the new-physics demo (`handover/design/SSE4-new-physics-demo.md`). Own
 - **Lists are not expanded** into blocks (the maths blocks take single numbers); expand per entry.
 - **Parsed per call.** `eval_typed` parses the formula each call; caching the parsed steps at pack load
   comes with ND3b, when base packs hold Equations and the timing check (PF2's bench) applies.
-- No golden hash changed: the new blocks are registered but no shipped flow uses them yet.
+- **Golden:** `tests/golden/contract.jsonl` changes on purpose in one line, the reach report for G: the ten
+  maths blocks and the Equation are declared as following a changed constant (`sse-atoms/src/reach.rs`; they
+  hold none, every constant arrives on a wire from a Look up block), and the Model number is listed under
+  "cannot follow" (a number of the model stays as written). No other golden changed: no shipped flow uses
+  the new blocks yet.
 
 ## Not done here (next)
 
