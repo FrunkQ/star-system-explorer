@@ -84,6 +84,26 @@ SOURCES = {
     "kasen2017": ("Kasen, D. et al. 2017, Nature 551, 80: origin of the heavy elements in binary neutron-star mergers from a gravitational-wave event (the GW170817 kilonova)", "10.1038/nature24453", None, "verified"),
     "abbott2017": ("Abbott, B. P. et al. (LIGO and Virgo) 2017, Phys. Rev. Lett. 119, 161101: GW170817, observation of gravitational waves from a binary neutron star inspiral", "10.1103/PhysRevLett.119.161101", None, "verified"),
     "fields2020": ("Fields, B. D., Olive, K. A., Yeh, T.-H. and Young, C. 2020, JCAP 03, 010: Big-Bang nucleosynthesis after Planck (primordial helium and the lithium problem)", None, "https://arxiv.org/abs/1912.01132", "verified"),
+    "planck2018": ("Planck Collaboration 2020, A&A 641, A6: Planck 2018 results VI, cosmological parameters. Table 2, last column (TT,TE,EE+lowE+lensing+BAO, 68% limits): Omega_b h2 0.02242 +- 0.00014, Omega_c h2 0.11933 +- 0.00091, n_s 0.9665 +- 0.0038, H0 67.66 +- 0.42, Omega_Lambda 0.6889 +- 0.0056, Omega_m 0.3111 +- 0.0056, Omega_m h2 0.14240 +- 0.00087, sigma8 0.8102 +- 0.0060, age 13.787 +- 0.020 Gyr. Section 2.1: one massive neutrino of 0.06 eV", "10.1051/0004-6361/201833910", "https://www.aanda.org/articles/aa/full_html/2020/09/aa33910-18/T2.html", "verified"),
+    "fixsen2009": ("Fixsen, D. J. 2009, ApJ 707, 916: the temperature of the cosmic microwave background (2.72548 +- 0.00057 K)", "10.1088/0004-637X/707/2/916", None, "verified"),
+    "mangano2005": ("Mangano, G. et al. 2005, Nucl. Phys. B 729, 221: relic neutrino decoupling including flavour oscillations (N_eff 3.046; Omega_nu h2 = sum of neutrino masses / 93.14 eV)", "10.1016/j.nuclphysb.2005.09.041", None, "verified"),
+    "chevallier2001": ("Chevallier, M. and Polarski, D. 2001, Int. J. Mod. Phys. D 10, 213: accelerating universes with scaling dark matter (w = w0 + wa (1 - a))", "10.1142/S0218271801000822", None, "verified"),
+    "linder2003": ("Linder, E. V. 2003, Phys. Rev. Lett. 90, 091301: exploring the expansion history of the universe (the w0, wa form)", "10.1103/PhysRevLett.90.091301", None, "verified"),
+    "schneider2012": ("Schneider, A. et al. 2012, MNRAS 424, 684: non-linear evolution of cosmological structures in warm dark matter models (the half-mode mass)", "10.1111/j.1365-2966.2012.21252.x", None, "verified"),
+    "irsic2017": ("Iršič, V. et al. 2017, Phys. Rev. D 96, 023522: new constraints on the free-streaming of warm dark matter from Lyman-alpha forest data", "10.1103/PhysRevD.96.023522", None, "verified"),
+    "nadler2021": ("Nadler, E. O. et al. 2021, Phys. Rev. Lett. 126, 091101: constraints on dark matter properties from observations of Milky Way satellite galaxies", "10.1103/PhysRevLett.126.091101", None, "verified"),
+    "rocha2013": ("Rocha, M. et al. 2013, MNRAS 430, 81: cosmological simulations with self-interacting dark matter I, constant-density cores and substructure", "10.1093/mnras/sts514", None, "verified"),
+    "harvey2015": ("Harvey, D. et al. 2015, Science 347, 1462: the nongravitational interactions of dark matter in colliding galaxy clusters", "10.1126/science.1261381", None, "verified"),
+    "kaplinghat2016": ("Kaplinghat, M., Tulin, S. and Yu, H.-B. 2016, Phys. Rev. Lett. 116, 041302: dark matter halos as particle colliders", "10.1103/PhysRevLett.116.041302", None, "verified"),
+    "hui2017": ("Hui, L., Ostriker, J. P., Tremaine, S. and Witten, E. 2017, Phys. Rev. D 95, 043541: ultralight scalars as cosmological dark matter", "10.1103/PhysRevD.95.043541", None, "verified"),
+    "clowe2006": ("Clowe, D. et al. 2006, ApJ 648, L109: a direct empirical proof of the existence of dark matter (the Bullet Cluster)", "10.1086/508162", None, "verified"),
+    "boran2018": ("Boran, S. et al. 2018, Phys. Rev. D 97, 041501: GW170817 falsifies dark matter emulators", "10.1103/PhysRevD.97.041501", None, "verified"),
+    "des2025": ("DES Collaboration (Abbott, T. M. C. et al.) 2025, Phys. Rev. D 112, 083535: Dark Energy Survey year 3, cosmological constraints from cluster abundances, weak lensing and galaxy clustering", "10.1103/3dzh-d8f5", None, "verified"),
+    "vijaykumar2021": ("Vijaykumar, A., Kapadia, S. J. and Ajith, P. 2021, Phys. Rev. Lett. 126, 141104: constraints on the time variation of the gravitational constant using gravitational-wave observations of binary neutron stars", "10.1103/PhysRevLett.126.141104", None, "verified"),
+    "sakstein2026": ("Sakstein, J. and Desmond, H. 2026, arXiv:2610.04048: stars would remember a recent gravitational transition, testing G-step resolutions of the Hubble tension with red dwarfs (excluded at 3.1 and 4.0 sigma)", None, "https://arxiv.org/abs/2610.04048", "verified"),
+    "mcgaugh2016": ("McGaugh, S. S., Lelli, F. and Schombert, J. M. 2016, Phys. Rev. Lett. 117, 201101: radial acceleration relation in rotationally supported galaxies", "10.1103/PhysRevLett.117.201101", None, "verified"),
+    "randall2008": ("Randall, S. W. et al. 2008, ApJ 679, 1173: constraints on the self-interaction cross section of dark matter from the Bullet Cluster", "10.1086/587859", None, "unverified"),
+    "desi2024": ("DESI Collaboration (Adame, A. G. et al.) 2025, JCAP 02, 021: DESI 2024 VI, cosmological constraints from baryon acoustic oscillations", "10.1088/1475-7516/2025/02/021", None, "verified"),
     "fudge-register": ("SSE4 fudge register: an authored stand-in kept because no measured value fits (reason in docs/fudges.md)", None, "https://github.com/FrunkQ/star-system-explorer/blob/main/docs/fudges.md", "authored"),
 }
 
@@ -152,6 +172,106 @@ CONSTANTS = [
     ("M_moon", "Moon mass", val(7.346e22, "kg", "nssdca-moon")),
     ("R_moon", "Moon mean radius", val(1.7374e6, "m", "nssdca-moon")),
     ("a_moon", "Moon semi-major axis", val(3.844e8, "m", "nssdca-moon")),
+]
+
+
+# ---------------------------------------------------------------- the Cosmos group (DM1)
+# Galaxy histories design section 3.2. The measured parameters of the universe, moved here from
+# packs/base-cosmology (its tuned model numbers stay there). Planck 2018 VI table 2, last column.
+# The kernel reads these through the constants handle (sse_core::constants::Cosmos), whose
+# compiled values must equal these bit for bit, so an unedited sheet changes no hash.
+H_PLANCK = 0.6766
+OMEGA_B = 0.04897      # Omega_b h2 0.02242 / h2 = 0.048975, to four figures as G1 has always used it
+OMEGA_NU = 0.0014072   # one 0.06 eV neutrino: Omega_nu h2 = 0.06 / 93.14 = 0.000644, / h2
+OMEGA_M = 0.3111       # Planck's own derived Omega_m (it includes the 0.06 eV neutrino)
+OMEGA_C = 0.2607228    # Omega_m - Omega_b - Omega_nu; Planck's Omega_c h2 / h2 is 0.26067, inside its 0.0020
+T_CMB = 2.7255
+N_EFF = 3.046
+THEORY_DM = ("The amount is measured through gravity alone (the cosmic background, lensing, clusters); no dark matter "
+             "particle has been detected. A detection, or a theory of gravity that needed none, would change the picture.")
+THEORY_DE = ("The amount is measured through the expansion (supernovae, the cosmic background, baryon acoustic "
+             "oscillations); what it is is unknown. A measured change in w, which DESI's 2024 and 2025 results lean "
+             "towards, would change the picture.")
+
+
+def omega_r():
+    return 2.473e-5 * (T_CMB / 2.7255) ** 4 * (1 + 0.2271073177 * N_EFF) / H_PLANCK ** 2
+
+
+def cos(id_, name, value, derived=None, mark=None, note=None):
+    row = {"id": id_, "name": name, "group": "cosmos", "value": value}
+    if derived:
+        row["derived_from"] = derived
+    if mark:
+        row["mark"] = "theoretical"
+        row["mark_note"] = mark
+    if note:
+        row["note"] = note
+    return row
+
+
+def cosmos():
+    om_l = 1 - OMEGA_M - omega_r()
+    pc = AU * 648000 / PI
+    h_si = 67.66 * 1000 / (1e6 * pc)
+    rho_l = om_l * 3 * h_si ** 2 * C ** 2 / (8 * PI * G)
+    return [
+        cos("H0", "Hubble constant", val(67.66, "km s-1 Mpc-1", "planck2018", uncertainty=0.42),
+            note="In km/s per megaparsec, as astronomers quote it; H0_si is the same rate per second."),
+        cos("H0_si", "Hubble constant per second", val(h_si, "s-1", "planck2018"), "H0 1000 / (1e6 pc)"),
+        cos("Omega_b", "ordinary matter today, Omega_b", val(OMEGA_B, "1", "planck2018", uncertainty=0.0003),
+            note="Planck's Omega_b h2 0.02242 +- 0.00014 divided by h2, to four figures."),
+        cos("Omega_c", "dark matter today, Omega_c", val(OMEGA_C, "1", "planck2018", uncertainty=0.002), mark=THEORY_DM,
+            note="Cold dark matter: Planck's Omega_m less ordinary matter and neutrinos, so the three sum to its 0.3111. "
+                 "Planck's own Omega_c h2 0.11933 +- 0.00091 gives 0.26067, inside the uncertainty."),
+        cos("Omega_nu", "massive neutrinos today, Omega_nu", val(OMEGA_NU, "1", "mangano2005", "unverified", also=["planck2018"]),
+            note="Planck's base model has one neutrino of 0.06 eV; Omega_nu h2 = sum of masses / 93.14 eV."),
+        cos("Omega_m", "all matter today, Omega_m", val(OMEGA_M, "1", "planck2018", uncertainty=0.0056),
+            "Omega_b + Omega_c + Omega_nu"),
+        cos("dm_per_ordinary", "dark matter per ordinary matter", val(OMEGA_C / OMEGA_B, "1", "planck2018"),
+            "Omega_c / Omega_b"),
+        cos("f_b", "cosmic baryon share", val(OMEGA_B / OMEGA_M, "1", "planck2018"), "Omega_b / Omega_m",
+            note="The share of every halo's matter that is ordinary: what each galaxy's gas supply reads."),
+        cos("sigma8", "fluctuation size on 8 Mpc/h, sigma_8", val(0.8102, "1", "planck2018", uncertainty=0.006)),
+        cos("n_s", "tilt of the primordial spectrum, n_s", val(0.9665, "1", "planck2018", uncertainty=0.0038)),
+        cos("T_cmb", "cosmic background temperature today", val(T_CMB, "K", "fixsen2009", "unverified", uncertainty=0.00057)),
+        cos("N_eff", "effective number of neutrino species", val(N_EFF, "1", "mangano2005", "unverified"),
+            note="The Standard Model prediction; Planck finds 2.99 +- 0.17 with BAO."),
+        cos("Omega_r", "radiation today, Omega_r", val(omega_r(), "1", "fixsen2009", also=["mangano2005"]),
+            "2.473e-5 (T_cmb / 2.7255)^4 (1 + 0.2271073177 N_eff) / (H0 / 100)^2",
+            note="Photons from the background temperature, plus 7/8 (4/11)^(4/3) per neutrino species."),
+        cos("Omega_Lambda", "dark energy today, Omega_Lambda", val(om_l, "1", "planck2018"), "1 - Omega_m - Omega_r",
+            mark=THEORY_DE, note="Worked out for a flat universe. Planck: 0.6889 +- 0.0056."),
+        cos("w0", "dark energy pressure today, w0", val(-1.0, "1", "chevallier2001", also=["linder2003", "planck2018"]),
+            mark=THEORY_DE, note="Pressure over density; -1 is a cosmological constant. w = w0 + wa (1 - a)."),
+        cos("wa", "drift of dark energy pressure, wa", val(0.0, "1", "chevallier2001", also=["linder2003", "desi2024"]),
+            mark=THEORY_DE, note="0 is a cosmological constant. Read from DM2 on; until then the expansion uses w = -1."),
+        cos("rho_Lambda", "dark energy density", val(rho_l, "J m-3", "planck2018"),
+            "Omega_Lambda 3 H0_si^2 c^2 / (8 pi G)"),
+        cos("m_wdm", "dark matter warmth: thermal relic mass", val(0.0, "keV", "schneider2012", also=["irsic2017", "nadler2021"]),
+            mark=THEORY_DM, note="0 is cold dark matter, with no cut-off. A mass in keV gives a smallest halo size "
+                                 "(the half-mode mass); today's limits say heavier than about 5 to 6.5 keV. Read from DM5 on."),
+        cos("sigma_dm", "dark matter self-interaction per mass", val(0.0, "m2 kg-1", "rocha2013", also=["harvey2015", "randall2008", "kaplinghat2016"]),
+            mark=THEORY_DM, note="0 is collisionless. A cross-section gives haloes a core; clusters limit it to under "
+                                 "about 0.5 cm2/g (5e-5 m2/kg). Read from DM5 on."),
+        cos("m_fdm", "fuzzy (ultra-light) dark matter particle mass", val(0.0, "eV", "hui2017"), mark=THEORY_DM,
+            note="0 is off. Listed, not wired: it would give both a cut-off and a solid core."),
+    ]
+
+
+# Page groups of the Constants page: names and notes for people and Orac.
+GROUPS = [
+    {"id": "nature", "name": "Constants of nature", "about": "What the universe gives."},
+    {"id": "convention", "name": "Definitions and conventions", "about": "Exact by agreement: c in SI, the astronomical unit, the Julian year, the IAU's nominal Sun."},
+    {"id": "factor", "name": "Conversion factors", "about": "Pure arithmetic from the rows above."},
+    {"id": "cosmos", "name": "Cosmos",
+     "about": "The measured parameters of the universe. Dark matter and dark energy are marked theoretical: their amounts are measured through gravity, their nature is unknown. Change one and the cosmos chain follows: expansion, growth, the web, halo counts, every galaxy's gas supply.",
+     "notes": [
+         {"text": "SSE4 takes the particle route: dark matter is an unseen particle that adds mass. It does not offer gravity that changes at low acceleration (MOND and its relatives). The web, the count of haloes and the growth of galaxies are built on dark matter, and no agreed theory of altered gravity replaces all three: colliding clusters show the mass sitting apart from the gas, and the neutron-star merger of 2017 ruled out the whole class of theories where gravity waves and light travel at different speeds.", "src": "clowe2006", "also": ["boran2018"]},
+         {"text": "The standard picture keeps passing new tests: counts of 16,000 galaxy clusters agree with the cosmic background's parameters. Gravity's strength has not changed over time where it can be tested: a neutron-star merger bounds the change in G, and red dwarfs, which would remember a jump in G, rule out the recent 4% and 11% steps proposed to ease the Hubble tension. Those test G changing with time, a different idea from MOND.", "src": "des2025", "also": ["vijaykumar2021", "sakstein2026"]},
+         {"text": "Kept as a check: the tight link between ordinary matter and rotation speed in galaxies, which haloes must reproduce.", "src": "mcgaugh2016"},
+         {"text": "Energy is conserved for a bound object, not for the expanding universe as a whole, so the sheet's ledgers are mass per co-moving region and energy per bound system.", "src": "planck2018"},
+     ]},
 ]
 
 
@@ -507,6 +627,7 @@ def build():
             # edit: doubling G is a what-if with the same masses and stronger gravity.
             row["checked_by" if c[0] in ("M_sun", "M_earth", "M_jup") else "derived_from"] = c[3]
         consts.append(row)
+    consts += cosmos()
     sources = []
     for sid, (text, doi, url, status) in sorted(SOURCES.items()):
         s = {"id": sid, "text": text, "status": status}
@@ -526,6 +647,7 @@ def build():
             "reference": {
                 "about": "The master data sheet (track MP, design handover/design/SSE4-matter-pack-design.md): constants of nature, conventions, reference objects, elements, isotopes, substances and mixtures, each value with its source. Built by scripts/build-base-reference.py; MP2 first wave. A value without \"check\" is verified against its source; \"unverified\" means the source is named but the number was not read from it; \"authored\" is a documented stand-in (docs/fudges.md).",
                 "constants": consts,
+                "groups": GROUPS,
                 "units": units(),
                 "origin_legend": [{"id": k, "physics": v[0], "plain": v[1], "story": v[2]} for k, v in element_origins.SOURCE_NAMES.items()],
                 "elements": elements(),

@@ -1136,10 +1136,14 @@ impl Kernel {
             .get(constant)
             .unwrap_or(real);
         let (mut follows, mut estimated, mut cannot) = (vec![], vec![], vec![]);
+        // A block uses the constant when it reads it or a row worked out
+        // from it (Omega_m from Omega_c).
+        let sheet = &self.observe.reference;
+        let uses = |reads: &[&str]| reads.iter().any(|r| sheet.rests_on(r, constant));
         for d in self.atoms.decls() {
             match reach::of(&d.id) {
                 Some(Reach::Follows(reads)) => follows.push(serde_json::json!({
-                    "block": d.id, "reads": reads, "uses_it": reads.contains(&constant),
+                    "block": d.id, "reads": reads, "uses_it": uses(reads),
                 })),
                 Some(Reach::Estimated { reads, law }) => estimated.push(serde_json::json!({
                     "block": d.id, "reads": reads, "law": law,
@@ -1147,6 +1151,21 @@ impl Kernel {
                 None => {
                     cannot.push(serde_json::json!({"block": d.id, "why": reach::CANNOT_FOLLOW}))
                 }
+            }
+        }
+        // DM1: the cosmos chain's stages, which read the Cosmos group.
+        for (stage, r) in reach::STAGES {
+            match r {
+                Some(Reach::Follows(reads)) => follows.push(serde_json::json!({
+                    "block": stage, "reads": reads, "uses_it": uses(reads),
+                })),
+                Some(Reach::Estimated { reads, law }) => estimated.push(serde_json::json!({
+                    "block": stage, "reads": reads, "law": law,
+                })),
+                None => cannot.push(serde_json::json!({
+                    "block": stage,
+                    "why": "tuned to the observed galaxy population: keeps our universe's numbers, not following your change",
+                })),
             }
         }
         Ok(Response::Reach {
