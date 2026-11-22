@@ -17,13 +17,14 @@ import type { SystemScene } from "./scene.ts";
 import type { PlayerScene } from "./player-scene.ts";
 import { parentOf, subjectName } from "./player-scene.ts";
 import { playerSubjectOf } from "./mark.ts";
+import { constant } from "./sheet.ts";
 
 export const LIGHT_SCHEMA = "sse.band-recipe/0" as const;
 
 // Physical constants (CODATA 2018, exact in SI since 2019).
-const H = 6.62607015e-34;
-const C = 299792458;
-const K = 1.380649e-23;
+const H = constant("h");
+const C = constant("c");
+const K = constant("k_B");
 
 /** The fixed band set (design 2.1), wavelengths in metres. */
 export interface Band {
@@ -321,8 +322,8 @@ export interface LitBody {
   num(field: string): number | undefined;
 }
 
-const R_SUN_M = 695_700_000;
-const AU_M = 149_597_870_700;
+const R_SUN_M = constant("R_sun");
+const AU_M = constant("au");
 
 /**
  * Stubbed descriptions: a star is a blackbody at its surface temperature; a
