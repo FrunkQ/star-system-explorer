@@ -49,9 +49,9 @@ pub const REF_KG10: &str = "Kokubo, E. and Genda, H. 2010, ApJ 714, L21: after g
 pub const REF_BRYAN18: &str = "Bryan, M. L. et al. 2018, Nature Astronomy 2, 138: planetary-mass companions spin at about 0.1 to 0.3 of breakup";
 
 const R_EARTH_AU: f64 = 4.258_75e-5;
-const R_EARTH_M: f64 = 6.371e6;
+const R_EARTH_M: f64 = sse_core::sheet::R_EARTH_MEAN;
 const M_EARTH_KG: f64 = 5.972_2e24;
-const G: f64 = 6.674_30e-11;
+const G: f64 = sse_core::sheet::G;
 /// Escape speed from the surface of Earth, km/s; orbital speed at 1 AU around the Sun, km/s.
 const V_ESC_EARTH: f64 = 11.186;
 const V_KEP_1AU: f64 = 29.784_7;

@@ -116,7 +116,7 @@ pub struct World<'a> {
     pub now: UniverseTime,
 }
 
-const YEAR: f64 = 31_557_600.0;
+const YEAR: f64 = sse_core::sheet::YR_JULIAN;
 
 /// The four components and the score. Each component saturates at a stated
 /// scale: persistence at 10 Gyr, reach at 10,000 addresses, rarity at one in

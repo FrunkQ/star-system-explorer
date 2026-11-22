@@ -1,0 +1,30 @@
+{
+  "schema": "sse.screen/1",
+  "id": "sse.workspace.gm.cluster",
+  "label": "Galaxies nearby",
+  "audience": "gm",
+  "layout": "chart-room",
+  "theme": "chart-room",
+  "symbology": "sse.symbology.diagrammatic",
+  "vocab": "physics",
+  "description": "The place line's galaxies nearby scale (U24): the haloes in this cell of the cosmic web, and which one to chart.",
+  "items": [
+    {
+      "view": "sse.view.cluster-map",
+      "area": "chart"
+    },
+    {
+      "view": "sse.view.time-ruler",
+      "area": "ruler"
+    }
+  ],
+  "rail": [
+    {
+      "scale": "cluster",
+      "group": "look",
+      "label": "Galaxies nearby",
+      "order": 1,
+      "hint": "The haloes in this cell of the cosmic web, and which one to chart"
+    }
+  ]
+}

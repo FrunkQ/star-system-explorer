@@ -1,4 +1,5 @@
-import init, { harness_run, engines_run } from "./pkg/sse_wasm.js";
+import init, { harness_run, engines_run, engine_names, engine_run } from "./pkg/sse_wasm.js";
+import { benchReport, runBench } from "./bench.js";
 
 const $ = (id) => document.getElementById(id);
 $("ua").textContent = navigator.userAgent;
@@ -26,6 +27,71 @@ async function main() {
   const epass = await enginesCheck();
   const kpass = await kernelCheck();
   document.body.dataset.result = pass && epass && kpass ? "pass" : "fail";
+  benchSection(report.version);
+}
+
+// PF2: the bench. Only on request (a button, or ?bench in the address for the bench script): it takes a while.
+let capability = null;
+function benchSection(version) {
+  const sec = $("bench");
+  sec.hidden = false;
+  let rep = null;
+  const ms = (x) => (x >= 1000 ? `${(x / 1000).toFixed(1)} s` : `${x >= 100 ? Math.round(x) : x.toFixed(1)} ms`);
+  const runs = Number(new URLSearchParams(location.search).get("runs") ?? 3) || 3;
+  const go = async () => {
+    $("benchgo").disabled = true;
+    const doc = await (await fetch("./pkg/perf-chunks.json", { cache: "no-store" })).json();
+    const results = await runBench({ engine_names, engine_run }, doc, {
+      runs,
+      onProgress: (d, t, name) => ($("benchnote").textContent = name ? `${d} of ${t}: ${name}…` : "Done."),
+      yieldTo: () => new Promise((r) => setTimeout(r, 0)),
+    });
+    rep = benchReport(results, doc, { device: await describe(), kernel: version, site: location.host, runs });
+    $("benchtable").innerHTML = rep.chunks
+      .map((c) => `<tr><td><strong>${c.name}</strong></td><td class="n">${ms(c.median_ms)}</td></tr>` + c.sources.map((s) => `<tr><td class="muted">&nbsp;&nbsp;${s.source.slice(6)}</td><td class="n">${ms(s.median_ms)}</td></tr>`).join(""))
+      .join("");
+    $("benchacts").hidden = false;
+    $("benchgo").disabled = false;
+    window.__benchReport = rep;
+    document.body.dataset.bench = "done";
+  };
+  const text = () => JSON.stringify({ ...rep, label: $("benchlabel").value.trim() }, null, 2);
+  $("benchgo").onclick = go;
+  $("benchcopy").onclick = async () => {
+    try { await navigator.clipboard.writeText(text()); $("benchnote").textContent = "Copied; nothing was sent."; } catch { $("benchnote").textContent = "This browser would not copy; use Save."; }
+  };
+  $("benchsave").onclick = () => {
+    const a = document.createElement("a");
+    a.href = URL.createObjectURL(new Blob([text()], { type: "application/json" }));
+    a.download = `sse4-bench-${($("benchlabel").value.trim() || "device").replace(/[^A-Za-z0-9-]+/g, "-").toLowerCase()}.json`;
+    a.click();
+  };
+  if (new URLSearchParams(location.search).has("bench")) go();
+}
+
+// What this device says about itself (the readout's describeDevice, packages/ui-contract/src/perf.ts, in plain JS).
+async function describe() {
+  let gpu = { backend: "none" };
+  try {
+    const a = await navigator.gpu?.requestAdapter();
+    if (a) { const i = a.info ?? {}; gpu = { backend: "webgpu", adapter: [i.vendor, i.architecture, i.device, i.description].filter(Boolean).join(" ") || undefined }; }
+  } catch {}
+  if (gpu.backend === "none") {
+    try {
+      const gl = document.createElement("canvas").getContext("webgl2");
+      if (gl) { const x = gl.getExtension("WEBGL_debug_renderer_info"); gpu = { backend: "webgl2", adapter: x ? String(gl.getParameter(x.UNMASKED_RENDERER_WEBGL)) : undefined }; }
+    } catch {}
+  }
+  return {
+    user_agent: navigator.userAgent,
+    ...(navigator.hardwareConcurrency ? { cores: navigator.hardwareConcurrency } : {}),
+    ...(navigator.deviceMemory ? { memory_gb: navigator.deviceMemory } : {}),
+    screen: `${screen.width}×${screen.height}`,
+    pixel_ratio: devicePixelRatio,
+    ...(capability ? { tier: capability.tier, units_per_second: Math.round(capability.unitsPerSecond) } : {}),
+    gpu,
+    reduced_motion: matchMedia("(prefers-reduced-motion: reduce)").matches,
+  };
 }
 
 // K7 to K10 and G0: resolve, sift, observe, suite and cosmos scenarios against native digests.
@@ -61,6 +127,7 @@ async function kernelCheck() {
     : `FAIL: kernel API responses differ at ${bad.join(", ") || "length"}`;
   v.className = "verdict " + (ok ? "ok" : "bad");
   const cap = await client.measure(20000);
+  capability = cap;
   $("cap").textContent = `This device: ${Math.round(cap.unitsPerSecond).toLocaleString()} work units per second, tier "${cap.tier}" (runs up to ${cap.runsUpTo} work locally). Speed is shown only; it never enters a hash.`;
   worker.terminate();
   return ok;

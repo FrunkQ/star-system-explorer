@@ -13,7 +13,7 @@ use sse_formation::Manifest;
 
 const M_SUN_KG: f64 = 1.988_47e30;
 const M_EARTH_KG: f64 = 5.972_2e24;
-const AU_M: f64 = 1.495_978_707e11;
+const AU_M: f64 = sse_core::sheet::AU;
 const GYR_S: f64 = 1e9 * 365.25 * 86_400.0;
 
 /// What an import says about one system, as pins.

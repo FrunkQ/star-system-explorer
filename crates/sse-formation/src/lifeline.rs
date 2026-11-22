@@ -10,7 +10,7 @@ use serde::{Deserialize, Serialize};
 use sse_core::math as m;
 
 /// Solar effective temperature, K (IAU 2015 B3 nominal).
-pub const TEFF_SUN: f64 = 5772.0;
+pub const TEFF_SUN: f64 = sse_core::sheet::T_SUN;
 /// Chandrasekhar mass used by the white-dwarf radius law (HPT00).
 pub const M_CH: f64 = 1.44;
 /// Stars: the hydrogen-burning limit (about 0.075, Chabrier et al. 2000) to

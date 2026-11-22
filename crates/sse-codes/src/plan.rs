@@ -18,9 +18,9 @@ use sse_formation::pipeline::{Block, SystemRun};
 use std::collections::BTreeMap;
 
 /// Physical constants (CODATA 2018 exact or recommended values).
-const G: f64 = 6.674_30e-11;
+const G: f64 = sse_core::sheet::G;
 const M_EARTH: f64 = 5.972_2e24;
-const R_EARTH: f64 = 6.371_0e6;
+const R_EARTH: f64 = sse_core::sheet::R_EARTH_MEAN;
 
 /// What the sheet says about a world's system (pack data, `CodeSheet.system`).
 #[derive(Clone, PartialEq, Debug, Default, Serialize, Deserialize)]
