@@ -28,7 +28,9 @@ export interface Place {
   world?: string;
   /** The screen in front, when it is not the scale's first. */
   screen?: string;
-  /** A world's name when the place was visited, for the Recent list (not part of the link). */
+  /** Above a system: which one at that scale, in the scale view's own id ("cell:0.0.0", a halo address, "web:200"). */
+  id?: string;
+  /** Its name, or a world's name, when the place was visited, for the Recent list (not part of the link). */
   label?: string;
 }
 
@@ -53,13 +55,14 @@ export function isPlaceScale(s: unknown): s is PlaceScale {
  * place the GM has been on this line: while the place in view is above it (same
  * system), the trail's steps below show too, marked `below`.
  */
-export function placeSteps(here: Place, trail: Place | null, names: { system: string; world?: string | null }): PlaceStep[] {
+export function placeSteps(here: Place, trail: Place | null, names: { system: string; world?: string | null; above?: Partial<Record<PlaceScale, { id: string; name: string }>> }): PlaceStep[] {
   const deepest = trail && trail.system === here.system && placeRank(trail.scale) > placeRank(here.scale) ? trail : here;
   const out: PlaceStep[] = [];
   for (const scale of PLACE_SCALES) {
     if (placeRank(scale) > placeRank(deepest.scale)) break;
-    const place: Place = scale === "world" ? { scale, system: here.system, world: deepest.world! } : { scale, system: here.system };
-    const label = scale === "system" ? names.system : scale === "world" ? (names.world ?? PLACE_WORDS.world) : PLACE_WORDS[scale];
+    const known = names.above?.[scale];
+    const place: Place = scale === "world" ? { scale, system: here.system, world: deepest.world! } : { scale, system: here.system, ...(known ? { id: known.id } : {}) };
+    const label = scale === "system" ? names.system : scale === "world" ? (names.world ?? PLACE_WORDS.world) : (known?.name ?? PLACE_WORDS[scale]);
     out.push({ scale, label, place, current: scale === here.scale, below: placeRank(scale) > placeRank(here.scale) });
   }
   return out;
@@ -67,7 +70,7 @@ export function placeSteps(here: Place, trail: Place | null, names: { system: st
 
 /** The same place? (The screen does not count: a place is where, not how.) */
 export function samePlace(a: Place | null | undefined, b: Place | null | undefined): boolean {
-  return !!a && !!b && a.scale === b.scale && a.system === b.system && (a.scale !== "world" || a.world === b.world);
+  return !!a && !!b && a.scale === b.scale && a.system === b.system && (a.scale !== "world" || a.world === b.world) && (a.id ?? "") === (b.id ?? "");
 }
 
 /** The trail after moving to `next`: going down replaces it; going up keeps it while the system is the same. */
@@ -82,15 +85,16 @@ export function rememberPlace(recent: readonly Place[], p: Place, max = 6): Plac
 }
 
 /**
- * A place as the address bar's hash: `#chart/<scale>[/<system>[/<world>]][~<screen>]`.
+ * A place as the address bar's hash: `#chart/<scale>[/<system>[/<world or id>]][~<screen>]`.
  * `#chart` alone is the base system (it also skips the start sheet).
  */
 export function placeHash(p: Place): string {
   const parts = ["chart"];
   if (p.scale !== "system" || p.system || p.world) {
     parts.push(p.scale);
-    if (p.system || p.world) parts.push(encodeURIComponent(p.system));
-    if (p.scale === "world" && p.world) parts.push(encodeURIComponent(p.world));
+    const third = p.scale === "world" ? p.world : p.id;
+    if (p.system || third) parts.push(encodeURIComponent(p.system));
+    if (third) parts.push(encodeURIComponent(third));
   }
   return `#${parts.join("/")}${p.screen ? `~${encodeURIComponent(p.screen)}` : ""}`;
 }
@@ -113,6 +117,9 @@ export function parsePlaceHash(hash: string): Place | null {
     const w = dec(m[3]);
     if (!w) return null;
     p.world = w;
+  } else if (scale !== "system" && m[3]) {
+    const id = dec(m[3]);
+    if (id) p.id = id;
   }
   const screen = dec(m[4]);
   if (screen) p.screen = screen;

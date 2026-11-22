@@ -43,6 +43,7 @@ const KMS_PC_MYR: f64 = 1.022_712;
 #[derive(Clone, PartialEq, Debug, Serialize, Deserialize)]
 pub struct EventParams {
     /// The event grid co-rotates with the disc at this rate (km/s/kpc), as the star grid does (G5).
+    /// A frame convention like the star grid's, kept at its first value (DM4 log).
     pub grid_rotation_kms_kpc: f64,
     /// Supernova-scale cells (pc) and time bins (Myr).
     pub sn_cell_pc: f64,

@@ -52,8 +52,6 @@ pub struct EnvelopeParams {
     pub pattern_kms_kpc: f64,
     pub arm_contrast: f64,
     pub arm_phase0: f64,
-    /// Flat rotation speed (km/s), for the arms' winding and encounter speeds.
-    pub rotation_kms: f64,
     /// Local texture: lognormal sigma (dex) on gas and star formation, on a lattice of this spacing (pc).
     pub texture_sigma_dex: f64,
     pub texture_cell_pc: f64,
@@ -85,7 +83,6 @@ impl Default for EnvelopeParams {
             pattern_kms_kpc: 25.0,
             arm_contrast: 0.6,
             arm_phase0: 0.0,
-            rotation_kms: 220.0,
             texture_sigma_dex: 0.2,
             texture_cell_pc: 50.0,
             sigma_kms: 35.0,
@@ -536,6 +533,16 @@ impl GalaxyEnvelope<'_> {
     /// the same place in any disc: 8.2 kpc x R_d / 2.6.
     pub fn sun_radius_kpc(&self) -> f64 {
         8.2 * self.galaxy.now.disc_kpc / 2.6
+    }
+
+    /// The galaxy's circular speed (km/s) and its log slope at r, from its
+    /// rotation curve now (DM4). A galaxy saved before DM4 has no curve and
+    /// falls back to its virial speed, flat.
+    pub fn circular(&self, r_kpc: f64) -> (f64, f64) {
+        if self.galaxy.rotation.len() < 2 {
+            return (self.galaxy.now.v_c, 0.0);
+        }
+        crate::structure::speed_and_slope(&self.galaxy.rotation, r_kpc)
     }
 
     /// Least-squares slope of present gas [Fe/H] with radius from 0.5 to 1.7 Sun radii, dex per kpc.

@@ -293,3 +293,33 @@ fn a_pin_survives_a_change_to_the_fill_rules() {
     assert_eq!(StarParams::default().key_version, 2);
     assert!(st.draw_one(&"u:g5/sys:1".parse().unwrap()).is_err());
 }
+
+#[test]
+fn cells_drawn_together_are_the_cells_drawn_one_by_one() {
+    // A voyage reads a box of cells in one walk of the census tree (V8); the
+    // shared walk only saves work, so each cell is exactly what `cell` gives,
+    // pins and all.
+    setup!(st, now, sun, now_myr);
+    let base = st.cell_at(st.from_grid(sun, now_myr), now_myr);
+    let pins: Vec<StarSystem> = st
+        .cell(base, now, &[])
+        .unwrap()
+        .iter()
+        .take(3)
+        .map(|s| st.promote(s))
+        .collect();
+    let mut cells = vec![];
+    for dx in -1..=1 {
+        for dy in -1..=1 {
+            for dz in -1..=1 {
+                cells.push([base[0] + dx, base[1] + dy, base[2] + dz]);
+            }
+        }
+    }
+    let together = st.cells(&cells, now, &pins).unwrap();
+    assert_eq!(together.len(), 27);
+    for (c, got) in cells.iter().zip(&together) {
+        assert_eq!(got, &st.cell(*c, now, &pins).unwrap(), "cell {c:?}");
+    }
+    assert!(together.iter().map(Vec::len).sum::<usize>() > 1000);
+}

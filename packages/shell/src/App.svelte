@@ -5,7 +5,7 @@
 -->
 <script lang="ts">
   import { untrack } from "svelte";
-  import { railOf, scalesOf, type RailScale, DEPTHS, isDepth, type Depth, cellHalo, readViewChoice, type ViewChoice, isPlaceScale, nextTrail, parsePlaceHash, placeHash, placeRank, placeSteps, readRecent, rememberPlace, samePlace, PLACE_SCALES, PLACE_WORDS, type Place, type PlaceScale } from "../../ui-contract/src/index.ts";
+  import { railOf, scalesOf, type RailScale, DEPTHS, isDepth, type Depth, cellHalo, readViewChoice, type ViewChoice, isPlaceScale, nextTrail, parsePlaceHash, placeHash, placeRank, placeSteps, readRecent, rememberPlace, samePlace, PLACE_EVENT, PLACE_SCALES, PLACE_WORDS, type Place, type PlaceNote, type PlaceScale } from "../../ui-contract/src/index.ts";
   import { PLACE_SCREENS } from "./documents/scales.ts";
   import { applyEdits, applySetup, type AtomInfo, type SifterDoc, enterFacts, observeOf, type AuthoredFacts, checkScreen, deriveScene, gmSeat, redoEdit, subjectOf, systemOrder, undoEdit, type CheckedScreen, type DerivationDoc, type ScreenDoc, type SystemScene, type ViewHandle, type ViewModule, type ViewSession } from "../../ui-contract/src/index.ts";
   import { openBrowserSession } from "../../ui-contract/src/host-browser.ts";
@@ -587,9 +587,38 @@
   }
   // The place line at every scale (U24, top-level design 2.1): a breadcrumb up, the list of what is nested below for
   // going down, the trail back to where the GM was, recent places, and the place as a deep link in the address bar.
+  // Above a system, the scale's own view says which place is in view and what is nested below it (an "sse:place" event,
+  // ui-contract place-event.ts): the latest word from each scale names its step and fills the Below list.
+  let notes = $state<Partial<Record<PlaceScale, PlaceNote>>>({});
+  const UPPER: readonly PlaceScale[] = ["web", "cluster", "galaxy"];
+  const noteId = (scale: RailScale) => (UPPER.includes(scale as PlaceScale) ? notes[scale as PlaceScale]?.id : undefined);
   const place = $derived<Place | null>(
-    railScale === "workshop" ? null : { scale: railScale, system: viewing?.system ?? "", ...(railScale === "world" && ws.selection ? { world: ws.selection } : {}), ...(ws.screen !== firstScreen(railScale) ? { screen: ws.screen } : {}) },
+    railScale === "workshop"
+      ? null
+      : { scale: railScale, system: viewing?.system ?? "", ...(railScale === "world" && ws.selection ? { world: ws.selection } : {}), ...(noteId(railScale) ? { id: noteId(railScale) } : {}), ...(ws.screen !== firstScreen(railScale) ? { screen: ws.screen } : {}) },
   );
+  // A place to open a scale's view on (a link, a step, a child picked in Below), passed as its `place` param; a new one
+  // mounts the view afresh. Without one, a scale's view opens on the place it last named.
+  let opening = $state<Partial<Record<PlaceScale, string>>>({});
+  let openings = $state(0);
+  const chartMount = $derived.by(() => {
+    const m = mountFor("chart");
+    // Back at a scale, its view opens where the GM last was there.
+    const id = opening[railScale as PlaceScale] ?? noteId(railScale);
+    return m && id && m.module.params.some((x) => x.name === "place") ? { ...m, params: { ...m.params, place: id } } : m;
+  });
+  $effect(() => {
+    const hear = (e: Event) => {
+      const d = (e as CustomEvent<PlaceNote>).detail;
+      if (!d || !UPPER.includes(d.scale) || typeof d.id !== "string") return;
+      // Only news changes anything: a view saying the same again must not stir the line (or the view) again.
+      if (JSON.stringify(untrack(() => notes[d.scale])) !== JSON.stringify(d)) notes = { ...untrack(() => notes), [d.scale]: d };
+      // Once the view is there, it is no longer being opened on it: a later visit opens wherever the GM goes next.
+      if (untrack(() => opening[d.scale]) === d.id) opening = Object.fromEntries(Object.entries(untrack(() => opening)).filter(([k]) => k !== d.scale));
+    };
+    window.addEventListener(PLACE_EVENT, hear);
+    return () => window.removeEventListener(PLACE_EVENT, hear);
+  });
   /** The instrument a scale opens on: the first on its rail. */
   function firstScreen(scale: RailScale): string | undefined {
     return scale === "world" ? "body" : scale === "system" ? "system" : railOf(SCREENS, scale)[0]?.lines[0]?.screen;
@@ -601,20 +630,25 @@
   let recent = $state<Place[]>(readRecent(loadPref("places")));
   const placeName = (a: string | undefined | null) => (a ? (scene.subjects.find((x) => x.address === a)?.label ?? null) : null);
   const systemTitle = (sys: string) => (sys ? (adoptedSystems.find((x) => x.system === sys)?.title ?? sys.split("/").pop()!) : base.title);
-  const steps = $derived(place ? placeSteps(place, trail, { system: scene.title, world: placeName(railScale === "world" ? ws.selection : trail?.world) }) : []);
+  const steps = $derived(
+    place
+      ? placeSteps(place, trail, { system: scene.title, world: placeName(railScale === "world" ? ws.selection : trail?.world), above: Object.fromEntries(UPPER.flatMap((k) => (notes[k] ? [[k, { id: notes[k]!.id, name: notes[k]!.name }]] : []))) })
+      : [],
+  );
   /** A place in words, for the Recent list. */
   function placeWords(p: Place): string {
     if (p.scale === "world") return `${p.label ?? "A world"} · ${systemTitle(p.system)}`;
     if (p.scale === "system") return systemTitle(p.system);
-    return PLACE_WORDS[p.scale];
+    return p.label ?? PLACE_WORDS[p.scale];
   }
   $effect(() => {
     const p = place;
     if (!p) return;
     untrack(() => {
       trail = nextTrail(trail, p);
-      const label = p.scale === "world" ? placeName(p.world) : null;
-      if (p.scale !== "world" || label) {
+      const label = p.scale === "world" ? placeName(p.world) : p.id ? (notes[p.scale]?.name ?? null) : null;
+      // Above a system, a place is remembered once its view has said which one it is.
+      if (p.scale === "system" || label) {
         recent = rememberPlace(recent, label ? { ...p, label } : p);
         savePref("places", JSON.stringify(recent));
       }
@@ -623,7 +657,9 @@
       const h = placeHash(p);
       if (typeof location === "undefined" || location.hash === h || startOpen) return;
       const was = parsePlaceHash(location.hash);
-      if (was && samePlace(was, p)) history.replaceState(history.state, "", h);
+      // The view naming its place (an id arriving for the same scale) refines this step rather than making a new one.
+      const refined = was && was.scale === p.scale && was.system === p.system && !was.id && !!p.id;
+      if (was && (samePlace(was, p) || refined)) history.replaceState(history.state, "", h);
       else history.pushState(history.state, "", h);
     });
   });
@@ -634,7 +670,14 @@
       showSystem(p.system);
     }
     if (p.scale === "world") toWorld(p.world);
-    else toScale(p.scale);
+    else {
+      // A place above a system that its view is not on yet: open the view on it.
+      if (p.id && p.id !== notes[p.scale]?.id) {
+        opening = { ...opening, [p.scale]: p.id };
+        if (railScale === p.scale) openings++;
+      }
+      toScale(p.scale);
+    }
     if (p.screen && SCREENS[p.screen] && scalesOf(SCREENS[p.screen]!).includes(p.scale)) ws.screen = p.screen;
   }
   /** Up one scale, from above the system (Esc); at a world, up to its system. */
@@ -646,10 +689,16 @@
   const SHORT_WORDS: Partial<Record<PlaceScale, string>> = { web: "Web", cluster: "Nearby" };
   /** The step below this one when it is a scale of its own (the cosmic web → the galaxies nearby → the galaxy). */
   const downScale = $derived<PlaceScale | null>(railScale === "web" ? "cluster" : railScale === "cluster" ? "galaxy" : null);
+  /** What the view in front says is nested below it, when the next scale down can open on it. */
+  const belowNote = $derived(downScale ? notes[railScale as PlaceScale] : undefined);
   const recentElsewhere = $derived(place ? recent.filter((r) => !samePlace(r, place)) : recent);
   function goBelow(v: string) {
     if (v.startsWith("scale:") && isPlaceScale(v.slice(6))) return toScale(v.slice(6) as PlaceScale);
     if (v.startsWith("sys:")) return goPlace({ scale: "system", system: v.slice(4) });
+    if (v.startsWith("child:")) {
+      const c = belowNote?.children?.[Number(v.slice(6))];
+      return void (c && downScale && goPlace({ scale: downScale, system: viewing?.system ?? "", id: c.id }));
+    }
     if (v.startsWith("recent:")) {
       const r = recentElsewhere[Number(v.slice(7))];
       return void (r && goPlace(r));
@@ -1125,6 +1174,9 @@
               {:else}
                 <option value="" disabled>Below ▾</option>
                 {#if downScale}<option value={`scale:${downScale}`}>{PLACE_WORDS[downScale]}</option>{/if}
+                {#if belowNote?.children?.length && downScale}
+                  <optgroup label={`In ${belowNote.name}`} data-children>{#each belowNote.children as c, j (c.id)}<option value={`child:${j}`}>{c.name}</option>{/each}</optgroup>
+                {/if}
                 <optgroup label="Systems in this campaign">
                   <option value="sys:">{base.title}</option>
                   {#each adoptedSystems as a (a.system)}<option value={`sys:${a.system}`}>{a.title}</option>{/each}
@@ -1226,7 +1278,7 @@
       <main class="stage" data-viewbar={viewSpec ? "" : undefined} data-desk={desk} data-screen={ws.screen} data-page={mountFor("card") ? undefined : ""} data-lens={lens.id} data-branch={ws.branch ? "open" : ahead ? "ahead" : undefined}>
         {#if ws.branch}<div class="branch-stamp" aria-hidden="true">What if · not kept</div>{/if}
         {#if viewSpec && ws.view}<div class="viewbar"><ViewControls spec={viewSpec} choice={ws.view} onchange={setView} /></div>{/if}
-        <div class="area-chart">{#if mountFor("chart")}<div class="fill" use:view={mountFor("chart")!}></div>{/if}</div>
+        <div class="area-chart">{#if chartMount}{#key openings}<div class="fill" use:view={chartMount}></div>{/key}{/if}</div>
         <nav class="tools" aria-label="Tools">
           <ToolButton label="Select" icon="M5 3l14 8-6 2-2 6z" pressed={true} />
           {#if hasTool(ws.lens, "undo") && (desk === "build" || ws.branch)}<ToolButton label="Undo" icon="M9 14L4 9l5-5M4 9h11a5 5 0 0 1 0 10h-3" keyhint="Control+Z" disabled={ws.undo.length === 0 || ws.mode !== "edit" || !!ws.branch} onclick={() => undo(true)} />

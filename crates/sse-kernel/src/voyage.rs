@@ -104,44 +104,43 @@ pub(crate) fn plan_voyage(
     // stays within one cell of the cell that drew it, and the box of cells
     // one wider than the voyage on every side holds every true neighbour.
     let mut systems: Vec<VoyageSystem> = vec![];
+    let mut box_cells = vec![];
     for x in lo[0]..=hi[0] {
         for y in lo[1]..=hi[1] {
             for z in lo[2]..=hi[2] {
-                for sys in st.cell([x, y, z], frame, pins).map_err(bad)? {
-                    let id = sys.address.to_string();
-                    let at = st.at(&sys, t_myr);
-                    let (odds, from) = match a.sensed_fuel.get(&id) {
-                        Some(&o) => (o.clamp(0.0, 1.0), "the ship's sensors"),
-                        None => (
-                            s.voyage.giant_prior.odds(sys.mass_msun, sys.feh),
-                            "its star's mass and metallicity",
-                        ),
-                    };
-                    systems.push(VoyageSystem {
-                        fuel_odds: Some(odds),
-                        odds_from: from.to_string(),
-                        name: short(&id),
-                        fuel: a.known_fuel.get(&id).cloned().unwrap_or_default(),
-                        surveyed: a.surveyed.contains(&id) || a.known_fuel.contains_key(&id),
-                        xyz_pc: at.xyz_pc,
-                        star: (at.state.luminosity_lsun > 0.0 && at.state.teff_k > 0.0).then(
-                            || {
-                                let t = 5772.0 / at.state.teff_k;
-                                sse_nav::voyage::StarWell {
-                                    mass_msun: at.state.mass_msun,
-                                    // R = √L (T☉/T)², Stefan-Boltzmann.
-                                    radius_rsun: sse_core::math::sqrt(at.state.luminosity_lsun)
-                                        * t
-                                        * t,
-                                    luminosity_lsun: at.state.luminosity_lsun,
-                                }
-                            },
-                        ),
-                        id,
-                    });
-                }
+                box_cells.push([x, y, z]);
             }
         }
+    }
+    let drawn = st.cells(&box_cells, frame, pins).map_err(bad)?;
+    for sys in drawn.into_iter().flatten() {
+        let id = sys.address.to_string();
+        let at = st.at(&sys, t_myr);
+        let (odds, from) = match a.sensed_fuel.get(&id) {
+            Some(&o) => (o.clamp(0.0, 1.0), "the ship's sensors"),
+            None => (
+                s.voyage.giant_prior.odds(sys.mass_msun, sys.feh),
+                "its star's mass and metallicity",
+            ),
+        };
+        systems.push(VoyageSystem {
+            fuel_odds: Some(odds),
+            odds_from: from.to_string(),
+            name: short(&id),
+            fuel: a.known_fuel.get(&id).cloned().unwrap_or_default(),
+            surveyed: a.surveyed.contains(&id) || a.known_fuel.contains_key(&id),
+            xyz_pc: at.xyz_pc,
+            star: (at.state.luminosity_lsun > 0.0 && at.state.teff_k > 0.0).then(|| {
+                let t = 5772.0 / at.state.teff_k;
+                sse_nav::voyage::StarWell {
+                    mass_msun: at.state.mass_msun,
+                    // R = √L (T☉/T)², Stefan-Boltzmann.
+                    radius_rsun: sse_core::math::sqrt(at.state.luminosity_lsun) * t * t,
+                    luminosity_lsun: at.state.luminosity_lsun,
+                }
+            }),
+            id,
+        });
     }
     let find = |id: &str| systems.iter().position(|s| s.id == id);
     let home = match a.home {

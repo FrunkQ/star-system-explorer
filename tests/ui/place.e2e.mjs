@@ -53,7 +53,9 @@ try {
   await line.locator('[data-place-step="galaxy"]').click();
   await until(gm, "galaxy");
   await gm.locator(".gal").waitFor({ timeout: 30000 });
-  assert.equal(new URL(gm.url()).hash, "#chart/galaxy");
+  // The galaxy chart says which galaxy is in view: its name is the place, and its key is in the link.
+  await gm.waitForFunction(() => location.hash === "#chart/galaxy//milky-way-like", null, { timeout: 20000 });
+  assert.equal((await line.locator("h1").innerText()).trim(), "A Milky-Way-like galaxy");
   assert.deepEqual((await line.locator("[data-place-step].below").allInnerTexts()).map((s) => s.trim()), ["Kestrel", tarnName]);
   assert.match(await gm.locator('.rail [data-go="back"]').innerText(), new RegExp(`Back to ${tarnName}`));
   const down = line.getByLabel("Go down");
@@ -84,6 +86,20 @@ try {
   assert.deepEqual(await line.locator("[data-place-step]:not(.below)").count(), 0);
   await line.getByLabel("Go down").selectOption("scale:cluster");
   await until(gm, "cluster");
+  // The galaxies nearby name their cell and list its galaxies below; picking one charts it.
+  const kids = line.getByLabel("Go down").locator("optgroup[data-children] option");
+  await kids.first().waitFor({ state: "attached", timeout: 30000 });
+  assert.match(await line.getByLabel("Go down").locator("optgroup[data-children]").getAttribute("label"), /^In Cell /);
+  const kid = (await kids.first().innerText()).trim();
+  assert.match(kid, /^Halo /);
+  await line.getByLabel("Go down").selectOption(await kids.first().getAttribute("value"));
+  await until(gm, "galaxy");
+  await gm.waitForFunction(() => /^#chart\/galaxy\/\/.*cell%3A.*halo%3A/.test(location.hash), null, { timeout: 30000 });
+  await gm.waitForFunction(() => /^Halo /.test(document.querySelector(".place h1.title")?.textContent?.trim() ?? ""), null, { timeout: 30000 });
+  assert.match(await line.locator('[data-place-step="cluster"]').innerText(), /Cell /, "the step above is the cell by name");
+  await shot(gm, "u24-galaxy-named");
+  await line.locator('[data-place-step="cluster"]').click();
+  await until(gm, "cluster");
   await line.getByLabel("Go down").selectOption("sys:");
   await until(gm, "system");
   assert.equal(await line.locator("h1").innerText(), "Kestrel");
@@ -99,6 +115,12 @@ try {
   await linked.goto(root + "#chart/web");
   await ready(linked);
   await until(linked, "web");
+  // A link names a galaxy above the system, and the chart opens on it.
+  await linked.goto(root + "#chart/galaxy//dwarf");
+  await linked.reload();
+  await ready(linked);
+  await until(linked, "galaxy");
+  await linked.waitForFunction(() => document.querySelector(".place h1.title")?.textContent?.trim() === "A dwarf galaxy", null, { timeout: 30000 });
 
   await more(gm, /Night chart/);
   await go(gm, "galaxy");

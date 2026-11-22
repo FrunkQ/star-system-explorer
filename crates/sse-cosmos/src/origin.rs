@@ -38,8 +38,6 @@ pub struct OriginParams {
     pub step_kpc: f64,
     /// Points on the returned path (birth to now).
     pub path_points: usize,
-    /// Circular speed for the azimuth along the path, km/s (flat rotation curve).
-    pub rotation_kms: f64,
 }
 
 impl Default for OriginParams {
@@ -51,7 +49,6 @@ impl Default for OriginParams {
             unusual_sd: 3.0,
             step_kpc: 0.05,
             path_points: 9,
-            rotation_kms: 220.0,
         }
     }
 }
@@ -229,9 +226,10 @@ pub fn reconstruct(env: &GalaxyEnvelope, p: &OriginParams, a: &OriginAsk) -> Ori
         })
     });
     // The path: the guide radius drifts from birth to now (its mean course,
-    // linear in time), the azimuth advances at the flat-curve rate.
+    // linear in time), the azimuth advances at the rotation curve's rate.
     let np = p.path_points.max(2);
-    let omega = |r: f64| p.rotation_kms * KMS_KPC_GYR / r.max(0.1); // rad per Gyr
+    // rad per Gyr, from the galaxy's rotation curve (DM4).
+    let omega = |r: f64| env.circular(r.max(0.1)).0 * KMS_KPC_GYR / r.max(0.1);
     let r_at = |t: f64| {
         if a.age_gyr <= 0.0 {
             a.r_now_kpc
