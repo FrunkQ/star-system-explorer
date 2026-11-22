@@ -112,6 +112,14 @@ pub mod dims {
     pub const SPECIFIC_POWER: D = D([2, 0, -3, 0, 0, 0, 0]);
     /// J kg^-1 (energy per unit mass).
     pub const SPECIFIC_ENERGY: D = D([2, 0, -2, 0, 0, 0, 0]);
+    /// kg m^-2 s^-1 (mass crossing a surface).
+    pub const MASS_FLUX: D = D([-2, 1, -1, 0, 0, 0, 0]);
+    /// W m^-1 K^-1.
+    pub const CONDUCTIVITY: D = D([1, 1, -3, 0, -1, 0, 0]);
+    /// K^-1.
+    pub const PER_KELVIN: D = D([0, 0, 0, 0, -1, 0, 0]);
+    /// J kg^-1 K^-1.
+    pub const SPECIFIC_HEAT: D = D([2, 0, -2, 0, -1, 0, 0]);
     /// Tesla.
     pub const MAGNETIC_FIELD: D = D::MAGNETIC_FIELD;
     /// A m².

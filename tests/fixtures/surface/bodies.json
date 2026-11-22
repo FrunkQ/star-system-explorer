@@ -52,6 +52,7 @@
     "mass_earth": 0.107,
     "radius_earth": 0.532,
     "core_mass_fraction": 0.24,
+    "core_light_fraction": 0.3,
     "age_gyr": 4.5,
     "climate": {
      "from": "fixed",
