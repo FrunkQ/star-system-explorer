@@ -171,6 +171,8 @@ New fixtures: Pluto, Charon, Triton, Enceladus, Miranda, Mimas, Ceres, Iapetus a
 | A3 | Minerva: narrative from sifter hits and explanation bundles, respecting data views | A1, K8, K9 | no number in output that is not in the supplied facts (automated check); will not reveal unscanned data |
 | A4 | Tars: support from docs and explanation bundles, humour setting | A1 | answers cite the bundle or doc they came from |
 
+### ND: the new-physics demo **[proposed 22 Nov, waiting for Alex's answers to section 5 of the design]**. Packages ND1 to ND10 exactly as `SSE4-new-physics-demo.md` section 3, one package each, with the owner thread suggested on each row. The capability: a user hands Orac a paper, Orac expresses it as visible, editable, cited blocks, and the result is saved as a pack anyone loads with no key. The test case is coloured white dwarfs (Hollands et al. 2026, doi:10.1093/rasti/rzag069), where a star's colour follows from what fell into it. Checked against main on 22 Nov, it is not possible yet: a white dwarf has no atmosphere facts (ND1, inside B3), a spectrum cannot carry broad absorption or travel on a wire (ND2, with O4), boxes have no maths beyond arithmetic (ND3), Orac cannot take a paper, add or wire nodes, or assemble one job as a set (ND4, ND5), a pack cannot carry its own fudges, sources and reproduction report (ND6) or be exported from Orac's work (ND7), and Explorers cannot publish V4 packs (ND8, which is X2). B3 builds the atmosphere facts only and leaves coloured white dwarfs for Orac. ND9 is a rehearsal on a second paper; ND10 is the film (video G in the trailer storyboards), made near the end when most visual effects are in place. Nothing is faked: the run, the cost and the published pack are real.
+
 ### X: sharing and release
 
 | Id | Package | Needs | Acceptance checks |
@@ -207,6 +209,7 @@ New fixtures: Pluto, Charon, Triton, Enceladus, Miranda, Mimas, Ceres, Iapetus a
 | M5e Tags and universe packs | TG1 to TG15 | import a V3 map and keep every label you set; survey a rock and see what is worth mining, mine it out and watch the label go; stack a setting pack and adopt its bases onto worlds that fit |
 | M5f One data sheet | MP0 to MP12 | open a periodic table and ask where this star's gold was made; see why it rains methane on Titan from a phase diagram; add unobtainium and mine it; change G in a what-if and see what follows, what is estimated and what cannot follow |
 | M5g Magnetic worlds | MF0 to MF10, MF14 | open Earth and see its field lines run down to the core that makes them; drag the time ruler and watch a Mars-like world lose its field; see why a gap in a giant's belts is there; fly a course that avoids them; watch aurorae spread when an ejection hits |
+| M9 New physics from a paper (near the end) | ND1 to ND10 | hand Orac a paper on coloured white dwarfs, read the result as a row of cited blocks, see a dead star turn green because its asteroids fell in, save it as a pack and load it on a device with no key |
 | 4.1 Economy (after 4.0) | EC0 design, then its own packages | goods priced by where they are scarce and what it costs to carry them; trade ships; players buying, selling and hauling |
 
 M6 and M7 are independent of each other and of M5 after M2, so they can run in parallel.
