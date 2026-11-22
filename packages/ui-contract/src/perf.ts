@@ -21,6 +21,8 @@ export interface PerfChunk {
   meaning: string;
   budget_ms: number;
   sources: string[];
+  /** Engine scenarios the bench times for this chunk (PF2, tests/harness/bench.js). */
+  bench?: string[];
 }
 
 export interface PerfChunksDoc {
@@ -213,9 +215,11 @@ export class PerfRecorder {
           return { source: s.source, ...(s.detail ? { detail: s.detail } : {}), calls: s.calls, last_ms: round(s.last), median_ms: round(t.median), p95_ms: round(t.p95), max_ms: round(t.max), ...(k ? { kernel_median_ms: round(k.median) } : {}) };
         })
         .sort((a, b) => b.p95_ms - a.p95_ms || a.source.localeCompare(b.source));
-      // The chunk's own figures pool its kept samples, so a rare slow op still shows in p95 and max.
+      // The median pools every kept sample; the 95th percentile is the worst op's own, so one slow kind of call
+      // (a single resolved_system among forty quick edits) is never averaged away. The verdict follows it.
       const all = stats(ss.flatMap((s) => s.total));
-      out.push({ id: c.id, name: c.name, meaning: c.meaning, budget_ms: c.budget_ms, verdict: verdict(all.p95, c.budget_ms), calls: ss.reduce((n, s) => n + s.calls, 0), median_ms: round(all.median), p95_ms: round(all.p95), max_ms: round(all.max), sources });
+      const p95 = Math.max(...sources.map((s) => s.p95_ms));
+      out.push({ id: c.id, name: c.name, meaning: c.meaning, budget_ms: c.budget_ms, verdict: verdict(p95, c.budget_ms), calls: ss.reduce((n, s) => n + s.calls, 0), median_ms: round(all.median), p95_ms: p95, max_ms: round(all.max), sources });
     }
     return out;
   }

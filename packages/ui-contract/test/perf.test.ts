@@ -97,3 +97,40 @@ test("through a real kernel worker: ops are named, the kernel's own time and mem
     await k.close();
   }
 });
+
+test("PF2: every engine scenario has one bench chunk, and the bench's sums and comparisons hold", async () => {
+  const bench = await import("../../../tests/harness/bench.js");
+  const lib = readFileSync(new URL("crates/sse-wasm/src/lib.rs", root), "utf8");
+  const names = [...lib.matchAll(/^\s+"([a-z-]+)" => [a-z_:]+\(\),$/gm)].map((m) => m[1]!);
+  assert.ok(names.length >= 38, `found ${names.length} scenarios`);
+  const listed = PERF_CHUNKS.chunks.flatMap((c) => c.bench ?? []);
+  assert.deepEqual([...listed].sort(), [...new Set(listed)].sort(), "no scenario in two chunks");
+  assert.deepEqual(names.filter((n) => !listed.includes(n)), [], "give each new engine scenario a chunk's bench list");
+  const xs = [5, 1, 9, 3, 7, 2];
+  assert.deepEqual(bench.stats(xs), stats(xs), "the bench's stats are the readout's");
+  let t = 0;
+  const fake = { engine_names: () => JSON.stringify(["resolve", "nav"]), engine_run: (n: string) => ((t += n === "resolve" ? 10 : 4), "{}") };
+  const results = await bench.runBench(fake, PERF_CHUNKS, { runs: 3, now: () => t });
+  assert.deepEqual(results.map((r: { chunk: string; runs_ms: number[] }) => [r.chunk, r.runs_ms]), [["resolve", [10, 10, 10]], ["voyages", [4, 4, 4]]]);
+  const before = bench.benchReport(results, PERF_CHUNKS, { today: "2026-11-22" });
+  assert.equal(before.source, "bench");
+  const slow = structuredClone(before);
+  slow.chunks[0].sources[0].median_ms = 10.6;
+  slow.chunks[0].median_ms = 10.6;
+  const cmp = bench.compareBench(before, slow);
+  assert.deepEqual(cmp.slower.map((r: { what: string }) => r.what), ["bench.resolve", "chunk resolve"], "6 % slower is caught");
+  slow.chunks[0].sources[0].median_ms = 10.4;
+  slow.chunks[0].median_ms = 10.4;
+  assert.deepEqual(bench.compareBench(before, slow).slower, [], "4 % is within");
+});
+
+test("a chunk's 95th percentile is its worst op's, so one slow kind of call is never averaged away", () => {
+  const r = new PerfRecorder();
+  r.setEnabled(true);
+  for (let i = 0; i < 40; i++) r.record("set_authored", 0.2);
+  r.record("resolved_system", 160);
+  const c = r.summary()[0]!;
+  assert.equal(c.median_ms, 0.2);
+  assert.equal(c.p95_ms, 160);
+  assert.equal(c.verdict, "over");
+});
