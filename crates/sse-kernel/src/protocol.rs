@@ -102,6 +102,16 @@ pub struct AuthoredEdit {
     pub impossible: bool,
 }
 
+/// A field of view for `sky_from_here`: galactic longitude and latitude
+/// of its centre, degrees, and its half angle.
+#[derive(Clone, PartialEq, Debug, Serialize, Deserialize, TS)]
+#[ts(export)]
+pub struct SkyCone {
+    pub l_deg: f64,
+    pub b_deg: f64,
+    pub half_angle_deg: f64,
+}
+
 /// One edit of a batch (`set_authored_batch`).
 #[derive(Clone, PartialEq, Debug, Serialize, Deserialize, TS)]
 #[ts(export)]
@@ -1229,6 +1239,40 @@ pub enum Request {
         #[ts(optional)]
         t_myr: Option<f64>,
     },
+    /// Y2 (night sky design 4.3): the stars seen from a place at a time down
+    /// to a limiting magnitude. The observer is a star system's address, or
+    /// a galactic position in pc, or (neither) the Sun's radius. Each luminosity
+    /// class is walked through the count tree inside the distance where its
+    /// brightest member reaches the limit; each star found gets band
+    /// magnitudes through its own dust column and is kept when it reaches
+    /// the limit in `band` (default V). `cone` narrows the sky to a field.
+    /// Read only.
+    SkyFromHere {
+        #[serde(default)]
+        #[ts(optional)]
+        observer: Option<String>,
+        #[serde(default)]
+        #[ts(optional)]
+        position_pc: Option<[f64; 3]>,
+        #[serde(default)]
+        #[ts(optional)]
+        t_myr: Option<f64>,
+        #[serde(default)]
+        #[ts(optional)]
+        limit_mag: Option<f64>,
+        #[serde(default)]
+        #[ts(optional)]
+        band: Option<String>,
+        #[serde(default)]
+        #[ts(optional)]
+        bands: Option<Vec<String>>,
+        #[serde(default)]
+        #[ts(optional)]
+        cone: Option<SkyCone>,
+        #[serde(default)]
+        #[ts(optional)]
+        max_stars: Option<u32>,
+    },
     /// Voyages between stars (V8 part 3): the cheapest chain of legs for one
     /// ship from a star system `from` to `to`, or with no `to` the nearest
     /// system not in `visited` (ties go to the shorter path, then to the one
@@ -1509,6 +1553,7 @@ impl Request {
             Request::ExportSector { .. } => "export_sector",
             Request::HaloCell { .. } => "halo_cell",
             Request::StarCell { .. } => "star_cell",
+            Request::SkyFromHere { .. } => "sky_from_here",
             Request::PlanVoyage { .. } => "plan_voyage",
             Request::PromoteStar { .. } => "promote_star",
             Request::CampaignTags => "campaign_tags",
@@ -1800,6 +1845,11 @@ pub fn ops() -> Vec<OpInfo> {
             "halo_cell",
             Cost::Medium,
             "one cell's haloes drawn from the mass function, each placed on the web and given a growth history and mergers (about 0.1 to 1 s native)",
+        ),
+        o(
+            "sky_from_here",
+            Cost::Medium,
+            "grows the campaign's galaxy, walks the count tree inside each class's visibility radius and gives each star found its magnitudes through dust; read only",
         ),
         o(
             "star_cell",
@@ -2579,6 +2629,17 @@ pub enum Response {
     StarCelled {
         #[ts(type = "unknown")]
         cell: serde_json::Value,
+    },
+    /// `sky_from_here`: `{galaxy, observer {address?, xyz_pc}, t_myr, frame,
+    /// limit_mag, band, bands, cone?, stars: [{address, pinned, class,
+    /// distance_pc, light_time_yr, l_deg, b_deg, dir, a_v, teff_k,
+    /// luminosity_lsun, phase, double, components: [{teff_k, radius_m}],
+    /// magnitudes, colours}], counts: [{mag,
+    /// n}], walked: {classes: [{class, top_lsun, radius_pc, found}], reads},
+    /// truncated, conventions}`.
+    Sky {
+        #[ts(type = "unknown")]
+        sky: serde_json::Value,
     },
     /// `plan_voyage`: `{ship, means, searched, cells, t_myr, systems: [{address,
     /// name, xyz_pc, fuel, surveyed, visited}], voyage: {from, to, minimise,

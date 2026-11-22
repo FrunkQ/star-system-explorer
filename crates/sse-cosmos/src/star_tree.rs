@@ -40,13 +40,19 @@ use std::collections::BTreeMap;
 /// A tree node: level (0 is the root block) and its index at that level.
 type Node = (u32, [i64; 3]);
 
+/// A node's split of one class's count among its children.
+type Split = Vec<(Node, u64)>;
+
 /// A walk through the tree in one frame, remembering expected numbers and
 /// class shares so a batch of cells shares the work.
 pub struct TreeWalk<'s, 'a> {
     pub stars: &'s Stars<'a>,
     pub frame: i64,
     expect: RefCell<BTreeMap<Node, f64>>,
-    shares: RefCell<BTreeMap<[i64; 3], ClassMix>>,
+    shares: RefCell<BTreeMap<[i64; 2], ClassMix>>,
+    /// Splits already made, by node and class (a split is keyed, so this
+    /// only saves the work).
+    splits: RefCell<BTreeMap<(Node, usize), Split>>,
 }
 
 /// A root block's mix of classes: each class's share of its systems, and
@@ -122,6 +128,7 @@ impl<'s, 'a> TreeWalk<'s, 'a> {
             frame,
             expect: RefCell::new(BTreeMap::new()),
             shares: RefCell::new(BTreeMap::new()),
+            splits: RefCell::new(BTreeMap::new()),
         }
     }
 
@@ -220,7 +227,10 @@ impl<'s, 'a> TreeWalk<'s, 'a> {
 
     /// The class shares with each class's corner of mass and age.
     pub fn class_mix(&self, root: [i64; 3]) -> ClassMix {
-        if let Some(v) = self.shares.borrow().get(&root) {
+        // The mix depends on the block's radius only, so blocks stacked in
+        // height share one.
+        let column = [root[0], root[1]];
+        if let Some(v) = self.shares.borrow().get(&column) {
             return v.clone();
         }
         let st = self.stars;
@@ -296,7 +306,7 @@ impl<'s, 'a> TreeWalk<'s, 'a> {
                 .map(|a| if a > 0.0 { a } else { oldest })
                 .collect(),
         };
-        self.shares.borrow_mut().insert(root, mix.clone());
+        self.shares.borrow_mut().insert(column, mix.clone());
         mix
     }
 
@@ -334,6 +344,17 @@ impl<'s, 'a> TreeWalk<'s, 'a> {
 
     /// Split a node's count of `class` among its children.
     fn split(&self, n: Node, class: usize, count: u64) -> Result<Vec<(Node, u64)>, String> {
+        if let Some(v) = self.splits.borrow().get(&(n, class)) {
+            if v.iter().map(|c| c.1).sum::<u64>() == count {
+                return Ok(v.clone());
+            }
+        }
+        let v = self.split_fresh(n, class, count)?;
+        self.splits.borrow_mut().insert((n, class), v.clone());
+        Ok(v)
+    }
+
+    fn split_fresh(&self, n: Node, class: usize, count: u64) -> Result<Vec<(Node, u64)>, String> {
         let ch = self.children(n);
         if count == 0 {
             return Ok(ch.into_iter().map(|c| (c, 0)).collect());

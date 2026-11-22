@@ -4,6 +4,7 @@ import type { BatchEdit } from "./BatchEdit";
 import type { FormationRequest } from "./FormationRequest";
 import type { InputSpec } from "./InputSpec";
 import type { JobSpec } from "./JobSpec";
+import type { SkyCone } from "./SkyCone";
 import type { SurfaceTile } from "./SurfaceTile";
 import type { TileRequest } from "./TileRequest";
 
@@ -83,7 +84,7 @@ arrives_at_s?: bigint, } | { "op": "set_kept", address: string, kind: string, va
  * pinned to the coded main world, giant and belt counts searched),
  * adopt it, and write the coded facts on the grown main world.
  */
-grow: boolean, at_s: bigint, } | { "op": "export_sector", scope: string, format: string, sheet?: string, at_s: bigint, } | { "op": "halo_cell", cell?: [bigint, bigint, bigint], min_mass_msun?: number, limit?: number, } | { "op": "star_cell", cell?: [bigint, bigint, bigint], t_myr?: number, } | { "op": "plan_voyage", from: string, to?: string, home?: string, ship: unknown, minimise?: string, visited?: Array<string>, known_fuel?: { [key in string]: Array<string> }, sensed_fuel?: { [key in string]: number }, surveyed?: Array<string>, gambles?: boolean, 
+grow: boolean, at_s: bigint, } | { "op": "export_sector", scope: string, format: string, sheet?: string, at_s: bigint, } | { "op": "halo_cell", cell?: [bigint, bigint, bigint], min_mass_msun?: number, limit?: number, } | { "op": "star_cell", cell?: [bigint, bigint, bigint], t_myr?: number, } | { "op": "sky_from_here", observer?: string, position_pc?: [number, number, number], t_myr?: number, limit_mag?: number, band?: string, bands?: Array<string>, cone?: SkyCone, max_stars?: number, } | { "op": "plan_voyage", from: string, to?: string, home?: string, ship: unknown, minimise?: string, visited?: Array<string>, known_fuel?: { [key in string]: Array<string> }, sensed_fuel?: { [key in string]: number }, surveyed?: Array<string>, gambles?: boolean, 
 /**
  * In-system voyages (part 3b): give one of a NAV `fixture`, an
  * inline `nav` system or an adopted `system` (read at `at_s`, with

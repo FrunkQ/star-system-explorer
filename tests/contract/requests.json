@@ -3003,6 +3003,16 @@
   "op": "star_cell"
  },
  {
+  "op": "sky_from_here",
+  "limit_mag": 2,
+  "bands": ["B", "V", "Ks"],
+  "max_stars": 4
+ },
+ {
+  "op": "sky_from_here",
+  "band": "nope"
+ },
+ {
   "op": "plan_voyage",
   "from": "u:aging/halo:milky-way-like/cell:988_0_0/sys:f137879k0",
   "ship": "jump-courier",

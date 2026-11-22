@@ -53,3 +53,17 @@ opt-level = 2
 # The star count tree reads the galaxy envelope thousands of times per sky walk.
 [profile.dev.package.sse-cosmos]
 opt-level = 2
+
+# A sky draw integrates passbands for thousands of stars; same reason.
+[profile.dev.package.sse-light]
+opt-level = 2
+
+# Keyed draws and the stellar relations run once per star in a sky draw.
+[profile.dev.package.sse-core]
+opt-level = 2
+
+[profile.dev.package.sse-atoms]
+opt-level = 2
+
+[profile.dev.package.sha2]
+opt-level = 2
