@@ -1,7 +1,7 @@
 // The Field layer's tracer (MF14a part 1): coefficients to field, field to lines, lines against the bubble.
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { bubbleOutline, chartCut, compressed, inBubble, cutPaths, drawField3D, project3D, dipole, dipoleAxis, fieldAt, insideBubble, lineBuffers, narrateField, schmidt, traceField, traceLine, type V3 } from "../src/field.ts";
+import { FIELD_LINES, bubbleOutline, chartCut, compressed, inBubble, cutPaths, drawField3D, project3D, dipole, dipoleAxis, fieldAt, insideBubble, lineBuffers, narrateField, schmidt, traceField, traceLine, type V3 } from "../src/field.ts";
 
 const near = (a: number, b: number, tol: number, what: string) => assert.ok(Math.abs(a - b) <= tol, `${what}: ${a} against ${b}`);
 
@@ -164,4 +164,37 @@ test("the views' fixture: a dipole Earth inside its bubble traces closed and ope
   const t = traceField(model, bubble);
   assert.ok(t.counts.closed > 50 && t.counts.open > 0, JSON.stringify(t.counts));
   assert.match(narrateField(model, bubble, t), /^Field 31 µT at the equator, tilted 9° from the spin axis; holds the wind off at 9\.3 radii\./);
+});
+
+test("part 1b: read_field's Solar System fixture becomes the layer's model and bubble", async () => {
+  const { readFileSync } = await import("node:fs");
+  const { Session } = await import("../../ui-contract/src/session.ts");
+  const { gmSeat } = await import("../../ui-contract/src/seat.ts");
+  const { nodeKernel } = await import("../../ui-contract/test/node-kernel.ts");
+  const { fieldFromRead, dipoleB0 } = await import("../src/field.ts");
+  const k = nodeKernel();
+  try {
+    const pack = (n: string) => JSON.parse(readFileSync(new URL(`../../../packs/${n}/pack.json`, import.meta.url), "utf8"));
+    const s = await Session.open(k.client, gmSeat(), { id: "mag", seed: "mag" }, [pack("base-physics"), pack("base-reference")]);
+    const r = await s.readField({ fixture: "solar-system" });
+    assert.ok(r.ok, JSON.stringify(r));
+    const bodies = r.bodies as never as Parameters<typeof fieldFromRead>[0][];
+    const earth = fieldFromRead(bodies.find((b) => b.name === "Earth")!)!;
+    // IGRF's g10 is about −29.4 µT; the fixture's dipole from the measured moment lands near it.
+    near(dipoleB0(earth.model) * 1e6, 30.6, 1.5, "Earth's B0, µT");
+    assert.ok(earth.bubble && earth.bubble.standoff_radii > 7 && earth.bubble.standoff_radii < 12);
+    // Parker's spiral at Earth: about 45°, so the radial and azimuthal parts are about equal.
+    const wf = earth.bubble.wind_field_t!;
+    near(Math.abs(wf[0]) / Math.abs(wf[1]), 1.1, 0.2, "spiral");
+    const t = traceField(earth.model, earth.bubble);
+    assert.ok(t.counts.closed > 50 && t.counts.open > 0, JSON.stringify(t.counts));
+    for (const name of ["Mercury", "Jupiter", "Saturn", "Uranus", "Neptune"]) {
+      const b = fieldFromRead(bodies.find((x) => x.name === name)!)!;
+      assert.ok(b && b.bubble, name);
+      const tr = traceField(b.model, b.bubble, FIELD_LINES.canvas!);
+      assert.ok(tr.counts.closed > 0, `${name}: ${JSON.stringify(tr.counts)}`);
+    }
+  } finally {
+    await k.close();
+  }
 });
