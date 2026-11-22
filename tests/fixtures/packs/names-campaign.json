@@ -1,0 +1,304 @@
+{
+ "format": "sse.pack/1",
+ "id": "test.names-campaign",
+ "version": "0.1.0",
+ "kind": [
+  "universe"
+ ],
+ "kernel_range": "^0.1",
+ "licence": "Apache-2.0",
+ "provides": {
+  "other": {
+   "names": {
+    "schemes": [
+     {
+      "id": "vesh",
+      "label": "Vesh",
+      "kind": "invented",
+      "script": "latin",
+      "about": "A hive-building people's tongue (NM3d draft, design thread). Guttural, with one click and doubled stops.",
+      "sounds": {
+       "classes": {
+        "C": [
+         [
+          "k",
+          5
+         ],
+         [
+          "kh",
+          4
+         ],
+         [
+          "r",
+          4
+         ],
+         [
+          "z",
+          4
+         ],
+         [
+          "g",
+          3
+         ],
+         [
+          "q",
+          3
+         ],
+         [
+          "gh",
+          2
+         ],
+         [
+          "tk",
+          2
+         ],
+         [
+          "x",
+          1
+         ]
+        ],
+        "V": [
+         [
+          "a",
+          6
+         ],
+         [
+          "i",
+          3
+         ],
+         [
+          "u",
+          3
+         ],
+         [
+          "aa",
+          2
+         ]
+        ],
+        "E": [
+         [
+          "k",
+          4
+         ],
+         [
+          "z",
+          3
+         ],
+         [
+          "kh",
+          3
+         ],
+         [
+          "q",
+          2
+         ],
+         [
+          "rr",
+          2
+         ]
+        ]
+       },
+       "shapes": [
+        [
+         "CV",
+         4
+        ],
+        [
+         "CVE",
+         5
+        ],
+        [
+         "VE",
+         1
+        ]
+       ],
+       "length": [
+        2,
+        3
+       ],
+       "never": [
+        [
+         "aa",
+         "a"
+        ],
+        [
+         "a",
+         "aa"
+        ],
+        [
+         "x",
+         "x"
+        ],
+        [
+         "k",
+         "k"
+        ],
+        [
+         "q",
+         "q"
+        ],
+        [
+         "rr",
+         "r"
+        ],
+        [
+         "kh",
+         "kh"
+        ]
+       ],
+       "stress": "first",
+       "say": {
+        "kh": "ch as in loch",
+        "x": "a sharp tongue click",
+        "rr": "a rolled r"
+       },
+       "ipa": {
+        "kh": "x",
+        "g": "ɡ",
+        "gh": "ɣ",
+        "r": "ɾ",
+        "rr": "r",
+        "tk": "t͡k",
+        "x": "ǂ",
+        "aa": "aː"
+       }
+      },
+      "means": {
+       "red": "khaz",
+       "mountain": "rak",
+       "home": "uq",
+       "sky": "xaak",
+       "great": "gaarr",
+       "sea": "zuq"
+      },
+      "forms": {
+       "planet": [
+        [
+         "{word}",
+         1
+        ]
+       ],
+       "peak": [
+        [
+         "{means:colour?}{means:mountain}",
+         1
+        ]
+       ],
+       "ocean": [
+        [
+         "{means:great}{means:sea}",
+         1
+        ]
+       ],
+       "port": [
+        [
+         "{means:sky}{means:home} {word}",
+         1
+        ]
+       ],
+       "default": [
+        [
+         "{word}",
+         1
+        ]
+       ]
+      }
+     },
+     {
+      "id": "catalogue",
+      "label": "Catalogue",
+      "kind": "catalogue",
+      "forms": {
+       "star": [
+        [
+         "KS {serial:4}",
+         1
+        ]
+       ],
+       "planet": [
+        [
+         "{parent} {roman}",
+         1
+        ]
+       ],
+       "moon": [
+        [
+         "{parent} {letter:a}",
+         1
+        ]
+       ]
+      },
+      "follow": [
+       "planet",
+       "moon"
+      ]
+     }
+    ],
+    "defaults": {
+     "designation": "catalogue",
+     "common": "vesh"
+    }
+   },
+   "observe": {
+    "disclosure": {
+     "fields": {
+      "kind": "obvious",
+      "body.kind": "obvious",
+      "name.designation": "obvious",
+      "name.common": "scanned",
+      "name.local_vesh": "surveyed",
+      "body.*": "scanned",
+      "orbit.*": "scanned",
+      "parent": "obvious"
+     }
+    },
+    "views": [
+     {
+      "id": "long-range",
+      "label": "Long-range sensors",
+      "description": "Exists, and its catalogue designation",
+      "show_tiers": [
+       "obvious"
+      ],
+      "tags": {
+       "mode": "none"
+      },
+      "unknown_style": "omit"
+     },
+     {
+      "id": "scanned",
+      "label": "Scanned",
+      "description": "Adds the names people use",
+      "show_tiers": [
+       "obvious",
+       "scanned"
+      ],
+      "tags": {
+       "mode": "none"
+      },
+      "unknown_style": "omit"
+     },
+     {
+      "id": "survey",
+      "label": "Survey on file",
+      "description": "Adds what the locals call it",
+      "show_tiers": [
+       "obvious",
+       "scanned",
+       "surveyed"
+      ],
+      "tags": {
+       "mode": "all"
+      },
+      "unknown_style": "omit"
+     }
+    ],
+    "campaign": {
+     "default_view": "long-range",
+     "before": "long-range",
+     "after": "scanned"
+    }
+   }
+  }
+ }
+}
