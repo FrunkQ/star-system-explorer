@@ -338,4 +338,56 @@ mod tests {
         );
         assert!(v["voyage"]["voyage"]["to"].is_string(), "{v}");
     }
+
+    #[test]
+    fn nav_reads_belts_from_the_field_model() {
+        let mut k = Kernel::new();
+        // The data sheet gives the electron's constants.
+        let pack = include_str!("../../../packs/base-reference/pack.json");
+        let r = k.handle_json(&format!(r#"{{"op":"load_stack","packs":[{pack}]}}"#));
+        assert!(r.contains("stack_loaded"), "{}", &r[..r.len().min(300)]);
+        let hz = |k: &mut Kernel, to: &str, ship: &str| {
+            let v = ask(
+                k,
+                &format!(
+                    r#"{{"op":"plan_route","fixture":"sol","from":"Earth","to":"{to}","ship":"{ship}"}}"#
+                ),
+            );
+            assert_eq!(v["type"], "route_planned", "{v}");
+            v["plan"]["candidates"][0]["hazards"]
+                .as_array()
+                .unwrap()
+                .iter()
+                .filter(|h| h["kind"] == "belts")
+                .map(|h| h["text"].as_str().unwrap().to_string())
+                .collect::<Vec<_>>()
+        };
+        let mars = hz(&mut k, "Mars", "chemical-transfer");
+        assert!(
+            mars.iter()
+                .any(|t| t.contains("Earth") && t.contains("MF7")),
+            "{mars:?}"
+        );
+        let jup = hz(&mut k, "Jupiter", "fusion-torch");
+        // Jupiter's belts, fed by Io's plasma, far outweigh Earth's.
+        let msv = |t: &str| -> f64 {
+            t.split(" mSv")
+                .next()
+                .unwrap()
+                .rsplit(' ')
+                .next()
+                .unwrap()
+                .parse()
+                .unwrap()
+        };
+        let j = jup
+            .iter()
+            .find(|t| t.contains("Jupiter's"))
+            .expect("Jupiter's belts");
+        let e = jup
+            .iter()
+            .find(|t| t.contains("Earth's"))
+            .expect("Earth's belts");
+        assert!(msv(j) > 10.0 * msv(e), "{jup:?}");
+    }
 }

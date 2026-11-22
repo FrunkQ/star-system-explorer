@@ -10,6 +10,7 @@ export const STAMP_LABELS: Record<string, string> = {
   fixture: "Fixture data",
   catalogued: "Catalogued",
   unverified: "Unverified",
+  theoretical: "Theoretical",
   "out-of-range": "Out of range",
   "changed-physics": "Changed physics",
   validated: "Validated",
