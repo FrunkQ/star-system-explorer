@@ -1492,6 +1492,63 @@ pub enum Request {
         #[ts(optional)]
         facts: Option<BTreeMap<String, String>>,
     },
+    /// The names at `address` (NM2, naming design 4.2): every layer's shown
+    /// name with where it came from (`typed`, `fixed`, `drawn`), the scheme
+    /// in force, its parts and faces, and under a typed name the one it
+    /// would have otherwise. With `audience`, only the layers that
+    /// audience's data view discloses there (a name is disclosed like any
+    /// fact, as the field `name.<layer>`). Read-only.
+    ReadNames {
+        address: String,
+        #[serde(default)]
+        #[ts(optional)]
+        at_s: Option<i64>,
+        #[serde(default)]
+        #[ts(optional)]
+        audience: Option<String>,
+    },
+    /// Set the scheme that names `layer` at `address` and beneath (only
+    /// things of `kind`, when given), from `at_s` on (design 4.3). No
+    /// `scheme` takes the setting away; an empty one means no names here.
+    /// Names not yet fixed change at once. With `rename_fixed`, fixed names
+    /// beneath that the new scheme now governs are renamed from it in the
+    /// same event, dated `at_s` (the history keeps the old ones). GM only.
+    SetNaming {
+        address: String,
+        layer: String,
+        #[serde(default)]
+        #[ts(optional)]
+        scheme: Option<String>,
+        #[serde(default)]
+        #[ts(optional)]
+        kind: Option<String>,
+        at_s: i64,
+        #[serde(default)]
+        #[ts(optional)]
+        rename_fixed: Option<bool>,
+    },
+    /// Type a name for `address` in `layer` (default `common`) from `at_s`
+    /// on: plain text that always wins and never follows its parent. No
+    /// `text` takes the typed name away, so the drawn or fixed name shows
+    /// again ("follow the parent again"). GM only.
+    Rename {
+        address: String,
+        #[serde(default)]
+        #[ts(optional)]
+        layer: Option<String>,
+        #[serde(default)]
+        #[ts(optional)]
+        text: Option<String>,
+        at_s: i64,
+    },
+    /// Fix the drawn names at `address` and beneath from `at_s` on (design
+    /// 4.4): their forms and parts are stored, so no later scheme version
+    /// can change them. A name that clashes with one already fixed in the
+    /// same system moves to its next draw. GM only.
+    FixNames {
+        address: String,
+        at_s: i64,
+    },
 }
 
 /// `adopt`'s formation request: the `run_formation` fields.
@@ -1648,6 +1705,10 @@ impl Request {
             Request::AdoptDressing { .. } => "adopt_dressing",
             Request::HoldDressing { .. } => "hold_dressing",
             Request::NameSample { .. } => "name_sample",
+            Request::ReadNames { .. } => "read_names",
+            Request::SetNaming { .. } => "set_naming",
+            Request::Rename { .. } => "rename",
+            Request::FixNames { .. } => "fix_names",
         }
     }
 }
@@ -1995,6 +2056,18 @@ pub fn ops() -> Vec<OpInfo> {
             "name_sample",
             Cost::Light,
             "up to 10,000 keyed draws from one name scheme, each a few table picks; read only",
+        ),
+        o(
+            "read_names",
+            Cost::Light,
+            "one address's names, drawing its sibling group once per layer; read only",
+        ),
+        o("set_naming", Cost::Light, "GM machine only; one authored event"),
+        o("rename", Cost::Trivial, "GM machine only; one authored event"),
+        o(
+            "fix_names",
+            Cost::Light,
+            "GM machine only; draws the names under one address, one event",
         ),
     ]
 }
@@ -2788,6 +2861,8 @@ pub enum Response {
     },
     /// `name_sample`: `{scheme, kind, layer, count, digest, names: [...],
     /// avoid_hits}`, each name with its form, faces and parts.
+    /// `read_names`: `{address, kind, names: [{layer, text, source, scheme,
+    /// named, original}]}`.
     Names {
         #[ts(type = "unknown")]
         value: serde_json::Value,

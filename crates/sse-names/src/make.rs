@@ -7,7 +7,7 @@
 
 use crate::scheme::{Library, Row, Scheme, Tok, Weighted, MAX_TRIES};
 use crate::text;
-use serde::Serialize;
+use serde::{Deserialize, Serialize};
 use sse_core::{Address, Draws, Seed, Stream};
 use std::collections::BTreeMap;
 
@@ -34,19 +34,19 @@ pub struct Request<'a> {
 }
 
 /// One drawn part of a name, for the name card.
-#[derive(Clone, Debug, PartialEq, Serialize)]
+#[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
 pub struct Part {
     pub text: String,
     /// `word`, `list:<name>`, `means:<id>`, `number`.
     pub from: String,
-    #[serde(skip_serializing_if = "Option::is_none")]
+    #[serde(default, skip_serializing_if = "Option::is_none")]
     pub means: Option<String>,
-    #[serde(skip_serializing_if = "Option::is_none")]
+    #[serde(default, skip_serializing_if = "Option::is_none")]
     pub source: Option<String>,
 }
 
 /// A made name: its stored form and its faces.
-#[derive(Clone, Debug, PartialEq, Serialize)]
+#[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
 pub struct Named {
     /// The scheme that made it (a mix names its member).
     pub scheme: String,
@@ -60,7 +60,7 @@ pub struct Named {
     pub say: String,
     /// "/ˈxaz.rak/".
     pub ipa: String,
-    #[serde(skip_serializing_if = "Option::is_none")]
+    #[serde(default, skip_serializing_if = "Option::is_none")]
     pub native: Option<String>,
     /// Plain hints for the unusual sounds it holds ("kh": "ch as in loch").
     pub hints: BTreeMap<String, String>,
@@ -451,6 +451,7 @@ fn draw_one(s: &Scheme, r: &Request, d: &Draws, attempt: u32) -> Result<Named, S
             }
             Tok::Roman => form.push_str(&roman(r.index + 1)),
             Tok::Letter => form.push_str(&letters(r.index, b'b', false)),
+            Tok::LetterFromA => form.push_str(&letters(r.index, b'a', false)),
             Tok::CapLetter => form.push_str(&letters(r.index, b'A', true)),
             Tok::Number => form.push_str(&(r.index + 1).to_string()),
             Tok::Serial(w) => {

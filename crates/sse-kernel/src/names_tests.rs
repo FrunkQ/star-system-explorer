@@ -110,3 +110,333 @@ fn an_unknown_scheme_or_count_is_a_plain_error() {
         assert_eq!(r["type"], "error", "{r}");
     }
 }
+
+// NM2: names on real addresses.
+
+const SYS: &str = "u:home/sys:5";
+const STAR: &str = "u:home/sys:5/star:0";
+const P1: &str = "u:home/sys:5/body:0";
+const P2: &str = "u:home/sys:5/body:1";
+const P3: &str = "u:home/sys:5/body:2";
+const MOON: &str = "u:home/sys:5/body:9";
+
+/// A grown system (a star and five planets) with an authored moon on the
+/// third planet, under the names campaign.
+fn campaign() -> crate::Kernel {
+    let mut k = kernel(vec![
+        base(),
+        pack("tests/fixtures/packs/names-campaign.json"),
+    ]);
+    send(
+        &mut k,
+        serde_json::json!({"op": "open_universe", "id": "home", "seed": "home"}),
+    );
+    let form =
+        serde_json::json!({"seed": "nm1", "system": SYS, "star_pins": {"primary_mass": 1.0}});
+    let r = send(
+        &mut k,
+        serde_json::json!({"op": "adopt", "formation": form}),
+    );
+    assert_eq!(r["type"], "adopted", "{r}");
+    let r = send(
+        &mut k,
+        serde_json::json!({"op": "set_authored_batch", "occurred_at_s": 0, "edits": [
+            {"address": MOON, "field": "body.kind", "value": "moon"},
+            {"address": MOON, "field": "parent", "value": P3}
+        ]}),
+    );
+    assert_eq!(r["type"], "authored", "{r}");
+    k
+}
+fn names_of(k: &mut crate::Kernel, a: &str, audience: Option<&str>) -> BTreeMap<String, String> {
+    let mut q = serde_json::json!({"op": "read_names", "address": a});
+    if let Some(x) = audience {
+        q["audience"] = x.into();
+    }
+    let r = send(k, q);
+    assert_eq!(r["type"], "names", "{r}");
+    r["value"]["names"]
+        .as_array()
+        .unwrap()
+        .iter()
+        .map(|n| {
+            (
+                n["layer"].as_str().unwrap().to_string(),
+                n["text"].as_str().unwrap().to_string(),
+            )
+        })
+        .collect()
+}
+fn ok(r: serde_json::Value) -> serde_json::Value {
+    assert_eq!(r["type"], "authored", "{r}");
+    r
+}
+use std::collections::BTreeMap;
+
+#[test]
+fn a_grown_system_has_designations_and_common_names() {
+    let mut k = campaign();
+    let star = names_of(&mut k, STAR, None);
+    assert_eq!(star["designation"], "KS 0005");
+    let p3 = names_of(&mut k, P3, None);
+    assert_eq!(p3["designation"], "KS 0005 III");
+    assert!(!p3["common"].is_empty());
+    assert_eq!(names_of(&mut k, MOON, None)["designation"], "KS 0005 III a");
+    // Siblings never share a common name.
+    let commons: Vec<String> = [P1, P2, P3]
+        .iter()
+        .map(|a| names_of(&mut k, a, None)["common"].clone())
+        .collect();
+    assert_ne!(commons[0], commons[1]);
+    assert_ne!(commons[1], commons[2]);
+    // The catalogue has no form for a system; Vesh names anything.
+    let sys = names_of(&mut k, SYS, None);
+    assert!(
+        !sys.contains_key("designation") && sys.contains_key("common"),
+        "{sys:?}"
+    );
+}
+
+#[test]
+fn each_seat_sees_only_the_names_it_knows() {
+    let mut k = campaign();
+    ok(send(
+        &mut k,
+        serde_json::json!({"op": "set_naming", "address": "u:home", "layer": "local_vesh", "scheme": "vesh", "at_s": 0}),
+    ));
+    for (aud, view) in [("near", "scanned"), ("lander", "survey")] {
+        let r = send(
+            &mut k,
+            serde_json::json!({"op": "grant", "address": SYS, "audience": aud, "view": view, "at_s": 0}),
+        );
+        assert_ne!(r["type"], "error", "{r}");
+    }
+    let layers = |k: &mut crate::Kernel, aud| -> Vec<String> {
+        names_of(k, P3, Some(aud)).into_keys().collect()
+    };
+    assert_eq!(layers(&mut k, "far"), vec!["designation"]);
+    assert_eq!(layers(&mut k, "near"), vec!["common", "designation"]);
+    assert_eq!(
+        layers(&mut k, "lander"),
+        vec!["common", "designation", "local_vesh"]
+    );
+    assert_eq!(
+        layers(&mut k, "gm"),
+        vec!["common", "designation", "local_vesh"]
+    );
+    // The scene carries the same names, and no bookkeeping.
+    let s = send(
+        &mut k,
+        serde_json::json!({"op": "scene", "audience": "near", "scope": P3, "at_s": 0}),
+    );
+    let fields: Vec<&str> = s["scene"]["subjects"][0]["facts"]
+        .as_array()
+        .unwrap()
+        .iter()
+        .map(|f| f["field"].as_str().unwrap())
+        .collect();
+    assert!(fields.contains(&"name.common"), "{fields:?}");
+    assert!(!fields
+        .iter()
+        .any(|f| f.starts_with("naming.") || f.starts_with("names.")));
+}
+
+#[test]
+fn names_read_back_the_same_after_replay() {
+    let read = || {
+        let mut k = campaign();
+        ok(send(
+            &mut k,
+            serde_json::json!({"op": "fix_names", "address": P2, "at_s": 5}),
+        ));
+        ok(send(
+            &mut k,
+            serde_json::json!({"op": "set_naming", "address": SYS, "layer": "common", "scheme": "catalogue", "at_s": 10}),
+        ));
+        let all: Vec<_> = [STAR, P1, P2, P3, MOON]
+            .iter()
+            .map(|a| names_of(&mut k, a, None))
+            .collect();
+        let h = send(&mut k, serde_json::json!({"op": "state_hash"}));
+        (all, h)
+    };
+    assert_eq!(read(), read());
+}
+
+#[test]
+fn a_typed_name_survives_its_world_being_grown_again() {
+    let mut k = campaign();
+    ok(send(
+        &mut k,
+        serde_json::json!({"op": "rename", "address": P3, "text": "Haven", "at_s": 0}),
+    ));
+    // Grown again: new physical facts on the world.
+    ok(send(
+        &mut k,
+        serde_json::json!({"op": "set_authored_batch", "occurred_at_s": 20, "edits": [
+            {"address": P3, "field": "body.mass", "value": 7.0e24},
+            {"address": P3, "field": "body.radius", "value": 6.9e6}
+        ]}),
+    ));
+    let r = send(
+        &mut k,
+        serde_json::json!({"op": "read_names", "address": P3}),
+    );
+    let common = r["value"]["names"]
+        .as_array()
+        .unwrap()
+        .iter()
+        .find(|n| n["layer"] == "common")
+        .unwrap()
+        .clone();
+    assert_eq!(common["text"], "Haven");
+    assert_eq!(common["source"], "typed");
+    let original = common["original"].as_str().unwrap().to_string();
+    // Taking the typed name away shows the drawn one again.
+    ok(send(
+        &mut k,
+        serde_json::json!({"op": "rename", "address": P3, "at_s": 30}),
+    ));
+    assert_eq!(names_of(&mut k, P3, None)["common"], original);
+    // Names that are not safe text are refused.
+    let r = send(
+        &mut k,
+        serde_json::json!({"op": "rename", "address": P3, "text": "Bad\u{202e}name", "at_s": 40}),
+    );
+    assert_eq!(r["code"], "bad_name", "{r}");
+}
+
+#[test]
+fn a_setting_changes_only_unfixed_names_beneath_it() {
+    let mut k = campaign();
+    let before: Vec<_> = [P1, P2, P3, MOON]
+        .iter()
+        .map(|a| names_of(&mut k, a, None)["common"].clone())
+        .collect();
+    let fixed = ok(send(
+        &mut k,
+        serde_json::json!({"op": "fix_names", "address": P2, "at_s": 5}),
+    ));
+    assert_eq!(fixed["affected"], serde_json::json!([P2]));
+    // The catalogue for common names on the third planet and what hangs from it.
+    ok(send(
+        &mut k,
+        serde_json::json!({"op": "set_naming", "address": P3, "layer": "common", "scheme": "catalogue", "at_s": 10}),
+    ));
+    assert_eq!(names_of(&mut k, P1, None)["common"], before[0]);
+    assert_eq!(names_of(&mut k, P2, None)["common"], before[1]);
+    // The catalogue follows the star's name in the same layer: its Vesh name.
+    let star = names_of(&mut k, STAR, None)["common"].clone();
+    assert_eq!(names_of(&mut k, P3, None)["common"], format!("{star} III"));
+    assert_eq!(
+        names_of(&mut k, MOON, None)["common"],
+        format!("{star} III a")
+    );
+    // On the whole system: the fixed planet keeps its name...
+    ok(send(
+        &mut k,
+        serde_json::json!({"op": "set_naming", "address": SYS, "layer": "common", "scheme": "catalogue", "at_s": 20}),
+    ));
+    assert_eq!(names_of(&mut k, P2, None)["common"], before[1]);
+    // The star is under the setting too, so its common name is now "KS 0005".
+    assert_eq!(names_of(&mut k, STAR, None)["common"], "KS 0005");
+    assert_eq!(names_of(&mut k, P1, None)["common"], "KS 0005 I");
+    // ...until the GM renames fixed names from the new scheme, as of a date.
+    let r = ok(send(
+        &mut k,
+        serde_json::json!({"op": "set_naming", "address": SYS, "layer": "common", "scheme": "catalogue", "at_s": 30, "rename_fixed": true}),
+    ));
+    assert!(
+        r["affected"].as_array().unwrap().contains(&P2.into()),
+        "{r}"
+    );
+    assert_eq!(names_of(&mut k, P2, None)["common"], "KS 0005 II");
+    // The history keeps the old name before that date.
+    let r = send(
+        &mut k,
+        serde_json::json!({"op": "read_names", "address": P2, "at_s": 25}),
+    );
+    assert!(r.to_string().contains(&before[1]), "{r}");
+    // An unknown scheme is refused.
+    let r = send(
+        &mut k,
+        serde_json::json!({"op": "set_naming", "address": SYS, "layer": "common", "scheme": "nobody", "at_s": 40}),
+    );
+    assert_eq!(r["code"], "unknown_scheme", "{r}");
+}
+
+#[test]
+fn renaming_a_star_renames_what_follows_it_in_every_layer() {
+    let mut k = campaign();
+    ok(send(
+        &mut k,
+        serde_json::json!({"op": "set_naming", "address": SYS, "layer": "common", "scheme": "catalogue", "at_s": 0}),
+    ));
+    let events = |k: &mut crate::Kernel, a: &str| {
+        send(k, serde_json::json!({"op": "history", "address": a}))["events"]
+            .as_array()
+            .unwrap()
+            .len()
+    };
+    let (e3, em) = (events(&mut k, P3), events(&mut k, MOON));
+    ok(send(
+        &mut k,
+        serde_json::json!({"op": "rename", "address": STAR, "layer": "designation", "text": "HD 102", "at_s": 1}),
+    ));
+    ok(send(
+        &mut k,
+        serde_json::json!({"op": "rename", "address": STAR, "text": "Mystar", "at_s": 1}),
+    ));
+    let p3 = names_of(&mut k, P3, None);
+    assert_eq!(p3["designation"], "HD 102 III");
+    assert_eq!(p3["common"], "Mystar III");
+    assert_eq!(names_of(&mut k, MOON, None)["common"], "Mystar III a");
+    assert_eq!((events(&mut k, P3), events(&mut k, MOON)), (e3, em));
+    // A typed planet name stays put; its moon follows it.
+    ok(send(
+        &mut k,
+        serde_json::json!({"op": "rename", "address": P3, "text": "Haven", "at_s": 2}),
+    ));
+    ok(send(
+        &mut k,
+        serde_json::json!({"op": "rename", "address": STAR, "text": "Brightstar", "at_s": 3}),
+    ));
+    assert_eq!(names_of(&mut k, P3, None)["common"], "Haven");
+    assert_eq!(names_of(&mut k, MOON, None)["common"], "Haven a");
+    assert_eq!(names_of(&mut k, MOON, None)["designation"], "HD 102 III a");
+    // A fixed name still follows: fixing stores the form, not the text.
+    ok(send(
+        &mut k,
+        serde_json::json!({"op": "fix_names", "address": P1, "at_s": 4}),
+    ));
+    ok(send(
+        &mut k,
+        serde_json::json!({"op": "rename", "address": STAR, "layer": "designation", "text": "HD 103", "at_s": 5}),
+    ));
+    assert_eq!(names_of(&mut k, P1, None)["designation"], "HD 103 I");
+}
+
+#[test]
+fn a_promoted_star_keeps_the_names_it_had() {
+    let mut k = kernel(vec![
+        base(),
+        pack("tests/fixtures/packs/names-campaign.json"),
+    ]);
+    send(
+        &mut k,
+        serde_json::json!({"op": "open_universe", "id": "aging", "seed": "aging"}),
+    );
+    let a = "u:aging/halo:milky-way-like/cell:988_0_0/sys:f137879k0";
+    let r = send(
+        &mut k,
+        serde_json::json!({"op": "promote_star", "address": a}),
+    );
+    assert_eq!(r["type"], "star_promoted", "{r}");
+    let r = send(
+        &mut k,
+        serde_json::json!({"op": "read_names", "address": a}),
+    );
+    let names = r["value"]["names"].as_array().unwrap();
+    assert!(!names.is_empty(), "{r}");
+    assert!(names.iter().all(|n| n["source"] == "fixed"), "{r}");
+}

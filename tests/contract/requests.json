@@ -3168,5 +3168,66 @@
   "op": "name_sample",
   "scheme": "nobody",
   "kind": "planet"
+ },
+ {
+  "op": "load_stack",
+  "packs": ["$pack:base-toy", "$pack:names-campaign"]
+ },
+ {
+  "op": "open_universe",
+  "id": "named",
+  "seed": "named"
+ },
+ {
+  "op": "set_authored_batch",
+  "occurred_at_s": 0,
+  "edits": [
+   {"address": "u:named/sys:5/star:0", "field": "body.kind", "value": "star"},
+   {"address": "u:named/sys:5/star:0", "field": "parent", "value": "u:named/sys:5"},
+   {"address": "u:named/sys:5/body:0", "field": "body.kind", "value": "planet"},
+   {"address": "u:named/sys:5/body:0", "field": "parent", "value": "u:named/sys:5/star:0"},
+   {"address": "u:named/sys:5/body:1", "field": "body.kind", "value": "planet"},
+   {"address": "u:named/sys:5/body:1", "field": "parent", "value": "u:named/sys:5/star:0"},
+   {"address": "u:named/sys:5/body:9", "field": "body.kind", "value": "moon"},
+   {"address": "u:named/sys:5/body:9", "field": "parent", "value": "u:named/sys:5/body:1"}
+  ]
+ },
+ {
+  "op": "read_names",
+  "address": "u:named/sys:5/body:9"
+ },
+ {
+  "op": "fix_names",
+  "address": "u:named/sys:5/body:0",
+  "at_s": 5
+ },
+ {
+  "op": "set_naming",
+  "address": "u:named/sys:5",
+  "layer": "common",
+  "scheme": "catalogue",
+  "at_s": 10,
+  "rename_fixed": true
+ },
+ {
+  "op": "rename",
+  "address": "u:named/sys:5/star:0",
+  "text": "Mystar",
+  "at_s": 20
+ },
+ {
+  "op": "read_names",
+  "address": "u:named/sys:5/body:9"
+ },
+ {
+  "op": "read_names",
+  "address": "u:named/sys:5/body:1",
+  "audience": "far"
+ },
+ {
+  "op": "scene",
+  "audience": "gm",
+  "scope": "u:named/sys:5",
+  "at_s": 30
  }
 ]

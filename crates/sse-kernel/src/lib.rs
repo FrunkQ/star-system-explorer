@@ -21,6 +21,7 @@ mod glow;
 mod ice_ages;
 #[cfg(test)]
 mod matter_tests;
+mod names;
 #[cfg(test)]
 mod names_tests;
 mod nav;
@@ -251,7 +252,7 @@ fn load_observe(ms: &[sse_pack::PackManifest]) -> Result<Observe, Vec<String>> {
         programs,
         dressing,
         reference: std::sync::Arc::new(reference),
-        names,
+        names: std::sync::Arc::new(names),
     })
 }
 
@@ -424,7 +425,7 @@ struct Observe {
     /// Look up block for the length of each call (MP17a).
     reference: std::sync::Arc<sse_reference::Reference>,
     /// Name schemes and the avoid list (`provides.other.names`, NM1).
-    names: sse_names::Library,
+    names: std::sync::Arc<sse_names::Library>,
 }
 
 pub struct Kernel {
@@ -1467,6 +1468,7 @@ impl Kernel {
 
     /// `promote_star` (Y7a): draw a fill star once and store it whole.
     fn promote_star(&mut self, address: &str) -> Result<Response, Response> {
+        let lib = self.observe.names.clone();
         let u = self.universe()?;
         let a = in_universe(&u.root, address)?;
         let state = u.chronicle.state_at(UniverseTime::seconds(i64::MAX));
@@ -1504,6 +1506,12 @@ impl Kernel {
             "star.companions".to_string(),
             Value::Int(drawn.companions.len() as i128),
         );
+        // NM2: looking promotes, and a promoted star's names are fixed with it.
+        let mut after = state.clone();
+        after.facts.insert(a.clone(), f.clone());
+        if let Some(fixed) = names::fixes(&after, &lib, &u.seed, &u.root, &a).remove(&a) {
+            f.extend(fixed);
+        }
         let e = clock::timeless_set(
             &u.chronicle,
             &a,
@@ -2562,6 +2570,8 @@ impl Kernel {
                 let mut state = u.chronicle.state_at(UniverseTime::seconds(at_s));
                 // Paste support: withdrawn subjects are not in the scene.
                 withdraw::drop_withdrawn(&mut state.facts);
+                // NM2: each subject's shown names, disclosed as `name.<layer>`.
+                names::inject(&mut state, &self.observe.names, &u.seed, &u.root);
                 // Authored tags out of the facts; rule tags from the stack.
                 // TG3: authored true forces a tag, authored false holds a
                 // rule's tag off; both come out of the facts.
@@ -4935,6 +4945,38 @@ impl Kernel {
                 parent.as_deref(),
                 &facts.unwrap_or_default(),
             )?,
+            Request::ReadNames {
+                address,
+                at_s,
+                audience,
+            } => self.read_names(&address, at_s, audience.as_deref())?,
+            Request::SetNaming {
+                address,
+                layer,
+                scheme,
+                kind,
+                at_s,
+                rename_fixed,
+            } => self.set_naming(
+                &address,
+                &layer,
+                scheme.as_deref(),
+                kind.as_deref(),
+                at_s,
+                rename_fixed.unwrap_or(false),
+            )?,
+            Request::Rename {
+                address,
+                layer,
+                text,
+                at_s,
+            } => self.rename(
+                &address,
+                layer.as_deref().unwrap_or("common"),
+                text.as_deref(),
+                at_s,
+            )?,
+            Request::FixNames { address, at_s } => self.fix_names(&address, at_s)?,
             Request::Dressing { scope, at_s } => self.dressing(&scope, at_s.unwrap_or(i64::MAX))?,
             Request::AdoptDressing {
                 candidate,

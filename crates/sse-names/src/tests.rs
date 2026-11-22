@@ -446,3 +446,23 @@ fn find<'a>(v: &'a J, key: &str) -> Option<&'a J> {
         _ => None,
     }
 }
+
+#[test]
+fn moons_can_be_lettered_from_a() {
+    let l = lib(vec![json!({
+        "id": "cat", "label": "Cat", "kind": "catalogue",
+        "forms": {"moon": [["{parent} {letter:a}", 1]], "planet": [["{parent} {letter}", 1]]},
+        "follow": ["moon", "planet"]
+    })]);
+    let seed = Seed::from_text("nm1");
+    let none = BTreeMap::new();
+    let a = addr("u:t/sys:0/body:1");
+    let mut r = req(&seed, &a, "cat", "moon", &none);
+    let shown = |r: &Request| name(&l, r).unwrap().show(Some("Tarn II"), None);
+    assert_eq!(shown(&r), "Tarn II a");
+    r.index = 2;
+    assert_eq!(shown(&r), "Tarn II c");
+    r.kind = "planet";
+    r.index = 0;
+    assert_eq!(shown(&r), "Tarn II b");
+}

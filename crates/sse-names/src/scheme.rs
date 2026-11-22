@@ -182,6 +182,8 @@ pub enum Tok {
     MeansOf(String),
     Roman,
     Letter,
+    /// `{letter:a}`: lettered from a (moons after a planet numeral, "II a").
+    LetterFromA,
     CapLetter,
     Number,
     Serial(usize),
@@ -195,7 +197,13 @@ impl Tok {
     pub fn is_number(&self) -> bool {
         matches!(
             self,
-            Tok::Roman | Tok::Letter | Tok::CapLetter | Tok::Number | Tok::Serial(_) | Tok::Coord
+            Tok::Roman
+                | Tok::Letter
+                | Tok::LetterFromA
+                | Tok::CapLetter
+                | Tok::Number
+                | Tok::Serial(_)
+                | Tok::Coord
         )
     }
 }
@@ -216,6 +224,7 @@ pub fn parse_form(f: &str) -> Result<Vec<Tok>, String> {
             "word" => Tok::Word,
             "roman" => Tok::Roman,
             "letter" => Tok::Letter,
+            "letter:a" => Tok::LetterFromA,
             "Letter" => Tok::CapLetter,
             "n" => Tok::Number,
             "serial" => Tok::Serial(0),
@@ -501,12 +510,24 @@ fn text_bad(c: char) -> bool {
     text::check(&c.to_string()).is_err() && c != ' '
 }
 
+/// A layer id: lower-case letters, digits and `_`, at most 32.
+pub fn layer_ok(l: &str) -> bool {
+    !l.is_empty()
+        && l.len() <= 32
+        && l.bytes()
+            .all(|c| c.is_ascii_lowercase() || c.is_ascii_digit() || c == b'_')
+}
+
 /// Every scheme a stack holds, and the avoid list.
 #[derive(Clone, Debug, Default)]
 pub struct Library {
     pub schemes: BTreeMap<String, Scheme>,
     /// Folded words generated names never are or hold.
     pub avoid: BTreeSet<String>,
+    /// The campaign's default scheme per layer (`defaults: {layer:
+    /// scheme}`), a later pack's winning (design 4.3). Settings on
+    /// addresses override it.
+    pub defaults: BTreeMap<String, String>,
 }
 
 impl Library {
@@ -522,8 +543,10 @@ impl Library {
                 continue;
             };
             for k in o.keys() {
-                if k != "schemes" && k != "avoid" {
-                    errs.push(format!("{pack}: names takes schemes and avoid, not {k:?}"));
+                if k != "schemes" && k != "avoid" && k != "defaults" {
+                    errs.push(format!(
+                        "{pack}: names takes schemes, avoid and defaults, not {k:?}"
+                    ));
                 }
             }
             for s in o.get("schemes").and_then(J::as_array).into_iter().flatten() {
@@ -540,6 +563,26 @@ impl Library {
                         lib.avoid.insert(text::fold(w));
                     }
                     _ => errs.push(format!("{pack}: avoid lists words")),
+                }
+            }
+        }
+        for (pack, v) in packs {
+            let Some(d) = v.get("defaults") else { continue };
+            let Some(d) = d.as_object() else {
+                errs.push(format!("{pack}: defaults maps a layer to a scheme"));
+                continue;
+            };
+            for (layer, s) in d {
+                match s.as_str() {
+                    Some(s) if lib.schemes.contains_key(s) && layer_ok(layer) => {
+                        lib.defaults.insert(layer.clone(), s.to_string());
+                    }
+                    Some(s) if !layer_ok(layer) => errs.push(format!(
+                        "{pack}: default layer {layer:?} is lower-case letters, digits and _ ({s})"
+                    )),
+                    _ => errs.push(format!(
+                        "{pack}: the default for {layer:?} names no stacked scheme"
+                    )),
                 }
             }
         }
