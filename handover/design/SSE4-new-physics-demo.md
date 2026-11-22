@@ -77,8 +77,8 @@ truly adds no code: only wiring, data, citations and tests.
 
 | # | Gap | Why it matters | Kind of work | Already planned? |
 |---|---|---|---|---|
-| 1 | **A white dwarf has no atmosphere.** No dominant gas, no trace abundances, no photospheric density. The star census says "Sketch (mass, cooling, no type)". | Everything in the paper hangs on these three facts | kernel (facts and blocks) | yes, B3 "white dwarf types" |
-| 2 | **A spectrum cannot carry broad absorption.** A light description has continuum parts and narrow named lines only. There is no part that says "remove this much, this wide, here". | The whole effect is broad absorption | kernel and `light.ts` (one new part kind, general) | partly, O4 line-strength grid |
+| 1 | **A star has no atmosphere in the sense a planet has one.** Planets carry a gas mix, pressure and density; a white dwarf carries none of these. The star census says "Sketch (mass, cooling, no type)". | Everything in the paper hangs on gas mix, traces and density | kernel: the same atmosphere facts on any body (the one-body rule), not a white dwarf special | yes, B1 one body and B3 |
+| 2 | **No gas has a colour yet, on any body.** This is the same mechanism as a planet's air having a colour: gas removes wavelengths, more widely as it gets denser. SSE4 does Rayleigh scattering per gas (`sse.air.*`) and narrow named lines, but no gas carries absorption bands, so neither Neptune's methane blue nor a white dwarf's sodium green can be computed today. | The whole effect is gas absorption | **one general piece** (section 2.6): absorption features as cited data sheet rows per gas, and one block that applies any gas mix to any light, reflected or the body's own | partly, O4 line-strength grid and the renderer's air |
 | 3 | **A spectrum cannot travel on a wire.** Flows carry numbers, flags, lists and records; no block takes a spectrum in and gives one out. Stars on screen are a blackbody stub (`light.ts` says so). | Without it the chain cannot be shown as blocks, which is the central shot | kernel (a spectrum shape and three or four general light blocks: thermal continuum, absorb a broad feature, colour to the eye, limb law) | "colour to the eye" as a block is already a candidate on the fudge register |
 | 4 | **No maths beyond arithmetic in a box.** No power, exponential or logarithm block. A relation like the Swan band shift (0.2 × density) can be wired today; a Planck curve or a line profile cannot. | Limits what any paper can become without Rust | kernel (design decision, see question 2) | no |
 | 5 | **Orac cannot take a paper.** It takes one sentence. No file intake, no text extraction. | Step one of the video | agents (PDF text in the browser, sent as labelled data; the context guard already refuses a model that cannot hold it; this paper is about 45k tokens) | no |
@@ -94,7 +94,8 @@ truly adds no code: only wiring, data, citations and tests.
 Alex's belief was that this could be built from existing physics with no new blocks. Tested against main:
 
 - **True for the colour science.** Nothing new is needed to turn a spectrum into a colour.
-- **Not true for the physics today.** Gaps 1 to 4 are new blocks or new shapes. But all four are general (they
+- **Not true for the physics today.** Gaps 1 to 4 are new blocks or new shapes. None is a white dwarf
+  special: gap 2 is the same mechanism as a planet's air having a colour (section 2.6). But all four are general (they
   also give magenta brown dwarfs from the same sodium line, carbon stars, titanium oxide in red dwarfs, hazy
   planets), three are already owed by B3 and O4, and none is specific to this paper.
 - **So the claim the video can honestly make is:** "no new code for this paper". By filming time the general
@@ -140,6 +141,37 @@ the exact hex. Saying so on screen is part of the pitch to academics, not a weak
 6. Honesty marks: real, authored, fictional (built, GM view).
 7. The what-if stays on a branch until kept (built: what-if branches).
 
+### 2.6 One mechanism, thought wide (Alex, 22 Nov)
+
+Alex asked whether a star's broad absorption is a different mechanism from a planet's air having a colour. It
+is not. Both are gas removing wavelengths from light passing through it. Only two things differ, and both are
+inputs, not mechanisms: where the light comes from (reflected starlight for a planet, the body's own glow for
+a star or brown dwarf), and how dense the gas is (which widens the features). His ruling: build it as one
+extensible capability under "processes, not classes", and in design think wide about other uses so that
+nothing has to be reworked later.
+
+So ND2 is one block, "light through gas", that takes any light, any gas mix and the conditions (temperature,
+density, how much gas is in the way) and gives the light that comes out. The per-gas features are reference
+rows on the data sheet, cited, editable, and addable by a pack. Nothing in it names a kind of body.
+
+What the same piece serves, beyond this paper:
+
+| Use | Gas and feature | Who reads it |
+|---|---|---|
+| Colour of a planet's disc | methane bands (Uranus, Neptune), sodium and potassium on hot giants, sulphur compounds | renderer, Eye mode, surface colour (S19) |
+| Colour of the sky and the sun from the ground | the same rows, with the Rayleigh scattering already built | renderer air (R2b), `read_air_optics` |
+| Brown dwarfs | the same broadened sodium line that makes a white dwarf green makes them magenta | one-body work (B1), light |
+| Cool and carbon stars | titanium oxide in red dwarfs, the same C2 bands in carbon stars | O4, star disc |
+| Dense hydrogen air | collision-induced absorption, which grows with density squared: giant planets, Titan, cool white dwarfs | climate (it is also a greenhouse term), light |
+| Reading an air from afar | a transit shows which wavelengths the air removes | planet finding (O13), sensing (O9), the knowledge ladder |
+| Fictional gases | a pack adds a gas with its own bands and every view shows it | universe packs, MP9 |
+| Light through a nebula or dust lane | the same block with gas between source and observer | nebulae (O3 on), night sky |
+
+Edge cases the design must hold from the start, so they are not bolted on: light passing through gas once
+(a star's own glow) or twice (reflected off a surface or cloud deck); features that depend on a pair of gases,
+not one (collision-induced); width and shift that follow density, not only pressure; gases with no known
+features (say so, do not invent); and a body whose "surface" is a level in the gas (giants, stars).
+
 ## 3. Proposed packages (track ND)
 
 One package each, owner suggested. ND1 to ND3 are general kernel work that should ride with B3 and O4 when
@@ -147,9 +179,9 @@ those threads reach them; ND4 to ND8 are the capability itself; ND9 and ND10 are
 
 | Id | Package | Owner | Needs | Acceptance |
 |---|---|---|---|---|
-| ND1 | White dwarf atmosphere facts: dominant gas, trace abundances fed by the dated debris event and by core dredge-up, photospheric density. Facts only; no colour consequence | Build SSE4 proven core (inside B3) | B1 | a polluted white dwarf carries the elements of what fell in; spectral type is a label read off the facts |
-| ND2 | Spectrum on a wire, and general light blocks: thermal continuum, absorb a broad feature (profile from pack data), colour to the eye (CIE, moved from `light.ts` into the kernel as a fact), limb law per channel | Build light and nebulae (with O4) | O1, O12 | the Sun and a 10 000 K hydrogen white dwarf reproduce the paper's section 2.4 values; a star on screen reads its colour from the kernel, not the blackbody stub |
-| ND3 | Maths in a box: power, exponential, logarithm as cited-at-the-box blocks through `sse_core::math`, or the formula block of question 2 | Build kernel resolve and rules | J3 | a Planck curve wired as a box matches `sse-light` to the last bit |
+| ND1 | Atmosphere facts on any body that holds gas, stars included (the one-body rule): gas mix, traces, pressure and density where the light leaves. For a white dwarf the traces are fed by the dated debris event and by core dredge-up. Facts only; no colour consequence | Build SSE4 proven core (inside B1 and B3) | B1 | a polluted white dwarf carries the elements of what fell in; a planet and a star answer the same atmosphere read; spectral type is a label read off the facts |
+| ND2 | Gas absorption as one general mechanism (section 2.6): absorption features per gas as cited rows on the data sheet (bands, collision-induced pairs, how width grows with density); a spectrum on a wire; general light blocks: thermal continuum, "light through gas" (any mix, reflected light or the body's own glow), colour to the eye (CIE, moved from `light.ts` into the kernel as a fact), limb law per channel. No body type is named anywhere in it | Build light and nebulae (with O4 and the air optics), data rows with the matter data sheet thread | O1, O12, MP4 | the Sun and a 10 000 K hydrogen white dwarf reproduce the paper's section 2.4 values; the same block gives a methane-rich giant its blue-green; a star on screen reads its colour from the kernel, not the blackbody stub |
+| ND3 | Maths in a box, exactly as `SSE4-equation-block-design.md`: power, exponential, logarithm, root and trigonometry blocks, and the Equation block (a formula as pack data, units checked on load, constants only through Look up, sourced, with worked examples) | Build kernel resolve and rules | J3, MP17a | that design's section 10: a Planck curve as an Equation matches `sse-light` to the last bit; a unit mismatch is refused at load in words |
 | ND4 | Orac reads a paper: PDF or text dropped on the Orac tab, text extracted in the browser, sent as labelled data; Orac first answers with a plan in words (what the paper claims, what exists, what it will add, what is missing) before drafting | Build Orac, Minerva and Tars | A2 | nothing in the paper is treated as an instruction; a model too small for it is refused before sending; the plan names every missing piece |
 | ND5 | Orac assembles one job as a set: boxes, a flow change that adds and wires nodes, light-table rows, data sheet rows (MP11), each kernel-checked, accepted together or not at all | Build Orac, Minerva and Tars, with the chart room's flow editor | ND4, MP11 | an invalid set never reaches Accept; one Undo withdraws the whole set |
 | ND6 | Packs carry their own citations, fudge list and reproduction report; the Packs screen shows them before the pack is added | Build kernel resolve and rules, chart room | K5 | a pack whose worked examples fail is refused with the numbers side by side |
@@ -192,11 +224,16 @@ Each with a recommendation.
 
 1. **Accept "no new code for this paper" in place of "no new blocks"?** The demo needs general pieces built
    first (ND1 to ND3). Recommended: yes. It is the honest claim and still one nobody else can make.
+   **Accepted by Alex, 22 Nov: "Yeah! Perfect... blocks are NOT code."** The film's claim is "no new code
+   for this paper"; say on screen that blocks are not code.
 2. **A general formula block?** One block whose formula is pack data (an expression over its inputs, with
    units, a source, and the kernel's own deterministic maths), so a new relation never needs Rust. It changes
    the standing rule "atoms are Rust; new base blocks are raised as GitHub issues". Recommended: yes, as a
    short design first (how it shows its formula, how it is cited, cost limits), because without it "bring in
    any paper" quietly means "any paper whose maths we already shipped". This matters most for academic use.
+   **Accepted by Alex, 22 Nov: "blocks should be able to do basic math! power, exponential or logarithm
+   blocks are valid... or just have a general purpose equation, which is what I thought we had."** The design
+   is `SSE4-equation-block-design.md`; ND3 builds both the maths blocks and the Equation block.
 3. **Hold coloured white dwarfs out of B3** so that Orac does it on camera, with B3 building only the
    atmosphere facts? Recommended: yes.
 4. **A reduced model with a stated tolerance, on the fudge register**, since the paper's full atmosphere
