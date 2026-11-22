@@ -101,3 +101,4 @@ source before they enter the sheet.
   `scripts/audit-matter.py --retired` checks in CI.
 
 Goldens: none changed.
+- MP22 (`packages/MP22.md`) turns this audit into the ledger `MP0-typed-copies.txt` and the `--ledger` check.

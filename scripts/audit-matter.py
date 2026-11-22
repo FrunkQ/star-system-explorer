@@ -19,6 +19,21 @@ Usage:
   scripts/audit-matter.py --retired FILE  fail if any retired constant listed
                                           in FILE (JSON list of quantity ids)
                                           is still typed outside sse-reference
+  scripts/audit-matter.py --ledger FILE [--base REF | --base-ledger FILE]
+                                          MP22 check: every typed copy must be
+                                          a line of the ledger, every ledger
+                                          line must still be a typed copy, and
+                                          the ledger may not grow against the
+                                          base (a git ref, or a file)
+  scripts/audit-matter.py --write-ledger FILE
+                                          write the ledger from today's scan
+                                          (once, for MP22; never to label a
+                                          new copy)
+  --root DIR                              scan DIR instead of the repo (tests)
+
+Exit codes for --ledger: 0 pass (prints "typed copies left: N"), 1 fail
+(an unlabelled copy, a stale ledger line, or the ledger grew), 2 could not
+run (bad arguments, unreadable ledger or base).
 
 The scan is textual on purpose (no build needed, runs in CI in a second).
 It finds numbers, not meaning: a literal that happens to equal 273.15 in an
@@ -36,6 +51,8 @@ SKIP_DIRS = {"target", "node_modules", "dist", "generated", ".git", "golden", "f
 EXTS = {".rs", ".ts", ".json", ".svelte", ".mjs"}
 # The one crate allowed to type constants once MP1c lands.
 HOME = os.path.join("crates", "sse-reference")
+# Where the sheet itself lives: values here are the source, not copies.
+SHEET_HOMES = (HOME, os.path.join("packs", "base-reference"))
 
 # Quantity catalogue: id, name, canonical value, unit, source, relative
 # tolerance for a match, and the unit scales the code might write it in.
@@ -347,8 +364,331 @@ def markdown(consts, props, rust_consts):
     return "\n".join(L) + "\n"
 
 
+# ---------------------------------------------------------------------------
+# MP22: the ledger of labelled typed copies.
+#
+# One line per typed copy, tab separated:  path  row  pattern
+#   path     the file, from the repo root
+#   row      the sheet row it should read: constant:<id>, substance:<id>/<prop>,
+#            mixture:<id>/<prop>, isotope:<id>/<prop>, element:<id>/<prop>, or
+#            new:<what> where the sheet has no row for it yet
+#   pattern  code: the source line, trimmed, runs of spaces made one;
+#            pack property: json:<JSON path>
+# Lines are matched as a multiset, so a line typed three times is listed three
+# times. Line numbers are left out on purpose, so edits elsewhere in a file do
+# not touch the ledger.
+
+# Catalogue id -> sheet row.
+Q_ROW = {
+    "R_earth_eq": "constant:R_earth_equatorial", "R_earth_pol": "constant:R_earth_polar",
+    "R_earth_mean": "constant:R_earth_mean", "R_jup_eq": "constant:R_jup_equatorial",
+    "R_jup_pol": "constant:R_jup_polar", "R_jup_mean": "constant:R_jup_mean",
+    "alpha_inv": "constant:alpha (inverse)", "yr_sidereal": "new:sidereal year",
+    "Msun_Mearth": "constant:GM_sun/GM_earth", "Msun_Mjup": "constant:GM_sun/GM_jup",
+    "au_Rsun": "constant:au/R_sun", "M_ch": "new:Chandrasekhar mass",
+    "T3_h2o": "substance:h2o/phases.triple_point_k", "P3_h2o": "substance:h2o/phases.triple_point_pa",
+    "M_h2o": "substance:h2o/molar_mass", "M_co2": "substance:co2/molar_mass",
+    "M_n2": "substance:n2/molar_mass", "M_co": "substance:co/molar_mass",
+    "M_o2": "substance:o2/molar_mass", "M_ch4": "substance:ch4/molar_mass",
+    "M_nh3": "substance:nh3/molar_mass", "M_ar": "substance:ar/molar_mass",
+    "M_air": "mixture:dry-air/molar_mass", "T3_co2": "substance:co2/phases.triple_point_k",
+    "T3_ch4": "substance:ch4/phases.triple_point_k", "T3_n2": "substance:n2/phases.triple_point_k",
+    "T3_nh3": "substance:nh3/phases.triple_point_k",
+    "Lv_h2o": "substance:h2o/phases.latent_vaporisation", "Lf_h2o": "new:h2o latent heat of fusion",
+    "cp_air": "new:dry-air heat capacity", "Rd_air": "mixture:dry-air/gas_constant (R_gas over molar mass)",
+    "t_u238": "isotope:u238/half_life_s", "t_u235": "isotope:u235/half_life_s",
+    "t_th232": "isotope:th232/half_life_s", "t_k40": "isotope:k40/half_life_s",
+    "t_al26": "isotope:al26/half_life_s",
+}
+
+# Rust const names whose value no catalogue literal matched (round, derived
+# or not yet catalogued) -> sheet row.
+NAME_ROW = [
+    (r"^(M_SUN\w*|MSUN\w*|SOLAR_MASS\w*)$", "constant:M_sun"),
+    (r"^(M_EARTH\w*|MEARTH|ME_MSUN)$", "constant:M_earth"),
+    (r"^(M_JUP\w*|MJ\w*)$", "constant:M_jup"),
+    (r"^(R_JUPITER\w*)$", "constant:R_jup_equatorial"),
+    (r"^(R_EARTH\w*)$", "constant:R_earth_mean"),
+    (r"^(RSUN\w*|R_SUN)$", "constant:R_sun"),
+    (r"^(L_SUN\w*)$", "constant:L_sun"), (r"^(T_SUN|TEFF_SUN)$", "constant:T_sun"),
+    (r"^(G_SUN)$", "constant:GM_sun/R_sun^2"),
+    (r"^(G|G_SI|G_KPC|G_PC3)$", "constant:G"), (r"^(GM_SUN)$", "constant:GM_sun"),
+    (r"^(GM_EARTH)$", "constant:GM_earth"), (r"^(GM_JUP\w*)$", "constant:GM_jup"),
+    (r"^(C|C_M_S|C_PC_MYR)$", "constant:c"), (r"^(H)$", "constant:h"),
+    (r"^(K_B|BOLTZMANN)$", "constant:k_B"), (r"^(SIGMA|SIGMA_SB|STEFAN_BOLTZMANN)$", "constant:sigma_SB"),
+    (r"^(R_GAS)$", "constant:R_gas"), (r"^(AMU)$", "constant:m_u"), (r"^(M_PROTON)$", "constant:m_p"),
+    (r"^(M_H)$", "element:h/atomic_mass"), (r"^(MU0)$", "constant:mu0"),
+    (r"^(AU|AU_M|AU_KM)$", "constant:au"), (r"^(AU_RSUN|AU_IN_RSUN)$", "constant:au/R_sun"),
+    (r"^(PC|PC_M|MPC_M)$", "constant:pc"), (r"^(KMS_\w+)$", "constant:pc and yr_julian (km/s in pc per Myr)"),
+    (r"^(DAY|DAY_S)$", "constant:day"), (r"^(HOUR)$", "unit:h"),
+    (r"^(YEAR\w*|YR\w*|JULIAN_YEAR\w*|GYR_S|MYR_S)$", "constant:yr_julian"),
+    (r"^(WIEN_B|WIEN_NM_K)$", "constant:b_wien"), (r"^(N_LOSCHMIDT)$", "new:Loschmidt constant (p0 over k_B T0)"),
+    (r"^(E_OVER_ME)$", "constant:e/m_e"), (r"^(KEV_M)$", "constant:h c / keV"),
+    (r"^(AL26_\w+)$", "isotope:al26"), (r"^(RHO_ICE)$", "substance:h2o/phases.density_solid"),
+    (r"^(RHO_WATER)$", "substance:h2o/phases.density_liquid"),
+    (r"^(G_PER_MOL_C)$", "element:c/atomic_weight"), (r"^(M_SO2)$", "substance:so2/molar_mass"),
+    (r"^(NACL_MOLAR_MASS)$", "new:NaCl molar mass"),
+    (r"^(T_MELT_ICE_K)$", "substance:h2o/phases.triple_point_k"),
+]
+
+# Pack keys the property scan finds that are not a material number: facts of
+# one named body, model settings, shapes. Listed so the ledger holds only real
+# copies. (file fragment, JSON path regex, reason)
+NOT_MATTER = [
+    ("packs/", r"/examples/[^/]+/values/(body\.bulk_density|surface\.ice_fraction)$", "a named body's measured fact"),
+    ("packs/sse3-classic/", r"body\.bulk_density$", "a named body's fact (V3 import)"),
+    ("packs/base-light/", r"/lines/[^/]+/strength$", "an absorption line's shape"),
+    ("packs/base-cosmos/", r"density_pc3$", "a star density in a galaxy model"),
+    ("packs/base-cosmology/", r"/(midplane_density|triple_share)$", "a galaxy model setting"),
+    ("packs/base-nav/", r"/(top_density|parking_radii)$", "a navigation setting"),
+    ("packs/base-life/", r"/decay_methane_(oxic|anoxic)$", "a model rate"),
+    ("packs/base-climate/", r"/(delta_h|latent_scale_w_m2|frost_emissivity|lowest_frost_k|t_ice_k|"
+     r"super_rotation_critical|latent_share|ddf_ice_mm)$", "a climate model setting"),
+    ("packs/base-surface/", r"/(ice_dry_k|land_ice_k|shadow_ice_max_bar|ice_min_km2|impactor_density|"
+     r"ice_giant_mass_earth|wind_ice_m_s)$", "a surface model setting"),
+    ("packs/base-weather/", r"/(equator_ice|equatorial_bands_ice|ice_giant_mass_earth|wind_ice_m_s|"
+     r"strength_u|strength_m_s)$", "a weather model setting"),
+    ("packs/base-weather/", r"/impact/density_kg_m3$", "an assumed impactor, a model setting"),
+]
+
+# Pack key -> property on the sheet (the substance or mixture is the key's
+# parent in the JSON path when the sheet has it).
+KEY_PROP = [
+    (r"molar|molecular_weight", "molar_mass"), (r"^king", "optical.king_factor"),
+    (r"refractiv", "optical.refractivity_589nm"), (r"cp_|heat_capacity", "thermal.heat_capacity"),
+    (r"density", "density"), (r"half_life", "half_life_s"), (r"albedo", "optical.albedo"),
+    (r"sea_ice", "freezing_point (sea water)"),
+]
+PARENT_SUB = {
+    "H2O": "substance:h2o", "water": "substance:h2o", "air": "mixture:dry-air",
+    "water-ice sand": "substance:h2o/phases.density_solid", "methane-ice sand": "substance:ch4/phases.density_solid",
+    "CO2": "substance:co2", "CO2 (thin)": "mixture:mars-air", "N2-O2": "mixture:dry-air",
+    "earth": "mixture:dry-air", "H2-He": "mixture:giant-air", "N2-CH4": "mixture:titan-air",
+    "rock sand": "mixture:surface-rock", "clouds": "mixture:giant-air",
+    "rings": "isotope:k40",
+}
+
+
+def _norm(line):
+    return re.sub(r"\s+", " ", line.strip())
+
+
+def _q_row(qid, ids):
+    if qid in Q_ROW:
+        return Q_ROW[qid]
+    return "constant:" + qid if qid in ids else "new:" + qid
+
+
+def _name_row(name):
+    for rx, row in NAME_ROW:
+        if re.match(rx, name):
+            return row
+    return "new:" + name.lower()
+
+
+def _prop_row(path, key, sheet_subs, sheet_mix=()):
+    row = _prop_row1(path, key, sheet_subs)
+    m = re.match(r"mixture:([^/]+)", row)
+    return "new:" + row if m and m.group(1) not in sheet_mix else row
+
+
+def _prop_row1(path, key, sheet_subs):
+    parts = path.strip("/").split("/")
+    parent = parts[-2] if len(parts) > 1 else ""
+    prop = next((p for rx, p in KEY_PROP if re.search(rx, key, re.I)), None)
+    owner = PARENT_SUB.get(parent)
+    if owner is None and parent.lower() in sheet_subs:
+        owner = "substance:" + parent.lower()
+    if owner and "/" in owner:
+        return owner
+    if owner and prop:
+        return owner + "/" + prop
+    if owner:
+        return owner + "/" + key
+    return "new:" + (parent + " " if parent and not parent.isdigit() else "") + key
+
+
+def _is_test(path):
+    return "/tests/" in path or path.endswith("tests.rs") or "/test/" in path
+
+
+def _has_typed_number(expr):
+    code = STR_RE.sub('""', expr)
+    for m in NUM_RE.finditer(code):
+        v = to_float(m.group(0))
+        if v is not None and abs(v) not in (0.0, 1.0, 2.0):
+            return True
+    return False
+
+
+def ledger_entries(consts, props, rust_consts):
+    """Every typed copy outside the sheet and outside tests, as ledger lines."""
+    sheet_ids, sheet_subs, sheet_mix = set(), set(), set()
+    try:
+        ref = json.load(open(os.path.join(ROOT, "packs", "base-reference", "pack.json"), encoding="utf-8"))
+        sheet_ids = {c["id"] for c in ref["provides"]["reference"]["constants"]}
+        sheet_subs = {c["id"] for c in ref["provides"]["reference"]["substances"]}
+        sheet_mix = {c["id"] for c in ref["provides"]["reference"]["mixtures"]}
+    except (OSError, ValueError, KeyError, TypeError):
+        pass
+    lines_of = {}
+
+    def src(path, n):
+        if path not in lines_of:
+            lines_of[path] = open(os.path.join(ROOT, path), encoding="utf-8").read().split("\n")
+        return _norm(lines_of[path][n - 1])
+
+    out = []
+    seen_lines = set()
+    for h in consts:
+        if h["test"] or h["file"].startswith(SHEET_HOMES):
+            continue
+        out.append((h["file"], _q_row(h["q"], sheet_ids), src(h["file"], h["line"])))
+        seen_lines.add((h["file"], h["line"]))
+    for r in rust_consts:
+        if r["file"].startswith(SHEET_HOMES) or _is_test(r["file"]) or (r["file"], r["line"]) in seen_lines:
+            continue
+        if r.get("test") or not _has_typed_number(r["expr"]):
+            continue
+        out.append((r["file"], _name_row(r["name"]), src(r["file"], r["line"])))
+    for p in props:
+        if p["file"].startswith(SHEET_HOMES):
+            continue
+        if any(p["file"].startswith(f) and re.search(rx, p["path"]) for f, rx, _ in NOT_MATTER):
+            continue
+        out.append((p["file"], _prop_row(p["path"], p["key"], sheet_subs, sheet_mix), "json:" + p["path"]))
+    return sorted(out)
+
+
+LEDGER_HEAD = """# MP22 ledger: every constant of nature, reference value and material number
+# still typed outside the master data sheet (packs/base-reference and
+# crates/sse-reference), outside tests. Design: SSE4-matter-pack-design.md 3A.
+#
+# Columns, tab separated: file, the sheet row it should read, the line as
+# written (code) or json:<path> (a pack property). "new:" means the sheet has
+# no row for it yet; add the row when the copy is moved.
+#
+# This file may only shrink. When you edit a file listed here, move its copies
+# to the Look up block or the reader and delete their lines in the same change.
+# scripts/audit-matter.py --ledger fails on a copy not listed here, on a line
+# here that no longer matches a copy, and on a ledger that grew.
+"""
+
+
+def read_ledger(text):
+    rows = []
+    for raw in text.split("\n"):
+        if not raw.strip() or raw.startswith("#"):
+            continue
+        parts = raw.split("\t")
+        if len(parts) != 3:
+            raise ValueError("ledger line is not three tab-separated columns: %r" % raw)
+        rows.append(tuple(parts))
+    return rows
+
+
+def _multiset(rows):
+    c = {}
+    for r in rows:
+        c[r] = c.get(r, 0) + 1
+    return c
+
+
+def _less(a, b):
+    """Entries of multiset a beyond those in b, as a sorted list."""
+    out = []
+    for k in sorted(a):
+        out += [k] * max(0, a[k] - b.get(k, 0))
+    return out
+
+
+def check_ledger(found, ledger, base):
+    """Returns (problems, count). found, ledger, base: lists of 3-tuples; base
+    may be None (no growth check)."""
+    probs = []
+    f, l = _multiset(found), _multiset(ledger)
+    key = lambda r: (r[0], r[2])  # the row column is a label, not identity
+    fk, lk = _multiset([key(r) for r in found]), _multiset([key(r) for r in ledger])
+    for path, pat in _less(fk, lk):
+        row = next(r[1] for r in found if key(r) == (path, pat))
+        probs.append("unlabelled typed copy (move it to the sheet, or read the sheet): %s: %s  [should read %s]" % (path, pat, row))
+    for path, pat in _less(lk, fk):
+        probs.append("stale ledger line (the copy is gone; delete the line): %s\t%s" % (path, pat))
+    if base is not None:
+        if len(ledger) > len(base):
+            probs.append("the ledger grew from %d to %d lines; it may only shrink" % (len(base), len(ledger)))
+        # A changed line (same file, same row) is an edit, not a new copy.
+        added = _less(l, _multiset(base))
+        removed = _multiset([(r[0], r[1]) for r in _less(_multiset(base), l)])
+        for r in added:
+            k = (r[0], r[1])
+            if removed.get(k, 0) > 0:
+                removed[k] -= 1
+            else:
+                probs.append("ledger line added (label nothing new; read the sheet instead): %s" % "\t".join(r))
+    del f
+    return probs, len(ledger)
+
+
+def git_show(ref, path):
+    import subprocess
+    rel = os.path.relpath(os.path.abspath(path), ROOT).replace(os.sep, "/")
+    r = subprocess.run(["git", "-C", ROOT, "show", "%s:%s" % (ref, rel)], capture_output=True, text=True)
+    if r.returncode != 0 and ("exists on disk, but not in" in r.stderr or "does not exist in" in r.stderr):
+        return None  # the ledger is new in this change: nothing to grow from
+    if r.returncode != 0:
+        raise OSError("cannot read %s at %s: %s" % (rel, ref, r.stderr.strip()))
+    return r.stdout
+
+
+def _arg(argv, flag):
+    if flag not in argv:
+        return None
+    i = argv.index(flag)
+    if i + 1 >= len(argv):
+        raise ValueError("%s needs a value" % flag)
+    return argv[i + 1]
+
+
 def main(argv):
+    global ROOT
+    try:
+        root = _arg(argv, "--root")
+        ledger_path = _arg(argv, "--ledger")
+        write_path = _arg(argv, "--write-ledger")
+        base_ref = _arg(argv, "--base")
+        base_file = _arg(argv, "--base-ledger")
+    except ValueError as e:
+        print("audit-matter: %s" % e)
+        return 2
+    if root:
+        ROOT = os.path.abspath(root)
     consts, props, rust_consts = scan()
+    if write_path:
+        entries = ledger_entries(consts, props, rust_consts)
+        with open(write_path, "w", encoding="utf-8", newline="\n") as fh:
+            fh.write(LEDGER_HEAD + "".join("\t".join(e) + "\n" for e in entries))
+        print("ledger written: %d typed copies" % len(entries))
+        return 0
+    if ledger_path:
+        try:
+            ledger = read_ledger(open(ledger_path, encoding="utf-8").read())
+            base = None
+            if base_file:
+                base = read_ledger(open(base_file, encoding="utf-8").read())
+            elif base_ref:
+                shown = git_show(base_ref, ledger_path)
+                base = None if shown is None else read_ledger(shown)
+        except (OSError, ValueError) as e:
+            print("audit-matter: %s" % e)
+            return 2
+        probs, n = check_ledger(ledger_entries(consts, props, rust_consts), ledger, base)
+        for p in probs:
+            print(p)
+        print("typed copies left: %d" % n)
+        if base is None:
+            print("(no base ledger, so the may-only-shrink check did not run)")
+        return 1 if probs else 0
     if "--retired" in argv:
         retired = set(json.load(open(argv[argv.index("--retired") + 1])))
         left = [h for h in consts if h["q"] in retired and not h["file"].startswith(HOME)]
