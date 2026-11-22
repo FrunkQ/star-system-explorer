@@ -28,6 +28,8 @@ export const TOKENS: readonly TokenSpec[] = [
   { name: "on-ink", type: "colour", meaning: "Text on an ink-filled control (a pressed button).", text_on: ["ink"] },
   { name: "zone", type: "colour", meaning: "Wash for a zone band (for example a temperate zone)." },
   { name: "zone-ink", type: "colour", meaning: "Text naming a zone.", text_on: ["ground"] },
+  { name: "field-out", type: "colour", meaning: "Mag layer: a field line where the field points away from the body (orange; reads apart from field-in for colour-blind eyes).", line_on: ["ground", "ground-raised"] },
+  { name: "field-in", type: "colour", meaning: "Mag layer: a field line where the field points into the body (blue).", line_on: ["ground", "ground-raised"] },
   { name: "hatch", type: "colour", meaning: "Hatching ink for uncertainty and unsurveyed regions." },
   { name: "focus", type: "colour", meaning: "Keyboard focus ring.", line_on: ["ground", "ground-raised"] },
   { name: "font-display", type: "font", meaning: "Place names and titles (serif; italic for places)." },
