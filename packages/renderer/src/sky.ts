@@ -252,6 +252,55 @@ export function unprojectSky(c: SkyCamera, x: number, y: number): V3 {
   return [a * c.r[0] + b * c.u[0] + w * c.f[0], a * c.r[1] + b * c.u[1] + w * c.f[1], a * c.r[2] + b * c.u[2] + w * c.f[2]];
 }
 
+/** Any projection the sky can be drawn through: galactic direction to screen and back. */
+export interface SkyView {
+  project(d: V3, margin?: number): { x: number; y: number } | null;
+  unproject(x: number, y: number): V3;
+}
+
+export function skyView(c: SkyCamera): SkyView {
+  return { project: (d, m = 0) => projectSky(c, d, m), unproject: (x, y) => unprojectSky(c, x, y) };
+}
+
+/** A system's orientation in the galaxy (kernel `frame`): rows of the matrix taking system-frame unit vectors to galactic. */
+export interface SystemFrame {
+  pole_l_deg: number;
+  pole_b_deg: number;
+  zero_l_deg?: number;
+  zero_b_deg?: number;
+  node_l_deg?: number;
+  to_galactic: [[number, number, number], [number, number, number], [number, number, number]];
+  evidence: string;
+  source?: string;
+}
+
+/** Galactic to the system's own frame (the transpose of a rotation is its inverse). */
+export function toSystem(f: SystemFrame, g: V3): V3 {
+  const m = f.to_galactic;
+  return [m[0][0] * g[0] + m[1][0] * g[1] + m[2][0] * g[2], m[0][1] * g[0] + m[1][1] * g[1] + m[2][1] * g[2], m[0][2] * g[0] + m[1][2] * g[1] + m[2][2] * g[2]];
+}
+
+/** The system's own frame to galactic. */
+export function toGalactic(f: SystemFrame, s: V3): V3 {
+  const m = f.to_galactic;
+  return [m[0][0] * s[0] + m[0][1] * s[1] + m[0][2] * s[2], m[1][0] * s[0] + m[1][1] * s[1] + m[1][2] * s[2], m[2][0] * s[0] + m[2][1] * s[1] + m[2][2] * s[2]];
+}
+
+/**
+ * A view for a camera that works in the system's own frame (the Window's): galactic directions are turned into the
+ * system frame, projected by the camera's own function (lon and lat in degrees), and screen points come back by the
+ * camera's inverse.
+ */
+export function systemView(f: SystemFrame, project: (lon_deg: number, lat_deg: number, margin: number) => { x: number; y: number } | null, unproject: (x: number, y: number) => V3): SkyView {
+  return {
+    project(d, margin = 0) {
+      const s = toSystem(f, d);
+      return project((Math.atan2(s[1], s[0]) * 180) / Math.PI, (Math.asin(Math.max(-1, Math.min(1, s[2]))) * 180) / Math.PI, margin);
+    },
+    unproject: (x, y) => toGalactic(f, unproject(x, y)),
+  };
+}
+
 // ── Display: exposure and points ───────────────────────────────────────────
 
 /** Surface brightness that shows as full white, mag per square arcsecond (display exposure, see docs/fudges.md). */
@@ -319,7 +368,8 @@ const enc = (v: number) => 255 * (v <= 0.0031308 ? 12.92 * v : 1.055 * Math.pow(
  * then each star as its spread of light, added, faintest first. Returns the stars drawn and their screen places
  * (for picking) and how many were left out by the point budget.
  */
-export function drawSky(out: { width: number; height: number; data: Uint8ClampedArray }, sky: Sky, c: SkyCamera, opts: { maxPoints?: number; glowStep?: number; white?: number; band?: string } = {}): { drawn: { i: number; x: number; y: number; r: number }[]; leftOut: number } {
+export function drawSky(out: { width: number; height: number; data: Uint8ClampedArray }, sky: Sky, cam: SkyCamera | SkyView, opts: { maxPoints?: number; glowStep?: number; white?: number; band?: string } = {}): { drawn: { i: number; x: number; y: number; r: number }[]; leftOut: number } {
+  const v: SkyView = "project" in cam ? cam : skyView(cam);
   const W = out.width;
   const H = out.height;
   const lin = new Float32Array(W * H * 3);
@@ -343,7 +393,7 @@ export function drawSky(out: { width: number; height: number; data: Uint8Clamped
     const grid = new Float32Array(gw * gh * 3);
     for (let j = 0; j < gh; j++)
       for (let i = 0; i < gw; i++) {
-        const d = unprojectSky(c, i * step, j * step);
+        const d = v.unproject(i * step, j * step);
         const fv = glowSample(n, glowV.flux, d);
         const level = glowLevel(-2.5 * Math.log10(Math.max(1e-30, fv)), white);
         const rgb = !trueColour ? [1, 1, 1] : glowB ? starRgb(tempFromBV(-2.5 * Math.log10(Math.max(1e-30, glowSample(n, glowB.flux, d)) / Math.max(1e-30, fv)))) : [1, 1, 1];
@@ -376,7 +426,7 @@ export function drawSky(out: { width: number; height: number; data: Uint8Clamped
   const sigma = 0.8;
   for (let i = start; i < sky.stars.length; i++) {
     const s = sky.stars[i]!;
-    const p = projectSky(c, s.dir, 4);
+    const p = v.project(s.dir, 4);
     if (!p) continue;
     const { peak, radius_px } = pointSpread(magOf(s), limit, sigma);
     const rgb: [number, number, number] = trueColour ? starRgb(s.teff_k) : [1, 1, 1];

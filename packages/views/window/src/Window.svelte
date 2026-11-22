@@ -8,7 +8,8 @@
 <script lang="ts">
   import { untrack } from "svelte";
   import SkyBeyond from "./SkyBeyond.svelte";
-  import { SENSORS, YEAR_S, angleWords, camera, discPx, lightWords, magWords, navFromScene, pointPx, project, towards, type Json, type Seen, type SystemScene, type ViewContext, type WindowView } from "../../../ui-contract/src/index.ts";
+  import { drawSky, readSky, systemView, SKY_POINTS_MAX, type Sky } from "../../../renderer/src/index.ts";
+  import { SENSORS, YEAR_S, angleWords, camera, discPx, lightWords, magWords, navFromScene, pointPx, project, towards, unprojectCamera, type Json, type Seen, type SystemScene, type ViewContext, type WindowView } from "../../../ui-contract/src/index.ts";
 
   let { ctx, scene, params }: { ctx: ViewContext; scene: SystemScene; params: Record<string, Json> } = $props();
   const first = untrack(() => ({ sensor: String(params.sensor ?? "eye"), missed: params.show_missed === true }));
@@ -56,13 +57,52 @@
     const t = now_s;
     if (!nav || !from) return;
     const g = ++gen;
-    ctx.session.windowView({ nav, from, sensor: s, at_s: t }).then((r) => {
+    ctx.session.windowView({ nav, from, sensor: s, at_s: t, system: scene.system }).then((r) => {
       if (g !== gen) return;
       if (!r.ok) return void ((failed = r.message), (view = null));
       failed = null;
       view = r.view;
     });
   });
+  // Y5 part 2 (renderer thread): the stars and the Milky Way's glow behind the system's own lights, through the same
+  // camera, turned from galactic into this system's frame by the kernel's `frame`. Stars to the sensor's limit (capped
+  // at 6.5 while the kernel's sky walk is slow); everything fainter is in the glow, so the light all adds up.
+  const SKY_CAP = 6.5;
+  let starsBehind = $state(false);
+  let sky = $state<Sky | null>(null);
+  let skyLoading = $state(false);
+  let skyError = $state<string | null>(null);
+  const skyCache = new Map<string, Sky>();
+  let skyGen = 0;
+  const skyLimit = $derived(view ? Math.round(Math.min(view.sensor.limit_mag, SKY_CAP) * 10) / 10 : SKY_CAP);
+  $effect(() => {
+    const on = starsBehind;
+    const lim = skyLimit;
+    if (!on || !view?.frame) return;
+    const key = `${scene.system}|${lim}`;
+    untrack(() => {
+      const hit = skyCache.get(key);
+      if (hit) return void (sky = hit);
+      const g = ++skyGen;
+      skyLoading = true;
+      skyError = null;
+      void (async () => {
+        const ask = { limit_mag: lim, band: "V", bands: ["B", "V"] };
+        let st = await ctx.session.skyFromHere({ ...ask, observer: scene.system });
+        if (!st.ok) st = await ctx.session.skyFromHere(ask);
+        if (g !== skyGen) return;
+        if (!st.ok) return void ((skyLoading = false), (skyError = st.message));
+        const xyz = (st.sky as { observer?: { xyz_pc?: [number, number, number] } }).observer?.xyz_pc;
+        const gl = await ctx.session.skyGlow({ ...ask, nside: 16, ...(xyz ? { position_pc: xyz } : {}) });
+        if (g !== skyGen) return;
+        skyLoading = false;
+        const s2 = readSky(st.sky as never, gl.ok ? (gl.glow as never) : null);
+        skyCache.set(key, s2);
+        sky = s2;
+      })();
+    });
+  });
+
   function choose(t: string) {
     target = t;
     dLon = 0;
@@ -109,11 +149,21 @@
     if (!cv || !c || !v) return;
     const g = cv.getContext("2d");
     if (!g) return;
-    const ink = token(cv, "--sse-ink");
+    const dark = starsBehind && !!sky && !!v.frame;
+    // Over the real sky the lights are drawn as light (white), the same in every theme: the picture is not themed.
+    const ink = dark ? "white" : token(cv, "--sse-ink");
     const ground = token(cv, "--sse-ground");
-    const muted = token(cv, "--sse-ink-muted");
-    g.fillStyle = ground;
-    g.fillRect(0, 0, SIZE, SIZE);
+    const muted = dark ? "silver" : token(cv, "--sse-ink-muted");
+    const behind = starsBehind && sky && v.frame ? sky : null;
+    if (behind && v.frame) {
+      // The sky first, through the Window's own camera; the system's lights go on top in light ink.
+      const img = g.createImageData(SIZE, SIZE);
+      drawSky(img, behind, systemView(v.frame, (lo, la, m) => project(c, lo, la, m), (x, y) => unprojectCamera(c, x, y)), { maxPoints: SKY_POINTS_MAX.canvas, glowStep: 4 });
+      g.putImageData(img, 0, 0);
+    } else {
+      g.fillStyle = ground;
+      g.fillRect(0, 0, SIZE, SIZE);
+    }
     // The ecliptic, faint, where it crosses the picture.
     g.strokeStyle = muted;
     g.globalAlpha = 0.5;
@@ -235,6 +285,18 @@
         <button type="button" onclick={() => (zoom = Math.max(1, zoom / 2))} aria-label="Zoom out">−</button>
         <span class="hint">{angleWords(field)} across · ecliptic dashed · north up</span>
       </div>
+      <p class="behind" data-stars-behind={starsBehind ? (sky && view?.frame ? "on" : skyLoading ? "loading" : "waiting") : "off"}>
+        {#if view?.frame}
+          <label><input type="checkbox" bind:checked={starsBehind} /> Stars behind</label>
+          {#if starsBehind}
+            <span class="hint" data-stars-behind-words>
+              {skyLoading ? "Reading the sky…" : skyError ? skyError : sky ? `${sky.stars.length.toLocaleString("en-GB")} stars to magnitude ${skyLimit}${sky.truncated ? " (the kernel's list stops there, so some faint stars are missing)" : ""} and the Milky Way's glow, in true colour. This system's plane is ${view.frame.evidence === "measured" ? "measured" : "drawn at random (no measurement)"} against the galaxy: its pole at galactic l ${view.frame.pole_l_deg.toFixed(1)}°, b ${view.frame.pole_b_deg.toFixed(1)}°.${view.sensor.limit_mag > SKY_CAP ? ` The sensor reaches magnitude ${view.sensor.limit_mag}; stars past ${SKY_CAP} are in the glow for now.` : ""}` : ""}
+            </span>
+          {/if}
+        {:else}
+          <span class="hint">Stars behind: the kernel cannot say how this system sits in the galaxy, so the background is not drawn.</span>
+        {/if}
+      </p>
     </div>
     <aside class="ledger">
       <h3>Seen through {view?.sensor.name.toLowerCase() ?? "the sensor"}</h3>
@@ -272,6 +334,10 @@
 </div>
 
 <style>
+  .behind {
+    margin: 6px 0 0;
+    max-width: 560px;
+  }
   .win {
     color: var(--sse-ink);
     font-size: 13px;

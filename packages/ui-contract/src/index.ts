@@ -77,7 +77,7 @@ export { VOYAGE_SHIPS, IN_SYSTEM_SHIPS, MINIMISE_WORDS, systemShort, voyageSpan,
 export type { Minimise, VoyageAsk, VoyageLeg, Voyage, VoyageSystem, VoyagePlan, StarCell, StarCellSystem, MapFrame, SystemPlace, SystemVoyagePlan } from "./voyage.ts";
 export { NAMED_HALOES, MORPHOLOGY_WORDS, GROUP_WORDS, LAYER_WORDS, discFrame, armPath, ringAt, ringShades, greenAt, cosmicAxis, logCurve, sci, timesSun, dex, epochTicks, foamCells, editWords, toggleRemoval, cellHalo, projectHalo, haloRadius, overdensityWords } from "./galaxy.ts";
 export type { GalaxyAsk, GalaxyChart, GalaxyRing, GalaxyState, Group, CosmicEpoch, PlaceLocal, PlaceGreen, SliceAsk, WebSlice, DiscFrame, RingLayer, CurveAxis, GalaxyEdit, GalaxyEventMark, HistoryCompare, HaloCellAsk, HaloCell, CellHalo, Projection } from "./galaxy.ts";
-export { SENSORS, camera, project, discPx, pointPx, towards, magWords, angleWords } from "./window.ts";
+export { SENSORS, camera, project, discPx, pointPx, towards, magWords, angleWords, unprojectCamera } from "./window.ts";
 export type { WindowAsk, WindowView, Seen, Camera } from "./window.ts";
 export { SIGNIFICANCE_PARTS, valueWords, fieldWords, storyBrief } from "./story.ts";
 export type { SifterDoc, StoryEvidence, StoryHit, SiftAsk, SiftResult } from "./story.ts";
