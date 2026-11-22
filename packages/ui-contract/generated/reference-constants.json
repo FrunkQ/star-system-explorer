@@ -244,6 +244,106 @@
    "v": 384400000.0,
    "unit": "m",
    "src": "nssdca-moon"
+  },
+  "H0": {
+   "v": 67.66,
+   "unit": "km s-1 Mpc-1",
+   "src": "planck2018"
+  },
+  "H0_si": {
+   "v": 2.1927112672380573e-18,
+   "unit": "s-1",
+   "src": "planck2018"
+  },
+  "Omega_b": {
+   "v": 0.04897,
+   "unit": "1",
+   "src": "planck2018"
+  },
+  "Omega_c": {
+   "v": 0.2607228,
+   "unit": "1",
+   "src": "planck2018"
+  },
+  "Omega_nu": {
+   "v": 0.0014072,
+   "unit": "1",
+   "src": "mangano2005"
+  },
+  "Omega_m": {
+   "v": 0.3111,
+   "unit": "1",
+   "src": "planck2018"
+  },
+  "dm_per_ordinary": {
+   "v": 5.324133142740453,
+   "unit": "1",
+   "src": "planck2018"
+  },
+  "f_b": {
+   "v": 0.15740919318547092,
+   "unit": "1",
+   "src": "planck2018"
+  },
+  "sigma8": {
+   "v": 0.8102,
+   "unit": "1",
+   "src": "planck2018"
+  },
+  "n_s": {
+   "v": 0.9665,
+   "unit": "1",
+   "src": "planck2018"
+  },
+  "T_cmb": {
+   "v": 2.7255,
+   "unit": "K",
+   "src": "fixsen2009"
+  },
+  "N_eff": {
+   "v": 3.046,
+   "unit": "1",
+   "src": "mangano2005"
+  },
+  "Omega_r": {
+   "v": 9.139052324320949e-05,
+   "unit": "1",
+   "src": "fixsen2009"
+  },
+  "Omega_Lambda": {
+   "v": 0.6888086094767568,
+   "unit": "1",
+   "src": "planck2018"
+  },
+  "w0": {
+   "v": -1.0,
+   "unit": "1",
+   "src": "chevallier2001"
+  },
+  "wa": {
+   "v": 0.0,
+   "unit": "1",
+   "src": "chevallier2001"
+  },
+  "rho_Lambda": {
+   "v": 5.323270563847347e-10,
+   "unit": "J m-3",
+   "src": "planck2018"
+  },
+  "m_wdm": {
+   "v": 0.0,
+   "unit": "keV",
+   "src": "schneider2012"
+  },
+  "sigma_dm": {
+   "v": 0.0,
+   "unit": "m2 kg-1",
+   "src": "rocha2013"
+  },
+  "m_fdm": {
+   "v": 0.0,
+   "unit": "eV",
+   "src": "hui2017"
   }
  }
 }
