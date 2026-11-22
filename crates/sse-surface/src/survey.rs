@@ -71,6 +71,8 @@ pub struct Survey {
     pub aerostat: Result<AerostatBand, String>,
     /// S14a: the lava tubes each lava source holds, as envelopes.
     pub tubes: Vec<crate::tubes::TubeField>,
+    /// The seed the world was drawn from (a Site-level read draws from it again).
+    pub seed: Seed,
     /// The one climate the ground was worn and covered under (None for a giant).
     pub climate: Option<WorldClimate>,
     /// The stages that ran, in order.
@@ -146,6 +148,7 @@ fn chain(
         let atlas = Atlas::new(s, &e, seed, epoch_gyr, vec![]).with_regime(rs);
         return Ok(Survey {
             tubes: vec![],
+            seed: *seed,
             envelope: e,
             atlas,
             register: None,
@@ -247,6 +250,7 @@ fn chain(
         let stages = ["envelope", "plates", "wear", "impacts", "regime", "cover"];
         return Ok(Survey {
             tubes,
+            seed: *seed,
             envelope: e,
             atlas,
             register: None,
@@ -268,6 +272,7 @@ fn chain(
     ];
     Ok(Survey {
         tubes,
+        seed: *seed,
         envelope: e,
         atlas,
         register: Some(reg),
