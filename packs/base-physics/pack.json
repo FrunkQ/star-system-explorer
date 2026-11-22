@@ -2087,6 +2087,34 @@
         "range": null
       },
       {
+        "description": "heat flux at the core's top beyond what conduction along the adiabat carries",
+        "dim": [
+          0,
+          1,
+          -3,
+          0,
+          0,
+          0,
+          0
+        ],
+        "id": "interior.convected_flux",
+        "range": null
+      },
+      {
+        "description": "heat flux leaving the top of the core",
+        "dim": [
+          0,
+          1,
+          -3,
+          0,
+          0,
+          0,
+          0
+        ],
+        "id": "interior.core_heat_flux",
+        "range": null
+      },
+      {
         "description": "fraction of the mass in the iron core",
         "dim": [
           0,
@@ -2118,6 +2146,34 @@
         "range": null
       },
       {
+        "description": "gravity at the top of the core",
+        "dim": [
+          1,
+          0,
+          -2,
+          0,
+          0,
+          0,
+          0
+        ],
+        "id": "interior.core_top_gravity",
+        "range": null
+      },
+      {
+        "description": "temperature at the top of the core",
+        "dim": [
+          0,
+          0,
+          0,
+          0,
+          1,
+          0,
+          0
+        ],
+        "id": "interior.core_top_temperature",
+        "range": null
+      },
+      {
         "description": "mean density of the convecting, conducting region that runs the dynamo",
         "dim": [
           -3,
@@ -2132,7 +2188,7 @@
         "range": null
       },
       {
-        "description": "heat flux carried out of the dynamo region by convection",
+        "description": "power stirring the dynamo region, as a heat flux: convected heat plus compositional buoyancy",
         "dim": [
           0,
           1,
@@ -2157,6 +2213,20 @@
           0
         ],
         "id": "interior.dynamo_radius",
+        "range": null
+      },
+      {
+        "description": "mass flux of buoyant light elements let out into the liquid core, per area of its top",
+        "dim": [
+          -2,
+          1,
+          -1,
+          0,
+          0,
+          0,
+          0
+        ],
+        "id": "interior.light_element_flux",
         "range": null
       },
       {

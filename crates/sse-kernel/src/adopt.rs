@@ -674,6 +674,7 @@ fn bodies_from_facts(
                         "authored".to_string()
                     }
                 }),
+            core_light_fraction: None,
         });
     }
     out

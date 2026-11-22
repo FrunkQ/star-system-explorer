@@ -53,7 +53,7 @@ pub const DEPOSITS: [&str; 7] = [
     "ice-shadowed",
 ];
 
-const R_GAS: f64 = 8.314462618;
+pub(crate) const R_GAS: f64 = 8.314462618;
 
 // ---------------------------------------------------------------- settings
 
