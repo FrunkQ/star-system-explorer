@@ -90,3 +90,4 @@ export { copyClip, readClip, placeClip, clipWords, missingPacks, subtree, CLIP_V
 export type { Clip, ClipNode, ClipEvent, ClipSource, ClipRead, Copied, PlacedBody } from "./clip.ts";
 export { pickLine, shownLines, opensKey, checkStartLines } from "./start.ts";
 export type { StartLine, StartLinesDoc, StartOpens } from "./start.ts";
+export { readSol, solBatches, solSourceText, SOL_TITLE, type SolSheet } from "./sol.ts";

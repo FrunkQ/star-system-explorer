@@ -35,11 +35,11 @@ try {
     await sheet.waitFor();
     assert.equal(await gm.locator("[data-start-line]").getAttribute("data-start-line"), "l1", "the first visit shows the first expected line");
     assert.match(await sheet.locator("h1").innerText(), /campaign, on real physics/);
-    for (const d of ["carry", "grow", "bring", "chart"]) assert.equal(await sheet.locator(`[data-door="${d}"]`).count(), 1, `door ${d}`);
+    for (const d of ["sol", "carry", "grow", "bring", "chart"]) assert.equal(await sheet.locator(`[data-door="${d}"]`).count(), 1, `door ${d}`);
     assert.match(await sheet.locator('[data-door="carry"]').innerText(), /sample campaign/);
     const verbs = await sheet.locator(".atlas li").count();
-    assert.equal(verbs, 9, "ten verbs, with Age the Sun held back until the Solar System is in");
-    assert.equal(await sheet.locator(".atlas", { hasText: "Age the Sun" }).count(), 0);
+    assert.equal(verbs, 10, "ten verbs, Age the Sun among them now the Solar System is in");
+    assert.match(await sheet.locator('[data-door="sol"]').innerText(), /Open the Solar System\s+Start here/i);
     await gm.waitForSelector('[data-door="grow"]:not([disabled])', { timeout: 20000 });
     if (vp === "phone") {
       const over = await gm.evaluate(() => document.documentElement.scrollWidth - window.innerWidth);
@@ -53,12 +53,32 @@ try {
     await gm.waitForSelector("[data-state-hash]:not([data-state-hash=''])");
     await more(gm, "Start sheet");
     await sheet.waitFor();
-    assert.equal(await gm.locator("[data-start-line]").getAttribute("data-start-line"), "l3", "the second visit: the third line (the second waits for the Solar System)");
+    assert.equal(await gm.locator("[data-start-line]").getAttribute("data-start-line"), "l2", "the second visit: the second line, which opens the Solar System");
 
     // A verb opens the real thing: Cut a world open goes to the Cutaway of a world.
     await sheet.getByRole("button", { name: /Cut a world open/ }).click();
     await sheet.waitFor({ state: "detached" });
     await gm.waitForFunction(() => document.querySelector(".stage")?.getAttribute("data-screen") === "cutaway");
+
+    // Open the Solar System: entered once from its catalogue, then on the chart with the Moon round Earth.
+    await more(gm, "Start sheet");
+    await sheet.locator('[data-door="sol"]').click();
+    await sheet.waitFor({ state: "detached" });
+    await gm.waitForFunction(() => [...document.querySelectorAll(".area-chart .body")].some((b) => /^Earth\b/.test(b.getAttribute("aria-label") ?? "")), null, { timeout: 20000 });
+    const solHash = await gm.locator("[data-state-hash]").first().getAttribute("data-state-hash");
+    for (const n of ["Sun", "Mercury", "Jupiter", "Neptune", "Kuiper belt"]) assert.ok(await gm.locator(`.area-chart .body[aria-label^="${n}"]`).count() >= 1 || (await gm.locator(".area-chart").innerText()).toLowerCase().includes(n.toLowerCase()), `${n} on the chart`);
+    assert.equal(await gm.locator("[data-catalogued]").count(), 1, "marked as measured, not as a V3 save");
+    if (vp === "phone") {
+      const over = await gm.evaluate(() => document.documentElement.scrollWidth - window.innerWidth);
+      assert.ok(over <= 0, `phone overflows by ${over} px on the Solar System`);
+    }
+    await shot(gm, `start-sol-${vp}`);
+    // A second open goes straight there, writing nothing.
+    await more(gm, "Start sheet");
+    await sheet.getByRole("button", { name: /Age the Sun/ }).click();
+    await sheet.waitFor({ state: "detached" });
+    await gm.waitForTimeout(600);
+    assert.equal(await gm.locator("[data-state-hash]").first().getAttribute("data-state-hash"), solHash, "entered once");
 
     // Grow a new system opens Make on its grow tab.
     await more(gm, "Start sheet");
