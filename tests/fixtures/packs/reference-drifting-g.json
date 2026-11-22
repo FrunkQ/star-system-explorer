@@ -1,0 +1,33 @@
+{
+ "format": "sse.pack/1",
+ "id": "test.drifting-g",
+ "version": "0.1.0",
+ "kind": [
+  "physics"
+ ],
+ "kernel_range": "^0.1",
+ "licence": "Apache-2.0",
+ "provides": {
+  "reference": {
+   "about": "DM6 fixture: gravity 10% stronger a billion years ago, drifting to today's value (fictional), for the time-law checks.",
+   "sources": [
+    {
+     "id": "what-if-g",
+     "text": "Fictional: G drifting by -1e-10 a year to CODATA 2018's value now, for teaching"
+    }
+   ],
+   "constants": [
+    {
+     "id": "G",
+     "law": {
+      "kind": "drift",
+      "per_yr": -1e-10,
+      "anchor_gyr": 13.8,
+      "mark": "fictional",
+      "src": "what-if-g"
+     }
+    }
+   ]
+  }
+ }
+}
