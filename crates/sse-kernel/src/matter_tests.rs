@@ -301,3 +301,113 @@ fn doubling_g_makes_the_sun_estimated_sixteen_times_brighter() {
         assert!(a[q].get("estimated").is_none(), "{q}: {a}");
     }
 }
+
+fn lookup_kernel(edit: bool) -> crate::Kernel {
+    let mut packs = vec![
+        pack("tests/fixtures/packs/base-physics.json"),
+        pack("packs/base-reference/pack.json"),
+        pack("tests/fixtures/packs/lookup-flows.json"),
+    ];
+    if edit {
+        packs.push(pack("tests/fixtures/packs/lookup-edit.json"));
+    }
+    let mut k = crate::Kernel::new();
+    let r = send(
+        &mut k,
+        serde_json::json!({"op": "load_stack", "packs": packs}),
+    );
+    assert_eq!(r["type"], "stack_loaded", "{r}");
+    k
+}
+
+/// MP17a: the Look up block reads the sheet. Water's latent heat is the
+/// sheet's value; the density at 1 GPa and 270 K is ice VI's own; a row
+/// without the property answers known = false; doubling the latent heat in
+/// a pack moves only the flow that reads it; "used by" lists the flows that
+/// wire a Look up block to the row.
+#[test]
+fn the_look_up_block_reads_the_sheet() {
+    let mut k = lookup_kernel(false);
+    let m = serde_json::json!({"mass": {"value": 1.0}});
+    let heat = derive(&mut k, "test.water-boil-heat", m.clone());
+    assert_eq!(heat["test.latent"]["value"], 2.468e6, "{heat}");
+    let at = |k: &mut crate::Kernel, p: f64, t: f64| {
+        derive(
+            k,
+            "test.water-density-at",
+            serde_json::json!({"p": {"value": p}, "t": {"value": t}}),
+        )
+    };
+    let ice6 = at(&mut k, 1.0e9, 270.0);
+    let d6 = ice6["test.density"]["value"].as_f64().unwrap();
+    assert!(
+        (1250.0..1400.0).contains(&d6),
+        "ice VI is about 1.3 g/cm3: {ice6}"
+    );
+    let liquid = at(&mut k, 101_325.0, 300.0)["test.density"]["value"]
+        .as_f64()
+        .unwrap();
+    assert!((990.0..1010.0).contains(&liquid), "{liquid}");
+    let none = derive(&mut k, "test.iron-density", m.clone());
+    assert_eq!(none["test.strength"]["value"], 0.0, "{none}");
+
+    // Change the sheet: only the flow that reads the changed value moves.
+    let mut e = lookup_kernel(true);
+    assert_eq!(
+        derive(&mut e, "test.water-boil-heat", m.clone())["test.latent"]["value"],
+        4.936e6
+    );
+    assert_eq!(at(&mut e, 1.0e9, 270.0), ice6);
+    assert_eq!(derive(&mut e, "test.iron-density", m), none);
+
+    // Used by, from the wiring.
+    let r = send(
+        &mut k,
+        serde_json::json!({"op": "read_matter", "table": "substances", "id": "h2o"}),
+    );
+    let used: Vec<&str> = r["value"]["used_by"]
+        .as_array()
+        .unwrap()
+        .iter()
+        .map(|u| u["flow"].as_str().unwrap())
+        .collect();
+    assert_eq!(
+        used,
+        [
+            "test.iron-density",
+            "test.water-boil-heat",
+            "test.water-density-at"
+        ],
+        "{r}"
+    );
+    let r = send(
+        &mut k,
+        serde_json::json!({"op": "read_matter", "table": "substances", "id": "co2"}),
+    );
+    assert_eq!(r["value"]["used_by"], serde_json::json!([]), "{r}");
+}
+
+/// A Look up block naming a row the sheet lacks, or with no sheet in the
+/// stack, refuses to load, saying why.
+#[test]
+fn a_look_up_block_with_no_row_or_no_sheet_is_refused() {
+    let mut flows = pack("tests/fixtures/packs/lookup-flows.json");
+    flows["provides"]["flows"][0]["nodes"][0]["config"]["what"] = "unobtainium".into();
+    let mut k = crate::Kernel::new();
+    let r = send(
+        &mut k,
+        serde_json::json!({"op": "load_stack", "packs": [
+            pack("tests/fixtures/packs/base-physics.json"),
+            pack("packs/base-reference/pack.json"), flows]}),
+    );
+    assert_eq!(r["type"], "stack_rejected", "{r}");
+    assert!(r.to_string().contains("unobtainium"), "{r}");
+    let r = send(
+        &mut k,
+        serde_json::json!({"op": "load_stack", "packs": [
+            pack("tests/fixtures/packs/base-physics.json"),
+            pack("tests/fixtures/packs/lookup-flows.json")]}),
+    );
+    assert_eq!(r["type"], "stack_rejected", "{r}");
+    assert!(r.to_string().contains("master data sheet"), "{r}");
+}

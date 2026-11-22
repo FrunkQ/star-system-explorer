@@ -26,6 +26,7 @@ use sse_core::math as m;
 use std::collections::BTreeMap;
 
 pub mod expr;
+pub mod lookup;
 pub mod phases;
 
 /// Relative tolerance between a sheet unit and the built-in one of the
@@ -939,6 +940,8 @@ fn check_vapour(id: &str, ph: &Map<String, J>, molar_kg: Option<f64>) -> Vec<Str
     p
 }
 
+#[cfg(test)]
+mod lookup_tests;
 #[cfg(test)]
 mod phases_tests;
 #[cfg(test)]

@@ -15,6 +15,7 @@ pub mod blocks;
 pub mod condition;
 pub mod dice;
 pub mod engine;
+pub mod lookup;
 
 pub use condition::{to_blocks, Condition, SubjectWorld};
 
@@ -26,6 +27,7 @@ pub fn register(reg: &mut sse_flow::AtomRegistry) {
     for a in dice::all() {
         reg.insert(a);
     }
+    reg.insert(Box::new(lookup::Lookup::new()));
 }
 
 /// A registry holding only the logic set (tests, condition flows).

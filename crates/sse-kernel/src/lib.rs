@@ -228,7 +228,7 @@ fn load_observe(ms: &[sse_pack::PackManifest]) -> Result<Observe, Vec<String>> {
         templates,
         programs,
         dressing,
-        reference,
+        reference: std::sync::Arc::new(reference),
     })
 }
 
@@ -397,8 +397,9 @@ struct Observe {
     programs: sse_trigger::programs::Programs,
     /// Dressing rules (`provides.other.dressing`, TG12).
     dressing: dressing::Dressing,
-    /// The master data sheet (`provides.reference`, MP1).
-    reference: sse_reference::Reference,
+    /// The master data sheet (`provides.reference`, MP1), shared with the
+    /// Look up block for the length of each call (MP17a).
+    reference: std::sync::Arc<sse_reference::Reference>,
 }
 
 pub struct Kernel {
@@ -490,6 +491,14 @@ fn replay_export(evs: &[serde_json::Value], what: &str) -> Result<Chronicle, Res
 /// The record's hash: its chronicle head (covers notes, which touch no state).
 fn record_hash(u: &Universe) -> String {
     u.record.head().hex()
+}
+
+/// The sheet a Look up block reads (MP17a); none when the stack has no
+/// master data sheet, so the block says so instead of finding no rows.
+fn sheet_of(
+    r: &std::sync::Arc<sse_reference::Reference>,
+) -> Option<std::sync::Arc<dyn sse_flow::sheet::Sheet>> {
+    (!r.tables.is_empty()).then(|| r.clone() as std::sync::Arc<dyn sse_flow::sheet::Sheet>)
 }
 
 fn latest_hash(c: &Chronicle) -> String {
@@ -637,9 +646,13 @@ impl Kernel {
     pub fn handle(&mut self, req: Request) -> Response {
         // MP1c: the stack's constants are in force for the whole call.
         let c = self.observe.reference.handle();
-        sse_core::constants::with(c, || match self.dispatch(req) {
-            Ok(r) => r,
-            Err(r) => r,
+        // MP17a: and its sheet, for the Look up block.
+        let sheet = sheet_of(&self.observe.reference);
+        sse_core::constants::with(c, || {
+            sse_flow::sheet::with(sheet, || match self.dispatch(req) {
+                Ok(r) => r,
+                Err(r) => r,
+            })
         })
     }
 
@@ -1147,7 +1160,7 @@ impl Kernel {
     /// sources and packs, or each table's ids.
     fn read_matter(&self, table: Option<&str>, id: Option<&str>) -> Result<Response, Response> {
         let r = &self.observe.reference;
-        let value = match (table, id) {
+        let mut value = match (table, id) {
             (Some(t), Some(i)) => r.describe(t, i).ok_or_else(|| {
                 err(
                     "no_row",
@@ -1179,7 +1192,46 @@ impl Kernel {
                 r.listing(t)
             }
         };
+        if let (Some(t), Some(i)) = (
+            value
+                .get("table")
+                .and_then(|v| v.as_str())
+                .map(str::to_string),
+            value.get("id").and_then(|v| v.as_str()).map(str::to_string),
+        ) {
+            value["used_by"] = serde_json::Value::Array(self.used_by(&format!("{t}/{i}")));
+        }
         Ok(Response::Matter { value })
+    }
+
+    /// MP17a: the flows that read a sheet row, read off their Look up
+    /// blocks (design 3A: from the wiring, never declared). A block whose
+    /// row is wired in reads whichever row arrives, so it is not listed.
+    fn used_by(&self, row: &str) -> Vec<serde_json::Value> {
+        let Some((stack, _)) = &self.stack else {
+            return vec![];
+        };
+        let mut out = vec![];
+        for (id, af) in &stack.flows {
+            for n in &af.doc.nodes {
+                if n.atom.as_deref() != Some(sse_logic::lookup::ID) {
+                    continue;
+                }
+                let Ok(c) = sse_logic::lookup::Lookup::cfg(n.config.as_ref()) else {
+                    continue;
+                };
+                let Some(w) = &c.what else { continue };
+                if self
+                    .observe
+                    .reference
+                    .resolve_row(w)
+                    .is_ok_and(|(t, i)| format!("{t}/{i}") == row)
+                {
+                    out.push(serde_json::json!({"flow": id, "node": n.id, "property": c.property, "pack": af.pack}));
+                }
+            }
+        }
+        out
     }
 
     /// `dressing` (TG12): the candidates and orphans under `scope`.
@@ -1857,6 +1909,57 @@ impl Kernel {
                         issues: issues.iter().map(|i| i.to_string()).collect(),
                     },
                     Ok(stack) => {
+                        // The sheet first (MP17a): its units join the
+                        // stack's before flows compile, and its Look up
+                        // blocks read it while flows are checked.
+                        let mut stack = stack;
+                        let observe = match load_observe(&ms) {
+                            Ok(o) => o,
+                            Err(problems) => {
+                                let issues: Vec<sse_pack::StackIssue> = problems
+                                    .iter()
+                                    .map(|m| sse_pack::StackIssue {
+                                        pack: "observe".into(),
+                                        message: m.clone(),
+                                    })
+                                    .collect();
+                                return Ok(Response::StackRejected {
+                                    report: sse_pack::report(&issues),
+                                    issues: problems,
+                                });
+                            }
+                        };
+                        // MP1c (design 7A.6): the sheet's units join the
+                        // session's; a pack unit of the same id must agree.
+                        let standard = sse_core::Units::standard();
+                        let mut clashes = vec![];
+                        for u in observe.reference.units() {
+                            if let Ok(have) = stack.units.get(&u.id) {
+                                let built_in = standard.get(&u.id).is_ok();
+                                if !built_in && (have.scale != u.scale || have.dim != u.dim) {
+                                    clashes.push(format!(
+                                        "unit {} on the master data sheet disagrees with the pack unit of that id",
+                                        u.id
+                                    ));
+                                    continue;
+                                }
+                            }
+                            stack.units.insert(u);
+                        }
+                        if !clashes.is_empty() {
+                            let issues: Vec<sse_pack::StackIssue> = clashes
+                                .iter()
+                                .map(|m| sse_pack::StackIssue {
+                                    pack: "reference".into(),
+                                    message: m.clone(),
+                                })
+                                .collect();
+                            return Ok(Response::StackRejected {
+                                report: sse_pack::report(&issues),
+                                issues: clashes,
+                            });
+                        }
+                        let _sheet = sse_flow::sheet::Scope::new(sheet_of(&observe.reference));
                         let cx = Context {
                             atoms: &self.atoms,
                             kinds: &stack.kinds,
@@ -1908,53 +2011,6 @@ impl Kernel {
                             return Ok(Response::StackRejected {
                                 report: sse_pack::report(&issues),
                                 issues: problems,
-                            });
-                        }
-                        let observe = match load_observe(&ms) {
-                            Ok(o) => o,
-                            Err(problems) => {
-                                let issues: Vec<sse_pack::StackIssue> = problems
-                                    .iter()
-                                    .map(|m| sse_pack::StackIssue {
-                                        pack: "observe".into(),
-                                        message: m.clone(),
-                                    })
-                                    .collect();
-                                return Ok(Response::StackRejected {
-                                    report: sse_pack::report(&issues),
-                                    issues: problems,
-                                });
-                            }
-                        };
-                        // MP1c (design 7A.6): the sheet's units join the
-                        // session's; a pack unit of the same id must agree.
-                        let mut stack = stack;
-                        let standard = sse_core::Units::standard();
-                        let mut clashes = vec![];
-                        for u in observe.reference.units() {
-                            if let Ok(have) = stack.units.get(&u.id) {
-                                let built_in = standard.get(&u.id).is_ok();
-                                if !built_in && (have.scale != u.scale || have.dim != u.dim) {
-                                    clashes.push(format!(
-                                        "unit {} on the master data sheet disagrees with the pack unit of that id",
-                                        u.id
-                                    ));
-                                    continue;
-                                }
-                            }
-                            stack.units.insert(u);
-                        }
-                        if !clashes.is_empty() {
-                            let issues: Vec<sse_pack::StackIssue> = clashes
-                                .iter()
-                                .map(|m| sse_pack::StackIssue {
-                                    pack: "reference".into(),
-                                    message: m.clone(),
-                                })
-                                .collect();
-                            return Ok(Response::StackRejected {
-                                report: sse_pack::report(&issues),
-                                issues: clashes,
                             });
                         }
                         let codes = match sse_codes::Codes::load(&ms) {
