@@ -19,6 +19,7 @@ pub mod drift;
 pub mod hazards;
 pub mod insystem;
 pub mod kepler;
+pub mod refuel;
 pub mod scenario;
 pub mod sky;
 pub mod voyage;
@@ -229,6 +230,23 @@ pub struct Ship {
     /// A jump drive (a pack's FTL rule), if the ship has one.
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub jump: Option<voyage::JumpDrive>,
+    /// Fuels the engines burn ("hydrogen", "hydrogen-oxygen", "antimatter");
+    /// a stop must give all of them (V8 part 3c).
+    #[serde(default, skip_serializing_if = "Vec::is_empty")]
+    pub fuels: Vec<String>,
+    /// What the ship can refuel with ("scoop", "ice processor", "docking");
+    /// none listed means any.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub refuel: Option<Vec<String>>,
+}
+
+impl Ship {
+    /// Whether the ship has a refuelling capability.
+    pub fn can(&self, capability: &str) -> bool {
+        self.refuel
+            .as_ref()
+            .is_none_or(|r| r.iter().any(|c| c == capability))
+    }
 }
 fn belt_reason() -> f64 {
     10.0
@@ -307,6 +325,9 @@ pub struct NavBody {
     /// Has a port (rescue can come from here).
     #[serde(default)]
     pub port: bool,
+    /// Fuels its port stocks beyond the pack's common list ("antimatter").
+    #[serde(default, skip_serializing_if = "Vec::is_empty")]
+    pub stock: Vec<String>,
     /// Magnetic dipole moment, A m², where it is known.
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub magnetic_moment_a_m2: Option<f64>,

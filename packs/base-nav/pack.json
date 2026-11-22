@@ -99,6 +99,8 @@
     },
     "ships": {
      "chemical-transfer": {
+      "fuels": ["hydrogen-oxygen"],
+      "refuel": ["docking", "ice processor"],
       "name": "Chemical transfer ship",
       "accel_g": 0.3,
       "sustained": false,
@@ -107,6 +109,8 @@
       "dry_t": 100.0
      },
      "nuclear-thermal": {
+      "fuels": ["hydrogen"],
+      "refuel": ["docking", "ice processor"],
       "name": "Nuclear thermal ship",
       "accel_g": 0.2,
       "sustained": false,
@@ -115,6 +119,8 @@
       "dry_t": 120.0
      },
      "fusion-torch": {
+      "fuels": ["deuterium", "helium-3"],
+      "refuel": ["docking", "scoop"],
       "name": "Fusion torch",
       "accel_g": 1.0,
       "sustained": true,
@@ -124,6 +130,8 @@
       "shield_g_cm2": 40.0
      },
      "rescue-cutter": {
+      "fuels": ["deuterium"],
+      "refuel": ["docking", "scoop", "ice processor"],
       "name": "Rescue cutter",
       "accel_g": 2.0,
       "sustained": true,
@@ -134,6 +142,8 @@
       "shield_g_cm2": 40.0
      },
      "jump-courier": {
+      "fuels": ["hydrogen"],
+      "refuel": ["docking", "scoop", "ice processor"],
       "name": "Jump courier",
       "accel_g": 2.0,
       "sustained": false,
@@ -150,6 +160,8 @@
       }
      },
      "relativistic-probe": {
+      "fuels": ["antimatter", "hydrogen"],
+      "refuel": ["docking"],
       "name": "Antimatter probe",
       "accel_g": 1.0,
       "sustained": true,
@@ -166,7 +178,14 @@
      "labels_per_system": 6,
      "max_steps": 200000,
      "gamble_min_odds": 0.5,
-     "giant_prior": {"base": 0.07, "mass_exp": 1.0, "feh_exp": 1.2, "cap": 0.9}
+     "giant_prior": {"base": 0.07, "mass_exp": 1.0, "feh_exp": 1.2, "cap": 0.9},
+     "refuel": {
+      "kinds": {
+       "skim": {"words": "a gas giant to skim", "needs": "scoop", "gives": ["hydrogen", "deuterium", "helium-3"], "why": "a giant's envelope is mostly molecular hydrogen with deuterium at about 2e-5 of it and helium-3 at about 1.5e-4 of the helium (Galileo probe: Mahaffy et al. 1998, Space Science Reviews 84, 251. doi:10.1023/A:1005091806594)"},
+       "ice": {"words": "ice to crack", "needs": "ice processor", "gives": ["water", "hydrogen", "hydrogen-oxygen", "deuterium"], "why": "water ice melts to water and electrolyses to hydrogen and oxygen; heavy water gives deuterium at about 1.5e-4 of the hydrogen"},
+       "port": {"words": "a port", "needs": "docking", "gives": ["hydrogen", "water", "hydrogen-oxygen", "deuterium"], "why": "a port sells what an ordinary economy makes; helium-3, tritium and antimatter only where a port lists them as stock"}
+      }
+     }
     },
     "sources": {
      "lambert": "Curtis, H. D. 2014, Orbital Mechanics for Engineering Students, 3rd ed., Elsevier, algorithms 3.4 and 5.2. doi:10.1016/C2011-0-69685-1",

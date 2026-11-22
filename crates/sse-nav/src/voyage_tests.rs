@@ -31,6 +31,8 @@ fn courier() -> (Ship, JumpDrive) {
         days_per_jump: 7.0,
         whole_parsecs: true,
         rule: "test".into(),
+        fuel: "hydrogen".into(),
+        limit_diameters: None,
     };
     (s, j)
 }
@@ -40,14 +42,11 @@ fn sys(id: &str, x: f64, fuel: bool) -> VoyageSystem {
         id: id.into(),
         name: id.into(),
         xyz_pc: [x, 0.0, 0.0],
-        fuel: if fuel {
-            vec!["gas giant".into()]
-        } else {
-            vec![]
-        },
+        fuel: if fuel { vec!["skim".into()] } else { vec![] },
         surveyed: true,
         fuel_odds: None,
         odds_from: String::new(),
+        star: None,
     }
 }
 
@@ -65,7 +64,7 @@ fn a_one_g_photon_drive_matches_the_textbook_relativistic_rocket() {
     // 5.9 at home (Baez, The Relativistic Rocket, its table).
     let ly_pc = C * JULIAN_YEAR / PC_M;
     let d = 4.3 * ly_pc;
-    let f = flight(&photon(), 99.0, d).unwrap();
+    let f = flight(&photon(), 99.0, d, 0.0).unwrap();
     let yr = |s: f64| s / JULIAN_YEAR;
     assert!(!f.coast);
     assert!((yr(f.ship_s) - 3.58).abs() < 0.05, "{}", yr(f.ship_s));
@@ -79,7 +78,7 @@ fn a_one_g_photon_drive_matches_the_textbook_relativistic_rocket() {
 
 #[test]
 fn a_fusion_torch_coasts_at_the_speed_its_propellant_affords() {
-    let f = flight(&torch(), 1000.0, 1.0).unwrap();
+    let f = flight(&torch(), 1000.0, 1.0, 0.0).unwrap();
     assert!(f.coast);
     // Δw = (v_e/c) ln(m0 / m_floor), half each way; v ≈ c·tanh(Δw/2).
     let floor = 1000.0 + 0.1 * 1000.0;
@@ -96,7 +95,7 @@ fn a_fusion_torch_coasts_at_the_speed_its_propellant_affords() {
 #[test]
 fn short_flights_agree_with_newton() {
     // 0.001 pc at 1 g with plenty of propellant: t = 2 sqrt(d/a).
-    let f = flight(&photon(), 99.0, 0.001).unwrap();
+    let f = flight(&photon(), 99.0, 0.001, 0.0).unwrap();
     let d = 0.001 * PC_M;
     let newton = 2.0 * m::sqrt(d / G0);
     assert!(
@@ -109,7 +108,7 @@ fn short_flights_agree_with_newton() {
 #[test]
 fn a_chemical_ship_cannot_fly_between_stars() {
     let (s, _) = courier();
-    assert_eq!(flight(&s, 20.0, 1.0), Err(NoFlight::NotSustained));
+    assert_eq!(flight(&s, 20.0, 1.0, 0.0), Err(NoFlight::NotSustained));
     let r = plan(
         &s,
         None,
@@ -351,6 +350,7 @@ fn plans_are_repeatable() {
             surveyed: true,
             fuel_odds: None,
             odds_from: String::new(),
+            star: None,
         });
     }
     let g = Goal::To("s39".into());
@@ -366,4 +366,161 @@ fn metal_rich_and_heavier_stars_are_likelier_to_have_giants() {
     assert!(p.odds(1.0, 0.3) > 2.0 * p.odds(1.0, 0.0));
     assert!(p.odds(0.3, 0.0) < p.odds(1.0, 0.0));
     assert!(p.odds(3.0, 1.5) <= 0.9);
+}
+
+// V8 part 3c: fuel by ship, engine and fuel type; refuelling as a capability.
+
+fn stock(id: &str) -> Ship {
+    crate::scenario::settings().ships[id].clone()
+}
+
+#[test]
+fn a_stop_refuels_only_when_place_ship_and_fuel_agree() {
+    let r = crate::refuel::RefuelRules::default();
+    let torch = stock("fusion-torch");
+    // Deuterium and helium-3: a giant gives both, an ordinary port no helium-3.
+    assert!(r.usable(&torch, "skim").is_ok());
+    let port = r.usable(&torch, "port").unwrap_err();
+    assert!(port.contains("helium-3"), "{port}");
+    assert!(r.usable(&torch, "port:helium-3").is_ok());
+    // No ice processor aboard.
+    assert!(r
+        .usable(&torch, "ice")
+        .unwrap_err()
+        .contains("ice processor"));
+    // Antimatter only where a port stocks it.
+    let probe = stock("relativistic-probe");
+    assert!(r.usable(&probe, "port").is_err());
+    assert!(r.usable(&probe, "skim").is_err());
+    assert!(r.usable(&probe, "port:antimatter").is_ok());
+    assert_eq!(r.words("port:antimatter"), "a port (antimatter)");
+    // A ship that lists no capabilities or fuels can use any kind (custom ships).
+    let (plain, _) = courier();
+    assert!(r.usable(&plain, "ice").is_ok());
+}
+
+#[test]
+fn a_courier_with_no_scoop_passes_a_giant_by() {
+    let (mut s, j) = courier();
+    s.refuel = Some(vec!["docking".into()]);
+    let mut ship = s.clone();
+    ship.jump = Some(j.clone());
+    // Home, a giant 2 pc out, then the target 2 pc beyond: Jump-2 with 40 t
+    // carries two jumps of 20 t, so the giant is not needed; with 20 t it is.
+    let mut j1 = j.clone();
+    j1.tank_t = 20.0;
+    let systems = vec![
+        sys("home", 0.0, false),
+        sys("giant", 2.0, true),
+        sys("far", 4.0, false),
+    ];
+    let g = Goal::To("far".into());
+    let refused = plan(
+        &ship,
+        Some(&j1),
+        &systems,
+        "home",
+        &g,
+        &opts(Minimise::HomeTime),
+    )
+    .unwrap_err();
+    assert!(refused.iter().any(|r| r.contains("scoop")), "{refused:?}");
+    ship.refuel = Some(vec!["docking".into(), "scoop".into()]);
+    let v = plan(
+        &ship,
+        Some(&j1),
+        &systems,
+        "home",
+        &g,
+        &opts(Minimise::HomeTime),
+    )
+    .unwrap();
+    assert_eq!(v.refuels, 1);
+    assert!(
+        v.legs[0].refuel.as_deref() == Some("a gas giant to skim"),
+        "{:?}",
+        v.legs[0].refuel
+    );
+}
+
+#[test]
+fn a_flight_between_stars_pays_to_climb_out_of_both_wells() {
+    let sun = StarWell {
+        mass_msun: 1.0,
+        radius_rsun: 1.0,
+        luminosity_lsun: 1.0,
+    };
+    // From Earth's distance: (√2 − 1) × 29.8 km/s, about 12.3 km/s.
+    let esc = sun.escape_m_s();
+    assert!((esc - 12_340.0).abs() < 100.0, "{esc}");
+    let free = flight(&torch(), 1000.0, 1.0, 0.0).unwrap();
+    let paid = flight(&torch(), 1000.0, 1.0, 2.0 * esc).unwrap();
+    // Either more propellant, or (when it coasts on all it has) a slower coast.
+    assert!(
+        paid.propellant_t > free.propellant_t + 1e-9 || paid.home_s > free.home_s,
+        "{paid:?} vs {free:?}"
+    );
+    // A chemical-class exhaust cannot climb out at all on a small tank.
+    let mut weak = torch();
+    weak.exhaust_km_s = 4.4;
+    weak.wet_t = 110.0;
+    assert_eq!(flight(&weak, 10.0, 1.0, 2.0 * esc), Err(NoFlight::Well));
+}
+
+#[test]
+fn a_jump_limit_adds_the_flight_out_to_it() {
+    let (s, mut j) = courier();
+    let mut a = sys("a", 0.0, false);
+    let mut b = sys("b", 1.0, false);
+    let sun = StarWell {
+        mass_msun: 1.0,
+        radius_rsun: 1.0,
+        luminosity_lsun: 1.0,
+    };
+    a.star = Some(sun);
+    b.star = Some(sun);
+    let g = Goal::To("b".into());
+    let plain = plan(
+        &s,
+        Some(&j),
+        &[a.clone(), b.clone()],
+        "a",
+        &g,
+        &opts(Minimise::HomeTime),
+    )
+    .unwrap();
+    j.limit_diameters = Some(100.0);
+    let limited = plan(&s, Some(&j), &[a, b], "a", &g, &opts(Minimise::HomeTime)).unwrap();
+    // 100 diameters of the Sun is about 0.93 au; Earth's distance is 1 au, so
+    // from the temperate orbit the limit is already passed.
+    assert!((limited.home_days - plain.home_days).abs() < 1e-9);
+    let mut c = sys("c", 0.0, false);
+    let mut d = sys("d", 1.0, false);
+    let big = StarWell {
+        mass_msun: 2.0,
+        radius_rsun: 2.0,
+        luminosity_lsun: 1.0,
+    };
+    c.star = Some(big);
+    d.star = Some(big);
+    let far = plan(
+        &s,
+        Some(&j),
+        &[c, d],
+        "c",
+        &g_to("d"),
+        &opts(Minimise::HomeTime),
+    )
+    .unwrap();
+    // From 1 au out to 1.86 au at 0.3 g and back in at the other end: days.
+    assert!(
+        far.home_days > plain.home_days + 2.0,
+        "{} vs {}",
+        far.home_days,
+        plain.home_days
+    );
+}
+
+fn g_to(id: &str) -> Goal {
+    Goal::To(id.into())
 }
