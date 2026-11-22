@@ -36,7 +36,7 @@ try {
     const ctx = await browser.newContext({ viewport: { width: 1440, height: 900 }, acceptDownloads: true });
     const gm = await ctx.newPage();
     gm.on("pageerror", (e) => errors.push(e.message));
-    await gm.goto(base);
+    await gm.goto(base + "#chart");
     await gm.waitForSelector("[data-state-hash]:not([data-state-hash=''])", { timeout: 20000 });
     const hash = () => gm.locator("[data-state-hash]").getAttribute("data-state-hash");
     const lensOf = () => gm.locator("main.stage").getAttribute("data-lens");
@@ -158,7 +158,7 @@ try {
     // Phone: the switcher is there and nothing scrolls sideways.
     const phone = await browser.newPage({ viewport: { width: 390, height: 844 } });
     phone.on("pageerror", (e) => errors.push(`phone: ${e.message}`));
-    await phone.goto(base);
+    await phone.goto(base + "#chart");
     await phone.waitForSelector("[data-state-hash]:not([data-state-hash=''])", { timeout: 20000 });
     assert.ok(await phone.getByRole("combobox", { name: "Lens", exact: true }).isVisible(), "the lens switcher is on a phone");
     const sw = await phone.evaluate(() => document.documentElement.scrollWidth);

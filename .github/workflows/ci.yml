@@ -72,6 +72,12 @@ jobs:
       - if: matrix.os == 'ubuntu-latest'
         name: master data sheet is current with its sources
         run: python3 scripts/build-base-reference.py --check
+      - if: matrix.os == 'ubuntu-latest'
+        name: no new typed constants or material numbers (MP22 ledger)
+        run: |
+          git fetch --depth=1 origin main
+          python3 scripts/test-audit-matter.py
+          python3 scripts/audit-matter.py --ledger handover/packages/MP0-typed-copies.txt --base FETCH_HEAD
       - run: cargo run -q -p sse-cli --release -- harness
 
   wasm:

@@ -18,6 +18,7 @@ pub mod caves;
 pub mod climate;
 pub mod cover;
 pub mod detail;
+pub mod frames;
 pub mod impacts;
 pub mod named;
 pub mod plates;
@@ -800,7 +801,11 @@ mod cover_tests;
 #[cfg(test)]
 mod detail_tests;
 #[cfg(test)]
+mod frames_tests;
+#[cfg(test)]
 mod impacts_tests;
+#[cfg(test)]
+mod land_tests;
 #[cfg(test)]
 mod plates_tests;
 #[cfg(test)]

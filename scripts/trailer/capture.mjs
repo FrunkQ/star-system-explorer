@@ -74,7 +74,8 @@ try {
     mkdirSync(tmp, { recursive: true });
 
     // Load and settle off camera, then start filming.
-    await page.goto(new URL(shot.path ?? "", base).href);
+    // The GM shell opens on the start sheet; "#chart" goes straight to the chart (a shot may set its own path).
+    await page.goto(new URL(shot.path ?? "#chart", base).href);
     if (shot.waitFor !== false) await page.waitForSelector(shot.waitFor ?? "[data-state-hash]:not([data-state-hash=''])", { timeout: 60000 });
     const d = director(page, { captions: !flag("no-captions") });
     await d.ready();

@@ -48,9 +48,20 @@ pub struct JumpDrive {
     /// Which pack rule this is, shown with the leg ("jump drive, a pack rule").
     #[serde(default)]
     pub rule: String,
+    /// The fuel the drive burns.
+    #[serde(default = "hydrogen")]
+    pub fuel: String,
+    /// The setting's jump limit: a jump starts and ends at least this many
+    /// star diameters out (a per-system rule, as Traveller's 100 diameters),
+    /// reached under the ship's own thrust.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub limit_diameters: Option<f64>,
 }
 fn yes() -> bool {
     true
+}
+fn hydrogen() -> String {
+    "hydrogen".into()
 }
 
 impl JumpDrive {
@@ -99,6 +110,40 @@ pub struct VoyageSystem {
     /// Where the odds came from ("the ship's sensors", "its star's metallicity").
     #[serde(default, skip_serializing_if = "String::is_empty")]
     pub odds_from: String,
+    /// The primary star, for its gravity well and a jump limit.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub star: Option<StarWell>,
+}
+
+/// A star's gravity well, as the voyage finder needs it.
+#[derive(Clone, Copy, PartialEq, Debug, Serialize, Deserialize)]
+pub struct StarWell {
+    pub mass_msun: f64,
+    pub radius_rsun: f64,
+    pub luminosity_lsun: f64,
+}
+
+/// Sun's GM, m³ s⁻² (IAU 2015 B3), its radius, m, and one au, m.
+const GM_SUN: f64 = 1.327_124_4e20;
+const R_SUN: f64 = 6.957e8;
+const AU: f64 = 1.495_978_707e11;
+
+impl StarWell {
+    /// Where a ship waits for a flight between stars: the temperate
+    /// distance, √L au (where Earth sits for the Sun), at least 10 star radii.
+    pub fn parking_m(&self) -> f64 {
+        (m::sqrt(self.luminosity_lsun.max(0.0)) * AU).max(10.0 * self.radius_rsun * R_SUN)
+    }
+    /// Δv from a circular orbit at the parking distance to escape:
+    /// (√2 − 1) √(GM/r).
+    pub fn escape_m_s(&self) -> f64 {
+        let v = m::sqrt(GM_SUN * self.mass_msun.max(0.0) / self.parking_m());
+        (m::sqrt(2.0) - 1.0) * v
+    }
+    /// The jump limit's distance from the star, m.
+    pub fn limit_m(&self, diameters: f64) -> f64 {
+        diameters * 2.0 * self.radius_rsun * R_SUN
+    }
 }
 
 #[derive(Clone, Copy, PartialEq, Eq, Debug, Serialize, Deserialize, Default)]
@@ -135,6 +180,12 @@ pub struct VoyageSettings {
     /// 2010): base × (M/M☉)^mass_exp × 10^(feh_exp [Fe/H]), at most `cap`.
     #[serde(default)]
     pub giant_prior: GiantPrior,
+    /// In-system voyages (part 3b).
+    #[serde(default)]
+    pub in_system: crate::insystem::InSystemSettings,
+    /// Refuelling kinds, what they need and what they give (part 3c).
+    #[serde(default)]
+    pub refuel: crate::refuel::RefuelRules,
 }
 fn half() -> f64 {
     0.5
@@ -177,6 +228,8 @@ impl Default for VoyageSettings {
             max_steps: 200_000,
             gamble_min_odds: 0.5,
             giant_prior: GiantPrior::default(),
+            in_system: crate::insystem::InSystemSettings::default(),
+            refuel: crate::refuel::RefuelRules::default(),
         }
     }
 }
@@ -220,7 +273,11 @@ pub enum NoFlight {
     NotSustained,
     NoThrust,
     AtReserve,
-    TooLong { years: f64 },
+    /// The tanks cannot climb out of the start's well and into the destination's.
+    Well,
+    TooLong {
+        years: f64,
+    },
 }
 
 /// A flight of `d_pc` from rest to rest with `prop_t` of propellant aboard:
@@ -231,7 +288,10 @@ pub enum NoFlight {
 /// time 2(c/a) sinh w. The relativistic rocket: the rapidity change of a
 /// burn is (v_e/c) ln(m0/m1), so speeding up and braking to w needs the
 /// mass ratio exp(2 w c / v_e).
-pub fn flight(ship: &Ship, prop_t: f64, d_pc: f64) -> Result<Flight, NoFlight> {
+/// One flight between stars for real: `escape_m_s` is the Δv to climb out
+/// of the start's well and settle into the destination's (non-relativistic,
+/// taken from the tanks first by the rocket equation).
+pub fn flight(ship: &Ship, prop_t: f64, d_pc: f64, escape_m_s: f64) -> Result<Flight, NoFlight> {
     if !ship.sustained {
         return Err(NoFlight::NotSustained);
     }
@@ -243,10 +303,16 @@ pub fn flight(ship: &Ship, prop_t: f64, d_pc: f64) -> Result<Flight, NoFlight> {
     }
     let full = (ship.wet_t - ship.dry_t).max(0.0);
     let floor = ship.dry_t + ship.reserve.clamp(0.0, 1.0) * full;
-    let m0 = ship.dry_t + prop_t.max(0.0);
-    if m0 <= floor * (1.0 + 1e-12) {
+    let m_start = ship.dry_t + prop_t.max(0.0);
+    if m_start <= floor * (1.0 + 1e-12) {
         return Err(NoFlight::AtReserve);
     }
+    // The wells first: what is left for the cruise after both burns.
+    let m0 = m_start / m::exp(escape_m_s.max(0.0) / ve);
+    if m0 <= floor * (1.0 + 1e-12) {
+        return Err(NoFlight::Well);
+    }
+    let well_t = m_start - m0;
     let d = d_pc * PC_M;
     let x = a * d / (2.0 * C * C);
     // acosh(1 + x), accurate for small x.
@@ -258,7 +324,7 @@ pub fn flight(ship: &Ship, prop_t: f64, d_pc: f64) -> Result<Flight, NoFlight> {
         Flight {
             home_s: 2.0 * ca * m::sinh(w_flip),
             ship_s: 2.0 * ca * w_flip,
-            propellant_t: m0 - m0 / ratio,
+            propellant_t: well_t + m0 - m0 / ratio,
             peak_beta: m::tanh(w_flip),
             coast: false,
             accel_g: g,
@@ -274,7 +340,7 @@ pub fn flight(ship: &Ship, prop_t: f64, d_pc: f64) -> Result<Flight, NoFlight> {
         Flight {
             home_s: 2.0 * ca * m::sinh(w) + coast,
             ship_s: 2.0 * ca * w + coast / m::cosh(w),
-            propellant_t: m0 - floor,
+            propellant_t: m_start - floor,
             peak_beta: m::tanh(w),
             coast: true,
             accel_g: g,
@@ -316,6 +382,12 @@ pub struct Leg {
     /// Left in the tanks on arrival (after any refuel).
     pub jump_fuel_left_t: f64,
     pub propellant_left_t: f64,
+    /// In-system legs: the NAV course taken (hohmann, lambert, torch, belt).
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub course: Option<String>,
+    /// In-system legs: days waited for the departure window.
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub wait_days: Option<f64>,
     /// The sentence the screens show.
     pub words: String,
 }
@@ -374,7 +446,7 @@ struct Label {
     dead: bool,
 }
 
-fn dist(a: &[f64; 3], b: &[f64; 3]) -> f64 {
+pub fn dist(a: &[f64; 3], b: &[f64; 3]) -> f64 {
     let (x, y, z) = (a[0] - b[0], a[1] - b[1], a[2] - b[2]);
     m::sqrt(x * x + y * y + z * z)
 }
@@ -432,6 +504,159 @@ pub fn plan(
             "{name} has no jump drive and no sustained drive, so it cannot cross between stars"
         )]);
     }
+    let set = &o.settings;
+    let jump_reach = jump.map(|j| j.rating_pc).unwrap_or(0.0);
+    let reach = jump_reach.max(if flies { set.max_flight_pc } else { 0.0 });
+    let maker = Interstellar {
+        ship,
+        jump,
+        systems,
+        grid: Grid::new(systems, reach.max(1e-6)),
+        reach,
+        flies,
+        name: name.clone(),
+        set,
+    };
+    search(ship, jump, systems, from, goal, o, &maker)
+}
+
+/// What prices the legs out of a place: between stars (jumps and flights)
+/// or inside one system (NAV's courses). The search is the same for both.
+pub trait LegMaker {
+    /// Legs from place `from`, leaving `t_s` seconds after the voyage
+    /// starts with `jf` t of jump fuel and `pr` t of propellant aboard.
+    fn legs(&self, from: usize, t_s: f64, jf: f64, pr: f64) -> Vec<(usize, Leg)>;
+    /// A cost the rest of the way from `from` to `to` can never beat (an
+    /// admissible A* bound); 0 when nothing better is known.
+    fn lower_bound(&self, _from: usize, _to: usize, _minimise: Minimise) -> f64 {
+        0.0
+    }
+    /// Why no voyage was found, in words.
+    fn refusals(&self, start: usize, target: Option<usize>, visited: &[usize]) -> Vec<String>;
+}
+
+struct Interstellar<'a> {
+    ship: &'a Ship,
+    jump: Option<&'a JumpDrive>,
+    systems: &'a [VoyageSystem],
+    grid: Grid,
+    reach: f64,
+    flies: bool,
+    name: String,
+    set: &'a VoyageSettings,
+}
+
+impl LegMaker for Interstellar<'_> {
+    fn legs(&self, from: usize, _t_s: f64, jf: f64, pr: f64) -> Vec<(usize, Leg)> {
+        let (ship, jump, set, systems) = (self.ship, self.jump, self.set, self.systems);
+        let a = &systems[from];
+        let mut out = vec![];
+        for v in self.grid.near(&a.xyz_pc, self.reach) {
+            if v == from {
+                continue;
+            }
+            let b = &systems[v];
+            let d = dist(&a.xyz_pc, &b.xyz_pc);
+            if let Some(j) = jump {
+                let n = j.counted(d);
+                let need = j.fuel_t_per_pc * n;
+                if n <= j.rating_pc + 1e-9 && need <= jf + 1e-9 {
+                    let t =
+                        j.days_per_jump + jump_limit_days(ship, j, a) + jump_limit_days(ship, j, b);
+                    out.push((
+                        v,
+                        Leg {
+                            means: "jump".into(),
+                            counted_pc: Some(n),
+                            home_days: t,
+                            ship_days: t,
+                            jump_fuel_t: need,
+                            fictional: true,
+                            jump_fuel_left_t: jf - need,
+                            propellant_left_t: pr,
+                            ..Leg::between(&a.id, &b.id, d)
+                        },
+                    ));
+                }
+            }
+            if self.flies && d <= set.max_flight_pc {
+                if let Ok(f) = flight(ship, pr, d, well(a) + well(b)) {
+                    if f.home_s / JULIAN_YEAR <= set.max_leg_years {
+                        out.push((
+                            v,
+                            Leg {
+                                means: "flight".into(),
+                                home_days: days(f.home_s),
+                                ship_days: days(f.ship_s),
+                                propellant_t: f.propellant_t,
+                                peak_beta: Some(f.peak_beta),
+                                coast: f.coast,
+                                jump_fuel_left_t: jf,
+                                propellant_left_t: pr - f.propellant_t,
+                                ..Leg::between(&a.id, &b.id, d)
+                            },
+                        ));
+                    }
+                }
+            }
+        }
+        out
+    }
+    fn refusals(&self, start: usize, target: Option<usize>, visited: &[usize]) -> Vec<String> {
+        refusals(
+            self.ship,
+            self.jump,
+            self.systems,
+            start,
+            target,
+            visited,
+            &self.name,
+            self.flies,
+            self.set,
+            &self.grid,
+        )
+    }
+}
+
+impl Leg {
+    /// A blank leg between two places, `d` parsecs apart, for a maker to fill.
+    pub fn between(from: &str, to: &str, d: f64) -> Leg {
+        Leg {
+            from: from.to_string(),
+            to: to.to_string(),
+            means: String::new(),
+            distance_pc: d,
+            counted_pc: None,
+            home_days: 0.0,
+            ship_days: 0.0,
+            jump_fuel_t: 0.0,
+            propellant_t: 0.0,
+            peak_beta: None,
+            coast: false,
+            fictional: false,
+            gamble: false,
+            odds: None,
+            odds_from: String::new(),
+            refuel: None,
+            jump_fuel_left_t: 0.0,
+            propellant_left_t: 0.0,
+            course: None,
+            wait_days: None,
+            words: String::new(),
+        }
+    }
+}
+
+/// The search itself: one graph, any leg-maker.
+pub fn search(
+    ship: &Ship,
+    jump: Option<&JumpDrive>,
+    systems: &[VoyageSystem],
+    from: &str,
+    goal: &Goal,
+    o: &Options,
+    maker: &dyn LegMaker,
+) -> Result<Voyage, Vec<String>> {
     let mut ids: BTreeMap<&str, usize> = BTreeMap::new();
     for (i, s) in systems.iter().enumerate() {
         ids.insert(s.id.as_str(), i);
@@ -462,9 +687,6 @@ pub fn plan(
     };
 
     let set = &o.settings;
-    let jump_reach = jump.map(|j| j.rating_pc).unwrap_or(0.0);
-    let reach = jump_reach.max(if flies { set.max_flight_pc } else { 0.0 });
-    let grid = Grid::new(systems, reach.max(1e-6));
     let full_pr = (ship.wet_t - ship.dry_t).max(0.0);
     let full_jf = jump.map(|j| j.tank_t).unwrap_or(0.0);
 
@@ -496,7 +718,8 @@ pub fn plan(
             return;
         }
         let id = labels.len();
-        heap.push((Key(l.cost, l.dist_pc, seq), id));
+        let h = target.map_or(0.0, |t| maker.lower_bound(l.node, t, o.minimise));
+        heap.push((Key(l.cost + h, l.dist_pc, seq), id));
         seq += 1;
         at[l.node].push(id);
         labels.push(l);
@@ -556,70 +779,10 @@ pub fn plan(
             continue;
         }
         let used_here = l.used;
-        let a = &systems[l.node];
-        for v in grid.near(&a.xyz_pc, reach) {
-            if v == l.node {
-                continue;
-            }
+        for (v, leg) in maker.legs(l.node, l.home_s, l.jf, l.pr) {
             let b = &systems[v];
-            let d = dist(&a.xyz_pc, &b.xyz_pc);
-            let mut options: Vec<Leg> = vec![];
-            if let Some(j) = jump {
-                let n = j.counted(d);
-                let need = j.fuel_t_per_pc * n;
-                if n <= j.rating_pc + 1e-9 && need <= l.jf + 1e-9 {
-                    let t = j.days_per_jump;
-                    options.push(Leg {
-                        from: a.id.clone(),
-                        to: b.id.clone(),
-                        means: "jump".into(),
-                        distance_pc: d,
-                        counted_pc: Some(n),
-                        home_days: t,
-                        ship_days: t,
-                        jump_fuel_t: need,
-                        propellant_t: 0.0,
-                        peak_beta: None,
-                        coast: false,
-                        fictional: true,
-                        gamble: false,
-                        odds: None,
-                        odds_from: String::new(),
-                        refuel: None,
-                        jump_fuel_left_t: l.jf - need,
-                        propellant_left_t: l.pr,
-                        words: String::new(),
-                    });
-                }
-            }
-            if flies && d <= set.max_flight_pc {
-                if let Ok(f) = flight(ship, l.pr, d) {
-                    if f.home_s / JULIAN_YEAR <= set.max_leg_years {
-                        options.push(Leg {
-                            from: a.id.clone(),
-                            to: b.id.clone(),
-                            means: "flight".into(),
-                            distance_pc: d,
-                            counted_pc: None,
-                            home_days: days(f.home_s),
-                            ship_days: days(f.ship_s),
-                            jump_fuel_t: 0.0,
-                            propellant_t: f.propellant_t,
-                            peak_beta: Some(f.peak_beta),
-                            coast: f.coast,
-                            fictional: false,
-                            gamble: false,
-                            odds: None,
-                            odds_from: String::new(),
-                            refuel: None,
-                            jump_fuel_left_t: l.jf,
-                            propellant_left_t: l.pr - f.propellant_t,
-                            words: String::new(),
-                        });
-                    }
-                }
-            }
-            for leg in options {
+            let d = leg.distance_pc;
+            {
                 let home = l.home_s + leg.home_days * DAY;
                 let shp = l.ship_s + leg.ship_days * DAY;
                 let used = used_here + leg.jump_fuel_t + leg.propellant_t;
@@ -639,18 +802,21 @@ pub fn plan(
                     dead: false,
                 };
                 // Refuel here when the crew knows of fuel (or gambles on it).
-                let known = !b.fuel.is_empty();
+                let offer = set.refuel.offers(ship, &b.fuel);
+                let known = offer.is_some();
                 let odds = b.fuel_odds.unwrap_or(0.0);
+                // The odds are of a giant, so a gamble needs a ship that can skim one.
                 let gamble = !b.surveyed
                     && o.gambles
-                    && !known
+                    && b.fuel.is_empty()
+                    && set.refuel.usable(ship, "skim").is_ok()
                     && odds > 0.0
                     && odds + 1e-12 >= set.gamble_min_odds;
                 let at_goal = is_goal(v);
                 if (known || gamble) && !at_goal {
                     let mut r = leg.clone();
-                    r.refuel = Some(if known {
-                        b.fuel[0].clone()
+                    r.refuel = Some(if let Some(w) = &offer {
+                        w.clone()
                     } else {
                         "hoped for".into()
                     });
@@ -680,9 +846,7 @@ pub fn plan(
     }
 
     if found.is_empty() {
-        return Err(refusals(
-            ship, jump, systems, start, target, &visited, &name, flies, set, &grid,
-        ));
+        return Err(maker.refusals(start, target, &visited));
     }
     // Ties: equal cost, then the shorter path, then farther from home, then id.
     let home = match goal {
@@ -750,6 +914,27 @@ pub fn plan(
 
 fn leg_words(l: &Leg, from: &str, to: &str) -> String {
     let mut s = match l.means.as_str() {
+        "course" => {
+            let kind = match l.course.as_deref() {
+                Some("hohmann") => "Hohmann transfer",
+                Some("lambert") => "transfer",
+                Some("torch") => "torch flight",
+                _ => "course",
+            };
+            let wait = l.wait_days.unwrap_or(0.0);
+            let on_way = l.home_days - wait;
+            let wait_words = if wait >= 1.0 {
+                format!("wait {} for the window, then ", span_words(wait))
+            } else {
+                String::new()
+            };
+            format!(
+                "{} from {from} to {to}: {wait_words}{} on the way, {:.1} t of propellant",
+                kind[..1].to_uppercase() + &kind[1..],
+                span_words(on_way),
+                l.propellant_t
+            )
+        }
         "jump" => format!(
             "Jump {} pc from {from} to {to} ({} counted), {}",
             fmt1(l.distance_pc),
@@ -900,6 +1085,26 @@ fn refusals(
         .map(|&i| &systems[i])
         .filter(|s| s.id != from.id && !s.fuel.is_empty())
         .collect();
+    // Fuel is known nearby but none of it suits this ship.
+    let rules = &set.refuel;
+    if !known.is_empty() && known.iter().all(|s| rules.offers(ship, &s.fuel).is_none()) {
+        let why = known
+            .iter()
+            .flat_map(|s| s.fuel.iter().map(move |e| (s, e)))
+            .take(2)
+            .map(|(s, e)| {
+                format!(
+                    "{} at {}: {name} {}",
+                    rules.words(e),
+                    nm(s),
+                    rules.usable(ship, e).err().unwrap_or_default()
+                )
+            })
+            .collect::<Vec<_>>()
+            .join("; ");
+        out.push(format!("none of the fuel {name} knows of suits it ({why})"));
+        return out;
+    }
     if let Some(j) = jump {
         let one = j.fuel_t_per_pc * j.counted(1.0).min(j.rating_pc);
         if j.fuel() + 1e-9 < one && !flies {
@@ -915,9 +1120,16 @@ fn refusals(
         if let Some(t) = target {
             let d = dist(&from.xyz_pc, &systems[t].xyz_pc);
             if d <= set.max_flight_pc {
-                match flight(ship, ship.propellant(), d) {
+                let tgt = &systems[t];
+                match flight(ship, ship.propellant(), d, well(from) + well(tgt)) {
                     Err(NoFlight::AtReserve) => out.push(format!(
                         "{name}'s propellant is down to its reserve, so it cannot set out"
+                    )),
+                    Err(NoFlight::Well) => out.push(format!(
+                        "{name} cannot climb out of {}'s gravity well and into {}'s: that takes {} km/s, more than its tanks give",
+                        nm(from),
+                        nm(tgt),
+                        fmt1((well(from) + well(tgt)) / 1000.0)
                     )),
                     Ok(f) if f.home_s / JULIAN_YEAR > set.max_leg_years => out.push(format!(
                         "{name} would take {} to fly to {}, longer than the {} year limit",
@@ -957,6 +1169,24 @@ fn nm(s: &VoyageSystem) -> String {
         s.id.clone()
     } else {
         s.name.clone()
+    }
+}
+
+/// The Δv to climb out of a system's well (0 when its star is not known).
+fn well(s: &VoyageSystem) -> f64 {
+    s.star.map(|w| w.escape_m_s()).unwrap_or(0.0)
+}
+
+/// Days to fly from the star out to the jump limit (or in from it) under
+/// the ship's own thrust, accelerating then braking: 2√(d/a).
+fn jump_limit_days(ship: &Ship, j: &JumpDrive, s: &VoyageSystem) -> f64 {
+    match (j.limit_diameters, s.star) {
+        (Some(n), Some(w)) if n > 0.0 => {
+            let a = ship.accel_g.min(ship.g_limit).max(1e-6) * G0;
+            let d = (w.limit_m(n) - w.parking_m()).max(0.0);
+            2.0 * m::sqrt(d / a) / DAY
+        }
+        _ => 0.0,
     }
 }
 
