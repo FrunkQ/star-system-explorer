@@ -91,6 +91,7 @@ pub fn conditions(
         Source::Star { albedo, .. } => *albedo,
         Source::Fixed { .. } => s.albedo_default,
     });
+    let wet = liquid.is_some();
     let c = Conditions {
         address: b.address.clone(),
         label: b.label.clone(),
@@ -117,8 +118,16 @@ pub fn conditions(
         ocean_fraction,
         internal_flux_w_m2: x.internal_flux_w_m2.unwrap_or(0.0),
         ground_ice_kg_m2: Default::default(),
-        land_by_lat: Vec::new(),
-        coasts_by_lat: Vec::new(),
+        land_by_lat: if wet {
+            x.land_by_lat.clone().unwrap_or_default()
+        } else {
+            Vec::new()
+        },
+        coasts_by_lat: if wet {
+            x.coasts_by_lat.clone().unwrap_or_default()
+        } else {
+            Vec::new()
+        },
     };
     (c, assumed)
 }
@@ -169,6 +178,124 @@ impl WorldClimate {
     /// Whether the prevailing surface wind blows from the east (radians).
     pub fn easterly(&self, lat: f64) -> bool {
         self.climate.circulation.easterly(lat * 180.0 / m::PI)
+    }
+}
+
+/// W7c part 2: land and coasts in `strips` equal strips of latitude, south
+/// to north, read off a height map on `grid` (`elevation_m` above sea
+/// level; land is above zero).
+///
+/// - Land: the share of the strip's cells above sea level (the cube grid's
+///   cells are near enough equal in area).
+/// - Coasts: the mean number a line round the strip crosses. Each land-sea
+///   pair of neighbours holds a piece of coast about a cell wide, at right
+///   angles to the step between them; its north-south extent is the cell
+///   size times the step's eastward share, and the crossings a strip's
+///   lines make sum those extents over the strip's width (Cauchy-Crofton).
+pub fn land_strips(
+    grid: &crate::plates::Grid,
+    elevation_m: &[f64],
+    strips: usize,
+) -> (Vec<f64>, Vec<f64>) {
+    let k = strips.max(1);
+    let n = grid.len().min(elevation_m.len());
+    let strip_of = |d: [f64; 3]| {
+        let lat = m::asin(d[2].clamp(-1.0, 1.0));
+        (((lat / m::PI + 0.5) * k as f64) as usize).min(k - 1)
+    };
+    let mut cells = vec![0.0; k];
+    let mut land = vec![0.0; k];
+    let mut extent = vec![0.0; k];
+    // Cell size on the unit sphere.
+    let size = m::sqrt(4.0 * m::PI / n.max(1) as f64);
+    for c in 0..n {
+        let d = grid.dirs[c];
+        let i = strip_of(d);
+        cells[i] += 1.0;
+        let up = elevation_m[c] > 0.0;
+        if up {
+            land[i] += 1.0;
+        }
+        for b in grid.neighbours(c) {
+            // Each pair once.
+            if b <= c || b >= n || (elevation_m[b] > 0.0) == up {
+                continue;
+            }
+            let e = grid.dirs[b];
+            let step = [e[0] - d[0], e[1] - d[1], e[2] - d[2]];
+            let len = m::sqrt(step[0] * step[0] + step[1] * step[1] + step[2] * step[2]).max(1e-12);
+            let rho = m::sqrt(d[0] * d[0] + d[1] * d[1]).max(1e-12);
+            let east = (-d[1] * step[0] + d[0] * step[1]) / (rho * len);
+            extent[i] += size * east.abs();
+        }
+    }
+    let width = m::PI / k as f64;
+    let frac = (0..k)
+        .map(|i| {
+            if cells[i] > 0.0 {
+                land[i] / cells[i]
+            } else {
+                0.0
+            }
+        })
+        .collect();
+    let coasts = extent.iter().map(|x| x / width).collect();
+    (frac, coasts)
+}
+
+/// W7c part 2: `x` with land and coasts by strip from a height map, and the
+/// ocean fraction they imply, so the climate's sea is the map's sea.
+pub fn with_land(
+    x: &Extra,
+    grid: &crate::plates::Grid,
+    elevation_m: &[f64],
+    strips: usize,
+) -> Extra {
+    let (land, coasts) = land_strips(grid, elevation_m, strips);
+    let n = grid.len().min(elevation_m.len()).max(1);
+    let sea = elevation_m.iter().take(n).filter(|h| **h <= 0.0).count() as f64 / n as f64;
+    let mut y = x.clone();
+    y.land_by_lat = Some(land);
+    y.coasts_by_lat = Some(coasts);
+    y.ocean_fraction = Some(sea);
+    y
+}
+
+/// W7c part 2a: `x` with the world's land and coasts by latitude, read off
+/// the Orbit-level (S16 guide) plate run's heights before wear, with sea
+/// level for `oceans` Earth oceans. Every detail level, the survey and the
+/// weather op read the same strips, so they keep one climate. `orbit_run`
+/// may hand over an Orbit-level history already run (no second run). A dry
+/// world, or one without a surface, gets `x` back unchanged.
+pub fn land_extra(
+    s: &SurfaceSettings,
+    env: &SurfaceEnvelope,
+    seed: &sse_core::draw::Seed,
+    epoch_gyr: f64,
+    oceans: f64,
+    x: &Extra,
+    orbit_run: Option<&crate::plates::PlateHistory>,
+) -> Extra {
+    if oceans <= 0.0 || env.kind == "cloud-deck" {
+        return x.clone();
+    }
+    let os = crate::detail::orbit_settings(s);
+    let own;
+    let h = match orbit_run {
+        Some(h) => h,
+        None => {
+            own = crate::plates::history(&os, env, seed, epoch_gyr);
+            &own
+        }
+    };
+    let raw = crate::wear::base_heights(&os, env, seed, h);
+    match crate::plates::sea_level(&raw, env.reference_radius_m, oceans) {
+        Some(sl) => {
+            let elev: Vec<f64> = raw.iter().map(|z| z - sl).collect();
+            let grid = crate::plates::grid_for(h);
+            with_land(x, &grid, &elev, s.climate.bands as usize)
+        }
+        None => x.clone(),
     }
 }
 

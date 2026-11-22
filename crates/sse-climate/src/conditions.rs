@@ -167,4 +167,11 @@ pub struct Extra {
     pub ocean_fraction: Option<f64>,
     #[serde(default)]
     pub internal_flux_w_m2: Option<f64>,
+    /// W7c: land fraction in equal latitude strips (see
+    /// [`Conditions::land_by_lat`]).
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub land_by_lat: Option<Vec<f64>>,
+    /// W7c: coasts crossed going round each strip.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub coasts_by_lat: Option<Vec<f64>>,
 }
