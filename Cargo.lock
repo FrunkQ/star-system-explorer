@@ -842,6 +842,14 @@ dependencies = [
 ]
 
 [[package]]
+name = "sse-sky"
+version = "0.1.0"
+dependencies = [
+ "serde",
+ "sse-core",
+]
+
+[[package]]
 name = "sse-suite"
 version = "0.1.0"
 dependencies = [
