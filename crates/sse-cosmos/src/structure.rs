@@ -330,6 +330,37 @@ impl Structure {
     }
 }
 
+/// The curve as a table, (r kpc, v km/s), 96 log-spaced radii from 0.05 kpc to r200.
+pub fn curve_table(s: &Structure) -> Vec<(f64, f64)> {
+    let (r0, r1) = (0.05, s.r200_kpc.max(0.1));
+    (0..96)
+        .map(|k| {
+            let r = r0 * m::pow(r1 / r0, f64::from(k) / 95.0);
+            (r, s.speeds(r).total)
+        })
+        .collect()
+}
+
+/// Circular speed (km/s) and its log slope d ln v / d ln r at r from a
+/// curve table; inside the table v rises as r, beyond it falls as r^-1/2.
+pub fn speed_and_slope(tab: &[(f64, f64)], r_kpc: f64) -> (f64, f64) {
+    let n = tab.len();
+    if n < 2 {
+        return (0.0, 0.0);
+    }
+    if r_kpc <= tab[0].0 {
+        return (tab[0].1 * r_kpc / tab[0].0, 1.0);
+    }
+    if r_kpc >= tab[n - 1].0 {
+        return (tab[n - 1].1 * m::sqrt(tab[n - 1].0 / r_kpc), -0.5);
+    }
+    let i = tab.partition_point(|e| e.0 < r_kpc).clamp(1, n - 1);
+    let (p, q) = (tab[i - 1], tab[i]);
+    let slope = m::ln(q.1 / p.1) / m::ln(q.0 / p.0);
+    let v = p.1 * m::pow(r_kpc / p.0, slope);
+    (v, slope)
+}
+
 fn interp_log(tab: &[(f64, f64)], r: f64) -> f64 {
     if r <= tab[0].0 {
         // ρ ∝ r^-γ inside: M ∝ r^(3 − γ); slope from the first two points.
