@@ -9,3 +9,4 @@
 | 18 Nov 2026 | Alex sets up the V4 subdomain and deploys once the repo has an install-and-run command (README). | X1 |
 | 18 Nov 2026 | All 8 rendering questions in SSE4-surfaces-and-rendering.md accepted as recommended. | R, S, V |
 | 21 Nov 2026 | Geology after Rock 3 (`design/SSE4-rock3-comparison.md`) accepted in full: all 8 section 7 recommendations are rulings; new stages S16a/b, S2b, S14a/b, S15a/b, S8a and extended S9 and S10 enter the build plan in that file's order, detail levels first. "Best calc is NO calc": reuse existing results first; raise detail only on approach, stay or request. | S, W |
+| 22 Nov 2026 | Game-layer secrecy confirmed explicitly by Alex ("yes to 3 and 4"): dice are keyed on a GM-only table secret, never the universe seed (record design 8A.3), and a pack that declares a campaign `competitive` requires sealed seats (8A.4, handoff H8.7). Both were built to the recommendation; now accepted. | J, V10 |

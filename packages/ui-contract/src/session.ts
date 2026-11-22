@@ -4,6 +4,16 @@
 // tests/ui/boundary.test.ts).
 import type { OrbitPlaced } from "./orbits.ts";
 /** A pack's calendar as the kernel serves it (`provides.other.calendar`). */
+/** Where and how a sky is asked for (`sky_from_here`, `sky_glow`): a system address or a galactic position in pc (neither: the Sun's place). */
+export interface SkyAsk {
+  observer?: string;
+  position_pc?: [number, number, number];
+  t_myr?: number;
+  limit_mag?: number;
+  band?: string;
+  bands?: string[];
+}
+
 /** One ask of the kernel `weather` op (presentation reads; nothing is recorded). */
 export interface WeatherAsk {
   want: "climate" | "systems" | "field" | "report" | "column" | "sound";
@@ -189,6 +199,10 @@ export interface ViewSession {
   /** Time-lapse keyframes of a world's surface (surface_frames): a fixture, or a body of an adopted system. Read only. */
   surfaceFrames(ask: { fixture?: string; system?: string; body?: string; at_s?: number; detail?: "orbit" | "survey"; frames_max?: number }): Promise<{ ok: true; frames: Json; label: string; source: string } | { ok: false; code: string; message: string }>;
   /** The kernel `weather` op: a fixture `world`, or a `body` of an adopted `system` at `at_s`; `want` picks climate, systems, field (a cube-sphere `tile`), report, column or sound, at `day` (days since the campaign epoch). */
+  /** Y2: the stars seen from a place at a time down to a limiting magnitude (kernel `sky_from_here`); read only. */
+  skyFromHere(ask: SkyAsk & { cone?: { l_deg: number; b_deg: number; half_angle_deg: number }; max_stars?: number }): Promise<{ ok: true; sky: Json } | { ok: false; code: string; message: string }>;
+  /** Y3: the light of every star the sky draw leaves out, as a HEALPix map per band (kernel `sky_glow`); read only. */
+  skyGlow(ask: Omit<SkyAsk, "observer"> & { nside?: number }): Promise<{ ok: true; glow: Json } | { ok: false; code: string; message: string }>;
   weather(ask: WeatherAsk): Promise<{ ok: true; want: string; world: string; provenance: Json; data: Json } | { ok: false; code: string; message: string }>;
   readActivity(ask: { stars: Json[]; seed?: string; at_s?: number; window?: { from_s: number; to_s: number; min_energy_j?: number } }): Promise<{ ok: true; stars: Json[] } | { ok: false; code: string; message: string }>;
   kernelVersion(): Promise<string>;
@@ -636,6 +650,16 @@ export class Session implements ViewSession {
     if (r.type !== "frames_made") return { ok: false, code: String(r.code ?? "unexpected"), message: String(r.message ?? JSON.stringify(r)) };
     const f = (r as unknown as { frames: { label: string; source: string; frames: Json } }).frames;
     return { ok: true, frames: f.frames, label: f.label, source: f.source };
+  }
+
+  async skyFromHere(ask: SkyAsk & { cone?: { l_deg: number; b_deg: number; half_angle_deg: number }; max_stars?: number }): Promise<{ ok: true; sky: Json } | { ok: false; code: string; message: string }> {
+    const r = await this.#call({ op: "sky_from_here", ...ask } as Json);
+    return r.type === "sky" ? { ok: true, sky: (r as unknown as { sky: Json }).sky } : { ok: false, code: String(r.code ?? "unexpected"), message: String(r.message ?? JSON.stringify(r)) };
+  }
+
+  async skyGlow(ask: Omit<SkyAsk, "observer"> & { nside?: number }): Promise<{ ok: true; glow: Json } | { ok: false; code: string; message: string }> {
+    const r = await this.#call({ op: "sky_glow", ...ask } as Json);
+    return r.type === "sky_glowed" ? { ok: true, glow: (r as unknown as { glow: Json }).glow } : { ok: false, code: String(r.code ?? "unexpected"), message: String(r.message ?? JSON.stringify(r)) };
   }
 
   async weather(ask: WeatherAsk): Promise<{ ok: true; want: string; world: string; provenance: Json; data: Json } | { ok: false; code: string; message: string }> {

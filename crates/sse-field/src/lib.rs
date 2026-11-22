@@ -20,6 +20,10 @@ use sse_core::math as m;
 use sse_core::quantity::consts::{DAY, JULIAN_YEAR};
 use sse_flow::Reference;
 
+mod belts;
+pub use belts::{BeltDose, BeltGap, BeltSettings, BeltShell, Belts};
+pub use sse_atoms::belts::Electron;
+
 /// The stellar wind at a body (or at its host).
 #[derive(Clone, Copy, Debug, PartialEq, Serialize, Deserialize)]
 pub struct Wind {
@@ -107,15 +111,21 @@ pub struct Body {
     pub plasma_source_kg_s: f64,
     #[serde(default)]
     pub pedersen_conductance_s: f64,
-    /// Moons whose field lines may land as aurora spots.
+    /// Moons whose field lines may land as aurora spots and that sweep
+    /// gaps in the belts.
     #[serde(default)]
     pub moons: Vec<MoonOrbit>,
+    /// Outer edge of rings dense enough to absorb trapped particles, m (0: none).
+    #[serde(default)]
+    pub rings_outer_m: f64,
 }
 
 #[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
 pub struct MoonOrbit {
     pub address: String,
     pub orbit_m: f64,
+    #[serde(default)]
+    pub radius_m: f64,
 }
 
 #[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
@@ -139,6 +149,12 @@ pub struct Settings {
     pub lambda_n_kg_m2: f64,
     pub lambda_mu_kg_m2: f64,
     pub muon_share: f64,
+    /// MF7 part 2: radiation belts.
+    pub belts: BeltSettings,
+    /// Electron mass, charge and ε₀, read from the master data sheet by the
+    /// caller; without them no belts are computed.
+    #[serde(skip)]
+    pub electron: Option<Electron>,
 }
 
 impl Default for Settings {
@@ -154,6 +170,8 @@ impl Default for Settings {
             lambda_n_kg_m2: 1400.0,
             lambda_mu_kg_m2: 6000.0,
             muon_share: 0.0045,
+            belts: BeltSettings::default(),
+            electron: None,
         }
     }
 }
@@ -266,6 +284,8 @@ pub struct FieldRead {
     pub shield: Option<Shield>,
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub aurora: Option<Aurora>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub belts: Option<Belts>,
     pub why: Vec<String>,
     pub stand_ins: Vec<String>,
     pub references: Vec<Reference>,
@@ -278,6 +298,7 @@ fn refs_of(ids: &[&str]) -> Vec<Reference> {
         .chain(sse_atoms::light::atoms().iter())
         .chain(sse_atoms::shield::atoms().iter())
         .chain(sse_atoms::aurora::atoms().iter())
+        .chain(sse_atoms::belts::atoms().iter())
     {
         let d = a.decl();
         if ids.contains(&d.id.as_str()) {
@@ -469,6 +490,15 @@ pub fn read(b: &Body, set: &Settings) -> Result<FieldRead, String> {
         ]);
     }
     let aurora = aurora_of(b, set, &obstacle, inside, &mut why, &mut used);
+    let belts = belts::belts_of(
+        b,
+        set,
+        own_reach,
+        set.electron.as_ref(),
+        &mut why,
+        &mut stand_ins,
+        &mut used,
+    );
     Ok(FieldRead {
         address: b.address.clone(),
         pressed_by: pressed_by.into(),
@@ -480,6 +510,7 @@ pub fn read(b: &Body, set: &Settings) -> Result<FieldRead, String> {
         induced,
         shield,
         aurora,
+        belts,
         why,
         stand_ins,
         references: refs_of(&used),
@@ -688,7 +719,7 @@ fn shield_of(
         eq.surface_dose_msv_yr,
         by_latitude[6].surface_dose_msv_yr,
     ));
-    stand_ins.push("dose from galactic cosmic rays only, for one level of the star's activity; the star's particle storms and radiation belts come with MF7 part 2. Vertical Størmer cut-off of a centred dipole".into());
+    stand_ins.push("dose from galactic cosmic rays only, for one level of the star's activity; the star's particle storms come later; belt electrons are given apart (belts). Vertical Størmer cut-off of a centred dipole".into());
     Some(Shield {
         free_space_msv_yr: msv_yr(free),
         column_kg_m2: column,

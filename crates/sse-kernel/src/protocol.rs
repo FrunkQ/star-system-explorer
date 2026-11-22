@@ -102,6 +102,16 @@ pub struct AuthoredEdit {
     pub impossible: bool,
 }
 
+/// A field of view for `sky_from_here`: galactic longitude and latitude
+/// of its centre, degrees, and its half angle.
+#[derive(Clone, PartialEq, Debug, Serialize, Deserialize, TS)]
+#[ts(export)]
+pub struct SkyCone {
+    pub l_deg: f64,
+    pub b_deg: f64,
+    pub half_angle_deg: f64,
+}
+
 /// One edit of a batch (`set_authored_batch`).
 #[derive(Clone, PartialEq, Debug, Serialize, Deserialize, TS)]
 #[ts(export)]
@@ -731,6 +741,11 @@ pub enum Request {
         #[serde(default)]
         #[ts(optional)]
         sensor: Option<String>,
+        /// The system an inline `nav` is, so the view's `frame` can be
+        /// keyed (needs an open universe); the Sol fixture's is measured.
+        #[serde(default)]
+        #[ts(optional)]
+        system: Option<String>,
     },
     /// G1 to G4 for the galaxy chart (U6): one galaxy grown from the open
     /// universe's seed, a named `halo` (`dwarf`, `milky-way-like`, `group`) or
@@ -1229,6 +1244,80 @@ pub enum Request {
         #[ts(optional)]
         t_myr: Option<f64>,
     },
+    /// Y2 (night sky design 4.3): the stars seen from a place at a time down
+    /// to a limiting magnitude. The observer is a star system's address, or
+    /// a galactic position in pc, or (neither) the Sun's radius. Each luminosity
+    /// class is walked through the count tree inside the distance where its
+    /// brightest member reaches the limit; each star found gets band
+    /// magnitudes through its own dust column and is kept when it reaches
+    /// the limit in `band` (default V). `cone` narrows the sky to a field.
+    /// Read only.
+    SkyFromHere {
+        #[serde(default)]
+        #[ts(optional)]
+        observer: Option<String>,
+        #[serde(default)]
+        #[ts(optional)]
+        position_pc: Option<[f64; 3]>,
+        #[serde(default)]
+        #[ts(optional)]
+        t_myr: Option<f64>,
+        #[serde(default)]
+        #[ts(optional)]
+        limit_mag: Option<f64>,
+        #[serde(default)]
+        #[ts(optional)]
+        band: Option<String>,
+        #[serde(default)]
+        #[ts(optional)]
+        bands: Option<Vec<String>>,
+        #[serde(default)]
+        #[ts(optional)]
+        cone: Option<SkyCone>,
+        /// Most stars listed, brightest first (default 20,000, the phone
+        /// tier of ruling 12; desktops ask 200,000). A cut list says
+        /// `truncated` and gives `kept_to_mag`, the faintest star kept: ask
+        /// `sky_glow` with that limit and the stars cut off are in the glow.
+        #[serde(default)]
+        #[ts(optional)]
+        max_stars: Option<u32>,
+        /// Y4: the other galaxies too (default true).
+        #[serde(default)]
+        #[ts(optional)]
+        galaxies: Option<bool>,
+        /// The stars (default true); false gives galaxies only.
+        #[serde(default)]
+        #[ts(optional)]
+        stars: Option<bool>,
+    },
+    /// Y3: the glow of every star the sky draw does not show, as a HEALPix
+    /// map (RING order, galactic l and b from the observer) per passband:
+    /// each class's light beyond the distance it is drawn to, plus the
+    /// stars inside it too faint for the limit, dimmed by the dust in front.
+    /// Ask it with the same `limit_mag` and `band` as `sky_from_here` and
+    /// the two add up to the whole sky. `nside` a power of two up to 64
+    /// (default 32). Read
+    /// only.
+    SkyGlow {
+        #[serde(default)]
+        #[ts(optional)]
+        position_pc: Option<[f64; 3]>,
+        #[serde(default)]
+        #[ts(optional)]
+        t_myr: Option<f64>,
+        #[serde(default)]
+        #[ts(optional)]
+        limit_mag: Option<f64>,
+        #[serde(default)]
+        #[ts(optional)]
+        band: Option<String>,
+        #[serde(default)]
+        #[ts(optional)]
+        bands: Option<Vec<String>>,
+        #[serde(default)]
+        #[ts(optional)]
+        nside: Option<u64>,
+    },
     /// Voyages between stars (V8 part 3): the cheapest chain of legs for one
     /// ship from a star system `from` to `to`, or with no `to` the nearest
     /// system not in `visited` (ties go to the shorter path, then to the one
@@ -1509,6 +1598,8 @@ impl Request {
             Request::ExportSector { .. } => "export_sector",
             Request::HaloCell { .. } => "halo_cell",
             Request::StarCell { .. } => "star_cell",
+            Request::SkyFromHere { .. } => "sky_from_here",
+            Request::SkyGlow { .. } => "sky_glow",
             Request::PlanVoyage { .. } => "plan_voyage",
             Request::PromoteStar { .. } => "promote_star",
             Request::CampaignTags => "campaign_tags",
@@ -1800,6 +1891,16 @@ pub fn ops() -> Vec<OpInfo> {
             "halo_cell",
             Cost::Medium,
             "one cell's haloes drawn from the mass function, each placed on the web and given a growth history and mergers (about 0.1 to 1 s native)",
+        ),
+        o(
+            "sky_from_here",
+            Cost::Medium,
+            "grows the campaign's galaxy, walks the count tree inside each class's visibility radius and gives each star found its magnitudes through dust; read only",
+        ),
+        o(
+            "sky_glow",
+            Cost::Medium,
+            "integrates the light of the undrawn stars and the dust in front along every HEALPix pixel of the sky (nside 32: 12,288 lines of 96 steps); read only",
         ),
         o(
             "star_cell",
@@ -2222,7 +2323,9 @@ pub enum Response {
     },
     /// `window_view`: sse-nav's `WindowView` (`seen`: lon/lat, distance,
     /// angular diameter, magnitude, phase, lit fraction, detected, resolved,
-    /// light time, why; `sensor`; `missed`; `model`).
+    /// light time, why; `sensor`; `missed`; `model`), plus `frame` (as
+    /// `resolved_system`'s; null for an inline system with no `system` or
+    /// no open universe).
     /// `sift`: hits best first (`sifter`, `label`, `subject`, `evidence`
     /// [{address, field, value, event}], `significance` {score, persistence_s,
     /// reach, reversibility, rarity_p, components}), the sifters run, the scope.
@@ -2520,6 +2623,11 @@ pub enum Response {
         #[serde(default, skip_serializing_if = "Vec::is_empty")]
         #[ts(optional, type = "unknown[]")]
         clouds: Vec<serde_json::Value>,
+        /// The system's frame in the galaxy: `{pole_l_deg, pole_b_deg,
+        /// zero_l_deg, zero_b_deg, node_l_deg, to_galactic (3x3 rows),
+        /// evidence ("drawn"), source, model}`.
+        #[ts(type = "unknown")]
+        frame: serde_json::Value,
     },
     /// `classify_preview`: one row per body in address order, `{address,
     /// base, fit, modifiers}` (`base` null when nothing fits), with the
@@ -2579,6 +2687,24 @@ pub enum Response {
     StarCelled {
         #[ts(type = "unknown")]
         cell: serde_json::Value,
+    },
+    /// `sky_from_here`: `{galaxy, observer {address?, xyz_pc}, t_myr, frame,
+    /// limit_mag, band, bands, cone?, stars: [{address, pinned, class,
+    /// distance_pc, light_time_yr, l_deg, b_deg, dir, a_v, teff_k,
+    /// luminosity_lsun, phase, double, components: [{teff_k, radius_m}],
+    /// magnitudes, colours}], counts: [{mag,
+    /// n}], walked: {classes: [{class, top_lsun, radius_pc, found}], reads},
+    /// truncated, conventions}`.
+    Sky {
+        #[ts(type = "unknown")]
+        sky: serde_json::Value,
+    },
+    /// `sky_glow`: `{nside, order, frame, limit_mag, limit_band,
+    /// observer_pc, t_myr, radii_pc, bands: [{band, intensity, mag_arcsec2,
+    /// whole_sky_ab, whole_sky_mag}], a_v, units}`.
+    SkyGlowed {
+        #[ts(type = "unknown")]
+        glow: serde_json::Value,
     },
     /// `plan_voyage`: `{ship, means, searched, cells, t_myr, systems: [{address,
     /// name, xyz_pc, fuel, surveyed, visited}], voyage: {from, to, minimise,

@@ -4,6 +4,7 @@ import type { BatchEdit } from "./BatchEdit";
 import type { FormationRequest } from "./FormationRequest";
 import type { InputSpec } from "./InputSpec";
 import type { JobSpec } from "./JobSpec";
+import type { SkyCone } from "./SkyCone";
 import type { SurfaceTile } from "./SurfaceTile";
 import type { TileRequest } from "./TileRequest";
 
@@ -49,7 +50,12 @@ sources?: unknown,
 /**
  * Which weather block, `{id, version, level}`; default the rule block.
  */
-block?: unknown, } | { "op": "read_light", fixture?: string, bodies?: unknown[], } | { "op": "detect", targets: unknown[], sensors: unknown[], radar?: unknown, } | { "op": "read_air_optics", airs: unknown[], wavelengths_m?: Array<number>, } | { "op": "read_spectrum", targets: unknown[], observer?: unknown, } | { "op": "read_activity", stars: unknown[], seed?: string, at_s?: number, window?: unknown, } | { "op": "read_field", bodies: unknown[], } | { "op": "read_photometry", stars: unknown[], bands?: Array<string>, } | { "op": "survey_planets", survey: unknown, } | { "op": "read_nebulae", at_s: number, seed?: string, deaths?: unknown[], planetary?: unknown[], remnants?: unknown[], glows?: unknown[], } | { "op": "adopt", import_v3?: string, formation?: FormationRequest, occurred_at_s?: number, } | { "op": "resolved_system", system: string, at_s?: number, tiles?: Array<TileRequest>, } | { "op": "classify_preview", packs: unknown[], scheme: string, scope?: string, at_s?: number, } | { "op": "plan_route", fixture?: string, nav?: unknown, system?: string, at_s?: number, ports?: Array<string>, ship: unknown, from: unknown, to?: unknown, depart_s?: number, window_days?: number, prefer?: string, rescue?: unknown, } | { "op": "sift", scope?: string, at_s?: number, sifters?: unknown[], audience?: string, } | { "op": "window_view", fixture?: string, nav?: unknown, at_s?: number, from?: string, at_au?: [number, number, number], sensor?: string, } | { "op": "galaxy_chart", halo?: string, mass_msun?: number, at_gyr?: number, place_kpc?: number, place_phi?: number, 
+block?: unknown, } | { "op": "read_light", fixture?: string, bodies?: unknown[], } | { "op": "detect", targets: unknown[], sensors: unknown[], radar?: unknown, } | { "op": "read_air_optics", airs: unknown[], wavelengths_m?: Array<number>, } | { "op": "read_spectrum", targets: unknown[], observer?: unknown, } | { "op": "read_activity", stars: unknown[], seed?: string, at_s?: number, window?: unknown, } | { "op": "read_field", bodies: unknown[], } | { "op": "read_photometry", stars: unknown[], bands?: Array<string>, } | { "op": "survey_planets", survey: unknown, } | { "op": "read_nebulae", at_s: number, seed?: string, deaths?: unknown[], planetary?: unknown[], remnants?: unknown[], glows?: unknown[], } | { "op": "adopt", import_v3?: string, formation?: FormationRequest, occurred_at_s?: number, } | { "op": "resolved_system", system: string, at_s?: number, tiles?: Array<TileRequest>, } | { "op": "classify_preview", packs: unknown[], scheme: string, scope?: string, at_s?: number, } | { "op": "plan_route", fixture?: string, nav?: unknown, system?: string, at_s?: number, ports?: Array<string>, ship: unknown, from: unknown, to?: unknown, depart_s?: number, window_days?: number, prefer?: string, rescue?: unknown, } | { "op": "sift", scope?: string, at_s?: number, sifters?: unknown[], audience?: string, } | { "op": "window_view", fixture?: string, nav?: unknown, at_s?: number, from?: string, at_au?: [number, number, number], sensor?: string, 
+/**
+ * The system an inline `nav` is, so the view's `frame` can be
+ * keyed (needs an open universe); the Sol fixture's is measured.
+ */
+system?: string, } | { "op": "galaxy_chart", halo?: string, mass_msun?: number, at_gyr?: number, place_kpc?: number, place_phi?: number, 
 /**
  * History edits to preview (galaxy design 11, G6): `{kind: "merger", t_gyr, ratio}`,
  * `{kind: "remove_merger", index}`, `{kind: "starburst", t_gyr, gas_fraction}`,
@@ -83,7 +89,22 @@ arrives_at_s?: bigint, } | { "op": "set_kept", address: string, kind: string, va
  * pinned to the coded main world, giant and belt counts searched),
  * adopt it, and write the coded facts on the grown main world.
  */
-grow: boolean, at_s: bigint, } | { "op": "export_sector", scope: string, format: string, sheet?: string, at_s: bigint, } | { "op": "halo_cell", cell?: [bigint, bigint, bigint], min_mass_msun?: number, limit?: number, } | { "op": "star_cell", cell?: [bigint, bigint, bigint], t_myr?: number, } | { "op": "plan_voyage", from: string, to?: string, home?: string, ship: unknown, minimise?: string, visited?: Array<string>, known_fuel?: { [key in string]: Array<string> }, sensed_fuel?: { [key in string]: number }, surveyed?: Array<string>, gambles?: boolean, 
+grow: boolean, at_s: bigint, } | { "op": "export_sector", scope: string, format: string, sheet?: string, at_s: bigint, } | { "op": "halo_cell", cell?: [bigint, bigint, bigint], min_mass_msun?: number, limit?: number, } | { "op": "star_cell", cell?: [bigint, bigint, bigint], t_myr?: number, } | { "op": "sky_from_here", observer?: string, position_pc?: [number, number, number], t_myr?: number, limit_mag?: number, band?: string, bands?: Array<string>, cone?: SkyCone, 
+/**
+ * Most stars listed, brightest first (default 20,000, the phone
+ * tier of ruling 12; desktops ask 200,000). A cut list says
+ * `truncated` and gives `kept_to_mag`, the faintest star kept: ask
+ * `sky_glow` with that limit and the stars cut off are in the glow.
+ */
+max_stars?: number, 
+/**
+ * Y4: the other galaxies too (default true).
+ */
+galaxies?: boolean, 
+/**
+ * The stars (default true); false gives galaxies only.
+ */
+stars?: boolean, } | { "op": "sky_glow", position_pc?: [number, number, number], t_myr?: number, limit_mag?: number, band?: string, bands?: Array<string>, nside?: bigint, } | { "op": "plan_voyage", from: string, to?: string, home?: string, ship: unknown, minimise?: string, visited?: Array<string>, known_fuel?: { [key in string]: Array<string> }, sensed_fuel?: { [key in string]: number }, surveyed?: Array<string>, gambles?: boolean, 
 /**
  * In-system voyages (part 3b): give one of a NAV `fixture`, an
  * inline `nav` system or an adopted `system` (read at `at_s`, with

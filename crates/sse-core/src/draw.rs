@@ -97,23 +97,51 @@ pub fn draw(seed: &Seed, address: &Address, stream: &Stream, counter: u64) -> u6
 
 /// Draws for one (seed, address, stream). Indexed, not stateful: `unit(5)`
 /// is the same whether or not `unit(0..5)` were ever asked for.
-#[derive(Clone, Debug)]
+#[derive(Clone)]
 pub struct Draws {
     seed: Seed,
     address: Address,
     stream: Stream,
+    /// The hash state after everything but the counter: `draw`'s bytes in
+    /// `draw`'s order, so each draw only adds its counter (the same result).
+    prefix: Hasher,
+}
+
+impl fmt::Debug for Draws {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        f.debug_struct("Draws")
+            .field("seed", &self.seed)
+            .field("address", &self.address)
+            .field("stream", &self.stream)
+            .finish()
+    }
 }
 
 impl Draws {
     pub fn new(seed: Seed, address: Address, stream: Stream) -> Self {
+        let a = address.to_string();
+        let mut prefix = Hasher::new(DRAW_ALGORITHM);
+        prefix
+            .update(&seed.0 .0)
+            .update(&(a.len() as u64).to_be_bytes())
+            .update(a.as_bytes())
+            .update(&(stream.0.len() as u64).to_be_bytes())
+            .update(stream.0.as_bytes());
         Draws {
             seed,
             address,
             stream,
+            prefix,
         }
     }
+    fn at(&self, counter: u64) -> u64 {
+        let mut h = self.prefix.clone();
+        h.update(&counter.to_be_bytes());
+        let d = h.finish().0;
+        u64::from_be_bytes(d[..8].try_into().unwrap())
+    }
     pub fn u64(&self, i: u64) -> u64 {
-        draw(&self.seed, &self.address, &self.stream, i)
+        self.at(i)
     }
     /// Uniform in [0, 1), exact from the top 53 bits.
     pub fn unit(&self, i: u64) -> f64 {
@@ -129,12 +157,7 @@ impl Draws {
         assert!(n > 0);
         let mut k: u64 = 0;
         loop {
-            let x = draw(
-                &self.seed,
-                &self.address,
-                &self.stream,
-                i.wrapping_add(k << 32),
-            );
+            let x = self.at(i.wrapping_add(k << 32));
             let m = (x as u128) * (n as u128);
             let low = m as u64;
             if low >= n.wrapping_neg() % n {
@@ -158,6 +181,19 @@ mod tests {
 
     fn addr(n: u64) -> Address {
         Address::universe("t").unwrap().child("sys", n).unwrap()
+    }
+
+    #[test]
+    fn a_draws_object_gives_the_free_function_s_values() {
+        let (seed, a, st) = (
+            Seed::from_text("tarn"),
+            addr(7),
+            Stream::new("x.v1").unwrap(),
+        );
+        let d = Draws::new(seed, a.clone(), st.clone());
+        for i in [0, 1, 7, 1 << 40, u64::MAX] {
+            assert_eq!(d.u64(i), draw(&seed, &a, &st, i));
+        }
     }
 
     #[test]

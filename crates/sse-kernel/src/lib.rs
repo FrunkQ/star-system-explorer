@@ -14,13 +14,17 @@ mod descent;
 mod dressing;
 #[cfg(test)]
 mod dressing_tests;
+mod frame;
 mod frames;
+mod galaxies;
+mod glow;
 mod ice_ages;
 #[cfg(test)]
 mod matter_tests;
 mod nav;
 mod orbits;
 pub mod protocol;
+mod sky;
 mod survey;
 mod systems;
 mod tags;
@@ -2637,7 +2641,7 @@ impl Kernel {
                 at_s,
                 window,
             } => systems::read_activity(stars, seed.as_deref(), at_s, window)?,
-            Request::ReadField { bodies } => systems::read_field(bodies)?,
+            Request::ReadField { bodies } => systems::read_field(bodies, &self.observe.reference)?,
             Request::ReadPhotometry { stars, bands } => {
                 systems::read_photometry(stars, bands.unwrap_or_default())?
             }
@@ -2712,6 +2716,7 @@ impl Kernel {
                     tiles: r.tiles,
                     refused: r.refused,
                     clouds: r.clouds,
+                    frame: frame::drawn(&u.seed, &a)?.json(),
                 }
             }
             Request::PlanRoute {
@@ -2815,16 +2820,28 @@ impl Kernel {
                 from,
                 at_au,
                 sensor,
-            } => Response::WindowViewed {
-                view: nav::window_view(
+                system,
+            } => {
+                let mut view = nav::window_view(
                     fixture.as_deref(),
                     nav.as_ref(),
                     at_s,
                     from.as_deref(),
                     at_au,
                     sensor.as_deref(),
-                )?,
-            },
+                )?;
+                let f = match (fixture.as_deref(), system, self.universe.as_ref()) {
+                    (Some(_), _, _) => Some(frame::sol()),
+                    (None, Some(s), Some(u)) => {
+                        let a: Address =
+                            s.parse().map_err(|e| err("bad_address", format!("{e}")))?;
+                        Some(frame::drawn(&u.seed, &a)?)
+                    }
+                    _ => None,
+                };
+                view["frame"] = f.map(|f| f.json()).unwrap_or(serde_json::Value::Null);
+                Response::WindowViewed { view }
+            }
             Request::WebSlice {
                 z,
                 t_gyr,
@@ -4594,6 +4611,70 @@ impl Kernel {
                     cosmos::star_cell(st, cell, t_myr.unwrap_or(now + elapsed), &pins)
                 })?;
                 Response::StarCelled { cell }
+            }
+            Request::SkyFromHere {
+                observer,
+                position_pc,
+                t_myr,
+                limit_mag,
+                band,
+                bands,
+                cone,
+                max_stars,
+                galaxies,
+                stars,
+            } => {
+                let u = self.universe()?;
+                let pins =
+                    cosmos::star_pins(&u.chronicle.state_at(UniverseTime::seconds(i64::MAX)))?;
+                let elapsed = clock::elapsed_myr(&u.chronicle);
+                let sky = cosmos::with_world(&u.seed, &u.root, None, |st, world, now| {
+                    sky::sky_from_here(
+                        st,
+                        world,
+                        &pins,
+                        &cosmos::sky_params()?,
+                        sky::Ask {
+                            observer: observer.as_deref(),
+                            position_pc,
+                            t_myr: t_myr.unwrap_or(now + elapsed),
+                            limit_mag: limit_mag.unwrap_or(6.5),
+                            band: band.as_deref().unwrap_or("V"),
+                            bands: bands.unwrap_or_default(),
+                            cone,
+                            max_stars: max_stars.unwrap_or(20_000) as usize,
+                            galaxies: galaxies.unwrap_or(true),
+                            stars: stars.unwrap_or(true),
+                        },
+                    )
+                })?;
+                Response::Sky { sky }
+            }
+            Request::SkyGlow {
+                position_pc,
+                t_myr,
+                limit_mag,
+                band,
+                bands,
+                nside,
+            } => {
+                let u = self.universe()?;
+                let elapsed = clock::elapsed_myr(&u.chronicle);
+                let glow = cosmos::with_stars(&u.seed, &u.root, None, |st, now| {
+                    glow::sky_glow(
+                        st,
+                        &cosmos::sky_params()?,
+                        glow::Ask {
+                            position_pc,
+                            t_myr: t_myr.unwrap_or(now + elapsed),
+                            limit_mag: limit_mag.unwrap_or(6.5),
+                            band: band.as_deref().unwrap_or("V"),
+                            bands: bands.unwrap_or_default(),
+                            nside: nside.unwrap_or(32),
+                        },
+                    )
+                })?;
+                Response::SkyGlowed { glow }
             }
             Request::PlanVoyage {
                 from,
