@@ -115,3 +115,30 @@ Source paper: Mauk and Fox 2010 (doi:10.1029/2010JA015660), supplied by Alex on 
 - The star's particle storms from O10's events through the same cut-off.
 - Readers: life's `radiation_dose_msv_yr` (kernel resolve thread) and NAV's belt hazard (travel screens
   thread) read `shield` and `belts`, once MF2 publishes each world's field.
+
+## MF14a fixture: the Solar System's fields (for the renderer)
+
+`read_field` takes `fixture: "solar-system"` in place of `bodies`. It builds
+each magnetised planet from three files, typing nothing:
+
+- `packs/base-sol/pack.json`: radius and orbit.
+- `tests/fixtures/magnetic/measured-fields.json` (MF0): moment, tilt,
+  offset, reference radius, grade, model and source.
+- `crates/sse-field/data/sol-field.json`: the solar wind at 1 au (ECSS-E-ST-10-04C
+  Table 8-2), each dipole's sense (Alken 2021, Anderson 2011, Connerney 1993),
+  Earth's air and gravity, Io's plasma (Bagenal and Dols 2020), Saturn's ring
+  edge and the moons that open belt gaps (NSSDCA).
+
+The proton mass that turns the wind's count into a density, and the electron's
+constants for the belts, come from the loaded data sheet. Without
+`base-reference` loaded the op refuses with `bad_field` (the contract case
+shows that path; `read_field_solar_system_fixture` in the kernel tests reads
+the real one).
+
+Each body is the usual FieldRead plus `name` and `field`:
+`reference_radius_m`, `g10_t`, `g11_t`, `h11_t` (Schmidt semi-normalised, T),
+`degree` (1), `tilt_deg`, `tilt_longitude_deg` (0 for now), `offset_radii`,
+`polarity` (+1 moment along spin north, −1 south), `grade`, `model`, `source`,
+`polarity_source`, `stand_ins`. g10 = polarity × B0 cos(tilt), g11 = polarity ×
+B0 sin(tilt), with B0 = μ0 M / (4π a³). Dipole-only, pole longitude and offset
+direction are stand-ins (fudge F41). Code: `crates/sse-field/src/sol.rs`.

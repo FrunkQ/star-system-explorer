@@ -3153,3 +3153,41 @@ fn the_window_says_how_its_frame_sits_in_the_galaxy() {
     );
     assert!(v["view"]["frame"].is_null(), "{v}");
 }
+
+/// `read_field` with fixture "solar-system" (MF14a, for the renderer's
+/// field lines): six magnetised planets with their measured dipoles, read
+/// with the real data sheet's constants.
+#[test]
+fn read_field_solar_system_fixture() {
+    let mut k = crate::Kernel::new();
+    let pack = |p: &str| -> serde_json::Value {
+        serde_json::from_str(&std::fs::read_to_string(root().join(p)).unwrap()).unwrap()
+    };
+    let send = |k: &mut crate::Kernel, v: serde_json::Value| -> serde_json::Value {
+        serde_json::from_str(&k.handle_json(&v.to_string())).unwrap()
+    };
+    let r = send(
+        &mut k,
+        serde_json::json!({"op": "load_stack", "packs": [pack("packs/base-reference/pack.json")]}),
+    );
+    assert_eq!(r["type"], "stack_loaded", "{r}");
+    let r = send(
+        &mut k,
+        serde_json::json!({"op": "read_field", "fixture": "solar-system"}),
+    );
+    assert_eq!(r["type"], "field_read", "{r}");
+    let b = r["bodies"].as_array().unwrap();
+    let names: Vec<&str> = b.iter().map(|x| x["name"].as_str().unwrap()).collect();
+    assert_eq!(names.len(), 6, "{names:?}");
+    let earth = b.iter().find(|x| x["address"] == "sol/earth").unwrap();
+    let g10 = earth["field"]["g10_t"].as_f64().unwrap();
+    // Earth's g10 is about −29,400 nT (IGRF); the dipole read from the
+    // moment and tilt lands within a few per cent.
+    assert!((-31e-6..-28e-6).contains(&g10), "{g10}");
+    assert!(earth["belts"].is_object(), "{earth}");
+    let jupiter = b.iter().find(|x| x["address"] == "sol/jupiter").unwrap();
+    assert!(
+        jupiter["field"]["g10_t"].as_f64().unwrap() > 3e-4,
+        "{jupiter}"
+    );
+}
