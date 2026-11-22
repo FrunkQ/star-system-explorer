@@ -471,13 +471,8 @@ pub(crate) fn read_spectrum(
     Ok(Response::SpectrumRead { spectra })
 }
 
-/// What stops the wind at each body (MF6 part 1), its shielding (MF7) and
-/// belts (MF7 part 2, with the electron's constants from the data sheet).
-pub(crate) fn read_field(
-    bodies: Vec<serde_json::Value>,
-    fixture: Option<&str>,
-    sheet: &sse_reference::Reference,
-) -> Out {
+/// The field model's settings, with the electron's constants from the data sheet.
+pub(crate) fn field_settings(sheet: &sse_reference::Reference) -> sse_field::Settings {
     let electron = match (
         sheet.constant("m_e"),
         sheet.constant("e"),
@@ -490,10 +485,20 @@ pub(crate) fn read_field(
         }),
         _ => None,
     };
-    let set = sse_field::Settings {
+    sse_field::Settings {
         electron,
         ..sse_field::Settings::default()
-    };
+    }
+}
+
+/// What stops the wind at each body (MF6 part 1), its shielding (MF7) and
+/// belts (MF7 part 2, with the electron's constants from the data sheet).
+pub(crate) fn read_field(
+    bodies: Vec<serde_json::Value>,
+    fixture: Option<&str>,
+    sheet: &sse_reference::Reference,
+) -> Out {
+    let set = field_settings(sheet);
     match (fixture, bodies.is_empty()) {
         (Some("solar-system"), true) => {
             let mp = sheet
