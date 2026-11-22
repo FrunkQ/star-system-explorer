@@ -17,6 +17,7 @@ pub mod origin;
 pub mod patch;
 pub mod rings;
 pub mod scenario;
+pub mod star_tree;
 pub mod stars;
 pub mod web;
 
@@ -143,6 +144,8 @@ mod g4_tests;
 mod g5_tests;
 #[cfg(test)]
 mod g6_tests;
+#[cfg(test)]
+mod y1_tests;
 
 #[cfg(test)]
 mod nucleus_tests;

@@ -117,6 +117,10 @@ pub struct Climate {
     /// frost point is within reach.
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub exchange: Option<crate::exchange::Exchange>,
+    /// W7c: land fraction of each band, when the world runs a land and a sea
+    /// column (empty otherwise; the seasons then carry no column values).
+    #[serde(default, skip_serializing_if = "Vec::is_empty")]
+    pub land: Vec<f64>,
     pub why: Vec<String>,
 }
 
@@ -181,6 +185,42 @@ pub fn orbit(cs: &ClimateSettings, c: &Conditions, epoch_myr: f64) -> Climate {
     if let Some(ex) = &exchange {
         why.extend(ex.why.iter().cloned());
     }
+    let land = if annual.t_land_k.len() == n {
+        ebm::band_land(cs, c)
+    } else {
+        vec![]
+    };
+    if !land.is_empty() {
+        // The band with the widest gap between the land's and the sea's year.
+        let range = |v: &dyn Fn(&Season) -> f64| {
+            let (lo, hi) = seasons
+                .iter()
+                .fold((f64::INFINITY, f64::NEG_INFINITY), |(a, b), s| {
+                    (a.min(v(s)), b.max(v(s)))
+                });
+            hi - lo
+        };
+        let mut best = (0usize, 0.0, 0.0);
+        for (j, f) in land.iter().enumerate() {
+            if *f <= 0.0 || *f >= 1.0 {
+                continue;
+            }
+            let rl = range(&|s: &Season| s.t_land_k[j]);
+            let rs = range(&|s: &Season| s.t_sea_k[j]);
+            if rl - rs > best.1 - best.2 {
+                best = (j, rl, rs);
+            }
+        }
+        if best.1 > 0.0 {
+            why.push(format!(
+                "Land and sea warm at their own pace (North, Mengel and Short 1983): at {:.0}° the land swings {:.0} K through the year and the sea {:.0} K, because the sea's mixed layer holds far more heat; the band is {:.0} % land.",
+                annual.lat_deg[best.0],
+                best.1,
+                best.2,
+                100.0 * land[best.0]
+            ));
+        }
+    }
     if c.retrograde() {
         why.push("It spins backwards, so its winds and storms turn the other way.".into());
     }
@@ -203,6 +243,7 @@ pub fn orbit(cs: &ClimateSettings, c: &Conditions, epoch_myr: f64) -> Climate {
         annual,
         liquid_kg_m3: rho,
         exchange,
+        land,
         why,
     }
 }
@@ -227,6 +268,49 @@ impl Climate {
     /// Annual mean temperature at a latitude, K (at the datum).
     pub fn t_at(&self, lat_deg: f64) -> f64 {
         self.lerp(&self.t_k, lat_deg)
+    }
+
+    /// W7c: annual mean over the land at a latitude, K (the band's mean on
+    /// a world without both land and sea).
+    pub fn t_land_at(&self, lat_deg: f64) -> f64 {
+        self.column(lat_deg, |s| &s.t_land_k).0
+    }
+
+    /// W7c: annual mean over the sea at a latitude, K.
+    pub fn t_sea_at(&self, lat_deg: f64) -> f64 {
+        self.column(lat_deg, |s| &s.t_sea_k).0
+    }
+
+    /// W7c: the land's coldest and warmest season at a latitude, K.
+    pub fn land_range_at(&self, lat_deg: f64) -> (f64, f64) {
+        let c = self.column(lat_deg, |s| &s.t_land_k);
+        (c.1, c.2)
+    }
+
+    /// W7c: the sea's coldest and warmest season at a latitude, K.
+    pub fn sea_range_at(&self, lat_deg: f64) -> (f64, f64) {
+        let c = self.column(lat_deg, |s| &s.t_sea_k);
+        (c.1, c.2)
+    }
+
+    /// A column's annual mean, coldest and warmest season at a latitude,
+    /// falling back on the band's own values.
+    fn column(&self, lat_deg: f64, pick: impl Fn(&Season) -> &Vec<f64>) -> (f64, f64, f64) {
+        let n = self.lat_deg.len();
+        if pick(&self.annual).len() != n || self.seasons.iter().any(|s| pick(s).len() != n) {
+            return (
+                self.t_at(lat_deg),
+                self.lerp(&self.t_min_k, lat_deg),
+                self.lerp(&self.t_max_k, lat_deg),
+            );
+        }
+        let (mut lo, mut hi) = (f64::INFINITY, f64::NEG_INFINITY);
+        for s in &self.seasons {
+            let v = self.lerp(pick(s), lat_deg);
+            lo = lo.min(v);
+            hi = hi.max(v);
+        }
+        (self.lerp(pick(&self.annual), lat_deg), lo, hi)
     }
 
     /// Annual rain and snow at a latitude, m a year.

@@ -6,8 +6,8 @@
   },
   "swap": [
     "Weather block sse.weather.rules 1 (rule) -> sse.weather.zonal-ebm 1 (simulated).",
-    "Earth: cloud 0.63 -> 0.63 (+0.00, within tolerance of ±0.10).",
-    "Earth: rain 0.846 -> 0.846 m/yr (+0 %, within tolerance of ±25 %).",
+    "Earth: cloud 0.64 -> 0.64 (+0.00, within tolerance of ±0.10).",
+    "Earth: rain 0.860 -> 0.860 m/yr (+0 %, within tolerance of ±25 %).",
     "Locked temperate world: cloud 0.22 -> 0.22 (+0.00, within tolerance of ±0.10).",
     "Locked temperate world: rain 0.118 -> 0.118 m/yr (+0 %, within tolerance of ±25 %).",
     "Mars: cloud 0.04 -> 0.04 (+0.00, within tolerance of ±0.10).",
@@ -24,14 +24,14 @@
   ],
   "worlds": [
     {
-      "climate": "29f59e2faa376a0a11895c4ee2741c5bffd86462e5f10fb6ce2ee42552bf1472",
+      "climate": "e2d04802e040509153e2bf20c296a0a853b1bedeeb32f94a8add98d8a507e079",
       "cloud": [
-        0.6339912453718376,
-        0.6339912453718376
+        0.6385112654688425,
+        0.6385112654688425
       ],
       "precip_m_yr": [
-        0.84583715607346,
-        0.84583715607346
+        0.8595930031139575,
+        0.8595930031139575
       ],
       "within": true,
       "world": "Earth"
@@ -63,40 +63,40 @@
       "world": "Venus"
     },
     {
-      "climate": "fc3b3f0a5bda90d3697a74b651da413ef098fb85617b293022844d592f155e7b",
+      "climate": "cc345c340a5e33962a4b1727b0b8da746eed3eb36a2d0fa89ed396a11e8eb5f4",
       "cloud": [
-        0.0010022082331955977,
-        0.0010022082331955977
+        0.001002208233174058,
+        0.001002208233174058
       ],
       "precip_m_yr": [
-        0.004130967763853742,
-        0.004130967763853742
+        0.004130967763853739,
+        0.004130967763853739
       ],
       "within": true,
       "world": "Titan"
     },
     {
-      "climate": "74ecb54a5bdc5eec44ea54a80eef43ac660c640bbdcfdad02a525c25225ced75",
+      "climate": "7900e7ce4a8c68b2ae0bb364c47e5f765fd4572d97af87f3233986443432bdb7",
       "cloud": [
-        0.22156296638304165,
-        0.22156296638304165
+        0.22156296638279366,
+        0.22156296638279366
       ],
       "precip_m_yr": [
-        0.11822190664463222,
-        0.11822190664463222
+        0.11822190664462841,
+        0.11822190664462841
       ],
       "within": true,
       "world": "Locked temperate world"
     },
     {
-      "climate": "9bc0e20b8e9bf1652b7ed58dba4484557bb64e12fa3f13f6a541c6caf4e38c8a",
+      "climate": "5495f30cb34169c962b069a81a3108a15798e2d90409a6ffbbb01d56b33877f5",
       "cloud": [
-        0.6757036965937191,
-        0.6757036965937191
+        0.6668752351777952,
+        0.6668752351777952
       ],
       "precip_m_yr": [
-        0.8247684282462607,
-        0.8247684282462607
+        0.8276736168216012,
+        0.8276736168216012
       ],
       "within": true,
       "world": "Fast-spinning Earth"

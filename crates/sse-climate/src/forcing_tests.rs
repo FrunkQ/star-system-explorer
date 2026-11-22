@@ -219,8 +219,16 @@ fn the_tilt_cycle_writes_one_glacial_advance_per_cycle() {
         "{}",
         edge.glaciated_share
     );
+    // The dated onsets are the advances counted, in time order, about one
+    // tilt period apart.
+    let on = model.onsets_yr(&cs, &cl, 6.5, b, 0.0);
+    assert_eq!(on.len() as u32, edge.advances);
+    for w in on.windows(2) {
+        assert!(w[1] > w[0] && (w[1] - w[0]) > 0.5 * period, "{on:?}");
+    }
     let deep = model.at(&cs, &cl, 6.5, 85.0, 3000.0);
     assert_eq!((deep.advances, deep.glaciated_share), (0, 1.0));
+    assert!(model.onsets_yr(&cs, &cl, 6.5, 85.0, 3000.0).is_empty());
     let tropics = model.at(&cs, &cl, 6.5, 0.0, 0.0);
     assert_eq!((tropics.advances, tropics.glaciated_share), (0, 0.0));
 }
