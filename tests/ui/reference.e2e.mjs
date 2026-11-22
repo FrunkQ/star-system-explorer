@@ -59,6 +59,7 @@ try {
     assert.match(await ref.locator('[data-row="c"] .how').innerText(), /exact/);
     assert.ok((await ref.locator("[data-group-notes] li").count()) >= 4, "cosmos notes");
     assert.match(await ref.locator("[data-group-notes]").innerText(), /Clowe 2006/);
+    await ref.locator("[data-group-notes] a[href^='https://doi.org/']").first().waitFor({ timeout: 10000 });
 
     // A row opens its card, with the source linked; Escape closes it and gives focus back.
     await ref.locator('[data-row="G"] .row').click();
