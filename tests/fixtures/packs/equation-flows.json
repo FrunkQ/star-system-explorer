@@ -1,0 +1,157 @@
+{
+ "format": "sse.pack/1",
+ "id": "test.equation-flows",
+ "version": "0.1.0",
+ "kind": [
+  "physics"
+ ],
+ "kernel_range": "^0.1",
+ "licence": "Apache-2.0",
+ "requires": [
+  {
+   "id": "sse.base-physics",
+   "range": "^0.1"
+  }
+ ],
+ "provides": {
+  "quantity_kinds": [
+   {
+    "id": "test.mass",
+    "dim": [
+     0,
+     1,
+     0,
+     0,
+     0,
+     0,
+     0
+    ],
+    "description": "ND3 fixture"
+   },
+   {
+    "id": "test.radius",
+    "dim": [
+     1,
+     0,
+     0,
+     0,
+     0,
+     0,
+     0
+    ],
+    "description": "ND3 fixture"
+   },
+   {
+    "id": "test.escape_speed",
+    "dim": [
+     1,
+     0,
+     -1,
+     0,
+     0,
+     0,
+     0
+    ],
+    "description": "ND3 fixture"
+   }
+  ],
+  "flows": [
+   {
+    "format": "sse.flow/1",
+    "id": "test.escape-speed",
+    "version": "1.0.0",
+    "hook": "test.equation",
+    "inputs": [
+     {
+      "name": "mass",
+      "kind": "test.mass"
+     },
+     {
+      "name": "radius",
+      "kind": "test.radius"
+     }
+    ],
+    "nodes": [
+     {
+      "id": "g",
+      "atom": "sse.reference.lookup",
+      "config": {
+       "what": "constants/G",
+       "property": ""
+      }
+     },
+     {
+      "id": "v",
+      "atom": "sse.math.equation",
+      "config": {
+       "name": "Speed needed to escape",
+       "formula": "v = sqrt(2 * G * M / R)",
+       "inputs": {
+        "G": {
+         "kind": "constant.G",
+         "unit": "m3 kg-1 s-2",
+         "name": "gravitational constant"
+        },
+        "M": {
+         "kind": "test.mass",
+         "unit": "kg",
+         "name": "mass of the world"
+        },
+        "R": {
+         "kind": "test.radius",
+         "unit": "m",
+         "name": "distance from its centre"
+        }
+       },
+       "outputs": {
+        "v": {
+         "kind": "test.escape_speed",
+         "unit": "km/s",
+         "name": "escape speed"
+        }
+       },
+       "source": {
+        "text": "Newton's law of gravitation, energy balance at the surface",
+        "url": "https://en.wikipedia.org/wiki/Escape_velocity",
+        "where": "Overview, first formula"
+       },
+       "explain": {
+        "curious": "How fast you must throw something so it never falls back.",
+        "science": "Kinetic energy equal to gravitational binding energy: v = sqrt(2GM/R)."
+       },
+       "examples": [
+        {
+         "G": 6.6743e-11,
+         "M": 5.972e+24,
+         "R": 6371000.0,
+         "v": 11.186,
+         "tolerance": 0.0001
+        }
+       ]
+      }
+     }
+    ],
+    "wires": [
+     {
+      "from": "g.value",
+      "to": "v.G"
+     },
+     {
+      "from": "in.mass",
+      "to": "v.M"
+     },
+     {
+      "from": "in.radius",
+      "to": "v.R"
+     }
+    ],
+    "publishes": [
+     {
+      "kind": "test.escape_speed",
+      "from": "v.v"
+     }
+    ]
+   }
+  ]
+ }
+}

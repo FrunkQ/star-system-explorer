@@ -14,6 +14,7 @@ use serde::Deserialize;
 use serde_json::Value as J;
 use sse_core::cbor::Value as C;
 use sse_core::math as m;
+use sse_core::quantity::parse_unit;
 use sse_core::{Address, Dimension};
 use sse_flow::{
     Atom, AtomDecl, AtomError, BlockClass, Call, CostClass, DimRule, Out, Port, Shape, Val,
@@ -73,6 +74,16 @@ pub enum Op {
     Now,
     Staying,
     Const,
+    Power,
+    Sqrt,
+    Exp,
+    Expm1,
+    Ln,
+    Log10,
+    Sin,
+    Cos,
+    Tan,
+    Atan2,
 }
 
 /// Every op with its id and explain text (curious, science, formula).
@@ -118,7 +129,17 @@ const OPS: &[(Op, &str, &str, &str, &str)] = &[
     (Op::Children, "world.children", "The things directly inside a place.", "Child addresses in address order.", "children(of)"),
     (Op::Now, "world.now", "The time of the reading.", "Universe time, seconds.", "now"),
     (Op::Staying, "world.staying", "True when the condition already held (hysteresis).", "Lets a block use a wider limit for staying in a state once entered.", "staying"),
-    (Op::Const, "logic.const", "A fixed value.", "A constant of any shape, written in the node's config.", "k"),
+    (Op::Const, "logic.const", "A fixed value.", "A constant of any shape, written in the node's config; a number may carry a unit.", "k"),
+    (Op::Power, "math.power", "Raises a value to a power.", "x^n with sse_core::math::pow. A whole-number or fractional exponent in the config (`5`, `1/4`) keeps the dimension (metres squared from metres); a wired exponent takes pure numbers only.", "x^n"),
+    (Op::Sqrt, "math.sqrt", "The square root of a value.", "IEEE correctly rounded; the dimension halves (a negative value is an error).", "sqrt(x)"),
+    (Op::Exp, "math.exp", "e raised to a value: how growth compounds.", "exp(x) of a pure number (pinned maths).", "exp(x)"),
+    (Op::Expm1, "math.expm1", "e raised to a value, less one, kept accurate when the value is small.", "exp(x) - 1 without the loss of digits near zero (pinned maths); the Planck law uses it.", "exp(x) - 1"),
+    (Op::Ln, "math.ln", "The natural logarithm: the power e must be raised to.", "ln(x) of a pure number above zero (pinned maths).", "ln(x)"),
+    (Op::Log10, "math.log10", "The base-10 logarithm: how many tens multiply to a value.", "log10(x) of a pure number above zero (pinned maths).", "log10(x)"),
+    (Op::Sin, "math.sin", "The sine of an angle.", "sin(x), x in radians (pinned maths).", "sin(x)"),
+    (Op::Cos, "math.cos", "The cosine of an angle.", "cos(x), x in radians (pinned maths).", "cos(x)"),
+    (Op::Tan, "math.tan", "The tangent of an angle.", "tan(x), x in radians (pinned maths).", "tan(x)"),
+    (Op::Atan2, "math.atan2", "The angle of a direction, from its two parts.", "atan2(y, x) in radians, -pi to pi; both parts carry one dimension (pinned maths).", "atan2(y, x)"),
 ];
 
 /// Settings a logic block may take in its node's `config`.
@@ -145,6 +166,8 @@ struct Cfg {
     key: Option<String>,
     descending: Option<bool>,
     n: Option<usize>,
+    unit: Option<String>,
+    exponent: Option<String>,
 }
 
 impl Op {
@@ -168,7 +191,8 @@ impl Op {
             ReadKept => &["kind", "shape", "address"],
             HasFact => &["field", "address"],
             HasTag => &["tag", "address"],
-            Const => &["shape", "value"],
+            Const => &["shape", "value", "unit"],
+            Power => &["exponent"],
             _ => &[],
         }
     }
@@ -224,6 +248,7 @@ impl Block {
         let dims = match op {
             Op::Multiply => Some(DimRule::Product),
             Op::Divide => Some(DimRule::Quotient),
+            Op::Sqrt => Some(DimRule::Power(1, 2)),
             _ => None,
         };
         let cost = match op {
@@ -357,8 +382,86 @@ fn ports(op: Op, c: &Cfg) -> (Vec<Port>, Vec<Port>) {
         ),
         Now => (vec![], vec![port("now", num)]),
         Staying => (vec![], vec![flag("staying")]),
-        Const => (vec![], vec![port("value", shape)]),
+        Const => {
+            let mut p = port("value", shape);
+            if let Some(d) = c.unit.as_deref().and_then(|u| parse_unit(u).ok()) {
+                p.dim = d.1;
+            }
+            (vec![], vec![p])
+        }
+        Power if c.exponent.is_some() => (vec![any("x", &num)], vec![any("value", &num)]),
+        Power => (
+            vec![port("x", num.clone()), port("n", num.clone())],
+            vec![port("value", num)],
+        ),
+        Sqrt => (vec![any("x", &num)], vec![any("value", &num)]),
+        Exp | Expm1 | Ln | Log10 | Sin | Cos | Tan => {
+            (vec![port("x", num.clone())], vec![port("value", num)])
+        }
+        Atan2 => (
+            vec![any("y", &num), any("x", &num)],
+            vec![port("angle", num)],
+        ),
     }
+}
+
+/// A small rational exponent written as text (`5`, `-3/2`, `1/4`): the
+/// whole numbers and their ratios a formula may hold (equation design 4).
+pub fn exponent(text: &str) -> Result<(i8, i8), String> {
+    let (a, b) = text.split_once('/').unwrap_or((text, "1"));
+    let p: i8 = a
+        .trim()
+        .parse()
+        .map_err(|_| format!("exponent {text:?} is not a whole number or a ratio of two"))?;
+    let q: i8 = b
+        .trim()
+        .parse()
+        .map_err(|_| format!("exponent {text:?} is not a whole number or a ratio of two"))?;
+    if q <= 0 {
+        return Err(format!("exponent {text:?}: the bottom must be above zero"));
+    }
+    Ok((p, q))
+}
+
+/// The pinned maths of the number blocks, shared with the Equation block so
+/// a formula and its blocks give the same bits and the same refusals. A
+/// result that is not a finite number is an error that names the step.
+pub fn number(op: Op, x: &[f64]) -> Result<f64, String> {
+    use Op::*;
+    let r = match op {
+        Add => x[0] + x[1],
+        Subtract => x[0] - x[1],
+        Multiply => x[0] * x[1],
+        Divide if x[1] == 0.0 => return Err("division by zero".into()),
+        Divide => x[0] / x[1],
+        Min => x[0].min(x[1]),
+        Max => x[0].max(x[1]),
+        Abs => x[0].abs(),
+        Clamp if x[1] > x[2] => return Err(format!("lo {} is above hi {}", x[1], x[2])),
+        Clamp => x[0].max(x[1]).min(x[2]),
+        Power => m::pow(x[0], x[1]),
+        Sqrt if x[0] < 0.0 => return Err(format!("the square root of {} (below zero)", x[0])),
+        Sqrt => m::sqrt(x[0]),
+        Exp => m::exp(x[0]),
+        Expm1 => m::expm1(x[0]),
+        Ln | Log10 if x[0] <= 0.0 => {
+            return Err(format!("the logarithm of {} (not above zero)", x[0]))
+        }
+        Ln => m::ln(x[0]),
+        Log10 => m::log10(x[0]),
+        Sin => m::sin(x[0]),
+        Cos => m::cos(x[0]),
+        Tan => m::tan(x[0]),
+        Atan2 => m::atan2(x[0], x[1]),
+        _ => return Err(format!("{} is not a number block", id_of(op))),
+    };
+    if !r.is_finite() {
+        return Err(format!(
+            "{} gives a number too large to hold (from {x:?})",
+            id_of(op)
+        ));
+    }
+    Ok(r)
 }
 
 fn parse(op: Op, config: Option<&J>) -> Result<Cfg, String> {
@@ -442,6 +545,15 @@ fn check(op: Op, c: &Cfg) -> Result<(), String> {
     if let Some(a) = &c.address {
         a.parse::<Address>()
             .map_err(|e| format!("{id}: {a:?} is not an address: {e}"))?;
+    }
+    if let Some(u) = &c.unit {
+        if shape != Shape::Number {
+            return Err(format!("{id}: only a number carries a unit"));
+        }
+        parse_unit(u).map_err(|e| format!("{id}: {e}"))?;
+    }
+    if let Some(e) = &c.exponent {
+        exponent(e).map_err(|e| format!("{id}: {e}"))?;
     }
     if c.n.is_some_and(|n| n > MAX_LIST) {
         return Err(format!("{id}: n is at most {MAX_LIST}"));
@@ -530,6 +642,14 @@ impl Atom for Block {
     }
     fn check_config(&self, config: Option<&J>) -> Result<(), String> {
         parse(self.op, config).map(|_| ())
+    }
+    fn dim_rule(&self, config: Option<&J>) -> Option<DimRule> {
+        if self.op != Op::Power {
+            return self.decl.dims;
+        }
+        let c = parse(self.op, config).ok()?;
+        let (p, q) = exponent(c.exponent.as_deref()?).ok()?;
+        Some(DimRule::Power(p, q))
     }
     fn eval_typed(&self, v: &[Val], _params: &[f64], cx: &mut Call) -> Result<Out, AtomError> {
         use Op::*;
@@ -661,25 +781,17 @@ impl Atom for Block {
                     ],
                 }))
             }
-            Add | Subtract | Multiply | Divide | Min | Max => {
-                let x = nums(op, v)?;
-                let r = match op {
-                    Add => x[0] + x[1],
-                    Subtract => x[0] - x[1],
-                    Multiply => x[0] * x[1],
-                    Divide if x[1] == 0.0 => return Err(err(op, "division by zero")),
-                    Divide => x[0] / x[1],
-                    Min => x[0].min(x[1]),
-                    _ => x[0].max(x[1]),
-                };
-                one(Val::Number(r))
-            }
-            Clamp => {
-                let x = nums(op, v)?;
-                if x[1] > x[2] {
-                    return Err(err(op, format!("lo {} is above hi {}", x[1], x[2])));
+            Add | Subtract | Multiply | Divide | Min | Max | Clamp | Sqrt | Exp | Expm1 | Ln
+            | Log10 | Sin | Cos | Tan | Atan2 => one(Val::Number(
+                number(op, &nums(op, v)?).map_err(|e| err(op, e))?,
+            )),
+            Power => {
+                let mut x = nums(op, v)?;
+                if let Some(e) = &c.exponent {
+                    let (p, q) = exponent(e).map_err(|e| err(op, e))?;
+                    x.push(f64::from(p) / f64::from(q));
                 }
-                one(Val::Number(x[0].max(x[1]).min(x[2])))
+                one(Val::Number(number(op, &x).map_err(|e| err(op, e))?))
             }
             Round | Floor | Ceiling | Trunc | Abs => {
                 let x = nums(op, v)?[0];
@@ -688,7 +800,7 @@ impl Atom for Block {
                     Floor => m::floor(x),
                     Ceiling => m::ceil(x),
                     Trunc => m::trunc(x),
-                    _ => x.abs(),
+                    _ => number(op, &[x]).map_err(|e| err(op, e))?,
                 }))
             }
             Count => one(Val::Number(items(op, &v[0])?.len() as f64)),
@@ -786,7 +898,13 @@ impl Atom for Block {
             Staying => one(Val::Flag(env.staying)),
             Const => {
                 let j = c.value.as_ref().expect("required");
-                one(Val::from_json(j, &shape).map_err(|e| err(op, e))?)
+                let v = Val::from_json(j, &shape).map_err(|e| err(op, e))?;
+                one(match (v, c.unit.as_deref()) {
+                    (Val::Number(x), Some(u)) => {
+                        Val::Number(x * parse_unit(u).map_err(|e| err(op, e))?.0)
+                    }
+                    (v, _) => v,
+                })
             }
         }
     }

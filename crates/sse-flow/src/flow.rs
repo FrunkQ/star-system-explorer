@@ -156,6 +156,8 @@ struct Compiled {
     config: Option<serde_json::Value>,
     /// A logic or engine block: evaluated through `eval_typed`.
     typed: bool,
+    /// How any-dimension outputs follow (the atom's rule for this config).
+    dims: Option<DimRule>,
 }
 
 /// A validated flow, ready to evaluate.
@@ -337,6 +339,7 @@ impl Flow {
                 }
             }
             let n_in = inputs.len();
+            let dims = atom.dim_rule(n.config.as_ref());
             nodes.push(Some(Compiled {
                 atom: atom_id,
                 decl,
@@ -347,6 +350,7 @@ impl Flow {
                 sources: vec![Source::Input(usize::MAX); n_in],
                 config: n.config.clone(),
                 typed,
+                dims,
             }));
         }
         // wires
@@ -449,6 +453,19 @@ impl Flow {
                             &format!("{}.{}", doc.nodes[ni].id, p.name),
                             "input is not wired".into(),
                         );
+                    }
+                }
+                let from: Vec<Option<&str>> = c
+                    .sources
+                    .iter()
+                    .map(|s| match *s {
+                        Source::Node(d, _) => nodes[d].as_ref().map(|n| n.atom.as_str()),
+                        Source::Input(_) => None,
+                    })
+                    .collect();
+                if let Some(a) = cx.atoms.get(&c.atom) {
+                    if let Err(e) = a.check_wiring(c.config.as_ref(), &from) {
+                        err(&doc.nodes[ni].id, e);
                     }
                 }
             }
@@ -569,7 +586,7 @@ impl Flow {
                     .filter(|(p, _)| p.any_dim && p.shape() == Shape::Number)
                     .map(|(_, s)| src_dim(s, &out_dims))
                     .collect();
-                let rule = c.decl.dims.unwrap_or(DimRule::Same);
+                let rule = c.dims.unwrap_or(DimRule::Same);
                 let od = match rule {
                     DimRule::Same => {
                         if let Some(d) = any.iter().find(|d| **d != any[0]) {
@@ -587,6 +604,19 @@ impl Flow {
                             any[0].div(any[1])
                         }
                     }
+                    DimRule::Power(p, q) if any.len() == 1 => match any[0].powi(p).root(q.max(1)) {
+                        Some(d) => d,
+                        None => {
+                            err(
+                                &doc.nodes[ni].id,
+                                format!(
+                                    "[{}] to the power {p}/{q} is not a whole dimension",
+                                    any[0]
+                                ),
+                            );
+                            Dimension::NONE
+                        }
+                    },
                     _ => Dimension::NONE,
                 };
                 for (o, p) in c.outputs.iter().enumerate() {

@@ -56,6 +56,9 @@ pub enum DimRule {
     Product,
     /// Output = first input / second input.
     Quotient,
+    /// Output = the one any-dimension input to the power `p / q` (a maths
+    /// block's fixed exponent); refused when the root does not divide.
+    Power(i8, i8),
 }
 
 /// What kind of block an atom is (J2, record design 3.2 and 3.5).
@@ -154,6 +157,24 @@ pub trait Atom: Send + Sync {
     fn ports(&self, config: Option<&serde_json::Value>) -> Option<(Vec<Port>, Vec<Port>)> {
         let _ = config;
         None
+    }
+    /// How a node's any-dimension outputs follow its inputs when its config
+    /// sets it (a power block's exponent). Default: the declaration's rule.
+    fn dim_rule(&self, config: Option<&serde_json::Value>) -> Option<DimRule> {
+        let _ = config;
+        self.decl().dims
+    }
+    /// Check what feeds a node's inputs, once the flow is wired: for each
+    /// input in port order, the atom id of the block its wire comes from
+    /// (`None` for a flow input). The Equation block refuses a typed
+    /// constant here. Default: anything may feed anything.
+    fn check_wiring(
+        &self,
+        config: Option<&serde_json::Value>,
+        sources: &[Option<&str>],
+    ) -> Result<(), String> {
+        let _ = (config, sources);
+        Ok(())
     }
     /// Check a node's `config` at validation (logic and engine blocks).
     fn check_config(&self, config: Option<&serde_json::Value>) -> Result<(), String> {

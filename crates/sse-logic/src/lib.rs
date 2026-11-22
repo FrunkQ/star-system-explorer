@@ -9,13 +9,19 @@
 //! - [`engine`]: engine blocks, the third kind of block beside atoms and
 //!   boxes: `engine.classify` (the class atlas) and `engine.place` (reverse
 //!   placement), each a heavy block with its own editor.
+//! - [`equation`]: the Equation block, a formula as pack data, and its
+//!   expansion into the maths blocks.
+//! - [`model`]: the Model number block, a number that belongs to the model
+//!   (a fitted slope), with its unit, range, grade and source.
 #![forbid(unsafe_code)]
 
 pub mod blocks;
 pub mod condition;
 pub mod dice;
 pub mod engine;
+pub mod equation;
 pub mod lookup;
+pub mod model;
 
 pub use condition::{to_blocks, Condition, SubjectWorld};
 
@@ -28,6 +34,8 @@ pub fn register(reg: &mut sse_flow::AtomRegistry) {
         reg.insert(a);
     }
     reg.insert(Box::new(lookup::Lookup::new()));
+    reg.insert(Box::new(equation::Equation::new()));
+    reg.insert(Box::new(model::ModelNumber::new()));
 }
 
 /// A registry holding only the logic set (tests, condition flows).
@@ -37,5 +45,7 @@ pub fn registry() -> sse_flow::AtomRegistry {
     r
 }
 
+#[cfg(test)]
+mod equation_tests;
 #[cfg(test)]
 mod tests;
