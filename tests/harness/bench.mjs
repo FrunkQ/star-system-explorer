@@ -64,7 +64,14 @@ async function inChromium(rate) {
     rep.label = `${machine}, Chromium ${browser.version()}${rate > 1 ? `, CPU slowed ${rate}×` : ""}`;
     rep.made_on = today;
     if (rate > 1) rep.device.note = `CPU slowed ${rate}× on the page's thread only: the kernel's speed and tier come from a worker, which Chromium does not slow`;
-    if (only) rep.chunks = rep.chunks.map((c) => ({ ...c, sources: c.sources.filter((s) => only.includes(s.source.slice(6))) })).filter((c) => c.sources.length);
+    if (only) {
+      // The page times every scenario; keep only those asked for, and sum the chunks again from what is kept.
+      const sum = (ss, k) => Math.round(ss.reduce((t, x) => t + x[k], 0) * 10) / 10;
+      rep.chunks = rep.chunks
+        .map((c) => ({ ...c, sources: c.sources.filter((s) => only.includes(s.source.slice(6))) }))
+        .filter((c) => c.sources.length)
+        .map((c) => ({ ...c, calls: sum(c.sources, "calls"), median_ms: sum(c.sources, "median_ms"), p95_ms: sum(c.sources, "p95_ms"), max_ms: sum(c.sources, "max_ms") }));
+    }
     return rep;
   } finally {
     await browser.close();

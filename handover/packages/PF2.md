@@ -27,3 +27,8 @@ Found: Chromium's CPU slowdown does not reach Web Workers, so the chart room's k
 
 ## Adding a device
 Run the bench on `/harness/` (or open the chart room with the readout on and use it a while), Save, put the file in `docs/perf-reports/<machine>/`, run `node scripts/min-spec.mjs`, commit both.
+
+## First real machine (22 Nov, evening)
+Alex's PC, AC-ProArt (Windows, 24 cores, 32 GB, WebGPU on AMD RDNA 3, Chrome 157), ran the bench on the live `/harness/`: `docs/perf-reports/ac-proart/bench-chrome.json`. It is about twice as fast as the cloud runner in every chunk (1.9× to 2.4×) and about nine times as fast as the cloud runner with CPU slowed 4×.
+- A bench report has no start-up stamps or memory by design: those come from the app readout.
+- Fixed after it: the bench report named the harness version as `kernel`; it now gives the real kernel version under `kernel` and the harness version under `harness` (Alex's report was corrected by hand to match). `bench.mjs --only` now sums the chunks from the kept scenarios.

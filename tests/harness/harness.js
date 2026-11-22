@@ -32,6 +32,7 @@ async function main() {
 
 // PF2: the bench. Only on request (a button, or ?bench in the address for the bench script): it takes a while.
 let capability = null;
+let kernelVersion = null;
 function benchSection(version) {
   const sec = $("bench");
   sec.hidden = false;
@@ -46,7 +47,8 @@ function benchSection(version) {
       onProgress: (d, t, name) => ($("benchnote").textContent = name ? `${d} of ${t}: ${name}…` : "Done."),
       yieldTo: () => new Promise((r) => setTimeout(r, 0)),
     });
-    rep = benchReport(results, doc, { device: await describe(), kernel: version, site: location.host, runs });
+    rep = benchReport(results, doc, { device: await describe(), kernel: kernelVersion ?? undefined, site: location.host, runs });
+    rep.app.harness = version;
     $("benchtable").innerHTML = rep.chunks
       .map((c) => `<tr><td><strong>${c.name}</strong></td><td class="n">${ms(c.median_ms)}</td></tr>` + c.sources.map((s) => `<tr><td class="muted">&nbsp;&nbsp;${s.source.slice(6)}</td><td class="n">${ms(s.median_ms)}</td></tr>`).join(""))
       .join("");
@@ -128,6 +130,7 @@ async function kernelCheck() {
   v.className = "verdict " + (ok ? "ok" : "bad");
   const cap = await client.measure(20000);
   capability = cap;
+  kernelVersion = (await client.info()).kernel_version;
   $("cap").textContent = `This device: ${Math.round(cap.unitsPerSecond).toLocaleString()} work units per second, tier "${cap.tier}" (runs up to ${cap.runsUpTo} work locally). Speed is shown only; it never enters a hash.`;
   worker.terminate();
   return ok;
