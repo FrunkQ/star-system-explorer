@@ -35,3 +35,27 @@ export function polar(cx: number, cy: number, r: number, deg: number): [number, 
   const t = (deg * Math.PI) / 180;
   return [cx + r * Math.cos(t), cy - r * Math.sin(t)];
 }
+
+/**
+ * The chart's scale drawn as rings (the grid of a log-radial chart): a solid
+ * ring at every power of ten of the unit, and fainter rings at 2 and 5 times it
+ * when the decades sit far enough apart to read them. `unit_au` is one display
+ * unit in AU (1 for AU; 1 / km-per-AU for kilometres). Rings run from the
+ * scale's inner edge out to `r_out` pixels.
+ */
+export function scaleRings(s: RadialScale, r_out: number, unit_au = 1, minGapPx = 56): { au: number; units: number; major: boolean }[] {
+  const lo = Math.max(s.inner_au, distanceAt(s.r_min, s));
+  const hi = distanceAt(r_out, s);
+  if (!(hi > lo)) return [];
+  const decadePx = (s.r_max - s.r_min) / (Math.log10(s.outer_au) - Math.log10(s.inner_au));
+  const minors = decadePx >= minGapPx * 2;
+  const out: { au: number; units: number; major: boolean }[] = [];
+  for (let e = Math.floor(Math.log10(lo / unit_au)); e <= Math.ceil(Math.log10(hi / unit_au)); e++) {
+    for (const m of minors ? [1, 2, 5] : [1]) {
+      const units = Number((m * Math.pow(10, e)).toPrecision(12));
+      const au = units * unit_au;
+      if (au >= lo * 0.999 && au <= hi) out.push({ au, units, major: m === 1 });
+    }
+  }
+  return out;
+}
