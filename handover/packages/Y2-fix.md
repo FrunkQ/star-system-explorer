@@ -19,3 +19,6 @@ Follow-up to Y2 (`Y2.md`), built 22 Nov 2026 by the kernel thread after the rend
 
 ## Note for other threads
 The light thread's `sse_sky::glow::class_radii` reads class edges from params, so it follows the 14 classes without change. The renderer's sky slices by class index; any index it hard-codes should be read from the class edges instead.
+
+## Follow-up: cut lists and the glow
+`sky_from_here`'s `max_stars` now defaults to 20,000, the design's phone tier (ruling 12; desktops ask 200,000). When the list is cut it says `truncated` and gives `kept_to_mag`, the faintest star kept. Asking `sky_glow` with that as its limit puts the stars that were cut into the glow, so no light is lost. The renderer thread asked for this on 22 Nov. The Window's model line now says only moons are not drawn.

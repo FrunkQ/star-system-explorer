@@ -332,6 +332,14 @@ pub(crate) fn sky_from_here(
     };
     let truncated = stars.len() > ask.max_stars;
     stars.truncate(ask.max_stars);
+    // When the list is cut, the faintest star kept: ask sky_glow with this
+    // as its limit and the stars cut off are in the glow (ruling: the glow
+    // absorbs what a tier cannot draw).
+    let kept_to_mag = if truncated {
+        stars.last().map_or(ask.limit_mag, |s| s.0)
+    } else {
+        ask.limit_mag
+    };
     Ok(serde_json::json!({
         "galaxy": st.galaxy.to_string(),
         "observer": {"address": obs_addr, "xyz_pc": obs},
@@ -347,6 +355,7 @@ pub(crate) fn sky_from_here(
         "galaxies": galaxies,
         "galaxy_walk": galaxy_walk,
         "truncated": truncated,
+        "kept_to_mag": kept_to_mag,
         "conventions": "l is measured from the direction of the galaxy's centre, b from its plane toward +z; magnitudes are Vega unless m_ab; counts are cumulative (stars brighter than mag); positions are where each star was when its light left",
     }))
 }

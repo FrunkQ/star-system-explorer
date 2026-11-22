@@ -1274,6 +1274,10 @@ pub enum Request {
         #[serde(default)]
         #[ts(optional)]
         cone: Option<SkyCone>,
+        /// Most stars listed, brightest first (default 20,000, the phone
+        /// tier of ruling 12; desktops ask 200,000). A cut list says
+        /// `truncated` and gives `kept_to_mag`, the faintest star kept: ask
+        /// `sky_glow` with that limit and the stars cut off are in the glow.
         #[serde(default)]
         #[ts(optional)]
         max_stars: Option<u32>,

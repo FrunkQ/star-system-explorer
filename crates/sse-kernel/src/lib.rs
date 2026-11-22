@@ -4642,7 +4642,7 @@ impl Kernel {
                             band: band.as_deref().unwrap_or("V"),
                             bands: bands.unwrap_or_default(),
                             cone,
-                            max_stars: max_stars.unwrap_or(5000) as usize,
+                            max_stars: max_stars.unwrap_or(20_000) as usize,
                             galaxies: galaxies.unwrap_or(true),
                             stars: stars.unwrap_or(true),
                         },
