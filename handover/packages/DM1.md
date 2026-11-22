@@ -62,7 +62,7 @@ Track GH (dark matter and galaxy histories), design `handover/design/SSE4-galaxy
 ## Citations
 
 Every source the rows and notes cite is in `docs/citations/matter-reference.md` section A5. Crossref was read
-for 19 DOIs, and all of them match. Randall 2008 could not be fetched (rate limit), so it stays unverified.
+for 19 DOIs, and all of them match. Randall 2008 was rate-limited then, and was checked in DM6 (it matches).
 Planck's numbers were read from the journal's own Table 2 page.
 
 **One correction to the design.** Its Ωc of 0.2621 (Ωc h² 0.1200) is Planck's lensing column. The cosmology
