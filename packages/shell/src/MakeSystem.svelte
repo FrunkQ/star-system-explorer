@@ -15,7 +15,7 @@
   import FormationReplay from "../../views/system-chart/src/FormationReplay.svelte";
   import { createWorkspace } from "./workspace.svelte.ts";
 
-  let { session, context, onadopted, start = "import" }: { session: ViewSession; context: Omit<ViewContext, "workspace" | "params" | "session">; onadopted?: (systems: { system: string; title: string }[], note: string, state_hash: string) => void; start?: "import" | "generate" } = $props();
+  let { session, context, onadopted, start = "import", view, onview }: { view?: import("../../ui-contract/src/index.ts").ViewChoice; onview?: (c: import("../../ui-contract/src/index.ts").ViewChoice) => void; session: ViewSession; context: Omit<ViewContext, "workspace" | "params" | "session">; onadopted?: (systems: { system: string; title: string }[], note: string, state_hash: string) => void; start?: "import" | "generate" } = $props();
 
   let tab = $state<"import" | "generate">(untrack(() => start));
   let busy = $state(false);
@@ -232,7 +232,7 @@
 
   {#if grown}
     <dialog class="replay-dlg" bind:this={replayDlg} aria-label="How {grownSeed} formed" onclose={() => (replayOpen = false)}>
-      {#if replayOpen}<FormationReplay run={grown} title={`Seed "${grownSeed}"`} onclose={() => (replayOpen = false)} />{/if}
+      {#if replayOpen}<FormationReplay run={grown} title={`Seed "${grownSeed}"`} onclose={() => (replayOpen = false)} {view} {onview} />{/if}
     </dialog>
   {/if}
 

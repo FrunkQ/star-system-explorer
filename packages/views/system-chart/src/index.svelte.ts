@@ -1,11 +1,14 @@
 import { mount, unmount } from "svelte";
 import type { ViewModule } from "../../../ui-contract/src/index.ts";
+import { SYSTEM_CHART_CONTROLS } from "./controls.ts";
 import SystemChart from "./SystemChart.svelte";
 
 export const systemChart: ViewModule = {
   id: "sse.view.system-chart",
   version: "0.1.0",
   tiers: ["canvas"],
+  // Chart is the flat log chart, seen from above; 3D turns (rule 12).
+  controls: SYSTEM_CHART_CONTROLS,
   inputs: [{ event_kinds: ["authored.set"] }],
   params: [
     { name: "zoom", type: "number", default: 1, range: [0.5, 6], meaning: "Starting zoom of the radial scale.", promoted: true },

@@ -37,7 +37,7 @@ try {
   const hash0 = await gm.locator("[data-state-hash]").first().getAttribute("data-state-hash");
   const line = gm.locator(".place");
   assert.equal(await at(gm), "system");
-  assert.deepEqual(await line.locator("[data-place-step]").allInnerTexts(), ["Cosmic web", "Galaxies nearby", "Galaxy"]);
+  assert.deepEqual(await line.locator("[data-place-step]").evaluateAll((b) => b.map((x) => x.title)), ["Up to Cosmic web", "Up to Galaxies nearby", "Up to Galaxy (Esc)"]);
   assert.equal(await line.locator("h1").innerText(), "Kestrel");
 
   // Down to a world from the list beside the name.

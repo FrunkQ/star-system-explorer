@@ -10,7 +10,7 @@
     value,
     onchange,
     slide = false,
-  }: { label: string; options: { value: T; label: string; key?: string; hint?: string }[]; value: T; onchange: (v: T) => void; slide?: boolean } = $props();
+  }: { label: string; options: { value: T; label: string; key?: string; hint?: string; unavailable?: string }[]; value: T; onchange: (v: T) => void; slide?: boolean } = $props();
 
   let frame = $state<HTMLDivElement | null>(null);
   let ink = $state<{ x: number; w: number } | null>(null);
@@ -64,7 +64,9 @@
       type="button"
       aria-pressed={o.value === value}
       aria-keyshortcuts={o.key}
-      title={o.hint ?? (o.key ? `${o.label} (${o.key})` : undefined)}
+      title={o.unavailable ?? o.hint ?? (o.key ? `${o.label} (${o.key})` : undefined)}
+      disabled={!!o.unavailable}
+      data-unavailable={o.unavailable ? "" : undefined}
       onclick={() => onchange(o.value)}>{o.label}</button
     >
   {/each}
@@ -95,7 +97,12 @@
     background: var(--sse-ink);
     color: var(--sse-on-ink);
   }
-  button:not([aria-pressed="true"]):hover {
+  /* An option this view or device cannot do stays in its place, quiet, with the reason as its title. */
+  button:disabled {
+    color: var(--sse-ink-muted);
+    cursor: not-allowed;
+  }
+  button:not([aria-pressed="true"]):not(:disabled):hover {
     background: var(--sse-rule);
   }
   /* Sliding ink: one bar behind the buttons, moved and stretched by transform only. */

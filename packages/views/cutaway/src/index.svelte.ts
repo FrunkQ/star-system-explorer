@@ -1,5 +1,5 @@
 import { mount, unmount } from "svelte";
-import type { ViewModule } from "../../../ui-contract/src/index.ts";
+import { flatChart, type ViewModule } from "../../../ui-contract/src/index.ts";
 import Cutaway from "./Cutaway.svelte";
 
 /**
@@ -12,6 +12,7 @@ export const cutaway: ViewModule = {
   id: "sse.view.cutaway",
   version: "0.1.0",
   tiers: ["text", "canvas"],
+  controls: flatChart("The cutaway is a slice: it is drawn flat"),
   inputs: [{ event_kinds: ["authored.set"] }],
   params: [
     { name: "scale", type: "enum", default: "log", options: ["log", "true"], meaning: "Depth to scale (true) or spread on a log scale so thin layers show (log).", promoted: true },

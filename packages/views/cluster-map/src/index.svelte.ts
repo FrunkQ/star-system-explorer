@@ -1,5 +1,5 @@
 import { mount, unmount } from "svelte";
-import type { ViewModule } from "../../../ui-contract/src/index.ts";
+import { flatChart, type ViewModule } from "../../../ui-contract/src/index.ts";
 import ClusterMap from "./ClusterMap.svelte";
 
 /**
@@ -13,6 +13,7 @@ export const clusterMap: ViewModule = {
   id: "sse.view.cluster-map",
   version: "0.1.0",
   tiers: ["text", "canvas"],
+  controls: flatChart("3D cells come with the galaxy charts' Free view"),
   inputs: [{ event_kinds: [] }],
   params: [
     { name: "min_mass", type: "enum", default: "1e10", options: ["1e10", "1e11", "1e12"], meaning: "Smallest halo shown, solar masses.", promoted: true, group: "content" },

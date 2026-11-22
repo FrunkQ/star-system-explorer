@@ -1,0 +1,10 @@
+import { WHY_WIREFRAME_LATER, type SeenFrom, type ViewControlsSpec } from "../../../ui-contract/src/index.ts";
+
+/**
+ * The Body globe's view controls (rule 12). Chart is the survey relief recipe, True the true-colour recipe (a recipe
+ * chosen by hand in Engine depth still wins). The globe is always round, so 3D is Chart. Seen from: the pole, a
+ * tilted view, the equator, or turned by hand.
+ */
+export const BODY_CONTROLS: ViewControlsSpec = { styles: { chart: true, "3d": "The globe is already 3D: Chart draws it", true: true, wireframe: WHY_WIREFRAME_LATER } };
+/** The latitude each fixed view looks down from. */
+export const GLOBE_LAT: Record<Exclude<SeenFrom, "free">, number> = { above: 90, tilted: 30, edge: 0 };
