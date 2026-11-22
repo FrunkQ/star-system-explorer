@@ -32,25 +32,26 @@ functions of its own, no input or output, and always finishes.
   "config": {
     "name": "How far carbon's colours shift when squeezed",
     "formula": "shift = alpha * density",
-    "inputs":  { "density": { "kind": "atmosphere.photosphere_density", "unit": "g/cm3", "valid": [0, 2] } },
-    "params":  { "alpha": { "value": 0.2, "unit": "eV cm3/g", "range": [0.1, 1.6], "grade": "fitted",
-                            "source": "Blouin et al. 2019, ApJ 878, 63 (DOI to be added from the citations check)" } },
+    "inputs":  { "density": { "kind": "atmosphere.photosphere_density", "unit": "g/cm3", "valid": [0, 2] },
+                 "alpha":   { "kind": "model.swan_shift_per_density", "unit": "eV cm3/g" } },
     "outputs": { "shift": { "kind": "light.band_shift", "unit": "eV" } },
     "source":  { "text": "Kowalski 2010, as cited by Hollands et al. 2026", "doi": "(to be added from the citations check)", "where": "shift proportional to density" },
     "explain": { "curious": "Squeeze the gas and carbon's colours slide towards the blue.",
                  "science": "The C2 electronic transition energy rises in proportion to density." },
-    "examples": [ { "density": 0.15, "shift": 0.03 } ] } }
+    "examples": [ { "density": 0.15, "alpha": 0.2, "shift": 0.03 } ] } }
 ```
 
 Illustrative only: the sources are named as the white dwarf paper cites them, and their DOIs go in through
 the usual citations check, not from memory.
 
-This example uses no constant of nature. One that does (escape speed, say) has an input named for the
-constant, wired on the flow from a Look up block; nothing about the constant is written in the Equation.
+On the flow this block has two lines coming in. `density` is a dynamic value from the atmosphere block.
+`alpha` comes from a Model number block beside it, which carries 0.2, its unit, its range, "fitted" and its
+source. A formula that used a constant of nature (escape speed, say) would have a third line, from a Look up
+block. Nothing is written inside the Equation but the formula.
 
 ## 3. The language
 
-- Names: the block's inputs and parameters, and nothing else.
+- Names: the block's inputs, and nothing else. Every letter is an input (section 4).
 - Operators: `+ - * / ^`, brackets, unary minus.
 - Functions: `exp ln log10 sqrt abs min max clamp sin cos tan atan2`.
 - A choice: `if <condition> then a else b`, with the condition written in the existing condition language.
@@ -63,25 +64,34 @@ constant, wired on the flow from a Look up block; nothing about the constant is 
 - Not in the language: loops, recursion, user-defined functions, reading the world, random draws. Iteration
   stays with Solve nodes; heavy physics stays with tables and Big Blocks.
 
-## 4. Numbers in a formula
+## 4. Every letter has a line from a source (Alex, 22 Nov)
 
-- A constant of nature or a property of a substance never appears inside an Equation, as a number or as a
-  hidden reference. It arrives on a **visible wire from a Look up block** (`sse.reference.lookup`) that sits
-  on the flow beside it (Alex, 22 Nov: "constants called by a box into this box"). A reader sees a block
-  named, say, "The gravitational constant (data sheet)" with a wire into "Speed needed to escape". The
-  Equation has an input for it like any other input. So the "no typed constants" check holds for packs as it
-  does for code, one Look up can feed several Equations, and a what-if that changes G shows on the flow
-  exactly where it enters and reaches every Equation by itself.
-- A number that belongs to the model (a fitted slope, an exponent from a paper) is a **parameter**: named,
-  with a unit, a range, a source and a grade (`derived`, `measured`, `fitted`, `assumed`). It shows as an
-  editable control like any other parameter. `fitted` and `assumed` parameters are listed automatically in
-  the pack's fudge list (ND6).
+Alex: "constants called by a box into this box", and "every letter should have a line from a source, dynamic
+or a reference." So an Equation holds a formula and nothing else. Every symbol in it is an input, and every
+input must have a visible wire on the flow from one of three kinds of source:
+
+| Source | What it is | Example |
+|---|---|---|
+| **Dynamic** | a value another block worked out for this world, now | density from the atmosphere block |
+| **Reference** | a row of the data sheet, through a Look up block (`sse.reference.lookup`) | the gravitational constant; the molar mass of methane |
+| **Model number** | a number that belongs to the model, not to nature (a fitted slope, an exponent from a paper), in its own small block on the flow: value, unit, allowed range, source with DOI or address, and a grade (`derived`, `measured`, `fitted`, `assumed`) | the 0.2 eV per g/cm³ of the Swan band shift |
+
+- A symbol with no wire is refused at load, naming the letter. There are no defaults hidden in a block.
+- Nothing about a constant or a model number is written inside the Equation, as a value or as a hidden
+  reference. So the "no typed constants" check holds for packs as it does for code, one source block can feed
+  several Equations, and a reader can follow any letter back along its line to where it came from.
+- A what-if that changes G shows on the flow exactly where it enters and reaches every Equation by itself.
+- A Model number is the editable control: the GM or Orac changes it there, through a change request, and
+  every Equation it feeds follows. `fitted` and `assumed` ones are listed automatically in the pack's fudge
+  list (ND6). They stay off the data sheet, which is for nature.
+- "Why?" on an Equation shows each letter with its value now and the name of the block its line comes from.
 - Bare numbers allowed in the text: small whole numbers and their ratios (2, 4, 1/2, 3/2), because they are
-  part of the mathematics. Anything else is refused at load with "make this a parameter or look it up".
+  part of the mathematics. Anything else is refused at load with "give this letter a source".
 
 ## 5. Units
 
-Every input, parameter and output declares a unit. On load the kernel works the dimensions through the
+Every input and output declares a unit, and the kernel checks that the block at the other end of each wire
+gives that unit. On load the kernel works the dimensions through the
 formula and refuses, in words, what does not agree: adding a length to a time, an `exp` or `ln` of something
 that is not a pure number, a power with a dimensioned exponent, an output whose dimension is not the declared
 one. Values are converted to SI on the way in and computed in SI. This check is the main protection against
@@ -110,8 +120,8 @@ a paper being transcribed wrongly, by a person or by Orac.
 - On a flow it is a block like any other. Its face shows the formula, typeset.
 - "Why?" shows the formula, then the same formula with this world's numbers in place, then the source.
   Curious shows the sentence; Science the formula; Engine the text, the canonical form and the expansion.
-- Editing the text checks as you type (names, units, range) and goes through a change request, like a
-  parameter edit. Orac drafts one inside a box through the box check it already has; its catalogue gains the
+- Editing the text checks as you type (names, units, range) and goes through a change request, like any
+  other edit. Orac drafts one inside a box through the box check it already has; its catalogue gains the
   language in one entry.
 - Cost: at most 64 operations per Equation (cost class trivial); over a list, at most the existing list limit
   of 4096 entries (light). Larger is refused at load: split it into a box.
@@ -159,8 +169,8 @@ no flow or save breaks. Owner: Build kernel resolve and rules, with each physics
 
 ## 9. Questions for Alex
 
-1. **The bare-number rule in section 4** (only small whole numbers and their ratios; everything else is a
-   parameter or a look-up)? Recommended: yes. It is stricter than a spreadsheet, and it is what keeps a
+1. **The bare-number rule in section 4** (only small whole numbers and their ratios; everything else is a letter
+   with a source)? Recommended: yes. It is stricter than a spreadsheet, and it is what keeps a
    shared pack honest.
 2. **Move existing Rust atoms over to Equations in the base packs, gradually**, each behind a test that the
    bits do not change? Recommended: yes, later, as a shrinking list like the typed-constants ledger; not part
@@ -177,6 +187,8 @@ no flow or save breaks. Owner: Build kernel resolve and rules, with each physics
 - An Equation and its expansion into blocks give identical results and identical "Why?" evidence.
 - Orac drafts a box containing an Equation from a sentence; an invalid one never reaches Accept.
 - A what-if that changes a looked-up constant changes the Equation's result with no edit to the pack.
+- An Equation with any letter that has no wire from a dynamic value, a Look up or a Model number is refused
+  at load, naming the letter.
 - An Equation that names a data sheet row inside itself, or has a constant's value typed in, is refused at
   load; every constant it uses shows as a wire from a Look up block.
 - ND3b: each moved family passes its timing check (section 8B) as well as its unchanged-results check.
