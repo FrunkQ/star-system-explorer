@@ -6,8 +6,8 @@ export default {
   trailers: ["intro", "features"],
   async run(page, d) {
     await d.caption('The cosmic web', 'Gravity draws matter into filaments, from the first billion years to today.');
-    await d.click(page.locator('.rail [data-go="explore"]').first());
-    await d.click(page.locator("[data-section-tab=foam]"));
+    // Straight up the place line (U24) to its top step.
+    await d.click(page.locator('.place [data-place-step="web"]').first());
     const foam = page.locator(".foam");
     await foam.locator("[data-lede]").waitFor({ timeout: 60000 });
     await foam.locator("[data-time]").fill("1");
