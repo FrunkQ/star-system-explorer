@@ -71,7 +71,7 @@ try {
     // Desktop, keyboard only.
     const page = await browser.newPage({ viewport: { width: 1440, height: 900 } });
     page.on("pageerror", (e) => errors.push(e.message));
-    await page.goto(url);
+    await page.goto(url + "#chart");
     await page.waitForSelector("[data-state-hash]:not([data-state-hash=''])", { timeout: 20000 });
     await desk(page, "Build");
     // The campaign opens with its recorded player-facing facts, inked at year 0; count edits after them.
@@ -249,7 +249,7 @@ try {
         await ctx.addInitScript((t) => localStorage.setItem("sse4.theme", t), theme);
         const p = await ctx.newPage();
         p.on("pageerror", (e) => errors.push(e.message));
-        await p.goto(url);
+        await p.goto(url + "#chart");
         await p.waitForSelector("[data-state-hash]:not([data-state-hash=''])", { timeout: 20000 });
         await desk(p, "Build");
         await p.locator("[role=button][aria-label^='Tarn']").click();

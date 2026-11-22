@@ -15,9 +15,9 @@
   import FormationReplay from "../../views/system-chart/src/FormationReplay.svelte";
   import { createWorkspace } from "./workspace.svelte.ts";
 
-  let { session, context, onadopted }: { session: ViewSession; context: Omit<ViewContext, "workspace" | "params" | "session">; onadopted?: (systems: { system: string; title: string }[], note: string, state_hash: string) => void } = $props();
+  let { session, context, onadopted, start = "import" }: { session: ViewSession; context: Omit<ViewContext, "workspace" | "params" | "session">; onadopted?: (systems: { system: string; title: string }[], note: string, state_hash: string) => void; start?: "import" | "generate" } = $props();
 
-  let tab = $state<"import" | "generate">("import");
+  let tab = $state<"import" | "generate">(untrack(() => start));
   let busy = $state(false);
   let problem = $state<string | null>(null);
 

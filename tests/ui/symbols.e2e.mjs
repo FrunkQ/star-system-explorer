@@ -32,7 +32,7 @@ try {
     const errors = [];
     const page = await browser.newPage({ viewport: { width: 1440, height: 1000 } });
     page.on("pageerror", (e) => errors.push(e.message));
-    await page.goto(base);
+    await page.goto(base + "#chart");
     await page.waitForSelector("[data-state-hash]:not([data-state-hash=''])");
     const hash = await page.getAttribute("[data-state-hash]", "data-state-hash");
     const chartMark = (body) => page.locator(`.area-chart [role=button][aria-label^='${body}'] [data-mark]`).getAttribute("data-mark");
@@ -97,7 +97,7 @@ try {
     // Phone width: no sideways scroll.
     const phone = await browser.newPage({ viewport: { width: 390, height: 844 } });
     phone.on("pageerror", (e) => errors.push(e.message));
-    await phone.goto(base);
+    await phone.goto(base + "#chart");
     await phone.waitForSelector("[data-state-hash]:not([data-state-hash=''])");
     await go(phone, "symbols");
     const pw = await phone.evaluate(() => document.scrollingElement.scrollWidth);
