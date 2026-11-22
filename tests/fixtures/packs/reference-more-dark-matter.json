@@ -1,0 +1,33 @@
+{
+ "format": "sse.pack/1",
+ "id": "test.more-dark-matter",
+ "version": "0.1.0",
+ "kind": [
+  "physics"
+ ],
+ "kernel_range": "^0.1",
+ "licence": "Apache-2.0",
+ "provides": {
+  "reference": {
+   "about": "DM1 fixture: a universe with twice the dark matter (fictional), for the reach checks.",
+   "sources": [
+    {
+     "id": "what-if-dm",
+     "text": "Fictional: twice Planck 2018's dark matter, for teaching"
+    }
+   ],
+   "constants": [
+    {
+     "id": "Omega_c",
+     "value": {
+      "v": 0.5214456,
+      "unit": "1",
+      "src": "what-if-dm",
+      "check": "authored",
+      "replaces": "sse.base-reference"
+     }
+    }
+   ]
+  }
+ }
+}

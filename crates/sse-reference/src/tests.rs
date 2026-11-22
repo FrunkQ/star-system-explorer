@@ -400,3 +400,67 @@ fn the_shipped_ice_curves_give_known_frost_points() {
     let l = crate::sublimation_latent_j_mol(&ph("n2"), 40.0).unwrap();
     assert!((6_000.0..7_600.0).contains(&l), "{l}");
 }
+
+/// DM1: a row mark is only "theoretical", it needs its line on what would
+/// change the picture, a group must be one the page has, and a group's
+/// notes cite known sources.
+#[test]
+fn the_theoretical_mark_and_page_groups_are_checked() {
+    let with = |extra: J, groups: J| {
+        let mut g = constants(extra);
+        g["groups"] = groups;
+        Reference::from_json(&[("base".into(), g)])
+    };
+    let groups = json!([{"id": "nature", "name": "Constants of nature"}, {"id": "cosmos", "name": "Cosmos",
+        "notes": [{"text": "particle route", "src": "codata-2018"}]}]);
+    let dm = |mark: J, note: J| {
+        let mut row = json!({"id": "Omega_c", "name": "dark matter", "group": "cosmos",
+            "value": {"v": 0.26, "unit": "1", "src": "codata-2018"}});
+        if !mark.is_null() {
+            row["mark"] = mark;
+        }
+        if !note.is_null() {
+            row["mark_note"] = note;
+        }
+        json!([row])
+    };
+    let r = with(
+        dm(
+            json!("theoretical"),
+            json!("measured by gravity; no particle seen"),
+        ),
+        groups.clone(),
+    )
+    .unwrap();
+    assert_eq!(r.groups["cosmos"]["name"], "Cosmos");
+    assert!(r.listing(None)["groups"]["cosmos"].is_object());
+    let e = with(dm(json!("theoretical"), J::Null), groups.clone()).unwrap_err();
+    assert!(e[0].contains("mark_note"), "{e:?}");
+    let e = with(dm(json!("fictional"), J::Null), groups.clone()).unwrap_err();
+    assert!(e[0].contains("not a row mark"), "{e:?}");
+    let mut odd = dm(J::Null, J::Null);
+    odd[0]["group"] = json!("astrology");
+    let e = with(odd, groups.clone()).unwrap_err();
+    assert!(e[0].contains("astrology"), "{e:?}");
+    let mut bad = groups;
+    bad[1]["notes"][0]["src"] = json!("nobody");
+    let e = with(dm(J::Null, J::Null), bad).unwrap_err();
+    assert!(e[0].contains("nobody"), "{e:?}");
+}
+
+/// DM1: a derived row rests on every row its formula reaches, and an edit
+/// deep down switches every typed copy above it to the worked-out value.
+#[test]
+fn an_edit_reaches_through_derived_rows() {
+    let rows = json!([
+        {"id": "a", "name": "a", "value": {"v": 1.0, "unit": "1", "src": "codata-2018"}},
+        {"id": "b", "name": "b", "derived_from": "a + 1", "value": {"v": 2.0, "unit": "1", "src": "codata-2018"}},
+        {"id": "d", "name": "d", "derived_from": "2 b", "value": {"v": 4.0, "unit": "1", "src": "codata-2018"}}
+    ]);
+    let r = Reference::from_json(&[("base".into(), constants(rows.clone()))]).unwrap();
+    assert!(r.rests_on("d", "a") && r.rests_on("b", "a") && !r.rests_on("a", "d"));
+    let edit = json!({"constants": [{"id": "a", "value": {"v": 2.0, "unit": "1", "src": "codata-2018", "replaces": "base"}}]});
+    let r = Reference::from_json(&[("base".into(), constants(rows)), ("what-if".into(), edit)])
+        .unwrap();
+    assert_eq!(r.constant("d"), Some(6.0));
+}

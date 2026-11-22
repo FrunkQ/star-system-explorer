@@ -13,6 +13,7 @@
  * Pure: no clock, no locale. The same definition gives the same date on
  * every device.
  */
+import { constant } from "./sheet.ts";
 
 export interface Calendar {
   name: string;
@@ -65,7 +66,7 @@ export interface CalendarDate {
   second: number;
 }
 
-const DAY = 86_400;
+const DAY = constant("day");
 
 export function isLong(cal: Calendar, year: number): boolean {
   const l = cal.leap;

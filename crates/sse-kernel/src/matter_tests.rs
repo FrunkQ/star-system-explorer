@@ -142,7 +142,10 @@ fn the_reach_report_lists_every_block_once() {
             );
         }
     }
-    let all: std::collections::BTreeSet<String> = k.atoms.decls().map(|d| d.id.clone()).collect();
+    let mut all: std::collections::BTreeSet<String> =
+        k.atoms.decls().map(|d| d.id.clone()).collect();
+    // DM1: the cosmos chain's stages are listed beside the atoms.
+    all.extend(sse_atoms::reach::STAGES.iter().map(|(s, _)| s.to_string()));
     assert_eq!(seen, all);
     for (a, _) in sse_atoms::reach::DECLARED {
         assert!(all.contains(*a), "declared block {a} is not an atom");
@@ -410,4 +413,137 @@ fn a_look_up_block_with_no_row_or_no_sheet_is_refused() {
     );
     assert_eq!(r["type"], "stack_rejected", "{r}");
     assert!(r.to_string().contains("master data sheet"), "{r}");
+}
+
+/// DM1: the Cosmos group on the sheet. Unedited, the cosmos chain gives
+/// exactly what it gave before the parameters moved to the sheet; with twice
+/// the dark matter it follows (expansion, ages, epochs), the reach report
+/// says so, and nothing leaks into the next call.
+#[test]
+fn more_dark_matter_follows_through_the_cosmos_chain() {
+    let chart = |packs: Vec<serde_json::Value>| {
+        let mut k = crate::Kernel::new();
+        if !packs.is_empty() {
+            let r = send(
+                &mut k,
+                serde_json::json!({"op": "load_stack", "packs": packs}),
+            );
+            assert_eq!(r["type"], "stack_loaded", "{r}");
+        }
+        let r = send(
+            &mut k,
+            serde_json::json!({"op": "open_universe", "id": "g3", "seed": "g3"}),
+        );
+        assert_eq!(r["type"], "universe_opened", "{r}");
+        let c = send(
+            &mut k,
+            serde_json::json!({"op": "galaxy_chart", "halo": "milky-way-like"}),
+        );
+        assert_eq!(c["type"], "galaxy_charted", "{c}");
+        (k, c)
+    };
+    let base = || {
+        vec![
+            pack("tests/fixtures/packs/base-physics.json"),
+            pack("packs/base-reference/pack.json"),
+        ]
+    };
+    let (_, none) = chart(vec![]);
+    let (mut real, sheet) = chart(base());
+    assert_eq!(none, sheet, "an unedited sheet changes nothing");
+    let mut more = base();
+    more.push(pack("tests/fixtures/packs/reference-more-dark-matter.json"));
+    let (mut k, dark) = chart(more);
+    assert_ne!(dark["chart"]["epochs"], sheet["chart"]["epochs"]);
+    assert_ne!(dark["chart"]["history"], sheet["chart"]["history"]);
+
+    let r = send(
+        &mut k,
+        serde_json::json!({"op": "read_reach", "constant": "Omega_c"}),
+    );
+    assert_eq!(r["type"], "reach", "{r}");
+    assert_eq!(r["real"], 0.2607228);
+    assert_eq!(r["in_force"], 0.5214456);
+    let find = |g: &str, b: &str| {
+        r[g].as_array()
+            .unwrap()
+            .iter()
+            .find(|x| x["block"] == b)
+            .cloned()
+            .unwrap_or_else(|| panic!("{b} not in {g}: {r}"))
+    };
+    // The expansion reads Omega_m, which rests on Omega_c.
+    assert_eq!(find("follows", "sse.cosmos.expansion")["uses_it"], true);
+    assert_eq!(find("follows", "sse.cosmos.baryon_share")["uses_it"], true);
+    assert!(find("estimated", "sse.cosmos.major_mergers")["law"]
+        .as_str()
+        .unwrap()
+        .contains("Fakhouri"));
+    find("cannot_follow", "sse.cosmos.galaxy_regulator");
+    // The worked-out rows move with it on the sheet.
+    let m = send(
+        &mut k,
+        serde_json::json!({"op": "read_matter", "table": "constants", "id": "Omega_m"}),
+    );
+    let om = m["value"]["worked"]["value"]["v"].as_f64().unwrap();
+    assert!(
+        (om - (0.04897 + 0.5214456 + 0.0014072)).abs() < 1e-12,
+        "{m}"
+    );
+    // The real kernel still reads Planck's dark matter, and the handle is back.
+    let r = send(
+        &mut real,
+        serde_json::json!({"op": "read_reach", "constant": "Omega_c"}),
+    );
+    assert_eq!(r["in_force"], r["real"], "{r}");
+    assert_eq!(
+        sse_core::constants::cosmos(),
+        sse_core::constants::Cosmos::REAL
+    );
+}
+
+/// DM1: dark matter and dark energy carry the "theoretical" mark with the
+/// line that says what would change the picture, and the Cosmos page's
+/// notes (the particle route) come with the listing.
+#[test]
+fn dark_matter_is_marked_theoretical_on_the_sheet() {
+    let mut k = crate::Kernel::new();
+    let r = send(
+        &mut k,
+        serde_json::json!({"op": "load_stack", "packs": [
+            pack("tests/fixtures/packs/base-physics.json"), pack("packs/base-reference/pack.json")]}),
+    );
+    assert_eq!(r["type"], "stack_loaded", "{r}");
+    for id in [
+        "Omega_c",
+        "Omega_Lambda",
+        "w0",
+        "wa",
+        "m_wdm",
+        "sigma_dm",
+        "m_fdm",
+    ] {
+        let m = send(
+            &mut k,
+            serde_json::json!({"op": "read_matter", "table": "constants", "id": id}),
+        );
+        let row = &m["value"]["row"];
+        assert_eq!(row["mark"], "theoretical", "{id}: {m}");
+        assert!(row["mark_note"].as_str().unwrap().len() > 40, "{id}");
+        assert_eq!(row["group"], "cosmos");
+    }
+    for id in ["H0", "Omega_b", "sigma8", "T_cmb"] {
+        let m = send(
+            &mut k,
+            serde_json::json!({"op": "read_matter", "table": "constants", "id": id}),
+        );
+        assert!(m["value"]["row"]["mark"].is_null(), "{id} is measured: {m}");
+    }
+    let l = send(&mut k, serde_json::json!({"op": "read_matter"}));
+    let cosmos = &l["value"]["groups"]["cosmos"];
+    assert_eq!(cosmos["name"], "Cosmos", "{l}");
+    assert!(cosmos["notes"][0]["text"]
+        .as_str()
+        .unwrap()
+        .contains("particle route"));
 }

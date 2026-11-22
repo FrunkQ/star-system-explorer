@@ -4,8 +4,9 @@
 // farthest they can be when both circle the same parent, and light time.
 // Presentation arithmetic on the scene's numbers only; no physics.
 import { KM_PER_AU, type SceneSubject, type SystemScene } from "./scene.ts";
+import { constant } from "./sheet.ts";
 
-export const C_KM_S = 299_792.458;
+export const C_KM_S = constant("c") / 1000;
 
 /** A body's position in AU relative to the system's root, summing its parents' orbits. */
 function position(scene: SystemScene, s: SceneSubject): [number, number] {
