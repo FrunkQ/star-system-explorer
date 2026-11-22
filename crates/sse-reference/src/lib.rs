@@ -107,6 +107,9 @@ pub struct Reference {
     /// Where elements were made (design 8.1): source id to its name in the
     /// three wordings. Element rows point at these from `origin.shares`.
     pub origin_legend: BTreeMap<String, Map<String, J>>,
+    /// The Constants page's groups (DM1): name, about and cited notes, by
+    /// group id (`nature`, `convention`, `factor`, `cosmos`).
+    pub groups: BTreeMap<String, Map<String, J>>,
     /// The pack each row came from (`table/id`), and the packs that changed it.
     pub origin: BTreeMap<String, Vec<String>>,
     /// Each substance's phase table, decoded at load (MP17).
@@ -185,10 +188,11 @@ impl Reference {
                 }
                 let known = TABLES.contains(&table.as_str())
                     || table == "sources"
-                    || table == "origin_legend";
+                    || table == "origin_legend"
+                    || table == "groups";
                 if !known {
                     problems.push(format!(
-                        "{pack}: reference table {table} is not one of {}, sources, origin_legend",
+                        "{pack}: reference table {table} is not one of {}, sources, origin_legend, groups",
                         TABLES.join(", ")
                     ));
                     continue;
@@ -208,6 +212,10 @@ impl Reference {
                     };
                     if table == "sources" {
                         r.sources.insert(id.to_string(), row.clone());
+                        continue;
+                    }
+                    if table == "groups" {
+                        r.groups.insert(id.to_string(), row.clone());
                         continue;
                     }
                     if table == "origin_legend" {
@@ -325,15 +333,58 @@ impl Reference {
         }
     }
 
+    /// Whether constant `id` is `on` or is worked out from it, at any depth
+    /// (DM1: Omega_m rests on Omega_c, so a block reading Omega_m uses a
+    /// changed dark matter amount).
+    pub fn rests_on(&self, id: &str, on: &str) -> bool {
+        self.rests_on_at(id, on, 0)
+    }
+
+    fn rests_on_at(&self, id: &str, on: &str, depth: u32) -> bool {
+        if id == on {
+            return true;
+        }
+        if depth > 16 {
+            return false;
+        }
+        self.row("constants", id)
+            .and_then(|r| r.get("derived_from"))
+            .and_then(J::as_str)
+            .is_some_and(|f| {
+                expr::names(f)
+                    .iter()
+                    .any(|n| self.rests_on_at(n, on, depth + 1))
+            })
+    }
+
     /// Whether a derived constant and every input it names come from one
     /// pack, so its typed copy stands for it.
+    /// The check reaches through derived inputs (DM1: Omega_Lambda rests on
+    /// Omega_m, which rests on an edited Omega_c).
     fn one_pack(&self, id: &str, f: &str) -> bool {
+        self.one_pack_at(id, f, 0)
+    }
+
+    fn one_pack_at(&self, id: &str, f: &str, depth: u32) -> bool {
+        if depth > 16 {
+            return false;
+        }
         std::iter::once(id.to_string())
             .chain(expr::names(f))
             .all(|n| {
-                self.origin
+                let unedited = self
+                    .origin
                     .get(&format!("constants/{n}"))
-                    .is_none_or(|o| o.len() == 1)
+                    .is_none_or(|o| o.len() == 1);
+                let inner = match self
+                    .row("constants", &n)
+                    .and_then(|r| r.get("derived_from"))
+                    .and_then(J::as_str)
+                {
+                    Some(g) if n != id => self.one_pack_at(&n, g, depth + 1),
+                    _ => true,
+                };
+                unedited && inner
             })
     }
 
@@ -517,6 +568,52 @@ impl Reference {
                     p.push(format!(
                         "constant {id}: typed as {typed:e} but {f} gives {worked:e}"
                     ));
+                }
+            }
+        }
+        // DM1: a constant's group is one the page knows, a mark is the one
+        // row mark there is ("theoretical", with the line saying what would
+        // change the picture), and a group's notes cite known sources.
+        for (id, row) in self.tables.get("constants").unwrap_or(&empty_c) {
+            if let Some(g) = row.get("group").and_then(J::as_str) {
+                if !self.groups.is_empty() && !self.groups.contains_key(g) {
+                    p.push(format!(
+                        "constant {id}: group {g} is not one of the sheet's groups"
+                    ));
+                }
+            }
+            match row.get("mark").and_then(J::as_str) {
+                None => {}
+                Some("theoretical") => {
+                    if row.get("mark_note").and_then(J::as_str).is_none_or(str::is_empty) {
+                        p.push(format!(
+                            "constant {id}: a theoretical row needs a mark_note saying what would change the picture"
+                        ));
+                    }
+                }
+                Some(m) => p.push(format!(
+                    "constant {id}: mark {m} is not a row mark (only \"theoretical\"; authored and fictional come from the packs)"
+                )),
+            }
+        }
+        for (g, row) in &self.groups {
+            for (i, n) in row
+                .get("notes")
+                .and_then(J::as_array)
+                .into_iter()
+                .flatten()
+                .enumerate()
+            {
+                let cited = n
+                    .get("src")
+                    .into_iter()
+                    .chain(n.get("also").and_then(J::as_array).into_iter().flatten());
+                for s in cited.filter_map(J::as_str) {
+                    if !self.sources.contains_key(s) {
+                        p.push(format!(
+                            "group {g}: note {i} cites source {s}, which is not in reference.sources"
+                        ));
+                    }
                 }
             }
         }
@@ -724,6 +821,10 @@ impl Reference {
         }
         // The legend is seven short rows, so it comes whole: the Reference
         // screen colours elements by it.
+        // The page groups are few and short, so they come whole (DM1).
+        if table.is_none_or(|x| x == "groups") {
+            out.insert("groups".into(), serde_json::json!(self.groups));
+        }
         if table.is_none_or(|x| x == "origin_legend") {
             out.insert(
                 "origin_legend".into(),

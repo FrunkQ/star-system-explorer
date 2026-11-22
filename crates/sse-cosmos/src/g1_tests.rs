@@ -282,3 +282,26 @@ fn cosmology_atoms() {
 fn g1_golden() {
     crate::golden::check("cosmology.json", &crate::scenario::cosmology_golden());
 }
+
+/// DM1: the measured parameters come from the sheet's Cosmos group through
+/// the handle; a pack that still sets one is told where it went, and an
+/// edited handle reaches the cosmology.
+#[test]
+fn cosmology_reads_the_cosmos_group() {
+    use crate::scenario::{base_cosmology_pack, CosmologyPack};
+    let cp = CosmologyPack::from_packs(&[base_cosmology_pack()]).unwrap();
+    assert_eq!(cp.params, Params::default());
+    let mut j: serde_json::Value =
+        serde_json::from_str(include_str!("../../../packs/base-cosmology/pack.json")).unwrap();
+    j["provides"]["other"]["cosmology"]["params"]["omega_m"] = serde_json::json!(0.3);
+    let old = sse_pack::PackManifest::from_json(&j.to_string()).unwrap();
+    let e = CosmologyPack::from_packs(&[old]).unwrap_err();
+    assert!(e.contains("Omega_m") && e.contains("Cosmos group"), "{e}");
+    let mut c = sse_core::constants::Constants::REAL;
+    c.cosmos.omega_m *= 2.0;
+    let edited = sse_core::constants::with(c, || {
+        CosmologyPack::from_packs(&[base_cosmology_pack()]).unwrap()
+    });
+    assert_eq!(edited.params.omega_m, 0.6222);
+    assert!(Cosmology::new(edited.params).age_gyr() < planck().age_gyr());
+}

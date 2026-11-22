@@ -79,6 +79,56 @@ pub const DECLARED: &[(&str, Reach)] = &[
     ("sse.reference.lookup", Reach::Follows(&[])),
 ];
 
+/// The cosmos chain's stages (DM1, galaxy histories design section 3.3).
+/// They are not atoms: each is a step of `sse-cosmos` that reads the
+/// sheet's Cosmos group through the handle (`sse_core::constants::cosmos`)
+/// whenever the cosmology settings are read. The reach report lists them
+/// beside the atoms, each in exactly one group.
+pub const STAGES: &[(&str, Option<Reach>)] = &[
+    (
+        "sse.cosmos.expansion",
+        Some(Reach::Follows(&["H0", "Omega_m", "T_cmb", "N_eff"])),
+    ),
+    ("sse.cosmos.growth", Some(Reach::Follows(&["Omega_m"]))),
+    (
+        "sse.cosmos.power_spectrum",
+        Some(Reach::Follows(&[
+            "H0", "Omega_m", "Omega_b", "n_s", "sigma8", "T_cmb",
+        ])),
+    ),
+    ("sse.cosmos.web", Some(Reach::Follows(&["Omega_m", "sigma8"]))),
+    ("sse.cosmos.epochs", Some(Reach::Follows(&["H0", "Omega_m", "Omega_b"]))),
+    ("sse.cosmos.halo_counts", Some(Reach::Follows(&["Omega_m", "sigma8"]))),
+    ("sse.cosmos.halo_growth", Some(Reach::Follows(&["Omega_m"]))),
+    ("sse.cosmos.baryon_share", Some(Reach::Follows(&["Omega_b", "Omega_m"]))),
+    (
+        "sse.cosmos.major_mergers",
+        Some(Reach::Estimated {
+            reads: &["Omega_m", "sigma8"],
+            law: "merger rate fitted in our universe, used unchanged on the changed halo counts (Fakhouri, Ma and Boylan-Kolchin 2010, MNRAS 406, 2267, arXiv:1001.2304)",
+        }),
+    ),
+    (
+        "sse.cosmos.subhaloes",
+        Some(Reach::Estimated {
+            reads: &["Omega_m", "sigma8"],
+            law: "sub-halo counts and sinking times fitted in our universe, used unchanged (Giocoli et al. 2008; Boylan-Kolchin et al. 2008)",
+        }),
+    ),
+    // Tuned to the observed galaxy population: winds, depletion times, the
+    // hot-halo cut, yields. They keep our universe's numbers.
+    ("sse.cosmos.galaxy_regulator", None),
+    ("sse.cosmos.ring_yields", None),
+];
+
+/// A stage's reach: `None` is "cannot follow".
+pub fn of_stage(stage: &str) -> Option<Reach> {
+    STAGES
+        .iter()
+        .find(|(s, _)| *s == stage)
+        .and_then(|(_, r)| *r)
+}
+
 /// A block's reach: `None` is "cannot follow".
 pub fn of(atom: &str) -> Option<Reach> {
     DECLARED.iter().find(|(a, _)| *a == atom).map(|(_, r)| *r)

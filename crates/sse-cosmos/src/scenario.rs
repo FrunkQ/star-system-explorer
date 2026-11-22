@@ -80,6 +80,17 @@ pub struct CosmologyPack {
     pub origin: crate::origin::OriginParams,
 }
 
+/// The pack fields that moved to the sheet, with the sheet's id for each.
+const SHEET_FIELDS: [(&str, &str); 7] = [
+    ("h0", "H0"),
+    ("omega_m", "Omega_m"),
+    ("omega_b", "Omega_b"),
+    ("sigma8", "sigma8"),
+    ("n_s", "n_s"),
+    ("t_cmb", "T_cmb"),
+    ("n_eff", "N_eff"),
+];
+
 impl CosmologyPack {
     pub fn from_packs(stack: &[PackManifest]) -> Result<Self, String> {
         let v = stack
@@ -87,9 +98,35 @@ impl CosmologyPack {
             .rev()
             .find_map(|p| p.provides.other.get("cosmology"))
             .ok_or("no pack provides cosmology")?;
-        serde_json::to_value(v)
-            .and_then(serde_json::from_value)
-            .map_err(|e| format!("cosmology settings: {e}"))
+        let mut json = serde_json::to_value(v).map_err(|e| format!("cosmology settings: {e}"))?;
+        // DM1: the measured parameters live on the master data sheet's
+        // Cosmos group and arrive through the constants handle. A pack that
+        // still sets one is told where it went.
+        let mut now_gyr = 13.8;
+        if let Some(p) = json.get_mut("params").and_then(|p| p.as_object_mut()) {
+            let moved: Vec<&str> = SHEET_FIELDS
+                .iter()
+                .filter(|(k, _)| p.contains_key(*k))
+                .map(|(_, id)| *id)
+                .collect();
+            if !moved.is_empty() {
+                return Err(format!(
+                    "cosmology settings: {} moved to the master data sheet's Cosmos group (provides.reference.constants); set them there",
+                    moved.join(", ")
+                ));
+            }
+            if let Some(n) = p.get("now_gyr").and_then(|n| n.as_f64()) {
+                now_gyr = n;
+            }
+        }
+        if let Some(o) = json.as_object_mut() {
+            o.insert(
+                "params".into(),
+                serde_json::to_value(Params::from_cosmos(&sse_core::constants::cosmos(), now_gyr))
+                    .map_err(|e| format!("cosmology settings: {e}"))?,
+            );
+        }
+        serde_json::from_value(json).map_err(|e| format!("cosmology settings: {e}"))
     }
 }
 

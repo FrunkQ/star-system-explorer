@@ -12,13 +12,6 @@
    "about": "Cosmology and the cosmic web (G1; galaxy design sections 2 and 3): the universe's parameters, how the web's noise octaves are laid out, and what sets each epoch. A fictional universe pack may change any of them; everything downstream follows.",
    "cosmology": {
     "params": {
-     "h0": 67.66,
-     "omega_m": 0.3111,
-     "omega_b": 0.04897,
-     "sigma8": 0.8102,
-     "n_s": 0.9665,
-     "t_cmb": 2.7255,
-     "n_eff": 3.046,
      "now_gyr": 13.8
     },
     "web": {
@@ -61,7 +54,7 @@
     },
     "sources": {
      "haloes": "Sheth and Tormen 1999 mass function and bias; growth M(z) = M0 (1+z)^alpha exp(beta z) (McBride et al. 2009) with alpha, beta from Correa et al. 2015 (paper I, MNRAS 450, 1514, doi:10.1093/mnras/stv689, eqs. 14, 15 and 20 to 23); spin Bullock et al. 2001; major mergers Fakhouri, Ma and Boylan-Kolchin 2010; formation scatter and environment shift are rough (sketch)",
-     "params": "Planck Collaboration 2020, Planck 2018 results VI, table 2 (TT,TE,EE+lowE+lensing+BAO); T_CMB from Fixsen 2009; N_eff 3.046 (Mangano et al. 2005)",
+     "params": "The measured parameters (H0, Omega_b, Omega_c, Omega_m, sigma8, n_s, T_cmb, N_eff and the dark energy rows) moved to the master data sheet's Cosmos group in DM1 (packs/base-reference, Planck 2018 VI table 2); now_gyr is a model setting",
      "web": "galaxy design section 3; T-web threshold 0 as in Hahn et al. 2007",
      "first_stars": "3-sigma peaks of 1e6 solar-mass minihaloes (Tegmark et al. 1997; Barkana and Loeb 2001)",
      "cooling_mass_z9": "virial temperature 1e4 K at z = 9 for mean molecular weight 0.6 (Barkana and Loeb 2001 eq. 26)",
