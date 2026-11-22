@@ -1,5 +1,6 @@
 import { mount, unmount } from "svelte";
 import type { ViewModule } from "../../../ui-contract/src/index.ts";
+import { BODY_CONTROLS } from "./controls.ts";
 import { cutaway } from "../../cutaway/src/index.ts";
 import { SHIPPED_RECIPES } from "../../../renderer/src/recipes.ts";
 import Body from "./Body.svelte";
@@ -16,6 +17,7 @@ export const body: ViewModule = {
   id: "sse.view.body",
   version: "0.1.0",
   tiers: ["text", "canvas", "gpu-basic"],
+  controls: BODY_CONTROLS,
   inputs: [{ event_kinds: ["authored.set", "adopt.v3", "adopt.formation", "time.aged"] }],
   params: [
     { name: "size_px", type: "number", default: 320, range: [160, 640], unit: "px", meaning: "Globe diameter on screen.", cost: "medium", group: "look" },

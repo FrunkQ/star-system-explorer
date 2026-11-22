@@ -38,6 +38,7 @@ export type { DataView, ObserveSetup, Override, TagMode, UnknownStyle, AuthoredF
 export { showReference } from "./reference.ts";
 export * from "./matter.ts";
 export * from "./place.ts";
+export * from "./view-controls.ts";
 export * from "./place-event.ts";
 export type { ReferenceIn, ShownReference } from "./reference.ts";
 export { GmHost, PlayerReplica, SealedHost, SealedReplica, memoryRoom, broadcastHub, relayHub, multiHub, P2P_PROTOCOL } from "./p2p.ts";

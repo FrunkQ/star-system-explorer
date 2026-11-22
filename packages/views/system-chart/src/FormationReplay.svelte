@@ -9,11 +9,13 @@
   stage chips jump. Nothing here simulates.
 -->
 <script lang="ts">
-  import { bandWords, isShell, replayAt, replayClock, replayModel, type FormationRan, type ReplayFrame } from "../../../ui-contract/src/index.ts";
-  import { radius, scaleRings, reducedMotion } from "../../../chart-grammar/src/index.ts";
+  import { bandWords, isShell, replayAt, replayClock, replayModel, flatChart, DEFAULT_VIEW, type FormationRan, type ReplayFrame, type ViewChoice } from "../../../ui-contract/src/index.ts";
+  import { radius, scaleRings, reducedMotion, ViewControls } from "../../../chart-grammar/src/index.ts";
   import { onDestroy } from "svelte";
 
-  let { run, title, onclose }: { run: FormationRan; title: string; onclose?: () => void } = $props();
+  let { run, title, onclose, view = DEFAULT_VIEW, onview }: { run: FormationRan; title: string; onclose?: () => void; view?: ViewChoice; onview?: (c: ViewChoice) => void } = $props();
+  // The standard view controls (rule 12): the replay is drawn from above for now; the rest is listed and says why.
+  const CONTROLS = flatChart("The replay is drawn from above for now");
 
   const m = $derived(replayModel(run));
   let w = $state(900);
@@ -129,6 +131,7 @@
   <header>
     <div class="clock"><b data-replay-clock>{replayClock(t)}</b> <span>after the disc formed</span></div>
     <div class="stage"><span class="k">Stage {frame.stage.n} of 9</span> <b>{frame.stage.name}</b></div>
+    <ViewControls spec={CONTROLS} choice={view} onchange={(c) => onview?.(c)} />
     {#if onclose}<button type="button" class="close" onclick={onclose} aria-label="Close the replay">×</button>{/if}
   </header>
 

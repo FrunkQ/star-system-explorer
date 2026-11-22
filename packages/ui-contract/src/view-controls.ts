@@ -1,0 +1,108 @@
+// The standard view controls (interface style rule 12, Alex 22 Nov 2026): every diagram display offers the same two
+// choices, in the same place, with the same words. **View style**: Chart, 3D, True, Wireframe. **Seen from**: Above,
+// Tilted, Edge-on, Free. A view declares what it can draw (`ViewModule.controls`); what it cannot is still listed,
+// quiet, with the reason, so the control never rearranges itself from one screen to the next. The choice belongs to
+// the viewer (any seat), is kept on their device, and later per panel. Presentation only: never in the campaign.
+
+export const VIEW_STYLES = ["chart", "3d", "true", "wireframe"] as const;
+export type ViewStyle = (typeof VIEW_STYLES)[number];
+export const SEEN_FROM = ["above", "tilted", "edge", "free"] as const;
+export type SeenFrom = (typeof SEEN_FROM)[number];
+
+export const VIEW_STYLE_WORDS: Record<ViewStyle, string> = { chart: "Chart", "3d": "3D", true: "True", wireframe: "Wireframe" };
+export const SEEN_WORDS: Record<SeenFrom, string> = { above: "Above", tilted: "Tilted", edge: "Edge-on", free: "Free" };
+/** How Free is worked, said the same way everywhere. */
+export const FREE_HINT = "Free view: drag to turn and tilt, Shift-drag or two fingers to slide, wheel or pinch to zoom.";
+
+/** `true`: the view draws it. A string: it does not, and this is why (shown as the option's title). */
+export type Can = true | string;
+
+export interface ViewControlsSpec {
+  /** What the view draws in each style. A style left out is "not drawn this way yet". */
+  styles: Partial<Record<ViewStyle, Can>>;
+  /** Chart is drawn flat, seen from above (the system's log chart, a slice). Turning it switches to 3D when it can. */
+  flat?: boolean;
+  /** Which ways it can be seen from, in its turnable styles. Left out: all four. */
+  seen?: Partial<Record<SeenFrom, Can>>;
+}
+
+/** The viewer's choice, kept on the device. */
+export interface ViewChoice {
+  style: ViewStyle;
+  seen: SeenFrom;
+}
+export const DEFAULT_VIEW: ViewChoice = { style: "chart", seen: "tilted" };
+
+export interface ViewOption<T extends string> {
+  value: T;
+  label: string;
+  unavailable?: string;
+}
+
+const NOT_YET = (s: ViewStyle) => `${VIEW_STYLE_WORDS[s]} is not drawn here yet`;
+const can = (c: Can | undefined): c is true => c === true;
+
+/** The style a view shows for a choice: the chosen one when it can, else Chart, else its first. */
+export function shownStyle(spec: ViewControlsSpec, choice: ViewChoice): ViewStyle {
+  if (can(spec.styles[choice.style])) return choice.style;
+  if (can(spec.styles.chart)) return "chart";
+  return VIEW_STYLES.find((s) => can(spec.styles[s])) ?? "chart";
+}
+
+/** What the control lists for this view and choice, and what is shown. Every option is always listed. */
+export function viewOptions(spec: ViewControlsSpec, choice: ViewChoice): { styles: ViewOption<ViewStyle>[]; seen: ViewOption<SeenFrom>[]; shown: ViewChoice; turnable: boolean } {
+  const style = shownStyle(spec, choice);
+  const flat = !!spec.flat && style === "chart";
+  const turnTo = flat && can(spec.styles["3d"]);
+  const styles = VIEW_STYLES.map((s) => {
+    const c = spec.styles[s];
+    return { value: s, label: VIEW_STYLE_WORDS[s], ...(can(c) ? {} : { unavailable: c ?? NOT_YET(s) }) };
+  });
+  const seen = SEEN_FROM.map((s) => {
+    const c = spec.seen ? spec.seen[s] : true;
+    let why: string | undefined = c === true ? undefined : (c ?? `Not seen ${SEEN_WORDS[s].toLowerCase()} here yet`);
+    if (!why && flat && s !== "above" && !turnTo) why = `This ${VIEW_STYLE_WORDS[style].toLowerCase()} is flat, seen from above`;
+    return { value: s, label: SEEN_WORDS[s], ...(why ? { unavailable: why } : {}) };
+  });
+  const ok = (s: SeenFrom) => !seen.find((o) => o.value === s)!.unavailable;
+  const shownSeen: SeenFrom = flat ? "above" : ok(choice.seen) ? choice.seen : (SEEN_FROM.find(ok) ?? "above");
+  return { styles, seen, shown: { style, seen: shownSeen }, turnable: !flat || turnTo };
+}
+
+/** Choosing a way to see it from: on a flat chart, anything but Above turns it into 3D (when the view has 3D). */
+export function pickSeen(spec: ViewControlsSpec, choice: ViewChoice, seen: SeenFrom): ViewChoice {
+  const style = shownStyle(spec, choice);
+  const flat = !!spec.flat && style === "chart";
+  if (flat && seen !== "above" && can(spec.styles["3d"])) return { style: "3d", seen };
+  if (flat && seen === "above") return choice;
+  return { ...choice, style, seen };
+}
+
+/** Choosing a style keeps the way it is seen from. */
+export function pickStyle(choice: ViewChoice, style: ViewStyle): ViewChoice {
+  return { ...choice, style };
+}
+
+/** A kept choice, read back (a per-viewer convenience: anything odd falls back to the default). */
+export function readViewChoice(json: string | null): ViewChoice {
+  try {
+    const v = JSON.parse(json ?? "null") as Partial<ViewChoice> | null;
+    return {
+      style: (VIEW_STYLES as readonly string[]).includes(String(v?.style)) ? (v!.style as ViewStyle) : DEFAULT_VIEW.style,
+      seen: (SEEN_FROM as readonly string[]).includes(String(v?.seen)) ? (v!.seen as SeenFrom) : DEFAULT_VIEW.seen,
+    };
+  } catch {
+    return { ...DEFAULT_VIEW };
+  }
+}
+
+/** The fixed views as an elevation, for views that orbit a camera: radians above the plane. Free keeps its own. */
+export const SEEN_ELEVATION: Record<Exclude<SeenFrom, "free">, number> = { above: 1.45, tilted: 0.55, edge: 0.02 };
+
+/** Shared reasons, so the same gap reads the same everywhere. */
+export const WHY_TRUE_HELD = "True is coming: the photoreal views are held for now";
+export const WHY_WIREFRAME_LATER = "Wireframe is coming with the view styles";
+/** A diagram drawn flat for now: Chart only, seen from above. */
+export function flatChart(why3d = "3D is not drawn here yet"): ViewControlsSpec {
+  return { styles: { chart: true, "3d": why3d, true: WHY_TRUE_HELD, wireframe: WHY_WIREFRAME_LATER }, flat: true };
+}

@@ -20,7 +20,8 @@
 </script>
 
 <script lang="ts">
-  import { globeStats, regimeWords, type Globe, type Json, type SystemScene, type ViewContext } from "../../../ui-contract/src/index.ts";
+  import { globeStats, regimeWords, viewOptions, DEFAULT_VIEW, type Globe, type Json, type SystemScene, type ViewContext } from "../../../ui-contract/src/index.ts";
+  import { BODY_CONTROLS, GLOBE_LAT } from "./controls.ts";
   import { untrack } from "svelte";
   import { DAY_S } from "../../../chart-grammar/src/calendar.ts";
   import { airFactsOf, airFromOptics, airRequest, applyEdits, editableSettings, keepPhoto, listPhotos, LIBRARY, mountGlobe, photograph, readFrames, readWeather, removePhoto, type GlobeRun, type RawFrames, type WeatherSystem, type WeatherTile, type MediaItem, type RecipeDoc, type RecipeEdit, type GlobeRunOptions, type GlobeStatus } from "../../../renderer/src/index.ts";
@@ -124,6 +125,13 @@
 
   let lon = $state(0);
   let lat = $state(20);
+  // The standard view controls (rule 12): the style picks the recipe, "seen from" the latitude looked down from.
+  const shownView = $derived(viewOptions(BODY_CONTROLS, ws.view ?? DEFAULT_VIEW).shown);
+  const styleRecipe = $derived(shownView.style === "true" ? "true-colour" : String(params.recipe ?? "survey-relief"));
+  $effect(() => {
+    const s = shownView.seen;
+    if (s !== "free") lat = GLOBE_LAT[s];
+  });
   let host = $state<HTMLElement | undefined>();
   let run: GlobeRun | null = null;
   let gs = $state<GlobeStatus | null>(null);
@@ -147,7 +155,7 @@
   let edits = $state<RecipeEdit[]>([]);
   let editName = $state("");
   const registry = $derived<RecipeDoc[]>([...SHIPPED_RECIPES, ...mine]);
-  const baseRecipe = $derived(registry.find((r) => r.id === (ovRecipe ?? String(params.recipe ?? "survey-relief"))) ?? SHIPPED_RECIPES[0]!);
+  const baseRecipe = $derived(registry.find((r) => r.id === (ovRecipe ?? styleRecipe)) ?? SHIPPED_RECIPES[0]!);
   const draft = $derived(editing && edits.length ? applyEdits(baseRecipe, editName.trim() && editName.trim() !== baseRecipe.name ? [...edits, { op: "name", name: editName.trim() }] : edits, { library: LIBRARY, pixels: size * size, budget_ms: Number(params.budget_ms ?? 33.3), id: baseRecipe.derived_from ? baseRecipe.id : `${baseRecipe.id}-mine-${mine.length + 1}` }) : null);
   function setEdit(use: string, param: string, value: number | string) {
     edits = [...edits.filter((e) => !(e.op === "set" && e.use === use && e.param === param)), { op: "set", use, param, value }];
@@ -178,7 +186,7 @@
   const runOpts = $derived({
     registry: draft?.ok ? [...registry.filter((r) => r.id !== draft.doc.id), draft.doc] : registry,
     library: LIBRARY,
-    recipe: draft?.ok ? draft.doc.id : (ovRecipe ?? String(params.recipe ?? "survey-relief")),
+    recipe: draft?.ok ? draft.doc.id : (ovRecipe ?? styleRecipe),
     tier: (ovTier ?? String(params.tier ?? "auto")) as GlobeRunOptions["tier"],
     knobs: { relief: Number(params.relief ?? 0.5), detail: Number(params.detail ?? 0.5) },
     budget_ms: Number(params.budget_ms ?? 33.3),
@@ -418,6 +426,7 @@
   }
   function move(e: PointerEvent) {
     if (!drag) return;
+    if (Math.abs(e.clientY - drag.y) + Math.abs(e.clientX - drag.x) > 3 && shownView.seen !== "free") ws.turned?.();
     const k = 180 / size;
     lon = (((drag.lon - (e.clientX - drag.x) * k) % 360) + 360) % 360;
     lat = Math.max(-90, Math.min(90, drag.lat + (e.clientY - drag.y) * k));
@@ -426,8 +435,8 @@
     const step = e.shiftKey ? 45 : 15;
     if (e.key === "ArrowLeft") lon = (lon + 360 - step) % 360;
     else if (e.key === "ArrowRight") lon = (lon + step) % 360;
-    else if (e.key === "ArrowUp") lat = Math.min(90, lat + step);
-    else if (e.key === "ArrowDown") lat = Math.max(-90, lat - step);
+    else if (e.key === "ArrowUp") (ws.turned?.(), (lat = Math.min(90, lat + step)));
+    else if (e.key === "ArrowDown") (ws.turned?.(), (lat = Math.max(-90, lat - step)));
     else return;
     e.preventDefault();
   }

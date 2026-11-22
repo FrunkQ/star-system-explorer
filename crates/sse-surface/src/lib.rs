@@ -16,6 +16,7 @@
 pub mod atlas;
 pub mod caves;
 pub mod climate;
+pub mod core;
 pub mod cover;
 pub mod detail;
 pub mod frames;
@@ -121,6 +122,8 @@ pub struct SurfaceSettings {
     pub tubes: tubes::TubeSettings,
     #[serde(default)]
     pub caves: caves::CaveSettings,
+    #[serde(default)]
+    pub core: core::CoreSettings,
     pub rules: Vec<Rule>,
     pub regimes: BTreeMap<String, RegimeDef>,
     /// The one climate wear and cover read (W7a): the climate pack in the
@@ -284,6 +287,10 @@ pub struct Body {
     /// "authored" (ruling 5: V3 values keep their mark).
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub spin_source: Option<String>,
+    /// Light elements in the core (S, O, Si, C, H), mass fraction (MF1); the
+    /// core settings' default when absent.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub core_light_fraction: Option<f64>,
 }
 
 /// Extra tidal heat flow over a span of a world's life.
@@ -346,6 +353,10 @@ pub struct SurfaceEnvelope {
     pub t_surface_now_k: f64,
     pub timeline: Vec<RegimeSpan>,
     pub events: Vec<RegimeEvent>,
+    /// MF1: the core's heat history and its dynamo (None: no iron core, or
+    /// no solid interior).
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub core: Option<core::CoreHistory>,
 }
 
 // ---------------------------------------------------------------- physics
@@ -631,7 +642,7 @@ pub fn envelope(s: &SurfaceSettings, b: &Body) -> SurfaceEnvelope {
     let regime = s.rules[cur].regime.clone();
     let def = &s.regimes[&regime];
     let r = b.radius_earth * R_EARTH_M;
-    SurfaceEnvelope {
+    let mut env = SurfaceEnvelope {
         address: b.address.clone(),
         label: b.label.clone(),
         kind: def.kind.clone(),
@@ -651,7 +662,11 @@ pub fn envelope(s: &SurfaceSettings, b: &Body) -> SurfaceEnvelope {
         t_surface_now_k: cx.t_surface(age),
         timeline,
         events,
-    }
+        core: None,
+    };
+    let heat = |t: f64| cx.radiogenic(t) + cx.tidal_at(t);
+    env.core = core::core_history(&s.core, b, &env, &heat);
+    env
 }
 
 fn span(cx: &Ctx, regime: &str, from: f64, to: f64) -> RegimeSpan {
@@ -782,6 +797,7 @@ pub fn bodies_of(run: &SystemRun, s: &SurfaceSettings) -> Vec<Body> {
                 spin_hours: spin.map(|x| x.spin_hours),
                 obliquity_deg: spin.map(|x| x.obliquity_deg),
                 spin_source: spin.map(|_| "formation".to_string()),
+                core_light_fraction: None,
             }
         })
         .collect()
@@ -796,6 +812,8 @@ pub fn envelopes_of(run: &SystemRun, s: &SurfaceSettings) -> Vec<SurfaceEnvelope
 mod atlas_tests;
 #[cfg(test)]
 mod caves_tests;
+#[cfg(test)]
+mod core_tests;
 #[cfg(test)]
 mod cover_tests;
 #[cfg(test)]
