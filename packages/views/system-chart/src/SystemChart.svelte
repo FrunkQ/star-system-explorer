@@ -69,6 +69,7 @@
   const bands = $derived(frame ? [] : scene.subjects.filter((s) => s.band_au));
   // A system read from a V3 save is authored there: its names (even "Earth") and values are the save's, not the physics'.
   const authoredImport = $derived(!scene.fixture && scene.subjects.some((s) => s.stamps.includes("imported")));
+  const catalogued = $derived(!scene.fixture && !authoredImport && scene.subjects.length > 0 && scene.subjects.every((s) => s.stamps.includes("catalogued")));
   const scale = $derived(
     fitScale(
       // A sphere round the system (the Oort cloud) reaches far past everything else; the chart shows where it begins.
@@ -366,6 +367,7 @@
       {#if problem}<p class="problem" role="alert">{problem}</p>{/if}
       <div class="legend">
         {#if authoredImport}<span class="authored-import" data-authored-import><Stamp kind="authored" title="Every name and value here was written in a V3 save, not modelled by SSE4's physics. A body called Earth is the save's Earth, not the real one." /><span class="words">As written in a V3 save, not modelled</span></span>{/if}
+        {#if catalogued}<span class="authored-import" data-catalogued><Stamp kind="catalogued" title="Every value here is a measurement from a catalogue, with its source on the card's why?." /><span class="words">As measured, each value with its source</span></span>{/if}
         {#if scene.fixture}<Stamp kind="fixture" title="The sample system's inputs are fixture data; every derived value comes from the kernel's base-physics pack." />{/if}
         <span data-scale-note>{on("grid") && decades.length ? `Log scale${frame ? ", in kilometres" : ""}: each bold dotted ring is ten times the last (${decades.slice(0, 2).map((g) => `${g.units.toLocaleString("en-GB")} ${unitWord}`).join(", ")}…)` : `Distances on a log scale${frame ? ", in kilometres" : ""}`}</span>
         {#if through}<span class="through" data-known-count={knownCount}>{L?.label}: {knownCount} of {bodyCount} known</span>{/if}

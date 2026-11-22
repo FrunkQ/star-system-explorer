@@ -19,6 +19,7 @@
   import StartSheet, { type StartAction } from "./StartSheet.svelte";
   import startDoc from "./documents/start.lines.json";
   import LookAhead from "./LookAhead.svelte";
+  import { readSol, solBatches, solSourceText, SOL_TITLE } from "../../ui-contract/src/index.ts";
   import { listedTitle, sceneAt, sceneFromResolved, type LookedAhead, type SystemSpec } from "../../ui-contract/src/index.ts";
   import lightDoc from "./documents/light.recipes.json";
   import { SYMBOLS, checkLightRecipe, describeLight, litFromSystem, paint, type BandRecipe, type Mark } from "../../ui-contract/src/index.ts";
@@ -163,7 +164,7 @@
       scene = await deriveScene(s, { ...base, now_yr: ws.now_yr }, derivations);
       // Systems already adopted into this universe (kept by the kernel across reloads) go on the "On the chart" list.
       const listed = await s.listSystems();
-      if (listed.ok) adoptedSystems = listed.systems.filter((x) => x.system !== base.system && x.source !== "facts").map((x) => ({ system: x.system, title: listedTitle(x) }));
+      if (listed.ok) adoptedSystems = listed.systems.filter((x) => x.system !== base.system && (x.source !== "facts" || x.system === `u:${base.universe.id}/sys:sol`)).map((x) => ({ system: x.system, title: listedTitle(x) }));
       session = s;
       status = { kernel: await s.kernelVersion(), tier: s.device()?.tier ?? "unmeasured", hash: await s.stateHash(), stack: s.stack().hash, campaign: false };
     })
@@ -494,7 +495,10 @@
       s.resolvedSystem(v.system).then((r) => {
         if (g !== generation) return;
         if (!r.ok) return void (whatNote = `Could not read ${v.title} back: ${r.message}`);
-        const read = sceneFromResolved(r.result, v.title);
+        const read0 = sceneFromResolved(r.result, v.title);
+        // The Solar System's sheet marks a few values unverified: those bodies carry the mark on the GM's view.
+        const marks = v.system === SOL ? solUnverified : null;
+        const read = marks?.size ? { ...read0, subjects: read0.subjects.map((x) => (marks.has(x.address) ? { ...x, stamps: [...x.stamps, "unverified"] } : x)) } : read0;
         const now_yr = v.fresh ? read.now_yr : now;
         if (v.fresh) ((v.fresh = false), shiftCampaign(read.now_yr));
         viewingSpec = r.result.spec ?? null;
@@ -566,7 +570,44 @@
 
   // The start sheet (top-level design 3.1, step 3): what the app opens on, unless this device asked to skip it or the
   // address ends in #chart. Features the sheet may name once they are built ("sol", "tours", "find", ...): none yet.
-  const STARTED: ReadonlySet<string> = new Set();
+  // Features the start sheet's lines and verbs may name: the Solar System once its sheet is in the build.
+  const STARTED: ReadonlySet<string> = new Set(["sol"]);
+  // The Solar System door (U21 part 2): SSE4's own Sol from packs/base-sol, entered once as catalogued facts, one batch
+  // per source, then opened like any system in the campaign. Later opens go straight to it.
+  const SOL = `u:${base.universe.id}/sys:sol`;
+  let solUnverified = $state<ReadonlySet<string> | null>(null);
+  async function solSheet() {
+    const sheet = readSol(await (await fetch(new URL(stackDoc.catalogues.sol, document.baseURI))).json());
+    if (!sheet) throw new Error("the Solar System sheet could not be read");
+    solUnverified = new Set(solBatches(sheet, SOL).unverified.map((k) => k.split("#")[0]!));
+    return sheet;
+  }
+  // Opened from the system list after a reload, the sheet is read for its marks.
+  $effect(() => {
+    if (viewing?.system === SOL && !solUnverified) solSheet().then(() => ws.revision++, () => {});
+  });
+  async function openSol() {
+    const s = session;
+    if (!s) return;
+    if (!adoptedSystems.some((x) => x.system === SOL)) {
+      whatNote = "Entering the Solar System from its catalogue…";
+      try {
+        const sheet = await solSheet();
+        for (const b of solBatches(sheet, SOL).batches) {
+          const r = await s.send({ kind: "set_values", edits: b.edits, at_yr: 0, evidence: "catalogued", source: solSourceText(sheet, b.source) });
+          if (r.status !== "applied") throw new Error(r.status === "refused" ? r.reason : r.status === "error" ? r.message : "sent to the game master");
+        }
+      } catch (e) {
+        return void (whatNote = `Could not open the Solar System: ${e instanceof Error ? e.message : String(e)}`);
+      }
+      adoptedSystems = [...adoptedSystems, { system: SOL, title: SOL_TITLE }];
+      whatNote = "The Solar System, as measured.";
+    }
+    // The door opens on the chart, whatever screen was in front.
+    railScale = "system";
+    ws.screen = "system";
+    showSystem(SOL);
+  }
   let startOpen = $state(typeof location !== "undefined" && location.hash !== "#chart" && loadPref("start") !== "skip");
   const keptSave = readStored(`u:${base.universe.id}`).save;
   const carryOn = keptSave ? { title: keptSave.title, when: new Date(keptSave.saved_at).toLocaleString("en-GB", { dateStyle: "medium", timeStyle: "short" }) } : null;
@@ -580,7 +621,8 @@
     startOpen = false;
     queueMicrotask(() => {
       if ("door" in a) {
-        if (a.door === "grow") openMake("generate");
+        if (a.door === "sol") void openSol();
+        else if (a.door === "grow") openMake("generate");
         else if (a.door === "bring") campaignDialog?.showModal();
       } else if ("desk" in a) chooseDesk(a.desk);
       else if ("screen" in a) (toSystem(), go(a.screen));

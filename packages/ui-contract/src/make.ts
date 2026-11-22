@@ -521,7 +521,7 @@ export function sceneFromResolved(r: SystemResolved, title?: string): SystemScen
         ...(band ? { band_au: band, shape: v3BeltShape(name, band) } : a !== primary && sma !== undefined ? { orbit: { a_au: sma / AU_M, phase_deg: phase(i++) } } : {}),
         facts: out,
         stamps: r.evidence
-          ? [grown ? "generated" : "imported", ...(classes(a).has("authored") ? ["authored"] : []), ...(classes(a).has("catalogued") ? ["catalogued"] : []), ...(classes(a).has("authored-impossible") ? ["authored", "impossible"] : []), ...(s?.speculative ? ["speculative"] : [])].filter((x, j, all) => all.indexOf(x) === j)
+          ? [...(grown ? ["generated"] : r.source === "v3" ? ["imported"] : []), ...(classes(a).has("authored") ? ["authored"] : []), ...(classes(a).has("catalogued") ? ["catalogued"] : []), ...(classes(a).has("authored-impossible") ? ["authored", "impossible"] : []), ...(s?.speculative ? ["speculative"] : [])].filter((x, j, all) => all.indexOf(x) === j)
           : grown ? ["generated", ...(s?.speculative ? ["speculative"] : [])] : ["authored", "imported"],
         tags: mass !== undefined && kind !== "star" ? [sizeTag(mass / M_EARTH)] : [],
       };

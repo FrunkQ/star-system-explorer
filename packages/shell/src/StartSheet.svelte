@@ -14,7 +14,7 @@
   import { reducedMotion } from "../../chart-grammar/src/index.ts";
   import { loadPref, savePref } from "./prefs.ts";
 
-  export type StartAction = StartOpens | { door: "carry" | "grow" | "bring" | "chart" };
+  export type StartAction = StartOpens | { door: "sol" | "carry" | "grow" | "bring" | "chart" };
   interface AtlasEntry {
     verb: string;
     hint: string;
@@ -71,7 +71,7 @@
   });
 
   function open(a: StartAction) {
-    if (!("door" in a && ["carry", "grow", "bring", "chart"].includes(a.door))) {
+    if (!("door" in a && ["sol", "carry", "grow", "bring", "chart"].includes(a.door))) {
       const seen = readList("start.opened");
       const k = opensKey(a);
       if (!seen.includes(k)) savePref("start.opened", JSON.stringify([...seen, k]));
@@ -108,10 +108,13 @@
     <div class="cols">
       <section class="begin" aria-labelledby="begin-h">
         <h2 id="begin-h">Begin</h2>
+        {#if built.has("sol")}
+          <button type="button" class="door" class:primary={!carryOn} data-door="sol" disabled={!ready} onclick={() => open({ door: "sol" })}><b>Open the Solar System</b><span>{#if !carryOn}<em class="here">Start here.</em> {/if}The Sun, its planets and belts, as measured</span></button>
+        {/if}
         {#if carryOn}
           <button type="button" class="door primary" data-door="carry" onclick={() => open({ door: "carry" })}><b>Carry on: {carryOn.title}</b><span>kept {carryOn.when}</span></button>
         {:else}
-          <button type="button" class="door primary" data-door="carry" onclick={() => open({ door: "carry" })}><b>Open the sample campaign</b><span>{sample}: a K dwarf with five worlds and their moons</span></button>
+          <button type="button" class="door" class:primary={!built.has("sol")} data-door="carry" onclick={() => open({ door: "carry" })}><b>Open the sample campaign</b><span>{sample}: a K dwarf with five worlds and their moons</span></button>
         {/if}
         <button type="button" class="door" data-door="grow" disabled={!ready} onclick={() => open({ door: "grow" })}><b>Grow a new system</b><span>from a cloud of gas, every stage kept</span></button>
         <button type="button" class="door" data-door="bring" disabled={!ready} onclick={() => open({ door: "bring" })}><b>Open or bring a campaign</b><span>a campaign file, or a V3 save</span></button>
@@ -241,6 +244,13 @@
   .door.primary {
     background: var(--sse-ink);
     color: var(--sse-ground);
+  }
+  .here {
+    font-style: normal;
+    font-family: var(--sse-font-mono);
+    font-size: 11px;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
   }
   .door.primary span {
     color: var(--sse-ground);
