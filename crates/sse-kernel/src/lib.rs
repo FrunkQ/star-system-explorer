@@ -27,6 +27,9 @@ mod tags;
 mod tags_tests;
 mod voyage;
 mod weather;
+mod withdraw;
+#[cfg(test)]
+mod withdraw_tests;
 
 use protocol::*;
 use sse_chronicle::{
@@ -1631,6 +1634,122 @@ impl Kernel {
         .map_err(|e| err("bad_event", format!("{e}")))
     }
 
+    /// `set_authored_batch`: every edit in one `authored.set` event. Tag
+    /// edits keep TG1's rules (exclusive groups hold, a new name joins the
+    /// campaign's tags), checked against the facts at that time plus the
+    /// batch's own earlier tags on the same address.
+    fn set_authored_batch(
+        &mut self,
+        edits: &[crate::protocol::BatchEdit],
+        occurred_at_s: i64,
+    ) -> Result<Response, Response> {
+        if edits.is_empty() {
+            return Err(err("empty_batch", "a batch needs at least one edit"));
+        }
+        let impossible = edits.iter().any(|e| e.impossible == Some(true));
+        if impossible && edits.iter().any(|e| e.impossible != Some(true)) {
+            return Err(err(
+                "mixed_batch",
+                "a batch is either all impossible edits or none: send the impossible ones as their own batch",
+            ));
+        }
+        let stack_tags = self.observe.tags.clone();
+        let u = self.universe()?;
+        let set_now = campaign_tags(u, &stack_tags)?;
+        let state = u.chronicle.state_at(UniverseTime::seconds(occurred_at_s));
+        let mut set: BTreeMap<Address, BTreeMap<String, Value>> = BTreeMap::new();
+        let mut declare: Vec<String> = vec![];
+        for e in edits {
+            let a = in_universe(&u.root, &e.address)?;
+            let v = json_to_value(&e.value)
+                .map_err(|m| err("bad_value", format!("{a} {}: {m}", e.field)))?;
+            if let (Some(tag), Value::Bool(true)) = (e.field.strip_prefix("tag."), &v) {
+                let have: Vec<String> = state
+                    .facts
+                    .get(&a)
+                    .into_iter()
+                    .flatten()
+                    .chain(set.get(&a).into_iter().flatten())
+                    .filter(|(_, v)| **v == Value::Bool(true))
+                    .filter_map(|(f, _)| f.strip_prefix("tag.").map(str::to_string))
+                    .collect();
+                if let Some(m) = set_now.exclusive_clash(tag, &have) {
+                    return Err(err("exclusive_tag", format!("{a}: {m}")));
+                }
+                if !set_now.declared(tag) && !declare.iter().any(|d| d == tag) {
+                    declare.push(tag.to_string());
+                }
+            }
+            set.entry(a).or_default().insert(e.field.clone(), v);
+        }
+        let t = UniverseTime::seconds(occurred_at_s);
+        let subject: Vec<Address> = set.keys().cloned().collect();
+        let ev = Event::new(EventBody {
+            kind: kinds::AUTHORED_SET.into(),
+            subject: subject.clone(),
+            occurred_at: t,
+            activated_at: t,
+            recognised_at: u.chronicle.next_stamp(),
+            causes: vec![],
+            payload: Payload {
+                set,
+                ..Default::default()
+            },
+            evidence: if impossible {
+                Evidence::AuthoredImpossible
+            } else {
+                Evidence::Authored
+            },
+            publisher: Publisher::new("gm", "edit", "1"),
+        })
+        .map_err(|e| err("bad_event", format!("{e}")))?;
+        let id = u
+            .chronicle
+            .append(ev)
+            .map_err(|e| err("chronicle", format!("{e}")))?;
+        for t in &declare {
+            declare_campaign_tag(u, t)?;
+        }
+        Ok(Response::Authored {
+            event_id: id.hex(),
+            affected: subject.iter().map(|a| a.to_string()).collect(),
+            state_hash: latest_hash(&u.chronicle),
+            declared_tag: (!declare.is_empty()).then(|| declare.join(", ")),
+        })
+    }
+
+    /// `withdraw` and `restore`: the authored `withdrawn` mark on one
+    /// address (paste support, `withdraw.rs`).
+    fn set_withdrawn(&mut self, address: &str, at_s: i64, on: bool) -> Result<Response, Response> {
+        let u = self.universe()?;
+        let a = in_universe(&u.root, address)?;
+        let state = u.chronicle.state_at(UniverseTime::seconds(at_s));
+        if !state.facts.keys().any(|x| a.contains(x)) {
+            return Err(err(
+                "unknown_address",
+                format!("{a} has no facts at that time: nothing to withdraw or restore"),
+            ));
+        }
+        let edit = AuthoredEdit {
+            address: a.to_string(),
+            field: withdraw::WITHDRAWN.into(),
+            value: serde_json::Value::Bool(on),
+            occurred_at_s: at_s,
+            impossible: false,
+        };
+        let e = Self::edit_event(u, &edit, u.chronicle.next_stamp())?;
+        let id = u
+            .chronicle
+            .append(e)
+            .map_err(|e| err("chronicle", format!("{e}")))?;
+        Ok(Response::Authored {
+            event_id: id.hex(),
+            affected: vec![a.to_string()],
+            state_hash: latest_hash(&u.chronicle),
+            declared_tag: None,
+        })
+    }
+
     fn flow_inputs(
         &self,
         flow: &Flow,
@@ -1896,6 +2015,12 @@ impl Kernel {
                     declared_tag: declare,
                 }
             }
+            Request::SetAuthoredBatch {
+                edits,
+                occurred_at_s,
+            } => self.set_authored_batch(&edits, occurred_at_s)?,
+            Request::Withdraw { address, at_s } => self.set_withdrawn(&address, at_s, true)?,
+            Request::Restore { address, at_s } => self.set_withdrawn(&address, at_s, false)?,
             Request::CampaignTags => {
                 let stack_tags = self.observe.tags.clone();
                 let u = self.universe()?;
@@ -2214,6 +2339,8 @@ impl Kernel {
                     .as_ref()
                     .ok_or_else(|| err("no_universe", "open a universe first"))?;
                 let mut state = u.chronicle.state_at(UniverseTime::seconds(at_s));
+                // Paste support: withdrawn subjects are not in the scene.
+                withdraw::drop_withdrawn(&mut state.facts);
                 // Authored tags out of the facts; rule tags from the stack.
                 // TG3: authored true forces a tag, authored false holds a
                 // rule's tag off; both come out of the facts.

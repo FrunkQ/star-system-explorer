@@ -3004,5 +3004,30 @@
   "substance": "unobtainium",
   "p_pa": 1.0,
   "t_k": 300.0
+ },
+ {
+  "op": "set_authored_batch",
+  "occurred_at_s": 0,
+  "edits": [
+   {"address": "u:aging/sys:90/body:1", "field": "name", "value": "Pasted"},
+   {"address": "u:aging/sys:90/body:2", "field": "mass_kg", "value": 6.0e24}
+  ]
+ },
+ {
+  "op": "set_authored_batch",
+  "occurred_at_s": 0,
+  "edits": [
+   {"address": "u:nowhere/sys:1", "field": "name", "value": "X"}
+  ]
+ },
+ {
+  "op": "withdraw",
+  "address": "u:aging/sys:90/body:2",
+  "at_s": 10
+ },
+ {
+  "op": "restore",
+  "address": "u:aging/sys:90/body:2",
+  "at_s": 20
  }
 ]

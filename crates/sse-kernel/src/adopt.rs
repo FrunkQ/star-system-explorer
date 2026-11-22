@@ -760,7 +760,9 @@ pub(crate) fn worlds_at(
         _ => None,
     };
     let at_s = at_s.or(now_s).or(present_s).unwrap_or(i64::MAX);
-    let st = ch.state_at(UniverseTime::seconds(at_s));
+    let mut st = ch.state_at(UniverseTime::seconds(at_s));
+    // Paste support: a withdrawn body (or system) is not there.
+    crate::withdraw::drop_withdrawn(&mut st.facts);
     let facts: Facts = st
         .facts
         .iter()
@@ -1009,7 +1011,8 @@ pub(crate) fn evidence_of(ch: &Chronicle, system: &Address, at_s: i64) -> serde_
 /// The systems of a universe (addresses `<root>/sys:*` with facts at or
 /// under them), with where each came from and a name if one is known.
 pub(crate) fn systems_of(ch: &Chronicle, root: &Address) -> Vec<serde_json::Value> {
-    let st = ch.state_at(UniverseTime::seconds(i64::MAX));
+    let mut st = ch.state_at(UniverseTime::seconds(i64::MAX));
+    crate::withdraw::drop_withdrawn(&mut st.facts);
     let mut found: BTreeMap<Address, u32> = BTreeMap::new();
     for a in st.facts.keys() {
         if !root.contains(a) || a.segments().len() <= root.segments().len() {

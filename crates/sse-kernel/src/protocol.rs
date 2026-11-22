@@ -102,6 +102,19 @@ pub struct AuthoredEdit {
     pub impossible: bool,
 }
 
+/// One edit of a batch (`set_authored_batch`).
+#[derive(Clone, PartialEq, Debug, Serialize, Deserialize, TS)]
+#[ts(export)]
+pub struct BatchEdit {
+    pub address: String,
+    pub field: String,
+    #[ts(type = "unknown")]
+    pub value: serde_json::Value,
+    #[serde(default)]
+    #[ts(optional)]
+    pub impossible: Option<bool>,
+}
+
 #[derive(Clone, Copy, PartialEq, Eq, Debug, Serialize, Deserialize, TS)]
 #[serde(tag = "kind", rename_all = "snake_case")]
 #[ts(export)]
@@ -126,6 +139,27 @@ pub enum Request {
     },
     SetAuthored {
         edit: AuthoredEdit,
+    },
+    /// Many authored edits at one time, chronicled as ONE `authored.set`
+    /// event (a paste on the Build desk is one undo step). The whole batch
+    /// is refused if any address is outside the universe or any value is
+    /// malformed. Impossible and possible edits go in separate batches.
+    SetAuthoredBatch {
+        edits: Vec<BatchEdit>,
+        occurred_at_s: i64,
+    },
+    /// Withdraw a subject and everything under it from `at_s` on (Undo of
+    /// a paste): it drops out of scene, resolved_system and systems. Nothing
+    /// is deleted; the history keeps the event.
+    Withdraw {
+        address: String,
+        at_s: i64,
+    },
+    /// Bring a withdrawn subject back from `at_s` on (Redo), with every fact
+    /// it had.
+    Restore {
+        address: String,
+        at_s: i64,
     },
     History {
         address: String,
@@ -1305,6 +1339,9 @@ impl Request {
             Request::LoadStack { .. } => "load_stack",
             Request::OpenUniverse { .. } => "open_universe",
             Request::SetAuthored { .. } => "set_authored",
+            Request::SetAuthoredBatch { .. } => "set_authored_batch",
+            Request::Withdraw { .. } => "withdraw",
+            Request::Restore { .. } => "restore",
             Request::History { .. } => "history",
             Request::StateHash { .. } => "state_hash",
             Request::Derive { .. } => "derive",
@@ -1411,6 +1448,21 @@ pub fn ops() -> Vec<OpInfo> {
             "set_authored",
             Cost::Trivial,
             "GM machine only in a session; players send intents",
+        ),
+        o(
+            "set_authored_batch",
+            Cost::Light,
+            "GM machine only in a session; one event for the whole batch",
+        ),
+        o(
+            "withdraw",
+            Cost::Trivial,
+            "GM machine only in a session; one authored event, nothing deleted",
+        ),
+        o(
+            "restore",
+            Cost::Trivial,
+            "GM machine only in a session; one authored event",
         ),
         o("history", Cost::Trivial, none),
         o("state_hash", Cost::Light, none),
