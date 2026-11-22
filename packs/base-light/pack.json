@@ -309,6 +309,18 @@
           {
             "text": "Bodhaine, B. A. et al. 1999, On Rayleigh optical depth calculations, J. Atmos. Oceanic Technol. 16, 1854",
             "doi": "10.1175/1520-0426(1999)016<1854:ORODC>2.0.CO;2"
+          },
+          {
+            "text": "Blanton, M. R. and Roweis, S. 2007, K-corrections and filter transformations in the ultraviolet, optical, and near infrared, AJ 133, 734: Table 1, effective wavelengths and AB minus Vega offsets",
+            "url": "https://doi.org/10.1086/510127"
+          },
+          {
+            "text": "Oke, J. B. and Gunn, J. E. 1983, Secondary standard stars for absolute spectrophotometry, ApJ 266, 713: the AB magnitude, m = −2.5 log10 f_ν − 48.60 (cgs), zero point 3631 Jy",
+            "url": "https://doi.org/10.1086/160817"
+          },
+          {
+            "text": "Cardelli, J. A., Clayton, G. C. and Mathis, J. S. 1989, The relationship between infrared, optical, and ultraviolet extinction, ApJ 345, 245",
+            "url": "https://doi.org/10.1086/167900"
           }
         ],
         "absorption": {
@@ -627,6 +639,59 @@
                 0.0
               ],
               "dispersion": "scaled"
+            }
+          ]
+        },
+        "passbands": {
+          "note": "Photometric bands for magnitudes: effective wavelength and AB minus Vega offset from Blanton and Roweis 2007 Table 1 (Bessell 1990 UBVRI, Cohen et al. 2003 JHKs). A star's magnitude is its flux density at the effective wavelength.",
+          "list": [
+            {
+              "id": "U",
+              "name": "Johnson U",
+              "effective_m": 3.571e-07,
+              "ab_minus_vega": 0.79
+            },
+            {
+              "id": "B",
+              "name": "Johnson B",
+              "effective_m": 4.344e-07,
+              "ab_minus_vega": -0.09
+            },
+            {
+              "id": "V",
+              "name": "Johnson V",
+              "effective_m": 5.456e-07,
+              "ab_minus_vega": 0.02
+            },
+            {
+              "id": "R",
+              "name": "Cousins R",
+              "effective_m": 6.442e-07,
+              "ab_minus_vega": 0.21
+            },
+            {
+              "id": "I",
+              "name": "Cousins I",
+              "effective_m": 7.994e-07,
+              "ab_minus_vega": 0.45
+            },
+            {
+              "id": "J",
+              "name": "2MASS J",
+              "effective_m": 1.2355e-06,
+              "ab_minus_vega": 0.91
+            },
+            {
+              "id": "H",
+              "name": "2MASS H",
+              "effective_m": 1.6458e-06,
+              "ab_minus_vega": 1.39
+            },
+            {
+              "id": "Ks",
+              "name": "2MASS Ks",
+              "effective_m": 2.1603e-06,
+              "ab_minus_vega": 1.85
             }
           ]
         }

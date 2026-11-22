@@ -74,6 +74,9 @@ pub const DECLARED: &[(&str, Reach)] = &[
     // the lifetime moves only through the luminosity it is given.
     ("sse.star.ms_lifetime", Reach::Follows(&[])),
     ("sse.star.ms_luminosity_at_age", Reach::Follows(&[])),
+    // MP17a: the Look up block gives whatever the stacked sheet holds, so a
+    // changed constant or material value reaches it directly.
+    ("sse.reference.lookup", Reach::Follows(&[])),
 ];
 
 /// A block's reach: `None` is "cannot follow".

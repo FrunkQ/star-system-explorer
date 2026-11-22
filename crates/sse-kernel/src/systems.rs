@@ -484,6 +484,35 @@ pub(crate) fn read_field(bodies: Vec<serde_json::Value>) -> Out {
     Ok(Response::FieldRead { bodies: out })
 }
 
+/// Magnitudes in photometric bands, through dust (night sky Y2, light side).
+pub(crate) fn read_photometry(stars: Vec<serde_json::Value>, bands: Vec<String>) -> Out {
+    use sse_light::photometry::*;
+    #[derive(serde::Deserialize)]
+    struct In {
+        #[serde(flatten)]
+        photosphere: Photosphere,
+        #[serde(flatten)]
+        sight: Sight,
+    }
+    let table = sse_light::LightTable::base();
+    let pb = bands_of(&table, &bands).map_err(|e| err("bad_photometry", e))?;
+    let mut out = vec![];
+    for (n, v) in stars.into_iter().enumerate() {
+        let s: In = serde_json::from_value(v)
+            .map_err(|e| err("bad_photometry", format!("star {n}: {e}")))?;
+        let p = star_photometry(&s.photosphere, &s.sight, &pb)
+            .map_err(|e| err("bad_photometry", format!("star {n}: {e}")))?;
+        out.push(serde_json::to_value(p).expect("plain data"));
+    }
+    Ok(Response::PhotometryRead {
+        stars: out,
+        references: references()
+            .into_iter()
+            .map(|r| serde_json::to_value(r).expect("plain data"))
+            .collect(),
+    })
+}
+
 /// Stellar activity (O10).
 pub(crate) fn read_activity(
     stars: Vec<serde_json::Value>,

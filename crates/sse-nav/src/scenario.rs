@@ -12,9 +12,28 @@ pub fn settings() -> NavSettings {
     NavSettings::from_packs(&[base_nav_pack()]).expect("nav settings")
 }
 
-/// The Solar System at J2000 (JPL approximate elements).
+/// The Solar System at J2000 (JPL approximate elements), with each body's
+/// magnetic moment from the measured-fields table (MF0), so the two cannot drift.
 pub fn sol() -> NavSystem {
-    serde_json::from_str(include_str!("../../../tests/fixtures/nav/sol.json")).expect("sol fixture")
+    let mut sys: NavSystem =
+        serde_json::from_str(include_str!("../../../tests/fixtures/nav/sol.json"))
+            .expect("sol fixture");
+    let fields: serde_json::Value = serde_json::from_str(include_str!(
+        "../../../tests/fixtures/magnetic/measured-fields.json"
+    ))
+    .expect("measured fields");
+    let rows = fields["bodies"].as_array().cloned().unwrap_or_default();
+    for b in &mut sys.bodies {
+        b.magnetic_moment_a_m2 = rows
+            .iter()
+            .find(|r| {
+                r["name"]
+                    .as_str()
+                    .is_some_and(|n| n.eq_ignore_ascii_case(&b.name))
+            })
+            .and_then(|r| r["moment_a_m2"].as_f64());
+    }
+    sys
 }
 
 /// NAV fixtures by name (for the kernel's `fixture` field).

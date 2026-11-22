@@ -108,7 +108,7 @@ fn every_atom_is_cited_explained_and_versioned() {
         }
     }
     assert_eq!(
-        n, 73,
+        n, 80,
         "first-wave atom count changed: update handover/packages/P1.md"
     );
 }
@@ -735,4 +735,51 @@ fn gibbs_blocks_reproduce_tabulated_values() {
     let h = run("sse.chem.reaction_gibbs", &[0.0, 298.15, lnq])[0];
     close(h, -39.95e3, 0.002, "pH 7 hydrogen ion");
     assert!(crate::chem::ln_quotient(&[(1.0, 0.0)]).is_err());
+}
+
+#[test]
+fn stormer_cutoff_matches_earth() {
+    use crate::shield::*;
+    // Earth's dipole, 8.0e22 A m² (IGRF 2020), at the ground.
+    let eq = cutoff_rigidity(8.0e22, 6.371e6, 0.0) * 1e-9;
+    assert!((eq - 14.9).abs() < 0.5, "equator {eq} GV");
+    assert!(cutoff_rigidity(8.0e22, 6.371e6, m::PI / 2.0) * 1e-9 < 1e-6);
+    // Falls as 1/r².
+    let up = cutoff_rigidity(8.0e22, 2.0 * 6.371e6, 0.0) * 1e-9;
+    assert!((up * 4.0 - eq).abs() < 1e-9);
+    assert!((space_share(0.0, 2.0, 1.7) - 1.0).abs() < 1e-15);
+    assert!((ground_share(0.0, 10.0, 1.0) - 1.0).abs() < 1e-15);
+    let g = ground_share(15e9, 10.0, 1.0);
+    assert!(g > 0.4 && g < 0.6, "ground share at 15 GV {g}");
+}
+
+#[test]
+fn dust_reddens_as_ccm89() {
+    use crate::extinction::ccm_ratio;
+    // V is the reference; B about 1 + 1/R_V (E(B−V) = A_V / R_V); K about a tenth.
+    close(ccm_ratio(0.549e-6, 3.1), 1.0, 0.01, "A_V/A_V");
+    let b = ccm_ratio(0.44e-6, 3.1);
+    assert!((b - 1.32).abs() < 0.03, "A_B/A_V {b}");
+    let k = ccm_ratio(2.2e-6, 3.1);
+    assert!((k - 0.114).abs() < 0.01, "A_K/A_V {k}");
+    // The 217.5 nm bump stands above its sides.
+    assert!(ccm_ratio(217.5e-9, 3.1) > ccm_ratio(170e-9, 3.1) * 0.95);
+    assert!(ccm_ratio(217.5e-9, 3.1) > ccm_ratio(260e-9, 3.1));
+}
+
+#[test]
+fn aurora_footprints_and_hill_distance() {
+    use crate::aurora::*;
+    let deg = 180.0 / m::PI;
+    // Earth's nose near 10 radii lands near 72°; Io's line (5.9 R_J) near 66°.
+    let e = footprint_latitude(10.0, 1.0) * deg;
+    assert!((e - 71.6).abs() < 0.1, "{e}");
+    let io = footprint_latitude(5.9, 1.0) * deg;
+    assert!((io - 65.7).abs() < 0.2, "{io}");
+    assert_eq!(footprint_latitude(0.5, 1.0), 0.0);
+    // Jupiter, Σ* 0.14 S, Ṁ 1000 kg/s: about 30 R_J (Nichols 2011, after Hill 2001).
+    let rj = 7.1373e7;
+    let h = hill_distance(0.14, 4.264e-4, rj, 1000.0) / rj;
+    assert!((h - 30.0).abs() < 1.5, "Hill distance {h}");
+    assert!(hill_distance(0.14, 4.264e-4, rj, 0.0).is_infinite());
 }

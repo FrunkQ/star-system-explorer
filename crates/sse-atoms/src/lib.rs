@@ -6,10 +6,12 @@
 
 pub mod activity;
 pub mod air;
+pub mod aurora;
 pub mod chem;
 pub mod climate;
 pub mod common;
 pub mod convection;
+pub mod extinction;
 pub mod field;
 pub mod heat;
 pub mod layers;
@@ -19,6 +21,7 @@ pub mod nebula;
 pub mod orbit;
 pub mod planet;
 pub mod reach;
+pub mod shield;
 pub mod star;
 pub mod tides;
 
@@ -43,6 +46,9 @@ pub fn atoms() -> Vec<Box<dyn sse_flow::Atom>> {
         .chain(activity::atoms())
         .chain(convection::atoms())
         .chain(field::atoms())
+        .chain(shield::atoms())
+        .chain(extinction::atoms())
+        .chain(aurora::atoms())
         .chain(air::atoms())
         .chain(chem::atoms())
         .collect()
@@ -333,6 +339,25 @@ pub const KIND_DESCRIPTIONS: &[(&str, &str)] = &[
     ("layer.outer_radius", "radius of a layer's top"),
     ("field.change_period", "period with which the outside magnetic field seen by a body changes"),
     ("induction.amplitude", "strength of a conducting layer's induced field relative to a perfect conductor's"),
+    // aurorae (MF9)
+    ("aurora.field_line_distance", "distance at which a field line crosses the magnetic equator"),
+    ("aurora.magnetic_latitude", "magnetic latitude at which a field line comes down to the surface"),
+    ("ionosphere.pedersen_conductance", "effective height-integrated Pedersen conductance of one hemisphere's ionosphere"),
+    ("body.equatorial_surface_field", "magnetic field strength at the surface on the magnetic equator"),
+    ("magnetosphere.plasma_source_rate", "mass of plasma added to a magnetosphere each second (by a moon's volcanoes or geysers)"),
+    ("magnetosphere.corotation_limit", "distance beyond which trapped plasma stops turning with the planet (Hill distance)"),
+    // dust extinction (Y2)
+    ("dust.extinction_ratio", "how much dust dims light at a wavelength, relative to the V band (A_λ / A_V)"),
+    // cosmic-ray shielding and dose (MF7)
+    ("shield.distance", "distance from a body's centre at which shielding is asked for"),
+    ("shield.magnetic_latitude", "latitude measured from a body's magnetic equator"),
+    ("shield.cutoff_rigidity", "least momentum per charge a cosmic ray needs to arrive (Størmer cut-off)"),
+    ("shield.space_share", "share of the free-space cosmic-ray dose carried by particles above the cut-off"),
+    ("shield.ground_share", "share of the no-cut-off ground dose left under a thick air at the cut-off"),
+    ("shield.free_space_dose_rate", "cosmic-ray dose rate in open space at the body's orbit, unshielded"),
+    ("atmosphere.column_mass", "mass of air above a unit area of ground"),
+    ("shield.open_sky", "share of the sky not blocked by the body itself"),
+    ("shield.dose_rate", "cosmic-ray dose rate after field and air"),
     // surface convection
     ("convection.cell_size", "diameter of a surface convection cell (granule)"),
     ("convection.speed", "speed of the churning gas near the surface"),

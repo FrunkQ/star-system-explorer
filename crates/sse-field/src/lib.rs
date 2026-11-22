@@ -12,9 +12,12 @@
 //! interior); so is the air. Field history (`read_field_history`) waits on MF3.
 
 use serde::{Deserialize, Serialize};
+use sse_atoms::aurora as au;
 use sse_atoms::field as fb;
 use sse_atoms::light::{magnetopause_radius, MU0};
+use sse_atoms::shield as sh;
 use sse_core::math as m;
+use sse_core::quantity::consts::{DAY, JULIAN_YEAR};
 use sse_flow::Reference;
 
 /// The stellar wind at a body (or at its host).
@@ -83,6 +86,36 @@ pub struct Body {
     pub host: Option<Host>,
     #[serde(default)]
     pub layers: Vec<Layer>,
+    /// Surface gravity, m/s²: turns the air's pressure into its column.
+    /// Without it a body with air gets no dose.
+    #[serde(default)]
+    pub surface_gravity_m_s2: f64,
+    /// Cosmic-ray dose in open space at this body's orbit, mSv a day; left
+    /// out, the settings' value (measured near 1 AU) is used.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub free_space_dose_msv_day: Option<f64>,
+    /// Orbits (distance from the centre, m) to give a dose for.
+    #[serde(default)]
+    pub orbits_m: Vec<f64>,
+    /// Angle between the magnetic and spin axes, degrees.
+    #[serde(default)]
+    pub magnetic_tilt_deg: f64,
+    /// Plasma added each second by moons' volcanoes or geysers, kg/s (Io
+    /// gives Jupiter about a tonne), and the ionosphere's effective
+    /// Pedersen conductance of one hemisphere, S. Both make the spin-driven oval.
+    #[serde(default)]
+    pub plasma_source_kg_s: f64,
+    #[serde(default)]
+    pub pedersen_conductance_s: f64,
+    /// Moons whose field lines may land as aurora spots.
+    #[serde(default)]
+    pub moons: Vec<MoonOrbit>,
+}
+
+#[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
+pub struct MoonOrbit {
+    pub address: String,
+    pub orbit_m: f64,
 }
 
 #[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
@@ -93,6 +126,19 @@ pub struct Settings {
     /// The wind's gusts: ram pressure from `gust[0]` to `gust[1]` times its
     /// mean (the Sun's wind varies by about this much).
     pub gust: [f64; 2],
+    /// Cosmic-ray dose in open space, mSv a day, when a body gives none
+    /// (MSL in cruise near 1 AU, Zeitlin et al. 2013).
+    pub free_space_dose_msv_day: f64,
+    /// `sse.shield.space_share`: turnover rigidity, GV, and index.
+    pub space_r0_gv: f64,
+    pub space_gamma: f64,
+    /// `sse.shield.ground_share`: Dorman α and k.
+    pub dorman_alpha: f64,
+    pub dorman_k: f64,
+    /// `sse.shield.air_dose`: attenuation lengths, kg/m², and muon share.
+    pub lambda_n_kg_m2: f64,
+    pub lambda_mu_kg_m2: f64,
+    pub muon_share: f64,
 }
 
 impl Default for Settings {
@@ -100,8 +146,80 @@ impl Default for Settings {
         Settings {
             ionopause_k: 1.0,
             gust: [0.25, 4.0],
+            free_space_dose_msv_day: 1.84,
+            space_r0_gv: 2.0,
+            space_gamma: 1.7,
+            dorman_alpha: 10.0,
+            dorman_k: 1.0,
+            lambda_n_kg_m2: 1400.0,
+            lambda_mu_kg_m2: 6000.0,
+            muon_share: 0.0045,
         }
     }
+}
+
+/// Cut-off and dose at one magnetic latitude on the ground.
+#[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
+pub struct LatitudeShield {
+    pub magnetic_latitude_deg: f64,
+    pub cutoff_gv: f64,
+    pub surface_dose_msv_yr: f64,
+}
+
+/// Dose in a circular orbit, unshielded by any hull.
+#[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
+pub struct OrbitDose {
+    pub distance_m: f64,
+    pub cutoff_equator_gv: f64,
+    pub equator_msv_yr: f64,
+    pub pole_msv_yr: f64,
+    /// Averaged over every direction of the orbit's plane (a sphere).
+    pub mean_msv_yr: f64,
+}
+
+/// An auroral oval: where one driver's currents come down into the air.
+#[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
+pub struct Oval {
+    /// "wind" (open and closed field lines meet) or "spin" (corotation fails).
+    pub driver: String,
+    /// Where its field lines cross the magnetic equator, m.
+    pub maps_to_m: f64,
+    /// Magnetic latitude of the oval, degrees, for the mean wind.
+    pub magnetic_latitude_deg: f64,
+    /// For a wind oval: from a gusty (strong) to a quiet wind, degrees.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub latitude_range_deg: Option<[f64; 2]>,
+    /// Nearest and furthest the oval comes to the spin equator, degrees of
+    /// spin latitude (the magnetic axis is tilted).
+    pub spin_latitude_range_deg: [f64; 2],
+}
+
+#[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
+pub struct Footprint {
+    pub moon: String,
+    pub magnetic_latitude_deg: f64,
+}
+
+/// Where aurorae glow: ovals and moon spots, or a diffuse glow over the
+/// night side for a world with air and no field holding the wind off.
+#[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
+pub struct Aurora {
+    pub ovals: Vec<Oval>,
+    pub footprints: Vec<Footprint>,
+    pub diffuse: bool,
+}
+
+/// Cosmic-ray shielding: what the field turns aside and the air absorbs.
+#[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
+pub struct Shield {
+    pub free_space_msv_yr: f64,
+    pub column_kg_m2: f64,
+    /// Equatorial cut-off of the host's field at a moon's orbit, GV (0 if none).
+    pub host_cutoff_gv: f64,
+    pub by_latitude: Vec<LatitudeShield>,
+    /// Averaged over the whole surface by area.
+    pub surface_mean_msv_yr: f64,
+    pub orbits: Vec<OrbitDose>,
 }
 
 #[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
@@ -144,6 +262,10 @@ pub struct FieldRead {
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub host_bubble: Option<HostBubble>,
     pub induced: Vec<Induced>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub shield: Option<Shield>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub aurora: Option<Aurora>,
     pub why: Vec<String>,
     pub stand_ins: Vec<String>,
     pub references: Vec<Reference>,
@@ -154,6 +276,8 @@ fn refs_of(ids: &[&str]) -> Vec<Reference> {
     for a in sse_atoms::field::atoms()
         .iter()
         .chain(sse_atoms::light::atoms().iter())
+        .chain(sse_atoms::shield::atoms().iter())
+        .chain(sse_atoms::aurora::atoms().iter())
     {
         let d = a.decl();
         if ids.contains(&d.id.as_str()) {
@@ -325,6 +449,26 @@ pub fn read(b: &Body, set: &Settings) -> Result<FieldRead, String> {
             stand_ins.push("induction uses the thin-shell response with the thickness capped at the skin depth; one frequency (the host's spin as seen by the moon)".into());
         }
     }
+    // Cosmic rays: the field's cut-off, then the air.
+    let own_reach = candidates
+        .iter()
+        .find(|c| c.kind == "field")
+        .map(|c| c.standoff_m)
+        .unwrap_or(0.0);
+    let host_cut = match (&b.host, inside) {
+        (Some(h), true) => sh::cutoff_rigidity(h.moment_a_m2, h.orbit_m, 0.0),
+        _ => 0.0,
+    };
+    let shield = shield_of(b, set, own_reach, host_cut, &mut why, &mut stand_ins);
+    if shield.is_some() {
+        used.extend([
+            "sse.shield.cutoff",
+            "sse.shield.space_share",
+            "sse.shield.ground_share",
+            "sse.shield.air_dose",
+        ]);
+    }
+    let aurora = aurora_of(b, set, &obstacle, inside, &mut why, &mut used);
     Ok(FieldRead {
         address: b.address.clone(),
         pressed_by: pressed_by.into(),
@@ -334,9 +478,224 @@ pub fn read(b: &Body, set: &Settings) -> Result<FieldRead, String> {
         flaring,
         host_bubble,
         induced,
+        shield,
+        aurora,
         why,
         stand_ins,
         references: refs_of(&used),
+    })
+}
+
+fn deg(rad: f64) -> f64 {
+    rad * 180.0 / m::PI
+}
+
+/// Ovals from each driver that lands inside the bubble, moon spots, or a
+/// diffuse glow.
+fn aurora_of(
+    b: &Body,
+    set: &Settings,
+    obstacle: &Obstacle,
+    inside: bool,
+    why: &mut Vec<String>,
+    used: &mut Vec<&'static str>,
+) -> Option<Aurora> {
+    let r = b.radius_m;
+    if obstacle.kind != "field" {
+        if b.air.is_some() && obstacle.kind == "air" {
+            why.push(format!("Aurora: with no field holding the {} off, it lights the top of the air as a faint diffuse glow over the night side, not a ring.", if inside { "host field" } else { "wind" }));
+            return Some(Aurora {
+                ovals: vec![],
+                footprints: vec![],
+                diffuse: true,
+            });
+        }
+        return None;
+    }
+    used.push("sse.aurora.footprint");
+    let tilt = b.magnetic_tilt_deg.abs();
+    // An oval at magnetic colatitude c round a pole tilted t from the spin
+    // pole spans spin colatitudes |t − c| to t + c.
+    let spin_range = |lat: f64| {
+        let c = 90.0 - lat;
+        [90.0 - (tilt + c), 90.0 - (tilt - c).abs()]
+    };
+    let mut ovals = vec![];
+    let nose = obstacle.standoff_m;
+    let lat = deg(au::footprint_latitude(nose, r));
+    let mut range = None;
+    if !inside && b.wind.ram() > 0.0 {
+        let at = |gust: f64| {
+            let s =
+                magnetopause_radius(b.moment_a_m2, b.wind.density_kg_m3 * gust, b.wind.speed_m_s);
+            deg(au::footprint_latitude(s, r))
+        };
+        range = Some([at(set.gust[1]), at(set.gust[0])]);
+    }
+    ovals.push(Oval {
+        driver: "wind".into(),
+        maps_to_m: nose,
+        magnetic_latitude_deg: lat,
+        latitude_range_deg: range,
+        spin_latitude_range_deg: spin_range(lat),
+    });
+    why.push(match range {
+        Some([lo, hi]) => format!("Aurora: the {} drives an oval at {:.0}° magnetic latitude, where the field line through the bubble's nose comes down; it moves from {:.0}° in a quiet wind to {:.0}° in a gusty one.", if inside { "host's flow" } else { "wind" }, lat, hi, lo),
+        None => format!("Aurora: an oval at {:.0}° magnetic latitude, where the field line through the bubble's nose comes down.", lat),
+    });
+    if b.plasma_source_kg_s > 0.0 && b.pedersen_conductance_s > 0.0 {
+        used.push("sse.aurora.hill_distance");
+        let b_eq = MU0 * b.moment_a_m2 / (4.0 * m::PI * r * r * r);
+        let h = au::hill_distance(b.pedersen_conductance_s, b_eq, r, b.plasma_source_kg_s);
+        if h > r && h < nose {
+            let l = deg(au::footprint_latitude(h, r));
+            ovals.push(Oval {
+                driver: "spin".into(),
+                maps_to_m: h,
+                magnetic_latitude_deg: l,
+                latitude_range_deg: None,
+                spin_latitude_range_deg: spin_range(l),
+            });
+            why.push(format!("Its moons load {:.0} kg of gas a second; beyond {:.0} of its radii that gas lags the spinning field, and the currents that drag it round light a main oval at {:.0}°, inside the wind's.", b.plasma_source_kg_s, h / r, l));
+        }
+    }
+    if tilt > 0.0 {
+        why.push(format!("Its magnetic axis is tilted {tilt:.0}° from its spin axis, so the ovals circle the magnetic poles, swinging between {:.0}° and {:.0}° of spin latitude.", ovals[0].spin_latitude_range_deg[0], ovals[0].spin_latitude_range_deg[1]));
+    }
+    let mut footprints = vec![];
+    for mo in &b.moons {
+        if mo.orbit_m > r && mo.orbit_m < nose {
+            let l = deg(au::footprint_latitude(mo.orbit_m, r));
+            why.push(format!("{}'s field line lands at {:.0}°: a spot and trail in the aurora that follows the moon.", mo.address, l));
+            footprints.push(Footprint {
+                moon: mo.address.clone(),
+                magnetic_latitude_deg: l,
+            });
+        }
+    }
+    Some(Aurora {
+        ovals,
+        footprints,
+        diffuse: false,
+    })
+}
+
+fn msv_yr(sv_s: f64) -> f64 {
+    sv_s * 1e3 * JULIAN_YEAR
+}
+
+/// Cut-off by latitude and the dose on the ground and in orbit. The own
+/// field turns particles aside only inside its own bubble (`reach`); a moon
+/// inside its host's bubble also has the host's cut-off at its orbit.
+fn shield_of(
+    b: &Body,
+    set: &Settings,
+    reach: f64,
+    host_cut: f64,
+    why: &mut Vec<String>,
+    stand_ins: &mut Vec<String>,
+) -> Option<Shield> {
+    let column = match &b.air {
+        Some(a) if b.surface_gravity_m_s2 > 0.0 => a.surface_pressure_pa / b.surface_gravity_m_s2,
+        Some(_) => {
+            why.push("No surface gravity was given, so the air's column and the dose under it are not computed.".into());
+            return None;
+        }
+        None => 0.0,
+    };
+    let free = b
+        .free_space_dose_msv_day
+        .unwrap_or(set.free_space_dose_msv_day)
+        .max(0.0)
+        * 1e-3
+        / DAY;
+    let air = sh::AirDose {
+        lambda_n: set.lambda_n_kg_m2,
+        lambda_mu: set.lambda_mu_kg_m2,
+        muon_share: set.muon_share,
+    };
+    let cut = |r: f64, lat: f64| {
+        let own = if r <= reach {
+            sh::cutoff_rigidity(b.moment_a_m2, r, lat)
+        } else {
+            0.0
+        };
+        own.max(host_cut)
+    };
+    let dose = |rc: f64, x: f64, sky: f64| {
+        sh::air_dose(
+            free,
+            x,
+            sh::space_share(rc, set.space_r0_gv, set.space_gamma),
+            sh::ground_share(rc, set.dorman_alpha, set.dorman_k),
+            sky,
+            &air,
+        )
+    };
+    let r = b.radius_m;
+    let mut by_latitude = vec![];
+    for d in [0.0, 15.0, 30.0, 45.0, 60.0, 75.0, 90.0] {
+        let rc = cut(r, d * m::PI / 180.0);
+        by_latitude.push(LatitudeShield {
+            magnetic_latitude_deg: d,
+            cutoff_gv: rc * 1e-9,
+            surface_dose_msv_yr: msv_yr(dose(rc, column, 0.5)),
+        });
+    }
+    // Area mean: midpoints in latitude weighted by cos λ.
+    let mean_at = |dist: f64, x: f64, sky: f64| {
+        let n = 90;
+        let (mut sum, mut wsum) = (0.0, 0.0);
+        for i in 0..n {
+            let lat = (i as f64 + 0.5) / n as f64 * m::PI / 2.0;
+            let w = m::cos(lat);
+            sum += w * dose(cut(dist, lat), x, sky);
+            wsum += w;
+        }
+        sum / wsum
+    };
+    let surface_mean = msv_yr(mean_at(r, column, 0.5));
+    let mut orbits = vec![];
+    for &d in &b.orbits_m {
+        if d <= r {
+            continue;
+        }
+        let q = r / d;
+        let sky = 1.0 - (1.0 - m::sqrt(1.0 - q * q)) / 2.0;
+        orbits.push(OrbitDose {
+            distance_m: d,
+            cutoff_equator_gv: cut(d, 0.0) * 1e-9,
+            equator_msv_yr: msv_yr(dose(cut(d, 0.0), 0.0, sky)),
+            pole_msv_yr: msv_yr(dose(cut(d, m::PI / 2.0), 0.0, sky)),
+            mean_msv_yr: msv_yr(mean_at(d, 0.0, sky)),
+        });
+    }
+    let eq = &by_latitude[0];
+    why.push(format!(
+        "Cosmic rays: open space here gives about {:.0} mSv a year. {} {} On the ground that leaves about {:.2} mSv a year on average ({:.2} at the magnetic equator, {:.2} at the poles).",
+        msv_yr(free),
+        if eq.cutoff_gv > 0.05 {
+            format!("The field turns aside those below {:.1} GV at the magnetic equator, none at the poles.", eq.cutoff_gv)
+        } else {
+            "No field turns any aside.".into()
+        },
+        if column > 0.0 {
+            format!("The air above each square metre weighs {:.0} kg and absorbs most of the rest.", column)
+        } else {
+            "There is no air to absorb them.".into()
+        },
+        surface_mean,
+        eq.surface_dose_msv_yr,
+        by_latitude[6].surface_dose_msv_yr,
+    ));
+    stand_ins.push("dose from galactic cosmic rays only, for one level of the star's activity; the star's particle storms and radiation belts come with MF7 part 2. Vertical Størmer cut-off of a centred dipole".into());
+    Some(Shield {
+        free_space_msv_yr: msv_yr(free),
+        column_kg_m2: column,
+        host_cutoff_gv: host_cut * 1e-9,
+        by_latitude,
+        surface_mean_msv_yr: surface_mean,
+        orbits,
     })
 }
 

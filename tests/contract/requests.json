@@ -1569,7 +1569,22 @@
     "address": "u:sol/sys:0/body:2",
     "radius_m": 6371000.0,
     "moment_a_m2": 8e+22,
-    "wind": { "density_kg_m3": 8.36e-21, "speed_m_s": 440000.0 }
+    "wind": { "density_kg_m3": 8.36e-21, "speed_m_s": 440000.0 },
+    "air": { "surface_pressure_pa": 101325.0, "scale_height_m": 8500.0 },
+    "surface_gravity_m_s2": 9.81,
+    "orbits_m": [6771000.0],
+    "magnetic_tilt_deg": 9.4,
+    "moons": [ { "address": "u:sol/sys:0/body:2/moon:0", "orbit_m": 384400000.0 } ]
+   },
+   {
+    "address": "u:sol/sys:0/body:5",
+    "radius_m": 71492000.0,
+    "moment_a_m2": 1.52e+27,
+    "wind": { "density_kg_m3": 3.09e-22, "speed_m_s": 440000.0 },
+    "magnetic_tilt_deg": 9.6,
+    "plasma_source_kg_s": 1000.0,
+    "pedersen_conductance_s": 0.1,
+    "moons": [ { "address": "u:sol/sys:0/body:5/moon:0", "orbit_m": 421700000.0 } ]
    },
    {
     "address": "u:sol/sys:0/body:5/moon:1",
@@ -1579,6 +1594,18 @@
     "layers": [ { "name": "salty ocean", "conductivity_s_m": 2.75, "thickness_m": 100000.0, "outer_radius_m": 1541000.0 } ]
    }
   ]
+ },
+ {
+  "op": "read_photometry",
+  "stars": [
+   { "temperature_k": 5772.0, "radius_m": 6.957e8, "distance_m": 3.0856775814913674e17 },
+   { "temperature_k": 3500.0, "luminosity_w": 1.5e25, "distance_m": 3.0856775814913674e18, "a_v": 1.0 }
+  ],
+  "bands": ["B", "V", "Ks"]
+ },
+ {
+  "op": "read_photometry",
+  "stars": [ { "temperature_k": 5772.0, "distance_m": 1.0 } ]
  },
  {
   "op": "read_field",
@@ -3030,5 +3057,42 @@
   "op": "read_reach",
   "constant": "G",
   "value": 1.33486e-10
+ },
+ {
+  "op": "phase_at",
+  "substance": "h2o",
+  "p_pa": 101325.0,
+  "t_k": 300.0
+ },
+ {
+  "op": "phase_at",
+  "substance": "unobtainium",
+  "p_pa": 1.0,
+  "t_k": 300.0
+ },
+ {
+  "op": "set_authored_batch",
+  "occurred_at_s": 0,
+  "edits": [
+   {"address": "u:aging/sys:90/body:1", "field": "name", "value": "Pasted"},
+   {"address": "u:aging/sys:90/body:2", "field": "mass_kg", "value": 6.0e24}
+  ]
+ },
+ {
+  "op": "set_authored_batch",
+  "occurred_at_s": 0,
+  "edits": [
+   {"address": "u:nowhere/sys:1", "field": "name", "value": "X"}
+  ]
+ },
+ {
+  "op": "withdraw",
+  "address": "u:aging/sys:90/body:2",
+  "at_s": 10
+ },
+ {
+  "op": "restore",
+  "address": "u:aging/sys:90/body:2",
+  "at_s": 20
  }
 ]

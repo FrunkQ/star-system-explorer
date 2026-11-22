@@ -102,6 +102,19 @@ pub struct AuthoredEdit {
     pub impossible: bool,
 }
 
+/// One edit of a batch (`set_authored_batch`).
+#[derive(Clone, PartialEq, Debug, Serialize, Deserialize, TS)]
+#[ts(export)]
+pub struct BatchEdit {
+    pub address: String,
+    pub field: String,
+    #[ts(type = "unknown")]
+    pub value: serde_json::Value,
+    #[serde(default)]
+    #[ts(optional)]
+    pub impossible: Option<bool>,
+}
+
 #[derive(Clone, Copy, PartialEq, Eq, Debug, Serialize, Deserialize, TS)]
 #[serde(tag = "kind", rename_all = "snake_case")]
 #[ts(export)]
@@ -126,6 +139,37 @@ pub enum Request {
     },
     SetAuthored {
         edit: AuthoredEdit,
+    },
+    /// Many authored edits at one time, chronicled as ONE `authored.set`
+    /// event (a paste on the Build desk is one undo step). The whole batch
+    /// is refused if any address is outside the universe or any value is
+    /// malformed. Impossible and possible edits go in separate batches.
+    /// `evidence` is `authored` (the default) or `catalogued`, for facts
+    /// entered from a published catalogue (the start sheet's Sol); a
+    /// catalogued batch may hold no impossible edit. `source` is the
+    /// citation, kept on the event and shown in `resolved_system`'s evidence.
+    SetAuthoredBatch {
+        edits: Vec<BatchEdit>,
+        occurred_at_s: i64,
+        #[serde(default)]
+        #[ts(optional)]
+        evidence: Option<String>,
+        #[serde(default)]
+        #[ts(optional)]
+        source: Option<String>,
+    },
+    /// Withdraw a subject and everything under it from `at_s` on (Undo of
+    /// a paste): it drops out of scene, resolved_system and systems. Nothing
+    /// is deleted; the history keeps the event.
+    Withdraw {
+        address: String,
+        at_s: i64,
+    },
+    /// Bring a withdrawn subject back from `at_s` on (Redo), with every fact
+    /// it had.
+    Restore {
+        address: String,
+        at_s: i64,
     },
     History {
         address: String,
@@ -501,6 +545,19 @@ pub enum Request {
     ReadField {
         #[ts(type = "unknown[]")]
         bodies: Vec<serde_json::Value>,
+    },
+    /// Magnitudes in photometric bands (night sky Y2, light side): for each
+    /// of `stars` (a photosphere: `temperature_k` with `radius_m` or
+    /// `luminosity_w`, and a sight line: `distance_m`, dust `a_v` and `r_v`),
+    /// AB and Vega magnitudes per band, the dust's dimming per band, and
+    /// colours with their dust excess. `bands` picks bands by id (U, B, V,
+    /// R, I, J, H, Ks); empty means all. The sky draw uses the same path.
+    ReadPhotometry {
+        #[ts(type = "unknown[]")]
+        stars: Vec<serde_json::Value>,
+        #[serde(default)]
+        #[ts(optional)]
+        bands: Option<Vec<String>>,
     },
     /// Planet finding from afar (O13): one star, its planets, an observer
     /// (direction and distance), an instrument and a watch time. Returns
@@ -1258,6 +1315,15 @@ pub enum Request {
         #[ts(optional)]
         id: Option<String>,
     },
+    /// The phase of a substance at a pressure and temperature (MP17, matter
+    /// pack design section 4.3A), with the phase's row: read from the
+    /// substance's phase table, or from its triple point and vapour curve
+    /// when it has none. Read-only, any seat.
+    PhaseAt {
+        substance: String,
+        p_pa: f64,
+        t_k: f64,
+    },
     /// The reach report for a changed constant (MP1c, design section 7A.3):
     /// every block in exactly one of three groups. `follows` (a formula that
     /// reads the constant from the one handle), `estimated` (a table
@@ -1360,6 +1426,9 @@ impl Request {
             Request::LoadStack { .. } => "load_stack",
             Request::OpenUniverse { .. } => "open_universe",
             Request::SetAuthored { .. } => "set_authored",
+            Request::SetAuthoredBatch { .. } => "set_authored_batch",
+            Request::Withdraw { .. } => "withdraw",
+            Request::Restore { .. } => "restore",
             Request::History { .. } => "history",
             Request::StateHash { .. } => "state_hash",
             Request::Derive { .. } => "derive",
@@ -1390,6 +1459,7 @@ impl Request {
             Request::SurveyPlanets { .. } => "survey_planets",
             Request::ReadActivity { .. } => "read_activity",
             Request::ReadField { .. } => "read_field",
+            Request::ReadPhotometry { .. } => "read_photometry",
             Request::ReadSpectrum { .. } => "read_spectrum",
             Request::ReadAirOptics { .. } => "read_air_optics",
             Request::Detect { .. } => "detect",
@@ -1443,6 +1513,7 @@ impl Request {
             Request::PromoteStar { .. } => "promote_star",
             Request::CampaignTags => "campaign_tags",
             Request::ReadMatter { .. } => "read_matter",
+            Request::PhaseAt { .. } => "phase_at",
             Request::ReadReach { .. } => "read_reach",
             Request::Dressing { .. } => "dressing",
             Request::AdoptDressing { .. } => "adopt_dressing",
@@ -1467,6 +1538,21 @@ pub fn ops() -> Vec<OpInfo> {
             "set_authored",
             Cost::Trivial,
             "GM machine only in a session; players send intents",
+        ),
+        o(
+            "set_authored_batch",
+            Cost::Light,
+            "GM machine only in a session; one event for the whole batch",
+        ),
+        o(
+            "withdraw",
+            Cost::Trivial,
+            "GM machine only in a session; one authored event, nothing deleted",
+        ),
+        o(
+            "restore",
+            Cost::Trivial,
+            "GM machine only in a session; one authored event",
         ),
         o("history", Cost::Trivial, none),
         o("state_hash", Cost::Light, none),
@@ -1561,6 +1647,11 @@ pub fn ops() -> Vec<OpInfo> {
             "read_field",
             Cost::Trivial,
             "per body: a few closed-form blocks",
+        ),
+        o(
+            "read_photometry",
+            Cost::Trivial,
+            "per star: one Planck evaluation and one extinction block per band",
         ),
         o(
             "survey_planets",
@@ -1734,6 +1825,11 @@ pub fn ops() -> Vec<OpInfo> {
             "read_matter",
             Cost::Light,
             "reads the master data sheet loaded with the stack; nothing is worked out but molar mass",
+        ),
+        o(
+            "phase_at",
+            Cost::Light,
+            "one lookup in a table built at pack-build time (or the familiar three phases)",
         ),
         o(
             "read_reach",
@@ -2056,6 +2152,15 @@ pub enum Response {
     FieldRead {
         #[ts(type = "unknown[]")]
         bodies: Vec<serde_json::Value>,
+    },
+    /// `read_photometry`: each of `stars` is `sse_light::photometry::Photometry`
+    /// (magnitudes per band with extinction, colours with excess); `references`
+    /// cite the magnitude system, band table, extinction curve and Planck's law.
+    PhotometryRead {
+        #[ts(type = "unknown[]")]
+        stars: Vec<serde_json::Value>,
+        #[ts(type = "unknown[]")]
+        references: Vec<serde_json::Value>,
     },
     /// `survey_planets`: `result` is `sse_survey::SurveyResult` (findings
     /// per planet and method with verdict, signal to noise, measured values

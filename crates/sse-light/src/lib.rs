@@ -20,6 +20,7 @@
 pub mod air;
 pub mod emit;
 pub mod observe;
+pub mod photometry;
 pub mod shift;
 pub mod table;
 
@@ -29,7 +30,7 @@ mod tests;
 use serde::{Deserialize, Serialize};
 use sse_core::math as m;
 pub use sse_flow::Reference;
-pub use table::{Band, LightTable, LineDef};
+pub use table::{Band, LightTable, LineDef, Passband};
 
 /// Planck constant, J s (CODATA 2018, exact).
 pub const H: f64 = 6.626_070_15e-34;

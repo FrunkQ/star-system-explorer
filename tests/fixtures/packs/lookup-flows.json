@@ -1,0 +1,201 @@
+{
+ "format": "sse.pack/1",
+ "id": "test.lookup-flows",
+ "version": "0.1.0",
+ "kind": [
+  "physics"
+ ],
+ "kernel_range": "^0.1",
+ "licence": "Apache-2.0",
+ "requires": [
+  {
+   "id": "sse.base-physics",
+   "range": "^0.1"
+  }
+ ],
+ "provides": {
+  "quantity_kinds": [
+   {
+    "id": "test.mass",
+    "dim": [
+     0,
+     1,
+     0,
+     0,
+     0,
+     0,
+     0
+    ],
+    "description": "MP17a fixture"
+   },
+   {
+    "id": "test.latent",
+    "dim": [
+     2,
+     0,
+     -2,
+     0,
+     0,
+     0,
+     0
+    ],
+    "description": "MP17a fixture"
+   },
+   {
+    "id": "test.pressure",
+    "dim": [
+     -1,
+     1,
+     -2,
+     0,
+     0,
+     0,
+     0
+    ],
+    "description": "MP17a fixture"
+   },
+   {
+    "id": "test.temperature",
+    "dim": [
+     0,
+     0,
+     0,
+     0,
+     1,
+     0,
+     0
+    ],
+    "description": "MP17a fixture"
+   },
+   {
+    "id": "test.density",
+    "dim": [
+     -3,
+     1,
+     0,
+     0,
+     0,
+     0,
+     0
+    ],
+    "description": "MP17a fixture"
+   },
+   {
+    "id": "test.strength",
+    "dim": [
+     -1,
+     1,
+     -2,
+     0,
+     0,
+     0,
+     0
+    ],
+    "description": "MP17a fixture"
+   }
+  ],
+  "flows": [
+   {
+    "format": "sse.flow/1",
+    "id": "test.water-boil-heat",
+    "version": "1.0.0",
+    "hook": "test.lookup",
+    "inputs": [
+     {
+      "name": "mass",
+      "kind": "test.mass"
+     }
+    ],
+    "nodes": [
+     {
+      "id": "l",
+      "atom": "sse.reference.lookup",
+      "config": {
+       "what": "h2o",
+       "property": "latent_vaporisation"
+      }
+     }
+    ],
+    "wires": [],
+    "publishes": [
+     {
+      "kind": "test.latent",
+      "from": "l.value"
+     }
+    ]
+   },
+   {
+    "format": "sse.flow/1",
+    "id": "test.water-density-at",
+    "version": "1.0.0",
+    "hook": "test.lookup",
+    "inputs": [
+     {
+      "name": "p",
+      "kind": "test.pressure"
+     },
+     {
+      "name": "t",
+      "kind": "test.temperature"
+     }
+    ],
+    "nodes": [
+     {
+      "id": "d",
+      "atom": "sse.reference.lookup",
+      "config": {
+       "what": "h2o",
+       "property": "density",
+       "conditions": true
+      }
+     }
+    ],
+    "wires": [
+     {
+      "from": "in.p",
+      "to": "d.p_pa"
+     },
+     {
+      "from": "in.t",
+      "to": "d.t_k"
+     }
+    ],
+    "publishes": [
+     {
+      "kind": "test.density",
+      "from": "d.value"
+     }
+    ]
+   },
+   {
+    "format": "sse.flow/1",
+    "id": "test.iron-density",
+    "version": "1.0.0",
+    "hook": "test.lookup",
+    "inputs": [
+     {
+      "name": "mass",
+      "kind": "test.mass"
+     }
+    ],
+    "nodes": [
+     {
+      "id": "f",
+      "atom": "sse.reference.lookup",
+      "config": {
+       "what": "h2o",
+       "property": "yield_strength"
+      }
+     }
+    ],
+    "wires": [],
+    "publishes": [
+     {
+      "kind": "test.strength",
+      "from": "f.value"
+     }
+    ]
+   }
+  ]
+ }
+}
