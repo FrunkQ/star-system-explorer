@@ -21,6 +21,8 @@ mod glow;
 mod ice_ages;
 #[cfg(test)]
 mod matter_tests;
+#[cfg(test)]
+mod names_tests;
 mod nav;
 mod orbits;
 pub mod protocol;
@@ -189,6 +191,22 @@ fn load_observe(ms: &[sse_pack::PackManifest]) -> Result<Observe, Vec<String>> {
             sse_reference::Reference::default()
         }
     };
+    // NM1: name schemes, bottom to top; a later pack's scheme of the same id
+    // replaces an earlier one.
+    let mut found = Vec::new();
+    for p in ms {
+        if let Some(v) = p.provides.other.get("names") {
+            let j = serde_json::to_value(v).map_err(|e| vec![format!("{}: names: {e}", p.id)])?;
+            found.push((p.id.clone(), j));
+        }
+    }
+    let names = match sse_names::Library::load(&found) {
+        Ok(l) => l,
+        Err(e) => {
+            problems.extend(e);
+            sse_names::Library::default()
+        }
+    };
     if !problems.is_empty() {
         return Err(problems);
     }
@@ -233,6 +251,7 @@ fn load_observe(ms: &[sse_pack::PackManifest]) -> Result<Observe, Vec<String>> {
         programs,
         dressing,
         reference: std::sync::Arc::new(reference),
+        names,
     })
 }
 
@@ -404,6 +423,8 @@ struct Observe {
     /// The master data sheet (`provides.reference`, MP1), shared with the
     /// Look up block for the length of each call (MP17a).
     reference: std::sync::Arc<sse_reference::Reference>,
+    /// Name schemes and the avoid list (`provides.other.names`, NM1).
+    names: sse_names::Library,
 }
 
 pub struct Kernel {
@@ -1176,6 +1197,69 @@ impl Kernel {
             follows,
             estimated,
             cannot_follow: cannot,
+        })
+    }
+
+    /// `name_sample` (NM1): names from one scheme at sample addresses
+    /// (`u:<seed>/sys:<i / 10>/body:<i % 10>`, index `i % 10`), their faces,
+    /// and a digest of every name, one per line.
+    #[allow(clippy::too_many_arguments)]
+    fn name_sample(
+        &self,
+        scheme: &str,
+        kind: &str,
+        layer: &str,
+        count: u32,
+        start: u32,
+        seed: &str,
+        parent: Option<&str>,
+        facts: &BTreeMap<String, String>,
+    ) -> Result<Response, Response> {
+        if count == 0 || count > 10_000 {
+            return Err(err("bad_request", "count is 1 to 10,000"));
+        }
+        let lib = &self.observe.names;
+        let s = sse_core::Seed::from_text(seed);
+        let root = sse_core::Address::universe("sample").expect("valid");
+        let mut all = String::new();
+        let mut shown = vec![];
+        for i in start..start.saturating_add(count) {
+            let a = root
+                .child("sys", u64::from(i / 10))
+                .and_then(|a| a.child("body", u64::from(i % 10)))
+                .expect("valid");
+            let r = sse_names::Request {
+                seed: &s,
+                address: &a,
+                layer,
+                scheme,
+                kind,
+                index: i % 10,
+                serial: Some(u64::from(i) + 1),
+                parent,
+                system: None,
+                facts,
+            };
+            let n = sse_names::name(lib, &r).map_err(|e| err("bad_request", e))?;
+            let text = n.show(parent, None);
+            all.push_str(&text);
+            all.push('\n');
+            if shown.len() < 12 {
+                let mut v = serde_json::to_value(&n).expect("plain data");
+                v["text"] = text.into();
+                shown.push(v);
+            }
+        }
+        Ok(Response::Names {
+            value: serde_json::json!({
+                "scheme": scheme,
+                "kind": kind,
+                "layer": layer,
+                "count": count,
+                "digest": sse_core::ContentHash::of_bytes(all.as_bytes()).hex(),
+                "names": shown,
+                "avoid_hits": lib.avoid_hits(scheme),
+            }),
         })
     }
 
@@ -4832,6 +4916,25 @@ impl Kernel {
             Request::ReadMatter { table, id } => {
                 self.read_matter(table.as_deref(), id.as_deref())?
             }
+            Request::NameSample {
+                scheme,
+                kind,
+                layer,
+                count,
+                start,
+                seed,
+                parent,
+                facts,
+            } => self.name_sample(
+                &scheme,
+                &kind,
+                layer.as_deref().unwrap_or("common"),
+                count.unwrap_or(12),
+                start.unwrap_or(0),
+                seed.as_deref().unwrap_or("sample"),
+                parent.as_deref(),
+                &facts.unwrap_or_default(),
+            )?,
             Request::Dressing { scope, at_s } => self.dressing(&scope, at_s.unwrap_or(i64::MAX))?,
             Request::AdoptDressing {
                 candidate,
