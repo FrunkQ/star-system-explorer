@@ -1,6 +1,6 @@
 //! NM1: the naming engine (naming design section 7, NM1 acceptance).
 
-use crate::make::{name, name_with, siblings, Request};
+use crate::make::{name, name_with, siblings, Named, Request};
 use crate::scheme::{Library, Scheme};
 use crate::text::{check, compose, fold, near};
 use serde_json::{json, Value as J};
@@ -677,4 +677,78 @@ fn base_names_english_means_what_it_says() {
         "{} unique planets in 1000",
         planets.len()
     );
+}
+
+/// NM3c: every Many-nations row is a real word with its meaning, language
+/// and source, written in its own script where that is not Latin, and none
+/// is on the avoid list.
+#[test]
+fn base_names_many_nations_rows_are_sourced() {
+    let l = base_names();
+    for id in ["en", "zh", "hi", "es", "ar", "fr", "pt", "ru", "ja", "sw"] {
+        let s = &l.schemes[format!("nations-{id}").as_str()];
+        assert_eq!(s.doc.kind.as_deref(), Some("real"));
+        assert!(s.doc.about.contains("first pass"), "{id}: review status");
+        let rows = &s.doc.lists["word"];
+        assert!(rows.len() >= 90, "{id}: {} words", rows.len());
+        for r in rows {
+            let r = r.row();
+            assert!(
+                r.means.is_some() && r.language.is_some() && r.source.is_some(),
+                "{id}: {} lacks meaning, language or source",
+                r.name
+            );
+            if ["zh", "hi", "ar", "ru", "ja"].contains(&id) {
+                assert!(r.native.is_some(), "{id}: {} has no own script", r.name);
+                assert!(r.ipa.is_some(), "{id}: {} has no IPA", r.name);
+            }
+            assert!(!crate::make::avoided(&l.avoid, &r.name), "{id}: {}", r.name);
+        }
+    }
+}
+
+/// NM3c: a system is named in one language, with about one name in ten
+/// from another, and a 500-world campaign gets no repeat inside any one
+/// system. A preset that weighs a language at 0 never draws it.
+#[test]
+fn base_names_many_nations_clump_by_system() {
+    let l = base_names();
+    let seed = Seed::from_text("nm3c");
+    let none = BTreeMap::new();
+    let (mut names, mut strays) = (0, 0);
+    for sys in 0..50u32 {
+        let addrs: Vec<Address> = (0..10)
+            .map(|b| addr(&format!("u:t/sys:{sys}/body:{b}")))
+            .collect();
+        let rs: Vec<_> = addrs
+            .iter()
+            .map(|a| req(&seed, a, "many-nations", "planet", &none))
+            .collect();
+        let got: Vec<Named> = siblings(&l, &rs).into_iter().map(Result::unwrap).collect();
+        let shown: BTreeSet<String> = got.iter().map(|n| fold(&n.show(None, None))).collect();
+        assert_eq!(shown.len(), got.len(), "system {sys} repeats a name");
+        let mut by: BTreeMap<&str, usize> = BTreeMap::new();
+        for n in &got {
+            *by.entry(n.scheme.as_str()).or_default() += 1;
+        }
+        let most = by.values().max().copied().unwrap_or(0);
+        names += got.len();
+        strays += got.len() - most;
+    }
+    let share = strays as f64 / names as f64;
+    assert!((0.03..0.2).contains(&share), "{strays} strays in {names}");
+    for i in 0..500u32 {
+        let a = addr(&format!("u:t/sys:{}/body:{}", i / 10, i % 10));
+        let n = name(
+            &l,
+            &req(&seed, &a, "many-nations-agencies", "planet", &none),
+        )
+        .unwrap();
+        assert!(
+            !["nations-es", "nations-pt", "nations-sw"].contains(&n.scheme.as_str()),
+            "{} came from {}",
+            n.show(None, None),
+            n.scheme
+        );
+    }
 }

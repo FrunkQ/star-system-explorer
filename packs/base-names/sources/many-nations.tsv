@@ -1,0 +1,1414 @@
+language	concept	gloss	native	romanised	ipa	source
+hi	55_dream	dream	सपना		səpnaː	northeuralex
+hi	55_dream	dream	स्वप्न		svəpn	northeuralex
+hi	56_sky	sky	आकाश		aːkaːɕ	northeuralex
+hi	56_sky	sky	आसमान		aːsmaːn	northeuralex
+hi	57_sun	sun	रवि		rəvɪ	northeuralex
+hi	57_sun	sun	सूरज		suːrəd͡ʒ	northeuralex
+hi	57_sun	sun	सूर्य		suːrj	northeuralex
+hi	58_moon	moon	चाँद		t͡ʃãːd	northeuralex
+hi	58_moon	moon	चंद्र		t͡ʃəndr	northeuralex
+hi	59_star	star	तारा		taːraː	northeuralex
+hi	59_star	star	सितारा		sɪtaːraː	northeuralex
+hi	60_air	air	हवा		həvaː	northeuralex
+hi	60_air	air	वायु		vaːjʊ	northeuralex
+hi	62_wave	wave	लहर		ləhər	northeuralex
+hi	62_wave	wave	तरंग		tərəŋɡ	northeuralex
+hi	63_water	water	जल		d͡ʒəl	northeuralex
+hi	63_water	water	पानी		paːniː	northeuralex
+hi	64_stone	stone	पत्थर		pətʰːər	northeuralex
+hi	65_ground	ground	मिट्टी		mɪʈːiː	northeuralex
+hi	66_earth	earth	भूमि		bʰuːmɪ	northeuralex
+hi	66_earth	earth	ज़मीन		zəmiːn	northeuralex
+hi	69_spark	spark	चिनगारी		t͡ʃɪnəɡaːriː	northeuralex
+hi	69_spark	spark	स्फुलिंग		sfʊlɪŋɡ	northeuralex
+hi	70_fire	fire	आग		aːɡ	northeuralex
+hi	70_fire	fire	आतिश		aːtɪɕ	northeuralex
+hi	70_fire	fire	अग्नि		əɡnɪ	northeuralex
+hi	71_light	light	रोशनी		roːɕniː	northeuralex
+hi	71_light	light	प्रकाश		prəkaːɕ	northeuralex
+hi	72_shadow	shadow	छाया		t͡ʃʰaːjaː	northeuralex
+hi	72_shadow	shadow	परछाई		pərt͡ʃʰaːĩː	northeuralex
+hi	74_fog	fog	धुँध		dʰʊndʰ	northeuralex
+hi	74_fog	fog	कुहरा		kʊhəraː	northeuralex
+hi	75_cloud	cloud	मेघ		meːɡʰ	northeuralex
+hi	75_cloud	cloud	अभ्र		əbʰr	northeuralex
+hi	76_rain	rain	मेंह		mẽːh	northeuralex
+hi	76_rain	rain	बारिश		baːrɪɕ	northeuralex
+hi	77_snow	snow	हिम		hɪm	northeuralex
+hi	77_snow	snow	बर्फ़		bərf	northeuralex
+hi	78_ice	ice	हिम		hɪm	northeuralex
+hi	78_ice	ice	बर्फ़		bərf	northeuralex
+hi	79_frost	frost	ठंड		ʈʰəɳɖ	northeuralex
+hi	81_heat	heat	ताप		taːp	northeuralex
+hi	81_heat	heat	गरमी		ɡərmiː	northeuralex
+hi	82_hoarfrost	hoarfrost	पाला		paːlaː	northeuralex
+hi	84_thunder	thunder	गरज		ɡərəd͡ʒ	northeuralex
+hi	85_current	current	बहाव		bəhaːv	northeuralex
+hi	85_current	current	प्रवाह		prəwaːh	northeuralex
+hi	86_drop	drop	बूँद		bũːd	northeuralex
+hi	87_foam	foam	झाग		d͡ʒʰaːɡ	northeuralex
+hi	89_lake	lake	झील		d͡ʒʰiːl	northeuralex
+hi	89_lake	lake	सरोवर		səroːvər	northeuralex
+hi	90_swamp	swamp	दलदल		dələdəl	northeuralex
+hi	90_swamp	swamp	धँसान		dʰə̃saːn	northeuralex
+hi	91_moor	moor	झाबर		d͡ʒʰaːbər	northeuralex
+hi	91_moor	moor	धँसान		dʰãsaːn	northeuralex
+hi	93_forest	forest	जंगल		d͡ʒəŋɡəl	northeuralex
+hi	94_hill	hill	टीला		ʈiːlaː	northeuralex
+hi	94_hill	hill	पहाड़		pəhaːɽ	northeuralex
+hi	96_mountain	mountain	पहाड़		pəhaːɽ	northeuralex
+hi	97_summit	summit	शिखर		ɕɪkʰər	northeuralex
+hi	98_cave	cave	गुहा		ɡʊhaː	northeuralex
+hi	98_cave	cave	गुफ़ा		ɡʊfaː	northeuralex
+hi	99_slope	slope	ढाल		ɖʰaːl	northeuralex
+hi	99_slope	slope	ढलान		ɖʰəlaːn	northeuralex
+hi	100_source	source	चश्मा		t͡ʃəɕmaː	northeuralex
+hi	101_brook	brook	सोता		soːtaː	northeuralex
+hi	101_brook	brook	नदिका		nədɪkaː	northeuralex
+hi	102_river	river	नदी		nədiː	northeuralex
+hi	102_river	river	सरिता		sərɪtaː	northeuralex
+hi	103_shore	shore	तट		təʈ	northeuralex
+hi	103_shore	shore	किनारा		kɪnaːraː	northeuralex
+hi	105_land	land	महाद्वीप		məhaːdviːp	northeuralex
+hi	106_sea	sea	सागर		saːɡər	northeuralex
+hi	106_sea	sea	समुद्र		səmʊdr	northeuralex
+hi	107_covebay	cove, bay	खाड़ी		kʰaːɽiː	northeuralex
+hi	108_island	island	टापू		ʈaːpuː	northeuralex
+hi	108_island	island	द्वीप		dwiːp	northeuralex
+hi	109_flower	flower	फूल		pʰuːl	northeuralex
+hi	109_flower	flower	पुष्प		pʊʂp	northeuralex
+hi	110_grass	grass	घास		ɡʰaːs	northeuralex
+hi	111_root	root	मूल		muːl	northeuralex
+hi	112_tree	tree	पेड़		peːɽ	northeuralex
+hi	112_tree	tree	वृक्ष		wr̥kʂ	northeuralex
+hi	117_leaf	leaf	पत्र		pətr	northeuralex
+hi	117_leaf	leaf	पत्ता		pətːaː	northeuralex
+hi	118_birch	birch	भूर्ज		bʰuːrd͡ʒ	northeuralex
+hi	120_willow	willow	बेंत		beːnt	northeuralex
+hi	123_feather	feather	पर		pər	northeuralex
+hi	123_feather	feather	पंख		pəŋkʰ	northeuralex
+hi	125_wing	wing	पंख		pəŋkʰ	northeuralex
+hi	125_wing	wing	डैना		ɖɛːnaː	northeuralex
+hi	130_nest	nest	नीड़		niːɽ	northeuralex
+hi	130_nest	nest	घोंसला		ɡʰõːslaː	northeuralex
+hi	136_horse	horse	अश्व		əɕw	northeuralex
+hi	136_horse	horse	घोड़ा		ɡʰoːɽaː	northeuralex
+hi	141_bear	bear	रीछ		riːt͡ʃʰ	northeuralex
+hi	141_bear	bear	भालू		bʰaːluː	northeuralex
+hi	144_fox	fox	लोमड़ी		loːməɽiː	northeuralex
+hi	145_hare	hare	खरहा		kʰərəhaː	northeuralex
+hi	145_hare	hare	ख़रगोश		xərɡoːɕ	northeuralex
+hi	147_wolf	wolf	भेड़िया		bʰeːɽɪjaː	northeuralex
+hi	148_bird	bird	पक्षी		pəkʂiː	northeuralex
+hi	148_bird	bird	चिड़िया		t͡ʃɪɽɪjaː	northeuralex
+hi	153_eagle	eagle	उक़ाब		ʊqaːb	northeuralex
+hi	155_owl	owl	उल्लू		ʊlːuː	northeuralex
+hi	156_crane	crane	सारस		saːrəs	northeuralex
+hi	157_crow	crow	काक		kaːk	northeuralex
+hi	158_cuckoo	cuckoo	कोयल		koːjəl	northeuralex
+hi	158_cuckoo	cuckoo	कोकिल		koːkɪl	northeuralex
+hi	159_swan	swan	हंस		həɲs	northeuralex
+hi	159_swan	swan	मराल		məraːl	northeuralex
+hi	160_fish	fish	मछली		mət͡ʃʰliː	northeuralex
+hi	160_fish	fish	मत्स्य		mətsj	northeuralex
+hi	170_butterfly	butterfly	तितली		tɪtəliː	northeuralex
+hi	172_apple	apple	सेब		seːb	northeuralex
+hi	175_seed	seed	बीज		biːd͡ʒ	northeuralex
+hi	176_grain	grain	दाना		daːnaː	northeuralex
+hi	185_iron	iron	लोहा		loːhaː	northeuralex
+hi	186_gold	gold	सोना		soːnaː	northeuralex
+hi	186_gold	gold	स्वर्ण		svərɳ	northeuralex
+hi	187_silver	silver	रजत		rəd͡ʒət	northeuralex
+hi	187_silver	silver	चाँदी		t͡ʃãːdiː	northeuralex
+hi	189_glass	glass	काँच		kãːt͡ʃ	northeuralex
+hi	191_sand	sand	रेत		reːt	northeuralex
+hi	191_sand	sand	बालू		baːluː	northeuralex
+hi	212_joy	joy	आनंद		aːnənd	northeuralex
+hi	212_joy	joy	प्रसन्नता		prəsənːtaː	northeuralex
+hi	214_happiness	happiness	आनंद		aːnənd	northeuralex
+hi	214_happiness	happiness	ख़ुशी		xʊɕiː	northeuralex
+hi	220_memory	memory	याददाश्त		jaːddaːɕt	northeuralex
+hi	224_truth	truth	सत्य		sətj	northeuralex
+hi	224_truth	truth	सच्चाई		sətt͡ʃaːiː	northeuralex
+hi	227_story	story	कथा		kətʰaː	northeuralex
+hi	227_story	story	कहानी		kəhaːniː	northeuralex
+hi	239_sound	sound	स्वर		swər	northeuralex
+hi	239_sound	sound	ध्वनि		dʰwənɪ	northeuralex
+hi	241_song	song	गीत		ɡiːt	northeuralex
+hi	242_calm	calm	आराम		aːraːm	northeuralex
+hi	242_calm	calm	ख़ामोशी		xaːmoːɕiː	northeuralex
+hi	247_gift	gift	उपहार		ʊphaːr	northeuralex
+hi	247_gift	gift	तोहफ़ा		toːhəfaː	northeuralex
+hi	251_friend	friend	मित्र		mɪtr	northeuralex
+hi	259_circle	circle	चक्कर		t͡ʃəkːər	northeuralex
+hi	266_space	space	जगह		d͡ʒəɡəh	northeuralex
+hi	266_space	space	स्थान		stʰaːn	northeuralex
+hi	295_north	north	उत्तर		ʊtːər	northeuralex
+hi	296_south	south	दक्खिन		dəkʰːɪn	northeuralex
+hi	297_west	west	पश्चिम		pəɕt͡ʃɪm	northeuralex
+hi	298_east	east	पूरब		puːrəb	northeuralex
+hi	308_home	home	घर		ɡʰər	northeuralex
+hi	399_bridge	bridge	पुल		pʊl	northeuralex
+hi	399_bridge	bridge	सेतु		seːtʊ	northeuralex
+hi	400_well	well	कुआँ		kʊãː	northeuralex
+hi	401_pasture	pasture	चरागाह		t͡ʃəraːɡaːh	northeuralex
+hi	402_path	path	पथ		pətʰ	northeuralex
+hi	402_path	path	पगडंडी		pəɡəɖəɳɖiː	northeuralex
+hi	411_life	life	जीवन		d͡ʒiːvən	northeuralex
+hi	411_life	life	ज़िंदगी		zɪndəɡiː	northeuralex
+hi	429_world	world	विश्व		wɪɕw	northeuralex
+hi	429_world	world	दुनिया		dʊnɪjaː	northeuralex
+hi	449_time	time	काल		kaːl	northeuralex
+hi	449_time	time	वक़्त		vəqt	northeuralex
+hi	450_day	day	दिन		dɪn	northeuralex
+hi	450_day	day	रोज़		roːz	northeuralex
+hi	451_morning	morning	सुबह		sʊbəh	northeuralex
+hi	452_noon	noon	दोपहर		doːpəhər	northeuralex
+hi	452_noon	noon	मध्याह्न		mədʰjaːhn	northeuralex
+hi	453_evening	evening	शाम		ɕaːm	northeuralex
+hi	453_evening	evening	संध्या		səndʰjaː	northeuralex
+hi	454_night	night	रात		raːt	northeuralex
+hi	454_night	night	रात्रि		raːtrɪ	northeuralex
+hi	457_year	year	बरस		bərəs	northeuralex
+hi	457_year	year	वर्ष		vərʂ	northeuralex
+hi	458_spring	spring	वसंत		wəsənt	northeuralex
+hi	459_summer	summer	गरमी		ɡərmiː	northeuralex
+hi	459_summer	summer	ग्रीष्म		ɡriːʂm	northeuralex
+hi	460_autumn	autumn	शरत्		ɕərət	northeuralex
+hi	460_autumn	autumn	पतझड़		pətəd͡ʒʰəɽ	northeuralex
+hi	461_winter	winter	जाड़ा		d͡ʒaːɽaː	northeuralex
+hi	461_winter	winter	सर्दियाँ		sərdɪjãː	northeuralex
+hi	501_beautiful	beautiful	सुंदर		sʊndər	northeuralex
+hi	503_warm	warm	गरम		ɡərəm	northeuralex
+hi	504_cold	cold	सर्द		sərd	northeuralex
+hi	506_fresh	fresh	तर		tər	northeuralex
+hi	506_fresh	fresh	ताज़ा		taːzaː	northeuralex
+hi	522_bright	bright	रोशन		roːɕən	northeuralex
+hi	525_white	white	सफ़ेद		səfeːd	northeuralex
+hi	526_red	red	लाल		laːl	northeuralex
+hi	526_red	red	सुर्ख़		sʊrx	northeuralex
+hi	527_yellow	yellow	पीला		piːlaː	northeuralex
+hi	527_yellow	yellow	ज़र्द		zərd	northeuralex
+hi	528_blue	blue	नीला		niːlaː	northeuralex
+hi	528_blue	blue	आसमानी		aːsmaːnɪ	northeuralex
+hi	529_green	green	हरा		həraː	northeuralex
+hi	530_grey	grey	धूसर		dʰuːsər	northeuralex
+hi	564_new	new	नया		nəjaː	northeuralex
+hi	575_far	far	दूर		duːr	northeuralex
+hi	575_far	far	दूरस्थ		duːrəstʰ	northeuralex
+hi	579_first	first	पहला		pəhlaː	northeuralex
+hi	579_first	first	प्रथम		prətʰəm	northeuralex
+ru	55_dream	dream	сновидение		snəvʲidʲeˑnʲijə	northeuralex
+ru	56_sky	sky	небо		nʲeˑbə	northeuralex
+ru	57_sun	sun	солнце		sɔˑnt͡sə	northeuralex
+ru	58_moon	moon	луна		ɫunaˑ	northeuralex
+ru	59_star	star	звезда		zvʲɪzdaˑ	northeuralex
+ru	60_air	air	воздух		vɔˑzdux	northeuralex
+ru	61_wind	wind	ветер		vʲeˑtʲɪr	northeuralex
+ru	62_wave	wave	волна		vɐɫnaˑ	northeuralex
+ru	63_water	water	вода		vɐdaˑ	northeuralex
+ru	64_stone	stone	камень		kaˑmʲɪnʲ	northeuralex
+ru	65_ground	ground	почва		pɔˑt͡ʃvə	northeuralex
+ru	66_earth	earth	земля		zʲɪmlaˑ	northeuralex
+ru	69_spark	spark	искра		jɨˑskrə	northeuralex
+ru	70_fire	fire	огонь		ɐɡɔˑnʲ	northeuralex
+ru	71_light	light	свет		svʲeˑt	northeuralex
+ru	72_shadow	shadow	тень		tʲeˑnʲ	northeuralex
+ru	74_fog	fog	туман		tumaˑn	northeuralex
+ru	75_cloud	cloud	облако		ɔˑbɫəkə	northeuralex
+ru	76_rain	rain	дождь		dəʒtʲ	northeuralex
+ru	77_snow	snow	снег		snʲeˑk	northeuralex
+ru	78_ice	ice	лед		lot	northeuralex
+ru	79_frost	frost	мороз		mɐrɔˑs	northeuralex
+ru	81_heat	heat	жара		ʒɐraˑ	northeuralex
+ru	82_hoarfrost	hoarfrost	иней		jɨˑnʲɪj	northeuralex
+ru	83_rainbow	rainbow	радуга		raˑduɡə	northeuralex
+ru	84_thunder	thunder	гром		ɡrɔˑm	northeuralex
+ru	85_current	current	течение		tʲɪt͡ʃʲeˑnʲijə	northeuralex
+ru	86_drop	drop	капля		kaˑplɪ	northeuralex
+ru	87_foam	foam	пена		pʲeˑnə	northeuralex
+ru	89_lake	lake	озеро		ɔˑzʲɪrə	northeuralex
+ru	90_swamp	swamp	топь		tɔˑpʲ	northeuralex
+ru	91_moor	moor	болото		bɐɫɔˑtə	northeuralex
+ru	92_meadow	meadow	луг		ɫuˑk	northeuralex
+ru	93_forest	forest	лес		leˑs	northeuralex
+ru	94_hill	hill	холм		xɔˑɫm	northeuralex
+ru	96_mountain	mountain	гора		ɡɐraˑ	northeuralex
+ru	97_summit	summit	вершина		vʲɪrʃɨˑnə	northeuralex
+ru	98_cave	cave	пещера		pʲɪʃʲːeˑrə	northeuralex
+ru	99_slope	slope	склон		skɫɔˑn	northeuralex
+ru	100_source	source	источник		jɨstɔˑt͡ʃnʲik	northeuralex
+ru	101_brook	brook	ручей		rut͡ʃʲeˑj	northeuralex
+ru	102_river	river	река		rʲɪkaˑ	northeuralex
+ru	103_shore	shore	берег		bʲeˑrʲɪk	northeuralex
+ru	104_coast	coast	побережье		pəbʲɪrʲeˑʒʲɪ	northeuralex
+ru	105_land	land	суша		suˑʃə	northeuralex
+ru	106_sea	sea	море		mɔˑrʲɪ	northeuralex
+ru	107_covebay	cove, bay	бухта		buˑxtə	northeuralex
+ru	108_island	island	остров		ɔˑstrəf	northeuralex
+ru	109_flower	flower	цветок		t͡svʲɪtɔˑk	northeuralex
+ru	110_grass	grass	трава		trɐvaˑ	northeuralex
+ru	111_root	root	корень		kɔˑrʲɪnʲ	northeuralex
+ru	112_tree	tree	дерево		dʲeˑrʲɪvə	northeuralex
+ru	117_leaf	leaf	лист		liˑst	northeuralex
+ru	118_birch	birch	береза		bʲɪrʲozə	northeuralex
+ru	119_pine	pine	сосна		sɐsnaˑ	northeuralex
+ru	120_willow	willow	ива		jɨˑvə	northeuralex
+ru	121_fir	fir	ель		jɛˑl	northeuralex
+ru	123_feather	feather	перо		pʲɪrɔˑ	northeuralex
+ru	125_wing	wing	крыло		krɨɫɔˑ	northeuralex
+ru	130_nest	nest	гнездо		ɡnʲɪzdɔˑ	northeuralex
+ru	136_horse	horse	лошадь		ɫɔˑʃətʲ	northeuralex
+ru	141_bear	bear	медведь		mʲɪdvʲeˑtʲ	northeuralex
+ru	144_fox	fox	лиса		lisaˑ	northeuralex
+ru	145_hare	hare	заяц		zaˑjət͡s	northeuralex
+ru	147_wolf	wolf	волк		vɔˑɫk	northeuralex
+ru	148_bird	bird	птица		ptʲiˑt͡sə	northeuralex
+ru	153_eagle	eagle	орел		ɐrʲoɫ	northeuralex
+ru	155_owl	owl	сова		sɐvaˑ	northeuralex
+ru	156_crane	crane	журавль		ʒuraˑvl	northeuralex
+ru	157_crow	crow	ворона		vɐrɔˑnə	northeuralex
+ru	158_cuckoo	cuckoo	кукушка		kukuˑʃkə	northeuralex
+ru	159_swan	swan	лебедь		leˑbʲɪtʲ	northeuralex
+ru	160_fish	fish	рыба		rɨˑbə	northeuralex
+ru	170_butterfly	butterfly	бабочка		baˑbət͡ʃkə	northeuralex
+ru	171_berry	berry	ягода		jaˑɡədə	northeuralex
+ru	172_apple	apple	яблоко		jaˑbɫəkə	northeuralex
+ru	175_seed	seed	семя		sʲeˑmʲɪ	northeuralex
+ru	176_grain	grain	зерно		zʲɪrnɔˑ	northeuralex
+ru	185_iron	iron	железо		ʒɪleˑzə	northeuralex
+ru	186_gold	gold	золото		zɔˑɫətə	northeuralex
+ru	187_silver	silver	серебро		sʲɪrʲɪbrɔˑ	northeuralex
+ru	189_glass	glass	стекло		stʲɪkɫɔˑ	northeuralex
+ru	190_clay	clay	глина		ɡliˑnə	northeuralex
+ru	191_sand	sand	песок		pʲɪsɔˑk	northeuralex
+ru	212_joy	joy	радость		raˑdəstʲ	northeuralex
+ru	214_happiness	happiness	счастье		st͡ʃaˑstʲɪ	northeuralex
+ru	220_memory	memory	память		paˑmʲɪtʲ	northeuralex
+ru	224_truth	truth	правда		praˑvdə	northeuralex
+ru	227_story	story	рассказ		rɐsskaˑs	northeuralex
+ru	239_sound	sound	звук		zvuˑk	northeuralex
+ru	241_song	song	песня		pʲeˑsnʲɪ	northeuralex
+ru	242_calm	calm	покой		pɐkɔˑj	northeuralex
+ru	247_gift	gift	подарок		pɐdaˑrək	northeuralex
+ru	251_friend	friend	друг		druˑk	northeuralex
+ru	259_circle	circle	круг		kruˑk	northeuralex
+ru	266_space	space	пространство		prɐstraˑnstvə	northeuralex
+ru	295_north	north	север		sʲeˑvʲɪr	northeuralex
+ru	296_south	south	юг		juˑk	northeuralex
+ru	297_west	west	запад		zaˑpət	northeuralex
+ru	298_east	east	восток		vɐstɔˑk	northeuralex
+ru	308_home	home	дом		dɔˑm	northeuralex
+ru	399_bridge	bridge	мост		mɔˑst	northeuralex
+ru	400_well	well	колодец		kɐɫɔˑdʲɪt͡s	northeuralex
+ru	401_pasture	pasture	пастбище		paˑstbʲiʃʲːɪ	northeuralex
+ru	402_path	path	тропа		trɐpaˑ	northeuralex
+ru	411_life	life	жизнь		ʒɨznʲ	northeuralex
+ru	429_world	world	мир		mʲiˑr	northeuralex
+ru	449_time	time	время		vrʲeˑmʲɪ	northeuralex
+ru	450_day	day	день		dʲeˑnʲ	northeuralex
+ru	451_morning	morning	утро		uˑtrə	northeuralex
+ru	452_noon	noon	полдень		pɔˑɫdʲɪnʲ	northeuralex
+ru	453_evening	evening	вечер		vʲeˑt͡ʃʲɪr	northeuralex
+ru	454_night	night	ночь		nɔˑt͡ʃʲ	northeuralex
+ru	457_year	year	год		ɡɔˑt	northeuralex
+ru	458_spring	spring	весна		vʲɪsnaˑ	northeuralex
+ru	459_summer	summer	лето		leˑtə	northeuralex
+ru	460_autumn	autumn	осень		ɔˑsʲɪnʲ	northeuralex
+ru	461_winter	winter	зима		zʲimaˑ	northeuralex
+ru	501_beautiful	beautiful	красивый		krɐsʲiˑvɨj	northeuralex
+ru	503_warm	warm	теплый		tʲopɫɨj	northeuralex
+ru	504_cold	cold	холодный		xɐɫɔˑdnɨj	northeuralex
+ru	506_fresh	fresh	свежий		svʲeˑʒɨj	northeuralex
+ru	522_bright	bright	светлый		svʲeˑtɫɨj	northeuralex
+ru	525_white	white	белый		bʲeˑɫɨj	northeuralex
+ru	526_red	red	красный		kraˑsnɨj	northeuralex
+ru	527_yellow	yellow	желтый		ʒoɫtɨj	northeuralex
+ru	528_blue	blue	синий		sʲiˑnʲij	northeuralex
+ru	529_green	green	зеленый		zʲɪlonɨj	northeuralex
+ru	530_grey	grey	серый		sʲeˑrɨj	northeuralex
+ru	564_new	new	новый		nɔˑvɨj	northeuralex
+ru	575_far	far	далекий		dɐlokij	northeuralex
+ru	579_first	first	первый		pʲeˑrvɨj	northeuralex
+en	55_dream	dream	dream		dɹiːm	northeuralex
+en	56_sky	sky	sky		skaɪ	northeuralex
+en	57_sun	sun	sun		sʌn	northeuralex
+en	58_moon	moon	moon		muːn	northeuralex
+en	59_star	star	star		stɑː	northeuralex
+en	60_air	air	air		eə	northeuralex
+en	61_wind	wind	wind		wɪnd	northeuralex
+en	62_wave	wave	wave		weɪv	northeuralex
+en	63_water	water	water		ˈwɔːtə	northeuralex
+en	64_stone	stone	stone		stəʊn	northeuralex
+en	65_ground	ground	soil		sɔɪl	northeuralex
+en	65_ground	ground	ground		ɡɹaʊnd	northeuralex
+en	66_earth	earth	earth		ɜːθ	northeuralex
+en	69_spark	spark	spark		spɑːk	northeuralex
+en	70_fire	fire	fire		ˈfaɪə	northeuralex
+en	71_light	light	light		laɪt	northeuralex
+en	72_shadow	shadow	shadow		ˈʃædəʊ	northeuralex
+en	74_fog	fog	fog		fɒɡ	northeuralex
+en	75_cloud	cloud	cloud		klaʊd	northeuralex
+en	76_rain	rain	rain		ɹeɪn	northeuralex
+en	77_snow	snow	snow		snəʊ	northeuralex
+en	78_ice	ice	ice		aɪs	northeuralex
+en	79_frost	frost	frost		fɹɒst	northeuralex
+en	81_heat	heat	heat		hiːt	northeuralex
+en	82_hoarfrost	hoarfrost	hoarfrost		ˈhɔːfɹɒst	northeuralex
+en	83_rainbow	rainbow	rainbow		ˈɹeɪnbəʊ	northeuralex
+en	84_thunder	thunder	thunder		ˈθʌndə	northeuralex
+en	85_current	current	current		ˈkʌɹənt	northeuralex
+en	86_drop	drop	drop		dɹɒp	northeuralex
+en	87_foam	foam	foam		fəʊm	northeuralex
+en	89_lake	lake	lake		leɪk	northeuralex
+en	90_swamp	swamp	swamp		swɒmp	northeuralex
+en	91_moor	moor	moor		mʊə	northeuralex
+en	92_meadow	meadow	meadow		ˈmedəʊ	northeuralex
+en	93_forest	forest	forest		ˈfɒɹɪst	northeuralex
+en	94_hill	hill	hill		hɪl	northeuralex
+en	96_mountain	mountain	mountain		ˈmaʊntɪn	northeuralex
+en	97_summit	summit	summit		ˈsʌmɪt	northeuralex
+en	98_cave	cave	cave		keɪv	northeuralex
+en	99_slope	slope	slope		sləʊp	northeuralex
+en	100_source	source	source		sɔːs	northeuralex
+en	101_brook	brook	brook		bɹʊk	northeuralex
+en	102_river	river	river		ˈɹɪvə	northeuralex
+en	103_shore	shore	shore		ʃɔː	northeuralex
+en	104_coast	coast	coast		kəʊst	northeuralex
+en	105_land	land	land		lænd	northeuralex
+en	106_sea	sea	sea		siː	northeuralex
+en	107_covebay	cove, bay	cove		kəʊv	northeuralex
+en	108_island	island	island		ˈaɪlənd	northeuralex
+en	109_flower	flower	flower		ˈflaʊə	northeuralex
+en	110_grass	grass	grass		ɡɹɑːs	northeuralex
+en	111_root	root	root		ɹuːt	northeuralex
+en	112_tree	tree	tree		tɹiː	northeuralex
+en	117_leaf	leaf	leaf		liːf	northeuralex
+en	118_birch	birch	birch		bɜːt͡ʃ	northeuralex
+en	119_pine	pine	pine		paɪn	northeuralex
+en	120_willow	willow	willow		ˈwɪləʊ	northeuralex
+en	121_fir	fir	fir		fɜː	northeuralex
+en	123_feather	feather	feather		ˈfeðə	northeuralex
+en	125_wing	wing	wing		wɪŋ	northeuralex
+en	130_nest	nest	nest		nest	northeuralex
+en	136_horse	horse	horse		hɔːs	northeuralex
+en	141_bear	bear	bear		beə	northeuralex
+en	144_fox	fox	fox		fɒks	northeuralex
+en	145_hare	hare	hare		heə	northeuralex
+en	147_wolf	wolf	wolf		wʊlf	northeuralex
+en	148_bird	bird	bird		bɜːd	northeuralex
+en	153_eagle	eagle	eagle		ˈiːɡl	northeuralex
+en	155_owl	owl	owl		aʊl	northeuralex
+en	156_crane	crane	crane		kɹeɪn	northeuralex
+en	157_crow	crow	crow		kɹəʊ	northeuralex
+en	158_cuckoo	cuckoo	cuckoo		ˈkʊkuː	northeuralex
+en	159_swan	swan	swan		swɒn	northeuralex
+en	160_fish	fish	fish		fɪʃ	northeuralex
+en	170_butterfly	butterfly	butterfly		ˈbʌtəflaɪ	northeuralex
+en	171_berry	berry	berry		ˈbeɹɪ	northeuralex
+en	175_seed	seed	seed		siːd	northeuralex
+en	176_grain	grain	grain		ɡɹeɪn	northeuralex
+en	185_iron	iron	iron		ˈaɪən	northeuralex
+en	186_gold	gold	gold		ɡəʊld	northeuralex
+en	187_silver	silver	silver		ˈsɪlvə	northeuralex
+en	189_glass	glass	glass		ɡlɑːs	northeuralex
+en	190_clay	clay	clay		kleɪ	northeuralex
+en	191_sand	sand	sand		sænd	northeuralex
+en	212_joy	joy	joy		ˈd͡ʒɔɪ	northeuralex
+en	214_happiness	happiness	happiness		ˈhæpɪnes	northeuralex
+en	220_memory	memory	memory		ˈmeməɹɪ	northeuralex
+en	224_truth	truth	truth		tɹuːθ	northeuralex
+en	227_story	story	story		ˈstɔːɹɪ	northeuralex
+en	239_sound	sound	sound		saʊnd	northeuralex
+en	241_song	song	song		sɒŋ	northeuralex
+en	242_calm	calm	calm		kɑːm	northeuralex
+en	247_gift	gift	gift		ɡɪft	northeuralex
+en	251_friend	friend	friend		fɹend	northeuralex
+en	259_circle	circle	circle		ˈsɜːkl	northeuralex
+en	266_space	space	space		speɪs	northeuralex
+en	295_north	north	north		nɔːθ	northeuralex
+en	296_south	south	south		saʊθ	northeuralex
+en	297_west	west	west		west	northeuralex
+en	298_east	east	east		iːst	northeuralex
+en	308_home	home	home		həʊm	northeuralex
+en	399_bridge	bridge	bridge		bɹɪd͡ʒ	northeuralex
+en	400_well	well	well		wel	northeuralex
+en	401_pasture	pasture	pasture		ˈpɑːst͡ʃə	northeuralex
+en	402_path	path	path		pɑːθ	northeuralex
+en	411_life	life	life		laɪf	northeuralex
+en	429_world	world	world		wɜːld	northeuralex
+en	449_time	time	time		taɪm	northeuralex
+en	450_day	day	day		deɪ	northeuralex
+en	451_morning	morning	morning		ˈmɔːnɪŋ	northeuralex
+en	452_noon	noon	noon		nuːn	northeuralex
+en	453_evening	evening	evening		ˈiːvnɪŋ	northeuralex
+en	454_night	night	night		naɪt	northeuralex
+en	457_year	year	year		jɪə	northeuralex
+en	458_spring	spring	spring		spɹɪŋ	northeuralex
+en	459_summer	summer	summer		ˈsʌmə	northeuralex
+en	460_autumn	autumn	autumn		ˈɔːtəm	northeuralex
+en	461_winter	winter	winter		ˈwɪntə	northeuralex
+en	501_beautiful	beautiful	beautiful		ˈbjuːtəfʊl	northeuralex
+en	503_warm	warm	warm		wɔːm	northeuralex
+en	504_cold	cold	cold		kəʊld	northeuralex
+en	506_fresh	fresh	fresh		fɹeʃ	northeuralex
+en	522_bright	bright	bright		bɹaɪt	northeuralex
+en	525_white	white	white		waɪt	northeuralex
+en	526_red	red	red		ɹed	northeuralex
+en	527_yellow	yellow	yellow		ˈjeləʊ	northeuralex
+en	528_blue	blue	blue		bluː	northeuralex
+en	529_green	green	green		ɡɹiːn	northeuralex
+en	530_grey	grey	grey		ɡɹeɪ	northeuralex
+en	564_new	new	new		njuː	northeuralex
+en	575_far	far	far		fɑː	northeuralex
+en	579_first	first	first		fɜːst	northeuralex
+fr	55_dream	dream	songe		sɔ̃ːʒ	northeuralex
+fr	56_sky	sky	ciel		sjɛl	northeuralex
+fr	57_sun	sun	soleil		sɔˈlɛj	northeuralex
+fr	58_moon	moon	lune		lyn	northeuralex
+fr	59_star	star	étoile		eˈtwal	northeuralex
+fr	60_air	air	air		ɛːʁ	northeuralex
+fr	61_wind	wind	vent		vɑ̃	northeuralex
+fr	62_wave	wave	vague		vaɡ	northeuralex
+fr	63_water	water	eau		o	northeuralex
+fr	64_stone	stone	pierre		pjɛːʁ	northeuralex
+fr	65_ground	ground	sol		sɔl	northeuralex
+fr	65_ground	ground	terrain		tɛˈʁɛ̃	northeuralex
+fr	66_earth	earth	terre		tɛːʁ	northeuralex
+fr	69_spark	spark	étincelle		etɛ̃ˈsɛl	northeuralex
+fr	70_fire	fire	feu		fø	northeuralex
+fr	71_light	light	lumière		lyˈmjɛːʁ	northeuralex
+fr	72_shadow	shadow	ombre		ˈɔː̃bʁə	northeuralex
+fr	74_fog	fog	brume		bʁym	northeuralex
+fr	74_fog	fog	brouillard		bʁuˈjaːʁ	northeuralex
+fr	75_cloud	cloud	nuage		nɥaːʒ	northeuralex
+fr	76_rain	rain	pluie		plɥi	northeuralex
+fr	77_snow	snow	neige		nɛːʒ	northeuralex
+fr	78_ice	ice	glace		ɡlas	northeuralex
+fr	79_frost	frost	gel		ʒɛl	northeuralex
+fr	79_frost	frost	gelée		ʒəˈle	northeuralex
+fr	81_heat	heat	chaleur		ʃaˈlœːʁ	northeuralex
+fr	82_hoarfrost	hoarfrost	givre		ˈʒiːvʁə	northeuralex
+fr	84_thunder	thunder	tonnerre		tɔˈnɛːʁ	northeuralex
+fr	85_current	current	courant		kuˈʁɑ̃	northeuralex
+fr	86_drop	drop	goutte		ɡut	northeuralex
+fr	87_foam	foam	écume		eˈkym	northeuralex
+fr	87_foam	foam	mousse		mus	northeuralex
+fr	89_lake	lake	lac		lak	northeuralex
+fr	90_swamp	swamp	marais		maˈʁɛ	northeuralex
+fr	90_swamp	swamp	marécage		maʁeˈkaːʒ	northeuralex
+fr	91_moor	moor	tourbière		tuʁˈbjɛːʁ	northeuralex
+fr	92_meadow	meadow	pré		pʁe	northeuralex
+fr	93_forest	forest	bois		bwa	northeuralex
+fr	93_forest	forest	forêt		fɔˈʁɛ	northeuralex
+fr	94_hill	hill	coteau		kɔˈto	northeuralex
+fr	94_hill	hill	colline		kɔˈlin	northeuralex
+fr	96_mountain	mountain	mont		mɔ̃	northeuralex
+fr	96_mountain	mountain	montagne		mɔ̃ˈtaɲ	northeuralex
+fr	97_summit	summit	cime		sim	northeuralex
+fr	97_summit	summit	sommet		sɔˈmɛ	northeuralex
+fr	98_cave	cave	caverne		kaˈvɛʁn	northeuralex
+fr	99_slope	slope	pente		pɑ̃ːt	northeuralex
+fr	99_slope	slope	versant		vɛʁˈsɑ̃	northeuralex
+fr	100_source	source	source		suʁs	northeuralex
+fr	100_source	source	fontaine		fɔ̃ˈtɛn	northeuralex
+fr	101_brook	brook	ruisseau		ʁɥiˈso	northeuralex
+fr	102_river	river	fleuve		flœːv	northeuralex
+fr	102_river	river	rivière		ʁiˈvjɛːʁ	northeuralex
+fr	103_shore	shore	bord		bɔʁ	northeuralex
+fr	103_shore	shore	rivage		ʁiˈvaːʒ	northeuralex
+fr	104_coast	coast	côte		koːt	northeuralex
+fr	106_sea	sea	mer		mɛːʁ	northeuralex
+fr	107_covebay	cove, bay	baie		bɛ	northeuralex
+fr	108_island	island	île		il	northeuralex
+fr	109_flower	flower	fleur		flœːʁ	northeuralex
+fr	110_grass	grass	herbe		ɛʁb	northeuralex
+fr	111_root	root	racine		ʁaˈsin	northeuralex
+fr	112_tree	tree	arbre		ˈaʁbʁə	northeuralex
+fr	117_leaf	leaf	feuille		fœj	northeuralex
+fr	118_birch	birch	bouleau		buˈlo	northeuralex
+fr	119_pine	pine	pin		pɛ̃	northeuralex
+fr	120_willow	willow	saule		soːl	northeuralex
+fr	121_fir	fir	sapin		saˈpɛ̃	northeuralex
+fr	123_feather	feather	plume		plym	northeuralex
+fr	125_wing	wing	aile		ɛːl	northeuralex
+fr	130_nest	nest	nid		ni	northeuralex
+fr	136_horse	horse	cheval		ʃval	northeuralex
+fr	141_bear	bear	ours		uʁs	northeuralex
+fr	144_fox	fox	renard		ʁəˈnaːʁ	northeuralex
+fr	145_hare	hare	lièvre		ˈljɛːvʁə	northeuralex
+fr	147_wolf	wolf	loup		lu	northeuralex
+fr	148_bird	bird	oiseau		waˈzo	northeuralex
+fr	153_eagle	eagle	aigle		ˈɛːɡlə	northeuralex
+fr	155_owl	owl	hibou		iˈbu	northeuralex
+fr	156_crane	crane	grue		ɡʁy	northeuralex
+fr	157_crow	crow	corneille		kɔʁˈnɛj	northeuralex
+fr	158_cuckoo	cuckoo	coucou		kuˈku	northeuralex
+fr	159_swan	swan	cygne		siŋ	northeuralex
+fr	160_fish	fish	poisson		pwaˈsɔ̃	northeuralex
+fr	170_butterfly	butterfly	papillon		papiˈjɔ̃	northeuralex
+fr	171_berry	berry	baie		bɛ	northeuralex
+fr	172_apple	apple	pomme		pɔm	northeuralex
+fr	175_seed	seed	semence		səˈmɑ̃ːs	northeuralex
+fr	176_grain	grain	grain		ɡʁɛ̃	northeuralex
+fr	185_iron	iron	fer		fɛːʁ	northeuralex
+fr	186_gold	gold	or		ɔːʁ	northeuralex
+fr	187_silver	silver	argent		aʁˈʒɑ̃	northeuralex
+fr	189_glass	glass	verre		vɛːʁ	northeuralex
+fr	190_clay	clay	glaise		ɡlɛːz	northeuralex
+fr	191_sand	sand	sable		ˈsɑːblə	northeuralex
+fr	212_joy	joy	joie		ʒwa	northeuralex
+fr	214_happiness	happiness	bonheur		bɔˈnœːʁ	northeuralex
+fr	220_memory	memory	mémoire		meˈmwaːʁ	northeuralex
+fr	224_truth	truth	vérité		veʁiˈte	northeuralex
+fr	227_story	story	conte		kɔ̃ːt	northeuralex
+fr	227_story	story	narration		naʁɑˈsjɔ̃	northeuralex
+fr	239_sound	sound	son		sɔ̃	northeuralex
+fr	241_song	song	chant		ʃɑ̃	northeuralex
+fr	241_song	song	chanson		ʃɑ̃ˈsɔ̃	northeuralex
+fr	242_calm	calm	calme		kalm	northeuralex
+fr	242_calm	calm	tranquillité		tʁɑ̃kiliˈte	northeuralex
+fr	247_gift	gift	cadeau		kaˈdo	northeuralex
+fr	247_gift	gift	présent		pʁeˈzɑ̃	northeuralex
+fr	251_friend	friend	ami		aˈmi	northeuralex
+fr	259_circle	circle	cercle		ˈsɛʁklə	northeuralex
+fr	266_space	space	place		plas	northeuralex
+fr	295_north	north	nord		nɔːʁ	northeuralex
+fr	296_south	south	sud		syd	northeuralex
+fr	297_west	west	ouest		wɛst	northeuralex
+fr	297_west	west	occident		ɔksiˈdɑ̃	northeuralex
+fr	298_east	east	est		ɛst	northeuralex
+fr	298_east	east	orient		ɔʁˈjɑ̃	northeuralex
+fr	308_home	home	maison		mɛˈzɔ̃	northeuralex
+fr	399_bridge	bridge	pont		pɔ̃	northeuralex
+fr	400_well	well	puits		pɥi	northeuralex
+fr	401_pasture	pasture	pâturage		pɑtyˈʁaːʒ	northeuralex
+fr	402_path	path	sentier		sɑ̃ˈtje	northeuralex
+fr	411_life	life	vie		vi	northeuralex
+fr	429_world	world	monde		mɔ̃ːd	northeuralex
+fr	449_time	time	temps		tɑ̃	northeuralex
+fr	450_day	day	jour		ʒuːʁ	northeuralex
+fr	450_day	day	journée		ʒuʁˈne	northeuralex
+fr	451_morning	morning	matin		maˈtɛ̃	northeuralex
+fr	451_morning	morning	matinée		matiˈne	northeuralex
+fr	452_noon	noon	midi		miˈdi	northeuralex
+fr	453_evening	evening	soir		swaːʁ	northeuralex
+fr	453_evening	evening	soirée		swaˈʁe	northeuralex
+fr	454_night	night	nuit		nɥi	northeuralex
+fr	457_year	year	an		ɑ̃	northeuralex
+fr	457_year	year	année		aˈne	northeuralex
+fr	458_spring	spring	printemps		pʁɛ̃ˈtɑ̃	northeuralex
+fr	459_summer	summer	été		eˈte	northeuralex
+fr	460_autumn	autumn	automne		oˈtɔn	northeuralex
+fr	461_winter	winter	hiver		iˈvɛːʁ	northeuralex
+fr	501_beautiful	beautiful	beau		bo	northeuralex
+fr	503_warm	warm	chaud		ʃo	northeuralex
+fr	504_cold	cold	froid		fʁwa	northeuralex
+fr	506_fresh	fresh	frais		fʁɛ	northeuralex
+fr	522_bright	bright	clair		klɛːʁ	northeuralex
+fr	525_white	white	blanc		blɑ̃	northeuralex
+fr	526_red	red	rouge		ʁuːʒ	northeuralex
+fr	527_yellow	yellow	jaune		ʒoːn	northeuralex
+fr	528_blue	blue	bleu		blø	northeuralex
+fr	529_green	green	vert		vɛːʁ	northeuralex
+fr	530_grey	grey	gris		ɡʁi	northeuralex
+fr	564_new	new	neuf		nœf	northeuralex
+fr	564_new	new	nouveau		nuˈvo	northeuralex
+fr	575_far	far	éloigné		elwaˈɲe	northeuralex
+fr	575_far	far	lointain		lwɛ̃ˈtɛ̃	northeuralex
+fr	579_first	first	premier		pʁəˈmje	northeuralex
+es	55_dream	dream	sueño		sweɲo	northeuralex
+es	55_dream	dream	ensueño		ensweɲo	northeuralex
+es	56_sky	sky	cielo		θjelo	northeuralex
+es	57_sun	sun	sol		sol	northeuralex
+es	58_moon	moon	luna		luna	northeuralex
+es	59_star	star	estrella		estɾeʝa	northeuralex
+es	60_air	air	aire		ai̯ɾe	northeuralex
+es	61_wind	wind	viento		bjento	northeuralex
+es	62_wave	wave	ola		ola	northeuralex
+es	62_wave	wave	onda		onda	northeuralex
+es	63_water	water	agua		aɣwa	northeuralex
+es	64_stone	stone	piedra		pjeðɾa	northeuralex
+es	65_ground	ground	suelo		swelo	northeuralex
+es	66_earth	earth	tierra		tjera	northeuralex
+es	69_spark	spark	chispa		t͡ʃispa	northeuralex
+es	70_fire	fire	fuego		fweɣo	northeuralex
+es	71_light	light	luz		luθ	northeuralex
+es	72_shadow	shadow	sombra		sombɾa	northeuralex
+es	74_fog	fog	niebla		njeβla	northeuralex
+es	75_cloud	cloud	nube		nuβe	northeuralex
+es	76_rain	rain	lluvia		ʝuβja	northeuralex
+es	77_snow	snow	nieve		njeβe	northeuralex
+es	78_ice	ice	hielo		jelo	northeuralex
+es	79_frost	frost	helada		elaða	northeuralex
+es	81_heat	heat	calor		kaloɾ	northeuralex
+es	82_hoarfrost	hoarfrost	escarcha		eskaɾt͡ʃa	northeuralex
+es	84_thunder	thunder	trueno		tɾweno	northeuralex
+es	85_current	current	corriente		korjente	northeuralex
+es	86_drop	drop	gota		ɡota	northeuralex
+es	87_foam	foam	espuma		espuma	northeuralex
+es	89_lake	lake	lago		laɣo	northeuralex
+es	90_swamp	swamp	pantano		pantano	northeuralex
+es	91_moor	moor	turbera		tuɾβeɾa	northeuralex
+es	92_meadow	meadow	prado		pɾaðo	northeuralex
+es	92_meadow	meadow	pradera		pɾaðeɾa	northeuralex
+es	93_forest	forest	bosque		boske	northeuralex
+es	94_hill	hill	colina		kolina	northeuralex
+es	96_mountain	mountain	monte		monte	northeuralex
+es	96_mountain	mountain	montaña		montaɲa	northeuralex
+es	97_summit	summit	cima		θima	northeuralex
+es	97_summit	summit	cumbre		kumbɾe	northeuralex
+es	98_cave	cave	cueva		kweβa	northeuralex
+es	98_cave	cave	caverna		kaβeɾna	northeuralex
+es	99_slope	slope	cuesta		kwesta	northeuralex
+es	99_slope	slope	declive		dekliβe	northeuralex
+es	100_source	source	fuente		fwente	northeuralex
+es	100_source	source	manantial		manantjal	northeuralex
+es	101_brook	brook	arroyo		aroʝo	northeuralex
+es	102_river	river	río		ɾio	northeuralex
+es	103_shore	shore	orilla		oɾiʝa	northeuralex
+es	104_coast	coast	costa		kosta	northeuralex
+es	106_sea	sea	mar		maɾ	northeuralex
+es	107_covebay	cove, bay	cala		kala	northeuralex
+es	107_covebay	cove, bay	bahía		baia	northeuralex
+es	108_island	island	isla		izla	northeuralex
+es	109_flower	flower	flor		floɾ	northeuralex
+es	110_grass	grass	hierba		jeɾβa	northeuralex
+es	111_root	root	raíz		ɾaiθ	northeuralex
+es	112_tree	tree	árbol		aɾβol	northeuralex
+es	117_leaf	leaf	hoja		oxa	northeuralex
+es	118_birch	birch	abedul		aβeðul	northeuralex
+es	119_pine	pine	pino		pino	northeuralex
+es	120_willow	willow	sauce		sau̯θe	northeuralex
+es	121_fir	fir	abeto		aβeto	northeuralex
+es	123_feather	feather	pluma		pluma	northeuralex
+es	125_wing	wing	ala		ala	northeuralex
+es	130_nest	nest	nido		niðo	northeuralex
+es	136_horse	horse	caballo		kaβaʝo	northeuralex
+es	141_bear	bear	oso		oso	northeuralex
+es	144_fox	fox	zorro		θoro	northeuralex
+es	145_hare	hare	liebre		ljeβɾe	northeuralex
+es	147_wolf	wolf	lobo		loβo	northeuralex
+es	148_bird	bird	ave		aβe	northeuralex
+es	148_bird	bird	pájaro		paxaɾo	northeuralex
+es	153_eagle	eagle	águila		aɣila	northeuralex
+es	155_owl	owl	lechuza		let͡ʃuθa	northeuralex
+es	156_crane	crane	grulla		ɡɾuʝa	northeuralex
+es	157_crow	crow	corneja		koɾnexa	northeuralex
+es	158_cuckoo	cuckoo	cuco		kuko	northeuralex
+es	159_swan	swan	cisne		θizne	northeuralex
+es	160_fish	fish	pez		peθ	northeuralex
+es	170_butterfly	butterfly	mariposa		maɾiposa	northeuralex
+es	171_berry	berry	baya		baʝa	northeuralex
+es	172_apple	apple	manzana		manθana	northeuralex
+es	175_seed	seed	siembra		sjembɾa	northeuralex
+es	176_grain	grain	grano		ɡɾano	northeuralex
+es	185_iron	iron	hierro		jero	northeuralex
+es	186_gold	gold	oro		oɾo	northeuralex
+es	187_silver	silver	plata		plata	northeuralex
+es	189_glass	glass	vidrio		biðɾjo	northeuralex
+es	189_glass	glass	cristal		kɾistal	northeuralex
+es	190_clay	clay	barro		baro	northeuralex
+es	191_sand	sand	arena		aɾena	northeuralex
+es	212_joy	joy	alegría		aleɣɾia	northeuralex
+es	214_happiness	happiness	felicidad		feliθiðað	northeuralex
+es	220_memory	memory	memoria		memoɾja	northeuralex
+es	224_truth	truth	verdad		beɾðað	northeuralex
+es	227_story	story	cuento		kwento	northeuralex
+es	227_story	story	narración		naraθjon	northeuralex
+es	239_sound	sound	sonido		soniðo	northeuralex
+es	241_song	song	canción		kanθjon	northeuralex
+es	242_calm	calm	calma		kalma	northeuralex
+es	242_calm	calm	silencio		silenθjo	northeuralex
+es	247_gift	gift	regalo		ɾeɣalo	northeuralex
+es	251_friend	friend	amigo		amiɣo	northeuralex
+es	259_circle	circle	círculo		θiɾkulo	northeuralex
+es	266_space	space	espacio		espaθjo	northeuralex
+es	295_north	north	norte		noɾte	northeuralex
+es	296_south	south	sur		suɾ	northeuralex
+es	297_west	west	oeste		oeste	northeuralex
+es	298_east	east	este		este	northeuralex
+es	308_home	home	hogar		oɣaɾ	northeuralex
+es	399_bridge	bridge	puente		pwente	northeuralex
+es	400_well	well	pozo		poθo	northeuralex
+es	401_pasture	pasture	pasto		pasto	northeuralex
+es	402_path	path	sendero		sendeɾo	northeuralex
+es	411_life	life	vida		biða	northeuralex
+es	429_world	world	mundo		mundo	northeuralex
+es	449_time	time	tiempo		tjempo	northeuralex
+es	450_day	day	día		dia	northeuralex
+es	451_morning	morning	mañana		maɲana	northeuralex
+es	452_noon	noon	mediodía		meðjoðia	northeuralex
+es	453_evening	evening	noche		not͡ʃe	northeuralex
+es	454_night	night	noche		not͡ʃe	northeuralex
+es	457_year	year	año		aɲo	northeuralex
+es	458_spring	spring	primavera		pɾimaβeɾa	northeuralex
+es	459_summer	summer	verano		beɾano	northeuralex
+es	460_autumn	autumn	otoño		otoɲo	northeuralex
+es	461_winter	winter	invierno		imbjeɾno	northeuralex
+es	501_beautiful	beautiful	bello		beʝo	northeuralex
+es	501_beautiful	beautiful	hermoso		eɾmoso	northeuralex
+es	503_warm	warm	cálido		kaliðo	northeuralex
+es	503_warm	warm	caliente		kaljente	northeuralex
+es	504_cold	cold	frío		fɾio	northeuralex
+es	506_fresh	fresh	fresco		fɾesko	northeuralex
+es	522_bright	bright	claro		klaɾo	northeuralex
+es	525_white	white	blanco		blaŋko	northeuralex
+es	526_red	red	rojo		ɾoxo	northeuralex
+es	527_yellow	yellow	amarillo		amaɾiʝo	northeuralex
+es	528_blue	blue	azul		aθul	northeuralex
+es	529_green	green	verde		beɾðe	northeuralex
+es	530_grey	grey	gris		ɡɾis	northeuralex
+es	564_new	new	nuevo		nweβo	northeuralex
+es	575_far	far	lejano		lexano	northeuralex
+es	579_first	first	primero		pɾimeɾo	northeuralex
+pt	55_dream	dream	sonho		ˈsoɲu	northeuralex
+pt	56_sky	sky	céu		sɛw	northeuralex
+pt	57_sun	sun	sol		sɔɫ	northeuralex
+pt	58_moon	moon	lua		ˈluɐ	northeuralex
+pt	59_star	star	estrela		iʃˈtrɛlɐ	northeuralex
+pt	60_air	air	ar		ar	northeuralex
+pt	61_wind	wind	vento		ˈvẽtu	northeuralex
+pt	62_wave	wave	onda		õda	northeuralex
+pt	63_water	water	água		ˈaɣwɐ	northeuralex
+pt	64_stone	stone	pedra		ˈpɛðrɐ	northeuralex
+pt	65_ground	ground	solo		ʃolu	northeuralex
+pt	66_earth	earth	terra		ˈtɛʀɐ	northeuralex
+pt	69_spark	spark	faísca		faiʃka	northeuralex
+pt	69_spark	spark	centelha		sẽteʎa	northeuralex
+pt	70_fire	fire	fogo		ˈfoɣu	northeuralex
+pt	71_light	light	luz		luʃ	northeuralex
+pt	72_shadow	shadow	sombra		ˈsõbrɐ	northeuralex
+pt	74_fog	fog	nevoeiro		nəˈvwejru	northeuralex
+pt	75_cloud	cloud	nuvem		ˈnuvẽj	northeuralex
+pt	76_rain	rain	chuva		ˈʃuvɐ	northeuralex
+pt	77_snow	snow	neve		ˈnɛvə	northeuralex
+pt	78_ice	ice	gelo		ˈʒelu	northeuralex
+pt	79_frost	frost	gelo		ˈʒelu	northeuralex
+pt	79_frost	frost	geada		ˈʒjaðɐ	northeuralex
+pt	81_heat	heat	ardor		arðor	northeuralex
+pt	82_hoarfrost	hoarfrost	geada		ˈʒjaðɐ	northeuralex
+pt	84_thunder	thunder	trovão		truˈvɐ̃w	northeuralex
+pt	85_current	current	corrente		kuˈʀẽtə	northeuralex
+pt	86_drop	drop	gota		ˈɡotɐ	northeuralex
+pt	87_foam	foam	espuma		iʃpuma	northeuralex
+pt	89_lake	lake	lago		ˈlaɣu	northeuralex
+pt	90_swamp	swamp	charco		ʃarku	northeuralex
+pt	90_swamp	swamp	pântano		pãtanu	northeuralex
+pt	91_moor	moor	pântano		pãtanu	northeuralex
+pt	92_meadow	meadow	prado		praðu	northeuralex
+pt	93_forest	forest	bosque		boʃke	northeuralex
+pt	93_forest	forest	floresta		fluˈrɛʃtɐ	northeuralex
+pt	94_hill	hill	colina		kuˈlinɐ	northeuralex
+pt	96_mountain	mountain	monte		ˈmõtə	northeuralex
+pt	96_mountain	mountain	montanha		mõˈtɐɲɐ	northeuralex
+pt	97_summit	summit	pico		ˈpiku	northeuralex
+pt	98_cave	cave	caverna		kaverna	northeuralex
+pt	99_slope	slope	encosta		ẽkoʃta	northeuralex
+pt	100_source	source	fonte		ˈdõtə	northeuralex
+pt	101_brook	brook	regato		reɣatu	northeuralex
+pt	101_brook	brook	ribeiro		riβejru	northeuralex
+pt	102_river	river	rio		ʀiw	northeuralex
+pt	103_shore	shore	beira		bejra	northeuralex
+pt	104_coast	coast	costa		ˈkɔʃtɐ	northeuralex
+pt	106_sea	sea	mar		mar	northeuralex
+pt	107_covebay	cove, bay	baía		baia	northeuralex
+pt	108_island	island	ilha		ˈiʎɐ	northeuralex
+pt	109_flower	flower	flor		flor	northeuralex
+pt	110_grass	grass	erva		erva	northeuralex
+pt	111_root	root	raiz		ʀɐˈiʃ	northeuralex
+pt	112_tree	tree	árvore		ˈarvurə	northeuralex
+pt	117_leaf	leaf	folha		ˈfoʎɐ	northeuralex
+pt	118_birch	birch	bétula		betula	northeuralex
+pt	119_pine	pine	pinheiro		piˈɲejru	northeuralex
+pt	120_willow	willow	salgueiro		ʃaɫɣejru	northeuralex
+pt	121_fir	fir	abeto		aβetu	northeuralex
+pt	123_feather	feather	pena		ˈpenɐ	northeuralex
+pt	125_wing	wing	asa		ˈazɐ	northeuralex
+pt	130_nest	nest	ninho		ˈniɲu	northeuralex
+pt	136_horse	horse	cavalo		kɐˈvalu	northeuralex
+pt	141_bear	bear	urso		urʃu	northeuralex
+pt	144_fox	fox	raposa		rapoza	northeuralex
+pt	145_hare	hare	lebre		ˈlɛβrə	northeuralex
+pt	147_wolf	wolf	lobo		ˈloβu	northeuralex
+pt	148_bird	bird	ave		ˈavə	northeuralex
+pt	148_bird	bird	pássaro		ˈpasɐru	northeuralex
+pt	153_eagle	eagle	águia		ˈaɣjɐ	northeuralex
+pt	155_owl	owl	mocho		moʃu	northeuralex
+pt	155_owl	owl	coruja		koruʒa	northeuralex
+pt	156_crane	crane	grou		ɣrow	northeuralex
+pt	157_crow	crow	gralha		ɣraʎa	northeuralex
+pt	158_cuckoo	cuckoo	cuco		kuku	northeuralex
+pt	159_swan	swan	cisne		siʃne	northeuralex
+pt	160_fish	fish	peixe		ˈpejʃə	northeuralex
+pt	170_butterfly	butterfly	borboleta		burβuˈletɐ	northeuralex
+pt	171_berry	berry	bago		baɣu	northeuralex
+pt	172_apple	apple	maçã		mɐˈsɐ̃	northeuralex
+pt	175_seed	seed	sementeira		ʃemẽtejra	northeuralex
+pt	176_grain	grain	grão		ɣrãw	northeuralex
+pt	185_iron	iron	ferro		ˈfɛʀu	northeuralex
+pt	186_gold	gold	ouro		ˈoru	northeuralex
+pt	187_silver	silver	prata		ˈpratɐ	northeuralex
+pt	189_glass	glass	vidro		ˈviðru	northeuralex
+pt	190_clay	clay	barro		baʀu	northeuralex
+pt	190_clay	clay	argila		arʒila	northeuralex
+pt	191_sand	sand	areia		ɐˈrejɐ	northeuralex
+pt	212_joy	joy	alegria		ɐləˈɣriə	northeuralex
+pt	214_happiness	happiness	felicidade		fələsiˈðaðə	northeuralex
+pt	220_memory	memory	memória		məˈmɔrjɐ	northeuralex
+pt	224_truth	truth	verdade		vərˈðaðə	northeuralex
+pt	227_story	story	conto		ˈkõtu	northeuralex
+pt	227_story	story	narrativa		naʀativa	northeuralex
+pt	239_sound	sound	som		sõ	northeuralex
+pt	241_song	song	canção		kɐ̃ˈsɐ̃w	northeuralex
+pt	242_calm	calm	calma		ˈkaɫmɐ	northeuralex
+pt	242_calm	calm	silêncio		siˈlẽsju	northeuralex
+pt	247_gift	gift	prenda		ˈprẽdɐ	northeuralex
+pt	247_gift	gift	presente		prəˈzẽtə	northeuralex
+pt	251_friend	friend	amigo		ɐˈmiɣu	northeuralex
+pt	259_circle	circle	círculo		ˈsirkulu	northeuralex
+pt	266_space	space	lugar		luˈɣar	northeuralex
+pt	295_north	north	norte		ˈnɔrtə	northeuralex
+pt	296_south	south	sul		suɫ	northeuralex
+pt	297_west	west	oeste		ˈwɛʃtə	northeuralex
+pt	297_west	west	ocidente		osiðẽte	northeuralex
+pt	298_east	east	este		ˈeʃtə	northeuralex
+pt	298_east	east	leste		ˈlɛʃtə	northeuralex
+pt	298_east	east	oriente		orjente	northeuralex
+pt	308_home	home	lar		lar	northeuralex
+pt	308_home	home	casa		ˈkazɐ	northeuralex
+pt	399_bridge	bridge	ponte		ˈpõtə	northeuralex
+pt	400_well	well	poço		ˈposu	northeuralex
+pt	401_pasture	pasture	pastagem		paʃtaʒẽj	northeuralex
+pt	402_path	path	senda		ʃẽda	northeuralex
+pt	402_path	path	trilho		triʎu	northeuralex
+pt	411_life	life	vida		ˈviðɐ	northeuralex
+pt	429_world	world	mundo		ˈmũdu	northeuralex
+pt	449_time	time	tempo		ˈtẽpu	northeuralex
+pt	450_day	day	dia		ˈdiɐ	northeuralex
+pt	451_morning	morning	manhã		mɐˈɲɐ̃	northeuralex
+pt	453_evening	evening	noite		ˈnojtə	northeuralex
+pt	453_evening	evening	tardinha		tɐrˈdiɲɐ	northeuralex
+pt	454_night	night	noite		ˈnojtə	northeuralex
+pt	457_year	year	ano		ˈɐnu	northeuralex
+pt	458_spring	spring	primavera		primɐˈvɛrɐ	northeuralex
+pt	459_summer	summer	verão		vəˈrɐ̃w	northeuralex
+pt	460_autumn	autumn	outono		oˈtonu	northeuralex
+pt	461_winter	winter	inverno		ĩˈvɛrnu	northeuralex
+pt	501_beautiful	beautiful	belo		belu	northeuralex
+pt	501_beautiful	beautiful	bonito		buˈnitu	northeuralex
+pt	503_warm	warm	quente		ˈkẽtə	northeuralex
+pt	504_cold	cold	frio		friw	northeuralex
+pt	506_fresh	fresh	fresco		ˈfrɛʃku	northeuralex
+pt	522_bright	bright	claro		ˈklaru	northeuralex
+pt	525_white	white	branco		ˈbrɐ̃ku	northeuralex
+pt	526_red	red	vermelho		vərˈmeʎu	northeuralex
+pt	527_yellow	yellow	amarelo		ɐmɐˈrɛlu	northeuralex
+pt	528_blue	blue	azul		ɐˈzuɫ	northeuralex
+pt	529_green	green	verde		ˈverðə	northeuralex
+pt	530_grey	grey	cinzento		sĩˈzẽtu	northeuralex
+pt	564_new	new	novo		ˈnovu	northeuralex
+pt	575_far	far	remoto		remotu	northeuralex
+pt	575_far	far	distante		diʃtãte	northeuralex
+pt	579_first	first	primeiro		priˈmejru	northeuralex
+ar	55_dream	dream	حلم		ħulm	northeuralex
+ar	56_sky	sky	سماء		samaːʔ	northeuralex
+ar	57_sun	sun	شمس		ʃams	northeuralex
+ar	58_moon	moon	قمر		qamar	northeuralex
+ar	59_star	star	نجم		nad͡ʒm	northeuralex
+ar	59_star	star	كوكب		kaukab	northeuralex
+ar	60_air	air	هواء		hawaːʔ	northeuralex
+ar	61_wind	wind	ريح		riːħ	northeuralex
+ar	62_wave	wave	موجة		maud͡ʒa	northeuralex
+ar	63_water	water	ماء		maːʔ	northeuralex
+ar	64_stone	stone	حجر		ħad͡ʒar	northeuralex
+ar	65_ground	ground	تراب		turaːb	northeuralex
+ar	66_earth	earth	أرض		ardˤ	northeuralex
+ar	69_spark	spark	شرارة		ʃaraːra	northeuralex
+ar	70_fire	fire	نار		naːr	northeuralex
+ar	71_light	light	نور		nuːr	northeuralex
+ar	71_light	light	ضوء		dˤɑuʔ	northeuralex
+ar	72_shadow	shadow	ظل		dˤɨlː	northeuralex
+ar	72_shadow	shadow	فيء		fajʔ	northeuralex
+ar	74_fog	fog	ضباب		dˤɑbaːb	northeuralex
+ar	75_cloud	cloud	غيمة		ɣaima	northeuralex
+ar	75_cloud	cloud	سحابة		saħaːba	northeuralex
+ar	76_rain	rain	مطر		mɑtˤɑr	northeuralex
+ar	77_snow	snow	ثلج		θald͡ʒ	northeuralex
+ar	78_ice	ice	جليد		d͡ʒaliːd	northeuralex
+ar	79_frost	frost	صقيع		sˤɑqiːʕ	northeuralex
+ar	81_heat	heat	حر		ħarː	northeuralex
+ar	81_heat	heat	حرارة		ħaraːra	northeuralex
+ar	82_hoarfrost	hoarfrost	صقيع		sˤɑqiːʕ	northeuralex
+ar	84_thunder	thunder	رعد		raʕd	northeuralex
+ar	85_current	current	تيار		tajaːr	northeuralex
+ar	86_drop	drop	قطرة		qɑtˤra	northeuralex
+ar	87_foam	foam	زبد		zabad	northeuralex
+ar	87_foam	foam	رغوة		raɣwa	northeuralex
+ar	89_lake	lake	بحيرة		buħajra	northeuralex
+ar	90_swamp	swamp	مستنقع		mustanqaʕ	northeuralex
+ar	91_moor	moor	مستنقع		mustanqaʕ	northeuralex
+ar	92_meadow	meadow	مرج		mard͡ʒ	northeuralex
+ar	93_forest	forest	غابة		ɣaːba	northeuralex
+ar	94_hill	hill	تل		tal	northeuralex
+ar	96_mountain	mountain	جبل		d͡ʒabal	northeuralex
+ar	97_summit	summit	قمة		qimːa	northeuralex
+ar	98_cave	cave	كهف		kahf	northeuralex
+ar	99_slope	slope	منحدر		munħadar	northeuralex
+ar	100_source	source	منبع		manbaʕ	northeuralex
+ar	101_brook	brook	مجرى		mad͡ʒran	northeuralex
+ar	102_river	river	نهر		nahr	northeuralex
+ar	103_shore	shore	ضفة		dˤɨfːa	northeuralex
+ar	104_coast	coast	ساحل		saːħil	northeuralex
+ar	105_land	land	بر		bar	northeuralex
+ar	106_sea	sea	بحر		baħr	northeuralex
+ar	107_covebay	cove, bay	خليج		xaliːd͡ʒ	northeuralex
+ar	108_island	island	جزيرة		d͡ʒaziːra	northeuralex
+ar	109_flower	flower	زهرة		zahra	northeuralex
+ar	111_root	root	أصل		asˤl	northeuralex
+ar	112_tree	tree	شجرة		ʃad͡ʒara	northeuralex
+ar	117_leaf	leaf	ورقة		waraqa	northeuralex
+ar	119_pine	pine	صنوبرة		sˤɑnuːbara	northeuralex
+ar	120_willow	willow	صفصاف		sˤɑfsˤɑːf	northeuralex
+ar	121_fir	fir	شوح		ʃuːħ	northeuralex
+ar	123_feather	feather	ريشة		riːʃa	northeuralex
+ar	125_wing	wing	جناح		d͡ʒanaːħ	northeuralex
+ar	130_nest	nest	عش		ʕuʃː	northeuralex
+ar	136_horse	horse	خيل		xail	northeuralex
+ar	141_bear	bear	دب		dubː	northeuralex
+ar	144_fox	fox	ثعلب		θaʕlab	northeuralex
+ar	145_hare	hare	أرنب		arnab	northeuralex
+ar	147_wolf	wolf	ذئب		ðiʔb	northeuralex
+ar	148_bird	bird	طير		tˤɑir	northeuralex
+ar	153_eagle	eagle	نسر		nisr	northeuralex
+ar	155_owl	owl	بوم		buwm	northeuralex
+ar	156_crane	crane	كركي		kurkiː	northeuralex
+ar	157_crow	crow	غراب		ɣuraːb	northeuralex
+ar	158_cuckoo	cuckoo	وقواق		waqwaːq	northeuralex
+ar	160_fish	fish	سمك		samak	northeuralex
+ar	170_butterfly	butterfly	فراشة		faraːʃa	northeuralex
+ar	171_berry	berry	حبة		ħabːa	northeuralex
+ar	172_apple	apple	تفاح		tufaːħ	northeuralex
+ar	175_seed	seed	زرع		zarʕ	northeuralex
+ar	176_grain	grain	حبة		ħabːa	northeuralex
+ar	185_iron	iron	حديد		ħadiːd	northeuralex
+ar	186_gold	gold	ذهب		ðahab	northeuralex
+ar	187_silver	silver	فضة		fɨdˤːɑ	northeuralex
+ar	189_glass	glass	زجاج		zud͡ʒaːd͡ʒ	northeuralex
+ar	190_clay	clay	طين		tˤɨːn	northeuralex
+ar	191_sand	sand	رمل		raml	northeuralex
+ar	212_joy	joy	فرح		faraħ	northeuralex
+ar	212_joy	joy	سرور		suruːr	northeuralex
+ar	214_happiness	happiness	سعادة		saʕaːda	northeuralex
+ar	220_memory	memory	ذاكرة		ðaːkira	northeuralex
+ar	224_truth	truth	حقيقة		ħaqiːqa	northeuralex
+ar	227_story	story	قصة		qɨsˤːɑ	northeuralex
+ar	227_story	story	حكاية		ħikaːja	northeuralex
+ar	239_sound	sound	صوت		sˤɑut	northeuralex
+ar	241_song	song	أغنية		uɣniːa	northeuralex
+ar	242_calm	calm	هدوء		huduːʔ	northeuralex
+ar	247_gift	gift	هدية		hadiːja	northeuralex
+ar	251_friend	friend	صديق		sˤɑdiːq	northeuralex
+ar	259_circle	circle	دائرة		daːʔira	northeuralex
+ar	266_space	space	فراغ		faraːɣ	northeuralex
+ar	295_north	north	شمال		ʃimaːl	northeuralex
+ar	296_south	south	جنوب		d͡ʒanuːb	northeuralex
+ar	297_west	west	غرب		ɣarb	northeuralex
+ar	298_east	east	شرق		ʃarq	northeuralex
+ar	308_home	home	بيت		bajt	northeuralex
+ar	308_home	home	مسكن		maskan	northeuralex
+ar	399_bridge	bridge	جسر		d͡ʒisr	northeuralex
+ar	400_well	well	بئر		biʔr	northeuralex
+ar	401_pasture	pasture	مرعى		marʕan	northeuralex
+ar	402_path	path	درب		darb	northeuralex
+ar	411_life	life	عيش		ʕaiʃ	northeuralex
+ar	411_life	life	حياة		ħajaːt	northeuralex
+ar	429_world	world	عالم		ʕaːlam	northeuralex
+ar	429_world	world	دنيا		dunjaː	northeuralex
+ar	449_time	time	وقت		waqt	northeuralex
+ar	450_day	day	يوم		jaum	northeuralex
+ar	451_morning	morning	صباح		sˤɑbaːħ	northeuralex
+ar	452_noon	noon	ظهر		dˤuhr	northeuralex
+ar	453_evening	evening	مساء		masaːʔ	northeuralex
+ar	454_night	night	ليلة		laila	northeuralex
+ar	457_year	year	عام		ʕaːm	northeuralex
+ar	457_year	year	سنة		sana	northeuralex
+ar	458_spring	spring	ربيع		rabiːʕ	northeuralex
+ar	459_summer	summer	صيف		sˤɑif	northeuralex
+ar	460_autumn	autumn	خريف		xariːf	northeuralex
+ar	501_beautiful	beautiful	جميل		d͡ʒamiːl	northeuralex
+ar	503_warm	warm	دافئ		daːfiʔ	northeuralex
+ar	504_cold	cold	بارد		baːrid	northeuralex
+ar	506_fresh	fresh	طازج		tˤɑːzid͡ʒ	northeuralex
+ar	522_bright	bright	نير		najːir	northeuralex
+ar	525_white	white	أبيض		abjadˤu	northeuralex
+ar	526_red	red	أحمر		aħmaru	northeuralex
+ar	527_yellow	yellow	أصفر		asˤfaru	northeuralex
+ar	528_blue	blue	أزرق		azraqu	northeuralex
+ar	529_green	green	أخضر		axdˤaru	northeuralex
+ar	530_grey	grey	رمادي		ramaːdiː	northeuralex
+ar	564_new	new	جديد		d͡ʒadiːd	northeuralex
+ar	575_far	far	بعيد		baʕiːd	northeuralex
+ar	579_first	first	أول		awal	northeuralex
+sw	429_world	world	dunia		ɗunia	wold
+sw	429_world	world	ulimwengu		ulimweⁿgu	wold
+ja	429_world	world	世界	sekai	sekai	wold
+ja	429_world	world	世	yo	jo	wold
+zh	429_world	world	世界	shi4jie4	ʂʅ⁵¹tɕiɤ⁵¹	wold
+sw	66_earth	earth	udongo		uɗoⁿgo	wold
+ja	66_earth	earth	土	tsuchi	tsutɕi	wold
+zh	66_earth	earth	土壤	tu3rang3	tʰu²¹⁴ʐaŋ²¹⁴	wold
+zh	66_earth	earth	土地	tu3di4	tʰu²¹⁴ti⁵¹	wold
+zh	66_earth	earth	土	tu3	tʰu²¹⁴	wold
+sw	191_sand	sand	mchanga		mtʃaⁿga	wold
+ja	191_sand	sand	砂	suna	suna	wold
+zh	191_sand	sand	沙子	sha1zi	ʂa⁵⁵tsɿ	wold
+zh	191_sand	sand	沙	sha1	ʂa⁵⁵	wold
+sw	96_mountain	mountain	mlima		mlima	wold
+sw	96_mountain	mountain	kilima		kilima	wold
+ja	96_mountain	mountain	山	yama	jama	wold
+ja	96_mountain	mountain	丘	oka	oka	wold
+zh	96_mountain	mountain	丘	qiu1	tɕʰjou⁵⁵	wold
+zh	96_mountain	mountain	山	shan1	ʂan⁵⁵	wold
+zh	96_mountain	mountain	丘岭	qiu1ling2	tɕʰjou⁵⁵liŋ³⁵	wold
+sw	108_island	island	kisiwa		kisiwa	wold
+ja	108_island	island	島	shima	ɕima	wold
+zh	108_island	island	岛	dao3	tau²¹⁴	wold
+sw	105_land	land	bara		ɓara	wold
+ja	105_land	land	内地	naichi	naitɕi	wold
+ja	105_land	land	大陸	tairiku	tairikɯ	wold
+zh	105_land	land	大陆	da4lu4	ta⁵¹lu⁵¹	wold
+zh	105_land	land	陆地	lu4di4	lu⁵¹ti⁵¹	wold
+sw	103_shore	shore	ufuko		ufuko	wold
+sw	103_shore	shore	pwani		pwani	wold
+ja	103_shore	shore	岸	kishi	kiɕi	wold
+ja	103_shore	shore	海岸	kaigan	kaigan	wold
+ja	103_shore	shore	河岸	kagan	kagan	wold
+zh	103_shore	shore	海岸	hai3an4	xai²¹⁴an⁵¹	wold
+zh	103_shore	shore	岸	an4	an⁵¹	wold
+sw	98_cave	cave	pango		paⁿgo	wold
+ja	98_cave	cave	洞窟	dōkutsu	doːkutsɯ	wold
+ja	98_cave	cave	洞穴	horaana	horaana	wold
+zh	98_cave	cave	山洞	shan1dong4	ʂan⁵⁵tʊŋ⁵¹	wold
+sw	63_water	water	maji		madʒi	wold
+ja	63_water	water	水	mizu	mizɯ	wold
+zh	63_water	water	水	shui3	ʂwəi̯²¹⁴	wold
+sw	106_sea	sea	bahari		ɓahari	wold
+ja	106_sea	sea	海	umi	ɯmi	wold
+zh	106_sea	sea	海	hai3	xai²¹⁴	wold
+sw	242_calm	calm	shwari		ʃwari	wold
+ja	242_calm	calm	凪	nagi	nagi	wold
+sw	87_foam	foam	povu		povu	wold
+ja	87_foam	foam	泡	awa	awa	wold
+zh	87_foam	foam	泡沫	pao4mo4	pʰau⁵¹mo⁵¹	wold
+zh	87_foam	foam	泡	pao4	pʰau⁵¹	wold
+sw	89_lake	lake	ziwa		ziwa	wold
+ja	89_lake	lake	湖	mizuumi	mizɯɯmi	wold
+ja	89_lake	lake	池	ike	ike	wold
+zh	89_lake	lake	湖	hu2	xu³⁵	wold
+zh	89_lake	lake	湖泊	hu2po1	xu³⁵pʰo⁵⁵	wold
+sw	107_covebay	cove, bay	ghuba		ɣuɓa	wold
+ja	107_covebay	cove, bay	入江	irie	irie	wold
+ja	107_covebay	cove, bay	湾	wan	wan	wold
+zh	107_covebay	cove, bay	海湾	hai3wan1	xai²¹⁴wan⁵⁵	wold
+zh	107_covebay	cove, bay	湾	wan1	wan⁵⁵	wold
+sw	62_wave	wave	wimbi		wiⁿbi	wold
+ja	62_wave	wave	波	nami	nami	wold
+zh	62_wave	wave	浪	lang4	laŋ⁵¹	wold
+zh	62_wave	wave	波浪	bo1lang4	po⁵⁵laŋ⁵¹	wold
+sw	102_river	river	mto		mto	wold
+ja	102_river	river	川	kawa	kawa	wold
+zh	102_river	river	河	he2	xɤ³⁵	wold
+zh	102_river	river	溪	xi1	ɕi⁵⁵	wold
+zh	102_river	river	川	chuan1	ʈʂʰuan⁵⁵	wold
+sw	100_source	source	chemchemi		tʃemtʃemi	wold
+sw	100_source	source	kisima		kisima	wold
+ja	100_source	source	泉	izumi	izumi	wold
+ja	100_source	source	井戸	ido	ido	wold
+zh	100_source	source	泉	quan2	tɕʰuan³⁵	wold
+zh	100_source	source	泉源	quan2yuan2	tɕʰuan³⁵ɥɛn³⁵	wold
+zh	100_source	source	泉水	quan2shui3	tɕʰuan³⁵ʂwəi̯²¹⁴	wold
+zh	100_source	source	井	jing3	tɕiŋ²¹⁴	wold
+sw	90_swamp	swamp	kinamasi		kinamasi	wold
+ja	90_swamp	swamp	沼	numa	numa	wold
+zh	90_swamp	swamp	沼泽	zhao3ze2	ʈʂau²¹⁴tsɤ³⁵	wold
+sw	93_forest	forest	msitu		msitu	wold
+sw	93_forest	forest	mwitu		mwitu	wold
+ja	93_forest	forest	森	mori	mori	wold
+ja	93_forest	forest	林	hayashi	hajaɕi	wold
+zh	93_forest	forest	森林	sen1lin2	sən⁵⁵lin³⁵	wold
+zh	93_forest	forest	树林	shu4lin2	ʂu⁵¹lin³⁵	wold
+sw	64_stone	stone	jiwe		dʒiwe	wold
+ja	64_stone	stone	石	ishi	iɕi	wold
+ja	64_stone	stone	岩	iwa	iwa	wold
+zh	64_stone	stone	岩石	yan2shi2	jɛn³⁵ʂʅ³⁵	wold
+sw	56_sky	sky	mbingu		ⁿbiⁿgu	wold
+sw	56_sky	sky	anga		aⁿga	wold
+ja	56_sky	sky	空	sora	sora	wold
+zh	56_sky	sky	天空	tian1kong1	tʰjɛn⁵⁵kʰʊŋ⁵⁵	wold
+sw	57_sun	sun	jua		dʒua	wold
+ja	57_sun	sun	日	hi	hi	wold
+ja	57_sun	sun	太陽	taiyō	taijoː	wold
+zh	57_sun	sun	太阳	tai4yang	tʰai⁵¹jaŋ	wold
+sw	58_moon	moon	mwezi		mwezi	wold
+ja	58_moon	moon	月	tsuki	tsuki	wold
+zh	58_moon	moon	月亮	yue4liang	ɥyɤ⁵¹ljaŋ	wold
+sw	59_star	star	nyota		ɲota	wold
+ja	59_star	star	星	hoshi	hoɕi	wold
+zh	59_star	star	星星	xing1xing	ɕiŋ⁵⁵ɕiŋ	wold
+sw	84_thunder	thunder	ngurumo		ⁿgurumo	wold
+ja	84_thunder	thunder	雷	kaminari	kaminari	wold
+zh	84_thunder	thunder	雷	lei2	ləi³⁵	wold
+ja	83_rainbow	rainbow	虹	niji	niʑi	wold
+zh	83_rainbow	rainbow	彩虹	cai3hong2	tsʰai²¹⁴xʊŋ³⁵	wold
+sw	71_light	light	mwanga		mwaⁿga	wold
+sw	71_light	light	nuru		nuru	wold
+ja	71_light	light	光	hikari	hikari	wold
+zh	71_light	light	光	guang1	kuaŋ⁵⁵	wold
+sw	72_shadow	shadow	kivuli		kivuli	wold
+ja	72_shadow	shadow	陰	kage	kage	wold
+zh	72_shadow	shadow	影子	ying3zi	jiŋ²¹⁴tsɿ	wold
+sw	60_air	air	hewa		hewa	wold
+ja	60_air	air	空気	kūki	kɯːki	wold
+zh	60_air	air	空气	kong1qi4	kʰʊŋ⁵⁵tɕʰi⁵¹	wold
+sw	61_wind	wind	upepo		upepo	wold
+ja	61_wind	wind	風	kaze	kaze	wold
+zh	61_wind	wind	风	feng1	fəŋ⁵⁵	wold
+sw	75_cloud	cloud	wingu		wiⁿgu	wold
+ja	75_cloud	cloud	雲	kumo	kumo	wold
+zh	75_cloud	cloud	云	yun2	ɥyn³⁵	wold
+zh	75_cloud	cloud	云彩	yun2cai	ɥyn³⁵tsʰai	wold
+sw	74_fog	fog	ukungu		ukuⁿgu	wold
+ja	74_fog	fog	霧	kiri	kiri	wold
+zh	74_fog	fog	雾	wu4	wu⁵¹	wold
+sw	76_rain	rain	mvua		ⁿvua	wold
+ja	76_rain	rain	雨	ame	ame	wold
+zh	76_rain	rain	雨	yu3	ɥy²¹⁴	wold
+sw	77_snow	snow	theluji		θeludʒi	wold
+ja	77_snow	snow	雪	yuki	juki	wold
+zh	77_snow	snow	雪	xue3	ɕuɤ²¹⁴	wold
+sw	78_ice	ice	barafu		ɓarafu	wold
+ja	78_ice	ice	氷	kōri	koːri	wold
+zh	78_ice	ice	冰	bing1	piŋ⁵⁵	wold
+sw	70_fire	fire	moto		moto	wold
+ja	70_fire	fire	火	hi	hi	wold
+zh	70_fire	fire	火	huo3	xwɔ²¹⁴	wold
+sw	401_pasture	pasture	malishoni		maliʃoni	wold
+sw	401_pasture	pasture	machungani		matʃuⁿgani	wold
+ja	401_pasture	pasture	牧場	bokujō	bokuʑoː	wold
+zh	401_pasture	pasture	草地	cao3di4	tsʰau²¹⁴ti⁵¹	wold
+zh	401_pasture	pasture	牧场	mu4chang3	mu⁵¹ʈʂʰaŋ²¹⁴	wold
+sw	136_horse	horse	farasi		farasi	wold
+ja	136_horse	horse	馬	uma	ɯma	wold
+zh	136_horse	horse	马	ma3	ma²¹⁴	wold
+sw	130_nest	nest	kiota		kiota	wold
+ja	130_nest	nest	巣	su	sɯ	wold
+zh	130_nest	nest	窝	wo1	wo⁵⁵	wold
+zh	130_nest	nest	巢	chao2	ʈʂʰau³⁵	wold
+sw	148_bird	bird	ndege		ⁿdeɠe	wold
+ja	148_bird	bird	鳥	tori	tori	wold
+zh	148_bird	bird	鸟	niao3	niau²¹⁴	wold
+sw	153_eagle	eagle	kozi		kozi	wold
+ja	153_eagle	eagle	鷲	washi	waɕi	wold
+zh	153_eagle	eagle	老鷹	lao3ying2	lau²¹⁴jiŋ³⁵	wold
+sw	157_crow	crow	kunguru		kuⁿguru	wold
+ja	157_crow	crow	烏	karasu	karasɯ	wold
+zh	157_crow	crow	烏鴉	wu1ya1	wu⁵⁵ɥa⁵⁵	wold
+sw	155_owl	owl	bundi		ɓuⁿdi	wold
+ja	155_owl	owl	梟	fukurō	ɸukuroː	wold
+zh	155_owl	owl	猫头鹰	mao1tou2ying1	mau⁵⁵tʰɔu³⁵jiŋ⁵⁵	wold
+sw	160_fish	fish	samaki		samaki	wold
+ja	160_fish	fish	魚	sakana	sakana	wold
+zh	160_fish	fish	鱼	yu2	ɥy³⁵	wold
+ja	147_wolf	wolf	狼	ōkami	oːkami	wold
+zh	147_wolf	wolf	狼	lang2	laŋ³⁵	wold
+sw	141_bear	bear	dubu		ɗuɓu	wold
+ja	141_bear	bear	熊	kuma	kuma	wold
+zh	141_bear	bear	熊	xiong2	ɕjʊŋ³⁵	wold
+ja	144_fox	fox	狐	kitsune	kitsune	wold
+zh	144_fox	fox	狐狸	hu2li	xu³⁵li	wold
+sw	170_butterfly	butterfly	kipepeo		kipepeo	wold
+ja	170_butterfly	butterfly	蝶	chō	tɕoː	wold
+zh	170_butterfly	butterfly	蝴蝶	hu2die2	xu³⁵tiɤ³⁵	wold
+sw	125_wing	wing	bawa		ɓawa	wold
+ja	125_wing	wing	翼	tsubasa	tsubasa	wold
+zh	125_wing	wing	翅膀	chi4bang3	ʈʂʰʅ⁵¹paŋ²¹⁴	wold
+sw	123_feather	feather	unyoya		uɲoja	wold
+ja	123_feather	feather	羽根	hane	hane	wold
+zh	123_feather	feather	羽毛	yu3mao2	ɥy²¹⁴mau³⁵	wold
+sw	175_seed	seed	mbegu		ⁿbeɠu	wold
+ja	175_seed	seed	種	tane	tane	wold
+ja	175_seed	seed	種子	shushi	ɕuɕi	wold
+zh	175_seed	seed	种子	zhong3zi	ʈʂʊŋ²¹⁴tsɿ	wold
+sw	176_grain	grain	nafaka		nafaka	wold
+ja	176_grain	grain	穀物	kokumotsu	kokumotsɯ	wold
+zh	176_grain	grain	五谷	wu3gu3	wu²¹⁴ku²¹⁴	wold
+zh	176_grain	grain	庄稼	zhuang1jia	ʈʂuaŋ⁵⁵tɕia	wold
+sw	110_grass	grass	jani		dʒani	wold
+sw	110_grass	grass	nyasi		ɲasi	wold
+ja	110_grass	grass	草	kusa	kusa	wold
+zh	110_grass	grass	草	cao3	tsʰau²¹⁴	wold
+zh	110_grass	grass	青草	qing1cao3	tɕʰiŋ⁵⁵tsʰau²¹⁴	wold
+sw	111_root	root	mzizi		mzizi	wold
+ja	111_root	root	根	ne	ne	wold
+zh	111_root	root	根	gen1	kən⁵⁵	wold
+zh	111_root	root	根子	gen1zi	kən⁵⁵tsɿ	wold
+sw	117_leaf	leaf	jani		dʒani	wold
+ja	117_leaf	leaf	葉	ha	ha	wold
+zh	117_leaf	leaf	叶子	ye4zi	jɤ⁵¹tsɿ	wold
+sw	109_flower	flower	ua		ua	wold
+ja	109_flower	flower	花	hana	hana	wold
+zh	109_flower	flower	花	hua1	xua⁵⁵ʐ	wold
+sw	112_tree	tree	mti		mti	wold
+ja	112_tree	tree	木	ki	ki	wold
+zh	112_tree	tree	树木	shu4mu4	ʂu⁵¹mu⁵¹	wold
+zh	112_tree	tree	树	shu4	ʂu⁵¹	wold
+sw	118_birch	birch	mbetula		ⁿbetula	wold
+ja	118_birch	birch	樺	kaba	kaba	wold
+zh	118_birch	birch	桦树	hua4shu4	xua⁵¹ʂu⁵¹	wold
+sw	119_pine	pine	msonobari		msonoɓari	wold
+ja	119_pine	pine	松	matsu	matsɯ	wold
+zh	119_pine	pine	松树	song1shu4	sʊŋ⁵⁵ʂu⁵¹	wold
+sw	121_fir	fir	msonobari		msonoɓari	wold
+ja	121_fir	fir	樅	momi	momi	wold
+zh	121_fir	fir	杉树	shan1shu4	ʂan⁵⁵ʂu⁵¹	wold
+sw	186_gold	gold	dhahabu		ðahaɓu	wold
+ja	186_gold	gold	金	kin	kin	wold
+ja	186_gold	gold	黄金	ōgon	oːgon	wold
+zh	186_gold	gold	金	jin1	tɕin⁵⁵	wold
+zh	186_gold	gold	金子	jin1zi	tɕin⁵⁵tsɿ	wold
+sw	187_silver	silver	fedha		feða	wold
+ja	187_silver	silver	銀	gin	gin	wold
+zh	187_silver	silver	银	yin2	jin³⁵	wold
+zh	187_silver	silver	银子	yin2zi	jin³⁵tsɿ	wold
+sw	185_iron	iron	chuma		tʃuma	wold
+ja	185_iron	iron	鉄	tetsu	tetsɯ	wold
+zh	185_iron	iron	铁	tie3	tʰiɤ²¹⁴	wold
+ja	190_clay	clay	粘土	nendo	nendo	wold
+ja	190_clay	clay	土	tsuchi	tsutɕi	wold
+zh	190_clay	clay	粘土	nian2tu3	njɛn³⁵tʰu²¹⁴	wold
+sw	189_glass	glass	kioo		kioː	wold
+zh	189_glass	glass	玻璃	bo1li	po⁵⁵li	wold
+sw	402_path	path	njia		ⁿdʒia	wold
+ja	402_path	path	道	michi	mitɕi	wold
+ja	402_path	path	路地	roji	roʑi	wold
+zh	402_path	path	小路	xiao3lu4	ɕiau²¹⁴lu⁵¹	wold
+sw	399_bridge	bridge	daraja		ɗaradʒa	wold
+ja	399_bridge	bridge	橋	hashi	haɕi	wold
+zh	399_bridge	bridge	桥	qiao2	tɕʰiau³⁵	wold
+sw	575_far	far	mbali		ⁿbali	wold
+ja	575_far	far	遠い	tōi	toːi	wold
+zh	575_far	far	远	yuan3	ɥɛn²¹⁴	wold
+sw	298_east	east	mashariki		maʃariki	wold
+ja	298_east	east	東	higashi	higaɕi	wold
+zh	298_east	east	东方	dong1fang1	tʊŋ⁵⁵faŋ⁵⁵	wold
+zh	298_east	east	东面	dong1mian4	tʊŋ⁵⁵mjɛn⁵¹	wold
+sw	297_west	west	magharibi		maɣariɓi	wold
+ja	297_west	west	西	nishi	niɕi	wold
+zh	297_west	west	西方	xi1fang1	ɕi⁵⁵faŋ⁵⁵	wold
+zh	297_west	west	西面	xi1mian4	ɕi⁵⁵mjɛn⁵¹	wold
+sw	295_north	north	kaskazini		kaskazini	wold
+ja	295_north	north	北	kita	kita	wold
+zh	295_north	north	北方	bei3fang1	pəi²¹⁴faŋ⁵⁵	wold
+zh	295_north	north	北面	bei3mian4	pəi²¹⁴mjɛn⁵¹	wold
+sw	296_south	south	kusini		kusini	wold
+ja	296_south	south	南	minami	minami	wold
+zh	296_south	south	南方	nan2fang1	nan³⁵faŋ⁵⁵	wold
+zh	296_south	south	南面	nan2mian4	nan³⁵mjɛn⁵¹	wold
+sw	259_circle	circle	mviringo		ⁿviriⁿgo	wold
+sw	259_circle	circle	duara		ɗuara	wold
+ja	259_circle	circle	円	maru	marɯ	wold
+zh	259_circle	circle	圆	yuan2	ɥɛn³⁵	wold
+zh	259_circle	circle	圈	quan1	tɕʰuan⁵⁵	wold
+zh	259_circle	circle	圆周	yuan2zhou1	ɥɛn³⁵ʈʂɔu⁵⁵	wold
+sw	579_first	first	kwanza		kwaⁿza	wold
+ja	579_first	first	第一	daiichi	daiːtɕi	wold
+zh	579_first	first	第一	di4yi1	ti⁵¹ɥi⁵⁵	wold
+sw	449_time	time	wakati		wakati	wold
+sw	449_time	time	muda		muɗa	wold
+ja	449_time	time	時	toki	toki	wold
+ja	449_time	time	時間	jikan	ʑikan	wold
+zh	449_time	time	时间	shi2jian1	ʂʅ³⁵tɕjɛn⁵⁵	wold
+zh	449_time	time	时候	shi2hou4	ʂʅ³⁵xɔu⁵¹	wold
+ja	564_new	new	新しい	atarashii	ataraɕiː	wold
+zh	564_new	new	新	xin1	ɕin⁵⁵	wold
+sw	454_night	night	usiku		usiku	wold
+ja	454_night	night	夜	yoru	jorɯ	wold
+zh	454_night	night	夜	ye4	jɤ⁵¹	wold
+sw	451_morning	morning	asubuhi		asuɓuhi	wold
+ja	451_morning	morning	朝	asa	asa	wold
+zh	451_morning	morning	早上	zao3shang4	tsau²¹⁴ʂaŋ⁵¹	wold
+sw	452_noon	noon	adhuhuri		aðuhuri	wold
+ja	452_noon	noon	昼	hiru	hirɯ	wold
+ja	452_noon	noon	正午	shōgo	ɕoːgo	wold
+zh	452_noon	noon	中午	zhong1wu3	ʈʂʊŋ⁵⁵wu²¹⁴	wold
+sw	453_evening	evening	jioni		dʒioni	wold
+ja	453_evening	evening	夕方	yūgata	jɯːgata	wold
+ja	453_evening	evening	晩	ban	ban	wold
+zh	453_evening	evening	晚上	wan3shang4	wan²¹⁴ʂaŋ⁵¹	wold
+sw	457_year	year	mwaka		mwaka	wold
+ja	457_year	year	年	toshi	toɕi	wold
+zh	457_year	year	年	nian2	njɛn³⁵	wold
+ja	461_winter	winter	冬	fuyu	ɸujɯ	wold
+zh	461_winter	winter	冬天	dong1tian1	tʊŋ⁵⁵tʰjɛn⁵⁵	wold
+ja	458_spring	spring	春	haru	harɯ	wold
+zh	458_spring	spring	春天	chun1tian1	ʈʂʰun⁵⁵tʰjɛn⁵⁵	wold
+ja	459_summer	summer	夏	natsu	natsɯ	wold
+zh	459_summer	summer	夏天	xia4tian1	ɕia⁵¹tʰjɛn⁵⁵	wold
+ja	460_autumn	autumn	秋	aki	aki	wold
+zh	460_autumn	autumn	秋天	qiu1tian1	tɕʰjou⁵⁵tʰjɛn⁵⁵	wold
+sw	239_sound	sound	sauti		sauti	wold
+sw	239_sound	sound	mlio		mlio	wold
+ja	239_sound	sound	音	oto	oto	wold
+zh	239_sound	sound	声音	sheng1yin1	ʂəŋ⁵⁵jin⁵⁵	wold
+zh	239_sound	sound	声响	sheng1xiang3	ʂəŋ⁵⁵ɕjaŋ²¹⁴	wold
+ja	522_bright	bright	明るい	akarui	akarui	wold
+zh	522_bright	bright	明亮	ming2liang4	miŋ³⁵ljaŋ⁵¹	wold
+ja	525_white	white	白い	shiroi	ɕiroi	wold
+zh	525_white	white	白	bai2	pai³⁵	wold
+ja	526_red	red	赤い	akai	akai	wold
+zh	526_red	red	红	hong2	xʊŋ³⁵	wold
+sw	528_blue	blue	buluu		ɓuluː	wold
+ja	528_blue	blue	青い	aoi	aoi	wold
+zh	528_blue	blue	蓝	lan2	lan³⁵	wold
+sw	529_green	green	kijani		kidʒani	wold
+ja	529_green	green	緑	midori	midori	wold
+zh	529_green	green	绿	lü4	ly⁵¹	wold
+sw	527_yellow	yellow	manjano		maⁿdʒano	wold
+ja	527_yellow	yellow	黄色	kiiro	kiːro	wold
+zh	527_yellow	yellow	黄	huang2	xuaŋ³⁵	wold
+sw	503_warm	warm	joto		dʒoto	wold
+sw	503_warm	warm	moto		moto	wold
+ja	503_warm	warm	温かい	atatakai	atatakai	wold
+zh	503_warm	warm	热	re4	ʐɤ⁵¹	wold
+zh	503_warm	warm	暖和	nuan3huo	nuan²¹⁴xwɔ	wold
+sw	504_cold	cold	baridi		ɓariɗi	wold
+ja	504_cold	cold	寒い	samui	samui	wold
+ja	504_cold	cold	冷たい	tsumetai	tsumetai	wold
+zh	504_cold	cold	冷	leng3	ləŋ²¹⁴	wold
+ja	501_beautiful	beautiful	綺麗	kirei	kirei	wold
+ja	501_beautiful	beautiful	美しい	utsukushii	ɯtsukuɕiː	wold
+zh	501_beautiful	beautiful	美	mei3	məi²¹⁴	wold
+zh	501_beautiful	beautiful	漂亮	piao1liang	pʰiau⁵⁵ljaŋ	wold
+zh	501_beautiful	beautiful	美丽	mei3li4	məi²¹⁴li⁵¹	wold
+sw	251_friend	friend	rafiki		rafiki	wold
+ja	251_friend	friend	友達	tomodachi	tomodatɕi	wold
+zh	251_friend	friend	朋友	peng2you	pʰəŋ³⁵ɥɔu	wold
+sw	241_song	song	wimbo		wiⁿbo	wold
+ja	241_song	song	歌	uta	ɯta	wold
+zh	241_song	song	歌曲	ge1qu3	kɤ⁵⁵tɕʰu²¹⁴	wold
+zh	241_song	song	歌	ge1	kɤ⁵⁵	wold
+sw	145_hare	hare	sungura		suⁿgura	wold
+ja	145_hare	hare	兎	usagi	ɯsagi	wold
+zh	145_hare	hare	兔子	tu4zi	tʰu⁵¹tsɿ	wold
+zh	145_hare	hare	家兔	jia1tu4	tɕia⁵⁵tʰu⁵¹	wold
+sw	411_life	life	maisha		maiʃa	wold
+ja	411_life	life	命	inochi	inotɕi	wold
+ja	411_life	life	生命	seimei	seimei	wold
+sw	450_day	day	siku		siku	wold
+ja	450_day	day	日	hi	hi	wold
+ja	450_day	day	一日	ichinichi	itɕinitɕi	wold
+zh	450_day	day	天	tian1	tʰjɛn⁵⁵	wold
+zh	100_source	source	源泉	yuan2quan2	ɥɛn³⁵tɕʰuan³⁵	wold
+zh	400_well	well	井	jing3	tɕiŋ²¹⁴	wold
