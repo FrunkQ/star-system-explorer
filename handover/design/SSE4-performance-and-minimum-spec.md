@@ -1,6 +1,6 @@
 # SSE4 performance readout and minimum spec (track PF)
 
-Status: PF1 built 22 Nov 2026 (thread "Measure performance for minimum specs"). PF2 and PF3 proposed here. Questions for Alex in section 7.
+Status: accepted by Alex 22 Nov 2026 (all five questions in section 7, yes). PF1, PF1b (players), PF2 (the bench) and PF3 (the table) built 22 Nov by the thread "Measure performance for minimum specs".
 
 Alex, 22 Nov 2026: "maybe add in some options performance measurement stuff that can be switched on in settings that provides extra debug info and gives us a chance to start building a 'minimum spec' for each big chunk."
 
@@ -40,7 +40,7 @@ The list is data (`packages/ui-contract/src/perf-chunks.json`, schema `sse.perf-
 | Drawing | the globe's own frame work, the page's frame interval | 33 ms (30 frames a second) |
 | Clicks and keys | click or key to the next paint (event timing) | 200 ms (the web's line for "good") |
 
-Budgets follow the standing rule "no heavy work for a click": a click-time read stays under 100 ms; a deliberate act (a survey, a galaxy chart) may take longer; a run with a progress bar has a whole-run budget. A chunk's verdict is within, near (over three quarters of its budget) or over.
+Budgets follow the standing rule "no heavy work for a click": a click-time read stays under 100 ms; a deliberate act (a survey, a galaxy chart) may take longer; a run with a progress bar has a whole-run budget. A chunk's median pools all its calls; its 95th percentile is that of its worst op, so one slow kind of call (a `resolved_system` among forty quick edits) is never averaged away. The verdict follows the 95th percentile: within, near (over three quarters of the budget) or over.
 
 Detail levels: a request that names its `detail` or `level` (Orbit, Survey) is recorded per level, so Survey is never averaged with Orbit.
 
@@ -63,21 +63,24 @@ Cost: off, a kernel call pays one null check. On, a call pays two clock reads an
 
 Nothing leaves the device. A report is made only when the person presses Copy report or Save. It holds timings and what the device says about itself (including the GPU adapter name), never a universe, a seed, a body's name or a campaign.
 
-## 5. PF2: the bench (proposed, next)
+## 5. PF2: the bench (built)
 
 - `sse-wasm` gains `engine_names()` and `engine_run(name)`, so each harness scenario (resolve, formation pipeline, surface atlas, galaxy, life history, nav and the rest, 38 in all) runs alone.
-- `/harness/` times each one (three runs, the median) after its hash check and maps it to a chunk with the same chunk list, then offers Copy report and Save with `source: "bench"`.
+- `/harness/` offers "Run the bench" after its hash check: each scenario three times, round-robin, grouped by the `bench` lists in the same chunk list, then Copy report and Save with `source: "bench"`. About 45 s on the cloud runner, about 3 minutes with its CPU slowed four times. `?bench` in the address runs it at once (the script uses that).
 - `tests/harness/bench.mjs` runs the same in Node, headless Chromium and Chromium with CPU slowed four times, writes a report per run, and with `--against <report>` lists every scenario more than 5 % slower. That is ND3b's timing check, run on one machine before and after a move.
-- Not in CI: cloud runners vary by more than 5 % from run to run, so a 5 % gate would fail at random (question 4).
+- Not in CI (question 4, agreed): cloud runners vary by more than 5 % from run to run, so a 5 % gate would fail at random. Scenarios under 2 ms in both runs are left out of the comparison, since the clock's grain is bigger than 5 % there.
+- Chromium's CPU slowdown applies to the page's own thread, not to Web Workers. The bench runs the scenarios on the page, so it is slowed; the chart room's kernel runs in a worker, so an app readout under the slowdown is not a phone stand-in. Phone app timings need a real phone.
 
-## 6. PF3: the minimum spec table (proposed)
+## 6. PF3: the minimum spec table (built)
 
 `scripts/min-spec.mjs` reads every report in `docs/perf-reports/` and writes `docs/minimum-spec.md`: for each chunk, each device's 95th percentile against the budget, and the slowest device class that stays within it. Device classes are the kernel's tiers (basic, standard, capable) crossed with the GPU backend (WebGPU, WebGL2, none), with named reference machines where Alex sends reports (AC-ProArt, his phone). The table is regenerated, never typed.
 
 ## 7. Questions for Alex
 
-1. **Players too.** Give the players' page the same switch (in its settings) so phone timings come from real players' devices? Recommended: yes, as PF1b; players' phones are the likeliest minimum spec.
-2. **Where the switch lives.** It is in More now, as "Performance readout". When the chart room gets one settings place, it moves there. Recommended: yes.
-3. **The budgets** in section 2 as the starting line, edited as data when they prove wrong? Recommended: yes.
-4. **No timing gate in CI for now.** PF2's script checks 5 % on one machine before and after; a CI job could later run the bench and attach the table without ever failing a build (this would edit a workflow, so it needs your yes then). Recommended: script only now.
-5. **Reference devices.** Run the bench on AC-ProArt and your phone once PF2 lands and paste the reports here, so the first table has real machines beside the cloud runner? Recommended: yes; it takes a minute on each.
+Alex, 22 Nov 2026: "agree to all".
+
+1. **Players too.** Give the players' page the same switch (in its settings) so phone timings come from real players' devices? Recommended: yes, as PF1b; players' phones are the likeliest minimum spec. **Yes; built (PF1b).**
+2. **Where the switch lives.** It is in More now, as "Performance readout". When the chart room gets one settings place, it moves there. Recommended: yes. **Yes.**
+3. **The budgets** in section 2 as the starting line, edited as data when they prove wrong? Recommended: yes. **Yes.**
+4. **No timing gate in CI for now.** PF2's script checks 5 % on one machine before and after; a CI job could later run the bench and attach the table without ever failing a build (this would edit a workflow, so it needs your yes then). Recommended: script only now. **Yes, script only.**
+5. **Reference devices.** Run the bench on AC-ProArt and your phone once PF2 lands and paste the reports here, so the first table has real machines beside the cloud runner? Recommended: yes; it takes a minute on each. **Yes; Alex runs it once PF2 is live.**

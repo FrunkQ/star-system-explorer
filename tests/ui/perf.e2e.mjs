@@ -4,7 +4,7 @@
 // fills with chunks as screens open (Working out a system, Drawing), a chunk row opens to its ops, the report copies
 // as an sse.perf-report/1 with the device and no universe in it, and the choice is remembered across a reload (which
 // then also times the start-up calls). × switches it off. On a phone it is a sheet along the foot, with no sideways
-// scroll; in the Night chart it draws with the night tokens.
+// scroll; in the Night chart it draws with the night tokens. The players' page has the same switch (PF1b).
 import { spawn } from "node:child_process";
 import { mkdirSync } from "node:fs";
 import assert from "node:assert/strict";
@@ -96,8 +96,28 @@ try {
     assert.deepEqual(errors, []);
     await context.close();
   }
+  // PF1b: players get the same switch, beside the theme, for their own devices.
+  {
+    const context = await browser.newContext({ viewport: { width: 390, height: 844 } });
+    const p = await context.newPage();
+    const errors = [];
+    p.on("pageerror", (e) => errors.push(e.message));
+    await p.goto(base + "players.html");
+    await p.locator("[data-view='sse.view.card'] article").waitFor({ timeout: 30000 });
+    assert.equal(await card(p).count(), 0, "players: off by default");
+    await p.locator("[data-perf-switch]").check();
+    await card(p).waitFor();
+    await p.waitForSelector('[data-perf] [data-chunk="drawing"]', { timeout: 20000 });
+    await shot(p, "perf-players-phone");
+    const over = await p.evaluate(() => document.documentElement.scrollWidth - window.innerWidth);
+    assert.ok(over <= 0, `players phone overflows by ${over} px`);
+    await card(p).getByTitle("Switch the readout off").click();
+    assert.equal(await p.locator("[data-perf-switch]").isChecked(), false, "× and the switch agree");
+    assert.deepEqual(errors, []);
+    await context.close();
+  }
   await browser.close();
-  console.log("perf readout: off by default, chunks, ops, report, remembered, phone sheet, night chart: ok");
+  console.log("perf readout: off by default, chunks, ops, report, remembered, phone sheet, night chart, players: ok");
 } finally {
   server.kill();
 }

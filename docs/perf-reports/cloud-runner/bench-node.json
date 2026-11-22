@@ -1,0 +1,396 @@
+{
+  "schema": "sse.perf-report/1",
+  "label": "cloud runner, Node",
+  "source": "bench",
+  "made_on": "2026-11-22",
+  "app": {},
+  "device": {
+    "user_agent": "Node v22.23.5",
+    "platform": "linux",
+    "cores": 4,
+    "cpu": "Intel(R) Xeon(R) Processor @ 2.10GHz",
+    "memory_gb": 16,
+    "screen": "none",
+    "pixel_ratio": 1,
+    "gpu": {
+      "backend": "none"
+    },
+    "reduced_motion": false
+  },
+  "startup_ms": {},
+  "chunks": [
+    {
+      "id": "resolve",
+      "name": "Working out a system",
+      "meaning": "Resolving a system and its worlds from the packs and the chronicle: what every card, chart, edit and search reads. A click must not wait on it.",
+      "calls": 18,
+      "median_ms": 96.4,
+      "p95_ms": 166,
+      "max_ms": 166,
+      "sources": [
+        {
+          "source": "bench.resolve",
+          "calls": 3,
+          "last_ms": 5.5,
+          "median_ms": 6.2,
+          "p95_ms": 23.8,
+          "max_ms": 23.8
+        },
+        {
+          "source": "bench.sift",
+          "calls": 3,
+          "last_ms": 2.3,
+          "median_ms": 3,
+          "p95_ms": 14.5,
+          "max_ms": 14.5
+        },
+        {
+          "source": "bench.observe",
+          "calls": 3,
+          "last_ms": 0.5,
+          "median_ms": 0.6,
+          "p95_ms": 6.1,
+          "max_ms": 6.1
+        },
+        {
+          "source": "bench.suite",
+          "calls": 3,
+          "last_ms": 2.9,
+          "median_ms": 3,
+          "p95_ms": 7.6,
+          "max_ms": 7.6
+        },
+        {
+          "source": "bench.classify",
+          "calls": 3,
+          "last_ms": 21.3,
+          "median_ms": 22.2,
+          "p95_ms": 31.3,
+          "max_ms": 31.3
+        },
+        {
+          "source": "bench.place",
+          "calls": 3,
+          "last_ms": 61.1,
+          "median_ms": 61.4,
+          "p95_ms": 83.1,
+          "max_ms": 83.1
+        }
+      ]
+    },
+    {
+      "id": "formation",
+      "name": "Making and ageing a system",
+      "meaning": "Importing a V3 save, the formation run and the look-ahead through deep time. Long, so it shows progress; the budget is for the whole run.",
+      "calls": 24,
+      "median_ms": 2054,
+      "p95_ms": 2149,
+      "max_ms": 2149,
+      "sources": [
+        {
+          "source": "bench.formation",
+          "calls": 3,
+          "last_ms": 669,
+          "median_ms": 707,
+          "p95_ms": 743,
+          "max_ms": 743
+        },
+        {
+          "source": "bench.formation-early",
+          "calls": 3,
+          "last_ms": 0.6,
+          "median_ms": 0.6,
+          "p95_ms": 1,
+          "max_ms": 1
+        },
+        {
+          "source": "bench.formation-accrete",
+          "calls": 3,
+          "last_ms": 4.9,
+          "median_ms": 4.4,
+          "p95_ms": 4.9,
+          "max_ms": 4.9
+        },
+        {
+          "source": "bench.formation-accrete-dole",
+          "calls": 3,
+          "last_ms": 649,
+          "median_ms": 649,
+          "p95_ms": 660,
+          "max_ms": 660
+        },
+        {
+          "source": "bench.formation-growth",
+          "calls": 3,
+          "last_ms": 20.1,
+          "median_ms": 23,
+          "p95_ms": 30.2,
+          "max_ms": 30.2
+        },
+        {
+          "source": "bench.formation-upheaval",
+          "calls": 3,
+          "last_ms": 20.5,
+          "median_ms": 21.1,
+          "p95_ms": 31.1,
+          "max_ms": 31.1
+        },
+        {
+          "source": "bench.formation-leftovers",
+          "calls": 3,
+          "last_ms": 24.3,
+          "median_ms": 25.8,
+          "p95_ms": 36.4,
+          "max_ms": 36.4
+        },
+        {
+          "source": "bench.formation-pipeline",
+          "calls": 3,
+          "last_ms": 623,
+          "median_ms": 623,
+          "p95_ms": 642,
+          "max_ms": 642
+        }
+      ]
+    },
+    {
+      "id": "surface",
+      "name": "Surfaces, caves and descents",
+      "meaning": "Surface tiles and their history (plates, wear, impacts), cave surveys and descents. A survey is a deliberate act, so the budget is longer.",
+      "calls": 21,
+      "median_ms": 3037,
+      "p95_ms": 3339,
+      "max_ms": 3339,
+      "sources": [
+        {
+          "source": "bench.surface",
+          "calls": 3,
+          "last_ms": 1002,
+          "median_ms": 1030,
+          "p95_ms": 1121,
+          "max_ms": 1121
+        },
+        {
+          "source": "bench.surface-atlas",
+          "calls": 3,
+          "last_ms": 258,
+          "median_ms": 258,
+          "p95_ms": 266,
+          "max_ms": 266
+        },
+        {
+          "source": "bench.surface-plates",
+          "calls": 3,
+          "last_ms": 243,
+          "median_ms": 240,
+          "p95_ms": 243,
+          "max_ms": 243
+        },
+        {
+          "source": "bench.surface-wear",
+          "calls": 3,
+          "last_ms": 338,
+          "median_ms": 281,
+          "p95_ms": 338,
+          "max_ms": 338
+        },
+        {
+          "source": "bench.surface-impacts",
+          "calls": 3,
+          "last_ms": 302,
+          "median_ms": 290,
+          "p95_ms": 302,
+          "max_ms": 302
+        },
+        {
+          "source": "bench.surface-regimes",
+          "calls": 3,
+          "last_ms": 242,
+          "median_ms": 242,
+          "p95_ms": 251,
+          "max_ms": 251
+        },
+        {
+          "source": "bench.surface-cover",
+          "calls": 3,
+          "last_ms": 818,
+          "median_ms": 696,
+          "p95_ms": 818,
+          "max_ms": 818
+        }
+      ]
+    },
+    {
+      "id": "life",
+      "name": "Life",
+      "meaning": "A world's biosphere, its history and its signatures.",
+      "calls": 18,
+      "median_ms": 252,
+      "p95_ms": 278,
+      "max_ms": 278,
+      "sources": [
+        {
+          "source": "bench.life",
+          "calls": 3,
+          "last_ms": 3,
+          "median_ms": 3.1,
+          "p95_ms": 10.1,
+          "max_ms": 10.1
+        },
+        {
+          "source": "bench.life-budget",
+          "calls": 3,
+          "last_ms": 4.6,
+          "median_ms": 4.6,
+          "p95_ms": 9.3,
+          "max_ms": 9.3
+        },
+        {
+          "source": "bench.life-history",
+          "calls": 3,
+          "last_ms": 117,
+          "median_ms": 117,
+          "p95_ms": 126,
+          "max_ms": 126
+        },
+        {
+          "source": "bench.life-biosphere",
+          "calls": 3,
+          "last_ms": 3.5,
+          "median_ms": 3.8,
+          "p95_ms": 6.7,
+          "max_ms": 6.7
+        },
+        {
+          "source": "bench.life-signatures",
+          "calls": 3,
+          "last_ms": 37.9,
+          "median_ms": 38.5,
+          "p95_ms": 39.8,
+          "max_ms": 39.8
+        },
+        {
+          "source": "bench.life-feedback",
+          "calls": 3,
+          "last_ms": 83.3,
+          "median_ms": 84.6,
+          "p95_ms": 86.5,
+          "max_ms": 86.5
+        }
+      ]
+    },
+    {
+      "id": "galaxy",
+      "name": "Galaxy and cosmic web",
+      "meaning": "The galaxy chart, star and halo cells, the cosmic web, the Window and sector import and export.",
+      "calls": 24,
+      "median_ms": 3151,
+      "p95_ms": 3298,
+      "max_ms": 3298,
+      "sources": [
+        {
+          "source": "bench.cosmology",
+          "calls": 3,
+          "last_ms": 516,
+          "median_ms": 516,
+          "p95_ms": 525,
+          "max_ms": 525
+        },
+        {
+          "source": "bench.haloes",
+          "calls": 3,
+          "last_ms": 406,
+          "median_ms": 431,
+          "p95_ms": 460,
+          "max_ms": 460
+        },
+        {
+          "source": "bench.galaxy",
+          "calls": 3,
+          "last_ms": 437,
+          "median_ms": 437,
+          "p95_ms": 447,
+          "max_ms": 447
+        },
+        {
+          "source": "bench.envelope",
+          "calls": 3,
+          "last_ms": 368,
+          "median_ms": 360,
+          "p95_ms": 368,
+          "max_ms": 368
+        },
+        {
+          "source": "bench.stars",
+          "calls": 3,
+          "last_ms": 386,
+          "median_ms": 370,
+          "p95_ms": 386,
+          "max_ms": 386
+        },
+        {
+          "source": "bench.galaxy-events",
+          "calls": 3,
+          "last_ms": 599,
+          "median_ms": 559,
+          "p95_ms": 599,
+          "max_ms": 599
+        },
+        {
+          "source": "bench.nucleus",
+          "calls": 3,
+          "last_ms": 378,
+          "median_ms": 378,
+          "p95_ms": 391,
+          "max_ms": 391
+        },
+        {
+          "source": "bench.cosmos",
+          "calls": 3,
+          "last_ms": 96.8,
+          "median_ms": 100,
+          "p95_ms": 122,
+          "max_ms": 122
+        }
+      ]
+    },
+    {
+      "id": "voyages",
+      "name": "Orbits, routes and voyages",
+      "meaning": "Where everything is at a time, the calendar, routes between stars and voyages in a system.",
+      "calls": 9,
+      "median_ms": 6181,
+      "p95_ms": 6870,
+      "max_ms": 6870,
+      "sources": [
+        {
+          "source": "bench.time",
+          "calls": 3,
+          "last_ms": 2785,
+          "median_ms": 2360,
+          "p95_ms": 2785,
+          "max_ms": 2785
+        },
+        {
+          "source": "bench.time-generated",
+          "calls": 3,
+          "last_ms": 2980,
+          "median_ms": 2980,
+          "p95_ms": 3235,
+          "max_ms": 3235
+        },
+        {
+          "source": "bench.nav",
+          "calls": 3,
+          "last_ms": 850,
+          "median_ms": 841,
+          "p95_ms": 850,
+          "max_ms": 850
+        }
+      ]
+    }
+  ],
+  "memory": {},
+  "long_tasks": 0,
+  "runs": 3
+}
