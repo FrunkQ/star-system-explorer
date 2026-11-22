@@ -37,7 +37,7 @@ try {
       const errors = [];
       const gm = await browser.newPage({ viewport: { width: 1440, height: 900 } });
       gm.on("pageerror", (e) => errors.push(`gm: ${e.message}`));
-      await gm.goto(base);
+      await gm.goto(base + "#chart");
       await gm.waitForSelector("[data-state-hash]:not([data-state-hash=''])", { timeout: 20000 });
       await gm.getByRole("button", { name: "3D", exact: true }).click();
       const view = gm.locator("[aria-roledescription='3D chart']");

@@ -48,8 +48,33 @@ The aim: heat capacity per place, so that coasts are mild and interiors harsh. A
 - **Reason:** worlds with both land and a surface liquid (Earth, Titan) now run a land and a sea column per band, as accepted in W7c.
 - **Unchanged:** worlds without both keep the single-column path bit for bit. `surface-regimes.json` and the other goldens did not move.
 
-### Not yet (part 2)
-- Land and coasts counted from the height map per strip, where the surface fills `land_by_lat` and `coasts_by_lat`.
+## Part 2a (22 Nov 2026): land and coasts from the height map
+
+### What was built
+- **`sse_surface::climate::land_strips(grid, elevation_m, strips)`** reads land and coasts off a height map, per strip of latitude.
+  - Land is the share of the strip's cells above sea level.
+  - Coasts is the mean number a line round the strip crosses. Each land-sea pair of neighbours holds a piece of coast about a cell long, at right angles to the step between them. Its north-south extent is the cell size times the step's eastward share. The crossings sum those extents over the strip's width (Cauchy-Crofton). Nothing in it is fitted.
+- **`with_land(x, grid, elev, strips)`** puts the strips on `Extra`, which gains `land_by_lat` and `coasts_by_lat`. It also sets `ocean_fraction` from the map, so the climate's sea is the map's sea.
+- **`land_extra(s, env, seed, epoch_gyr, oceans, x, orbit_run)`** reads the strips off the **Orbit-level** (S16 guide) plate run's pre-wear heights (`wear::base_heights`, which covers both plate and sketch worlds). It places sea level for the water and gives `x` back with the strips.
+  - Every level (a quick survey, a full survey) and the weather op read the same strips, so they keep one climate key.
+  - `survey_world`'s chain hands over its own run when it already is the Orbit level. A full survey runs the coarse guide once more for the climate.
+  - A dry world, or a giant, keeps one column.
+- **Kernel `weather` op**: `body_conditions` calls `land_extra` with the universe's seed (the survey's) and keeps the result for 8 bodies and dates. A re-read, or a tile of the live weather layer, does not re-run the plates.
+- `conditions()` carries the strips only for a world with a surface liquid.
+- The surface_frames op (proven core) calls `land_strips` per frame with that frame's heights.
+
+### Tests (`crates/sse-surface/src/land_tests.rs`)
+- A world with land east of one meridian has land 0.5 and coasts 2 in every strip.
+- A polar-cap world has no land and no coasts at the equator.
+- A surveyed Earth carries 36 strips. Its ocean fraction comes from the map and it runs both columns.
+- `sse-weather::the_ground_and_the_sky_read_one_climate`: the weather's conditions, with `land_extra`, still equal the survey's for Earth, Mars, Venus and Titan.
+
+### Goldens changed (on purpose)
+- **Changed:** the survey lines of `contract.jsonl`.
+- **Reason:** a surveyed world with seas now takes its land and sea from its own height map instead of one global share.
+- **Unchanged:** the surface goldens. They build their climates directly, without the survey chain.
+
+### Not yet (rest of part 2)
 - A cell's temperature from its distance to the coast, so land cells read the land column and coasts lean to the sea.
 - Evaporation from the sea column.
 - Current rules: western boundaries warm, eastern upwelling cold, marine decks only over upwelling. A retrograde fixture's currents flip.

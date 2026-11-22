@@ -31,7 +31,7 @@ try {
     const errors = [];
     const gm = await (await browser.newContext({ viewport: { width: 1440, height: 900 }, deviceScaleFactor: screens ? 2 : 1 })).newPage();
     gm.on("pageerror", (e) => errors.push(e.message));
-    await gm.goto(base);
+    await gm.goto(base + "#chart");
     await gm.waitForSelector("[data-state-hash]:not([data-state-hash=''])", { timeout: 20000 });
     await go(gm, "route");
     const route = gm.locator(".route");
@@ -75,7 +75,7 @@ try {
     // Phone, both modes.
     const phone = await (await browser.newContext({ viewport: { width: 390, height: 844 }, deviceScaleFactor: 2 })).newPage();
     phone.on("pageerror", (e) => errors.push(`phone: ${e.message}`));
-    await phone.goto(base);
+    await phone.goto(base + "#chart");
     await phone.waitForSelector("[data-state-hash]:not([data-state-hash=''])", { timeout: 20000 });
     await go(phone, "route");
     await phone.waitForSelector(".route [data-course]", { timeout: 20000 });

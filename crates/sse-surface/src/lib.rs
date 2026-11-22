@@ -802,6 +802,8 @@ mod detail_tests;
 #[cfg(test)]
 mod impacts_tests;
 #[cfg(test)]
+mod land_tests;
+#[cfg(test)]
 mod plates_tests;
 #[cfg(test)]
 mod regimes_tests;

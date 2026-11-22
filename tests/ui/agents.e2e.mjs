@@ -41,7 +41,7 @@ try {
       const h = r.headers().authorization ?? "";
       if (h.includes(KEY) || (r.postData() ?? "").includes(KEY)) carried.push(r.url());
     });
-    await gm.goto(base);
+    await gm.goto(base + "#chart");
     await gm.waitForSelector("[data-state-hash]:not([data-state-hash=''])", { timeout: 20000 });
     const h0 = await gm.locator("[data-state-hash]").getAttribute("data-state-hash");
     await gm.locator(".area-chart [role=button]", { hasText: "Tarn" }).first().click();

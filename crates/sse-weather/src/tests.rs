@@ -119,7 +119,16 @@ fn the_ground_and_the_sky_read_one_climate() {
         let ground = sv.climate.as_ref().expect("a solid world has a climate");
         let cover = &sv.atlas.layers().expect("layers").climate.world;
         assert_eq!(ground, cover, "{name}: wear and cover read one climate");
-        let x = opts.extra(Some(rot));
+        // W7c part 2a: the land and coasts the survey read off its map.
+        let x = sse_surface::climate::land_extra(
+            &ss,
+            &sv.envelope,
+            &seed,
+            body.age_gyr,
+            body.oceans,
+            &opts.extra(Some(rot)),
+            None,
+        );
         let (c, _) = crate::conditions::from_surface(&ss, &body, &sv.envelope, &x);
         assert_eq!(c, ground.climate.conditions, "{name}: one set of facts");
         for blk in [&b as &dyn WeatherBlock, &zonal] {

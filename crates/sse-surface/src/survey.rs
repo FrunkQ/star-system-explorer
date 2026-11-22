@@ -160,13 +160,25 @@ fn chain(
     let h = crate::plates::history(s, &e, seed, epoch_gyr);
     let water = WaterHistory::steady(body.oceans, body.pressure_bar, epoch_gyr);
     // The one climate (W7a): wear's rain and cover's temperature read it.
+    // W7c part 2a: land and coasts by latitude from the Orbit-level height
+    // map, so each band's land and sea are the map's own at every level.
+    let orbit_level = crate::detail::orbit_settings(s).plates == s.plates;
+    let x = crate::climate::land_extra(
+        s,
+        &e,
+        seed,
+        epoch_gyr,
+        water.oceans,
+        &opts.extra(opts.rotation_hours),
+        orbit_level.then_some(&h),
+    );
     let climate = wet_climate(
         s,
         body,
         &e,
         &water,
         // The climate locks the spin itself from the year (as the weather does).
-        &opts.extra(opts.rotation_hours),
+        &x,
         epoch_gyr * 1000.0,
     );
     let mut climate = climate;
