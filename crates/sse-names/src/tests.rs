@@ -446,3 +446,151 @@ fn find<'a>(v: &'a J, key: &str) -> Option<&'a J> {
         _ => None,
     }
 }
+
+/// The shipped `packs/base-names` (NM3a), loaded as the kernel loads it.
+fn base_names() -> Library {
+    let p = concat!(
+        env!("CARGO_MANIFEST_DIR"),
+        "/../../packs/base-names/pack.json"
+    );
+    let v: J = serde_json::from_str(&std::fs::read_to_string(p).unwrap()).unwrap();
+    Library::load(&[(
+        "sse.base-names".into(),
+        v["provides"]["other"]["names"].clone(),
+    )])
+    .unwrap()
+}
+
+/// NM3a: Sol's bodies get designations as real practice writes them, in
+/// both forms, and every one follows a renamed star.
+#[test]
+fn base_names_designates_sol_as_real_practice_does() {
+    let l = base_names();
+    let seed = Seed::from_text("nm3a");
+    let none = BTreeMap::new();
+    let sun = addr("u:t/sys:0/body:0");
+    let mut r = req(&seed, &sun, "catalogue", "star", &none);
+    r.layer = "designation";
+    r.serial = Some(102);
+    let star = name(&l, &r).unwrap().show(None, None);
+    assert_eq!(star, "SX 000102");
+    // A coordinate designation from the sky position.
+    let sky: BTreeMap<String, String> = [
+        ("ra_deg".into(), "83.82".into()),
+        ("dec_deg".into(), "-5.39".into()),
+    ]
+    .into();
+    let r = req(&seed, &sun, "catalogue", "star-sky", &sky);
+    assert!(name(&l, &r)
+        .unwrap()
+        .show(None, None)
+        .starts_with("SX J0535"));
+    // The eight planets by orbit, then by letter from b.
+    let mut roman = vec![];
+    let mut letter = vec![];
+    for i in 0..8u32 {
+        let a = addr(&format!("u:t/sys:0/body:0/body:{i}"));
+        for (scheme, out) in [
+            ("catalogue", &mut roman),
+            ("catalogue-letters", &mut letter),
+        ] {
+            let mut r = req(&seed, &a, scheme, "planet", &none);
+            r.index = i;
+            let n = name(&l, &r).unwrap();
+            assert!(n.follows, "{scheme}");
+            out.push(n.show(Some(&star), None));
+        }
+    }
+    assert_eq!(roman[2], "SX 000102 III");
+    assert_eq!(roman[7], "SX 000102 VIII");
+    assert_eq!(letter[0], "SX 000102 b");
+    assert_eq!(letter[4], "SX 000102 f");
+    // Moons: a letter after a numeral, a numeral after a letter (Kepler-1625 b I).
+    let io = addr("u:t/sys:0/body:0/body:4/body:0");
+    let m = name(&l, &req(&seed, &io, "catalogue", "moon", &none)).unwrap();
+    assert_eq!(m.show(Some("SX 000102 V"), None), "SX 000102 V b");
+    let m = name(&l, &req(&seed, &io, "catalogue-letters", "moon", &none)).unwrap();
+    assert_eq!(m.show(Some("SX 000102 f"), None), "SX 000102 f I");
+    // Components of a multiple star.
+    let mut r = req(&seed, &sun, "catalogue", "component", &none);
+    r.index = 1;
+    assert_eq!(
+        name(&l, &r).unwrap().show(Some("SX 000102"), None),
+        "SX 000102 B"
+    );
+    // A surface feature takes the IAU's descriptor term.
+    let mons = addr("u:t/sys:0/body:0/body:3/feat:0");
+    let mut r = req(&seed, &mons, "catalogue", "shield", &none);
+    r.index = 0;
+    assert_eq!(
+        name(&l, &r).unwrap().show(Some("SX 000102 IV"), None),
+        "SX 000102 IV Mons 1"
+    );
+    // Renaming the star carries down.
+    assert_eq!(
+        name(&l, &req(&seed, &io, "catalogue", "moon", &none))
+            .unwrap()
+            .show(Some("Sol V"), None),
+        "Sol V b"
+    );
+}
+
+/// NM3a: a 200-body system has no duplicate designation, in either form, and
+/// every surface kind the surface crate names has a form.
+#[test]
+fn base_names_gives_a_200_body_system_no_duplicate() {
+    let l = base_names();
+    let seed = Seed::from_text("nm3a");
+    let none = BTreeMap::new();
+    for scheme in ["catalogue", "catalogue-letters"] {
+        let addrs: Vec<Address> = (0..200)
+            .map(|i| addr(&format!("u:t/sys:0/body:0/body:{i}")))
+            .collect();
+        let reqs: Vec<Request> = addrs
+            .iter()
+            .enumerate()
+            .map(|(i, a)| {
+                let mut r = req(&seed, a, scheme, "planet", &none);
+                r.index = i as u32;
+                r.parent = Some("SX 000102");
+                r
+            })
+            .collect();
+        let names: BTreeSet<String> = siblings(&l, &reqs)
+            .into_iter()
+            .map(|n| n.unwrap().show(Some("SX 000102"), None))
+            .collect();
+        assert_eq!(names.len(), 200, "{scheme}");
+    }
+    for kind in [
+        "ocean",
+        "sea",
+        "lake",
+        "continent",
+        "island",
+        "range",
+        "peak",
+        "summit",
+        "deep",
+        "ice-cap",
+        "crater",
+        "shield",
+        "plains",
+        "rift",
+        "chasma",
+        "corona",
+        "patera",
+        "scarp",
+        "settlement",
+        "port",
+        "mine",
+        "base",
+    ] {
+        let a = addr("u:t/sys:0/body:0/body:3/feat:0");
+        let n = name(&l, &req(&seed, &a, "catalogue", kind, &none)).unwrap();
+        assert!(n.form.starts_with("{parent} "), "{kind}: {}", n.form);
+        assert!(n.form.ends_with(" 1"), "{kind}: {}", n.form);
+    }
+    // The avoid list loaded, folded.
+    assert!(l.avoid.contains("merde") && l.avoid.len() > 40);
+}
