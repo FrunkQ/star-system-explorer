@@ -51,6 +51,16 @@ pub struct StarParams {
     pub giant_l_factor: f64,
     pub giant_l_floor_lsun: f64,
     pub giant_teff_k: f64,
+    /// Eker et al. 2018's relation is fitted up to 31 M☉; above it the
+    /// main-sequence luminosity grows as M^mlr_top_slope, which meets the
+    /// Geneva tracks (Ekström et al. 2012, doi:10.1051/0004-6361/201117751:
+    /// log L about 6.2 at 120 M☉) instead of Eker's extrapolated 7.
+    pub mlr_top_msun: f64,
+    pub mlr_top_slope: f64,
+    /// No cool supergiant is brighter than the Humphreys-Davidson limit,
+    /// log L about 5.8 (Humphreys and Davidson 1979, doi:10.1086/157301):
+    /// a star whose giant phase would pass it stays hot instead.
+    pub cool_limit_lsun: f64,
     /// White dwarf mass = wd_a x M + wd_b (Kalirai et al. 2008).
     pub wd_a: f64,
     pub wd_b: f64,
@@ -113,6 +123,9 @@ impl Default for StarParams {
             giant_l_factor: 2.0,
             giant_l_floor_lsun: 50.0,
             giant_teff_k: 4500.0,
+            mlr_top_msun: 31.0,
+            mlr_top_slope: 1.5,
+            cool_limit_lsun: 6.3e5,
             wd_a: 0.109,
             wd_b: 0.394,
             ns_min_msun: 8.0,
@@ -147,7 +160,7 @@ impl Default for StarParams {
             cell_rotation_kms_kpc: 26.83,
             key_version: 2,
             class_edges_lsun: vec![
-                0.1, 1.0, 10.0, 100.0, 300.0, 1.0e3, 3.0e3, 1.0e4, 3.0e4, 1.0e5, 3.0e5,
+                0.1, 1.0, 3.0, 10.0, 30.0, 100.0, 300.0, 1.0e3, 3.0e3, 1.0e4, 3.0e4, 1.0e5, 3.0e5,
             ],
             tree_depth: 6,
             class_attempts: 65536,
@@ -309,7 +322,12 @@ impl StarParams {
         let life = self.lifetime_gyr(mass);
         // Eker et al. 2018 six-piece MLR and Demircan and Kahraman 1991 radii,
         // the same relations as the base-physics atoms.
-        let ms_l = sse_atoms::star::luminosity_solar(mass);
+        let ms_l = if mass > self.mlr_top_msun {
+            sse_atoms::star::luminosity_solar(self.mlr_top_msun)
+                * m::pow(mass / self.mlr_top_msun, self.mlr_top_slope)
+        } else {
+            sse_atoms::star::luminosity_solar(mass)
+        };
         let ms_r = sse_atoms::star::radius_solar(mass);
         let teff = |l: f64, r: f64| 5772.0 * m::pow(l / (r * r), 0.25);
         if age_gyr < 0.0 {
@@ -332,11 +350,16 @@ impl StarParams {
         }
         if age_gyr < life * (1.0 + self.giant_share) {
             let l = ms_l * self.giant_l_factor + self.giant_l_floor_lsun;
+            let cool = l <= self.cool_limit_lsun;
             return StarState {
-                phase: "giant".into(),
+                phase: if cool { "giant" } else { "hot supergiant" }.into(),
                 mass_msun: mass,
                 luminosity_lsun: l,
-                teff_k: self.giant_teff_k,
+                teff_k: if cool {
+                    self.giant_teff_k
+                } else {
+                    teff(ms_l, ms_r)
+                },
                 age_gyr,
             };
         }
@@ -643,7 +666,14 @@ impl<'a> Stars<'a> {
         if n.len() != 3 {
             return Err(format!("{text}: cell key is <x>_<y>_<z>"));
         }
-        let all = self.draw_all([n[0], n[1], n[2]], frame)?;
+        let cell = [n[0], n[1], n[2]];
+        let all = if self.params.key_version >= 2 {
+            // The slot names its class (count tree slots interleave them).
+            let classes = self.params.class_edges_lsun.len() as u64 + 1;
+            self.draw_tree(cell, frame, Some((slot % classes) as usize))?
+        } else {
+            self.draw_all(cell, frame)?
+        };
         Ok(all.into_iter().find(|s| s.slot == slot))
     }
 
