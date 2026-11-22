@@ -86,11 +86,10 @@ fn sigmoid(x: f64, k: f64) -> f64 {
     p / (1.0 + p)
 }
 
-/// Condensation temperature of a substance at partial pressure `p_pa`
-/// (Clausius-Clapeyron through the triple point, as `ebm::p_sat`).
+/// Condensation temperature of a substance at partial pressure `p_pa`, the
+/// inverse of `ebm::p_sat` (one vapour curve for frost and cloud).
 pub fn condense_k(sub: &crate::settings::Substance, p_pa: f64) -> f64 {
-    let l_r = sub.latent_j_kg * sub.molar_kg / R_GAS;
-    1.0 / (1.0 / sub.triple_k - m::ln(p_pa / sub.triple_pa) / l_r)
+    crate::ebm::frost_k(sub, p_pa)
 }
 
 /// The strengths of `c`'s circulation processes.

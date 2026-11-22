@@ -46,6 +46,8 @@ def val(v, unit, src, check="verified", **extra):
 # ---------------------------------------------------------------- sources
 # id -> (text, doi, url, register status). The register is docs/citations/matter-reference.md.
 SOURCES = {
+    "fray2009": ("Fray, N. and Schmitt, B. 2009, Planet. Space Sci. 57, 2053: sublimation of ices of astrophysical interest, a bibliographic review (recommended fits ln P[bar] = A0 + sum A_i / T^i; water by Feistel and Wagner 2007). Coefficients read from Lisse et al. 2021's reproduction of the table (SOM Table 2); which fit covers which range checked against each ice's triple point", "10.1016/j.pss.2009.09.011", None, "verified"),
+    "lisse2021": ("Lisse, C. M. et al. 2021, Icarus 356, 114072: on the origin and thermal stability of Arrokoth's and Pluto's ices; Supplementary Online Material Table 2 reproduces Fray and Schmitt 2009's sublimation fits", None, "https://ntrs.nasa.gov/api/citations/20210019502/downloads/Supplementary%20Online%20Material%2020210019502.pdf", "verified"),
     "codata2018": ("Tiesinga, E., Mohr, P. J., Newell, D. B. and Taylor, B. N. 2021, Rev. Mod. Phys. 93, 025010: CODATA recommended values of the fundamental physical constants, 2018", "10.1103/RevModPhys.93.025010", None, "verified"),
     "si2019": ("The International System of Units (SI), 9th edition 2019, BIPM: the seven defining constants are exact (CODATA 2018 Table I)", None, "https://www.bipm.org/en/publications/si-brochure", "verified"),
     "iau2015b3": ("Prša, A. et al. 2016, AJ 152, 41: nominal values for selected solar and planetary quantities, IAU 2015 Resolution B3", "10.3847/0004-6256/152/2/41", None, "verified"),
@@ -297,6 +299,17 @@ def gas_optics(n589, king, src_n, check_n="verified", king_src="bodhaine1999", k
     }
 
 
+FS = "fray2009"
+
+
+def fs_fit(coeffs, lo, hi, note=None):
+    """A Fray and Schmitt 2009 sublimation fit, ln P[bar] = A0 + sum A_i / T^i."""
+    d = {"fit": "fray-schmitt-2009", "coeffs": coeffs, "valid_k": [lo, hi], "src": FS, "also": ["lisse2021"]}
+    if note:
+        d["note"] = note
+    return d
+
+
 KING_ONE = ("fudge-register", "authored")  # King factor 1: molecular depolarisation not yet tabulated
 T = "thauer1977"
 NIST = "nist-webbook"
@@ -309,6 +322,7 @@ SUBSTANCES = [
                   "latent_vaporisation": val(2.468e6, "J kg-1", NIST, "verified", at_k=288.0, note="from the slope of the NIST Antoine fit, 273-303 K row"),
                   "density_liquid": val(1000.0, "kg m-3", NIST, "verified", at_k=277.0),
                   "density_solid": val(917.0, "kg m-3", "petrenko1999", "verified", at_k=273.15, note="ice Ih"),
+                  "vapour_pressure": {"fit": "feistel-wagner-2007", "coeffs": [273.16, 611.657, 20.9969665107897, 3.72437478271362, -13.9205483215524, 29.6988765013566, -40.1972392635944, 29.7880481050215, -9.13050963547721], "valid_k": [50.0, 273.16], "src": FS, "also": ["lisse2021"], "note": "ln(P/Pt) = 1.5 ln(T/Tt) + (1 - Tt/T) sum e_i (T/Tt)^i; coeffs [Tt, Pt Pa, e0..e6]"},
               },
               thermal={"conductivity_solid": {"fit": "k = a / T", "coeffs": [651.0], "valid_k": [100.0, 273.15], "unit": "W m-1 K-1", "src": "petrenko1999"}},
               optical={**gas_optics(2.56e-4, [1.0, 0.0, 0.0], "kaye-laby", "unverified", *KING_ONE), "condensed_colour_rgb": val([0.95, 0.95, 0.97], "1", "fudge-register", "authored")},
@@ -319,6 +333,8 @@ SUBSTANCES = [
                   "triple_point_pa": val(518500.0, "Pa", NIST),
                   "latent_sublimation": val(573000.0, "J kg-1", NIST, at_k=195.0, note="25.2 kJ/mol"),
                   "density_solid": val(1560.0, "kg m-3", NIST, "unverified"),
+                  "vapour_pressure": fs_fit([18.61, -4154.0, 1.041e5], 194.7, 216.58, "CO2-2"),
+                  "vapour_pressure_low": fs_fit([14.76, -2571.0, -7.781e4, 4.325e6, -1.207e8, 1.350e9], 40.0, 194.7, "CO2-1"),
               },
               optical={**gas_optics(4.49e-4, [1.15, 0.0, 0.0], "pdg-gas"), "condensed_colour_rgb": val([0.97, 0.97, 1.0], "1", "fudge-register", "authored")},
               chemical={"states": {"gas": gibbs(-394.36, -393.51, T), "dissolved": gibbs(-386.02, -413.8, T)}},
@@ -329,8 +345,10 @@ SUBSTANCES = [
                   "triple_point_pa": val(11690.0, "Pa", NIST),
                   "latent_vaporisation": val(531000.0, "J kg-1", NIST, at_k=99.5, note="8.519 kJ/mol"),
                   "density_liquid": val(450.0, "kg m-3", NIST, "unverified", at_k=90.7),
+                  "density_solid": val(494.0, "kg m-3", "fudge-register", "unverified", note="methane ice as the climate's sand grain (Telfer et al. 2018 use it); not read from a measurement"),
+                  "vapour_pressure": fs_fit([10.51, -1110.0, -4341.0, 1.035e5, -7.910e5], 20.0, 90.67, "CH4-1"),
               },
-              optical=gas_optics(4.44e-4, [1.0, 0.0, 0.0], "kaye-laby", "unverified", *KING_ONE),
+              optical={**gas_optics(4.44e-4, [1.0, 0.0, 0.0], "kaye-laby", "unverified", *KING_ONE), "condensed_colour_rgb": val([0.9, 0.9, 0.95], "1", "fudge-register", "authored")},
               chemical={"states": {"gas": gibbs(-50.75, -74.81, T), "dissolved": gibbs(-34.39, -89.04, T)}}),
     substance("nh3", {"n": 1, "h": 3}, "ammonia",
               phases={
@@ -338,21 +356,32 @@ SUBSTANCES = [
                   "triple_point_pa": val(6060.0, "Pa", NIST),
                   "latent_sublimation": val(1832000.0, "J kg-1", NIST, note="31.2 kJ/mol"),
                   "density_solid": val(820.0, "kg m-3", NIST, "unverified"),
+                  "vapour_pressure": fs_fit([15.96, -3537.0, -3.310e4, 1.742e6, -2.995e7], 15.0, 195.4, "NH3-1"),
               },
-              optical=gas_optics(3.76e-4, [1.0, 0.0, 0.0], "pdg-gas", "verified", *KING_ONE)),
+              optical={**gas_optics(3.76e-4, [1.0, 0.0, 0.0], "pdg-gas", "verified", *KING_ONE), "condensed_colour_rgb": val([0.98, 0.96, 0.9], "1", "fudge-register", "authored")}),
     substance("n2", {"n": 2}, "nitrogen",
               phases={
                   "triple_point_k": val(63.14, "K", NIST),
                   "triple_point_pa": val(12520.0, "Pa", NIST),
                   "latent_vaporisation": val(200000.0, "J kg-1", NIST, at_k=77.0, note="5.6 kJ/mol"),
                   "density_liquid": val(800.0, "kg m-3", NIST, "unverified", at_k=77.0, note="808 kg/m3 at 77 K"),
+                  "density_solid": val(1027.0, "kg m-3", "fudge-register", "unverified", note="alpha nitrogen ice near 20 K, from memory; not read"),
+                  "vapour_pressure": fs_fit([8.514, -458.4, -1.987e4, 4.800e5, -4.524e6], 35.61, 63.14, "N2-2, beta nitrogen"),
+                  "vapour_pressure_low": fs_fit([12.40, -807.4, -3926.0, 6.297e4, -4.633e5, 1.325e6], 20.0, 35.61, "N2-1, alpha nitrogen"),
               },
-              optical=gas_optics(2.98e-4, [1.034, 3.17e-4, 0.0], "kaye-laby", "unverified"),
+              optical={**gas_optics(2.98e-4, [1.034, 3.17e-4, 0.0], "kaye-laby", "unverified"), "condensed_colour_rgb": val([0.97, 0.97, 0.97], "1", "fudge-register", "authored")},
               chemical={"states": {"gas": gibbs(0.0, 0.0, "convention")}}),
     substance("o2", {"o": 2}, "oxygen",
               optical=gas_optics(2.71e-4, [1.096, 1.385e-3, 1.448e-4], "kaye-laby", "unverified"),
               chemical={"states": {"gas": gibbs(0.0, 0.0, "convention"), "dissolved": gibbs(16.32, -11.7, T)}}),
-    substance("ar", {"ar": 1}, "argon", optical=gas_optics(2.81e-4, [1.0, 0.0, 0.0], "kaye-laby", "unverified", king_src="atom-isotropic")),
+    substance("ar", {"ar": 1}, "argon",
+              phases={
+                  "triple_point_k": val(83.81, "K", NIST, "unverified"),
+                  "triple_point_pa": val(68900.0, "Pa", NIST, "unverified"),
+                  "density_solid": val(1616.0, "kg m-3", "fudge-register", "unverified", note="from memory; not read"),
+                  "vapour_pressure": fs_fit([10.69, -893.2, -3567.0, 6.574e4, -4.280e5], 21.0, 83.81, "Ar-1"),
+              },
+              optical={**gas_optics(2.81e-4, [1.0, 0.0, 0.0], "kaye-laby", "unverified", king_src="atom-isotropic"), "condensed_colour_rgb": val([0.97, 0.97, 0.97], "1", "fudge-register", "authored")}),
     substance("h2", {"h": 2}, "hydrogen",
               optical=gas_optics(1.32e-4, [1.0, 0.0, 0.0], "kaye-laby", "unverified", *KING_ONE),
               chemical={"states": {"gas": gibbs(0.0, 0.0, "convention"), "dissolved": gibbs(17.72, -4.2, T)}}),
@@ -362,7 +391,14 @@ SUBSTANCES = [
     substance("xe", {"xe": 1}, "xenon"),
     substance("so2", {"s": 1, "o": 2}, "sulphur dioxide", optical=gas_optics(6.86e-4, [1.0, 0.0, 0.0], "kaye-laby", "unverified", *KING_ONE)),
     substance("co", {"c": 1, "o": 1}, "carbon monoxide",
-              optical=gas_optics(3.38e-4, [1.0, 0.0, 0.0], "kaye-laby", "unverified", *KING_ONE),
+              phases={
+                  "triple_point_k": val(68.13, "K", NIST, "unverified"),
+                  "triple_point_pa": val(15370.0, "Pa", NIST, "unverified"),
+                  "density_solid": val(929.0, "kg m-3", "fudge-register", "unverified", note="from memory; not read"),
+                  "vapour_pressure": fs_fit([10.25, -748.2, -5843.0, 3.939e4], 61.55, 68.13, "CO-2, beta carbon monoxide"),
+                  "vapour_pressure_low": fs_fit([10.43, -721.3, -1.074e4, 2.341e5, -2.392e6, 9.478e6], 14.0, 61.55, "CO-1, alpha carbon monoxide"),
+              },
+              optical={**gas_optics(3.38e-4, [1.0, 0.0, 0.0], "kaye-laby", "unverified", *KING_ONE), "condensed_colour_rgb": val([0.97, 0.97, 0.97], "1", "fudge-register", "authored")},
               chemical={"states": {"gas": gibbs(-137.15, -110.53, T)}},
               cosmochemical={"ice_line_k": val(20.0, "K", "oberg2011", "unverified")}),
     substance("h2s", {"h": 2, "s": 1}, "hydrogen sulfide", chemical={"states": {"dissolved": gibbs(-27.87, -39.7, T)}}),
