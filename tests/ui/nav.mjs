@@ -2,8 +2,23 @@
 // More). `go(page, id)` opens a screen by its id from the rail, going up, down or into the Workshop as needed;
 // `more(page, name)` presses an entry of the More menu.
 
-/** Open the screen `id` (system, body, cutaway, compare, life, route, voyages, window, stories, explore, physics, packs, screens, data, symbols, styles). */
+/** Open the screen `id` (system, body, cutaway, compare, life, route, voyages, window, stories, galaxy, cluster, web, physics, packs, screens, data, symbols, styles). */
 export async function go(page, id) {
+  // The scales above a system are steps on the place line (U24): web, cluster (galaxies nearby), galaxy. Press the
+  // step when it shows, else climb by the parent step ("‹", which is all a phone shows).
+  if (["web", "cluster", "galaxy"].includes(id)) {
+    for (let i = 0; i < 8; i++) {
+      if (await page.locator(`.place [data-place="${id}"]`).count()) return;
+      const step = page.locator(`.place [data-place-step="${id}"]`).first();
+      const up = page.locator(".place .step.up").first();
+      const back = page.locator('.rail [data-go="back"]').first();
+      if (await step.isVisible()) await step.click();
+      else if (await up.isVisible()) await up.click();
+      else if (await back.isVisible()) await back.click();
+      else break;
+    }
+    throw new Error(`no way up to ${id}`);
+  }
   const target = page.locator(`.rail [data-go="${id}"]`).first();
   const open = async () => {
     if (!(await target.isVisible())) return false;

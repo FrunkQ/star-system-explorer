@@ -25,13 +25,5 @@
       "area": "ruler"
     }
   ],
-  "rail": [
-    {
-      "scale": "system",
-      "group": "look",
-      "label": "Out to the galaxy",
-      "order": 4,
-      "hint": "The galaxy around this system, the galaxies nearby and the cosmic web"
-    }
-  ]
+  "description": "The galaxy, the galaxies nearby and the cosmic web as sections of one screen, for Orac and screen documents. On the GM's chart these are scales of the place line (U24), not an instrument."
 }

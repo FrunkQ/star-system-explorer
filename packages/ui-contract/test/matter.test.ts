@@ -72,3 +72,29 @@ test("the Constants and Units pages read the kernel's sheet: groups, theoretical
     await k.close();
   }
 });
+
+test("the Elements page: 118 elements in table places, shares in the legend's colours", async () => {
+  const { readElementsPage, tablePosition, originShares, originGradient, shareWords } = await import("../src/matter.ts");
+  const k = nodeKernel();
+  try {
+    const pack = (n: string) => JSON.parse(readFileSync(new URL(`../../../packs/${n}/pack.json`, import.meta.url), "utf8"));
+    const s = await Session.open(k.client, gmSeat(), { id: "el", seed: "el" }, [pack("base-physics"), pack("base-reference")]);
+    const r = await readElementsPage(s);
+    assert.ok(r.ok, JSON.stringify(r));
+    const { elements, legend } = r.page;
+    assert.equal(elements.length, 118);
+    assert.deepEqual(legend.map((l) => l.id), ["big_bang", "cosmic_rays", "low_mass_stars", "massive_stars", "white_dwarfs", "neutron_star_mergers", "human_made"]);
+    const places = new Set(elements.map((e) => String(tablePosition(e.z))));
+    assert.equal(places.size, 118, "no two elements share a cell");
+    assert.deepEqual(tablePosition(79), [6, 11]);
+    assert.deepEqual(tablePosition(57), [9, 3]);
+    const au = elements.find((e) => e.id === "au")!;
+    const parts = originShares(au, legend);
+    assert.equal(parts[0]!.kind.id, "neutron_star_mergers");
+    assert.equal(shareWords(parts[0]!, true), "Merging neutron stars, about 94 parts in 100");
+    assert.match(originGradient(parts), /--sse-origin-neutron-star-mergers.*--sse-origin-low-mass-stars/);
+    for (const e of elements) assert.ok(e.origin_story?.plain, `${e.id} has a plain origin story`);
+  } finally {
+    await k.close();
+  }
+});

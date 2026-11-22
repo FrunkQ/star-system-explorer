@@ -25,8 +25,7 @@ use sse_core::math as m;
 
 pub const CORE_VERSION: &str = "core-history-v1";
 
-use crate::cover::R_GAS;
-use crate::{M_EARTH_KG as M_EARTH, R_EARTH_M as R_EARTH};
+use sse_core::sheet::{M_EARTH, R_EARTH_MEAN as R_EARTH, R_GAS};
 
 pub const REFS: [&str; 9] = [
     "Stevenson, D. J., Spohn, T. and Schubert, G. 1983, Icarus 54, 466: magnetism and thermal evolution of the terrestrial planets. doi:10.1016/0019-1035(83)90241-5",

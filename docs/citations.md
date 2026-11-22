@@ -29,6 +29,7 @@ reference as written, what is relied on, status, what was checked.
 | Galaxy and cosmology | [citations/galaxy-cosmology.md](citations/galaxy-cosmology.md) | 90 | 11 | merger mass ratios, disc heating exponent, Hawking lifetime |
 | Master data sheet (track MP) | [citations/matter-reference.md](citations/matter-reference.md) | 34 | 0 | none yet (sources for the sheet) |
 | Galaxy histories design (track GH, GH0) | [citations/galaxy-histories.md](citations/galaxy-histories.md) | 113 (metadata) | 1 (Bekki and Chiba DOI) | none (design stage) |
+| Naming (track NM, NM0) | [citations/naming.md](citations/naming.md) | 11 | 2 metadata (WGSN list has no origin column; Hessman 2010 is a preprint), 1 replaced (English place-name elements are copyrighted) | none (design stage) |
 | Magnetic fields (track MF) | [citations/magnetic-fields.md](citations/magnetic-fields.md) | 108 | 2 | none yet (design references; DOIs checked in MF0) |
 | Light, reference objects and design files | [citations/light-reference.md](citations/light-reference.md) | 108 | 18 | planet disc brightness factor, Sizes tab star radii and temperatures |
 

@@ -29,9 +29,9 @@ use sse_core::draw::{Draws, Seed, Stream};
 use sse_core::math as m;
 use sse_surface::atlas::TileKey;
 
-const G: f64 = 6.6743e-11;
+const G: f64 = sse_core::sheet::G;
 const M_EARTH_KG: f64 = 5.9722e24;
-const DAY_S: f64 = 86_400.0;
+const DAY_S: f64 = sse_core::sheet::DAY;
 const YEAR_D: f64 = 365.25;
 const DEG: f64 = 180.0 / m::PI;
 

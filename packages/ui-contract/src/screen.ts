@@ -40,7 +40,7 @@ export interface ScreenDoc {
 }
 
 /** Scales the rail serves (the place line's steps), plus the Workshop: everything that changes the tool, not the universe. */
-export const RAIL_SCALES = ["system", "world", "workshop"] as const;
+export const RAIL_SCALES = ["web", "cluster", "galaxy", "system", "world", "workshop"] as const;
 export type RailScale = (typeof RAIL_SCALES)[number];
 /** The rail's groups, always in this order; "world" is "This world". */
 export const RAIL_GROUPS = ["look", "find", "world", "travel", "understand", "workshop"] as const;

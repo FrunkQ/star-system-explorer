@@ -5,7 +5,8 @@
 -->
 <script lang="ts">
   import { untrack } from "svelte";
-  import { railOf, scalesOf, type RailScale, DEPTHS, isDepth, type Depth } from "../../ui-contract/src/index.ts";
+  import { railOf, scalesOf, type RailScale, DEPTHS, isDepth, type Depth, cellHalo, isPlaceScale, nextTrail, parsePlaceHash, placeHash, placeRank, placeSteps, readRecent, rememberPlace, samePlace, PLACE_SCALES, PLACE_WORDS, type Place, type PlaceScale } from "../../ui-contract/src/index.ts";
+  import { PLACE_SCREENS } from "./documents/scales.ts";
   import { applyEdits, applySetup, type AtomInfo, type SifterDoc, enterFacts, observeOf, type AuthoredFacts, checkScreen, deriveScene, gmSeat, redoEdit, subjectOf, systemOrder, undoEdit, type CheckedScreen, type DerivationDoc, type ScreenDoc, type SystemScene, type ViewHandle, type ViewModule, type ViewSession } from "../../ui-contract/src/index.ts";
   import { openBrowserSession } from "../../ui-contract/src/host-browser.ts";
   import { createShare, type Share } from "./share.svelte.ts";
@@ -72,6 +73,8 @@
   import { createWorkspace } from "./workspace.svelte.ts";
   import { loadPref, savePref } from "./prefs.ts";
   import { createSymbols } from "./symbols.svelte.ts";
+  import PerfReadout from "./PerfReadout.svelte";
+  import { perf } from "../../ui-contract/src/index.ts";
   import type { ChangeRequest, Json } from "../../ui-contract/src/index.ts";
 
   // World stacks (P4) ride on their subjects; until the kernel serves them they come from a fixture document.
@@ -84,7 +87,7 @@
   let scene = $state<SystemScene>(base);
 
   // Each screen document is checked before anything mounts; the GM switches between them.
-  const SCREENS: Record<string, ScreenDoc> = { system: workspaceDoc as unknown as ScreenDoc, physics: physicsDoc as unknown as ScreenDoc, packs: packsDoc as unknown as ScreenDoc, reference: referenceDoc as unknown as ScreenDoc, screens: screensDoc as unknown as ScreenDoc, data: dataDoc as unknown as ScreenDoc, symbols: symbolsDoc as unknown as ScreenDoc, body: bodyDoc as unknown as ScreenDoc, compare: compareDoc as unknown as ScreenDoc, life: lifeDoc as unknown as ScreenDoc, styles: stylesScreenDoc as unknown as ScreenDoc, route: routeDoc as unknown as ScreenDoc, window: windowDoc as unknown as ScreenDoc, stories: storiesDoc as unknown as ScreenDoc, cutaway: cutawayDoc as unknown as ScreenDoc, ...Object.fromEntries(MORE_SCREENS.map((m) => [m.value, m.doc])) };
+  const SCREENS: Record<string, ScreenDoc> = { system: workspaceDoc as unknown as ScreenDoc, physics: physicsDoc as unknown as ScreenDoc, packs: packsDoc as unknown as ScreenDoc, reference: referenceDoc as unknown as ScreenDoc, screens: screensDoc as unknown as ScreenDoc, data: dataDoc as unknown as ScreenDoc, symbols: symbolsDoc as unknown as ScreenDoc, body: bodyDoc as unknown as ScreenDoc, compare: compareDoc as unknown as ScreenDoc, life: lifeDoc as unknown as ScreenDoc, styles: stylesScreenDoc as unknown as ScreenDoc, route: routeDoc as unknown as ScreenDoc, window: windowDoc as unknown as ScreenDoc, stories: storiesDoc as unknown as ScreenDoc, cutaway: cutawayDoc as unknown as ScreenDoc, ...Object.fromEntries(MORE_SCREENS.map((m) => [m.value, m.doc])), ...PLACE_SCREENS };
   const checks = Object.fromEntries(Object.entries(SCREENS).map(([k, d]) => [k, checkScreen(d, REGISTRY)]));
   const badScreens = Object.values(checks).flatMap((c) => (c.ok ? [] : c.errors));
   const screen = $derived.by((): CheckedScreen | null => {
@@ -114,17 +117,36 @@
   }
   /** Up to the whole system, on a system instrument. */
   function toSystem() {
+    if (cellHalo(ws.selection)) ws.select(null);
     railScale = "system";
     if (!scalesOf(SCREENS[ws.screen] ?? {}).includes("system")) ws.screen = "system";
   }
   function toWorkshop() {
     railScale = "workshop";
   }
+  /** Out to a scale above the system (U24): the galaxy, the galaxies nearby, the cosmic web, on that scale's first instrument. */
+  function toScale(scale: PlaceScale) {
+    if (scale === "system") return toSystem();
+    if (scale === "world") return toWorld();
+    railScale = scale;
+    const first = railOf(SCREENS, scale)[0]?.lines[0]?.screen;
+    if (first && !scalesOf(SCREENS[ws.screen] ?? {}).includes(scale)) ws.screen = first;
+  }
+
   function goTo(v: string) {
     if (v === "@system") return toSystem();
     if (v) toWorld(v);
   }
   let moreOpen = $state(false);
+  // The performance readout (PF1): off by default, remembered per device.
+  let perfOn = $state(loadPref("perf.readout") === "on");
+  // At once, so a readout left on also times the start-up calls.
+  perf.setEnabled(loadPref("perf.readout") === "on");
+  let moreBtn = $state<HTMLElement | null>(null);
+  $effect(() => {
+    perf.setEnabled(perfOn);
+    savePref("perf.readout", perfOn ? "on" : "off");
+  });
 
   let theme = $state(loadPref("theme") === "night-chart" ? "night-chart" : "chart-room");
   // Symbols are chosen apart from the theme (H8.4A); the theme only says what it can carry.
@@ -144,7 +166,9 @@
   let failure = $state<string | null>(null);
   let status = $state({ kernel: "", tier: "", hash: "", stack: "", campaign: false });
   async function loadPacks(): Promise<unknown[]> {
-    return Promise.all(stackDoc.packs.map(async (p) => (await fetch(new URL(p, document.baseURI))).json()));
+    const packs = await Promise.all(stackDoc.packs.map(async (p) => (await fetch(new URL(p, document.baseURI))).json()));
+    perf.stamp("startup.packs", performance.now());
+    return packs;
   }
 
   // Sharing with players (V4): recording starts as the campaign opens, before any fact is entered.
@@ -168,6 +192,7 @@
       if (listed.ok) adoptedSystems = listed.systems.filter((x) => x.system !== base.system && (x.source !== "facts" || x.system === `u:${base.universe.id}/sys:sol`)).map((x) => ({ system: x.system, title: listedTitle(x) }));
       session = s;
       status = { kernel: await s.kernelVersion(), tier: s.device()?.tier ?? "unmeasured", hash: await s.stateHash(), stack: s.stack().hash, campaign: false };
+      perf.stamp("startup.first_chart", performance.now());
     })
     .catch((e) => (failure = String(e)));
 
@@ -548,6 +573,99 @@
     else ((viewing = null), (viewingSpec = null), shiftCampaign(base.now_yr));
     ws.revision++;
   }
+  // The place line at every scale (U24, top-level design 2.1): a breadcrumb up, the list of what is nested below for
+  // going down, the trail back to where the GM was, recent places, and the place as a deep link in the address bar.
+  const place = $derived<Place | null>(
+    railScale === "workshop" ? null : { scale: railScale, system: viewing?.system ?? "", ...(railScale === "world" && ws.selection ? { world: ws.selection } : {}), ...(ws.screen !== firstScreen(railScale) ? { screen: ws.screen } : {}) },
+  );
+  /** The instrument a scale opens on: the first on its rail. */
+  function firstScreen(scale: RailScale): string | undefined {
+    return scale === "world" ? "body" : scale === "system" ? "system" : railOf(SCREENS, scale)[0]?.lines[0]?.screen;
+  }
+  // The place a link names, read before anything writes the address bar.
+  const linkedPlace = typeof location === "undefined" ? null : parsePlaceHash(location.hash);
+  let trail = $state<Place | null>(null);
+  let linked = false;
+  let recent = $state<Place[]>(readRecent(loadPref("places")));
+  const placeName = (a: string | undefined | null) => (a ? (scene.subjects.find((x) => x.address === a)?.label ?? null) : null);
+  const systemTitle = (sys: string) => (sys ? (adoptedSystems.find((x) => x.system === sys)?.title ?? sys.split("/").pop()!) : base.title);
+  const steps = $derived(place ? placeSteps(place, trail, { system: scene.title, world: placeName(railScale === "world" ? ws.selection : trail?.world) }) : []);
+  /** A place in words, for the Recent list. */
+  function placeWords(p: Place): string {
+    if (p.scale === "world") return `${p.label ?? "A world"} · ${systemTitle(p.system)}`;
+    if (p.scale === "system") return systemTitle(p.system);
+    return PLACE_WORDS[p.scale];
+  }
+  $effect(() => {
+    const p = place;
+    if (!p) return;
+    untrack(() => {
+      trail = nextTrail(trail, p);
+      const label = p.scale === "world" ? placeName(p.world) : null;
+      if (p.scale !== "world" || label) {
+        recent = rememberPlace(recent, label ? { ...p, label } : p);
+        savePref("places", JSON.stringify(recent));
+      }
+      // The address bar follows: a new place is a step in the browser's history; another instrument at the same place is not.
+      if ((p.scale === "world" && !p.world) || !linked) return;
+      const h = placeHash(p);
+      if (typeof location === "undefined" || location.hash === h || startOpen) return;
+      const was = parsePlaceHash(location.hash);
+      if (was && samePlace(was, p)) history.replaceState(history.state, "", h);
+      else history.pushState(history.state, "", h);
+    });
+  });
+  /** Go to a place: its system on the chart, its scale, its world and its instrument. */
+  function goPlace(p: Place) {
+    if (p.system !== (viewing?.system ?? "")) {
+      if (p.system && !adoptedSystems.some((x) => x.system === p.system)) return;
+      showSystem(p.system);
+    }
+    if (p.scale === "world") toWorld(p.world);
+    else toScale(p.scale);
+    if (p.screen && SCREENS[p.screen] && scalesOf(SCREENS[p.screen]!).includes(p.scale)) ws.screen = p.screen;
+  }
+  /** Up one scale, from above the system (Esc); at a world, up to its system. */
+  function upAStep() {
+    const i = placeRank(railScale as PlaceScale);
+    if (i > 0 && railScale !== "system") toScale(PLACE_SCALES[i - 1]!);
+  }
+  /** The step below this one when it is a scale of its own (the cosmic web → the galaxies nearby → the galaxy). */
+  const downScale = $derived<PlaceScale | null>(railScale === "web" ? "cluster" : railScale === "cluster" ? "galaxy" : null);
+  const recentElsewhere = $derived(place ? recent.filter((r) => !samePlace(r, place)) : recent);
+  function goBelow(v: string) {
+    if (v.startsWith("scale:") && isPlaceScale(v.slice(6))) return toScale(v.slice(6) as PlaceScale);
+    if (v.startsWith("sys:")) return goPlace({ scale: "system", system: v.slice(4) });
+    if (v.startsWith("recent:")) {
+      const r = recentElsewhere[Number(v.slice(7))];
+      return void (r && goPlace(r));
+    }
+    goTo(v);
+  }
+  // The address bar's Back and Forward, and a pasted link, move through places.
+  function fromHash() {
+    const p = parsePlaceHash(location.hash);
+    if (p && session && !(place && samePlace(place, p) && (!p.screen || p.screen === ws.screen))) goPlace(p);
+  }
+  // A chart can send the GM to another scale (the galaxies nearby's "Chart this galaxy"): a bubbling "sse:explore" event
+  // naming the section. Inside the Explore screen its own tabs answer it; on the place line it is a scale.
+  const SECTION_SCALE: Record<string, PlaceScale> = { foam: "web", cluster: "cluster", galaxy: "galaxy" };
+  $effect(() => {
+    const go = (e: Event) => {
+      const to = SECTION_SCALE[(e as CustomEvent<{ section?: string }>).detail?.section ?? ""];
+      if (to && ws.screen !== "explore") toScale(to);
+    };
+    window.addEventListener("sse:explore", go);
+    return () => window.removeEventListener("sse:explore", go);
+  });
+  $effect(() => {
+    if (!session || linked) return;
+    linked = true;
+    untrack(() => {
+      const p = linkedPlace;
+      if (p && (p.scale !== "system" || p.system || p.screen)) goPlace(p);
+    });
+  });
   function adopted(systems: { system: string; title: string }[], note: string, hash: string) {
     adoptedSystems = [...adoptedSystems.filter((x) => !systems.some((y) => y.system === x.system)), ...systems];
     whatNote = note;
@@ -609,7 +727,7 @@
     ws.screen = "system";
     showSystem(SOL);
   }
-  let startOpen = $state(typeof location !== "undefined" && location.hash !== "#chart" && loadPref("start") !== "skip");
+  let startOpen = $state(typeof location !== "undefined" && !parsePlaceHash(location.hash) && loadPref("start") !== "skip");
   const keptSave = readStored(`u:${base.universe.id}`).save;
   const carryOn = keptSave ? { title: keptSave.title, when: new Date(keptSave.saved_at).toLocaleString("en-GB", { dateStyle: "medium", timeStyle: "short" }) } : null;
   /** A world for the world instruments when none is selected: the selected body's world, else the first planet. */
@@ -951,7 +1069,7 @@
       },
       "?": () => help?.showModal(),
       // Esc clears the selection, then goes up a step.
-      Escape: () => (ws.selection ? ws.select(null) : railScale !== "system" && toSystem()),
+      Escape: () => (ws.selection ? ws.select(null) : railScale === "world" || railScale === "workshop" ? toSystem() : upAStep()),
     };
     const f = keys[e.key];
     if (f) {
@@ -961,39 +1079,58 @@
   }
 </script>
 
-<svelte:window {onkeydown} {oncopy} {oncut} {onpaste} onpointerdown={(e) => moreOpen && !(e.target as HTMLElement).closest(".more") && (moreOpen = false)} />
+<svelte:window {onkeydown} {oncopy} {oncut} {onpaste} onpopstate={fromHash} onhashchange={fromHash} onpointerdown={(e) => moreOpen && !(e.target as HTMLElement).closest(".more") && (moreOpen = false)} />
 
 {#if startOpen}<StartSheet doc={startDoc as never} built={STARTED} {carryOn} sample={base.title === "Kestrel" ? "Kestrel Reach" : base.title} ready={!!session} onopen={fromStart} />{/if}
 <div class="app" inert={startOpen} data-depth={depth} data-state-hash={status.hash} data-stack-hash={status.stack} data-physics={status.campaign ? "campaign" : "base"}>
   <header class="bar">
     <!-- Where (top-level design 2.1): the place line is the title, from the largest scale shown to the one in view. -->
     <nav class="place" aria-label="Place" data-scale={railScale}>
-      {#if adoptedSystems.length}
-        <label class="onchart"><span class="sr">System on the chart</span>
-          <select aria-label="System on the chart" value={viewing?.system ?? ""} onchange={(e) => (showSystem(e.currentTarget.value), toSystem())} data-viewing={viewing?.system ?? ""}>
-            <option value="">{base.title}</option>
-            {#each adoptedSystems as a (a.system)}<option value={a.system}>{a.title}</option>{/each}
-          </select>
-        </label>
-        <span class="sep" aria-hidden="true">›</span>
-      {/if}
-      {#if railScale === "world"}
-        <button type="button" class="up" onclick={toSystem} data-go="system" title="Up to the whole system (Esc)"><span class="up-arrow" aria-hidden="true">‹ </span><span class="up-name">{scene.title}</span></button>
-        <span class="sep up-sep" aria-hidden="true">›</span>
-        <h1 class="title" data-place="world">{selName ?? "A world"}</h1>
+      {#each place ? steps : [] as s, i (s.scale)}
+        {@const parent = steps[i + 1]?.current ?? false}
+        {#if s.scale === "system" && adoptedSystems.length && !s.below}
+          <label class="onchart"><span class="sr">System on the chart</span>
+            <select aria-label="System on the chart" value={viewing?.system ?? ""} onchange={(e) => (showSystem(e.currentTarget.value), toSystem())} data-viewing={viewing?.system ?? ""}>
+              <option value="">{base.title}</option>
+              {#each adoptedSystems as a (a.system)}<option value={a.system}>{a.title}</option>{/each}
+            </select>
+          </label>
+          <span class="sep" aria-hidden="true">›</span>
+        {/if}
+        {#if s.current}
+          <h1 class="title" data-place={s.scale}>{s.scale === "world" ? (selName ?? "A world") : s.label}</h1>
+          <!-- Down: what is nested below this step, the systems in the campaign, and recent places. -->
+          <label class="goto">
+            <span class="sr">{railScale === "system" || railScale === "world" ? "Go to a body" : "Go down"}</span>
+            <span class="goto-mark" aria-hidden="true">▾</span>
+            <select aria-label={railScale === "system" || railScale === "world" ? "Go to a body" : "Go down"} value="" data-below={railScale} onchange={(e) => { goBelow(e.currentTarget.value); e.currentTarget.value = ""; }}>
+              {#if railScale === "system" || railScale === "world"}
+                <option value="" disabled>{placeBodies.length} {placeBodies.length === 1 ? "body" : "bodies"}</option>
+                <option value="@system">The whole system</option>
+                {#each placeBodies as b (b.address)}<option value={b.address}>{b.depth ? "\u00a0\u00a0".repeat(b.depth) : ""}{b.label}</option>{/each}
+              {:else}
+                <option value="" disabled>Below ▾</option>
+                {#if downScale}<option value={`scale:${downScale}`}>{PLACE_WORDS[downScale]}</option>{/if}
+                <optgroup label="Systems in this campaign">
+                  <option value="sys:">{base.title}</option>
+                  {#each adoptedSystems as a (a.system)}<option value={`sys:${a.system}`}>{a.title}</option>{/each}
+                </optgroup>
+              {/if}
+              {#if recentElsewhere.length}
+                <optgroup label="Recent">{#each recentElsewhere as r, j (j)}<option value={`recent:${j}`}>{placeWords(r)}</option>{/each}</optgroup>
+              {/if}
+            </select>
+          </label>
+        {:else}
+          <button type="button" class="step" class:up={parent} class:below={s.below} class:far={!s.below && !parent} data-place-step={s.scale} data-go={s.scale === "system" ? "system" : undefined} onclick={() => goPlace(s.place)} title={s.below ? `Back down to ${s.label}` : `Up to ${s.label}${parent ? " (Esc)" : ""}`}>{#if parent}<span class="up-arrow" aria-hidden="true">‹ </span>{/if}<span class="up-name">{s.label}</span></button>
+        {/if}
+        {#if i < steps.length - 1}<span class="sep" class:up-sep={parent} class:far={!s.below && !parent && !s.current} class:below={s.below} aria-hidden="true">›</span>{/if}
       {:else}
         <h1 class="title" data-place="system">{scene.title}</h1>
-      {/if}
-      <label class="goto">
-        <span class="sr">Go to a body</span>
-        <select aria-label="Go to a body" value="" onchange={(e) => { goTo(e.currentTarget.value); e.currentTarget.value = ""; }}>
-          <option value="" disabled>{placeBodies.length} {placeBodies.length === 1 ? "body" : "bodies"}</option>
-          <option value="@system">The whole system</option>
-          {#each placeBodies as b (b.address)}<option value={b.address}>{b.depth ? "\u00a0\u00a0".repeat(b.depth) : ""}{b.label}</option>{/each}
-        </select>
-      </label>
+      {/each}
     </nav>
-    <div class="kicker">{scene.subtitle} · {formatYears(ws.now_yr)}</div>
+    <!-- The system's subtitle belongs to the system; above it the line itself says where. -->
+    {#if railScale === "system" || railScale === "world" || railScale === "workshop"}<div class="kicker">{scene.subtitle} · {formatYears(ws.now_yr)}</div>{/if}
     <div class="spacer"></div>
     <!-- What (2.3): the desk. Explore looks, Build changes, Run is the table. -->
     <Segmented label="Desk" value={desk} options={DESKS} onchange={chooseDesk} slide />
@@ -1015,7 +1152,7 @@
     <!-- Ask (2.5): the agents, promoted from the status line. Tars needs no key. -->
     <button type="button" class="barbtn ask" onclick={() => ((agentsOpen = true), agentsDialog?.showModal())} title="Ask Tars, Orac or Minerva: what can I do here?">Ask</button>
     <div class="more">
-      <button type="button" class="barbtn" aria-expanded={moreOpen} aria-controls="more-menu" onclick={() => (moreOpen = !moreOpen)}>More</button>
+      <button type="button" class="barbtn" bind:this={moreBtn} aria-expanded={moreOpen} aria-controls="more-menu" onclick={() => (moreOpen = !moreOpen)}>More</button>
       {#if moreOpen}
         <div class="menu" id="more-menu" role="group" aria-label="More">
           <button type="button" class="ask-more" onclick={() => ((moreOpen = false), (agentsOpen = true), agentsDialog?.showModal())}>Ask Tars, Orac or Minerva</button>
@@ -1031,6 +1168,7 @@
           <button type="button" data-more-start onclick={() => ((moreOpen = false), (startOpen = true))}>Start sheet</button>
           <button type="button" aria-pressed={theme === "night-chart"} onclick={() => ((moreOpen = false), (theme = theme === "chart-room" ? "night-chart" : "chart-room"))}>Night chart <kbd>N</kbd></button>
           <button type="button" onclick={() => ((moreOpen = false), help?.showModal())}>Keyboard shortcuts <kbd>?</kbd></button>
+          <button type="button" data-more-perf aria-pressed={perfOn} onclick={() => ((moreOpen = false), (perfOn = !perfOn))} title="Time every chunk of the app on this device, for the minimum spec">Performance readout <small>{perfOn ? "on" : "off"}</small></button>
         </div>
       {/if}
     </div>
@@ -1054,6 +1192,8 @@
       <nav class="rail" aria-label="Instruments" data-scale={railScale}>
         {#if railScale === "workshop"}
           <button type="button" class="door back" data-go="back" onclick={toSystem}>‹ Back to {scene.title}</button>
+        {:else if railScale !== "system" && railScale !== "world"}
+          <button type="button" class="door back" data-go="back" onclick={() => goPlace(trail && trail.system === (viewing?.system ?? "") && placeRank(trail.scale) > placeRank("galaxy") ? trail : { scale: "system", system: viewing?.system ?? "" })}>‹ Back to {trail?.scale === "world" && placeName(trail.world) ? placeName(trail.world) : scene.title}</button>
         {:else if railScale === "system"}
           <button type="button" class="door open" data-go="world" onclick={() => toWorld()} title={selName ? `Look at ${selName} itself: globe, cutaway, life` : "Pick a world to look at closely"}>{selName ? `Open ${selName}` : "Open a world"} ›</button>
         {/if}
@@ -1065,6 +1205,7 @@
             {/each}
           </div>
         {/each}
+        {#if railScale === "system"}<button type="button" class="door" data-go="out" onclick={() => toScale("galaxy")} title="The galaxy around this system, the galaxies nearby and the cosmic web: they are on the place line above the system">Out to the galaxy ›</button>{/if}
         {#if railScale !== "workshop"}<button type="button" class="door" data-go="workshop" onclick={toWorkshop} title="Physics flows, packs, player screens and data, symbols, styles: everything that changes the tool">Workshop ›</button>{/if}
       </nav>
       {#key ws.screen}
@@ -1151,6 +1292,10 @@
     </div>
   {/if}
 </div>
+
+{#if perfOn}
+  <PerfReadout kernel={status.kernel} edge={session?.device()} from={() => moreBtn} onclose={() => (perfOn = false)} />
+{/if}
 
 <dialog bind:this={seatsDialog} class="help seats-dialog" aria-label="Seats" onclose={() => (seatsOpen = !!seatsDialog?.open)}>
   {#if seatsOpen && share && session}
@@ -1345,6 +1490,52 @@
   }
   .place .up:hover {
     text-decoration: underline;
+  }
+  /* The steps above the place in view are quiet; the ones below it are the way back to where the GM was. */
+  .place .step:not(.up) {
+    font: inherit;
+    font-size: 13px;
+    color: var(--sse-ink-muted);
+    background: none;
+    border: 0;
+    padding: 0;
+    cursor: pointer;
+    white-space: nowrap;
+  }
+  .place .step:not(.up):hover {
+    color: var(--sse-accent);
+    text-decoration: underline;
+  }
+  .place .step.below {
+    font-style: italic;
+    flex: 0 1 auto;
+    min-width: 2em;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  /* Above a system the names are short: the name keeps its room, the list beside it stays narrow. */
+  .place:not([data-scale="system"], [data-scale="world"]) .title {
+    flex: none;
+  }
+  .goto select[data-below="web"],
+  .goto select[data-below="cluster"],
+  .goto select[data-below="galaxy"] {
+    max-width: 5.5em;
+  }
+  .sep.below {
+    opacity: 0.6;
+  }
+  .goto {
+    position: relative;
+  }
+  .goto-mark {
+    display: none;
+  }
+  @media (max-width: 1180px) {
+    .place .step.far,
+    .sep.far {
+      display: none;
+    }
   }
   .sep {
     color: var(--sse-ink-muted);
@@ -1938,10 +2129,32 @@
     .up-sep {
       display: none;
     }
-    .goto,
     .onchart,
-    .onchart + .sep {
+    .onchart + .sep,
+    .place .step.below,
+    .sep.below {
       display: none;
+    }
+    /* Down is a small ▾ beside the name; the list opens over it. */
+    .goto {
+      flex: none;
+      width: 22px;
+      height: 32px;
+      display: inline-grid;
+      place-items: center;
+      align-self: center;
+    }
+    .goto-mark {
+      display: inline;
+      color: var(--sse-accent);
+      font-size: 16px;
+    }
+    .goto select {
+      position: absolute;
+      inset: 0;
+      width: 100%;
+      max-width: none;
+      opacity: 0;
     }
     .lens {
       flex: 0 1 auto;

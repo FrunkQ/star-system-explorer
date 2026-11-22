@@ -107,7 +107,7 @@ pub struct WindowView {
     pub model: Vec<String>,
 }
 
-const C_M_S: f64 = 299_792_458.0;
+const C_M_S: f64 = sse_core::sheet::C;
 
 fn lon_lat(d: V3) -> (f64, f64) {
     let r = norm(d).max(1e-30);

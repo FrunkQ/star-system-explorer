@@ -33,10 +33,10 @@ use crate::settings::ClimateSettings;
 use serde::{Deserialize, Serialize};
 use sse_core::math as m;
 
-const G: f64 = 6.6743e-11;
-const AU_M: f64 = 1.495_978_707e11;
+const G: f64 = sse_core::sheet::G;
+const AU_M: f64 = sse_core::sheet::AU;
 const M_SUN_KG: f64 = 1.988_47e30;
-const YEAR_S: f64 = 3.15576e7;
+const YEAR_S: f64 = sse_core::sheet::YR_JULIAN;
 const EARTH_OMEGA: f64 = 7.292_115e-5;
 
 type V3 = [f64; 3];

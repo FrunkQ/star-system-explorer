@@ -33,8 +33,7 @@ try {
     gm.on("pageerror", (e) => errors.push(e.message));
     await gm.goto(base + "#chart");
     await gm.waitForSelector("[data-state-hash]:not([data-state-hash=''])", { timeout: 20000 });
-    await go(gm, "explore");
-    await gm.locator("[data-section-tab=galaxy]").click();
+    await go(gm, "galaxy");
     await gm.waitForSelector(".gal [data-ring]", { timeout: 30000 });
     const gal = gm.locator(".gal");
     assert.match(await gal.getAttribute("data-galaxy"), /halo:milky-way-like$/);
@@ -91,8 +90,7 @@ try {
     phone.on("pageerror", (e) => errors.push(`phone: ${e.message}`));
     await phone.goto(base + "#chart");
     await phone.waitForSelector("[data-state-hash]:not([data-state-hash=''])", { timeout: 20000 });
-    await go(phone, "explore");
-    await phone.locator("[data-section-tab=galaxy]").click();
+    await go(phone, "galaxy");
     await phone.waitForSelector(".gal [data-ring]", { timeout: 30000 });
     const over = await phone.evaluate(() => document.documentElement.scrollWidth - window.innerWidth);
     assert.ok(over <= 1, `no sideways scroll on a phone (${over}px over)`);

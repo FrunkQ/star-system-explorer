@@ -33,11 +33,11 @@ pub use sse_flow::Reference;
 pub use table::{Band, LightTable, LineDef, Passband};
 
 /// Planck constant, J s (CODATA 2018, exact).
-pub const H: f64 = 6.626_070_15e-34;
+pub const H: f64 = sse_core::sheet::H;
 /// Speed of light, m/s (exact).
-pub const C: f64 = 299_792_458.0;
+pub const C: f64 = sse_core::sheet::C;
 /// Boltzmann constant, J/K (CODATA 2018, exact).
-pub const K_B: f64 = 1.380_649e-23;
+pub const K_B: f64 = sse_core::sheet::K_B;
 /// Stefan-Boltzmann constant, W m⁻² K⁻⁴ (CODATA 2018, from h, k and c).
 pub const SIGMA: f64 = sse_core::quantity::consts::STEFAN_BOLTZMANN;
 /// Newton's constant (CODATA 2018).

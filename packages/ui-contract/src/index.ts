@@ -37,6 +37,7 @@ export { observeOf, checkSetup, playerDataPack, setupChanges, applySetup, enterF
 export type { DataView, ObserveSetup, Override, TagMode, UnknownStyle, AuthoredFacts } from "./data-views.ts";
 export { showReference } from "./reference.ts";
 export * from "./matter.ts";
+export * from "./place.ts";
 export type { ReferenceIn, ShownReference } from "./reference.ts";
 export { GmHost, PlayerReplica, SealedHost, SealedReplica, memoryRoom, broadcastHub, relayHub, multiHub, P2P_PROTOCOL } from "./p2p.ts";
 export type { Hub, Wire, Manifest, LogEntry, HostState, ReplicaStatus, PlayerRequest, OwnRequest, SealedManifest } from "./p2p.ts";
@@ -92,3 +93,5 @@ export type { Clip, ClipNode, ClipEvent, ClipSource, ClipRead, Copied, PlacedBod
 export { pickLine, shownLines, opensKey, checkStartLines } from "./start.ts";
 export type { StartLine, StartLinesDoc, StartOpens } from "./start.ts";
 export { readSol, solBatches, solSourceText, SOL_TITLE, type SolSheet } from "./sol.ts";
+// The performance readout and its reports (PF1).
+export * from "./perf.ts";

@@ -32,8 +32,7 @@ try {
     gm.on("pageerror", (e) => errors.push(e.message));
     await gm.goto(base + "#chart");
     await gm.waitForSelector("[data-state-hash]:not([data-state-hash=''])", { timeout: 20000 });
-    await go(gm, "explore");
-    await gm.locator("[data-section-tab=cluster]").click();
+    await go(gm, "cluster");
     await gm.waitForSelector(".clu [data-halo-dot]", { timeout: 30000 });
     const clu = gm.locator(".clu");
     assert.equal(await clu.getAttribute("data-cell"), "0.0.0");
@@ -68,7 +67,7 @@ try {
     assert.match(await gm.locator(".gal h2").innerText(), new RegExp(`Halo ${key}, cell 0\\.0\\.0`));
     await shot(gm, "v9-cluster-charted");
     // And back to the cluster map, which keeps the halo picked.
-    await gm.locator("[data-section-tab=cluster]").click();
+    await go(gm, "cluster");
     await gm.waitForFunction((k) => document.querySelector(".clu [data-halo-ledger]")?.getAttribute("data-halo-ledger") === k, key, { timeout: 30000 });
 
     await more(gm, "Night chart");
@@ -79,8 +78,7 @@ try {
     phone.on("pageerror", (e) => errors.push(`phone: ${e.message}`));
     await phone.goto(base + "#chart");
     await phone.waitForSelector("[data-state-hash]:not([data-state-hash=''])", { timeout: 20000 });
-    await go(phone, "explore");
-    await phone.locator("[data-section-tab=cluster]").click();
+    await go(phone, "cluster");
     await phone.waitForSelector(".clu [data-halo-dot]", { timeout: 30000 });
     await phone.waitForTimeout(600);
     const over = await phone.evaluate(() => document.documentElement.scrollWidth - window.innerWidth);

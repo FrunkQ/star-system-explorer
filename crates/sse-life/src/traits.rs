@@ -112,7 +112,7 @@ impl Default for TraitParams {
 }
 
 /// Earth's standard gravity, m s-2 (the stature limit's reference).
-const G_EARTH: f64 = 9.806_65;
+const G_EARTH: f64 = sse_core::sheet::G0;
 
 impl TraitParams {
     /// A trait's limits in these conditions.

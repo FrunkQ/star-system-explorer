@@ -29,7 +29,7 @@ use serde::{Deserialize, Serialize};
 use sse_core::math as m;
 
 const R_GAS: f64 = 8.314462618;
-const DAY_S: f64 = 86_400.0;
+const DAY_S: f64 = sse_core::sheet::DAY;
 const YEAR_DAYS: f64 = 365.25;
 const TG: f64 = 1.0e9;
 const M_SO2: f64 = 0.064066;

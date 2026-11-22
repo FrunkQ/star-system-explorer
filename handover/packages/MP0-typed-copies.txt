@@ -11,40 +11,22 @@
 # scripts/audit-matter.py --ledger fails on a copy not listed here, on a line
 # here that no longer matches a copy, and on a ledger that grew.
 crates/sse-activity/src/lib.rs	constant:h c / keV	const KEV_M: f64 = 1.239_84e-9;
-crates/sse-atoms/src/air.rs	constant:k_B	pub const K_B: f64 = 1.380_649e-23;
-crates/sse-atoms/src/air.rs	constant:m_u	pub const AMU: f64 = 1.660_539_066_60e-27;
 crates/sse-atoms/src/air.rs	new:Loschmidt constant (p0 over k_B T0)	pub const N_LOSCHMIDT: f64 = 2.686_780_111e25;
 crates/sse-atoms/src/chem.rs	constant:R_gas	pub const R_GAS: f64 = 8.314_462_618;
-crates/sse-atoms/src/common.rs	constant:k_B	pub const BOLTZMANN: f64 = 1.380_649e-23;
-crates/sse-atoms/src/common.rs	constant:m_u	pub const AMU: f64 = 1.660_539_066_60e-27;
-crates/sse-atoms/src/convection.rs	constant:T_sun	const T_SUN: f64 = 5772.0;
-crates/sse-atoms/src/convection.rs	constant:k_B	const K_B: f64 = 1.380_649e-23;
-crates/sse-atoms/src/convection.rs	constant:m_u	const AMU: f64 = 1.660_539_066_60e-27;
 crates/sse-atoms/src/heat.rs	isotope:al26	pub const AL26_H0: f64 = 0.00865 * 5.25e-5 * 0.3583;
 crates/sse-atoms/src/heat.rs	isotope:al26	pub const AL26_TAU_MYR: f64 = 0.717 / LN2;
-crates/sse-atoms/src/layers.rs	constant:T0C	param("pure_freezing_point", D::TEMPERATURE, 273.15, (200.0, 300.0), "freezing point of the pure solvent"),
 crates/sse-atoms/src/layers.rs	new:NaCl molar mass	pub const NACL_MOLAR_MASS: f64 = 0.058_44;
 crates/sse-atoms/src/layers.rs	new:ice_k	pub const ICE_K: f64 = 651.0;
 crates/sse-atoms/src/layers.rs	new:water_kf	pub const WATER_KF: f64 = 1.86;
-crates/sse-atoms/src/light.rs	constant:e	pub const E_OVER_ME: f64 = 1.602_176_634e-19 / 9.109_383_701_5e-31;
-crates/sse-atoms/src/light.rs	constant:m_e	pub const E_OVER_ME: f64 = 1.602_176_634e-19 / 9.109_383_701_5e-31;
-crates/sse-atoms/src/light.rs	constant:m_p	pub const M_PROTON: f64 = 1.672_621_923_69e-27;
-crates/sse-atoms/src/light.rs	constant:mu0	pub const MU0: f64 = 1.256_637_062_12e-6;
 crates/sse-atoms/src/light.rs	new:omega_sun	pub const OMEGA_SUN: f64 = 2.0 * m::PI / (25.38 * DAY);
-crates/sse-atoms/src/magnetic.rs	constant:mu0	pub const MU0: f64 = 1.256_637_062_12e-6;
-crates/sse-atoms/src/nebula.rs	constant:c	pub const H_ALPHA_J: f64 = 6.626_070_15e-34 * 299_792_458.0 / 656.28e-9;
-crates/sse-atoms/src/nebula.rs	constant:e	pub const E_ION_H: f64 = 13.598 * 1.602_176_634e-19;
-crates/sse-atoms/src/nebula.rs	constant:h	let (h, c, k) = (6.626_070_15e-34, C, 1.380_649e-23);
-crates/sse-atoms/src/nebula.rs	constant:h	pub const H_ALPHA_J: f64 = 6.626_070_15e-34 * 299_792_458.0 / 656.28e-9;
-crates/sse-atoms/src/nebula.rs	constant:k_B	let (h, c, k) = (6.626_070_15e-34, C, 1.380_649e-23);
-crates/sse-atoms/src/nebula.rs	constant:pc	const PC: f64 = 648_000.0 / m::PI * AU;
 crates/sse-atoms/src/nebula.rs	element:h/atomic_mass	pub const M_H: f64 = 1.673_5e-27;
 crates/sse-atoms/src/nebula.rs	new:mu_h	pub const MU_H: f64 = 1.4;
-crates/sse-atoms/src/planet.rs	constant:R_earth_mean	const R_EARTH_ZENG: f64 = 6.371e6;
+crates/sse-atoms/src/nebula.rs	constant:e	pub const E_ION_H: f64 = 13.598 * 1.602_176_634e-19;
+crates/sse-atoms/src/nebula.rs	constant:h	pub const H_ALPHA_J: f64 = 6.626_070_15e-34 * 299_792_458.0 / 656.28e-9;
+crates/sse-atoms/src/nebula.rs	constant:c	pub const H_ALPHA_J: f64 = 6.626_070_15e-34 * 299_792_458.0 / 656.28e-9;
 crates/sse-chronicle/src/event.rs	constant:yr_julian	s: y * 31_557_600,
 crates/sse-climate/examples/strengths.rs	constant:day	s.radiative_s / 86400.0
 crates/sse-climate/src/circulation.rs	constant:day	"radiative_days" => st.radiative_s / 86400.0,
-crates/sse-climate/src/climate.rs	constant:yr_julian	const YEAR_S: f64 = 3.15576e7;
 crates/sse-climate/src/conditions.rs	constant:R_gas	pub const R_GAS: f64 = 8.314462618;
 crates/sse-climate/src/conditions.rs	constant:atm	pub const EARTH_COLUMN_KG_M2: f64 = 101_325.0 / 9.80665;
 crates/sse-climate/src/conditions.rs	constant:g0	pub const EARTH_COLUMN_KG_M2: f64 = 101_325.0 / 9.80665;
@@ -56,39 +38,25 @@ crates/sse-climate/src/ebm.rs	constant:day	let year_s = (c.year_days * 86_400.0)
 crates/sse-climate/src/ebm.rs	constant:day	let year_s = (c.year_days * 86_400.0).max(1.0);
 crates/sse-climate/src/ebm.rs	new:earth_omega	const EARTH_OMEGA: f64 = 2.0 * m::PI / (23.934 * 3600.0);
 crates/sse-climate/src/exchange.rs	constant:day	let year_s = (c.year_days * 86_400.0).max(1.0);
-crates/sse-climate/src/exchange.rs	constant:sigma_SB	const SIGMA_SB: f64 = 5.670374419e-8;
-crates/sse-climate/src/forcing.rs	constant:G	const G: f64 = 6.6743e-11;
 crates/sse-climate/src/forcing.rs	constant:M_sun	const M_SUN_KG: f64 = 1.988_47e30;
-crates/sse-climate/src/forcing.rs	constant:au	const AU_M: f64 = 1.495_978_707e11;
 crates/sse-climate/src/forcing.rs	constant:day	let dt = c.year_days.max(1e-6) * 86_400.0 / n as f64;
-crates/sse-climate/src/forcing.rs	constant:yr_julian	const YEAR_S: f64 = 3.15576e7;
 crates/sse-climate/src/forcing.rs	new:earth_omega	const EARTH_OMEGA: f64 = 7.292_115e-5;
 crates/sse-climate/src/strengths.rs	constant:day	growth * 86400.0,
 crates/sse-climate/src/strengths.rs	constant:day	tau_rad / 86400.0
-crates/sse-climate/src/strengths.rs	constant:k_B	const K_B: f64 = 1.380649e-23;
-crates/sse-climate/src/strengths.rs	constant:sigma_SB	const SIGMA_SB: f64 = 5.670374419e-8;
 crates/sse-climate/src/water.rs	constant:T0C	"t_cold_c" => w.t_cold_k - 273.15,
 crates/sse-climate/src/water.rs	constant:T0C	"t_mean_c" => w.t_k - 273.15,
 crates/sse-climate/src/water.rs	constant:T0C	"t_warm_c" => w.t_warm_k - 273.15,
 crates/sse-climate/src/water.rs	constant:T0C	let t_c = t_k - 273.15;
-crates/sse-climate/src/water.rs	constant:yr_julian	const YEAR_S: f64 = 3.15576e7;
-crates/sse-codes/src/plan.rs	constant:G	const G: f64 = 6.674_30e-11;
 crates/sse-codes/src/plan.rs	constant:M_earth	const M_EARTH: f64 = 5.972_2e24;
-crates/sse-codes/src/plan.rs	constant:R_earth_mean	const R_EARTH: f64 = 6.371_0e6;
 crates/sse-codes/src/plan.rs	new:exosphere_k	pub const EXOSPHERE_K: f64 = 1000.0;
 crates/sse-core/src/constants.rs	constant:k_B	k_b: 1.380_649e-23,
 crates/sse-cosmos/src/cosmology.rs	constant:pc	pub const MPC_M: f64 = 3.085_677_581_491_367e22;
-crates/sse-cosmos/src/cosmology.rs	constant:yr_julian	pub const YEAR_S: f64 = 31_557_600.0;
 crates/sse-cosmos/src/cosmology.rs	new:rho_crit_h2	pub const RHO_CRIT_H2: f64 = 2.775_366e11;
 crates/sse-cosmos/src/epochs.rs	constant:GM_sun/GM_jup	1048.0 * (1.0 + 0.001_24 * m::pow(wb, -0.738)) * (1.0 + g1 * m::pow(wm, g2))
 crates/sse-cosmos/src/events.rs	constant:c	pub const C_PC_MYR: f64 = 306_601.39;
 crates/sse-cosmos/src/events.rs	constant:pc and yr_julian (km/s in pc per Myr)	const KMS_PC_MYR: f64 = 1.022_712;
 crates/sse-cosmos/src/galaxy.rs	constant:G	pub const G_KPC: f64 = 4.300_917e-6;
-crates/sse-cosmos/src/nucleus.rs	constant:G	const G_SI: f64 = 6.674_30e-11;
 crates/sse-cosmos/src/nucleus.rs	constant:M_sun	const M_SUN_KG: f64 = 1.988_47e30;
-crates/sse-cosmos/src/nucleus.rs	constant:c	const C_M_S: f64 = 299_792_458.0;
-crates/sse-cosmos/src/nucleus.rs	constant:sigma_SB	const SIGMA_SB: f64 = 5.670_374_419e-8;
-crates/sse-cosmos/src/nucleus.rs	constant:yr_julian	const YEAR_S: f64 = 31_557_600.0;
 crates/sse-cosmos/src/nucleus.rs	new:l_edd_per_msun	pub const L_EDD_PER_MSUN: f64 = 1.257e31;
 crates/sse-cosmos/src/origin.rs	constant:pc and yr_julian (km/s in pc per Myr)	const KMS_KPC_GYR: f64 = 1.022_712;
 crates/sse-cosmos/src/patch.rs	constant:M_sun	pub const MSUN_KG: f64 = 1.988_41e30;
@@ -101,42 +69,26 @@ crates/sse-formation/src/accrete.rs	constant:GM_sun/GM_earth	pub const SOLAR_MAS
 crates/sse-formation/src/accrete.rs	constant:M_sun	pub const SOLAR_MASS_KG: f64 = 1.989e30;
 crates/sse-formation/src/body.rs	constant:M_jup	pub const MJ_MSUN: f64 = 9.547_9e-4;
 crates/sse-formation/src/body.rs	constant:R_jup_equatorial	pub const R_JUPITER_RSUN: f64 = 0.1028;
-crates/sse-formation/src/disc.rs	constant:G	const G: f64 = 6.674_30e-11;
 crates/sse-formation/src/disc.rs	constant:M_sun	const MSUN_KG: f64 = 1.988_47e30;
-crates/sse-formation/src/disc.rs	constant:au	const AU_M: f64 = 1.495_978_707e11;
-crates/sse-formation/src/disc.rs	constant:k_B	const K_B: f64 = 1.380_649e-23;
-crates/sse-formation/src/disc.rs	constant:sigma_SB	const SIGMA_SB: f64 = 5.670_374_419e-8;
 crates/sse-formation/src/disc.rs	constant:yr_julian	const MYR_S: f64 = 3.155_76e13;
-crates/sse-formation/src/disc.rs	constant:yr_julian	const YR_S: f64 = 3.155_76e7;
 crates/sse-formation/src/disc.rs	element:h/atomic_mass	const M_H: f64 = 1.673_5e-27;
-crates/sse-formation/src/early.rs	constant:G	const G: f64 = 6.674_30e-11;
 crates/sse-formation/src/early.rs	constant:GM_sun/GM_earth	const MSUN_IN_EARTH: f64 = 332_946.0;
-crates/sse-formation/src/early.rs	constant:L_sun	const L_SUN_W: f64 = 3.828e26;
 crates/sse-formation/src/early.rs	constant:M_earth	pub const M_EARTH_KG: f64 = 5.972_2e24;
-crates/sse-formation/src/early.rs	constant:R_earth_mean	pub const R_EARTH_M: f64 = 6.371_0e6;
 crates/sse-formation/src/early.rs	constant:S_sun	h("early.insolation", flux * 1361.0),
-crates/sse-formation/src/early.rs	constant:au	const AU_M: f64 = 1.495_978_707e11;
 crates/sse-formation/src/early.rs	constant:yr_julian	const MYR_S: f64 = 3.155_76e13;
 crates/sse-formation/src/early.rs	new:earth_ocean_kg	pub const EARTH_OCEAN_KG: f64 = 1.4e21;
-crates/sse-formation/src/growth.rs	constant:G	const G: f64 = 6.674_30e-11;
 crates/sse-formation/src/growth.rs	constant:GM_sun/GM_earth	pub const MSUN_IN_EARTH: f64 = 332_946.0;
 crates/sse-formation/src/growth.rs	constant:M_sun	const MSUN_KG: f64 = 1.988_47e30;
-crates/sse-formation/src/growth.rs	constant:au	const AU_M: f64 = 1.495_978_707e11;
-crates/sse-formation/src/growth.rs	constant:k_B	const K_B: f64 = 1.380_649e-23;
-crates/sse-formation/src/growth.rs	constant:yr_julian	const YR_S: f64 = 3.155_76e7;
 crates/sse-formation/src/growth.rs	element:h/atomic_mass	const M_H: f64 = 1.673_5e-27;
 crates/sse-formation/src/history.rs	constant:au/R_sun	const AU_IN_RSUN: f64 = 215.032;
 crates/sse-formation/src/leftovers.rs	constant:M_sun	const MSUN_KG: f64 = 1.988_47e30;
 crates/sse-formation/src/leftovers.rs	constant:R_earth_mean	const R_EARTH_KM: f64 = 6_371.0;
 crates/sse-formation/src/leftovers.rs	constant:au	const AU_KM: f64 = 1.495_978_707e8;
-crates/sse-formation/src/lifeline.rs	constant:T_sun	pub const TEFF_SUN: f64 = 5772.0;
 crates/sse-formation/src/lifeline.rs	new:Chandrasekhar mass	pub const M_CH: f64 = 1.44;
 crates/sse-formation/src/pins.rs	constant:GM_sun/GM_earth	let mu = (p.mass + p.gas + q.mass + q.gas) / (3.0 * 332_946.0 * host_mass);
 crates/sse-formation/src/pipeline.rs	constant:day	const GYR_S: f64 = 1e9 * 365.25 * 86_400.0;
-crates/sse-formation/src/violent.rs	constant:G	const G: f64 = 6.674_30e-11;
 crates/sse-formation/src/violent.rs	constant:M_earth	const M_EARTH_KG: f64 = 5.972_2e24;
 crates/sse-formation/src/violent.rs	constant:R_earth_mean	const R_EARTH_AU: f64 = 4.258_75e-5;
-crates/sse-formation/src/violent.rs	constant:R_earth_mean	const R_EARTH_M: f64 = 6.371e6;
 crates/sse-formation/src/violent.rs	new:v_esc_earth	const V_ESC_EARTH: f64 = 11.186;
 crates/sse-formation/src/violent.rs	new:v_kep_1au	const V_KEP_1AU: f64 = 29.784_7;
 crates/sse-import-v3/src/lib.rs	constant:day	Json::from(age * 1e9 * 365.25 * 86400.0),
@@ -144,7 +96,6 @@ crates/sse-import-v3/src/lib.rs	new:earth_mean_depth_m	const EARTH_MEAN_DEPTH_M:
 crates/sse-import-v3/src/lib.rs	new:earth_oceans_m3	const EARTH_OCEANS_M3: f64 = 1.335e18;
 crates/sse-import-v3/src/reconstruct.rs	constant:M_earth	const M_EARTH_KG: f64 = 5.972_2e24;
 crates/sse-import-v3/src/reconstruct.rs	constant:M_sun	const M_SUN_KG: f64 = 1.988_47e30;
-crates/sse-import-v3/src/reconstruct.rs	constant:au	const AU_M: f64 = 1.495_978_707e11;
 crates/sse-import-v3/src/reconstruct.rs	constant:day	const GYR_S: f64 = 1e9 * 365.25 * 86_400.0;
 crates/sse-kernel/src/adopt.rs	constant:M_earth	pub const M_EARTH_KG: f64 = 5.972_2e24;
 crates/sse-kernel/src/adopt.rs	constant:M_sun	pub const M_SUN_KG: f64 = 1.988_47e30;
@@ -152,52 +103,31 @@ crates/sse-kernel/src/adopt.rs	constant:T_sun	.unwrap_or(5772.0);
 crates/sse-kernel/src/adopt.rs	constant:yr_julian	(a as f64 / 31_557_600.0 - now_year) / 1.0e9
 crates/sse-kernel/src/adopt.rs	constant:yr_julian	.map(|sp| m::round((sp.birth_year as f64 + sp.age_myr * 1.0e6) * 31_557_600.0) as i64),
 crates/sse-kernel/src/adopt.rs	constant:yr_julian	.map(|y| y as i64 * 31_557_600);
-crates/sse-kernel/src/clock.rs	constant:yr_julian	pub const JULIAN_YEAR_S: f64 = 31_557_600.0;
 crates/sse-kernel/src/descent.rs	constant:R_gas	const R_GAS: f64 = 8.314_462_618;
 crates/sse-kernel/src/ice_ages.rs	constant:M_earth	const M_EARTH_KG: f64 = 5.9722e24;
 crates/sse-kernel/src/ice_ages.rs	constant:M_earth	const M_EARTH_MSUN: f64 = 3.003_489_6e-6;
-crates/sse-kernel/src/ice_ages.rs	constant:au	const AU_M: f64 = 1.495_978_707e11;
-crates/sse-kernel/src/orbits.rs	constant:G	const G: f64 = 6.674_30e-11;
 crates/sse-kernel/src/voyage.rs	constant:T_sun	let t = 5772.0 / at.state.teff_k;
 crates/sse-life/src/biosphere.rs	constant:g0	const EARTH_G: f64 = 9.81;
 crates/sse-life/src/biosphere.rs	new:earth_air	const EARTH_AIR: f64 = 1.225;
 crates/sse-life/src/budget.rs	constant:b_wien	const WIEN_NM_K: f64 = 2.897_771_955e6;
-crates/sse-life/src/budget.rs	constant:c	const C: f64 = 299_792_458.0;
-crates/sse-life/src/budget.rs	constant:h	const H: f64 = 6.626_070_15e-34;
-crates/sse-life/src/budget.rs	constant:k_B	const K_B: f64 = 1.380_649e-23;
-crates/sse-life/src/budget.rs	constant:sigma_SB	const SIGMA: f64 = 5.670_374_419e-8;
-crates/sse-life/src/budget.rs	constant:yr_julian	const YEAR_S: f64 = 3.155_76e7;
 crates/sse-life/src/cover.rs	constant:T0C	grow_base_k: 273.15,
 crates/sse-life/src/cover.rs	constant:T0C	let c = t_k - 273.15;
 crates/sse-life/src/cover.rs	constant:g0	let g0 = 9.806_65;
 crates/sse-life/src/cover.rs	substance:h2o/phases.triple_point_pa	611.2 * m::exp(17.67 * c / (c + 243.5))
 crates/sse-life/src/feedback.rs	element:c/atomic_weight	const G_PER_MOL_C: f64 = 12.011;
-crates/sse-life/src/gradients.rs	constant:yr_julian	const YEAR_S: f64 = 3.155_76e7;
 crates/sse-life/src/scenario.rs	constant:T_sun	star_teff_k: 5772.0,
 crates/sse-life/src/scenario.rs	constant:T_sun	star_teff_k: 5772.0,
 crates/sse-life/src/scenario.rs	constant:g0	"earth" | "earth-archean" => (9.81, Some(1.225), 24.0, 23.4, false),
 crates/sse-life/src/scenario.rs	constant:g0	_ => (9.81, Some(1.225), 24.0, 23.4, false),
 crates/sse-life/src/signatures.rs	constant:T_sun	(edge_area >= p.edge_floor).then(|| 700.0 * m::sqrt(5772.0 / obs.star_teff_k.max(2000.0)));
-crates/sse-life/src/traits.rs	constant:g0	const G_EARTH: f64 = 9.806_65;
-crates/sse-light/src/lib.rs	constant:c	pub const C: f64 = 299_792_458.0;
-crates/sse-light/src/lib.rs	constant:h	pub const H: f64 = 6.626_070_15e-34;
-crates/sse-light/src/lib.rs	constant:k_B	pub const K_B: f64 = 1.380_649e-23;
-crates/sse-light/src/observe.rs	constant:b_wien	pub const WIEN_B: f64 = 2.897_771_955e-3;
 crates/sse-nav/src/hazards.rs	constant:GM_earth	const GM_EARTH: f64 = 3.986_004_418e14;
 crates/sse-nav/src/hazards.rs	constant:S_sun	peak_flux / 1361.0
-crates/sse-nav/src/hazards.rs	constant:mu0	const MU0: f64 = 1.256_637_062_12e-6;
 crates/sse-nav/src/lib.rs	constant:M_earth	pub const M_EARTH_KG: f64 = 5.972_2e24;
 crates/sse-nav/src/lib.rs	constant:M_sun	pub const M_SUN_KG: f64 = 1.988_47e30;
-crates/sse-nav/src/lib.rs	constant:g0	pub const G0: f64 = 9.806_65;
 crates/sse-nav/src/scenario.rs	constant:R_earth_mean	6371.0,
 crates/sse-nav/src/scenario.rs	constant:R_gas	let r = 8.314_462_618 / molar;
 crates/sse-nav/src/scenario.rs	constant:R_moon	1737.4,
 crates/sse-nav/src/scenario.rs	constant:g0	9.81,
-crates/sse-nav/src/sky.rs	constant:c	const C_M_S: f64 = 299_792_458.0;
-crates/sse-nav/src/voyage.rs	constant:GM_sun	const GM_SUN: f64 = 1.327_124_4e20;
-crates/sse-nav/src/voyage.rs	constant:R_sun	const R_SUN: f64 = 6.957e8;
-crates/sse-nav/src/voyage.rs	constant:au	const AU: f64 = 1.495_978_707e11;
-crates/sse-nav/src/voyage.rs	constant:pc	pub const PC_M: f64 = 3.085_677_581_491_367e16;
 crates/sse-nebula/src/lib.rs	constant:M_sun	pub const MSUN_KG: f64 = 1.988_41e30;
 crates/sse-nebula/src/lib.rs	constant:pc	pub const PC_M: f64 = 648_000.0 / m::PI * sse_core::quantity::consts::AU;
 crates/sse-place/src/model.rs	constant:R_gas	let boil = 1.0 / (1.0 / 373.15 - 8.314 * m::ln(p_bar.max(1e-12) / 1.01325) / 40660.0);
@@ -208,13 +138,10 @@ crates/sse-place/src/model.rs	constant:atm	let boil = 1.0 / (1.0 / 373.15 - 8.31
 crates/sse-place/src/model.rs	constant:yr_julian	const GYR_S: f64 = 3.15576e16;
 crates/sse-place/src/model.rs	new:i_earth	const I_EARTH: f64 = L_SUN / (4.0 * m::PI * AU * AU);
 crates/sse-place/src/model.rs	substance:h2o/phases.triple_point_pa	if p_pa >= 611.657 && tsurf >= 273.15 && tsurf <= boil {
-crates/sse-sift/src/sifter.rs	constant:yr_julian	const YEAR: f64 = 31_557_600.0;
-crates/sse-surface/src/climate.rs	constant:G	const G: f64 = 6.6743e-11;
 crates/sse-surface/src/climate.rs	constant:M_earth	const M_EARTH_KG: f64 = 5.9722e24;
-crates/sse-surface/src/climate.rs	constant:R_earth_mean	const R_EARTH_M: f64 = 6.371e6;
 crates/sse-surface/src/climate.rs	constant:S_sun	1361.0 / (a_au * a_au)
 crates/sse-surface/src/climate.rs	constant:T0C	.or_else(|| (b.oceans > 0.0 && t > 273.15 && t < 373.0).then(|| "water".to_string()));
-crates/sse-surface/src/cover.rs	constant:R_gas	pub(crate) const R_GAS: f64 = 8.314462618;
+crates/sse-surface/src/cover.rs	constant:R_gas	const R_GAS: f64 = 8.314462618;
 crates/sse-surface/src/cover.rs	constant:atm	1.0 / (1.0 / 373.15 - R_GAS / l * m::ln(p_bar.max(1e-12) / 1.01325))
 crates/sse-surface/src/cover.rs	constant:day	2.0 * m::PI * (env.reference_radius_m + 0.5 * (lo + hi)) / wind.max(1e-6) / 86400.0;
 crates/sse-surface/src/cover.rs	constant:g0	let max_relief_m = s.impacts.volcanism.shield_height_m * (9.81 / g);
@@ -223,12 +150,8 @@ crates/sse-surface/src/frames.rs	substance:h2o/phases.density_solid	const RHO_IC
 crates/sse-surface/src/impacts.rs	constant:M_earth	const M_EARTH_KG: f64 = 5.972e24;
 crates/sse-surface/src/impacts.rs	constant:R_earth_mean	const R_EARTH_KM: f64 = 6371.0;
 crates/sse-surface/src/impacts.rs	constant:g0	let h = v.shield_height_m * (9.81 / field.g) * grow.max(0.05);
-crates/sse-surface/src/lib.rs	constant:G	const G: f64 = 6.6743e-11;
-crates/sse-surface/src/lib.rs	constant:M_earth	pub(crate) const M_EARTH_KG: f64 = 5.9722e24;
+crates/sse-surface/src/lib.rs	constant:M_earth	const M_EARTH_KG: f64 = 5.9722e24;
 crates/sse-surface/src/lib.rs	constant:M_sun	const M_SUN_KG: f64 = 1.98892e30;
-crates/sse-surface/src/lib.rs	constant:R_earth_mean	pub(crate) const R_EARTH_M: f64 = 6.371e6;
-crates/sse-surface/src/lib.rs	constant:T0C	const T_MELT_ICE_K: f64 = 273.15;
-crates/sse-surface/src/lib.rs	constant:au	const AU_M: f64 = 1.495978707e11;
 crates/sse-surface/src/lib.rs	constant:yr_julian	const GYR_S: f64 = 3.15576e16;
 crates/sse-surface/src/lib.rs	new:k_ice_651	const K_ICE_651: f64 = 651.0;
 crates/sse-surface/src/lib.rs	new:rho_rock	const RHO_ROCK: f64 = 3500.0;
@@ -242,7 +165,6 @@ crates/sse-surface/src/tubes.rs	constant:g0	let gscale = 9.81 / g;
 crates/sse-surface/src/wear.rs	new:rho_mantle	const RHO_MANTLE: f64 = 3300.0;
 crates/sse-surface/src/wear.rs	new:rho_rock	const RHO_ROCK: f64 = 2700.0;
 crates/sse-surface/src/wear.rs	new:rho_sediment	const RHO_SEDIMENT: f64 = 2300.0;
-crates/sse-survey/src/lib.rs	constant:day	pub const DAY: f64 = 86_400.0;
 crates/sse-survey/src/lib.rs	new:photon_550	pub const PHOTON_550: f64 = 6.626_070_15e-34 * C / 550e-9;
 crates/sse-survey/src/lib.rs	unit:h	pub const HOUR: f64 = 3600.0;
 crates/sse-time/src/binary.rs	constant:R_sun	pub const RSUN_AU: f64 = 0.004_650_47;
@@ -257,7 +179,6 @@ crates/sse-time/src/epoch.rs	constant:yr_julian	let tau = tau_s / 3.155_76e7;
 crates/sse-time/src/kepler.rs	constant:G	pub const G: f64 = 4.0 * m::PI * m::PI;
 crates/sse-trigger/src/intents.rs	constant:yr_julian	pub const YEAR_S: i64 = 31_557_600;
 crates/sse-weather/src/aerosols.rs	constant:R_gas	const R_GAS: f64 = 8.314462618;
-crates/sse-weather/src/aerosols.rs	constant:day	const DAY_S: f64 = 86_400.0;
 crates/sse-weather/src/aerosols.rs	constant:yr_julian	const YEAR_DAYS: f64 = 365.25;
 crates/sse-weather/src/aerosols.rs	substance:so2/molar_mass	const M_SO2: f64 = 0.064066;
 crates/sse-weather/src/circulation.rs	constant:R_gas	const R_GAS: f64 = 8.314462618;
@@ -265,9 +186,7 @@ crates/sse-weather/src/formations.rs	constant:R_earth_mean	size_km: 2500.0 * c.r
 crates/sse-weather/src/formations.rs	constant:T0C	cell.precip_kind = if t < 273.15 {
 crates/sse-weather/src/formations.rs	constant:T0C	tc.min_sst_k - 273.15,
 crates/sse-weather/src/formations.rs	constant:day	let s = dt * 86_400.0;
-crates/sse-weather/src/giants.rs	constant:G	const G: f64 = 6.6743e-11;
 crates/sse-weather/src/giants.rs	constant:M_earth	const M_EARTH_KG: f64 = 5.9722e24;
-crates/sse-weather/src/giants.rs	constant:day	const DAY_S: f64 = 86_400.0;
 crates/sse-weather/src/giants.rs	constant:yr_julian	const YEAR_D: f64 = 365.25;
 crates/sse-weather/src/hooks.rs	constant:R_gas	let cp = 3.5 * 8.314462618 / c.mean_molar_kg;
 crates/sse-weather/src/rules.rs	constant:T0C	if at(&sea.t_k) < 273.15 {
