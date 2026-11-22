@@ -20,6 +20,7 @@ pub mod hazards;
 pub mod kepler;
 pub mod scenario;
 pub mod sky;
+pub mod voyage;
 
 use kepler::{Elements, V3};
 use serde::{Deserialize, Serialize};
@@ -63,6 +64,9 @@ pub struct NavSettings {
     /// The Window's sensors and brightness constants (V8).
     #[serde(default)]
     pub window: sky::WindowSettings,
+    /// Voyages between stars (V8 part 3).
+    #[serde(default)]
+    pub voyage: voyage::VoyageSettings,
 }
 
 #[derive(Clone, PartialEq, Debug, Serialize, Deserialize)]
@@ -205,6 +209,9 @@ pub struct Ship {
     /// Most stellar flux the ship can shed, W/m².
     #[serde(default = "flux")]
     pub flux_limit_w_m2: f64,
+    /// A jump drive (a pack's FTL rule), if the ship has one.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub jump: Option<voyage::JumpDrive>,
 }
 fn reserve() -> f64 {
     0.1

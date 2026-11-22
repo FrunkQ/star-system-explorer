@@ -1101,6 +1101,46 @@ pub enum Request {
         #[ts(optional)]
         t_myr: Option<f64>,
     },
+    /// Voyages between stars (V8 part 3): the cheapest chain of legs for one
+    /// ship from a star system `from` to `to`, or with no `to` the nearest
+    /// system not in `visited` (ties go to the shorter path, then to the one
+    /// farther from `home`). Legs are jumps (the ship's jump drive, a pack
+    /// rule) or flights there for real (special relativity). `known_fuel`
+    /// maps system addresses to the fuel the crew knows of there; `surveyed`
+    /// lists systems known to be dry; `sensed_fuel` gives the odds (0 to 1)
+    /// of fuel where the ship's sensors have looked (else the star's own
+    /// giant-planet odds); `gambles` lets a plan hope for fuel in unsurveyed
+    /// systems at odds above the pack's floor. `minimise` is `home_time`, `ship_time`, `fuel` or
+    /// `legs`. Read only; refusals come back in words.
+    PlanVoyage {
+        from: String,
+        #[serde(default)]
+        #[ts(optional)]
+        to: Option<String>,
+        #[serde(default)]
+        #[ts(optional)]
+        home: Option<String>,
+        #[ts(type = "unknown")]
+        ship: serde_json::Value,
+        #[serde(default)]
+        #[ts(optional)]
+        minimise: Option<String>,
+        #[serde(default)]
+        #[ts(optional)]
+        visited: Option<Vec<String>>,
+        #[serde(default)]
+        #[ts(optional)]
+        known_fuel: Option<std::collections::BTreeMap<String, Vec<String>>>,
+        #[serde(default)]
+        #[ts(optional)]
+        sensed_fuel: Option<std::collections::BTreeMap<String, f64>>,
+        #[serde(default)]
+        #[ts(optional)]
+        surveyed: Option<Vec<String>>,
+        #[serde(default)]
+        #[ts(optional)]
+        gambles: Option<bool>,
+    },
     /// Make a fill star permanent: its whole drawn description (address,
     /// cell, frame and slot, birth, mass, companions, abundances, orbit) is
     /// written to the record, so no later change to the fill rules can move
@@ -1302,6 +1342,7 @@ impl Request {
             Request::ExportSector { .. } => "export_sector",
             Request::HaloCell { .. } => "halo_cell",
             Request::StarCell { .. } => "star_cell",
+            Request::PlanVoyage { .. } => "plan_voyage",
             Request::PromoteStar { .. } => "promote_star",
             Request::CampaignTags => "campaign_tags",
             Request::ReadMatter { .. } => "read_matter",
@@ -1561,6 +1602,11 @@ pub fn ops() -> Vec<OpInfo> {
             "star_cell",
             Cost::Medium,
             "grows the campaign's galaxy, then draws one 10 pc cell (tens of systems) with its pins; read only",
+        ),
+        o(
+            "plan_voyage",
+            Cost::Medium,
+            "draws the star cells around the start and the destination (up to 125), then searches legs with fuel carried; read only",
         ),
         o(
             "campaign_tags",
@@ -2285,12 +2331,23 @@ pub enum Response {
         #[ts(type = "unknown")]
         cell: serde_json::Value,
     },
-    /// `star_cell`: `{galaxy, cell, frame, t_myr, cell_pc, expected, pins,
+    /// `star_cell`: `{galaxy, cell, frame, frame_start_myr, t_myr, cell_pc, expected, pins,
     /// systems: [{address, pinned, drawn_in {cell, frame, slot}, mass_msun,
     /// companions, birth_gyr, feh, xyz_pc, state}], model}`.
     StarCelled {
         #[ts(type = "unknown")]
         cell: serde_json::Value,
+    },
+    /// `plan_voyage`: `{ship, means, searched, cells, t_myr, systems: [{address,
+    /// name, xyz_pc, fuel, surveyed, visited}], voyage: {from, to, minimise,
+    /// legs: [{from, to, means, distance_pc, counted_pc?, home_days, ship_days,
+    /// jump_fuel_t, propellant_t, peak_beta?, coast, fictional, gamble,
+    /// refuel?, jump_fuel_left_t, propellant_left_t, words}], distance_pc,
+    /// home_days, ship_days, jump_fuel_t, propellant_t, refuels, gambles,
+    /// fictional, needs?} | null, refusals: [text], model}`.
+    VoyagePlanned {
+        #[ts(type = "unknown")]
+        voyage: serde_json::Value,
     },
     /// `campaign_tags`: `{id: "campaign", tags: {groups, tags}}`.
     CampaignTagsListed {

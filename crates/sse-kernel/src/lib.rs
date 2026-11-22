@@ -24,6 +24,7 @@ mod systems;
 mod tags;
 #[cfg(test)]
 mod tags_tests;
+mod voyage;
 mod weather;
 
 use protocol::*;
@@ -4226,6 +4227,47 @@ impl Kernel {
                     cosmos::star_cell(st, cell, t_myr.unwrap_or(now + elapsed), &pins)
                 })?;
                 Response::StarCelled { cell }
+            }
+            Request::PlanVoyage {
+                from,
+                to,
+                home,
+                ship,
+                minimise,
+                visited,
+                known_fuel,
+                sensed_fuel,
+                surveyed,
+                gambles,
+            } => {
+                let u = self.universe()?;
+                let pins =
+                    cosmos::star_pins(&u.chronicle.state_at(UniverseTime::seconds(i64::MAX)))?;
+                let elapsed = clock::elapsed_myr(&u.chronicle);
+                let (visited, surveyed) =
+                    (visited.unwrap_or_default(), surveyed.unwrap_or_default());
+                let known_fuel = known_fuel.unwrap_or_default();
+                let sensed_fuel = sensed_fuel.unwrap_or_default();
+                let voyage = cosmos::with_stars(&u.seed, &u.root, None, |st, now| {
+                    voyage::plan_voyage(
+                        st,
+                        now + elapsed,
+                        &pins,
+                        voyage::Ask {
+                            from: &from,
+                            to: to.as_deref(),
+                            home: home.as_deref(),
+                            ship: &ship,
+                            minimise: minimise.as_deref(),
+                            visited: &visited,
+                            known_fuel: &known_fuel,
+                            sensed_fuel: &sensed_fuel,
+                            surveyed: &surveyed,
+                            gambles: gambles.unwrap_or(false),
+                        },
+                    )
+                })?;
+                Response::VoyagePlanned { voyage }
             }
             Request::PromoteStar { address } => self.promote_star(&address)?,
             Request::ReadReach { constant, value } => self.read_reach(&constant, value)?,

@@ -10,13 +10,16 @@ import { foamMap } from "../../views/foam-map/src/index.ts";
 import { clusterMap } from "../../views/cluster-map/src/index.ts";
 import { windowView } from "../../views/window/src/index.ts";
 import { storyFinder } from "../../views/story-finder/src/index.ts";
+import { voyageView } from "../../views/voyage/src/index.ts";
 import exploreDoc from "./documents/explore.gm.json";
+import voyagesDoc from "./documents/voyages.gm.json";
 import "./screens.more.css";
 
 /** GM view modules from this track (the sections are registered too, so other screens and Orac can use them alone). */
-export const MORE_VIEWS: readonly ViewModule[] = [explore, route, windowView, galaxyChart, clusterMap, foamMap, storyFinder];
+export const MORE_VIEWS: readonly ViewModule[] = [explore, route, windowView, galaxyChart, clusterMap, foamMap, storyFinder, voyageView];
 
-/** Screens: "Out to the galaxy" on the rail (the galaxy, the galaxies nearby, the cosmic web); its sections switch inside it. Route, Sky from here and Stories are rail screens of their own (shell documents). */
+/** Screens: "Out to the galaxy" on the rail (the galaxy, the galaxies nearby, the cosmic web); its sections switch inside it. Between stars (voyages), Route, Sky from here and Stories are rail screens of their own (shell documents). */
 export const MORE_SCREENS: readonly { value: string; label: string; doc: ScreenDoc }[] = [
   { value: "explore", label: "Out to the galaxy", doc: exploreDoc as unknown as ScreenDoc },
+  { value: "voyages", label: "Between stars", doc: voyagesDoc as unknown as ScreenDoc },
 ];
