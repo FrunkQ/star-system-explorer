@@ -107,11 +107,13 @@ export interface FormationRan {
 
 // ── Shared helpers ──
 
-const M_EARTH = 5.9722e24;
-const M_SUN = 1.98847e30;
-const R_EARTH_M = 6_371_000;
-const R_SUN_M = 695_700_000;
-const AU_M = KM_PER_AU * 1000;
+export const M_EARTH = 5.9722e24;
+export const M_SUN = 1.98847e30;
+export const R_EARTH_M = 6_371_000;
+export const R_SUN_M = 695_700_000;
+export const AU_M = KM_PER_AU * 1000;
+/** The Sun's luminosity (IAU 2015 nominal), in watts. */
+export const L_SUN_W = 3.828e26;
 
 const round = (v: number, d = 3) => Number(v.toPrecision(d));
 
@@ -465,7 +467,7 @@ export function sceneFromResolved(r: SystemResolved, title?: string): SystemScen
   const grown = r.source === "formation";
   const worldOrder = bodies.filter((a) => role(a) !== "star").sort((x, y) => (num(x, "orbit.semi_major_axis") ?? 0) - (num(y, "orbit.semi_major_axis") ?? 0));
   const surf = new Map(r.surfaces.map((s) => [s.address, s]));
-  const nameOf = (a: string) => str(a, "v3.name") ?? (role(a) === "star" ? (stars.length > 1 ? `Star ${stars.indexOf(a) + 1}` : "Star") : `World ${worldOrder.indexOf(a) + 1}`);
+  const nameOf = (a: string) => str(a, "v3.name") ?? str(a, "name") ?? (role(a) === "star" ? (stars.length > 1 ? `Star ${stars.indexOf(a) + 1}` : "Star") : `World ${worldOrder.indexOf(a) + 1}`);
   // Each value is marked by the evidence the kernel holds for it: set in the save (authored, or authored against the
   // physics), from a real catalogue, or the physics' own (resolved by formation, derived by ageing).
   const evOf = (a: string, k: string) => r.evidence?.[a]?.[k];
@@ -496,7 +498,7 @@ export function sceneFromResolved(r: SystemResolved, title?: string): SystemScen
         const t = num(a, "star.effective_temperature");
         if (t !== undefined) out.push(f("teff_k", "Surface", t, "K", srcOf(a, "star.effective_temperature")));
         const l = num(a, "star.luminosity");
-        if (l !== undefined) out.push(f("luminosity_sun", "Luminosity", l / 3.828e26, "L☉", srcOf(a, "star.luminosity")));
+        if (l !== undefined) out.push(f("luminosity_sun", "Luminosity", l / L_SUN_W, "L☉", srcOf(a, "star.luminosity")));
         const ph = str(a, "star.phase");
         if (ph) out.push(f("phase", "Phase", ph.replace(/[-_]/g, " "), undefined, srcOf(a, "star.phase")));
       } else {

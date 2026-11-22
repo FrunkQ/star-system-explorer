@@ -34,7 +34,7 @@ try {
       const shot = async (n) => {
         if (screens) (mkdirSync(screens, { recursive: true }), await page.screenshot({ path: `${screens}/tactile-${n}.png` }));
       };
-      await page.goto(base);
+      await page.goto(base + "#chart");
       await page.waitForSelector("[data-state-hash]:not([data-state-hash=''])", { timeout: 20000 });
 
       // Peek on hover.

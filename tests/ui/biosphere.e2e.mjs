@@ -31,7 +31,7 @@ try {
     const errors = [];
     const gm = await (await browser.newContext({ viewport: { width: 1440, height: 900 } })).newPage();
     gm.on("pageerror", (e) => errors.push(e.message));
-    await gm.goto(base);
+    await gm.goto(base + "#chart");
     await gm.waitForSelector("[data-state-hash]:not([data-state-hash=''])", { timeout: 20000 });
     await go(gm, "life");
     await gm.waitForSelector("[data-biosphere='fixture:earth']", { timeout: 15000 });
@@ -85,7 +85,7 @@ try {
     // Phone.
     const phone = await (await browser.newContext({ viewport: { width: 390, height: 844 }, deviceScaleFactor: 2 })).newPage();
     phone.on("pageerror", (e) => errors.push(`phone: ${e.message}`));
-    await phone.goto(base);
+    await phone.goto(base + "#chart");
     await phone.waitForSelector("[data-state-hash]:not([data-state-hash=''])", { timeout: 20000 });
     await go(phone, "life");
     await phone.waitForSelector("[data-biosphere='fixture:earth']", { timeout: 15000 });

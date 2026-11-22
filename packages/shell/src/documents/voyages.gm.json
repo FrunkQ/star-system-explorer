@@ -6,7 +6,7 @@
   "symbology": "sse.symbology.diagrammatic",
   "vocab": "physics",
   "id": "sse.workspace.gm.voyages",
-  "label": "Between stars",
+  "label": "Voyages",
   "items": [
     {
       "view": "sse.view.voyage",
@@ -21,9 +21,9 @@
     {
       "scale": "system",
       "group": "travel",
-      "label": "Between stars",
+      "label": "Voyages",
       "order": 2,
-      "hint": "Plan a voyage to other stars: jumps or real flight, fuel stops, time at home and aboard"
+      "hint": "Plan a voyage with stops: in this system by real transfers, or between stars by jumps or real flight"
     }
   ]
 }

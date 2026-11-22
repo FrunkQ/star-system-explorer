@@ -30,7 +30,7 @@ try {
     const errors = [];
     const gm = await (await browser.newContext({ viewport: { width: 1440, height: 900 } })).newPage();
     gm.on("pageerror", (e) => errors.push(e.message));
-    await gm.goto(base);
+    await gm.goto(base + "#chart");
     await gm.waitForSelector("[data-state-hash]:not([data-state-hash=''])", { timeout: 20000 });
     const h0 = await gm.locator("[data-state-hash]").getAttribute("data-state-hash");
 
@@ -113,7 +113,7 @@ try {
     // Phone.
     const phone = await (await browser.newContext({ viewport: { width: 390, height: 844 }, hasTouch: true })).newPage();
     phone.on("pageerror", (e) => errors.push(e.message));
-    await phone.goto(base);
+    await phone.goto(base + "#chart");
     await phone.waitForSelector("[data-state-hash]:not([data-state-hash=''])", { timeout: 20000 });
     await go(phone, "compare");
     await phone.getByRole("region", { name: "Size comparison" }).waitFor();
