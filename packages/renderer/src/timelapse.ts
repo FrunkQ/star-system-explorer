@@ -74,6 +74,40 @@ function arrayOf(o: Record<string, unknown>, name: string, len: number): Float32
 
 const gkey = (i: number, j: number, k: number) => (i + 512) * 1048576 + (j + 512) * 1024 + (k + 512);
 
+/** A direction lookup over unit cell centres (buckets about one and a half cells wide), shared with the weather layer. */
+export function dirIndex(dirs: Float32Array, cells: number): { cell: number; grid: Map<number, number[]> } {
+  const cell = Math.sqrt((4 * Math.PI) / cells) * 1.5;
+  const grid = new Map<number, number[]>();
+  for (let i = 0; i < cells; i++) {
+    const k = gkey(Math.floor(dirs[i * 3]! / cell), Math.floor(dirs[i * 3 + 1]! / cell), Math.floor(dirs[i * 3 + 2]! / cell));
+    const b = grid.get(k);
+    if (b) b.push(i);
+    else grid.set(k, [i]);
+  }
+  return { cell, grid };
+}
+
+/** The cell whose centre is nearest a unit direction, or -1 when the lookup has nothing near. */
+export function nearestCell(index: { cell: number; grid: Map<number, number[]> }, d: Float32Array, x: number, y: number, z: number): number {
+  const { cell, grid } = index;
+  const i0 = Math.floor(x / cell);
+  const j0 = Math.floor(y / cell);
+  const k0 = Math.floor(z / cell);
+  let best = -1;
+  let bd = -Infinity;
+  for (let i = i0 - 1; i <= i0 + 1; i++)
+    for (let j = j0 - 1; j <= j0 + 1; j++)
+      for (let k = k0 - 1; k <= k0 + 1; k++) {
+        const b = grid.get(gkey(i, j, k));
+        if (!b) continue;
+        for (const p of b) {
+          const dot = x * d[p * 3]! + y * d[p * 3 + 1]! + z * d[p * 3 + 2]!;
+          if (dot > bd) ((bd = dot), (best = p));
+        }
+      }
+  return best;
+}
+
 /** Read the kernel's reply: typed arrays, frames in time order, a direction lookup built once. */
 export function readFrames(r: RawFrames): TimeLapse {
   const { n, cells } = r.grid;
@@ -91,39 +125,14 @@ export function readFrames(r: RawFrames): TimeLapse {
     })
     .sort((a, b) => a.t_myr - b.t_myr);
   if (!frames.length) throw new Error("surface_frames: no frames");
-  // Lookup grid: buckets about one and a half cells wide.
-  const cell = (Math.sqrt((4 * Math.PI) / cells) * 1.5) as number;
-  const grid = new Map<number, number[]>();
-  for (let i = 0; i < cells; i++) {
-    const k = gkey(Math.floor(dirs[i * 3]! / cell), Math.floor(dirs[i * 3 + 1]! / cell), Math.floor(dirs[i * 3 + 2]! / cell));
-    const b = grid.get(k);
-    if (b) b.push(i);
-    else grid.set(k, [i]);
-  }
+  const index = dirIndex(dirs, cells);
   const events = [...(r.events ?? [])].sort((a, b) => a.t_myr - b.t_myr);
-  return { n, cells, dirs, frames, events, pending: r.pending ?? [], why: r.why ?? [], index: { cell, grid } };
+  return { n, cells, dirs, frames, events, pending: r.pending ?? [], why: r.why ?? [], index };
 }
 
 /** The cell a unit direction falls in (nearest centre). */
 export function cellOf(tl: TimeLapse, x: number, y: number, z: number): number {
-  const { cell, grid } = tl.index;
-  const d = tl.dirs;
-  const i0 = Math.floor(x / cell);
-  const j0 = Math.floor(y / cell);
-  const k0 = Math.floor(z / cell);
-  let best = -1;
-  let bd = -Infinity;
-  for (let i = i0 - 1; i <= i0 + 1; i++)
-    for (let j = j0 - 1; j <= j0 + 1; j++)
-      for (let k = k0 - 1; k <= k0 + 1; k++) {
-        const b = grid.get(gkey(i, j, k));
-        if (!b) continue;
-        for (const p of b) {
-          const dot = x * d[p * 3]! + y * d[p * 3 + 1]! + z * d[p * 3 + 2]!;
-          if (dot > bd) ((bd = dot), (best = p));
-        }
-      }
-  return best;
+  return nearestCell(tl.index, tl.dirs, x, y, z);
 }
 
 /** The keyframes around `t`: the earlier, the later and the blend weight toward the later (0 at the earlier). */
