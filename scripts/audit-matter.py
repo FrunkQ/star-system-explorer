@@ -54,7 +54,7 @@ HOME = os.path.join("crates", "sse-reference")
 # Where the sheet itself lives: values here are the source, not copies.
 # packs/base-sol is the catalogued Solar System: measured body facts, each
 # cited, checked against the sheet by scripts/build-base-sol.py.
-SHEET_HOMES = (HOME, os.path.join("packs", "base-reference"), os.path.join("packs", "base-sol"))
+SHEET_HOMES = (HOME, os.path.join("packs", "base-reference"), os.path.join("packs", "base-sol"), os.path.join("crates", "sse-core", "src", "sheet.rs"))
 
 # Quantity catalogue: id, name, canonical value, unit, source, relative
 # tolerance for a match, and the unit scales the code might write it in.

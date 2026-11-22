@@ -77,20 +77,6 @@ crates/sse-codes/src/plan.rs	constant:M_earth	const M_EARTH: f64 = 5.972_2e24;
 crates/sse-codes/src/plan.rs	constant:R_earth_mean	const R_EARTH: f64 = 6.371_0e6;
 crates/sse-codes/src/plan.rs	new:exosphere_k	pub const EXOSPHERE_K: f64 = 1000.0;
 crates/sse-core/src/constants.rs	constant:k_B	k_b: 1.380_649e-23,
-crates/sse-core/src/quantity.rs	constant:G	pub const G: f64 = 6.674_30e-11;
-crates/sse-core/src/quantity.rs	constant:GM_earth	pub const GM_EARTH: f64 = 3.986_004e14;
-crates/sse-core/src/quantity.rs	constant:GM_jup	pub const GM_JUPITER: f64 = 1.266_865_3e17;
-crates/sse-core/src/quantity.rs	constant:GM_sun	pub const GM_SUN: f64 = 1.327_124_4e20;
-crates/sse-core/src/quantity.rs	constant:L_sun	pub const L_SUN: f64 = 3.828e26;
-crates/sse-core/src/quantity.rs	constant:R_earth_equatorial	pub const R_EARTH: f64 = 6.378_1e6;
-crates/sse-core/src/quantity.rs	constant:R_jup_equatorial	pub const R_JUPITER: f64 = 7.149_2e7;
-crates/sse-core/src/quantity.rs	constant:R_sun	pub const R_SUN: f64 = 6.957e8;
-crates/sse-core/src/quantity.rs	constant:T0C	add("degc", "°C", D::TEMPERATURE, 1.0, 273.15);
-crates/sse-core/src/quantity.rs	constant:au	pub const AU: f64 = 149_597_870_700.0;
-crates/sse-core/src/quantity.rs	constant:c	pub const C: f64 = 299_792_458.0;
-crates/sse-core/src/quantity.rs	constant:day	pub const DAY: f64 = 86_400.0;
-crates/sse-core/src/quantity.rs	constant:sigma_SB	pub const STEFAN_BOLTZMANN: f64 = 5.670_374_419e-8; // CODATA 2018, derived exactly from h, k, c
-crates/sse-core/src/quantity.rs	constant:yr_julian	pub const JULIAN_YEAR: f64 = 365.25 * DAY;
 crates/sse-cosmos/src/cosmology.rs	constant:pc	pub const MPC_M: f64 = 3.085_677_581_491_367e22;
 crates/sse-cosmos/src/cosmology.rs	constant:yr_julian	pub const YEAR_S: f64 = 31_557_600.0;
 crates/sse-cosmos/src/cosmology.rs	new:rho_crit_h2	pub const RHO_CRIT_H2: f64 = 2.775_366e11;
