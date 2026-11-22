@@ -576,6 +576,7 @@ pub(crate) fn star_cell(
         "galaxy": st.galaxy.to_string(),
         "cell": cell,
         "frame": frame,
+        "frame_start_myr": frame as f64 * st.params.frame_myr,
         "t_myr": t_myr,
         "cell_pc": st.params.cell_pc,
         "expected": st.expected(cell, frame),

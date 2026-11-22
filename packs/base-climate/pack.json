@@ -551,6 +551,15 @@
      "probe_obliquity_deg": 1.0,
      "drawn_inclination_deg": 3.0,
      "source": "Spin axis s' = alpha (n.s)(s x n), alpha = K (kappa + beta), K = (3/2) E_d GM/(omega a^3), kappa = (1-e^2)^-3/2, beta = g_L (a/a_L)^3 m_L/M (Zeebe 2022 eqs. 1-5; Earth E_d 0.00327381, Table 1). Summer energy over days of at least 275 W/m2 (Huybers 2006). E_d scaled as spin squared, g_L 1 (it reproduces Earth's 50.4 arcsec/yr with the Moon), the linear ice-balance response to summer energy, the 400 kyr window and the drawn sibling inclinations are ours (docs/fudges.md)."
+    },
+    "exchange": {
+     "trigger_margin_k": 2.0,
+     "bisection_steps": 30,
+     "lowest_frost_k": 10.0,
+     "migration_steps": 40,
+     "migration_span_yr": 1000000.0,
+     "frost_emissivity": 0.9,
+     "source": "W8 part 2: frost pins the ground at the main gas's frost point (Fray and Schmitt 2009's curves on the master data sheet); latent heat from the curve's slope; the gas's partial pressure is its inventory less the ground's ice (vapour-pressure buffering, Bertrand and Forget 2016; Forget et al. 2017). Without ground ice the air is the inventory and the given mean pressure holds; with it, a year's change carries forward until a band would run out."
     }
    }
   }

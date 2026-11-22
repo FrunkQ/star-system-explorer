@@ -46,6 +46,27 @@ pub struct Substance {
     pub phases: serde_json::Map<String, serde_json::Value>,
 }
 
+/// `sse.volatile.exchange` (W8 part 2): ice of the air's main gas between
+/// ground and air.
+#[derive(Clone, PartialEq, Debug, Serialize, Deserialize)]
+pub struct ExchangeSettings {
+    /// Run the exchange when the main gas's frost point comes within this of
+    /// the coldest band of the plain cycle, K.
+    pub trigger_margin_k: f64,
+    /// Most steps of the frost-point search per time step (regula falsi).
+    pub bisection_steps: u32,
+    /// The coldest frost point the search considers, K.
+    pub lowest_frost_k: f64,
+    /// With ground ice given: at most this many carried-forward years, and
+    /// at most this long in all.
+    pub migration_steps: u32,
+    pub migration_span_yr: f64,
+    /// Thermal emissivity of a frosted band (one value for every ice until
+    /// the sheet carries per-ice optics).
+    pub frost_emissivity: f64,
+    pub source: String,
+}
+
 /// The base master data sheet (`packs/base-reference`).
 pub fn base_reference_pack() -> sse_pack::PackManifest {
     sse_pack::PackManifest::from_json(include_str!("../../../packs/base-reference/pack.json"))
@@ -470,6 +491,7 @@ pub struct ClimateSettings {
     pub saltation: SaltationSettings,
     pub areas: Areas,
     pub forcing: ForcingSettings,
+    pub exchange: ExchangeSettings,
     pub defaults: Defaults,
     /// Filled from the master data sheet (`volatile_species`); a climate
     /// pack may not list its own (retired with W8).
