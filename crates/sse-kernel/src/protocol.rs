@@ -551,10 +551,19 @@ pub enum Request {
     /// surface), the bubble's flaring, whether a moon sits inside, outside or
     /// crosses its host's bubble, and each layer's induced field. Conditions
     /// are handed in until MF2 publishes each world's field as facts, when
-    /// `system` and `body` addressing joins.
+    /// `system` and `body` addressing joins. `fixture: "solar-system"`
+    /// reads the Solar System's six magnetised planets as measured
+    /// (`packs/base-sol`, `tests/fixtures/magnetic/measured-fields.json`,
+    /// `crates/sse-field/data/sol-field.json`) and adds each one's `name`
+    /// and `field` (reference radius, Gauss coefficients g10, g11, h11 in T,
+    /// tilt, offset, polarity, grade and sources).
     ReadField {
+        #[serde(default)]
         #[ts(type = "unknown[]")]
         bodies: Vec<serde_json::Value>,
+        #[serde(default)]
+        #[ts(optional)]
+        fixture: Option<String>,
     },
     /// Magnitudes in photometric bands (night sky Y2, light side): for each
     /// of `stars` (a photosphere: `temperature_k` with `radius_m` or

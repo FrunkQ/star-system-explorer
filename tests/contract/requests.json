@@ -1618,6 +1618,14 @@
  },
  {
   "op": "read_field",
+  "fixture": "solar-system"
+ },
+ {
+  "op": "read_field",
+  "fixture": "nope"
+ },
+ {
+  "op": "read_field",
   "bodies": [ { "address": "u:t/sys:3/body:0", "radius_m": -1.0, "wind": { "density_kg_m3": 1e-21, "speed_m_s": 4e5 } } ]
  },
  {

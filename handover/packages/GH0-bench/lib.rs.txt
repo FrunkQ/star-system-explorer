@@ -1,0 +1,112 @@
+//! GH0 throwaway: time an assembly tree and satellite orbits.
+use sse_core::math as m;
+use sse_core::{Address, Draws, Seed, Stream};
+use sse_cosmos::cosmology::{Cosmology, Params};
+use sse_cosmos::galaxy::{evolve, GalaxyParams};
+use sse_cosmos::haloes::{correa, poisson, Halo};
+
+fn halo(c: &Cosmology, mass: f64, addr: String) -> Halo {
+    let (alpha, beta) = correa(c, mass, 0.0);
+    Halo { address: addr, mass, position: [0.0; 3], alpha, beta, z_half: 1.0, spin: 0.035, mergers: vec![], neighbour: None }
+}
+
+/// Draw the tree down to psi_min; grow G3 galaxies for the first `grow` progenitors.
+/// Returns the number of progenitors drawn.
+#[no_mangle]
+pub extern "C" fn tree(psi_min: f64, grow: u32) -> f64 {
+    let c = Cosmology::new(Params::default());
+    let gp = GalaxyParams::default();
+    let host = halo(&c, 1.0e12, "u:b/halo:host".into());
+    let d = Draws::new(Seed::from_text("gh0"), "u:b/halo:host".parse::<Address>().unwrap(), Stream::new("gh0.tree.v1").unwrap());
+    let (n0, al, k) = (0.21, 0.8, 6.283);
+    let shmf = |l: f64| { let x = m::exp(l) / al; n0 * m::pow(x, -al) * m::exp(-k * x * x * x) };
+    let decades = -m::log10(psi_min);
+    let nb = m::ceil(decades * 8.0) as u64;
+    let step = decades * m::ln(10.0) / nb as f64;
+    let lo0 = m::ln(psi_min);
+    let mut count = 0u64;
+    let mut grown = 0u32;
+    let mut acc = 0.0;
+    for j in 0..nb {
+        let lo = lo0 + step * j as f64;
+        let lam = sse_cosmos::cosmology::quad(&shmf, lo, lo + step, 8);
+        let n = poisson(&d, j * 65536, lam);
+        for i in 0..n {
+            count += 1;
+            let k0 = j * 65536 + 16 + i * 8;
+            let psi = m::exp(lo + step * d.unit(k0));
+            let f = psi + (1.0 - psi) * d.unit(k0 + 1);
+            let (mut zl, mut zh) = (0.0, 20.0f64);
+            for _ in 0..60 { let mid = 0.5 * (zl + zh); if host.mass_at(mid) > f * 1.0e12 { zl = mid } else { zh = mid } }
+            acc += zl;
+            if grown < grow {
+                grown += 1;
+                let h = halo(&c, psi * 1.0e12, format!("u:b/halo:p{j}x{i}"));
+                acc += evolve(&c, &gp, &h).now.stars;
+            }
+        }
+    }
+    if acc.is_nan() { -1.0 } else { count as f64 }
+}
+
+const G: f64 = 4.498_502e-6; // kpc^3 / (Msun Gyr^2)
+
+fn accel(p: [f64; 3], v: [f64; 3], msat: f64) -> [f64; 3] {
+    let (x, y, z) = (p[0], p[1], p[2]);
+    let r = m::sqrt(x * x + y * y + z * z).max(1e-3);
+    // NFW, M200 1e12, c 10, r200 211 kpc.
+    let rs = 21.1;
+    let mnorm = 1.0e12 / (m::ln(11.0) - 10.0 / 11.0);
+    let s = r / rs;
+    let menc = mnorm * (m::ln(1.0 + s) - s / (1.0 + s));
+    let mut a = [-G * menc * x / (r * r * r), -G * menc * y / (r * r * r), -G * menc * z / (r * r * r)];
+    // Hernquist bulge 1e10, a 0.7.
+    let hb = -G * 1.0e10 / ((r + 0.7) * (r + 0.7) * r);
+    for i in 0..3 { a[i] += hb * p[i]; }
+    // Miyamoto-Nagai disc 5e10, a 3, b 0.3.
+    let zb = m::sqrt(z * z + 0.09);
+    let den = x * x + y * y + (3.0 + zb) * (3.0 + zb);
+    let den32 = den * m::sqrt(den);
+    a[0] += -G * 5.0e10 * x / den32;
+    a[1] += -G * 5.0e10 * y / den32;
+    a[2] += -G * 5.0e10 * z * (3.0 + zb) / (zb * den32);
+    // Chandrasekhar drag in the NFW halo (isothermal-ish sigma).
+    let rho = mnorm / (4.0 * m::PI * rs * rs * rs * s * (1.0 + s) * (1.0 + s));
+    let vv = m::sqrt(v[0] * v[0] + v[1] * v[1] + v[2] * v[2]).max(1e-3);
+    let sigma = m::sqrt(G * menc / r / 2.0);
+    let xx = vv / (sigma * m::sqrt(2.0));
+    let lnl = m::ln(1.0 + 1.0e12 / msat);
+    let fac = m::erf(xx) - 2.0 * xx / m::sqrt(m::PI) * m::exp(-xx * xx);
+    let df = -4.0 * m::PI * G * G * msat * rho * lnl * fac / (vv * vv * vv);
+    for i in 0..3 { a[i] += df * v[i]; }
+    a
+}
+
+/// Leapfrog (kick-drift-kick) n bodies for `steps` steps over 13.8 Gyr. Returns a checksum.
+#[no_mangle]
+pub extern "C" fn orbits(n: u32, steps: u32) -> f64 {
+    let dt = 13.8 / steps as f64;
+    let mut sum = 0.0;
+    for b in 0..n {
+        let r0 = 50.0 + (b % 150) as f64;
+        let mut p = [r0, 0.0, 0.1 * r0];
+        let vc = m::sqrt(G * 3.0e11 / r0);
+        let mut v = [0.0, 0.6 * vc, 0.1 * vc];
+        let msat = 1.0e8 + 1.0e7 * b as f64;
+        let mut a = accel(p, v, msat);
+        for _ in 0..steps {
+            for i in 0..3 { v[i] += 0.5 * dt * a[i]; p[i] += dt * v[i]; }
+            a = accel(p, v, msat);
+            for i in 0..3 { v[i] += 0.5 * dt * a[i]; }
+        }
+        sum += p[0] + p[1] + p[2];
+    }
+    sum
+}
+
+/// Setup only (the cosmology).
+#[no_mangle]
+pub extern "C" fn setup() -> f64 {
+    let c = Cosmology::new(Params::default());
+    c.age_gyr()
+}
