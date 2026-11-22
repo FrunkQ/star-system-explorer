@@ -1583,6 +1583,76 @@
         "range": null
       },
       {
+        "description": "magnetic field strength where a field line crosses the magnetic equator",
+        "dim": [
+          0,
+          1,
+          -2,
+          -1,
+          0,
+          0,
+          0
+        ],
+        "id": "belts.equatorial_field",
+        "range": null
+      },
+      {
+        "description": "the Kennel-Petschek cap on a belt: normalisation C of the spectrum C E^-1 per cm² s sr keV",
+        "dim": [
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0
+        ],
+        "id": "belts.limit_normalisation",
+        "range": null
+      },
+      {
+        "description": "least energy, MeV, an electron needs to cross a shield",
+        "dim": [
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0
+        ],
+        "id": "belts.penetration_energy_mev",
+        "range": null
+      },
+      {
+        "description": "mass per area of a shield in front of a dose point",
+        "dim": [
+          -2,
+          1,
+          0,
+          0,
+          0,
+          0,
+          0
+        ],
+        "id": "belts.shield_column",
+        "range": null
+      },
+      {
+        "description": "length along the field line over which whistler waves grow (D R_p)",
+        "dim": [
+          1,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0
+        ],
+        "id": "belts.wave_path",
+        "range": null
+      },
+      {
         "description": "time since the body formed",
         "dim": [
           0,
@@ -1902,6 +1972,48 @@
           0
         ],
         "id": "chem.temperature",
+        "range": null
+      },
+      {
+        "description": "elementary charge, read from the master data sheet",
+        "dim": [
+          0,
+          0,
+          1,
+          1,
+          0,
+          0,
+          0
+        ],
+        "id": "constant.e",
+        "range": null
+      },
+      {
+        "description": "vacuum permittivity, read from the master data sheet",
+        "dim": [
+          -3,
+          -1,
+          4,
+          2,
+          0,
+          0,
+          0
+        ],
+        "id": "constant.eps0",
+        "range": null
+      },
+      {
+        "description": "electron mass, read from the master data sheet",
+        "dim": [
+          0,
+          1,
+          0,
+          0,
+          0,
+          0,
+          0
+        ],
+        "id": "constant.m_e",
         "range": null
       },
       {

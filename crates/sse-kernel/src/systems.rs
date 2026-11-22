@@ -471,9 +471,25 @@ pub(crate) fn read_spectrum(
     Ok(Response::SpectrumRead { spectra })
 }
 
-/// What stops the wind at each body (MF6 part 1).
-pub(crate) fn read_field(bodies: Vec<serde_json::Value>) -> Out {
-    let set = sse_field::Settings::default();
+/// What stops the wind at each body (MF6 part 1), its shielding (MF7) and
+/// belts (MF7 part 2, with the electron's constants from the data sheet).
+pub(crate) fn read_field(bodies: Vec<serde_json::Value>, sheet: &sse_reference::Reference) -> Out {
+    let electron = match (
+        sheet.constant("m_e"),
+        sheet.constant("e"),
+        sheet.constant("eps0"),
+    ) {
+        (Some(mass_kg), Some(charge_c), Some(eps0)) => Some(sse_field::Electron {
+            mass_kg,
+            charge_c,
+            eps0,
+        }),
+        _ => None,
+    };
+    let set = sse_field::Settings {
+        electron,
+        ..sse_field::Settings::default()
+    };
     let mut out = vec![];
     for (n, v) in bodies.into_iter().enumerate() {
         let b: sse_field::Body =

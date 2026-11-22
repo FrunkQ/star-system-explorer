@@ -7,6 +7,7 @@
 pub mod activity;
 pub mod air;
 pub mod aurora;
+pub mod belts;
 pub mod chem;
 pub mod climate;
 pub mod common;
@@ -49,6 +50,7 @@ pub fn atoms() -> Vec<Box<dyn sse_flow::Atom>> {
         .chain(shield::atoms())
         .chain(extinction::atoms())
         .chain(aurora::atoms())
+        .chain(belts::atoms())
         .chain(air::atoms())
         .chain(chem::atoms())
         .collect()
@@ -352,6 +354,14 @@ pub const KIND_DESCRIPTIONS: &[(&str, &str)] = &[
     ("shield.distance", "distance from a body's centre at which shielding is asked for"),
     ("shield.magnetic_latitude", "latitude measured from a body's magnetic equator"),
     ("shield.cutoff_rigidity", "least momentum per charge a cosmic ray needs to arrive (Størmer cut-off)"),
+    ("belts.equatorial_field", "magnetic field strength where a field line crosses the magnetic equator"),
+    ("belts.wave_path", "length along the field line over which whistler waves grow (D R_p)"),
+    ("belts.limit_normalisation", "the Kennel-Petschek cap on a belt: normalisation C of the spectrum C E^-1 per cm² s sr keV"),
+    ("belts.shield_column", "mass per area of a shield in front of a dose point"),
+    ("belts.penetration_energy_mev", "least energy, MeV, an electron needs to cross a shield"),
+    ("constant.m_e", "electron mass, read from the master data sheet"),
+    ("constant.e", "elementary charge, read from the master data sheet"),
+    ("constant.eps0", "vacuum permittivity, read from the master data sheet"),
     ("shield.space_share", "share of the free-space cosmic-ray dose carried by particles above the cut-off"),
     ("shield.ground_share", "share of the no-cut-off ground dose left under a thick air at the cut-off"),
     ("shield.free_space_dose_rate", "cosmic-ray dose rate in open space at the body's orbit, unshielded"),
