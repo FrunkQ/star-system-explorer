@@ -51,3 +51,34 @@ keyframes, two moving plates, an ice age and an eruption:
 - The live weather layer from `weather {want: "field"}` (cloud and wind per tile).
 - Mountains rising as heights change: per-frame hill shading from the frame's elevation.
 - River channels when a flow-routing field is sent.
+
+# R6 part 2: Earth through time on the Body screen
+
+## What was built
+- **`session.surfaceFrames({fixture | system + body, at_s?, detail?, frames_max?})`** calls the kernel's
+  `surface_frames` (proven core, PR 135).
+- **`Body.svelte`**:
+  - A reactive `lapse` API that the chart room's `BodyTimeline.svelte` drives: {loaded, loading, error, layer, t_myr,
+    layers, frames, load(), close(), setLayer(), setTime(), pick()}.
+  - The loader reads the current world's frames and attaches them to the globe runtime. It attaches them again if the
+    globe remounts, and closes them when a different world is picked.
+  - An interim control in one node, `[data-lapse-controls]`: a "Through time" button, a layer select, a "When" range,
+    a "Back to today" button and the layer's limits with the kernel's pending notes. BodyTimeline replaces this node.
+- **Volcanism** reads three recency fields (each 0 to 1, where 1 means it happened at this frame): `ridge` (new ocean
+  crust, drawn faint), `arc` (volcanoes over sinking plates) and `vent` (plumes, floods, shields and plains, drawn
+  bright). These follow proven core's split of vent.
+- **Pending notes** come as sentences (the kernel's limit lines). Each note goes to the layers whose fields it mentions.
+
+## Evidence
+- `timelapse.test.ts` passes 6 of 6. The new test uses the kernel's Earth (frames_max 12) and checks:
+  - every layer has its fields, and collisions are in the event list;
+  - today's land share is between 15% and 50%;
+  - the south pole is more than 30 K colder than the equator and carries ice;
+  - the same request gives the same plates.
+- `render.e2e` chromium:
+  - "Through time" reads Earth's history in about 2 s;
+  - the plates and ice layers draw 3.97 billion years ago and differ from today;
+  - the words give the time, the layer and the land share;
+  - "Back to today" restores the present;
+  - the state hash is unchanged.
+- Screens are in `R6-screens/`.
