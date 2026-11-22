@@ -646,6 +646,18 @@ energy balance). Details in `handover/packages/W7a.md`.
 | sheet condensed colours of CH4, NH3, N2, CO and Ar | Near-white authored colours (the climate pack's, moved) | No measured cloud colours yet | Optical constants per ice (MP13) | authored |
 | one latent heat per cloud substance | `latent_j_kg` is the heat of vaporisation where the sheet has one, else of sublimation, else the curve's slope at the triple point | The cloud's latent flux uses one number; frost points read the curve itself | Phase-resolved latent heat (liquid or solid by the band's temperature) | documented |
 
+### Moving ices (W8 part 2: `sse.volatile.exchange`, `crates/sse-climate/src/exchange.rs`, `climate.exchange`)
+
+| Where | Instead of the physics | Why | Real physics to replace it | Status |
+|---|---|---|---|---|
+| `exchange.frost_emissivity` 0.9 | One thermal emissivity for every frost, times the world's own greenhouse (its outgoing flux at the mean temperature over σT̄⁴) | The climate's outgoing-longwave line A + B T, fitted at the mean, overstates what a 148 K polar night radiates (about twice σT⁴ on Mars), which doubled Mars's caps | Per-ice emissivity on the sheet (CO2 frost 0.8 to 0.95, N2 ice 0.5 to 0.8, Lewis et al. 2020) and a radiative column | ours: 0.9 taken from the observed range, after which Mars came out at 29 % (61 % with the linear line) |
+| frosted bands' sunlight | A frosted band absorbs with the climate's albedo, not its ice's | No per-ice albedo yet; Pluto's 0.72 is its whole-world value | Ice albedo per species and grain size (S19) | documented |
+| one gas | Only the air's main gas exchanges; minor ices (Mars's water, Pluto's methane and CO) do not | The main gas sets the pressure; the others ride on it | One exchange per species, each with its partial pressure | known gap |
+| no ground ice given | The air is the inventory, and each spin-up year restores the given mean pressure | The world's given pressure is its observed mean; without it Mars's perennial cap would draw the air down without limit | Ground inventories from formation and outgassing (S17, F stages) | documented |
+| migration (`migration_steps` 40, `migration_span_yr` 1 Myr) | A year's change per band is carried forward until the first band that is losing ice would run out, then the ground's total is restored | Hundreds of orbits of stepping cost too much at the Orbit level; the equilibrium is what the surface reads | Stepping through the obliquity cycle (W9's spin history), with flow and basins (S17) | documented |
+| isothermal ice at the climate's temperature | A buffered world's ice sits at the frost point the climate's mean temperature gives: Pluto's fixture at 40 K holds about 12 Pa, where the real ice at 37 K holds about 1 Pa | The bright ice is colder than the darker bare ground; with one albedo the ice takes the mean | Albedo contrast between ice and bare ground | known gap |
+| `Curve` table | The vapour curve is read from a 1,024-node table in 1/T per cycle | The exchange reads it thousands of times a year; ln P is near-linear in 1/T | None needed | documented |
+
 ### Orbital forcing and ice ages (W9 part 2, `crates/sse-climate/src/forcing.rs`, `climate.forcing`, `crates/sse-kernel/src/ice_ages.rs`)
 
 | Where | Instead of the physics | Why | Real physics to replace it | Status |
