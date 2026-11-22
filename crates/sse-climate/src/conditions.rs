@@ -61,6 +61,12 @@ pub struct Conditions {
     /// Heat from inside, W/m² (giants radiate several times what they absorb).
     #[serde(default)]
     pub internal_flux_w_m2: f64,
+    /// Ice of the air's gases lying on the ground at the start, by gas,
+    /// kg per m² of the whole surface (W8's exchange moves it between ground
+    /// and air). Empty: the air is all there is (Mars's seasonal caps come
+    /// out of its air).
+    #[serde(default, skip_serializing_if = "BTreeMap::is_empty")]
+    pub ground_ice_kg_m2: BTreeMap<String, f64>,
 }
 
 impl Conditions {

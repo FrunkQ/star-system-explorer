@@ -2,11 +2,11 @@
   A star on the Body screen (R5a): its photosphere in its own colour, darkened
   to the limb, with spots where its activity cycle puts them, or its corona in
   X-rays. Facts from the kernel: temperature, radius and mass from the system,
-  activity (spin, spots, cycle, X-rays, flares) from read_activity.
+  activity (spin, spots, cycle, X-rays, flares, surface convection) from read_activity.
 -->
 <script lang="ts">
   import type { Json, SystemScene, ViewContext } from "../../../ui-contract/src/index.ts";
-  import { coronaScaleHeight, CORONA_K, drawStar, narrateStar, SPOT_DELTA_K, spotsFor, STAR_REFERENCES, type StarDraw } from "../../../renderer/src/index.ts";
+  import { coronaScaleHeight, CORONA_K, drawStar, GRANULE_DT, granulesFor, granulesShow, narrateGranules, narrateStar, SPOT_DELTA_K, spotsFor, STAR_REFERENCES, type Convection, type StarDraw } from "../../../renderer/src/index.ts";
 
   let { ctx, scene, address, label, size }: { ctx: ViewContext; scene: SystemScene; address: string; label: string; size: number } = $props();
 
@@ -64,6 +64,11 @@
   const now = $derived(got?.age_s ?? 0);
   const active = $derived((got?.flares ?? []).filter((f) => now >= f.at_s - f.rise_s && now <= f.at_s + f.decay_s));
   const next = $derived((got?.flares ?? []).filter((f) => f.at_s > now).sort((x, y) => x.at_s - y.at_s).slice(0, 5));
+  // Granules: the kernel's cells, drawn when each is at least a few pixels wide on this disc. A generation of cells
+  // lives granule_lifetime_s, so the picture shows the generation alive at the star's present moment.
+  const conv = $derived((got?.activity.convection ?? null) as unknown as Convection | null);
+  const discPx = $derived(Math.round(size * Math.min(2, typeof devicePixelRatio === "number" ? devicePixelRatio : 1) * 0.92));
+  const granules = $derived(conv && granulesShow(conv.granules_across, discPx) ? granulesFor(address, conv.granules_across, Math.floor(now / Math.max(1, conv.granule_lifetime_s))) : null);
   const spin_days = $derived(Number(got?.activity.rotation_period_s ?? 0) / 86400);
 
   $effect(() => {
@@ -74,7 +79,7 @@
     c.width = c.height = n;
     const x = c.getContext("2d")!;
     const img = x.createImageData(n, n);
-    drawStar(img, { teff_k: g.teff, spots, lon_deg: turn, lat_deg: 7, light: band, corona_h: H, flares: active.map((f, i) => ({ lat_deg: spots[i % Math.max(1, spots.length)]?.lat_deg ?? 15, lon_deg: spots[i % Math.max(1, spots.length)]?.lon_deg ?? 0, strength: f.peak_w / Math.max(1, Number(g.moment.xray_w)) })) }, band === "visible" ? 0.92 : 0.6);
+    drawStar(img, { teff_k: g.teff, spots, lon_deg: turn, lat_deg: 7, light: band, corona_h: H, flares: active.map((f, i) => ({ lat_deg: spots[i % Math.max(1, spots.length)]?.lat_deg ?? 15, lon_deg: spots[i % Math.max(1, spots.length)]?.lon_deg ?? 0, strength: f.peak_w / Math.max(1, Number(g.moment.xray_w)) })), granules }, band === "visible" ? 0.92 : 0.6);
     x.putImageData(img, 0, 0);
   });
 
@@ -98,7 +103,7 @@
     <p class="note">Reading {label}'s activity from the kernel…</p>
   {:else}
     <!-- svelte-ignore a11y_no_noninteractive_tabindex, a11y_no_noninteractive_element_interactions (a turnable star: arrow keys) -->
-    <div class="disc" tabindex="0" role="img" aria-label={narrateStar(label, got.teff, spots.length, coverage, String(got.activity.regime), band)} onkeydown={key} data-band={band} data-spots={spots.length}>
+    <div class="disc" tabindex="0" role="img" aria-label={narrateStar(label, got.teff, spots.length, coverage, String(got.activity.regime), band)} onkeydown={key} data-band={band} data-spots={spots.length} data-granules={granules ? granules.n : 0}>
       <canvas bind:this={canvas} style={`width:${size}px;height:${size}px`}></canvas>
     </div>
     <dl class="facts">
@@ -112,6 +117,8 @@
       </dd>
       <dt>Surface</dt>
       <dd>{Math.round(got.teff).toLocaleString("en-GB")} K, darker towards the limb (grey atmosphere)</dd>
+      <dt>Granules</dt>
+      <dd data-granule-words>{narrateGranules(conv, discPx)}</dd>
       <dt>Activity</dt>
       <dd data-regime>{got.activity.regime}{spin_days ? `, turning every ${spin_days.toFixed(1)} days (${got.activity.rotation_from})` : ""}</dd>
       <dt>Spots</dt>
@@ -128,7 +135,7 @@
         {/if}
       </dd>
       <dt>Why</dt>
-      <dd class="why">Spot places are drawn from the star and the cycle (the kernel gives coverage, not maps); spots are {SPOT_DELTA_K} K cooler; the corona is taken at {(CORONA_K / 1e6).toFixed(1)} MK. Turn with the arrow keys. Sources: {STAR_REFERENCES.map((r) => r.text.split(".")[0]).join("; ")}.</dd>
+      <dd class="why">Spot places are drawn from the star and the cycle (the kernel gives coverage, not maps); spots are {SPOT_DELTA_K} K cooler; the corona is taken at {(CORONA_K / 1e6).toFixed(1)} MK; granule cells are placed from the star (the kernel gives their size and life) with a temperature spread of {(GRANULE_DT * 100).toFixed(1)}%, set from the Sun's measured contrast. Turn with the arrow keys. Sources: {STAR_REFERENCES.map((r) => r.text.split(".")[0]).join("; ")}.</dd>
     </dl>
   {/if}
 </div>
