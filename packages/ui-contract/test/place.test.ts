@@ -53,3 +53,15 @@ test("a place is a deep link and back", () => {
   assert.equal(parsePlaceHash("#chart/nowhere"), null);
   assert.equal(parsePlaceHash("#chart/world"), null);
 });
+
+test("above a system, a place is one of that scale's own (a cell, a galaxy), named by its view", () => {
+  const cell: Place = { scale: "cluster", system: "", id: "cell:0.0.0" };
+  const halo: Place = { scale: "galaxy", system: "", id: "u:kestrel/cell:0.0.0/halo:3" };
+  for (const p of [cell, halo, { ...halo, screen: "galaxy" }]) assert.deepEqual(parsePlaceHash(placeHash(p)), p);
+  assert.equal(placeHash(cell), `#chart/cluster//${encodeURIComponent("cell:0.0.0")}`);
+  const s = placeSteps(halo, null, { system: "Kestrel", above: { cluster: { id: "cell:0.0.0", name: "Cell 0 · 0 · 0" }, galaxy: { id: halo.id!, name: "Halo 3, cell 0.0.0" } } });
+  assert.deepEqual(s.map((x) => x.label), ["Cosmic web", "Cell 0 · 0 · 0", "Halo 3, cell 0.0.0"]);
+  assert.deepEqual(s[1]!.place, cell);
+  assert.ok(!rememberPlace([cell], { ...cell, id: "cell:1.0.0" }).every((p) => p.id === "cell:0.0.0"));
+  assert.equal(rememberPlace([cell], { ...cell, id: "cell:1.0.0" }).length, 2);
+});
