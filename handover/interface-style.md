@@ -20,4 +20,6 @@ Every interface thread holds to this, on GM and player screens alike (player the
 9. **`prefers-reduced-motion` is honoured everywhere.** It turns motion into instant changes or plain fades. Feedback on touch stays.
 10. **Positions in time come from the kernel** (rendering rule 5). Animation between two states is presentation and is labelled as such where it could be mistaken for physics.
 
+11. **Every diagram can be turned.** Any diagrammatic view of something with depth (a system, a body, a galaxy, a field, the web) offers zoom, slide and tilt. Its "Seen from" choice carries the fixed views that suit it (Above, Tilted, Edge-on or their like) and always a **Free** view: drag to turn and tilt, Shift-drag or two fingers to slide, wheel or pinch to zoom. Dragging with a mouse switches to Free by itself. Picking a fixed view puts everything back. On touch, one finger scrolls the page until Free is chosen, so a chart never traps a scroll. Flat charts (a ruler, a rotation curve, a ledger) zoom and slide only. Alex, 22 Nov 2026. Shown in the galaxy chart mockup.
+
 The shared helpers for this (`motion` tokens, an `opensFrom` action, and the reduced-motion switch) are in the UI track's tactility pass. Use them rather than writing your own.
