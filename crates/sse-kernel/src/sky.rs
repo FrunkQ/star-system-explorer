@@ -26,6 +26,10 @@ pub(crate) struct Ask<'a> {
     pub bands: Vec<String>,
     pub cone: Option<crate::protocol::SkyCone>,
     pub max_stars: usize,
+    /// Y4: also the other galaxies.
+    pub galaxies: bool,
+    /// The stars (false: galaxies only).
+    pub stars: bool,
 }
 
 fn unit(v: [f64; 3]) -> [f64; 3] {
@@ -42,7 +46,7 @@ fn dot(a: [f64; 3], b: [f64; 3]) -> f64 {
 
 /// The observer's sky axes: x toward the galaxy's centre in the plane, z
 /// toward the galaxy's north (+z), y completing a right-handed set.
-fn axes(obs: [f64; 3]) -> [[f64; 3]; 3] {
+pub(crate) fn axes(obs: [f64; 3]) -> [[f64; 3]; 3] {
     let ex = unit([-obs[0], -obs[1], 0.0]);
     let ez = [0.0, 0.0, 1.0];
     let ey = [
@@ -53,7 +57,7 @@ fn axes(obs: [f64; 3]) -> [[f64; 3]; 3] {
     [ex, ey, ez]
 }
 
-fn lb(ax: &[[f64; 3]; 3], d: [f64; 3]) -> (f64, f64) {
+pub(crate) fn lb(ax: &[[f64; 3]; 3], d: [f64; 3]) -> (f64, f64) {
     let (x, y, z) = (dot(d, ax[0]), dot(d, ax[1]), dot(d, ax[2]));
     let mut l = m::atan2(y, x).to_degrees();
     if l < 0.0 {
@@ -88,7 +92,13 @@ fn shining(st: &Stars, s: &StarSystem, t_myr: f64) -> Vec<(f64, f64)> {
         .collect()
 }
 
-pub(crate) fn sky_from_here(st: &Stars, pins: &[StarSystem], sky: &SkyParams, ask: Ask) -> Out {
+pub(crate) fn sky_from_here(
+    st: &Stars,
+    world: &crate::cosmos::World,
+    pins: &[StarSystem],
+    sky: &SkyParams,
+    ask: Ask,
+) -> Out {
     let t = ask.t_myr;
     if !t.is_finite() || t < 0.0 {
         return Err(err("bad_request", "t_myr must be 0 or more"));
@@ -177,9 +187,12 @@ pub(crate) fn sky_from_here(st: &Stars, pins: &[StarSystem], sky: &SkyParams, as
             .min(sky.max_radius_pc)
         })
         .collect();
-    let (found, per, reads) = st
-        .sky_walk(&radii, obs, t)
-        .map_err(|e| err("bad_request", e))?;
+    let (found, per, reads) = if ask.stars {
+        st.sky_walk(&radii, obs, t)
+            .map_err(|e| err("bad_request", e))?
+    } else {
+        (vec![], vec![0; classes], 0)
+    };
     let walked: Vec<_> = (0..classes)
         .map(|c| serde_json::json!({"class": c, "top_lsun": tops[c], "radius_pc": radii[c], "found": per[c]}))
         .collect();
@@ -192,7 +205,7 @@ pub(crate) fn sky_from_here(st: &Stars, pins: &[StarSystem], sky: &SkyParams, as
             .iter()
             .any(|p| p.cell == s.cell && p.frame == s.frame && p.slot == s.slot)
     });
-    for p in pins {
+    for p in pins.iter().filter(|_| ask.stars) {
         let l = st.at(p, t).state.luminosity_lsun;
         found.push((p.clone(), st.params.class_of(l)));
     }
@@ -294,6 +307,28 @@ pub(crate) fn sky_from_here(st: &Stars, pins: &[StarSystem], sky: &SkyParams, as
         counts.push(serde_json::json!({"mag": k + 1.0, "n": n}));
         k += 1.0;
     }
+    // Y4: the other galaxies, the same way one level up.
+    let (galaxies, galaxy_walk) = if ask.galaxies {
+        let (g, w) = crate::galaxies::galaxies_seen(
+            world.c,
+            world.hs,
+            &world.cp.galaxy,
+            st,
+            sky,
+            crate::galaxies::GalaxyAsk {
+                observer_pc: obs,
+                axes: &ax,
+                cone,
+                limit_mag: ask.limit_mag,
+                limit_band,
+                bands: &bands,
+                t_myr: t,
+            },
+        )?;
+        (g.into_iter().map(|g| g.1).collect::<Vec<_>>(), w)
+    } else {
+        (vec![], serde_json::Value::Null)
+    };
     let truncated = stars.len() > ask.max_stars;
     stars.truncate(ask.max_stars);
     Ok(serde_json::json!({
@@ -308,6 +343,8 @@ pub(crate) fn sky_from_here(st: &Stars, pins: &[StarSystem], sky: &SkyParams, as
         "stars": stars.into_iter().map(|s| s.1).collect::<Vec<_>>(),
         "counts": counts,
         "walked": {"classes": walked, "reads": reads},
+        "galaxies": galaxies,
+        "galaxy_walk": galaxy_walk,
         "truncated": truncated,
         "conventions": "l is measured from the direction of the galaxy's centre, b from its plane toward +z; magnitudes are Vega unless m_ab; counts are cumulative (stars brighter than mag); positions are where each star was when its light left",
     }))

@@ -15,6 +15,7 @@ mod dressing;
 #[cfg(test)]
 mod dressing_tests;
 mod frames;
+mod galaxies;
 mod glow;
 mod ice_ages;
 #[cfg(test)]
@@ -4606,14 +4607,17 @@ impl Kernel {
                 bands,
                 cone,
                 max_stars,
+                galaxies,
+                stars,
             } => {
                 let u = self.universe()?;
                 let pins =
                     cosmos::star_pins(&u.chronicle.state_at(UniverseTime::seconds(i64::MAX)))?;
                 let elapsed = clock::elapsed_myr(&u.chronicle);
-                let sky = cosmos::with_stars(&u.seed, &u.root, None, |st, now| {
+                let sky = cosmos::with_world(&u.seed, &u.root, None, |st, world, now| {
                     sky::sky_from_here(
                         st,
+                        world,
                         &pins,
                         &cosmos::sky_params()?,
                         sky::Ask {
@@ -4625,6 +4629,8 @@ impl Kernel {
                             bands: bands.unwrap_or_default(),
                             cone,
                             max_stars: max_stars.unwrap_or(5000) as usize,
+                            galaxies: galaxies.unwrap_or(true),
+                            stars: stars.unwrap_or(true),
                         },
                     )
                 })?;
