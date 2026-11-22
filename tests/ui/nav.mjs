@@ -2,7 +2,7 @@
 // More). `go(page, id)` opens a screen by its id from the rail, going up, down or into the Workshop as needed;
 // `more(page, name)` presses an entry of the More menu.
 
-/** Open the screen `id` (system, body, cutaway, compare, life, route, window, stories, explore, physics, packs, screens, data, symbols, styles). */
+/** Open the screen `id` (system, body, cutaway, compare, life, route, voyages, window, stories, explore, physics, packs, screens, data, symbols, styles). */
 export async function go(page, id) {
   const target = page.locator(`.rail [data-go="${id}"]`).first();
   const open = async () => {

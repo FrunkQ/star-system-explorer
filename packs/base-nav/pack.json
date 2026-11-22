@@ -128,7 +128,41 @@
       "dry_t": 200.0,
       "g_limit": 3.0,
       "shield_g_cm2": 40.0
+     },
+     "jump-courier": {
+      "name": "Jump courier",
+      "accel_g": 2.0,
+      "sustained": false,
+      "exhaust_km_s": 8.8,
+      "wet_t": 120.0,
+      "dry_t": 100.0,
+      "jump": {
+       "rating_pc": 2.0,
+       "fuel_t_per_pc": 10.0,
+       "tank_t": 40.0,
+       "days_per_jump": 7.0,
+       "whole_parsecs": true,
+       "rule": "a generic jump drive (fictional): one jump of up to 2 parsecs in about a week, fuel of a tenth of the hull per parsec"
+      }
+     },
+     "relativistic-probe": {
+      "name": "Antimatter probe",
+      "accel_g": 1.0,
+      "sustained": true,
+      "exhaust_km_s": 100000.0,
+      "wet_t": 1000.0,
+      "dry_t": 100.0,
+      "reserve": 0.05
      }
+    },
+    "voyage": {
+     "max_flight_pc": 6.0,
+     "max_leg_years": 20000.0,
+     "refuel_days": 2.0,
+     "labels_per_system": 6,
+     "max_steps": 200000,
+     "gamble_min_odds": 0.5,
+     "giant_prior": {"base": 0.07, "mass_exp": 1.0, "feh_exp": 1.2, "cap": 0.9}
     },
     "sources": {
      "lambert": "Curtis, H. D. 2014, Orbital Mechanics for Engineering Students, 3rd ed., Elsevier, algorithms 3.4 and 5.2. doi:10.1016/C2011-0-69685-1",
@@ -138,6 +172,8 @@
      "dose_limit": "ICRP 2007, The 2007 Recommendations of the International Commission on Radiological Protection, ICRP Publication 103 (50 mSv in any one year for workers). doi:10.1016/j.icrp.2007.10.003",
      "spe": "rough: a few large solar particle events a year near solar maximum, tens of mSv each behind light shielding; scaled by (r / 1 au)^-2 and luminosity",
      "belts": "rough: Jupiter-like radiation belts, tens of mSv an hour behind light shielding inside about 15 radii",
+     "giant_prior": "Johnson, J. A. et al. 2010, Giant Planet Occurrence in the Stellar Mass-Metallicity Plane, PASP 122, 905 (f = 0.07 (M/Msun)^1.0 10^(1.2 [Fe/H]), giants within about 2.5 au, so a floor for skimmable giants farther out). doi:10.1086/655775",
+     "relativity": "Baez, J. and others 1996, The Relativistic Rocket, Usenet Physics FAQ (constant proper acceleration, turnover, and the mass ratio exp(2 w c / v_e)). https://math.ucr.edu/home/baez/physics/Relativity/SR/Rocket/rocket.html",
      "ships": "stock templates for play: chemical (H2/O2, Isp about 450 s), nuclear thermal (Isp about 900 s), and fictional fusion torches",
      "descent": "Sutton, K. and Graves, R. A. 1971, A general stagnation-point convective heating equation for arbitrary gas mixtures, NASA TR R-376. https://ntrs.nasa.gov/citations/19720003329",
      "landers": "stock templates for play, sized after Soyuz, the Mars Science Laboratory, Huygens (its 3 m stabiliser chute) and Apollo's lunar module",
