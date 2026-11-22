@@ -12,7 +12,7 @@ use crate::*;
 use serde::{Deserialize, Serialize};
 
 /// Wien's displacement constant for the peak of B_λ, m K (CODATA 2018).
-pub const WIEN_B: f64 = 2.897_771_955e-3;
+pub const WIEN_B: f64 = sse_core::sheet::B_WIEN;
 const R_WIEN: &str = "Wien's displacement law: the peak of B_λ(T) lies at λ T = 2.897771955×10⁻³ m K (CODATA 2018). https://physics.nist.gov/cgi-bin/cuu/Value?bwien";
 
 #[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]

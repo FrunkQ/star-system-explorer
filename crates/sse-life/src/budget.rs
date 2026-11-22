@@ -169,12 +169,12 @@ pub struct WorldBudget {
     pub biomass_class: String,
 }
 
-const H: f64 = 6.626_070_15e-34;
-const C: f64 = 299_792_458.0;
-const K_B: f64 = 1.380_649e-23;
-const SIGMA: f64 = 5.670_374_419e-8;
+const H: f64 = sse_core::sheet::H;
+const C: f64 = sse_core::sheet::C;
+const K_B: f64 = sse_core::sheet::K_B;
+const SIGMA: f64 = sse_core::sheet::SIGMA_SB;
 const WIEN_NM_K: f64 = 2.897_771_955e6;
-const YEAR_S: f64 = 3.155_76e7;
+const YEAR_S: f64 = sse_core::sheet::YR_JULIAN;
 
 /// Share of a blackbody's energy between two wavelengths (nm), for the
 /// temperature whose Wien peak is `peak_nm`. Simpson's rule, 400 intervals.

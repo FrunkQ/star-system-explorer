@@ -16,7 +16,7 @@ use serde::{Deserialize, Serialize};
 use sse_core::math as m;
 
 /// Seconds in a Julian year.
-pub const YEAR_S: f64 = 31_557_600.0;
+pub const YEAR_S: f64 = sse_core::sheet::YR_JULIAN;
 /// Megaparsec in metres (IAU 2015: 1 pc = 648000/pi au).
 pub const MPC_M: f64 = 3.085_677_581_491_367e22;
 /// Critical density today per h^2, solar masses per cubic Mpc (3 H^2 / 8 pi G with H = 100 km/s/Mpc).

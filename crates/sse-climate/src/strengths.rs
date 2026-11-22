@@ -33,8 +33,8 @@ use crate::settings::ClimateSettings;
 use serde::{Deserialize, Serialize};
 use sse_core::math as m;
 
-const SIGMA_SB: f64 = 5.670374419e-8;
-const K_B: f64 = 1.380649e-23;
+const SIGMA_SB: f64 = sse_core::sheet::SIGMA_SB;
+const K_B: f64 = sse_core::sheet::K_B;
 
 /// Every strength and the ratios behind it.
 #[derive(Clone, PartialEq, Debug, Serialize, Deserialize)]

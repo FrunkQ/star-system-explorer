@@ -23,7 +23,7 @@ use sse_flow::Reference;
 pub const G: f64 = sse_core::quantity::consts::G;
 pub const C: f64 = sse_core::quantity::consts::C;
 pub const HOUR: f64 = 3600.0;
-pub const DAY: f64 = 86_400.0;
+pub const DAY: f64 = sse_core::sheet::DAY;
 pub const YEAR: f64 = sse_core::quantity::consts::JULIAN_YEAR;
 /// Photon energy at 550 nm, J (for photon counting in the visible).
 pub const PHOTON_550: f64 = 6.626_070_15e-34 * C / 550e-9;

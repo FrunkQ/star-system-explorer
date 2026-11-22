@@ -25,7 +25,7 @@ use sse_core::math as m;
 use sse_core::{Address, Seed};
 use std::collections::BTreeMap;
 
-const G: f64 = 6.674_30e-11;
+const G: f64 = sse_core::sheet::G;
 /// Times one call may ask for.
 pub const MAX_TIMES: usize = 64;
 /// Event kind and root field of the campaign clock.
