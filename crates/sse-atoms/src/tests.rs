@@ -108,7 +108,7 @@ fn every_atom_is_cited_explained_and_versioned() {
         }
     }
     assert_eq!(
-        n, 82,
+        n, 83,
         "first-wave atom count changed: update handover/packages/P1.md"
     );
 }
@@ -842,4 +842,36 @@ fn belts_reach_the_kennel_petschek_limit() {
         1e-6,
         "inverse",
     );
+}
+
+/// Bremsstrahlung (MF7 part 2b-i): the radiation yield grows with energy and
+/// atomic number, and the X-ray dose behind a shield falls far more slowly
+/// than the electrons' (they stop; the X-rays get through).
+#[test]
+fn bremsstrahlung_behind_shields() {
+    use crate::belts::*;
+    // Koch and Motz: about 0.8 per cent at 1 MeV in aluminium.
+    let y = radiation_yield(1.0, 13.0, 6e-4);
+    assert!((0.006..0.009).contains(&y), "{y}");
+    assert!(radiation_yield(10.0, 13.0, 6e-4) > 5.0 * y);
+    assert!(radiation_yield(1.0, 82.0, 6e-4) > 5.0 * y);
+    // A test table (values typed here): flat coefficients.
+    let ph = Photons {
+        energy_mev: vec![0.01, 100.0],
+        shield_mu_rho_cm2_g: vec![0.05, 0.05],
+        tissue_mu_en_rho_cm2_g: vec![0.03, 0.03],
+    };
+    let b = Brems {
+        z: 13.0,
+        k_per_mev: 6e-4,
+        inward_share: 0.5,
+        photons: &ph,
+        j_per_mev: 1.602e-13,
+    };
+    // A belt-like spectrum, E^-1 with an e-fold at 1 MeV.
+    let j = |e: f64| 1e6 / e * sse_core::math::exp(-e / 1e3);
+    let d10 = bremsstrahlung_dose(100.0, &j, &b);
+    let d40 = bremsstrahlung_dose(400.0, &j, &b);
+    assert!(d10 > d40 && d40 > 0.0 && d10 / d40 < 10.0, "{d10} {d40}");
+    assert_eq!(bremsstrahlung_dose(0.0, &j, &b), 0.0);
 }
