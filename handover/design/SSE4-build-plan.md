@@ -1,6 +1,8 @@
 # SSE4 build plan: for the coordinator who starts the builders
 
-Date 17 Nov 2026. Audience: a coordinating session planning the work, and the building sessions it starts. Design only has been done so far; no V4 code exists.
+Date 17 Nov 2026. Audience: a coordinating session planning the work, and the building sessions it starts.
+
+**As of 22 Nov 2026:** most tracks below are built in the kernel and partly on screen; `main` is the default branch, live at v4.starsystemx.com, and pull requests merge when their checks pass (this replaces "never push without Alex's word" in section 1; edits to CI or merge checks still need his own yes). Package state is in `handover/START-HERE.md`. **The order in which the pieces are joined up, in six stages, and the rules for changes that touch many blocks, are in `SSE4-coming-together.md` (proposed 22 Nov, waiting on Alex).** This file stays the list of every package.
 
 ## 0. Read in this order
 
@@ -213,6 +215,8 @@ New fixtures: Pluto, Charon, Triton, Enceladus, Miranda, Mimas, Ceres, Iapetus a
 | 4.1 Economy (after 4.0) | EC0 design, then its own packages | goods priced by where they are scarce and what it costs to carry them; trade ships; players buying, selling and hauling |
 
 M6 and M7 are independent of each other and of M5 after M2, so they can run in parallel.
+
+The milestones above group packages by subject. The order of joining them up into the app is the six stages of `SSE4-coming-together.md`: test drive; one system told in full; one language underneath; the galaxy has a past; run a game; show it.
 
 ## 5. Risks to watch
 
