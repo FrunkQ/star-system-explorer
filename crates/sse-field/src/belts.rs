@@ -5,10 +5,42 @@
 //! rings' outer edge) to the last closed drift shell, a share of the
 //! stand-off. Its intensity is capped by the Kennel-Petschek limit
 //! (`sse.belts.kp_limit`), filled to the share that measured belts reach.
-//! Moons on a shell sweep it. Doses are given behind three shields.
+//! Moons on a shell sweep it. Doses are given behind a list of aluminium
+//! shields, from the electrons that cross them and the X-rays
+//! (bremsstrahlung) made by those that stop in them.
 
 use super::*;
-use sse_atoms::belts::{self as bl, Electron, Shape};
+use sse_atoms::belts::{self as bl, Brems, Electron, Photons, Shape};
+
+const SHIELDING: &str = include_str!("../data/shielding.json");
+
+/// The shield's photon data (`data/shielding.json`, NIST and Koch and Motz).
+#[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
+pub struct ShieldData {
+    pub z: f64,
+    pub k_per_mev: f64,
+    pub energy_mev: Vec<f64>,
+    pub shield_mu_rho_cm2_g: Vec<f64>,
+    pub tissue_mu_en_rho_cm2_g: Vec<f64>,
+}
+
+impl Default for ShieldData {
+    fn default() -> Self {
+        let v: serde_json::Value = serde_json::from_str(SHIELDING).expect("shielding.json parses");
+        let list = |k: &str| -> Vec<f64> {
+            v[k].as_array()
+                .map(|a| a.iter().filter_map(|x| x.as_f64()).collect())
+                .unwrap_or_default()
+        };
+        ShieldData {
+            z: v["shield"]["z"].as_f64().unwrap_or(0.0),
+            k_per_mev: v["yield"]["k_per_mev"].as_f64().unwrap_or(0.0),
+            energy_mev: list("energy_mev"),
+            shield_mu_rho_cm2_g: list("shield_mu_rho_cm2_g"),
+            tissue_mu_en_rho_cm2_g: list("tissue_mu_en_rho_cm2_g"),
+        }
+    }
+}
 
 #[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
 #[serde(default)]
@@ -35,10 +67,13 @@ pub struct BeltSettings {
     /// Wave path, planetary radii, where moons' plasma is held near the
     /// equator by spin (instead of D = L).
     pub confined_path_radii: f64,
-    /// Shields, kg/m² (0.3, 1 and 3 g/cm²).
-    pub shields_kg_m2: [f64; 3],
+    /// Shields, kg/m² (0.3, 1, 3, 10, 20 and 40 g/cm²).
+    pub shields_kg_m2: Vec<f64>,
     /// Stopping power of tissue for the electrons that get through, MeV cm²/g.
     pub stopping_mev_cm2_g: f64,
+    /// Share of bremsstrahlung sent inward, toward the dose point.
+    pub inward_share: f64,
+    pub shield: ShieldData,
     pub shells: usize,
 }
 
@@ -58,8 +93,10 @@ impl Default for BeltSettings {
             source_share: 0.5,
             air_scale_heights: 100.0,
             confined_path_radii: 3.0,
-            shields_kg_m2: [3.0, 10.0, 30.0],
+            shields_kg_m2: vec![3.0, 10.0, 30.0, 100.0, 200.0, 400.0],
             stopping_mev_cm2_g: 1.85,
+            inward_share: 0.5,
+            shield: ShieldData::default(),
             shells: 16,
         }
     }
@@ -77,8 +114,8 @@ pub struct BeltShell {
     pub intensity_1mev: f64,
     /// Electrons above 1 MeV crossing a square centimetre each second, from all directions.
     pub flux_above_1mev_cm2_s: f64,
-    /// Dose rate, Sv an hour, behind each shield.
-    pub dose_sv_h: [f64; 3],
+    /// Dose rate, Sv an hour, behind each shield (electrons and X-rays).
+    pub dose_sv_h: Vec<f64>,
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub swept_by: Option<String>,
 }
@@ -96,7 +133,7 @@ pub struct BeltDose {
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub moon: Option<String>,
     pub flux_above_1mev_cm2_s: f64,
-    pub dose_sv_h: [f64; 3],
+    pub dose_sv_h: Vec<f64>,
 }
 
 #[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
@@ -114,9 +151,11 @@ pub struct Belts {
     pub source_set_by: String,
     pub break_kev: f64,
     pub break_index: f64,
-    pub shields_kg_m2: [f64; 3],
+    pub shields_kg_m2: Vec<f64>,
     /// Electron energy, MeV, that crosses each shield.
-    pub shield_cut_mev: [f64; 3],
+    pub shield_cut_mev: Vec<f64>,
+    /// Share of the dose behind each shield from X-rays (bremsstrahlung).
+    pub xray_share: Vec<f64>,
     pub shells: Vec<BeltShell>,
     pub gaps: Vec<BeltGap>,
     pub orbits: Vec<BeltDose>,
@@ -165,7 +204,11 @@ pub(crate) fn belts_of(
         why.push(format!("Belts: none. Its bubble closes {} out, too near the {} for electrons to drift round without striking it.", radii(outer, r), inner_by));
         return None;
     }
-    used.extend(["sse.belts.kp_limit", "sse.belts.electron_range"]);
+    used.extend([
+        "sse.belts.kp_limit",
+        "sse.belts.electron_range",
+        "sse.belts.radiation_yield",
+    ]);
     let spun = b.plasma_source_kg_s > 0.0;
     let shape = Shape {
         index: bs.index,
@@ -248,12 +291,37 @@ pub(crate) fn belts_of(
     let above_1mev = flux_above(1e3);
     // MeV cm²/g to J m²/kg, and per second to per hour.
     let s_si = bs.stopping_mev_cm2_g * 1e6 * q.charge_c * 1e-4 / 1e-3;
-    let dose = |c: f64| -> [f64; 3] {
-        let mut d = [0.0; 3];
-        for (k, v) in d.iter_mut().enumerate() {
-            *v = c * per_c[k] * 1e4 * s_si * 3600.0;
-        }
-        d
+    // X-rays from the electrons stopped in each shield, Gy/s for C = 1.
+    let photons = Photons {
+        energy_mev: bs.shield.energy_mev.clone(),
+        shield_mu_rho_cm2_g: bs.shield.shield_mu_rho_cm2_g.clone(),
+        tissue_mu_en_rho_cm2_g: bs.shield.tissue_mu_en_rho_cm2_g.clone(),
+    };
+    let brems = Brems {
+        z: bs.shield.z,
+        k_per_mev: bs.shield.k_per_mev,
+        inward_share: bs.inward_share,
+        photons: &photons,
+        j_per_mev: 1e6 * q.charge_c,
+    };
+    let spectrum = |e_kev: f64| omni * shape.at(e_kev);
+    let electron_part: Vec<f64> = per_c.iter().map(|f| f * 1e4 * s_si).collect();
+    let xray_part: Vec<f64> = bs
+        .shields_kg_m2
+        .iter()
+        .map(|x| bl::bremsstrahlung_dose(*x, &spectrum, &brems))
+        .collect();
+    let xray_share: Vec<f64> = electron_part
+        .iter()
+        .zip(&xray_part)
+        .map(|(e, x)| if e + x > 0.0 { x / (e + x) } else { 0.0 })
+        .collect();
+    let dose = |c: f64| -> Vec<f64> {
+        electron_part
+            .iter()
+            .zip(&xray_part)
+            .map(|(e, x)| c * (e + x) * 3600.0)
+            .collect()
     };
     // Gaps swept by moons on a shell inside the belt.
     let mut gaps = vec![];
@@ -315,11 +383,14 @@ pub(crate) fn belts_of(
             dose_sv_h: dose(c),
         });
     }
+    // The dose behind the second shield (1 g/cm² by default) picks the peak.
+    let pick = 1.min(bs.shields_kg_m2.len().saturating_sub(1));
+    let at = |s: &BeltShell| s.dose_sv_h.get(pick).copied().unwrap_or(0.0);
     let peak = shells
         .iter()
         .filter(|s| s.swept_by.is_none())
         .fold(None::<&BeltShell>, |a, s| match a {
-            Some(x) if x.dose_sv_h[1] >= s.dose_sv_h[1] => Some(x),
+            Some(x) if at(x) >= at(s) => Some(x),
             _ => Some(s),
         });
     why.push(format!(
@@ -331,8 +402,8 @@ pub(crate) fn belts_of(
         if source_by == "injections" { "by injections from the night side".to_string() } else { format!("outward from {source_by}'s plasma") },
         if spun { "; with moons loading the spinning field, the spectrum stays hard to tens of MeV." } else { "." },
         match peak {
-            Some(p) => format!(" Behind 1 g/cm² of shielding the dose peaks at about {:.3} Sv an hour near {:.1} radii.", p.dose_sv_h[1], p.l),
-            None => String::new(),
+            Some(p) if !bs.shields_kg_m2.is_empty() => format!(" Behind {} g/cm² of aluminium the dose peaks at about {:.3} Sv an hour near {:.1} radii.", bs.shields_kg_m2[pick] / 10.0, at(p), p.l),
+            _ => String::new(),
         }
     ));
     for g in &gaps {
@@ -342,7 +413,7 @@ pub(crate) fn belts_of(
             (g.from_m + g.to_m) / 2.0 / r
         ));
     }
-    stand_ins.push("belts: electrons only; filled to 0.6 of the Kennel-Petschek limit in a dense plasma at and beyond the source shell (half the stand-off, or the innermost moon of a spun belt) and kept flat inward of it; this is the belt after strong injections, often ten times above quiet times (a quiet magnetosphere like Neptune's, and gas and dust like Saturn's E ring, keep real belts lower; Jupiter's falls faster outward than the limit); the last closed drift shell is 0.7 of the stand-off; moons sweep a gap of their own width; no slot from wave losses inside a plasmasphere yet, no proton belt; dose is the electrons that pass the shield times a constant stopping power, without bremsstrahlung".into());
+    stand_ins.push("belts: electrons only; filled to 0.6 of the Kennel-Petschek limit in a dense plasma at and beyond the source shell (half the stand-off, or the innermost moon of a spun belt) and kept flat inward of it; this is the belt after strong injections, often ten times above quiet times (a quiet magnetosphere like Neptune's, and gas and dust like Saturn's E ring, keep real belts lower; Jupiter's falls faster outward than the limit); the last closed drift shell is 0.7 of the stand-off; moons sweep a gap of their own width; no slot from wave losses inside a plasmasphere yet, no proton belt; dose is the electrons that pass an aluminium shield times a constant stopping power, plus the X-rays of those that stop in it (Koch and Motz yield, Kramers' flat spectrum, half sent inward from halfway along each path, linear build-up), so thick shields still read low without the proton belt".into());
     Some(Belts {
         inner_m: inner,
         outer_m: outer,
@@ -353,8 +424,9 @@ pub(crate) fn belts_of(
         source_set_by: source_by,
         break_kev: shape.break_kev,
         break_index: shape.break_index,
-        shields_kg_m2: bs.shields_kg_m2,
-        shield_cut_mev: [cut[0], cut[1], cut[2]],
+        shields_kg_m2: bs.shields_kg_m2.clone(),
+        shield_cut_mev: cut,
+        xray_share,
         shells,
         gaps,
         orbits,

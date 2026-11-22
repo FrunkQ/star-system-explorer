@@ -359,6 +359,8 @@ pub const KIND_DESCRIPTIONS: &[(&str, &str)] = &[
     ("belts.limit_normalisation", "the Kennel-Petschek cap on a belt: normalisation C of the spectrum C E^-1 per cm² s sr keV"),
     ("belts.shield_column", "mass per area of a shield in front of a dose point"),
     ("belts.penetration_energy_mev", "least energy, MeV, an electron needs to cross a shield"),
+    ("belts.electron_energy_mev", "kinetic energy of an electron, MeV"),
+    ("belts.radiation_yield", "share of a stopping electron's energy given off as X-rays"),
     ("constant.m_e", "electron mass, read from the master data sheet"),
     ("constant.e", "elementary charge, read from the master data sheet"),
     ("constant.eps0", "vacuum permittivity, read from the master data sheet"),

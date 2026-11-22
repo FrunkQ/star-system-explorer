@@ -96,7 +96,7 @@ Planck's numbers read from the journal's own Table 2 page.
 | nadler2021 | Nadler, E. O. et al. 2021, Phys. Rev. Lett. 126, 091101. doi:10.1103/PhysRevLett.126.091101 | warm dark matter limit | verified (metadata) | Crossref |
 | rocha2013 | Rocha, M. et al. 2013, MNRAS 430, 81. doi:10.1093/mnras/sts514 | self-interaction gives a core | verified (metadata) | Crossref |
 | harvey2015 | Harvey, D. et al. 2015, Science 347, 1462. doi:10.1126/science.1261381 | cluster limit on self-interaction | verified (metadata) | Crossref |
-| randall2008 | Randall, S. W. et al. 2008, ApJ. doi:10.1086/587859 | cluster limit on self-interaction | unverified | Crossref refused the fetch (rate limit); volume and page are from memory |
+| randall2008 | Randall, S. W. et al. 2008, ApJ. doi:10.1086/587859 | cluster limit on self-interaction | verified | Crossref: ApJ 679, 1173 (2008), matches |
 | kaplinghat2016 | Kaplinghat, M., Tulin, S. and Yu, H.-B. 2016, Phys. Rev. Lett. 116, 041302. doi:10.1103/PhysRevLett.116.041302 | velocity-dependent self-interaction | verified (metadata) | Crossref |
 | hui2017 | Hui, L. et al. 2017, Phys. Rev. D 95, 043541. doi:10.1103/PhysRevD.95.043541 | fuzzy dark matter | verified (metadata) | Crossref |
 | clowe2006 | Clowe, D. et al. 2006, ApJ 648, L109. doi:10.1086/508162 | the particle route: mass apart from gas | verified (metadata) | Crossref |

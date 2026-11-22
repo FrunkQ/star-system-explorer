@@ -2,7 +2,7 @@
 
 Track GH (`design/SSE4-galaxy-histories-design.md`, section 5), built 22 Nov 2026 by the kernel thread. This is part 1: the blocks and their checks, and the rotation curve card's data. Part 2 retires the typed speeds.
 
-## Part 1: the profile and the curve (`crates/sse-cosmos/src/structure.rs`, fudge F43)
+## Part 1: the profile and the curve (`crates/sse-cosmos/src/structure.rs`, fudge F44)
 - `structure::concentration`: the halo's concentration from its own growth. The mean density inside r₋₂ is a fixed multiple of the critical density at the time the main progenitor first held the mass now inside r₋₂ (Ludlow et al. 2014's form). Ludlow's constant suits simulated main branches. With G2's Correa histories the constant that meets Dutton and Macciò 2014 is 800, not about 400. With it, every decade from 10¹⁰ to 10¹⁵ M☉ lands within 0.06 dex (about 0.03 in practice), so only the zero point is calibrated and the mass trend comes out of the physics. An early-forming halo is denser.
 - `Structure::new`: the (α, β, γ) profile after the galaxy's response (Di Cintio et al. 2014, from M*/M_halo, strength 0 to 1), normalised so the dark matter inside r200 is the halo's mass less its baryon share. The missing baryons (the share not in stars, cold gas or the black hole) sit in hot gas that follows the dark matter.
 - `Structure::speeds(r)`: circular speed by part. The parts are dark matter, hot gas, stellar disc and gas disc (Freeman, Bessel functions by Abramowitz and Stegun's fits, tested against their table), bulge (Hernquist, sized by Shen et al. 2003) and the black hole. Each part is listed with the total and the "visible only" speed, the classic picture of why dark matter was proposed. Also `dark_density(r)` and `v_max()`.

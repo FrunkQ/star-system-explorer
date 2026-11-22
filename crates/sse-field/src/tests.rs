@@ -392,8 +392,18 @@ fn belts_where_field_lines_close() {
         "{}",
         l5.intensity_1mev
     );
-    // Shielding: each thicker shield lets less through.
-    assert!(l5.dose_sv_h[0] > l5.dose_sv_h[1] && l5.dose_sv_h[1] > l5.dose_sv_h[2]);
+    // Shielding: each thicker shield lets less through, and behind thick
+    // shields the X-rays of stopped electrons carry the dose.
+    assert_eq!(l5.dose_sv_h.len(), 6);
+    for w in l5.dose_sv_h.windows(2) {
+        assert!(w[0] > w[1], "{:?}", l5.dose_sv_h);
+    }
+    assert!(b.xray_share[0] < 0.1, "{:?}", b.xray_share);
+    assert!(b.xray_share[5] > 0.5, "{:?}", b.xray_share);
+    assert!(l5.dose_sv_h[5] > 0.0);
+    // Behind 10 g/cm² and more the X-rays fall slowly: doubling the shield
+    // from 20 to 40 g/cm² cuts the dose less than tenfold.
+    assert!(l5.dose_sv_h[4] / l5.dose_sv_h[5] < 10.0);
     // No sheet, no belts; no field, no belts.
     assert!(read(&e, &Settings::default()).unwrap().belts.is_none());
     assert!(read(&body("mars", 3.39e6, 0.0, 1.52), &set)

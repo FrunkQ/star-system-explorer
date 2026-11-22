@@ -26,6 +26,7 @@ use sse_core::math as m;
 use std::collections::BTreeMap;
 
 pub mod expr;
+pub mod laws;
 pub mod lookup;
 pub mod phases;
 
@@ -307,6 +308,43 @@ impl Reference {
     }
 
     fn constant_at(&self, id: &str, depth: u32) -> Result<f64, String> {
+        self.constant_when(id, None, depth)
+    }
+
+    /// DM6: a constant's value at `t_gyr` (Gyr after the origin), with each
+    /// measured row's time law applied and every worked-out row following
+    /// its inputs at that date. With no laws it is [`constant`](Self::constant).
+    pub fn constant_on(&self, id: &str, t_gyr: f64) -> Option<f64> {
+        self.constant_when(id, Some(t_gyr), 0).ok()
+    }
+
+    /// Whether any row `id` rests on carries a time law that is not constant.
+    pub fn has_history(&self, id: &str) -> bool {
+        self.tables
+            .get("constants")
+            .into_iter()
+            .flatten()
+            .any(|(k, row)| {
+                !matches!(laws::Law::of(row), Ok(laws::Law::Constant)) && self.rests_on(id, k)
+            })
+    }
+
+    /// DM6: the constants handle at `t_gyr`. Each id with a history gets its
+    /// value at that date; every other id is exactly [`handle`](Self::handle),
+    /// so with no laws nothing moves by a bit.
+    pub fn handle_on(&self, t_gyr: f64) -> sse_core::constants::Constants {
+        let mut c = self.handle();
+        for id in sse_core::constants::Constants::IDS {
+            if self.has_history(id) {
+                if let Some(v) = self.constant_on(id, t_gyr) {
+                    c.set(id, v);
+                }
+            }
+        }
+        c
+    }
+
+    fn constant_when(&self, id: &str, t: Option<f64>, depth: u32) -> Result<f64, String> {
         if depth > 16 {
             return Err(format!("constant {id}: its formula goes round in a circle"));
         }
@@ -316,7 +354,7 @@ impl Reference {
         match row.get("derived_from").and_then(J::as_str) {
             Some(f) => {
                 let mut err = None;
-                let v = expr::eval(f, |n| match self.constant_at(n, depth + 1) {
+                let v = expr::eval(f, |n| match self.constant_when(n, t, depth + 1) {
                     Ok(v) => Some(v),
                     Err(e) => {
                         err.get_or_insert(e);
@@ -329,7 +367,14 @@ impl Reference {
                     (Err(e), None) => Err(e),
                 }
             }
-            None => num(row.get("value")).ok_or_else(|| format!("constant {id} has no value")),
+            None => {
+                let v =
+                    num(row.get("value")).ok_or_else(|| format!("constant {id} has no value"))?;
+                match t {
+                    Some(t) => Ok(laws::Law::of(row).unwrap_or(laws::Law::Constant).at(v, t)),
+                    None => Ok(v),
+                }
+            }
         }
     }
 
@@ -594,6 +639,32 @@ impl Reference {
                 Some(m) => p.push(format!(
                     "constant {id}: mark {m} is not a row mark (only \"theoretical\"; authored and fictional come from the packs)"
                 )),
+            }
+        }
+        // DM6: a time law reads, is marked authored or fictional, cites a
+        // known source, and sits on a measured row, not a worked-out one.
+        for (id, row) in self.tables.get("constants").unwrap_or(&empty_c) {
+            match laws::Law::of(row) {
+                Err(e) => p.push(format!("constant {id}: {e}")),
+                Ok(laws::Law::Constant) => {}
+                Ok(_) => {
+                    if row.get("derived_from").is_some() {
+                        p.push(format!(
+                            "constant {id}: a time law goes on a measured row; a worked-out row follows its inputs at each date"
+                        ));
+                    }
+                    if let Some(s) = row
+                        .get("law")
+                        .and_then(|l| l.get("src"))
+                        .and_then(J::as_str)
+                    {
+                        if !self.sources.contains_key(s) {
+                            p.push(format!(
+                                "constant {id}: its law cites source {s}, which is not in reference.sources"
+                            ));
+                        }
+                    }
+                }
             }
         }
         for (g, row) in &self.groups {

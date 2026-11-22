@@ -150,3 +150,31 @@ renderer's open polar caps): Parker's spiral in the ecliptic, `radial_t` =
 wind speed above, plus `magnitude_t`, `spiral_angle_deg` (about 45° at Earth)
 and `sector` ("away"; flip both signs for a toward sector). It does not yet
 feed the read itself (Bz stays 0).
+
+## Part 2b-i: doses behind thick shields, with bremsstrahlung (for NAV)
+
+NAV's stock ships carry 20 to 40 g/cm², and electrons alone give almost
+nothing behind that, so the belts now count the X-rays that stopping electrons
+make in the shield.
+
+- `BeltSettings.shields_kg_m2` is a list, by default 3, 10, 30, 100, 200 and
+  400 kg/m² (0.3 to 40 g/cm² of aluminium). Every `dose_sv_h` (shells and
+  orbits) and `shield_cut_mev` has one entry per shield, in that order.
+  `belts.xray_share` gives the X-rays' share of each shield's dose, which is
+  the same at every shell because the spectrum's shape is the same.
+- Electrons: as in part 2, those above the Katz-Penfold cut times 1.85 MeV cm²/g.
+- X-rays: `sse_atoms::belts::bremsstrahlung_dose`. Each electron radiates
+  Y(E) E (`sse.belts.radiation_yield`, Koch and Motz 1959,
+  doi:10.1103/RevModPhys.31.920, k = 6e-4 per MeV, Z = 13), or a share X/R of
+  that if it crosses the shield. The photons spread evenly over energy up to
+  E (Kramers), half go inward, and they start halfway along the electron's
+  path. They cross the rest of the shield as exp(−μt)(1 + μt) with NIST's
+  aluminium μ/ρ, and deposit water's μ_en/ρ (Hubbell and Seltzer,
+  `crates/sse-field/data/shielding.json`). The MeV-to-joule factor comes from
+  the electron's charge on the data sheet.
+- Earth, storm-filled belt (F40): near L 5 the dose is 24, 0.76, 0.0048,
+  0.0024, 0.0015 and 0.00057 Sv/h behind the six shields. X-rays carry 0.01 %,
+  0.4 %, 64 % and over 99 % from 10 g/cm² on. At Jupiter the share behind
+  40 g/cm² is 57 %, because the hard spectrum's electrons still cross.
+- Gaps: no proton belt yet (2b-ii), so thick-shield doses at Earth read low,
+  and LEO (inside the electron belt's air edge) reads zero. Fudge F42.

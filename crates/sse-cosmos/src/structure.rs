@@ -20,7 +20,7 @@
 //! matter, the hot gas (taken to follow the dark matter), the stellar disc
 //! and the gas disc (exponential, Freeman 1970, doi:10.1086/150474), the
 //! bulge (Hernquist 1990, doi:10.1086/168845, sized by Shen et al. 2003,
-//! doi:10.1046/j.1365-8711.2003.06740.x) and the black hole. Fudge F43.
+//! doi:10.1046/j.1365-8711.2003.06740.x) and the black hole. Fudge F44.
 
 use crate::cosmology::Cosmology;
 use crate::galaxy::{GalaxyState, G_KPC};
@@ -34,7 +34,7 @@ pub struct StructureParams {
     /// M₋₂. Ludlow et al. 2014 find a constant for their simulated main
     /// branches; with Correa's analytic histories (G2) the constant that
     /// meets Dutton and Macciò 2014's relation from 10¹⁰ to 10¹⁵ M☉ is 800
-    /// (fudge F43: one number, calibrated, the mass trend is not).
+    /// (fudge F44: one number, calibrated, the mass trend is not).
     pub density_ratio: f64,
     /// Concentrations searched.
     pub c_range: [f64; 2],
