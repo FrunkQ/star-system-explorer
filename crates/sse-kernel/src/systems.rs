@@ -471,6 +471,19 @@ pub(crate) fn read_spectrum(
     Ok(Response::SpectrumRead { spectra })
 }
 
+/// What stops the wind at each body (MF6 part 1).
+pub(crate) fn read_field(bodies: Vec<serde_json::Value>) -> Out {
+    let set = sse_field::Settings::default();
+    let mut out = vec![];
+    for (n, v) in bodies.into_iter().enumerate() {
+        let b: sse_field::Body =
+            serde_json::from_value(v).map_err(|e| err("bad_field", format!("body {n}: {e}")))?;
+        let f = sse_field::read(&b, &set).map_err(|e| err("bad_field", e))?;
+        out.push(serde_json::to_value(f).expect("serialisable"));
+    }
+    Ok(Response::FieldRead { bodies: out })
+}
+
 /// Stellar activity (O10).
 pub(crate) fn read_activity(
     stars: Vec<serde_json::Value>,

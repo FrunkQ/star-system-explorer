@@ -2396,6 +2396,7 @@ impl Kernel {
                 at_s,
                 window,
             } => systems::read_activity(stars, seed.as_deref(), at_s, window)?,
+            Request::ReadField { bodies } => systems::read_field(bodies)?,
             Request::Adopt {
                 import_v3,
                 formation,

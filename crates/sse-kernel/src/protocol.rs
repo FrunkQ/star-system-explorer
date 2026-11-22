@@ -491,6 +491,17 @@ pub enum Request {
         #[ts(optional, type = "unknown")]
         window: Option<serde_json::Value>,
     },
+    /// What stops the wind at each body (MF6 part 1): for each of `bodies`
+    /// (radius, dipole moment, air, the star's wind there, the host for a
+    /// moon, conducting layers), the obstacle (own field, air or bare
+    /// surface), the bubble's flaring, whether a moon sits inside, outside or
+    /// crosses its host's bubble, and each layer's induced field. Conditions
+    /// are handed in until MF2 publishes each world's field as facts, when
+    /// `system` and `body` addressing joins.
+    ReadField {
+        #[ts(type = "unknown[]")]
+        bodies: Vec<serde_json::Value>,
+    },
     /// Planet finding from afar (O13): one star, its planets, an observer
     /// (direction and distance), an instrument and a watch time. Returns
     /// what each method (transit, wobble, position wobble, direct imaging,
@@ -1325,6 +1336,7 @@ impl Request {
             Request::ReadNebulae { .. } => "read_nebulae",
             Request::SurveyPlanets { .. } => "survey_planets",
             Request::ReadActivity { .. } => "read_activity",
+            Request::ReadField { .. } => "read_field",
             Request::ReadSpectrum { .. } => "read_spectrum",
             Request::ReadAirOptics { .. } => "read_air_optics",
             Request::Detect { .. } => "detect",
@@ -1490,6 +1502,11 @@ pub fn ops() -> Vec<OpInfo> {
             "read_activity",
             Cost::Light,
             "per star: a few block evaluations; flares are one draw per time bin per energy decade, capped at 2000 listed",
+        ),
+        o(
+            "read_field",
+            Cost::Trivial,
+            "per body: a few closed-form blocks",
         ),
         o(
             "survey_planets",
@@ -1973,6 +1990,13 @@ pub enum Response {
     ActivityRead {
         #[ts(type = "unknown[]")]
         stars: Vec<serde_json::Value>,
+    },
+    /// `read_field`: each of `bodies` is `sse_field::FieldRead` (obstacle
+    /// candidates and winner, flaring, host bubble, induced layers, why,
+    /// stand-ins, references).
+    FieldRead {
+        #[ts(type = "unknown[]")]
+        bodies: Vec<serde_json::Value>,
     },
     /// `survey_planets`: `result` is `sse_survey::SurveyResult` (findings
     /// per planet and method with verdict, signal to noise, measured values
