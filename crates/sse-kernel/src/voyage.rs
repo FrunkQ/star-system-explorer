@@ -100,10 +100,9 @@ pub(crate) fn plan_voyage(
         ));
     }
     let frame = st.frame_of(t_myr);
-    // Positions at the frame's start, where every drawn system is still in
-    // its own cell: by the frame's end stars have drifted tens of parsecs, so
-    // a few cells read at a later time would miss their true neighbours.
-    let t_myr = frame as f64 * st.params.frame_myr;
+    // Positions at the asked time. Frames are 0.1 Myr (Y1), so a system
+    // stays within one cell of the cell that drew it, and the box of cells
+    // one wider than the voyage on every side holds every true neighbour.
     let mut systems: Vec<VoyageSystem> = vec![];
     for x in lo[0]..=hi[0] {
         for y in lo[1]..=hi[1] {
@@ -125,6 +124,19 @@ pub(crate) fn plan_voyage(
                         fuel: a.known_fuel.get(&id).cloned().unwrap_or_default(),
                         surveyed: a.surveyed.contains(&id) || a.known_fuel.contains_key(&id),
                         xyz_pc: at.xyz_pc,
+                        star: (at.state.luminosity_lsun > 0.0 && at.state.teff_k > 0.0).then(
+                            || {
+                                let t = 5772.0 / at.state.teff_k;
+                                sse_nav::voyage::StarWell {
+                                    mass_msun: at.state.mass_msun,
+                                    // R = √L (T☉/T)², Stefan-Boltzmann.
+                                    radius_rsun: sse_core::math::sqrt(at.state.luminosity_lsun)
+                                        * t
+                                        * t,
+                                    luminosity_lsun: at.state.luminosity_lsun,
+                                }
+                            },
+                        ),
                         id,
                     });
                 }
@@ -164,7 +176,8 @@ pub(crate) fn plan_voyage(
         if let Some(j) = &ship.jump {
             m.push(serde_json::json!({
                 "means": "jump",
-                "words": format!("{}, {} t of jump fuel in a {} t tank, {} days a jump", j.rating_words(), j.fuel(), j.tank_t, j.days_per_jump),
+                "words": format!("{}, {} t of {} in a {} t tank, {} days a jump{}", j.rating_words(), j.fuel(), j.fuel, j.tank_t, j.days_per_jump,
+                    j.limit_diameters.map(|n| format!(", from {n} star diameters out")).unwrap_or_default()),
                 "rule": j.rule,
                 "fictional": true,
             }));
@@ -172,7 +185,8 @@ pub(crate) fn plan_voyage(
         if ship.sustained {
             m.push(serde_json::json!({
                 "means": "flight",
-                "words": format!("{} g sustained, exhaust {} km/s, {} t of propellant", ship.accel_g.min(ship.g_limit), ship.exhaust_km_s, ship.propellant()),
+                "words": format!("{} g sustained, exhaust {} km/s, {} t of {}", ship.accel_g.min(ship.g_limit), ship.exhaust_km_s, ship.propellant(),
+                    if ship.fuels.is_empty() { "propellant".to_string() } else { ship.fuels.join(" and ") }),
                 "fictional": false,
             }));
         }
@@ -226,14 +240,17 @@ pub(crate) fn plan_voyage(
         "cells": count,
         "t_myr": t_myr,
         "systems": near,
+        "fuels": sse_nav::refuel::needs(&ship),
+        "refuel": ship.refuel,
         "model": [
             "systems: the campaign's star cells around the start and the destination at the campaign's now (Y7a)",
             "jump: the ship's jump drive, a pack rule (fictional): its rating, fuel per parsec and days per jump",
             "flight: constant proper acceleration with turnover, special relativity and the relativistic rocket equation; a coast at the best speed the propellant allows (Baez, The Relativistic Rocket)",
-            "fuel: carried leg to leg; a stop refuels only where the crew knows of fuel; unsurveyed systems are dry unless gambles are allowed, and then only at odds above the pack's floor",
+            "fuel: carried leg to leg; a stop refuels only where the crew knows of a source the ship can use (a scoop for a giant, an ice processor for ice, docking for a port) that gives every fuel it burns; exotic fuels only at ports that stock them; unsurveyed systems are dry unless gambles are allowed, the ship can skim, and the odds clear the pack's floor",
             "odds: the ship's sensors where it has sensed a system, else giant-planet odds from the star's mass and metallicity (Johnson et al. 2010, PASP 122, 905; doi:10.1086/655775)",
-            "positions: the systems at the start of the current star frame (G5 frames are 1 Myr), so each is in its own cell; drift within the frame is not followed",
-            "left out: the stars' own motion, and the climb out of and fall into each system (in-system courses are plan_route's)",
+            "positions: the systems at the asked time; frames are 0.1 Myr, so each stays within one cell of the cell that drew it",
+            "wells: a flight pays the Δv to climb out of the start star's well from its temperate orbit (√L au) and to settle into the destination's, (√2 − 1)√(GM/r) each, by the rocket equation; a jump limit (a pack rule) adds the flight out to it and in from it",
+            "left out: the stars' own motion",
         ],
     });
     let mut out = base;
