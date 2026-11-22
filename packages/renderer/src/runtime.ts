@@ -4,6 +4,7 @@
 // Presentation only: nothing here reaches the kernel or the state hash.
 import { cubeDirection, type Globe, type Tier } from "../../ui-contract/src/index.ts";
 import { layersFor, narrateFrame, pickAt, recolour, type LayerSpec, type TimeLapse } from "./timelapse.ts";
+import { narrateWeather, weatherAt, withWeather, type WeatherMap } from "./weather.ts";
 import { badge, Governor, type Badge } from "./governor.ts";
 import { DEFAULT_BUDGET_MS, estimateMs, maxLevel, pickRecipe, plan, TIER_ORDER, type PassSpec, type Plan, type RecipeDoc } from "./recipe.ts";
 import { drawCanvas } from "./canvas.ts";
@@ -75,6 +76,10 @@ export interface GlobeRun {
   frames(): { times: number[]; events: { t_myr: number; kind: string; label: string; lon?: number; lat?: number }[] };
   /** What lies under a point on the globe at the time shown: field values, the nearest event and the kernel's why lines. */
   pick(lon_deg: number, lat_deg: number): ReturnType<typeof pickAt> | null;
+  /** Today's weather over the globe (the kernel's weather op, read): null takes it off. A time lapse shows its own past instead. */
+  setWeather(w: WeatherMap | null): void;
+  /** The weather at a point: the cell's layers and rain, and a storm over it (radius sizes the storms). */
+  weatherAt(lon_deg: number, lat_deg: number, radius_km: number): ReturnType<typeof weatherAt>;
   setView(lon: number, lat: number): void;
   update(o: Partial<GlobeRunOptions>): void;
   /** Recent frame times in ms, newest last (for tests and the badge). */
@@ -93,6 +98,7 @@ export function mountGlobe(host: HTMLElement, opts: GlobeRunOptions, onStatus: (
   let lapse: TimeLapse | null = null;
   let lapseLayer = "land";
   let lapseT = 0;
+  let wx: WeatherMap | null = null;
   let shown: Prepared | null = null;
   let shownKey = "";
   let lon = 0;
@@ -229,6 +235,9 @@ export function mountGlobe(host: HTMLElement, opts: GlobeRunOptions, onStatus: (
     if (lapse) {
       const k = `${preparedKey}|${lapseLayer}|${lapseT}`;
       if (!shown || shownKey !== k || shown.globe !== globe) ((shown = recolour(prepared, lapse, lapseLayer, lapseT, cubeDirection)), (shownKey = k));
+    } else if (wx) {
+      const k = `${preparedKey}|weather|${wx.day}`;
+      if (!shown || shownKey !== k || shown.globe !== globe) ((shown = withWeather(prepared, wx, cubeDirection)), (shownKey = k));
     } else shown = prepared;
     const drawn = shown!;
     const want = pl.tier === "gpu-basic" || pl.tier === "gpu-high" ? "gpu" : pl.tier === "canvas" ? "canvas" : "text";
@@ -272,7 +281,7 @@ export function mountGlobe(host: HTMLElement, opts: GlobeRunOptions, onStatus: (
       lastEmit = now;
       const narr = c2.plan.passes.find((x) => x.kind === "text");
       const L = lightDir(Number(relief.sun_azimuth_deg ?? 315), Number(relief.sun_elevation_deg ?? 40));
-      const narration = lapse ? narrateFrame(lapse, lapseLayer, lapseT, o.label) : narrate(prepared, o.label, lon, lat, String(narr?.params.detail ?? "full"), L);
+      const narration = lapse ? narrateFrame(lapse, lapseLayer, lapseT, o.label) : `${narrate(prepared, o.label, lon, lat, String(narr?.params.detail ?? "full"), L)}${wx ? ` ${narrateWeather(wx, "")}` : ""}`;
       onStatus({
       tier: c2.plan.tier,
       backend: c2.plan.tier === "gpu-basic" || c2.plan.tier === "gpu-high" ? (gpu?.backend ?? "none") : c2.plan.tier === "canvas" ? "canvas2d" : "none",
@@ -341,6 +350,18 @@ export function mountGlobe(host: HTMLElement, opts: GlobeRunOptions, onStatus: (
       const a = (lo * Math.PI) / 180;
       const b = (la * Math.PI) / 180;
       return pickAt(lapse, [Math.cos(b) * Math.cos(a), Math.cos(b) * Math.sin(a), Math.sin(b)], lapseT);
+    },
+    setWeather(w) {
+      wx = w;
+      shown = null;
+      dirty = true;
+      kick();
+    },
+    weatherAt(lo, la, radius_km) {
+      if (!wx) return null;
+      const a = (lo * Math.PI) / 180;
+      const b = (la * Math.PI) / 180;
+      return weatherAt(wx, [Math.cos(b) * Math.cos(a), Math.cos(b) * Math.sin(a), Math.sin(b)], radius_km);
     },
     setView(lo, la) {
       lon = lo;

@@ -10,6 +10,7 @@ pub mod chem;
 pub mod climate;
 pub mod common;
 pub mod convection;
+pub mod field;
 pub mod heat;
 pub mod layers;
 pub mod light;
@@ -41,6 +42,7 @@ pub fn atoms() -> Vec<Box<dyn sse_flow::Atom>> {
         .chain(nebula::atoms())
         .chain(activity::atoms())
         .chain(convection::atoms())
+        .chain(field::atoms())
         .chain(air::atoms())
         .chain(chem::atoms())
         .collect()
@@ -321,6 +323,16 @@ pub const KIND_DESCRIPTIONS: &[(&str, &str)] = &[
     ("star.activity_cycle_period", "length of a star's spot and activity cycle"),
     ("flare.energy", "total energy released by a flare, all wavelengths"),
     ("flare.rate_above", "flares per unit time with at least the given energy"),
+    // what stops a wind (MF6)
+    ("body.ionopause_altitude", "height above the ground at which a body's air holds off the stellar wind"),
+    ("magnetosphere.flaring", "how quickly a magnetosphere's boundary flares out behind the nose (Shue exponent)"),
+    ("host.field_at_orbit", "the host planet's magnetic field strength at a moon's orbit"),
+    ("host.plasma_pressure_at_orbit", "pressure of the host's trapped plasma flowing past a moon"),
+    ("layer.electrical_conductivity", "electrical conductivity of a layer (salty ocean, magma, iron)"),
+    ("layer.thickness", "thickness of a layer"),
+    ("layer.outer_radius", "radius of a layer's top"),
+    ("field.change_period", "period with which the outside magnetic field seen by a body changes"),
+    ("induction.amplitude", "strength of a conducting layer's induced field relative to a perfect conductor's"),
     // surface convection
     ("convection.cell_size", "diameter of a surface convection cell (granule)"),
     ("convection.speed", "speed of the churning gas near the surface"),

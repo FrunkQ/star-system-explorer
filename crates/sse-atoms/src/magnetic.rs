@@ -17,7 +17,7 @@ use sse_flow::{Atom, CostClass};
 
 const CHR09: &str = "Christensen, U. R., Holzwarth, V. and Reiners, A. 2009, Nature 457, 167: energy flux determines magnetic field strength of planets and stars. doi:10.1038/nature07626";
 const C10: &str = "Christensen, U. R. 2010, Space Science Reviews 152, 565: dynamo scaling laws and applications to the planets (c about 0.63, f_ohm about 0.9). doi:10.1007/s11214-009-9553-2";
-const CA06: &str = "Christensen, U. R. and Aubert, J. 2006, Geophysical Journal International 166, 97: scaling properties of convection-driven dynamos in rotating spherical shells (dipolar dynamos, the ratio of mean field to dipole field at the dynamo surface). doi:10.1111/j.1365-246X.2006.02972.x";
+const CA06: &str = "Christensen, U. R. and Aubert, J. 2006, Geophysical Journal International 166, 97: scaling properties of convection-driven dynamos in rotating spherical shells and application to planetary magnetic fields (dipolar dynamos, the ratio of mean field to dipole field at the dynamo surface). doi:10.1111/j.1365-246X.2006.03009.x";
 const IGRF: &str = "Alken, P. et al. 2021, Earth, Planets and Space 73, 49: the International Geomagnetic Reference Field, 13th generation (Earth's dipole moment about 7.7e22 A m²). doi:10.1186/s40623-020-01288-x";
 const JRM09: &str = "Connerney, J. E. P. et al. 2018, Geophysical Research Letters 45, 2590: a new model of Jupiter's magnetic field from Juno's first nine orbits (dipole about 4.1 G at the equator). doi:10.1002/2018GL077312";
 const SPHERE: &str = "A uniform sphere: density is mass over volume, ρ = M / (4/3 π R³).";

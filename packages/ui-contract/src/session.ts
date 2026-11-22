@@ -4,6 +4,22 @@
 // tests/ui/boundary.test.ts).
 import type { OrbitPlaced } from "./orbits.ts";
 /** A pack's calendar as the kernel serves it (`provides.other.calendar`). */
+/** One ask of the kernel `weather` op (presentation reads; nothing is recorded). */
+export interface WeatherAsk {
+  want: "climate" | "systems" | "field" | "report" | "column" | "sound";
+  world?: string;
+  system?: string;
+  body?: string;
+  at_s?: number;
+  day?: number;
+  /** [face 0-5, level, x, y] on the surface atlas. */
+  tile?: [number, number, number, number];
+  /** Cells across the tile, 1 to 64. */
+  n?: number;
+  lat?: number;
+  lon?: number;
+}
+
 export interface PackCalendar {
   name: string;
   epoch_s: number;
@@ -172,6 +188,8 @@ export interface ViewSession {
   /** Stellar activity (kernel `read_activity`, light track O10): regime, spin, X-rays, spots, cycle, and flares in a window. Read only; any seat. */
   /** Time-lapse keyframes of a world's surface (surface_frames): a fixture, or a body of an adopted system. Read only. */
   surfaceFrames(ask: { fixture?: string; system?: string; body?: string; at_s?: number; detail?: "orbit" | "survey"; frames_max?: number }): Promise<{ ok: true; frames: Json; label: string; source: string } | { ok: false; code: string; message: string }>;
+  /** The kernel `weather` op: a fixture `world`, or a `body` of an adopted `system` at `at_s`; `want` picks climate, systems, field (a cube-sphere `tile`), report, column or sound, at `day` (days since the campaign epoch). */
+  weather(ask: WeatherAsk): Promise<{ ok: true; want: string; world: string; provenance: Json; data: Json } | { ok: false; code: string; message: string }>;
   readActivity(ask: { stars: Json[]; seed?: string; at_s?: number; window?: { from_s: number; to_s: number; min_energy_j?: number } }): Promise<{ ok: true; stars: Json[] } | { ok: false; code: string; message: string }>;
   kernelVersion(): Promise<string>;
   /** Derived values of a flow (read only; no event). */
@@ -618,6 +636,13 @@ export class Session implements ViewSession {
     if (r.type !== "frames_made") return { ok: false, code: String(r.code ?? "unexpected"), message: String(r.message ?? JSON.stringify(r)) };
     const f = (r as unknown as { frames: { label: string; source: string; frames: Json } }).frames;
     return { ok: true, frames: f.frames, label: f.label, source: f.source };
+  }
+
+  async weather(ask: WeatherAsk): Promise<{ ok: true; want: string; world: string; provenance: Json; data: Json } | { ok: false; code: string; message: string }> {
+    const r = await this.#call({ op: "weather", ...ask } as Json);
+    if (r.type !== "weather_read") return { ok: false, code: String(r.code ?? "unexpected"), message: String(r.message ?? JSON.stringify(r)) };
+    const x = r as unknown as { want: string; world: string; provenance: Json; data: Json };
+    return { ok: true, want: x.want, world: x.world, provenance: x.provenance, data: x.data };
   }
 
   async readActivity(ask: { stars: Json[]; seed?: string; at_s?: number; window?: { from_s: number; to_s: number; min_energy_j?: number } }): Promise<{ ok: true; stars: Json[] } | { ok: false; code: string; message: string }> {
