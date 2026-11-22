@@ -38,7 +38,7 @@ try {
     const gm = await context.newPage();
     const errors = [];
     gm.on("pageerror", (e) => errors.push(e.message));
-    await gm.goto(base);
+    await gm.goto(base + "#chart");
     await gm.waitForSelector("[data-state-hash]:not([data-state-hash=''])", { timeout: 20000 });
     const hash = () => gm.locator("[data-state-hash]").first().getAttribute("data-state-hash");
     const h0 = await hash();

@@ -16,6 +16,8 @@
   import SoundControl from "../../sound/src/SoundControl.svelte";
   import LightControl from "./LightControl.svelte";
   import MakeSystem from "./MakeSystem.svelte";
+  import StartSheet, { type StartAction } from "./StartSheet.svelte";
+  import startDoc from "./documents/start.lines.json";
   import LookAhead from "./LookAhead.svelte";
   import { listedTitle, sceneAt, sceneFromResolved, type LookedAhead, type SystemSpec } from "../../ui-contract/src/index.ts";
   import lightDoc from "./documents/light.recipes.json";
@@ -536,6 +538,43 @@
   let agentsOpen = $state(false);
   let makeDialog: HTMLDialogElement | undefined = $state();
   let makeOpen = $state(false);
+  let makeStart = $state<"import" | "generate">("import");
+  function openMake(tab: "import" | "generate") {
+    makeStart = tab;
+    makeOpen = true;
+    makeDialog?.showModal();
+  }
+
+  // The start sheet (top-level design 3.1, step 3): what the app opens on, unless this device asked to skip it or the
+  // address ends in #chart. Features the sheet may name once they are built ("sol", "tours", "find", ...): none yet.
+  const STARTED: ReadonlySet<string> = new Set();
+  let startOpen = $state(typeof location !== "undefined" && location.hash !== "#chart" && loadPref("start") !== "skip");
+  const keptSave = readStored(`u:${base.universe.id}`).save;
+  const carryOn = keptSave ? { title: keptSave.title, when: new Date(keptSave.saved_at).toLocaleString("en-GB", { dateStyle: "medium", timeStyle: "short" }) } : null;
+  /** A world for the world instruments when none is selected: the selected body's world, else the first planet. */
+  function someWorld(): string | undefined {
+    const sel = scene.subjects.find((x) => x.address === ws.selection);
+    if (sel && sel.kind !== "star") return sel.address;
+    return systemOrder(scene).find((x) => x.kind === "planet")?.address;
+  }
+  function fromStart(a: StartAction) {
+    startOpen = false;
+    queueMicrotask(() => {
+      if ("door" in a) {
+        if (a.door === "grow") openMake("generate");
+        else if (a.door === "bring") campaignDialog?.showModal();
+      } else if ("desk" in a) chooseDesk(a.desk);
+      else if ("screen" in a) (toSystem(), go(a.screen));
+      else if ("world" in a) (toWorld(someWorld()), (ws.screen = a.world));
+      else if ("dialog" in a) {
+        if (a.dialog === "ask") ((agentsOpen = true), agentsDialog?.showModal());
+        else if (a.dialog === "grow") openMake("generate");
+        else if (a.dialog === "bring") campaignDialog?.showModal();
+        else if (a.dialog === "share" && share) window.open(share.start(), "_blank", "noopener");
+      } else if ("control" in a) document.querySelector<HTMLButtonElement>(a.control === "light" ? ".light .toggle" : ".sound .toggle")?.click();
+      else if ("link" in a) window.open(a.link, "_blank", "noopener");
+    });
+  }
   const agentContext = $derived.by(() => {
     const sub = scene.subjects.find((x) => x.address === ws.selection);
     const head = `${scene.title}: ${scene.subtitle}.`;
@@ -753,6 +792,11 @@
   }
 
   function onkeydown(e: KeyboardEvent) {
+    // The start sheet takes no chart keys; Escape leaves it for the chart.
+    if (startOpen) {
+      if (e.key === "Escape") ((startOpen = false), e.preventDefault());
+      return;
+    }
     const t = e.target as HTMLElement;
     if (t.closest("input, textarea, select, dialog")) return;
     if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === "z") {
@@ -795,7 +839,8 @@
 
 <svelte:window {onkeydown} {oncopy} {onpaste} onpointerdown={(e) => moreOpen && !(e.target as HTMLElement).closest(".more") && (moreOpen = false)} />
 
-<div class="app" data-depth={depth} data-state-hash={status.hash} data-stack-hash={status.stack} data-physics={status.campaign ? "campaign" : "base"}>
+{#if startOpen}<StartSheet doc={startDoc as never} built={STARTED} {carryOn} sample={base.title === "Kestrel" ? "Kestrel Reach" : base.title} ready={!!session} onopen={fromStart} />{/if}
+<div class="app" inert={startOpen} data-depth={depth} data-state-hash={status.hash} data-stack-hash={status.stack} data-physics={status.campaign ? "campaign" : "base"}>
   <header class="bar">
     <!-- Where (top-level design 2.1): the place line is the title, from the largest scale shown to the one in view. -->
     <nav class="place" aria-label="Place" data-scale={railScale}>
@@ -857,7 +902,8 @@
           {/if}
           <button type="button" onclick={() => ((moreOpen = false), toWorkshop())}>Workshop</button>
           <button type="button" onclick={() => ((moreOpen = false), (offered = null), (confirmFresh = false), campaignDialog?.showModal())}>Campaign… <small>save, open, start fresh</small></button>
-          <button type="button" onclick={() => ((moreOpen = false), (makeOpen = true), makeDialog?.showModal())} title="Import a V3 save or grow a new system, and add it to the campaign">Make a system…</button>
+          <button type="button" onclick={() => ((moreOpen = false), openMake("import"))} title="Import a V3 save or grow a new system, and add it to the campaign">Make a system…</button>
+          <button type="button" data-more-start onclick={() => ((moreOpen = false), (startOpen = true))}>Start sheet</button>
           <button type="button" aria-pressed={theme === "night-chart"} onclick={() => ((moreOpen = false), (theme = theme === "chart-room" ? "night-chart" : "chart-room"))}>Night chart <kbd>N</kbd></button>
           <button type="button" onclick={() => ((moreOpen = false), help?.showModal())}>Keyboard shortcuts <kbd>?</kbd></button>
         </div>
@@ -1021,7 +1067,7 @@
 </dialog>
 
 <dialog bind:this={makeDialog} class="help make-dialog" aria-label="Make a system" onclose={() => (makeOpen = !!makeDialog?.open)}>
-  {#if makeOpen && session}<MakeSystem {session} onadopted={(sys, note, hash) => (adopted(sys, note, hash), sys[0] && (makeDialog?.close(), showSystem(sys[0].system)))} context={{ mark: (s) => symbols.marker().mark(subjectOf(s)), symbology: symbols, styles: styleHost }} />{/if}
+  {#if makeOpen && session}<MakeSystem {session} start={makeStart} onadopted={(sys, note, hash) => (adopted(sys, note, hash), sys[0] && (makeDialog?.close(), showSystem(sys[0].system)))} context={{ mark: (s) => symbols.marker().mark(subjectOf(s)), symbology: symbols, styles: styleHost }} />{/if}
   <form method="dialog"><button type="submit">Close</button></form>
 </dialog>
 
@@ -1032,6 +1078,7 @@
   <h3>Open a campaign</h3>
   <p class="hint">A file from Save campaign. It replaces the campaign open now; save that first if you want to keep it. Players' screens reload into the opened campaign.</p>
   <label class="row">Campaign file <input type="file" accept=".json,application/json" onchange={pickFile} /></label>
+  <p class="row hint">A save from Star System Explorer 3? <button type="button" class="linkbtn" data-bring-v3 onclick={() => (campaignDialog?.close(), openMake("import"))}>Bring it in with Make a system ›</button></p>
   {#if offered}
     {#if offered.save}
       <p data-offered={offered.save.saved_at}><b>{offered.save.title}</b>, kept {new Date(offered.save.saved_at).toLocaleString("en-GB", { dateStyle: "medium", timeStyle: "short" })}: {savedEvents(offered.save)} events.</p>

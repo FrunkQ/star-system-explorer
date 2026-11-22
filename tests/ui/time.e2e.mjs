@@ -35,7 +35,7 @@ try {
       const readout = () => ruler.locator(".now").innerText();
       const linked = () => ruler.getAttribute("data-linked");
       const viewing = async () => Number(await ruler.locator(".now").getAttribute("data-viewing"));
-      await page.goto(base);
+      await page.goto(base + "#chart");
       await page.waitForSelector("[data-state-hash]:not([data-state-hash=''])", { timeout: 20000 });
 
       // Opens at the campaign's now, in deep time.

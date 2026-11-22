@@ -34,7 +34,7 @@ try {
     const errors = [];
     const page = await browser.newPage({ viewport: { width: 1440, height: 900 } });
     page.on("pageerror", (e) => errors.push(e.message));
-    await page.goto(url);
+    await page.goto(url + "#chart");
     await page.waitForSelector("[data-state-hash]:not([data-state-hash=''])");
     const stateHash = await page.getAttribute("[data-state-hash]", "data-state-hash");
 

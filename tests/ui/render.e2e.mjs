@@ -52,7 +52,7 @@ const pixelsOf = async (page, loc) => {
 };
 
 async function openEarth(page) {
-  await page.goto(base);
+  await page.goto(base + "#chart");
   await page.waitForSelector("[data-state-hash]:not([data-state-hash=''])", { timeout: 20000 });
   const hash = await page.locator("[data-state-hash]").first().getAttribute("data-state-hash");
   await more(page, "Make a system");

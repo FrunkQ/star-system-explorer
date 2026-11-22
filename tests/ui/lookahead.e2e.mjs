@@ -29,7 +29,7 @@ try {
     const errors = [];
     const gm = await (await browser.newContext({ viewport: { width: 1440, height: 900 } })).newPage();
     gm.on("pageerror", (e) => errors.push(e.message));
-    await gm.goto(base);
+    await gm.goto(base + "#chart");
     await gm.waitForSelector("[data-state-hash]:not([data-state-hash=''])", { timeout: 20000 });
     await gm.waitForTimeout(800);
     const hash = () => gm.locator("[data-state-hash]").getAttribute("data-state-hash");
