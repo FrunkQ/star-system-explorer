@@ -53,6 +53,8 @@ pub struct TreeWalk<'s, 'a> {
     /// Splits already made, by node and class (a split is keyed, so this
     /// only saves the work).
     splits: RefCell<BTreeMap<(Node, usize), Split>>,
+    /// Each IMF point's class at each age bin (`class_mix`).
+    class_grid: std::cell::OnceCell<Vec<(f64, f64, Vec<usize>)>>,
 }
 
 /// A root block's mix of classes: each class's share of its systems, and
@@ -129,6 +131,7 @@ impl<'s, 'a> TreeWalk<'s, 'a> {
             expect: RefCell::new(BTreeMap::new()),
             shares: RefCell::new(BTreeMap::new()),
             splits: RefCell::new(BTreeMap::new()),
+            class_grid: std::cell::OnceCell::new(),
         }
     }
 
@@ -269,27 +272,41 @@ impl<'s, 'a> TreeWalk<'s, 'a> {
                 let margin = edges[(k + 2).min(na)];
                 (mid, born_by(t_now - e[0]) - born_by(t_now - e[1]), margin)
             })
-            .filter(|b| b.1 > 0.0)
             .collect();
+        // The class of each IMF point at each bin's age is the same for every
+        // block (only the births differ), so it is worked out once a walk.
+        let grid = self.class_grid.get_or_init(|| {
+            let mut g = vec![];
+            for (lo, hi, nm) in [(0.0, 0.99, 256), (0.99, 0.999, 128), (0.999, 1.0, 128)] {
+                let du = (hi - lo) / nm as f64;
+                for i in 0..nm {
+                    let u = lo + (i as f64 + 0.5) * du;
+                    let mass = imf_quantile(p, u);
+                    let cs = bins
+                        .iter()
+                        .map(|(age, _, _)| p.class_of(p.state(mass, *age).luminosity_lsun))
+                        .collect();
+                    g.push((u, du, cs));
+                }
+            }
+            g
+        });
         let classes = p.class_edges_lsun.len() + 1;
         let mut w = vec![0.0; classes];
         let mut u_floor = vec![1.0f64; classes];
         let mut ceiling = vec![0.0f64; classes];
         // Three grids in the IMF's unit: the bulk, the brightest per cent and
         // the brightest per mille.
-        for (lo, hi, nm) in [(0.0, 0.99, 256), (0.99, 0.999, 128), (0.999, 1.0, 128)] {
-            let du = (hi - lo) / nm as f64;
-            for i in 0..nm {
-                let u = lo + (i as f64 + 0.5) * du;
-                let mass = imf_quantile(p, u);
-                for (age, share, margin) in &bins {
-                    let l = p.state(mass, *age).luminosity_lsun;
-                    let c = p.class_of(l);
-                    w[c] += du * share;
-                    // Two grid steps below, one age bin beyond.
-                    u_floor[c] = u_floor[c].min(u - 2.5 * du);
-                    ceiling[c] = ceiling[c].max(*margin);
+        for (u, du, cs) in grid {
+            for ((_, share, margin), c) in bins.iter().zip(cs) {
+                if *share <= 0.0 {
+                    continue;
                 }
+                let c = *c;
+                w[c] += du * share;
+                // Two grid steps below, one age bin beyond.
+                u_floor[c] = u_floor[c].min(u - 2.5 * du);
+                ceiling[c] = ceiling[c].max(*margin);
             }
         }
         let total: f64 = w.iter().sum();
@@ -473,13 +490,14 @@ impl<'s, 'a> TreeWalk<'s, 'a> {
         let classes = p.class_edges_lsun.len() + 1;
         let mix = self.class_mix(self.node_of(cell, 0).1);
         let mut out = vec![];
-        let mut slot = 0u64;
+        // Slots interleave the classes (the j-th star of class c is slot
+        // j x classes + c), so one class is drawn without counting the
+        // others.
         for c in 0..classes {
-            let n = self.cell_count(cell, c)?;
             if class.is_some_and(|k| k != c) {
-                slot += n;
                 continue;
             }
+            let n = self.cell_count(cell, c)?;
             let d = Draws::new(
                 st.seed,
                 addr.clone(),
@@ -520,10 +538,11 @@ impl<'s, 'a> TreeWalk<'s, 'a> {
                     let b = best.expect("at least one attempt");
                     (b.0, b.1)
                 });
+                let slot = j * classes as u64 + c as u64;
                 out.push(st.complete(&d, &i, &addr, cell, frame, slot, mass, birth)?);
-                slot += 1;
             }
         }
+        out.sort_by_key(|s| s.slot);
         Ok(out)
     }
 }

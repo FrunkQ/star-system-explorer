@@ -741,6 +741,11 @@ pub enum Request {
         #[serde(default)]
         #[ts(optional)]
         sensor: Option<String>,
+        /// The system an inline `nav` is, so the view's `frame` can be
+        /// keyed (needs an open universe); the Sol fixture's is measured.
+        #[serde(default)]
+        #[ts(optional)]
+        system: Option<String>,
     },
     /// G1 to G4 for the galaxy chart (U6): one galaxy grown from the open
     /// universe's seed, a named `halo` (`dwarf`, `milky-way-like`, `group`) or
@@ -2314,7 +2319,9 @@ pub enum Response {
     },
     /// `window_view`: sse-nav's `WindowView` (`seen`: lon/lat, distance,
     /// angular diameter, magnitude, phase, lit fraction, detected, resolved,
-    /// light time, why; `sensor`; `missed`; `model`).
+    /// light time, why; `sensor`; `missed`; `model`), plus `frame` (as
+    /// `resolved_system`'s; null for an inline system with no `system` or
+    /// no open universe).
     /// `sift`: hits best first (`sifter`, `label`, `subject`, `evidence`
     /// [{address, field, value, event}], `significance` {score, persistence_s,
     /// reach, reversibility, rarity_p, components}), the sifters run, the scope.
@@ -2612,6 +2619,11 @@ pub enum Response {
         #[serde(default, skip_serializing_if = "Vec::is_empty")]
         #[ts(optional, type = "unknown[]")]
         clouds: Vec<serde_json::Value>,
+        /// The system's frame in the galaxy: `{pole_l_deg, pole_b_deg,
+        /// zero_l_deg, zero_b_deg, node_l_deg, to_galactic (3x3 rows),
+        /// evidence ("drawn"), source, model}`.
+        #[ts(type = "unknown")]
+        frame: serde_json::Value,
     },
     /// `classify_preview`: one row per body in address order, `{address,
     /// base, fit, modifiers}` (`base` null when nothing fits), with the
