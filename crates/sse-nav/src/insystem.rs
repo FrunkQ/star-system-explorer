@@ -59,12 +59,16 @@ pub fn places(sys: &NavSystem, set: &InSystemSettings) -> Vec<VoyageSystem> {
         .map(|b| {
             let mut fuel = vec![];
             if b.port {
-                fuel.push("port".to_string());
+                fuel.push(if b.stock.is_empty() {
+                    "port".to_string()
+                } else {
+                    format!("port:{}", b.stock.join(","))
+                });
             }
             if b.mass_earth >= set.skim_min_mass_earth {
-                fuel.push("gas giant to skim".to_string());
+                fuel.push("skim".to_string());
             } else if b.a_au >= snow {
-                fuel.push("ice to crack".to_string());
+                fuel.push("ice".to_string());
             }
             VoyageSystem {
                 id: b.address.clone(),
@@ -74,6 +78,7 @@ pub fn places(sys: &NavSystem, set: &InSystemSettings) -> Vec<VoyageSystem> {
                 surveyed: true,
                 fuel_odds: None,
                 odds_from: String::new(),
+                star: None,
             }
         })
         .collect();
@@ -86,13 +91,14 @@ pub fn places(sys: &NavSystem, set: &InSystemSettings) -> Vec<VoyageSystem> {
             // Ice where any of the belt lies beyond the snow line (Ceres, at
             // 2.8 au, holds water ice).
             fuel: if belt.a_out_au >= snow {
-                vec!["ice to crack".into()]
+                vec!["ice".into()]
             } else {
                 vec![]
             },
             surveyed: true,
             fuel_odds: None,
             odds_from: String::new(),
+            star: None,
         });
     }
     out
@@ -432,14 +438,14 @@ mod tests {
         let main = ps.iter().find(|p| p.id == "belt:Main Belt").unwrap();
         assert_eq!(
             main.fuel,
-            vec!["ice to crack".to_string()],
+            vec!["ice".to_string()],
             "the outer main belt is icy"
         );
         assert!(ps.iter().find(|p| p.name == "Mars").unwrap().fuel == vec!["port".to_string()]);
         let kuiper = ps.iter().find(|p| p.id == "belt:Kuiper Belt").unwrap();
-        assert_eq!(kuiper.fuel, vec!["ice to crack".to_string()]);
+        assert_eq!(kuiper.fuel, vec!["ice".to_string()]);
         let jupiter = ps.iter().find(|p| p.name == "Jupiter").unwrap();
-        assert_eq!(jupiter.fuel, vec!["gas giant to skim".to_string()]);
+        assert_eq!(jupiter.fuel, vec!["skim".to_string()]);
         let ship = s.ships["nuclear-thermal"].clone();
         let (v, _) = plan_in_system(
             &s,

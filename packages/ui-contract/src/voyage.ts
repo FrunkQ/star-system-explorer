@@ -6,10 +6,10 @@
 
 /** Stock ships that can cross between stars (base-nav pack), by template id. */
 export const VOYAGE_SHIPS: readonly { id: string; name: string; drive: string }[] = [
-  { id: "jump-courier", name: "Jump courier", drive: "Jump-2, a pack rule (fictional)" },
-  { id: "relativistic-probe", name: "Antimatter probe", drive: "1 g sustained, exhaust a third of light" },
-  { id: "fusion-torch", name: "Fusion torch", drive: "1 g sustained, exhaust 2,000 km/s" },
-  { id: "rescue-cutter", name: "Rescue cutter", drive: "2 g sustained, exhaust 3,000 km/s" },
+  { id: "jump-courier", name: "Jump courier", drive: "Jump-2, a pack rule (fictional); hydrogen from a giant, ice or a port" },
+  { id: "relativistic-probe", name: "Antimatter probe", drive: "1 g sustained, exhaust a third of light; antimatter, only where a port stocks it" },
+  { id: "fusion-torch", name: "Fusion torch", drive: "1 g sustained, exhaust 2,000 km/s; deuterium and helium-3, skimmed from giants" },
+  { id: "rescue-cutter", name: "Rescue cutter", drive: "2 g sustained, exhaust 3,000 km/s; deuterium from a giant, ice or a port" },
   { id: "chemical-transfer", name: "Chemical transfer ship", drive: "chemical: cannot cross between stars" },
 ];
 
@@ -179,10 +179,10 @@ export function voyageFrame(w: number, h: number, points: readonly (readonly num
 
 /** Ships for voyages inside one system (the base-nav pack's stock ships). */
 export const IN_SYSTEM_SHIPS: readonly { id: string; name: string; drive: string }[] = [
-  { id: "chemical-transfer", name: "Chemical transfer ship", drive: "chemical, coasts between burns" },
-  { id: "nuclear-thermal", name: "Nuclear thermal ship", drive: "nuclear thermal, coasts between burns" },
-  { id: "fusion-torch", name: "Fusion torch", drive: "1 g sustained (fictional)" },
-  { id: "rescue-cutter", name: "Rescue cutter", drive: "2 g sustained (fictional)" },
+  { id: "chemical-transfer", name: "Chemical transfer ship", drive: "chemical, coasts between burns; hydrogen and oxygen from ice or a port" },
+  { id: "nuclear-thermal", name: "Nuclear thermal ship", drive: "nuclear thermal, coasts between burns; hydrogen from ice or a port" },
+  { id: "fusion-torch", name: "Fusion torch", drive: "1 g sustained (fictional); deuterium and helium-3, skimmed from giants" },
+  { id: "rescue-cutter", name: "Rescue cutter", drive: "2 g sustained (fictional); deuterium from a giant, ice or a port" },
 ];
 
 /** A place inside a system, as plan_voyage lists it. */

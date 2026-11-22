@@ -104,7 +104,7 @@
   function toggleFuel(a: string) {
     const k = { ...knownFuel };
     if (k[a]) delete k[a];
-    else k[a] = ["gas giant"];
+    else k[a] = ["skim"];
     knownFuel = k;
   }
   function restart() {

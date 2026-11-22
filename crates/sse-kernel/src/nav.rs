@@ -106,6 +106,7 @@ fn from_system(
                 varpi_deg: p.varpi_deg,
                 mean_longitude_deg: p.mean_longitude_deg,
                 port: ports.contains(&p.address),
+                stock: vec![],
                 magnetic_moment_a_m2: None,
             }
         })

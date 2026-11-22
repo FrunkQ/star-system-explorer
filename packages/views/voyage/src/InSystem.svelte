@@ -118,7 +118,7 @@
   <div class="head">
     <h2>Voyages in {plan?.system ?? "this system"}</h2>
     {#if shipInfo}<span class="muted">{shipInfo.name}: {shipInfo.drive}</span>{/if}
-    <p class="lede">Transfers wait for their windows; the computer refuels where a giant can be skimmed, ice cracked or fuel bought. Pick a world or a belt to go there.</p>
+    <p class="lede">Transfers wait for their windows; the computer refuels where the ship can use what it finds: a giant to skim, ice to crack or a port that stocks its fuel. Pick a world or a belt to go there.</p>
   </div>
 
   {#if fromScene.notes.length && !fromScene.nav}<p class="warn">{fromScene.notes[0]}</p>{/if}

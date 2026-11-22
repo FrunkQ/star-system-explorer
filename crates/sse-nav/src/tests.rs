@@ -86,6 +86,7 @@ fn ideal() -> NavSystem {
         varpi_deg: 0.0,
         mean_longitude_deg: l,
         port: true,
+        stock: vec![],
         magnetic_moment_a_m2: None,
     };
     NavSystem {
