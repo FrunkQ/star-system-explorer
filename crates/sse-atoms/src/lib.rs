@@ -10,6 +10,7 @@ pub mod chem;
 pub mod climate;
 pub mod common;
 pub mod convection;
+pub mod extinction;
 pub mod field;
 pub mod heat;
 pub mod layers;
@@ -45,6 +46,7 @@ pub fn atoms() -> Vec<Box<dyn sse_flow::Atom>> {
         .chain(convection::atoms())
         .chain(field::atoms())
         .chain(shield::atoms())
+        .chain(extinction::atoms())
         .chain(air::atoms())
         .chain(chem::atoms())
         .collect()
@@ -335,6 +337,8 @@ pub const KIND_DESCRIPTIONS: &[(&str, &str)] = &[
     ("layer.outer_radius", "radius of a layer's top"),
     ("field.change_period", "period with which the outside magnetic field seen by a body changes"),
     ("induction.amplitude", "strength of a conducting layer's induced field relative to a perfect conductor's"),
+    // dust extinction (Y2)
+    ("dust.extinction_ratio", "how much dust dims light at a wavelength, relative to the V band (A_λ / A_V)"),
     // cosmic-ray shielding and dose (MF7)
     ("shield.distance", "distance from a body's centre at which shielding is asked for"),
     ("shield.magnetic_latitude", "latitude measured from a body's magnetic equator"),

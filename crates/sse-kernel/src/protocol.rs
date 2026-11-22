@@ -502,6 +502,19 @@ pub enum Request {
         #[ts(type = "unknown[]")]
         bodies: Vec<serde_json::Value>,
     },
+    /// Magnitudes in photometric bands (night sky Y2, light side): for each
+    /// of `stars` (a photosphere: `temperature_k` with `radius_m` or
+    /// `luminosity_w`, and a sight line: `distance_m`, dust `a_v` and `r_v`),
+    /// AB and Vega magnitudes per band, the dust's dimming per band, and
+    /// colours with their dust excess. `bands` picks bands by id (U, B, V,
+    /// R, I, J, H, Ks); empty means all. The sky draw uses the same path.
+    ReadPhotometry {
+        #[ts(type = "unknown[]")]
+        stars: Vec<serde_json::Value>,
+        #[serde(default)]
+        #[ts(optional)]
+        bands: Option<Vec<String>>,
+    },
     /// Planet finding from afar (O13): one star, its planets, an observer
     /// (direction and distance), an instrument and a watch time. Returns
     /// what each method (transit, wobble, position wobble, direct imaging,
@@ -1390,6 +1403,7 @@ impl Request {
             Request::SurveyPlanets { .. } => "survey_planets",
             Request::ReadActivity { .. } => "read_activity",
             Request::ReadField { .. } => "read_field",
+            Request::ReadPhotometry { .. } => "read_photometry",
             Request::ReadSpectrum { .. } => "read_spectrum",
             Request::ReadAirOptics { .. } => "read_air_optics",
             Request::Detect { .. } => "detect",
@@ -1561,6 +1575,11 @@ pub fn ops() -> Vec<OpInfo> {
             "read_field",
             Cost::Trivial,
             "per body: a few closed-form blocks",
+        ),
+        o(
+            "read_photometry",
+            Cost::Trivial,
+            "per star: one Planck evaluation and one extinction block per band",
         ),
         o(
             "survey_planets",
@@ -2056,6 +2075,15 @@ pub enum Response {
     FieldRead {
         #[ts(type = "unknown[]")]
         bodies: Vec<serde_json::Value>,
+    },
+    /// `read_photometry`: each of `stars` is `sse_light::photometry::Photometry`
+    /// (magnitudes per band with extinction, colours with excess); `references`
+    /// cite the magnitude system, band table, extinction curve and Planck's law.
+    PhotometryRead {
+        #[ts(type = "unknown[]")]
+        stars: Vec<serde_json::Value>,
+        #[ts(type = "unknown[]")]
+        references: Vec<serde_json::Value>,
     },
     /// `survey_planets`: `result` is `sse_survey::SurveyResult` (findings
     /// per planet and method with verdict, signal to noise, measured values
