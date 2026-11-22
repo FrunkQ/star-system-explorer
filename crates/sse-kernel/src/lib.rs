@@ -14,6 +14,7 @@ mod descent;
 mod dressing;
 #[cfg(test)]
 mod dressing_tests;
+mod frame;
 mod frames;
 mod galaxies;
 mod glow;
@@ -2715,6 +2716,7 @@ impl Kernel {
                     tiles: r.tiles,
                     refused: r.refused,
                     clouds: r.clouds,
+                    frame: frame::drawn(&u.seed, &a)?.json(),
                 }
             }
             Request::PlanRoute {
@@ -2818,16 +2820,28 @@ impl Kernel {
                 from,
                 at_au,
                 sensor,
-            } => Response::WindowViewed {
-                view: nav::window_view(
+                system,
+            } => {
+                let mut view = nav::window_view(
                     fixture.as_deref(),
                     nav.as_ref(),
                     at_s,
                     from.as_deref(),
                     at_au,
                     sensor.as_deref(),
-                )?,
-            },
+                )?;
+                let f = match (fixture.as_deref(), system, self.universe.as_ref()) {
+                    (Some(_), _, _) => Some(frame::sol()),
+                    (None, Some(s), Some(u)) => {
+                        let a: Address =
+                            s.parse().map_err(|e| err("bad_address", format!("{e}")))?;
+                        Some(frame::drawn(&u.seed, &a)?)
+                    }
+                    _ => None,
+                };
+                view["frame"] = f.map(|f| f.json()).unwrap_or(serde_json::Value::Null);
+                Response::WindowViewed { view }
+            }
             Request::WebSlice {
                 z,
                 t_gyr,

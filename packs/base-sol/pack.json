@@ -46,6 +46,30 @@
         "unit": "Gyr",
         "src": "connelly2012",
         "note": "age of the first solids (CAIs), 4567.30 ± 0.16 Myr"
+       },
+       "system.frame.pole_l_deg": {
+        "v": 96.384,
+        "unit": "deg",
+        "src": "hipparcos1997",
+        "note": "J2000 ecliptic north pole in galactic coordinates, from the obliquity (hilton2006) and A_G"
+       },
+       "system.frame.pole_b_deg": {
+        "v": 29.8114,
+        "unit": "deg",
+        "src": "hipparcos1997",
+        "note": "J2000 ecliptic north pole in galactic coordinates, from the obliquity (hilton2006) and A_G"
+       },
+       "system.frame.zero_l_deg": {
+        "v": 96.3373,
+        "unit": "deg",
+        "src": "hipparcos1997",
+        "note": "J2000 ecliptic equinox (longitude zero) in galactic coordinates, from the obliquity (hilton2006) and A_G"
+       },
+       "system.frame.zero_b_deg": {
+        "v": -60.1886,
+        "unit": "deg",
+        "src": "hipparcos1997",
+        "note": "J2000 ecliptic equinox (longitude zero) in galactic coordinates, from the obliquity (hilton2006) and A_G"
        }
       }
      },
@@ -674,6 +698,18 @@
       "text": "Connelly, J. N. et al. 2012, Science 338, 651: the absolute chronology and thermal processing of solids in the solar protoplanetary disk (CAIs at 4567.30 ± 0.16 Myr)",
       "status": "verified",
       "doi": "10.1126/science.1226919"
+     },
+     {
+      "id": "hilton2006",
+      "text": "Hilton, J. L. et al. 2006, Celest. Mech. Dyn. Astron. 94, 351: Report of the IAU Division I Working Group on Precession and the Ecliptic (obliquity at J2000, 84381.406 arcsec)",
+      "status": "verified",
+      "doi": "10.1007/s10569-006-0001-2"
+     },
+     {
+      "id": "hipparcos1997",
+      "text": "ESA 1997, The Hipparcos and Tycho Catalogues, ESA SP-1200, vol. 1, sec. 1.5.3: the ICRS to galactic matrix A_G",
+      "status": "verified",
+      "url": "https://www.cosmos.esa.int/documents/532822/552851/vol1_all.pdf"
      },
      {
       "id": "iau2015b3",
