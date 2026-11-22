@@ -12,7 +12,7 @@ Alex, 22 Nov 12:39: "how can we mass and energy balance galactic filaments and g
 2. **Dark energy needs no frig.** It is already in the expansion and in the growth of structure, which is the honest place for it. It does not push on voids in particular. Voids grow because matter drains out of them, and dark energy slows that draining across the whole universe. What is missing is that the foam map is drawn in co-moving units, so nobody sees the universe getting bigger. Section 3.4 adds that as a switch, and two rows on the sheet.
 3. **"Formation again through a different lens": mostly yes.** About two thirds of this design is reuse (section 11). The record, the pins, the fidelity ladder, "clouds until looked at", the budgets, the events on the ruler and the detail levels all carry over from system formation almost word for word. Three things are different in kind and need new blocks: galaxies are made of galaxies (so the history is a tree and the mechanism calls itself), stars and dark matter pass through each other (so the leftovers are orbits, not bodies), and the building has not finished (two galaxies are being eaten by ours today).
 4. **One mechanism does all of it.** Every galaxy has one **assembly tree**: the list of smaller haloes it swallowed, each with its own small galaxy grown by the code we already have. Each swallowed galaxy then runs the same four processes (sinking, tidal stripping, gas stripping, heating). Satellites, dwarfs, ultra-faint dwarfs, streams, shells, ancient patches, accreted globular clusters, a thick disc, galaxies that lost their dark matter and galaxies that are nearly all dark matter are what that mechanism leaves behind. None is a special case, and each name is a label read off the result.
-5. **It fits a browser.** No particle simulation. A Milky Way history at chart level is about 55 swallowed haloes and costs tens of milliseconds on top of what Y4 already does. The full survey (about 2,000 haloes down to the smallest that can hold stars) is a second or two, once, and then stored (estimates, to be measured in GH0). What a browser cannot do is listed in section 10 with what stands in for it.
+5. **It fits a browser.** No particle simulation. A Milky Way history at chart level is about 55 swallowed haloes and costs about 0.4 s on a laptop and under 2 s on a phone, once, and is then stored. The full survey (about 2,000 haloes down to the smallest that can hold stars) measured at about 8 s on a laptop before the three cuts in section 10, which should bring it to about 1 s (measured in GH0, 22 Nov; the first estimates here were about 8 times too low for orbits). What a browser cannot do is listed in section 10 with what stands in for it.
 6. **"Battle-worn" comes in two kinds.** Damage to the disc is bright and shows in true colour: the warp, ripples, driven arms, a punched ring, bursts, companions (section 9.4). The remains of old meals out in the halo are faint light, odd orbits and odd chemistry, and real images show them only at very long exposure. So Chart style inks those, and True style shows them when the exposure is deepened (section 9.3).
 
 ---
@@ -329,14 +329,14 @@ Also pinned: Andromeda and Triangulum as neighbours (this mends fudge F37, where
 
 ### 9.1 Detail levels
 
-| Level | Seen from | What exists | Cost (estimate) |
+| Level | Seen from | What exists | Cost (measured in GH0, see section 10) |
 |---|---|---|---|
 | **Glance** | the sky, the cluster map | mass, size, shape, colour (built), plus from summary numbers alone: time of last big merger, a "disturbed" flag, expected satellites, dark share | none beyond today's |
-| **Chart** | the galaxy chart | disc, bulge, bar, arms; the brighter satellites where they are now, with orbits; the largest streams and shells; the cluster system as a count and a few bright ones; rotation curve | tens of ms; stored |
-| **Survey** | an explicit survey, or zooming into the halo | every progenitor to the smallest; every component with where it came from; each globular cluster; dark haloes (GM view); the family tree on the ruler | 1 to 3 s once; stored; served by the GM's machine to weak devices |
+| **Chart** | the galaxy chart | disc, bulge, bar, arms; the brighter satellites where they are now, with orbits; the largest streams and shells; the cluster system as a count and a few bright ones; rotation curve | about 0.4 s on a laptop, 1.7 s on the phone stand-in, before the GH2 cuts; once, then stored; the disc draws first and the satellites and streams arrive when ready |
+| **Survey** | an explicit survey, or zooming into the halo | every progenitor to the smallest; every component with where it came from; each globular cluster; dark haloes (GM view); the family tree on the ruler | about 8 s on a laptop and over 30 s on the phone stand-in as first written; target about 1 s on a laptop after the GH2 cuts (to be measured again in GH2); once, then stored; served by the GM's machine to weak devices |
 | **Site** | inside a satellite, a stream, a cluster or a patch | that object's own envelope and stars. A satellite is a galaxy, so the whole chain runs on it | as G4 and G5 today |
 
-Same world at every level: deeper levels add lower mass bins with their own keys. No heavy work for a click: a click reads Glance.
+Same world at every level: deeper levels add lower mass bins with their own keys. No heavy work for a click: a click reads Glance. Opening the galaxy chart is a move to another screen, not a click on a galaxy, and its one-off cost is paid in the background: the chart shows the Glance galaxy at once and fills in.
 
 ### 9.2 Time
 
@@ -393,12 +393,22 @@ A mockup of the galaxy chart with its history should come before GH8, as the Ref
 | Piece | How | Verdict |
 |---|---|---|
 | Sheet rows, ledgers, halo profile, rotation curve | formulas | trivial |
-| Assembly tree | keyed counts per mass bin | trivial at Chart; under 0.1 s at Survey |
-| A galaxy per progenitor | G3, about 2 ms each; Sketch envelope until looked at | fine |
-| Orbits and stripping | leapfrog, one test body each, 14,000 steps | about 1 million steps at Chart, 30 million at Survey: under 1 s compiled |
+| Assembly tree | keyed counts per mass bin | measured: free at both levels (about 50 ms at Survey on the phone stand-in) |
+| A galaxy per progenitor | G3, measured 2 to 3 ms each on a laptop, 13 ms on the phone stand-in; Sketch envelope until looked at | fine at Chart (0.1 s, 0.6 s); Survey needs the Sketch envelope |
+| Orbits and stripping | leapfrog, one test body each, 14,000 steps | measured: 0.3 to 0.4 µs a step on a laptop, 1.7 µs on the phone stand-in. Chart (55 bodies) 0.3 s and 1.2 s. Survey (2,000 bodies) about 8 s and over 30 s as first written, about 8 times the first estimate. Fine at Chart; Survey needs the cuts below |
 | Components in the envelope | a sum over the few that overlap a patch, indexed by radius | fine |
 | Clusters one by one | a few hundred a galaxy | fine |
 | Storage | about 30 kB a galaxy at Chart, about 1 MB at Survey | fine |
+
+**Measured, 22 Nov (GH0, `handover/packages/GH0-timing.md`).** Compiled to WebAssembly on a mid-laptop-class machine, in Node and headless Chromium, and with Chromium's CPU throttled 4 times as a phone stand-in (not a real phone). Building the cosmology costs 0.3 s (1.4 s on the stand-in) for every op that builds one today; caching it is on the kernel's queue and is not part of the figures above.
+
+**The three cuts for GH2, and the conditions that keep them inside the design.** The kernel thread proposes them; all three fit, given these conditions.
+
+1. *Step a body only from its infall.* Fits as it stands: before infall the body is not in the host, so nothing is lost.
+2. *Size the step from the body's own orbital time.* Fits if the step is a function of the body alone (its orbit and its key), never of the level or the device, so the same body takes the same path at Chart and at Survey and on every machine. The step is sized from the time spent near closest approach, not the whole period, because sinking, stripping and disc passes all happen there and plunging orbits (the Sausage kind) are the ones that matter most.
+3. *Read the host's pull and drag from a radial table per stored time slice.* Fits if one table per host is built once and used at every level, and the table is checked against the direct formulas to a stated tolerance in GH2's tests. It is numerical method, not a fudge, so it needs no register entry unless the tolerance is loosened.
+
+None of the three changes what exists, only what it costs. If Survey still misses about 1 s on a laptop after them, the next step is to run the survey in mass bins from the top down and show each bin as it lands, which the keyed bins already allow.
 
 **Not practicable**, with what stands in (each goes on the register):
 
@@ -476,7 +486,7 @@ Owners are suggestions for the coordinator. Each package adds its own fudge regi
 
 | Id | Package | Needs | Owner | Acceptance checks |
 |---|---|---|---|---|
-| GH0 | Check every from-memory citation in section 12; time a throwaway tree and orbit run in WebAssembly on a phone and a laptop; walk a full catalogue of identified galaxy types (Hubble and de Vaucouleurs sequence, dwarf kinds, peculiar and interacting kinds, active kinds) and say for each which processes and Marks produce it, naming any the mechanism cannot yet produce (Alex, 22 Nov: "we will have every type of identified galaxy"); file the atom issues | none | citations, kernel | a checked source list; measured costs replace the estimates in 9.1 and 10; a type coverage table with every gap named |
+| GH0 (timing half done 22 Nov) | Check every from-memory citation in section 12; time a throwaway tree and orbit run in WebAssembly on a phone and a laptop; walk a full catalogue of identified galaxy types (Hubble and de Vaucouleurs sequence, dwarf kinds, peculiar and interacting kinds, active kinds) and say for each which processes and Marks produce it, naming any the mechanism cannot yet produce (Alex, 22 Nov: "we will have every type of identified galaxy"); file the atom issues | none | citations, kernel | a checked source list; measured costs replace the estimates in 9.1 and 10; a type coverage table with every gap named |
 | DM1 | Sheet: Cosmos group, the rows of 3.2, the theoretical mark, reach declarations; `base-cosmology` reads the sheet | MP1c | matter data sheet | nothing edited gives identical hashes; a changed Ωc gives a reach report; the mark shows at every depth, on phone and Night chart |
 | DM2 | Dark energy: w0, wa, growth by its equation; "real size" switch on foam and cluster maps | DM1 | kernel; galaxy charts | growth matches today's closed form at w = −1 to 0.2%; void profile against Hamaus et al.; scrub shows expansion |
 | DM3 | Matter ledger per cell and per halo; op `matter_budget`; "where the matter is" bar; dark matter layer | DM1 | kernel; galaxy charts | closure to rounding; environment shares and baryon census within stated bands |
@@ -484,7 +494,7 @@ Owners are suggestions for the coordinator. Each package adds its own fudge regi
 | DM5 | Warm and self-interacting rows wired through the two numbers | DM4, GH2 | kernel | a 3 keV universe has fewer ultra-faint dwarfs by the published factor; cored dwarfs strip faster |
 | DM6 | Constants with a history: a time law (constant, drift, step) on any Constants row, read by date; G first; the "particle route" lines on the Cosmos page | DM1 | matter data sheet; kernel | with every law constant, all hashes identical; a drifting G changes a year's length by the Kepler factor at each date; a stepped G shows a star's brightness change with the ESTIMATED stamp; reach report lists what cannot follow |
 | GH1 | One assembly tree: pins, fill, recursion, levels; the record of section 6 | G2, Y4 | kernel | no double counting (accreted mass closes); deeper levels never change members already drawn; Y4's satellites above the old floor unchanged where the budget allows; order independence |
-| GH2 | Orbits and the four processes; `satellites_at(time)`; labels | GH1, DM4 | kernel | section 7.3 checks; energy drift bound on the leapfrog; identical on rerun and across devices; retires F39's limits |
+| GH2 | Orbits and the four processes; `satellites_at(time)`; labels | GH1, DM4 | kernel | section 7.3 checks; energy drift bound on the leapfrog; identical on rerun and across devices; the three cuts of section 10 under their conditions (same path for a body at every level; table within a stated tolerance of the formulas); Survey timed again against the 1 s laptop target; retires F39's limits |
 | GH3 | Progenitors feed the host: stars, gas, holes; merger responses, each writing a dated mark (9.4) | GH2 | kernel | stellar halo mass and metals against biggest progenitor; share of stars not born here against mass (Rodriguez-Gomez et al. 2016, used in G3); a Gaia-Sausage-like history gives a thick disc and two chemical families; G3 goldens re-blessed on purpose |
 | GH4 | Components in the envelope, cells, origins, count tree and glow | GH3 | kernel; light and nebulae | section 7.6 checks; budget closure with components; a promoted star keeps its origin at any time read; G4, G5 and sky goldens re-blessed on purpose |
 | GH5 | Clusters: birth, loss, arrival; a cluster as a place | GH3 | kernel | section 7.8 checks |
