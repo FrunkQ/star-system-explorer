@@ -14,9 +14,9 @@ const PR72: &str = "Peck, E. R. and Reeder, K. 1972, Dispersion of air, J. Opt. 
 const BUCH95: &str = "Bucholtz, A. 1995, Rayleigh-scattering calculations for the terrestrial atmosphere, Applied Optics 34, 2765. doi:10.1364/AO.34.002765";
 
 /// Boltzmann constant, J/K.
-pub const K_B: f64 = 1.380_649e-23;
+pub const K_B: f64 = sse_core::sheet::K_B;
 /// Atomic mass unit, kg.
-pub const AMU: f64 = 1.660_539_066_60e-27;
+pub const AMU: f64 = sse_core::sheet::M_U;
 /// Number density at which dry-air refractivity (Peck and Reeder) is given: 288.15 K, 101325 Pa, m⁻³.
 pub const N_S_288: f64 = 2.546_899e25;
 /// Loschmidt's number, 273.15 K and 101325 Pa, m⁻³ (CODATA).

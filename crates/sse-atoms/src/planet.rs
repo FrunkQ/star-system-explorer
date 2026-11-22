@@ -10,7 +10,7 @@ pub const M_EARTH: f64 = GM_EARTH / G;
 const M_JUPITER: f64 = GM_JUPITER / G;
 const M_SUN: f64 = GM_SUN / G;
 /// Earth's mean radius, the R⊕ of Zeng et al. 2016 (table 2 notes: 6.371e6 m).
-const R_EARTH_ZENG: f64 = 6.371e6;
+const R_EARTH_ZENG: f64 = sse_core::sheet::R_EARTH_MEAN;
 
 const CK17: &str = "Chen, J. and Kipping, D. 2017, ApJ 834, 17: probabilistic forecasting of the masses and radii of other worlds (median posterior hyper-parameters, table 1). doi:10.3847/1538-4357/834/1/17";
 const ZENG16: &str = "Zeng, L., Sasselov, D. D. and Jacobsen, S. B. 2016, ApJ 819, 127: mass-radius relation for rocky planets based on PREM, eq. 2 (inverse eq. 3). doi:10.3847/0004-637X/819/2/127";

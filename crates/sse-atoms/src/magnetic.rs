@@ -24,7 +24,7 @@ const SPHERE: &str = "A uniform sphere: density is mass over volume, ρ = M / (4
 const DIPOLE: &str = "A dipole field falls as r⁻³; the equatorial field B at radius r of a moment μ is B = μ₀ μ / (4π r³). Jackson, J. D. 1999, Classical Electrodynamics, 3rd edn, Wiley, section 5.6.";
 
 /// Vacuum permeability, N A⁻² (CODATA 2018).
-pub const MU0: f64 = 1.256_637_062_12e-6;
+pub const MU0: f64 = sse_core::sheet::MU0;
 
 /// Field inside a dynamo, T, from Christensen (2010) eq. 12:
 /// B²/(2μ₀) = c · f_ohm · ρ^(1/3) · (q)^(2/3), with q the convected heat

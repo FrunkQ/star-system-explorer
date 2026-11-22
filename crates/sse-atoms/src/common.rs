@@ -7,9 +7,9 @@ use sse_flow::{Atom, AtomDecl, AtomError, CostClass, Param, Port};
 /// crate does not edit the core. Each is cited.
 pub mod k {
     /// Boltzmann constant, J/K. Exact in the 2019 SI (CODATA 2018).
-    pub const BOLTZMANN: f64 = 1.380_649e-23;
+    pub const BOLTZMANN: f64 = sse_core::sheet::K_B;
     /// Atomic mass constant, kg (CODATA 2018).
-    pub const AMU: f64 = 1.660_539_066_60e-27;
+    pub const AMU: f64 = sse_core::sheet::M_U;
 }
 
 pub type EvalFn = fn(&[f64], &[f64]) -> Result<Vec<f64>, AtomError>;
