@@ -1,0 +1,30 @@
+{
+  "schema": "sse.screen/1",
+  "id": "sse.workspace.gm.web",
+  "label": "Cosmic web",
+  "audience": "gm",
+  "layout": "chart-room",
+  "theme": "chart-room",
+  "symbology": "sse.symbology.diagrammatic",
+  "vocab": "physics",
+  "description": "The place line's cosmic web scale (U24): walls, filaments, knots and voids in a slice of the universe, grown from its seed.",
+  "items": [
+    {
+      "view": "sse.view.foam-map",
+      "area": "chart"
+    },
+    {
+      "view": "sse.view.time-ruler",
+      "area": "ruler"
+    }
+  ],
+  "rail": [
+    {
+      "scale": "web",
+      "group": "look",
+      "label": "Cosmic web",
+      "order": 1,
+      "hint": "Walls, filaments, knots and voids in a slice of the universe, grown from its seed"
+    }
+  ]
+}
