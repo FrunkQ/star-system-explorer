@@ -108,6 +108,7 @@ fn from_system(
                 port: ports.contains(&p.address),
                 stock: vec![],
                 magnetic_moment_a_m2: None,
+                belts: None,
             }
         })
         .collect();
@@ -135,6 +136,63 @@ fn from_system(
     ))
 }
 
+/// Read each magnetised body's radiation belts from the field model (MF7,
+/// `read_field`), at the star's wind for its orbit, so NAV's belt hazard is
+/// the computed one. Bodies with no moment keep NAV's stand-in.
+pub(crate) fn fill_belts(
+    sys: &mut NavSystem,
+    sheet: &sse_reference::Reference,
+    s: &sse_nav::NavSettings,
+) {
+    let set = crate::systems::field_settings(sheet);
+    let rs = &s.radiation;
+    // The Solar System's own field reads (MF14a fixture: measured dipoles,
+    // the wind at each planet, moons and their plasma), matched by name.
+    let sol: Vec<sse_field::SolField> = if sys.name.eq_ignore_ascii_case("sol") {
+        sheet
+            .constant("m_p")
+            .and_then(|mp| sse_field::solar_system(&set, mp).ok())
+            .unwrap_or_default()
+    } else {
+        vec![]
+    };
+    for b in &mut sys.bodies {
+        let read = match sol.iter().find(|f| f.name.eq_ignore_ascii_case(&b.name)) {
+            Some(f) => Some(f.read.clone()),
+            None => {
+                let Some(mom) = b.magnetic_moment_a_m2.filter(|&m| m > 0.0) else {
+                    continue;
+                };
+                let a = b.a_au.max(1e-3);
+                let p = rs.wind_pressure_1au_pa / (a * a);
+                let v = rs.wind_speed_m_s;
+                serde_json::from_value::<sse_field::Body>(serde_json::json!({
+                    "address": b.address,
+                    "radius_m": b.radius_m,
+                    "moment_a_m2": mom,
+                    "wind": {"density_kg_m3": p / (v * v), "speed_m_s": v},
+                }))
+                .ok()
+                .and_then(|fb| sse_field::read(&fb, &set).ok())
+            }
+        };
+        if let Some(belts) = read.and_then(|r| r.belts) {
+            b.belts = Some(sse_nav::BeltProfile {
+                inner_m: belts.inner_m,
+                outer_m: belts.outer_m,
+                shields_g_cm2: belts.shields_kg_m2.iter().map(|k| k / 10.0).collect(),
+                shells: belts
+                    .shells
+                    .iter()
+                    .map(|sh| (sh.distance_m, sh.dose_sv_h.clone()))
+                    .collect(),
+                source: "electron belts filled after strong injections, MF7; no proton belt yet"
+                    .into(),
+            });
+        }
+    }
+}
+
 pub(crate) struct Ask<'a> {
     pub source: Source<'a>,
     pub ship: &'a serde_json::Value,
@@ -144,6 +202,7 @@ pub(crate) struct Ask<'a> {
     pub window_days: Option<f64>,
     pub prefer: Option<&'a str>,
     pub rescue: Option<&'a serde_json::Value>,
+    pub sheet: &'a sse_reference::Reference,
 }
 
 /// The NAV system a source names, and the time it was read at (a system's).
@@ -174,7 +233,8 @@ pub(crate) fn nav_system(source: Source) -> Result<(NavSystem, Option<f64>), Res
 
 pub(crate) fn plan_route(a: Ask) -> Result<serde_json::Value, Response> {
     let s = sse_nav::scenario::settings();
-    let (sys, t_read) = nav_system(a.source)?;
+    let (mut sys, t_read) = nav_system(a.source)?;
+    fill_belts(&mut sys, a.sheet, &s);
     let mut req = serde_json::json!({
         "ship": ship(&s, a.ship)?,
         "from": a.from,
@@ -248,12 +308,14 @@ pub(crate) struct VoyageAsk<'a> {
     pub depart_s: Option<f64>,
     pub minimise: sse_nav::voyage::Minimise,
     pub visited: &'a [String],
+    pub sheet: &'a sse_reference::Reference,
 }
 
 pub(crate) fn plan_voyage(source: Source, a: VoyageAsk) -> Result<serde_json::Value, Response> {
     use sse_nav::voyage::{Goal, Options};
     let s = sse_nav::scenario::settings();
-    let (sys, t_read) = nav_system(source)?;
+    let (mut sys, t_read) = nav_system(source)?;
+    fill_belts(&mut sys, a.sheet, &s);
     let ship = ship(&s, a.ship)?;
     let t0 = a.depart_s.or(t_read).unwrap_or(sys.t0_s);
     let places = sse_nav::insystem::places(&sys, &s.voyage.in_system);

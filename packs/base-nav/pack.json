@@ -34,6 +34,7 @@
      "spe_msv_1au": 50.0,
      "belt_min_standoff_radii": 2.0,
      "wind_pressure_1au_pa": 1.6e-9,
+     "wind_speed_m_s": 400000.0,
      "belt_min_mass_earth": 10.0,
      "belt_radii": 15.0,
      "belt_msv_hour": 50.0,
