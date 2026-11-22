@@ -15,7 +15,7 @@
       "id": "catalogue",
       "label": "Catalogue",
       "kind": "catalogue",
-      "about": "Formal designations, as surveys write them. Planets take Roman numerals by orbit (the default) and their moons letters. Stars are SX and a running number, or SX J and their sky position; the components of a multiple star are A, B, C; surface features take the IAU's Latin descriptor terms with the world's name and a number. Every designation follows its parent's name when that is renamed. Sources: IAU naming rules, Hessman et al. 2010 (arXiv:1012.0707), the Washington Multiplicity Catalog, and the USGS and IAU Gazetteer of Planetary Nomenclature (docs/citations/naming.md).",
+      "about": "Formal designations, as surveys write them. Planets take Roman numerals by orbit (the default) and their moons letters from a (Sol III a). Stars are SX and a running number, or SX J and their sky position; the components of a multiple star are A, B, C; surface features take the IAU's Latin descriptor terms with the world's name and a number. Every designation follows its parent's name when that is renamed. Sources: IAU naming rules, Hessman et al. 2010 (arXiv:1012.0707), the Washington Multiplicity Catalog, and the USGS and IAU Gazetteer of Planetary Nomenclature (docs/citations/naming.md).",
       "forms": {
        "star": [
         [
@@ -43,7 +43,7 @@
        ],
        "moon": [
         [
-         "{parent} {letter}",
+         "{parent} {letter:a}",
          1
         ]
        ],
@@ -14916,7 +14916,10 @@
      "whore",
      "wichser",
      "yahoo"
-    ]
+    ],
+    "defaults": {
+     "designation": "catalogue"
+    }
    }
   }
  },
