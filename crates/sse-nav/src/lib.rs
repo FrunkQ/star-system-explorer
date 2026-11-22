@@ -17,6 +17,7 @@ pub mod courses;
 pub mod descent;
 pub mod drift;
 pub mod hazards;
+pub mod insystem;
 pub mod kepler;
 pub mod scenario;
 pub mod sky;
@@ -80,11 +81,27 @@ pub struct RadiationSettings {
     pub spe_per_year_1au: f64,
     /// Dose of one large event behind the reference shielding at 1 au, mSv.
     pub spe_msv_1au: f64,
-    /// Giants above this mass have radiation belts out to `belt_radii` radii.
+    /// A body with a dipole moment holds radiation belts when its
+    /// magnetopause stands at least this many radii above its centre
+    /// (MF0 stop-gap, magnetic fields design; MF7 replaces it).
+    #[serde(default = "belt_min_standoff")]
+    pub belt_min_standoff_radii: f64,
+    /// Solar wind dynamic pressure at 1 au, Pa; it falls as the distance squared.
+    #[serde(default = "wind_pressure")]
+    pub wind_pressure_1au_pa: f64,
+    /// With no moment known, bodies of at least this mass are taken to have
+    /// belts (giants all have dynamos); a fallback until MF7.
     pub belt_min_mass_earth: f64,
+    /// Belts reach out to this many radii, or the magnetopause if nearer.
     pub belt_radii: f64,
     /// Belt dose rate inside the belts, mSv/hour (Jupiter-like order).
     pub belt_msv_hour: f64,
+    /// The equatorial surface field that `belt_msv_hour` belongs to, gauss (Jupiter's).
+    #[serde(default = "belt_ref_field")]
+    pub belt_ref_field_g: f64,
+    /// A belt dose under this, mSv, is listed but adds no difficulty.
+    #[serde(default = "belt_reason")]
+    pub belt_reason_msv: f64,
 }
 
 #[derive(Clone, PartialEq, Debug, Serialize, Deserialize)]
@@ -213,6 +230,18 @@ pub struct Ship {
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub jump: Option<voyage::JumpDrive>,
 }
+fn belt_reason() -> f64 {
+    10.0
+}
+fn belt_ref_field() -> f64 {
+    4.17
+}
+fn belt_min_standoff() -> f64 {
+    2.0
+}
+fn wind_pressure() -> f64 {
+    1.6e-9
+}
 fn reserve() -> f64 {
     0.1
 }
@@ -278,6 +307,9 @@ pub struct NavBody {
     /// Has a port (rescue can come from here).
     #[serde(default)]
     pub port: bool,
+    /// Magnetic dipole moment, A m², where it is known.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub magnetic_moment_a_m2: Option<f64>,
 }
 
 #[derive(Clone, PartialEq, Debug, Serialize, Deserialize)]

@@ -1141,7 +1141,9 @@ pub enum Request {
     /// of fuel where the ship's sensors have looked (else the star's own
     /// giant-planet odds); `gambles` lets a plan hope for fuel in unsurveyed
     /// systems at odds above the pack's floor. `minimise` is `home_time`, `ship_time`, `fuel` or
-    /// `legs`. Read only; refusals come back in words.
+    /// `legs`. Inside one system (a `fixture`, `nav` or `system` given) the
+    /// places are its bodies and belts and the legs are NAV's courses with
+    /// their windows. Read only; refusals come back in words.
     PlanVoyage {
         from: String,
         #[serde(default)]
@@ -1170,6 +1172,27 @@ pub enum Request {
         #[serde(default)]
         #[ts(optional)]
         gambles: Option<bool>,
+        /// In-system voyages (part 3b): give one of a NAV `fixture`, an
+        /// inline `nav` system or an adopted `system` (read at `at_s`, with
+        /// `ports`), and `from` and `to` are bodies (or `belt:<name>`).
+        #[serde(default)]
+        #[ts(optional)]
+        fixture: Option<String>,
+        #[serde(default)]
+        #[ts(optional, type = "unknown")]
+        nav: Option<serde_json::Value>,
+        #[serde(default)]
+        #[ts(optional)]
+        system: Option<String>,
+        #[serde(default)]
+        #[ts(optional, type = "number")]
+        at_s: Option<i64>,
+        #[serde(default)]
+        #[ts(optional)]
+        ports: Option<Vec<String>>,
+        #[serde(default)]
+        #[ts(optional)]
+        depart_s: Option<f64>,
     },
     /// Make a fill star permanent: its whole drawn description (address,
     /// cell, frame and slot, birth, mass, companions, abundances, orbit) is
@@ -1642,7 +1665,7 @@ pub fn ops() -> Vec<OpInfo> {
         o(
             "plan_voyage",
             Cost::Medium,
-            "draws the star cells around the start and the destination (up to 125), then searches legs with fuel carried; read only",
+            "between stars: draws the star cells around the start and the destination (up to 125), then searches legs with fuel carried; in a system: one NAV course plan per place per step (about 0.1 to 2 s native); read only",
         ),
         o(
             "campaign_tags",
@@ -2389,7 +2412,10 @@ pub enum Response {
     /// jump_fuel_t, propellant_t, peak_beta?, coast, fictional, gamble,
     /// refuel?, jump_fuel_left_t, propellant_left_t, words}], distance_pc,
     /// home_days, ship_days, jump_fuel_t, propellant_t, refuels, gambles,
-    /// fictional, needs?} | null, refusals: [text], model}`.
+    /// fictional, needs?} | null, refusals: [text], model}`; inside a system
+    /// `{scale: "system", system, ship, depart_s, places: [{address, name,
+    /// a_au, fuel, belt, visited}], voyage | null, refusals, model}`, its legs
+    /// with `means: "course"`, `course` and `wait_days`.
     VoyagePlanned {
         #[ts(type = "unknown")]
         voyage: serde_json::Value,

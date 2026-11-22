@@ -134,30 +134,40 @@ pub fn assess(
                 at_s: Some(best.1),
             });
         }
-        let belts = b.mass_earth >= rs.belt_min_mass_earth;
-        let in_belts = best.0 < rs.belt_radii * b.radius_m || (ends && belts);
+        let reach = belt_reach_radii(b, rs);
+        let belts = reach.is_some();
+        let reach = reach.unwrap_or(0.0);
+        let in_belts = best.0 < reach * b.radius_m || (ends && belts);
         if belts && in_belts {
-            // Rough time inside: the belt diameter at the local speed, or a day at an end.
+            // Rough time inside: the belt diameter at the local speed, or one
+            // crossing at escape speed when the course starts or ends here.
             let hours = if ends {
-                24.0
+                let v_esc = m::sqrt(2.0 * GM_EARTH * b.mass_earth.max(1e-9) / b.radius_m.max(1.0));
+                reach * b.radius_m / v_esc.max(1.0) / 3600.0
             } else {
                 let v = samples
                     .iter()
                     .map(|x| norm(x.v))
                     .fold(0.0_f64, f64::max)
                     .max(1.0);
-                2.0 * rs.belt_radii * b.radius_m / v / 3600.0
+                2.0 * reach * b.radius_m / v / 3600.0
             };
-            let d = rs.belt_msv_hour * hours * m::exp(-extra / rs.gcr_atten_g_cm2);
+            let d = rs.belt_msv_hour
+                * belt_strength(b, rs)
+                * hours
+                * m::exp(-extra / rs.gcr_atten_g_cm2);
             dose += d;
-            reasons.push((
-                "belts".into(),
-                format!("{:.0} mSv in {}'s radiation belts", d, b.name),
-            ));
+            // A brief crossing (Apollo's took about an hour) is noted but adds no difficulty.
+            if d >= rs.belt_reason_msv {
+                reasons.push((
+                    "belts".into(),
+                    format!("{:.0} mSv in {}'s radiation belts", d, b.name),
+                ));
+            }
             hazards.push(Hazard {
                 kind: "belts".into(),
                 text: format!(
-                    "about {:.0} hours in {}'s radiation belts, {:.0} mSv behind this shielding",
+                    "about {:.1} hours in {}'s radiation belts, {:.0} mSv behind this shielding",
                     hours, b.name, d
                 ),
                 at_s: Some(best.1),
@@ -339,5 +349,46 @@ pub fn assess(
                 .collect(),
         },
         why,
+    }
+}
+
+/// How far a body's radiation belts reach, in its radii, or `None` when it
+/// holds none. With a known dipole moment M the magnetopause stands where the
+/// compressed dipole's pressure meets the wind's, (2B)²/2μ₀ = p with
+/// B = μ₀M/4πr³ (Chapman and Ferraro 1931; Earth about 10 radii); belts need
+/// room above the body, so a standoff under `belt_min_standoff_radii` (Mercury
+/// at about 1.5) holds none. With no moment known, the mass fallback applies.
+/// MF0 stop-gap: MF7 computes belts with their sources, limits and sweepers.
+pub fn belt_reach_radii(b: &NavBody, rs: &crate::RadiationSettings) -> Option<f64> {
+    const MU0: f64 = 1.256_637_062_12e-6;
+    match b.magnetic_moment_a_m2 {
+        Some(mom) if mom > 0.0 && b.radius_m > 0.0 => {
+            let a = b.a_au.max(1e-3);
+            let p = rs.wind_pressure_1au_pa / (a * a);
+            let r3 = MU0 * mom / (4.0 * m::PI * m::sqrt(MU0 * p / 2.0));
+            let standoff = m::cbrt(r3) / b.radius_m;
+            (standoff >= rs.belt_min_standoff_radii).then(|| standoff.min(rs.belt_radii))
+        }
+        Some(_) => None,
+        None => (b.mass_earth >= rs.belt_min_mass_earth).then_some(rs.belt_radii),
+    }
+}
+
+/// Earth's gravitational parameter, m³ s⁻² (IERS 2010).
+const GM_EARTH: f64 = 3.986_004_418e14;
+
+/// The belt dose rate relative to Jupiter's, read as the body's equatorial
+/// surface field over Jupiter's (rough: the trapped flux a field can hold
+/// grows with the field, Kennel and Petschek 1966). Bodies with no moment
+/// known take Jupiter's rate. MF0 stop-gap until MF7's belts.
+pub fn belt_strength(b: &NavBody, rs: &crate::RadiationSettings) -> f64 {
+    const MU0_4PI: f64 = 1.0e-7;
+    match b.magnetic_moment_a_m2 {
+        Some(mom) if b.radius_m > 0.0 => {
+            let r = b.radius_m;
+            let gauss = MU0_4PI * mom / (r * r * r) * 1.0e4;
+            gauss / rs.belt_ref_field_g
+        }
+        _ => 1.0,
     }
 }

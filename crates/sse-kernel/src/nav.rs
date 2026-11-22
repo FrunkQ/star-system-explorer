@@ -106,6 +106,7 @@ fn from_system(
                 varpi_deg: p.varpi_deg,
                 mean_longitude_deg: p.mean_longitude_deg,
                 port: ports.contains(&p.address),
+                magnetic_moment_a_m2: None,
             }
         })
         .collect();
@@ -144,9 +145,9 @@ pub(crate) struct Ask<'a> {
     pub rescue: Option<&'a serde_json::Value>,
 }
 
-pub(crate) fn plan_route(a: Ask) -> Result<serde_json::Value, Response> {
-    let s = sse_nav::scenario::settings();
-    let (sys, t_read) = match a.source {
+/// The NAV system a source names, and the time it was read at (a system's).
+pub(crate) fn nav_system(source: Source) -> Result<(NavSystem, Option<f64>), Response> {
+    Ok(match source {
         Source::Fixture(name) => (
             sse_nav::scenario::fixture(name).ok_or_else(|| {
                 err(
@@ -167,7 +168,12 @@ pub(crate) fn plan_route(a: Ask) -> Result<serde_json::Value, Response> {
             run,
             ports,
         } => from_system(ch, system, at_s, run, ports)?,
-    };
+    })
+}
+
+pub(crate) fn plan_route(a: Ask) -> Result<serde_json::Value, Response> {
+    let s = sse_nav::scenario::settings();
+    let (sys, t_read) = nav_system(a.source)?;
     let mut req = serde_json::json!({
         "ship": ship(&s, a.ship)?,
         "from": a.from,
@@ -230,4 +236,77 @@ pub(crate) fn window_view(
     )
     .map_err(|e| err("window_refused", e))?;
     Ok(serde_json::to_value(v).expect("plain data"))
+}
+
+/// `plan_voyage` inside one system (V8 part 3b): the voyage finder over the
+/// system's bodies and belts, legs priced by NAV's courses.
+pub(crate) struct VoyageAsk<'a> {
+    pub ship: &'a serde_json::Value,
+    pub from: &'a str,
+    pub to: Option<&'a str>,
+    pub depart_s: Option<f64>,
+    pub minimise: sse_nav::voyage::Minimise,
+    pub visited: &'a [String],
+}
+
+pub(crate) fn plan_voyage(source: Source, a: VoyageAsk) -> Result<serde_json::Value, Response> {
+    use sse_nav::voyage::{Goal, Options};
+    let s = sse_nav::scenario::settings();
+    let (sys, t_read) = nav_system(source)?;
+    let ship = ship(&s, a.ship)?;
+    let t0 = a.depart_s.or(t_read).unwrap_or(sys.t0_s);
+    let places = sse_nav::insystem::places(&sys, &s.voyage.in_system);
+    let home = sys
+        .body(a.from)
+        .map(|b| [b.a_au / sse_nav::insystem::AU_PER_PC, 0.0, 0.0])
+        .unwrap_or([0.0; 3]);
+    let goal = match a.to {
+        Some(t) => Goal::To(t.to_string()),
+        None => Goal::NearestUnvisited {
+            visited: a
+                .visited
+                .iter()
+                .cloned()
+                .chain([a.from.to_string()])
+                .collect(),
+            home,
+        },
+    };
+    let o = Options {
+        minimise: a.minimise,
+        gambles: false,
+        settings: s.voyage.clone(),
+    };
+    let result = sse_nav::insystem::plan_in_system(&s, &sys, &ship, a.from, &goal, t0, &o);
+    let rows: Vec<serde_json::Value> = places
+        .iter()
+        .map(|p| {
+            serde_json::json!({
+                "address": p.id, "name": p.name,
+                "a_au": p.xyz_pc[0] * sse_nav::insystem::AU_PER_PC,
+                "fuel": p.fuel,
+                "belt": p.id.starts_with("belt:"),
+                "visited": a.visited.contains(&p.id) || a.visited.contains(&p.name),
+            })
+        })
+        .collect();
+    let (voyage, refusals) = match result {
+        Ok((v, _)) => (serde_json::to_value(v).expect("plain data"), vec![]),
+        Err(r) => (serde_json::Value::Null, r),
+    };
+    Ok(serde_json::json!({
+        "scale": "system",
+        "system": sys.name,
+        "ship": ship.name,
+        "depart_s": t0,
+        "places": rows,
+        "voyage": voyage,
+        "refusals": refusals,
+        "model": [
+            "places: the system's bodies and belts; fuel by the pack's rules (a giant to skim, ice beyond the snow line at 2.7 au times the square root of the star's luminosity, Hayashi 1981, a port)",
+            "body to body: NAV's courses (Hohmann and Lambert transfers with their launch windows, torch courses), the quickest and the cheapest of each kept",
+            "belts: Hohmann transfers or torch flights to the belt's middle radius, met anywhere on the ring with no window",
+            "the same search as between the stars: fuel carried, refuel where fuel is known, the chosen measure minimised",
+        ],
+    }))
 }
