@@ -312,7 +312,7 @@ One layer, called **Field**, offered in every view style (Chart, 3D, True, Wiref
 
 ### 9A. The Field instrument on True views (Alex, 22 Nov 12:49: "an 'instrument' to see magnetic fields on the photoreal views as lines or halos")
 
-**Proposed 22 Nov, questions 14 to 16.** True style shows what is really visible, and the view styles ruling is one picture at a time, never the diagram laid over a photograph. A magnetic field is not light, so the way in is the way real science does it: **an instrument whose reading is the picture**. It sits in the same switch as the light bands, because that switch already means "which instrument am I looking through".
+**Accepted 22 Nov 13:03, questions 14 to 16** (Alex: "agree with your recs - it looks great - will look great moving in 3d"). True style shows what is really visible, and the view styles ruling is one picture at a time, never the diagram laid over a photograph. A magnetic field is not light, so the way in is the way real science does it: **an instrument whose reading is the picture**. It sits in the same switch as the light bands, because that switch already means "which instrument am I looking through".
 
 `Visible · Infrared · Ultraviolet · X-ray · Radio · Field`
 
@@ -401,7 +401,7 @@ Drawn reversal and cycle statistics; drawn incidence of fossil fields and of mag
 12. **A magnetometer as a real survey instrument that can reveal a buried ocean (MF15)?** Recommended: yes. It is how Europa's ocean was found, and it is a good reason to fly past a moon.
 13. **Shall I draw the Field layer as a mockup (Earth, Neptune with its cutaway, a Mars-like world four billion years apart, a red dwarf) before MF14 is built?** Recommended: yes, once 8 and 9 are answered.
 
-### Follow-up, 22 Nov 12:49 (the Field instrument; open)
+### Follow-up, 22 Nov 12:49 (the Field instrument; all three accepted 22 Nov 13:03, "agree with your recs")
 
 14. **Bring fields into True views as an instrument in the band switch (Visible, Infrared, X-ray, Radio, Field), whose reading replaces the visible picture, so it stays one picture at a time?** Recommended: yes. It keeps your "one or the other" rule, and it is how real field maps are made.
 15. **Three readings: Lines, Halo and Surface, with Lines the default and Halo only on strong GPUs?** Recommended: yes.
