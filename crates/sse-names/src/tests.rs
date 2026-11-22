@@ -594,3 +594,87 @@ fn base_names_gives_a_200_body_system_no_duplicate() {
     // The avoid list loaded, folded.
     assert!(l.avoid.contains("merde") && l.avoid.len() > 40);
 }
+
+/// NM3d: the two invented languages load from their name sheets, every
+/// sound has an IPA symbol, every name comes with its say-it and IPA, and
+/// samples read as two different languages (no shared hard or soft sounds).
+#[test]
+fn base_names_invented_languages_have_their_voices() {
+    let l = base_names();
+    for id in ["vesh", "oluen"] {
+        let s = &l.schemes[id];
+        let snd = s.doc.sounds.as_ref().unwrap();
+        for sounds in snd.classes.values() {
+            for w in sounds {
+                assert!(
+                    snd.ipa.contains_key(w.text()),
+                    "{id}: {} has no IPA",
+                    w.text()
+                );
+            }
+        }
+    }
+    let seed = Seed::from_text("nm3d");
+    let none = BTreeMap::new();
+    let mut seen: BTreeMap<&str, BTreeSet<String>> = BTreeMap::new();
+    for i in 0..1000u32 {
+        let a = addr(&format!("u:t/sys:{}/body:{}", i / 10, i % 10));
+        for id in ["vesh", "oluen"] {
+            let n = name(&l, &req(&seed, &a, id, "planet", &none)).unwrap();
+            let shown = n.show(None, None).to_lowercase();
+            assert!(!n.say.is_empty() && !n.ipa.is_empty(), "{id}: {shown}");
+            let (banned, which): (&[char], _) = if id == "vesh" {
+                (&['l', 'm', 'n', 's', 'v', 'e', 'o'], "soft")
+            } else {
+                (&['k', 'q', 'z', 'x', 'g'], "hard")
+            };
+            assert!(!shown.contains(banned), "{id} has a {which} sound: {shown}");
+            seen.entry(id).or_default().insert(shown);
+        }
+    }
+    assert!(
+        seen["vesh"].len() > 900 && seen["oluen"].len() > 900,
+        "{:?}",
+        seen.values().map(BTreeSet::len).collect::<Vec<_>>()
+    );
+}
+
+/// NM3b: English-sounding names. In 1,000 draws none is on the avoid list,
+/// every list part carries its meaning and source for the card, and the
+/// names hardly repeat.
+#[test]
+fn base_names_english_means_what_it_says() {
+    let l = base_names();
+    let seed = Seed::from_text("nm3b");
+    let none = BTreeMap::new();
+    let mut planets = BTreeSet::new();
+    for i in 0..1000u32 {
+        let a = addr(&format!("u:t/sys:{}/body:{}", i / 10, i % 10));
+        for kind in ["planet", "settlement", "peak", "crater", "lake", "sea"] {
+            let n = name(&l, &req(&seed, &a, "english", kind, &none)).unwrap();
+            let shown = n.show(None, None);
+            assert!(!crate::make::avoided(&l.avoid, &shown), "{kind}: {shown}");
+            let lists: Vec<_> = n
+                .parts
+                .iter()
+                .filter(|p| p.from.starts_with("list:"))
+                .collect();
+            assert!(!lists.is_empty(), "{kind}: {shown} has no listed part");
+            for p in lists {
+                assert!(
+                    p.means.is_some() && p.source.is_some(),
+                    "{kind}: {shown}: {} has no meaning or source",
+                    p.text
+                );
+            }
+            if kind == "planet" {
+                planets.insert(shown);
+            }
+        }
+    }
+    assert!(
+        planets.len() > 950,
+        "{} unique planets in 1000",
+        planets.len()
+    );
+}
