@@ -49,10 +49,10 @@
     },
     {
       "id": "matter",
-      "name": "Matter and fields",
-      "meaning": "Look-ups on the master data sheet, phases, and magnetic fields.",
+      "name": "Matter, fields and names",
+      "meaning": "Look-ups on the master data sheet, phases, magnetic fields, and name samples.",
       "budget_ms": 100,
-      "sources": ["read_matter", "phase_at", "read_field"]
+      "sources": ["read_matter", "phase_at", "read_field", "name_sample"]
     },
     {
       "id": "life",

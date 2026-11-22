@@ -42,6 +42,7 @@ A pack carries its schemes in `provides.other.names = {"schemes": [...], "avoid"
 ## Checks
 - `crates/sse-names/src/tests.rs` (9): determinism and a 10,000-name digest with an unrelated scheme stacked; Vesh faces and meanings; parent following and renames; siblings; mix clumps and strays; the avoid list; every hostile text of 4.10; hostile schemes (sizes, bad forms, cycles); old settings.
 - `crates/sse-kernel/src/names_tests.rs` (4): the sample digest is the same with an unrelated pack beside it; the resolved system is identical with and without the names pack; a hostile scheme refuses the stack with its reason; unknown scheme or count is a plain error.
+- `name_sample` is timed in the performance readout's "Matter, fields and names" chunk (`packages/ui-contract/src/perf-chunks.json`).
 - Fixture pack `tests/fixtures/packs/names-toy.json` (the Vesh draft and a catalogue scheme).
 
 ## Goldens
