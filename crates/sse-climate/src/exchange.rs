@@ -37,7 +37,7 @@ use serde::{Deserialize, Serialize};
 use sse_core::math as m;
 
 /// Stefan-Boltzmann, W m⁻² K⁻⁴ (CODATA 2018).
-const SIGMA_SB: f64 = 5.670374419e-8;
+const SIGMA_SB: f64 = sse_core::sheet::SIGMA_SB;
 
 /// One season of the exchange.
 #[derive(Clone, PartialEq, Debug, Serialize, Deserialize)]

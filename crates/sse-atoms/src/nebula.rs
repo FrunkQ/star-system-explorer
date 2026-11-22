@@ -29,7 +29,7 @@ pub const M_H: f64 = 1.673_5e-27;
 pub const MU_H: f64 = 1.4;
 /// Sedov-Taylor constant for γ = 5/3.
 pub const XI_SEDOV: f64 = 1.1517;
-const PC: f64 = 648_000.0 / m::PI * AU;
+const PC: f64 = sse_core::sheet::PC;
 const YR: f64 = JULIAN_YEAR;
 /// Ionisation energy of hydrogen, J (13.598 eV).
 pub const E_ION_H: f64 = 13.598 * 1.602_176_634e-19;
@@ -41,7 +41,7 @@ pub fn ionising_photons(t_k: f64, radius_m: f64, e_min_j: f64) -> f64 {
     if t_k <= 0.0 || radius_m <= 0.0 {
         return 0.0;
     }
-    let (h, c, k) = (6.626_070_15e-34, C, 1.380_649e-23);
+    let (h, c, k) = (sse_core::sheet::H, C, sse_core::sheet::K_B);
     let x0 = e_min_j / (k * t_k);
     let mut s = 0.0;
     for n in 1..=400 {

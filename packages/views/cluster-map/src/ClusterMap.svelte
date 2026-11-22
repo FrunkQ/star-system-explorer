@@ -8,7 +8,7 @@
 -->
 <script lang="ts">
   import { untrack } from "svelte";
-  import { cellHalo, foamCells, haloRadius, overdensityWords, projectHalo, sci, type CellHalo, type HaloCell, type Json, type SystemScene, type ViewContext, type WebSlice } from "../../../ui-contract/src/index.ts";
+  import { announcePlace, cellHalo, cellId, foamCells, parseCellId, haloRadius, overdensityWords, projectHalo, sci, type CellHalo, type HaloCell, type Json, type SystemScene, type ViewContext, type WebSlice } from "../../../ui-contract/src/index.ts";
 
   let { ctx, params }: { ctx: ViewContext; scene: SystemScene; params: Record<string, Json> } = $props();
   const first = untrack(() => ({ min: String(params.min_mass ?? "1e10"), web: params.web !== false }));
@@ -16,12 +16,15 @@
   let min = $state<string>(MINS.includes(first.min as (typeof MINS)[number]) ? first.min : "1e10");
   let showWeb = $state(first.web);
   const fromSel = untrack(() => cellHalo(ctx.workspace.selection));
-  let idx = $state<[number, number, number]>(fromSel ? fromSel.cell : [0, 0, 0]);
+  // A link's place opens first (a cell id, or a halo's address), then the GM's pick.
+  const fromPlace = untrack(() => parseCellId(params.place));
+  const placeHalo = untrack(() => (cellHalo(String(params.place ?? "")) ? String(params.place) : null));
+  let idx = $state<[number, number, number]>(fromPlace ?? (fromSel ? fromSel.cell : [0, 0, 0]));
   let cell = $state<HaloCell | null>(null);
   let web = $state<WebSlice | null>(null);
   let failed = $state<string | null>(null);
   let busy = $state(false);
-  let picked = $state<string | null>(untrack(() => (fromSel ? ctx.workspace.selection : null)));
+  let picked = $state<string | null>(untrack(() => placeHalo ?? (fromPlace ? null : fromSel ? ctx.workspace.selection : null)));
   let gen = 0;
 
   $effect(() => {
@@ -80,10 +83,17 @@
     picked = h.address;
   }
   let root = $state<HTMLDivElement | null>(null);
+  // The place line (U24): this cell is the place in view; its galaxies, biggest first, are below it.
+  $effect(() => {
+    const c = cell;
+    if (!c || !root) return;
+    announcePlace(root, { scale: "cluster", id: cellId(c.index), name: `Cell ${c.index.join(" · ")}`, children: c.haloes.slice(0, PLACE_CHILDREN).map((h) => ({ id: h.address, name: nameOf(h.address) })) });
+  });
   function chart(h: CellHalo) {
     ctx.workspace.select(h.address);
     root?.dispatchEvent(new CustomEvent("sse:explore", { bubbles: true, detail: { section: "galaxy" } }));
   }
+  const PLACE_CHILDREN = 24;
   const nameOf = (a: string) => a.split("/").at(-1)?.replace("halo:", "Halo ") ?? a;
   const gyr = (t: number) => `${t.toFixed(t < 1 ? 2 : 1)} Gyr`;
   // The mass function: expected and drawn per bin, over the bins that matter.

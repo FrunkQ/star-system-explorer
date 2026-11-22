@@ -26,7 +26,7 @@ pub const AGE_IMPOSSIBLE: &str = "system.age_impossible";
 pub const ORIGIN_KIND: &str = "system.origin";
 /// A GM-pinned birthplace: the kernel never reconstructs over it.
 pub const ORIGIN_PINNED: &str = "origin.pinned";
-pub const JULIAN_YEAR_S: f64 = 31_557_600.0;
+pub const JULIAN_YEAR_S: f64 = sse_core::sheet::YR_JULIAN;
 
 fn int(v: &Value) -> Option<i64> {
     match v {

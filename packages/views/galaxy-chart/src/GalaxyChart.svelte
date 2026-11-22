@@ -7,15 +7,19 @@
 -->
 <script lang="ts">
   import { untrack } from "svelte";
-  import { cellHalo, GROUP_WORDS, LAYER_WORDS, MORPHOLOGY_WORDS, NAMED_HALOES, armPath, cosmicAxis, dex, editWords, toggleRemoval, discFrame, epochTicks, greenAt, logCurve, ringAt, ringShades, sci, timesSun, type GalaxyChart, type GalaxyEdit, type Group, type Json, type RingLayer, type SystemScene, type ViewContext } from "../../../ui-contract/src/index.ts";
+  import { announcePlace, cellHalo, GROUP_WORDS, LAYER_WORDS, MORPHOLOGY_WORDS, NAMED_HALOES, armPath, cosmicAxis, dex, editWords, toggleRemoval, discFrame, epochTicks, greenAt, logCurve, ringAt, ringShades, sci, timesSun, type GalaxyChart, type GalaxyEdit, type Group, type Json, type RingLayer, type SystemScene, type ViewContext } from "../../../ui-contract/src/index.ts";
 
   let { ctx, params }: { ctx: ViewContext; scene: SystemScene; params: Record<string, Json> } = $props();
   const first = untrack(() => ({ halo: String(params.halo ?? "milky-way-like"), layer: String(params.layer ?? "metals") }));
   // A named halo, or a catalogued halo's address picked on the cluster map (V9).
   type HaloKey = string;
+  // A link's place (U24) opens first, then a galaxy picked on the cluster map, then the screen's own choice.
+  const named = (k: unknown): k is string => typeof k === "string" && NAMED_HALOES.some((h) => h.key === k);
   const startHalo = untrack(() => {
+    const p = params.place;
+    if (typeof p === "string" && (cellHalo(p) || named(p))) return p;
     const sel = ctx.workspace.selection;
-    return cellHalo(sel) ? sel! : NAMED_HALOES.some((h) => h.key === first.halo) ? first.halo : "milky-way-like";
+    return cellHalo(sel) ? sel! : named(first.halo) ? first.halo : "milky-way-like";
   });
   let halo = $state<HaloKey>(startHalo);
   const catalogued = $derived(cellHalo(halo));
@@ -92,6 +96,14 @@
     halo = h;
   }
 
+  // The place line: this galaxy is the place in view. Nothing is placed in it below yet (systems join with GH).
+  let root = $state<HTMLDivElement | null>(null);
+  const galaxyName = (h: string) => NAMED_HALOES.find((n) => n.key === h)?.label ?? (cellHalo(h) ? `Halo ${cellHalo(h)!.key}, cell ${cellHalo(h)!.cell.join(".")}` : h);
+  $effect(() => {
+    const h = halo;
+    if (root) announcePlace(root, { scale: "galaxy", id: h, name: galaxyName(h) });
+  });
+
   const W = 520;
   const f = $derived(chart ? discFrame(W, W, chart) : null);
   const shades = $derived(chart ? ringShades(chart.rings, layer) : []);
@@ -145,7 +157,7 @@
   ];
 </script>
 
-<div class="gal" data-galaxy={chart?.halo ?? ""}>
+<div class="gal" data-galaxy={chart?.halo ?? ""} bind:this={root}>
   <div class="bar">
     <label>Galaxy
       <select value={halo} onchange={(e) => chooseHalo(e.currentTarget.value as HaloKey)} data-halo>
@@ -163,7 +175,7 @@
     <p class="note" role="alert">Could not chart the galaxy: {failed}</p>
   {:else if chart && f}
     <header class="head">
-      <h2>{NAMED_HALOES.find((h) => h.key === chart!.key)?.label ?? (catalogued ? `Halo ${catalogued.key}, cell ${catalogued.cell.join(".")}` : chart.key)}</h2>
+      <h2>{galaxyName(halo)}</h2>
       <span class="stamp">grown, not prebaked</span>
       {#if chart.edits.length}<span class="stamp authored" data-inked>history inked by the GM</span>{/if}
       <p class="lede">

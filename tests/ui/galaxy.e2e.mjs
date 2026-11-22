@@ -31,11 +31,19 @@ try {
     const errors = [];
     const gm = await (await browser.newContext({ viewport: { width: 1440, height: 900 }, deviceScaleFactor: screens ? 2 : 1 })).newPage();
     gm.on("pageerror", (e) => errors.push(e.message));
+    // The place line hears where the view is (sse:place).
+    await gm.addInitScript(() => {
+      window.__places = [];
+      document.addEventListener("sse:place", (e) => window.__places.push(e.detail));
+    });
     await gm.goto(base + "#chart");
     await gm.waitForSelector("[data-state-hash]:not([data-state-hash=''])", { timeout: 20000 });
-    await go(gm, "explore");
-    await gm.locator("[data-section-tab=galaxy]").click();
+    await go(gm, "galaxy");
     await gm.waitForSelector(".gal [data-ring]", { timeout: 30000 });
+    {
+      const p = await gm.evaluate(() => window.__places.at(-1));
+      assert.deepEqual(p, { scale: "galaxy", id: "milky-way-like", name: "A Milky-Way-like galaxy" }, "the galaxy chart says where it is");
+    }
     const gal = gm.locator(".gal");
     assert.match(await gal.getAttribute("data-galaxy"), /halo:milky-way-like$/);
     assert.equal(await gal.locator("circle.ring").count(), 24, "24 rings");
@@ -59,6 +67,7 @@ try {
     await gm.waitForFunction(() => /At 6\.0 Gyr after the Big Bang/.test(document.querySelector(".gal .lede")?.textContent ?? ""), null, { timeout: 30000 });
     // The dwarf.
     await gal.locator("[data-halo]").selectOption("dwarf");
+    await gm.waitForFunction(() => window.__places.at(-1)?.id === "dwarf");
     await gm.waitForFunction(() => /halo:dwarf$/.test(document.querySelector(".gal")?.getAttribute("data-galaxy") ?? ""), null, { timeout: 30000 });
     await gal.locator("[data-halo]").selectOption("milky-way-like");
     await gm.waitForFunction(() => /halo:milky-way-like$/.test(document.querySelector(".gal")?.getAttribute("data-galaxy") ?? ""), null, { timeout: 30000 });
@@ -91,8 +100,7 @@ try {
     phone.on("pageerror", (e) => errors.push(`phone: ${e.message}`));
     await phone.goto(base + "#chart");
     await phone.waitForSelector("[data-state-hash]:not([data-state-hash=''])", { timeout: 20000 });
-    await go(phone, "explore");
-    await phone.locator("[data-section-tab=galaxy]").click();
+    await go(phone, "galaxy");
     await phone.waitForSelector(".gal [data-ring]", { timeout: 30000 });
     const over = await phone.evaluate(() => document.documentElement.scrollWidth - window.innerWidth);
     assert.ok(over <= 1, `no sideways scroll on a phone (${over}px over)`);

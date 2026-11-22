@@ -31,6 +31,8 @@
   import { allStyles } from "./styles.svelte.ts";
   import guideVocabDoc from "./documents/vocab.guide.json";
   import { loadPref, savePref } from "./prefs.ts";
+  import PerfReadout from "./PerfReadout.svelte";
+  import { perf } from "../../ui-contract/src/index.ts";
 
   // A theme names its vocabulary layer (H8.4); the screen's is the fallback.
   const VOCABS: Record<string, Vocab> = { plain: vocabDoc as unknown as Vocab, guide: guideVocabDoc as unknown as Vocab };
@@ -171,6 +173,7 @@
       };
       replica.onSession = (s) => {
         session = s;
+        perfEdge = s.device();
         void useScreen(s).then(refresh).catch((e) => (sceneErrors = [String(e)]));
       };
       replica.onUpdate = () => {
@@ -188,6 +191,7 @@
         const bad = await enterFacts(s, facts);
         if (bad) throw new Error(`recorded facts refused: ${JSON.stringify(bad)}`);
         session = s;
+        perfEdge = s.device();
         await useScreen(s);
         await refresh();
         stateHash = await s.stateHash();
@@ -224,6 +228,14 @@
   // Screen effects follow the viewer: no motion when asked, none at all for more contrast or when switched off.
   const media = (q: string) => typeof matchMedia === "function" && matchMedia(q).matches;
   let effects = $state(loadPref("effects") !== "off");
+  // The performance readout (PF1b): the same switch as the chart room's, for players' own devices.
+  let perfOn = $state(loadPref("perf.readout") === "on");
+  perf.setEnabled(loadPref("perf.readout") === "on");
+  let perfEdge = $state<{ tier: string; unitsPerSecond: number } | undefined>(undefined);
+  $effect(() => {
+    perf.setEnabled(perfOn);
+    savePref("perf.readout", perfOn ? "on" : "off");
+  });
   const layers = $derived(filterLayers(themeDoc.filters, { reducedMotion: media("(prefers-reduced-motion: reduce)"), off: !effects || media("(prefers-contrast: more)") }));
   const rootFx = $derived(layers.map((l) => l.root).join(" "));
   $effect(() => {
@@ -274,6 +286,7 @@
       <select bind:value={symbology}>{#each SHIPPED as d (d.id)}<option value={d.id}>{d.name}</option>{/each}</select>
     </label>
     {#if themeDoc.filters?.length}<label class="pick"><input type="checkbox" bind:checked={effects} /> Screen effects</label>{/if}
+    <label class="pick" title="Time this device, for the minimum spec; nothing is sent"><input type="checkbox" bind:checked={perfOn} data-perf-switch /> Performance</label>
     {#if joined && link.state !== "live"}
       <div class="banner" role="status" aria-label="Game master" data-link={link.state}>
         {#if link.state === "joining"}Joining the game master…
@@ -307,6 +320,9 @@
   {#if scene}<div class="soundbar"><LightControl recipes={LIGHT_RECIPES} lights={lit.lights} missing={lit.missing} names={lightNames} bind:value={lightId} key="light.players" /><SoundControl scene={orbitScene(scene.scope, voicesFromPlayers(scene))} key="sound.players" /></div>{/if}
   <footer class="status" data-state-hash={stateHash} data-scene-hash={sceneHash} data-sealed={isSealed || undefined} data-seat={joined ? seatId : undefined} data-audience={audience} data-link={joined ? link.state : "local"} data-via={via}>Scene: live from {isSealed ? "the game master's machine (sealed seat: this screen holds no seed and runs no kernel)" : joined ? "this screen's kernel, in step with the game master" : "the kernel"} {via ? ` (via ${via === "relay" ? "the site's relay" : "this browser"})` : ""} for {seatLabel && seatId !== "table" ? `the seat ${seatLabel}, ` : ""}the {audience} audience{sceneHash ? ` · scene ${sceneHash.slice(0, 10)}` : ""}{stateHash ? ` · state ${stateHash.slice(0, 10)}` : ""} {joined ? "" : screenDoc?.data_view ? ` · fixed to the ${screenDoc.data_view} view by the screen document` : ` · the Scanned control stands in for the GM's button and taps it for ${target ? subjectName(target) : "the body in focus"}`}</footer>
 </div>
+{#if perfOn}
+  <PerfReadout kernel="" edge={perfEdge} onclose={() => (perfOn = false)} />
+{/if}
 <FilterChain {layers} />
 
 <style>

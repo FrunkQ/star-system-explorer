@@ -108,6 +108,7 @@ V3's other warning, "the generation duplication problem is the main risk": V4 ha
 | Newton panel "show the working" with a `/physics` reference | Replace | Explanation bundles with curious, science and engine lenses (K4, U3), over every flow. Physics pipelines are the educational centre of V4. |
 | Diagnostic bundle | Replace | Tars, the support agent, reads the run manifest and harness report (A4). |
 | Custom images for bodies, stars and constructs | Keep | Assets. |
+| Names for stars, planets and features (how V3 makes them) | Replace (provisional) | Name schemes as pack data, with three layers per object and settings that inherit down the tree (track NM, `design/SSE4-naming-design.md`). What V3 does is **not yet read**: V3 lives only on Alex's machine, and NM0 asked for a read-only look. This row is written once that read comes back, and anything V3 users depend on joins the NM acceptance checks. |
 
 ## 7. Dropped outright
 

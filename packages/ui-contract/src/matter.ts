@@ -268,3 +268,110 @@ export function dimensionless(values: ReadonlyMap<string, number>): { id: string
   }
   return out;
 }
+
+/** One origin in the sheet's one legend (big_bang ... human_made), in its three wordings. */
+export interface OriginKind {
+  id: string;
+  physics: string;
+  plain: string;
+  story: string;
+}
+
+/** One element row as the Elements page reads it. */
+export interface ElementRow {
+  id: string;
+  symbol: string;
+  name: string;
+  z: number;
+  atomic_weight?: SheetValue;
+  no_standard_weight?: boolean;
+  abundance_protosolar?: SheetValue & { sigma?: number };
+  origin?: { shares: Record<string, number>; src?: string; also?: string[]; check?: string; note?: string; argued?: string };
+  origin_story?: { physics?: string; plain?: string; story?: string };
+  /** A pack's honesty mark on the row, when it adds or changes an element (authored, fictional, hypothetical). */
+  mark?: string;
+  fictional?: boolean;
+  hypothetical?: boolean;
+}
+
+export interface ElementsPage {
+  elements: ElementRow[];
+  legend: OriginKind[];
+}
+
+/** The legend's reading order: the oldest process first, people last. */
+const ORIGIN_ORDER = ["big_bang", "cosmic_rays", "low_mass_stars", "massive_stars", "white_dwarfs", "neutron_star_mergers", "human_made"];
+
+/** Read the Elements page: the listing (for its ids and the origin legend), then each element's row. */
+export async function readElementsPage(k: MatterReader): Promise<{ ok: true; page: ElementsPage } | { ok: false; message: string }> {
+  const l = await k.readMatter({});
+  if (!l.ok) return { ok: false, message: l.message };
+  const list = l.value as unknown as { elements?: string[]; origin_legend?: OriginKind[] | Record<string, OriginKind> };
+  const rows = await Promise.all(
+    (list.elements ?? []).map(async (id) => {
+      const r = await k.readMatter({ table: "elements", id });
+      return r.ok ? ((r.value as unknown as RowDetail<ElementRow>).row ?? null) : null;
+    }),
+  );
+  const elements = rows.filter((r): r is ElementRow => r !== null).sort((a, b) => a.z - b.z);
+  // The kernel keys the legend by id; the page reads it oldest process first, as the sheet lists it, then any a pack adds.
+  const raw = Array.isArray(list.origin_legend) ? list.origin_legend : Object.values(list.origin_legend ?? {});
+  const at = (id: string) => (ORIGIN_ORDER.includes(id) ? ORIGIN_ORDER.indexOf(id) : ORIGIN_ORDER.length);
+  const legend = [...raw].sort((a, b) => at(a.id) - at(b.id) || a.id.localeCompare(b.id));
+  return { ok: true, page: { elements, legend } };
+}
+
+/**
+ * Where an element sits in the usual 18-column table: [row, column], rows 1 to 7 for the periods, 9 and 10 for the
+ * lanthanides and actinides set below, null past 118 (those go in the campaign row). Layout only.
+ */
+export function tablePosition(z: number): [number, number] | null {
+  if (!Number.isInteger(z) || z < 1 || z > 118) return null;
+  if (z === 1) return [1, 1];
+  if (z === 2) return [1, 18];
+  if (z <= 4) return [2, z - 2];
+  if (z <= 10) return [2, z + 8];
+  if (z <= 12) return [3, z - 10];
+  if (z <= 18) return [3, z];
+  if (z <= 36) return [4, z - 18];
+  if (z <= 54) return [5, z - 36];
+  if (z <= 56) return [6, z - 54];
+  if (z <= 71) return [9, z - 54];
+  if (z <= 86) return [6, z - 68];
+  if (z <= 88) return [7, z - 86];
+  if (z <= 103) return [10, z - 86];
+  return [7, z - 100];
+}
+
+/** The theme token that colours an origin: one legend for the whole app. */
+export const originToken = (id: string): string => `--sse-origin-${id.replace(/_/g, "-")}`;
+
+/** An element's shares in the legend's order, largest first within it, each with its fraction. */
+export function originShares(e: Pick<ElementRow, "origin">, legend: readonly OriginKind[]): { kind: OriginKind; share: number }[] {
+  const shares = e.origin?.shares ?? {};
+  const known = legend.filter((k) => (shares[k.id] ?? 0) > 0).map((kind) => ({ kind, share: shares[kind.id]! }));
+  // A share whose origin the legend lacks still shows, in the faint ink, so nothing is hidden.
+  for (const [id, share] of Object.entries(shares)) if (share > 0 && !legend.some((k) => k.id === id)) known.push({ kind: { id, physics: id, plain: id.replace(/_/g, " "), story: id }, share });
+  return known.sort((a, b) => b.share - a.share);
+}
+
+/** A CSS gradient that fills a bar in proportion to the shares, in the legend's colours. */
+export function originGradient(parts: readonly { kind: OriginKind; share: number }[]): string {
+  const total = parts.reduce((s, p) => s + p.share, 0) || 1;
+  let at = 0;
+  const stops: string[] = [];
+  for (const p of parts) {
+    const c = `var(${originToken(p.kind.id)}, var(--sse-ink-faint))`;
+    const to = at + (p.share / total) * 100;
+    stops.push(`${c} ${at.toFixed(2)}%`, `${c} ${to.toFixed(2)}%`);
+    at = to;
+  }
+  return stops.length ? `linear-gradient(90deg, ${stops.join(", ")})` : "var(--sse-ink-faint)";
+}
+
+/** "Merging neutron stars, about 94 parts in 100": a share in words. */
+export function shareWords(p: { kind: OriginKind; share: number }, first: boolean): string {
+  const n = Math.round(p.share * 100);
+  const who = p.kind.plain.charAt(0).toUpperCase() + p.kind.plain.slice(1);
+  return n >= 100 ? `${who}, all of it` : first ? `${who}, about ${n} parts in 100` : `${who}, ${n}`;
+}

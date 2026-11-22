@@ -27,13 +27,13 @@ pub const REF_HP11: &str = "Hasegawa, Y. and Pudritz, R. E. 2011, MNRAS 417, 123
 pub const REF_LC17: &str = "Lee, E. J. and Chiang, E. 2017, ApJ 842, 40: magnetospheric truncation of the disc explains the fall-off of Kepler planets inside about 10-day orbits";
 pub const REF_GLADMAN93: &str = "Gladman, B. 1993, Icarus 106, 247: two orbits closer than 2 sqrt(3) mutual Hill radii cannot stay apart";
 
-const G: f64 = 6.674_30e-11;
-const K_B: f64 = 1.380_649e-23;
+const G: f64 = sse_core::sheet::G;
+const K_B: f64 = sse_core::sheet::K_B;
 const M_H: f64 = 1.673_5e-27;
 const MU: f64 = 2.34;
-const AU_M: f64 = 1.495_978_707e11;
+const AU_M: f64 = sse_core::sheet::AU;
 const MSUN_KG: f64 = 1.988_47e30;
-const YR_S: f64 = 3.155_76e7;
+const YR_S: f64 = sse_core::sheet::YR_JULIAN;
 pub const MSUN_IN_EARTH: f64 = 332_946.0;
 
 /// Pebble flux as a fraction of the gas accretion flow, per unit of solid mass

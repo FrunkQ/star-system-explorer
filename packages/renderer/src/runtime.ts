@@ -2,7 +2,7 @@
 // recipe, draws it, measures every frame, lets the governor walk the degrade
 // order, and reports what it did so the view can show the quality badge.
 // Presentation only: nothing here reaches the kernel or the state hash.
-import { cubeDirection, type Globe, type Tier } from "../../ui-contract/src/index.ts";
+import { cubeDirection, perf, type Globe, type Tier } from "../../ui-contract/src/index.ts";
 import { layersFor, narrateFrame, pickAt, recolour, type LayerSpec, type TimeLapse } from "./timelapse.ts";
 import { narrateWeather, weatherAt, withWeather, type WeatherMap } from "./weather.ts";
 import { badge, Governor, type Badge } from "./governor.ts";
@@ -258,6 +258,8 @@ export function mountGlobe(host: HTMLElement, opts: GlobeRunOptions, onStatus: (
     const work = performance.now() - t0;
     if (drew) {
       frames++;
+      // The performance readout (PF1), when it is on: the globe's own drawing time, by tier.
+      perf.record("render.globe", work, { detail: pl.tier });
       // Continuous frames: the interval between them is the frame time; a lone frame: its own work.
       const ms = lastFrameAt >= 0 && now - lastFrameAt < 250 ? Math.max(work, now - lastFrameAt) : work;
       lastFrameAt = now;

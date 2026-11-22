@@ -415,7 +415,7 @@ pub fn assess(
 /// at about 1.5) holds none. With no moment known, the mass fallback applies.
 /// MF0 stop-gap: MF7 computes belts with their sources, limits and sweepers.
 pub fn belt_reach_radii(b: &NavBody, rs: &crate::RadiationSettings) -> Option<f64> {
-    const MU0: f64 = 1.256_637_062_12e-6;
+    const MU0: f64 = sse_core::sheet::MU0;
     match b.magnetic_moment_a_m2 {
         Some(mom) if mom > 0.0 && b.radius_m > 0.0 => {
             let a = b.a_au.max(1e-3);

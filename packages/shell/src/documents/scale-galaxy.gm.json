@@ -1,0 +1,30 @@
+{
+  "schema": "sse.screen/1",
+  "id": "sse.workspace.gm.galaxy",
+  "label": "Galaxy chart",
+  "audience": "gm",
+  "layout": "chart-room",
+  "theme": "chart-room",
+  "symbology": "sse.symbology.diagrammatic",
+  "vocab": "physics",
+  "description": "The place line's galaxy chart scale (U24): the galaxy's rings through time: metals, stars, supernovae, where life could start.",
+  "items": [
+    {
+      "view": "sse.view.galaxy-chart",
+      "area": "chart"
+    },
+    {
+      "view": "sse.view.time-ruler",
+      "area": "ruler"
+    }
+  ],
+  "rail": [
+    {
+      "scale": "galaxy",
+      "group": "look",
+      "label": "Galaxy chart",
+      "order": 1,
+      "hint": "The galaxy's rings through time: metals, stars, supernovae, where life could start"
+    }
+  ]
+}

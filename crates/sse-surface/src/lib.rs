@@ -44,10 +44,10 @@ pub use sketch::{sketch, Sketch, SurveyState};
 pub const SURFACE_VERSION: &str = "surface-envelope-v1";
 
 const M_EARTH_KG: f64 = 5.9722e24;
-const R_EARTH_M: f64 = 6.371e6;
+const R_EARTH_M: f64 = sse_core::sheet::R_EARTH_MEAN;
 const M_SUN_KG: f64 = 1.98892e30;
-const AU_M: f64 = 1.495978707e11;
-const G: f64 = 6.6743e-11;
+const AU_M: f64 = sse_core::sheet::AU;
+const G: f64 = sse_core::sheet::G;
 const GYR_S: f64 = 3.15576e16;
 
 // ---------------------------------------------------------------- settings
@@ -521,7 +521,7 @@ pub fn round_ratio(b: &Body) -> f64 {
 }
 
 /// Ice's melting point at low pressure, K.
-const T_MELT_ICE_K: f64 = 273.15;
+const T_MELT_ICE_K: f64 = sse_core::sheet::T0C;
 /// Ice's conductivity k = 651 / T W m⁻¹ K⁻¹ (Petrenko and Whitworth 1999).
 const K_ICE_651: f64 = 651.0;
 /// Rudolph et al. 2022: cracks cross Enceladus's shell where it is thinner

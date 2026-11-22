@@ -36,7 +36,7 @@ use crate::settings::{ClimateSettings, AREA_QUANTITIES};
 use serde::{Deserialize, Serialize};
 use sse_core::math as m;
 
-const YEAR_S: f64 = 3.15576e7;
+const YEAR_S: f64 = sse_core::sheet::YR_JULIAN;
 
 /// The water supply at one place, per year (metres of the liquid).
 #[derive(Clone, PartialEq, Debug, Serialize, Deserialize, Default)]

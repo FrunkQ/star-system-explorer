@@ -25,7 +25,7 @@ use std::cmp::Ordering;
 use std::collections::{BTreeMap, BinaryHeap};
 
 /// One parsec in metres (IAU 2015 B2: 648000/π au).
-pub const PC_M: f64 = 3.085_677_581_491_367e16;
+pub const PC_M: f64 = sse_core::sheet::PC;
 
 /// A jump drive (a pack's FTL rule). "Jump-N" is the rating; the counted
 /// parsecs of a jump are its length rounded up when `whole_parsecs`.
@@ -124,9 +124,9 @@ pub struct StarWell {
 }
 
 /// Sun's GM, m³ s⁻² (IAU 2015 B3), its radius, m, and one au, m.
-const GM_SUN: f64 = 1.327_124_4e20;
-const R_SUN: f64 = 6.957e8;
-const AU: f64 = 1.495_978_707e11;
+const GM_SUN: f64 = sse_core::sheet::GM_SUN;
+const R_SUN: f64 = sse_core::sheet::R_SUN;
+const AU: f64 = sse_core::sheet::AU;
 
 impl StarWell {
     /// Where a ship waits for a flight between stars: the temperate
