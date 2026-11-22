@@ -7,7 +7,7 @@ export const reference: ViewModule = {
   version: "0.1.0",
   tiers: ["text"],
   inputs: [{ quantity_kinds: [] }],
-  params: [{ name: "page", type: "enum", options: ["constants", "units"], default: "constants", meaning: "The page it opens on: constants or units (more pages follow in MP10's later parts)." }],
+  params: [{ name: "page", type: "enum", options: ["constants", "elements", "units"], default: "constants", meaning: "The page it opens on: constants, elements or units (more pages follow in MP10's later parts)." }],
   intents: [],
   mount(el, ctx, scene) {
     const props = $state({ ctx, scene, params: ctx.params });
