@@ -164,7 +164,7 @@ pub fn water_at(
     };
     let summer_share = if precip > 0.0 { summer / precip } else { 0.5 };
     // Köppen's dryness threshold in mm (Kottek et al. 2006 eq. 2.1).
-    let t_c = t_k - 273.15;
+    let t_c = t_k - sse_core::sheet::T0C;
     let pth = 2.0 * t_c
         + if summer_share >= 2.0 / 3.0 {
             28.0
@@ -209,9 +209,9 @@ pub fn quantity(w: &WaterSupply, q: &str) -> f64 {
         "runoff_m_yr" => w.runoff_m_yr,
         "aridity" => w.aridity,
         "p_over_pth" => w.p_over_pth,
-        "t_cold_c" => w.t_cold_k - 273.15,
-        "t_warm_c" => w.t_warm_k - 273.15,
-        "t_mean_c" => w.t_k - 273.15,
+        "t_cold_c" => w.t_cold_k - sse_core::sheet::T0C,
+        "t_warm_c" => w.t_warm_k - sse_core::sheet::T0C,
+        "t_mean_c" => w.t_k - sse_core::sheet::T0C,
         "t_warm_over_freeze_k" => w.t_warm_k - w.freeze_k,
         "snow_share" => {
             if w.precip_m_yr > 0.0 {

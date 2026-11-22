@@ -13,7 +13,7 @@ use std::collections::BTreeMap;
 
 pub const R_GAS: f64 = 8.314462618;
 /// Earth's air column, kg/m² (1.01325 bar over 9.80665 m/s²).
-pub const EARTH_COLUMN_KG_M2: f64 = 101_325.0 / 9.80665;
+pub const EARTH_COLUMN_KG_M2: f64 = sse_core::sheet::ATM / sse_core::sheet::G0;
 
 #[derive(Clone, PartialEq, Debug, Serialize, Deserialize)]
 pub struct Conditions {
@@ -126,7 +126,7 @@ impl Conditions {
 
     /// Effective (emission) temperature from sunlight and internal heat, K.
     pub fn t_eff_k(&self) -> f64 {
-        let s = 5.670374419e-8;
+        let s = sse_core::sheet::SIGMA_SB;
         m::pow((self.absorbed_w_m2() + self.internal_flux_w_m2) / s, 0.25)
     }
 

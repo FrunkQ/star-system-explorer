@@ -194,7 +194,7 @@ impl Default for CoverParams {
             alpha_grass: 0.4,
             treeline_k: 279.55,
             treeline_width_k: 2.0,
-            grow_base_k: 273.15,
+            grow_base_k: sse_core::sheet::T0C,
             lue_gc_mj: 0.389,
             canopy_m: 35.0,
             fire_rate_max: 1.0,
@@ -295,7 +295,7 @@ fn smooth(x: f64) -> f64 {
 
 /// Saturation vapour pressure of water, Pa (Bolton 1980).
 fn e_sat(t_k: f64) -> f64 {
-    let c = t_k - 273.15;
+    let c = t_k - sse_core::sheet::T0C;
     611.2 * m::exp(17.67 * c / (c + 243.5))
 }
 
@@ -347,7 +347,7 @@ impl CoverParams {
         }
         let green = c.max(ground);
         let npp = light * green;
-        let g0 = 9.806_65;
+        let g0 = sse_core::sheet::G0;
         let g = if x.gravity_m_s2 > 0.0 {
             x.gravity_m_s2
         } else {

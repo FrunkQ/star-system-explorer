@@ -131,7 +131,7 @@ pub(crate) fn plan_voyage(
             surveyed: a.surveyed.contains(&id) || a.known_fuel.contains_key(&id),
             xyz_pc: at.xyz_pc,
             star: (at.state.luminosity_lsun > 0.0 && at.state.teff_k > 0.0).then(|| {
-                let t = 5772.0 / at.state.teff_k;
+                let t = sse_core::sheet::T_SUN / at.state.teff_k;
                 sse_nav::voyage::StarWell {
                     mass_msun: at.state.mass_msun,
                     // R = √L (T☉/T)², Stefan-Boltzmann.

@@ -306,7 +306,7 @@ pub fn early_life(p: &Protoplanet, fits: &Fits, host: &LifeLine) -> WorldStart {
         h("early.surface_water", surface_water_kg),
         h("early.co2_partial_pressure", co2_pa),
         h("early.desiccated", if desiccated { 1.0 } else { 0.0 }),
-        h("early.insolation", flux * 1361.0),
+        h("early.insolation", flux * sse_core::sheet::S_SUN),
     ];
     WorldStart {
         address: p.address.clone(),

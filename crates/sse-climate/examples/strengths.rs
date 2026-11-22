@@ -25,7 +25,7 @@ fn main() {
             c.label, k.regime, k.cells, k.hadley_edge_deg, s.thermal_rossby, s.wind_scale_m_s, s.eddy_wind_m_s,
             s.super_rotation, s.baroclinic, s.day_night, s.night_k,
             s.condense_k.map(|x| format!("{x:.0}")).unwrap_or("-".into()), s.collapse, s.collisional,
-            s.radiative_s / 86400.0
+            s.radiative_s / sse_core::sheet::DAY
         );
     }
 }

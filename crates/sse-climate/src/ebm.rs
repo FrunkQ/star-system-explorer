@@ -347,7 +347,7 @@ pub fn land_sea_coupling(cs: &ClimateSettings, c: &Conditions, wind: &[f64]) -> 
     let coasts = resample(&c.coasts_by_lat, n, f64::INFINITY)
         .unwrap_or_else(|| vec![cs.land_sea.coasts_per_band; n]);
     let (cap_l, cap_s) = column_capacities(cs, c);
-    let omega = 2.0 * m::PI / (c.year_days * 86_400.0).max(1.0);
+    let omega = 2.0 * m::PI / (c.year_days * sse_core::sheet::DAY).max(1.0);
     let reach = |cap: f64| {
         let damp = m::sqrt(b * b + omega * cap * omega * cap);
         c.radius_m * m::sqrt(d / damp.max(1e-12))

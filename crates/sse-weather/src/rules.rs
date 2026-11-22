@@ -281,7 +281,8 @@ impl RuleBlock {
             l.wind_m_s = [u * (1.0 + 1.5 * k as f64), 0.0];
         }
         // kg m⁻² s⁻¹ of liquid to mm a day.
-        let mut precip = at(&sea.precip).max(0.0) * 86_400.0 / p.core.liquid_kg_m3 * 1000.0;
+        let mut precip =
+            at(&sea.precip).max(0.0) * sse_core::sheet::DAY / p.core.liquid_kg_m3 * 1000.0;
         let mut kind = "none".to_string();
         if let Some(cd) = &p.cond {
             let deck = circulation::deck_cover(s, c);
@@ -317,7 +318,7 @@ impl RuleBlock {
         if precip > 0.0 {
             let liquid = c.liquid.clone().unwrap_or_default();
             kind = if liquid == "water" {
-                if at(&sea.t_k) < 273.15 {
+                if at(&sea.t_k) < sse_core::sheet::T0C {
                     "snow".into()
                 } else {
                     "rain".into()

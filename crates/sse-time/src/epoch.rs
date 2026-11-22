@@ -19,8 +19,8 @@ use sse_core::math as m;
 use sse_formation::lifeline::Phase;
 use std::collections::BTreeMap;
 
-const AU_RSUN: f64 = 149_597_870_700.0 / 6.957e8;
-const ME_MSUN: f64 = 3.986_004e14 / 1.327_124_4e20;
+const AU_RSUN: f64 = sse_core::sheet::AU / sse_core::sheet::R_SUN;
+const ME_MSUN: f64 = sse_core::sheet::GM_EARTH / sse_core::sheet::GM_SUN;
 const DEG: f64 = m::PI / 180.0;
 
 /// Pack settings (`provides.other.time`).
@@ -349,10 +349,12 @@ impl<'a> Ageing<'a> {
                     }
                     // Convective turnover time (yr) = (Menv (R - Renv)^2 / (3 L))^(1/3), Renv ~ 0.
                     let msun = 1.988_47e30;
-                    let r_m = st.star.radius * 6.957e8;
-                    let tau_s =
-                        m::cbrt(menv * msun * r_m * r_m / (3.0 * st.star.luminosity * 3.828e26));
-                    let tau = tau_s / 3.155_76e7;
+                    let r_m = st.star.radius * sse_core::sheet::R_SUN;
+                    let tau_s = m::cbrt(
+                        menv * msun * r_m * r_m
+                            / (3.0 * st.star.luminosity * sse_core::sheet::L_SUN),
+                    );
+                    let tau = tau_s / sse_core::sheet::YR_JULIAN;
                     for lp in live.iter_mut().filter(|x| !x.engulfed) {
                         let a = lp.p.a;
                         let period = m::sqrt(a * a * a / st.mass);

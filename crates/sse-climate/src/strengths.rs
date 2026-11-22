@@ -230,8 +230,8 @@ pub fn strengths(cs: &ClimateSettings, c: &Conditions) -> Strengths {
         ),
         format!(
             "Baroclinic storms {bc:.2}: growth {:.2} per day (Lindzen and Farrell 1980) against a radiative time of {:.1} days.",
-            growth * 86400.0,
-            tau_rad / 86400.0
+            growth * sse_core::sheet::DAY,
+            tau_rad / sse_core::sheet::DAY
         ),
         format!(
             "Day-night contrast {dn:.2} of the full contrast (Komacek and Showman 2016): wave time {:.1} h, {:.0} % of a night to cool in.",

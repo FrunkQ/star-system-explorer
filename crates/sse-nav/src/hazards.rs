@@ -343,7 +343,7 @@ pub fn assess(
             text: format!(
                 "peak sunlight {:.0} W/m² ({:.1} × Earth's)",
                 peak_flux,
-                peak_flux / 1361.0
+                peak_flux / sse_core::sheet::S_SUN
             ),
             at_s: Some(closest_at),
         });

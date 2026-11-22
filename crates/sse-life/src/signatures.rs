@@ -221,8 +221,8 @@ pub fn signatures(
     } else {
         0.0
     };
-    let edge_nm =
-        (edge_area >= p.edge_floor).then(|| 700.0 * m::sqrt(5772.0 / obs.star_teff_k.max(2000.0)));
+    let edge_nm = (edge_area >= p.edge_floor)
+        .then(|| 700.0 * m::sqrt(sse_core::sheet::T_SUN / obs.star_teff_k.max(2000.0)));
     let mut signals = vec![];
     let see_o2 = air && o2 >= p.o2_floor;
     let see_ch4 = air && ch4 >= p.ch4_floor_ppm;

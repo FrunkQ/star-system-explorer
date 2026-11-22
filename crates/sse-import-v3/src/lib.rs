@@ -379,7 +379,7 @@ impl Importer {
             self.set(
                 &sa,
                 "system.age",
-                Json::from(age * 1e9 * 365.25 * 86400.0),
+                Json::from(age * 1e9 * 365.25 * sse_core::sheet::DAY),
                 Evidence::Authored,
             );
         }
