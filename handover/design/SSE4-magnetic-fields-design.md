@@ -304,7 +304,7 @@ One layer, called **Field**, offered in every view style (Chart, 3D, True, Wiref
 
 **Time.** The layer follows the time ruler. Drag back four billion years on a Mars-like world and the bubble is there; drag forward and it shrinks to patches. Reversals show as a fading and re-growing. A stellar cycle flips the star's field. An ejection arriving squeezes the bubble and lights the oval, as it happens.
 
-**Motion and feel** (interface style): on opening, lines ink outward from the dynamo layer in under 400 ms; dragging the wind strength or the time ruler reshapes the bubble under the finger; reduced-motion setting draws the end state. **Phone:** the axis cut only, with the card below. **Text tier:** "Field 31 µT at the equator, tilted 11°. Holds the wind off at 10 radii. Two belts. Aurorae at 67° north and south. Why?"
+**Motion and feel** (interface style): on opening, lines ink outward from the dynamo layer in 240 ms or less; dragging the wind strength or the time ruler reshapes the bubble under the finger; reduced-motion setting draws the end state. **Phone:** the axis cut only, with the card below. **Text tier:** "Field 31 µT at the equator, tilted 11°. Holds the wind off at 10 radii. Two belts. Aurorae at 67° north and south. Why?"
 
 **Players** see the field only through what their instruments have sensed (a magnetometer reading, a radio detection, an aurora seen from orbit), in their theme. Sound: the radio chorus and whistlers as translated signals (N6) read the same facts.
 
