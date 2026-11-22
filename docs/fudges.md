@@ -665,6 +665,20 @@ energy balance). Details in `handover/packages/W7a.md`.
 | isothermal ice at the climate's temperature | A buffered world's ice sits at the frost point the climate's mean temperature gives: Pluto's fixture at 40 K holds about 12 Pa, where the real ice at 37 K holds about 1 Pa | The bright ice is colder than the darker bare ground; with one albedo the ice takes the mean | Albedo contrast between ice and bare ground | known gap |
 | `Curve` table | The vapour curve is read from a 1,024-node table in 1/T per cycle | The exchange reads it thousands of times a year; ln P is near-linear in 1/T | None needed | documented |
 
+### Land and sea columns (W7c part 1, `crates/sse-climate/src/ebm.rs` `cycle_two`, `climate.land_sea`)
+
+| Where | Instead of the physics | Why | Real physics to replace it | Status |
+|---|---|---|---|---|
+| two columns per band | Each band's land and sea are two well-mixed columns; a place's distance from the coast does not yet matter | The Orbit level is zonal; coasts and interiors need the D2 grid | North, Mengel and Short 1983's 2D energy balance on the cell grid (W7c part 2 and W11) | documented |
+| `land_sea.coasts_per_band` 2 | One continent and one sea round each band unless the world counts its coasts (`Conditions::coasts_by_lat`) | Surveyed worlds do not publish coast counts yet | Counted from the height map per strip (W7c part 2) | documented |
+| diffusive coupling | Heat crosses a coast by the model's own D over the lesser of half a block and ℓ = R √(D / \|B + iωC\|), the seasonal reach on each side; one reach per column from the seasonal frequency, used for the annual mean too | Exact for one damped diffusion across a coast at the seasonal frequency; the annual-mean exchange is slightly over-coupled | The 2D model | ours, derived |
+| zonal advection, `land_sea.column_wind_ratio` 0.5 | The air column carries its heat round the band with half the thermal wind at the thermal depth (a wind rising linearly with height), relaxing to the new ground over u τ, τ = C_air / (ρ c_p C\|U\| + B), across one windward coast in two | Diffusion alone left Earth's land at 52° N swinging 57 K against about 30 to 35 K observed; with advection it gives 32 K and the sea 10 K (observed 8 to 10) | Winds per cell on the D2 grid | ours: the ½ is the linear-profile column mean, not fitted; the outcome was checked against the observed ranges, not tuned |
+| `land_sea.max_coupling_w_m2_k` 50 | Coupling held below 50 W m⁻² K⁻¹ per square metre of band | The geometry grows as 1 / cos² φ at the poles | None needed (the cap only binds in the polar bands, where land and sea are already one) | documented |
+| tied columns | A band with no land reports its sea for both columns (and one with no sea its land) | Keeps the solve one shape | None needed | documented |
+| evaporation from the band | Evaporation reads the band's mean temperature, weighted by the band's sea share, not the sea column's temperature | Part 1 keeps the moisture scheme unchanged apart from where the sea is | Evaporation from the sea column (W7c part 2) | known gap |
+| exchange on one column | W8's moving-ices cycle keeps the single mixed column | Frost of the main gas comes within reach only on worlds without a sea so far | Two columns in the exchange cycle if a world needs both | known gap |
+| ice-age onsets | Dated only inside the W9 orbit-history window | Outside it there is no spin history to date them by | Longer secular tracks (T1) | documented |
+
 ### Orbital forcing and ice ages (W9 part 2, `crates/sse-climate/src/forcing.rs`, `climate.forcing`, `crates/sse-kernel/src/ice_ages.rs`)
 
 | Where | Instead of the physics | Why | Real physics to replace it | Status |

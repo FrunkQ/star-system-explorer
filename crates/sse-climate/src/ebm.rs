@@ -53,6 +53,13 @@ pub struct Season {
     pub condensate: String,
     pub d_w_m2_k: f64,
     pub b_w_m2_k: f64,
+    /// W7c: the land column's and the sea column's temperatures, K, on a
+    /// world with both (empty otherwise). A band with no land reports its
+    /// sea for both, and one with no sea its land.
+    #[serde(default, skip_serializing_if = "Vec::is_empty")]
+    pub t_land_k: Vec<f64>,
+    #[serde(default, skip_serializing_if = "Vec::is_empty")]
+    pub t_sea_k: Vec<f64>,
 }
 
 pub(crate) fn rad(x: f64) -> f64 {
@@ -263,11 +270,352 @@ pub fn heat_capacity(cs: &ClimateSettings, c: &Conditions) -> f64 {
     sea * h.water_j_m3_k * h.mixed_layer_m + (1.0 - sea) * skin + air
 }
 
+/// W7c: the land fraction of each band, south to north. A world with no
+/// surface liquid is all land; `land_by_lat` is resampled onto the bands by
+/// overlap in latitude; otherwise every band holds the world's own share.
+pub fn band_land(cs: &ClimateSettings, c: &Conditions) -> Vec<f64> {
+    let n = cs.bands.max(1) as usize;
+    if liquid(cs, c).is_none() {
+        return vec![1.0; n];
+    }
+    resample(&c.land_by_lat, n, 1.0).unwrap_or_else(|| vec![c.land_fraction(); n])
+}
+
+/// Equal strips of latitude, south to north, averaged onto `n` bands by
+/// their overlap in latitude, each value held to 0 ..= `top`. None when
+/// there are no strips.
+fn resample(strips: &[f64], n: usize, top: f64) -> Option<Vec<f64>> {
+    let k = strips.len();
+    if k == 0 {
+        return None;
+    }
+    Some(
+        (0..n)
+            .map(|j| {
+                let (a, b) = (j as f64 / n as f64, (j as f64 + 1.0) / n as f64);
+                let (mut s, mut w) = (0.0, 0.0);
+                for (i, v) in strips.iter().enumerate() {
+                    let (p, q) = (i as f64 / k as f64, (i as f64 + 1.0) / k as f64);
+                    let o = (b.min(q) - a.max(p)).max(0.0);
+                    s += o * v.clamp(0.0, top);
+                    w += o;
+                }
+                if w > 0.0 {
+                    s / w
+                } else {
+                    0.0
+                }
+            })
+            .collect(),
+    )
+}
+
+/// W7c: whether the world needs a land and a sea column: a surface liquid
+/// and either a share of land between none and all, or land given strip by
+/// strip.
+pub fn two_columns(cs: &ClimateSettings, c: &Conditions) -> bool {
+    if !c.solid_surface || liquid(cs, c).is_none() {
+        return false;
+    }
+    let f = c.land_fraction();
+    !c.land_by_lat.is_empty() || (f > 0.0 && f < 1.0)
+}
+
+/// Heat capacity of a square metre of land and of sea, J m⁻² K⁻¹, each
+/// with the air column above it.
+pub fn column_capacities(cs: &ClimateSettings, c: &Conditions) -> (f64, f64) {
+    let h = &cs.heat_capacity;
+    let year_s = (c.year_days * 86_400.0).max(1.0);
+    let cp_air = 3.5 * R_GAS / c.mean_molar_kg.max(1e-6);
+    let air = cp_air * c.column_kg_m2().max(0.0);
+    let skin = h.ground_inertia_si * m::sqrt(year_s / m::PI);
+    (skin + air, h.water_j_m3_k * h.mixed_layer_m + air)
+}
+
+/// W7c: the coupling between a band's land and sea columns, W m⁻² K⁻¹ per
+/// square metre of band, by the model's own diffusion D across the band's
+/// coasts. Blocks of land and sea alternate, n coasts round the band; heat
+/// crosses each coast down a gradient that reaches into each side by the
+/// lesser of half the block's width and the depth a seasonal anomaly
+/// diffuses before it is damped, ℓ = R √(D / |B + iωC|). Per square metre
+/// of band, ν = n D R² / (L r) with L = 2πR cos φ and r = ℓ_land + ℓ_sea.
+pub fn land_sea_coupling(cs: &ClimateSettings, c: &Conditions, wind: &[f64]) -> Vec<f64> {
+    let lat = lats(cs);
+    let n = lat.len();
+    let (d, b) = coefficients(cs, c);
+    let f = band_land(cs, c);
+    let coasts = resample(&c.coasts_by_lat, n, f64::INFINITY)
+        .unwrap_or_else(|| vec![cs.land_sea.coasts_per_band; n]);
+    let (cap_l, cap_s) = column_capacities(cs, c);
+    let omega = 2.0 * m::PI / (c.year_days * 86_400.0).max(1.0);
+    let reach = |cap: f64| {
+        let damp = m::sqrt(b * b + omega * cap * omega * cap);
+        c.radius_m * m::sqrt(d / damp.max(1e-12))
+    };
+    let (rl, rs) = (reach(cap_l), reach(cap_s));
+    let cp_air = 3.5 * R_GAS / c.mean_molar_kg.max(1e-6);
+    let air = cp_air * c.column_kg_m2().max(0.0);
+    let rho = c.pressure_bar * 1.0e5 * c.mean_molar_kg / (R_GAS * c.t_surface_k.max(1.0));
+    let lam = rho * cp_air * cs.moisture.exchange_m_s + b;
+    (0..n)
+        .map(|j| {
+            let k = coasts[j].max(1e-6);
+            let len = 2.0 * m::PI * c.radius_m * m::cos(rad(lat[j])).max(1e-6);
+            let r = rl.min(f[j] * len / k) + rs.min((1.0 - f[j]) * len / k);
+            let nu = k * d * c.radius_m * c.radius_m / (len * r.max(1.0));
+            // The mean zonal wind carries each block's air over the next: a
+            // column of heat capacity C_air at speed u crosses a windward coast
+            // and relaxes to the new ground over u τ, τ = C_air / λ with λ the
+            // ground-air exchange ρ c_p C|U| plus B.
+            let u = wind[j].abs() * cs.land_sea.column_wind_ratio / cs.surface_wind_share.max(1e-6);
+            let tau = air / lam.max(1e-12);
+            let reach_air = (u * tau).max(1.0);
+            let windward = 0.5 * k;
+            let short = (f[j] * len / k).min((1.0 - f[j]) * len / k);
+            let adv = windward * air * u * (1.0 - m::exp(-short / reach_air)) / len;
+            (nu + adv).min(cs.land_sea.max_coupling_w_m2_k)
+        })
+        .collect()
+}
+
+/// The seasonal cycle with land and sea in each band (W7c part 1): as
+/// [`cycle`], with two columns per band that share the band's meridional
+/// transport (diffusion acts on the band's mean) and exchange heat across
+/// the band's coasts. One implicit block-tridiagonal solve per step.
+fn cycle_two(cs: &ClimateSettings, c: &Conditions) -> Vec<Season> {
+    let hc = &cs.heat_capacity;
+    let ns = cs.seasons.max(1) as usize;
+    let sub = hc.steps_per_season.max(1) as usize;
+    let steps = ns * sub;
+    let lat = lats(cs);
+    let n = lat.len();
+    let g = grid(cs, c);
+    let f = band_land(cs, c);
+    let qs: Vec<Vec<f64>> = (0..steps)
+        .map(|k| {
+            let phase = (k as f64 + 0.5) / steps as f64;
+            let decl = declination_deg(c, phase);
+            let near = orbit_at(c, phase).1;
+            lat.iter()
+                .map(|l| insolation(c.flux_w_m2 * near, *l, decl))
+                .collect()
+        })
+        .collect();
+    let q_year: Vec<f64> = (0..n)
+        .map(|j| qs.iter().map(|q| q[j]).sum::<f64>() / steps as f64)
+        .collect();
+    let (t0, a0) = steady(cs, c, &q_year);
+    let nu = land_sea_coupling(cs, c, &diagnose(cs, c, &q_year, &t0, &a0).wind_m_s);
+    let (mut tl, mut ts) = (t0.clone(), t0.clone());
+    let t_bar = c.t_surface_k;
+    let (cap_l, cap_s) = column_capacities(cs, c);
+    let dt = (c.year_days * 86_400.0).max(1.0) / steps as f64;
+    let (kl, ks) = (cap_l / dt, cap_s / dt);
+    let b = g.b;
+    // The block rows, fixed over the year: [land; sea] × [T_land, T_sea].
+    let mut di = vec![[[0.0; 2]; 2]; n];
+    let mut lo = vec![[[0.0; 2]; 2]; n];
+    let mut up = vec![[[0.0; 2]; 2]; n];
+    for j in 0..n {
+        let s = g.lo[j] + g.up[j];
+        let fj = f[j];
+        let mut rows = [true, true];
+        if fj <= 0.0 {
+            di[j][0] = [1.0, -1.0];
+            rows[0] = false;
+            di[j][1] = [0.0, ks + b + s];
+        } else if fj >= 1.0 {
+            di[j][1] = [-1.0, 1.0];
+            rows[1] = false;
+            di[j][0] = [kl + b + s, 0.0];
+        } else {
+            let (nl, nsea) = (nu[j] / fj, nu[j] / (1.0 - fj));
+            di[j][0] = [kl + b + s * fj + nl, s * (1.0 - fj) - nl];
+            di[j][1] = [s * fj - nsea, ks + b + s * (1.0 - fj) + nsea];
+        }
+        for (r, on) in rows.iter().enumerate() {
+            if !on {
+                continue;
+            }
+            if j > 0 {
+                lo[j][r] = [g.lo[j] * f[j - 1], g.lo[j] * (1.0 - f[j - 1])];
+            }
+            if j + 1 < n {
+                up[j][r] = [g.up[j] * f[j + 1], g.up[j] * (1.0 - f[j + 1])];
+            }
+        }
+    }
+    let band = |a: &[f64], bb: &[f64]| -> Vec<f64> {
+        (0..n).map(|j| f[j] * a[j] + (1.0 - f[j]) * bb[j]).collect()
+    };
+    let (al0, as0) = albedo_two(cs, c, &g, &q_year, &tl, &ts, &f);
+    let abs0: Vec<f64> = (0..n)
+        .map(|j| q_year[j] * (1.0 - (f[j] * al0[j] + (1.0 - f[j]) * as0[j])))
+        .collect();
+    let mut a_olr = weighted_mean(&g.w, &abs0) + c.internal_flux_w_m2 - b * t_bar;
+    type Acc = (Vec<f64>, Vec<f64>, Vec<f64>, Vec<f64>, Vec<f64>);
+    let mut out: Vec<Acc> = vec![];
+    let years = hc.spin_up_years.max(1);
+    for y in 0..years {
+        let mut year_abs = 0.0;
+        let last = y + 1 == years;
+        let z = vec![0.0; n];
+        let mut acc: Vec<Acc> = vec![(z.clone(), z.clone(), z.clone(), z.clone(), z); ns];
+        for (st, q) in qs.iter().enumerate() {
+            let (al, asea) = albedo_two(cs, c, &g, q, &tl, &ts, &f);
+            let abl: Vec<f64> = q.iter().zip(&al).map(|(a, x)| a * (1.0 - x)).collect();
+            let abs: Vec<f64> = q.iter().zip(&asea).map(|(a, x)| a * (1.0 - x)).collect();
+            let ab = band(&abl, &abs);
+            year_abs += weighted_mean(&g.w, &ab);
+            let r: Vec<[f64; 2]> = (0..n)
+                .map(|j| {
+                    let rl = kl * tl[j] + abl[j] + c.internal_flux_w_m2 - a_olr;
+                    let rs = ks * ts[j] + abs[j] + c.internal_flux_w_m2 - a_olr;
+                    if f[j] <= 0.0 {
+                        [0.0, rs]
+                    } else if f[j] >= 1.0 {
+                        [rl, 0.0]
+                    } else {
+                        [rl, rs]
+                    }
+                })
+                .collect();
+            let x = block_thomas(&lo, &di, &up, &r);
+            for j in 0..n {
+                tl[j] = x[j][0];
+                ts[j] = x[j][1];
+            }
+            if last {
+                let tb = band(&tl, &ts);
+                let alb = band(&al, &asea);
+                let e = &mut acc[st / sub];
+                let k = 1.0 / sub as f64;
+                for j in 0..n {
+                    e.0[j] += tb[j] * k;
+                    e.1[j] += alb[j] * k;
+                    e.2[j] += q[j] * k;
+                    e.3[j] += tl[j] * k;
+                    e.4[j] += ts[j] * k;
+                }
+            }
+        }
+        a_olr = year_abs / steps as f64 + c.internal_flux_w_m2 - b * t_bar;
+        if last {
+            out = acc;
+        }
+    }
+    out.into_iter()
+        .map(|(t, alb, q, l, sea)| {
+            let mut s = diagnose(cs, c, &q, &t, &alb);
+            s.t_land_k = l;
+            s.t_sea_k = sea;
+            s
+        })
+        .collect()
+}
+
+/// Ice and albedo of the land and the sea columns, with one base albedo
+/// set so the band-weighted, sunlight-weighted albedo is the Bond albedo.
+#[allow(clippy::too_many_arguments)]
+fn albedo_two(
+    cs: &ClimateSettings,
+    c: &Conditions,
+    g: &Grid,
+    q: &[f64],
+    tl: &[f64],
+    ts: &[f64],
+    f: &[f64],
+) -> (Vec<f64>, Vec<f64>) {
+    let water = liquid(cs, c).is_some_and(|s| s.name == "water");
+    let ice = |x: f64| {
+        if water {
+            0.5 * (1.0 - m::tanh((x - cs.ice.t_ice_k) / cs.ice.width_k))
+        } else {
+            0.0
+        }
+    };
+    let il: Vec<f64> = tl.iter().map(|x| ice(*x)).collect();
+    let is: Vec<f64> = ts.iter().map(|x| ice(*x)).collect();
+    let q_mean = weighted_mean(&g.w, q).max(1e-12);
+    let qi: Vec<f64> = (0..q.len())
+        .map(|j| q[j] * (f[j] * il[j] + (1.0 - f[j]) * is[j]))
+        .collect();
+    let a0 = c.albedo - cs.ice.albedo_step * weighted_mean(&g.w, &qi) / q_mean;
+    let a = |i: &f64| (a0 + cs.ice.albedo_step * i).clamp(0.0, 0.95);
+    (il.iter().map(a).collect(), is.iter().map(a).collect())
+}
+
+type M2 = [[f64; 2]; 2];
+
+fn mul(a: &M2, b: &M2) -> M2 {
+    [
+        [
+            a[0][0] * b[0][0] + a[0][1] * b[1][0],
+            a[0][0] * b[0][1] + a[0][1] * b[1][1],
+        ],
+        [
+            a[1][0] * b[0][0] + a[1][1] * b[1][0],
+            a[1][0] * b[0][1] + a[1][1] * b[1][1],
+        ],
+    ]
+}
+
+fn mulv(a: &M2, v: &[f64; 2]) -> [f64; 2] {
+    [
+        a[0][0] * v[0] + a[0][1] * v[1],
+        a[1][0] * v[0] + a[1][1] * v[1],
+    ]
+}
+
+fn inv(a: &M2) -> M2 {
+    let det = a[0][0] * a[1][1] - a[0][1] * a[1][0];
+    [
+        [a[1][1] / det, -a[0][1] / det],
+        [-a[1][0] / det, a[0][0] / det],
+    ]
+}
+
+/// Solve the block-tridiagonal system
+/// `-lo[j] x[j-1] + di[j] x[j] - up[j] x[j+1] = r[j]` with 2 × 2 blocks.
+fn block_thomas(lo: &[M2], di: &[M2], up: &[M2], r: &[[f64; 2]]) -> Vec<[f64; 2]> {
+    let n = di.len();
+    let mut gam = vec![[[0.0; 2]; 2]; n];
+    let mut del = vec![[0.0; 2]; n];
+    let neg = |a: &M2| [[-a[0][0], -a[0][1]], [-a[1][0], -a[1][1]]];
+    for j in 0..n {
+        let (m_j, rhs) = if j == 0 {
+            (di[0], r[0])
+        } else {
+            // M = B − A γ with A = −lo; d − A δ.
+            let ag = mul(&neg(&lo[j]), &gam[j - 1]);
+            let mm = [
+                [di[j][0][0] - ag[0][0], di[j][0][1] - ag[0][1]],
+                [di[j][1][0] - ag[1][0], di[j][1][1] - ag[1][1]],
+            ];
+            let ad = mulv(&neg(&lo[j]), &del[j - 1]);
+            (mm, [r[j][0] - ad[0], r[j][1] - ad[1]])
+        };
+        let mi = inv(&m_j);
+        gam[j] = mul(&mi, &neg(&up[j]));
+        del[j] = mulv(&mi, &rhs);
+    }
+    let mut x = vec![[0.0; 2]; n];
+    x[n - 1] = del[n - 1];
+    for j in (0..n - 1).rev() {
+        let gx = mulv(&gam[j], &x[j + 1]);
+        x[j] = [del[j][0] - gx[0], del[j][1] - gx[1]];
+    }
+    x
+}
+
 /// The seasonal cycle with heat capacity (North and Coakley 1979): start
 /// from the steady state under the year's mean sunlight, step the year
 /// implicitly for a fixed number of years, and return each season's mean
 /// state in the last year, phase (k + ½) / n.
 pub fn cycle(cs: &ClimateSettings, c: &Conditions) -> Vec<Season> {
+    if two_columns(cs, c) {
+        return cycle_two(cs, c);
+    }
     let hc = &cs.heat_capacity;
     let ns = cs.seasons.max(1) as usize;
     let sub = hc.steps_per_season.max(1) as usize;
@@ -385,6 +733,8 @@ pub fn diagnose(cs: &ClimateSettings, c: &Conditions, q: &[f64], t: &[f64], alb:
         condensate,
         d_w_m2_k: d,
         b_w_m2_k: b,
+        t_land_k: vec![],
+        t_sea_k: vec![],
     }
 }
 
@@ -449,21 +799,30 @@ fn moisture(
             .iter()
             .map(|x| (sub.molar_kg / c.mean_molar_kg * p_sat(sub, *x) / p0).min(1.0))
             .collect();
-        let wet = m::sqrt((c.ocean_fraction / cs.supply.wet_saturation).min(1.0));
+        let land = band_land(cs, c);
+        let wet_at = |j: usize| {
+            let sea = if c.land_by_lat.is_empty() {
+                c.ocean_fraction
+            } else {
+                1.0 - land[j]
+            };
+            m::sqrt((sea / cs.supply.wet_saturation).min(1.0))
+        };
         let ssf = surface_sun_fraction(cs, c);
         let evap: Vec<f64> = (0..n)
             .map(|j| {
                 let rho = p0 * c.mean_molar_kg / (R_GAS * t[j]);
                 let bulk = rho * cs.moisture.exchange_m_s * qsat[j] * (1.0 - rh);
                 let energy = cs.supply.latent_share * ssf * absorbed[j].max(0.0) / sub.latent_j_kg;
-                wet * bulk.min(energy)
+                wet_at(j) * bulk.min(energy)
             })
             .collect();
         // Moisture as a temperature (L q / c_p) diffuses down its gradient.
         let cp = 3.5 * R_GAS / c.mean_molar_kg;
         let hq: Vec<f64> = qsat
             .iter()
-            .map(|x| sub.latent_j_kg * rh * x / cp * wet)
+            .enumerate()
+            .map(|(j, x)| sub.latent_j_kg * rh * x / cp * wet_at(j))
             .collect();
         // Moisture transport (Siler, Roe and Armour 2018): eddies carry it
         // down its gradient; the Hadley cell's lower branch carries it toward
@@ -620,6 +979,8 @@ pub fn mean(seasons: &[Season]) -> Season {
         add(&mut a.cover, &s.cover);
         add(&mut a.gradient_k_deg, &s.gradient_k_deg);
         add(&mut a.wind_m_s, &s.wind_m_s);
+        add(&mut a.t_land_k, &s.t_land_k);
+        add(&mut a.t_sea_k, &s.t_sea_k);
         if a.condensate.is_empty() {
             a.condensate = s.condensate.clone();
         }
@@ -634,6 +995,8 @@ pub fn mean(seasons: &[Season]) -> Season {
         &mut a.cover,
         &mut a.gradient_k_deg,
         &mut a.wind_m_s,
+        &mut a.t_land_k,
+        &mut a.t_sea_k,
     ] {
         for x in v.iter_mut() {
             *x *= k;
