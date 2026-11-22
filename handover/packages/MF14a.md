@@ -46,7 +46,7 @@ fact, not a new fact. This package is that tracer, plus the data the Chart and 3
   5 open into the wind."
 - **Tiers** (`FIELD_LINES`): 16 × 6 seeds on gpu-high, 12 × 6 on gpu-basic, 10 × 4 on canvas, none on text.
 
-## Checks (`packages/renderer/test/field.test.ts`, 7 tests)
+## Checks (`packages/renderer/test/field.test.ts`, 8 tests)
 
 - The Schmidt functions match their closed forms to degree 3, and dP/dθ matches a finite difference.
 - An aligned dipole has B0 at the equator, 2·B0 at the pole (pointing in, Earth's sign) and falls as 1/r³. A
@@ -59,6 +59,7 @@ fact, not a new fact. This package is that tracer, plus the data the Chart and 3
   plane at the flank either.
 - In 3D, no point drawn over the disc lies behind the body. The cut's paths fit the frame.
 - Cost (see below).
+- `test/field-fixture.ts` `earthField()`: a dipole Earth and its bubble for the views (chart room thread) to build against before part 1b.
 
 ## Cost (design 9B asked for it to be measured)
 

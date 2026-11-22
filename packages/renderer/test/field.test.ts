@@ -157,3 +157,11 @@ test("3D: lines behind the body are cut, those in front and beside it stay; the 
   assert.ok(c.bubble!.startsWith("M") && c.lines.every((l) => l.d === "" || l.d.startsWith("M")));
   near(c.body.r, 400 / 28, 1e-12, "body radius in px");
 });
+
+test("the views' fixture: a dipole Earth inside its bubble traces closed and open lines", async () => {
+  const { earthField } = await import("./field-fixture.ts");
+  const { model, bubble } = earthField();
+  const t = traceField(model, bubble);
+  assert.ok(t.counts.closed > 50 && t.counts.open > 0, JSON.stringify(t.counts));
+  assert.match(narrateField(model, bubble, t), /^Field 31 µT at the equator, tilted 9° from the spin axis; holds the wind off at 9\.3 radii\./);
+});
