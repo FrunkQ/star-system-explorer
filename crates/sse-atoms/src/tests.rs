@@ -108,7 +108,7 @@ fn every_atom_is_cited_explained_and_versioned() {
         }
     }
     assert_eq!(
-        n, 71,
+        n, 85,
         "first-wave atom count changed: update handover/packages/P1.md"
     );
 }
@@ -735,4 +735,143 @@ fn gibbs_blocks_reproduce_tabulated_values() {
     let h = run("sse.chem.reaction_gibbs", &[0.0, 298.15, lnq])[0];
     close(h, -39.95e3, 0.002, "pH 7 hydrogen ion");
     assert!(crate::chem::ln_quotient(&[(1.0, 0.0)]).is_err());
+}
+
+#[test]
+fn stormer_cutoff_matches_earth() {
+    use crate::shield::*;
+    // Earth's dipole, 8.0e22 A m² (IGRF 2020), at the ground.
+    let eq = cutoff_rigidity(8.0e22, 6.371e6, 0.0) * 1e-9;
+    assert!((eq - 14.9).abs() < 0.5, "equator {eq} GV");
+    assert!(cutoff_rigidity(8.0e22, 6.371e6, m::PI / 2.0) * 1e-9 < 1e-6);
+    // Falls as 1/r².
+    let up = cutoff_rigidity(8.0e22, 2.0 * 6.371e6, 0.0) * 1e-9;
+    assert!((up * 4.0 - eq).abs() < 1e-9);
+    assert!((space_share(0.0, 2.0, 1.7) - 1.0).abs() < 1e-15);
+    assert!((ground_share(0.0, 10.0, 1.0) - 1.0).abs() < 1e-15);
+    let g = ground_share(15e9, 10.0, 1.0);
+    assert!(g > 0.4 && g < 0.6, "ground share at 15 GV {g}");
+}
+
+#[test]
+fn dust_reddens_as_ccm89() {
+    use crate::extinction::ccm_ratio;
+    // V is the reference; B about 1 + 1/R_V (E(B−V) = A_V / R_V); K about a tenth.
+    close(ccm_ratio(0.549e-6, 3.1), 1.0, 0.01, "A_V/A_V");
+    let b = ccm_ratio(0.44e-6, 3.1);
+    assert!((b - 1.32).abs() < 0.03, "A_B/A_V {b}");
+    let k = ccm_ratio(2.2e-6, 3.1);
+    assert!((k - 0.114).abs() < 0.01, "A_K/A_V {k}");
+    // The 217.5 nm bump stands above its sides.
+    assert!(ccm_ratio(217.5e-9, 3.1) > ccm_ratio(170e-9, 3.1) * 0.95);
+    assert!(ccm_ratio(217.5e-9, 3.1) > ccm_ratio(260e-9, 3.1));
+}
+
+#[test]
+fn aurora_footprints_and_hill_distance() {
+    use crate::aurora::*;
+    let deg = 180.0 / m::PI;
+    // Earth's nose near 10 radii lands near 72°; Io's line (5.9 R_J) near 66°.
+    let e = footprint_latitude(10.0, 1.0) * deg;
+    assert!((e - 71.6).abs() < 0.1, "{e}");
+    let io = footprint_latitude(5.9, 1.0) * deg;
+    assert!((io - 65.7).abs() < 0.2, "{io}");
+    assert_eq!(footprint_latitude(0.5, 1.0), 0.0);
+    // Jupiter, Σ* 0.14 S, Ṁ 1000 kg/s: about 30 R_J (Nichols 2011, after Hill 2001).
+    let rj = 7.1373e7;
+    let h = hill_distance(0.14, 4.264e-4, rj, 1000.0) / rj;
+    assert!((h - 30.0).abs() < 1.5, "Hill distance {h}");
+    assert!(hill_distance(0.14, 4.264e-4, rj, 0.0).is_infinite());
+}
+
+/// Mauk and Fox 2010: the Earth L = 5 storm spectrum (C 2.38e6, index 0.978,
+/// E₀ 1748 keV, 7.04; their Table 1) sits at about 0.6 of the limit for a
+/// storm field of 149 nT and D = L (their Figure 5); the limit's cap for the
+/// E⁻¹ shape falls in proportion to B / (D R_p) in a dense plasma; Neptune's
+/// spectrum (L 7.4) is about 30 times below the limit at 1 MeV.
+#[test]
+fn belts_reach_the_kennel_petschek_limit() {
+    use crate::belts::*;
+    // Test values typed here (tests are outside the sheet audit).
+    let q = Electron {
+        mass_kg: 9.109_383_701_5e-31,
+        charge_c: 1.602_176_634e-19,
+        eps0: 8.854_187_812_8e-12,
+    };
+    let re = 6.371e6;
+    let earth = Shape {
+        index: 0.978,
+        break_kev: 1748.0,
+        break_index: 7.036,
+        anisotropy: 0.3,
+    };
+    // Sheeley et al. 2001 trough density near 10 per cm³ at L = 5.
+    let b = 149e-9;
+    let wpe = m::sqrt(10e6 * q.charge_c * q.charge_c / (q.eps0 * q.mass_kg))
+        / (q.charge_c * b / q.mass_kg);
+    let ratio = (2.38e6 / kp_normalisation(b, 5.0 * re, 200.0, wpe, 3.0, &earth, &q)).max(0.0);
+    assert!((0.4..=0.8).contains(&ratio), "Earth L5 Cm/CK {ratio}");
+    // Dense-limit cap for the E⁻¹ shape scales as B / D.
+    let lim = Shape {
+        index: 1.0,
+        break_kev: 1500.0,
+        break_index: 6.0,
+        anisotropy: 0.3,
+    };
+    let c1 = kp_cap(b, 5.0 * re, 300.0, 3.0, &lim, &q);
+    let c2 = kp_cap(4.0 * b, 2.0 * re, 300.0, 3.0, &lim, &q);
+    close(c2 / c1, 10.0, 1e-6, "B/D scaling");
+    close(c1 / 3.83e6, 1.0, 0.1, "Earth storm cap");
+    // Neptune: near the limit at 0.1 MeV, far under at 1 MeV.
+    let rn = 2.4764e7;
+    let nep = Shape {
+        index: 1.56,
+        break_kev: 625.0,
+        break_index: 2.745,
+        anisotropy: 0.3,
+    };
+    let bn = 1.42e-5 / m::pow(7.4, 3.0);
+    let at = |e: f64| 5.49e6 / kp_normalisation(bn, 7.4 * rn, e, 300.0, 3.0, &nep, &q);
+    assert!(at(100.0) > 0.5, "Neptune 0.1 MeV {}", at(100.0));
+    assert!(at(1000.0) < 0.1, "Neptune 1 MeV {}", at(1000.0));
+    // Katz-Penfold: 1 MeV goes about 0.41 g/cm²; 1 g/cm² needs about 2 MeV.
+    close(electron_range(1.0), 4.12, 1e-9, "range 1 MeV");
+    close(
+        penetration_energy(electron_range(1.7)),
+        1.7,
+        1e-6,
+        "inverse",
+    );
+}
+
+/// Bremsstrahlung (MF7 part 2b-i): the radiation yield grows with energy and
+/// atomic number, and the X-ray dose behind a shield falls far more slowly
+/// than the electrons' (they stop; the X-rays get through).
+#[test]
+fn bremsstrahlung_behind_shields() {
+    use crate::belts::*;
+    // Koch and Motz: about 0.8 per cent at 1 MeV in aluminium.
+    let y = radiation_yield(1.0, 13.0, 6e-4);
+    assert!((0.006..0.009).contains(&y), "{y}");
+    assert!(radiation_yield(10.0, 13.0, 6e-4) > 5.0 * y);
+    assert!(radiation_yield(1.0, 82.0, 6e-4) > 5.0 * y);
+    // A test table (values typed here): flat coefficients.
+    let ph = Photons {
+        energy_mev: vec![0.01, 100.0],
+        shield_mu_rho_cm2_g: vec![0.05, 0.05],
+        tissue_mu_en_rho_cm2_g: vec![0.03, 0.03],
+    };
+    let b = Brems {
+        z: 13.0,
+        k_per_mev: 6e-4,
+        inward_share: 0.5,
+        photons: &ph,
+        j_per_mev: 1.602e-13,
+    };
+    // A belt-like spectrum, E^-1 with an e-fold at 1 MeV.
+    let j = |e: f64| 1e6 / e * sse_core::math::exp(-e / 1e3);
+    let d10 = bremsstrahlung_dose(100.0, &j, &b);
+    let d40 = bremsstrahlung_dose(400.0, &j, &b);
+    assert!(d10 > d40 && d40 > 0.0 && d10 / d40 < 10.0, "{d10} {d40}");
+    assert_eq!(bremsstrahlung_dose(0.0, &j, &b), 0.0);
 }

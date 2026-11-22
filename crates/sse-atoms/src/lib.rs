@@ -6,10 +6,14 @@
 
 pub mod activity;
 pub mod air;
+pub mod aurora;
+pub mod belts;
 pub mod chem;
 pub mod climate;
 pub mod common;
 pub mod convection;
+pub mod extinction;
+pub mod field;
 pub mod heat;
 pub mod layers;
 pub mod light;
@@ -18,6 +22,7 @@ pub mod nebula;
 pub mod orbit;
 pub mod planet;
 pub mod reach;
+pub mod shield;
 pub mod star;
 pub mod tides;
 
@@ -41,6 +46,11 @@ pub fn atoms() -> Vec<Box<dyn sse_flow::Atom>> {
         .chain(nebula::atoms())
         .chain(activity::atoms())
         .chain(convection::atoms())
+        .chain(field::atoms())
+        .chain(shield::atoms())
+        .chain(extinction::atoms())
+        .chain(aurora::atoms())
+        .chain(belts::atoms())
         .chain(air::atoms())
         .chain(chem::atoms())
         .collect()
@@ -332,6 +342,45 @@ pub const KIND_DESCRIPTIONS: &[(&str, &str)] = &[
     ("star.activity_cycle_period", "length of a star's spot and activity cycle"),
     ("flare.energy", "total energy released by a flare, all wavelengths"),
     ("flare.rate_above", "flares per unit time with at least the given energy"),
+    // what stops a wind (MF6)
+    ("body.ionopause_altitude", "height above the ground at which a body's air holds off the stellar wind"),
+    ("magnetosphere.flaring", "how quickly a magnetosphere's boundary flares out behind the nose (Shue exponent)"),
+    ("host.field_at_orbit", "the host planet's magnetic field strength at a moon's orbit"),
+    ("host.plasma_pressure_at_orbit", "pressure of the host's trapped plasma flowing past a moon"),
+    ("layer.electrical_conductivity", "electrical conductivity of a layer (salty ocean, magma, iron)"),
+    ("layer.thickness", "thickness of a layer"),
+    ("layer.outer_radius", "radius of a layer's top"),
+    ("field.change_period", "period with which the outside magnetic field seen by a body changes"),
+    ("induction.amplitude", "strength of a conducting layer's induced field relative to a perfect conductor's"),
+    // aurorae (MF9)
+    ("aurora.field_line_distance", "distance at which a field line crosses the magnetic equator"),
+    ("aurora.magnetic_latitude", "magnetic latitude at which a field line comes down to the surface"),
+    ("ionosphere.pedersen_conductance", "effective height-integrated Pedersen conductance of one hemisphere's ionosphere"),
+    ("body.equatorial_surface_field", "magnetic field strength at the surface on the magnetic equator"),
+    ("magnetosphere.plasma_source_rate", "mass of plasma added to a magnetosphere each second (by a moon's volcanoes or geysers)"),
+    ("magnetosphere.corotation_limit", "distance beyond which trapped plasma stops turning with the planet (Hill distance)"),
+    // dust extinction (Y2)
+    ("dust.extinction_ratio", "how much dust dims light at a wavelength, relative to the V band (A_λ / A_V)"),
+    // cosmic-ray shielding and dose (MF7)
+    ("shield.distance", "distance from a body's centre at which shielding is asked for"),
+    ("shield.magnetic_latitude", "latitude measured from a body's magnetic equator"),
+    ("shield.cutoff_rigidity", "least momentum per charge a cosmic ray needs to arrive (Størmer cut-off)"),
+    ("belts.equatorial_field", "magnetic field strength where a field line crosses the magnetic equator"),
+    ("belts.wave_path", "length along the field line over which whistler waves grow (D R_p)"),
+    ("belts.limit_normalisation", "the Kennel-Petschek cap on a belt: normalisation C of the spectrum C E^-1 per cm² s sr keV"),
+    ("belts.shield_column", "mass per area of a shield in front of a dose point"),
+    ("belts.penetration_energy_mev", "least energy, MeV, an electron needs to cross a shield"),
+    ("belts.electron_energy_mev", "kinetic energy of an electron, MeV"),
+    ("belts.radiation_yield", "share of a stopping electron's energy given off as X-rays"),
+    ("constant.m_e", "electron mass, read from the master data sheet"),
+    ("constant.e", "elementary charge, read from the master data sheet"),
+    ("constant.eps0", "vacuum permittivity, read from the master data sheet"),
+    ("shield.space_share", "share of the free-space cosmic-ray dose carried by particles above the cut-off"),
+    ("shield.ground_share", "share of the no-cut-off ground dose left under a thick air at the cut-off"),
+    ("shield.free_space_dose_rate", "cosmic-ray dose rate in open space at the body's orbit, unshielded"),
+    ("atmosphere.column_mass", "mass of air above a unit area of ground"),
+    ("shield.open_sky", "share of the sky not blocked by the body itself"),
+    ("shield.dose_rate", "cosmic-ray dose rate after field and air"),
     // surface convection
     ("convection.cell_size", "diameter of a surface convection cell (granule)"),
     ("convection.speed", "speed of the churning gas near the surface"),

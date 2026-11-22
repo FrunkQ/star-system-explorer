@@ -471,6 +471,100 @@ pub(crate) fn read_spectrum(
     Ok(Response::SpectrumRead { spectra })
 }
 
+/// The field model's settings, with the electron's constants from the data sheet.
+pub(crate) fn field_settings(sheet: &sse_reference::Reference) -> sse_field::Settings {
+    let electron = match (
+        sheet.constant("m_e"),
+        sheet.constant("e"),
+        sheet.constant("eps0"),
+    ) {
+        (Some(mass_kg), Some(charge_c), Some(eps0)) => Some(sse_field::Electron {
+            mass_kg,
+            charge_c,
+            eps0,
+        }),
+        _ => None,
+    };
+    sse_field::Settings {
+        electron,
+        ..sse_field::Settings::default()
+    }
+}
+
+/// What stops the wind at each body (MF6 part 1), its shielding (MF7) and
+/// belts (MF7 part 2, with the electron's constants from the data sheet).
+pub(crate) fn read_field(
+    bodies: Vec<serde_json::Value>,
+    fixture: Option<&str>,
+    sheet: &sse_reference::Reference,
+) -> Out {
+    let set = field_settings(sheet);
+    match (fixture, bodies.is_empty()) {
+        (Some("solar-system"), true) => {
+            let mp = sheet
+                .constant("m_p")
+                .ok_or_else(|| err("bad_field", "the data sheet has no proton mass"))?;
+            let all = sse_field::solar_system(&set, mp).map_err(|e| err("bad_field", e))?;
+            let out = all
+                .into_iter()
+                .map(|b| {
+                    let mut v = serde_json::to_value(&b.read).expect("serialisable");
+                    v["name"] = serde_json::Value::String(b.name);
+                    v["field"] = serde_json::to_value(&b.field).expect("serialisable");
+                    v["wind_field"] = serde_json::to_value(&b.wind_field).expect("serialisable");
+                    v
+                })
+                .collect();
+            return Ok(Response::FieldRead { bodies: out });
+        }
+        (Some(f), _) => {
+            return Err(err(
+                "bad_field",
+                format!("no field fixture {f}; fixtures: solar-system, given without bodies"),
+            ))
+        }
+        (None, true) => return Err(err("bad_field", "give bodies or fixture: solar-system")),
+        _ => {}
+    }
+    let mut out = vec![];
+    for (n, v) in bodies.into_iter().enumerate() {
+        let b: sse_field::Body =
+            serde_json::from_value(v).map_err(|e| err("bad_field", format!("body {n}: {e}")))?;
+        let f = sse_field::read(&b, &set).map_err(|e| err("bad_field", e))?;
+        out.push(serde_json::to_value(f).expect("serialisable"));
+    }
+    Ok(Response::FieldRead { bodies: out })
+}
+
+/// Magnitudes in photometric bands, through dust (night sky Y2, light side).
+pub(crate) fn read_photometry(stars: Vec<serde_json::Value>, bands: Vec<String>) -> Out {
+    use sse_light::photometry::*;
+    #[derive(serde::Deserialize)]
+    struct In {
+        #[serde(flatten)]
+        photosphere: Photosphere,
+        #[serde(flatten)]
+        sight: Sight,
+    }
+    let table = sse_light::LightTable::base();
+    let pb = bands_of(&table, &bands).map_err(|e| err("bad_photometry", e))?;
+    let mut out = vec![];
+    for (n, v) in stars.into_iter().enumerate() {
+        let s: In = serde_json::from_value(v)
+            .map_err(|e| err("bad_photometry", format!("star {n}: {e}")))?;
+        let p = star_photometry(&s.photosphere, &s.sight, &pb)
+            .map_err(|e| err("bad_photometry", format!("star {n}: {e}")))?;
+        out.push(serde_json::to_value(p).expect("plain data"));
+    }
+    Ok(Response::PhotometryRead {
+        stars: out,
+        references: references()
+            .into_iter()
+            .map(|r| serde_json::to_value(r).expect("plain data"))
+            .collect(),
+    })
+}
+
 /// Stellar activity (O10).
 pub(crate) fn read_activity(
     stars: Vec<serde_json::Value>,

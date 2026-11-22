@@ -898,3 +898,87 @@ mod air_optics {
         assert!(optics(&earth(mix(&[("n2", 0.5)])), &[550e-9], &t).is_err());
     }
 }
+
+/// The Sun as a 5772 K blackbody at 10 pc: M_V 4.78 and B−V 0.65 measured
+/// (Blanton and Roweis 2007 Table 1, Vega system; Ramírez et al. 2012 for
+/// B−V, doi:10.1088/0004-637X/752/1/5). Dust: E(B−V) = A_V / R_V within a few
+/// per cent, and the infrared nearly clear.
+#[test]
+fn sun_magnitudes_and_reddening() {
+    use crate::photometry::*;
+    let table = t();
+    let bands = bands_of(&table, &[]).unwrap();
+    let sun = Photosphere {
+        temperature_k: 5772.0,
+        radius_m: Some(6.957e8),
+        luminosity_w: None,
+    };
+    let pc = 3.085_677_581e16;
+    let p = star_photometry(
+        &sun,
+        &Sight {
+            distance_m: 10.0 * pc,
+            a_v: 0.0,
+            r_v: 3.1,
+        },
+        &bands,
+    )
+    .unwrap();
+    let v = p.magnitudes.iter().find(|x| x.band == "V").unwrap();
+    assert!((v.m_vega - 4.78).abs() < 0.15, "M_V {}", v.m_vega);
+    let bv = p.colours.iter().find(|c| c.name == "B-V").unwrap();
+    assert!((bv.value - 0.65).abs() < 0.12, "B−V {}", bv.value);
+    // Same star from its luminosity.
+    let by_l = Photosphere {
+        temperature_k: 5772.0,
+        radius_m: None,
+        luminosity_w: Some(3.828e26),
+    };
+    let q = star_photometry(
+        &by_l,
+        &Sight {
+            distance_m: 10.0 * pc,
+            a_v: 0.0,
+            r_v: 3.1,
+        },
+        &bands,
+    )
+    .unwrap();
+    assert!((q.magnitudes[2].m_vega - v.m_vega).abs() < 0.01);
+    // Through one magnitude of dust in V.
+    let d = star_photometry(
+        &sun,
+        &Sight {
+            distance_m: 10.0 * pc,
+            a_v: 1.0,
+            r_v: 3.1,
+        },
+        &bands,
+    )
+    .unwrap();
+    let dv = d.magnitudes.iter().find(|x| x.band == "V").unwrap();
+    assert!((dv.m_vega - v.m_vega - 1.0).abs() < 0.02, "V dims by A_V");
+    let ex = d.colours.iter().find(|c| c.name == "B-V").unwrap().excess;
+    assert!((ex - 1.0 / 3.1).abs() < 0.03, "E(B−V) {ex}");
+    let k = d.magnitudes.iter().find(|x| x.band == "Ks").unwrap();
+    assert!(k.extinction < 0.15, "Ks nearly clear {}", k.extinction);
+    // Hotter is bluer.
+    let hot = Photosphere {
+        temperature_k: 10_000.0,
+        ..sun.clone()
+    };
+    let h = star_photometry(
+        &hot,
+        &Sight {
+            distance_m: 10.0 * pc,
+            a_v: 0.0,
+            r_v: 3.1,
+        },
+        &bands,
+    )
+    .unwrap();
+    let hb = h.colours.iter().find(|c| c.name == "B-V").unwrap().value;
+    // Ballesteros 2012 (doi:10.1209/0295-5075/97/34008) puts a 10,000 K
+    // blackbody near B−V 0; the effective-wavelength stand-in reads 0.14.
+    assert!(hb < 0.2 && hb < bv.value - 0.4, "10,000 K B−V {hb}");
+}

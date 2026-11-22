@@ -195,20 +195,23 @@ pub struct Units {
     by_id: BTreeMap<String, Unit>,
 }
 
+/// The kernel's names for the sheet's constants (generated into `crate::sheet`
+/// from packs/base-reference; MP22). No number is typed here.
 pub mod consts {
-    pub const G: f64 = 6.674_30e-11;
-    pub const C: f64 = 299_792_458.0;
-    pub const AU: f64 = 149_597_870_700.0;
-    pub const DAY: f64 = 86_400.0;
-    pub const JULIAN_YEAR: f64 = 365.25 * DAY;
-    pub const GM_SUN: f64 = 1.327_124_4e20;
-    pub const GM_EARTH: f64 = 3.986_004e14;
-    pub const GM_JUPITER: f64 = 1.266_865_3e17;
-    pub const R_SUN: f64 = 6.957e8;
-    pub const L_SUN: f64 = 3.828e26;
-    pub const R_EARTH: f64 = 6.378_1e6;
-    pub const R_JUPITER: f64 = 7.149_2e7;
-    pub const STEFAN_BOLTZMANN: f64 = 5.670_374_419e-8; // CODATA 2018, derived exactly from h, k, c
+    use crate::sheet as s;
+    pub const G: f64 = s::G;
+    pub const C: f64 = s::C;
+    pub const AU: f64 = s::AU;
+    pub const DAY: f64 = s::DAY;
+    pub const JULIAN_YEAR: f64 = s::YR_JULIAN;
+    pub const GM_SUN: f64 = s::GM_SUN;
+    pub const GM_EARTH: f64 = s::GM_EARTH;
+    pub const GM_JUPITER: f64 = s::GM_JUP;
+    pub const R_SUN: f64 = s::R_SUN;
+    pub const L_SUN: f64 = s::L_SUN;
+    pub const R_EARTH: f64 = s::R_EARTH_EQUATORIAL;
+    pub const R_JUPITER: f64 = s::R_JUP_EQUATORIAL;
+    pub const STEFAN_BOLTZMANN: f64 = s::SIGMA_SB;
 }
 
 impl Units {
@@ -268,7 +271,7 @@ impl Units {
         add("myr", "Myr", D::TIME, 1e6 * JULIAN_YEAR, 0.0);
         add("gyr", "Gyr", D::TIME, 1e9 * JULIAN_YEAR, 0.0);
         add("k", "K", D::TEMPERATURE, 1.0, 0.0);
-        add("degc", "°C", D::TEMPERATURE, 1.0, 273.15);
+        add("degc", "°C", D::TEMPERATURE, 1.0, crate::sheet::T0C);
         add("w", "W", D::POWER, 1.0, 0.0);
         add("l_sun", "L☉", D::POWER, L_SUN, 0.0);
         add("w_m2", "W/m²", D::FLUX, 1.0, 0.0);

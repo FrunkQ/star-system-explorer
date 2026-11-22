@@ -60,9 +60,9 @@ A style is **data**: a `sse.view-style/1` document. It carries id, label, `needs
 2. True galaxy and foam (V9).
 3. The filter chain and a first in-universe look, green CRT, to prove the idea.
 
-## 6. Questions for Alex (each with a recommendation)
+## 6. Questions for Alex (all answered 22 Nov 2026: yes to every recommendation)
 
-1. **Default on a capable PC: Chart or True?** Recommendation: Chart, until True covers every scale. A GM switches once and the device remembers.
+1. **Default on a capable PC: Chart or True?** Recommendation: Chart, until True covers every scale. A GM switches once and the device remembers. **Accepted.**
 2. *(Answered by the ruling: each user chooses on their own device, at every seat.)*
-3. **What shows over True while editing?** Recommendation: only the name and an outline on hover or selection. Honesty marks (authored, impossible, fictional) show only in the selection card.
-4. **Is Wireframe a style of its own, or a filter?** Recommendation: a style of its own, because it changes what is drawn and not just how the frame looks. The in-universe looks build on it.
+3. **What shows over True while editing?** Recommendation: only the name and an outline on hover or selection. Honesty marks (authored, impossible, fictional) show only in the selection card. **Accepted.**
+4. **Is Wireframe a style of its own, or a filter?** Recommendation: a style of its own, because it changes what is drawn and not just how the frame looks. The in-universe looks build on it. **Accepted.**

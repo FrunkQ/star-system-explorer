@@ -14,13 +14,17 @@ mod descent;
 mod dressing;
 #[cfg(test)]
 mod dressing_tests;
+mod frame;
 mod frames;
+mod galaxies;
+mod glow;
 mod ice_ages;
 #[cfg(test)]
 mod matter_tests;
 mod nav;
 mod orbits;
 pub mod protocol;
+mod sky;
 mod survey;
 mod systems;
 mod tags;
@@ -28,6 +32,9 @@ mod tags;
 mod tags_tests;
 mod voyage;
 mod weather;
+mod withdraw;
+#[cfg(test)]
+mod withdraw_tests;
 
 use protocol::*;
 use sse_chronicle::{
@@ -225,7 +232,7 @@ fn load_observe(ms: &[sse_pack::PackManifest]) -> Result<Observe, Vec<String>> {
         templates,
         programs,
         dressing,
-        reference,
+        reference: std::sync::Arc::new(reference),
     })
 }
 
@@ -394,8 +401,9 @@ struct Observe {
     programs: sse_trigger::programs::Programs,
     /// Dressing rules (`provides.other.dressing`, TG12).
     dressing: dressing::Dressing,
-    /// The master data sheet (`provides.reference`, MP1).
-    reference: sse_reference::Reference,
+    /// The master data sheet (`provides.reference`, MP1), shared with the
+    /// Look up block for the length of each call (MP17a).
+    reference: std::sync::Arc<sse_reference::Reference>,
 }
 
 pub struct Kernel {
@@ -487,6 +495,14 @@ fn replay_export(evs: &[serde_json::Value], what: &str) -> Result<Chronicle, Res
 /// The record's hash: its chronicle head (covers notes, which touch no state).
 fn record_hash(u: &Universe) -> String {
     u.record.head().hex()
+}
+
+/// The sheet a Look up block reads (MP17a); none when the stack has no
+/// master data sheet, so the block says so instead of finding no rows.
+fn sheet_of(
+    r: &std::sync::Arc<sse_reference::Reference>,
+) -> Option<std::sync::Arc<dyn sse_flow::sheet::Sheet>> {
+    (!r.tables.is_empty()).then(|| r.clone() as std::sync::Arc<dyn sse_flow::sheet::Sheet>)
 }
 
 fn latest_hash(c: &Chronicle) -> String {
@@ -634,9 +650,13 @@ impl Kernel {
     pub fn handle(&mut self, req: Request) -> Response {
         // MP1c: the stack's constants are in force for the whole call.
         let c = self.observe.reference.handle();
-        sse_core::constants::with(c, || match self.dispatch(req) {
-            Ok(r) => r,
-            Err(r) => r,
+        // MP17a: and its sheet, for the Look up block.
+        let sheet = sheet_of(&self.observe.reference);
+        sse_core::constants::with(c, || {
+            sse_flow::sheet::with(sheet, || match self.dispatch(req) {
+                Ok(r) => r,
+                Err(r) => r,
+            })
         })
     }
 
@@ -1116,10 +1136,14 @@ impl Kernel {
             .get(constant)
             .unwrap_or(real);
         let (mut follows, mut estimated, mut cannot) = (vec![], vec![], vec![]);
+        // A block uses the constant when it reads it or a row worked out
+        // from it (Omega_m from Omega_c).
+        let sheet = &self.observe.reference;
+        let uses = |reads: &[&str]| reads.iter().any(|r| sheet.rests_on(r, constant));
         for d in self.atoms.decls() {
             match reach::of(&d.id) {
                 Some(Reach::Follows(reads)) => follows.push(serde_json::json!({
-                    "block": d.id, "reads": reads, "uses_it": reads.contains(&constant),
+                    "block": d.id, "reads": reads, "uses_it": uses(reads),
                 })),
                 Some(Reach::Estimated { reads, law }) => estimated.push(serde_json::json!({
                     "block": d.id, "reads": reads, "law": law,
@@ -1127,6 +1151,21 @@ impl Kernel {
                 None => {
                     cannot.push(serde_json::json!({"block": d.id, "why": reach::CANNOT_FOLLOW}))
                 }
+            }
+        }
+        // DM1: the cosmos chain's stages, which read the Cosmos group.
+        for (stage, r) in reach::STAGES {
+            match r {
+                Some(Reach::Follows(reads)) => follows.push(serde_json::json!({
+                    "block": stage, "reads": reads, "uses_it": uses(reads),
+                })),
+                Some(Reach::Estimated { reads, law }) => estimated.push(serde_json::json!({
+                    "block": stage, "reads": reads, "law": law,
+                })),
+                None => cannot.push(serde_json::json!({
+                    "block": stage,
+                    "why": "tuned to the observed galaxy population: keeps our universe's numbers, not following your change",
+                })),
             }
         }
         Ok(Response::Reach {
@@ -1144,7 +1183,7 @@ impl Kernel {
     /// sources and packs, or each table's ids.
     fn read_matter(&self, table: Option<&str>, id: Option<&str>) -> Result<Response, Response> {
         let r = &self.observe.reference;
-        let value = match (table, id) {
+        let mut value = match (table, id) {
             (Some(t), Some(i)) => r.describe(t, i).ok_or_else(|| {
                 err(
                     "no_row",
@@ -1176,7 +1215,46 @@ impl Kernel {
                 r.listing(t)
             }
         };
+        if let (Some(t), Some(i)) = (
+            value
+                .get("table")
+                .and_then(|v| v.as_str())
+                .map(str::to_string),
+            value.get("id").and_then(|v| v.as_str()).map(str::to_string),
+        ) {
+            value["used_by"] = serde_json::Value::Array(self.used_by(&format!("{t}/{i}")));
+        }
         Ok(Response::Matter { value })
+    }
+
+    /// MP17a: the flows that read a sheet row, read off their Look up
+    /// blocks (design 3A: from the wiring, never declared). A block whose
+    /// row is wired in reads whichever row arrives, so it is not listed.
+    fn used_by(&self, row: &str) -> Vec<serde_json::Value> {
+        let Some((stack, _)) = &self.stack else {
+            return vec![];
+        };
+        let mut out = vec![];
+        for (id, af) in &stack.flows {
+            for n in &af.doc.nodes {
+                if n.atom.as_deref() != Some(sse_logic::lookup::ID) {
+                    continue;
+                }
+                let Ok(c) = sse_logic::lookup::Lookup::cfg(n.config.as_ref()) else {
+                    continue;
+                };
+                let Some(w) = &c.what else { continue };
+                if self
+                    .observe
+                    .reference
+                    .resolve_row(w)
+                    .is_ok_and(|(t, i)| format!("{t}/{i}") == row)
+                {
+                    out.push(serde_json::json!({"flow": id, "node": n.id, "property": c.property, "pack": af.pack}));
+                }
+            }
+        }
+        out
     }
 
     /// `dressing` (TG12): the candidates and orphans under `scope`.
@@ -1659,6 +1737,150 @@ impl Kernel {
         .map_err(|e| err("bad_event", format!("{e}")))
     }
 
+    /// `set_authored_batch`: every edit in one `authored.set` event. Tag
+    /// edits keep TG1's rules (exclusive groups hold, a new name joins the
+    /// campaign's tags), checked against the facts at that time plus the
+    /// batch's own earlier tags on the same address.
+    fn set_authored_batch(
+        &mut self,
+        edits: &[crate::protocol::BatchEdit],
+        occurred_at_s: i64,
+        evidence: Option<&str>,
+        source: Option<String>,
+    ) -> Result<Response, Response> {
+        if edits.is_empty() {
+            return Err(err("empty_batch", "a batch needs at least one edit"));
+        }
+        let impossible = edits.iter().any(|e| e.impossible == Some(true));
+        if impossible && edits.iter().any(|e| e.impossible != Some(true)) {
+            return Err(err(
+                "mixed_batch",
+                "a batch is either all impossible edits or none: send the impossible ones as their own batch",
+            ));
+        }
+        let catalogued = match evidence.unwrap_or("authored") {
+            "authored" => false,
+            "catalogued" => true,
+            other => {
+                return Err(err(
+                    "bad_evidence",
+                    format!("a batch's evidence is authored or catalogued, not {other:?}"),
+                ))
+            }
+        };
+        if catalogued && impossible {
+            return Err(err(
+                "mixed_batch",
+                "a catalogued batch holds facts from a catalogue, so none can be impossible",
+            ));
+        }
+        if source.as_deref().is_some_and(|s| s.trim().is_empty()) {
+            return Err(err(
+                "bad_source",
+                "a source, when given, names the catalogue",
+            ));
+        }
+        let stack_tags = self.observe.tags.clone();
+        let u = self.universe()?;
+        let set_now = campaign_tags(u, &stack_tags)?;
+        let state = u.chronicle.state_at(UniverseTime::seconds(occurred_at_s));
+        let mut set: BTreeMap<Address, BTreeMap<String, Value>> = BTreeMap::new();
+        let mut declare: Vec<String> = vec![];
+        for e in edits {
+            let a = in_universe(&u.root, &e.address)?;
+            let v = json_to_value(&e.value)
+                .map_err(|m| err("bad_value", format!("{a} {}: {m}", e.field)))?;
+            if let (Some(tag), Value::Bool(true)) = (e.field.strip_prefix("tag."), &v) {
+                let have: Vec<String> = state
+                    .facts
+                    .get(&a)
+                    .into_iter()
+                    .flatten()
+                    .chain(set.get(&a).into_iter().flatten())
+                    .filter(|(_, v)| **v == Value::Bool(true))
+                    .filter_map(|(f, _)| f.strip_prefix("tag.").map(str::to_string))
+                    .collect();
+                if let Some(m) = set_now.exclusive_clash(tag, &have) {
+                    return Err(err("exclusive_tag", format!("{a}: {m}")));
+                }
+                if !set_now.declared(tag) && !declare.iter().any(|d| d == tag) {
+                    declare.push(tag.to_string());
+                }
+            }
+            set.entry(a).or_default().insert(e.field.clone(), v);
+        }
+        let t = UniverseTime::seconds(occurred_at_s);
+        let subject: Vec<Address> = set.keys().cloned().collect();
+        let ev = Event::new(EventBody {
+            kind: kinds::AUTHORED_SET.into(),
+            subject: subject.clone(),
+            occurred_at: t,
+            activated_at: t,
+            recognised_at: u.chronicle.next_stamp(),
+            causes: vec![],
+            payload: Payload {
+                set,
+                data: source
+                    .map(|t| Value::Map(BTreeMap::from([("source".to_string(), Value::Text(t))]))),
+                ..Default::default()
+            },
+            evidence: if impossible {
+                Evidence::AuthoredImpossible
+            } else if catalogued {
+                Evidence::Catalogued
+            } else {
+                Evidence::Authored
+            },
+            publisher: Publisher::new("gm", "edit", "1"),
+        })
+        .map_err(|e| err("bad_event", format!("{e}")))?;
+        let id = u
+            .chronicle
+            .append(ev)
+            .map_err(|e| err("chronicle", format!("{e}")))?;
+        for t in &declare {
+            declare_campaign_tag(u, t)?;
+        }
+        Ok(Response::Authored {
+            event_id: id.hex(),
+            affected: subject.iter().map(|a| a.to_string()).collect(),
+            state_hash: latest_hash(&u.chronicle),
+            declared_tag: (!declare.is_empty()).then(|| declare.join(", ")),
+        })
+    }
+
+    /// `withdraw` and `restore`: the authored `withdrawn` mark on one
+    /// address (paste support, `withdraw.rs`).
+    fn set_withdrawn(&mut self, address: &str, at_s: i64, on: bool) -> Result<Response, Response> {
+        let u = self.universe()?;
+        let a = in_universe(&u.root, address)?;
+        let state = u.chronicle.state_at(UniverseTime::seconds(at_s));
+        if !state.facts.keys().any(|x| a.contains(x)) {
+            return Err(err(
+                "unknown_address",
+                format!("{a} has no facts at that time: nothing to withdraw or restore"),
+            ));
+        }
+        let edit = AuthoredEdit {
+            address: a.to_string(),
+            field: withdraw::WITHDRAWN.into(),
+            value: serde_json::Value::Bool(on),
+            occurred_at_s: at_s,
+            impossible: false,
+        };
+        let e = Self::edit_event(u, &edit, u.chronicle.next_stamp())?;
+        let id = u
+            .chronicle
+            .append(e)
+            .map_err(|e| err("chronicle", format!("{e}")))?;
+        Ok(Response::Authored {
+            event_id: id.hex(),
+            affected: vec![a.to_string()],
+            state_hash: latest_hash(&u.chronicle),
+            declared_tag: None,
+        })
+    }
+
     fn flow_inputs(
         &self,
         flow: &Flow,
@@ -1710,6 +1932,57 @@ impl Kernel {
                         issues: issues.iter().map(|i| i.to_string()).collect(),
                     },
                     Ok(stack) => {
+                        // The sheet first (MP17a): its units join the
+                        // stack's before flows compile, and its Look up
+                        // blocks read it while flows are checked.
+                        let mut stack = stack;
+                        let observe = match load_observe(&ms) {
+                            Ok(o) => o,
+                            Err(problems) => {
+                                let issues: Vec<sse_pack::StackIssue> = problems
+                                    .iter()
+                                    .map(|m| sse_pack::StackIssue {
+                                        pack: "observe".into(),
+                                        message: m.clone(),
+                                    })
+                                    .collect();
+                                return Ok(Response::StackRejected {
+                                    report: sse_pack::report(&issues),
+                                    issues: problems,
+                                });
+                            }
+                        };
+                        // MP1c (design 7A.6): the sheet's units join the
+                        // session's; a pack unit of the same id must agree.
+                        let standard = sse_core::Units::standard();
+                        let mut clashes = vec![];
+                        for u in observe.reference.units() {
+                            if let Ok(have) = stack.units.get(&u.id) {
+                                let built_in = standard.get(&u.id).is_ok();
+                                if !built_in && (have.scale != u.scale || have.dim != u.dim) {
+                                    clashes.push(format!(
+                                        "unit {} on the master data sheet disagrees with the pack unit of that id",
+                                        u.id
+                                    ));
+                                    continue;
+                                }
+                            }
+                            stack.units.insert(u);
+                        }
+                        if !clashes.is_empty() {
+                            let issues: Vec<sse_pack::StackIssue> = clashes
+                                .iter()
+                                .map(|m| sse_pack::StackIssue {
+                                    pack: "reference".into(),
+                                    message: m.clone(),
+                                })
+                                .collect();
+                            return Ok(Response::StackRejected {
+                                report: sse_pack::report(&issues),
+                                issues: clashes,
+                            });
+                        }
+                        let _sheet = sse_flow::sheet::Scope::new(sheet_of(&observe.reference));
                         let cx = Context {
                             atoms: &self.atoms,
                             kinds: &stack.kinds,
@@ -1761,53 +2034,6 @@ impl Kernel {
                             return Ok(Response::StackRejected {
                                 report: sse_pack::report(&issues),
                                 issues: problems,
-                            });
-                        }
-                        let observe = match load_observe(&ms) {
-                            Ok(o) => o,
-                            Err(problems) => {
-                                let issues: Vec<sse_pack::StackIssue> = problems
-                                    .iter()
-                                    .map(|m| sse_pack::StackIssue {
-                                        pack: "observe".into(),
-                                        message: m.clone(),
-                                    })
-                                    .collect();
-                                return Ok(Response::StackRejected {
-                                    report: sse_pack::report(&issues),
-                                    issues: problems,
-                                });
-                            }
-                        };
-                        // MP1c (design 7A.6): the sheet's units join the
-                        // session's; a pack unit of the same id must agree.
-                        let mut stack = stack;
-                        let standard = sse_core::Units::standard();
-                        let mut clashes = vec![];
-                        for u in observe.reference.units() {
-                            if let Ok(have) = stack.units.get(&u.id) {
-                                let built_in = standard.get(&u.id).is_ok();
-                                if !built_in && (have.scale != u.scale || have.dim != u.dim) {
-                                    clashes.push(format!(
-                                        "unit {} on the master data sheet disagrees with the pack unit of that id",
-                                        u.id
-                                    ));
-                                    continue;
-                                }
-                            }
-                            stack.units.insert(u);
-                        }
-                        if !clashes.is_empty() {
-                            let issues: Vec<sse_pack::StackIssue> = clashes
-                                .iter()
-                                .map(|m| sse_pack::StackIssue {
-                                    pack: "reference".into(),
-                                    message: m.clone(),
-                                })
-                                .collect();
-                            return Ok(Response::StackRejected {
-                                report: sse_pack::report(&issues),
-                                issues: clashes,
                             });
                         }
                         let codes = match sse_codes::Codes::load(&ms) {
@@ -1924,6 +2150,14 @@ impl Kernel {
                     declared_tag: declare,
                 }
             }
+            Request::SetAuthoredBatch {
+                edits,
+                occurred_at_s,
+                evidence,
+                source,
+            } => self.set_authored_batch(&edits, occurred_at_s, evidence.as_deref(), source)?,
+            Request::Withdraw { address, at_s } => self.set_withdrawn(&address, at_s, true)?,
+            Request::Restore { address, at_s } => self.set_withdrawn(&address, at_s, false)?,
             Request::CampaignTags => {
                 let stack_tags = self.observe.tags.clone();
                 let u = self.universe()?;
@@ -2242,6 +2476,8 @@ impl Kernel {
                     .as_ref()
                     .ok_or_else(|| err("no_universe", "open a universe first"))?;
                 let mut state = u.chronicle.state_at(UniverseTime::seconds(at_s));
+                // Paste support: withdrawn subjects are not in the scene.
+                withdraw::drop_withdrawn(&mut state.facts);
                 // Authored tags out of the facts; rule tags from the stack.
                 // TG3: authored true forces a tag, authored false holds a
                 // rule's tag off; both come out of the facts.
@@ -2424,6 +2660,12 @@ impl Kernel {
                 at_s,
                 window,
             } => systems::read_activity(stars, seed.as_deref(), at_s, window)?,
+            Request::ReadField { bodies, fixture } => {
+                systems::read_field(bodies, fixture.as_deref(), &self.observe.reference)?
+            }
+            Request::ReadPhotometry { stars, bands } => {
+                systems::read_photometry(stars, bands.unwrap_or_default())?
+            }
             Request::Adopt {
                 import_v3,
                 formation,
@@ -2495,6 +2737,7 @@ impl Kernel {
                     tiles: r.tiles,
                     refused: r.refused,
                     clouds: r.clouds,
+                    frame: frame::drawn(&u.seed, &a)?.json(),
                 }
             }
             Request::PlanRoute {
@@ -2521,6 +2764,7 @@ impl Kernel {
                     window_days,
                     prefer: prefer.as_deref(),
                     rescue: rescue.as_ref(),
+                    sheet: &self.observe.reference,
                 };
                 let plan = match (fixture.as_deref(), nav.as_ref(), system) {
                     (Some(f), None, None) => nav::plan_route(ask(nav::Source::Fixture(f)))?,
@@ -2598,16 +2842,28 @@ impl Kernel {
                 from,
                 at_au,
                 sensor,
-            } => Response::WindowViewed {
-                view: nav::window_view(
+                system,
+            } => {
+                let mut view = nav::window_view(
                     fixture.as_deref(),
                     nav.as_ref(),
                     at_s,
                     from.as_deref(),
                     at_au,
                     sensor.as_deref(),
-                )?,
-            },
+                )?;
+                let f = match (fixture.as_deref(), system, self.universe.as_ref()) {
+                    (Some(_), _, _) => Some(frame::sol()),
+                    (None, Some(s), Some(u)) => {
+                        let a: Address =
+                            s.parse().map_err(|e| err("bad_address", format!("{e}")))?;
+                        Some(frame::drawn(&u.seed, &a)?)
+                    }
+                    _ => None,
+                };
+                view["frame"] = f.map(|f| f.json()).unwrap_or(serde_json::Value::Null);
+                Response::WindowViewed { view }
+            }
             Request::WebSlice {
                 z,
                 t_gyr,
@@ -4378,6 +4634,70 @@ impl Kernel {
                 })?;
                 Response::StarCelled { cell }
             }
+            Request::SkyFromHere {
+                observer,
+                position_pc,
+                t_myr,
+                limit_mag,
+                band,
+                bands,
+                cone,
+                max_stars,
+                galaxies,
+                stars,
+            } => {
+                let u = self.universe()?;
+                let pins =
+                    cosmos::star_pins(&u.chronicle.state_at(UniverseTime::seconds(i64::MAX)))?;
+                let elapsed = clock::elapsed_myr(&u.chronicle);
+                let sky = cosmos::with_world(&u.seed, &u.root, None, |st, world, now| {
+                    sky::sky_from_here(
+                        st,
+                        world,
+                        &pins,
+                        &cosmos::sky_params()?,
+                        sky::Ask {
+                            observer: observer.as_deref(),
+                            position_pc,
+                            t_myr: t_myr.unwrap_or(now + elapsed),
+                            limit_mag: limit_mag.unwrap_or(6.5),
+                            band: band.as_deref().unwrap_or("V"),
+                            bands: bands.unwrap_or_default(),
+                            cone,
+                            max_stars: max_stars.unwrap_or(20_000) as usize,
+                            galaxies: galaxies.unwrap_or(true),
+                            stars: stars.unwrap_or(true),
+                        },
+                    )
+                })?;
+                Response::Sky { sky }
+            }
+            Request::SkyGlow {
+                position_pc,
+                t_myr,
+                limit_mag,
+                band,
+                bands,
+                nside,
+            } => {
+                let u = self.universe()?;
+                let elapsed = clock::elapsed_myr(&u.chronicle);
+                let glow = cosmos::with_stars(&u.seed, &u.root, None, |st, now| {
+                    glow::sky_glow(
+                        st,
+                        &cosmos::sky_params()?,
+                        glow::Ask {
+                            position_pc,
+                            t_myr: t_myr.unwrap_or(now + elapsed),
+                            limit_mag: limit_mag.unwrap_or(6.5),
+                            band: band.as_deref().unwrap_or("V"),
+                            bands: bands.unwrap_or_default(),
+                            nside: nside.unwrap_or(32),
+                        },
+                    )
+                })?;
+                Response::SkyGlowed { glow }
+            }
             Request::PlanVoyage {
                 from,
                 to,
@@ -4406,6 +4726,7 @@ impl Kernel {
                     depart_s,
                     minimise: voyage::minimise(minimise.as_deref())?,
                     visited: &visited,
+                    sheet: &self.observe.reference,
                 };
                 let voyage = match (fixture.as_deref(), nav.as_ref(), system) {
                     (Some(f), None, None) => nav::plan_voyage(nav::Source::Fixture(f), ask)?,
@@ -4494,6 +4815,20 @@ impl Kernel {
             }
             Request::PromoteStar { address } => self.promote_star(&address)?,
             Request::ReadReach { constant, value } => self.read_reach(&constant, value)?,
+            Request::PhaseAt {
+                substance,
+                p_pa,
+                t_k,
+            } => {
+                let at = self
+                    .observe
+                    .reference
+                    .phase_at(&substance, p_pa, t_k)
+                    .map_err(|e| err("no_phase", e))?;
+                Response::Matter {
+                    value: serde_json::to_value(at).expect("plain data"),
+                }
+            }
             Request::ReadMatter { table, id } => {
                 self.read_matter(table.as_deref(), id.as_deref())?
             }

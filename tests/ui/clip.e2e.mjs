@@ -3,7 +3,8 @@
 // On Build, select Tarn and press Copy: the clipboard holds an sseClip 2 with Tarn and its moon. Pasting it shows
 // where it would land, orbiting the star at its own distance. On Explore, a paste says to switch to Build. A V3
 // clip is recognised; text that is not a clip is refused in words. Copying and reading a paste never change the
-// state hash.
+// state hash. "Paste here" places Tarn and its moon as one change: both join the chart, one Undo takes both away and
+// Redo brings them back; the pasted copy can be cut, and Undo puts it back (U20 part 2).
 import { spawn } from "node:child_process";
 import { mkdirSync } from "node:fs";
 import assert from "node:assert/strict";
@@ -89,6 +90,38 @@ try {
     await paste(gm, "hello");
     assert.match(await note.innerText(), /does not hold/);
 
+    assert.equal(await hash(), h0, "copying and reading a paste change nothing");
+
+    // Paste here: the copy joins the chart as one change, at a new address.
+    const copyOf = gm.locator('.area-chart .body[data-address="u:kestrel/sys:1/body:6"]');
+    const present = (yes) => (yes ? copyOf.waitFor() : copyOf.waitFor({ state: "detached" }));
+    await paste(gm, text);
+    await dlg.waitFor();
+    await dlg.locator("[data-paste-place]").click();
+    await present(true);
+    assert.match(await note.innerText(), /Pasted Tarn, with a moon, orbiting Kestrel/);
+    assert.match((await copyOf.getAttribute("aria-label")) ?? "", /^Tarn, Pasted/);
+    const h1 = await hash();
+    assert.notEqual(h1, h0, "a paste is history");
+    await shot(gm, `clip-pasted-${vp}`);
+    // One Undo takes it away; Redo brings it back.
+    await gm.keyboard.press("Control+z");
+    await present(false);
+    await gm.keyboard.press("Control+Shift+z");
+    await present(true);
+    // The sample's own Tarn cannot be cut; the pasted one can, and Undo puts it back.
+    await gm.locator('.area-chart .body[data-address="u:kestrel/sys:1/body:3"] .hit').click();
+    if (phone) await gm.getByRole("button", { name: "More", exact: true }).click();
+    assert.equal(await gm.locator("[data-more-cut]").count(), 0, "the sample's own body is not cut");
+    if (phone) await gm.getByRole("button", { name: "More", exact: true }).click();
+    await copyOf.locator(".hit").click();
+    if (phone) await more(gm, /^Cut Tarn/);
+    else await gm.getByRole("button", { name: "Cut", exact: true }).click();
+    await present(false);
+    assert.match(await note.innerText(), /Cut Tarn, with a moon/);
+    await gm.keyboard.press("Control+z");
+    await present(true);
+
     // On Explore a paste says where it works.
     await desk(gm, "Explore");
     await paste(gm, text);
@@ -100,7 +133,6 @@ try {
       const over = await gm.evaluate(() => document.documentElement.scrollWidth - window.innerWidth);
       assert.ok(over <= 0, `phone overflows by ${over} px`);
     }
-    assert.equal(await hash(), h0, "copying and reading a paste change nothing");
     assert.deepEqual(errors, []);
     await browser.close();
   }

@@ -102,6 +102,29 @@ pub struct AuthoredEdit {
     pub impossible: bool,
 }
 
+/// A field of view for `sky_from_here`: galactic longitude and latitude
+/// of its centre, degrees, and its half angle.
+#[derive(Clone, PartialEq, Debug, Serialize, Deserialize, TS)]
+#[ts(export)]
+pub struct SkyCone {
+    pub l_deg: f64,
+    pub b_deg: f64,
+    pub half_angle_deg: f64,
+}
+
+/// One edit of a batch (`set_authored_batch`).
+#[derive(Clone, PartialEq, Debug, Serialize, Deserialize, TS)]
+#[ts(export)]
+pub struct BatchEdit {
+    pub address: String,
+    pub field: String,
+    #[ts(type = "unknown")]
+    pub value: serde_json::Value,
+    #[serde(default)]
+    #[ts(optional)]
+    pub impossible: Option<bool>,
+}
+
 #[derive(Clone, Copy, PartialEq, Eq, Debug, Serialize, Deserialize, TS)]
 #[serde(tag = "kind", rename_all = "snake_case")]
 #[ts(export)]
@@ -126,6 +149,37 @@ pub enum Request {
     },
     SetAuthored {
         edit: AuthoredEdit,
+    },
+    /// Many authored edits at one time, chronicled as ONE `authored.set`
+    /// event (a paste on the Build desk is one undo step). The whole batch
+    /// is refused if any address is outside the universe or any value is
+    /// malformed. Impossible and possible edits go in separate batches.
+    /// `evidence` is `authored` (the default) or `catalogued`, for facts
+    /// entered from a published catalogue (the start sheet's Sol); a
+    /// catalogued batch may hold no impossible edit. `source` is the
+    /// citation, kept on the event and shown in `resolved_system`'s evidence.
+    SetAuthoredBatch {
+        edits: Vec<BatchEdit>,
+        occurred_at_s: i64,
+        #[serde(default)]
+        #[ts(optional)]
+        evidence: Option<String>,
+        #[serde(default)]
+        #[ts(optional)]
+        source: Option<String>,
+    },
+    /// Withdraw a subject and everything under it from `at_s` on (Undo of
+    /// a paste): it drops out of scene, resolved_system and systems. Nothing
+    /// is deleted; the history keeps the event.
+    Withdraw {
+        address: String,
+        at_s: i64,
+    },
+    /// Bring a withdrawn subject back from `at_s` on (Redo), with every fact
+    /// it had.
+    Restore {
+        address: String,
+        at_s: i64,
     },
     History {
         address: String,
@@ -491,6 +545,39 @@ pub enum Request {
         #[ts(optional, type = "unknown")]
         window: Option<serde_json::Value>,
     },
+    /// What stops the wind at each body (MF6 part 1): for each of `bodies`
+    /// (radius, dipole moment, air, the star's wind there, the host for a
+    /// moon, conducting layers), the obstacle (own field, air or bare
+    /// surface), the bubble's flaring, whether a moon sits inside, outside or
+    /// crosses its host's bubble, and each layer's induced field. Conditions
+    /// are handed in until MF2 publishes each world's field as facts, when
+    /// `system` and `body` addressing joins. `fixture: "solar-system"`
+    /// reads the Solar System's six magnetised planets as measured
+    /// (`packs/base-sol`, `tests/fixtures/magnetic/measured-fields.json`,
+    /// `crates/sse-field/data/sol-field.json`) and adds each one's `name`
+    /// and `field` (reference radius, Gauss coefficients g10, g11, h11 in T,
+    /// tilt, offset, polarity, grade and sources).
+    ReadField {
+        #[serde(default)]
+        #[ts(type = "unknown[]")]
+        bodies: Vec<serde_json::Value>,
+        #[serde(default)]
+        #[ts(optional)]
+        fixture: Option<String>,
+    },
+    /// Magnitudes in photometric bands (night sky Y2, light side): for each
+    /// of `stars` (a photosphere: `temperature_k` with `radius_m` or
+    /// `luminosity_w`, and a sight line: `distance_m`, dust `a_v` and `r_v`),
+    /// AB and Vega magnitudes per band, the dust's dimming per band, and
+    /// colours with their dust excess. `bands` picks bands by id (U, B, V,
+    /// R, I, J, H, Ks); empty means all. The sky draw uses the same path.
+    ReadPhotometry {
+        #[ts(type = "unknown[]")]
+        stars: Vec<serde_json::Value>,
+        #[serde(default)]
+        #[ts(optional)]
+        bands: Option<Vec<String>>,
+    },
     /// Planet finding from afar (O13): one star, its planets, an observer
     /// (direction and distance), an instrument and a watch time. Returns
     /// what each method (transit, wobble, position wobble, direct imaging,
@@ -663,6 +750,11 @@ pub enum Request {
         #[serde(default)]
         #[ts(optional)]
         sensor: Option<String>,
+        /// The system an inline `nav` is, so the view's `frame` can be
+        /// keyed (needs an open universe); the Sol fixture's is measured.
+        #[serde(default)]
+        #[ts(optional)]
+        system: Option<String>,
     },
     /// G1 to G4 for the galaxy chart (U6): one galaxy grown from the open
     /// universe's seed, a named `halo` (`dwarf`, `milky-way-like`, `group`) or
@@ -1161,6 +1253,80 @@ pub enum Request {
         #[ts(optional)]
         t_myr: Option<f64>,
     },
+    /// Y2 (night sky design 4.3): the stars seen from a place at a time down
+    /// to a limiting magnitude. The observer is a star system's address, or
+    /// a galactic position in pc, or (neither) the Sun's radius. Each luminosity
+    /// class is walked through the count tree inside the distance where its
+    /// brightest member reaches the limit; each star found gets band
+    /// magnitudes through its own dust column and is kept when it reaches
+    /// the limit in `band` (default V). `cone` narrows the sky to a field.
+    /// Read only.
+    SkyFromHere {
+        #[serde(default)]
+        #[ts(optional)]
+        observer: Option<String>,
+        #[serde(default)]
+        #[ts(optional)]
+        position_pc: Option<[f64; 3]>,
+        #[serde(default)]
+        #[ts(optional)]
+        t_myr: Option<f64>,
+        #[serde(default)]
+        #[ts(optional)]
+        limit_mag: Option<f64>,
+        #[serde(default)]
+        #[ts(optional)]
+        band: Option<String>,
+        #[serde(default)]
+        #[ts(optional)]
+        bands: Option<Vec<String>>,
+        #[serde(default)]
+        #[ts(optional)]
+        cone: Option<SkyCone>,
+        /// Most stars listed, brightest first (default 20,000, the phone
+        /// tier of ruling 12; desktops ask 200,000). A cut list says
+        /// `truncated` and gives `kept_to_mag`, the faintest star kept: ask
+        /// `sky_glow` with that limit and the stars cut off are in the glow.
+        #[serde(default)]
+        #[ts(optional)]
+        max_stars: Option<u32>,
+        /// Y4: the other galaxies too (default true).
+        #[serde(default)]
+        #[ts(optional)]
+        galaxies: Option<bool>,
+        /// The stars (default true); false gives galaxies only.
+        #[serde(default)]
+        #[ts(optional)]
+        stars: Option<bool>,
+    },
+    /// Y3: the glow of every star the sky draw does not show, as a HEALPix
+    /// map (RING order, galactic l and b from the observer) per passband:
+    /// each class's light beyond the distance it is drawn to, plus the
+    /// stars inside it too faint for the limit, dimmed by the dust in front.
+    /// Ask it with the same `limit_mag` and `band` as `sky_from_here` and
+    /// the two add up to the whole sky. `nside` a power of two up to 64
+    /// (default 32). Read
+    /// only.
+    SkyGlow {
+        #[serde(default)]
+        #[ts(optional)]
+        position_pc: Option<[f64; 3]>,
+        #[serde(default)]
+        #[ts(optional)]
+        t_myr: Option<f64>,
+        #[serde(default)]
+        #[ts(optional)]
+        limit_mag: Option<f64>,
+        #[serde(default)]
+        #[ts(optional)]
+        band: Option<String>,
+        #[serde(default)]
+        #[ts(optional)]
+        bands: Option<Vec<String>>,
+        #[serde(default)]
+        #[ts(optional)]
+        nside: Option<u64>,
+    },
     /// Voyages between stars (V8 part 3): the cheapest chain of legs for one
     /// ship from a star system `from` to `to`, or with no `to` the nearest
     /// system not in `visited` (ties go to the shorter path, then to the one
@@ -1246,6 +1412,15 @@ pub enum Request {
         #[serde(default)]
         #[ts(optional)]
         id: Option<String>,
+    },
+    /// The phase of a substance at a pressure and temperature (MP17, matter
+    /// pack design section 4.3A), with the phase's row: read from the
+    /// substance's phase table, or from its triple point and vapour curve
+    /// when it has none. Read-only, any seat.
+    PhaseAt {
+        substance: String,
+        p_pa: f64,
+        t_k: f64,
     },
     /// The reach report for a changed constant (MP1c, design section 7A.3):
     /// every block in exactly one of three groups. `follows` (a formula that
@@ -1349,6 +1524,9 @@ impl Request {
             Request::LoadStack { .. } => "load_stack",
             Request::OpenUniverse { .. } => "open_universe",
             Request::SetAuthored { .. } => "set_authored",
+            Request::SetAuthoredBatch { .. } => "set_authored_batch",
+            Request::Withdraw { .. } => "withdraw",
+            Request::Restore { .. } => "restore",
             Request::History { .. } => "history",
             Request::StateHash { .. } => "state_hash",
             Request::Derive { .. } => "derive",
@@ -1378,6 +1556,8 @@ impl Request {
             Request::ReadNebulae { .. } => "read_nebulae",
             Request::SurveyPlanets { .. } => "survey_planets",
             Request::ReadActivity { .. } => "read_activity",
+            Request::ReadField { .. } => "read_field",
+            Request::ReadPhotometry { .. } => "read_photometry",
             Request::ReadSpectrum { .. } => "read_spectrum",
             Request::ReadAirOptics { .. } => "read_air_optics",
             Request::Detect { .. } => "detect",
@@ -1427,10 +1607,13 @@ impl Request {
             Request::ExportSector { .. } => "export_sector",
             Request::HaloCell { .. } => "halo_cell",
             Request::StarCell { .. } => "star_cell",
+            Request::SkyFromHere { .. } => "sky_from_here",
+            Request::SkyGlow { .. } => "sky_glow",
             Request::PlanVoyage { .. } => "plan_voyage",
             Request::PromoteStar { .. } => "promote_star",
             Request::CampaignTags => "campaign_tags",
             Request::ReadMatter { .. } => "read_matter",
+            Request::PhaseAt { .. } => "phase_at",
             Request::ReadReach { .. } => "read_reach",
             Request::Dressing { .. } => "dressing",
             Request::AdoptDressing { .. } => "adopt_dressing",
@@ -1455,6 +1638,21 @@ pub fn ops() -> Vec<OpInfo> {
             "set_authored",
             Cost::Trivial,
             "GM machine only in a session; players send intents",
+        ),
+        o(
+            "set_authored_batch",
+            Cost::Light,
+            "GM machine only in a session; one event for the whole batch",
+        ),
+        o(
+            "withdraw",
+            Cost::Trivial,
+            "GM machine only in a session; one authored event, nothing deleted",
+        ),
+        o(
+            "restore",
+            Cost::Trivial,
+            "GM machine only in a session; one authored event",
         ),
         o("history", Cost::Trivial, none),
         o("state_hash", Cost::Light, none),
@@ -1544,6 +1742,16 @@ pub fn ops() -> Vec<OpInfo> {
             "read_activity",
             Cost::Light,
             "per star: a few block evaluations; flares are one draw per time bin per energy decade, capped at 2000 listed",
+        ),
+        o(
+            "read_field",
+            Cost::Trivial,
+            "per body: a few closed-form blocks",
+        ),
+        o(
+            "read_photometry",
+            Cost::Trivial,
+            "per star: one Planck evaluation and one extinction block per band",
         ),
         o(
             "survey_planets",
@@ -1694,6 +1902,16 @@ pub fn ops() -> Vec<OpInfo> {
             "one cell's haloes drawn from the mass function, each placed on the web and given a growth history and mergers (about 0.1 to 1 s native)",
         ),
         o(
+            "sky_from_here",
+            Cost::Medium,
+            "grows the campaign's galaxy, walks the count tree inside each class's visibility radius and gives each star found its magnitudes through dust; read only",
+        ),
+        o(
+            "sky_glow",
+            Cost::Medium,
+            "integrates the light of the undrawn stars and the dust in front along every HEALPix pixel of the sky (nside 32: 12,288 lines of 96 steps); read only",
+        ),
+        o(
             "star_cell",
             Cost::Medium,
             "grows the campaign's galaxy, then draws one 10 pc cell (tens of systems) with its pins; read only",
@@ -1717,6 +1935,11 @@ pub fn ops() -> Vec<OpInfo> {
             "read_matter",
             Cost::Light,
             "reads the master data sheet loaded with the stack; nothing is worked out but molar mass",
+        ),
+        o(
+            "phase_at",
+            Cost::Light,
+            "one lookup in a table built at pack-build time (or the familiar three phases)",
         ),
         o(
             "read_reach",
@@ -2033,6 +2256,22 @@ pub enum Response {
         #[ts(type = "unknown[]")]
         stars: Vec<serde_json::Value>,
     },
+    /// `read_field`: each of `bodies` is `sse_field::FieldRead` (obstacle
+    /// candidates and winner, flaring, host bubble, induced layers, why,
+    /// stand-ins, references).
+    FieldRead {
+        #[ts(type = "unknown[]")]
+        bodies: Vec<serde_json::Value>,
+    },
+    /// `read_photometry`: each of `stars` is `sse_light::photometry::Photometry`
+    /// (magnitudes per band with extinction, colours with excess); `references`
+    /// cite the magnitude system, band table, extinction curve and Planck's law.
+    PhotometryRead {
+        #[ts(type = "unknown[]")]
+        stars: Vec<serde_json::Value>,
+        #[ts(type = "unknown[]")]
+        references: Vec<serde_json::Value>,
+    },
     /// `survey_planets`: `result` is `sse_survey::SurveyResult` (findings
     /// per planet and method with verdict, signal to noise, measured values
     /// and why; the addresses found; references).
@@ -2093,7 +2332,9 @@ pub enum Response {
     },
     /// `window_view`: sse-nav's `WindowView` (`seen`: lon/lat, distance,
     /// angular diameter, magnitude, phase, lit fraction, detected, resolved,
-    /// light time, why; `sensor`; `missed`; `model`).
+    /// light time, why; `sensor`; `missed`; `model`), plus `frame` (as
+    /// `resolved_system`'s; null for an inline system with no `system` or
+    /// no open universe).
     /// `sift`: hits best first (`sifter`, `label`, `subject`, `evidence`
     /// [{address, field, value, event}], `significance` {score, persistence_s,
     /// reach, reversibility, rarity_p, components}), the sifters run, the scope.
@@ -2391,6 +2632,11 @@ pub enum Response {
         #[serde(default, skip_serializing_if = "Vec::is_empty")]
         #[ts(optional, type = "unknown[]")]
         clouds: Vec<serde_json::Value>,
+        /// The system's frame in the galaxy: `{pole_l_deg, pole_b_deg,
+        /// zero_l_deg, zero_b_deg, node_l_deg, to_galactic (3x3 rows),
+        /// evidence ("drawn"), source, model}`.
+        #[ts(type = "unknown")]
+        frame: serde_json::Value,
     },
     /// `classify_preview`: one row per body in address order, `{address,
     /// base, fit, modifiers}` (`base` null when nothing fits), with the
@@ -2450,6 +2696,24 @@ pub enum Response {
     StarCelled {
         #[ts(type = "unknown")]
         cell: serde_json::Value,
+    },
+    /// `sky_from_here`: `{galaxy, observer {address?, xyz_pc}, t_myr, frame,
+    /// limit_mag, band, bands, cone?, stars: [{address, pinned, class,
+    /// distance_pc, light_time_yr, l_deg, b_deg, dir, a_v, teff_k,
+    /// luminosity_lsun, phase, double, components: [{teff_k, radius_m}],
+    /// magnitudes, colours}], counts: [{mag,
+    /// n}], walked: {classes: [{class, top_lsun, radius_pc, found}], reads},
+    /// truncated, conventions}`.
+    Sky {
+        #[ts(type = "unknown")]
+        sky: serde_json::Value,
+    },
+    /// `sky_glow`: `{nside, order, frame, limit_mag, limit_band,
+    /// observer_pc, t_myr, radii_pc, bands: [{band, intensity, mag_arcsec2,
+    /// whole_sky_ab, whole_sky_mag}], a_v, units}`.
+    SkyGlowed {
+        #[ts(type = "unknown")]
+        glow: serde_json::Value,
     },
     /// `plan_voyage`: `{ship, means, searched, cells, t_myr, systems: [{address,
     /// name, xyz_pc, fuel, surveyed, visited}], voyage: {from, to, minimise,

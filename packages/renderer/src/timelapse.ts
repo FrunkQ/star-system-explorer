@@ -34,7 +34,7 @@ export interface RawFrames {
 }
 
 /** The fields a frame carries, by name (units in the name, as the kernel gives them). */
-export const FIELDS = ["plate", "continental", "elevation_m", "vent", "ice_m", "temp_k", "rain_m_yr", "runoff_m_yr"] as const;
+export const FIELDS = ["plate", "continental", "elevation_m", "vent", "arc", "ridge", "ice_m", "temp_k", "rain_m_yr", "runoff_m_yr"] as const;
 export type FieldName = (typeof FIELDS)[number];
 /** Fields that may blend between keyframes; the rest show the nearer frame. */
 const SMOOTH: ReadonlySet<FieldName> = new Set(["ice_m", "temp_k", "rain_m_yr", "runoff_m_yr"]);
@@ -74,6 +74,40 @@ function arrayOf(o: Record<string, unknown>, name: string, len: number): Float32
 
 const gkey = (i: number, j: number, k: number) => (i + 512) * 1048576 + (j + 512) * 1024 + (k + 512);
 
+/** A direction lookup over unit cell centres (buckets about one and a half cells wide), shared with the weather layer. */
+export function dirIndex(dirs: Float32Array, cells: number): { cell: number; grid: Map<number, number[]> } {
+  const cell = Math.sqrt((4 * Math.PI) / cells) * 1.5;
+  const grid = new Map<number, number[]>();
+  for (let i = 0; i < cells; i++) {
+    const k = gkey(Math.floor(dirs[i * 3]! / cell), Math.floor(dirs[i * 3 + 1]! / cell), Math.floor(dirs[i * 3 + 2]! / cell));
+    const b = grid.get(k);
+    if (b) b.push(i);
+    else grid.set(k, [i]);
+  }
+  return { cell, grid };
+}
+
+/** The cell whose centre is nearest a unit direction, or -1 when the lookup has nothing near. */
+export function nearestCell(index: { cell: number; grid: Map<number, number[]> }, d: Float32Array, x: number, y: number, z: number): number {
+  const { cell, grid } = index;
+  const i0 = Math.floor(x / cell);
+  const j0 = Math.floor(y / cell);
+  const k0 = Math.floor(z / cell);
+  let best = -1;
+  let bd = -Infinity;
+  for (let i = i0 - 1; i <= i0 + 1; i++)
+    for (let j = j0 - 1; j <= j0 + 1; j++)
+      for (let k = k0 - 1; k <= k0 + 1; k++) {
+        const b = grid.get(gkey(i, j, k));
+        if (!b) continue;
+        for (const p of b) {
+          const dot = x * d[p * 3]! + y * d[p * 3 + 1]! + z * d[p * 3 + 2]!;
+          if (dot > bd) ((bd = dot), (best = p));
+        }
+      }
+  return best;
+}
+
 /** Read the kernel's reply: typed arrays, frames in time order, a direction lookup built once. */
 export function readFrames(r: RawFrames): TimeLapse {
   const { n, cells } = r.grid;
@@ -91,39 +125,14 @@ export function readFrames(r: RawFrames): TimeLapse {
     })
     .sort((a, b) => a.t_myr - b.t_myr);
   if (!frames.length) throw new Error("surface_frames: no frames");
-  // Lookup grid: buckets about one and a half cells wide.
-  const cell = (Math.sqrt((4 * Math.PI) / cells) * 1.5) as number;
-  const grid = new Map<number, number[]>();
-  for (let i = 0; i < cells; i++) {
-    const k = gkey(Math.floor(dirs[i * 3]! / cell), Math.floor(dirs[i * 3 + 1]! / cell), Math.floor(dirs[i * 3 + 2]! / cell));
-    const b = grid.get(k);
-    if (b) b.push(i);
-    else grid.set(k, [i]);
-  }
+  const index = dirIndex(dirs, cells);
   const events = [...(r.events ?? [])].sort((a, b) => a.t_myr - b.t_myr);
-  return { n, cells, dirs, frames, events, pending: r.pending ?? [], why: r.why ?? [], index: { cell, grid } };
+  return { n, cells, dirs, frames, events, pending: r.pending ?? [], why: r.why ?? [], index };
 }
 
 /** The cell a unit direction falls in (nearest centre). */
 export function cellOf(tl: TimeLapse, x: number, y: number, z: number): number {
-  const { cell, grid } = tl.index;
-  const d = tl.dirs;
-  const i0 = Math.floor(x / cell);
-  const j0 = Math.floor(y / cell);
-  const k0 = Math.floor(z / cell);
-  let best = -1;
-  let bd = -Infinity;
-  for (let i = i0 - 1; i <= i0 + 1; i++)
-    for (let j = j0 - 1; j <= j0 + 1; j++)
-      for (let k = k0 - 1; k <= k0 + 1; k++) {
-        const b = grid.get(gkey(i, j, k));
-        if (!b) continue;
-        for (const p of b) {
-          const dot = x * d[p * 3]! + y * d[p * 3 + 1]! + z * d[p * 3 + 2]!;
-          if (dot > bd) ((bd = dot), (best = p));
-        }
-      }
-  return best;
+  return nearestCell(tl.index, tl.dirs, x, y, z);
 }
 
 /** The keyframes around `t`: the earlier, the later and the blend weight toward the later (0 at the earlier). */
@@ -211,6 +220,8 @@ const RUNOFF: Stops = [
   [1, [64, 150, 214]],
   [3, [190, 232, 250]],
 ];
+/** Recency (1: at this frame, decaying with the gap between frames) above which a cell counts as erupting. */
+export const VENT_ERUPTING = 0.1;
 const VENT: Stops = [
   [0, [0, 0, 0]],
   [0.3, [190, 60, 20]],
@@ -230,7 +241,7 @@ export interface LayerSpec {
 export const LAYERS: readonly LayerSpec[] = [
   { id: "land", label: "Land and sea", reads: ["elevation_m"], legend: { unit: "m from the sea", stops: [{ at: -6000, label: "deep sea" }, { at: 0, label: "coast" }, { at: 3000, label: "3 km" }, { at: 6000, label: "6 km" }] }, limits: "Heights of each keyframe, shown flat-lit when not today (the hill shading is today's relief); coasts from that frame's sea level." },
   { id: "plates", label: "Plates", reads: ["plate", "continental"], legend: { unit: "one colour per plate", stops: [{ at: 0, label: "ocean crust darker" }, { at: 1, label: "continent lighter" }] }, limits: "Plate colours are labels, not physics; boundaries are where neighbouring cells change plate." },
-  { id: "volcanism", label: "Volcanism", reads: ["vent", "elevation_m"], legend: { unit: "eruption strength over the step", stops: [{ at: 0, label: "quiet" }, { at: 0.3, label: "erupting" }, { at: 1, label: "flood volcanism" }] }, limits: "Eruption strength summed over each keyframe's step; single eruptions shorter than a step are in the event list." },
+  { id: "volcanism", label: "Volcanism", reads: ["vent", "elevation_m"], legend: { unit: "how recently, 1 at this frame", stops: [{ at: 0, label: "quiet" }, { at: 0.3, label: "ridges, faint" }, { at: 0.6, label: "arcs" }, { at: 1, label: "eruptions" }] }, limits: "Each kind fades with time since it last happened (1 means at this frame); single eruptions shorter than the gap between frames are in the event list." },
   { id: "temperature", label: "Surface temperature", reads: ["temp_k"], legend: { unit: "K, yearly mean", stops: [{ at: 200, label: "200" }, { at: 273.15, label: "freezing" }, { at: 300, label: "300" }, { at: 330, label: "330" }] }, limits: "Yearly mean; seasons and day and night are not shown." },
   { id: "rain", label: "Rain and snow", reads: ["rain_m_yr"], legend: { unit: "m a year", stops: [{ at: 0, label: "desert" }, { at: 0.25, label: "0.25" }, { at: 1, label: "1" }, { at: 3, label: "3" }] }, limits: "Yearly totals from the one shared climate." },
   { id: "ice", label: "Ice and glaciers", reads: ["ice_m", "elevation_m"], legend: { unit: "m of ice", stops: [{ at: 0, label: "none" }, { at: 100, label: "100 m" }, { at: 1000, label: "1 km" }, { at: 3000, label: "3 km" }] }, limits: "Ice thickness from the ice balance; sea ice shows where the kernel gives it." },
@@ -272,8 +283,17 @@ export function layerColour(tl: TimeLapse, layer: string, cell: number, t_myr: n
     }
     case "volcanism": {
       const base = mix(landColour(tl, cell, t_myr, sea), [110, 110, 110], 0.6);
-      const v = Math.max(0, Math.min(1, valueAt(tl, "vent", cell, t_myr) ?? 0));
-      return v > 0.02 ? mix(base, rampOf(VENT, v), Math.min(1, 0.35 + v)) : base;
+      // Three kinds, each a recency 0 to 1: new ocean crust at ridges (faint), arcs over sinking plates (chains of
+      // volcanoes), and eruptions (plumes, floods, shields and plains: bright).
+      const clamp = (x: number | null) => Math.max(0, Math.min(1, x ?? 0));
+      const ridge = clamp(valueAt(tl, "ridge", cell, t_myr));
+      const arc = clamp(valueAt(tl, "arc", cell, t_myr));
+      const v = clamp(valueAt(tl, "vent", cell, t_myr));
+      let c = base;
+      if (ridge > 0.02) c = mix(c, [176, 120, 96], 0.35 * ridge);
+      if (arc > 0.02) c = mix(c, [210, 92, 40], 0.3 + 0.5 * arc);
+      if (v > 0.02) c = mix(c, rampOf(VENT, v), Math.min(1, 0.5 + v / 2));
+      return c;
     }
     case "temperature":
       return rampOf(TEMPERATURE, valueAt(tl, "temp_k", cell, t_myr) ?? 273.15);
@@ -300,10 +320,25 @@ export function layerColour(tl: TimeLapse, layer: string, cell: number, t_myr: n
 }
 
 /** Layers whose fields are all present, and those whose fields the kernel lists as pending (shown, but said). */
-export function layersFor(tl: TimeLapse): { spec: LayerSpec; available: boolean; pending: FieldName[] }[] {
+/** Words in the kernel's pending notes that tie a note to a field (the kernel names fields or says them in words). */
+const FIELD_WORDS: Record<FieldName, readonly string[]> = {
+  plate: ["plate"],
+  continental: ["continent"],
+  elevation_m: ["elevation", "height", "worn"],
+  vent: ["vent", "eruption", "volcan"],
+  arc: ["arc", "subduct"],
+  ridge: ["ridge", "spreading"],
+  ice_m: ["ice", "glacier"],
+  temp_k: ["temp", "climate"],
+  rain_m_yr: ["rain", "climate"],
+  runoff_m_yr: ["runoff", "river"],
+};
+
+/** Each layer: whether its fields are present, and the kernel's pending notes that bear on it (shown as its limits). */
+export function layersFor(tl: TimeLapse): { spec: LayerSpec; available: boolean; pending: string[] }[] {
   return LAYERS.map((spec) => {
     const missing = spec.reads.filter((f) => !tl.frames.some((fr) => fr.fields[f]));
-    const pending = spec.reads.filter((f) => tl.pending.includes(f));
+    const pending = tl.pending.filter((note) => spec.reads.some((f) => note === f || FIELD_WORDS[f].some((w) => note.toLowerCase().includes(w))));
     return { spec, available: missing.length === 0, pending };
   });
 }
@@ -369,17 +404,17 @@ export function narrateFrame(tl: TimeLapse, layer: string, t_myr: number, label:
     const e = valueAt(tl, "elevation_m", c, t_myr);
     if (e !== null && e >= sea) land++;
     if ((valueAt(tl, "ice_m", c, t_myr) ?? 0) > 1) iced++;
-    if ((valueAt(tl, "vent", c, t_myr) ?? 0) > 0.05) erupting++;
+    if ((valueAt(tl, "vent", c, t_myr) ?? 0) > VENT_ERUPTING) erupting++;
     const t = valueAt(tl, "temp_k", c, t_myr);
     if (t !== null) ((tsum += t), tn++);
   }
   const pct = (x: number) => `${Math.round((100 * x) / tl.cells)}%`;
-  const parts = [`${label}, ${when}: ${spec?.label.toLowerCase() ?? layer}.`, `Land ${pct(land)} of the surface`, `ice on ${pct(iced)}`, `eruptions on ${pct(erupting)}`];
-  if (tn) parts.push(`mean surface ${Math.round(tsum / tn)} K`);
+  const facts = [`land ${pct(land)} of the surface`, `ice on ${pct(iced)}`, `eruptions on ${pct(erupting)}`];
+  if (tn) facts.push(`mean surface ${Math.round(tsum / tn)} K`);
   const ev = eventsBetween(tl, t_myr - 50, t_myr + 50)
     .slice(0, 3)
-    .map((e) => e.text);
-  return `${parts.join(", ")}.${ev.length ? ` Around then: ${ev.join("; ")}.` : ""}`;
+    .map((e) => e.text.replace(/\.$/, ""));
+  return `${label}, ${when}, ${spec?.label.toLowerCase() ?? layer}: ${facts.join(", ")}.${ev.length ? ` Around then: ${ev.join("; ")}.` : ""}`;
 }
 
 /**

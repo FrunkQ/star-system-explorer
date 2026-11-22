@@ -22,11 +22,14 @@
 <script lang="ts">
   import { globeStats, regimeWords, type Globe, type Json, type SystemScene, type ViewContext } from "../../../ui-contract/src/index.ts";
   import { untrack } from "svelte";
-  import { airFactsOf, airFromOptics, airRequest, applyEdits, editableSettings, keepPhoto, listPhotos, LIBRARY, mountGlobe, photograph, removePhoto, type GlobeRun, type MediaItem, type RecipeDoc, type RecipeEdit, type GlobeRunOptions, type GlobeStatus } from "../../../renderer/src/index.ts";
+  import { DAY_S } from "../../../chart-grammar/src/calendar.ts";
+  import { airFactsOf, airFromOptics, airRequest, applyEdits, editableSettings, keepPhoto, listPhotos, LIBRARY, mountGlobe, photograph, readFrames, readWeather, removePhoto, type GlobeRun, type RawFrames, type WeatherSystem, type WeatherTile, type MediaItem, type RecipeDoc, type RecipeEdit, type GlobeRunOptions, type GlobeStatus } from "../../../renderer/src/index.ts";
   import { SHIPPED_RECIPES } from "../../../renderer/src/recipes.ts";
   import Cutaway from "../../cutaway/src/Cutaway.svelte";
   import StarDisc from "./StarDisc.svelte";
   import ClimateWhy from "./ClimateWhy.svelte";
+  import BodyTimeline from "./BodyTimeline.svelte";
+  import BodyMag from "./BodyMag.svelte";
 
   let { ctx, scene, params }: { ctx: ViewContext; scene: SystemScene; params: Record<string, Json> } = $props();
 
@@ -185,6 +188,144 @@
     label: subject?.label ?? "",
     air: got?.air ?? null,
   });
+  // Time lapse (R6): the kernel's surface_frames for this world, played on the same globe. `lapse` is the API the
+  // chart room's timeline (BodyTimeline) drives; it is reactive, so a scrubber follows changes made anywhere.
+  type Lapse = {
+    loaded: boolean;
+    loading: boolean;
+    error: string | null;
+    layer: string;
+    t_myr: number;
+    layers: ReturnType<GlobeRun["layers"]>;
+    frames: ReturnType<GlobeRun["frames"]>;
+    load(): Promise<void>;
+    close(): void;
+    setLayer(id: string): void;
+    setTime(t_myr: number): void;
+    pick(lon_deg: number, lat_deg: number): ReturnType<GlobeRun["pick"]>;
+    /** Turn the globe to face a point (a clicked event mark brings its place into view). */
+    view(lon_deg: number, lat_deg: number): void;
+  };
+  let lapseData: RawFrames | null = null;
+  let lapseKey = "";
+  const lapse: Lapse = $state({
+    loaded: false,
+    loading: false,
+    error: null,
+    layer: "land",
+    t_myr: 0,
+    layers: [],
+    frames: { times: [], events: [] },
+    async load() {
+      const sub = subject;
+      if (!sub || lapse.loading) return;
+      const key = `${scene.system}|${sub.address}`;
+      lapse.loading = true;
+      lapse.error = null;
+      const r = await ctx.session.surfaceFrames({ system: scene.system, body: sub.address, detail: "orbit" });
+      lapse.loading = false;
+      if (key !== `${scene.system}|${subject?.address}`) return;
+      if (!r.ok) return void (lapse.error = r.message);
+      lapseData = r.frames as unknown as RawFrames;
+      lapseKey = key;
+      attachLapse();
+    },
+    close() {
+      lapseData = null;
+      lapseKey = "";
+      lapse.loaded = false;
+      run?.setTimeLapse(null);
+    },
+    setLayer(id: string) {
+      lapse.layer = id;
+      run?.setLayer(id);
+    },
+    setTime(t: number) {
+      lapse.t_myr = t;
+      run?.setTime(t);
+    },
+    pick: (lo: number, la: number) => run?.pick(lo, la) ?? null,
+    view(lo: number, la: number) {
+      lon = ((lo % 360) + 360) % 360;
+      lat = Math.max(-90, Math.min(90, la));
+    },
+  });
+  /** Hand the loaded frames to the current globe runtime (again after the globe remounts). */
+  function attachLapse() {
+    const r = run;
+    if (!r || !lapseData) return;
+    r.setTimeLapse(readFrames(lapseData));
+    lapse.layers = r.layers();
+    lapse.frames = r.frames();
+    const times = lapse.frames.times;
+    if (!lapse.loaded) lapse.t_myr = times[times.length - 1] ?? 0;
+    r.setLayer(lapse.layer);
+    r.setTime(lapse.t_myr);
+    lapse.loaded = true;
+  }
+  // A different world closes the time lapse.
+  $effect(() => {
+    const key = `${scene.system}|${subject?.address}`;
+    if (untrack(() => lapseKey) && key !== untrack(() => lapseKey)) untrack(() => lapse.close());
+  });
+
+  // Weather (R2b): today's clouds and haze from the kernel's weather op, on the campaign's day. `weather` is reactive,
+  // like `lapse`, so the chart room's controls can drive it; a time lapse shows its own past instead.
+  const WX_N = 32;
+  type Weather = { on: boolean; loading: boolean; error: string | null; day: number | null; show(): Promise<void>; hide(): void };
+  let wxKey = "";
+  let wxData: ReturnType<typeof readWeather> | null = null;
+  const weather: Weather = $state({
+    on: false,
+    loading: false,
+    error: null,
+    day: null,
+    async show() {
+      const sub = subject;
+      if (!sub || weather.loading) return;
+      const key = `${scene.system}|${sub.address}`;
+      weather.loading = true;
+      weather.error = null;
+      const now = await ctx.session.campaignNow();
+      const at_s = now.ok && now.at_s !== undefined ? Number(now.at_s) : undefined;
+      const day = at_s !== undefined ? at_s / DAY_S : 0;
+      const where = { system: scene.system, body: sub.address, ...(at_s !== undefined ? { at_s } : {}), day };
+      const tiles: WeatherTile[] = [];
+      let fail: string | null = null;
+      let meta = { block: "", evidence: "" };
+      for (const face of [0, 1, 2, 3, 4, 5]) {
+        const r = await ctx.session.weather({ want: "field", ...where, tile: [face, 0, 0, 0], n: WX_N });
+        if (!r.ok) {
+          fail = r.message;
+          break;
+        }
+        tiles.push(r.data as unknown as WeatherTile);
+        const pv = r.provenance as { block?: { id?: string }; evidence?: string };
+        meta = { block: pv.block?.id ?? "", evidence: pv.evidence ?? "" };
+      }
+      const sy = fail ? null : await ctx.session.weather({ want: "systems", ...where });
+      weather.loading = false;
+      if (key !== `${scene.system}|${subject?.address}`) return;
+      if (fail) return void (weather.error = fail);
+      wxData = readWeather(tiles, sy?.ok ? (sy.data as unknown as WeatherSystem[]) : [], { day, ...meta });
+      wxKey = key;
+      weather.day = day;
+      weather.on = true;
+      run?.setWeather(wxData);
+    },
+    hide() {
+      wxData = null;
+      wxKey = "";
+      weather.on = false;
+      weather.day = null;
+      run?.setWeather(null);
+    },
+  });
+  $effect(() => {
+    const key = `${scene.system}|${subject?.address}`;
+    if (untrack(() => wxKey) && key !== untrack(() => wxKey)) untrack(() => weather.hide());
+  });
+
   // One runtime per globe element; settings and turns are passed to it.
   $effect(() => {
     const h = host;
@@ -194,6 +335,8 @@
       if (st.lon !== lon) lon = st.lon;
     });
     run = r;
+    untrack(() => attachLapse());
+    if (wxData) r.setWeather(wxData);
     return () => {
       r.dispose();
       run = null;
@@ -349,6 +492,17 @@
           </p>
         {/if}
       </div>
+      {#if has}
+        <!-- The time lapse's controls (U22): layer toggles, scrubber with event marks, Play, and the why card. -->
+        <BodyTimeline {lapse} depth={ws.depth ?? "science"} label={subject.label} />
+        <!-- Interim weather control; the chart room's controls replace it. A time lapse shows its own past, so this hides then. -->
+        {#if !lapse.loaded}<div class="weather" data-weather-controls data-weather={weather.on ? "on" : weather.loading ? "loading" : "off"}>
+          {#if weather.on}<button type="button" class="link" onclick={() => weather.hide()}>Clear the weather</button>{:else}<button type="button" class="link" disabled={weather.loading} onclick={() => weather.show()}>{weather.loading ? "Reading the weather…" : "Today's weather"}</button>{/if}
+          {#if weather.error}<small data-weather-error>{weather.error}</small>{/if}
+        </div>{/if}
+      {/if}
+      <!-- The Mag layer (MF14b): the field's Chart cut, its words and a why for every part. -->
+      <BodyMag session={ctx.session} system={scene.system} name={subject.label} tier={gs?.tier ?? "gpu-basic"} depth={ws.depth ?? "science"} size={Math.min(size, 320)} />
       {#if stats}
         <dl class="facts" data-globe-stats>
           <dt>Drawn</dt>
@@ -530,6 +684,19 @@
     font-size: 12px;
     color: var(--sse-ink-muted);
     margin-top: 4px;
+  }
+  .weather {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px 12px;
+    align-items: center;
+    font-size: 13px;
+    margin: 8px 0;
+  }
+  .weather small {
+    flex-basis: 100%;
+    color: var(--sse-ink-muted);
+    font-size: 12px;
   }
   .drawing {
     display: flex;

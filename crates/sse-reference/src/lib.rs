@@ -26,6 +26,9 @@ use sse_core::math as m;
 use std::collections::BTreeMap;
 
 pub mod expr;
+pub mod laws;
+pub mod lookup;
+pub mod phases;
 
 /// Relative tolerance between a sheet unit and the built-in one of the
 /// same id.
@@ -105,8 +108,14 @@ pub struct Reference {
     /// Where elements were made (design 8.1): source id to its name in the
     /// three wordings. Element rows point at these from `origin.shares`.
     pub origin_legend: BTreeMap<String, Map<String, J>>,
+    /// The Constants page's groups (DM1): name, about and cited notes, by
+    /// group id (`nature`, `convention`, `factor`, `cosmos`).
+    pub groups: BTreeMap<String, Map<String, J>>,
     /// The pack each row came from (`table/id`), and the packs that changed it.
     pub origin: BTreeMap<String, Vec<String>>,
+    /// Each substance's phase table, decoded at load (MP17).
+    #[serde(skip)]
+    pub phase_tables: BTreeMap<String, phases::PhaseTable>,
 }
 
 fn is_value(v: &J) -> bool {
@@ -180,10 +189,11 @@ impl Reference {
                 }
                 let known = TABLES.contains(&table.as_str())
                     || table == "sources"
-                    || table == "origin_legend";
+                    || table == "origin_legend"
+                    || table == "groups";
                 if !known {
                     problems.push(format!(
-                        "{pack}: reference table {table} is not one of {}, sources, origin_legend",
+                        "{pack}: reference table {table} is not one of {}, sources, origin_legend, groups",
                         TABLES.join(", ")
                     ));
                     continue;
@@ -203,6 +213,10 @@ impl Reference {
                     };
                     if table == "sources" {
                         r.sources.insert(id.to_string(), row.clone());
+                        continue;
+                    }
+                    if table == "groups" {
+                        r.groups.insert(id.to_string(), row.clone());
                         continue;
                     }
                     if table == "origin_legend" {
@@ -236,6 +250,16 @@ impl Reference {
         }
         problems.extend(r.check());
         if problems.is_empty() {
+            // Phase tables decoded once (MP17), so `phase_at` is a lookup.
+            let mut built = BTreeMap::new();
+            for (id, row) in r.tables.get("substances").into_iter().flatten() {
+                if let Some(t) = row.get("phases").and_then(|p| p.get("table")) {
+                    if let Ok(t) = phases::PhaseTable::from_json(t) {
+                        built.insert(id.clone(), t);
+                    }
+                }
+            }
+            r.phase_tables = built;
             Ok(r)
         } else {
             Err(problems)
@@ -284,6 +308,43 @@ impl Reference {
     }
 
     fn constant_at(&self, id: &str, depth: u32) -> Result<f64, String> {
+        self.constant_when(id, None, depth)
+    }
+
+    /// DM6: a constant's value at `t_gyr` (Gyr after the origin), with each
+    /// measured row's time law applied and every worked-out row following
+    /// its inputs at that date. With no laws it is [`constant`](Self::constant).
+    pub fn constant_on(&self, id: &str, t_gyr: f64) -> Option<f64> {
+        self.constant_when(id, Some(t_gyr), 0).ok()
+    }
+
+    /// Whether any row `id` rests on carries a time law that is not constant.
+    pub fn has_history(&self, id: &str) -> bool {
+        self.tables
+            .get("constants")
+            .into_iter()
+            .flatten()
+            .any(|(k, row)| {
+                !matches!(laws::Law::of(row), Ok(laws::Law::Constant)) && self.rests_on(id, k)
+            })
+    }
+
+    /// DM6: the constants handle at `t_gyr`. Each id with a history gets its
+    /// value at that date; every other id is exactly [`handle`](Self::handle),
+    /// so with no laws nothing moves by a bit.
+    pub fn handle_on(&self, t_gyr: f64) -> sse_core::constants::Constants {
+        let mut c = self.handle();
+        for id in sse_core::constants::Constants::IDS {
+            if self.has_history(id) {
+                if let Some(v) = self.constant_on(id, t_gyr) {
+                    c.set(id, v);
+                }
+            }
+        }
+        c
+    }
+
+    fn constant_when(&self, id: &str, t: Option<f64>, depth: u32) -> Result<f64, String> {
         if depth > 16 {
             return Err(format!("constant {id}: its formula goes round in a circle"));
         }
@@ -293,7 +354,7 @@ impl Reference {
         match row.get("derived_from").and_then(J::as_str) {
             Some(f) => {
                 let mut err = None;
-                let v = expr::eval(f, |n| match self.constant_at(n, depth + 1) {
+                let v = expr::eval(f, |n| match self.constant_when(n, t, depth + 1) {
                     Ok(v) => Some(v),
                     Err(e) => {
                         err.get_or_insert(e);
@@ -306,19 +367,69 @@ impl Reference {
                     (Err(e), None) => Err(e),
                 }
             }
-            None => num(row.get("value")).ok_or_else(|| format!("constant {id} has no value")),
+            None => {
+                let v =
+                    num(row.get("value")).ok_or_else(|| format!("constant {id} has no value"))?;
+                match t {
+                    Some(t) => Ok(laws::Law::of(row).unwrap_or(laws::Law::Constant).at(v, t)),
+                    None => Ok(v),
+                }
+            }
         }
+    }
+
+    /// Whether constant `id` is `on` or is worked out from it, at any depth
+    /// (DM1: Omega_m rests on Omega_c, so a block reading Omega_m uses a
+    /// changed dark matter amount).
+    pub fn rests_on(&self, id: &str, on: &str) -> bool {
+        self.rests_on_at(id, on, 0)
+    }
+
+    fn rests_on_at(&self, id: &str, on: &str, depth: u32) -> bool {
+        if id == on {
+            return true;
+        }
+        if depth > 16 {
+            return false;
+        }
+        self.row("constants", id)
+            .and_then(|r| r.get("derived_from"))
+            .and_then(J::as_str)
+            .is_some_and(|f| {
+                expr::names(f)
+                    .iter()
+                    .any(|n| self.rests_on_at(n, on, depth + 1))
+            })
     }
 
     /// Whether a derived constant and every input it names come from one
     /// pack, so its typed copy stands for it.
+    /// The check reaches through derived inputs (DM1: Omega_Lambda rests on
+    /// Omega_m, which rests on an edited Omega_c).
     fn one_pack(&self, id: &str, f: &str) -> bool {
+        self.one_pack_at(id, f, 0)
+    }
+
+    fn one_pack_at(&self, id: &str, f: &str, depth: u32) -> bool {
+        if depth > 16 {
+            return false;
+        }
         std::iter::once(id.to_string())
             .chain(expr::names(f))
             .all(|n| {
-                self.origin
+                let unedited = self
+                    .origin
                     .get(&format!("constants/{n}"))
-                    .is_none_or(|o| o.len() == 1)
+                    .is_none_or(|o| o.len() == 1);
+                let inner = match self
+                    .row("constants", &n)
+                    .and_then(|r| r.get("derived_from"))
+                    .and_then(J::as_str)
+                {
+                    Some(g) if n != id => self.one_pack_at(&n, g, depth + 1),
+                    _ => true,
+                };
+                unedited && inner
             })
     }
 
@@ -505,6 +616,78 @@ impl Reference {
                 }
             }
         }
+        // DM1: a constant's group is one the page knows, a mark is the one
+        // row mark there is ("theoretical", with the line saying what would
+        // change the picture), and a group's notes cite known sources.
+        for (id, row) in self.tables.get("constants").unwrap_or(&empty_c) {
+            if let Some(g) = row.get("group").and_then(J::as_str) {
+                if !self.groups.is_empty() && !self.groups.contains_key(g) {
+                    p.push(format!(
+                        "constant {id}: group {g} is not one of the sheet's groups"
+                    ));
+                }
+            }
+            match row.get("mark").and_then(J::as_str) {
+                None => {}
+                Some("theoretical") => {
+                    if row.get("mark_note").and_then(J::as_str).is_none_or(str::is_empty) {
+                        p.push(format!(
+                            "constant {id}: a theoretical row needs a mark_note saying what would change the picture"
+                        ));
+                    }
+                }
+                Some(m) => p.push(format!(
+                    "constant {id}: mark {m} is not a row mark (only \"theoretical\"; authored and fictional come from the packs)"
+                )),
+            }
+        }
+        // DM6: a time law reads, is marked authored or fictional, cites a
+        // known source, and sits on a measured row, not a worked-out one.
+        for (id, row) in self.tables.get("constants").unwrap_or(&empty_c) {
+            match laws::Law::of(row) {
+                Err(e) => p.push(format!("constant {id}: {e}")),
+                Ok(laws::Law::Constant) => {}
+                Ok(_) => {
+                    if row.get("derived_from").is_some() {
+                        p.push(format!(
+                            "constant {id}: a time law goes on a measured row; a worked-out row follows its inputs at each date"
+                        ));
+                    }
+                    if let Some(s) = row
+                        .get("law")
+                        .and_then(|l| l.get("src"))
+                        .and_then(J::as_str)
+                    {
+                        if !self.sources.contains_key(s) {
+                            p.push(format!(
+                                "constant {id}: its law cites source {s}, which is not in reference.sources"
+                            ));
+                        }
+                    }
+                }
+            }
+        }
+        for (g, row) in &self.groups {
+            for (i, n) in row
+                .get("notes")
+                .and_then(J::as_array)
+                .into_iter()
+                .flatten()
+                .enumerate()
+            {
+                let cited = n
+                    .get("src")
+                    .into_iter()
+                    .chain(n.get("also").and_then(J::as_array).into_iter().flatten());
+                for s in cited.filter_map(J::as_str) {
+                    if !self.sources.contains_key(s) {
+                        p.push(format!(
+                            "group {g}: note {i} cites source {s}, which is not in reference.sources"
+                        ));
+                    }
+                }
+            }
+        }
         // Every value names a source.
         for (table, rows) in &self.tables {
             for (id, row) in rows {
@@ -554,6 +737,15 @@ impl Reference {
             }
             if let Some(ph) = row.get("phases").and_then(J::as_object) {
                 p.extend(check_vapour(id, ph, self.molar_mass_kg_mol(id)));
+                let known: std::collections::BTreeSet<String> =
+                    self.sources.keys().cloned().collect();
+                let linked: std::collections::BTreeSet<String> = self
+                    .sources
+                    .iter()
+                    .filter(|(_, r)| r.contains_key("doi") || r.contains_key("url"))
+                    .map(|(k, _)| k.clone())
+                    .collect();
+                p.extend(phases::check(id, ph, &known, &linked));
             }
         }
         let substances = self.tables.get("substances").unwrap_or(&empty);
@@ -638,6 +830,16 @@ impl Reference {
     /// One row as `read_matter` shows it: the row, its worked-out values
     /// (molar mass), its sources and the packs it came from.
     pub fn describe(&self, table: &str, id: &str) -> Option<J> {
+        // A source by id (its text, DOI or URL and status), so a page can
+        // cite a group note's `src` and `also`, which carry only ids.
+        if table == "sources" {
+            let row = self.sources.get(id)?;
+            return Some(serde_json::json!({
+                "table": table,
+                "id": id,
+                "row": row,
+            }));
+        }
         let row = self.row(table, id)?;
         let mut vs = vec![];
         values(row, "", &mut vs);
@@ -700,6 +902,10 @@ impl Reference {
         }
         // The legend is seven short rows, so it comes whole: the Reference
         // screen colours elements by it.
+        // The page groups are few and short, so they come whole (DM1).
+        if table.is_none_or(|x| x == "groups") {
+            out.insert("groups".into(), serde_json::json!(self.groups));
+        }
         if table.is_none_or(|x| x == "origin_legend") {
             out.insert(
                 "origin_legend".into(),
@@ -916,5 +1122,9 @@ fn check_vapour(id: &str, ph: &Map<String, J>, molar_kg: Option<f64>) -> Vec<Str
     p
 }
 
+#[cfg(test)]
+mod lookup_tests;
+#[cfg(test)]
+mod phases_tests;
 #[cfg(test)]
 mod tests;

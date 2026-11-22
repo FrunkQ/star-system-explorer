@@ -3,7 +3,11 @@
 // bracketed, blended and coloured; the globe's samples recoloured; words.
 import { test } from "node:test";
 import assert from "node:assert/strict";
+import { readFileSync } from "node:fs";
 import { cubeDirection } from "../../ui-contract/src/index.ts";
+import { Session } from "../../ui-contract/src/session.ts";
+import { gmSeat } from "../../ui-contract/src/seat.ts";
+import { nodeKernel } from "../../ui-contract/test/node-kernel.ts";
 import { bracket, cellOf, eventsBetween, layerColour, layersFor, narrateFrame, onPlateEdge, pickAt, readFrames, recolour, seaLevelAt, valueAt, type RawFrames } from "../src/timelapse.ts";
 
 const N = 8;
@@ -44,7 +48,7 @@ function fixture(b64 = false): RawFrames {
       { t_myr: 3000, kind: "eruption", text: "Flood basalts", dir: [1, 0, 0], radius_km: 800, why: ["A plume head reached the base of the plate."] },
       { t_myr: 4000, kind: "ice-age", text: "Ice age begins" },
     ],
-    pending: ["rain_m_yr", "runoff_m_yr"],
+    pending: ["rain_m_yr", "runoff_m_yr", "ice-age onsets (dated only inside the orbit-history window)"],
   };
 }
 
@@ -78,6 +82,7 @@ test("layers: colours follow the fields, pending fields are named, plate edges f
   const ls = layersFor(tl);
   assert.equal(ls.find((l) => l.spec.id === "rain")!.available, false);
   assert.deepEqual(ls.find((l) => l.spec.id === "rain")!.pending, ["rain_m_yr"]);
+  assert.deepEqual(ls.find((l) => l.spec.id === "ice")!.pending, ["ice-age onsets (dated only inside the orbit-history window)"], "a pending note in words reaches its layer");
   assert.equal(ls.find((l) => l.spec.id === "ice")!.available, true);
   const pole = cellOf(tl, 0, 0, 1);
   const icy = layerColour(tl, "ice", pole, 4000);
@@ -120,6 +125,36 @@ test("recolour: every sample takes the layer's colour; past frames are flat-lit;
   const now = recolour(p, tl, "land", 4500, cubeDirection);
   assert.equal(now.faces[0]!.normal, p.faces[0]!.normal, "today keeps the hill shading");
   const words = narrateFrame(tl, "ice", 4000, "Fixture");
-  assert.match(words, /500 million years ago: ice and glaciers/);
+  assert.match(words, /500 million years ago, ice and glaciers: land \d+% of the surface/);
+  assert.doesNotMatch(words, /\.\.|\.,/);
   assert.match(words, /Ice age begins/);
+});
+
+test("the kernel's Earth: surface_frames read whole, every layer drawable, events placed, the same each time", async () => {
+  const k = nodeKernel();
+  try {
+    const base = JSON.parse(readFileSync(new URL("../../../packs/base-physics/pack.json", import.meta.url), "utf8"));
+    const s = await Session.open(k.client, gmSeat(), { id: "frames", seed: "frames" }, [base]);
+    const r = await s.surfaceFrames({ fixture: "Earth", frames_max: 12 });
+    assert.ok(r.ok, JSON.stringify(r));
+    const tl = readFrames(r.frames as unknown as RawFrames);
+    assert.ok(tl.frames.length >= 6 && tl.frames.length <= 12, `${tl.frames.length} frames`);
+    assert.equal(tl.frames[tl.frames.length - 1]!.t_myr, 4500, "the last frame is today");
+    for (const l of layersFor(tl)) assert.ok(l.available, `${l.spec.id} has its fields`);
+    assert.ok(tl.events.some((e) => e.kind === "collision"), "plates collide in Earth's history");
+    // Today: about 30% land, ice at the poles, the poles colder than the equator.
+    const now = 4500;
+    let land = 0;
+    for (let c = 0; c < tl.cells; c++) if ((valueAt(tl, "elevation_m", c, now) ?? 0) >= seaLevelAt(tl, now)) land++;
+    assert.ok(land / tl.cells > 0.15 && land / tl.cells < 0.5, `land share ${land / tl.cells}`);
+    const pole = cellOf(tl, 0, 0, -1);
+    const equator = cellOf(tl, 1, 0, 0);
+    assert.ok((valueAt(tl, "temp_k", pole, now) ?? 0) < (valueAt(tl, "temp_k", equator, now) ?? 0) - 30);
+    assert.ok((valueAt(tl, "ice_m", pole, now) ?? 0) > 100, "Antarctic-like ice today");
+    const again = await s.surfaceFrames({ fixture: "Earth", frames_max: 12 });
+    assert.ok(again.ok);
+    assert.deepEqual(readFrames(again.frames as unknown as RawFrames).frames[3]!.fields.plate, tl.frames[3]!.fields.plate, "the same world each time");
+  } finally {
+    await k.close();
+  }
 });

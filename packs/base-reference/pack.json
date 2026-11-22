@@ -542,6 +542,320 @@
       "unit": "m",
       "src": "nssdca-moon"
      }
+    },
+    {
+     "id": "H0",
+     "name": "Hubble constant",
+     "group": "cosmos",
+     "value": {
+      "v": 67.66,
+      "unit": "km s-1 Mpc-1",
+      "src": "planck2018",
+      "uncertainty": 0.42
+     },
+     "note": "In km/s per megaparsec, as astronomers quote it; H0_si is the same rate per second."
+    },
+    {
+     "id": "H0_si",
+     "name": "Hubble constant per second",
+     "group": "cosmos",
+     "value": {
+      "v": 2.1927112672380573e-18,
+      "unit": "s-1",
+      "src": "planck2018"
+     },
+     "derived_from": "H0 1000 / (1e6 pc)"
+    },
+    {
+     "id": "Omega_b",
+     "name": "ordinary matter today, Omega_b",
+     "group": "cosmos",
+     "value": {
+      "v": 0.04897,
+      "unit": "1",
+      "src": "planck2018",
+      "uncertainty": 0.0003
+     },
+     "note": "Planck's Omega_b h2 0.02242 +- 0.00014 divided by h2, to four figures."
+    },
+    {
+     "id": "Omega_c",
+     "name": "dark matter today, Omega_c",
+     "group": "cosmos",
+     "value": {
+      "v": 0.2607228,
+      "unit": "1",
+      "src": "planck2018",
+      "uncertainty": 0.002
+     },
+     "mark": "theoretical",
+     "mark_note": "The amount is measured through gravity alone (the cosmic background, lensing, clusters); no dark matter particle has been detected. A detection, or a theory of gravity that needed none, would change the picture.",
+     "note": "Cold dark matter: Planck's Omega_m less ordinary matter and neutrinos, so the three sum to its 0.3111. Planck's own Omega_c h2 0.11933 +- 0.00091 gives 0.26067, inside the uncertainty."
+    },
+    {
+     "id": "Omega_nu",
+     "name": "massive neutrinos today, Omega_nu",
+     "group": "cosmos",
+     "value": {
+      "v": 0.0014072,
+      "unit": "1",
+      "src": "mangano2005",
+      "check": "unverified",
+      "also": [
+       "planck2018"
+      ]
+     },
+     "note": "Planck's base model has one neutrino of 0.06 eV; Omega_nu h2 = sum of masses / 93.14 eV."
+    },
+    {
+     "id": "Omega_m",
+     "name": "all matter today, Omega_m",
+     "group": "cosmos",
+     "value": {
+      "v": 0.3111,
+      "unit": "1",
+      "src": "planck2018",
+      "uncertainty": 0.0056
+     },
+     "derived_from": "Omega_b + Omega_c + Omega_nu"
+    },
+    {
+     "id": "dm_per_ordinary",
+     "name": "dark matter per ordinary matter",
+     "group": "cosmos",
+     "value": {
+      "v": 5.324133142740453,
+      "unit": "1",
+      "src": "planck2018"
+     },
+     "derived_from": "Omega_c / Omega_b"
+    },
+    {
+     "id": "f_b",
+     "name": "cosmic baryon share",
+     "group": "cosmos",
+     "value": {
+      "v": 0.15740919318547092,
+      "unit": "1",
+      "src": "planck2018"
+     },
+     "derived_from": "Omega_b / Omega_m",
+     "note": "The share of every halo's matter that is ordinary: what each galaxy's gas supply reads."
+    },
+    {
+     "id": "sigma8",
+     "name": "fluctuation size on 8 Mpc/h, sigma_8",
+     "group": "cosmos",
+     "value": {
+      "v": 0.8102,
+      "unit": "1",
+      "src": "planck2018",
+      "uncertainty": 0.006
+     }
+    },
+    {
+     "id": "n_s",
+     "name": "tilt of the primordial spectrum, n_s",
+     "group": "cosmos",
+     "value": {
+      "v": 0.9665,
+      "unit": "1",
+      "src": "planck2018",
+      "uncertainty": 0.0038
+     }
+    },
+    {
+     "id": "T_cmb",
+     "name": "cosmic background temperature today",
+     "group": "cosmos",
+     "value": {
+      "v": 2.7255,
+      "unit": "K",
+      "src": "fixsen2009",
+      "check": "unverified",
+      "uncertainty": 0.00057
+     }
+    },
+    {
+     "id": "N_eff",
+     "name": "effective number of neutrino species",
+     "group": "cosmos",
+     "value": {
+      "v": 3.046,
+      "unit": "1",
+      "src": "mangano2005",
+      "check": "unverified"
+     },
+     "note": "The Standard Model prediction; Planck finds 2.99 +- 0.17 with BAO."
+    },
+    {
+     "id": "Omega_r",
+     "name": "radiation today, Omega_r",
+     "group": "cosmos",
+     "value": {
+      "v": 9.139052324320949e-05,
+      "unit": "1",
+      "src": "fixsen2009",
+      "also": [
+       "mangano2005"
+      ]
+     },
+     "derived_from": "2.473e-5 (T_cmb / 2.7255)^4 (1 + 0.2271073177 N_eff) / (H0 / 100)^2",
+     "note": "Photons from the background temperature, plus 7/8 (4/11)^(4/3) per neutrino species."
+    },
+    {
+     "id": "Omega_Lambda",
+     "name": "dark energy today, Omega_Lambda",
+     "group": "cosmos",
+     "value": {
+      "v": 0.6888086094767568,
+      "unit": "1",
+      "src": "planck2018"
+     },
+     "derived_from": "1 - Omega_m - Omega_r",
+     "mark": "theoretical",
+     "mark_note": "The amount is measured through the expansion (supernovae, the cosmic background, baryon acoustic oscillations); what it is is unknown. A measured change in w, which DESI's 2024 and 2025 results lean towards, would change the picture.",
+     "note": "Worked out for a flat universe. Planck: 0.6889 +- 0.0056."
+    },
+    {
+     "id": "w0",
+     "name": "dark energy pressure today, w0",
+     "group": "cosmos",
+     "value": {
+      "v": -1.0,
+      "unit": "1",
+      "src": "chevallier2001",
+      "also": [
+       "linder2003",
+       "planck2018"
+      ]
+     },
+     "mark": "theoretical",
+     "mark_note": "The amount is measured through the expansion (supernovae, the cosmic background, baryon acoustic oscillations); what it is is unknown. A measured change in w, which DESI's 2024 and 2025 results lean towards, would change the picture.",
+     "note": "Pressure over density; -1 is a cosmological constant. w = w0 + wa (1 - a)."
+    },
+    {
+     "id": "wa",
+     "name": "drift of dark energy pressure, wa",
+     "group": "cosmos",
+     "value": {
+      "v": 0.0,
+      "unit": "1",
+      "src": "chevallier2001",
+      "also": [
+       "linder2003",
+       "desi2024"
+      ]
+     },
+     "mark": "theoretical",
+     "mark_note": "The amount is measured through the expansion (supernovae, the cosmic background, baryon acoustic oscillations); what it is is unknown. A measured change in w, which DESI's 2024 and 2025 results lean towards, would change the picture.",
+     "note": "0 is a cosmological constant. Read from DM2 on; until then the expansion uses w = -1."
+    },
+    {
+     "id": "rho_Lambda",
+     "name": "dark energy density",
+     "group": "cosmos",
+     "value": {
+      "v": 5.323270563847347e-10,
+      "unit": "J m-3",
+      "src": "planck2018"
+     },
+     "derived_from": "Omega_Lambda 3 H0_si^2 c^2 / (8 pi G)"
+    },
+    {
+     "id": "m_wdm",
+     "name": "dark matter warmth: thermal relic mass",
+     "group": "cosmos",
+     "value": {
+      "v": 0.0,
+      "unit": "keV",
+      "src": "schneider2012",
+      "also": [
+       "irsic2017",
+       "nadler2021"
+      ]
+     },
+     "mark": "theoretical",
+     "mark_note": "The amount is measured through gravity alone (the cosmic background, lensing, clusters); no dark matter particle has been detected. A detection, or a theory of gravity that needed none, would change the picture.",
+     "note": "0 is cold dark matter, with no cut-off. A mass in keV gives a smallest halo size (the half-mode mass); today's limits say heavier than about 5 to 6.5 keV. Read from DM5 on."
+    },
+    {
+     "id": "sigma_dm",
+     "name": "dark matter self-interaction per mass",
+     "group": "cosmos",
+     "value": {
+      "v": 0.0,
+      "unit": "m2 kg-1",
+      "src": "rocha2013",
+      "also": [
+       "harvey2015",
+       "randall2008",
+       "kaplinghat2016"
+      ]
+     },
+     "mark": "theoretical",
+     "mark_note": "The amount is measured through gravity alone (the cosmic background, lensing, clusters); no dark matter particle has been detected. A detection, or a theory of gravity that needed none, would change the picture.",
+     "note": "0 is collisionless. A cross-section gives haloes a core; clusters limit it to under about 0.5 cm2/g (5e-5 m2/kg). Read from DM5 on."
+    },
+    {
+     "id": "m_fdm",
+     "name": "fuzzy (ultra-light) dark matter particle mass",
+     "group": "cosmos",
+     "value": {
+      "v": 0.0,
+      "unit": "eV",
+      "src": "hui2017"
+     },
+     "mark": "theoretical",
+     "mark_note": "The amount is measured through gravity alone (the cosmic background, lensing, clusters); no dark matter particle has been detected. A detection, or a theory of gravity that needed none, would change the picture.",
+     "note": "0 is off. Listed, not wired: it would give both a cut-off and a solid core."
+    }
+   ],
+   "groups": [
+    {
+     "id": "nature",
+     "name": "Constants of nature",
+     "about": "What the universe gives."
+    },
+    {
+     "id": "convention",
+     "name": "Definitions and conventions",
+     "about": "Exact by agreement: c in SI, the astronomical unit, the Julian year, the IAU's nominal Sun."
+    },
+    {
+     "id": "factor",
+     "name": "Conversion factors",
+     "about": "Pure arithmetic from the rows above."
+    },
+    {
+     "id": "cosmos",
+     "name": "Cosmos",
+     "about": "The measured parameters of the universe. Dark matter and dark energy are marked theoretical: their amounts are measured through gravity, their nature is unknown. Change one and the cosmos chain follows: expansion, growth, the web, halo counts, every galaxy's gas supply.",
+     "notes": [
+      {
+       "text": "SSE4 takes the particle route: dark matter is an unseen particle that adds mass. It does not offer gravity that changes at low acceleration (MOND and its relatives). The web, the count of haloes and the growth of galaxies are built on dark matter, and no agreed theory of altered gravity replaces all three: colliding clusters show the mass sitting apart from the gas, and the neutron-star merger of 2017 ruled out the whole class of theories where gravity waves and light travel at different speeds.",
+       "src": "clowe2006",
+       "also": [
+        "boran2018"
+       ]
+      },
+      {
+       "text": "The standard picture keeps passing new tests: counts of 16,000 galaxy clusters agree with the cosmic background's parameters. Gravity's strength has not changed over time where it can be tested: a neutron-star merger bounds the change in G, and red dwarfs, which would remember a jump in G, rule out the recent 4% and 11% steps proposed to ease the Hubble tension. Those test G changing with time, a different idea from MOND.",
+       "src": "des2025",
+       "also": [
+        "vijaykumar2021",
+        "sakstein2026"
+       ]
+      },
+      {
+       "text": "Kept as a check: the tight link between ordinary matter and rotation speed in galaxies, which haloes must reproduce.",
+       "src": "mcgaugh2016"
+      },
+      {
+       "text": "Energy is conserved for a bound object, not for the expanding universe as a whole, so the sheet's ledgers are mass per co-moving region and energy per bound system.",
+       "src": "planck2018"
+      }
+     ]
     }
    ],
    "units": [
@@ -9611,6 +9925,12 @@
      "doi": "10.1175/1520-0426(1999)016<1854:ORODC>2.0.CO;2"
     },
     {
+     "id": "boran2018",
+     "text": "Boran, S. et al. 2018, Phys. Rev. D 97, 041501: GW170817 falsifies dark matter emulators",
+     "status": "verified",
+     "doi": "10.1103/PhysRevD.97.041501"
+    },
+    {
      "id": "cgpm1901",
      "text": "3rd CGPM 1901, Resolution 2: standard acceleration of gravity 980.665 cm/s2",
      "status": "textbook",
@@ -9635,6 +9955,18 @@
      "url": "https://arxiv.org/abs/2103.09035"
     },
     {
+     "id": "chevallier2001",
+     "text": "Chevallier, M. and Polarski, D. 2001, Int. J. Mod. Phys. D 10, 213: accelerating universes with scaling dark matter (w = w0 + wa (1 - a))",
+     "status": "verified",
+     "doi": "10.1142/S0218271801000822"
+    },
+    {
+     "id": "clowe2006",
+     "text": "Clowe, D. et al. 2006, ApJ 648, L109: a direct empirical proof of the existence of dark matter (the Bullet Cluster)",
+     "status": "verified",
+     "doi": "10.1086/508162"
+    },
+    {
      "id": "codata2018",
      "text": "Tiesinga, E., Mohr, P. J., Newell, D. B. and Taylor, B. N. 2021, Rev. Mod. Phys. 93, 025010: CODATA recommended values of the fundamental physical constants, 2018",
      "status": "verified",
@@ -9647,10 +9979,28 @@
      "url": "https://goldbook.iupac.org/"
     },
     {
+     "id": "des2025",
+     "text": "DES Collaboration (Abbott, T. M. C. et al.) 2025, Phys. Rev. D 112, 083535: Dark Energy Survey year 3, cosmological constraints from cluster abundances, weak lensing and galaxy clustering",
+     "status": "verified",
+     "doi": "10.1103/3dzh-d8f5"
+    },
+    {
+     "id": "desi2024",
+     "text": "DESI Collaboration (Adame, A. G. et al.) 2025, JCAP 02, 021: DESI 2024 VI, cosmological constraints from baryon acoustic oscillations",
+     "status": "verified",
+     "doi": "10.1088/1475-7516/2025/02/021"
+    },
+    {
      "id": "fields2020",
      "text": "Fields, B. D., Olive, K. A., Yeh, T.-H. and Young, C. 2020, JCAP 03, 010: Big-Bang nucleosynthesis after Planck (primordial helium and the lithium problem)",
      "status": "verified",
      "url": "https://arxiv.org/abs/1912.01132"
+    },
+    {
+     "id": "fixsen2009",
+     "text": "Fixsen, D. J. 2009, ApJ 707, 916: the temperature of the cosmic microwave background (2.72548 +- 0.00057 K)",
+     "status": "verified",
+     "doi": "10.1088/0004-637X/707/2/916"
     },
     {
      "id": "frank2004",
@@ -9675,6 +10025,18 @@
      "text": "Haldemann, J., Alibert, Y., Mordasini, C. and Benz, W. 2020, A&A 643, A105: AQUA, a collection of H2O equations of state for planetary models (the ice VI-VII fit, Eq. 22 and Table 2, read from arXiv 2009.10098)",
      "status": "verified",
      "url": "https://arxiv.org/abs/2009.10098"
+    },
+    {
+     "id": "harvey2015",
+     "text": "Harvey, D. et al. 2015, Science 347, 1462: the nongravitational interactions of dark matter in colliding galaxy clusters",
+     "status": "verified",
+     "doi": "10.1126/science.1261381"
+    },
+    {
+     "id": "hui2017",
+     "text": "Hui, L., Ostriker, J. P., Tremaine, S. and Witten, E. 2017, Phys. Rev. D 95, 043541: ultralight scalars as cosmological dark matter",
+     "status": "verified",
+     "doi": "10.1103/PhysRevD.95.043541"
     },
     {
      "id": "iapws1992-sat",
@@ -9709,6 +10071,12 @@
      "doi": "10.3847/0004-6256/152/2/41"
     },
     {
+     "id": "irsic2017",
+     "text": "Iršič, V. et al. 2017, Phys. Rev. D 96, 023522: new constraints on the free-streaming of warm dark matter from Lyman-alpha forest data",
+     "status": "verified",
+     "doi": "10.1103/PhysRevD.96.023522"
+    },
+    {
      "id": "iupac2021",
      "text": "Prohaska, T. et al. 2022, Pure Appl. Chem. 94, 573: standard atomic weights of the elements 2021 (IUPAC Technical Report)",
      "status": "verified",
@@ -9726,6 +10094,12 @@
      "status": "verified",
      "doi": "10.1029/2019JE006176",
      "url": "https://arxiv.org/abs/1907.09598"
+    },
+    {
+     "id": "kaplinghat2016",
+     "text": "Kaplinghat, M., Tulin, S. and Yu, H.-B. 2016, Phys. Rev. Lett. 116, 041302: dark matter halos as particle colliders",
+     "status": "verified",
+     "doi": "10.1103/PhysRevLett.116.041302"
     },
     {
      "id": "kasen2017",
@@ -9758,6 +10132,12 @@
      "doi": "10.1029/2005GL022499"
     },
     {
+     "id": "linder2003",
+     "text": "Linder, E. V. 2003, Phys. Rev. Lett. 90, 091301: exploring the expansion history of the universe (the w0, wa form)",
+     "status": "verified",
+     "doi": "10.1103/PhysRevLett.90.091301"
+    },
+    {
      "id": "lineweaver2010",
      "text": "Lineweaver, C. H. and Norman, M. 2010, Proc. 9th Australian Space Science Conference: the potato radius, rock and ice yield strengths (calibrated stand-in; docs/fudges.md)",
      "status": "unverified",
@@ -9782,6 +10162,12 @@
      "doi": "10.1007/s11214-021-00825-8"
     },
     {
+     "id": "mangano2005",
+     "text": "Mangano, G. et al. 2005, Nucl. Phys. B 729, 221: relic neutrino decoupling including flavour oscillations (N_eff 3.046; Omega_nu h2 = sum of neutrino masses / 93.14 eV)",
+     "status": "verified",
+     "doi": "10.1016/j.nuclphysb.2005.09.041"
+    },
+    {
      "id": "mastin2009",
      "text": "Mastin, L. G. et al. 2009, J. Volcanol. Geotherm. Res. 186, 10: eruption column heights, magma at 2500 kg/m3 dense-rock equivalent",
      "status": "verified",
@@ -9794,6 +10180,12 @@
      "doi": "10.1103/PhysRevLett.97.017801"
     },
     {
+     "id": "mcgaugh2016",
+     "text": "McGaugh, S. S., Lelli, F. and Schombert, J. M. 2016, Phys. Rev. Lett. 117, 201101: radial acceleration relation in rotationally supported galaxies",
+     "status": "verified",
+     "doi": "10.1103/PhysRevLett.117.201101"
+    },
+    {
      "id": "millot2018",
      "text": "Millot, M. et al. 2018, Nature Physics 14, 297: experimental evidence for superionic water ice using shock compression. Not read; its melting point near 5000 K at 190 GPa is recalled",
      "status": "unverified",
@@ -9804,6 +10196,12 @@
      "text": "Millot, M., Coppari, F., Rygg, J. R., Correa Barrios, A., Hamel, S., Swift, D. C. and Eggert, J. H. 2019, Nature 569, 251: nanosecond X-ray diffraction of shock-compressed superionic water ice (fcc superionic ice XVIII at 100 to 400 GPa and 2000 to 3000 K; simulated ionic conductivity above 100 S/cm). Abstract read; body paywalled",
      "status": "verified",
      "doi": "10.1038/s41586-019-1114-6"
+    },
+    {
+     "id": "nadler2021",
+     "text": "Nadler, E. O. et al. 2021, Phys. Rev. Lett. 126, 091101: constraints on dark matter properties from observations of Milky Way satellite galaxies",
+     "status": "verified",
+     "doi": "10.1103/PhysRevLett.126.091101"
     },
     {
      "id": "nist-webbook",
@@ -9860,6 +10258,19 @@
      "doi": "10.1093/acprof:oso/9780198518945.001.0001"
     },
     {
+     "id": "planck2018",
+     "text": "Planck Collaboration 2020, A&A 641, A6: Planck 2018 results VI, cosmological parameters. Table 2, last column (TT,TE,EE+lowE+lensing+BAO, 68% limits): Omega_b h2 0.02242 +- 0.00014, Omega_c h2 0.11933 +- 0.00091, n_s 0.9665 +- 0.0038, H0 67.66 +- 0.42, Omega_Lambda 0.6889 +- 0.0056, Omega_m 0.3111 +- 0.0056, Omega_m h2 0.14240 +- 0.00087, sigma8 0.8102 +- 0.0060, age 13.787 +- 0.020 Gyr. Section 2.1: one massive neutrino of 0.06 eV",
+     "status": "verified",
+     "doi": "10.1051/0004-6361/201833910",
+     "url": "https://www.aanda.org/articles/aa/full_html/2020/09/aa33910-18/T2.html"
+    },
+    {
+     "id": "randall2008",
+     "text": "Randall, S. W. et al. 2008, ApJ 679, 1173: constraints on the self-interaction cross section of dark matter from the Bullet Cluster",
+     "status": "verified",
+     "doi": "10.1086/587859"
+    },
+    {
      "id": "recalled",
      "text": "A value recalled from textbooks and not yet read from a source; listed so the citations track can find it",
      "status": "unverified"
@@ -9871,16 +10282,34 @@
      "doi": "10.1016/j.icarus.2010.08.008"
     },
     {
+     "id": "rocha2013",
+     "text": "Rocha, M. et al. 2013, MNRAS 430, 81: cosmological simulations with self-interacting dark matter I, constant-density cores and substructure",
+     "status": "verified",
+     "doi": "10.1093/mnras/sts514"
+    },
+    {
      "id": "ruedas2017",
      "text": "Ruedas, T. 2017, Geochem. Geophys. Geosyst. 18, 3530: radioactive heat production of six geologically important nuclides",
      "status": "verified",
      "doi": "10.1002/2017GC006997"
     },
     {
+     "id": "sakstein2026",
+     "text": "Sakstein, J. and Desmond, H. 2026, arXiv:2610.04048: stars would remember a recent gravitational transition, testing G-step resolutions of the Hubble tension with red dwarfs (excluded at 3.1 and 4.0 sigma)",
+     "status": "verified",
+     "url": "https://arxiv.org/abs/2610.04048"
+    },
+    {
      "id": "salzmann2019",
      "text": "Salzmann, C. G. 2019, J. Chem. Phys. 150, 060901: advances in the experimental exploration of water's phase diagram (ices XVI and XVII, amorphous ices, hydrogen order)",
      "status": "verified",
      "doi": "10.1063/1.5085163"
+    },
+    {
+     "id": "schneider2012",
+     "text": "Schneider, A. et al. 2012, MNRAS 424, 684: non-linear evolution of cosmological structures in warm dark matter models (the half-mode mass)",
+     "status": "verified",
+     "doi": "10.1111/j.1365-2966.2012.21252.x"
     },
     {
      "id": "si2019",
@@ -9899,6 +10328,12 @@
      "text": "U.S. Standard Atmosphere 1976, NOAA/NASA/USAF (sea-level dry-air composition by volume)",
      "status": "verified",
      "url": "https://ntrs.nasa.gov/citations/19770009539"
+    },
+    {
+     "id": "vijaykumar2021",
+     "text": "Vijaykumar, A., Kapadia, S. J. and Ajith, P. 2021, Phys. Rev. Lett. 126, 141104: constraints on the time variation of the gravitational constant using gravitational-wave observations of binary neutron stars",
+     "status": "verified",
+     "doi": "10.1103/PhysRevLett.126.141104"
     },
     {
      "id": "wikipedia-ice-phases",

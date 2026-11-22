@@ -1,0 +1,14 @@
+[package]
+name = "sse-sky"
+description = "SSE4 night sky, light side (track Y3): an equal-area sphere grid (HEALPix, written fresh from Gorski et al. 2005) and the glow of unresolved starlight and dust"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+authors.workspace = true
+
+[dependencies]
+sse-core.workspace = true
+serde.workspace = true
+sse-atoms.workspace = true
+sse-cosmos = { path = "../sse-cosmos" }
+sse-light = { path = "../sse-light" }

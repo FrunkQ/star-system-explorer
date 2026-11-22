@@ -1345,6 +1345,20 @@
     ],
     "quantity_kinds": [
       {
+        "description": "mass of air above a unit area of ground",
+        "dim": [
+          -2,
+          1,
+          0,
+          0,
+          0,
+          0,
+          0
+        ],
+        "id": "atmosphere.column_mass",
+        "range": null
+      },
+      {
         "description": "distance from the centre to the exobase",
         "dim": [
           1,
@@ -1541,6 +1555,132 @@
         "range": null
       },
       {
+        "description": "distance at which a field line crosses the magnetic equator",
+        "dim": [
+          1,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0
+        ],
+        "id": "aurora.field_line_distance",
+        "range": null
+      },
+      {
+        "description": "magnetic latitude at which a field line comes down to the surface",
+        "dim": [
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0
+        ],
+        "id": "aurora.magnetic_latitude",
+        "range": null
+      },
+      {
+        "description": "kinetic energy of an electron, MeV",
+        "dim": [
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0
+        ],
+        "id": "belts.electron_energy_mev",
+        "range": null
+      },
+      {
+        "description": "magnetic field strength where a field line crosses the magnetic equator",
+        "dim": [
+          0,
+          1,
+          -2,
+          -1,
+          0,
+          0,
+          0
+        ],
+        "id": "belts.equatorial_field",
+        "range": null
+      },
+      {
+        "description": "the Kennel-Petschek cap on a belt: normalisation C of the spectrum C E^-1 per cm² s sr keV",
+        "dim": [
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0
+        ],
+        "id": "belts.limit_normalisation",
+        "range": null
+      },
+      {
+        "description": "least energy, MeV, an electron needs to cross a shield",
+        "dim": [
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0
+        ],
+        "id": "belts.penetration_energy_mev",
+        "range": null
+      },
+      {
+        "description": "share of a stopping electron's energy given off as X-rays",
+        "dim": [
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0
+        ],
+        "id": "belts.radiation_yield",
+        "range": null
+      },
+      {
+        "description": "mass per area of a shield in front of a dose point",
+        "dim": [
+          -2,
+          1,
+          0,
+          0,
+          0,
+          0,
+          0
+        ],
+        "id": "belts.shield_column",
+        "range": null
+      },
+      {
+        "description": "length along the field line over which whistler waves grow (D R_p)",
+        "dim": [
+          1,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0
+        ],
+        "id": "belts.wave_path",
+        "range": null
+      },
+      {
         "description": "time since the body formed",
         "dim": [
           0,
@@ -1580,6 +1720,20 @@
           0
         ],
         "id": "body.effective_temperature",
+        "range": null
+      },
+      {
+        "description": "magnetic field strength at the surface on the magnetic equator",
+        "dim": [
+          0,
+          1,
+          -2,
+          -1,
+          0,
+          0,
+          0
+        ],
+        "id": "body.equatorial_surface_field",
         "range": null
       },
       {
@@ -1636,6 +1790,20 @@
           0
         ],
         "id": "body.internal_heat_flux",
+        "range": null
+      },
+      {
+        "description": "height above the ground at which a body's air holds off the stellar wind",
+        "dim": [
+          1,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0
+        ],
+        "id": "body.ionopause_altitude",
         "range": null
       },
       {
@@ -1835,6 +2003,48 @@
         "range": null
       },
       {
+        "description": "elementary charge, read from the master data sheet",
+        "dim": [
+          0,
+          0,
+          1,
+          1,
+          0,
+          0,
+          0
+        ],
+        "id": "constant.e",
+        "range": null
+      },
+      {
+        "description": "vacuum permittivity, read from the master data sheet",
+        "dim": [
+          -3,
+          -1,
+          4,
+          2,
+          0,
+          0,
+          0
+        ],
+        "id": "constant.eps0",
+        "range": null
+      },
+      {
+        "description": "electron mass, read from the master data sheet",
+        "dim": [
+          0,
+          1,
+          0,
+          0,
+          0,
+          0,
+          0
+        ],
+        "id": "constant.m_e",
+        "range": null
+      },
+      {
         "description": "how long one surface convection cell lasts",
         "dim": [
           0,
@@ -1905,6 +2115,20 @@
         "range": null
       },
       {
+        "description": "how much dust dims light at a wavelength, relative to the V band (A_λ / A_V)",
+        "dim": [
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0
+        ],
+        "id": "dust.extinction_ratio",
+        "range": null
+      },
+      {
         "description": "mass thrown out by an explosion",
         "dim": [
           0,
@@ -1930,6 +2154,20 @@
           0
         ],
         "id": "event.explosion_energy",
+        "range": null
+      },
+      {
+        "description": "period with which the outside magnetic field seen by a body changes",
+        "dim": [
+          0,
+          0,
+          1,
+          0,
+          0,
+          0,
+          0
+        ],
+        "id": "field.change_period",
         "range": null
       },
       {
@@ -2028,6 +2266,48 @@
           0
         ],
         "id": "gas.refractivity",
+        "range": null
+      },
+      {
+        "description": "the host planet's magnetic field strength at a moon's orbit",
+        "dim": [
+          0,
+          1,
+          -2,
+          -1,
+          0,
+          0,
+          0
+        ],
+        "id": "host.field_at_orbit",
+        "range": null
+      },
+      {
+        "description": "pressure of the host's trapped plasma flowing past a moon",
+        "dim": [
+          -1,
+          1,
+          -2,
+          0,
+          0,
+          0,
+          0
+        ],
+        "id": "host.plasma_pressure_at_orbit",
+        "range": null
+      },
+      {
+        "description": "strength of a conducting layer's induced field relative to a perfect conductor's",
+        "dim": [
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0
+        ],
+        "id": "induction.amplitude",
         "range": null
       },
       {
@@ -2286,6 +2566,20 @@
         "range": null
       },
       {
+        "description": "effective height-integrated Pedersen conductance of one hemisphere's ionosphere",
+        "dim": [
+          -2,
+          -1,
+          3,
+          2,
+          0,
+          0,
+          0
+        ],
+        "id": "ionosphere.pedersen_conductance",
+        "range": null
+      },
+      {
         "description": "temperature at the base of a layer",
         "dim": [
           0,
@@ -2328,6 +2622,34 @@
         "range": null
       },
       {
+        "description": "electrical conductivity of a layer (salty ocean, magma, iron)",
+        "dim": [
+          -3,
+          -1,
+          3,
+          2,
+          0,
+          0,
+          0
+        ],
+        "id": "layer.electrical_conductivity",
+        "range": null
+      },
+      {
+        "description": "radius of a layer's top",
+        "dim": [
+          1,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0
+        ],
+        "id": "layer.outer_radius",
+        "range": null
+      },
+      {
         "description": "pressure added across a layer",
         "dim": [
           -1,
@@ -2342,7 +2664,7 @@
         "range": null
       },
       {
-        "description": "thickness of a layer, or depth within it",
+        "description": "thickness of a layer",
         "dim": [
           1,
           0,
@@ -2423,6 +2745,48 @@
           0
         ],
         "id": "magnetic.dynamo_field",
+        "range": null
+      },
+      {
+        "description": "distance beyond which trapped plasma stops turning with the planet (Hill distance)",
+        "dim": [
+          1,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0
+        ],
+        "id": "magnetosphere.corotation_limit",
+        "range": null
+      },
+      {
+        "description": "how quickly a magnetosphere's boundary flares out behind the nose (Shue exponent)",
+        "dim": [
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0
+        ],
+        "id": "magnetosphere.flaring",
+        "range": null
+      },
+      {
+        "description": "mass of plasma added to a magnetosphere each second (by a moon's volcanoes or geysers)",
+        "dim": [
+          0,
+          1,
+          -1,
+          0,
+          0,
+          0,
+          0
+        ],
+        "id": "magnetosphere.plasma_source_rate",
         "range": null
       },
       {
@@ -2838,6 +3202,118 @@
           0
         ],
         "id": "satellite.bulk_density",
+        "range": null
+      },
+      {
+        "description": "least momentum per charge a cosmic ray needs to arrive (Størmer cut-off)",
+        "dim": [
+          2,
+          1,
+          -3,
+          -1,
+          0,
+          0,
+          0
+        ],
+        "id": "shield.cutoff_rigidity",
+        "range": null
+      },
+      {
+        "description": "distance from a body's centre at which shielding is asked for",
+        "dim": [
+          1,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0
+        ],
+        "id": "shield.distance",
+        "range": null
+      },
+      {
+        "description": "cosmic-ray dose rate after field and air",
+        "dim": [
+          2,
+          0,
+          -3,
+          0,
+          0,
+          0,
+          0
+        ],
+        "id": "shield.dose_rate",
+        "range": null
+      },
+      {
+        "description": "cosmic-ray dose rate in open space at the body's orbit, unshielded",
+        "dim": [
+          2,
+          0,
+          -3,
+          0,
+          0,
+          0,
+          0
+        ],
+        "id": "shield.free_space_dose_rate",
+        "range": null
+      },
+      {
+        "description": "share of the no-cut-off ground dose left under a thick air at the cut-off",
+        "dim": [
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0
+        ],
+        "id": "shield.ground_share",
+        "range": null
+      },
+      {
+        "description": "latitude measured from a body's magnetic equator",
+        "dim": [
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0
+        ],
+        "id": "shield.magnetic_latitude",
+        "range": null
+      },
+      {
+        "description": "share of the sky not blocked by the body itself",
+        "dim": [
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0
+        ],
+        "id": "shield.open_sky",
+        "range": null
+      },
+      {
+        "description": "share of the free-space cosmic-ray dose carried by particles above the cut-off",
+        "dim": [
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0
+        ],
+        "id": "shield.space_share",
         "range": null
       },
       {

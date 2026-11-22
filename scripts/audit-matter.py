@@ -52,7 +52,9 @@ EXTS = {".rs", ".ts", ".json", ".svelte", ".mjs"}
 # The one crate allowed to type constants once MP1c lands.
 HOME = os.path.join("crates", "sse-reference")
 # Where the sheet itself lives: values here are the source, not copies.
-SHEET_HOMES = (HOME, os.path.join("packs", "base-reference"))
+# packs/base-sol is the catalogued Solar System: measured body facts, each
+# cited, checked against the sheet by scripts/build-base-sol.py.
+SHEET_HOMES = (HOME, os.path.join("packs", "base-reference"), os.path.join("packs", "base-sol"), os.path.join("crates", "sse-core", "src", "sheet.rs"))
 
 # Quantity catalogue: id, name, canonical value, unit, source, relative
 # tolerance for a match, and the unit scales the code might write it in.
@@ -187,7 +189,28 @@ def to_float(lit):
         return None
 
 
+def _tracked():
+    """The repo's files, tracked or new but not ignored (so built, gitignored
+    copies are never read),
+    or None outside a git checkout."""
+    import subprocess
+    try:
+        r = subprocess.run(["git", "-C", ROOT, "ls-files", "-z", "--cached", "--others", "--exclude-standard", "--"] + SCAN_DIRS, capture_output=True)
+    except OSError:
+        return None
+    if r.returncode != 0 or not os.path.isdir(os.path.join(ROOT, ".git")) and not r.stdout:
+        return None
+    return set(r.stdout.decode("utf-8").split("\0")) - {""}
+
+
 def walk():
+    tracked = _tracked()
+    for path in _walk_all():
+        if tracked is None or path.replace(os.sep, "/") in tracked:
+            yield path
+
+
+def _walk_all():
     for top in SCAN_DIRS:
         base = os.path.join(ROOT, top)
         for d, dirs, files in os.walk(base):

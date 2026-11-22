@@ -134,6 +134,61 @@ pub fn assess(
                 at_s: Some(best.1),
             });
         }
+        if let Some(prof) = &b.belts {
+            // The field model's belts: integrate the dose along the course,
+            // and at an end one radial crossing at escape speed.
+            let mut sv = 0.0;
+            let mut hours = 0.0;
+            for w in samples.windows(2) {
+                let (rb, _) = sys.at(b, w[0].t);
+                let r = norm(sub(w[0].r, rb));
+                let rate = prof.rate_sv_h(r, ship.shield_g_cm2);
+                if rate > 0.0 {
+                    let dt_h = (w[1].t - w[0].t).abs() / 3600.0;
+                    sv += rate * dt_h;
+                    hours += dt_h;
+                }
+            }
+            if ends {
+                let gm = GM_EARTH * b.mass_earth.max(1e-9);
+                let n = 64;
+                let (r0, r1) = (prof.inner_m.max(b.radius_m), prof.outer_m);
+                if r1 > r0 {
+                    for k in 0..n {
+                        let r = r0 * m::pow(r1 / r0, (k as f64 + 0.5) / n as f64);
+                        let dr = r0
+                            * (m::pow(r1 / r0, (k + 1) as f64 / n as f64)
+                                - m::pow(r1 / r0, k as f64 / n as f64));
+                        let v = m::sqrt(2.0 * gm / r).max(1.0);
+                        let dt_h = dr / v / 3600.0;
+                        sv += prof.rate_sv_h(r, ship.shield_g_cm2) * dt_h;
+                        hours += dt_h;
+                    }
+                }
+            }
+            let d = sv * 1000.0;
+            if hours > 0.0 && d > 0.0 {
+                dose += d;
+                if d >= rs.belt_reason_msv {
+                    reasons.push((
+                        "belts".into(),
+                        format!("{:.0} mSv in {}'s radiation belts", d, b.name),
+                    ));
+                }
+                hazards.push(Hazard {
+                    kind: "belts".into(),
+                    text: format!(
+                        "about {:.1} hours in {}'s radiation belts, {} mSv behind this shielding ({})",
+                        hours,
+                        b.name,
+                        if d < 1.0 { format!("{d:.2}") } else { format!("{d:.0}") },
+                        prof.source
+                    ),
+                    at_s: Some(best.1),
+                });
+            }
+            continue;
+        }
         let reach = belt_reach_radii(b, rs);
         let belts = reach.is_some();
         let reach = reach.unwrap_or(0.0);

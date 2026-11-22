@@ -293,3 +293,27 @@ fn a_pack_replaces_a_box_explicitly() {
         "{e:?}"
     );
 }
+
+#[test]
+fn the_catalogued_solar_system_pack_loads() {
+    // packs/base-sol (scripts/build-base-sol.py) is a manifest the kernel
+    // accepts, and every Sol body names a source the pack carries.
+    let m = PackManifest::from_json(include_str!("../../../packs/base-sol/pack.json")).unwrap();
+    assert_eq!(m.id, "sse.base-sol");
+    let doc: serde_json::Value =
+        serde_json::from_str(include_str!("../../../packs/base-sol/pack.json")).unwrap();
+    let sol = &doc["provides"]["other"]["sol"];
+    let srcs: Vec<&str> = sol["sources"]
+        .as_array()
+        .unwrap()
+        .iter()
+        .map(|s| s["id"].as_str().unwrap())
+        .collect();
+    let bodies = sol["bodies"].as_array().unwrap();
+    assert_eq!(bodies.len(), 12);
+    for b in bodies {
+        for (_, v) in b["values"].as_object().unwrap() {
+            assert!(srcs.contains(&v["src"].as_str().unwrap()), "{b}");
+        }
+    }
+}

@@ -4,6 +4,7 @@
 pub mod boxes;
 pub mod decl;
 pub mod flow;
+pub mod sheet;
 pub mod toy;
 pub mod value;
 

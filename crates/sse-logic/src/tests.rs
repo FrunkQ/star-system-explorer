@@ -166,8 +166,9 @@ impl T {
 fn every_block_is_logic_and_explained() {
     let r = crate::registry();
     let ids: Vec<&str> = r.decls().map(|d| d.id.as_str()).collect();
-    assert_eq!(ids.len(), 44, "{ids:?}");
-    for d in r.decls() {
+    assert_eq!(ids.len(), 45, "{ids:?}");
+    // The Look up block (MP17a) is an engine block: the Reference screen is its editor.
+    for d in r.decls().filter(|d| d.id != crate::lookup::ID) {
         assert_eq!(d.class, Some(sse_flow::BlockClass::Logic), "{}", d.id);
         assert!(
             !d.explain.curious.is_empty() && !d.explain.science.is_empty(),

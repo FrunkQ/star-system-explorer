@@ -2193,6 +2193,9 @@ fn templates_through_the_api() {
         &mut k,
         serde_json::json!({"op":"resolved_system","system":sys}),
     );
+    assert_eq!(v["frame"]["evidence"], "drawn", "{v}");
+    let to_g = &v["frame"]["to_galactic"];
+    assert_eq!(to_g.as_array().map(|r| r.len()), Some(3), "{v}");
     let f = &v["facts"];
     assert_eq!(f[&ship]["retired"], true, "{v}");
     assert_eq!(f[&ship]["name"], "Black Gull");
@@ -3129,4 +3132,67 @@ fn classify_preview_labels_the_campaign_under_a_candidate_stack() {
         serde_json::json!({"op":"classify_preview","packs":[atlas],"scheme":"nope"}),
     );
     assert_eq!(unknown["code"], "unknown_scheme", "{unknown}");
+}
+
+#[test]
+fn the_window_says_how_its_frame_sits_in_the_galaxy() {
+    let mut k = crate::Kernel::new();
+    let v = send(
+        &mut k,
+        serde_json::json!({"op":"window_view","fixture":"sol","from":"Earth"}),
+    );
+    let f = &v["view"]["frame"];
+    assert_eq!(f["evidence"], "measured", "{v}");
+    let pl = f["pole_l_deg"].as_f64().unwrap();
+    assert!((pl - 96.38).abs() < 0.01, "{f}");
+    // An inline system with no open universe has no keyed frame.
+    let nav = serde_json::to_value(sse_nav::scenario::sol()).unwrap();
+    let v = send(
+        &mut k,
+        serde_json::json!({"op":"window_view","nav":nav,"from":"Earth","system":"u:x/sys:1"}),
+    );
+    assert!(v["view"]["frame"].is_null(), "{v}");
+}
+
+/// `read_field` with fixture "solar-system" (MF14a, for the renderer's
+/// field lines): six magnetised planets with their measured dipoles, read
+/// with the real data sheet's constants.
+#[test]
+fn read_field_solar_system_fixture() {
+    let mut k = crate::Kernel::new();
+    let pack = |p: &str| -> serde_json::Value {
+        serde_json::from_str(&std::fs::read_to_string(root().join(p)).unwrap()).unwrap()
+    };
+    let send = |k: &mut crate::Kernel, v: serde_json::Value| -> serde_json::Value {
+        serde_json::from_str(&k.handle_json(&v.to_string())).unwrap()
+    };
+    let r = send(
+        &mut k,
+        serde_json::json!({"op": "load_stack", "packs": [pack("packs/base-reference/pack.json")]}),
+    );
+    assert_eq!(r["type"], "stack_loaded", "{r}");
+    let r = send(
+        &mut k,
+        serde_json::json!({"op": "read_field", "fixture": "solar-system"}),
+    );
+    assert_eq!(r["type"], "field_read", "{r}");
+    let b = r["bodies"].as_array().unwrap();
+    let names: Vec<&str> = b.iter().map(|x| x["name"].as_str().unwrap()).collect();
+    assert_eq!(names.len(), 6, "{names:?}");
+    let earth = b.iter().find(|x| x["address"] == "sol/earth").unwrap();
+    let g10 = earth["field"]["g10_t"].as_f64().unwrap();
+    // Earth's g10 is about −29,400 nT (IGRF); the dipole read from the
+    // moment and tilt lands within a few per cent.
+    assert!((-31e-6..-28e-6).contains(&g10), "{g10}");
+    assert!(earth["belts"].is_object(), "{earth}");
+    // Parker's spiral at 1 au sits near 45 degrees (Parker 1958).
+    let angle = earth["wind_field"]["spiral_angle_deg"].as_f64().unwrap();
+    assert!((38.0..52.0).contains(&angle), "{angle}");
+    let bt = earth["wind_field"]["magnitude_t"].as_f64().unwrap();
+    assert!((3e-9..7e-9).contains(&bt), "{bt}");
+    let jupiter = b.iter().find(|x| x["address"] == "sol/jupiter").unwrap();
+    assert!(
+        jupiter["field"]["g10_t"].as_f64().unwrap() > 3e-4,
+        "{jupiter}"
+    );
 }

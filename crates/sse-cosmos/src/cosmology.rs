@@ -22,7 +22,9 @@ pub const MPC_M: f64 = 3.085_677_581_491_367e22;
 /// Critical density today per h^2, solar masses per cubic Mpc (3 H^2 / 8 pi G with H = 100 km/s/Mpc).
 pub const RHO_CRIT_H2: f64 = 2.775_366e11;
 
-/// Pack parameters (`provides.other.cosmology`), defaults Planck 2018 (TT,TE,EE+lowE+lensing+BAO, table 2 last column).
+/// The universe's parameters. The measured ones are the master data
+/// sheet's Cosmos group (DM1), read through the constants handle; only
+/// `now_gyr`, a model setting, comes from `provides.other.cosmology`.
 #[derive(Clone, PartialEq, Debug, Serialize, Deserialize)]
 pub struct Params {
     /// Hubble constant, km/s/Mpc.
@@ -39,18 +41,26 @@ pub struct Params {
     pub now_gyr: f64,
 }
 
-impl Default for Params {
-    fn default() -> Self {
+impl Params {
+    /// The measured parameters from the Cosmos group `c`, with `now_gyr`.
+    pub fn from_cosmos(c: &sse_core::constants::Cosmos, now_gyr: f64) -> Self {
         Params {
-            h0: 67.66,
-            omega_m: 0.3111,
-            omega_b: 0.04897,
-            sigma8: 0.8102,
-            n_s: 0.9665,
-            t_cmb: 2.7255,
-            n_eff: 3.046,
-            now_gyr: 13.8,
+            h0: c.h0,
+            omega_m: c.omega_m,
+            omega_b: c.omega_b,
+            sigma8: c.sigma8,
+            n_s: c.n_s,
+            t_cmb: c.t_cmb,
+            n_eff: c.n_eff,
+            now_gyr,
         }
+    }
+}
+
+impl Default for Params {
+    /// The real universe (the sheet's values as compiled), now at 13.8 Gyr.
+    fn default() -> Self {
+        Self::from_cosmos(&sse_core::constants::Cosmos::REAL, 13.8)
     }
 }
 
@@ -178,6 +188,41 @@ impl Cosmology {
             }
         }
         m::pow(10.0, 0.5 * (lo + hi))
+    }
+
+    /// Comoving distance light covers from scale factor `a` to now, Mpc:
+    /// c / H0 times the integral of da / (a² E(a)) from a to 1 (Hogg 1999,
+    /// arXiv:astro-ph/9905116, eq. 15), by fixed quadrature in ln a.
+    pub fn comoving_mpc(&self, a: f64) -> f64 {
+        if a >= 1.0 {
+            return 0.0;
+        }
+        let c_mpc_gyr = sse_core::quantity::consts::C * YEAR_S * 1.0e9 / MPC_M;
+        let la = m::ln(a.max(1.0e-12));
+        // da / (a² E) = d(ln a) / (a E).
+        let f = |x: f64| {
+            let aa = m::exp(x);
+            1.0 / (aa * self.e(aa))
+        };
+        quad(&f, la, 0.0, 64) * c_mpc_gyr * self.hubble_time_gyr
+    }
+
+    /// The scale factor at which light now arriving from comoving distance
+    /// `d_mpc` set out (fixed 60-step bisection in ln a).
+    pub fn scale_at_comoving(&self, d_mpc: f64) -> f64 {
+        if d_mpc <= 0.0 {
+            return 1.0;
+        }
+        let (mut lo, mut hi) = (-12.0_f64, 0.0_f64);
+        for _ in 0..60 {
+            let mid = 0.5 * (lo + hi);
+            if self.comoving_mpc(m::exp(mid)) > d_mpc {
+                lo = mid;
+            } else {
+                hi = mid;
+            }
+        }
+        m::exp(0.5 * (lo + hi))
     }
 
     pub fn age_gyr(&self) -> f64 {

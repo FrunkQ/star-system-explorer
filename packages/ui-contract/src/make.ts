@@ -4,8 +4,9 @@
 // touches the open universe; adopting a preview into the campaign is a later
 // step (see handover/packages/V13.md).
 import type { Json } from "./json.ts";
-import { KM_PER_AU, type SceneFact, type SceneSubject, type SystemScene } from "./scene.ts";
+import type { SceneFact, SceneSubject, SystemScene } from "./scene.ts";
 import { YEAR_S } from "./intent.ts";
+import { constant } from "./sheet.ts";
 
 // ── Kernel shapes (the parts the screens read; full types in packages/contracts) ──
 
@@ -107,13 +108,13 @@ export interface FormationRan {
 
 // ── Shared helpers ──
 
-export const M_EARTH = 5.9722e24;
-export const M_SUN = 1.98847e30;
-export const R_EARTH_M = 6_371_000;
-export const R_SUN_M = 695_700_000;
-export const AU_M = KM_PER_AU * 1000;
+export const M_EARTH = constant("M_earth");
+export const M_SUN = constant("M_sun");
+export const R_EARTH_M = constant("R_earth_mean");
+export const R_SUN_M = constant("R_sun");
+export const AU_M = constant("au");
 /** The Sun's luminosity (IAU 2015 nominal), in watts. */
-export const L_SUN_W = 3.828e26;
+export const L_SUN_W = constant("L_sun");
 
 const round = (v: number, d = 3) => Number(v.toPrecision(d));
 
@@ -521,7 +522,7 @@ export function sceneFromResolved(r: SystemResolved, title?: string): SystemScen
         ...(band ? { band_au: band, shape: v3BeltShape(name, band) } : a !== primary && sma !== undefined ? { orbit: { a_au: sma / AU_M, phase_deg: phase(i++) } } : {}),
         facts: out,
         stamps: r.evidence
-          ? [grown ? "generated" : "imported", ...(classes(a).has("authored") ? ["authored"] : []), ...(classes(a).has("catalogued") ? ["catalogued"] : []), ...(classes(a).has("authored-impossible") ? ["authored", "impossible"] : []), ...(s?.speculative ? ["speculative"] : [])].filter((x, j, all) => all.indexOf(x) === j)
+          ? [...(grown ? ["generated"] : r.source === "v3" ? ["imported"] : []), ...(classes(a).has("authored") ? ["authored"] : []), ...(classes(a).has("catalogued") ? ["catalogued"] : []), ...(classes(a).has("authored-impossible") ? ["authored", "impossible"] : []), ...(s?.speculative ? ["speculative"] : [])].filter((x, j, all) => all.indexOf(x) === j)
           : grown ? ["generated", ...(s?.speculative ? ["speculative"] : [])] : ["authored", "imported"],
         tags: mass !== undefined && kind !== "star" ? [sizeTag(mass / M_EARTH)] : [],
       };

@@ -142,7 +142,10 @@ fn the_reach_report_lists_every_block_once() {
             );
         }
     }
-    let all: std::collections::BTreeSet<String> = k.atoms.decls().map(|d| d.id.clone()).collect();
+    let mut all: std::collections::BTreeSet<String> =
+        k.atoms.decls().map(|d| d.id.clone()).collect();
+    // DM1: the cosmos chain's stages are listed beside the atoms.
+    all.extend(sse_atoms::reach::STAGES.iter().map(|(s, _)| s.to_string()));
     assert_eq!(seen, all);
     for (a, _) in sse_atoms::reach::DECLARED {
         assert!(all.contains(*a), "declared block {a} is not an atom");
@@ -218,6 +221,40 @@ fn the_base_sheet_loads_in_a_stack() {
     assert_eq!(g["in_force"], g["real"], "{g}");
 }
 
+/// MP17: `phase_at` through the kernel, reading water's map (MP18).
+#[test]
+fn phase_at_answers_through_the_kernel() {
+    let path = root().join("packs/base-reference/pack.json");
+    let sheet: serde_json::Value =
+        serde_json::from_str(&std::fs::read_to_string(&path).unwrap()).unwrap();
+    let mut k = crate::Kernel::new();
+    let r = send(
+        &mut k,
+        serde_json::json!({"op": "load_stack", "packs": [
+            pack("tests/fixtures/packs/base-physics.json"), sheet]}),
+    );
+    assert_eq!(r["type"], "stack_loaded", "{r}");
+    let at = |k: &mut crate::Kernel, p: f64, t: f64| {
+        send(
+            k,
+            serde_json::json!({"op": "phase_at", "substance": "h2o", "p_pa": p, "t_k": t}),
+        )
+    };
+    let r = at(&mut k, 101_325.0, 300.0);
+    assert_eq!(r["type"], "matter", "{r}");
+    assert_eq!(r["value"]["phase"], "h2o.liquid", "{r}");
+    assert_eq!(r["value"]["from"], "table", "{r}");
+    assert_eq!(r["value"]["grade"], "measured", "{r}");
+    assert_eq!(at(&mut k, 101_325.0, 250.0)["value"]["phase"], "h2o.ice_ih");
+    // Ice VI under Ganymede's ocean, by the same question.
+    assert_eq!(at(&mut k, 1.0e9, 270.0)["value"]["phase"], "h2o.ice_vi");
+    let r = send(
+        &mut k,
+        serde_json::json!({"op": "phase_at", "substance": "unobtainium", "p_pa": 1.0, "t_k": 300.0}),
+    );
+    assert_eq!(r["type"], "error", "{r}");
+}
+
 /// MP1c part 2: with twice G the Sun is 16 times as bright and twice as
 /// wide by stellar homology, its lifetime a sixteenth, and each of those
 /// values carries the ESTIMATED law. The real kernel stamps nothing. (At
@@ -265,5 +302,296 @@ fn doubling_g_makes_the_sun_estimated_sixteen_times_brighter() {
             "{q}: {b}"
         );
         assert!(a[q].get("estimated").is_none(), "{q}: {a}");
+    }
+}
+
+fn lookup_kernel(edit: bool) -> crate::Kernel {
+    let mut packs = vec![
+        pack("tests/fixtures/packs/base-physics.json"),
+        pack("packs/base-reference/pack.json"),
+        pack("tests/fixtures/packs/lookup-flows.json"),
+    ];
+    if edit {
+        packs.push(pack("tests/fixtures/packs/lookup-edit.json"));
+    }
+    let mut k = crate::Kernel::new();
+    let r = send(
+        &mut k,
+        serde_json::json!({"op": "load_stack", "packs": packs}),
+    );
+    assert_eq!(r["type"], "stack_loaded", "{r}");
+    k
+}
+
+/// MP17a: the Look up block reads the sheet. Water's latent heat is the
+/// sheet's value; the density at 1 GPa and 270 K is ice VI's own; a row
+/// without the property answers known = false; doubling the latent heat in
+/// a pack moves only the flow that reads it; "used by" lists the flows that
+/// wire a Look up block to the row.
+#[test]
+fn the_look_up_block_reads_the_sheet() {
+    let mut k = lookup_kernel(false);
+    let m = serde_json::json!({"mass": {"value": 1.0}});
+    let heat = derive(&mut k, "test.water-boil-heat", m.clone());
+    assert_eq!(heat["test.latent"]["value"], 2.468e6, "{heat}");
+    let at = |k: &mut crate::Kernel, p: f64, t: f64| {
+        derive(
+            k,
+            "test.water-density-at",
+            serde_json::json!({"p": {"value": p}, "t": {"value": t}}),
+        )
+    };
+    let ice6 = at(&mut k, 1.0e9, 270.0);
+    let d6 = ice6["test.density"]["value"].as_f64().unwrap();
+    assert!(
+        (1250.0..1400.0).contains(&d6),
+        "ice VI is about 1.3 g/cm3: {ice6}"
+    );
+    let liquid = at(&mut k, 101_325.0, 300.0)["test.density"]["value"]
+        .as_f64()
+        .unwrap();
+    assert!((990.0..1010.0).contains(&liquid), "{liquid}");
+    let none = derive(&mut k, "test.iron-density", m.clone());
+    assert_eq!(none["test.strength"]["value"], 0.0, "{none}");
+
+    // Change the sheet: only the flow that reads the changed value moves.
+    let mut e = lookup_kernel(true);
+    assert_eq!(
+        derive(&mut e, "test.water-boil-heat", m.clone())["test.latent"]["value"],
+        4.936e6
+    );
+    assert_eq!(at(&mut e, 1.0e9, 270.0), ice6);
+    assert_eq!(derive(&mut e, "test.iron-density", m), none);
+
+    // Used by, from the wiring.
+    let r = send(
+        &mut k,
+        serde_json::json!({"op": "read_matter", "table": "substances", "id": "h2o"}),
+    );
+    let used: Vec<&str> = r["value"]["used_by"]
+        .as_array()
+        .unwrap()
+        .iter()
+        .map(|u| u["flow"].as_str().unwrap())
+        .collect();
+    assert_eq!(
+        used,
+        [
+            "test.iron-density",
+            "test.water-boil-heat",
+            "test.water-density-at"
+        ],
+        "{r}"
+    );
+    let r = send(
+        &mut k,
+        serde_json::json!({"op": "read_matter", "table": "substances", "id": "co2"}),
+    );
+    assert_eq!(r["value"]["used_by"], serde_json::json!([]), "{r}");
+}
+
+/// A Look up block naming a row the sheet lacks, or with no sheet in the
+/// stack, refuses to load, saying why.
+#[test]
+fn a_look_up_block_with_no_row_or_no_sheet_is_refused() {
+    let mut flows = pack("tests/fixtures/packs/lookup-flows.json");
+    flows["provides"]["flows"][0]["nodes"][0]["config"]["what"] = "unobtainium".into();
+    let mut k = crate::Kernel::new();
+    let r = send(
+        &mut k,
+        serde_json::json!({"op": "load_stack", "packs": [
+            pack("tests/fixtures/packs/base-physics.json"),
+            pack("packs/base-reference/pack.json"), flows]}),
+    );
+    assert_eq!(r["type"], "stack_rejected", "{r}");
+    assert!(r.to_string().contains("unobtainium"), "{r}");
+    let r = send(
+        &mut k,
+        serde_json::json!({"op": "load_stack", "packs": [
+            pack("tests/fixtures/packs/base-physics.json"),
+            pack("tests/fixtures/packs/lookup-flows.json")]}),
+    );
+    assert_eq!(r["type"], "stack_rejected", "{r}");
+    assert!(r.to_string().contains("master data sheet"), "{r}");
+}
+
+/// DM1: the Cosmos group on the sheet. Unedited, the cosmos chain gives
+/// exactly what it gave before the parameters moved to the sheet; with twice
+/// the dark matter it follows (expansion, ages, epochs), the reach report
+/// says so, and nothing leaks into the next call.
+#[test]
+fn more_dark_matter_follows_through_the_cosmos_chain() {
+    let chart = |packs: Vec<serde_json::Value>| {
+        let mut k = crate::Kernel::new();
+        if !packs.is_empty() {
+            let r = send(
+                &mut k,
+                serde_json::json!({"op": "load_stack", "packs": packs}),
+            );
+            assert_eq!(r["type"], "stack_loaded", "{r}");
+        }
+        let r = send(
+            &mut k,
+            serde_json::json!({"op": "open_universe", "id": "g3", "seed": "g3"}),
+        );
+        assert_eq!(r["type"], "universe_opened", "{r}");
+        let c = send(
+            &mut k,
+            serde_json::json!({"op": "galaxy_chart", "halo": "milky-way-like"}),
+        );
+        assert_eq!(c["type"], "galaxy_charted", "{c}");
+        (k, c)
+    };
+    let base = || {
+        vec![
+            pack("tests/fixtures/packs/base-physics.json"),
+            pack("packs/base-reference/pack.json"),
+        ]
+    };
+    let (_, none) = chart(vec![]);
+    let (mut real, sheet) = chart(base());
+    assert_eq!(none, sheet, "an unedited sheet changes nothing");
+    let mut more = base();
+    more.push(pack("tests/fixtures/packs/reference-more-dark-matter.json"));
+    let (mut k, dark) = chart(more);
+    assert_ne!(dark["chart"]["epochs"], sheet["chart"]["epochs"]);
+    assert_ne!(dark["chart"]["history"], sheet["chart"]["history"]);
+
+    let r = send(
+        &mut k,
+        serde_json::json!({"op": "read_reach", "constant": "Omega_c"}),
+    );
+    assert_eq!(r["type"], "reach", "{r}");
+    assert_eq!(r["real"], 0.2607228);
+    assert_eq!(r["in_force"], 0.5214456);
+    let find = |g: &str, b: &str| {
+        r[g].as_array()
+            .unwrap()
+            .iter()
+            .find(|x| x["block"] == b)
+            .cloned()
+            .unwrap_or_else(|| panic!("{b} not in {g}: {r}"))
+    };
+    // The expansion reads Omega_m, which rests on Omega_c.
+    assert_eq!(find("follows", "sse.cosmos.expansion")["uses_it"], true);
+    assert_eq!(find("follows", "sse.cosmos.baryon_share")["uses_it"], true);
+    assert!(find("estimated", "sse.cosmos.major_mergers")["law"]
+        .as_str()
+        .unwrap()
+        .contains("Fakhouri"));
+    find("cannot_follow", "sse.cosmos.galaxy_regulator");
+    // The worked-out rows move with it on the sheet.
+    let m = send(
+        &mut k,
+        serde_json::json!({"op": "read_matter", "table": "constants", "id": "Omega_m"}),
+    );
+    let om = m["value"]["worked"]["value"]["v"].as_f64().unwrap();
+    assert!(
+        (om - (0.04897 + 0.5214456 + 0.0014072)).abs() < 1e-12,
+        "{m}"
+    );
+    // The real kernel still reads Planck's dark matter, and the handle is back.
+    let r = send(
+        &mut real,
+        serde_json::json!({"op": "read_reach", "constant": "Omega_c"}),
+    );
+    assert_eq!(r["in_force"], r["real"], "{r}");
+    assert_eq!(
+        sse_core::constants::cosmos(),
+        sse_core::constants::Cosmos::REAL
+    );
+}
+
+/// DM1: dark matter and dark energy carry the "theoretical" mark with the
+/// line that says what would change the picture, and the Cosmos page's
+/// notes (the particle route) come with the listing.
+#[test]
+fn dark_matter_is_marked_theoretical_on_the_sheet() {
+    let mut k = crate::Kernel::new();
+    let r = send(
+        &mut k,
+        serde_json::json!({"op": "load_stack", "packs": [
+            pack("tests/fixtures/packs/base-physics.json"), pack("packs/base-reference/pack.json")]}),
+    );
+    assert_eq!(r["type"], "stack_loaded", "{r}");
+    for id in [
+        "Omega_c",
+        "Omega_Lambda",
+        "w0",
+        "wa",
+        "m_wdm",
+        "sigma_dm",
+        "m_fdm",
+    ] {
+        let m = send(
+            &mut k,
+            serde_json::json!({"op": "read_matter", "table": "constants", "id": id}),
+        );
+        let row = &m["value"]["row"];
+        assert_eq!(row["mark"], "theoretical", "{id}: {m}");
+        assert!(row["mark_note"].as_str().unwrap().len() > 40, "{id}");
+        assert_eq!(row["group"], "cosmos");
+    }
+    // A group note's sources read by id (MP10 asks for their text and DOI).
+    let s = send(
+        &mut k,
+        serde_json::json!({"op": "read_matter", "table": "sources", "id": "clowe2006"}),
+    );
+    assert_eq!(s["value"]["row"]["doi"], "10.1086/508162", "{s}");
+    for id in ["H0", "Omega_b", "sigma8", "T_cmb"] {
+        let m = send(
+            &mut k,
+            serde_json::json!({"op": "read_matter", "table": "constants", "id": id}),
+        );
+        assert!(m["value"]["row"]["mark"].is_null(), "{id} is measured: {m}");
+    }
+    let l = send(&mut k, serde_json::json!({"op": "read_matter"}));
+    let cosmos = &l["value"]["groups"]["cosmos"];
+    assert_eq!(cosmos["name"], "Cosmos", "{l}");
+    assert!(cosmos["notes"][0]["text"]
+        .as_str()
+        .unwrap()
+        .contains("particle route"));
+}
+
+/// DM6: with G drifting (fictional fixture), a year's length at each date
+/// follows Kepler's factor P ∝ G^(-1/2), read from the stack's sheet by
+/// date; today's year is the real one, and the stack without the law gives
+/// the same handle at every date.
+#[test]
+fn a_drifting_g_changes_the_year_by_keplers_factor_at_each_date() {
+    let sheet = |extra: Option<&str>| {
+        let mut packs = vec![serde_json::from_value::<sse_pack::PackManifest>(pack(
+            "packs/base-reference/pack.json",
+        ))
+        .unwrap()];
+        if let Some(p) = extra {
+            packs.push(serde_json::from_value(pack(p)).unwrap());
+        }
+        sse_reference::Reference::from_packs(&packs).unwrap()
+    };
+    let atoms = sse_atoms::atoms();
+    let period = atoms
+        .iter()
+        .find(|a| a.decl().id == "sse.orbit.period")
+        .unwrap();
+    let year = |r: &sse_reference::Reference, t: f64| {
+        sse_core::constants::with(r.handle_on(t), || {
+            period
+                .eval(&[1.495_978_707e11, 1.988_409_870_698_051e30], &[])
+                .unwrap()[0]
+        })
+    };
+    let real = sheet(None);
+    let drift = sheet(Some("tests/fixtures/packs/reference-drifting-g.json"));
+    let now = year(&real, 13.8);
+    assert_eq!(year(&drift, 13.8), now);
+    assert_eq!(year(&real, 12.8), now, "no law, no history");
+    for (t, g_ratio) in [(12.8, 1.1), (13.3, 1.05), (8.8, 1.5)] {
+        let ratio = year(&drift, t) / now;
+        assert!(
+            (ratio - 1.0 / sse_core::math::sqrt(g_ratio)).abs() < 1e-12,
+            "{t}: {ratio}"
+        );
     }
 }

@@ -90,6 +90,9 @@ pub struct RadiationSettings {
     /// Solar wind dynamic pressure at 1 au, Pa; it falls as the distance squared.
     #[serde(default = "wind_pressure")]
     pub wind_pressure_1au_pa: f64,
+    /// Solar wind speed, m/s (slow wind near the ecliptic).
+    #[serde(default = "wind_speed")]
+    pub wind_speed_m_s: f64,
     /// With no moment known, bodies of at least this mass are taken to have
     /// belts (giants all have dynamos); a fallback until MF7.
     pub belt_min_mass_earth: f64,
@@ -248,6 +251,9 @@ impl Ship {
             .is_none_or(|r| r.iter().any(|c| c == capability))
     }
 }
+fn wind_speed() -> f64 {
+    4.0e5
+}
 fn belt_reason() -> f64 {
     10.0
 }
@@ -331,6 +337,70 @@ pub struct NavBody {
     /// Magnetic dipole moment, A m², where it is known.
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub magnetic_moment_a_m2: Option<f64>,
+    /// The body's radiation belts from the field model (MF7 `read_field`
+    /// `belts`), when it has been read; otherwise the MF0 stand-in applies.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub belts: Option<BeltProfile>,
+}
+
+/// Belt dose against distance and shielding, as the field model gives it.
+#[derive(Clone, PartialEq, Debug, Serialize, Deserialize)]
+pub struct BeltProfile {
+    pub inner_m: f64,
+    pub outer_m: f64,
+    /// Aluminium shields the doses are behind, g/cm², ascending.
+    pub shields_g_cm2: Vec<f64>,
+    /// Shells outward: distance from the centre, m, and dose, Sv an hour,
+    /// behind each shield.
+    pub shells: Vec<(f64, Vec<f64>)>,
+    /// Where the numbers came from (shown with the hazard).
+    #[serde(default)]
+    pub source: String,
+}
+
+impl BeltProfile {
+    /// Dose rate, Sv an hour, at distance `r_m` behind `shield_g_cm2`:
+    /// log-linear between shells in distance, log-log between shields; zero
+    /// outside the belts; the thickest shield's value beyond it (no
+    /// extrapolation past the model's data).
+    pub fn rate_sv_h(&self, r_m: f64, shield_g_cm2: f64) -> f64 {
+        use sse_core::math as m;
+        if self.shells.is_empty() || r_m < self.inner_m || r_m > self.outer_m {
+            return 0.0;
+        }
+        let by_shield = |d: &[f64]| -> f64 {
+            let s = &self.shields_g_cm2;
+            if d.is_empty() || s.is_empty() {
+                return 0.0;
+            }
+            let x = shield_g_cm2.max(s[0]);
+            if x >= s[s.len() - 1] {
+                return d[d.len().min(s.len()) - 1];
+            }
+            let i = s.iter().position(|&v| v > x).unwrap_or(s.len() - 1).max(1);
+            let (a, b) = (d[i - 1].max(1e-300), d[i].max(1e-300));
+            let f = (m::ln(x) - m::ln(s[i - 1])) / (m::ln(s[i]) - m::ln(s[i - 1]));
+            m::exp(m::ln(a) + f * (m::ln(b) - m::ln(a)))
+        };
+        let sh = &self.shells;
+        if r_m <= sh[0].0 {
+            return by_shield(&sh[0].1);
+        }
+        if r_m >= sh[sh.len() - 1].0 {
+            return by_shield(&sh[sh.len() - 1].1);
+        }
+        let i = sh
+            .iter()
+            .position(|s| s.0 > r_m)
+            .unwrap_or(sh.len() - 1)
+            .max(1);
+        let (a, b) = (
+            by_shield(&sh[i - 1].1).max(1e-300),
+            by_shield(&sh[i].1).max(1e-300),
+        );
+        let f = (m::ln(r_m) - m::ln(sh[i - 1].0)) / (m::ln(sh[i].0) - m::ln(sh[i - 1].0));
+        m::exp(m::ln(a) + f * (m::ln(b) - m::ln(a)))
+    }
 }
 
 #[derive(Clone, PartialEq, Debug, Serialize, Deserialize)]

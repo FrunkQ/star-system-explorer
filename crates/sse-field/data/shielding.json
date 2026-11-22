@@ -1,0 +1,9 @@
+{
+ "about": "Photon coefficients for belt shielding (MF7 part 2b-i): the shield is aluminium, the dose point liquid water as a stand-in for soft tissue. Copied from NIST Standard Reference Database 126 (Hubbell and Seltzer 2004), photon energies 0.05 to 20 MeV.",
+ "shield": {"material": "aluminium", "z": 13, "src": {"what": "Hubbell and Seltzer 2004, aluminium (Z = 13)", "url": "https://physics.nist.gov/PhysRefData/XrayMassCoef/ElemTab/z13.html"}},
+ "tissue": {"material": "liquid water", "src": {"what": "Hubbell and Seltzer 2004, water, liquid", "url": "https://physics.nist.gov/PhysRefData/XrayMassCoef/ComTab/water.html"}},
+ "yield": {"k_per_mev": 6e-4, "src": {"what": "Koch and Motz 1959, radiation yield", "doi": "10.1103/RevModPhys.31.920"}},
+ "energy_mev": [0.05, 0.06, 0.08, 0.1, 0.15, 0.2, 0.3, 0.4, 0.5, 0.6, 0.8, 1.0, 1.25, 1.5, 2.0, 3.0, 4.0, 5.0, 6.0, 8.0, 10.0, 15.0, 20.0],
+ "shield_mu_rho_cm2_g": [0.3681, 0.2778, 0.2018, 0.1704, 0.1378, 0.1223, 0.1042, 0.09276, 0.08445, 0.07802, 0.06841, 0.06146, 0.05496, 0.05006, 0.04324, 0.03541, 0.03106, 0.02836, 0.02655, 0.02437, 0.02318, 0.02195, 0.02168],
+ "tissue_mu_en_rho_cm2_g": [0.04223, 0.03190, 0.02597, 0.02546, 0.02764, 0.02967, 0.03192, 0.03279, 0.03299, 0.03284, 0.03206, 0.03103, 0.02965, 0.02833, 0.02608, 0.02281, 0.02066, 0.01915, 0.01806, 0.01658, 0.01566, 0.01441, 0.01382]
+}

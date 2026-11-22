@@ -26,6 +26,11 @@ fn settings() -> Result<CosmologyPack, Response> {
     CosmologyPack::from_packs(&[base_cosmology_pack()]).map_err(|e| err("bad_pack", e))
 }
 
+/// The sky draw's settings (Y2).
+pub(crate) fn sky_params() -> Result<sse_cosmos::sky::SkyParams, Response> {
+    Ok(settings()?.sky)
+}
+
 fn web(c: &Cosmology, cp: &CosmologyPack, seed: &Seed, root: &Address) -> Result<Web, Response> {
     Web::new(
         c,
@@ -499,6 +504,26 @@ pub(crate) fn with_stars<R>(
     params: Option<sse_cosmos::stars::StarParams>,
     f: impl FnOnce(&sse_cosmos::stars::Stars, f64) -> Result<R, Response>,
 ) -> Result<R, Response> {
+    with_world(seed, root, params, |st, _, now| f(st, now))
+}
+
+/// The cosmos around the campaign's galaxy: the cosmology, the web's
+/// haloes and the pack's settings (Y4 reads other galaxies through it).
+pub(crate) struct World<'a> {
+    pub c: &'a Cosmology,
+    pub hs: &'a Haloes<'a>,
+    pub cp: &'a CosmologyPack,
+    /// Our galaxy's own halo.
+    pub host: &'a sse_cosmos::haloes::Halo,
+}
+
+/// As `with_stars`, with the world around the galaxy too.
+pub(crate) fn with_world<R>(
+    seed: &Seed,
+    root: &Address,
+    params: Option<sse_cosmos::stars::StarParams>,
+    f: impl FnOnce(&sse_cosmos::stars::Stars, &World, f64) -> Result<R, Response>,
+) -> Result<R, Response> {
     let cp = settings()?;
     let c = Cosmology::new(cp.params.clone());
     let w = web(&c, &cp, seed, root)?;
@@ -530,7 +555,13 @@ pub(crate) fn with_stars<R>(
         seed: *seed,
         galaxy: addr,
     };
-    f(&st, g.now.t_gyr * 1000.0)
+    let world = World {
+        c: &c,
+        hs: &hs,
+        cp: &cp,
+        host: &h,
+    };
+    f(&st, &world, g.now.t_gyr * 1000.0)
 }
 
 /// One 10 pc cell's systems at a time: the fill as today's rules draw it,
@@ -746,6 +777,240 @@ mod tests {
         assert!(bad.contains("unknown_halo"), "{bad}");
     }
 
+    /// Stars brighter than V = 3, 4 and 5 over the whole sky: about 171, 513
+    /// and 1,602 (the standard cumulative counts, as tabulated at
+    /// https://en.wikipedia.org/wiki/Apparent_magnitude and
+    /// https://oeis.org/A053406).
+    const REAL_SKY: [(f64, f64); 3] = [(3.0, 171.0), (4.0, 513.0), (5.0, 1602.0)];
+
+    fn n_brighter(sky: &serde_json::Value, mag: f64) -> f64 {
+        sky["counts"]
+            .as_array()
+            .unwrap()
+            .iter()
+            .find(|c| c["mag"].as_f64() == Some(mag))
+            .map_or(0.0, |c| c["n"].as_f64().unwrap())
+    }
+
+    #[test]
+    fn the_sky_from_the_suns_place_counts_like_the_real_one() {
+        let mut k = open();
+        let r = ask(
+            &mut k,
+            r#"{"op":"sky_from_here","limit_mag":5,"bands":["B","V"],"galaxies":false}"#,
+        );
+        assert_eq!(r["type"], "sky", "{r}");
+        let sky = &r["sky"];
+        // A fill sky is statistical, and this galaxy is only like the Milky
+        // Way: within a factor of 1.5 either way of the real counts.
+        for (mag, real) in REAL_SKY {
+            let n = n_brighter(sky, mag);
+            assert!(
+                n > real / 1.5 && n < real * 1.5,
+                "V < {mag}: {n} against {real}"
+            );
+        }
+        let stars = sky["stars"].as_array().unwrap();
+        assert!(!stars.is_empty());
+        // Brightest first, each at or above the limit.
+        for w in stars.windows(2) {
+            assert!(w[0]["mag"].as_f64() <= w[1]["mag"].as_f64());
+        }
+        assert!(stars.iter().all(|s| s["mag"].as_f64().unwrap() <= 5.0));
+        // Dust reddens: B-V excess is positive wherever A_V is.
+        let s = stars
+            .iter()
+            .find(|s| s["a_v"].as_f64().unwrap() > 0.05)
+            .unwrap();
+        assert!(s["colours"][0]["excess"].as_f64().unwrap() > 0.0, "{s}");
+
+        // A point's magnitude is its system's: a single star's photosphere
+        // read through the same sight line gives the same V.
+        let one = stars
+            .iter()
+            .find(|s| s["double"] == false && s["mag"].as_f64().unwrap() > 3.0)
+            .unwrap();
+        let c = &one["components"][0];
+        let pc = sse_core::Units::standard().get("pc").unwrap().scale;
+        let p = ask(
+            &mut k,
+            &serde_json::json!({
+                "op": "read_photometry",
+                "bands": ["V"],
+                "stars": [{
+                    "temperature_k": c["teff_k"],
+                    "radius_m": c["radius_m"],
+                    "distance_m": one["distance_pc"].as_f64().unwrap() * pc,
+                    "a_v": one["a_v"],
+                }],
+            })
+            .to_string(),
+        );
+        let v = p["stars"][0]["magnitudes"][0]["m_vega"].as_f64().unwrap();
+        assert!((v - one["mag"].as_f64().unwrap()).abs() < 1e-9, "{v} {one}");
+
+        // The star the sky finds is the one its cell draws.
+        let addr = one["address"].as_str().unwrap();
+        let cell: Vec<i64> = addr
+            .split("cell:")
+            .nth(1)
+            .unwrap()
+            .split('/')
+            .next()
+            .unwrap()
+            .split('_')
+            .map(|x| x.parse().unwrap())
+            .collect();
+        let drawn = ask(
+            &mut k,
+            &format!(
+                r#"{{"op":"star_cell","cell":[{},{},{}],"t_myr":{}}}"#,
+                cell[0], cell[1], cell[2], sky["t_myr"]
+            ),
+        );
+        let row = drawn["cell"]["systems"]
+            .as_array()
+            .unwrap()
+            .iter()
+            .find(|s| s["address"] == addr)
+            .unwrap_or_else(|| panic!("{addr} not drawn in its cell"));
+        assert_eq!(row["companions"].as_array().unwrap().len(), 0);
+    }
+
+    #[test]
+    fn the_sky_is_the_same_twice_and_a_promoted_star_appears_once() {
+        use sse_core::math as m;
+        let mut k = open();
+        let q = r#"{"op":"sky_from_here","limit_mag":3,"galaxies":false,"cone":{"l_deg":90,"b_deg":0,"half_angle_deg":60}}"#;
+        let a = ask(&mut k, q);
+        assert_eq!(a["type"], "sky", "{a}");
+        let b = ask(&mut k, q);
+        assert_eq!(a, b);
+        // Every star is inside the cone.
+        let stars = a["sky"]["stars"].as_array().unwrap();
+        assert!(stars.len() > 5, "{}", a["sky"]["counts"]);
+        for s in stars {
+            let (l, bb) = (s["l_deg"].as_f64().unwrap(), s["b_deg"].as_f64().unwrap());
+            let (l, bb) = (l.to_radians(), bb.to_radians());
+            let cos = m::cos(bb) * m::sin(l); // cos of the angle to (l 90, b 0)
+            assert!(cos >= m::cos(60f64.to_radians()) - 1e-9, "{s}");
+        }
+        // Promote one: it is still there once, now pinned, as bright.
+        let pick = &stars[stars.len() / 2];
+        let addr = pick["address"].as_str().unwrap();
+        let p = ask(
+            &mut k,
+            &format!(r#"{{"op":"promote_star","address":"{addr}"}}"#),
+        );
+        assert_eq!(p["type"], "star_promoted", "{p}");
+        let c = ask(&mut k, q);
+        let after = c["sky"]["stars"].as_array().unwrap();
+        let hits: Vec<_> = after.iter().filter(|s| s["address"] == addr).collect();
+        assert_eq!(hits.len(), 1);
+        assert_eq!(hits[0]["pinned"], true);
+        assert_eq!(hits[0]["mag"], pick["mag"]);
+        assert_eq!(after.len(), stars.len());
+    }
+
+    #[test]
+    fn other_galaxies_shine_as_their_mass_and_distance_say() {
+        let mut k = open();
+        let q = r#"{"op":"sky_from_here","limit_mag":9,"bands":["B","V"],"stars":false}"#;
+        let r = ask(&mut k, q);
+        assert_eq!(r["type"], "sky", "{r}");
+        let sky = &r["sky"];
+        assert!(sky["stars"].as_array().unwrap().is_empty());
+        let gs = sky["galaxies"].as_array().unwrap();
+        assert!(gs.len() >= 3, "{}", sky["galaxy_walk"]);
+        for w in gs.windows(2) {
+            assert!(w[0]["mag"].as_f64() <= w[1]["mag"].as_f64());
+        }
+        // The Sun's absolute V, from its own photosphere at 10 pc.
+        let pc = sse_core::Units::standard().get("pc").unwrap().scale;
+        let sun = ask(
+            &mut k,
+            &serde_json::json!({"op": "read_photometry", "bands": ["V"], "stars": [{
+                "temperature_k": 5772.0, "luminosity_w": 3.828e26, "distance_m": 10.0 * pc}]})
+            .to_string(),
+        );
+        let sun_v = sun["stars"][0]["magnitudes"][0]["m_vega"].as_f64().unwrap();
+        // The brightest galaxy beyond our own halo (satellites are tested
+        // apart).
+        let g = gs.iter().find(|g| g["satellite"] != true).unwrap();
+        let d = g["distance_mpc"].as_f64().unwrap();
+        let z = g["redshift"].as_f64().unwrap();
+        let v = g["magnitudes"][1]["m_vega"].as_f64().unwrap();
+        let abs_v = g["absolute"][1]["m_vega"].as_f64().unwrap();
+        let ext = g["magnitudes"][1]["extinction"].as_f64().unwrap();
+        // Distance modulus with the luminosity distance; the K-correction
+        // is tiny this close.
+        let dm = 5.0 * sse_core::math::log10((1.0 + z) * d * 1.0e6 / 10.0);
+        assert!((v - ext - abs_v - dm).abs() < 0.05, "{g}");
+        // Mass-to-light in V of a galaxy with stars of every age: 0.3 to 5.
+        let l_v = sse_core::math::pow(10.0, (sun_v - abs_v) / 2.5);
+        let ml = g["stellar_mass_msun"].as_f64().unwrap() / l_v;
+        assert!(ml > 0.3 && ml < 5.0, "M/L_V {ml}: {g}");
+        // Seen as it was: the look-back is the light time, 3.26 Myr per Mpc
+        // this close.
+        let lb = g["lookback_myr"].as_f64().unwrap();
+        assert!((lb / (d * 3.2616) - 1.0).abs() < 0.03, "{lb} for {d} Mpc");
+        assert!(z > 0.0 && z < 0.01);
+
+        // The same halo through the galaxy chart has the same stellar mass.
+        let addr = g["address"].as_str().unwrap();
+        let cell: Vec<i64> = addr
+            .split("cell:")
+            .nth(1)
+            .unwrap()
+            .split('/')
+            .next()
+            .unwrap()
+            .split('.')
+            .map(|x| x.parse().unwrap())
+            .collect();
+        let halo = addr.rsplit('/').next().unwrap();
+        let chart = ask(
+            &mut k,
+            &format!(
+                r#"{{"op":"galaxy_chart","cell":[{},{},{}],"halo":"{halo}"}}"#,
+                cell[0], cell[1], cell[2]
+            ),
+        );
+        assert_eq!(chart["chart"]["halo"], g["address"], "{chart}");
+        assert_eq!(chart["chart"]["now"]["stars"], g["stellar_mass_now_msun"]);
+
+        // Order independence: a narrow field around it finds it unchanged.
+        let (l, b) = (g["l_deg"].as_f64().unwrap(), g["b_deg"].as_f64().unwrap());
+        let narrow = ask(
+            &mut k,
+            &format!(
+                r#"{{"op":"sky_from_here","limit_mag":9,"bands":["B","V"],"stars":false,"cone":{{"l_deg":{l},"b_deg":{b},"half_angle_deg":5}}}}"#
+            ),
+        );
+        let found: Vec<_> = narrow["sky"]["galaxies"]
+            .as_array()
+            .unwrap()
+            .iter()
+            .filter(|x| x["address"] == g["address"])
+            .collect();
+        assert_eq!(found.len(), 1);
+        assert_eq!(found[0], g);
+    }
+
+    #[test]
+    fn a_sky_ask_out_of_range_is_refused() {
+        let mut k = open();
+        for q in [
+            r#"{"op":"sky_from_here","t_myr":-1}"#,
+            r#"{"op":"sky_from_here","limit_mag":31}"#,
+            r#"{"op":"sky_from_here","band":"Q"}"#,
+            r#"{"op":"sky_from_here","observer":"u:g3/halo:nowhere"}"#,
+        ] {
+            let r = ask(&mut k, q);
+            assert_eq!(r["type"], "error", "{q}: {r}");
+        }
+    }
+
     #[test]
     fn a_promoted_star_is_stored_whole_and_survives_new_fill_rules() {
         let mut k = open();
@@ -833,5 +1098,66 @@ mod tests {
         // Bad addresses are refused.
         let bad = ask(&mut k, r#"{"op":"promote_star","address":"u:g3/sys:1"}"#);
         assert_eq!(bad["type"], "error", "{bad}");
+    }
+
+    #[test]
+    fn our_galaxy_s_satellites_are_its_surviving_subhaloes() {
+        let mut k = open();
+        let r = ask(
+            &mut k,
+            r#"{"op":"sky_from_here","limit_mag":13,"bands":["V"],"stars":false}"#,
+        );
+        let sky = &r["sky"];
+        let walk = &sky["galaxy_walk"]["satellites"];
+        let r200 = walk["r200_kpc"].as_f64().unwrap();
+        // A 1e12 halo's r_200 is about 200 kpc.
+        assert!(r200 > 180.0 && r200 < 240.0, "{walk}");
+        // Giocoli 2008 above psi 1e-3: about 54.6 subhaloes ever accreted.
+        let drawn = walk["subhaloes"].as_f64().unwrap();
+        assert!((drawn - 54.6).abs() < 4.0 * 54.6_f64.sqrt(), "{walk}");
+        let merged = walk["merged"].as_f64().unwrap();
+        assert!(merged > 0.0 && merged < drawn, "{walk}");
+        let sats: Vec<&serde_json::Value> = sky["galaxies"]
+            .as_array()
+            .unwrap()
+            .iter()
+            .filter(|g| g["satellite"] == true)
+            .collect();
+        let now = r["sky"]["t_myr"].as_f64().unwrap() / 1000.0;
+        let mut classical = 0;
+        for g in &sats {
+            let rc = g["from_centre_kpc"].as_f64().unwrap();
+            assert!(rc <= r200 * 1.000001, "{g}");
+            // Quenched: no star formation once the delay after infall is past.
+            let infall = g["infall_gyr"].as_f64().unwrap();
+            if infall + 3.0 < now {
+                assert_eq!(g["sfr_msun_yr"].as_f64(), Some(0.0), "{g}");
+            }
+            // Light time inside our halo is under a Myr.
+            assert!(g["lookback_myr"].as_f64().unwrap() < 1.0, "{g}");
+            if g["absolute"][0]["m_vega"].as_f64().unwrap() < -8.0 {
+                classical += 1;
+            }
+        }
+        // The Milky Way has about a dozen satellites brighter than M_V -8
+        // (the classical dwarfs and the Magellanic Clouds); hosts like it
+        // in simulations scatter by a factor of a few.
+        assert!(
+            (3..=40).contains(&classical),
+            "{classical} of {}",
+            sats.len()
+        );
+        // The same satellite through a 3 degree cone around it.
+        let s0 = sats[0];
+        let q = serde_json::json!({"op":"sky_from_here","limit_mag":13,"bands":["V"],"stars":false,
+            "cone":{"l_deg":s0["l_deg"],"b_deg":s0["b_deg"],"half_angle_deg":3.0}});
+        let c = ask(&mut k, &q.to_string());
+        let again = c["sky"]["galaxies"]
+            .as_array()
+            .unwrap()
+            .iter()
+            .find(|g| g["address"] == s0["address"])
+            .cloned();
+        assert_eq!(again.as_ref(), Some(s0));
     }
 }

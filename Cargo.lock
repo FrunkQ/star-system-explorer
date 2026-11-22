@@ -586,6 +586,17 @@ dependencies = [
 ]
 
 [[package]]
+name = "sse-field"
+version = "0.1.0"
+dependencies = [
+ "serde",
+ "serde_json",
+ "sse-atoms",
+ "sse-core",
+ "sse-flow",
+]
+
+[[package]]
 name = "sse-flow"
 version = "0.1.0"
 dependencies = [
@@ -637,6 +648,7 @@ dependencies = [
  "sse-codes",
  "sse-core",
  "sse-cosmos",
+ "sse-field",
  "sse-flow",
  "sse-formation",
  "sse-import-v3",
@@ -652,6 +664,7 @@ dependencies = [
  "sse-sector-io",
  "sse-sense",
  "sse-sift",
+ "sse-sky",
  "sse-surface",
  "sse-survey",
  "sse-time",
@@ -779,6 +792,7 @@ dependencies = [
  "serde",
  "serde_json",
  "sse-core",
+ "sse-flow",
  "sse-pack",
 ]
 
@@ -826,6 +840,17 @@ dependencies = [
  "sse-flow",
  "sse-pack",
  "sse-resolve",
+]
+
+[[package]]
+name = "sse-sky"
+version = "0.1.0"
+dependencies = [
+ "serde",
+ "sse-atoms",
+ "sse-core",
+ "sse-cosmos",
+ "sse-light",
 ]
 
 [[package]]

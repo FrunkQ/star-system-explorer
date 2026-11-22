@@ -1,0 +1,826 @@
+{
+ "format": "sse.pack/1",
+ "id": "sse.base-sol",
+ "version": "0.1.0",
+ "kind": [
+  "base-physics"
+ ],
+ "kernel_range": "^0.1",
+ "licence": "Apache-2.0",
+ "provides": {
+  "other": {
+   "sol": {
+    "about": "The catalogued Solar System: the Sun, the planets, the Moon, Ceres and Pluto, and the belts and the Oort cloud, as measured. Built by scripts/build-base-sol.py; every value names its source. Body facts, not the master data sheet's reference objects.",
+    "bodies": [
+     {
+      "id": "sun",
+      "name": "Sun",
+      "kind": "star",
+      "host": null,
+      "values": {
+       "body.mass": {
+        "v": 1.9884e+30,
+        "unit": "kg",
+        "src": "nssdca-sun"
+       },
+       "body.radius": {
+        "v": 695700000.0,
+        "unit": "m",
+        "src": "nssdca-sun",
+        "note": "volumetric mean radius; equals the IAU nominal radius"
+       },
+       "star.luminosity": {
+        "v": 3.828e+26,
+        "unit": "W",
+        "src": "nssdca-sun",
+        "note": "equals the IAU nominal luminosity"
+       },
+       "star.effective_temperature": {
+        "v": 5772.0,
+        "unit": "K",
+        "src": "nssdca-sun",
+        "note": "equals the IAU nominal temperature"
+       },
+       "system.age_gyr": {
+        "v": 4.5673,
+        "unit": "Gyr",
+        "src": "connelly2012",
+        "note": "age of the first solids (CAIs), 4567.30 ± 0.16 Myr"
+       },
+       "system.frame.pole_l_deg": {
+        "v": 96.384,
+        "unit": "deg",
+        "src": "hipparcos1997",
+        "note": "J2000 ecliptic north pole in galactic coordinates, from the obliquity (hilton2006) and A_G"
+       },
+       "system.frame.pole_b_deg": {
+        "v": 29.8114,
+        "unit": "deg",
+        "src": "hipparcos1997",
+        "note": "J2000 ecliptic north pole in galactic coordinates, from the obliquity (hilton2006) and A_G"
+       },
+       "system.frame.zero_l_deg": {
+        "v": 96.3373,
+        "unit": "deg",
+        "src": "hipparcos1997",
+        "note": "J2000 ecliptic equinox (longitude zero) in galactic coordinates, from the obliquity (hilton2006) and A_G"
+       },
+       "system.frame.zero_b_deg": {
+        "v": -60.1886,
+        "unit": "deg",
+        "src": "hipparcos1997",
+        "note": "J2000 ecliptic equinox (longitude zero) in galactic coordinates, from the obliquity (hilton2006) and A_G"
+       }
+      }
+     },
+     {
+      "id": "mercury",
+      "name": "Mercury",
+      "kind": "planet",
+      "host": "sun",
+      "values": {
+       "body.mass": {
+        "v": 3.301e+23,
+        "unit": "kg",
+        "src": "nssdca-mercury"
+       },
+       "body.radius": {
+        "v": 2439700.0,
+        "unit": "m",
+        "src": "nssdca-mercury",
+        "note": "volumetric mean radius"
+       },
+       "orbit.semi_major_axis": {
+        "v": 57909000000.0,
+        "unit": "m",
+        "src": "nssdca-mercury"
+       },
+       "orbit.eccentricity": {
+        "v": 0.2056,
+        "unit": "1",
+        "src": "nssdca-mercury"
+       },
+       "body.rotation_period": {
+        "v": 5067360.0,
+        "unit": "s",
+        "src": "nssdca-mercury",
+        "note": "sidereal; spin sense is in body.obliquity"
+       },
+       "body.obliquity": {
+        "v": 0.034,
+        "unit": "deg",
+        "src": "nssdca-mercury",
+        "note": "obliquity to orbit; above 90 means retrograde spin"
+       },
+       "body.albedo": {
+        "v": 0.068,
+        "unit": "1",
+        "src": "nssdca-mercury",
+        "note": "Bond albedo"
+       },
+       "body.albedo_geometric": {
+        "v": 0.142,
+        "unit": "1",
+        "src": "nssdca-mercury"
+       }
+      }
+     },
+     {
+      "id": "venus",
+      "name": "Venus",
+      "kind": "planet",
+      "host": "sun",
+      "values": {
+       "body.mass": {
+        "v": 4.8673e+24,
+        "unit": "kg",
+        "src": "nssdca-venus"
+       },
+       "body.radius": {
+        "v": 6051800.0,
+        "unit": "m",
+        "src": "nssdca-venus",
+        "note": "volumetric mean radius"
+       },
+       "orbit.semi_major_axis": {
+        "v": 108210000000.0,
+        "unit": "m",
+        "src": "nssdca-venus"
+       },
+       "orbit.eccentricity": {
+        "v": 0.0068,
+        "unit": "1",
+        "src": "nssdca-venus"
+       },
+       "body.rotation_period": {
+        "v": 20997360.0,
+        "unit": "s",
+        "src": "nssdca-venus",
+        "note": "sidereal; spin sense is in body.obliquity"
+       },
+       "body.obliquity": {
+        "v": 177.36,
+        "unit": "deg",
+        "src": "nssdca-venus",
+        "note": "obliquity to orbit; above 90 means retrograde spin"
+       },
+       "body.albedo": {
+        "v": 0.77,
+        "unit": "1",
+        "src": "nssdca-venus",
+        "note": "Bond albedo"
+       },
+       "body.albedo_geometric": {
+        "v": 0.689,
+        "unit": "1",
+        "src": "nssdca-venus"
+       }
+      }
+     },
+     {
+      "id": "earth",
+      "name": "Earth",
+      "kind": "planet",
+      "host": "sun",
+      "values": {
+       "body.mass": {
+        "v": 5.9722e+24,
+        "unit": "kg",
+        "src": "nssdca-earth"
+       },
+       "body.radius": {
+        "v": 6371000.0,
+        "unit": "m",
+        "src": "nssdca-earth",
+        "note": "volumetric mean radius"
+       },
+       "orbit.semi_major_axis": {
+        "v": 149598000000.0,
+        "unit": "m",
+        "src": "nssdca-earth"
+       },
+       "orbit.eccentricity": {
+        "v": 0.0167,
+        "unit": "1",
+        "src": "nssdca-earth"
+       },
+       "body.rotation_period": {
+        "v": 86164.2,
+        "unit": "s",
+        "src": "nssdca-earth",
+        "note": "sidereal; spin sense is in body.obliquity"
+       },
+       "body.obliquity": {
+        "v": 23.44,
+        "unit": "deg",
+        "src": "nssdca-earth",
+        "note": "obliquity to orbit; above 90 means retrograde spin"
+       },
+       "body.albedo": {
+        "v": 0.294,
+        "unit": "1",
+        "src": "nssdca-earth",
+        "note": "Bond albedo"
+       },
+       "body.albedo_geometric": {
+        "v": 0.434,
+        "unit": "1",
+        "src": "nssdca-earth"
+       }
+      }
+     },
+     {
+      "id": "moon",
+      "name": "Moon",
+      "kind": "moon",
+      "host": "earth",
+      "values": {
+       "body.mass": {
+        "v": 7.3459999999999995e+22,
+        "unit": "kg",
+        "src": "nssdca-moon"
+       },
+       "body.radius": {
+        "v": 1737400.0,
+        "unit": "m",
+        "src": "nssdca-moon",
+        "note": "volumetric mean radius"
+       },
+       "orbit.semi_major_axis": {
+        "v": 384400000.0,
+        "unit": "m",
+        "src": "nssdca-moon"
+       },
+       "orbit.eccentricity": {
+        "v": 0.0549,
+        "unit": "1",
+        "src": "nssdca-moon"
+       },
+       "body.rotation_period": {
+        "v": 2360592.0,
+        "unit": "s",
+        "src": "nssdca-moon",
+        "note": "sidereal; spin sense is in body.obliquity"
+       },
+       "body.obliquity": {
+        "v": 6.68,
+        "unit": "deg",
+        "src": "nssdca-moon",
+        "note": "obliquity to orbit; above 90 means retrograde spin"
+       },
+       "body.albedo": {
+        "v": 0.11,
+        "unit": "1",
+        "src": "nssdca-moon",
+        "note": "Bond albedo"
+       },
+       "body.albedo_geometric": {
+        "v": 0.12,
+        "unit": "1",
+        "src": "nssdca-moon"
+       }
+      },
+      "note": "semi-major axis about Earth"
+     },
+     {
+      "id": "mars",
+      "name": "Mars",
+      "kind": "planet",
+      "host": "sun",
+      "values": {
+       "body.mass": {
+        "v": 6.4169e+23,
+        "unit": "kg",
+        "src": "nssdca-mars"
+       },
+       "body.radius": {
+        "v": 3389500.0,
+        "unit": "m",
+        "src": "nssdca-mars",
+        "note": "volumetric mean radius"
+       },
+       "orbit.semi_major_axis": {
+        "v": 227956000000.0,
+        "unit": "m",
+        "src": "nssdca-mars"
+       },
+       "orbit.eccentricity": {
+        "v": 0.0935,
+        "unit": "1",
+        "src": "nssdca-mars"
+       },
+       "body.rotation_period": {
+        "v": 88642.44,
+        "unit": "s",
+        "src": "nssdca-mars",
+        "note": "sidereal; spin sense is in body.obliquity"
+       },
+       "body.obliquity": {
+        "v": 25.19,
+        "unit": "deg",
+        "src": "nssdca-mars",
+        "note": "obliquity to orbit; above 90 means retrograde spin"
+       },
+       "body.albedo": {
+        "v": 0.25,
+        "unit": "1",
+        "src": "nssdca-mars",
+        "note": "Bond albedo"
+       },
+       "body.albedo_geometric": {
+        "v": 0.17,
+        "unit": "1",
+        "src": "nssdca-mars"
+       }
+      }
+     },
+     {
+      "id": "jupiter",
+      "name": "Jupiter",
+      "kind": "planet",
+      "host": "sun",
+      "values": {
+       "body.mass": {
+        "v": 1.89813e+27,
+        "unit": "kg",
+        "src": "nssdca-jupiter"
+       },
+       "body.radius": {
+        "v": 69911000.0,
+        "unit": "m",
+        "src": "nssdca-jupiter",
+        "note": "volumetric mean radius"
+       },
+       "orbit.semi_major_axis": {
+        "v": 778479000000.0,
+        "unit": "m",
+        "src": "nssdca-jupiter"
+       },
+       "orbit.eccentricity": {
+        "v": 0.0487,
+        "unit": "1",
+        "src": "nssdca-jupiter"
+       },
+       "body.rotation_period": {
+        "v": 35730.0,
+        "unit": "s",
+        "src": "nssdca-jupiter",
+        "note": "sidereal; spin sense is in body.obliquity"
+       },
+       "body.obliquity": {
+        "v": 3.13,
+        "unit": "deg",
+        "src": "nssdca-jupiter",
+        "note": "obliquity to orbit; above 90 means retrograde spin"
+       },
+       "body.albedo": {
+        "v": 0.343,
+        "unit": "1",
+        "src": "nssdca-jupiter",
+        "note": "Bond albedo"
+       },
+       "body.albedo_geometric": {
+        "v": 0.538,
+        "unit": "1",
+        "src": "nssdca-jupiter"
+       }
+      },
+      "note": "rotation in System III (1965.0)"
+     },
+     {
+      "id": "saturn",
+      "name": "Saturn",
+      "kind": "planet",
+      "host": "sun",
+      "values": {
+       "body.mass": {
+        "v": 5.6832000000000005e+26,
+        "unit": "kg",
+        "src": "nssdca-saturn"
+       },
+       "body.radius": {
+        "v": 58232000.0,
+        "unit": "m",
+        "src": "nssdca-saturn",
+        "note": "volumetric mean radius"
+       },
+       "orbit.semi_major_axis": {
+        "v": 1432041000000.0,
+        "unit": "m",
+        "src": "nssdca-saturn"
+       },
+       "orbit.eccentricity": {
+        "v": 0.052,
+        "unit": "1",
+        "src": "nssdca-saturn"
+       },
+       "body.rotation_period": {
+        "v": 38361.6,
+        "unit": "s",
+        "src": "nssdca-saturn",
+        "note": "sidereal; spin sense is in body.obliquity"
+       },
+       "body.obliquity": {
+        "v": 26.73,
+        "unit": "deg",
+        "src": "nssdca-saturn",
+        "note": "obliquity to orbit; above 90 means retrograde spin"
+       },
+       "body.albedo": {
+        "v": 0.342,
+        "unit": "1",
+        "src": "nssdca-saturn",
+        "note": "Bond albedo"
+       },
+       "body.albedo_geometric": {
+        "v": 0.499,
+        "unit": "1",
+        "src": "nssdca-saturn"
+       }
+      },
+      "note": "rotation in Saturnian System III"
+     },
+     {
+      "id": "uranus",
+      "name": "Uranus",
+      "kind": "planet",
+      "host": "sun",
+      "values": {
+       "body.mass": {
+        "v": 8.6811e+25,
+        "unit": "kg",
+        "src": "nssdca-uranus"
+       },
+       "body.radius": {
+        "v": 25362000.0,
+        "unit": "m",
+        "src": "nssdca-uranus",
+        "note": "volumetric mean radius"
+       },
+       "orbit.semi_major_axis": {
+        "v": 2867043000000.0,
+        "unit": "m",
+        "src": "nssdca-uranus"
+       },
+       "orbit.eccentricity": {
+        "v": 0.0469,
+        "unit": "1",
+        "src": "nssdca-uranus"
+       },
+       "body.rotation_period": {
+        "v": 62063.99999999999,
+        "unit": "s",
+        "src": "nssdca-uranus",
+        "note": "sidereal; spin sense is in body.obliquity"
+       },
+       "body.obliquity": {
+        "v": 97.77,
+        "unit": "deg",
+        "src": "nssdca-uranus",
+        "note": "obliquity to orbit; above 90 means retrograde spin"
+       },
+       "body.albedo": {
+        "v": 0.3,
+        "unit": "1",
+        "src": "nssdca-uranus",
+        "note": "Bond albedo"
+       },
+       "body.albedo_geometric": {
+        "v": 0.488,
+        "unit": "1",
+        "src": "nssdca-uranus"
+       }
+      },
+      "note": "rotation from Voyager 2 radio science (magnetic coordinates)"
+     },
+     {
+      "id": "neptune",
+      "name": "Neptune",
+      "kind": "planet",
+      "host": "sun",
+      "values": {
+       "body.mass": {
+        "v": 1.02409e+26,
+        "unit": "kg",
+        "src": "nssdca-neptune"
+       },
+       "body.radius": {
+        "v": 24622000.0,
+        "unit": "m",
+        "src": "nssdca-neptune",
+        "note": "volumetric mean radius"
+       },
+       "orbit.semi_major_axis": {
+        "v": 4514953000000.0,
+        "unit": "m",
+        "src": "nssdca-neptune"
+       },
+       "orbit.eccentricity": {
+        "v": 0.0097,
+        "unit": "1",
+        "src": "nssdca-neptune"
+       },
+       "body.rotation_period": {
+        "v": 57996.0,
+        "unit": "s",
+        "src": "nssdca-neptune",
+        "note": "sidereal; spin sense is in body.obliquity"
+       },
+       "body.obliquity": {
+        "v": 28.32,
+        "unit": "deg",
+        "src": "nssdca-neptune",
+        "note": "obliquity to orbit; above 90 means retrograde spin"
+       },
+       "body.albedo": {
+        "v": 0.29,
+        "unit": "1",
+        "src": "nssdca-neptune",
+        "note": "Bond albedo"
+       },
+       "body.albedo_geometric": {
+        "v": 0.442,
+        "unit": "1",
+        "src": "nssdca-neptune"
+       }
+      },
+      "note": "rotation from Voyager 2 radio science (magnetic coordinates)"
+     },
+     {
+      "id": "pluto",
+      "name": "Pluto",
+      "kind": "dwarf_planet",
+      "host": "sun",
+      "values": {
+       "body.mass": {
+        "v": 1.303e+22,
+        "unit": "kg",
+        "src": "nssdca-pluto"
+       },
+       "body.radius": {
+        "v": 1188000.0,
+        "unit": "m",
+        "src": "nssdca-pluto",
+        "note": "volumetric mean radius"
+       },
+       "orbit.semi_major_axis": {
+        "v": 5869656000000.0,
+        "unit": "m",
+        "src": "nssdca-pluto"
+       },
+       "orbit.eccentricity": {
+        "v": 0.2444,
+        "unit": "1",
+        "src": "nssdca-pluto"
+       },
+       "body.rotation_period": {
+        "v": 551854.08,
+        "unit": "s",
+        "src": "nssdca-pluto",
+        "note": "sidereal; spin sense is in body.obliquity"
+       },
+       "body.obliquity": {
+        "v": 119.51,
+        "unit": "deg",
+        "src": "nssdca-pluto",
+        "note": "obliquity to orbit; above 90 means retrograde spin"
+       },
+       "body.albedo": {
+        "v": 0.72,
+        "unit": "1",
+        "src": "nssdca-pluto",
+        "note": "Bond albedo"
+       },
+       "body.albedo_geometric": {
+        "v": 0.52,
+        "unit": "1",
+        "src": "nssdca-pluto"
+       }
+      }
+     },
+     {
+      "id": "ceres",
+      "name": "Ceres",
+      "kind": "dwarf_planet",
+      "host": "sun",
+      "values": {
+       "body.mass": {
+        "v": 9.384e+20,
+        "unit": "kg",
+        "src": "russell2016",
+        "also": "park2016: 9.38416e20"
+       },
+       "body.radius": {
+        "v": 469700.0,
+        "unit": "m",
+        "src": "russell2016",
+        "note": "geometric mean radius"
+       },
+       "orbit.semi_major_axis": {
+        "v": 414086906097.6,
+        "unit": "m",
+        "src": "nssdca-asteroid",
+        "note": "2.768 AU as printed"
+       },
+       "orbit.eccentricity": {
+        "v": 0.0758,
+        "unit": "1",
+        "src": "nssdca-asteroid"
+       },
+       "body.rotation_period": {
+        "v": 32666.399999999998,
+        "unit": "s",
+        "src": "nssdca-asteroid"
+       },
+       "body.obliquity": {
+        "v": 4.0,
+        "unit": "deg",
+        "src": "russell2016"
+       },
+       "body.albedo_geometric": {
+        "v": 0.094,
+        "unit": "1",
+        "src": "ciarniello2017",
+        "note": "at 0.55 µm"
+       },
+       "body.albedo": {
+        "v": 0.034,
+        "unit": "1",
+        "src": "li2016",
+        "check": "unverified",
+        "note": "the paper's Ceres average in the clear filter; whether it is a Bond albedo was not confirmed from the text"
+       }
+      }
+     }
+    ],
+    "regions": [
+     {
+      "id": "main-belt",
+      "name": "Main asteroid belt",
+      "host": "sun",
+      "inner_m": 308939595883.788,
+      "outer_m": 490411039500.5555,
+      "src": "nssdca-jupiter",
+      "grade": "convention",
+      "note": "edges at the 4:1 and 2:1 mean-motion resonances with Jupiter (the outer Kirkwood gaps), worked out from Jupiter's semi-major axis by Kepler's third law, a = a_J (p/q)^(2/3)"
+     },
+     {
+      "id": "kuiper-belt",
+      "name": "Kuiper belt",
+      "host": "sun",
+      "inner_m": 4514953000000.0,
+      "outer_m": 7479893535000.0,
+      "src": "trujillo2001",
+      "grade": "measured",
+      "note": "inner edge at Neptune's orbit (convention, from nssdca-neptune); outer edge of the classical belt at 50 AU"
+     },
+     {
+      "id": "oort-cloud",
+      "name": "Oort cloud",
+      "host": "sun",
+      "inner_m": 747989353500000.0,
+      "outer_m": 1.495978707e+16,
+      "src": "kaib-volk2022",
+      "grade": "estimate",
+      "check": "unverified",
+      "note": "outer limit set by the Galactic tide at 1 to 2 × 10^5 au (quoted); the inner edge near 5,000 au for bodies scattered by Uranus and Neptune was read in paraphrase, not quoted. A sphere (ruling)."
+     }
+    ],
+    "sources": [
+     {
+      "id": "ciarniello2017",
+      "text": "Ciarniello, M. et al. 2017, A&A 598, A130: spectrophotometric properties of dwarf planet Ceres from the VIR spectrometer on board the Dawn mission (geometric albedo 0.094 ± 0.007 at 0.55 µm)",
+      "status": "verified",
+      "doi": "10.1051/0004-6361/201629490"
+     },
+     {
+      "id": "connelly2012",
+      "text": "Connelly, J. N. et al. 2012, Science 338, 651: the absolute chronology and thermal processing of solids in the solar protoplanetary disk (CAIs at 4567.30 ± 0.16 Myr)",
+      "status": "verified",
+      "doi": "10.1126/science.1226919"
+     },
+     {
+      "id": "hilton2006",
+      "text": "Hilton, J. L. et al. 2006, Celest. Mech. Dyn. Astron. 94, 351: Report of the IAU Division I Working Group on Precession and the Ecliptic (obliquity at J2000, 84381.406 arcsec)",
+      "status": "verified",
+      "doi": "10.1007/s10569-006-0001-2"
+     },
+     {
+      "id": "hipparcos1997",
+      "text": "ESA 1997, The Hipparcos and Tycho Catalogues, ESA SP-1200, vol. 1, sec. 1.5.3: the ICRS to galactic matrix A_G",
+      "status": "verified",
+      "url": "https://www.cosmos.esa.int/documents/532822/552851/vol1_all.pdf"
+     },
+     {
+      "id": "iau2015b3",
+      "text": "Prša, A. et al. 2016, AJ 152, 41: Nominal values for selected solar and planetary quantities, IAU 2015 Resolution B3",
+      "status": "verified",
+      "doi": "10.3847/0004-6256/152/2/41"
+     },
+     {
+      "id": "kaib-volk2022",
+      "text": "Kaib, N. A. and Volk, K. 2022, Dynamical population of comet reservoirs, arXiv:2206.00010 (the Galactic tide sets the Oort cloud's outer limit near 1 to 2 × 10^5 au)",
+      "status": "verified",
+      "url": "https://arxiv.org/abs/2206.00010"
+     },
+     {
+      "id": "li2016",
+      "text": "Li, J.-Y. et al. 2016, ApJL 817, L22: surface albedo and spectral variability of Ceres (0.034 ± 0.001 for the Ceres average, Dawn FC clear filter)",
+      "status": "verified",
+      "doi": "10.3847/2041-8205/817/2/L22"
+     },
+     {
+      "id": "nssdca-asteroid",
+      "text": "Williams, D. R., NASA NSSDCA Asteroid Fact Sheet (read 22 Nov 2026)",
+      "status": "verified",
+      "url": "https://nssdc.gsfc.nasa.gov/planetary/factsheet/asteroidfact.html"
+     },
+     {
+      "id": "nssdca-earth",
+      "text": "Williams, D. R., NASA NSSDCA Earth Fact Sheet (read 22 Nov 2026)",
+      "status": "verified",
+      "url": "https://nssdc.gsfc.nasa.gov/planetary/factsheet/earthfact.html"
+     },
+     {
+      "id": "nssdca-jupiter",
+      "text": "Williams, D. R., NASA NSSDCA Jupiter Fact Sheet (read 22 Nov 2026)",
+      "status": "verified",
+      "url": "https://nssdc.gsfc.nasa.gov/planetary/factsheet/jupiterfact.html"
+     },
+     {
+      "id": "nssdca-mars",
+      "text": "Williams, D. R., NASA NSSDCA Mars Fact Sheet (read 22 Nov 2026)",
+      "status": "verified",
+      "url": "https://nssdc.gsfc.nasa.gov/planetary/factsheet/marsfact.html"
+     },
+     {
+      "id": "nssdca-mercury",
+      "text": "Williams, D. R., NASA NSSDCA Mercury Fact Sheet (read 22 Nov 2026)",
+      "status": "verified",
+      "url": "https://nssdc.gsfc.nasa.gov/planetary/factsheet/mercuryfact.html"
+     },
+     {
+      "id": "nssdca-moon",
+      "text": "Williams, D. R., NASA NSSDCA Moon Fact Sheet (read 22 Nov 2026)",
+      "status": "verified",
+      "url": "https://nssdc.gsfc.nasa.gov/planetary/factsheet/moonfact.html"
+     },
+     {
+      "id": "nssdca-neptune",
+      "text": "Williams, D. R., NASA NSSDCA Neptune Fact Sheet (read 22 Nov 2026)",
+      "status": "verified",
+      "url": "https://nssdc.gsfc.nasa.gov/planetary/factsheet/neptunefact.html"
+     },
+     {
+      "id": "nssdca-pluto",
+      "text": "Williams, D. R., NASA NSSDCA Pluto Fact Sheet (read 22 Nov 2026)",
+      "status": "verified",
+      "url": "https://nssdc.gsfc.nasa.gov/planetary/factsheet/plutofact.html"
+     },
+     {
+      "id": "nssdca-saturn",
+      "text": "Williams, D. R., NASA NSSDCA Saturn Fact Sheet (read 22 Nov 2026)",
+      "status": "verified",
+      "url": "https://nssdc.gsfc.nasa.gov/planetary/factsheet/saturnfact.html"
+     },
+     {
+      "id": "nssdca-sun",
+      "text": "Williams, D. R., NASA NSSDCA Sun Fact Sheet (read 22 Nov 2026)",
+      "status": "verified",
+      "url": "https://nssdc.gsfc.nasa.gov/planetary/factsheet/sunfact.html"
+     },
+     {
+      "id": "nssdca-uranus",
+      "text": "Williams, D. R., NASA NSSDCA Uranus Fact Sheet (read 22 Nov 2026)",
+      "status": "verified",
+      "url": "https://nssdc.gsfc.nasa.gov/planetary/factsheet/uranusfact.html"
+     },
+     {
+      "id": "nssdca-venus",
+      "text": "Williams, D. R., NASA NSSDCA Venus Fact Sheet (read 22 Nov 2026)",
+      "status": "verified",
+      "url": "https://nssdc.gsfc.nasa.gov/planetary/factsheet/venusfact.html"
+     },
+     {
+      "id": "park2016",
+      "text": "Park, R. S. et al. 2016, Nature 537, 515: a partially differentiated interior for (1) Ceres deduced from its gravity field and shape (mass 938.416e18 kg)",
+      "status": "verified",
+      "doi": "10.1038/nature18955"
+     },
+     {
+      "id": "russell2016",
+      "text": "Russell, C. T. et al. 2016, Science 353, 1008: Dawn arrives at Ceres, exploration of a small, volatile-rich world (mean radius 469.7 km, mass 9.384e20 kg, obliquity 4°)",
+      "status": "verified",
+      "doi": "10.1126/science.aaf4219"
+     },
+     {
+      "id": "trujillo2001",
+      "text": "Trujillo, C. A., Jewitt, D. C. and Luu, J. X. 2001, AJ 122, 457: properties of the trans-Neptunian belt, statistics from the Canada-France-Hawaii Telescope survey (an outer edge to the classical belt at 50 AU)",
+      "status": "verified",
+      "doi": "10.1086/321117"
+     }
+    ]
+   }
+  }
+ }
+}
