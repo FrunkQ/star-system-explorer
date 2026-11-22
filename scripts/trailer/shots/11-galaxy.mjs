@@ -6,9 +6,8 @@ export default {
   trailers: ["features", "intro"],
   async run(page, d, nav) {
     await d.caption('Out to the galaxy', 'Rings of history: what formed, what died, where life could start.');
-    await d.click(page.locator('.rail [data-go="explore"]').first());
-    const tab = page.locator("[data-section-tab=galaxy]");
-    if (await tab.isVisible().catch(() => false)) await d.click(tab);
+    // Up the place line (U24): system, then the galaxy step.
+    await d.click(page.locator('.place [data-place-step="galaxy"]').first());
     await page.waitForSelector(".gal [data-ring]", { timeout: 60000 });
     const gal = page.locator(".gal");
     await gal.locator("[data-green]").waitFor({ timeout: 60000 });
