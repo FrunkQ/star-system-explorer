@@ -6,6 +6,7 @@ import type { Json } from "./json.ts";
 import type { AppliedEdit, Workspace } from "./view.ts";
 import type { SceneFact, SystemScene } from "./scene.ts";
 import type { IntentResult, ViewSession } from "./session.ts";
+import type { Intent } from "./intent.ts";
 
 export async function commitEdit(
   session: ViewSession,
@@ -36,12 +37,61 @@ async function reverse(session: ViewSession, ws: Workspace, from: "undo" | "redo
   const stack = from === "undo" ? ws.undo : ws.redo;
   const e = stack[stack.length - 1];
   if (!e) return null;
-  const r = await session.send({ kind: "set_value", address: e.address, field: e.field, value: e.before.value, at_yr: ws.now_yr });
+  // A paste or a cut is kept as the presence of its top bodies: taking it back withdraws them, or brings them back.
+  const r =
+    e.field === PRESENCE
+      ? await sendAll(session, (e.before.value as string[] | null) ? (e.before.value as string[]).map((a) => ({ kind: "restore" as const, address: a, at_yr: ws.now_yr })) : (e.after.value as string[]).map((a) => ({ kind: "withdraw" as const, address: a, at_yr: ws.now_yr })))
+      : await session.send({ kind: "set_value", address: e.address, field: e.field, value: e.before.value, at_yr: ws.now_yr });
   if (r.status === "applied") {
     stack.pop();
     const back: AppliedEdit = { address: e.address, field: e.field, before: e.after, after: e.before, event_id: r.event_id };
     ws.noteApplied(back, from);
   }
+  return r;
+}
+
+/**
+ * The undo stack's field for a paste or a cut: before and after hold the top
+ * bodies' addresses where they are present, null where they are not, and the
+ * address is the first of them.
+ */
+export const PRESENCE = "presence";
+
+async function sendAll(session: ViewSession, intents: Intent[]): Promise<IntentResult> {
+  let last: IntentResult = { status: "refused", reason: "nothing to send" };
+  for (const i of intents) {
+    last = await session.send(i);
+    if (last.status !== "applied") return last;
+  }
+  return last;
+}
+
+/**
+ * Place bodies (a paste) as one change: the possible values in one authored
+ * event, any impossible ones in a second, and one entry on the undo stack, so
+ * one Undo withdraws them all. `roots` are the top bodies placed; `words`
+ * says what was placed, for the undo list.
+ */
+export async function placeBodies(
+  session: ViewSession,
+  ws: Workspace,
+  p: { edits: { address: string; field: string; value: Json; impossible?: boolean }[]; roots: string[]; words: string; evidence?: "authored" | "catalogued"; source?: string },
+): Promise<IntentResult> {
+  if (ws.branch) return { status: "refused", reason: "a what-if takes value edits only: keep it or throw it away, then paste" };
+  const possible = p.edits.filter((e) => !e.impossible);
+  const impossible = p.edits.filter((e) => e.impossible);
+  const extra = { ...(p.evidence ? { evidence: p.evidence } : {}), ...(p.source ? { source: p.source } : {}) };
+  const batches: Intent[] = [possible, impossible].filter((b) => b.length).map((edits) => ({ kind: "set_values" as const, edits, at_yr: ws.now_yr, ...(edits === possible ? extra : {}) }));
+  const r = await sendAll(session, batches);
+  if (r.status === "applied") ws.noteApplied({ address: p.roots[0]!, field: PRESENCE, before: { value: null, display: "not here" }, after: { value: p.roots, display: p.words }, event_id: r.event_id });
+  return r;
+}
+
+/** Take bodies out (a cut), as one entry on the undo stack; Undo brings them back with every fact they had. */
+export async function withdrawBodies(session: ViewSession, ws: Workspace, p: { roots: string[]; words: string }): Promise<IntentResult> {
+  if (ws.branch) return { status: "refused", reason: "a what-if takes value edits only: keep it or throw it away, then cut" };
+  const r = await sendAll(session, p.roots.map((a) => ({ kind: "withdraw" as const, address: a, at_yr: ws.now_yr })));
+  if (r.status === "applied") ws.noteApplied({ address: p.roots[0]!, field: PRESENCE, before: { value: p.roots, display: p.words }, after: { value: null, display: "not here" }, event_id: r.event_id });
   return r;
 }
 
