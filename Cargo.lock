@@ -664,6 +664,7 @@ dependencies = [
  "sse-sector-io",
  "sse-sense",
  "sse-sift",
+ "sse-sky",
  "sse-surface",
  "sse-survey",
  "sse-time",
@@ -846,7 +847,10 @@ name = "sse-sky"
 version = "0.1.0"
 dependencies = [
  "serde",
+ "sse-atoms",
  "sse-core",
+ "sse-cosmos",
+ "sse-light",
 ]
 
 [[package]]
