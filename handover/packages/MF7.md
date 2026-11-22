@@ -142,3 +142,11 @@ Each body is the usual FieldRead plus `name` and `field`:
 `polarity_source`, `stand_ins`. g10 = polarity × B0 cos(tilt), g11 = polarity ×
 B0 sin(tilt), with B0 = μ0 M / (4π a³). Dipole-only, pole longitude and offset
 direction are stand-ins (fudge F41). Code: `crates/sse-field/src/sol.rs`.
+
+Each body also carries `wind_field`, the solar wind's own field there (for the
+renderer's open polar caps): Parker's spiral in the ecliptic, `radial_t` =
+3.1 nT (au/a)² (Ulysses, Smith and Balogh 1995, doi:10.1029/95GL02826),
+`azimuthal_t` = −B_r Ω a / v with the Sun's sidereal rotation (NSSDCA) and the
+wind speed above, plus `magnitude_t`, `spiral_angle_deg` (about 45° at Earth)
+and `sector` ("away"; flip both signs for a toward sector). It does not yet
+feed the read itself (Bz stays 0).

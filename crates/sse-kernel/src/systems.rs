@@ -506,6 +506,7 @@ pub(crate) fn read_field(
                     let mut v = serde_json::to_value(&b.read).expect("serialisable");
                     v["name"] = serde_json::Value::String(b.name);
                     v["field"] = serde_json::to_value(&b.field).expect("serialisable");
+                    v["wind_field"] = serde_json::to_value(&b.wind_field).expect("serialisable");
                     v
                 })
                 .collect();

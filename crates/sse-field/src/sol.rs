@@ -37,10 +37,25 @@ pub struct MeasuredField {
     pub stand_ins: Vec<String>,
 }
 
+/// The solar wind's own field at a body: Parker's spiral in the ecliptic,
+/// for an "away" sector (field pointing out from the Sun; flip both signs
+/// for a "toward" sector).
+#[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
+pub struct WindField {
+    pub radial_t: f64,
+    pub azimuthal_t: f64,
+    pub magnitude_t: f64,
+    /// Angle between the field and the radial direction, degrees.
+    pub spiral_angle_deg: f64,
+    pub sector: String,
+    pub source: String,
+}
+
 #[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
 pub struct SolField {
     pub name: String,
     pub field: MeasuredField,
+    pub wind_field: WindField,
     pub read: FieldRead,
 }
 
@@ -83,6 +98,14 @@ pub fn solar_system(set: &Settings, proton_mass_kg: f64) -> Result<Vec<SolField>
     let w = &extra["wind"];
     let speed = num(w, &["speed_m_s"]).ok_or("wind speed")?;
     let n1 = num(w, &["proton_density_1au_m3"]).ok_or("wind density")?;
+    let br1 = num(w, &["radial_field_1au_t"]).ok_or("wind radial field")?;
+    let omega = 2.0 * m::PI / num(w, &["sun_sidereal_rotation_s"]).ok_or("Sun's rotation")?;
+    let wind_src = format!(
+        "{}; {}; {}",
+        text(w, "radial_field_src"),
+        text(w, "sun_rotation_src"),
+        text(w, "spiral_src")
+    );
     let mut out = vec![];
     for m in measured["bodies"].as_array().ok_or("no measured bodies")? {
         let id = m["id"].as_str().unwrap_or_default();
@@ -155,7 +178,18 @@ pub fn solar_system(set: &Settings, proton_mass_kg: f64) -> Result<Vec<SolField>
             "earth" | "mercury" => text(&extra["polarity_src"], id),
             _ => text(&extra["polarity_src"], "giants"),
         };
+        let b_r = br1 * (AU / a) * (AU / a);
+        let b_phi = -b_r * omega * a / speed;
+        let wind_field = WindField {
+            radial_t: b_r,
+            azimuthal_t: b_phi,
+            magnitude_t: m::sqrt(b_r * b_r + b_phi * b_phi),
+            spiral_angle_deg: m::atan2(-b_phi, b_r) * 180.0 / m::PI,
+            sector: "away".into(),
+            source: wind_src.clone(),
+        };
         out.push(SolField {
+            wind_field,
             name: m["name"].as_str().unwrap_or(id).to_string(),
             field: MeasuredField {
                 reference_radius_m: rr,
@@ -173,7 +207,7 @@ pub fn solar_system(set: &Settings, proton_mass_kg: f64) -> Result<Vec<SolField>
                 polarity_source: psrc,
                 stand_ins: vec![
                     "dipole only (degree 1) from the measured moment and tilt; the pole's longitude and the offset's direction are not in the fixture yet, so the pole leans toward longitude 0 and the offset has no direction".into(),
-                    "the solar wind is ECSS's mean at 1 au, thinned as the inverse square of distance, with no field of its own".into(),
+                    "the solar wind is ECSS's mean at 1 au, thinned as the inverse square of distance; its own field is Parker's spiral in the ecliptic from Ulysses' radial field, in an away sector, and does not yet feed the read (no Bz)".into(),
                 ],
             },
             read,

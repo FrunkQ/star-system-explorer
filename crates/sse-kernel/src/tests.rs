@@ -3185,6 +3185,11 @@ fn read_field_solar_system_fixture() {
     // moment and tilt lands within a few per cent.
     assert!((-31e-6..-28e-6).contains(&g10), "{g10}");
     assert!(earth["belts"].is_object(), "{earth}");
+    // Parker's spiral at 1 au sits near 45 degrees (Parker 1958).
+    let angle = earth["wind_field"]["spiral_angle_deg"].as_f64().unwrap();
+    assert!((38.0..52.0).contains(&angle), "{angle}");
+    let bt = earth["wind_field"]["magnitude_t"].as_f64().unwrap();
+    assert!((3e-9..7e-9).contains(&bt), "{bt}");
     let jupiter = b.iter().find(|x| x["address"] == "sol/jupiter").unwrap();
     assert!(
         jupiter["field"]["g10_t"].as_f64().unwrap() > 3e-4,
