@@ -166,7 +166,7 @@ export function blendAt(w: WeatherMap, d: V3): { cloud: number; haze: number; rg
           ws += g;
           cloud += g * w.cloudR[p]!;
           haze += g * w.hazeR[p]!;
-          for (let ch = 0; ch < 3; ch++) rgb[ch] += g * w.hazeRgb[p * 3 + ch]!;
+          for (let ch = 0; ch < 3; ch++) rgb[ch]! += g * w.hazeRgb[p * 3 + ch]!;
         }
       }
   if (ws <= 0) {
