@@ -1272,6 +1272,14 @@ pub enum Request {
         #[serde(default)]
         #[ts(optional)]
         max_stars: Option<u32>,
+        /// Y4: the other galaxies too (default true).
+        #[serde(default)]
+        #[ts(optional)]
+        galaxies: Option<bool>,
+        /// The stars (default true); false gives galaxies only.
+        #[serde(default)]
+        #[ts(optional)]
+        stars: Option<bool>,
     },
     /// Y3: the glow of every star the sky draw does not show, as a HEALPix
     /// map (RING order, galactic l and b from the observer) per passband:

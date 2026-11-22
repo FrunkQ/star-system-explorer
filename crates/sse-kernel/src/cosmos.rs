@@ -504,6 +504,24 @@ pub(crate) fn with_stars<R>(
     params: Option<sse_cosmos::stars::StarParams>,
     f: impl FnOnce(&sse_cosmos::stars::Stars, f64) -> Result<R, Response>,
 ) -> Result<R, Response> {
+    with_world(seed, root, params, |st, _, now| f(st, now))
+}
+
+/// The cosmos around the campaign's galaxy: the cosmology, the web's
+/// haloes and the pack's settings (Y4 reads other galaxies through it).
+pub(crate) struct World<'a> {
+    pub c: &'a Cosmology,
+    pub hs: &'a Haloes<'a>,
+    pub cp: &'a CosmologyPack,
+}
+
+/// As `with_stars`, with the world around the galaxy too.
+pub(crate) fn with_world<R>(
+    seed: &Seed,
+    root: &Address,
+    params: Option<sse_cosmos::stars::StarParams>,
+    f: impl FnOnce(&sse_cosmos::stars::Stars, &World, f64) -> Result<R, Response>,
+) -> Result<R, Response> {
     let cp = settings()?;
     let c = Cosmology::new(cp.params.clone());
     let w = web(&c, &cp, seed, root)?;
@@ -535,7 +553,12 @@ pub(crate) fn with_stars<R>(
         seed: *seed,
         galaxy: addr,
     };
-    f(&st, g.now.t_gyr * 1000.0)
+    let world = World {
+        c: &c,
+        hs: &hs,
+        cp: &cp,
+    };
+    f(&st, &world, g.now.t_gyr * 1000.0)
 }
 
 /// One 10 pc cell's systems at a time: the fill as today's rules draw it,
@@ -771,7 +794,7 @@ mod tests {
         let mut k = open();
         let r = ask(
             &mut k,
-            r#"{"op":"sky_from_here","limit_mag":5,"bands":["B","V"]}"#,
+            r#"{"op":"sky_from_here","limit_mag":5,"bands":["B","V"],"galaxies":false}"#,
         );
         assert_eq!(r["type"], "sky", "{r}");
         let sky = &r["sky"];
@@ -855,7 +878,7 @@ mod tests {
     fn the_sky_is_the_same_twice_and_a_promoted_star_appears_once() {
         use sse_core::math as m;
         let mut k = open();
-        let q = r#"{"op":"sky_from_here","limit_mag":3,"cone":{"l_deg":90,"b_deg":0,"half_angle_deg":60}}"#;
+        let q = r#"{"op":"sky_from_here","limit_mag":3,"galaxies":false,"cone":{"l_deg":90,"b_deg":0,"half_angle_deg":60}}"#;
         let a = ask(&mut k, q);
         assert_eq!(a["type"], "sky", "{a}");
         let b = ask(&mut k, q);
@@ -884,6 +907,89 @@ mod tests {
         assert_eq!(hits[0]["pinned"], true);
         assert_eq!(hits[0]["mag"], pick["mag"]);
         assert_eq!(after.len(), stars.len());
+    }
+
+    #[test]
+    fn other_galaxies_shine_as_their_mass_and_distance_say() {
+        let mut k = open();
+        let q = r#"{"op":"sky_from_here","limit_mag":9,"bands":["B","V"],"stars":false}"#;
+        let r = ask(&mut k, q);
+        assert_eq!(r["type"], "sky", "{r}");
+        let sky = &r["sky"];
+        assert!(sky["stars"].as_array().unwrap().is_empty());
+        let gs = sky["galaxies"].as_array().unwrap();
+        assert!(gs.len() >= 3, "{}", sky["galaxy_walk"]);
+        for w in gs.windows(2) {
+            assert!(w[0]["mag"].as_f64() <= w[1]["mag"].as_f64());
+        }
+        // The Sun's absolute V, from its own photosphere at 10 pc.
+        let pc = sse_core::Units::standard().get("pc").unwrap().scale;
+        let sun = ask(
+            &mut k,
+            &serde_json::json!({"op": "read_photometry", "bands": ["V"], "stars": [{
+                "temperature_k": 5772.0, "luminosity_w": 3.828e26, "distance_m": 10.0 * pc}]})
+            .to_string(),
+        );
+        let sun_v = sun["stars"][0]["magnitudes"][0]["m_vega"].as_f64().unwrap();
+        let g = &gs[0];
+        let d = g["distance_mpc"].as_f64().unwrap();
+        let z = g["redshift"].as_f64().unwrap();
+        let v = g["magnitudes"][1]["m_vega"].as_f64().unwrap();
+        let abs_v = g["absolute"][1]["m_vega"].as_f64().unwrap();
+        let ext = g["magnitudes"][1]["extinction"].as_f64().unwrap();
+        // Distance modulus with the luminosity distance; the K-correction
+        // is tiny this close.
+        let dm = 5.0 * sse_core::math::log10((1.0 + z) * d * 1.0e6 / 10.0);
+        assert!((v - ext - abs_v - dm).abs() < 0.05, "{g}");
+        // Mass-to-light in V of a galaxy with stars of every age: 0.3 to 5.
+        let l_v = sse_core::math::pow(10.0, (sun_v - abs_v) / 2.5);
+        let ml = g["stellar_mass_msun"].as_f64().unwrap() / l_v;
+        assert!(ml > 0.3 && ml < 5.0, "M/L_V {ml}: {g}");
+        // Seen as it was: the look-back is the light time, 3.26 Myr per Mpc
+        // this close.
+        let lb = g["lookback_myr"].as_f64().unwrap();
+        assert!((lb / (d * 3.2616) - 1.0).abs() < 0.03, "{lb} for {d} Mpc");
+        assert!(z > 0.0 && z < 0.01);
+
+        // The same halo through the galaxy chart has the same stellar mass.
+        let addr = g["address"].as_str().unwrap();
+        let cell: Vec<i64> = addr
+            .split("cell:")
+            .nth(1)
+            .unwrap()
+            .split('/')
+            .next()
+            .unwrap()
+            .split('.')
+            .map(|x| x.parse().unwrap())
+            .collect();
+        let halo = addr.rsplit('/').next().unwrap();
+        let chart = ask(
+            &mut k,
+            &format!(
+                r#"{{"op":"galaxy_chart","cell":[{},{},{}],"halo":"{halo}"}}"#,
+                cell[0], cell[1], cell[2]
+            ),
+        );
+        assert_eq!(chart["chart"]["halo"], g["address"], "{chart}");
+        assert_eq!(chart["chart"]["now"]["stars"], g["stellar_mass_now_msun"]);
+
+        // Order independence: a narrow field around it finds it unchanged.
+        let (l, b) = (g["l_deg"].as_f64().unwrap(), g["b_deg"].as_f64().unwrap());
+        let narrow = ask(
+            &mut k,
+            &format!(
+                r#"{{"op":"sky_from_here","limit_mag":9,"bands":["B","V"],"stars":false,"cone":{{"l_deg":{l},"b_deg":{b},"half_angle_deg":5}}}}"#
+            ),
+        );
+        let found: Vec<_> = narrow["sky"]["galaxies"]
+            .as_array()
+            .unwrap()
+            .iter()
+            .filter(|x| x["address"] == g["address"])
+            .collect();
+        assert_eq!(found.len(), 1);
+        assert_eq!(found[0], g);
     }
 
     #[test]

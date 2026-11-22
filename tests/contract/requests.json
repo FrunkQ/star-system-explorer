@@ -3006,7 +3006,14 @@
   "op": "sky_from_here",
   "limit_mag": 2,
   "bands": ["B", "V", "Ks"],
-  "max_stars": 4
+  "max_stars": 4,
+  "galaxies": false
+ },
+ {
+  "op": "sky_from_here",
+  "limit_mag": 8,
+  "bands": ["B", "V"],
+  "stars": false
  },
  {
   "op": "sky_from_here",

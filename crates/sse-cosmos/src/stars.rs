@@ -260,7 +260,7 @@ pub(crate) fn birth_from(cdf: &[(f64, f64)], acc: f64, u: f64, t_now_gyr: f64) -
         })
 }
 
-pub(crate) fn imf_quantile(p: &StarParams, u: f64) -> f64 {
+pub fn imf_quantile(p: &StarParams, u: f64) -> f64 {
     // Piecewise power law by number.
     let e = &p.imf_edges;
     let a = &p.imf_alphas;
