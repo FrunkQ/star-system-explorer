@@ -166,9 +166,12 @@ impl T {
 fn every_block_is_logic_and_explained() {
     let r = crate::registry();
     let ids: Vec<&str> = r.decls().map(|d| d.id.as_str()).collect();
-    assert_eq!(ids.len(), 45, "{ids:?}");
-    // The Look up block (MP17a) is an engine block: the Reference screen is its editor.
-    for d in r.decls().filter(|d| d.id != crate::lookup::ID) {
+    assert_eq!(ids.len(), 57, "{ids:?}");
+    // The Look up block (MP17a) is an engine block: the Reference screen is
+    // its editor. So are the Equation and the Model number (ND3), which
+    // carry their own sources.
+    let engines = [crate::lookup::ID, crate::equation::ID, crate::model::ID];
+    for d in r.decls().filter(|d| !engines.contains(&d.id.as_str())) {
         assert_eq!(d.class, Some(sse_flow::BlockClass::Logic), "{}", d.id);
         assert!(
             !d.explain.curious.is_empty() && !d.explain.science.is_empty(),
@@ -533,6 +536,61 @@ fn truth_tables() {
             vec![]
         )
         .contains("expected a flag"));
+    // The maths blocks (ND3): sse_core::math to the bit, refusals in words.
+    use sse_core::math as m;
+    for (id, x, want) in [
+        ("math.sqrt", 2.0, m::sqrt(2.0)),
+        ("math.exp", 0.7, m::exp(0.7)),
+        ("math.expm1", 1e-9, m::expm1(1e-9)),
+        ("math.ln", 3.0, m::ln(3.0)),
+        ("math.log10", 3.0, m::log10(3.0)),
+        ("math.sin", 0.3, m::sin(0.3)),
+        ("math.cos", 0.3, m::cos(0.3)),
+        ("math.tan", 0.3, m::tan(0.3)),
+    ] {
+        let got = t.value(id, None, vec![n(x)]).num().unwrap();
+        assert_eq!(got.to_bits(), want.to_bits(), "{id}");
+    }
+    assert_eq!(
+        t.value("math.atan2", None, vec![n(1.0), n(-2.0)]),
+        n(m::atan2(1.0, -2.0))
+    );
+    assert_eq!(
+        t.value(
+            "math.power",
+            Some(json!({"exponent": "1/4"})),
+            vec![n(81.0)]
+        ),
+        n(m::pow(81.0, 0.25))
+    );
+    assert_eq!(
+        t.value("math.power", None, vec![n(2.0), n(0.5)]),
+        n(m::pow(2.0, 0.5))
+    );
+    assert!(t
+        .fails("math.ln", None, vec![n(0.0)])
+        .contains("not above zero"));
+    assert!(t
+        .fails("math.sqrt", None, vec![n(-1.0)])
+        .contains("below zero"));
+    assert!(t
+        .fails("math.exp", None, vec![n(1e4)])
+        .contains("too large"));
+    assert!(t
+        .fails(
+            "math.power",
+            Some(json!({"exponent": "0.25"})),
+            vec![n(2.0)]
+        )
+        .contains("ratio of two"));
+    assert_eq!(
+        t.value(
+            "logic.const",
+            Some(json!({"value": 2, "unit": "km"})),
+            vec![]
+        ),
+        n(2000.0)
+    );
     // Every logic atom has rows here (the dice have their own test).
     let all: BTreeSet<String> = crate::blocks::all()
         .iter()

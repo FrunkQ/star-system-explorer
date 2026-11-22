@@ -77,6 +77,19 @@ pub const DECLARED: &[(&str, Reach)] = &[
     // MP17a: the Look up block gives whatever the stacked sheet holds, so a
     // changed constant or material value reaches it directly.
     ("sse.reference.lookup", Reach::Follows(&[])),
+    // ND3: the maths blocks and the Equation hold no constant; every
+    // constant reaches them on a wire from a Look up block, so they follow.
+    ("sse.math.equation", Reach::Follows(&[])),
+    ("math.power", Reach::Follows(&[])),
+    ("math.sqrt", Reach::Follows(&[])),
+    ("math.exp", Reach::Follows(&[])),
+    ("math.expm1", Reach::Follows(&[])),
+    ("math.ln", Reach::Follows(&[])),
+    ("math.log10", Reach::Follows(&[])),
+    ("math.sin", Reach::Follows(&[])),
+    ("math.cos", Reach::Follows(&[])),
+    ("math.tan", Reach::Follows(&[])),
+    ("math.atan2", Reach::Follows(&[])),
 ];
 
 /// The cosmos chain's stages (DM1, galaxy histories design section 3.3).

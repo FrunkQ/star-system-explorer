@@ -711,6 +711,7 @@ dependencies = [
  "sse-core",
  "sse-flow",
  "sse-life",
+ "sse-light",
  "sse-place",
  "sse-sift",
 ]
