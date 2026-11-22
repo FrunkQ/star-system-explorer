@@ -6,6 +6,7 @@
 // describe, and positions on a course are the kernel's own track.
 import type { SceneSubject, SystemScene } from "./scene.ts";
 import { YEAR_S } from "./intent.ts";
+import { constant } from "./sheet.ts";
 
 /** A ship as NAV reads it (sse-nav `Ship`), or a template id from the base-nav pack. */
 export interface NavShip {
@@ -117,8 +118,8 @@ export interface RoutePlan {
   model: string[];
 }
 
-const AU_M = 149_597_870_700;
-const R_EARTH_M = 6_371_000;
+const AU_M = constant("au");
+const R_EARTH_M = constant("R_earth_mean");
 const num = (s: SceneSubject, field: string): number | undefined => {
   const v = s.facts.find((f) => f.field === field)?.value;
   return typeof v === "number" && Number.isFinite(v) ? v : undefined;

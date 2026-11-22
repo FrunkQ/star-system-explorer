@@ -4,6 +4,7 @@
 // only from a scene and never compute physics.
 import type { Json } from "./json.ts";
 import type { DeriveRef } from "./session.ts";
+import { constant } from "./sheet.ts";
 
 export type FactSource = "authored" | "derived" | "resolved" | "catalogued" | "fixture";
 
@@ -91,7 +92,7 @@ export interface SystemScene {
 }
 
 /** Kilometres in one astronomical unit (IAU 2012 exact definition). */
-export const KM_PER_AU = 149_597_870.7;
+export const KM_PER_AU = constant("au") / 1000;
 
 /** The system's primary star: the star with no orbit. */
 export function primaryOf(scene: Pick<SystemScene, "subjects">): SceneSubject | undefined {
