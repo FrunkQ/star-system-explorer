@@ -714,6 +714,36 @@ pub enum Request {
         extent_mpc: f64,
         n: u32,
     },
+    /// Time-lapse frames: a world's surface (a `fixture`, or a `body` of an
+    /// adopted `system` at `at_s`) as keyframes on the S2 plate grid at its
+    /// plate snapshot dates, from its first plates to the epoch, with dated
+    /// events. `detail` is `orbit` (the coarse grid, default) or `survey`;
+    /// `frames_max` thins the frames evenly (the last always kept).
+    /// Read only.
+    SurfaceFrames {
+        #[serde(default)]
+        #[ts(optional)]
+        system: Option<String>,
+        #[serde(default)]
+        #[ts(optional)]
+        body: Option<String>,
+        #[serde(default)]
+        #[ts(optional)]
+        fixture: Option<String>,
+        #[serde(default)]
+        #[ts(optional, type = "number")]
+        at_s: Option<i64>,
+        #[serde(default)]
+        #[ts(optional, type = "unknown")]
+        options: Option<serde_json::Value>,
+        #[serde(default)]
+        #[ts(optional)]
+        detail: Option<String>,
+        /// At most this many frames, evenly spaced, always ending on the epoch.
+        #[serde(default)]
+        #[ts(optional)]
+        frames_max: Option<u32>,
+    },
     /// S14a's cave survey (Site level): survey a world as `survey_surface`
     /// does (a `fixture`, or a `body` of an adopted `system` at `at_s`) and
     /// place the lava-tube passages within `radius_km` (default 5, at most
@@ -1339,6 +1369,7 @@ impl Request {
             Request::ClassifyPreview { .. } => "classify_preview",
             Request::PlanDescent { .. } => "plan_descent",
             Request::SurveyCaves { .. } => "survey_caves",
+            Request::SurfaceFrames { .. } => "surface_frames",
             Request::Systems => "systems",
             Request::LifeView { .. } => "life_view",
             Request::ExportChronicle => "export_chronicle",
@@ -1550,6 +1581,11 @@ pub fn ops() -> Vec<OpInfo> {
             "plan_descent",
             Cost::Heavy,
             "a survey as survey_surface (cached for the same world), one site read of about 30 heights, and a descent at 0.1 s steps (well under 0.1 s native)",
+        ),
+        o(
+            "surface_frames",
+            Cost::Heavy,
+            "the plate run recorded at every snapshot, the impacts, and one climate per frame: about 1 to 2 s native at the Orbit level; the Survey grid is four times the cells",
         ),
         o(
             "survey_caves",
@@ -2061,6 +2097,15 @@ pub enum Response {
     RoutePlanned {
         #[ts(type = "unknown")]
         plan: serde_json::Value,
+    },
+    /// `surface_frames`: `{body, label, source, at_s?, frames (version, detail,
+    /// epoch_myr, grid {n, cells}, dirs (x y z per cell), frames (t_myr,
+    /// sea_level_m, plate, continental, elevation_m, vent, ice_m, temp_k,
+    /// rain_m_yr, runoff_m_yr, why), events (t_myr, kind, text, dir?,
+    /// plates?, radius_km?, diameter_km?, why), pending, why)}`.
+    FramesMade {
+        #[ts(type = "unknown")]
+        frames: serde_json::Value,
     },
     /// `survey_caves`: `{body, label, source, at_s?, caves (version, lat_deg,
     /// lon_deg, radius_km, level, spacing_m, fields, passages (id, field,

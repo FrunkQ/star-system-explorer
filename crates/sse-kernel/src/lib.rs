@@ -14,6 +14,7 @@ mod descent;
 mod dressing;
 #[cfg(test)]
 mod dressing_tests;
+mod frames;
 mod ice_ages;
 #[cfg(test)]
 mod matter_tests;
@@ -2730,6 +2731,62 @@ impl Kernel {
                     }
                 };
                 Response::CavesSurveyed { caves }
+            }
+            Request::SurfaceFrames {
+                system,
+                body,
+                fixture,
+                at_s,
+                options,
+                detail,
+                frames_max,
+            } => {
+                let ask = |from| (from, options.as_ref(), detail.as_deref());
+                let made = match (fixture, system, body) {
+                    (Some(f), None, None) => {
+                        let (fr, o, d) = ask(survey::From::Fixture(&f));
+                        frames::surface_frames(fr, o, d, frames_max)?
+                    }
+                    (None, Some(system), Some(body)) => {
+                        let a: Address = system
+                            .parse()
+                            .map_err(|e| err("bad_address", format!("{e}")))?;
+                        let u = self
+                            .universe
+                            .as_mut()
+                            .ok_or_else(|| err("no_universe", "open a universe first"))?;
+                        if !u.root.contains(&a) {
+                            return Err(err(
+                                "bad_address",
+                                format!("{a} is not in universe {}", u.root),
+                            ));
+                        }
+                        if !u.runs.contains_key(&system) {
+                            if let Some(req) = adopt::formation_request(&u.chronicle, &a) {
+                                let (_, run, _) = systems::form(req.into())?;
+                                u.runs.insert(system.clone(), run);
+                            }
+                        }
+                        {
+                            let (fr, o, d) = ask(survey::From::System {
+                                ch: &u.chronicle,
+                                seed: &u.seed,
+                                system: &a,
+                                body: &body,
+                                at_s,
+                                run: u.runs.get(&system),
+                            });
+                            frames::surface_frames(fr, o, d, frames_max)?
+                        }
+                    }
+                    _ => {
+                        return Err(err(
+                            "bad_request",
+                            "give a fixture, or a system and one of its bodies",
+                        ))
+                    }
+                };
+                Response::FramesMade { frames: made }
             }
             Request::SurveySurface {
                 system,
