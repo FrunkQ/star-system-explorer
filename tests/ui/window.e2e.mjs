@@ -106,6 +106,32 @@ try {
       console.log(`  sky: ${words.slice(0, 240)}`);
     }
 
+    // Y5 part 2: the stars behind the system's own lights, through the Window's camera, turned by the kernel's frame.
+    {
+      const hash = await gm.locator("[data-state-hash]").first().getAttribute("data-state-hash");
+      await win.locator("[data-target]").selectOption("star");
+      await gm.waitForTimeout(200);
+      const mean = () => win.locator("canvas[data-sky]").evaluate((c) => {
+        const d = c.getContext("2d").getImageData(0, 0, c.width, c.height).data;
+        let t = 0;
+        for (let i = 0; i < d.length; i += 4) t += d[i] + d[i + 1] + d[i + 2];
+        return t / (d.length / 4) / 3;
+      });
+      const chartMean = await mean();
+      await win.getByLabel("Stars behind").check();
+      await gm.waitForSelector("[data-stars-behind=on]", { timeout: 180000 });
+      await gm.waitForTimeout(300);
+      const skyMean = await mean();
+      assert.ok(skyMean < chartMean - 40, `the night sky replaces the chart ground (${skyMean.toFixed(0)} against ${chartMean.toFixed(0)})`);
+      const words = await win.locator("[data-stars-behind-words]").innerText();
+      assert.match(words, /^[\d,]+ stars to magnitude [\d.]+( \(the kernel's list stops there, so some faint stars are missing\))? and the Milky Way's glow, in true colour\. This system's plane is drawn at random/, words);
+      await win.locator("canvas[data-sky]").scrollIntoViewIfNeeded();
+      await shot(gm, "y5-window-stars-behind");
+      assert.equal(await gm.locator("[data-state-hash]").first().getAttribute("data-state-hash"), hash, "the stars behind never change the state hash");
+      console.log(`  stars behind: ${words.slice(0, 220)}`);
+      await win.getByLabel("Stars behind").uncheck();
+    }
+
     await more(gm, "Night chart");
     await gm.waitForTimeout(400);
     await win.locator("[data-target]").selectOption("star");

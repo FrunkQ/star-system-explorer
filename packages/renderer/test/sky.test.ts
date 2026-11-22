@@ -119,3 +119,36 @@ test("the kernel's sky from the Sun's place: the glow follows the galactic plane
     await k.close();
   }
 });
+
+test("Y5 part 2: the sky turned into a system's own frame through the Window's camera", async () => {
+  const { camera, project, unprojectCamera } = await import("../../ui-contract/src/window.ts");
+  const { systemView, toGalactic, toSystem } = await import("../src/sky.ts");
+  const k = nodeKernel();
+  try {
+    const base = JSON.parse(readFileSync(new URL("../../../packs/base-physics/pack.json", import.meta.url), "utf8"));
+    const s = await Session.open(k.client, gmSeat(), { id: "frame", seed: "frame" }, [base]);
+    const w = await s.windowView({ fixture: "sol", from: "Earth" });
+    assert.ok(w.ok, JSON.stringify(w));
+    const f = w.view.frame!;
+    assert.equal(f.evidence, "measured");
+    // The rows are a rotation: there and back is the identity.
+    const g: V3 = [0.3, -0.5, 0.8124];
+    const back = toGalactic(f, toSystem(f, g));
+    assert.ok(Math.hypot(back[0] - g[0], back[1] - g[1], back[2] - g[2]) < 1e-9);
+    // Ecliptic longitude 90° lies where the ecliptic crosses the Milky Way, near galactic l 186°, b 0° (frame.md).
+    const e90 = toGalactic(f, [0, 1, 0]);
+    const l = ((Math.atan2(e90[1], e90[0]) * 180) / Math.PI + 360) % 360;
+    const b = (Math.asin(e90[2]) * 180) / Math.PI;
+    assert.ok(Math.abs(l - 186.37) < 0.1 && Math.abs(b) < 0.1, `l ${l} b ${b}`);
+    // Through the Window's gnomonic camera: a galactic direction lands where its system-frame lon/lat does, and back.
+    const cam = camera(80, 5, 60, 400);
+    const v = systemView(f, (lo, la, m) => project(cam, lo, la, m), (x, y) => unprojectCamera(cam, x, y));
+    const p = v.project(e90)!;
+    const q = project(cam, 90, 0)!;
+    assert.ok(Math.abs(p.x - q.x) < 1e-6 && Math.abs(p.y - q.y) < 1e-6);
+    const d = v.unproject(p.x, p.y);
+    assert.ok(Math.hypot(d[0] - e90[0], d[1] - e90[1], d[2] - e90[2]) < 1e-9);
+  } finally {
+    await k.close();
+  }
+});
