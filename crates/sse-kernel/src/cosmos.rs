@@ -26,6 +26,11 @@ fn settings() -> Result<CosmologyPack, Response> {
     CosmologyPack::from_packs(&[base_cosmology_pack()]).map_err(|e| err("bad_pack", e))
 }
 
+/// The sky draw's settings (Y2).
+pub(crate) fn sky_params() -> Result<sse_cosmos::sky::SkyParams, Response> {
+    Ok(settings()?.sky)
+}
+
 fn web(c: &Cosmology, cp: &CosmologyPack, seed: &Seed, root: &Address) -> Result<Web, Response> {
     Web::new(
         c,
@@ -744,6 +749,155 @@ mod tests {
         assert!((g["chart"]["halo_mass_msun"].as_f64().unwrap() - m[0]).abs() < 1.0);
         let bad = k.handle_json(r#"{"op":"galaxy_chart","cell":[0,0,0],"halo":"halo:99999"}"#);
         assert!(bad.contains("unknown_halo"), "{bad}");
+    }
+
+    /// Stars brighter than V = 3, 4 and 5 over the whole sky: about 171, 513
+    /// and 1,602 (the standard cumulative counts, as tabulated at
+    /// https://en.wikipedia.org/wiki/Apparent_magnitude and
+    /// https://oeis.org/A053406).
+    const REAL_SKY: [(f64, f64); 3] = [(3.0, 171.0), (4.0, 513.0), (5.0, 1602.0)];
+
+    fn n_brighter(sky: &serde_json::Value, mag: f64) -> f64 {
+        sky["counts"]
+            .as_array()
+            .unwrap()
+            .iter()
+            .find(|c| c["mag"].as_f64() == Some(mag))
+            .map_or(0.0, |c| c["n"].as_f64().unwrap())
+    }
+
+    #[test]
+    fn the_sky_from_the_suns_place_counts_like_the_real_one() {
+        let mut k = open();
+        let r = ask(
+            &mut k,
+            r#"{"op":"sky_from_here","limit_mag":5,"bands":["B","V"]}"#,
+        );
+        assert_eq!(r["type"], "sky", "{r}");
+        let sky = &r["sky"];
+        // A fill sky is statistical, and this galaxy is only like the Milky
+        // Way: within a factor of 1.5 either way of the real counts.
+        for (mag, real) in REAL_SKY {
+            let n = n_brighter(sky, mag);
+            assert!(
+                n > real / 1.5 && n < real * 1.5,
+                "V < {mag}: {n} against {real}"
+            );
+        }
+        let stars = sky["stars"].as_array().unwrap();
+        assert!(!stars.is_empty());
+        // Brightest first, each at or above the limit.
+        for w in stars.windows(2) {
+            assert!(w[0]["mag"].as_f64() <= w[1]["mag"].as_f64());
+        }
+        assert!(stars.iter().all(|s| s["mag"].as_f64().unwrap() <= 5.0));
+        // Dust reddens: B-V excess is positive wherever A_V is.
+        let s = stars
+            .iter()
+            .find(|s| s["a_v"].as_f64().unwrap() > 0.05)
+            .unwrap();
+        assert!(s["colours"][0]["excess"].as_f64().unwrap() > 0.0, "{s}");
+
+        // A point's magnitude is its system's: a single star's photosphere
+        // read through the same sight line gives the same V.
+        let one = stars
+            .iter()
+            .find(|s| s["double"] == false && s["mag"].as_f64().unwrap() > 3.0)
+            .unwrap();
+        let c = &one["components"][0];
+        let pc = sse_core::Units::standard().get("pc").unwrap().scale;
+        let p = ask(
+            &mut k,
+            &serde_json::json!({
+                "op": "read_photometry",
+                "bands": ["V"],
+                "stars": [{
+                    "temperature_k": c["teff_k"],
+                    "radius_m": c["radius_m"],
+                    "distance_m": one["distance_pc"].as_f64().unwrap() * pc,
+                    "a_v": one["a_v"],
+                }],
+            })
+            .to_string(),
+        );
+        let v = p["stars"][0]["magnitudes"][0]["m_vega"].as_f64().unwrap();
+        assert!((v - one["mag"].as_f64().unwrap()).abs() < 1e-9, "{v} {one}");
+
+        // The star the sky finds is the one its cell draws.
+        let addr = one["address"].as_str().unwrap();
+        let cell: Vec<i64> = addr
+            .split("cell:")
+            .nth(1)
+            .unwrap()
+            .split('/')
+            .next()
+            .unwrap()
+            .split('_')
+            .map(|x| x.parse().unwrap())
+            .collect();
+        let drawn = ask(
+            &mut k,
+            &format!(
+                r#"{{"op":"star_cell","cell":[{},{},{}],"t_myr":{}}}"#,
+                cell[0], cell[1], cell[2], sky["t_myr"]
+            ),
+        );
+        let row = drawn["cell"]["systems"]
+            .as_array()
+            .unwrap()
+            .iter()
+            .find(|s| s["address"] == addr)
+            .unwrap_or_else(|| panic!("{addr} not drawn in its cell"));
+        assert_eq!(row["companions"].as_array().unwrap().len(), 0);
+    }
+
+    #[test]
+    fn the_sky_is_the_same_twice_and_a_promoted_star_appears_once() {
+        use sse_core::math as m;
+        let mut k = open();
+        let q = r#"{"op":"sky_from_here","limit_mag":3,"cone":{"l_deg":90,"b_deg":0,"half_angle_deg":60}}"#;
+        let a = ask(&mut k, q);
+        assert_eq!(a["type"], "sky", "{a}");
+        let b = ask(&mut k, q);
+        assert_eq!(a, b);
+        // Every star is inside the cone.
+        let stars = a["sky"]["stars"].as_array().unwrap();
+        assert!(stars.len() > 5, "{}", a["sky"]["counts"]);
+        for s in stars {
+            let (l, bb) = (s["l_deg"].as_f64().unwrap(), s["b_deg"].as_f64().unwrap());
+            let (l, bb) = (l.to_radians(), bb.to_radians());
+            let cos = m::cos(bb) * m::sin(l); // cos of the angle to (l 90, b 0)
+            assert!(cos >= m::cos(60f64.to_radians()) - 1e-9, "{s}");
+        }
+        // Promote one: it is still there once, now pinned, as bright.
+        let pick = &stars[stars.len() / 2];
+        let addr = pick["address"].as_str().unwrap();
+        let p = ask(
+            &mut k,
+            &format!(r#"{{"op":"promote_star","address":"{addr}"}}"#),
+        );
+        assert_eq!(p["type"], "star_promoted", "{p}");
+        let c = ask(&mut k, q);
+        let after = c["sky"]["stars"].as_array().unwrap();
+        let hits: Vec<_> = after.iter().filter(|s| s["address"] == addr).collect();
+        assert_eq!(hits.len(), 1);
+        assert_eq!(hits[0]["pinned"], true);
+        assert_eq!(hits[0]["mag"], pick["mag"]);
+        assert_eq!(after.len(), stars.len());
+    }
+
+    #[test]
+    fn a_sky_ask_out_of_range_is_refused() {
+        let mut k = open();
+        for q in [
+            r#"{"op":"sky_from_here","t_myr":-1}"#,
+            r#"{"op":"sky_from_here","limit_mag":31}"#,
+            r#"{"op":"sky_from_here","band":"Q"}"#,
+            r#"{"op":"sky_from_here","observer":"u:g3/halo:nowhere"}"#,
+        ] {
+            let r = ask(&mut k, q);
+            assert_eq!(r["type"], "error", "{q}: {r}");
+        }
     }
 
     #[test]

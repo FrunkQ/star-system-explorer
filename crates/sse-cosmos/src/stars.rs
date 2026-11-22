@@ -40,6 +40,17 @@ pub struct StarParams {
     pub lifetime_slope: f64,
     /// Giant phase length as a share of the main-sequence life.
     pub giant_share: f64,
+    /// Giant luminosity = giant_l_factor x the main-sequence luminosity +
+    /// giant_l_floor_lsun, at giant_teff_k (fudge F-S11). The floor is the
+    /// red clump, where a low-mass giant spends most of its giant life:
+    /// about 50 L☉ at 4,500 to 4,800 K (Girardi 2016,
+    /// doi:10.1146/annurev-astro-081915-023354). A massive star leaves the
+    /// main sequence about twice as bright as it began (Hurley, Pols and
+    /// Tout 2000, doi:10.1046/j.1365-8711.2000.03426.x) and crosses to a
+    /// supergiant at about that luminosity.
+    pub giant_l_factor: f64,
+    pub giant_l_floor_lsun: f64,
+    pub giant_teff_k: f64,
     /// White dwarf mass = wd_a x M + wd_b (Kalirai et al. 2008).
     pub wd_a: f64,
     pub wd_b: f64,
@@ -99,6 +110,9 @@ impl Default for StarParams {
             sun_life_gyr: 10.0,
             lifetime_slope: 2.5,
             giant_share: 0.1,
+            giant_l_factor: 2.0,
+            giant_l_floor_lsun: 50.0,
+            giant_teff_k: 4500.0,
             wd_a: 0.109,
             wd_b: 0.394,
             ns_min_msun: 8.0,
@@ -317,13 +331,12 @@ impl StarParams {
             };
         }
         if age_gyr < life * (1.0 + self.giant_share) {
-            let l = ms_l * 30.0 + 50.0;
-            let r = ms_r * 20.0;
+            let l = ms_l * self.giant_l_factor + self.giant_l_floor_lsun;
             return StarState {
                 phase: "giant".into(),
                 mass_msun: mass,
                 luminosity_lsun: l,
-                teff_k: teff(l, r),
+                teff_k: self.giant_teff_k,
                 age_gyr,
             };
         }
@@ -411,16 +424,12 @@ impl<'a> Stars<'a> {
     pub(crate) fn density_at(&self, g: [f64; 3], t0: f64) -> f64 {
         let [x, y, z] = self.from_grid(g, t0);
         let t_gyr = t0 / 1000.0;
-        let l = self.env.local(
-            Place {
-                r_kpc: m::hypot(x, y) / 1000.0,
-                phi: m::atan2(y, x),
-                z_pc: z,
-                t_gyr,
-            },
-            &self.green,
-        );
-        l.systems_pc3
+        self.env.systems_pc3(Place {
+            r_kpc: m::hypot(x, y) / 1000.0,
+            phi: m::atan2(y, x),
+            z_pc: z,
+            t_gyr,
+        })
     }
     /// Every system drawn for a cell and frame, before pins.
     pub(crate) fn draw_all(&self, cell: [i64; 3], frame: i64) -> Result<Vec<StarSystem>, String> {
@@ -519,16 +528,10 @@ impl<'a> Stars<'a> {
             }
             companions.sort_by(|a, b| a.a_au.total_cmp(&b.a_au));
         }
-        let lb = self.env.local(
-            Place {
-                r_kpc: rc,
-                phi: m::atan2(y, x),
-                z_pc: 0.0,
-                t_gyr: birth,
-            },
-            &self.green,
-        );
-        let feh = lb.feh + p.feh_scatter * d.normal(i(13));
+        // The gas's mix at its birth ring and time (`local`'s arithmetic,
+        // without the hazards it also works out).
+        let sb = self.env.surface(rc, birth);
+        let feh = sb.feh + p.feh_scatter * d.normal(i(13));
         let cluster = {
             let u = d.unit(i(16));
             let (a, b) = (1.0 / p.cluster_min, 1.0 / p.cluster_max);
@@ -563,10 +566,10 @@ impl<'a> Stars<'a> {
             mass_msun: mass,
             companions,
             feh,
-            alpha_fe: lb.alpha_fe,
-            c_o: lb.c_o,
-            r_fe: lb.r_fe,
-            k40_fe: lb.k40_fe,
+            alpha_fe: sb.alpha_h - sb.feh,
+            c_o: 0.55 * m::pow(10.0, sb.cn_h - sb.alpha_h),
+            r_fe: sb.r_h - sb.feh,
+            k40_fe: sb.k40_h - sb.feh,
             cluster_mass_msun: cluster,
             orbit: Orbit {
                 r_guide_pc: r_guide,

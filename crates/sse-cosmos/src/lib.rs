@@ -17,6 +17,7 @@ pub mod origin;
 pub mod patch;
 pub mod rings;
 pub mod scenario;
+pub mod sky;
 pub mod star_tree;
 pub mod stars;
 pub mod web;

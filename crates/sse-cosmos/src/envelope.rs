@@ -310,6 +310,30 @@ impl GalaxyEnvelope<'_> {
     }
 
     /// The envelope at a place.
+    /// Systems per pc³ at a place: the part of `local` a star count needs,
+    /// without the hazards and the metal history (the same arithmetic, so
+    /// the same number).
+    pub fn systems_pc3(&self, p: Place) -> f64 {
+        let e = &self.params;
+        let s = self.surface(p.r_kpc, p.t_gyr);
+        let vz = |h: f64| m::exp(-p.z_pc.abs() / h) / (2.0 * h);
+        let stars = s.stars
+            * ((1.0 - e.thick_share) * vz(e.thin_height_pc)
+                + e.thick_share * vz(e.thick_height_pc));
+        stars / e.mean_star_msun
+    }
+
+    /// Gas density (M☉ per pc³) and [Fe/H] at a place: the part of `local`
+    /// a dust column needs (the same arithmetic, so the same numbers).
+    pub fn gas_pc3(&self, p: Place) -> (f64, f64) {
+        let e = &self.params;
+        let s = self.surface(p.r_kpc, p.t_gyr);
+        let arm = self.arm(&p);
+        let tex = self.texture(&p);
+        let vz = |h: f64| m::exp(-p.z_pc.abs() / h) / (2.0 * h);
+        (s.gas * vz(e.gas_height_pc) * arm * tex, s.feh)
+    }
+
     pub fn local(&self, p: Place, g: &GreenParams) -> Local {
         let e = &self.params;
         let s = self.surface(p.r_kpc, p.t_gyr);

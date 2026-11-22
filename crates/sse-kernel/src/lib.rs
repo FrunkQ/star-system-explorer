@@ -21,6 +21,7 @@ mod matter_tests;
 mod nav;
 mod orbits;
 pub mod protocol;
+mod sky;
 mod survey;
 mod systems;
 mod tags;
@@ -4594,6 +4595,39 @@ impl Kernel {
                     cosmos::star_cell(st, cell, t_myr.unwrap_or(now + elapsed), &pins)
                 })?;
                 Response::StarCelled { cell }
+            }
+            Request::SkyFromHere {
+                observer,
+                position_pc,
+                t_myr,
+                limit_mag,
+                band,
+                bands,
+                cone,
+                max_stars,
+            } => {
+                let u = self.universe()?;
+                let pins =
+                    cosmos::star_pins(&u.chronicle.state_at(UniverseTime::seconds(i64::MAX)))?;
+                let elapsed = clock::elapsed_myr(&u.chronicle);
+                let sky = cosmos::with_stars(&u.seed, &u.root, None, |st, now| {
+                    sky::sky_from_here(
+                        st,
+                        &pins,
+                        &cosmos::sky_params()?,
+                        sky::Ask {
+                            observer: observer.as_deref(),
+                            position_pc,
+                            t_myr: t_myr.unwrap_or(now + elapsed),
+                            limit_mag: limit_mag.unwrap_or(6.5),
+                            band: band.as_deref().unwrap_or("V"),
+                            bands: bands.unwrap_or_default(),
+                            cone,
+                            max_stars: max_stars.unwrap_or(5000) as usize,
+                        },
+                    )
+                })?;
+                Response::Sky { sky }
             }
             Request::PlanVoyage {
                 from,
