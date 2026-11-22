@@ -476,7 +476,7 @@ Owners are suggestions for the coordinator. Each package adds its own fudge regi
 
 | Id | Package | Needs | Owner | Acceptance checks |
 |---|---|---|---|---|
-| GH0 | Check every from-memory citation in section 12; time a throwaway tree and orbit run in WebAssembly on a phone and a laptop; file the atom issues | none | citations, kernel | a checked source list; measured costs replace the estimates in 9.1 and 10 |
+| GH0 | Check every from-memory citation in section 12; time a throwaway tree and orbit run in WebAssembly on a phone and a laptop; walk a full catalogue of identified galaxy types (Hubble and de Vaucouleurs sequence, dwarf kinds, peculiar and interacting kinds, active kinds) and say for each which processes and Marks produce it, naming any the mechanism cannot yet produce (Alex, 22 Nov: "we will have every type of identified galaxy"); file the atom issues | none | citations, kernel | a checked source list; measured costs replace the estimates in 9.1 and 10; a type coverage table with every gap named |
 | DM1 | Sheet: Cosmos group, the rows of 3.2, the theoretical mark, reach declarations; `base-cosmology` reads the sheet | MP1c | matter data sheet | nothing edited gives identical hashes; a changed Ωc gives a reach report; the mark shows at every depth, on phone and Night chart |
 | DM2 | Dark energy: w0, wa, growth by its equation; "real size" switch on foam and cluster maps | DM1 | kernel; galaxy charts | growth matches today's closed form at w = −1 to 0.2%; void profile against Hamaus et al.; scrub shows expansion |
 | DM3 | Matter ledger per cell and per halo; op `matter_budget`; "where the matter is" bar; dark matter layer | DM1 | kernel; galaxy charts | closure to rounding; environment shares and baryon census within stated bands |
