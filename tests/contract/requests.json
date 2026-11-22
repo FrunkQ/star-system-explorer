@@ -1572,7 +1572,19 @@
     "wind": { "density_kg_m3": 8.36e-21, "speed_m_s": 440000.0 },
     "air": { "surface_pressure_pa": 101325.0, "scale_height_m": 8500.0 },
     "surface_gravity_m_s2": 9.81,
-    "orbits_m": [6771000.0]
+    "orbits_m": [6771000.0],
+    "magnetic_tilt_deg": 9.4,
+    "moons": [ { "address": "u:sol/sys:0/body:2/moon:0", "orbit_m": 384400000.0 } ]
+   },
+   {
+    "address": "u:sol/sys:0/body:5",
+    "radius_m": 71492000.0,
+    "moment_a_m2": 1.52e+27,
+    "wind": { "density_kg_m3": 3.09e-22, "speed_m_s": 440000.0 },
+    "magnetic_tilt_deg": 9.6,
+    "plasma_source_kg_s": 1000.0,
+    "pedersen_conductance_s": 0.1,
+    "moons": [ { "address": "u:sol/sys:0/body:5/moon:0", "orbit_m": 421700000.0 } ]
    },
    {
     "address": "u:sol/sys:0/body:5/moon:1",

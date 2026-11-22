@@ -29,6 +29,10 @@ fn body(address: &str, r: f64, mom: f64, d_au: f64) -> Body {
         surface_gravity_m_s2: 0.0,
         free_space_dose_msv_day: None,
         orbits_m: vec![],
+        magnetic_tilt_deg: 0.0,
+        plasma_source_kg_s: 0.0,
+        pedersen_conductance_s: 0.0,
+        moons: vec![],
     }
 }
 
@@ -256,4 +260,80 @@ fn host_field_shields_its_moons() {
         .shield
         .unwrap();
     assert!(s.surface_mean_msv_yr < bare.surface_mean_msv_yr * 0.2);
+}
+
+/// Aurorae: Earth's oval near 67° to 75° (Feldstein and Starkov 1967),
+/// moving equatorward in a gusty wind; Jupiter's spin-driven main oval
+/// inside its wind oval with Io's spot near 66°; Uranus's ovals far from its
+/// spin poles (tilt 59°, Ness et al. 1986, doi:10.1126/science.233.4759.85);
+/// Venus a diffuse glow.
+#[test]
+fn aurorae_follow_the_drivers() {
+    let set = Settings::default();
+    let e = read(&body("earth", 6.371e6, 8.0e22, 1.0), &set).unwrap();
+    let a = e.aurora.unwrap();
+    let o = &a.ovals[0];
+    assert_eq!(o.driver, "wind");
+    assert!(
+        (66.0..=76.0).contains(&o.magnetic_latitude_deg),
+        "{}",
+        o.magnetic_latitude_deg
+    );
+    let [storm, quiet] = o.latitude_range_deg.unwrap();
+    assert!(storm < o.magnetic_latitude_deg && quiet > o.magnetic_latitude_deg);
+
+    let mut j = body("jupiter", R_J, moment(4.17e-4, R_J), 5.2);
+    j.plasma_source_kg_s = 1000.0;
+    j.pedersen_conductance_s = 0.1;
+    j.magnetic_tilt_deg = 9.6;
+    j.moons = vec![
+        MoonOrbit {
+            address: "io".into(),
+            orbit_m: 5.9 * R_J,
+        },
+        MoonOrbit {
+            address: "callisto".into(),
+            orbit_m: 26.3 * R_J,
+        },
+        MoonOrbit {
+            address: "far".into(),
+            orbit_m: 300.0 * R_J,
+        },
+    ];
+    let a = read(&j, &set).unwrap().aurora.unwrap();
+    let spin = a
+        .ovals
+        .iter()
+        .find(|o| o.driver == "spin")
+        .expect("Io's gas makes a main oval");
+    assert!(spin.magnetic_latitude_deg < a.ovals[0].magnetic_latitude_deg);
+    assert!(
+        (20.0..=35.0).contains(&(spin.maps_to_m / R_J)),
+        "{}",
+        spin.maps_to_m / R_J
+    );
+    let io = a.footprints.iter().find(|f| f.moon == "io").unwrap();
+    assert!((io.magnetic_latitude_deg - 65.7).abs() < 1.0);
+    assert!(
+        a.footprints.iter().all(|f| f.moon != "far"),
+        "outside the bubble"
+    );
+
+    let r_u = 2.5559e7;
+    let mut u = body("uranus", r_u, moment(2.3e-5, r_u), 19.2);
+    u.magnetic_tilt_deg = 59.0;
+    let a = read(&u, &set).unwrap().aurora.unwrap();
+    assert!(
+        a.ovals[0].spin_latitude_range_deg[0] < 30.0,
+        "{:?}",
+        a.ovals[0].spin_latitude_range_deg
+    );
+
+    let mut v = body("venus", 6.0518e6, 0.0, 0.72);
+    v.air = Some(Air {
+        surface_pressure_pa: 9.2e6,
+        scale_height_m: 15_900.0,
+    });
+    v.surface_gravity_m_s2 = 8.87;
+    assert!(read(&v, &set).unwrap().aurora.unwrap().diffuse);
 }
