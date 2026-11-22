@@ -46,6 +46,22 @@ pub struct Substance {
     pub phases: serde_json::Map<String, serde_json::Value>,
 }
 
+/// W7c part 1: land and sea as two columns in each band, coupled by the
+/// band's own diffusion across its coasts.
+#[derive(Clone, PartialEq, Debug, Serialize, Deserialize)]
+pub struct LandSeaSettings {
+    /// Coasts a line along a band crosses when the world does not say
+    /// (2: one continent and one sea per band).
+    pub coasts_per_band: f64,
+    /// Upper bound on the land-sea coupling per square metre of band,
+    /// W m⁻² K⁻¹ (the formula grows as 1 / cos² φ toward the poles).
+    pub max_coupling_w_m2_k: f64,
+    /// Column-mean zonal wind as a share of the thermal wind at the top of
+    /// the thermal depth (a wind rising linearly with height gives ½).
+    pub column_wind_ratio: f64,
+    pub source: String,
+}
+
 /// `sse.volatile.exchange` (W8 part 2): ice of the air's main gas between
 /// ground and air.
 #[derive(Clone, PartialEq, Debug, Serialize, Deserialize)]
@@ -479,6 +495,7 @@ pub struct ClimateSettings {
     pub diffusion: Diffusion,
     pub ice: Ice,
     pub heat_capacity: HeatCapacity,
+    pub land_sea: LandSeaSettings,
     pub moisture: Moisture,
     pub cloud: Cloud,
     /// Thermal wind depth in scale heights, and the share of it felt near the ground.

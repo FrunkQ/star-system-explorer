@@ -31,6 +31,7 @@ ORIGINS_CSV = ROOT / "handover/packages/MP2-data/origins.csv"
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 import element_origins  # noqa: E402
+import water_phases  # noqa: E402
 
 JULIAN_YEAR_S = 31557600.0
 
@@ -209,6 +210,11 @@ CONVENTION_IDS = {"au", "yr_julian", "day", "atm", "g0", "T0C", "GM_sun", "R_sun
 FACTOR_IDS = {"pc", "ly"}
 
 
+for _k, _v in water_phases.SOURCES.items():
+    assert _k not in SOURCES, _k
+    SOURCES[_k] = _v
+
+
 def units():
     out = []
     for u in UNITS:
@@ -323,6 +329,8 @@ SUBSTANCES = [
                   "density_liquid": val(1000.0, "kg m-3", NIST, "verified", at_k=277.0),
                   "density_solid": val(917.0, "kg m-3", "petrenko1999", "verified", at_k=273.15, note="ice Ih"),
                   "vapour_pressure": {"fit": "feistel-wagner-2007", "coeffs": [273.16, 611.657, 20.9969665107897, 3.72437478271362, -13.9205483215524, 29.6988765013566, -40.1972392635944, 29.7880481050215, -9.13050963547721], "valid_k": [50.0, 273.16], "src": FS, "also": ["lisse2021"], "note": "ln(P/Pt) = 1.5 ln(T/Tt) + (1 - Tt/T) sum e_i (T/Tt)^i; coeffs [Tt, Pt Pa, e0..e6]"},
+                  # MP18: every phase of water, its boundaries, triple points and the phase_at table (scripts/water_phases.py)
+                  **water_phases.build(),
               },
               thermal={"conductivity_solid": {"fit": "k = a / T", "coeffs": [651.0], "valid_k": [100.0, 273.15], "unit": "W m-1 K-1", "src": "petrenko1999"}},
               optical={**gas_optics(2.56e-4, [1.0, 0.0, 0.0], "kaye-laby", "unverified", *KING_ONE), "condensed_colour_rgb": val([0.95, 0.95, 0.97], "1", "fudge-register", "authored")},
@@ -573,9 +581,76 @@ def validate(pack):
         for k in e["origin"]["shares"]:
             if k not in element_origins.SOURCE_NAMES:
                 errors.append(f"element {e['id']}: unknown origin {k}")
+    errors += validate_phases(ref)
     if len(ref["elements"]) != 118:
         errors.append("elements: expected 118 rows")
     return errors
+
+
+def validate_phases(ref):
+    """MP17's load checks, run here too so a bad table never reaches the pack."""
+    errors = []
+    for sub in ref["substances"]:
+        ph = sub.get("phases", {})
+        if "forms" not in ph:
+            continue
+        sid = sub["id"]
+        form_ids = [f["id"] for f in ph["forms"]]
+        if len(form_ids) != len(set(form_ids)):
+            errors.append(f"{sid}: duplicate phase ids")
+        stable = {f["id"] for f in ph["forms"] if f["stability"] == "stable"}
+        linked = {x["id"] for x in ref["sources"] if x.get("doi") or x.get("url")}
+        grades = ("measured", "computed", "extrapolated", "convention")
+        for f in ph["forms"]:
+            if f["evidence"]["grade"] not in grades:
+                errors.append(f"{sid}: {f['id']} has grade {f['evidence']['grade']}")
+            if f["evidence"]["grade"] == "computed" and f["evidence"]["src"] not in linked:
+                errors.append(f"{sid}: {f['id']} is computed but its source has no doi or url")
+        for b in ph["boundaries"]:
+            if b["evidence"]["grade"] not in grades:
+                errors.append(f"{sid}: boundary {b['between']} has grade {b['evidence']['grade']}")
+            if b["evidence"]["grade"] == "computed" and b["src"] not in linked:
+                errors.append(f"{sid}: boundary {b['between']} is computed but its source has no doi or url")
+        pairs = set()
+        for b in ph["boundaries"]:
+            for x in b["between"]:
+                if x not in stable:
+                    errors.append(f"{sid}: boundary names {x}, not a stable phase")
+            pairs.add(tuple(sorted(b["between"])))
+        for m in ph["meets"]:
+            for x in m["phases"]:
+                if x not in stable:
+                    errors.append(f"{sid}: triple point names {x}")
+            for a, b in ((0, 1), (0, 2), (1, 2)):
+                pr = tuple(sorted((m["phases"][a], m["phases"][b])))
+                if pr not in pairs:
+                    errors.append(f"{sid}: triple point {m['phases']} has no boundary {pr}")
+        fam = [m for m in ph["meets"] if set(m["phases"]) == {f"{sid}.ice_ih", f"{sid}.liquid", f"{sid}.vapour"}]
+        if fam and (fam[0]["t_k"] != ph["triple_point_k"]["v"] or fam[0]["p_pa"] != ph["triple_point_pa"]["v"]):
+            errors.append(f"{sid}: the solid-liquid-vapour triple point disagrees with phases.triple_point")
+        t = ph["table"]
+        n_p, n_t = t["log10_p_pa"]["n"], t["log10_t_k"]["n"]
+        grid = water_phases.decode(t)
+        if len(grid) != n_p or any(len(r) != n_t for r in grid):
+            errors.append(f"{sid}: table does not decode to {n_p} x {n_t}")
+            continue
+        ids = t["phases"]
+        used = set()
+        for i in range(n_p):
+            row = grid[i]
+            for j, a in enumerate(row):
+                used.add(a)
+                for b in ([row[j + 1]] if j + 1 < n_t else []) + ([grid[i + 1][j]] if i + 1 < n_p else []):
+                    if a != b and tuple(sorted((a, b))) not in pairs and not any(
+                            tuple(sorted((a, c))) in pairs and tuple(sorted((c, b))) in pairs for c in stable):
+                        # a phase thinner than one cell may sit between two that do not touch
+                        errors.append(f"{sid}: table puts {a} next to {b} with no boundary between them (cell {i},{j})")
+        for x in ids:
+            if x not in stable:
+                errors.append(f"{sid}: table phase {x} is not a stable form")
+        for x in stable - used:
+            errors.append(f"{sid}: stable phase {x} never appears in the table")
+    return sorted(set(errors))[:40]
 
 
 def main():
@@ -584,7 +659,7 @@ def main():
     if errors:
         print("\n".join(errors))
         sys.exit(1)
-    text = json.dumps(pack, indent=1, ensure_ascii=False) + "\n"
+    text = json.dumps(pack, indent=1, ensure_ascii=False, allow_nan=False) + "\n"
     if "--check" in sys.argv:
         if not OUT.exists() or OUT.read_text() != text:
             print(f"{OUT.relative_to(ROOT)} is stale: run scripts/build-base-reference.py")

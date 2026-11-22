@@ -52,6 +52,8 @@ mod exchange_tests;
 #[cfg(test)]
 mod forcing_tests;
 #[cfg(test)]
+mod land_sea_tests;
+#[cfg(test)]
 mod species_tests;
 #[cfg(test)]
 mod strengths_tests;
