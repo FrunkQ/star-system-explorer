@@ -440,3 +440,18 @@ fn a_promoted_star_keeps_the_names_it_had() {
     assert!(!names.is_empty(), "{r}");
     assert!(names.iter().all(|n| n["source"] == "fixed"), "{r}");
 }
+
+/// NM3a: the shipped base-names pack loads with the stack, and its
+/// Catalogue planets come back numbered under their parent.
+#[test]
+fn base_names_loads_with_the_stack() {
+    let mut k = kernel(vec![base(), pack("packs/base-names/pack.json")]);
+    let r = send(
+        &mut k,
+        serde_json::json!({"op": "name_sample", "scheme": "catalogue", "kind": "planet",
+            "count": 3, "parent": "SX 000102"}),
+    );
+    assert_eq!(r["type"], "names", "{r}");
+    let text = r.to_string();
+    assert!(text.contains("SX 000102 I"), "{text}");
+}

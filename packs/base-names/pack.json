@@ -1,0 +1,574 @@
+{
+ "format": "sse.pack/1",
+ "id": "sse.base-names",
+ "version": "0.1.0",
+ "kind": [
+  "presentation"
+ ],
+ "kernel_range": "^0.1",
+ "licence": "Apache-2.0",
+ "provides": {
+  "other": {
+   "names": {
+    "schemes": [
+     {
+      "id": "catalogue",
+      "label": "Catalogue",
+      "kind": "catalogue",
+      "about": "Formal designations, as surveys write them. Planets take Roman numerals by orbit (the default) and their moons letters. Stars are SX and a running number, or SX J and their sky position; the components of a multiple star are A, B, C; surface features take the IAU's Latin descriptor terms with the world's name and a number. Every designation follows its parent's name when that is renamed. Sources: IAU naming rules, Hessman et al. 2010 (arXiv:1012.0707), the Washington Multiplicity Catalog, and the USGS and IAU Gazetteer of Planetary Nomenclature (docs/citations/naming.md).",
+      "forms": {
+       "star": [
+        [
+         "SX {serial:6}",
+         1
+        ]
+       ],
+       "star-sky": [
+        [
+         "SX {coord}",
+         1
+        ]
+       ],
+       "component": [
+        [
+         "{parent} {Letter}",
+         1
+        ]
+       ],
+       "planet": [
+        [
+         "{parent} {roman}",
+         1
+        ]
+       ],
+       "moon": [
+        [
+         "{parent} {letter}",
+         1
+        ]
+       ],
+       "small-body": [
+        [
+         "{parent} {n}",
+         1
+        ]
+       ],
+       "galaxy": [
+        [
+         "SXG {serial:6}",
+         1
+        ]
+       ],
+       "cluster": [
+        [
+         "SXC {serial:5}",
+         1
+        ]
+       ],
+       "nebula": [
+        [
+         "SXN {serial:5}",
+         1
+        ]
+       ],
+       "stream": [
+        [
+         "{parent} Stream {n}",
+         1
+        ]
+       ],
+       "default": [
+        [
+         "{parent} {n}",
+         1
+        ]
+       ],
+       "ocean": [
+        [
+         "{parent} Oceanus {n}",
+         1
+        ]
+       ],
+       "sea": [
+        [
+         "{parent} Mare {n}",
+         1
+        ]
+       ],
+       "lake": [
+        [
+         "{parent} Lacus {n}",
+         1
+        ]
+       ],
+       "continent": [
+        [
+         "{parent} Terra {n}",
+         1
+        ]
+       ],
+       "island": [
+        [
+         "{parent} Insula {n}",
+         1
+        ]
+       ],
+       "range": [
+        [
+         "{parent} Montes {n}",
+         1
+        ]
+       ],
+       "peak": [
+        [
+         "{parent} Mons {n}",
+         1
+        ]
+       ],
+       "summit": [
+        [
+         "{parent} Mons {n}",
+         1
+        ]
+       ],
+       "deep": [
+        [
+         "{parent} Fossa {n}",
+         1
+        ]
+       ],
+       "ice-cap": [
+        [
+         "{parent} Planum {n}",
+         1
+        ]
+       ],
+       "crater": [
+        [
+         "{parent} Crater {n}",
+         1
+        ]
+       ],
+       "shield": [
+        [
+         "{parent} Mons {n}",
+         1
+        ]
+       ],
+       "plains": [
+        [
+         "{parent} Planitia {n}",
+         1
+        ]
+       ],
+       "rift": [
+        [
+         "{parent} Fossae {n}",
+         1
+        ]
+       ],
+       "chasma": [
+        [
+         "{parent} Chasma {n}",
+         1
+        ]
+       ],
+       "corona": [
+        [
+         "{parent} Corona {n}",
+         1
+        ]
+       ],
+       "patera": [
+        [
+         "{parent} Patera {n}",
+         1
+        ]
+       ],
+       "scarp": [
+        [
+         "{parent} Rupes {n}",
+         1
+        ]
+       ],
+       "settlement": [
+        [
+         "{parent} Site {n}",
+         1
+        ]
+       ],
+       "port": [
+        [
+         "{parent} Port {n}",
+         1
+        ]
+       ],
+       "mine": [
+        [
+         "{parent} Mine {n}",
+         1
+        ]
+       ],
+       "base": [
+        [
+         "{parent} Base {n}",
+         1
+        ]
+       ]
+      },
+      "follow": [
+       "base",
+       "chasma",
+       "component",
+       "continent",
+       "corona",
+       "crater",
+       "deep",
+       "default",
+       "ice-cap",
+       "island",
+       "lake",
+       "mine",
+       "moon",
+       "ocean",
+       "patera",
+       "peak",
+       "plains",
+       "planet",
+       "port",
+       "range",
+       "rift",
+       "scarp",
+       "sea",
+       "settlement",
+       "shield",
+       "small-body",
+       "stream",
+       "summit"
+      ]
+     },
+     {
+      "id": "catalogue-letters",
+      "label": "Catalogue (letters)",
+      "kind": "catalogue",
+      "about": "Formal designations, as surveys write them. Planets take letters from b (the IAU's form) and their moons Roman numerals (as Kepler-1625 b I). Stars are SX and a running number, or SX J and their sky position; the components of a multiple star are A, B, C; surface features take the IAU's Latin descriptor terms with the world's name and a number. Every designation follows its parent's name when that is renamed. Sources: IAU naming rules, Hessman et al. 2010 (arXiv:1012.0707), the Washington Multiplicity Catalog, and the USGS and IAU Gazetteer of Planetary Nomenclature (docs/citations/naming.md).",
+      "forms": {
+       "star": [
+        [
+         "SX {serial:6}",
+         1
+        ]
+       ],
+       "star-sky": [
+        [
+         "SX {coord}",
+         1
+        ]
+       ],
+       "component": [
+        [
+         "{parent} {Letter}",
+         1
+        ]
+       ],
+       "planet": [
+        [
+         "{parent} {letter}",
+         1
+        ]
+       ],
+       "moon": [
+        [
+         "{parent} {roman}",
+         1
+        ]
+       ],
+       "small-body": [
+        [
+         "{parent} {n}",
+         1
+        ]
+       ],
+       "galaxy": [
+        [
+         "SXG {serial:6}",
+         1
+        ]
+       ],
+       "cluster": [
+        [
+         "SXC {serial:5}",
+         1
+        ]
+       ],
+       "nebula": [
+        [
+         "SXN {serial:5}",
+         1
+        ]
+       ],
+       "stream": [
+        [
+         "{parent} Stream {n}",
+         1
+        ]
+       ],
+       "default": [
+        [
+         "{parent} {n}",
+         1
+        ]
+       ],
+       "ocean": [
+        [
+         "{parent} Oceanus {n}",
+         1
+        ]
+       ],
+       "sea": [
+        [
+         "{parent} Mare {n}",
+         1
+        ]
+       ],
+       "lake": [
+        [
+         "{parent} Lacus {n}",
+         1
+        ]
+       ],
+       "continent": [
+        [
+         "{parent} Terra {n}",
+         1
+        ]
+       ],
+       "island": [
+        [
+         "{parent} Insula {n}",
+         1
+        ]
+       ],
+       "range": [
+        [
+         "{parent} Montes {n}",
+         1
+        ]
+       ],
+       "peak": [
+        [
+         "{parent} Mons {n}",
+         1
+        ]
+       ],
+       "summit": [
+        [
+         "{parent} Mons {n}",
+         1
+        ]
+       ],
+       "deep": [
+        [
+         "{parent} Fossa {n}",
+         1
+        ]
+       ],
+       "ice-cap": [
+        [
+         "{parent} Planum {n}",
+         1
+        ]
+       ],
+       "crater": [
+        [
+         "{parent} Crater {n}",
+         1
+        ]
+       ],
+       "shield": [
+        [
+         "{parent} Mons {n}",
+         1
+        ]
+       ],
+       "plains": [
+        [
+         "{parent} Planitia {n}",
+         1
+        ]
+       ],
+       "rift": [
+        [
+         "{parent} Fossae {n}",
+         1
+        ]
+       ],
+       "chasma": [
+        [
+         "{parent} Chasma {n}",
+         1
+        ]
+       ],
+       "corona": [
+        [
+         "{parent} Corona {n}",
+         1
+        ]
+       ],
+       "patera": [
+        [
+         "{parent} Patera {n}",
+         1
+        ]
+       ],
+       "scarp": [
+        [
+         "{parent} Rupes {n}",
+         1
+        ]
+       ],
+       "settlement": [
+        [
+         "{parent} Site {n}",
+         1
+        ]
+       ],
+       "port": [
+        [
+         "{parent} Port {n}",
+         1
+        ]
+       ],
+       "mine": [
+        [
+         "{parent} Mine {n}",
+         1
+        ]
+       ],
+       "base": [
+        [
+         "{parent} Base {n}",
+         1
+        ]
+       ]
+      },
+      "follow": [
+       "base",
+       "chasma",
+       "component",
+       "continent",
+       "corona",
+       "crater",
+       "deep",
+       "default",
+       "ice-cap",
+       "island",
+       "lake",
+       "mine",
+       "moon",
+       "ocean",
+       "patera",
+       "peak",
+       "plains",
+       "planet",
+       "port",
+       "range",
+       "rift",
+       "scarp",
+       "sea",
+       "settlement",
+       "shield",
+       "small-body",
+       "stream",
+       "summit"
+      ]
+     }
+    ],
+    "avoid": [
+     "adidas",
+     "amazon",
+     "apple",
+     "arsch",
+     "arse",
+     "ass",
+     "bastard",
+     "bitch",
+     "bollocks",
+     "buceta",
+     "bugger",
+     "cabron",
+     "carajo",
+     "caralho",
+     "cazzo",
+     "coca",
+     "cock",
+     "cojones",
+     "cola",
+     "connard",
+     "coño",
+     "crap",
+     "cunt",
+     "damn",
+     "dick",
+     "disney",
+     "encule",
+     "facebook",
+     "fag",
+     "ferrari",
+     "fotze",
+     "fuck",
+     "google",
+     "honda",
+     "hure",
+     "ikea",
+     "intel",
+     "joder",
+     "lego",
+     "marvel",
+     "mcdonald",
+     "merda",
+     "merde",
+     "microsoft",
+     "mierda",
+     "nazi",
+     "netflix",
+     "nigger",
+     "nike",
+     "nintendo",
+     "pepsi",
+     "piss",
+     "porra",
+     "prick",
+     "puta",
+     "putain",
+     "puto",
+     "rape",
+     "salope",
+     "samsung",
+     "scheisse",
+     "shit",
+     "slut",
+     "sony",
+     "spastic",
+     "starbucks",
+     "stronzo",
+     "tesla",
+     "toyota",
+     "twat",
+     "twitter",
+     "vaffanculo",
+     "walmart",
+     "wank",
+     "whore",
+     "wichser",
+     "yahoo"
+    ]
+   }
+  }
+ },
+ "about": "SSE4's built-in name schemes (naming design 4.8): Catalogue designations in two forms, and the avoid list that generated names are checked against (best effort: no list catches every word in every language or every trade mark, so every name can be renamed by hand). Built by scripts/build-base-names.py.",
+ "notice": [
+  "Descriptor terms and naming rules: Gazetteer of Planetary Nomenclature, USGS Astrogeology and the IAU Working Group for Planetary System Nomenclature (a U.S. Government work).",
+  "Designation conventions: International Astronomical Union (CC BY 4.0); Washington Double Star Catalog, U.S. Naval Observatory."
+ ]
+}
