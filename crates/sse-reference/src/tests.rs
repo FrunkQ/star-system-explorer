@@ -363,3 +363,40 @@ fn element_origins_name_the_legend_and_sum_to_one() {
     assert!(all.contains("sum to 0.8"), "{all}");
     assert!(all.contains("source nobody"), "{all}");
 }
+
+/// The shipped ice curves (MP3, W8) give the frost points the Solar
+/// System shows, and the slope gives the measured sublimation heats.
+#[test]
+fn the_shipped_ice_curves_give_known_frost_points() {
+    let s = include_str!("../../../packs/base-reference/pack.json");
+    let m: sse_pack::PackManifest = serde_json::from_str(s).unwrap();
+    let r = Reference::from_packs(&[m]).unwrap();
+    let ph = |id: &str| {
+        r.row("substances", id)
+            .and_then(|x| x.get("phases"))
+            .and_then(J::as_object)
+            .unwrap()
+            .clone()
+    };
+    let p = |id: &str, t: f64| crate::sublimation_pa(&ph(id), t).unwrap();
+    // Water ice at 200 K: 0.1626 Pa (Feistel and Wagner 2007's own table
+    // gives 0.16 Pa).
+    assert!(
+        (p("h2o", 200.0) / 0.1626 - 1.0).abs() < 0.01,
+        "{}",
+        p("h2o", 200.0)
+    );
+    // Mars's CO2 frost point is about 148 K at 610 Pa.
+    let co2 = p("co2", 148.0);
+    assert!((500.0..750.0).contains(&co2), "{co2}");
+    // Pluto's 1 Pa of nitrogen sits on ice near 36.5 to 37 K (both nitrogen
+    // fits agree there).
+    let n2 = p("n2", 37.0);
+    assert!((0.7..2.0).contains(&n2), "{n2}");
+    // Sublimation heats from the slope, against NIST's (CO2 25.2 kJ/mol near
+    // 195 K; N2 about 6.8 kJ/mol).
+    let l = crate::sublimation_latent_j_mol(&ph("co2"), 190.0).unwrap();
+    assert!((24_000.0..28_000.0).contains(&l), "{l}");
+    let l = crate::sublimation_latent_j_mol(&ph("n2"), 40.0).unwrap();
+    assert!((6_000.0..7_600.0).contains(&l), "{l}");
+}

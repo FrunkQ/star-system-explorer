@@ -12,6 +12,8 @@
 //! - [`water`] (W9): rain, snow, melt, evaporation and runoff at any place and
 //!   height, and the per-area climate label read off them.
 //! - [`saltation`] (W9): `sse.wind.saltation`, how often the wind moves sand.
+//! - [`forcing`] (W9 part 2): the spin axis under the orbit's secular wobble,
+//!   summer energy and the ice ages it drives.
 //!
 //! `sse-surface` (wear, cover) and `sse-weather` (both blocks) depend on this
 //! crate and compute none of it themselves.
@@ -20,6 +22,8 @@ pub mod circulation;
 pub mod climate;
 pub mod conditions;
 pub mod ebm;
+pub mod exchange;
+pub mod forcing;
 pub mod saltation;
 pub mod settings;
 pub mod strengths;
@@ -43,6 +47,12 @@ pub fn base_settings() -> ClimateSettings {
     ClimateSettings::from_packs(&[base_pack()]).expect("climate settings")
 }
 
+#[cfg(test)]
+mod exchange_tests;
+#[cfg(test)]
+mod forcing_tests;
+#[cfg(test)]
+mod species_tests;
 #[cfg(test)]
 mod strengths_tests;
 #[cfg(test)]

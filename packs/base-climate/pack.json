@@ -156,83 +156,6 @@
       "h2o": 0.0
      }
     },
-    "substances": [
-     {
-      "gas": "h2o",
-      "name": "water",
-      "triple_k": 273.16,
-      "triple_pa": 611.0,
-      "latent_j_kg": 2468000.0,
-      "molar_kg": 0.018015,
-      "condensed_kg_m3": 1000.0,
-      "colour": [
-       0.95,
-       0.95,
-       0.97
-      ],
-      "source": "NIST WebBook Antoine (273-303 K row): pressure at 273.16 K and latent heat from the slope at 288 K"
-     },
-     {
-      "gas": "co2",
-      "name": "carbon dioxide",
-      "triple_k": 216.58,
-      "triple_pa": 518500.0,
-      "latent_j_kg": 573000.0,
-      "molar_kg": 0.04401,
-      "condensed_kg_m3": 1560.0,
-      "colour": [
-       0.97,
-       0.97,
-       1.0
-      ],
-      "source": "NIST WebBook: triple point; sublimation enthalpy 25.2 kJ/mol at 195 K"
-     },
-     {
-      "gas": "ch4",
-      "name": "methane",
-      "triple_k": 90.67,
-      "triple_pa": 11690.0,
-      "latent_j_kg": 531000.0,
-      "molar_kg": 0.016043,
-      "condensed_kg_m3": 450.0,
-      "colour": [
-       0.9,
-       0.9,
-       0.95
-      ],
-      "source": "NIST WebBook: triple point; vaporisation enthalpy 8.519 kJ/mol at 99.5 K"
-     },
-     {
-      "gas": "nh3",
-      "name": "ammonia",
-      "triple_k": 194.95,
-      "triple_pa": 6060.0,
-      "latent_j_kg": 1832000.0,
-      "molar_kg": 0.017031,
-      "condensed_kg_m3": 820.0,
-      "colour": [
-       0.98,
-       0.96,
-       0.9
-      ],
-      "source": "NIST WebBook: melting point and triple-point pressure; sublimation enthalpy 31.2 kJ/mol"
-     },
-     {
-      "gas": "n2",
-      "name": "nitrogen",
-      "triple_k": 63.14,
-      "triple_pa": 12520.0,
-      "latent_j_kg": 200000.0,
-      "molar_kg": 0.028014,
-      "condensed_kg_m3": 800.0,
-      "colour": [
-       0.97,
-       0.97,
-       0.97
-      ],
-      "source": "NIST WebBook: triple point; vaporisation enthalpy 5.6 kJ/mol at 77 K"
-     }
-    ],
     "references": [
      {
       "text": "North, G. R. 1975, Theory of energy-balance climate models, J. Atmos. Sci. 32, 2033-2043",
@@ -353,6 +276,14 @@
      {
       "text": "Lancaster 1988, Development of linear dunes in the southwestern Kalahari, southern Africa, Journal of Arid Environments 14, 233 (dune mobility index; read through Lancaster and Helm 2000, Earth Surface Processes and Landforms 25, 197)",
       "doi": "10.1002/(SICI)1096-9837(200002)25:2<197::AID-ESP82>3.0.CO;2-H"
+     },
+     {
+      "text": "Zeebe 2022, Reduced variations in Earth's and Mars' orbital inclination and Earth's obliquity from 58 to 48 Myr ago due to solar system chaos, Astronomical Journal 164, 107 (arXiv 2207.04006)",
+      "url": "https://arxiv.org/abs/2207.04006"
+     },
+     {
+      "text": "Huybers 2006, Early Pleistocene glacial cycles and the integrated summer insolation forcing, Science 313, 508",
+      "doi": "10.1126/science.1125249"
      }
     ],
     "strengths": {
@@ -607,6 +538,28 @@
       "wet": "Wet"
      },
      "source": "Koppen-Geiger criteria of Kottek et al. 2006 (Table 1 and eq. 2.1), applied to each place's own temperatures and rain, after the ice balance (physics) and with plain labels for worlds whose liquid is not water. A label is read off the numbers; nothing reads it back."
+    },
+    "forcing": {
+     "earth_ellipticity": 0.00327381,
+     "ellipticity_spin_power": 2.0,
+     "moon_geometry": 1.0,
+     "window_yr": 400000.0,
+     "sample_yr": 2000.0,
+     "step_yr": 100.0,
+     "summer_threshold_w_m2": 275.0,
+     "year_steps": 72,
+     "probe_obliquity_deg": 1.0,
+     "drawn_inclination_deg": 3.0,
+     "source": "Spin axis s' = alpha (n.s)(s x n), alpha = K (kappa + beta), K = (3/2) E_d GM/(omega a^3), kappa = (1-e^2)^-3/2, beta = g_L (a/a_L)^3 m_L/M (Zeebe 2022 eqs. 1-5; Earth E_d 0.00327381, Table 1). Summer energy over days of at least 275 W/m2 (Huybers 2006). E_d scaled as spin squared, g_L 1 (it reproduces Earth's 50.4 arcsec/yr with the Moon), the linear ice-balance response to summer energy, the 400 kyr window and the drawn sibling inclinations are ours (docs/fudges.md)."
+    },
+    "exchange": {
+     "trigger_margin_k": 2.0,
+     "bisection_steps": 30,
+     "lowest_frost_k": 10.0,
+     "migration_steps": 40,
+     "migration_span_yr": 1000000.0,
+     "frost_emissivity": 0.9,
+     "source": "W8 part 2: frost pins the ground at the main gas's frost point (Fray and Schmitt 2009's curves on the master data sheet); latent heat from the curve's slope; the gas's partial pressure is its inventory less the ground's ice (vapour-pressure buffering, Bertrand and Forget 2016; Forget et al. 2017). Without ground ice the air is the inventory and the given mean pressure holds; with it, a year's change carries forward until a band would run out."
     }
    }
   }

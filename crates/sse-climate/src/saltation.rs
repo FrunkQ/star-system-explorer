@@ -152,9 +152,25 @@ pub fn mean_wind(ss: &SaltationSettings, cl: &Climate, lat_deg: f64) -> f64 {
     ss.ten_metre_share * m::sqrt(u * u + gust * gust)
 }
 
-/// Lofting at a latitude: the air's main gas freezes onto the ground there in
-/// its coldest season (smoothly, over `lofting_width` of the frost point).
+/// Lofting at a latitude: ice of the air's main gas sublimes from the
+/// ground there. With the exchange (W8) it is the share of the year's
+/// seasons in which the band holds ice and loses it to the air; without
+/// one, whether the coldest season reaches the frost point (smoothly, over
+/// `lofting_width` of it).
 pub fn lofting(ss: &SaltationSettings, cl: &Climate, lat_deg: f64) -> f64 {
+    if let Some(ex) = &cl.exchange {
+        let ns = ex.seasons.len().max(1) as f64;
+        let share: Vec<f64> = (0..cl.lat_deg.len())
+            .map(|j| {
+                ex.seasons
+                    .iter()
+                    .filter(|s| s.ice_kg_m2[j] > 0.0 && s.flux_kg_m2_s[j] < 0.0)
+                    .count() as f64
+                    / ns
+            })
+            .collect();
+        return cl.lerp(&share, lat_deg).clamp(0.0, 1.0);
+    }
     let Some(tc) = cl.circulation.strengths.condense_k else {
         return 0.0;
     };

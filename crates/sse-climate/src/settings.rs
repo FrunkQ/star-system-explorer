@@ -14,24 +14,140 @@ pub struct Reference {
     pub url: Option<String>,
 }
 
-/// A substance that can condense: Clausius-Clapeyron from its triple point
-/// with a constant latent heat.
+/// A substance that can condense, as the climate reads it: the weather
+/// track's view (`sse.volatile.species`, W8 and matter pack MP3) of a row of
+/// the master data sheet that has a triple point and a vapour curve. The
+/// climate keeps no substance table of its own, so ground frost, cloud and
+/// ice lines read one curve per substance.
 #[derive(Clone, PartialEq, Debug, Serialize, Deserialize)]
 pub struct Substance {
-    /// Gas key in [`crate::Conditions::gases`] (`h2o`, `co2`, `ch4`, ...).
+    /// The sheet's substance id, also the gas key in
+    /// [`crate::Conditions::gases`] (`h2o`, `co2`, `ch4`, ...).
     pub gas: String,
-    /// Name the field uses (`water`, `carbon dioxide`, `methane`, ...).
+    /// The sheet's plain name (`water`, `carbon dioxide`, ...).
     pub name: String,
     pub triple_k: f64,
     pub triple_pa: f64,
-    /// Latent heat of the phase change that forms the cloud, J/kg.
+    /// Latent heat of the phase change that forms the cloud, J/kg: the
+    /// sheet's heat of vaporisation where it has one, else its sublimation
+    /// heat, else the vapour curve's slope at the triple point.
     pub latent_j_kg: f64,
+    /// Molar mass worked out from the sheet's formula, kg/mol.
     pub molar_kg: f64,
-    /// Density of the condensed phase, kg/m³ (turns a mass flux into depth).
+    /// Density of the condensed phase, kg/m³ (liquid where the sheet has one,
+    /// else solid).
     pub condensed_kg_m3: f64,
     /// Cloud colour, linear sRGB.
     pub colour: [f64; 3],
     pub source: String,
+    /// The sheet row's `phases` group: the solid's vapour curves (read by
+    /// [`crate::ebm::p_sat`] below the triple point).
+    #[serde(default)]
+    pub phases: serde_json::Map<String, serde_json::Value>,
+}
+
+/// `sse.volatile.exchange` (W8 part 2): ice of the air's main gas between
+/// ground and air.
+#[derive(Clone, PartialEq, Debug, Serialize, Deserialize)]
+pub struct ExchangeSettings {
+    /// Run the exchange when the main gas's frost point comes within this of
+    /// the coldest band of the plain cycle, K.
+    pub trigger_margin_k: f64,
+    /// Most steps of the frost-point search per time step (regula falsi).
+    pub bisection_steps: u32,
+    /// The coldest frost point the search considers, K.
+    pub lowest_frost_k: f64,
+    /// With ground ice given: at most this many carried-forward years, and
+    /// at most this long in all.
+    pub migration_steps: u32,
+    pub migration_span_yr: f64,
+    /// Thermal emissivity of a frosted band (one value for every ice until
+    /// the sheet carries per-ice optics).
+    pub frost_emissivity: f64,
+    pub source: String,
+}
+
+/// The base master data sheet (`packs/base-reference`).
+pub fn base_reference_pack() -> sse_pack::PackManifest {
+    sse_pack::PackManifest::from_json(include_str!("../../../packs/base-reference/pack.json"))
+        .expect("base-reference pack")
+}
+
+fn num(v: Option<&serde_json::Value>) -> Option<f64> {
+    v?.get("v")?.as_f64()
+}
+
+/// The volatile species (`sse.volatile.species`): every substance on the
+/// sheet with a triple point and a vapour curve, in id order. A stack with
+/// no sheet reads the base one.
+pub fn volatile_species(stack: &[sse_pack::PackManifest]) -> Result<Vec<Substance>, String> {
+    let r = if stack.iter().any(|p| !p.provides.reference.is_empty()) {
+        sse_reference::Reference::from_packs(stack)
+    } else {
+        sse_reference::Reference::from_packs(&[base_reference_pack()])
+    }
+    .map_err(|e| format!("master data sheet: {}", e.join("; ")))?;
+    let mut out = vec![];
+    let Some(rows) = r.tables.get("substances") else {
+        return Ok(out);
+    };
+    for (id, row) in rows {
+        let Some(ph) = row.get("phases").and_then(|v| v.as_object()) else {
+            continue;
+        };
+        let (Some(tk), Some(tp), Some(_)) = (
+            num(ph.get("triple_point_k")),
+            num(ph.get("triple_point_pa")),
+            ph.get("vapour_pressure"),
+        ) else {
+            continue;
+        };
+        let Some(mk) = r.molar_mass_kg_mol(id) else {
+            continue;
+        };
+        let latent = num(ph.get("latent_vaporisation"))
+            .or_else(|| num(ph.get("latent_sublimation")))
+            .or_else(|| sse_reference::sublimation_latent_j_mol(ph, tk).map(|l| l / mk))
+            .ok_or_else(|| format!("substance {id}: no latent heat and no usable vapour curve"))?;
+        let dens = num(ph.get("density_liquid"))
+            .or_else(|| num(ph.get("density_solid")))
+            .ok_or_else(|| format!("substance {id}: a volatile needs a liquid or solid density"))?;
+        let colour = row
+            .get("optical")
+            .and_then(|o| o.get("condensed_colour_rgb"))
+            .and_then(|v| v.get("v"))
+            .and_then(|v| v.as_array())
+            .map(|a| a.iter().filter_map(|x| x.as_f64()).collect::<Vec<_>>())
+            .filter(|a| a.len() == 3)
+            .map(|a| [a[0], a[1], a[2]])
+            .ok_or_else(|| {
+                format!("substance {id}: a volatile needs optical.condensed_colour_rgb")
+            })?;
+        let name = row
+            .get("names")
+            .and_then(|n| n.get("plain"))
+            .and_then(|v| v.as_str())
+            .unwrap_or(id)
+            .to_string();
+        let mut srcs: Vec<String> = ["triple_point_k", "vapour_pressure"]
+            .iter()
+            .filter_map(|k| ph.get(*k)?.get("src")?.as_str().map(String::from))
+            .collect();
+        srcs.dedup();
+        out.push(Substance {
+            gas: id.clone(),
+            name,
+            triple_k: tk,
+            triple_pa: tp,
+            latent_j_kg: latent,
+            molar_kg: mk,
+            condensed_kg_m3: dens,
+            colour,
+            source: format!("master data sheet, substance {id} ({})", srcs.join(", ")),
+            phases: ph.clone(),
+        });
+    }
+    Ok(out)
 }
 
 #[derive(Clone, PartialEq, Debug, Serialize, Deserialize)]
@@ -233,6 +349,31 @@ pub struct WaterSettings {
     pub source: String,
 }
 
+/// Orbital forcing and ice ages (W9 part 2, `forcing.rs`).
+#[derive(Clone, PartialEq, Debug, Serialize, Deserialize)]
+pub struct ForcingSettings {
+    /// Earth's dynamical ellipticity (C − A)/C (Zeebe 2022 Table 1).
+    pub earth_ellipticity: f64,
+    /// E_d scales as (ω / ω_Earth)^this (hydrostatic: 2).
+    pub ellipticity_spin_power: f64,
+    /// g_L in β = g_L (a/a_L)³ (m_L/M) (Zeebe 2022 eq. 5).
+    pub moon_geometry: f64,
+    /// Window of the history read for one epoch, years, sampled every
+    /// `sample_yr` and integrated in steps of `step_yr`.
+    pub window_yr: f64,
+    pub sample_yr: f64,
+    pub step_yr: f64,
+    /// Huybers 2006: summer days are those of at least this insolation, W/m².
+    pub summer_threshold_w_m2: f64,
+    /// Steps through the year for the summer energy.
+    pub year_steps: u32,
+    /// The sensitivity probe: the climate at this much less tilt, degrees.
+    pub probe_obliquity_deg: f64,
+    /// Inclinations not published for a sibling are drawn up to this, degrees.
+    pub drawn_inclination_deg: f64,
+    pub source: String,
+}
+
 /// A sand grain saltation reads.
 #[derive(Clone, PartialEq, Debug, Serialize, Deserialize)]
 pub struct Grain {
@@ -349,7 +490,12 @@ pub struct ClimateSettings {
     pub water: WaterSettings,
     pub saltation: SaltationSettings,
     pub areas: Areas,
+    pub forcing: ForcingSettings,
+    pub exchange: ExchangeSettings,
     pub defaults: Defaults,
+    /// Filled from the master data sheet (`volatile_species`); a climate
+    /// pack may not list its own (retired with W8).
+    #[serde(default)]
     pub substances: Vec<Substance>,
     pub references: Vec<Reference>,
 }
@@ -358,14 +504,15 @@ impl ClimateSettings {
     /// The last pack in the stack that provides `climate` wins; a stack with
     /// none reads the base climate pack.
     pub fn from_packs(stack: &[sse_pack::PackManifest]) -> Result<Self, String> {
-        let Some(v) = stack
+        let species = volatile_species(stack)?;
+        let base = [crate::base_pack()];
+        let v = stack
             .iter()
             .rev()
             .find_map(|p| p.provides.other.get("climate"))
-        else {
-            return Self::from_packs(&[crate::base_pack()]);
-        };
-        let s: ClimateSettings = serde_json::to_value(v)
+            .or_else(|| base[0].provides.other.get("climate"))
+            .ok_or("base climate pack provides no climate")?;
+        let mut s: ClimateSettings = serde_json::to_value(v)
             .and_then(serde_json::from_value)
             .map_err(|e| format!("climate settings: {e}"))?;
         if s.bands < 4 || s.seasons == 0 || s.iterations == 0 {
@@ -402,8 +549,15 @@ impl ClimateSettings {
             return Err("the last area rule must have no conditions (the fallback)".into());
         }
         crate::saltation::check(&s.saltation)?;
+        if !s.substances.is_empty() {
+            return Err("climate.substances is retired (W8): substances come from the master data sheet's rows with a vapour curve".into());
+        }
+        s.substances = species;
         if s.substances.is_empty() {
-            return Err("climate needs at least one substance".into());
+            return Err(
+                "climate needs at least one substance with a vapour curve on the master data sheet"
+                    .into(),
+            );
         }
         if s.references
             .iter()

@@ -74,7 +74,7 @@ pub fn insolation(s0: f64, lat_deg: f64, decl_deg: f64) -> f64 {
 }
 
 /// Solve the tridiagonal system `-lo[j] x[j-1] + di[j] x[j] - up[j] x[j+1] = r[j]`.
-fn thomas(lo: &[f64], di: &[f64], up: &[f64], r: &[f64]) -> Vec<f64> {
+pub(crate) fn thomas(lo: &[f64], di: &[f64], up: &[f64], r: &[f64]) -> Vec<f64> {
     let n = di.len();
     let mut c = vec![0.0; n];
     let mut d = vec![0.0; n];
@@ -152,14 +152,14 @@ pub fn season(cs: &ClimateSettings, c: &Conditions, decl_deg: f64) -> Season {
     diagnose(cs, c, &q, &t, &alb)
 }
 
-struct Grid {
-    w: Vec<f64>,
-    lo: Vec<f64>,
-    up: Vec<f64>,
-    b: f64,
+pub(crate) struct Grid {
+    pub(crate) w: Vec<f64>,
+    pub(crate) lo: Vec<f64>,
+    pub(crate) up: Vec<f64>,
+    pub(crate) b: f64,
 }
 
-fn grid(cs: &ClimateSettings, c: &Conditions) -> Grid {
+pub(crate) fn grid(cs: &ClimateSettings, c: &Conditions) -> Grid {
     let lat = lats(cs);
     let n = lat.len();
     let dphi = m::PI / n as f64;
@@ -192,7 +192,13 @@ fn grid(cs: &ClimateSettings, c: &Conditions) -> Grid {
 
 /// Ice fraction and albedo for band temperatures, with the base albedo set
 /// so the sunlight-weighted albedo is the world's Bond albedo.
-fn albedo(cs: &ClimateSettings, c: &Conditions, g: &Grid, q: &[f64], t: &[f64]) -> Vec<f64> {
+pub(crate) fn albedo(
+    cs: &ClimateSettings,
+    c: &Conditions,
+    g: &Grid,
+    q: &[f64],
+    t: &[f64],
+) -> Vec<f64> {
     let water = liquid(cs, c).is_some_and(|s| s.name == "water");
     let ice: Vec<f64> = t
         .iter()
@@ -213,7 +219,7 @@ fn albedo(cs: &ClimateSettings, c: &Conditions, g: &Grid, q: &[f64], t: &[f64]) 
 }
 
 /// The steady state under sunlight `q`: relaxed tridiagonal solves.
-fn steady(cs: &ClimateSettings, c: &Conditions, q: &[f64]) -> (Vec<f64>, Vec<f64>) {
+pub(crate) fn steady(cs: &ClimateSettings, c: &Conditions, q: &[f64]) -> (Vec<f64>, Vec<f64>) {
     let g = grid(cs, c);
     let n = q.len();
     let di: Vec<f64> = (0..n).map(|j| g.b + g.lo[j] + g.up[j]).collect();
@@ -382,10 +388,40 @@ pub fn diagnose(cs: &ClimateSettings, c: &Conditions, q: &[f64], t: &[f64], alb:
     }
 }
 
-/// Saturation vapour pressure, Pa: Clausius-Clapeyron from the triple point.
+/// Saturation vapour pressure, Pa. Below the triple point, over the solid,
+/// from the master data sheet's vapour curve (Fray and Schmitt 2009's fits,
+/// `sse.volatile.species`); above it, over the liquid, Clausius-Clapeyron
+/// from the triple point with the heat of vaporisation.
 pub fn p_sat(sub: &Substance, t_k: f64) -> f64 {
+    if t_k < sub.triple_k {
+        if let Some(p) = sse_reference::sublimation_pa(&sub.phases, t_k) {
+            return p;
+        }
+    }
     let l_r = sub.latent_j_kg * sub.molar_kg / R_GAS;
     sub.triple_pa * m::exp(l_r * (1.0 / sub.triple_k - 1.0 / t_k))
+}
+
+/// The temperature at which `sub`'s vapour saturates at `p_pa`, K: the
+/// inverse of [`p_sat`] (bisection in ln T on the solid's curve, a fixed 60
+/// steps so every device agrees; closed form over the liquid).
+pub fn frost_k(sub: &Substance, p_pa: f64) -> f64 {
+    let l_r = sub.latent_j_kg * sub.molar_kg / R_GAS;
+    let liquid = || 1.0 / (1.0 / sub.triple_k - m::ln(p_pa / sub.triple_pa) / l_r);
+    if p_pa >= sub.triple_pa || sse_reference::sublimation_pa(&sub.phases, sub.triple_k).is_none() {
+        return liquid();
+    }
+    let target = m::ln(p_pa.max(1e-300));
+    let (mut lo, mut hi) = (m::ln(1.0), m::ln(sub.triple_k));
+    for _ in 0..60 {
+        let mid = 0.5 * (lo + hi);
+        if m::ln(p_sat(sub, m::exp(mid)).max(1e-300)) < target {
+            lo = mid;
+        } else {
+            hi = mid;
+        }
+    }
+    m::exp(0.5 * (lo + hi))
 }
 
 #[allow(clippy::too_many_arguments, clippy::type_complexity)]

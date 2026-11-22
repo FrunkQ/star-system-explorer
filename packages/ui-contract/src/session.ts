@@ -159,6 +159,10 @@ export interface ViewSession {
   windowView(ask: import("./window.ts").WindowAsk): Promise<{ ok: true; view: import("./window.ts").WindowView } | { ok: false; code: string; message: string }>;
   /** One halo cell's galaxies (V9 cluster map, kernel `halo_cell`, G2). Read only; GM only. */
   haloCell(ask: import("./galaxy.ts").HaloCellAsk): Promise<{ ok: true; cell: import("./galaxy.ts").HaloCell } | { ok: false; code: string; message: string }>;
+  /** One 10 pc star cell of the campaign's galaxy (kernel `star_cell`, Y7a). Read only; GM only. */
+  starCell(ask: { cell?: [number, number, number]; t_myr?: number }): Promise<{ ok: true; cell: import("./voyage.ts").StarCell } | { ok: false; code: string; message: string }>;
+  /** A voyage between stars for one ship (kernel `plan_voyage`, V8 part 3). Read only; GM only for now (players ask through their console later). */
+  planVoyage(ask: import("./voyage.ts").VoyageAsk): Promise<{ ok: true; plan: import("./voyage.ts").VoyagePlan } | { ok: false; code: string; message: string }>;
   /** A slice of the cosmic web at one epoch (V9, kernel `web_slice`, G1). Read only; GM only. */
   webSlice(ask: import("./galaxy.ts").SliceAsk): Promise<{ ok: true; web: import("./galaxy.ts").WebSlice } | { ok: false; code: string; message: string }>;
   /** A system as the universe now holds it: facts, a SystemSpec for look-ahead, and S0 surfaces. */
@@ -627,6 +631,18 @@ export class Session implements ViewSession {
     if (this.seat.authority !== "gm") return { ok: false, code: "not_gm", message: "the universe's galaxies are charted on the game master's machine" };
     const r = await this.#call({ op: "halo_cell", ...ask });
     return r.type === "halo_celled" ? { ok: true, cell: (r as unknown as { cell: import("./galaxy.ts").HaloCell }).cell } : { ok: false, code: String(r.code ?? "unexpected"), message: String(r.message ?? JSON.stringify(r)) };
+  }
+
+  async starCell(ask: { cell?: [number, number, number]; t_myr?: number }): Promise<{ ok: true; cell: import("./voyage.ts").StarCell } | { ok: false; code: string; message: string }> {
+    if (this.seat.authority !== "gm") return { ok: false, code: "not_gm", message: "the galaxy's stars are drawn on the game master's machine" };
+    const r = await this.#call({ op: "star_cell", ...ask });
+    return r.type === "star_celled" ? { ok: true, cell: (r as unknown as { cell: import("./voyage.ts").StarCell }).cell } : { ok: false, code: String(r.code ?? "unexpected"), message: String(r.message ?? JSON.stringify(r)) };
+  }
+
+  async planVoyage(ask: import("./voyage.ts").VoyageAsk): Promise<{ ok: true; plan: import("./voyage.ts").VoyagePlan } | { ok: false; code: string; message: string }> {
+    if (this.seat.authority !== "gm") return { ok: false, code: "not_gm", message: "voyages between stars are planned on the game master's machine for now" };
+    const r = await this.#call({ op: "plan_voyage", ...ask });
+    return r.type === "voyage_planned" ? { ok: true, plan: (r as unknown as { voyage: import("./voyage.ts").VoyagePlan }).voyage } : { ok: false, code: String(r.code ?? "unexpected"), message: String(r.message ?? JSON.stringify(r)) };
   }
 
   async webSlice(ask: import("./galaxy.ts").SliceAsk): Promise<{ ok: true; web: import("./galaxy.ts").WebSlice } | { ok: false; code: string; message: string }> {
