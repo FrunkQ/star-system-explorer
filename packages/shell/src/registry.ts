@@ -15,6 +15,7 @@ import { screenComposer } from "../../views/screen-composer/src/index.ts";
 import { dataViews } from "../../views/data-views/src/index.ts";
 import { symbols } from "../../views/symbols/src/index.ts";
 import { styles } from "../../views/styles/src/index.ts";
+import { reference } from "../../views/reference/src/index.ts";
 import { MORE_VIEWS } from "./screens.more.ts";
 
-export const REGISTRY: readonly ViewModule[] = [systemChart, bodyCard, cutaway, body, compare, biosphere, timeRuler, flowEditor, changeRequests, packStack, screenComposer, dataViews, symbols, styles, ...MORE_VIEWS];
+export const REGISTRY: readonly ViewModule[] = [systemChart, bodyCard, cutaway, body, compare, biosphere, timeRuler, flowEditor, changeRequests, packStack, screenComposer, dataViews, symbols, styles, reference, ...MORE_VIEWS];

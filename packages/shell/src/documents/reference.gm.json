@@ -1,0 +1,30 @@
+{
+  "schema": "sse.screen/1",
+  "id": "sse.workspace.gm.reference",
+  "label": "Reference",
+  "audience": "gm",
+  "layout": "chart-room",
+  "theme": "chart-room",
+  "symbology": "sse.symbology.diagrammatic",
+  "vocab": "physics",
+  "items": [
+    {
+      "view": "sse.view.reference",
+      "area": "chart",
+      "params": { "page": "constants" }
+    },
+    {
+      "view": "sse.view.time-ruler",
+      "area": "ruler"
+    }
+  ],
+  "rail": [
+    {
+      "scale": "workshop",
+      "group": "workshop",
+      "label": "Reference",
+      "order": 7,
+      "hint": "The data sheet: constants, units and where each number comes from"
+    }
+  ]
+}
