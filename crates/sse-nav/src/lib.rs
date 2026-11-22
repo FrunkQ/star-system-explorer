@@ -17,6 +17,7 @@ pub mod courses;
 pub mod descent;
 pub mod drift;
 pub mod hazards;
+pub mod insystem;
 pub mod kepler;
 pub mod scenario;
 pub mod sky;

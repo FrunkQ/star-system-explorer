@@ -23,6 +23,20 @@ pub(crate) struct Ask<'a> {
     pub gambles: bool,
 }
 
+pub(crate) fn minimise(m: Option<&str>) -> Result<Minimise, Response> {
+    Ok(match m.unwrap_or("home_time") {
+        "home_time" => Minimise::HomeTime,
+        "ship_time" => Minimise::ShipTime,
+        "fuel" => Minimise::Fuel,
+        "legs" => Minimise::Legs,
+        other => {
+            return Err(bad(format!(
+                "minimise is home_time, ship_time, fuel or legs, not {other}"
+            )))
+        }
+    })
+}
+
 /// Cells searched at most (each 10 pc, tens of systems).
 const MAX_CELLS: usize = 125;
 
@@ -68,17 +82,7 @@ pub(crate) fn plan_voyage(
         })?,
         other => serde_json::from_value(other.clone()).map_err(|e| bad(format!("ship: {e}")))?,
     };
-    let minimise = match a.minimise.unwrap_or("home_time") {
-        "home_time" => Minimise::HomeTime,
-        "ship_time" => Minimise::ShipTime,
-        "fuel" => Minimise::Fuel,
-        "legs" => Minimise::Legs,
-        other => {
-            return Err(bad(format!(
-                "minimise is home_time, ship_time, fuel or legs, not {other}"
-            )))
-        }
-    };
+    let minimise = minimise(a.minimise)?;
     let c0 = cell_of(a.from).ok_or_else(|| bad(format!("{}: not a star system", a.from)))?;
     let c1 = match a.to {
         Some(t) => cell_of(t).ok_or_else(|| bad(format!("{t}: not a star system")))?,
@@ -294,5 +298,27 @@ mod tests {
             .as_str()
             .unwrap()
             .contains("cannot cross between stars"));
+    }
+
+    #[test]
+    fn in_a_system_the_same_finder_plans_transfers_with_windows() {
+        let mut k = Kernel::new();
+        let v = ask(
+            &mut k,
+            r#"{"op":"plan_voyage","fixture":"sol","from":"Earth","to":"Mars","ship":"nuclear-thermal","minimise":"fuel"}"#,
+        );
+        assert_eq!(v["type"], "voyage_planned", "{v}");
+        assert_eq!(v["voyage"]["scale"], "system");
+        let leg = &v["voyage"]["voyage"]["legs"][0];
+        assert_eq!(leg["means"], "course", "{v}");
+        assert!(leg["wait_days"].as_f64().is_some());
+        let places = v["voyage"]["places"].as_array().unwrap();
+        assert!(places.iter().any(|p| p["address"] == "belt:Main Belt"));
+        // Nearest unvisited from Earth, by a torch.
+        let v = ask(
+            &mut k,
+            r#"{"op":"plan_voyage","fixture":"sol","from":"Earth","ship":"fusion-torch"}"#,
+        );
+        assert!(v["voyage"]["voyage"]["to"].is_string(), "{v}");
     }
 }

@@ -4239,6 +4239,79 @@ impl Kernel {
                 sensed_fuel,
                 surveyed,
                 gambles,
+                fixture,
+                nav,
+                system,
+                at_s,
+                ports,
+                depart_s,
+            } if fixture.is_some() || nav.is_some() || system.is_some() => {
+                let visited = visited.unwrap_or_default();
+                let ports = ports.unwrap_or_default();
+                let _ = (home, known_fuel, sensed_fuel, surveyed, gambles);
+                let ask = nav::VoyageAsk {
+                    ship: &ship,
+                    from: &from,
+                    to: to.as_deref(),
+                    depart_s,
+                    minimise: voyage::minimise(minimise.as_deref())?,
+                    visited: &visited,
+                };
+                let voyage = match (fixture.as_deref(), nav.as_ref(), system) {
+                    (Some(f), None, None) => nav::plan_voyage(nav::Source::Fixture(f), ask)?,
+                    (None, Some(n), None) => nav::plan_voyage(nav::Source::Inline(n), ask)?,
+                    (None, None, Some(system)) => {
+                        let a: Address = system
+                            .parse()
+                            .map_err(|e| err("bad_address", format!("{e}")))?;
+                        let u = self
+                            .universe
+                            .as_mut()
+                            .ok_or_else(|| err("no_universe", "open a universe first"))?;
+                        if !u.root.contains(&a) {
+                            return Err(err(
+                                "bad_address",
+                                format!("{a} is not in universe {}", u.root),
+                            ));
+                        }
+                        if !u.runs.contains_key(&system) {
+                            if let Some(req) = adopt::formation_request(&u.chronicle, &a) {
+                                let (_, run, _) = systems::form(req.into())?;
+                                u.runs.insert(system.clone(), run);
+                            }
+                        }
+                        nav::plan_voyage(
+                            nav::Source::System {
+                                ch: &u.chronicle,
+                                system: &a,
+                                at_s,
+                                run: u.runs.get(&system),
+                                ports: &ports,
+                            },
+                            ask,
+                        )?
+                    }
+                    _ => {
+                        return Err(err(
+                            "bad_request",
+                            "give one of a fixture, a nav system or a universe system",
+                        ))
+                    }
+                };
+                Response::VoyagePlanned { voyage }
+            }
+            Request::PlanVoyage {
+                from,
+                to,
+                home,
+                ship,
+                minimise,
+                visited,
+                known_fuel,
+                sensed_fuel,
+                surveyed,
+                gambles,
+                ..
             } => {
                 let u = self.universe()?;
                 let pins =

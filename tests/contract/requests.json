@@ -2934,6 +2934,13 @@
   "minimise": "sideways"
  },
  {
+  "op": "plan_voyage",
+  "fixture": "sol",
+  "from": "Mars",
+  "to": "Main Belt",
+  "ship": "nuclear-thermal"
+ },
+ {
   "op": "promote_star",
   "address": "u:aging/halo:milky-way-like/cell:988_0_0/sys:f13787k0"
  },

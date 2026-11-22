@@ -76,6 +76,21 @@ These are not new machinery. Every role is a program (J6's states, picks and int
 
 What this track adds for all of them: the finder as the one way any role moves between systems (in-system courses stay NAV's `plan_route`), and the screens that show any role's plan before it runs. Trading needs prices; until the economy pack exists they are a pack table of base prices per port (the "placeholder" that the economy replaces without changing the trader program).
 
+### 5.2 What V3's autopilot teaches (read 22 Nov from V3's `docs/autopilot-guide.md` and `src/lib/transit/autopilot*.ts`)
+
+V3 already flies standing routes in a system, and much of it is right. Kept as ideas, not structure:
+
+- **The itinerary is the state.** Everything (position, fuel, cargo, log) is derived from the clock, so scrubbing time gives the same answer every time. SSE4 gets this from the chronicle and J6 programs for free; keep it a rule.
+- **Five verbs cover the roles:** transport (place to place), patrol (go and hold; hold 0 is a flyby), mine (search for the best source of a resource), explore (search for somewhere not yet visited), escort (meet a moving ship and keep formation, which breaks honestly when the charge out-thrusts it). Trading and piracy are compositions of these plus a pick rule, which is how section 5.1 already frames them.
+- **One search scores candidates** by richness, closeness from where the ship will be, and a refuel bonus that grows sharply when the tanks are below half. SSE4's finder makes this exact: the cost is the real voyage, refuel stops are part of the plan, and the pick rule is pack data.
+- **Plan families and a "drive" choice:** most efficient (may wait for a window), efficient now, direct burn, flyby assist; and a cap on any leg's whole time including the wait ("prevents the zero-fuel fifty-year crawl"). SSE4: the finder's measure plus a `max_leg_days` cap in the program's parameters; NAV already offers the families.
+- **Traversal:** in order, best order (reordered by real transfer quotes at the projected times, with a staleness bonus so no stop starves), and as needed. SSE4: a program state's pick, with the finder's quotes as the cost.
+- **Honest stops:** a red "stuck" with the exact reason, orange "needs your decision", green "done". SSE4: the program's halt reason, and approval requests (question 7).
+- **Logs and totals:** work events at stops (loaded, mined, refuelled), incoming visits shown on stations, tonnes a year. SSE4: these are chronicle events, so any data view can read them.
+- **Self-fuel while mining** (a fuel's refuel tags), an **avoid list** that explicit orders override, **discipline** (slack added only to stopped time, from the owner), and **disengage** choices (finish the leg, cut thrust and drift, emergency stop).
+
+Where V3 was overcomplicated: many separate sliders and special cases per verb, and its own scheduler. In SSE4 each knob is a program parameter with a default in the ship-roles pack (editable by people or Orac), the five verbs are states of one program language, and every move is the one finder.
+
 ## 6. Screens
 
 - **Route console, "Between stars"**: pick a ship and a destination (or "nearest unvisited"), choose what to minimise, see the legs on a small star map with fuel left after each, refuel stops marked, times at home and aboard, and every refusal in words.
@@ -94,11 +109,11 @@ What this track adds for all of them: the finder as the one way any role moves b
 
 ## 8. Questions for Alex (with recommendations)
 
-1. **Fuel for jumps.** Recommended: a ship's jump drive declares fuel per parsec jumped and a tank size; the Traveller pack fills them with its rule (10% of the hull per parsec). Other settings set their own numbers or none (no fuel limit).
-2. **What counts as a refuel stop.** Recommended: three kinds, each a pack rule: a gas giant to skim, water or ice to crack, a port that sells fuel. The finder uses only what the crew knows.
+1. **Fuel for jumps.** Open (built as recommended in V8 part 3 so it can be tried; easy to change). Recommended: a ship's jump drive declares fuel per parsec jumped and a tank size; the Traveller pack fills them with its rule (10% of the hull per parsec). Other settings set their own numbers or none (no fuel limit).
+2. **What counts as a refuel stop.** Open (built as recommended: a giant to skim, ice beyond the snow line, a port; pack rules). Recommended: three kinds, each a pack rule: a gas giant to skim, water or ice to crack, a port that sells fuel. The finder uses only what the crew knows.
 3. **Unsurveyed systems.** Answered 23:26: an informed risk, not a blind gamble. Built: each unsurveyed system has odds of holding fuel, from the ship's sensors when it has sensed the system, otherwise from its star (giant-planet odds rise with the star's mass and metallicity, Johnson et al. 2010, editable in the pack). Gambles are a GM switch; a plan takes one only when the odds reach a pack floor (50% to start), and the plan shows each gamble's odds and the chance they all pay off. Original recommendation: assumed dry, so a plan never depends on fuel nobody has seen. A GM switch "allow gambles" lets a program jump to an unsurveyed system hoping for fuel, and such a leg is marked as a gamble.
-4. **The explorer's order.** Recommended: nearest unvisited by the chosen cost, ties to the one farther from home. It spirals out on its own and wastes no fuel. A strict geometric spiral would sometimes skip a near star and come back for it.
+4. **The explorer's order.** Open (built as recommended). Recommended: nearest unvisited by the chosen cost, ties to the one farther from home. It spirals out on its own and wastes no fuel. A strict geometric spiral would sometimes skip a near star and come back for it.
 5. **Relativistic time.** Answered 23:26: yes, and each crew member's own age matters (plot points). Recommended: the campaign clock moves by time at home; each crew member ages by time aboard (kept on the ship), and the plan shows both. Messages home take the light time, as the night sky already honours.
-6. **What a survey does at each stop.** Recommended: on arrival, a system survey (every body resolved and recorded with who found it, catalogue-to-resolve); a detailed survey (surfaces, `survey_surface`) only at the destination or where the program names it, because it is the costly one.
-7. **Approval.** Recommended: an autopilot voyage runs within its GM-set scope like any program. Leaving surveyed space and gambles for fuel each need the GM's yes unless the scope says otherwise.
+6. **What a survey does at each stop.** Open. Recommended: on arrival, a system survey (every body resolved and recorded with who found it, catalogue-to-resolve); a detailed survey (surfaces, `survey_surface`) only at the destination or where the program names it, because it is the costly one.
+7. **Approval.** Open. Recommended: an autopilot voyage runs within its GM-set scope like any program. Leaving surveyed space and gambles for fuel each need the GM's yes unless the scope says otherwise.
 8. **Roles as starter programs.** Answered 23:26: yes, with as much as possible editable by people or by Orac (every rule above is pack data for that reason). Recommended: explorer, courier, miner, trader, patrol and pirate ship as starter programs in one "ship roles" pack, each editable and copyable like any pack data, with no role written in code. V3's roles are a checklist of what to cover, not a copy.
