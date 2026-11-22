@@ -29,6 +29,7 @@
   import StarDisc from "./StarDisc.svelte";
   import ClimateWhy from "./ClimateWhy.svelte";
   import BodyTimeline from "./BodyTimeline.svelte";
+  import BodyMag from "./BodyMag.svelte";
 
   let { ctx, scene, params }: { ctx: ViewContext; scene: SystemScene; params: Record<string, Json> } = $props();
 
@@ -500,6 +501,8 @@
           {#if weather.error}<small data-weather-error>{weather.error}</small>{/if}
         </div>{/if}
       {/if}
+      <!-- The Mag layer (MF14b): the field's Chart cut, its words and a why for every part. -->
+      <BodyMag session={ctx.session} system={scene.system} name={subject.label} tier={gs?.tier ?? "gpu-basic"} depth={ws.depth ?? "science"} size={Math.min(size, 320)} />
       {#if stats}
         <dl class="facts" data-globe-stats>
           <dt>Drawn</dt>
