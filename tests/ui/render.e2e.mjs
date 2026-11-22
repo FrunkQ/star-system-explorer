@@ -231,7 +231,7 @@ try {
       assert.equal(lerr, "", "the kernel gave the world's history");
       const secs = (Date.now() - t0) / 1000;
       const today = await pixelsOf(gm, globe(gm));
-      await lc.getByLabel("Layer").selectOption("plates");
+      await lc.getByRole("radiogroup", { name: "Layer" }).getByRole("radio", { name: "Plates" }).click();
       await gm.waitForTimeout(800);
       await shot(gm, `render-lapse-plates-today-${name}`);
       const slider = lc.getByLabel("When");
@@ -240,13 +240,26 @@ try {
       await gm.waitForTimeout(800);
       await shot(gm, `render-lapse-plates-early-${name}`);
       assert.match(await lc.locator("[data-lapse-when]").innerText(), /billion years ago/);
-      await lc.getByLabel("Layer").selectOption("ice");
+      await lc.getByRole("radiogroup", { name: "Layer" }).getByRole("radio", { name: "Ice and glaciers" }).click();
       await gm.waitForTimeout(800);
       const iceEarly = await pixelsOf(gm, globe(gm));
       await shot(gm, `render-lapse-ice-early-${name}`);
       assert.notDeepEqual(iceEarly.centre, today.centre, "the past is drawn, not today's surface");
       const label = await globe(gm).getAttribute("aria-label");
       assert.match(label, /billion years ago, ice and glaciers: land \d+% of the surface/, label);
+      // U22: the events are marked on the scrubber; a mark moves time to it and opens the why card with what lay there.
+      assert.ok(Number(await lc.locator("[data-lapse-marks]").getAttribute("data-lapse-marks")) > 10, "the world's dated events are marked");
+      await lc.locator(".mark.violent").first().click();
+      const why = lc.locator("[data-lapse-why]");
+      await why.waitFor();
+      assert.ok((await why.locator(".said").innerText()).length > 5, "the event in words");
+      await shot(gm, `render-lapse-why-${name}`);
+      // Play steps forward through the keyframes.
+      const before = Number(await lc.getAttribute("data-lapse-t"));
+      await lc.getByRole("button", { name: "Play" }).click();
+      await gm.waitForTimeout(1300);
+      await lc.getByRole("button", { name: "Pause" }).click();
+      assert.ok(Number(await lc.getAttribute("data-lapse-t")) > before, "Play moves time forward");
       await lc.getByRole("button", { name: "Back to today" }).click();
       await gm.waitForSelector('[data-lapse-controls][data-lapse="off"]');
       assert.equal(await gm.locator("[data-state-hash]").first().getAttribute("data-state-hash"), hash, "time lapse never changes the state hash");
