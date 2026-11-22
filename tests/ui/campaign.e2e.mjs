@@ -38,7 +38,7 @@ try {
     const hash = () => gm.locator("[data-state-hash]").getAttribute("data-state-hash");
     const kept = () => gm.evaluate(() => JSON.parse(localStorage.getItem("sse4.campaign") ?? "null"));
     const keptWith = (h) => gm.waitForFunction((x) => JSON.parse(localStorage.getItem("sse4.campaign") ?? "null")?.state_hash === x, h, { timeout: 15000 });
-    await gm.goto(base);
+    await gm.goto(base + "#chart");
     await ready();
     const h0 = await hash();
     await keptWith(h0);

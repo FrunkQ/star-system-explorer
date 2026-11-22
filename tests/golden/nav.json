@@ -22,7 +22,7 @@
         }
       ],
       "case": "chemical",
-      "plan": "21738a9910e1a46e75db19bb35bf69edc83587573734424789cc82891f16eb11",
+      "plan": "06e9b276e08d0e37c51f6179ae4dc424fa2c7de0cc5378c305023689590e3819",
       "refused": 0,
       "ways_out": []
     },
@@ -72,14 +72,14 @@
         }
       ],
       "case": "torch",
-      "plan": "ed58f21cadf17a5dfa18beca10d20bacc329b81ecf58fc198d00e4c26e64d076",
+      "plan": "6b12beb4634c06538e4289fd48b8b321210a5dfcd7efec75331c8a6491dfb1fe",
       "refused": 0,
       "ways_out": []
     },
     {
       "candidates": [],
       "case": "drift",
-      "plan": "50fdc5a78e05632827e071d20d9987b652352b612f882eda034874ba56ebb312",
+      "plan": "646d757d422d779c8e09bad98661ed760f8e538da35fb40b4743c6675fad5d57",
       "refused": 0,
       "ways_out": [
         {

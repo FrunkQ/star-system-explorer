@@ -32,9 +32,13 @@
      "gcr_atten_g_cm2": 150.0,
      "spe_per_year_1au": 3.0,
      "spe_msv_1au": 50.0,
-     "belt_min_mass_earth": 200.0,
+     "belt_min_standoff_radii": 2.0,
+     "wind_pressure_1au_pa": 1.6e-9,
+     "belt_min_mass_earth": 10.0,
      "belt_radii": 15.0,
-     "belt_msv_hour": 50.0
+     "belt_msv_hour": 50.0,
+     "belt_ref_field_g": 4.17,
+     "belt_reason_msv": 10.0
     },
     "hazards": {
      "graze_radii": 3.0,
@@ -95,6 +99,8 @@
     },
     "ships": {
      "chemical-transfer": {
+      "fuels": ["hydrogen-oxygen"],
+      "refuel": ["docking", "ice processor"],
       "name": "Chemical transfer ship",
       "accel_g": 0.3,
       "sustained": false,
@@ -103,6 +109,8 @@
       "dry_t": 100.0
      },
      "nuclear-thermal": {
+      "fuels": ["hydrogen"],
+      "refuel": ["docking", "ice processor"],
       "name": "Nuclear thermal ship",
       "accel_g": 0.2,
       "sustained": false,
@@ -111,6 +119,8 @@
       "dry_t": 120.0
      },
      "fusion-torch": {
+      "fuels": ["deuterium", "helium-3"],
+      "refuel": ["docking", "scoop"],
       "name": "Fusion torch",
       "accel_g": 1.0,
       "sustained": true,
@@ -120,6 +130,8 @@
       "shield_g_cm2": 40.0
      },
      "rescue-cutter": {
+      "fuels": ["deuterium"],
+      "refuel": ["docking", "scoop", "ice processor"],
       "name": "Rescue cutter",
       "accel_g": 2.0,
       "sustained": true,
@@ -130,6 +142,8 @@
       "shield_g_cm2": 40.0
      },
      "jump-courier": {
+      "fuels": ["hydrogen"],
+      "refuel": ["docking", "scoop", "ice processor"],
       "name": "Jump courier",
       "accel_g": 2.0,
       "sustained": false,
@@ -146,6 +160,8 @@
       }
      },
      "relativistic-probe": {
+      "fuels": ["antimatter", "hydrogen"],
+      "refuel": ["docking"],
       "name": "Antimatter probe",
       "accel_g": 1.0,
       "sustained": true,
@@ -162,7 +178,14 @@
      "labels_per_system": 6,
      "max_steps": 200000,
      "gamble_min_odds": 0.5,
-     "giant_prior": {"base": 0.07, "mass_exp": 1.0, "feh_exp": 1.2, "cap": 0.9}
+     "giant_prior": {"base": 0.07, "mass_exp": 1.0, "feh_exp": 1.2, "cap": 0.9},
+     "refuel": {
+      "kinds": {
+       "skim": {"words": "a gas giant to skim", "needs": "scoop", "gives": ["hydrogen", "deuterium", "helium-3"], "why": "a giant's envelope is mostly molecular hydrogen with deuterium at about 2e-5 of it and helium-3 at about 1.5e-4 of the helium (Galileo probe: Mahaffy et al. 1998, Space Science Reviews 84, 251. doi:10.1023/A:1005091806594)"},
+       "ice": {"words": "ice to crack", "needs": "ice processor", "gives": ["water", "hydrogen", "hydrogen-oxygen", "deuterium"], "why": "water ice melts to water and electrolyses to hydrogen and oxygen; heavy water gives deuterium at about 1.5e-4 of the hydrogen"},
+       "port": {"words": "a port", "needs": "docking", "gives": ["hydrogen", "water", "hydrogen-oxygen", "deuterium"], "why": "a port sells what an ordinary economy makes; helium-3, tritium and antimatter only where a port lists them as stock"}
+      }
+     }
     },
     "sources": {
      "lambert": "Curtis, H. D. 2014, Orbital Mechanics for Engineering Students, 3rd ed., Elsevier, algorithms 3.4 and 5.2. doi:10.1016/C2011-0-69685-1",
@@ -171,7 +194,8 @@
      "gcr": "Zeitlin, C. et al. 2013, Measurements of energetic particle radiation in transit to Mars on the Mars Science Laboratory, Science 340, 1080. doi:10.1126/science.1235989",
      "dose_limit": "ICRP 2007, The 2007 Recommendations of the International Commission on Radiological Protection, ICRP Publication 103 (50 mSv in any one year for workers). doi:10.1016/j.icrp.2007.10.003",
      "spe": "rough: a few large solar particle events a year near solar maximum, tens of mSv each behind light shielding; scaled by (r / 1 au)^-2 and luminosity",
-     "belts": "rough: Jupiter-like radiation belts, tens of mSv an hour behind light shielding inside about 15 radii",
+     "magnetopause": "Chapman, S. and Ferraro, V. C. A. 1931, A new theory of magnetic storms, Terrestrial Magnetism and Atmospheric Electricity 36, 77 (pressure balance of a compressed dipole against the solar wind). doi:10.1029/TE036i002p00077; solar wind pressure at 1 au about 1.6 nPa (Schwenn, R. 2006, Living Reviews in Solar Physics 3, 2. doi:10.12942/lrsp-2006-2)",
+     "belts": "rough: Jupiter-like radiation belts, tens of mSv an hour behind light shielding inside about 15 radii or the magnetopause, scaled for other bodies by their surface field over Jupiter's (the trapped flux a field holds grows with it: Kennel, C. F. and Petschek, H. E. 1966, Limit on stably trapped particle fluxes, JGR 71, 1. doi:10.1029/JZ071i001p00001); a stop-gap until the magnetic fields design's MF7",
      "giant_prior": "Johnson, J. A. et al. 2010, Giant Planet Occurrence in the Stellar Mass-Metallicity Plane, PASP 122, 905 (f = 0.07 (M/Msun)^1.0 10^(1.2 [Fe/H]), giants within about 2.5 au, so a floor for skimmable giants farther out). doi:10.1086/655775",
      "relativity": "Baez, J. and others 1996, The Relativistic Rocket, Usenet Physics FAQ (constant proper acceleration, turnover, and the mass ratio exp(2 w c / v_e)). https://math.ucr.edu/home/baez/physics/Relativity/SR/Rocket/rocket.html",
      "ships": "stock templates for play: chemical (H2/O2, Isp about 450 s), nuclear thermal (Isp about 900 s), and fictional fusion torches",

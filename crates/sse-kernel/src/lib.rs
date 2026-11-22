@@ -14,6 +14,7 @@ mod descent;
 mod dressing;
 #[cfg(test)]
 mod dressing_tests;
+mod frames;
 mod ice_ages;
 #[cfg(test)]
 mod matter_tests;
@@ -410,6 +411,9 @@ pub struct Kernel {
     time: Option<sse_time::epoch::TimeSettings>,
     /// Recent `survey_surface` results.
     surveys: survey::Cache,
+    /// W7c part 2a: land and coasts by latitude read for the weather op,
+    /// by body and date, newest last.
+    land: Vec<(String, sse_climate::Extra)>,
     /// Orbit-level climates by key (W7a): the `weather` op reuses them.
     climates: sse_climate::Cache,
 }
@@ -539,6 +543,7 @@ impl Kernel {
             codes: sse_codes::Codes::default(),
             universe: None,
             surveys: vec![],
+            land: vec![],
             climates: sse_climate::Cache::new(8),
             jobs: BTreeMap::new(),
             next_job: 1,
@@ -588,9 +593,32 @@ impl Kernel {
                 )
             })?;
         let env = sse_surface::envelope(&s, &b);
-        let (c, _) = sse_surface::climate::conditions(&s, &b, &env, &Default::default());
         // The epoch the survey reads the body at, so both keep one key.
-        let epoch_myr = (b.age_gyr + w.shift_gyr).max(0.0) * 1000.0;
+        let epoch_gyr = (b.age_gyr + w.shift_gyr).max(0.0);
+        let epoch_myr = epoch_gyr * 1000.0;
+        // W7c part 2a: the land and coasts the survey reads off the
+        // Orbit-level map, kept by body and date so a re-read reuses them.
+        let lkey = serde_json::to_string(&(&u.seed, &b, epoch_gyr)).expect("plain data");
+        let x = match self.land.iter().position(|(k, _)| *k == lkey) {
+            Some(i) => self.land[i].1.clone(),
+            None => {
+                let x = sse_surface::climate::land_extra(
+                    &s,
+                    &env,
+                    &u.seed,
+                    epoch_gyr,
+                    b.oceans,
+                    &Default::default(),
+                    None,
+                );
+                self.land.push((lkey, x.clone()));
+                if self.land.len() > 8 {
+                    self.land.remove(0);
+                }
+                x
+            }
+        };
+        let (c, _) = sse_surface::climate::conditions(&s, &b, &env, &x);
         Ok((serde_json::to_value(&c).expect("plain data"), epoch_myr))
     }
 
@@ -2731,6 +2759,62 @@ impl Kernel {
                 };
                 Response::CavesSurveyed { caves }
             }
+            Request::SurfaceFrames {
+                system,
+                body,
+                fixture,
+                at_s,
+                options,
+                detail,
+                frames_max,
+            } => {
+                let ask = |from| (from, options.as_ref(), detail.as_deref());
+                let made = match (fixture, system, body) {
+                    (Some(f), None, None) => {
+                        let (fr, o, d) = ask(survey::From::Fixture(&f));
+                        frames::surface_frames(fr, o, d, frames_max)?
+                    }
+                    (None, Some(system), Some(body)) => {
+                        let a: Address = system
+                            .parse()
+                            .map_err(|e| err("bad_address", format!("{e}")))?;
+                        let u = self
+                            .universe
+                            .as_mut()
+                            .ok_or_else(|| err("no_universe", "open a universe first"))?;
+                        if !u.root.contains(&a) {
+                            return Err(err(
+                                "bad_address",
+                                format!("{a} is not in universe {}", u.root),
+                            ));
+                        }
+                        if !u.runs.contains_key(&system) {
+                            if let Some(req) = adopt::formation_request(&u.chronicle, &a) {
+                                let (_, run, _) = systems::form(req.into())?;
+                                u.runs.insert(system.clone(), run);
+                            }
+                        }
+                        {
+                            let (fr, o, d) = ask(survey::From::System {
+                                ch: &u.chronicle,
+                                seed: &u.seed,
+                                system: &a,
+                                body: &body,
+                                at_s,
+                                run: u.runs.get(&system),
+                            });
+                            frames::surface_frames(fr, o, d, frames_max)?
+                        }
+                    }
+                    _ => {
+                        return Err(err(
+                            "bad_request",
+                            "give a fixture, or a system and one of its bodies",
+                        ))
+                    }
+                };
+                Response::FramesMade { frames: made }
+            }
             Request::SurveySurface {
                 system,
                 body,
@@ -4305,6 +4389,79 @@ impl Kernel {
                 sensed_fuel,
                 surveyed,
                 gambles,
+                fixture,
+                nav,
+                system,
+                at_s,
+                ports,
+                depart_s,
+            } if fixture.is_some() || nav.is_some() || system.is_some() => {
+                let visited = visited.unwrap_or_default();
+                let ports = ports.unwrap_or_default();
+                let _ = (home, known_fuel, sensed_fuel, surveyed, gambles);
+                let ask = nav::VoyageAsk {
+                    ship: &ship,
+                    from: &from,
+                    to: to.as_deref(),
+                    depart_s,
+                    minimise: voyage::minimise(minimise.as_deref())?,
+                    visited: &visited,
+                };
+                let voyage = match (fixture.as_deref(), nav.as_ref(), system) {
+                    (Some(f), None, None) => nav::plan_voyage(nav::Source::Fixture(f), ask)?,
+                    (None, Some(n), None) => nav::plan_voyage(nav::Source::Inline(n), ask)?,
+                    (None, None, Some(system)) => {
+                        let a: Address = system
+                            .parse()
+                            .map_err(|e| err("bad_address", format!("{e}")))?;
+                        let u = self
+                            .universe
+                            .as_mut()
+                            .ok_or_else(|| err("no_universe", "open a universe first"))?;
+                        if !u.root.contains(&a) {
+                            return Err(err(
+                                "bad_address",
+                                format!("{a} is not in universe {}", u.root),
+                            ));
+                        }
+                        if !u.runs.contains_key(&system) {
+                            if let Some(req) = adopt::formation_request(&u.chronicle, &a) {
+                                let (_, run, _) = systems::form(req.into())?;
+                                u.runs.insert(system.clone(), run);
+                            }
+                        }
+                        nav::plan_voyage(
+                            nav::Source::System {
+                                ch: &u.chronicle,
+                                system: &a,
+                                at_s,
+                                run: u.runs.get(&system),
+                                ports: &ports,
+                            },
+                            ask,
+                        )?
+                    }
+                    _ => {
+                        return Err(err(
+                            "bad_request",
+                            "give one of a fixture, a nav system or a universe system",
+                        ))
+                    }
+                };
+                Response::VoyagePlanned { voyage }
+            }
+            Request::PlanVoyage {
+                from,
+                to,
+                home,
+                ship,
+                minimise,
+                visited,
+                known_fuel,
+                sensed_fuel,
+                surveyed,
+                gambles,
+                ..
             } => {
                 let u = self.universe()?;
                 let pins =

@@ -54,6 +54,53 @@ pub(crate) fn surveyed<'c>(
     quick: bool,
     cache: &'c mut Cache,
 ) -> Result<(String, Body, Option<i64>, &'c Survey), Response> {
+    let w = resolve(from, options, quick)?;
+    let (source, body, seed, epoch_gyr, at_s, opts, s) = (
+        w.source,
+        w.body,
+        w.seed,
+        w.epoch_gyr,
+        w.at_s,
+        w.opts,
+        w.settings,
+    );
+    let key = serde_json::to_string(&(&seed, &body, epoch_gyr, quick, &opts)).expect("plain data");
+    let sv = match cache.iter().position(|(k, _)| *k == key) {
+        Some(i) => {
+            let hit = cache.remove(i);
+            cache.push(hit);
+            &cache[cache.len() - 1].1
+        }
+        None => {
+            let sv = survey_world(&s, &body, &seed, epoch_gyr, &opts)
+                .map_err(|e| err("survey_refused", e))?;
+            if cache.len() >= CACHE_SIZE {
+                cache.remove(0);
+            }
+            cache.push((key, sv));
+            &cache[cache.len() - 1].1
+        }
+    };
+    Ok((source, body, at_s, sv))
+}
+
+/// A world to read: where it came from, the body, its seed and epoch, the
+/// time read, the survey options and the settings (Orbit level if quick).
+pub(crate) struct Resolved {
+    pub source: String,
+    pub body: Body,
+    pub seed: Seed,
+    pub epoch_gyr: f64,
+    pub at_s: Option<i64>,
+    pub opts: SurveyOptions,
+    pub settings: sse_surface::SurfaceSettings,
+}
+
+pub(crate) fn resolve(
+    from: From,
+    options: Option<&serde_json::Value>,
+    quick: bool,
+) -> Result<Resolved, Response> {
     let mut opts: SurveyOptions = match options {
         Some(v) => serde_json::from_value(v.clone())
             .map_err(|e| err("bad_request", format!("options: {e}")))?,
@@ -127,24 +174,15 @@ pub(crate) fn surveyed<'c>(
             )
         }
     };
-    let key = serde_json::to_string(&(&seed, &body, epoch_gyr, quick, &opts)).expect("plain data");
-    let sv = match cache.iter().position(|(k, _)| *k == key) {
-        Some(i) => {
-            let hit = cache.remove(i);
-            cache.push(hit);
-            &cache[cache.len() - 1].1
-        }
-        None => {
-            let sv = survey_world(&s, &body, &seed, epoch_gyr, &opts)
-                .map_err(|e| err("survey_refused", e))?;
-            if cache.len() >= CACHE_SIZE {
-                cache.remove(0);
-            }
-            cache.push((key, sv));
-            &cache[cache.len() - 1].1
-        }
-    };
-    Ok((source, body, at_s, sv))
+    Ok(Resolved {
+        source,
+        body,
+        seed,
+        epoch_gyr,
+        at_s,
+        opts,
+        settings: s,
+    })
 }
 
 pub(crate) fn survey_surface(r: Request, cache: &mut Cache) -> Result<serde_json::Value, Response> {

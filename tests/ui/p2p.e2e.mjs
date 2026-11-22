@@ -36,7 +36,7 @@ try {
     const gm = await context.newPage({ viewport: { width: 1440, height: 1000 } });
     gm.setViewportSize({ width: 1440, height: 1000 });
     gm.on("pageerror", (e) => errors.push(`gm: ${e.message}`));
-    await gm.goto(base);
+    await gm.goto(base + "#chart");
     await gm.waitForSelector("[data-state-hash]:not([data-state-hash=''])");
     await chooseDesk(gm, "Build");
     const gmHash = () => gm.getAttribute("[data-state-hash]", "data-state-hash");

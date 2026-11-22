@@ -30,9 +30,24 @@ try {
     const errors = [];
     const gm = await (await browser.newContext({ viewport: { width: 1440, height: 900 }, deviceScaleFactor: screens ? 2 : 1 })).newPage();
     gm.on("pageerror", (e) => errors.push(e.message));
-    await gm.goto(base);
+    await gm.goto(base + "#chart");
     await gm.waitForSelector("[data-state-hash]:not([data-state-hash=''])", { timeout: 20000 });
     await go(gm, "voyages");
+
+    // In this system first: the next world out by a real transfer, waiting for its window.
+    const ins = gm.locator(".insys");
+    await gm.waitForFunction(() => Number(document.querySelector(".insys")?.getAttribute("data-legs") ?? 0) >= 1, null, { timeout: 60000 });
+    assert.ok((await ins.locator("[data-place]").count()) >= 3, "places on the orbit line");
+    assert.match(await ins.locator("[data-leg]").first().innerText(), /from .* to .*propellant/);
+    await shot(gm, "v8-voyage-system");
+    // To a belt, if the system has one; else the outermost world.
+    const belt = ins.locator("[data-place^='belt:']").first();
+    const target = (await belt.count()) ? await belt.getAttribute("data-place") : await ins.locator("[data-place]").last().getAttribute("data-place");
+    await ins.locator(`[data-place='${target}']`).dispatchEvent("click");
+    await gm.waitForFunction((t) => (document.querySelector(".insys")?.getAttribute("data-voyage") ?? "").endsWith(`>${t}`) || !!document.querySelector(".insys [data-refusal]"), target, { timeout: 90000 });
+    await shot(gm, "v8-voyage-system-far");
+
+    await gm.locator("[data-scale-pick=stars]").click();
     const voy = gm.locator(".voy");
     await gm.waitForFunction(() => document.querySelector(".voy")?.getAttribute("data-legs") === "1", null, { timeout: 60000 });
     assert.ok((await voy.locator("[data-star]").count()) > 5, "stars drawn");
@@ -76,9 +91,15 @@ try {
 
     const phone = await (await browser.newContext({ viewport: { width: 390, height: 844 }, deviceScaleFactor: 2 })).newPage();
     phone.on("pageerror", (e) => errors.push(`phone: ${e.message}`));
-    await phone.goto(base);
+    await phone.goto(base + "#chart");
     await phone.waitForSelector("[data-state-hash]:not([data-state-hash=''])", { timeout: 20000 });
     await go(phone, "voyages");
+    await phone.waitForFunction(() => Number(document.querySelector(".insys")?.getAttribute("data-legs") ?? 0) >= 1, null, { timeout: 60000 });
+    await phone.waitForTimeout(300);
+    const overIn = await phone.evaluate(() => document.documentElement.scrollWidth - window.innerWidth);
+    assert.ok(overIn <= 1, `no sideways scroll on a phone in a system (${overIn}px over)`);
+    await shot(phone, "v8-voyage-system-phone", true);
+    await phone.locator("[data-scale-pick=stars]").click();
     await phone.waitForFunction(() => document.querySelector(".voy")?.getAttribute("data-legs") === "1", null, { timeout: 60000 });
     await phone.waitForTimeout(400);
     const over = await phone.evaluate(() => document.documentElement.scrollWidth - window.innerWidth);
@@ -87,7 +108,7 @@ try {
 
     assert.deepEqual(errors, []);
     await browser.close();
-    console.log(`${name}: between stars: nearest unvisited by jump, explorer steps, flight to a picked star with crew ages, chemical refusal, night chart, phone`);
+    console.log(`${name}: voyages in a system (transfer, a belt) and between stars: nearest unvisited by jump, explorer steps, flight to a picked star with crew ages, chemical refusal, night chart, phone`);
   }
 } finally {
   server.kill();
