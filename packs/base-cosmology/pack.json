@@ -176,7 +176,7 @@
     },
     "stars": {
      "cell_pc": 10.0,
-     "frame_myr": 1.0,
+     "frame_myr": 0.1,
      "imf_edges": [
       0.08,
       0.5,

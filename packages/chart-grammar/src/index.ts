@@ -16,7 +16,7 @@ export { formatYears, ticks, niceStep, fraction, keyStep, labelRows } from "./ru
 export type { Tick, RulerEvent } from "./ruler.ts";
 export { DAY_S, around, between, calendarTicks, checkCalendar, dateParts, dateWords, defaultCalendar, fromPackCalendar, spanWords, steps, timeWords, zoom } from "./calendar.ts";
 export type { Calendar, DateParts, RulerWindow } from "./calendar.ts";
-export { radius, distanceAt, fitScale, polar } from "./scale.ts";
+export { radius, distanceAt, fitScale, polar, scaleRings } from "./scale.ts";
 export type { RadialScale } from "./scale.ts";
 export { STAMP_LABELS, HONESTY, stampLabel } from "./stamps.ts";
 export { default as FilterChain } from "./FilterChain.svelte";

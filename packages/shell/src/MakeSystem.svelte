@@ -12,6 +12,7 @@
   import { importedSystems, noWorldsWhy, reportSummary, resolveParams, sceneFromFormation, sceneFromImport, worldWords, type FormationRan, type FormationRequest, type SystemScene, type V3Imported, type ViewContext, type ViewHandle, type ViewModule, type ViewSession } from "../../ui-contract/src/index.ts";
   import { systemChart } from "../../views/system-chart/src/index.ts";
   import { bodyCard } from "../../views/body-card/src/index.ts";
+  import FormationReplay from "../../views/system-chart/src/FormationReplay.svelte";
   import { createWorkspace } from "./workspace.svelte.ts";
 
   let { session, context, onadopted }: { session: ViewSession; context: Omit<ViewContext, "workspace" | "params" | "session">; onadopted?: (systems: { system: string; title: string }[], note: string, state_hash: string) => void } = $props();
@@ -61,6 +62,14 @@
   let block = $state<"modern" | "classic" | "classic-corrected">("modern");
   let grown = $state<FormationRan | null>(null);
   let grownSeed = $state("");
+  // The formation replay (for "how it formed"): opened over the whole page, from the run already grown.
+  let replayOpen = $state(false);
+  let replayDlg = $state<HTMLDialogElement | undefined>();
+  $effect(() => {
+    if (!replayDlg) return;
+    if (replayOpen && !replayDlg.open) (replayDlg.showModal(), replayDlg.querySelector<HTMLElement>(".replay")?.focus());
+    else if (!replayOpen && replayDlg.open) replayDlg.close();
+  });
   let grownReq = $state<FormationRequest | null>(null);
   let importText = "";
   async function grow() {
@@ -201,6 +210,7 @@
           <ol class="worlds">{#each grown.run.worlds as w, i (w.address)}<li>World {i + 1}: {worldWords(w)}</li>{/each}</ol>
         {/if}
         {#each grown.run.notes as n (n)}<p class="note">{n}</p>{/each}
+        {#if grown.run.worlds.length}<button type="button" class="go watch" data-watch-form onclick={() => (replayOpen = true)}>Watch it form ›</button>{/if}
         <details>
           <summary>How it formed ({grown.run.history.events.length + grown.run.events.length} events)</summary>
           <ol class="events">
@@ -219,6 +229,12 @@
     </div>
   {/if}
   {#if adoptedNote}<p role="status" data-adopted>{adoptedNote}</p>{/if}
+
+  {#if grown}
+    <dialog class="replay-dlg" bind:this={replayDlg} aria-label="How {grownSeed} formed" onclose={() => (replayOpen = false)}>
+      {#if replayOpen}<FormationReplay run={grown} title={`Seed "${grownSeed}"`} onclose={() => (replayOpen = false)} />{/if}
+    </dialog>
+  {/if}
 
   {#if preview}
     {#key preview.system + tab}
@@ -295,6 +311,9 @@
     border: 0;
     cursor: pointer;
   }
+  .watch {
+    justify-self: start;
+  }
   .linkbtn {
     font: inherit;
     background: none;
@@ -315,6 +334,7 @@
   }
   .report {
     display: grid;
+    grid-template-columns: minmax(0, 1fr);
     gap: 6px;
     font-size: 13px;
     border-left: 3px solid var(--sse-rule, currentColor);
@@ -356,6 +376,18 @@
   }
   dd {
     margin: 0 0 4px;
+  }
+  .replay-dlg {
+    width: min(1400px, 100vw);
+    height: min(920px, 100dvh);
+    max-width: 100vw;
+    max-height: 100dvh;
+    padding: 0;
+    border: var(--sse-line) solid var(--sse-ink);
+    background: var(--sse-ground);
+  }
+  .replay-dlg::backdrop {
+    background: color-mix(in srgb, var(--sse-ink) 40%, transparent);
   }
   .worlds,
   .events {

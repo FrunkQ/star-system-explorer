@@ -806,9 +806,10 @@ mod tests {
         assert_eq!(pins[0], stored);
         let t = again["cell"]["t_myr"].as_f64().unwrap();
         let cell_ix: [i64; 3] = serde_json::from_value(again["cell"]["cell"].clone()).unwrap();
+        let base = settings().unwrap().stars;
         let v2 = sse_cosmos::stars::StarParams {
-            key_version: 2,
-            ..settings().unwrap().stars
+            key_version: base.key_version + 1,
+            ..base
         };
         let redrawn = with_stars(&u.seed, &u.root, Some(v2), |st, _| {
             star_cell(st, Some(cell_ix), t, &pins)
