@@ -34,7 +34,7 @@ pub fn atoms() -> Vec<Box<dyn Atom>> {
                 param("van_t_hoff", D::NONE, 2.0, (1.0, 3.0), "ions per formula unit (2 for NaCl, 3 for MgCl2)"),
                 param("osmotic_coefficient", D::NONE, 0.93, (0.5, 1.2), "non-ideality of the brine"),
                 param("solute_molar_mass", dims::MOLAR_MASS, NACL_MOLAR_MASS, (0.01, 0.5), "molar mass of the salt"),
-                param("pure_freezing_point", D::TEMPERATURE, 273.15, (200.0, 300.0), "freezing point of the pure solvent"),
+                param("pure_freezing_point", D::TEMPERATURE, sse_core::sheet::T0C, (200.0, 300.0), "freezing point of the pure solvent"),
             ],
             cost: CostClass::Trivial,
             references: &[ATKINS, RS],

@@ -21,11 +21,11 @@ const ZARKA01: &str = "Zarka, P., Treumann, R. A., Ryabov, B. P. and Ryabov, V. 
 const CYCLOTRON: &str = "Treumann, R. A. 2006, The electron-cyclotron maser for astrophysical application, Astron. Astrophys. Rev. 13, 229: auroral radio is emitted near the local electron gyrofrequency f = eB/(2π m_e). doi:10.1007/s00159-006-0001-y";
 
 /// Vacuum permeability, N A⁻² (CODATA 2018).
-pub const MU0: f64 = 1.256_637_062_12e-6;
+pub const MU0: f64 = sse_core::sheet::MU0;
 /// Electron charge over electron mass, C/kg (CODATA 2018).
-pub const E_OVER_ME: f64 = 1.602_176_634e-19 / 9.109_383_701_5e-31;
+pub const E_OVER_ME: f64 = sse_core::sheet::E / sse_core::sheet::M_E;
 /// Proton mass, kg (CODATA 2018).
-pub const M_PROTON: f64 = 1.672_621_923_69e-27;
+pub const M_PROTON: f64 = sse_core::sheet::M_P;
 /// The Sun's sidereal rotation rate (Carrington, 25.38 d), rad/s.
 /// Dimensions: magnetic moment (A m²), magnetic field (tesla = kg s⁻² A⁻¹), area.
 pub const MOMENT: D = D([2, 0, 0, 1, 0, 0, 0]);

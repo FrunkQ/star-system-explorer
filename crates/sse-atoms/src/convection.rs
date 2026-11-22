@@ -20,10 +20,10 @@ const NSA09: &str = "Nordlund, Å., Stein, R. F. and Asplund, M. 2009, Solar sur
 const RR10: &str = "Rieutord, M. and Rincon, F. 2010, The Sun's supergranulation, Living Rev. Solar Phys. 7, 2: cells about 30 Mm across, lifetimes one to two days, horizontal flows about 300 to 400 m/s, outlined by the magnetic network. doi:10.12942/lrsp-2010-2";
 const GN89: &str = "Gray, D. F. and Nagel, T. 1989, The granulation boundary in the H-R diagram, ApJ 341, 421: no granulation in stars hotter than about early F. doi:10.1086/167505";
 
-const T_SUN: f64 = 5772.0;
+const T_SUN: f64 = sse_core::sheet::T_SUN;
 const G_SUN: f64 = GM_SUN / (R_SUN * R_SUN);
-const K_B: f64 = 1.380_649e-23;
-const AMU: f64 = 1.660_539_066_60e-27;
+const K_B: f64 = sse_core::sheet::K_B;
+const AMU: f64 = sse_core::sheet::M_U;
 
 /// Granule size, m: a multiple of the pressure scale height.
 pub fn granule_size(scale_height_m: f64, factor: f64) -> f64 {
