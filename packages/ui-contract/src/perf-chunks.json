@@ -1,0 +1,97 @@
+{
+  "schema": "sse.perf-chunks/1",
+  "about": "The big chunks of SSE4 the performance readout and the minimum spec table group timings by (PF1, design/SSE4-performance-and-minimum-spec.md). Each source is a kernel op, a job (job:<kind>), or a page measurement (render.*, page.*); start-up stages are stamps kept apart in the report. budget_ms is what a call's 95th percentile must stay within on a device for that device to meet the chunk's minimum spec. Anything not listed falls in 'other', named by its op, so nothing hides.",
+  "chunks": [
+    {
+      "id": "startup",
+      "name": "Opening the app",
+      "meaning": "Starting the kernel, loading the packs, opening the universe and measuring the device, once per visit.",
+      "budget_ms": 5000,
+      "sources": ["hello", "load_stack", "open_universe", "job:benchmark"]
+    },
+    {
+      "id": "resolve",
+      "name": "Working out a system",
+      "meaning": "Resolving a system and its worlds from the packs and the chronicle: what every card, chart, edit and search reads. A click must not wait on it.",
+      "budget_ms": 100,
+      "sources": ["derive", "explain", "draw", "scene", "atoms", "manifest", "resolved_system", "systems", "read_world_stack", "classify_preview", "history", "state_hash", "branch_state_hash", "set_authored", "set_authored_batch", "withdraw", "restore", "branch", "branch_set", "commit", "discard", "adopt", "read_reach", "dressing", "adopt_dressing", "hold_dressing", "campaign_tags", "sift"]
+    },
+    {
+      "id": "formation",
+      "name": "Making and ageing a system",
+      "meaning": "Importing a V3 save, the formation run and the look-ahead through deep time. Long, so it shows progress; the budget is for the whole run.",
+      "budget_ms": 5000,
+      "sources": ["import_v3", "run_formation", "look_ahead", "commit_look_ahead", "set_system_age"]
+    },
+    {
+      "id": "climate",
+      "name": "Climate and weather",
+      "meaning": "A world's climate bands and today's weather.",
+      "budget_ms": 300,
+      "sources": ["weather"]
+    },
+    {
+      "id": "surface",
+      "name": "Surfaces, caves and descents",
+      "meaning": "Surface tiles and their history (plates, wear, impacts), cave surveys and descents. A survey is a deliberate act, so the budget is longer.",
+      "budget_ms": 2000,
+      "sources": ["surface_frames", "survey_surface", "survey_caves", "plan_descent"]
+    },
+    {
+      "id": "light",
+      "name": "Light, spectra and the sky",
+      "meaning": "Starlight, spectra, activity, air optics, nebulae, planet finding and the sky from a world.",
+      "budget_ms": 300,
+      "sources": ["read_light", "detect", "read_air_optics", "read_spectrum", "read_activity", "read_photometry", "survey_planets", "read_nebulae", "sky_from_here", "sky_glow"]
+    },
+    {
+      "id": "matter",
+      "name": "Matter and fields",
+      "meaning": "Look-ups on the master data sheet, phases, and magnetic fields.",
+      "budget_ms": 100,
+      "sources": ["read_matter", "phase_at", "read_field"]
+    },
+    {
+      "id": "life",
+      "name": "Life",
+      "meaning": "A world's biosphere, its history and its signatures.",
+      "budget_ms": 300,
+      "sources": ["life_view"]
+    },
+    {
+      "id": "galaxy",
+      "name": "Galaxy and cosmic web",
+      "meaning": "The galaxy chart, star and halo cells, the cosmic web, the Window and sector import and export.",
+      "budget_ms": 1000,
+      "sources": ["galaxy_chart", "web_slice", "halo_cell", "star_cell", "window_view", "import_sector", "export_sector", "promote_star"]
+    },
+    {
+      "id": "voyages",
+      "name": "Orbits, routes and voyages",
+      "meaning": "Where everything is at a time, the calendar, routes between stars and voyages in a system.",
+      "budget_ms": 300,
+      "sources": ["orbits_at", "calendar", "campaign_now", "set_campaign_now", "plan_route", "plan_voyage"]
+    },
+    {
+      "id": "game",
+      "name": "Seats, rules and programs",
+      "meaning": "The game layer: seats and grants, disclosure, rules, ship programs, intents and the chronicle's notes.",
+      "budget_ms": 100,
+      "sources": ["grant", "scan_toggle", "disclosures", "rules", "rules_step", "rules_pending", "rules_decide", "rules_policy", "programs", "programs_step", "attach_program", "detach_program", "templates", "create", "retire", "intents", "set_seats", "send_intent", "intent_decide", "add_actor", "record", "add_note", "set_kept", "export_chronicle", "import_chronicle", "codes"]
+    },
+    {
+      "id": "drawing",
+      "name": "Drawing",
+      "meaning": "One frame: the globe's own drawing time and the page's frame interval. 33 ms is 30 frames a second.",
+      "budget_ms": 33,
+      "sources": ["render.globe", "page.frame"]
+    },
+    {
+      "id": "clicks",
+      "name": "Clicks and keys",
+      "meaning": "From a click or key to the next paint (the browser's event timing). 200 ms is the web's own line for 'good'.",
+      "budget_ms": 200,
+      "sources": ["page.interaction"]
+    }
+  ]
+}
