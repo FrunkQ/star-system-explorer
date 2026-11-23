@@ -557,6 +557,91 @@ pub mod conductivity_solid {
     pub const H2O: [f64; 1] = [651.0];
 }
 
+/// Half-life, s, by isotope (the sheet's isotopes).
+pub mod isotope_half_life_s {
+    /// u238 (ruedas2017).
+    pub const U238: f64 = 1.409993568e+17;
+    /// u235 (ruedas2017).
+    pub const U235: f64 = 2.22165504e+16;
+    /// th232 (nubase2020).
+    pub const TH232: f64 = 4.4338428e+17;
+    /// k40 (ruedas2017).
+    pub const K40: f64 = 3.93838848e+16;
+    /// al26 (ruedas2017).
+    pub const AL26: f64 = 22626799200000.0;
+    /// h3 (nubase2020).
+    pub const H3: f64 = 388789632.0;
+    /// c14 (nubase2020).
+    pub const C14: f64 = 179878320000.0;
+    /// be10 (nubase2020).
+    pub const BE10: f64 = 43770391200000.0;
+    /// cl36 (nubase2020).
+    pub const CL36: f64 = 9498837600000.0;
+    /// fe60 (nubase2020).
+    pub const FE60: f64 = 82680912000000.0;
+    /// i129 (nubase2020).
+    pub const I129: f64 = 508077360000000.0;
+    /// hf182 (nubase2020).
+    pub const HF182: f64 = 280862640000000.0;
+    /// pu244 (nubase2020).
+    pub const PU244: f64 = 2565632880000000.0;
+    /// rb87 (nubase2020).
+    pub const RB87: f64 = 1.56841272e+18;
+    /// sm147 (nubase2020).
+    pub const SM147: f64 = 3.3451056e+18;
+    /// u234 (nubase2020).
+    pub const U234: f64 = 7747390800000.0;
+    /// th230 (nubase2020).
+    pub const TH230: f64 = 2379443040000.0;
+    /// ra226 (nubase2020).
+    pub const RA226: f64 = 50492160000.0;
+    /// rn222 (nubase2020).
+    pub const RN222: f64 = 330350.4;
+}
+
+/// Decay heat, W per kg of the isotope, by isotope (the sheet's isotopes).
+pub mod isotope_decay_heat_w_per_kg {
+    /// u238 (ruedas2017).
+    pub const U238: f64 = 9.46e-05;
+    /// u235 (ruedas2017).
+    pub const U235: f64 = 0.000569;
+    /// th232 (ruedas2017).
+    pub const TH232: f64 = 2.64e-05;
+    /// k40 (ruedas2017).
+    pub const K40: f64 = 2.92e-05;
+    /// al26 (ruedas2017).
+    pub const AL26: f64 = 0.3583;
+}
+
+/// Share at the Sun's birth (as each row's note says), by isotope (the sheet's isotopes).
+pub mod isotope_share_at_sun_birth {
+    /// al26 (kita2013).
+    pub const AL26: f64 = 5.25e-05;
+}
+
+/// Mass share of its element today, by isotope (the sheet's isotopes).
+pub mod isotope_share_today {
+    /// u238 (ruedas2017).
+    pub const U238: f64 = 0.9929;
+    /// u235 (ruedas2017).
+    pub const U235: f64 = 0.00711;
+    /// th232 (ruedas2017).
+    pub const TH232: f64 = 1.0;
+    /// k40 (ruedas2017).
+    pub const K40: f64 = 0.000119;
+}
+
+/// The protosolar mixture's mass shares, from every element's protosolar abundance
+/// times its atomic weight (the sheet's elements).
+pub mod protosolar {
+    /// X, the mass share of hydrogen.
+    pub const X: f64 = 0.7041772139526112;
+    /// Y, the mass share of helium.
+    pub const Y: f64 = 0.2785075831267356;
+    /// Z, the mass share of everything heavier.
+    pub const Z: f64 = 0.01731520292065315;
+}
+
 /// Density, kg/m3, by mixture (the sheet's mixtures).
 pub mod mixture_density {
     /// dry-air (ussa1976).
