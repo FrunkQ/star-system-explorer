@@ -60,6 +60,8 @@ pub struct SatelliteParams {
     pub orbits: crate::infall::OrbitParams,
     /// How the host answers what its tree brings (GH3, `feed`).
     pub responses: crate::feed::ResponseParams,
+    /// The shapes of what they leave behind (GH4, `remains`).
+    pub remains: crate::remains::RemainsParams,
 }
 
 impl Default for SkyParams {
@@ -144,19 +146,25 @@ impl Stars<'_> {
         t_myr: f64,
     ) -> Result<(Vec<Found>, Vec<usize>, usize), String> {
         let frame = self.frame_of(t_myr);
-        let w = crate::star_tree::TreeWalk::new(self, frame);
+        let mut walks = vec![crate::star_tree::TreeWalk::new(self, frame)];
+        // GH4: the stellar halo's stars, from the remains, with their own tree.
+        if self.params.key_version >= 2 && self.has_remains() {
+            walks.push(crate::star_tree::TreeWalk::remains(self, frame));
+        }
         let centre = self.to_grid(observer, frame as f64 * self.params.frame_myr);
         let mut out = vec![];
         let mut per = vec![];
         for (class, r) in radii_pc.iter().enumerate() {
             let before = out.len();
-            for (cell, _) in w.cells_within(class, centre, *r)? {
-                for s in w.draw(cell, Some(class))? {
-                    out.push(Found { system: s, class });
+            for w in &walks {
+                for (cell, _) in w.cells_within(class, centre, *r)? {
+                    for s in w.draw(cell, Some(class))? {
+                        out.push(Found { system: s, class });
+                    }
                 }
             }
             per.push(out.len() - before);
         }
-        Ok((out, per, w.reads()))
+        Ok((out, per, walks.iter().map(|w| w.reads()).sum()))
     }
 }

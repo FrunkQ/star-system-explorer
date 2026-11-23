@@ -68,4 +68,6 @@ node tests/ui/shell.e2e.mjs                  # GM shell in a browser (after scri
 
 ## Licence
 
-Apache-2.0. See `LICENSE` and `NOTICE` (credit to FrunkQ must be kept).
+Apache-2.0. See `LICENSE` and `NOTICE` (credit to FrunkQ must be kept). One exception: the Traveller pack's data
+(`packs/traveller/pack.json`) is free fan work under CC BY-NC 4.0, as Mongoose Publishing's fair use policy asks;
+see `packs/traveller/LICENCE.md`.

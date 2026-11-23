@@ -18,7 +18,8 @@
           "packs/samples/near-future.json",
           "packs/samples/space-opera.json",
           "packs/samples/base-hooks.json",
-          "packs/samples/intrigue.json"
+          "packs/samples/intrigue.json",
+          "packs/samples/world-hooks.json"
         ],
         "sample_labels": [
           "Try the sample pack",
@@ -26,7 +27,8 @@
           "Add the Near future setting",
           "Add the Meridian Reach setting",
           "Add access labels",
-          "Add story hooks (intrigue)"
+          "Add story hooks (intrigue)",
+          "Add world hooks"
         ]
       }
     },

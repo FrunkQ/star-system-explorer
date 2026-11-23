@@ -20,6 +20,14 @@ export interface PackSummary {
   replaces: string[];
   /** Content the kernel carries but does not interpret yet (rules, data views, screens, skins...). */
   other: string[];
+  /** A notice the pack must carry wherever it is shown (`provides.other.notice`): a rights holder's fair use wording. */
+  notice?: { text: string; source?: string };
+}
+
+function noticeOf(other: Record<string, unknown> | undefined): PackSummary["notice"] {
+  const n = other?.notice as { text?: unknown; source?: unknown } | undefined;
+  if (!n || typeof n.text !== "string" || !n.text.trim()) return undefined;
+  return typeof n.source === "string" ? { text: n.text, source: n.source } : { text: n.text };
 }
 
 export function packSummary(p: PackDoc): PackSummary {
@@ -33,7 +41,8 @@ export function packSummary(p: PackDoc): PackSummary {
     flows: (prov.flows ?? []).map((f) => f.id),
     quantity_kinds: (prov.quantity_kinds ?? []).length,
     replaces: (p.replaces ?? []).map((r) => `${r.flow} from ${r.pack} ${r.range}`),
-    other: Object.keys(prov.other ?? {}),
+    other: Object.keys(prov.other ?? {}).filter((k) => k !== "notice"),
+    ...(noticeOf(prov.other) ? { notice: noticeOf(prov.other)! } : {}),
   };
 }
 
