@@ -5,14 +5,14 @@
   guess. Selecting a body selects it for the other views of the screen.
 -->
 <script lang="ts">
-  import { fact, subjectName, wordsFor, type PlayerContext, type PlayerScene } from "../../../ui-contract/src/index.ts";
+  import { constant, fact, subjectName, wordsFor, type PlayerContext, type PlayerScene } from "../../../ui-contract/src/index.ts";
   import { fitScale, radius, polar } from "../../../chart-grammar/src/scale.ts";
   import { topLevel } from "./pick.ts";
   import HatchDefs from "../../../chart-grammar/src/HatchDefs.svelte";
   import Mark from "../../../chart-grammar/src/Mark.svelte";
 
   let { ctx, scene }: { ctx: PlayerContext; scene: PlayerScene } = $props();
-  const AU = 1.495978707e11;
+  const AU = constant("au");
   let w = $state(600);
   let h = $state(400);
   const star = $derived(scene.subjects.find((s) => s.address === scene.scope));

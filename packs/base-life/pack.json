@@ -311,7 +311,7 @@
        253.0,
        395.0
       ],
-      "liquid_min_pa": 611.657,
+      "liquid_min_pa": {"sheet": "substances/h2o", "property": "triple_point_pa"},
       "activity_property": "water_activity",
       "min_activity": 0.585,
       "recipe": {

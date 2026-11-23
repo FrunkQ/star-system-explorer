@@ -212,7 +212,7 @@ impl SketchModel {
         let bs = blobs(&d);
         // Low gravity lets relief stand taller (surface design section 3 term 2).
         let g = env.gravity_m_s2.max(0.1);
-        let gscale = (9.81 / g).clamp(0.5, 3.0);
+        let gscale = (sse_core::sheet::G0 / g).clamp(0.5, 3.0);
         let bands = m::round((6.0 * m::sqrt(10.0 / s.tide.spin_hours.max(1.0))).clamp(1.0, 20.0));
         let mut model = SketchModel {
             regime: regime.to_string(),

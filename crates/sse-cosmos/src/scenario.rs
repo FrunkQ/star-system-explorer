@@ -104,7 +104,8 @@ impl CosmologyPack {
             .rev()
             .find_map(|p| p.provides.other.get("cosmology"))
             .ok_or("no pack provides cosmology")?;
-        let mut json = serde_json::to_value(v).map_err(|e| format!("cosmology settings: {e}"))?;
+        let mut json = sse_reference::refs::with_sheet(stack, v)
+            .map_err(|e| format!("cosmology settings: {e}"))?;
         // DM1: the measured parameters live on the master data sheet's
         // Cosmos group and arrive through the constants handle. A pack that
         // still sets one is told where it went.

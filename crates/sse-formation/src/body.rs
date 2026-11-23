@@ -25,7 +25,7 @@ use sse_core::math as m;
 pub const ENVELOPE_MIN_MSUN: f64 = 3.0e-5;
 /// Jupiter's radius, solar radii: giant planets and old brown dwarfs sit
 /// near it whatever their mass (electron degeneracy against Coulomb).
-pub const R_JUPITER_RSUN: f64 = 0.1028;
+pub const R_JUPITER_RSUN: f64 = sse_core::sheet::R_JUP_EQUATORIAL / sse_core::sheet::R_SUN;
 /// Deuterium burning lasts about this long at the deuterium limit, Myr,
 /// growing as mass squared above it (Spiegel, Burrows and Milsom 2011).
 pub const DEUTERIUM_MYR_AT_LIMIT: f64 = 10.0;
@@ -137,7 +137,7 @@ pub fn self_light(
 }
 
 /// Jupiter's mass in solar masses.
-pub const MJ_MSUN: f64 = 9.547_9e-4;
+pub const MJ_MSUN: f64 = sse_core::sheet::GM_JUP / sse_core::sheet::GM_SUN;
 
 /// How long deuterium burning lasts for a brown dwarf, Myr.
 pub fn deuterium_myr(mass_msun: f64) -> f64 {

@@ -18,9 +18,10 @@ use sse_core::math as m;
 /// Seconds in a Julian year.
 pub const YEAR_S: f64 = sse_core::sheet::YR_JULIAN;
 /// Megaparsec in metres (IAU 2015: 1 pc = 648000/pi au).
-pub const MPC_M: f64 = 3.085_677_581_491_367e22;
+pub const MPC_M: f64 = 1e6 * sse_core::sheet::PC;
 /// Critical density today per h^2, solar masses per cubic Mpc (3 H^2 / 8 pi G with H = 100 km/s/Mpc).
-pub const RHO_CRIT_H2: f64 = 2.775_366e11;
+/// (H = 1e5 m/s per Mpc, so H^2 / G in solar masses per Mpc^3 is (1e5)^2 Mpc / GM_sun.)
+pub const RHO_CRIT_H2: f64 = 3.0 * (1e5 * 1e5) * MPC_M / (8.0 * m::PI * sse_core::sheet::GM_SUN);
 
 /// The universe's parameters. The measured ones are the master data
 /// sheet's Cosmos group (DM1), read through the constants handle; only

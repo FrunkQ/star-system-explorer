@@ -21,7 +21,7 @@ use sse_formation::{FormationHistory, Phase};
 use std::collections::BTreeMap;
 
 /// One solar radius in au.
-pub const RSUN_AU: f64 = 0.004_650_47;
+pub const RSUN_AU: f64 = sse_core::sheet::R_SUN / sse_core::sheet::AU;
 
 pub const REF_EGGLETON: &str = "Eggleton, P. P. 1983, ApJ 268, 368: Roche lobe radius r_L/a = 0.49 q^(2/3) / (0.6 q^(2/3) + ln(1 + q^(1/3)))";
 pub const REF_HTP02: &str = "Hurley, J. R., Tout, C. A. and Pols, O. R. 2002, MNRAS 329, 897: critical mass ratios for stable transfer (0.695 for low-mass main-sequence donors, 3 above about 0.7 solar masses as in BSE, 4 in the Hertzsprung gap, eq. 57 on the giant branch). arXiv:astro-ph/0201220";

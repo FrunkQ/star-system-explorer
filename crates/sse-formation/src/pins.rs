@@ -215,7 +215,8 @@ pub fn solve(
     }
     // Clear generated worlds sitting on top of pinned ones.
     let hill = |p: &Protoplanet, q: &Protoplanet| {
-        let mu = (p.mass + p.gas + q.mass + q.gas) / (3.0 * 332_946.0 * host_mass);
+        let mu = (p.mass + p.gas + q.mass + q.gas)
+            / (3.0 * (sse_core::sheet::GM_SUN / sse_core::sheet::GM_EARTH) * host_mass);
         let rh = m::cbrt(mu) * 0.5 * (p.a_au + q.a_au);
         (p.a_au - q.a_au).abs() / rh
     };

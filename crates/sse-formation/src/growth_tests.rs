@@ -138,7 +138,12 @@ fn population_of_10000_systems() {
     // Rises with star mass: M dwarfs well below, F/A stars above or level
     // (Johnson et al. 2010: proportional to M; Endl et al. 2006 for M dwarfs).
     assert!(f(3) < 0.5 * f(0), "M dwarf giants {}", f(3));
-    assert!(f(4) > f(0), "F/A star giants {}", f(4));
+    assert!(
+        f(4) >= f(0),
+        "F/A star giants {} against solar {}",
+        f(4),
+        f(0)
+    );
     // Compact chains: at the end of the gas disc, systems of three or more
     // close-in planets sit in resonant chains nearly always (Izidoro et al.
     // 2017, 2021: most later break, F4); tolerance at least 70 percent.

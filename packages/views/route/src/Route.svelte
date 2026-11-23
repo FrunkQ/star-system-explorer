@@ -9,7 +9,7 @@
 -->
 <script lang="ts">
   import { untrack } from "svelte";
-  import { STOCK_SHIPS, daysWords, delayWords, difficultyPips, doseWords, dvWords, fromNowWords, fuelLeft, navFromScene, orbitEllipse, routeFrame, safestFirst, shortlist, trackIndexAt, trackPath, trackPoint, type Course, type Json, type Prefer, type RoutePlan, type SystemScene, type ViewContext, YEAR_S } from "../../../ui-contract/src/index.ts";
+  import { STOCK_SHIPS, constant, daysWords, delayWords, difficultyPips, doseWords, dvWords, fromNowWords, fuelLeft, navFromScene, orbitEllipse, routeFrame, safestFirst, shortlist, trackIndexAt, trackPath, trackPoint, type Course, type Json, type Prefer, type RoutePlan, type SystemScene, type ViewContext, YEAR_S } from "../../../ui-contract/src/index.ts";
 
   const YEAR_S_NUM = Number(YEAR_S);
   let { ctx, scene, params }: { ctx: ViewContext; scene: SystemScene; params: Record<string, Json> } = $props();
@@ -110,7 +110,7 @@
   const burnMarks = $derived(chosen ? chosen.burns.map((b) => ({ ...trackPoint(chosen.track[trackIndexAt(chosen, b.at_s)]!, bigFrame), b })) : []);
   const hazardMarks = $derived(chosen ? chosen.hazards.filter((h) => h.at_s !== undefined).map((h) => ({ ...trackPoint(chosen.track[trackIndexAt(chosen, h.at_s!)]!, bigFrame), h })) : []);
   const fuel = $derived(chosen && plan ? fuelLeft(chosen, plan.ship) : null);
-  const AU_M = 149_597_870_700;
+  const AU_M = constant("au");
 </script>
 
 <div class="route" data-route={plan ? `${plan.from}>${plan.to}` : ""}>
@@ -208,7 +208,7 @@
           <div class="cols">
             <div>
               <h4>Burns</h4>
-              <ol class="burns">{#each chosen.burns as b, j (j)}<li><span class="v">{fromNowWords(chosen.depart_s + b.at_s, now_s)}</span> {b.what}: {dvWords(b.dv_m_s)}{b.duration_s > 3600 ? `, lasting ${daysWords(b.duration_s / 86400)}` : ""}</li>{/each}</ol>
+              <ol class="burns">{#each chosen.burns as b, j (j)}<li><span class="v">{fromNowWords(chosen.depart_s + b.at_s, now_s)}</span> {b.what}: {dvWords(b.dv_m_s)}{b.duration_s > 3600 ? `, lasting ${daysWords(b.duration_s / constant("day"))}` : ""}</li>{/each}</ol>
               {#if chosen.difficulty.reasons.length}<h4>Why it is {chosen.difficulty.label}</h4><ul>{#each chosen.difficulty.reasons as r (r)}<li>{r}</li>{/each}</ul>{/if}
             </div>
             <div>

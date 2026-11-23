@@ -69,15 +69,24 @@ impl Absorption {
     }
 }
 
-/// A gas's optical data for Rayleigh scattering.
+/// A gas's optical data for Rayleigh scattering. The light pack names the
+/// gas and its dispersion; the numbers are the master data sheet's (MP22):
+/// `sheet` is the sheet row (a substance, or a mixture by volume such as
+/// dry air), the gas's own id when absent. A pack may still type them, and a
+/// typed number wins.
 #[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
 pub struct GasDef {
     pub id: String,
     pub name: String,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub sheet: Option<String>,
+    #[serde(default)]
     pub molar_mass_g: f64,
     /// n − 1 at 589.3 nm, 273.15 K, 101325 Pa.
+    #[serde(default)]
     pub refractivity_589: f64,
     /// King factor a + b λ⁻² + c λ⁻⁴ (λ in µm).
+    #[serde(default)]
     pub king: [f64; 3],
     /// "peck-reeder" (dry air, exact) or "scaled" (air's dispersion, scaled).
     pub dispersion: String,
@@ -135,6 +144,37 @@ pub struct LightTable {
 
 pub const BASE_PACK: &str = include_str!("../../../packs/base-light/pack.json");
 
+/// A gas's molar mass, refractivity and King factor from its sheet row,
+/// where the pack left them out.
+fn fill_from_sheet(g: &mut GasDef, sheet: &sse_reference::Reference) -> Result<(), String> {
+    let id = g.sheet.clone().unwrap_or_else(|| g.id.clone());
+    let row = sheet
+        .row("substances", &id)
+        .or_else(|| sheet.row("mixtures", &id))
+        .ok_or_else(|| format!("gas {}: no sheet row {id}", g.id))?;
+    let optical = row.get("optical").and_then(|o| o.as_object());
+    if g.molar_mass_g == 0.0 {
+        g.molar_mass_g = sheet
+            .gas_molar_mass_kg_mol(&id)
+            .ok_or_else(|| format!("gas {}: the sheet has no molar mass for {id}", g.id))?
+            * 1000.0;
+    }
+    if g.refractivity_589 == 0.0 {
+        g.refractivity_589 = optical
+            .and_then(|o| o.get("refractivity_589nm")?.get("v")?.as_f64())
+            .ok_or_else(|| format!("gas {}: the sheet has no refractivity for {id}", g.id))?;
+    }
+    if g.king == [0.0; 3] {
+        let c = optical
+            .and_then(|o| o.get("king_factor")?.get("coeffs")?.as_array().cloned())
+            .ok_or_else(|| format!("gas {}: the sheet has no King factor for {id}", g.id))?;
+        for (k, v) in g.king.iter_mut().zip(c) {
+            *k = v.as_f64().unwrap_or(0.0);
+        }
+    }
+    Ok(())
+}
+
 impl LightTable {
     /// The base pack's table.
     pub fn base() -> Self {
@@ -154,9 +194,18 @@ impl LightTable {
             .rev()
             .find_map(|p| p.provides.other.get("light"))
             .ok_or("no pack provides a light table")?;
-        let t: LightTable = serde_json::to_value(v)
+        let mut t: LightTable = serde_json::to_value(v)
             .and_then(serde_json::from_value)
             .map_err(|e| format!("light table: {e}"))?;
+        if let Some(g) = t.gases.as_mut() {
+            let sheet = sse_reference::Reference::from_packs(stack)
+                .ok()
+                .filter(|r| r.row("constants", "c").is_some())
+                .unwrap_or_else(sse_reference::Reference::base);
+            for gas in &mut g.list {
+                fill_from_sheet(gas, &sheet)?;
+            }
+        }
         t.check()?;
         Ok(t)
     }

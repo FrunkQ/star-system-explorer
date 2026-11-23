@@ -5,7 +5,7 @@
 use serde::{Deserialize, Serialize};
 use sse_core::math as m;
 
-pub const G: f64 = 4.0 * m::PI * m::PI;
+pub const G: f64 = 4.0 * m::PI * m::PI; // not-sheet: G in AU^3 per solar mass per year^2 is 4 pi^2 by the choice of units (Kepler's third law), not a measured value
 
 /// Heliocentric osculating elements; angles in radians.
 #[derive(Clone, Copy, PartialEq, Debug, Serialize, Deserialize)]

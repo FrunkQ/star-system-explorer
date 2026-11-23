@@ -20,8 +20,8 @@ use std::collections::BTreeMap;
 
 pub const M_EARTH: f64 = GM_EARTH / G;
 pub const M_SUN: f64 = GM_SUN / G;
-const GYR_S: f64 = 3.15576e16;
-const I_EARTH: f64 = L_SUN / (4.0 * m::PI * AU * AU);
+const GYR_S: f64 = 1e9 * sse_core::sheet::YR_JULIAN;
+const I_EARTH: f64 = L_SUN / (4.0 * m::PI * AU * AU); // not-sheet: worked out from L_sun and au
 
 /// Pack settings (`provides.other.placement`).
 #[derive(Clone, PartialEq, Debug, Serialize, Deserialize)]
@@ -310,8 +310,15 @@ impl Model {
             let ok = (90.0..=190.0).contains(&tsurf) && p_bar >= 0.1;
             (if ok { c.liquid_inventory } else { 0.0 }, 0.0)
         } else {
-            let boil = 1.0 / (1.0 / 373.15 - 8.314 * m::ln(p_bar.max(1e-12) / 1.01325) / 40660.0);
-            if p_pa >= 611.657 && tsurf >= sse_core::sheet::T0C && tsurf <= boil {
+            let boil = 1.0
+                / (1.0 / 373.15
+                    - sse_core::sheet::R_GAS
+                        * m::ln(p_bar.max(1e-12) * 1e5 / sse_core::sheet::ATM)
+                        / 40660.0);
+            if p_pa >= sse_core::sheet::triple_point_pa::H2O
+                && tsurf >= sse_core::sheet::T0C
+                && tsurf <= boil
+            {
                 (c.liquid_inventory, 0.0)
             } else if tsurf < sse_core::sheet::T0C {
                 (0.0, c.liquid_inventory)

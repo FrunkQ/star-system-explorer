@@ -499,10 +499,10 @@
      "source": "Earth eruption column height H = 2.00 V^0.241 km above the vent, V the dense-rock-equivalent rate in m3/s with magma at 2500 kg/m3; mass form 0.304 MER^0.241 (Mastin et al. 2009)"
     },
     "earth": {
-     "gravity_m_s2": 9.80665,
-     "molar_kg": 0.02897,
+     "gravity_m_s2": {"sheet": "constants/g0"},
+     "molar_kg": {"sheet": "mixtures/dry-air", "property": "molar_mass"},
      "t_strat_k": 214.4,
-     "density_kg_m3": 1.225,
+     "density_kg_m3": {"sheet": "mixtures/dry-air", "property": "density"},
      "source": "Earth reference for scaling Mastin's heights: standard gravity and sea-level density; stratosphere at the skin temperature T_eff/2^(1/4) of a 255 K world"
     },
     "scaling_source": "Other worlds: H scales as (g/g_E)^(1/4) (rho_E/rho)^(1/4) (N_E/N)^(3/4), from the buoyant plume rise H proportional to F^(1/4) N^(-3/4) with buoyancy flux F proportional to g MER / rho (Morton, Taylor and Turner 1956); N^2 = g^2/(c_p T) for an isothermal stratosphere at the skin temperature, c_p = 3.5 R/M. The constant is Earth's (Mastin); carrying it to other worlds this way is a fudge (docs/fudges.md)",

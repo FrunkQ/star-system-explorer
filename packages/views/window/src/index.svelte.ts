@@ -1,5 +1,6 @@
 import { mount, unmount } from "svelte";
-import { flatChart, type ViewModule } from "../../../ui-contract/src/index.ts";
+import type { ViewModule } from "../../../ui-contract/src/index.ts";
+import { WINDOW_CONTROLS } from "./controls.ts";
 import Window from "./Window.svelte";
 
 /**
@@ -13,7 +14,7 @@ export const windowView: ViewModule = {
   id: "sse.view.window",
   version: "0.1.0",
   tiers: ["text", "canvas"],
-  controls: flatChart("The sky is drawn as a flat map for now"),
+  controls: WINDOW_CONTROLS,
   inputs: [{ event_kinds: ["authored.set", "adopt.v3", "adopt.formation", "time.aged"] }],
   params: [
     { name: "sensor", type: "enum", default: "eye", options: ["eye", "binoculars", "telescope"], meaning: "The sensor the window opens with (base-nav's sensors).", promoted: true, group: "content" },

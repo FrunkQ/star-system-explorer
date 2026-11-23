@@ -146,7 +146,7 @@ pub fn lava_tubes(
 ) -> Vec<TubeField> {
     let epoch = inp.features.epoch_myr;
     let g = env.gravity_m_s2.max(1e-3);
-    let gscale = 9.81 / g;
+    let gscale = sse_core::sheet::G0 / g;
     let icy = env.regime_now.contains("ice");
     let mut out = vec![];
     // (source id, dir, radius km, formed, slope degrees, what it is)

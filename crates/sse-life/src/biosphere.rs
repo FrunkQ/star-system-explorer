@@ -132,8 +132,8 @@ pub fn budget_with(
 const SIZE_EARTH_LAND_KG: f64 = 7.0e4;
 const SIZE_EARTH_FLYER_KG: f64 = 250.0;
 const PLANT_EARTH_M: f64 = 130.0;
-const EARTH_G: f64 = 9.81;
-const EARTH_AIR: f64 = 1.225;
+const EARTH_G: f64 = sse_core::sheet::G0;
+const EARTH_AIR: f64 = sse_core::sheet::mixture_density::DRY_AIR;
 
 /// Plain words for a habitat kind.
 fn plain_kind(kind: &str) -> &str {

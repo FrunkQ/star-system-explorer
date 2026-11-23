@@ -28,11 +28,11 @@ use crate::settings::{Photochemical, Reference, WeatherSettings};
 use serde::{Deserialize, Serialize};
 use sse_core::math as m;
 
-const R_GAS: f64 = 8.314462618;
+const R_GAS: f64 = sse_core::sheet::R_GAS;
 const DAY_S: f64 = sse_core::sheet::DAY;
-const YEAR_DAYS: f64 = 365.25;
+const YEAR_DAYS: f64 = sse_core::sheet::YR_JULIAN / sse_core::sheet::DAY;
 const TG: f64 = 1.0e9;
-const M_SO2: f64 = 0.064066;
+const M_SO2: f64 = sse_core::sheet::molar_mass::SO2;
 
 // ---------------------------------------------------------------- settings
 
@@ -201,8 +201,8 @@ impl AerosolSettings {
             .rev()
             .find_map(|p| p.provides.other.get("weather_aerosols"))
             .ok_or("no pack provides weather aerosols")?;
-        let s: AerosolSettings = serde_json::to_value(v)
-            .and_then(serde_json::from_value)
+        let s: AerosolSettings = sse_reference::refs::with_sheet(stack, v)
+            .and_then(|j| serde_json::from_value(j).map_err(|e| e.to_string()))
             .map_err(|e| format!("weather aerosols: {e}"))?;
         if s.references
             .iter()
