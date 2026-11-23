@@ -56,7 +56,10 @@ impl Kernel {
         let u = self.universe()?;
         let mut out = vec![(EVERYONE.to_string(), "The table".to_string())];
         for s in sse_trigger::intents::seats(&reg, &u.record) {
-            if s.audience == GM || out.iter().any(|(a, _)| *a == s.audience) {
+            if s.authority == sse_trigger::intents::Authority::Gm
+                || s.audience == GM
+                || out.iter().any(|(a, _)| *a == s.audience)
+            {
                 continue;
             }
             let label = if s.label.is_empty() {

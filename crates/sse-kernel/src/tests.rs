@@ -1992,6 +1992,8 @@ fn intents_through_the_api() {
             "stack_packs",
             "scan_toggle",
             "grant",
+            "set_known",
+            "undo_known",
             "add_note",
             "set_campaign_now",
             "hail"

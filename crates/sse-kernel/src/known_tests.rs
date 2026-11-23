@@ -257,3 +257,35 @@ fn news_dated_later_waits_and_an_undo_before_it_means_it_never_arrives() {
     assert_eq!(known(&mut k, BASE, None, 2000)["landmark"], "gm_only");
     assert!(!wire(&mut k, 2000).contains("Tarn Deep"));
 }
+
+/// The chart room's shared fixture (SV2): every key it reads is in the
+/// kernel's answer, and every request it sends is taken. Its Kestrel is the
+/// test drive's (system 1); here Tarn is system 0's.
+#[test]
+fn the_shared_fixture_is_what_the_kernel_answers_and_takes() {
+    let root = std::path::PathBuf::from(env!("CARGO_MANIFEST_DIR")).join("../..");
+    let fx: serde_json::Value = serde_json::from_str(
+        &std::fs::read_to_string(root.join("tests/fixtures/sv/known-to.json")).unwrap(),
+    )
+    .unwrap();
+    let here = |v: &serde_json::Value| -> serde_json::Value {
+        serde_json::from_str(&v.to_string().replace("u:kestrel/sys:1", SYS)).unwrap()
+    };
+    let mut k = kernel();
+    for a in fx["answers"].as_array().unwrap() {
+        let r = send(&mut k, here(&a["ask"]));
+        assert_eq!(r["type"], "known_to", "{r}");
+        let want = &a["value"]["audiences"][0];
+        let got = &r["value"]["audiences"][0];
+        for key in want.as_object().unwrap().keys() {
+            assert!(got.get(key).is_some(), "known_to lacks {key}: {got}");
+        }
+        for key in a["value"].as_object().unwrap().keys() {
+            assert!(r["value"].get(key).is_some(), "known_to lacks {key}");
+        }
+    }
+    for c in fx["changes"].as_array().unwrap() {
+        let r = send(&mut k, here(&c["request"]));
+        assert_eq!(r["type"], "known_set", "{}: {r}", c["about"]);
+    }
+}

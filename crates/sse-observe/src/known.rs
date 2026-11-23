@@ -304,7 +304,6 @@ fn write(
             set,
             unset,
             data: Some(Value::Map(data)),
-            ..Default::default()
         },
         evidence: Evidence::Authored,
         publisher: publisher.clone(),
