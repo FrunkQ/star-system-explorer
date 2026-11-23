@@ -232,6 +232,7 @@ impl LegMaker for InSystem<'_> {
                         means: "course".into(),
                         course: Some(c.kind.clone()),
                         wait_days: Some(((c.depart_s - now) / DAY).max(0.0)),
+                        arrive_v_inf_m_s: Some(c.arrive_v_inf_m_s),
                         home_days: (c.arrive_s - now) / DAY,
                         ship_days: (c.arrive_s - now) / DAY,
                         propellant_t: c.propellant_t,
