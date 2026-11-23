@@ -8,8 +8,16 @@
 // comes back; they never decide what a class looks like. Presentation only:
 // nothing here reaches the kernel or changes the state hash.
 
-export type Channel = "shape" | "fill_pattern" | "colour" | "size" | "outline" | "ring" | "glyph" | "tone";
-export const CHANNELS: readonly Channel[] = ["shape", "fill_pattern", "colour", "size", "outline", "ring", "glyph", "tone"];
+export type Channel = "shape" | "fill_pattern" | "colour" | "size" | "outline" | "ring" | "glyph" | "tone" | "aura";
+export const CHANNELS: readonly Channel[] = ["shape", "fill_pattern", "colour", "size", "outline", "ring", "glyph", "tone", "aura"];
+
+/**
+ * What a star is doing, drawn around its mark (V3 gap 19): flares, a shed
+ * shell. It only says what the kernel's facts say (activity, nebulae); a
+ * symbology binds it from those facts like any other channel.
+ */
+export type Aura = "none" | "flares" | "shell";
+export const AURAS: readonly Aura[] = ["none", "flares", "shell"];
 
 export type Shape = "disc" | "star" | "diamond" | "square" | "triangle";
 /** Shapes a planet-like body can take (the star shape is kept for stars). */
@@ -31,6 +39,8 @@ export interface Mark {
   ring: boolean;
   /** A short mark drawn beside the body (a letter or symbol), or null. */
   glyph: string | null;
+  /** What the object is doing, drawn around it (flares, a shed shell). */
+  aura: Aura;
 }
 
 /** What a mark is chosen from: the object's kind, classes (C1 ids, base first), tags and numbers. */
@@ -91,7 +101,7 @@ export interface ThemeCapability {
   palette?: readonly string[];
 }
 
-const BASE: Mark = { shape: "disc", fill_pattern: "solid", colour: null, size: 4, tone: "ink", outline: "none", ring: false, glyph: null };
+const BASE: Mark = { shape: "disc", fill_pattern: "solid", colour: null, size: 4, tone: "ink", outline: "none", ring: false, glyph: null, aura: "none" };
 
 /** The bindings a symbology uses after `inherits` and `mix`. Throws on a loop or a missing document. */
 export function resolveSymbology(id: string, registry: readonly SymbologyDoc[], seen: string[] = []): Binding[] {
@@ -263,7 +273,7 @@ function readableKey(k: string): string {
 
 /** Two marks look the same to the eye (used to prove a grammar distinguishes classes). */
 export function sameLook(a: Mark, b: Mark): boolean {
-  return a.shape === b.shape && a.fill_pattern === b.fill_pattern && a.colour === b.colour && a.ring === b.ring && a.glyph === b.glyph && a.outline === b.outline;
+  return a.shape === b.shape && a.fill_pattern === b.fill_pattern && a.colour === b.colour && a.ring === b.ring && a.glyph === b.glyph && a.outline === b.outline && a.aura === b.aura;
 }
 
 const HEX_OR_PALETTE = /^(#[0-9A-Fa-f]{6}|palette:\d+)$/;
@@ -277,6 +287,9 @@ export function checkSymbology(d: SymbologyDoc, registry: readonly SymbologyDoc[
     if (b.when !== undefined && b.when !== "one-colour") return `binding condition ${String(b.when)} is not one-colour`;
     for (const src of [b, ...(b.prefer ?? [])]) {
       if (!(src.from === "kind" || src.from === "class" || src.from.startsWith("tag:") || src.from.startsWith("number:"))) return `binding source ${src.from} is not kind, class, tag: or number:`;
+      if (b.channel === "aura" && "table" in src.scale) {
+        for (const v of Object.values(src.scale.table)) if (!AURAS.includes(v as Aura)) return `aura ${String(v)} must be one of ${AURAS.join(", ")}`;
+      }
       if (b.channel === "colour" && "table" in src.scale) {
         for (const v of Object.values(src.scale.table)) if (typeof v !== "string" || !HEX_OR_PALETTE.test(v)) return `colour ${String(v)} must be #RRGGBB or palette:N`;
       }

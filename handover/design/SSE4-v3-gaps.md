@@ -1,9 +1,9 @@
 # What SSE3 does that SSE4 does not (yet)
 
-Date 23 Nov 2026. Status: **obvious items going ahead** (Alex, 23 Nov: "the obvious ones you can push on and develop"); **six open questions** below wait on him.
+Date 23 Nov 2026. Status: **obvious items going ahead** (Alex, 23 Nov: "the obvious ones you can push on and develop"); Alex answered the six open questions on 23 Nov 02:51 (recorded on each item) and added items 35 and 36. **Nothing is waiting on him.**
 
 - Going ahead, each through the thread that owns its area and in its stage: 1 to 9, 11 to 14, 16, 18 to 23, 25 to 29, 31.
-- Open, for Alex: 10 (drop type pictures), 15 (megastructures in 4.0), 17 (bring your-systems map into stage 2), 24 (print any screen instead of a report generator), 30 (colour-blind check instead of a third skin), 32 to 34 (the drops).
+- Settled 23 Nov: 10 (replaced by the gallery, item 35), 15 (megastructures as constructs carrying physics blocks), 17 (yes), 24 (purpose-built report screens), 30 (yes), 32 to 34 (dropped for now). New: 35 (class gallery), 36 (gas giant colours from the physics).
 
 Read on Alex's machine, read only: V3.1's `README.md` and `GettingStarted.md` (the user's account of every screen) and its component list (`star-system-generator/src/lib/components`). Checked against SSE4 `main` at a26c1a5 (`handover/START-HERE.md`, the screens and rail entries in `packages/shell/src/documents`, the views and crates). `docs/v3-parity.md` (K0) already gave each V3 mechanism a verdict; this file is the other half: **what a V3 user could do with a click that an SSE4 user cannot today**, and where it lands in the six stages of `SSE4-coming-together.md`. Tags and the V3 save importer are covered elsewhere and are not repeated.
 
@@ -35,6 +35,8 @@ Already in SSE4 and so not listed: size comparison, measure, undo and redo, copy
 
 **10. The type picture (artist's impression per class).** V3 shows a painted picture per planet type. *Drop:* SSE4 draws each world from its own physics, and a picture per class fights "processes, not classes". A GM's own uploaded picture survives as item 22.
 
+*Alex, 23 Nov:* replaced by a gallery of every class on the classification pages (item 35).
+
 **11. Edit an atmosphere gas by gas.** V3: log sliders across eight decades, ppm below 1%, a cross to remove a gas, always summing to 100%. *Do better:* one **mix editor** for any mixture (air, interior makeup, ocean salts, ices, a ship's fuel), reading substances from the data sheet, with V3's log sliders and ppm. **Stage 2.**
 
 **12. Reclassify by hand when the call is close.** V3 flags a borderline class, shows the competing fingerprints and lets you pin a type that survives reload. SSE4 has class pins in the kernel, nothing on screen. *Keep:* the class line's "why?" shows the runner-up and a **Pin this class** button, same mechanism as item 4. **Stage 2** (beside the class atlas, coming-together question 4).
@@ -47,11 +49,15 @@ Already in SSE4 and so not listed: size comparison, measure, undo and redo, copy
 
 **15. Megastructures and docking.** V3: seven types (elevator, ring, ringworld, Dyson sphere and swarm, collector, battle station) that obey the physics (a swarm dims the star and every world cools), docking at elevator levels and ring rims with the cost priced. SSE4 has none. *Do better:* a megastructure is a construct that declares its physical effects through the same blocks as everything else (a swarm is an absorber in the light path, a ring is a body with an orbit), so no special code per type; docking is a NAV relation. **Stage 5**, late in it, after item 13.
 
+*Alex, 23 Nov:* "constructs are just constructs. Megaconstructs are big enough they need to be tied to physics and impact the system at stellar levels... A construct can have blocks attached (an autopilot)... thrust physics blocks for stellar engines." **Design direction:** any construct may carry a small flow of physics blocks, exactly as a body does. An ordinary ship carries few (its drive, its autopilot program). A megastructure carries the blocks that make it matter at stellar scale: an absorber in the star's light path (swarm, sphere), a mass and an orbit (ring, ringworld), a thrust block (a stellar engine that moves its star over Myr). No per-type code. Needs a short design note before building (kernel thread with the Traveller thread for constructs).
+
 **16. Ship's log, drift and the stress graph.** V3: a log of every journey, cargo and refuel; a stopped ship coasting under gravity; a graph of g-force and dose along a trip. SSE4 has autopilot roles designed as pack programs (J6) and drift queued in V8. *Keep:* the log is a view of the campaign record, so it cannot drift from what happened; g-force and dose go on the voyage card. **Stage 5.**
 
 ## D. The map of your systems
 
 **17. A campaign map of your own systems.** V3's home screen: every system in the campaign on one pan-and-zoom map with depth, routes drawn between them, Add system here, Add near here (by bearing, elevation and distance), Set depth, Centre map here with rings from that star, and hover a star to see what is in it. SSE4 has the galaxy, cluster and web charts, but systems are not yet placed in galaxies, so there is no map of *your* systems to go back to. *Do better:* one **Your systems** scale on the place line between galaxy and system (it is the patch chart, U6 part 2b), routes as authored relations, the hover peek that bodies already have, and the Traveller hex map as a view style of this same chart rather than its own screen. I would bring this **forward into stage 2**: for a GM it is the most used screen V3 has.
+
+*Alex, 23 Nov:* agreed (the coordinator is explaining it further). Stage 2.
 
 **18. Grids, snap and your own picture behind the stars.** V3: square, hex, subsector and Traveller grids, snap to grid, a sector map or empire borders pinned to map coordinates. *Keep:* grids and a pinned picture are layers in the view controls (rule 12) on item 17's map; nothing per screen. **Stage 5.**
 
@@ -69,6 +75,8 @@ Already in SSE4 and so not listed: size comparison, measure, undo and redo, copy
 
 **24. Print a report, and save a player-safe copy.** V3: GM or Player reports in three themes, print or PDF; a spoiler-free export of the campaign. *Do better:* **Print** on any screen document, in the seat's theme, which is player-safe by construction because it prints what that audience's data view holds; **Save as seen by...** an audience gives the spoiler-free file. One mechanism, no report generator. **Stage 5.**
 
+*Alex, 23 Nov:* not every screen. **Settled:** report screens built for the purpose (a GM briefing, a player survey sheet, a world dossier), shipped as screen documents and printable; the lens is the filter, so a player report shows only that audience's knowledge so far. "Save as seen by..." stays for the spoiler-free file. Stage 5.
+
 **25. Branding, join message and quick overrides on player views.** V3: a faction name and logo across every view, an "Incoming transmission" join screen with the size coming, live Hide labels and Hide orbit lines that are never saved. *Keep:* branding as theme data, the join text as pack vocabulary, quick overrides as an unsaved toggle on the seat panel. **Stage 5.**
 
 **26. Show it inside a virtual tabletop.** V3's Mappadux bridge and `?embed=1`, with an exact origin allowlist. *Keep:* re-specified on the V4 view contract, same allowlist rule. **Stage 5.**
@@ -81,7 +89,7 @@ Already in SSE4 and so not listed: size comparison, measure, undo and redo, copy
 
 **29. Credit the maker.** V3 lets you put your name, contact and version in a file, and keeps the chain of cartographers on anything pasted from Explorers. *Keep:* author fields in the campaign manifest; the credit chain rides in the clip. **Stage 5**, with Explorers V4 packs.
 
-**30. A colour-blind-safe look.** V3's "Clarity" skin (Okabe-Ito palette, contrast up). SSE4 has the chart room and the night chart only, and the parity call to drop GM skins stands. *Do better:* no third skin; instead a colour-blind and contrast check on both GM themes and every player theme, in the theme tests, so every look is safe. **Stage 1** for the check.
+**30. A colour-blind-safe look.** V3's "Clarity" skin (Okabe-Ito palette, contrast up). SSE4 has the chart room and the night chart only, and the parity call to drop GM skins stands. *Do better:* no third skin; instead a colour-blind and contrast check on both GM themes and every player theme, in the theme tests, so every look is safe. **Stage 1** for the check. *Alex, 23 Nov:* yes.
 
 **31. Help, guides and what's new.** V3: a Help hub with Getting started, the Tags and Autopilot guides, the physics reference and the changelog. *Do better:* the guides become tours (stage 6) and the physics reference is the flows themselves at Curious depth; what is left is one **Help** door in More with "What's new" from the stage-end notes. **Stage 1** for the door, **stage 6** for tours.
 
@@ -93,10 +101,45 @@ Already in SSE4 and so not listed: size comparison, measure, undo and redo, copy
 
 **34. A low-power switch.** Capability tiers already decide what runs. *Drop*, unless testers on weak machines ask; then it is one "Lighter" toggle that lowers the tier.
 
+*Alex, 23 Nov, on 32 to 34:* "the way we are going seems fine", dropped for now.
+
+## H. Added by Alex, 23 Nov
+
+**35. A gallery of every planet class.** V3 had a gallery screen of each planet type. Alex: put it on the classification pages, which "will have them all", with a selectable icon, photo or animation per class; unsure whether to use V3's old pictures or "our own imagery now, as it should be accurate". *Recommendation:* our own imagery. Each class's picture is a real world rendered from the physics: the class atlas picks a representative sample world for each class (a seed whose resolved world lands in the middle of the class's bands), and the gallery draws it three ways from one recipe, a flat icon (chart symbology), a still (globe render) and a slow turn (globe with time lapse). Nothing painted, so a picture can never disagree with the world. V3's pictures are not carried over (their licences are CC BY-SA and they show V3's classes). It also gives item 10 back what people liked about it. **Stage 2**, on the class atlas ("Names and classes" in Reference, coming-together question 4); the turning version waits on the renderer's globe in True for the best look, stage 6.
+
+**36. Gas giants in every colour.** V3's gas giant recipes gave "rainbows of colours", and that variety must come along. *Recommendation:* not as copied recipes. In SSE4 a giant's colours come from its cloud decks and their chemistry: which condensates form at its temperature (ammonia, ammonium hydrosulphide, water, silicates and iron for hot giants, methane haze), chromophores and hazes as substances on the data sheet with absorption rows, and bands from the zonal winds. That is the same light-through-gas block as item 9 (ND2), so a giant's colour is computed, varied by temperature, metallicity and age, and explained by "why?". Check: a set of grown giants spans at least the palette of V3's recipes (V3's recipe list, read on Alex's machine, is the target to beat, not data to copy). **Stage 3**, light thread with the proven core (cloud decks) and the data sheet thread (chromophore rows).
+
+**36a. The target, read from V3 (23 Nov, read only, `star-system-generator/src/lib`).** V3's "recipes" are already physics in shape, so they translate directly. A recipe (`catalogue/giantRecipe.ts`) is only an authored **gas mix and anchor pressure**, plus the **temperature it needs**, which V3 derives and never lets you set ("a giant is that colour because it is that cold"). The colour then comes from three steps:
+
+1. **Trace gases by mass** (`physics/giantTraces.ts`): H₂ and He with CH₄, NH₃ and H₂S at solar baselines (0.00075, 0.000065, 0.00002) times an enrichment of 126·M⁻⁰·⁶ (M in Earth masses, clamped 1 to 120), which gives Jupiter about 4x, Saturn about 8x and Uranus about 25x. Each trace is jittered by 0.65 to 1.35 from the seed. He is 13% to 19%.
+2. **Cloud decks by saturation** (`physics/cloudDecks.ts`): each condensable gas is tested level by level against its saturation pressure, the cloud base is the lifting condensation level, the column (kg/m²) becomes an optical depth (droplets of 10 µm, opaque at τ = 5), coverage is bucketed (wisps, scattered, broken, overcast, veil), and decks stack by base pressure, warmest-condensing deepest.
+3. **Colour from the condensate** (`data/liquids.json`, `rendering/apparentColor.ts`, `planetAppearance.ts`): each condensate carries a hand-picked colour, a cloud opacity and albedo, and a "tint distance" from white (default 60 of 255). The visible giant is the top decks' tints over each other, plus banding.
+
+The palette to match or beat (V3's condensate colours, all **hand-picked hex, not derived**: in SSE4 they must come from absorption and scattering rows on the data sheet, or be listed as fudges):
+
+| Condensate | V3 colour | Where it forms in V3's lab |
+|---|---|---|
+| Ammonia (NH₃) ice | #c9b08a, cream | top deck of a Jupiter, 110 to 165 K |
+| Ammonium hydrosulphide (NH₄SH) | #b8845a, brown, opacity 0.65 | deeper deck, the brown belts |
+| Water | #2b6cb0 as a liquid, white as cloud | steam giant at 320 K, deepest deck of a cold one |
+| Methane (CH₄) | #6a8caf | ice giants below about 90 K; the blue is CH₄ absorption above the decks |
+| Hydrogen sulphide (H₂S) | #d8d090 | ammonia-poor, sulphur-rich giants |
+| Sulphur dioxide (SO₂) | #ffffe0, pale yellow | "sulphurous" giant at 240 K |
+| Sulphuric acid | #efe6c0 | "acid giant" at 290 K |
+| Nitrogen | #cfe0ff | very cold N₂ and CH₄ giant, 100 K |
+| Sodium, potassium | #d8d3c8, #cfc8bd, opacity 0.7 | hot Jupiters at 700 to 1100 K |
+| Silicate (SiO) "molten glass" | #d98a3c, glowing | 1100 to 1400 K |
+| Iron | #e8631f, glowing, opacity 0.75 | 1400 to 2400 K |
+| Clear (nothing condenses) | the gas's own scattering | the hottest, or past every condensation point |
+
+V3's giant lab rows are the check to rerun in SSE4, all with the same rule and no per-row authoring: **one Jovian chemistry cooled** (CH₄ 0.3%, NH₃ 0.026%, H₂S 0.008% at 220, 190, 165, 134, 110, 80 K: NH₄SH appears first and deepest, then NH₃, then CH₄); **where methane switches on** (2.3% CH₄ at 140 to 60 K: Saturn has no methane deck, Uranus does); **ice giants by methane** (0.5% to 8% CH₄ at 76 K: Uranus to Neptune blue); **other chemistries** (sulphurous, steam, ammonia-rich, acid, N₂ and CH₄); **hot Jupiters** (Na and K at 700 K up to SiO and Fe at 2400 K); **one air anchored at 0.1 to 20 bar**; and **one Jupiter growing old** (987 K at 10 Myr down to 108 K at 1 Gyr: young giants glow, which is how V3 answers "make a really hot giant").
+
+What SSE4 should do better than V3: the colours themselves become physics (a condensate's colour from its refractive index and absorption rows through ND2; Jupiter's reds from a chromophore row, which V3 does not have, it tints NH₄SH brown by hand; ice giant blue from CH₄ absorption, not a hex); banding count from the zonal wind cells, not authored per gallery world (V3's gallery sets `banding: 3` to `9` by hand); and the age row follows from the core and interior heat history already in the kernel.
+
 ## Stage summary if all are accepted
 
 - Stage 1 (test drive): 2, 27, 28, 30, 31 (door only).
-- Stage 2 (one system in full): 1, 3, 4, 5, 6, 7, 8, 11, 12, 17 (brought forward), 21.
-- Stage 3: 9. Stage 4: 19, 20.
+- Stage 2 (one system in full): 1, 3, 4, 5, 6, 7, 8, 11, 12, 17 (brought forward), 21, 35.
+- Stage 3: 9, 36. Stage 4: 19, 20.
 - Stage 5 (run a game): 13, 15, 16, 18, 22 to 26, 29.
 - Stage 6: 14, 31 (tours).

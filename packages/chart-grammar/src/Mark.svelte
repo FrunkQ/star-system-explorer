@@ -18,6 +18,23 @@
     return `M${cx - r} ${cy}a${r} ${r} 0 1 0 ${r * 2} 0a${r} ${r} 0 1 0 ${-r * 2} 0Z`;
   });
   const edge = $derived(mark.fill_pattern === "solid" && !mark.colour ? 0 : 1.3);
+  // What it is doing (V3 gap 19), drawn round the mark. Flares: a short kinked stroke on each diagonal, out past a
+  // star's rays. A shed shell: a broken ring well clear of the mark.
+  const reach = $derived(mark.shape === "star" ? r * 2.3 : r * 1.5);
+  const flares = $derived.by(() => {
+    if (mark.aura !== "flares") return "";
+    const a = reach;
+    const b = reach + Math.max(3, r * 1.2);
+    return [45, 135, 225, 315]
+      .map((deg) => {
+        const t = (deg * Math.PI) / 180;
+        const [ux, uy, nx, ny] = [Math.cos(t), Math.sin(t), -Math.sin(t), Math.cos(t)];
+        const m = (a + b) / 2;
+        const k = Math.max(1.2, r * 0.35);
+        return `M${cx + ux * a} ${cy + uy * a}L${cx + ux * m + nx * k} ${cy + uy * m + ny * k}L${cx + ux * m - nx * k} ${cy + uy * m - ny * k}L${cx + ux * b} ${cy + uy * b}`;
+      })
+      .join("");
+  });
 </script>
 
 <g aria-hidden="true" data-mark="{mark.shape} {mark.fill_pattern}{mark.colour ? ` ${mark.colour}` : ''}{mark.ring ? ' ring' : ''}">
@@ -34,6 +51,8 @@
       stroke-width="1"
     />
   {/if}
+  {#if mark.aura === "flares"}<path d={flares} fill="none" stroke={ink} stroke-width="1" stroke-linejoin="round" data-aura="flares" />{/if}
+  {#if mark.aura === "shell"}<circle {cx} {cy} r={reach + Math.max(5, r * 2)} fill="none" stroke={ink} stroke-width="0.9" stroke-dasharray="2 3" data-aura="shell" />{/if}
   {#if mark.outline === "double"}
     <circle {cx} {cy} r={r + 3} fill="none" stroke={ink} stroke-width="0.8" />
   {/if}
