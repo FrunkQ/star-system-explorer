@@ -2,12 +2,18 @@
 const vc = (page, group, name) => page.getByRole("group", { name: group }).getByRole("button", { name, exact: true });
 export default {
   id: "25-true-system",
-  title: "The system in True, then in other light",
+  title: "The Solar System in True, HUD on, then in other light",
   feature: "True on the system chart, living star, bands through True, Mag at system scale (V10a to V10e)",
   trailers: ["intro", "features"],
-  notes: "GPU only: film with --gpu on AC-ProArt. In the cloud True has no GPU tier and films blank.",
+  path: "",
+  waitFor: '[data-door="sol"]:not([disabled])',
+  async setup(page) {
+    await page.locator('[data-door="sol"]').click();
+    await page.locator('.area-chart .body[aria-label^="Earth,"]').first().waitFor({ timeout: 20000 });
+  },
+  notes: "The catalogued Solar System (SOL1). GPU only: film with --gpu on AC-ProArt. In the cloud True has no GPU tier and films blank.",
   async run(page, d) {
-    await d.caption("True", "The same chart, drawn as it would look: each world its own surface, lit by its star.");
+    await d.caption("True", "The Solar System as it would look: each world lit by the Sun, the Sun in its own colour.");
     await d.click(vc(page, "View style", "True"));
     await d.hold(4500);
     await d.click(vc(page, "Seen from", "Tilted"));
