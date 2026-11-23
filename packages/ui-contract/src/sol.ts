@@ -26,9 +26,6 @@ export interface SolRegion {
   host: string;
   inner_m: number;
   outer_m: number;
-  /** A ring's normal optical depth and its particles' albedo (a region round a planet), when the sheet carries them. */
-  tau?: number;
-  albedo?: number;
   src: string;
   grade: string;
   note?: string;
@@ -145,9 +142,6 @@ export function solBatches(sheet: SolSheet, system: string): { batches: SolBatch
     put(r.src, a, "body.radius_inner", r.inner_m);
     put(r.src, a, "body.radius_outer", r.outer_m);
     put(r.src, a, "belt.shape", /oort/.test(r.id) ? "sphere" : "disc");
-    // A ring (a region round a planet): what it is made of, when the sheet carries it (V10f draws it in True).
-    if (typeof r.tau === "number") put(r.src, a, "ring.optical_depth", r.tau);
-    if (typeof r.albedo === "number") put(r.src, a, "ring.albedo", r.albedo);
     if (r.check === "unverified") unverified.push(`${a}#body.radius_inner`);
   }
   return { batches: [...by.values()], addresses: addr, unverified, names };

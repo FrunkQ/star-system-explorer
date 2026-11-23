@@ -521,7 +521,7 @@ export function sceneFromResolved(r: SystemResolved, title?: string): SystemScen
       // A belt round a world, not the star, is its ring: edges from the world's centre, and what it is made of.
       const rin = num(a, "body.radius_inner");
       const rout = num(a, "body.radius_outer");
-      const ring = kind === "belt" && parent && parent !== primary && rin !== undefined && rout !== undefined && rout > rin ? { inner_m: rin, outer_m: rout, tau: num(a, "ring.optical_depth") ?? null, albedo: num(a, "ring.albedo") ?? null } : undefined;
+      const ring = kind === "belt" && parent && parent !== primary && rin !== undefined && rout !== undefined && rout > rin ? { inner_m: rin, outer_m: rout, tau: num(a, "ring.optical_depth") ?? null, albedo: num(a, "ring.albedo") ?? num(a, "body.albedo") ?? null } : undefined;
       const tilt = num(a, "body.axial_tilt");
       return {
         address: a,
