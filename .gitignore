@@ -11,3 +11,6 @@ node_modules/
 /.wrangler/
 trailer-out
 __pycache__/
+handover/packages/*-screens/*.png
+handover/packages/*-screens/*.jpg
+handover/packages/*-screens/*.webp
