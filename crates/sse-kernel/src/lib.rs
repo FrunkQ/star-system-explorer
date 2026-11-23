@@ -19,6 +19,8 @@ mod frame;
 mod frames;
 mod galaxies;
 mod glow;
+#[cfg(test)]
+mod hooks_tests;
 mod ice_ages;
 #[cfg(test)]
 mod matter_tests;
@@ -39,6 +41,8 @@ mod tags_tests;
 mod trust;
 #[cfg(test)]
 mod trust_tests;
+#[cfg(test)]
+mod universe_pack_tests;
 mod voyage;
 mod weather;
 mod withdraw;

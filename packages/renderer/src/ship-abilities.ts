@@ -49,6 +49,8 @@ export interface AbilityRules {
   legs: { max_touchdown_m_s: number };
   chute: { cd: number; max_mach: number; max_q_pa: number; fill_s: number; max_area_over_front: number };
   scoop: { skim_density_kg_m3: number; skim_speed_m_s: number; fill_days: number };
+  /** The shield face's emissivity, for the pass view's glow. */
+  shield_emissivity?: number;
 }
 
 /** What the designer fitted, for the drawing. */
@@ -92,7 +94,7 @@ const check = (w: ShipAtWorld, id: string) => w.checks.find((c) => c.id === id);
 const hasAir = (w: ShipAtWorld) => w.air !== undefined && w.air.pressure_pa > 0;
 
 /** Size the ship's shield, lift, legs, parachute and scoop from what it must do, asking the kernel at each step. */
-export async function fitAbilities(ask: AskShipAtWorld, where: Pick<ShipAtWorldAsk, "fixture" | "nav" | "system" | "at_s">, base: NavShip & { refuel?: string[] }, l: ShipLayout, hull: "open" | "skin", abilities: Abilities, rules: AbilityRules): Promise<FitResult> {
+export async function fitAbilities(ask: AskShipAtWorld, where: Pick<ShipAtWorldAsk, "fixture" | "nav" | "system" | "at_s" | "v_inf_m_s">, base: NavShip & { refuel?: string[] }, l: ShipLayout, hull: "open" | "skin", abilities: Abilities, rules: AbilityRules): Promise<FitResult> {
   const o = outlineOf(l);
   const notes: string[] = [];
   const fit: Fitted = {};
@@ -275,4 +277,14 @@ export function fittedChecks(r: FitResult): { world: string; check: WorldCheck }
     }
   }
   return out;
+}
+
+/** What an aerobraking pass looks like at its hottest (for the True pass view): the shield face at radiative balance
+ * with the peak heating, q = ε σ T⁴ (an upper bound for a reusable face; an ablator runs cooler by what it carries
+ * away), and the bow shock standing off the nose by about 0.14 nose radii at hypersonic speed, curved at about 1.14
+ * nose radii (Billig 1967). The shock layer's glow is a display choice (fudge register "ship pass glow"). */
+export function passGlow(peak_heat_w_m2: number, emissivity: number): { shield_k: number; standoff_rn: number; shock_curve_rn: number; glow: number } {
+  const q = Math.max(0, peak_heat_w_m2);
+  const shield_k = Math.pow(q / (Math.max(emissivity, 1e-3) * constant("sigma_SB")), 0.25);
+  return { shield_k, standoff_rn: 0.143, shock_curve_rn: 1.143, glow: Math.min(1, q / 1e6) };
 }

@@ -141,6 +141,27 @@ does not judge entry itself; the kernel's `ship_at_world` (travel thread, PR 228
   at Earth and Mars, the fusion torch aerobraking at Jupiter with a 27 m carbon phenolic shield),
   `abilities-3d.png` (the same in 3D) and `abilities-card.png` (ShipPlans with the kernel's verdicts).
 
+## Stage 4b: on the Voyages card, and the aerobraking pass
+
+- `ShipAtWorldView` (views/ship) replaces the drawn ship on the Voyages "At world" card (`AtWorld.svelte`): the ship
+  designed from its record through `ShipPlans`, and "Fit it for {world}" running `fitAbilities` for what the world
+  asks (aerobrake where there is an aerocapture check, land where there is entry or a powered landing). The card keeps
+  its own single `shipAtWorld` call per ask; fitting asks the kernel again only when pressed.
+- "Watch the pass" shows when the fitted ship carries a shield and the kernel gives an aerocapture peak heating. It
+  opens the 3D model in pass mode (`mountShip(..., { pass })`, framed on the front: `ShipMesh.front_bounds`, the
+  modules without spine, radiators or drive): radiators folded away, the shield glowing at its face temperature,
+  the bow shock ahead of its nose.
+- `passGlow(q, ε)`: the face at radiative balance, T = (q/(εσ))^¼ with ε from the pack (`abilities.shield_emissivity`
+  0.85); the shock stands off 0.143 nose radii and curves at 1.143 (Billig 1967, sphere at high Mach); its glow
+  (colour of a body at 1.6 T, opacity by heating up to 1 MW/m²) is drawn for the eye.
+- The shell copies `packs/base-ships/pack.json` to `public/packs/base-ships.json` for the view to fetch.
+- Checks: `ship-abilities.test.ts` gains the balance test (εσT⁴ equals q, hotter for more heating, Billig's numbers);
+  `tests/ui/voyage.e2e.mjs` checks the plans on the card and presses "Fit it for", and watches the pass when the
+  destination has air to brake in. The test drive's Kestrel worlds carry no air, so the browser run fits without a
+  pass there; the pass is pictured from the kernel's own fits.
+- Pictures: `SHIP14-screens/pass-mars-lander.png` (a Mars lander's PICA shield at about 1,440 K) and
+  `pass-torch-jupiter.png` (the fusion torch's carbon phenolic shield at about 4,270 K aerobraking at Jupiter).
+
 ## Next
 
 - **Sheet**: `density_liquid` for hydrogen, oxygen, deuterium and helium-3, and a substance for each base-nav fuel

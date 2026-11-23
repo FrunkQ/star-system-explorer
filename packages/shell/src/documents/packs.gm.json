@@ -14,11 +14,19 @@
       "params": {
         "samples": [
           "packs/samples/warm-worlds.json",
-          "packs/samples/traveller.json"
+          "packs/samples/traveller.json",
+          "packs/samples/near-future.json",
+          "packs/samples/space-opera.json",
+          "packs/samples/base-hooks.json",
+          "packs/samples/intrigue.json"
         ],
         "sample_labels": [
           "Try the sample pack",
-          "Add the Traveller pack"
+          "Add the Traveller pack",
+          "Add the Near future setting",
+          "Add the Meridian Reach setting",
+          "Add access labels",
+          "Add story hooks (intrigue)"
         ]
       }
     },

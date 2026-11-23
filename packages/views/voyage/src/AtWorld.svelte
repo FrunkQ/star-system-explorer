@@ -1,6 +1,7 @@
 <!--
   What the ship can do where the voyage ends (V8, kernel ship_at_world): the
-  ship drawn from its own numbers, then each act at the world (aerocapture,
+  ship designed from its own numbers (and, on request, fitted for this world and watched through an aerobraking
+  pass), then each act at the world (aerocapture,
   entry, runway landing, powered landing, take-off) with how close it runs to
   its limits, what could go wrong, a rough chance and what would make it safe.
   Nothing is refused and nothing is rolled: the GM makes the call. The kernel
@@ -9,7 +10,7 @@
 <script lang="ts">
   import { chanceWords, verdictWords, worstDangers, type ShipAtWorld, type ShipAtWorldAsk, type ViewContext } from "../../../ui-contract/src/index.ts";
   import { readPropellants, type Propellants, type ShipRecord } from "../../../renderer/src/index.ts";
-  import { ShipPicture } from "../../ship/src/index.ts";
+  import { ShipAtWorldView } from "../../ship/src/index.ts";
 
   let { ctx, ask }: { ctx: ViewContext; ask: ShipAtWorldAsk | null } = $props();
   let world = $state<ShipAtWorld | null>(null);
@@ -42,7 +43,7 @@
 {#if world}
   <section class="at" data-at-world={world.body}>
     <h4>At {world.name}</h4>
-    {#if ship}<ShipPicture {ship} {fuels} height={64} words={false} />{/if}
+    {#if ship && ask}<ShipAtWorldView {ctx} {ask} {ship} {world} {fuels} />{/if}
     <p class="muted">{world.v_inf_m_s < 1 ? "Arrives with its drive braked to the world's own speed" : `${world.arrival[0]!.toUpperCase()}${world.arrival.slice(1)}, ${(world.v_inf_m_s / 1000).toFixed(1)} km/s over escape speed`}. Nothing here is refused or rolled: the dangers are for you to weigh.</p>
     <ul class="acts">
       {#each acts as c (c.id)}

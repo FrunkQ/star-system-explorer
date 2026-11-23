@@ -1,0 +1,756 @@
+{
+ "format": "sse.pack/1",
+ "id": "sse.near-future",
+ "version": "0.1.0",
+ "kind": [
+  "universe"
+ ],
+ "kernel_range": "^0.1",
+ "licence": "Apache-2.0",
+ "provides": {
+  "other": {
+   "about": {
+    "label": "Near future",
+    "text": "A generic near-future hard science fiction setting: fusion drives and no faster-than-light travel, a treaty government on the inner worlds, fuel combines at the giants, and independent crews staking claims on the cold rocks.",
+    "fictional": false,
+    "note": "Written for SSE4 (tags design TG13). Rules and plain descriptions only; no published setting is copied."
+   },
+   "tags": {
+    "about": "Tags this pack names (tags design, TG1): labels only, never an input to physics.",
+    "groups": [
+     {
+      "id": "nf.label",
+      "label": "Near future: worlds",
+      "about": "How the near-future powers speak of a world.",
+      "applies_to": [
+       "body"
+      ]
+     },
+     {
+      "id": "nf.faction",
+      "label": "Near future: powers",
+      "about": "Who runs a place.",
+      "applies_to": [
+       "construct",
+       "body"
+      ],
+      "exclusive": true
+     },
+     {
+      "id": "nf.port",
+      "label": "Near future: ports",
+      "about": "Where a ship can dock, refuel or refit.",
+      "applies_to": [
+       "construct"
+      ]
+     }
+    ],
+    "tags": [
+     {
+      "id": "construct",
+      "label": "construct"
+     },
+     {
+      "id": "ship",
+      "label": "ship"
+     },
+     {
+      "id": "station",
+      "label": "station"
+     },
+     {
+      "id": "site",
+      "label": "site"
+     },
+     {
+      "id": "nf.label.homeworld",
+      "label": "home-type world",
+      "group": "nf.label",
+      "about": "rocky, temperate and around its star: where people can live outside a habitat",
+      "source": "derived",
+      "tier": "obvious"
+     },
+     {
+      "id": "nf.label.volatile-giant",
+      "label": "volatile giant",
+      "group": "nf.label",
+      "about": "a giant whose air holds hydrogen to skim for fusion fuel",
+      "source": "derived",
+      "tier": "obvious"
+     },
+     {
+      "id": "nf.label.ice-moon",
+      "label": "ice moon",
+      "group": "nf.label",
+      "about": "a moon of a giant: water ice and shelter from the giant's belts behind rock",
+      "source": "derived",
+      "tier": "scanned"
+     },
+     {
+      "id": "nf.label.frontier",
+      "label": "frontier rock",
+      "group": "nf.label",
+      "about": "a rocky world far and cold from its star, worth a claim",
+      "source": "derived",
+      "tier": "scanned"
+     },
+     {
+      "id": "nf.faction.accord",
+      "label": "Terran Accord",
+      "group": "nf.faction",
+      "about": "the inner worlds' treaty government and its navy",
+      "source": "authored",
+      "tier": "obvious"
+     },
+     {
+      "id": "nf.faction.consortium",
+      "label": "Jovian Consortium",
+      "group": "nf.faction",
+      "about": "the fuel and ice combines of the giants",
+      "source": "authored",
+      "tier": "obvious"
+     },
+     {
+      "id": "nf.faction.haulers",
+      "label": "Free Haulers' Union",
+      "group": "nf.faction",
+      "about": "independent crews and claim-stakers",
+      "source": "authored",
+      "tier": "obvious"
+     },
+     {
+      "id": "nf.port.yard",
+      "label": "orbital yard",
+      "group": "nf.port",
+      "about": "docking, refit and refuelling in orbit",
+      "source": "authored",
+      "tier": "obvious"
+     },
+     {
+      "id": "nf.port.fuel",
+      "label": "fuel depot",
+      "group": "nf.port",
+      "about": "refined fusion fuel for sale",
+      "source": "authored",
+      "tier": "obvious"
+     },
+     {
+      "id": "nf.military",
+      "label": "military",
+      "about": "armed and under a navy's orders",
+      "source": "authored",
+      "tier": "scanned"
+     },
+     {
+      "id": "nf.research",
+      "label": "research",
+      "about": "a science post",
+      "source": "authored",
+      "tier": "obvious"
+     }
+    ]
+   },
+   "templates": {
+    "templates": [
+     {
+      "id": "nf_orbital_yard",
+      "kind": "station",
+      "label": "Orbital yard",
+      "facts": {
+       "construct.mass_kg": 400000000.0,
+       "construct.length_m": 600.0,
+       "construct.crew_max": 4000.0,
+       "construct.source": "written for this pack"
+      },
+      "tags": [
+       "construct",
+       "station",
+       "nf.port.yard",
+       "nf.port.fuel"
+      ],
+      "explain": "a large station for docking, refit and refuelling, spun for gravity"
+     },
+     {
+      "id": "nf_skimmer_depot",
+      "kind": "station",
+      "label": "Skimmer depot",
+      "facts": {
+       "construct.mass_kg": 60000000.0,
+       "construct.crew_max": 300.0,
+       "construct.cargo_t": 50000.0,
+       "construct.source": "written for this pack"
+      },
+      "tags": [
+       "construct",
+       "station",
+       "nf.port.fuel"
+      ],
+      "explain": "a fuel station in low orbit of a giant, fed by skimmer craft diving into its air"
+     },
+     {
+      "id": "nf_patrol_station",
+      "kind": "station",
+      "label": "Patrol station",
+      "facts": {
+       "construct.mass_kg": 90000000.0,
+       "construct.crew_max": 800.0,
+       "construct.source": "written for this pack"
+      },
+      "tags": [
+       "construct",
+       "station",
+       "nf.military"
+      ],
+      "explain": "a navy picket: sensors, a hangar of cutters and a brig"
+     },
+     {
+      "id": "nf_ice_station",
+      "kind": "site",
+      "label": "Ice-moon station",
+      "facts": {
+       "construct.crew_max": 120.0,
+       "construct.power_mw": 40.0,
+       "construct.source": "written for this pack"
+      },
+      "tags": [
+       "construct",
+       "site",
+       "nf.research"
+      ],
+      "explain": "a research and water-mining base dug under the ice"
+     },
+     {
+      "id": "nf_claim_outpost",
+      "kind": "site",
+      "label": "Claim outpost",
+      "facts": {
+       "construct.crew_max": 20.0,
+       "construct.power_mw": 2.0,
+       "construct.source": "written for this pack"
+      },
+      "tags": [
+       "construct",
+       "site"
+      ],
+      "explain": "a pressurised hab and a drill rig staking a mineral claim"
+     },
+     {
+      "id": "nf_patrol_cutter",
+      "kind": "ship",
+      "label": "Patrol cutter",
+      "facts": {
+       "construct.mass_kg": 1200000.0,
+       "construct.length_m": 70.0,
+       "construct.crew_max": 12.0,
+       "construct.source": "written for this pack"
+      },
+      "tags": [
+       "construct",
+       "ship",
+       "nf.military"
+      ],
+      "explain": "a fast fusion-drive cutter for inspection and rescue"
+     },
+     {
+      "id": "nf_ice_hauler",
+      "kind": "ship",
+      "label": "Ice hauler",
+      "facts": {
+       "construct.mass_kg": 3000000.0,
+       "construct.cargo_t": 200000.0,
+       "construct.crew_max": 6.0,
+       "construct.source": "written for this pack"
+      },
+      "tags": [
+       "construct",
+       "ship"
+      ],
+      "explain": "a slow tug pushing a block of water ice sunward"
+     }
+    ]
+   },
+   "rules": [
+    {
+     "id": "nf.label.homeworld.v1",
+     "tag": "nf.label.homeworld",
+     "applies_to": [
+      "body"
+     ],
+     "when": {
+      "if": "all",
+      "of": [
+       {
+        "if": "all",
+        "of": [
+         {
+          "if": "all",
+          "of": [
+           {
+            "if": "not",
+            "p": {
+             "if": "has",
+             "field": "star.effective_temperature"
+            }
+           },
+           {
+            "if": "not",
+            "p": {
+             "if": "has",
+             "field": "mass_sun"
+            }
+           }
+          ]
+         },
+         {
+          "if": "any",
+          "of": [
+           {
+            "if": "range",
+            "field": "body.mass",
+            "min": 2.9860839338956896e+23,
+            "max": 5.972167867791379e+25
+           },
+           {
+            "if": "range",
+            "field": "mass_earth",
+            "min": 0.05,
+            "max": 10
+           }
+          ]
+         }
+        ]
+       },
+       {
+        "if": "any",
+        "of": [
+         {
+          "if": "range",
+          "field": "surface_k",
+          "min": 240,
+          "max": 330
+         },
+         {
+          "if": "all",
+          "of": [
+           {
+            "if": "not",
+            "p": {
+             "if": "has",
+             "field": "surface_k"
+            }
+           },
+           {
+            "if": "any",
+            "of": [
+             {
+              "if": "range",
+              "field": "orbit.semi_major_axis",
+              "min": 119678296560.0,
+              "max": 194477231910.0
+             },
+             {
+              "if": "range",
+              "field": "a_au",
+              "min": 0.8,
+              "max": 1.3
+             }
+            ]
+           }
+          ]
+         }
+        ]
+       },
+       {
+        "if": "not",
+        "p": {
+         "if": "any",
+         "of": [
+          {
+           "if": "range",
+           "field": "parent.body.mass",
+           "min": 5.972167867791379e+20
+          },
+          {
+           "if": "range",
+           "field": "parent.mass_earth",
+           "min": 0.0001
+          }
+         ]
+        }
+       }
+      ]
+     }
+    },
+    {
+     "id": "nf.label.volatile-giant.v1",
+     "tag": "nf.label.volatile-giant",
+     "applies_to": [
+      "body"
+     ],
+     "when": {
+      "if": "all",
+      "of": [
+       {
+        "if": "all",
+        "of": [
+         {
+          "if": "all",
+          "of": [
+           {
+            "if": "not",
+            "p": {
+             "if": "has",
+             "field": "star.effective_temperature"
+            }
+           },
+           {
+            "if": "not",
+            "p": {
+             "if": "has",
+             "field": "mass_sun"
+            }
+           }
+          ]
+         },
+         {
+          "if": "any",
+          "of": [
+           {
+            "if": "range",
+            "field": "body.mass",
+            "min": 5.972167867791379e+25,
+            "max": 2.3888671471165516e+28
+           },
+           {
+            "if": "range",
+            "field": "mass_earth",
+            "min": 10,
+            "max": 4000
+           }
+          ]
+         }
+        ]
+       },
+       {
+        "if": "not",
+        "p": {
+         "if": "any",
+         "of": [
+          {
+           "if": "range",
+           "field": "parent.body.mass",
+           "min": 5.972167867791379e+20
+          },
+          {
+           "if": "range",
+           "field": "parent.mass_earth",
+           "min": 0.0001
+          }
+         ]
+        }
+       }
+      ]
+     }
+    },
+    {
+     "id": "nf.label.ice-moon.v1",
+     "tag": "nf.label.ice-moon",
+     "applies_to": [
+      "body"
+     ],
+     "when": {
+      "if": "all",
+      "of": [
+       {
+        "if": "all",
+        "of": [
+         {
+          "if": "not",
+          "p": {
+           "if": "has",
+           "field": "star.effective_temperature"
+          }
+         },
+         {
+          "if": "not",
+          "p": {
+           "if": "has",
+           "field": "mass_sun"
+          }
+         }
+        ]
+       },
+       {
+        "if": "any",
+        "of": [
+         {
+          "if": "range",
+          "field": "parent.body.mass",
+          "min": 5.972167867791379e+25,
+          "max": 2.3888671471165516e+28
+         },
+         {
+          "if": "range",
+          "field": "parent.mass_earth",
+          "min": 10,
+          "max": 4000
+         }
+        ]
+       },
+       {
+        "if": "any",
+        "of": [
+         {
+          "if": "range",
+          "field": "body.mass",
+          "min": 5.972167867791379e+21,
+          "max": 5.972167867791379e+23
+         },
+         {
+          "if": "range",
+          "field": "mass_earth",
+          "min": 0.001,
+          "max": 0.1
+         }
+        ]
+       }
+      ]
+     }
+    },
+    {
+     "id": "nf.label.frontier.v1",
+     "tag": "nf.label.frontier",
+     "applies_to": [
+      "body"
+     ],
+     "when": {
+      "if": "all",
+      "of": [
+       {
+        "if": "all",
+        "of": [
+         {
+          "if": "all",
+          "of": [
+           {
+            "if": "not",
+            "p": {
+             "if": "has",
+             "field": "star.effective_temperature"
+            }
+           },
+           {
+            "if": "not",
+            "p": {
+             "if": "has",
+             "field": "mass_sun"
+            }
+           }
+          ]
+         },
+         {
+          "if": "any",
+          "of": [
+           {
+            "if": "range",
+            "field": "body.mass",
+            "min": 2.9860839338956896e+23,
+            "max": 5.972167867791379e+25
+           },
+           {
+            "if": "range",
+            "field": "mass_earth",
+            "min": 0.05,
+            "max": 10
+           }
+          ]
+         }
+        ]
+       },
+       {
+        "if": "any",
+        "of": [
+         {
+          "if": "range",
+          "field": "surface_k",
+          "max": 120
+         },
+         {
+          "if": "all",
+          "of": [
+           {
+            "if": "not",
+            "p": {
+             "if": "has",
+             "field": "surface_k"
+            }
+           },
+           {
+            "if": "any",
+            "of": [
+             {
+              "if": "range",
+              "field": "orbit.semi_major_axis",
+              "min": 747989353500.0,
+              "max": 8975872242000.0
+             },
+             {
+              "if": "range",
+              "field": "a_au",
+              "min": 5.0,
+              "max": 60.0
+             }
+            ]
+           }
+          ]
+         }
+        ]
+       },
+       {
+        "if": "not",
+        "p": {
+         "if": "any",
+         "of": [
+          {
+           "if": "range",
+           "field": "parent.body.mass",
+           "min": 5.972167867791379e+20
+          },
+          {
+           "if": "range",
+           "field": "parent.mass_earth",
+           "min": 0.0001
+          }
+         ]
+        }
+       }
+      ]
+     }
+    }
+   ],
+   "dressing": {
+    "about": "Near future: which worlds get a port, a base or a faction's presence, and why.",
+    "rules": [
+     {
+      "id": "nf.yard.v1",
+      "applies_to": [
+       "body"
+      ],
+      "when": {
+       "if": "tag",
+       "tag": "nf.label.homeworld"
+      },
+      "place": "nf_orbital_yard",
+      "where": "high-orbit",
+      "tags": [
+       "nf.faction.accord"
+      ],
+      "faction": "nf.faction.accord",
+      "explain": "a home-type world has an Accord orbital yard above it: the port where inner-system traffic docks"
+     },
+     {
+      "id": "nf.patrol.v1",
+      "applies_to": [
+       "body"
+      ],
+      "when": {
+       "if": "tag",
+       "tag": "nf.label.homeworld"
+      },
+      "place": "nf_patrol_station",
+      "where": "L4",
+      "tags": [
+       "nf.faction.accord"
+      ],
+      "faction": "nf.faction.accord",
+      "explain": "the Accord keeps a patrol station at the leading Lagrange point of every home-type world"
+     },
+     {
+      "id": "nf.depot.v1",
+      "applies_to": [
+       "body"
+      ],
+      "when": {
+       "if": "tag",
+       "tag": "nf.label.volatile-giant"
+      },
+      "place": "nf_skimmer_depot",
+      "where": "low-orbit",
+      "tags": [
+       "nf.faction.consortium"
+      ],
+      "faction": "nf.faction.consortium",
+      "explain": "every volatile giant has a Consortium skimmer depot: hydrogen is skimmed from its air and refined to fuel"
+     },
+     {
+      "id": "nf.ice-station.v1",
+      "applies_to": [
+       "body"
+      ],
+      "when": {
+       "if": "tag",
+       "tag": "nf.label.ice-moon"
+      },
+      "place": "nf_ice_station",
+      "where": "surface",
+      "chance": 0.5,
+      "tags": [
+       "nf.faction.consortium"
+      ],
+      "faction": "nf.faction.consortium",
+      "explain": "about half of a giant's ice moons have a Consortium station under the ice (drawn from the seed)"
+     },
+     {
+      "id": "nf.claim.v1",
+      "applies_to": [
+       "body"
+      ],
+      "when": {
+       "if": "tag",
+       "tag": "nf.label.frontier"
+      },
+      "place": "nf_claim_outpost",
+      "where": "surface",
+      "chance": 0.4,
+      "tags": [
+       "nf.faction.haulers"
+      ],
+      "faction": "nf.faction.haulers",
+      "explain": "some frontier rocks carry a Haulers' Union claim (drawn from the seed)"
+     }
+    ]
+   },
+   "lenses": [
+    {
+     "schema": "sse.lens/0",
+     "id": "nf.politics",
+     "label": "Near future: who holds what",
+     "description": "Each place's power and port first: the political map of the near-future setting.",
+     "cards": [
+      {
+       "subject_kind": "*",
+       "fields": [
+        "name",
+        "dressing.faction",
+        "dressing.where",
+        "construct.crew_max"
+       ],
+       "density": "compact"
+      }
+     ],
+     "layers": [
+      "orbits",
+      "zones",
+      "labels",
+      "moons",
+      "key"
+     ],
+     "tools": [
+      "undo"
+     ],
+     "cost": "light"
+    }
+   ]
+  }
+ }
+}

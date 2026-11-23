@@ -669,6 +669,43 @@ def jump_ship(id_, label, explain, hull_dt, thrust_g, jump, cargo_dt, crew_max, 
                      facts={"traveller.hull_dt": float(hull_dt), "traveller.thrust_g": float(thrust_g),
                             "traveller.jump": float(jump), "traveller.cargo_dt": float(cargo_dt),
                             **sensors(*sensor_ids)})
+# Bases and ports as dressing rules (tags design TG12 and TG13): a world
+# whose starport class or bases column says so gets a candidate station or
+# site from the templates below, which the GM adopts or holds off. The class
+# and the bases are the referee's call (imported columns or a planned code);
+# a candidate is never placed until adopted, and adopting changes no fact.
+def _port(letter):
+    return {"if": "is", "field": "society.starport", "value": letter}
+
+
+def _base(code):
+    return {"if": "is", "field": f"traveller.bases.{code}", "value": True}
+
+
+_BASE_WORDS = {"N": ("naval_base", "high-orbit", "a naval base"), "S": ("scout_base", "high-orbit", "a scout base"),
+               "W": ("way_station", "high-orbit", "a way station"), "D": ("naval_depot", "high-orbit", "a naval depot"),
+               "M": ("military_base", "surface", "a planetary military base"), "C": ("corsair_base", "high-orbit", "a corsair base")}
+DRESSING = {
+    "about": "Ports and bases a world's codes call for, as candidates the GM adopts or holds off.",
+    "rules": [
+        {"id": "traveller.port.highport-a.v1", "applies_to": ["body"], "when": _port("A"), "place": "highport_a", "where": "high-orbit",
+         "explain": "a class A starport has a highport in orbit with a shipyard for jump ships"},
+        {"id": "traveller.port.highport-b.v1", "applies_to": ["body"], "when": _port("B"), "place": "highport_b", "where": "high-orbit",
+         "explain": "a class B starport has a highport in orbit that builds small craft"},
+        {"id": "traveller.port.downport.v1", "applies_to": ["body"],
+         "when": {"if": "any", "of": [_port("A"), _port("B"), _port("C")]}, "place": "downport", "where": "surface",
+         "explain": "a class A, B or C starport has a downport on the surface"},
+        {"id": "traveller.port.spaceport-d.v1", "applies_to": ["body"], "when": _port("D"), "place": "spaceport_d", "where": "surface",
+         "explain": "a class D starport is a landing pad with unrefined fuel"},
+        {"id": "traveller.port.beacon-e.v1", "applies_to": ["body"], "when": _port("E"), "place": "beacon_e", "where": "surface",
+         "explain": "a class E starport is a marked patch of ground and a beacon"},
+    ] + [
+        {"id": f"traveller.base.{code}.v1", "applies_to": ["body"], "when": _base(code), "place": t, "where": w,
+         "explain": f"the bases column lists {code}: {words} here"}
+        for code, (t, w, words) in _BASE_WORDS.items()
+    ],
+}
+
 TEMPLATES = [
     # Ships.
     jump_ship("courier", "Courier (100 dT)", "a small fast ship for messages, survey and scouting",
@@ -739,10 +776,50 @@ TEMPLATES = [
     construct("solar_array", "site", "Hardened solar array", "a power farm built to ride out stellar flares",
               modules=["surge breakers", "repair drones"], tags=("power",)),
 ]
+# TG9 (record-logic-programs design 8.1): a ship's or station's discipline
+# and readiness are kept values from 0 to 1, never numbers riding on tags.
+# The template gives the default (a navy hull is disciplined, a tramp less
+# so: game defaults written for this pack, not physics); the GM, a program
+# in scope, or one of the status triggers below may write them.
+DISCIPLINE = {"courier": 0.8, "trader": 0.6, "far_trader": 0.5, "patrol": 0.9, "shuttle": 0.6, "heavy_lifter": 0.7,
+              "highport_a": 0.7, "highport_b": 0.6, "naval_base": 0.9, "naval_depot": 0.95, "scout_base": 0.8,
+              "way_station": 0.6, "research_station": 0.6, "corsair_base": 0.4}
+for t in TEMPLATES:
+    if t["id"] in DISCIPLINE:
+        t["kept"]["ship.readiness"] = 1.0
+        t["kept"]["ship.discipline"] = DISCIPLINE[t["id"]]
+# Status tags act only through these visible triggers. Derelict sets
+# readiness to 0 once, when the tag appears: the GM can then set it to
+# anything with the tag left in place. Damaged holds readiness at 0.5 or
+# below for as long as the tag is there. Removing a tag restores nothing.
+STATUS_RULES = [
+    {"id": "traveller.status.derelict",
+     "when": {"on_condition": {"condition": {"if": "tag", "tag": "status.derelict"}}},
+     "scope": {"tag": "construct"},
+     "effects": [{"effect": "set_kept", "kind": "ship.readiness", "value": 0.0,
+                  "reason": "tagged derelict"}],
+     "explain": "a construct tagged derelict drops to readiness 0 (the GM may set it otherwise afterwards)"},
+    {"id": "traveller.status.damaged",
+     "when": {"on_condition": {"condition": {"if": "all", "of": [
+         {"if": "tag", "tag": "status.damaged"},
+         {"if": "range", "field": "ship.readiness", "min": 0.5000001}]}}},
+     "scope": {"tag": "construct"},
+     "effects": [{"effect": "set_kept", "kind": "ship.readiness", "value": 0.5,
+                  "reason": "tagged damaged: readiness at most 0.5"}],
+     "explain": "a construct tagged damaged runs at readiness 0.5 at most until the tag is taken off"},
+]
+TRIGGERS["rules"].extend(STATUS_RULES)
+KEPT_WRITERS = ["gm", *[f"template.{t['id']}" for t in TEMPLATES]]
 RECORD = {"kept": [
     {"id": "construct.crew", "shape": "number", "range": [0.0, 1.0e7], "default": 0, "tier": "scanned",
-     "writers": ["gm", *[f"template.{t['id']}" for t in TEMPLATES]],
+     "writers": KEPT_WRITERS,
      "describes": "people aboard or living there now"},
+    {"id": "ship.readiness", "shape": "number", "range": [0.0, 1.0], "default": 1, "tier": "scanned",
+     "writers": [*KEPT_WRITERS, *[f"effect.{r['id']}" for r in STATUS_RULES]],
+     "describes": "how ready it is to go or to fight now, from 0 (dead in space) to 1 (fully ready)"},
+    {"id": "ship.discipline", "shape": "number", "range": [0.0, 1.0], "default": 0.5, "tier": "scanned",
+     "writers": KEPT_WRITERS,
+     "describes": "how well its crew keeps to orders and drill, from 0 to 1; programs read it (a patrol reacts faster when it is high)"},
 ]}
 
 pack = {
@@ -765,6 +842,7 @@ pack = {
         "observe": OBSERVE,
         "triggers": TRIGGERS,
         "templates": {"templates": TEMPLATES},
+        "dressing": DRESSING,
         "record": RECORD,
         "vocabulary": {"terms": TERMS, "traveller.trade": TRADE_WORDS, "traveller.bases": BASES,
                        "traveller.zone": {"A": "amber", "R": "red"},

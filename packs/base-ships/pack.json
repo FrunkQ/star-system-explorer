@@ -168,7 +168,9 @@
             "fill_days": 1.0,
             "why": "authored: an intake that fills the tanks in a day of skimming passes through a giant's thin upper air at orbital speed; area = propellant / (density x speed x time)",
             "src": "authored"
-          }
+          },
+          "shield_emissivity": 0.85,
+          "shield_emissivity_why": "a charred ablator or a tiled face radiates at about 0.85; the pass view shows the face at radiative balance with the peak heating"
         }
       },
       "ship_styles": {
