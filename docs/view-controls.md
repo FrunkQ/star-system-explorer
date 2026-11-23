@@ -26,9 +26,10 @@ The rule (Alex, 23 Nov 2026): one set of controls, and similar levels of drawing
 | System | System chart | ✓ | ✓ | ✓ | —3 | Above, Tilted, Edge-on, Free | Readable, Real | Chart, 3D, True | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ |
 | Sky from a world | Window | ✓ | —13 | —2 | —3 | Above | Readable | Chart | ✓ | ✓ | —5 | —6 | —7 | —8 |
 | World | Body (globe) | ✓ | —14 | ✓ | —3 | Above, Tilted, Edge-on, Free | Readable, Real | Chart, True | ✓ | —15 | —15 | —15 | —15 | ✓ |
-| Inside a world | Cutaway | ✓ | —16 | —2 | —3 | Above | Readable, Real | Chart | ✓ | —4 | —5 | —6 | —7 | —8 |
-| Side by side | Size comparison | ✓ | —17 | —2 | —3 | Above | Readable, Real | always labelled | ✓ | —4 | —5 | —6 | —7 | —8 |
-| On the ground | Surface walk | not built yet: flying down to a site and walking a patch a few km across comes next (surface landing rulings, 23 Nov) |
+| On the ground | Land (surface) | ✓ | ✓ | ✓ | ✓ | Free | Real | 3D, True, Wireframe | ✓ | —16 | —16 | —16 | —16 | —17 |
+| Inside a world | Cutaway | ✓ | —18 | —2 | —3 | Above | Readable, Real | Chart | ✓ | —4 | —5 | —6 | —7 | —8 |
+| Side by side | Size comparison | ✓ | —19 | —2 | —3 | Above | Readable, Real | always labelled | ✓ | —4 | —5 | —6 | —7 | —8 |
+| Down a lava tube | Caves | not built yet: the kernel's lava tubes (survey_caves) drawn underground come after the walk |
 
 ### Why a switch is not offered
 
@@ -47,5 +48,7 @@ The rule (Alex, 23 Nov 2026): one set of controls, and similar levels of drawing
 13. The sky is drawn as a flat map for now.
 14. The globe is already 3D: Chart draws it.
 15. The globe is drawn in visible light for now.
-16. The cutaway is a slice: it is drawn flat.
-17. The lineup is drawn flat, side by side.
+16. The ground is drawn in visible light for now.
+17. The field at the ground is not drawn yet: the Globe's Mag shows the world's field.
+18. The cutaway is a slice: it is drawn flat.
+19. The lineup is drawn flat, side by side.

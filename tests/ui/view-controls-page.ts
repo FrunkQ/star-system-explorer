@@ -9,6 +9,7 @@ import { CUTAWAY_CONTROLS } from "../../packages/views/cutaway/src/controls.ts";
 import { GALAXY_CONTROLS } from "../../packages/views/galaxy-chart/src/controls.ts";
 import { SECTOR_CONTROLS } from "../../packages/views/sector/src/controls.ts";
 import { SYSTEM_CHART_CONTROLS } from "../../packages/views/system-chart/src/controls.ts";
+import { SURFACE_CONTROLS } from "../../packages/views/surface/src/controls.ts";
 import { WINDOW_CONTROLS } from "../../packages/views/window/src/controls.ts";
 
 /** Every screen with view controls, from the largest scale to the smallest. */
@@ -22,6 +23,7 @@ export const SCREENS: { scale: string; screen: string; spec: ViewControlsSpec }[
   { scale: "System", screen: "System chart", spec: SYSTEM_CHART_CONTROLS },
   { scale: "Sky from a world", screen: "Window", spec: WINDOW_CONTROLS },
   { scale: "World", screen: "Body (globe)", spec: BODY_CONTROLS },
+  { scale: "On the ground", screen: "Land (surface)", spec: SURFACE_CONTROLS },
   { scale: "Inside a world", screen: "Cutaway", spec: CUTAWAY_CONTROLS },
   { scale: "Side by side", screen: "Size comparison", spec: COMPARE_CONTROLS },
 ];
@@ -78,7 +80,7 @@ export function viewControlsPage(): string {
     head,
     rule,
     ...rows,
-    "| On the ground | Surface walk | not built yet: flying down to a site and walking a patch a few km across comes next (surface landing rulings, 23 Nov) |",
+    "| Down a lava tube | Caves | not built yet: the kernel's lava tubes (survey_caves) drawn underground come after the walk |",
     "",
     "### Why a switch is not offered",
     "",
