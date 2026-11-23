@@ -1,6 +1,6 @@
 # SSE4 territory overlays: politics and other maps of "who or what, where", at every scale
 
-Status: **proposed**, 23 Nov 2026. Written in the thread "Design territory overlays across all scales". Track **OV** (it continues OV1, the pack overlays of PR 271). Fifteen questions for Alex are in section 12, each with a recommendation. Mockup: the artifact "SSE4 Territory overlays mockup" (https://claude.ai/artifact/6fUw6HgRsmXVegPR1iMox9), its page in `OV-screens/territory-overlays-mockup.html` and four stills beside it.
+Status: **accepted in full**, 23 Nov 2026 (Alex, 16:15: "yes to all", on the fifteen questions in section 12, so read each "Recommend" there as the ruling). Written 23 Nov 2026. Written in the thread "Design territory overlays across all scales". Track **OV** (it continues OV1, the pack overlays of PR 271). The fifteen rulings are in section 12. Mockup: the artifact "SSE4 Territory overlays mockup" (https://claude.ai/artifact/6fUw6HgRsmXVegPR1iMox9), its page in `OV-screens/territory-overlays-mockup.html` and four stills beside it.
 
 ## 1. What Alex asked for (23 Nov, 15:48)
 
@@ -220,7 +220,7 @@ Owners are suggestions for the coordinator. Stage is from the coming-together pl
 | OV13 | V3 import of tag groups as powers | SSE4 converter | 5 | a real V3 save with faction tags opens with a Powers layer |
 | OV14 | Grown histories (question 12) | kernel thread | after 5 | design note first |
 
-## 12. Questions for Alex, each with a recommendation
+## 12. Rulings (the questions, each decided as recommended, Alex 23 Nov)
 
 1. **One mechanism: a map layer colours places by any value with few answers, and politics is the first layer?** Recommend yes. Trade zones, danger, survey coverage, languages, faiths, biomes and jump range then cost a pack entry each, not a feature each.
 2. **Territory is held on addresses and maps work out the shapes, with drawn outlines only where nothing else will do?** Recommend yes. It is what makes one statement appear on every scale and keeps borders right as things move.
