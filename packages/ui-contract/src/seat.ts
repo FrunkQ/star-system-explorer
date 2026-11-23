@@ -66,7 +66,7 @@ export function decide(seat: Seat, intent: Intent): Decision {
   // Placing and withdrawing bodies is the GM's (paste and cut on the Build desk): never auto-approved.
   if (intent.kind === "set_values" || intent.kind === "withdraw" || intent.kind === "restore") return { action: "ask_gm" };
   // Who knows what is the GM's (SV): a player seat never reveals or hides, even with auto-approve.
-  if (intent.kind === "set_known") return { action: "refuse", reason: "what players know is set by the game master" };
+  if (intent.kind === "set_known" || intent.kind === "undo_known") return { action: "refuse", reason: "what players know is set by the game master" };
   // What things are called is the GM's (NM2): a player's rename goes to the GM.
   if (intent.kind === "rename" || intent.kind === "set_naming") return { action: "ask_gm" };
   const ok = (seat.auto_approve ?? []).some(
