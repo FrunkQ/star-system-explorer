@@ -44,7 +44,7 @@ Layout:
 7. **The place name is cut to a letter or two on a narrow phone.** The bar holds the desk switch, "See as" and More beside it.
 8. **On a phone, the view controls take two rows above every diagram.**
 9. **The galaxy charts and the cosmic web are flat.** Their 3D, Tilted and Free options show as unavailable, with the reason (galaxy charts).
-10. **True and Wireframe are held** (Alex: design only for now).
+10. **Wireframe and in-universe looks are held** (Alex: design only for now). True ships on the system chart (V10a) and the globe.
 
 Editing:
 11. **A system read back from the universe (the Solar System, a grown or imported one) can be typed over in orbit, eccentricity, mass, radius and day,** and in a star's mass, radius, temperature and luminosity. Other fields and names are not yet editable there.
