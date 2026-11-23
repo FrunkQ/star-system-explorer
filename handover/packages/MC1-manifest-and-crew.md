@@ -22,7 +22,7 @@ Track: ship manifest and crew (MC). Date 23 Nov 2026. Asked by Alex, 23 Nov: "do
 
 - `cargo test -p sse-record`: `the_manifest_pack_moves_people_between_ships` (the pack's kinds load; a move is one dated change with its reason; the earlier place reads back at an earlier time; an unlisted state or writer is refused).
 - `tests/ui/manifest.test.ts` (8): pack kinds and cited rates, reading entries, who is aboard where, ageing with cold sleep and death, life support days and recycling, unrated kinds named apart, unweighed stores, new ids and starting values.
-- `tests/ui/manifest.e2e.mjs` (chromium, built shell): Traveller pack added, two ships made, three people aboard (one vesh), stores loaded; oxygen first at 37 days for two awake, 73 days with one put in cold sleep; machine parts moved to the other ship; phone width fits. Screenshots: `/mnt/project-files/sse4/MC1-screens/`.
+- `tests/ui/manifest.e2e.mjs` (chromium, built shell): Traveller pack added, two ships made, three people aboard (one vesh), stores loaded; oxygen first at 37 days for two awake, 73 days with one put in cold sleep; machine parts moved to the other ship; phone width fits. Screenshots: `/mnt/project-files/sse4/handover-screens/MC1-screens/`.
 - No golden hash changes.
 
 ## Rough edges and next
