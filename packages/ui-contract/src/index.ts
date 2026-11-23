@@ -127,3 +127,5 @@ export { embedAsked, embedOrigin, embedOrigins, framingOrigin, embedMode, embedA
 export type { EmbedMode, EmbedOut } from "./embed.ts";
 export { BRAND_LOGO_MAX, BRAND_NAME_MAX, DEFAULT_JOIN, LIVE_OVERRIDES, checkBrand, joinLine, joinWordsOf, withLive } from "./brand.ts";
 export type { JoinWords, SeatBrand } from "./brand.ts";
+export { ABOARD, PERSON, CARGO, STATES, STATE_WORDS, STORES, entryFrom, aboard, living, ageNow, lifeSupportFrom, storeOf, massKg, lifeSupport, entryId, startingValues } from "./manifest.ts";
+export type { AboardEntry, AboardState, LifeSupport, LifeSupportPack, LifeSupportRate, Store, StoreDays } from "./manifest.ts";

@@ -11,6 +11,7 @@
   import { BOOKKEEPING, byKind, constructsIn, factOf, kindOf, placeHash, secondsToYears, shipLog, templateOf, type ConstructTemplate, type Json, type ShipLogEntry, type PlayerSubject, type SystemScene, type ViewContext } from "../../../ui-contract/src/index.ts";
   import { dateWords, defaultCalendar, fromPackCalendar, opensFrom } from "../../../chart-grammar/src/index.ts";
   import { fieldWords, valueWords } from "./words.ts";
+  import { Aboard } from "../../manifest/src/index.ts";
 
   let { ctx, scene }: { ctx: ViewContext; scene: SystemScene; params: Record<string, Json> } = $props();
   const session = untrack(() => ctx.session);
@@ -104,6 +105,13 @@
     const a = picked;
     if (a && logOpen) untrack(() => void loadLog(a));
   });
+
+  // ---- Manifest and crew (track MC): one panel at a time, opened from the card ----
+  let aboardPart = $state<"manifest" | "crew" | null>(null);
+  const places = $derived([
+    ...listed.map((s) => ({ address: s.address, label: nameOf(s) })),
+    ...scene.subjects.map((s) => ({ address: s.address, label: s.address === scene.system ? `${s.label} (the system)` : s.label })),
+  ]);
 
   // ---- Edit and retire ----
   let edits = $state<Record<string, string>>({});
@@ -214,9 +222,16 @@
           {#if depth === "curious" && current.facts.length > shownFacts.length}<p class="small muted">More at Science depth.</p>{/if}
           <nav class="links">
             {#if bodyAt(current.address)}<a href={placeHash({ scale: "world", system: scene.system, world: bodyAt(current.address)! })}>Open the world it is at</a>{/if}
+            {#if gm}<button type="button" class="quiet-btn" aria-expanded={aboardPart === "manifest"} onclick={() => (aboardPart = aboardPart === "manifest" ? null : "manifest")} data-manifest-toggle>Manifest</button>{/if}
+            {#if gm}<button type="button" class="quiet-btn" aria-expanded={aboardPart === "crew"} onclick={() => (aboardPart = aboardPart === "crew" ? null : "crew")} data-crew-toggle>Crew</button>{/if}
             {#if gm}<button type="button" class="quiet-btn" bind:this={logBtn} aria-expanded={logOpen} onclick={() => (logOpen = !logOpen)} data-log-toggle>Log</button>{/if}
             {#if gm && current.facts.some((f) => f.field === "template.id")}<button type="button" class="quiet-btn" onclick={() => (retiring = !retiring)} data-retire>Take out of play…</button>{/if}
           </nav>
+          {#if aboardPart}
+            <div use:opensFrom={() => document.querySelector(aboardPart === "crew" ? "[data-crew-toggle]" : "[data-manifest-toggle]")}>
+              <Aboard {ctx} construct={current} {places} part={aboardPart} />
+            </div>
+          {/if}
           {#if logOpen}
             <section class="log" aria-label="Log" use:opensFrom={() => logBtn}>
               <h4>Log, newest first</h4>
