@@ -1,0 +1,29 @@
+{
+  "schema": "sse.screen/1",
+  "id": "sse.workspace.gm.surface",
+  "label": "Land",
+  "audience": "gm",
+  "layout": "chart-room",
+  "theme": "chart-room",
+  "symbology": "sse.symbology.diagrammatic",
+  "vocab": "physics",
+  "items": [
+    {
+      "view": "sse.view.surface",
+      "area": "chart"
+    },
+    {
+      "view": "sse.view.time-ruler",
+      "area": "ruler"
+    }
+  ],
+  "rail": [
+    {
+      "scale": "world",
+      "group": "travel",
+      "label": "Land",
+      "order": 2,
+      "hint": "Pick a landmark or any spot, fly down, and walk about"
+    }
+  ]
+}
