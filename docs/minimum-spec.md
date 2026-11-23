@@ -10,52 +10,55 @@ From app reports: a device meets a chunk's minimum spec when the chunk's 95th pe
 
 | Chunk | Budget | Minimum spec so far | Devices over budget |
 |---|---|---|---|
-| Opening the app | 5.0 s | cloud runner, Chromium: standard, webgl2 (86.9 ms) |  |
-| Working out a system | 100 ms | cloud runner, Chromium: standard, webgl2 (72.8 ms) |  |
+| Opening the app | 5.0 s | cloud runner, Chromium: standard, webgl2 (131 ms) |  |
+| Working out a system | 100 ms | cloud runner, Chromium: standard, webgl2 (82.2 ms) |  |
 | Making and ageing a system | 5.0 s | not measured yet |  |
 | Climate and weather | 300 ms | not measured yet |  |
 | Surfaces, caves and descents | 2.0 s | not measured yet |  |
 | Light, spectra and the sky | 300 ms | not measured yet |  |
-| Matter and fields | 100 ms | not measured yet |  |
-| Life | 300 ms | cloud runner, Chromium: standard, webgl2 (78.2 ms) |  |
-| Galaxy and cosmic web | 1.0 s | cloud runner, Chromium: standard, webgl2 (410 ms) |  |
-| Orbits, routes and voyages | 300 ms | none yet | cloud runner, Chromium (626 ms) |
-| Seats, rules and programs | 100 ms | cloud runner, Chromium: standard, webgl2 (2.7 ms) |  |
-| Drawing | 33.0 ms | cloud runner, Chromium: standard, webgl2 (16.7 ms) |  |
-| Clicks and keys | 200 ms | cloud runner, Chromium: standard, webgl2 (64.0 ms) |  |
+| Matter, fields and names | 100 ms | not measured yet |  |
+| Life | 300 ms | cloud runner, Chromium: standard, webgl2 (68.2 ms) |  |
+| Galaxy and cosmic web | 1.0 s | cloud runner, Chromium: standard, webgl2 (2.6 ms) |  |
+| Orbits, routes and voyages | 300 ms | none yet | cloud runner, Chromium (480 ms) |
+| Seats, rules and programs | 100 ms | cloud runner, Chromium: standard, webgl2 (2.3 ms) |  |
+| Drawing | 33.0 ms | cloud runner, Chromium: standard, webgl2 (16.8 ms) |  |
+| Clicks and keys | 200 ms | cloud runner, Chromium: standard, webgl2 (72.0 ms) |  |
 
 ## App reports: 95th percentile by chunk
 
 | Chunk | cloud runner, Chromium |
 |---|---|
-| Opening the app | 86.9 ms within |
-| Working out a system | 72.8 ms within |
-| Life | 78.2 ms within |
-| Galaxy and cosmic web | 410 ms within |
-| Orbits, routes and voyages | 626 ms over |
-| Seats, rules and programs | 2.7 ms within |
-| Drawing | 16.7 ms within |
-| Clicks and keys | 64.0 ms within |
+| Opening the app | 131 ms within |
+| Working out a system | 82.2 ms within |
+| Life | 68.2 ms within |
+| Galaxy and cosmic web | 2.6 ms within |
+| Orbits, routes and voyages | 480 ms over |
+| Seats, rules and programs | 2.3 ms within |
+| Drawing | 16.8 ms within |
+| Clicks and keys | 72.0 ms within |
 
 ## Bench: the same work on every device
 
 Each chunk is the sum of its engine scenarios' medians. In brackets, how many times slower than the fastest device listed. These are test workloads, so they have no budget; they show how machines compare, and a chunk's app timings on one device can be scaled by its bench ratio to estimate another.
 
-| Chunk | AC-ProArt, Chrome 157 | cloud runner, Chromium 157.0.8103.78, CPU slowed 4× | cloud runner, Chromium 157.0.8103.78 | cloud runner, Node |
-|---|---|---|---|---|
-| Working out a system | 43.9 ms (1.0×) | 449 ms (10.2×) | 90.7 ms (2.1×) | 96.4 ms (2.2×) |
-| Making and ageing a system | 992 ms (1.0×) | 8.4 s (8.4×) | 2.2 s (2.2×) | 2.1 s (2.1×) |
-| Surfaces, caves and descents | 1.3 s (1.0×) | 12 s (9.1×) | 2.8 s (2.2×) | 3.0 s (2.4×) |
-| Life | 110 ms (1.0×) | 1.0 s (9.4×) | 237 ms (2.2×) | 252 ms (2.3×) |
-| Galaxy and cosmic web | 1.5 s (1.0×) | 14 s (9.1×) | 3.0 s (1.9×) | 3.2 s (2.1×) |
-| Orbits, routes and voyages | 3.0 s (1.0×) | 26 s (8.6×) | 6.4 s (2.1×) | 6.2 s (2.0×) |
+| Chunk | AC-ProArt, Chrome 157 | cloud runner, Chromium 157.0.8103.78, CPU slowed 4× | cloud runner, Chromium 157.0.8103.78 | cloud runner, Node | Pixel 11 Pro, Chrome 157 |
+|---|---|---|---|---|---|
+| Working out a system | 43.9 ms (1.0×) | 449 ms (10.2×) | 90.7 ms (2.1×) | 96.4 ms (2.2×) | 129 ms (2.9×) |
+| Making and ageing a system | 992 ms (1.0×) | 8.4 s (8.4×) | 2.2 s (2.2×) | 2.1 s (2.1×) | 2.0 s (2.0×) |
+| Surfaces, caves and descents | 1.3 s (1.0×) | 12 s (9.1×) | 2.8 s (2.2×) | 3.0 s (2.4×) | 3.1 s (2.5×) |
+| Life | 110 ms (1.0×) | 1.0 s (9.4×) | 237 ms (2.2×) | 252 ms (2.3×) | 316 ms (2.9×) |
+| Galaxy and cosmic web | 1.5 s (1.0×) | 14 s (9.1×) | 3.0 s (1.9×) | 3.2 s (2.1×) | 2.8 s (1.8×) |
+| Orbits, routes and voyages | 3.0 s (1.0×) | 26 s (8.6×) | 6.4 s (2.1×) | 6.2 s (2.0×) | 6.2 s (2.0×) ‡ |
+
+‡ One run of a scenario took over twice its median, the mark of a pause on the device (screen dimmed, another app); the median is still used.
 
 ## Devices
 
 | Report | Source | Day | Device | Class | Speed (units/s) |
 |---|---|---|---|---|---|
 | AC-ProArt, Chrome 157 (`docs/perf-reports/ac-proart/bench-chrome.json`) | bench | 2026-11-22 | 24 cores; 32 GB; amd rdna-3; Mozilla/5.0 AppleWebKit/537.36 Chrome/157.0.0.0 Safari/537.36 | capable, webgpu | 4,000,000 |
-| cloud runner, Chromium (`docs/perf-reports/cloud-runner/app-chromium.json`) | app | 2026-11-22 | 4 cores; 16 GB; ANGLE (Google, Vulkan 1.3.0 (SwiftShader Device (Subzero) (0x0000C0DE)), SwiftShader driver); Mozilla/5.0 AppleWebKit/537.36 HeadlessChrome/157.0.8103.78 Safari/537.36 | standard, webgl2 | 1,333,333 |
+| cloud runner, Chromium (`docs/perf-reports/cloud-runner/app-chromium.json`) | app | 2026-11-23 | 4 cores; 16 GB; ANGLE (Google, Vulkan 1.3.0 (SwiftShader Device (Subzero) (0x0000C0DE)), SwiftShader driver); Mozilla/5.0 AppleWebKit/537.36 HeadlessChrome/157.0.8103.78 Safari/537.36 | standard, webgl2 | 1,005,025 |
 | cloud runner, Chromium 157.0.8103.78, CPU slowed 4× (`docs/perf-reports/cloud-runner/bench-chromium-cpu4.json`) | bench | 2026-11-22 | 4 cores; 16 GB; ANGLE (Google, Vulkan 1.3.0 (SwiftShader Device (Subzero) (0x0000C0DE)), SwiftShader driver); Mozilla/5.0 AppleWebKit/537.36 HeadlessChrome/157.0.8103.78 Safari/537.36; CPU slowed 4× on the page's thread only: the kernel's speed and tier come from a worker, which Chromium does not slow | capable, webgl2 | 2,000,000 |
 | cloud runner, Chromium 157.0.8103.78 (`docs/perf-reports/cloud-runner/bench-chromium.json`) | bench | 2026-11-22 | 4 cores; 16 GB; ANGLE (Google, Vulkan 1.3.0 (SwiftShader Device (Subzero) (0x0000C0DE)), SwiftShader driver); Mozilla/5.0 AppleWebKit/537.36 HeadlessChrome/157.0.8103.78 Safari/537.36 | standard, webgl2 | 1,785,714 |
 | cloud runner, Node (`docs/perf-reports/cloud-runner/bench-node.json`) | bench | 2026-11-22 | Intel(R) Xeon(R) Processor @ 2.10GHz; 4 cores; 16 GB; Node v22.23.5 | unmeasured, no GPU |  |
+| Pixel 11 Pro, Chrome 157 (`docs/perf-reports/pixel-11-pro/bench-chrome.json`) | bench | 2026-11-23 | 7 cores; 8 GB; ANGLE (Google Inc. (Imagination Technologies), ANGLE (Imagination Technologies Vulkan 1.4.317 (PowerVR C-Series CXTP-48-1536 MC1 (0x70061042)) PowerVR C-Series Vulkan Driver-1.662.3024), OpenGL ES 3.2); Mozilla/5.0 AppleWebKit/537.36 Chrome/157.0.0.0 Mobile Safari/537.36; The third run of bench.time and bench.time-generated took 5.7 times their median while the scenarios after them ran at normal speed: a pause on the phone (screen dimmed or app switched), not throttling. Medians used. | capable, webgl2 | 2,197,802 |
