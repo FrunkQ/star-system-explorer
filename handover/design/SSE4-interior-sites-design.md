@@ -1,6 +1,6 @@
 # SSE4 sites you can go inside: caves, wrecks, mines and other interiors (track IS)
 
-Status: **proposed 23 Nov 2026, not yet accepted.** Fourteen questions for Alex in section 13.
+Status: **proposed 23 Nov 2026, then parked the same evening.** Alex, 19:47: he loves it, but it began as a one-liner and belongs with "dynamic adventures in a living breathing simulation", perhaps **4.2**: a co-GM that makes random encounters and events, runs pirate skirmishes as a side channel and so creates wrecks to investigate. So nothing here is built for 4.0 beyond what was already accepted and in flight: the natural caves and lava tubes of S14 with their survey map, which need no author because the world makes them. Wrecks, built sites, the Inside card, exploring that inks the map and the example pack wait. The fourteen questions in section 13 are not live until this is picked up again. Section 12A says how it then gets its content.
 Mockup: `/mnt/project-files/sse4/IS-screens/site-survey-mockup.html` (artifact "SSE4 site survey", https://claude.ai/artifact/TPrbGRF7LBmyNHMpqgbR6V). Screenshots beside it in `IS-screens/`.
 
 Asked for by Alex, 23 Nov 19:28 and 19:33: games in SSE4 are going to be "space trucker sims with horror, or frontier explorer with horror, or military team with horror", run inside SSE4 "even down to crashed spaceship wreckage and entering a lava tube". SSE4 supplies the exploring, mining and hauling, with no rule set built in. The example packs note (section 4.3A) listed "sites with an inside" as a general piece needing its own design. This is it.
@@ -209,6 +209,12 @@ The SV design (accepted in direction, 23 Nov, with the eye as its mark) covers t
 Order: IS1 and IS2 first (a real lava tube with real conditions on the survey map is already a demo), then IS5 and IS6, then IS3 and IS4, then the rest.
 
 **Waits for 4.1:** wrecks, ruins and mines left behind by histories that grow by themselves; the economy digging mines out; creatures and cave ecologies beyond plants and microbes; knowledge of sites spreading by itself; structures that fail under load while the party is inside; air that moves between spaces; crews whose supplies run down unattended.
+
+## 12A. Who authors a site (answer to Alex, 23 Nov 19:47)
+
+- **Natural sites: nobody.** Caves and tubes come from the world's history, in every universe, with no setup. This is the only part that is 4.0 work, and it was already accepted as S14.
+- **Built and wrecked sites, by hand:** a GM picks a ship and "wreck it here", or a pack places sites by rule, or Orac sets one up as a request and Minerva writes what happened. That works, but it is setup a GM must choose to do, which is why it is not worth building alone.
+- **Built and wrecked sites, by the simulation (the real answer):** in 4.1 the economy gives pirates and patrols reasons to fight, and a lost ship is a dated event. In 4.2 a co-GM turns such events into places worth visiting and offers them to the GM as side stories. The `construct.wrecked` event in section 4 is exactly what that system would write, so this design is its receiving end and needs no change.
 
 ## 13. Questions for Alex
 
