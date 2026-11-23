@@ -10,17 +10,19 @@
   import { findInSheet, readElementsPage, type ElementRow, type RefHit, dimensionless, formatUnit, formatValue, measureWords, readConstantsPage, readRow, readSource, rowNote, showReference, siUnits, sourceName, unitFactor, type ConstantRow, type ConstantsPage, type Json, type RowDetail, type SheetSource, type SystemScene, type UnitRow, type ViewContext } from "../../../ui-contract/src/index.ts";
   import { Stamp } from "../../../chart-grammar/src/index.ts";
   import Elements from "./Elements.svelte";
+  import Names from "./Names.svelte";
 
   let { ctx, params }: { ctx: ViewContext; scene: SystemScene; params: Record<string, Json> } = $props();
   const depth = $derived(ctx.workspace.depth ?? "science");
   const full = $derived(depth !== "curious");
 
-  type PageId = "constants" | "elements" | "units";
+  type PageId = "constants" | "elements" | "units" | "names";
   const PAGES: { group: string; pages: { id: PageId; label: string }[] }[] = [
     { group: "Nature", pages: [{ id: "constants", label: "Constants" }, { id: "elements", label: "Elements" }] },
+    { group: "Names and classes", pages: [{ id: "names", label: "Names" }] },
     { group: "This setting", pages: [{ id: "units", label: "Units" }] },
   ];
-  let page = $state<PageId>(untrack(() => (params.page === "units" || params.page === "elements" ? params.page : "constants")));
+  let page = $state<PageId>(untrack(() => (params.page === "units" || params.page === "elements" || params.page === "names" ? params.page : "constants")));
 
   let sheet = $state.raw<ConstantsPage | null>(null);
   let failed = $state<string | null>(null);
@@ -126,7 +128,7 @@
   <header>
     <div class="title">
       <h1>Reference</h1>
-      <p class="lede">{page === "units" ? "How this setting counts and shows things. Nothing here changes the physics." : "What nature gives the simulation. Real unless marked."}</p>
+      <p class="lede">{page === "units" ? "How this setting counts and shows things. Nothing here changes the physics." : page === "names" ? "What this campaign calls things. Names never change the physics." : "What nature gives the simulation. Real unless marked."}</p>
     </div>
     <div class="find" role="search">
       <input
@@ -164,6 +166,8 @@
 
   {#if page === "elements"}
     <div class="body"><Elements session={ctx.session} {depth} {pick} /></div>
+  {:else if page === "names"}
+    <div class="body"><Names session={ctx.session} workspace={ctx.workspace} {depth} offer={typeof params.names_offer === "string" ? params.names_offer : ""} /></div>
   {:else if failed}
     <p class="note" data-reference-error>Could not read the data sheet: {failed}</p>
   {:else if !sheet}

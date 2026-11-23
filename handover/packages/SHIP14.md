@@ -102,11 +102,51 @@ Pictures: `SHIP14-screens/design-cool-drives.png` (chemical, nuclear thermal, ju
 - Picture: `SHIP14-screens/model-3d.png` (chemical, nuclear thermal, jump courier, rescue cutter closed in, and the
   fusion torch closed in and whole: a 15 m crew module on a 785 m spine over 3.8 km² of glowing radiator).
 
+## Stage 4: abilities shape the ship
+
+Alex, 23 Nov: "aerobraking ships need to look like they can", "ships that can land will have aero". The designer
+does not judge entry itself; the kernel's `ship_at_world` (travel thread, PR 228) does.
+
+- `ship-abilities.ts`: `fitAbilities(ask, where, ship, layout, hull, { aerobrake, land }, rules)` writes the NavShip
+  fields `aero`, `shield` and `landing` from the layout and the ship's abilities, asking the kernel at each step and
+  scaling each part by the law its figure follows until it sits at the margin (75%, the kernel's own "would pass"
+  mark) of its limit:
+  - **shape in air**: frontal area from the layout, drag coefficient by hull (open truss, skin, blunt shield);
+  - **heat shield** wherever the ship meets air at speed: nose radius from q ∝ 1/√r_n, the lightest material that
+    fits within three hull radii (tiles, then PICA, then carbon phenolic), mass from tiles' areal density or the
+    pass's heat load over the ablator's heat of ablation; drawn as a blunt sphere-cone leading the ship, and a
+    pointed nose is cut short to carry it;
+  - **lift** for a landing world with ground and air when the drive cannot hover there: wing area from v_s ∝ 1/√S
+    against the runway speed; a lifting body if the hull's own planform does it, else delta wings (aspect 2.3,
+    swept 45°); air too thin for wings that fit says so;
+  - **legs** (or wheels under a winged ship) and a **parachute** sized for the legs' touchdown where the air can
+    carry one (A = 2 m g / (ρ C_d v²)); where it cannot, the words say the drive brakes the last of the way;
+  - **scoop** for a ship that refuels by skimming (base-nav `refuel: scoop`): intake area = propellant / (air
+    density × speed × time).
+  - Notes in words: "Its radiators must fold behind the shield before it meets the air", shield mass, worlds where
+    no part could be made big enough (drawn at its largest; danger is drama, never forbidden).
+- `designShip(..., fit)` draws the fitted parts (`shield`, `wings`, `legs`, `chute`, `scoop`) in the plans and the
+  model; abilities never resize the systems. The model has a `shield` surface (dark ablator look per style).
+- `fittedChecks(result)` picks the kernel's checks for the acts fitted for; `ShipPlans` takes `abilities` (a
+  FitResult) and lists them under the words, "past a limit" in the alert colour.
+- Call-outs: a row too long for the frame splits into two staggered lines.
+- Rules and their sources are pack data (`base-ships` `ship_design.abilities`), all marked unverified; fudge
+  register row "base-ships `abilities`". `scripts/audit-matter.py` lists the scoop's skimmed air density as a
+  designer setting, not a material number.
+- Checks (`ship-abilities.test.ts`, 5 tests, against the kernel through `nodeKernel`): no kernel call when nothing is
+  asked; a Mars lander's shield keeps aerocapture and entry heating inside the margin and weighs its areal density
+  over its face; wings land exactly at the margin of the runway speed; a cutter that can hover gets no wings, and its
+  scoop is the propellant over density, speed and time; the fitted parts appear in plans, call-outs and the model.
+- Pictures: `SHIP14-screens/abilities-plans.png` (a Mars lander, a winged surface shuttle, the jump courier landing
+  at Earth and Mars, the fusion torch aerobraking at Jupiter with a 27 m carbon phenolic shield),
+  `abilities-3d.png` (the same in 3D) and `abilities-card.png` (ShipPlans with the kernel's verdicts).
+
 ## Next
 
 - **Sheet**: `density_liquid` for hydrogen, oxygen, deuterium and helium-3, and a substance for each base-nav fuel
   (asked of the matter data sheet thread). Mixture ratios in the ship record (galaxy and travel thread).
 - A True plume from the exhaust's own emission, and the model in the True exposure chain.
-- **Stage 4**: abilities shape the ship from the kernel's `ship_at_world` (travel thread): heat shield, wings or
-  lifting body, legs, scoops; styles assigned per nation or culture, inherited down the tree like name schemes.
+- **Stage 5**: styles assigned per nation or culture, inherited down the tree like name schemes.
+- Abilities on the ship record (where it must aerobrake and land) once the travel thread's ship editor carries them;
+  until then the owner passes them in the recipe (`DesignRecipe.abilities`).
 - **Uploads**: GLB, OBJ and STL hulls with credit fields once packs can carry files.

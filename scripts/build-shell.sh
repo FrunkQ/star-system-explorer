@@ -16,6 +16,8 @@ cp packs/base-physics/pack.json packages/shell/public/packs/base-physics.json
 cp packs/base-time/pack.json packages/shell/public/packs/base-time.json
 cp packs/base-sol/pack.json packages/shell/public/packs/base-sol.json
 cp packs/base-reference/pack.json packages/shell/public/packs/base-reference.json
+# The base names pack, offered on the Names page while no pack on the stack carries names (NM6).
+cp packs/base-names/pack.json packages/shell/public/packs/base-names.json
 cp packages/shell/src/documents/kestrel.player-data.pack.json packages/shell/public/packs/kestrel-player-data.json
 mkdir -p packages/shell/public/packs/samples
 cp packages/shell/src/documents/sample.warm-worlds.pack.json packages/shell/public/packs/samples/warm-worlds.json

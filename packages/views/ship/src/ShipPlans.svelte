@@ -3,8 +3,8 @@
   // A ship designed from its parts: side and top views with call-outs, a style switch and a remix button. Sizes come
   // from the ship record and the base-ships rules; the style only arranges. The design is kept as a recipe
   // ({ style, seed, overrides }), reported through `onchange` so the owner can save it with the ship.
-  import { designShip, narrateDesign, shipViews, startShip, type DesignOverrides, type DesignRecipe, type DesignRules, type DesignShip, type Propellants, type ShipStyle, type ShipView, type ShipView3D } from "../../../renderer/src/index.ts";
-  import { DEFAULT_VIEW, SEEN_ELEVATION, WHY_TRUE_HELD, WHY_WIREFRAME_LATER, type ViewChoice, type ViewControlsSpec } from "../../../ui-contract/src/index.ts";
+  import { designShip, fittedChecks, narrateDesign, shipViews, startShip, type FitResult, type DesignOverrides, type DesignRecipe, type DesignRules, type DesignShip, type Propellants, type ShipStyle, type ShipView, type ShipView3D } from "../../../renderer/src/index.ts";
+  import { DEFAULT_VIEW, SEEN_ELEVATION, WHY_TRUE_HELD, WHY_WIREFRAME_LATER, verdictWords, type ViewChoice, type ViewControlsSpec } from "../../../ui-contract/src/index.ts";
   import { ViewControls } from "../../../chart-grammar/src/index.ts";
 
   // Chart is the plans (flat: side and top); any other "Seen from" turns it into the 3D model.
@@ -18,6 +18,7 @@
     recipe = { style: Object.keys(styles)[0] ?? "spine", seed: 1 },
     fit = "all",
     segments = 32,
+    abilities,
     onchange,
   }: {
     ship: DesignShip;
@@ -28,6 +29,8 @@
     fit?: "all" | "hull";
     /** Sides round each body in 3D: the device tier sets it. */
     segments?: number;
+    /** What its abilities fitted (renderer fitAbilities, run by the owner against the kernel) and the kernel's verdicts. */
+    abilities?: FitResult;
     onchange?: (r: DesignRecipe) => void;
   } = $props();
 
@@ -40,7 +43,9 @@
   const W = 560;
   const H = 220;
   const style = $derived(styles[styleId] ?? Object.values(styles)[0]!);
-  const layout = $derived(designShip(ship, fuels, rules, styleId, style, seed, overrides));
+  const layout = $derived(designShip(ship, fuels, rules, styleId, style, seed, overrides, abilities?.fit));
+  // One line per world and act the ship was fitted for: the kernel's verdict in words.
+  const verdicts = $derived(abilities ? fittedChecks(abilities).map(({ world, check: c }) => ({ key: `${world}:${c.id}`, text: `${world}, ${c.words.toLowerCase()}: ${verdictWords(c.verdict)}`, verdict: c.verdict })) : []);
   const views = $derived(shipViews(layout, [W, H], framing));
   const words = $derived(narrateDesign(layout, style));
   // Worth closing in when radiators or a long spine dwarf the modules.
@@ -161,6 +166,11 @@
     {@render plan(views.top, "From above")}
   {/if}
   <p class="words">{words}</p>
+  {#if verdicts.length}
+    <ul class="verdicts">
+      {#each verdicts as v (v.key)}<li class={v.verdict}>{v.text}</li>{/each}
+    </ul>
+  {/if}
 </section>
 
 <style>
@@ -177,5 +187,10 @@
   .leader { fill: none; stroke: var(--sse-ink-muted); stroke-width: 0.6; }
   .dot { fill: var(--sse-ink); }
   text { fill: var(--sse-ink); font-size: 10px; }
+  .shield { fill: var(--sse-ink-muted); }
+  .wings { fill-opacity: 0.6; }
+  .legs { fill: var(--sse-ink-faint); }
+  .verdicts { margin: 0; padding-left: 1.2em; font-size: 0.85em; color: var(--sse-ink-muted); }
+  .verdicts .dangerous { color: var(--sse-alert); }
   .words { color: var(--sse-ink-muted); font-size: 0.85em; line-height: 1.4; margin: 0; }
 </style>
