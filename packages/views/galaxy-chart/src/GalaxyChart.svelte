@@ -9,7 +9,8 @@
   import { untrack } from "svelte";
   import GalaxyScars from "./GalaxyScars.svelte";
   import GalaxyEdgeOn from "./GalaxyEdgeOn.svelte";
-  import { announcePlace, cellHalo, GROUP_WORDS, LAYER_WORDS, MORPHOLOGY_WORDS, NAMED_HALOES, armPath, cosmicAxis, dex, editWords, toggleRemoval, discFrame, epochTicks, greenAt, logCurve, ringAt, ringShades, sci, timesSun, type GalaxyChart, type GalaxyEdit, type Group, type Json, type RingLayer, type SystemScene, type ViewContext } from "../../../ui-contract/src/index.ts";
+  import { markStrengthAt } from "../../../renderer/src/index.ts";
+  import { announcePlace, cellHalo, GROUP_WORDS, LAYER_WORDS, MORPHOLOGY_WORDS, NAMED_HALOES, armPath, cosmicAxis, dex, editWords, toggleRemoval, discFrame, epochTicks, greenAt, logCurve, ringAt, ringShades, sci, timesSun, type GalaxyChart, type GalaxyEdit, type GalaxyMark, type Group, type Json, type RingLayer, type SystemScene, type ViewContext } from "../../../ui-contract/src/index.ts";
 
   let { ctx, params }: { ctx: ViewContext; scene: SystemScene; params: Record<string, Json> } = $props();
   const first = untrack(() => ({ halo: String(params.halo ?? "milky-way-like"), layer: String(params.layer ?? "metals") }));
@@ -148,6 +149,36 @@
     return b ? b.t_gyr : null;
   });
   const gyr = (t: number) => `${t.toFixed(t < 1 ? 2 : 1)} Gyr`;
+  // GH3's assembly read-out: a member's address shortened to its last part, ratios in plain words.
+  const shortAddress = (a: string) => a.split("/").at(-1)!.replace(/^prog:/, "progenitor ");
+  const fewer = (r: number) => (r >= 1 ? `${r.toFixed(1)} times as rich` : `${(1 / r).toFixed(r > 0.1 ? 1 : 0)} times poorer`);
+  // Marks grouped by kind at the chart's time: a grown galaxy carries well over a thousand.
+  function markKinds(marks: readonly GalaxyMark[], t: number) {
+    const by = new Map<string, { kind: string; n: number; live: number; strongest: number; first: number; by: Set<string> }>();
+    for (const m of marks) {
+      const k = by.get(m.kind) ?? { kind: m.kind, n: 0, live: 0, strongest: 0, first: Infinity, by: new Set<string>() };
+      const now = markStrengthAt(m, t);
+      k.n += 1;
+      if (now >= 0.02) (k.live += 1), (k.strongest = Math.max(k.strongest, now));
+      k.first = Math.min(k.first, m.began_gyr);
+      k.by.add(m.caused_by);
+      by.set(m.kind, k);
+    }
+    return [...by.values()].map((k) => ({ ...k, culprits: k.by.size })).sort((a, b) => b.live - a.live || b.n - a.n || a.kind.localeCompare(b.kind));
+  }
+  const MARK_WORDS: Record<string, string> = {
+    warp: "Warped edge",
+    ripples: "Ripples",
+    tilt: "Tilted outer disc",
+    thick_disc: "Thickened disc",
+    driven_arms: "Driven arms",
+    ring: "Collision ring",
+    burst_knots: "Knots of new stars",
+    lopsided: "Lopsided disc",
+    gas_trail: "Gas trail",
+    warm_side: "Warm side of the hot halo",
+    fresh_gas: "Fresh gas",
+  };
   const CRITERIA: { key: keyof NonNullable<GalaxyChart["place"]>["green"]; words: string }[] = [
     { key: "metals_enough", words: "enough metals for rocky worlds" },
     { key: "metals_not_too_many", words: "not so metal-rich that migrating giants dominate" },
@@ -285,6 +316,31 @@
       <p class="hint">Model: {chart.model.join("; ")}.</p>
     </section>
 
+    {#if chart.assembly}
+      {@const a = chart.assembly}
+      {@const share = chart.now.stars > 0 ? a.exsitu_msun / chart.now.stars : 0}
+      <section aria-label="Built from other galaxies" class="built" data-assembly>
+        <h4>Built from other galaxies</h4>
+        <p class="hint">What {a.members} smaller galaxies brought by {gyr(chart.now_gyr)}: {a.merged} merged into this one and {a.torn_apart} were torn apart on the way in.</p>
+        <div class="row" data-exsitu><span>Stars not born here</span><span class="v">{sci(a.exsitu_msun)} M☉{share > 0 ? ` · ${(share * 100).toFixed(share < 0.1 ? 1 : 0)}% of all stars` : ""}</span></div>
+        <div class="row"><span>Stellar halo (stars torn off passing galaxies)</span><span class="v">{sci(a.stellar_halo_msun)} M☉</span></div>
+        {#if chart.now.z_gas > 0 && a.stellar_halo_z > 0}<div class="row"><span>Halo stars' metals, against the gas now</span><span class="v">{fewer(a.stellar_halo_z / chart.now.z_gas)}</span></div>{/if}
+        <div class="row"><span>Thick disc (stars heated by the collisions)</span><span class="v">{sci(a.thick_disc_msun)} M☉</span></div>
+        {#if a.biggest}<div class="row" data-biggest><span>Gave the most</span><span class="v" title={a.biggest}>{shortAddress(a.biggest)} · {(a.biggest_share * 100).toFixed(0)}% of the stars not born here</span></div>{/if}
+        {#if a.marks.length}
+          {@const kinds = markKinds(a.marks, chart.at_gyr)}
+          <details data-mark-list>
+            <summary>The marks collisions left: {a.marks.length} in all, {kinds.reduce((n, k) => n + k.live, 0)} still showing at {gyr(chart.at_gyr)}</summary>
+            <ul class="marks">
+              {#each kinds as k (k.kind)}
+                <li data-mark={k.kind} class:faded={!k.live}>{MARK_WORDS[k.kind] ?? k.kind.replace(/_/g, " ")}: {k.n} from {k.culprits} galax{k.culprits === 1 ? "y" : "ies"}, the first at {gyr(k.first)}; {k.live ? `${k.live} still showing, the strongest at ${k.strongest.toFixed(2)}` : chart.at_gyr < k.first ? "none made yet" : "all faded by this time"}.</li>
+              {/each}
+            </ul>
+          </details>
+        {/if}
+      </section>
+    {/if}
+
     <section aria-label="Ink history" class="ink" data-ink>
       <h4>Ink history</h4>
       <p class="hint">Rewrite this galaxy's past: each edit acts from its own time on, so what came before is untouched. A preview kept in this browser; nothing is sent to players.</p>
@@ -339,6 +395,9 @@
 </div>
 
 <style>
+  .built .marks { margin: 4px 0 0; padding-left: 18px; }
+  .built .marks li.faded { color: var(--sse-ink-muted); }
+  .built summary { cursor: pointer; }
   .stamp.authored {
     border-style: dashed;
   }
