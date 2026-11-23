@@ -490,7 +490,7 @@
     left: 92px;
     right: 16px;
     /* Below the shell's view controls (interface style rule 12), which sit at the top of the stage. */
-    top: 84px;
+    top: calc(var(--viewbar-h, 68px) + 16px);
     flex-wrap: wrap;
     display: flex;
     align-items: center;

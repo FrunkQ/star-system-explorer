@@ -19,6 +19,12 @@ export const SCALE_WORDS: Record<ViewScale, string> = { readable: "Readable", re
  * like a photograph, on like a heads-up overview. Off by default. */
 export const HUD_WORDS: Record<"off" | "on", string> = { off: "Off", on: "On" };
 
+/** Band (the instrument): what light, or field, the view is seen in. Visible by default. Mag replaces the picture with
+ * the magnetic field (magnetic fields design, 22 Nov 2026). */
+export const VIEW_BANDS = ["visible", "infrared", "ultraviolet", "xray", "radio", "mag"] as const;
+export type ViewBand = (typeof VIEW_BANDS)[number];
+export const VIEW_BAND_WORDS: Record<ViewBand, string> = { visible: "Visible", infrared: "Infrared", ultraviolet: "Ultraviolet", xray: "X-ray", radio: "Radio", mag: "Mag" };
+
 export const VIEW_STYLE_WORDS: Record<ViewStyle, string> = { chart: "Chart", "3d": "3D", true: "True", wireframe: "Wireframe" };
 export const SEEN_WORDS: Record<SeenFrom, string> = { above: "Above", tilted: "Tilted", edge: "Edge-on", free: "Free" };
 /** How Free is worked, said the same way everywhere. */
@@ -36,6 +42,8 @@ export interface ViewControlsSpec {
   seen?: Partial<Record<SeenFrom, Can>>;
   /** Which scales it draws. Left out: Readable only, Real "not drawn to scale here yet". */
   scale?: Partial<Record<ViewScale, Can>>;
+  /** Which bands it is seen in. Left out: Visible only, the others "not seen in this band here yet". */
+  bands?: Partial<Record<ViewBand, Can>>;
   /** Whether it can turn its HUD (orbit lines, names, outlines) off and on, per style. Left out: not in any style
    * (the option is listed quiet with the reason, and the view shows its labels). */
   hud?: Partial<Record<ViewStyle, Can>>;
@@ -49,6 +57,8 @@ export interface ViewChoice {
   scale?: ViewScale;
   /** HUD on or off. Left out: off in True (a photograph), on in the diagrams; once chosen it holds in every style. */
   hud?: boolean;
+  /** Visible when left out. */
+  band?: ViewBand;
 }
 export const DEFAULT_VIEW: ViewChoice = { style: "chart", seen: "tilted", scale: "readable" };
 
@@ -69,7 +79,7 @@ export function shownStyle(spec: ViewControlsSpec, choice: ViewChoice): ViewStyl
 }
 
 /** What the control lists for this view and choice, and what is shown. Every option is always listed. */
-export function viewOptions(spec: ViewControlsSpec, choice: ViewChoice): { styles: ViewOption<ViewStyle>[]; seen: ViewOption<SeenFrom>[]; scales: ViewOption<ViewScale>[]; huds: ViewOption<"off" | "on">[]; shown: Required<ViewChoice>; turnable: boolean } {
+export function viewOptions(spec: ViewControlsSpec, choice: ViewChoice): { styles: ViewOption<ViewStyle>[]; seen: ViewOption<SeenFrom>[]; scales: ViewOption<ViewScale>[]; huds: ViewOption<"off" | "on">[]; bands: ViewOption<ViewBand>[]; shown: Required<ViewChoice>; turnable: boolean } {
   const style = shownStyle(spec, choice);
   const flat = !!spec.flat && style === "chart";
   const turnTo = flat && can(spec.styles["3d"]);
@@ -94,7 +104,14 @@ export function viewOptions(spec: ViewControlsSpec, choice: ViewChoice): { style
   const hudWhy = h === true ? undefined : (h ?? `${VIEW_STYLE_WORDS[style]} always shows its labels`);
   const huds: ViewOption<"off" | "on">[] = (["off", "on"] as const).map((v) => ({ value: v, label: HUD_WORDS[v], ...(hudWhy ? { unavailable: hudWhy } : {}) }));
   const shownHud = hudWhy ? true : (choice.hud ?? style !== "true");
-  return { styles, seen, scales, huds, shown: { style, seen: shownSeen, scale: shownScale, hud: shownHud }, turnable: !flat || turnTo };
+  const bands: ViewOption<ViewBand>[] = VIEW_BANDS.map((b) => {
+    const c = spec.bands ? spec.bands[b] : b === "visible" ? true : undefined;
+    const why = c === true ? undefined : (c ?? `Not seen in ${VIEW_BAND_WORDS[b] === "Mag" ? "Mag" : VIEW_BAND_WORDS[b].toLowerCase()} here yet`);
+    return { value: b, label: VIEW_BAND_WORDS[b], ...(why ? { unavailable: why } : {}) };
+  });
+  const wantBand = choice.band ?? "visible";
+  const shownBand: ViewBand = bands.find((o) => o.value === wantBand && !o.unavailable) ? wantBand : "visible";
+  return { styles, seen, scales, huds, bands, shown: { style, seen: shownSeen, scale: shownScale, hud: shownHud, band: shownBand }, turnable: !flat || turnTo };
 }
 
 const NOT_TO_SCALE = "Not drawn to scale here yet";
@@ -135,6 +152,7 @@ export function readViewChoice(json: string | null): ViewChoice {
       seen: (SEEN_FROM as readonly string[]).includes(String(v?.seen)) ? (v!.seen as SeenFrom) : DEFAULT_VIEW.seen,
       scale: (SCALES as readonly string[]).includes(String(v?.scale)) ? (v!.scale as ViewScale) : "readable",
       ...(typeof v?.hud === "boolean" ? { hud: v.hud } : {}),
+      ...((VIEW_BANDS as readonly string[]).includes(String(v?.band)) ? { band: v!.band as ViewBand } : {}),
     };
   } catch {
     return { ...DEFAULT_VIEW };
