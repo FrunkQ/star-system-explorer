@@ -56,6 +56,15 @@ try {
     await gal.locator("[data-green]").waitFor({ timeout: 20000 });
     // GH9: the scars its history left, over the face-on disc and edge-on below it.
     assert.equal(await gal.locator("[data-scars] path.scar-edge").count(), 1, "the scarred outline");
+    // GH3's read-out: what other galaxies brought, and every mark they left.
+    await gal.locator("[data-assembly] [data-exsitu]").waitFor({ timeout: 30000 });
+    assert.match(await gal.locator("[data-assembly] [data-exsitu]").innerText(), /M☉/, "stars not born here");
+    assert.ok((await gal.locator("[data-assembly] [data-mark]").count()) > 0, "the marks listed");
+    if (screens) {
+      await gal.locator("[data-mark-list] summary").click();
+      await gal.locator("[data-assembly]").screenshot({ path: `${screens}/gh3-galaxy-built.png` });
+      await gal.locator("[data-mark-list] summary").click();
+    }
     assert.match(await gal.locator("[data-edge-on] figcaption").innerText(), /Edge-on, heights 5 times\. Scars now: .*(warped edge|ripples|thick disc)/);
     await shot(gm, "u6-galaxy");
 
