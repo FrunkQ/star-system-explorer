@@ -7,7 +7,7 @@ import type { Json } from "./json.ts";
 import { YEAR_S } from "./intent.ts";
 
 export interface SolValue {
-  v: number;
+  v: number | string; // a string only where unit is "substance" (a gas id on the master data sheet)
   unit: string;
   src: string;
   note?: string;
@@ -103,7 +103,7 @@ export function solBatches(sheet: SolSheet, system: string): { batches: SolBatch
     for (const [field, x] of Object.entries(b.values)) {
       if (field === "system.age_gyr") {
         // Gyr to seconds through the Julian year the time ruler uses.
-        put(x.src, system, "system.age", x.v * 1e9 * Number(YEAR_S));
+        put(x.src, system, "system.age", Number(x.v) * 1e9 * Number(YEAR_S));
         continue;
       }
       put(x.src, a, field, x.v);
