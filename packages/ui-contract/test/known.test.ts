@@ -4,7 +4,7 @@ import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 import { checkIntent, intentToRequest, type Intent } from "../src/intent.ts";
 import { decide, gmSeat, tableSeat } from "../src/seat.ts";
-import { eyesShow, fieldLandmark, holdReveal, knownOverall, pressedLandmark, secrecyRelevant, tableOf, type KnownTo } from "../src/known.ts";
+import { eyesShow, fieldLandmark, hasException, lineChange, holdReveal, knownOverall, pressedLandmark, secrecyRelevant, tableOf, type KnownTo } from "../src/known.ts";
 
 const fx = JSON.parse(readFileSync(new URL("../../../tests/fixtures/sv/known-to.json", import.meta.url), "utf8")) as {
   answers: { ask: { address: string; field?: string }; value: KnownTo }[];
@@ -76,4 +76,16 @@ test("the two-second hold: Undo before it ends sends nothing; after, it is too l
   assert.equal(sent, 3, "flush sends now");
   d.flush();
   assert.equal(sent, 3, "once");
+});
+
+test("a line: withheld past its rung is pencil; a press makes an exception, and pressing it back follows the thing again", () => {
+  const t = { ...tableOf(tarn)!, withheld: ["population", "atmosphere.pressure"] };
+  assert.equal(fieldLandmark(t, "atmosphere.pressure"), "gm_only", "past its rung");
+  assert.equal(hasException(t, "population"), true);
+  assert.equal(hasException(t, "atmosphere.pressure"), false);
+  assert.equal(lineChange(t, "population", "known"), "known", "still withheld by the exception's own list: an exception");
+  const kept = { ...t, withheld: [] };
+  assert.equal(lineChange(kept, "population", "known"), null, "back to its thing: drop the exception");
+  assert.equal(lineChange(kept, "mass", "gm_only"), "gm_only", "keep one fact back");
+  assert.equal(lineChange(t, "atmosphere.pressure", "known"), "known", "show one fact early");
 });

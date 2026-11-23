@@ -4,6 +4,7 @@
   text into an intent; this component never edits anything itself.
 -->
 <script lang="ts">
+  import type { Snippet } from "svelte";
   let {
     label,
     display,
@@ -15,6 +16,9 @@
     fictional = false,
     oncommit,
     onwhy,
+    pencil = false,
+    known,
+    keepKnown = false,
   }: {
     label: string;
     display: string;
@@ -31,6 +35,12 @@
     fictional?: boolean;
     oncommit?: (text: string) => Promise<string | null>;
     onwhy?: () => void;
+    /** The table cannot see this line (secrets design 4): quieter ink and a dotted rule under the value. */
+    pencil?: boolean;
+    /** The line's "Known to" eye, in the left margin: shown on hover or focus, always when `keepKnown`. */
+    known?: Snippet;
+    /** The line has an exception of its own, so its eye stays showing. */
+    keepKnown?: boolean;
   } = $props();
 
   let draft = $state("");
@@ -59,7 +69,7 @@
   }
 </script>
 
-<div class="field">
+<div class="field" class:pencil data-pencil={pencil || undefined}>
   <div class="head">
     <label for={id} class="k" class:set>{label}{#if set}<span class="mark">&nbsp;· set</span>{:else if derived}<span class="drv">&nbsp;· derived</span>{/if}{#if flagged}<span class="mark">&nbsp;· out of range</span>{/if}{#if changed}<span class="mark chg">&nbsp;· changed physics</span>{/if}{#if fictional}<span class="mark">&nbsp;· fictional</span>{/if}</label>
     {#if onwhy}
@@ -86,10 +96,12 @@
     {/if}
   </div>
   {#if error}<p class="err" id="{id}-err" role="alert">{error}</p>{/if}
+  {#if known}<span class="margin" class:keep={keepKnown}>{@render known()}</span>{/if}
 </div>
 
 <style>
   .field {
+    position: relative;
     display: flex;
     flex-direction: column;
     gap: 2px;
@@ -167,6 +179,27 @@
   }
   .why:hover {
     color: var(--sse-accent-ink);
+  }
+  /* Pencil: what only the GM knows is drawn quieter, with a dotted rule under it. */
+  .pencil .v {
+    color: var(--sse-ink-muted);
+    border-bottom: var(--sse-line) dotted var(--sse-ink-muted);
+  }
+  .margin {
+    position: absolute;
+    left: -6px;
+    top: 30px;
+    opacity: 0;
+  }
+  .field:hover .margin,
+  .field:focus-within .margin,
+  .margin.keep {
+    opacity: 1;
+  }
+  @media (pointer: coarse) {
+    .margin {
+      opacity: 1;
+    }
   }
   .err {
     margin: 4px 0 0;
