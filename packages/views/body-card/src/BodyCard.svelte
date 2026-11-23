@@ -4,7 +4,7 @@
   derived values are read-only and open the kernel's explanation.
 -->
 <script lang="ts">
-  import { CURIOUS_FACTS, HONESTY_MARKS, namesOnStack, asPlayers, curiousDisplay, curiousSentence, headline, cardFacts, cardFor, commitEdit, factEdit, gmStamps, hasTool, primaryOf, eyesShow, secrecyRelevant, type KnownChange, type KnownTo as KnownRead, type Json, type PlayerContext, type SceneFact, type SystemScene, type ViewContext, type Vocab } from "../../../ui-contract/src/index.ts";
+  import { CURIOUS_FACTS, HONESTY_MARKS, namesOnStack, asPlayers, curiousDisplay, curiousSentence, headline, cardFacts, cardFor, commitEdit, factEdit, gmStamps, hasTool, primaryOf, eyesShow, fieldLandmark, hasException, secrecyRelevant, tableOf, type IntentResult, type KnownChange, type KnownTo as KnownRead, type Json, type PlayerContext, type SceneFact, type SystemScene, type ViewContext, type Vocab } from "../../../ui-contract/src/index.ts";
   import PlayerCard from "../../player-stack/src/PlayerCard.svelte";
   import { Card, CardField, KnownTo, Stamp, opensFrom } from "../../../chart-grammar/src/index.ts";
   import { parseFact } from "./parse.ts";
@@ -48,12 +48,20 @@
   });
   const eye = $derived(!!known && eyesShow(ws.desk, secrecyRelevant(known, !!ws.shared)));
   const inside = $derived(!!subject && scene.subjects.some((x) => x.parent === subject.address));
-  async function setKnown(c: KnownChange): Promise<string | null> {
-    if (!subject) return "nothing selected";
+  const failed = (r: IntentResult) => (r.status === "refused" ? r.reason : r.status === "pending" ? "sent to the GM" : r.status === "error" ? r.message : "");
+  async function setKnown(c: KnownChange): Promise<{ ok: true; undo?: string } | { ok: false; why: string }> {
+    if (!subject) return { ok: false, why: "nothing selected" };
     const r = await ctx.session.send({ kind: "set_known", address: subject.address, ...c, at_yr: ws.now_yr });
-    if (r.status === "applied") return (ws.revision++, null);
-    return r.status === "refused" ? r.reason : r.status === "pending" ? "sent to the GM" : r.message;
+    if (r.status === "applied") return (ws.revision++, { ok: true, ...(r.event_id ? { undo: r.event_id } : {}) });
+    return { ok: false, why: failed(r) };
   }
+  async function undoKnown(undo: string): Promise<string | null> {
+    const r = await ctx.session.send({ kind: "undo_known", undo, at_yr: ws.now_yr });
+    return r.status === "applied" ? (ws.revision++, null) : failed(r);
+  }
+  // Pencil on the card (secrets design 4): the lines the table is not sent are drawn quieter, each with its own eye.
+  const tableKnows = $derived(eye && known ? tableOf(known) : null);
+  const pencilled = (field: string) => !!tableKnows && fieldLandmark(tableKnows, field) !== "known";
   const listed = $derived(curious && !allFacts ? headline(shown) : shown);
   const sentence = $derived(subject && depth === "curious" ? curiousSentence(subject, scene.subjects.find((x) => x.address === subject.parent)?.label) : null);
   const published = $derived(subject && depth === "engine" ? shown.filter((f) => f.publisher) : []);
@@ -113,7 +121,7 @@
 </script>
 
 {#snippet knownLead()}
-  {#if known && subject}<KnownTo read={known} label={subject.label} hold={(ws.players_online ?? 0) > 0} children={inside} onset={setKnown} />{/if}
+  {#if known && subject}<KnownTo read={known} label={subject.label} hold={(ws.players_online ?? 0) > 0} children={inside} onset={setKnown} onundo={undoKnown} />{/if}
 {/snippet}
 
 <div class="wrap">
@@ -138,6 +146,9 @@
       {#if depth === "engine"}<p class="address" data-depth="engine" title="This body's address in the universe">{subject.address}</p>{/if}
       <div class="grid" class:line={rule.density === "line"} style="--cols: {cols}">
         {#each listed as f (f.field)}
+          {#snippet lineEye()}
+            {#if known && subject}<KnownTo read={known} label={subject.label} field={f.field} fieldLabel={f.label} size={11} hold={(ws.players_online ?? 0) > 0} onset={setKnown} onundo={undoKnown} />{/if}
+          {/snippet}
           <CardField
             label={f.label}
             display={curious ? curiousDisplay(f) : f.display}
@@ -149,6 +160,9 @@
             editable={f.editable && ws.mode === "edit"}
             oncommit={(t) => commit(f, t)}
             onwhy={f.field === "name" ? undefined : () => (why = why === f.field ? null : f.field)}
+            pencil={pencilled(f.field)}
+            known={tableKnows && f.field !== "name" ? lineEye : undefined}
+            keepKnown={hasException(tableKnows, f.field)}
           />
           {#if why === f.field}
             {#if f.why}

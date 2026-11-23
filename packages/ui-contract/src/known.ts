@@ -29,6 +29,8 @@ export interface KnownAudience {
   /** True when the thing stands on its ladder's top rung. */
   top: boolean;
   exceptions: KnownException[];
+  /** The fields this audience's view does not show at the thing's rung, exceptions included (drawn in pencil). */
+  withheld?: string[];
   /** Cover stories (SV5): a fact told in place of the true one. Empty until then. */
   cover: { field: string; told: string }[];
   /** The news reaches this audience only from this campaign time (seconds), when set. */
@@ -61,7 +63,17 @@ export function tableOf(k: KnownTo | null | undefined): KnownAudience | null {
 
 /** The landmark of one fact for one audience: its exception when the GM made one, else the thing's own. */
 export function fieldLandmark(a: KnownAudience, field: string): Landmark {
-  return a.exceptions.find((e) => e.field === field)?.landmark ?? a.landmark;
+  return a.exceptions.find((e) => e.field === field)?.landmark ?? (a.withheld?.includes(field) ? "gm_only" : a.landmark);
+}
+
+/** Whether a line has an exception of its own (its eye then stays showing). */
+export function hasException(a: KnownAudience | null, field: string): boolean {
+  return !!a && a.exceptions.some((e) => e.field === field);
+}
+
+/** The change a press on a line asks for: back to following its thing when that is where it lands, else an exception. */
+export function lineChange(a: KnownAudience, field: string, to: Landmark): Landmark | null {
+  return to === a.landmark && !a.withheld?.includes(field) && hasException(a, field) ? null : to;
 }
 
 /** What one press does: an open eye hides again; any other reveals to the table. */

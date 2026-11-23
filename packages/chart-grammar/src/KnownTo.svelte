@@ -9,7 +9,7 @@
 <script lang="ts">
   import KnownEye from "./KnownEye.svelte";
   import { opensFrom } from "./motion.ts";
-  import { LANDMARKS, LANDMARK_MEANS, LANDMARK_WORDS, fieldLandmark, holdReveal, pressedLandmark, tableOf, type Held, type KnownChange, type KnownLandmark, type KnownTo } from "../../ui-contract/src/index.ts";
+  import { LANDMARKS, LANDMARK_MEANS, LANDMARK_WORDS, fieldLandmark, holdReveal, lineChange, pressedLandmark, tableOf, type Held, type KnownChange, type KnownLandmark, type KnownTo } from "../../ui-contract/src/index.ts";
 
   let {
     read,
@@ -20,6 +20,7 @@
     hold = false,
     children = false,
     onset,
+    onundo,
   }: {
     read: KnownTo;
     /** The thing's name, for the popup and the press target's label. */
@@ -33,7 +34,10 @@
     /** The thing has things inside it, so "and what is inside it" is offered. */
     children?: boolean;
     /** Send one change; resolves to null when applied, or the reason it was not. */
-    onset: (c: KnownChange) => Promise<string | null>;
+    onset: (c: KnownChange) => Promise<{ ok: true; undo?: string } | { ok: false; why: string }>;
+    /** Put back exactly what one applied change did (kernel undo_known), by the id `onset` gave. Without it, Undo
+     * sends the opposite change. */
+    onundo?: (undo: string) => Promise<string | null>;
   } = $props();
 
   const table = $derived(tableOf(read));
@@ -57,22 +61,25 @@
   const who = $derived(table ? (table.audience === "everyone" ? "the table" : table.label) : "the table");
   const what = $derived(field ? (fieldLabel ?? field).toLowerCase() : label);
 
-  async function send(c: KnownChange) {
-    const why = await onset(c);
-    if (why) {
+  async function send(c: KnownChange): Promise<string | undefined> {
+    const r = await onset(c);
+    if (!r.ok) {
       shown = null;
-      say(`Not changed: ${why}`, null);
+      say(`Not changed: ${r.why}`, null);
+      return undefined;
     }
+    return r.undo;
   }
 
   function press() {
     if (!table) return;
     const from = eye;
     const to = pressedLandmark(from);
-    const c: KnownChange = { audience: table.audience, landmark: to, ...(field ? { field } : {}), scope: "this" };
+    const c: KnownChange = { audience: table.audience, landmark: field ? lineChange(table, field, to) : to, ...(field ? { field } : {}), scope: "this" };
     shown = to;
     held?.flush();
-    const h = holdReveal(() => void send(c), { hold: hold && to !== "gm_only" });
+    let sentAs: Promise<string | undefined> | null = null;
+    const h = holdReveal(() => void (sentAs = send(c)), { hold: hold && to !== "gm_only" });
     held = h;
     const back = () => {
       if (h.undo()) {
@@ -80,7 +87,8 @@
         say(`Undone. ${who[0]!.toUpperCase()}${who.slice(1)} never saw it.`, null);
       } else {
         shown = from;
-        void send({ ...c, landmark: from });
+        const reverse = () => void send({ ...c, landmark: field ? lineChange(table!, field, from) : from });
+        void (sentAs ?? Promise.resolve(undefined)).then((id) => (id && onundo ? onundo(id).then((why) => why && reverse()) : reverse()));
         say(from === "gm_only" ? `Hidden again. ${who[0]!.toUpperCase()}${who.slice(1)} has already seen it.` : `Put back as before.`, null);
       }
     };
