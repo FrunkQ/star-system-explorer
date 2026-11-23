@@ -1,0 +1,886 @@
+{
+ "format": "sse.pack/1",
+ "id": "sse.world-hooks",
+ "version": "0.1.0",
+ "kind": [
+  "presentation"
+ ],
+ "kernel_range": "^0.1",
+ "licence": "Apache-2.0",
+ "provides": {
+  "other": {
+   "about": {
+    "label": "World hooks",
+    "text": "One-line story prompts read off a world's physics: what it would be like to live there, in a sentence. Labels only; each says what it read."
+   },
+   "tags": {
+    "about": "Tags this pack names (tags design, TG1): labels only, never an input to physics.",
+    "groups": [
+     {
+      "id": "hook",
+      "label": "World hooks",
+      "about": "A story prompt read off a world's facts: never set by hand, never an input to physics.",
+      "applies_to": [
+       "body"
+      ]
+     }
+    ],
+    "tags": [
+     {
+      "id": "hook.long-night",
+      "label": "long night",
+      "group": "hook",
+      "about": "A day that lasts weeks: towns roll slowly round the world to stay in the light, or dig in for the long night.",
+      "why": "a solid world that turns once in 30 days or more (a round number; Mercury and Venus qualify, the Moon at 27 days just misses)",
+      "source": "derived",
+      "tier": "scanned"
+     },
+     {
+      "id": "hook.backwards-sun",
+      "label": "backwards sun",
+      "group": "hook",
+      "about": "The sun rises in the west here, and every newcomer's sense of direction is wrong for a week.",
+      "why": "an axial tilt over 120 degrees: the world spins backwards against its orbit, as Venus does",
+      "source": "derived",
+      "tier": "scanned"
+     },
+     {
+      "id": "hook.on-its-side",
+      "label": "on its side",
+      "group": "hook",
+      "about": "The world rolls on its side round its star: half the year is endless day at the pole, half endless night, and cities follow the light.",
+      "why": "an axial tilt between 60 and 120 degrees, as Uranus at 98 degrees: each pole spends a season facing the star",
+      "source": "derived",
+      "tier": "scanned"
+     },
+     {
+      "id": "hook.crushing-air",
+      "label": "crushing air",
+      "group": "hook",
+      "about": "The air at the ground presses like the deep sea; only hardened landers, and very brave crews, go down.",
+      "why": "a surface pressure of 50 bar or more, the pressure about 500 m under Earth's sea (Venus has 92 bar)",
+      "source": "derived",
+      "tier": "scanned"
+     },
+     {
+      "id": "hook.thin-air",
+      "label": "thin air",
+      "group": "hook",
+      "about": "Air far too thin to breathe but thick enough to raise dust storms: a pressure suit is everyday clothing.",
+      "why": "a surface pressure between 100 Pa and 10 kPa, a tenth of Earth's (round numbers); Mars has about 600 Pa",
+      "source": "derived",
+      "tier": "scanned"
+     },
+     {
+      "id": "hook.furnace",
+      "label": "furnace",
+      "group": "hook",
+      "about": "Hot enough to cook a ship's electronics where it lands: anything built here hides in the shade or underground.",
+      "why": "a surface at 600 K or more (a round number; Venus, at about 740 K, qualifies)",
+      "source": "derived",
+      "tier": "scanned"
+     },
+     {
+      "id": "hook.oxygen-rain",
+      "label": "oxygen rain",
+      "group": "hook",
+      "about": "So cold that oxygen would fall as rain: a leaking suit is a race against the cold, measured in minutes.",
+      "why": "a surface at 90.2 K or less, where oxygen at one atmosphere is a liquid (the master data sheet's boiling point)",
+      "source": "derived",
+      "tier": "scanned"
+     },
+     {
+      "id": "hook.ocean-world",
+      "label": "ocean world",
+      "group": "hook",
+      "about": "Water from pole to pole: every settlement floats, and dry land is the rarest thing anyone trades.",
+      "why": "liquid over at least nine tenths of the surface",
+      "source": "derived",
+      "tier": "scanned"
+     },
+     {
+      "id": "hook.heavy-world",
+      "label": "heavy world",
+      "group": "hook",
+      "about": "Several times Earth's mass: the ground pulls harder, locals are short and strong, and every launch to orbit costs dear.",
+      "why": "a solid world of 3 to 10 Earth masses, with a higher escape speed than Earth's",
+      "source": "derived",
+      "tier": "scanned"
+     },
+     {
+      "id": "hook.featherweight",
+      "label": "featherweight",
+      "group": "hook",
+      "about": "Gravity so weak that a stumble becomes a long, slow fall, and a thrown rock might not come back down.",
+      "why": "a world under 0.02 Earth masses (the Moon is 0.012); its escape speed is a few km/s or less",
+      "source": "derived",
+      "tier": "scanned"
+     },
+     {
+      "id": "hook.wild-orbit",
+      "label": "wild orbit",
+      "group": "hook",
+      "about": "Its orbit swings near and far: a short, scorching summer at the close pass, a long winter after, and a calendar built round the approach.",
+      "why": "an orbital eccentricity of 0.2 or more (Mercury's is 0.21): the starlight at the close pass is at least twice that at the far one",
+      "source": "derived",
+      "tier": "scanned"
+     },
+     {
+      "id": "hook.sun-filled-sky",
+      "label": "sun-filled sky",
+      "group": "hook",
+      "about": "So close to its star that the sun fills the sky, and flares are weather.",
+      "why": "an orbit within 0.1 au of its star, a quarter of Mercury's distance",
+      "source": "derived",
+      "tier": "scanned"
+     },
+     {
+      "id": "hook.giant-in-the-sky",
+      "label": "giant in the sky",
+      "group": "hook",
+      "about": "A giant planet fills the sky; people here tell the time by its phases and its shadow.",
+      "why": "a moon of a giant planet (its host at least 10 Earth masses)",
+      "source": "derived",
+      "tier": "scanned"
+     }
+    ]
+   },
+   "rules": [
+    {
+     "id": "hook.long-night.v1",
+     "tag": "hook.long-night",
+     "applies_to": [
+      "body"
+     ],
+     "when": {
+      "if": "all",
+      "of": [
+       {
+        "if": "all",
+        "of": [
+         {
+          "if": "all",
+          "of": [
+           {
+            "if": "not",
+            "p": {
+             "if": "has",
+             "field": "star.effective_temperature"
+            }
+           },
+           {
+            "if": "not",
+            "p": {
+             "if": "has",
+             "field": "mass_sun"
+            }
+           }
+          ]
+         },
+         {
+          "if": "any",
+          "of": [
+           {
+            "if": "range",
+            "field": "body.mass",
+            "max": 5.972167867791379e+25
+           },
+           {
+            "if": "range",
+            "field": "mass_earth",
+            "max": 10.0
+           }
+          ]
+         }
+        ]
+       },
+       {
+        "if": "any",
+        "of": [
+         {
+          "if": "range",
+          "field": "body.rotation_period",
+          "min": 2592000.0
+         },
+         {
+          "if": "range",
+          "field": "day_h",
+          "min": 720.0
+         }
+        ]
+       }
+      ]
+     }
+    },
+    {
+     "id": "hook.backwards-sun.v1",
+     "tag": "hook.backwards-sun",
+     "applies_to": [
+      "body"
+     ],
+     "when": {
+      "if": "all",
+      "of": [
+       {
+        "if": "all",
+        "of": [
+         {
+          "if": "not",
+          "p": {
+           "if": "has",
+           "field": "star.effective_temperature"
+          }
+         },
+         {
+          "if": "not",
+          "p": {
+           "if": "has",
+           "field": "mass_sun"
+          }
+         }
+        ]
+       },
+       {
+        "if": "range",
+        "field": "body.obliquity",
+        "min": 120.0
+       }
+      ]
+     }
+    },
+    {
+     "id": "hook.on-its-side.v1",
+     "tag": "hook.on-its-side",
+     "applies_to": [
+      "body"
+     ],
+     "when": {
+      "if": "all",
+      "of": [
+       {
+        "if": "all",
+        "of": [
+         {
+          "if": "not",
+          "p": {
+           "if": "has",
+           "field": "star.effective_temperature"
+          }
+         },
+         {
+          "if": "not",
+          "p": {
+           "if": "has",
+           "field": "mass_sun"
+          }
+         }
+        ]
+       },
+       {
+        "if": "range",
+        "field": "body.obliquity",
+        "min": 60.0,
+        "max": 120.0
+       }
+      ]
+     }
+    },
+    {
+     "id": "hook.crushing-air.v1",
+     "tag": "hook.crushing-air",
+     "applies_to": [
+      "body"
+     ],
+     "when": {
+      "if": "all",
+      "of": [
+       {
+        "if": "all",
+        "of": [
+         {
+          "if": "all",
+          "of": [
+           {
+            "if": "not",
+            "p": {
+             "if": "has",
+             "field": "star.effective_temperature"
+            }
+           },
+           {
+            "if": "not",
+            "p": {
+             "if": "has",
+             "field": "mass_sun"
+            }
+           }
+          ]
+         },
+         {
+          "if": "any",
+          "of": [
+           {
+            "if": "range",
+            "field": "body.mass",
+            "max": 5.972167867791379e+25
+           },
+           {
+            "if": "range",
+            "field": "mass_earth",
+            "max": 10.0
+           }
+          ]
+         }
+        ]
+       },
+       {
+        "if": "range",
+        "field": "atmosphere.surface_pressure",
+        "min": 5000000.0
+       }
+      ]
+     }
+    },
+    {
+     "id": "hook.thin-air.v1",
+     "tag": "hook.thin-air",
+     "applies_to": [
+      "body"
+     ],
+     "when": {
+      "if": "all",
+      "of": [
+       {
+        "if": "all",
+        "of": [
+         {
+          "if": "all",
+          "of": [
+           {
+            "if": "not",
+            "p": {
+             "if": "has",
+             "field": "star.effective_temperature"
+            }
+           },
+           {
+            "if": "not",
+            "p": {
+             "if": "has",
+             "field": "mass_sun"
+            }
+           }
+          ]
+         },
+         {
+          "if": "any",
+          "of": [
+           {
+            "if": "range",
+            "field": "body.mass",
+            "max": 5.972167867791379e+25
+           },
+           {
+            "if": "range",
+            "field": "mass_earth",
+            "max": 10.0
+           }
+          ]
+         }
+        ]
+       },
+       {
+        "if": "range",
+        "field": "atmosphere.surface_pressure",
+        "min": 100.0,
+        "max": 10000.0
+       }
+      ]
+     }
+    },
+    {
+     "id": "hook.furnace.v1",
+     "tag": "hook.furnace",
+     "applies_to": [
+      "body"
+     ],
+     "when": {
+      "if": "all",
+      "of": [
+       {
+        "if": "all",
+        "of": [
+         {
+          "if": "all",
+          "of": [
+           {
+            "if": "not",
+            "p": {
+             "if": "has",
+             "field": "star.effective_temperature"
+            }
+           },
+           {
+            "if": "not",
+            "p": {
+             "if": "has",
+             "field": "mass_sun"
+            }
+           }
+          ]
+         },
+         {
+          "if": "any",
+          "of": [
+           {
+            "if": "range",
+            "field": "body.mass",
+            "max": 5.972167867791379e+25
+           },
+           {
+            "if": "range",
+            "field": "mass_earth",
+            "max": 10.0
+           }
+          ]
+         }
+        ]
+       },
+       {
+        "if": "any",
+        "of": [
+         {
+          "if": "range",
+          "field": "planet.surface_temperature",
+          "min": 600.0
+         },
+         {
+          "if": "range",
+          "field": "surface_k",
+          "min": 600.0
+         }
+        ]
+       }
+      ]
+     }
+    },
+    {
+     "id": "hook.oxygen-rain.v1",
+     "tag": "hook.oxygen-rain",
+     "applies_to": [
+      "body"
+     ],
+     "when": {
+      "if": "all",
+      "of": [
+       {
+        "if": "all",
+        "of": [
+         {
+          "if": "all",
+          "of": [
+           {
+            "if": "not",
+            "p": {
+             "if": "has",
+             "field": "star.effective_temperature"
+            }
+           },
+           {
+            "if": "not",
+            "p": {
+             "if": "has",
+             "field": "mass_sun"
+            }
+           }
+          ]
+         },
+         {
+          "if": "any",
+          "of": [
+           {
+            "if": "range",
+            "field": "body.mass",
+            "max": 5.972167867791379e+25
+           },
+           {
+            "if": "range",
+            "field": "mass_earth",
+            "max": 10.0
+           }
+          ]
+         }
+        ]
+       },
+       {
+        "if": "any",
+        "of": [
+         {
+          "if": "range",
+          "field": "planet.surface_temperature",
+          "max": 90.188
+         },
+         {
+          "if": "range",
+          "field": "surface_k",
+          "max": 90.188
+         }
+        ]
+       }
+      ]
+     }
+    },
+    {
+     "id": "hook.ocean-world.v1",
+     "tag": "hook.ocean-world",
+     "applies_to": [
+      "body"
+     ],
+     "when": {
+      "if": "all",
+      "of": [
+       {
+        "if": "all",
+        "of": [
+         {
+          "if": "all",
+          "of": [
+           {
+            "if": "not",
+            "p": {
+             "if": "has",
+             "field": "star.effective_temperature"
+            }
+           },
+           {
+            "if": "not",
+            "p": {
+             "if": "has",
+             "field": "mass_sun"
+            }
+           }
+          ]
+         },
+         {
+          "if": "any",
+          "of": [
+           {
+            "if": "range",
+            "field": "body.mass",
+            "max": 5.972167867791379e+25
+           },
+           {
+            "if": "range",
+            "field": "mass_earth",
+            "max": 10.0
+           }
+          ]
+         }
+        ]
+       },
+       {
+        "if": "range",
+        "field": "surface.liquid_fraction",
+        "min": 0.9
+       }
+      ]
+     }
+    },
+    {
+     "id": "hook.heavy-world.v1",
+     "tag": "hook.heavy-world",
+     "applies_to": [
+      "body"
+     ],
+     "when": {
+      "if": "all",
+      "of": [
+       {
+        "if": "all",
+        "of": [
+         {
+          "if": "all",
+          "of": [
+           {
+            "if": "not",
+            "p": {
+             "if": "has",
+             "field": "star.effective_temperature"
+            }
+           },
+           {
+            "if": "not",
+            "p": {
+             "if": "has",
+             "field": "mass_sun"
+            }
+           }
+          ]
+         },
+         {
+          "if": "any",
+          "of": [
+           {
+            "if": "range",
+            "field": "body.mass",
+            "max": 5.972167867791379e+25
+           },
+           {
+            "if": "range",
+            "field": "mass_earth",
+            "max": 10.0
+           }
+          ]
+         }
+        ]
+       },
+       {
+        "if": "any",
+        "of": [
+         {
+          "if": "range",
+          "field": "body.mass",
+          "min": 1.7916503603374138e+25,
+          "max": 5.972167867791379e+25
+         },
+         {
+          "if": "range",
+          "field": "mass_earth",
+          "min": 3.0,
+          "max": 10.0
+         }
+        ]
+       }
+      ]
+     }
+    },
+    {
+     "id": "hook.featherweight.v1",
+     "tag": "hook.featherweight",
+     "applies_to": [
+      "body"
+     ],
+     "when": {
+      "if": "all",
+      "of": [
+       {
+        "if": "all",
+        "of": [
+         {
+          "if": "all",
+          "of": [
+           {
+            "if": "not",
+            "p": {
+             "if": "has",
+             "field": "star.effective_temperature"
+            }
+           },
+           {
+            "if": "not",
+            "p": {
+             "if": "has",
+             "field": "mass_sun"
+            }
+           }
+          ]
+         },
+         {
+          "if": "any",
+          "of": [
+           {
+            "if": "range",
+            "field": "body.mass",
+            "max": 5.972167867791379e+25
+           },
+           {
+            "if": "range",
+            "field": "mass_earth",
+            "max": 10.0
+           }
+          ]
+         }
+        ]
+       },
+       {
+        "if": "any",
+        "of": [
+         {
+          "if": "range",
+          "field": "body.mass",
+          "max": 1.1944335735582758e+23
+         },
+         {
+          "if": "range",
+          "field": "mass_earth",
+          "max": 0.02
+         }
+        ]
+       }
+      ]
+     }
+    },
+    {
+     "id": "hook.wild-orbit.v1",
+     "tag": "hook.wild-orbit",
+     "applies_to": [
+      "body"
+     ],
+     "when": {
+      "if": "all",
+      "of": [
+       {
+        "if": "all",
+        "of": [
+         {
+          "if": "not",
+          "p": {
+           "if": "has",
+           "field": "star.effective_temperature"
+          }
+         },
+         {
+          "if": "not",
+          "p": {
+           "if": "has",
+           "field": "mass_sun"
+          }
+         }
+        ]
+       },
+       {
+        "if": "any",
+        "of": [
+         {
+          "if": "range",
+          "field": "orbit.eccentricity",
+          "min": 0.2
+         },
+         {
+          "if": "range",
+          "field": "eccentricity",
+          "min": 0.2
+         }
+        ]
+       }
+      ]
+     }
+    },
+    {
+     "id": "hook.sun-filled-sky.v1",
+     "tag": "hook.sun-filled-sky",
+     "applies_to": [
+      "body"
+     ],
+     "when": {
+      "if": "all",
+      "of": [
+       {
+        "if": "all",
+        "of": [
+         {
+          "if": "not",
+          "p": {
+           "if": "has",
+           "field": "star.effective_temperature"
+          }
+         },
+         {
+          "if": "not",
+          "p": {
+           "if": "has",
+           "field": "mass_sun"
+          }
+         }
+        ]
+       },
+       {
+        "if": "not",
+        "p": {
+         "if": "any",
+         "of": [
+          {
+           "if": "range",
+           "field": "parent.body.mass",
+           "min": 2.9860839338956896e+23,
+           "max": 2.3888671471165516e+28
+          },
+          {
+           "if": "range",
+           "field": "parent.mass_earth",
+           "min": 0.05,
+           "max": 4000.0
+          }
+         ]
+        }
+       },
+       {
+        "if": "any",
+        "of": [
+         {
+          "if": "range",
+          "field": "orbit.semi_major_axis",
+          "max": 14959787070.0
+         },
+         {
+          "if": "range",
+          "field": "a_au",
+          "max": 0.1
+         }
+        ]
+       }
+      ]
+     }
+    },
+    {
+     "id": "hook.giant-in-the-sky.v1",
+     "tag": "hook.giant-in-the-sky",
+     "applies_to": [
+      "body"
+     ],
+     "when": {
+      "if": "all",
+      "of": [
+       {
+        "if": "all",
+        "of": [
+         {
+          "if": "not",
+          "p": {
+           "if": "has",
+           "field": "star.effective_temperature"
+          }
+         },
+         {
+          "if": "not",
+          "p": {
+           "if": "has",
+           "field": "mass_sun"
+          }
+         }
+        ]
+       },
+       {
+        "if": "any",
+        "of": [
+         {
+          "if": "range",
+          "field": "parent.body.mass",
+          "min": 5.972167867791379e+25,
+          "max": 2.3888671471165516e+28
+         },
+         {
+          "if": "range",
+          "field": "parent.mass_earth",
+          "min": 10.0,
+          "max": 4000.0
+         }
+        ]
+       }
+      ]
+     }
+    }
+   ]
+  }
+ }
+}

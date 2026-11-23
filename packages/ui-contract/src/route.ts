@@ -43,6 +43,26 @@ export const STOCK_SHIPS: readonly { id: string; name: string; drive: string }[]
   { id: "rescue-cutter", name: "Rescue cutter", drive: "torch, 2 g sustained (fictional)" },
 ];
 
+/**
+ * Ships a pack lists for the voyage planner and the ship designer (`provides.other.nav_ships.ships`, each an sse-nav
+ * ship the kernel flies as given), in stack order; a higher pack's ship replaces a lower one with the same id.
+ */
+export function packShips(packs: readonly { id: string; provides?: { other?: Record<string, unknown> } }[]): { id: string; pack: string; ship: NavShip }[] {
+  const out: { id: string; pack: string; ship: NavShip }[] = [];
+  for (const p of packs) {
+    const ships = (p.provides?.other?.nav_ships as { ships?: Record<string, NavShip> } | undefined)?.ships;
+    if (!ships || typeof ships !== "object") continue;
+    for (const [id, ship] of Object.entries(ships)) {
+      if (!ship || typeof ship.name !== "string" || typeof ship.accel_g !== "number") continue;
+      const i = out.findIndex((x) => x.id === id);
+      const row = { id, pack: p.id, ship };
+      if (i >= 0) out[i] = row;
+      else out.push(row);
+    }
+  }
+  return out;
+}
+
 export interface NavBody {
   address: string;
   name: string;

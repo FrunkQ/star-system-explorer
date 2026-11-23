@@ -50,6 +50,34 @@
    "label": "lands"
   },
   {
+   "id": "starship",
+   "label": "starship"
+  },
+  {
+   "id": "explorer",
+   "label": "explorer"
+  },
+  {
+   "id": "courier",
+   "label": "courier"
+  },
+  {
+   "id": "miner",
+   "label": "miner"
+  },
+  {
+   "id": "trader",
+   "label": "trader"
+  },
+  {
+   "id": "patrol",
+   "label": "patrol"
+  },
+  {
+   "id": "pirate",
+   "label": "pirate"
+  },
+  {
    "id": "station",
    "label": "station"
   },
