@@ -680,8 +680,12 @@ impl Kernel {
     }
 
     pub fn handle(&mut self, req: Request) -> Response {
-        // MP1c: the stack's constants are in force for the whole call.
-        let c = self.observe.reference.handle();
+        // MP1c: the stack's constants are in force for the whole call; DM6:
+        // read at the call's date when any constant has a history.
+        let c = match self.dated(&req) {
+            Some(t) => self.observe.reference.handle_on(t),
+            None => self.observe.reference.handle(),
+        };
         // MP17a: and its sheet, for the Look up block.
         let sheet = sheet_of(&self.observe.reference);
         sse_core::constants::with(c, || {
@@ -690,6 +694,36 @@ impl Kernel {
                 Err(r) => r,
             })
         })
+    }
+
+    /// DM6: the date a call is asked at, Gyr after the origin, when any
+    /// constant on the stack's sheet has a history (otherwise none, so the
+    /// call reads the plain handle and nothing moves by a bit). The date is
+    /// the request's `at_s` on the campaign clock (the far future meaning
+    /// "now"), else the campaign's now; the clock's first setting is the
+    /// cosmology's present (`now_gyr`), as every system's age counts from it.
+    fn dated(&self, req: &Request) -> Option<f64> {
+        let r = &self.observe.reference;
+        if !sse_core::constants::Constants::IDS
+            .iter()
+            .any(|id| r.has_history(id))
+        {
+            return None;
+        }
+        let now_gyr = cosmos::now_gyr().ok()?;
+        let (first, latest) = self
+            .universe
+            .as_ref()
+            .and_then(|u| clock::campaign_span_s(&u.chronicle))
+            .unwrap_or((0, 0));
+        let at = serde_json::to_value(req)
+            .ok()
+            .and_then(|v| v.get("at_s").and_then(serde_json::Value::as_i64));
+        let at = match at {
+            Some(s) if s < i64::MAX => s,
+            _ => latest,
+        };
+        Some(now_gyr + (at - first) as f64 / clock::JULIAN_YEAR_S / 1.0e9)
     }
 
     /// Carry out an applied intent: a built-in becomes its kernel request
@@ -2316,7 +2350,7 @@ impl Kernel {
                 };
                 Response::StateHash { hash: hash.hex() }
             }
-            Request::Derive { flow, inputs } => {
+            Request::Derive { flow, inputs, .. } => {
                 let (stack, flows) = self
                     .stack
                     .as_ref()
@@ -2356,7 +2390,9 @@ impl Kernel {
                     work_units: ev.work_units as u32,
                 }
             }
-            Request::Explain { flow, inputs, kind } => {
+            Request::Explain {
+                flow, inputs, kind, ..
+            } => {
                 let (stack, flows) = self
                     .stack
                     .as_ref()

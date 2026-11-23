@@ -193,11 +193,22 @@ pub enum Request {
     Derive {
         flow: String,
         inputs: BTreeMap<String, InputSpec>,
+        /// DM6: the campaign date the blocks are asked at (seconds on the
+        /// campaign clock). A constant with a history on the sheet is read
+        /// at that date; with none, the date changes nothing. Left out, the
+        /// campaign's now.
+        #[serde(default, skip_serializing_if = "Option::is_none")]
+        #[ts(optional)]
+        at_s: Option<i64>,
     },
     Explain {
         flow: String,
         inputs: BTreeMap<String, InputSpec>,
         kind: String,
+        /// DM6: as `derive`.
+        #[serde(default, skip_serializing_if = "Option::is_none")]
+        #[ts(optional)]
+        at_s: Option<i64>,
     },
     Draw {
         address: String,
