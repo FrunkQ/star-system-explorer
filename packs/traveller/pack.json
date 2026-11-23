@@ -6,7 +6,7 @@
   "game-system"
  ],
  "kernel_range": "^0.1",
- "licence": "Apache-2.0",
+ "licence": "CC-BY-NC-4.0",
  "provides": {
   "units": [
    {

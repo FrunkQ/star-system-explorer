@@ -56,8 +56,9 @@ asks fan work to carry its notice. The pack's `about` no longer names Far Future
 pack may carry one) and the Packs screen shows it under the pack as a "Notice" disclosure (`data-pack-notice`).
 
 The policy also asks that Mongoose be notified (an email to its sales address) and says the contents are for
-personal, non-commercial use. Both are Alex's to act on: the notification is his to send, and the pack's licence
-field still reads Apache-2.0 (see the questions in the status row).
+personal, non-commercial use. Alex agreed (23 Nov) to both: he emails Mongoose himself, and the Traveller pack alone
+is now CC BY-NC 4.0 (`licence` in the pack, `packs/traveller/LICENCE.md`, a line in the README); the rest of the
+repository, the build script included, stays Apache-2.0.
 
 ## World hooks
 

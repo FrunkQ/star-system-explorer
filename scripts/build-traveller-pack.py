@@ -952,7 +952,10 @@ pack = {
     "version": "0.1.0",
     "kind": ["game-system"],
     "kernel_range": "^0.1",
-    "licence": "Apache-2.0",
+    # Alex, 23 Nov: this pack alone is non-commercial, as Mongoose's Fair Use
+    # Policy asks of fan work (packs/traveller/LICENCE.md); the rest of the
+    # repository, this script included, stays Apache-2.0.
+    "licence": "CC-BY-NC-4.0",
     "provides": {"units": UNITS, "other": {
         "about": ABOUT,
         "notice": {"text": NOTICE, "source": NOTICE_SOURCE},
