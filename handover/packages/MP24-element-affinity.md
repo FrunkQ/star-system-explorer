@@ -20,6 +20,11 @@ The sheet stores cited concentrations only. How an element splits between core, 
 
 Also new: `substances[h2o].phases.latent_fusion` (333.55 kJ/kg, CRC, unverified), so the cryoscopic constant R·T²·M/ΔH is worked out (1.86 K kg/mol); the constant `P_rot_sun` (25.38 days, NSSDCA, unverified). `sse_core::sheet` gains `element_ci_mass_fraction` and `latent_fusion` for the kernel's last three ledger lines.
 
+## Follow-up for MP6 (proven core's ask, 23 Nov)
+
+- `ci_mass_fraction` for H (1.97%) and O (45.9%) from Palme and O'Neill 2014 (one copy read): neither copy of McDonough and Sun 1995 carries them, so rock's oxygen can be normalised. Those two rows cite palme-oneill2014.
+- `condensation.oxide` on the rock-forming elements (Si, Ti, Al, Cr, Fe, Mn, Mg, Ca, Na, K, P, Ni): the oxide each takes in rock, by the convention of rock analyses, as a substance id. Twelve oxide substances join the sheet with their formulas (sio2, tio2, al2o3, cr2o3, feo, mno, mgo, cao, na2o, k2o, p2o5, nio). The check refuses an oxide id with no substance row. A block binds rock's oxygen by stoichiometry, so water's oxygen stays with the water material.
+
 ## Honesty
 
 Every value is marked unverified: the publishers' pages could not be read from this sandbox, so each table was taken from machine-readable reproductions and cross-checked against a second copy where one exists (the README in the data folder lists every URL read and every flag). Fixes made on reading: Earth's core cobalt printed "0.25 ppm" is 0.25 wt% (2500 ppm); core titanium left out (unit unsure); CI nitrogen and phosphorus differ by 1000 between the two copies and the per-cent-level values are kept. Lodders 2021 CI values were not found readable, so McDonough and Sun 1995 stands in.

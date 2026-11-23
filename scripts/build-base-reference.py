@@ -76,6 +76,7 @@ SOURCES = {
     "convention": ("Elements in their standard state and the hydrogen ion at unit activity have zero free energy and enthalpy of formation by convention", None, "https://goldbook.iupac.org/", "textbook"),
     "nssdca-sun": ("NASA NSSDCA Sun fact sheet: sidereal rotation period 25.38 days (the Carrington rotation)", None, "https://nssdc.gsfc.nasa.gov/planetary/factsheet/sunfact.html", "unverified"),
     "mcdonough-sun1995": ("McDonough, W. F. and Sun, S.-s. 1995, Chemical Geology 120, 223: the composition of the Earth (CI chondrite and pyrolite columns; read from two machine-readable reproductions, handover/packages/MP-affinity-data)", "10.1016/0009-2541(94)00140-4", None, "unverified"),
+    "palme-oneill2014": ("Palme, H. and O'Neill, H. St. C. 2014, Cosmochemical estimates of mantle composition, Treatise on Geochemistry 2nd edition vol. 3, 1: CI chondrite hydrogen and oxygen (read from the pyrolite package's copy)", "10.1016/B978-0-08-095975-7.00201-1", None, "unverified"),
     "mcdonough2003": ("McDonough, W. F. 2003, Compositional model for the Earth's core, Treatise on Geochemistry vol. 2, 547, Table 4 (read from the GERM reservoir database's copy)", "10.1016/B0-08-043751-6/02015-6", "https://earthref.org/GERMRD/34/", "unverified"),
     "rudnick-gao2003": ("Rudnick, R. L. and Gao, S. 2003, Composition of the continental crust, Treatise on Geochemistry vol. 3, 1, Table 11, bulk crust (read from the pyrolite package's copy, checked against the 2014 edition)", "10.1016/B0-08-043751-6/03016-4", None, "unverified"),
     "nssdca-earth": ("NASA NSSDCA Earth fact sheet (volumetric mean radius 6371.000 km)", None, "https://nssdc.gsfc.nasa.gov/planetary/factsheet/earthfact.html", "verified"),
@@ -593,6 +594,20 @@ SUBSTANCES = [
     substance("acetate-", {"c": 2, "h": 3, "o": 2}, "acetate", charge=-1, chemical={"states": {"dissolved": gibbs(-369.41, -486.01, T)}}),
     substance("glucose", {"c": 6, "h": 12, "o": 6}, "glucose", chemical={"states": {"dissolved": gibbs(-917.22, -1262.19, T)}}),
     substance("ethanol", {"c": 2, "h": 6, "o": 1}, "ethanol", chemical={"states": {"dissolved": gibbs(-181.75, -288.3, T)}}),
+    # The oxides of rock analyses (element inventory: a rock-riding element's
+    # condensation.oxide names one, so a block can bind rock's oxygen).
+    substance("sio2", {"si": 1, "o": 2}, "silicon dioxide", plain="silica"),
+    substance("tio2", {"ti": 1, "o": 2}, "titanium dioxide"),
+    substance("al2o3", {"al": 2, "o": 3}, "aluminium oxide", plain="alumina"),
+    substance("cr2o3", {"cr": 2, "o": 3}, "chromium(III) oxide"),
+    substance("feo", {"fe": 1, "o": 1}, "iron(II) oxide"),
+    substance("mno", {"mn": 1, "o": 1}, "manganese(II) oxide"),
+    substance("mgo", {"mg": 1, "o": 1}, "magnesium oxide", plain="magnesia"),
+    substance("cao", {"ca": 1, "o": 1}, "calcium oxide", plain="lime"),
+    substance("na2o", {"na": 2, "o": 1}, "sodium oxide"),
+    substance("k2o", {"k": 2, "o": 1}, "potassium oxide"),
+    substance("p2o5", {"p": 2, "o": 5}, "phosphorus pentoxide"),
+    substance("nio", {"ni": 1, "o": 1}, "nickel(II) oxide"),
     substance("ch2o", {"c": 1, "h": 2, "o": 1}, "organic carbon (one sixth of glucose)", plain="organic matter",
               chemical={"states": {"dissolved": gibbs(-152.87, -210.37, T)}}),
 ]
@@ -777,6 +792,10 @@ def validate(pack):
                 walk(v, f"{where}[{i}]")
 
     walk(ref, "reference")
+    for e in ref["elements"]:
+        ox = e.get("condensation", {}).get("oxide")
+        if ox and ox not in sub_ids:
+            errors.append(f"element {e['id']}: unknown oxide {ox}")
     for s in ref["substances"]:
         iso_mass = {i["id"] for i in ref["isotopes"] if "mass" in i}
         for el in s["formula"]:
