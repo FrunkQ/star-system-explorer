@@ -1,0 +1,527 @@
+{
+ "format": "sse.formulas/1",
+ "family": "sse.composition",
+ "about": "MP6: where a body's elements are, as blocks (matter pack design section 5, steps 3 and 4). The composition chain runs each once per element; the sums are also in sse_atoms::matter, held together by a test.",
+ "atoms": [
+  {
+   "id": "sse.composition.share_in_material",
+   "version": "1.0.0",
+   "cost": "trivial",
+   "inputs": [
+    {
+     "port": "ci",
+     "letter": "ci"
+    },
+    {
+     "port": "ratio",
+     "letter": "r"
+    },
+    {
+     "port": "oxygen",
+     "letter": "o"
+    },
+    {
+     "port": "total",
+     "letter": "W"
+    }
+   ],
+   "outputs": [
+    {
+     "port": "share",
+     "letter": "s"
+    },
+    {
+     "port": "bound_oxygen",
+     "letter": "b"
+    }
+   ],
+   "references": [
+    "McDonough, W. F. and Sun, S.-s. 1995, Chemical Geology 120, 223: the composition of the Earth (CI chondrite and pyrolite). doi:10.1016/0009-2541(94)00140-4",
+    "Palme, H. and O'Neill, H. St. C. 2014, Treatise on Geochemistry (2nd ed.) 3, 1: cosmochemical estimates of mantle composition (CI H and O). doi:10.1016/B978-0-08-095975-7.00201-1",
+    "Lodders, K. 2003, ApJ 591, 1220: solar system abundances and condensation temperatures of the elements (host phases, table 8). doi:10.1086/375492"
+   ],
+   "shown": "share = ci · ratio / W;  bound O = ci · ratio · o / W;  W = Σ ci · ratio · (1 + o)",
+   "equation": {
+    "name": "An element's share of the material it rode in on",
+    "formula": "w = ci * r\ns = if W <= 0 then 0 else w / W\nb = if W <= 0 then 0 else w * o / W",
+    "inputs": {
+     "ci": {
+      "kind": "element.ci_mass_fraction",
+      "unit": "1",
+      "name": "its share of CI chondrites by mass",
+      "valid": [
+       0.0,
+       1.0
+      ]
+     },
+     "r": {
+      "kind": "star.element_ratio",
+      "unit": "1",
+      "name": "how much more of it the star has than the Sun",
+      "valid": [
+       0.0,
+       1000000.0
+      ]
+     },
+     "o": {
+      "kind": "element.oxide_oxygen_ratio",
+      "unit": "1",
+      "name": "oxygen its oxide binds, per kg of it",
+      "valid": [
+       0.0,
+       10.0
+      ]
+     },
+     "W": {
+      "kind": "material.ci_weight",
+      "unit": "1",
+      "name": "the same weight summed over the material",
+      "valid": [
+       0.0,
+       10.0
+      ]
+     }
+    },
+    "outputs": {
+     "s": {
+      "kind": "element.material_share",
+      "unit": "1",
+      "name": "its share of the material"
+     },
+     "b": {
+      "kind": "element.bound_oxygen_share",
+      "unit": "1",
+      "name": "share of the material that is oxygen bound to it"
+     }
+    },
+    "source": {
+     "text": "McDonough, W. F. and Sun, S.-s. 1995, Chemical Geology 120, 223",
+     "doi": "10.1016/0009-2541(94)00140-4",
+     "where": "table 1, CI chondrite"
+    },
+    "explain": {
+     "curious": "Every rock and every grain of metal that built a planet carried a little of every element. Gold and platinum rode in with the iron; potassium, uranium and thorium came with the rock. How much a world holds of each follows from how much of its material it collected.",
+     "science": "An element's mass share of the formation material it condenses with (its host phase, Lodders 2003): its CI chondrite share times its star's abundance over the Sun's, over the same weight summed over every element riding in that material, the oxygen their oxides bind included. Trace elements are shares inside the material, so adding one changes no bulk mass."
+    },
+    "examples": [
+     {
+      "ci": 0.0965,
+      "r": 1.0,
+      "o": 0.6583,
+      "W": 0.43,
+      "s": 0.2244186046511628,
+      "b": 0.14773476744186045
+     }
+    ]
+   }
+  },
+  {
+   "id": "sse.composition.separation_strength",
+   "version": "1.0.0",
+   "cost": "trivial",
+   "inputs": [
+    {
+     "port": "mass",
+     "letter": "M"
+    },
+    {
+     "port": "radius",
+     "letter": "R"
+    },
+    {
+     "port": "al26",
+     "letter": "E"
+    }
+   ],
+   "outputs": [
+    {
+     "port": "strength",
+     "letter": "s"
+    }
+   ],
+   "constants": {
+    "G": "constants/G"
+   },
+   "params": [
+    {
+     "param": "e_melt",
+     "letter": "em",
+     "default": 1800000.0,
+     "range": [
+      10000.0,
+      100000000.0
+     ],
+     "description": "energy per kg that melts chondritic rock, J/kg (the same as the Al-26 block's e_dry)"
+    }
+   ],
+   "positive": [
+    {
+     "port": "radius",
+     "says": "radius"
+    }
+   ],
+   "references": [
+    "Elkins-Tanton, L. T. 2012, Annual Review of Earth and Planetary Sciences 40, 113: magma oceans in the inner solar system (accretion and Al-26 energy against the energy to melt). doi:10.1146/annurev-earth-042711-105503"
+   ],
+   "shown": "s = min(1, (0.6 · G · M / R + E_Al26) / e_melt)",
+   "equation": {
+    "name": "How far a world melted and sorted itself",
+    "formula": "heat = 3/5 * G * M / R + max(E, 0)\ns = clamp(heat / em, 0, 1)",
+    "inputs": {
+     "M": {
+      "kind": "body.mass",
+      "unit": "kg",
+      "name": "mass of the world"
+     },
+     "R": {
+      "kind": "body.radius",
+      "unit": "m",
+      "name": "radius of the world"
+     },
+     "E": {
+      "kind": "planetesimal.al26_energy",
+      "unit": "J kg-1",
+      "name": "aluminium-26 heat left after it formed, per kg"
+     },
+     "G": {
+      "kind": "constant.G",
+      "unit": "m3 kg-1 s-2",
+      "name": "gravitational constant"
+     },
+     "em": {
+      "kind": "model.melt_energy",
+      "unit": "J kg-1",
+      "name": "heat per kg that melts rock"
+     }
+    },
+    "outputs": {
+     "s": {
+      "kind": "interior.separation_strength",
+      "unit": "1",
+      "name": "how far it separated into metal and rock"
+     }
+    },
+    "source": {
+     "text": "Elkins-Tanton, L. T. 2012, Annual Review of Earth and Planetary Sciences 40, 113",
+     "doi": "10.1146/annurev-earth-042711-105503",
+     "where": "energy sources for magma oceans"
+    },
+    "explain": {
+     "curious": "A world sorts itself into a metal core and a rocky mantle only if it gets hot enough to melt. Big planets melt from the energy of their own building; small early asteroids melted from radioactive aluminium; small late ones never did, and still hold their metal mixed through their rock.",
+     "science": "Heat available per kilogram, three fifths of GM/R from accretion plus the Al-26 energy left after the body formed, over the energy to melt chondritic rock. Capped at 1: a world that could melt more than once over separates fully. A process strength, not a class."
+    },
+    "examples": [
+     {
+      "M": 6e+24,
+      "R": 6400000.0,
+      "E": 0.0,
+      "em": 1800000.0,
+      "s": 1.0
+     },
+     {
+      "M": 2.59e+20,
+      "R": 263000.0,
+      "E": 3000000.0,
+      "em": 1800000.0,
+      "s": 1.0
+     },
+     {
+      "M": 9.38e+20,
+      "R": 469700.0,
+      "E": 0.0,
+      "em": 1800000.0,
+      "s": 0.044429021361152496
+     }
+    ]
+   }
+  },
+  {
+   "id": "sse.composition.core_share",
+   "version": "1.0.0",
+   "cost": "trivial",
+   "inputs": [
+    {
+     "port": "partition",
+     "letter": "D"
+    },
+    {
+     "port": "metal",
+     "letter": "f"
+    },
+    {
+     "port": "strength",
+     "letter": "s"
+    }
+   ],
+   "outputs": [
+    {
+     "port": "core",
+     "letter": "c"
+    }
+   ],
+   "references": [
+    "McDonough, W. F. 2003, Treatise on Geochemistry 2, 547: compositional model for the Earth's core (table 4). doi:10.1016/B0-08-043751-6/02015-6",
+    "McDonough, W. F. and Sun, S.-s. 1995, Chemical Geology 120, 223: the composition of the Earth (CI chondrite and pyrolite). doi:10.1016/0009-2541(94)00140-4"
+   ],
+   "shown": "core = s · f · D / (f · D + 1 − f)",
+   "equation": {
+    "name": "How much of an element sank with the iron",
+    "formula": "fm = clamp(f, 0, 1)\nc = if D <= 0 or fm <= 0 then 0 else clamp(s, 0, 1) * fm * D / (fm * D + 1 - fm)",
+    "inputs": {
+     "D": {
+      "kind": "element.metal_silicate_partition",
+      "unit": "1",
+      "name": "how much it prefers metal to rock",
+      "valid": [
+       0.0,
+       1000000000000.0
+      ]
+     },
+     "f": {
+      "kind": "interior.metal_fraction",
+      "unit": "1",
+      "name": "metal's share of the world",
+      "valid": [
+       0.0,
+       1.0
+      ]
+     },
+     "s": {
+      "kind": "interior.separation_strength",
+      "unit": "1",
+      "name": "how far the world separated",
+      "valid": [
+       0.0,
+       1.0
+      ]
+     }
+    },
+    "outputs": {
+     "c": {
+      "kind": "element.core_share",
+      "unit": "1",
+      "name": "share of it in the core"
+     }
+    },
+    "source": {
+     "text": "McDonough, W. F. 2003, Treatise on Geochemistry 2, 547",
+     "doi": "10.1016/B0-08-043751-6/02015-6",
+     "where": "table 4, core and silicate Earth"
+    },
+    "explain": {
+     "curious": "Iron-loving elements sank with the iron. Nearly all of a planet's gold and platinum is in its core, far out of reach; what is mined at the surface came later, or was brought back up.",
+     "science": "Mass balance between metal and silicate: with the body's metal share f and the element's partition D (concentration in Earth's core over its silicate, McDonough 2003 and McDonough and Sun 1995), the core holds f·D / (f·D + 1 − f) of it, times how far the world separated. D is one typical value per element, not a function of pressure and oxygen (fudge register)."
+    },
+    "examples": [
+     {
+      "D": 13.66,
+      "f": 0.325,
+      "s": 1.0,
+      "c": 0.8680222895688728
+     },
+     {
+      "D": 0.0,
+      "f": 0.325,
+      "s": 1.0,
+      "c": 0.0
+     }
+    ]
+   }
+  },
+  {
+   "id": "sse.composition.crust_share",
+   "version": "1.0.0",
+   "cost": "trivial",
+   "inputs": [
+    {
+     "port": "enrichment",
+     "letter": "E"
+    },
+    {
+     "port": "crust",
+     "letter": "fc"
+    },
+    {
+     "port": "strength",
+     "letter": "s"
+    }
+   ],
+   "outputs": [
+    {
+     "port": "share",
+     "letter": "cr"
+    }
+   ],
+   "references": [
+    "Rudnick, R. L. and Gao, S. 2003, Treatise on Geochemistry 3, 1: composition of the continental crust. doi:10.1016/B0-08-043751-6/03016-4",
+    "McDonough, W. F. and Sun, S.-s. 1995, Chemical Geology 120, 223: the composition of the Earth (CI chondrite and pyrolite). doi:10.1016/0009-2541(94)00140-4"
+   ],
+   "shown": "crust = s · fc · E / (fc · E + 1 − fc)",
+   "equation": {
+    "name": "How much of the rock's element rose into the crust",
+    "formula": "x = clamp(fc, 0, 1)\ncr = if E <= 0 or x <= 0 then 0 else clamp(s, 0, 1) * x * E / (x * E + 1 - x)",
+    "inputs": {
+     "E": {
+      "kind": "element.crust_enrichment",
+      "unit": "1",
+      "name": "how much richer the crust is in it than the mantle",
+      "valid": [
+       0.0,
+       1000000.0
+      ]
+     },
+     "fc": {
+      "kind": "interior.crust_fraction",
+      "unit": "1",
+      "name": "the crust's share of the rock",
+      "valid": [
+       0.0,
+       1.0
+      ]
+     },
+     "s": {
+      "kind": "interior.separation_strength",
+      "unit": "1",
+      "name": "how far the world separated",
+      "valid": [
+       0.0,
+       1.0
+      ]
+     }
+    },
+    "outputs": {
+     "cr": {
+      "kind": "element.crust_share",
+      "unit": "1",
+      "name": "share of the rock's element in the crust"
+     }
+    },
+    "source": {
+     "text": "Rudnick, R. L. and Gao, S. 2003, Treatise on Geochemistry 3, 1",
+     "doi": "10.1016/B0-08-043751-6/03016-4",
+     "where": "table 9, bulk continental crust"
+    },
+    "explain": {
+     "curious": "When mantle rock partly melts, the elements that do not fit in its crystals go with the melt and rise. So a thin crust holds a large share of a world's potassium, uranium and thorium, and of many metals people mine.",
+     "science": "Mass balance between crust (share fc of the silicate) and mantle with the element's enrichment E (concentration in Earth's continental crust, Rudnick and Gao 2003, over its primitive mantle, McDonough and Sun 1995): the crust holds fc·E / (fc·E + 1 − fc) of the silicate's element, times how far the world separated. One typical value per element (fudge register)."
+    },
+    "examples": [
+     {
+      "E": 62.3,
+      "fc": 0.006,
+      "s": 1.0,
+      "cr": 0.27328556806550663
+     }
+    ]
+   }
+  },
+  {
+   "id": "sse.composition.crust_fraction",
+   "version": "1.0.0",
+   "cost": "trivial",
+   "inputs": [
+    {
+     "port": "radius",
+     "letter": "R"
+    },
+    {
+     "port": "silicate",
+     "letter": "Ms"
+    }
+   ],
+   "outputs": [
+    {
+     "port": "crust",
+     "letter": "fc"
+    }
+   ],
+   "params": [
+    {
+     "param": "thickness",
+     "letter": "h",
+     "default": 20000.0,
+     "range": [
+      0.0,
+      200000.0
+     ],
+     "description": "mean crust thickness, m (Earth's area-weighted mean is about 17 km, the Moon's about 35 km, Mars's about 50 km)"
+    },
+    {
+     "param": "density",
+     "letter": "rho",
+     "default": 2700.0,
+     "range": [
+      1000.0,
+      4000.0
+     ],
+     "description": "crust density, kg/m3 (the sheet's crust-rock)"
+    }
+   ],
+   "positive": [
+    {
+     "port": "radius",
+     "says": "radius"
+    },
+    {
+     "port": "silicate",
+     "says": "silicate mass"
+    }
+   ],
+   "references": [
+    "Rudnick, R. L. and Gao, S. 2003, Treatise on Geochemistry 3, 1: composition of the continental crust. doi:10.1016/B0-08-043751-6/03016-4"
+   ],
+   "shown": "fc = (4/3) π (R³ − (R − h)³) ρ / M_silicate",
+   "equation": {
+    "name": "The crust's share of a world's rock",
+    "formula": "hh = clamp(h, 0, R)\nri = R - hh\nshell = 4/3 * pi * (R * R * R - ri * ri * ri)\nfc = clamp(shell * rho / Ms, 0, 1/2)",
+    "inputs": {
+     "R": {
+      "kind": "body.radius",
+      "unit": "m",
+      "name": "radius of the world"
+     },
+     "Ms": {
+      "kind": "interior.silicate_mass",
+      "unit": "kg",
+      "name": "mass of its rock"
+     },
+     "h": {
+      "kind": "model.crust_thickness",
+      "unit": "m",
+      "name": "mean thickness of the crust"
+     },
+     "rho": {
+      "kind": "model.crust_density",
+      "unit": "kg m-3",
+      "name": "density of the crust"
+     }
+    },
+    "outputs": {
+     "fc": {
+      "kind": "interior.crust_fraction",
+      "unit": "1",
+      "name": "the crust's share of the rock"
+     }
+    },
+    "source": {
+     "text": "Rudnick, R. L. and Gao, S. 2003, Treatise on Geochemistry 3, 1",
+     "doi": "10.1016/B0-08-043751-6/03016-4",
+     "where": "crustal mass and thickness"
+    },
+    "explain": {
+     "curious": "A planet's crust is a skin: on Earth about half a per cent of the rock by mass. That thin skin is where every mine is.",
+     "science": "A shell of the given thickness and density at the surface, over the silicate's mass. The thickness is one value until the surface stage hands each world its own (fudge register)."
+    },
+    "examples": [
+     {
+      "R": 6400000.0,
+      "Ms": 4e+24,
+      "h": 20000.0,
+      "rho": 2700.0,
+      "fc": 0.006927008225961541
+     }
+    ]
+   }
+  }
+ ]
+}
