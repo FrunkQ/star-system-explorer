@@ -16,7 +16,7 @@
 -->
 <script lang="ts">
   import { onDestroy } from "svelte";
-  import { basis, drawLiveStar, flaresAt, turnAt, project, spotsOf, STAR_SECONDS_PER_SECOND, startGpu, tree, type Camera, type Gpu, type GpuLight, type LiveStar, type TrueTexture, type Vec3 } from "../../../renderer/src/index.ts";
+  import { basis, drawLiveStar, flaresAt, thermalGrey, THERMAL_DECADES, turnAt, project, spotsOf, STAR_SECONDS_PER_SECOND, startGpu, tree, type Camera, type Gpu, type GpuLight, type LiveStar, type TrueTexture, type Vec3 } from "../../../renderer/src/index.ts";
   import { SEEN_ELEVATION, type SeenFrom } from "../../../ui-contract/src/index.ts";
   import { bandLines, hasChildren, layout, layoutReal, shellDots, type Band3D, type Body3D } from "./bodies.ts";
 
@@ -38,6 +38,7 @@
     realScale = false,
     hud = true,
     star = null,
+    band = "visible",
   }: {
     bands?: Band3D[];
     bodies: Body3D[];
@@ -63,7 +64,11 @@
     hud?: boolean;
     /** True look: the star as the kernel has it (live-star.ts), drawn turning, spotted and flaring. */
     star?: LiveStar | null;
+    /** True look: the band it is seen in (rule 12). Visible, X-ray (the star's corona; worlds dark) and Infrared (each
+     * body's own heat, mapped grey) are drawn; the others draw Visible and say so. */
+    band?: string;
   } = $props();
+  const trueBand = $derived(band === "xray" || band === "infrared" ? band : "visible");
   const overlay = $derived(hud);
   const isTrue = $derived(trueLook);
 
@@ -230,10 +235,23 @@
     raf = requestAnimationFrame(step);
     return () => cancelAnimationFrame(raf);
   });
+  const starK = $derived(bodies.find((b) => b.parent === null)?.t_k ?? star?.teff ?? 5772);
+  const bandNote = $derived(
+    !isTrue
+      ? ""
+      : trueBand === "xray"
+        ? "X-rays, in mapped colour: the star's corona on a log scale, brighter over its spots and flares. Worlds give off almost none, so they are dark."
+        : trueBand === "infrared"
+          ? `Thermal infrared (10 µm), in mapped grey on a log scale ${THERMAL_DECADES} decades deep from the star: each body glows by its own temperature, the same over its whole disc (the Light panel's near-infrared recipes paint the flat chart).`
+          : band !== "visible"
+            ? "True draws Visible, Infrared and X-ray for now; this band is drawn as Visible."
+            : "",
+  );
   const flaringNow = $derived(star && isTrue ? flaresAt(star, spotsOf(star), starT, STAR_SECONDS_PER_SECOND / 10).length : 0);
   // The face is drawn at about the size the disc shows on the screen, in steps so its texture is not remade each zoom.
   const FACE_STEPS = [16, 32, 64, 128, 256];
   const FACE_DISC = 0.92;
+  const XRAY_DISC = 0.6;
   let faceBuf: { width: number; data: Uint8ClampedArray } | null = null;
   let faceVersion = 0;
   function faceFor(b: Body3D, radius: number) {
@@ -245,8 +263,11 @@
     const px = ((radius / Math.max(1e-6, d)) * (h / 2)) / Math.tan(cam.fovY / 2) * 2 * dpr / FACE_DISC;
     const width = FACE_STEPS.find((n) => n >= px) ?? 256;
     if (!faceBuf || faceBuf.width !== width) faceBuf = { width, data: new Uint8ClampedArray(width * width * 4) };
-    drawLiveStar(faceBuf, s, starT, "visible", FACE_DISC, 7, STAR_SECONDS_PER_SECOND / 10);
-    return { key: `star:${b.id}`, version: ++faceVersion, width, data: faceBuf.data, disc: FACE_DISC };
+    const xray = trueBand === "xray";
+    // In X-rays the corona reaches past the disc: the disc takes less of the square.
+    const disc = xray ? XRAY_DISC : FACE_DISC;
+    drawLiveStar(faceBuf, s, starT, xray ? "xray" : "visible", disc, 7, STAR_SECONDS_PER_SECOND / 10);
+    return { key: `star:${b.id}:${xray ? "x" : "v"}`, version: ++faceVersion, width, data: faceBuf.data, disc };
   }
 
   let canvas2d: HTMLCanvasElement | undefined = $state();
@@ -269,8 +290,11 @@
             const t = tex(b);
             const isStar = b.parent === null;
             const radius = sizeOf(b, b === lay!.centre);
-            const face = isStar ? faceFor(b, radius) : undefined;
-            return { id: b.id, rel: relOf(b.id), radius, colour: isStar ? starColour || colour(b) : faint, ring: b.mark?.ring ?? false, selected: b.id === selection, shines: isStar, ...(t ? { surface: { key: b.id, texture: t } } : {}), ...(face ? { face } : {}) };
+            // Infrared draws every body by its own heat, the star included; X-ray draws the star's corona and leaves
+            // the worlds dark (they give off almost none).
+            const face = isStar && trueBand !== "infrared" ? faceFor(b, radius) : undefined;
+            const emit = trueBand === "infrared" ? thermalGrey(b.t_k ?? 0, starK) : trueBand === "xray" && !isStar ? 0 : undefined;
+            return { id: b.id, rel: relOf(b.id), radius, colour: isStar ? starColour || colour(b) : faint, ring: b.mark?.ring ?? false, selected: b.id === selection, shines: isStar, ...(t ? { surface: { key: b.id, texture: t } } : {}), ...(face ? { face } : {}), ...(emit !== undefined ? { emit } : {}) };
           }),
           rings: hud ? lay.placed.map((b) => ({ points: ringPoints(lay!.ring.get(b.id)!), colour: b.id === selection ? accent : faint })) : [],
           forward: f,
@@ -466,6 +490,7 @@
     {#if lay?.unplaced.length}<span>Position not known: {lay.unplaced.map((b) => b.name).join(", ")}.</span>{/if}
     <span>{realScale ? "Real scale: distances and sizes in proportion (a world smaller than a pixel shows as a point)" : "Distances on a log scale, sizes not to scale"}{distanceNote}. Drawn with {using === "gpu" ? reason : using === "canvas" ? `Canvas 2D (${reason})` : "…"}.</span>
     {#if isTrue && (using === "canvas" || trueNote)}<span data-true-note>{using === "canvas" ? "True needs a GPU: this device draws the chart's look." : trueNote}</span>{/if}
+    {#if isTrue && bandNote && using === "gpu"}<span data-true-band={trueBand}>{bandNote}</span>{/if}
     {#if isTrue && star && using === "gpu"}<span data-star-live={flaringNow ? "flaring" : "quiet"} data-star-turn={turnAt(star, starT).toFixed(1)}>The star runs on its own clock, six hours a second: it turns on its spin, its spots go round with it{flaringNow ? ", and it is flaring now" : ""}.</span>{/if}
   </p>
 </div>
