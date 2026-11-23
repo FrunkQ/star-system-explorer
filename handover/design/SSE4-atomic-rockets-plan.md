@@ -1,6 +1,6 @@
 # SSE4 and Atomic Rockets: what is on the site, where it lands in SSE4, the rights, and the approach
 
-Status: **accepted 23 Nov 2026, 20:25** (Alex: "Agree to all questions", with question 11 changed: weapons come in, as data and "in range" sums only, "we dont fire anything"). Sections 11 to 14 were added the same evening on his word (power as a general input, sensors, weapons, and what SSE3 had) and carry six new questions in section 15, **not yet answered**. Research and design only, no code. Track letters **RK** (a neutral working name; nothing here is named after the site until its author agrees).
+Status: **accepted 23 Nov 2026, 20:25** (Alex: "Agree to all questions", with question 11 changed: weapons come in, as data and "in range" sums only, "we dont fire anything"). Sections 11 to 14 were added the same evening on his word (power as a general input, sensors, weapons, and what SSE3 had); their six questions in section 15 were **answered yes at 21:30** ("yes to all"). Sections 16 and 17 (the power flow diagram, and fog of war from sensors) answer his two follow-ups and carry five new questions in section 18, **not yet answered**. Mockup: `/mnt/project-files/sse4/RK-screens/power-flow-mockup.html` (artifact "SSE4 power flow", https://claude.ai/artifact/2k5uSbdv6yKuFNgRedGTDs), screenshots beside it. Research and design only, no code. Track letters **RK** (a neutral working name; nothing here is named after the site until its author agrees).
 
 Alex, 23 Nov 16:25 to 16:28: "this is VERY interesting", "EVERYTHING on that site needs to be in SSE - as a pack? I approach them and ask if they wanna get involved - as they can now fly their rockets properly simulated", "They have rocket equations - we have equation blocks!"
 
@@ -403,14 +403,14 @@ No new limit is needed. "Beams spread" (accepted, question 3) covers lasers, lin
 
 | Package | What | Suggested owner | Waits on |
 |---|---|---|---|
-| RK9 | The bus ledger: power sources with laws, engines as parts with `energy_from`, loads; electric and heat buses closing; thrust from power; SSE3 fields read on import with the balance check marking what does not close | travel thread (ship record, NAV), kernel thread (import, checks), with RS writing its real parts to the same fields | question 12 |
-| RK10 | One Bands table on the sheet; every band string points at it; the hand-written band map removed | data sheet thread, then light, renderer and chart room threads each for their own strings | question 14 |
-| RK11 | One instrument shape with a method; authored ranges on import; range bands moved to the setting's measures; gravity and magnetic channels | light thread (owns `sse-sense`), Traveller thread for its pack | questions 13, 15 |
-| RK12 | Effect at range: the laser, kinetic, missile and warhead Equations; the three readings; rings as a HUD overlay; weapons as loads on the ledger | light thread for beams, travel thread for missile reach, Traveller thread for its mapping | RK9, question 16 |
+| RK9 | The bus ledger: power sources with laws, engines as parts with `energy_from`, loads; electric and heat buses closing; thrust from power; SSE3 fields read on import with the balance check marking what does not close | travel thread (ship record, NAV), kernel thread (import, checks), with RS writing its real parts to the same fields | accepted |
+| RK10 | One Bands table on the sheet; every band string points at it; the hand-written band map removed | data sheet thread, then light, renderer and chart room threads each for their own strings | accepted |
+| RK11 | One instrument shape with a method; authored ranges on import; range bands moved to the setting's measures; gravity and magnetic channels | light thread (owns `sse-sense`), Traveller thread for its pack | accepted |
+| RK12 | Effect at range: the laser, kinetic, missile and warhead Equations; the three readings; rings as a HUD overlay; weapons as loads on the ledger | light thread for beams, travel thread for missile reach, Traveller thread for its mapping | RK9 |
 
 RK4 (power plant as a part) is absorbed by RK9.
 
-## 15. New questions for Alex (23 Nov, evening)
+## 15. Questions 12 to 17 (all answered yes, 23 Nov 21:30)
 
 12. **One power model: every part is a converter on four buses** (electric, heat with its temperature, propellant, jet), with an engine's energy coming from fuel, electric, beam or sunlight, and SSE3's `power_plants` and `powerDraw_MW` read straight into it. Recommended: yes. Air, food and ore join the same ledger later.
 13. **Sensor ranges are never typed.** They are computed from what the target gives off; SSE3's typed ranges import as marked authored ranges so nothing breaks. Recommended: yes.
@@ -418,3 +418,87 @@ RK4 (power plant as a part) is absorbed by RK9.
 15. **Channels beyond light**: objects also publish gravity, magnetic field, particles and neutrinos, so a gravimetric sensor or a neutrino detector is real physics with an honest (often tiny) range. Recommended: yes to gravity and magnetic now, particles and neutrinos when a pack wants them.
 16. **Weapons give three readings (in range, marginal, out of range) and a ring on the chart**, with a game pack free to keep its own table beside the physics. Recommended: yes.
 17. **SSE3 stock items that carry another setting's name are renamed when they come into the base packs**, and left alone in users' own saves. Recommended: yes.
+
+## 16. The power flow diagram (Alex, 23 Nov 21:30: "this whole power bus looks like a cool diagram that could help a user understand?")
+
+Yes, and it is the natural face of section 11: a ledger of who gives and who takes is exactly what a flow diagram draws. In the mockup.
+
+**What it is.** A **Power** card, one press from any construct. Three columns read left to right: *Comes from* (arrays, reactor, the fuel's own energy), *Used by* (engine, quarters, sensors, radar, laser, and what the plant loses itself), *Ends up as* (jet, sent out as radio or beam, hot radiators, cool radiators). Band width is watts. Under it, five plain readings: thrust, power to spare, hot radiator area, cool radiator area, how visible the craft is.
+
+**Why it earns its place.**
+- **It is live.** Slide the distance from the star and a solar craft's flow thins and its engine starves. Turn the radar on and the engine gets less. Nobody has to be told that everything competes.
+- **It shows the radiators' reason.** The bands that end in "hot radiators" are the radiators the generator draws. "Show it without" (FT question 10) is the same diagram with a band removed.
+- **It shows broken books.** Where a balance check fails, the missing power arrives as a dashed band from a node called **Nowhere**, with one sentence saying how much. SSE3's Hall thruster as typed is in the mockup: 5.2 MW from nowhere. That is the honesty mark made visible, and it is what a GM fixes or chooses to keep.
+- **It is honest about scale.** A flow under one part in a hundred is a hairline. A torch drive beside its own life support looks exactly as lopsided as it is.
+
+**Depth.** Curious: the picture and the sentences. Science: the figures on each band and the efficiency of each part. Engine: press a band to open the Equation block behind it.
+
+**Players** see their own ship's card with no honesty marks, like any other fact of their world. It is a good engineer's station: what can we turn off to get more thrust?
+
+**Think wide: this is one view for any ledger, not a ship feature.** The same diagram, with other units, draws things SSE4 already computes:
+
+| Ledger | Comes from, used by, ends up as | Already computed by |
+|---|---|---|
+| A construct's power | section 11 | RK9 |
+| A world's energy budget | sunlight and inner heat; air, ocean, ice, life; light and heat back to space | the climate and weather track |
+| An element's journey | supernova, star, disc; core, mantle, crust; ore that can be mined out | the matter design, section 5 |
+| A habitat's air, water and food | stores and greenhouse; crew; recycled or lost | limit 9, later |
+| A star's output by band | fusion; photosphere, corona, wind; light by band | the light track |
+| An economy's goods | 4.1 | later |
+
+So the recommendation is a general **Flow** view that any ledger can hand rows to (from, to, amount, kind), with the Power card as its first user. On a phone it runs top to bottom.
+
+## 17. Fog of war from sensors (Alex, 23 Nov 21:30: "needs to just work and be tweaked by those that care")
+
+**The idea: fog of war is not a sensor screen. It is the map.** The physics of sections 11 and 12 decides what each crew can see, and the only thing a player ever meets is things appearing, sharpening and fading on the chart they already use. All the sensor detail stays a step away, for those who care.
+
+It also adds no second system. The secrets design (track SV, accepted today) already has the ladder a thing stands on for each audience, the eye with three states, pencil and ink on the GM's chart, and the rule that sensors "write the same grants a press does". Fog of war is simply **the physics pressing the eye**. SV said nothing spreads knowledge by itself in 4.0; this is the one automatic writer, and it writes dated `observe.grant` events like any other, so it undoes and it scrubs with the clock.
+
+### 17.1 What a player sees: three marks
+
+| Mark | Meaning | From |
+|---|---|---|
+| **Ink** | known: what it is, where it is | enough light to resolve it, or it is on their charts, or the GM revealed it |
+| **Dotted** ("something warm", "a radio source") | noticed, not identified: SV's half-open eye, "heard of" | enough light to detect, not to resolve |
+| **Faded, with a widening ring** | last seen: where it was, how long ago, and how far it could have gone since | a contact that went quiet. The ring grows from its last known speed and what its drive could do |
+
+Nothing else is drawn, and nothing leaks by absence (SV's rule). One soft ring round the crew's own ship shows "a craft like ours would be noticed out to here". It swells when they throttle up, which teaches the whole idea without a word.
+
+### 17.2 Making it just work
+
+1. **One switch per campaign, three positions: Off, Simple, Full.** Off: the table sees what the GM reveals by hand, as now. Simple: the default for any game with ships. Full: the same thing with the reasons shown. They are **one calculation**; the switch only changes how much is shown. No mode has different physics.
+2. **Every craft gets a sensor fit for free.** A default set of instruments from its tech level and size, as an advance like any other part. A GM who never opens a sensor still gets sensible fog. Fitting a better telescope is for those who care.
+3. **What a thing gives off is never set up.** It comes from the power flow: a burning torch is seen across the system, a coasting hull only close by, a station by its radiators. The GM changes what a ship *does*, and visibility follows.
+4. **"Why?" on any contact, both ways.** "Seen by its drive plume, in X-ray and infrared, by your main telescope." And on the GM's side for anything a seat cannot see: "Too cold: gives off 200 W, and they would need to be within 4,000 km." One line, in words.
+5. **Ping is an order, not a control panel.** "Ping with radar" finds what is close and cold, and tells everyone in range where you are. One button, with the cost stated on it. This fits "players never hand-pilot": it is an instruction to the ship.
+6. **Charts count.** Things on a crew's charts (stations, worlds, lanes) are known without being sensed. Buying a chart is SV's "Hand over".
+7. **The GM always wins.** A press of the eye overrides the physics either way, and stays as authored ink. Physics never un-reveals what the GM revealed.
+8. **Light delay, quietly.** A contact is drawn where its light says it was. In Simple that is just true and unremarked; in Full the card says "as seen 4 minutes ago".
+
+### 17.3 Keeping it cheap
+
+No heavy work for a click, so the sums run only when something changes: a drive starts or stops, a radar is switched, a leg ends, the clock is scrubbed. Each is one small sum per seat per object, from signatures the power ledger has already worked out. Between events nothing is computed; the faded ring grows by plain arithmetic.
+
+### 17.4 On the GM's side
+
+The chart stays in pencil and ink per SV. "See as: the Kestrel's crew" shows that crew's fog exactly. A run of contacts gained and lost is a list on the Run desk ("14:20 lost the freighter, drive off"), which is also what Minerva narrates from. Programs sense through the same fog (the record design already rules that), so a pirate that cannot see a coasting ship does not chase it: hiding works on computer-run ships with no extra rule.
+
+### 17.5 What it does not do
+
+No sensor operator mini-game, no electronic warfare, no jamming, no decoys in 4.0. A pack may add them later as parts on the ledger. Surface fog (what a landed party can see) is the same idea with terrain in the way, and waits for the surface work.
+
+### 17.6 Packages
+
+| Package | What | Suggested owner | Waits on |
+|---|---|---|---|
+| RK13 | The Flow view (rows of from, to, amount, kind) and the Power card on it, with the Nowhere band and the five readings | chart room thread, with the renderer for the ship card | RK9 |
+| RK14 | Default sensor fit per tech level; signatures from the ledger; the three rungs written as grants on events; the last-seen ring | light thread (`sse-sense`) and kernel thread (grants), on SV1 | RK9, RK11, SV1 |
+| RK15 | The three marks on the chart, the Off, Simple, Full switch, "Why?" both ways, Ping, the Run desk's contact list | chart room thread and the travel screens thread | RK14, SV2 |
+
+## 18. Questions for Alex (23 Nov, late)
+
+18. **A general Flow view**, with the Power card as its first use, that a world's energy budget, an element's journey and a habitat's air can use later. Recommended: yes. Build the Power card first and let the others follow when their owners want them.
+19. **Broken books drawn as a dashed band from "Nowhere"**, with one sentence saying how much. Recommended: yes; it is the clearest honesty mark we have.
+20. **Fog of war is the secrets ladder climbed by physics**: three marks on the ordinary chart (ink, dotted, faded with a ring), no sensor screen. Recommended: yes.
+21. **One campaign switch, Off, Simple, Full, defaulting to Simple** in any campaign that has ships, with a free default sensor fit per tech level. Recommended: yes. Say if you would rather it default to Off so nothing changes for a GM who never asked for it.
+22. **Ping as a single order with its cost stated**, and no jamming, decoys or operator game in 4.0. Recommended: yes.
