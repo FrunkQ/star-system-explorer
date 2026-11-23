@@ -49,7 +49,7 @@ try {
     // Lenses choose the fields; Science shows every one of them (Curious leads with four, in words).
     await depth(gm, "Science");
     const h0 = await hash();
-    const kicker = await gm.locator(".kicker").innerText();
+    const kicker = await gm.locator(".kicker").textContent();
 
     await gm.locator(".area-chart [role=button]", { hasText: TARN }).first().click();
     const tarn = gm.locator(".area-chart [role=button][aria-pressed=true]");
@@ -62,7 +62,7 @@ try {
     await choose("basic");
     assert.deepEqual(await fields(), ["Orbit", "Mass", "Surface"], "Basic: three headline facts");
     assert.match(await gm.locator(".area-chart [role=button][aria-pressed=true]").getAttribute("aria-label"), /^Tarn/, "selection kept");
-    assert.equal(await gm.locator(".kicker").innerText(), kicker, "time kept");
+    assert.equal(await gm.locator(".kicker").textContent(), kicker, "time kept");
     assert.equal(await hash(), h0, "switching lens leaves the state hash unchanged");
     assert.equal(await gm.locator(".area-chart text.dist").count(), 0, "Basic draws no distance rings");
     await shot(gm, "u9-basic");
