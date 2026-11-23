@@ -105,7 +105,7 @@
       {:else}
       {#if namesInPlay}
         <button type="button" class="names-open" aria-expanded={namesOpen} data-names-open onclick={() => (namesOpen = !namesOpen)}>{namesOpen ? "Hide names" : "Names ›"}</button>
-        {#if namesOpen}<NameCard session={ctx.session} address={subject.address} label={subject.label} {depth} onclose={() => (namesOpen = false)} />{/if}
+        {#if namesOpen}<NameCard session={ctx.session} workspace={ws} address={subject.address} label={subject.label} {depth} onclose={() => (namesOpen = false)} />{/if}
       {/if}
       {#if sentence}<p class="sentence" data-depth="curious">{sentence}</p>{/if}
       {#if depth === "engine"}<p class="address" data-depth="engine" title="This body's address in the universe">{subject.address}</p>{/if}
