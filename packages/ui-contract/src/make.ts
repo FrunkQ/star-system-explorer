@@ -518,6 +518,11 @@ export function sceneFromResolved(r: SystemResolved, title?: string): SystemScen
         if (s) out.push(f("surface_k", "Surface", s.t_surface_now_k, "K", "derived"));
       }
       const band = kind === "belt" && (!parent || parent === primary) ? beltBand(sma, num(a, "body.radius_inner"), num(a, "body.radius_outer")) : undefined;
+      // A belt round a world, not the star, is its ring: edges from the world's centre, and what it is made of.
+      const rin = num(a, "body.radius_inner");
+      const rout = num(a, "body.radius_outer");
+      const ring = kind === "belt" && parent && parent !== primary && rin !== undefined && rout !== undefined && rout > rin ? { inner_m: rin, outer_m: rout, tau: num(a, "ring.optical_depth") ?? null, albedo: num(a, "ring.albedo") ?? null } : undefined;
+      const tilt = num(a, "body.axial_tilt");
       return {
         address: a,
         kind,
@@ -525,6 +530,8 @@ export function sceneFromResolved(r: SystemResolved, title?: string): SystemScen
         subtitle: `${grown ? "Grown" : r.source === "v3" ? "Imported from V3" : "From the universe's facts"} · ${kind}${aged(a) ? " · aged by a kept look-ahead" : ""}${s?.regime_label ? ` · ${s.regime_label.toLowerCase()}` : ""}`,
         ...(a !== primary && parent ? { parent } : {}),
         ...(band ? { band_au: band, shape: v3BeltShape(name, band) } : a !== primary && sma !== undefined ? { orbit: { a_au: sma / AU_M, phase_deg: phase(i++) } } : {}),
+        ...(ring ? { ring } : {}),
+        ...(tilt !== undefined && kind !== "belt" ? { tilt_rad: tilt } : {}),
         facts: out,
         stamps: r.evidence
           ? [...(grown ? ["generated"] : r.source === "v3" ? ["imported"] : []), ...(classes(a).has("authored") ? ["authored"] : []), ...(classes(a).has("catalogued") ? ["catalogued"] : []), ...(classes(a).has("authored-impossible") ? ["authored", "impossible"] : []), ...(s?.speculative ? ["speculative"] : [])].filter((x, j, all) => all.indexOf(x) === j)

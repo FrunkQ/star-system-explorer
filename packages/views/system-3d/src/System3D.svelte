@@ -16,7 +16,7 @@
 -->
 <script lang="ts">
   import { onDestroy } from "svelte";
-  import { basis, drawLiveStar, flaresAt, magShape, placeMag, type FieldReadJson, type MagShape, thermalGrey, THERMAL_DECADES, turnAt, project, spotsOf, STAR_SECONDS_PER_SECOND, startGpu, tree, type Camera, type Gpu, type GpuLight, type LiveStar, type TrueTexture, type Vec3 } from "../../../renderer/src/index.ts";
+  import { basis, BELT_DUST, beltHaze, drawLiveStar, poleOf, ringProfile, flaresAt, magShape, placeMag, type FieldReadJson, type MagShape, thermalGrey, THERMAL_DECADES, turnAt, project, spotsOf, STAR_SECONDS_PER_SECOND, startGpu, tree, type Camera, type Gpu, type GpuLight, type LiveStar, type TrueTexture, type Vec3 } from "../../../renderer/src/index.ts";
   import { constant, SEEN_ELEVATION, type SeenFrom } from "../../../ui-contract/src/index.ts";
   import { bandLines, hasChildren, layout, layoutReal, shellDots, type Band3D, type Body3D } from "./bodies.ts";
 
@@ -318,6 +318,47 @@
     return out;
   }
 
+  // Rings in True (V10f): each ringed world's profile, worked out once per world and its rings. The ring material's
+  // colour is the world's own mean surface colour when its surface has been read, else a neutral grey: the ring data
+  // carries no colour yet (fudge register).
+  const ringCache = new Map<string, { sig: string; item: NonNullable<import("../../../renderer/src/index.ts").GpuItem["rings"]> | null; assumed: boolean }>();
+  function ringsFor(b: Body3D): NonNullable<import("../../../renderer/src/index.ts").GpuItem["rings"]> | undefined {
+    if (!b.rings?.length || !(b.radius_m && b.radius_m > 0)) return undefined;
+    const t = surfaces.get(b.id);
+    const sig = `${JSON.stringify(b.rings)}|${b.tilt_rad ?? ""}|${t ? "s" : "-"}`;
+    let e = ringCache.get(b.id);
+    if (!e || e.sig !== sig) {
+      const tint = t ? meanColour(t) : ([0.5, 0.5, 0.5] as [number, number, number]);
+      const p = ringProfile(b.rings, tint);
+      e = { sig, item: p ? { key: `${b.id}|${sig}`, inner: p.inner_m / b.radius_m, outer: p.outer_m / b.radius_m, normal: poleOf(b.tilt_rad), width: p.width, data: p.data } : null, assumed: p?.assumed ?? false };
+      ringCache.set(b.id, e);
+    }
+    return e.item ?? undefined;
+  }
+  /** A surface texture's mean colour, 0..1 linear-ish (sRGB bytes over 255; a tint, not a measurement). */
+  function meanColour(t: TrueTexture): [number, number, number] {
+    let r = 0;
+    let g = 0;
+    let bl = 0;
+    let n = 0;
+    for (let i = 0; i < t.data.length; i += 4 * 17) ((r += t.data[i]!), (g += t.data[i + 1]!), (bl += t.data[i + 2]!), n++);
+    return n ? [r / n / 255, g / n / 255, bl / n / 255] : [0.5, 0.5, 0.5];
+  }
+  // Belts in True: a haze of points between each disc belt's drawn edges, in the star's frame, as faint as starlight
+  // on dust allows a screen to show (fudge register: the count is a drawing's, not the belt's).
+  const BELT_POINTS = 1600;
+  const beltHazes = $derived(lay && centreId === root ? bands.filter((b) => b.shape === "disc").map((b) => ({ b, pts: beltHaze(Math.min(11.5, lay!.dist(b.a_in_m)), Math.min(11.5, lay!.dist(b.a_out_m)), 0.08, BELT_POINTS) })) : []);
+  const ringed = $derived(shown.filter((b) => b.rings?.length).map((b) => b.name));
+  const ringsAssumed = $derived(shown.some((b) => b.rings?.some((r) => r.tau === null || r.albedo === null)));
+  const ringNote = $derived(
+    [
+      ringed.length ? `Rings of ${ringed.join(", ")} from their edges, optical depth and albedo${ringsAssumed ? " (a ring with none on record is drawn as a middling one)" : ""}, in the world's equator.` : "",
+      beltHazes.length ? "Belts are a haze of points between their edges: a drawing, not their real numbers." : "",
+    ]
+      .filter(Boolean)
+      .join(" "),
+  );
+
   let canvas2d: HTMLCanvasElement | undefined = $state();
   $effect(() => {
     if (!lay || w === 0 || h === 0) return;
@@ -345,9 +386,12 @@
             const face = isStar && !mag && trueBand !== "infrared" ? faceFor(b, radius) : undefined;
             // Mag: the worlds dark under their fields, the star a dim grey (its own field is not drawn yet).
             const emit = mag ? (isStar ? 0.35 : magShapes.has(b.id) ? 0.18 : 0.08) : trueBand === "infrared" ? thermalGrey(b.t_k ?? 0, starK) : trueBand === "xray" && !isStar ? 0 : undefined;
-            return { id: b.id, rel: relOf(b.id), radius, colour: isStar ? starColour || colour(b) : faint, ring: b.mark?.ring ?? false, selected: b.id === selection, shines: isStar, ...(t ? { surface: { key: b.id, texture: t } } : {}), ...(face ? { face } : {}), ...(emit !== undefined ? { emit } : {}) };
+            const rings = !isStar && emit === undefined ? ringsFor(b) : undefined;
+            return { id: b.id, rel: relOf(b.id), radius, colour: isStar ? starColour || colour(b) : faint, ring: b.mark?.ring ?? false, selected: b.id === selection, shines: isStar, ...(t ? { surface: { key: b.id, texture: t } } : {}), ...(face ? { face } : {}), ...(emit !== undefined ? { emit } : {}), ...(rings ? { rings } : {}) };
           }),
           rings: [...(hud ? lay.placed.map((b) => ({ points: ringPoints(lay!.ring.get(b.id)!), colour: b.id === selection ? accent : faint })) : []), ...magRings(fieldOut, fieldIn, faint)],
+          // Belts as haze in visible light only: in the other bands they give off next to nothing a screen could show.
+          dots: trueBand === "visible" && !mag ? beltHazes.map(({ pts }) => ({ points: pts.map(rel), colour: BELT_DUST })) : [],
           forward: f,
           up: u,
           fovY: cam.fovY,
@@ -541,6 +585,7 @@
     {#if lay?.unplaced.length}<span>Position not known: {lay.unplaced.map((b) => b.name).join(", ")}.</span>{/if}
     <span>{realScale ? "Real scale: distances and sizes in proportion (a world smaller than a pixel shows as a point)" : "Distances on a log scale, sizes not to scale"}{distanceNote}. Drawn with {using === "gpu" ? reason : using === "canvas" ? `Canvas 2D (${reason})` : "…"}.</span>
     {#if isTrue && (using === "canvas" || trueNote)}<span data-true-note>{using === "canvas" ? "True needs a GPU: this device draws the chart's look." : trueNote}</span>{/if}
+    {#if isTrue && using === "gpu" && ringNote && trueBand === "visible" && !mag}<span data-true-rings={ringed.length} data-true-belts={beltHazes.length}>{ringNote}</span>{/if}
     {#if isTrue && bandNote && using === "gpu"}<span data-true-band={trueBand}>{bandNote}</span>{/if}
     {#if mag}<span data-true-band="mag" data-mag-worlds={magShapes.size}>{magNote}</span>{/if}
     {#if isTrue && star && using === "gpu"}<span data-star-live={flaringNow ? "flaring" : "quiet"} data-star-turn={turnAt(star, starT).toFixed(1)}>The star runs on its own clock, six hours a second: it turns on its spin, its spots go round with it{flaringNow ? ", and it is flaring now" : ""}.</span>{/if}
