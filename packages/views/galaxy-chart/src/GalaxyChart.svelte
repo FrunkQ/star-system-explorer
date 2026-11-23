@@ -7,6 +7,8 @@
 -->
 <script lang="ts">
   import { untrack } from "svelte";
+  import GalaxyScars from "./GalaxyScars.svelte";
+  import GalaxyEdgeOn from "./GalaxyEdgeOn.svelte";
   import { announcePlace, cellHalo, GROUP_WORDS, LAYER_WORDS, MORPHOLOGY_WORDS, NAMED_HALOES, armPath, cosmicAxis, dex, editWords, toggleRemoval, discFrame, epochTicks, greenAt, logCurve, ringAt, ringShades, sci, timesSun, type GalaxyChart, type GalaxyEdit, type Group, type Json, type RingLayer, type SystemScene, type ViewContext } from "../../../ui-contract/src/index.ts";
 
   let { ctx, params }: { ctx: ViewContext; scene: SystemScene; params: Record<string, Json> } = $props();
@@ -210,13 +212,15 @@
             {#each green.habitable as edge, i (i)}<circle class="greenedge" cx={f.cx} cy={f.cy} r={edge * f.k} />{/each}
           {/if}
           {#each chart.arms as a, i (i)}<path class="arm" d={armPath(a, f)} style="stroke-width: {1 + chart.arm_contrast * 4}" />{/each}
+          <GalaxyScars {chart} frame={f} />
           {#if chart.barred}<line class="barline" x1={f.cx - chart.disc_kpc * f.k} y1={f.cy} x2={f.cx + chart.disc_kpc * f.k} y2={f.cy} />{/if}
           <circle class="sun" cx={f.cx + chart.sun_radius_kpc * f.k} cy={f.cy} r="4"><title>At the Sun's distance from the centre, scaled to this disc</title></circle>
           {#if ring}<circle class="pick" cx={f.cx} cy={f.cy} r={ring.radius_kpc * f.k} />{/if}
           <circle class="core" cx={f.cx} cy={f.cy} r="3" />
         </svg>
+        <GalaxyEdgeOn {chart} width={W} />
         <p class="hint">
-          {chart.rings.length} rings out to {chart.rings.at(-1)!.outer_kpc.toFixed(0)} kpc, narrow near the centre and wider outside. {LAYER_WORDS[layer].legend}. Arms in ink; the green band{green?.habitable ? "" : " (none at this time)"} where simple life could start; the dot at the Sun's distance scaled to this disc. Pick a ring for its ledger.
+          {chart.rings.length} rings out to {chart.rings.at(-1)!.outer_kpc.toFixed(0)} kpc, narrow near the centre and wider outside. {LAYER_WORDS[layer].legend}. Arms in ink; the green band{green?.habitable ? "" : " (none at this time)"} where simple life could start; the dot at the Sun's distance scaled to this disc. {#if chart.assembly?.marks.length}The dashed outline, accent rings and knots are scars from passing and merging galaxies at this time.{" "}{/if}Pick a ring for its ledger.
         </p>
         <label class="time">Time
           <input type="range" min={Math.ceil(chart.t_start_gyr * 10) / 10} max={chart.now_gyr} step="0.1" value={chart.at_gyr} onchange={(e) => (at = Number(e.currentTarget.value))} aria-valuetext={gyr(chart.at_gyr)} data-time />

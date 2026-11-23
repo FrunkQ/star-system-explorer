@@ -54,6 +54,9 @@ try {
     assert.match(await gal.locator(".ledger h3").innerText(), /at the Sun's distance/);
     assert.match(await gal.locator(".ledger").innerText(), /Neutron-star mergers/);
     await gal.locator("[data-green]").waitFor({ timeout: 20000 });
+    // GH9: the scars its history left, over the face-on disc and edge-on below it.
+    assert.equal(await gal.locator("[data-scars] path.scar-edge").count(), 1, "the scarred outline");
+    assert.match(await gal.locator("[data-edge-on] figcaption").innerText(), /Edge-on, heights 5 times\. Scars now: .*(warped edge|ripples|thick disc)/);
     await shot(gm, "u6-galaxy");
 
     // Another ring: its ledger.
@@ -65,6 +68,7 @@ try {
     await gal.locator("[data-time]").fill("6");
     await gal.locator("[data-time]").dispatchEvent("change");
     await gm.waitForFunction(() => /At 6\.0 Gyr after the Big Bang/.test(document.querySelector(".gal .lede")?.textContent ?? ""), null, { timeout: 30000 });
+    await shot(gm, "gh9-galaxy-6gyr");
     // The dwarf.
     await gal.locator("[data-halo]").selectOption("dwarf");
     await gm.waitForFunction(() => window.__places.at(-1)?.id === "dwarf");
