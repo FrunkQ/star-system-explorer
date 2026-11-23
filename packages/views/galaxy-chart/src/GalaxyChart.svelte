@@ -9,10 +9,15 @@
   import { untrack } from "svelte";
   import GalaxyScars from "./GalaxyScars.svelte";
   import GalaxyEdgeOn from "./GalaxyEdgeOn.svelte";
+  import { Galaxy3D } from "../../galaxy-3d/src/index.ts";
+  import { GALAXY_CONTROLS } from "./controls.ts";
   import { markStrengthAt } from "../../../renderer/src/index.ts";
-  import { announcePlace, cellHalo, GROUP_WORDS, LAYER_WORDS, MORPHOLOGY_WORDS, NAMED_HALOES, armPath, cosmicAxis, dex, editWords, toggleRemoval, discFrame, epochTicks, greenAt, logCurve, ringAt, ringShades, sci, timesSun, type GalaxyChart, type GalaxyEdit, type GalaxyMark, type Group, type Json, type RingLayer, type SystemScene, type ViewContext } from "../../../ui-contract/src/index.ts";
+  import { announcePlace, cellHalo, GROUP_WORDS, LAYER_WORDS, MORPHOLOGY_WORDS, NAMED_HALOES, armPath, cosmicAxis, DEFAULT_VIEW, dex, viewOptions, editWords, toggleRemoval, discFrame, epochTicks, greenAt, logCurve, ringAt, ringShades, sci, timesSun, type GalaxyChart, type GalaxyEdit, type GalaxyMark, type Group, type Json, type RingLayer, type SystemScene, type ViewContext } from "../../../ui-contract/src/index.ts";
 
   let { ctx, params }: { ctx: ViewContext; scene: SystemScene; params: Record<string, Json> } = $props();
+  // The one set of view controls (V9t): Chart is the face-on diagram below; 3D and True turn the disc (Galaxy3D).
+  const shownView = $derived(viewOptions(GALAXY_CONTROLS, ctx.workspace.view ?? DEFAULT_VIEW).shown);
+  const turned = $derived(shownView.style === "3d" || shownView.style === "true");
   const first = untrack(() => ({ halo: String(params.halo ?? "milky-way-like"), layer: String(params.layer ?? "metals") }));
   // A named halo, or a catalogued halo's address picked on the cluster map (V9).
   type HaloKey = string;
@@ -234,6 +239,9 @@
 
     <div class="cols">
       <div class="disc">
+        {#if turned}
+          <div class="frame3d"><Galaxy3D {chart} look={shownView.style === "true" ? "true" : "3d"} band={shownView.band} seen={shownView.seen} hud={shownView.hud} onturned={() => ctx.workspace.turned?.()} /></div>
+        {:else}
         <svg viewBox="0 0 {W} {W}" role="img" aria-label="The galaxy face-on at {gyr(chart.at_gyr)}: {chart.rings.length} rings shaded by {LAYER_WORDS[layer].label.toLowerCase()}, {chart.arms.length} arms, the green band{green?.habitable ? ` from ${green.habitable[0].toFixed(1)} to ${green.habitable[1].toFixed(1)} kpc` : ' absent'}">
           {#each chart.rings as g, i (i)}
             <circle class="ring" cx={f.cx} cy={f.cy} r={((g.inner_kpc + g.outer_kpc) / 2) * f.k} stroke-width={Math.max(1, (g.outer_kpc - g.inner_kpc) * f.k)} style="stroke-opacity: {0.06 + shades[i]! * 0.6}" onclick={() => (picked = i)} role="presentation"><title>Ring {i + 1}: {g.radius_kpc.toFixed(1)} kpc</title></circle>
@@ -249,6 +257,7 @@
           {#if ring}<circle class="pick" cx={f.cx} cy={f.cy} r={ring.radius_kpc * f.k} />{/if}
           <circle class="core" cx={f.cx} cy={f.cy} r="3" />
         </svg>
+        {/if}
         <GalaxyEdgeOn {chart} width={W} />
         <p class="hint">
           {chart.rings.length} rings out to {chart.rings.at(-1)!.outer_kpc.toFixed(0)} kpc, narrow near the centre and wider outside. {LAYER_WORDS[layer].legend}. Arms in ink; the green band{green?.habitable ? "" : " (none at this time)"} where simple life could start; the dot at the Sun's distance scaled to this disc. {#if chart.assembly?.marks.length}The dashed outline, accent rings and knots are scars from passing and merging galaxies at this time.{" "}{/if}Pick a ring for its ledger.
@@ -395,6 +404,10 @@
 </div>
 
 <style>
+  .frame3d {
+    width: 100%;
+    height: min(62vh, 640px);
+  }
   .built .marks { margin: 4px 0 0; padding-left: 18px; }
   .built .marks li.faded { color: var(--sse-ink-muted); }
   .built summary { cursor: pointer; }
