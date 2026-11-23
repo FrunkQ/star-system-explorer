@@ -11,6 +11,8 @@
   import { openBrowserSession } from "../../ui-contract/src/host-browser.ts";
   import { createShare, type Share } from "./share.svelte.ts";
   import { clearStored, download, readStored, setAside, writeStored } from "./campaign-store.ts";
+  import YourData from "./YourData.svelte";
+  import { downloadText, opening as markOpening, restoreSetAside, setAsideText, unfinishedOpen, watchProblems, type DiagnosticState } from "./your-data.ts";
   import { checkCampaignSave, makeCampaignSave, saveFileName, savedEvents, type CampaignSave } from "../../ui-contract/src/index.ts";
   import SeatsPanel from "./SeatsPanel.svelte";
   import LensPanel from "./LensPanel.svelte";
@@ -186,6 +188,7 @@
   // Style documents (H8.9): checked for this device's measured tier.
   const styleHost = createStyles(() => [...REGISTRY, ...PLAYER_STACK] as never, () => session?.device()?.tier ?? "standard");
   let failure = $state<string | null>(null);
+  watchProblems();
   let status = $state({ kernel: "", tier: "", hash: "", stack: "", campaign: false });
   async function loadPacks(): Promise<unknown[]> {
     const packs = await Promise.all(stackDoc.packs.map(async (p) => (await fetch(new URL(p, document.baseURI))).json()));
@@ -223,20 +226,40 @@
   let keptNote = $state<string | null>(null);
   let savedAt = $state<string | null>(null);
   let saveProblem = $state<string | null>(null);
+  // A kept campaign that failed to open is set aside, never lost, and the recovery note offers it back (V3 gap 27).
+  let recovery = $state(false);
   async function reopenKept(s: ViewSession): Promise<Json | null> {
+    const stuck = unfinishedOpen();
+    if (stuck) {
+      setAside();
+      markOpening(false);
+      recovery = true;
+      keptNote = `Last time, opening the campaign kept in this browser did not finish (started ${new Date(stuck).toLocaleString("en-GB", { dateStyle: "medium", timeStyle: "short" })}). It is set aside, not lost, and a fresh campaign opened.`;
+      return null;
+    }
     const { save, problem } = readStored(ROOT);
     if (problem) {
       setAside();
-      keptNote = `The campaign kept in this browser could not be reopened (${problem}); it is set aside and a fresh campaign opened.`;
+      recovery = true;
+      keptNote = `The campaign kept in this browser could not be reopened (${problem}). It is set aside, not lost, and a fresh campaign opened.`;
       return null;
     }
     if (!save) return null;
+    markOpening(true);
+    try {
+      return await reopenSave(s, save);
+    } finally {
+      markOpening(false);
+    }
+  }
+  async function reopenSave(s: ViewSession, save: CampaignSave): Promise<Json | null> {
     if (save.stack?.added.length) await s.send({ kind: "stack_packs", packs: save.stack.added });
     if (save.stack?.campaign) await s.send({ kind: "adopt_physics", pack: save.stack.campaign, requests: [] });
     const im = await s.importChronicle(save.export);
     if (!im.ok) {
       setAside();
-      keptNote = `The campaign kept in this browser could not be reopened (${im.message}); it is set aside and a fresh campaign opened.`;
+      recovery = true;
+      keptNote = `The campaign kept in this browser could not be reopened (${im.message}). It is set aside, not lost, and a fresh campaign opened.`;
       if (save.stack) await s.send({ kind: "stack_packs", packs: [] }).then(() => s.send({ kind: "adopt_physics", pack: null, requests: [] }));
       return null;
     }
@@ -292,7 +315,24 @@
     const save = await currentSave();
     if (save) download(save, saveFileName(save.title, save.saved_at));
   }
+  async function diagnosticState(): Promise<DiagnosticState> {
+    const save = session ? await currentSave() : null;
+    return {
+      kernel: status.kernel,
+      tier: status.tier,
+      state_hash: status.hash,
+      stack_hash: status.stack,
+      campaign: { title: base.title, events: save ? savedEvents(save) : null, saved_at: savedAt },
+      notes: [failure, keptNote, saveProblem].filter((x): x is string => !!x),
+    };
+  }
   let campaignDialog: HTMLDialogElement | undefined = $state();
+  // Each opening reads Your data afresh (a save may have been set aside since the page loaded).
+  let campaignOpens = $state(0);
+  function openCampaign() {
+    campaignOpens++;
+    campaignDialog?.showModal();
+  }
   let offered = $state<{ save: CampaignSave | null; problems: string[]; name: string } | null>(null);
   let confirmFresh = $state(false);
   async function pickFile(e: Event) {
@@ -842,14 +882,14 @@
       if ("door" in a) {
         if (a.door === "sol") void openSol();
         else if (a.door === "grow") openMake("generate");
-        else if (a.door === "bring") campaignDialog?.showModal();
+        else if (a.door === "bring") openCampaign();
       } else if ("desk" in a) chooseDesk(a.desk);
       else if ("screen" in a) (toSystem(), go(a.screen));
       else if ("world" in a) (toWorld(someWorld()), (ws.screen = a.world));
       else if ("dialog" in a) {
         if (a.dialog === "ask") ((agentsOpen = true), agentsDialog?.showModal());
         else if (a.dialog === "grow") openMake("generate");
-        else if (a.dialog === "bring") campaignDialog?.showModal();
+        else if (a.dialog === "bring") openCampaign();
         else if (a.dialog === "share" && share) window.open(share.start(), "_blank", "noopener");
       } else if ("control" in a) document.querySelector<HTMLButtonElement>(a.control === "light" ? ".light .toggle" : ".sound .toggle")?.click();
       else if ("link" in a) window.open(a.link, "_blank", "noopener");
@@ -1286,7 +1326,7 @@
             <button type="button" data-more-paste onclick={pasteFromMenu}>Paste <kbd>Ctrl+V</kbd></button>
           {/if}
           <button type="button" onclick={() => ((moreOpen = false), toWorkshop())}>Workshop</button>
-          <button type="button" onclick={() => ((moreOpen = false), (offered = null), (confirmFresh = false), campaignDialog?.showModal())}>Campaign… <small>save, open, start fresh</small></button>
+          <button type="button" onclick={() => ((moreOpen = false), (offered = null), (confirmFresh = false), openCampaign())}>Campaign… <small>save, open, your data</small></button>
           <button type="button" onclick={() => ((moreOpen = false), openMake("import"))} title="Import a V3 save or grow a new system, and add it to the campaign">Make a system…</button>
           <button type="button" data-more-start onclick={() => ((moreOpen = false), (startOpen = true))}>Start sheet</button>
           <button type="button" aria-pressed={theme === "night-chart"} onclick={() => ((moreOpen = false), (theme = theme === "chart-room" ? "night-chart" : "chart-room"))}>Night chart <kbd>N</kbd></button>
@@ -1306,6 +1346,7 @@
     <main class="problem" role="alert">
       <h2>The kernel did not start</h2>
       <p>{failure}</p>
+      <p>Nothing kept in this browser has been changed. <button type="button" class="linkbtn" onclick={() => location.reload()}>Try again</button> · <button type="button" class="linkbtn" data-start-without onclick={() => (setAside(), location.reload())}>Start without the kept campaign</button> (it is set aside, not lost) · <button type="button" class="linkbtn" onclick={async () => downloadText(JSON.stringify({ kind: "sse4-diagnostic", failure, problems: [] }, null, 2), "sse4-diagnostic.json")}>Diagnostic file</button></p>
     </main>
   {:else if !session}
     <main class="problem" aria-busy="true"><p>Opening the chart…</p></main>
@@ -1374,7 +1415,7 @@
         </span>
       </div>
     </footer>
-    {#if keptNote}<p class="kept-note" role="status" data-kept-note>{keptNote} <button type="button" class="linkbtn" onclick={() => (keptNote = null)}>OK</button></p>{/if}
+    {#if keptNote}<p class="kept-note" role="status" data-kept-note>{keptNote}{#if recovery && setAsideText()}{" "}<button type="button" class="linkbtn" data-recover-try onclick={() => restoreSetAside() && location.reload()}>Try again</button> · <button type="button" class="linkbtn" onclick={() => downloadText(setAsideText() ?? "", "sse4-set-aside-campaign.json")}>Download it</button> ·{/if} <button type="button" class="linkbtn" onclick={() => (keptNote = null)}>{recovery ? "Carry on fresh" : "OK"}</button></p>{/if}
     <div class="status" aria-label="Session">
       <span>Seat: {session.seat.label}</span>
       <span class="kept">
@@ -1489,6 +1530,7 @@
   {:else}
     <p class="row"><button type="button" onclick={() => (confirmFresh = true)}>Start fresh…</button></p>
   {/if}
+  {#key campaignOpens}<YourData onbackup={saveFile} report={diagnosticState} />{/key}
   <form method="dialog"><button type="submit">Close</button></form>
 </dialog>
 
