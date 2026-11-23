@@ -12,7 +12,7 @@
 //!   doi:10.1093/mnras/staa4034; stripping from the outside in, Peñarrubia
 //!   et al. 2008, doi:10.1086/523686). Its stars start to leave only when
 //!   about nine tenths of its dark matter has gone (Peñarrubia et al. 2008),
-//!   fudge F45 for the shape after that.
+//!   fudge F46 for the shape after that.
 //! - **Gas stripping**: the host's hot gas pushes on the satellite's gas as
 //!   it moves (ram pressure ρ v²); once that beats the satellite's grip on
 //!   its gas, 2πG Σ_tot Σ_gas at its disc scale (Gunn and Gott 1972,
@@ -73,7 +73,7 @@ pub struct OrbitParams {
     pub table_kpc: [f64; 2],
     /// Tidal stripping rate: the mass outside the tidal radius goes on this
     /// many of the satellite's own dynamical times (SatGen's α = 0.55, a
-    /// fitted number, fudge F45).
+    /// fitted number, fudge F46).
     pub strip_alpha: f64,
     /// Stars start to leave once the bound dark matter falls below this
     /// share of its infall mass (Peñarrubia et al. 2008: about a tenth).
@@ -683,7 +683,7 @@ pub fn follow_with(host: &Host, b: &Body, t_to: f64, op: &OrbitParams, processes
     } else if dark_kept >= op.stars_leave_below {
         1.0
     } else {
-        // F45: below the threshold, the stars follow the dark matter down.
+        // F46: below the threshold, the stars follow the dark matter down.
         dark_kept / op.stars_leave_below
     };
     let r = m::sqrt(dot(x, x));
