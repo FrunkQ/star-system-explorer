@@ -1236,6 +1236,17 @@ pub enum Request {
         sheet: Option<String>,
         at_s: i64,
     },
+    /// The hex map's worlds (handoff 7A part 4): each mapped system
+    /// (`map.hex`) at or under `scope`, its main world read through the code
+    /// sheet (`sheet`, or the first in the stack) at `at_s`. Read only; GM
+    /// machine.
+    SectorMap {
+        scope: String,
+        #[serde(default)]
+        #[ts(optional)]
+        sheet: Option<String>,
+        at_s: i64,
+    },
     /// G2 for V9's cluster map: one halo cell (8 Mpc a side at pack
     /// defaults) of the open universe, its haloes biggest first down to
     /// `min_mass_msun` (default 1e10, the catalogue floor), at most `limit` (default 300), with
@@ -1701,6 +1712,7 @@ impl Request {
             Request::Codes { .. } => "codes",
             Request::ImportSector { .. } => "import_sector",
             Request::ExportSector { .. } => "export_sector",
+            Request::SectorMap { .. } => "sector_map",
             Request::HaloCell { .. } => "halo_cell",
             Request::StarCell { .. } => "star_cell",
             Request::SkyFromHere { .. } => "sky_from_here",
@@ -1994,6 +2006,11 @@ pub fn ops() -> Vec<OpInfo> {
         ),
         o(
             "export_sector",
+            Cost::Light,
+            "GM machine only; one code reading per mapped system",
+        ),
+        o(
+            "sector_map",
             Cost::Light,
             "GM machine only; one code reading per mapped system",
         ),
@@ -2795,6 +2812,14 @@ pub enum Response {
     SectorExport {
         text: String,
         written: u32,
+        skipped: Vec<String>,
+    },
+    /// `sector_map`: `{system, body, hex, name, sector, reading}` per mapped
+    /// system, by hex, and the systems skipped (no main world).
+    SectorMapped {
+        sheet: String,
+        #[ts(type = "unknown[]")]
+        worlds: Vec<serde_json::Value>,
         skipped: Vec<String>,
     },
     Error {

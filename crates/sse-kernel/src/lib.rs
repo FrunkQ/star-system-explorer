@@ -4739,6 +4739,35 @@ impl Kernel {
                     skipped,
                 }
             }
+            Request::SectorMap { scope, sheet, at_s } => {
+                let scope: Address = scope
+                    .parse()
+                    .map_err(|e| err("bad_address", format!("{e}")))?;
+                let sheet = match &sheet {
+                    Some(id) => self.codes.sheet(id).ok_or_else(|| {
+                        err(
+                            "unknown_sheet",
+                            format!("no code sheet {id:?} in the stack"),
+                        )
+                    })?,
+                    None => self.codes.sheets.first().ok_or_else(|| {
+                        err(
+                            "no_code_sheets",
+                            "the pack stack defines no code sheets (provides.other.code_sheets)",
+                        )
+                    })?,
+                };
+                let u = self
+                    .universe
+                    .as_ref()
+                    .ok_or_else(|| err("no_universe", "open a universe first"))?;
+                let (worlds, skipped) = sector_map_at(&self.codes, sheet, u, &scope, at_s);
+                Response::SectorMapped {
+                    sheet: sheet.id.clone(),
+                    worlds,
+                    skipped,
+                }
+            }
             Request::HaloCell {
                 cell,
                 min_mass_msun,
@@ -5108,16 +5137,28 @@ fn codes_at(
 /// `export_sector`: one world line per mapped system under `scope`. The
 /// file takes its sector name and abbreviation from the first system that
 /// has them (a scope spanning two sectors writes one file).
-fn export_at(
+/// One mapped system's main world, read through a code sheet.
+struct MappedWorld {
+    system: Address,
+    body: Address,
+    reading: sse_codes::Reading,
+    world: BTreeMap<String, Value>,
+    system_facts: BTreeMap<String, Value>,
+}
+
+/// Every mapped system (`map.hex`) at or under `scope` at `at_s`, each with
+/// its main world (the body carrying `provenance.code`, or tagged
+/// `main_world`) read through `sheet`; systems with no main world come back
+/// as skipped. In address order.
+fn mapped_at(
     codes: &sse_codes::Codes,
     sheet: &sse_codes::CodeSheet,
-    hints: &sse_codes::import::ImportHints,
     u: &Universe,
     scope: &Address,
     at_s: i64,
-) -> (sse_sector_io::SectorFile, Vec<String>) {
+) -> (Vec<MappedWorld>, Vec<String>) {
     let state = u.chronicle.state_at(UniverseTime::seconds(at_s));
-    let mut file = sse_sector_io::SectorFile::default();
+    let mut out = Vec::new();
     let mut skipped = Vec::new();
     for (sys, sf) in state
         .facts
@@ -5160,26 +5201,94 @@ fn export_at(
                 now_s: at_s,
             });
         }
-        let text = |k: &str| match sf.get(k) {
-            Some(Value::Text(t)) => Some(t.clone()),
-            _ => None,
-        };
-        file.name = file.name.take().or_else(|| text("map.sector"));
-        file.abbreviation = file.abbreviation.take().or_else(|| text("map.sector_abbr"));
         let Some(m) = main else {
             skipped.push(sys.to_string());
             continue;
         };
-        let r = codes.read(sheet, &bodies[m], Some(&bodies));
+        let reading = codes.read(sheet, &bodies[m], Some(&bodies));
+        out.push(MappedWorld {
+            system: sys.clone(),
+            body: bodies[m]
+                .address
+                .clone()
+                .expect("every body has its address"),
+            reading,
+            world: bodies[m].facts.clone(),
+            system_facts: sf.clone(),
+        });
+    }
+    (out, skipped)
+}
+
+fn export_at(
+    codes: &sse_codes::Codes,
+    sheet: &sse_codes::CodeSheet,
+    hints: &sse_codes::import::ImportHints,
+    u: &Universe,
+    scope: &Address,
+    at_s: i64,
+) -> (sse_sector_io::SectorFile, Vec<String>) {
+    let (mapped, skipped) = mapped_at(codes, sheet, u, scope, at_s);
+    let mut file = sse_sector_io::SectorFile::default();
+    let text = |f: &BTreeMap<String, Value>, k: &str| match f.get(k) {
+        Some(Value::Text(t)) => Some(t.clone()),
+        _ => None,
+    };
+    for w in &mapped {
+        file.name = file
+            .name
+            .take()
+            .or_else(|| text(&w.system_facts, "map.sector"));
+        file.abbreviation = file
+            .abbreviation
+            .take()
+            .or_else(|| text(&w.system_facts, "map.sector_abbr"));
         file.worlds.push(sse_codes::import::world_line(
             hints,
-            &r,
-            &bodies[m].facts,
-            sf,
+            &w.reading,
+            &w.world,
+            &w.system_facts,
         ));
     }
     file.worlds.sort_by(|a, b| a.hex.cmp(&b.hex));
     (file, skipped)
+}
+
+/// `sector_map`: each mapped system's main world for the hex map, sorted by
+/// hex: `{system, body, hex, name, sector, reading}`.
+fn sector_map_at(
+    codes: &sse_codes::Codes,
+    sheet: &sse_codes::CodeSheet,
+    u: &Universe,
+    scope: &Address,
+    at_s: i64,
+) -> (Vec<serde_json::Value>, Vec<String>) {
+    let (mapped, skipped) = mapped_at(codes, sheet, u, scope, at_s);
+    let text = |f: &BTreeMap<String, Value>, k: &str| match f.get(k) {
+        Some(Value::Text(t)) => t.clone(),
+        _ => String::new(),
+    };
+    let mut rows: Vec<(String, serde_json::Value)> = mapped
+        .iter()
+        .map(|w| {
+            let hex = text(&w.system_facts, "map.hex");
+            let mut name = text(&w.world, "name");
+            if name.is_empty() {
+                name = text(&w.system_facts, "name");
+            }
+            let row = serde_json::json!({
+                "system": w.system.to_string(),
+                "body": w.body.to_string(),
+                "hex": hex,
+                "name": name,
+                "sector": text(&w.system_facts, "map.sector"),
+                "reading": w.reading,
+            });
+            (hex, row)
+        })
+        .collect();
+    rows.sort_by(|a, b| a.0.cmp(&b.0));
+    (rows.into_iter().map(|(_, r)| r).collect(), skipped)
 }
 
 /// MP1c: the laws of the rescaled blocks a value rests on, while the
