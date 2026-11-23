@@ -2,7 +2,7 @@
 // device has no WebGPU). It is handed camera-relative positions only, already
 // narrowed from f64 (frames.ts), and draws with the camera at the origin, so
 // no large number ever reaches the GPU (rendering rule 3).
-import { AmbientLight, BufferGeometry, Color, DataTexture, DirectionalLight, Float32BufferAttribute, Line, LineBasicMaterial, LinearFilter, Mesh, MeshBasicMaterial, MeshStandardMaterial, PerspectiveCamera, PointLight, Points, PointsMaterial, RGBAFormat, Scene, SphereGeometry, Sprite, SpriteMaterial, SRGBColorSpace, TorusGeometry, Vector3 } from "three";
+import { AdditiveBlending, AmbientLight, BufferGeometry, DoubleSide, PlaneGeometry, Color, DataTexture, DirectionalLight, Float32BufferAttribute, Line, LineBasicMaterial, LinearFilter, Mesh, MeshBasicMaterial, MeshStandardMaterial, PerspectiveCamera, PointLight, Points, PointsMaterial, RGBAFormat, Scene, SphereGeometry, Sprite, SpriteMaterial, SRGBColorSpace, TorusGeometry, Vector3 } from "three";
 import { WebGPURenderer } from "three/webgpu";
 import type { Vec3 } from "./frames.ts";
 import type { TrueTexture } from "./true-look.ts";
@@ -47,9 +47,35 @@ export interface GpuDots {
   colour: string;
 }
 
+/**
+ * A flat picture lying in the xy plane (V9t: a galaxy's disc, one layer of its thickness), added to what is behind
+ * it as light. `heights` bends it: (n+1)² heights in display units over the square, row 0 at +y, for a warp.
+ */
+export interface GpuSheet {
+  key: string;
+  version: number;
+  texture: { width: number; data: Uint8ClampedArray };
+  /** Camera-relative centre. */
+  rel: Vec3;
+  /** Half the square's side, display units. */
+  half: number;
+  /** Brightness this layer adds, 0..1. */
+  weight: number;
+  heights?: { n: number; z: Float32Array; version: number };
+}
+
+/** A camera-facing glow added as light (a galaxy's bulge): a square picture `radius` from centre to edge. */
+export interface GpuGlow {
+  key: string;
+  version: number;
+  texture: { width: number; data: Uint8ClampedArray };
+  rel: Vec3;
+  radius: number;
+}
+
 export interface Gpu {
   readonly backend: "webgpu" | "webgl2";
-  draw(o: { items: GpuItem[]; rings: GpuRing[]; dots?: GpuDots[]; forward: Vec3; up: Vec3; fovY: number; width: number; height: number; ground: string; /** True look: worlds lit by their star against black space. */ light?: GpuLight }): void;
+  draw(o: { items: GpuItem[]; rings: GpuRing[]; dots?: GpuDots[]; sheets?: GpuSheet[]; glows?: GpuGlow[]; forward: Vec3; up: Vec3; fovY: number; width: number; height: number; ground: string; /** True look: worlds lit by their star against black space. */ light?: GpuLight; /** Black space with no light (a galaxy in True). */ space?: boolean }): void;
   dispose(): void;
 }
 
@@ -121,6 +147,60 @@ export async function createGpu(canvas: HTMLCanvasElement): Promise<Gpu | null> 
     const k = Math.round(Math.max(0, Math.min(1, v)) * 64);
     return greys.get(k) ?? (greys.set(k, new MeshBasicMaterial({ color: new Color().setScalar(k / 64) })), greys.get(k)!);
   };
+  // Pictures added as light (sheets and glows): a texture per key, remade when its version changes; rows turned over.
+  const pics = new Map<string, { tex: DataTexture; version: number; width: number }>();
+  const picture = (key: string, version: number, t: { width: number; data: Uint8ClampedArray }) => {
+    let e = pics.get(key);
+    if (e && e.width !== t.width) (e.tex.dispose(), pics.delete(key), (e = undefined));
+    if (!e) {
+      const tex = new DataTexture(new Uint8Array(t.width * t.width * 4), t.width, t.width, RGBAFormat);
+      tex.colorSpace = SRGBColorSpace;
+      tex.magFilter = LinearFilter;
+      tex.minFilter = LinearFilter;
+      e = { tex, version: -1, width: t.width };
+      pics.set(key, e);
+    }
+    if (e.version !== version) {
+      const n = t.width;
+      const dst = e.tex.image.data as Uint8Array;
+      for (let j = 0; j < n; j++) dst.set(t.data.subarray((n - 1 - j) * n * 4, (n - j) * n * 4), j * n * 4);
+      e.tex.needsUpdate = true;
+      e.version = version;
+    }
+    return e.tex;
+  };
+  const lightMats = new Map<string, MeshBasicMaterial>();
+  const lightMat = (key: string, tex: DataTexture, weight: number) => {
+    const k = `${key}|${Math.round(weight * 1000)}`;
+    let m = lightMats.get(k);
+    if (!m) {
+      m = new MeshBasicMaterial({ map: tex, transparent: true, blending: AdditiveBlending, depthWrite: false, side: DoubleSide, color: new Color().setScalar(weight) });
+      lightMats.set(k, m);
+    }
+    m.map = tex;
+    return m;
+  };
+  const glowMats = new Map<string, SpriteMaterial>();
+  const sheetGeoms = new Map<string, { geom: PlaneGeometry; version: number; half: number }>();
+  const sheetGeom = (s: GpuSheet) => {
+    const n = s.heights?.n ?? 1;
+    const key = `${s.key}|${n}`;
+    let e = sheetGeoms.get(key);
+    const version = s.heights?.version ?? 0;
+    if (e && (e.version !== version || e.half !== s.half)) (e.geom.dispose(), sheetGeoms.delete(key), (e = undefined));
+    if (!e) {
+      const geom = new PlaneGeometry(2 * s.half, 2 * s.half, n, n);
+      if (s.heights) {
+        // PlaneGeometry's vertices run row by row from +y down, as the heights do.
+        const pos = geom.getAttribute("position");
+        for (let v = 0; v < pos.count; v++) pos.setZ(v, s.heights.z[v] ?? 0);
+        pos.needsUpdate = true;
+      }
+      e = { geom, version, half: s.half };
+      sheetGeoms.set(key, e);
+    }
+    return e.geom;
+  };
   const torus = new TorusGeometry(1.8, 0.08, 6, 48);
   const mats = new Map<string, MeshBasicMaterial>();
   const lineMats = new Map<string, LineBasicMaterial>();
@@ -133,7 +213,7 @@ export async function createGpu(canvas: HTMLCanvasElement): Promise<Gpu | null> 
     draw(o) {
       scene.clear();
       // Space is black in the true look: a physical choice, not a theme colour.
-      scene.background = new Color(o.light ? 0x000000 : o.ground);
+      scene.background = new Color(o.light || o.space ? 0x000000 : o.ground);
       if (o.light) {
         // The star lights its worlds with no fall-off across the frame (the distances are drawn on a log scale);
         // a trace of ambient keeps a night side from vanishing against space.
@@ -173,6 +253,21 @@ export async function createGpu(canvas: HTMLCanvasElement): Promise<Gpu | null> 
         g.setAttribute("position", new Float32BufferAttribute(ring.points.flat(), 3));
         scene.add(new Line(g, lineMat(ring.colour)));
       }
+      for (const s of o.sheets ?? []) {
+        const m = new Mesh(sheetGeom(s), lightMat(s.key, picture(s.key, s.version, s.texture), s.weight));
+        m.position.set(s.rel[0], s.rel[1], s.rel[2]);
+        scene.add(m);
+      }
+      for (const g of o.glows ?? []) {
+        const tex = picture(g.key, g.version, g.texture);
+        let m = glowMats.get(g.key);
+        if (!m) glowMats.set(g.key, (m = new SpriteMaterial({ map: tex, transparent: true, blending: AdditiveBlending, depthWrite: false })));
+        m.map = tex;
+        const sp = new Sprite(m);
+        sp.position.set(g.rel[0], g.rel[1], g.rel[2]);
+        sp.scale.setScalar(2 * g.radius);
+        scene.add(sp);
+      }
       for (const d of o.dots ?? []) {
         const g = new BufferGeometry();
         g.setAttribute("position", new Float32BufferAttribute(d.points.flat(), 3));
@@ -197,6 +292,10 @@ export async function createGpu(canvas: HTMLCanvasElement): Promise<Gpu | null> 
       litMats.forEach((m) => m.dispose());
       mats.forEach((m) => m.dispose());
       greys.forEach((m) => m.dispose());
+      pics.forEach((e) => e.tex.dispose());
+      lightMats.forEach((m) => m.dispose());
+      glowMats.forEach((m) => m.dispose());
+      sheetGeoms.forEach((e) => e.geom.dispose());
       lineMats.forEach((m) => m.dispose());
       dotMats.forEach((m) => m.dispose());
       renderer.dispose();

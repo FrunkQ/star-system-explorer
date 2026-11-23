@@ -167,3 +167,48 @@ fn hooks_stack_with_the_traveller_and_universe_packs() {
     );
     assert_eq!(r["type"], "stack_loaded", "{r}");
 }
+
+#[test]
+fn world_hooks_read_off_sol_and_kestrel() {
+    let hooks = || stack(vec![pack("packs/world-hooks/pack.json")]);
+    let (mut k, sys) = sol_with(hooks());
+    let t = tags(&mut k, &sys, "gm");
+    let body = |n: &str| format!("{sys}/body:{n}");
+    // Venus: a backwards sun, a crushing surface and a furnace; its day
+    // lasts 243 days. Mars has thin air; Earth carries no hook at all.
+    for tag in [
+        "hook.backwards-sun",
+        "hook.crushing-air",
+        "hook.furnace",
+        "hook.long-night",
+    ] {
+        assert!(with(&t, tag).contains(&body("1")), "{tag}: {t:?}");
+    }
+    assert_eq!(with(&t, "hook.thin-air"), [body("3")]);
+    let earth = &t.iter().find(|(a, _)| *a == body("2")).unwrap().1;
+    assert!(earth.iter().all(|x| !x.starts_with("hook.")), "{earth:?}");
+    // Uranus rolls on its side; Mercury's orbit is wild, and a moon is never
+    // a world beside its sun.
+    assert!(with(&t, "hook.on-its-side").contains(&body("6")), "{t:?}");
+    assert!(with(&t, "hook.wild-orbit").contains(&body("0")), "{t:?}");
+    // The Moon is a featherweight; the Sun carries nothing.
+    assert!(with(&t, "hook.featherweight").contains(&body("2/body:0")));
+    assert!(t
+        .iter()
+        .filter(|(a, _)| a.ends_with("star:0"))
+        .all(|(_, ts)| ts.iter().all(|x| !x.starts_with("hook."))));
+
+    // Kestrel, in the chart room's names: the giant Vault's moons see it fill
+    // the sky; Hollow (61 K) is cold enough for oxygen rain; the inner world
+    // (0.21 au, a 1,180-hour day) is a long night under a sun-filled sky.
+    let mut k = kestrel_with(hooks());
+    let t = tags(&mut k, "u:kestrel/sys:1", "gm");
+    let kb = |n: &str| format!("u:kestrel/sys:1/body:{n}");
+    assert_eq!(
+        with(&t, "hook.giant-in-the-sky"),
+        [kb("4/body:0"), kb("4/body:1"), kb("4/body:2")]
+    );
+    assert_eq!(with(&t, "hook.oxygen-rain"), [kb("5")]);
+    assert_eq!(with(&t, "hook.long-night"), [kb("1")]);
+    assert!(with(&t, "hook.sun-filled-sky").is_empty(), "{t:?}");
+}
