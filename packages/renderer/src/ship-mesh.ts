@@ -39,6 +39,8 @@ export interface ShipMesh {
   bounds: [[number, number, number], [number, number, number]];
   /** The same for the modules alone (no radiators, no spine), for closing in on the ship itself. */
   hull_bounds: [[number, number, number], [number, number, number]];
+  /** The modules without the drive either, for an aerobraking pass, where the shield end is what matters. */
+  front_bounds: [[number, number, number], [number, number, number]];
 }
 
 class Builder {
@@ -112,6 +114,8 @@ export function shipMesh(l: ShipLayout, o: { segments: number; panel_m: number }
   const hi: [number, number, number] = [-Infinity, -Infinity, -Infinity];
   const hlo: [number, number, number] = [Infinity, Infinity, Infinity];
   const hhi: [number, number, number] = [-Infinity, -Infinity, -Infinity];
+  const flo: [number, number, number] = [Infinity, Infinity, Infinity];
+  const fhi: [number, number, number] = [-Infinity, -Infinity, -Infinity];
   for (const p of l.pieces) {
     const surface = SURFACE_OF[p.system];
     if (!surface) continue;
@@ -124,6 +128,7 @@ export function shipMesh(l: ShipLayout, o: { segments: number; panel_m: number }
         const v = b.p[k + d]!;
         (lo[d] = Math.min(lo[d]!, v)), (hi[d] = Math.max(hi[d]!, v));
         if (surface !== "radiators" && surface !== "spine") (hlo[d] = Math.min(hlo[d]!, v)), (hhi[d] = Math.max(hhi[d]!, v));
+        if (surface !== "radiators" && surface !== "spine" && surface !== "drive") (flo[d] = Math.min(flo[d]!, v)), (fhi[d] = Math.max(fhi[d]!, v));
       }
   }
   const surfaces: Partial<Record<Surface, SurfaceBuffers>> = {};
@@ -132,7 +137,7 @@ export function shipMesh(l: ShipLayout, o: { segments: number; panel_m: number }
     surfaces[k] = b.done();
     triangles += b.i.length / 3;
   }
-  return { surfaces, triangles, bounds: [lo, hi], hull_bounds: [hlo, hhi] };
+  return { surfaces, triangles, bounds: [lo, hi], hull_bounds: [hlo, hhi], front_bounds: [flo, fhi] };
 }
 
 export interface SurfaceLook {

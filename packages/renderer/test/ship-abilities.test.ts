@@ -6,7 +6,7 @@ import { test, before, after } from "node:test";
 import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 import { designShip, type DesignRules, type DesignShip, type ShipStyle } from "../src/ship-design.ts";
-import { fitAbilities, fittedChecks, outlineOf, type AbilityRules, type AskShipAtWorld } from "../src/ship-abilities.ts";
+import { fitAbilities, fittedChecks, outlineOf, passGlow, type AbilityRules, type AskShipAtWorld } from "../src/ship-abilities.ts";
 import { shipMesh } from "../src/ship-mesh.ts";
 import { constant } from "../../ui-contract/src/index.ts";
 import { shipViews } from "../src/ship-design.ts";
@@ -113,4 +113,20 @@ test("fitted parts appear in the plans and the model", async () => {
   const v = shipViews(l, [560, 220]);
   assert.ok(v.side.paths.some((p) => p.system === "wings"));
   assert.ok(v.top.callouts.some((c) => /^wings, \d+ m²$/.test(c.text)));
+});
+
+test("the pass glow: the shield face sits at radiative balance, the bow shock stands off per Billig", () => {
+  const eps = AB.shield_emissivity ?? 0.85;
+  for (const q of [2e5, 1e6, 5e6]) {
+    const g = passGlow(q, eps);
+    // Radiated equals absorbed: εσT⁴ = q.
+    const back = eps * constant("sigma_SB") * g.shield_k ** 4;
+    assert.ok(Math.abs(back - q) / q < 1e-9, `balance at ${q}`);
+    assert.ok(g.glow > 0 && g.glow <= 1);
+  }
+  assert.ok(passGlow(1e6, eps).shield_k > passGlow(2e5, eps).shield_k, "more heating, hotter face");
+  const g = passGlow(1e6, eps);
+  assert.equal(g.standoff_rn, 0.143);
+  assert.equal(g.shock_curve_rn, 1.143);
+  assert.equal(passGlow(0, eps).shield_k, 0);
 });

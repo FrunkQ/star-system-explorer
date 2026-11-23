@@ -19,6 +19,7 @@
     fit = "all",
     segments = 32,
     abilities,
+    pass,
     onchange,
   }: {
     ship: DesignShip;
@@ -31,6 +32,8 @@
     segments?: number;
     /** What its abilities fitted (renderer fitAbilities, run by the owner against the kernel) and the kernel's verdicts. */
     abilities?: FitResult;
+    /** An aerobraking pass at its hottest (renderer passGlow): opens on the 3D model, radiators folded, the shield glowing. */
+    pass?: { shield_k: number; standoff_rn: number; shock_curve_rn: number; glow: number };
     onchange?: (r: DesignRecipe) => void;
   } = $props();
 
@@ -38,8 +41,8 @@
   let styleId = $state(untrack(() => recipe.style));
   let seed = $state(untrack(() => recipe.seed));
   let overrides = $state<DesignOverrides>(untrack(() => recipe.overrides ?? {}));
-  let framing = $state<"all" | "hull">(untrack(() => fit));
-  let view = $state<ViewChoice>({ ...DEFAULT_VIEW });
+  let framing = $state<"all" | "hull">(untrack(() => (pass ? "hull" : fit)));
+  let view = $state<ViewChoice>(untrack(() => (pass ? { ...DEFAULT_VIEW, style: "3d", seen: "free" } : { ...DEFAULT_VIEW })));
   const W = 560;
   const H = 220;
   const style = $derived(styles[styleId] ?? Object.values(styles)[0]!);
@@ -65,7 +68,8 @@
     const c = canvas;
     const l = layout;
     let gone = false;
-    void startShip(c, l, style.skin, { segments, seed }).then((m) => {
+    const p = pass;
+    void startShip(c, l, style.skin, { segments, seed, ...(p ? { pass: p } : {}) }).then((m) => {
       if (gone) return m?.dispose();
       model = m;
       failed = !m;
@@ -78,7 +82,7 @@
     };
   });
   function redraw() {
-    model?.draw({ yaw_deg: yaw, pitch_deg: pitch, zoom, pan, frame: framing, width: W * 2, height: H * 2, ground: getComputedStyle(canvas!).getPropertyValue("--sse-chart-ground").trim() || "black" });
+    model?.draw({ yaw_deg: yaw, pitch_deg: pitch, zoom, pan, frame: pass && framing === "hull" ? "front" : framing, width: W * 2, height: H * 2, ground: getComputedStyle(canvas!).getPropertyValue("--sse-chart-ground").trim() || "black" });
   }
   $effect(() => {
     void [yaw, pitch, zoom, pan, framing];

@@ -54,7 +54,7 @@ export type { ShipMesh, SkinSpec, Surface, SurfaceBuffers, SurfaceLook } from ".
 export { brightnessAt, edgeOnPaths, faceOnPaths, heightAt, markStrengthAt, SCAR_SHAPES, scarsAt, scarWords } from "./galaxy-marks.ts";
 export type { DiscScars, Frame as ScarFrame, Ring as ScarRing, Ripple } from "./galaxy-marks.ts";
 // V3 gap item 14, stage 4: abilities (aerobraking, landing, skimming) size a shield, lift, legs, chute and scoop.
-export { fitAbilities, fittedChecks, outlineOf } from "./ship-abilities.ts";
+export { fitAbilities, fittedChecks, outlineOf, passGlow } from "./ship-abilities.ts";
 export type { Abilities, AbilityRules, AskShipAtWorld, FitResult, Fitted, ShieldKind } from "./ship-abilities.ts";
 export type { ShipView3D } from "./gpu-ship.ts";
 
