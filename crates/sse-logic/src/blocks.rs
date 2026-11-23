@@ -427,41 +427,13 @@ pub fn exponent(text: &str) -> Result<(i8, i8), String> {
 /// a formula and its blocks give the same bits and the same refusals. A
 /// result that is not a finite number is an error that names the step.
 pub fn number(op: Op, x: &[f64]) -> Result<f64, String> {
-    use Op::*;
-    let r = match op {
-        Add => x[0] + x[1],
-        Subtract => x[0] - x[1],
-        Multiply => x[0] * x[1],
-        Divide if x[1] == 0.0 => return Err("division by zero".into()),
-        Divide => x[0] / x[1],
-        Min => x[0].min(x[1]),
-        Max => x[0].max(x[1]),
-        Abs => x[0].abs(),
-        Clamp if x[1] > x[2] => return Err(format!("lo {} is above hi {}", x[1], x[2])),
-        Clamp => x[0].max(x[1]).min(x[2]),
-        Power => m::pow(x[0], x[1]),
-        Sqrt if x[0] < 0.0 => return Err(format!("the square root of {} (below zero)", x[0])),
-        Sqrt => m::sqrt(x[0]),
-        Exp => m::exp(x[0]),
-        Expm1 => m::expm1(x[0]),
-        Ln | Log10 if x[0] <= 0.0 => {
-            return Err(format!("the logarithm of {} (not above zero)", x[0]))
-        }
-        Ln => m::ln(x[0]),
-        Log10 => m::log10(x[0]),
-        Sin => m::sin(x[0]),
-        Cos => m::cos(x[0]),
-        Tan => m::tan(x[0]),
-        Atan2 => m::atan2(x[0], x[1]),
-        _ => return Err(format!("{} is not a number block", id_of(op))),
-    };
-    if !r.is_finite() {
-        return Err(format!(
-            "{} gives a number too large to hold (from {x:?})",
-            id_of(op)
-        ));
+    match sse_formula::Func::ALL
+        .iter()
+        .find(|f| crate::equation::op_of(**f) == op)
+    {
+        Some(f) => sse_formula::number(*f, x),
+        None => Err(format!("{} is not a number block", id_of(op))),
     }
-    Ok(r)
 }
 
 fn parse(op: Op, config: Option<&J>) -> Result<Cfg, String> {

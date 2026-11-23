@@ -49,18 +49,16 @@ fn access_labels_follow_the_facts_on_sol_and_kestrel() {
     let giants: Vec<String> = (4..=7).map(|n| format!("{sys}/body:{n}")).collect();
     // Gas skimming on the four giants only; never the Sun.
     assert_eq!(with(&t, "access.gas-skimming"), giants);
-    // Aerobraking: the catalogue gives Sol no surface pressures, so only the
-    // giants' envelopes, until a pressure is known.
-    assert_eq!(with(&t, "access.aerobraking"), giants);
-    let mars = format!("{sys}/body:3");
-    let r = send(
-        &mut k,
-        serde_json::json!({"op": "set_authored", "edit": {
-            "address": mars, "field": "atmosphere.surface_pressure", "value": 610.0, "occurred_at_s": 0}}),
+    // Aerobraking where the catalogue's surface pressure is at least 100 Pa
+    // (Venus, Earth, Mars at 636 Pa) and in the giants' envelopes; not
+    // Pluto (1.3 Pa) and not Mercury (no air).
+    let body = |n: u32| format!("{sys}/body:{n}");
+    let aero = with(&t, "access.aerobraking");
+    assert_eq!(aero, (1..=7).map(body).collect::<Vec<_>>(), "{aero:?}");
+    assert!(
+        !aero.contains(&body(8)) && !aero.contains(&body(0)),
+        "{aero:?}"
     );
-    assert_eq!(r["type"], "authored", "{r}");
-    let t = tags(&mut k, &sys, "gm");
-    assert!(with(&t, "access.aerobraking").contains(&mars));
     // Gravity assists from every planet, not the Moon, Pluto or Ceres.
     let assist = with(&t, "access.gravity-assist");
     assert_eq!(assist.len(), 8, "{assist:?}");

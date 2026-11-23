@@ -14,6 +14,7 @@ pub mod common;
 pub mod convection;
 pub mod extinction;
 pub mod field;
+pub mod formulas;
 pub mod heat;
 pub mod layers;
 pub mod light;
@@ -35,6 +36,7 @@ use std::collections::BTreeMap;
 pub fn atoms() -> Vec<Box<dyn sse_flow::Atom>> {
     star::atoms()
         .into_iter()
+        .chain(formulas::atoms())
         .chain(orbit::atoms())
         .chain(planet::atoms())
         .chain(climate::atoms())

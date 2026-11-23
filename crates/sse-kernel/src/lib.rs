@@ -31,11 +31,16 @@ mod nav;
 mod orbits;
 pub mod protocol;
 mod sky;
+#[cfg(test)]
+mod sol_tests;
 mod survey;
 mod systems;
 mod tags;
 #[cfg(test)]
 mod tags_tests;
+mod trust;
+#[cfg(test)]
+mod trust_tests;
 #[cfg(test)]
 mod universe_pack_tests;
 mod voyage;
@@ -451,6 +456,9 @@ pub struct Kernel {
     land: Vec<(String, sse_climate::Extra)>,
     /// Orbit-level climates by key (W7a): the `weather` op reuses them.
     climates: sse_climate::Cache,
+    /// ND6: each pack's sources, fudges and reproduction report, worked
+    /// out when the stack loaded.
+    reports: Vec<trust::PackReport>,
 }
 
 impl Default for Kernel {
@@ -588,6 +596,7 @@ impl Kernel {
             surveys: vec![],
             land: vec![],
             climates: sse_climate::Cache::new(8),
+            reports: vec![],
             jobs: BTreeMap::new(),
             next_job: 1,
             time: None,
@@ -2120,6 +2129,15 @@ impl Kernel {
                                 }
                             }
                         }
+                        // ND6: each pack's reproduction checks, run here on
+                        // the reader's machine; one outside its tolerance
+                        // refuses the stack with the numbers side by side.
+                        let mut reports = vec![];
+                        if problems.is_empty() {
+                            let (r, p) = trust::reports(&ms, &flows, &cx);
+                            reports = r;
+                            problems.extend(p);
+                        }
                         if !problems.is_empty() {
                             let issues: Vec<sse_pack::StackIssue> = problems
                                 .iter()
@@ -2161,6 +2179,7 @@ impl Kernel {
                             adopted,
                         };
                         self.stack = Some((stack, flows));
+                        self.reports = reports;
                         self.observe = observe;
                         self.codes = codes;
                         self.time = sse_time::epoch::TimeSettings::from_packs(&ms).ok();
@@ -5014,6 +5033,25 @@ impl Kernel {
                 parent.as_deref(),
                 &facts.unwrap_or_default(),
             )?,
+            Request::PackReports { pack } => {
+                let reports: Vec<&trust::PackReport> = self
+                    .reports
+                    .iter()
+                    .filter(|r| pack.as_deref().is_none_or(|p| p == r.pack))
+                    .collect();
+                if let Some(p) = &pack {
+                    if reports.is_empty() {
+                        return Err(err(
+                            "unknown_pack",
+                            format!("{p} is not in the stack in force"),
+                        ));
+                    }
+                }
+                Response::PackReports {
+                    reports: serde_json::to_value(reports)
+                        .map_err(|e| err("internal", e.to_string()))?,
+                }
+            }
             Request::ReadNames {
                 address,
                 at_s,

@@ -180,7 +180,7 @@ pub(crate) fn split_ref(r: &str) -> Option<(&str, &str)> {
     r.split_once('.')
 }
 
-pub(crate) fn param_si(units: &Units, v: &ParamValue, dim: Dimension) -> Result<f64, String> {
+pub fn param_si(units: &Units, v: &ParamValue, dim: Dimension) -> Result<f64, String> {
     match v {
         ParamValue::Si(x) => Ok(*x),
         ParamValue::InUnit { value, unit } => {
@@ -984,34 +984,56 @@ impl Flow {
         })
     }
 
+    /// Run the flow on one case's inputs, written as numbers in SI or with
+    /// a unit (golden cases, ND6 reproduction checks). Errors are lines in
+    /// words.
+    pub fn run_case(
+        &self,
+        cx: &Context,
+        given: &BTreeMap<String, ParamValue>,
+    ) -> Result<Evaluation<'_>, Vec<String>> {
+        let mut inputs = BTreeMap::new();
+        let mut fails = vec![];
+        for (i, fi) in self.doc.inputs.iter().enumerate() {
+            match given
+                .get(&fi.name)
+                .map(|v| param_si(cx.units, v, self.input_dims[i]))
+            {
+                Some(Ok(x)) => {
+                    inputs.insert(
+                        fi.name.clone(),
+                        InputValue {
+                            q: Quantity::si(x, self.input_dims[i]),
+                            source: SourceLabel::Authored,
+                        },
+                    );
+                }
+                Some(Err(e)) => fails.push(format!("input {}: {e}", fi.name)),
+                None => fails.push(format!("input {} missing", fi.name)),
+            }
+        }
+        if !fails.is_empty() {
+            // As before: a case with a bad input still runs, so its later
+            // lines say what the evaluation made of it.
+            return match self.eval(cx, &inputs) {
+                Ok(_) => Err(fails),
+                Err(e) => {
+                    fails.push(e.to_string());
+                    Err(fails)
+                }
+            };
+        }
+        self.eval(cx, &inputs).map_err(|e| vec![e.to_string()])
+    }
+
     /// Run the document's own golden cases. Returns failures as readable lines.
     pub fn run_tests(&self, cx: &Context) -> Vec<String> {
         let mut fails = Vec::new();
         for t in &self.doc.tests {
-            let mut inputs = BTreeMap::new();
-            for (i, fi) in self.doc.inputs.iter().enumerate() {
-                match t
-                    .inputs
-                    .get(&fi.name)
-                    .map(|v| param_si(cx.units, v, self.input_dims[i]))
-                {
-                    Some(Ok(x)) => {
-                        inputs.insert(
-                            fi.name.clone(),
-                            InputValue {
-                                q: Quantity::si(x, self.input_dims[i]),
-                                source: SourceLabel::Authored,
-                            },
-                        );
-                    }
-                    Some(Err(e)) => fails.push(format!("{}: input {}: {e}", t.name, fi.name)),
-                    None => fails.push(format!("{}: input {} missing", t.name, fi.name)),
-                }
-            }
-            let ev = match self.eval(cx, &inputs) {
+            let ev = match self.run_case(cx, &t.inputs) {
                 Ok(e) => e,
-                Err(e) => {
-                    fails.push(format!("{}: {e}", t.name));
+                Err(es) => {
+                    fails.extend(es.into_iter().map(|e| format!("{}: {e}", t.name)));
                     continue;
                 }
             };
