@@ -1,0 +1,91 @@
+{
+ "format": "sse.formulas/1",
+ "family": "sse.interior",
+ "about": "Physics blocks whose maths is a formula (ND3b): each keeps its id, ports and results, and its maths is the Equation below, with a name that says what happens.",
+ "atoms": [
+  {
+   "id": "sse.interior.hydrostatic_pressure",
+   "version": "1.0.0",
+   "cost": "trivial",
+   "inputs": [
+    {
+     "port": "density",
+     "letter": "rho"
+    },
+    {
+     "port": "g",
+     "letter": "g"
+    },
+    {
+     "port": "depth",
+     "letter": "h"
+    }
+   ],
+   "outputs": [
+    {
+     "port": "pressure",
+     "letter": "P"
+    }
+   ],
+   "positive": [
+    {
+     "port": "density",
+     "says": "density"
+    },
+    {
+     "port": "g",
+     "says": "gravity"
+    }
+   ],
+   "references": [
+    "Turcotte, D. L. and Schubert, G. 2014, Geodynamics, 3rd edn, Cambridge University Press, section 2.2. doi:10.1017/CBO9780511843877"
+   ],
+   "shown": "ΔP = ρ g h",
+   "equation": {
+    "name": "Pressure from the weight of a layer",
+    "formula": "P = rho * g * max(h, 0)",
+    "inputs": {
+     "rho": {
+      "kind": "layer.density",
+      "unit": "kg m-3",
+      "name": "density of the layer"
+     },
+     "g": {
+      "kind": "body.surface_gravity",
+      "unit": "m s-2",
+      "name": "gravity"
+     },
+     "h": {
+      "kind": "layer.thickness",
+      "unit": "m",
+      "name": "depth into the layer"
+     }
+    },
+    "outputs": {
+     "P": {
+      "kind": "layer.pressure_increase",
+      "unit": "Pa",
+      "name": "pressure added by the layer"
+     }
+    },
+    "source": {
+     "text": "Turcotte, D. L. and Schubert, G. 2014, Geodynamics, 3rd edn, Cambridge University Press",
+     "doi": "10.1017/CBO9780511843877",
+     "where": "section 2.2"
+    },
+    "explain": {
+     "curious": "The deeper you go, the more weight sits on top of you. Ten kilometres of water presses about a thousand times harder than the air.",
+     "science": "Pressure added by a layer of constant density under constant gravity. Fine for oceans and crusts much thinner than the radius; deep interiors need gravity that falls with depth."
+    },
+    "examples": [
+     {
+      "rho": 3300.0,
+      "g": 9.81,
+      "h": 100000.0,
+      "P": 3237300000.0
+     }
+    ]
+   }
+  }
+ ]
+}

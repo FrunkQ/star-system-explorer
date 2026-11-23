@@ -7,6 +7,8 @@ pub mod activity;
 pub mod air;
 pub mod climate;
 pub mod convection;
+pub mod heat;
+pub mod layers;
 pub mod nebula;
 pub mod tides;
 
@@ -16,6 +18,8 @@ pub fn atoms() -> Vec<Box<dyn sse_flow::Atom>> {
     all.extend(air::atoms());
     all.extend(climate::atoms());
     all.extend(convection::atoms());
+    all.extend(heat::atoms());
+    all.extend(layers::atoms());
     all.extend(nebula::atoms());
     all.extend(tides::atoms());
     all

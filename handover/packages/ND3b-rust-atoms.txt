@@ -17,16 +17,9 @@ sse.field.shue_flaring	not yet looked at
 sse.field.standoff_in_field	not yet looked at
 sse.heat.active_geology_lifetime	not yet looked at
 sse.heat.al26_planetesimal_heating	not yet looked at
-sse.heat.ice_shell_heat_flow	not yet looked at
-sse.heat.ice_shell_thickness	not yet looked at
-sse.heat.mantle_mass	not yet looked at
-sse.heat.radiogenic_heating	not yet looked at
-sse.heat.radiogenic_power	not yet looked at
-sse.heat.surface_heat_flow	not yet looked at
 sse.induction.response	not yet looked at
 sse.interior.core_mass_fraction	its fitted numbers (1.07, 0.21, 3.7) become Model number letters first
 sse.interior.core_radius	not yet looked at
-sse.interior.hydrostatic_pressure	not yet looked at
 sse.interior.rocky_radius	its fitted numbers (1.07, 0.21, 3.7) become Model number letters first
 sse.light.auroral_radio_power	not yet looked at
 sse.light.cyclotron_frequency	not yet looked at
@@ -39,7 +32,6 @@ sse.magnetic.dynamo_density	not yet looked at
 sse.magnetic.dynamo_field	not yet looked at
 sse.magnetic.surface_dipole	not yet looked at
 sse.nebula.ionising_photon_rate	iterates: a 400-term series for the photons above 13.6 eV
-sse.ocean.brine_freezing_point	not yet looked at
 sse.orbit.kepler_position	iterates: Kepler's equation solved by a fixed number of Newton steps
 sse.planet.radius_from_mass	a broken power law over a table of mass ranges
 sse.shield.air_dose	not yet looked at

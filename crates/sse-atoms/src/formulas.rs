@@ -51,6 +51,18 @@ pub const FILES: &[(&str, &str)] = &[
         "nebula",
         include_str!("../../../packs/base-physics/formulas/nebula.json"),
     ),
+    (
+        "heat",
+        include_str!("../../../packs/base-physics/formulas/heat.json"),
+    ),
+    (
+        "ocean",
+        include_str!("../../../packs/base-physics/formulas/ocean.json"),
+    ),
+    (
+        "interior",
+        include_str!("../../../packs/base-physics/formulas/interior.json"),
+    ),
 ];
 
 /// Read every formula file once: parsed, unit-checked and its worked
