@@ -25,6 +25,7 @@ pub mod reach;
 pub mod shield;
 pub mod star;
 #[cfg(test)]
+#[path = "test/mod.rs"]
 mod was;
 
 use sse_core::{Dimension, QuantityKind};

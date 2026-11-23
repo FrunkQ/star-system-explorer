@@ -60,7 +60,7 @@
     {
      "param": "pure_freezing_point",
      "letter": "T0",
-     "default": 273.15,
+     "default": "sheet/T0C",
      "range": [
       200.0,
       300.0
@@ -139,10 +139,6 @@
     "examples": [
      {
       "w": 0.035,
-      "i": 2.0,
-      "phi": 0.93,
-      "Ms": 0.05844,
-      "T0": 273.15,
       "T": 271.0028795310189
      }
     ]

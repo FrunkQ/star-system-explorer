@@ -45,7 +45,9 @@ struct PortEntry {
 struct ParamEntry {
     param: String,
     letter: String,
-    default: f64,
+    /// A number, or a sheet row (`sheet/T0C`) when the default is a figure
+    /// of nature.
+    default: J,
     range: (f64, f64),
     description: String,
 }
@@ -140,6 +142,13 @@ pub fn sheet_row(row: &str) -> Option<f64> {
         .map(|(_, v)| *v)
 }
 
+fn default_of(v: &J) -> Option<f64> {
+    match v {
+        J::String(row) => sheet_row(row),
+        other => other.as_f64(),
+    }
+}
+
 fn fixed(row: &str) -> Option<f64> {
     constant(row).map(|f| f()).or_else(|| sheet_row(row))
 }
@@ -199,6 +208,13 @@ impl FormulaAtom {
                     }
                     if let Some(v) = fixed(row) {
                         ex.insert(l.clone(), J::from(v));
+                    }
+                }
+                for q in &e.params {
+                    if !ex.contains_key(&q.letter) {
+                        if let Some(v) = default_of(&q.default) {
+                            ex.insert(q.letter.clone(), J::from(v));
+                        }
                     }
                 }
                 for (l, mo) in &e.models {
@@ -279,7 +295,9 @@ impl FormulaAtom {
             if parsed.in_scales[i] != 1.0 {
                 return Err(at(format!("setting {} is written in SI units", q.param)));
             }
-            if !(q.range.0 <= q.default && q.default <= q.range.1) {
+            let default = default_of(&q.default)
+                .ok_or_else(|| at(format!("setting {}'s default is a number or a sheet row", q.param)))?;
+            if !(q.range.0 <= default && default <= q.range.1) {
                 return Err(at(format!(
                     "setting {}'s default is outside its range",
                     q.param
@@ -289,7 +307,7 @@ impl FormulaAtom {
             params.push(sse_flow::decl::Param {
                 name: q.param.clone(),
                 dim: parsed.in_dims[i],
-                default: q.default,
+                default,
                 range: Some(q.range),
                 description: q.description.clone(),
             });
