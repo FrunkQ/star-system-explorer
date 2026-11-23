@@ -7,7 +7,7 @@ import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 import { LatheGeometry, Vector2 } from "three";
 import { bandOf, driveFacts, hullFromShip, hullProfile, narrateShip, shipPaths, type Propellants, type ShipRecord } from "../src/ship.ts";
-import { constant } from "../../ui-contract/src/sheet.ts";
+import { constant } from "../../ui-contract/src/index.ts";
 
 const pack = JSON.parse(readFileSync(new URL("../../../packs/base-nav/pack.json", import.meta.url), "utf8"));
 const SHIPS = pack.provides.other.nav.ships as Record<string, ShipRecord>;
@@ -72,6 +72,9 @@ test("each tank holds its propellant at the stored density, and the shield is it
   const r = torch.radius_m;
   near(torch.shield_t, (40 * 10 * (2 * Math.PI * r * r + 2 * Math.PI * r * r)) / 1e3, 1e-12, "shield mass");
   assert.ok(hullFromShip(SHIPS["jump-courier"], STORE).parts.some((p) => p.name.startsWith("jump fuel")));
+  // With the record's fuel shares, deuterium and helium-3 split by their reaction mass ratio.
+  const shared = hullFromShip({ ...SHIPS["fusion-torch"], fuel_shares: { deuterium: 2.014, "helium-3": 3.016 } }, STORE).parts;
+  near(shared.find((p) => p.name === "liquid deuterium")!.mass_t!, 1000 * (2.014 / 5.03), 1e-12, "deuterium share");
   const probe = hullFromShip(SHIPS["relativistic-probe"], STORE);
   assert.ok(probe.parts.some((p) => p.stand_in && p.name === "antimatter"));
   assert.match(probe.notes.join(" "), /antimatter is stored is not on the master data sheet/);

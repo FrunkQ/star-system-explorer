@@ -8,7 +8,7 @@
 //   delta-v = c tanh((v_e / c) ln(m0 / m1)), full-thrust burn t = (m0 - m1) / mdot.
 // Constants come from the master data sheet; densities come from the sheet's substance rows (phases.density_liquid),
 // passed in by the view, never typed here.
-import { constant } from "../../ui-contract/src/sheet.ts";
+import { constant } from "../../ui-contract/src/index.ts";
 
 /** A ship as NAV reads it (ui-contract NavShip), with the fuels the base-nav record lists. */
 export interface ShipRecord {
@@ -19,6 +19,8 @@ export interface ShipRecord {
   wet_t: number;
   dry_t: number;
   fuels?: string[];
+  /** Each fuel's share of the propellant mass (galaxy and travel thread's nav package). Missing: equal shares. */
+  fuel_shares?: Readonly<Record<string, number>>;
   shield_g_cm2?: number;
   jump?: { tank_t?: number };
 }
@@ -121,10 +123,13 @@ export function hullFromShip(s: ShipRecord, store: Propellants): Hull {
   const fuels = s.fuels?.length ? s.fuels : ["propellant"];
   const prop_t = Math.max(0, s.wet_t - s.dry_t);
   const tanks: { name: string; t: number; part?: PropellantPart }[] = [];
-  // Several fuels share the propellant mass equally unless the stored parts say otherwise (fudge register).
-  for (const f of fuels) {
+  // Fuels share the propellant mass as the record's fuel_shares say; without them, equally (fudge register).
+  const given = fuels.map((f) => s.fuel_shares?.[f] ?? 0);
+  const sum = given.reduce((a, x) => a + x, 0);
+  const shareOf = (i: number) => (sum > 0 && given.every((x) => x > 0) ? given[i]! / sum : 1 / fuels.length);
+  for (const [i, f] of fuels.entries()) {
     const parts = store[f];
-    const t = prop_t / fuels.length;
+    const t = prop_t * shareOf(i);
     if (!parts?.length) {
       tanks.push({ name: f, t });
       notes.push(`How ${f} is stored is not on the master data sheet yet, so its tank is drawn at a stand-in size.`);

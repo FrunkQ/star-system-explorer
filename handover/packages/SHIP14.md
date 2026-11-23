@@ -24,6 +24,14 @@ voyage (base-nav `ships`, ui-contract `NavShip`) plus the fuels it lists.
   Thrust 20 MN; the jet carries 20 TW and the tanks last 28 hours at full thrust, for 1,386 km/s of change in speed.
   Each hydrogen atom's weight of exhaust carries 21 keV: where the jet stops, that is enough for light up to X-rays."
 
+- **View** (`packages/views/ship`, `ShipPicture({ ship, fuels, height?, words? })`): the Chart side view and its
+  words in the theme's inks (`accent` plume, `ground-raised` hull, `ink` outline). The galaxy and travel thread
+  mounts it on the Voyages ship card and the route card's ship line.
+- **Fuel shares**: an optional `fuel_shares` on the record (the travel thread is adding it to base-nav, with cited
+  reasons) splits the propellant; without it, fuels share equally.
+- `constant`, `constantOf`, `constantIds` and `SHEET_PACK` are now exported from the ui-contract index, so packages
+  outside it reach the sheet through the public API.
+
 Densities are passed in by the view from the sheet's substance rows (`phases.density_liquid`); nothing is typed.
 
 ## Checks (`packages/renderer/test/ship.test.ts`, 5 tests, all six base-nav ships)
@@ -31,6 +39,7 @@ Densities are passed in by the view from the sheet's substance rows (`phases.den
 - Chemical ship: thrust, mass flow, jet power ½Fv, Δv = v_e ln(m0/m1) and burn time to 1e-9.
 - Antimatter probe: Δv is c tanh(...), below c and below the classical answer; momentum flux equals thrust; its
   exhaust can make gamma rays, the fusion torch's X-rays.
+- Fuel shares from the record split the mass (deuterium and helium-3 at 2.014 : 3.016).
 - Every tank holds its propellant at its density; parts run end to end; shield mass is σ × skin; the jump courier
   carries its jump tank; antimatter is a marked stand-in.
 - The outline builds a lathe as long and wide as the hull. Chart paths fit their frame; the words carry the facts.
