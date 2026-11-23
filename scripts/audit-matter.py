@@ -295,9 +295,16 @@ def scan():
         except UnicodeDecodeError:
             continue
         in_test = False
+        json_tests = None  # indent of an open "tests": [ array in a pack (a flow's own test cases)
         for n, line in enumerate(text.split("\n"), 1):
             if ext == ".rs" and re.match(r"\s*#\[cfg\(test\)\]", line):
                 in_test = True
+            if ext == ".json":
+                tm = re.match(r'(\s*)"tests": \[\s*$', line)
+                if json_tests is None and tm:
+                    json_tests = tm.group(1)
+                elif json_tests is not None and re.match(re.escape(json_tests) + r"\],?\s*$", line):
+                    json_tests = None
             if is_comment(line, ext):
                 continue
             code = line.split("//")[0] if ext in (".rs", ".ts", ".mjs", ".svelte") else line.split("#")[0] if ext == ".py" else line
@@ -312,7 +319,7 @@ def scan():
                 hit = match_quantity(abs(v), lit)
                 if hit:
                     qid, s, rel = hit
-                    test = in_test or "/tests/" in path or path.endswith("_tests.rs") or path.endswith("tests.rs") or "/test/" in path
+                    test = in_test or json_tests is not None or "/tests/" in path or path.endswith("_tests.rs") or path.endswith("tests.rs") or "/test/" in path
                     consts.append({"q": qid, "file": path, "line": n, "literal": lit, "value": abs(v), "scale": s, "test": test})
             if ext == ".rs":
                 cm = CONST_RE.match(line)
