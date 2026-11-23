@@ -1,0 +1,709 @@
+{
+ "format": "sse.formulas/1",
+ "family": "sse.light",
+ "about": "Physics blocks whose maths is a formula (ND3b): each keeps its id, ports and results, and its maths is the Equation below, with a name that says what happens.",
+ "atoms": [
+  {
+   "id": "sse.light.effective_temperature",
+   "version": "1.0.0",
+   "cost": "trivial",
+   "inputs": [
+    {
+     "port": "flux",
+     "letter": "S"
+    },
+    {
+     "port": "albedo",
+     "letter": "A"
+    },
+    {
+     "port": "internal_flux",
+     "letter": "F"
+    }
+   ],
+   "outputs": [
+    {
+     "port": "teff",
+     "letter": "T"
+    }
+   ],
+   "constants": {
+    "sigma": "sheet/sigma_SB"
+   },
+   "checks": [
+    {
+     "port": "flux",
+     "min": 0,
+     "finite": true,
+     "says": "insolation must be zero or more, got {}"
+    },
+    {
+     "port": "internal_flux",
+     "min": 0,
+     "finite": true,
+     "says": "internal heat flux must be zero or more, got {}"
+    }
+   ],
+   "references": [
+    "Pearl, J. C. and Conrath, B. J. 1991, The albedo, effective temperature, and energy balance of Neptune, as determined from Voyager data, J. Geophys. Res. 96, 18921 https://ui.adsabs.harvard.edu/abs/1991JGR....9618921P",
+    "Li, L. et al. 2018, Less absorbed solar energy and more internal heat for Jupiter, Nature Communications 9, 3709. doi:10.1038/s41467-018-06107-2",
+    "Williams, D. R., NASA Planetary Fact Sheets (Bond albedo, black-body temperature, dipole field strength), NSSDCA https://nssdc.gsfc.nasa.gov/planetary/factsheet/"
+   ],
+   "shown": "T_eff = ((1 − A) S / 4σ + q / σ)^¼",
+   "equation": {
+    "name": "Temperature a world glows at, with its own heat",
+    "formula": "t4 = (1 - A) * S / (4 * sigma) + F / sigma\nT = sqrt(sqrt(max(t4, 0)))",
+    "inputs": {
+     "S": {
+      "kind": "planet.insolation",
+      "unit": "W m-2",
+      "name": "starlight arriving on each square metre"
+     },
+     "A": {
+      "kind": "planet.bond_albedo",
+      "unit": "1",
+      "name": "share of light reflected (Bond albedo)",
+      "valid": [
+       0.0,
+       1.0
+      ]
+     },
+     "F": {
+      "kind": "body.internal_heat_flux",
+      "unit": "W m-2",
+      "name": "heat welling up from inside"
+     },
+     "sigma": {
+      "kind": "constant.sigma_SB",
+      "unit": "W m-2 K-4",
+      "name": "Stefan-Boltzmann constant"
+     }
+    },
+    "outputs": {
+     "T": {
+      "kind": "body.effective_temperature",
+      "unit": "K",
+      "name": "temperature the world glows at"
+     }
+    },
+    "source": {
+     "text": "Pearl, J. C. and Conrath, B. J. 1991, J. Geophys. Res. 96, 18921",
+     "url": "https://ui.adsabs.harvard.edu/abs/1991JGR....9618921P",
+     "where": "the energy balance"
+    },
+    "explain": {
+     "curious": "Everything glows by its own warmth. A world warmed only by its star glows at the bare-ball temperature; Jupiter, Saturn and Neptune glow warmer because they are still losing the heat they were born with.",
+     "science": "Global energy balance: absorbed starlight spread over the whole sphere plus internal heat flux, radiated as a black body. This is the effective temperature Voyager and Cassini measured for the giants (Neptune 59.3 K, Pearl and Conrath 1991). The same block gives a star its effective temperature when the internal flux is its own luminosity over its surface."
+    },
+    "examples": [
+     {
+      "S": 50.5,
+      "A": 0.34,
+      "F": 5.4,
+      "T": 124.74825167231504
+     }
+    ]
+   }
+  },
+  {
+   "id": "sse.light.reflected_area",
+   "version": "1.0.0",
+   "cost": "trivial",
+   "inputs": [
+    {
+     "port": "radius",
+     "letter": "R"
+    },
+    {
+     "port": "albedo",
+     "letter": "A"
+    },
+    {
+     "port": "source_radius",
+     "letter": "Rs"
+    },
+    {
+     "port": "distance",
+     "letter": "d"
+    }
+   ],
+   "outputs": [
+    {
+     "port": "area",
+     "letter": "X"
+    }
+   ],
+   "positive": [
+    {
+     "port": "radius",
+     "says": "radius"
+    },
+    {
+     "port": "distance",
+     "says": "distance"
+    }
+   ],
+   "checks": [
+    {
+     "port": "source_radius",
+     "min": 0,
+     "finite": true,
+     "says": "source radius must be zero or more, got {}"
+    }
+   ],
+   "references": [
+    "Williams, D. R., NASA Planetary Fact Sheets (Bond albedo, black-body temperature, dipole field strength), NSSDCA https://nssdc.gsfc.nasa.gov/planetary/factsheet/",
+    "Parker, E. N. 1958, Dynamics of the interplanetary gas and magnetic fields, ApJ 128, 664: the spiral interplanetary field. doi:10.1086/146579"
+   ],
+   "shown": "A_eff = A π R² (R* / d)²",
+   "equation": {
+    "name": "How much starlight a world sends back",
+    "formula": "X = A * pi * R * R * (Rs / d) * (Rs / d)",
+    "inputs": {
+     "R": {
+      "kind": "body.radius",
+      "unit": "m",
+      "name": "radius of the world"
+     },
+     "A": {
+      "kind": "planet.bond_albedo",
+      "unit": "1",
+      "name": "share of light reflected",
+      "valid": [
+       0.0,
+       1.0
+      ]
+     },
+     "Rs": {
+      "kind": "star.radius",
+      "unit": "m",
+      "name": "radius of the star"
+     },
+     "d": {
+      "kind": "orbit.semi_major_axis",
+      "unit": "m",
+      "name": "distance from the star"
+     }
+    },
+    "outputs": {
+     "X": {
+      "kind": "light.reflected_area",
+      "unit": "m2",
+      "name": "reflected light as an area of the star's face"
+     }
+    },
+    "source": {
+     "text": "Williams, D. R., NASA Planetary Fact Sheets, NSSDCA",
+     "url": "https://nssdc.gsfc.nasa.gov/planetary/factsheet/",
+     "where": "Bond albedo"
+    },
+    "explain": {
+     "curious": "Planets shine mostly by borrowed light. How much comes back depends on how big the world is, how pale it is, and how much of its star's light reaches it.",
+     "science": "A sphere of radius R at distance d intercepts πR² of a flux that, for a star of radius R* glowing at T*, is π B_λ(T*) (R*/d)². A fraction A (the Bond albedo) is sent back. Written as an effective area so the reflected spectrum is that area times the star's surface brightness. Grey albedo: real albedos vary with wavelength."
+    },
+    "examples": [
+     {
+      "R": 75000000.0,
+      "A": 0.34,
+      "Rs": 750000000.0,
+      "d": 780000000000.0,
+      "X": 5555007350.213093
+     }
+    ]
+   }
+  },
+  {
+   "id": "sse.light.stellar_wind",
+   "version": "1.0.0",
+   "cost": "trivial",
+   "inputs": [
+    {
+     "port": "distance",
+     "letter": "d"
+    }
+   ],
+   "outputs": [
+    {
+     "port": "density",
+     "letter": "rho"
+    },
+    {
+     "port": "speed",
+     "letter": "v"
+    },
+    {
+     "port": "field",
+     "letter": "B"
+    }
+   ],
+   "constants": {
+    "au": "sheet/au",
+    "m_p": "sheet/m_p",
+    "day": "sheet/day"
+   },
+   "models": {
+    "per_cc": {
+     "value": 1000000.0,
+     "grade": "derived",
+     "source": "definition"
+    },
+    "km": {
+     "value": 1000.0,
+     "grade": "derived",
+     "source": "definition"
+    },
+    "nT": {
+     "value": 1e-09,
+     "grade": "derived",
+     "source": "definition"
+    }
+   },
+   "params": [
+    {
+     "param": "n_1au",
+     "letter": "n1",
+     "default": 7.0,
+     "range": [
+      0.0,
+      1000000.0
+     ],
+     "description": "proton number density at 1 au, per cm³ (Sun: about 7)"
+    },
+    {
+     "param": "speed_km_s",
+     "letter": "vk",
+     "default": 440.0,
+     "range": [
+      10.0,
+      5000.0
+     ],
+     "description": "wind speed, km/s (Sun: about 440)"
+    },
+    {
+     "param": "radial_field_nt",
+     "letter": "Br",
+     "default": 3.5,
+     "range": [
+      0.0,
+      1000000.0
+     ],
+     "description": "radial field at 1 au, nT (Sun: about 3.5)"
+    },
+    {
+     "param": "spin_days",
+     "letter": "Pd",
+     "default": 25.38,
+     "range": [
+      0.01,
+      100000.0
+     ],
+     "description": "the star's rotation period, days (Sun: 25.38)"
+    }
+   ],
+   "positive": [
+    {
+     "port": "distance",
+     "says": "distance"
+    }
+   ],
+   "references": [
+    "Parker, E. N. 1958, Dynamics of the interplanetary gas and magnetic fields, ApJ 128, 664: the spiral interplanetary field. doi:10.1086/146579",
+    "Kivelson, M. G. and Russell, C. T. (eds) 1995, Introduction to Space Physics, Cambridge University Press, chapter 9 (magnetopause stand-off from pressure balance, Chapman-Ferraro compression factor 2) https://www.cambridge.org/9780521457149"
+   ],
+   "shown": "ρ = n₁ m_p (1 au / d)², B_⊥ = B_r1 (1 au / d)² Ω d / v",
+   "equation": {
+    "name": "The star's wind where the world is",
+    "formula": "x = au / d\nrho = n1 * per_cc * m_p * x * x\nv = vk * km\nomega = 2 * pi / (Pd * day)\nB = Br * nT * x * x * omega * d / v",
+    "inputs": {
+     "d": {
+      "kind": "orbit.semi_major_axis",
+      "unit": "m",
+      "name": "distance from the star"
+     },
+     "au": {
+      "kind": "constant.au",
+      "unit": "m",
+      "name": "astronomical unit"
+     },
+     "m_p": {
+      "kind": "constant.m_p",
+      "unit": "kg",
+      "name": "proton mass"
+     },
+     "day": {
+      "kind": "constant.day",
+      "unit": "s",
+      "name": "one day"
+     },
+     "per_cc": {
+      "kind": "model.per_cubic_centimetre",
+      "unit": "m-3",
+      "name": "one per cubic centimetre"
+     },
+     "km": {
+      "kind": "model.km_per_s",
+      "unit": "m/s",
+      "name": "one kilometre per second"
+     },
+     "nT": {
+      "kind": "model.nanotesla",
+      "unit": "T",
+      "name": "one nanotesla"
+     },
+     "n1": {
+      "kind": "model.wind_density_1au",
+      "unit": "1",
+      "name": "protons per cm³ at 1 au"
+     },
+     "vk": {
+      "kind": "model.wind_speed_km_s",
+      "unit": "1",
+      "name": "wind speed, km/s"
+     },
+     "Br": {
+      "kind": "model.wind_radial_field_nt",
+      "unit": "1",
+      "name": "radial field at 1 au, nT"
+     },
+     "Pd": {
+      "kind": "model.star_spin_days",
+      "unit": "1",
+      "name": "the star's spin, days"
+     }
+    },
+    "outputs": {
+     "rho": {
+      "kind": "wind.density",
+      "unit": "kg m-3",
+      "name": "density of the wind"
+     },
+     "v": {
+      "kind": "wind.speed",
+      "unit": "m/s",
+      "name": "speed of the wind"
+     },
+     "B": {
+      "kind": "wind.transverse_field",
+      "unit": "kg s-2 A-1",
+      "name": "sideways field the wind carries"
+     }
+    },
+    "source": {
+     "text": "Parker, E. N. 1958, ApJ 128, 664",
+     "doi": "10.1086/146579",
+     "where": "the spiral interplanetary field"
+    },
+    "explain": {
+     "curious": "Stars blow a thin wind of charged gas that carries their magnetic field out past the planets, wound into a spiral by the star's spin like water from a garden sprinkler.",
+     "science": "Parker's wind at constant speed: density falls as 1/d², the radial field as 1/d², and the azimuthal field B_φ = B_r Ω d / v as 1/d. B_φ is the part of the field across the flow that a magnetosphere intercepts. Defaults are solar values at 1 au; a star's own wind comes with stellar activity (O10)."
+    },
+    "examples": [
+     {
+      "d": 160000000000.0,
+      "rho": 1.0235443934386011e-20,
+      "v": 440000.0,
+      "B": 3.1880176520594543e-09
+     }
+    ]
+   }
+  },
+  {
+   "id": "sse.light.magnetopause_radius",
+   "version": "1.0.0",
+   "cost": "trivial",
+   "inputs": [
+    {
+     "port": "moment",
+     "letter": "M"
+    },
+    {
+     "port": "density",
+     "letter": "rho"
+    },
+    {
+     "port": "speed",
+     "letter": "v"
+    }
+   ],
+   "outputs": [
+    {
+     "port": "radius",
+     "letter": "R"
+    }
+   ],
+   "constants": {
+    "mu0": "sheet/mu0"
+   },
+   "checks": [
+    {
+     "port": "moment",
+     "min": 0,
+     "finite": true,
+     "says": "magnetic moment must be zero or more, got {}"
+    }
+   ],
+   "references": [
+    "Kivelson, M. G. and Russell, C. T. (eds) 1995, Introduction to Space Physics, Cambridge University Press, chapter 9 (magnetopause stand-off from pressure balance, Chapman-Ferraro compression factor 2) https://www.cambridge.org/9780521457149"
+   ],
+   "shown": "R_mp = (μ₀ M² / (8π² ρ v²))^⅙",
+   "equation": {
+    "name": "Where a world's magnetic field holds off the wind",
+    "formula": "ram = rho * v * v\nR = if M <= 0 or ram <= 0 then 0 else (mu0 * M * M / (8 * pi * pi * ram)) ^ (1/6)",
+    "inputs": {
+     "M": {
+      "kind": "body.magnetic_moment",
+      "unit": "m2 A",
+      "name": "strength of the world's magnet (dipole moment)"
+     },
+     "rho": {
+      "kind": "wind.density",
+      "unit": "kg m-3",
+      "name": "density of the wind"
+     },
+     "v": {
+      "kind": "wind.speed",
+      "unit": "m/s",
+      "name": "speed of the wind"
+     },
+     "mu0": {
+      "kind": "constant.mu0",
+      "unit": "N A-2",
+      "name": "magnetic constant"
+     }
+    },
+    "outputs": {
+     "R": {
+      "kind": "body.magnetopause_radius",
+      "unit": "m",
+      "name": "where the field holds the wind off"
+     }
+    },
+    "source": {
+     "text": "Kivelson, M. G. and Russell, C. T. (eds) 1995, Introduction to Space Physics, Cambridge University Press",
+     "url": "https://www.cambridge.org/9780521457149",
+     "where": "chapter 9, pressure balance"
+    },
+    "explain": {
+     "curious": "A magnetic field holds the wind off like a bubble. Earth's bubble reaches about ten Earth radii towards the Sun; a world with no field has none.",
+     "science": "Pressure balance at the nose: the dipole field there, doubled by the currents on the boundary (Chapman-Ferraro), against the wind's ram pressure. Ignores plasma inside the bubble, which inflates Jupiter's to about twice this."
+    },
+    "examples": [
+     {
+      "M": 7.7e+22,
+      "rho": 1.17e-20,
+      "v": 440000.0,
+      "R": 58877820.868042044
+     }
+    ]
+   }
+  },
+  {
+   "id": "sse.light.auroral_radio_power",
+   "version": "1.0.0",
+   "cost": "trivial",
+   "inputs": [
+    {
+     "port": "field",
+     "letter": "B"
+    },
+    {
+     "port": "speed",
+     "letter": "v"
+    },
+    {
+     "port": "magnetopause",
+     "letter": "Rmp"
+    },
+    {
+     "port": "radius",
+     "letter": "R"
+    }
+   ],
+   "outputs": [
+    {
+     "port": "power",
+     "letter": "P"
+    }
+   ],
+   "constants": {
+    "mu0": "sheet/mu0"
+   },
+   "params": [
+    {
+     "param": "efficiency",
+     "letter": "eta",
+     "default": 0.002,
+     "range": [
+      0.0,
+      1.0
+     ],
+     "description": "share of the intercepted magnetic power that comes out as radio (Zarka: about 2×10⁻³)"
+    }
+   ],
+   "references": [
+    "Zarka, P. 2007, Plasma interactions of exoplanets with their parent star and associated radio emissions, Planet. Space Sci. 55, 598: the radio-magnetic Bode's law, P_radio ≈ 2×10⁻³ of the incident magnetic power https://ui.adsabs.harvard.edu/abs/2007P%26SS...55..598Z",
+    "Zarka, P., Treumann, R. A., Ryabov, B. P. and Ryabov, V. B. 2001, Magnetically-driven planetary radio emissions and application to extrasolar planets, Astrophys. Space Sci. 277, 293. doi:10.1023/A:1012221527425"
+   ],
+   "shown": "P = η (B_⊥² / μ₀) v π R_mp²  if R_mp > R, else 0",
+   "equation": {
+    "name": "Radio roar of a world's aurorae",
+    "formula": "P = if Rmp <= R then 0 else eta * B * B / mu0 * v * pi * Rmp * Rmp",
+    "inputs": {
+     "B": {
+      "kind": "wind.transverse_field",
+      "unit": "kg s-2 A-1",
+      "name": "sideways field the wind carries"
+     },
+     "v": {
+      "kind": "wind.speed",
+      "unit": "m/s",
+      "name": "speed of the wind"
+     },
+     "Rmp": {
+      "kind": "body.magnetopause_radius",
+      "unit": "m",
+      "name": "where the field holds the wind off"
+     },
+     "R": {
+      "kind": "body.radius",
+      "unit": "m",
+      "name": "radius of the world"
+     },
+     "mu0": {
+      "kind": "constant.mu0",
+      "unit": "N A-2",
+      "name": "magnetic constant"
+     },
+     "eta": {
+      "kind": "model.radio_efficiency",
+      "unit": "1",
+      "name": "share that comes out as radio"
+     }
+    },
+    "outputs": {
+     "P": {
+      "kind": "radio.auroral_power",
+      "unit": "W",
+      "name": "radio power from the aurorae"
+     }
+    },
+    "source": {
+     "text": "Zarka, P. 2007, Planet. Space Sci. 55, 598",
+     "url": "https://ui.adsabs.harvard.edu/abs/2007P%26SS...55..598Z",
+     "where": "the radio-magnetic Bode's law"
+    },
+    "explain": {
+     "curious": "Magnetised planets are radio beacons. Jupiter is the loudest radio source in the sky after the Sun at long wavelengths; a world with no field is silent.",
+     "science": "The radio-magnetic Bode's law: every magnetised planet in the Solar System puts about the same small share of the wind's magnetic energy flux through its magnetosphere's cross-section into auroral radio. No magnetosphere (stand-off inside the body) gives no radio."
+    },
+    "examples": [
+     {
+      "B": 3e-09,
+      "v": 440000.0,
+      "Rmp": 60000000.0,
+      "R": 6800000.0,
+      "P": 71279999.9611969
+     }
+    ]
+   }
+  },
+  {
+   "id": "sse.light.cyclotron_frequency",
+   "version": "1.0.0",
+   "cost": "trivial",
+   "inputs": [
+    {
+     "port": "moment",
+     "letter": "M"
+    },
+    {
+     "port": "radius",
+     "letter": "R"
+    }
+   ],
+   "outputs": [
+    {
+     "port": "frequency",
+     "letter": "f"
+    }
+   ],
+   "constants": {
+    "mu0": "sheet/mu0",
+    "e": "sheet/e",
+    "m_e": "sheet/m_e"
+   },
+   "positive": [
+    {
+     "port": "radius",
+     "says": "radius"
+    }
+   ],
+   "checks": [
+    {
+     "port": "moment",
+     "min": 0,
+     "finite": true,
+     "says": "magnetic moment must be zero or more, got {}"
+    }
+   ],
+   "references": [
+    "Treumann, R. A. 2006, The electron-cyclotron maser for astrophysical application, Astron. Astrophys. Rev. 13, 229: auroral radio is emitted near the local electron gyrofrequency f = eB/(2π m_e). doi:10.1007/s00159-006-0001-y"
+   ],
+   "shown": "f_max = (e / 2π mₑ) μ₀ M / (2π R³)",
+   "equation": {
+    "name": "Highest note of a world's radio aurorae",
+    "formula": "B = mu0 * M / (2 * pi * R * R * R)\nf = e / m_e * B / (2 * pi)",
+    "inputs": {
+     "M": {
+      "kind": "body.magnetic_moment",
+      "unit": "m2 A",
+      "name": "strength of the world's magnet (dipole moment)"
+     },
+     "R": {
+      "kind": "body.radius",
+      "unit": "m",
+      "name": "radius of the world"
+     },
+     "mu0": {
+      "kind": "constant.mu0",
+      "unit": "N A-2",
+      "name": "magnetic constant"
+     },
+     "e": {
+      "kind": "constant.e",
+      "unit": "C",
+      "name": "elementary charge"
+     },
+     "m_e": {
+      "kind": "constant.m_e",
+      "unit": "kg",
+      "name": "electron mass"
+     }
+    },
+    "outputs": {
+     "f": {
+      "kind": "radio.max_frequency",
+      "unit": "s-1",
+      "name": "highest radio frequency of its aurorae"
+     }
+    },
+    "source": {
+     "text": "Treumann, R. A. 2006, Astron. Astrophys. Rev. 13, 229",
+     "doi": "10.1007/s00159-006-0001-y",
+     "where": "the electron-cyclotron maser"
+    },
+    "explain": {
+     "curious": "Auroral radio comes out at the rate electrons circle the field lines, so a stronger field means a higher top note. Jupiter's reaches tens of megahertz; Earth's only a few.",
+     "science": "Electron-cyclotron maser emission sits near the local gyrofrequency; its highest frequency is set by the strongest field, at the magnetic pole on the surface: B_pole = μ₀M / (2π R³) for a dipole. Real surface fields with multipoles go higher (Jupiter's 40 MHz cutoff)."
+    },
+    "examples": [
+     {
+      "M": 7.7e+22,
+      "R": 6800000.0,
+      "f": 1370993.8691628098
+     }
+    ]
+   }
+  }
+ ]
+}

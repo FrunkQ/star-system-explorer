@@ -1,4 +1,4 @@
-# ND3b part 1: physics blocks move from Rust into formula files
+# ND3b: physics blocks move from Rust into formula files
 
 Design: `handover/design/SSE4-equation-block-design.md`, sections 8A and 8B (accepted by Alex, 22 Nov).
 Sweep order (Alex, 23 Nov, coming-together Q7): typed copies first, then Equations crate by crate.
@@ -42,9 +42,43 @@ Owner: Build kernel resolve and rules.
 - `the_rust_blocks_list_matches_the_registry`, `formula_blocks_have_worded_names_and_keep_their_faces`.
 - Golden hashes unchanged: every golden test passes untouched, so no world changed.
 
-## Next (part 2 onward)
+## Part 2 (23 Nov): the families
 
-`cbrt` in the formula language, parameters as letters, then the next families by the ledger.
+71 blocks now live in 20 formula files under `packs/base-physics/formulas/`; 14 stay in Rust, each with
+its reason in `ND3b-rust-atoms.txt` (series, bisection, piecewise fits over mass tables, an answer of
+infinity, a rounded gas constant that MP22 swaps first).
+
+- **The formula language** gains `cbrt` (`math.cbrt`, also a maths block in sse-logic, unit rule root 3),
+  so `x^(1/3)` written as `cbrt(x)` keeps the Rust bits.
+- **Letters for settings, sheet rows and model numbers.** `params` become the block's settings (default a
+  number or a sheet row, `"sheet/T0C"`), `constants` may read any sheet row unedited (`sheet/<id>`), and
+  `models` carry fitted or measured numbers with their grade and source, like the Model number block.
+- **Own refusal words.** `positive` and `checks` (`min`, `max`, `over`, `below`, `above` another port,
+  `finite`) refuse with the old block's words, so a moved block refuses exactly where it did.
+- **Valid ranges** may give an end as a multiple of a sheet row (`"8 sheet/M_earth"`), so no figure of
+  nature is typed in a pack.
+- **`sse_atoms::decl_of` and `decls_of`** give a block's face by id; callers that took the faces from the
+  old Rust modules (activity indices, convection references, the light air list, the field block list)
+  read them from the registry.
+- **The old Rust** lives under `crates/sse-atoms/src/test/` as the `was` module, test only.
+  `moved_blocks_keep_their_faces_and_bits` checks every moved block against it: the same face, and the same
+  bits and refusal words over a grid of values with the settings at their defaults and range ends.
+- **Tools** (not in the repo, rebuildable from this log): a script read each Rust `Def`, wrote the formula
+  entry and worked examples, and moved the `Def` under `src/test/`. Worked examples use round numbers.
+
+- **The gas constant.** `sse_atoms::chem::R_GAS` was a rounded copy (8.314462618); it now is the sheet
+  row `R_gas` (N_A k_B, exact), and `sse.chem.reaction_gibbs` moved with it. Its ledger line is gone (423
+  left). Values move by about 1e-11 relative; no golden moved.
+
+### Golden
+
+The contract golden changes by one line, on purpose: the reach report lists the new `math.cbrt` block.
+No world changed: every other golden passes untouched.
+
+## Next
+
+The 15 blocks in the list, as the language grows: series and bisection (a fixed-step "repeat" form),
+fit tables as data (mass-range pieces, CCM89) and an unbounded answer.
 
 ## Timing (8B, within 5 %)
 

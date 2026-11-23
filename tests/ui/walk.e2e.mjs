@@ -139,7 +139,7 @@ async function walk(browser, vp) {
     await page.waitForFunction(() => Number(document.querySelector("[data-body] [data-tier]")?.getAttribute("data-frames") ?? 0) > 0, null, { timeout: 30000 });
   });
   await step("its magnetic field", async () => {
-    await tap(page.getByRole("button", { name: "Mag", exact: true }));
+    await tap(page.getByRole("group", { name: "Band" }).getByRole("button", { name: "Mag", exact: true }));
     await page.getByText(/Field \d+(\.\d+)? µT at the equator/).waitFor({ timeout: 20000 });
   });
   await step("cut it open", async () => {

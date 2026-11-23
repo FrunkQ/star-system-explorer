@@ -30,8 +30,6 @@ pub const PERMITTIVITY: D = D([-3, -1, 4, 2, 0, 0, 0]);
 
 const MAUK10: &str = "Mauk, B. H. and Fox, N. J. 2010, Electron radiation belts of the solar system, J. Geophys. Res. 115, A12220: the relativistic differential Kennel-Petschek limit, eq. 6 and appendix A; the most intense belts of Earth, Jupiter and Uranus sit near it with an E^-1 shape below about 1 MeV; anisotropy S = 0.3; Neptune 30 times below it at 1 MeV, Saturn over 20 below. doi:10.1029/2010JA015660";
 const SUMMERS09: &str = "Summers, D., Tang, R. and Thorne, R. M. 2009, Limit on stably trapped particle fluxes in planetary magnetospheres, J. Geophys. Res. 114, A10210: the relativistic growth rate used for the limit. doi:10.1029/2009JA014428";
-const KOCH59: &str = "Koch, H. W. and Motz, J. W. 1959, Bremsstrahlung cross-section formulas and related data, Rev. Mod. Phys. 31, 920: the share of an electron's energy radiated as it stops in a material of atomic number Z, Y = k Z T / (1 + k Z T) with k about 6e-4 per MeV. doi:10.1103/RevModPhys.31.920";
-const HUBBELL: &str = "Hubbell, J. H. and Seltzer, S. M. 2004, Tables of X-ray mass attenuation coefficients and mass energy-absorption coefficients (NIST Standard Reference Database 126): aluminium and liquid water. https://physics.nist.gov/PhysRefData/XrayMassCoef/";
 const KP66: &str = "Kennel, C. F. and Petschek, H. E. 1966, Limit on stably trapped particle fluxes, J. Geophys. Res. 71, 1: waves grow by about e^3 (5 per cent reflection) at the limit. doi:10.1029/JZ071i001p00001";
 const KATZ52: &str = "Katz, L. and Penfold, A. S. 1952, Range-energy relations for electrons and the determination of beta-ray end-point energies by absorption, Rev. Mod. Phys. 24, 28: R = 412 E^(1.265 - 0.0954 ln E) mg/cm² for 0.01 to 2.5 MeV, R = 530 E - 106 above. doi:10.1103/RevModPhys.24.28";
 
@@ -334,23 +332,6 @@ pub fn atoms() -> Vec<Box<dyn Atom>> {
             science: "The measured range of electrons in light materials, inverted: the energy an electron needs to cross a shield of given mass per area.",
             formula: "R = 412 E^(1.265 − 0.0954 ln E) mg/cm² (E ≤ 2.5 MeV), 530 E − 106 above",
             f: |i, _| Ok(vec![penetration_energy(i[0])]),
-        }
-        .build(),
-        Def {
-            id: "sse.belts.radiation_yield",
-            version: "1.0.0",
-            inputs: vec![port("energy", "belts.electron_energy_mev", D::NONE, None)],
-            outputs: vec![port("yield", "belts.radiation_yield", D::NONE, None)],
-            params: vec![
-                param("z", D::NONE, 13.0, (1.0, 92.0), "atomic number of the shield (aluminium 13)"),
-                param("k_per_mev", D::NONE, 6e-4, (3e-4, 1.2e-3), "Koch and Motz's constant, per MeV"),
-            ],
-            cost: CostClass::Trivial,
-            references: &[KOCH59, HUBBELL],
-            curious: "An electron stopped in metal shakes out X-rays as it slows. Behind a thick wall those X-rays, not the electrons, give most of the dose, so a heavier wall helps less than you would hope.",
-            science: "The radiation yield of a stopping electron, used with Kramers' flat thick-target spectrum and the NIST photon coefficients for the shield and tissue to give the bremsstrahlung dose behind a shield.",
-            formula: "Y = k Z T / (1 + k Z T)",
-            f: |i, p| Ok(vec![radiation_yield(i[0], p[0], p[1])]),
         }
         .build(),
     ]

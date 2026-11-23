@@ -18,6 +18,7 @@ import type { PlayerScene } from "./player-scene.ts";
 import { parentOf, subjectName } from "./player-scene.ts";
 import { playerSubjectOf } from "./mark.ts";
 import { constant } from "./sheet.ts";
+import type { ViewBand } from "./view-controls.ts";
 
 export const LIGHT_SCHEMA = "sse.band-recipe/0" as const;
 
@@ -390,6 +391,50 @@ export function readLight(raw: string | null, ids: readonly string[]): string {
   } catch {
     return SYMBOLS;
   }
+}
+
+/** Which instrument band (the view controls' Band, interface style rule 12) each light band is seen in. */
+const BAND_OF: Record<string, ViewBand> = { gamma: "xray", xray: "xray", uv: "ultraviolet", visible: "visible", "near-ir": "infrared", "mid-ir": "infrared", "far-ir": "infrared", mm: "radio", radio: "radio" };
+const bandAt = (m: number): ViewBand => BAND_OF[BANDS.find((b) => m >= b.from_m && m < b.to_m)?.id ?? "visible"] ?? "visible";
+function sourceAt(s: Source): number | null {
+  if ("band" in s) {
+    const b = BANDS.find((x) => x.id === s.band);
+    return b ? Math.sqrt(b.from_m * b.to_m) : null;
+  }
+  if ("line" in s) return LINES.find((l) => l.id === s.line)?.at_m ?? null;
+  return Math.sqrt(s.from_m * s.to_m);
+}
+
+/** The instrument band a recipe is seen in, read from the light its channels take (the eye and the chart's own colours
+ * are Visible). A recipe pack adds a band's palettes without code. */
+export function recipeBand(r: BandRecipe | null | undefined): ViewBand {
+  if (!r || r.mode === "eye" || !r.channels.length) return "visible";
+  const at = r.channels.flatMap((c) => {
+    const m = sourceAt(c.source);
+    return m === null ? [] : [m];
+  });
+  if (!at.length) return "visible";
+  const sorted = [...at].sort((a, b) => a - b);
+  return bandAt(sorted[Math.floor(sorted.length / 2)]!);
+}
+
+/** The choices for one band, as the Light panel lists them: the chart's own colours ("symbols") belong to Visible. */
+export function bandChoices(recipes: readonly BandRecipe[], band: ViewBand): string[] {
+  return [...(band === "visible" ? [SYMBOLS] : []), ...recipes.filter((r) => recipeBand(r) === band).map((r) => r.id)];
+}
+
+/** The bands some recipe paints, for a view's spec: Visible always. */
+export function paintedBands(recipes: readonly BandRecipe[]): ViewBand[] {
+  return ["visible", ...new Set(recipes.map(recipeBand).filter((b) => b !== "visible"))];
+}
+
+/** Choosing a band in the view controls: keep the light if it is already in that band, else the one last used there,
+ * else the band's first. */
+export function lightForBand(recipes: readonly BandRecipe[], band: ViewBand, current: string, last: Partial<Record<ViewBand, string>> = {}): string {
+  const ids = bandChoices(recipes, band);
+  if (ids.includes(current)) return current;
+  const kept = last[band];
+  return kept && ids.includes(kept) ? kept : (ids[0] ?? SYMBOLS);
 }
 
 // Adapters: the GM's system scene and a players' scene, as lit bodies.

@@ -70,9 +70,9 @@
     },
     "examples": [
      {
-      "M": 2e+30,
-      "m": 6e+24,
-      "total": 2.000006e+30
+      "M": 2.1e+30,
+      "m": 6.4e+24,
+      "total": 2.1000064e+30
      }
     ]
    }
@@ -152,9 +152,386 @@
     },
     "examples": [
      {
-      "a": 150000000000.0,
-      "M": 2e+30,
-      "P": 31593584.1373
+      "a": 160000000000.0,
+      "M": 2.1e+30,
+      "P": 33966228.98894869
+     }
+    ]
+   }
+  },
+  {
+   "id": "sse.orbit.semi_major_axis_from_period",
+   "version": "1.0.0",
+   "cost": "trivial",
+   "inputs": [
+    {
+     "port": "period",
+     "letter": "P"
+    },
+    {
+     "port": "total_mass",
+     "letter": "M"
+    }
+   ],
+   "outputs": [
+    {
+     "port": "semi_major_axis",
+     "letter": "a"
+    }
+   ],
+   "constants": {
+    "G": "constants/G"
+   },
+   "positive": [
+    {
+     "port": "period",
+     "says": "period"
+    },
+    {
+     "port": "total_mass",
+     "says": "total mass"
+    }
+   ],
+   "references": [
+    "Murray, C. D. and Dermott, S. F. 1999, Solar System Dynamics, Cambridge University Press. doi:10.1017/CBO9781139174817"
+   ],
+   "shown": "a = (G (M + m) P² / 4π²)^⅓",
+   "equation": {
+    "name": "Size of the orbit from the length of a year",
+    "formula": "a = cbrt(G * M * P * P / (4 * pi * pi))",
+    "inputs": {
+     "G": {
+      "kind": "constant.G",
+      "unit": "m3 kg-1 s-2",
+      "name": "gravitational constant"
+     },
+     "P": {
+      "kind": "orbit.period",
+      "unit": "s",
+      "name": "time for one orbit"
+     },
+     "M": {
+      "kind": "orbit.total_mass",
+      "unit": "kg",
+      "name": "combined mass of the pair"
+     }
+    },
+    "outputs": {
+     "a": {
+      "kind": "orbit.semi_major_axis",
+      "unit": "m",
+      "name": "size of the orbit"
+     }
+    },
+    "source": {
+     "text": "Murray, C. D. and Dermott, S. F. 1999, Solar System Dynamics, Cambridge University Press",
+     "doi": "10.1017/CBO9781139174817",
+     "where": "section 2.3, Kepler's third law"
+    },
+    "explain": {
+     "curious": "Knowing how long a year lasts and how heavy the star is tells you how far away the world must be.",
+     "science": "Kepler's third law solved for the semi-major axis. Used when a catalogue gives a period but not a distance."
+    },
+    "examples": [
+     {
+      "P": 34000000.0,
+      "M": 2.1e+30,
+      "a": 160106036043.0549
+     }
+    ]
+   }
+  },
+  {
+   "id": "sse.orbit.apsides",
+   "version": "1.0.0",
+   "cost": "trivial",
+   "inputs": [
+    {
+     "port": "semi_major_axis",
+     "letter": "a"
+    },
+    {
+     "port": "eccentricity",
+     "letter": "e"
+    }
+   ],
+   "outputs": [
+    {
+     "port": "periapsis",
+     "letter": "q"
+    },
+    {
+     "port": "apoapsis",
+     "letter": "Q"
+    }
+   ],
+   "checks": [
+    {
+     "port": "eccentricity",
+     "min": 0,
+     "below": 1,
+     "says": "eccentricity {} is not an ellipse"
+    }
+   ],
+   "references": [
+    "Murray, C. D. and Dermott, S. F. 1999, Solar System Dynamics, Cambridge University Press. doi:10.1017/CBO9781139174817"
+   ],
+   "shown": "q = a (1 - e), Q = a (1 + e)",
+   "equation": {
+    "name": "Closest and farthest points of the orbit",
+    "formula": "q = a * (1 - e)\nQ = a * (1 + e)",
+    "inputs": {
+     "a": {
+      "kind": "orbit.semi_major_axis",
+      "unit": "m",
+      "name": "size of the orbit"
+     },
+     "e": {
+      "kind": "orbit.eccentricity",
+      "unit": "1",
+      "name": "how stretched the orbit is",
+      "valid": [
+       0,
+       0.99
+      ]
+     }
+    },
+    "outputs": {
+     "q": {
+      "kind": "orbit.periapsis",
+      "unit": "m",
+      "name": "closest distance"
+     },
+     "Q": {
+      "kind": "orbit.apoapsis",
+      "unit": "m",
+      "name": "farthest distance"
+     }
+    },
+    "source": {
+     "text": "Murray, C. D. and Dermott, S. F. 1999, Solar System Dynamics, Cambridge University Press",
+     "doi": "10.1017/CBO9781139174817",
+     "where": "section 2.4, the ellipse"
+    },
+    "explain": {
+     "curious": "An oval orbit has a closest and a farthest point; the more stretched it is, the bigger the difference.",
+     "science": "Geometry of the ellipse: periapsis a(1 - e), apoapsis a(1 + e)."
+    },
+    "examples": [
+     {
+      "a": 160000000000.0,
+      "e": 0.25,
+      "q": 120000000000.0,
+      "Q": 200000000000.0
+     }
+    ]
+   }
+  },
+  {
+   "id": "sse.orbit.hill_radius",
+   "version": "1.0.0",
+   "cost": "trivial",
+   "inputs": [
+    {
+     "port": "semi_major_axis",
+     "letter": "a"
+    },
+    {
+     "port": "eccentricity",
+     "letter": "e"
+    },
+    {
+     "port": "body_mass",
+     "letter": "m"
+    },
+    {
+     "port": "host_mass",
+     "letter": "M"
+    }
+   ],
+   "outputs": [
+    {
+     "port": "hill_radius",
+     "letter": "r"
+    }
+   ],
+   "positive": [
+    {
+     "port": "semi_major_axis",
+     "says": "semi-major axis"
+    },
+    {
+     "port": "body_mass",
+     "says": "body mass"
+    },
+    {
+     "port": "host_mass",
+     "says": "host mass"
+    }
+   ],
+   "references": [
+    "Murray, C. D. and Dermott, S. F. 1999, Solar System Dynamics, Cambridge University Press. doi:10.1017/CBO9781139174817",
+    "Hamilton, D. P. and Burns, J. A. 1992, Icarus 96, 43 (periapsis form) https://ui.adsabs.harvard.edu/abs/1992Icar...96...43H"
+   ],
+   "shown": "r_H = a (1 - e) (m / 3M)^⅓",
+   "equation": {
+    "name": "Reach of a world's own gravity",
+    "formula": "r = a * (1 - e) * cbrt(m / (3 * M))",
+    "inputs": {
+     "a": {
+      "kind": "orbit.semi_major_axis",
+      "unit": "m",
+      "name": "size of the orbit"
+     },
+     "e": {
+      "kind": "orbit.eccentricity",
+      "unit": "1",
+      "name": "how stretched the orbit is",
+      "valid": [
+       0,
+       0.99
+      ]
+     },
+     "m": {
+      "kind": "body.mass",
+      "unit": "kg",
+      "name": "mass of the world"
+     },
+     "M": {
+      "kind": "orbit.host_mass",
+      "unit": "kg",
+      "name": "mass of what it circles"
+     }
+    },
+    "outputs": {
+     "r": {
+      "kind": "body.hill_radius",
+      "unit": "m",
+      "name": "radius of the bubble its gravity rules"
+     }
+    },
+    "source": {
+     "text": "Hamilton, D. P. and Burns, J. A. 1992, Icarus 96, 43",
+     "url": "https://ui.adsabs.harvard.edu/abs/1992Icar...96...43H",
+     "where": "periapsis form"
+    },
+    "explain": {
+     "curious": "Around every world is a bubble where its own gravity beats its star's. Moons have to live well inside it.",
+     "science": "Hill sphere radius at periapsis, for a body much lighter than its host. Prograde moons are long-term stable out to roughly a third to a half of it."
+    },
+    "examples": [
+     {
+      "a": 160000000000.0,
+      "e": 0.25,
+      "m": 6.4e+24,
+      "M": 2.1e+30,
+      "r": 1206315905.8066463
+     }
+    ]
+   }
+  },
+  {
+   "id": "sse.orbit.roche_limit",
+   "version": "1.0.0",
+   "cost": "trivial",
+   "inputs": [
+    {
+     "port": "primary_radius",
+     "letter": "R"
+    },
+    {
+     "port": "primary_density",
+     "letter": "rho_M"
+    },
+    {
+     "port": "satellite_density",
+     "letter": "rho_m"
+    }
+   ],
+   "outputs": [
+    {
+     "port": "roche_limit",
+     "letter": "d"
+    }
+   ],
+   "params": [
+    {
+     "param": "coefficient",
+     "letter": "k",
+     "default": 2.44,
+     "range": [
+      1.26,
+      2.46
+     ],
+     "description": "2.44 for a fluid satellite, 1.26 for a rigid one"
+    }
+   ],
+   "positive": [
+    {
+     "port": "primary_radius",
+     "says": "primary radius"
+    },
+    {
+     "port": "primary_density",
+     "says": "primary density"
+    },
+    {
+     "port": "satellite_density",
+     "says": "satellite density"
+    }
+   ],
+   "references": [
+    "Murray, C. D. and Dermott, S. F. 1999, Solar System Dynamics, Cambridge University Press. doi:10.1017/CBO9781139174817",
+    "Chandrasekhar, S. 1969, Ellipsoidal Figures of Equilibrium, Yale University Press (fluid coefficient)"
+   ],
+   "shown": "d = k R (ρ_M / ρ_m)^⅓",
+   "equation": {
+    "name": "Closest a moon can come before tides tear it apart",
+    "formula": "d = k * R * cbrt(rho_M / rho_m)",
+    "inputs": {
+     "k": {
+      "kind": "model.roche_coefficient",
+      "unit": "1",
+      "name": "how the moon holds together (fluid 2.44, rigid 1.26)"
+     },
+     "R": {
+      "kind": "body.radius",
+      "unit": "m",
+      "name": "radius of the big world"
+     },
+     "rho_M": {
+      "kind": "body.bulk_density",
+      "unit": "kg m-3",
+      "name": "density of the big world"
+     },
+     "rho_m": {
+      "kind": "satellite.bulk_density",
+      "unit": "kg m-3",
+      "name": "density of the moon"
+     }
+    },
+    "outputs": {
+     "d": {
+      "kind": "body.roche_limit",
+      "unit": "m",
+      "name": "closest safe distance"
+     }
+    },
+    "source": {
+     "text": "Murray, C. D. and Dermott, S. F. 1999, Solar System Dynamics, Cambridge University Press",
+     "doi": "10.1017/CBO9781139174817",
+     "where": "section 4.10, the Roche limit"
+    },
+    "explain": {
+     "curious": "Get too close to a big world and its tides pull a moon apart. That is where rings live.",
+     "science": "Roche limit for a satellite held together only by its own gravity. A fluid body breaks up at about 2.44 primary radii for equal densities, a rigid one at about 1.26."
+    },
+    "examples": [
+     {
+      "R": 6800000.0,
+      "rho_M": 5500.0,
+      "rho_m": 3000.0,
+      "d": 20307005.38438883
      }
     ]
    }

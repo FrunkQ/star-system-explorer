@@ -37,6 +37,59 @@ struct PortEntry {
     letter: String,
 }
 
+/// A setting of the block, read as a letter of its formula: a number that
+/// belongs to the model (a fitted coefficient, a default lifetime), shown
+/// and edited on the block like any other setting.
+#[derive(Clone, Debug, Deserialize)]
+#[serde(deny_unknown_fields)]
+struct ParamEntry {
+    param: String,
+    letter: String,
+    /// A number, or a sheet row (`sheet/T0C`) when the default is a figure
+    /// of nature.
+    default: J,
+    range: (f64, f64),
+    description: String,
+}
+
+/// A number that belongs to the model, not to nature (a fitted slope, a
+/// reference energy), as a letter of the formula with its grade and where
+/// it comes from (equation block design, Model number). It is shown with
+/// the formula; changing it is a change to the pack.
+#[derive(Clone, Debug, Deserialize)]
+#[serde(deny_unknown_fields)]
+struct ModelEntry {
+    value: f64,
+    /// `fitted`, `measured`, `derived` or `assumed`.
+    grade: String,
+    source: String,
+}
+
+/// A refusal kept from the old block in its own words: the port's value
+/// must be at least `min`, below `below` and at most `max` (each when
+/// given); `{}` in `says` is the value.
+#[derive(Clone, Debug, Deserialize)]
+#[serde(deny_unknown_fields)]
+struct Check {
+    port: String,
+    #[serde(default)]
+    min: Option<f64>,
+    /// The value must be above this (strictly).
+    #[serde(default)]
+    over: Option<f64>,
+    #[serde(default)]
+    below: Option<f64>,
+    #[serde(default)]
+    max: Option<f64>,
+    /// Refuse an infinity too.
+    #[serde(default)]
+    finite: bool,
+    /// The value must be above this other port's value.
+    #[serde(default)]
+    above: Option<String>,
+    says: String,
+}
+
 /// A refusal kept from the old block: the port must be above zero, and
 /// the refusal names it in these words ("semi-major axis must be positive").
 #[derive(Clone, Debug, Deserialize)]
@@ -56,9 +109,16 @@ struct Entry {
     outputs: Vec<PortEntry>,
     #[serde(default)]
     constants: BTreeMap<String, String>,
+    #[serde(default)]
+    params: Vec<ParamEntry>,
+    #[serde(default)]
+    models: BTreeMap<String, ModelEntry>,
     /// Checked in this order before the formula runs.
     #[serde(default)]
     positive: Vec<Positive>,
+    /// Checked after `positive`, in this order.
+    #[serde(default)]
+    checks: Vec<Check>,
     references: Vec<String>,
     /// The formula as the block's face has always shown it.
     shown: String,
@@ -70,6 +130,30 @@ struct Entry {
 enum From {
     Port(usize),
     Constant(fn() -> f64),
+    /// A sheet row at its unedited value (`sheet/<id>`): a measured
+    /// figure of nature that no what-if edits yet, such as the Sun's mass.
+    Sheet(f64),
+    Param(usize),
+}
+
+/// A sheet row's unedited value (`sheet/M_sun`), from the compiled sheet.
+pub fn sheet_row(row: &str) -> Option<f64> {
+    let id = row.strip_prefix("sheet/")?;
+    sse_core::sheet::ALL
+        .iter()
+        .find(|(k, _)| *k == id)
+        .map(|(_, v)| *v)
+}
+
+fn default_of(v: &J) -> Option<f64> {
+    match v {
+        J::String(row) => sheet_row(row),
+        other => other.as_f64(),
+    }
+}
+
+fn fixed(row: &str) -> Option<f64> {
+    constant(row).map(|f| f()).or_else(|| sheet_row(row))
 }
 
 /// The constants a formula may read, as the sheet names them, each the
@@ -95,6 +179,7 @@ pub struct FormulaAtom {
     out: Vec<usize>,
     /// Ports that must be above zero, with their names.
     positive: Vec<(usize, String)>,
+    checks: Vec<(usize, Option<usize>, Check)>,
 }
 
 fn port(p: &PortEntry, spec: &PortSpec, dim: sse_core::Dimension, scale: f64) -> Port {
@@ -124,9 +209,24 @@ impl FormulaAtom {
                             "a worked example types {l}; it reads {row} from the sheet"
                         )));
                     }
-                    if let Some(f) = constant(row) {
-                        ex.insert(l.clone(), J::from(f()));
+                    if let Some(v) = fixed(row) {
+                        ex.insert(l.clone(), J::from(v));
                     }
+                }
+                for q in &e.params {
+                    if !ex.contains_key(&q.letter) {
+                        if let Some(v) = default_of(&q.default) {
+                            ex.insert(q.letter.clone(), J::from(v));
+                        }
+                    }
+                }
+                for (l, mo) in &e.models {
+                    if ex.contains_key(l) {
+                        return Err(at(format!(
+                            "a worked example types {l}; it reads the model number"
+                        )));
+                    }
+                    ex.insert(l.clone(), J::from(mo.value));
                 }
             }
         }
@@ -166,10 +266,78 @@ impl FormulaAtom {
             if parsed.in_scales[i] != 1.0 {
                 return Err(at(format!("constant {l} is written in SI units")));
             }
-            let f = constant(row).ok_or_else(|| {
-                at(format!("{row} is not a constant a formula can read (constants/G, constants/c, constants/sigma_SB, constants/k_B)"))
+            from[i] = Some(match (constant(row), sheet_row(row)) {
+                (Some(f), _) => From::Constant(f),
+                (None, Some(v)) => From::Sheet(v),
+                _ => return Err(at(format!("{row} is not a constant a formula can read (constants/G, constants/c, constants/sigma_SB, constants/k_B, or a sheet row as sheet/<id>)"))),
+            });
+        }
+        for (l, mo) in &e.models {
+            let i = letter_in(l).ok_or_else(|| at(format!("model number {l} is no letter")))?;
+            if from[i].is_some() {
+                return Err(at(format!("letter {l} is fed twice")));
+            }
+            if parsed.in_scales[i] != 1.0 {
+                return Err(at(format!("model number {l} is written in SI units")));
+            }
+            if !["fitted", "measured", "derived", "assumed"].contains(&mo.grade.as_str()) {
+                return Err(at(format!(
+                    "model number {l}'s grade is fitted, measured, derived or assumed"
+                )));
+            }
+            if mo.source.trim().is_empty() {
+                return Err(at(format!("model number {l} says where it comes from")));
+            }
+            from[i] = Some(From::Sheet(mo.value));
+        }
+        let mut params = vec![];
+        for (k, q) in e.params.iter().enumerate() {
+            let i = letter_in(&q.letter)
+                .ok_or_else(|| at(format!("setting {} names no letter {}", q.param, q.letter)))?;
+            if from[i].is_some() {
+                return Err(at(format!("letter {} is fed twice", q.letter)));
+            }
+            if parsed.in_scales[i] != 1.0 {
+                return Err(at(format!("setting {} is written in SI units", q.param)));
+            }
+            let default = default_of(&q.default).ok_or_else(|| {
+                at(format!(
+                    "setting {}'s default is a number or a sheet row",
+                    q.param
+                ))
             })?;
-            from[i] = Some(From::Constant(f));
+            if !(q.range.0 <= default && default <= q.range.1) {
+                return Err(at(format!(
+                    "setting {}'s default is outside its range",
+                    q.param
+                )));
+            }
+            from[i] = Some(From::Param(k));
+            params.push(sse_flow::decl::Param {
+                name: q.param.clone(),
+                dim: parsed.in_dims[i],
+                default,
+                range: Some(q.range),
+                description: q.description.clone(),
+            });
+        }
+        let mut checks = vec![];
+        for c in &e.checks {
+            let k = e
+                .inputs
+                .iter()
+                .position(|p| p.port == c.port)
+                .ok_or_else(|| at(format!("a check names no port {}", c.port)))?;
+            let other = match &c.above {
+                None => None,
+                Some(o) => Some(
+                    e.inputs
+                        .iter()
+                        .position(|p| p.port == *o)
+                        .ok_or_else(|| at(format!("a check names no port {o}")))?,
+                ),
+            };
+            checks.push((k, other, c.clone()));
         }
         let from: Vec<From> = from
             .into_iter()
@@ -202,7 +370,7 @@ impl FormulaAtom {
                 version: e.version.clone(),
                 inputs,
                 outputs,
-                params: vec![],
+                params,
                 cost_class: e.cost,
                 references: e.references.iter().map(|s| Reference::parse(s)).collect(),
                 explain,
@@ -213,6 +381,7 @@ impl FormulaAtom {
             from,
             out,
             positive,
+            checks,
         })
     }
 
@@ -233,7 +402,7 @@ impl Atom for FormulaAtom {
     fn decl(&self) -> &AtomDecl {
         &self.decl
     }
-    fn eval(&self, inputs: &[f64], _: &[f64]) -> Result<Vec<f64>, AtomError> {
+    fn eval(&self, inputs: &[f64], params: &[f64]) -> Result<Vec<f64>, AtomError> {
         for (k, what) in &self.positive {
             let x = inputs[*k];
             if x > 0.0 {
@@ -241,12 +410,31 @@ impl Atom for FormulaAtom {
             }
             return Err(AtomError(format!("{what} must be positive, got {x}")));
         }
+        for (k, other, c) in &self.checks {
+            let x = inputs[*k];
+            if let Some(o) = other {
+                if x > inputs[*o] {
+                    continue;
+                }
+                return Err(AtomError(c.says.replacen("{}", &format!("{x}"), 1)));
+            }
+            let ok = c.min.is_none_or(|m| x >= m)
+                && c.over.is_none_or(|m| x > m)
+                && c.below.is_none_or(|b| x < b)
+                && c.max.is_none_or(|m| x <= m)
+                && (!c.finite || x.is_finite());
+            if !ok {
+                return Err(AtomError(c.says.replacen("{}", &format!("{x}"), 1)));
+            }
+        }
         let x: Vec<f64> = self
             .from
             .iter()
             .map(|f| match f {
                 From::Port(k) => inputs[*k],
                 From::Constant(c) => c(),
+                From::Sheet(v) => *v,
+                From::Param(k) => params[*k],
             })
             .collect();
         let nums = self

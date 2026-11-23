@@ -76,6 +76,7 @@ pub enum Op {
     Const,
     Power,
     Sqrt,
+    Cbrt,
     Exp,
     Expm1,
     Ln,
@@ -132,6 +133,7 @@ const OPS: &[(Op, &str, &str, &str, &str)] = &[
     (Op::Const, "logic.const", "A fixed value.", "A constant of any shape, written in the node's config; a number may carry a unit.", "k"),
     (Op::Power, "math.power", "Raises a value to a power.", "x^n with sse_core::math::pow. A whole-number or fractional exponent in the config (`5`, `1/4`) keeps the dimension (metres squared from metres); a wired exponent takes pure numbers only.", "x^n"),
     (Op::Sqrt, "math.sqrt", "The square root of a value.", "IEEE correctly rounded; the dimension halves (a negative value is an error).", "sqrt(x)"),
+    (Op::Cbrt, "math.cbrt", "The cube root of a value: the side of a cube from its volume.", "sse_core::math::cbrt (pinned maths, not x^(1/3), which differs in the last bits); the dimension thirds; a negative value gives a negative root.", "cbrt(x)"),
     (Op::Exp, "math.exp", "e raised to a value: how growth compounds.", "exp(x) of a pure number (pinned maths).", "exp(x)"),
     (Op::Expm1, "math.expm1", "e raised to a value, less one, kept accurate when the value is small.", "exp(x) - 1 without the loss of digits near zero (pinned maths); the Planck law uses it.", "exp(x) - 1"),
     (Op::Ln, "math.ln", "The natural logarithm: the power e must be raised to.", "ln(x) of a pure number above zero (pinned maths).", "ln(x)"),
@@ -249,6 +251,7 @@ impl Block {
             Op::Multiply => Some(DimRule::Product),
             Op::Divide => Some(DimRule::Quotient),
             Op::Sqrt => Some(DimRule::Power(1, 2)),
+            Op::Cbrt => Some(DimRule::Power(1, 3)),
             _ => None,
         };
         let cost = match op {
@@ -394,7 +397,7 @@ fn ports(op: Op, c: &Cfg) -> (Vec<Port>, Vec<Port>) {
             vec![port("x", num.clone()), port("n", num.clone())],
             vec![port("value", num)],
         ),
-        Sqrt => (vec![any("x", &num)], vec![any("value", &num)]),
+        Sqrt | Cbrt => (vec![any("x", &num)], vec![any("value", &num)]),
         Exp | Expm1 | Ln | Log10 | Sin | Cos | Tan => {
             (vec![port("x", num.clone())], vec![port("value", num)])
         }
@@ -753,8 +756,8 @@ impl Atom for Block {
                     ],
                 }))
             }
-            Add | Subtract | Multiply | Divide | Min | Max | Clamp | Sqrt | Exp | Expm1 | Ln
-            | Log10 | Sin | Cos | Tan | Atan2 => one(Val::Number(
+            Add | Subtract | Multiply | Divide | Min | Max | Clamp | Sqrt | Cbrt | Exp | Expm1
+            | Ln | Log10 | Sin | Cos | Tan | Atan2 => one(Val::Number(
                 number(op, &nums(op, v)?).map_err(|e| err(op, e))?,
             )),
             Power => {

@@ -28,7 +28,7 @@
   import { readSol, solBatches, solSourceText, SOL_TITLE } from "../../ui-contract/src/index.ts";
   import { listedTitle, sceneAt, sceneFromResolved, type LookedAhead, type SystemSpec } from "../../ui-contract/src/index.ts";
   import lightDoc from "./documents/light.recipes.json";
-  import { SYMBOLS, checkLightRecipe, describeLight, litFromSystem, paint, type BandRecipe, type Mark } from "../../ui-contract/src/index.ts";
+  import { SYMBOLS, checkLightRecipe, describeLight, lightForBand, litFromSystem, paint, readLight, recipeBand, type ViewBand, type BandRecipe, type Mark } from "../../ui-contract/src/index.ts";
   import AgentsPanel from "../../agents/src/AgentsPanel.svelte";
   import type { OracHost } from "../../agents/src/OracTab.svelte";
   import type { MinervaHost } from "../../agents/src/MinervaTab.svelte";
@@ -114,6 +114,8 @@
   const mountFor = (area: string) => screen?.mounts.find((m) => m.area === area);
   /** What the chart's view draws in each view style, when it is a diagram (rule 12). */
   const viewSpec = $derived(mountFor("chart")?.module.controls);
+  // The view controls' height: what sits below them starts there, however many rows they wrap to.
+  let viewbarH = $state(0);
 
   // The instrument rail (top-level design 2.2) at the scale in view: system, world, or the Workshop.
   let railScale = $state<RailScale>("system");
@@ -548,7 +550,20 @@
   // N1: the sound bed for the frame in view (off until the GM turns it on; never touches the session).
   // Light (O1): which band recipe paints the marks. Presentation only, on this device.
   const LIGHT_RECIPES = (lightDoc.recipes as unknown as BandRecipe[]).filter((r) => !checkLightRecipe(r).length);
-  let lightId = $state(SYMBOLS);
+  let lightId = $state(readLight(loadPref("light.gm"), LIGHT_RECIPES.map((r) => r.id)));
+  // Band (one set of controls, Alex 23 Nov): chosen in the view controls; the Light panel paints within it. A choice
+  // kept before the Band switch takes its band from the light it kept.
+  if (ws.view && !ws.view.band) ws.view = { ...ws.view, band: recipeBand(LIGHT_RECIPES.find((r) => r.id === lightId)) };
+  const band = $derived<ViewBand>(ws.view?.band ?? "visible");
+  const lastLight: Partial<Record<ViewBand, string>> = {};
+  $effect(() => {
+    const b = band;
+    const now = untrack(() => lightId);
+    const from = recipeBand(LIGHT_RECIPES.find((r) => r.id === now));
+    if (from === b) return;
+    lastLight[from] = now;
+    lightId = lightForBand(LIGHT_RECIPES, b, now, lastLight);
+  });
   // U4 part 2: with a look-ahead open, the views show the snapshot the scrubber is on.
   let ahead = $state<LookedAhead | null>(null);
   let aheadAt = $state(0);
@@ -1477,9 +1492,9 @@
         {#if railScale !== "workshop"}<button type="button" class="door" data-go="workshop" onclick={toWorkshop} title="Physics flows, packs, player screens and data, symbols, styles: everything that changes the tool">Workshop ›</button>{/if}
       </nav>
       {#key ws.screen}
-      <main class="stage" data-viewbar={viewSpec ? "" : undefined} data-desk={desk} data-screen={ws.screen} data-page={mountFor("card") ? undefined : ""} data-lens={lens.id} data-branch={ws.branch ? "open" : ahead ? "ahead" : undefined}>
+      <main class="stage" style:--viewbar-h={viewbarH ? `${viewbarH}px` : undefined} data-viewbar={viewSpec ? "" : undefined} data-desk={desk} data-screen={ws.screen} data-page={mountFor("card") ? undefined : ""} data-lens={lens.id} data-branch={ws.branch ? "open" : ahead ? "ahead" : undefined}>
         {#if ws.branch}<div class="branch-stamp" aria-hidden="true">What if · not kept</div>{/if}
-        {#if viewSpec && ws.view}<div class="viewbar"><ViewControls spec={viewSpec} choice={ws.view} onchange={setView} /></div>{/if}
+        {#if viewSpec && ws.view}<div class="viewbar" bind:clientHeight={viewbarH}><ViewControls spec={viewSpec} choice={ws.view} onchange={setView} /></div>{/if}
         <div class="area-chart">{#if chartMount}{#key openings}<div class="fill" use:view={chartMount}></div>{/key}{/if}</div>
         <nav class="tools" aria-label="Tools">
           <ToolButton label="Select" icon="M5 3l14 8-6 2-2 6z" pressed={true} />
@@ -1515,7 +1530,7 @@
           {#if whatNote}<span class="note" role="status" title={whatNote}>{whatNote}</span>{/if}
         </span>
         <span class="strip">
-          <LightControl recipes={LIGHT_RECIPES} lights={lit.lights} missing={lit.missing} names={lightNames} bind:value={lightId} key="light.gm" />
+          <LightControl recipes={LIGHT_RECIPES} lights={lit.lights} missing={lit.missing} names={lightNames} {band} bind:value={lightId} key="light.gm" />
           <SoundControl scene={soundScene} deviceTier={status.tier} seed={base.universe.seed} key="sound.gm" />
         </span>
       </div>
@@ -2228,13 +2243,14 @@
     pointer-events: auto;
     width: fit-content;
   }
+  /* Below the view controls however many rows they wrap to (their measured height). */
   .stage[data-viewbar] .undo-note {
-    top: 84px;
+    top: calc(var(--viewbar-h, 68px) + 16px);
   }
   .stage[data-viewbar][data-screen="body"] .area-chart,
   .stage[data-viewbar][data-screen="cutaway"] .area-chart,
   .stage[data-viewbar][data-page] .area-chart {
-    top: 84px;
+    top: calc(var(--viewbar-h, 68px) + 16px);
   }
   .tools {
     position: absolute;

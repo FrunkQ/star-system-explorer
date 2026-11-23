@@ -5,71 +5,47 @@
   activity (spin, spots, cycle, X-rays, flares, surface convection) from read_activity.
 -->
 <script lang="ts">
-  import type { Json, SystemScene, ViewContext } from "../../../ui-contract/src/index.ts";
-  import { coronaScaleHeight, CORONA_K, drawStar, GRANULE_DT, granulesFor, granulesShow, narrateGranules, narrateStar, SPOT_DELTA_K, spotsFor, STAR_REFERENCES, type Convection, type StarDraw } from "../../../renderer/src/index.ts";
+  import { constant, type SystemScene, type ViewContext } from "../../../ui-contract/src/index.ts";
+  import { coronaScaleHeight, CORONA_K, cycleOf, drawStar, flaresAt, readLiveStar, GRANULE_DT, granulesFor, granulesShow, narrateGranules, narrateStar, SPOT_DELTA_K, spotsFor, STAR_REFERENCES, type Convection, type LiveStar, type StarDraw, type StarReader } from "../../../renderer/src/index.ts";
 
   let { ctx, scene, address, label, size }: { ctx: ViewContext; scene: SystemScene; address: string; label: string; size: number } = $props();
 
-  type Flare = { at_s: number; rise_s: number; decay_s: number; peak_w: number; energy_j: number };
-  type Got = { teff: number; mass: number; radius: number; lum: number; age_s: number; activity: Record<string, Json>; moment: Record<string, Json>; flares: Flare[] };
-  let got = $state<Got | null>(null);
+  let got = $state<LiveStar | null>(null);
   let failed = $state<string | null>(null);
   let band = $state<StarDraw["light"]>("visible");
   let turn = $state(0);
   let canvas = $state<HTMLCanvasElement | undefined>();
 
-  const SIGMA = 5.670374419e-8;
-  const YEAR = 365.25 * 86400;
-
+  // The star as the kernel has it (live-star.ts, shared with the system view's True star).
   $effect(() => {
     const a = address;
     const sys = scene.system;
     got = null;
     failed = null;
     let live = true;
-    (async () => {
-      const rs = await ctx.session.resolvedSystem(sys);
+    void readLiveStar(ctx.session as unknown as StarReader, sys, a).then((r) => {
       if (!live) return;
-      if (!rs.ok) return void (failed = rs.message);
-      const f = rs.result.facts[a] ?? {};
-      const teff = Number(f["star.effective_temperature"]);
-      const mass = Number(f["body.mass"]);
-      const radius = Number(f["body.radius"]);
-      const age_s = Number(rs.result.facts[sys]?.["system.age"] ?? 0);
-      if (!(teff > 0 && mass > 0 && radius > 0)) return void (failed = "The kernel has no temperature, mass and radius for this star yet, so there is nothing true to draw.");
-      const lum = 4 * Math.PI * radius * radius * SIGMA * teff ** 4;
-      const star = { address: a, mass_kg: mass, radius_m: radius, luminosity_w: lum, teff_k: teff, age_s: age_s > 0 ? age_s : 4.6e9 * YEAR };
-      const r = await ctx.session.readActivity({ stars: [star], at_s: star.age_s, window: { from_s: star.age_s - 2 * 86400, to_s: star.age_s + YEAR, min_energy_j: 1e24 } });
-      if (!live) return;
-      if (!r.ok) return void (failed = r.message);
-      const one = r.stars[0] as { activity: Record<string, Json>; moment: Record<string, Json>; flares?: { flares?: Flare[] } };
-      got = { teff, mass, radius, lum, age_s: star.age_s, activity: one.activity, moment: one.moment, flares: one.flares?.flares ?? [] };
-    })();
+      if (typeof r === "string") failed = r;
+      else got = r;
+    });
     return () => {
       live = false;
     };
   });
 
-  const cyc = $derived.by(() => {
-    const ph = got?.moment.cycle_phase;
-    const c = got?.activity.cycle as { period_s?: number } | undefined;
-    if (typeof ph !== "number" || !c?.period_s) return null;
-    // Cycle progress from minimum: the activity factor is 1 + A sin(2 pi phase), lowest at phase 0.75.
-    const p = (((ph - 0.75) % 1) + 1) % 1;
-    return { phase: p, number: Math.floor((got!.age_s / c.period_s) + 0.25) };
-  });
+  const cyc = $derived(got ? cycleOf(got) : null);
   const coverage = $derived(Number(got?.moment.spot_coverage ?? 0));
   const spots = $derived(got ? spotsFor(address, coverage, cyc) : []);
   const H = $derived(got ? coronaScaleHeight(got.mass, got.radius) : 0.1);
   const now = $derived(got?.age_s ?? 0);
-  const active = $derived((got?.flares ?? []).filter((f) => now >= f.at_s - f.rise_s && now <= f.at_s + f.decay_s));
+  const active = $derived(got ? flaresAt(got, spots, now) : []);
   const next = $derived((got?.flares ?? []).filter((f) => f.at_s > now).sort((x, y) => x.at_s - y.at_s).slice(0, 5));
   // Granules: the kernel's cells, drawn when each is at least a few pixels wide on this disc. A generation of cells
   // lives granule_lifetime_s, so the picture shows the generation alive at the star's present moment.
   const conv = $derived((got?.activity.convection ?? null) as unknown as Convection | null);
   const discPx = $derived(Math.round(size * Math.min(2, typeof devicePixelRatio === "number" ? devicePixelRatio : 1) * 0.92));
   const granules = $derived(conv && granulesShow(conv.granules_across, discPx) ? granulesFor(address, conv.granules_across, Math.floor(now / Math.max(1, conv.granule_lifetime_s))) : null);
-  const spin_days = $derived(Number(got?.activity.rotation_period_s ?? 0) / 86400);
+  const spin_days = $derived(Number(got?.activity.rotation_period_s ?? 0) / constant("day"));
 
   $effect(() => {
     const c = canvas;
@@ -79,13 +55,13 @@
     c.width = c.height = n;
     const x = c.getContext("2d")!;
     const img = x.createImageData(n, n);
-    drawStar(img, { teff_k: g.teff, spots, lon_deg: turn, lat_deg: 7, light: band, corona_h: H, flares: active.map((f, i) => ({ lat_deg: spots[i % Math.max(1, spots.length)]?.lat_deg ?? 15, lon_deg: spots[i % Math.max(1, spots.length)]?.lon_deg ?? 0, strength: f.peak_w / Math.max(1, Number(g.moment.xray_w)) })), granules }, band === "visible" ? 0.92 : 0.6);
+    drawStar(img, { teff_k: g.teff, spots, lon_deg: turn, lat_deg: 7, light: band, corona_h: H, flares: active.map(({ lat_deg, lon_deg, strength }) => ({ lat_deg, lon_deg, strength })), granules }, band === "visible" ? 0.92 : 0.6);
     x.putImageData(img, 0, 0);
   });
 
   const pow = (w: number) => `${(w / 1e20).toPrecision(2)} × 10²⁰ W`;
   const when = (s: number) => {
-    const d = (s - now) / 86400;
+    const d = (s - now) / constant("day");
     return d < 1 ? `in ${Math.round(d * 24)} h` : `in ${Math.round(d)} days`;
   };
   function key(e: KeyboardEvent) {

@@ -293,16 +293,32 @@ pub struct FieldRead {
     pub references: Vec<Reference>,
 }
 
+/// The field blocks in the order their references are listed.
+const FIELD_BLOCKS: &[&str] = &[
+    "sse.field.ionopause_altitude",
+    "sse.field.shue_flaring",
+    "sse.field.standoff_in_field",
+    "sse.induction.response",
+    "sse.light.effective_temperature",
+    "sse.light.reflected_area",
+    "sse.light.stellar_wind",
+    "sse.light.magnetopause_radius",
+    "sse.light.auroral_radio_power",
+    "sse.light.cyclotron_frequency",
+    "sse.shield.cutoff",
+    "sse.shield.space_share",
+    "sse.shield.ground_share",
+    "sse.shield.air_dose",
+    "sse.aurora.footprint",
+    "sse.aurora.hill_distance",
+    "sse.belts.kp_limit",
+    "sse.belts.electron_range",
+    "sse.belts.radiation_yield",
+];
+
 fn refs_of(ids: &[&str]) -> Vec<Reference> {
     let mut out: Vec<Reference> = vec![];
-    for a in sse_atoms::field::atoms()
-        .iter()
-        .chain(sse_atoms::light::atoms().iter())
-        .chain(sse_atoms::shield::atoms().iter())
-        .chain(sse_atoms::aurora::atoms().iter())
-        .chain(sse_atoms::belts::atoms().iter())
-    {
-        let d = a.decl();
+    for d in sse_atoms::decls_of(FIELD_BLOCKS) {
         if ids.contains(&d.id.as_str()) {
             for r in &d.references {
                 if !out.contains(r) {
