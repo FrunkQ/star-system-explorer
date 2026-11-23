@@ -41,3 +41,6 @@ export { ang2pixRing, drawSky, exposureFor, glowLevel, glowPixel, glowSample, na
 export type { Sky, SkyCamera, SkyGlowBand, SkyStar, SkyView, SystemFrame } from "./sky.ts";
 export { bubbleOutline, chartCut, compressed, cutPaths, degreeOf, dipole, dipoleAxis, dipoleB0, drawField3D, FIELD_LINES, FIELD_REFS, fieldAt, fieldFromRead, inBubble, insideBubble, lineBuffers, narrateField, project3D, schmidt, seeds, traceField, traceLine } from "./field.ts";
 export type { Bubble, ChartCut, FieldCamera, FieldLine, FieldModel, FieldReadJson, FieldTrace, Pen, Run, TraceOptions } from "./field.ts";
+// V3 gap item 14, part 1: ship hulls and drive plumes built from the ship record's own physics.
+export { bandOf, driveFacts, HULL_SHAPE, hullFromShip, hullProfile, narrateShip, plumeShape, SHIP_REFS, shipPaths } from "./ship.ts";
+export type { DriveFacts, Hull, HullPart, HullPartKind, PlumeShape, PropellantPart, Propellants, ShipRecord } from "./ship.ts";
