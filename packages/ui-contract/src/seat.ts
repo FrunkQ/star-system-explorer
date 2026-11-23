@@ -28,6 +28,12 @@ export interface Seat {
   embed_origins?: string[];
   /** A faction's name and logo shown on this seat's screens (V3 gap 25). Presentation only. */
   brand?: SeatBrand;
+  /**
+   * Quick overrides (V3 gap 25): the GM's live switches for this seat's screens, set from the Seats panel and sent
+   * at once ("hide labels" on a wall screen). Presentation only, never saved with the campaign: player view
+   * parameters by name, laid over every screen this seat shows.
+   */
+  live?: Record<string, boolean>;
 }
 
 export type Decision = { action: "apply" } | { action: "ask_gm" } | { action: "refuse"; reason: string };

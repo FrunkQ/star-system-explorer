@@ -37,3 +37,12 @@ test("join words come from the stacked packs' vocabulary, topmost first, line by
   assert.equal(both.waiting, "Stand by.");
   assert.equal(both.joining, t.joining, "a line the top pack leaves out keeps the one below");
 });
+
+test("quick overrides lay a seat's live switches over a screen's parameters, only where the view has them", async () => {
+  const { withLive, LIVE_OVERRIDES } = await import("../../packages/ui-contract/src/brand.ts");
+  const declared = [{ name: "labels" }, { name: "mark_scale" }];
+  assert.deepEqual(withLive({ labels: true, mark_scale: 2 }, declared, { labels: false }), { labels: false, mark_scale: 2 });
+  assert.deepEqual(withLive({ fields: [] }, [{ name: "fields" }], { labels: false }), { fields: [] }, "a card has no labels switch");
+  assert.deepEqual(withLive({ labels: true }, declared, undefined), { labels: true });
+  assert.ok(LIVE_OVERRIDES.some((o) => o.param === "labels" && o.on === false));
+});

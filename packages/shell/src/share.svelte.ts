@@ -16,6 +16,8 @@ export interface Share {
   /** V10: add a seat with its own audience; a fog-of-war audience's starting view is chronicled at once. */
   addSeat(o: Parameters<typeof addSeat>[1]): Promise<string | null>;
   removeSeat(id: string): void;
+  /** Quick overrides (V3 gap 25): set a seat's live switches now; they go to its screens at once and are never saved. */
+  setLive(id: string, live: Record<string, boolean>): void;
   /** Mark a body (and what orbits it) discovered by an audience, or take it back. */
   discover(audience: Audience, address: string, known: boolean, at_yr: number): Promise<string | null>;
   /** Join links of a seat: one per screen it opens. */
@@ -79,6 +81,16 @@ export async function createShare(session: Session, opening: { universe: { id: s
       host.setState({ seats: next.seats });
       serveSealed();
       return null;
+    },
+    setLive(id: string, live: Record<string, boolean>) {
+      const plan = $state.snapshot(st.plan) as SeatPlan;
+      const seats = plan.seats.map((s) => {
+        if (s.id !== id) return s;
+        const { live: _old, ...rest } = s;
+        return Object.keys(live).length ? { ...rest, live: { ...live } } : rest;
+      });
+      st.plan = { ...plan, seats };
+      host.setState({ seats });
     },
     removeSeat(id: string) {
       const next = removeSeat($state.snapshot(st.plan) as SeatPlan, id);
