@@ -259,6 +259,7 @@ fn seen(
             quench_gyr: None,
             address: &h.address,
             halo_mass: h.mass,
+            stars_kept: 1.0,
         },
         pc_m,
         now_gyr,
@@ -275,6 +276,8 @@ struct Look<'a> {
     quench_gyr: Option<f64>,
     address: &'a str,
     halo_mass: f64,
+    /// GH2: the share of its stars still bound (tidal stripping).
+    stars_kept: f64,
 }
 
 #[allow(clippy::too_many_arguments)]
@@ -312,12 +315,13 @@ fn look(
     // is stripped): its stars are those born by then, aged to t_emit.
     let t_stop = lk.quench_gyr.map_or(t_emit, |q| q.min(t_emit));
     let then = state_at(g, t_stop);
-    if then.stars <= 0.0 {
+    if then.stars <= 0.0 || lk.stars_kept <= 0.0 {
         return Ok(None);
     }
+    let kept = lk.stars_kept;
     let born: Vec<(f64, f64)> = births(g, t_stop)
         .into_iter()
-        .map(|(age, mass)| (age + (t_emit - t_stop), mass))
+        .map(|(age, mass)| (age + (t_emit - t_stop), mass * kept))
         .collect();
     // Rest-frame L_λ (W per m).
     let l_rest = |lam: f64| -> f64 {
@@ -414,8 +418,8 @@ fn look(
             "b_deg": b,
             "dir": dir,
             "a_v": a_v,
-            "stellar_mass_msun": then.stars,
-            "stellar_mass_now_msun": g.now.stars,
+            "stellar_mass_msun": then.stars * kept,
+            "stellar_mass_now_msun": g.now.stars * kept,
             "sfr_msun_yr": if t_stop < t_emit { 0.0 } else { then.sfr },
             "morphology": morph,
             "half_light_kpc": r_half_kpc,
@@ -431,16 +435,19 @@ fn look(
     )))
 }
 
-/// Y4 part 2: the satellites of our own galaxy, seen from an observer in it.
+/// The satellites of our own galaxy, seen from an observer in it (Y4 part
+/// 2, GH1, GH2).
 ///
-/// Subhaloes are drawn from the unevolved subhalo mass function of the host
-/// as it is at the campaign's time (keyed Poisson counts per ln ψ bin).
-/// Each falls in when the host had grown to a matching share of its mass
-/// (accretion follows the host's growth), and is gone if dynamical friction
-/// has merged it since. Survivors sit on the Aquarius radial profile,
-/// isotropic about the centre. Each satellite's galaxy is G3 grown on a
-/// halo that had the subhalo's mass at infall; it stops forming stars a
-/// delay after infall. Fudge F39.
+/// The subhaloes are the members of the host's assembly tree read at the
+/// campaign's time (GH1). Each falls in on the host's r200 with a keyed
+/// speed and direction and is followed on its orbit in the host's growing
+/// potential under the four processes of design 7.3 (`sse_cosmos::infall`):
+/// sinking, tidal stripping, gas stripping and disc shocks. Those that
+/// reached the centre are merged; those torn apart are remains (streams,
+/// shells, mixed remains), counted but not drawn as galaxies. Each
+/// survivor's galaxy is G3 grown on a halo that had its mass at infall, with
+/// its stars cut to the share still bound, forming stars until ram pressure
+/// strips its gas.
 #[allow(clippy::too_many_arguments)]
 pub(crate) fn satellites_seen(
     c: &Cosmology,
@@ -452,7 +459,7 @@ pub(crate) fn satellites_seen(
     host: &Halo,
     ask: &GalaxyAsk,
 ) -> Result<(Vec<(f64, serde_json::Value)>, serde_json::Value), Response> {
-    let sp = &sky.satellites;
+    let op = &sky.satellites.orbits;
     let pc_m = MPC_M / 1.0e6;
     let now_gyr = c.age_gyr();
     let t_obs = ask.t_myr / 1000.0;
@@ -479,108 +486,129 @@ pub(crate) fn satellites_seen(
         sse_core::Stream::new(sse_cosmos::assembly::FILL_STREAM)
             .map_err(|e| err("bad_request", e.to_string()))?,
     );
-    // The radial profile's inverse CDF: number density n(x) ∝
-    // exp(-2/α ((x/x₂)^α - 1)), weighted by x², from r_min to r_200.
-    let (ea, e2) = (sp.einasto_alpha, sp.einasto_r2_frac);
-    let n_grid = 128usize;
-    let xs: Vec<f64> = (0..=n_grid)
-        .map(|i| sp.r_min_frac + (1.0 - sp.r_min_frac) * i as f64 / n_grid as f64)
-        .collect();
-    let w = |x: f64| x * x * m::exp(-2.0 / ea * (m::pow(x / e2, ea) - 1.0));
-    let mut cdf = vec![0.0];
-    for k in 1..xs.len() {
-        let last = cdf[k - 1];
-        cdf.push(last + 0.5 * (w(xs[k - 1]) + w(xs[k])) * (xs[k] - xs[k - 1]));
-    }
-    let total = cdf[n_grid];
-    let radius = |u: f64| -> f64 {
-        let target = u * total;
-        let k = cdf.partition_point(|v| *v < target).clamp(1, n_grid);
-        let f = (target - cdf[k - 1]) / (cdf[k] - cdf[k - 1]).max(1e-300);
-        xs[k - 1] + f * (xs[k] - xs[k - 1])
-    };
+    // The host's potential from the first infall to now, one table per
+    // slice (GH2 cut 3), built once for every satellite.
+    let first = tree
+        .progenitors
+        .iter()
+        .map(|p| p.t_infall_gyr)
+        .fold(t_obs, f64::min);
+    let host_galaxy = sse_cosmos::galaxy::evolve(c, gp, host);
+    let pot = sse_cosmos::infall::Host::new(c, gp, host, &host_galaxy, first, t_obs, op);
     let mut out = vec![];
     let (mut drawn, mut merged) = (0u64, 0u64);
+    let mut remains: std::collections::BTreeMap<String, u64> = Default::default();
     for p in &tree.progenitors {
-        {
-            drawn += 1;
-            let k0 = p.draw_base;
-            let m_sat = p.mass_at_infall_msun;
-            let z_acc = p.z_infall;
-            let a_acc = 1.0 / (1.0 + z_acc);
-            let t_acc = p.t_infall_gyr;
-            // Dynamical friction since infall (BK08).
-            let ratio = (host.mass_at(z_acc) / m_sat).max(1.0);
-            let eta = sp.eta_range[0] + (sp.eta_range[1] - sp.eta_range[0]) * d.unit(k0 + 2);
-            let rc = sp.rc_range[0] + (sp.rc_range[1] - sp.rc_range[0]) * d.unit(k0 + 3);
-            let tau_dyn = 0.1 * c.hubble_time_gyr / c.e(a_acc);
-            let tau = tau_dyn * sp.df_a * m::pow(ratio, sp.df_b) / m::ln(1.0 + ratio)
-                * m::exp(sp.df_c * eta)
-                * m::pow(rc, sp.df_d);
-            if t_acc + tau < t_obs {
-                merged += 1;
+        drawn += 1;
+        let k0 = p.draw_base;
+        let u = [
+            d.unit(k0 + 2),
+            d.unit(k0 + 3),
+            d.unit(k0 + 4),
+            d.unit(k0 + 5),
+            d.unit(k0 + 6),
+        ];
+        // Its galaxy: the progenitor as a halo of its own, with the mass at
+        // infall it fell in with.
+        let m0 = sse_cosmos::assembly::mass_today_for(c, p.mass_at_infall_msun, p.z_infall);
+        let paddr: sse_core::Address = p
+            .address
+            .parse()
+            .map_err(|e| err("bad_address", format!("{e:?}")))?;
+        let halo = hs.median_at(m0, &paddr);
+        let g = sse_cosmos::galaxy::evolve(c, gp, &halo);
+        let at = state_at(&g, p.t_infall_gyr);
+        let grip = sse_cosmos::infall::Grip {
+            stars_msun: at.stars,
+            gas_msun: at.gas,
+            disc_kpc: at.disc_kpc,
+            gas_scale: gp.structure.gas_scale_factor,
+        };
+        let body = sse_cosmos::infall::infall(
+            c,
+            gp,
+            op,
+            host.mass_at(p.z_infall),
+            &p.address,
+            p.mass_at_infall_msun,
+            p.z_infall,
+            p.t_infall_gyr,
+            u,
+            Some(grip),
+        );
+        let fate = sse_cosmos::infall::follow(&pot, &body, t_obs, op);
+        if fate.merged_gyr.is_some() {
+            merged += 1;
+            continue;
+        }
+        if fate.disrupted_gyr.is_some() {
+            for l in &fate.labels {
+                *remains.entry(l.clone()).or_default() += 1;
+            }
+            continue;
+        }
+        let pos = [
+            fate.pos_kpc[0] * 1000.0,
+            fate.pos_kpc[1] * 1000.0,
+            fate.pos_kpc[2] * 1000.0,
+        ];
+        let o = ask.observer_pc;
+        let rel = [pos[0] - o[0], pos[1] - o[1], pos[2] - o[2]];
+        let dist = m::sqrt(dot(rel, rel));
+        if let Some((axis, cos_max)) = ask.cone {
+            let dir = [rel[0] / dist, rel[1] / dist, rel[2] / dist];
+            if dot(dir, axis) < cos_max {
                 continue;
             }
-            // Where it is now.
-            let r_kpc = radius(d.unit(k0 + 4)) * r200_kpc;
-            let cos_t = 2.0 * d.unit(k0 + 5) - 1.0;
-            let sin_t = m::sqrt((1.0 - cos_t * cos_t).max(0.0));
-            let phi = 2.0 * m::PI * d.unit(k0 + 6);
-            let pos = [
-                r_kpc * 1000.0 * sin_t * m::cos(phi),
-                r_kpc * 1000.0 * sin_t * m::sin(phi),
-                r_kpc * 1000.0 * cos_t,
-            ];
-            let o = ask.observer_pc;
-            let rel = [pos[0] - o[0], pos[1] - o[1], pos[2] - o[2]];
-            let dist = m::sqrt(dot(rel, rel));
-            if let Some((axis, cos_max)) = ask.cone {
-                let dir = [rel[0] / dist, rel[1] / dist, rel[2] / dist];
-                if dot(dir, axis) < cos_max {
-                    continue;
-                }
-            }
-            // Its galaxy: the progenitor as a halo of its own, with the
-            // mass at infall it fell in with.
-            let m0 = sse_cosmos::assembly::mass_today_for(c, m_sat, z_acc);
-            let paddr: sse_core::Address = p
-                .address
-                .parse()
-                .map_err(|e| err("bad_address", format!("{e:?}")))?;
-            let halo = hs.median_at(m0, &paddr);
-            let g = sse_cosmos::galaxy::evolve(c, gp, &halo);
-            let seen = look(
-                c,
-                st,
-                sky,
-                ssp,
-                Look {
-                    rel_pc: rel,
-                    g: &g,
-                    quench_gyr: Some(t_acc + sp.quench_delay_gyr),
-                    address: &halo.address,
-                    halo_mass: m_sat,
-                },
-                pc_m,
-                now_gyr,
-                t_obs,
-                ask,
-            )?;
-            if let Some((mag, mut v)) = seen {
-                v["satellite"] = true.into();
-                v["distance_kpc"] = (dist / 1000.0).into();
-                v["from_centre_kpc"] = r_kpc.into();
-                v["infall_gyr"] = t_acc.into();
-                v["infall_halo_mass_msun"] = m_sat.into();
-                out.push((mag, v));
-            }
+        }
+        let seen = look(
+            c,
+            st,
+            sky,
+            ssp,
+            Look {
+                rel_pc: rel,
+                g: &g,
+                quench_gyr: fate.quench_gyr,
+                address: &halo.address,
+                halo_mass: p.mass_at_infall_msun,
+                stars_kept: fate.stars_kept,
+            },
+            pc_m,
+            now_gyr,
+            t_obs,
+            ask,
+        )?;
+        if let Some((mag, mut v)) = seen {
+            v["satellite"] = true.into();
+            v["distance_kpc"] = (dist / 1000.0).into();
+            v["from_centre_kpc"] = fate.r_kpc.into();
+            v["infall_gyr"] = p.t_infall_gyr.into();
+            v["infall_halo_mass_msun"] = p.mass_at_infall_msun.into();
+            v["orbit"] = serde_json::json!({
+                "labels": fate.labels,
+                "dark_kept": fate.dark_kept,
+                "stars_kept": fate.stars_kept,
+                "pericentres": fate.pericentres,
+                "closest_kpc": fate.peri_kpc,
+                "farthest_kpc": fate.apo_kpc,
+                "disc_passes": fate.disc_passes,
+                "heat": fate.heat,
+                "quenched_gyr": fate.quench_gyr,
+                "velocity_kms": [
+                    fate.vel_kpc_gyr[0] / sse_cosmos::infall::kms(),
+                    fate.vel_kpc_gyr[1] / sse_cosmos::infall::kms(),
+                    fate.vel_kpc_gyr[2] / sse_cosmos::infall::kms(),
+                ],
+            });
+            out.push((mag, v));
         }
     }
     Ok((
         out,
         serde_json::json!({
             "host_mass_msun": m_host, "r200_kpc": r200_kpc,
-            "subhaloes": drawn, "merged": merged,
+            "subhaloes": drawn, "merged": merged, "remains": remains,
             "expected": tree.expected, "accreted_share": tree.accreted_psi,
             "pinned": tree.progenitors.iter().filter(|p| p.pinned).count(),
         }),
