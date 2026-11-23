@@ -75,3 +75,11 @@ test("Band: Visible by default; the others listed quiet until a view declares th
   assert.equal(readViewChoice('{"style":"chart","seen":"above","band":"mag"}').band, "mag");
   assert.equal(readViewChoice('{"style":"chart","seen":"above","band":"gamma"}').band, undefined);
 });
+
+test("Scale on a flat slice: Real is drawn flat when the view says it can; a flat chart that turns shows Real in 3D", () => {
+  const slice: ViewControlsSpec = { ...flatChart("A slice"), scale: { readable: true, real: true } };
+  assert.equal(viewOptions(slice, { style: "chart", seen: "above", scale: "real" }).shown.scale, "real");
+  assert.deepEqual(pickScale(slice, { style: "chart", seen: "above" }, "real"), { style: "chart", seen: "above", scale: "real" });
+  assert.equal(viewOptions(flatChart(), { style: "chart", seen: "above", scale: "real" }).shown.scale, "readable", "Real not declared");
+  assert.equal(viewOptions({ ...system, scale: { readable: true, real: true } }, { style: "chart", seen: "above", scale: "real" }).shown.scale, "readable", "the system's flat log chart");
+});

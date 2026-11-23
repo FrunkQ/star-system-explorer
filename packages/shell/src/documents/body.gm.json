@@ -10,10 +10,7 @@
   "items": [
     {
       "view": "sse.view.body",
-      "area": "chart",
-      "params": {
-        "scale": "log"
-      }
+      "area": "chart"
     },
     {
       "view": "sse.view.body-card",
