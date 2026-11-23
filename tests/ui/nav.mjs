@@ -63,3 +63,17 @@ export async function depth(page, name) {
   }
   await page.waitForFunction((d) => document.querySelector(".app")?.getAttribute("data-depth") === d, name.toLowerCase());
 }
+
+/**
+ * Press one option of the view controls by its switch and name: `view(page, "Band", "Mag")`, `view(page, "HUD", "Off")`.
+ * HUD and Band are folded into the "Show" chip; it is opened when needed, and a choice closes it.
+ */
+export async function view(page, group, option, scope = page.locator(".viewbar [data-view-controls], [data-view-controls]").first()) {
+  let g = scope.getByRole("group", { name: group, exact: true });
+  const folded = !(await g.isVisible());
+  if (folded) {
+    await scope.locator("[data-view-more]").click();
+    g = scope.getByRole("group", { name: group, exact: true });
+  }
+  await g.getByRole("button", { name: option, exact: true }).click();
+}
