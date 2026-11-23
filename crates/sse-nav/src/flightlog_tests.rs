@@ -154,3 +154,43 @@ fn the_star_answers_to_the_systems_own_address() {
         "Sol's NAV fixture has no Moon yet"
     );
 }
+
+/// Voyager 2 from the real spaceflight pack's log (Horizons flyby times): each
+/// arc between flybys is solved from its ends, so rewinding meets Jupiter,
+/// Saturn, Uranus and Neptune on their dates, and after Neptune the hyperbola
+/// carries it out past 100 au by 2020.
+#[test]
+fn voyager_2_rewinds_through_four_flybys() {
+    let sys = sol();
+    let root = std::path::Path::new(env!("CARGO_MANIFEST_DIR")).join("../..");
+    let text =
+        std::fs::read_to_string(root.join("tests/fixtures/flightlog/voyager-2.json")).unwrap();
+    let l: FlightLog = serde_json::from_str(&text).unwrap();
+    let flybys: Vec<(i64, String)> = l
+        .events
+        .iter()
+        .filter_map(|e| match &e.what {
+            What::Flyby { body, .. } => Some((e.at_s, body.clone())),
+            _ => None,
+        })
+        .collect();
+    assert_eq!(flybys.len(), 4);
+    let mut last_r = 1.0;
+    for (t, body) in &flybys {
+        // A second before: arriving at the planet (the arc ends at its centre).
+        let just = l.at(t - 1, &sys);
+        assert_eq!(just.kind, "course", "{body}");
+        let b = crate::flightlog::Ephemeris::body(&sys, body, *t as f64).unwrap();
+        let miss = norm(crate::kepler::sub(just.r_m.unwrap(), b.0));
+        assert!(miss < 1.0e6, "missed {body} by {} km", miss / 1e3);
+        // Each flyby is further out than the last.
+        let r = norm(b.0) / AU;
+        assert!(r > last_r, "{body} at {r} au");
+        last_r = r;
+    }
+    // 2020-01-01 (TT): out on the hyperbola, past 100 au (Horizons: about 122 au).
+    let t2020 = T0 + 7305 * 86_400;
+    let out = l.at(t2020, &sys);
+    let d = norm(out.r_m.unwrap()) / AU;
+    assert!(d > 100.0 && d < 140.0, "{d} au");
+}
