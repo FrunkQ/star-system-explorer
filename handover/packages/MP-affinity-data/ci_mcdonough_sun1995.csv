@@ -75,3 +75,5 @@ Y,1.57e-06,"two reproductions agree (pyrolite 0.3.9 CH_McDonoughSun1995.csv; geo
 Yb,1.61e-07,"two reproductions agree (pyrolite 0.3.9 CH_McDonoughSun1995.csv; georefdatar CI_Pyrolite__McDonough_Sun__1995__full.csv)"
 Zn,0.00031,"two reproductions agree (pyrolite 0.3.9 CH_McDonoughSun1995.csv; georefdatar CI_Pyrolite__McDonough_Sun__1995__full.csv)"
 Zr,3.82e-06,"two reproductions agree (pyrolite 0.3.9 CH_McDonoughSun1995.csv; georefdatar CI_Pyrolite__McDonough_Sun__1995__full.csv)"
+H,0.0197,"from Palme and O'Neill 2014 (pyrolite 0.3.9 CH_PalmeONeill2014.csv, one copy); neither copy of McDonough and Sun 1995 carries it"
+O,0.459,"from Palme and O'Neill 2014 (pyrolite 0.3.9 CH_PalmeONeill2014.csv, one copy); neither copy of McDonough and Sun 1995 carries it"

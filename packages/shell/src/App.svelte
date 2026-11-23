@@ -502,6 +502,14 @@
     // The Workshop changes the tool, not the universe, so its screens are always armed.
     ws.mode = railScale === "workshop" ? "edit" : DESK_MODE[desk];
   });
+  // Secrets (SV2): the desk decides whether the "Known to" eyes show; a share's connected players hold reveals.
+  $effect(() => {
+    ws.desk = desk;
+  });
+  $effect(() => {
+    ws.players_online = share?.state.players ?? 0;
+    ws.shared = !!share?.state.link;
+  });
   const lenses = $derived.by(() => {
     void ws.revision;
     const s = session;

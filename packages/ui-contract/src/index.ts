@@ -127,3 +127,5 @@ export { embedAsked, embedOrigin, embedOrigins, framingOrigin, embedMode, embedA
 export type { EmbedMode, EmbedOut } from "./embed.ts";
 export { BRAND_LOGO_MAX, BRAND_NAME_MAX, DEFAULT_JOIN, LIVE_OVERRIDES, checkBrand, joinLine, joinWordsOf, withLive } from "./brand.ts";
 export type { JoinWords, SeatBrand } from "./brand.ts";
+export { LANDMARKS, LANDMARK_WORDS, LANDMARK_MEANS, HOLD_MS, tableOf, fieldLandmark, pressedLandmark, knownOverall, knownChangedWords, eyesShow, secrecyRelevant, holdReveal } from "./known.ts";
+export type { Landmark as KnownLandmark, KnownTo, KnownAudience, KnownException, KnownScope, KnownChange, Held } from "./known.ts";
