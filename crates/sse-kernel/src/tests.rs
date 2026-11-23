@@ -2635,6 +2635,31 @@ fn traveller_stock_ships_are_templates_that_sense() {
         "under": "u:trav/sys:0/body:3", "at_s": 0}));
     assert_eq!(st["type"], "created", "{st}");
     assert_eq!(st["kept"].as_array().unwrap().len(), 1, "crew aboard: {st}");
+    // The chart room's Ships and stations screen finds both in the GM scene,
+    // each naming its template, with the template's facts.
+    let g = send(
+        serde_json::json!({"op": "scene", "audience": "gm", "scope": "u:trav/sys:0", "at_s": 0}),
+    );
+    let subjects = g["scene"]["subjects"].as_array().unwrap();
+    for (a, t) in [
+        ("u:trav/sys:0/ship:1", "trader"),
+        ("u:trav/sys:0/body:3/station:1", "highport_a"),
+    ] {
+        let s = subjects
+            .iter()
+            .find(|s| s["address"] == a)
+            .unwrap_or_else(|| panic!("{a} in {g}"));
+        let fact = |f: &str| {
+            s["facts"]
+                .as_array()
+                .unwrap()
+                .iter()
+                .find(|x| x["field"] == f)
+                .map(|x| x["value"].clone())
+        };
+        assert_eq!(fact("template.id"), Some(serde_json::json!(t)), "{s}");
+        assert!(fact("construct.crew_max").is_some(), "{s}");
+    }
     let world = "u:trav/sys:0/body:3";
     for (a, f, v) in [
         (

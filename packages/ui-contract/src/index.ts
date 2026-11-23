@@ -77,6 +77,8 @@ export type { Terms } from "./words.ts";
 export { fetchSector, sectorPath } from "./sector-fetch.ts";
 export type { SectorText } from "./sector-fetch.ts";
 export { SECTOR_FORMATS, mapFields, stackProvides } from "./sector.ts";
+export { BOOKKEEPING, byKind, constructsIn, factOf, kindOf, kindWords, templateOf } from "./constructs.ts";
+export type { ConstructTemplate, Created } from "./constructs.ts";
 export type { CodeReading, CodesRead, MappedWorldRow, SectorMap, SectorFormat, SectorImportAsk, ImportedWorldRow, SectorImported, SectorExported } from "./sector.ts";
 export { STOCK_SHIPS, navFromScene, safestFirst, shortlist, DIFFICULTY_STEPS, difficultyPips, daysWords, dvWords, doseWords, delayWords, fromNowWords, fuelLeft, routeFrame, trackPath, trackPoint, orbitEllipse, trackIndexAt } from "./route.ts";
 export type { NavShip, NavBody, NavSystem, Prefer, RouteAsk, RoutePlan, Course, RouteBurn, RouteHazard, WayOut, NavFromScene, RouteFrame } from "./route.ts";

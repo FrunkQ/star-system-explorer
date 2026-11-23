@@ -21,6 +21,7 @@
     "packages/views/cluster-map",
     "packages/views/voyage",
     "packages/views/sector",
+    "packages/views/constructs",
     "packages/views/window",
     "packages/views/story-finder",
     "packages/views/time-ruler",

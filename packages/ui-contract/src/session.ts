@@ -189,6 +189,12 @@ export interface ViewSession {
   starCell(ask: { cell?: [number, number, number]; t_myr?: number }): Promise<{ ok: true; cell: import("./voyage.ts").StarCell } | { ok: false; code: string; message: string }>;
   /** A voyage between stars for one ship (kernel `plan_voyage`, V8 part 3). Read only; GM only for now (players ask through their console later). */
   planVoyage(ask: import("./voyage.ts").VoyageAsk): Promise<{ ok: true; plan: import("./voyage.ts").VoyagePlan | import("./voyage.ts").SystemVoyagePlan } | { ok: false; code: string; message: string }>;
+  /** The stacked packs' templates for ships, stations, sites and the like (kernel `templates`, J7). Read only. */
+  templates?(): Promise<{ ok: true; templates: import("./constructs.ts").ConstructTemplate[] } | { ok: false; code: string; message: string }>;
+  /** Make an object from a template under `under` (kernel `create`): its facts and tags as one universe event, its kept values in the record. GM only. */
+  createFrom?(ask: { template: string; under: string; key?: string; name?: string; at_s?: number | bigint }): Promise<{ ok: true; result: import("./constructs.ts").Created } | { ok: false; code: string; message: string }>;
+  /** Take an object made from a template out of play (kernel `retire`); nothing is deleted. GM only. */
+  retire?(address: string, reason?: string, at_s?: number | bigint): Promise<{ ok: true; event_id: string } | { ok: false; code: string; message: string }>;
   /** Game-system codes (X3a, kernel `codes`) for every body at or under `scope`, read by a code sheet (the first in the stack when none is named). Read only; GM only. */
   codes?(ask: { scope: string; sheet?: string; at_s?: number | bigint }): Promise<{ ok: true; result: import("./sector.ts").CodesRead } | { ok: false; code: string; message: string }>;
   /** The hex map's worlds (X3c, kernel `sector_map`): each mapped system's main world with its reading, by hex. Read only; GM only. */
@@ -723,6 +729,23 @@ export class Session implements ViewSession {
     if (this.seat.authority !== "gm") return { ok: false, code: "not_gm", message: "voyages between stars are planned on the game master's machine for now" };
     const r = await this.#call({ op: "plan_voyage", ...ask });
     return r.type === "voyage_planned" ? { ok: true, plan: (r as unknown as { voyage: import("./voyage.ts").VoyagePlan }).voyage } : { ok: false, code: String(r.code ?? "unexpected"), message: String(r.message ?? JSON.stringify(r)) };
+  }
+
+  async templates(): Promise<{ ok: true; templates: import("./constructs.ts").ConstructTemplate[] } | { ok: false; code: string; message: string }> {
+    const r = await this.#call({ op: "templates" });
+    return r.type === "templates_listed" ? { ok: true, templates: (r as unknown as { templates: import("./constructs.ts").ConstructTemplate[] }).templates } : { ok: false, code: String(r.code ?? "unexpected"), message: String(r.message ?? JSON.stringify(r)) };
+  }
+
+  async createFrom(ask: { template: string; under: string; key?: string; name?: string; at_s?: number | bigint }): Promise<{ ok: true; result: import("./constructs.ts").Created } | { ok: false; code: string; message: string }> {
+    if (this.seat.authority !== "gm") return { ok: false, code: "not_gm", message: "ships and stations are made on the game master's machine" };
+    const r = await this.#call({ op: "create", template: ask.template, under: ask.under, ...(ask.key ? { key: ask.key } : {}), ...(ask.name ? { name: ask.name } : {}), at_s: ask.at_s ?? 0 });
+    return r.type === "created" ? { ok: true, result: r as unknown as import("./constructs.ts").Created } : { ok: false, code: String(r.code ?? "unexpected"), message: String(r.message ?? JSON.stringify(r)) };
+  }
+
+  async retire(address: string, reason?: string, at_s?: number | bigint): Promise<{ ok: true; event_id: string } | { ok: false; code: string; message: string }> {
+    if (this.seat.authority !== "gm") return { ok: false, code: "not_gm", message: "only the game master takes things out of play" };
+    const r = await this.#call({ op: "retire", address, ...(reason ? { reason } : {}), at_s: at_s ?? 0 });
+    return r.type === "retired" ? { ok: true, event_id: String(r.event_id) } : { ok: false, code: String(r.code ?? "unexpected"), message: String(r.message ?? JSON.stringify(r)) };
   }
 
   async codes(ask: { scope: string; sheet?: string; at_s?: number | bigint }): Promise<{ ok: true; result: import("./sector.ts").CodesRead } | { ok: false; code: string; message: string }> {
