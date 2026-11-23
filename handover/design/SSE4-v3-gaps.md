@@ -109,6 +109,33 @@ Already in SSE4 and so not listed: size comparison, measure, undo and redo, copy
 
 **36. Gas giants in every colour.** V3's gas giant recipes gave "rainbows of colours", and that variety must come along. *Recommendation:* not as copied recipes. In SSE4 a giant's colours come from its cloud decks and their chemistry: which condensates form at its temperature (ammonia, ammonium hydrosulphide, water, silicates and iron for hot giants, methane haze), chromophores and hazes as substances on the data sheet with absorption rows, and bands from the zonal winds. That is the same light-through-gas block as item 9 (ND2), so a giant's colour is computed, varied by temperature, metallicity and age, and explained by "why?". Check: a set of grown giants spans at least the palette of V3's recipes (V3's recipe list, read on Alex's machine, is the target to beat, not data to copy). **Stage 3**, light thread with the proven core (cloud decks) and the data sheet thread (chromophore rows).
 
+**36a. The target, read from V3 (23 Nov, read only, `star-system-generator/src/lib`).** V3's "recipes" are already physics in shape, so they translate directly. A recipe (`catalogue/giantRecipe.ts`) is only an authored **gas mix and anchor pressure**, plus the **temperature it needs**, which V3 derives and never lets you set ("a giant is that colour because it is that cold"). The colour then comes from three steps:
+
+1. **Trace gases by mass** (`physics/giantTraces.ts`): H₂ and He with CH₄, NH₃ and H₂S at solar baselines (0.00075, 0.000065, 0.00002) times an enrichment of 126·M⁻⁰·⁶ (M in Earth masses, clamped 1 to 120), which gives Jupiter about 4x, Saturn about 8x and Uranus about 25x. Each trace is jittered by 0.65 to 1.35 from the seed. He is 13% to 19%.
+2. **Cloud decks by saturation** (`physics/cloudDecks.ts`): each condensable gas is tested level by level against its saturation pressure, the cloud base is the lifting condensation level, the column (kg/m²) becomes an optical depth (droplets of 10 µm, opaque at τ = 5), coverage is bucketed (wisps, scattered, broken, overcast, veil), and decks stack by base pressure, warmest-condensing deepest.
+3. **Colour from the condensate** (`data/liquids.json`, `rendering/apparentColor.ts`, `planetAppearance.ts`): each condensate carries a hand-picked colour, a cloud opacity and albedo, and a "tint distance" from white (default 60 of 255). The visible giant is the top decks' tints over each other, plus banding.
+
+The palette to match or beat (V3's condensate colours, all **hand-picked hex, not derived**: in SSE4 they must come from absorption and scattering rows on the data sheet, or be listed as fudges):
+
+| Condensate | V3 colour | Where it forms in V3's lab |
+|---|---|---|
+| Ammonia (NH₃) ice | #c9b08a, cream | top deck of a Jupiter, 110 to 165 K |
+| Ammonium hydrosulphide (NH₄SH) | #b8845a, brown, opacity 0.65 | deeper deck, the brown belts |
+| Water | #2b6cb0 as a liquid, white as cloud | steam giant at 320 K, deepest deck of a cold one |
+| Methane (CH₄) | #6a8caf | ice giants below about 90 K; the blue is CH₄ absorption above the decks |
+| Hydrogen sulphide (H₂S) | #d8d090 | ammonia-poor, sulphur-rich giants |
+| Sulphur dioxide (SO₂) | #ffffe0, pale yellow | "sulphurous" giant at 240 K |
+| Sulphuric acid | #efe6c0 | "acid giant" at 290 K |
+| Nitrogen | #cfe0ff | very cold N₂ and CH₄ giant, 100 K |
+| Sodium, potassium | #d8d3c8, #cfc8bd, opacity 0.7 | hot Jupiters at 700 to 1100 K |
+| Silicate (SiO) "molten glass" | #d98a3c, glowing | 1100 to 1400 K |
+| Iron | #e8631f, glowing, opacity 0.75 | 1400 to 2400 K |
+| Clear (nothing condenses) | the gas's own scattering | the hottest, or past every condensation point |
+
+V3's giant lab rows are the check to rerun in SSE4, all with the same rule and no per-row authoring: **one Jovian chemistry cooled** (CH₄ 0.3%, NH₃ 0.026%, H₂S 0.008% at 220, 190, 165, 134, 110, 80 K: NH₄SH appears first and deepest, then NH₃, then CH₄); **where methane switches on** (2.3% CH₄ at 140 to 60 K: Saturn has no methane deck, Uranus does); **ice giants by methane** (0.5% to 8% CH₄ at 76 K: Uranus to Neptune blue); **other chemistries** (sulphurous, steam, ammonia-rich, acid, N₂ and CH₄); **hot Jupiters** (Na and K at 700 K up to SiO and Fe at 2400 K); **one air anchored at 0.1 to 20 bar**; and **one Jupiter growing old** (987 K at 10 Myr down to 108 K at 1 Gyr: young giants glow, which is how V3 answers "make a really hot giant").
+
+What SSE4 should do better than V3: the colours themselves become physics (a condensate's colour from its refractive index and absorption rows through ND2; Jupiter's reds from a chromophore row, which V3 does not have, it tints NH₄SH brown by hand; ice giant blue from CH₄ absorption, not a hex); banding count from the zonal wind cells, not authored per gallery world (V3's gallery sets `banding: 3` to `9` by hand); and the age row follows from the core and interior heat history already in the kernel.
+
 ## Stage summary if all are accepted
 
 - Stage 1 (test drive): 2, 27, 28, 30, 31 (door only).
