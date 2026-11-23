@@ -112,6 +112,15 @@ So megastructures are not a special catalogue. Each states its figures, and what
 
 **The teaching use.** Because the lower rungs are real history and the marks are cited, the same screen answers "why have we not built a space elevator?" with a number. That is the education half of the project, free.
 
+### 7.1 Where it is set up (Alex, 23 Nov 16:23: "where we set up the universe factions, calendars, languages ... it is in effect a civilisation capability")
+
+Yes: tech is set up where the rest of a civilisation is set up, and nowhere else. Two places, both already designed, and no new tab:
+
+- **The setting's ladder, on Reference under "This setting".** A **Technology** page sits beside Units, Calendars and Names (matter pack design 7A, naming design 7). It shows this setting's levels, every advance at its home level with its marks and its limit, and the two size factors. Like its neighbours it is a convention of the setting, it shows the pack each row came from, and it never touches nature's pages.
+- **Each civilisation's own page.** A civilisation is an actor in the record (`/actor:vesh`, and powers nest: `/actor:vesh/actor:third-fleet`), the same thing the territory overlays design hangs holdings on and the naming design hangs a scheme on. Its page gathers everything it carries or inherits, one row each, with the same "inherited from" wording throughout: names and language, calendar, units, ship and construct style, holdings, and **tech level with its exceptions and dated gains**. Changing the level here is the "Develop it" event of section 7. A child (a fleet, a shipyard, a colony) shows the parent's value greyed until it is given its own.
+
+So one inheritance rule and one page per civilisation serve naming, calendars, units, styles, territory and tech. The Build desk's availability reading (section 7) reads from this page and links back to it; it is not a second place to set anything.
+
 ## 8. Honesty: always visible
 
 On the GM view, every construct card gains one line, **Leans on**, listing its advances as chips in three inks:
