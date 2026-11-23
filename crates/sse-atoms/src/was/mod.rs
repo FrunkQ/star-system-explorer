@@ -3,12 +3,16 @@
 //! checks each formula block against its old self, face and bits.
 #![allow(dead_code, unused_imports, clippy::all)]
 
+pub mod activity;
 pub mod climate;
+pub mod convection;
 pub mod tides;
 
 pub fn atoms() -> Vec<Box<dyn sse_flow::Atom>> {
     let mut all = vec![];
+    all.extend(activity::atoms());
     all.extend(climate::atoms());
+    all.extend(convection::atoms());
     all.extend(tides::atoms());
     all
 }

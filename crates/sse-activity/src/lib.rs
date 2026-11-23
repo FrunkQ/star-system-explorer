@@ -255,16 +255,22 @@ pub fn activity(seed: &Seed, s: &Star, set: &Settings) -> Result<Activity, Strin
     if let Some(c) = &convection {
         why.push(surface_why(c, s));
         stand_ins.push("granules are ten pressure scale heights across and live half a crossing time; supergranules 25 granules across with flows a fifth of the granule speed; convective speed from flux with a fixed photospheric opacity (all fitted on the Sun)".into());
-        for x in sse_atoms::convection::atoms()
-            .iter()
-            .flat_map(|a| a.decl().references.clone())
+        for x in sse_atoms::decls_of(&[
+            "sse.convection.granule_size",
+            "sse.convection.speed",
+            "sse.convection.cell_lifetime",
+            "sse.convection.supergranule_size",
+            "sse.convection.supergranule_lifetime",
+        ])
+        .into_iter()
+        .flat_map(|d| d.references)
         {
             if !refs.contains(&x) {
                 refs.push(x);
             }
         }
     }
-    let refs_w11 = || sse_atoms::activity::atoms()[0].decl().references.clone();
+    let refs_w11 = || sse_atoms::decl_of("sse.activity.convective_turnover_time").references;
     let base =
         |regime: &str, rx: f64, why: Vec<String>, stand_ins: Vec<String>, refs: Vec<Reference>| {
             Activity {
@@ -360,7 +366,7 @@ pub fn activity(seed: &Seed, s: &Star, set: &Settings) -> Result<Activity, Strin
             p / JULIAN_YEAR,
             if active { "active" } else { "inactive" }
         ));
-        for x in sse_atoms::activity::atoms()[3].decl().references.clone() {
+        for x in sse_atoms::decl_of("sse.activity.cycle_period_inactive").references {
             refs.push(x);
         }
         stand_ins.push("the cycle is a sine of fixed amplitude; real cycles vary in length and strength, with grand minima".into());
@@ -620,7 +626,7 @@ pub fn flares(
             "ejection share, speed and mass grow with flare energy by stated power laws; cone half-width 30°, leaving within 30° of the star's equator; planets on circular orbits in that equator".into(),
             format!("largest possible flare {:.0e} J", set.max_flare_j),
         ],
-        references: sse_atoms::activity::atoms()[5].decl().references.clone(),
+        references: sse_atoms::decl_of("sse.activity.flare_rate_above").references,
     };
     out.references.push(r(SHIB13_T));
     out.references.push(r(YASHIRO06));

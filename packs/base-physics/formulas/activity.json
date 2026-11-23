@@ -1,0 +1,624 @@
+{
+ "format": "sse.formulas/1",
+ "family": "sse.activity",
+ "about": "Physics blocks whose maths is a formula (ND3b): each keeps its id, ports and results, and its maths is the Equation below, with a name that says what happens.",
+ "atoms": [
+  {
+   "id": "sse.activity.convective_turnover_time",
+   "version": "1.0.0",
+   "cost": "trivial",
+   "inputs": [
+    {
+     "port": "mass",
+     "letter": "M"
+    }
+   ],
+   "outputs": [
+    {
+     "port": "tau",
+     "letter": "tau"
+    }
+   ],
+   "constants": {
+    "M_sun": "sheet/M_sun",
+    "day": "sheet/day"
+   },
+   "models": {
+    "c0": {
+     "value": 1.16,
+     "grade": "fitted",
+     "source": "Wright et al. 2011 eq. 11"
+    },
+    "c1": {
+     "value": 1.49,
+     "grade": "fitted",
+     "source": "Wright et al. 2011 eq. 11"
+    },
+    "c2": {
+     "value": 0.54,
+     "grade": "fitted",
+     "source": "Wright et al. 2011 eq. 11"
+    }
+   },
+   "positive": [
+    {
+     "port": "mass",
+     "says": "mass"
+    }
+   ],
+   "references": [
+    "Wright, N. J., Drake, J. J., Mamajek, E. E. and Henry, G. W. 2011, The stellar-activity-rotation relationship and the evolution of stellar dynamos, ApJ 743, 48: log τ = 1.16 − 1.49 log(M/M☉) − 0.54 log²(M/M☉) days (0.09 to 1.36 M☉); saturated log(L_X/L_bol) = −3.13 below Ro = 0.13; slope β = −2.70 above it (unbiased sample); Sun log(L_X/L_bol) = −6.24. https://arxiv.org/abs/1109.4634",
+    "Noyes, R. W., Hartmann, L. W., Baliunas, S. L., Duncan, D. K. and Vaughan, A. H. 1984, Rotation, convection, and magnetic activity in lower main-sequence stars, ApJ 279, 763: activity depends on the Rossby number. doi:10.1086/161945"
+   ],
+   "shown": "log τ[d] = 1.16 − 1.49 log(M/M☉) − 0.54 log²(M/M☉)",
+   "equation": {
+    "name": "How long a star's outer layer takes to churn once",
+    "formula": "x = log10(M / M_sun)\ntau = 10 ^ (c0 - c1 * x - c2 * x * x) * day",
+    "inputs": {
+     "M": {
+      "kind": "star.mass",
+      "unit": "kg",
+      "name": "mass of the star",
+      "valid": [
+       1.789568883628246e+29,
+       2.7042374241493495e+30
+      ]
+     },
+     "M_sun": {
+      "kind": "constant.M_sun",
+      "unit": "kg",
+      "name": "the Sun's mass"
+     },
+     "day": {
+      "kind": "constant.day",
+      "unit": "s",
+      "name": "one day"
+     },
+     "c0": {
+      "kind": "model.turnover_c0",
+      "unit": "1",
+      "name": "fit's value at one solar mass (log days)"
+     },
+     "c1": {
+      "kind": "model.turnover_c1",
+      "unit": "1",
+      "name": "fit's slope"
+     },
+     "c2": {
+      "kind": "model.turnover_c2",
+      "unit": "1",
+      "name": "fit's curvature"
+     }
+    },
+    "outputs": {
+     "tau": {
+      "kind": "star.convective_turnover_time",
+      "unit": "s",
+      "name": "time for the outer layer to turn over"
+     }
+    },
+    "source": {
+     "text": "Wright, N. J., Drake, J. J., Mamajek, E. E. and Henry, G. W. 2011, ApJ 743, 48",
+     "url": "https://arxiv.org/abs/1109.4634",
+     "where": "eq. 11"
+    },
+    "explain": {
+     "curious": "Cool stars boil like a pan of soup under their surfaces. The smaller the star, the deeper and slower the boiling: about two weeks for the Sun, months for a small red dwarf.",
+     "science": "Empirical turnover time fitted so that X-ray activity against spin over turnover time is one relation for all cool stars. Valid for 0.09 to 1.36 solar masses; stars without a convective outer layer have none."
+    },
+    "examples": [
+     {
+      "M": 1.989e+30,
+      "tau": 1248307.883068715
+     }
+    ]
+   }
+  },
+  {
+   "id": "sse.activity.rossby_number",
+   "version": "1.0.0",
+   "cost": "trivial",
+   "inputs": [
+    {
+     "port": "period",
+     "letter": "P"
+    },
+    {
+     "port": "tau",
+     "letter": "tau"
+    }
+   ],
+   "outputs": [
+    {
+     "port": "ro",
+     "letter": "Ro"
+    }
+   ],
+   "positive": [
+    {
+     "port": "period",
+     "says": "rotation period"
+    },
+    {
+     "port": "tau",
+     "says": "turnover time"
+    }
+   ],
+   "references": [
+    "Noyes, R. W., Hartmann, L. W., Baliunas, S. L., Duncan, D. K. and Vaughan, A. H. 1984, Rotation, convection, and magnetic activity in lower main-sequence stars, ApJ 279, 763: activity depends on the Rossby number. doi:10.1086/161945",
+    "Wright, N. J., Drake, J. J., Mamajek, E. E. and Henry, G. W. 2011, The stellar-activity-rotation relationship and the evolution of stellar dynamos, ApJ 743, 48: log τ = 1.16 − 1.49 log(M/M☉) − 0.54 log²(M/M☉) days (0.09 to 1.36 M☉); saturated log(L_X/L_bol) = −3.13 below Ro = 0.13; slope β = −2.70 above it (unbiased sample); Sun log(L_X/L_bol) = −6.24. https://arxiv.org/abs/1109.4634"
+   ],
+   "shown": "Ro = P_rot / τ",
+   "equation": {
+    "name": "How fast a star spins against how fast it churns",
+    "formula": "Ro = P / tau",
+    "inputs": {
+     "P": {
+      "kind": "body.rotation_period",
+      "unit": "s",
+      "name": "time for one turn of the star"
+     },
+     "tau": {
+      "kind": "star.convective_turnover_time",
+      "unit": "s",
+      "name": "time for the outer layer to turn over"
+     }
+    },
+    "outputs": {
+     "Ro": {
+      "kind": "star.rossby_number",
+      "unit": "1",
+      "name": "spin over churning (Rossby number)"
+     }
+    },
+    "source": {
+     "text": "Noyes, R. W. et al. 1984, ApJ 279, 763",
+     "doi": "10.1086/161945",
+     "where": "the Rossby number"
+    },
+    "explain": {
+     "curious": "A star's magnetism comes from spin twisting its boiling layer. What matters is how many turns it makes in one boil: fewer than one, and the star is quiet like the Sun; many, and it is wild.",
+     "science": "Rossby number Ro = P_rot / τ_c."
+    },
+    "examples": [
+     {
+      "P": 2200000.0,
+      "tau": 1200000.0,
+      "Ro": 1.8333333333333333
+     }
+    ]
+   }
+  },
+  {
+   "id": "sse.activity.xray_fraction",
+   "version": "1.0.0",
+   "cost": "trivial",
+   "inputs": [
+    {
+     "port": "ro",
+     "letter": "Ro"
+    }
+   ],
+   "outputs": [
+    {
+     "port": "rx",
+     "letter": "Rx"
+    }
+   ],
+   "params": [
+    {
+     "param": "log_rx_sat",
+     "letter": "lsat",
+     "default": -3.13,
+     "range": [
+      -6.0,
+      -1.0
+     ],
+     "description": "saturated log(L_X/L_bol) (Wright 2011: −3.13 ± 0.08)"
+    },
+    {
+     "param": "ro_sat",
+     "letter": "Ro_sat",
+     "default": 0.13,
+     "range": [
+      0.01,
+      1.0
+     ],
+     "description": "Rossby number below which activity saturates (0.13 ± 0.02)"
+    },
+    {
+     "param": "beta",
+     "letter": "beta",
+     "default": -2.7,
+     "range": [
+      -5.0,
+      0.0
+     ],
+     "description": "slope above saturation (−2.70 ± 0.13 unbiased; −2.18 from the full-sample fit)"
+    }
+   ],
+   "positive": [
+    {
+     "port": "ro",
+     "says": "Rossby number"
+    }
+   ],
+   "references": [
+    "Wright, N. J., Drake, J. J., Mamajek, E. E. and Henry, G. W. 2011, The stellar-activity-rotation relationship and the evolution of stellar dynamos, ApJ 743, 48: log τ = 1.16 − 1.49 log(M/M☉) − 0.54 log²(M/M☉) days (0.09 to 1.36 M☉); saturated log(L_X/L_bol) = −3.13 below Ro = 0.13; slope β = −2.70 above it (unbiased sample); Sun log(L_X/L_bol) = −6.24. https://arxiv.org/abs/1109.4634"
+   ],
+   "shown": "L_X/L_bol = R_sat for Ro ≤ Ro_sat; R_sat (Ro/Ro_sat)^β above",
+   "equation": {
+    "name": "How brightly a star shines in X-rays for its spin",
+    "formula": "sat = 10 ^ lsat\nRx = if Ro <= Ro_sat then sat else sat * (Ro / Ro_sat) ^ beta",
+    "inputs": {
+     "Ro": {
+      "kind": "star.rossby_number",
+      "unit": "1",
+      "name": "spin over churning (Rossby number)"
+     },
+     "lsat": {
+      "kind": "model.log_rx_sat",
+      "unit": "1",
+      "name": "saturated log of the X-ray share"
+     },
+     "Ro_sat": {
+      "kind": "model.ro_sat",
+      "unit": "1",
+      "name": "Rossby number where activity saturates"
+     },
+     "beta": {
+      "kind": "model.activity_slope",
+      "unit": "1",
+      "name": "slope above saturation"
+     }
+    },
+    "outputs": {
+     "Rx": {
+      "kind": "star.xray_fraction",
+      "unit": "1",
+      "name": "share of the star's light given off as X-rays"
+     }
+    },
+    "source": {
+     "text": "Wright, N. J., Drake, J. J., Mamajek, E. E. and Henry, G. W. 2011, ApJ 743, 48",
+     "url": "https://arxiv.org/abs/1109.4634",
+     "where": "eq. 3, the saturated and unsaturated regimes"
+    },
+    "explain": {
+     "curious": "The Sun gives out less than a millionth of its power as X-rays. A young fast-spinning star gives out a thousandth, and no amount of extra spin pushes it higher: it is saturated.",
+     "science": "The activity-rotation relation: flat below the saturation Rossby number, a power law above. The Sun's Rossby number 1.8 gives log(L_X/L_bol) = −6.21 against −6.24 observed."
+    },
+    "examples": [
+     {
+      "Ro": 1.8,
+      "lsat": -3.13,
+      "Ro_sat": 0.13,
+      "beta": -2.7,
+      "Rx": 6.143435280436325e-07
+     }
+    ]
+   }
+  },
+  {
+   "id": "sse.activity.cycle_period_inactive",
+   "version": "1.0.0",
+   "cost": "trivial",
+   "inputs": [
+    {
+     "port": "period",
+     "letter": "P"
+    }
+   ],
+   "outputs": [
+    {
+     "port": "cycle",
+     "letter": "Pc"
+    }
+   ],
+   "constants": {
+    "day": "sheet/day"
+   },
+   "params": [
+    {
+     "param": "a",
+     "letter": "a",
+     "default": 1.488,
+     "range": [
+      -2.0,
+      6.0
+     ],
+     "description": "intercept, log days"
+    },
+    {
+     "param": "n",
+     "letter": "n",
+     "default": 1.324,
+     "range": [
+      0.0,
+      4.0
+     ],
+     "description": "slope"
+    }
+   ],
+   "positive": [
+    {
+     "port": "period",
+     "says": "rotation period"
+    }
+   ],
+   "references": [
+    "Mittag, M., Schmitt, J. H. M. M. and Schröder, K.-P. 2023, Revisiting the cycle-rotation connection for late-type stars: short (inactive) branch log P_cyc = 1.488 + 1.324 log P_rot and long (active) branch log P_cyc = 2.22 + 1.28 log P_rot, both periods in days; scatter 0.24 dex and about 40 %; the Sun lies between the branches (6.1 yr predicted against 11). https://arxiv.org/abs/2306.05866"
+   ],
+   "shown": "log P_cyc[d] = a + n log P_rot[d]",
+   "equation": {
+    "name": "Length of a quiet star's spot cycle",
+    "formula": "Pc = 10 ^ (a + n * log10(P / day)) * day",
+    "inputs": {
+     "P": {
+      "kind": "body.rotation_period",
+      "unit": "s",
+      "name": "time for one turn of the star"
+     },
+     "day": {
+      "kind": "constant.day",
+      "unit": "s",
+      "name": "one day"
+     },
+     "a": {
+      "kind": "model.cycle_intercept",
+      "unit": "1",
+      "name": "intercept, log days"
+     },
+     "n": {
+      "kind": "model.cycle_slope",
+      "unit": "1",
+      "name": "slope"
+     }
+    },
+    "outputs": {
+     "Pc": {
+      "kind": "star.activity_cycle_period",
+      "unit": "s",
+      "name": "length of the activity cycle"
+     }
+    },
+    "source": {
+     "text": "Mittag, M., Schmitt, J. H. M. M. and Schröder, K.-P. 2023, Revisiting the cycle-rotation connection for late-type stars",
+     "url": "https://arxiv.org/abs/2306.05866",
+     "where": "the two branches"
+    },
+    "explain": {
+     "curious": "Quiet stars wax and wane in spots over years, like the Sun's eleven-year cycle. Slower spinners have longer cycles.",
+     "science": "The short-cycle (inactive) branch of the cycle-rotation diagram. Scatter 0.24 dex; the Sun itself sits between the branches, and this relation gives it 6.1 years against the observed 11."
+    },
+    "examples": [
+     {
+      "P": 2200000.0,
+      "a": 1.488,
+      "n": 1.324,
+      "Pc": 193168886.7078996
+     }
+    ]
+   }
+  },
+  {
+   "id": "sse.activity.cycle_period_active",
+   "version": "1.0.0",
+   "cost": "trivial",
+   "inputs": [
+    {
+     "port": "period",
+     "letter": "P"
+    }
+   ],
+   "outputs": [
+    {
+     "port": "cycle",
+     "letter": "Pc"
+    }
+   ],
+   "constants": {
+    "day": "sheet/day"
+   },
+   "params": [
+    {
+     "param": "a",
+     "letter": "a",
+     "default": 2.22,
+     "range": [
+      -2.0,
+      6.0
+     ],
+     "description": "intercept, log days"
+    },
+    {
+     "param": "n",
+     "letter": "n",
+     "default": 1.28,
+     "range": [
+      0.0,
+      4.0
+     ],
+     "description": "slope"
+    }
+   ],
+   "positive": [
+    {
+     "port": "period",
+     "says": "rotation period"
+    }
+   ],
+   "references": [
+    "Mittag, M., Schmitt, J. H. M. M. and Schröder, K.-P. 2023, Revisiting the cycle-rotation connection for late-type stars: short (inactive) branch log P_cyc = 1.488 + 1.324 log P_rot and long (active) branch log P_cyc = 2.22 + 1.28 log P_rot, both periods in days; scatter 0.24 dex and about 40 %; the Sun lies between the branches (6.1 yr predicted against 11). https://arxiv.org/abs/2306.05866"
+   ],
+   "shown": "log P_cyc[d] = a + n log P_rot[d]",
+   "equation": {
+    "name": "Length of a busy star's spot cycle",
+    "formula": "Pc = 10 ^ (a + n * log10(P / day)) * day",
+    "inputs": {
+     "P": {
+      "kind": "body.rotation_period",
+      "unit": "s",
+      "name": "time for one turn of the star"
+     },
+     "day": {
+      "kind": "constant.day",
+      "unit": "s",
+      "name": "one day"
+     },
+     "a": {
+      "kind": "model.cycle_intercept",
+      "unit": "1",
+      "name": "intercept, log days"
+     },
+     "n": {
+      "kind": "model.cycle_slope",
+      "unit": "1",
+      "name": "slope"
+     }
+    },
+    "outputs": {
+     "Pc": {
+      "kind": "star.activity_cycle_period",
+      "unit": "s",
+      "name": "length of the activity cycle"
+     }
+    },
+    "source": {
+     "text": "Mittag, M., Schmitt, J. H. M. M. and Schröder, K.-P. 2023, Revisiting the cycle-rotation connection for late-type stars",
+     "url": "https://arxiv.org/abs/2306.05866",
+     "where": "the two branches"
+    },
+    "explain": {
+     "curious": "Very active stars have cycles too, but longer for the same spin, as if a second deeper dynamo were running.",
+     "science": "The long-cycle (active) branch. Scatter about 40 %."
+    },
+    "examples": [
+     {
+      "P": 860000.0,
+      "a": 2.22,
+      "n": 1.28,
+      "Pc": 271602754.25257534
+     }
+    ]
+   }
+  },
+  {
+   "id": "sse.activity.flare_rate_above",
+   "version": "1.0.0",
+   "cost": "trivial",
+   "inputs": [
+    {
+     "port": "lx",
+     "letter": "Lx"
+    },
+    {
+     "port": "energy",
+     "letter": "E"
+    }
+   ],
+   "outputs": [
+    {
+     "port": "rate",
+     "letter": "N"
+    }
+   ],
+   "models": {
+    "E_ref": {
+     "value": 1e+27,
+     "grade": "assumed",
+     "source": "the reference energy of Vasilyev et al. 2024's superflare rate"
+    }
+   },
+   "params": [
+    {
+     "param": "k",
+     "letter": "k",
+     "default": 0.0012414662791788848,
+     "range": [
+      0.0,
+      1.0
+     ],
+     "description": "flares above 10³⁴ erg per second, times 10³⁴ erg, per watt of X-rays (from the Sun-like superflare rate)"
+    },
+    {
+     "param": "alpha",
+     "letter": "alpha",
+     "default": 2.0,
+     "range": [
+      1.1,
+      3.0
+     ],
+     "description": "index of the energy spread dN/dE ∝ E^−α (Shibayama 2013: 2.0; Vasilyev 2024: 1.97 ± 0.30)"
+    }
+   ],
+   "positive": [
+    {
+     "port": "energy",
+     "says": "energy"
+    }
+   ],
+   "references": [
+    "Vasilyev, V. et al. 2024, Sun-like stars produce superflares roughly once per century, Science: (8.63 ± 0.20)×10⁻³ per year above 10³⁴ erg for 5000 to 6500 K stars with rotation over 20 days; energy spread dN/dE ∝ E^(−1.97 ± 0.30), consistent with the Sun's own flares extrapolated. https://arxiv.org/abs/2412.12265",
+    "Shibayama, T. et al. 2013, Superflares on solar-type stars observed with Kepler I, ApJS 209, 5: dN/dE ∝ E^(−2.0) for slow rotators, −2.2 for all G dwarfs; fast rotators flare far more often. https://arxiv.org/abs/1308.1480"
+   ],
+   "shown": "N(>E) = k (L_X / E₀) (E / E₀)^(1−α),  E₀ = 10³⁴ erg",
+   "equation": {
+    "name": "How often a star flares at least this hard",
+    "formula": "L = max(Lx, 0)\nN = k * L / E_ref * (E / E_ref) ^ (1 - alpha)",
+    "inputs": {
+     "Lx": {
+      "kind": "star.xray_luminosity",
+      "unit": "W",
+      "name": "X-ray light of the star"
+     },
+     "E": {
+      "kind": "flare.energy",
+      "unit": "J",
+      "name": "flare energy"
+     },
+     "E_ref": {
+      "kind": "model.flare_reference_energy",
+      "unit": "J",
+      "name": "reference flare energy (10³⁴ erg)"
+     },
+     "k": {
+      "kind": "model.flare_rate_k",
+      "unit": "1",
+      "name": "flare rate scale"
+     },
+     "alpha": {
+      "kind": "model.flare_energy_index",
+      "unit": "1",
+      "name": "index of the energy spread"
+     }
+    },
+    "outputs": {
+     "N": {
+      "kind": "flare.rate_above",
+      "unit": "s-1",
+      "name": "flares per second at least this big"
+     }
+    },
+    "source": {
+     "text": "Vasilyev, V. et al. 2024, Sun-like stars produce superflares roughly once per century, Science",
+     "url": "https://arxiv.org/abs/2412.12265",
+     "where": "the superflare rate and energy index"
+    },
+    "explain": {
+     "curious": "Small flares happen all the time and great ones rarely: ten times the energy, a tenth as often. A star like the Sun has a superflare about once a century; a young or red dwarf star, many a year.",
+     "science": "A power-law spread of flare energies whose rate scales with the star's X-ray luminosity (both are fed by the same magnetic energy). Normalised to Sun-like stars' superflare rate."
+    },
+    "examples": [
+     {
+      "Lx": 2.2e+20,
+      "E": 1e+27,
+      "k": 0.0012414662791788848,
+      "alpha": 2.0,
+      "N": 2.7312258141935466e-10
+     }
+    ]
+   }
+  }
+ ]
+}

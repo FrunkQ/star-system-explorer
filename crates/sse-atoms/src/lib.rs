@@ -44,8 +44,6 @@ pub fn atoms() -> Vec<Box<dyn sse_flow::Atom>> {
         .chain(magnetic::atoms())
         .chain(light::atoms())
         .chain(nebula::atoms())
-        .chain(activity::atoms())
-        .chain(convection::atoms())
         .chain(field::atoms())
         .chain(shield::atoms())
         .chain(extinction::atoms())
@@ -54,6 +52,21 @@ pub fn atoms() -> Vec<Box<dyn sse_flow::Atom>> {
         .chain(air::atoms())
         .chain(chem::atoms())
         .collect()
+}
+
+/// One block's face (ports, settings, references, words) by its id, whether
+/// its maths is Rust or a formula file.
+pub fn decl_of(id: &str) -> sse_flow::AtomDecl {
+    atoms()
+        .into_iter()
+        .find(|a| a.decl().id == id)
+        .map(|a| a.decl().clone())
+        .unwrap_or_else(|| panic!("no block {id}"))
+}
+
+/// The faces of several blocks, in the order asked.
+pub fn decls_of(ids: &[&str]) -> Vec<sse_flow::AtomDecl> {
+    ids.iter().map(|id| decl_of(id)).collect()
 }
 
 pub fn registry() -> AtomRegistry {

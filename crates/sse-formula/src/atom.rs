@@ -50,6 +50,19 @@ struct ParamEntry {
     description: String,
 }
 
+/// A number that belongs to the model, not to nature (a fitted slope, a
+/// reference energy), as a letter of the formula with its grade and where
+/// it comes from (equation block design, Model number). It is shown with
+/// the formula; changing it is a change to the pack.
+#[derive(Clone, Debug, Deserialize)]
+#[serde(deny_unknown_fields)]
+struct ModelEntry {
+    value: f64,
+    /// `fitted`, `measured`, `derived` or `assumed`.
+    grade: String,
+    source: String,
+}
+
 /// A refusal kept from the old block in its own words: the port's value
 /// must be at least `min`, below `below` and at most `max` (each when
 /// given); `{}` in `says` is the value.
@@ -87,6 +100,8 @@ struct Entry {
     constants: BTreeMap<String, String>,
     #[serde(default)]
     params: Vec<ParamEntry>,
+    #[serde(default)]
+    models: BTreeMap<String, ModelEntry>,
     /// Checked in this order before the formula runs.
     #[serde(default)]
     positive: Vec<Positive>,
@@ -180,6 +195,14 @@ impl FormulaAtom {
                         ex.insert(l.clone(), J::from(v));
                     }
                 }
+                for (l, mo) in &e.models {
+                    if ex.contains_key(l) {
+                        return Err(at(format!(
+                            "a worked example types {l}; it reads the model number"
+                        )));
+                    }
+                    ex.insert(l.clone(), J::from(mo.value));
+                }
             }
         }
         let parsed = Parsed::new(Some(&equation)).map_err(at)?;
@@ -223,6 +246,22 @@ impl FormulaAtom {
                 (None, Some(v)) => From::Sheet(v),
                 _ => return Err(at(format!("{row} is not a constant a formula can read (constants/G, constants/c, constants/sigma_SB, constants/k_B, or a sheet row as sheet/<id>)"))),
             });
+        }
+        for (l, mo) in &e.models {
+            let i = letter_in(l).ok_or_else(|| at(format!("model number {l} is no letter")))?;
+            if from[i].is_some() {
+                return Err(at(format!("letter {l} is fed twice")));
+            }
+            if parsed.in_scales[i] != 1.0 {
+                return Err(at(format!("model number {l} is written in SI units")));
+            }
+            if !["fitted", "measured", "derived", "assumed"].contains(&mo.grade.as_str()) {
+                return Err(at(format!("model number {l}'s grade is fitted, measured, derived or assumed")));
+            }
+            if mo.source.trim().is_empty() {
+                return Err(at(format!("model number {l} says where it comes from")));
+            }
+            from[i] = Some(From::Sheet(mo.value));
         }
         let mut params = vec![];
         for (k, q) in e.params.iter().enumerate() {

@@ -35,6 +35,14 @@ pub const FILES: &[(&str, &str)] = &[
         "tides",
         include_str!("../../../packs/base-physics/formulas/tides.json"),
     ),
+    (
+        "activity",
+        include_str!("../../../packs/base-physics/formulas/activity.json"),
+    ),
+    (
+        "convection",
+        include_str!("../../../packs/base-physics/formulas/convection.json"),
+    ),
 ];
 
 /// Read every formula file once: parsed, unit-checked and its worked
