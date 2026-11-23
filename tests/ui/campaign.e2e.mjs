@@ -114,6 +114,9 @@ try {
     await od.locator("[data-opened='other-app']").getByRole("link", { name: "Open the converter" }).waitFor();
     await give("p.json", JSON.stringify({ format: "sse.pack/1", id: "base-physics", version: "9.9.9" }));
     await od.locator("[data-opened='pack'] [data-pack-problem]").waitFor();
+    // A paper's pack (ND6) says what it cites, what it fudges and whether it reproduces the paper, before it is added.
+    await give("paper.json", readFileSync("packages/ui-contract/test/fixtures/paper.pack.json"));
+    assert.match(await od.locator("[data-opened='pack'] [data-pack-report='test.paper']").innerText({ timeout: 20000 }), /2 sources, 2 fudges, 1 of 1 check reproduced, citing Planetary fact sheet and A made-up fit/);
     await give("starmap.json", readFileSync("packages/shell/public/samples/synthetic-sol.json"));
     await od.locator("[data-opened='v3-save']").getByText(/Star System Explorer 3 save/).waitFor();
     await od.getByRole("button", { name: "Bring it in" }).click();

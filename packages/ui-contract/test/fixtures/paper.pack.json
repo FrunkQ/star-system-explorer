@@ -1,0 +1,189 @@
+{
+  "format": "sse.pack/1",
+  "id": "test.paper",
+  "version": "0.1.0",
+  "kind": [
+    "physics"
+  ],
+  "kernel_range": "^0.1",
+  "licence": "CC-BY-4.0",
+  "requires": [
+    {
+      "id": "sse.base-physics",
+      "range": "^0.1"
+    }
+  ],
+  "provides": {
+    "quantity_kinds": [
+      {
+        "id": "test.length",
+        "dim": [
+          1,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0
+        ],
+        "description": "ND6 fixture"
+      },
+      {
+        "id": "test.stretched",
+        "dim": [
+          1,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0
+        ],
+        "description": "ND6 fixture"
+      }
+    ],
+    "flows": [
+      {
+        "format": "sse.flow/1",
+        "id": "test.stretch",
+        "version": "1.0.0",
+        "hook": "test.stretch",
+        "inputs": [
+          {
+            "name": "length",
+            "kind": "test.length"
+          }
+        ],
+        "nodes": [
+          {
+            "id": "k",
+            "atom": "sse.model.number",
+            "config": {
+              "name": "stretch factor",
+              "value": 1.5,
+              "unit": "1",
+              "range": [
+                1,
+                2
+              ],
+              "grade": "fitted",
+              "source": {
+                "text": "A made-up fit",
+                "url": "https://example.org/fit",
+                "where": "Table 1"
+              }
+            }
+          },
+          {
+            "id": "s",
+            "atom": "sse.math.equation",
+            "config": {
+              "name": "How long it ends up",
+              "formula": "y = k * x",
+              "inputs": {
+                "k": {
+                  "kind": "model.number",
+                  "unit": "1",
+                  "name": "stretch factor"
+                },
+                "x": {
+                  "kind": "test.length",
+                  "unit": "m",
+                  "name": "length before"
+                }
+              },
+              "outputs": {
+                "y": {
+                  "kind": "test.stretched",
+                  "unit": "m",
+                  "name": "length after"
+                }
+              },
+              "source": {
+                "text": "Definition",
+                "url": "https://example.org/def",
+                "where": "eq. 1"
+              },
+              "explain": {
+                "curious": "It gets longer.",
+                "science": "A linear stretch."
+              },
+              "examples": [
+                {
+                  "k": 2,
+                  "x": 3,
+                  "y": 6
+                }
+              ]
+            }
+          }
+        ],
+        "wires": [
+          {
+            "from": "k.value",
+            "to": "s.k"
+          },
+          {
+            "from": "in.length",
+            "to": "s.x"
+          }
+        ],
+        "publishes": [
+          {
+            "kind": "test.stretched",
+            "from": "s.y"
+          }
+        ]
+      }
+    ]
+  },
+  "sources": [
+    {
+      "id": "facts",
+      "text": "Planetary fact sheet",
+      "url": "https://nssdc.gsfc.nasa.gov/planetary/factsheet/"
+    },
+    {
+      "id": "fit",
+      "text": "A made-up fit",
+      "doi": "10.0000/example"
+    }
+  ],
+  "fudges": [
+    {
+      "id": "linear",
+      "what": "a straight-line stretch",
+      "stands_in_for": "the full curve",
+      "replace_with": "a table of measured lengths",
+      "flows": [
+        "test.stretch"
+      ],
+      "source": "fit"
+    }
+  ],
+  "reproduction": [
+    {
+      "name": "A world like ours",
+      "source": "facts",
+      "where": "gravity row",
+      "flow": "sse.base.planet-bulk",
+      "inputs": {
+        "mass": {
+          "value": 5.97e+24,
+          "unit": "kg"
+        },
+        "radius": {
+          "value": 6371,
+          "unit": "km"
+        }
+      },
+      "expect": {
+        "body.surface_gravity": {
+          "value": 9.8,
+          "unit": "m_s2",
+          "tolerance": 0.01
+        }
+      }
+    }
+  ]
+}

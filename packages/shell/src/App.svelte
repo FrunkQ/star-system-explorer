@@ -14,7 +14,7 @@
   import YourData from "./YourData.svelte";
   import { downloadText, opening as markOpening, restoreSetAside, setAsideText, unfinishedOpen, watchProblems, type DiagnosticState } from "./your-data.ts";
   import { checkCampaignSave, makeCampaignSave, saveFileName, savedEvents, type CampaignSave } from "../../ui-contract/src/index.ts";
-  import { CONVERTER_URL, checkPackDoc, creditWords, fetchExplorers, previewStack, sniffFile, stackPacks as addPacks, v3SaveText, type ExplorersListing, type PackDoc, type Sniffed, type StackPreview } from "../../ui-contract/src/index.ts";
+  import { CONVERTER_URL, checkPackDoc, creditWords, fetchExplorers, previewStack, reportWords, sniffFile, stackPacks as addPacks, v3SaveText, type ExplorersListing, type PackDoc, type Sniffed, type StackPreview } from "../../ui-contract/src/index.ts";
   import SeatsPanel from "./SeatsPanel.svelte";
   import LensPanel from "./LensPanel.svelte";
   import SoundControl from "../../sound/src/SoundControl.svelte";
@@ -365,7 +365,7 @@
     if (sniffed.kind === "pack" && session) {
       const info = session.stack();
       const bad = checkPackDoc(sniffed.doc, [...info.base, ...(info.campaign ? [info.campaign] : [])].map((p) => p.id));
-      packCheck = bad ? { ok: false, problems: [bad], changes: [] } : await previewStack(session, scene, [...(info.added as PackDoc[]), sniffed.doc as PackDoc]);
+      packCheck = bad ? { ok: false, problems: [bad], changes: [] } : await previewStack(session, scene, [...(info.added as PackDoc[]), sniffed.doc as PackDoc], { report: (sniffed.doc as PackDoc).id });
     }
   }
   async function pickFile(e: Event) {
@@ -1639,6 +1639,7 @@
         {#if !packCheck}<p class="hint">Checking it with the kernel…</p>
         {:else if packCheck.ok}
           <p data-pack-check>The kernel accepts it. It would change {packCheck.changes.length} {packCheck.changes.length === 1 ? "value" : "values"} on this chart{packCheck.changes.length ? `, such as ${packCheck.changes.slice(0, 3).map((c) => c.label).join(", ")}` : ""}.</p>
+          {#if packCheck.report}<p data-pack-report={packCheck.report.pack}>It brings {reportWords(packCheck.report)}{packCheck.report.sources.length ? `, citing ${packCheck.report.sources.map((x) => x.text).slice(0, 2).join(" and ")}${packCheck.report.sources.length > 2 ? " and more" : ""}` : ""}.</p>{/if}
           {#if packNote}<p role="status">{packNote}</p>{:else}<p class="row"><button type="button" onclick={openOpened}>Add it to this campaign</button></p>{/if}
         {:else}<p role="alert" data-pack-problem>It cannot be added: {packCheck.problems.join("; ")}.</p>{/if}
       {:else if given.sniffed.kind === "other-app"}

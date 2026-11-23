@@ -32,8 +32,8 @@ export type { SystemScene, SceneSubject, SceneFact, SceneEvent, FactSource } fro
 export { KM_PER_AU, primaryOf, childrenOf, systemOrder, frameFor, isShell } from "./scene.ts";
 export { describeFact, wordsFor, fact, subjectName, parentOf, sentence, checkPlayerScene } from "./player-scene.ts";
 export type { PlayerScene, PlayerSubject, PlayerFact, Vocab, FieldWords, FactText } from "./player-scene.ts";
-export { packSummary, previewStack, stackPacks, checkPackDoc } from "./packs-edit.ts";
-export type { PackSummary, ValueChange, StackPreview } from "./packs-edit.ts";
+export { packSummary, previewStack, stackPacks, checkPackDoc, sourceLink, percentWords, reportWords, unitWords } from "./packs-edit.ts";
+export type { PackSummary, ValueChange, StackPreview, PackReport } from "./packs-edit.ts";
 export { observeOf, checkSetup, playerDataPack, setupChanges, applySetup, enterFacts, ladderOf, PLAYER_DATA_PACK, DEFAULT_LADDER } from "./data-views.ts";
 export type { DataView, ObserveSetup, Override, TagMode, UnknownStyle, AuthoredFacts } from "./data-views.ts";
 export { showReference } from "./reference.ts";

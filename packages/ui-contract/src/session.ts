@@ -297,8 +297,11 @@ export interface StackCandidate {
   campaign?: PackDoc | null;
 }
 
-/** What a trial's probe may do: derive, and see the candidate stack. */
-export type Probe = Pick<ViewSession, "derive" | "stack">;
+/** What a trial's probe may do: derive, see the candidate stack, and read the packs' own reports (ND6). */
+export type Probe = Pick<ViewSession, "derive" | "stack"> & {
+  /** Sources, fudges and reproduction checks of one pack of the candidate stack (or every pack), worked out when it loaded. */
+  packReports(pack?: string): Promise<{ ok: true; reports: unknown[] } | { ok: false; message: string }>;
+};
 
 export type TrialResult<T> = { ok: true; stack_hash: string; result: T } | { ok: false; report: string; issues: string[] };
 
@@ -412,6 +415,10 @@ export class Session implements ViewSession {
         async derive(ref) {
           const r = await call(client, { op: "derive", flow: ref.flow, inputs: ref.inputs });
           return r.type === "derived" ? { ok: true as const, values: r.values as Record<string, Derived> } : { ok: false as const, message: String(r.message ?? JSON.stringify(r)) };
+        },
+        async packReports(pack) {
+          const r = await call(client, { op: "pack_reports", ...(pack ? { pack } : {}) });
+          return r.type === "pack_reports" && Array.isArray(r.reports) ? { ok: true as const, reports: r.reports as unknown[] } : { ok: false as const, message: String(r.message ?? JSON.stringify(r)) };
         },
       };
       return { ok: true as const, stack_hash: String(st.stack_hash), result: await probe(p) };
