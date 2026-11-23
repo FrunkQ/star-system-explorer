@@ -223,6 +223,8 @@ export interface ViewSession {
   readActivity(ask: { stars: Json[]; seed?: string; at_s?: number; window?: { from_s: number; to_s: number; min_energy_j?: number } }): Promise<{ ok: true; stars: Json[] } | { ok: false; code: string; message: string }>;
   /** What stops the wind at each body, and its field (read only): `fixture: "solar-system"` or handed `bodies`. */
   readField(ask: { fixture?: string; bodies?: Json[] }): Promise<{ ok: true; bodies: Json[] } | { ok: false; code: string; message: string }>;
+  /** NM6: every name a thing has, by layer (kernel `read_names`); a player seat sees only the layers its view discloses. */
+  readNames(address: string): Promise<{ ok: true; value: import("./names.ts").NamesRead } | { ok: false; code: string; message: string }>;
   /** NM6: a sample of names from one scheme on the stack (kernel `name_sample`), the same on every device. Read only. */
   nameSample(ask: import("./names.ts").SampleAsk): Promise<{ ok: true; value: import("./names.ts").NameSample } | { ok: false; code: string; message: string }>;
   /** MP10: the master data sheet as the stack has it (kernel `read_matter`): the listing, a table's ids, or one row with sources and readers. Read only. */
@@ -716,6 +718,12 @@ export class Session implements ViewSession {
   async readField(ask: { fixture?: string; bodies?: Json[] }): Promise<{ ok: true; bodies: Json[] } | { ok: false; code: string; message: string }> {
     const r = await this.#call({ op: "read_field", ...ask } as Json);
     return r.type === "field_read" ? { ok: true, bodies: (r as unknown as { bodies: Json[] }).bodies } : { ok: false, code: String(r.code ?? "unexpected"), message: String(r.message ?? JSON.stringify(r)) };
+  }
+
+  async readNames(address: string): Promise<{ ok: true; value: import("./names.ts").NamesRead } | { ok: false; code: string; message: string }> {
+    const own = audienceOf(this.seat);
+    const r = await this.#call({ op: "read_names", address, ...(this.seat.authority === "gm" ? {} : { audience: own }) } as Json);
+    return r.type === "names" ? { ok: true, value: (r as unknown as { value: import("./names.ts").NamesRead }).value } : { ok: false, code: String(r.code ?? "unexpected"), message: String(r.message ?? JSON.stringify(r)) };
   }
 
   async nameSample(ask: import("./names.ts").SampleAsk): Promise<{ ok: true; value: import("./names.ts").NameSample } | { ok: false; code: string; message: string }> {
