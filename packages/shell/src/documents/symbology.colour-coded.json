@@ -17,12 +17,36 @@
   {
    "applies_to": "star",
    "channel": "size",
-   "from": "kind",
+   "from": "number:luminosity_lsun",
    "scale": {
-    "table": {
-     "star": 7
-    }
-   }
+    "thresholds": [
+     [
+      0.01,
+      4.5
+     ],
+     [
+      0.3,
+      5.5
+     ],
+     [
+      3,
+      7
+     ],
+     [
+      30,
+      8.5
+     ],
+     [
+      1000,
+      10
+     ],
+     [
+      1e+99,
+      12
+     ]
+    ]
+   },
+   "fallback": 7
   },
   {
    "applies_to": "planet",
@@ -169,6 +193,18 @@
     }
    },
    "fallback": null
+  },
+  {
+   "applies_to": "star",
+   "channel": "aura",
+   "from": "tag:activity:",
+   "scale": {
+    "table": {
+     "saturated": "flares",
+     "active": "flares"
+    }
+   },
+   "fallback": "none"
   },
   {
    "applies_to": "belt",
