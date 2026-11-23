@@ -22,7 +22,7 @@ Open https://v4.starsystemx.com/ and try these steps in order. The check `tests/
 | Run time | Press Play on the ruler. The ruler closes in so the days visibly pass. | 1 |
 | Out to the cosmic web | Press "Web" at the left of the place line. | 1 (2 on a phone) |
 | Straight back down | Press "‹ Back to Earth" on the rail, or Earth at the end of the place line. | 1 |
-| Look up an element | Choose "Look up" on the rail, then "Elements", then an element. | 3 |
+| Look up an element | Choose "Look up" on the rail, type its name (iron) and press Enter. A phone presses the Find box first. | 1 (2 on a phone) |
 
 Undo (Ctrl+Z, or the arrow on the Build tools) takes the edit back. Nothing in the walk needs a key or an account.
 
@@ -36,7 +36,7 @@ Physics:
 3. **Going up from a system opens the galaxy you last charted, not the system's own.** The kernel does not yet place systems in a galaxy (kernel, galaxy histories).
 
 Presses:
-4. **Looking up an element takes three presses:** Look up, Elements, the element. A search box in Look up would make it one (chart room, after stage 1).
+4. **Find in Look up covers elements, constants and units.** Substances join it with their page (MP10 part 3), and it does not yet search names on the chart (chart room, Find in stage 2).
 5. **Adding a world takes three presses** (pick the star, Add here, one of what forms there), and a fourth on a phone, where Add here is in More. With nothing selected it goes round the primary in two. Moons are not sampled from formation yet: "Something else" adds one, marked impossible (chart room; kernel for moon formation).
 6. **On a phone, the cosmic web takes two presses.** The place line shows only the step above, so the way out is the list beside the name, under "Further out".
 
@@ -59,4 +59,5 @@ Editing:
 - "Look up" (Reference) is on the rail at every system and world, under Understand.
 - The place line keeps inside its own space at every scale, and the trail gives way first. The system's name is its own switcher when the campaign holds more than one system. Below adds the campaign's other systems and "Further out".
 - The phone's rail chips no longer squeeze into each other.
+- Look up has one Find box: an element, constant or unit by name, symbol or number, so looking one up takes a press and a word.
 - Add here (V3 gap 2): a world or moon by hand on the Build desk, from what formation runs make at that orbit, or anything, marked impossible.

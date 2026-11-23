@@ -35,7 +35,7 @@ const BUDGET = {
   "run time": 1,
   "out to the cosmic web": { desktop: 1, phone: 2 }, // a phone's line shows one step up: the list beside the name, then the web
   "straight back down": 1,
-  "look up an element": 3, // Look up, Elements, the element
+  "look up an element": { desktop: 1, phone: 2 }, // Look up, then type its name and Enter (a phone presses the box first)
 };
 
 async function walk(browser, vp) {
@@ -178,10 +178,13 @@ async function walk(browser, vp) {
 
   await step("look up an element", async () => {
     await tap(rail("reference"));
-    await tap(page.locator('[data-page="elements"]'));
-    await page.locator('[data-elements="ready"]').waitFor({ timeout: 20000 });
-    await page.locator('.table [data-el="fe"]').click({ force: phone });
-    await page.locator('[data-element-card="fe"]').waitFor();
+    const find = page.locator("[data-ref-find]");
+    if (phone) await tap(find);
+    else await page.waitForFunction(() => document.activeElement?.hasAttribute("data-ref-find"), null, { timeout: 20000 });
+    await page.keyboard.type("iron");
+    await page.locator('[data-ref-hit="elements:fe"]').waitFor({ timeout: 20000 });
+    await page.keyboard.press("Enter");
+    await page.locator('[data-element-card="fe"]').waitFor({ timeout: 20000 });
   });
 
   // Nothing runs off the side of a phone, anywhere on the walk's last screen.
