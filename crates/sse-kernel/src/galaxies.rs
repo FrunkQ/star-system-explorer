@@ -420,6 +420,8 @@ fn look(
             "a_v": a_v,
             "stellar_mass_msun": then.stars * kept,
             "stellar_mass_now_msun": g.now.stars * kept,
+            // G3's envelope: the galaxy chart follows its tree (GH3).
+            "about": true,
             "sfr_msun_yr": if t_stop < t_emit { 0.0 } else { then.sfr },
             "morphology": morph,
             "half_light_kpc": r_half_kpc,
@@ -476,67 +478,21 @@ pub(crate) fn satellites_seen(
         sse_cosmos::assembly::Level::Chart,
     )
     .map_err(|e| err("bad_address", e))?;
-    let host_addr: sse_core::Address = host
-        .address
-        .parse()
-        .map_err(|e| err("bad_address", format!("{e:?}")))?;
-    let d = sse_core::Draws::new(
-        st.seed,
-        host_addr,
-        sse_core::Stream::new(sse_cosmos::assembly::FILL_STREAM)
-            .map_err(|e| err("bad_request", e.to_string()))?,
-    );
     // The host's potential from the first infall to now, one table per
-    // slice (GH2 cut 3), built once for every satellite.
-    let first = tree
-        .progenitors
-        .iter()
-        .map(|p| p.t_infall_gyr)
-        .fold(t_obs, f64::min);
+    // slice (GH2 cut 3), built once for every satellite; each member's own
+    // galaxy and orbit in it (shared with GH3's feed).
     let host_galaxy = sse_cosmos::galaxy::evolve(c, gp, host);
-    let pot = sse_cosmos::infall::Host::new(c, gp, host, &host_galaxy, first, t_obs, op);
+    let (_, members) = sse_cosmos::feed::members(c, hs, gp, op, host, &host_galaxy, &tree, t_obs)
+        .map_err(|e| err("bad_address", e))?;
     let mut out = vec![];
     let (mut drawn, mut merged) = (0u64, 0u64);
     let mut remains: std::collections::BTreeMap<String, u64> = Default::default();
-    for p in &tree.progenitors {
+    for mb in &members {
         drawn += 1;
-        let k0 = p.draw_base;
-        let u = [
-            d.unit(k0 + 2),
-            d.unit(k0 + 3),
-            d.unit(k0 + 4),
-            d.unit(k0 + 5),
-            d.unit(k0 + 6),
-        ];
-        // Its galaxy: the progenitor as a halo of its own, with the mass at
-        // infall it fell in with.
-        let m0 = sse_cosmos::assembly::mass_today_for(c, p.mass_at_infall_msun, p.z_infall);
-        let paddr: sse_core::Address = p
-            .address
-            .parse()
-            .map_err(|e| err("bad_address", format!("{e:?}")))?;
-        let halo = hs.median_at(m0, &paddr);
-        let g = sse_cosmos::galaxy::evolve(c, gp, &halo);
-        let at = state_at(&g, p.t_infall_gyr);
-        let grip = sse_cosmos::infall::Grip {
-            stars_msun: at.stars,
-            gas_msun: at.gas,
-            disc_kpc: at.disc_kpc,
-            gas_scale: gp.structure.gas_scale_factor,
-        };
-        let body = sse_cosmos::infall::infall(
-            c,
-            gp,
-            op,
-            host.mass_at(p.z_infall),
-            &p.address,
-            p.mass_at_infall_msun,
-            p.z_infall,
-            p.t_infall_gyr,
-            u,
-            Some(grip),
-        );
-        let fate = sse_cosmos::infall::follow(&pot, &body, t_obs, op);
+        let p = &mb.progenitor;
+        let g = &mb.galaxy;
+        let halo = &mb.halo;
+        let fate = &mb.fate;
         if fate.merged_gyr.is_some() {
             merged += 1;
             continue;
@@ -568,7 +524,7 @@ pub(crate) fn satellites_seen(
             ssp,
             Look {
                 rel_pc: rel,
-                g: &g,
+                g,
                 quench_gyr: fate.quench_gyr,
                 address: &halo.address,
                 halo_mass: p.mass_at_infall_msun,

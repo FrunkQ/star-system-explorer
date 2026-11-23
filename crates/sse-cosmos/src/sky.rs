@@ -58,6 +58,8 @@ pub struct SkyParams {
 pub struct SatelliteParams {
     /// Orbits and the four processes (`infall`).
     pub orbits: crate::infall::OrbitParams,
+    /// How the host answers what its tree brings (GH3, `feed`).
+    pub responses: crate::feed::ResponseParams,
 }
 
 impl Default for SkyParams {
