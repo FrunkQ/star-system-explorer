@@ -8,7 +8,11 @@
   import {
     checkPackDoc,
     packSummary,
+    percentWords,
     previewStack,
+    reportWords,
+    sourceLink,
+    unitWords,
     stackPacks,
     type Json,
     type PackDoc,
@@ -45,10 +49,10 @@
   let proposal = $state<{ title: string; added: PackDoc[]; preview: StackPreview | null } | null>(null);
   let note = $state<string | null>(null);
   let busy = $state(false);
-  async function propose(title: string, added: PackDoc[]) {
+  async function propose(title: string, added: PackDoc[], report?: string) {
     note = null;
     proposal = { title, added, preview: null };
-    const p = await previewStack(session, scene, added);
+    const p = await previewStack(session, scene, added, report ? { report } : {});
     if (proposal?.title === title) proposal = { ...proposal, preview: p };
   }
   async function accept() {
@@ -68,7 +72,7 @@
       const doc = JSON.parse(await f.text());
       const bad = checkPackDoc(doc, [...info.base, ...(info.campaign ? [info.campaign] : [])].map((p) => p.id));
       fileError = bad;
-      if (!bad) await propose(`Add ${doc.id}`, [...info.added, doc]);
+      if (!bad) await propose(`Add ${doc.id}`, [...info.added, doc], doc.id);
     } catch (err) {
       fileError = `Not readable as JSON: ${(err as Error).message}`;
     }
@@ -79,7 +83,7 @@
     const doc = (await (await fetch(new URL(url, document.baseURI))).json()) as PackDoc;
     const bad = checkPackDoc(doc, info.base.map((p) => p.id));
     fileError = bad;
-    if (!bad) await propose(`Add ${doc.id}`, [...info.added, doc]);
+    if (!bad) await propose(`Add ${doc.id}`, [...info.added, doc], doc.id);
   }
   const ROLE = { campaign: "your physics changes", added: "added here", opening: "campaign start" };
 </script>
@@ -152,6 +156,48 @@
               </tbody>
             </table>
           {/if}
+          {@const rep = proposal.preview.report}
+          {#if rep}
+            <div class="report" data-pack-report={rep.pack} data-reproduced={rep.reproduced}>
+              <h4>What the pack says about itself</h4>
+              <p class="muted">{reportWords(rep)}. The kernel ran its checks when it loaded the stack.</p>
+              {#if rep.sources.length}
+                <div class="k">Sources</div>
+                <ul class="plain">
+                  {#each rep.sources as src (src.id)}
+                    {@const href = sourceLink(src)}
+                    <li data-pack-source={src.id}>{#if href}<a {href} target="_blank" rel="noopener">{src.text}</a>{:else}{src.text}{/if}{src.licence ? ` · ${src.licence}` : ""}</li>
+                  {/each}
+                </ul>
+              {/if}
+              {#if rep.fudges.length}
+                <div class="k">Fudges</div>
+                <ul class="plain">
+                  {#each rep.fudges as f (f.id)}
+                    <li data-pack-fudge={f.id}>
+                      {#if f.from === "model_number"}<b>{f.what}</b>{f.number?.value !== undefined ? `, ${f.number.value}${unitWords(f.number.unit) ? ` ${unitWords(f.number.unit)}` : ""}` : ""}, in {f.flows.join(", ")}
+                      {:else}<b>{f.what}</b> stands in for {f.stands_in_for}{f.replace_with ? `; better would be ${f.replace_with}` : ""}{/if}
+                    </li>
+                  {/each}
+                </ul>
+              {/if}
+              {#if rep.reproduction.length}
+                <div class="k">Reproduction checks</div>
+                {#each rep.reproduction as c (c.name)}
+                  <div class="check" data-check={c.name} data-pass={c.pass}>
+                    <b>{c.pass ? "✓" : "✗"} {c.name}</b>{c.where ? `, ${c.where}` : ""}
+                    {#each c.rows as row (row.kind)}
+                      {@const u = unitWords(row.unit)}
+                      <div class="crow" data-pass={row.pass}>
+                        <span class="m">{row.kind}</span>
+                        published {row.published}{u ? ` ${u}` : ""}, this pack {row.got === null ? (row.error ?? "did not run") : `${Number(row.got.toPrecision(4))}${u ? ` ${u}` : ""}`}; {percentWords(row.off)} off, the pack allows {percentWords(row.tolerance)}
+                      </div>
+                    {/each}
+                  </div>
+                {/each}
+              {/if}
+            </div>
+          {/if}
         {/if}
         <div class="actions">
           <button type="button" class="btn ink" disabled={!proposal.preview?.ok || busy} onclick={accept}>Accept</button>
@@ -189,6 +235,32 @@
     font-family: var(--sse-font-display);
     font-size: 20px;
     font-weight: 600;
+  }
+  h4 {
+    margin: 14px 0 4px;
+    font-size: 15px;
+  }
+  .report {
+    margin-top: 12px;
+    padding-top: 10px;
+    border-top: var(--sse-line) solid var(--sse-rule);
+  }
+  .check {
+    margin: 4px 0 8px;
+  }
+  .crow {
+    margin-top: 2px;
+    color: var(--sse-ink-muted);
+  }
+  .crow .m {
+    display: block;
+  }
+  .plain {
+    margin: 2px 0 10px;
+    padding-left: 18px;
+  }
+  .report a {
+    color: var(--sse-accent-ink);
   }
   h3 {
     margin: 0 0 6px;

@@ -6,7 +6,7 @@ import { readFileSync } from "node:fs";
 import { Session } from "../src/session.ts";
 import { gmSeat, tableSeat } from "../src/seat.ts";
 import { deriveScene, type DerivationDoc } from "../src/derivation.ts";
-import { checkPackDoc, packSummary, previewStack, stackPacks } from "../src/packs-edit.ts";
+import { checkPackDoc, packSummary, percentWords, previewStack, reportWords, sourceLink, stackPacks, unitWords } from "../src/packs-edit.ts";
 import { adoptRequest, draftParam } from "../src/physics-edit.ts";
 import type { PackDoc } from "../src/physics.ts";
 import type { SystemScene } from "../src/scene.ts";
@@ -81,6 +81,41 @@ test("players cannot stack packs", async () => {
     const s = await Session.open(k.client, { ...tableSeat(), may_send: ["stack_packs"] }, scene.universe, [base]);
     assert.equal((await s.send({ kind: "stack_packs", packs: [warm as never] })).status, "pending");
     assert.equal(s.stack().added.length, 0);
+  } finally {
+    await k.close();
+  }
+});
+
+// ND6: before a pack is added, its own sources, fudges and reproduction checks are shown, as the kernel worked them out.
+test("a paper's pack shows its sources, fudges and reproduction before it is added", async () => {
+  const paper: PackDoc = JSON.parse(readFileSync(new URL("./fixtures/paper.pack.json", import.meta.url), "utf8"));
+  const k = nodeKernel();
+  try {
+    const s = await Session.open(k.client, gmSeat(), scene.universe, [base], k.scratch);
+    const shipped = await deriveScene(s, scene, doc);
+    const p = await previewStack(s, shipped, [paper], { report: paper.id });
+    assert.ok(p.ok, p.problems.join("; "));
+    const r = p.report!;
+    assert.equal(r.pack, "test.paper");
+    assert.equal(r.reproduced, true);
+    assert.deepEqual(r.fudges.map((f) => f.from), ["declared", "model_number"]);
+    assert.equal(r.fudges[1]!.number?.grade, "fitted");
+    const row = r.reproduction[0]!.rows[0]!;
+    assert.equal(row.published, 9.8);
+    assert.ok(row.pass && row.off! < 0.01, JSON.stringify(row));
+    assert.equal(reportWords(r), "2 sources, 2 fudges, 1 of 1 check reproduced");
+    assert.equal(sourceLink(r.sources[1]!), "https://doi.org/10.0000/example");
+    assert.equal(sourceLink({ doi: "https://doi.org/10.1/x" }), "https://doi.org/10.1/x");
+    assert.equal(percentWords(0.0012), "0.12 %");
+    assert.deepEqual(["m_s2", "w_m2", "km_s", "1", "kg"].map(unitWords), ["m/s²", "W/m²", "km/s", "", "kg"]);
+    assert.equal(s.stack().added.length, 0, "showing the report adds nothing");
+    // Asked for nothing, the preview carries no report; outside its stated closeness the pack is refused, both numbers shown.
+    assert.equal((await previewStack(s, shipped, [paper])).report, undefined);
+    const tight = structuredClone(paper) as PackDoc & { reproduction: { expect: Record<string, { tolerance: number }> }[] };
+    tight.reproduction[0]!.expect["body.surface_gravity"]!.tolerance = 0.0001;
+    const no = await previewStack(s, shipped, [tight], { report: paper.id });
+    assert.equal(no.ok, false);
+    assert.match(no.problems.join(" "), /9\.8.*allows/);
   } finally {
     await k.close();
   }
