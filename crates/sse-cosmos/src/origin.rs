@@ -203,7 +203,7 @@ fn disc_weight(env: &GalaxyEnvelope, p: &OriginParams, a: &OriginAsk, o: &Origin
     dens * near / all * fit
 }
 
-const KMS_KPC_GYR: f64 = 1.022_712;
+const KMS_KPC_GYR: f64 = 1e3 * 1e9 * sse_core::sheet::YR_JULIAN / (1e3 * sse_core::sheet::PC);
 
 /// Kilometres per second in kiloparsecs per gigayear, for `infall`.
 pub(crate) fn kms_kpc_gyr() -> f64 {

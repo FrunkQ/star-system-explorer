@@ -3,7 +3,7 @@
     {
       "address": "u:g2/cell:0.0.0",
       "delta_l": 1.3010410378516066,
-      "digest": "40525b798c0ab56b3045311d901cb69176c8ba2d75618b97e65d27e48c8cd29e",
+      "digest": "51c094e26846d0773065062daa24f906b8e4d6c7684a7df503aebadbdb92b94e",
       "halo_mass": 12796340596025.74,
       "haloes": 14,
       "mergers": 26
@@ -11,11 +11,11 @@
     {
       "address": "u:g2/cell:3.-2.1",
       "delta_l": 0.13768040353923228,
-      "digest": "dd00e25267fc07aaf555603a328794fa5fd1e0e5dad8d8cbfbb927ec0ba35d44",
+      "digest": "6b017dadee7326ae10c602f5711409550d86a9bba2a3d550f14f3985709e2acd",
       "halo_mass": 3925083942045.4287,
       "haloes": 7,
       "mergers": 16
     }
   ],
-  "chronicle_head": "bc37aea5c5cbed3d9235343fb7787f673e42429e027da48567b633e8ba57c89f"
+  "chronicle_head": "61f88194bf2258698ada0a56dc71e818ca56956902b98d31c91492f928a423bc"
 }

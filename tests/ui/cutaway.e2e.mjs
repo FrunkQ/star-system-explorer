@@ -57,6 +57,24 @@ try {
     // The kernel's physics notes for the picked line.
     assert.match(await cut.getByLabel("Physics of Sub-ice brine ocean").innerText(), /freezes at 265\.1 K.*liquid/);
     await shot(gm, `cutaway-${name}`);
+    // Scale is the view controls' (one set of controls, Alex 23 Nov): Readable spreads depth on a log scale, Real draws it to scale.
+    assert.equal(await cut.getAttribute("data-scale"), "log");
+    const scaleBar = gm.getByRole("group", { name: "Scale" });
+    await scaleBar.getByRole("button", { name: "Real", exact: true }).click();
+    await gm.waitForSelector('[data-cutaway][data-scale="true"]');
+    assert.match(await cut.locator("figcaption").innerText(), /to scale/);
+    await scaleBar.getByRole("button", { name: "Readable", exact: true }).click();
+    await gm.waitForSelector('[data-cutaway][data-scale="log"]');
+    // HUD off: the slice and its marks without names or depth ticks; on brings them back.
+    const named = await cut.locator("svg text").count();
+    assert.ok(named > 0);
+    await gm.getByRole("group", { name: "HUD" }).getByRole("button", { name: "Off", exact: true }).click();
+    await gm.waitForSelector('[data-cutaway][data-hud="off"]');
+    assert.equal(await cut.locator("svg text").count(), 0, "HUD off: no names or ticks");
+    assert.equal(await cut.locator("[data-shell]").count(), 6, "the shells stay");
+    await gm.getByRole("group", { name: "HUD" }).getByRole("button", { name: "On", exact: true }).click();
+    await gm.waitForSelector('[data-cutaway][data-hud="on"]');
+    assert.equal(await cut.locator("svg text").count(), named);
 
     // A body with no stack says so.
     await go(gm, "system");

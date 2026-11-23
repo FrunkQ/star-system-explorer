@@ -120,7 +120,7 @@ pub fn golden() -> serde_json::Value {
 /// An isothermal atmosphere ρ = ρ₀ e^(−h/H) with sound speed √(γ R T / M),
 /// for the descent fixtures (no survey needed).
 pub fn iso_air(rho0: f64, t_k: f64, molar: f64, gamma: f64, g: f64) -> impl Fn(f64) -> (f64, f64) {
-    let r = 8.314_462_618 / molar;
+    let r = sse_core::sheet::R_GAS / molar;
     let h_scale = r * t_k / g;
     let a = sse_core::math::sqrt(gamma * r * t_k);
     move |h: f64| (rho0 * sse_core::math::exp(-h.max(0.0) / h_scale), a)
@@ -145,8 +145,8 @@ pub fn descent_golden() -> serde_json::Value {
     let cases: [Case; 4] = [
         (
             "Earth",
-            6371.0,
-            9.81,
+            sse_core::sheet::R_EARTH_MEAN / 1e3,
+            sse_core::sheet::G0,
             (1.225, 250.0, 0.029, 1.4),
             "N2-O2",
             "capsule",
@@ -172,7 +172,7 @@ pub fn descent_golden() -> serde_json::Value {
         ),
         (
             "Moon",
-            1737.4,
+            sse_core::sheet::R_MOON / 1e3,
             1.62,
             (0.0, 1.0, 0.029, 1.4),
             "",

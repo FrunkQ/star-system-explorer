@@ -24,10 +24,17 @@ be squared with a code are listed in docs/fudges.md. Run after editing:
 """
 import json
 import math
+import sys
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parent.parent
-RE = 6.371e6
+# The master data sheet's values (MP22: no typed copies). The pack is built
+# from them, and check.sh runs --check so an edited sheet rebuilds it.
+REF = {c["id"]: c["value"]["v"] for c in json.loads((ROOT / "packs/base-reference/pack.json").read_text())["provides"]["reference"]["constants"]}
+RE = REF["R_earth_mean"]
+def au_km(n):
+    """n astronomical units in km, from the sheet's au (in metres, exactly)."""
+    return n * REF["au"] / 1e3
 INF = 1e6
 EHEX = "0123456789ABCDEFGHJKLMNPQRSTUVWXYZ"
 
@@ -280,7 +287,7 @@ rule("traveller.prep.tainted", any_(has("atmosphere.taint"), rng("atmosphere.pp.
 rule("traveller.prep.belt", ALWAYS, ["belt"])
 # Bodies the PBG digits count.
 rule("traveller.count.belt", ALWAYS, ["belt"])
-rule("traveller.count.gas-giant", all_(rng("body.radius", 2.5 * RE), rng("body.mass", None, 13 * 1.898e27)), ["body"])
+rule("traveller.count.gas-giant", all_(rng("body.radius", 2.5 * RE), rng("body.mass", None, 13 * REF["M_jup"])), ["body"])
 
 U = "traveller.uwp."
 
@@ -540,13 +547,13 @@ def sensor(id_, label, range_km, targets, reveals, up_to):
     return {"id": id_, "label": label, "range_m": range_km * KM, "targets": targets,
             "reveals": reveals, "up_to": up_to, "source": "V3 starter-sf sensors.json"}
 SENSORS = [
-    sensor("astrometer", "wide-field astrometer", 7479893535, ["star", "gas giant", "ice giant"], "stellar details, planetary basics", "scanned"),
-    sensor("telescope_15au", "deep-field telescope (15 au)", 2243968060, ["terrestrial planet", "belt"], "planetary basics", "scanned"),
-    sensor("telescope_2au", "deep-field telescope (2 au)", 299195741, ["dwarf planet", "moon"], "planetary basics", "scanned"),
-    sensor("spectral_5au", "spectral analyser (5 au)", 747989353, ["gas giant", "ice giant"], "air composition, surface liquids", "scanned"),
-    sensor("spectral_1au", "spectral analyser (1 au)", 149597870, ["terrestrial planet"], "air composition, surface liquids", "scanned"),
+    sensor("astrometer", "wide-field astrometer", au_km(50), ["star", "gas giant", "ice giant"], "stellar details, planetary basics", "scanned"),
+    sensor("telescope_15au", "deep-field telescope (15 au)", au_km(15), ["terrestrial planet", "belt"], "planetary basics", "scanned"),
+    sensor("telescope_2au", "deep-field telescope (2 au)", au_km(2), ["dwarf planet", "moon"], "planetary basics", "scanned"),
+    sensor("spectral_5au", "spectral analyser (5 au)", au_km(5), ["gas giant", "ice giant"], "air composition, surface liquids", "scanned"),
+    sensor("spectral_1au", "spectral analyser (1 au)", au_km(1), ["terrestrial planet"], "air composition, surface liquids", "scanned"),
     sensor("bio_scanner", "high-resolution bio-scanner", 10000, ["planetary surface"], "biosphere, vegetation, settlements", "surveyed"),
-    sensor("passive_rf", "passive radio antenna", 14959787070, ["construct (cooperative)"], "responder ping, transponder id", None),
+    sensor("passive_rf", "passive radio antenna", au_km(100), ["construct (cooperative)"], "responder ping, transponder id", None),
     sensor("search_radar", "active search radar", 500000, ["construct over 10,000 t"], "construct basics, lock, trajectory, hull", None),
     sensor("thermal_ir", "thermal and infrared tracker", 50000, ["construct"], "drive plumes, heat sinks, power output", None),
     sensor("gravimetric", "gravimetric grid", 25000, ["construct (stealthy)"], "construct basics", None),
@@ -605,7 +612,7 @@ IMPERIAL = {
     # epoch_year begins); 0 and 1105 are a placeholder starting point.
     "epoch_s": 0.0,
     "epoch_year": 1105,
-    "day_s": 86400.0,
+    "day_s": REF["day"],
     "year_days": 365,
     "format": "{day:03}-{year}",
     # Optional extras, checked by the kernel at load (J calendars) and read by
@@ -620,7 +627,7 @@ IMPERIAL = {
 # are words, not units.
 UNITS = [
     {"id": "dton", "symbol": "dT", "dim": [3, 0, 0, 0, 0, 0, 0], "scale": 14.0},
-    {"id": "g_std", "symbol": "g", "dim": [1, 0, -2, 0, 0, 0, 0], "scale": 9.80665},
+    {"id": "g_std", "symbol": "g", "dim": [1, 0, -2, 0, 0, 0, 0], "scale": REF["g0"]},
 ]
 
 # Words (7A part 8): general terms as the game says them. Reports and views
@@ -846,12 +853,22 @@ pack = {
         "record": RECORD,
         "vocabulary": {"terms": TERMS, "traveller.trade": TRADE_WORDS, "traveller.bases": BASES,
                        "traveller.zone": {"A": "amber", "R": "red"},
-                       "traveller.need": {k: v[0] for k, v in NEEDS.items()}},
+                       "traveller.need": {k: v[0] for k, v in NEEDS.items()},
+                       # V3 gap 25: what a player screen says while it joins ({seat}, {brand} filled in).
+                       "join": {"joining": "Calling the ship's computer for {brand}…",
+                                "waiting": "Link open. Receiving the charts…",
+                                "away": "Signal lost. These are the last charts received, read only; they update when the link is back."}},
         # TG1: every tag the pack names is declared (labels only, never physics).
         "tags": json.loads((ROOT / "scripts/traveller-tags.json").read_text()),
     }},
 }
 out = ROOT / "packs/traveller/pack.json"
 out.parent.mkdir(parents=True, exist_ok=True)
-out.write_text(json.dumps(pack, indent=1) + "\n")
+text = json.dumps(pack, indent=1) + "\n"
+if "--check" in sys.argv:
+    if not out.exists() or out.read_text() != text:
+        sys.exit("packs/traveller/pack.json is out of date: run python3 scripts/build-traveller-pack.py")
+    print("packs/traveller/pack.json is current")
+    sys.exit(0)
+out.write_text(text)
 print(f"wrote {out}: {len(CLASSES)} classes, {len(RULES)} rules")

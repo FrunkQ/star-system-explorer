@@ -29,12 +29,12 @@ pub const REF_GLADMAN93: &str = "Gladman, B. 1993, Icarus 106, 247: two orbits c
 
 const G: f64 = sse_core::sheet::G;
 const K_B: f64 = sse_core::sheet::K_B;
-const M_H: f64 = 1.673_5e-27;
+const M_H: f64 = sse_core::sheet::atomic_weight::H * 1e-3 / sse_core::sheet::N_A;
 const MU: f64 = 2.34;
 const AU_M: f64 = sse_core::sheet::AU;
 const MSUN_KG: f64 = sse_core::sheet::M_SUN;
 const YR_S: f64 = sse_core::sheet::YR_JULIAN;
-pub const MSUN_IN_EARTH: f64 = 332_946.0;
+pub const MSUN_IN_EARTH: f64 = sse_core::sheet::GM_SUN / sse_core::sheet::GM_EARTH;
 
 /// Pebble flux as a fraction of the gas accretion flow, per unit of solid mass
 /// fraction (Lambrechts and Johansen 2014 find pebble fluxes of about 100 Earth

@@ -107,6 +107,7 @@
         <button type="button" class="names-open" aria-expanded={namesOpen} data-names-open onclick={() => (namesOpen = !namesOpen)}>{namesOpen ? "Hide names" : "Names ›"}</button>
         {#if namesOpen}<NameCard session={ctx.session} workspace={ws} address={subject.address} label={subject.label} {depth} onclose={() => (namesOpen = false)} />{/if}
       {/if}
+      {#if ctx.describe}<button type="button" class="names-open" data-describe onclick={() => ctx.describe?.(subject.address)} title="Minerva writes a description from what one audience knows of it">Describe ›</button>{/if}
       {#if sentence}<p class="sentence" data-depth="curious">{sentence}</p>{/if}
       {#if depth === "engine"}<p class="address" data-depth="engine" title="This body's address in the universe">{subject.address}</p>{/if}
       <div class="grid" class:line={rule.density === "line"} style="--cols: {cols}">

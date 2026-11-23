@@ -114,3 +114,12 @@ test("sifter hits come from what the audience is shown, never the GM's", async (
     await k.close();
   }
 });
+
+test("Describe hands her one subject, what it orbits, what orbits it and the star (V3 gap 23)", async () => {
+  const { aboutOne } = await import("../src/minerva.ts");
+  const s = (address: string) => ({ address, view: "survey", facts: [], tags: [] });
+  const scene = { audience: "everyone", scope: "u:k/sys:1/body:0", subjects: ["u:k/sys:1/body:0", "u:k/sys:1/body:3", "u:k/sys:1/body:3/body:0", "u:k/sys:1/body:4", "u:k/sys:1/body:4/body:0"].map(s) };
+  assert.deepEqual(aboutOne(scene, "u:k/sys:1/body:3")!.subjects.map((x) => x.address), ["u:k/sys:1/body:0", "u:k/sys:1/body:3", "u:k/sys:1/body:3/body:0"]);
+  assert.deepEqual(aboutOne(scene, "u:k/sys:1/body:4/body:0")!.subjects.map((x) => x.address), ["u:k/sys:1/body:0", "u:k/sys:1/body:4", "u:k/sys:1/body:4/body:0"]);
+  assert.equal(aboutOne(scene, "u:k/sys:1/body:9"), null, "a subject they do not know is not described");
+});

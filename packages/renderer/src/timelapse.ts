@@ -7,6 +7,8 @@
 // rain, ice, runoff) blend; plates, coasts and heights show the nearer frame,
 // because a blend of two plate maps is not a world that existed.
 
+import { constant } from "../../ui-contract/src/index.ts";
+
 export type V3 = readonly [number, number, number];
 
 /** One raw keyframe as the kernel sends it (arrays as JSON numbers, or base64 f32 under `<name>_b64`). */
@@ -204,7 +206,7 @@ const LAND: Stops = [
 const TEMPERATURE: Stops = [
   [200, [44, 54, 140]],
   [250, [104, 160, 214]],
-  [273.15, [238, 238, 232]],
+  [constant("T0C"), [238, 238, 232]],
   [300, [232, 150, 72]],
   [330, [168, 36, 40]],
 ];
@@ -242,7 +244,7 @@ export const LAYERS: readonly LayerSpec[] = [
   { id: "land", label: "Land and sea", reads: ["elevation_m"], legend: { unit: "m from the sea", stops: [{ at: -6000, label: "deep sea" }, { at: 0, label: "coast" }, { at: 3000, label: "3 km" }, { at: 6000, label: "6 km" }] }, limits: "Heights of each keyframe, shown flat-lit when not today (the hill shading is today's relief); coasts from that frame's sea level." },
   { id: "plates", label: "Plates", reads: ["plate", "continental"], legend: { unit: "one colour per plate", stops: [{ at: 0, label: "ocean crust darker" }, { at: 1, label: "continent lighter" }] }, limits: "Plate colours are labels, not physics; boundaries are where neighbouring cells change plate." },
   { id: "volcanism", label: "Volcanism", reads: ["vent", "elevation_m"], legend: { unit: "how recently, 1 at this frame", stops: [{ at: 0, label: "quiet" }, { at: 0.3, label: "ridges, faint" }, { at: 0.6, label: "arcs" }, { at: 1, label: "eruptions" }] }, limits: "Each kind fades with time since it last happened (1 means at this frame); single eruptions shorter than the gap between frames are in the event list." },
-  { id: "temperature", label: "Surface temperature", reads: ["temp_k"], legend: { unit: "K, yearly mean", stops: [{ at: 200, label: "200" }, { at: 273.15, label: "freezing" }, { at: 300, label: "300" }, { at: 330, label: "330" }] }, limits: "Yearly mean; seasons and day and night are not shown." },
+  { id: "temperature", label: "Surface temperature", reads: ["temp_k"], legend: { unit: "K, yearly mean", stops: [{ at: 200, label: "200" }, { at: constant("T0C"), label: "freezing" }, { at: 300, label: "300" }, { at: 330, label: "330" }] }, limits: "Yearly mean; seasons and day and night are not shown." },
   { id: "rain", label: "Rain and snow", reads: ["rain_m_yr"], legend: { unit: "m a year", stops: [{ at: 0, label: "desert" }, { at: 0.25, label: "0.25" }, { at: 1, label: "1" }, { at: 3, label: "3" }] }, limits: "Yearly totals from the one shared climate." },
   { id: "ice", label: "Ice and glaciers", reads: ["ice_m", "elevation_m"], legend: { unit: "m of ice", stops: [{ at: 0, label: "none" }, { at: 100, label: "100 m" }, { at: 1000, label: "1 km" }, { at: 3000, label: "3 km" }] }, limits: "Ice thickness from the ice balance; sea ice shows where the kernel gives it." },
   { id: "runoff", label: "Water running off", reads: ["runoff_m_yr", "elevation_m"], legend: { unit: "m a year leaving the ground", stops: [{ at: 0, label: "dry" }, { at: 0.1, label: "0.1" }, { at: 1, label: "1" }, { at: 3, label: "3" }] }, limits: "Water leaving each cell; river channels themselves come with a flow-routing field (not yet sent)." },
@@ -296,7 +298,7 @@ export function layerColour(tl: TimeLapse, layer: string, cell: number, t_myr: n
       return c;
     }
     case "temperature":
-      return rampOf(TEMPERATURE, valueAt(tl, "temp_k", cell, t_myr) ?? 273.15);
+      return rampOf(TEMPERATURE, valueAt(tl, "temp_k", cell, t_myr) ?? constant("T0C"));
     case "rain": {
       const e = valueAt(tl, "elevation_m", cell, t_myr);
       if (e !== null && e < sea) return mix(rampOf(OCEAN, e - sea), [150, 150, 160], 0.5);

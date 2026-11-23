@@ -119,8 +119,8 @@ impl BudgetParams {
             .rev()
             .find_map(|p| p.provides.other.get("life_budget"))
             .ok_or("no pack provides life_budget")?;
-        let bp: BudgetParams = serde_json::to_value(v)
-            .and_then(serde_json::from_value)
+        let bp: BudgetParams = sse_reference::refs::with_sheet(stack, v)
+            .and_then(|j| serde_json::from_value(j).map_err(|e| e.to_string()))
             .map_err(|e| format!("life_budget: {e}"))?;
         for c in &bp.chemistry {
             c.check()?;
@@ -173,7 +173,7 @@ const H: f64 = sse_core::sheet::H;
 const C: f64 = sse_core::sheet::C;
 const K_B: f64 = sse_core::sheet::K_B;
 const SIGMA: f64 = sse_core::sheet::SIGMA_SB;
-const WIEN_NM_K: f64 = 2.897_771_955e6;
+const WIEN_NM_K: f64 = sse_core::sheet::B_WIEN * 1e9;
 const YEAR_S: f64 = sse_core::sheet::YR_JULIAN;
 
 /// Share of a blackbody's energy between two wavelengths (nm), for the

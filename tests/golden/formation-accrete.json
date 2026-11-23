@@ -3,21 +3,21 @@
     "bodies": [
       {
         "a_au": 4.039764404296875,
-        "earth_mass": 239.6447116967532,
+        "earth_mass": 239.7674509813727,
         "gas_giant": true,
         "id": "nucleus-047",
         "ledger_entries": 36
       },
       {
         "a_au": 7.1575164794921875,
-        "earth_mass": 336.78495822867416,
+        "earth_mass": 336.95745001683383,
         "gas_giant": true,
         "id": "nucleus-009",
         "ledger_entries": 34
       },
       {
         "a_au": 17.226409912109375,
-        "earth_mass": 32.93902742613635,
+        "earth_mass": 32.955897870026895,
         "gas_giant": true,
         "id": "nucleus-010",
         "ledger_entries": 8
@@ -31,35 +31,35 @@
     "bodies": [
       {
         "a_au": 2.7614593505859375,
-        "earth_mass": 33.49756980563303,
+        "earth_mass": 33.51472631922903,
         "gas_giant": true,
         "id": "nucleus-067",
         "ledger_entries": 41
       },
       {
         "a_au": 5.974894508727049,
-        "earth_mass": 577.1401576033614,
+        "earth_mass": 577.4357525679566,
         "gas_giant": true,
         "id": "collision-002",
         "ledger_entries": 2
       },
       {
         "a_au": 9.659576416015625,
-        "earth_mass": 372.1017958981375,
+        "earth_mass": 372.29237597775113,
         "gas_giant": true,
         "id": "nucleus-009",
         "ledger_entries": 32
       },
       {
         "a_au": 17.830657958984375,
-        "earth_mass": 64.13522718423546,
+        "earth_mass": 64.16807544467804,
         "gas_giant": true,
         "id": "nucleus-013",
         "ledger_entries": 36
       },
       {
         "a_au": 44.647783342419736,
-        "earth_mass": 0.38445395483121864,
+        "earth_mass": 0.38465086133940324,
         "gas_giant": true,
         "id": "collision-001",
         "ledger_entries": 2
@@ -73,14 +73,14 @@
     "bodies": [
       {
         "a_au": 2.0046234130859375,
-        "earth_mass": 3.615471664515628,
+        "earth_mass": 3.6173234074667775,
         "gas_giant": true,
         "id": "nucleus-019",
         "ledger_entries": 6
       },
       {
         "a_au": 7.2784423828125,
-        "earth_mass": 123.67019214853265,
+        "earth_mass": 123.73353254442786,
         "gas_giant": true,
         "id": "nucleus-012",
         "ledger_entries": 7
@@ -94,28 +94,28 @@
     "bodies": [
       {
         "a_au": 5.2356719970703125,
-        "earth_mass": 222.18170092578615,
+        "earth_mass": 222.29549614719576,
         "gas_giant": true,
         "id": "nucleus-081",
         "ledger_entries": 37
       },
       {
         "a_au": 12.227249145507812,
-        "earth_mass": 247.39721115874403,
+        "earth_mass": 247.52392105565553,
         "gas_giant": true,
         "id": "nucleus-044",
         "ledger_entries": 33
       },
       {
         "a_au": 18.98193359375,
-        "earth_mass": 31.593019489308958,
+        "earth_mass": 31.60920054577222,
         "gas_giant": true,
         "id": "nucleus-007",
         "ledger_entries": 38
       },
       {
         "a_au": 45.90544111394962,
-        "earth_mass": 0.31386419936640136,
+        "earth_mass": 0.31402495178620293,
         "gas_giant": true,
         "id": "collision-001",
         "ledger_entries": 2

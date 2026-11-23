@@ -28,11 +28,11 @@
       "system": "sun"
     },
     {
-      "a_au": 18.879178765295634,
+      "a_au": 18.879264640157555,
       "blocking": [],
       "class": "gas-giant/ammonia-clouds",
       "fit": 1.0,
-      "hash": "af813bfb16298b27ccb43330117c48625c550140bf38a7989a6c7c908c9da541",
+      "hash": "37c61d2db837553c1f9995d0ac858c33136c6dffc925bdeeff8b216d34d550ae",
       "interventions": [],
       "label": "gas-giant/ammonia-clouds",
       "outcome": "placed",
@@ -54,7 +54,7 @@
       "blocking": [],
       "class": "water-rich",
       "fit": 1.0,
-      "hash": "05d36bb55b126bce31e4e83ec0eef729536919b95645f2c03ba32daaa0ad4848",
+      "hash": "9fdd001ac5270106f4204807e9b10eb6161299df5f559bd4f853d853f4cf3d79",
       "interventions": [],
       "label": "water-rich",
       "outcome": "placed",

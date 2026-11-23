@@ -514,6 +514,61 @@
      }
     },
     {
+     "id": "omega_earth",
+     "name": "Earth's angular velocity (sidereal rotation)",
+     "group": "nature",
+     "value": {
+      "v": 7.292115e-05,
+      "unit": "rad s-1",
+      "src": "moritz2000"
+     }
+    },
+    {
+     "id": "V_ocean_earth",
+     "name": "volume of Earth's ocean",
+     "group": "nature",
+     "value": {
+      "v": 1.335e+18,
+      "unit": "m3",
+      "src": "eakins2010",
+      "check": "unverified"
+     }
+    },
+    {
+     "id": "depth_ocean_earth",
+     "name": "mean depth of Earth's ocean",
+     "group": "nature",
+     "value": {
+      "v": 3688.0,
+      "unit": "m",
+      "src": "eakins2010",
+      "check": "unverified"
+     }
+    },
+    {
+     "id": "M_ocean_earth",
+     "name": "mass of Earth's ocean",
+     "group": "nature",
+     "value": {
+      "v": 1.4e+21,
+      "unit": "kg",
+      "src": "eakins2010",
+      "check": "unverified",
+      "note": "1.335e18 m3 at about 1030 kg/m3, to two figures"
+     }
+    },
+    {
+     "id": "M_ch",
+     "name": "Chandrasekhar mass",
+     "group": "nature",
+     "value": {
+      "v": 1.44,
+      "unit": "M_sun",
+      "src": "chandrasekhar1931",
+      "check": "textbook"
+     }
+    },
+    {
      "id": "M_moon",
      "name": "Moon mass",
      "group": "nature",
@@ -1095,6 +1150,17 @@
      "measures": "mass",
      "group": "working",
      "factor_from": "M_jup"
+    },
+    {
+     "id": "h",
+     "symbol": "h",
+     "name": "hour",
+     "measures": "time",
+     "group": "working",
+     "factor": {
+      "v": 3600.0,
+      "src": "si2019"
+     }
     },
     {
      "id": "day",
@@ -9722,6 +9788,23 @@
        ],
        "src": "bodhaine1999"
       }
+     },
+     "density": {
+      "v": 1.225,
+      "unit": "kg m-3",
+      "src": "ussa1976",
+      "at_k": 288.15,
+      "at_pa": 101325.0,
+      "note": "sea level in the standard atmosphere"
+     },
+     "thermal": {
+      "heat_capacity": {
+       "v": 1004.0,
+       "unit": "J kg-1 K-1",
+       "src": "wallace-hobbs2006",
+       "check": "unverified",
+       "note": "at constant pressure, near 300 K"
+      }
      }
     },
     {
@@ -9738,7 +9821,16 @@
      "by": "volume",
      "src": "fudge-register",
      "check": "authored",
-     "note": "the weather pack's giant air at 0.0023 kg/mol; the reader's worked-out molar mass replaces it"
+     "note": "the weather pack's giant air at 0.0023 kg/mol; the reader's worked-out molar mass replaces it",
+     "thermal": {
+      "heat_capacity": {
+       "v": 12000.0,
+       "unit": "J kg-1 K-1",
+       "src": "nist-webbook",
+       "check": "unverified",
+       "note": "by mass from hydrogen near 300 K and helium (5193); colder hydrogen holds less"
+      }
+     }
     },
     {
      "id": "fuel-hydrogen",
@@ -9851,6 +9943,147 @@
       "unit": "K",
       "src": "nist-webbook",
       "note": "at low pressure"
+     }
+    },
+    {
+     "id": "crust-rock",
+     "names": {
+      "physics": "continental crust rock",
+      "plain": "crust rock",
+      "story": "rock"
+     },
+     "recipe": {},
+     "by": "mass",
+     "density": {
+      "v": 2700.0,
+      "unit": "kg m-3",
+      "src": "turcotte2014",
+      "check": "unverified"
+     }
+    },
+    {
+     "id": "mantle-rock",
+     "names": {
+      "physics": "upper mantle rock",
+      "plain": "mantle rock",
+      "story": "deep rock"
+     },
+     "recipe": {},
+     "by": "mass",
+     "density": {
+      "v": 3300.0,
+      "unit": "kg m-3",
+      "src": "turcotte2014",
+      "check": "unverified"
+     }
+    },
+    {
+     "id": "sediment",
+     "names": {
+      "physics": "compacted sediment",
+      "plain": "sediment",
+      "story": "sediment"
+     },
+     "recipe": {},
+     "by": "mass",
+     "density": {
+      "v": 2300.0,
+      "unit": "kg m-3",
+      "src": "turcotte2014",
+      "check": "unverified"
+     }
+    },
+    {
+     "id": "venus-air",
+     "names": {
+      "physics": "carbon dioxide atmosphere (Venus)",
+      "plain": "thick carbon dioxide air",
+      "story": "furnace air"
+     },
+     "recipe": {
+      "co2": 0.965,
+      "n2": 0.035
+     },
+     "by": "volume",
+     "src": "nssdca-venus",
+     "check": "unverified",
+     "thermal": {
+      "heat_capacity": {
+       "v": 1100.0,
+       "unit": "J kg-1 K-1",
+       "src": "nist-webbook",
+       "check": "unverified",
+       "note": "carbon dioxide near 700 K"
+      }
+     }
+    },
+    {
+     "id": "mars-air",
+     "names": {
+      "physics": "thin carbon dioxide atmosphere (Mars)",
+      "plain": "thin carbon dioxide air",
+      "story": "thin air"
+     },
+     "recipe": {
+      "co2": 0.9525,
+      "n2": 0.0259,
+      "ar": 0.0194,
+      "o2": 0.0016,
+      "co": 0.0006
+     },
+     "by": "volume",
+     "src": "nssdca-mars",
+     "check": "unverified",
+     "note": "carbon dioxide taken as 95.25% (the fact sheet's 95.1% plus the traces it leaves out) so the recipe sums to one",
+     "thermal": {
+      "heat_capacity": {
+       "v": 750.0,
+       "unit": "J kg-1 K-1",
+       "src": "nist-webbook",
+       "check": "unverified",
+       "note": "carbon dioxide near 210 K"
+      }
+     }
+    },
+    {
+     "id": "titan-air",
+     "names": {
+      "physics": "nitrogen-methane atmosphere (Titan)",
+      "plain": "nitrogen and methane air",
+      "story": "cold haze air"
+     },
+     "recipe": {
+      "n2": 0.9435,
+      "ch4": 0.0565
+     },
+     "by": "volume",
+     "src": "niemann2005",
+     "check": "unverified",
+     "thermal": {
+      "heat_capacity": {
+       "v": 1040.0,
+       "unit": "J kg-1 K-1",
+       "src": "nist-webbook",
+       "check": "unverified",
+       "note": "nitrogen near 94 K"
+      }
+     }
+    },
+    {
+     "id": "quartz-sand",
+     "names": {
+      "physics": "quartz sand",
+      "plain": "sand",
+      "story": "sand"
+     },
+     "recipe": {},
+     "by": "mass",
+     "density": {
+      "v": 2650.0,
+      "unit": "kg m-3",
+      "src": "crc-handbook",
+      "check": "unverified",
+      "note": "grain density, not bulk"
      }
     },
     {
@@ -10103,6 +10336,12 @@
      "url": "https://www.bipm.org/en/committees/cg/cgpm/10-1954/resolution-4"
     },
     {
+     "id": "chandrasekhar1931",
+     "text": "Chandrasekhar, S. 1931, ApJ 74, 81: the maximum mass of ideal white dwarfs (1.44 solar masses is the usual figure for a carbon-oxygen core, mu_e = 2, with Coulomb corrections)",
+     "status": "textbook",
+     "doi": "10.1086/143324"
+    },
+    {
      "id": "chaplin-lsbu",
      "text": "Chaplin, M., Water Structure and Science (London South Bank University): the water phase diagram page (triple points, with its references) and the ice phases page (structural table: densities, ordering, space groups). A curated secondary source; each triple point cites a primary paper there",
      "status": "verified",
@@ -10146,6 +10385,12 @@
      "url": "https://github.com/CoolProp/CoolProp"
     },
     {
+     "id": "crc-handbook",
+     "text": "Haynes, W. M. (ed.) 2016, CRC Handbook of Chemistry and Physics, 97th edition, CRC Press (quartz 2650 kg/m3)",
+     "status": "unverified",
+     "doi": "10.1201/9781315380476"
+    },
+    {
      "id": "des2025",
      "text": "DES Collaboration (Abbott, T. M. C. et al.) 2025, Phys. Rev. D 112, 083535: Dark Energy Survey year 3, cosmological constraints from cluster abundances, weak lensing and galaxy clustering",
      "status": "verified",
@@ -10156,6 +10401,12 @@
      "text": "DESI Collaboration (Adame, A. G. et al.) 2025, JCAP 02, 021: DESI 2024 VI, cosmological constraints from baryon acoustic oscillations",
      "status": "verified",
      "doi": "10.1088/1475-7516/2025/02/021"
+    },
+    {
+     "id": "eakins2010",
+     "text": "Eakins, B. W. and Sharman, G. F. 2010, Volumes of the World's Oceans from ETOPO1, NOAA National Geophysical Data Center (1.335e9 km3, mean depth 3688 m)",
+     "status": "unverified",
+     "url": "https://www.ngdc.noaa.gov/mgg/global/etopo1_ocean_volumes.html"
     },
     {
      "id": "fields2020",
@@ -10371,10 +10622,22 @@
      "doi": "10.1038/s41586-019-1114-6"
     },
     {
+     "id": "moritz2000",
+     "text": "Moritz, H. 2000, J. Geodesy 74, 128: Geodetic Reference System 1980 (Earth's angular velocity 7 292 115e-11 rad/s)",
+     "status": "verified",
+     "doi": "10.1007/s001900050278"
+    },
+    {
      "id": "nadler2021",
      "text": "Nadler, E. O. et al. 2021, Phys. Rev. Lett. 126, 091101: constraints on dark matter properties from observations of Milky Way satellite galaxies",
      "status": "verified",
      "doi": "10.1103/PhysRevLett.126.091101"
+    },
+    {
+     "id": "niemann2005",
+     "text": "Niemann, H. B. et al. 2005, Nature 438, 779: Titan's atmosphere from the Huygens probe (5.65% methane by volume near the surface)",
+     "status": "unverified",
+     "doi": "10.1038/nature04122"
     },
     {
      "id": "nist-webbook",
@@ -10395,10 +10658,22 @@
      "url": "https://nssdc.gsfc.nasa.gov/planetary/factsheet/jupiterfact.html"
     },
     {
+     "id": "nssdca-mars",
+     "text": "NASA NSSDCA Mars fact sheet (atmosphere 95.1% CO2, 2.59% N2, 1.94% Ar, 0.16% O2, 0.06% CO by volume)",
+     "status": "unverified",
+     "url": "https://nssdc.gsfc.nasa.gov/planetary/factsheet/marsfact.html"
+    },
+    {
      "id": "nssdca-moon",
      "text": "NASA NSSDCA Moon fact sheet (mass 0.07346e24 kg, mean radius 1737.4 km, semi-major axis 0.3844e6 km)",
      "status": "verified",
      "url": "https://nssdc.gsfc.nasa.gov/planetary/factsheet/moonfact.html"
+    },
+    {
+     "id": "nssdca-venus",
+     "text": "NASA NSSDCA Venus fact sheet (atmosphere 96.5% CO2, 3.5% N2 by volume)",
+     "status": "unverified",
+     "url": "https://nssdc.gsfc.nasa.gov/planetary/factsheet/venusfact.html"
     },
     {
      "id": "nubase2020",
@@ -10509,6 +10784,12 @@
      "url": "https://pmc.ncbi.nlm.nih.gov/articles/PMC413997"
     },
     {
+     "id": "turcotte2014",
+     "text": "Turcotte, D. L. and Schubert, G. 2014, Geodynamics, 3rd edition, Cambridge University Press (typical crust 2700, mantle 3300 and sediment 2300 kg/m3 of its worked problems)",
+     "status": "unverified",
+     "doi": "10.1017/CBO9780511843877"
+    },
+    {
      "id": "ussa1976",
      "text": "U.S. Standard Atmosphere 1976, NOAA/NASA/USAF (sea-level dry-air composition by volume)",
      "status": "verified",
@@ -10519,6 +10800,12 @@
      "text": "Vijaykumar, A., Kapadia, S. J. and Ajith, P. 2021, Phys. Rev. Lett. 126, 141104: constraints on the time variation of the gravitational constant using gravitational-wave observations of binary neutron stars",
      "status": "verified",
      "doi": "10.1103/PhysRevLett.126.141104"
+    },
+    {
+     "id": "wallace-hobbs2006",
+     "text": "Wallace, J. M. and Hobbs, P. V. 2006, Atmospheric Science: An Introductory Survey, 2nd edition, Academic Press (dry air c_p = 1004 J/kg/K)",
+     "status": "unverified",
+     "doi": "10.1016/C2009-0-00034-8"
     },
     {
      "id": "wikipedia-ice-phases",

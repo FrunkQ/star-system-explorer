@@ -67,6 +67,10 @@ export interface WhatIf {
 
 export interface Workspace {
   selection: string | null;
+  /** Where the GM put each pack overlay (overlay.ts), by overlay id; kept with the campaign. */
+  overlay_anchors?: Record<string, import("./overlay.ts").OverlayAnchor>;
+  /** Place an overlay (null takes it off the map). */
+  setOverlayAnchor?(id: string, a: import("./overlay.ts").OverlayAnchor | null): void;
   /** The viewer's view style and "seen from" (rule 12), kept on the device; a view draws `viewOptions(spec, view).shown`. */
   view?: import("./view-controls.ts").ViewChoice;
   /** A view says the viewer turned it by hand: the choice becomes Free. */
@@ -131,6 +135,8 @@ export interface ViewContext {
   symbology?: import("./symbology.ts").SymbologyHost;
   /** Style documents (H8.9) this shell knows, the device tier they are checked for, and a way to keep an edited one. */
   styles?: StylesHost;
+  /** V3 gap 23: hand a subject to Minerva, the storyteller, to describe from what one audience knows (absent where she cannot run). */
+  describe?(address: string): void;
 }
 
 /** What a shell offers views about style documents. Presentation only: kept on the device, never in the universe. */

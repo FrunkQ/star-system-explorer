@@ -97,8 +97,9 @@ export function viewOptions(spec: ViewControlsSpec, choice: ViewChoice): { style
   const shownSeen: SeenFrom = flat ? "above" : ok(choice.seen) ? choice.seen : (SEEN_FROM.find(ok) ?? "above");
   const scales = scaleOptions(spec);
   const want = choice.scale ?? "readable";
-  // A flat chart is a diagram: it is always Readable.
-  const shownScale: ViewScale = !flat && scales.find((o) => o.value === want && !o.unavailable) ? want : "readable";
+  // A flat chart that turns into 3D shows Real there (pickScale); one that cannot turn (a slice) draws Real itself
+  // when it says it can.
+  const shownScale: ViewScale = !(flat && turnTo) && scales.find((o) => o.value === want && !o.unavailable) ? want : "readable";
   // A diagram always shows its labels; the HUD switch is for a view that can look like a photograph.
   const h = spec.hud?.[style];
   const hudWhy = h === true ? undefined : (h ?? `${VIEW_STYLE_WORDS[style]} always shows its labels`);

@@ -258,7 +258,7 @@ export function delayWords(s: number): string {
 
 /** A time on the campaign clock, as days from the scene's now ("in 3 days", "day +12"). */
 export function fromNowWords(at_s: number, now_s: number): string {
-  const d = (at_s - now_s) / 86_400;
+  const d = (at_s - now_s) / constant("day");
   if (Math.abs(d) < 1 / 24) return "now";
   if (d < 0) return `${daysWords(-d)} ago`;
   return `in ${daysWords(d)}`;

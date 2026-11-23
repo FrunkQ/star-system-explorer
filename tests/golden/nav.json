@@ -22,7 +22,7 @@
         }
       ],
       "case": "chemical",
-      "plan": "2c14ef965c2406ac103b4b30b1baefb0e47da77e26b71f46a15713bddc365e8a",
+      "plan": "c5993353531a5d0f898a26cc6364dceb06f9a2aed6b14917beecde194550b987",
       "refused": 0,
       "ways_out": []
     },
@@ -72,7 +72,7 @@
         }
       ],
       "case": "torch",
-      "plan": "a69a2cce986ea063151133a606d6401205bb8d3a502019cb6b34e0c8fcd46297",
+      "plan": "36c4ffd62a79cb21326810c60588ca052fc4081852886c8710a0e2cc88077ce8",
       "refused": 0,
       "ways_out": []
     },
@@ -159,7 +159,7 @@
   ],
   "descents": [
     {
-      "duration_s": "1400.50",
+      "duration_s": "1401.80",
       "events": [
         "entry",
         "peak-heating",
@@ -168,11 +168,11 @@
       ],
       "lander": "capsule",
       "method": "chute",
-      "peak_g": "9.4253",
-      "peak_heat_w_cm2": "115.3875",
+      "peak_g": "9.4131",
+      "peak_heat_w_cm2": "115.2708",
       "propellant_kg": "0.000",
       "result": "landed",
-      "touchdown_m_s": "7.5976",
+      "touchdown_m_s": "7.5962",
       "world": "Earth"
     },
     {

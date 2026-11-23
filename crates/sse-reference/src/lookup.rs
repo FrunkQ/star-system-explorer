@@ -12,7 +12,8 @@
 //!    the row (`phases.density_liquid`);
 //! 3. the property by its path (`phases.triple_point_k`) or by its last name
 //!    when only one value on the row has it;
-//! 4. worked-out values: a substance's `molar_mass` from its formula.
+//! 4. worked-out values: a substance's `molar_mass` from its formula, a
+//!    mixture's (by volume) from its recipe.
 //!
 //! Point values are read as written. Fits are read where this reader knows
 //! the form (the vapour-pressure fits and `k = a / T`) and need a
@@ -171,7 +172,7 @@ impl Reference {
         if table == "constants" && (property.is_empty() || property == "value") {
             return unit_of(row.get("value")?).map(str::to_string);
         }
-        if table == "substances" && property == "molar_mass" {
+        if (table == "substances" || table == "mixtures") && property == "molar_mass" {
             return Some("kg mol-1".into());
         }
         if let Some(u) = forms(row).find_map(|f| unit_of(f.get("props")?.get(property)?)) {
@@ -279,6 +280,16 @@ impl Reference {
                 out.grade = Some("computed".into());
                 out.reason =
                     Some("worked out from the formula and the elements' atomic weights".into());
+                return Ok(out);
+            }
+        }
+        if table == "mixtures" && property == "molar_mass" {
+            if let Some(mm) = self.gas_molar_mass_kg_mol(&id) {
+                out.value = mm;
+                out.unit = "kg mol-1".into();
+                out.known = true;
+                out.grade = Some("computed".into());
+                out.reason = Some("worked out from the recipe by volume".into());
                 return Ok(out);
             }
         }

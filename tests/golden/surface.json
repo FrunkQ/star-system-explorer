@@ -11,7 +11,7 @@
       ],
       "kind": "solid",
       "regime": "mobile-lid",
-      "sketch": "27f70b33e1139c7450ac23ac2cf2431ac5d199df446d7e7ad141344fd0ad2925"
+      "sketch": "eee8ae05fe803b099926075c388844ffb44470268e09705ab8e3a08214110a01"
     },
     {
       "body": "Venus",
@@ -24,7 +24,7 @@
       ],
       "kind": "solid",
       "regime": "episodic-lid",
-      "sketch": "d3baa4d8b5c086b00bd756a6e1d95619b15510d4099b4bc49c4eff39098e6dae"
+      "sketch": "63fc91f69ce4efaac24ebebe2a3923213c31997da5771982337a2e8674d014ae"
     },
     {
       "body": "Mars",
@@ -32,7 +32,7 @@
       "events": [],
       "kind": "solid",
       "regime": "stagnant-lid",
-      "sketch": "f298ccf4d48deb373cf0cdeedbeb53aaa49edb981ddbd2462bded29b41b63d94"
+      "sketch": "8b1d090b1056967bfc5128a4b48156725ae23263a102839e3fb0daf224ba4e3b"
     },
     {
       "body": "Mercury",
@@ -40,7 +40,7 @@
       "events": [],
       "kind": "solid",
       "regime": "stagnant-lid",
-      "sketch": "56d9998a0237474bdd0c3a5758ff446a201b9d098740ae67678e255b3a1d6c23"
+      "sketch": "532c6712b0f44bc46576f460ff3844c3ee4fb95bd052a79083b4b34f3e70e548"
     },
     {
       "body": "Moon",
@@ -158,7 +158,7 @@
       "events": [],
       "kind": "ocean",
       "regime": "ocean-world",
-      "sketch": "4d3b131a68a9b70c0bcaf5a8f432c0c4dba063cd70482763524cb14fcc5d5248"
+      "sketch": "34e30f810bd0017d85b5204fe95c47deb5b21c547a68bcf78412e22b7369d7c8"
     },
     {
       "body": "Wet super-Earth",
@@ -174,7 +174,7 @@
       "events": [],
       "kind": "solid",
       "regime": "carbon-rich",
-      "sketch": "242fe2754d780730551d09128da87cc8c397aa5efa0e0695e6bff07a29bb4a28"
+      "sketch": "a076114cf2f6296b41ad35a7cd2552665a7c29876c243bae4003d0d15aa263b2"
     }
   ],
   "generated": [
@@ -184,7 +184,7 @@
       "system": "u:g0/patch:9:solar/cohort:0/sys:0"
     },
     {
-      "digest": "f7bd5165bd041562650a377c981e0d58ac729448a84d290f250e46bf4156a8fa",
+      "digest": "7093cd6b4c215352d41520f55235220e31dafcf68d9415d9b5eb0b6c9932a408",
       "regimes": [
         "stagnant-lid",
         "cold-ice-lid",
@@ -202,7 +202,7 @@
       "system": "u:g0/patch:9:solar/cohort:0/sys:1"
     },
     {
-      "digest": "f53285fa591cce8d5368ae344b5bf745824f97c7f8d3427b47984f7c5b644f37",
+      "digest": "c81891dbdfc849aa40c88a8e751e06a0285e8d0d7980fe75a80b95ebe7b05055",
       "regimes": [
         "stagnant-lid",
         "stagnant-lid",

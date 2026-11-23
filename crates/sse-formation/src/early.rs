@@ -16,13 +16,13 @@ use sse_core::Address;
 
 pub const M_EARTH_KG: f64 = sse_core::sheet::M_EARTH;
 pub const R_EARTH_M: f64 = sse_core::sheet::R_EARTH_MEAN;
-const MSUN_IN_EARTH: f64 = 332_946.0;
+const MSUN_IN_EARTH: f64 = sse_core::sheet::GM_SUN / sse_core::sheet::GM_EARTH;
 const G: f64 = sse_core::sheet::G;
 const AU_M: f64 = sse_core::sheet::AU;
 const L_SUN_W: f64 = sse_core::sheet::L_SUN;
-const MYR_S: f64 = 3.155_76e13;
+const MYR_S: f64 = 1e6 * sse_core::sheet::YR_JULIAN;
 /// Earth's ocean mass, kg.
-pub const EARTH_OCEAN_KG: f64 = 1.4e21;
+pub const EARTH_OCEAN_KG: f64 = sse_core::sheet::M_OCEAN_EARTH;
 
 pub const REF_ZENG16: &str = "Zeng, L., Sasselov, D. D. and Jacobsen, S. B. 2016, ApJ 819, 127: rocky radius (1.07 - 0.21 CMF) M^(1/3.7)";
 pub const REF_LF14: &str =

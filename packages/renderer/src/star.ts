@@ -6,7 +6,7 @@
 // file turns them into pixels; where it has to choose something the kernel
 // does not publish (spot places, spot temperature, coronal temperature) the
 // choice is named here and in docs/fudges.md.
-import { planck, thermalColour } from "../../ui-contract/src/index.ts";
+import { constant, planck, thermalColour } from "../../ui-contract/src/index.ts";
 
 export const STAR_REFERENCES = [
   { text: "Eddington, A. S. (1926). The Internal Constitution of the Stars. Cambridge University Press (grey atmosphere limb darkening, I(mu)/I(1) = (2 + 3 mu) / 5).", url: "https://archive.org/details/internalconstitu0000eddi" },
@@ -18,9 +18,9 @@ export const STAR_REFERENCES = [
   { text: "Chiavassa, A. et al. (2010). Radiative hydrodynamics simulations of red supergiant stars II. A&A 515, A12 (Betelgeuse: a few giant convective cells).", doi: "10.1051/0004-6361/200913907" },
 ];
 
-const K_B = 1.380649e-23;
+const K_B = constant("k_B");
 const M_H = 1.6735575e-27;
-const G = 6.6743e-11;
+const G = constant("G");
 /** Spot umbra this much cooler than the photosphere (Berdyugina 2005: about 1500 to 2000 K for Sun-like stars). Stand-in. */
 export const SPOT_DELTA_K = 1700;
 /** Coronal temperature (quiet Sun 1 to 2 MK). Stand-in until the kernel publishes one. */
@@ -370,7 +370,8 @@ export function narrateStar(label: string, teff_k: number, spots: number, covera
 }
 
 const km = (m: number) => (m >= 1e9 ? `${(m / 1e9).toPrecision(2)} million km` : `${Math.round(m / 1000).toLocaleString("en-GB")} km`);
-const span = (s: number) => (s < 3600 ? `${Math.round(s / 60)} minutes` : s < 2 * 86400 ? `${Math.round(s / 3600)} hours` : s < 2 * 365.25 * 86400 ? `${Math.round(s / 86400)} days` : `${Math.round(s / (365.25 * 86400))} years`);
+const DAY_S = constant("day");
+const span = (s: number) => (s < 3600 ? `${Math.round(s / 60)} minutes` : s < 2 * DAY_S ? `${Math.round(s / 3600)} hours` : s < 2 * 365.25 * DAY_S ? `${Math.round(s / DAY_S)} days` : `${Math.round(s / (365.25 * DAY_S))} years`);
 
 /** The churning surface in words: what the cells are, and whether this picture shows them. */
 export function narrateGranules(c: Convection | null | undefined, disc_px: number): string {

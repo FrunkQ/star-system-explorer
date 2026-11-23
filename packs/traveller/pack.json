@@ -6658,7 +6658,7 @@
          {
           "if": "range",
           "field": "body.mass",
-          "max": 2.4674e+28
+          "max": 2.4675619765368657e+28
          }
         ]
        },
@@ -8571,7 +8571,7 @@
      {
       "id": "telescope_15au",
       "label": "deep-field telescope (15 au)",
-      "range_m": 2243968060000.0,
+      "range_m": 2243968060500.0,
       "targets": [
        "terrestrial planet",
        "belt"
@@ -8583,7 +8583,7 @@
      {
       "id": "telescope_2au",
       "label": "deep-field telescope (2 au)",
-      "range_m": 299195741000.0,
+      "range_m": 299195741400.0,
       "targets": [
        "dwarf planet",
        "moon"
@@ -8595,7 +8595,7 @@
      {
       "id": "spectral_5au",
       "label": "spectral analyser (5 au)",
-      "range_m": 747989353000.0,
+      "range_m": 747989353500.0,
       "targets": [
        "gas giant",
        "ice giant"
@@ -8607,7 +8607,7 @@
      {
       "id": "spectral_1au",
       "label": "spectral analyser (1 au)",
-      "range_m": 149597870000.0,
+      "range_m": 149597870700.0,
       "targets": [
        "terrestrial planet"
       ],
@@ -8911,7 +8911,7 @@
         ]
        }
       ],
-      "explain": "a ship's spectral analyser (5 au) within 747,989,353 km for an hour reveals air composition, surface liquids"
+      "explain": "a ship's spectral analyser (5 au) within 747,989,354 km for an hour reveals air composition, surface liquids"
      },
      {
       "id": "traveller.sense.spectral_1au",
@@ -8941,7 +8941,7 @@
         ]
        }
       ],
-      "explain": "a ship's spectral analyser (1 au) within 149,597,870 km for an hour reveals air composition, surface liquids"
+      "explain": "a ship's spectral analyser (1 au) within 149,597,871 km for an hour reveals air composition, surface liquids"
      },
      {
       "id": "traveller.sense.bio_scanner",
@@ -9044,8 +9044,8 @@
        "traveller.jump": 2.0,
        "traveller.cargo_dt": 10.0,
        "sensor.astrometer.range_m": 7479893535000.0,
-       "sensor.telescope_2au.range_m": 299195741000.0,
-       "sensor.spectral_1au.range_m": 149597870000.0,
+       "sensor.telescope_2au.range_m": 299195741400.0,
+       "sensor.spectral_1au.range_m": 149597870700.0,
        "sensor.passive_rf.range_m": 14959787070000.0,
        "construct.crew_max": 4.0,
        "construct.source": "written for this pack"
@@ -9072,7 +9072,7 @@
        "traveller.thrust_g": 1.0,
        "traveller.jump": 1.0,
        "traveller.cargo_dt": 80.0,
-       "sensor.spectral_1au.range_m": 149597870000.0,
+       "sensor.spectral_1au.range_m": 149597870700.0,
        "sensor.passive_rf.range_m": 14959787070000.0,
        "sensor.search_radar.range_m": 500000000.0,
        "construct.crew_max": 6.0,
@@ -9100,7 +9100,7 @@
        "traveller.thrust_g": 1.0,
        "traveller.jump": 2.0,
        "traveller.cargo_dt": 60.0,
-       "sensor.spectral_1au.range_m": 149597870000.0,
+       "sensor.spectral_1au.range_m": 149597870700.0,
        "sensor.passive_rf.range_m": 14959787070000.0,
        "sensor.search_radar.range_m": 500000000.0,
        "construct.crew_max": 6.0,
@@ -9129,7 +9129,7 @@
        "traveller.jump": 3.0,
        "traveller.cargo_dt": 20.0,
        "sensor.astrometer.range_m": 7479893535000.0,
-       "sensor.spectral_5au.range_m": 747989353000.0,
+       "sensor.spectral_5au.range_m": 747989353500.0,
        "sensor.search_radar.range_m": 500000000.0,
        "sensor.thermal_ir.range_m": 50000000.0,
        "sensor.gravimetric.range_m": 25000000.0,
@@ -9338,8 +9338,8 @@
       "label": "Scout base",
       "facts": {
        "sensor.astrometer.range_m": 7479893535000.0,
-       "sensor.telescope_15au.range_m": 2243968060000.0,
-       "sensor.spectral_5au.range_m": 747989353000.0,
+       "sensor.telescope_15au.range_m": 2243968060500.0,
+       "sensor.spectral_5au.range_m": 747989353500.0,
        "construct.mass_kg": 500000.0,
        "construct.crew_max": 500.0,
        "construct.modules": [
@@ -9974,6 +9974,11 @@
      "sealed_suit": "a sealed suit, renewed often: insidious air defeats seals",
      "altitude": "high ground: the air is breathable only at altitude",
      "low_ground": "low ground: the air is breathable only in the lowlands"
+    },
+    "join": {
+     "joining": "Calling the ship's computer for {brand}\u2026",
+     "waiting": "Link open. Receiving the charts\u2026",
+     "away": "Signal lost. These are the last charts received, read only; they update when the link is back."
     }
    },
    "tags": {

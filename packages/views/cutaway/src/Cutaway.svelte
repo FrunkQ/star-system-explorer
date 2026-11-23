@@ -10,8 +10,9 @@
   no stack, no picture.
 -->
 <script lang="ts">
-  import { cutRadius, formatKm, kindPhrase, regionCounts, type Json, type LadderLine, type WorldStackRead, type SystemScene, type ViewContext, type WorldShell, type WorldStack } from "../../../ui-contract/src/index.ts";
+  import { cutRadius, formatKm, viewOptions, DEFAULT_VIEW, kindPhrase, regionCounts, type Json, type LadderLine, type WorldStackRead, type SystemScene, type ViewContext, type WorldShell, type WorldStack } from "../../../ui-contract/src/index.ts";
   import { Card } from "../../../chart-grammar/src/index.ts";
+  import { CUTAWAY_CONTROLS } from "./controls.ts";
 
   let { ctx, scene, params }: { ctx: ViewContext; scene: SystemScene; params: Record<string, Json> } = $props();
 
@@ -46,7 +47,11 @@
     })();
   });
   const w = $derived<WorldStack | undefined>(read?.stack);
-  const scale = $derived(params.scale === "true" ? "true" : "log");
+  // Scale is the view controls' (one set of controls, Alex 23 Nov): Real draws depth to scale, Readable on a log scale.
+  const shownView = $derived(viewOptions(CUTAWAY_CONTROLS, ws.view ?? DEFAULT_VIEW).shown);
+  const scale = $derived(shownView.scale === "real" ? "true" : "log");
+  // HUD off: the slice and its marks alone, without names and depth ticks (the ladder still says every layer).
+  const hud = $derived(shownView.hud);
   const wedge = $derived(Math.min(360, Math.max(60, Number(params.wedge_deg ?? 140))));
   const lines = $derived<LadderLine[]>(read?.ladder ?? []);
   // physics_notes() lines start "<key>: ".
@@ -125,7 +130,7 @@
   });
 </script>
 
-<div class="wrap" data-cutaway={w && subject ? subject.address : loading ? "loading" : "none"} data-source={read?.source ?? ""} data-scale={scale}>
+<div class="wrap" data-cutaway={w && subject ? subject.address : loading ? "loading" : "none"} data-source={read?.source ?? ""} data-scale={scale} data-hud={hud ? "on" : "off"}>
   {#if w && subject}
     <Card title="{subject.label}: cutaway" subtitle={regionCounts(w) ? `Regions: ${regionCounts(w)}` : undefined}>
       <div class="body" class:noladder={params.ladder === false}>
@@ -140,16 +145,16 @@
               {#each regional as s (s.key)}
                 <path d={sector(r(s.bottom_m), r(s.top_m), a1 - regionArc, a1)} fill={fill(s)} stroke="var(--sse-ink)" stroke-width={picked === s.key ? 2 : 0.6} data-shell={s.key} data-within={s.within} />
               {/each}
-              <text x={cx + (Rpx + 10) * Math.sin(rad(a1 - regionArc / 2))} y={cy - (Rpx + 10) * Math.cos(rad(a1 - regionArc / 2))} class="lbl" text-anchor="start">{regionName(regional[0]!.within!)}</text>
+              {#if hud}<text x={cx + (Rpx + 10) * Math.sin(rad(a1 - regionArc / 2))} y={cy - (Rpx + 10) * Math.cos(rad(a1 - regionArc / 2))} class="lbl" text-anchor="start">{regionName(regional[0]!.within!)}</text>{/if}
             {/if}
             {#each ticks as { m, show } (m)}
               <line x1={cx + r(m) * Math.sin(rad(a0))} y1={cy - r(m) * Math.cos(rad(a0))} x2={cx + (r(m) + 6) * Math.sin(rad(a0))} y2={cy - (r(m) + 6) * Math.cos(rad(a0))} stroke="var(--sse-ink)" />
-              {#if show}<text x={cx + (r(m) + 9) * Math.sin(rad(a0))} y={cy - (r(m) + 9) * Math.cos(rad(a0)) + 3} class="tick" text-anchor="end">{formatKm(m)}</text>{/if}
+              {#if show && hud}<text x={cx + (r(m) + 9) * Math.sin(rad(a0))} y={cy - (r(m) + 9) * Math.cos(rad(a0)) + 3} class="tick" text-anchor="end">{formatKm(m)}</text>{/if}
             {/each}
             {#each marks as m (m.key)}
               <g data-feature={m.key}>
                 <circle cx={cx} cy={cy - m.y} r={picked === m.key ? 5 : 3.5} fill="var(--sse-accent)" stroke="var(--sse-ground)" />
-                <text x={m.left ? cx - 8 : cx + 8} y={cy - m.y + 3.5} class="lbl" text-anchor={m.left ? "end" : "start"}>{m.label}</text>
+                {#if hud}<text x={m.left ? cx - 8 : cx + 8} y={cy - m.y + 3.5} class="lbl" text-anchor={m.left ? "end" : "start"}>{m.label}</text>{/if}
               </g>
             {/each}
           </svg>

@@ -835,7 +835,7 @@
         "silicate and iron clouds"
        ]
       ],
-      "mean_molar_kg": 0.0023,
+      "mean_molar_kg": {"sheet": "mixtures/giant-air", "property": "molar_mass"},
       "source": "jets from the Rhines scale (Rhines 1975, J. Fluid Mech. 69, 417. doi:10.1017/S0022112075001504) with empirical wind scales: gas giants about 150 m/s, ice giants about 400 m/s; cloud chemistry by 1-bar temperature, adapted from the effective-temperature classes of Sudarsky et al. 2000 (ApJ 538, 885. doi:10.1086/309160: ammonia below about 150 K Teff, water, clear, alkali 900 to 1500 K, silicate above); the thresholds here are on the 1-bar temperature, the clear class is not modelled and the methane-ice row is an ice-giant addition (docs/fudges.md)"
      }
     },
@@ -938,33 +938,33 @@
      "gases": [
       {
        "gas": "H2-He",
-       "molar_kg": 0.0023,
-       "cp_j_kg_k": 12000.0,
+       "molar_kg": {"sheet": "mixtures/giant-air", "property": "molar_mass"},
+       "cp_j_kg_k": {"sheet": "mixtures/giant-air", "property": "heat_capacity"},
        "giant": true
       },
       {
        "gas": "CO2",
-       "molar_kg": 0.044,
-       "cp_j_kg_k": 1100.0,
+       "molar_kg": {"sheet": "mixtures/venus-air", "property": "molar_mass"},
+       "cp_j_kg_k": {"sheet": "mixtures/venus-air", "property": "heat_capacity"},
        "min_bar": 10.0
       },
       {
        "gas": "N2-CH4",
-       "molar_kg": 0.028,
-       "cp_j_kg_k": 1040.0,
+       "molar_kg": {"sheet": "mixtures/titan-air", "property": "molar_mass"},
+       "cp_j_kg_k": {"sheet": "mixtures/titan-air", "property": "heat_capacity"},
        "min_bar": 0.1,
        "max_t_k": 150.0
       },
       {
        "gas": "N2-O2",
-       "molar_kg": 0.029,
-       "cp_j_kg_k": 1004.0,
+       "molar_kg": {"sheet": "mixtures/dry-air", "property": "molar_mass"},
+       "cp_j_kg_k": {"sheet": "mixtures/dry-air", "property": "heat_capacity"},
        "min_bar": 0.1
       },
       {
        "gas": "CO2 (thin)",
-       "molar_kg": 0.044,
-       "cp_j_kg_k": 750.0
+       "molar_kg": {"sheet": "mixtures/mars-air", "property": "molar_mass"},
+       "cp_j_kg_k": {"sheet": "mixtures/mars-air", "property": "heat_capacity"}
       }
      ],
      "aerostat": {

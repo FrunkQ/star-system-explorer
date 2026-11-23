@@ -1179,7 +1179,7 @@ pub fn cell_heights(s: &SurfaceSettings, h: &PlateHistory, gravity: f64) -> Vec<
 
 /// Heights of `cells` at `now` Myr (before wear), metres from the raw datum.
 pub fn cells_heights(p: &PlateSettings, cells: &[Cell], now: f64, gravity: f64) -> Vec<f64> {
-    let g = (9.81 / gravity.max(0.1)).clamp(0.5, 3.0);
+    let g = (sse_core::sheet::G0 / gravity.max(0.1)).clamp(0.5, 3.0);
     let cap = p.max_relief_m * g;
     cells
         .iter()

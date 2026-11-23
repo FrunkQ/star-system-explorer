@@ -72,8 +72,11 @@ pub fn recombination_z(c: &Cosmology) -> f64 {
     let wm = c.p.omega_m * c.h * c.h;
     let g1 = 0.0783 * m::pow(wb, -0.238) / (1.0 + 39.5 * m::pow(wb, 0.763));
     let g2 = 0.560 / (1.0 + 21.1 * m::pow(wb, 1.81));
-    1048.0 * (1.0 + 0.001_24 * m::pow(wb, -0.738)) * (1.0 + g1 * m::pow(wm, g2))
+    Z_STAR_FIT * (1.0 + 0.001_24 * m::pow(wb, -0.738)) * (1.0 + g1 * m::pow(wm, g2))
 }
+
+/// The leading coefficient of Hu and Sugiyama's z_* fit.
+const Z_STAR_FIT: f64 = 1048.0; // not-sheet: Hu and Sugiyama 1996 fit coefficient for z_*, not a mass ratio
 
 /// Ionised fraction of the intergalactic medium at redshift z: zeta times
 /// the fraction of matter collapsed into haloes that can cool by atomic

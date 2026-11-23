@@ -48,13 +48,17 @@ pub const REF_CHATTERJEE08: &str = "Chatterjee, S. et al. 2008, ApJ 686, 580; Ju
 pub const REF_KG10: &str = "Kokubo, E. and Genda, H. 2010, ApJ 714, L21: after giant impacts, spins are near the critical rate and obliquities isotropic";
 pub const REF_BRYAN18: &str = "Bryan, M. L. et al. 2018, Nature Astronomy 2, 138: planetary-mass companions spin at about 0.1 to 0.3 of breakup";
 
-const R_EARTH_AU: f64 = 4.258_75e-5;
+const R_EARTH_AU: f64 = sse_core::sheet::R_EARTH_MEAN / sse_core::sheet::AU;
 const R_EARTH_M: f64 = sse_core::sheet::R_EARTH_MEAN;
 const M_EARTH_KG: f64 = sse_core::sheet::M_EARTH;
 const G: f64 = sse_core::sheet::G;
 /// Escape speed from the surface of Earth, km/s; orbital speed at 1 AU around the Sun, km/s.
-const V_ESC_EARTH: f64 = 11.186;
-const V_KEP_1AU: f64 = 29.784_7;
+fn v_esc_earth() -> f64 {
+    m::sqrt(2.0 * sse_core::sheet::GM_EARTH / R_EARTH_M) / 1e3
+}
+fn v_kep_1au() -> f64 {
+    m::sqrt(sse_core::sheet::GM_SUN / sse_core::sheet::AU) / 1e3
+}
 const W: usize = 3;
 /// Loss order for erosive impacts, outermost first (Co, Co2, water, carbon, rock, metal).
 const LAYERS: [usize; 6] = [5, 4, 3, 2, 1, 0];
@@ -678,7 +682,7 @@ impl Ctx<'_> {
             .unit(fnv(&[b"ev", &self.k.to_be_bytes(), &slot.to_be_bytes()]))
     }
     fn v_kep(&self, a: f64) -> f64 {
-        V_KEP_1AU * m::sqrt(self.host / a)
+        v_kep_1au() * m::sqrt(self.host / a)
     }
     fn theta(&self, w: &World) -> f64 {
         (w.mass_earth() / (MSUN_IN_EARTH * self.host)) * (w.a_au / (w.radius_earth() * R_EARTH_AU))
@@ -875,7 +879,7 @@ impl Ctx<'_> {
         let gam = 1.0 - 2.0 * gamma;
         let theta = 0.5 * m::acos(1.0 - 2.0 * u_angle);
         let s = m::sin(theta);
-        let vesc = V_ESC_EARTH * m::sqrt(mt / (r1 + r2));
+        let vesc = v_esc_earth() * m::sqrt(mt / (r1 + r2));
         let abar = (m1 * big.a_au + m2 * small.a_au) / mt;
         let vk = self.v_kep(abar);
         let e_rel = m::hypot(big.e, small.e);
@@ -1175,7 +1179,7 @@ impl Ctx<'_> {
         };
         // Hits on every world inside or near the belt (Opik-style focused cross-sections).
         let earth_focus =
-            1.0 + (V_ESC_EARTH / (0.3 * V_KEP_1AU)) * (V_ESC_EARTH / (0.3 * V_KEP_1AU));
+            1.0 + (v_esc_earth() / (0.3 * v_kep_1au())) * (v_esc_earth() / (0.3 * v_kep_1au()));
         let mut hits = vec![];
         for (wi, w) in self.worlds.iter().enumerate() {
             if w.a_au > belt_a * 1.3 {
@@ -1183,7 +1187,7 @@ impl Ctx<'_> {
             }
             let r = w.radius_earth();
             let vrel = 0.3 * self.v_kep(w.a_au);
-            let vesc = V_ESC_EARTH * m::sqrt(w.mass_earth() / r);
+            let vesc = v_esc_earth() * m::sqrt(w.mass_earth() / r);
             let focus = 1.0 + (vesc / vrel) * (vesc / vrel);
             let h = (HIT_EARTH * r * r * focus / earth_focus / w.a_au).min(0.05);
             hits.push((wi, h));
@@ -1430,7 +1434,7 @@ pub fn upheave(seed: &Seed, system: &Address, disc: &Disc, g: &Growth) -> Upheav
         d,
         system,
         host,
-        v_unit: V_KEP_1AU * m::sqrt(host),
+        v_unit: v_kep_1au() * m::sqrt(host),
         engulf_au: (2.0 * r_star_au).max(0.005),
         worlds,
         belts,
@@ -1525,8 +1529,8 @@ pub fn upheave(seed: &Seed, system: &Address, disc: &Disc, g: &Growth) -> Upheav
                             continue;
                         }
                         let sig = |w: &World| {
-                            RESIDUAL_E * V_ESC_EARTH * m::sqrt(w.mass_earth() / w.radius_earth())
-                                / (V_KEP_1AU * m::sqrt(host / w.a_au))
+                            RESIDUAL_E * v_esc_earth() * m::sqrt(w.mass_earth() / w.radius_earth())
+                                / (v_kep_1au() * m::sqrt(host / w.a_au))
                         };
                         let key = fnv(&[b"stir", c.worlds[i].id.as_bytes()]);
                         let e1 = c.worlds[i]

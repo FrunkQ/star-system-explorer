@@ -64,6 +64,6 @@ export function lightWords(s: number): string {
   const f = (x: number) => x.toLocaleString("en-GB", { maximumSignificantDigits: 2 });
   if (s < 60) return `${f(s)} light seconds`;
   if (s < 3600) return `${f(s / 60)} light minutes`;
-  if (s < 86400 * 2) return `${f(s / 3600)} light hours`;
-  return `${f(s / 86400)} light days`;
+  if (s < constant("day") * 2) return `${f(s / 3600)} light hours`;
+  return `${f(s / constant("day"))} light days`;
 }

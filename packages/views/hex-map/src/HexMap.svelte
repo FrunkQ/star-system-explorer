@@ -3,7 +3,9 @@
   import { blockHexes, centre, corners, extent, label, parse, within } from "./grid.ts";
   import { marksFor, SPOTS } from "./glyphs.ts";
 
-  let { scene, params, onpick }: { scene: HexScene; params: Record<string, unknown>; onpick?: (hex: string) => void } = $props();
+  // `hud` (the shared view controls' HUD, V10a): off leaves the grid and each world's own mark; hex numbers, names, zones, bases, ports and the reach are the HUD.
+  let { scene, params, onpick, hud = true }: { scene: HexScene; params: Record<string, unknown>; onpick?: (hex: string) => void; hud?: boolean } = $props();
+  const plain = (mark: string) => mark === "world" || mark === "world-wet";
 
   const size = $derived(Number(params.hex_size ?? 22));
   const cfg = $derived(scene.config.grid);
@@ -47,16 +49,16 @@
     </tbody>
   </table>
 {:else}
-  <svg class="hex-map" viewBox="0 0 {box.w} {box.h}" role="img" aria-label={scene.title ?? "Hex map"}>
+  <svg class="hex-map" class:bare={!hud} data-hud={hud ? "on" : "off"} viewBox="0 0 {box.w} {box.h}" role="img" aria-label={scene.title ?? "Hex map"}>
     {#each hexes as h}
       {@const p = at(h)}
       {@const l = label(cfg, h)}
       {@const w = byHex.get(l)}
-      <g class="hex" class:range={inRange.has(l)} class:selected={scene.selected === l}>
+      <g class="hex" class:range={hud && inRange.has(l)} class:selected={scene.selected === l}>
         <polygon points={corners(p, size)} role="button" tabindex="-1" aria-label="hex {l}" onclick={() => onpick?.(l)} onkeydown={(e) => { if (e.key === "Enter") onpick?.(l); }} />
-        <text class="num" x={p.x} y={p.y - size * 0.62}>{l}</text>
+        {#if hud}<text class="num" x={p.x} y={p.y - size * 0.62}>{l}</text>{/if}
         {#if w}
-          {#each marksFor(w, scene.config.glyphs) as m}
+          {#each marksFor(w, scene.config.glyphs).filter((m) => hud || (m.text === undefined && plain(m.mark))) as m}
             {@const [dx, dy] = SPOTS[m.at] ?? [0, 0]}
             {#if m.at === "ring"}
               <circle class="ring tone-{m.tone}" cx={p.x} cy={p.y} r={size * 0.72} />
@@ -66,7 +68,7 @@
               <use class="mark tone-{m.tone}" href="#hm-{m.mark}" x={p.x + dx * size} y={p.y + dy * size} />
             {/if}
           {/each}
-          <text class="name" x={p.x} y={p.y + size * 0.78}>{String(w.fields[scene.config.glyphs.label_field] ?? w.name)}</text>
+          {#if hud}<text class="name" x={p.x} y={p.y + size * 0.78}>{String(w.fields[scene.config.glyphs.label_field] ?? w.name)}</text>{/if}
         {/if}
       </g>
     {/each}
@@ -84,13 +86,16 @@
 
 <style>
   .hex-map { width: 100%; height: auto; font-family: var(--sse-font-mono); background: var(--sse-chart-ground, var(--sse-ground)); }
-  polygon { fill: none; stroke: var(--sse-rule); stroke-width: 0.6; cursor: pointer; }
+  /* The whole hex takes a press, not just its outline (it has no fill). */
+  polygon { fill: none; stroke: var(--sse-rule); stroke-width: 0.6; cursor: pointer; pointer-events: all; }
   .range polygon { fill: color-mix(in srgb, var(--sse-accent) 14%, transparent); }
   .selected polygon { stroke: var(--sse-accent); stroke-width: 1.6; }
   .num { font-size: 5px; fill: var(--sse-ink-muted); text-anchor: middle; }
   .name { font-size: 6px; fill: var(--sse-ink); text-anchor: middle; }
   .mark { font-size: 7px; text-anchor: middle; fill: var(--sse-ink); stroke: var(--sse-ink); }
   .mark :global(.fill), :global(symbol .fill) { fill: currentColor; }
+  /* Marks and words sit over the hex; a press on them picks the hex. */
+  .num, .name, .mark, .ring { pointer-events: none; }
   .ring { fill: none; stroke-width: 1.2; stroke-dasharray: 3 2; }
   .tone-ink { color: var(--sse-ink); }
   .tone-muted { color: var(--sse-ink-muted); fill: var(--sse-ink-muted); }

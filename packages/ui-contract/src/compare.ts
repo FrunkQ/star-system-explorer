@@ -7,7 +7,7 @@
 // hidden. Nothing here computes physics: a subject with no radius fact is
 // left out and says so.
 import type { SceneSubject } from "./scene.ts";
-import { constant } from "./sheet.ts";
+import { constant, numberOf, type SheetRef } from "./sheet.ts";
 
 export const R_EARTH_KM = constant("R_earth_mean") / 1000;
 export const R_JUPITER_KM = constant("R_jup_mean") / 1000;
@@ -20,8 +20,9 @@ export interface ReferenceObject {
   type: string;
   kind: string;
   tags: string[];
-  radius_km: number;
-  teff_k?: number;
+  /** km, or a sheet reference (`{"sheet": "constants/R_sun", "in": "km"}`) for an object the sheet holds. */
+  radius_km: number | SheetRef;
+  teff_k?: number | SheetRef;
   colour?: string;
   /** A type's typical size, not one measured object. */
   typical?: boolean;
@@ -65,14 +66,20 @@ export function checkReferences(doc: unknown): string[] {
     if (ids.has(o.id)) out.push(`${o.id}: listed twice`);
     ids.add(o.id);
     if (!groups.has(o.group)) out.push(`${o.id}: unknown group ${o.group}`);
-    if (!(o.radius_km > 0) || !Number.isFinite(o.radius_km)) out.push(`${o.id}: radius must be a positive number of km`);
+    let r = NaN;
+    try {
+      r = numberOf(o.radius_km);
+    } catch {
+      /* an unknown sheet row reads as no radius */
+    }
+    if (!(r > 0) || !Number.isFinite(r)) out.push(`${o.id}: radius must be a positive number of km`);
     if (!o.ref?.url?.startsWith("https://")) out.push(`${o.id}: needs a reference with a link`);
   }
   return out;
 }
 
 export function itemFromReference(o: ReferenceObject): CompareItem {
-  return { key: `ref:${o.id}`, label: o.label, kind: o.kind, tags: o.tags, radius_km: o.radius_km, where: "Reference", basis: o.typical ? "typical" : "reference", type: o.type, teff_k: o.teff_k, colour: o.colour, ref: o.ref };
+  return { key: `ref:${o.id}`, label: o.label, kind: o.kind, tags: o.tags, radius_km: numberOf(o.radius_km), where: "Reference", basis: o.typical ? "typical" : "reference", type: o.type, teff_k: o.teff_k === undefined ? undefined : numberOf(o.teff_k), colour: o.colour, ref: o.ref };
 }
 
 /** A subject's radius in km from its facts (radius_earth or radius_sun), or null: the view never guesses one. */
@@ -102,9 +109,9 @@ export function starColour(teff_k: number | undefined): string {
     [2500, [255, 140, 70]],
     [3500, [255, 180, 110]],
     [5000, [255, 220, 170]],
-    [5800, [255, 240, 215]],
+    [5800, [255, 240, 215]], // not-sheet: an RGB colour stop
     [7500, [240, 240, 255]],
-    [10000, [200, 215, 255]],
+    [10000, [200, 215, 255]], // not-sheet: an RGB colour stop
     [30000, [160, 185, 255]],
   ];
   const t = Math.min(30000, Math.max(2500, teff_k));

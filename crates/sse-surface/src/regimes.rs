@@ -740,7 +740,9 @@ fn cloud_deck(
             }
         })
         .collect();
-    let h_km = 8.314 * t.max(10.0) / (c.mean_molar_kg * env.gravity_m_s2.max(0.1)) / 1000.0;
+    let h_km = sse_core::sheet::R_GAS * t.max(10.0)
+        / (c.mean_molar_kg * env.gravity_m_s2.max(0.1))
+        / 1000.0;
     CloudDeck {
         rotation_hours: rot,
         wind_scale_m_s: u,
