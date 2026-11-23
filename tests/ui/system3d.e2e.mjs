@@ -71,6 +71,13 @@ try {
       await gm.getByRole("button", { name: "True", exact: true }).click();
       await gm.waitForFunction(() => /no surface|needs a GPU/.test(document.querySelector("[aria-roledescription='3D chart'] [data-true-note]")?.textContent ?? ""), null, { timeout: 60000 });
       assert.equal(await view.getAttribute("data-look"), tier === "gpu" ? "true" : "plain", "True draws on the GPU tier; a device without one keeps the plain look");
+      // The living star (V10c): on the GPU tier the star is the kernel's, turning on its own clock.
+      if (tier === "gpu") {
+        const live = view.locator("[data-star-live]");
+        await live.waitFor({ timeout: 30000 });
+        const turn0 = await live.getAttribute("data-star-turn");
+        await gm.waitForFunction((t) => document.querySelector("[data-star-live]")?.getAttribute("data-star-turn") !== t, turn0, { timeout: 10000 });
+      }
       await shot(gm, `v10a-gm-true-${mode}`);
       // Scale and HUD (Alex, 23 Nov): Real puts distances and sizes in proportion; HUD off in True by default, on
       // brings the orbit lines and names back.

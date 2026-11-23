@@ -2,7 +2,7 @@
 // device has no WebGPU). It is handed camera-relative positions only, already
 // narrowed from f64 (frames.ts), and draws with the camera at the origin, so
 // no large number ever reaches the GPU (rendering rule 3).
-import { AmbientLight, BufferGeometry, Color, DataTexture, DirectionalLight, Float32BufferAttribute, Line, LineBasicMaterial, LinearFilter, Mesh, MeshBasicMaterial, MeshStandardMaterial, PerspectiveCamera, PointLight, Points, PointsMaterial, RGBAFormat, Scene, SphereGeometry, SRGBColorSpace, TorusGeometry, Vector3 } from "three";
+import { AmbientLight, BufferGeometry, Color, DataTexture, DirectionalLight, Float32BufferAttribute, Line, LineBasicMaterial, LinearFilter, Mesh, MeshBasicMaterial, MeshStandardMaterial, PerspectiveCamera, PointLight, Points, PointsMaterial, RGBAFormat, Scene, SphereGeometry, Sprite, SpriteMaterial, SRGBColorSpace, TorusGeometry, Vector3 } from "three";
 import { WebGPURenderer } from "three/webgpu";
 import type { Vec3 } from "./frames.ts";
 import type { TrueTexture } from "./true-look.ts";
@@ -19,6 +19,12 @@ export interface GpuItem {
   surface?: { key: string; texture: TrueTexture };
   /** True look: a star, drawn by its own light (not lit). */
   shines?: boolean;
+  /**
+   * True look: the star's face, a square of RGBA pixels drawn for this moment (live-star.ts), row 0 at the top, the
+   * disc filling `disc` of the square. It faces the camera, so the limb darkening drawn into it is the true one.
+   * A new `version` uploads new pixels.
+   */
+  face?: { key: string; version: number; width: number; data: Uint8ClampedArray; disc: number };
 }
 
 /** True look: the star's light. `at` a camera-relative point (the star is in the frame), else `from` a direction. */
@@ -79,6 +85,34 @@ export async function createGpu(canvas: HTMLCanvasElement): Promise<Gpu | null> 
     litMats.set(key, m);
     return m;
   };
+  // A star's face: one texture and material per star, its pixels replaced when the moment drawn changes.
+  const faces = new Map<string, { tex: DataTexture; mat: SpriteMaterial; version: number; width: number }>();
+  const faceMat = (f: NonNullable<GpuItem["face"]>) => {
+    let e = faces.get(f.key);
+    if (e && e.width !== f.width) {
+      e.tex.dispose();
+      e.mat.dispose();
+      faces.delete(f.key);
+      e = undefined;
+    }
+    if (!e) {
+      const tex = new DataTexture(new Uint8Array(f.width * f.width * 4), f.width, f.width, RGBAFormat);
+      tex.colorSpace = SRGBColorSpace;
+      tex.magFilter = LinearFilter;
+      tex.minFilter = LinearFilter;
+      e = { tex, mat: new SpriteMaterial({ map: tex, transparent: true, depthWrite: false }), version: -1, width: f.width };
+      faces.set(f.key, e);
+    }
+    if (e.version !== f.version) {
+      // Rows turned over: the face is drawn top row first, a texture's row 0 is the bottom.
+      const n = f.width;
+      const dst = e.tex.image.data as Uint8Array;
+      for (let j = 0; j < n; j++) dst.set(f.data.subarray((n - 1 - j) * n * 4, (n - j) * n * 4), j * n * 4);
+      e.tex.needsUpdate = true;
+      e.version = f.version;
+    }
+    return e.mat;
+  };
   const torus = new TorusGeometry(1.8, 0.08, 6, 48);
   const mats = new Map<string, MeshBasicMaterial>();
   const lineMats = new Map<string, LineBasicMaterial>();
@@ -107,6 +141,13 @@ export async function createGpu(canvas: HTMLCanvasElement): Promise<Gpu | null> 
         scene.add(new AmbientLight(0xffffff, 0.04));
       }
       for (const it of o.items) {
+        if (o.light && it.face) {
+          const sp = new Sprite(faceMat(it.face));
+          sp.position.set(it.rel[0], it.rel[1], it.rel[2]);
+          sp.scale.setScalar((2 * it.radius) / it.face.disc);
+          scene.add(sp);
+          continue;
+        }
         const lit = !!o.light && !it.shines;
         const m = new Mesh(o.light ? globe : sphere, lit ? litMat(it) : mat(it.colour));
         m.position.set(it.rel[0], it.rel[1], it.rel[2]);
@@ -144,6 +185,7 @@ export async function createGpu(canvas: HTMLCanvasElement): Promise<Gpu | null> 
       globe.dispose();
       torus.dispose();
       textures.forEach((t) => t.dispose());
+      faces.forEach((e) => (e.tex.dispose(), e.mat.dispose()));
       litMats.forEach((m) => m.dispose());
       mats.forEach((m) => m.dispose());
       lineMats.forEach((m) => m.dispose());
