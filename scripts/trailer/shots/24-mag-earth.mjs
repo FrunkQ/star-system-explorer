@@ -21,15 +21,18 @@ export default {
     await b.waitFor({ timeout: 20000 });
     await b.locator(".hit").click();
     await nav.go(page, "body");
-    await page.locator("[data-mag-toggle]:visible").first().waitFor({ timeout: 20000 });
+    await page.locator("[data-mag]").waitFor({ state: "attached", timeout: 20000 });
     await page.waitForSelector("[data-body] [data-tier]:not([data-tier='']) canvas", { timeout: 60000 });
     await page.waitForTimeout(1500);
   },
   async run(page, d) {
-    await d.caption("Earth, from the catalogue", "The Solar System pack: measured orbit, size and field. Its surface is not modelled yet.");
+    await d.caption("Earth, from the catalogue", "Measured orbit, size and field. Its continents are generated, not the real map.");
     await d.hold(1500);
     await d.caption("Mag", "Field lines from the measured dipole, and where it holds the solar wind off.");
-    await d.click(page.locator("[data-mag-toggle]:visible").first());
+    // Mag is a Band in the one set of view controls (23 Nov): it replaces the picture with the field.
+    const chip = page.locator("[data-view-more]").first();
+    if (!(await page.getByRole("group", { name: "Band" }).isVisible()) && (await chip.count())) await d.click(chip);
+    await d.click(page.getByRole("group", { name: "Band" }).getByRole("button", { name: "Mag", exact: true }));
     await page.waitForSelector('[data-mag="lines"]', { timeout: 45000 });
     await d.hold(3500);
     const mag = page.locator("[data-mag]");
