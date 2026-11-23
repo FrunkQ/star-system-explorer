@@ -114,6 +114,8 @@
   const mountFor = (area: string) => screen?.mounts.find((m) => m.area === area);
   /** What the chart's view draws in each view style, when it is a diagram (rule 12). */
   const viewSpec = $derived(mountFor("chart")?.module.controls);
+  // The view controls' height: what sits below them starts there, however many rows they wrap to.
+  let viewbarH = $state(0);
 
   // The instrument rail (top-level design 2.2) at the scale in view: system, world, or the Workshop.
   let railScale = $state<RailScale>("system");
@@ -1477,9 +1479,9 @@
         {#if railScale !== "workshop"}<button type="button" class="door" data-go="workshop" onclick={toWorkshop} title="Physics flows, packs, player screens and data, symbols, styles: everything that changes the tool">Workshop ›</button>{/if}
       </nav>
       {#key ws.screen}
-      <main class="stage" data-viewbar={viewSpec ? "" : undefined} data-desk={desk} data-screen={ws.screen} data-page={mountFor("card") ? undefined : ""} data-lens={lens.id} data-branch={ws.branch ? "open" : ahead ? "ahead" : undefined}>
+      <main class="stage" style:--viewbar-h={viewbarH ? `${viewbarH}px` : undefined} data-viewbar={viewSpec ? "" : undefined} data-desk={desk} data-screen={ws.screen} data-page={mountFor("card") ? undefined : ""} data-lens={lens.id} data-branch={ws.branch ? "open" : ahead ? "ahead" : undefined}>
         {#if ws.branch}<div class="branch-stamp" aria-hidden="true">What if · not kept</div>{/if}
-        {#if viewSpec && ws.view}<div class="viewbar"><ViewControls spec={viewSpec} choice={ws.view} onchange={setView} /></div>{/if}
+        {#if viewSpec && ws.view}<div class="viewbar" bind:clientHeight={viewbarH}><ViewControls spec={viewSpec} choice={ws.view} onchange={setView} /></div>{/if}
         <div class="area-chart">{#if chartMount}{#key openings}<div class="fill" use:view={chartMount}></div>{/key}{/if}</div>
         <nav class="tools" aria-label="Tools">
           <ToolButton label="Select" icon="M5 3l14 8-6 2-2 6z" pressed={true} />
@@ -2228,13 +2230,14 @@
     pointer-events: auto;
     width: fit-content;
   }
+  /* Below the view controls however many rows they wrap to (their measured height). */
   .stage[data-viewbar] .undo-note {
-    top: 84px;
+    top: calc(var(--viewbar-h, 68px) + 16px);
   }
   .stage[data-viewbar][data-screen="body"] .area-chart,
   .stage[data-viewbar][data-screen="cutaway"] .area-chart,
   .stage[data-viewbar][data-page] .area-chart {
-    top: 84px;
+    top: calc(var(--viewbar-h, 68px) + 16px);
   }
   .tools {
     position: absolute;
