@@ -423,6 +423,7 @@ pub fn at_world(
     d: &DescentPack,
     ship: &Ship,
     body: &NavBody,
+    // None: not known; a pressure of 0: airless.
     air: Option<&Air>,
     v_inf: f64,
     arrival: String,
@@ -433,8 +434,23 @@ pub fn at_world(
     let orbit = m::sqrt(mu / r);
     let escape = m::sqrt(2.0 * mu / r);
     let h = hull(s, ship);
+    // No air given is not the same as airless: a chart that carries no air
+    // says nothing about it, so the acts that need air say so.
+    let unknown = air.is_none();
     let air = air.filter(|a| a.pressure_pa > 0.0);
     let ground = air.is_none_or(|a| a.ground);
+    let no_air = |id: &str, words: &str, airless: &str| {
+        not_here(
+            id,
+            words,
+            if unknown {
+                "this world's air is not known here (an adopted system's own record carries it)"
+                    .into()
+            } else {
+                airless.into()
+            },
+        )
+    };
     let k = air
         .and_then(|a| d.sutton_graves.get(&a.gas))
         .copied()
@@ -442,10 +458,10 @@ pub fn at_world(
     let mut checks = vec![];
     checks.push(match air {
         Some(a) => aerocapture(s, d, ship, &h, a, mu, r, g, v_inf, k),
-        None => not_here(
+        None => no_air(
             "aerocapture",
             "Aerocapture",
-            "no air to brake in: capture takes a burn".into(),
+            "no air to brake in: capture takes a burn",
         ),
     });
     match (air, ground) {
@@ -465,6 +481,8 @@ pub fn at_world(
                 if let Some(c) = runway(s, ship, a, g) {
                     checks.push(c);
                 }
+            } else if unknown {
+                checks.push(no_air("entry", "Entry and landing", ""));
             }
             checks.push(powered(s, ship, g, orbit, false));
             checks.push(powered(s, ship, g, orbit, true));

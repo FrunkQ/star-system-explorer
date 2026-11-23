@@ -17,7 +17,14 @@
    "node_deg": 48.33076593,
    "varpi_deg": 77.45779628,
    "mean_longitude_deg": 252.2503235,
-   "port": false
+   "port": false,
+   "air": {
+    "pressure_pa": 0.0,
+    "temperature_k": 440,
+    "molar_kg": 0.0,
+    "gas": "",
+    "ground": true
+   }
   },
   {
    "address": "u:sol/sys:sun/body:venus",

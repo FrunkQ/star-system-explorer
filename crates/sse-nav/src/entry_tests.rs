@@ -138,3 +138,25 @@ fn ship_fields_are_optional_and_round_trip() {
     let back: Ship = serde_json::from_value(serde_json::to_value(&c).unwrap()).unwrap();
     assert_eq!(back, c);
 }
+
+#[test]
+fn a_world_with_no_air_given_says_its_air_is_unknown_not_airless() {
+    let s = settings();
+    let sys = sol();
+    let mut b = sys.body("Mars").unwrap().clone();
+    b.air = None;
+    let w = at_world(
+        &s.entry,
+        &s.descent,
+        &capsule_ship(),
+        &b,
+        None,
+        3000.0,
+        String::new(),
+    );
+    assert!(check(&w, "aerocapture").why[0].contains("not known"));
+    assert!(check(&w, "entry").why[0].contains("not known"));
+    // Mercury is known to be airless.
+    let m = at(&capsule_ship(), "Mercury");
+    assert!(check(&m, "aerocapture").why[0].contains("no air to brake in"));
+}

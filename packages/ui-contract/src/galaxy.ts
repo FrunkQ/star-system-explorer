@@ -127,7 +127,38 @@ export interface GalaxyChart {
   edits: GalaxyEdit[];
   /** Before and after, when history is inked. */
   compare: HistoryCompare | null;
+  /** What other galaxies brought (GH3): present when the galaxy is fed by its own assembly tree. */
+  assembly?: GalaxyAssembly | null;
   model: string[];
+}
+
+/** One scar on a galaxy (GH3, galaxy histories design 9.4): the renderer draws these and nothing else. */
+export interface GalaxyMark {
+  kind: "warp" | "ripples" | "tilt" | "thick_disc" | "driven_arms" | "ring" | "burst_knots" | "lopsided" | "gas_trail" | "warm_side" | "fresh_gas" | string;
+  /** The progenitor that made it (an address). */
+  caused_by: string;
+  began_gyr: number;
+  /** 0 to 1 when it began. */
+  strength: number;
+  /** It falls by a factor e over this; null lasts for good. */
+  fades_gyr: number | null;
+  /** A few numbers for its shape: r_kpc (closest approach), prograde (-1 to 1), speed_kms. */
+  shape: Record<string, number>;
+}
+
+/** GH3's tally of what the galaxy's assembly tree delivered. */
+export interface GalaxyAssembly {
+  exsitu_msun: number;
+  stellar_halo_msun: number;
+  stellar_halo_z: number;
+  exsitu_z: number;
+  thick_disc_msun: number;
+  biggest: string;
+  biggest_share: number;
+  merged: number;
+  torn_apart: number;
+  members: number;
+  marks: GalaxyMark[];
 }
 
 export interface SliceAsk {

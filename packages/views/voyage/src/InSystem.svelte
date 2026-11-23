@@ -9,7 +9,8 @@
 -->
 <script lang="ts">
   import { untrack } from "svelte";
-  import { IN_SYSTEM_SHIPS, MINIMISE_WORDS, YEAR_S, navFromScene, orbitAxis, voyageSpan, type Json, type Minimise, type SystemScene, type SystemVoyagePlan, type ViewContext } from "../../../ui-contract/src/index.ts";
+  import { IN_SYSTEM_SHIPS, MINIMISE_WORDS, YEAR_S, navFromScene, orbitAxis, voyageSpan, type Json, type Minimise, type ShipAtWorldAsk, type SystemScene, type SystemVoyagePlan, type ViewContext } from "../../../ui-contract/src/index.ts";
+  import AtWorld from "./AtWorld.svelte";
 
   let { ctx, scene, params }: { ctx: ViewContext; scene: SystemScene; params: Record<string, Json> } = $props();
   const first = untrack(() => ({ ship: String(params.ship ?? "fusion-torch"), minimise: String(params.minimise ?? "home_time") }));
@@ -80,6 +81,16 @@
   );
   const nameOf = (a: string) => at(a)?.name ?? a;
   const shipInfo = $derived(IN_SYSTEM_SHIPS.find((s) => s.id === ship));
+  // What the ship can do where the voyage ends: an adopted system's own record on the GM's seat (its air), else the chart's system.
+  const atAsk = $derived.by((): ShipAtWorldAsk | null => {
+    const dest = v?.to;
+    if (!dest || dest.startsWith("belt:")) return null;
+    // A torch course brakes on its drive and arrives with no speed to shed; a transfer arrives on its own orbit.
+    const torch = v?.legs.at(-1)?.course === "torch";
+    const speed = torch ? { v_inf_m_s: 0 } : {};
+    if (!scene.fixture && ctx.session.seat.authority === "gm") return { system: scene.system, ship, worlds: [dest], ...speed };
+    return fromScene.nav ? { nav: fromScene.nav, ship, worlds: [dest], ...speed } : null;
+  });
   const waited = $derived(v ? v.legs.reduce((t, l) => t + (l.wait_days ?? 0), 0) : 0);
 
   function pick(a: string) {
@@ -163,6 +174,7 @@
       </ol>
       <button type="button" class="go" data-next onclick={nextStop}>{mode === "explore" ? "Next stop: go there" : "Arrive there"}</button>
       {#if visited.length > 1}<button type="button" class="quiet-btn" data-restart onclick={restart}>Back to the start</button>{/if}
+      <AtWorld {ctx} ask={atAsk} />
     {/if}
   </div>
 </div>
