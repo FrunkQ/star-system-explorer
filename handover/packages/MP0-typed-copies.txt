@@ -180,11 +180,6 @@ packages/ui-contract/src/sound.ts	constant:day	const SEC_PER_DAY = 86_400;
 packages/ui-contract/src/sound.ts	constant:yr_julian	const SEC_PER_YEAR = 31_557_600;
 packages/ui-contract/src/voyage.ts	constant:c	return beta >= 0.01 ? `${(beta * 100).toFixed(1)}% of light` : `${Math.round(beta * 299_792.458).toLocaleString("en-GB")} km/s`;
 packages/views/body/src/ClimateWhy.svelte	constant:T0C	const c = (k: number) => Math.round(k - 273.15);
-packages/views/body/src/StarDisc.svelte	constant:day	const YEAR = 365.25 * 86400;
-packages/views/body/src/StarDisc.svelte	constant:day	const d = (s - now) / 86400;
-packages/views/body/src/StarDisc.svelte	constant:day	const r = await ctx.session.readActivity({ stars: [star], at_s: star.age_s, window: { from_s: star.age_s - 2 * 86400, to_s: star.age_s + YEAR, min_energy_j: 1e24 } });
-packages/views/body/src/StarDisc.svelte	constant:day	const spin_days = $derived(Number(got?.activity.rotation_period_s ?? 0) / 86400);
-packages/views/body/src/StarDisc.svelte	constant:sigma_SB	const SIGMA = 5.670374419e-8;
 packages/views/player-stack/src/PlayerChart.svelte	constant:au	const AU = 1.495978707e11;
 packages/views/route/src/Route.svelte	constant:au	const AU_M = 149_597_870_700;
 packages/views/route/src/Route.svelte	constant:day	<ol class="burns">{#each chosen.burns as b, j (j)}<li><span class="v">{fromNowWords(chosen.depart_s + b.at_s, now_s)}</span> {b.what}: {dvWords(b.dv_m_s)}{b.duration_s > 3600 ? `, lasting ${daysWords(b.duration_s / 86400)}` : ""}</li>{/each}</ol>

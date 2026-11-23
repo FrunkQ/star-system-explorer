@@ -8,13 +8,15 @@
   2D drawing the same projection. The overlay buttons are the keyboard path.
   True (V10a): the same frame against black space, each world wrapped in its
   own surface (given in `surfaces`, read from its tiles) and lit by its star,
-  the star in its own colour. HUD (every style, Alex 23 Nov): orbit lines,
+  the star in its own colour; given `star` (V10c), the star itself as the
+  kernel has it, turning on its spin with its spots and flares, on a clock of
+  its own that runs six hours a second. HUD (every style, Alex 23 Nov): orbit lines,
   belts, names and locator rings; off, names show on hover only and True
   looks like a photograph. Scale Real: distances and sizes in proportion.
 -->
 <script lang="ts">
   import { onDestroy } from "svelte";
-  import { basis, project, startGpu, tree, type Camera, type Gpu, type GpuLight, type TrueTexture, type Vec3 } from "../../../renderer/src/index.ts";
+  import { basis, drawLiveStar, flaresAt, turnAt, project, spotsOf, STAR_SECONDS_PER_SECOND, startGpu, tree, type Camera, type Gpu, type GpuLight, type LiveStar, type TrueTexture, type Vec3 } from "../../../renderer/src/index.ts";
   import { SEEN_ELEVATION, type SeenFrom } from "../../../ui-contract/src/index.ts";
   import { bandLines, hasChildren, layout, layoutReal, shellDots, type Band3D, type Body3D } from "./bodies.ts";
 
@@ -35,6 +37,7 @@
     trueNote = "",
     realScale = false,
     hud = true,
+    star = null,
   }: {
     bands?: Band3D[];
     bodies: Body3D[];
@@ -58,6 +61,8 @@
     realScale?: boolean;
     /** HUD (True only): orbit lines, names and locator rings over the picture; off, it looks like a photograph. */
     hud?: boolean;
+    /** True look: the star as the kernel has it (live-star.ts), drawn turning, spotted and flaring. */
+    star?: LiveStar | null;
   } = $props();
   const overlay = $derived(hud);
   const isTrue = $derived(trueLook);
@@ -205,6 +210,45 @@
     return { from: [-Math.cos(a), -Math.sin(a), 0.15] };
   }
 
+  // The living star (V10c): its own clock, six hours of the star's time a second, from the star's present. Ten
+  // pictures a second; each shows any flare that peaked since the last. The universe clock is not moved.
+  let starT = $state(0);
+  $effect(() => {
+    const s = star;
+    if (!s || !isTrue || using !== "gpu") return;
+    const t0 = performance.now();
+    starT = s.age_s;
+    let last = 0;
+    let raf = 0;
+    const step = (now: number) => {
+      if (now - last >= 100) {
+        last = now;
+        starT = s.age_s + ((now - t0) / 1000) * STAR_SECONDS_PER_SECOND;
+      }
+      raf = requestAnimationFrame(step);
+    };
+    raf = requestAnimationFrame(step);
+    return () => cancelAnimationFrame(raf);
+  });
+  const flaringNow = $derived(star && isTrue ? flaresAt(star, spotsOf(star), starT, STAR_SECONDS_PER_SECOND / 10).length : 0);
+  // The face is drawn at about the size the disc shows on the screen, in steps so its texture is not remade each zoom.
+  const FACE_STEPS = [16, 32, 64, 128, 256];
+  const FACE_DISC = 0.92;
+  let faceBuf: { width: number; data: Uint8ClampedArray } | null = null;
+  let faceVersion = 0;
+  function faceFor(b: Body3D, radius: number) {
+    const s = star;
+    if (!s || b.parent !== null) return undefined;
+    const r = relOf(b.id);
+    const d = Math.hypot(r[0], r[1], r[2]);
+    const dpr = typeof devicePixelRatio === "number" ? devicePixelRatio : 1;
+    const px = ((radius / Math.max(1e-6, d)) * (h / 2)) / Math.tan(cam.fovY / 2) * 2 * dpr / FACE_DISC;
+    const width = FACE_STEPS.find((n) => n >= px) ?? 256;
+    if (!faceBuf || faceBuf.width !== width) faceBuf = { width, data: new Uint8ClampedArray(width * width * 4) };
+    drawLiveStar(faceBuf, s, starT, "visible", FACE_DISC, 7, STAR_SECONDS_PER_SECOND / 10);
+    return { key: `star:${b.id}`, version: ++faceVersion, width, data: faceBuf.data, disc: FACE_DISC };
+  }
+
   let canvas2d: HTMLCanvasElement | undefined = $state();
   $effect(() => {
     if (!lay || w === 0 || h === 0) return;
@@ -223,8 +267,10 @@
         gpu.draw({
           items: shown.map((b) => {
             const t = tex(b);
-            const star = b.parent === null;
-            return { id: b.id, rel: relOf(b.id), radius: sizeOf(b, b === lay!.centre), colour: star ? starColour || colour(b) : faint, ring: b.mark?.ring ?? false, selected: b.id === selection, shines: star, ...(t ? { surface: { key: b.id, texture: t } } : {}) };
+            const isStar = b.parent === null;
+            const radius = sizeOf(b, b === lay!.centre);
+            const face = isStar ? faceFor(b, radius) : undefined;
+            return { id: b.id, rel: relOf(b.id), radius, colour: isStar ? starColour || colour(b) : faint, ring: b.mark?.ring ?? false, selected: b.id === selection, shines: isStar, ...(t ? { surface: { key: b.id, texture: t } } : {}), ...(face ? { face } : {}) };
           }),
           rings: hud ? lay.placed.map((b) => ({ points: ringPoints(lay!.ring.get(b.id)!), colour: b.id === selection ? accent : faint })) : [],
           forward: f,
@@ -420,6 +466,7 @@
     {#if lay?.unplaced.length}<span>Position not known: {lay.unplaced.map((b) => b.name).join(", ")}.</span>{/if}
     <span>{realScale ? "Real scale: distances and sizes in proportion (a world smaller than a pixel shows as a point)" : "Distances on a log scale, sizes not to scale"}{distanceNote}. Drawn with {using === "gpu" ? reason : using === "canvas" ? `Canvas 2D (${reason})` : "…"}.</span>
     {#if isTrue && (using === "canvas" || trueNote)}<span data-true-note>{using === "canvas" ? "True needs a GPU: this device draws the chart's look." : trueNote}</span>{/if}
+    {#if isTrue && star && using === "gpu"}<span data-star-live={flaringNow ? "flaring" : "quiet"} data-star-turn={turnAt(star, starT).toFixed(1)}>The star runs on its own clock, six hours a second: it turns on its spin, its spots go round with it{flaringNow ? ", and it is flaring now" : ""}.</span>{/if}
   </p>
 </div>
 

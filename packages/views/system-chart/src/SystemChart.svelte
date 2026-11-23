@@ -6,16 +6,18 @@
   centre and its moons about it (handover/rendering-rules.md), in kilometres.
 -->
 <script lang="ts" module>
-  import type { TrueTexture as Kept } from "../../../renderer/src/index.ts";
+  import type { LiveStar, TrueTexture as Kept } from "../../../renderer/src/index.ts";
   /** Surfaces read for True, by system and world, kept for the page (a string: why the world has none to show). */
   const trueSurfaces = new Map<string, Kept | string>();
+  /** Stars read for True's living star, by system and star (a string: why there is none). */
+  const liveStars = new Map<string, LiveStar | string>();
 </script>
 
 <script lang="ts">
   import { KM_PER_AU, isShell, asPlayers, distanceWords, lightWords, separation, hasLayer, hasTool, childrenOf, commitEdit, factEdit, frameFor, legendFor, primaryOf, sig, subjectOf, viewOptions, hudShows, DEFAULT_VIEW, type Json, type SceneSubject, type SystemScene, type ViewContext } from "../../../ui-contract/src/index.ts";
   import { SYSTEM_CHART_CONTROLS } from "./controls.ts";
   import { System3D, bandsFromScene, fromSystemScene } from "../../system-3d/src/index.ts";
-  import { starCss, trueSurface, type TrueTexture } from "../../../renderer/src/index.ts";
+  import { readLiveStar, starCss, trueSurface, type StarReader, type TrueTexture } from "../../../renderer/src/index.ts";
   import { ChartGround, HatchDefs, Hatch, Ink, Legend, Mark, Stamp, markExtent, distanceAt, scaleRings, easing, fitScale, motionMs, polar, radius } from "../../../chart-grammar/src/index.ts";
 
   let { ctx, scene, params }: { ctx: ViewContext; scene: SystemScene; params: Record<string, Json> } = $props();
@@ -241,11 +243,32 @@
       reading = { done, of: order.length, none, why: noneWhy };
     })();
   });
+  // The living star (V10c): read once a star from the kernel (its facts and activity), on the GM's seat.
+  let liveStar = $state<LiveStar | null>(null);
+  let liveStarWhy = $state("");
+  $effect(() => {
+    const sys = scene.system;
+    const a = star?.address;
+    if (!looksTrue || !a || ctx.session.seat.authority !== "gm") return;
+    const key = `${sys}|${a}`;
+    const kept = liveStars.get(key);
+    const show = (r: LiveStar | string) => ((liveStar = typeof r === "string" ? null : r), (liveStarWhy = typeof r === "string" ? r : ""));
+    if (kept !== undefined) return void show(kept);
+    let live = true;
+    const num = (k: string) => Number(star?.facts.find((x) => x.field === k)?.value);
+    void readLiveStar(ctx.session as unknown as StarReader, sys, a, { teff_k: num("teff_k"), mass_sun: num("mass_sun"), radius_sun: num("radius_sun") }).then((r) => {
+      liveStars.set(key, r);
+      if (live) show(r);
+    });
+    return () => {
+      live = false;
+    };
+  });
   const starColour = $derived.by(() => {
     const t = Number(star?.facts.find((f) => f.field === "teff_k")?.value);
     return Number.isFinite(t) && t > 0 ? starCss(t) : "";
   });
-  const trueNote = $derived(
+  const surfaceNote = $derived(
     ctx.session.seat.authority !== "gm"
       ? "Worlds are drawn plain: their surfaces are read on the GM's seat."
       : !reading
@@ -256,6 +279,7 @@
             ? `${reading.none} of ${reading.of} worlds are drawn plain, with no surface to show (the kernel: ${reading.why}).`
             : "",
   );
+  const trueNote = $derived([surfaceNote, liveStarWhy ? `The star is drawn plain: ${liveStarWhy}` : ""].filter(Boolean).join(" "));
   const bodies3d = $derived(dims === "3d" ? fromSystemScene(scene, ctx.mark) : []);
   const bands3d = $derived(dims === "3d" && on("zones") ? bandsFromScene(scene) : []);
   // Measure (V14): pick two bodies; the chart draws the line and says how far apart they are now.
@@ -284,7 +308,7 @@
 
 <div class="chart" bind:clientWidth={w} bind:clientHeight={h}>
   {#if dims === "3d"}
-    <System3D bodies={bodies3d} bands={bands3d} selection={ctx.workspace.selection} onselect={(id) => ctx.workspace.select(id)} title={scene.title} seen={shownView.seen} onturned={() => ctx.workspace.turned?.()} trueLook={looksTrue} {surfaces} {starColour} {trueNote} realScale={shownView.scale === "real"} hud={shownView.hud} />
+    <System3D bodies={bodies3d} bands={bands3d} selection={ctx.workspace.selection} onselect={(id) => ctx.workspace.select(id)} title={scene.title} seen={shownView.seen} onturned={() => ctx.workspace.turned?.()} trueLook={looksTrue} {surfaces} {starColour} {trueNote} star={liveStar} realScale={shownView.scale === "real"} hud={shownView.hud} />
   {:else}
   <ChartGround>
     {#if w > 0 && h > 0}
