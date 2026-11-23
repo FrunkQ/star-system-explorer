@@ -30,6 +30,8 @@ export default {
     await d.hold(1500);
     await d.caption("Mag", "Field lines from the measured dipole, and where it holds the solar wind off.");
     // Mag is a Band in the one set of view controls (23 Nov): it replaces the picture with the field.
+    const chip = page.locator("[data-view-more]").first();
+    if (!(await page.getByRole("group", { name: "Band" }).isVisible()) && (await chip.count())) await d.click(chip);
     await d.click(page.getByRole("group", { name: "Band" }).getByRole("button", { name: "Mag", exact: true }));
     await page.waitForSelector('[data-mag="lines"]', { timeout: 45000 });
     await d.hold(3500);

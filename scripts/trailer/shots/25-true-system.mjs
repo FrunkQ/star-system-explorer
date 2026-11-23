@@ -1,5 +1,12 @@
 // True on the system chart (V10a to V10e): worlds in their own surfaces lit by their star, then the bands and Mag.
-const vc = (page, group, name) => page.getByRole("group", { name: group }).getByRole("button", { name, exact: true });
+// Press an option of the view controls. HUD and Band may sit behind the "HUD on · Visible ▾" chip
+// ([data-view-more]); when they do, the chip is opened on camera first.
+async function pick(page, d, group, name) {
+  const g = page.getByRole("group", { name: group });
+  const chip = page.locator("[data-view-more]").first();
+  if (!(await g.isVisible()) && (await chip.count())) await d.click(chip);
+  await d.click(g.getByRole("button", { name, exact: true }));
+}
 export default {
   id: "25-true-system",
   title: "The Solar System in True, HUD on, then in other light",
@@ -14,23 +21,23 @@ export default {
   notes: "The catalogued Solar System (SOL1). GPU only: film with --gpu on AC-ProArt. In the cloud True has no GPU tier and films blank.",
   async run(page, d) {
     await d.caption("True", "The Solar System as it would look: each world lit by the Sun, the Sun in its own colour.");
-    await d.click(vc(page, "View style", "True"));
+    await pick(page, d, "View style", "True");
     await d.hold(4500);
-    await d.click(vc(page, "Seen from", "Tilted"));
+    await pick(page, d, "Seen from", "Tilted");
     await d.hold(3500);
     await d.caption("HUD", "Names, orbits and outlines over the true picture, like a heads-up display.");
-    await d.click(vc(page, "HUD", "On"));
+    await pick(page, d, "HUD", "On");
     await d.hold(3500);
     await d.caption("Infrared", "Each body glows by its own heat.");
-    await d.click(vc(page, "Band", "Infrared"));
+    await pick(page, d, "Band", "Infrared");
     await d.hold(3500);
     await d.caption("X-ray", "The star's corona and flares; the worlds go dark.");
-    await d.click(vc(page, "Band", "X-ray"));
+    await pick(page, d, "Band", "X-ray");
     await d.hold(3500);
     await d.caption("Mag", "Every world's magnetic field lines, and the wind's bubble round it.");
-    await d.click(vc(page, "Band", "Mag"));
+    await pick(page, d, "Band", "Mag");
     await d.hold(5000);
-    await d.click(vc(page, "Band", "Visible"));
+    await pick(page, d, "Band", "Visible");
     await d.hold(1500);
   },
 };
