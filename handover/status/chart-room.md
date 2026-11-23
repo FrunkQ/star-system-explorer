@@ -48,6 +48,7 @@ Only the owner thread edits this file. One row per package: update it in the sam
 | O1 light switch (UI side): Eye, Camera, SHO and HOO palettes, single bands, legend chip and honesty label, stubbed spectra marked | UI done on stubbed light; real light facts wait on the kernel | packages/O1-ui.md |
 | V13 make a system: import a V3 save (report and preview) and grow a new system (formation run and preview) | part 1 done: previews; part 2 adopts a preview into the campaign | packages/V13.md |
 | T1 stage 1 test drive: the walk as a check (`tests/ui/walk.e2e.mjs`, desktop and phone, presses counted per step), `handover/test-drive.md` with its rough edges, and the fixes it needed (Sol cutaways, editing read-back systems in place, Play zooms the ruler, Look up on the rail, place line and phone rail fit) | done (UI track); rough edges listed for the next fixes | test-drive.md |
+| T2 colour vision check on every theme (V3 gap 30, in place of a third skin): `colour-vision.ts` (Machado et al. 2009, CIE76 ΔE) and `skins/player/test/colour-vision.test.ts` keep the accent, field lines and element origins at least ΔE 10 apart for protanopia, deuteranopia, tritanopia and typical vision; cosmic-rays origin is now violet #8877DD, paper's origin greys are an even ladder, guide's zone ink is teal | done (UI track) | this row |
 
 ## Done so far and what is next
 

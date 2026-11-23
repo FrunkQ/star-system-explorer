@@ -104,3 +104,22 @@ test("Chart paths fit their frame and the words give the drive's facts", () => {
   assert.match(t, /Thrust [\d.]+ MN; the jet carries [\d.]+ TW/);
   assert.match(t, /X-rays/);
 });
+
+test("fuels read from the master data sheet: mixtures by mass, densities from the substances", async () => {
+  const { Session } = await import("../../ui-contract/src/session.ts");
+  const { gmSeat } = await import("../../ui-contract/src/seat.ts");
+  const { nodeKernel } = await import("../../ui-contract/test/node-kernel.ts");
+  const { readPropellants } = await import("../src/ship.ts");
+  const k = nodeKernel();
+  try {
+    const pack = (n: string) => JSON.parse(readFileSync(new URL(`../../../packs/${n}/pack.json`, import.meta.url), "utf8"));
+    const s = await Session.open(k.client, gmSeat(), { id: "ship", seed: "ship" }, [pack("base-physics"), pack("base-reference")]);
+    const store = await readPropellants(s, ["hydrogen-oxygen", "deuterium", "helium-3", "antimatter"]);
+    assert.deepEqual(store["hydrogen-oxygen"]!.map((p) => Math.round(p.share * 7)), [1, 6]);
+    assert.ok(store["hydrogen-oxygen"]![0]!.kg_m3 < 100 && store["hydrogen-oxygen"]![1]!.kg_m3 > 1000, "liquid hydrogen is light, liquid oxygen dense");
+    assert.ok(store.deuterium![0]!.kg_m3 > 100 && store.deuterium![0]!.kg_m3 < 200);
+    assert.equal(store.antimatter, undefined, "no sheet row: the hull draws a stand-in");
+  } finally {
+    await k.close();
+  }
+});

@@ -72,8 +72,10 @@ if (bench.length) {
     const vals = bench.map((r) => r.chunks.find((y) => y.id === c.id)?.median_ms);
     if (!vals.some((v) => v !== undefined)) continue;
     const best = Math.min(...vals.filter((v) => v !== undefined));
-    out.push(`| ${c.name} | ${vals.map((v) => (v === undefined ? "" : `${ms(v)} (${(v / best).toFixed(1)}×)`)).join(" | ")} |`);
+    const shaky = bench.map((r) => (r.chunks.find((y) => y.id === c.id)?.sources ?? []).some((x) => x.unsteady || (x.max_ms > 2 * x.median_ms && x.max_ms - x.median_ms > 50)));
+    out.push(`| ${c.name} | ${vals.map((v, i) => (v === undefined ? "" : `${ms(v)} (${(v / best).toFixed(1)}×)${shaky[i] ? " ‡" : ""}`)).join(" | ")} |`);
   }
+  if (bench.some((r) => r.chunks.some((c) => c.sources.some((x) => x.unsteady || (x.max_ms > 2 * x.median_ms && x.max_ms - x.median_ms > 50))))) out.push("", "‡ One run of a scenario took over twice its median, the mark of a pause on the device (screen dimmed, another app); the median is still used.");
   out.push("");
 }
 

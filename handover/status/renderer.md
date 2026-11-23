@@ -8,7 +8,8 @@ Only the owner thread edits this file. One row per package: update it in the sam
 |---|---|---|
 | R1 pass library, render recipes, degrade order, governor, quality badge (the Body globe runs on recipes: GPU, canvas, words) | done (renderer track) | packages/R1.md |
 | V3 gap item 14 part 1: ship hulls and drive plumes from the ship record's physics (tanks, shield, thrust, jet power, words, Chart paths, lathe outline) | done | packages/SHIP14.md |
-| V3 gap item 14 stage 2: ships designed from their parts (base-ships pack rules and styles, side and top views with call-outs, remix, hand overrides, ShipPlans view) | done; stage 3 (3D model and textures from the same recipe) next | packages/SHIP14.md |
+| V3 gap item 14 stage 2: ships designed from their parts (base-ships pack rules and styles, side and top views with call-outs, remix, hand overrides, ShipPlans view) | done | packages/SHIP14.md |
+| V3 gap item 14 stage 3: the 3D model from the same layout (volumes and radiator area checked), panel textures and looks per style, glowing hot radiators, Chart/3D through the shared ViewControls in ShipPlans | done; stage 4 (abilities from the kernel's ship_at_world: heat shields, wings, legs, scoops) next | packages/SHIP14.md |
 
 ## Done so far and what is next
 

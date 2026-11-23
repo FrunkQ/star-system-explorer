@@ -4,3 +4,5 @@ export { CHART_ROOM, NIGHT_CHART, THEMES } from "./themes.ts";
 export type { ThemeDoc, Filter } from "./themes.ts";
 export { resolveTheme, themeCss } from "./resolve.ts";
 export { contrast } from "./contrast.ts";
+export { apart, leastApart, seen, VISIONS } from "./colour-vision.ts";
+export type { Vision } from "./colour-vision.ts";

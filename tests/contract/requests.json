@@ -3229,5 +3229,16 @@
   "audience": "gm",
   "scope": "u:named/sys:5",
   "at_s": 30
+ },
+ {
+  "op": "sector_map",
+  "scope": "u:toy",
+  "at_s": 30
+ },
+ {
+  "op": "sector_map",
+  "scope": "u:toy",
+  "sheet": "nope",
+  "at_s": 30
  }
 ]

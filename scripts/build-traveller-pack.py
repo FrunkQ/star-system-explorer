@@ -440,7 +440,7 @@ HEX_MAP = {
          "explain": "a gas giant to skim or surface water to crack, so a ship can refuel without a port"},
         {"id": "refined", "label": "Refined fuel", "any": [{"field": "starport", "in": ["A", "B"]}],
          "explain": "a class A or B starport sells refined fuel"},
-        {"id": "red-candidates", "label": "Red zone candidates", "all": [{"field": "zone", "is": "none"}], "any": [{"field": "atmosphere", "in": [11, 12]}, {"field": "law", "gt": 12}],
+        {"id": "red-candidates", "label": "Red zone candidates", "all": [{"field": "zone_first", "is": "none"}], "any": [{"field": "atmosphere", "in": [11, 12]}, {"field": "law", "gt": 12}],
          "explain": "not yet zoned, but corrosive or insidious air, or extreme law"},
     ],
     "glyphs": {
@@ -455,8 +455,8 @@ HEX_MAP = {
             {"when": {"field": "bases", "has": "S"}, "at": "bottom-left", "mark": "triangle"},
             {"when": {"field": "bases", "has": "W"}, "at": "bottom-left", "mark": "triangle", "tone": "muted"},
             {"when": {"field": "bases", "has": "D"}, "at": "top-left", "mark": "square"},
-            {"when": {"field": "zone", "is": "A"}, "at": "ring", "mark": "zone", "tone": "caution"},
-            {"when": {"field": "zone", "is": "R"}, "at": "ring", "mark": "zone", "tone": "danger"},
+            {"when": {"field": "zone", "has": "A"}, "at": "ring", "mark": "zone", "tone": "caution"},
+            {"when": {"field": "zone", "has": "R"}, "at": "ring", "mark": "zone", "tone": "danger"},
         ],
     },
 }
@@ -769,6 +769,8 @@ pack = {
         "vocabulary": {"terms": TERMS, "traveller.trade": TRADE_WORDS, "traveller.bases": BASES,
                        "traveller.zone": {"A": "amber", "R": "red"},
                        "traveller.need": {k: v[0] for k, v in NEEDS.items()}},
+        # TG1: every tag the pack names is declared (labels only, never physics).
+        "tags": json.loads((ROOT / "scripts/traveller-tags.json").read_text()),
     }},
 }
 out = ROOT / "packs/traveller/pack.json"

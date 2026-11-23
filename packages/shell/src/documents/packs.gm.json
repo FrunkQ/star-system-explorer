@@ -13,7 +13,12 @@
       "area": "chart",
       "params": {
         "samples": [
-          "packs/samples/warm-worlds.json"
+          "packs/samples/warm-worlds.json",
+          "packs/samples/traveller.json"
+        ],
+        "sample_labels": [
+          "Try the sample pack",
+          "Add the Traveller pack"
         ]
       }
     },

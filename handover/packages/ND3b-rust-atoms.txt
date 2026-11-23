@@ -1,0 +1,84 @@
+# ND3b: physics blocks still written in Rust, each with why (equation block design 8A).
+# This list only shrinks: moving a block into a formula file (packs/base-*/formulas/) takes
+# its line out. A test checks the list against the registry. "not yet looked at" means the
+# block has not been read for moving; a reason means it stays for now, and why.
+
+sse.activity.convective_turnover_time	not yet looked at
+sse.activity.cycle_period_active	not yet looked at
+sse.activity.cycle_period_inactive	not yet looked at
+sse.activity.flare_rate_above	not yet looked at
+sse.activity.rossby_number	not yet looked at
+sse.activity.xray_fraction	not yet looked at
+sse.air.column_optical_depth	not yet looked at
+sse.air.dry_air_refractivity	not yet looked at
+sse.air.rayleigh_cross_section	not yet looked at
+sse.air.scale_height	not yet looked at
+sse.air.scattering_coefficient	not yet looked at
+sse.atmosphere.jeans_parameter	not yet looked at
+sse.atmosphere.scale_height	not yet looked at
+sse.atmosphere.surface_pressure	not yet looked at
+sse.aurora.footprint	not yet looked at
+sse.aurora.hill_distance	not yet looked at
+sse.belts.electron_range	not yet looked at
+sse.belts.kp_limit	not yet looked at
+sse.belts.radiation_yield	not yet looked at
+sse.chem.reaction_gibbs	not yet looked at
+sse.chem.standard_gibbs_at_temperature	not yet looked at
+sse.climate.equilibrium_temperature	not yet looked at
+sse.climate.grey_surface_temperature	not yet looked at
+sse.climate.insolation	not yet looked at
+sse.convection.cell_lifetime	not yet looked at
+sse.convection.granule_size	not yet looked at
+sse.convection.speed	not yet looked at
+sse.convection.supergranule_lifetime	not yet looked at
+sse.convection.supergranule_size	not yet looked at
+sse.dynamo.compositional_power	not yet looked at
+sse.dynamo.convected_flux	not yet looked at
+sse.field.ionopause_altitude	not yet looked at
+sse.field.shue_flaring	not yet looked at
+sse.field.standoff_in_field	not yet looked at
+sse.heat.active_geology_lifetime	not yet looked at
+sse.heat.al26_planetesimal_heating	not yet looked at
+sse.heat.ice_shell_heat_flow	not yet looked at
+sse.heat.ice_shell_thickness	not yet looked at
+sse.heat.mantle_mass	not yet looked at
+sse.heat.radiogenic_heating	not yet looked at
+sse.heat.radiogenic_power	not yet looked at
+sse.heat.surface_heat_flow	not yet looked at
+sse.induction.response	not yet looked at
+sse.interior.core_mass_fraction	its fitted numbers (1.07, 0.21, 3.7) become Model number letters first
+sse.interior.core_radius	not yet looked at
+sse.interior.hydrostatic_pressure	not yet looked at
+sse.interior.rocky_radius	its fitted numbers (1.07, 0.21, 3.7) become Model number letters first
+sse.light.auroral_radio_power	not yet looked at
+sse.light.cyclotron_frequency	not yet looked at
+sse.light.dust_extinction	not yet looked at
+sse.light.effective_temperature	not yet looked at
+sse.light.magnetopause_radius	not yet looked at
+sse.light.reflected_area	not yet looked at
+sse.light.stellar_wind	not yet looked at
+sse.magnetic.dynamo_density	not yet looked at
+sse.magnetic.dynamo_field	not yet looked at
+sse.magnetic.surface_dipole	not yet looked at
+sse.nebula.balmer_alpha_power	not yet looked at
+sse.nebula.ionising_photon_rate	not yet looked at
+sse.nebula.remnant_radius	not yet looked at
+sse.nebula.shell_radius	not yet looked at
+sse.nebula.stromgren_radius	not yet looked at
+sse.ocean.brine_freezing_point	not yet looked at
+sse.orbit.apsides	refuses an eccentricity outside 0 to 1 in its own words, which a formula cannot say yet
+sse.orbit.hill_radius	needs a cube root in the formula language (x^(1/3) is not the same bits as cbrt)
+sse.orbit.kepler_position	iterates: Kepler's equation solved by a fixed number of Newton steps
+sse.orbit.roche_limit	has a parameter (k): waits for parameters as letters
+sse.orbit.semi_major_axis_from_period	needs a cube root in the formula language (x^(1/3) is not the same bits as cbrt)
+sse.planet.radius_from_mass	a broken power law over a table of mass ranges
+sse.shield.air_dose	not yet looked at
+sse.shield.cutoff	not yet looked at
+sse.shield.ground_share	not yet looked at
+sse.shield.space_share	not yet looked at
+sse.star.ms_lifetime	has a parameter (the Sun's lifetime) and reads the Sun's mass and luminosity: waits for parameters as letters
+sse.star.ms_luminosity	a piecewise fit over a table of mass ranges, with the homology factors for changed constants
+sse.star.ms_luminosity_at_age	has a parameter and refuses ages outside the main sequence in its own words
+sse.star.ms_radius	a piecewise fit over mass ranges, with the homology factor for changed constants
+sse.tides.eccentricity_heating	not yet looked at
+sse.tides.locking_time	not yet looked at

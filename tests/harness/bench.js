@@ -55,7 +55,10 @@ export function benchReport(results, doc, { device, label = "", kernel, site, to
     if (!mine.length) continue;
     const sources = mine.map((s) => {
       const t = stats(s.runs_ms);
-      return { source: `bench.${s.name}`, calls: s.runs_ms.length, last_ms: round(s.runs_ms[s.runs_ms.length - 1]), median_ms: round(t.median), p95_ms: round(t.p95), max_ms: round(t.max) };
+      // Unsteady: a run over twice the median (and 50 ms or more over it, so a clock tick on a tiny scenario does not count), the mark of a pause on the device (screen dimmed, app switched),
+      // not of the work. The median is still sound; the report says so, so nobody reads the slow run as the speed.
+      const unsteady = t.n > 1 && t.max > 2 * t.median && t.max - t.median > 50;
+      return { source: `bench.${s.name}`, calls: s.runs_ms.length, last_ms: round(s.runs_ms[s.runs_ms.length - 1]), median_ms: round(t.median), p95_ms: round(t.p95), max_ms: round(t.max), ...(unsteady ? { unsteady: true } : {}) };
     });
     const total = sources.reduce((a, s) => a + s.median_ms, 0);
     chunks.push({ id: c.id, name: c.name, meaning: c.meaning, calls: sources.reduce((a, s) => a + s.calls, 0), median_ms: round(total), p95_ms: round(sources.reduce((a, s) => a + s.p95_ms, 0)), max_ms: round(sources.reduce((a, s) => a + s.max_ms, 0)), sources });

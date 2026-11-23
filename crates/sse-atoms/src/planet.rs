@@ -15,7 +15,6 @@ const R_EARTH_ZENG: f64 = sse_core::sheet::R_EARTH_MEAN;
 const CK17: &str = "Chen, J. and Kipping, D. 2017, ApJ 834, 17: probabilistic forecasting of the masses and radii of other worlds (median posterior hyper-parameters, table 1). doi:10.3847/1538-4357/834/1/17";
 const ZENG16: &str = "Zeng, L., Sasselov, D. D. and Jacobsen, S. B. 2016, ApJ 819, 127: mass-radius relation for rocky planets based on PREM, eq. 2 (inverse eq. 3). doi:10.3847/0004-637X/819/2/127";
 const ZJ17: &str = "Zeng, L. and Jacobsen, S. B. 2017, ApJ 837, 164: a simple analytical model for rocky planet interiors (core radius fraction about the square root of core mass fraction). doi:10.3847/1538-4357/aa6218";
-const NEWTON: &str = "Newtonian gravity for a spherical body, e.g. de Pater, I. and Lissauer, J. J. 2015, Planetary Sciences, 2nd edn, Cambridge University Press, chapter 2. doi:10.1017/CBO9781316165270";
 
 /// Chen and Kipping 2017 relation at the posterior medians (table 1): (upper mass bound in M⊕, exponent).
 /// R = 1.008 R⊕ at 1 M⊕ (the paper's Terran constant); the other segments'
@@ -41,7 +40,6 @@ pub fn ck_radius_earth(m_earth: f64) -> f64 {
 }
 
 pub fn atoms() -> Vec<Box<dyn Atom>> {
-    let mass = port("mass", "body.mass", D::MASS, None);
     let radius = port("radius", "body.radius", D::LENGTH, None);
     vec![
         Def {
@@ -58,57 +56,6 @@ pub fn atoms() -> Vec<Box<dyn Atom>> {
             f: |i, _| {
                 let me = positive(i[0], "mass")? / M_EARTH;
                 Ok(vec![R_EARTH * ck_radius_earth(me)])
-            },
-        }
-        .build(),
-        Def {
-            id: "sse.planet.bulk_density",
-            version: "1.0.0",
-            inputs: vec![mass.clone(), radius.clone()],
-            outputs: vec![port("density", "body.bulk_density", D::DENSITY, None)],
-            params: vec![],
-            cost: CostClass::Trivial,
-            references: &[NEWTON],
-            curious: "Mass shared out over volume. Rock is around 3 to 5 grams per cubic centimetre, ice about 1, and Saturn would float.",
-            science: "Mean density of a sphere. The volumetric mean radius should be used for oblate bodies.",
-            formula: "ρ = 3M / (4π R³)",
-            f: |i, _| {
-                let r = positive(i[1], "radius")?;
-                Ok(vec![3.0 * positive(i[0], "mass")? / (4.0 * m::PI * r * r * r)])
-            },
-        }
-        .build(),
-        Def {
-            id: "sse.planet.surface_gravity",
-            version: "1.0.0",
-            inputs: vec![mass.clone(), radius.clone()],
-            outputs: vec![port("g", "body.surface_gravity", D::ACCELERATION, None)],
-            params: vec![],
-            cost: CostClass::Trivial,
-            references: &[NEWTON],
-            curious: "How hard the ground pulls you down. More mass pulls harder; a bigger radius puts you farther from it.",
-            science: "Newtonian gravity at the surface of a non-rotating sphere. Rotation and oblateness lower it at the equator by up to a few percent on fast spinners.",
-            formula: "g = G M / R²",
-            f: |i, _| {
-                let r = positive(i[1], "radius")?;
-                Ok(vec![sse_core::constants::g() * positive(i[0], "mass")? / (r * r)])
-            },
-        }
-        .build(),
-        Def {
-            id: "sse.planet.escape_velocity",
-            version: "1.0.0",
-            inputs: vec![mass.clone(), radius.clone()],
-            outputs: vec![port("v_esc", "body.escape_velocity", D::VELOCITY, None)],
-            params: vec![],
-            cost: CostClass::Trivial,
-            references: &[NEWTON],
-            curious: "How fast you must throw something for it never to fall back. It decides which gases a world can keep.",
-            science: "Speed at which kinetic energy equals the gravitational binding at the surface, ignoring air drag and rotation.",
-            formula: "v = √(2 G M / R)",
-            f: |i, _| {
-                let r = positive(i[1], "radius")?;
-                Ok(vec![m::sqrt(2.0 * sse_core::constants::g() * positive(i[0], "mass")? / r)])
             },
         }
         .build(),

@@ -19,6 +19,8 @@ cp packs/base-reference/pack.json packages/shell/public/packs/base-reference.jso
 cp packages/shell/src/documents/kestrel.player-data.pack.json packages/shell/public/packs/kestrel-player-data.json
 mkdir -p packages/shell/public/packs/samples
 cp packages/shell/src/documents/sample.warm-worlds.pack.json packages/shell/public/packs/samples/warm-worlds.json
+# The game pack the sector map and world codes screens read (X3).
+cp packs/traveller/pack.json packages/shell/public/packs/samples/traveller.json
 rm -rf packages/shell/public/samples && mkdir -p packages/shell/public/samples
 # The sample save the Make a system dialog offers: the importer fixture with names that say "(sample)", so nobody takes it for the real Sol (Alex, 21 Nov).
 cp packages/shell/src/documents/sample-sol.v3.json packages/shell/public/samples/synthetic-sol.json

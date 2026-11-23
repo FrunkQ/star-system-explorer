@@ -1,0 +1,38 @@
+{
+  "schema": "sse.screen/1",
+  "id": "sse.workspace.gm.constructs",
+  "label": "Ships and stations",
+  "audience": "gm",
+  "layout": "chart-room",
+  "theme": "chart-room",
+  "symbology": "sse.symbology.diagrammatic",
+  "vocab": "physics",
+  "items": [
+    {
+      "view": "sse.view.constructs",
+      "area": "chart"
+    },
+    {
+      "view": "sse.view.time-ruler",
+      "area": "ruler"
+    }
+  ],
+  "rail": [
+    {
+      "scale": "system",
+      "group": "travel",
+      "label": "Ships and stations",
+      "order": 3,
+      "hint": "The ships, stations and sites here; add one from the game pack's stock, edit it, or take it out of play",
+      "needs": ["templates"]
+    },
+    {
+      "scale": "world",
+      "group": "world",
+      "label": "Ships and stations",
+      "order": 3,
+      "hint": "What is at this world; Add here puts a stock ship, station or site on it",
+      "needs": ["templates"]
+    }
+  ]
+}

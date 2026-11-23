@@ -8,7 +8,30 @@
 //   delta-v = c tanh((v_e / c) ln(m0 / m1)), full-thrust burn t = (m0 - m1) / mdot.
 // Constants come from the master data sheet; densities come from the sheet's substance rows (phases.density_liquid),
 // passed in by the view, never typed here.
-import { constant } from "../../ui-contract/src/index.ts";
+import { constant, readRow, type MatterReader } from "../../ui-contract/src/index.ts";
+
+/** How each fuel is stored, read from the master data sheet: base-nav fuel `id` is the mixture `fuel-<id>`, whose
+ * recipe gives each substance's mass share; each substance's `phases.density_liquid` gives its stored density. A
+ * fuel with no mixture row (antimatter) or a part with no density is left out, and the hull marks it a stand-in. */
+export async function readPropellants(k: MatterReader, fuels: readonly string[]): Promise<Propellants> {
+  const out: Record<string, PropellantPart[]> = {};
+  for (const f of new Set(fuels)) {
+    const mix = await readRow<{ recipe?: Record<string, number>; by?: string }>(k, "mixtures", `fuel-${f}`);
+    if (!mix?.row.recipe || (mix.row.by && mix.row.by !== "mass")) continue;
+    const parts: PropellantPart[] = [];
+    for (const [id, share] of Object.entries(mix.row.recipe)) {
+      const sub = await readRow<{ names?: { plain?: string }; phases?: { density_liquid?: { v: number; src?: string } } }>(k, "substances", id);
+      const d = sub?.row.phases?.density_liquid;
+      if (!d || !(d.v > 0)) {
+        parts.length = 0;
+        break;
+      }
+      parts.push({ name: `liquid ${sub.row.names?.plain ?? id}`, share, kg_m3: d.v, src: d.src ?? "" });
+    }
+    if (parts.length) out[f] = parts;
+  }
+  return out;
+}
 
 /** A ship as NAV reads it (ui-contract NavShip), with the fuels the base-nav record lists. */
 export interface ShipRecord {

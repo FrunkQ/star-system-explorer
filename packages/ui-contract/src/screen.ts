@@ -58,6 +58,12 @@ export interface RailEntry {
   order: number;
   /** One line on what it shows. */
   hint?: string;
+  /**
+   * What the stack must give for the entry to show: each a `provides.other` key some stacked pack carries
+   * ("code_sheets"). A screen a game pack brings is on the rail only while that pack is stacked, so no entry leads
+   * nowhere. Absent: always shown.
+   */
+  needs?: string[];
 }
 
 /** One rail line: the screen it opens and how it is shown. */
@@ -79,6 +85,7 @@ function checkRail(rail: unknown): string[] {
     if (!RAIL_GROUPS.includes(r.group)) errors.push(`rail: unknown group ${String(r.group)}`);
     if (typeof r.label !== "string" || !r.label.trim()) errors.push("rail: an entry needs a label");
     if (typeof r.order !== "number" || !Number.isFinite(r.order)) errors.push("rail: an entry needs a numeric order");
+    if (r.needs !== undefined && !(Array.isArray(r.needs) && r.needs.every((n) => typeof n === "string" && n))) errors.push("rail: needs must be a list of pack keys");
     if (seen.has(r.scale)) errors.push(`rail: scale ${r.scale} is listed twice`);
     seen.add(r.scale);
   }
@@ -87,11 +94,12 @@ function checkRail(rail: unknown): string[] {
 
 /**
  * The rail at one scale, from the screens' own entries: grouped in the fixed group order, ordered within each group.
- * Screens are given as id → document; a screen without an entry for the scale is not on it.
+ * Screens are given as id → document; a screen without an entry for the scale is not on it, nor one whose entry
+ * `needs` something `has` says the stack lacks.
  */
-export function railOf(screens: Readonly<Record<string, Pick<ScreenDoc, "rail">>>, scale: RailScale): { group: RailGroup; words: string; lines: RailLine[] }[] {
+export function railOf(screens: Readonly<Record<string, Pick<ScreenDoc, "rail">>>, scale: RailScale, has: (need: string) => boolean = () => true): { group: RailGroup; words: string; lines: RailLine[] }[] {
   const lines: RailLine[] = [];
-  for (const [screen, doc] of Object.entries(screens)) for (const r of doc.rail ?? []) if (r.scale === scale) lines.push({ ...r, screen });
+  for (const [screen, doc] of Object.entries(screens)) for (const r of doc.rail ?? []) if (r.scale === scale && (r.needs ?? []).every(has)) lines.push({ ...r, screen });
   return RAIL_GROUPS.map((group) => ({
     group,
     words: RAIL_GROUP_WORDS[group],

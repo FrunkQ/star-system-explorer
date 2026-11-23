@@ -1,0 +1,163 @@
+{
+ "format": "sse.formulas/1",
+ "family": "sse.orbit",
+ "about": "Physics blocks whose maths is a formula (ND3b): each keeps its id, ports and results, and its maths is the Equation below, with a name that says what happens.",
+ "atoms": [
+  {
+   "id": "sse.orbit.total_mass",
+   "version": "1.0.0",
+   "cost": "trivial",
+   "inputs": [
+    {
+     "port": "host_mass",
+     "letter": "M"
+    },
+    {
+     "port": "body_mass",
+     "letter": "m"
+    }
+   ],
+   "outputs": [
+    {
+     "port": "total_mass",
+     "letter": "total"
+    }
+   ],
+   "positive": [
+    {
+     "port": "host_mass",
+     "says": "host mass"
+    },
+    {
+     "port": "body_mass",
+     "says": "body mass"
+    }
+   ],
+   "references": [
+    "Murray, C. D. and Dermott, S. F. 1999, Solar System Dynamics, Cambridge University Press. doi:10.1017/CBO9781139174817"
+   ],
+   "shown": "M_total = M + m",
+   "equation": {
+    "name": "Weight of the pair together",
+    "formula": "total = M + m",
+    "inputs": {
+     "M": {
+      "kind": "orbit.host_mass",
+      "unit": "kg",
+      "name": "mass of what it circles"
+     },
+     "m": {
+      "kind": "body.mass",
+      "unit": "kg",
+      "name": "mass of the orbiting body"
+     }
+    },
+    "outputs": {
+     "total": {
+      "kind": "orbit.total_mass",
+      "unit": "kg",
+      "name": "combined mass"
+     }
+    },
+    "source": {
+     "text": "Murray, C. D. and Dermott, S. F. 1999, Solar System Dynamics, Cambridge University Press",
+     "doi": "10.1017/CBO9781139174817",
+     "where": "chapter 2"
+    },
+    "explain": {
+     "curious": "In a pair, both bodies pull on each other, so the orbit depends on their combined mass.",
+     "science": "The two-body problem reduces to one body moving under the total mass G(M + m)."
+    },
+    "examples": [
+     {
+      "M": 2e+30,
+      "m": 6e+24,
+      "total": 2.000006e+30
+     }
+    ]
+   }
+  },
+  {
+   "id": "sse.orbit.period",
+   "version": "1.0.0",
+   "cost": "trivial",
+   "inputs": [
+    {
+     "port": "semi_major_axis",
+     "letter": "a"
+    },
+    {
+     "port": "total_mass",
+     "letter": "M"
+    }
+   ],
+   "outputs": [
+    {
+     "port": "period",
+     "letter": "P"
+    }
+   ],
+   "constants": {
+    "G": "constants/G"
+   },
+   "positive": [
+    {
+     "port": "semi_major_axis",
+     "says": "semi-major axis"
+    },
+    {
+     "port": "total_mass",
+     "says": "total mass"
+    }
+   ],
+   "references": [
+    "Murray, C. D. and Dermott, S. F. 1999, Solar System Dynamics, Cambridge University Press. doi:10.1017/CBO9781139174817"
+   ],
+   "shown": "P = 2π √(a³ / (G (M + m)))",
+   "equation": {
+    "name": "Length of a year",
+    "formula": "P = 2 * pi * sqrt(a * a * a / (G * M))",
+    "inputs": {
+     "G": {
+      "kind": "constant.G",
+      "unit": "m3 kg-1 s-2",
+      "name": "gravitational constant"
+     },
+     "a": {
+      "kind": "orbit.semi_major_axis",
+      "unit": "m",
+      "name": "size of the orbit"
+     },
+     "M": {
+      "kind": "orbit.total_mass",
+      "unit": "kg",
+      "name": "combined mass of the pair"
+     }
+    },
+    "outputs": {
+     "P": {
+      "kind": "orbit.period",
+      "unit": "s",
+      "name": "time for one orbit"
+     }
+    },
+    "source": {
+     "text": "Murray, C. D. and Dermott, S. F. 1999, Solar System Dynamics, Cambridge University Press",
+     "doi": "10.1017/CBO9781139174817",
+     "where": "section 2.3, Kepler's third law"
+    },
+    "explain": {
+     "curious": "The farther out a world orbits, the longer its year, and not just in proportion: four times farther means eight times longer.",
+     "science": "Kepler's third law for two point masses, using the sum of both masses. Exact for an isolated pair; other bodies perturb it slightly."
+    },
+    "examples": [
+     {
+      "a": 150000000000.0,
+      "M": 2e+30,
+      "P": 31593584.1373
+     }
+    ]
+   }
+  }
+ ]
+}
