@@ -73,9 +73,19 @@ const SI_UNITS: ReadonlySet<string> = new Set(["1", "m", "kg", "s", "K", "W", "P
  * door does not know stops the door rather than entering a value in the wrong unit.
  */
 export function toSI(x: SolValue, what = "a value"): number {
+  if (typeof x.v !== "number") throw new Error(`sol: ${what} is text, not a number`);
   if (SI_UNITS.has(x.unit)) return x.v;
   if (x.unit === "deg") return (x.v * Math.PI) / 180;
   throw new Error(`sol: ${what} is in "${x.unit}", which the door cannot convert to SI`);
+}
+
+/**
+ * Units the kernel holds a fact in as it is, though they are not SI: surface water in Earth oceans, and a gas named by
+ * its substance id on the master data sheet (text).
+ */
+const KERNEL_UNITS: ReadonlySet<string> = new Set(["earth_oceans", "substance"]);
+function factValue(x: SolValue, what: string): Json {
+  return KERNEL_UNITS.has(x.unit) ? x.v : toSI(x, what);
 }
 
 export function solBatches(sheet: SolSheet, system: string): { batches: SolBatch[]; addresses: Record<string, string>; unverified: string[]; names: Record<string, string> } {
@@ -119,7 +129,7 @@ export function solBatches(sheet: SolSheet, system: string): { batches: SolBatch
         put(x.src, system, "system.age", Number(x.v) * 1e9 * Number(YEAR_S));
         continue;
       }
-      put(x.src, a, field, toSI(x, `${b.id} ${field}`));
+      put(x.src, a, field, factValue(x, `${b.id} ${field}`));
       if (x.check === "unverified") unverified.push(`${a}#${field}`);
     }
   }
