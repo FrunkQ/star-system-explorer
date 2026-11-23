@@ -252,7 +252,9 @@ pub fn lambert(r1: V3, r2: V3, tof_s: f64, mu: f64) -> Option<(V3, V3)> {
             return -smu * tof_s;
         }
         let (cz, sz) = stumpff(z);
-        m::pow(yz / cz, 1.5) * sz + a * m::sqrt(yz) - smu * tof_s
+        // (y/C)^1.5 as q √q: one square root instead of libm's pow (PF2).
+        let q = yz / cz;
+        q * m::sqrt(q) * sz + a * m::sqrt(yz) - smu * tof_s
     };
     let mut hi = 4.0 * m::PI * m::PI * (1.0 - 1e-9);
     if ff(hi) < 0.0 {
