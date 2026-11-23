@@ -128,3 +128,34 @@ export function saysMore(n: SampledName): boolean {
   const flat = (x: string) => x.replace(/[\s-]/g, "").toLowerCase();
   return !!n.say && (flat(n.say) !== flat(n.text) || /[A-Z]{2}/.test(n.say));
 }
+
+/** One layer's name on a real thing (kernel `read_names`, NM2). */
+export interface ShownName {
+  layer: string;
+  text: string;
+  /** typed (a person wrote it; it always wins), fixed (drawn once and kept) or drawn (worked out when read). */
+  source: "typed" | "fixed" | "drawn";
+  scheme?: string;
+  named?: Omit<SampledName, "text">;
+  /** Under a typed name, the name it would have otherwise (GM only). */
+  original?: string;
+}
+
+export interface NamesRead {
+  address: string;
+  kind: string;
+  names: ShownName[];
+}
+
+/** Where a name came from, in words. */
+export function sourceWords(n: ShownName, schemeLabel: (id: string) => string = (id) => id): string {
+  if (n.source === "typed") return "typed";
+  const from = n.scheme ? ` from ${schemeLabel(n.scheme)}` : "";
+  return n.source === "fixed" ? `drawn${from}, kept` : `drawn${from}`;
+}
+
+/** Layers in the order people read them: designation, common, then the rest by id. */
+export function layerOrder(a: { layer: string }, b: { layer: string }): number {
+  const at = (l: string) => (l === "designation" ? 0 : l === "common" ? 1 : 2);
+  return at(a.layer) - at(b.layer) || a.layer.localeCompare(b.layer);
+}

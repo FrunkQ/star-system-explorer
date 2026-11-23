@@ -175,6 +175,14 @@ try {
       await gm.locator('[data-names="stack"]').waitFor({ timeout: 20000 });
       await gm.waitForFunction((h) => document.querySelector("[data-state-hash]")?.getAttribute("data-state-hash") !== h, hash0);
       await gm.locator('[data-names="stack"] [data-sample] li').nth(11).waitFor({ timeout: 20000 });
+      // The name card: every name a body has, by layer, with where it came from.
+      await go(gm, "system");
+      await gm.locator("[role=button][aria-label^='Tarn']").click();
+      await gm.locator("[data-names-open]").click();
+      const card = gm.locator("[data-name-card='u:kestrel/sys:1/body:3']");
+      await card.locator('[data-layer="designation"][data-source="drawn"]').waitFor({ timeout: 20000 });
+      assert.match(await card.locator('[data-layer="common"]').innerText(), /^Tarn\s+typed/);
+      await shot(gm, "name-card-desk");
     }
     assert.deepEqual(errors, []);
     await browser.close();
