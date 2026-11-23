@@ -74,6 +74,9 @@ struct Check {
     port: String,
     #[serde(default)]
     min: Option<f64>,
+    /// The value must be above this (strictly).
+    #[serde(default)]
+    over: Option<f64>,
     #[serde(default)]
     below: Option<f64>,
     #[serde(default)]
@@ -278,7 +281,9 @@ impl FormulaAtom {
                 return Err(at(format!("model number {l} is written in SI units")));
             }
             if !["fitted", "measured", "derived", "assumed"].contains(&mo.grade.as_str()) {
-                return Err(at(format!("model number {l}'s grade is fitted, measured, derived or assumed")));
+                return Err(at(format!(
+                    "model number {l}'s grade is fitted, measured, derived or assumed"
+                )));
             }
             if mo.source.trim().is_empty() {
                 return Err(at(format!("model number {l} says where it comes from")));
@@ -295,8 +300,12 @@ impl FormulaAtom {
             if parsed.in_scales[i] != 1.0 {
                 return Err(at(format!("setting {} is written in SI units", q.param)));
             }
-            let default = default_of(&q.default)
-                .ok_or_else(|| at(format!("setting {}'s default is a number or a sheet row", q.param)))?;
+            let default = default_of(&q.default).ok_or_else(|| {
+                at(format!(
+                    "setting {}'s default is a number or a sheet row",
+                    q.param
+                ))
+            })?;
             if !(q.range.0 <= default && default <= q.range.1) {
                 return Err(at(format!(
                     "setting {}'s default is outside its range",
@@ -410,6 +419,7 @@ impl Atom for FormulaAtom {
                 return Err(AtomError(c.says.replacen("{}", &format!("{x}"), 1)));
             }
             let ok = c.min.is_none_or(|m| x >= m)
+                && c.over.is_none_or(|m| x > m)
                 && c.below.is_none_or(|b| x < b)
                 && c.max.is_none_or(|m| x <= m)
                 && (!c.finite || x.is_finite());

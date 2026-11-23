@@ -5,26 +5,36 @@
 
 pub mod activity;
 pub mod air;
+pub mod belts;
+pub mod chem;
 pub mod climate;
 pub mod convection;
+pub mod field;
 pub mod heat;
 pub mod layers;
 pub mod light;
 pub mod magnetic;
 pub mod nebula;
+pub mod planet;
+pub mod shield;
 pub mod tides;
 
 pub fn atoms() -> Vec<Box<dyn sse_flow::Atom>> {
     let mut all = vec![];
     all.extend(activity::atoms());
     all.extend(air::atoms());
+    all.extend(belts::atoms());
+    all.extend(chem::atoms());
     all.extend(climate::atoms());
     all.extend(convection::atoms());
+    all.extend(field::atoms());
     all.extend(heat::atoms());
     all.extend(layers::atoms());
     all.extend(light::atoms());
     all.extend(magnetic::atoms());
     all.extend(nebula::atoms());
+    all.extend(planet::atoms());
+    all.extend(shield::atoms());
     all.extend(tides::atoms());
     all
 }

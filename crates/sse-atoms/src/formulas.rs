@@ -75,6 +75,22 @@ pub const FILES: &[(&str, &str)] = &[
         "magnetic",
         include_str!("../../../packs/base-physics/formulas/magnetic.json"),
     ),
+    (
+        "field",
+        include_str!("../../../packs/base-physics/formulas/field.json"),
+    ),
+    (
+        "shield",
+        include_str!("../../../packs/base-physics/formulas/shield.json"),
+    ),
+    (
+        "chem",
+        include_str!("../../../packs/base-physics/formulas/chem.json"),
+    ),
+    (
+        "belts",
+        include_str!("../../../packs/base-physics/formulas/belts.json"),
+    ),
 ];
 
 /// Read every formula file once: parsed, unit-checked and its worked

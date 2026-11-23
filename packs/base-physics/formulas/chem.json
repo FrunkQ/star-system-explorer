@@ -1,0 +1,104 @@
+{
+ "format": "sse.formulas/1",
+ "family": "sse.chem",
+ "about": "Physics blocks whose maths is a formula (ND3b): each keeps its id, ports and results, and its maths is the Equation below, with a name that says what happens.",
+ "atoms": [
+  {
+   "id": "sse.chem.standard_gibbs_at_temperature",
+   "version": "1.0.0",
+   "cost": "trivial",
+   "inputs": [
+    {
+     "port": "standard_gibbs_298",
+     "letter": "G0"
+    },
+    {
+     "port": "standard_enthalpy",
+     "letter": "H0"
+    },
+    {
+     "port": "temperature",
+     "letter": "T"
+    }
+   ],
+   "outputs": [
+    {
+     "port": "standard_gibbs",
+     "letter": "G"
+    }
+   ],
+   "models": {
+    "T_ref": {
+     "value": 298.15,
+     "grade": "derived",
+     "source": "IUPAC standard state"
+    }
+   },
+   "positive": [
+    {
+     "port": "temperature",
+     "says": "temperature"
+    }
+   ],
+   "references": [
+    "Amend, J. P. and Shock, E. L. 2001, FEMS Microbiology Reviews 25, 175: energetics of overall metabolic reactions of thermophilic and hyperthermophilic Archaea and Bacteria. doi:10.1111/j.1574-6976.2001.tb00576.x",
+    "Thauer, R. K., Jungermann, K. and Decker, K. 1977, Bacteriological Reviews 41, 100: energy conservation in chemotrophic anaerobic bacteria (free energies of formation, appendix). doi:10.1128/br.41.1.100-180.1977"
+   ],
+   "shown": "ΔG°(T) = ΔH° − T (ΔH° − ΔG°₂₉₈) / 298.15 K",
+   "equation": {
+    "name": "Free energy of a reaction at another temperature",
+    "formula": "G = H0 - T * (H0 - G0) / T_ref",
+    "inputs": {
+     "G0": {
+      "kind": "chem.standard_gibbs_298",
+      "unit": "m2 kg s-2 mol-1",
+      "name": "standard free energy at 298.15 K"
+     },
+     "H0": {
+      "kind": "chem.standard_enthalpy",
+      "unit": "m2 kg s-2 mol-1",
+      "name": "standard enthalpy of reaction"
+     },
+     "T": {
+      "kind": "chem.temperature",
+      "unit": "K",
+      "name": "temperature",
+      "valid": [
+       200.0,
+       450.0
+      ]
+     },
+     "T_ref": {
+      "kind": "model.standard_temperature",
+      "unit": "K",
+      "name": "temperature the standard values are tabulated at"
+     }
+    },
+    "outputs": {
+     "G": {
+      "kind": "chem.standard_gibbs",
+      "unit": "m2 kg s-2 mol-1",
+      "name": "standard free energy at this temperature"
+     }
+    },
+    "source": {
+     "text": "Atkins, P. and de Paula, J. 2014, Atkins' Physical Chemistry, 10th edn, Oxford University Press",
+     "url": "https://global.oup.com/academic/product/atkins-physical-chemistry-9780199697403",
+     "where": "topic 3D, the Gibbs-Helmholtz equation"
+    },
+    "explain": {
+     "curious": "Tables give a reaction's energy at 25 °C. A vent at 90 °C or an ice-moon ocean near 0 °C changes it, sometimes enough to decide whether anything can live on it.",
+     "science": "Integrated Gibbs-Helmholtz equation with the reaction enthalpy held at its 298.15 K value. Good to a few kJ per mole across liquid-water temperatures; beyond about 150 °C the heat-capacity terms of the full revised HKF model matter (Amend and Shock 2001 tabulate those)."
+    },
+    "examples": [
+     {
+      "G0": -818000.0,
+      "H0": -890000.0,
+      "T": 280.0,
+      "G": -822383.0286768405
+     }
+    ]
+   }
+  }
+ ]
+}

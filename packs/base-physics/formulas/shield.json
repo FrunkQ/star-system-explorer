@@ -1,0 +1,482 @@
+{
+ "format": "sse.formulas/1",
+ "family": "sse.shield",
+ "about": "Physics blocks whose maths is a formula (ND3b): each keeps its id, ports and results, and its maths is the Equation below, with a name that says what happens.",
+ "atoms": [
+  {
+   "id": "sse.shield.cutoff",
+   "version": "1.0.0",
+   "cost": "trivial",
+   "inputs": [
+    {
+     "port": "moment",
+     "letter": "M"
+    },
+    {
+     "port": "distance",
+     "letter": "r"
+    },
+    {
+     "port": "latitude",
+     "letter": "lat"
+    }
+   ],
+   "outputs": [
+    {
+     "port": "rigidity",
+     "letter": "Rc"
+    }
+   ],
+   "constants": {
+    "mu0": "sheet/mu0",
+    "c": "sheet/c"
+   },
+   "positive": [
+    {
+     "port": "distance",
+     "says": "distance"
+    }
+   ],
+   "references": [
+    "Smart, D. F. and Shea, M. A. 2005, A review of geomagnetic cutoff rigidities for earth-orbiting spacecraft, Adv. Space Res. 36, 2012: Størmer's cut-off; for vertical arrival R_c = (μ₀ M c / 16π r²) cos⁴λ, about 14.9 GV at Earth's equator. doi:10.1016/j.asr.2004.09.015"
+   ],
+   "shown": "R_c = (μ₀ M c / 16π r²) cos⁴λ  (vertical arrival)",
+   "equation": {
+    "name": "How hard a cosmic ray must hit to get through the field",
+    "formula": "m0 = max(M, 0)\ncl = abs(cos(lat))\nRc = if m0 <= 0 or r <= 0 then 0 else mu0 * m0 * c / (16 * pi * r * r) * (cl * cl * cl * cl)",
+    "inputs": {
+     "M": {
+      "kind": "body.magnetic_moment",
+      "unit": "m2 A",
+      "name": "strength of the world's magnet (dipole moment)"
+     },
+     "r": {
+      "kind": "shield.distance",
+      "unit": "m",
+      "name": "distance from the centre"
+     },
+     "lat": {
+      "kind": "shield.magnetic_latitude",
+      "unit": "1",
+      "name": "magnetic latitude",
+      "valid": [
+       -1.5707963267948966,
+       1.5707963267948966
+      ]
+     },
+     "mu0": {
+      "kind": "constant.mu0",
+      "unit": "N A-2",
+      "name": "magnetic constant"
+     },
+     "c": {
+      "kind": "constant.c",
+      "unit": "m/s",
+      "name": "speed of light"
+     }
+    },
+    "outputs": {
+     "Rc": {
+      "kind": "shield.cutoff_rigidity",
+      "unit": "m2 kg s-3 A-1",
+      "name": "least rigidity a cosmic ray needs to get in"
+     }
+    },
+    "source": {
+     "text": "Smart, D. F. and Shea, M. A. 2005, Adv. Space Res. 36, 2012",
+     "doi": "10.1016/j.asr.2004.09.015",
+     "where": "the Størmer cut-off"
+    },
+    "explain": {
+     "curious": "A magnetic field turns cosmic rays aside, most strongly at its equator. Near the magnetic poles the field lines point straight down and let them in, which is why aurorae and the highest radiation doses are found there.",
+     "science": "Størmer's result for a dipole: a particle needs at least the cut-off rigidity (momentum per charge) to arrive vertically at magnetic latitude λ and distance r. It falls as 1/r², so a field shields less with height."
+    },
+    "examples": [
+     {
+      "M": 7.7e+22,
+      "r": 6800000.0,
+      "lat": 0.8,
+      "Rc": 2940583953.4662523
+     }
+    ]
+   }
+  },
+  {
+   "id": "sse.shield.space_share",
+   "version": "1.0.0",
+   "cost": "trivial",
+   "inputs": [
+    {
+     "port": "rigidity",
+     "letter": "Rc"
+    }
+   ],
+   "outputs": [
+    {
+     "port": "share",
+     "letter": "s"
+    }
+   ],
+   "models": {
+    "per_GV": {
+     "value": 1e-09,
+     "grade": "derived",
+     "source": "definition"
+    }
+   },
+   "params": [
+    {
+     "param": "r0_gv",
+     "letter": "R0",
+     "default": 2.0,
+     "range": [
+      0.1,
+      20.0
+     ],
+     "description": "rigidity, GV, below which the star's wind has already thinned the cosmic rays"
+    },
+    {
+     "param": "gamma",
+     "letter": "gamma",
+     "default": 1.7,
+     "range": [
+      1.0,
+      3.0
+     ],
+     "description": "integral spectral index of cosmic rays at high rigidity"
+    }
+   ],
+   "references": [
+    "Navas, S. et al. (Particle Data Group) 2024, Review of Particle Physics: Cosmic rays, Phys. Rev. D 110, 030001: primary nucleon intensity falls as about E^−2.7 above a few GeV (integral index about 1.7). doi:10.1103/PhysRevD.110.030001"
+   ],
+   "shown": "share = (1 + R_c / R₀)^−γ",
+   "equation": {
+    "name": "Share of cosmic rays strong enough to get in",
+    "formula": "s = (1 + max(Rc, 0) * per_GV / R0) ^ (-gamma)",
+    "inputs": {
+     "Rc": {
+      "kind": "shield.cutoff_rigidity",
+      "unit": "m2 kg s-3 A-1",
+      "name": "cut-off rigidity"
+     },
+     "per_GV": {
+      "kind": "model.per_gigavolt",
+      "unit": "V-1",
+      "name": "gigavolts in a volt"
+     },
+     "R0": {
+      "kind": "model.modulation_rigidity_gv",
+      "unit": "1",
+      "name": "where the star's wind thins the cosmic rays, GV"
+     },
+     "gamma": {
+      "kind": "model.cosmic_ray_index",
+      "unit": "1",
+      "name": "spectral index"
+     }
+    },
+    "outputs": {
+     "s": {
+      "kind": "shield.space_share",
+      "unit": "1",
+      "name": "share of the cosmic-ray dose above the cut-off",
+      "valid": [
+       0.0,
+       1.0
+      ]
+     }
+    },
+    "source": {
+     "text": "Navas, S. et al. (Particle Data Group) 2024, Phys. Rev. D 110, 030001",
+     "doi": "10.1103/PhysRevD.110.030001",
+     "where": "Cosmic rays"
+    },
+    "explain": {
+     "curious": "Cosmic rays come in all energies, many more weak ones than strong. A field that turns away the weak ones removes most of the dose in space.",
+     "science": "The integral cosmic-ray spectrum above rigidity R falls as a power of R with index about 1.7; the star's wind already removes most particles below a few GV, so the share bends over below R₀."
+    },
+    "examples": [
+     {
+      "Rc": 10000000000.0,
+      "R0": 2.0,
+      "gamma": 1.7,
+      "s": 0.0475491627613807
+     }
+    ]
+   }
+  },
+  {
+   "id": "sse.shield.ground_share",
+   "version": "1.0.0",
+   "cost": "trivial",
+   "inputs": [
+    {
+     "port": "rigidity",
+     "letter": "Rc"
+    }
+   ],
+   "outputs": [
+    {
+     "port": "share",
+     "letter": "s"
+    }
+   ],
+   "models": {
+    "per_GV": {
+     "value": 1e-09,
+     "grade": "derived",
+     "source": "definition"
+    },
+    "floor": {
+     "value": 1e-06,
+     "grade": "assumed",
+     "source": "guard"
+    }
+   },
+   "params": [
+    {
+     "param": "alpha",
+     "letter": "alpha",
+     "default": 10.0,
+     "range": [
+      1.0,
+      30.0
+     ],
+     "description": "Dorman function α (sea level)"
+    },
+    {
+     "param": "k",
+     "letter": "k",
+     "default": 1.0,
+     "range": [
+      0.5,
+      1.5
+     ],
+     "description": "Dorman function k (sea level)"
+    }
+   ],
+   "references": [
+    "Clem, J. M. and Dorman, L. I. 2000, Neutron monitor response functions, Space Sci. Rev. 93, 335: ground count rate against cut-off follows N(R_c) = N₀ (1 − exp(−α R_c^−k)); attenuation in air about 140 g/cm² (barometric coefficient about 0.7 % per hPa). doi:10.1023/A:1026508915269"
+   ],
+   "shown": "share = 1 − exp(−α R_c^−k),  R_c in GV",
+   "equation": {
+    "name": "Share of the ground's cosmic-ray rate left under the field",
+    "formula": "gv = Rc * per_GV\ns = if gv <= floor then 1 else 1 - exp(-alpha * gv ^ (-k))",
+    "inputs": {
+     "Rc": {
+      "kind": "shield.cutoff_rigidity",
+      "unit": "m2 kg s-3 A-1",
+      "name": "cut-off rigidity"
+     },
+     "per_GV": {
+      "kind": "model.per_gigavolt",
+      "unit": "V-1",
+      "name": "gigavolts in a volt"
+     },
+     "floor": {
+      "kind": "model.smallest_cutoff_gv",
+      "unit": "1",
+      "name": "cut-off below which there is none, GV"
+     },
+     "alpha": {
+      "kind": "model.dorman_alpha",
+      "unit": "1",
+      "name": "Dorman α"
+     },
+     "k": {
+      "kind": "model.dorman_k",
+      "unit": "1",
+      "name": "Dorman k"
+     }
+    },
+    "outputs": {
+     "s": {
+      "kind": "shield.ground_share",
+      "unit": "1",
+      "name": "share of the polar ground rate left",
+      "valid": [
+       0.0,
+       1.0
+      ]
+     }
+    },
+    "source": {
+     "text": "Clem, J. M. and Dorman, L. I. 2000, Space Sci. Rev. 93, 335",
+     "doi": "10.1023/A:1026508915269",
+     "where": "the Dorman function"
+    },
+    "explain": {
+     "curious": "Under a thick air, only the strongest cosmic rays make showers that reach the ground, and the field cannot turn those aside. So the field changes the ground dose by about half, not a hundredfold.",
+     "science": "Neutron monitors show how a ground rate falls with cut-off: the Dorman function, fitted at sea level, integrates the shower yield over the cosmic-ray spectrum."
+    },
+    "examples": [
+     {
+      "Rc": 10000000000.0,
+      "alpha": 10.0,
+      "k": 1.0,
+      "s": 0.6321205588285577
+     }
+    ]
+   }
+  },
+  {
+   "id": "sse.shield.air_dose",
+   "version": "1.0.0",
+   "cost": "trivial",
+   "inputs": [
+    {
+     "port": "free",
+     "letter": "D0"
+    },
+    {
+     "port": "column",
+     "letter": "X"
+    },
+    {
+     "port": "space",
+     "letter": "ss"
+    },
+    {
+     "port": "ground",
+     "letter": "sg"
+    },
+    {
+     "port": "sky",
+     "letter": "sky"
+    }
+   ],
+   "outputs": [
+    {
+     "port": "dose",
+     "letter": "D"
+    }
+   ],
+   "params": [
+    {
+     "param": "lambda_n",
+     "letter": "Ln",
+     "default": 1400.0,
+     "range": [
+      500.0,
+      3000.0
+     ],
+     "description": "attenuation length of the shower's nucleonic part, kg/m² (140 g/cm²)"
+    },
+    {
+     "param": "lambda_mu",
+     "letter": "Lm",
+     "default": 6000.0,
+     "range": [
+      2000.0,
+      20000.0
+     ],
+     "description": "attenuation length of its penetrating muon part, kg/m²"
+    },
+    {
+     "param": "muon_share",
+     "letter": "fm",
+     "default": 0.0045,
+     "range": [
+      0.0,
+      0.1
+     ],
+     "description": "share of the top-of-air dose that becomes penetrating muons"
+    }
+   ],
+   "references": [
+    "Atri, D., Hariharan, B. and Grießmeier, J.-M. 2013, Galactic cosmic ray-induced radiation dose on terrestrial exoplanets, Astrobiology 13, 910: the air column, not the field, is the main shield for a world with thick air. doi:10.1089/ast.2013.1052",
+    "Clem, J. M. and Dorman, L. I. 2000, Neutron monitor response functions, Space Sci. Rev. 93, 335: ground count rate against cut-off follows N(R_c) = N₀ (1 − exp(−α R_c^−k)); attenuation in air about 140 g/cm² (barometric coefficient about 0.7 % per hPa). doi:10.1023/A:1026508915269",
+    "Zeitlin, C. et al. 2013, Measurements of energetic particle radiation in transit to Mars on the Mars Science Laboratory, Science 340, 1080: 1.84 mSv per day in interplanetary space near 1 AU. doi:10.1126/science.1235989",
+    "UNSCEAR 2008, Sources and effects of ionizing radiation, Annex B: cosmic rays at sea level give about 0.39 mSv a year (0.28 directly ionising, mostly muons, and 0.11 from neutrons). https://www.unscear.org/unscear/en/publications/2008_1.html"
+   ],
+   "shown": "D = D₀ s [(1 − f_μ) w (w S_space + (1 − w) S_ground) + f_μ e^(−X/λ_μ) S_ground],  w = e^(−X/λ_n)",
+   "equation": {
+    "name": "Radiation dose under a world's air",
+    "formula": "x = max(X, 0)\nw = exp(-x / Ln)\nshare = w * ss + (1 - w) * sg\nD = max(D0, 0) * sky * ((1 - fm) * w * share + fm * exp(-x / Lm) * sg)",
+    "inputs": {
+     "D0": {
+      "kind": "shield.free_space_dose_rate",
+      "unit": "m2 s-3",
+      "name": "dose rate in open space"
+     },
+     "X": {
+      "kind": "atmosphere.column_mass",
+      "unit": "m-2 kg",
+      "name": "air above, mass per square metre"
+     },
+     "ss": {
+      "kind": "shield.space_share",
+      "unit": "1",
+      "name": "share above the cut-off in space",
+      "valid": [
+       0.0,
+       1.0
+      ]
+     },
+     "sg": {
+      "kind": "shield.ground_share",
+      "unit": "1",
+      "name": "share left at the ground",
+      "valid": [
+       0.0,
+       1.0
+      ]
+     },
+     "sky": {
+      "kind": "shield.open_sky",
+      "unit": "1",
+      "name": "share of the sky not hidden by the world",
+      "valid": [
+       0.0,
+       1.0
+      ]
+     },
+     "Ln": {
+      "kind": "model.nucleon_attenuation",
+      "unit": "m-2 kg",
+      "name": "attenuation of the shower's nucleons"
+     },
+     "Lm": {
+      "kind": "model.muon_attenuation",
+      "unit": "m-2 kg",
+      "name": "attenuation of its muons"
+     },
+     "fm": {
+      "kind": "model.muon_share",
+      "unit": "1",
+      "name": "share that becomes muons"
+     }
+    },
+    "outputs": {
+     "D": {
+      "kind": "shield.dose_rate",
+      "unit": "m2 s-3",
+      "name": "dose rate under the air"
+     }
+    },
+    "source": {
+     "text": "Atri, D., Hariharan, B. and Grießmeier, J.-M. 2013, Astrobiology 13, 910",
+     "doi": "10.1089/ast.2013.1052",
+     "where": "the air shower dose"
+    },
+    "explain": {
+     "curious": "Air is a shield. Earth's column of air weighs as much as ten metres of water, and cuts the cosmic-ray dose about a thousandfold; Mars's thin air barely helps.",
+     "science": "Two-part attenuation: the nucleonic cascade falls off with about 140 g/cm²; muons, made in it, penetrate much further and dominate at sea level. The body itself blocks the sky below the horizon."
+    },
+    "examples": [
+     {
+      "D0": 1e-11,
+      "X": 10000.0,
+      "ss": 0.3,
+      "sg": 0.6,
+      "sky": 0.5,
+      "Ln": 1400.0,
+      "Lm": 6000.0,
+      "fm": 0.0045,
+      "D": 4.909686893784363e-15
+     }
+    ]
+   }
+  }
+ ]
+}

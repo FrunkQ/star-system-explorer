@@ -80,13 +80,47 @@ pub struct PortSpec {
     /// The worded name shown beside the symbol ("distance from the star").
     #[serde(default)]
     pub name: Option<String>,
-    /// Where the relation holds, in the port's unit.
-    #[serde(default)]
+    /// Where the relation holds, in the port's unit. Each end is a number,
+    /// or a whole multiple of a data sheet row (`"8 sheet/M_earth"`) so a
+    /// figure of nature is never typed.
+    #[serde(default, deserialize_with = "valid_range")]
     pub valid: Option<(f64, f64)>,
     /// A list (a spectrum on its wavelength grid): the formula runs once
     /// per entry and every output is a list of the same length.
     #[serde(default)]
     pub list: bool,
+}
+
+fn valid_range<'de, D: serde::Deserializer<'de>>(d: D) -> Result<Option<(f64, f64)>, D::Error> {
+    let v: Option<(J, J)> = Option::deserialize(d)?;
+    let one = |x: &J| -> Result<f64, String> {
+        match x {
+            J::String(t) => {
+                let (k, row) = t
+                    .split_once(' ')
+                    .ok_or_else(|| format!("`{t}` is not a number times a sheet row"))?;
+                let k: f64 = k.parse().map_err(|_| format!("`{k}` is not a number"))?;
+                let id = row
+                    .strip_prefix("sheet/")
+                    .ok_or_else(|| format!("`{row}` is not a sheet row"))?;
+                let r = sse_core::sheet::ALL
+                    .iter()
+                    .find(|(n, _)| *n == id)
+                    .ok_or_else(|| format!("no sheet row {id}"))?;
+                Ok(k * r.1)
+            }
+            other => other
+                .as_f64()
+                .ok_or_else(|| "a valid range end is a number".into()),
+        }
+    };
+    match v {
+        None => Ok(None),
+        Some((a, b)) => Ok(Some((
+            one(&a).map_err(serde::de::Error::custom)?,
+            one(&b).map_err(serde::de::Error::custom)?,
+        ))),
+    }
 }
 
 #[derive(Clone, Debug, Deserialize)]

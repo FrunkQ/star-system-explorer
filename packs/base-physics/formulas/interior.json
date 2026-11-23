@@ -86,6 +86,334 @@
      }
     ]
    }
+  },
+  {
+   "id": "sse.interior.rocky_radius",
+   "version": "1.0.1",
+   "cost": "trivial",
+   "inputs": [
+    {
+     "port": "mass",
+     "letter": "M"
+    },
+    {
+     "port": "core_mass_fraction",
+     "letter": "f"
+    }
+   ],
+   "outputs": [
+    {
+     "port": "radius",
+     "letter": "R"
+    }
+   ],
+   "constants": {
+    "M_e": "sheet/M_earth",
+    "R_e": "sheet/R_earth_mean"
+   },
+   "models": {
+    "c0": {
+     "value": 1.07,
+     "grade": "fitted",
+     "source": "Zeng, Sasselov and Jacobsen 2016 eq. 2"
+    },
+    "c1": {
+     "value": 0.21,
+     "grade": "fitted",
+     "source": "Zeng, Sasselov and Jacobsen 2016 eq. 2"
+    },
+    "c2": {
+     "value": 3.7,
+     "grade": "fitted",
+     "source": "Zeng, Sasselov and Jacobsen 2016 eq. 2"
+    }
+   },
+   "positive": [
+    {
+     "port": "mass",
+     "says": "mass"
+    }
+   ],
+   "references": [
+    "Zeng, L., Sasselov, D. D. and Jacobsen, S. B. 2016, ApJ 819, 127: mass-radius relation for rocky planets based on PREM, eq. 2 (inverse eq. 3). doi:10.3847/0004-637X/819/2/127"
+   ],
+   "shown": "R/R⊕ = (1.07 - 0.21 CMF) (M/M⊕)^(1/3.7)",
+   "equation": {
+    "name": "Size of a rocky world from its mass and core",
+    "formula": "x = M / M_e\nR = R_e * (c0 - c1 * f) * x ^ (1 / c2)",
+    "inputs": {
+     "M": {
+      "kind": "body.mass",
+      "unit": "kg",
+      "name": "mass of the world",
+      "valid": [
+       "1 sheet/M_earth",
+       "8 sheet/M_earth"
+      ]
+     },
+     "f": {
+      "kind": "interior.core_mass_fraction",
+      "unit": "1",
+      "name": "share of the mass in the core",
+      "valid": [
+       0.0,
+       0.4
+      ]
+     },
+     "M_e": {
+      "kind": "constant.M_earth",
+      "unit": "kg",
+      "name": "Earth's mass"
+     },
+     "R_e": {
+      "kind": "constant.R_earth_mean",
+      "unit": "m",
+      "name": "Earth's mean radius"
+     },
+     "c0": {
+      "kind": "model.zeng_c0",
+      "unit": "1",
+      "name": "radius at no core, Earth radii per Earth mass^(1/3.7)"
+     },
+     "c1": {
+      "kind": "model.zeng_c1",
+      "unit": "1",
+      "name": "shrink per core share"
+     },
+     "c2": {
+      "kind": "model.zeng_exponent",
+      "unit": "1",
+      "name": "mass exponent's inverse"
+     }
+    },
+    "outputs": {
+     "R": {
+      "kind": "body.radius",
+      "unit": "m",
+      "name": "radius of the world"
+     }
+    },
+    "source": {
+     "text": "Zeng, L., Sasselov, D. D. and Jacobsen, S. B. 2016, ApJ 819, 127",
+     "doi": "10.3847/0004-637X/819/2/127",
+     "where": "eq. 2"
+    },
+    "explain": {
+     "curious": "An iron-rich rocky world is smaller than a rock-rich one of the same mass, because iron packs tighter.",
+     "science": "Fit to two-layer (iron core, silicate mantle) models scaled from Earth's seismic profile (PREM), for rocky planets without water or atmosphere. Agrees with the model curves to about 0.01 R⊕ in its range (1 to 8 M⊕, core mass fraction 0 to 0.4); the inverse gives core mass fraction to about ±0.02."
+    },
+    "examples": [
+     {
+      "M": 1.2e+25,
+      "f": 0.3,
+      "R": 7747155.54181288
+     }
+    ]
+   }
+  },
+  {
+   "id": "sse.interior.core_mass_fraction",
+   "version": "1.0.1",
+   "cost": "trivial",
+   "inputs": [
+    {
+     "port": "mass",
+     "letter": "M"
+    },
+    {
+     "port": "radius",
+     "letter": "R"
+    }
+   ],
+   "outputs": [
+    {
+     "port": "core_mass_fraction",
+     "letter": "f"
+    }
+   ],
+   "constants": {
+    "M_e": "sheet/M_earth",
+    "R_e": "sheet/R_earth_mean"
+   },
+   "models": {
+    "c0": {
+     "value": 1.07,
+     "grade": "fitted",
+     "source": "Zeng, Sasselov and Jacobsen 2016 eq. 2"
+    },
+    "c1": {
+     "value": 0.21,
+     "grade": "fitted",
+     "source": "Zeng, Sasselov and Jacobsen 2016 eq. 2"
+    },
+    "c2": {
+     "value": 3.7,
+     "grade": "fitted",
+     "source": "Zeng, Sasselov and Jacobsen 2016 eq. 2"
+    }
+   },
+   "positive": [
+    {
+     "port": "mass",
+     "says": "mass"
+    },
+    {
+     "port": "radius",
+     "says": "radius"
+    }
+   ],
+   "references": [
+    "Zeng, L., Sasselov, D. D. and Jacobsen, S. B. 2016, ApJ 819, 127: mass-radius relation for rocky planets based on PREM, eq. 2 (inverse eq. 3). doi:10.3847/0004-637X/819/2/127"
+   ],
+   "shown": "CMF = (1.07 - (R/R⊕) / (M/M⊕)^(1/3.7)) / 0.21",
+   "equation": {
+    "name": "Share of a rocky world's mass in its core",
+    "formula": "x = M / M_e\nr = R / R_e\nf = (c0 - r / x ^ (1 / c2)) / c1",
+    "inputs": {
+     "M": {
+      "kind": "body.mass",
+      "unit": "kg",
+      "name": "mass of the world",
+      "valid": [
+       "1 sheet/M_earth",
+       "8 sheet/M_earth"
+      ]
+     },
+     "R": {
+      "kind": "body.radius",
+      "unit": "m",
+      "name": "radius of the world"
+     },
+     "M_e": {
+      "kind": "constant.M_earth",
+      "unit": "kg",
+      "name": "Earth's mass"
+     },
+     "R_e": {
+      "kind": "constant.R_earth_mean",
+      "unit": "m",
+      "name": "Earth's mean radius"
+     },
+     "c0": {
+      "kind": "model.zeng_c0",
+      "unit": "1",
+      "name": "radius at no core, Earth radii per Earth mass^(1/3.7)"
+     },
+     "c1": {
+      "kind": "model.zeng_c1",
+      "unit": "1",
+      "name": "shrink per core share"
+     },
+     "c2": {
+      "kind": "model.zeng_exponent",
+      "unit": "1",
+      "name": "mass exponent's inverse"
+     }
+    },
+    "outputs": {
+     "f": {
+      "kind": "interior.core_mass_fraction",
+      "unit": "1",
+      "name": "share of the mass in the core"
+     }
+    },
+    "source": {
+     "text": "Zeng, L., Sasselov, D. D. and Jacobsen, S. B. 2016, ApJ 819, 127",
+     "doi": "10.3847/0004-637X/819/2/127",
+     "where": "eq. 3"
+    },
+    "explain": {
+     "curious": "Weigh a rocky world and measure it, and you can tell roughly how much of it is an iron core.",
+     "science": "The Zeng et al. 2016 relation inverted. Outside 0 to 0.4 the answer means the world is not a dry iron and rock planet (too fluffy: water or gas; too dense: more iron than the fit covers)."
+    },
+    "examples": [
+     {
+      "M": 1.2e+25,
+      "R": 7900000.0,
+      "f": 0.2053942360406775
+     }
+    ]
+   }
+  },
+  {
+   "id": "sse.interior.core_radius",
+   "version": "1.0.0",
+   "cost": "trivial",
+   "inputs": [
+    {
+     "port": "radius",
+     "letter": "R"
+    },
+    {
+     "port": "core_mass_fraction",
+     "letter": "f"
+    }
+   ],
+   "outputs": [
+    {
+     "port": "core_radius",
+     "letter": "Rc"
+    }
+   ],
+   "checks": [
+    {
+     "port": "core_mass_fraction",
+     "min": 0,
+     "says": "core mass fraction is negative"
+    },
+    {
+     "port": "radius",
+     "over": 0,
+     "says": "radius must be positive, got {}"
+    }
+   ],
+   "references": [
+    "Zeng, L. and Jacobsen, S. B. 2017, ApJ 837, 164: a simple analytical model for rocky planet interiors (core radius fraction about the square root of core mass fraction). doi:10.3847/1538-4357/aa6218"
+   ],
+   "shown": "R_core ≈ R √CMF",
+   "equation": {
+    "name": "Size of a rocky world's core",
+    "formula": "Rc = R * sqrt(f)",
+    "inputs": {
+     "R": {
+      "kind": "body.radius",
+      "unit": "m",
+      "name": "radius of the world"
+     },
+     "f": {
+      "kind": "interior.core_mass_fraction",
+      "unit": "1",
+      "name": "share of the mass in the core",
+      "valid": [
+       0.0,
+       0.4
+      ]
+     }
+    },
+    "outputs": {
+     "Rc": {
+      "kind": "interior.core_radius",
+      "unit": "m",
+      "name": "radius of the core"
+     }
+    },
+    "source": {
+     "text": "Zeng, L. and Jacobsen, S. B. 2017, ApJ 837, 164",
+     "doi": "10.3847/1538-4357/aa6218",
+     "where": "core radius fraction"
+    },
+    "explain": {
+     "curious": "How far down you would dig before reaching the iron core.",
+     "science": "For rocky planets the core radius fraction is close to the square root of the core mass fraction (Earth: 0.57 predicted, 0.55 measured)."
+    },
+    "examples": [
+     {
+      "R": 6800000.0,
+      "f": 0.32,
+      "Rc": 3846660.8896548185
+     }
+    ]
+   }
   }
  ]
 }

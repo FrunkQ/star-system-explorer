@@ -60,8 +60,8 @@
       "unit": "kg",
       "name": "mass of the star",
       "valid": [
-       1.789568883628246e+29,
-       2.7042374241493495e+30
+       "0.09 sheet/M_sun",
+       "1.36 sheet/M_sun"
       ]
      },
      "M_sun": {
