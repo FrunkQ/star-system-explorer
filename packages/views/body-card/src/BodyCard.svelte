@@ -4,7 +4,7 @@
   derived values are read-only and open the kernel's explanation.
 -->
 <script lang="ts">
-  import { CURIOUS_FACTS, HONESTY_MARKS, asPlayers, curiousDisplay, curiousSentence, headline, cardFacts, cardFor, commitEdit, gmStamps, hasTool, primaryOf, type Json, type PlayerContext, type SceneFact, type SystemScene, type ViewContext, type Vocab } from "../../../ui-contract/src/index.ts";
+  import { CURIOUS_FACTS, HONESTY_MARKS, asPlayers, curiousDisplay, curiousSentence, headline, cardFacts, cardFor, commitEdit, factEdit, gmStamps, hasTool, primaryOf, type Json, type PlayerContext, type SceneFact, type SystemScene, type ViewContext, type Vocab } from "../../../ui-contract/src/index.ts";
   import PlayerCard from "../../player-stack/src/PlayerCard.svelte";
   import { Card, CardField, Stamp, opensFrom } from "../../../chart-grammar/src/index.ts";
   import { parseFact } from "./parse.ts";
@@ -54,7 +54,9 @@
     if (!subject) return null;
     const p = parseFact(f, text);
     if (!p.ok) return p.message;
-    const r = await commitEdit(ctx.session, ws, { address: subject.address, field: f.field, value: p.value, display: p.display, before: { value: f.value, display: f.display } });
+    // A value read back from the universe goes to its kernel field, in SI; the fixture's own fields take it as typed.
+    const e = factEdit(f, p.value);
+    const r = await commitEdit(ctx.session, ws, { address: subject.address, field: e.field, value: e.value, display: p.display, before: { value: e.before, display: f.display } });
     switch (r.status) {
       case "applied":
         note = `Inked at ${(ws.now_yr / 1e9).toFixed(2)} Gyr as event ${r.event_id.slice(0, 8)}`;
@@ -72,6 +74,10 @@
     if (f.source === "authored") return "you set it. It feeds every value derived from it.";
     if (f.source === "catalogued") return "it comes from a real catalogue, carried in with the import.";
     if (f.source === "fixture") return "it comes from the sample system's fixture data, not from physics. Set it to make it yours.";
+    if (f.source === "resolved") return "the formation run put it here, from the cloud the system grew out of. Set it to make it yours.";
+    // A value the kernel works out but has no flow to show here yet (a system read back from the universe).
+    if (f.source === "derived" && f.field === "surface_k") return "the physics works it out from the star's light, this orbit and the world's air, so it follows when you change them. Open the world: the globe's Climate, Why? shows each step.";
+    if (f.source === "derived") return "the physics works it out from this world's other values, so it follows when you change them.";
     return `its source is ${f.source}.`;
   }
 </script>

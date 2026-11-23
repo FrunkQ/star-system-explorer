@@ -56,3 +56,10 @@ test("entered as catalogued facts, Sol reads back whole, with its spec", async (
     await k.close();
   }
 });
+
+test("the door converts each value by its printed unit: degrees to radians, SI as it is, an unknown unit stops it", async () => {
+  const { toSI } = await import("../src/sol.ts");
+  assert.equal(toSI({ v: 180, unit: "deg", src: "x" } as never), Math.PI);
+  assert.equal(toSI({ v: 5.97e24, unit: "kg", src: "x" } as never), 5.97e24);
+  assert.throws(() => toSI({ v: 1, unit: "AU", src: "x" } as never), /cannot convert/);
+});

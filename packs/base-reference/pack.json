@@ -5153,13 +5153,23 @@
      "id": "h1",
      "element": "h",
      "a": 1,
-     "stable": true
+     "stable": true,
+     "mass": {
+      "v": 1.00782503224,
+      "unit": "u",
+      "src": "ame2020"
+     }
     },
     {
      "id": "h2",
      "element": "h",
      "a": 2,
-     "stable": true
+     "stable": true,
+     "mass": {
+      "v": 2.01410177812,
+      "unit": "u",
+      "src": "ame2020"
+     }
     },
     {
      "id": "h3",
@@ -5172,19 +5182,34 @@
       "check": "unverified",
       "note": "year taken as the Julian year"
      },
-     "daughter": "he3"
+     "daughter": "he3",
+     "mass": {
+      "v": 3.01604928132,
+      "unit": "u",
+      "src": "ame2020"
+     }
     },
     {
      "id": "he3",
      "element": "he",
      "a": 3,
-     "stable": true
+     "stable": true,
+     "mass": {
+      "v": 3.01602932197,
+      "unit": "u",
+      "src": "ame2020"
+     }
     },
     {
      "id": "he4",
      "element": "he",
      "a": 4,
-     "stable": true
+     "stable": true,
+     "mass": {
+      "v": 4.00260325413,
+      "unit": "u",
+      "src": "ame2020"
+     }
     },
     {
      "id": "li6",
@@ -8686,6 +8711,19 @@
       "plain": "oxygen",
       "story": "oxygen"
      },
+     "phases": {
+      "density_liquid": {
+       "v": 1141.2,
+       "unit": "kg m-3",
+       "src": "schmidt-wagner1985",
+       "check": "unverified",
+       "at_k": 90.188,
+       "also": [
+        "coolprop2014"
+       ],
+       "note": "saturated liquid at its normal boiling point; CoolProp's fit gives 1141.20"
+      }
+     },
      "optical": {
       "refractivity_589nm": {
        "v": 0.000271,
@@ -8828,6 +8866,19 @@
       "plain": "hydrogen",
       "story": "hydrogen"
      },
+     "phases": {
+      "density_liquid": {
+       "v": 70.85,
+       "unit": "kg m-3",
+       "src": "leachman2009",
+       "check": "unverified",
+       "at_k": 20.369,
+       "also": [
+        "coolprop2014"
+       ],
+       "note": "normal hydrogen at its normal boiling point"
+      }
+     },
      "optical": {
       "refractivity_589nm": {
        "v": 0.000132,
@@ -8908,6 +8959,51 @@
         0.0
        ],
        "src": "atom-isotropic"
+      }
+     }
+    },
+    {
+     "id": "d2",
+     "formula": {
+      "h2": 2
+     },
+     "names": {
+      "physics": "deuterium",
+      "plain": "heavy hydrogen",
+      "story": "heavy hydrogen"
+     },
+     "phases": {
+      "density_liquid": {
+       "v": 163.5,
+       "unit": "kg m-3",
+       "src": "coolprop2014",
+       "check": "computed",
+       "at_k": 23.31,
+       "also": [
+        "richardson2014"
+       ],
+       "note": "normal deuterium at its normal boiling point, from CoolProp's saturated-liquid fit to Richardson et al. 2014 (fit good to 0.17%)"
+      }
+     }
+    },
+    {
+     "id": "he3",
+     "formula": {
+      "he3": 1
+     },
+     "names": {
+      "physics": "helium-3",
+      "plain": "helium-3",
+      "story": "helium-3"
+     },
+     "phases": {
+      "density_liquid": {
+       "v": 59.0,
+       "unit": "kg m-3",
+       "src": "fudge-register",
+       "check": "unverified",
+       "at_k": 3.19,
+       "note": "about 59 kg/m3 at its 3.19 K boiling point; from memory, not read: check against a helium-3 equation of state"
       }
      }
     },
@@ -9645,6 +9741,64 @@
      "note": "the weather pack's giant air at 0.0023 kg/mol; the reader's worked-out molar mass replaces it"
     },
     {
+     "id": "fuel-hydrogen",
+     "names": {
+      "physics": "liquid hydrogen",
+      "plain": "hydrogen fuel",
+      "story": "hydrogen"
+     },
+     "recipe": {
+      "h2": 1.0
+     },
+     "by": "mass",
+     "src": "fudge-register",
+     "check": "authored"
+    },
+    {
+     "id": "fuel-hydrogen-oxygen",
+     "names": {
+      "physics": "liquid hydrogen and liquid oxygen",
+      "plain": "hydrogen and oxygen",
+      "story": "hydrolox"
+     },
+     "recipe": {
+      "h2": 0.14285714285714285,
+      "o2": 0.8571428571428571
+     },
+     "by": "mass",
+     "src": "fudge-register",
+     "check": "authored",
+     "note": "oxidiser to fuel 6:1 by mass, near what hydrogen-oxygen engines burn (the stoichiometric ratio is about 7.9)"
+    },
+    {
+     "id": "fuel-deuterium",
+     "names": {
+      "physics": "liquid deuterium",
+      "plain": "deuterium fuel",
+      "story": "deuterium"
+     },
+     "recipe": {
+      "d2": 1.0
+     },
+     "by": "mass",
+     "src": "fudge-register",
+     "check": "authored"
+    },
+    {
+     "id": "fuel-helium-3",
+     "names": {
+      "physics": "liquid helium-3",
+      "plain": "helium-3 fuel",
+      "story": "helium-3"
+     },
+     "recipe": {
+      "he3": 1.0
+     },
+     "by": "mass",
+     "src": "fudge-register",
+     "check": "authored"
+    },
+    {
      "id": "surface-rock",
      "names": {
       "physics": "generic silicate rock",
@@ -9907,6 +10061,12 @@
      "doi": "10.1103/PhysRevLett.119.161101"
     },
     {
+     "id": "ame2020",
+     "text": "Wang, M., Huang, W. J., Kondev, F. G., Audi, G. and Naimi, S. 2021, Chinese Phys. C 45, 030003: the AME 2020 atomic mass evaluation (II), tables",
+     "status": "unverified",
+     "doi": "10.1088/1674-1137/abddaf"
+    },
+    {
      "id": "atom-isotropic",
      "text": "A spherically symmetric atom has no anisotropic polarisability, so its King correction factor is exactly 1 (Bodhaine et al. 1999 discussion of depolarisation)",
      "status": "textbook",
@@ -9977,6 +10137,13 @@
      "text": "Elements in their standard state and the hydrogen ion at unit activity have zero free energy and enthalpy of formation by convention",
      "status": "textbook",
      "url": "https://goldbook.iupac.org/"
+    },
+    {
+     "id": "coolprop2014",
+     "text": "Bell, I. H., Wronski, J., Quoilin, S. and Lemort, V. 2014, Ind. Eng. Chem. Res. 53, 2498: CoolProp, pure and pseudo-pure fluid property evaluation (MIT licence; its saturated-liquid density fits to the equations of state, dev/fluids/*.json)",
+     "status": "unverified",
+     "doi": "10.1021/ie4033999",
+     "url": "https://github.com/CoolProp/CoolProp"
     },
     {
      "id": "des2025",
@@ -10124,6 +10291,12 @@
      "text": "Kobayashi, C., Karakas, A. I. and Lugaro, M. 2020, ApJ 900, 179: the origin of elements from carbon to uranium (half of C, N and F from AGB stars; half of the iron-peak elements from Type Ia supernovae; the r-process shortfall)",
      "status": "verified",
      "doi": "10.3847/1538-4357/abae65"
+    },
+    {
+     "id": "leachman2009",
+     "text": "Leachman, J. W., Jacobsen, R. T., Penoncello, S. G. and Lemmon, E. W. 2009, J. Phys. Chem. Ref. Data 38, 721: fundamental equations of state for parahydrogen, normal hydrogen and orthohydrogen",
+     "status": "unverified",
+     "doi": "10.1063/1.3160306"
     },
     {
      "id": "lin2005",
@@ -10282,6 +10455,12 @@
      "doi": "10.1016/j.icarus.2010.08.008"
     },
     {
+     "id": "richardson2014",
+     "text": "Richardson, I. A., Leachman, J. W. and Lemmon, E. W. 2014, J. Phys. Chem. Ref. Data 43, 013103: fundamental equation of state for deuterium",
+     "status": "unverified",
+     "doi": "10.1063/1.4864752"
+    },
+    {
      "id": "rocha2013",
      "text": "Rocha, M. et al. 2013, MNRAS 430, 81: cosmological simulations with self-interacting dark matter I, constant-density cores and substructure",
      "status": "verified",
@@ -10304,6 +10483,12 @@
      "text": "Salzmann, C. G. 2019, J. Chem. Phys. 150, 060901: advances in the experimental exploration of water's phase diagram (ices XVI and XVII, amorphous ices, hydrogen order)",
      "status": "verified",
      "doi": "10.1063/1.5085163"
+    },
+    {
+     "id": "schmidt-wagner1985",
+     "text": "Schmidt, R. and Wagner, W. 1985, Fluid Phase Equilibria 19, 175: a new form of the equation of state for pure substances and its application to oxygen",
+     "status": "unverified",
+     "doi": "10.1016/0378-3812(85)87016-3"
     },
     {
      "id": "schneider2012",

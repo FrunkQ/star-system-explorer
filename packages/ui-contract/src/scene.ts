@@ -29,6 +29,11 @@ export interface SceneFact {
   /** Display value = SI value / scale (derived facts), so a preview can show another stack's value the same way. */
   scale?: number;
   digits?: number;
+  /**
+   * A value read back from the universe (an adopted, grown or catalogued system) is edited at its kernel field, in SI:
+   * the value sent is the typed value × `per_unit`. Without it, an edit goes to `field` as typed (the fixture's own).
+   */
+  kernel?: { field: string; per_unit: number };
 }
 
 export interface SceneSubject {

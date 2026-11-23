@@ -50,10 +50,63 @@ Picture: `SHIP14-screens/ships-chart.png` (all six ships, Chart style, with dens
 
 Three rows: hull proportions (HULL_SHAPE), equal fuel shares and the stand-in density, and the Chart plume glyph.
 
+## Stage 2: ships designed from their parts
+
+Alex, 23 Nov: design a ship from its components, sizes worked out from physics, styles from hard-science spines to
+high tech, assignable to a nation or culture, remixable, overridable; the 2D is "a simple top-down and side view
+with rough call-outs", not deck plans. He loves the giant radiators. Coordinator: add crew and cargo fields to the
+stock ships with the travel thread (it adds `crew`, `cargo_t` and `fuel_shares` to NavShip and base-nav).
+
+- **Rules** (`packs/base-ships`, `ship_design`, each with a source): habitable volume per person and net to gross,
+  cargo stowage density, radiator emissivity and faces, and drive heat by energy source.
+- **Needs** (`needsOf`): quarters from crew, hold from cargo, tanks from `tanksOf`, waste heat from jet power, and
+  radiator area by Stefan–Boltzmann: A = P / (2 ε σ T⁴). Hand overrides (`crew_m3`, `cargo_m3`, `radiator_m2`) win
+  and are said in the words.
+- **Styles** (`ship_styles`): "Spine and modules" (open truss, tank rings, radiator wings off the middle) and "Sleek
+  hull" (one skin, pointed nose, swept fins). A style arranges and never resizes: the test checks that every
+  drawn part holds exactly its need in both styles.
+- **Layout** (`designShip`): solids along the ship's axis, kept as a recipe `{ style, seed, overrides }`. `remixes`
+  picks inside the style's ranges (tank ring count, tank fineness, drive gap, nose, wing shape) with a seeded
+  generator, so a recipe rebuilds the same ship anywhere.
+- **Views** (`shipViews`): side and top at one scale, call-outs above and below that never overlap, the plume behind
+  the stern, and a "hull" framing that lets kilometre radiators run off the frame. `ShipPlans` (packages/views/ship)
+  draws them with a style switch, Remix and "Close in on the hull", inked from theme tokens.
+- **Honesty**: a sleek hull on a hot drive says it has nowhere to put the radiators ("its fins would reach 33 km
+  out on each side. Ships with drives this hot carry radiators on booms").
+
+Pictures: `SHIP14-screens/design-cool-drives.png` (chemical, nuclear thermal, jump courier in both styles),
+`design-hot-drives.png` (torch, cutter, probe framed whole: the radiators dwarf the ship) and `design-hot-close.png`
+(closed in on the hull). Checks: `packages/renderer/test/ship-design.test.ts`, 5 tests.
+
+## Stage 3: the 3D model
+
+- `ship-mesh.ts` (pure): `shipMesh(layout, { segments, panel_m })` turns the same layout the plans draw into one
+  triangle buffer per surface (hull, tanks, radiators, spine, drive) with normals and texture coordinates in real
+  metres over the style's panel size, plus bounds for the whole ship and for its modules alone. `panelTexture`
+  makes a tileable 4 × 4 panel texture (seams, shade per panel, wear) from a seed.
+- `gpu-ship.ts`: `mountShip` (exported lazily as `startShip`, so three.js loads only when a model is shown) wraps
+  the buffers in materials from the style's `skin` (pack data: albedo, roughness, metalness per surface), one star
+  and a fill light, a logarithmic depth buffer (kilometre radiators beside metre modules), mipmapped panels, and
+  hot radiators that glow with the colour of a body at their temperature. Built once; later draws only turn the
+  camera. "hull" framing closes in on the modules.
+- `ShipPlans` now carries the shared ViewControls: Chart is the plans (flat), any other "Seen from" turns it into
+  the 3D model; Free drags to turn and wheels to zoom. True and Wireframe are listed and say why they wait.
+- Fuels from the master data sheet (PR 223): `readPropellants(session, fuels)` reads mixture `fuel-<id>` (shares by
+  mass) and each substance's `phases.density_liquid`; antimatter has no row, so its tank stays a marked stand-in.
+  Views no longer need typed densities; the tests' NIST fixtures remain only in the pure tests.
+- Free view in `ShipPlans`: drag turns and tilts, Shift-drag or two fingers slide, wheel or pinch zooms (the shared
+  hint's promise).
+- Checks (`ship-mesh.test.ts`, 4 tests): every closed body's mesh volume (divergence theorem) equals its part's
+  volume to 1e-6 of the polygon's share; radiator faces add up to exactly the area the waste heat needs; normals are
+  unit and agree with winding; bounds match the layout; under 5,000 triangles; textures repeat per seed.
+- Picture: `SHIP14-screens/model-3d.png` (chemical, nuclear thermal, jump courier, rescue cutter closed in, and the
+  fusion torch closed in and whole: a 15 m crew module on a 785 m spine over 3.8 km² of glowing radiator).
+
 ## Next
 
 - **Sheet**: `density_liquid` for hydrogen, oxygen, deuterium and helium-3, and a substance for each base-nav fuel
   (asked of the matter data sheet thread). Mixture ratios in the ship record (galaxy and travel thread).
-- **Part 2**: the GPU hull (lathe, lit like a body) and a True plume from the exhaust's own emission; mounting on the
-  ship card and Voyages screen (galaxy and travel thread's screens).
+- A True plume from the exhaust's own emission, and the model in the True exposure chain.
+- **Stage 4**: abilities shape the ship from the kernel's `ship_at_world` (travel thread): heat shield, wings or
+  lifting body, legs, scoops; styles assigned per nation or culture, inherited down the tree like name schemes.
 - **Uploads**: GLB, OBJ and STL hulls with credit fields once packs can carry files.

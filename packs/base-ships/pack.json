@@ -1,0 +1,254 @@
+{
+  "format": "sse.pack/1",
+  "id": "sse.base-ships",
+  "version": "0.1.0",
+  "kind": [
+    "base-physics"
+  ],
+  "kernel_range": "^0.1",
+  "licence": "Apache-2.0",
+  "provides": {
+    "other": {
+      "about": "Ship designer (V3 gap item 14, stage 2): the rules that size a ship's parts from what they must do, and the styles that arrange them. A style decides the arrangement and the look, never a size. Numbers marked authored or rough are rules for play and pictures, listed in the fudge register; the drive's own numbers come from the ship record.",
+      "ship_design": {
+        "crew": {
+          "habitable_m3_per_person": 25.0,
+          "net_to_gross": 0.5,
+          "why": "net habitable volume per person for missions of months; a pressurised module is about twice its net habitable volume once equipment and stowage are in",
+          "src": "nasa-std-3001",
+          "check": "unverified"
+        },
+        "cargo": {
+          "stowage_kg_m3": 250.0,
+          "why": "mixed packed cargo; authored",
+          "src": "authored"
+        },
+        "radiator": {
+          "emissivity": 0.9,
+          "two_sided": true,
+          "why": "a flat panel radiates from both faces at emissivity 0.9; area = waste heat / (2 e sigma T^4)",
+          "src": "authored"
+        },
+        "drive_heat": [
+          {
+            "fuels": [
+              "hydrogen-oxygen"
+            ],
+            "waste_per_jet": 0.0,
+            "radiator_k": 0.0,
+            "why": "combustion heat leaves with the exhaust; the nozzle is cooled by its own propellant",
+            "src": "authored"
+          },
+          {
+            "fuels": [
+              "hydrogen"
+            ],
+            "waste_per_jet": 0.0,
+            "radiator_k": 0.0,
+            "why": "a nuclear thermal reactor is cooled by the propellant it heats while it burns",
+            "src": "authored"
+          },
+          {
+            "fuels": [
+              "deuterium",
+              "helium-3"
+            ],
+            "waste_per_jet": 0.1,
+            "radiator_k": 1500.0,
+            "why": "rough: neutrons from side reactions and bremsstrahlung heat the structure and must be radiated; about a tenth of the jet power",
+            "src": "santarius-logan-1998",
+            "check": "unverified"
+          },
+          {
+            "fuels": [
+              "antimatter"
+            ],
+            "waste_per_jet": 0.1,
+            "radiator_k": 1500.0,
+            "why": "rough: gamma rays caught by the engine's shielding heat it; about a tenth of the jet power",
+            "src": "authored"
+          }
+        ],
+        "sources": {
+          "nasa-std-3001": "NASA 2015, NASA Space Flight Human-System Standard, NASA-STD-3001 Volume 2 Revision A, habitable volume section. https://www.nasa.gov/reference/nasa-std-3001/",
+          "santarius-logan-1998": "Santarius, J. F. and Logan, B. G. 1998, Generic magnetic fusion rocket model, Journal of Propulsion and Power 14, 519. doi:10.2514/2.5309",
+          "authored": "authored for play and pictures; in the fudge register"
+        }
+      },
+      "ship_styles": {
+        "spine": {
+          "name": "Spine and modules",
+          "about": "Hard-science: modules strung along an open truss, tanks clustered round it, crew as far from the drive as the spine allows, radiators as flat wings off the middle. Radiator wings are as long as they must be: their area comes from the waste heat, their shape (span over chord) from the style.",
+          "order": [
+            "sensors",
+            "crew",
+            "cargo",
+            "tanks",
+            "radiators",
+            "drive"
+          ],
+          "tank_cluster": [
+            1,
+            3,
+            4,
+            6
+          ],
+          "tank_fineness": [
+            2.0,
+            4.0
+          ],
+          "drive_gap_r": [
+            1.0,
+            3.0
+          ],
+          "spine_width_r": 0.12,
+          "sensor_r": 0.5,
+          "hull": "open",
+          "radiator_aspect": [
+            1.5,
+            4.0
+          ],
+          "skin": {
+            "panel_m": 2.0,
+            "patchiness": 0.5,
+            "wear": 0.4,
+            "why": "white thermal blankets on the modules, foil-wrapped tanks, a bare metal truss, black high-emissivity radiators",
+            "surfaces": {
+              "hull": {
+                "albedo": [
+                  0.78,
+                  0.78,
+                  0.75
+                ],
+                "roughness": 0.75,
+                "metalness": 0.0
+              },
+              "tanks": {
+                "albedo": [
+                  0.7,
+                  0.68,
+                  0.6
+                ],
+                "roughness": 0.45,
+                "metalness": 0.4
+              },
+              "radiators": {
+                "albedo": [
+                  0.05,
+                  0.05,
+                  0.06
+                ],
+                "roughness": 0.5,
+                "metalness": 0.1
+              },
+              "spine": {
+                "albedo": [
+                  0.4,
+                  0.41,
+                  0.43
+                ],
+                "roughness": 0.4,
+                "metalness": 0.8
+              },
+              "drive": {
+                "albedo": [
+                  0.18,
+                  0.18,
+                  0.2
+                ],
+                "roughness": 0.35,
+                "metalness": 0.9
+              }
+            }
+          }
+        },
+        "sleek": {
+          "name": "Sleek hull",
+          "about": "High tech: one smooth skin round everything, a long pointed nose, radiators swept back as fins.",
+          "order": [
+            "sensors",
+            "crew",
+            "cargo",
+            "tanks",
+            "drive"
+          ],
+          "tank_cluster": [
+            1
+          ],
+          "tank_fineness": [
+            5.0,
+            8.0
+          ],
+          "nose_r": [
+            1.5,
+            3.0
+          ],
+          "drive_gap_r": [
+            0.0,
+            0.0
+          ],
+          "spine_width_r": 0.0,
+          "sensor_r": 0.3,
+          "hull": "skin",
+          "radiator_aspect": [
+            0.8,
+            2.0
+          ],
+          "skin": {
+            "panel_m": 4.0,
+            "patchiness": 0.15,
+            "wear": 0.1,
+            "why": "one gunmetal skin, black radiator fins",
+            "surfaces": {
+              "hull": {
+                "albedo": [
+                  0.26,
+                  0.28,
+                  0.31
+                ],
+                "roughness": 0.3,
+                "metalness": 0.6
+              },
+              "tanks": {
+                "albedo": [
+                  0.26,
+                  0.28,
+                  0.31
+                ],
+                "roughness": 0.3,
+                "metalness": 0.6
+              },
+              "radiators": {
+                "albedo": [
+                  0.04,
+                  0.04,
+                  0.05
+                ],
+                "roughness": 0.45,
+                "metalness": 0.1
+              },
+              "spine": {
+                "albedo": [
+                  0.26,
+                  0.28,
+                  0.31
+                ],
+                "roughness": 0.3,
+                "metalness": 0.6
+              },
+              "drive": {
+                "albedo": [
+                  0.12,
+                  0.12,
+                  0.13
+                ],
+                "roughness": 0.3,
+                "metalness": 0.9
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+}
