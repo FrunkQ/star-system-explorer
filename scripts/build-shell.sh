@@ -21,6 +21,8 @@ mkdir -p packages/shell/public/packs/samples
 cp packages/shell/src/documents/sample.warm-worlds.pack.json packages/shell/public/packs/samples/warm-worlds.json
 # The game pack the sector map and world codes screens read (X3).
 cp packs/traveller/pack.json packages/shell/public/packs/samples/traveller.json
+cp packs/near-future/pack.json packages/shell/public/packs/samples/near-future.json
+cp packs/space-opera/pack.json packages/shell/public/packs/samples/space-opera.json
 rm -rf packages/shell/public/samples && mkdir -p packages/shell/public/samples
 # The sample save the Make a system dialog offers: the importer fixture with names that say "(sample)", so nobody takes it for the real Sol (Alex, 21 Nov).
 cp packages/shell/src/documents/sample-sol.v3.json packages/shell/public/samples/synthetic-sol.json

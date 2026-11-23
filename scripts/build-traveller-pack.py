@@ -669,6 +669,43 @@ def jump_ship(id_, label, explain, hull_dt, thrust_g, jump, cargo_dt, crew_max, 
                      facts={"traveller.hull_dt": float(hull_dt), "traveller.thrust_g": float(thrust_g),
                             "traveller.jump": float(jump), "traveller.cargo_dt": float(cargo_dt),
                             **sensors(*sensor_ids)})
+# Bases and ports as dressing rules (tags design TG12 and TG13): a world
+# whose starport class or bases column says so gets a candidate station or
+# site from the templates below, which the GM adopts or holds off. The class
+# and the bases are the referee's call (imported columns or a planned code);
+# a candidate is never placed until adopted, and adopting changes no fact.
+def _port(letter):
+    return {"if": "is", "field": "society.starport", "value": letter}
+
+
+def _base(code):
+    return {"if": "is", "field": f"traveller.bases.{code}", "value": True}
+
+
+_BASE_WORDS = {"N": ("naval_base", "high-orbit", "a naval base"), "S": ("scout_base", "high-orbit", "a scout base"),
+               "W": ("way_station", "high-orbit", "a way station"), "D": ("naval_depot", "high-orbit", "a naval depot"),
+               "M": ("military_base", "surface", "a planetary military base"), "C": ("corsair_base", "high-orbit", "a corsair base")}
+DRESSING = {
+    "about": "Ports and bases a world's codes call for, as candidates the GM adopts or holds off.",
+    "rules": [
+        {"id": "traveller.port.highport-a.v1", "applies_to": ["body"], "when": _port("A"), "place": "highport_a", "where": "high-orbit",
+         "explain": "a class A starport has a highport in orbit with a shipyard for jump ships"},
+        {"id": "traveller.port.highport-b.v1", "applies_to": ["body"], "when": _port("B"), "place": "highport_b", "where": "high-orbit",
+         "explain": "a class B starport has a highport in orbit that builds small craft"},
+        {"id": "traveller.port.downport.v1", "applies_to": ["body"],
+         "when": {"if": "any", "of": [_port("A"), _port("B"), _port("C")]}, "place": "downport", "where": "surface",
+         "explain": "a class A, B or C starport has a downport on the surface"},
+        {"id": "traveller.port.spaceport-d.v1", "applies_to": ["body"], "when": _port("D"), "place": "spaceport_d", "where": "surface",
+         "explain": "a class D starport is a landing pad with unrefined fuel"},
+        {"id": "traveller.port.beacon-e.v1", "applies_to": ["body"], "when": _port("E"), "place": "beacon_e", "where": "surface",
+         "explain": "a class E starport is a marked patch of ground and a beacon"},
+    ] + [
+        {"id": f"traveller.base.{code}.v1", "applies_to": ["body"], "when": _base(code), "place": t, "where": w,
+         "explain": f"the bases column lists {code}: {words} here"}
+        for code, (t, w, words) in _BASE_WORDS.items()
+    ],
+}
+
 TEMPLATES = [
     # Ships.
     jump_ship("courier", "Courier (100 dT)", "a small fast ship for messages, survey and scouting",
@@ -805,6 +842,7 @@ pack = {
         "observe": OBSERVE,
         "triggers": TRIGGERS,
         "templates": {"templates": TEMPLATES},
+        "dressing": DRESSING,
         "record": RECORD,
         "vocabulary": {"terms": TERMS, "traveller.trade": TRADE_WORDS, "traveller.bases": BASES,
                        "traveller.zone": {"A": "amber", "R": "red"},

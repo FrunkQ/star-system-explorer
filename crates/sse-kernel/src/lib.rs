@@ -34,6 +34,8 @@ mod systems;
 mod tags;
 #[cfg(test)]
 mod tags_tests;
+#[cfg(test)]
+mod universe_pack_tests;
 mod voyage;
 mod weather;
 mod withdraw;

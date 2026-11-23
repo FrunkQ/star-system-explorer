@@ -9612,6 +9612,180 @@
      }
     ]
    },
+   "dressing": {
+    "about": "Ports and bases a world's codes call for, as candidates the GM adopts or holds off.",
+    "rules": [
+     {
+      "id": "traveller.port.highport-a.v1",
+      "applies_to": [
+       "body"
+      ],
+      "when": {
+       "if": "is",
+       "field": "society.starport",
+       "value": "A"
+      },
+      "place": "highport_a",
+      "where": "high-orbit",
+      "explain": "a class A starport has a highport in orbit with a shipyard for jump ships"
+     },
+     {
+      "id": "traveller.port.highport-b.v1",
+      "applies_to": [
+       "body"
+      ],
+      "when": {
+       "if": "is",
+       "field": "society.starport",
+       "value": "B"
+      },
+      "place": "highport_b",
+      "where": "high-orbit",
+      "explain": "a class B starport has a highport in orbit that builds small craft"
+     },
+     {
+      "id": "traveller.port.downport.v1",
+      "applies_to": [
+       "body"
+      ],
+      "when": {
+       "if": "any",
+       "of": [
+        {
+         "if": "is",
+         "field": "society.starport",
+         "value": "A"
+        },
+        {
+         "if": "is",
+         "field": "society.starport",
+         "value": "B"
+        },
+        {
+         "if": "is",
+         "field": "society.starport",
+         "value": "C"
+        }
+       ]
+      },
+      "place": "downport",
+      "where": "surface",
+      "explain": "a class A, B or C starport has a downport on the surface"
+     },
+     {
+      "id": "traveller.port.spaceport-d.v1",
+      "applies_to": [
+       "body"
+      ],
+      "when": {
+       "if": "is",
+       "field": "society.starport",
+       "value": "D"
+      },
+      "place": "spaceport_d",
+      "where": "surface",
+      "explain": "a class D starport is a landing pad with unrefined fuel"
+     },
+     {
+      "id": "traveller.port.beacon-e.v1",
+      "applies_to": [
+       "body"
+      ],
+      "when": {
+       "if": "is",
+       "field": "society.starport",
+       "value": "E"
+      },
+      "place": "beacon_e",
+      "where": "surface",
+      "explain": "a class E starport is a marked patch of ground and a beacon"
+     },
+     {
+      "id": "traveller.base.N.v1",
+      "applies_to": [
+       "body"
+      ],
+      "when": {
+       "if": "is",
+       "field": "traveller.bases.N",
+       "value": true
+      },
+      "place": "naval_base",
+      "where": "high-orbit",
+      "explain": "the bases column lists N: a naval base here"
+     },
+     {
+      "id": "traveller.base.S.v1",
+      "applies_to": [
+       "body"
+      ],
+      "when": {
+       "if": "is",
+       "field": "traveller.bases.S",
+       "value": true
+      },
+      "place": "scout_base",
+      "where": "high-orbit",
+      "explain": "the bases column lists S: a scout base here"
+     },
+     {
+      "id": "traveller.base.W.v1",
+      "applies_to": [
+       "body"
+      ],
+      "when": {
+       "if": "is",
+       "field": "traveller.bases.W",
+       "value": true
+      },
+      "place": "way_station",
+      "where": "high-orbit",
+      "explain": "the bases column lists W: a way station here"
+     },
+     {
+      "id": "traveller.base.D.v1",
+      "applies_to": [
+       "body"
+      ],
+      "when": {
+       "if": "is",
+       "field": "traveller.bases.D",
+       "value": true
+      },
+      "place": "naval_depot",
+      "where": "high-orbit",
+      "explain": "the bases column lists D: a naval depot here"
+     },
+     {
+      "id": "traveller.base.M.v1",
+      "applies_to": [
+       "body"
+      ],
+      "when": {
+       "if": "is",
+       "field": "traveller.bases.M",
+       "value": true
+      },
+      "place": "military_base",
+      "where": "surface",
+      "explain": "the bases column lists M: a planetary military base here"
+     },
+     {
+      "id": "traveller.base.C.v1",
+      "applies_to": [
+       "body"
+      ],
+      "when": {
+       "if": "is",
+       "field": "traveller.bases.C",
+       "value": true
+      },
+      "place": "corsair_base",
+      "where": "high-orbit",
+      "explain": "the bases column lists C: a corsair base here"
+     }
+    ]
+   },
    "record": {
     "kept": [
      {
