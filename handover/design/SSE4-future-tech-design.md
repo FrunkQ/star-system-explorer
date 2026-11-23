@@ -4,6 +4,8 @@ Status: **accepted 23 Nov 2026**. Alex answered "yes to all" at 16:15 to the fou
 
 **Revision, 23 Nov 18:48 (Alex):** the ten times per level rule was "a simple rule of thumb for ideas. Not a hard fact. Apply intelligently and improve if possible." Section 5.2 now gives the size rule by family of part; its four questions (15 to 18) were accepted 23 Nov 19:20 (Alex: "size rules make sense", read by the coordinator as yes to all four).
 
+**Revision, 23 Nov 20:14 (Alex: "that all makes sense - push on", read by the coordinator as yes to all seven):** a critical review of the accepted design found that it tested each number alone, while physics lives in how the numbers relate. Section 15 adds seven improvements, questions 19 to 25, all accepted. Where section 15 and an earlier section differ, section 15 wins.
+
 **Ruling, 23 Nov 17:49 (Alex):** "4.1 alien life will have to have culture and tech as part of life. So all these systems can be extended then and we can have a lighter touch." So 4.0 keeps civilisation capability light: levels and advances are set by hand or by a pack. Automated research, tech trees and a civilisation growing its own technology are 4.1, grown from life.
 
 Read with: the voyages design (drive facts, FTL as a pack rule), the nebulae and light design (every object publishes its light by band, section 5A sensing), the matter pack design (the master data sheet and its one "Look up" door), the programs design (track J), the naming design (settings inherit down the tree), and the ship generator in `packages/renderer/src/ship-design.ts` (parts sized by physics, a style only arranges and dresses them).
@@ -317,3 +319,107 @@ Every source read where it could be (publisher record, the paper, or the author'
 | lithium-ion about 80 Wh/kg first, about 270 now | Crabtree, G., Kócs, E. and Trahey, L. 2015, MRS Bulletin 40, 1067: Sony's first cell 80 Wh/kg, energy density up "by a factor of three" since; Amprius 2022 press release: 450 Wh/kg silicon-anode cells | holds as "about three times"; the 270 had no source read and is replaced by Crabtree's factor |
 
 Still from memory: the hydrogen-oxygen exhaust ceiling "near 5 km/s".
+
+## 15. Keeping the books: seven improvements (accepted 23 Nov 20:14)
+
+Alex asked for an honest critical look at the accepted design. The core stands. Its weak point was that "fictional" was read off one figure passing its own ceiling, and a setting can stay under every ceiling and still break physics, because the laws are relations between figures. These seven changes close that, make the numbers easier to set, and make "scientific" a tested claim. Figures marked *computed* are this note's arithmetic and pass the citation check like the rest.
+
+### 15.1 Balance checks: check the books, not only each ceiling (question 19)
+
+Every construct design runs a short list of **balance checks**, each a small cited block that relates figures the design already has. A check that fails is named on the card, the same way a figure past its ceiling is.
+
+| Check | Relation | What it catches |
+|---|---|---|
+| **Energy pays for the exhaust** | exhaust speed is at most √(2 × energy per kg of what is thrown and burned); the relativistic form near c | a "chemical" fuel with a torch's exhaust speed. Hydrogen and oxygen at 13.3 MJ/kg give at most 5.2 km/s (*computed*), which replaces the cited "near 5 km/s" ceiling with a computed one |
+| **Jet power** | jet power = ½ × thrust × exhaust speed, and it is at most what the plant delivers | thrust and exhaust speed typed independently that need more power than the ship makes |
+| **Energy in, energy out** | plant output = jet power + waste heat + stored + other loads | waste heat set to nothing while the plant's efficiency says otherwise |
+| **Momentum** | thrust = mass thrown per second × exhaust speed, or P/c for light alone | thrust with nothing thrown and no stated partner (section 15.3) |
+| **Heat flows downhill** | section 15.2 | a hot radiator cooling a cool room for free |
+
+Consequences:
+
+- **A ceiling may be computed.** Where a relation gives the ceiling from other figures, the mark says "computed from" and names them, and it moves when they move. A cited ceiling stays where no relation gives one (a melting point, a bond energy).
+- **"Fictional by arithmetic" now means: a figure past its ceiling, or a balance that does not close.** The chip names the check and by how much: "exhaust carries 40 times the energy its fuel holds".
+- **Still never forbidden.** A failed check is an honesty mark and a "setting fiction" row, not a refusal.
+- The list is pack data (`base-tech`), so a physics pack can add a check with a new law.
+
+### 15.2 Heat comes in grades (question 20)
+
+The radiator table in section 5.1 let panel temperature rise freely. It cannot: a radiator runs no hotter than the thing it cools, unless a heat pump is paid for, and the pump's work becomes more heat.
+
+- **Waste heat carries its temperature.** Each source of waste heat states how hot it is: a drive or reactor at its working temperature, electronics near 350 K, a crew's quarters near 300 K.
+- **A radiator's temperature is at most its source's.** The radiator figure an advance gives (how hot a panel can run) is a cap, not the answer. Heat is shed at the lower of the two.
+- **A heat pump is a part.** Lifting heat Q from T-cold to T-hot costs work of at least Q × (T-hot − T-cold) / T-cold (Carnot), and that work is shed too. The block sizes the pump and adds its power to the plant's loads.
+- **Visible result:** a high-tech ship with tiny hot radiators for its drive still carries a modest cool panel for its quarters and electronics. 100 kW of low-grade heat at 300 K needs about 120 m² of two-sided panel (*computed*, emissivity 0.9), whatever the panel material can stand. This is true of real designs and is a second thing the eye can read.
+- The 5.1 table stays right for drive and reactor heat, which is nearly all of a torch ship's 43 GW.
+
+### 15.3 A fictional advance says where everything goes (question 21)
+
+Question 11 made every fictional advance state its light. The same now holds for the three books it may break. Each fictional advance fills four plain fields, and "nowhere" or "nothing" is allowed but shows on the card:
+
+| Field | Question it answers | Example |
+|---|---|---|
+| Light | what it gives off, by band | "a blue flash on entry" |
+| Heat | where the heat ends up | a heat sink: "stored in the sink, dumped in port; holds 40 hours" or "nowhere" |
+| Momentum | what it pushes on | a gravity drive: "the nearest large mass" or "nothing" |
+| Energy | where the energy comes from, or goes | a reactionless drive: "the ship's plant, with the surplus from nowhere" |
+
+A stated partner has consequences the blocks can use (a sink that fills makes heat a clock on a fight or a pass; a drive that pushes on a planet needs one nearby). An honest "nothing" stays a plain fictional mark. Either is a choice a setting makes on purpose.
+
+### 15.4 One advance per figure per part, stored as the real quantity (question 22)
+
+- **Stored value.** A pack stores a figure as the physical quantity with its unit (1,700 K, 45 MJ/kg, 0.03 c). "Sheds heat 1,000 times better than today's panels" is a reading the card computes against the built mark, never the stored value. This removes the doubt over what a factor multiplies (temperature, or heat per m², which goes as its fourth power).
+- **No stacking.** Two advances that set the same figure are alternatives. A part uses one, chosen by the builder or by the generator as the better for the job, and never the product of both. Advances on different figures combine only through the sizing blocks and the balance checks.
+- **Several limits, one figure.** A figure held back by more than one limit (an engine's power for its mass answers to heat and to material strength) lists each on its Science line.
+
+### 15.5 Set a number by what it buys (question 23)
+
+A GM does not know what 1,700 K means. On the Technology page (section 7.1), each figure of an advance shows:
+
+- **A scale with its marks on it**: built, allowed and ceiling as ticks, the setting's value as the handle, the ink changing as the handle crosses a mark. Dragging past the ceiling is allowed and turns the chip fictional.
+- **A reference construct redrawn live beside it**: the setting's own reference ship (or a station or cable for a material), from the same generator as "show it without", with the one-line reading "radiators 52 km² to 52,000 m²".
+- Later, not in the first build: asking Orac "what would it take to lose the radiators?", which searches the same scale.
+
+This follows the interface style: the common act (nudge a figure, see the ship change) is one drag away, and the kelvin stay on the Science line.
+
+### 15.6 Prove it on real hardware (question 24)
+
+The claim "the same blocks that draw today's ship draw tomorrow's" gets a standing test. At the "Sol today" level the blocks should reproduce about ten real craft within a stated tolerance, and one level short should give something like the first generation.
+
+| What is reproduced | From | Proves |
+|---|---|---|
+| ISS radiator area from its heat load | limit 1, low-grade heat (15.2) | the radiator block and heat grades |
+| Saturn V and a modern reusable launcher: mass ratio and stage masses from exhaust speed and payload | limit 2 | the rocket equation and tank sizing |
+| A deep-space probe's power source mass (an RTG) and a solar craft's panel area at its distance | limit 3 | power for mass |
+| Shuttle and capsule entry heating | limit 1, heat shields | the aerobraking sums |
+| A station's shielding and supplies per person a day | limits 8 and 9 | habitat sizing |
+| The V-2 as "one level short" of a modern engine | section 5.2 | the family defaults |
+
+- **Tolerance is stated per row and logged.** A row that misses is a finding, either a block to fix or a fudge to register, never a number to tune quietly.
+- **Data comes from the real spaceflight pack** (its own thread, started 23 Nov on Alex's ask to gather every craft and station that has flown). This test draws its craft from that pack once it exists; until then FT1 holds the ten by hand, cited.
+- It is also teaching content: a page that shows the engine getting real machines right.
+
+### 15.7 The family defaults are rules of thumb, and logged as such (question 25)
+
+The defaults of section 5.2 (engines a seventh, materials a fifth, stores a third, two-thirds of the way for near-ceiling figures, ten times for the unknown) rest on one or two examples each. They are editable guesses with history behind them, not measurements. So they live in the **fudge register** as rules of thumb, each with its examples and the note "small sample", and not on the cited data sheet beside constants. The examples themselves (V-2, Merlin, T300) stay cited.
+
+### Questions (all accepted 23 Nov 20:14)
+
+19. **Balance checks run on every design**, and "fictional" also means a balance that does not close. Recommended: yes.
+20. **Waste heat carries its temperature**; a radiator runs no hotter than its source unless a heat pump is paid for. Recommended: yes.
+21. **Every fictional advance states its light, heat, momentum and energy**, with "nowhere" allowed and shown. Recommended: yes.
+22. **Figures stored as real quantities; advances on one figure are alternatives and never multiply.** Recommended: yes.
+23. **A scale with marks and a live reference construct for each figure** on the Technology page; the Orac search later. Recommended: yes.
+24. **A real-hardware test of about ten craft** at "Sol today", with stated tolerances, drawing on the real spaceflight pack. Recommended: yes.
+25. **Family defaults logged in the fudge register as rules of thumb.** Recommended: yes.
+
+### What changes in the packages
+
+| Package | Added by section 15 |
+|---|---|
+| FT1 (data sheet thread) | balance checks as pack rows with their relations; computed ceilings marked "computed from"; a temperature on every waste heat source; the four "where it goes" fields on fictional advances; figures stored as quantities with units; about ten real craft, cited, for the test until the spaceflight pack supplies them; family defaults moved to the fudge register |
+| FT2 (kernel thread) | the balance check block and the widened "fictional" reading; heat grades and the heat pump in the radiator block; one advance per figure per part, no stacking; the real-hardware test in the suite |
+| FT3 (travel thread) | ships state waste heat by grade; legs and passes carry the fictional flag for a failed balance as for a passed ceiling |
+| FT4 (renderer thread) | the cool habitat radiator as its own drawn part; the reference construct for the Technology page |
+| FT6 (chart room thread) | the figure scale with marks and the live reference construct; the failed check named on "Leans on"; the four fields shown on a fictional chip |
+| FT8 (Traveller thread) | the four fields filled for each fictional advance in the example packs |
