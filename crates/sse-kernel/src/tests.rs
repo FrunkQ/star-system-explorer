@@ -3196,3 +3196,61 @@ fn read_field_solar_system_fixture() {
         "{jupiter}"
     );
 }
+
+/// Gap item 7, "which worlds are shielded, at a glance": `read_field` with
+/// `system` reads every planet of an adopted system and gives each a glance.
+#[test]
+fn read_field_for_a_whole_system() {
+    let mut k = crate::Kernel::new();
+    let send = |k: &mut crate::Kernel, v: serde_json::Value| -> serde_json::Value {
+        serde_json::from_str(&k.handle_json(&v.to_string())).unwrap()
+    };
+    let pack = |p: &str| -> serde_json::Value {
+        serde_json::from_str(&std::fs::read_to_string(root().join(p)).unwrap()).unwrap()
+    };
+    let r = send(
+        &mut k,
+        serde_json::json!({"op": "load_stack", "packs": [pack("packs/base-time/pack.json"), pack("packs/base-reference/pack.json")]}),
+    );
+    assert_eq!(r["type"], "stack_loaded", "{r}");
+    send(
+        &mut k,
+        serde_json::json!({"op": "open_universe", "id": "home", "seed": "home"}),
+    );
+    let form = serde_json::json!({"seed": "adopt-1", "system": "u:home/sys:5", "star_pins": {"primary_mass": 1.0}});
+    let r = send(
+        &mut k,
+        serde_json::json!({"op": "adopt", "formation": form}),
+    );
+    assert_eq!(r["type"], "adopted", "{r}");
+    let r = send(
+        &mut k,
+        serde_json::json!({"op": "read_field", "system": "u:home/sys:5"}),
+    );
+    assert_eq!(r["type"], "field_read", "{r}");
+    let bodies = r["bodies"].as_array().unwrap();
+    assert!(!bodies.is_empty());
+    for b in bodies {
+        let g = &b["glance"];
+        assert!(b["name"].is_string(), "{b}");
+        assert!(g["bubble_m"].as_f64().unwrap() > 0.0, "{g}");
+        let by = g["held_off_by"].as_str().unwrap();
+        assert!(["field", "air", "surface"].contains(&by), "{g}");
+        assert_eq!(g["shielded"], by == "field");
+        let f = g["field"].as_str().unwrap();
+        assert!(["computed", "none", "unresolved"].contains(&f), "{g}");
+        if f == "unresolved" {
+            assert!(b["stand_ins"].to_string().contains("MF2"), "{b}");
+        }
+        // MF1's core history says why a rocky world has no dynamo now.
+        if g["dynamo_now"] == false {
+            assert!(b["why"].to_string().contains("MF1"), "{b}");
+        }
+    }
+    // Outside the universe, or with nothing open, it says so.
+    let r = send(
+        &mut k,
+        serde_json::json!({"op": "read_field", "system": "u:elsewhere/sys:1"}),
+    );
+    assert_eq!(r["code"], "bad_address", "{r}");
+}
