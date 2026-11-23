@@ -82,7 +82,7 @@ impl Constants {
         g: k::G,
         c: k::C,
         sigma_sb: k::STEFAN_BOLTZMANN,
-        k_b: 1.380_649e-23,
+        k_b: crate::sheet::K_B,
         cosmos: Cosmos::REAL,
     };
 

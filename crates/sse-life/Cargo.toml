@@ -10,6 +10,7 @@ authors.workspace = true
 sse-core.workspace = true
 sse-chronicle.workspace = true
 sse-pack.workspace = true
+sse-reference.workspace = true
 sse-world.workspace = true
 sse-atoms.workspace = true
 sse-climate.workspace = true

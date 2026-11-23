@@ -631,3 +631,29 @@ fn ship_fuels_have_densities_and_isotope_masses() {
     }
     assert!(r.row("mixtures", "fuel-antimatter").is_none());
 }
+
+/// The compiled molar masses and atomic weights are the reader's, bit for bit.
+#[test]
+fn the_compiled_molar_masses_are_the_readers() {
+    let r = Reference::base();
+    use sse_core::sheet::{atomic_weight as aw, molar_mass as mm};
+    for (id, v) in [
+        ("h2o", mm::H2O),
+        ("so2", mm::SO2),
+        ("co2", mm::CO2),
+        ("n2", mm::N2),
+        ("d2", mm::D2),
+    ] {
+        assert_eq!(
+            r.molar_mass_kg_mol(id).unwrap().to_bits(),
+            v.to_bits(),
+            "{id}"
+        );
+    }
+    for (id, v) in [("h", aw::H), ("c", aw::C), ("fe", aw::FE)] {
+        let w = r.row("elements", id).unwrap()["atomic_weight"]["v"]
+            .as_f64()
+            .unwrap();
+        assert_eq!(w.to_bits(), v.to_bits(), "{id}");
+    }
+}

@@ -33,7 +33,7 @@ use serde::{Deserialize, Serialize};
 use sse_core::math as m;
 
 /// G in kpc (km/s)^2 per solar mass.
-pub const G_KPC: f64 = 4.300_917e-6;
+pub const G_KPC: f64 = sse_core::sheet::GM_SUN / (1e3 * sse_core::sheet::PC) / 1e6;
 
 /// Pack settings (`provides.other.cosmology.galaxy`).
 #[derive(Clone, PartialEq, Debug, Serialize, Deserialize)]

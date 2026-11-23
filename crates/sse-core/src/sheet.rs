@@ -96,6 +96,16 @@ pub const R_JUP_EQUATORIAL: f64 = 71492000.0;
 pub const R_JUP_POLAR: f64 = 66854000.0;
 /// `R_jup_mean`: Jupiter volumetric mean radius (m; nssdca-jupiter).
 pub const R_JUP_MEAN: f64 = 69911000.0;
+/// `omega_earth`: Earth's angular velocity (sidereal rotation) (rad s-1; moritz2000).
+pub const OMEGA_EARTH: f64 = 7.292115e-05;
+/// `V_ocean_earth`: volume of Earth's ocean (m3; eakins2010).
+pub const V_OCEAN_EARTH: f64 = 1.335e+18;
+/// `depth_ocean_earth`: mean depth of Earth's ocean (m; eakins2010).
+pub const DEPTH_OCEAN_EARTH: f64 = 3688.0;
+/// `M_ocean_earth`: mass of Earth's ocean (kg; eakins2010).
+pub const M_OCEAN_EARTH: f64 = 1.4e+21;
+/// `M_ch`: Chandrasekhar mass (M_sun; chandrasekhar1931).
+pub const M_CH: f64 = 1.44;
 /// `M_moon`: Moon mass (kg; nssdca-moon).
 pub const M_MOON: f64 = 7.346e+22;
 /// `R_moon`: Moon mean radius (m; nssdca-moon).
@@ -144,7 +154,7 @@ pub const SIGMA_DM: f64 = 0.0;
 pub const M_FDM: f64 = 0.0;
 
 /// Every constant above by its sheet id, in sheet order.
-pub const ALL: [(&str, f64); 68] = [
+pub const ALL: [(&str, f64); 73] = [
     ("c", C),
     ("h", H),
     ("hbar", HBAR),
@@ -190,6 +200,11 @@ pub const ALL: [(&str, f64); 68] = [
     ("R_jup_equatorial", R_JUP_EQUATORIAL),
     ("R_jup_polar", R_JUP_POLAR),
     ("R_jup_mean", R_JUP_MEAN),
+    ("omega_earth", OMEGA_EARTH),
+    ("V_ocean_earth", V_OCEAN_EARTH),
+    ("depth_ocean_earth", DEPTH_OCEAN_EARTH),
+    ("M_ocean_earth", M_OCEAN_EARTH),
+    ("M_ch", M_CH),
     ("M_moon", M_MOON),
     ("R_moon", R_MOON),
     ("a_moon", A_MOON),
@@ -214,3 +229,428 @@ pub const ALL: [(&str, f64); 68] = [
     ("sigma_dm", SIGMA_DM),
     ("m_fdm", M_FDM),
 ];
+
+/// Standard atomic weights, g/mol, by element (IUPAC, as on the sheet).
+pub mod atomic_weight {
+    /// Hydrogen (iupac2021).
+    pub const H: f64 = 1.008;
+    /// Helium (iupac2021).
+    pub const HE: f64 = 4.002602;
+    /// Lithium (iupac2021).
+    pub const LI: f64 = 6.94;
+    /// Beryllium (iupac2021).
+    pub const BE: f64 = 9.0121831;
+    /// Boron (iupac2021).
+    pub const B: f64 = 10.81;
+    /// Carbon (iupac2021).
+    pub const C: f64 = 12.011;
+    /// Nitrogen (iupac2021).
+    pub const N: f64 = 14.007;
+    /// Oxygen (iupac2021).
+    pub const O: f64 = 15.999;
+    /// Fluorine (iupac2021).
+    pub const F: f64 = 18.998403162;
+    /// Neon (iupac2021).
+    pub const NE: f64 = 20.1797;
+    /// Sodium (iupac2021).
+    pub const NA: f64 = 22.98976928;
+    /// Magnesium (iupac2021).
+    pub const MG: f64 = 24.305;
+    /// Aluminium (iupac2021).
+    pub const AL: f64 = 26.9815384;
+    /// Silicon (iupac2021).
+    pub const SI: f64 = 28.085;
+    /// Phosphorus (iupac2021).
+    pub const P: f64 = 30.973761998;
+    /// Sulfur (iupac2021).
+    pub const S: f64 = 32.06;
+    /// Chlorine (iupac2021).
+    pub const CL: f64 = 35.45;
+    /// Argon (iupac2021).
+    pub const AR: f64 = 39.95;
+    /// Potassium (iupac2021).
+    pub const K: f64 = 39.0983;
+    /// Calcium (iupac2021).
+    pub const CA: f64 = 40.078;
+    /// Scandium (iupac2021).
+    pub const SC: f64 = 44.955907;
+    /// Titanium (iupac2021).
+    pub const TI: f64 = 47.867;
+    /// Vanadium (iupac2021).
+    pub const V: f64 = 50.9415;
+    /// Chromium (iupac2021).
+    pub const CR: f64 = 51.9961;
+    /// Manganese (iupac2021).
+    pub const MN: f64 = 54.938043;
+    /// Iron (iupac2021).
+    pub const FE: f64 = 55.845;
+    /// Cobalt (iupac2021).
+    pub const CO: f64 = 58.933194;
+    /// Nickel (iupac2021).
+    pub const NI: f64 = 58.6934;
+    /// Copper (iupac2021).
+    pub const CU: f64 = 63.546;
+    /// Zinc (iupac2021).
+    pub const ZN: f64 = 65.38;
+    /// Gallium (iupac2021).
+    pub const GA: f64 = 69.723;
+    /// Germanium (iupac2021).
+    pub const GE: f64 = 72.63;
+    /// Arsenic (iupac2021).
+    pub const AS: f64 = 74.921595;
+    /// Selenium (iupac2021).
+    pub const SE: f64 = 78.971;
+    /// Bromine (iupac2021).
+    pub const BR: f64 = 79.904;
+    /// Krypton (iupac2021).
+    pub const KR: f64 = 83.798;
+    /// Rubidium (iupac2021).
+    pub const RB: f64 = 85.4678;
+    /// Strontium (iupac2021).
+    pub const SR: f64 = 87.62;
+    /// Yttrium (iupac2021).
+    pub const Y: f64 = 88.905838;
+    /// Zirconium (iupac2021).
+    pub const ZR: f64 = 91.224;
+    /// Niobium (iupac2021).
+    pub const NB: f64 = 92.90637;
+    /// Molybdenum (iupac2021).
+    pub const MO: f64 = 95.95;
+    /// Ruthenium (iupac2021).
+    pub const RU: f64 = 101.07;
+    /// Rhodium (iupac2021).
+    pub const RH: f64 = 102.90549;
+    /// Palladium (iupac2021).
+    pub const PD: f64 = 106.42;
+    /// Silver (iupac2021).
+    pub const AG: f64 = 107.8682;
+    /// Cadmium (iupac2021).
+    pub const CD: f64 = 112.414;
+    /// Indium (iupac2021).
+    pub const IN: f64 = 114.818;
+    /// Tin (iupac2021).
+    pub const SN: f64 = 118.71;
+    /// Antimony (iupac2021).
+    pub const SB: f64 = 121.76;
+    /// Tellurium (iupac2021).
+    pub const TE: f64 = 127.6;
+    /// Iodine (iupac2021).
+    pub const I: f64 = 126.90447;
+    /// Xenon (iupac2021).
+    pub const XE: f64 = 131.293;
+    /// Caesium (iupac2021).
+    pub const CS: f64 = 132.90545196;
+    /// Barium (iupac2021).
+    pub const BA: f64 = 137.327;
+    /// Lanthanum (iupac2021).
+    pub const LA: f64 = 138.90547;
+    /// Cerium (iupac2021).
+    pub const CE: f64 = 140.116;
+    /// Praseodymium (iupac2021).
+    pub const PR: f64 = 140.90766;
+    /// Neodymium (iupac2021).
+    pub const ND: f64 = 144.242;
+    /// Samarium (iupac2021).
+    pub const SM: f64 = 150.36;
+    /// Europium (iupac2021).
+    pub const EU: f64 = 151.964;
+    /// Gadolinium (iupac2021).
+    pub const GD: f64 = 157.25;
+    /// Terbium (iupac2021).
+    pub const TB: f64 = 158.925354;
+    /// Dysprosium (iupac2021).
+    pub const DY: f64 = 162.5;
+    /// Holmium (iupac2021).
+    pub const HO: f64 = 164.930329;
+    /// Erbium (iupac2021).
+    pub const ER: f64 = 167.259;
+    /// Thulium (iupac2021).
+    pub const TM: f64 = 168.934219;
+    /// Ytterbium (iupac2021).
+    pub const YB: f64 = 173.045;
+    /// Lutetium (iupac2021).
+    pub const LU: f64 = 174.9668;
+    /// Hafnium (iupac2021).
+    pub const HF: f64 = 178.486;
+    /// Tantalum (iupac2021).
+    pub const TA: f64 = 180.94788;
+    /// Tungsten (iupac2021).
+    pub const W: f64 = 183.84;
+    /// Rhenium (iupac2021).
+    pub const RE: f64 = 186.207;
+    /// Osmium (iupac2021).
+    pub const OS: f64 = 190.23;
+    /// Iridium (iupac2021).
+    pub const IR: f64 = 192.217;
+    /// Platinum (iupac2021).
+    pub const PT: f64 = 195.084;
+    /// Gold (iupac2021).
+    pub const AU: f64 = 196.96657;
+    /// Mercury (iupac2021).
+    pub const HG: f64 = 200.592;
+    /// Thallium (iupac2021).
+    pub const TL: f64 = 204.38;
+    /// Lead (iupac2021).
+    pub const PB: f64 = 207.2;
+    /// Bismuth (iupac2021).
+    pub const BI: f64 = 208.9804;
+    /// Thorium (iupac2021).
+    pub const TH: f64 = 232.0377;
+    /// Protactinium (iupac2021).
+    pub const PA: f64 = 231.03588;
+    /// Uranium (iupac2021).
+    pub const U: f64 = 238.02891;
+}
+
+/// Molar masses, kg/mol, worked out from each substance's formula (as the reader does).
+pub mod molar_mass {
+    /// h2o.
+    pub const H2O: f64 = 0.018015;
+    /// co2.
+    pub const CO2: f64 = 0.044009;
+    /// ch4.
+    pub const CH4: f64 = 0.016042999999999998;
+    /// nh3.
+    pub const NH3: f64 = 0.017030999999999998;
+    /// n2.
+    pub const N2: f64 = 0.028014;
+    /// o2.
+    pub const O2: f64 = 0.031998;
+    /// ar.
+    pub const AR: f64 = 0.03995;
+    /// h2.
+    pub const H2: f64 = 0.002016;
+    /// he.
+    pub const HE: f64 = 0.004002602;
+    /// d2.
+    pub const D2: f64 = 0.00402820355624;
+    /// he3.
+    pub const HE3: f64 = 0.00301602932197;
+    /// ne.
+    pub const NE: f64 = 0.020179700000000002;
+    /// kr.
+    pub const KR: f64 = 0.083798;
+    /// xe.
+    pub const XE: f64 = 0.131293;
+    /// so2.
+    pub const SO2: f64 = 0.064058;
+    /// co.
+    pub const CO: f64 = 0.028009999999999997;
+    /// h2s.
+    pub const H2S: f64 = 0.034076;
+    /// h+.
+    pub const H_: f64 = 0.001008;
+    /// hco3-.
+    pub const HCO3_: f64 = 0.061016;
+    /// hs-.
+    pub const HS_: f64 = 0.03306800000000001;
+    /// s.
+    pub const S: f64 = 0.032060000000000005;
+    /// so4-2.
+    pub const SO4_2: f64 = 0.09605600000000002;
+    /// nh4+.
+    pub const NH4_: f64 = 0.018039000000000003;
+    /// no2-.
+    pub const NO2_: f64 = 0.046005000000000004;
+    /// no3-.
+    pub const NO3_: f64 = 0.062004;
+    /// fe+2.
+    pub const FE_2: f64 = 0.055845;
+    /// fe+3.
+    pub const FE_3: f64 = 0.055845;
+    /// acetate-.
+    pub const ACETATE_: f64 = 0.059044;
+    /// glucose.
+    pub const GLUCOSE: f64 = 0.180156;
+    /// ethanol.
+    pub const ETHANOL: f64 = 0.046069000000000006;
+    /// ch2o.
+    pub const CH2O: f64 = 0.030026;
+}
+
+/// Triple point temperature, K, by substance (the sheet's `phases.triple_point_k`).
+pub mod triple_point_k {
+    /// h2o (nist-webbook).
+    pub const H2O: f64 = 273.16;
+    /// co2 (nist-webbook).
+    pub const CO2: f64 = 216.58;
+    /// ch4 (nist-webbook).
+    pub const CH4: f64 = 90.67;
+    /// nh3 (nist-webbook).
+    pub const NH3: f64 = 195.4;
+    /// n2 (nist-webbook).
+    pub const N2: f64 = 63.14;
+    /// ar (nist-webbook).
+    pub const AR: f64 = 83.81;
+    /// co (nist-webbook).
+    pub const CO: f64 = 68.13;
+}
+
+/// Triple point pressure, Pa, by substance (the sheet's `phases.triple_point_pa`).
+pub mod triple_point_pa {
+    /// h2o (nist-webbook).
+    pub const H2O: f64 = 611.657;
+    /// co2 (nist-webbook).
+    pub const CO2: f64 = 518500.0;
+    /// ch4 (nist-webbook).
+    pub const CH4: f64 = 11690.0;
+    /// nh3 (nist-webbook).
+    pub const NH3: f64 = 6060.0;
+    /// n2 (nist-webbook).
+    pub const N2: f64 = 12520.0;
+    /// ar (nist-webbook).
+    pub const AR: f64 = 68900.0;
+    /// co (nist-webbook).
+    pub const CO: f64 = 15370.0;
+}
+
+/// Density of the solid at its reference state, kg/m3, by substance (the sheet's `phases.density_solid`).
+pub mod density_solid {
+    /// h2o (petrenko1999).
+    pub const H2O: f64 = 917.0;
+    /// co2 (nist-webbook).
+    pub const CO2: f64 = 1560.0;
+    /// ch4 (fudge-register).
+    pub const CH4: f64 = 494.0;
+    /// nh3 (nist-webbook).
+    pub const NH3: f64 = 820.0;
+    /// n2 (fudge-register).
+    pub const N2: f64 = 1027.0;
+    /// ar (fudge-register).
+    pub const AR: f64 = 1616.0;
+    /// co (fudge-register).
+    pub const CO: f64 = 929.0;
+}
+
+/// Density of the liquid at its reference state, kg/m3, by substance (the sheet's `phases.density_liquid`).
+pub mod density_liquid {
+    /// h2o (nist-webbook).
+    pub const H2O: f64 = 1000.0;
+    /// ch4 (nist-webbook).
+    pub const CH4: f64 = 450.0;
+    /// n2 (nist-webbook).
+    pub const N2: f64 = 800.0;
+    /// o2 (schmidt-wagner1985).
+    pub const O2: f64 = 1141.2;
+    /// h2 (leachman2009).
+    pub const H2: f64 = 70.85;
+    /// d2 (coolprop2014).
+    pub const D2: f64 = 163.5;
+    /// he3 (fudge-register).
+    pub const HE3: f64 = 59.0;
+}
+
+/// Latent heat of vaporisation, J/kg, by substance (the sheet's `phases.latent_vaporisation`).
+pub mod latent_vaporisation {
+    /// h2o (nist-webbook).
+    pub const H2O: f64 = 2468000.0;
+    /// ch4 (nist-webbook).
+    pub const CH4: f64 = 531000.0;
+    /// n2 (nist-webbook).
+    pub const N2: f64 = 200000.0;
+}
+
+/// Thermal conductivity fits of the solid, by substance (the sheet's `thermal.conductivity_solid`):
+/// the coefficients, in the order the fit names them.
+pub mod conductivity_solid {
+    /// h2o: k = a / T (W m-1 K-1; petrenko1999).
+    pub const H2O: [f64; 1] = [651.0];
+}
+
+/// Density, kg/m3, by mixture (the sheet's mixtures).
+pub mod mixture_density {
+    /// dry-air (ussa1976).
+    pub const DRY_AIR: f64 = 1.225;
+    /// surface-rock (fudge-register).
+    pub const SURFACE_ROCK: f64 = 3500.0;
+    /// surface-ice (fudge-register).
+    pub const SURFACE_ICE: f64 = 930.0;
+    /// crust-rock (turcotte2014).
+    pub const CRUST_ROCK: f64 = 2700.0;
+    /// mantle-rock (turcotte2014).
+    pub const MANTLE_ROCK: f64 = 3300.0;
+    /// sediment (turcotte2014).
+    pub const SEDIMENT: f64 = 2300.0;
+    /// quartz-sand (crc-handbook).
+    pub const QUARTZ_SAND: f64 = 2650.0;
+    /// magma-dre (mastin2009).
+    pub const MAGMA_DRE: f64 = 2500.0;
+    /// formation-metal (fudge-register).
+    pub const FORMATION_METAL: f64 = 7800.0;
+    /// formation-rock (fudge-register).
+    pub const FORMATION_ROCK: f64 = 3000.0;
+    /// formation-carbon (fudge-register).
+    pub const FORMATION_CARBON: f64 = 2000.0;
+    /// formation-water (fudge-register).
+    pub const FORMATION_WATER: f64 = 1000.0;
+    /// formation-co2 (fudge-register).
+    pub const FORMATION_CO2: f64 = 1500.0;
+    /// formation-co (fudge-register).
+    pub const FORMATION_CO: f64 = 900.0;
+}
+
+/// Yield strength, Pa, by mixture (the sheet's mixtures).
+pub mod mixture_yield_strength {
+    /// surface-rock (lineweaver2010).
+    pub const SURFACE_ROCK: f64 = 154000000.0;
+    /// surface-ice (lineweaver2010).
+    pub const SURFACE_ICE: f64 = 5600000.0;
+}
+
+/// Each unit's factor to SI, by unit id (the sheet's units table).
+pub mod unit {
+    /// one.
+    pub const ONE: f64 = 1.0;
+    /// metre.
+    pub const M: f64 = 1.0;
+    /// kilogram.
+    pub const KG: f64 = 1.0;
+    /// second.
+    pub const S: f64 = 1.0;
+    /// ampere.
+    pub const A: f64 = 1.0;
+    /// kelvin.
+    pub const K: f64 = 1.0;
+    /// mole.
+    pub const MOL: f64 = 1.0;
+    /// candela.
+    pub const CD: f64 = 1.0;
+    /// newton.
+    pub const N: f64 = 1.0;
+    /// pascal.
+    pub const PA: f64 = 1.0;
+    /// joule.
+    pub const J: f64 = 1.0;
+    /// watt.
+    pub const W: f64 = 1.0;
+    /// hertz.
+    pub const HZ: f64 = 1.0;
+    /// tesla.
+    pub const T: f64 = 1.0;
+    /// kilometre.
+    pub const KM: f64 = 1000.0;
+    /// hour.
+    pub const H: f64 = 3600.0;
+    /// degree Celsius.
+    pub const DEGC: f64 = 1.0;
+    /// watt per square metre.
+    pub const W_M2: f64 = 1.0;
+    /// bar.
+    pub const BAR: f64 = 100000.0;
+    /// metre per second.
+    pub const M_S: f64 = 1.0;
+    /// kilometre per second.
+    pub const KM_S: f64 = 1000.0;
+    /// metre per second squared.
+    pub const M_S2: f64 = 1.0;
+    /// kilogram per cubic metre.
+    pub const KG_M3: f64 = 1.0;
+    /// gram per cubic centimetre.
+    pub const G_CM3: f64 = 1000.0;
+    /// microtesla.
+    pub const UT: f64 = 1e-06;
+    /// gauss.
+    pub const GAUSS: f64 = 0.0001;
+    /// ampere square metre.
+    pub const A_M2: f64 = 1.0;
+}

@@ -8,12 +8,13 @@
 import type { Json } from "./json.ts";
 import type { SceneFact, SceneSubject, SystemScene } from "./scene.ts";
 import type { InputValue, ViewSession } from "./session.ts";
+import { numberOf, type SheetRef } from "./sheet.ts";
 
 export interface InputBinding {
   input: string;
   /** "fact": a fact of the subject (or of the system's star, derived ones included); "const": a fixed value; "now": the ruler's time in years, divided by `scale`. */
   from: "fact" | "const" | "now";
-  scale?: number;
+  scale?: number | SheetRef;
   subject?: "self" | "star";
   field?: string;
   value?: number;
@@ -26,8 +27,8 @@ export interface OutputBinding {
   label: string;
   /** Quantity kind the flow publishes. */
   kind: string;
-  /** Shown value = SI value / scale, in `unit`. */
-  scale: number;
+  /** Shown value = SI value / scale, in `unit` (a number, or a sheet reference such as `{"sheet": "constants/au"}`). */
+  scale: number | SheetRef;
   unit: string;
   digits: number;
   /** Not derived for subjects with any of these tags (e.g. no surface temperature for a gas giant). */
@@ -82,7 +83,7 @@ function bindInputs(rule: DerivationRule, s: SceneSubject, star: SceneSubject | 
   const out: Record<string, InputValue> = {};
   for (const b of rule.inputs) {
     if (b.from === "now") {
-      out[b.input] = { value: now_yr / (b.scale ?? 1), ...(b.unit ? { unit: b.unit } : {}), source: "authored" };
+      out[b.input] = { value: now_yr / numberOf(b.scale ?? 1), ...(b.unit ? { unit: b.unit } : {}), source: "authored" };
       continue;
     }
     if (b.from === "const") {
@@ -116,7 +117,7 @@ export async function deriveScene(session: Pick<ViewSession, "derive" | "stack">
       for (const o of rule.outputs) {
         const d = r.values[o.kind];
         if (!d || o.except_tags?.some((t) => cur.tags.includes(t))) continue;
-        const v = d.value / o.scale;
+        const v = d.value / numberOf(o.scale);
         const text = sig(v, o.digits);
         const fact: SceneFact = {
           field: o.field,
@@ -131,7 +132,7 @@ export async function deriveScene(session: Pick<ViewSession, "derive" | "stack">
           fictional: d.fictional,
           publisher: d.publisher,
           changed: !basePacks.has(d.publisher.split("/")[0]!),
-          scale: o.scale,
+          scale: numberOf(o.scale),
           digits: o.digits,
         };
         const i = facts.findIndex((f) => f.field === o.field);

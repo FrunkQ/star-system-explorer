@@ -50,8 +50,8 @@ pub const L4_SHARE: f64 = 0.6;
 pub const SIZE_CAP_KM: f64 = 2_400.0;
 pub const RING_CAP_KM: f64 = 0.01;
 
-const R_EARTH_KM: f64 = 6_371.0;
-const AU_KM: f64 = 1.495_978_707e8;
+const R_EARTH_KM: f64 = sse_core::sheet::R_EARTH_MEAN / 1e3;
+const AU_KM: f64 = sse_core::sheet::AU / 1e3;
 const MSUN_KG: f64 = sse_core::sheet::M_SUN;
 /// Densities by element group, kg/m^3 (metal, rock, carbon, water, CO2, CO).
 const DENSITY: [f64; 6] = [7_800.0, 3_000.0, 2_000.0, 1_000.0, 1_500.0, 900.0];

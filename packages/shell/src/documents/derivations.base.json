@@ -26,7 +26,7 @@
      "field": "luminosity_sun",
      "label": "Luminosity now",
      "kind": "star.luminosity_at_age",
-     "scale": 3.828e+26,
+     "scale": {"sheet": "constants/L_sun"},
      "unit": "L☉",
      "digits": 3
     },
@@ -34,7 +34,7 @@
      "field": "radius_sun",
      "label": "Radius",
      "kind": "star.radius",
-     "scale": 695700000.0,
+     "scale": {"sheet": "constants/R_sun"},
      "unit": "R☉",
      "digits": 3
     },
@@ -50,7 +50,7 @@
      "field": "ms_life",
      "label": "Main sequence",
      "kind": "star.main_sequence_lifetime",
-     "scale": 3.15576e+16,
+     "scale": {"sheet": "units/gyr"},
      "unit": "Gyr",
      "digits": 3
     }
@@ -80,7 +80,7 @@
      "field": "gravity_g",
      "label": "Gravity",
      "kind": "body.surface_gravity",
-     "scale": 9.80665,
+     "scale": {"sheet": "constants/g0"},
      "unit": "g",
      "digits": 3
     },
@@ -140,7 +140,7 @@
      "field": "year_d",
      "label": "Year",
      "kind": "orbit.period",
-     "scale": 86400,
+     "scale": {"sheet": "constants/day"},
      "unit": "d",
      "digits": 3
     },
@@ -148,7 +148,7 @@
      "field": "peri_au",
      "label": "Closest",
      "kind": "orbit.periapsis",
-     "scale": 149597870700.0,
+     "scale": {"sheet": "constants/au"},
      "unit": "AU",
      "digits": 3
     },
@@ -156,7 +156,7 @@
      "field": "apo_au",
      "label": "Farthest",
      "kind": "orbit.apoapsis",
-     "scale": 149597870700.0,
+     "scale": {"sheet": "constants/au"},
      "unit": "AU",
      "digits": 3
     }

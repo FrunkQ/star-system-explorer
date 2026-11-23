@@ -33,11 +33,11 @@ pub const MASS_UNIT: f64 = 1.0e-12;
 const G: f64 = sse_core::sheet::G;
 const SIGMA_SB: f64 = sse_core::sheet::SIGMA_SB;
 const K_B: f64 = sse_core::sheet::K_B;
-const M_H: f64 = 1.673_5e-27;
+const M_H: f64 = sse_core::sheet::atomic_weight::H * 1e-3 / sse_core::sheet::N_A;
 const AU_M: f64 = sse_core::sheet::AU;
 const MSUN_KG: f64 = sse_core::sheet::M_SUN;
 const YR_S: f64 = sse_core::sheet::YR_JULIAN;
-const MYR_S: f64 = 3.155_76e13;
+const MYR_S: f64 = 1e6 * sse_core::sheet::YR_JULIAN;
 /// Mean molecular weight of disc gas.
 const MU: f64 = 2.34;
 

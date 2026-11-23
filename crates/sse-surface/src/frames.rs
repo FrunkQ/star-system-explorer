@@ -37,7 +37,7 @@ pub const FRAMES_VERSION: &str = "surface-frames-v1";
 
 /// Yield stress of ice in a perfectly plastic sheet, Pa (Nye 1951).
 const ICE_YIELD_PA: f64 = 1.0e5;
-const RHO_ICE: f64 = 917.0;
+const RHO_ICE: f64 = sse_core::sheet::density_solid::H2O;
 /// Frames for a world whose plates never moved.
 const STILL_FRAMES: u32 = 12;
 /// Impacts listed as events: the largest this many.

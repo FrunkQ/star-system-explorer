@@ -29,6 +29,7 @@ pub mod expr;
 pub mod laws;
 pub mod lookup;
 pub mod phases;
+pub mod refs;
 
 /// Relative tolerance between a sheet unit and the built-in one of the
 /// same id.
@@ -264,6 +265,31 @@ impl Reference {
         } else {
             Err(problems)
         }
+    }
+
+    /// The shipped master data sheet (packs/base-reference) on its own.
+    pub fn base() -> Self {
+        let m = sse_pack::PackManifest::from_json(BASE_PACK).expect("base-reference parses");
+        Self::from_packs(&[m]).expect("base-reference loads clean")
+    }
+
+    /// A gas's molar mass, kg/mol: a substance from its formula, a mixture
+    /// from its recipe by volume (the mole-weighted mean of its parts).
+    pub fn gas_molar_mass_kg_mol(&self, id: &str) -> Option<f64> {
+        if let Some(m) = self.molar_mass_kg_mol(id) {
+            return Some(m);
+        }
+        let row = self.row("mixtures", id)?;
+        if row.get("by").and_then(J::as_str) != Some("volume") {
+            return None;
+        }
+        let (mut sum, mut x) = (0.0, 0.0);
+        for (part, share) in row.get("recipe")?.as_object()? {
+            let f = share.as_f64()?;
+            sum += f * self.molar_mass_kg_mol(part)?;
+            x += f;
+        }
+        (x > 0.0).then(|| sum / x)
     }
 
     pub fn row(&self, table: &str, id: &str) -> Option<&Map<String, J>> {
@@ -926,6 +952,9 @@ impl Reference {
         J::Object(out)
     }
 }
+
+/// The shipped sheet, as JSON.
+pub const BASE_PACK: &str = include_str!("../../../packs/base-reference/pack.json");
 
 /// Pressure in Pa from a vapour-pressure fit at `t` K.
 pub fn vapour_pressure_pa(fit: &J, t: f64) -> Option<f64> {

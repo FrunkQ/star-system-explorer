@@ -6,7 +6,7 @@
 // and turns the answer into the renderer's numbers. Gases the kernel's table
 // lacks are left out and listed, never invented. Aerosols and absorption are
 // not modelled yet (docs/fudges.md).
-import type { Json } from "../../ui-contract/src/index.ts";
+import { constant, type Json } from "../../ui-contract/src/index.ts";
 
 export const REFERENCES = [
   { text: "Bucholtz, A. (1995). Rayleigh-scattering calculations for the terrestrial atmosphere. Applied Optics 34(15), 2765-2773.", doi: "10.1364/AO.34.002765" },
@@ -70,7 +70,7 @@ export function airFromOptics(o: { mean_molecular_mass_kg: number; scale_height_
     rayleigh_m: at.map((x) => x.beta_per_m) as [number, number, number],
     scale_height_m: o.scale_height_m,
     density_m3: o.surface_density_m3,
-    mean_molar_mass: o.mean_molecular_mass_kg / 1.66053906660e-27,
+    mean_molar_mass: o.mean_molecular_mass_kg / constant("m_u"),
     zenith_depth: at.map((x) => x.tau) as [number, number, number],
     unknown_gases: req.unknown_gases,
     unknown_share: req.unknown_share,

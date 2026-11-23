@@ -115,7 +115,7 @@
      "ia_min_gyr": 0.04,
      "ia_per_mass": 0.002,
      "inner_rd": 0.1,
-     "k40_half_life_gyr": 1.248,
+     "k40_half_life_gyr": {"sheet": "isotopes/k40", "property": "half_life_s", "in": "gyr"},
      "ks_a": 0.00025,
      "ks_n": 1.4,
      "nsm_min_gyr": 0.03,

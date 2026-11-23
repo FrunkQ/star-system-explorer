@@ -66,7 +66,7 @@
        0.12
       ],
       "unit": "au",
-      "divide_by": 149597870700.0,
+      "divide_by": {"sheet": "units/au"},
       "missing": 0
      }
     ],
@@ -81,7 +81,7 @@
        0.05
       ],
       "unit": "Gyr",
-      "divide_by": 3.15576e+16
+      "divide_by": {"sheet": "units/gyr"}
      }
     ],
     [
@@ -332,7 +332,7 @@
        6400
       ],
       "unit": "Earth masses",
-      "divide_by": 5.972e+24
+      "divide_by": {"sheet": "units/m_earth"}
      }
     ],
     [
@@ -346,7 +346,7 @@
        1
       ],
       "unit": "days",
-      "divide_by": 86400.0,
+      "divide_by": {"sheet": "units/day"},
       "missing": 0
      }
     ],
@@ -397,7 +397,7 @@
        25
       ],
       "unit": "Earth radii",
-      "divide_by": 6371000.0
+      "divide_by": {"sheet": "constants/R_earth_mean"}
      }
     ],
     [

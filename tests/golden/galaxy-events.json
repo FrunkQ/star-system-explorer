@@ -1,71 +1,71 @@
 {
   "after": {
-    "black_hole": 38382366.511130184,
-    "bulge_fraction": 0.4446458445996965,
-    "exposure_digest": "d572a742590a4c98fc6a2a88033246ef7a15c53add25bcfb7c6c0b0eb6f9bd8c",
-    "galaxy_digest": "cba9ad38ccc942ec0091d16c19b4e13c6dea2a4eed066e07e42a8387e98ae3e7",
+    "black_hole": 38382367.9650494,
+    "bulge_fraction": 0.4446458439081774,
+    "exposure_digest": "2b78c2a8476b530cb2a55b0415b1e322ce1411c21193646adfef23197d462dcd",
+    "galaxy_digest": "338fafeb8fa504605625ecc08ed2e9298bd50dc16063775296934ca42674eb13",
     "harmful": 4,
     "hits": {
       "active_nucleus": 1,
       "arm_entry": 1,
       "arm_exit": 2,
-      "core_collapse": 201,
+      "core_collapse": 202,
       "encounter": 198,
       "gamma_ray_burst": 3,
       "merger": 1,
       "type_ia": 13
     },
     "morphology": "barred",
-    "sfr": 2.474259572802888,
+    "sfr": 2.4742596566517285,
     "showers": 51,
-    "stars": 31081441750.91179
+    "stars": 31081443704.819237
   },
   "before": {
-    "black_hole": 26840820.52473833,
-    "bulge_fraction": 0.09043211860797816,
-    "exposure_digest": "fbb175f1d2ab5054c5267a4337f07a5af2af6b37759c7d44bf7dd2a8abaceeb2",
-    "galaxy_digest": "7c1e2e1c1ba98bbff74a3a445bb5b2cda94c97f0993b4c0cf2eb20e4b8a93b15",
+    "black_hole": 26840822.148292452,
+    "bulge_fraction": 0.09043211351088024,
+    "exposure_digest": "f9dd983dc4fea588aa6a645a7bc1c4e5b3e1d4006645f5445a24aff94de6ac23",
+    "galaxy_digest": "196218ae5e3d046d7d71ab2a903b1ac7cebff18841a52bc8b7ec28487cbb7cd3",
     "harmful": 5,
     "hits": {
       "arm_entry": 1,
       "arm_exit": 2,
-      "core_collapse": 225,
+      "core_collapse": 227,
       "encounter": 199,
       "gamma_ray_burst": 3,
       "type_ia": 13
     },
     "morphology": "barred",
-    "sfr": 2.9493241069056495,
+    "sfr": 2.9493241836504542,
     "showers": 51,
-    "stars": 30734403235.781662
+    "stars": 30734405117.90759
   },
   "changes": [
     {
       "curve": "stars",
-      "max_change": 0.10596621549626646
+      "max_change": 0.10596621180028487
     },
     {
       "curve": "bulge_fraction",
-      "max_change": 5.407535866410447
+      "max_change": 5.4075362387047905
     },
     {
       "curve": "gas",
-      "max_change": 0.24259652163921935
+      "max_change": 0.2425965213616669
     },
     {
       "curve": "sfr",
-      "max_change": 0.24259652163921933
+      "max_change": 0.24259652136166693
     },
     {
       "curve": "z_gas",
-      "max_change": 0.03433024482246903
+      "max_change": 0.03433024331698386
     },
     {
       "curve": "black_hole",
-      "max_change": 0.7415831244260838
+      "max_change": 0.7415830596683969
     }
   ],
-  "chronicle_head": "69f51730016e5435064883adf1550915fdf6d9e2e5ee2edeb40fbe3e9014e595",
+  "chronicle_head": "74c70bc1ab3ccde968af4c89085dbe6db75a3992ede7e92b29ef7f9faf040fab",
   "edit_from_gyr": 9.0,
   "edits": [
     {

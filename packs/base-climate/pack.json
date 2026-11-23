@@ -366,19 +366,19 @@
       {
        "name": "methane-ice sand",
        "diameter_m": 0.00025,
-       "density_kg_m3": 494.0,
-       "below_k": 90.67
+       "density_kg_m3": {"sheet": "substances/ch4", "property": "density_solid"},
+       "below_k": {"sheet": "substances/ch4", "property": "triple_point_k"}
       },
       {
        "name": "water-ice sand",
        "diameter_m": 0.00025,
-       "density_kg_m3": 920.0,
+       "density_kg_m3": {"sheet": "substances/h2o", "property": "density_solid"},
        "below_k": 180.0
       },
       {
        "name": "rock sand",
        "diameter_m": 0.00025,
-       "density_kg_m3": 2650.0
+       "density_kg_m3": {"sheet": "mixtures/quartz-sand", "property": "density"}
       }
      ],
      "mobility": {

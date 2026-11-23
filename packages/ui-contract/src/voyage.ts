@@ -4,6 +4,8 @@
 // refusals. This file words the answer and lays the systems out on a small
 // top-down map. It computes no physics.
 
+import { constant } from "./sheet.ts";
+
 /** Stock ships that can cross between stars (base-nav pack), by template id. */
 export const VOYAGE_SHIPS: readonly { id: string; name: string; drive: string }[] = [
   { id: "jump-courier", name: "Jump courier", drive: "Jump-2, a pack rule (fictional); hydrogen from a giant, ice or a port" },
@@ -146,7 +148,7 @@ export function voyageSpan(d: number): string {
 
 /** Peak speed in words: a share of light, or km/s when slow. */
 export function speedWords(beta: number): string {
-  return beta >= 0.01 ? `${(beta * 100).toFixed(1)}% of light` : `${Math.round(beta * 299_792.458).toLocaleString("en-GB")} km/s`;
+  return beta >= 0.01 ? `${(beta * 100).toFixed(1)}% of light` : `${Math.round((beta * constant("c")) / 1e3).toLocaleString("en-GB")} km/s`;
 }
 
 /** The difference the crew feels: how much younger they come home. */

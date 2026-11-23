@@ -14,7 +14,7 @@ pub use sse_climate::circulation::Circulation;
 pub use sse_climate::ebm::{declination_deg, p_sat};
 use sse_core::math as m;
 
-const R_GAS: f64 = 8.314462618;
+const R_GAS: f64 = sse_core::sheet::R_GAS;
 
 /// The cloud substance and the height it forms at.
 #[derive(Clone, PartialEq, Debug, Serialize, Deserialize)]

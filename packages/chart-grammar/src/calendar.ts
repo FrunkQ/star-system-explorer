@@ -6,10 +6,11 @@
 // starts, not the Big Bang. Presentation only: the kernel's time is seconds,
 // and positions at a time come from the kernel.
 import { formatYears, niceStep, type Tick } from "./ruler.ts";
+import { constant } from "../../ui-contract/src/index.ts";
 
 /** Seconds in the workspace's year (the Julian year, as the kernel's YEAR_S). */
-export const YEAR_S = 31_557_600;
-export const DAY_S = 86_400;
+export const YEAR_S = constant("yr_julian");
+export const DAY_S = constant("day");
 
 export interface Calendar {
   id: string;
