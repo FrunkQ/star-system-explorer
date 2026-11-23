@@ -8,8 +8,8 @@
 -->
 <script lang="ts">
   import { untrack } from "svelte";
-  import { BOOKKEEPING, byKind, constructsIn, factOf, kindOf, placeHash, secondsToYears, shipLog, templateOf, type ConstructTemplate, type Json, type ShipLogEntry, type PlayerSubject, type SystemScene, type ViewContext } from "../../../ui-contract/src/index.ts";
-  import { dateWords, defaultCalendar, fromPackCalendar, opensFrom } from "../../../chart-grammar/src/index.ts";
+  import { BOOKKEEPING, byKind, constructsIn, factOf, kindOf, placeHash, secondsToYears, shipLog, templateOf, eyesShow, secrecyRelevant, tableOf, type IntentResult, type KnownChange, type KnownLandmark, type KnownTo as KnownRead, type ConstructTemplate, type Json, type ShipLogEntry, type PlayerSubject, type SystemScene, type ViewContext } from "../../../ui-contract/src/index.ts";
+  import { KnownTo, dateWords, defaultCalendar, fromPackCalendar, opensFrom } from "../../../chart-grammar/src/index.ts";
   import { fieldWords, valueWords } from "./words.ts";
 
   let { ctx, scene }: { ctx: ViewContext; scene: SystemScene; params: Record<string, Json> } = $props();
@@ -116,6 +116,35 @@
     delete edits[field];
     ws.revision++;
   }
+  // Known to (SV2): each construct's eye in a narrow column on the left, sortable so "what the table does not know"
+  // is one press; the eye shows on Build and Run once secrecy matters here. A GM-made base is where it most often does.
+  let known = $state.raw<Record<string, KnownRead>>({});
+  $effect(() => {
+    const list = listed.map((x) => x.address);
+    void ws.revision;
+    if (!gm || (ws.desk !== "build" && ws.desk !== "run")) return void (known = {});
+    let live = true;
+    void Promise.all(list.map(async (a) => [a, await session.knownTo(a)] as const)).then((rs) => {
+      if (live) known = Object.fromEntries(rs.flatMap(([a, r]) => (r.ok ? [[a, r.value]] : [])));
+    });
+    return () => (live = false);
+  });
+  const eyes = $derived(eyesShow(ws.desk, Object.values(known).some((k) => secrecyRelevant(k, !!ws.shared))));
+  const landmarkOf = (a: string): KnownLandmark => tableOf(known[a])?.landmark ?? "known";
+  let unknownFirst = $state(false);
+  const RANK: Record<KnownLandmark, number> = { gm_only: 0, heard_of: 1, known: 2 };
+  const rows = $derived(unknownFirst ? [...listed].sort((a, b) => RANK[landmarkOf(a.address)] - RANK[landmarkOf(b.address)]) : listed);
+  const why = (r: IntentResult) => (r.status === "refused" ? r.reason : r.status === "pending" ? "sent to the GM" : r.status === "error" ? r.message : "");
+  const setKnownOf = (address: string) => async (c: KnownChange): Promise<{ ok: true; undo?: string } | { ok: false; why: string }> => {
+    const r = await session.send({ kind: "set_known", address, ...c, at_yr: ws.now_yr });
+    if (r.status === "applied") return (ws.revision++, { ok: true, ...(r.event_id ? { undo: r.event_id } : {}) });
+    return { ok: false, why: why(r) };
+  };
+  async function undoKnown(undo: string): Promise<string | null> {
+    const r = await session.send({ kind: "undo_known", undo, at_yr: ws.now_yr });
+    return r.status === "applied" ? (ws.revision++, null) : why(r);
+  }
+
   let retiring = $state(false);
   let reason = $state("");
   async function retireIt() {
@@ -178,9 +207,11 @@
     {#if note}<p class="small" aria-live="polite" data-note>{note}</p>{/if}
 
     <div class="body">
-      <ul class="list" aria-label="Constructs">
-        {#each listed as s (s.address)}
-          <li>
+      <ul class="list" aria-label="Constructs" class:eyes>
+        {#if eyes && listed.length > 1}<li class="eyehead"><button type="button" class="sort" aria-pressed={unknownFirst} data-known-sort onclick={() => (unknownFirst = !unknownFirst)} title="Put what the table does not know first">{unknownFirst ? "What the table does not know first" : "Sort by who knows"}</button></li>{/if}
+        {#each rows as s (s.address)}
+          <li class:pencil={eyes && landmarkOf(s.address) !== "known"}>
+            {#if eyes && known[s.address]}<KnownTo read={known[s.address]!} label={nameOf(s)} hold={(ws.players_online ?? 0) > 0} onset={setKnownOf(s.address)} onundo={undoKnown} />{/if}
             <button type="button" class="row-btn" aria-pressed={picked === s.address} onclick={() => ((picked = picked === s.address ? null : s.address), (retiring = false))} data-construct={s.address}>
               <b>{nameOf(s)}</b> <span class="muted">{templateOf(s, templates)?.label ?? kindOf(s.address)} · {whereWords(s.address)}</span>
             </button>
@@ -264,6 +295,12 @@
   .pop { border: 1px solid var(--sse-rule); background: var(--sse-ground); padding: 12px; display: flex; flex-direction: column; gap: 8px; max-height: 60vh; overflow: auto; }
   h4 { margin: 6px 0 0; font-size: 12px; text-transform: uppercase; letter-spacing: 0.06em; color: var(--sse-ink-muted); }
   .lib, .list { list-style: none; margin: 0; padding: 0; }
+  .list.eyes li { display: flex; align-items: center; gap: 2px; }
+  .list.eyes .row-btn { flex: 1; min-width: 0; }
+  /* Pencil: a construct the table has not been told of reads quieter, in italic, with a dotted rule. */
+  .list li.pencil .row-btn { color: var(--sse-ink-muted); font-style: italic; border-bottom-style: dotted; }
+  .eyehead { justify-content: flex-start; }
+  .sort { font: inherit; font-size: 12px; min-height: 28px; padding: 0 6px; border: none; background: none; color: var(--sse-ink-muted); text-decoration: underline; cursor: pointer; }
   .body { display: grid; grid-template-columns: minmax(0, 1fr); gap: 16px; }
   .body:has(.card) { grid-template-columns: minmax(0, 2fr) minmax(260px, 3fr); }
   .card { border-left: 1px solid var(--sse-rule); padding-left: 16px; min-width: 0; }

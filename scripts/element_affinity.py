@@ -31,6 +31,15 @@ CORE_FIX = {"co": (2500.0, "printed 0.25 ppm in the copy read; 0.25 wt% meant (M
 CORE_SKIP = {"ti": "printed 0.03 ppm in the copy read, unit unsure: left out"}
 
 
+# The oxide each rock-forming element takes in rock, by the convention of
+# rock analyses (the major-element oxides of McDonough and Sun 1995 and
+# Rudnick and Gao 2003): a substance id on the sheet. A block works out the
+# oxygen bound in rock from these by stoichiometry, so rock's oxygen splits
+# from water's.
+OXIDES = {"si": "sio2", "ti": "tio2", "al": "al2o3", "cr": "cr2o3", "fe": "feo", "mn": "mno", "mg": "mgo",
+          "ca": "cao", "na": "na2o", "k": "k2o", "p": "p2o5", "ni": "nio"}
+
+
 def rides_in(sym, host, tc):
     h = host.lower()
     if sym in RIDES_OVERRIDE:
@@ -89,11 +98,14 @@ def apply(row, data, val):
             cond["tc50_k"] = val(tc, "K", "lodders2003", "unverified", at_pa=10.0, note="50% condensed from a gas of solar make-up at 1e-4 bar (Table 8)")
         if why:
             cond["note"] = why
+        if sym in OXIDES:
+            cond["oxide"] = OXIDES[sym]
         row["condensation"] = cond
     if d.get("ci"):
         v, note = d["ci"]
         if v is not None:
-            row["ci_mass_fraction"] = val(v, "1", "mcdonough-sun1995", "unverified", note=f"CI chondrite by mass; {note}")
+            src = "palme-oneill2014" if "Palme" in note else "mcdonough-sun1995"
+            row["ci_mass_fraction"] = val(v, "1", src, "unverified", note=f"CI chondrite by mass; {note}")
     earth = {}
     core = d.get("core")
     if sym in CORE_FIX:
