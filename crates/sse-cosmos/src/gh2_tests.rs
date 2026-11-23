@@ -49,7 +49,7 @@ fn the_host_table_matches_the_direct_formulas() {
     let mut r = 0.3;
     while r < s.r200_kpc {
         let here = host.at(now, r);
-        let v = s.speeds(r).total * KMS;
+        let v = s.speeds(r).total * kms();
         let pull = v * v / r;
         worst = worst.max((here.pull / pull - 1.0).abs());
         let rho = s.dark_density(r) * (1.0 + s.hot_msun / s.dark_msun);

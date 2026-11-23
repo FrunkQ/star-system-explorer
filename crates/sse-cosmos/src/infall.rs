@@ -47,7 +47,9 @@ use sse_core::math as m;
 
 /// Kilometres per second in kiloparsecs per gigayear (the factor `origin`
 /// already uses).
-pub const KMS: f64 = crate::origin::KMS_KPC_GYR;
+pub fn kms() -> f64 {
+    crate::origin::kms_kpc_gyr()
+}
 
 /// The processes' settings (in `SkyParams.satellites`).
 #[derive(Clone, PartialEq, Debug, Serialize, Deserialize)]
@@ -188,7 +190,7 @@ impl Host {
         let n = op.table_points.max(16) as usize;
         let (l0, l1) = (m::ln(op.table_kpc[0]), m::ln(op.table_kpc[1]));
         let dl = (l1 - l0) / (n - 1) as f64;
-        let g = G_KPC * KMS * KMS;
+        let g = G_KPC * kms() * kms();
         let k = m::ceil((t_to - t_from).max(0.0) / op.slice_gyr) as usize;
         let mut slices = Vec::with_capacity(k + 1);
         for j in 0..=k {
@@ -230,7 +232,7 @@ impl Host {
         };
         for i in 0..n {
             let ri = r(i);
-            let v = s.speeds(ri).total * KMS;
+            let v = s.speeds(ri).total * kms();
             pull.push(v * v / ri);
             let d = s.dark_density(ri);
             rho.push(d * (1.0 + hot_share));
@@ -436,7 +438,7 @@ pub fn infall(
     let phi = 2.0 * m::PI * u[1];
     let n = [sin_t * m::cos(phi), sin_t * m::sin(phi), cos_t];
     let pos = [n[0] * r200, n[1] * r200, n[2] * r200];
-    let v = v200 * KMS * (op.speed_range[0] + (op.speed_range[1] - op.speed_range[0]) * u[2]);
+    let v = v200 * kms() * (op.speed_range[0] + (op.speed_range[1] - op.speed_range[0]) * u[2]);
     let rad = op.radial_range[0] + (op.radial_range[1] - op.radial_range[0]) * u[3];
     let side = m::sqrt((1.0 - rad * rad).max(0.0));
     // Two directions at right angles to n.

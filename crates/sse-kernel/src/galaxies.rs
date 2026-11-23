@@ -596,9 +596,9 @@ pub(crate) fn satellites_seen(
                 "heat": fate.heat,
                 "quenched_gyr": fate.quench_gyr,
                 "velocity_kms": [
-                    fate.vel_kpc_gyr[0] / sse_cosmos::infall::KMS,
-                    fate.vel_kpc_gyr[1] / sse_cosmos::infall::KMS,
-                    fate.vel_kpc_gyr[2] / sse_cosmos::infall::KMS,
+                    fate.vel_kpc_gyr[0] / sse_cosmos::infall::kms(),
+                    fate.vel_kpc_gyr[1] / sse_cosmos::infall::kms(),
+                    fate.vel_kpc_gyr[2] / sse_cosmos::infall::kms(),
                 ],
             });
             out.push((mag, v));

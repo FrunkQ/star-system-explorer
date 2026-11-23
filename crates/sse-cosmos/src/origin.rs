@@ -97,7 +97,12 @@ pub struct Origin {
     pub references: Vec<String>,
 }
 
-pub(crate) const KMS_KPC_GYR: f64 = 1.022_712;
+const KMS_KPC_GYR: f64 = 1.022_712;
+
+/// Kilometres per second in kiloparsecs per gigayear, for `infall`.
+pub(crate) fn kms_kpc_gyr() -> f64 {
+    KMS_KPC_GYR
+}
 
 fn wrap_deg(d: f64) -> f64 {
     let x = d - 360.0 * m::floor(d / 360.0);
