@@ -88,3 +88,11 @@ export function worstDangers(c: WorldCheck): Danger[] {
   const rank = { danger: 2, caution: 1, ok: 0 } as const;
   return (c.dangers ?? []).filter((d) => d.level !== "ok").sort((a, b) => rank[b.level] - rank[a.level] || b.chance.p - a.chance.p || a.id.localeCompare(b.id));
 }
+
+/** The risky option beside a course's arrival burn (Alex, 23 Nov: offered, never forbidden): braking in the
+ * destination's air instead, when the kernel finds air there to brake in. The burn it saves and the kernel's check. */
+export function aerobrakeOption(burns: readonly { what: string; dv_m_s: number }[], world: ShipAtWorld | undefined): { check: WorldCheck; saves_m_s: number } | null {
+  const arr = burns.find((b) => b.what === "arrival burn");
+  const check = world?.checks.find((c) => c.id === "aerocapture");
+  return arr && check && check.verdict !== "not-here" ? { check, saves_m_s: arr.dv_m_s } : null;
+}
