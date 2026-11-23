@@ -83,6 +83,21 @@ try {
       await shot(gm, `v10b-gm-real-hud-${mode}`);
       await gm.getByRole("group", { name: "Scale" }).getByRole("button", { name: "Readable" }).click();
       await gm.getByRole("button", { name: "3D", exact: true }).click();
+      await gm.getByRole("group", { name: "View style" }).getByRole("button", { name: "Chart", exact: true }).click();
+      // HUD on the flat chart too (one set of controls, Alex 23 Nov): off leaves the bodies and belts without the
+      // scale rings, orbit lines and names; on brings them back.
+      const flat = gm.locator("svg[aria-label^='System chart of']");
+      await flat.locator("[data-scale-rings]").waitFor();
+      const named = await flat.locator("text.name").count();
+      assert.ok(named > 0);
+      await gm.getByRole("group", { name: "HUD" }).getByRole("button", { name: "Off" }).click();
+      await flat.locator("[data-scale-rings]").waitFor({ state: "detached" });
+      assert.equal(await flat.locator("text.name").count(), 0, "HUD off: no names");
+      assert.ok((await flat.locator("[data-address]").count()) > 0, "the bodies stay");
+      if (mode === "gpu") await shot(gm, `hud-off-chart-${name}`);
+      await gm.getByRole("group", { name: "HUD" }).getByRole("button", { name: "On" }).click();
+      await flat.locator("[data-scale-rings]").waitFor();
+      assert.equal(await flat.locator("text.name").count(), named);
 
       // A players' 3D screen.
       const pl = await browser.newPage({ viewport: { width: 1280, height: 900 } });

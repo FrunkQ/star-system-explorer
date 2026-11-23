@@ -1,6 +1,6 @@
 import { mount, unmount } from "svelte";
 import type { ViewModule } from "../../../ui-contract/src/index.ts";
-import { VOYAGE_SHIPS, IN_SYSTEM_SHIPS, MINIMISE_WORDS } from "../../../ui-contract/src/index.ts";
+import { VOYAGE_CONTROLS, VOYAGE_SHIPS, IN_SYSTEM_SHIPS, MINIMISE_WORDS } from "../../../ui-contract/src/index.ts";
 import Voyage from "./Voyage.svelte";
 
 /**
@@ -24,6 +24,7 @@ export const voyageView: ViewModule = {
     { name: "gambles", type: "boolean", default: false, meaning: "Let a plan hope for fuel in systems nobody has surveyed, when the odds are good enough.", group: "behaviour" },
   ],
   intents: [],
+  controls: VOYAGE_CONTROLS,
   mount(el, ctx, scene) {
     const props = $state({ ctx, scene, params: ctx.params });
     const c = mount(Voyage, { target: el, props });

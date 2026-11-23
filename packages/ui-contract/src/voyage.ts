@@ -210,8 +210,13 @@ export interface SystemVoyagePlan {
 }
 
 /** A log-radius axis: x for an orbit's size in au, so inner worlds and the Kuiper belt fit one line. */
-export function orbitAxis(w: number, places: readonly { a_au: number }[], pad = 28): (a_au: number) => number {
+export function orbitAxis(w: number, places: readonly { a_au: number }[], pad = 28, real = false): (a_au: number) => number {
   const as = places.map((p) => p.a_au).filter((a) => a > 0);
+  // Real (the Scale switch): AU laid out evenly from the star, so the inner worlds crowd together as they truly do.
+  if (real) {
+    const top = Math.max(...as, 1) * 1.05;
+    return (a) => pad + (Math.max(a, 0) / top) * (w - 2 * pad);
+  }
   const lo = Math.log10(Math.min(...as, 0.3) * 0.8);
   const hi = Math.log10(Math.max(...as, 2) * 1.15);
   return (a) => pad + ((Math.log10(Math.max(a, 1e-3)) - lo) / (hi - lo || 1)) * (w - 2 * pad);
