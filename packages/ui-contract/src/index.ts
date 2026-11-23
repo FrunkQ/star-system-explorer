@@ -105,3 +105,9 @@ export * from "./perf.ts";
 // The master data sheet's constants (MP22): one door to a constant's value for every package.
 export { constant, constantOf, constantIds, SHEET_PACK } from "./sheet.ts";
 export type { SheetConstant } from "./sheet.ts";
+// One Open door (V3 gap 28): what a file is, by looking inside it; Explorers V4 listings, checked by sha256.
+export { sniffFile, sha256Hex, explorersUrl, fetchExplorers, creditWords, CONVERTER_URL } from "./open-file.ts";
+export type { FileKind, Sniffed, ExplorersListing, ExplorersFetched } from "./open-file.ts";
+// Add here (V3 gap 2): what this orbit would make, from formation runs, or anything, marked impossible.
+export { formsHere, anythingClip, clipAt, freeOrbit } from "./add-here.ts";
+export type { FormsHere } from "./add-here.ts";

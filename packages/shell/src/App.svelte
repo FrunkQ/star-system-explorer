@@ -14,11 +14,13 @@
   import YourData from "./YourData.svelte";
   import { downloadText, opening as markOpening, restoreSetAside, setAsideText, unfinishedOpen, watchProblems, type DiagnosticState } from "./your-data.ts";
   import { checkCampaignSave, makeCampaignSave, saveFileName, savedEvents, type CampaignSave } from "../../ui-contract/src/index.ts";
+  import { CONVERTER_URL, checkPackDoc, creditWords, fetchExplorers, previewStack, sniffFile, stackPacks as addPacks, v3SaveText, type ExplorersListing, type PackDoc, type Sniffed, type StackPreview } from "../../ui-contract/src/index.ts";
   import SeatsPanel from "./SeatsPanel.svelte";
   import LensPanel from "./LensPanel.svelte";
   import SoundControl from "../../sound/src/SoundControl.svelte";
   import LightControl from "./LightControl.svelte";
   import MakeSystem from "./MakeSystem.svelte";
+  import AddHere from "./AddHere.svelte";
   import StartSheet, { type StartAction } from "./StartSheet.svelte";
   import HelpDoor, { markNewsSeen, unseenNews, type HelpPage } from "./HelpDoor.svelte";
   import startDoc from "./documents/start.lines.json";
@@ -218,6 +220,14 @@
       session = s;
       status = { kernel: await s.kernelVersion(), tier: s.device()?.tier ?? "unmeasured", hash: await s.stateHash(), stack: s.stack().hash, campaign: false };
       perf.stamp("startup.first_chart", performance.now());
+      // Opened from an Explorers item page: the link is read once, then leaves the address bar.
+      const fromExplorers = new URLSearchParams(location.search).get("explorers");
+      if (fromExplorers) {
+        const u = new URL(location.href);
+        u.searchParams.delete("explorers");
+        history.replaceState(history.state, "", u.pathname + u.search + u.hash);
+        void openFromExplorers(fromExplorers);
+      }
     })
     .catch((e) => (failure = String(e)));
 
@@ -234,14 +244,14 @@
       setAside();
       markOpening(false);
       recovery = true;
-      keptNote = `Last time, opening the campaign kept in this browser did not finish (started ${new Date(stuck).toLocaleString("en-GB", { dateStyle: "medium", timeStyle: "short" })}). It is set aside, not lost, and a fresh campaign opened.`;
+      keptNote = `Last time, opening the campaign kept in this browser did not finish (started ${new Date(stuck).toLocaleString("en-GB", { dateStyle: "medium", timeStyle: "short" })}). It is set aside, not lost, and a fresh campaign given.`;
       return null;
     }
     const { save, problem } = readStored(ROOT);
     if (problem) {
       setAside();
       recovery = true;
-      keptNote = `The campaign kept in this browser could not be reopened (${problem}). It is set aside, not lost, and a fresh campaign opened.`;
+      keptNote = `The campaign kept in this browser could not be reopened (${problem}). It is set aside, not lost, and a fresh campaign given.`;
       return null;
     }
     if (!save) return null;
@@ -259,7 +269,7 @@
     if (!im.ok) {
       setAside();
       recovery = true;
-      keptNote = `The campaign kept in this browser could not be reopened (${im.message}). It is set aside, not lost, and a fresh campaign opened.`;
+      keptNote = `The campaign kept in this browser could not be reopened (${im.message}). It is set aside, not lost, and a fresh campaign given.`;
       if (save.stack) await s.send({ kind: "stack_packs", packs: [] }).then(() => s.send({ kind: "adopt_physics", pack: null, requests: [] }));
       return null;
     }
@@ -329,25 +339,84 @@
   let campaignDialog: HTMLDialogElement | undefined = $state();
   // Each opening reads Your data afresh (a save may have been set aside since the page loaded).
   let campaignOpens = $state(0);
-  function openCampaign() {
+  function openCampaign(pick = false) {
     campaignOpens++;
     campaignDialog?.showModal();
+    if (pick) queueMicrotask(() => campaignDialog?.querySelector<HTMLInputElement>("[data-open-file]")?.click());
   }
   let offered = $state<{ save: CampaignSave | null; problems: string[]; name: string } | null>(null);
   let confirmFresh = $state(false);
+  // The one Open door (V3 gap 28): any file, named by what is inside it, with the one way to open it.
+  let given = $state<{ name: string; sniffed: Sniffed; text: string; bytes: Uint8Array; from?: ExplorersListing } | null>(null);
+  let makeFile = $state<{ text: string; name: string } | null>(null);
+  let packCheck = $state<StackPreview | null>(null);
+  let packNote = $state<string | null>(null);
+  async function offerFile(name: string, bytes: Uint8Array, from?: ExplorersListing) {
+    const text = new TextDecoder().decode(bytes);
+    const sniffed = sniffFile(name, text, bytes);
+    given = { name, sniffed, text, bytes, ...(from ? { from } : {}) };
+    offered = null;
+    packCheck = null;
+    packNote = null;
+    if (sniffed.kind === "v4-campaign") {
+      const problems = checkCampaignSave(sniffed.doc, ROOT);
+      offered = { save: problems.length ? null : (sniffed.doc as CampaignSave), problems, name };
+    }
+    if (sniffed.kind === "pack" && session) {
+      const info = session.stack();
+      const bad = checkPackDoc(sniffed.doc, [...info.base, ...(info.campaign ? [info.campaign] : [])].map((p) => p.id));
+      packCheck = bad ? { ok: false, problems: [bad], changes: [] } : await previewStack(session, scene, [...(info.added as PackDoc[]), sniffed.doc as PackDoc]);
+    }
+  }
   async function pickFile(e: Event) {
     const input = e.currentTarget as HTMLInputElement;
     const file = input.files?.[0];
     input.value = "";
-    if (!file) return;
-    let doc: unknown = null;
-    try {
-      doc = JSON.parse(await file.text());
-    } catch {
-      doc = null;
+    if (file) await offerFile(file.name, new Uint8Array(await file.arrayBuffer()));
+  }
+  async function openOpened() {
+    const o = given;
+    if (!o) return;
+    const k = o.sniffed.kind;
+    if (k === "v4-campaign") return reopenOffered();
+    if (k === "v4-clip") {
+      campaignDialog?.close();
+      if (desk !== "build") chooseDesk("build");
+      return pasteText(o.text);
     }
-    const problems = checkCampaignSave(doc, ROOT);
-    offered = { save: problems.length ? null : (doc as CampaignSave), problems, name: file.name };
+    if (k === "v3-save") {
+      let text: string;
+      try {
+        text = await v3SaveText(o.bytes);
+      } catch (e) {
+        return void (given = { ...o, sniffed: { kind: "unknown", what: `That zip could not be read: ${(e as Error).message}.` } });
+      }
+      campaignDialog?.close();
+      makeFile = { text, name: o.name };
+      return openMake("import");
+    }
+    if (k === "pack" && session && packCheck?.ok) {
+      const r = await addPacks(session, ws, $state.snapshot([...(session.stack().added as PackDoc[]), o.sniffed.doc as PackDoc]) as PackDoc[]);
+      packNote = r.status === "applied" ? "Added. Every value it touches is worked out again and labelled." : r.status === "refused" ? r.reason : "Not added.";
+    }
+  }
+  // Drop a file anywhere on the chart room: the same door.
+  async function dropFile(e: DragEvent) {
+    const f = e.dataTransfer?.files?.[0];
+    if (!f) return;
+    e.preventDefault();
+    await offerFile(f.name, new Uint8Array(await f.arrayBuffer()));
+    openCampaign();
+  }
+  // ?explorers=<an Explorers /api/v4/<slug> URL>: the item page's Open in SSE4 button. The bytes are checked against
+  // the listing before anything is offered, and the link leaves the address bar once read.
+  let explorersNote = $state<string | null>(null);
+  async function openFromExplorers(raw: string) {
+    const r = await fetchExplorers(raw);
+    if (!r.ok) return void (explorersNote = r.why);
+    const name = r.listing.pack ? `${r.listing.pack.id}-${r.listing.pack.version}.json` : `${r.listing.source.title || "campaign"}.json`;
+    await offerFile(name, r.bytes, r.listing);
+    openCampaign();
   }
   function reopenOffered() {
     if (!offered?.save) return;
@@ -614,7 +683,7 @@
     }
     // A now moved by a kept look-ahead can pass the fixture's ruler: the ruler grows to keep it in view.
     const at = { ...base, now_yr: now, span_yr: [base.span_yr[0], Math.max(base.span_yr[1], now * 1.25)] as [number, number] };
-    // Bodies pasted into the campaign's own system live in the universe, not the fixture: they are read back from it
+    // Bodies pasted or added by hand into the campaign's own system live in the universe, not the fixture: they are read back from it
     // and set in beside the fixture's (a withdrawn one, by Undo or Cut, has left the read-back).
     const added = pastedSubjects(s, at);
     const main = added.then((x) => deriveScene(s, applyEdits(x, applied), derivations));
@@ -637,7 +706,7 @@
       const host = typeof f["orbit.host"] === "string" ? (f["orbit.host"] as string) : x.parent;
       const sma = f["orbit.semi_major_axis"];
       const orbit = x.orbit ?? (typeof sma === "number" && !x.band_au ? { a_au: sma / AU_M, phase_deg: 0 } : undefined);
-      return { ...x, subtitle: `Pasted · ${x.kind}`, stamps: x.stamps.filter((t) => t !== "imported"), ...(host ? { parent: host } : {}), ...(orbit ? { orbit } : {}) };
+      return { ...x, subtitle: `Added by hand · ${x.kind}`, stamps: x.stamps.filter((t) => t !== "imported"), ...(host ? { parent: host } : {}), ...(orbit ? { orbit } : {}) };
     });
     return { ...at, subjects: [...at.subjects, ...placed] };
   }
@@ -817,6 +886,7 @@
   let makeOpen = $state(false);
   let makeStart = $state<"import" | "generate">("import");
   function openMake(tab: "import" | "generate") {
+    if (!makeDialog?.open && tab === "generate") makeFile = null;
     makeStart = tab;
     makeOpen = true;
     makeDialog?.showModal();
@@ -1115,6 +1185,30 @@
     return null;
   }
   let placing = $state(false);
+  // Add here (V3 gap 2): one world or moon by hand, round the selected star or planet (else the primary).
+  let addDialog: HTMLDialogElement | undefined = $state();
+  let addFor = $state<{ address: string; label: string; kind: string; mass_sun: number | null } | null>(null);
+  const addOrbits = $derived(addFor ? scene.subjects.filter((x) => (addFor!.kind === "star" ? x.kind === "planet" : x.parent === addFor!.address) && x.orbit).map((x) => x.orbit!.a_au) : []);
+  function openAdd() {
+    const sel = scene.subjects.find((x) => x.address === ws.selection);
+    const h = sel && (sel.kind === "star" || sel.kind === "planet") ? sel : primaryOf(scene);
+    if (!h) return void (clipNote = "There is no star here to add round.");
+    const m = h.facts.find((f) => f.field === "mass_sun")?.value;
+    addFor = { address: h.address, label: h.label, kind: h.kind, mass_sun: typeof m === "number" ? m : null };
+    addDialog?.showModal();
+  }
+  async function addClip(clip: Clip, words: string): Promise<string | null> {
+    if (!session || !addFor) return "The chart is not ready.";
+    const p = await placement(clip, { address: addFor.address, kind: addFor.kind });
+    if (!p) return "Could not find a free place for it.";
+    const roots = p.placed.filter((x) => x.parent === addFor!.address).map((x) => x.address);
+    const r = await placePasted(session, ws, { edits: p.edits, roots, words });
+    if (r.status !== "applied") return `Could not add it: ${r.status === "refused" ? r.reason : r.status === "error" ? r.message : "sent to the game master"}.`;
+    addDialog?.close();
+    clipNote = `Added ${words}, orbiting ${addFor.label}. Undo takes it back.`;
+    ws.select(roots[0]!);
+    return null;
+  }
   async function placePaste() {
     const p0 = pasted;
     if (!session || !p0 || placing) return;
@@ -1194,6 +1288,13 @@
       void undo(!e.shiftKey);
       return;
     }
+    if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === "o") {
+      e.preventDefault();
+      given = null;
+      offered = null;
+      openCampaign(true);
+      return;
+    }
     if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === "y") {
       e.preventDefault();
       void undo(false);
@@ -1202,6 +1303,7 @@
     if (e.ctrlKey || e.metaKey || e.altKey) return;
     const keys: Record<string, () => void> = {
       e: () => chooseDesk("build"),
+      a: () => clipArmed && openAdd(),
       r: () => chooseDesk("run"),
       p: () => (ws.screen = ws.screen === "physics" ? "system" : "physics"),
       v: () => chooseDesk("explore"),
@@ -1227,7 +1329,7 @@
   }
 </script>
 
-<svelte:window {onkeydown} {oncopy} {oncut} {onpaste} onpopstate={fromHash} onhashchange={fromHash} onpointerdown={(e) => moreOpen && !(e.target as HTMLElement).closest(".more") && (moreOpen = false)} />
+<svelte:window {onkeydown} {oncopy} {oncut} {onpaste} ondragover={(e) => e.dataTransfer?.types.includes("Files") && e.preventDefault()} ondrop={dropFile} onpopstate={fromHash} onhashchange={fromHash} onpointerdown={(e) => moreOpen && !(e.target as HTMLElement).closest(".more") && (moreOpen = false)} />
 
 {#if startOpen}<StartSheet doc={startDoc as never} built={STARTED} {carryOn} sample={base.title === "Kestrel" ? "Kestrel Reach" : base.title} ready={!!session} onopen={fromStart} />{/if}
 <div class="app" inert={startOpen} data-depth={depth} data-state-hash={status.hash} data-stack-hash={status.stack} data-physics={status.campaign ? "campaign" : "base"}>
@@ -1324,8 +1426,10 @@
             <button type="button" data-more-copy disabled={!ws.selection} onclick={() => ((moreOpen = false), void copyBody())}>Copy {selName ?? "a body"} <kbd>Ctrl+C</kbd></button>
             {#if cuttable}<button type="button" data-more-cut onclick={() => ((moreOpen = false), void cutBody())}>Cut {selName} <kbd>Ctrl+X</kbd></button>{/if}
             <button type="button" data-more-paste onclick={pasteFromMenu}>Paste <kbd>Ctrl+V</kbd></button>
+            <button type="button" data-more-add onclick={() => ((moreOpen = false), openAdd())}>Add here… <kbd>A</kbd></button>
           {/if}
           <button type="button" onclick={() => ((moreOpen = false), toWorkshop())}>Workshop</button>
+          <button type="button" data-more-open onclick={() => ((moreOpen = false), (offered = null), (given = null), (confirmFresh = false), openCampaign(true))}>Open a file… <kbd>Ctrl+O</kbd></button>
           <button type="button" onclick={() => ((moreOpen = false), (offered = null), (confirmFresh = false), openCampaign())}>Campaign… <small>save, open, your data</small></button>
           <button type="button" onclick={() => ((moreOpen = false), openMake("import"))} title="Import a V3 save or grow a new system, and add it to the campaign">Make a system…</button>
           <button type="button" data-more-start onclick={() => ((moreOpen = false), (startOpen = true))}>Start sheet</button>
@@ -1382,6 +1486,7 @@
           {#if hasTool(ws.lens, "undo") && (desk === "build" || ws.branch)}<ToolButton label="Undo" icon="M9 14L4 9l5-5M4 9h11a5 5 0 0 1 0 10h-3" keyhint="Control+Z" disabled={ws.undo.length === 0 || ws.mode !== "edit" || !!ws.branch} onclick={() => undo(true)} />
           <ToolButton label="Redo" icon="M15 14l5-5-5-5M20 9H9a5 5 0 0 0 0 10h3" keyhint="Control+Shift+Z" disabled={ws.redo.length === 0 || ws.mode !== "edit" || !!ws.branch} onclick={() => undo(false)} />{/if}
           {#if clipArmed}<ToolButton label="Copy" icon="M8 8h11v11H8zM5 16V5h11" keyhint="Control+C" disabled={!ws.selection} onclick={copyBody} />{/if}
+          {#if clipArmed}<ToolButton label="Add here" icon="M12 5v14M5 12h14" keyhint="A" onclick={openAdd} />{/if}
           {#if clipArmed && cuttable}<ToolButton label="Cut" icon="M6 4l12 16M18 4L6 20M4 18a2 2 0 1 0 4 0M16 18a2 2 0 1 0 4 0" keyhint="Control+X" onclick={cutBody} />{/if}
           <ToolButton label="Keyboard shortcuts" icon="M3 7h18v10H3zM7 11h1M11 11h1M15 11h2M7 14h10" keyhint="?" onclick={() => openHelp("keys")} />
         </nav>
@@ -1415,6 +1520,7 @@
         </span>
       </div>
     </footer>
+    {#if explorersNote}<p class="kept-note" role="alert" data-explorers-note>{explorersNote} <button type="button" class="linkbtn" onclick={() => (explorersNote = null)}>OK</button></p>{/if}
     {#if keptNote}<p class="kept-note" role="status" data-kept-note>{keptNote}{#if recovery && setAsideText()}{" "}<button type="button" class="linkbtn" data-recover-try onclick={() => restoreSetAside() && location.reload()}>Try again</button> · <button type="button" class="linkbtn" onclick={() => downloadText(setAsideText() ?? "", "sse4-set-aside-campaign.json")}>Download it</button> ·{/if} <button type="button" class="linkbtn" onclick={() => (keptNote = null)}>{recovery ? "Carry on fresh" : "OK"}</button></p>{/if}
     <div class="status" aria-label="Session">
       <span>Seat: {session.seat.label}</span>
@@ -1503,7 +1609,7 @@
 </dialog>
 
 <dialog bind:this={makeDialog} class="help make-dialog" aria-label="Make a system" onclose={() => (makeOpen = !!makeDialog?.open)}>
-  {#if makeOpen && session}<MakeSystem {session} start={makeStart} view={ws.view} onview={setView} onadopted={(sys, note, hash) => (adopted(sys, note, hash), sys[0] && (makeDialog?.close(), showSystem(sys[0].system)))} context={{ mark: (s) => symbols.marker().mark(subjectOf(s)), symbology: symbols, styles: styleHost }} />{/if}
+  {#if makeOpen && session}<MakeSystem {session} start={makeStart} file={makeFile} view={ws.view} onview={setView} onadopted={(sys, note, hash) => (adopted(sys, note, hash), sys[0] && (makeDialog?.close(), showSystem(sys[0].system)))} context={{ mark: (s) => symbols.marker().mark(subjectOf(s)), symbology: symbols, styles: styleHost }} />{/if}
   <form method="dialog"><button type="submit">Close</button></form>
 </dialog>
 
@@ -1511,17 +1617,34 @@
   <h2>Campaign</h2>
   <p class="hint">{saveProblem ?? `The campaign is kept in this browser after every change (${savedWords.toLowerCase()}). Save it as a file to keep a copy, move it to another device or hand it on.`}</p>
   <p class="row"><button type="button" onclick={saveFile}>Save campaign</button></p>
-  <h3>Open a campaign</h3>
-  <p class="hint">A file from Save campaign. It replaces the campaign open now; save that first if you want to keep it. Players' screens reload into the opened campaign.</p>
-  <label class="row">Campaign file <input type="file" accept=".json,application/json" onchange={pickFile} /></label>
-  <p class="row hint">A save from Star System Explorer 3? <button type="button" class="linkbtn" data-bring-v3 onclick={() => (campaignDialog?.close(), openMake("import"))}>Bring it in with Make a system ›</button></p>
-  {#if offered}
-    {#if offered.save}
-      <p data-offered={offered.save.saved_at}><b>{offered.save.title}</b>, kept {new Date(offered.save.saved_at).toLocaleString("en-GB", { dateStyle: "medium", timeStyle: "short" })}: {savedEvents(offered.save)} events.</p>
-      <p class="row"><button type="button" onclick={reopenOffered}>Open it</button></p>
-    {:else}
-      <p role="alert" data-offered-problem>{offered.name} cannot be opened here: {offered.problems.join("; ")}.</p>
-    {/if}
+  <h3>Open a file</h3>
+  <p class="hint">Any file: a saved campaign, a clip, a pack, a Star System Explorer 3 save, or a Universe Sandbox or SpaceEngine file. SSE4 looks inside and says what it is. You can also drop a file anywhere on the chart room.</p>
+  <label class="row">File <input type="file" data-open-file onchange={pickFile} /></label>
+  {#if given}
+    <div class="opened" data-opened={given.sniffed.kind}>
+      {#if given.from}<p class="hint" data-from-explorers>From Explorers: <b>{given.from.source.title}</b>{creditWords(given.from.source.creditChain) ? `. ${creditWords(given.from.source.creditChain)}` : ""}. Its bytes match the listing.</p>{/if}
+      <p><b>{given.name}</b>: {given.sniffed.what}</p>
+      {#if given.sniffed.kind === "v4-campaign"}
+        {#if offered?.save}
+          <p data-offered={offered.save.saved_at}><b>{offered.save.title}</b>, kept {new Date(offered.save.saved_at).toLocaleString("en-GB", { dateStyle: "medium", timeStyle: "short" })}: {savedEvents(offered.save)} events. Save the campaign open now first if you want to keep it; players' screens reload into the opened one.</p>
+          <p class="row"><button type="button" onclick={openOpened}>Open it</button></p>
+        {:else if offered}
+          <p role="alert" data-offered-problem>{offered.name} cannot be opened here: {offered.problems.join("; ")}.</p>
+        {/if}
+      {:else if given.sniffed.kind === "v4-clip"}
+        <p class="row"><button type="button" onclick={openOpened}>Paste it on the chart</button></p>
+      {:else if given.sniffed.kind === "v3-save"}
+        <p class="row"><button type="button" data-bring-v3 onclick={openOpened}>Bring it in</button></p>
+      {:else if given.sniffed.kind === "pack"}
+        {#if !packCheck}<p class="hint">Checking it with the kernel…</p>
+        {:else if packCheck.ok}
+          <p data-pack-check>The kernel accepts it. It would change {packCheck.changes.length} {packCheck.changes.length === 1 ? "value" : "values"} on this chart{packCheck.changes.length ? `, such as ${packCheck.changes.slice(0, 3).map((c) => c.label).join(", ")}` : ""}.</p>
+          {#if packNote}<p role="status">{packNote}</p>{:else}<p class="row"><button type="button" onclick={openOpened}>Add it to this campaign</button></p>{/if}
+        {:else}<p role="alert" data-pack-problem>It cannot be added: {packCheck.problems.join("; ")}.</p>{/if}
+      {:else if given.sniffed.kind === "other-app"}
+        <p class="row"><a class="linkbtn" href={CONVERTER_URL} target="_blank" rel="noopener">Open the converter</a></p>
+      {/if}
+    </div>
   {/if}
   <h3>Start fresh</h3>
   {#if confirmFresh}
@@ -1531,6 +1654,11 @@
     <p class="row"><button type="button" onclick={() => (confirmFresh = true)}>Start fresh…</button></p>
   {/if}
   {#key campaignOpens}<YourData onbackup={saveFile} report={diagnosticState} />{/key}
+  <form method="dialog"><button type="submit">Close</button></form>
+</dialog>
+
+<dialog bind:this={addDialog} class="help seats-dialog" aria-labelledby="add-title" data-add onclose={() => !addDialog?.open && (addFor = null)}>
+  {#if addFor && session}<AddHere {session} system={scene.system} host={addFor} orbits={addOrbits} packs={stackPacks()} onadd={addClip} />{/if}
   <form method="dialog"><button type="submit">Close</button></form>
 </dialog>
 

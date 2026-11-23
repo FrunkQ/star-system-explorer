@@ -88,6 +88,7 @@
       <dt>[ and ]</dt><dd>Previous or next body</dd>
       <dt>C, T</dt><dd>Go to the chart, go to the time ruler</dd>
       <dt>Page Up, Page Down, Home, End</dt><dd>On the ruler, larger steps</dd>
+      <dt>A</dt><dd>Add here: a world round the selected star, or a moon round the selected planet (Build desk)</dd>
       <dt>Drag a body, or Page Up, Page Down on it</dt><dd>Move its orbit out or in (Build desk)</dd>
       <dt>Ctrl+C, Ctrl+X, Ctrl+V</dt><dd>Copy the selected body with everything that orbits it; cut a pasted body; paste a copied body (Build desk)</dd>
       <dt>Ctrl+Z, Ctrl+Shift+Z</dt><dd>Undo, redo (each is a new correction on the chart's history)</dd>

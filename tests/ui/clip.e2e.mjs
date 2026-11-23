@@ -100,7 +100,7 @@ try {
     await dlg.locator("[data-paste-place]").click();
     await present(true);
     assert.match(await note.innerText(), /Pasted Tarn, with a moon, orbiting Kestrel/);
-    assert.match((await copyOf.getAttribute("aria-label")) ?? "", /^Tarn, Pasted/);
+    assert.match((await copyOf.getAttribute("aria-label")) ?? "", /^Tarn, Added by hand/);
     const h1 = await hash();
     assert.notEqual(h1, h0, "a paste is history");
     await shot(gm, `clip-pasted-${vp}`);
