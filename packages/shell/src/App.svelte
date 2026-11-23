@@ -898,6 +898,13 @@
   // A1: agents, on the GM's own key. The panel reads only what is on the chart.
   let agentsDialog: HTMLDialogElement | undefined = $state();
   let agentsOpen = $state(false);
+  // Describe on a card (V3 gap 23): the subject handed to Minerva, until the Agents panel closes.
+  let describing = $state<string | null>(null);
+  function describe(address: string) {
+    describing = address;
+    agentsOpen = true;
+    agentsDialog?.showModal();
+  }
   let makeDialog: HTMLDialogElement | undefined = $state();
   let makeOpen = $state(false);
   let makeStart = $state<"import" | "generate">("import");
@@ -1068,6 +1075,12 @@
       sift: async (audience) => {
         const r = await s.sift({ scope, audience, sifters: STORY_STARTERS });
         return r.ok ? r.result : null;
+      },
+      // A kept description is a narrative note in the record, for the audience it was written for (the GM sees every note).
+      keep: async (address, text, audience) => {
+        if (!s.addNote) return "This session cannot write the record.";
+        const r = await s.addNote({ address, text, audience: audience === "everyone" ? "everyone" : [audience], tags: ["description"], narrative: true, at_s: yearsToSeconds(ws.now_yr) });
+        return r.ok ? null : r.message;
       },
     };
   });
@@ -1262,7 +1275,7 @@
   }
 
   function view(node: HTMLElement, m: { module: ViewModule; params: Record<string, Json> }) {
-    const h = m.module.mount(node, { session: session!, workspace: ws, params: m.params, mark: (s) => lightMark(symbols.marker().mark(withStarFacts(subjectOf(s), starFacts.get(s.address))), s.address), symbology: symbols, styles: styleHost }, shown);
+    const h = m.module.mount(node, { session: session!, workspace: ws, params: m.params, mark: (s) => lightMark(symbols.marker().mark(withStarFacts(subjectOf(s), starFacts.get(s.address))), s.address), symbology: symbols, styles: styleHost, ...(minervaHost ? { describe } : {}) }, shown);
     handles.push(h);
     return {
       destroy: () => {
@@ -1619,8 +1632,8 @@
   <form method="dialog"><button type="submit">Close</button></form>
 </dialog>
 
-<dialog bind:this={agentsDialog} class="help seats-dialog" aria-label="Agents" onclose={() => (agentsOpen = !!agentsDialog?.open)}>
-  {#if agentsOpen}<AgentsPanel tars={tarsHost} orac={oracHost} minerva={minervaHost} />{/if}
+<dialog bind:this={agentsDialog} class="help seats-dialog" aria-label="Agents" onclose={() => ((agentsOpen = !!agentsDialog?.open), agentsOpen || (describing = null))}>
+  {#if agentsOpen}<AgentsPanel tars={tarsHost} orac={oracHost} minerva={minervaHost} describe={describing} />{/if}
   <form method="dialog"><button type="submit">Close</button></form>
 </dialog>
 

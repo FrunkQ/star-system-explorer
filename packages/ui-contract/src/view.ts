@@ -135,6 +135,8 @@ export interface ViewContext {
   symbology?: import("./symbology.ts").SymbologyHost;
   /** Style documents (H8.9) this shell knows, the device tier they are checked for, and a way to keep an edited one. */
   styles?: StylesHost;
+  /** V3 gap 23: hand a subject to Minerva, the storyteller, to describe from what one audience knows (absent where she cannot run). */
+  describe?(address: string): void;
 }
 
 /** What a shell offers views about style documents. Presentation only: kept on the device, never in the universe. */

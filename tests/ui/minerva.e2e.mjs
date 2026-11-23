@@ -73,9 +73,26 @@ try {
     assert.match(bodies[1].at(-1).content, /not in the facts you were given: 7/);
     assert.equal(await gm.locator("[data-state-hash]").getAttribute("data-state-hash"), h0);
     await shot(gm, "a3-minerva");
+
+    // V3 gap 23: Describe on Tarn's card hands her Tarn alone (with what it orbits and what orbits it), and her
+    // checked text is kept as Tarn's description: a narrative note in the record, for the table. State is untouched.
+    await dlg.getByRole("button", { name: "Close", exact: true }).click();
+    await gm.locator("[role=button][aria-label^='Tarn']").first().click();
+    await gm.locator("[data-describe]").click();
+    await dlg.locator("[data-minerva-focus]").waitFor();
+    const tarnFacts = await dlg.locator("[data-facts]").textContent({ timeout: 20000 });
+    assert.match(tarnFacts, /- Tarn: /);
+    assert.ok(!/- Vault: |- Ember: /.test(tarnFacts), `only Tarn and its neighbours: ${tarnFacts}`);
+    assert.ok(!/Worth a story/.test(tarnFacts), "no system-wide story hits on a description");
+    await dlg.getByRole("button", { name: "Write" }).click();
+    await dlg.locator("[data-keep-description]").waitFor({ timeout: 30000 });
+    await dlg.locator("[data-keep-description]").click();
+    await dlg.locator("[data-kept]").waitFor();
+    assert.match(await dlg.locator("[data-kept]").innerText(), /for Everyone/);
+    assert.equal(await gm.locator("[data-state-hash]").getAttribute("data-state-hash"), h0, "a note never changes the universe");
     assert.deepEqual(errors, []);
     await browser.close();
-    console.log(`PASS ${name}: Minerva wrote for the table from its own facts; invented number sent back and never shown; no secret sent; sifter hits only from the table's scene`);
+    console.log(`PASS ${name}: Minerva wrote for the table from its own facts; invented number sent back and never shown; no secret sent; sifter hits only from the table's scene; Describe on Tarn kept as its description`);
   }
 } finally {
   server.kill();
