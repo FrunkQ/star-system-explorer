@@ -123,5 +123,5 @@ export { namesOnStack, sampleKinds, layerWords, sortWords, meaningWords, saysMor
 export type { SampleAsk, SampledName, NameSample, NamePart, SchemeInfo, NamesOnStack, ShownName, NamesRead } from "./names.ts";
 export { embedAsked, embedOrigin, embedOrigins, framingOrigin, embedMode, embedAsk, EmbedBridge } from "./embed.ts";
 export type { EmbedMode, EmbedOut } from "./embed.ts";
-export { BRAND_LOGO_MAX, BRAND_NAME_MAX, DEFAULT_JOIN, checkBrand, joinLine, joinWordsOf } from "./brand.ts";
+export { BRAND_LOGO_MAX, BRAND_NAME_MAX, DEFAULT_JOIN, LIVE_OVERRIDES, checkBrand, joinLine, joinWordsOf, withLive } from "./brand.ts";
 export type { JoinWords, SeatBrand } from "./brand.ts";

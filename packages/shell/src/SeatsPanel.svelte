@@ -7,7 +7,7 @@
   that audience (nothing is remembered here).
 -->
 <script lang="ts">
-  import { EVERYONE, checkBrand, embedOrigins, fogViews, isDefaultPlan, observeOf, type Audience, type SceneSubject, type ViewSession } from "../../ui-contract/src/index.ts";
+  import { EVERYONE, LIVE_OVERRIDES, checkBrand, embedOrigins, fogViews, isDefaultPlan, observeOf, type Audience, type SceneSubject, type ViewSession } from "../../ui-contract/src/index.ts";
   import type { Share } from "./share.svelte.ts";
 
   let { share, session, bodies, scope, at_yr, onchange }: { share: Share; session: ViewSession; bodies: SceneSubject[]; scope: string; at_yr: number; onchange: () => void } = $props();
@@ -102,6 +102,11 @@
             {#each share.links(s.id) as l (l.href)}
               <a href={l.href} target="_blank" rel="noopener" data-seat-link={s.id}>{l.screen ? (SCREENS.find((x) => x.file === l.screen)?.label ?? l.screen) : "join link"}</a>
               {#if s.embed_origins?.length}<a href={`${l.href}&embed=1`} target="_blank" rel="noopener" data-seat-embed={s.id} title="Paste this into the tabletop's web or iframe tool">tabletop link</a>{/if}
+            {/each}
+          </span>
+          <span class="live" title="Live: sent to this seat's screens now, never saved">
+            {#each LIVE_OVERRIDES as o (o.param)}
+              <label class="check"><input type="checkbox" data-live={`${s.id}:${o.param}`} checked={s.live?.[o.param] === o.on} onchange={(e) => { const { [o.param]: _x, ...rest } = s.live ?? {}; share.setLive(s.id, e.currentTarget.checked ? { ...rest, [o.param]: o.on } : rest); }} /> {o.label}</label>
             {/each}
           </span>
           {#if s.id !== "table"}<button type="button" class="linkbtn" onclick={() => share.removeSeat(s.id)}>Remove</button>{/if}
