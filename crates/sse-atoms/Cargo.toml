@@ -9,6 +9,7 @@ authors.workspace = true
 [dependencies]
 sse-core.workspace = true
 sse-flow.workspace = true
+sse-formula = { path = "../sse-formula" }
 serde_json.workspace = true
 
 [dev-dependencies]

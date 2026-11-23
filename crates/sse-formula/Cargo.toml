@@ -1,0 +1,13 @@
+[package]
+name = "sse-formula"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+authors.workspace = true
+description = "SSE4 formulas as data: the Equation parser, unit checks and pinned run (ND3, ND3b)"
+
+[dependencies]
+sse-core.workspace = true
+sse-flow.workspace = true
+serde.workspace = true
+serde_json.workspace = true

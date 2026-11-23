@@ -500,6 +500,7 @@ dependencies = [
  "serde_json",
  "sse-core",
  "sse-flow",
+ "sse-formula",
  "sse-pack",
 ]
 
@@ -623,6 +624,16 @@ dependencies = [
 ]
 
 [[package]]
+name = "sse-formula"
+version = "0.1.0"
+dependencies = [
+ "serde",
+ "serde_json",
+ "sse-core",
+ "sse-flow",
+]
+
+[[package]]
 name = "sse-import-v3"
 version = "0.1.0"
 dependencies = [
@@ -711,6 +722,7 @@ dependencies = [
  "serde_json",
  "sse-core",
  "sse-flow",
+ "sse-formula",
  "sse-life",
  "sse-light",
  "sse-place",
