@@ -6,17 +6,20 @@
 -->
 <script lang="ts">
   import { untrack } from "svelte";
-  import { SECTOR_FORMATS, fetchSector, placeHash, type Json, type SectorFormat, type SectorImported, type SectorMap, type ViewContext } from "../../../ui-contract/src/index.ts";
+  import { SECTOR_FORMATS, fetchSector, placeHash, viewOptions, DEFAULT_VIEW, type Json, type SectorFormat, type SectorImported, type SectorMap, type ViewContext } from "../../../ui-contract/src/index.ts";
   import { opensFrom } from "../../../chart-grammar/src/index.ts";
   import HexMap from "../../hex-map/src/HexMap.svelte";
   import WorldCodes from "../../world-codes/src/WorldCodes.svelte";
   import { sift } from "../../hex-map/src/sift.ts";
   import { inputFromPacks, sheetOf, type CodesResponse, type WorldCodesInput } from "../../world-codes/src/sheet.ts";
+  import { SECTOR_CONTROLS } from "./controls.ts";
   import { blocksInUse, exportName, hexConfigOf, mapWorlds, openingBlock, sceneOf } from "./desk.ts";
 
   let { ctx, params }: { ctx: ViewContext; params: Record<string, Json> } = $props();
   const session = untrack(() => ctx.session);
   const ws = $derived(ctx.workspace);
+  // The shared view controls (V10a): on the Sector map the grid is the map, and HUD (on by default) carries its labels and overlays.
+  const hud = $derived(viewOptions(SECTOR_CONTROLS, ws.view ?? DEFAULT_VIEW).shown.hud);
   const gm = session.seat.authority === "gm";
 
   const packs = $derived.by(() => {
@@ -238,7 +241,7 @@
           {#if !worlds.length}
             <p class="lede">No mapped systems yet. Import a sector, and each world lands on its hex with its physics behind it.</p>
           {:else}
-            <HexMap {scene} params={params as Record<string, unknown>} onpick={(h) => (selected = selected === h ? undefined : h)} />
+            <HexMap {scene} {hud} params={params as Record<string, unknown>} onpick={(h) => (selected = selected === h ? undefined : h)} />
           {/if}
         {/if}
       </div>
