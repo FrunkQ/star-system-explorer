@@ -16,6 +16,7 @@ macro_rules! setup {
             params: EnvelopeParams::default(),
             seed: Seed::from_text("g4"),
             address: Address::universe("g4").unwrap(),
+            remains: Default::default(),
         };
         let $st = Stars {
             env: &env,

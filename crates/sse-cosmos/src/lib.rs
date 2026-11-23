@@ -20,6 +20,7 @@ pub mod model;
 pub mod nucleus;
 pub mod origin;
 pub mod patch;
+pub mod remains;
 pub mod rings;
 pub mod scenario;
 pub mod sky;
@@ -157,6 +158,8 @@ mod g5_tests;
 mod g6_tests;
 #[cfg(test)]
 mod gh3_tests;
+#[cfg(test)]
+mod gh4_tests;
 #[cfg(test)]
 mod y1_tests;
 

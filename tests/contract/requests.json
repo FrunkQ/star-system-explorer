@@ -3281,5 +3281,27 @@
   "fixture": "sol",
   "ship": "fusion-torch",
   "worlds": ["Vulcan"]
+ },
+ {
+  "op": "jump_map",
+  "fixture": "sol",
+  "rule": {"id": "jump", "name": "Jump drive", "family": "jump",
+   "start": [{"kind": "clear_of", "multiple": 100.0, "of": "diameter", "bodies": {"which": "every"}}],
+   "end": [{"kind": "lagrange", "points": [4, 5], "bodies": {"which": "massive", "min_earth": 1.0}}, {"kind": "gate", "construct": "ring gate", "linked": true}],
+   "crew": "awake", "duration": {"form": "fixed", "days": 7.0}, "cost": "fuel by the parsec",
+   "risks": ["misjump"], "messages": {"by": "ships"}, "fictional": true}
+ },
+ {
+  "op": "jump_map",
+  "fixture": "sol",
+  "end": true,
+  "rule": {"id": "gate", "name": "Gates", "family": "gate",
+   "end": [{"kind": "gravity", "m_s2": 1.0e-4}, {"kind": "poles", "au": 5.0, "within_au": 0.5}],
+   "duration": {"form": "instant"}, "messages": {"by": "radio", "times_light": 1000.0, "range_pc": 10.0}}
+ },
+ {
+  "op": "jump_map",
+  "fixture": "sol",
+  "rule": {"id": "bad", "name": "No messages"}
  }
 ]

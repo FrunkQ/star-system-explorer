@@ -260,7 +260,10 @@ pub fn glow(
             let da = gas * m::pow(10.0, feh) * ds / sky.gas_per_av_msun_pc2;
             let a_mid = a_v + 0.5 * da;
             a_v += da;
-            let dens = st.env.systems_pc3(place);
+            // GH4: the remains of torn-apart galaxies glow too (with the
+            // disc's light mix at that radius: fudge F49).
+            let dens = st.env.systems_pc3(place)
+                + st.env.remains_pc3(place) / st.env.params.mean_star_msun;
             if dens <= 0.0 {
                 continue;
             }

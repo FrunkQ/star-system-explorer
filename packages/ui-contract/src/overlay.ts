@@ -6,9 +6,13 @@
 // A view draws an overlay only while its HUD is on (a view with no HUD switch always shows its labels, so always
 // draws them), and lists it in its Layers tool so the GM can turn one off.
 
-/** Coordinate frames a view can carry. galaxy-plane-pc: x and y in parsecs on the galactic plane (star cells' xyz_pc). */
-export type OverlayFrame = "galaxy-plane-pc" | "cluster-pc" | "system-au";
-export const OVERLAY_FRAMES: readonly OverlayFrame[] = ["galaxy-plane-pc", "cluster-pc", "system-au"];
+/**
+ * Coordinate frames a view can carry. galaxy-plane-pc: x and y in parsecs on the galactic plane (star cells' xyz_pc).
+ * body-latlon (OV2): x longitude east and y latitude north, degrees, on a body's own surface. web-mpc (OV2): x and y
+ * in megaparsecs on the cosmic web's chart.
+ */
+export type OverlayFrame = "galaxy-plane-pc" | "cluster-pc" | "system-au" | "body-latlon" | "web-mpc";
+export const OVERLAY_FRAMES: readonly OverlayFrame[] = ["galaxy-plane-pc", "cluster-pc", "system-au", "body-latlon", "web-mpc"];
 
 /** A hex grid as data: the same shape as the hex map view's grid (hex-map/src/grid.ts GridConfig). */
 export interface OverlayGrid {
@@ -21,11 +25,17 @@ export interface OverlayGrid {
   hex_distance: { value: number; unit: string };
 }
 
-/** One overlay as a pack declares it. `grid` is a grid, or the id of a view config whose `grid` to use. */
+/**
+ * One overlay as a pack declares it. `grid` is a grid, or the id of a view config whose `grid` to use. A layer of
+ * areas (`areas`, OV2) is about places, not a frame: every view that shows places draws it in its own frame, so it
+ * needs no `frame`. A grid or fixed drawing still names one.
+ */
 export interface OverlaySpec {
   id: string;
   label: string;
-  frame: OverlayFrame;
+  frame?: OverlayFrame;
+  /** A map layer: each place gets at most one answer from a short list, and the map colours places by it (OV2). */
+  areas?: AreaSpec;
   grid?: OverlayGrid | string;
   /** Fixed lines and labels in the overlay's own coordinates (before the anchor), e.g. drawn borders. */
   layers?: OverlayLayer[];
@@ -39,11 +49,215 @@ export interface OverlayAnchor {
   rotation_deg: number;
 }
 
-export type OverlayInk = "faint" | "ink" | "accent";
+/** A map palette slot (territory design 6, ruling 9): one of the theme's eight map colours, each paired with a pattern. */
+export type MapSlot = 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8;
+export const MAP_SLOTS: readonly MapSlot[] = [1, 2, 3, 4, 5, 6, 7, 8];
+/** The patterns paired with the slots, for themes and eyes that need more than colour: slot n's is MAP_PATTERNS[n-1]. */
+export const MAP_PATTERNS = ["plain", "stripes", "dots", "cross", "waves", "grid", "back-stripes", "chevrons"] as const;
+export type MapPattern = (typeof MAP_PATTERNS)[number];
+/** The theme token that holds a slot's colour (each theme defines all eight, tuned to its ground: OV4). */
+export const mapSlotToken = (slot: MapSlot): string => `--sse-map-${slot}`;
+
+/** The plain inks, or a map palette slot (OV2: only inside map layers, the one exception to "one accent"). */
+export type OverlayInk = "faint" | "ink" | "accent" | { slot: MapSlot; pattern?: MapPattern };
 export type OverlayLayer =
   | { kind: "lines"; ink: OverlayInk; items: { points: [number, number][]; closed?: boolean }[] }
   | { kind: "hexes"; ink: OverlayInk; /** The anchor's turn, for drawing each hex. */ rotation_deg?: number; items: { centre: [number, number]; size: number; orient: "flat" | "point"; label?: string }[] }
-  | { kind: "labels"; ink: OverlayInk; items: { at: [number, number]; text: string }[] };
+  | { kind: "labels"; ink: OverlayInk; items: { at: [number, number]; text: string }[] }
+  | {
+      kind: "areas";
+      /** Where it sits in the Layers list's stack (design 4.6): the top area layer fills, the next draws edges and
+       * hatching only, a third marks places. */
+      as: AreaRole;
+      items: AreaItem[];
+    };
+
+/** How an area layer draws in a stack (design 4.6). */
+export type AreaRole = "fill" | "edges" | "marks";
+/** The role of the area layer at `index` among the area layers on, top first. */
+export const areaRole = (index: number): AreaRole => (index <= 0 ? "fill" : index === 1 ? "edges" : "marks");
+
+/** Holds is control, claims an assertion by someone, influences a soft presence with a strength (design 4.3). */
+export type AreaStatus = "holds" | "claims" | "influences";
+export const AREA_STATUSES: readonly AreaStatus[] = ["holds", "claims", "influences"];
+
+/**
+ * One territory ready to draw, in the view's frame: its answer's key and ink, its status, and its outline as rings
+ * (the first the outside, any after it holes or further pieces, by the even-odd rule). `label` and `label_turn`
+ * letter its name along its long axis (degrees from +x). `divided` is set on a place no answer holds 60 percent of:
+ * the shares, largest first, for stripes and a split mark (design 4.4).
+ */
+export interface AreaItem {
+  key: string;
+  ink: OverlayInk;
+  status: AreaStatus;
+  /** 0..1, for influence: drawn as tint depth. */
+  strength?: number;
+  rings: [number, number][][];
+  label?: string;
+  label_turn?: number;
+  divided?: { key: string; share: number }[];
+  /** The place or holding it came from, for pointing and pressing (opens its card). */
+  place?: string;
+}
+
+/** A distance with its unit, as packs write them ("4 pc"). */
+export interface Quantity {
+  value: number;
+  unit: string;
+}
+
+/** What a map layer reads at each place (design 4.2). */
+export type AreaSource =
+  /** A relation to an actor: holds, claims or influences (the kernel's OV3). */
+  | { relation: string }
+  /** An exclusive tag group: each tag an answer. */
+  | { tag_group: string }
+  /** A `choice` kept value: each choice an answer. */
+  | { choice: string }
+  /** A fact with few answers, or a number cut into bands at `bands` (ascending). Read-only from physics. */
+  | { fact: string; bands?: number[] }
+  /** What an audience knows ("charted by the party"). */
+  | { knowledge: "charted" }
+  /** A reach the layer computes: from a place, out to a distance given or read from a fact, growing at a rate
+   * (light speed for the news horizon: `rate: { value: 1, unit: "c" }`). */
+  | { reach: { from: string; radius: Quantity | { fact: string }; rate?: Quantity } };
+
+/** How the gaps between places are filled, per scale (design 4.5). The kernel holds the rules; views draw the answers. */
+export interface AreaFill {
+  /** Cosmic web: galaxies and groups colour space out to a reach. */
+  web?: { reach: Quantity };
+  /** Local stars and sectors: each held system colours space out to a reach, met halfway; "grid" follows a placed pack grid's hexes. */
+  between_stars?: { reach: Quantity } | "grid";
+  /** In a system: Hill spheres round bodies, or bands between orbits. */
+  in_system?: "hill" | "bands";
+  /** On a surface: the atlas's regions, or outlines drawn by hand. */
+  on_surface?: "regions" | "outlines";
+}
+
+/** A map layer as a pack declares it (design 4.1). */
+export interface AreaSpec {
+  by: AreaSource;
+  /** The set of answers, and so the key: actors under a parent, a tag group's tags, a choice's options, the bands. */
+  answers?: { from: "actors" | "tags" | "choices" | "bands"; under?: string };
+  /** How far down the answer tree to split: "auto" by zoom, or a depth from 0 (the top). */
+  level?: "auto" | number;
+  fill?: AreaFill;
+  /** What "most of it" means when rolling up a place: population where kept, else area, else count. */
+  weigh_by?: "population" | "area" | "count";
+  /** A drawing recipe (design 6): sse.look.atlas by default, sse.look.cells for the flat hex look. */
+  look?: string;
+  /** Default disclosure, as for a tag. */
+  tier?: string;
+}
+
+/** The default reach between stars (ruling 6). */
+export const AREA_REACH_DEFAULT: Quantity = { value: 4, unit: "pc" };
+/** Below this share a rolled-up place is drawn divided (ruling 5). */
+export const AREA_DIVIDED_BELOW = 0.6;
+export const AREA_LOOKS = ["sse.look.atlas", "sse.look.cells"] as const;
+
+const SOURCES = ["relation", "tag_group", "choice", "fact", "knowledge", "reach"] as const;
+/**
+ * What is wrong with a map layer as written, in words for its author (a GM, a pack maker or Orac); empty when it
+ * can be read. Unknown looks are allowed (a pack may bring its own recipe).
+ */
+export function areaProblems(a: unknown): string[] {
+  const out: string[] = [];
+  const o = (a ?? {}) as Record<string, unknown>;
+  const by = o.by as Record<string, unknown> | undefined;
+  const keys = by && typeof by === "object" ? Object.keys(by).filter((k) => (SOURCES as readonly string[]).includes(k)) : [];
+  if (keys.length !== 1) out.push(`"by" names one thing to read at each place: one of ${SOURCES.join(", ")}`);
+  else {
+    const k = keys[0]!;
+    const v = by![k];
+    if (k === "knowledge" && v !== "charted") out.push(`"knowledge" can only be "charted" for now`);
+    else if (k === "fact" && by!.bands !== undefined) {
+      const b = by!.bands;
+      if (!Array.isArray(b) || b.some((x, i) => typeof x !== "number" || !Number.isFinite(x) || (i > 0 && x <= (b[i - 1] as number)))) out.push(`"bands" is a list of numbers, each larger than the last`);
+    } else if (k === "reach") {
+      const r = v as Record<string, unknown> | undefined;
+      if (!r || typeof r.from !== "string" || !r.radius) out.push(`a reach needs "from" (a place) and "radius" (a distance or a fact)`);
+    } else if (k !== "fact" && k !== "reach" && (typeof v !== "string" || !v)) out.push(`"${k}" names what to read`);
+  }
+  if (o.level !== undefined && o.level !== "auto" && !(Number.isInteger(o.level) && (o.level as number) >= 0)) out.push(`"level" is "auto" or a depth from 0`);
+  if (o.weigh_by !== undefined && !["population", "area", "count"].includes(String(o.weigh_by))) out.push(`"weigh_by" is population, area or count`);
+  const f = o.fill as Record<string, unknown> | undefined;
+  const reachOk = (q: unknown) => {
+    const r = (q as { reach?: Quantity } | undefined)?.reach;
+    return !!r && typeof r.value === "number" && r.value > 0 && typeof r.unit === "string";
+  };
+  if (f) {
+    if (f.web !== undefined && !reachOk(f.web)) out.push(`"fill.web" is { reach: { value, unit } }`);
+    if (f.between_stars !== undefined && f.between_stars !== "grid" && !reachOk(f.between_stars)) out.push(`"fill.between_stars" is "grid" or { reach: { value, unit } }`);
+    if (f.in_system !== undefined && !["hill", "bands"].includes(String(f.in_system))) out.push(`"fill.in_system" is hill or bands`);
+    if (f.on_surface !== undefined && !["regions", "outlines"].includes(String(f.on_surface))) out.push(`"fill.on_surface" is regions or outlines`);
+  }
+  return out;
+}
+
+/** Every map layer the stack declares (overlays with `areas` that read cleanly), bottom to top, a higher pack's winning. */
+export function areaSpecsOf(packs: readonly unknown[]): (OverlaySpec & { areas: AreaSpec })[] {
+  return overlaySpecsOf(packs).filter((s): s is OverlaySpec & { areas: AreaSpec } => !!s.areas && areaProblems(s.areas).length === 0);
+}
+
+/**
+ * Give each answer in view a palette slot (design 6): neighbours never share one, an answer's own preference is
+ * kept when no neighbour has it, and with more than eight answers in view slots are reused by answers that do not
+ * touch. Deterministic: answers are taken in order of key (code units), so every device colours the map alike.
+ * Where every slot is already on a neighbour (eight or more neighbours), the one fewest neighbours use is shared.
+ */
+export function assignSlots(answers: readonly { key: string; prefer?: MapSlot }[], touching: readonly (readonly [string, string])[]): Map<string, MapSlot> {
+  const near = new Map<string, Set<string>>();
+  for (const [a, b] of touching) {
+    if (a === b) continue;
+    (near.get(a) ?? near.set(a, new Set()).get(a)!).add(b);
+    (near.get(b) ?? near.set(b, new Set()).get(b)!).add(a);
+  }
+  const order = [...answers].sort((x, y) => (x.key < y.key ? -1 : x.key > y.key ? 1 : 0));
+  const out = new Map<string, MapSlot>();
+  for (const a of order) {
+    if (out.has(a.key)) continue;
+    const used = new Map<MapSlot, number>();
+    for (const n of near.get(a.key) ?? []) {
+      const s = out.get(n);
+      if (s) used.set(s, (used.get(s) ?? 0) + 1);
+    }
+    const pick = a.prefer && !used.has(a.prefer) ? a.prefer : (MAP_SLOTS.find((s) => !used.has(s)) ?? MAP_SLOTS.reduce((m, s) => ((used.get(s) ?? 0) < (used.get(m) ?? 0) ? s : m), 1 as MapSlot));
+    out.set(a.key, pick);
+  }
+  return out;
+}
+
+/**
+ * Where a holding is, when the place's own address is not enough (design 4.3), anchored to that address so it moves
+ * with it: everything within a reach of it, a band between two distances, or an outline drawn in its own frame.
+ */
+export type HoldingExtent = { reach: Quantity } | { band: [Quantity, Quantity] } | { outline: [number, number][]; frame: OverlayFrame };
+
+/**
+ * One answer at one place, as the kernel's `holdings_in` and `who_holds` give it (OV3; the shape agreed with the
+ * kernel thread). `via` says how the answer was reached: held there, inherited from a place it is inside, rolled up
+ * from what is inside it, or by a fill rule. `why` is the words behind the "Why?".
+ */
+export interface Holding {
+  place: string;
+  layer: string;
+  key: string;
+  status: AreaStatus;
+  strength?: number;
+  extent?: HoldingExtent;
+  /** Who asserts it (a claim); absent means it is simply so. */
+  by?: string;
+  /** From and until when, on the one universe clock (s); a holding with `until_s` has ended, read as history. */
+  since_s?: number;
+  until_s?: number;
+  /** The relation record or rule id it comes from, so the Why line and the GM's edit can go to it. */
+  source?: string;
+  via: "held" | "inherited" | "rolled-up" | "rule";
+  divided?: { key: string; share: number }[];
+  why: string;
+}
 
 /** An overlay ready to draw: every point already in the frame's coordinates. */
 export interface ViewOverlay {
@@ -66,7 +280,9 @@ export function overlaySpecsOf(packs: readonly unknown[]): OverlaySpec[] {
     const list = other(p).overlays;
     if (!Array.isArray(list)) continue;
     for (const o of list as OverlaySpec[]) {
-      if (!o || typeof o.id !== "string" || !OVERLAY_FRAMES.includes(o.frame)) continue;
+      if (!o || typeof o.id !== "string") continue;
+      // A grid or drawing names a frame it is drawn in; a map layer of areas needs none.
+      if (o.frame === undefined ? !o.areas : !OVERLAY_FRAMES.includes(o.frame)) continue;
       out.set(o.id, { ...o, pack: String((p as PackLike)?.id ?? "") });
     }
   }
@@ -132,8 +348,9 @@ const HEX_MAX = 4000;
  * unit: the sheet's outline and its block bounds always, block names when they fit, the hexes when each is at least
  * HEX_MIN_PX across, and their labels from HEX_LABEL_PX. Without an anchor, nothing to draw and why.
  */
+// A grid always names its frame (overlaySpecsOf keeps none without one but a map layer); galaxy-plane-pc stands in for a hand-built spec.
 export function gridOverlay(spec: OverlaySpec, g: OverlayGrid, anchor: OverlayAnchor | undefined, bounds: [number, number, number, number], px_per_unit: number): ViewOverlay {
-  const base = { id: spec.id, label: spec.label, pack: spec.pack ?? "", frame: spec.frame };
+  const base = { id: spec.id, label: spec.label, pack: spec.pack ?? "", frame: spec.frame ?? "galaxy-plane-pc" };
   if (!anchor) return { ...base, layers: [], why: `Place ${spec.label} on the map first` };
   const d = g.hex_distance.value;
   const size = d / Math.sqrt(3);
@@ -201,7 +418,9 @@ export function gridOverlay(spec: OverlaySpec, g: OverlayGrid, anchor: OverlayAn
 export function overlaysFor(packs: readonly unknown[], frames: readonly OverlayFrame[], anchors: Readonly<Record<string, OverlayAnchor>> | undefined, bounds: [number, number, number, number], px_per_unit: number): ViewOverlay[] {
   const out: ViewOverlay[] = [];
   for (const s of overlaySpecsOf(packs)) {
-    if (!frames.includes(s.frame)) continue;
+    // Map layers of areas are drawn from holdings (areaSpecsOf), not from fixed data in a frame.
+    if (!s.frame || !frames.includes(s.frame)) continue;
+    const frame = s.frame;
     const a = anchors?.[s.id];
     const g = overlayGrid(s, packs);
     if (g) {
@@ -210,7 +429,7 @@ export function overlaysFor(packs: readonly unknown[], frames: readonly OverlayF
       if (a && s.layers) o.layers.push(...s.layers.map((l) => placeLayer(l, a)));
       out.push(o);
     } else if (s.layers) {
-      out.push(a ? { id: s.id, label: s.label, pack: s.pack ?? "", frame: s.frame, layers: s.layers.map((l) => placeLayer(l, a)) } : { id: s.id, label: s.label, pack: s.pack ?? "", frame: s.frame, layers: [], why: `Place ${s.label} on the map first` });
+      out.push(a ? { id: s.id, label: s.label, pack: s.pack ?? "", frame, layers: s.layers.map((l) => placeLayer(l, a)) } : { id: s.id, label: s.label, pack: s.pack ?? "", frame, layers: [], why: `Place ${s.label} on the map first` });
     }
   }
   return out;
@@ -220,6 +439,7 @@ function placeLayer(l: OverlayLayer, a: OverlayAnchor): OverlayLayer {
   const P = (p: [number, number]) => placeBy(a, p);
   if (l.kind === "lines") return { ...l, items: l.items.map((i) => ({ ...i, points: i.points.map(P) })) };
   if (l.kind === "hexes") return { ...l, rotation_deg: (l.rotation_deg ?? 0) + a.rotation_deg, items: l.items.map((i) => ({ ...i, centre: P(i.centre) })) };
+  if (l.kind === "areas") return { ...l, items: l.items.map((i) => ({ ...i, rings: i.rings.map((r) => r.map(P)), ...(i.label_turn !== undefined ? { label_turn: i.label_turn + a.rotation_deg } : {}) })) };
   return { ...l, items: l.items.map((i) => ({ ...i, at: P(i.at) })) };
 }
 

@@ -13,6 +13,7 @@ fn env<'a>(g: &'a Galaxy, d: &'a Disc) -> GalaxyEnvelope<'a> {
         params: EnvelopeParams::default(),
         seed: Seed::from_text("g4"),
         address: Address::universe("g4").unwrap(),
+        remains: Default::default(),
     }
 }
 

@@ -145,6 +145,9 @@ pub struct Local {
     pub gas_pc3: f64,
     pub stars_pc3: f64,
     pub systems_pc3: f64,
+    /// GH4: the part of `stars_pc3` in the remains of torn-apart galaxies.
+    #[serde(default, skip_serializing_if = "is_zero")]
+    pub remains_pc3: f64,
     /// Gas abundances, [X/H] in dex.
     pub feh: f64,
     pub alpha_fe: f64,
@@ -191,6 +194,12 @@ pub struct GalaxyEnvelope<'a> {
     pub params: EnvelopeParams,
     pub seed: Seed,
     pub address: Address,
+    /// GH4: the shapes of the galaxy's remains, worked out once a time.
+    pub remains: crate::remains::Cache,
+}
+
+fn is_zero(x: &f64) -> bool {
+    *x == 0.0
 }
 
 fn lerp(a: f64, b: f64, w: f64) -> f64 {
@@ -320,6 +329,29 @@ impl GalaxyEnvelope<'_> {
         stars / e.mean_star_msun
     }
 
+    /// GH4: the remains of what this galaxy tore apart at a place: each
+    /// component's stars per pc³ (M☉), in component order, zeros left out.
+    pub fn remains_at(&self, p: Place) -> Vec<(usize, f64)> {
+        let Some(a) = self.galaxy.assembled.as_ref() else {
+            return vec![];
+        };
+        let Some((op, rp)) = a.shapes_with.as_ref() else {
+            return vec![];
+        };
+        let r = p.r_kpc;
+        let x = [r * m::cos(p.phi), r * m::sin(p.phi), p.z_pc / 1000.0];
+        self.remains
+            .densities(&a.components, op, rp, x, p.t_gyr)
+            .into_iter()
+            .map(|(i, d)| (i, d * 1.0e-9))
+            .collect()
+    }
+
+    /// Stars of the remains per pc³ (M☉) at a place.
+    pub fn remains_pc3(&self, p: Place) -> f64 {
+        self.remains_at(p).iter().map(|d| d.1).sum()
+    }
+
     /// Gas density (M☉ per pc³) and [Fe/H] at a place: the part of `local`
     /// a dust column needs (the same arithmetic, so the same numbers).
     pub fn gas_pc3(&self, p: Place) -> (f64, f64) {
@@ -354,6 +386,20 @@ impl GalaxyEnvelope<'_> {
         let n = stars / e.mean_star_msun;
         let v_pc_myr = m::sqrt(2.0) * sigma * 1.022_712;
         let encounters = n * m::PI * e.encounter_pc * e.encounter_pc * v_pc_myr;
+        // GH4: the remains here. Their stars barely turn with the disc, so
+        // they meet a disc star at about the circular speed.
+        let remains = self.remains_pc3(p);
+        let (stars, n, encounters) = if remains > 0.0 {
+            let v_halo = self.circular(p.r_kpc).0 * 1.022_712;
+            let nr = remains / e.mean_star_msun;
+            (
+                stars + remains,
+                n + nr,
+                encounters + nr * m::PI * e.encounter_pc * e.encounter_pc * v_halo,
+            )
+        } else {
+            (stars, n, encounters)
+        };
         // Lethal bursts: within grb_kpc (wider than the disc is thick, so a surface integral).
         let zrel = m::pow(10.0, s.feh);
         let grb = m::PI * e.grb_kpc * e.grb_kpc * 1.0e6 * s.sfr * 1.0e9 * e.grb_per_msun
@@ -371,6 +417,7 @@ impl GalaxyEnvelope<'_> {
             gas_pc3: gas,
             stars_pc3: stars,
             systems_pc3: n,
+            remains_pc3: remains,
             feh: s.feh,
             alpha_fe: s.alpha_h - s.feh,
             c_o: 0.55 * m::pow(10.0, s.cn_h - s.alpha_h),
@@ -457,6 +504,7 @@ impl GalaxyEnvelope<'_> {
             },
             seed: self.seed,
             address: self.address.clone(),
+            remains: Default::default(),
         };
         let outer = self.disc.rings.last().map_or(0.0, |r| r.outer_kpc);
         let mut best: Option<(f64, f64)> = None;

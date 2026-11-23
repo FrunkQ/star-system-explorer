@@ -10,15 +10,6 @@
 # to the Look up block or the reader and delete their lines in the same change.
 # scripts/audit-matter.py --ledger fails on a copy not listed here, on a line
 # here that no longer matches a copy, and on a ledger that grew.
-crates/sse-atoms/src/air.rs	new:Loschmidt constant (p0 over k_B T0)	pub const N_LOSCHMIDT: f64 = 2.686_780_111e25;
 crates/sse-atoms/src/heat.rs	isotope:al26	pub const AL26_H0: f64 = 0.00865 * 5.25e-5 * 0.3583;
-crates/sse-atoms/src/heat.rs	isotope:al26	pub const AL26_TAU_MYR: f64 = 0.717 / LN2;
-crates/sse-atoms/src/layers.rs	new:NaCl molar mass	pub const NACL_MOLAR_MASS: f64 = 0.058_44;
-crates/sse-atoms/src/layers.rs	new:ice_k	pub const ICE_K: f64 = 651.0;
 crates/sse-atoms/src/layers.rs	new:water_kf	pub const WATER_KF: f64 = 1.86;
 crates/sse-atoms/src/light.rs	new:omega_sun	pub const OMEGA_SUN: f64 = 2.0 * m::PI / (25.38 * DAY);
-crates/sse-atoms/src/nebula.rs	element:h/atomic_mass	pub const M_H: f64 = 1.673_5e-27;
-crates/sse-atoms/src/nebula.rs	new:mu_h	pub const MU_H: f64 = 1.4;
-crates/sse-atoms/src/nebula.rs	constant:e	pub const E_ION_H: f64 = 13.598 * 1.602_176_634e-19;
-crates/sse-atoms/src/nebula.rs	constant:h	pub const H_ALPHA_J: f64 = 6.626_070_15e-34 * 299_792_458.0 / 656.28e-9;
-crates/sse-atoms/src/nebula.rs	constant:c	pub const H_ALPHA_J: f64 = 6.626_070_15e-34 * 299_792_458.0 / 656.28e-9;

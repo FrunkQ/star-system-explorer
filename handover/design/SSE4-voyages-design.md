@@ -1,6 +1,6 @@
 # SSE4 voyages between stars: the voyage finder and the autopilot
 
-Status: proposed 21 Nov 2026, second UI track ("Build galaxy charts and travel screens"). It builds on the matter-pack design's section 7A.8 (ratings and counts, MP16), the programs design's section 6 (autopilot is a seat driven by a flow, J6), the night sky design (catalogue, then resolve, track Y) and NAV (`sse-nav`, T3).
+Status: accepted 22 Nov 2026 (Alex answered all eight questions in section 8, 21 Nov 23:26 to 22 Nov 01:01; FTL rules as six fields added 23 Nov, example packs 4A), second UI track ("Build galaxy charts and travel screens"). It builds on the matter-pack design's section 7A.8 (ratings and counts, MP16), the programs design's section 6 (autopilot is a seat driven by a flow, J6), the night sky design (catalogue, then resolve, track Y) and NAV (`sse-nav`, T3).
 
 ## 1. What Alex asked for (21 Nov, 23:11 to 23:13)
 

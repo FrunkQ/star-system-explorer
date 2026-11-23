@@ -12,8 +12,8 @@ pub const K_B: f64 = sse_core::sheet::K_B;
 pub const AMU: f64 = sse_core::sheet::M_U;
 /// Number density at which dry-air refractivity (Peck and Reeder) is given: 288.15 K, 101325 Pa, m⁻³.
 pub const N_S_288: f64 = 2.546_899e25;
-/// Loschmidt's number, 273.15 K and 101325 Pa, m⁻³ (CODATA).
-pub const N_LOSCHMIDT: f64 = 2.686_780_111e25;
+/// Loschmidt's number, 273.15 K and 101325 Pa, m⁻³: p₀ / (k_B T₀) from the sheet.
+pub const N_LOSCHMIDT: f64 = sse_core::sheet::ATM / (sse_core::sheet::K_B * sse_core::sheet::T0C);
 
 /// Dry-air refractivity n − 1 at `lambda_m` (Peck and Reeder 1972), at N_S_288.
 pub fn air_refractivity(lambda_m: f64) -> f64 {

@@ -1,0 +1,268 @@
+// The ground at eye height on the GPU (SL1): the kernel's terrain round a landing site as meshes in the site's
+// frame (metres, x east, y north, z up), a sky dome lit by single Rayleigh scattering (surface-sky.ts, the same sums
+// in TSL), sunlight dimmed by the air, and aerial perspective (the air between the eye and far ground scatters sky
+// light in and dims the ground behind it). One TSL source: WGSL on WebGPU, GLSL on WebGL2. The camera sits at the
+// origin and the meshes are moved by −eye, so the GPU only sees numbers within the patch (rendering rule 3).
+//
+// Three looks: "true" (the light as it is, tone-mapped), "3d" (the same ground as a diagram: shaded relief in the
+// chart's colours with contour lines), "wireframe" (the mesh's edges on the chart's ground).
+import { ACESFilmicToneMapping, BackSide, BufferAttribute, BufferGeometry, Color, LinearSRGBColorSpace, Mesh, NoToneMapping, PerspectiveCamera, Scene, SphereGeometry, SRGBColorSpace, Vector3 } from "three";
+import { MeshBasicNodeMaterial, WebGPURenderer, type Node } from "three/webgpu";
+import { Fn, abs, attribute, dot, exp, float, fract, fwidth, length, max, min, mix, normalWorld, normalize, positionWorld, select, smoothstep, sqrt, uniform, vec3, vec4 } from "three/tsl";
+
+export interface SurfaceMesh {
+  key: string;
+  /** x, y, z per vertex, metres in the site's frame. */
+  positions: Float32Array;
+  /** Linear reflectance, r, g, b per vertex (true look). */
+  albedo: Float32Array;
+  /** Display colour, r, g, b per vertex, 0..1 (diagram looks). */
+  chart: Float32Array;
+  /** The kernel's height per vertex before decoration, metres (contour lines follow it). */
+  kernel_z: Float32Array;
+  indices: Uint32Array;
+  /** Drawn over lower layers where they overlap (a finer ring inside a coarser one). */
+  layer: number;
+}
+
+export interface SurfaceFrame {
+  look: "true" | "3d" | "wireframe";
+  /** The eye in the site's frame, metres. */
+  eye: [number, number, number];
+  forward: [number, number, number];
+  up: [number, number, number];
+  fovY: number;
+  width: number;
+  height: number;
+  /** Toward the sun, unit, site frame. */
+  sun: [number, number, number];
+  /** The star's colour (linear), its light at the top of the air taken as 1 in its brightest channel. */
+  sunRgb: [number, number, number];
+  /** Optical depth straight up at red, green, blue; 0 with no air. */
+  tau: [number, number, number];
+  scale_height_m: number;
+  radius_m: number;
+  /** Angular radius of the star's disc, radians. */
+  sun_radius: number;
+  exposure: number;
+  /** Diagram looks: background, ink and contour interval (metres). */
+  ground: string;
+  ink: string;
+  contour_m: number;
+}
+
+export interface SurfaceGpu {
+  readonly backend: "webgpu" | "webgl2";
+  setMeshes(meshes: SurfaceMesh[]): void;
+  draw(f: SurfaceFrame): void;
+  dispose(): void;
+}
+
+export async function createSurfaceGpu(canvas: HTMLCanvasElement): Promise<SurfaceGpu | null> {
+  let renderer: WebGPURenderer;
+  try {
+    renderer = new WebGPURenderer({ canvas, antialias: true, alpha: false, logarithmicDepthBuffer: true });
+    await renderer.init();
+  } catch {
+    return null;
+  }
+  renderer.outputColorSpace = LinearSRGBColorSpace;
+  const backend = (renderer.backend as { isWebGPUBackend?: boolean }).isWebGPUBackend ? "webgpu" : "webgl2";
+  const scene = new Scene();
+  // A logarithmic depth buffer holds a pebble at 5 cm and the far ring 300 km off in one frame.
+  const camera = new PerspectiveCamera(60, 1, 0.05, 4e6);
+  camera.up.set(0, 0, 1);
+
+  // Shared uniforms.
+  const uSun = uniform(new Vector3(0, 0, 1));
+  const uSunRgb = uniform(new Vector3(1, 1, 1));
+  const uTau = uniform(new Vector3(0, 0, 0));
+  // The air above the eye: the zenith depth thinned by the eye's height (a peak 10 km up sees a darker sky).
+  const uTauEye = uniform(new Vector3(0, 0, 0));
+  const uK = uniform(1000); // R / H
+  const uH = uniform(8000);
+  const uEyeZ = uniform(0);
+  const uExp = uniform(1);
+  const uSunR = uniform(0.0047);
+
+  const airMass = (mu: Node<"float">) => sqrt(uK.mul(mu).mul(uK.mul(mu)).add(uK.mul(2)).add(1)).sub(uK.mul(mu));
+  /** Single-scattered sky light along a unit direction d (the closed form of surface-sky.ts). */
+  const skyAlong = (d: Node<"vec3">) => {
+    const muV = max(d.z, float(0.0));
+    const muS = uSun.z;
+    const mv = airMass(muV);
+    const ms = airMass(muS);
+    const cg = dot(d, uSun);
+    const p = float(3 / (16 * Math.PI)).mul(cg.mul(cg).add(1));
+    const diff = mv.sub(ms);
+    const big = exp(uTauEye.mul(ms).negate()).sub(exp(uTauEye.mul(mv).negate())).div(select(abs(diff).lessThan(1e-5), float(1e-5), diff));
+    const L = uSunRgb.mul(p).mul(mv).mul(big);
+    return select(muS.lessThan(-0.2), vec3(0, 0, 0), L);
+  };
+  const sunT = () => select(uSun.z.lessThan(-0.1), vec3(0, 0, 0), exp(uTauEye.mul(airMass(uSun.z)).negate()));
+
+  // The sky: a dome round the eye.
+  const skyMat = new MeshBasicNodeMaterial({ side: BackSide, depthWrite: false });
+  skyMat.colorNode = Fn(() => {
+    const d = normalize(positionWorld);
+    const sky = skyAlong(d);
+    // The star's disc, dimmed by the air on its way to the eye, with a soft edge one tenth of its size.
+    const ang = float(1).sub(dot(d, uSun));
+    const r2 = uSunR.mul(uSunR).mul(0.5);
+    const disc = smoothstep(r2.mul(1.2), r2.mul(0.8), ang).mul(select(d.z.lessThan(-0.01), float(0), float(1)));
+    const sunL = uSunRgb.mul(sunT()).mul(disc).mul(float(1).div(max(uSunR.mul(uSunR).mul(Math.PI), 1e-9)).mul(0.02));
+    // Below the horizon of a flat eye the dome is ground the meshes did not reach: the last light of the air.
+    const c = sky.add(sunL).mul(uExp);
+    return vec4(c, 1);
+  })();
+  const dome = new Mesh(new SphereGeometry(3e6, 64, 32), skyMat);
+  dome.renderOrder = -1;
+  dome.frustumCulled = false;
+  scene.add(dome);
+
+  // The ground, true look: albedo lit by the sun through the air and by the sky, seen through the air.
+  const trueNode = Fn(() => {
+    const alb = attribute("albedo", "vec3");
+    const n = normalize(normalWorld);
+    const ndl = max(dot(n, uSun), float(0));
+    const muS = uSun.z;
+    const sunLight = uSunRgb.mul(sunT()).mul(ndl);
+    // The sky's light on the ground (half of what the beam lost on the way down; surface-sky.ts skyIrradiance).
+    const skyLight = uSunRgb.mul(max(muS, float(0))).mul(float(1).sub(sunT())).mul(0.5).mul(n.z.mul(0.5).add(0.5));
+    const lit = alb.mul(sunLight.add(skyLight)).div(Math.PI);
+    // Aerial perspective: the eye is at the origin, the point at positionWorld (camera-relative).
+    const v = positionWorld;
+    const dist = length(v);
+    const d = v.div(max(dist, 1e-3));
+    const z0 = uEyeZ;
+    const z1 = uEyeZ.add(v.z);
+    const dz = v.z;
+    // Optical depth along the path through air thinning with height: τ/H · ∫ e^(−z/H) ds.
+    const e0 = exp(z0.div(uH).negate());
+    const e1 = exp(z1.div(uH).negate());
+    const flat = abs(dz).lessThan(1);
+    const column = select(flat, e0.mul(dist), uH.mul(dist).div(select(flat, float(1), dz)).mul(e0.sub(e1)));
+    const od = uTau.div(uH).mul(column);
+    const T = exp(od.negate());
+    const inscatter = skyAlong(vec3(d.x, d.y, max(d.z, float(0.02)))).mul(float(1).sub(T));
+    const c = lit.mul(T).add(inscatter).mul(uExp);
+    return vec4(c, 1);
+  })();
+
+  // Diagram looks: the chart colours, shaded, with contour lines every uC metres.
+  const uInk = uniform(new Vector3(0.13, 0.13, 0.13));
+  const uC = uniform(50);
+  const uLow = uniform(0);
+  const chartNode = Fn(() => {
+    const col = attribute("chart", "vec3");
+    const n = normalize(normalWorld);
+    const shade = float(0.55).add(float(0.45).mul(max(dot(n, normalize(vec3(-0.5, 0.5, 0.8))), float(0))));
+    const z = attribute("kernel_z", "float").sub(uLow);
+    const f = fract(z.div(uC));
+    const w = fwidth(z.div(uC)).mul(1.2);
+    const line = float(1).sub(smoothstep(float(0), w, min(f, float(1).sub(f))));
+    const c = mix(col.mul(shade), vec3(uInk), line.mul(0.65));
+    return vec4(c, 1);
+  })();
+  const wireNode = vec4(vec3(uInk), 1);
+  // One set of materials per layer: a finer ring is pulled toward the eye where it overlaps a coarser one.
+  const layers = new Map<number, { true: MeshBasicNodeMaterial; chart: MeshBasicNodeMaterial; wire: MeshBasicNodeMaterial }>();
+  const matsFor = (layer: number) => {
+    let e = layers.get(layer);
+    if (!e) {
+      const make = (node: typeof wireNode, wireframe = false) => {
+        const m = new MeshBasicNodeMaterial({ wireframe });
+        m.colorNode = node;
+        if (layer > 0) ((m.polygonOffset = true), (m.polygonOffsetFactor = -2 * layer), (m.polygonOffsetUnits = -4 * layer));
+        return m;
+      };
+      e = { true: make(trueNode), chart: make(chartNode), wire: make(wireNode, true) };
+      layers.set(layer, e);
+    }
+    return e;
+  };
+  const allMats = () => [skyMat, ...[...layers.values()].flatMap((e) => [e.true, e.chart, e.wire])];
+
+  const meshes = new Map<string, Mesh>();
+  let order: SurfaceMesh[] = [];
+  const dropAll = () => {
+    for (const m of meshes.values()) {
+      scene.remove(m);
+      m.geometry.dispose();
+    }
+    meshes.clear();
+  };
+  const bg = new Color();
+  const ink = new Color();
+  let lastLook = "";
+  return {
+    backend,
+    setMeshes(list) {
+      dropAll();
+      order = list;
+      for (const s of list) {
+        const g = new BufferGeometry();
+        g.setAttribute("position", new BufferAttribute(s.positions, 3));
+        g.setAttribute("albedo", new BufferAttribute(s.albedo, 3));
+        g.setAttribute("chart", new BufferAttribute(s.chart, 3));
+        g.setAttribute("kernel_z", new BufferAttribute(s.kernel_z, 1));
+        g.setIndex(new BufferAttribute(s.indices, 1));
+        g.computeVertexNormals();
+        g.computeBoundingSphere();
+        const m = new Mesh(g, matsFor(s.layer).true);
+        m.frustumCulled = false;
+        m.renderOrder = s.layer;
+        meshes.set(s.key, m);
+        scene.add(m);
+      }
+    },
+    draw(f) {
+      renderer.setSize(f.width, f.height, false);
+      camera.aspect = f.width / Math.max(1, f.height);
+      camera.fov = (f.fovY * 180) / Math.PI;
+      camera.updateProjectionMatrix();
+      camera.position.set(0, 0, 0);
+      camera.up.set(f.up[0], f.up[1], f.up[2]);
+      camera.lookAt(f.forward[0], f.forward[1], f.forward[2]);
+      const isTrue = f.look === "true";
+      uSun.value.set(f.sun[0], f.sun[1], f.sun[2]);
+      uSunRgb.value.set(f.sunRgb[0], f.sunRgb[1], f.sunRgb[2]);
+      uTau.value.set(f.tau[0], f.tau[1], f.tau[2]);
+      const thin = Math.exp(-Math.max(0, f.eye[2]) / Math.max(1, f.scale_height_m));
+      uTauEye.value.set(f.tau[0] * thin, f.tau[1] * thin, f.tau[2] * thin);
+      uH.value = Math.max(1, f.scale_height_m);
+      uK.value = f.radius_m / Math.max(1, f.scale_height_m);
+      uEyeZ.value = f.eye[2];
+      uExp.value = f.exposure;
+      uSunR.value = f.sun_radius;
+      uC.value = Math.max(1, f.contour_m);
+      uLow.value = 0;
+      // Diagram looks pass the theme's display colours straight through; True is light, tone-mapped and encoded.
+      bg.setStyle(f.ground, LinearSRGBColorSpace);
+      ink.setStyle(f.ink, LinearSRGBColorSpace);
+      uInk.value.set(ink.r, ink.g, ink.b);
+      if (f.look !== lastLook) {
+        lastLook = f.look;
+        renderer.toneMapping = isTrue ? ACESFilmicToneMapping : NoToneMapping;
+        renderer.outputColorSpace = isTrue ? SRGBColorSpace : LinearSRGBColorSpace;
+        for (const m of allMats()) m.needsUpdate = true;
+      }
+      dome.visible = isTrue;
+      renderer.setClearColor(isTrue ? 0x000000 : bg, 1);
+      for (const s of order) {
+        const m = meshes.get(s.key)!;
+        m.position.set(-f.eye[0], -f.eye[1], -f.eye[2]);
+        const ms = matsFor(s.layer);
+        m.material = isTrue ? ms.true : f.look === "wireframe" ? ms.wire : ms.chart;
+
+      }
+      renderer.render(scene, camera);
+    },
+    dispose() {
+      dropAll();
+      dome.geometry.dispose();
+      for (const m of allMats()) m.dispose();
+      renderer.dispose();
+    },
+  };
+}

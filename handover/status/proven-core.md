@@ -38,4 +38,4 @@ Only the owner thread edits this file. One row per package: update it in the sam
 
 ## Done so far and what is next
 
-P1, P3, P4, F0 to F6 done; pipeline, F7, F9, S0 to S4, S6 and S7 done, served by the `survey_surface` op; T3 NAV done (`sse-nav`, `plan_route`); S5 done (`plan_descent`); F8 next (G6 is in), S8 on G7; next B1 one body (handover/design/SSE4-star-census.md), then weather W1 to W3 and W5, then S8 or S9
+P1, P3, P4, F0 to F6 done; pipeline, F7, F9, S0 to S4, S6 and S7 done, served by the `survey_surface` op; T3 NAV done (`sse-nav`, `plan_route`); S5 done (`plan_descent`); weather W1 to W3 and W5 done; MF1 core history done; catalogued worlds take their own air and temperature (SOL2-catalogued-air.md). In progress: B1 one body (B1a to B1d part 1 on main), S16a detail levels, S14a lava tubes, SF1 surface frames. Next: SF1's land strips per frame, then MF2 and MF3 (field ledger and field history), MP19 after MP17, MF10, S17a, S15, S2b, then S9 and S10; F8 and S8 when their inputs land

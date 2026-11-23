@@ -121,6 +121,34 @@ def build():
             out.append(f"    /// {sub['id']}: {fit['fit']} ({fit.get('unit', '')}; {fit.get('src', '')}).")
             out.append(f"    pub const {ident(sub['id'])}: [f64; {len(fit['coeffs'])}] = [{co}];")
     out.append("}")
+    # Isotope properties, by isotope id (the sheet's isotopes table).
+    for prop, doc in [("half_life_s", "Half-life, s"), ("decay_heat_w_per_kg", "Decay heat, W per kg of the isotope"),
+                      ("share_at_sun_birth", "Share at the Sun's birth (as each row's note says)"),
+                      ("share_today", "Mass share of its element today")]:
+        out += ["", f"/// {doc}, by isotope (the sheet's isotopes).", f"pub mod isotope_{prop} {{"]
+        for iso in ref.get("isotopes", []):
+            v = iso.get(prop)
+            if isinstance(v, dict) and isinstance(v.get("v"), (int, float)):
+                out.append(f"    /// {iso['id']} ({v.get('src', '')}).")
+                out.append(f"    pub const {ident(iso['id'])}: f64 = {lit(v['v'])};")
+        out.append("}")
+    # The protosolar mixture's mass shares, worked out from the elements'
+    # protosolar abundances and atomic weights (elements in sheet order).
+    total, h, he = 0.0, 0.0, 0.0
+    for e in ref["elements"]:
+        a, w = e.get("abundance_protosolar"), e.get("atomic_weight")
+        if isinstance(a, dict) and isinstance(w, dict):
+            x = a["v"] * w["v"]
+            total += x
+            if e["id"] == "h":
+                h = x
+            elif e["id"] == "he":
+                he = x
+    out += ["", "/// The protosolar mixture's mass shares, from every element's protosolar abundance",
+            "/// times its atomic weight (the sheet's elements).", "pub mod protosolar {",
+            "    /// X, the mass share of hydrogen.", f"    pub const X: f64 = {lit(h / total)};",
+            "    /// Y, the mass share of helium.", f"    pub const Y: f64 = {lit(he / total)};",
+            "    /// Z, the mass share of everything heavier.", f"    pub const Z: f64 = {lit((total - h - he) / total)};", "}"]
     # Mixture properties, by mixture id.
     for prop, doc in [("density", "Density, kg/m3"), ("yield_strength", "Yield strength, Pa")]:
         out += ["", f"/// {doc}, by mixture (the sheet's mixtures).", f"pub mod mixture_{prop} {{"]

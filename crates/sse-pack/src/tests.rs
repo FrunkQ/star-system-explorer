@@ -317,3 +317,26 @@ fn the_catalogued_solar_system_pack_loads() {
         }
     }
 }
+
+#[test]
+fn the_future_tech_base_pack_loads() {
+    // packs/base-tech (scripts/build-base-tech.py, FT1) is a manifest the
+    // kernel accepts: ten limits, every mark cites a source the pack carries,
+    // and every ceiling names its law.
+    let text = include_str!("../../../packs/base-tech/pack.json");
+    let m = PackManifest::from_json(text).unwrap();
+    assert_eq!(m.id, "sse.base-tech");
+    let doc: serde_json::Value = serde_json::from_str(text).unwrap();
+    let tech = &doc["provides"]["other"]["tech"];
+    assert_eq!(tech["limits"].as_array().unwrap().len(), 10);
+    for f in tech["figures"].as_array().unwrap() {
+        for mk in f["marks"].as_array().unwrap() {
+            let src = mk["src"].as_str().unwrap();
+            assert!(tech["sources"].get(src).is_some(), "{src}");
+            if mk["mark"] == "ceiling" {
+                assert!(mk["law"].is_string(), "{}", f["id"]);
+            }
+        }
+    }
+    assert_eq!(tech["ladder"]["size_per_level_short"], 10.0);
+}
