@@ -1085,6 +1085,88 @@ pub enum Request {
         #[ts(optional)]
         at_s: Option<i64>,
     },
+    /// OV3: a holding on a map layer, one dated record event. `status` is
+    /// `holds` (one holder per place per layer), `claims` (by `by`) or
+    /// `influences` (with `strength` 0 to 1). `extent` is `{reach: {value,
+    /// unit}}`, `{band: [q, q]}` or `{outline: [[x, y]...], frame}`.
+    /// `withdraw` ends the holding in that slot. The layer is a pack's area
+    /// layer or a GM's own `misc.*` one.
+    Hold {
+        place: String,
+        layer: String,
+        key: String,
+        status: String,
+        #[serde(default)]
+        #[ts(optional)]
+        strength: Option<f64>,
+        #[serde(default)]
+        #[ts(optional, type = "unknown")]
+        extent: Option<serde_json::Value>,
+        #[serde(default)]
+        #[ts(optional)]
+        by: Option<String>,
+        #[serde(default)]
+        #[ts(optional)]
+        tier: Option<String>,
+        #[serde(default)]
+        #[ts(optional, type = "unknown")]
+        audience: Option<serde_json::Value>,
+        #[serde(default)]
+        #[ts(optional)]
+        writer: Option<String>,
+        #[serde(default)]
+        #[ts(optional)]
+        reason: Option<String>,
+        #[serde(default)]
+        #[ts(optional)]
+        source: Option<String>,
+        #[serde(default)]
+        #[ts(optional)]
+        withdraw: Option<bool>,
+        at_s: i64,
+    },
+    /// OV3: who holds a place (or a point drawn on a place: `point` is
+    /// `{frame, xy}`, in `body-latlon` or `galaxy-plane-pc`) on a layer at
+    /// `at_s` (absent: latest), seen by `audience` (absent: the GM), drawn
+    /// as `according_to` (an actor whose claims read as held). The answer
+    /// has `via` (held, inherited, rolled-up, rule), `divided` below a 0.6
+    /// share, the claims and influences there (`also`) and `why`.
+    WhoHolds {
+        place: String,
+        layer: String,
+        #[serde(default)]
+        #[ts(optional)]
+        point: Option<HoldPoint>,
+        #[serde(default)]
+        #[ts(optional)]
+        at_s: Option<i64>,
+        #[serde(default)]
+        #[ts(optional)]
+        audience: Option<String>,
+        #[serde(default)]
+        #[ts(optional)]
+        according_to: Option<String>,
+    },
+    /// OV3: the answers for `bounds` and every place held, claimed or
+    /// influenced inside it on a layer, as `who_holds` gives them; with
+    /// `history`, also every holding there that started by `at_s`, with
+    /// `until_s` on those that ended (the ruler's border changes).
+    HoldingsIn {
+        bounds: String,
+        layer: String,
+        #[serde(default)]
+        #[ts(optional)]
+        at_s: Option<i64>,
+        #[serde(default)]
+        #[ts(optional)]
+        audience: Option<String>,
+        #[serde(default)]
+        #[ts(optional)]
+        according_to: Option<String>,
+        #[serde(default)]
+        #[ts(optional)]
+        history: Option<bool>,
+    },
     /// What one audience may be sent of the record at `at_s` (record design
     /// 8A): per subject, the notes it may see (already arrived) and the kept
     /// values its view shows, at that view's precision. No event ids, no
@@ -1752,6 +1834,9 @@ impl Request {
             Request::SetKept { .. } => "set_kept",
             Request::AddActor { .. } => "add_actor",
             Request::Record { .. } => "record",
+            Request::Hold { .. } => "hold",
+            Request::WhoHolds { .. } => "who_holds",
+            Request::HoldingsIn { .. } => "holdings_in",
             Request::Disclosures { .. } => "disclosures",
             Request::RulesStep { .. } => "rules_step",
             Request::RulesPending => "rules_pending",
@@ -2660,6 +2745,28 @@ pub enum Response {
         #[ts(type = "unknown[]")]
         actors: Vec<serde_json::Value>,
     },
+    /// `hold`: the holding as stored.
+    Held {
+        holding_id: String,
+        #[ts(type = "unknown")]
+        holding: serde_json::Value,
+        record_hash: String,
+    },
+    /// `who_holds`: the answer, or null for bare paper.
+    WhoHeld {
+        #[ts(type = "unknown")]
+        answer: serde_json::Value,
+    },
+    /// `holdings_in`: `holdings` are answers as `who_holds` gives them;
+    /// `changes` (with `history`) every holding there by date.
+    HoldingsListed {
+        layer: String,
+        #[ts(type = "unknown[]")]
+        holdings: Vec<serde_json::Value>,
+        #[serde(default, skip_serializing_if = "Vec::is_empty")]
+        #[ts(optional, type = "unknown[]")]
+        changes: Vec<serde_json::Value>,
+    },
     /// `disclosures`: `items` are `{subject, notes?: [{id, at_s, text, tags?,
     /// by, links?}], kept?: [{field, value?, band?}]}`, where `kept` holds the
     /// record's facts the view shows (kept values, an actor's name and kind);
@@ -3107,3 +3214,11 @@ pub struct StackAdopted {
 }
 
 pub const PROTOCOL: &str = "sse.kernel/1";
+
+/// A point drawn on a place, in that place's frame (OV3).
+#[derive(Clone, Debug, PartialEq, Serialize, Deserialize, TS)]
+#[ts(export)]
+pub struct HoldPoint {
+    pub frame: String,
+    pub xy: [f64; 2],
+}

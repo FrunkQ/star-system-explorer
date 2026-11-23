@@ -38,6 +38,9 @@ mod systems;
 mod tags;
 #[cfg(test)]
 mod tags_tests;
+mod territory;
+#[cfg(test)]
+mod territory_tests;
 mod trust;
 #[cfg(test)]
 mod trust_tests;
@@ -218,6 +221,22 @@ fn load_observe(ms: &[sse_pack::PackManifest]) -> Result<Observe, Vec<String>> {
             sse_names::Library::default()
         }
     };
+    // OV3: map layers of areas, bottom to top.
+    let mut found = Vec::new();
+    for p in ms {
+        if let Some(v) = p.provides.other.get("overlays") {
+            let j =
+                serde_json::to_value(v).map_err(|e| vec![format!("{}: overlays: {e}", p.id)])?;
+            found.push((p.id.clone(), j));
+        }
+    }
+    let layers = match territory::Layers::from_packs(&found) {
+        Ok(l) => l,
+        Err(e) => {
+            problems.extend(e);
+            territory::Layers::default()
+        }
+    };
     if !problems.is_empty() {
         return Err(problems);
     }
@@ -263,6 +282,7 @@ fn load_observe(ms: &[sse_pack::PackManifest]) -> Result<Observe, Vec<String>> {
         dressing,
         reference: std::sync::Arc::new(reference),
         names: std::sync::Arc::new(names),
+        layers,
     })
 }
 
@@ -436,6 +456,8 @@ struct Observe {
     reference: std::sync::Arc<sse_reference::Reference>,
     /// Name schemes and the avoid list (`provides.other.names`, NM1).
     names: std::sync::Arc<sse_names::Library>,
+    /// Map layers of areas (`provides.other.overlays[].areas`, OV3).
+    layers: territory::Layers,
 }
 
 pub struct Kernel {
@@ -528,6 +550,55 @@ fn replay_export(evs: &[serde_json::Value], what: &str) -> Result<Chronicle, Res
 }
 
 /// The record's hash: its chronicle head (covers notes, which touch no state).
+/// OV3: the world the reading rules see: where each drawn star system among
+/// the places asked and held is at the date, and the record's kept numbers.
+fn territory_world(
+    u: &Universe,
+    live: &[sse_record::holdings::Holding],
+    asked: &[Address],
+    at: UniverseTime,
+) -> Result<territory::KernelWorld, Response> {
+    let mut systems: Vec<Address> = live
+        .iter()
+        .map(|h| h.place.clone())
+        .chain(asked.iter().cloned())
+        .filter_map(|p| territory::drawn_system(&p))
+        .collect();
+    systems.sort();
+    systems.dedup();
+    let mut positions = BTreeMap::new();
+    if !systems.is_empty() {
+        let state = u.chronicle.state_at(UniverseTime::seconds(i64::MAX));
+        let pins = cosmos::star_pins(&state)?;
+        let start = clock::campaign_span_s(&u.chronicle).map(|(a, _)| a);
+        positions = cosmos::with_stars(&u.seed, &u.root, None, |st, now| {
+            let t_myr = match start {
+                Some(s0) if at.s != i64::MAX => {
+                    now + (at.s - s0) as f64 / sse_core::sheet::YR_JULIAN / 1.0e6
+                }
+                _ => now + clock::elapsed_myr(&u.chronicle),
+            };
+            let mut out = BTreeMap::new();
+            for a in &systems {
+                let s = match pins.iter().find(|p| p.address == *a) {
+                    Some(p) => Some(p.clone()),
+                    None => st.draw_one(a).map_err(|e| err("bad_address", e))?,
+                };
+                if let Some(s) = s {
+                    let x = st.at(&s, t_myr).xyz_pc;
+                    let pc = sse_core::sheet::PC;
+                    out.insert(a.clone(), [x[0] * pc, x[1] * pc, x[2] * pc]);
+                }
+            }
+            Ok(out)
+        })?;
+    }
+    Ok(territory::KernelWorld {
+        positions,
+        record: u.record.state_at(at),
+    })
+}
+
 fn record_hash(u: &Universe) -> String {
     u.record.head().hex()
 }
@@ -3746,6 +3817,148 @@ impl Kernel {
                     notes,
                     kept,
                     actors,
+                }
+            }
+            Request::Hold {
+                place,
+                layer,
+                key,
+                status,
+                strength,
+                extent,
+                by,
+                tier,
+                audience,
+                writer,
+                reason,
+                source,
+                withdraw,
+                at_s,
+            } => {
+                self.observe.layers.rules(&layer)?;
+                let u = self.universe()?;
+                let place = in_universe(&u.root, &place)?;
+                let bad = |m: String| err("bad_holding", m);
+                let status = match status.as_str() {
+                    "holds" => sse_record::holdings::Status::Holds,
+                    "claims" => sse_record::holdings::Status::Claims,
+                    "influences" => sse_record::holdings::Status::Influences,
+                    o => return Err(bad(format!("status {o:?}: holds, claims or influences"))),
+                };
+                let extent = match extent {
+                    None => None,
+                    Some(v) => Some(serde_json::from_value(v).map_err(|e| {
+                        bad(format!(
+                            "extent: {{reach: {{value, unit}}}}, {{band: [q, q]}} or {{outline, frame}} ({e})"
+                        ))
+                    })?),
+                };
+                let audience: sse_record::Audience = match audience {
+                    None => sse_record::Audience::gm(),
+                    Some(v) => serde_json::from_value(v).map_err(|e| {
+                        bad(format!("audience: \"everyone\", \"gm\" or a list ({e})"))
+                    })?,
+                };
+                let writer = writer.unwrap_or_else(|| "gm".into());
+                let d = sse_record::holdings::HoldDraft {
+                    place,
+                    layer,
+                    key,
+                    status,
+                    strength,
+                    extent,
+                    by,
+                    tier,
+                    audience,
+                    writer: writer.clone(),
+                    reason,
+                    source,
+                    withdraw: withdraw.unwrap_or(false),
+                };
+                let id = sse_record::holdings::hold(
+                    &mut u.record,
+                    &d,
+                    UniverseTime::seconds(at_s),
+                    &Publisher::new(&writer, "hold", "1"),
+                )
+                .map_err(record_err)?;
+                let h = sse_record::holdings::history(
+                    u.record.events(),
+                    &d.layer,
+                    UniverseTime::seconds(i64::MAX),
+                )
+                .into_iter()
+                .find(|h| h.event == id.hex());
+                Response::Held {
+                    holding_id: id.hex(),
+                    holding: serde_json::to_value(&h).expect("plain"),
+                    record_hash: record_hash(u),
+                }
+            }
+            Request::WhoHolds {
+                place,
+                layer,
+                point,
+                at_s,
+                audience,
+                according_to,
+            } => {
+                let rules = self.observe.layers.rules(&layer)?;
+                let u = self.universe()?;
+                let place = in_universe(&u.root, &place)?;
+                let at = UniverseTime::seconds(at_s.unwrap_or(i64::MAX));
+                let live = sse_record::holdings::holdings_at(u.record.events(), &layer, at);
+                let view = sse_record::holdings::View {
+                    audience: audience.unwrap_or_else(|| "gm".into()),
+                    according_to,
+                };
+                let world = territory_world(u, &live, std::slice::from_ref(&place), at)?;
+                let a = match point {
+                    Some(p) => sse_record::holdings::who_holds_point(
+                        &place, &p.frame, p.xy, &live, &view, &rules, &world,
+                    ),
+                    None => sse_record::holdings::who_holds(&place, &live, &view, &rules, &world),
+                };
+                Response::WhoHeld {
+                    answer: serde_json::to_value(&a).expect("plain"),
+                }
+            }
+            Request::HoldingsIn {
+                bounds,
+                layer,
+                at_s,
+                audience,
+                according_to,
+                history,
+            } => {
+                let rules = self.observe.layers.rules(&layer)?;
+                let u = self.universe()?;
+                let bounds = in_universe(&u.root, &bounds)?;
+                let at = UniverseTime::seconds(at_s.unwrap_or(i64::MAX));
+                let live = sse_record::holdings::holdings_at(u.record.events(), &layer, at);
+                let view = sse_record::holdings::View {
+                    audience: audience.unwrap_or_else(|| "gm".into()),
+                    according_to,
+                };
+                let world = territory_world(u, &live, std::slice::from_ref(&bounds), at)?;
+                let holdings =
+                    sse_record::holdings::holdings_in(&bounds, &live, &view, &rules, &world)
+                        .iter()
+                        .map(|a| serde_json::to_value(a).expect("plain"))
+                        .collect();
+                let changes = if history.unwrap_or(false) {
+                    sse_record::holdings::history(u.record.events(), &layer, at)
+                        .into_iter()
+                        .filter(|h| bounds.contains(&h.place) && h.visible_to(&view.audience))
+                        .map(|h| serde_json::to_value(&h).expect("plain"))
+                        .collect()
+                } else {
+                    vec![]
+                };
+                Response::HoldingsListed {
+                    layer,
+                    holdings,
+                    changes,
                 }
             }
             Request::Systems => {

@@ -49,6 +49,7 @@ Only the owner thread edits this file. One row per package: update it in the sam
 | DM6 kernel half: `derive` and `explain` take `at_s`; a stack with a constant's law reads it at that date | done; look-ahead spans keep one date (noted) | packages/DM6-kernel.md |
 | GH3 progenitors feed the host: each tree member's galaxy and orbit decide what arrives (stellar halo, hot gas, merger); responses by ratios; dated marks; G3's ex-situ stand-ins retired in looked-at galaxies | done | packages/GH3.md |
 | GH4 remains as places: stars leave a satellite by its tidal radius; each torn member a stream, shells or mixed remains in the envelope; halo stars in star cells and the sky with where they were born; origins across galaxies | done; next GH5 | packages/GH4.md |
+| OV3 territory holdings: `record.hold` with status and extent; inherit down, roll up (divided below 0.6), reach met midway, outlines; ops `hold`, `who_holds`, `holdings_in` with Why; area layers read from `provides.other.overlays[].areas` | done; next OV10 and OV12 at stage 5 (OV14 moved to 4.1) | packages/OV3.md |
 | DM2 dark energy w0 and wa in the expansion and in the growth (stepped when w is not −1); void shape checked | done; real-size switch is the galaxy charts' | packages/DM2.md |
 | DM3 matter ledger per cell (op `matter_budget`): dark in catalogued haloes, below the floor, never collapsed; ordinary by reservoir; environments | done; one question for Alex (environment classifier) in the log | packages/DM3.md |
 
