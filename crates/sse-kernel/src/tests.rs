@@ -3335,6 +3335,45 @@ fn detect_on_the_magnetic_channel_with_range_bands() {
     assert_eq!(d["distance_band"], "distant", "{d}");
 }
 
+/// ND2: light through gas reads each gas's absorption from the data sheet
+/// and gives the colour to the eye before and after.
+#[test]
+fn light_through_gas_gives_the_colour_to_the_eye() {
+    let mut k = crate::Kernel::new();
+    let send = |k: &mut crate::Kernel, v: serde_json::Value| -> serde_json::Value {
+        serde_json::from_str(&k.handle_json(&v.to_string())).unwrap()
+    };
+    let pack = |p: &str| -> serde_json::Value {
+        serde_json::from_str(&std::fs::read_to_string(root().join(p)).unwrap()).unwrap()
+    };
+    let r = send(
+        &mut k,
+        serde_json::json!({"op": "load_stack", "packs": [pack("packs/base-reference/pack.json")]}),
+    );
+    assert_eq!(r["type"], "stack_loaded", "{r}");
+    let r = send(
+        &mut k,
+        serde_json::json!({"op": "light_through_gas", "passages": [
+            {"address": "sun", "t_k": 5800.0, "layers": []},
+            {"address": "giant", "t_k": 5772.0, "path_factor": 2.0,
+             "layers": [{"t_k": 80.0, "path_m": 5e4, "gases": [
+                 {"gas": "h2", "number_density_m3": 1e25}, {"gas": "ch4", "number_density_m3": 2e22}]}],
+             "wavelengths_m": [5.5e-7, 8.9e-7]}]}),
+    );
+    assert_eq!(r["type"], "gas_passed", "{r}");
+    assert_eq!(r["passages"][0]["colour_in"]["hex"], "#FFF1EB", "{r}");
+    let g = &r["passages"][1]["passed"];
+    assert_eq!(g["wavelengths_m"].as_array().unwrap().len(), 2, "{g}");
+    // No absorption rows on the sheet yet: said, and the light passes.
+    assert!(g["not_looked_up"].to_string().contains("ch4"), "{g}");
+    let r = send(
+        &mut k,
+        serde_json::json!({"op": "light_through_gas", "passages": [
+            {"layers": [{"t_k": 80.0, "path_m": 1.0, "gases": [{"gas": "unobtainium", "number_density_m3": 1.0}]}], "t_k": 5000.0}]}),
+    );
+    assert_eq!(r["code"], "bad_gas", "{r}");
+}
+
 /// X3e: the chart room's Packs screen adds the Traveller pack on top of the
 /// app's opening stack (no atlas pack), so it must load there and read codes.
 #[test]

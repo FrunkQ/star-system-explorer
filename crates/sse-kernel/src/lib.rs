@@ -2913,6 +2913,9 @@ impl Kernel {
                 airs,
                 wavelengths_m,
             } => systems::read_air_optics(airs, wavelengths_m)?,
+            Request::LightThroughGas { passages } => {
+                systems::light_through_gas(passages, &self.observe.reference)?
+            }
             Request::Detect {
                 targets,
                 sensors,
