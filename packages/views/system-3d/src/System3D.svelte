@@ -347,7 +347,7 @@
   // Belts in True: a haze of points between each disc belt's drawn edges, in the star's frame, as faint as starlight
   // on dust allows a screen to show (fudge register: the count is a drawing's, not the belt's).
   const BELT_POINTS = 1600;
-  const beltHazes = $derived(lay && centreId === root ? bands.filter((b) => b.shape === "disc").map((b) => ({ b, pts: beltHaze(Math.min(11.5, lay!.dist(b.a_in_m)), Math.min(11.5, lay!.dist(b.a_out_m)), 0.08, BELT_POINTS) })) : []);
+  const beltHazes = $derived(lay && centreId === root ? bands.filter((b) => b.shape !== "sphere").map((b) => ({ b, pts: beltHaze(Math.min(11.5, lay!.dist(b.a_in_m)), Math.min(11.5, lay!.dist(b.a_out_m)), 0.08, BELT_POINTS) })) : []);
   const ringed = $derived(shown.filter((b) => b.rings?.length).map((b) => b.name));
   const ringsAssumed = $derived(shown.some((b) => b.rings?.some((r) => r.tau === null || r.albedo === null)));
   const ringNote = $derived(
