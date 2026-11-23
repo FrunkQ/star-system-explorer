@@ -72,3 +72,19 @@ and the unknown-op error message names `ship_at_world`. No other line changed.
 - Voyages: show these checks on the ship card at each stop, and offer the aerobraked arrival beside the burn with its
   propellant saved and its dangers (the route finder's risky option).
 - Mount the renderer's `ShipPicture` on the Voyages ship card and the route card.
+
+## Part 2: on the Voyages screen (23 Nov)
+
+- `packages/views/voyage/src/AtWorld.svelte`: under an in-system voyage, "At <destination>": the ship drawn by the
+  renderer's `ShipPicture` (from the ship record the op returns, fuels from `readPropellants`), then each act with its
+  verdict in words, the dangers past caution with their rough chance as odds and what happens if it goes wrong, what
+  would make it safer, and a "Why?" with the model and the chance basis. Acts with nothing to act on are one line.
+- On the GM's seat with an adopted system it asks with `system` (the world's own air from S7); a fixture chart asks
+  with the chart's inline system, whose worlds carry no air, so aerocapture and entry say the air is not known there.
+- A torch course arrives braked by its drive (`v_inf_m_s` 0); a transfer arrives on the kernel's default (a Hohmann
+  transfer from the next body in, not yet the leg's own arrival speed).
+- Kernel: no `air` on a body now means "not known", said as such; a pressure of 0 means airless (Sol's Mercury and an
+  adopted airless world carry that). No golden changed.
+- e2e: `tests/ui/voyage.e2e.mjs` waits for the card, an act and the ship picture.
+
+Limits: the leg's own arrival speed is not passed yet (the voyage plan does not carry it); belts get no card.

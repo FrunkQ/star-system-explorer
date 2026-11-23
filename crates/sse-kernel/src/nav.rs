@@ -148,7 +148,15 @@ fn air_of(ss: &sse_surface::SurfaceSettings, b: &sse_surface::Body) -> Option<ss
     let env = sse_surface::envelope(ss, b);
     let giant = env.kind == "cloud-deck";
     if b.pressure_bar <= 0.0 && !giant {
-        return None;
+        // Known to be airless.
+        return Some(sse_nav::entry::Air {
+            pressure_pa: 0.0,
+            temperature_k: env.t_surface_now_k,
+            molar_kg: 0.0,
+            scale_height_m: None,
+            gas: String::new(),
+            ground: !b.deep_envelope,
+        });
     }
     let a = sse_surface::cover::Air::guess(&ss.cover, &env, b.pressure_bar, b.oceans > 0.0);
     Some(sse_nav::entry::Air {
