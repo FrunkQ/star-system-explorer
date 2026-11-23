@@ -129,3 +129,5 @@ export { BRAND_LOGO_MAX, BRAND_NAME_MAX, DEFAULT_JOIN, LIVE_OVERRIDES, checkBran
 export type { JoinWords, SeatBrand } from "./brand.ts";
 export { ABOARD, PERSON, CARGO, STATES, STATE_WORDS, STORES, entryFrom, aboard, crewAboard, living, ageNow, lifeSupportFrom, storeOf, massKg, lifeSupport, entryId, startingValues } from "./manifest.ts";
 export type { AboardEntry, AboardState, LifeSupport, LifeSupportPack, LifeSupportRate, Store, StoreDays } from "./manifest.ts";
+export { LANDMARKS, LANDMARK_WORDS, LANDMARK_MEANS, HOLD_MS, tableOf, fieldLandmark, hasException, lineChange, pressedLandmark, knownOverall, knownChangedWords, eyesShow, secrecyRelevant, holdReveal } from "./known.ts";
+export type { Landmark as KnownLandmark, KnownTo, KnownAudience, KnownException, KnownScope, KnownChange, Held } from "./known.ts";

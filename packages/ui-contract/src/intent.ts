@@ -58,11 +58,20 @@ export type Intent =
    * thing only). `scheme` null takes the setting away, so the one above applies again. Names not yet kept change at
    * once; `rename_fixed` draws kept ones afresh too, dated `at_yr`. Only the GM applies it.
    */
-  | { kind: "set_naming"; address: string; layer: string; scheme: string | null; of_kind?: string; rename_fixed?: boolean; at_yr: number };
+  | { kind: "set_naming"; address: string; layer: string; scheme: string | null; of_kind?: string; rename_fixed?: boolean; at_yr: number }
+  /**
+   * Who knows a thing (SV1 set_known, secrets and visibility design 5): put it, or one fact on it (`field`), at a
+   * landmark for one audience, over a scope (this, with what is inside it, or a list), as dated observe.grant events
+   * that undo as one. A null landmark on a field drops its exception, so the fact follows its thing again. `from_yr`
+   * holds the news back until that campaign time. Only the GM applies it.
+   */
+  /** Put back exactly what one set_known changed (SV1 undo_known), by the id its reply gave, as one dated event. */
+  | { kind: "undo_known"; undo: string; at_yr: number }
+  | { kind: "set_known"; address: string; audience: string; landmark: import("./known.ts").Landmark | null; field?: string; scope: import("./known.ts").KnownScope; from_yr?: number; at_yr: number };
 
 export type IntentKind = Intent["kind"];
 
-export const INTENT_KINDS: readonly IntentKind[] = ["set_value", "adopt_physics", "stack_packs", "scan_toggle", "grant", "set_values", "withdraw", "restore", "rename", "set_naming"];
+export const INTENT_KINDS: readonly IntentKind[] = ["set_value", "adopt_physics", "stack_packs", "scan_toggle", "grant", "set_values", "withdraw", "restore", "rename", "set_naming", "set_known", "undo_known"];
 
 /** Machine-readable description of an intent a view may send (H8.1 `intents`). */
 export interface IntentSchema {
@@ -154,6 +163,18 @@ export function checkIntent(i: Intent): string | null {
     if (!Number.isFinite(i.at_yr)) return "time must be finite";
     return null;
   }
+  if (i.kind === "undo_known") return typeof i.undo === "string" && i.undo ? (Number.isFinite(i.at_yr) ? null : "time must be finite") : "undo needs the id a set_known gave";
+  if (i.kind === "set_known") {
+    if (!i.address.startsWith("u:")) return "address must start with u:";
+    if (!/^[a-z0-9][a-z0-9._-]*$/.test(i.audience)) return "audience must be a lower-case name";
+    if (i.landmark !== null && !["gm_only", "heard_of", "known"].includes(i.landmark)) return "landmark is gm_only, heard_of or known";
+    if (i.landmark === null && !i.field) return "only a fact's exception can be dropped; a thing always has a landmark";
+    if (i.field !== undefined && !/^[a-z][a-z0-9_.-]*$/.test(i.field)) return "field must be a lower-case name";
+    if (typeof i.scope === "object" && (!Array.isArray(i.scope.list) || !i.scope.list.length || i.scope.list.some((a) => !a.startsWith("u:")))) return "a list scope names addresses";
+    if (typeof i.scope === "string" && i.scope !== "this" && i.scope !== "children") return "scope is this, children or a list";
+    if (!Number.isFinite(i.at_yr) || (i.from_yr !== undefined && !Number.isFinite(i.from_yr))) return "time must be finite";
+    return null;
+  }
   if (i.kind !== "set_value") return `unknown intent kind ${(i as { kind: string }).kind}`;
   if (!i.address.startsWith("u:")) return "address must start with u:";
   if (!/^[a-z][a-z0-9_.-]*$/.test(i.field)) return "field must be a lower-case name";
@@ -184,6 +205,18 @@ export function intentToRequest(i: Intent, stack: { opening: readonly unknown[];
   if (i.kind === "rename") return { op: "rename" as const, address: i.address, layer: i.layer, ...(i.text !== null ? { text: i.text.trim() } : {}), at_s: yearsToSeconds(i.at_yr) };
   if (i.kind === "set_naming")
     return { op: "set_naming" as const, address: i.address, layer: i.layer, ...(i.scheme !== null ? { scheme: i.scheme } : {}), ...(i.of_kind ? { kind: i.of_kind } : {}), ...(i.rename_fixed ? { rename_fixed: true } : {}), at_s: yearsToSeconds(i.at_yr) };
+  if (i.kind === "undo_known") return { op: "undo_known" as const, undo: i.undo, at_s: yearsToSeconds(i.at_yr) };
+  if (i.kind === "set_known")
+    return {
+      op: "set_known" as const,
+      address: i.address,
+      audience: i.audience,
+      landmark: i.landmark,
+      ...(i.field ? { field: i.field } : {}),
+      scope: i.scope,
+      ...(i.from_yr !== undefined ? { from_s: yearsToSeconds(i.from_yr) } : {}),
+      at_s: yearsToSeconds(i.at_yr),
+    };
   return {
     op: "set_authored" as const,
     edit: {

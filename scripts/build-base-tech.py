@@ -12,11 +12,17 @@ holds plain data, read by general machinery (FT2 is the kernel's):
              it, nobody has built it) and ceiling (where a named law stops it).
              `better` is the way an advance pushes the figure; past the
              ceiling in that direction is fictional by arithmetic
-  ladder     the neutral ladder, real history on its lower rungs, and the two
-             size factors (ten times the size per level short, half per level
-             beyond for at most two levels)
-  advances   real and near-real advances: what each sets, its home level and
-             the mark it earns
+  ladder     the neutral ladder, real history on its lower rungs, and how a
+             figure improves past an advance's home level (half as much
+             better again per level, until its next cited mark)
+  families   part families (design 5.2): how much worse an advance's own
+             figure is per level short of home (engines a seventh, bulk
+             materials a fifth, stores a third, near-ceiling figures two-thirds
+             of the way, plain mass the same, least-size devices a floor);
+             only fictional and unknown devices scale the part's size (ten
+             times per level short, half per level ahead for two levels)
+  advances   real and near-real advances: what each sets, its family, the
+             figures physics fixes, its home level and the mark it earns
 
 Numbers that follow from the master data sheet (c, g0, strength for weight of
 its materials) are worked out from it here, never typed (MP22; this builder is
@@ -37,6 +43,9 @@ REF = {c["id"]: c["value"]["v"] for c in SHEET["constants"]}
 MIX = {m["id"]: m for m in SHEET["mixtures"]}
 C = REF["c"]
 G0 = REF["g0"]
+# The international pound, exact by definition (1959); SNAP-10A's mass is given in pounds.
+LB_KG = 0.45359237
+SNAP10A_W_KG = round(500.0 / (950.0 * LB_KG), 2)
 ELEMENTS = {e["id"]: e for e in SHEET["elements"]}
 H2O = next(x for x in SHEET["substances"] if x["id"] == "h2o")
 # Hydrogen burned with oxygen, per kilogram of liquid water made (the higher
@@ -85,6 +94,9 @@ SOURCES = {
     "lynch2023": "Lynch, C. et al. 2023, Logistics rates and assumptions for future human spaceflight missions beyond LEO, AIAA ASCEND 2023 (NTRS 20230013896): oxygen 0.89, drinking water 2.79, food as shipped 2.39 kg per crew member a day",
     "nasa-water2023": "NASA 2023 (20 June), NASA achieves water recovery milestone on International Space Station: 98% total water recovery with the brine processor. https://www.nasa.gov/missions/station/iss-research/nasa-achieves-water-recovery-milestone-on-international-space-station",
     "peng2008": "Peng, B. et al. 2008, Nature Nanotechnology 3, 626: single carbon nanotube shells near 100 GPa (as summarised; not read)",
+    "doe-snap": "US DOE Energy Technology Engineering Center, System for Nuclear Auxiliary Power (SNAP) overview: SNAP-10A (1965) made at least 500 W (over 600 at first) and weighed under 950 lb with instruments and shielding. https://www.energy.gov/etec/system-nuclear-auxiliary-power-snap-overview",
+    "sp100": "Manvi, R. and Fujita, T. 1986, SP-100 program users handbook, JPL D-2185 issue 2: 100 kWe at end of life for about 3,000 kg (design; never flown). https://www.osti.gov/servlets/purl/10184673",
+    "ft-design-5.2": "SSE4 future tech design, section 5.2 (accepted by Alex 23 Nov 2026): first working generation against the mature one, by family of part; figures checked in its section 14.1 (V-2 about 22 against Merlin 1D over 150; Jumo 004 1.2 against EJ200 about 9; carbon fibre 0.5 to 1 GPa early, 3.5 in 1971, 7.0 now; nanotube tubes 100 GPa against fibre 4.2; lithium-ion 80 Wh/kg in 1991, about three times now)",
     "sheet": "the master data sheet (pack base-reference): the value is worked out from its rows",
     "law": "a law of physics, named on the mark",
 }
@@ -125,7 +137,9 @@ FIGURES = [
                mark("ceiling", C * C, "matter with antimatter, all of the mass", "law", law="mass-energy equivalence", sheet="constants/c")]},
     {"id": "plant_w_per_kg", "limit": "energy", "plain": "power per kilogram of power plant and drive", "unit": "W kg-1", "better": "higher",
      "reads": "FT2",
-     "marks": [mark("allowed", 8620.0, "D-He3 spherical torus fusion ship", "williams2005")]},
+     "marks": [mark("built", SNAP10A_W_KG, "SNAP-10A, the only reactor the US flew: 500 W for under 950 lb", "doe-snap"),
+               mark("allowed", round(100e3 / 3000.0), "SP-100 space reactor design, 100 kWe for about 3,000 kg", "sp100"),
+               mark("allowed", 8620.0, "D-He3 spherical torus fusion ship, drive and plant together", "williams2005")]},
     # 4 Crews break under hard acceleration
     {"id": "crew_g", "limit": "acceleration", "plain": "sustained acceleration a crew can take", "unit": "g", "better": "higher",
      "reads": "ship g_limit (sse-nav Ship); the species' tolerance",
@@ -187,7 +201,11 @@ LIMITS = [
 LADDER = {
     "id": "neutral", "name": "Neutral ladder",
     "about": "Real history on the lower rungs, so 'Sol today' is level 4. A setting defines its own ladder; this one is the default.",
+    "improve_per_level_beyond": 1.5,
+    # Kept while FT2's first reader still reads them; the kernel removes them
+    # when its reader moves to the families (the fictional family holds the same numbers).
     "size_per_level_short": 10.0, "shrink_per_level_beyond": 0.5, "shrink_levels": 2,
+    "improve_note": "past an advance's home level its figure gets half as much better again per level (times 1.5 where higher is better, divided by 1.5 where lower is), until it meets the next cited allowed or ceiling mark, then stops",
     "levels": [
         {"n": 0, "id": "muscle", "name": "Muscle and wind", "about": "before engines"},
         {"n": 1, "id": "steam", "name": "Steam and steel", "about": "about 1800 to 1900: engines, steel wire"},
@@ -199,20 +217,45 @@ LADDER = {
     ],
 }
 
+# Part families (design 5.2): how much worse an advance's own figure is for
+# each level short of its home level. The size of the part then falls out of
+# the sizing blocks. `rule`: "worse_by" divides the figure by `factor` per
+# level short (multiplies where lower is better); "toward" puts it `share` of
+# the way from the older figure to the mature one; "same" leaves it; "floor"
+# keeps the advance's stated least size; "size" (fictional and unknown
+# devices only) leaves the figure and scales the part's mass and volume.
+FAMILIES = [
+    {"id": "engine", "name": "Engines and power plants", "about": "output for their mass: drives, reactors, generators, radiators",
+     "maturity": {"rule": "worse_by", "factor": 7.0}, "src": "ft-design-5.2"},
+    {"id": "near-ceiling", "name": "Figures held down by a nearby ceiling", "about": "exhaust speed for a given fuel, conversion efficiency, how much a habitat recycles",
+     "maturity": {"rule": "toward", "share": 2.0 / 3.0}, "src": "ft-design-5.2"},
+    {"id": "material", "name": "Materials in bulk", "about": "strength for weight of something bought by the kilometre",
+     "maturity": {"rule": "worse_by", "factor": 5.0}, "src": "ft-design-5.2"},
+    {"id": "store", "name": "Stores of energy", "about": "batteries, fuel handling",
+     "maturity": {"rule": "worse_by", "factor": 3.0}, "src": "ft-design-5.2"},
+    {"id": "plain-mass", "name": "Plain mass", "about": "shielding by matter, ballast, reaction mass, structure that only has to be there",
+     "maturity": {"rule": "same"}, "src": "ft-design-5.2"},
+    {"id": "least-size", "name": "Devices with a least size set by physics", "about": "a critical mass, a plasma big enough to hold its heat: never smaller at any maturity",
+     "maturity": {"rule": "floor"}, "src": "ft-design-5.2"},
+    {"id": "fictional", "name": "Fictional devices and anything unknown", "about": "nothing to go on: Alex's rule of thumb",
+     "maturity": {"rule": "size", "size_per_level_short": 10.0, "shrink_per_level_beyond": 0.5, "shrink_levels": 2}, "src": "ft-design-5.2"},
+]
+
 ADVANCES = [
-    {"id": "steel-wire", "name": "Steel cable", "level": 1, "sets": {"strength_for_weight": strength_for_weight("steel-wire")}, "part": "structure"},
-    {"id": "chemical-rocket", "name": "Hydrogen-oxygen rocket", "level": 3, "sets": {"exhaust_km_s": isp_km_s(465.5), "waste_per_jet": 0.0}, "part": "drive"},
-    {"id": "fission-reactor", "name": "Fission reactor", "level": 3, "sets": {"fuel_j_per_kg": 8.21e13}, "part": "reactor"},
-    {"id": "aramid", "name": "Aramid fibre", "level": 3, "sets": {"strength_for_weight": strength_for_weight("aramid")}, "part": "structure"},
-    {"id": "pumped-radiator", "name": "Pumped ammonia radiators", "level": 3, "sets": {"radiator_k": 276.0}, "part": "radiator"},
-    {"id": "nuclear-thermal", "name": "Nuclear thermal rocket", "level": 4, "sets": {"exhaust_km_s": isp_km_s(875.0), "waste_per_jet": 0.0}, "part": "drive",
+    {"id": "steel-wire", "name": "Steel cable", "level": 1, "sets": {"strength_for_weight": strength_for_weight("steel-wire")}, "family": "material", "part": "structure"},
+    {"id": "chemical-rocket", "name": "Hydrogen-oxygen rocket", "level": 3, "sets": {"exhaust_km_s": isp_km_s(465.5), "waste_per_jet": 0.0}, "family": "near-ceiling", "fixed": ["waste_per_jet"], "part": "drive"},
+    {"id": "fission-reactor", "name": "Fission reactor", "level": 3, "sets": {"plant_w_per_kg": SNAP10A_W_KG}, "family": "engine", "part": "reactor"},
+    {"id": "aramid", "name": "Aramid fibre", "level": 3, "sets": {"strength_for_weight": strength_for_weight("aramid")}, "family": "material", "part": "structure"},
+    {"id": "pumped-radiator", "name": "Pumped ammonia radiators", "level": 3, "sets": {"radiator_k": 276.0}, "family": "engine", "part": "radiator"},
+    {"id": "nuclear-thermal", "name": "Nuclear thermal rocket", "level": 4, "sets": {"exhaust_km_s": isp_km_s(875.0), "waste_per_jet": 0.0}, "family": "near-ceiling", "fixed": ["waste_per_jet"], "part": "drive",
      "note": "ground-tested 1959 to 1972, never flown: built at level 3 on the bench, home here as a flying part"},
-    {"id": "pbo-fibre", "name": "PBO fibre", "level": 4, "sets": {"strength_for_weight": strength_for_weight("pbo-fibre")}, "part": "structure"},
-    {"id": "water-recovery", "name": "Water recovery with brine processing", "level": 4, "sets": {"water_recycled": 0.98}, "part": "stores"},
-    {"id": "light-sail", "name": "Light sail or photon rocket", "level": 4, "sets": {"unthrown_n_per_w": 1.0 / C}, "part": "drive"},
-    {"id": "fusion-torch", "name": "Fusion torch (D-He3)", "level": 5, "sets": {"exhaust_km_s": isp_km_s(35435.0), "plant_w_per_kg": 8620.0, "fuel_j_per_kg": DHE3_J_KG, "waste_per_jet": 0.1, "radiator_k": 1500.0}, "part": "drive"},
-    {"id": "spin-habitat", "name": "Comfortable spin habitat", "level": 5, "sets": {"spin_rpm": 4.0}, "part": "spin ring"},
-    {"id": "nanotube-cable", "name": "Woven carbon cable", "level": 6, "sets": {"strength_for_weight": strength_for_weight("carbon-nanotube")}, "part": "structure"},
+    {"id": "pbo-fibre", "name": "PBO fibre", "level": 4, "sets": {"strength_for_weight": strength_for_weight("pbo-fibre")}, "family": "material", "part": "structure"},
+    {"id": "water-recovery", "name": "Water recovery with brine processing", "level": 4, "sets": {"water_recycled": 0.98}, "family": "near-ceiling", "part": "stores"},
+    {"id": "light-sail", "name": "Light sail or photon rocket", "level": 4, "sets": {"unthrown_n_per_w": 1.0 / C}, "family": "plain-mass", "fixed": ["unthrown_n_per_w"], "part": "drive"},
+    {"id": "fusion-torch", "name": "Fusion torch (D-He3)", "level": 5, "sets": {"exhaust_km_s": isp_km_s(35435.0), "plant_w_per_kg": 8620.0, "fuel_j_per_kg": DHE3_J_KG, "waste_per_jet": 0.1, "radiator_k": 1500.0}, "family": "engine", "fixed": ["fuel_j_per_kg"], "part": "drive"},
+    {"id": "spin-habitat", "name": "Comfortable spin habitat", "level": 5, "sets": {"spin_rpm": 4.0}, "family": "plain-mass", "fixed": ["spin_rpm"], "part": "spin ring",
+     "note": "comfort is the crew's physiology, not the ring's maturity"},
+    {"id": "nanotube-cable", "name": "Woven carbon cable", "level": 6, "sets": {"strength_for_weight": strength_for_weight("carbon-nanotube")}, "family": "material", "part": "structure"},
 ]
 
 
@@ -248,7 +291,7 @@ def build():
         "kernel_range": "^0.1", "licence": "Apache-2.0",
         "provides": {"other": {"tech": {
             "about": "Future tech base pack (FT1): technology is how far each limit on building things has been pushed. An advance moves a figure; the same sizing block still runs; past a figure's ceiling is fictional by arithmetic. Built by scripts/build-base-tech.py from the master data sheet.",
-            "limits": limits, "figures": FIGURES, "ladder": LADDER, "advances": advances,
+            "limits": limits, "figures": FIGURES, "ladder": LADDER, "families": FAMILIES, "advances": advances,
             "sources": SOURCES,
         }}},
     }
@@ -273,10 +316,16 @@ def validate(pack):
                 table, rid = m["sheet"].split("/")
                 assert any(r["id"] == rid for r in SHEET[table]), m["sheet"]
     levels = {lv["n"] for lv in t["ladder"]["levels"]}
+    fams = {f["id"] for f in t["families"]}
+    assert {"engine", "near-ceiling", "material", "store", "plain-mass", "least-size", "fictional"} <= fams
     for a in t["advances"]:
         assert a["level"] in levels, a["id"]
         for k in a["sets"]:
             assert k in fids, (a["id"], k)
+        assert a["family"] in fams, (a["id"], a["family"])
+        assert a["family"] != "fictional", (a["id"], "the base pack holds no fiction")
+        for k in a.get("fixed", []):
+            assert k in a["sets"], (a["id"], k)
         assert a["mark"] != "fictional", (a["id"], "the base pack holds no fiction")
 
 

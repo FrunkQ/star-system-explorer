@@ -308,9 +308,21 @@
       "reads": "FT2",
       "marks": [
        {
+        "mark": "built",
+        "v": 1.16,
+        "what": "SNAP-10A, the only reactor the US flew: 500 W for under 950 lb",
+        "src": "doe-snap"
+       },
+       {
+        "mark": "allowed",
+        "v": 33,
+        "what": "SP-100 space reactor design, 100 kWe for about 3,000 kg",
+        "src": "sp100"
+       },
+       {
         "mark": "allowed",
         "v": 8620.0,
-        "what": "D-He3 spherical torus fusion ship",
+        "what": "D-He3 spherical torus fusion ship, drive and plant together",
         "src": "williams2005"
        }
       ]
@@ -533,9 +545,11 @@
      "id": "neutral",
      "name": "Neutral ladder",
      "about": "Real history on the lower rungs, so 'Sol today' is level 4. A setting defines its own ladder; this one is the default.",
+     "improve_per_level_beyond": 1.5,
      "size_per_level_short": 10.0,
      "shrink_per_level_beyond": 0.5,
      "shrink_levels": 2,
+     "improve_note": "past an advance's home level its figure gets half as much better again per level (times 1.5 where higher is better, divided by 1.5 where lower is), until it meets the next cited allowed or ceiling mark, then stops",
      "levels": [
       {
        "n": 0,
@@ -581,6 +595,78 @@
       }
      ]
     },
+    "families": [
+     {
+      "id": "engine",
+      "name": "Engines and power plants",
+      "about": "output for their mass: drives, reactors, generators, radiators",
+      "maturity": {
+       "rule": "worse_by",
+       "factor": 7.0
+      },
+      "src": "ft-design-5.2"
+     },
+     {
+      "id": "near-ceiling",
+      "name": "Figures held down by a nearby ceiling",
+      "about": "exhaust speed for a given fuel, conversion efficiency, how much a habitat recycles",
+      "maturity": {
+       "rule": "toward",
+       "share": 0.6666666666666666
+      },
+      "src": "ft-design-5.2"
+     },
+     {
+      "id": "material",
+      "name": "Materials in bulk",
+      "about": "strength for weight of something bought by the kilometre",
+      "maturity": {
+       "rule": "worse_by",
+       "factor": 5.0
+      },
+      "src": "ft-design-5.2"
+     },
+     {
+      "id": "store",
+      "name": "Stores of energy",
+      "about": "batteries, fuel handling",
+      "maturity": {
+       "rule": "worse_by",
+       "factor": 3.0
+      },
+      "src": "ft-design-5.2"
+     },
+     {
+      "id": "plain-mass",
+      "name": "Plain mass",
+      "about": "shielding by matter, ballast, reaction mass, structure that only has to be there",
+      "maturity": {
+       "rule": "same"
+      },
+      "src": "ft-design-5.2"
+     },
+     {
+      "id": "least-size",
+      "name": "Devices with a least size set by physics",
+      "about": "a critical mass, a plasma big enough to hold its heat: never smaller at any maturity",
+      "maturity": {
+       "rule": "floor"
+      },
+      "src": "ft-design-5.2"
+     },
+     {
+      "id": "fictional",
+      "name": "Fictional devices and anything unknown",
+      "about": "nothing to go on: Alex's rule of thumb",
+      "maturity": {
+       "rule": "size",
+       "size_per_level_short": 10.0,
+       "shrink_per_level_beyond": 0.5,
+       "shrink_levels": 2
+      },
+      "src": "ft-design-5.2"
+     }
+    ],
     "advances": [
      {
       "id": "steel-wire",
@@ -589,6 +675,7 @@
       "sets": {
        "strength_for_weight": 255000.0
       },
+      "family": "material",
       "part": "structure",
       "mark": "built"
      },
@@ -600,6 +687,10 @@
        "exhaust_km_s": 4.565,
        "waste_per_jet": 0.0
       },
+      "family": "near-ceiling",
+      "fixed": [
+       "waste_per_jet"
+      ],
       "part": "drive",
       "mark": "built"
      },
@@ -608,8 +699,9 @@
       "name": "Fission reactor",
       "level": 3,
       "sets": {
-       "fuel_j_per_kg": 82100000000000.0
+       "plant_w_per_kg": 1.16
       },
+      "family": "engine",
       "part": "reactor",
       "mark": "built"
      },
@@ -620,6 +712,7 @@
       "sets": {
        "strength_for_weight": 2083000.0
       },
+      "family": "material",
       "part": "structure",
       "mark": "built"
      },
@@ -630,6 +723,7 @@
       "sets": {
        "radiator_k": 276.0
       },
+      "family": "engine",
       "part": "radiator",
       "mark": "built"
      },
@@ -641,6 +735,10 @@
        "exhaust_km_s": 8.581,
        "waste_per_jet": 0.0
       },
+      "family": "near-ceiling",
+      "fixed": [
+       "waste_per_jet"
+      ],
       "part": "drive",
       "note": "ground-tested 1959 to 1972, never flown: built at level 3 on the bench, home here as a flying part",
       "mark": "built"
@@ -652,6 +750,7 @@
       "sets": {
        "strength_for_weight": 3718000.0
       },
+      "family": "material",
       "part": "structure",
       "mark": "built"
      },
@@ -662,6 +761,7 @@
       "sets": {
        "water_recycled": 0.98
       },
+      "family": "near-ceiling",
       "part": "stores",
       "mark": "built"
      },
@@ -672,6 +772,10 @@
       "sets": {
        "unthrown_n_per_w": 3.3356409519815204e-09
       },
+      "family": "plain-mass",
+      "fixed": [
+       "unthrown_n_per_w"
+      ],
       "part": "drive",
       "mark": "built"
      },
@@ -686,6 +790,10 @@
        "waste_per_jet": 0.1,
        "radiator_k": 1500.0
       },
+      "family": "engine",
+      "fixed": [
+       "fuel_j_per_kg"
+      ],
       "part": "drive",
       "mark": "not yet built"
      },
@@ -696,7 +804,12 @@
       "sets": {
        "spin_rpm": 4.0
       },
+      "family": "plain-mass",
+      "fixed": [
+       "spin_rpm"
+      ],
       "part": "spin ring",
+      "note": "comfort is the crew's physiology, not the ring's maturity",
       "mark": "not yet built"
      },
      {
@@ -706,6 +819,7 @@
       "sets": {
        "strength_for_weight": 47015000.0
       },
+      "family": "material",
       "part": "structure",
       "mark": "not yet built"
      }
@@ -729,6 +843,9 @@
      "lynch2023": "Lynch, C. et al. 2023, Logistics rates and assumptions for future human spaceflight missions beyond LEO, AIAA ASCEND 2023 (NTRS 20230013896): oxygen 0.89, drinking water 2.79, food as shipped 2.39 kg per crew member a day",
      "nasa-water2023": "NASA 2023 (20 June), NASA achieves water recovery milestone on International Space Station: 98% total water recovery with the brine processor. https://www.nasa.gov/missions/station/iss-research/nasa-achieves-water-recovery-milestone-on-international-space-station",
      "peng2008": "Peng, B. et al. 2008, Nature Nanotechnology 3, 626: single carbon nanotube shells near 100 GPa (as summarised; not read)",
+     "doe-snap": "US DOE Energy Technology Engineering Center, System for Nuclear Auxiliary Power (SNAP) overview: SNAP-10A (1965) made at least 500 W (over 600 at first) and weighed under 950 lb with instruments and shielding. https://www.energy.gov/etec/system-nuclear-auxiliary-power-snap-overview",
+     "sp100": "Manvi, R. and Fujita, T. 1986, SP-100 program users handbook, JPL D-2185 issue 2: 100 kWe at end of life for about 3,000 kg (design; never flown). https://www.osti.gov/servlets/purl/10184673",
+     "ft-design-5.2": "SSE4 future tech design, section 5.2 (accepted by Alex 23 Nov 2026): first working generation against the mature one, by family of part; figures checked in its section 14.1 (V-2 about 22 against Merlin 1D over 150; Jumo 004 1.2 against EJ200 about 9; carbon fibre 0.5 to 1 GPa early, 3.5 in 1971, 7.0 now; nanotube tubes 100 GPa against fibre 4.2; lithium-ion 80 Wh/kg in 1991, about three times now)",
      "sheet": "the master data sheet (pack base-reference): the value is worked out from its rows",
      "law": "a law of physics, named on the mark"
     }

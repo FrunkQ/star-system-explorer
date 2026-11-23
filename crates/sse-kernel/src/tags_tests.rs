@@ -240,7 +240,7 @@ fn a_physics_flow_that_reads_a_tag_is_refused() {
         load(&mut k, vec![base.clone(), toy.clone()])["type"],
         "stack_loaded"
     );
-    for atom in ["world.has_tag", "world.read_kept"] {
+    for atom in ["world.has_tag", "world.read_kept", "world.who_holds"] {
         let mut bad = toy.clone();
         bad["provides"]["flows"][0]["nodes"]
             .as_array_mut()

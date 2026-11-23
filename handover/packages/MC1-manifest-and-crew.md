@@ -4,7 +4,7 @@ Track: ship manifest and crew (MC). Date 23 Nov 2026. Asked by Alex, 23 Nov: "do
 
 ## What a GM can do
 
-- On **Ships and stations**, a ship's card has two new buttons beside Log: **Manifest** and **Crew**. One panel opens at a time and stays open as the card changes ship.
+- On **Ships and stations**, a ship's card has one new button beside Log: **Aboard** (laid out with the chart room thread, 23 Nov, so the card's row stays Aboard, Log, Power, Take out of play). It opens one panel with a two-way switch, **Crew** (first) and **Manifest**, the same for a ship, a station or a site, and it stays open as the card changes ship.
 - **Crew**: everyone aboard, by name, with role (the setting's own words), kind of being, state (awake, in cold sleep, missing, dead) and own age now. **Add someone…** brings a person aboard; the state list changes them in place; **Move…** sends them to another ship, station, world or the system. Edit mode adds an inline role field.
 - **Manifest**: people aboard against the ship's crew limit and berths; the ship's own capacities from its design (cargo, tanks); readiness; the share of oxygen and water recycled (edit mode); **Life support**: which store runs out first and when, each store's mass and days, the daily use at Science depth; anyone of a kind of being with no figures is named apart ("No life support figures for vesh"), never given a human's; stores in counts or volumes are named as not weighed. **Cargo and stores**: every lot with amount and unit, **Load…** and **Move…**, amounts editable in edit mode.
 - Everything is a dated record change, so it undoes and replays like any other kept value, and the history keeps where someone was.

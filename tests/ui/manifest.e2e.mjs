@@ -46,7 +46,8 @@ try {
   await desk.locator("[data-construct]", { hasText: "Kittiwake" }).click();
 
   // Crew: two people, one with a kind of being the packs have no figures for.
-  await desk.locator("[data-crew-toggle]").click();
+  // One Aboard button; the panel opens on Crew.
+  await desk.locator("[data-aboard-toggle]").click();
   const crew = desk.locator("[data-aboard=crew]");
   for (const [name, role, being, age] of [["Ada Moss", "pilot", "", "30"], ["Tovan", "engineer", "vesh", "112"], ["Rhee", "medic", "human", "44"]]) {
     await crew.locator("[data-add-person]").click();
@@ -62,7 +63,7 @@ try {
   assert.match(await crew.locator("[data-person]", { hasText: "Tovan" }).innerText(), /vesh · 112 yr/);
 
   // Manifest: load stores and goods.
-  await desk.locator("[data-manifest-toggle]").click();
+  await desk.locator("[data-part=manifest]").click();
   const man = desk.locator("[data-aboard=manifest]");
   for (const [what, amount, unit] of [["water", "500", "kg"], ["food", "200", "kg"], ["oxygen", "60", "kg"], ["machine parts", "3", "t"]]) {
     await man.locator("[data-add-cargo]").click();
@@ -82,11 +83,11 @@ try {
   await shot(page, "manifest-desk");
 
   // Cold sleep for Rhee: one person draws, so the oxygen lasts twice as long.
-  await desk.locator("[data-crew-toggle]").click();
+  await desk.locator("[data-part=crew]").click();
   await crew.locator("[data-person]", { hasText: "Rhee" }).locator("[data-state]").selectOption("cold_sleep");
   await page.waitForTimeout(400);
   await shot(page, "crew-desk");
-  await desk.locator("[data-manifest-toggle]").click();
+  await desk.locator("[data-part=manifest]").click();
   await man.locator("[data-life]", { hasText: "1 person awake" }).waitFor();
   const after = await man.locator("[data-first-days]").innerText();
   assert.notEqual(before, after, `days left changed with cold sleep (${before} then ${after})`);

@@ -10,7 +10,9 @@
   import { ABOARD, CARGO, PERSON, STATES, STATE_WORDS, aboard, ageNow, crewAboard, daysWords, entryFrom, entryId, lifeSupport, lifeSupportFrom, startingValues, secondsToYears, type AboardEntry, type AboardState, type Json, type PlayerSubject, type ViewContext } from "../../../ui-contract/src/index.ts";
   import { fieldWords, valueWords } from "../../constructs/src/words.ts";
 
-  let { ctx, construct, places, part }: { ctx: ViewContext; construct: PlayerSubject; places: { address: string; label: string }[]; part: "manifest" | "crew" } = $props();
+  let { ctx, construct, places, start = "crew" }: { ctx: ViewContext; construct: PlayerSubject; places: { address: string; label: string }[]; start?: "manifest" | "crew" } = $props();
+  // One panel, two sides: who is aboard (Crew, first) and what (Manifest). The same for a ship, a station or a site.
+  let part = $state<"manifest" | "crew">(untrack(() => start));
   const session = untrack(() => ctx.session);
   const ws = $derived(ctx.workspace);
   const depth = $derived(ws.depth ?? "science");
@@ -139,11 +141,15 @@
   };
 </script>
 
-<section class="aboard" aria-label={part === "crew" ? "Crew" : "Manifest"} data-aboard={part}>
+<section class="aboard" aria-label="Aboard" data-aboard={part}>
+  <div class="switch" role="group" aria-label="Aboard">
+    {#each [["crew", "Crew"], ["manifest", "Manifest"]] as [k, label] (k)}
+      <button type="button" aria-pressed={part === k} onclick={() => ((part = k as "crew" | "manifest"), (adding = false), (moving = null))} data-part={k}>{label}</button>
+    {/each}
+  </div>
   {#if !hasKinds}
     <p class="small muted">The manifest pack is not on the stack, so nothing can be listed aboard.</p>
   {:else if part === "manifest"}
-    <h4>Manifest</h4>
     <dl>
       <dt>People aboard</dt>
       <dd data-people-count>{counted}{crewMax ? ` of ${valueWords(crewMax.value)}` : ""}{#if berths}<span class="muted">{` · ${valueWords(berths.value)} berths`}</span>{/if}</dd>
@@ -211,7 +217,7 @@
       {/each}
     </ul>
   {:else}
-    <div class="bar"><h4>Crew</h4><span class="muted small">{counted}{crewMax ? ` of ${valueWords(crewMax.value)}` : ""} aboard</span><span class="grow"></span>{#if gm}<button type="button" class="quiet-btn" aria-expanded={adding} onclick={openAdd} data-add-person>Add someone…</button>{/if}</div>
+    <div class="bar"><span class="muted small" data-crew-count>{counted}{crewMax ? ` of ${valueWords(crewMax.value)}` : ""} aboard</span><span class="grow"></span>{#if gm}<button type="button" class="quiet-btn" aria-expanded={adding} onclick={openAdd} data-add-person>Add someone…</button>{/if}</div>
     {#if adding}
       <div class="form">
         <label>Name <input type="text" bind:value={f.name} data-person-name /></label>
@@ -256,7 +262,10 @@
 
 <style>
   .aboard { margin-top: 10px; display: flex; flex-direction: column; gap: 6px; }
-  h4, h5 { margin: 6px 0 0; font-size: 12px; text-transform: uppercase; letter-spacing: 0.06em; color: var(--sse-ink-muted); }
+  .switch { display: inline-flex; align-self: flex-start; border: 1px solid var(--sse-rule); }
+  .switch button { font: inherit; min-height: 28px; padding: 0 12px; border: none; background: transparent; color: var(--sse-ink); cursor: pointer; }
+  .switch button[aria-pressed="true"] { background: var(--sse-ink); color: var(--sse-ground); }
+  h5 { margin: 6px 0 0; font-size: 12px; text-transform: uppercase; letter-spacing: 0.06em; color: var(--sse-ink-muted); }
   dl { display: grid; grid-template-columns: max-content 1fr; gap: 4px 12px; margin: 4px 0; }
   dt { color: var(--sse-ink-muted); }
   dd { margin: 0; }
@@ -277,6 +286,6 @@
   .mono { font-family: var(--sse-font-mono, monospace); }
   .small { font-size: 12px; margin: 0; }
   .muted { color: var(--sse-ink-muted); }
-  @media (pointer: coarse) { .quiet-btn, .go, input, select { min-height: 44px; } }
+  @media (pointer: coarse) { .quiet-btn, .go, input, select, .switch button { min-height: 44px; } }
   @media (prefers-reduced-motion: reduce) { .quiet-btn, .go { transition: none; } }
 </style>
