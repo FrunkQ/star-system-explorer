@@ -45,7 +45,9 @@ test("a grown system adopts as one event and reads back as the same worlds", asy
     const orbits = (x: typeof scene) => worlds(x).map((w) => w.orbit!.a_au.toPrecision(9)).sort();
     assert.deepEqual(orbits(scene), orbits(preview));
     assert.ok(Math.abs(scene.now_yr - preview.now_yr) / preview.now_yr < 1e-3);
-    assert.ok(scene.subjects.every((b) => b.facts.every((x) => !x.editable)));
+    // Read back, a value the universe holds can be typed over at its kernel field (in SI); a derived one cannot.
+    assert.ok(scene.subjects.every((b) => b.facts.every((x) => x.editable === (!!x.kernel && x.source !== "derived"))));
+    assert.ok(worlds(scene).every((w) => w.facts.find((x) => x.field === "a_au")?.kernel?.field === "orbit.semi_major_axis"));
     // Evidence from the kernel: a grown system's values are the pipeline's (resolved), never authored.
     assert.ok(r.result.evidence, "resolved_system carries evidence");
     assert.ok(worlds(scene).every((w) => w.facts.filter((x) => x.field !== "name" && x.field !== "surface_k").every((x) => x.source === "resolved")));
