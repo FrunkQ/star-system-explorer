@@ -48,3 +48,13 @@ test("a star's colour is its temperature's", () => {
   assert.ok(r1! > b1!, "a cool star is red");
   assert.ok(b2! >= r2!, "a hot star is blue-white");
 });
+
+test("thermal infrared grey: the star is white, a warm world grey, a cold one darker, nothing dark at zero", async () => {
+  const { thermalGrey } = await import("../src/true-look.ts");
+  assert.equal(thermalGrey(5772, 5772), 1);
+  const earth = thermalGrey(288, 5772);
+  const pluto = thermalGrey(44, 5772);
+  assert.ok(earth > 0.3 && earth < 0.6, `Earth-like ${earth}`);
+  assert.ok(pluto < earth, "colder is darker");
+  assert.equal(thermalGrey(0, 5772), 0);
+});

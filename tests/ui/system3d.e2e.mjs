@@ -77,6 +77,14 @@ try {
         await live.waitFor({ timeout: 30000 });
         const turn0 = await live.getAttribute("data-star-turn");
         await gm.waitForFunction((t) => document.querySelector("[data-star-live]")?.getAttribute("data-star-turn") !== t, turn0, { timeout: 10000 });
+        // Bands through True (rule 12, one set of controls): X-ray draws the corona, Infrared each body's own heat.
+        for (const [b, id] of [["X-ray", "xray"], ["Infrared", "infrared"]]) {
+          await gm.getByRole("group", { name: "Band" }).getByRole("button", { name: b }).click();
+          await gm.waitForFunction((x) => document.querySelector("[aria-roledescription='3D chart'] [data-true-band]")?.getAttribute("data-true-band") === x, id);
+        }
+        await shot(gm, `v10d-gm-true-infrared-${mode}`);
+        await gm.getByRole("group", { name: "Band" }).getByRole("button", { name: "Visible" }).click();
+        await gm.waitForFunction(() => !document.querySelector("[aria-roledescription='3D chart'] [data-true-band]"));
       }
       await shot(gm, `v10a-gm-true-${mode}`);
       // Scale and HUD (Alex, 23 Nov): Real puts distances and sizes in proportion; HUD off in True by default, on

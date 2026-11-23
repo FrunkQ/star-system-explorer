@@ -2,7 +2,7 @@
 // globe draws (surface.ts `prepare`), so a world looks the same from the system as close up. This turns a prepared
 // globe into a small equirectangular picture for a lit sphere. Nothing is invented: a world whose tiles are not read
 // yet, or that has none (a giant, until cloud colours come), is drawn plain and says so.
-import type { Globe, SurfaceTile } from "../../ui-contract/src/index.ts";
+import { planck, type Globe, type SurfaceTile } from "../../ui-contract/src/index.ts";
 import { starRgb } from "./sky.ts";
 import { fastFace, lookupFast, prepare, type Prepared } from "./surface.ts";
 
@@ -71,4 +71,19 @@ export function starCss(t_k: number): string {
   const enc = (v: number) => Math.round(255 * (v <= 0.0031308 ? 12.92 * v : 1.055 * Math.pow(v, 1 / 2.4) - 0.055));
   const [r, g, b] = starRgb(t_k);
   return `rgb(${enc(r)}, ${enc(g)}, ${enc(b)})`;
+}
+
+/** Thermal infrared for True's Infrared band: 10 µm, where a world's own heat outshines the starlight it reflects. */
+export const THERMAL_IR_M = 10e-6;
+/** Decades of surface brightness the mapped grey spans, below the star's. */
+export const THERMAL_DECADES = 6;
+
+/**
+ * A body's surface brightness in thermal infrared as a mapped grey, 0..1: its blackbody radiance at THERMAL_IR_M
+ * over the star's, on a log scale THERMAL_DECADES deep (the star is 1). Mapped, not seen: infrared has no colour.
+ */
+export function thermalGrey(t_k: number, star_k: number): number {
+  if (!(t_k > 0 && star_k > 0)) return 0;
+  const r = planck(THERMAL_IR_M, t_k) / planck(THERMAL_IR_M, star_k);
+  return Math.max(0, Math.min(1, 1 + Math.log10(Math.max(r, 1e-30)) / THERMAL_DECADES));
 }
