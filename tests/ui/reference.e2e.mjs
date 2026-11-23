@@ -183,6 +183,20 @@ try {
       await card.locator('[data-layer="designation"][data-source="drawn"]').waitFor({ timeout: 20000 });
       assert.match(await card.locator('[data-layer="common"]').innerText(), /^Tarn\s+typed/);
       await shot(gm, "name-card-desk");
+      // On the Build desk: type a designation, put it back, and name everything beneath the star in Vesh.
+      const desig = () => card.locator('[data-layer="designation"] .name').innerText();
+      const drawnDesig = await desig();
+      await card.locator('[data-name-type="designation"]').click();
+      await card.locator('[data-name-input="designation"]').fill("Kestrel Survey 3");
+      await card.locator('[data-name-input="designation"]').press("Enter");
+      await card.locator('[data-layer="designation"][data-source="typed"]').waitFor({ timeout: 20000 });
+      assert.equal(await desig(), "Kestrel Survey 3");
+      await card.locator('[data-name-restore="designation"]').click();
+      await card.locator('[data-layer="designation"][data-source="drawn"]').waitFor({ timeout: 20000 });
+      assert.equal(await desig(), drawnDesig, "putting it back shows the drawn name again");
+      await card.locator('[data-name-here="designation"]').selectOption("vesh");
+      await card.locator("[data-name-note]").getByText(/take designation names from Vesh/).waitFor({ timeout: 20000 });
+      await gm.waitForFunction(() => /drawn from Vesh/.test(document.querySelector('[data-name-card] [data-layer="designation"]')?.textContent ?? ""), null, { timeout: 20000 });
     }
     assert.deepEqual(errors, []);
     await browser.close();
