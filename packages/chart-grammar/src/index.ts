@@ -14,6 +14,8 @@ export { default as Segmented } from "./Segmented.svelte";
 export { default as ViewControls } from "./ViewControls.svelte";
 export { default as Overlays } from "./Overlays.svelte";
 export { default as Lenses } from "./Lenses.svelte";
+export { default as KnownEye } from "./KnownEye.svelte";
+export { default as KnownTo } from "./KnownTo.svelte";
 export { formatYears, ticks, niceStep, fraction, keyStep, labelRows } from "./ruler.ts";
 export type { Tick, RulerEvent } from "./ruler.ts";
 export { DAY_S, around, between, calendarTicks, checkCalendar, dateParts, dateWords, defaultCalendar, fromPackCalendar, spanWords, steps, timeWords, zoom } from "./calendar.ts";
