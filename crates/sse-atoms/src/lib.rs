@@ -49,7 +49,6 @@ pub fn atoms() -> Vec<Box<dyn sse_flow::Atom>> {
         .chain(extinction::atoms())
         .chain(aurora::atoms())
         .chain(belts::atoms())
-        .chain(air::atoms())
         .chain(chem::atoms())
         .collect()
 }

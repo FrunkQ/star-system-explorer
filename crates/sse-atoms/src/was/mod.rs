@@ -4,15 +4,19 @@
 #![allow(dead_code, unused_imports, clippy::all)]
 
 pub mod activity;
+pub mod air;
 pub mod climate;
 pub mod convection;
+pub mod nebula;
 pub mod tides;
 
 pub fn atoms() -> Vec<Box<dyn sse_flow::Atom>> {
     let mut all = vec![];
     all.extend(activity::atoms());
+    all.extend(air::atoms());
     all.extend(climate::atoms());
     all.extend(convection::atoms());
+    all.extend(nebula::atoms());
     all.extend(tides::atoms());
     all
 }

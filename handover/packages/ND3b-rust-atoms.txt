@@ -3,11 +3,6 @@
 # its line out. A test checks the list against the registry. "not yet looked at" means the
 # block has not been read for moving; a reason means it stays for now, and why.
 
-sse.air.column_optical_depth	not yet looked at
-sse.air.dry_air_refractivity	not yet looked at
-sse.air.rayleigh_cross_section	not yet looked at
-sse.air.scale_height	not yet looked at
-sse.air.scattering_coefficient	not yet looked at
 sse.aurora.footprint	not yet looked at
 sse.aurora.hill_distance	not yet looked at
 sse.belts.electron_range	not yet looked at
@@ -35,7 +30,7 @@ sse.interior.hydrostatic_pressure	not yet looked at
 sse.interior.rocky_radius	its fitted numbers (1.07, 0.21, 3.7) become Model number letters first
 sse.light.auroral_radio_power	not yet looked at
 sse.light.cyclotron_frequency	not yet looked at
-sse.light.dust_extinction	not yet looked at
+sse.light.dust_extinction	CCM89's four polynomial pieces need more than the 64 operations an Equation holds; waits for fit tables as data
 sse.light.effective_temperature	not yet looked at
 sse.light.magnetopause_radius	not yet looked at
 sse.light.reflected_area	not yet looked at
@@ -43,11 +38,7 @@ sse.light.stellar_wind	not yet looked at
 sse.magnetic.dynamo_density	not yet looked at
 sse.magnetic.dynamo_field	not yet looked at
 sse.magnetic.surface_dipole	not yet looked at
-sse.nebula.balmer_alpha_power	not yet looked at
-sse.nebula.ionising_photon_rate	not yet looked at
-sse.nebula.remnant_radius	not yet looked at
-sse.nebula.shell_radius	not yet looked at
-sse.nebula.stromgren_radius	not yet looked at
+sse.nebula.ionising_photon_rate	iterates: a 400-term series for the photons above 13.6 eV
 sse.ocean.brine_freezing_point	not yet looked at
 sse.orbit.kepler_position	iterates: Kepler's equation solved by a fixed number of Newton steps
 sse.planet.radius_from_mass	a broken power law over a table of mass ranges

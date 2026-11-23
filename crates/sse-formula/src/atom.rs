@@ -76,6 +76,9 @@ struct Check {
     below: Option<f64>,
     #[serde(default)]
     max: Option<f64>,
+    /// Refuse an infinity too.
+    #[serde(default)]
+    finite: bool,
     says: String,
 }
 
@@ -372,7 +375,8 @@ impl Atom for FormulaAtom {
             let x = inputs[*k];
             let ok = c.min.is_none_or(|m| x >= m)
                 && c.below.is_none_or(|b| x < b)
-                && c.max.is_none_or(|m| x <= m);
+                && c.max.is_none_or(|m| x <= m)
+                && (!c.finite || x.is_finite());
             if !ok {
                 return Err(AtomError(c.says.replacen("{}", &format!("{x}"), 1)));
             }
