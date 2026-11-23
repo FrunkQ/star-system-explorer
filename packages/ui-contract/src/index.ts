@@ -114,3 +114,5 @@ export type { FormsHere } from "./add-here.ts";
 // Find in Look up: an element, constant or unit by name, symbol or id.
 export { findInSheet } from "./reference-find.ts";
 export type { RefHit } from "./reference-find.ts";
+export { namesOnStack, sampleKinds, layerWords, sortWords, meaningWords, saysMore, SAMPLE_KINDS } from "./names.ts";
+export type { SampleAsk, SampledName, NameSample, NamePart, SchemeInfo, NamesOnStack } from "./names.ts";
