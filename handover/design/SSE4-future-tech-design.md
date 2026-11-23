@@ -4,7 +4,7 @@ Status: **accepted 23 Nov 2026**. Alex answered "yes to all" at 16:15 to the fou
 
 Read with: the voyages design (drive facts, FTL as a pack rule), the nebulae and light design (every object publishes its light by band, section 5A sensing), the matter pack design (the master data sheet and its one "Look up" door), the programs design (track J), the naming design (settings inherit down the tree), and the ship generator in `packages/renderer/src/ship-design.ts` (parts sized by physics, a style only arranges and dresses them).
 
-Sources below are **[from memory, verify]** unless a build thread has already cited them in a pack. The citation check applies before any figure ships.
+Sources below were **[from memory, verify]**; the citation check (FT1, 23 Nov, section 14) has now read or re-worked each one, and corrected those that were off. A figure marked *computed* is this note's own arithmetic, re-run in the check; *textbook* means a standard value not read from a paper.
 
 ## 1. What Alex asked for (23 Nov, 15:46 to 16:00)
 
@@ -42,11 +42,11 @@ Ten to start. The list is pack data (`base-tech`), so a setting can add one, as 
 
 | # | Limit, in plain words | Science line | Figures it holds back | What it shapes | Past the ceiling |
 |---|---|---|---|---|---|
-| 1 | **Heat has to leave** | Second law; radiated power goes as area times temperature to the fourth | waste heat per watt of jet or of power; radiator temperature; a heat shield's peak heating and total load | radiators (2 TW of waste at 1500 K needs about 3.9 km² of panel); heat shields and aerobraking; how bright it is in infrared | heat sinks that send it "nowhere" |
+| 1 | **Heat has to leave** | Second law; radiated power goes as area times temperature to the fourth | waste heat per watt of jet or of power; radiator temperature; a heat shield's peak heating and total load | radiators (2 TW of waste at 1500 K needs about 3.9 km² of panel radiating from both faces at emissivity 0.9, 7 km² of one-sided black panel; computed); heat shields and aerobraking; how bright it is in infrared | heat sinks that send it "nowhere" |
 | 2 | **Thrust needs something to throw** | Conservation of momentum; the rocket equation | exhaust speed (ceiling c); thrust per watt with nothing thrown (ceiling 1/c, a photon drive, about 3.3 N per GW) | tanks, mass ratio, staging; lifting off a world at all | reactionless and gravity drives; contragravity |
 | 3 | **Energy has weight** | Mass-energy; energy per kilogram of fuel, power per kilogram of plant | energy per kg (chemical 13 MJ, fission about 8×10¹³ J, deuterium and helium-3 about 3.5×10¹⁴ J, ceiling c² = 9×10¹⁶ J for matter with antimatter); power per kg of power plant | fuel tanks, reactor size, range | anything richer than annihilation |
-| 4 | **Crews break under hard acceleration** | Physiology of the crew's species; inertia cannot be screened (equivalence principle) | sustained and peak g for the crew, from the species, raised by couches and liquid immersion | trip times; engine size; the length of a launch track (3 g to orbital speed at Earth is about 1,000 km of track) | inertial compensators |
-| 5 | **Crews need weight** | Spin gravity: radius is g over spin rate squared; comfort caps the spin rate | highest comfortable spin (about 2 to 4 turns a minute); lowest healthy gravity | spin rings and tumbling pairs (1 g at 2 turns a minute needs a 224 m arm) | gravity plates |
+| 4 | **Crews break under hard acceleration** | Physiology of the crew's species; inertia cannot be screened (equivalence principle) | sustained and peak g for the crew, from the species, raised by couches and liquid immersion | trip times; engine size; the length of a launch track (3 g to orbital speed at Earth is about 1,000 km of track; computed, 7.8 km/s gives 1,030 km) | inertial compensators |
+| 5 | **Crews need weight** | Spin gravity: radius is g over spin rate squared; comfort caps the spin rate | highest comfortable spin (up to about 4 turns a minute for anyone, 6 for trained residents; Globus and Hall 2017); lowest healthy gravity | spin rings and tumbling pairs (1 g at 2 turns a minute needs a 224 m arm, at 4 a 56 m arm; computed) | gravity plates |
 | 6 | **Nothing outruns light** | Special relativity | none: this one has no figure to push, only a pack rule | travel between stars; message delay; a crew's age against home | every FTL drive and FTL radio; already a per-setting rule in the voyages design |
 | 7 | **Materials only bear so much** | Strength for weight (pascals over density); bond energy sets a ceiling near 50 to 100 MJ/kg | a substance's strength for its weight, from the master data sheet (steel about 0.25 MJ/kg, aramid about 2.5, carbon nanotube about 45, allowed and not built at length) | tank and structure mass; how hard a hull can be pushed; pressure hulls and domes; tower height; spin habitat radius; tethers; every megastructure (section 6) | ringworld floor, rigid shells round a star |
 | 8 | **Radiation gets through** | Stopping of charged particles and gammas by mass in the way | shielding in g/cm² for a given dose; a magnetic screen's bending strength (allowed) | mass round the quarters; storm shelters; how close a ship may pass a hot star or a giant's belts | force screens |
@@ -56,7 +56,7 @@ Ten to start. The list is pack data (`base-tech`), so a setting can add one, as 
 Notes on the list:
 
 - **The crew limits belong to the cargo, not the ship.** A drone has no limit 4, 5 or 9, so it comes out small and fast with no fiction at all. An alien species with a different tolerance changes ships with no tech entry. This is why limit 4 reads the species.
-- **Limit 6 is the only true on-off.** That is honest: there is no partial FTL. It stays the voyages design's abstract rule per setting.
+- **Limit 6 has no single number to push, so its advance is a rule.** The rule still has a rating (Jump-2 against Jump-4, a warp factor), so it too comes in degrees. Section 5.1 gives its form.
 - **Left out on purpose:** build time and cost (the economy pack, 4.1), minds and computing, medicine, weapons and armour (no dogfighting). A pack may add a limit for any of them later through the same shape.
 
 Most of these figures already exist. `base-ships` `drive_heat` carries waste per jet and radiator temperature per fuel; the ship record carries exhaust speed, acceleration and shielding; `NavShip` carries shield heating limits and `structure_g`; strength for weight is a substance property that belongs on the master data sheet and is read through "Look up". FT1 mostly names what is there and gives each figure its marks.
@@ -72,6 +72,31 @@ Most of these figures already exist. `base-ships` `drive_heat` carries waste per
 
 Because the generator already draws every part from its size, a prototype looks like one: the same ship with one grotesquely swollen system.
 
+### 5.1 Advances are partial, and civilisations differ (Alex, 23 Nov 16:39)
+
+"Different civilisations can (in theory) have different solutions to the same problem ... radiators 10 times as efficient as we have now, 1,000, 100,000x."
+
+**Every advance is a factor on a number, never "solved".** "Solved" is only what a very large factor looks like. Heat, worked from the same radiator block (figures computed here from the Stefan-Boltzmann law for a panel radiating from both faces at emissivity 0.9, and to be re-run in the citation check):
+
+| Heat shed per m² of panel | Panel temperature | Mark | The mockup's 43 GW needs |
+|---|---|---|---|
+| today, about 0.8 kW (a room-temperature panel) | 300 K | built | 52 km² |
+| 10 times | about 530 K | built | 5.2 km² |
+| 1,000 times | about 1,700 K | not yet built | 52,000 m² |
+| about 23,000 times | 3,695 K, where tungsten melts: the ceiling for a solid panel | ceiling | 2,300 m² |
+| 100,000 times | about 5,300 K, hotter than any solid | fictional, unless the advance is a different kind of radiator (droplets, dust) with its own marks | 520 m² |
+
+So a setting picks a point on a scale, the card shows the factor ("sheds heat 1,000 times better than today's panels"), and the ship's radiators shrink to match and vanish only when the area rounds to nothing. Fuel is the same: its data (energy per kg, exhaust speed) is the factor. So is cable: strength for weight is the factor.
+
+**Two civilisations may answer the same limit differently.** Advances belong to a civilisation (section 7), and several advances may address one limit. One navy runs hot solid panels, its neighbour sprays droplet sheets, a third has a fictional heat sink. Each is its own row on the Technology page with its own figures, marks, part size and look, and a construct uses its builder's. Their ships differ for a reason before any style is applied.
+
+**The light-speed advance is an FTL rule, held by a civilisation like any other advance.** Its form is the one accepted in the example packs design (section 4A): a family (jump by rating, hop with a tether, speed by formula, rate per distance, gates, fixed points), a rating on the ship, and six fields: where a leg may start and end, what the crew does, how long it takes, what it costs, what can go wrong, and how messages travel. Consequences:
+
+- **Several FTL rules can coexist in one setting.** One power jumps by rating, its neighbour uses gates it found and cannot build ("found, not built"), a third has none and flies for real. The voyage finder already prices each leg by one means, so a ship is simply offered the legs its own rule allows.
+- **It sits on the ladder.** An FTL rule has a home level, so a power one level short can have a jump drive ten times the size.
+- **Messages are part of the rule**, so two neighbours can differ in how fast news travels as well as ships.
+- **A setting-wide rule is the common case and stays easy**: put the rule on the setting and every civilisation inherits it.
+
 ## 6. Every construct, one rule set
 
 "A construct is just a construct." The limits do not know what they are sizing.
@@ -79,13 +104,13 @@ Because the generator already draws every part from its size, a prototype looks 
 | Construct | Limits that bite hardest | What the same blocks give |
 |---|---|---|
 | **Ship** | 1, 2, 3, 4, 5 | tanks, radiators, spin ring, shield, as built today in the ship generator |
-| **Station or habitat** | 5, 7, 8, 9 | largest spin radius is strength for weight over g: a few kilometres in steel with a working load (O'Neill 1974), hundreds of kilometres in nanotube (McKendree 1995) |
+| **Station or habitat** | 5, 7, 8, 9 | largest spin radius is strength for weight over g: about 3 km in steel cable at a working stress with soil and air to carry (O'Neill 1974: his largest model, radius 3,200 m, spinning once in 114 s), about 1,000 km in nanotube (McKendree 1996, as summarised: 1,120 km) |
 | **Ground facility** | 1, 3, 7, 9 | heat goes into air or ground where there is any, so radiators shrink on a world with air; dome span from skin tension; tower height from strength for weight over local g; crush depth in an ocean or a giant's air; a launch track's length from limit 4 |
 | **Asteroid with engines** | 2, 3, 7 | the rock is the reaction mass or carries it; the push it can take is its own strength, and a rubble pile's is tiny (Sánchez and Scheeres 2014), so the answer is "years of gentle thrust", from physics |
-| **Beanstalk (space elevator)** | 7 | taper and cable mass computed per world from its gravity and spin, the way aerobraking is computed per ship per world. Mars and the Moon open with fibres that exist (Pearson 1975, 2005); Earth needs nanotube-class cable (Edwards 2000). No can-build flag: the app says "the cable would outweigh the planet" where it would |
-| **Orbital ring** | 3, 7 | held up by a moving ring, so it needs power and control, not a miracle material (Birch 1982) |
+| **Beanstalk (space elevator)** | 7 | taper and cable mass computed per world from its gravity and spin, the way aerobraking is computed per ship per world. The Moon opens with fibres that exist, such as aramid and M5 (Pearson, Levin, Oldson and Wykes 2005); so does Mars by the same taper sum (Zylon tapers about 12 times with no margin, computed); Earth needs nanotube-class cable (Edwards 2000: carbon nanotube composite at 130 GPa; Pearson 1975 for the tapered tower itself). No can-build flag: the app says "the cable would outweigh the planet" where it would |
+| **Orbital ring** | 3, 7 | the ring itself is in free fall, faster than orbit, and carries stationary skyhooks magnetically, so it needs power and active control, not a miracle material (Birch 1982) |
 | **Dyson swarm** | 3, and mass | no fiction at all; it needs a planet's worth of matter, which is a real amount that can be mined out (the resources ruling) |
-| **Stellar engine** | 2 | a mirror gives thrust of the star's light over 2c (Shkadov 1987): real, and almost nothing. Attached as a thrust block, per the megastructure ruling |
+| **Stellar engine** | 2 | a mirror gives thrust L(1 − cos θ)/2c for a rim angle θ, at most about L/2c for one spanning half the sky, about 6×10¹⁷ N for the Sun (Shkadov 1987; Badescu and Cathcart 2006): real, and almost nothing. Attached as a thrust block, per the megastructure ruling |
 | **Ringworld** | 7 | a 1 g ring at 1 AU needs strength for weight of g times radius, about 1.5×10¹² J/kg, some 30,000 times nanotube and far past the bond ceiling. Fictional by arithmetic; the card says exactly how far |
 
 So megastructures are not a special catalogue. Each states its figures, and what a civilisation can build falls out. The megastructure design note itself stays with the Traveller and kernel threads as ruled; this note supplies its tech side.
@@ -111,6 +136,15 @@ So megastructures are not a special catalogue. Each states its figures, and what
 **Found, not built.** Any construct may carry parts above its owner's level. They work, they cannot be copied or repaired, and the card says "found". This gives the ancient artefact, the captured drive and the gift from elder aliens with no new machinery, and it is authored ink like any GM placement.
 
 **The teaching use.** Because the lower rungs are real history and the marks are cited, the same screen answers "why have we not built a space elevator?" with a number. That is the education half of the project, free.
+
+### 7.1 Where it is set up (Alex, 23 Nov 16:23: "where we set up the universe factions, calendars, languages ... it is in effect a civilisation capability")
+
+Yes: tech is set up where the rest of a civilisation is set up, and nowhere else. Two places, both already designed, and no new tab:
+
+- **The setting's ladder, on Reference under "This setting".** A **Technology** page sits beside Units, Calendars and Names (matter pack design 7A, naming design 7). It shows this setting's levels, every advance at its home level with its marks and its limit, and the two size factors. Like its neighbours it is a convention of the setting, it shows the pack each row came from, and it never touches nature's pages.
+- **Each civilisation's own page.** A civilisation is an actor in the record (`/actor:vesh`, and powers nest: `/actor:vesh/actor:third-fleet`), the same thing the territory overlays design hangs holdings on and the naming design hangs a scheme on. Its page gathers everything it carries or inherits, one row each, with the same "inherited from" wording throughout: names and language, calendar, units, ship and construct style, holdings, and **tech level with its exceptions and dated gains**. Changing the level here is the "Develop it" event of section 7. A child (a fleet, a shipyard, a colony) shows the parent's value greyed until it is given its own.
+
+So one inheritance rule and one page per civilisation serve naming, calendars, units, styles, territory and tech. The Build desk's availability reading (section 7) reads from this page and links back to it; it is not a second place to set anything.
 
 ## 8. Honesty: always visible
 
@@ -195,3 +229,38 @@ So two navies at the same level differ by style, and two ships in the same style
 | FT6 | "Leans on" on the card; the Build desk's availability reading and its three ways forward; "setting fiction" rows | chart room thread |
 | FT7 | Megastructures on this footing: per-world beanstalk and ring sums, thrust blocks | Traveller and kernel threads (their design note) |
 | FT8 | Ladders and advances in the example packs: Traveller's TL table first | Traveller thread |
+
+## 14. Citation check (FT1, data sheet thread, 23 Nov)
+
+Every source read where it could be (publisher record, the paper, or the author's report); "as summarised" means only a secondary page was read. Arithmetic re-run with the master data sheet's constants.
+
+| Source | Reference | What it supports here | Status |
+|---|---|---|---|
+| O'Neill 1974 | O'Neill, G. K. 1974, Physics Today 27(9), 32 to 40. doi:10.1063/1.3128863 | steel cables "for conservatism", largest model R = 3,200 m, period 114 s; "no sharp upper limit", titanium allows larger | read (NSS reprint); DOI as cited elsewhere |
+| McKendree 1996 | McKendree, T. L. 1996, Nanotechnology 7(3), 204 to 209. doi:10.1088/0957-4484/7/3/007 | nanotube habitat radius about 1,120 km (diamondoid 461 km) | as summarised (encyclopaedia); was "1995" and "hundreds of km", corrected |
+| Globus and Hall 2017 | Globus, A. and Hall, T. 2017, NSS Space Settlement Journal, June 2017 | up to 4 rpm acceptable (56 m at 1 g); 6 rpm for residents with training; the older 1 to 2 rpm assumption | read |
+| Pearson 1975 | Pearson, J. 1975, Acta Astronautica 2(9-10), 785 to 799. doi:10.1016/0094-5765(75)90021-1 | the tapered orbital tower | metadata read; content via Edwards 2000 |
+| Edwards 2000 | Edwards, B. C. 2000, Acta Astronautica 47(10), 735 to 744. doi:10.1016/S0094-5765(00)00111-9; NIAC phase I report | carbon nanotube composite ribbon, 130 GPa assumed with a safety factor of 2; steel taper 1.7×10³³, Kevlar 2.6×10⁸ | read (NIAC report) |
+| Pearson et al. 2005 | Pearson, J., Levin, E., Oldson, J. and Wykes, H. 2005, Lunar Space Elevators for Cislunar Space Development, NIAC phase I final report | aramid and M5 suffice; taper about 4, or none | as summarised; was "Pearson 2005" |
+| Mars elevator | computed here | Zylon (3.8 MJ/kg) tapers about 12 times with no margin, 150 at a factor of 2; aramid 45 and 2,000 | computed; no paper read |
+| Birch 1982 | Birch, P. 1982, Orbital ring systems and Jacob's ladders I, JBIS 35, 475 to 497 | ring in free fall, skyhooks held electromagnetically, active control and power; the ring bears little structural stress | read; "moving ring" reworded |
+| Shkadov 1987 | Shkadov, L. M. 1987, Possibility of controlling solar system motion in the Galaxy, 38th IAF Congress, Brighton | the mirror thruster | abstract record read |
+| Badescu and Cathcart 2006 | Badescu, V. and Cathcart, R. B. 2006, in Macro-Engineering, Springer, 251 to 279. doi:10.1007/1-4020-4604-9_12 | F = L(1 − cos θ)/2c (their eq. 34) | read |
+| Sánchez and Scheeres 2014 | Sánchez, P. and Scheeres, D. J. 2014, Meteoritics and Planetary Science (accepted February 2014; volume and pages not read). doi:10.1111/maps.12293 | "small but non-zero cohesive strength"; about 25 Pa only in the unread part | read in part; do not ship a number from it until read |
+
+| Figure | Check | Result |
+|---|---|---|
+| strength for weight: steel 0.25, aramid 2.5, nanotube 45 MJ/kg | 2 GPa / 7,850; 3.6 GPa / 1,440; 63 GPa / 1,340 | holds. Now on the master sheet as mixtures steel-wire, aramid, pbo-fibre, carbon-nanotube (tensile_strength and density). Aramid read from DuPont 2017 Table II-1: Kevlar 49 yarn 3.0 GPa (2.1 MJ/kg), resin strand 3.6 GPa (2.5); the sheet holds the yarn. PBO (Zylon HM) 5.8 GPa / 1,560 = 3.7 MJ/kg, read from the Fiber-Line datasheet. Nanotube 47 from Yu et al. 2000 (Science 287, 637, doi:10.1126/science.287.5453.637), citation confirmed, abstract not read. Steel still textbook from memory, marked so on the sheet |
+| bond ceiling 50 to 100 MJ/kg | ideal nanotube about 100 GPa / 1,300 | about 77; holds |
+| chemical 13 MJ/kg | hydrogen-oxygen, 120 MJ/kg of hydrogen at 1 in 9 by mass | 13.3; holds |
+| fission 8×10¹³ J/kg | 200 MeV per 235 u | 8.2×10¹³; holds |
+| D-He3 3.5×10¹⁴ J/kg | 18.35 MeV per 5.03 u | 3.52×10¹⁴; holds |
+| annihilation 9×10¹⁶ J/kg | c² | 8.99×10¹⁶; holds |
+| photon drive 3.3 N per GW | P/c | 3.34; holds |
+| Wien peak at 1500 K | b / T | 1.93 µm; holds |
+| radiator 3.9 km² for 2 TW at 1500 K | σT⁴ = 287 kW/m² | 7.0 km² one side at emissivity 1; 3.9 km² only two-sided at 0.9; assumption now stated |
+| 224 m arm, 1 g at 2 rpm | g / ω² | 223.6 m; holds |
+| ringworld 1.5×10¹² J/kg | g × 1 au | 1.47×10¹²; holds (about 33,000 times nanotube) |
+| launch track 1,000 km at 3 g | v² / 2a, v = 7.8 km/s | 1,034 km; holds |
+| fusion plume tens to hundreds of keV | burning D-T and D-He3 plasmas run at about 10 to 100 keV | holds; textbook |
+

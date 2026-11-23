@@ -44,3 +44,66 @@ test("placed by the anchor: turned about hex 0101, then moved; only hexes in vie
   assert.ok(hexes && hexes.items.length > 4 && hexes.items.length < 40, `${hexes?.items.length} hexes`);
   assert.equal((hexes!.items[0] as { label?: string }).label, "0101");
 });
+
+// OV2: map layers of areas (territory overlays design 4 and 10).
+import { areaProblems, areaRole, areaSpecsOf, assignSlots, mapSlotToken, MAP_PATTERNS, MAP_SLOTS, OVERLAY_FRAMES } from "../src/overlay.ts";
+
+const POWERS = {
+  id: "so.powers",
+  label: "Powers of the Reach",
+  areas: {
+    by: { relation: "holds" },
+    answers: { from: "actors", under: "so" },
+    level: "auto",
+    fill: { between_stars: { reach: { value: 4, unit: "pc" } }, in_system: "hill", on_surface: "regions" },
+    weigh_by: "population",
+    look: "sse.look.atlas",
+    tier: "obvious",
+  },
+};
+
+test("OV2: a map layer needs no frame, round-trips through the stack unchanged, and OV1's grids are untouched", () => {
+  const packs = [pack("so", { overlays: [POWERS, { id: "noframe", label: "x" }, { id: "g", label: "Sector grid", frame: "galaxy-plane-pc", grid: GRID }] })];
+  const specs = overlaySpecsOf(packs);
+  assert.deepEqual(specs.map((s) => s.id), ["so.powers", "g"], "a frameless overlay without areas is dropped");
+  const back = JSON.parse(JSON.stringify(areaSpecsOf(packs)));
+  assert.deepEqual(back, [{ ...POWERS, pack: "so" }]);
+  // Areas are drawn from holdings, so the fixed-data path skips them; the grid still comes through.
+  assert.deepEqual(overlaysFor(packs, OVERLAY_FRAMES, {}, [0, 0, 1, 1], 1).map((o) => o.id), ["g"]);
+  assert.ok(OVERLAY_FRAMES.includes("body-latlon") && OVERLAY_FRAMES.includes("web-mpc"));
+});
+
+test("OV2: every kind of source reads; mistakes are said in words", () => {
+  for (const by of [{ relation: "holds" }, { tag_group: "tech era" }, { choice: "travel zone" }, { fact: "biome" }, { fact: "population", bands: [1e3, 1e6, 1e9] }, { knowledge: "charted" }, { reach: { from: "u:x/sys:1", radius: { value: 0, unit: "ly" }, rate: { value: 1, unit: "c" } } }]) assert.deepEqual(areaProblems({ by }), [], JSON.stringify(by));
+  assert.match(areaProblems({ by: {} })[0]!, /one thing to read/);
+  assert.match(areaProblems({ by: { relation: "holds", tag_group: "x" } })[0]!, /one thing/);
+  assert.match(areaProblems({ by: { fact: "population", bands: [5, 1] } })[0]!, /larger than the last/);
+  assert.match(areaProblems({ by: { relation: "holds" }, fill: { between_stars: { reach: { value: -1, unit: "pc" } } } })[0]!, /between_stars/);
+  assert.match(areaProblems({ by: { relation: "holds" }, level: -2 })[0]!, /level/);
+  const bad = [pack("p", { overlays: [{ id: "bad", label: "Bad", areas: { by: {} } }] })];
+  assert.deepEqual(areaSpecsOf(bad), [], "a layer that does not read is left out");
+});
+
+test("OV2: palette slots: neighbours never share, preferences kept when free, reused by answers that do not touch, same on every device", () => {
+  assert.equal(MAP_SLOTS.length, 8);
+  assert.equal(MAP_PATTERNS.length, 8);
+  assert.equal(mapSlotToken(3), "--sse-map-3");
+  const answers = ["crown", "league", "vesh", "free", "a", "b", "c", "d", "e", "f"].map((key) => ({ key }));
+  // A ring of ten answers, each touching the next.
+  const touching = answers.map((a, i) => [a.key, answers[(i + 1) % answers.length]!.key] as const);
+  const s = assignSlots(answers, touching);
+  for (const [a, b] of touching) assert.notEqual(s.get(a), s.get(b), `${a} and ${b} touch`);
+  assert.ok(new Set(s.values()).size <= 3, "a ring needs few slots: they are reused");
+  assert.deepEqual([...assignSlots([...answers].reverse(), touching).entries()].sort(), [...s.entries()].sort(), "order of input does not matter");
+  const pref = assignSlots([{ key: "crown", prefer: 5 }, { key: "league", prefer: 5 }], [["crown", "league"]]);
+  assert.equal(pref.get("crown"), 5);
+  assert.notEqual(pref.get("league"), 5, "the second wanting the same slot as its neighbour gets another");
+  // Nine answers all touching one another: the ninth shares the slot fewest neighbours use.
+  const nine = Array.from({ length: 9 }, (_, i) => ({ key: `p${i}` }));
+  const all = nine.flatMap((a, i) => nine.slice(i + 1).map((b) => [a.key, b.key] as const));
+  assert.equal(new Set(assignSlots(nine, all).values()).size, 8);
+});
+
+test("OV2: stacked area layers fill, then edge, then mark", () => {
+  assert.deepEqual([0, 1, 2, 3].map(areaRole), ["fill", "edges", "marks", "marks"]);
+});

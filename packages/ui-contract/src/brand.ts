@@ -27,6 +27,17 @@ export function checkBrand(b: SeatBrand): string[] {
   return out;
 }
 
+/** The quick overrides the Seats panel offers (V3 gap 25): a player view parameter, the switch's words and the value it sets while on. */
+export const LIVE_OVERRIDES: readonly { param: string; label: string; on: boolean }[] = [{ param: "labels", label: "Hide labels", on: false }];
+
+/** A screen's parameters with a seat's live overrides laid over them, only where the view has that parameter. */
+export function withLive<P extends Record<string, unknown>>(params: P, declared: readonly { name: string }[], live: Record<string, boolean> | undefined): P {
+  if (!live) return params;
+  const out: Record<string, unknown> = { ...params };
+  for (const [k, v] of Object.entries(live)) if (declared.some((d) => d.name === k)) out[k] = v;
+  return out as P;
+}
+
 /** What a player screen says while it joins and when the GM is away. `{seat}` is the seat's name, `{brand}` its brand's. */
 export interface JoinWords {
   joining: string;
