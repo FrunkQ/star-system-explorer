@@ -20,6 +20,7 @@
   import SoundControl from "../../sound/src/SoundControl.svelte";
   import LightControl from "./LightControl.svelte";
   import MakeSystem from "./MakeSystem.svelte";
+  import AddHere from "./AddHere.svelte";
   import StartSheet, { type StartAction } from "./StartSheet.svelte";
   import HelpDoor, { markNewsSeen, unseenNews, type HelpPage } from "./HelpDoor.svelte";
   import startDoc from "./documents/start.lines.json";
@@ -682,7 +683,7 @@
     }
     // A now moved by a kept look-ahead can pass the fixture's ruler: the ruler grows to keep it in view.
     const at = { ...base, now_yr: now, span_yr: [base.span_yr[0], Math.max(base.span_yr[1], now * 1.25)] as [number, number] };
-    // Bodies pasted into the campaign's own system live in the universe, not the fixture: they are read back from it
+    // Bodies pasted or added by hand into the campaign's own system live in the universe, not the fixture: they are read back from it
     // and set in beside the fixture's (a withdrawn one, by Undo or Cut, has left the read-back).
     const added = pastedSubjects(s, at);
     const main = added.then((x) => deriveScene(s, applyEdits(x, applied), derivations));
@@ -705,7 +706,7 @@
       const host = typeof f["orbit.host"] === "string" ? (f["orbit.host"] as string) : x.parent;
       const sma = f["orbit.semi_major_axis"];
       const orbit = x.orbit ?? (typeof sma === "number" && !x.band_au ? { a_au: sma / AU_M, phase_deg: 0 } : undefined);
-      return { ...x, subtitle: `Pasted · ${x.kind}`, stamps: x.stamps.filter((t) => t !== "imported"), ...(host ? { parent: host } : {}), ...(orbit ? { orbit } : {}) };
+      return { ...x, subtitle: `Added by hand · ${x.kind}`, stamps: x.stamps.filter((t) => t !== "imported"), ...(host ? { parent: host } : {}), ...(orbit ? { orbit } : {}) };
     });
     return { ...at, subjects: [...at.subjects, ...placed] };
   }
@@ -1184,6 +1185,30 @@
     return null;
   }
   let placing = $state(false);
+  // Add here (V3 gap 2): one world or moon by hand, round the selected star or planet (else the primary).
+  let addDialog: HTMLDialogElement | undefined = $state();
+  let addFor = $state<{ address: string; label: string; kind: string; mass_sun: number | null } | null>(null);
+  const addOrbits = $derived(addFor ? scene.subjects.filter((x) => (addFor!.kind === "star" ? x.kind === "planet" : x.parent === addFor!.address) && x.orbit).map((x) => x.orbit!.a_au) : []);
+  function openAdd() {
+    const sel = scene.subjects.find((x) => x.address === ws.selection);
+    const h = sel && (sel.kind === "star" || sel.kind === "planet") ? sel : primaryOf(scene);
+    if (!h) return void (clipNote = "There is no star here to add round.");
+    const m = h.facts.find((f) => f.field === "mass_sun")?.value;
+    addFor = { address: h.address, label: h.label, kind: h.kind, mass_sun: typeof m === "number" ? m : null };
+    addDialog?.showModal();
+  }
+  async function addClip(clip: Clip, words: string): Promise<string | null> {
+    if (!session || !addFor) return "The chart is not ready.";
+    const p = await placement(clip, { address: addFor.address, kind: addFor.kind });
+    if (!p) return "Could not find a free place for it.";
+    const roots = p.placed.filter((x) => x.parent === addFor!.address).map((x) => x.address);
+    const r = await placePasted(session, ws, { edits: p.edits, roots, words });
+    if (r.status !== "applied") return `Could not add it: ${r.status === "refused" ? r.reason : r.status === "error" ? r.message : "sent to the game master"}.`;
+    addDialog?.close();
+    clipNote = `Added ${words}, orbiting ${addFor.label}. Undo takes it back.`;
+    ws.select(roots[0]!);
+    return null;
+  }
   async function placePaste() {
     const p0 = pasted;
     if (!session || !p0 || placing) return;
@@ -1278,6 +1303,7 @@
     if (e.ctrlKey || e.metaKey || e.altKey) return;
     const keys: Record<string, () => void> = {
       e: () => chooseDesk("build"),
+      a: () => clipArmed && openAdd(),
       r: () => chooseDesk("run"),
       p: () => (ws.screen = ws.screen === "physics" ? "system" : "physics"),
       v: () => chooseDesk("explore"),
@@ -1400,6 +1426,7 @@
             <button type="button" data-more-copy disabled={!ws.selection} onclick={() => ((moreOpen = false), void copyBody())}>Copy {selName ?? "a body"} <kbd>Ctrl+C</kbd></button>
             {#if cuttable}<button type="button" data-more-cut onclick={() => ((moreOpen = false), void cutBody())}>Cut {selName} <kbd>Ctrl+X</kbd></button>{/if}
             <button type="button" data-more-paste onclick={pasteFromMenu}>Paste <kbd>Ctrl+V</kbd></button>
+            <button type="button" data-more-add onclick={() => ((moreOpen = false), openAdd())}>Add here… <kbd>A</kbd></button>
           {/if}
           <button type="button" onclick={() => ((moreOpen = false), toWorkshop())}>Workshop</button>
           <button type="button" data-more-open onclick={() => ((moreOpen = false), (offered = null), (given = null), (confirmFresh = false), openCampaign(true))}>Open a file… <kbd>Ctrl+O</kbd></button>
@@ -1459,6 +1486,7 @@
           {#if hasTool(ws.lens, "undo") && (desk === "build" || ws.branch)}<ToolButton label="Undo" icon="M9 14L4 9l5-5M4 9h11a5 5 0 0 1 0 10h-3" keyhint="Control+Z" disabled={ws.undo.length === 0 || ws.mode !== "edit" || !!ws.branch} onclick={() => undo(true)} />
           <ToolButton label="Redo" icon="M15 14l5-5-5-5M20 9H9a5 5 0 0 0 0 10h3" keyhint="Control+Shift+Z" disabled={ws.redo.length === 0 || ws.mode !== "edit" || !!ws.branch} onclick={() => undo(false)} />{/if}
           {#if clipArmed}<ToolButton label="Copy" icon="M8 8h11v11H8zM5 16V5h11" keyhint="Control+C" disabled={!ws.selection} onclick={copyBody} />{/if}
+          {#if clipArmed}<ToolButton label="Add here" icon="M12 5v14M5 12h14" keyhint="A" onclick={openAdd} />{/if}
           {#if clipArmed && cuttable}<ToolButton label="Cut" icon="M6 4l12 16M18 4L6 20M4 18a2 2 0 1 0 4 0M16 18a2 2 0 1 0 4 0" keyhint="Control+X" onclick={cutBody} />{/if}
           <ToolButton label="Keyboard shortcuts" icon="M3 7h18v10H3zM7 11h1M11 11h1M15 11h2M7 14h10" keyhint="?" onclick={() => openHelp("keys")} />
         </nav>
@@ -1626,6 +1654,11 @@
     <p class="row"><button type="button" onclick={() => (confirmFresh = true)}>Start fresh…</button></p>
   {/if}
   {#key campaignOpens}<YourData onbackup={saveFile} report={diagnosticState} />{/key}
+  <form method="dialog"><button type="submit">Close</button></form>
+</dialog>
+
+<dialog bind:this={addDialog} class="help seats-dialog" aria-labelledby="add-title" data-add onclose={() => !addDialog?.open && (addFor = null)}>
+  {#if addFor && session}<AddHere {session} system={scene.system} host={addFor} orbits={addOrbits} packs={stackPacks()} onadd={addClip} />{/if}
   <form method="dialog"><button type="submit">Close</button></form>
 </dialog>
 
