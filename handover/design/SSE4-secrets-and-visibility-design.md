@@ -48,6 +48,7 @@ A **fact** on a thing (one card line) follows its thing's rung by default: the p
 
 ## 4. The mark, and where it sits
 
+- **The eye is drawn narrow** (Alex, 23 Nov: about 30% less wide, "looks better, less UI space"): it sits in a square box, 14 by 14 px by a name and 11 by 11 px on a line, with the outline 12 units wide by 7 high in a 14-unit box. The press target stays at least 24 px (44 px on touch) however small the drawing.
 - **On a card:** one small eye at the left of the title. Lines the table cannot see are in pencil: quieter ink and a dotted rule under the value. Hover or focus a line and its eye appears in the left margin; press it to make an exception. Lines with an exception keep their eye showing.
 - **On a chart or map:** a thing the table does not know is drawn in pencil: a thin dotted outline, a dotted line for a link or a border, the name in quieter italic. Heard of is a thin solid outline with no fill. Known is ordinary ink. No icons are added to the chart.
 - **In a list or table:** a narrow eye column on the left, sortable, so "show me what they don't know" is one press on the column head.
