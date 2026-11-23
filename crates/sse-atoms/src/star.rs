@@ -21,8 +21,6 @@ const DK91: &str = "Demircan, O. and Kahraman, G. 1991, Ap&SS 181, 313: stellar 
 const GOUGH: &str =
     "Gough, D. O. 1981, Solar Physics 74, 21: solar interior structure and luminosity variations. doi:10.1007/BF00151270";
 const ADAMS: &str = "Adams, F. C. 2008, JCAP 08, 010: stars in other universes, stellar structure with different fundamental constants (homology scalings of luminosity and radius). doi:10.1088/1475-7516/2008/08/010";
-const HKT: &str = "Hansen, C. J., Kawaler, S. D. and Trimble, V. 2004, Stellar Interiors, 2nd edn, Springer, section 1.4 (main-sequence lifetime scaling). doi:10.1007/978-1-4419-9110-2";
-
 /// Eker et al. 2018 six-piece mass-luminosity relation, (upper mass bound in
 /// M☉, slope, intercept) for log L = a log M + b.
 pub const EKER_MLR: [(f64, f64, f64); 6] = [
@@ -114,33 +112,6 @@ pub fn atoms() -> Vec<Box<dyn Atom>> {
             f: |i, _| {
                 let ms = positive(i[0], "mass")? / M_SUN;
                 Ok(vec![R_SUN * radius_solar(ms) * homology_radius_factor()])
-            },
-        }
-        .build(),
-        Def {
-            id: "sse.star.ms_lifetime",
-            version: "1.0.0",
-            inputs: vec![
-                mass(Some((0.179 * M_SUN, 31.0 * M_SUN))),
-                port("luminosity", "star.luminosity", D::POWER, None),
-            ],
-            outputs: vec![port("lifetime", "star.main_sequence_lifetime", D::TIME, None)],
-            params: vec![param(
-                "sun_lifetime",
-                D::TIME,
-                1.0e10 * JULIAN_YEAR,
-                (8.0e9 * JULIAN_YEAR, 1.2e10 * JULIAN_YEAR),
-                "the Sun's main-sequence lifetime",
-            )],
-            cost: CostClass::Trivial,
-            references: &[HKT],
-            curious: "A star lives on its fuel divided by how fast it burns it. Bright heavy stars burn out in millions of years; dim red dwarfs outlast the present age of the universe.",
-            science: "The usable hydrogen scales with mass and the burn rate with luminosity, so the lifetime scales as M/L, normalised to the Sun's 10 Gyr. Ignores the larger burnt fraction in fully convective dwarfs and mass loss in massive stars.",
-            formula: "t_MS = t☉ (M/M☉) / (L/L☉)",
-            f: |i, p| {
-                let ms = positive(i[0], "mass")? / M_SUN;
-                let ls = positive(i[1], "luminosity")? / L_SUN;
-                Ok(vec![p[0] * ms / ls])
             },
         }
         .build(),

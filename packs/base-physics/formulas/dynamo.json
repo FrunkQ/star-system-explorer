@@ -1,0 +1,266 @@
+{
+ "format": "sse.formulas/1",
+ "family": "sse.dynamo",
+ "about": "Physics blocks whose maths is a formula (ND3b): each keeps its id, ports and results, and its maths is the Equation below, with a name that says what happens.",
+ "atoms": [
+  {
+   "id": "sse.dynamo.convected_flux",
+   "version": "1.0.0",
+   "cost": "trivial",
+   "inputs": [
+    {
+     "port": "flux",
+     "letter": "q"
+    },
+    {
+     "port": "temperature",
+     "letter": "T"
+    },
+    {
+     "port": "gravity",
+     "letter": "g"
+    }
+   ],
+   "outputs": [
+    {
+     "port": "convected_flux",
+     "letter": "Fc"
+    }
+   ],
+   "models": {
+    "tiny": {
+     "value": 1e-09,
+     "grade": "assumed",
+     "source": "guard"
+    }
+   },
+   "params": [
+    {
+     "param": "k",
+     "letter": "k",
+     "default": 130.0,
+     "range": [
+      10.0,
+      300.0
+     ],
+     "description": "thermal conductivity of the liquid alloy (Pozzo et al. 2012 give about 150; Konopkova et al. 2016 about 30; until MP21's iron rows)"
+    },
+    {
+     "param": "alpha",
+     "letter": "alpha",
+     "default": 1.25e-05,
+     "range": [
+      1e-06,
+      0.0001
+     ],
+     "description": "thermal expansivity of the liquid alloy"
+    },
+    {
+     "param": "cp",
+     "letter": "cp",
+     "default": 840.0,
+     "range": [
+      300.0,
+      2000.0
+     ],
+     "description": "specific heat of the liquid alloy"
+    }
+   ],
+   "references": [
+    "Labrosse, S. 2015, Physics of the Earth and Planetary Interiors 247, 36: thermal evolution of the core with a high thermal conductivity (the adiabatic heat flow q = k α g T / c_p). doi:10.1016/j.pepi.2015.02.002",
+    "Driscoll, P. and Bercovici, D. 2014, Physics of the Earth and Planetary Interiors 236, 36: on the thermal and magnetic histories of Earth and Venus (dynamo power from the CMB flux above the adiabat plus inner core buoyancy). doi:10.1016/j.pepi.2014.08.004"
+   ],
+   "shown": "q_conv = q − k α g T / c_p",
+   "equation": {
+    "name": "Heat the core sheds by churning",
+    "formula": "Fc = q - k * alpha * g * T / max(cp, tiny)",
+    "inputs": {
+     "q": {
+      "kind": "interior.core_heat_flux",
+      "unit": "W m-2",
+      "name": "heat leaving the core's top"
+     },
+     "T": {
+      "kind": "interior.core_top_temperature",
+      "unit": "K",
+      "name": "temperature at the core's top"
+     },
+     "g": {
+      "kind": "interior.core_top_gravity",
+      "unit": "m s-2",
+      "name": "gravity at the core's top"
+     },
+     "tiny": {
+      "kind": "model.smallest_specific_heat",
+      "unit": "J kg-1 K-1",
+      "name": "floor that keeps the division finite"
+     },
+     "k": {
+      "kind": "model.core_conductivity",
+      "unit": "W m-1 K-1",
+      "name": "conductivity of the liquid metal"
+     },
+     "alpha": {
+      "kind": "model.core_expansivity",
+      "unit": "K-1",
+      "name": "how much it expands when hot"
+     },
+     "cp": {
+      "kind": "model.core_specific_heat",
+      "unit": "J kg-1 K-1",
+      "name": "specific heat of the liquid metal"
+     }
+    },
+    "outputs": {
+     "Fc": {
+      "kind": "interior.convected_flux",
+      "unit": "W m-2",
+      "name": "heat carried by churning, beyond what conducts"
+     }
+    },
+    "source": {
+     "text": "Labrosse, S. 2015, Phys. Earth Planet. Inter. 247, 36",
+     "doi": "10.1016/j.pepi.2015.02.002",
+     "where": "the adiabatic heat flow"
+    },
+    "explain": {
+     "curious": "A hot core can lose heat and still make no field: if conduction alone can carry the heat away, the iron does not need to churn.",
+     "science": "Liquid iron conducts heat well, so part of what leaves the core's top is carried by conduction along the adiabat, q_ad = k α g T / c_p. Only the rest is carried by convection, and only convection stirs a dynamo. When the flux falls below q_ad the top of the core is stably layered."
+    },
+    "examples": [
+     {
+      "q": 0.09,
+      "T": 4000.0,
+      "g": 10.7,
+      "Fc": 0.007202380952380946
+     }
+    ]
+   }
+  },
+  {
+   "id": "sse.dynamo.compositional_power",
+   "version": "1.0.0",
+   "cost": "trivial",
+   "inputs": [
+    {
+     "port": "convected_flux",
+     "letter": "Fc"
+    },
+    {
+     "port": "light_mass_flux",
+     "letter": "mdot"
+    }
+   ],
+   "outputs": [
+    {
+     "port": "dynamo_flux",
+     "letter": "Fd"
+    }
+   ],
+   "models": {
+    "tiny": {
+     "value": 1e-12,
+     "grade": "assumed",
+     "source": "guard"
+    }
+   },
+   "params": [
+    {
+     "param": "drho",
+     "letter": "drho",
+     "default": 0.05,
+     "range": [
+      0.0,
+      1.0
+     ],
+     "description": "fractional density contrast of what is let out (light elements at the inner core boundary, about 5%)"
+    },
+    {
+     "param": "alpha",
+     "letter": "alpha",
+     "default": 1.25e-05,
+     "range": [
+      1e-06,
+      0.0001
+     ],
+     "description": "thermal expansivity of the liquid alloy"
+    },
+    {
+     "param": "cp",
+     "letter": "cp",
+     "default": 840.0,
+     "range": [
+      300.0,
+      2000.0
+     ],
+     "description": "specific heat of the liquid alloy"
+    }
+   ],
+   "references": [
+    "Buffett, B. A., Huppert, H. E., Lister, J. R. and Woods, A. W. 1996, Journal of Geophysical Research 101, 7989: on the thermal evolution of the Earth's core (light elements released at the inner core boundary as a buoyancy source). doi:10.1029/95JB03539",
+    "Driscoll, P. and Bercovici, D. 2014, Physics of the Earth and Planetary Interiors 236, 36: on the thermal and magnetic histories of Earth and Venus (dynamo power from the CMB flux above the adiabat plus inner core buoyancy). doi:10.1016/j.pepi.2014.08.004",
+    "O'Rourke, J. G. and Stevenson, D. J. 2016, Nature 529, 387: powering Earth's dynamo with magnesium precipitation from the core. doi:10.1038/nature16495"
+   ],
+   "shown": "q_dyn = q_conv + (c_p / α) · (Δρ/ρ) · ṁ/A",
+   "equation": {
+    "name": "Dynamo power from light elements rising",
+    "formula": "Fl = if mdot <= 0 then 0 else cp / max(alpha, tiny) * drho * mdot\nFd = Fc + Fl",
+    "inputs": {
+     "Fc": {
+      "kind": "interior.convected_flux",
+      "unit": "W m-2",
+      "name": "heat carried by churning"
+     },
+     "mdot": {
+      "kind": "interior.light_element_flux",
+      "unit": "kg m-2 s-1",
+      "name": "light elements let out per square metre per second"
+     },
+     "tiny": {
+      "kind": "model.smallest_expansivity",
+      "unit": "K-1",
+      "name": "floor that keeps the division finite"
+     },
+     "drho": {
+      "kind": "model.light_element_density_contrast",
+      "unit": "1",
+      "name": "density contrast of what is let out"
+     },
+     "alpha": {
+      "kind": "model.core_expansivity",
+      "unit": "K-1",
+      "name": "how much it expands when hot"
+     },
+     "cp": {
+      "kind": "model.core_specific_heat",
+      "unit": "J kg-1 K-1",
+      "name": "specific heat of the liquid metal"
+     }
+    },
+    "outputs": {
+     "Fd": {
+      "kind": "interior.dynamo_heat_flux",
+      "unit": "W m-2",
+      "name": "power that drives the dynamo, as a heat flux"
+     }
+    },
+    "source": {
+     "text": "Buffett, B. A., Huppert, H. E., Lister, J. R. and Woods, A. W. 1996, J. Geophys. Res. 101, 7989",
+     "doi": "10.1029/95JB03539",
+     "where": "buoyancy at the inner core boundary"
+    },
+    "explain": {
+     "curious": "Earth's field may be older than its solid inner core. Once the inner core began to freeze, the light elements it pushed out rose like bubbles and gave the dynamo a second engine.",
+     "science": "A freezing inner core rejects light elements into the liquid above, and magnesium oxide can come out of solution at the core's top; either way buoyant fluid stirs the core. Its power is written as the heat flux that would give the same buoyancy, (c_p/α) Δρ/ρ ṁ/A, and added to the convected flux. A negative convected flux is a stable layer that the buoyancy must first overcome."
+    },
+    "examples": [
+     {
+      "Fc": 0.01,
+      "mdot": 1e-09,
+      "Fd": 0.01336
+     }
+    ]
+   }
+  }
+ ]
+}

@@ -1,0 +1,485 @@
+{
+ "format": "sse.formulas/1",
+ "family": "sse.convection",
+ "about": "Physics blocks whose maths is a formula (ND3b): each keeps its id, ports and results, and its maths is the Equation below, with a name that says what happens.",
+ "atoms": [
+  {
+   "id": "sse.convection.granule_size",
+   "version": "1.0.0",
+   "cost": "trivial",
+   "inputs": [
+    {
+     "port": "h",
+     "letter": "H"
+    }
+   ],
+   "outputs": [
+    {
+     "port": "size",
+     "letter": "d"
+    }
+   ],
+   "params": [
+    {
+     "param": "factor",
+     "letter": "f",
+     "default": 10.0,
+     "range": [
+      3.0,
+      30.0
+     ],
+     "description": "granule diameter in pressure scale heights (Sun: about 1.4 Mm over 0.14 Mm)"
+    }
+   ],
+   "positive": [
+    {
+     "port": "h",
+     "says": "scale height"
+    }
+   ],
+   "references": [
+    "Trampedach, R., Asplund, M., Collet, R., Nordlund, Å. and Stein, R. F. 2013, A grid of three-dimensional stellar atmosphere models of solar metallicity. I. General properties, granulation, and atmospheric expansion, ApJ 769, 18: granule size scales with the surface pressure scale height across the grid. doi:10.1088/0004-637X/769/1/18",
+    "Schwarzschild, M. 1975, On the scale of photospheric convection in red giants and supergiants, ApJ 195, 137: cell size follows the pressure scale height, so giants' cells are huge. doi:10.1086/153313",
+    "Nordlund, Å., Stein, R. F. and Asplund, M. 2009, Solar surface convection, Living Rev. Solar Phys. 6, 2: granules about 1 to 2 Mm across living minutes, with upflows of a few km/s near the surface. doi:10.12942/lrsp-2009-2"
+   ],
+   "shown": "d = f H,  H = k T / (μ m_u g)",
+   "equation": {
+    "name": "Size of the boiling cells on a star's face",
+    "formula": "d = f * H",
+    "inputs": {
+     "H": {
+      "kind": "atmosphere.scale_height",
+      "unit": "m",
+      "name": "pressure scale height at the surface"
+     },
+     "f": {
+      "kind": "model.granule_factor",
+      "unit": "1",
+      "name": "granule diameter in scale heights"
+     }
+    },
+    "outputs": {
+     "d": {
+      "kind": "convection.cell_size",
+      "unit": "m",
+      "name": "granule diameter"
+     }
+    },
+    "source": {
+     "text": "Trampedach, R. et al. 2013, ApJ 769, 18",
+     "doi": "10.1088/0004-637X/769/1/18",
+     "where": "granule size against scale height"
+    },
+    "explain": {
+     "curious": "The surface of a cool star is a boiling pan of bright cells. On the Sun each is about the size of France; on a red supergiant a few cells cover the whole star.",
+     "science": "Hot gas rises, spreads and sinks over about ten pressure scale heights: thin hot surfaces under strong gravity make small cells, cool distended ones make huge cells. The scale height is the same block an atmosphere uses, read at the photosphere."
+    },
+    "examples": [
+     {
+      "H": 140000.0,
+      "d": 1400000.0
+     }
+    ]
+   }
+  },
+  {
+   "id": "sse.convection.speed",
+   "version": "1.0.0",
+   "cost": "trivial",
+   "inputs": [
+    {
+     "port": "teff",
+     "letter": "T"
+    },
+    {
+     "port": "g",
+     "letter": "g"
+    }
+   ],
+   "outputs": [
+    {
+     "port": "speed",
+     "letter": "v"
+    }
+   ],
+   "constants": {
+    "T_sun": "sheet/T_sun",
+    "GM_sun": "sheet/GM_sun",
+    "R_sun": "sheet/R_sun",
+    "k": "sheet/k_B",
+    "m_u": "sheet/m_u"
+   },
+   "params": [
+    {
+     "param": "v_sun",
+     "letter": "v_sun",
+     "default": 2000.0,
+     "range": [
+      500.0,
+      5000.0
+     ],
+     "description": "the Sun's near-surface convective speed, m/s (a few km/s; Nordlund et al. 2009)"
+    },
+    {
+     "param": "mu",
+     "letter": "mu",
+     "default": 1.3,
+     "range": [
+      0.5,
+      3.0
+     ],
+     "description": "mean molecular weight of the photosphere (neutral solar mix about 1.3)"
+    }
+   ],
+   "positive": [
+    {
+     "port": "teff",
+     "says": "temperature"
+    },
+    {
+     "port": "g",
+     "says": "gravity"
+    }
+   ],
+   "references": [
+    "Nordlund, Å., Stein, R. F. and Asplund, M. 2009, Solar surface convection, Living Rev. Solar Phys. 6, 2: granules about 1 to 2 Mm across living minutes, with upflows of a few km/s near the surface. doi:10.12942/lrsp-2009-2",
+    "Freytag, B., Steffen, M. and Dorch, B. 2002, Spots on the surface of Betelgeuse: results from new 3D stellar convection models, Astron. Nachr. 323, 213: red supergiants have only a few giant convection cells across their faces. doi:10.1002/1521-3994(200208)323:3/4<213::AID-ASNA213>3.0.CO;2-H"
+   ],
+   "shown": "v = v☉ (T/T☉)^(5/3) (g☉/g)^(1/3),  v ≤ √(5kT/(3μ m_u))",
+   "equation": {
+    "name": "How fast the gas churns at a star's surface",
+    "formula": "g_sun = GM_sun / (R_sun * R_sun)\nw = v_sun * (T / T_sun) ^ (5/3) * cbrt(g_sun / g)\nsound = sqrt(5/3 * k * T / (mu * m_u))\nv = min(w, sound)",
+    "inputs": {
+     "T": {
+      "kind": "star.effective_temperature",
+      "unit": "K",
+      "name": "surface temperature"
+     },
+     "g": {
+      "kind": "body.surface_gravity",
+      "unit": "m s-2",
+      "name": "surface gravity"
+     },
+     "T_sun": {
+      "kind": "constant.T_sun",
+      "unit": "K",
+      "name": "the Sun's surface temperature"
+     },
+     "GM_sun": {
+      "kind": "constant.GM_sun",
+      "unit": "m3 s-2",
+      "name": "the Sun's mass times G"
+     },
+     "R_sun": {
+      "kind": "constant.R_sun",
+      "unit": "m",
+      "name": "the Sun's radius"
+     },
+     "k": {
+      "kind": "constant.k_B",
+      "unit": "J K-1",
+      "name": "Boltzmann constant"
+     },
+     "m_u": {
+      "kind": "constant.m_u",
+      "unit": "kg",
+      "name": "atomic mass constant"
+     },
+     "v_sun": {
+      "kind": "model.sun_convective_speed",
+      "unit": "m/s",
+      "name": "the Sun's churning speed"
+     },
+     "mu": {
+      "kind": "atmosphere.mean_molecular_weight",
+      "unit": "1",
+      "name": "mean molecular weight of the surface gas"
+     }
+    },
+    "outputs": {
+     "v": {
+      "kind": "convection.speed",
+      "unit": "m/s",
+      "name": "speed of the churning gas"
+     }
+    },
+    "source": {
+     "text": "Nordlund, Å., Stein, R. F. and Asplund, M. 2009, Solar surface convection, Living Rev. Solar Phys. 6, 2",
+     "doi": "10.12942/lrsp-2009-2",
+     "where": "section 4, convective velocities"
+    },
+    "explain": {
+     "curious": "The hotter the surface and the weaker its gravity, the faster it boils. On giant stars the gas churns nearly as fast as sound.",
+     "science": "The flux the surface must carry, σT⁴, is moved by rising gas as about ρv³. With photospheric density set by gravity over a fixed opacity, ρ ∝ gμ/T, so v ∝ T^(5/3) g^(−1/3), normalised to the Sun and capped at the sound speed."
+    },
+    "examples": [
+     {
+      "T": 6200.0,
+      "g": 290.0,
+      "v": 2211.543488658977
+     }
+    ]
+   }
+  },
+  {
+   "id": "sse.convection.cell_lifetime",
+   "version": "1.0.0",
+   "cost": "trivial",
+   "inputs": [
+    {
+     "port": "size",
+     "letter": "d"
+    },
+    {
+     "port": "speed",
+     "letter": "v"
+    }
+   ],
+   "outputs": [
+    {
+     "port": "life",
+     "letter": "t"
+    }
+   ],
+   "params": [
+    {
+     "param": "k",
+     "letter": "k",
+     "default": 0.5,
+     "range": [
+      0.1,
+      3.0
+     ],
+     "description": "life over the time to cross the cell (fixed so the Sun's granules live about 6 minutes)"
+    }
+   ],
+   "positive": [
+    {
+     "port": "size",
+     "says": "cell size"
+    },
+    {
+     "port": "speed",
+     "says": "speed"
+    }
+   ],
+   "references": [
+    "Nordlund, Å., Stein, R. F. and Asplund, M. 2009, Solar surface convection, Living Rev. Solar Phys. 6, 2: granules about 1 to 2 Mm across living minutes, with upflows of a few km/s near the surface. doi:10.12942/lrsp-2009-2"
+   ],
+   "shown": "t = k d / v",
+   "equation": {
+    "name": "How long a boiling cell lasts",
+    "formula": "t = k * d / v",
+    "inputs": {
+     "d": {
+      "kind": "convection.cell_size",
+      "unit": "m",
+      "name": "cell size"
+     },
+     "v": {
+      "kind": "convection.speed",
+      "unit": "m/s",
+      "name": "speed of the churning gas"
+     },
+     "k": {
+      "kind": "model.cell_life_factor",
+      "unit": "1",
+      "name": "life over crossing time"
+     }
+    },
+    "outputs": {
+     "t": {
+      "kind": "convection.cell_lifetime",
+      "unit": "s",
+      "name": "how long a cell lives"
+     }
+    },
+    "source": {
+     "text": "Nordlund, Å., Stein, R. F. and Asplund, M. 2009, Solar surface convection, Living Rev. Solar Phys. 6, 2",
+     "doi": "10.12942/lrsp-2009-2",
+     "where": "section 3, granule lifetimes"
+    },
+    "explain": {
+     "curious": "Each solar granule lives only minutes before it fades and a new one takes its place. Giant cells on a supergiant last months to years.",
+     "science": "A cell lasts about the time its gas takes to cross it."
+    },
+    "examples": [
+     {
+      "d": 1400000.0,
+      "v": 2000.0,
+      "t": 350.0
+     }
+    ]
+   }
+  },
+  {
+   "id": "sse.convection.supergranule_size",
+   "version": "1.0.0",
+   "cost": "trivial",
+   "inputs": [
+    {
+     "port": "granule",
+     "letter": "dg"
+    }
+   ],
+   "outputs": [
+    {
+     "port": "size",
+     "letter": "d"
+    }
+   ],
+   "params": [
+    {
+     "param": "ratio",
+     "letter": "r",
+     "default": 25.0,
+     "range": [
+      5.0,
+      60.0
+     ],
+     "description": "supergranule over granule diameter (Sun: about 30 Mm over 1.2 Mm)"
+    }
+   ],
+   "positive": [
+    {
+     "port": "granule",
+     "says": "granule size"
+    }
+   ],
+   "references": [
+    "Rieutord, M. and Rincon, F. 2010, The Sun's supergranulation, Living Rev. Solar Phys. 7, 2: cells about 30 Mm across, lifetimes one to two days, horizontal flows about 300 to 400 m/s, outlined by the magnetic network. doi:10.12942/lrsp-2010-2",
+    "Gray, D. F. and Nagel, T. 1989, The granulation boundary in the H-R diagram, ApJ 341, 421: no granulation in stars hotter than about early F. doi:10.1086/167505"
+   ],
+   "shown": "D = r d",
+   "equation": {
+    "name": "Size of the big slow cells under the granules",
+    "formula": "d = dg * r",
+    "inputs": {
+     "dg": {
+      "kind": "convection.cell_size",
+      "unit": "m",
+      "name": "granule diameter"
+     },
+     "r": {
+      "kind": "model.supergranule_ratio",
+      "unit": "1",
+      "name": "supergranules over granules"
+     }
+    },
+    "outputs": {
+     "d": {
+      "kind": "convection.supergranule_size",
+      "unit": "m",
+      "name": "supergranule diameter"
+     }
+    },
+    "source": {
+     "text": "Rieutord, M. and Rincon, F. 2010, The Sun's supergranulation, Living Rev. Solar Phys. 7, 2",
+     "doi": "10.12942/lrsp-2010-2",
+     "where": "sizes, lifetimes and flows"
+    },
+    "explain": {
+     "curious": "Granules sit inside much bigger slow cells whose edges sweep the star's magnetic field into a glowing net. Spots and flares rise through that net.",
+     "science": "Supergranulation's origin is still debated; this block scales it with the granules, as the Sun shows, until better theory or observation of other stars replaces it."
+    },
+    "examples": [
+     {
+      "dg": 1400000.0,
+      "d": 35000000.0
+     }
+    ]
+   }
+  },
+  {
+   "id": "sse.convection.supergranule_lifetime",
+   "version": "1.0.0",
+   "cost": "trivial",
+   "inputs": [
+    {
+     "port": "size",
+     "letter": "d"
+    },
+    {
+     "port": "speed",
+     "letter": "v"
+    }
+   ],
+   "outputs": [
+    {
+     "port": "life",
+     "letter": "t"
+    }
+   ],
+   "params": [
+    {
+     "param": "share",
+     "letter": "s",
+     "default": 0.2,
+     "range": [
+      0.05,
+      1.0
+     ],
+     "description": "supergranule flow over the granule speed (Sun: about 0.4 over 2 km/s)"
+    }
+   ],
+   "positive": [
+    {
+     "port": "size",
+     "says": "supergranule size"
+    },
+    {
+     "port": "speed",
+     "says": "speed"
+    }
+   ],
+   "references": [
+    "Rieutord, M. and Rincon, F. 2010, The Sun's supergranulation, Living Rev. Solar Phys. 7, 2: cells about 30 Mm across, lifetimes one to two days, horizontal flows about 300 to 400 m/s, outlined by the magnetic network. doi:10.12942/lrsp-2010-2"
+   ],
+   "shown": "T = D / (s v)",
+   "equation": {
+    "name": "How long a big slow cell lasts",
+    "formula": "t = 1 * d / (v * s)",
+    "inputs": {
+     "d": {
+      "kind": "convection.supergranule_size",
+      "unit": "m",
+      "name": "supergranule diameter"
+     },
+     "v": {
+      "kind": "convection.speed",
+      "unit": "m/s",
+      "name": "speed of the churning gas"
+     },
+     "s": {
+      "kind": "model.supergranule_flow_share",
+      "unit": "1",
+      "name": "supergranule flow over granule speed"
+     }
+    },
+    "outputs": {
+     "t": {
+      "kind": "convection.supergranule_lifetime",
+      "unit": "s",
+      "name": "how long a supergranule lives"
+     }
+    },
+    "source": {
+     "text": "Rieutord, M. and Rincon, F. 2010, The Sun's supergranulation, Living Rev. Solar Phys. 7, 2",
+     "doi": "10.12942/lrsp-2010-2",
+     "where": "sizes, lifetimes and flows"
+    },
+    "explain": {
+     "curious": "The Sun's big network cells last a day or two.",
+     "science": "The slow horizontal flow crosses a supergranule once in its life."
+    },
+    "examples": [
+     {
+      "d": 35000000.0,
+      "v": 2000.0,
+      "t": 87500.0
+     }
+    ]
+   }
+  }
+ ]
+}

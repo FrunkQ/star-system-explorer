@@ -12,7 +12,6 @@
 # here that no longer matches a copy, and on a ledger that grew.
 crates/sse-activity/src/lib.rs	constant:h c / keV	const KEV_M: f64 = 1.239_84e-9;
 crates/sse-atoms/src/air.rs	new:Loschmidt constant (p0 over k_B T0)	pub const N_LOSCHMIDT: f64 = 2.686_780_111e25;
-crates/sse-atoms/src/chem.rs	constant:R_gas	pub const R_GAS: f64 = 8.314_462_618;
 crates/sse-atoms/src/heat.rs	isotope:al26	pub const AL26_H0: f64 = 0.00865 * 5.25e-5 * 0.3583;
 crates/sse-atoms/src/heat.rs	isotope:al26	pub const AL26_TAU_MYR: f64 = 0.717 / LN2;
 crates/sse-atoms/src/layers.rs	new:NaCl molar mass	pub const NACL_MOLAR_MASS: f64 = 0.058_44;

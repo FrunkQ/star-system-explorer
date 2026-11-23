@@ -23,6 +23,74 @@ pub const FILES: &[(&str, &str)] = &[
         "star",
         include_str!("../../../packs/base-physics/formulas/star.json"),
     ),
+    (
+        "climate",
+        include_str!("../../../packs/base-physics/formulas/climate.json"),
+    ),
+    (
+        "atmosphere",
+        include_str!("../../../packs/base-physics/formulas/atmosphere.json"),
+    ),
+    (
+        "tides",
+        include_str!("../../../packs/base-physics/formulas/tides.json"),
+    ),
+    (
+        "activity",
+        include_str!("../../../packs/base-physics/formulas/activity.json"),
+    ),
+    (
+        "convection",
+        include_str!("../../../packs/base-physics/formulas/convection.json"),
+    ),
+    (
+        "air",
+        include_str!("../../../packs/base-physics/formulas/air.json"),
+    ),
+    (
+        "nebula",
+        include_str!("../../../packs/base-physics/formulas/nebula.json"),
+    ),
+    (
+        "heat",
+        include_str!("../../../packs/base-physics/formulas/heat.json"),
+    ),
+    (
+        "ocean",
+        include_str!("../../../packs/base-physics/formulas/ocean.json"),
+    ),
+    (
+        "interior",
+        include_str!("../../../packs/base-physics/formulas/interior.json"),
+    ),
+    (
+        "light",
+        include_str!("../../../packs/base-physics/formulas/light.json"),
+    ),
+    (
+        "dynamo",
+        include_str!("../../../packs/base-physics/formulas/dynamo.json"),
+    ),
+    (
+        "magnetic",
+        include_str!("../../../packs/base-physics/formulas/magnetic.json"),
+    ),
+    (
+        "field",
+        include_str!("../../../packs/base-physics/formulas/field.json"),
+    ),
+    (
+        "shield",
+        include_str!("../../../packs/base-physics/formulas/shield.json"),
+    ),
+    (
+        "chem",
+        include_str!("../../../packs/base-physics/formulas/chem.json"),
+    ),
+    (
+        "belts",
+        include_str!("../../../packs/base-physics/formulas/belts.json"),
+    ),
 ];
 
 /// Read every formula file once: parsed, unit-checked and its worked

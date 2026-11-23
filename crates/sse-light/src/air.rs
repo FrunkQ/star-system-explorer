@@ -156,10 +156,16 @@ pub fn optics(air: &Air, wavelengths_m: &[f64], table: &LightTable) -> Result<Ai
             x.tau
         ));
     }
-    let mut references: Vec<Reference> = sse_atoms::air::atoms()
-        .iter()
-        .flat_map(|x| x.decl().references.clone())
-        .collect();
+    let mut references: Vec<Reference> = sse_atoms::decls_of(&[
+        "sse.air.rayleigh_cross_section",
+        "sse.air.dry_air_refractivity",
+        "sse.air.column_optical_depth",
+        "sse.air.scale_height",
+        "sse.air.scattering_coefficient",
+    ])
+    .into_iter()
+    .flat_map(|d| d.references)
+    .collect();
     references.dedup();
     if let Some(r) = table.references.iter().find(|r| r.text.starts_with("Kaye")) {
         references.push(r.clone());

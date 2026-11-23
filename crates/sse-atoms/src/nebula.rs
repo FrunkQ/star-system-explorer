@@ -11,11 +11,7 @@ use sse_core::Dimension as D;
 use sse_flow::{Atom, AtomError, CostClass};
 
 const OF06: &str = "Osterbrock, D. E. and Ferland, G. J. 2006, Astrophysics of Gaseous Nebulae and Active Galactic Nuclei, 2nd edn, University Science Books: chapter 2 (Strömgren sphere; case B recombination coefficient 2.59e-13 cm³/s at 10⁴ K) and chapter 4 (Balmer emissivities; Hα/Hβ = 2.86) https://uscibooks.aip.org/books/astrophysics-of-gaseous-nebulae-and-active-galactic-nuclei-second-edition/";
-const STROMGREN39: &str = "Strömgren, B. 1939, The physical state of interstellar hydrogen, ApJ 89, 526. doi:10.1086/144074";
 const RL79: &str = "Rybicki, G. B. and Lightman, A. P. 1979, Radiative Processes in Astrophysics, Wiley, chapter 1: photon numbers from Planck's law. doi:10.1002/9783527618170";
-const SEDOV: &str = "Sedov, L. I. 1959, Similarity and Dimensional Methods in Mechanics, Academic Press; Taylor, G. I. 1950, The formation of a blast wave by a very intense explosion, Proc. R. Soc. A 201, 159 (ξ = 1.1517 for γ = 5/3). doi:10.1098/rspa.1950.0049";
-const CMB88: &str = "Cioffi, D. F., McKee, C. F. and Bertschinger, E. 1988, Dynamics of radiative supernova remnants, ApJ 334, 252: t_PDS = 1.33×10⁴ E₅₁^(3/14) n₀^(-4/7) yr, R_PDS = 14.0 E₅₁^(2/7) n₀^(-3/7) pc, R = R_PDS (4t/3t_PDS - 1/3)^(3/10). doi:10.1086/166834";
-const KPF78: &str = "Kwok, S., Purton, C. R. and Fitzgerald, P. M. 1978, On the origin of planetary nebulae, ApJ 219, L125: a fast late wind sweeps the slow giant wind into a shell. doi:10.1086/182621";
 
 /// Case B recombination coefficient at 10⁴ K, m³/s.
 pub const ALPHA_B: f64 = 2.59e-19;
@@ -99,7 +95,7 @@ fn nonneg(x: f64, what: &str) -> Result<f64, AtomError> {
 }
 
 pub fn atoms() -> Vec<Box<dyn Atom>> {
-    let number_density = D([-3, 0, 0, 0, 0, 0, 0]);
+    let _number_density = D([-3, 0, 0, 0, 0, 0, 0]);
     let rate = crate::common::dims::RATE;
     vec![
         Def {
@@ -117,78 +113,6 @@ pub fn atoms() -> Vec<Box<dyn Atom>> {
             science: "Photons above 13.6 eV from a black body photosphere, counted exactly with the series form of the Planck photon integral. Real hot-star atmospheres differ from a black body by up to a factor of a few above the Lyman edge; a model-atmosphere table can replace this block.",
             formula: "Q = 4πR² (2π/c²)(kT/h)³ ∫ x² / (eˣ − 1) dx,  x > 13.6 eV / kT",
             f: |i, _| Ok(vec![ionising_photons(nonneg(i[0], "temperature")?, nonneg(i[1], "radius")?, E_ION_H)]),
-        }
-        .build(),
-        Def {
-            id: "sse.nebula.stromgren_radius",
-            version: "1.0.0",
-            inputs: vec![
-                port("q", "light.ionising_photon_rate", rate, None),
-                port("density", "gas.hydrogen_density", number_density, None),
-            ],
-            outputs: vec![port("radius", "nebula.ionised_radius", D::LENGTH, None)],
-            params: vec![],
-            cost: CostClass::Trivial,
-            references: &[STROMGREN39, OF06],
-            curious: "A hot star lights a glowing bubble in the gas round it, out to where every ionising photon has been used up keeping the gas ionised. Thinner gas, bigger bubble.",
-            science: "Ionisation balance in a uniform medium: photons emitted equal recombinations to excited levels (case B) inside the sphere.",
-            formula: "R_S = (3Q / (4π n² α_B))^⅓",
-            f: |i, _| Ok(vec![stromgren_radius(nonneg(i[0], "photon rate")?, nonneg(i[1], "density")?)]),
-        }
-        .build(),
-        Def {
-            id: "sse.nebula.balmer_alpha_power",
-            version: "1.0.0",
-            inputs: vec![port("recombinations", "nebula.recombination_rate", rate, None)],
-            outputs: vec![port("power", "nebula.h_alpha_power", D::POWER, None)],
-            params: vec![],
-            cost: CostClass::Trivial,
-            references: &[OF06],
-            curious: "Each time an electron falls back onto a proton it cascades down the energy ladder, and nearly half the time one step gives out the red light of hydrogen alpha. That is why glowing nebulae are red.",
-            science: "Case B at 10⁴ K: 0.45 Hα photons per recombination, so L(Hα) = 1.37×10⁻¹⁹ W per recombination per second. For an ionisation-bounded nebula the recombination rate equals the ionising photon rate.",
-            formula: "L(Hα) = 0.45 hν(Hα) × recombinations per second",
-            f: |i, _| Ok(vec![H_ALPHA_PER_RECOMBINATION * H_ALPHA_J * nonneg(i[0], "recombination rate")?]),
-        }
-        .build(),
-        Def {
-            id: "sse.nebula.shell_radius",
-            version: "1.0.0",
-            inputs: vec![
-                port("speed", "nebula.expansion_speed", D::VELOCITY, None),
-                port("age", "nebula.age", D::TIME, None),
-            ],
-            outputs: vec![port("radius", "nebula.shell_radius", D::LENGTH, None)],
-            params: vec![],
-            cost: CostClass::Trivial,
-            references: &[KPF78],
-            curious: "The gas a dying star throws off coasts outwards at a steady speed, so a ring nebula's size is a clock: measure it and its speed and you know its age.",
-            science: "In the interacting-winds picture the swept-up shell of a planetary nebula expands at a nearly constant speed of tens of km/s over its visible life.",
-            formula: "R = v t",
-            f: |i, _| Ok(vec![nonneg(i[0], "speed")? * nonneg(i[1], "age")?]),
-        }
-        .build(),
-        Def {
-            id: "sse.nebula.remnant_radius",
-            version: "1.0.0",
-            inputs: vec![
-                port("energy", "event.explosion_energy", D::POWER.mul(D::TIME), None),
-                port("ejecta", "event.ejecta_mass", D::MASS, None),
-                port("density", "gas.hydrogen_density", number_density, None),
-                port("age", "nebula.age", D::TIME, None),
-            ],
-            outputs: vec![port("radius", "nebula.shell_radius", D::LENGTH, None)],
-            params: vec![],
-            cost: CostClass::Trivial,
-            references: &[SEDOV, CMB88],
-            curious: "A supernova's blast coasts at first, then slows as it sweeps up gas, then cools and ploughs on as a thin shell until it is no faster than the gas around it.",
-            science: "Free expansion at √(2E/M) until the swept mass equals the ejecta; the Sedov-Taylor blast wave R = 1.15 (E t²/ρ)^⅕; after shell formation Cioffi, McKee and Bertschinger's pressure-driven snowplough. Solar metallicity; uniform surroundings.",
-            formula: "R = v t;  1.15 (E t²/ρ)^⅕;  R_PDS (4t/3t_PDS − ⅓)^0.3",
-            f: |i, _| {
-                let e = positive(i[0], "explosion energy")?;
-                let mej = positive(i[1], "ejecta mass")?;
-                let n = positive(i[2], "density")?;
-                Ok(vec![remnant_radius(e, mej, n, nonneg(i[3], "age")?).0])
-            },
         }
         .build(),
     ]

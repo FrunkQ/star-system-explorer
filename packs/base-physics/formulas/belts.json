@@ -1,0 +1,96 @@
+{
+ "format": "sse.formulas/1",
+ "family": "sse.belts",
+ "about": "Physics blocks whose maths is a formula (ND3b): each keeps its id, ports and results, and its maths is the Equation below, with a name that says what happens.",
+ "atoms": [
+  {
+   "id": "sse.belts.radiation_yield",
+   "version": "1.0.0",
+   "cost": "trivial",
+   "inputs": [
+    {
+     "port": "energy",
+     "letter": "E"
+    }
+   ],
+   "outputs": [
+    {
+     "port": "yield",
+     "letter": "Y"
+    }
+   ],
+   "params": [
+    {
+     "param": "z",
+     "letter": "Z",
+     "default": 13.0,
+     "range": [
+      1.0,
+      92.0
+     ],
+     "description": "atomic number of the shield (aluminium 13)"
+    },
+    {
+     "param": "k_per_mev",
+     "letter": "k",
+     "default": 0.0006,
+     "range": [
+      0.0003,
+      0.0012
+     ],
+     "description": "Koch and Motz's constant, per MeV"
+    }
+   ],
+   "references": [
+    "Koch, H. W. and Motz, J. W. 1959, Bremsstrahlung cross-section formulas and related data, Rev. Mod. Phys. 31, 920: the share of an electron's energy radiated as it stops in a material of atomic number Z, Y = k Z T / (1 + k Z T) with k about 6e-4 per MeV. doi:10.1103/RevModPhys.31.920",
+    "Hubbell, J. H. and Seltzer, S. M. 2004, Tables of X-ray mass attenuation coefficients and mass energy-absorption coefficients (NIST Standard Reference Database 126): aluminium and liquid water. https://physics.nist.gov/PhysRefData/XrayMassCoef/"
+   ],
+   "shown": "Y = k Z T / (1 + k Z T)",
+   "equation": {
+    "name": "Share of a stopped electron's energy given off as X-rays",
+    "formula": "x = k * Z * max(E, 0)\nY = x / (1 + x)",
+    "inputs": {
+     "E": {
+      "kind": "belts.electron_energy_mev",
+      "unit": "1",
+      "name": "electron energy, MeV"
+     },
+     "Z": {
+      "kind": "model.shield_atomic_number",
+      "unit": "1",
+      "name": "atomic number of the shield"
+     },
+     "k": {
+      "kind": "model.koch_motz_k",
+      "unit": "1",
+      "name": "Koch and Motz's constant, per MeV"
+     }
+    },
+    "outputs": {
+     "Y": {
+      "kind": "belts.radiation_yield",
+      "unit": "1",
+      "name": "share of its energy given off as X-rays"
+     }
+    },
+    "source": {
+     "text": "Koch, H. W. and Motz, J. W. 1959, Rev. Mod. Phys. 31, 920",
+     "doi": "10.1103/RevModPhys.31.920",
+     "where": "the radiation yield"
+    },
+    "explain": {
+     "curious": "An electron stopped in metal shakes out X-rays as it slows. Behind a thick wall those X-rays, not the electrons, give most of the dose, so a heavier wall helps less than you would hope.",
+     "science": "The radiation yield of a stopping electron, used with Kramers' flat thick-target spectrum and the NIST photon coefficients for the shield and tissue to give the bremsstrahlung dose behind a shield."
+    },
+    "examples": [
+     {
+      "E": 2.0,
+      "Z": 13.0,
+      "k": 0.0006,
+      "Y": 0.015360378101614808
+     }
+    ]
+   }
+  }
+ ]
+}

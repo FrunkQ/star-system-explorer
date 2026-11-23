@@ -21,7 +21,7 @@
 //! ```
 //!
 //! The language (design section 3): the block's inputs and nothing else as
-//! names; `+ - * / ^`, brackets, unary minus; `exp expm1 ln log10 sqrt abs
+//! names; `+ - * / ^`, brackets, unary minus; `exp expm1 ln log10 sqrt cbrt abs
 //! min max clamp sin cos tan atan2`; `if <condition> then a else b` with
 //! comparisons joined by `and`, `or`, `not`; several lines `name = ...`, a
 //! later line using an earlier one; `pi`. Bare numbers are whole numbers
@@ -62,9 +62,9 @@ pub const ID: &str = "sse.math.equation";
 pub const MAX_OPS: usize = 64;
 /// Largest whole number a formula may hold as a bare number.
 pub const MAX_WHOLE: u32 = 32;
-const FUNCS: [&str; 13] = [
-    "exp", "expm1", "ln", "log10", "sqrt", "abs", "min", "max", "clamp", "sin", "cos", "tan",
-    "atan2",
+const FUNCS: [&str; 14] = [
+    "exp", "expm1", "ln", "log10", "sqrt", "cbrt", "abs", "min", "max", "clamp", "sin", "cos",
+    "tan", "atan2",
 ];
 const WORDS: [&str; 7] = ["if", "then", "else", "and", "or", "not", "pi"];
 
@@ -80,13 +80,47 @@ pub struct PortSpec {
     /// The worded name shown beside the symbol ("distance from the star").
     #[serde(default)]
     pub name: Option<String>,
-    /// Where the relation holds, in the port's unit.
-    #[serde(default)]
+    /// Where the relation holds, in the port's unit. Each end is a number,
+    /// or a whole multiple of a data sheet row (`"8 sheet/M_earth"`) so a
+    /// figure of nature is never typed.
+    #[serde(default, deserialize_with = "valid_range")]
     pub valid: Option<(f64, f64)>,
     /// A list (a spectrum on its wavelength grid): the formula runs once
     /// per entry and every output is a list of the same length.
     #[serde(default)]
     pub list: bool,
+}
+
+fn valid_range<'de, D: serde::Deserializer<'de>>(d: D) -> Result<Option<(f64, f64)>, D::Error> {
+    let v: Option<(J, J)> = Option::deserialize(d)?;
+    let one = |x: &J| -> Result<f64, String> {
+        match x {
+            J::String(t) => {
+                let (k, row) = t
+                    .split_once(' ')
+                    .ok_or_else(|| format!("`{t}` is not a number times a sheet row"))?;
+                let k: f64 = k.parse().map_err(|_| format!("`{k}` is not a number"))?;
+                let id = row
+                    .strip_prefix("sheet/")
+                    .ok_or_else(|| format!("`{row}` is not a sheet row"))?;
+                let r = sse_core::sheet::ALL
+                    .iter()
+                    .find(|(n, _)| *n == id)
+                    .ok_or_else(|| format!("no sheet row {id}"))?;
+                Ok(k * r.1)
+            }
+            other => other
+                .as_f64()
+                .ok_or_else(|| "a valid range end is a number".into()),
+        }
+    };
+    match v {
+        None => Ok(None),
+        Some((a, b)) => Ok(Some((
+            one(&a).map_err(serde::de::Error::custom)?,
+            one(&b).map_err(serde::de::Error::custom)?,
+        ))),
+    }
 }
 
 #[derive(Clone, Debug, Deserialize)]
@@ -383,6 +417,7 @@ impl P<'_> {
                         Func::Ln,
                         Func::Log10,
                         Func::Sqrt,
+                        Func::Cbrt,
                         Func::Abs,
                         Func::Min,
                         Func::Max,
@@ -620,6 +655,12 @@ impl Dims<'_> {
                     let d = self.num(args[0])?;
                     Dv::D(d.root(2).ok_or_else(|| {
                         format!("the square root of [{d}] is not a whole dimension")
+                    })?)
+                }
+                Func::Cbrt => {
+                    let d = self.num(args[0])?;
+                    Dv::D(d.root(3).ok_or_else(|| {
+                        format!("the cube root of [{d}] is not a whole dimension")
                     })?)
                 }
                 Func::Abs => self.infer(args[0], want)?,
@@ -1217,6 +1258,7 @@ pub enum Func {
     Abs,
     Power,
     Sqrt,
+    Cbrt,
     Exp,
     Expm1,
     Ln,
@@ -1228,7 +1270,7 @@ pub enum Func {
 }
 
 impl Func {
-    pub const ALL: [Func; 18] = [
+    pub const ALL: [Func; 19] = [
         Func::Add,
         Func::Subtract,
         Func::Multiply,
@@ -1239,6 +1281,7 @@ impl Func {
         Func::Abs,
         Func::Power,
         Func::Sqrt,
+        Func::Cbrt,
         Func::Exp,
         Func::Expm1,
         Func::Ln,
@@ -1261,6 +1304,7 @@ impl Func {
             Func::Abs => "logic.abs",
             Func::Power => "math.power",
             Func::Sqrt => "math.sqrt",
+            Func::Cbrt => "math.cbrt",
             Func::Exp => "math.exp",
             Func::Expm1 => "math.expm1",
             Func::Ln => "math.ln",
@@ -1293,6 +1337,7 @@ pub fn number(op: Func, x: &[f64]) -> Result<f64, String> {
         Power => m::pow(x[0], x[1]),
         Sqrt if x[0] < 0.0 => return Err(format!("the square root of {} (below zero)", x[0])),
         Sqrt => m::sqrt(x[0]),
+        Cbrt => m::cbrt(x[0]),
         Exp => m::exp(x[0]),
         Expm1 => m::expm1(x[0]),
         Ln | Log10 if x[0] <= 0.0 => {
