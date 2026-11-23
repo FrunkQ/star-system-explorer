@@ -11,6 +11,8 @@
   import { openBrowserSession } from "../../ui-contract/src/host-browser.ts";
   import { createShare, type Share } from "./share.svelte.ts";
   import { clearStored, download, readStored, setAside, writeStored } from "./campaign-store.ts";
+  import YourData from "./YourData.svelte";
+  import { downloadText, opening as markOpening, restoreSetAside, setAsideText, unfinishedOpen, watchProblems, type DiagnosticState } from "./your-data.ts";
   import { checkCampaignSave, makeCampaignSave, saveFileName, savedEvents, type CampaignSave } from "../../ui-contract/src/index.ts";
   import SeatsPanel from "./SeatsPanel.svelte";
   import LensPanel from "./LensPanel.svelte";
@@ -18,6 +20,7 @@
   import LightControl from "./LightControl.svelte";
   import MakeSystem from "./MakeSystem.svelte";
   import StartSheet, { type StartAction } from "./StartSheet.svelte";
+  import HelpDoor, { markNewsSeen, unseenNews, type HelpPage } from "./HelpDoor.svelte";
   import startDoc from "./documents/start.lines.json";
   import LookAhead from "./LookAhead.svelte";
   import { readSol, solBatches, solSourceText, SOL_TITLE } from "../../ui-contract/src/index.ts";
@@ -185,6 +188,7 @@
   // Style documents (H8.9): checked for this device's measured tier.
   const styleHost = createStyles(() => [...REGISTRY, ...PLAYER_STACK] as never, () => session?.device()?.tier ?? "standard");
   let failure = $state<string | null>(null);
+  watchProblems();
   let status = $state({ kernel: "", tier: "", hash: "", stack: "", campaign: false });
   async function loadPacks(): Promise<unknown[]> {
     const packs = await Promise.all(stackDoc.packs.map(async (p) => (await fetch(new URL(p, document.baseURI))).json()));
@@ -222,20 +226,40 @@
   let keptNote = $state<string | null>(null);
   let savedAt = $state<string | null>(null);
   let saveProblem = $state<string | null>(null);
+  // A kept campaign that failed to open is set aside, never lost, and the recovery note offers it back (V3 gap 27).
+  let recovery = $state(false);
   async function reopenKept(s: ViewSession): Promise<Json | null> {
+    const stuck = unfinishedOpen();
+    if (stuck) {
+      setAside();
+      markOpening(false);
+      recovery = true;
+      keptNote = `Last time, opening the campaign kept in this browser did not finish (started ${new Date(stuck).toLocaleString("en-GB", { dateStyle: "medium", timeStyle: "short" })}). It is set aside, not lost, and a fresh campaign opened.`;
+      return null;
+    }
     const { save, problem } = readStored(ROOT);
     if (problem) {
       setAside();
-      keptNote = `The campaign kept in this browser could not be reopened (${problem}); it is set aside and a fresh campaign opened.`;
+      recovery = true;
+      keptNote = `The campaign kept in this browser could not be reopened (${problem}). It is set aside, not lost, and a fresh campaign opened.`;
       return null;
     }
     if (!save) return null;
+    markOpening(true);
+    try {
+      return await reopenSave(s, save);
+    } finally {
+      markOpening(false);
+    }
+  }
+  async function reopenSave(s: ViewSession, save: CampaignSave): Promise<Json | null> {
     if (save.stack?.added.length) await s.send({ kind: "stack_packs", packs: save.stack.added });
     if (save.stack?.campaign) await s.send({ kind: "adopt_physics", pack: save.stack.campaign, requests: [] });
     const im = await s.importChronicle(save.export);
     if (!im.ok) {
       setAside();
-      keptNote = `The campaign kept in this browser could not be reopened (${im.message}); it is set aside and a fresh campaign opened.`;
+      recovery = true;
+      keptNote = `The campaign kept in this browser could not be reopened (${im.message}). It is set aside, not lost, and a fresh campaign opened.`;
       if (save.stack) await s.send({ kind: "stack_packs", packs: [] }).then(() => s.send({ kind: "adopt_physics", pack: null, requests: [] }));
       return null;
     }
@@ -291,7 +315,24 @@
     const save = await currentSave();
     if (save) download(save, saveFileName(save.title, save.saved_at));
   }
+  async function diagnosticState(): Promise<DiagnosticState> {
+    const save = session ? await currentSave() : null;
+    return {
+      kernel: status.kernel,
+      tier: status.tier,
+      state_hash: status.hash,
+      stack_hash: status.stack,
+      campaign: { title: base.title, events: save ? savedEvents(save) : null, saved_at: savedAt },
+      notes: [failure, keptNote, saveProblem].filter((x): x is string => !!x),
+    };
+  }
   let campaignDialog: HTMLDialogElement | undefined = $state();
+  // Each opening reads Your data afresh (a save may have been set aside since the page loaded).
+  let campaignOpens = $state(0);
+  function openCampaign() {
+    campaignOpens++;
+    campaignDialog?.showModal();
+  }
   let offered = $state<{ save: CampaignSave | null; problems: string[]; name: string } | null>(null);
   let confirmFresh = $state(false);
   async function pickFile(e: Event) {
@@ -841,14 +882,14 @@
       if ("door" in a) {
         if (a.door === "sol") void openSol();
         else if (a.door === "grow") openMake("generate");
-        else if (a.door === "bring") campaignDialog?.showModal();
+        else if (a.door === "bring") openCampaign();
       } else if ("desk" in a) chooseDesk(a.desk);
       else if ("screen" in a) (toSystem(), go(a.screen));
       else if ("world" in a) (toWorld(someWorld()), (ws.screen = a.world));
       else if ("dialog" in a) {
         if (a.dialog === "ask") ((agentsOpen = true), agentsDialog?.showModal());
         else if (a.dialog === "grow") openMake("generate");
-        else if (a.dialog === "bring") campaignDialog?.showModal();
+        else if (a.dialog === "bring") openCampaign();
         else if (a.dialog === "share" && share) window.open(share.start(), "_blank", "noopener");
       } else if ("control" in a) document.querySelector<HTMLButtonElement>(a.control === "light" ? ".light .toggle" : ".sound .toggle")?.click();
       else if ("link" in a) window.open(a.link, "_blank", "noopener");
@@ -1122,6 +1163,14 @@
   }
 
   let help: HTMLDialogElement | undefined = $state();
+  // The Help door (V3 gap 31): What's new, Getting started, Keyboard. The dot marks news this device has not seen.
+  let helpPage = $state<HelpPage>("new");
+  let newsDot = $state(unseenNews());
+  function openHelp(page: HelpPage) {
+    helpPage = page;
+    help?.showModal();
+    if (page === "new") (markNewsSeen(), (newsDot = false));
+  }
   // V10: the seats panel opens from a quiet link once the session is shared.
   let seatsDialog: HTMLDialogElement | undefined = $state();
   let seatsOpen = $state(false);
@@ -1166,7 +1215,7 @@
         const i = lenses.findIndex((x) => x.id === lens.id);
         chooseLens(lenses[(i + 1) % lenses.length]!.id);
       },
-      "?": () => help?.showModal(),
+      "?": () => openHelp("keys"),
       // Esc clears the selection, then goes up a step.
       Escape: () => (ws.selection ? ws.select(null) : railScale === "world" || railScale === "workshop" ? toSystem() : upAStep()),
     };
@@ -1266,7 +1315,7 @@
     <!-- Ask (2.5): the agents, promoted from the status line. Tars needs no key. -->
     <button type="button" class="barbtn ask" onclick={() => ((agentsOpen = true), agentsDialog?.showModal())} title="Ask Tars, Orac or Minerva: what can I do here?">Ask</button>
     <div class="more">
-      <button type="button" class="barbtn" bind:this={moreBtn} aria-expanded={moreOpen} aria-controls="more-menu" onclick={() => (moreOpen = !moreOpen)}>More</button>
+      <button type="button" class="barbtn" bind:this={moreBtn} aria-expanded={moreOpen} aria-controls="more-menu" onclick={() => (moreOpen = !moreOpen)}>More{#if newsDot}<span class="news-dot" aria-hidden="true" title="Something new in Help"></span>{/if}</button>
       {#if moreOpen}
         <div class="menu" id="more-menu" role="group" aria-label="More">
           <button type="button" class="ask-more" onclick={() => ((moreOpen = false), (agentsOpen = true), agentsDialog?.showModal())}>Ask Tars, Orac or Minerva</button>
@@ -1277,11 +1326,11 @@
             <button type="button" data-more-paste onclick={pasteFromMenu}>Paste <kbd>Ctrl+V</kbd></button>
           {/if}
           <button type="button" onclick={() => ((moreOpen = false), toWorkshop())}>Workshop</button>
-          <button type="button" onclick={() => ((moreOpen = false), (offered = null), (confirmFresh = false), campaignDialog?.showModal())}>Campaign… <small>save, open, start fresh</small></button>
+          <button type="button" onclick={() => ((moreOpen = false), (offered = null), (confirmFresh = false), openCampaign())}>Campaign… <small>save, open, your data</small></button>
           <button type="button" onclick={() => ((moreOpen = false), openMake("import"))} title="Import a V3 save or grow a new system, and add it to the campaign">Make a system…</button>
           <button type="button" data-more-start onclick={() => ((moreOpen = false), (startOpen = true))}>Start sheet</button>
           <button type="button" aria-pressed={theme === "night-chart"} onclick={() => ((moreOpen = false), (theme = theme === "chart-room" ? "night-chart" : "chart-room"))}>Night chart <kbd>N</kbd></button>
-          <button type="button" onclick={() => ((moreOpen = false), help?.showModal())}>Keyboard shortcuts <kbd>?</kbd></button>
+          <button type="button" data-more-help onclick={() => ((moreOpen = false), openHelp(newsDot ? "new" : "start"))}>Help and what's new{#if newsDot}<span class="news-dot" aria-hidden="true" title="Something new"></span>{/if} <kbd>?</kbd></button>
           <button type="button" data-more-perf aria-pressed={perfOn} onclick={() => ((moreOpen = false), (perfOn = !perfOn))} title="Time every chunk of the app on this device, for the minimum spec">Performance readout <small>{perfOn ? "on" : "off"}</small></button>
         </div>
       {/if}
@@ -1297,6 +1346,7 @@
     <main class="problem" role="alert">
       <h2>The kernel did not start</h2>
       <p>{failure}</p>
+      <p>Nothing kept in this browser has been changed. <button type="button" class="linkbtn" onclick={() => location.reload()}>Try again</button> · <button type="button" class="linkbtn" data-start-without onclick={() => (setAside(), location.reload())}>Start without the kept campaign</button> (it is set aside, not lost) · <button type="button" class="linkbtn" onclick={async () => downloadText(JSON.stringify({ kind: "sse4-diagnostic", failure, problems: [] }, null, 2), "sse4-diagnostic.json")}>Diagnostic file</button></p>
     </main>
   {:else if !session}
     <main class="problem" aria-busy="true"><p>Opening the chart…</p></main>
@@ -1333,7 +1383,7 @@
           <ToolButton label="Redo" icon="M15 14l5-5-5-5M20 9H9a5 5 0 0 0 0 10h3" keyhint="Control+Shift+Z" disabled={ws.redo.length === 0 || ws.mode !== "edit" || !!ws.branch} onclick={() => undo(false)} />{/if}
           {#if clipArmed}<ToolButton label="Copy" icon="M8 8h11v11H8zM5 16V5h11" keyhint="Control+C" disabled={!ws.selection} onclick={copyBody} />{/if}
           {#if clipArmed && cuttable}<ToolButton label="Cut" icon="M6 4l12 16M18 4L6 20M4 18a2 2 0 1 0 4 0M16 18a2 2 0 1 0 4 0" keyhint="Control+X" onclick={cutBody} />{/if}
-          <ToolButton label="Keyboard shortcuts" icon="M3 7h18v10H3zM7 11h1M11 11h1M15 11h2M7 14h10" keyhint="?" onclick={() => help?.showModal()} />
+          <ToolButton label="Keyboard shortcuts" icon="M3 7h18v10H3zM7 11h1M11 11h1M15 11h2M7 14h10" keyhint="?" onclick={() => openHelp("keys")} />
         </nav>
         {#if undoNote}<p class="undo-note" role="status">{undoNote}</p>{/if}
         {#if clipNote}<p class="undo-note clip-note" role="status" data-clip-note>{clipNote}</p>{/if}
@@ -1365,7 +1415,7 @@
         </span>
       </div>
     </footer>
-    {#if keptNote}<p class="kept-note" role="status" data-kept-note>{keptNote} <button type="button" class="linkbtn" onclick={() => (keptNote = null)}>OK</button></p>{/if}
+    {#if keptNote}<p class="kept-note" role="status" data-kept-note>{keptNote}{#if recovery && setAsideText()}{" "}<button type="button" class="linkbtn" data-recover-try onclick={() => restoreSetAside() && location.reload()}>Try again</button> · <button type="button" class="linkbtn" onclick={() => downloadText(setAsideText() ?? "", "sse4-set-aside-campaign.json")}>Download it</button> ·{/if} <button type="button" class="linkbtn" onclick={() => (keptNote = null)}>{recovery ? "Carry on fresh" : "OK"}</button></p>{/if}
     <div class="status" aria-label="Session">
       <span>Seat: {session.seat.label}</span>
       <span class="kept">
@@ -1480,6 +1530,7 @@
   {:else}
     <p class="row"><button type="button" onclick={() => (confirmFresh = true)}>Start fresh…</button></p>
   {/if}
+  {#key campaignOpens}<YourData onbackup={saveFile} report={diagnosticState} />{/key}
   <form method="dialog"><button type="submit">Close</button></form>
 </dialog>
 
@@ -1501,26 +1552,8 @@
   {#if ws.branch}<p class="hint">A what-if is open: keep it or throw it away, then paste.</p>{/if}
 </dialog>
 
-<dialog bind:this={help} class="help" aria-labelledby="help-title">
-  <h2 id="help-title">Keyboard</h2>
-  <dl>
-    <dt>Tab</dt><dd>Move between the chart's bodies, the card and the ruler</dd>
-    <dt>Arrows</dt><dd>On the chart, the next or previous body; on the ruler, 1 % of the span</dd>
-    <dt>Enter</dt><dd>Select the focused body; on the card, ink the typed value</dd>
-    <dt>Esc</dt><dd>Put a typed value back, or clear the selection</dd>
-    <dt>[ and ]</dt><dd>Previous or next body</dd>
-    <dt>C, T</dt><dd>Go to the chart, go to the time ruler</dd>
-    <dt>Page Up, Page Down, Home, End</dt><dd>On the ruler, larger steps</dd>
-    <dt>Drag a body, or Page Up, Page Down on it</dt><dd>Move its orbit out or in (Build desk)</dd>
-    <dt>Ctrl+C, Ctrl+X, Ctrl+V</dt><dd>Copy the selected body with everything that orbits it; cut a pasted body; paste a copied body (Build desk)</dd>
-    <dt>Ctrl+Z, Ctrl+Shift+Z</dt><dd>Undo, redo (each is a new correction on the chart's history)</dd>
-    <dt>why?</dt><dd>On any value: where it came from, at three depths (Curious, Science, Engine); "Open the flow" puts its physics on the bench</dd>
-    <dt>P</dt><dd>Chart or Physics: the flow editor and change requests</dd>
-    <dt>V, E, R</dt><dd>Desk: Explore (look), Build (change), Run (the table)</dd>
-    <dt>D</dt><dd>Depth: Curious, Science, Engine (how much every card and number says)</dd>
-    <dt>N</dt><dd>Chart room or Night chart</dd>
-    <dt>L</dt><dd>See the desk through the next lens (Basic, Advanced, Building, Running, as players see it)</dd>
-  </dl>
+<dialog bind:this={help} class="help" aria-labelledby="help-title" onclose={() => (newsDot = unseenNews())}>
+  <HelpDoor bind:page={helpPage} onstart={() => (help?.close(), (startOpen = true))} onask={() => (help?.close(), (agentsOpen = true), agentsDialog?.showModal())} onsol={() => (help?.close(), void openSol())} />
   <form method="dialog"><button type="submit">Close</button></form>
 </dialog>
 
@@ -2196,7 +2229,9 @@
     font-family: var(--sse-font-display);
   }
   .help {
-    max-width: 520px;
+    max-width: 600px;
+    width: calc(100vw - 32px);
+    box-sizing: border-box;
     border: var(--sse-line) solid var(--sse-ink);
     box-shadow: var(--sse-card-shadow);
     background: var(--sse-ground-raised);
@@ -2238,26 +2273,17 @@
   .quiet {
     color: var(--sse-ink-muted);
   }
+  .news-dot {
+    display: inline-block;
+    width: 7px;
+    height: 7px;
+    margin-left: 6px;
+    border-radius: 50%;
+    background: var(--sse-accent);
+    vertical-align: middle;
+  }
   .help::backdrop {
     background: rgba(0, 0, 0, 0.25);
-  }
-  .help h2 {
-    margin: 0 0 12px;
-    font-family: var(--sse-font-display);
-  }
-  .help dl {
-    display: grid;
-    grid-template-columns: auto 1fr;
-    gap: 6px 16px;
-    margin: 0 0 16px;
-    font-size: 14px;
-  }
-  .help dt {
-    font-family: var(--sse-font-mono);
-    font-size: 13px;
-  }
-  .help dd {
-    margin: 0;
   }
   .help button {
     height: 40px;

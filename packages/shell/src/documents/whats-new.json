@@ -1,0 +1,29 @@
+{
+  "about": "What's new, newest first (V3 gap 31). One entry per stage end or notable release, in plain words for a keen amateur. The Help door in More shows these; a dot on Help marks an entry the device has not seen. The chart room thread adds an entry as each stage of handover/design/SSE4-coming-together.md lands.",
+  "entries": [
+    {
+      "id": "2026-11-23-stage-1",
+      "date": "2026-11-23",
+      "title": "Stage 1: a test drive you can walk",
+      "items": [
+        "Open the Solar System from the start sheet, pick a world and ask why any value is what it is.",
+        "Change a world on the Build desk and watch what follows: move Mars to 1 AU and its surface warms by about 50 K. Undo takes it back.",
+        "Open any world as a globe, see its magnetic field with Mag, and cut it open with Cutaway.",
+        "Play now closes the time ruler in, so you see the days pass.",
+        "Go out to the cosmic web from the place line and come straight back down to where you were.",
+        "Look up is on the rail at every system and world: elements, substances, constants and units.",
+        "Every theme is checked for colour-blind viewers. Element origins, field lines and the accent stay apart for every common colour vision."
+      ]
+    },
+    {
+      "id": "2026-11-22-place-line",
+      "date": "2026-11-22",
+      "title": "Where you are, and how to get anywhere",
+      "items": [
+        "The place line along the top shows where you are, from the cosmic web down to a single world. Press any step to go there.",
+        "Below, at the end of the line, lists what is inside: the worlds of a system, the systems of a campaign.",
+        "Every diagram has the same view controls: zoom and slide everywhere, and tilt and Free where the diagram has depth."
+      ]
+    }
+  ]
+}

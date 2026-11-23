@@ -41,6 +41,8 @@ SOURCES = [
      "status": "verified", "url": "https://www.cosmos.esa.int/documents/532822/552851/vol1_all.pdf"},
     {"id": "hilton2006", "text": "Hilton, J. L. et al. 2006, Celest. Mech. Dyn. Astron. 94, 351: Report of the IAU Division I Working Group on Precession and the Ecliptic (obliquity at J2000, 84381.406 arcsec)",
      "status": "verified", "doi": "10.1007/s10569-006-0001-2"},
+    {"id": "charette-smith2010", "text": "Charette, M. A. and Smith, W. H. F. 2010, Oceanography 23(2), 112: The volume of Earth's ocean (1.335e9 km3, the size of one Earth ocean as the kernel counts it; Earth holds 1 by definition)",
+     "status": "unverified", "doi": "10.5670/oceanog.2010.51"},
 ]
 
 # ICRS to galactic (Hipparcos A_G, rows are galactic x, y, z) and the J2000
@@ -113,9 +115,55 @@ def planet_row(name, pid, kind, host, m24, r_km, a6, e, rot_h, bond, geo, obl):
         "body.albedo_geometric": val(geo, "1", src),
     }
     row = {"id": pid, "name": name, "kind": kind, "host": host, "values": values}
+    values.update(surface_facts(pid, src))
     if pid in NOTES:
         row["note"] = NOTES[pid]
     return row
+
+
+# What a catalogued world's surface is like, as the NSSDCA sheet prints it
+# (read 23 Nov 2026), for the surface chain to use before any estimate
+# (proven core, test drive). Only a printed average is kept: the Moon and Pluto
+# print a range, so they have no temperature here; Mercury's and the Moon's
+# surface pressures are printed as upper bounds of an exosphere, so they have
+# none either. atmosphere.main is the main gas by volume, as a substance id on
+# the master data sheet. Fields: average surface temperature (K), surface
+# pressure (bar), main gas.
+SURFACE = {
+    "mercury": (440.0, None, None),
+    "venus": (737.0, 92.0, "co2"),
+    "earth": (288.0, 1.014, "n2"),
+    "mars": (214.0, 6.36e-3, "co2"),
+    "pluto": (None, 13e-6, "n2"),
+}
+SURFACE_NOTES = {
+    "mars": "average; NSSDCA prints ~214 K",
+    "mars_p": "at mean radius; varies 4.0 to 8.7 mb with the season",
+    "pluto_p": "NSSDCA prints ~13 microbar",
+    "venus_gas": "96.5% CO2, 3.5% N2 near the surface, by volume",
+    "earth_gas": "78.08% N2, 20.95% O2, dry air by volume",
+    "mars_gas": "95.1% CO2, 2.59% N2, 1.94% Ar by volume",
+    "pluto_gas": "99% N2, 0.5% CH4 by volume",
+}
+BAR = 1e5
+
+
+def surface_facts(pid, src):
+    out = {}
+    if pid == "earth":
+        out["body.surface_water_oceans"] = val(1.0, "earth_oceans", "charette-smith2010",
+                                               note="1 by definition of the unit (1.335e18 m3 of ocean)")
+    if pid not in SURFACE:
+        return out
+    t, p_bar, gas = SURFACE[pid]
+    if t is not None:
+        out["planet.surface_temperature"] = val(t, "K", src, note=SURFACE_NOTES.get(pid, "average temperature"))
+    if p_bar is not None:
+        out["atmosphere.surface_pressure"] = val(round(p_bar * BAR, 9), "Pa", src, **(
+            {"note": SURFACE_NOTES[pid + "_p"]} if pid + "_p" in SURFACE_NOTES else {}))
+    if gas is not None:
+        out["atmosphere.main"] = val(gas, "substance", src, note=SURFACE_NOTES[pid + "_gas"])
+    return out
 
 
 
@@ -151,10 +199,15 @@ def validate(pack):
     for s in sol["sources"]:
         assert s.get("doi") or s.get("url"), "source %s has no DOI or URL" % s["id"]
     bids = {b["id"] for b in sol["bodies"]}
+    sheet = json.load(open(SHEET, encoding="utf-8"))["provides"]["reference"]
+    subs = {x["id"] for x in sheet["substances"]}
     for b in sol["bodies"]:
         assert b["host"] is None or b["host"] in bids, "%s: unknown host %s" % (b["id"], b["host"])
         for k, v in b["values"].items():
             assert v["src"] in ids, "%s %s: unknown source %s" % (b["id"], k, v["src"])
+            if v["unit"] == "substance":
+                assert v["v"] in subs, "%s %s: %s is not a substance on the sheet" % (b["id"], k, v["v"])
+                continue
             assert isinstance(v["v"], (int, float)) and v["v"] == v["v"], "%s %s: not a number" % (b["id"], k)
     for r in sol["regions"]:
         assert r["host"] in bids and r["src"] in ids and 0 < r["inner_m"] < r["outer_m"], r["id"]
