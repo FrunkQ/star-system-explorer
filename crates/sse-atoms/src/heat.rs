@@ -114,8 +114,8 @@ fn budget() -> Vec<sse_flow::Param> {
 /// Al 0.865 wt% (CI chondrite, McDonough and Sun 1995) × canonical 26Al/27Al
 /// 5.25e-5 (Kita et al. 2013) × 0.3583 W per kg of Al-26 (Ruedas 2017, table 2).
 pub const AL26_H0: f64 = 0.00865 * 5.25e-5 * 0.3583;
-/// Al-26 mean life, Myr (half-life 0.717 Myr).
-pub const AL26_TAU_MYR: f64 = 0.717 / LN2;
+/// Al-26 mean life, Myr: the sheet's half-life over ln 2 (0.717 Myr half-life).
+pub const AL26_TAU_MYR: f64 = sse_core::sheet::isotope_half_life_s::AL26 / LN2 / MYR;
 
 fn rel(x: f64, what: &str) -> Result<f64, AtomError> {
     if x >= 0.0 && x.is_finite() {

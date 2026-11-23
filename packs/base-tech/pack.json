@@ -1,0 +1,738 @@
+{
+ "format": "sse.pack/1",
+ "id": "sse.base-tech",
+ "version": "0.1.0",
+ "kind": [
+  "base-physics"
+ ],
+ "kernel_range": "^0.1",
+ "licence": "Apache-2.0",
+ "provides": {
+  "other": {
+   "tech": {
+    "about": "Future tech base pack (FT1): technology is how far each limit on building things has been pushed. An advance moves a figure; the same sizing block still runs; past a figure's ceiling is fictional by arithmetic. Built by scripts/build-base-tech.py from the master data sheet.",
+    "limits": [
+     {
+      "id": "heat",
+      "n": 1,
+      "plain": "Heat has to leave",
+      "science": "Second law; radiated power goes as area times temperature to the fourth",
+      "shapes": "radiators, heat shields, glow in infrared",
+      "past_ceiling": "heat sinks that send it nowhere",
+      "figures": [
+       "radiator_k",
+       "waste_per_jet",
+       "heat_sent_nowhere"
+      ]
+     },
+     {
+      "id": "thrust",
+      "n": 2,
+      "plain": "Thrust needs something to throw",
+      "science": "Conservation of momentum; the rocket equation",
+      "shapes": "tanks, mass ratio, staging, lifting off a world",
+      "past_ceiling": "reactionless and gravity drives",
+      "figures": [
+       "exhaust_km_s",
+       "unthrown_n_per_w"
+      ]
+     },
+     {
+      "id": "energy",
+      "n": 3,
+      "plain": "Energy has weight",
+      "science": "Mass-energy; energy per kilogram of fuel, power per kilogram of plant",
+      "shapes": "fuel tanks, reactor size, range",
+      "past_ceiling": "anything richer than annihilation",
+      "figures": [
+       "fuel_j_per_kg",
+       "plant_w_per_kg"
+      ]
+     },
+     {
+      "id": "acceleration",
+      "n": 4,
+      "plain": "Crews break under hard acceleration",
+      "science": "The crew's physiology; inertia cannot be screened (equivalence principle)",
+      "shapes": "trip times, engine size, launch track length",
+      "past_ceiling": "inertial compensators",
+      "figures": [
+       "crew_g",
+       "inertia_screened"
+      ]
+     },
+     {
+      "id": "weight",
+      "n": 5,
+      "plain": "Crews need weight",
+      "science": "Spin gravity: radius is g over spin rate squared; comfort caps the spin rate",
+      "shapes": "spin rings and tumbling pairs",
+      "past_ceiling": "gravity plates",
+      "figures": [
+       "spin_rpm",
+       "weight_without_spin_g"
+      ]
+     },
+     {
+      "id": "light-speed",
+      "n": 6,
+      "plain": "Nothing outruns light",
+      "science": "Special relativity",
+      "shapes": "travel between stars, message delay, a crew's age against home",
+      "past_ceiling": "every FTL drive and radio: a per-setting rule (voyages design), not a figure",
+      "figures": []
+     },
+     {
+      "id": "materials",
+      "n": 7,
+      "plain": "Materials only bear so much",
+      "science": "Strength for weight (pascals over density); bond energy sets a ceiling",
+      "shapes": "tank and structure mass, domes, towers, spin radius, tethers, megastructures",
+      "past_ceiling": "ringworld floors, rigid shells round a star",
+      "figures": [
+       "strength_for_weight"
+      ]
+     },
+     {
+      "id": "radiation",
+      "n": 8,
+      "plain": "Radiation gets through",
+      "science": "Stopping of charged particles and gammas by mass in the way",
+      "shapes": "mass round the quarters, storm shelters, close passes",
+      "past_ceiling": "force screens",
+      "figures": [
+       "shield_g_cm2",
+       "career_dose_sv"
+      ]
+     },
+     {
+      "id": "supplies",
+      "n": 9,
+      "plain": "Crews need air, food and time",
+      "science": "Mass balance of a closed habitat; ageing",
+      "shapes": "habitat and stores size, greenhouses, who is awake",
+      "past_ceiling": "stasis with no upkeep",
+      "figures": [
+       "supplies_kg_per_day",
+       "water_recycled"
+      ]
+     },
+     {
+      "id": "seen",
+      "n": 10,
+      "plain": "Anything warm can be seen",
+      "science": "Every body radiates at its temperature",
+      "shapes": "detection range by band, hiding",
+      "past_ceiling": "cloaks, which must say where the light goes",
+      "figures": [
+       "light_hidden"
+      ]
+     }
+    ],
+    "figures": [
+     {
+      "id": "radiator_k",
+      "limit": "heat",
+      "plain": "radiator temperature",
+      "unit": "K",
+      "better": "higher",
+      "reads": "base-ships ship_design.drive_heat[].radiator_k",
+      "marks": [
+       {
+        "mark": "built",
+        "v": 276.0,
+        "what": "International Space Station radiators: ammonia supplied at 2.8 C",
+        "src": "nasa-iss-atcs",
+        "note": "the coolant's supply temperature, not the panel's"
+       },
+       {
+        "mark": "allowed",
+        "v": 1500.0,
+        "what": "a fusion drive's structure radiating its side-reaction heat",
+        "src": "santarius-logan-1998",
+        "check": "unverified"
+       }
+      ]
+     },
+     {
+      "id": "waste_per_jet",
+      "limit": "heat",
+      "plain": "waste heat per watt of jet",
+      "unit": "1",
+      "better": "lower",
+      "reads": "base-ships ship_design.drive_heat[].waste_per_jet",
+      "marks": [
+       {
+        "mark": "built",
+        "v": 0.0,
+        "what": "a chemical rocket: the heat leaves with the exhaust",
+        "src": "sheet"
+       },
+       {
+        "mark": "allowed",
+        "v": 0.1,
+        "what": "a D-He3 fusion drive: neutrons and bremsstrahlung heat the engine",
+        "src": "santarius-logan-1998",
+        "check": "unverified"
+       }
+      ]
+     },
+     {
+      "id": "heat_sent_nowhere",
+      "limit": "heat",
+      "plain": "share of waste heat that leaves without being radiated or carried",
+      "unit": "1",
+      "better": "higher",
+      "reads": "FT2",
+      "marks": [
+       {
+        "mark": "ceiling",
+        "v": 0.0,
+        "what": "a heat sink that sends heat nowhere",
+        "src": "law",
+        "law": "second law of thermodynamics"
+       }
+      ]
+     },
+     {
+      "id": "exhaust_km_s",
+      "limit": "thrust",
+      "plain": "exhaust speed",
+      "unit": "km s-1",
+      "better": "higher",
+      "reads": "ship exhaust_km_s (sse-nav Ship)",
+      "marks": [
+       {
+        "mark": "built",
+        "v": 4.565,
+        "what": "RL10B-2 hydrogen-oxygen engine, 465.5 s",
+        "src": "l3harris-rl10"
+       },
+       {
+        "mark": "built",
+        "v": 8.581,
+        "what": "Pewee 1 nuclear thermal reactor, about 875 s (ground test, never flown)",
+        "src": "nasem2021"
+       },
+       {
+        "mark": "allowed",
+        "v": 347.499,
+        "what": "D-He3 spherical torus fusion ship, 35,435 s",
+        "src": "williams2005"
+       },
+       {
+        "mark": "allowed",
+        "v": 755.112,
+        "what": "D-He3 magnetised target fusion ship, 77,000 s",
+        "src": "adams2003"
+       },
+       {
+        "mark": "ceiling",
+        "v": 299792.458,
+        "what": "the speed of light",
+        "src": "law",
+        "law": "special relativity",
+        "sheet": "constants/c"
+       }
+      ]
+     },
+     {
+      "id": "unthrown_n_per_w",
+      "limit": "thrust",
+      "plain": "thrust per watt with nothing thrown",
+      "unit": "N W-1",
+      "better": "higher",
+      "reads": "FT2",
+      "marks": [
+       {
+        "mark": "built",
+        "v": 3.3356409519815204e-09,
+        "what": "light pressure: a photon rocket or a lamp, 3.3 N per GW",
+        "src": "lubin2016",
+        "sheet": "constants/c"
+       },
+       {
+        "mark": "ceiling",
+        "v": 3.3356409519815204e-09,
+        "what": "a reactionless drive above 1/c gives out more energy than it takes in",
+        "src": "law",
+        "law": "conservation of momentum and energy",
+        "sheet": "constants/c"
+       }
+      ]
+     },
+     {
+      "id": "fuel_j_per_kg",
+      "limit": "energy",
+      "plain": "energy per kilogram of fuel",
+      "unit": "J kg-1",
+      "better": "higher",
+      "reads": "FT2 (the fuel's energy beside base-nav fuels)",
+      "marks": [
+       {
+        "mark": "built",
+        "v": 15900000.0,
+        "what": "hydrogen burned with oxygen, per kilogram of liquid water made",
+        "src": "sheet",
+        "note": "the higher heating value; about 13 MJ/kg if the water leaves as vapour",
+        "sheet": "substances/h2o"
+       },
+       {
+        "mark": "built",
+        "v": 82100000000000.0,
+        "what": "U-235 fission, 200 MeV a fission",
+        "src": "openstax-up3"
+       },
+       {
+        "mark": "allowed",
+        "v": 357000000000000.0,
+        "what": "D-He3 fusion, 3.7 MeV per nucleon",
+        "src": "ball2019"
+       },
+       {
+        "mark": "ceiling",
+        "v": 8.987551787368176e+16,
+        "what": "matter with antimatter, all of the mass",
+        "src": "law",
+        "law": "mass-energy equivalence",
+        "sheet": "constants/c"
+       }
+      ]
+     },
+     {
+      "id": "plant_w_per_kg",
+      "limit": "energy",
+      "plain": "power per kilogram of power plant and drive",
+      "unit": "W kg-1",
+      "better": "higher",
+      "reads": "FT2",
+      "marks": [
+       {
+        "mark": "allowed",
+        "v": 8620.0,
+        "what": "D-He3 spherical torus fusion ship",
+        "src": "williams2005"
+       }
+      ]
+     },
+     {
+      "id": "crew_g",
+      "limit": "acceleration",
+      "plain": "sustained acceleration a crew can take",
+      "unit": "g",
+      "better": "higher",
+      "reads": "ship g_limit (sse-nav Ship); the species' tolerance",
+      "marks": [
+       {
+        "mark": "built",
+        "v": 0.5,
+        "what": "seated, long duration, head-to-foot axis",
+        "src": "pattarini2020",
+        "note": "chest-to-back tolerance is higher; NASA-STD-3001 V2 6064 tables not read"
+       }
+      ]
+     },
+     {
+      "id": "inertia_screened",
+      "limit": "acceleration",
+      "plain": "share of the ship's acceleration the crew does not feel",
+      "unit": "1",
+      "better": "higher",
+      "reads": "FT2",
+      "marks": [
+       {
+        "mark": "ceiling",
+        "v": 0.0,
+        "what": "inertial compensators",
+        "src": "law",
+        "law": "equivalence principle: inertia cannot be screened"
+       }
+      ]
+     },
+     {
+      "id": "spin_rpm",
+      "limit": "weight",
+      "plain": "highest comfortable spin",
+      "unit": "rpm",
+      "better": "higher",
+      "reads": "FT2 (the spin ring part)",
+      "marks": [
+       {
+        "mark": "allowed",
+        "v": 4.0,
+        "what": "anyone, after a short adaptation",
+        "src": "globus-hall2017"
+       },
+       {
+        "mark": "allowed",
+        "v": 6.0,
+        "what": "trained residents",
+        "src": "globus-hall2017"
+       }
+      ]
+     },
+     {
+      "id": "weight_without_spin_g",
+      "limit": "weight",
+      "plain": "weight felt without spin or thrust",
+      "unit": "g",
+      "better": "higher",
+      "reads": "FT2",
+      "marks": [
+       {
+        "mark": "ceiling",
+        "v": 0.0,
+        "what": "gravity plates",
+        "src": "law",
+        "law": "equivalence principle; no negative mass is known"
+       }
+      ]
+     },
+     {
+      "id": "strength_for_weight",
+      "limit": "materials",
+      "plain": "strength for weight",
+      "unit": "J kg-1",
+      "better": "higher",
+      "reads": "Look up: tensile_strength over density of a sheet material",
+      "marks": [
+       {
+        "mark": "built",
+        "v": 255000.0,
+        "what": "high-strength steel wire",
+        "src": "sheet",
+        "sheet": "mixtures/steel-wire"
+       },
+       {
+        "mark": "built",
+        "v": 2083000.0,
+        "what": "aramid fibre",
+        "src": "sheet",
+        "sheet": "mixtures/aramid"
+       },
+       {
+        "mark": "built",
+        "v": 3718000.0,
+        "what": "PBO fibre",
+        "src": "sheet",
+        "sheet": "mixtures/pbo-fibre"
+       },
+       {
+        "mark": "allowed",
+        "v": 47015000.0,
+        "what": "carbon nanotube, the best measured shell; not made at length",
+        "src": "sheet",
+        "sheet": "mixtures/carbon-nanotube"
+       },
+       {
+        "mark": "ceiling",
+        "v": 77000000.0,
+        "what": "an ideal nanotube shell, about 100 GPa over 1,300 kg/m3: the carbon bond itself",
+        "src": "peng2008",
+        "check": "unverified",
+        "law": "chemical bond energy"
+       }
+      ]
+     },
+     {
+      "id": "shield_g_cm2",
+      "limit": "radiation",
+      "plain": "shielding round the crew",
+      "unit": "g cm-2",
+      "better": "lower",
+      "reads": "ship shield_g_cm2 (sse-nav Ship)",
+      "marks": [
+       {
+        "mark": "built",
+        "v": 45.0,
+        "what": "International Space Station, US Lab median 40 to 50",
+        "src": "koontz2016"
+       },
+       {
+        "mark": "allowed",
+        "v": 20.0,
+        "what": "a long mission's storm shelter, NASA's guidance",
+        "src": "ochmo-tb-020"
+       }
+      ]
+     },
+     {
+      "id": "career_dose_sv",
+      "limit": "radiation",
+      "plain": "career radiation dose allowed",
+      "unit": "Sv",
+      "better": "higher",
+      "reads": "FT2 (the shielding part's target)",
+      "marks": [
+       {
+        "mark": "built",
+        "v": 0.6,
+        "what": "NASA's career limit",
+        "src": "nasa-std-3001-v1"
+       }
+      ]
+     },
+     {
+      "id": "supplies_kg_per_day",
+      "limit": "supplies",
+      "plain": "oxygen, drinking water and food per person a day, before recycling",
+      "unit": "kg",
+      "better": "lower",
+      "reads": "FT2 (the stores part)",
+      "marks": [
+       {
+        "mark": "built",
+        "v": 6.07,
+        "what": "oxygen 0.89, drinking water 2.79, food 2.39",
+        "src": "lynch2023"
+       }
+      ]
+     },
+     {
+      "id": "water_recycled",
+      "limit": "supplies",
+      "plain": "share of water recovered",
+      "unit": "1",
+      "better": "higher",
+      "reads": "FT2 (the stores part)",
+      "marks": [
+       {
+        "mark": "built",
+        "v": 0.98,
+        "what": "International Space Station with its brine processor",
+        "src": "nasa-water2023"
+       },
+       {
+        "mark": "ceiling",
+        "v": 1.0,
+        "what": "all of it",
+        "src": "law",
+        "law": "conservation of mass"
+       }
+      ]
+     },
+     {
+      "id": "light_hidden",
+      "limit": "seen",
+      "plain": "share of a construct's light that goes nowhere",
+      "unit": "1",
+      "better": "higher",
+      "reads": "FT2",
+      "marks": [
+       {
+        "mark": "ceiling",
+        "v": 0.0,
+        "what": "a cloak that does not say where the light goes",
+        "src": "law",
+        "law": "conservation of energy; second law of thermodynamics"
+       }
+      ]
+     }
+    ],
+    "ladder": {
+     "id": "neutral",
+     "name": "Neutral ladder",
+     "about": "Real history on the lower rungs, so 'Sol today' is level 4. A setting defines its own ladder; this one is the default.",
+     "size_per_level_short": 10.0,
+     "shrink_per_level_beyond": 0.5,
+     "shrink_levels": 2,
+     "levels": [
+      {
+       "n": 0,
+       "id": "muscle",
+       "name": "Muscle and wind",
+       "about": "before engines"
+      },
+      {
+       "n": 1,
+       "id": "steam",
+       "name": "Steam and steel",
+       "about": "about 1800 to 1900: engines, steel wire"
+      },
+      {
+       "n": 2,
+       "id": "combustion",
+       "name": "Combustion and electricity",
+       "about": "about 1900 to 1957: aircraft, early rockets"
+      },
+      {
+       "n": 3,
+       "id": "rocket",
+       "name": "Rocket age",
+       "about": "1957 to about 2000: orbit, the Moon, fission reactors, aramid"
+      },
+      {
+       "n": 4,
+       "id": "orbital",
+       "name": "Orbital",
+       "about": "today: a crewed station, recycled water, reusable rockets"
+      },
+      {
+       "n": 5,
+       "id": "torch",
+       "name": "Torch",
+       "about": "not yet built: fusion drives, spin habitats, closed life support"
+      },
+      {
+       "n": 6,
+       "id": "deep",
+       "name": "Deep",
+       "about": "not yet built: nanotube cable at length, antimatter in bulk"
+      }
+     ]
+    },
+    "advances": [
+     {
+      "id": "steel-wire",
+      "name": "Steel cable",
+      "level": 1,
+      "sets": {
+       "strength_for_weight": 255000.0
+      },
+      "part": "structure",
+      "mark": "built"
+     },
+     {
+      "id": "chemical-rocket",
+      "name": "Hydrogen-oxygen rocket",
+      "level": 3,
+      "sets": {
+       "exhaust_km_s": 4.565,
+       "waste_per_jet": 0.0
+      },
+      "part": "drive",
+      "mark": "built"
+     },
+     {
+      "id": "fission-reactor",
+      "name": "Fission reactor",
+      "level": 3,
+      "sets": {
+       "fuel_j_per_kg": 82100000000000.0
+      },
+      "part": "reactor",
+      "mark": "built"
+     },
+     {
+      "id": "aramid",
+      "name": "Aramid fibre",
+      "level": 3,
+      "sets": {
+       "strength_for_weight": 2083000.0
+      },
+      "part": "structure",
+      "mark": "built"
+     },
+     {
+      "id": "pumped-radiator",
+      "name": "Pumped ammonia radiators",
+      "level": 3,
+      "sets": {
+       "radiator_k": 276.0
+      },
+      "part": "radiator",
+      "mark": "built"
+     },
+     {
+      "id": "nuclear-thermal",
+      "name": "Nuclear thermal rocket",
+      "level": 4,
+      "sets": {
+       "exhaust_km_s": 8.581,
+       "waste_per_jet": 0.0
+      },
+      "part": "drive",
+      "note": "ground-tested 1959 to 1972, never flown: built at level 3 on the bench, home here as a flying part",
+      "mark": "built"
+     },
+     {
+      "id": "pbo-fibre",
+      "name": "PBO fibre",
+      "level": 4,
+      "sets": {
+       "strength_for_weight": 3718000.0
+      },
+      "part": "structure",
+      "mark": "built"
+     },
+     {
+      "id": "water-recovery",
+      "name": "Water recovery with brine processing",
+      "level": 4,
+      "sets": {
+       "water_recycled": 0.98
+      },
+      "part": "stores",
+      "mark": "built"
+     },
+     {
+      "id": "light-sail",
+      "name": "Light sail or photon rocket",
+      "level": 4,
+      "sets": {
+       "unthrown_n_per_w": 3.3356409519815204e-09
+      },
+      "part": "drive",
+      "mark": "built"
+     },
+     {
+      "id": "fusion-torch",
+      "name": "Fusion torch (D-He3)",
+      "level": 5,
+      "sets": {
+       "exhaust_km_s": 347.499,
+       "plant_w_per_kg": 8620.0,
+       "fuel_j_per_kg": 357000000000000.0,
+       "waste_per_jet": 0.1,
+       "radiator_k": 1500.0
+      },
+      "part": "drive",
+      "mark": "not yet built"
+     },
+     {
+      "id": "spin-habitat",
+      "name": "Comfortable spin habitat",
+      "level": 5,
+      "sets": {
+       "spin_rpm": 4.0
+      },
+      "part": "spin ring",
+      "mark": "not yet built"
+     },
+     {
+      "id": "nanotube-cable",
+      "name": "Woven carbon cable",
+      "level": 6,
+      "sets": {
+       "strength_for_weight": 47015000.0
+      },
+      "part": "structure",
+      "mark": "not yet built"
+     }
+    ],
+    "sources": {
+     "l3harris-rl10": "L3Harris 2024, RL10 engine specification sheet: RL10B-2 specific impulse 465.5 s, thrust 24,750 lbf. https://l3harris.com/sites/default/files/2024-07/l3harris-ar-rl10-spec-sheet.pdf",
+     "nasem2021": "National Academies of Sciences, Engineering, and Medicine 2021, Space Nuclear Propulsion for Human Mars Exploration, chapter 2, Table 2.1: Rover/NERVA reactor tests, Pewee 1 about 875 s (vacuum, ideal expansion, from measured propellant temperature). https://www.nationalacademies.org/read/25977/chapter/4",
+     "williams2005": "Williams, C. H., Dudzinski, L. A., Borowski, S. K. and Juhasz, A. J. 2005, Realizing '2001: A Space Odyssey': piloted spherical torus nuclear fusion propulsion, NASA/TM-2005-213559 (AIAA 2001-3805): D-He3, specific impulse 35,435 s (Jupiter mission), jet power 4,830 MW, specific power 8.62 kW/kg",
+     "adams2003": "Adams, R. B. et al. 2003, Conceptual design of in-space vehicles for human exploration of the outer planets, AIAA 2003-4527 (NTRS 20030065984): D-He3 magnetised target fusion, specific impulse 77,000 s",
+     "ball2019": "Ball, J. 2019, Maximizing specific energy by breeding deuterium, arXiv:1908.00834, Table 1: D-He3 3.7 MeV per nucleon",
+     "openstax-up3": "Ling, S. J., Sanny, J. and Moebs, W. 2016, University Physics volume 3, OpenStax, section 10.5: fission of 1.00 kg of U-235 releases 8.21e13 J. https://openstax.org/books/university-physics-volume-3/pages/10-5-fission",
+     "pattarini2020": "Pattarini, J. M. et al. 2020, Artemis sustained translational acceleration limits: human tolerance evidence from Apollo to ISS, NASA/TM-20205008196: seated, long duration, 4.91 m/s2 from 120 s on (head-to-foot axis)",
+     "nasa-std-3001-v2": "NASA-STD-3001 Volume 2, requirement V2 6064, sustained translational acceleration limits, Tables 6.5-1 to 6.5-6 (tables not read)",
+     "globus-hall2017": "Globus, A. and Hall, T. 2017, Space settlement population rotation tolerance, NSS Space Settlement Journal: up to 4 rpm (56 m radius at 1 g) acceptable, up to 6 rpm for residents. https://nss.org/wp-content/uploads/NSS-JOURNAL-Space-Settlement-Population-Rotation-Tolerance.pdf",
+     "nasa-iss-atcs": "NASA and Boeing, International Space Station Active Thermal Control System overview: 70 kW rejected (35 kW per loop), ammonia supply 2.8 C. https://www.nasa.gov/wp-content/uploads/2021/02/473486main_iss_atcs_overview.pdf",
+     "santarius-logan-1998": "Santarius, J. F. and Logan, B. G. 1998, Generic magnetic fusion rocket model, Journal of Propulsion and Power 14, 519 (abstract read; full text not read)",
+     "lubin2016": "Lubin, P. 2016, A roadmap to interstellar flight, NASA NIAC phase I final report (NTRS 20190001185): a photon thrust of 3.3 nN per watt emitted",
+     "nasa-std-3001-v1": "NASA-STD-3001 Volume 1 revision C 2023, requirement V1 4030: career effective dose below 600 mSv. https://standards.nasa.gov/",
+     "ochmo-tb-020": "NASA OCHMO-TB-020 revision E 2022, radiation protection technical brief: at least 20 g/cm2 of shielding for missions longer than six months (solar particle events)",
+     "koontz2016": "Koontz, S. 2016, The International Space Station ionizing radiation environment, NASA JSC (NTRS 20160011221): median shielding 40 to 50 g/cm2 in the US Lab",
+     "lynch2023": "Lynch, C. et al. 2023, Logistics rates and assumptions for future human spaceflight missions beyond LEO, AIAA ASCEND 2023 (NTRS 20230013896): oxygen 0.89, drinking water 2.79, food as shipped 2.39 kg per crew member a day",
+     "nasa-water2023": "NASA 2023 (20 June), NASA achieves water recovery milestone on International Space Station: 98% total water recovery with the brine processor. https://www.nasa.gov/missions/station/iss-research/nasa-achieves-water-recovery-milestone-on-international-space-station",
+     "peng2008": "Peng, B. et al. 2008, Nature Nanotechnology 3, 626: single carbon nanotube shells near 100 GPa (as summarised; not read)",
+     "sheet": "the master data sheet (pack base-reference): the value is worked out from its rows",
+     "law": "a law of physics, named on the mark"
+    }
+   }
+  }
+ }
+}

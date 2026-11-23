@@ -10087,6 +10087,97 @@
      }
     },
     {
+     "id": "steel-wire",
+     "names": {
+      "physics": "high-strength steel wire",
+      "plain": "steel cable",
+      "story": "steel"
+     },
+     "recipe": {},
+     "by": "mass",
+     "density": {
+      "v": 7850.0,
+      "unit": "kg m-3",
+      "src": "fudge-register",
+      "check": "unverified",
+      "note": "textbook carbon steel; from memory, not read"
+     },
+     "tensile_strength": {
+      "v": 2000000000.0,
+      "unit": "Pa",
+      "src": "fudge-register",
+      "check": "unverified",
+      "note": "drawn high-carbon wire is about 1.8 to 2.2 GPa; from memory, not read"
+     }
+    },
+    {
+     "id": "aramid",
+     "names": {
+      "physics": "aramid fibre (Kevlar 49 yarn)",
+      "plain": "aramid fibre",
+      "story": "aramid"
+     },
+     "recipe": {},
+     "by": "mass",
+     "density": {
+      "v": 1440.0,
+      "unit": "kg m-3",
+      "src": "dupont-kevlar2017"
+     },
+     "tensile_strength": {
+      "v": 3000000000.0,
+      "unit": "Pa",
+      "src": "dupont-kevlar2017",
+      "note": "yarn, straight test; a resin-impregnated strand reaches 3.6 GPa"
+     }
+    },
+    {
+     "id": "pbo-fibre",
+     "names": {
+      "physics": "PBO fibre (Zylon HM)",
+      "plain": "PBO fibre",
+      "story": "Zylon"
+     },
+     "recipe": {},
+     "by": "mass",
+     "density": {
+      "v": 1560.0,
+      "unit": "kg m-3",
+      "src": "fiberline-zylon",
+      "note": "specific gravity 1.56"
+     },
+     "tensile_strength": {
+      "v": 5800000000.0,
+      "unit": "Pa",
+      "src": "fiberline-zylon",
+      "note": "42.0 g/d times specific gravity 1.56 is 5.8 GPa, as Toyobo quotes"
+     }
+    },
+    {
+     "id": "carbon-nanotube",
+     "names": {
+      "physics": "multiwalled carbon nanotube (best measured shell)",
+      "plain": "carbon nanotube",
+      "story": "nanotube"
+     },
+     "recipe": {},
+     "by": "mass",
+     "density": {
+      "v": 1340.0,
+      "unit": "kg m-3",
+      "src": "fudge-register",
+      "check": "unverified",
+      "note": "1.3 to 1.4 g/cm3 is usually quoted; not read from a paper"
+     },
+     "tensile_strength": {
+      "v": 63000000000.0,
+      "unit": "Pa",
+      "src": "yu2000",
+      "check": "unverified",
+      "note": "the strongest of the measured outer shells; no cable this strong has been made"
+     }
+    },
+    {
      "id": "magma-dre",
      "names": {
       "physics": "magma, dense-rock equivalent",
@@ -10403,10 +10494,22 @@
      "doi": "10.1088/1475-7516/2025/02/021"
     },
     {
+     "id": "dupont-kevlar2017",
+     "text": "DuPont 2017, Kevlar aramid fiber technical guide, Table II-1: typical properties of Kevlar 29 and 49 yarns (Kevlar 49 straight-test yarn 3,000 MPa, resin-impregnated strand 3,600 MPa, density 1.44 g/cm3; typical values, not specifications)",
+     "status": "verified",
+     "url": "https://www.r-g.de/wiki/images/e/ec/Td_en_Kevlar_guide.pdf"
+    },
+    {
      "id": "eakins2010",
      "text": "Eakins, B. W. and Sharman, G. F. 2010, Volumes of the World's Oceans from ETOPO1, NOAA National Geophysical Data Center (1.335e9 km3, mean depth 3688 m)",
      "status": "unverified",
      "url": "https://www.ngdc.noaa.gov/mgg/global/etopo1_ocean_volumes.html"
+    },
+    {
+     "id": "fiberline-zylon",
+     "text": "Fiber-Line, Zylon PBO datasheet (fibre made by Toyobo): high-modulus grade breaking tenacity 42.0 g/d, specific gravity 1.56; typical values, not a specification. Toyobo's own technical information gives 5.8 GPa",
+     "status": "verified",
+     "url": "https://automotive.polyone.com/sites/default/files/2021-06/fl.us-.datasheet-zylonr-pbo.pdf"
     },
     {
      "id": "fields2020",
@@ -10812,6 +10915,12 @@
      "text": "Wikipedia, Phases of ice (read 22 Nov 2026): table of phases with formation conditions; used only where it agrees with the LSBU tables",
      "status": "verified",
      "url": "https://en.wikipedia.org/wiki/Phases_of_ice"
+    },
+    {
+     "id": "yu2000",
+     "text": "Yu, M.-F., Lourie, O., Dyer, M. J., Moloni, K., Kelly, T. F. and Ruoff, R. S. 2000, Science 287, 637: strength and breaking mechanism of multiwalled carbon nanotubes under tensile load (outer shells broke at 11 to 63 GPa)",
+     "status": "unverified",
+     "doi": "10.1126/science.287.5453.637"
     }
    ]
   }

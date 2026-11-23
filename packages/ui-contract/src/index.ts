@@ -41,6 +41,7 @@ export * from "./matter.ts";
 export * from "./place.ts";
 export * from "./view-controls.ts";
 export * from "./overlay.ts";
+export * from "./landing.ts";
 export * from "./map-controls.ts";
 export * from "./place-event.ts";
 export type { ReferenceIn, ShownReference } from "./reference.ts";

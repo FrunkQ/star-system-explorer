@@ -152,6 +152,12 @@ export interface ViewSession {
   readWorldStack(by: { body?: string; fixture?: string }): Promise<{ ok: true; result: WorldStackRead } | { ok: false; code: string; message: string }>;
   /** A world's six level-0 surface tiles (S1, at the GM's disclosure), through resolved_system. Heavy: about 8 MB and a second or more. */
   surfaceTiles(system: string, body: string): Promise<{ ok: true; tiles: SurfaceTile[]; refused: Json[]; regime?: string } | { ok: false; code: string; message: string }>;
+  /** Tiles of a world at any level (S1, through resolved_system; at most 24 a call), with the kernel's refusals; GM only. The ground round a landing site (SL1). */
+  surfaceTilesAt(system: string, body: string, keys: readonly { face: number; level: number; x: number; y: number }[]): Promise<{ ok: true; tiles: SurfaceTile[]; refused: { face: number; level: number; x: number; y: number; why: string }[] } | { ok: false; code: string; message: string }>;
+  /** A world's landmarks (SL1): its named landscape from a quick survey (`survey_surface`'s register, the same world the globe shows); GM only. */
+  surfaceLandmarks(system: string, body: string, limit?: number): Promise<{ ok: true; landmarks: import("./landing.ts").Landmark[]; total: number } | { ok: false; code: string; message: string }>;
+  /** A descent planned to any site (SL1, kernel `plan_descent` on the quick survey): the site judged, a lander flown down; GM only. */
+  planDescent(ask: { system: string; body: string; lat_deg: number; lon_deg: number; lander: string | Record<string, unknown> }): Promise<{ ok: true; plan: import("./landing.ts").DescentPlan } | { ok: false; code: string; message: string }>;
   /** A world's one climate (W7a), from a quick survey (kernel `survey_surface`, about half a second, cached by the kernel); GM only. */
   surveyClimate(system: string, body: string): Promise<{ ok: true; climate: import("./climate.ts").ClimateSummary } | { ok: false; code: string; message: string }>;
   /** The open universe as a document to keep (U10, kernel `export_chronicle`); GM only. */
@@ -628,6 +634,28 @@ export class Session implements ViewSession {
     if (r.type !== "system_resolved") return { ok: false, code: String(r.code ?? "unexpected"), message: String(r.message ?? JSON.stringify(r)) };
     const x = r as unknown as { tiles?: SurfaceTile[]; refused?: Json[]; surfaces?: { address: string; regime_label?: string }[] };
     return { ok: true, tiles: x.tiles ?? [], refused: x.refused ?? [], regime: x.surfaces?.find((s2) => s2.address === body)?.regime_label };
+  }
+
+  async surfaceTilesAt(system: string, body: string, keys: readonly { face: number; level: number; x: number; y: number }[]): Promise<{ ok: true; tiles: SurfaceTile[]; refused: { face: number; level: number; x: number; y: number; why: string }[] } | { ok: false; code: string; message: string }> {
+    if (this.seat.authority !== "gm") return { ok: false, code: "not_gm", message: "only the game master reads surface tiles" };
+    const r = await this.#call({ op: "resolved_system", system, tiles: keys.map((k) => ({ body, face: k.face, level: k.level, x: k.x, y: k.y })) });
+    if (r.type !== "system_resolved") return { ok: false, code: String(r.code ?? "unexpected"), message: String(r.message ?? JSON.stringify(r)) };
+    const x = r as unknown as { tiles?: SurfaceTile[]; refused?: { face: number; level: number; x: number; y: number; why: string }[] };
+    return { ok: true, tiles: x.tiles ?? [], refused: x.refused ?? [] };
+  }
+
+  async surfaceLandmarks(system: string, body: string, limit = 60): Promise<{ ok: true; landmarks: import("./landing.ts").Landmark[]; total: number } | { ok: false; code: string; message: string }> {
+    if (this.seat.authority !== "gm") return { ok: false, code: "not_gm", message: "only the game master surveys a world" };
+    const r = await this.#call({ op: "survey_surface", system, body, quick: true, limit });
+    if (r.type !== "surface_surveyed") return { ok: false, code: String(r.code ?? "unexpected"), message: String(r.message ?? JSON.stringify(r)) };
+    const reg = (r as unknown as { survey?: { register?: { features?: import("./landing.ts").Landmark[]; features_total?: number } } }).survey?.register;
+    return { ok: true, landmarks: reg?.features ?? [], total: reg?.features_total ?? 0 };
+  }
+
+  async planDescent(ask: { system: string; body: string; lat_deg: number; lon_deg: number; lander: string | Record<string, unknown> }): Promise<{ ok: true; plan: import("./landing.ts").DescentPlan } | { ok: false; code: string; message: string }> {
+    if (this.seat.authority !== "gm") return { ok: false, code: "not_gm", message: "only the game master plans a descent against a world's full record" };
+    const r = await this.#call({ op: "plan_descent", system: ask.system, body: ask.body, quick: true, lander: ask.lander as Json, lat_deg: ask.lat_deg, lon_deg: ask.lon_deg });
+    return r.type === "descent_planned" ? { ok: true, plan: (r as unknown as { descent: import("./landing.ts").DescentPlan }).descent } : { ok: false, code: String(r.code ?? "unexpected"), message: String(r.message ?? JSON.stringify(r)) };
   }
 
   async surveyClimate(system: string, body: string): Promise<{ ok: true; climate: import("./climate.ts").ClimateSummary } | { ok: false; code: string; message: string }> {

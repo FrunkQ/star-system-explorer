@@ -62,6 +62,7 @@ HOME = os.path.join("crates", "sse-reference")
 SHEET_FED = {
     os.path.join("packs", "base-atlas", "pack.json"): os.path.join("scripts", "build-base-atlas.py"),
     os.path.join("packs", "traveller", "pack.json"): os.path.join("scripts", "build-traveller-pack.py"),
+    os.path.join("packs", "base-tech", "pack.json"): os.path.join("scripts", "build-base-tech.py"),
 }
 # Sample documents whose numbers are a made-up or foreign record, not values
 # the app computes with: like a fixtures folder, they are not read.
