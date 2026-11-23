@@ -151,3 +151,8 @@ export const WHY_WIREFRAME_LATER = "Wireframe is coming with the view styles";
 export function flatChart(why3d = "3D is not drawn here yet"): ViewControlsSpec {
   return { styles: { chart: true, "3d": why3d, true: WHY_TRUE_HELD, wireframe: WHY_WIREFRAME_LATER }, flat: true };
 }
+
+/** The lens layers a diagram hides when HUD is off: the overlay of scale, survey, distances, orbit lines and names. */
+export const HUD_OVERLAY_LAYERS: readonly string[] = ["grid", "unsurveyed", "distances", "orbits", "labels"];
+/** Whether a lens layer is drawn under this HUD choice. */
+export const hudShows = (hud: boolean, layer: string): boolean => hud || !HUD_OVERLAY_LAYERS.includes(layer);
