@@ -6,7 +6,9 @@ export default {
   trailers: ["features"],
   async run(page, d, nav) {
     await d.caption('How big is it, really?', 'Worlds side by side at true scale.');
-    await d.click(page.locator('.rail [data-go="compare"]').first());
+    const entry = page.locator('.rail [data-go="compare"]').first();
+    if (await entry.isVisible()) await d.click(entry);
+    else await nav.go(page, "compare");
     const cmp = page.getByRole("region", { name: "Size comparison" });
     await cmp.waitFor();
     await d.hold(1800);
@@ -17,7 +19,9 @@ export default {
     await d.click(refs.getByRole("button", { name: "Typical neutron star", exact: true }));
     await d.caption("Jupiter and a neutron star", "A star's core the size of a city, beside a giant planet.");
     await d.hold(1500);
-    await d.click(cmp.getByRole("button", { name: "Log scale" }));
+    // Scale lives in the one set of view controls (23 Nov): Real is true scale, Readable a log scale.
+    await d.caption("Readable", "A log scale, so the smallest still shows.");
+    await d.click(page.getByRole("group", { name: "Scale" }).getByRole("button", { name: "Readable", exact: true }));
     await d.hold(2500);
   },
 };

@@ -111,9 +111,11 @@ fn budget() -> Vec<sse_flow::Param> {
 }
 
 /// Al-26 heating per kg of chondritic rock at CAI time zero, W/kg:
-/// Al 0.865 wt% (CI chondrite, McDonough and Sun 1995) × canonical 26Al/27Al
-/// 5.25e-5 (Kita et al. 2013) × 0.3583 W per kg of Al-26 (Ruedas 2017, table 2).
-pub const AL26_H0: f64 = 0.00865 * 5.25e-5 * 0.3583;
+/// Al by mass in CI chondrite × canonical 26Al/27Al at CAI time (Kita et al.
+/// 2013) × W per kg of Al-26 (Ruedas 2017, table 2), all from the sheet.
+pub const AL26_H0: f64 = sse_core::sheet::element_ci_mass_fraction::AL
+    * sse_core::sheet::isotope_share_at_sun_birth::AL26
+    * sse_core::sheet::isotope_decay_heat_w_per_kg::AL26;
 /// Al-26 mean life, Myr: the sheet's half-life over ln 2 (0.717 Myr half-life).
 pub const AL26_TAU_MYR: f64 = sse_core::sheet::isotope_half_life_s::AL26 / LN2 / MYR;
 

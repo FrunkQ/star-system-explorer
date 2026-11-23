@@ -16,6 +16,7 @@
 </script>
 
 <script lang="ts">
+  import { untrack } from "svelte";
   import { KM_PER_AU, isShell, asPlayers, distanceWords, lightWords, separation, hasLayer, hasTool, childrenOf, commitEdit, factEdit, frameFor, legendFor, primaryOf, sig, subjectOf, viewOptions, hudShows, DEFAULT_VIEW, type Json, type SceneSubject, type SystemScene, type ViewContext } from "../../../ui-contract/src/index.ts";
   import { SYSTEM_CHART_CONTROLS } from "./controls.ts";
   import { System3D, bandsFromScene, fromSystemScene } from "../../system-3d/src/index.ts";
@@ -224,7 +225,10 @@
     if (!looksTrue || ctx.session.seat.authority !== "gm") return void (reading = null);
     const worlds = scene.subjects.filter((s) => s.orbit && s.kind !== "star" && s.kind !== "belt");
     const order = [...worlds.filter((s) => s.address === sel), ...worlds.filter((s) => s.address !== sel)];
-    void (async () => {
+    // The reader runs untracked: worlds already kept are put in `surfaces` without waiting, so a tracked read of
+    // `surfaces` here would make the effect depend on what it writes and run again without end (the tab froze on
+    // choosing a world once one surface was kept, Alex 23 Nov).
+    untrack(() => void (async () => {
       let none = 0;
       let noneWhy = "";
       let done = 0;
@@ -243,7 +247,7 @@
         done++;
       }
       reading = { done, of: order.length, none, why: noneWhy };
-    })();
+    })());
   });
   // The living star (V10c): read once a star from the kernel (its facts and activity), on the GM's seat.
   let liveStar = $state<LiveStar | null>(null);

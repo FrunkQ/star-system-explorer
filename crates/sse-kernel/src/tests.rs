@@ -3303,6 +3303,38 @@ fn read_field_for_a_whole_system() {
     assert_eq!(r["code"], "bad_address", "{r}");
 }
 
+/// RK11 through `detect`: a magnetometer with the sheet's μ0 finds a dark
+/// magnetised body, and the setting's range bands label the readings.
+#[test]
+fn detect_on_the_magnetic_channel_with_range_bands() {
+    let mut k = crate::Kernel::new();
+    let send = |k: &mut crate::Kernel, v: serde_json::Value| -> serde_json::Value {
+        serde_json::from_str(&k.handle_json(&v.to_string())).unwrap()
+    };
+    let pack = |p: &str| -> serde_json::Value {
+        serde_json::from_str(&std::fs::read_to_string(root().join(p)).unwrap()).unwrap()
+    };
+    let r = send(
+        &mut k,
+        serde_json::json!({"op": "load_stack", "packs": [pack("packs/base-reference/pack.json")]}),
+    );
+    assert_eq!(r["type"], "stack_loaded", "{r}");
+    let r = send(
+        &mut k,
+        serde_json::json!({"op": "detect",
+            "targets": [{"address": "u:t/sys:0/body:2", "distance_m": 1e8, "magnetic_moment_a_m2": 8e22}],
+            "sensors": [{"name": "fluxgate", "from_m": 1.0, "to_m": 2.0, "aperture_m": 1.0,
+                "method": "magnetometer", "noise_density": 1e-11, "field_clutter": 1e-9, "stare_s": 100.0}],
+            "range_bands": [{"id": "close", "label": "close", "range_m": 1e4},
+                {"id": "distant", "label": "distant", "range_m": 3e8}]}),
+    );
+    assert_eq!(r["type"], "detected", "{r}");
+    let d = &r["detections"][0];
+    assert_eq!(d["channel"], "magnetic", "{d}");
+    assert_eq!(d["detectable"], true, "{d}");
+    assert_eq!(d["distance_band"], "distant", "{d}");
+}
+
 /// X3e: the chart room's Packs screen adds the Traveller pack on top of the
 /// app's opening stack (no atlas pack), so it must load there and read codes.
 #[test]

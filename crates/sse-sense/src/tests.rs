@@ -53,6 +53,12 @@ fn ir_telescope() -> Sensor {
         bandwidth_hz: None,
         threshold_snr: 5.0,
         stare_s: 60.0,
+        method: "image".into(),
+        resolving_power: None,
+        transmit_power_w: None,
+        noise_density: None,
+        field_clutter: 0.0,
+        authored_range_m: None,
     }
 }
 
@@ -63,6 +69,12 @@ fn visible_camera() -> Sensor {
         to_m: 7e-7,
         aperture_m: 0.5,
         stare_s: 10.0,
+        method: "image".into(),
+        resolving_power: None,
+        transmit_power_w: None,
+        noise_density: None,
+        field_clutter: 0.0,
+        authored_range_m: None,
         dark_photons_s: 1.0,
         ..ir_telescope()
     }
@@ -75,6 +87,9 @@ fn seen(light: LightDescription, d: f64) -> Seen {
         distance_m: d,
         extinction_av: 0.0,
         neighbours: vec![],
+        magnetic_moment_a_m2: 0.0,
+        mass_kg: 0.0,
+        radar_cross_section_m2: None,
     }
 }
 
@@ -210,10 +225,179 @@ fn a_star_from_ten_parsecs() {
             distance_m: 10.0 * PC,
             extinction_av: 0.0,
             neighbours: vec![],
+            magnetic_moment_a_m2: 0.0,
+            mass_kg: 0.0,
+            radar_cross_section_m2: None,
         },
         &visible_camera(),
         &t,
     )
     .unwrap();
     assert!(d.detectable && d.range_m > 100.0 * PC);
+}
+
+// RK11: one instrument shape with a method; field channels; authored ranges.
+// Constants typed here for the test only (tests are outside the sheet audit).
+const NATURE: Nature = Nature {
+    g: 6.674_30e-11,
+    mu0: 1.256_637_062_12e-6,
+};
+
+fn dark(d: f64, moment: f64, mass: f64) -> Seen {
+    Seen {
+        magnetic_moment_a_m2: moment,
+        mass_kg: mass,
+        ..seen(LightDescription::new("u:t/sys:0/body:2"), d)
+    }
+}
+
+/// A magnetometer finds an Earth-strength dipole tens of radii out, and at
+/// the range it computes S/N is exactly the threshold.
+#[test]
+fn magnetometer_reads_a_dipole() {
+    let t = Model::base().table.clone();
+    let mag = Sensor {
+        method: "magnetometer".into(),
+        noise_density: Some(1e-11),
+        field_clutter: 1e-9,
+        stare_s: 100.0,
+        ..ir_telescope()
+    };
+    let d = detect_with(&dark(1e8, 8e22, 0.0), &mag, &t, Some(&NATURE)).unwrap();
+    assert_eq!(d.channel, "magnetic");
+    assert_eq!(d.range_source, "computed");
+    assert!(d.detectable, "{:?}", d.why);
+    let r_earth = 6.371e6;
+    assert!(
+        (10.0..30.0).contains(&(d.range_m / r_earth)),
+        "{}",
+        d.range_m
+    );
+    let at = detect_with(&dark(d.range_m, 8e22, 0.0), &mag, &t, Some(&NATURE)).unwrap();
+    assert!((at.snr - 5.0).abs() < 1e-6, "{}", at.snr);
+    // Without the sheet's constants it says so.
+    assert!(detect_with(&dark(1e8, 8e22, 0.0), &mag, &t, None).is_err());
+}
+
+/// Finding a ship by its mass is real but short: a thousand-tonne ship is
+/// seen by a GOCE-class gradiometer only from hundreds of metres.
+#[test]
+fn gradiometer_finds_mass_only_close() {
+    let t = Model::base().table.clone();
+    let grad = Sensor {
+        method: "gradiometer".into(),
+        noise_density: Some(1e-11),
+        stare_s: 100.0,
+        ..ir_telescope()
+    };
+    let d = detect_with(&dark(1e3, 0.0, 1e6), &grad, &t, Some(&NATURE)).unwrap();
+    assert_eq!(d.channel, "gravity");
+    assert!((100.0..1000.0).contains(&d.range_m), "{}", d.range_m);
+    assert!(!d.detectable);
+    assert!(d.why.iter().any(|w| w.contains("only this close")));
+}
+
+/// A spectrum splits the light, so it reaches less far than an image; an
+/// astrometric fix is the resolution over the S/N.
+#[test]
+fn spectrum_and_astrometry() {
+    let t = Model::base().table.clone();
+    let hot = seen(ship(600.0, false), 1e9);
+    let img = detect(&hot, &ir_telescope(), &t).unwrap();
+    let spec = Sensor {
+        method: "spectrum".into(),
+        resolving_power: Some(1000.0),
+        ..ir_telescope()
+    };
+    let sp = detect(&hot, &spec, &t).unwrap();
+    assert!(sp.range_m < img.range_m, "{} {}", sp.range_m, img.range_m);
+    let ast = Sensor {
+        method: "astrometry".into(),
+        ..ir_telescope()
+    };
+    let a = detect(&hot, &ast, &t).unwrap();
+    let p = a.precision_rad.unwrap();
+    assert!((p - ast.resolution() / a.snr).abs() < 1e-12 * p.max(1e-30));
+}
+
+/// An active instrument sees by its echo and is heard much further; what it
+/// sends is a load.
+#[test]
+fn active_sees_and_is_heard() {
+    let t = Model::base().table.clone();
+    let radar = Sensor {
+        name: "search radar".into(),
+        kind: "radio".into(),
+        from_m: 0.03,
+        to_m: 0.031,
+        aperture_m: 3.0,
+        method: "active".into(),
+        transmit_power_w: Some(1e5),
+        ..ir_telescope()
+    };
+    let target = Seen {
+        radar_cross_section_m2: Some(100.0),
+        ..seen(ship(0.0, false), 1e7)
+    };
+    let d = detect(&target, &radar, &t).unwrap();
+    assert_eq!(d.transmit_power_w, Some(1e5));
+    let heard = d.heard_to_m.unwrap();
+    assert!(heard > 10.0 * d.range_m, "{heard} {}", d.range_m);
+    assert_eq!(d.detectable, 1e7 <= d.range_m);
+    // No cross-section: refused in words.
+    assert!(detect(&seen(ship(0.0, false), 1e7), &radar, &t).is_err());
+}
+
+/// A typed range from an older file is kept, marked authored, and used only
+/// when the instrument cannot compute one.
+#[test]
+fn authored_ranges_are_kept_and_marked() {
+    let t = Model::base().table.clone();
+    let old = Sensor {
+        aperture_m: 0.0,
+        authored_range_m: Some(7.5e12),
+        ..ir_telescope()
+    };
+    let d = detect(&seen(ship(0.0, false), 1e12), &old, &t).unwrap();
+    assert_eq!(d.range_source, "authored");
+    assert!(d.detectable);
+    let both = Sensor {
+        authored_range_m: Some(7.5e12),
+        ..ir_telescope()
+    };
+    let c = detect(&seen(ship(300.0, false), 1e12), &both, &t).unwrap();
+    assert_eq!(c.range_source, "computed");
+    assert_eq!(c.authored_range_m, Some(7.5e12));
+    // An unknown method is refused.
+    let odd = Sensor {
+        method: "bio".into(),
+        ..ir_telescope()
+    };
+    assert!(detect(&seen(ship(0.0, false), 1e9), &odd, &t).is_err());
+}
+
+/// Range bands are a labelled reading of a real distance.
+#[test]
+fn range_bands_label_a_distance() {
+    let bands = vec![
+        RangeBand {
+            id: "far".into(),
+            label: "far".into(),
+            range_m: 1.5e11,
+        },
+        RangeBand {
+            id: "close".into(),
+            label: "close".into(),
+            range_m: 1e4,
+        },
+        RangeBand {
+            id: "short".into(),
+            label: "short".into(),
+            range_m: 1.25e6,
+        },
+    ];
+    assert_eq!(band_of(5e3, &bands).unwrap().id, "close");
+    assert_eq!(band_of(1e6, &bands).unwrap().id, "short");
+    assert_eq!(band_of(1e9, &bands).unwrap().id, "far");
+    assert!(band_of(1e12, &bands).is_none());
 }
