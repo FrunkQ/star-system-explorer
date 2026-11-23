@@ -74,6 +74,8 @@ pub const R_SUN: f64 = 695700000.0;
 pub const L_SUN: f64 = 3.828e+26;
 /// `T_sun`: nominal solar effective temperature (K; iau2015b3).
 pub const T_SUN: f64 = 5772.0;
+/// `P_rot_sun`: solar sidereal rotation period (Carrington) (s; nssdca-sun).
+pub const P_ROT_SUN: f64 = 2192832.0;
 /// `S_sun`: nominal total solar irradiance (W m-2; iau2015b3).
 pub const S_SUN: f64 = 1361.0;
 /// `GM_earth`: nominal Earth mass parameter (m3 s-2; iau2015b3).
@@ -154,7 +156,7 @@ pub const SIGMA_DM: f64 = 0.0;
 pub const M_FDM: f64 = 0.0;
 
 /// Every constant above by its sheet id, in sheet order.
-pub const ALL: [(&str, f64); 73] = [
+pub const ALL: [(&str, f64); 74] = [
     ("c", C),
     ("h", H),
     ("hbar", HBAR),
@@ -189,6 +191,7 @@ pub const ALL: [(&str, f64); 73] = [
     ("R_sun", R_SUN),
     ("L_sun", L_SUN),
     ("T_sun", T_SUN),
+    ("P_rot_sun", P_ROT_SUN),
     ("S_sun", S_SUN),
     ("GM_earth", GM_EARTH),
     ("M_earth", M_EARTH),
@@ -550,6 +553,12 @@ pub mod latent_vaporisation {
     pub const N2: f64 = 200000.0;
 }
 
+/// Latent heat of fusion, J/kg, by substance (the sheet's `phases.latent_fusion`).
+pub mod latent_fusion {
+    /// h2o (crc-handbook).
+    pub const H2O: f64 = 333550.0;
+}
+
 /// Thermal conductivity fits of the solid, by substance (the sheet's `thermal.conductivity_solid`):
 /// the coefficients, in the order the fit names them.
 pub mod conductivity_solid {
@@ -629,6 +638,162 @@ pub mod isotope_share_today {
     pub const TH232: f64 = 1.0;
     /// k40 (ruedas2017).
     pub const K40: f64 = 0.000119;
+}
+
+/// Mass share in CI chondrites, by element (the sheet's `ci_mass_fraction`).
+pub mod element_ci_mass_fraction {
+    /// li (mcdonough-sun1995).
+    pub const LI: f64 = 1.5e-06;
+    /// be (mcdonough-sun1995).
+    pub const BE: f64 = 2.5e-08;
+    /// b (mcdonough-sun1995).
+    pub const B: f64 = 9e-07;
+    /// c (mcdonough-sun1995).
+    pub const C: f64 = 0.035;
+    /// n (mcdonough-sun1995).
+    pub const N: f64 = 0.00318;
+    /// f (mcdonough-sun1995).
+    pub const F: f64 = 6e-05;
+    /// na (mcdonough-sun1995).
+    pub const NA: f64 = 0.0051;
+    /// mg (mcdonough-sun1995).
+    pub const MG: f64 = 0.0965;
+    /// al (mcdonough-sun1995).
+    pub const AL: f64 = 0.0086;
+    /// si (mcdonough-sun1995).
+    pub const SI: f64 = 0.1065;
+    /// p (mcdonough-sun1995).
+    pub const P: f64 = 0.00108;
+    /// s (mcdonough-sun1995).
+    pub const S: f64 = 0.054;
+    /// cl (mcdonough-sun1995).
+    pub const CL: f64 = 0.00068;
+    /// k (mcdonough-sun1995).
+    pub const K: f64 = 0.00055;
+    /// ca (mcdonough-sun1995).
+    pub const CA: f64 = 0.00925;
+    /// sc (mcdonough-sun1995).
+    pub const SC: f64 = 5.92e-06;
+    /// ti (mcdonough-sun1995).
+    pub const TI: f64 = 0.00044;
+    /// v (mcdonough-sun1995).
+    pub const V: f64 = 5.6e-05;
+    /// cr (mcdonough-sun1995).
+    pub const CR: f64 = 0.00265;
+    /// mn (mcdonough-sun1995).
+    pub const MN: f64 = 0.00192;
+    /// fe (mcdonough-sun1995).
+    pub const FE: f64 = 0.181;
+    /// co (mcdonough-sun1995).
+    pub const CO: f64 = 0.0005;
+    /// ni (mcdonough-sun1995).
+    pub const NI: f64 = 0.0105;
+    /// cu (mcdonough-sun1995).
+    pub const CU: f64 = 0.00012;
+    /// zn (mcdonough-sun1995).
+    pub const ZN: f64 = 0.00031;
+    /// ga (mcdonough-sun1995).
+    pub const GA: f64 = 9.2e-06;
+    /// ge (mcdonough-sun1995).
+    pub const GE: f64 = 3.1e-05;
+    /// as (mcdonough-sun1995).
+    pub const AS: f64 = 1.85e-06;
+    /// se (mcdonough-sun1995).
+    pub const SE: f64 = 2.1e-05;
+    /// br (mcdonough-sun1995).
+    pub const BR: f64 = 3.57e-06;
+    /// rb (mcdonough-sun1995).
+    pub const RB: f64 = 2.3e-06;
+    /// sr (mcdonough-sun1995).
+    pub const SR: f64 = 7.25e-06;
+    /// y (mcdonough-sun1995).
+    pub const Y: f64 = 1.57e-06;
+    /// zr (mcdonough-sun1995).
+    pub const ZR: f64 = 3.82e-06;
+    /// nb (mcdonough-sun1995).
+    pub const NB: f64 = 2.4e-07;
+    /// mo (mcdonough-sun1995).
+    pub const MO: f64 = 9e-07;
+    /// ru (mcdonough-sun1995).
+    pub const RU: f64 = 7.1e-07;
+    /// rh (mcdonough-sun1995).
+    pub const RH: f64 = 1.3e-07;
+    /// pd (mcdonough-sun1995).
+    pub const PD: f64 = 5.5e-07;
+    /// ag (mcdonough-sun1995).
+    pub const AG: f64 = 2e-07;
+    /// cd (mcdonough-sun1995).
+    pub const CD: f64 = 7.1e-07;
+    /// in (mcdonough-sun1995).
+    pub const IN: f64 = 8e-08;
+    /// sn (mcdonough-sun1995).
+    pub const SN: f64 = 1.65e-06;
+    /// sb (mcdonough-sun1995).
+    pub const SB: f64 = 1.4e-07;
+    /// te (mcdonough-sun1995).
+    pub const TE: f64 = 2.33e-06;
+    /// i (mcdonough-sun1995).
+    pub const I: f64 = 4.5e-07;
+    /// cs (mcdonough-sun1995).
+    pub const CS: f64 = 1.9e-07;
+    /// ba (mcdonough-sun1995).
+    pub const BA: f64 = 2.41e-06;
+    /// la (mcdonough-sun1995).
+    pub const LA: f64 = 2.37e-07;
+    /// ce (mcdonough-sun1995).
+    pub const CE: f64 = 6.13e-07;
+    /// pr (mcdonough-sun1995).
+    pub const PR: f64 = 9.28e-08;
+    /// nd (mcdonough-sun1995).
+    pub const ND: f64 = 4.57e-07;
+    /// sm (mcdonough-sun1995).
+    pub const SM: f64 = 1.48e-07;
+    /// eu (mcdonough-sun1995).
+    pub const EU: f64 = 5.63e-08;
+    /// gd (mcdonough-sun1995).
+    pub const GD: f64 = 1.99e-07;
+    /// tb (mcdonough-sun1995).
+    pub const TB: f64 = 3.61e-08;
+    /// dy (mcdonough-sun1995).
+    pub const DY: f64 = 2.46e-07;
+    /// ho (mcdonough-sun1995).
+    pub const HO: f64 = 5.46e-08;
+    /// er (mcdonough-sun1995).
+    pub const ER: f64 = 1.6e-07;
+    /// tm (mcdonough-sun1995).
+    pub const TM: f64 = 2.47e-08;
+    /// yb (mcdonough-sun1995).
+    pub const YB: f64 = 1.61e-07;
+    /// lu (mcdonough-sun1995).
+    pub const LU: f64 = 2.46e-08;
+    /// hf (mcdonough-sun1995).
+    pub const HF: f64 = 1.03e-07;
+    /// ta (mcdonough-sun1995).
+    pub const TA: f64 = 1.36e-08;
+    /// w (mcdonough-sun1995).
+    pub const W: f64 = 9.3e-08;
+    /// re (mcdonough-sun1995).
+    pub const RE: f64 = 4e-08;
+    /// os (mcdonough-sun1995).
+    pub const OS: f64 = 4.9e-07;
+    /// ir (mcdonough-sun1995).
+    pub const IR: f64 = 4.55e-07;
+    /// pt (mcdonough-sun1995).
+    pub const PT: f64 = 1.01e-06;
+    /// au (mcdonough-sun1995).
+    pub const AU: f64 = 1.4e-07;
+    /// hg (mcdonough-sun1995).
+    pub const HG: f64 = 3e-07;
+    /// tl (mcdonough-sun1995).
+    pub const TL: f64 = 1.4e-07;
+    /// pb (mcdonough-sun1995).
+    pub const PB: f64 = 2.47e-06;
+    /// bi (mcdonough-sun1995).
+    pub const BI: f64 = 1.1e-07;
+    /// th (mcdonough-sun1995).
+    pub const TH: f64 = 2.9e-08;
+    /// u (mcdonough-sun1995).
+    pub const U: f64 = 7.4e-09;
 }
 
 /// The protosolar mixture's mass shares, from every element's protosolar abundance

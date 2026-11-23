@@ -104,7 +104,8 @@ def build():
     for prop, doc in [("triple_point_k", "Triple point temperature, K"), ("triple_point_pa", "Triple point pressure, Pa"),
                       ("density_solid", "Density of the solid at its reference state, kg/m3"),
                       ("density_liquid", "Density of the liquid at its reference state, kg/m3"),
-                      ("latent_vaporisation", "Latent heat of vaporisation, J/kg")]:
+                      ("latent_vaporisation", "Latent heat of vaporisation, J/kg"),
+                      ("latent_fusion", "Latent heat of fusion, J/kg")]:
         rows = [(sub["id"], sub["phases"][prop]) for sub in ref["substances"]
                 if isinstance(sub.get("phases", {}).get(prop), dict) and isinstance(sub["phases"][prop].get("v"), (int, float))]
         out += ["", f"/// {doc}, by substance (the sheet's `phases.{prop}`).", f"pub mod {prop} {{"]
@@ -132,6 +133,14 @@ def build():
                 out.append(f"    /// {iso['id']} ({v.get('src', '')}).")
                 out.append(f"    pub const {ident(iso['id'])}: f64 = {lit(v['v'])};")
         out.append("}")
+    # Element mass shares, by element id (the sheet's elements).
+    out += ["", "/// Mass share in CI chondrites, by element (the sheet's `ci_mass_fraction`).", "pub mod element_ci_mass_fraction {"]
+    for e in ref["elements"]:
+        v = e.get("ci_mass_fraction")
+        if isinstance(v, dict) and isinstance(v.get("v"), (int, float)):
+            out.append(f"    /// {e['id']} ({v.get('src', '')}).")
+            out.append(f"    pub const {ident(e['id'])}: f64 = {lit(v['v'])};")
+    out.append("}")
     # The protosolar mixture's mass shares, worked out from the elements'
     # protosolar abundances and atomic weights (elements in sheet order).
     total, h, he = 0.0, 0.0, 0.0

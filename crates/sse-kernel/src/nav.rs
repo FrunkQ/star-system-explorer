@@ -227,6 +227,21 @@ pub(crate) fn ship_at_world(
     }))
 }
 
+/// `jump_map`: where a pack's FTL rule lets a leg begin (or end) in the system at a time.
+pub(crate) fn jump_map(
+    source: Source,
+    rule_v: &serde_json::Value,
+    end: bool,
+    at_s: Option<f64>,
+) -> Result<serde_json::Value, Response> {
+    let (sys, _) = nav_system(source)?;
+    let rule: sse_nav::ftl::FtlRule =
+        serde_json::from_value(rule_v.clone()).map_err(|e| bad(format!("rule: {e}")))?;
+    let places = if end { &rule.end } else { &rule.start };
+    let map = sse_nav::ftl::jump_map(&sys, places, at_s.unwrap_or(sys.t0_s));
+    Ok(serde_json::json!({ "system": sys.name, "rule": rule, "map": map }))
+}
+
 /// Read each magnetised body's radiation belts from the field model (MF7,
 /// `read_field`), at the star's wind for its orbit, so NAV's belt hazard is
 /// the computed one. Bodies with no moment keep NAV's stand-in.
