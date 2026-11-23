@@ -4,7 +4,7 @@
      device cannot do stay in place, quiet, with the reason as their title. Free shows how it is worked. -->
 <script lang="ts">
   import Segmented from "./Segmented.svelte";
-  import { FREE_HINT, pickScale, pickSeen, pickStyle, viewOptions, type Band, type ViewScale, type SeenFrom, type ViewChoice, type ViewControlsSpec, type ViewStyle } from "../../ui-contract/src/index.ts";
+  import { FREE_HINT, pickScale, pickSeen, pickStyle, viewOptions, type ViewBand, type ViewScale, type SeenFrom, type ViewChoice, type ViewControlsSpec, type ViewStyle } from "../../ui-contract/src/index.ts";
 
   let { spec, choice, onchange, compact = false }: { spec: ViewControlsSpec; choice: ViewChoice; onchange: (c: ViewChoice) => void; compact?: boolean } = $props();
   const o = $derived(viewOptions(spec, choice));
@@ -29,7 +29,7 @@
   </div>
   <div class="field">
     <span class="k" aria-hidden="true">Band</span>
-    <Segmented label="Band" value={o.shown.band} options={o.bands} onchange={(b: Band) => onchange({ ...choice, band: b })} />
+    <Segmented label="Band" value={o.shown.band} options={o.bands} onchange={(b: ViewBand) => onchange({ ...choice, band: b })} />
   </div>
   {#if o.shown.seen === "free" && o.turnable}<p class="hint" data-free-hint>{FREE_HINT}</p>{/if}
 </div>
