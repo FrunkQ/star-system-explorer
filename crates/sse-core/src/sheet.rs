@@ -467,6 +467,30 @@ pub mod molar_mass {
     pub const GLUCOSE: f64 = 0.180156;
     /// ethanol.
     pub const ETHANOL: f64 = 0.046069000000000006;
+    /// sio2.
+    pub const SIO2: f64 = 0.060083;
+    /// tio2.
+    pub const TIO2: f64 = 0.07986499999999999;
+    /// al2o3.
+    pub const AL2O3: f64 = 0.1019600768;
+    /// cr2o3.
+    pub const CR2O3: f64 = 0.1519892;
+    /// feo.
+    pub const FEO: f64 = 0.07184399999999999;
+    /// mno.
+    pub const MNO: f64 = 0.070937043;
+    /// mgo.
+    pub const MGO: f64 = 0.040304;
+    /// cao.
+    pub const CAO: f64 = 0.056077;
+    /// na2o.
+    pub const NA2O: f64 = 0.061978538560000004;
+    /// k2o.
+    pub const K2O: f64 = 0.0941956;
+    /// p2o5.
+    pub const P2O5: f64 = 0.141942523996;
+    /// nio.
+    pub const NIO: f64 = 0.07469239999999999;
     /// ch2o.
     pub const CH2O: f64 = 0.030026;
 }
@@ -642,6 +666,8 @@ pub mod isotope_share_today {
 
 /// Mass share in CI chondrites, by element (the sheet's `ci_mass_fraction`).
 pub mod element_ci_mass_fraction {
+    /// h (palme-oneill2014).
+    pub const H: f64 = 0.0197;
     /// li (mcdonough-sun1995).
     pub const LI: f64 = 1.5e-06;
     /// be (mcdonough-sun1995).
@@ -652,6 +678,8 @@ pub mod element_ci_mass_fraction {
     pub const C: f64 = 0.035;
     /// n (mcdonough-sun1995).
     pub const N: f64 = 0.00318;
+    /// o (palme-oneill2014).
+    pub const O: f64 = 0.459;
     /// f (mcdonough-sun1995).
     pub const F: f64 = 6e-05;
     /// na (mcdonough-sun1995).

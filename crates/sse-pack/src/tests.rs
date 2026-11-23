@@ -338,5 +338,12 @@ fn the_future_tech_base_pack_loads() {
             }
         }
     }
-    assert_eq!(tech["ladder"]["size_per_level_short"], 10.0);
+    // Immaturity acts on the advance's figure by part family (design 5.2);
+    // only fictional and unknown devices scale the part's size.
+    let fams = tech["families"].as_array().unwrap();
+    let fict = fams.iter().find(|f| f["id"] == "fictional").unwrap();
+    assert_eq!(fict["maturity"]["size_per_level_short"], 10.0);
+    for a in tech["advances"].as_array().unwrap() {
+        assert!(fams.iter().any(|f| f["id"] == a["family"]), "{}", a["id"]);
+    }
 }
