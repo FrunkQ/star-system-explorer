@@ -85,11 +85,17 @@
   const atAsk = $derived.by((): ShipAtWorldAsk | null => {
     const dest = v?.to;
     if (!dest || dest.startsWith("belt:")) return null;
-    // A torch course brakes on its drive and arrives with no speed to shed; a transfer arrives on its own orbit.
-    const torch = v?.legs.at(-1)?.course === "torch";
-    const speed = torch ? { v_inf_m_s: 0 } : {};
+    // The last leg's own speed over escape at the world (a torch course arrives braked, 0); a leg without one
+    // (a belt hop) leaves the kernel's default, a Hohmann transfer from the next body in.
+    const last = v?.legs.at(-1);
+    const speed = last?.arrive_v_inf_m_s !== undefined ? { v_inf_m_s: last.arrive_v_inf_m_s } : last?.course === "torch" ? { v_inf_m_s: 0 } : {};
     if (!scene.fixture && ctx.session.seat.authority === "gm") return { system: scene.system, ship, worlds: [dest], ...speed };
     return fromScene.nav ? { nav: fromScene.nav, ship, worlds: [dest], ...speed } : null;
+  });
+  const arriving = $derived.by(() => {
+    const l = v?.legs.at(-1);
+    if (l?.arrive_v_inf_m_s === undefined) return undefined;
+    return l.course === "lambert" ? "arriving on this voyage's transfer arc" : l.course === "hohmann" ? "arriving on this voyage's Hohmann transfer" : "arriving on this voyage's last leg";
   });
   const waited = $derived(v ? v.legs.reduce((t, l) => t + (l.wait_days ?? 0), 0) : 0);
 
@@ -174,7 +180,7 @@
       </ol>
       <button type="button" class="go" data-next onclick={nextStop}>{mode === "explore" ? "Next stop: go there" : "Arrive there"}</button>
       {#if visited.length > 1}<button type="button" class="quiet-btn" data-restart onclick={restart}>Back to the start</button>{/if}
-      <AtWorld {ctx} ask={atAsk} />
+      <AtWorld {ctx} ask={atAsk} arriving={arriving} />
     {/if}
   </div>
 </div>

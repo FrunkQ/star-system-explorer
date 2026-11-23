@@ -65,6 +65,24 @@ try {
       await view.focus();
       await gm.keyboard.press("ArrowLeft");
       await gm.waitForFunction((b) => document.querySelector(`[aria-roledescription='3D chart'] [data-body='${"u:kestrel/sys:1/body:4"}']`)?.getAttribute("data-x") !== b, before);
+      // True (V10a), one press from the chart: the same frame against space with the star in its own colour. The test
+      // drive's worlds have no surface atlas, so they are drawn plain and the note says why; the canvas tier says True
+      // needs a GPU.
+      await gm.getByRole("button", { name: "True", exact: true }).click();
+      await gm.waitForFunction(() => /no surface|needs a GPU/.test(document.querySelector("[aria-roledescription='3D chart'] [data-true-note]")?.textContent ?? ""), null, { timeout: 60000 });
+      assert.equal(await view.getAttribute("data-look"), tier === "gpu" ? "true" : "plain", "True draws on the GPU tier; a device without one keeps the plain look");
+      await shot(gm, `v10a-gm-true-${mode}`);
+      // Scale and HUD (Alex, 23 Nov): Real puts distances and sizes in proportion; HUD off in True by default, on
+      // brings the orbit lines and names back.
+      assert.equal(await view.getAttribute("data-hud"), "off");
+      await gm.getByRole("group", { name: "Scale" }).getByRole("button", { name: "Real" }).click();
+      await gm.waitForFunction(() => document.querySelector("[aria-roledescription='3D chart']")?.getAttribute("data-scale") === "real");
+      assert.match(await view.locator(".note").innerText(), /Real scale/);
+      await gm.getByRole("group", { name: "HUD" }).getByRole("button", { name: "On" }).click();
+      await gm.waitForFunction(() => document.querySelector("[aria-roledescription='3D chart']")?.getAttribute("data-hud") === "on");
+      await shot(gm, `v10b-gm-real-hud-${mode}`);
+      await gm.getByRole("group", { name: "Scale" }).getByRole("button", { name: "Readable" }).click();
+      await gm.getByRole("button", { name: "3D", exact: true }).click();
 
       // A players' 3D screen.
       const pl = await browser.newPage({ viewport: { width: 1280, height: 900 } });

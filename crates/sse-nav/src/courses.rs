@@ -139,6 +139,8 @@ impl Ctx<'_> {
             difficulty: a.difficulty,
             why,
             track: samples.iter().map(|x| x.r).collect(),
+            // Set by each kind: a torch flight brakes on its drive and arrives at rest.
+            arrive_v_inf_m_s: 0.0,
         }
     }
 
@@ -244,7 +246,7 @@ pub(crate) fn candidates(
             ),
             "ideal: assumes circular orbits in one plane; the Lambert courses use the real orbits".into(),
         ];
-        let course = c.course(
+        let mut course = c.course(
             "hohmann",
             "hohmann",
             "Textbook transfer (Hohmann)",
@@ -257,6 +259,7 @@ pub(crate) fn candidates(
             why,
             false,
         );
+        course.arrive_v_inf_m_s = d2;
         out.push(course);
     }
 
@@ -268,6 +271,8 @@ pub(crate) fn candidates(
         tof: f64,
         dep: f64,
         arr: f64,
+        /// Speed over escape at the destination before the arrival burn.
+        v_inf: f64,
         r: V3,
         v: V3,
     }
@@ -283,6 +288,7 @@ pub(crate) fn candidates(
             tof,
             dep: end_burn(s, fb, norm(sub(v1, va))),
             arr: end_burn(s, tb, norm(sub(v2, vb))),
+            v_inf: norm(sub(v2, vb)),
             r: ra,
             v: v1,
         })
@@ -382,7 +388,7 @@ pub(crate) fn candidates(
                 p.arr / 1000.0
             )];
             let samples = c.coast_samples(p.r, p.v, p.td, p.tof);
-            out.push(c.course(
+            let mut course = c.course(
                 id,
                 "lambert",
                 label,
@@ -394,7 +400,9 @@ pub(crate) fn candidates(
                 samples,
                 why,
                 false,
-            ));
+            );
+            course.arrive_v_inf_m_s = p.v_inf;
+            out.push(course);
         }
     }
 

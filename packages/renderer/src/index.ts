@@ -3,7 +3,10 @@
 // only when a view asks for it, so pages without 3D never fetch it.
 export { tree, pathTo, relative, basis, project, projectExact, projectFlattened, rebase, frameFor } from "./frames.ts";
 export type { Vec3, FrameNode, Tree, Camera, Pixel } from "./frames.ts";
-export type { Gpu, GpuItem, GpuRing } from "./gpu.ts";
+export type { Gpu, GpuItem, GpuLight, GpuRing } from "./gpu.ts";
+// V10a: True in the system view, each world wrapped in its own surface.
+export { equirect, starCss, trueSurface } from "./true-look.ts";
+export type { TrueTexture } from "./true-look.ts";
 // R1: render recipes, the pass library, the governor and the globe runtime.
 export { checkRecipe, plan, estimateMs, pickRecipe, bestTier, maxLevel, stepsFrom, TIER_ORDER, DEFAULT_BUDGET_MS } from "./recipe.ts";
 export type { RecipeDoc, RecipePass, PassSpec, PassCost, Knob, DegradeStep, Plan, RecipeCheck } from "./recipe.ts";

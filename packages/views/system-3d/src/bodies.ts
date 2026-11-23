@@ -2,7 +2,7 @@
 // distance from it (metres, f64), never a flattened system-wide position.
 // The view shows one frame at a time (rendering rule 2): a centre body and
 // the bodies that orbit it, at log-scaled display distances.
-import { KM_PER_AU, fact, parentOf, primaryOf, subjectName, type Mark, type PlayerScene, type PlayerSubject, type SceneSubject, type SystemScene } from "../../../ui-contract/src/index.ts";
+import { KM_PER_AU, constant, fact, parentOf, primaryOf, subjectName, type Mark, type PlayerScene, type PlayerSubject, type SceneSubject, type SystemScene } from "../../../ui-contract/src/index.ts";
 import type { FrameNode } from "../../../renderer/src/index.ts";
 
 export interface Body3D {
@@ -15,13 +15,27 @@ export interface Body3D {
   phase_deg: number;
   phase_known: boolean;
   mark: Mark | null;
+  /** The body's radius, metres, for Real scale; null or absent when the audience does not have it. */
+  radius_m?: number | null;
 }
 
 export function fromSystemScene(scene: SystemScene, mark: (s: SceneSubject) => Mark): Body3D[] {
   const star = primaryOf(scene);
   return scene.subjects
     .filter((s) => s === star || s.orbit)
-    .map((s) => ({ id: s.address, parent: s === star ? null : (s.parent ?? star?.address ?? null), name: s.label, a_m: s.orbit ? s.orbit.a_au * KM_PER_AU * 1000 : null, phase_deg: s.orbit?.phase_deg ?? 0, phase_known: true, mark: mark(s) }));
+    .map((s) => ({ id: s.address, parent: s === star ? null : (s.parent ?? star?.address ?? null), name: s.label, a_m: s.orbit ? s.orbit.a_au * KM_PER_AU * 1000 : null, phase_deg: s.orbit?.phase_deg ?? 0, phase_known: true, mark: mark(s), radius_m: radiusOf(s) }));
+}
+
+/** A subject's radius in metres from its facts (Earth radii for worlds, Sun radii for stars), else null. */
+function radiusOf(s: SceneSubject): number | null {
+  const v = (field: string) => {
+    const f = s.facts.find((x) => x.field === field);
+    return typeof f?.value === "number" && f.value > 0 ? f.value : null;
+  };
+  const re = v("radius_earth");
+  if (re !== null) return re * constant("R_earth_mean");
+  const rs = v("radius_sun");
+  return rs !== null ? rs * constant("R_sun") : null;
 }
 
 /** A belt, disc or cloud round the star: drawn flat (a disc) or as a shell all round (a sphere, the Oort cloud). */
@@ -126,6 +140,29 @@ export function layout(bodies: readonly Body3D[], centreId: string): FrameLayout
     nodes.push({ id: b.id, parent: centre.id, local: [d * Math.cos(t), d * Math.sin(t), 0] });
   }
   return { centre, placed, unplaced, nodes, ring, inner_m: inner, outer_m: outer, dist: r };
+}
+
+/**
+ * Real scale (Alex, 23 Nov 2026): the same frame with distances in proportion, the outermost orbit at 10 display
+ * units, and `dist` linear, so a radius through `dist` is the body's true size on the same scale.
+ */
+export function layoutReal(bodies: readonly Body3D[], centreId: string): FrameLayout | null {
+  const centre = bodies.find((b) => b.id === centreId);
+  if (!centre) return null;
+  const kids = bodies.filter((b) => b.parent === centreId);
+  const placed = kids.filter((b) => b.a_m !== null && b.a_m > 0).sort((a, b) => a.a_m! - b.a_m!);
+  const unplaced = kids.filter((b) => !placed.includes(b));
+  const outer = placed.length ? placed[placed.length - 1]!.a_m! : 1;
+  const r = (a: number) => (10 * a) / outer;
+  const ring = new Map<string, number>();
+  const nodes: FrameNode[] = [{ id: centre.id, parent: null, local: [0, 0, 0] }];
+  for (const b of placed) {
+    const d = r(b.a_m!);
+    const t = (b.phase_deg * Math.PI) / 180;
+    ring.set(b.id, d);
+    nodes.push({ id: b.id, parent: centre.id, local: [d * Math.cos(t), d * Math.sin(t), 0] });
+  }
+  return { centre, placed, unplaced, nodes, ring, inner_m: placed.length ? placed[0]!.a_m! : 0, outer_m: outer, dist: r };
 }
 
 export const hasChildren = (bodies: readonly Body3D[], id: string) => bodies.some((b) => b.parent === id && b.a_m !== null);
