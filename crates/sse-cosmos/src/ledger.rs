@@ -169,12 +169,7 @@ impl Default for LedgerParams {
 }
 
 /// The ledger of one cell today.
-pub fn cell(
-    hs: &Haloes,
-    res: &Reservoirs,
-    lp: &LedgerParams,
-    idx: [i64; 3],
-) -> Ledger {
+pub fn cell(hs: &Haloes, res: &Reservoirs, lp: &LedgerParams, idx: [i64; 3]) -> Ledger {
     let c: &Cosmology = hs.cosmo;
     let cell = hs.cell(idx);
     let side = hs.params.cell_mpc;
@@ -240,7 +235,10 @@ pub fn cell(
             }
         }
     }
-    let (tv, tm) = (vol.iter().sum::<f64>(), mat.iter().sum::<f64>().max(1.0e-300));
+    let (tv, tm) = (
+        vol.iter().sum::<f64>(),
+        mat.iter().sum::<f64>().max(1.0e-300),
+    );
     let environments = [
         Environment::Void,
         Environment::Sheet,

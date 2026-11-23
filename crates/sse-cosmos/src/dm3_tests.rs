@@ -39,7 +39,14 @@ fn the_ledger_closes_in_every_cell() {
         assert!((total / l.matter_msun - 1.0).abs() < 1e-9, "{l:?}");
         assert!((l.baryon_share / l.f_b - 1.0).abs() < 1e-9, "{l:?}");
         let o = &l.ordinary;
-        for v in [o.stars, o.cold_gas, o.hot_gas, o.thrown_out, o.black_holes, o.between_galaxies] {
+        for v in [
+            o.stars,
+            o.cold_gas,
+            o.hot_gas,
+            o.thrown_out,
+            o.black_holes,
+            o.between_galaxies,
+        ] {
             assert!(v >= 0.0, "{l:?}");
         }
         let shares: f64 = l.environments.iter().map(|s| s.volume).sum();
@@ -99,18 +106,42 @@ fn matter_gathers_into_filaments_and_drains_from_voids() {
 #[ignore]
 fn probe() {
     let ls = ledgers(3);
-    let (mut st, mut cg, mut hg, mut th, mut bh, mut bw, mut dc, mut db, mut dn) = (0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0);
+    let (mut st, mut cg, mut hg, mut th, mut bh, mut bw, mut dc, mut db, mut dn) =
+        (0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0);
     let mut vol = [0.0; 4];
     let mut mat = [0.0; 4];
     for l in &ls {
         let o = &l.ordinary;
-        st += o.stars; cg += o.cold_gas; hg += o.hot_gas; th += o.thrown_out; bh += o.black_holes; bw += o.between_galaxies;
-        dc += l.dark.catalogued_haloes; db += l.dark.haloes_below_floor; dn += l.dark.never_collapsed;
-        for s in &l.environments { vol[s.environment as usize] += s.volume / ls.len() as f64; mat[s.environment as usize] += s.matter / ls.len() as f64; }
+        st += o.stars;
+        cg += o.cold_gas;
+        hg += o.hot_gas;
+        th += o.thrown_out;
+        bh += o.black_holes;
+        bw += o.between_galaxies;
+        dc += l.dark.catalogued_haloes;
+        db += l.dark.haloes_below_floor;
+        dn += l.dark.never_collapsed;
+        for s in &l.environments {
+            vol[s.environment as usize] += s.volume / ls.len() as f64;
+            mat[s.environment as usize] += s.matter / ls.len() as f64;
+        }
     }
     let t = st + cg + hg + th + bh + bw;
     let d = dc + db + dn;
-    println!("ordinary: stars {:.3} cold {:.3} hot {:.3} thrown {:.3} bh {:.1e} between {:.3}", st/t, cg/t, hg/t, th/t, bh/t, bw/t);
-    println!("dark: catalogued {:.3} below {:.3} never {:.3}", dc/d, db/d, dn/d);
+    println!(
+        "ordinary: stars {:.3} cold {:.3} hot {:.3} thrown {:.3} bh {:.1e} between {:.3}",
+        st / t,
+        cg / t,
+        hg / t,
+        th / t,
+        bh / t,
+        bw / t
+    );
+    println!(
+        "dark: catalogued {:.3} below {:.3} never {:.3}",
+        dc / d,
+        db / d,
+        dn / d
+    );
     println!("env vol {vol:?} mat {mat:?}");
 }
