@@ -19,9 +19,11 @@ NSSDCA air, temperature and water facts to `packs/base-sol` under these keys.
 **Tests.** `crates/sse-kernel/src/sol_tests.rs` enters base-sol the way the
 start sheet's door does (one catalogued batch):
 
-- with base-sol as it is, Earth sits at its own-albedo equilibrium temperature;
-- with catalogued air and water, Earth is 288 K, mobile lid, dynamo on; Venus
-  737 K, not a mobile lid, no dynamo; Mars 210 K, stagnant lid, no dynamo.
+- base-sol alone (its NSSDCA air, temperature and water, PR 231): Earth
+  288 K, mobile lid, dynamo on; Venus 737 K, not a mobile lid, no dynamo;
+  Mars 214 K, stagnant lid, no dynamo;
+- the Moon (no measured mean) sits at its own-albedo equilibrium temperature;
+- typed temperature and air win over the estimate.
 
 No golden changed (the fixtures carry no albedo or air on fact-built worlds).
 

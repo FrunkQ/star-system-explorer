@@ -97,32 +97,12 @@ fn world(k: &mut crate::Kernel, name: &str) -> serde_json::Value {
         .unwrap_or_else(|| panic!("no surface for {name}: {r}"))
 }
 
-/// With only what base-sol carries today (no air, no water), Earth sits at
-/// its equilibrium temperature from its own Bond albedo: honest, but frozen.
+/// base-sol as it ships: measured air, temperature and water reach the
+/// chain, which then gives the planets we know. Plates and a field on Earth;
+/// a still lid and no field on Venus and Mars.
 #[test]
-fn a_world_without_catalogued_air_uses_its_own_albedo() {
+fn sol_from_its_catalogue_alone() {
     let mut k = open_sol(&[]);
-    let e = world(&mut k, "Earth");
-    let (teff, r_sun, a) = (5772.0_f64, 695_700e3_f64, 149.598e9_f64);
-    let t_eq = teff * m::sqrt(r_sun / (2.0 * a)) * m::pow(1.0 - 0.294, 0.25);
-    let t = e["t_surface_now_k"].as_f64().unwrap();
-    assert!((t - t_eq).abs() < 0.01, "{t} against {t_eq}");
-}
-
-/// Measured air, temperature and water win over every estimate, and the
-/// chain then gives the planets we know: plates and a field on Earth, a
-/// still lid and no field on Venus and Mars.
-#[test]
-fn catalogued_air_and_water_reach_the_surface_chain() {
-    let mut k = open_sol(&[
-        ("earth", "planet.surface_temperature", 288.0.into()),
-        ("earth", "atmosphere.surface_pressure", 101_400.0.into()),
-        ("earth", "body.surface_water_oceans", 1.0.into()),
-        ("venus", "planet.surface_temperature", 737.0.into()),
-        ("venus", "atmosphere.surface_pressure", 9.2e6.into()),
-        ("mars", "planet.surface_temperature", 210.0.into()),
-        ("mars", "atmosphere.surface_pressure", 636.0.into()),
-    ]);
     let e = world(&mut k, "Earth");
     assert_eq!(e["t_surface_now_k"], 288.0, "{e}");
     assert_eq!(e["regime_now"], "mobile-lid", "{e}");
@@ -132,7 +112,30 @@ fn catalogued_air_and_water_reach_the_surface_chain() {
     assert_ne!(v["regime_now"], "mobile-lid", "{v}");
     assert_eq!(v["core"]["dynamo_now"], false, "{v}");
     let m = world(&mut k, "Mars");
-    assert_eq!(m["t_surface_now_k"], 210.0, "{m}");
+    assert_eq!(m["t_surface_now_k"], 214.0, "{m}");
     assert_eq!(m["regime_now"], "stagnant-lid", "{m}");
     assert_eq!(m["core"]["dynamo_now"], false, "{m}");
+}
+
+/// A world with no catalogued temperature (the Moon: NSSDCA prints only a
+/// range) sits at its equilibrium temperature from its own Bond albedo.
+#[test]
+fn a_world_without_a_measured_mean_uses_its_own_albedo() {
+    let mut k = open_sol(&[]);
+    let e = world(&mut k, "Moon");
+    let (teff, r_sun, a) = (5772.0_f64, 695_700e3_f64, 149.598e9_f64);
+    let t_eq = teff * m::sqrt(r_sun / (2.0 * a)) * m::pow(1.0 - 0.11, 0.25);
+    let t = e["t_surface_now_k"].as_f64().unwrap();
+    assert!((t - t_eq).abs() < 0.01, "{t} against {t_eq}");
+}
+
+/// Facts typed over the catalogue win the same way.
+#[test]
+fn typed_air_and_temperature_win_over_estimates() {
+    let mut k = open_sol(&[
+        ("moon", "planet.surface_temperature", 250.0.into()),
+        ("moon", "atmosphere.surface_pressure", 101_400.0.into()),
+    ]);
+    let e = world(&mut k, "Moon");
+    assert_eq!(e["t_surface_now_k"], 250.0, "{e}");
 }
