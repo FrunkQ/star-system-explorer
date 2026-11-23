@@ -1,6 +1,6 @@
 # How SSE4 comes together
 
-Date 22 Nov 2026. Status: **proposed, waiting on Alex's answers in section 7.** It sits beside `SSE4-build-plan.md`, which stays the list of every package. This file is the order in which the pieces are joined up, and how that stays tidy. Read from main, the open pull requests and each build thread's checklist on 22 Nov at about 16:30 UTC.
+Date 22 Nov 2026. Status: **accepted by Alex, 23 Nov 2026 ("yes to all" on the seven questions of section 7).** It sits beside `SSE4-build-plan.md`, which stays the list of every package. This file is the order in which the pieces are joined up, and how that stays tidy. Read from main, the open pull requests and each build thread's checklist on 22 Nov at about 16:30 UTC.
 
 ## 1. The idea
 
@@ -9,6 +9,15 @@ Date 22 Nov 2026. Status: **proposed, waiting on Alex's answers in section 7.** 
 - A stage ends with one walk through the app that a person can do, and a short list of known rough edges. It does not have to be fully working. It has to be honest about what is rough.
 - Changes that touch many blocks at once go one at a time, in one lane, with one owner (section 4).
 - Alex gets one numbered list a day at most, each question with a recommendation (section 6).
+
+### The test every joined-up screen must pass (Alex, 23 Nov)
+
+In his words: "we need to stitch everything together so it feels intuitive and approachable. Most common things a click away. Rarely touched things in menus that have relevant context."
+
+- **Common things are one click away** from where a person already is: on the thing itself, its card, the place line or the instrument rail. If a tester does it in most sessions, it is not in a menu.
+- **Rare things live in a menu that belongs to what they act on**: this world's menu, this chart's menu, this pack's menu. Never one global list of everything, and never a setting far from the thing it changes.
+- **Each stage's walk is also the click count.** When a walk is written into the check, each step records how many clicks it took from the step before. A common step that needs more than one is a rough edge and goes on the list.
+- When a screen is joined up, its owner sorts its actions into "every session", "sometimes" and "rarely", and places them by that. New capability arrives where its subject already is (a field on the body, a formula on its block), not as a new top-level place.
 
 ## 2. Where things stand on main
 
@@ -82,7 +91,7 @@ Needs: ND4 to ND10, view styles and True views, tours, help text for every block
 | Golden hashes changed on purpose (DM4, GH3, GH4, later S and W stages) | Whoever's package it is | One such pull request open at a time. Its owner posts "golden window open" to the other build threads, merges fast, posts "closed". |
 | Place contract | Chart room thread | The shell owns the bar, history and links. A view only says where it is and what is below it. |
 | Free view on every diagram (rule 11) | Each view's owner | As each diagram is next touched. No sweep. |
-| `handover/START-HERE.md` | Everyone, which is the problem | It is 54 KB and every thread edits the same table. Split into one status file per track with START-HERE as a one-page index (question 5). |
+| Package status | Each thread, its own file | Done 23 Nov: `handover/status/<track>.md`, one file per track, edited only by its owner thread. `handover/START-HERE.md` is the index and standing rules and takes no package rows. |
 
 ## 5. Parked on purpose
 
@@ -104,7 +113,7 @@ Needs: ND4 to ND10, view styles and True views, tours, help text for every block
 - **Asking Alex.** Threads send questions to the coordinator, not to Alex. The coordinator posts one numbered list a day at most, each with a recommendation, answered as "yes to 1, 2 and 4". Only something that cannot be undone, or that stops a stage, comes sooner.
 - **Stage end.** One short message: the walk to try, the rough edges, what the next stage is. Nothing else needs reading.
 
-## 7. Questions for Alex
+## 7. Questions for Alex (all seven answered yes, 23 Nov)
 
 1. **The six stages in this order?** Recommended: yes. Stages 4 and 5 could swap if you want a table game before the galaxy's past; the kernel work for both runs underneath either way.
 2. **Stage 1 is the walk in section 3, and a fix to it goes ahead of new screens until it passes?** Recommended: yes. It costs about a day and gives a floor that later merges cannot break.

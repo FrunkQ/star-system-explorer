@@ -39,6 +39,7 @@
   import { orbitScene, voicesFromSystem } from "../../ui-contract/src/index.ts";
   import { orbitBodies, phasesFrom, withPhases, yearsToSeconds } from "../../ui-contract/src/index.ts";
   import { compareScenes, dropWhatIf, keepWhatIf, openWhatIf } from "../../ui-contract/src/index.ts";
+  import { readStarFacts, withStarFacts, type StarFacts } from "../../ui-contract/src/index.ts";
   import { AU_M, placeBodies as placePasted, withdrawBodies, copyClip, missingPacks, placeClip, primaryOf, readClip, clipWords, type Clip } from "../../ui-contract/src/index.ts";
   import { allLenses, checkLens, defaultLens, hasTool, lensAudience, type Lens, type Vocab } from "../../ui-contract/src/index.ts";
   import { themeCss, THEMES } from "../../skins/chart-room/src/index.ts";
@@ -480,6 +481,22 @@
   const lightColours = $derived.by(() => {
     const r = LIGHT_RECIPES.find((x) => x.id === lightId);
     return r ? paint(r, lit.lights) : null;
+  });
+  // Stars that show what they do (V3 gap 19): each star's power and activity, read once per system, for its mark.
+  let starFacts = $state<Map<string, StarFacts>>(new Map());
+  const starKey = $derived(`${scene.system}|${scene.subjects.filter((x) => x.kind === "star").map((x) => x.address).join(",")}`);
+  $effect(() => {
+    const key = starKey;
+    const sys = scene.system;
+    const stars = untrack(() => scene.subjects.filter((x) => x.kind === "star").map((x) => x.address));
+    if (!session || !sys) return;
+    let live = true;
+    void readStarFacts(session, sys, stars).then((f) => {
+      if (live && key === starKey) starFacts = f;
+    });
+    return () => {
+      live = false;
+    };
   });
   const lightMark = (m: Mark, address: string): Mark => (lightColours ? { ...m, colour: lightColours.get(address) ?? null } : m);
   const soundScene = $derived(orbitScene(shown.system, voicesFromSystem(shown)));
@@ -1075,7 +1092,7 @@
   }
 
   function view(node: HTMLElement, m: { module: ViewModule; params: Record<string, Json> }) {
-    const h = m.module.mount(node, { session: session!, workspace: ws, params: m.params, mark: (s) => lightMark(symbols.marker().mark(subjectOf(s)), s.address), symbology: symbols, styles: styleHost }, shown);
+    const h = m.module.mount(node, { session: session!, workspace: ws, params: m.params, mark: (s) => lightMark(symbols.marker().mark(withStarFacts(subjectOf(s), starFacts.get(s.address))), s.address), symbology: symbols, styles: styleHost }, shown);
     handles.push(h);
     return {
       destroy: () => {
