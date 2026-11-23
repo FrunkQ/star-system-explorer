@@ -111,3 +111,6 @@ export type { FileKind, Sniffed, ExplorersListing, ExplorersFetched } from "./op
 // Add here (V3 gap 2): what this orbit would make, from formation runs, or anything, marked impossible.
 export { formsHere, anythingClip, clipAt, freeOrbit } from "./add-here.ts";
 export type { FormsHere } from "./add-here.ts";
+// Find in Look up: an element, constant or unit by name, symbol or id.
+export { findInSheet } from "./reference-find.ts";
+export type { RefHit } from "./reference-find.ts";

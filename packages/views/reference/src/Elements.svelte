@@ -11,7 +11,7 @@
   import { formatValue, originGradient, originShares, originToken, readElementsPage, readRow, shareWords, showReference, tablePosition, type Depth, type ElementRow, type ElementsPage, type RowDetail, type ViewSession } from "../../../ui-contract/src/index.ts";
   import { Stamp } from "../../../chart-grammar/src/index.ts";
 
-  let { session, depth }: { session: ViewSession; depth: Depth } = $props();
+  let { session, depth, pick = null }: { session: ViewSession; depth: Depth; pick?: string | null } = $props();
   const full = $derived(depth !== "curious");
 
   let sheet = $state.raw<ElementsPage | null>(null);
@@ -41,6 +41,12 @@
     await tick();
     opener?.focus();
   }
+  // Found from the Find box: the element's card opens as if pressed.
+  $effect(() => {
+    const id = pick;
+    const e = id ? sheet?.elements.find((x) => x.id === id) : undefined;
+    if (e) untrack(() => void choose(e, document.querySelector<HTMLElement>(`[data-el="${e.id}"]`)));
+  });
   // The phone's strip: the chosen element and its neighbours by number.
   const strip = $derived.by(() => {
     const els = sheet?.elements ?? [];
