@@ -101,6 +101,8 @@
   // Branding and join words (V3 gap 25): the seat's brand, and the stacked packs' words while joining.
   let brand = $state<SeatBrand | null>(null);
   let words = $state<JoinWords>(DEFAULT_JOIN);
+  // Quick overrides (V3 gap 25 part 2): the GM's live switches for this seat, as they change.
+  let live = $state<Record<string, boolean> | undefined>(undefined);
   const say = (t: string) => joinLine(t, { seat: seatLabel, ...(brand ? { brand: brand.name } : {}) });
   const embed = $derived(seatKnown ? embedMode(asksEmbed, framing, embedList) : asksEmbed && framing !== "unframed" ? ({ mode: "waiting" } as const) : ({ mode: "page" } as const));
   const bare = $derived(embed.mode !== "page");
@@ -145,6 +147,7 @@
         mayAsk = seat.may_send.includes("set_value");
         embedList = seat.embed_origins;
         brand = seat.brand ?? null;
+        live = seat.live;
         seatKnown = true;
         const bad = checkPlayerScene(sc);
         sceneErrors = bad ? [bad] : [];
@@ -179,6 +182,7 @@
           seatScreen = seat.screens?.[0] ?? null;
           embedList = seat.embed_origins;
           brand = seat.brand ?? null;
+          live = seat.live;
           words = joinWordsOf(m.packs);
           seatKnown = true;
           return openBrowserSession({ base: document.baseURI, seat, universe: m.universe, packs: m.packs });
@@ -197,6 +201,8 @@
         void useScreen(s).then(refresh).catch((e) => (sceneErrors = [String(e)]));
       };
       replica.onUpdate = () => {
+        const mine = replica.seats().find((x) => x.id === seatId);
+        if (JSON.stringify(mine?.live ?? null) !== JSON.stringify(live ?? null)) live = mine?.live;
         if (session && screenDoc) void refresh();
       };
       replica.join();
@@ -351,7 +357,7 @@
     <main class="problem" aria-busy="true"><p data-join-words>{say(words.waiting)}</p></main>
   {:else}
     {#key vocabId}
-      <main class="grid"><ScreenRuntime screen={checked.screen} {scene} {vocab} {mark} bind:selection /></main>
+      <main class="grid"><ScreenRuntime screen={checked.screen} {scene} {vocab} {mark} {live} bind:selection /></main>
     {/key}
   {/if}
   {#if joined && scene && mayAsk && !bare}

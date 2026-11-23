@@ -29,11 +29,24 @@ the pack gained `vocabulary.join`. No code reading changed.
   stack, filling.
 - `tests/ui/embed.e2e.mjs`: a branded seat's own page shows the brand.
 
-## Next (part 2)
+## Part 2: quick overrides
 
-- Quick overrides: an unsaved toggle on the Seats panel that turns a seat's
-  screens' HUD (labels, orbit lines) off live, e.g. for a wall screen. Rides on
-  the shared view controls' HUD; travels with the seat plan but is never put
-  into the campaign file.
-- V3's "size coming" on the join screen: show the manifest's size while a
-  player joins.
+- `Seat.live` holds the GM's live switches for a seat's screens, as player view
+  parameters by name. The Seats panel lists them per seat (`LIVE_OVERRIDES`,
+  for now "Hide labels", which sets `labels: false`). A switch goes to the
+  seat's screens at once through the host's state message. The seat plan is
+  not saved with the campaign, so neither are these.
+- `ScreenRuntime` takes `live` and lays it over each mount's parameters, only
+  where the view declares that parameter (`withLive`), remounting when it
+  changes.
+- Checks: `tests/ui/brand.test.ts` (`withLive`), `tests/ui/embed.e2e.mjs` (the
+  crew's chart drops its names when the GM ticks Hide labels, and gets them
+  back).
+
+## Next
+
+- Hide orbit lines once a player view draws orbit lines (add it to
+  `LIVE_OVERRIDES`); the switches for the single shared table (the panel lists
+  seats only when there are several); sealed seats (their screens take the seat
+  from the sealed host, which does not resend it yet).
+- V3's "size coming" on the join screen.

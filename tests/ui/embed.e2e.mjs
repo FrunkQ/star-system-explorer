@@ -56,6 +56,14 @@ try {
   assert.equal(await crewPage.locator(".page").getAttribute("data-embed"), "page");
   await crewPage.locator("[data-brand]").waitFor({ timeout: 30000 });
   assert.equal((await crewPage.locator("[data-brand]").innerText()).trim(), "Vesh Navy");
+  // V3 gap 25 part 2: the GM's live "Hide labels" reaches the crew's screen at once, and comes back off.
+  const names = () => crewPage.locator("svg text:not(.scale)").count();
+  await crewPage.waitForFunction(() => document.querySelectorAll("svg text:not(.scale)").length > 0, null, { timeout: 30000 });
+  const before = await names();
+  await panel.locator("[data-live='crew:labels']").check();
+  await crewPage.waitForFunction(() => document.querySelectorAll("svg text:not(.scale)").length === 0, null, { timeout: 15000 });
+  await panel.locator("[data-live='crew:labels']").uncheck();
+  await crewPage.waitForFunction((n) => document.querySelectorAll("svg text:not(.scale)").length === n, before, { timeout: 15000 });
   await crewPage.close();
 
   // The tabletop: a page on another site that frames the link and logs what it hears.
@@ -99,7 +107,7 @@ try {
   assert.ok(!(await host.evaluate(() => window.heard.some((m) => m.data?.source === "sse4"))), "a refused view says nothing to the tabletop");
 
   assert.deepEqual(errors, []);
-  console.log(`PASS chromium: tabletop link embedded at ${tabletop}, ready heard from ${ready.origin}, focus both ways; unlisted seat refused; brand shown`);
+  console.log(`PASS chromium: tabletop link embedded at ${tabletop}, ready heard from ${ready.origin}, focus both ways; unlisted seat refused; brand shown; live Hide labels on and off`);
   await browser.close();
 } finally {
   server.kill();
