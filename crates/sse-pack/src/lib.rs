@@ -14,6 +14,8 @@ use sse_flow::FlowDoc;
 use std::collections::{BTreeMap, BTreeSet};
 use std::fmt;
 
+pub mod trust;
+
 pub const PACK_FORMAT: &str = "sse.pack/1";
 
 #[derive(Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Debug, Serialize, Deserialize)]
@@ -89,6 +91,17 @@ pub struct PackManifest {
     #[serde(default)]
     pub seed_namespace: Option<String>,
     pub licence: String,
+    /// ND6: the sources this pack cites. Left out when empty.
+    #[serde(default, skip_serializing_if = "Vec::is_empty")]
+    pub sources: Vec<trust::Source>,
+    /// ND6: the simplifications it makes, each with what it stands in for.
+    /// Its fitted and assumed Model numbers are added to this list by the
+    /// kernel; they need not be written here.
+    #[serde(default, skip_serializing_if = "Vec::is_empty")]
+    pub fudges: Vec<trust::Fudge>,
+    /// ND6: published numbers its flows should give back, run on load.
+    #[serde(default, skip_serializing_if = "Vec::is_empty")]
+    pub reproduction: Vec<trust::Check>,
 }
 
 impl PackManifest {
@@ -244,6 +257,16 @@ pub fn resolve(
         }
         if p.fictional {
             fictional_packs.insert(p.id.clone());
+        }
+        let own: BTreeSet<String> = p
+            .provides
+            .flows
+            .iter()
+            .map(|f| f.id.clone())
+            .chain(p.provides.boxes.iter().map(|b| b.id.clone()))
+            .collect();
+        for m in trust::check_shape(&p.sources, &p.fudges, &p.reproduction, &own) {
+            issue(pid, m);
         }
         for k in &p.provides.quantity_kinds {
             match kinds.get(&k.id) {
