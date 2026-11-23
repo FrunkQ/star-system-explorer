@@ -282,7 +282,21 @@ pub(crate) fn detect(
     targets: Vec<serde_json::Value>,
     sensors: Vec<serde_json::Value>,
     radar: Option<serde_json::Value>,
+    range_bands: Vec<serde_json::Value>,
+    sheet: &sse_reference::Reference,
 ) -> Out {
+    let bands: Vec<sse_sense::RangeBand> = range_bands
+        .into_iter()
+        .enumerate()
+        .map(|(n, v)| {
+            serde_json::from_value(v)
+                .map_err(|e| err("bad_sensing", format!("range band {n}: {e}")))
+        })
+        .collect::<Result<_, _>>()?;
+    let nature = match (sheet.constant("G"), sheet.constant("mu0")) {
+        (Some(g), Some(mu0)) => Some(sse_sense::Nature { g, mu0 }),
+        _ => None,
+    };
     #[derive(serde::Deserialize)]
     struct Lit {
         #[serde(default)]
@@ -308,6 +322,12 @@ pub(crate) fn detect(
         extinction_av: f64,
         #[serde(default)]
         neighbours: Vec<Near>,
+        #[serde(default)]
+        magnetic_moment_a_m2: f64,
+        #[serde(default)]
+        mass_kg: f64,
+        #[serde(default)]
+        radar_cross_section_m2: Option<f64>,
     }
     let model = sse_light::emit::Model::base();
     let light_of = |l: Lit, what: &str| -> Result<sse_light::LightDescription, Response> {
@@ -342,16 +362,39 @@ pub(crate) fn detect(
                 separation_rad: nb.separation_rad,
             });
         }
+        // A target seen only on the field channels needs no light: it is dark.
+        let fields_only = t.lit.conditions.is_none()
+            && t.lit.light.is_none()
+            && (t.magnetic_moment_a_m2 > 0.0 || t.mass_kg > 0.0);
+        let light = if fields_only {
+            sse_light::LightDescription::new(&t.address)
+        } else {
+            light_of(t.lit, &t.address)?
+        };
         let seen = sse_sense::Seen {
-            light: light_of(t.lit, &t.address)?,
+            light,
             address: t.address,
             distance_m: t.distance_m,
             extinction_av: t.extinction_av,
             neighbours,
+            magnetic_moment_a_m2: t.magnetic_moment_a_m2,
+            mass_kg: t.mass_kg,
+            radar_cross_section_m2: t.radar_cross_section_m2,
         };
         for s in &sensors {
-            let d = sse_sense::detect(&seen, s, &model.table).map_err(|e| err("bad_sensing", e))?;
-            detections.push(serde_json::to_value(d).expect("plain data"));
+            let d = sse_sense::detect_with(&seen, s, &model.table, nature.as_ref())
+                .map_err(|e| err("bad_sensing", e))?;
+            let mut v = serde_json::to_value(&d).expect("plain data");
+            if !bands.is_empty() {
+                let label = |x: f64| {
+                    sse_sense::band_of(x, &bands)
+                        .map(|b| serde_json::Value::String(b.label.clone()))
+                        .unwrap_or(serde_json::Value::Null)
+                };
+                v["distance_band"] = label(seen.distance_m);
+                v["range_band"] = label(d.range_m);
+            }
+            detections.push(v);
         }
     }
     let radar = match radar {

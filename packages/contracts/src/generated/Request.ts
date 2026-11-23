@@ -62,7 +62,12 @@ sources?: unknown,
 /**
  * Which weather block, `{id, version, level}`; default the rule block.
  */
-block?: unknown, } | { "op": "read_light", fixture?: string, bodies?: unknown[], } | { "op": "detect", targets: unknown[], sensors: unknown[], radar?: unknown, } | { "op": "read_air_optics", airs: unknown[], wavelengths_m?: Array<number>, } | { "op": "read_spectrum", targets: unknown[], observer?: unknown, } | { "op": "read_activity", stars: unknown[], seed?: string, at_s?: number, window?: unknown, } | { "op": "read_field", bodies: unknown[], fixture?: string, 
+block?: unknown, } | { "op": "read_light", fixture?: string, bodies?: unknown[], } | { "op": "detect", targets: unknown[], sensors: unknown[], radar?: unknown, 
+/**
+ * The setting's range bands (a measure, RK11): each detection's
+ * distance and range are labelled with them.
+ */
+range_bands?: unknown[], } | { "op": "read_air_optics", airs: unknown[], wavelengths_m?: Array<number>, } | { "op": "read_spectrum", targets: unknown[], observer?: unknown, } | { "op": "read_activity", stars: unknown[], seed?: string, at_s?: number, window?: unknown, } | { "op": "read_field", bodies: unknown[], fixture?: string, 
 /**
  * An adopted system: every planet read from its facts, each with a
  * `glance` (what holds off the wind, bubble size, shielded or not,

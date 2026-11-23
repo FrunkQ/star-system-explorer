@@ -37,6 +37,7 @@ The order in which tracks are joined up into the app is the six stages of `desig
 | `status/naming.md` | the thread that owns track NM | NM |
 | `status/performance.md` | Measure performance for minimum specs | PF |
 | `status/across-tracks.md` | each row names its owners | the umbrella rows for MF, Y, GH, ND, TG, and the converter module |
+| `status/spaceflight.md` | Build real spaceflight history pack | RS |
 
 A package that does not fit a file goes in its owner thread's file. A new track gets a new file and one line in the table above. Milestone M1 "Proven core" (K0 to K6) is complete.
 
