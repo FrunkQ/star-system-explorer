@@ -70,7 +70,7 @@ try {
       // needs a GPU.
       await gm.getByRole("button", { name: "True", exact: true }).click();
       await gm.waitForFunction(() => /no surface|needs a GPU/.test(document.querySelector("[aria-roledescription='3D chart'] [data-true-note]")?.textContent ?? ""), null, { timeout: 60000 });
-      assert.equal(await view.getAttribute("data-look"), mode === "canvas" ? "plain" : "true");
+      assert.equal(await view.getAttribute("data-look"), tier === "gpu" ? "true" : "plain", "True draws on the GPU tier; a device without one keeps the plain look");
       await shot(gm, `v10a-gm-true-${mode}`);
       // Scale and HUD (Alex, 23 Nov): Real puts distances and sizes in proportion; HUD off in True by default, on
       // brings the orbit lines and names back.
