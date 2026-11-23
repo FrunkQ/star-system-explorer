@@ -77,8 +77,10 @@ pub struct OrbitParams {
     /// many of the satellite's own dynamical times (SatGen's α = 0.55, a
     /// fitted number, fudge F46).
     pub strip_alpha: f64,
-    /// Stars start to leave once the bound dark matter falls below this
-    /// share of its infall mass (Peñarrubia et al. 2008: about a tenth).
+    /// For a body with no stellar scale only (GH4 strips stars by the tidal
+    /// radius over the galaxy's own scale): stars start to leave once the
+    /// bound dark matter falls below this share of its infall mass
+    /// (Peñarrubia et al. 2008: about a tenth).
     pub stars_leave_below: f64,
     /// Torn apart: bound mass under this share of the infall mass, or heat
     /// past the satellite's own binding energy.
@@ -93,6 +95,8 @@ pub struct OrbitParams {
     /// Remains on an orbit with closest over farthest approach under this
     /// are shells (radial orbits), above it streams.
     pub shell_below: f64,
+    /// The finer path a stream is drawn along, points this far apart, Gyr.
+    pub path_gyr: f64,
 }
 
 impl Default for OrbitParams {
@@ -112,6 +116,7 @@ impl Default for OrbitParams {
             disc_reach: 5.0,
             mix_gyr: 5.0,
             shell_below: 0.1,
+            path_gyr: 0.02,
         }
     }
 }
@@ -506,6 +511,9 @@ pub struct Fate {
     pub track: Vec<(f64, [f64; 3])>,
     /// Its stars kept (over those at infall) at each point of `track`.
     pub kept: Vec<f64>,
+    /// Where it was every `path_gyr` (GH4 draws streams along it; not sent).
+    #[serde(skip)]
+    pub path: Vec<(f64, [f64; 3])>,
     /// Each closest approach and each pass through the disc while bound
     /// (GH3 reads the host's responses off these).
     pub passes: Vec<Pass>,
@@ -593,6 +601,8 @@ pub fn follow_with(host: &Host, b: &Body, t_to: f64, op: &OrbitParams, processes
     let r_start = m::sqrt(dot(x, x));
     let (mut peri, mut apo) = (r_start, r_start);
     let mut track = vec![(t, x)];
+    let mut path = vec![(t, x)];
+    let mut next_path = t + op.path_gyr;
     let mut passes: Vec<Pass> = vec![];
     let kms_k = kms();
     let pass_at = |t: f64, disc: bool, x: [f64; 3], v: [f64; 3], mass: f64, h: &Here| {
@@ -619,9 +629,20 @@ pub fn follow_with(host: &Host, b: &Body, t_to: f64, op: &OrbitParams, processes
             disc_kpc: h.disc_kpc,
         }
     };
-    let kept_of = |mass: f64, gone: bool| {
+    // GH4: stars outside the tidal radius leave, at the same rate as the
+    // dark matter outside it. Its stars lie in an exponential disc of the
+    // galaxy's own scale, so the share inside r_t is 1 − (1 + x) e^(−x),
+    // x = r_t / R_d, and a star once lost stays lost. Deep in its dark halo
+    // they go only once most of the dark matter has (Peñarrubia, Navarro and
+    // McConnachie 2008). With no stellar scale (a body with no galaxy), F46's
+    // share of the dark matter stands in.
+    let star_scale = b.grip.map(|gr| gr.disc_kpc.max(1.0e-3));
+    let mut held = 1.0_f64;
+    let kept_of = |held: f64, mass: f64, gone: bool| {
         if gone {
             0.0
+        } else if star_scale.is_some() {
+            held
         } else {
             (mass / m0 / op.stars_leave_below).min(1.0)
         }
@@ -712,6 +733,13 @@ pub fn follow_with(host: &Host, b: &Body, t_to: f64, op: &OrbitParams, processes
                 let rate = op.strip_alpha * (1.0 + heat) / t_dyn;
                 // First order in the step: rate × h is small.
                 mass -= (mass - inside) * (rate * h).min(1.0);
+                if let Some(rd) = star_scale {
+                    let x = rt / rd;
+                    let within = 1.0 - (1.0 + x) * m::exp(-x);
+                    if held > within {
+                        held -= (held - within) * (rate * h).min(1.0);
+                    }
+                }
             }
             // A pass through the disc (impulsive heating, design 7.3).
             let big_r = m::sqrt(x[0] * x[0] + x[1] * x[1]);
@@ -739,24 +767,26 @@ pub fn follow_with(host: &Host, b: &Body, t_to: f64, op: &OrbitParams, processes
                 quench = quench.or(Some(t));
             }
         }
+        let k_now = kept_of(held, mass, disrupted.is_some());
+        if t >= next_path {
+            path.push((t, x));
+            next_path += op.path_gyr;
+        }
         if t >= next_slice {
             track.push((t, x));
-            kept.push(kept_of(mass, disrupted.is_some()));
+            kept.push(k_now);
             next_slice += op.slice_gyr;
         }
     }
     if track.last().is_some_and(|l| l.0 < t) {
         track.push((t, x));
-        kept.push(kept_of(mass, disrupted.is_some()));
+        kept.push(kept_of(held, mass, disrupted.is_some()));
     }
     let dark_kept = mass / m0;
     let stars_kept = if disrupted.is_some() {
         0.0
-    } else if dark_kept >= op.stars_leave_below {
-        1.0
     } else {
-        // F46: below the threshold, the stars follow the dark matter down.
-        dark_kept / op.stars_leave_below
+        kept_of(held, mass, false)
     };
     let r = m::sqrt(dot(x, x));
     let mut labels = vec![];
@@ -802,6 +832,7 @@ pub fn follow_with(host: &Host, b: &Body, t_to: f64, op: &OrbitParams, processes
         labels,
         track,
         kept,
+        path,
         passes,
     }
 }
