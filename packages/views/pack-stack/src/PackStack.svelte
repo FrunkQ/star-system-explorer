@@ -74,6 +74,7 @@
     }
   }
   const samples = $derived((params.samples as string[]) ?? []);
+  const sampleLabels = $derived((params.sample_labels as string[]) ?? []);
   async function addSample(url: string) {
     const doc = (await (await fetch(new URL(url, document.baseURI))).json()) as PackDoc;
     const bad = checkPackDoc(doc, info.base.map((p) => p.id));
@@ -122,7 +123,7 @@
       <div class="add">
         <label class="btn" for="pack-file">Add a pack from a file…</label>
         <input id="pack-file" type="file" accept=".json,application/json" onchange={addFile} />
-        {#each samples as u (u)}<button type="button" class="btn" onclick={() => addSample(u)}>Try the sample pack</button>{/each}
+        {#each samples as u, i (u)}<button type="button" class="btn" onclick={() => addSample(u)}>{sampleLabels[i] ?? "Try the sample pack"}</button>{/each}
       </div>
       {#if fileError}<p class="err" role="alert">{fileError}</p>{/if}
     {/if}

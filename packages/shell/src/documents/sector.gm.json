@@ -1,0 +1,30 @@
+{
+  "schema": "sse.screen/1",
+  "id": "sse.workspace.gm.sector",
+  "label": "Sector map",
+  "audience": "gm",
+  "layout": "chart-room",
+  "theme": "chart-room",
+  "symbology": "sse.symbology.diagrammatic",
+  "vocab": "physics",
+  "items": [
+    {
+      "view": "sse.view.sector",
+      "area": "chart"
+    },
+    {
+      "view": "sse.view.time-ruler",
+      "area": "ruler"
+    }
+  ],
+  "rail": [
+    {
+      "scale": "galaxy",
+      "group": "look",
+      "label": "Sector map",
+      "order": 2,
+      "hint": "The campaign's mapped systems on the game pack's hex map; import or export a sector file",
+      "needs": ["code_sheets"]
+    }
+  ]
+}

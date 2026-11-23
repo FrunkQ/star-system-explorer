@@ -189,6 +189,14 @@ export interface ViewSession {
   starCell(ask: { cell?: [number, number, number]; t_myr?: number }): Promise<{ ok: true; cell: import("./voyage.ts").StarCell } | { ok: false; code: string; message: string }>;
   /** A voyage between stars for one ship (kernel `plan_voyage`, V8 part 3). Read only; GM only for now (players ask through their console later). */
   planVoyage(ask: import("./voyage.ts").VoyageAsk): Promise<{ ok: true; plan: import("./voyage.ts").VoyagePlan | import("./voyage.ts").SystemVoyagePlan } | { ok: false; code: string; message: string }>;
+  /** Game-system codes (X3a, kernel `codes`) for every body at or under `scope`, read by a code sheet (the first in the stack when none is named). Read only; GM only. */
+  codes?(ask: { scope: string; sheet?: string; at_s?: number | bigint }): Promise<{ ok: true; result: import("./sector.ts").CodesRead } | { ok: false; code: string; message: string }>;
+  /** The hex map's worlds (X3c, kernel `sector_map`): each mapped system's main world with its reading, by hex. Read only; GM only. */
+  sectorMap?(ask: { scope: string; sheet?: string; at_s?: number | bigint }): Promise<{ ok: true; result: import("./sector.ts").SectorMap } | { ok: false; code: string; message: string }>;
+  /** Read a sector file (X3c, kernel `import_sector`): a preview without `apply`; with it, every world written as history (and with `grow`, its whole system grown first). GM only. */
+  importSector?(ask: import("./sector.ts").SectorImportAsk): Promise<{ ok: true; result: import("./sector.ts").SectorImported } | { ok: false; code: string; message: string }>;
+  /** Write the mapped systems as a sector file (X3c, kernel `export_sector`). Read only; GM only. */
+  exportSector?(ask: { scope: string; format: import("./sector.ts").SectorFormat; sheet?: string; at_s?: number | bigint }): Promise<{ ok: true; result: import("./sector.ts").SectorExported } | { ok: false; code: string; message: string }>;
   /** A slice of the cosmic web at one epoch (V9, kernel `web_slice`, G1). Read only; GM only. */
   webSlice(ask: import("./galaxy.ts").SliceAsk): Promise<{ ok: true; web: import("./galaxy.ts").WebSlice } | { ok: false; code: string; message: string }>;
   /** A system as the universe now holds it: facts, a SystemSpec for look-ahead, and S0 surfaces. */
@@ -715,6 +723,30 @@ export class Session implements ViewSession {
     if (this.seat.authority !== "gm") return { ok: false, code: "not_gm", message: "voyages between stars are planned on the game master's machine for now" };
     const r = await this.#call({ op: "plan_voyage", ...ask });
     return r.type === "voyage_planned" ? { ok: true, plan: (r as unknown as { voyage: import("./voyage.ts").VoyagePlan }).voyage } : { ok: false, code: String(r.code ?? "unexpected"), message: String(r.message ?? JSON.stringify(r)) };
+  }
+
+  async codes(ask: { scope: string; sheet?: string; at_s?: number | bigint }): Promise<{ ok: true; result: import("./sector.ts").CodesRead } | { ok: false; code: string; message: string }> {
+    if (this.seat.authority !== "gm") return { ok: false, code: "not_gm", message: "codes are read on the game master's machine" };
+    const r = await this.#call({ op: "codes", scope: ask.scope, ...(ask.sheet ? { sheet: ask.sheet } : {}), at_s: ask.at_s ?? 0 });
+    return r.type === "codes" ? { ok: true, result: r as unknown as import("./sector.ts").CodesRead } : { ok: false, code: String(r.code ?? "unexpected"), message: String(r.message ?? JSON.stringify(r)) };
+  }
+
+  async sectorMap(ask: { scope: string; sheet?: string; at_s?: number | bigint }): Promise<{ ok: true; result: import("./sector.ts").SectorMap } | { ok: false; code: string; message: string }> {
+    if (this.seat.authority !== "gm") return { ok: false, code: "not_gm", message: "the sector map is read on the game master's machine" };
+    const r = await this.#call({ op: "sector_map", scope: ask.scope, ...(ask.sheet ? { sheet: ask.sheet } : {}), at_s: ask.at_s ?? 0 });
+    return r.type === "sector_mapped" ? { ok: true, result: r as unknown as import("./sector.ts").SectorMap } : { ok: false, code: String(r.code ?? "unexpected"), message: String(r.message ?? JSON.stringify(r)) };
+  }
+
+  async importSector(ask: import("./sector.ts").SectorImportAsk): Promise<{ ok: true; result: import("./sector.ts").SectorImported } | { ok: false; code: string; message: string }> {
+    if (this.seat.authority !== "gm") return { ok: false, code: "not_gm", message: "sectors are imported on the game master's machine" };
+    const r = await this.#call({ op: "import_sector", text: ask.text, ...(ask.format ? { format: ask.format } : {}), ...(ask.sheet ? { sheet: ask.sheet } : {}), apply: !!ask.apply, grow: !!ask.grow, at_s: ask.at_s ?? 0 });
+    return r.type === "sector_import" ? { ok: true, result: r as unknown as import("./sector.ts").SectorImported } : { ok: false, code: String(r.code ?? "unexpected"), message: String(r.message ?? JSON.stringify(r)) };
+  }
+
+  async exportSector(ask: { scope: string; format: import("./sector.ts").SectorFormat; sheet?: string; at_s?: number | bigint }): Promise<{ ok: true; result: import("./sector.ts").SectorExported } | { ok: false; code: string; message: string }> {
+    if (this.seat.authority !== "gm") return { ok: false, code: "not_gm", message: "sectors are written on the game master's machine" };
+    const r = await this.#call({ op: "export_sector", scope: ask.scope, format: ask.format, ...(ask.sheet ? { sheet: ask.sheet } : {}), at_s: ask.at_s ?? 0 });
+    return r.type === "sector_export" ? { ok: true, result: r as unknown as import("./sector.ts").SectorExported } : { ok: false, code: String(r.code ?? "unexpected"), message: String(r.message ?? JSON.stringify(r)) };
   }
 
   async webSlice(ask: import("./galaxy.ts").SliceAsk): Promise<{ ok: true; web: import("./galaxy.ts").WebSlice } | { ok: false; code: string; message: string }> {

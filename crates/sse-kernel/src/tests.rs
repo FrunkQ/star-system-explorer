@@ -2732,6 +2732,25 @@ fn a_sector_imports_as_grown_systems() {
             "{hex} {uwp} in\n{out}"
         );
     }
+    // The hex map reads the same worlds, by hex, each with its reading.
+    let m = send(serde_json::json!({"op": "sector_map", "scope": "u:kestrel", "at_s": 0}));
+    assert_eq!(m["type"], "sector_mapped", "{m}");
+    let rows = m["worlds"].as_array().unwrap();
+    assert_eq!(rows.len(), 12, "{m}");
+    let hexes: Vec<&str> = rows.iter().map(|r| r["hex"].as_str().unwrap()).collect();
+    let mut sorted = hexes.clone();
+    sorted.sort();
+    assert_eq!(hexes, sorted);
+    for r in rows {
+        assert!(
+            r["body"]
+                .as_str()
+                .unwrap()
+                .starts_with(r["system"].as_str().unwrap()),
+            "{r}"
+        );
+        assert!(r["reading"]["lines"]["uwp"].is_string(), "{r}");
+    }
 }
 
 #[test]
@@ -3195,4 +3214,27 @@ fn read_field_solar_system_fixture() {
         jupiter["field"]["g10_t"].as_f64().unwrap() > 3e-4,
         "{jupiter}"
     );
+}
+
+/// X3e: the chart room's Packs screen adds the Traveller pack on top of the
+/// app's opening stack (no atlas pack), so it must load there and read codes.
+#[test]
+fn the_traveller_pack_stacks_on_the_apps_opening_packs() {
+    let mut k = crate::Kernel::new();
+    let pack = |n: &str| -> serde_json::Value {
+        serde_json::from_str(
+            &std::fs::read_to_string(root().join(format!("packs/{n}/pack.json"))).unwrap(),
+        )
+        .unwrap()
+    };
+    let mut send = |v: serde_json::Value| -> serde_json::Value {
+        serde_json::from_str(&k.handle_json(&v.to_string())).unwrap()
+    };
+    let r = send(serde_json::json!({"op": "load_stack", "packs": [
+        pack("base-physics"), pack("base-time"), pack("base-reference"), pack("traveller")]}));
+    assert_eq!(r["type"], "stack_loaded", "{r}");
+    send(serde_json::json!({"op": "open_universe", "id": "k", "seed": "k"}));
+    let m = send(serde_json::json!({"op": "sector_map", "scope": "u:k", "at_s": 0}));
+    assert_eq!(m["type"], "sector_mapped", "{m}");
+    assert_eq!(m["sheet"], "traveller.world", "{m}");
 }
