@@ -1,6 +1,6 @@
 {
   "age_gyr": 13.785924491621502,
-  "chronicle_head": "dee6a9dc56cbbfb7baace8e1acd5378c0fc61c8479acb2d174edd04a30229fc6",
+  "chronicle_head": "6c86e1d2f37464e8849fd815affd42bc588220fb757d50e5c44b4114f420470d",
   "epochs": [
     [
       "recombination",
@@ -14,18 +14,18 @@
     ],
     [
       "first_stars",
-      8.341065541568355,
-      17.283776466762735
+      8.341065537532904,
+      17.283776579512335
     ],
     [
       "reionisation",
-      8.828483602777856,
-      7.670828310632929
+      8.828483596951697,
+      7.670828388088976
     ],
     [
       "reionisation_end",
-      8.953207303647659,
-      6.160778250950912
+      8.953207297715078,
+      6.160778316168038
     ],
     [
       "peak_star_formation",
@@ -59,7 +59,7 @@
     ]
   ],
   "omega_r": 0.0000913905232432095,
-  "sigma_table": "cdb173cb61cc495c4dc563f82239da66ddadc5897462bb4da907be09ff293c82",
+  "sigma_table": "d8657e5c00a29251d116640559b94fe36f46ddeefa53a5fb61e00a0b2e885a4d",
   "slice": "a50d00ef661eee98dad20f608be0998dfbc92befbad78636925f7f9775a25aa8",
   "t_web_counts": [
     15,

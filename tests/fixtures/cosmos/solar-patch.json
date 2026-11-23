@@ -1288,7 +1288,7 @@
       "thick": 0.0083620955597,
       "thin": 0.066608097334
     },
-    "encounters_per_myr": 11.834077407,
+    "encounters_per_myr": 11.834079317,
     "expected_cc_remnants": 0.00061193874727,
     "expected_ia_remnants": 0.00005033553493,
     "expected_ionising_stars": 0.00038497556057,
@@ -1347,7 +1347,7 @@
     "facts": {
       "patch.alpha_fe_ism": 0.0,
       "patch.cc_sn_gyr_pc3": 0.00007381997765,
-      "patch.encounters_per_myr": 11.834077407,
+      "patch.encounters_per_myr": 11.834079317,
       "patch.expected_cc_remnants": 0.00061193874727,
       "patch.expected_ia_remnants": 0.00005033553493,
       "patch.expected_planetary_nebulae": 0.000093157505959,
