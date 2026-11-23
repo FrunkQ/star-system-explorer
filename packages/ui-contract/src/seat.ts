@@ -23,6 +23,8 @@ export interface Seat {
   screens?: string[];
   /** Data view the seat looks through instead of its audience's own (H8.7 `lens`). */
   lens?: string;
+  /** Tabletops this seat's view may be shown inside (V3 gap 26, `?embed=1`): exact origins, no wildcards. */
+  embed_origins?: string[];
 }
 
 export type Decision = { action: "apply" } | { action: "ask_gm" } | { action: "refuse"; reason: string };

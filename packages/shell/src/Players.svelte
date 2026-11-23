@@ -33,6 +33,7 @@
   import { loadPref, savePref } from "./prefs.ts";
   import PerfReadout from "./PerfReadout.svelte";
   import { perf } from "../../ui-contract/src/index.ts";
+  import { EmbedBridge, embedAsked, embedMode, framingOrigin } from "../../ui-contract/src/index.ts";
 
   // A theme names its vocabulary layer (H8.4); the screen's is the fallback.
   const VOCABS: Record<string, Vocab> = { plain: vocabDoc as unknown as Vocab, guide: guideVocabDoc as unknown as Vocab };
@@ -91,6 +92,13 @@
   const isSealed = sealedRoom !== null && /^[a-z0-9]{4,40}$/.test(sealedRoom);
   const room = isSealed ? sealedRoom : new URLSearchParams(location.search).get("join");
   const joined = room !== null && /^[a-z0-9]{4,40}$/.test(room);
+  // Inside a virtual tabletop (V3 gap 26): `?embed=1`, and only for a tabletop the GM listed on this seat.
+  const asksEmbed = embedAsked(location.search);
+  const framing = framingOrigin(window, document.referrer);
+  let embedList = $state<string[] | undefined>(undefined);
+  let seatKnown = $state(!joined);
+  const embed = $derived(seatKnown ? embedMode(asksEmbed, framing, embedList) : asksEmbed && framing !== "unframed" ? ({ mode: "waiting" } as const) : ({ mode: "page" } as const));
+  const bare = $derived(embed.mode !== "page");
   let link = $state<ReplicaStatus>({ state: "joining" });
   let stateHash = $state("");
   // How this screen reached the room: the site's relay (other devices) or this browser.
@@ -130,6 +138,8 @@
         audience = audienceOf(seat);
         seatLabel = seat.label;
         mayAsk = seat.may_send.includes("set_value");
+        embedList = seat.embed_origins;
+        seatKnown = true;
         const bad = checkPlayerScene(sc);
         sceneErrors = bad ? [bad] : [];
         scene = sc;
@@ -161,6 +171,8 @@
           seatLabel = seat.label;
           mayAsk = seat.may_send.includes("set_value");
           seatScreen = seat.screens?.[0] ?? null;
+          embedList = seat.embed_origins;
+          seatKnown = true;
           return openBrowserSession({ base: document.baseURI, seat, universe: m.universe, packs: m.packs });
         },
         { kernel: "", app: APP_VERSION, now: () => performance.now() },
@@ -261,9 +273,34 @@
     return lightColours ? { ...m, colour: lightColours.get(x.address) ?? null } : m;
   };
   const star = $derived(scene ? scene.subjects.find((s) => s.address === scene!.scope) : undefined);
+
+  // The tabletop bridge: tell the allowed tabletop the view is ready and what is in focus; take its "focus this" asks for subjects this seat already sees.
+  let bridge = $state<EmbedBridge | null>(null);
+  $effect(() => {
+    if (embed.mode !== "embedded") return;
+    const b = new EmbedBridge(embed.origin, window.parent, (f) => {
+      const h = (e: MessageEvent) => f({ origin: e.origin, source: e.source, data: e.data });
+      addEventListener("message", h);
+      return () => removeEventListener("message", h);
+    });
+    b.onAsk((a) => {
+      if (scene?.subjects.some((x) => x.address === a.address)) selection = a.address;
+    });
+    b.send({ source: "sse4", v: 1, type: "ready", seat: seatLabel, audience });
+    bridge = b;
+    return () => {
+      b.close();
+      bridge = null;
+    };
+  });
+  $effect(() => {
+    const t = scene && selection ? scene.subjects.find((x) => x.address === selection) : undefined;
+    bridge?.send({ source: "sse4", v: 1, type: "focus", address: t?.address ?? null, name: t ? subjectName(t) : null });
+  });
 </script>
 
-<div class="page" style={rootFx}>
+<div class="page" class:bare style={rootFx} data-embed={embed.mode}>
+  {#if !bare}
   <header class="bar">
     <h1>{star ? subjectName(star) : "System"}</h1>
     <span class="kicker">{screenDoc?.label ?? "…"}{screenDoc?.data_view ? ` · seen through ${screenDoc.data_view}` : ""} · audience {scene?.audience ?? "…"}</span>
@@ -296,7 +333,10 @@
       </div>
     {/if}
   </header>
-  {#if (checked && !checked.ok) || sceneErrors.length}
+  {/if}
+  {#if embed.mode === "refused"}
+    <main class="problem" role="alert"><h2>This view cannot be shown here</h2><p>{embed.reason}</p></main>
+  {:else if (checked && !checked.ok) || sceneErrors.length}
     <main class="problem" role="alert"><h2>This screen cannot be shown</h2><ul>{#each [...(checked && !checked.ok ? checked.errors : []), ...sceneErrors] as e (e)}<li>{e}</li>{/each}</ul></main>
   {:else if !scene || !checked?.ok}
     <main class="problem" aria-busy="true"><p>Waiting for the scene…</p></main>
@@ -305,7 +345,7 @@
       <main class="grid"><ScreenRuntime screen={checked.screen} {scene} {vocab} {mark} bind:selection /></main>
     {/key}
   {/if}
-  {#if joined && scene && mayAsk}
+  {#if joined && scene && mayAsk && !bare}
     <section class="ask" aria-label="Ask the game master">
       <form onsubmit={(e) => (e.preventDefault(), askName())}>
         <label>Suggest a name for {target ? subjectName(target) : "the body in focus"} <input type="text" bind:value={ask} maxlength="40" disabled={link.state !== "live" || !target} /></label>
@@ -317,8 +357,8 @@
       {/if}
     </section>
   {/if}
-  {#if scene}<div class="soundbar"><LightControl recipes={LIGHT_RECIPES} lights={lit.lights} missing={lit.missing} names={lightNames} bind:value={lightId} key="light.players" /><SoundControl scene={orbitScene(scene.scope, voicesFromPlayers(scene))} key="sound.players" /></div>{/if}
-  <footer class="status" data-state-hash={stateHash} data-scene-hash={sceneHash} data-sealed={isSealed || undefined} data-seat={joined ? seatId : undefined} data-audience={audience} data-link={joined ? link.state : "local"} data-via={via}>Scene: live from {isSealed ? "the game master's machine (sealed seat: this screen holds no seed and runs no kernel)" : joined ? "this screen's kernel, in step with the game master" : "the kernel"} {via ? ` (via ${via === "relay" ? "the site's relay" : "this browser"})` : ""} for {seatLabel && seatId !== "table" ? `the seat ${seatLabel}, ` : ""}the {audience} audience{sceneHash ? ` · scene ${sceneHash.slice(0, 10)}` : ""}{stateHash ? ` · state ${stateHash.slice(0, 10)}` : ""} {joined ? "" : screenDoc?.data_view ? ` · fixed to the ${screenDoc.data_view} view by the screen document` : ` · the Scanned control stands in for the GM's button and taps it for ${target ? subjectName(target) : "the body in focus"}`}</footer>
+  {#if scene && !bare}<div class="soundbar"><LightControl recipes={LIGHT_RECIPES} lights={lit.lights} missing={lit.missing} names={lightNames} bind:value={lightId} key="light.players" /><SoundControl scene={orbitScene(scene.scope, voicesFromPlayers(scene))} key="sound.players" /></div>{/if}
+  <footer class="status" hidden={bare} data-state-hash={stateHash} data-scene-hash={sceneHash} data-sealed={isSealed || undefined} data-seat={joined ? seatId : undefined} data-audience={audience} data-link={joined ? link.state : "local"} data-via={via}>Scene: live from {isSealed ? "the game master's machine (sealed seat: this screen holds no seed and runs no kernel)" : joined ? "this screen's kernel, in step with the game master" : "the kernel"} {via ? ` (via ${via === "relay" ? "the site's relay" : "this browser"})` : ""} for {seatLabel && seatId !== "table" ? `the seat ${seatLabel}, ` : ""}the {audience} audience{sceneHash ? ` · scene ${sceneHash.slice(0, 10)}` : ""}{stateHash ? ` · state ${stateHash.slice(0, 10)}` : ""} {joined ? "" : screenDoc?.data_view ? ` · fixed to the ${screenDoc.data_view} view by the screen document` : ` · the Scanned control stands in for the GM's button and taps it for ${target ? subjectName(target) : "the body in focus"}`}</footer>
 </div>
 {#if perfOn}
   <PerfReadout kernel="" edge={perfEdge} onclose={() => (perfOn = false)} />
@@ -340,6 +380,9 @@
     min-height: 100dvh;
     display: grid;
     grid-template-rows: auto 1fr auto auto;
+  }
+  .page.bare {
+    grid-template-rows: 1fr;
   }
   .bar {
     display: flex;
