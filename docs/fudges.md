@@ -765,6 +765,20 @@ energy balance). Details in `handover/packages/W7a.md`.
 | advances counted as upward zero crossings | Each crossing of the ice balance from loss to gain is one advance | No hysteresis or minimum ice volume | Ice volume integrated through the window | ours |
 | moons and lone worlds | A moon, or a planet with no siblings, gets no orbit track and so no cycles | A lone planet has no secular forcing; a moon's own forcing (its planet's wobble) is not modelled | Satellite secular theory | documented |
 
+## Future tech (`packs/base-tech`, track FT)
+
+Rules of thumb behind the tech ladder (design section 15.7). Each rests on one or two cited examples, so each is an editable guess with history behind it, not a measurement. The examples themselves are cited in the design note's section 14.1.
+
+| Where | Instead of the physics | Why | Real physics to replace it | Status |
+|---|---|---|---|---|
+| `families[engine].maturity` worse_by 7 | One level short, an engine's or power plant's output for its mass is a seventh | V-2 about 22 against Merlin 1D over 150; Jumo 004 1.2 against EJ200 about 9 (small sample) | A history of each part type's figure by year, fitted per family | Rule of thumb, small sample |
+| `families[material].maturity` worse_by 5 | One level short, a bulk material's strength for weight is a fifth | carbon fibre 0.5 to 1 GPa (early 1960s), 3.5 (1971), 7.0 (now); nanotube tubes 100 GPa against fibre 4.2 (small sample) | As above | Rule of thumb, small sample |
+| `families[store].maturity` worse_by 3 | One level short, an energy store holds a third | lithium-ion 80 Wh/kg in 1991, about three times that now (Crabtree 2015) (one example) | As above | Rule of thumb, small sample |
+| `families[near-ceiling].maturity` toward 2/3 | One level short, a figure held down by a nearby ceiling is two-thirds of the way from the old figure to the mature one | V-2 exhaust about half the best hydrogen engine's (one example) | As above | Rule of thumb, small sample |
+| `families[fictional].maturity` size 10, 0.5, 2 | Fictional and unknown devices: ten times the mass and volume per level short, half per level ahead for two levels | Alex's rule of thumb; nothing to go on | None: the device is fictional | Authored |
+| `ladder.improve_per_level_beyond` 1.5 | Past the home level a real figure improves half as much again per level until its next cited mark | design 5.2 | As above | Rule of thumb |
+| `figures[waste_heat_k]` 350 K and 300 K | Electronics and quarters reject heat at single round temperatures | design 15.2 | The ship's own thermal model per load | Authored |
+
 ## Game-system packs
 
 Codes that a game reads from physics. Where a code's band had to be drawn on the physics, the line is a choice,

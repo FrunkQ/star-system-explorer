@@ -22,6 +22,7 @@
       "figures": [
        "radiator_k",
        "waste_per_jet",
+       "waste_heat_k",
        "heat_sent_nowhere"
       ]
      },
@@ -178,6 +179,37 @@
       ]
      },
      {
+      "id": "waste_heat_k",
+      "limit": "heat",
+      "plain": "temperature of a waste heat source",
+      "unit": "K",
+      "better": "higher",
+      "reads": "FT2 (heat grades: a radiator runs no hotter than its source unless a heat pump is paid for)",
+      "marks": [
+       {
+        "mark": "built",
+        "v": 350.0,
+        "what": "electronics",
+        "src": "ft-design-15",
+        "check": "authored"
+       },
+       {
+        "mark": "built",
+        "v": 300.0,
+        "what": "a crew's quarters",
+        "src": "ft-design-15",
+        "check": "authored"
+       },
+       {
+        "mark": "allowed",
+        "v": 1500.0,
+        "what": "a D-He3 fusion drive's structure",
+        "src": "santarius-logan-1998",
+        "check": "unverified"
+       }
+      ]
+     },
+     {
       "id": "heat_sent_nowhere",
       "limit": "heat",
       "plain": "share of waste heat that leaves without being radiated or carried",
@@ -228,6 +260,21 @@
        },
        {
         "mark": "ceiling",
+        "v": 5.18,
+        "what": "hydrogen and oxygen: every joule of the fuel in the jet",
+        "src": "sheet",
+        "for": "hydrogen-oxygen",
+        "computed_from": {
+         "balance": "energy-pays-exhaust",
+         "figures": {
+          "fuel_j_per_kg": 13400000.0
+         }
+        },
+        "law": "conservation of energy",
+        "note": "computed from sqrt(2 x fuel_j_per_kg), with the fuel's lower heating value; replaces the 'near 5 km/s' once held from memory"
+       },
+       {
+        "mark": "ceiling",
         "v": 299792.458,
         "what": "the speed of light",
         "src": "law",
@@ -271,10 +318,10 @@
       "marks": [
        {
         "mark": "built",
-        "v": 15900000.0,
-        "what": "hydrogen burned with oxygen, per kilogram of liquid water made",
+        "v": 13400000.0,
+        "what": "hydrogen burned with oxygen, per kilogram of water vapour made",
         "src": "sheet",
-        "note": "the higher heating value; about 13 MJ/kg if the water leaves as vapour",
+        "note": "the lower heating value: water's heat of formation less its latent heat of vaporisation; 15.9 MJ/kg if the water condenses",
         "sheet": "substances/h2o"
        },
        {
@@ -604,7 +651,8 @@
        "rule": "worse_by",
        "factor": 7.0
       },
-      "src": "ft-design-5.2"
+      "src": "fudge-register",
+      "examples_src": "ft-design-5.2"
      },
      {
       "id": "near-ceiling",
@@ -614,7 +662,8 @@
        "rule": "toward",
        "share": 0.6666666666666666
       },
-      "src": "ft-design-5.2"
+      "src": "fudge-register",
+      "examples_src": "ft-design-5.2"
      },
      {
       "id": "material",
@@ -624,7 +673,8 @@
        "rule": "worse_by",
        "factor": 5.0
       },
-      "src": "ft-design-5.2"
+      "src": "fudge-register",
+      "examples_src": "ft-design-5.2"
      },
      {
       "id": "store",
@@ -634,7 +684,8 @@
        "rule": "worse_by",
        "factor": 3.0
       },
-      "src": "ft-design-5.2"
+      "src": "fudge-register",
+      "examples_src": "ft-design-5.2"
      },
      {
       "id": "plain-mass",
@@ -643,7 +694,8 @@
       "maturity": {
        "rule": "same"
       },
-      "src": "ft-design-5.2"
+      "src": "fudge-register",
+      "examples_src": "ft-design-5.2"
      },
      {
       "id": "least-size",
@@ -652,7 +704,8 @@
       "maturity": {
        "rule": "floor"
       },
-      "src": "ft-design-5.2"
+      "src": "fudge-register",
+      "examples_src": "ft-design-5.2"
      },
      {
       "id": "fictional",
@@ -664,7 +717,93 @@
        "shrink_per_level_beyond": 0.5,
        "shrink_levels": 2
       },
-      "src": "ft-design-5.2"
+      "src": "fudge-register",
+      "examples_src": "ft-design-5.2"
+     }
+    ],
+    "balances": [
+     {
+      "id": "energy-pays-exhaust",
+      "name": "Energy pays for the exhaust",
+      "relation": "exhaust_km_s * 1000 <= sqrt(2 * fuel_j_per_kg)",
+      "near_c": "gamma - 1 <= fuel_j_per_kg / c^2 for the exhaust's speed (the relativistic form)",
+      "figures": [
+       "exhaust_km_s",
+       "fuel_j_per_kg"
+      ],
+      "law": "conservation of energy",
+      "catches": "a chemical fuel with a torch's exhaust speed",
+      "src": "ft-design-15"
+     },
+     {
+      "id": "jet-power",
+      "name": "Jet power",
+      "relation": "jet_w = 0.5 * thrust_n * exhaust_km_s * 1000; jet_w <= plant_w",
+      "figures": [
+       "exhaust_km_s",
+       "plant_w_per_kg"
+      ],
+      "law": "kinetic energy of the exhaust",
+      "catches": "thrust and exhaust speed set apart that need more power than the ship makes",
+      "src": "ft-design-15"
+     },
+     {
+      "id": "energy-in-out",
+      "name": "Energy in, energy out",
+      "relation": "plant_w = jet_w + waste_w + stored_w + loads_w",
+      "figures": [
+       "plant_w_per_kg",
+       "waste_per_jet"
+      ],
+      "law": "conservation of energy",
+      "catches": "waste heat set to nothing while the plant's efficiency says otherwise",
+      "src": "ft-design-15"
+     },
+     {
+      "id": "momentum",
+      "name": "Momentum",
+      "relation": "thrust_n = mdot_kg_s * exhaust_km_s * 1000, or thrust_n <= plant_w * unthrown_n_per_w for light alone",
+      "figures": [
+       "exhaust_km_s",
+       "unthrown_n_per_w"
+      ],
+      "law": "conservation of momentum",
+      "catches": "thrust with nothing thrown and no stated partner",
+      "src": "ft-design-15"
+     },
+     {
+      "id": "heat-downhill",
+      "name": "Heat flows downhill",
+      "relation": "radiator_k <= waste_heat_k, unless a heat pump is paid for: pump_w >= q_w * (t_hot_k - t_cold_k) / t_cold_k, and pump_w is shed too",
+      "figures": [
+       "radiator_k",
+       "waste_heat_k"
+      ],
+      "law": "second law of thermodynamics (Carnot)",
+      "catches": "a hot radiator cooling a cool room for free",
+      "src": "ft-design-15"
+     }
+    ],
+    "fictional_where": [
+     {
+      "id": "light",
+      "question": "what it gives off, by band",
+      "example": "a blue flash on entry"
+     },
+     {
+      "id": "heat",
+      "question": "where the heat ends up",
+      "example": "stored in the sink, dumped in port; holds 40 hours"
+     },
+     {
+      "id": "momentum",
+      "question": "what it pushes on",
+      "example": "the nearest large mass"
+     },
+     {
+      "id": "energy",
+      "question": "where the energy comes from, or goes",
+      "example": "the ship's plant, with the surplus from nowhere"
      }
     ],
     "advances": [
@@ -788,6 +927,7 @@
        "plant_w_per_kg": 8620.0,
        "fuel_j_per_kg": 357000000000000.0,
        "waste_per_jet": 0.1,
+       "waste_heat_k": 1500.0,
        "radiator_k": 1500.0
       },
       "family": "engine",
@@ -824,6 +964,384 @@
       "mark": "not yet built"
      }
     ],
+    "real_craft": [
+     {
+      "id": "iss-radiators",
+      "name": "International Space Station heat rejection",
+      "flew": "1998 to now",
+      "quantities": {
+       "q_w": {
+        "v": 70000.0,
+        "unit": "W",
+        "note": "35 kW per loop, two loops"
+       },
+       "radiator_k": {
+        "v": 275.95,
+        "unit": "K",
+        "note": "ammonia supply temperature, not the panel's"
+       },
+       "planform_m2": {
+        "v": 475.0,
+        "unit": "m2",
+        "note": "six radiator units of 23.3 by 3.4 m; worked out here, not stated; whether both faces radiate is not stated"
+       }
+      },
+      "tests": [
+       "heat-downhill",
+       "radiator sizing"
+      ],
+      "src": [
+       "nasa-iss-atcs"
+      ]
+     },
+     {
+      "id": "saturn-v-s-ic",
+      "name": "Saturn V first stage (Apollo 11)",
+      "flew": "1969",
+      "quantities": {
+       "dry_kg": {
+        "v": 130422.0,
+        "unit": "kg"
+       },
+       "propellant_kg": {
+        "v": 2145798.0,
+        "unit": "kg",
+        "note": "oxidiser and fuel"
+       },
+       "thrust_n": {
+        "v": 33851000.0,
+        "unit": "N",
+        "note": "five F-1, sea level, rated"
+       },
+       "exhaust_km_s": {
+        "v": 2.602,
+        "unit": "km/s",
+        "note": "F-1 at sea level; vacuum value not found"
+       }
+      },
+      "tests": [
+       "momentum",
+       "jet-power",
+       "tank sizing"
+      ],
+      "src": [
+       "nasa-sp4029",
+       "rocketdyne-f1"
+      ]
+     },
+     {
+      "id": "saturn-v-s-ii",
+      "name": "Saturn V second stage (Apollo 11)",
+      "flew": "1969",
+      "quantities": {
+       "dry_kg": {
+        "v": 36158.0,
+        "unit": "kg"
+       },
+       "propellant_kg": {
+        "v": 443235.0,
+        "unit": "kg"
+       },
+       "thrust_n": {
+        "v": 5115000.0,
+        "unit": "N",
+        "note": "five J-2"
+       },
+       "exhaust_km_s": {
+        "v": 4.168,
+        "unit": "km/s",
+        "note": "J-2, vacuum implied"
+       }
+      },
+      "tests": [
+       "energy-pays-exhaust",
+       "momentum",
+       "tank sizing"
+      ],
+      "src": [
+       "nasa-sp4029",
+       "coffman-j2"
+      ]
+     },
+     {
+      "id": "saturn-v-s-ivb",
+      "name": "Saturn V third stage (Apollo 11)",
+      "flew": "1969",
+      "quantities": {
+       "dry_kg": {
+        "v": 11273.0,
+        "unit": "kg"
+       },
+       "propellant_kg": {
+        "v": 107095.0,
+        "unit": "kg"
+       },
+       "thrust_n": {
+        "v": 901000.0,
+        "unit": "N",
+        "note": "first burn, one J-2"
+       },
+       "exhaust_km_s": {
+        "v": 4.168,
+        "unit": "km/s",
+        "note": "J-2, vacuum implied"
+       }
+      },
+      "tests": [
+       "energy-pays-exhaust",
+       "tank sizing"
+      ],
+      "src": [
+       "nasa-sp4029",
+       "coffman-j2"
+      ]
+     },
+     {
+      "id": "saturn-v-stack",
+      "name": "Saturn V with Apollo",
+      "flew": "1969",
+      "quantities": {
+       "ignition_kg": {
+        "v": 2941221.0,
+        "unit": "kg",
+        "note": "Apollo 11 at S-IC ignition"
+       },
+       "orbit_kg": {
+        "v": 135669.0,
+        "unit": "kg",
+        "note": "Apollo 11 at orbit insertion"
+       },
+       "tli_payload_kg": {
+        "v": 42864.0,
+        "unit": "kg",
+        "note": "Apollo 10 spacecraft at translunar injection"
+       }
+      },
+      "tests": [
+       "rocket equation over the three stages"
+      ],
+      "src": [
+       "msfc-as506",
+       "msfc-as505"
+      ]
+     },
+     {
+      "id": "falcon-9",
+      "name": "Falcon 9",
+      "flew": "2010 to now",
+      "quantities": {
+       "liftoff_kg": {
+        "v": 549054.0,
+        "unit": "kg"
+       },
+       "leo_payload_kg": {
+        "v": 22800.0,
+        "unit": "kg",
+        "note": "expendable, not stated on the page"
+       },
+       "upper_thrust_n": {
+        "v": 981000.0,
+        "unit": "N"
+       }
+      },
+      "tests": [
+       "payload share against the Saturn V"
+      ],
+      "src": [
+       "spacex-f9"
+      ],
+      "note": "stage masses and Merlin specific impulse are not published by the maker"
+     },
+     {
+      "id": "mmrtg",
+      "name": "Multi-mission radioisotope generator (Curiosity, Perseverance)",
+      "flew": "2011 to now",
+      "quantities": {
+       "plant_w": {
+        "v": 110.0,
+        "unit": "W",
+        "note": "electric, at launch"
+       },
+       "mass_kg": {
+        "v": 45.0,
+        "unit": "kg"
+       }
+      },
+      "tests": [
+       "energy-in-out",
+       "plant sizing"
+      ],
+      "src": [
+       "nasa-mmrtg"
+      ]
+     },
+     {
+      "id": "mhw-rtg",
+      "name": "Voyager's radioisotope generators (one of three)",
+      "flew": "1976 to now",
+      "quantities": {
+       "plant_w": {
+        "v": 158.0,
+        "unit": "W",
+        "note": "electric, start of mission"
+       },
+       "mass_kg": {
+        "v": 37.7,
+        "unit": "kg"
+       }
+      },
+      "tests": [
+       "plant sizing"
+      ],
+      "src": [
+       "schmidt2009"
+      ]
+     },
+     {
+      "id": "gphs-rtg",
+      "name": "GPHS radioisotope generator (Galileo, Cassini, New Horizons)",
+      "flew": "1989 to now",
+      "quantities": {
+       "plant_w": {
+        "v": 292.0,
+        "unit": "W",
+        "note": "electric, start of mission; New Horizons' own unit made about 213 to 250 W"
+       },
+       "mass_kg": {
+        "v": 55.9,
+        "unit": "kg"
+       }
+      },
+      "tests": [
+       "plant sizing"
+      ],
+      "src": [
+       "schmidt2009"
+      ]
+     },
+     {
+      "id": "juno-arrays",
+      "name": "Juno's solar arrays",
+      "flew": "2011 to now",
+      "quantities": {
+       "area_m2": {
+        "v": 60.0,
+        "unit": "m2",
+        "note": "more than"
+       },
+       "power_1au_w": {
+        "v": 14000.0,
+        "unit": "W"
+       },
+       "power_jupiter_w": {
+        "v": 400.0,
+        "unit": "W"
+       }
+      },
+      "tests": [
+       "light falls with the square of distance (about 520 W expected at 5.2 au before the cold and dim penalty)"
+      ],
+      "src": [
+       "jpl-juno2011"
+      ]
+     },
+     {
+      "id": "shuttle-entry",
+      "name": "Space Shuttle orbiter entry",
+      "flew": "1981 to 2011",
+      "quantities": {
+       "entry_m_s": {
+        "v": 7600.0,
+        "unit": "m/s",
+        "note": "in excess of 17,000 mph"
+       },
+       "rcc_surface_k": {
+        "v": 1922.0,
+        "unit": "K",
+        "note": "nose cap and wing leading edges, up to 3,000 F"
+       },
+       "tile_max_k": {
+        "v": 1644.3,
+        "unit": "K"
+       }
+      },
+      "tests": [
+       "entry heating",
+       "heat shield sizing"
+      ],
+      "src": [
+       "nasa-orbiter-tps"
+      ]
+     },
+     {
+      "id": "apollo-heat-shield",
+      "name": "Apollo command module heat shield",
+      "flew": "1966 to 1975",
+      "quantities": {
+       "entry_m_s": {
+        "v": 11074.0,
+        "unit": "m/s",
+        "note": "design lunar return, inertial"
+       },
+       "peak_heating_w_m2": {
+        "v": 4827000.0,
+        "unit": "W/m2",
+        "note": "Apollo 4"
+       },
+       "heat_load_j_m2": {
+        "v": 426120000.0,
+        "unit": "J/m2",
+        "note": "Apollo 4, total"
+       },
+       "ablator_kg_m3": {
+        "v": 497.0,
+        "unit": "kg/m3",
+        "note": "Avco 5026-39G"
+       }
+      },
+      "tests": [
+       "entry heating",
+       "ablator sizing"
+      ],
+      "src": [
+       "pavlosky1974"
+      ]
+     },
+     {
+      "id": "iss",
+      "name": "International Space Station",
+      "flew": "1998 to now",
+      "quantities": {
+       "pressurised_m3": {
+        "v": 1005.0,
+        "unit": "m3",
+        "note": "35,491 cubic feet"
+       },
+       "habitable_m3": {
+        "v": 388.0,
+        "unit": "m3",
+        "note": "visiting craft not counted"
+       },
+       "mass_kg": {
+        "v": 419725.0,
+        "unit": "kg"
+       },
+       "array_power_w": {
+        "v": 90000.0,
+        "unit": "W",
+        "note": "75 to 90 kW from eight arrays"
+       }
+      },
+      "tests": [
+       "habitat sizing",
+       "energy-in-out against the 70 kW rejected"
+      ],
+      "src": [
+       "nasa-iss-facts",
+       "nasa-iss-atcs"
+      ]
+     }
+    ],
     "sources": {
      "l3harris-rl10": "L3Harris 2024, RL10 engine specification sheet: RL10B-2 specific impulse 465.5 s, thrust 24,750 lbf. https://l3harris.com/sites/default/files/2024-07/l3harris-ar-rl10-spec-sheet.pdf",
      "nasem2021": "National Academies of Sciences, Engineering, and Medicine 2021, Space Nuclear Propulsion for Human Mars Exploration, chapter 2, Table 2.1: Rover/NERVA reactor tests, Pewee 1 about 875 s (vacuum, ideal expansion, from measured propellant temperature). https://www.nationalacademies.org/read/25977/chapter/4",
@@ -846,6 +1364,20 @@
      "doe-snap": "US DOE Energy Technology Engineering Center, System for Nuclear Auxiliary Power (SNAP) overview: SNAP-10A (1965) made at least 500 W (over 600 at first) and weighed under 950 lb with instruments and shielding. https://www.energy.gov/etec/system-nuclear-auxiliary-power-snap-overview",
      "sp100": "Manvi, R. and Fujita, T. 1986, SP-100 program users handbook, JPL D-2185 issue 2: 100 kWe at end of life for about 3,000 kg (design; never flown). https://www.osti.gov/servlets/purl/10184673",
      "ft-design-5.2": "SSE4 future tech design, section 5.2 (accepted by Alex 23 Nov 2026): first working generation against the mature one, by family of part; figures checked in its section 14.1 (V-2 about 22 against Merlin 1D over 150; Jumo 004 1.2 against EJ200 about 9; carbon fibre 0.5 to 1 GPa early, 3.5 in 1971, 7.0 now; nanotube tubes 100 GPa against fibre 4.2; lithium-ion 80 Wh/kg in 1991, about three times now)",
+     "ft-design-15": "SSE4 future tech design, section 15 (keeping the books, accepted by Alex 23 Nov 2026): balance checks, heat grades (electronics near 350 K, quarters near 300 K), the four fields of a fictional advance",
+     "fudge-register": "docs/fudges.md, Future tech: the part-family maturity defaults are rules of thumb from a small sample (design 15.7); their examples stay cited in ft-design-5.2",
+     "nasa-sp4029": "Orloff, R. W. 2000, Apollo by the Numbers, NASA SP-4029: Apollo 11 (AS-506) ground ignition weights in lb (actual, from the flight evaluation reports) and launch vehicle key facts (F-1 1,522,000 lbf sea level; J-2 230,000 lbf). https://www.nasa.gov/wp-content/uploads/static/history/SP-4029/Apollo_18-19_Ground_Ignition_Weights.htm",
+     "msfc-as506": "MSFC 1969, Saturn V launch vehicle flight evaluation report AS-506 Apollo 11: 2,941,221 kg at S-IC ignition, 135,669 kg at orbit insertion (text extraction partial). https://ibiblio.org/apollo/Documents/lvfea-AS506-Apollo11.pdf",
+     "msfc-as505": "MSFC 1969, Technical information summary Apollo-10 (AS-505): spacecraft at translunar injection 94,500 lb (noisy scan). https://www.nasa.gov/wp-content/uploads/static/history/afj/ap10fj/pdf/19700015780_as-505-a10-saturn-v-technical-info-summary.pdf",
+     "rocketdyne-f1": "Rocketdyne 1967, R-3896-1 Technical manual, engine data, F-1 rocket engine, figure 1-5: sea-level specific impulse 265.3 s, thrust 1,522,000 lbf, mixture ratio 2.27, dry weight 18,619 lb",
+     "coffman-j2": "Coffman, P. 2010, Remembering the Giants, chapter 2 (NASA, NTRS 20100027318): J-2 specific impulse 425 s (vacuum implied), up to 230,000 lbf",
+     "spacex-f9": "SpaceX, Falcon 9 vehicle page (read Nov 2026): 549,054 kg, 22,800 kg to low Earth orbit (expendable, not stated), second stage 981 kN. https://www.spacex.com/vehicles/falcon-9",
+     "nasa-mmrtg": "NASA Facts NF-2020-05-619-HQ, Multi-Mission Radioisotope Thermoelectric Generator: about 110 W electric at launch, about 45 kg, 4.8 kg of plutonium dioxide",
+     "schmidt2009": "Schmidt, G. R., Sutliff, T. J. and Dudzinski, L. A. 2009, Radioisotope power: a key technology for deep space exploration, IAC-09 (NTRS 20120016365): MHW-RTG 37.7 kg and 158 W at start of mission; GPHS-RTG 55.9 kg and up to 300 W (sidebar 292 W)",
+     "jpl-juno2011": "NASA and JPL 2011, Juno launch press kit: three arrays of more than 60 m2 in all, 18,698 cells, about 14 kW at Earth's distance and about 400 W at Jupiter's, launch mass 3,625 kg. https://www.jpl.nasa.gov/news/press_kits/JunoLaunch.pdf",
+     "nasa-orbiter-tps": "NASA Facts FS-2008-02-042-KSC, Orbiter thermal protection system: reinforced carbon-carbon above 3000 F, tiles for 1,200 to 2,500 F, entry in excess of 17,000 mph",
+     "pavlosky1974": "Pavlosky, J. E. and St. Leger, L. G. 1974, Apollo experience report: thermal protection subsystem, NASA TN D-7564: Avco 5026-39G at 31 lb/ft3; design lunar return 36,333 ft/s; Apollo 4 peak 425 Btu/ft2 s and total 37,522 Btu/ft2; surfaces approaching 5000 F",
+     "nasa-iss-facts": "NASA, Space station facts and figures (read Nov 2026): 1,005 m3 pressurised, 388 m3 habitable, 419,725 kg, 75 to 90 kW from 8 arrays. https://www.nasa.gov/international-space-station/space-station-facts-and-figures/",
      "sheet": "the master data sheet (pack base-reference): the value is worked out from its rows",
      "law": "a law of physics, named on the mark"
     }
