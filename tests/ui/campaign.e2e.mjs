@@ -131,6 +131,41 @@ try {
     assert.match(await gm.locator("[data-kept-note]").innerText(), /could not be reopened .* set aside/);
     assert.ok(await gm.evaluate(() => localStorage.getItem("sse4.campaign.set-aside") !== null), "the damaged save is kept aside");
 
+    // V3 gap 27: the note offers the set-aside save back. Trying again with a save still damaged sets it aside again.
+    await Promise.all([gm.waitForEvent("load"), gm.locator("[data-recover-try]").click()]);
+    await ready();
+    await gm.locator("[data-kept-note]").getByText(/set aside, not lost/).waitFor({ timeout: 20000 });
+    assert.ok(await gm.evaluate(() => localStorage.getItem("sse4.campaign.set-aside") !== null), "still kept aside");
+
+    // An open that never finished (the tab closed part way) is set aside on the next visit, not tried again blind.
+    await gm.evaluate(() => localStorage.setItem("sse4.campaign.opening", new Date().toISOString()));
+    await gm.reload();
+    await ready();
+    assert.match(await gm.locator("[data-kept-note]").innerText(), /did not finish/);
+    assert.equal(await gm.evaluate(() => localStorage.getItem("sse4.campaign.opening")), null);
+
+    // Your data, in the Campaign dialog: space used, the set-aside save, a diagnostic file without keys, clear all.
+    await gm.evaluate(() => localStorage.setItem("sse4.agents.key.test", "sk-not-a-real-key"));
+    await more(gm, "Campaign…");
+    const yd = gm.locator("[data-your-data]");
+    await yd.locator("[data-used]").getByText(/This browser keeps .* for SSE4/).waitFor();
+    await yd.locator("[data-set-aside]").waitFor();
+    await shot(gm, "u27-your-data");
+    const [diag] = await Promise.all([gm.waitForEvent("download"), yd.locator("[data-diagnostic]").click()]);
+    const dpath = `${tmpdir()}/sse4-diag-${name}.json`;
+    await diag.saveAs(dpath);
+    const dtext = readFileSync(dpath, "utf8");
+    const d = JSON.parse(dtext);
+    assert.equal(d.kind, "sse4-diagnostic");
+    assert.ok(d.kernel && d.state_hash, "says what ran");
+    assert.ok(!dtext.includes("sk-not-a-real-key"), "no agent keys in the diagnostic file");
+    await yd.getByRole("button", { name: "Clear all data…" }).click();
+    await Promise.all([gm.waitForEvent("load"), yd.locator("[data-clear-all]").click()]);
+    await ready();
+    assert.equal(await gm.evaluate(() => localStorage.getItem("sse4.agents.key.test")), null, "keys forgotten");
+    assert.equal(await gm.evaluate(() => localStorage.getItem("sse4.campaign.set-aside")), null, "set-aside forgotten");
+    assert.equal(await gm.locator("[data-kept-note]").count(), 0);
+
     assert.deepEqual(errors, []);
     await browser.close();
     console.log(`${name}: campaign kept, reopened, joined, downloaded, started fresh and opened from a file`);
