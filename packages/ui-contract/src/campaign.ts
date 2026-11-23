@@ -29,6 +29,8 @@ export interface CampaignSave {
     /** U11: the campaign's now and where its calendar starts (older saves have neither; they open at now_yr). */
     campaign_now_yr?: number;
     campaign_epoch_yr?: number;
+    /** Where the GM put each pack overlay (overlay.ts), by overlay id (older saves have none). */
+    overlay_anchors?: Record<string, import("./overlay.ts").OverlayAnchor>;
   };
   /**
    * The packs over the opening stack (Packs screen) and the campaign's own
