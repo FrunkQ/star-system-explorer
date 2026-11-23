@@ -99,7 +99,7 @@ const GAS_NAMES: Readonly<Record<string, string>> = Object.fromEntries(Object.en
 
 /**
  * A world's gas mix by mole fraction: a V3 import's `v3.atmosphere.composition`, else an `atmosphere.composition`
- * fact, else the main gas alone (`atmosphere.main`, as base-sol and the kernel give it) standing for the whole mix
+ * fact, else the sheet's facts one per gas (`atmosphere.composition.n2` and so on), else the main gas alone (`atmosphere.main`, as base-sol and the kernel give it) standing for the whole mix
  * until the data sheet carries a fuller one (fudge register). Null when nothing is known or the main gas is "none".
  */
 export function gasMixOf(facts: Record<string, Json> | undefined): Record<string, number> | null {
@@ -111,6 +111,14 @@ export function gasMixOf(facts: Record<string, Json> | undefined): Record<string
     for (const [g, x] of Object.entries(own)) if (typeof x === "number") out[GAS_NAMES[g.toLowerCase()] ?? g] = x;
     if (Object.keys(out).length) return out;
   }
+  // The data sheet's own mix: one fact per gas, `atmosphere.composition.<sheet substance id>` = mole fraction.
+  const per: Record<string, number> = {};
+  for (const [k, x] of Object.entries(facts ?? {})) {
+    if (!k.startsWith("atmosphere.composition.") || typeof x !== "number" || !(x > 0)) continue;
+    const id = k.slice("atmosphere.composition.".length);
+    per[GAS_NAMES[id.toLowerCase()] ?? id] = x;
+  }
+  if (Object.keys(per).length) return per;
   const main = facts?.["atmosphere.main"];
   if (typeof main !== "string" || !main || main === "none") return null;
   return { [GAS_NAMES[main.toLowerCase()] ?? main]: 1 };
