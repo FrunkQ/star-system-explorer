@@ -10,6 +10,7 @@
 // control (every band, as they have no view controls yet).
 import { spawn } from "node:child_process";
 import { mkdirSync, readFileSync } from "node:fs";
+import { view } from "./nav.mjs";
 import assert from "node:assert/strict";
 import { createRequire } from "node:module";
 import { Session } from "../../packages/ui-contract/src/session.ts";
@@ -88,7 +89,6 @@ try {
     }
     assert.equal(await hash(), h0, "opening and closing the panels changes nothing");
     const panel = gm.getByRole("group", { name: "Light" });
-    const bandBar = gm.getByRole("group", { name: "Band" });
     const openLight = async () => (await panel.count()) || (await control.getByRole("button", { name: /Light:/ }).click());
     // Band (one set of controls, Alex 23 Nov): the view controls choose it; the panel only offers that band's recipes.
     await openLight();
@@ -96,7 +96,7 @@ try {
     for (const r of recipes) {
       const b = recipeBand(r);
       if ((await gm.locator("[data-view-controls]").getAttribute("data-band")) !== b) {
-        await bandBar.getByRole("button", { name: VIEW_BAND_WORDS[b], exact: true }).click();
+        await view(gm, "Band", VIEW_BAND_WORDS[b]);
         await gm.waitForFunction((w) => document.querySelector("[data-view-controls]")?.getAttribute("data-band") === w, b);
         // A new band starts on its first recipe; the panel lists its own band.
         await openLight();
@@ -124,7 +124,7 @@ try {
     // Why per body.
     await panel.getByRole("button", { name: "Why is Tarn this colour?" }).click();
     assert.match(await panel.locator(".why").innerText(), /Stubbed/);
-    await bandBar.getByRole("button", { name: "Visible", exact: true }).click();
+    await view(gm, "Band", "Visible");
     await openLight();
     await panel.getByRole("radio", { name: /Chart colours/ }).check();
     assert.equal(await starMark(), before, "back to the symbology exactly");

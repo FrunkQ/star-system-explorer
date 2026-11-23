@@ -8,4 +8,5 @@
 - Commits authored as `FrunkQ <frunk@frunk.net>`. One work package at a time; its checks pass before the next starts.
 - Deterministic Rust code: no wall clock, no HashMap/HashSet, no std transcendental maths (use `sse_core::math`), no fused multiply-add. Clippy enforces this (`clippy.toml`).
 - Before committing: `scripts/check.sh` (fmt, clippy -D warnings, all tests).
+- Screenshots are never committed: they go in project files at `sse4/handover-screens/<PKG>-screens/` (see START-HERE, How to resume).
 - Golden hashes (`tests/golden/`) change only on purpose, with the reason in the package log.

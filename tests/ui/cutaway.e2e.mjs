@@ -8,7 +8,7 @@
 import { spawn } from "node:child_process";
 import { mkdirSync } from "node:fs";
 import assert from "node:assert/strict";
-import { go, more } from "./nav.mjs";
+import { go, more, view } from "./nav.mjs";
 import { createRequire } from "node:module";
 
 const { chromium, firefox, webkit } = createRequire(import.meta.url)("playwright");
@@ -68,11 +68,11 @@ try {
     // HUD off: the slice and its marks without names or depth ticks; on brings them back.
     const named = await cut.locator("svg text").count();
     assert.ok(named > 0);
-    await gm.getByRole("group", { name: "HUD" }).getByRole("button", { name: "Off", exact: true }).click();
+    await view(gm, "HUD", "Off");
     await gm.waitForSelector('[data-cutaway][data-hud="off"]');
     assert.equal(await cut.locator("svg text").count(), 0, "HUD off: no names or ticks");
     assert.equal(await cut.locator("[data-shell]").count(), 6, "the shells stay");
-    await gm.getByRole("group", { name: "HUD" }).getByRole("button", { name: "On", exact: true }).click();
+    await view(gm, "HUD", "On");
     await gm.waitForSelector('[data-cutaway][data-hud="on"]');
     assert.equal(await cut.locator("svg text").count(), named);
 

@@ -7,6 +7,7 @@
 // back to Canvas 2D. (The pixel-stability proof is packages/renderer/test.)
 import { spawn } from "node:child_process";
 import { mkdirSync } from "node:fs";
+import { view as pick } from "./nav.mjs";
 import assert from "node:assert/strict";
 import { createRequire } from "node:module";
 
@@ -79,11 +80,11 @@ try {
         await gm.waitForFunction((t) => document.querySelector("[data-star-live]")?.getAttribute("data-star-turn") !== t, turn0, { timeout: 10000 });
         // Bands through True (rule 12, one set of controls): X-ray draws the corona, Infrared each body's own heat.
         for (const [b, id] of [["X-ray", "xray"], ["Infrared", "infrared"]]) {
-          await gm.getByRole("group", { name: "Band" }).getByRole("button", { name: b }).click();
+          await pick(gm, "Band", b);
           await gm.waitForFunction((x) => document.querySelector("[aria-roledescription='3D chart'] [data-true-band]")?.getAttribute("data-true-band") === x, id);
         }
         await shot(gm, `v10d-gm-true-infrared-${mode}`);
-        await gm.getByRole("group", { name: "Band" }).getByRole("button", { name: "Visible" }).click();
+        await pick(gm, "Band", "Visible");
         await gm.waitForFunction(() => !document.querySelector("[aria-roledescription='3D chart'] [data-true-band]"));
       }
       await shot(gm, `v10a-gm-true-${mode}`);
@@ -93,7 +94,7 @@ try {
       await gm.getByRole("group", { name: "Scale" }).getByRole("button", { name: "Real" }).click();
       await gm.waitForFunction(() => document.querySelector("[aria-roledescription='3D chart']")?.getAttribute("data-scale") === "real");
       assert.match(await view.locator(".note").innerText(), /Real scale/);
-      await gm.getByRole("group", { name: "HUD" }).getByRole("button", { name: "On" }).click();
+      await pick(gm, "HUD", "On");
       await gm.waitForFunction(() => document.querySelector("[aria-roledescription='3D chart']")?.getAttribute("data-hud") === "on");
       await shot(gm, `v10b-gm-real-hud-${mode}`);
       await gm.getByRole("group", { name: "Scale" }).getByRole("button", { name: "Readable" }).click();
@@ -105,12 +106,12 @@ try {
       await flat.locator("[data-scale-rings]").waitFor();
       const named = await flat.locator("text.name").count();
       assert.ok(named > 0);
-      await gm.getByRole("group", { name: "HUD" }).getByRole("button", { name: "Off" }).click();
+      await pick(gm, "HUD", "Off");
       await flat.locator("[data-scale-rings]").waitFor({ state: "detached" });
       assert.equal(await flat.locator("text.name").count(), 0, "HUD off: no names");
       assert.ok((await flat.locator("[data-address]").count()) > 0, "the bodies stay");
       if (mode === "gpu") await shot(gm, `hud-off-chart-${name}`);
-      await gm.getByRole("group", { name: "HUD" }).getByRole("button", { name: "On" }).click();
+      await pick(gm, "HUD", "On");
       await flat.locator("[data-scale-rings]").waitFor();
       assert.equal(await flat.locator("text.name").count(), named);
 
