@@ -1,6 +1,6 @@
 # SSE4 future technology: defined by the problems it solves
 
-Status: **proposed 23 Nov 2026** by the design thread, for Alex to answer the numbered questions in section 12. Track letters **FT**. Design only; nothing here is built by this note. A mockup goes with it: "SSE4 ship styles and tech levels" (one generated ship in five styles and at three tech levels).
+Status: **accepted 23 Nov 2026**. Alex answered "yes to all" at 16:15 to the fourteen questions in section 12 (read by the coordinator as covering this list among three open at once; he can correct that). Written by the design thread. Track letters **FT**. Design only; the packages are in section 13. Every figure still passes the citation check before it ships. A mockup goes with it: "SSE4 ship styles and tech levels" (one generated ship in five styles and at three tech levels), source in `/mnt/project-files/sse4/ships/styles-and-tech-mockup.html`.
 
 Read with: the voyages design (drive facts, FTL as a pack rule), the nebulae and light design (every object publishes its light by band, section 5A sensing), the matter pack design (the master data sheet and its one "Look up" door), the programs design (track J), the naming design (settings inherit down the tree), and the ship generator in `packages/renderer/src/ship-design.ts` (parts sized by physics, a style only arranges and dresses them).
 
@@ -166,7 +166,7 @@ So two navies at the same level differ by style, and two ships in the same style
 | Megastructures | one rising row of material strength, each structure from its paper | a ladder you can watch open: ring habitat, Mars beanstalk, Earth beanstalk, then the fictional ones |
 | Pulp solar system | "atomic rockets" richer than any real fuel | honest fictional marks on cheerful ships |
 
-## 12. Questions for Alex (each with a recommendation)
+## 12. Questions for Alex (all answered yes, 23 Nov 2026)
 
 1. **No switches: an advance moves a figure, and the same block still runs** (zero waste heat gives zero radiator), so nothing is ever "skipped", only pushed, and "fictional" is read off whether a figure passed its cited ceiling. Recommended: yes. It is the processes-not-classes rule for machines.
 2. **The ten starting limits in section 4**, as editable pack data, with weapons, computing, medicine and build cost left out for now. Recommended: yes.
