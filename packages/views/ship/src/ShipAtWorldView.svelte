@@ -6,7 +6,7 @@
 -->
 <script lang="ts">
   import { untrack } from "svelte";
-  import { fitAbilities, passGlow, type AbilityRules, type DesignRules, type DesignShip, type FitResult, type Propellants, type ShipStyle } from "../../../renderer/src/index.ts";
+  import { designShip, fitAbilities, passGlow, type AbilityRules, type DesignRules, type DesignShip, type FitResult, type Propellants, type ShipStyle } from "../../../renderer/src/index.ts";
   import type { ShipAtWorld, ShipAtWorldAsk, ViewContext } from "../../../ui-contract/src/index.ts";
   import ShipPlans from "./ShipPlans.svelte";
 
@@ -44,7 +44,6 @@
     failed = null;
     try {
       const style = Object.keys(pack.styles)[0]!;
-      const { designShip } = await import("../../../renderer/src/index.ts");
       const layout = designShip(ship, fuels, pack.rules, style, pack.styles[style]!, 1);
       const where = { ...(ask.fixture ? { fixture: ask.fixture } : {}), ...(ask.nav ? { nav: ask.nav } : {}), ...(ask.system ? { system: ask.system } : {}), ...(ask.at_s !== undefined ? { at_s: ask.at_s } : {}), ...(ask.v_inf_m_s !== undefined ? { v_inf_m_s: ask.v_inf_m_s } : {}) };
       fitted = await fitAbilities((a) => ctx.session.shipAtWorld(a), where, ship, layout, pack.styles[style]!.hull, asks, pack.rules.abilities);
