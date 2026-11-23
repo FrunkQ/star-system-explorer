@@ -3,7 +3,12 @@
 // only when a view asks for it, so pages without 3D never fetch it.
 export { tree, pathTo, relative, basis, project, projectExact, projectFlattened, rebase, frameFor } from "./frames.ts";
 export type { Vec3, FrameNode, Tree, Camera, Pixel } from "./frames.ts";
-export type { Gpu, GpuItem, GpuRing } from "./gpu.ts";
+export type { Gpu, GpuGlow, GpuItem, GpuLight, GpuRing, GpuSheet } from "./gpu.ts";
+export { armField, cloudNoise, GALAXY_BANDS, GALAXY_LIGHT, GALAXY_LIGHT_REFS, galaxyFace, glowPicture, sheetWeights, surfaceAt } from "./galaxy-true.ts";
+export type { GalaxyBand, GalaxyPicture } from "./galaxy-true.ts";
+// V10a: True in the system view, each world wrapped in its own surface.
+export { equirect, starCss, thermalGrey, THERMAL_DECADES, THERMAL_IR_M, trueSurface } from "./true-look.ts";
+export type { TrueTexture } from "./true-look.ts";
 // R1: render recipes, the pass library, the governor and the globe runtime.
 export { checkRecipe, plan, estimateMs, pickRecipe, bestTier, maxLevel, stepsFrom, TIER_ORDER, DEFAULT_BUDGET_MS } from "./recipe.ts";
 export type { RecipeDoc, RecipePass, PassSpec, PassCost, Knob, DegradeStep, Plan, RecipeCheck } from "./recipe.ts";
@@ -32,6 +37,8 @@ export type { EditContext, EditResult, RecipeEdit, TierCost } from "./recipe-edi
 // O10 convection: granules drawn where the disc resolves them.
 export { coronaScaleHeight, CORONA_K, drawStar, GRANULE_DT, granulesFor, granulesShow, limbDarkening, narrateGranules, narrateStar, SPOT_DELTA_K, spotsFor, STAR_REFERENCES } from "./star.ts";
 export type { Convection, Granules, Spot, StarDraw } from "./star.ts";
+export { cycleOf, drawLiveStar, flareProfile, flaresAt, readLiveStar, spotsOf, STAR_SECONDS_PER_SECOND, turnAt } from "./live-star.ts";
+export type { Flare, GivenStar, LiveStar, StarReader } from "./live-star.ts";
 // Time-lapse layers on the Body globe (surface_frames): read, bracket, colour, pick, narrate.
 export { bracket, cellOf, eventsBetween, FIELDS, LAYERS, layerColour, layersFor, narrateFrame, pickAt, readFrames, recolour, seaLevelAt, valueAt } from "./timelapse.ts";
 export type { FieldName, Frame, FrameEvent, LayerSpec, RawFrames, TimeLapse } from "./timelapse.ts";
@@ -40,7 +47,39 @@ export type { WeatherCell, WeatherLayer, WeatherMap, WeatherSystem, WeatherTile 
 export { ang2pixRing, drawSky, exposureFor, glowLevel, glowPixel, glowSample, narrateSky, pickStar, pix2angRing, pointSpread, projectSky, readSky, skyCamera, skyView, systemView, toGalactic, toSystem, SKY_POINTS_MAX, SKY_WHITE_MAG_ARCSEC2, starRgb, tempFromBV, unprojectSky } from "./sky.ts";
 export type { Sky, SkyCamera, SkyGlowBand, SkyStar, SkyView, SystemFrame } from "./sky.ts";
 export { bubbleOutline, chartCut, compressed, cutPaths, degreeOf, dipole, dipoleAxis, dipoleB0, drawField3D, FIELD_LINES, FIELD_REFS, fieldAt, fieldFromRead, inBubble, insideBubble, lineBuffers, narrateField, project3D, schmidt, seeds, traceField, traceLine } from "./field.ts";
+export { MAG_SYSTEM_LINES, magExtent, magShape, placeMag } from "./mag-true.ts";
+export type { MagRun, MagShape } from "./mag-true.ts";
 export type { Bubble, ChartCut, FieldCamera, FieldLine, FieldModel, FieldReadJson, FieldTrace, Pen, Run, TraceOptions } from "./field.ts";
 // V3 gap item 14, part 1: ship hulls and drive plumes built from the ship record's own physics.
-export { bandOf, driveFacts, HULL_SHAPE, hullFromShip, hullProfile, narrateShip, plumeShape, SHIP_REFS, shipPaths } from "./ship.ts";
-export type { DriveFacts, Hull, HullPart, HullPartKind, PlumeShape, PropellantPart, Propellants, ShipRecord } from "./ship.ts";
+export { bandOf, driveFacts, HULL_SHAPE, hullFromShip, hullProfile, narrateShip, plumeShape, SHIP_REFS, shipPaths, readPropellants, tanksOf } from "./ship.ts";
+export type { DriveFacts, Hull, HullPart, HullPartKind, PlumeShape, PropellantPart, Propellants, ShipRecord, TankNeed } from "./ship.ts";
+// V3 gap item 14, stage 2: ships designed from their parts, in styles from the base-ships pack.
+export { designShip, narrateDesign, needsOf, remixes, shipViews } from "./ship-design.ts";
+export type { Callout, DesignOverrides, DesignRecipe, DesignRules, DesignShip, Needs, Piece, ShipLayout, ShipStyle, ShipView, SystemKind, ViewPath } from "./ship-design.ts";
+// V3 gap item 14, stage 3: the 3D model from the same layout, with panel textures from the style's skin.
+export { panelTexture, PANEL_UNIT, shipMesh, SURFACE_OF } from "./ship-mesh.ts";
+export type { ShipMesh, SkinSpec, Surface, SurfaceBuffers, SurfaceLook } from "./ship-mesh.ts";
+// GH9: every collision leaves its mark: warps, ripples, rings, lopsided discs, drawn from the kernel's dated marks.
+export { brightnessAt, edgeOnPaths, faceOnPaths, heightAt, markStrengthAt, SCAR_SHAPES, scarsAt, scarWords } from "./galaxy-marks.ts";
+export type { DiscScars, Frame as ScarFrame, Ring as ScarRing, Ripple } from "./galaxy-marks.ts";
+// V3 gap item 14, stage 4: abilities (aerobraking, landing, skimming) size a shield, lift, legs, chute and scoop.
+export { fitAbilities, fittedChecks, outlineOf, passGlow } from "./ship-abilities.ts";
+export type { Abilities, AbilityRules, AskShipAtWorld, FitResult, Fitted, ShieldKind } from "./ship-abilities.ts";
+export type { ShipView3D } from "./gpu-ship.ts";
+
+/** Draw a designed ship in 3D (WebGPU, else WebGL2), or null when this device has neither. three.js loads only here. */
+export async function startShip(...a: Parameters<typeof import("./gpu-ship.ts").mountShip>) {
+  const { mountShip } = await import("./gpu-ship.ts");
+  return mountShip(...a);
+}
+
+export { curveDrop, decoration, descentTrack, floorFromRefusal, groundColours, groundMesh, heightAt as groundHeightAt, horizonDistance, levelFor, localToDir, patchKeys, patchPoint, playbackKeys, readPatch, siteFrame, tileSpot } from "./surface-patch.ts";
+export type { GroundPoint, Patch, TileKey as SurfaceTileKey } from "./surface-patch.ts";
+export { airMass, rayleighPhase, skyIrradiance, skyRadiance, sunDirection, sunTransmittance } from "./surface-sky.ts";
+export type { SurfaceFrame, SurfaceGpu, SurfaceMesh } from "./gpu-surface.ts";
+
+/** Draw the ground round a site on the GPU (WebGPU, else WebGL2), or null when this device has neither. three.js loads only here. */
+export async function startSurface(canvas: HTMLCanvasElement) {
+  const { createSurfaceGpu } = await import("./gpu-surface.ts");
+  return createSurfaceGpu(canvas);
+}

@@ -18,9 +18,10 @@ use sse_core::math as m;
 /// Seconds in a Julian year.
 pub const YEAR_S: f64 = sse_core::sheet::YR_JULIAN;
 /// Megaparsec in metres (IAU 2015: 1 pc = 648000/pi au).
-pub const MPC_M: f64 = 3.085_677_581_491_367e22;
+pub const MPC_M: f64 = 1e6 * sse_core::sheet::PC;
 /// Critical density today per h^2, solar masses per cubic Mpc (3 H^2 / 8 pi G with H = 100 km/s/Mpc).
-pub const RHO_CRIT_H2: f64 = 2.775_366e11;
+/// (H = 1e5 m/s per Mpc, so H^2 / G in solar masses per Mpc^3 is (1e5)^2 Mpc / GM_sun.)
+pub const RHO_CRIT_H2: f64 = 3.0 * (1e5 * 1e5) * MPC_M / (8.0 * m::PI * sse_core::sheet::GM_SUN);
 
 /// The universe's parameters. The measured ones are the master data
 /// sheet's Cosmos group (DM1), read through the constants handle; only
@@ -39,6 +40,23 @@ pub struct Params {
     pub n_eff: f64,
     /// "Now", Gyr after the origin.
     pub now_gyr: f64,
+    /// DM2: dark energy's pressure over density, w = w0 + wa (1 − a)
+    /// (Chevallier and Polarski 2001; Linder 2003). −1 and 0 is a
+    /// cosmological constant, and then every number is as before.
+    #[serde(default = "minus_one", skip_serializing_if = "is_minus_one")]
+    pub w0: f64,
+    #[serde(default, skip_serializing_if = "is_zero")]
+    pub wa: f64,
+}
+
+fn minus_one() -> f64 {
+    -1.0
+}
+fn is_minus_one(x: &f64) -> bool {
+    *x == -1.0
+}
+fn is_zero(x: &f64) -> bool {
+    *x == 0.0
 }
 
 impl Params {
@@ -53,6 +71,8 @@ impl Params {
             t_cmb: c.t_cmb,
             n_eff: c.n_eff,
             now_gyr,
+            w0: c.w0,
+            wa: c.wa,
         }
     }
 }
@@ -129,7 +149,14 @@ pub struct Cosmology {
     pub sigma_table: Vec<(f64, f64)>,
     /// Power-spectrum amplitude fixed by sigma8.
     pub amplitude: f64,
+    /// DM2: with w other than −1, the growth factor stepped from its
+    /// equation, (ln a, D unnormalised) on a fixed grid; empty for Λ.
+    pub growth_table: Vec<(f64, f64)>,
 }
+
+/// The growth table's grid: ln a from this to 0.5, in this many steps.
+const GROWTH_LN_A0: f64 = -9.210_340_371_976_184; // ln 1e-4
+const GROWTH_STEPS: usize = 2000;
 
 impl Cosmology {
     pub fn new(p: Params) -> Self {
@@ -147,7 +174,11 @@ impl Cosmology {
             hubble_time_gyr,
             sigma_table: vec![],
             amplitude: 1.0,
+            growth_table: vec![],
         };
+        if !c.is_lambda() {
+            c.growth_table = c.growth_steps();
+        }
         let r8 = 8.0 / h;
         c.amplitude = (c.p.sigma8 * c.p.sigma8) / c.sigma2_r(r8);
         c.sigma_table = (0..=280)
@@ -159,9 +190,87 @@ impl Cosmology {
         c
     }
 
+    /// A cosmological constant (w = −1 at every time)?
+    pub fn is_lambda(&self) -> bool {
+        self.p.w0 == -1.0 && self.p.wa == 0.0
+    }
+
+    /// Dark energy's density at a over today's: a^(−3(1 + w0 + wa)) e^(−3 wa (1 − a))
+    /// for w = w0 + wa (1 − a); exactly 1 for a cosmological constant.
+    pub fn dark_energy(&self, a: f64) -> f64 {
+        if self.is_lambda() {
+            return 1.0;
+        }
+        let (w0, wa) = (self.p.w0, self.p.wa);
+        m::pow(a, -3.0 * (1.0 + w0 + wa)) * m::exp(-3.0 * wa * (1.0 - a))
+    }
+
+    /// w at scale factor a.
+    pub fn w(&self, a: f64) -> f64 {
+        self.p.w0 + self.p.wa * (1.0 - a)
+    }
+
     /// E(a) = H(a) / H0.
     pub fn e(&self, a: f64) -> f64 {
-        m::sqrt(self.omega_r / (a * a * a * a) + self.p.omega_m / (a * a * a) + self.omega_l)
+        if self.is_lambda() {
+            return m::sqrt(
+                self.omega_r / (a * a * a * a) + self.p.omega_m / (a * a * a) + self.omega_l,
+            );
+        }
+        m::sqrt(
+            self.omega_r / (a * a * a * a)
+                + self.p.omega_m / (a * a * a)
+                + self.omega_l * self.dark_energy(a),
+        )
+    }
+
+    /// The linear growth equation in ln a, for matter and any smooth dark
+    /// energy: D'' + (2 + d ln H / d ln a) D' − (3/2) Ωm(a) D = 0, from the
+    /// matter era's growing mode D = a, stepped by fixed RK4 (radiation
+    /// left out, as in `growth_exact`). (ln a, D) on the grid.
+    fn growth_steps(&self) -> Vec<(f64, f64)> {
+        let h2 = |a: f64| self.p.omega_m / (a * a * a) + self.omega_l * self.dark_energy(a);
+        // d ln H / d ln a = (1/2) d ln H² / d ln a, with ρ_DE' = −3(1 + w) ρ_DE.
+        let dlnh = |a: f64| {
+            let de = self.omega_l * self.dark_energy(a);
+            let mm = self.p.omega_m / (a * a * a);
+            0.5 * (-3.0 * mm - 3.0 * (1.0 + self.w(a)) * de) / (mm + de)
+        };
+        let om = |a: f64| self.p.omega_m / (a * a * a) / h2(a);
+        let f = |x: f64, d: f64, v: f64| {
+            let a = m::exp(x);
+            (v, -(2.0 + dlnh(a)) * v + 1.5 * om(a) * d)
+        };
+        let h = (0.5 - GROWTH_LN_A0) / GROWTH_STEPS as f64;
+        let mut x = GROWTH_LN_A0;
+        let a0 = m::exp(x);
+        let (mut d, mut v) = (a0, a0);
+        let mut out = Vec::with_capacity(GROWTH_STEPS + 1);
+        out.push((x, d));
+        for _ in 0..GROWTH_STEPS {
+            let (k1d, k1v) = f(x, d, v);
+            let (k2d, k2v) = f(x + 0.5 * h, d + 0.5 * h * k1d, v + 0.5 * h * k1v);
+            let (k3d, k3v) = f(x + 0.5 * h, d + 0.5 * h * k2d, v + 0.5 * h * k2v);
+            let (k4d, k4v) = f(x + h, d + h * k3d, v + h * k3v);
+            d += h / 6.0 * (k1d + 2.0 * k2d + 2.0 * k3d + k4d);
+            v += h / 6.0 * (k1v + 2.0 * k2v + 2.0 * k3v + k4v);
+            x += h;
+            out.push((x, d));
+        }
+        out
+    }
+
+    /// The stepped growth at a (unnormalised), linear in ln a between grid points.
+    fn growth_stepped(&self, table: &[(f64, f64)], a: f64) -> f64 {
+        let x = m::ln(a.max(1.0e-12));
+        if x <= table[0].0 {
+            return table[0].1 * a / m::exp(table[0].0);
+        }
+        let h = table[1].0 - table[0].0;
+        let i = (((x - table[0].0) / h) as usize).min(table.len() - 2);
+        let (x0, d0) = table[i];
+        let (_, d1) = table[i + 1];
+        d0 + (d1 - d0) * (x - x0) / h
     }
 
     /// Cosmic time at scale factor a, Gyr, with radiation (fixed quadrature in s = sqrt(a)).
@@ -232,11 +341,26 @@ impl Cosmology {
     /// Omega_m(a) and Omega_L(a).
     fn omegas(&self, a: f64) -> (f64, f64) {
         let e2 = self.e(a) * self.e(a);
-        (self.p.omega_m / (a * a * a) / e2, self.omega_l / e2)
+        (
+            self.p.omega_m / (a * a * a) / e2,
+            self.omega_l * self.dark_energy(a) / e2,
+        )
     }
 
-    /// Linear growth factor, Carroll, Press and Turner 1992, D(1) = 1.
+    /// The growth equation stepped even for Λ (the check against the
+    /// closed forms).
+    pub fn growth_by_steps(&self, a: f64) -> f64 {
+        let t = self.growth_steps();
+        self.growth_stepped(&t, a) / self.growth_stepped(&t, 1.0)
+    }
+
+    /// Linear growth factor, Carroll, Press and Turner 1992, D(1) = 1; with
+    /// w other than −1, stepped from its equation (DM2).
     pub fn growth(&self, a: f64) -> f64 {
+        if !self.growth_table.is_empty() {
+            let t = &self.growth_table;
+            return self.growth_stepped(t, a) / self.growth_stepped(t, 1.0);
+        }
         let g = |om: f64, ol: f64| {
             2.5 * om / (m::pow(om, 4.0 / 7.0) - ol + (1.0 + 0.5 * om) * (1.0 + ol / 70.0))
         };

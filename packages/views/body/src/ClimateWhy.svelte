@@ -5,7 +5,7 @@
   and what it assumed. Read-only; the Workshop's climate blocks come in W12.
 -->
 <script lang="ts">
-  import { climateBelts, isExtrapolation, regimeWords, type ClimateSummary, type Depth } from "../../../ui-contract/src/index.ts";
+  import { climateBelts, constant, isExtrapolation, regimeWords, type ClimateSummary, type Depth } from "../../../ui-contract/src/index.ts";
   import { Stamp, opensFrom } from "../../../chart-grammar/src/index.ts";
 
   let { climate, label, depth = "curious", from, onclose }: { climate: ClimateSummary; label: string; depth?: Depth; from?: () => Element | null | undefined; onclose: () => void } = $props();
@@ -13,7 +13,7 @@
   const belts = $derived(climateBelts(climate));
   // The kernel repeats its assumptions among the why lines; they are listed once, under Assumed.
   const lines = $derived(climate.assumed.length ? climate.why.filter((w) => !/^assumed:/i.test(w)) : climate.why);
-  const c = (k: number) => Math.round(k - 273.15);
+  const c = (k: number) => Math.round(k - constant("T0C"));
   const mm = (m: number) => (m <= 0 ? "none" : m < 0.01 ? "a trace" : `${Math.round(m * 1000).toLocaleString("en-GB")} mm`);
   const n = (x: number, d = 1) => x.toLocaleString("en-GB", { maximumFractionDigits: d });
 </script>

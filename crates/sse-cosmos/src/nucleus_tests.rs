@@ -109,13 +109,14 @@ fn black_holes_quasars_and_quiet_nuclei() {
 #[test]
 fn light_views_and_events() {
     let np = NucleusParams::default();
-    // Eddington: a 1e8 hole at the Eddington rate shines at 1.26e39 W (1.26e46 erg/s).
+    // Eddington: a 1e8 hole at the Eddington rate shines at 1.2571e39 W (1.26e46 erg/s),
+    // 4 pi G M m_p c / sigma_T from the sheet.
     let mdot_edd = L_EDD_PER_MSUN * 1.0e8
         / (np.radiative_efficiency * 299_792_458.0_f64 * 299_792_458.0)
-        / 1.988_47e30
+        / sse_core::sheet::M_SUN
         * 31_557_600.0;
     let (l, lam, t) = np.light(1.0e8, mdot_edd);
-    assert!((lam - 1.0).abs() < 1e-9 && (l - 1.257e39).abs() < 1e33);
+    assert!((lam - 1.0).abs() < 1e-9 && (l - 1.2571e39).abs() < 1e35);
     assert_eq!(np.class(l, lam), NucleusClass::Quasar);
     // Disc peaks in the far ultraviolet for 1e8 Msun (about 1e5 K), hotter for smaller holes.
     assert!((5.0e4..5.0e5).contains(&t), "{t}");

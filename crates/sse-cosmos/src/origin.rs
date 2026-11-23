@@ -95,9 +95,120 @@ pub struct Origin {
     pub path: Vec<[f64; 3]>,
     pub why: String,
     pub references: Vec<String>,
+    /// GH4: born in a galaxy this one tore apart (its address), when that
+    /// fits better than any birthplace in the disc.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub born_in: Option<String>,
 }
 
-const KMS_KPC_GYR: f64 = 1.022_712;
+/// How a halo star's birthplace reads: "a dwarf galaxy that fell in 9.6
+/// Gyr ago and was torn apart 7.2 Gyr ago".
+pub fn born_in_words(c: &crate::remains::Component, now_gyr: f64) -> String {
+    let what = if c.stars_msun < 1.0e9 {
+        "a dwarf galaxy"
+    } else {
+        "a galaxy"
+    };
+    let fate = match (c.torn_gyr, c.merged_gyr) {
+        (Some(t), _) => format!(" and was torn apart {:.1} Gyr ago", now_gyr - t),
+        (None, Some(t)) => format!(" and sank to the centre {:.1} Gyr ago", now_gyr - t),
+        _ => ", and is still being torn apart".to_string(),
+    };
+    format!(
+        "{what} that fell in {:.1} Gyr ago{fate}",
+        now_gyr - c.fell_gyr
+    )
+}
+
+/// GH4: the swallowed galaxy that best fits a birth at `t_b` (with a kept
+/// [Fe/H], if any) among the remains at the star's place now: its index,
+/// the gas [Fe/H] there and then, and its weight (stars per pc³ there born
+/// within half a Gyr of `t_b`, times the fit of the composition).
+fn from_remains(
+    env: &GalaxyEnvelope,
+    p: &OriginParams,
+    a: &OriginAsk,
+    t_b: f64,
+) -> Option<(usize, f64, f64)> {
+    let comps = &env.galaxy.assembled.as_ref()?.components;
+    let place = crate::envelope::Place {
+        r_kpc: a.r_now_kpc,
+        phi: a.phi_now_deg * m::PI / 180.0,
+        z_pc: 0.0,
+        t_gyr: a.now_gyr.min(env.galaxy.now.t_gyr),
+    };
+    let mut best: Option<(usize, f64, f64)> = None;
+    for (i, dens) in env.remains_at(place) {
+        let c = &comps[i];
+        let total: f64 = c.births.iter().map(|b| b.stars).sum();
+        let near: f64 = c
+            .births
+            .iter()
+            .filter(|b| (b.t_gyr - t_b).abs() <= 0.5)
+            .map(|b| b.stars)
+            .sum();
+        let Some(b) = c
+            .births
+            .iter()
+            .min_by(|x, y| (x.t_gyr - t_b).abs().total_cmp(&(y.t_gyr - t_b).abs()))
+        else {
+            continue;
+        };
+        if total <= 0.0 || near <= 0.0 {
+            continue;
+        }
+        let fit = a.keep_feh.map_or(1.0, |f| {
+            let q = (f - b.feh) / (p.feh_sd + b.feh_sd);
+            m::exp(-0.5 * q * q)
+        });
+        let w = dens * near / total * fit;
+        if w > 0.0 && best.is_none_or(|x| w > x.2) {
+            best = Some((i, b.feh, w));
+        }
+    }
+    best
+}
+
+/// The disc's weight on the same terms: stars per pc³ at the place born
+/// within half a Gyr of `t_b` (from the ring at its radius), times the fit.
+fn disc_weight(env: &GalaxyEnvelope, p: &OriginParams, a: &OriginAsk, o: &Origin) -> f64 {
+    if o.impossible.is_some() {
+        return 0.0;
+    }
+    let place = crate::envelope::Place {
+        r_kpc: a.r_now_kpc,
+        phi: a.phi_now_deg * m::PI / 180.0,
+        z_pc: 0.0,
+        t_gyr: a.now_gyr.min(env.galaxy.now.t_gyr),
+    };
+    let dens = env.systems_pc3(place) * env.params.mean_star_msun;
+    let steps = 200;
+    let (t0, t1) = (env.disc.t_start_gyr, place.t_gyr);
+    let (mut all, mut near) = (0.0, 0.0);
+    for k in 0..steps {
+        let t = t0 + (t1 - t0) * (k as f64 + 0.5) / steps as f64;
+        let f = env.surface(a.r_now_kpc, t).sfr.max(0.0);
+        all += f;
+        if (t - o.birth_gyr).abs() <= 0.5 {
+            near += f;
+        }
+    }
+    if all <= 0.0 {
+        return 0.0;
+    }
+    let fit = a.keep_feh.map_or(1.0, |f| {
+        let q = (f - o.feh_gas) / p.feh_sd;
+        m::exp(-0.5 * q * q)
+    });
+    dens * near / all * fit
+}
+
+const KMS_KPC_GYR: f64 = 1e3 * 1e9 * sse_core::sheet::YR_JULIAN / (1e3 * sse_core::sheet::PC);
+
+/// Kilometres per second in kiloparsecs per gigayear, for `infall`.
+pub(crate) fn kms_kpc_gyr() -> f64 {
+    KMS_KPC_GYR
+}
 
 fn wrap_deg(d: f64) -> f64 {
     let x = d - 360.0 * m::floor(d / 360.0);
@@ -112,8 +223,58 @@ fn fmt_feh(x: f64) -> String {
     format!("{:+.2}", x)
 }
 
-/// Work back a birthplace and path (deterministic).
+/// Work back a birthplace and path (deterministic). GH4: when a galaxy
+/// this one tore apart holds more stars of this age and composition at the
+/// star's place than the disc does, the star is one of the stellar halo's.
 pub fn reconstruct(env: &GalaxyEnvelope, p: &OriginParams, a: &OriginAsk) -> Origin {
+    let disc = disc_origin(env, p, a);
+    if a.age_gyr < 0.0 || a.now_gyr - a.age_gyr <= 0.0 {
+        return disc;
+    }
+    let t_b = a.now_gyr - a.age_gyr;
+    let Some((i, feh_gas, w_halo)) = from_remains(env, p, a, t_b) else {
+        return disc;
+    };
+    // The more likely population at its place, for its age and composition.
+    if w_halo <= disc_weight(env, p, a, &disc) {
+        return disc;
+    }
+    let c = &env.galaxy.assembled.as_ref().expect("remains").components[i];
+    let words = born_in_words(c, a.now_gyr);
+    let feh = a.keep_feh.unwrap_or(feh_gas);
+    let why = format!(
+        "{} It is more likely a star of the stellar halo: formed {:.2} Gyr ago in {words}, whose gas then had [Fe/H] {}. That galaxy's stars are spread along its old orbit, and here they outnumber the disc's stars of this age and composition. One plausible past.",
+        disc.impossible.as_deref().map_or_else(
+            || "Few of the disc's stars here are of this age and composition.".to_string(),
+            |w| format!("No birthplace in this galaxy's disc fits ({w})."),
+        ),
+        a.age_gyr,
+        fmt_feh(feh_gas),
+    );
+    let mut refs = disc.references.clone();
+    refs.push("Helmi, A. et al. 2018, Nature 563, 85, the merger that led to the formation of the Milky Way's inner stellar halo and thick disk, https://doi.org/10.1038/s41586-018-0625-x".into());
+    Origin {
+        label: "one plausible past".into(),
+        birth_gyr: t_b,
+        age_gyr: a.age_gyr,
+        birth_r_kpc: a.r_now_kpc,
+        birth_phi_deg: wrap_deg(a.phi_now_deg),
+        now_r_kpc: a.r_now_kpc,
+        migrated_kpc: 0.0,
+        sigma_kpc: disc.sigma_kpc,
+        feh_gas,
+        feh,
+        composition: disc.composition.clone(),
+        unusual: None,
+        impossible: None,
+        path: vec![],
+        why,
+        references: refs,
+        born_in: Some(c.from.clone()),
+    }
+}
+
+fn disc_origin(env: &GalaxyEnvelope, p: &OriginParams, a: &OriginAsk) -> Origin {
     let t_b = a.now_gyr - a.age_gyr;
     let sigma = p.mig_sigma_kpc * m::sqrt((a.age_gyr / p.mig_ref_gyr).max(0.0));
     let rings = &env.disc.rings;
@@ -144,6 +305,7 @@ pub fn reconstruct(env: &GalaxyEnvelope, p: &OriginParams, a: &OriginAsk) -> Ori
         path: vec![],
         why,
         references: refs.clone(),
+        born_in: None,
     };
     if a.age_gyr < 0.0 {
         let why = "a star cannot have a negative age".to_string();
@@ -319,5 +481,6 @@ pub fn reconstruct(env: &GalaxyEnvelope, p: &OriginParams, a: &OriginAsk) -> Ori
         path,
         why,
         references: refs,
+        born_in: None,
     }
 }

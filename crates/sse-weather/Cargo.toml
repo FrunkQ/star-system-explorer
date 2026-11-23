@@ -9,6 +9,7 @@ authors.workspace = true
 [dependencies]
 sse-core.workspace = true
 sse-pack.workspace = true
+sse-reference.workspace = true
 sse-climate.workspace = true
 sse-surface.workspace = true
 serde.workspace = true

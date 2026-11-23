@@ -18,6 +18,9 @@ const port = 9600 + Math.floor(Math.random() * 90);
 const base = `http://localhost:${port}/`;
 const server = spawn(process.execPath, ["scripts/serve.mjs", "packages/shell/dist", String(port)], { stdio: "ignore" });
 await new Promise((r) => setTimeout(r, 400));
+const magBand = async (page) => {
+  if ((await page.locator("[data-view-controls]").getAttribute("data-band")) !== "mag") await page.getByRole("group", { name: "Band" }).getByRole("button", { name: "Mag", exact: true }).click();
+};
 const shot = async (page, n) => {
   await page.waitForTimeout(500);
   if (screens) (mkdirSync(screens, { recursive: true }), await page.screenshot({ path: `${screens}/${n}.png` }));
@@ -40,10 +43,12 @@ try {
     await pick("Earth");
     await go(gm, "body");
     const mag = gm.locator("[data-mag]");
-    await mag.waitFor({ timeout: 20000 });
+    await mag.waitFor({ state: "attached", timeout: 20000 });
     const hash0 = await gm.locator("[data-state-hash]").first().getAttribute("data-state-hash");
-    await gm.locator("[data-mag-toggle]").click();
+    // Mag is a Band in the one view controls (Alex, 23 Nov): it replaces the globe with the field.
+    await magBand(gm);
     await gm.waitForSelector('[data-mag="lines"]', { timeout: 20000 });
+    assert.equal(await gm.locator(".globe").isVisible(), false, "Mag replaces the picture");
     const cut = gm.locator("[data-mag-cut]");
     const closed = await cut.locator('path.line[data-kind="closed"]').count();
     const open = await cut.locator("path.line.open").count();
@@ -75,7 +80,7 @@ try {
     await pick("Mars");
     await go(gm, "body");
     await gm.waitForSelector("[data-mag]");
-    if ((await gm.locator("[data-mag-toggle]").getAttribute("aria-pressed")) !== "true") await gm.locator("[data-mag-toggle]").click();
+    await magBand(gm);
     await gm.waitForSelector('[data-mag="none"]', { timeout: 20000 });
     assert.match(await gm.locator("[data-mag-none]").innerText(), /No field facts for this world yet/);
 
@@ -85,13 +90,29 @@ try {
       await pick("Jupiter");
       await go(gm, "body");
       await gm.waitForSelector('[data-mag="lines"]', { timeout: 20000 }).catch(async () => {
-        await gm.locator("[data-mag-toggle]").click();
+        await magBand(gm);
         await gm.waitForSelector('[data-mag="lines"]', { timeout: 20000 });
       });
       await more(gm, /Night chart/);
       const night = await gm.locator("[data-mag-cut] path.line").evaluateAll((ps) => [...new Set(ps.map((p) => getComputedStyle(p).stroke))]);
       assert.equal(night.length, 2);
       await shot(gm, "mag-jupiter-night-desk");
+    }
+    if (vp === "desk") {
+      // Mag at system scale (V10e): the same Band on the system chart in 3D draws every world's field round it, from
+      // the same facts; the note says how many worlds have one. Real draws them at their true size.
+      await go(gm, "system");
+      await gm.getByRole("button", { name: "3D", exact: true }).click();
+      await magBand(gm);
+      const note = gm.locator("[aria-roledescription='3D chart'] [data-true-band='mag']");
+      await note.waitFor({ timeout: 20000 });
+      await gm.waitForFunction(() => Number(document.querySelector("[data-mag-worlds]")?.getAttribute("data-mag-worlds")) >= 5, null, { timeout: 20000 });
+      assert.match(await note.innerText(), /worlds' magnetic fields from the kernel's facts/);
+      await shot(gm, "v10e-system-mag-3d-night-desk");
+      await gm.getByRole("button", { name: "True", exact: true }).click();
+      await gm.getByRole("group", { name: "Scale" }).getByRole("button", { name: "Real" }).click();
+      await gm.waitForFunction(() => /true size/.test(document.querySelector("[data-true-band='mag']")?.textContent ?? ""), null, { timeout: 20000 });
+      await shot(gm, "v10e-system-mag-true-real-night-desk");
     }
     assert.equal(await gm.locator("[data-state-hash]").first().getAttribute("data-state-hash"), hash0, "reading the field writes nothing");
     assert.deepEqual(errors, []);

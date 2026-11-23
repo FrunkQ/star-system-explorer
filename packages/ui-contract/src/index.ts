@@ -16,7 +16,7 @@ export { deriveScene, applyEdits, sig } from "./derivation.ts";
 export type { DerivationDoc, DerivationRule, InputBinding, OutputBinding } from "./derivation.ts";
 export { resolveParams } from "./view.ts";
 export type { StylesHost, ViewModule, ViewContext, PlayerContext, ViewHandle, ParamSpec, Tier, TopicQuery, Workspace, AppliedEdit, WhatIf } from "./view.ts";
-export { commitEdit, placeBodies, withdrawBodies, PRESENCE, undoEdit, redoEdit, openWhatIf, dropWhatIf, keepWhatIf, compareScenes } from "./edit.ts";
+export { commitEdit, factEdit, placeBodies, withdrawBodies, PRESENCE, undoEdit, redoEdit, openWhatIf, dropWhatIf, keepWhatIf, compareScenes } from "./edit.ts";
 export type { Difference } from "./edit.ts";
 export { checkScreen, boundScene, LAYOUT_AREAS, RAIL_SCALES, RAIL_GROUPS, RAIL_GROUP_WORDS, RAIL_MAX, railOf, scalesOf } from "./screen.ts";
 export { resolveStyle, checkStyle, settingCost, settingsCost, promotedOf, settingsDiff, COSTS, TIER_RUNS_UP_TO } from "./style.ts";
@@ -32,14 +32,17 @@ export type { SystemScene, SceneSubject, SceneFact, SceneEvent, FactSource } fro
 export { KM_PER_AU, primaryOf, childrenOf, systemOrder, frameFor, isShell } from "./scene.ts";
 export { describeFact, wordsFor, fact, subjectName, parentOf, sentence, checkPlayerScene } from "./player-scene.ts";
 export type { PlayerScene, PlayerSubject, PlayerFact, Vocab, FieldWords, FactText } from "./player-scene.ts";
-export { packSummary, previewStack, stackPacks, checkPackDoc } from "./packs-edit.ts";
-export type { PackSummary, ValueChange, StackPreview } from "./packs-edit.ts";
+export { packSummary, previewStack, stackPacks, checkPackDoc, sourceLink, percentWords, reportWords, unitWords } from "./packs-edit.ts";
+export type { PackSummary, ValueChange, StackPreview, PackReport } from "./packs-edit.ts";
 export { observeOf, checkSetup, playerDataPack, setupChanges, applySetup, enterFacts, ladderOf, PLAYER_DATA_PACK, DEFAULT_LADDER } from "./data-views.ts";
 export type { DataView, ObserveSetup, Override, TagMode, UnknownStyle, AuthoredFacts } from "./data-views.ts";
 export { showReference } from "./reference.ts";
 export * from "./matter.ts";
 export * from "./place.ts";
 export * from "./view-controls.ts";
+export * from "./overlay.ts";
+export * from "./landing.ts";
+export * from "./map-controls.ts";
 export * from "./place-event.ts";
 export type { ReferenceIn, ShownReference } from "./reference.ts";
 export { GmHost, PlayerReplica, SealedHost, SealedReplica, memoryRoom, broadcastHub, relayHub, multiHub, P2P_PROTOCOL } from "./p2p.ts";
@@ -50,7 +53,7 @@ export { LENS_SCHEMA, LAYERS, TOOLS, SHIPPED_LENSES, HONESTY_MARKS, playerLenses
 export type { Lens, LensCard, LayerId, ToolId, Density, LensPackMeta } from "./lens.ts";
 export { SOUND_SCENE_SCHEMA, SOUND_RECIPE_SCHEMA, SOUND_LABELS, SOUND_LAYERS, NODE_TYPES, hash32, draw, intoOctave, settle, dialled, bandFor, orbitScene, voicesFromSystem, voicesFromPlayers, score, scoreHash, checkRecipe, defaultSound, readSound, voiceLimit } from "./sound.ts";
 export type { SoundLabel, SoundLayer, SoundTier, SoundSource, ScoreNote, SoundScene, Voice, NodeType, RecipeNode, SoundRecipe, SoundSettings } from "./sound.ts";
-export { LIGHT_SCHEMA, BANDS, LINES, HONESTY_WORDS, SYMBOLS, DRAPER_K, planck, thermalColour, checkLightRecipe, paint, describeLight, litFromSystem, litFromPlayers, teffFromSpectral, readLight } from "./light.ts";
+export { LIGHT_SCHEMA, BANDS, LINES, HONESTY_WORDS, SYMBOLS, DRAPER_K, planck, thermalColour, checkLightRecipe, paint, describeLight, litFromSystem, litFromPlayers, teffFromSpectral, readLight, recipeBand, bandChoices, paintedBands, lightForBand } from "./light.ts";
 export type { BandRecipe, Honesty, LightDescription, LitBody } from "./light.ts";
 export { importedSystems, sceneFromImport, reportSummary, sceneFromFormation, worldWords, noWorldsWhy, sceneFromResolved, listedTitle, cloudShape, cloudSubjects, v3BeltShape } from "./make.ts";
 export type { V3Imported, ImportReport, ImportDifference, ImportedSystem, FormationRan, FormationRequest, FormationWorld, Adopted, SystemResolved, ListedSystem, LeftoverCloud } from "./make.ts";
@@ -76,12 +79,20 @@ export type { Depth } from "./depth.ts";
 export type { Terms } from "./words.ts";
 export { fetchSector, sectorPath } from "./sector-fetch.ts";
 export type { SectorText } from "./sector-fetch.ts";
-export { STOCK_SHIPS, navFromScene, safestFirst, shortlist, DIFFICULTY_STEPS, difficultyPips, daysWords, dvWords, doseWords, delayWords, fromNowWords, fuelLeft, routeFrame, trackPath, trackPoint, orbitEllipse, trackIndexAt } from "./route.ts";
-export type { NavShip, NavBody, NavSystem, Prefer, RouteAsk, RoutePlan, Course, RouteBurn, RouteHazard, WayOut, NavFromScene, RouteFrame } from "./route.ts";
+export { SECTOR_FORMATS, mapFields, stackProvides } from "./sector.ts";
+export { BOOKKEEPING, byKind, constructsIn, factOf, kindOf, kindWords, templateOf } from "./constructs.ts";
+export { shipLog, writerWords } from "./constructs.ts";
+export type { ConstructTemplate, Created, KeptChange, ShipLogEntry, RecordRead } from "./constructs.ts";
+export type { CodeReading, CodesRead, MappedWorldRow, SectorMap, SectorFormat, SectorImportAsk, ImportedWorldRow, SectorImported, SectorExported } from "./sector.ts";
+export { STOCK_SHIPS, packShips, shipChoices, shipToSend, packDriveWords, navFromScene, safestFirst, shortlist, DIFFICULTY_STEPS, difficultyPips, daysWords, dvWords, doseWords, delayWords, fromNowWords, fuelLeft, routeFrame, trackPath, trackPoint, orbitEllipse, trackIndexAt } from "./route.ts";
+export type { NavShip, ShipChoice, NavBody, NavSystem, Prefer, RouteAsk, RoutePlan, Course, RouteBurn, RouteHazard, WayOut, NavFromScene, RouteFrame } from "./route.ts";
+export { verdictWords, chanceWords, worstDangers } from "./ship-at-world.ts";
+export { aerobrakeOption } from "./ship-at-world.ts";
+export type { ShipAtWorldAsk, ShipAtWorldReport, ShipAtWorld, WorldCheck, Danger as ShipDanger, Chance as ShipChance, ShipEffect, Verdict as ShipVerdict, WorldAir } from "./ship-at-world.ts";
 export { VOYAGE_SHIPS, IN_SYSTEM_SHIPS, MINIMISE_WORDS, systemShort, voyageSpan, speedWords, agesWords, voyageFrame, orbitAxis } from "./voyage.ts";
 export type { Minimise, VoyageAsk, VoyageLeg, Voyage, VoyageSystem, VoyagePlan, StarCell, StarCellSystem, MapFrame, SystemPlace, SystemVoyagePlan } from "./voyage.ts";
 export { NAMED_HALOES, MORPHOLOGY_WORDS, GROUP_WORDS, LAYER_WORDS, discFrame, armPath, ringAt, ringShades, greenAt, cosmicAxis, logCurve, sci, timesSun, dex, epochTicks, foamCells, editWords, toggleRemoval, cellHalo, projectHalo, haloRadius, overdensityWords } from "./galaxy.ts";
-export type { GalaxyAsk, GalaxyChart, GalaxyRing, GalaxyState, Group, CosmicEpoch, PlaceLocal, PlaceGreen, SliceAsk, WebSlice, DiscFrame, RingLayer, CurveAxis, GalaxyEdit, GalaxyEventMark, HistoryCompare, HaloCellAsk, HaloCell, CellHalo, Projection } from "./galaxy.ts";
+export type { GalaxyAsk, GalaxyChart, GalaxyRing, GalaxyState, Group, CosmicEpoch, PlaceLocal, PlaceGreen, SliceAsk, WebSlice, DiscFrame, RingLayer, CurveAxis, GalaxyEdit, GalaxyEventMark, GalaxyMark, GalaxyAssembly, HistoryCompare, HaloCellAsk, HaloCell, CellHalo, Projection } from "./galaxy.ts";
 export { SENSORS, camera, project, discPx, pointPx, towards, magWords, angleWords, unprojectCamera } from "./window.ts";
 export type { WindowAsk, WindowView, Seen, Camera } from "./window.ts";
 export { SIGNIFICANCE_PARTS, valueWords, fieldWords, storyBrief } from "./story.ts";
@@ -99,5 +110,22 @@ export { readSol, solBatches, solSourceText, SOL_TITLE, type SolSheet } from "./
 // The performance readout and its reports (PF1).
 export * from "./perf.ts";
 // The master data sheet's constants (MP22): one door to a constant's value for every package.
-export { constant, constantOf, constantIds, SHEET_PACK } from "./sheet.ts";
+export { constant, constantOf, constantIds, SHEET_PACK, numberOf, sheetUnitFactor, sheetValue, type SheetRef } from "./sheet.ts";
 export type { SheetConstant } from "./sheet.ts";
+// One Open door (V3 gap 28): what a file is, by looking inside it; Explorers V4 listings, checked by sha256.
+export { sniffFile, sha256Hex, explorersUrl, fetchExplorers, creditWords, CONVERTER_URL } from "./open-file.ts";
+export type { FileKind, Sniffed, ExplorersListing, ExplorersFetched } from "./open-file.ts";
+// Add here (V3 gap 2): what this orbit would make, from formation runs, or anything, marked impossible.
+export { formsHere, anythingClip, clipAt, freeOrbit } from "./add-here.ts";
+export type { FormsHere } from "./add-here.ts";
+// Find in Look up: an element, constant or unit by name, symbol or id.
+export { findInSheet } from "./reference-find.ts";
+export type { RefHit } from "./reference-find.ts";
+export { namesOnStack, sampleKinds, layerWords, sortWords, meaningWords, saysMore, sourceWords, layerOrder, SAMPLE_KINDS } from "./names.ts";
+export type { SampleAsk, SampledName, NameSample, NamePart, SchemeInfo, NamesOnStack, ShownName, NamesRead } from "./names.ts";
+export { embedAsked, embedOrigin, embedOrigins, framingOrigin, embedMode, embedAsk, EmbedBridge } from "./embed.ts";
+export type { EmbedMode, EmbedOut } from "./embed.ts";
+export { BRAND_LOGO_MAX, BRAND_NAME_MAX, DEFAULT_JOIN, LIVE_OVERRIDES, checkBrand, joinLine, joinWordsOf, withLive } from "./brand.ts";
+export type { JoinWords, SeatBrand } from "./brand.ts";
+export { LANDMARKS, LANDMARK_WORDS, LANDMARK_MEANS, HOLD_MS, tableOf, fieldLandmark, hasException, lineChange, pressedLandmark, knownOverall, knownChangedWords, eyesShow, secrecyRelevant, holdReveal } from "./known.ts";
+export type { Landmark as KnownLandmark, KnownTo, KnownAudience, KnownException, KnownScope, KnownChange, Held } from "./known.ts";

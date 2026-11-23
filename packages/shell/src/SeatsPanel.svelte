@@ -7,7 +7,7 @@
   that audience (nothing is remembered here).
 -->
 <script lang="ts">
-  import { EVERYONE, fogViews, isDefaultPlan, observeOf, type Audience, type SceneSubject, type ViewSession } from "../../ui-contract/src/index.ts";
+  import { EVERYONE, LIVE_OVERRIDES, checkBrand, embedOrigins, fogViews, isDefaultPlan, observeOf, type Audience, type SceneSubject, type ViewSession } from "../../ui-contract/src/index.ts";
   import type { Share } from "./share.svelte.ts";
 
   let { share, session, bodies, scope, at_yr, onchange }: { share: Share; session: ViewSession; bodies: SceneSubject[]; scope: string; at_yr: number; onchange: () => void } = $props();
@@ -30,14 +30,34 @@
   let sealed = $state(false);
   let screens = $state<string[]>(["players.screen.json"]);
   let problem = $state("");
+  // Tabletops this seat may sit inside (V3 gap 26), one web address per line.
+  let tabletops = $state("");
+  // A brand for the seat's screens (V3 gap 25): a faction's name and a small logo.
+  let brandName = $state("");
+  let brandLogo = $state<string | undefined>(undefined);
+  function readLogo(e: Event) {
+    const f = (e.currentTarget as HTMLInputElement).files?.[0];
+    if (!f) return void (brandLogo = undefined);
+    const r = new FileReader();
+    r.onload = () => (brandLogo = String(r.result));
+    r.readAsDataURL(f);
+  }
 
   async function add(e: SubmitEvent) {
     e.preventDefault();
     if (!label.trim()) return void (problem = "Give the seat a name, for example Empire: Vesh.");
-    const bad = await share.addSeat({ label: label.trim(), ...(withFog && fog ? { fog } : {}), names, autoNames: autoNames ? [scope] : [], screens: screens.length > 1 || screens[0] !== "players.screen.json" ? screens : [], sealed });
+    const vtt = embedOrigins(tabletops.split(/[\s,]+/));
+    if (vtt.problems.length) return void (problem = `Tabletop addresses: ${vtt.problems.join("; ")}.`);
+    const brand = brandName.trim() ? { name: brandName.trim(), ...(brandLogo ? { logo: brandLogo } : {}) } : undefined;
+    const brandBad = brand ? checkBrand(brand) : [];
+    if (brandBad.length) return void (problem = `Brand: ${brandBad.join("; ")}.`);
+    const bad = await share.addSeat({ label: label.trim(), ...(withFog && fog ? { fog } : {}), names, autoNames: autoNames ? [scope] : [], screens: screens.length > 1 || screens[0] !== "players.screen.json" ? screens : [], sealed, embedOrigins: vtt.origins, ...(brand ? { brand } : {}) });
     problem = bad ?? "";
     if (!bad) {
       label = "";
+      tabletops = "";
+      brandName = "";
+      brandLogo = undefined;
       onchange();
       await refresh();
     }
@@ -77,10 +97,16 @@
         {@const a = plan.audiences.find((x) => x.id === s.audience)}
         <li data-seat={s.id}>
           <span class="name">{s.label}</span>
-          <span class="meta">{s.audience === EVERYONE ? "sees what everyone has been shown" : a?.starts_with ? "fog of war: sees its own discoveries" : "its own knowledge"}{s.sealed ? " · sealed" : ""}{s.may_send.length ? (s.auto_approve?.length ? " · names apply without asking" : " · may suggest names") : ""}</span>
+          <span class="meta">{s.audience === EVERYONE ? "sees what everyone has been shown" : a?.starts_with ? "fog of war: sees its own discoveries" : "its own knowledge"}{s.sealed ? " · sealed" : ""}{s.brand ? ` · branded ${s.brand.name}` : ""}{s.embed_origins?.length ? ` · may sit inside ${s.embed_origins.join(", ")}` : ""}{s.may_send.length ? (s.auto_approve?.length ? " · names apply without asking" : " · may suggest names") : ""}</span>
           <span class="links">
             {#each share.links(s.id) as l (l.href)}
               <a href={l.href} target="_blank" rel="noopener" data-seat-link={s.id}>{l.screen ? (SCREENS.find((x) => x.file === l.screen)?.label ?? l.screen) : "join link"}</a>
+              {#if s.embed_origins?.length}<a href={`${l.href}&embed=1`} target="_blank" rel="noopener" data-seat-embed={s.id} title="Paste this into the tabletop's web or iframe tool">tabletop link</a>{/if}
+            {/each}
+          </span>
+          <span class="live" title="Live: sent to this seat's screens now, never saved">
+            {#each LIVE_OVERRIDES as o (o.param)}
+              <label class="check"><input type="checkbox" data-live={`${s.id}:${o.param}`} checked={s.live?.[o.param] === o.on} onchange={(e) => { const { [o.param]: _x, ...rest } = s.live ?? {}; share.setLive(s.id, e.currentTarget.checked ? { ...rest, [o.param]: o.on } : rest); }} /> {o.label}</label>
             {/each}
           </span>
           {#if s.id !== "table"}<button type="button" class="linkbtn" onclick={() => share.removeSeat(s.id)}>Remove</button>{/if}
@@ -117,6 +143,10 @@
     <label class="check"><input type="checkbox" bind:checked={names} /> May suggest names</label>
     <label class="check"><input type="checkbox" bind:checked={autoNames} disabled={!names} /> Its names apply without asking</label>
     <label class="check"><input type="checkbox" bind:checked={sealed} /> Sealed: its screens get finished scenes only, never the seed (needs you online)</label>
+    <label>Brand on its screens <input bind:value={brandName} maxlength="40" placeholder="A faction or ship name (optional)" /></label>
+    {#if brandName.trim()}<label class="check">Logo <input type="file" accept="image/png,image/jpeg,image/webp" onchange={readLogo} /></label>{/if}
+    <label>Tabletops it may sit inside <input bind:value={tabletops} placeholder="https://tabletop.example.com" /></label>
+    <p class="hint">The exact web address of each virtual tabletop, separated by spaces. Its tabletop link then shows the view there with nothing else round it, and refuses any other site.</p>
     <fieldset>
       <legend>Screens (each opens in its own window or device)</legend>
       {#each SCREENS as sc (sc.file)}

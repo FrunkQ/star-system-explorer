@@ -89,6 +89,7 @@ fn ideal() -> NavSystem {
         stock: vec![],
         magnetic_moment_a_m2: None,
         belts: None,
+        air: None,
     };
     NavSystem {
         name: "ideal".into(),
@@ -147,6 +148,17 @@ fn fixture_transfers_match_analytic_solutions() {
         "{} days",
         l.days
     );
+    // Each arrives with its own speed over Mars's: what an aerocapture would shed instead of the arrival burn.
+    assert!(
+        (h.arrive_v_inf_m_s - d2).abs() < 1e-6,
+        "{}",
+        h.arrive_v_inf_m_s
+    );
+    assert!(
+        (l.arrive_v_inf_m_s - d2).abs() < 0.1 * d2,
+        "{} against {d2}",
+        l.arrive_v_inf_m_s
+    );
     // The Hohmann arc ends at Mars's orbit.
     let end = *h.track.last().unwrap();
     assert!((norm(end) - r2).abs() < 1e-6 * r2);
@@ -192,6 +204,8 @@ fn torch_flights_match_constant_thrust() {
         t
     );
     assert!((c.dv_m_s - a * t).abs() < 1e-6 * a * t);
+    // A torch flight brakes on its drive: nothing left to shed at the world.
+    assert_eq!(c.arrive_v_inf_m_s, 0.0);
     // With less fuel it coasts: t = d / v + v / a at v = half the usable Δv.
     ship.exhaust_km_s = 2000.0;
     let p = plan(

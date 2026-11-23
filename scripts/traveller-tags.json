@@ -1,0 +1,410 @@
+{
+ "about": "Tags this pack names (tags design, TG1): labels only, never an input to physics.",
+ "groups": [
+  {
+   "id": "traveller",
+   "label": "Traveller codes",
+   "about": "Tags the Traveller code sheet derives from UWP and world facts (trade codes, bases, zones, gear)."
+  },
+  {
+   "id": "status",
+   "label": "Status",
+   "about": "A construct's condition, set by the GM. A status tag carries no number: pack triggers set readiness from it, visibly.",
+   "applies_to": [
+    "construct"
+   ],
+   "exclusive": false
+  }
+ ],
+ "tags": [
+  {
+   "id": "construct",
+   "label": "construct"
+  },
+  {
+   "id": "ship",
+   "label": "ship"
+  },
+  {
+   "id": "fictional_drive",
+   "label": "fictional drive"
+  },
+  {
+   "id": "survey",
+   "label": "survey"
+  },
+  {
+   "id": "trade",
+   "label": "trade"
+  },
+  {
+   "id": "armed",
+   "label": "armed"
+  },
+  {
+   "id": "small_craft",
+   "label": "small craft"
+  },
+  {
+   "id": "lands",
+   "label": "lands"
+  },
+  {
+   "id": "starship",
+   "label": "starship"
+  },
+  {
+   "id": "explorer",
+   "label": "explorer"
+  },
+  {
+   "id": "courier",
+   "label": "courier"
+  },
+  {
+   "id": "miner",
+   "label": "miner"
+  },
+  {
+   "id": "trader",
+   "label": "trader"
+  },
+  {
+   "id": "patrol",
+   "label": "patrol"
+  },
+  {
+   "id": "pirate",
+   "label": "pirate"
+  },
+  {
+   "id": "station",
+   "label": "station"
+  },
+  {
+   "id": "starport",
+   "label": "starport"
+  },
+  {
+   "id": "starport_a",
+   "label": "starport a"
+  },
+  {
+   "id": "refined_fuel",
+   "label": "refined fuel"
+  },
+  {
+   "id": "shipyard",
+   "label": "shipyard"
+  },
+  {
+   "id": "starport_b",
+   "label": "starport b"
+  },
+  {
+   "id": "base",
+   "label": "base"
+  },
+  {
+   "id": "base_naval",
+   "label": "base naval"
+  },
+  {
+   "id": "military",
+   "label": "military"
+  },
+  {
+   "id": "base_depot",
+   "label": "base depot"
+  },
+  {
+   "id": "base_scout",
+   "label": "base scout"
+  },
+  {
+   "id": "base_way",
+   "label": "base way"
+  },
+  {
+   "id": "research",
+   "label": "research"
+  },
+  {
+   "id": "base_corsair",
+   "label": "base corsair"
+  },
+  {
+   "id": "outlaw",
+   "label": "outlaw"
+  },
+  {
+   "id": "site",
+   "label": "site"
+  },
+  {
+   "id": "unrefined_fuel",
+   "label": "unrefined fuel"
+  },
+  {
+   "id": "starport_d",
+   "label": "starport d"
+  },
+  {
+   "id": "starport_e",
+   "label": "starport e"
+  },
+  {
+   "id": "settlement",
+   "label": "settlement"
+  },
+  {
+   "id": "underground",
+   "label": "underground"
+  },
+  {
+   "id": "power",
+   "label": "power"
+  },
+  {
+   "id": "traveller.count.belt",
+   "label": "Counts: belt"
+  },
+  {
+   "id": "traveller.count.gas-giant",
+   "label": "Counts: gas-giant"
+  },
+  {
+   "id": "traveller-generated",
+   "label": "Traveller generated",
+   "about": "Source mark on values a Traveller code sheet generated; to become a mark (tags design ruling 9)."
+  },
+  {
+   "id": "traveller.prep.oxygen",
+   "label": "Code preparation: oxygen"
+  },
+  {
+   "id": "traveller.prep.corrosive",
+   "label": "Code preparation: corrosive"
+  },
+  {
+   "id": "traveller.prep.tainted",
+   "label": "Code preparation: tainted"
+  },
+  {
+   "id": "traveller.prep.belt",
+   "label": "Code preparation: belt"
+  },
+  {
+   "id": "traveller.trade.As",
+   "label": "Trade codes: As"
+  },
+  {
+   "id": "traveller.trade.De",
+   "label": "Trade codes: De"
+  },
+  {
+   "id": "traveller.trade.Fl",
+   "label": "Trade codes: Fl"
+  },
+  {
+   "id": "traveller.trade.Ga",
+   "label": "Trade codes: Ga"
+  },
+  {
+   "id": "traveller.trade.He",
+   "label": "Trade codes: He"
+  },
+  {
+   "id": "traveller.trade.Ic",
+   "label": "Trade codes: Ic"
+  },
+  {
+   "id": "traveller.trade.Oc",
+   "label": "Trade codes: Oc"
+  },
+  {
+   "id": "traveller.trade.Va",
+   "label": "Trade codes: Va"
+  },
+  {
+   "id": "traveller.trade.Wa",
+   "label": "Trade codes: Wa"
+  },
+  {
+   "id": "traveller.trade.Di",
+   "label": "Trade codes: Di"
+  },
+  {
+   "id": "traveller.trade.Ba",
+   "label": "Trade codes: Ba"
+  },
+  {
+   "id": "traveller.trade.Lo",
+   "label": "Trade codes: Lo"
+  },
+  {
+   "id": "traveller.trade.Ni",
+   "label": "Trade codes: Ni"
+  },
+  {
+   "id": "traveller.trade.Ph",
+   "label": "Trade codes: Ph"
+  },
+  {
+   "id": "traveller.trade.Hi",
+   "label": "Trade codes: Hi"
+  },
+  {
+   "id": "traveller.trade.Pa",
+   "label": "Trade codes: Pa"
+  },
+  {
+   "id": "traveller.trade.Ag",
+   "label": "Trade codes: Ag"
+  },
+  {
+   "id": "traveller.trade.Na",
+   "label": "Trade codes: Na"
+  },
+  {
+   "id": "traveller.trade.Pi",
+   "label": "Trade codes: Pi"
+  },
+  {
+   "id": "traveller.trade.In",
+   "label": "Trade codes: In"
+  },
+  {
+   "id": "traveller.trade.Po",
+   "label": "Trade codes: Po"
+  },
+  {
+   "id": "traveller.trade.Pr",
+   "label": "Trade codes: Pr"
+  },
+  {
+   "id": "traveller.trade.Ri",
+   "label": "Trade codes: Ri"
+  },
+  {
+   "id": "traveller.trade.Sa",
+   "label": "Trade codes: Sa"
+  },
+  {
+   "id": "traveller.trade.Lk",
+   "label": "Trade codes: Lk"
+  },
+  {
+   "id": "traveller.trade.Tz",
+   "label": "Trade codes: Tz"
+  },
+  {
+   "id": "traveller.trade.Fr",
+   "label": "Trade codes: Fr"
+  },
+  {
+   "id": "traveller.trade.Co",
+   "label": "Trade codes: Co"
+  },
+  {
+   "id": "traveller.trade.Ho",
+   "label": "Trade codes: Ho"
+  },
+  {
+   "id": "traveller.trade.Tu",
+   "label": "Trade codes: Tu"
+  },
+  {
+   "id": "traveller.trade.Tr",
+   "label": "Trade codes: Tr"
+  },
+  {
+   "id": "traveller.zone.A",
+   "label": "Travel zones: A"
+  },
+  {
+   "id": "traveller.zone.R",
+   "label": "Travel zones: R"
+  },
+  {
+   "id": "traveller.zonehint.amber",
+   "label": "Zone hints: amber"
+  },
+  {
+   "id": "traveller.base.N",
+   "label": "Bases: N"
+  },
+  {
+   "id": "traveller.base.S",
+   "label": "Bases: S"
+  },
+  {
+   "id": "traveller.base.W",
+   "label": "Bases: W"
+  },
+  {
+   "id": "traveller.base.D",
+   "label": "Bases: D"
+  },
+  {
+   "id": "traveller.base.M",
+   "label": "Bases: M"
+  },
+  {
+   "id": "traveller.base.C",
+   "label": "Bases: C"
+  },
+  {
+   "id": "traveller.base.K",
+   "label": "Bases: K"
+  },
+  {
+   "id": "traveller.need.vacc_suit",
+   "label": "What to wear outside: vacc suit"
+  },
+  {
+   "id": "traveller.need.respirator",
+   "label": "What to wear outside: respirator"
+  },
+  {
+   "id": "traveller.need.filter",
+   "label": "What to wear outside: filter"
+  },
+  {
+   "id": "traveller.need.air_supply",
+   "label": "What to wear outside: air supply"
+  },
+  {
+   "id": "traveller.need.protective_suit",
+   "label": "What to wear outside: protective suit"
+  },
+  {
+   "id": "traveller.need.sealed_suit",
+   "label": "What to wear outside: sealed suit"
+  },
+  {
+   "id": "traveller.need.altitude",
+   "label": "What to wear outside: altitude"
+  },
+  {
+   "id": "traveller.need.low_ground",
+   "label": "What to wear outside: low ground"
+  },
+  {
+   "id": "status.derelict",
+   "label": "Derelict",
+   "about": "abandoned or dead in space; its readiness drops to 0 when tagged",
+   "group": "status",
+   "source": "authored",
+   "tier": "scanned"
+  },
+  {
+   "id": "status.damaged",
+   "label": "Damaged",
+   "about": "damaged; its readiness is held at 0.5 or below while tagged",
+   "group": "status",
+   "source": "authored",
+   "tier": "scanned"
+  }
+ ]
+}

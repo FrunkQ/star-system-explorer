@@ -1,0 +1,148 @@
+{
+ "format": "sse.formulas/1",
+ "family": "sse.ocean",
+ "about": "Physics blocks whose maths is a formula (ND3b): each keeps its id, ports and results, and its maths is the Equation below, with a name that says what happens.",
+ "atoms": [
+  {
+   "id": "sse.ocean.brine_freezing_point",
+   "version": "1.0.0",
+   "cost": "trivial",
+   "inputs": [
+    {
+     "port": "salinity",
+     "letter": "w"
+    }
+   ],
+   "outputs": [
+    {
+     "port": "freezing_point",
+     "letter": "T"
+    }
+   ],
+   "models": {
+    "Kf": {
+     "value": 1.86,
+     "grade": "measured",
+     "source": "Atkins and de Paula 2014, topic 5B"
+    }
+   },
+   "params": [
+    {
+     "param": "van_t_hoff",
+     "letter": "i",
+     "default": 2.0,
+     "range": [
+      1.0,
+      3.0
+     ],
+     "description": "ions per formula unit (2 for NaCl, 3 for MgCl2)"
+    },
+    {
+     "param": "osmotic_coefficient",
+     "letter": "phi",
+     "default": 0.93,
+     "range": [
+      0.5,
+      1.2
+     ],
+     "description": "non-ideality of the brine"
+    },
+    {
+     "param": "solute_molar_mass",
+     "letter": "Ms",
+     "default": 0.05844,
+     "range": [
+      0.01,
+      0.5
+     ],
+     "description": "molar mass of the salt"
+    },
+    {
+     "param": "pure_freezing_point",
+     "letter": "T0",
+     "default": "sheet/T0C",
+     "range": [
+      200.0,
+      300.0
+     ],
+     "description": "freezing point of the pure solvent"
+    }
+   ],
+   "checks": [
+    {
+     "port": "salinity",
+     "min": 0,
+     "below": 1,
+     "says": "salinity {} is not a mass fraction below 1"
+    }
+   ],
+   "references": [
+    "Atkins, P. and de Paula, J. 2014, Atkins' Physical Chemistry, 10th edn, Oxford University Press, topic 5B (colligative properties; water's cryoscopic constant 1.86 K kg/mol)",
+    "Robinson, R. A. and Stokes, R. H. 1959, Electrolyte Solutions, 2nd edn, Butterworths, appendix 8.10 (osmotic coefficient of NaCl about 0.93 near 2 mol/kg)"
+   ],
+   "shown": "T_f = T₀ - i φ K_f b, b = w / (M_s (1 - w))",
+   "equation": {
+    "name": "How much salt lowers the freezing point",
+    "formula": "b = w / (Ms * (1 - w))\nT = T0 - i * phi * Kf * b",
+    "inputs": {
+     "w": {
+      "kind": "ocean.salinity_mass_fraction",
+      "unit": "1",
+      "name": "salt share by mass",
+      "valid": [
+       0.0,
+       0.2
+      ]
+     },
+     "Kf": {
+      "kind": "model.cryoscopic_constant",
+      "unit": "K kg mol-1",
+      "name": "water's cryoscopic constant"
+     },
+     "i": {
+      "kind": "model.van_t_hoff",
+      "unit": "1",
+      "name": "ions per formula unit"
+     },
+     "phi": {
+      "kind": "model.osmotic_coefficient",
+      "unit": "1",
+      "name": "osmotic coefficient"
+     },
+     "Ms": {
+      "kind": "model.solute_molar_mass",
+      "unit": "kg mol-1",
+      "name": "molar mass of the salt"
+     },
+     "T0": {
+      "kind": "model.pure_freezing_point",
+      "unit": "K",
+      "name": "freezing point of the pure solvent"
+     }
+    },
+    "outputs": {
+     "T": {
+      "kind": "ocean.freezing_point",
+      "unit": "K",
+      "name": "temperature the brine freezes at"
+     }
+    },
+    "source": {
+     "text": "Atkins, P. and de Paula, J. 2014, Atkins' Physical Chemistry, 10th edn, Oxford University Press",
+     "url": "https://global.oup.com/academic/product/atkins-physical-chemistry-9780199697403",
+     "where": "topic 5B, colligative properties"
+    },
+    "explain": {
+     "curious": "Salt water freezes colder than fresh water. A brine six times saltier than the sea stays liquid well below freezing, which is how oceans hide under ice.",
+     "science": "Freezing-point depression from the solute's molality, with the van 't Hoff factor and an osmotic coefficient for non-ideal brines. Good to about 10 percent up to 20 percent salt by mass; the NaCl eutectic (23 percent, 252 K) is the hard floor."
+    },
+    "examples": [
+     {
+      "w": 0.035,
+      "T": 271.0028795310189
+     }
+    ]
+   }
+  }
+ ]
+}

@@ -1,0 +1,455 @@
+{
+ "format": "sse.formulas/1",
+ "family": "sse.field",
+ "about": "Physics blocks whose maths is a formula (ND3b): each keeps its id, ports and results, and its maths is the Equation below, with a name that says what happens.",
+ "atoms": [
+  {
+   "id": "sse.field.ionopause_altitude",
+   "version": "1.0.0",
+   "cost": "trivial",
+   "inputs": [
+    {
+     "port": "pressure",
+     "letter": "P"
+    },
+    {
+     "port": "scale_height",
+     "letter": "H"
+    },
+    {
+     "port": "density",
+     "letter": "rho"
+    },
+    {
+     "port": "speed",
+     "letter": "v"
+    }
+   ],
+   "outputs": [
+    {
+     "port": "altitude",
+     "letter": "h"
+    }
+   ],
+   "params": [
+    {
+     "param": "k",
+     "letter": "k",
+     "default": 1.0,
+     "range": [
+      0.01,
+      100.0
+     ],
+     "description": "air pressure at the boundary over the wind's ram pressure (stand-in for the ionosphere's share)"
+    }
+   ],
+   "positive": [
+    {
+     "port": "scale_height",
+     "says": "scale height"
+    }
+   ],
+   "references": [
+    "Brace, L. H. and Kliore, A. J. 1991, The structure of the Venus ionosphere, Space Sci. Rev. 55, 81: the ionopause sits where the ionosphere's pressure balances the solar wind's, a few hundred km up on Venus. doi:10.1007/BF00177136",
+    "Luhmann, J. G. and Cravens, T. E. 1991, Magnetic fields in the ionosphere of Venus, Space Sci. Rev. 55, 201: induced magnetospheres of unmagnetised bodies with air. doi:10.1007/BF00177137"
+   ],
+   "shown": "h = H ln(P₀ / (k ρ v²))",
+   "equation": {
+    "name": "Height where a world's air holds off the wind",
+    "formula": "P0 = max(P, 0)\nram = max(rho, 0) * v * v\nh = if P0 <= 0 or ram <= 0 then 0 else max(H * ln(P0 / (k * ram)), 0)",
+    "inputs": {
+     "P": {
+      "kind": "atmosphere.surface_pressure",
+      "unit": "Pa",
+      "name": "air pressure at the ground"
+     },
+     "H": {
+      "kind": "atmosphere.scale_height",
+      "unit": "m",
+      "name": "height over which the pressure falls to a third"
+     },
+     "rho": {
+      "kind": "wind.density",
+      "unit": "kg m-3",
+      "name": "density of the wind"
+     },
+     "v": {
+      "kind": "wind.speed",
+      "unit": "m/s",
+      "name": "speed of the wind"
+     },
+     "k": {
+      "kind": "model.ionopause_pressure_share",
+      "unit": "1",
+      "name": "air pressure at the boundary over the wind's push"
+     }
+    },
+    "outputs": {
+     "h": {
+      "kind": "body.ionopause_altitude",
+      "unit": "m",
+      "name": "height where the air holds the wind off"
+     }
+    },
+    "source": {
+     "text": "Brace, L. H. and Kliore, A. J. 1991, Space Sci. Rev. 55, 81",
+     "doi": "10.1007/BF00177136",
+     "where": "the Venus ionopause"
+    },
+    "explain": {
+     "curious": "A world with air but no magnetic field still holds the wind off: the wind lights up the top of its air and pushes against that. Venus and Mars do this a few hundred kilometres up.",
+     "science": "The wind's ram pressure meets the upper atmosphere's pressure in an isothermal column. A stand-in for the ionospheric pressure balance, which needs the ionosphere's own profile."
+    },
+    "examples": [
+     {
+      "P": 9200000.0,
+      "H": 16000.0,
+      "rho": 2e-20,
+      "v": 440000.0,
+      "k": 1.0,
+      "h": 566467.3393528216
+     }
+    ]
+   }
+  },
+  {
+   "id": "sse.field.shue_flaring",
+   "version": "1.0.0",
+   "cost": "trivial",
+   "inputs": [
+    {
+     "port": "density",
+     "letter": "rho"
+    },
+    {
+     "port": "speed",
+     "letter": "v"
+    }
+   ],
+   "outputs": [
+    {
+     "port": "alpha",
+     "letter": "alpha"
+    }
+   ],
+   "models": {
+    "nT": {
+     "value": 1e-09,
+     "grade": "derived",
+     "source": "definition"
+    },
+    "per_nT": {
+     "value": 1000000000.0,
+     "grade": "derived",
+     "source": "definition"
+    },
+    "per_nPa": {
+     "value": 1000000000.0,
+     "grade": "derived",
+     "source": "definition"
+    },
+    "floor": {
+     "value": 1e-06,
+     "grade": "assumed",
+     "source": "guard"
+    },
+    "a0": {
+     "value": 0.58,
+     "grade": "fitted",
+     "source": "Shue et al. 1998 eq. 11"
+    },
+    "a1": {
+     "value": 0.007,
+     "grade": "fitted",
+     "source": "Shue et al. 1998 eq. 11"
+    },
+    "a2": {
+     "value": 0.024,
+     "grade": "fitted",
+     "source": "Shue et al. 1998 eq. 11"
+    }
+   },
+   "params": [
+    {
+     "param": "bz_nt",
+     "letter": "bz",
+     "default": 0.0,
+     "range": [
+      -50.0,
+      50.0
+     ],
+     "description": "north-south field in the wind, nT (southward negative)"
+    }
+   ],
+   "references": [
+    "Shue, J.-H. et al. 1998, Magnetopause location under extreme solar wind conditions, J. Geophys. Res. 103, 17691: r = r₀ (2 / (1 + cos θ))^α, α = (0.58 − 0.007 B_z)(1 + 0.024 ln P_dyn), B_z in nT, P_dyn in nPa. doi:10.1029/98JA01103"
+   ],
+   "shown": "α = (0.58 − 0.007 B_z)(1 + 0.024 ln P_dyn)",
+   "equation": {
+    "name": "How the magnetic boundary flares behind a world",
+    "formula": "ram = max(rho, 0) * v * v\nbt = bz * nT\np = max(ram * per_nPa, floor)\nalpha = (a0 - a1 * bt * per_nT) * (1 + a2 * ln(p))",
+    "inputs": {
+     "rho": {
+      "kind": "wind.density",
+      "unit": "kg m-3",
+      "name": "density of the wind"
+     },
+     "v": {
+      "kind": "wind.speed",
+      "unit": "m/s",
+      "name": "speed of the wind"
+     },
+     "nT": {
+      "kind": "model.nanotesla",
+      "unit": "T",
+      "name": "one nanotesla"
+     },
+     "per_nT": {
+      "kind": "model.per_nanotesla",
+      "unit": "T-1",
+      "name": "nanoteslas in a tesla"
+     },
+     "per_nPa": {
+      "kind": "model.per_nanopascal",
+      "unit": "Pa-1",
+      "name": "nanopascals in a pascal"
+     },
+     "floor": {
+      "kind": "model.smallest_wind_pressure",
+      "unit": "1",
+      "name": "smallest wind pressure used, nPa"
+     },
+     "a0": {
+      "kind": "model.shue_a0",
+      "unit": "1",
+      "name": "flaring with no field"
+     },
+     "a1": {
+      "kind": "model.shue_a1",
+      "unit": "1",
+      "name": "flaring change per nT"
+     },
+     "a2": {
+      "kind": "model.shue_a2",
+      "unit": "1",
+      "name": "flaring change with wind pressure"
+     },
+     "bz": {
+      "kind": "model.wind_bz_nt",
+      "unit": "1",
+      "name": "north-south field in the wind, nT"
+     }
+    },
+    "outputs": {
+     "alpha": {
+      "kind": "magnetosphere.flaring",
+      "unit": "1",
+      "name": "how much the boundary flares behind the world"
+     }
+    },
+    "source": {
+     "text": "Shue, J.-H. et al. 1998, J. Geophys. Res. 103, 17691",
+     "doi": "10.1029/98JA01103",
+     "where": "eq. 11"
+    },
+    "explain": {
+     "curious": "The bubble is blunt at the nose and flares out behind into a long tail; a stronger wind or a southward field opens it wider.",
+     "science": "Shue's empirical boundary: distance r₀ at the nose, flaring with angle from the nose by the exponent α."
+    },
+    "examples": [
+     {
+      "rho": 1.2e-20,
+      "v": 400000.0,
+      "bz": 0.0,
+      "alpha": 0.5890803665896724
+     }
+    ]
+   }
+  },
+  {
+   "id": "sse.field.standoff_in_field",
+   "version": "1.0.0",
+   "cost": "trivial",
+   "inputs": [
+    {
+     "port": "moment",
+     "letter": "M"
+    },
+    {
+     "port": "outside",
+     "letter": "B"
+    },
+    {
+     "port": "plasma",
+     "letter": "p"
+    }
+   ],
+   "outputs": [
+    {
+     "port": "radius",
+     "letter": "R"
+    }
+   ],
+   "constants": {
+    "mu0": "sheet/mu0"
+   },
+   "references": [
+    "Kivelson, M. G. et al. 1998, Ganymede's magnetosphere: magnetometer overview, J. Geophys. Res. 103, 19963: a moon's own field stands off its host's field and plasma about two moon radii out. doi:10.1029/98JE00227"
+   ],
+   "shown": "R = (μ₀ M / (2π √(B² + 2μ₀ p)))^⅓",
+   "equation": {
+    "name": "Where a moon's own field holds off its host's",
+    "formula": "m0 = max(M, 0)\nb = max(B, 0)\nbn = sqrt(b * b + 2 * mu0 * max(max(p, 0), 0))\nR = if m0 <= 0 or bn <= 0 then 0 else cbrt(mu0 * m0 / (2 * pi * bn))",
+    "inputs": {
+     "M": {
+      "kind": "body.magnetic_moment",
+      "unit": "m2 A",
+      "name": "strength of the moon's magnet (dipole moment)"
+     },
+     "B": {
+      "kind": "host.field_at_orbit",
+      "unit": "kg s-2 A-1",
+      "name": "host's field where the moon orbits"
+     },
+     "p": {
+      "kind": "host.plasma_pressure_at_orbit",
+      "unit": "Pa",
+      "name": "plasma pressure where the moon orbits"
+     },
+     "mu0": {
+      "kind": "constant.mu0",
+      "unit": "N A-2",
+      "name": "magnetic constant"
+     }
+    },
+    "outputs": {
+     "R": {
+      "kind": "body.magnetopause_radius",
+      "unit": "m",
+      "name": "where the moon's field holds the host's off"
+     }
+    },
+    "source": {
+     "text": "Kivelson, M. G. et al. 1998, J. Geophys. Res. 103, 19963",
+     "doi": "10.1029/98JE00227",
+     "where": "Ganymede's magnetosphere"
+    },
+    "explain": {
+     "curious": "A moon with its own field inside a planet's bubble makes a bubble within a bubble. Ganymede's reaches about two of its own widths out against Jupiter's field.",
+     "science": "Inside a host's bubble the pressure outside is the host's field and plasma, not the star's wind. The moon's compressed dipole balances them."
+    },
+    "examples": [
+     {
+      "M": 1.3e+20,
+      "B": 1.2e-07,
+      "p": 1e-09,
+      "R": 5847270.270363882
+     }
+    ]
+   }
+  },
+  {
+   "id": "sse.induction.response",
+   "version": "1.0.0",
+   "cost": "trivial",
+   "inputs": [
+    {
+     "port": "conductivity",
+     "letter": "sigma"
+    },
+    {
+     "port": "thickness",
+     "letter": "h"
+    },
+    {
+     "port": "radius",
+     "letter": "r"
+    },
+    {
+     "port": "period",
+     "letter": "T"
+    }
+   ],
+   "outputs": [
+    {
+     "port": "amplitude",
+     "letter": "A"
+    }
+   ],
+   "constants": {
+    "mu0": "sheet/mu0"
+   },
+   "positive": [
+    {
+     "port": "radius",
+     "says": "radius"
+    },
+    {
+     "port": "period",
+     "says": "period"
+    }
+   ],
+   "references": [
+    "Zimmer, C., Khurana, K. K. and Kivelson, M. G. 2000, Subsurface oceans on Europa and Callisto: constraints from Galileo magnetometer observations, Icarus 147, 329: a conducting shell answers a changing field with a dipole of relative strength A. doi:10.1006/icar.2000.6456",
+    "Kivelson, M. G. et al. 2000, Galileo magnetometer measurements: a stronger case for a subsurface ocean at Europa, Science 289, 1340: induced response close to that of a perfect conductor (A about 0.97). doi:10.1126/science.289.5483.1340"
+   ],
+   "shown": "A = κ / √(1 + κ²),  κ = μ₀ σ ω r min(h, δ) / 3,  δ = √(2 / μ₀σω)",
+   "equation": {
+    "name": "How strongly a buried ocean answers a changing field",
+    "formula": "s = max(sigma, 0)\nd = max(h, 0)\nomega = 2 * pi / T\nhs = min(d, sqrt(2 / (mu0 * s * omega)))\nk = mu0 * s * omega * r * hs / 3\nA = if s <= 0 or d <= 0 or T <= 0 then 0 else k / sqrt(1 + k * k)",
+    "inputs": {
+     "sigma": {
+      "kind": "layer.electrical_conductivity",
+      "unit": "m-3 kg-1 s3 A2",
+      "name": "how well the layer conducts"
+     },
+     "h": {
+      "kind": "layer.thickness",
+      "unit": "m",
+      "name": "thickness of the layer"
+     },
+     "r": {
+      "kind": "layer.outer_radius",
+      "unit": "m",
+      "name": "outer radius of the layer"
+     },
+     "T": {
+      "kind": "field.change_period",
+      "unit": "s",
+      "name": "period of the changing field"
+     },
+     "mu0": {
+      "kind": "constant.mu0",
+      "unit": "N A-2",
+      "name": "magnetic constant"
+     }
+    },
+    "outputs": {
+     "A": {
+      "kind": "induction.amplitude",
+      "unit": "1",
+      "name": "share of the change the layer answers back"
+     }
+    },
+    "source": {
+     "text": "Zimmer, C., Khurana, K. K. and Kivelson, M. G. 2000, Icarus 147, 329",
+     "doi": "10.1006/icar.2000.6456",
+     "where": "the induced response"
+    },
+    "explain": {
+     "curious": "A salty ocean under ice is a conductor. As a moon swings through its planet's tilted field, the ocean answers with a field of its own, and a magnetometer flying past can find the hidden sea.",
+     "science": "A thin conducting shell in a field changing at angular frequency ω answers with a dipole of relative strength κ/√(1+κ²), κ = μ₀σωrh/3; a shell thicker than the skin depth acts as one skin depth thick."
+    },
+    "examples": [
+     {
+      "sigma": 2.75,
+      "h": 100000.0,
+      "r": 1500000.0,
+      "T": 35000.0,
+      "A": 0.9983919591054508
+     }
+    ]
+   }
+  }
+ ]
+}

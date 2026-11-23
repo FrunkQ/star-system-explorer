@@ -1,0 +1,307 @@
+{
+ "format": "sse.formulas/1",
+ "family": "sse.tides",
+ "about": "Physics blocks whose maths is a formula (ND3b): each keeps its id, ports and results, and its maths is the Equation below, with a name that says what happens.",
+ "atoms": [
+  {
+   "id": "sse.tides.eccentricity_heating",
+   "version": "1.0.0",
+   "cost": "trivial",
+   "inputs": [
+    {
+     "port": "host_mass",
+     "letter": "M"
+    },
+    {
+     "port": "radius",
+     "letter": "R"
+    },
+    {
+     "port": "semi_major_axis",
+     "letter": "a"
+    },
+    {
+     "port": "eccentricity",
+     "letter": "e"
+    }
+   ],
+   "outputs": [
+    {
+     "port": "power",
+     "letter": "P"
+    }
+   ],
+   "constants": {
+    "G": "constants/G"
+   },
+   "params": [
+    {
+     "param": "k2_over_q",
+     "letter": "kq",
+     "default": 0.015,
+     "range": [
+      1e-06,
+      0.1
+     ],
+     "description": "tidal response: Love number k2 over quality factor Q (Io 0.015, Lainey et al. 2009)"
+    }
+   ],
+   "positive": [
+    {
+     "port": "host_mass",
+     "says": "host mass"
+    },
+    {
+     "port": "radius",
+     "says": "radius"
+    },
+    {
+     "port": "semi_major_axis",
+     "says": "semi-major axis"
+    }
+   ],
+   "references": [
+    "Peale, S. J., Cassen, P. and Reynolds, R. T. 1979, Science 203, 892: melting of Io by tidal dissipation. doi:10.1126/science.203.4383.892",
+    "Segatz, M., Spohn, T., Ross, M. N. and Schubert, G. 1988, Icarus 75, 187: tidal dissipation in Io https://ui.adsabs.harvard.edu/abs/1988Icar...75..187S",
+    "Lainey, V. et al. 2009, Nature 459, 957 (Io's k2/Q). doi:10.1038/nature08108"
+   ],
+   "shown": "Ė = (21/2) (k2/Q) G M² R⁵ n e² / a⁶, n = √(G M / a³)",
+   "equation": {
+    "name": "Heat squeezed out of a world by its stretched orbit",
+    "formula": "n = sqrt(G * M / (a * a * a))\nr5 = R * R * R * R * R\na6 = a * a * a * a * a * a\nP = 21/2 * kq * G * M * M * r5 * n * e * e / a6",
+    "inputs": {
+     "M": {
+      "kind": "orbit.host_mass",
+      "unit": "kg",
+      "name": "mass of what it circles"
+     },
+     "R": {
+      "kind": "body.radius",
+      "unit": "m",
+      "name": "radius of the world"
+     },
+     "a": {
+      "kind": "orbit.semi_major_axis",
+      "unit": "m",
+      "name": "size of the orbit"
+     },
+     "e": {
+      "kind": "orbit.eccentricity",
+      "unit": "1",
+      "name": "how stretched the orbit is",
+      "valid": [
+       0.0,
+       0.1
+      ]
+     },
+     "G": {
+      "kind": "constant.G",
+      "unit": "m3 kg-1 s-2",
+      "name": "gravitational constant"
+     },
+     "kq": {
+      "kind": "model.k2_over_q",
+      "unit": "1",
+      "name": "how strongly the world flexes and loses heat (k2/Q)"
+     }
+    },
+    "outputs": {
+     "P": {
+      "kind": "tides.heating_power",
+      "unit": "W",
+      "name": "heat made by tides"
+     }
+    },
+    "source": {
+     "text": "Murray, C. D. and Dermott, S. F. 1999, Solar System Dynamics, Cambridge University Press",
+     "doi": "10.1017/CBO9781139174817",
+     "where": "section 4.13, tidal heating"
+    },
+    "explain": {
+     "curious": "A moon on a slightly oval orbit is squeezed and relaxed every lap, and the flexing heats it. It makes Io the most volcanic place known.",
+     "science": "Heating of a synchronously rotating satellite by its eccentricity tide, for small e. Power scales as the fifth power of the satellite's radius and falls as distance to the power -7.5, so it is sensitive to everything."
+    },
+    "examples": [
+     {
+      "M": 2e+27,
+      "R": 1821600.0,
+      "a": 421700000.0,
+      "e": 0.0041,
+      "P": 106357942339463.36
+     }
+    ]
+   }
+  },
+  {
+   "id": "sse.tides.locking_time",
+   "version": "1.0.0",
+   "cost": "trivial",
+   "inputs": [
+    {
+     "port": "initial_spin_rate",
+     "letter": "w"
+    },
+    {
+     "port": "semi_major_axis",
+     "letter": "a"
+    },
+    {
+     "port": "mass",
+     "letter": "m"
+    },
+    {
+     "port": "radius",
+     "letter": "R"
+    },
+    {
+     "port": "host_mass",
+     "letter": "M"
+    }
+   ],
+   "outputs": [
+    {
+     "port": "time",
+     "letter": "t"
+    }
+   ],
+   "constants": {
+    "G": "constants/G"
+   },
+   "params": [
+    {
+     "param": "q",
+     "letter": "Q",
+     "default": 100.0,
+     "range": [
+      10.0,
+      1000000.0
+     ],
+     "description": "tidal quality factor Q"
+    },
+    {
+     "param": "k2",
+     "letter": "k2",
+     "default": 0.3,
+     "range": [
+      0.001,
+      1.5
+     ],
+     "description": "Love number k2"
+    },
+    {
+     "param": "moment_factor",
+     "letter": "cI",
+     "default": 0.4,
+     "range": [
+      0.05,
+      0.4
+     ],
+     "description": "moment of inertia factor I/(m R²); 0.4 for a uniform sphere"
+    }
+   ],
+   "positive": [
+    {
+     "port": "initial_spin_rate",
+     "says": "initial spin rate"
+    },
+    {
+     "port": "semi_major_axis",
+     "says": "semi-major axis"
+    },
+    {
+     "port": "mass",
+     "says": "mass"
+    },
+    {
+     "port": "radius",
+     "says": "radius"
+    },
+    {
+     "port": "host_mass",
+     "says": "host mass"
+    }
+   ],
+   "references": [
+    "Gladman, B. et al. 1996, Icarus 122, 166: synchronous locking of tidally evolving satellites, eq. 9 https://ui.adsabs.harvard.edu/abs/1996Icar..122..166G"
+   ],
+   "shown": "t = ω a⁶ I Q / (3 G M² k2 R⁵), I = α m R²",
+   "equation": {
+    "name": "Time for a world to turn one face to its host",
+    "formula": "I = cI * m * R * R\na6 = a * a * a * a * a * a\nr5 = R * R * R * R * R\nt = w * a6 * I * Q / (3 * G * M * M * k2 * r5)",
+    "inputs": {
+     "w": {
+      "kind": "body.initial_spin_rate",
+      "unit": "s-1",
+      "name": "how fast it spun at first"
+     },
+     "a": {
+      "kind": "orbit.semi_major_axis",
+      "unit": "m",
+      "name": "size of the orbit"
+     },
+     "m": {
+      "kind": "body.mass",
+      "unit": "kg",
+      "name": "mass of the world"
+     },
+     "R": {
+      "kind": "body.radius",
+      "unit": "m",
+      "name": "radius of the world"
+     },
+     "M": {
+      "kind": "orbit.host_mass",
+      "unit": "kg",
+      "name": "mass of what it circles"
+     },
+     "G": {
+      "kind": "constant.G",
+      "unit": "m3 kg-1 s-2",
+      "name": "gravitational constant"
+     },
+     "Q": {
+      "kind": "model.tidal_quality",
+      "unit": "1",
+      "name": "tidal quality factor Q"
+     },
+     "k2": {
+      "kind": "model.love_number_k2",
+      "unit": "1",
+      "name": "Love number k2"
+     },
+     "cI": {
+      "kind": "model.moment_of_inertia_factor",
+      "unit": "1",
+      "name": "moment of inertia factor"
+     }
+    },
+    "outputs": {
+     "t": {
+      "kind": "tides.locking_time",
+      "unit": "s",
+      "name": "time until one face always points inward"
+     }
+    },
+    "source": {
+     "text": "Gladman, B. et al. 1996, Icarus 122, 166, Synchronous locking of tidally evolving satellites",
+     "doi": "10.1006/icar.1996.0117",
+     "where": "eq. 9"
+    },
+    "explain": {
+     "curious": "Tides slowly brake a spinning world until one face always points at its partner, as the Moon does. Close in, it takes a few million years; far out, longer than the universe has existed.",
+     "science": "Despinning time for a body whose tidal response is a constant Q, from an initial spin to synchronous. Order-of-magnitude only: Q and k2 are uncertain by factors of several, and Q depends on frequency."
+    },
+    "examples": [
+     {
+      "w": 7.27e-05,
+      "a": 160000000000.0,
+      "m": 6.4e+24,
+      "R": 6800000.0,
+      "M": 2.1e+30,
+      "t": 3.74870021767237e+18
+     }
+    ]
+   }
+  }
+ ]
+}

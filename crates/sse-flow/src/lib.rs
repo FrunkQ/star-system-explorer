@@ -14,8 +14,8 @@ pub use decl::{
     Port, Reference, World,
 };
 pub use flow::{
-    Context, EvalError, Evaluation, Explanation, Flow, FlowDoc, FlowError, InputValue, SourceLabel,
-    Validity,
+    Context, EvalError, Evaluation, Explanation, Flow, FlowDoc, FlowError, InputValue, ParamValue,
+    SourceLabel, Validity,
 };
 pub use value::{Shape, Val};
 

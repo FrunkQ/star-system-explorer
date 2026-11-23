@@ -29,6 +29,7 @@ pub mod expr;
 pub mod laws;
 pub mod lookup;
 pub mod phases;
+pub mod refs;
 
 /// Relative tolerance between a sheet unit and the built-in one of the
 /// same id.
@@ -266,6 +267,31 @@ impl Reference {
         }
     }
 
+    /// The shipped master data sheet (packs/base-reference) on its own.
+    pub fn base() -> Self {
+        let m = sse_pack::PackManifest::from_json(BASE_PACK).expect("base-reference parses");
+        Self::from_packs(&[m]).expect("base-reference loads clean")
+    }
+
+    /// A gas's molar mass, kg/mol: a substance from its formula, a mixture
+    /// from its recipe by volume (the mole-weighted mean of its parts).
+    pub fn gas_molar_mass_kg_mol(&self, id: &str) -> Option<f64> {
+        if let Some(m) = self.molar_mass_kg_mol(id) {
+            return Some(m);
+        }
+        let row = self.row("mixtures", id)?;
+        if row.get("by").and_then(J::as_str) != Some("volume") {
+            return None;
+        }
+        let (mut sum, mut x) = (0.0, 0.0);
+        for (part, share) in row.get("recipe")?.as_object()? {
+            let f = share.as_f64()?;
+            sum += f * self.molar_mass_kg_mol(part)?;
+            x += f;
+        }
+        (x > 0.0).then(|| sum / x)
+    }
+
     pub fn row(&self, table: &str, id: &str) -> Option<&Map<String, J>> {
         self.tables.get(table)?.get(id)
     }
@@ -280,14 +306,20 @@ impl Reference {
         )
     }
 
-    /// Molar mass worked out from the formula, kg/mol (atomic weights are g/mol).
+    /// Molar mass worked out from the formula, kg/mol (atomic weights are g/mol;
+    /// an isotope named in the formula counts at its own mass).
     /// `None` when an element in the formula has no standard atomic weight
     /// (the elements with no stable isotope).
     pub fn molar_mass_kg_mol(&self, id: &str) -> Option<f64> {
         let f = self.formula(id)?;
         let mut sum = 0.0;
         for (e, n) in f {
-            let w = num(self.row("elements", &e)?.get("atomic_weight"))?;
+            // An element's standard atomic weight, or an isotope's own mass
+            // (u) when the formula names one: deuterium is {"h2": 2}.
+            let w = match self.row("elements", &e) {
+                Some(row) => num(row.get("atomic_weight"))?,
+                None => num(self.row("isotopes", &e)?.get("mass"))?,
+            };
             sum += n * w;
         }
         Some(sum / 1000.0)
@@ -710,8 +742,13 @@ impl Reference {
             match row.get("formula").and_then(J::as_object) {
                 None => p.push(format!("substance {id} has no formula (element counts)")),
                 Some(f) => {
-                    for e in f.keys().filter(|e| !elements.contains_key(*e)) {
-                        p.push(format!("substance {id}: formula names element {e}, which is not in the elements table"));
+                    let isotopes = self.tables.get("isotopes").unwrap_or(&empty);
+                    let known = |e: &String| {
+                        elements.contains_key(e)
+                            || isotopes.get(e).is_some_and(|i| i.get("mass").is_some())
+                    };
+                    for e in f.keys().filter(|e| !known(e)) {
+                        p.push(format!("substance {id}: formula names element {e}, which is not in the elements table (nor an isotope with a mass)"));
                     }
                 }
             }
@@ -915,6 +952,9 @@ impl Reference {
         J::Object(out)
     }
 }
+
+/// The shipped sheet, as JSON.
+pub const BASE_PACK: &str = include_str!("../../../packs/base-reference/pack.json");
 
 /// Pressure in Pa from a vapour-pressure fit at `t` K.
 pub fn vapour_pressure_pa(fit: &J, t: f64) -> Option<f64> {

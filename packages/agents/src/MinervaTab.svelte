@@ -8,7 +8,7 @@
 <script lang="ts">
   import { asker, estimate, linked, type AgentsState, type LedgerRow } from "./agents.ts";
   import type { LoopResult } from "./loop.ts";
-  import { factsBundle, hiddenFrom, hitsFor, minervaRequest, minervaSystem, runMinerva, type FactsBundle, type MinervaNotes, type Narrative } from "./minerva.ts";
+  import { aboutOne, factsBundle, hiddenFrom, hitsFor, minervaRequest, minervaSystem, runMinerva, type FactsBundle, type MinervaNotes, type Narrative } from "./minerva.ts";
   import type { PlayerScene, SiftResult, Vocab } from "../../ui-contract/src/index.ts";
 
   export interface MinervaHost {
@@ -19,9 +19,14 @@
     title: string;
     /** The kernel's sifter hits over what one audience is shown (never the GM's), or null when it cannot say. */
     sift?: (audience: string) => Promise<SiftResult | null>;
+    /** Keep a passed narrative as a subject's description (V3 gap 23): a note in the record for that audience. Null when kept, else why not. */
+    keep?: (address: string, text: string, audience: string) => Promise<string | null>;
   }
 
-  let { st, host, onrow }: { st: AgentsState; host?: MinervaHost; onrow: (r: LedgerRow) => void } = $props();
+  let { st, host, onrow, focus }: { st: AgentsState; host?: MinervaHost; onrow: (r: LedgerRow) => void; focus?: string | null } = $props();
+  // Describe (V3 gap 23): a subject handed over from a card; her facts are that subject and its neighbours only.
+  let focusLabel = $state("");
+  let kept = $state<Record<number, string>>({});
 
   let audience = $state("everyone");
   let notes = $state<MinervaNotes>({ seed: "", style: "", length: "short" });
@@ -32,7 +37,9 @@
 
   $effect(() => {
     const a = audience;
+    void focus;
     bundle = null;
+    kept = {};
     build(a).then((b) => {
       if (a === audience) bundle = b;
     });
@@ -55,8 +62,15 @@
   /** The audience's facts, with the sifter hits over what they are shown. */
   async function build(a: string): Promise<FactsBundle | null> {
     if (!host) return null;
-    const [s, r] = await Promise.all([host.scene(a), host.sift ? host.sift(a) : Promise.resolve(null)]);
-    return s ? factsBundle(s, host.vocab, { title: host.title, hits: hitsFor(r, a, s) }) : null;
+    const [all, r] = await Promise.all([host.scene(a), host.sift ? host.sift(a) : Promise.resolve(null)]);
+    const s = all && focus ? aboutOne(all, focus) : all;
+    if (all && focus) focusLabel = s ? (s.subjects.find((x) => x.address === focus)?.facts.find((f) => f.field === "name")?.value as string | undefined) ?? "" : "";
+    return s ? factsBundle(s, host.vocab, { title: host.title, hits: focus ? [] : hitsFor(r, a, s) }) : null;
+  }
+  async function keepIt(i: number, text: string, a: string) {
+    if (!host?.keep || !focus) return;
+    const bad = await host.keep(focus, text, a);
+    kept = { ...kept, [i]: bad ?? "kept" };
   }
 
   async function write(e: SubmitEvent) {
@@ -81,6 +95,7 @@
   {#if !host}
     <p class="hint" data-agent-off="minerva">Minerva works on the GM's chart room only.</p>
   {:else}
+    {#if focus}<p class="meta" data-minerva-focus={focus}>Describing {focusLabel || "the body in focus"}: she is given it, what it orbits and what orbits it, as the audience knows them.</p>{/if}
     {#if !linked(st, "describing")}<p class="hint" data-agent-off="minerva">No model is linked for Describing. Link one under Link models.</p>{/if}
     <form class="ask" onsubmit={write}>
       <label>For <select bind:value={audience} aria-label="Audience">{#each host.audiences() as a (a.id)}<option value={a.id}>{a.label}</option>{/each}</select></label>
@@ -100,6 +115,10 @@
         <article class="narrative" data-narrative={c.value!.audience}>
           <p class="meta">Narrative · for {host.audiences().find((a) => a.id === c.value!.audience)?.label ?? c.value!.audience} · every number checked against their facts</p>
           {#each c.value!.text.split(/\n\s*\n/) as para, j (j)}<p>{para}</p>{/each}
+          {#if focus && host.keep}
+            {#if kept[i] === "kept"}<p class="meta" data-kept>Kept as its description, for {host.audiences().find((a) => a.id === c.value!.audience)?.label ?? c.value!.audience}.</p>
+            {:else}<button type="button" data-keep-description onclick={() => keepIt(i, c.value!.text, c.value!.audience)}>Keep as its description</button>{#if kept[i]}<span class="problem" role="alert">{kept[i]}</span>{/if}{/if}
+          {/if}
         </article>
       {/each}
       {#each result.failed as c, i (i)}

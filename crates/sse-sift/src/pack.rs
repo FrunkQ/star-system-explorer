@@ -15,12 +15,18 @@ pub struct SiftContent {
     pub sifters: Vec<Sifter>,
 }
 
-fn take<T: serde::de::DeserializeOwned>(p: &PackManifest, key: &str) -> Result<Vec<T>, String> {
+fn take<T: serde::de::DeserializeOwned>(
+    stack: &[PackManifest],
+    p: &PackManifest,
+    key: &str,
+) -> Result<Vec<T>, String> {
     match p.provides.other.get(key) {
         None => Ok(Vec::new()),
-        // Through JSON, so integers written in a pack read as numbers where a number is wanted.
-        Some(v @ Value::Array(_)) => serde_json::to_value(v)
-            .and_then(serde_json::from_value)
+        // Through JSON, so integers written in a pack read as numbers where a
+        // number is wanted, and sheet references (an axis dividing by a unit)
+        // read the stack's sheet.
+        Some(v @ Value::Array(_)) => sse_reference::refs::with_sheet(stack, v)
+            .and_then(|j| serde_json::from_value(j).map_err(|e| e.to_string()))
             .map_err(|e| format!("{}: {key}: {e}", p.id)),
         Some(_) => Err(format!("{}: {key} must be a list", p.id)),
     }
@@ -40,35 +46,35 @@ pub fn load(stack: &[PackManifest]) -> Result<SiftContent, Vec<String>> {
         }
     };
     for p in stack {
-        match take::<Rule>(p, "rules") {
+        match take::<Rule>(stack, p, "rules") {
             Ok(rs) => rs.into_iter().for_each(|r| {
                 claim("rule", &r.id, &p.id, &mut errs);
                 out.rules.rules.push(r)
             }),
             Err(e) => errs.push(e),
         }
-        match take::<(String, Axis)>(p, "axes") {
+        match take::<(String, Axis)>(stack, p, "axes") {
             Ok(xs) => xs.into_iter().for_each(|(id, a)| {
                 claim("axis", &id, &p.id, &mut errs);
                 out.atlas.axes.insert(id, a);
             }),
             Err(e) => errs.push(e),
         }
-        match take::<Scheme>(p, "schemes") {
+        match take::<Scheme>(stack, p, "schemes") {
             Ok(ss) => ss.into_iter().for_each(|sc| {
                 claim("scheme", &sc.id, &p.id, &mut errs);
                 out.atlas.schemes.insert(sc.id.clone(), sc);
             }),
             Err(e) => errs.push(e),
         }
-        match take::<Class>(p, "classes") {
+        match take::<Class>(stack, p, "classes") {
             Ok(cs) => cs.into_iter().for_each(|c| {
                 claim("class", &c.id, &p.id, &mut errs);
                 out.atlas.classes.push(c)
             }),
             Err(e) => errs.push(e),
         }
-        match take::<Sifter>(p, "sifters") {
+        match take::<Sifter>(stack, p, "sifters") {
             Ok(ss) => ss.into_iter().for_each(|s| {
                 claim("sifter", &s.id, &p.id, &mut errs);
                 out.sifters.push(s)

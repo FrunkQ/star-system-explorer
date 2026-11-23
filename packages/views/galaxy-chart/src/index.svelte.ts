@@ -1,5 +1,6 @@
 import { mount, unmount } from "svelte";
-import { flatChart, type ViewModule } from "../../../ui-contract/src/index.ts";
+import type { ViewModule } from "../../../ui-contract/src/index.ts";
+import { GALAXY_CONTROLS } from "./controls.ts";
 import GalaxyChart from "./GalaxyChart.svelte";
 
 /**
@@ -13,8 +14,8 @@ import GalaxyChart from "./GalaxyChart.svelte";
 export const galaxyChart: ViewModule = {
   id: "sse.view.galaxy-chart",
   version: "0.1.0",
-  tiers: ["text", "canvas"],
-  controls: flatChart("3D galaxies come with the galaxy chart's Free view"),
+  tiers: ["text", "canvas", "gpu-basic", "gpu-high"],
+  controls: GALAXY_CONTROLS,
   inputs: [{ event_kinds: [] }],
   params: [
     { name: "halo", type: "enum", default: "milky-way-like", options: ["dwarf", "milky-way-like", "group"], meaning: "Which reference galaxy to chart first: the median halo of 1e11, 1e12 or 1e13 solar masses grown from the universe's seed.", promoted: true, group: "content" },

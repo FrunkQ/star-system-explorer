@@ -40,12 +40,38 @@ try {
     assert.ok((await ins.locator("[data-place]").count()) >= 3, "places on the orbit line");
     assert.match(await ins.locator("[data-leg]").first().innerText(), /from .* to .*propellant/);
     await shot(gm, "v8-voyage-system");
+    // What the ship can do where it arrives (ship_at_world): the ship drawn, then the acts, none refused.
+    await gm.waitForSelector(".insys [data-at-world]", { timeout: 60000 });
+    assert.ok((await ins.locator("[data-at-world] [data-act]").count()) >= 1, "acts at the destination");
+    await gm.waitForSelector(".insys [data-at-world] [data-ship-plans]", { timeout: 30000 });
+    assert.equal(await ins.locator("[data-at-world] [data-ship-plans]").count(), 1, "the ship designed from its numbers");
+    await shot(gm, "v8-voyage-at-world", true);
+    // Abilities shape the ship (SHIP14 stage 4b): fit it for this world, and if the fit carries a heat shield for an
+    // aerobraking pass, watch the pass with the shield glowing at its radiative balance.
+    await ins.locator("[data-fit-for-world]").click();
+    await gm.waitForFunction(() => !document.querySelector(".insys [data-fit-for-world]")?.hasAttribute("disabled"), null, { timeout: 60000 });
+    const pass = ins.locator("[data-watch-pass]");
+    if (await pass.count()) {
+      await pass.click();
+      await gm.waitForSelector(".insys [data-pass-view] canvas", { timeout: 30000 });
+      assert.match(await ins.locator("[data-pass-view]").innerText(), /K/);
+      await gm.waitForTimeout(1500);
+      await shot(gm, "ship14-watch-the-pass", true);
+    }
     // To a belt, if the system has one; else the outermost world.
     const belt = ins.locator("[data-place^='belt:']").first();
     const target = (await belt.count()) ? await belt.getAttribute("data-place") : await ins.locator("[data-place]").last().getAttribute("data-place");
     await ins.locator(`[data-place='${target}']`).dispatchEvent("click");
     await gm.waitForFunction((t) => (document.querySelector(".insys")?.getAttribute("data-voyage") ?? "").endsWith(`>${t}`) || !!document.querySelector(".insys [data-refusal]"), target, { timeout: 90000 });
     await shot(gm, "v8-voyage-system-far");
+    // Scale (Alex, 23 Nov): Real lays the orbits out in AU, Readable by the log of their size.
+    assert.equal(await ins.locator("[data-axis-scale]").getAttribute("data-axis-scale"), "readable");
+    await gm.getByRole("group", { name: "Scale" }).getByRole("button", { name: "Real" }).click();
+    await ins.locator("[data-axis-scale=real]").waitFor();
+    assert.match(await ins.locator("[data-axis-scale]").textContent(), /AU across/);
+    await shot(gm, "v8-voyage-system-real");
+    await gm.getByRole("group", { name: "Scale" }).getByRole("button", { name: "Readable" }).click();
+    await ins.locator("[data-axis-scale=readable]").waitFor();
 
     await gm.locator("[data-scale-pick=stars]").click();
     const voy = gm.locator(".voy");

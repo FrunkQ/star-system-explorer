@@ -227,6 +227,29 @@ pub struct StarSystem {
     pub cluster_mass_msun: f64,
     pub orbit: Orbit,
     pub pinned: bool,
+    /// GH4: a star of the stellar halo, born in a galaxy this one tore apart.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub born_in: Option<BornIn>,
+}
+
+/// Where a halo star was born (GH4): the galaxy it came from, and what is
+/// left of that galaxy here.
+#[derive(Clone, PartialEq, Debug, Serialize, Deserialize)]
+pub struct BornIn {
+    /// The progenitor's address in the assembly tree.
+    pub galaxy: String,
+    pub fell_gyr: f64,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub torn_gyr: Option<f64>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub merged_gyr: Option<f64>,
+    /// Its stars' total in the host now, M☉.
+    pub galaxy_stars_msun: f64,
+    /// `stream`, `shell` or `mixed remains` where the star is.
+    pub remains: String,
+    /// The card's line: "born in a dwarf galaxy that fell in 9.6 Gyr ago
+    /// and was torn apart 7.2 Gyr ago".
+    pub says: String,
 }
 
 /// What a star is at a time.
@@ -255,8 +278,27 @@ pub struct Stars<'a> {
     pub galaxy: Address,
 }
 
-const KMS_PC_MYR: f64 = 1.022_712;
-const G_PC3: f64 = 4.498_502e-3;
+const KMS_PC_MYR: f64 = 1e3 * 1e6 * sse_core::sheet::YR_JULIAN / sse_core::sheet::PC;
+const G_PC3: f64 = sse_core::sheet::GM_SUN
+    * (1e6 * sse_core::sheet::YR_JULIAN)
+    * (1e6 * sse_core::sheet::YR_JULIAN)
+    / (sse_core::sheet::PC * sse_core::sheet::PC * sse_core::sheet::PC);
+
+/// Share of a cumulative history's births by `t`.
+fn birth_share(cdf: &[(f64, f64)], acc: f64, t: f64) -> f64 {
+    if acc <= 0.0 {
+        return 0.0;
+    }
+    let v = match cdf.windows(2).find(|w| w[1].0 >= t) {
+        None => acc,
+        Some(w) if t <= w[0].0 => w[0].1,
+        Some(w) => {
+            let f = (t - w[0].0) / (w[1].0 - w[0].0).max(1e-300);
+            w[0].1 + f * (w[1].1 - w[0].1)
+        }
+    };
+    (v / acc).clamp(0.0, 1.0)
+}
 
 /// A birth time from the cumulative star formation and a unit draw.
 pub(crate) fn birth_from(cdf: &[(f64, f64)], acc: f64, u: f64, t_now_gyr: f64) -> f64 {
@@ -454,6 +496,218 @@ impl<'a> Stars<'a> {
             t_gyr,
         })
     }
+    /// GH4: whether this galaxy holds the remains of others.
+    pub(crate) fn has_remains(&self) -> bool {
+        self.env
+            .galaxy
+            .assembled
+            .as_ref()
+            .is_some_and(|a| !a.components.is_empty() && a.shapes_with.is_some())
+    }
+
+    /// GH4: each component's systems per pc³ at a point of the grid (pc) at
+    /// `t0` (Myr).
+    pub(crate) fn remains_weights_at(&self, g: [f64; 3], t0: f64) -> Vec<(usize, f64)> {
+        if !self.has_remains() {
+            return vec![];
+        }
+        let [x, y, z] = self.from_grid(g, t0);
+        let k = 1.0 / self.env.params.mean_star_msun;
+        self.env
+            .remains_at(Place {
+                r_kpc: m::hypot(x, y) / 1000.0,
+                phi: m::atan2(y, x),
+                z_pc: z,
+                t_gyr: t0 / 1000.0,
+            })
+            .into_iter()
+            .map(|(i, d)| (i, d * k))
+            .collect()
+    }
+
+    /// GH4: the remains' systems per pc³ at a point of the grid.
+    pub(crate) fn remains_density_at(&self, g: [f64; 3], t0: f64) -> f64 {
+        self.remains_weights_at(g, t0).iter().map(|w| w.1).sum()
+    }
+
+    /// GH4: the earliest birth any component holds (every remains history
+    /// starts there, so the class grid is one for the walk).
+    fn remains_first_gyr(&self) -> f64 {
+        self.env
+            .galaxy
+            .assembled
+            .as_ref()
+            .map_or(0.0, |a| {
+                a.components
+                    .iter()
+                    .filter_map(|c| c.births.first().map(|b| b.t_gyr))
+                    .fold(f64::INFINITY, f64::min)
+            })
+            .min(self.env.disc.t_start_gyr)
+            - 0.05
+    }
+
+    /// GH4: one component's cumulative births up to `t_now_gyr`.
+    pub(crate) fn component_cdf(&self, i: usize, t_now_gyr: f64) -> (Vec<(f64, f64)>, f64) {
+        let mut cdf = vec![(self.remains_first_gyr(), 0.0)];
+        let mut acc = 0.0;
+        if let Some(c) = self
+            .env
+            .galaxy
+            .assembled
+            .as_ref()
+            .and_then(|a| a.components.get(i))
+        {
+            for b in c.births.iter().filter(|b| b.t_gyr <= t_now_gyr) {
+                acc += b.stars;
+                cdf.push((b.t_gyr, acc));
+            }
+        }
+        (cdf, acc)
+    }
+
+    /// GH4: the remains' births at a point of the grid: each component's
+    /// share of the stars there times its own history.
+    pub(crate) fn remains_cdf_at(&self, g: [f64; 3], t0: f64) -> (Vec<(f64, f64)>, f64) {
+        let t_now = t0 / 1000.0;
+        let w = self.remains_weights_at(g, t0);
+        let total: f64 = w.iter().map(|x| x.1).sum();
+        let first = self.remains_first_gyr();
+        let steps = 200;
+        type Cdf = (f64, Vec<(f64, f64)>, f64);
+        let cdfs: Vec<Cdf> = w
+            .iter()
+            .map(|(i, d)| {
+                let (c, a) = self.component_cdf(*i, t_now);
+                (*d, c, a)
+            })
+            .collect();
+        let mut out = Vec::with_capacity(steps + 1);
+        for k in 0..=steps {
+            let t = first + (t_now - first) * k as f64 / steps as f64;
+            let mut v = 0.0;
+            for (d, c, a) in &cdfs {
+                if *a > 0.0 && total > 0.0 {
+                    let by = birth_share(c, *a, t);
+                    v += d / total * by;
+                }
+            }
+            out.push((t, v));
+        }
+        let acc = out.last().map_or(0.0, |p| p.1);
+        (out, acc)
+    }
+
+    /// GH4: a halo star of component `comp`: everything but its mass and
+    /// birth, with the abundances of the gas it was born from in its own
+    /// galaxy and an orbit through the halo (fudge F49).
+    #[allow(clippy::too_many_arguments)]
+    pub(crate) fn complete_remains(
+        &self,
+        d: &Draws,
+        i: &dyn Fn(u64) -> u64,
+        addr: &Address,
+        cell: [i64; 3],
+        frame: i64,
+        k: u64,
+        comp: usize,
+        mass: f64,
+        birth: f64,
+    ) -> Result<StarSystem, String> {
+        let mut s = self.complete(d, i, addr, cell, frame, k, mass, birth)?;
+        let a = self
+            .env
+            .galaxy
+            .assembled
+            .as_ref()
+            .ok_or("no remains here")?;
+        let c = a.components.get(comp).ok_or("no such component")?;
+        let b = c
+            .births
+            .iter()
+            .min_by(|x, y| (x.t_gyr - birth).abs().total_cmp(&(y.t_gyr - birth).abs()))
+            .ok_or("a component with no births")?;
+        s.feh = b.feh + b.feh_sd * d.normal(i(13));
+        s.alpha_fe = b.alpha_fe;
+        s.c_o = 0.55 * m::pow(10.0, b.cn_alpha);
+        s.r_fe = b.r_fe;
+        s.k40_fe = b.k40_fe;
+        // Its orbit: the closed form, with the halo's reach (F49). It turns
+        // with the disc as far as its galaxy's orbit did, at half the
+        // circular speed at most.
+        let t0 = frame as f64 * self.params.frame_myr;
+        let [x, y, z] = s.orbit.xyz(t0);
+        let r0 = m::hypot(x, y).max(1.0);
+        let (v_c, _) = self.env.circular(r0 / 1000.0);
+        let v = v_c * KMS_PC_MYR;
+        let rayleigh = |u: f64| m::sqrt(-2.0 * m::ln(u.max(1.0e-300)));
+        let reach = 500.0 * (c.apo_kpc - c.peri_kpc).max(0.0);
+        let amp_r = (reach * rayleigh(d.unit(i(17))) * 0.5).min(0.9 * r0);
+        let phase_r = 2.0 * m::PI * d.unit(i(18));
+        let r_guide = r0 - amp_r * m::cos(phase_r);
+        let omega = 0.5 * c.prograde * v / r_guide.max(1.0);
+        let kappa = m::sqrt(2.0) * v / r_guide.max(1.0);
+        let r3 = m::sqrt(r0 * r0 + z * z).max(1.0);
+        let nu = v / r3;
+        let phi_now = m::atan2(y, x);
+        let phi0 = if kappa > 0.0 {
+            phi_now + 2.0 * omega / kappa * amp_r / r_guide.max(1.0) * m::sin(phase_r)
+        } else {
+            phi_now
+        };
+        let amp_z = (1000.0 * c.apo_kpc * 0.5 * d.unit(i(19))).max(z.abs() * (1.0 + 1.0e-12));
+        let base = m::acos((z / amp_z).clamp(-1.0, 1.0));
+        let phase_z = if d.unit(i(20)) < 0.5 { base } else { -base };
+        s.orbit = Orbit {
+            r_guide_pc: r_guide,
+            amp_r_pc: amp_r,
+            amp_z_pc: amp_z,
+            phase_r,
+            phase_z,
+            phi0,
+            t0_myr: t0,
+            omega,
+            kappa,
+            nu,
+        };
+        let (op, rp) = a.shapes_with.as_ref().ok_or("no remains here")?;
+        let kind = self.env.remains.kind_at(
+            &a.components,
+            op,
+            rp,
+            [x / 1000.0, y / 1000.0, z / 1000.0],
+            t0 / 1000.0,
+            comp,
+        );
+        s.address = addr
+            .child_key("sys", &format!("f{frame}h{k}"))
+            .map_err(|e| format!("{e:?}"))?;
+        s.born_in = Some(BornIn {
+            galaxy: c.from.clone(),
+            fell_gyr: c.fell_gyr,
+            torn_gyr: c.torn_gyr,
+            merged_gyr: c.merged_gyr,
+            galaxy_stars_msun: c.stars_msun,
+            remains: kind.into(),
+            says: format!("born in {}", crate::origin::born_in_words(c, t0 / 1000.0)),
+        });
+        Ok(s)
+    }
+
+    /// GH4: the remains' stars of a cell (none in a galaxy that tore none
+    /// apart).
+    pub(crate) fn draw_remains(
+        &self,
+        cell: [i64; 3],
+        frame: i64,
+        class: Option<usize>,
+    ) -> Result<Vec<StarSystem>, String> {
+        if self.params.key_version < 2 || !self.has_remains() {
+            return Ok(vec![]);
+        }
+        crate::star_tree::TreeWalk::remains(self, frame).draw(cell, class)
+    }
+
     /// Every system drawn for a cell and frame, before pins.
     pub(crate) fn draw_all(&self, cell: [i64; 3], frame: i64) -> Result<Vec<StarSystem>, String> {
         if self.params.key_version >= 2 {
@@ -610,6 +864,7 @@ impl<'a> Stars<'a> {
                 nu,
             },
             pinned: false,
+            born_in: None,
         })
     }
 
@@ -623,7 +878,8 @@ impl<'a> Stars<'a> {
         pins: &[StarSystem],
     ) -> Result<Vec<StarSystem>, String> {
         let fill = self.draw_all(cell, frame)?;
-        Ok(self.with_pins(cell, frame, pins, fill))
+        let rem = self.draw_remains(cell, frame, None)?;
+        Ok(self.with_pins(cell, frame, pins, fill, rem))
     }
 
     /// Several cells in one frame, each exactly as `cell` gives it. The
@@ -637,6 +893,8 @@ impl<'a> Stars<'a> {
     ) -> Result<Vec<Vec<StarSystem>>, String> {
         let walk =
             (self.params.key_version >= 2).then(|| crate::star_tree::TreeWalk::new(self, frame));
+        let rwalk = (self.params.key_version >= 2 && self.has_remains())
+            .then(|| crate::star_tree::TreeWalk::remains(self, frame));
         cells
             .iter()
             .map(|&c| {
@@ -644,7 +902,11 @@ impl<'a> Stars<'a> {
                     Some(w) => w.draw(c, None)?,
                     None => self.draw_all(c, frame)?,
                 };
-                Ok(self.with_pins(c, frame, pins, fill))
+                let rem = match &rwalk {
+                    Some(w) => w.draw(c, None)?,
+                    None => vec![],
+                };
+                Ok(self.with_pins(c, frame, pins, fill, rem))
             })
             .collect()
     }
@@ -655,24 +917,32 @@ impl<'a> Stars<'a> {
         frame: i64,
         pins: &[StarSystem],
         mut fill: Vec<StarSystem>,
+        mut remains: Vec<StarSystem>,
     ) -> Vec<StarSystem> {
         let t0 = frame as f64 * self.params.frame_myr;
         let here: Vec<&StarSystem> = pins
             .iter()
             .filter(|s| self.cell_at(s.orbit.xyz(t0), t0) == cell)
             .collect();
-        // Pins drawn from this cell and frame keep their slot.
-        let own: Vec<u64> = here
-            .iter()
-            .filter(|s| s.cell == cell && s.frame == frame)
-            .map(|s| s.slot)
-            .collect();
-        fill.retain(|s| !own.contains(&s.slot));
-        let foreign = here.len() - own.len();
-        let keep = fill.len().saturating_sub(foreign);
-        fill.truncate(keep);
+        // Pins drawn from this cell and frame keep their slot; a disc pin
+        // that moved here takes a disc star's place, a halo pin a halo
+        // star's.
+        let own = |halo: bool| -> Vec<u64> {
+            here.iter()
+                .filter(|s| s.cell == cell && s.frame == frame && s.born_in.is_some() == halo)
+                .map(|s| s.slot)
+                .collect()
+        };
+        for (list, halo) in [(&mut fill, false), (&mut remains, true)] {
+            let mine = own(halo);
+            list.retain(|s| !mine.contains(&s.slot));
+            let of_kind = here.iter().filter(|s| s.born_in.is_some() == halo).count();
+            let keep = list.len().saturating_sub(of_kind - mine.len());
+            list.truncate(keep);
+        }
         let mut out: Vec<StarSystem> = here.into_iter().cloned().collect();
         out.extend(fill);
+        out.extend(remains);
         out.sort_by(|a, b| a.address.cmp(&b.address));
         out
     }
@@ -691,10 +961,11 @@ impl<'a> Stars<'a> {
             return Err(format!("{text}: not in galaxy {}", self.galaxy));
         }
         let n: Vec<i64> = key.split('_').filter_map(|x| x.parse().ok()).collect();
+        let halo = sys.contains('h');
         let (f, k) = sys
             .strip_prefix('f')
-            .and_then(|x| x.split_once('k'))
-            .ok_or_else(|| format!("{text}: system key is f<frame>k<slot>"))?;
+            .and_then(|x| x.split_once(if halo { 'h' } else { 'k' }))
+            .ok_or_else(|| format!("{text}: system key is f<frame>k<slot> or f<frame>h<slot>"))?;
         let (frame, slot): (i64, u64) = match (f.parse(), k.parse()) {
             (Ok(f), Ok(k)) => (f, k),
             _ => return Err(format!("{text}: system key is f<frame>k<slot>")),
@@ -703,7 +974,10 @@ impl<'a> Stars<'a> {
             return Err(format!("{text}: cell key is <x>_<y>_<z>"));
         }
         let cell = [n[0], n[1], n[2]];
-        let all = if self.params.key_version >= 2 {
+        let all = if halo {
+            let classes = self.params.class_edges_lsun.len() as u64 + 1;
+            self.draw_remains(cell, frame, Some((slot % classes) as usize))?
+        } else if self.params.key_version >= 2 {
             // The slot names its class (count tree slots interleave them).
             let classes = self.params.class_edges_lsun.len() as u64 + 1;
             self.draw_tree(cell, frame, Some((slot % classes) as usize))?
@@ -734,7 +1008,9 @@ impl<'a> Stars<'a> {
         let total: f64 = s.mass_msun + s.companions.iter().map(|c| c.mass_msun).sum::<f64>();
         crate::SystemBirth {
             address: s.address.clone(),
-            population: if s.birth_gyr < 3.0 {
+            population: if s.born_in.is_some() {
+                "stellar halo".into()
+            } else if s.birth_gyr < 3.0 {
                 "thick disc".into()
             } else {
                 "thin disc".into()

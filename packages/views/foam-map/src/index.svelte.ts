@@ -1,5 +1,5 @@
 import { mount, unmount } from "svelte";
-import { flatChart, type ViewModule } from "../../../ui-contract/src/index.ts";
+import { FOAM_CONTROLS, type ViewModule } from "../../../ui-contract/src/index.ts";
 import FoamMap from "./FoamMap.svelte";
 
 /**
@@ -12,7 +12,7 @@ export const foamMap: ViewModule = {
   id: "sse.view.foam-map",
   version: "0.1.0",
   tiers: ["text", "canvas"],
-  controls: flatChart("The cosmic web is a slice for now: 3D comes later"),
+  controls: FOAM_CONTROLS,
   inputs: [{ event_kinds: [] }],
   params: [
     { name: "extent_mpc", type: "enum", default: "200", options: ["50", "100", "200", "400"], meaning: "Side of the square slice, megaparsecs.", promoted: true, group: "content" },

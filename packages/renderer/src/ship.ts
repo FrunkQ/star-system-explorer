@@ -8,7 +8,30 @@
 //   delta-v = c tanh((v_e / c) ln(m0 / m1)), full-thrust burn t = (m0 - m1) / mdot.
 // Constants come from the master data sheet; densities come from the sheet's substance rows (phases.density_liquid),
 // passed in by the view, never typed here.
-import { constant } from "../../ui-contract/src/index.ts";
+import { constant, readRow, type MatterReader } from "../../ui-contract/src/index.ts";
+
+/** How each fuel is stored, read from the master data sheet: base-nav fuel `id` is the mixture `fuel-<id>`, whose
+ * recipe gives each substance's mass share; each substance's `phases.density_liquid` gives its stored density. A
+ * fuel with no mixture row (antimatter) or a part with no density is left out, and the hull marks it a stand-in. */
+export async function readPropellants(k: MatterReader, fuels: readonly string[]): Promise<Propellants> {
+  const out: Record<string, PropellantPart[]> = {};
+  for (const f of new Set(fuels)) {
+    const mix = await readRow<{ recipe?: Record<string, number>; by?: string }>(k, "mixtures", `fuel-${f}`);
+    if (!mix?.row.recipe || (mix.row.by && mix.row.by !== "mass")) continue;
+    const parts: PropellantPart[] = [];
+    for (const [id, share] of Object.entries(mix.row.recipe)) {
+      const sub = await readRow<{ names?: { plain?: string }; phases?: { density_liquid?: { v: number; src?: string } } }>(k, "substances", id);
+      const d = sub?.row.phases?.density_liquid;
+      if (!d || !(d.v > 0)) {
+        parts.length = 0;
+        break;
+      }
+      parts.push({ name: `liquid ${sub.row.names?.plain ?? id}`, share, kg_m3: d.v, src: d.src ?? "" });
+    }
+    if (parts.length) out[f] = parts;
+  }
+  return out;
+}
 
 /** A ship as NAV reads it (ui-contract NavShip), with the fuels the base-nav record lists. */
 export interface ShipRecord {
@@ -118,11 +141,25 @@ export const HULL_SHAPE = { fineness: 4, crew_length: 1, engine_length: 1.2, bel
 
 /** Build a hull from the record: one tank per stored part of each fuel, a crew module whose skin is the shield,
  * and an engine at the back. The hull's radius is the one at which the tanks make a cylinder `fineness` diameters long. */
-export function hullFromShip(s: ShipRecord, store: Propellants): Hull {
+/** One tank's worth of propellant: its mass, its volume at the stored density (or the stand-in density), and
+ * whether the sheet sized it. */
+export interface TankNeed {
+  name: string;
+  t: number;
+  volume_m3: number;
+  stand_in: boolean;
+  src?: string;
+}
+
+/** The tanks a ship needs: one per stored part of each fuel, plus a jump drive's own tank. */
+export function tanksOf(s: ShipRecord, store: Propellants): { tanks: TankNeed[]; notes: string[] } {
   const notes: string[] = [];
   const fuels = s.fuels?.length ? s.fuels : ["propellant"];
   const prop_t = Math.max(0, s.wet_t - s.dry_t);
-  const tanks: { name: string; t: number; part?: PropellantPart }[] = [];
+  const tanks: TankNeed[] = [];
+  // A fuel the sheet cannot size is drawn at a stand-in density (fudge register), marked as such.
+  const add = (name: string, t: number, part?: PropellantPart) =>
+    tanks.push({ name, t, volume_m3: (t * 1e3) / (part ? part.kg_m3 : HULL_SHAPE.stand_in_kg_m3), stand_in: !part, ...(part ? { src: part.src } : {}) });
   // Fuels share the propellant mass as the record's fuel_shares say; without them, equally (fudge register).
   const given = fuels.map((f) => s.fuel_shares?.[f] ?? 0);
   const sum = given.reduce((a, x) => a + x, 0);
@@ -131,17 +168,21 @@ export function hullFromShip(s: ShipRecord, store: Propellants): Hull {
     const parts = store[f];
     const t = prop_t * shareOf(i);
     if (!parts?.length) {
-      tanks.push({ name: f, t });
+      add(f, t);
       notes.push(`How ${f} is stored is not on the master data sheet yet, so its tank is drawn at a stand-in size.`);
-    } else for (const p of parts) tanks.push({ name: p.name, t: t * p.share, part: p });
+    } else for (const p of parts) add(p.name, t * p.share, p);
   }
   if (s.jump?.tank_t) {
     const parts = store["hydrogen"];
-    if (parts?.length) for (const p of parts) tanks.push({ name: `jump fuel (${p.name})`, t: s.jump.tank_t * p.share, part: p });
-    else tanks.push({ name: "jump fuel", t: s.jump.tank_t });
+    if (parts?.length) for (const p of parts) add(`jump fuel (${p.name})`, s.jump.tank_t * p.share, p);
+    else add("jump fuel", s.jump.tank_t);
   }
-  // A fuel the sheet cannot size is drawn at a stand-in density (fudge register), marked as such.
-  const vol = (k: { t: number; part?: PropellantPart }) => (k.t * 1e3) / (k.part ? k.part.kg_m3 : HULL_SHAPE.stand_in_kg_m3);
+  return { tanks, notes };
+}
+
+export function hullFromShip(s: ShipRecord, store: Propellants): Hull {
+  const { tanks, notes } = tanksOf(s, store);
+  const vol = (k: TankNeed) => k.volume_m3;
   const volume = Math.max(1, tanks.reduce((a, k) => a + vol(k), 0));
   const r = Math.cbrt(volume / (2 * Math.PI * HULL_SHAPE.fineness));
   const parts: HullPart[] = [];
@@ -150,9 +191,9 @@ export function hullFromShip(s: ShipRecord, store: Propellants): Hull {
   parts.push({ kind: "engine", name: "engine", from_m: 0, to_m: engine, radius_m: HULL_SHAPE.bell_exit * r });
   at = engine;
   for (const k of tanks) {
-    const v = k.part ? vol(k) : undefined;
-    const len = vol(k) / (Math.PI * r * r);
-    parts.push({ kind: "tank", name: k.name, from_m: at, to_m: at + len, radius_m: r, mass_t: k.t, volume_m3: v, stand_in: v === undefined, src: k.part?.src });
+    const v = k.stand_in ? undefined : k.volume_m3;
+    const len = k.volume_m3 / (Math.PI * r * r);
+    parts.push({ kind: "tank", name: k.name, from_m: at, to_m: at + len, radius_m: r, mass_t: k.t, volume_m3: v, stand_in: k.stand_in, src: k.src });
     at += len;
   }
   const crewLen = HULL_SHAPE.crew_length * r;

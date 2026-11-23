@@ -11,10 +11,10 @@ use sse_formation::pins::{solve, PinnedRun, Pins, WorldPin};
 use sse_formation::pipeline::Block;
 use sse_formation::Manifest;
 
-const M_SUN_KG: f64 = 1.988_47e30;
-const M_EARTH_KG: f64 = 5.972_2e24;
+const M_SUN_KG: f64 = sse_core::sheet::M_SUN;
+const M_EARTH_KG: f64 = sse_core::sheet::M_EARTH;
 const AU_M: f64 = sse_core::sheet::AU;
-const GYR_S: f64 = 1e9 * 365.25 * 86_400.0;
+const GYR_S: f64 = 1e9 * sse_core::sheet::YR_JULIAN;
 
 /// What an import says about one system, as pins.
 #[derive(Clone, PartialEq, Debug, Serialize, Deserialize)]

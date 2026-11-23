@@ -16,6 +16,8 @@
 pub mod courses;
 pub mod descent;
 pub mod drift;
+pub mod entry;
+pub mod ftl;
 pub mod hazards;
 pub mod insystem;
 pub mod kepler;
@@ -31,8 +33,8 @@ use sse_core::quantity::consts::{AU, G, L_SUN, R_SUN};
 use std::collections::BTreeMap;
 
 pub const NAV_VERSION: &str = "nav-v1";
-pub const M_SUN_KG: f64 = 1.988_47e30;
-pub const M_EARTH_KG: f64 = 5.972_2e24;
+pub const M_SUN_KG: f64 = sse_core::sheet::M_SUN;
+pub const M_EARTH_KG: f64 = sse_core::sheet::M_EARTH;
 pub const G0: f64 = sse_core::sheet::G0;
 
 // ------------------------------------------------------------------ settings
@@ -60,6 +62,8 @@ pub struct NavSettings {
     pub difficulty: DifficultySettings,
     pub drift: DriftSettings,
     pub descent: descent::DescentPack,
+    /// A ship at a world: aerocapture, entry, landing and take-off.
+    pub entry: entry::EntrySettings,
     /// Ship templates by id.
     pub ships: BTreeMap<String, Ship>,
     pub sources: BTreeMap<String, String>,
@@ -241,6 +245,27 @@ pub struct Ship {
     /// none listed means any.
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub refuel: Option<Vec<String>>,
+    /// Heat shield, shape in air and landing gear (a ship at a world:
+    /// `entry`). The renderer's ship designer writes them from the same
+    /// numbers it draws.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub shield: Option<entry::Shield>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub aero: Option<entry::Aero>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub landing: Option<entry::LandingGear>,
+    /// People aboard (0: an uncrewed probe; none given: crewed).
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub crew: Option<u32>,
+    /// Cargo aboard, tonnes (inside `dry_t`).
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub cargo_t: Option<f64>,
+    /// Share of the propellant mass by fuel ("deuterium" 0.4, "helium-3" 0.6).
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub fuel_shares: Option<BTreeMap<String, f64>>,
+    /// Most deceleration the hull bears, g (none given: not checked).
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub structure_g: Option<f64>,
 }
 
 impl Ship {
@@ -341,6 +366,9 @@ pub struct NavBody {
     /// `belts`), when it has been read; otherwise the MF0 stand-in applies.
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub belts: Option<BeltProfile>,
+    /// The body's air, where it has one (a ship at a world: `entry`).
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub air: Option<entry::Air>,
 }
 
 /// Belt dose against distance and shielding, as the field model gives it.
@@ -564,6 +592,10 @@ pub struct Course {
     pub why: Vec<String>,
     /// Course positions around the star at the samples, m (for drawing).
     pub track: Vec<V3>,
+    /// Speed over escape at the destination before the arrival burn, m/s: what an
+    /// aerocapture would shed instead (0 for a torch flight braked by its drive).
+    #[serde(default)]
+    pub arrive_v_inf_m_s: f64,
 }
 
 #[derive(Clone, PartialEq, Debug, Serialize, Deserialize)]
@@ -693,5 +725,9 @@ fn order(mut c: Vec<Course>, p: Prefer) -> Vec<Course> {
 
 #[cfg(test)]
 mod descent_tests;
+#[cfg(test)]
+mod entry_tests;
+#[cfg(test)]
+mod ftl_tests;
 #[cfg(test)]
 mod tests;

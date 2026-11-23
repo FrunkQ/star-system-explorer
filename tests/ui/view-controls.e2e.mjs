@@ -3,7 +3,8 @@
 // Every diagram shows the same two switches at the top of the stage: View style (Chart, 3D, True, Wireframe) and Seen
 // from (Above, Tilted, Edge-on, Free). What a view cannot do stays listed, disabled, with its reason. On the system
 // chart, Tilted turns the flat chart into 3D; dragging switches to Free and the hint says how Free is worked; the
-// choice is kept on the device. The galaxy chart, flat for now, shows Chart seen from above with the rest disabled.
+// choice is kept on the device. The galaxy chart follows it in 3D; Galaxies nearby, flat for now, shows Chart seen
+// from above with the rest disabled.
 // On a phone the controls sit over the chart with nothing off the side. Choosing writes nothing.
 import { spawn } from "node:child_process";
 import { mkdirSync } from "node:fs";
@@ -41,9 +42,14 @@ try {
   assert.deepEqual(await seen.locator("button").allInnerTexts(), ["Above", "Tilted", "Edge-on", "Free"]);
   assert.equal(await vc.getAttribute("data-style"), "chart");
   assert.equal(await vc.getAttribute("data-seen"), "above", "the flat chart is seen from above");
-  assert.ok(await style.getByRole("button", { name: "True" }).isDisabled());
-  assert.match(await style.getByRole("button", { name: "True" }).getAttribute("title"), /coming/);
+  // True is drawn on the system chart (V10a); Wireframe is still to come.
+  assert.ok(!(await style.getByRole("button", { name: "True" }).isDisabled()));
   assert.ok(await style.getByRole("button", { name: "Wireframe" }).isDisabled());
+  assert.match(await style.getByRole("button", { name: "Wireframe" }).getAttribute("title"), /coming/);
+  // Band: listed on every view; Visible until a view declares the others.
+  const band = vc.getByRole("group", { name: "Band" });
+  assert.deepEqual(await band.locator("button").allInnerTexts(), ["Visible", "Infrared", "Ultraviolet", "X-ray", "Radio", "Mag"]);
+  assert.equal(await vc.getAttribute("data-band"), "visible");
   await shot(gm, "rule12-system-chart");
 
   // Tilted turns the flat chart into 3D; dragging switches to Free and the hint appears.
@@ -73,16 +79,22 @@ try {
   assert.equal(await again.locator(".viewbar [data-view-controls]").getAttribute("data-seen"), "edge");
   await again.close();
 
-  // The galaxy chart is flat for now: Chart from above, everything else listed and disabled, the choice untouched.
+  // The galaxy chart (V9t) follows the same choice: 3D, edge-on, the disc turned.
   await go(gm, "galaxy");
   await gm.locator(".gal").waitFor({ timeout: 30000 });
-  assert.equal(await vc.getAttribute("data-style"), "chart");
+  assert.equal(await vc.getAttribute("data-style"), "3d");
+  assert.equal(await vc.getAttribute("data-seen"), "edge");
+  await gm.locator("[data-galaxy-3d][data-seen='edge']").waitFor({ timeout: 20000 });
+  await more(gm, /Night chart/);
+  await shot(gm, "rule12-galaxy-night");
+  // Galaxies nearby is flat for now: Chart from above, everything else listed and disabled, the choice untouched.
+  await go(gm, "cluster");
+  await gm.locator(".viewbar [data-view-controls]").waitFor();
+  await gm.waitForFunction(() => document.querySelector(".viewbar [data-view-controls]")?.getAttribute("data-style") === "chart", null, { timeout: 30000 });
   assert.equal(await vc.getAttribute("data-seen"), "above");
   assert.ok(await style.getByRole("button", { name: "3D" }).isDisabled());
   assert.ok(await seen.getByRole("button", { name: "Free" }).isDisabled());
   assert.match(await seen.getByRole("button", { name: "Free" }).getAttribute("title"), /flat, seen from above/);
-  await more(gm, /Night chart/);
-  await shot(gm, "rule12-galaxy-night");
   // Back at the system, the 3D choice is still there.
   await gm.locator('.place [data-place-step="system"]').click();
   await gm.locator(".s3d").waitFor();

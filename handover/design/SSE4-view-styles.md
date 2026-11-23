@@ -60,6 +60,23 @@ A style is **data**: a `sse.view-style/1` document. It carries id, label, `needs
 2. True galaxy and foam (V9).
 3. The filter chain and a first in-universe look, green CRT, to prove the idea.
 
+## 5a. Scale: Readable or Real (Alex, 23 Nov 2026)
+
+A second switch beside View style, on every view, carried by the same `ViewControls` and kept with the same choice:
+**Scale: Readable / Real**. Readable is what the charts draw now (sizes and spacing exaggerated so everything can be
+seen; V3 called it Toytown) and is the default. Real draws sizes and distances as they truly are; tiny worlds are found
+by a faint locator ring and their name on hover. It matters most in True; a diagram is fine on Readable. A view that
+cannot draw Real lists it quiet with the reason, like any option. On a flat chart, choosing Real turns it into 3D
+where the view has 3D, as Seen from does. Alex: "Scale/Real - great!". The words are data (`SCALE_WORDS`).
+
+## 5b. HUD: Off or On (Alex, 23 Nov 2026)
+
+One switch for the clutter: orbit lines, belts, names over the worlds, locator rings and outlines. Off looks like a
+photograph, on like a heads-up overview. It is in the same `ViewControls` beside Scale, "follows through on ALL view
+styles" and "at EVERY scale". Left unchosen it is off in True and on in the diagrams; once chosen it holds in every
+style. A style that cannot turn its labels off lists the switch quiet with the reason. With HUD off, a name still shows
+on hover or focus (the 22 Nov ruling). The words are data (`HUD_WORDS`).
+
 ## 6. Questions for Alex (all answered 22 Nov 2026: yes to every recommendation)
 
 1. **Default on a capable PC: Chart or True?** Recommendation: Chart, until True covers every scale. A GM switches once and the device remembers. **Accepted.**

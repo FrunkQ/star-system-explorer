@@ -40,13 +40,15 @@ use sse_core::math as m;
 use sse_core::{Address, Draws, Seed, Stream};
 use std::collections::BTreeMap;
 
-const M_SUN_KG: f64 = 1.988_47e30;
+const M_SUN_KG: f64 = sse_core::sheet::M_SUN;
 const C_M_S: f64 = sse_core::sheet::C;
 const G_SI: f64 = sse_core::sheet::G;
 const SIGMA_SB: f64 = sse_core::sheet::SIGMA_SB;
 const YEAR_S: f64 = sse_core::sheet::YR_JULIAN;
 /// Eddington luminosity per solar mass (ionised hydrogen), W.
-pub const L_EDD_PER_MSUN: f64 = 1.257e31;
+pub const L_EDD_PER_MSUN: f64 =
+    4.0 * m::PI * sse_core::sheet::GM_SUN * sse_core::sheet::M_P * sse_core::sheet::C
+        / sse_core::sheet::SIGMA_T;
 /// Eddington time sigma_T c / (4 pi G m_p), Gyr.
 pub const T_EDD_GYR: f64 = 0.4505;
 

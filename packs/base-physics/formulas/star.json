@@ -1,0 +1,198 @@
+{
+ "format": "sse.formulas/1",
+ "family": "sse.star",
+ "about": "Physics blocks whose maths is a formula (ND3b): each keeps its id, ports and results, and its maths is the Equation below, with a name that says what happens.",
+ "atoms": [
+  {
+   "id": "sse.star.effective_temperature",
+   "version": "1.0.0",
+   "cost": "trivial",
+   "inputs": [
+    {
+     "port": "luminosity",
+     "letter": "L"
+    },
+    {
+     "port": "radius",
+     "letter": "R"
+    }
+   ],
+   "outputs": [
+    {
+     "port": "teff",
+     "letter": "T"
+    }
+   ],
+   "constants": {
+    "sigma": "constants/sigma_SB"
+   },
+   "positive": [
+    {
+     "port": "luminosity",
+     "says": "luminosity"
+    },
+    {
+     "port": "radius",
+     "says": "radius"
+    }
+   ],
+   "references": [
+    "Stefan-Boltzmann law; definition of effective temperature, e.g. Carroll, B. W. and Ostlie, D. A. 2017, An Introduction to Modern Astrophysics, 2nd edn, Cambridge University Press, eq. 3.17. doi:10.1017/9781108380980"
+   ],
+   "shown": "T_eff = (L / (4π R² σ))^¼",
+   "equation": {
+    "name": "How hot a star's surface shines",
+    "formula": "T = (L / (4 * pi * R * R * sigma)) ^ (1/4)",
+    "inputs": {
+     "L": {
+      "kind": "star.luminosity",
+      "unit": "W",
+      "name": "light the star gives off"
+     },
+     "R": {
+      "kind": "star.radius",
+      "unit": "m",
+      "name": "radius of the star"
+     },
+     "sigma": {
+      "kind": "constant.sigma_SB",
+      "unit": "W m-2 K-4",
+      "name": "Stefan-Boltzmann constant"
+     }
+    },
+    "outputs": {
+     "T": {
+      "kind": "star.effective_temperature",
+      "unit": "K",
+      "name": "surface temperature"
+     }
+    },
+    "source": {
+     "text": "Carroll, B. W. and Ostlie, D. A. 2017, An Introduction to Modern Astrophysics, 2nd edn, Cambridge University Press",
+     "doi": "10.1017/9781108380980",
+     "where": "eq. 3.17"
+    },
+    "explain": {
+     "curious": "How hot a star's surface is follows from how much light leaves how much surface.",
+     "science": "Effective temperature is the temperature of a black body with the star's radius and luminosity. It defines the surface temperature rather than measuring it."
+    },
+    "examples": [
+     {
+      "L": 4.1e+26,
+      "R": 750000000.0,
+      "T": 5655.355788012577
+     }
+    ]
+   }
+  },
+  {
+   "id": "sse.star.ms_lifetime",
+   "version": "1.0.0",
+   "cost": "trivial",
+   "inputs": [
+    {
+     "port": "mass",
+     "letter": "M"
+    },
+    {
+     "port": "luminosity",
+     "letter": "L"
+    }
+   ],
+   "outputs": [
+    {
+     "port": "lifetime",
+     "letter": "t"
+    }
+   ],
+   "constants": {
+    "M_sun": "sheet/M_sun",
+    "L_sun": "sheet/L_sun"
+   },
+   "params": [
+    {
+     "param": "sun_lifetime",
+     "letter": "t_sun",
+     "default": 3.15576e+17,
+     "range": [
+      2.524608e+17,
+      3.786912e+17
+     ],
+     "description": "the Sun's main-sequence lifetime"
+    }
+   ],
+   "positive": [
+    {
+     "port": "mass",
+     "says": "mass"
+    },
+    {
+     "port": "luminosity",
+     "says": "luminosity"
+    }
+   ],
+   "references": [
+    "Hansen, C. J., Kawaler, S. D. and Trimble, V. 2004, Stellar Interiors, 2nd edn, Springer, section 1.4 (main-sequence lifetime scaling). doi:10.1007/978-1-4419-9110-2"
+   ],
+   "shown": "t_MS = t☉ (M/M☉) / (L/L☉)",
+   "equation": {
+    "name": "How long a star burns hydrogen",
+    "formula": "t = t_sun * (M / M_sun) / (L / L_sun)",
+    "inputs": {
+     "t_sun": {
+      "kind": "model.sun_lifetime",
+      "unit": "s",
+      "name": "the Sun's main-sequence lifetime"
+     },
+     "M": {
+      "kind": "star.mass",
+      "unit": "kg",
+      "name": "mass of the star",
+      "valid": [
+       "0.179 sheet/M_sun",
+       "31 sheet/M_sun"
+      ]
+     },
+     "L": {
+      "kind": "star.luminosity",
+      "unit": "W",
+      "name": "light the star gives off"
+     },
+     "M_sun": {
+      "kind": "constant.M_sun",
+      "unit": "kg",
+      "name": "the Sun's mass"
+     },
+     "L_sun": {
+      "kind": "constant.L_sun",
+      "unit": "W",
+      "name": "the Sun's luminosity"
+     }
+    },
+    "outputs": {
+     "t": {
+      "kind": "star.main_sequence_lifetime",
+      "unit": "s",
+      "name": "time on the main sequence"
+     }
+    },
+    "source": {
+     "text": "Hansen, C. J., Kawaler, S. D. and Trimble, V. 2004, Stellar Interiors, 2nd edn, Springer",
+     "doi": "10.1007/978-1-4419-9110-2",
+     "where": "section 1.4"
+    },
+    "explain": {
+     "curious": "A star lives on its fuel divided by how fast it burns it. Bright heavy stars burn out in millions of years; dim red dwarfs outlast the present age of the universe.",
+     "science": "The usable hydrogen scales with mass and the burn rate with luminosity, so the lifetime scales as M/L, normalised to the Sun's 10 Gyr. Ignores the larger burnt fraction in fully convective dwarfs and mass loss in massive stars."
+    },
+    "examples": [
+     {
+      "M": 2.1e+30,
+      "L": 4.1e+26,
+      "t": 3.1117551991424026e+17
+     }
+    ]
+   }
+  }
+ ]
+}

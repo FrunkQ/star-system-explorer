@@ -51,8 +51,8 @@ const ALPHA: f64 = 5.0;
 const N: f64 = 3.0;
 const Q: f64 = 0.077;
 pub const PROTOPLANET_MASS: f64 = 1e-15;
-pub const SOLAR_MASS_IN_EARTH: f64 = 332_775.64;
-pub const SOLAR_MASS_KG: f64 = 1.989e30;
+pub const SOLAR_MASS_IN_EARTH: f64 = sse_core::sheet::GM_SUN / sse_core::sheet::GM_EARTH;
+pub const SOLAR_MASS_KG: f64 = sse_core::sheet::M_SUN;
 pub const CLOUD_RADIUS_AU: f64 = 50.0;
 pub const MAX_ITERATIONS: u32 = 100;
 /// The corrected rule runs until the planet zone's dust is gone (Dole and Fogg

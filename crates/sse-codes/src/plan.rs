@@ -19,7 +19,7 @@ use std::collections::BTreeMap;
 
 /// Physical constants (CODATA 2018 exact or recommended values).
 const G: f64 = sse_core::sheet::G;
-const M_EARTH: f64 = 5.972_2e24;
+const M_EARTH: f64 = sse_core::sheet::M_EARTH;
 const R_EARTH: f64 = sse_core::sheet::R_EARTH_MEAN;
 
 /// What the sheet says about a world's system (pack data, `CodeSheet.system`).
@@ -146,7 +146,7 @@ pub fn escape_speed(mass_kg: f64, radius_m: f64) -> f64 {
 }
 
 /// Exosphere temperature used for the air-retention check (docs/fudges.md).
-pub const EXOSPHERE_K: f64 = 1000.0;
+pub const EXOSPHERE_K: f64 = 1000.0; // not-sheet: a model setting (docs/fudges.md), not a measured value
 /// The Jeans parameter above which a gas stays for billions of years, as the
 /// base-physics atom `sse.atmosphere.jeans_parameter` explains it.
 pub const JEANS_KEEP: f64 = 30.0;

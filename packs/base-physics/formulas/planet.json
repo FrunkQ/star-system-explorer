@@ -1,0 +1,245 @@
+{
+ "format": "sse.formulas/1",
+ "family": "sse.planet",
+ "about": "Physics blocks whose maths is a formula (ND3b): each keeps its id, ports and results, and its maths is the Equation below, with a name that says what happens.",
+ "atoms": [
+  {
+   "id": "sse.planet.bulk_density",
+   "version": "1.0.0",
+   "cost": "trivial",
+   "inputs": [
+    {
+     "port": "mass",
+     "letter": "M"
+    },
+    {
+     "port": "radius",
+     "letter": "R"
+    }
+   ],
+   "outputs": [
+    {
+     "port": "density",
+     "letter": "rho"
+    }
+   ],
+   "positive": [
+    {
+     "port": "radius",
+     "says": "radius"
+    },
+    {
+     "port": "mass",
+     "says": "mass"
+    }
+   ],
+   "references": [
+    "Newtonian gravity for a spherical body, e.g. de Pater, I. and Lissauer, J. J. 2015, Planetary Sciences, 2nd edn, Cambridge University Press, chapter 2. doi:10.1017/CBO9781316165270"
+   ],
+   "shown": "ρ = 3M / (4π R³)",
+   "equation": {
+    "name": "How tightly a world is packed",
+    "formula": "rho = 3 * M / (4 * pi * R * R * R)",
+    "inputs": {
+     "M": {
+      "kind": "body.mass",
+      "unit": "kg",
+      "name": "mass of the world"
+     },
+     "R": {
+      "kind": "body.radius",
+      "unit": "m",
+      "name": "radius of the world"
+     }
+    },
+    "outputs": {
+     "rho": {
+      "kind": "body.bulk_density",
+      "unit": "kg m-3",
+      "name": "mean density"
+     }
+    },
+    "source": {
+     "text": "de Pater, I. and Lissauer, J. J. 2015, Planetary Sciences, 2nd edn, Cambridge University Press",
+     "doi": "10.1017/CBO9781316165270",
+     "where": "chapter 2"
+    },
+    "explain": {
+     "curious": "Mass shared out over volume. Rock is around 3 to 5 grams per cubic centimetre, ice about 1, and Saturn would float.",
+     "science": "Mean density of a sphere. The volumetric mean radius should be used for oblate bodies."
+    },
+    "examples": [
+     {
+      "M": 6.4e+24,
+      "R": 6800000.0,
+      "rho": 4859.198343941441
+     }
+    ]
+   }
+  },
+  {
+   "id": "sse.planet.surface_gravity",
+   "version": "1.0.0",
+   "cost": "trivial",
+   "inputs": [
+    {
+     "port": "mass",
+     "letter": "M"
+    },
+    {
+     "port": "radius",
+     "letter": "R"
+    }
+   ],
+   "outputs": [
+    {
+     "port": "g",
+     "letter": "g"
+    }
+   ],
+   "constants": {
+    "G": "constants/G"
+   },
+   "positive": [
+    {
+     "port": "radius",
+     "says": "radius"
+    },
+    {
+     "port": "mass",
+     "says": "mass"
+    }
+   ],
+   "references": [
+    "Newtonian gravity for a spherical body, e.g. de Pater, I. and Lissauer, J. J. 2015, Planetary Sciences, 2nd edn, Cambridge University Press, chapter 2. doi:10.1017/CBO9781316165270"
+   ],
+   "shown": "g = G M / R²",
+   "equation": {
+    "name": "How hard the ground pulls you down",
+    "formula": "g = G * M / (R * R)",
+    "inputs": {
+     "G": {
+      "kind": "constant.G",
+      "unit": "m3 kg-1 s-2",
+      "name": "gravitational constant"
+     },
+     "M": {
+      "kind": "body.mass",
+      "unit": "kg",
+      "name": "mass of the world"
+     },
+     "R": {
+      "kind": "body.radius",
+      "unit": "m",
+      "name": "radius of the world"
+     }
+    },
+    "outputs": {
+     "g": {
+      "kind": "body.surface_gravity",
+      "unit": "m s-2",
+      "name": "pull at the surface"
+     }
+    },
+    "source": {
+     "text": "de Pater, I. and Lissauer, J. J. 2015, Planetary Sciences, 2nd edn, Cambridge University Press",
+     "doi": "10.1017/CBO9781316165270",
+     "where": "chapter 2"
+    },
+    "explain": {
+     "curious": "How hard the ground pulls you down. More mass pulls harder; a bigger radius puts you farther from it.",
+     "science": "Newtonian gravity at the surface of a non-rotating sphere. Rotation and oblateness lower it at the equator by up to a few percent on fast spinners."
+    },
+    "examples": [
+     {
+      "M": 6.4e+24,
+      "R": 6800000.0,
+      "g": 9.237785467128026
+     }
+    ]
+   }
+  },
+  {
+   "id": "sse.planet.escape_velocity",
+   "version": "1.0.0",
+   "cost": "trivial",
+   "inputs": [
+    {
+     "port": "mass",
+     "letter": "M"
+    },
+    {
+     "port": "radius",
+     "letter": "R"
+    }
+   ],
+   "outputs": [
+    {
+     "port": "v_esc",
+     "letter": "v"
+    }
+   ],
+   "constants": {
+    "G": "constants/G"
+   },
+   "positive": [
+    {
+     "port": "radius",
+     "says": "radius"
+    },
+    {
+     "port": "mass",
+     "says": "mass"
+    }
+   ],
+   "references": [
+    "Newtonian gravity for a spherical body, e.g. de Pater, I. and Lissauer, J. J. 2015, Planetary Sciences, 2nd edn, Cambridge University Press, chapter 2. doi:10.1017/CBO9781316165270"
+   ],
+   "shown": "v = √(2 G M / R)",
+   "equation": {
+    "name": "Speed needed to escape",
+    "formula": "v = sqrt(2 * G * M / R)",
+    "inputs": {
+     "G": {
+      "kind": "constant.G",
+      "unit": "m3 kg-1 s-2",
+      "name": "gravitational constant"
+     },
+     "M": {
+      "kind": "body.mass",
+      "unit": "kg",
+      "name": "mass of the world"
+     },
+     "R": {
+      "kind": "body.radius",
+      "unit": "m",
+      "name": "radius of the world"
+     }
+    },
+    "outputs": {
+     "v": {
+      "kind": "body.escape_velocity",
+      "unit": "m/s",
+      "name": "escape speed"
+     }
+    },
+    "source": {
+     "text": "de Pater, I. and Lissauer, J. J. 2015, Planetary Sciences, 2nd edn, Cambridge University Press",
+     "doi": "10.1017/CBO9781316165270",
+     "where": "chapter 2"
+    },
+    "explain": {
+     "curious": "How fast you must throw something for it never to fall back. It decides which gases a world can keep.",
+     "science": "Speed at which kinetic energy equals the gravitational binding at the surface, ignoring air drag and rotation."
+    },
+    "examples": [
+     {
+      "M": 6.4e+24,
+      "R": 6800000.0,
+      "v": 11208.652120256975
+     }
+    ]
+   }
+  }
+ ]
+}

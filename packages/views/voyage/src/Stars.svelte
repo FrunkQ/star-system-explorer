@@ -10,12 +10,24 @@
 -->
 <script lang="ts">
   import { untrack } from "svelte";
-  import { MINIMISE_WORDS, VOYAGE_SHIPS, agesWords, systemShort, voyageFrame, voyageSpan, type Json, type Minimise, type StarCell, type SystemScene, type ViewContext, type VoyagePlan } from "../../../ui-contract/src/index.ts";
+  import { Overlays } from "../../../chart-grammar/src/index.ts";
+  import { MINIMISE_WORDS, VOYAGE_CONTROLS, DEFAULT_VIEW, overlaysFor, overlaySpecsOf, viewOptions, VOYAGE_SHIPS, shipChoices, shipToSend, agesWords, systemShort, voyageFrame, voyageSpan, type Json, type Minimise, type StarCell, type SystemScene, type ViewContext, type VoyagePlan } from "../../../ui-contract/src/index.ts";
 
   let { ctx, params }: { ctx: ViewContext; scene: SystemScene; params: Record<string, Json> } = $props();
   const first = untrack(() => ({ ship: String(params.ship ?? "jump-courier"), minimise: String(params.minimise ?? "home_time"), gambles: params.gambles === true }));
 
-  let ship = $state(VOYAGE_SHIPS.some((s) => s.id === first.ship) ? first.ship : "jump-courier");
+  let ship = $state(first.ship);
+  // Ships the stacked packs list (the Traveller pack's standard ships) beside the stock ones; a pack ship goes whole.
+  const choices = $derived.by(() => {
+    void ctx.workspace.revision;
+    const st = ctx.session.stack();
+    return shipChoices(VOYAGE_SHIPS, [...st.base, ...(st.campaign ? [st.campaign] : [])] as unknown as Parameters<typeof shipChoices>[1]);
+  });
+  $effect(() => {
+    if (!choices.some((c) => c.id === ship)) ship = "jump-courier";
+  });
+  const shipInfo = $derived(choices.find((c) => c.id === ship) ?? choices.find((c) => c.id === "jump-courier") ?? choices[0]);
+  const sending = $derived(shipInfo ? shipToSend(shipInfo) : ship);
   let minimise = $state<Minimise>((MINIMISE_WORDS.some((m) => m.id === first.minimise) ? first.minimise : "home_time") as Minimise);
   let gambles = $state(first.gambles);
   let mode = $state<"explore" | "to">("explore");
@@ -53,7 +65,7 @@
 
   let gen = 0;
   $effect(() => {
-    const ask = { from, ship, minimise, gambles, home, visited: [...visited], known_fuel: { ...knownFuel }, ...(mode === "to" && to ? { to } : {}) };
+    const ask = { from, ship: sending, minimise, gambles, home, visited: [...visited], known_fuel: { ...knownFuel }, ...(mode === "to" && to ? { to } : {}) };
     if (!ask.from || (mode === "to" && !to)) return void (plan = null);
     const g = ++gen;
     busy = true;
@@ -86,7 +98,6 @@
   );
   const trail = $derived(visited.map(posOf).filter((p): p is readonly number[] => !!p).map((p) => frame.at(p)));
   const pickedStar = $derived(stars.find((s) => s.address === picked) ?? null);
-  const shipInfo = $derived(VOYAGE_SHIPS.find((s) => s.id === ship));
   const ages = $derived(v ? agesWords(v) : null);
 
   function pick(a: string) {
@@ -113,13 +124,30 @@
     to = "";
   }
   const name = (a: string) => systemShort(a);
+
+  // Pack overlays in the galactic plane (overlay.ts): a stacked pack's grid, placed where the GM put it, under the HUD.
+  const packs = $derived.by(() => {
+    void ctx.workspace.revision;
+    const st = session.stack();
+    return [...st.base, ...(st.campaign ? [st.campaign] : [])] as unknown[];
+  });
+  const overlaySpecs = $derived(overlaySpecsOf(packs).filter((o) => o.frame === "galaxy-plane-pc"));
+  const hud = $derived(viewOptions(VOYAGE_CONTROLS, ctx.workspace.view ?? DEFAULT_VIEW).shown.hud);
+  const bounds = $derived.by((): [number, number, number, number] => {
+    const o = frame.at([0, 0]);
+    return [(0 - o.x) / frame.scale, (o.y - H) / frame.scale, (W - o.x) / frame.scale, o.y / frame.scale];
+  });
+  const overlays = $derived(hud && overlaySpecs.length ? overlaysFor(packs, ["galaxy-plane-pc"], ctx.workspace.overlay_anchors, bounds, frame.scale) : []);
+  function placeOverlay(id: string, at: readonly number[] | null) {
+    ctx.workspace.setOverlayAnchor?.(id, at ? { origin: [at[0]!, at[1]!], rotation_deg: ctx.workspace.overlay_anchors?.[id]?.rotation_deg ?? 0 } : null);
+  }
 </script>
 
 <div class="voy" data-voyage={v ? `${v.from}>${v.to}` : ""} data-legs={v?.legs.length ?? 0}>
   <div class="bar">
     <label class="lbl">Ship
       <select data-ship bind:value={ship}>
-        {#each VOYAGE_SHIPS as s (s.id)}<option value={s.id}>{s.name}</option>{/each}
+        {#each choices as s (s.id)}<option value={s.id} data-pack={s.pack ?? null}>{s.name}{s.pack ? " (pack)" : ""}</option>{/each}
       </select>
     </label>
     <span class="seg" role="group" aria-label="Goal">
@@ -144,6 +172,7 @@
 
   <div class="body">
     <svg class="map" viewBox="0 0 {W} {H}" role="img" aria-label="Star systems seen from above, with the voyage's legs">
+      {#if overlays.length}<Overlays {overlays} at={frame.at} scale={frame.scale} />{/if}
       {#if trail.length > 1}<polyline class="trail" points={trail.map((p) => `${p.x},${p.y}`).join(" ")} />{/if}
       {#each legs as g, i (i)}
         <line class="leg" class:jump={g.l.means === "jump"} class:gamble={g.l.gamble} x1={g.a.x} y1={g.a.y} x2={g.b.x} y2={g.b.y} />
@@ -201,6 +230,17 @@
         <h4>Picked</h4>
         <p data-picked>{name(pickedStar.address)}{#if pickedStar.odds !== undefined && !pickedStar.fuel.length}: {Math.round(pickedStar.odds * 100)}% odds of a gas giant from its star{/if}.</p>
         <button type="button" class="quiet-btn" data-fuel-toggle onclick={() => toggleFuel(pickedStar.address)}>{knownFuel[pickedStar.address] ? "Forget the fuel here" : "The crew knows of fuel here"}</button>
+      {/if}
+      {#if overlaySpecs.length}
+        <h4>Overlays</h4>
+        {#each overlaySpecs as o (o.id)}
+          {@const a = ctx.workspace.overlay_anchors?.[o.id]}
+          <p class="overlay-row" data-overlay-row={o.id} data-placed={a ? "yes" : "no"}>
+            <span>{o.label}{a ? `, hex 0101 at ${a.origin[0].toFixed(1)}, ${a.origin[1].toFixed(1)} pc` : ": not on the map yet"}{!hud ? " (hidden with the HUD)" : ""}.</span>
+            {#if pickedStar}<button type="button" class="quiet-btn" data-place-overlay={o.id} onclick={() => placeOverlay(o.id, pickedStar.xyz_pc)}>Put its first hex on {name(pickedStar.address)}</button>{:else if !a}<span class="muted"> Pick a star to put its first hex there.</span>{/if}
+            {#if a}<button type="button" class="quiet-btn" data-remove-overlay={o.id} onclick={() => placeOverlay(o.id, null)}>Take it off the map</button>{/if}
+          </p>
+        {/each}
       {/if}
       {#if plan}<p class="muted small">Searched {plan.searched.toLocaleString("en-GB")} systems in {plan.cells} star cells. Visited so far: {visited.length}.</p>{/if}
     </div>

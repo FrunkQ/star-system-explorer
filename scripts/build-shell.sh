@@ -16,9 +16,19 @@ cp packs/base-physics/pack.json packages/shell/public/packs/base-physics.json
 cp packs/base-time/pack.json packages/shell/public/packs/base-time.json
 cp packs/base-sol/pack.json packages/shell/public/packs/base-sol.json
 cp packs/base-reference/pack.json packages/shell/public/packs/base-reference.json
+# The base names pack, offered on the Names page while no pack on the stack carries names (NM6).
+cp packs/base-names/pack.json packages/shell/public/packs/base-names.json
+cp packs/base-ships/pack.json packages/shell/public/packs/base-ships.json
 cp packages/shell/src/documents/kestrel.player-data.pack.json packages/shell/public/packs/kestrel-player-data.json
 mkdir -p packages/shell/public/packs/samples
 cp packages/shell/src/documents/sample.warm-worlds.pack.json packages/shell/public/packs/samples/warm-worlds.json
+# The game pack the sector map and world codes screens read (X3).
+cp packs/traveller/pack.json packages/shell/public/packs/samples/traveller.json
+cp packs/near-future/pack.json packages/shell/public/packs/samples/near-future.json
+cp packs/space-opera/pack.json packages/shell/public/packs/samples/space-opera.json
+cp packs/base-hooks/pack.json packages/shell/public/packs/samples/base-hooks.json
+cp packs/intrigue/pack.json packages/shell/public/packs/samples/intrigue.json
+cp packs/world-hooks/pack.json packages/shell/public/packs/samples/world-hooks.json
 rm -rf packages/shell/public/samples && mkdir -p packages/shell/public/samples
 # The sample save the Make a system dialog offers: the importer fixture with names that say "(sample)", so nobody takes it for the real Sol (Alex, 21 Nov).
 cp packages/shell/src/documents/sample-sol.v3.json packages/shell/public/samples/synthetic-sol.json

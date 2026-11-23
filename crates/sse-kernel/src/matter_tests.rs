@@ -649,3 +649,68 @@ fn an_equation_follows_a_looked_up_constant() {
     assert_eq!(r["type"], "stack_rejected", "{r}");
     assert!(r.to_string().contains("give this letter a source"), "{r}");
 }
+
+/// DM6 in the kernel: a block asked at a date reads a constant with a
+/// history at that date. With G drifting (10 % stronger a billion years
+/// ago), a year asked a billion years back is shorter by Kepler's factor;
+/// asked now, or on a stack with no law at any date, it is today's year.
+#[test]
+fn a_block_asked_at_a_date_reads_g_at_that_date() {
+    let orbit = serde_json::json!({
+        "host_mass": {"value": 1, "unit": "m_sun"}, "body_mass": {"value": 1, "unit": "m_earth"},
+        "semi_major_axis": {"value": 1, "unit": "au"}, "eccentricity": {"value": 0.0167}});
+    let base = || pack("packs/base-physics/pack.json");
+    let kernel = |extra: bool| {
+        let mut k = crate::Kernel::new();
+        let mut packs = vec![pack("packs/base-reference/pack.json"), base()];
+        if extra {
+            packs.push(pack("tests/fixtures/packs/reference-drifting-g.json"));
+        }
+        let r = send(
+            &mut k,
+            serde_json::json!({"op": "load_stack", "packs": packs}),
+        );
+        assert_eq!(r["type"], "stack_loaded", "{r}");
+        k
+    };
+    let year = |k: &mut crate::Kernel, at_s: Option<i64>| {
+        let mut q =
+            serde_json::json!({"op": "derive", "flow": "sse.base.orbit-basics", "inputs": orbit});
+        if let Some(s) = at_s {
+            q["at_s"] = s.into();
+        }
+        let r = send(k, q);
+        assert_eq!(r["type"], "derived", "{r}");
+        r["values"]["orbit.period"]["value"].as_f64().unwrap()
+    };
+    let gyr = (1.0e9 * crate::clock::JULIAN_YEAR_S) as i64;
+    let mut real = kernel(false);
+    let mut drift = kernel(true);
+    let now = year(&mut real, None);
+    assert_eq!(year(&mut real, Some(-gyr)), now, "no law, no history");
+    assert_eq!(year(&mut drift, None), now, "today's G is the real one");
+    let back = year(&mut drift, Some(-gyr)) / now;
+    assert!(
+        (back - 1.0 / sse_core::math::sqrt(1.1)).abs() < 1e-9,
+        "{back}"
+    );
+    // On a campaign clock: a billion years before its first now.
+    send(
+        &mut drift,
+        serde_json::json!({"op": "open_universe", "id": "dated", "seed": "dated"}),
+    );
+    let start = 5_000_000;
+    let r = send(
+        &mut drift,
+        serde_json::json!({"op": "set_campaign_now", "at_s": start}),
+    );
+    assert_ne!(r["type"], "error", "{r}");
+    let back = year(&mut drift, Some(start - gyr)) / now;
+    assert!(
+        (back - 1.0 / sse_core::math::sqrt(1.1)).abs() < 1e-9,
+        "{back}"
+    );
+    assert_eq!(year(&mut drift, Some(start)), now);
+    // And nothing leaks out of the dated call.
+    assert_eq!(sse_core::constants::g(), sse_core::quantity::consts::G);
+}

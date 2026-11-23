@@ -725,7 +725,7 @@ fn gibbs_blocks_reproduce_tabulated_values() {
     let r = run("sse.chem.reaction_gibbs", &[-100.0e3, 298.15, m::ln(10.0)])[0];
     close(
         r,
-        -100.0e3 + 8.314_462_618 * 298.15 * m::ln(10.0),
+        -100.0e3 + crate::chem::R_GAS * 298.15 * m::ln(10.0),
         1e-12,
         "RT ln Q",
     );
@@ -874,4 +874,314 @@ fn bremsstrahlung_behind_shields() {
     let d40 = bremsstrahlung_dose(400.0, &j, &b);
     assert!(d10 > d40 && d40 > 0.0 && d10 / d40 < 10.0, "{d10} {d40}");
     assert_eq!(bremsstrahlung_dose(0.0, &j, &b), 0.0);
+}
+
+// ND3b: blocks whose maths moved into formulas.
+
+fn formula_atom(id: &str) -> Box<dyn sse_flow::Atom> {
+    crate::formulas::atoms()
+        .into_iter()
+        .find(|a| a.decl().id == id)
+        .unwrap_or_else(|| panic!("{id} is not a formula block"))
+}
+
+/// The moved blocks' Rust maths as it was before the move, kept here so the
+/// formulas are checked against it bit for bit.
+fn old(id: &str, i: &[f64], p: &[f64]) -> Result<Vec<f64>, sse_flow::AtomError> {
+    use crate::common::positive;
+    use sse_core::math as m;
+    let g = sse_core::constants::g();
+    Ok(match id {
+        "sse.planet.bulk_density" => {
+            let r = positive(i[1], "radius")?;
+            vec![3.0 * positive(i[0], "mass")? / (4.0 * m::PI * r * r * r)]
+        }
+        "sse.planet.surface_gravity" => {
+            let r = positive(i[1], "radius")?;
+            vec![g * positive(i[0], "mass")? / (r * r)]
+        }
+        "sse.planet.escape_velocity" => {
+            let r = positive(i[1], "radius")?;
+            vec![m::sqrt(2.0 * g * positive(i[0], "mass")? / r)]
+        }
+        "sse.orbit.total_mass" => vec![positive(i[0], "host mass")? + positive(i[1], "body mass")?],
+        "sse.orbit.period" => {
+            let a = positive(i[0], "semi-major axis")?;
+            let mt = positive(i[1], "total mass")?;
+            vec![m::TAU * m::sqrt(a * a * a / (g * mt))]
+        }
+        "sse.star.effective_temperature" => {
+            let l = positive(i[0], "luminosity")?;
+            let r = positive(i[1], "radius")?;
+            vec![m::pow(
+                l / (4.0 * m::PI * r * r * sse_core::constants::sigma_sb()),
+                0.25,
+            )]
+        }
+        // Part 2: cube roots, own refusal words and settings as letters.
+        "sse.orbit.semi_major_axis_from_period" => {
+            let p = positive(i[0], "period")?;
+            let mt = positive(i[1], "total mass")?;
+            vec![m::cbrt(g * mt * p * p / (4.0 * m::PI * m::PI))]
+        }
+        "sse.orbit.apsides" => {
+            if !(0.0..1.0).contains(&i[1]) {
+                return Err(sse_flow::AtomError(format!(
+                    "eccentricity {} is not an ellipse",
+                    i[1]
+                )));
+            }
+            vec![i[0] * (1.0 - i[1]), i[0] * (1.0 + i[1])]
+        }
+        "sse.orbit.hill_radius" => {
+            let a = positive(i[0], "semi-major axis")?;
+            let mb = positive(i[2], "body mass")?;
+            let mh = positive(i[3], "host mass")?;
+            vec![a * (1.0 - i[1]) * m::cbrt(mb / (3.0 * mh))]
+        }
+        "sse.orbit.roche_limit" => {
+            let r = positive(i[0], "primary radius")?;
+            let rp = positive(i[1], "primary density")?;
+            let rs = positive(i[2], "satellite density")?;
+            vec![p[0] * r * m::cbrt(rp / rs)]
+        }
+        "sse.star.ms_lifetime" => {
+            let m_sun = sse_core::quantity::consts::GM_SUN / sse_core::quantity::consts::G;
+            let ms = positive(i[0], "mass")? / m_sun;
+            let ls = positive(i[1], "luminosity")? / sse_core::quantity::consts::L_SUN;
+            vec![p[0] * ms / ls]
+        }
+        _ => unreachable!(),
+    })
+}
+
+#[test]
+fn formula_blocks_give_the_old_bits_and_refusals() {
+    let ids = [
+        "sse.planet.bulk_density",
+        "sse.planet.surface_gravity",
+        "sse.planet.escape_velocity",
+        "sse.orbit.total_mass",
+        "sse.orbit.period",
+        "sse.star.effective_temperature",
+        "sse.orbit.semi_major_axis_from_period",
+        "sse.orbit.apsides",
+        "sse.orbit.hill_radius",
+        "sse.orbit.roche_limit",
+        "sse.star.ms_lifetime",
+    ];
+    // Values over many decades, and the refusals at zero and below.
+    let mut xs = vec![0.0, -1.0, -0.0];
+    for e in -30..=40 {
+        for k in [1.0, 1.7, 3.3, 7.9] {
+            xs.push(k * sse_core::math::pow(10.0, f64::from(e)));
+        }
+    }
+    // Eccentricities, and just outside an ellipse.
+    xs.extend([0.25, 0.5, 0.9, 0.99, 1.0, 1.5]);
+    let mut n = 0;
+    for id in ids {
+        let a = formula_atom(id);
+        let d = a.decl();
+        let ins = d.inputs.len();
+        // Each setting at its default and at both ends of its range.
+        let mut settings: Vec<Vec<f64>> = vec![d.params.iter().map(|p| p.default).collect()];
+        for end in [0, 1] {
+            settings.push(
+                d.params
+                    .iter()
+                    .map(|p| {
+                        let r = p.range.unwrap();
+                        if end == 0 {
+                            r.0
+                        } else {
+                            r.1
+                        }
+                    })
+                    .collect(),
+            );
+        }
+        for (j, x) in xs.iter().enumerate() {
+            for p in &settings {
+                let i: Vec<f64> = (0..ins)
+                    .map(|k| {
+                        if k == 0 {
+                            *x
+                        } else {
+                            xs[(j * (7 + 4 * k) + 3 * k) % xs.len()]
+                        }
+                    })
+                    .collect();
+                let new = a.eval(&i, p);
+                match (old(id, &i, p), new) {
+                    (Ok(o), Ok(f)) => {
+                        assert_eq!(o.len(), f.len());
+                        for (p, q) in o.iter().zip(&f) {
+                            assert_eq!(p.to_bits(), q.to_bits(), "{id} at {i:?}: {p} vs {q}");
+                        }
+                        n += 1;
+                    }
+                    (Err(o), Err(f))
+                        if o.0.contains("must be positive") || o.0.contains("not an ellipse") =>
+                    {
+                        assert_eq!(o.0, f.0, "{id} at {i:?}");
+                    }
+                    // The old maths gave an infinity or NaN where a formula
+                    // refuses a number too large to hold.
+                    (Ok(o), Err(f)) => assert!(
+                        o.iter().any(|v| !v.is_finite()) && f.0.contains("too large"),
+                        "{id} at {i:?}: {o:?} vs {f:?}"
+                    ),
+                    (o, f) => panic!("{id} at {i:?}: {o:?} vs {f:?}"),
+                }
+            }
+        }
+    }
+    assert!(n > 3000, "{n}");
+}
+
+#[test]
+fn formula_blocks_follow_a_changed_constant() {
+    let a = formula_atom("sse.planet.surface_gravity");
+    let before = a.eval(&[6.0e24, 6.4e6], &[]).unwrap()[0];
+    let mut c = sse_core::constants::Constants::REAL;
+    c.g *= 2.0;
+    let after = sse_core::constants::with(c, || a.eval(&[6.0e24, 6.4e6], &[]).unwrap()[0]);
+    assert_eq!(after, 2.0 * before);
+}
+
+#[test]
+fn the_rust_blocks_list_matches_the_registry() {
+    let moved: Vec<String> = crate::formulas::loaded()
+        .iter()
+        .map(|a| sse_flow::Atom::decl(a).id.clone())
+        .collect();
+    let mut rust: Vec<String> = crate::atoms()
+        .iter()
+        .map(|a| a.decl().id.clone())
+        .filter(|i| !moved.contains(i))
+        .collect();
+    rust.sort();
+    let text = include_str!("../../../handover/packages/ND3b-rust-atoms.txt");
+    let mut listed: Vec<String> = text
+        .lines()
+        .filter(|l| !l.starts_with('#') && !l.trim().is_empty())
+        .map(|l| {
+            let (id, why) = l.split_once('\t').expect("id, a tab, then why");
+            assert!(!why.trim().is_empty(), "{id} says why it stays");
+            id.to_string()
+        })
+        .collect();
+    listed.sort();
+    assert_eq!(
+        rust, listed,
+        "a block moved into a formula takes its line out of ND3b-rust-atoms.txt; a new Rust block adds one with why"
+    );
+}
+
+#[test]
+fn formula_blocks_have_worded_names_and_keep_their_faces() {
+    for a in crate::formulas::loaded() {
+        let d = sse_flow::Atom::decl(a);
+        assert!(
+            a.name().split_whitespace().count() >= 3,
+            "{}: {}",
+            d.id,
+            a.name()
+        );
+        assert!(
+            !d.references.is_empty() && !d.explain.curious.is_empty(),
+            "{}",
+            d.id
+        );
+        assert!(!d.explain.formula.is_empty(), "{}", d.id);
+    }
+}
+
+#[test]
+fn a_worked_example_reads_constants_from_the_sheet() {
+    let text = include_str!("../../../packs/base-physics/formulas/planet.json");
+    let file: serde_json::Value = serde_json::from_str(text).unwrap();
+    let mut entry = file["atoms"][1].clone();
+    assert_eq!(entry["id"], "sse.planet.surface_gravity");
+    sse_formula::FormulaAtom::from_json(&entry).unwrap();
+    entry["equation"]["examples"][0]["G"] = serde_json::json!(6.6743e-11);
+    let e = sse_formula::FormulaAtom::from_json(&entry).unwrap_err();
+    assert!(e.contains("reads constants/G from the sheet"), "{e}");
+}
+
+/// Every block moved by the generator (ND3b part 3 onward) against its Rust
+/// as it was (`src/was/`): the same face (ports, kinds, units, valid ranges,
+/// settings, references, words) and the same bits and refusals over many
+/// decades of input, at each setting's default and both ends of its range.
+#[test]
+fn moved_blocks_keep_their_faces_and_bits() {
+    let formulas = crate::formulas::atoms();
+    let was = crate::was::atoms();
+    let mut xs = vec![
+        0.0, -1.0, -0.0, 0.25, 0.5, 0.9, 0.99, 1.0, 1.5, -0.3, 2.0, 3.0,
+    ];
+    for e in -30..=40 {
+        for k in [1.0, 1.7, 3.3, 7.9] {
+            xs.push(k * sse_core::math::pow(10.0, f64::from(e)));
+        }
+    }
+    let mut n = 0;
+    for old in &was {
+        let d = old.decl();
+        let new = formulas
+            .iter()
+            .find(|a| a.decl().id == d.id)
+            .unwrap_or_else(|| panic!("{} has no formula", d.id));
+        assert_eq!(new.decl(), d, "{} keeps its face", d.id);
+        let mut settings: Vec<Vec<f64>> = vec![d.params.iter().map(|p| p.default).collect()];
+        for end in [0, 1] {
+            settings.push(
+                d.params
+                    .iter()
+                    .map(|p| {
+                        let r = p.range.unwrap();
+                        if end == 0 {
+                            r.0
+                        } else {
+                            r.1
+                        }
+                    })
+                    .collect(),
+            );
+        }
+        let ins = d.inputs.len();
+        for (j, x) in xs.iter().enumerate() {
+            for p in &settings {
+                let i: Vec<f64> = (0..ins)
+                    .map(|k| {
+                        if k == 0 {
+                            *x
+                        } else {
+                            xs[(j * (7 + 4 * k) + 3 * k) % xs.len()]
+                        }
+                    })
+                    .collect();
+                match (old.eval(&i, p), new.eval(&i, p)) {
+                    (Ok(o), Ok(f)) => {
+                        assert_eq!(o.len(), f.len());
+                        for (a, b) in o.iter().zip(&f) {
+                            assert!(
+                                a.to_bits() == b.to_bits() || (a.is_nan() && b.is_nan()),
+                                "{} at {i:?} {p:?}: {a} vs {b}",
+                                d.id
+                            );
+                        }
+                        n += 1;
+                    }
+                    (Err(o), Err(f)) => assert_eq!(o.0, f.0, "{} at {i:?} {p:?}", d.id),
+                    // Where the old maths gave an infinity or NaN, a formula
+                    // refuses in words that name the step.
+                    (Ok(o), Err(_)) if o.iter().any(|v| !v.is_finite()) => {}
+                    (o, f) => panic!("{} at {i:?} {p:?}: {o:?} vs {f:?}", d.id),
+                }
+            }
+        }
+    }
+    assert!(n >= was.len() * 50, "{n}");
 }

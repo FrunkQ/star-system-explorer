@@ -44,12 +44,12 @@ pub use sketch::{sketch, Sketch, SurveyState};
 
 pub const SURFACE_VERSION: &str = "surface-envelope-v1";
 
-const M_EARTH_KG: f64 = 5.9722e24;
+const M_EARTH_KG: f64 = sse_core::sheet::M_EARTH;
 const R_EARTH_M: f64 = sse_core::sheet::R_EARTH_MEAN;
-const M_SUN_KG: f64 = 1.98892e30;
+const M_SUN_KG: f64 = sse_core::sheet::M_SUN;
 const AU_M: f64 = sse_core::sheet::AU;
 const G: f64 = sse_core::sheet::G;
-const GYR_S: f64 = 3.15576e16;
+const GYR_S: f64 = 1e9 * sse_core::sheet::YR_JULIAN;
 
 // ---------------------------------------------------------------- settings
 
@@ -140,8 +140,8 @@ impl SurfaceSettings {
             .rev()
             .find_map(|p| p.provides.other.get("surface"))
             .ok_or("no pack provides surface settings")?;
-        let mut s: SurfaceSettings = serde_json::to_value(v)
-            .and_then(serde_json::from_value)
+        let mut s: SurfaceSettings = sse_reference::refs::with_sheet(stack, v)
+            .and_then(|j| serde_json::from_value(j).map_err(|e| e.to_string()))
             .map_err(|e| format!("surface settings: {e}"))?;
         s.climate = sse_climate::ClimateSettings::from_packs(stack)?;
         for r in &s.rules {
@@ -505,10 +505,10 @@ impl Ctx<'_> {
 /// Strength of rock and of ice against self-gravity (Lineweaver and Norman
 /// 2010): calibrated so a body of rock (3500 kg/m³) rounds at about 300 km
 /// and one of ice (930 kg/m³) at about 200 km, from R² = 3σ / (2π G ρ²).
-const SIGMA_ROCK_PA: f64 = 1.54e8;
-const SIGMA_ICE_PA: f64 = 5.6e6;
-const RHO_ROCK: f64 = 3500.0;
-const RHO_ICE: f64 = 930.0;
+const SIGMA_ROCK_PA: f64 = sse_core::sheet::mixture_yield_strength::SURFACE_ROCK;
+const SIGMA_ICE_PA: f64 = sse_core::sheet::mixture_yield_strength::SURFACE_ICE;
+const RHO_ROCK: f64 = sse_core::sheet::mixture_density::SURFACE_ROCK;
+const RHO_ICE: f64 = sse_core::sheet::density_solid::H2O;
 
 /// Radius over the radius at which self-gravity pulls the body round
 /// (gravity overcoming material strength, a real edge). The central
@@ -534,7 +534,7 @@ pub fn round_ratio(b: &Body) -> f64 {
 /// Ice's melting point at low pressure, K.
 const T_MELT_ICE_K: f64 = sse_core::sheet::T0C;
 /// Ice's conductivity k = 651 / T W m⁻¹ K⁻¹ (Petrenko and Whitworth 1999).
-const K_ICE_651: f64 = 651.0;
+const K_ICE_651: f64 = sse_core::sheet::conductivity_solid::H2O[0];
 /// Rudolph et al. 2022: cracks cross Enceladus's shell where it is thinner
 /// than about 15 km.
 const CRACK_THROUGH_M: f64 = 15_000.0;

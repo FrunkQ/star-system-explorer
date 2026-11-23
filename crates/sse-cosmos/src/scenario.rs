@@ -62,6 +62,9 @@ pub struct CosmologyPack {
     pub epochs: EpochParams,
     #[serde(default)]
     pub haloes: crate::haloes::HaloParams,
+    /// DM3: the matter ledger.
+    #[serde(default)]
+    pub ledger: crate::ledger::LedgerParams,
     #[serde(default)]
     pub galaxy: crate::galaxy::GalaxyParams,
     #[serde(default)]
@@ -101,7 +104,8 @@ impl CosmologyPack {
             .rev()
             .find_map(|p| p.provides.other.get("cosmology"))
             .ok_or("no pack provides cosmology")?;
-        let mut json = serde_json::to_value(v).map_err(|e| format!("cosmology settings: {e}"))?;
+        let mut json = sse_reference::refs::with_sheet(stack, v)
+            .map_err(|e| format!("cosmology settings: {e}"))?;
         // DM1: the measured parameters live on the master data sheet's
         // Cosmos group and arrive through the constants handle. A pack that
         // still sets one is told where it went.
@@ -314,6 +318,7 @@ pub fn envelope_golden() -> serde_json::Value {
         params: cp.envelope.clone(),
         seed: Seed::from_text("g4"),
         address: addr,
+        remains: Default::default(),
     };
     let r0 = e.sun_radius_kpc();
     let places: Vec<serde_json::Value> = [
@@ -388,6 +393,7 @@ pub fn stars_golden() -> serde_json::Value {
         params: cp.envelope.clone(),
         seed: Seed::from_text("g4"),
         address: addr,
+        remains: Default::default(),
     };
     let st = crate::stars::Stars {
         env: &e,

@@ -10,7 +10,7 @@
   import MinervaTab, { type MinervaHost } from "./MinervaTab.svelte";
   import TarsTab, { type TarsHost } from "./TarsTab.svelte";
 
-  let { tars, orac, minerva, onchange }: { tars?: TarsHost; orac?: OracHost; minerva?: MinervaHost; onchange?: (s: AgentsState) => void } = $props();
+  let { tars, orac, minerva, onchange, describe }: { tars?: TarsHost; orac?: OracHost; minerva?: MinervaHost; onchange?: (s: AgentsState) => void; describe?: string | null } = $props();
 
   // Settings in "sse4.agents", each key in its own entry (Ovid saves its links without keys).
   const store = (() => {
@@ -28,6 +28,10 @@
   }
 
   let tab = $state<"link" | "tars" | "orac" | "minerva">("link");
+  // Describe on a card (V3 gap 23) opens straight on Minerva with that subject.
+  $effect(() => {
+    if (describe) tab = "minerva";
+  });
 
   // Adding a provider.
   let kind = $state<ProviderKind>("openrouter");
@@ -159,7 +163,7 @@
   {:else if tab === "orac"}
     <OracTab st={$state.snapshot(st) as AgentsState} host={orac} onrow={(r) => (st.ledger.push(r), save())} />
   {:else}
-    <MinervaTab st={$state.snapshot(st) as AgentsState} host={minerva} onrow={(r) => (st.ledger.push(r), save())} />
+    <MinervaTab st={$state.snapshot(st) as AgentsState} host={minerva} focus={describe ?? null} onrow={(r) => (st.ledger.push(r), save())} />
   {/if}
 </section>
 

@@ -1,0 +1,171 @@
+{
+ "format": "sse.pack/1",
+ "id": "sse.intrigue",
+ "version": "0.1.0",
+ "kind": [
+  "universe"
+ ],
+ "kernel_range": "^0.1",
+ "licence": "Apache-2.0",
+ "provides": {
+  "other": {
+   "about": {
+    "label": "Intrigue",
+    "text": "Story hooks drawn from the seed, for what physics cannot decide. Optional, off until a GM adds it; GM-only until disclosed."
+   },
+   "tags": {
+    "about": "Tags this pack names (tags design, TG1): labels only, never an input to physics.",
+    "groups": [
+     {
+      "id": "intrigue",
+      "label": "Intrigue",
+      "about": "Story hooks drawn from the seed: a roll, not a finding.",
+      "applies_to": [
+       "body"
+      ]
+     }
+    ],
+    "tags": [
+     {
+      "id": "intrigue.anomalous-signal",
+      "label": "anomalous signal",
+      "group": "intrigue",
+      "about": "a signal nobody can account for, heard here",
+      "source": "derived"
+     },
+     {
+      "id": "intrigue.derelict-rumour",
+      "label": "derelict rumour",
+      "group": "intrigue",
+      "about": "a rumour of a derelict in orbit",
+      "source": "derived"
+     },
+     {
+      "id": "intrigue.uncharted-feature",
+      "label": "uncharted feature",
+      "group": "intrigue",
+      "about": "a surface feature the charts leave out",
+      "source": "derived"
+     },
+     {
+      "id": "intrigue.legend",
+      "label": "legend",
+      "group": "intrigue",
+      "about": "a story told about this world, true or not",
+      "source": "derived"
+     }
+    ]
+   },
+   "rules": [
+    {
+     "id": "intrigue.anomalous-signal.v1",
+     "tag": "intrigue.anomalous-signal",
+     "applies_to": [
+      "body"
+     ],
+     "when": {
+      "if": "all",
+      "of": [
+       {
+        "if": "not",
+        "p": {
+         "if": "has",
+         "field": "star.effective_temperature"
+        }
+       },
+       {
+        "if": "not",
+        "p": {
+         "if": "has",
+         "field": "mass_sun"
+        }
+       }
+      ]
+     },
+     "chance": 0.03
+    },
+    {
+     "id": "intrigue.derelict-rumour.v1",
+     "tag": "intrigue.derelict-rumour",
+     "applies_to": [
+      "body"
+     ],
+     "when": {
+      "if": "all",
+      "of": [
+       {
+        "if": "not",
+        "p": {
+         "if": "has",
+         "field": "star.effective_temperature"
+        }
+       },
+       {
+        "if": "not",
+        "p": {
+         "if": "has",
+         "field": "mass_sun"
+        }
+       }
+      ]
+     },
+     "chance": 0.05
+    },
+    {
+     "id": "intrigue.uncharted-feature.v1",
+     "tag": "intrigue.uncharted-feature",
+     "applies_to": [
+      "body"
+     ],
+     "when": {
+      "if": "all",
+      "of": [
+       {
+        "if": "not",
+        "p": {
+         "if": "has",
+         "field": "star.effective_temperature"
+        }
+       },
+       {
+        "if": "not",
+        "p": {
+         "if": "has",
+         "field": "mass_sun"
+        }
+       }
+      ]
+     },
+     "chance": 0.08
+    },
+    {
+     "id": "intrigue.legend.v1",
+     "tag": "intrigue.legend",
+     "applies_to": [
+      "body"
+     ],
+     "when": {
+      "if": "all",
+      "of": [
+       {
+        "if": "not",
+        "p": {
+         "if": "has",
+         "field": "star.effective_temperature"
+        }
+       },
+       {
+        "if": "not",
+        "p": {
+         "if": "has",
+         "field": "mass_sun"
+        }
+       }
+      ]
+     },
+     "chance": 0.02
+    }
+   ]
+  }
+ }
+}

@@ -296,7 +296,7 @@ fn smooth(x: f64) -> f64 {
 /// Saturation vapour pressure of water, Pa (Bolton 1980).
 fn e_sat(t_k: f64) -> f64 {
     let c = t_k - sse_core::sheet::T0C;
-    611.2 * m::exp(17.67 * c / (c + 243.5))
+    611.2 * m::exp(17.67 * c / (c + 243.5)) // not-sheet: the Magnus fit's coefficients (Bolton 1980), not the triple point
 }
 
 impl CoverParams {

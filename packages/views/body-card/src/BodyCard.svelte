@@ -4,11 +4,12 @@
   derived values are read-only and open the kernel's explanation.
 -->
 <script lang="ts">
-  import { CURIOUS_FACTS, HONESTY_MARKS, asPlayers, curiousDisplay, curiousSentence, headline, cardFacts, cardFor, commitEdit, gmStamps, hasTool, primaryOf, type Json, type PlayerContext, type SceneFact, type SystemScene, type ViewContext, type Vocab } from "../../../ui-contract/src/index.ts";
+  import { CURIOUS_FACTS, HONESTY_MARKS, namesOnStack, asPlayers, curiousDisplay, curiousSentence, headline, cardFacts, cardFor, commitEdit, factEdit, gmStamps, hasTool, primaryOf, eyesShow, fieldLandmark, hasException, secrecyRelevant, tableOf, type IntentResult, type KnownChange, type KnownTo as KnownRead, type Json, type PlayerContext, type SceneFact, type SystemScene, type ViewContext, type Vocab } from "../../../ui-contract/src/index.ts";
   import PlayerCard from "../../player-stack/src/PlayerCard.svelte";
-  import { Card, CardField, Stamp, opensFrom } from "../../../chart-grammar/src/index.ts";
+  import { Card, CardField, KnownTo, Stamp, opensFrom } from "../../../chart-grammar/src/index.ts";
   import { parseFact } from "./parse.ts";
   import Explain from "./Explain.svelte";
+  import NameCard from "./NameCard.svelte";
 
   let { ctx, scene, params }: { ctx: ViewContext; scene: SystemScene; params: Record<string, Json> } = $props();
 
@@ -24,6 +25,43 @@
   const depth = $derived(ws.depth ?? "science");
   const curious = $derived(depth === "curious" && ws.mode !== "edit");
   let allFacts = $state(false);
+  // Names (NM6): when a pack on the stack carries name schemes, "Names" opens every name the body has, by layer.
+  const namesInPlay = $derived.by(() => {
+    void ws.revision;
+    const st = ctx.session.stack();
+    return namesOnStack([...st.base, ...(st.campaign ? [st.campaign] : [])]).schemes.length > 0;
+  });
+  let namesOpen = $state(false);
+  // Known to (SV2): who knows this body, read from the kernel on the GM's Build and Run desks. The eye shows once
+  // secrecy matters here (something held back, or the campaign shared); a press reveals or hides through set_known.
+  let known = $state.raw<KnownRead | null>(null);
+  $effect(() => {
+    const a = subject?.address;
+    void ws.revision;
+    known = null;
+    if (!a || ctx.session.seat.authority !== "gm" || (ws.desk !== "build" && ws.desk !== "run")) return;
+    let live = true;
+    void ctx.session.knownTo(a).then((r) => {
+      if (live && r.ok) known = r.value;
+    });
+    return () => (live = false);
+  });
+  const eye = $derived(!!known && eyesShow(ws.desk, secrecyRelevant(known, !!ws.shared)));
+  const inside = $derived(!!subject && scene.subjects.some((x) => x.parent === subject.address));
+  const failed = (r: IntentResult) => (r.status === "refused" ? r.reason : r.status === "pending" ? "sent to the GM" : r.status === "error" ? r.message : "");
+  async function setKnown(c: KnownChange): Promise<{ ok: true; undo?: string } | { ok: false; why: string }> {
+    if (!subject) return { ok: false, why: "nothing selected" };
+    const r = await ctx.session.send({ kind: "set_known", address: subject.address, ...c, at_yr: ws.now_yr });
+    if (r.status === "applied") return (ws.revision++, { ok: true, ...(r.event_id ? { undo: r.event_id } : {}) });
+    return { ok: false, why: failed(r) };
+  }
+  async function undoKnown(undo: string): Promise<string | null> {
+    const r = await ctx.session.send({ kind: "undo_known", undo, at_yr: ws.now_yr });
+    return r.status === "applied" ? (ws.revision++, null) : failed(r);
+  }
+  // Pencil on the card (secrets design 4): the lines the table is not sent are drawn quieter, each with its own eye.
+  const tableKnows = $derived(eye && known ? tableOf(known) : null);
+  const pencilled = (field: string) => !!tableKnows && fieldLandmark(tableKnows, field) !== "known";
   const listed = $derived(curious && !allFacts ? headline(shown) : shown);
   const sentence = $derived(subject && depth === "curious" ? curiousSentence(subject, scene.subjects.find((x) => x.address === subject.parent)?.label) : null);
   const published = $derived(subject && depth === "engine" ? shown.filter((f) => f.publisher) : []);
@@ -54,7 +92,9 @@
     if (!subject) return null;
     const p = parseFact(f, text);
     if (!p.ok) return p.message;
-    const r = await commitEdit(ctx.session, ws, { address: subject.address, field: f.field, value: p.value, display: p.display, before: { value: f.value, display: f.display } });
+    // A value read back from the universe goes to its kernel field, in SI; the fixture's own fields take it as typed.
+    const e = factEdit(f, p.value);
+    const r = await commitEdit(ctx.session, ws, { address: subject.address, field: e.field, value: e.value, display: p.display, before: { value: e.before, display: f.display } });
     switch (r.status) {
       case "applied":
         note = `Inked at ${(ws.now_yr / 1e9).toFixed(2)} Gyr as event ${r.event_id.slice(0, 8)}`;
@@ -72,16 +112,24 @@
     if (f.source === "authored") return "you set it. It feeds every value derived from it.";
     if (f.source === "catalogued") return "it comes from a real catalogue, carried in with the import.";
     if (f.source === "fixture") return "it comes from the sample system's fixture data, not from physics. Set it to make it yours.";
+    if (f.source === "resolved") return "the formation run put it here, from the cloud the system grew out of. Set it to make it yours.";
+    // A value the kernel works out but has no flow to show here yet (a system read back from the universe).
+    if (f.source === "derived" && f.field === "surface_k") return "the physics works it out from the star's light, this orbit and the world's air, so it follows when you change them. Open the world: the globe's Climate, Why? shows each step.";
+    if (f.source === "derived") return "the physics works it out from this world's other values, so it follows when you change them.";
     return `its source is ${f.source}.`;
   }
 </script>
+
+{#snippet knownLead()}
+  {#if known && subject}<KnownTo read={known} label={subject.label} hold={(ws.players_online ?? 0) > 0} children={inside} onset={setKnown} onundo={undoKnown} />{/if}
+{/snippet}
 
 <div class="wrap">
   <!-- A new subject's card opens from its body on the chart (dynamic minimalism); edits to the same subject do not. -->
   {#key subject?.address}
   <div use:opensFrom={() => (subject ? document.querySelector(`[data-address="${CSS.escape(subject.address)}"]`) : null)}>
   {#if subject}
-    <Card title={subject.label} subtitle={subject.subtitle}>
+    <Card title={subject.label} subtitle={subject.subtitle} lead={eye && known ? knownLead : undefined}>
       {#if stamps.length}
         <div class="stamps">{#each stamps as k (k)}<Stamp kind={k} />{/each}</div>
       {/if}
@@ -89,10 +137,18 @@
         <p class="as" data-through={L?.id}>{L?.label}{through.subjects.some((x) => x.address === theirs) ? "" : ": not known to them"}</p>
         {#if pctx && through.subjects.some((x) => x.address === theirs)}<div class="theirs"><PlayerCard ctx={pctx} scene={through} /></div>{/if}
       {:else}
+      {#if namesInPlay}
+        <button type="button" class="names-open" aria-expanded={namesOpen} data-names-open onclick={() => (namesOpen = !namesOpen)}>{namesOpen ? "Hide names" : "Names ›"}</button>
+        {#if namesOpen}<NameCard session={ctx.session} workspace={ws} address={subject.address} label={subject.label} {depth} onclose={() => (namesOpen = false)} />{/if}
+      {/if}
+      {#if ctx.describe}<button type="button" class="names-open" data-describe onclick={() => ctx.describe?.(subject.address)} title="Minerva writes a description from what one audience knows of it">Describe ›</button>{/if}
       {#if sentence}<p class="sentence" data-depth="curious">{sentence}</p>{/if}
       {#if depth === "engine"}<p class="address" data-depth="engine" title="This body's address in the universe">{subject.address}</p>{/if}
       <div class="grid" class:line={rule.density === "line"} style="--cols: {cols}">
         {#each listed as f (f.field)}
+          {#snippet lineEye()}
+            {#if known && subject}<KnownTo read={known} label={subject.label} field={f.field} fieldLabel={f.label} size={11} hold={(ws.players_online ?? 0) > 0} onset={setKnown} onundo={undoKnown} />{/if}
+          {/snippet}
           <CardField
             label={f.label}
             display={curious ? curiousDisplay(f) : f.display}
@@ -104,6 +160,9 @@
             editable={f.editable && ws.mode === "edit"}
             oncommit={(t) => commit(f, t)}
             onwhy={f.field === "name" ? undefined : () => (why = why === f.field ? null : f.field)}
+            pencil={pencilled(f.field)}
+            known={tableKnows && f.field !== "name" ? lineEye : undefined}
+            keepKnown={hasException(tableKnows, f.field)}
           />
           {#if why === f.field}
             {#if f.why}
@@ -136,6 +195,19 @@
 </div>
 
 <style>
+  .names-open {
+    display: block;
+    height: auto;
+    margin: 6px 18px 0;
+    padding: 0;
+    border: none;
+    background: none;
+    color: var(--sse-accent-ink);
+    font: inherit;
+    font-size: 13px;
+    text-decoration: underline;
+    cursor: pointer;
+  }
   .stamps {
     display: flex;
     flex-wrap: wrap;

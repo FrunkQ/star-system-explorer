@@ -8,7 +8,11 @@
   import {
     checkPackDoc,
     packSummary,
+    percentWords,
     previewStack,
+    reportWords,
+    sourceLink,
+    unitWords,
     stackPacks,
     type Json,
     type PackDoc,
@@ -45,10 +49,10 @@
   let proposal = $state<{ title: string; added: PackDoc[]; preview: StackPreview | null } | null>(null);
   let note = $state<string | null>(null);
   let busy = $state(false);
-  async function propose(title: string, added: PackDoc[]) {
+  async function propose(title: string, added: PackDoc[], report?: string) {
     note = null;
     proposal = { title, added, preview: null };
-    const p = await previewStack(session, scene, added);
+    const p = await previewStack(session, scene, added, report ? { report } : {});
     if (proposal?.title === title) proposal = { ...proposal, preview: p };
   }
   async function accept() {
@@ -68,17 +72,18 @@
       const doc = JSON.parse(await f.text());
       const bad = checkPackDoc(doc, [...info.base, ...(info.campaign ? [info.campaign] : [])].map((p) => p.id));
       fileError = bad;
-      if (!bad) await propose(`Add ${doc.id}`, [...info.added, doc]);
+      if (!bad) await propose(`Add ${doc.id}`, [...info.added, doc], doc.id);
     } catch (err) {
       fileError = `Not readable as JSON: ${(err as Error).message}`;
     }
   }
   const samples = $derived((params.samples as string[]) ?? []);
+  const sampleLabels = $derived((params.sample_labels as string[]) ?? []);
   async function addSample(url: string) {
     const doc = (await (await fetch(new URL(url, document.baseURI))).json()) as PackDoc;
     const bad = checkPackDoc(doc, info.base.map((p) => p.id));
     fileError = bad;
-    if (!bad) await propose(`Add ${doc.id}`, [...info.added, doc]);
+    if (!bad) await propose(`Add ${doc.id}`, [...info.added, doc], doc.id);
   }
   const ROLE = { campaign: "your physics changes", added: "added here", opening: "campaign start" };
 </script>
@@ -111,6 +116,7 @@
             v{s.version} · {ROLE[role]} · {s.flows.length} flows{s.quantity_kinds ? `, ${s.quantity_kinds} quantity kinds` : ""}{s.other.length ? `, ${s.other.join(", ")}` : ""}
           </div>
           {#each s.replaces as r (r)}<div class="rep">replaces {r}</div>{/each}
+          {#if s.notice}<details class="notice" data-pack-notice={p.id}><summary>Notice</summary><p>{s.notice.text}</p>{#if s.notice.source}<p class="muted">{s.notice.source}</p>{/if}</details>{/if}
           {#if role === "added" && editable}
             <button type="button" class="link" onclick={() => propose(`Remove ${p.id}`, info.added.filter((x) => x.id !== p.id))}>Remove…</button>
           {/if}
@@ -122,7 +128,7 @@
       <div class="add">
         <label class="btn" for="pack-file">Add a pack from a file…</label>
         <input id="pack-file" type="file" accept=".json,application/json" onchange={addFile} />
-        {#each samples as u (u)}<button type="button" class="btn" onclick={() => addSample(u)}>Try the sample pack</button>{/each}
+        {#each samples as u, i (u)}<button type="button" class="btn" onclick={() => addSample(u)}>{sampleLabels[i] ?? "Try the sample pack"}</button>{/each}
       </div>
       {#if fileError}<p class="err" role="alert">{fileError}</p>{/if}
     {/if}
@@ -150,6 +156,48 @@
                 {/each}
               </tbody>
             </table>
+          {/if}
+          {@const rep = proposal.preview.report}
+          {#if rep}
+            <div class="report" data-pack-report={rep.pack} data-reproduced={rep.reproduced}>
+              <h4>What the pack says about itself</h4>
+              <p class="muted">{reportWords(rep)}. The kernel ran its checks when it loaded the stack.</p>
+              {#if rep.sources.length}
+                <div class="k">Sources</div>
+                <ul class="plain">
+                  {#each rep.sources as src (src.id)}
+                    {@const href = sourceLink(src)}
+                    <li data-pack-source={src.id}>{#if href}<a {href} target="_blank" rel="noopener">{src.text}</a>{:else}{src.text}{/if}{src.licence ? ` · ${src.licence}` : ""}</li>
+                  {/each}
+                </ul>
+              {/if}
+              {#if rep.fudges.length}
+                <div class="k">Fudges</div>
+                <ul class="plain">
+                  {#each rep.fudges as f (f.id)}
+                    <li data-pack-fudge={f.id}>
+                      {#if f.from === "model_number"}<b>{f.what}</b>{f.number?.value !== undefined ? `, ${f.number.value}${unitWords(f.number.unit) ? ` ${unitWords(f.number.unit)}` : ""}` : ""}, in {f.flows.join(", ")}
+                      {:else}<b>{f.what}</b> stands in for {f.stands_in_for}{f.replace_with ? `; better would be ${f.replace_with}` : ""}{/if}
+                    </li>
+                  {/each}
+                </ul>
+              {/if}
+              {#if rep.reproduction.length}
+                <div class="k">Reproduction checks</div>
+                {#each rep.reproduction as c (c.name)}
+                  <div class="check" data-check={c.name} data-pass={c.pass}>
+                    <b>{c.pass ? "✓" : "✗"} {c.name}</b>{c.where ? `, ${c.where}` : ""}
+                    {#each c.rows as row (row.kind)}
+                      {@const u = unitWords(row.unit)}
+                      <div class="crow" data-pass={row.pass}>
+                        <span class="m">{row.kind}</span>
+                        published {row.published}{u ? ` ${u}` : ""}, this pack {row.got === null ? (row.error ?? "did not run") : `${Number(row.got.toPrecision(4))}${u ? ` ${u}` : ""}`}; {percentWords(row.off)} off, the pack allows {percentWords(row.tolerance)}
+                      </div>
+                    {/each}
+                  </div>
+                {/each}
+              {/if}
+            </div>
           {/if}
         {/if}
         <div class="actions">
@@ -188,6 +236,32 @@
     font-family: var(--sse-font-display);
     font-size: 20px;
     font-weight: 600;
+  }
+  h4 {
+    margin: 14px 0 4px;
+    font-size: 15px;
+  }
+  .report {
+    margin-top: 12px;
+    padding-top: 10px;
+    border-top: var(--sse-line) solid var(--sse-rule);
+  }
+  .check {
+    margin: 4px 0 8px;
+  }
+  .crow {
+    margin-top: 2px;
+    color: var(--sse-ink-muted);
+  }
+  .crow .m {
+    display: block;
+  }
+  .plain {
+    margin: 2px 0 10px;
+    padding-left: 18px;
+  }
+  .report a {
+    color: var(--sse-accent-ink);
   }
   h3 {
     margin: 0 0 6px;
@@ -238,6 +312,14 @@
     font-size: 16px;
     font-weight: 600;
     overflow-wrap: anywhere;
+  }
+  .notice {
+    margin-top: 4px;
+    font-size: 0.85em;
+  }
+  .notice summary {
+    cursor: pointer;
+    color: var(--sse-ink-muted);
   }
   .rep {
     font-family: var(--sse-font-mono);

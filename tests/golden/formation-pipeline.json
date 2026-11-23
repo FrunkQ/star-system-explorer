@@ -1,73 +1,73 @@
 [
   {
-    "digest": "43bd926ab9f314c67276a45c369c1ae585c2aec8935cf79f1ea1ed146ef52b84",
+    "digest": "2b8585864e1a72c4e8de0a649a6419d649376848f0273095f1bad5d73418ae59",
     "events": 0,
     "heat": [],
     "system": "u:g0/patch:9:solar/cohort:0/sys:0",
     "worlds": []
   },
   {
-    "digest": "dc8a2d89ebf3ac5a5d5a5a1a642747707e4176054c2a266bd33852b77ab9361a",
+    "digest": "4b59385cc30ceb4a5a896c58379e3500e324ea619b105b5a71ea052ccb8c4948",
     "events": 0,
     "heat": [
       {
         "address": "u:g0/patch:9:solar/cohort:0/sys:1/body:0",
-        "power_w": 5266182727.283442,
+        "power_w": 5265021849.127853,
         "until_gyr": 0.0
       },
       {
         "address": "u:g0/patch:9:solar/cohort:0/sys:1/body:1",
-        "power_w": 12806781141.479454,
+        "power_w": 12807848009.000145,
         "until_gyr": 0.0
       },
       {
         "address": "u:g0/patch:9:solar/cohort:0/sys:1/body:2",
-        "power_w": 12524861005.98444,
+        "power_w": 12520308434.48214,
         "until_gyr": 0.0
       },
       {
         "address": "u:g0/patch:9:solar/cohort:0/sys:1/body:3",
-        "power_w": 99000299829.67041,
+        "power_w": 99013229118.14279,
         "until_gyr": 0.0
       },
       {
         "address": "u:g0/patch:9:solar/cohort:0/sys:1/body:4",
-        "power_w": 49022844336.66325,
+        "power_w": 49026131449.419876,
         "until_gyr": 0.0
       },
       {
         "address": "u:g0/patch:9:solar/cohort:0/sys:1/body:5",
-        "power_w": 46684946287.79092,
+        "power_w": 46689321370.39568,
         "until_gyr": 0.0
       },
       {
         "address": "u:g0/patch:9:solar/cohort:0/sys:1/body:6",
-        "power_w": 57886524818.25026,
+        "power_w": 57890597163.29772,
         "until_gyr": 0.0
       },
       {
         "address": "u:g0/patch:9:solar/cohort:0/sys:1/body:7",
-        "power_w": 68227287039.80657,
+        "power_w": 68226695597.43971,
         "until_gyr": 0.0
       },
       {
         "address": "u:g0/patch:9:solar/cohort:0/sys:1/body:8",
-        "power_w": 91815601348.63104,
+        "power_w": 91816311163.00285,
         "until_gyr": 0.0
       },
       {
         "address": "u:g0/patch:9:solar/cohort:0/sys:1/body:9",
-        "power_w": 105215240921.88008,
+        "power_w": 105216063018.59653,
         "until_gyr": 0.0
       },
       {
         "address": "u:g0/patch:9:solar/cohort:0/sys:1/body:10",
-        "power_w": 128484197931.41377,
+        "power_w": 128484307570.89711,
         "until_gyr": 0.0
       },
       {
         "address": "u:g0/patch:9:solar/cohort:0/sys:1/body:11",
-        "power_w": 155027503716.5175,
+        "power_w": 155026707162.25006,
         "until_gyr": 0.0
       }
     ],
@@ -76,133 +76,133 @@
       {
         "address": "u:g0/patch:9:solar/cohort:0/sys:1/body:0",
         "envelope": "none",
-        "mass_earth": 0.0019097782559999998
+        "mass_earth": 0.001909445759211481
       },
       {
         "address": "u:g0/patch:9:solar/cohort:0/sys:1/body:1",
         "envelope": "none",
-        "mass_earth": 0.004584999365999999
+        "mass_earth": 0.00458533339073418
       },
       {
         "address": "u:g0/patch:9:solar/cohort:0/sys:1/body:2",
         "envelope": "none",
-        "mass_earth": 0.0043449453
+        "mass_earth": 0.004343281591789672
       },
       {
         "address": "u:g0/patch:9:solar/cohort:0/sys:1/body:3",
         "envelope": "none",
-        "mass_earth": 0.032281112375999996
+        "mass_earth": 0.03228511532331628
       },
       {
         "address": "u:g0/patch:9:solar/cohort:0/sys:1/body:4",
         "envelope": "none",
-        "mass_earth": 0.015981740946000002
+        "mass_earth": 0.01598274354406067
       },
       {
         "address": "u:g0/patch:9:solar/cohort:0/sys:1/body:5",
         "envelope": "none",
-        "mass_earth": 0.015222624065999998
+        "mass_earth": 0.01522362648547267
       },
       {
         "address": "u:g0/patch:9:solar/cohort:0/sys:1/body:6",
         "envelope": "none",
-        "mass_earth": 0.018875374632
+        "mass_earth": 0.018876377910809924
       },
       {
         "address": "u:g0/patch:9:solar/cohort:0/sys:1/body:7",
         "envelope": "none",
-        "mass_earth": 0.022248450557999996
+        "mass_earth": 0.02224845579211662
       },
       {
         "address": "u:g0/patch:9:solar/cohort:0/sys:1/body:8",
         "envelope": "none",
-        "mass_earth": 0.029937172535999996
+        "mass_earth": 0.029937845471103397
       },
       {
         "address": "u:g0/patch:9:solar/cohort:0/sys:1/body:9",
         "envelope": "none",
-        "mass_earth": 0.03431175003
+        "mass_earth": 0.034311758102099243
       },
       {
         "address": "u:g0/patch:9:solar/cohort:0/sys:1/body:10",
         "envelope": "kept",
-        "mass_earth": 0.041897924639999994
+        "mass_earth": 0.04189826744288265
       },
       {
         "address": "u:g0/patch:9:solar/cohort:0/sys:1/body:11",
         "envelope": "kept",
-        "mass_earth": 0.050557184208
+        "mass_earth": 0.05055719610196075
       }
     ]
   },
   {
-    "digest": "b9fd308d85d033331f9dea848eb56051295e1c95a123ba0422f44fffea12db13",
+    "digest": "db2898c0f9853fc9babd28b7dcd62c8671792bbe7013f96c20c1a14de693c37a",
     "events": 13,
     "heat": [
       {
         "address": "u:g0/patch:9:solar/cohort:1/sys:0/body:0",
-        "power_w": 186121511430.55484,
-        "until_gyr": 1.552645048900362
+        "power_w": 186120555779.1888,
+        "until_gyr": 1.5526316836333465
       },
       {
         "address": "u:g0/patch:9:solar/cohort:1/sys:0/body:1",
-        "power_w": 466678967881.49146,
-        "until_gyr": 2.8111618388481903
+        "power_w": 466695409805.0227,
+        "until_gyr": 2.8111923052220043
       },
       {
         "address": "u:g0/patch:9:solar/cohort:1/sys:0/body:2",
-        "power_w": 296206718293.3782,
-        "until_gyr": 2.1362924520846107
+        "power_w": 296224153271.3606,
+        "until_gyr": 2.136374904320788
       },
       {
         "address": "u:g0/patch:9:solar/cohort:1/sys:0/body:3",
-        "power_w": 481258251795.61255,
-        "until_gyr": 2.8614436305936177
+        "power_w": 481300654144.23956,
+        "until_gyr": 2.861582618371422
       },
       {
         "address": "u:g0/patch:9:solar/cohort:1/sys:0/body:4",
-        "power_w": 349722253864.8829,
-        "until_gyr": 2.3689882652111542
+        "power_w": 349701240717.7086,
+        "until_gyr": 2.3688816854081627
       },
       {
         "address": "u:g0/patch:9:solar/cohort:1/sys:0/body:5",
-        "power_w": 744640640219.0443,
-        "until_gyr": 3.2323479364878587
+        "power_w": 744708530244.5596,
+        "until_gyr": 3.232528790182054
       },
       {
         "address": "u:g0/patch:9:solar/cohort:1/sys:0/body:6",
-        "power_w": 4206466145912.016,
-        "until_gyr": 6.2761645157196035
+        "power_w": 4206911848331.043,
+        "until_gyr": 6.276547537213588
       },
       {
         "address": "u:g0/patch:9:solar/cohort:1/sys:0/body:7",
-        "power_w": 18125078949991.2,
-        "until_gyr": 12.552653652849832
+        "power_w": 18129077124747.082,
+        "until_gyr": 12.553854145614034
       },
       {
         "address": "u:g0/patch:9:solar/cohort:1/sys:0/body:8",
-        "power_w": 6951777477077.747,
-        "until_gyr": 7.651554851928001
+        "power_w": 6953360460483.922,
+        "until_gyr": 7.652494688712545
       },
       {
         "address": "u:g0/patch:9:solar/cohort:1/sys:0/body:9",
-        "power_w": 8026274138999.141,
-        "until_gyr": 8.474210646255093
+        "power_w": 8028826407327.832,
+        "until_gyr": 8.475659429091378
       },
       {
         "address": "u:g0/patch:9:solar/cohort:1/sys:0/body:10",
-        "power_w": 5051874399643.8,
-        "until_gyr": 6.657323018247428
+        "power_w": 5053179141010.569,
+        "until_gyr": 6.658235822258595
       },
       {
         "address": "u:g0/patch:9:solar/cohort:1/sys:0/body:11",
-        "power_w": 3811035652581.139,
-        "until_gyr": 5.70575853146877
+        "power_w": 3811806979796.5537,
+        "until_gyr": 5.706393970614191
       },
       {
         "address": "u:g0/patch:9:solar/cohort:1/sys:0/body:12",
-        "power_w": 2582725455765.952,
-        "until_gyr": 4.610772603077316
+        "power_w": 2583082169127.753,
+        "until_gyr": 4.611092552436821
       }
     ],
     "system": "u:g0/patch:9:solar/cohort:1/sys:0",
@@ -210,72 +210,72 @@
       {
         "address": "u:g0/patch:9:solar/cohort:1/sys:0/body:0",
         "envelope": "none",
-        "mass_earth": 0.008766135234
+        "mass_earth": 0.008766137296299752
       },
       {
         "address": "u:g0/patch:9:solar/cohort:1/sys:0/body:1",
         "envelope": "none",
-        "mass_earth": 0.021981760811999998
+        "mass_earth": 0.021983097767689145
       },
       {
         "address": "u:g0/patch:9:solar/cohort:1/sys:0/body:2",
         "envelope": "none",
-        "mass_earth": 0.013952435076
+        "mass_earth": 0.013953104250572754
       },
       {
         "address": "u:g0/patch:9:solar/cohort:1/sys:0/body:3",
         "envelope": "none",
-        "mass_earth": 0.022670626085999998
+        "mass_earth": 0.022672629095906578
       },
       {
         "address": "u:g0/patch:9:solar/cohort:1/sys:0/body:4",
         "envelope": "none",
-        "mass_earth": 0.016473502188
+        "mass_earth": 0.01647284017135959
       },
       {
         "address": "u:g0/patch:9:solar/cohort:1/sys:0/body:5",
         "envelope": "stripped",
-        "mass_earth": 0.033706454202
+        "mass_earth": 0.03371079043071708
       },
       {
         "address": "u:g0/patch:9:solar/cohort:1/sys:0/body:6",
         "envelope": "stripped",
-        "mass_earth": 0.173508481926
+        "mass_earth": 0.17352750067165013
       },
       {
         "address": "u:g0/patch:9:solar/cohort:1/sys:0/body:7",
         "envelope": "kept",
-        "mass_earth": 0.7359837919199999
+        "mass_earth": 0.7361487733745375
       },
       {
         "address": "u:g0/patch:9:solar/cohort:1/sys:0/body:8",
         "envelope": "kept",
-        "mass_earth": 0.280979455374
+        "mass_earth": 0.2810454448000554
       },
       {
         "address": "u:g0/patch:9:solar/cohort:1/sys:0/body:9",
         "envelope": "kept",
-        "mass_earth": 0.32418152949599993
+        "mass_earth": 0.32428615083075685
       },
       {
         "address": "u:g0/patch:9:solar/cohort:1/sys:0/body:10",
         "envelope": "kept",
-        "mass_earth": 0.20404462431599996
+        "mass_earth": 0.20409727779942016
       },
       {
         "address": "u:g0/patch:9:solar/cohort:1/sys:0/body:11",
         "envelope": "kept",
-        "mass_earth": 0.15392559704399997
+        "mass_earth": 0.15395792902576114
       },
       {
         "address": "u:g0/patch:9:solar/cohort:1/sys:0/body:12",
         "envelope": "kept",
-        "mass_earth": 0.10431464536799999
+        "mass_earth": 0.10433065132057068
       }
     ]
   },
   {
-    "digest": "b5443a4f24f29b5bed9ddfd6bcaaecb08d7fb597f9f67b1d360c122acaeb7ff7",
+    "digest": "15cceccd5686607c1b5f2e8c9a520403fa71161ab228cc2303cf56648d0a3c98",
     "events": 0,
     "heat": [],
     "system": "u:g0/patch:9:solar/cohort:1/sys:1",

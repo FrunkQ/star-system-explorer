@@ -50,52 +50,18 @@ pub struct SkyParams {
     pub satellites: SatelliteParams,
 }
 
-/// How our galaxy's satellites are drawn (Y4 part 2, fudge F39).
-#[derive(Clone, PartialEq, Debug, Serialize, Deserialize)]
+/// What acts on our galaxy's satellites after they fall in (GH2, design
+/// 7.3). The subhaloes themselves come from the host's assembly tree
+/// (`assembly::tree`, GH1).
+#[derive(Clone, PartialEq, Debug, Default, Serialize, Deserialize)]
 #[serde(default)]
 pub struct SatelliteParams {
-    // The subhaloes themselves come from the host's assembly tree
-    // (`assembly::tree`, GH1); these are the processes acting on them.
-    /// Merging by dynamical friction after infall (Boylan-Kolchin, Ma and
-    /// Quataert 2008, eqs. 5 and 6, doi:10.1111/j.1365-2966.2007.12530.x):
-    /// τ/τ_dyn = A (M/m)^b / ln(1 + M/m) exp(c η) (r_c/r_vir)^d with
-    /// τ_dyn = 0.1 / H(z); A 0.216, b 1.3, c 1.9, d 1.0.
-    pub df_a: f64,
-    pub df_b: f64,
-    pub df_c: f64,
-    pub df_d: f64,
-    /// Orbit ranges drawn uniformly: circularity η and r_c / r_vir.
-    pub eta_range: [f64; 2],
-    pub rc_range: [f64; 2],
-    /// Radial number density of surviving subhaloes, Einasto with shape α
-    /// and r_-2 as a fraction of r_200 (Springel et al. 2008, Aquarius,
-    /// doi:10.1111/j.1365-2966.2008.14066.x): 0.678 and 0.81. Drawn
-    /// between `r_min_frac` and 1 of r_200.
-    pub einasto_alpha: f64,
-    pub einasto_r2_frac: f64,
-    pub r_min_frac: f64,
-    /// Star formation goes on this long after infall, then stops ("delayed
-    /// then rapid": satellite star formation "unaffected for 2-4 Gyr after
-    /// infall", then quenched in under 0.8 Gyr, Wetzel et al. 2013,
-    /// doi:10.1093/mnras/stt469; here one delay for every mass, fudge F39).
-    pub quench_delay_gyr: f64,
-}
-
-impl Default for SatelliteParams {
-    fn default() -> Self {
-        SatelliteParams {
-            df_a: 0.216,
-            df_b: 1.3,
-            df_c: 1.9,
-            df_d: 1.0,
-            eta_range: [0.3, 1.0],
-            rc_range: [0.5, 1.0],
-            einasto_alpha: 0.678,
-            einasto_r2_frac: 0.81,
-            r_min_frac: 0.05,
-            quench_delay_gyr: 3.0,
-        }
-    }
+    /// Orbits and the four processes (`infall`).
+    pub orbits: crate::infall::OrbitParams,
+    /// How the host answers what its tree brings (GH3, `feed`).
+    pub responses: crate::feed::ResponseParams,
+    /// The shapes of what they leave behind (GH4, `remains`).
+    pub remains: crate::remains::RemainsParams,
 }
 
 impl Default for SkyParams {
@@ -180,19 +146,25 @@ impl Stars<'_> {
         t_myr: f64,
     ) -> Result<(Vec<Found>, Vec<usize>, usize), String> {
         let frame = self.frame_of(t_myr);
-        let w = crate::star_tree::TreeWalk::new(self, frame);
+        let mut walks = vec![crate::star_tree::TreeWalk::new(self, frame)];
+        // GH4: the stellar halo's stars, from the remains, with their own tree.
+        if self.params.key_version >= 2 && self.has_remains() {
+            walks.push(crate::star_tree::TreeWalk::remains(self, frame));
+        }
         let centre = self.to_grid(observer, frame as f64 * self.params.frame_myr);
         let mut out = vec![];
         let mut per = vec![];
         for (class, r) in radii_pc.iter().enumerate() {
             let before = out.len();
-            for (cell, _) in w.cells_within(class, centre, *r)? {
-                for s in w.draw(cell, Some(class))? {
-                    out.push(Found { system: s, class });
+            for w in &walks {
+                for (cell, _) in w.cells_within(class, centre, *r)? {
+                    for s in w.draw(cell, Some(class))? {
+                        out.push(Found { system: s, class });
+                    }
                 }
             }
             per.push(out.len() - before);
         }
-        Ok((out, per, w.reads()))
+        Ok((out, per, walks.iter().map(|w| w.reads()).sum()))
     }
 }

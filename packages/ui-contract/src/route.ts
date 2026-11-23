@@ -20,6 +20,19 @@ export interface NavShip {
   reserve?: number;
   g_limit?: number;
   shield_g_cm2?: number;
+  fuels?: string[];
+  /** Heat shield, shape in air and landing gear (sse-nav `entry`; the renderer's ship designer writes them). */
+  shield?: { nose_radius_m: number; max_heat_flux_w_m2: number; max_heat_load_j_m2?: number; kind?: "ablative" | "reusable" | string; mass_t?: number };
+  aero?: { ref_area_m2: number; cd: number; lift_area_m2?: number; cl_max?: number; l_over_d?: number };
+  landing?: { legs: boolean; max_touchdown_m_s: number; chute?: { area_m2: number; cd: number; max_mach: number; max_q_pa: number; fill_s?: number } };
+  /** People aboard (0: an uncrewed probe; missing: crewed). */
+  crew?: number;
+  /** Cargo aboard, tonnes, inside dry_t. */
+  cargo_t?: number;
+  /** Each fuel's share of the propellant mass. */
+  fuel_shares?: Record<string, number>;
+  /** Most deceleration the hull bears, g. */
+  structure_g?: number;
 }
 
 /** The base-nav pack's stock ships (T3), by template id. Names for the picker; the kernel holds the numbers. */
@@ -29,6 +42,63 @@ export const STOCK_SHIPS: readonly { id: string; name: string; drive: string }[]
   { id: "fusion-torch", name: "Fusion torch", drive: "fusion torch, 1 g sustained (fictional)" },
   { id: "rescue-cutter", name: "Rescue cutter", drive: "torch, 2 g sustained (fictional)" },
 ];
+
+/**
+ * Ships a pack lists for the voyage planner and the ship designer (`provides.other.nav_ships.ships`, each an sse-nav
+ * ship the kernel flies as given), in stack order; a higher pack's ship replaces a lower one with the same id.
+ */
+export function packShips(packs: readonly { id: string; provides?: { other?: Record<string, unknown> } }[]): { id: string; pack: string; ship: NavShip }[] {
+  const out: { id: string; pack: string; ship: NavShip }[] = [];
+  for (const p of packs) {
+    const ships = (p.provides?.other?.nav_ships as { ships?: Record<string, NavShip> } | undefined)?.ships;
+    if (!ships || typeof ships !== "object") continue;
+    for (const [id, ship] of Object.entries(ships)) {
+      if (!ship || typeof ship.name !== "string" || typeof ship.accel_g !== "number") continue;
+      const i = out.findIndex((x) => x.id === id);
+      const row = { id, pack: p.id, ship };
+      if (i >= 0) out[i] = row;
+      else out.push(row);
+    }
+  }
+  return out;
+}
+
+/** One row of a ship picker: a stock ship (sent by id) or a pack's ship (sent whole, `ship`). */
+export interface ShipChoice {
+  id: string;
+  name: string;
+  drive: string;
+  /** The pack that lists it; missing for a stock ship. */
+  pack?: string;
+  ship?: NavShip;
+}
+
+/** A pack ship's drive in words, from its own figures. */
+export function packDriveWords(ship: NavShip): string {
+  const j = (ship as NavShip & { jump?: { rating_pc?: number } }).jump;
+  const g = `${ship.accel_g} g${ship.sustained ? " sustained" : ""}`;
+  return j && typeof j.rating_pc === "number" ? `Jump-${j.rating_pc}, a pack rule (fictional); ${g} in a system` : g;
+}
+
+/**
+ * The picker's rows: the stock ships, then every ship the stacked packs list (`packShips`), a pack ship keeping
+ * its own id. A pack ship with a stock ship's id replaces it.
+ */
+export function shipChoices(stock: readonly { id: string; name: string; drive: string }[], packs: readonly { id: string; provides?: { other?: Record<string, unknown> } }[]): ShipChoice[] {
+  const out: ShipChoice[] = stock.map((s) => ({ ...s }));
+  for (const p of packShips(packs)) {
+    const row: ShipChoice = { id: p.id, name: p.ship.name, drive: packDriveWords(p.ship), pack: p.pack, ship: p.ship };
+    const i = out.findIndex((x) => x.id === p.id);
+    if (i >= 0) out[i] = row;
+    else out.push(row);
+  }
+  return out;
+}
+
+/** What to send the kernel for a picked row: the ship itself for a pack ship, else its template id. */
+export function shipToSend(choice: ShipChoice): string | NavShip {
+  return choice.ship ?? choice.id;
+}
 
 export interface NavBody {
   address: string;
@@ -42,6 +112,8 @@ export interface NavBody {
   varpi_deg?: number;
   mean_longitude_deg?: number;
   port?: boolean;
+  /** The body's air (a ship at a world): at the ground, or at 1 bar on a giant. */
+  air?: import("./ship-at-world.ts").WorldAir;
 }
 
 export interface NavSystem {
@@ -98,6 +170,8 @@ export interface Course {
   difficulty: { score: number; label: string; reasons: string[] };
   why: string[];
   track: [number, number, number][];
+  /** Speed over escape at the destination before the arrival burn, m/s (0 for a torch flight). */
+  arrive_v_inf_m_s?: number;
 }
 
 export interface WayOut { kind: string; label: string; body?: string; dv_m_s: number; at_s: number; days: number; feasible: boolean; why: string[] }
@@ -241,7 +315,7 @@ export function delayWords(s: number): string {
 
 /** A time on the campaign clock, as days from the scene's now ("in 3 days", "day +12"). */
 export function fromNowWords(at_s: number, now_s: number): string {
-  const d = (at_s - now_s) / 86_400;
+  const d = (at_s - now_s) / constant("day");
   if (Math.abs(d) < 1 / 24) return "now";
   if (d < 0) return `${daysWords(-d)} ago`;
   return `in ${daysWords(d)}`;

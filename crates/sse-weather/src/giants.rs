@@ -30,9 +30,9 @@ use sse_core::math as m;
 use sse_surface::atlas::TileKey;
 
 const G: f64 = sse_core::sheet::G;
-const M_EARTH_KG: f64 = 5.9722e24;
+const M_EARTH_KG: f64 = sse_core::sheet::M_EARTH;
 const DAY_S: f64 = sse_core::sheet::DAY;
-const YEAR_D: f64 = 365.25;
+const YEAR_D: f64 = sse_core::sheet::YR_JULIAN / sse_core::sheet::DAY;
 const DEG: f64 = 180.0 / m::PI;
 
 /// Keyed stream for storms (ovals, strings, dark spots, outbreaks).

@@ -4,6 +4,8 @@
 // refusals. This file words the answer and lays the systems out on a small
 // top-down map. It computes no physics.
 
+import { constant } from "./sheet.ts";
+
 /** Stock ships that can cross between stars (base-nav pack), by template id. */
 export const VOYAGE_SHIPS: readonly { id: string; name: string; drive: string }[] = [
   { id: "jump-courier", name: "Jump courier", drive: "Jump-2, a pack rule (fictional); hydrogen from a giant, ice or a port" },
@@ -26,7 +28,7 @@ export interface VoyageAsk {
   from: string;
   to?: string;
   home?: string;
-  ship: string | Record<string, unknown>;
+  ship: string | import("./route.ts").NavShip | Record<string, unknown>;
   minimise?: Minimise;
   visited?: string[];
   known_fuel?: Record<string, string[]>;
@@ -49,6 +51,8 @@ export interface VoyageLeg {
   /** In-system legs: the NAV course (hohmann, lambert, torch) and the days waited for its window. */
   course?: string;
   wait_days?: number;
+  /** In-system legs: speed over escape at the destination before the arrival burn, m/s. */
+  arrive_v_inf_m_s?: number;
   counted_pc?: number;
   home_days: number;
   ship_days: number;
@@ -144,7 +148,7 @@ export function voyageSpan(d: number): string {
 
 /** Peak speed in words: a share of light, or km/s when slow. */
 export function speedWords(beta: number): string {
-  return beta >= 0.01 ? `${(beta * 100).toFixed(1)}% of light` : `${Math.round(beta * 299_792.458).toLocaleString("en-GB")} km/s`;
+  return beta >= 0.01 ? `${(beta * 100).toFixed(1)}% of light` : `${Math.round((beta * constant("c")) / 1e3).toLocaleString("en-GB")} km/s`;
 }
 
 /** The difference the crew feels: how much younger they come home. */
@@ -208,8 +212,13 @@ export interface SystemVoyagePlan {
 }
 
 /** A log-radius axis: x for an orbit's size in au, so inner worlds and the Kuiper belt fit one line. */
-export function orbitAxis(w: number, places: readonly { a_au: number }[], pad = 28): (a_au: number) => number {
+export function orbitAxis(w: number, places: readonly { a_au: number }[], pad = 28, real = false): (a_au: number) => number {
   const as = places.map((p) => p.a_au).filter((a) => a > 0);
+  // Real (the Scale switch): AU laid out evenly from the star, so the inner worlds crowd together as they truly do.
+  if (real) {
+    const top = Math.max(...as, 1) * 1.05;
+    return (a) => pad + (Math.max(a, 0) / top) * (w - 2 * pad);
+  }
   const lo = Math.log10(Math.min(...as, 0.3) * 0.8);
   const hi = Math.log10(Math.max(...as, 2) * 1.15);
   return (a) => pad + ((Math.log10(Math.max(a, 1e-3)) - lo) / (hi - lo || 1)) * (w - 2 * pad);

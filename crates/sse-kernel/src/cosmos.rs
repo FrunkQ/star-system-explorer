@@ -22,6 +22,11 @@ pub const HALOES: [(&str, f64); 3] = [
     ("group", 1.0e13),
 ];
 
+/// The cosmology's present, Gyr after the origin (DM6's dated calls).
+pub(crate) fn now_gyr() -> Result<f64, Response> {
+    Ok(settings()?.params.now_gyr)
+}
+
 fn settings() -> Result<CosmologyPack, Response> {
     CosmologyPack::from_packs(&[base_cosmology_pack()]).map_err(|e| err("bad_pack", e))
 }
@@ -45,6 +50,67 @@ pub(crate) fn cosmology(p: &sse_cosmos::cosmology::Params) -> Cosmology {
             }
         }
     })
+}
+
+thread_local! {
+    /// The last few fed galaxies (GH3): a fed galaxy follows its whole tree,
+    /// a tenth of a second or more, and every look at the home galaxy needs
+    /// it. Keyed by everything it is made from.
+    static FED: std::cell::RefCell<Vec<(String, std::rc::Rc<sse_cosmos::galaxy::Galaxy>)>> =
+        const { std::cell::RefCell::new(Vec::new()) };
+}
+
+/// A galaxy fed by its assembly tree (GH3), with authored edits.
+pub(crate) fn fed_galaxy(
+    c: &Cosmology,
+    cp: &CosmologyPack,
+    hs: &Haloes,
+    h: &sse_cosmos::haloes::Halo,
+    edits: &[sse_cosmos::galaxy::Edit],
+) -> Result<std::rc::Rc<sse_cosmos::galaxy::Galaxy>, Response> {
+    let key = serde_json::to_string(&(
+        format!("{:?}", hs.seed),
+        hs.universe.to_string(),
+        h,
+        cp,
+        edits,
+    ))
+    .map_err(|e| err("internal", e.to_string()))?;
+    if let Some(g) = FED.with(|f| {
+        f.borrow()
+            .iter()
+            .find(|(k, _)| *k == key)
+            .map(|e| e.1.clone())
+    }) {
+        return Ok(g);
+    }
+    let fed = sse_cosmos::feed::evolve_fed(
+        c,
+        hs,
+        &cp.galaxy,
+        &cp.sky.satellites.orbits,
+        &cp.sky.satellites.responses,
+        h,
+        edits,
+    )
+    .map_err(|e| err("bad_address", e))?;
+    let mut fed = fed;
+    // GH4: what it tore apart stays as places in its envelope.
+    sse_cosmos::feed::with_remains(
+        &mut fed,
+        &cp.galaxy,
+        &cp.sky.satellites.orbits,
+        &cp.rings,
+        &cp.sky.satellites.remains,
+        hs.seed,
+    );
+    let g = std::rc::Rc::new(fed.galaxy);
+    FED.with(|f| {
+        let mut f = f.borrow_mut();
+        f.insert(0, (key, g.clone()));
+        f.truncate(4);
+    });
+    Ok(g)
 }
 
 /// The sky draw's settings (Y2).
@@ -112,7 +178,7 @@ pub(crate) fn galaxy_chart(a: GalaxyAsk) -> Result<serde_json::Value, Response> 
         Some(h) => h,
         None => named_halo(&hs, a.halo, a.mass_msun)?,
     };
-    galaxy_chart_of(&c, &cp, a, h)
+    galaxy_chart_of(&c, &cp, &hs, a, h)
 }
 
 fn named_halo(
@@ -145,31 +211,34 @@ fn named_halo(
 fn galaxy_chart_of(
     c: &Cosmology,
     cp: &CosmologyPack,
+    hs: &Haloes,
     a: GalaxyAsk,
     h: sse_cosmos::haloes::Halo,
 ) -> Result<serde_json::Value, Response> {
     sse_cosmos::galaxy::check_edits(&h, a.edits).map_err(|e| err("bad_edit", e))?;
-    let g = sse_cosmos::galaxy::evolve_with(c, &cp.galaxy, &h, a.edits);
+    let g = fed_galaxy(c, cp, hs, &h, a.edits)?;
+    let g = &*g;
     // Before and after, when the GM has inked history: the ghost the chart draws.
     let compare = if a.edits.is_empty() {
         None
     } else {
         Some(sse_cosmos::events::compare(
-            &sse_cosmos::galaxy::evolve(c, &cp.galaxy, &h),
-            &g,
+            &*fed_galaxy(c, cp, hs, &h, &[])?,
+            g,
         ))
     };
     let addr: Address = h
         .address
         .parse()
         .map_err(|e| err("bad_address", format!("{e:?}")))?;
-    let d = rings::evolve(&g, &cp.galaxy, &cp.rings, *a.seed, &addr);
+    let d = rings::evolve(g, &cp.galaxy, &cp.rings, *a.seed, &addr);
     let env = GalaxyEnvelope {
-        galaxy: &g,
+        galaxy: g,
         disc: &d,
         params: cp.envelope.clone(),
         seed: *a.seed,
         address: addr.clone(),
+        remains: Default::default(),
     };
     let now = g.now.t_gyr;
     // Galaxy-wide events over the whole history (mergers, inked starbursts, nucleus episodes).
@@ -182,7 +251,7 @@ fn galaxy_chart_of(
         params: cp.events.clone(),
         seed: *a.seed,
     }
-    .galaxy_events(&g, 0.0, now * 1000.0 + 1.0);
+    .galaxy_events(g, 0.0, now * 1000.0 + 1.0);
     let removed = |i: usize| {
         a.edits
             .iter()
@@ -296,12 +365,14 @@ fn galaxy_chart_of(
         "edits": a.edits,
         "compare": compare,
         "rotation_curve": rotation,
+        "assembly": g.assembled,
         "model": [
             "galaxy: a halo's median growth, gas and star formation by published relations (G3), not a simulation",
             "rings: chemical evolution ring by ring with delayed type Ia and neutron-star mergers",
             "green band: the G4 criteria (metals, supernovae, passages, bursts, a quiet nucleus, time)",
             "inked history (G6): each edit acts from its own time on; everything before the earliest edit is unchanged",
             "rotation curve (DM4): dark matter on a profile set by the halo's own growth and reshaped by its galaxy, plus discs, bulge, hot gas and black hole; the galaxy now, at the halo's mass now",
+            "assembly (GH3): every progenitor above a thousandth of the halo brings its own galaxy on its own orbit; stars torn off join the stellar halo, gas pushed out joins the hot halo, the rest reaches the centre; each merger and close pass answers by its ratios and leaves a dated mark",
         ],
     }))
 }
@@ -377,6 +448,40 @@ pub(crate) fn web_slice(a: SliceAsk) -> Result<serde_json::Value, Response> {
         "slice": s,
         "model": ["the cosmic web from seeded Gaussian fields, grown linearly and moved by the Zel'dovich approximation (G1); a picture of the large-scale pattern, not an N-body simulation"],
     }))
+}
+
+/// DM3: one cell's matter ledger today.
+pub(crate) fn matter_budget(
+    seed: &Seed,
+    root: &Address,
+    cell: [i64; 3],
+) -> Result<serde_json::Value, Response> {
+    let cp = settings()?;
+    let c = cosmology(&cp.params);
+    let w = web(&c, &cp, seed, root)?;
+    let hs = Haloes {
+        cosmo: &c,
+        web: &w,
+        params: cp.haloes.clone(),
+        seed: *seed,
+        universe: root.clone(),
+    };
+    let lp = &cp.ledger;
+    let res = sse_cosmos::ledger::Reservoirs::new(
+        &hs,
+        &cp.galaxy,
+        lp.galaxy_low_msun,
+        cp.haloes.max_mass,
+    );
+    let l = sse_cosmos::ledger::cell(&hs, &res, lp, cell);
+    let mut v = serde_json::to_value(&l).map_err(|e| err("internal", e.to_string()))?;
+    v["model"] = serde_json::json!([
+        "matter: the cell's mass from the web's density; dark and ordinary in the universe's shares",
+        "haloes: the catalogued ones (G2) and, below the floor, the same mass function down to floor_low_msun; the rest of the dark matter never collapsed into those",
+        "reservoirs: G3 on a median halo once per half dex of mass, read off by each halo's mass; hot halo gas is a halo's share of ordinary matter less what its galaxy holds and threw out; gas between galaxies is the rest of the cell's",
+        "environments: the T-web at the web's finest octave (voids, sheets, filaments, knots), on a grid of samples",
+    ]);
+    Ok(v)
 }
 
 pub(crate) struct CellAsk<'a> {
@@ -501,18 +606,20 @@ pub(crate) fn reconstruct_origin(
         universe: root.clone(),
     };
     let h = named_halo(&hs, None, None)?;
-    let g = sse_cosmos::galaxy::evolve(&c, &cp.galaxy, &h);
+    let g = fed_galaxy(&c, &cp, &hs, &h, &[])?;
+    let g = &*g;
     let addr: Address = h
         .address
         .parse()
         .map_err(|e| err("bad_address", format!("{e:?}")))?;
-    let d = rings::evolve(&g, &cp.galaxy, &cp.rings, *seed, &addr);
+    let d = rings::evolve(g, &cp.galaxy, &cp.rings, *seed, &addr);
     let env = GalaxyEnvelope {
-        galaxy: &g,
+        galaxy: g,
         disc: &d,
         params: cp.envelope.clone(),
         seed: *seed,
         address: addr,
+        remains: Default::default(),
     };
     let ask = sse_cosmos::origin::OriginAsk {
         now_gyr: g.now.t_gyr + a.elapsed_gyr,
@@ -586,18 +693,20 @@ pub(crate) fn with_world<R>(
         universe: root.clone(),
     };
     let h = named_halo(&hs, None, None)?;
-    let g = sse_cosmos::galaxy::evolve(&c, &cp.galaxy, &h);
+    let g = fed_galaxy(&c, &cp, &hs, &h, &[])?;
+    let g = &*g;
     let addr: Address = h
         .address
         .parse()
         .map_err(|e| err("bad_address", format!("{e:?}")))?;
-    let d = rings::evolve(&g, &cp.galaxy, &cp.rings, *seed, &addr);
+    let d = rings::evolve(g, &cp.galaxy, &cp.rings, *seed, &addr);
     let env = GalaxyEnvelope {
-        galaxy: &g,
+        galaxy: g,
         disc: &d,
         params: cp.envelope.clone(),
         seed: *seed,
         address: addr.clone(),
+        remains: Default::default(),
     };
     let st = sse_cosmos::stars::Stars {
         env: &env,
@@ -707,13 +816,16 @@ mod tests {
             .unwrap(),
         )
         .unwrap();
+        // G3's golden is the galaxy unfed; the chart's is fed by its
+        // tree (GH3), with about the same stars, since what arrives was
+        // taken back from its smooth inflow.
         let g = &golden["galaxies"][1];
-        assert_eq!(c["now"]["stars"], g["stars"]);
-        assert_eq!(c["now"]["sfr"], g["sfr"]);
-        assert_eq!(
-            c["core_collapse_per_century"],
-            g["core_collapse_per_century"]
-        );
+        let r_stars = c["now"]["stars"].as_f64().unwrap() / g["stars"].as_f64().unwrap();
+        assert!((0.7..1.3).contains(&r_stars), "{r_stars}");
+        let a = &c["assembly"];
+        assert!(a["members"].as_u64().unwrap() > 20, "{a}");
+        assert!(!a["marks"].as_array().unwrap().is_empty());
+        assert!(a["exsitu_msun"].as_f64().unwrap() > 0.0);
         assert_eq!(c["rings"].as_array().unwrap().len(), 24);
         assert!(c["history"].as_array().unwrap().len() > 10);
         assert!(c["green_bands"]
@@ -773,6 +885,35 @@ mod tests {
             r#"{"op":"galaxy_chart","halo":"dwarf","edits":[{"kind":"remove_merger","index":999}]}"#,
         );
         assert_eq!(bad["code"], "bad_edit", "{bad}");
+    }
+
+    /// DM3 through the kernel: the ledger closes and is repeatable.
+    #[test]
+    fn matter_budget_closes_and_is_repeatable() {
+        let mut k = open();
+        let r = ask(&mut k, r#"{"op":"matter_budget","cell":[0,0,0]}"#);
+        assert_eq!(r["type"], "matter_budgeted", "{r}");
+        let b = &r["budget"];
+        let f = |p: &str, q: &str| b[p][q].as_f64().unwrap();
+        let dark = f("dark", "catalogued_haloes")
+            + f("dark", "haloes_below_floor")
+            + f("dark", "never_collapsed");
+        let ord: f64 = [
+            "stars",
+            "cold_gas",
+            "hot_gas",
+            "thrown_out",
+            "black_holes",
+            "between_galaxies",
+        ]
+        .iter()
+        .map(|q| f("ordinary", q))
+        .sum();
+        let m = b["matter_msun"].as_f64().unwrap();
+        assert!(((dark + ord) / m - 1.0).abs() < 1e-9, "{b}");
+        assert_eq!(b["environments"].as_array().unwrap().len(), 4);
+        let again = ask(&mut k, r#"{"op":"matter_budget","cell":[0,0,0]}"#);
+        assert_eq!(r, again);
     }
 
     #[test]
@@ -1028,7 +1169,12 @@ mod tests {
             ),
         );
         assert_eq!(chart["chart"]["halo"], g["address"], "{chart}");
-        assert_eq!(chart["chart"]["now"]["stars"], g["stellar_mass_now_msun"]);
+        // The sky shows its unfed envelope ("about"); the chart follows its
+        // whole tree (GH3), so the two agree to a few tenths.
+        assert_eq!(g["about"], true);
+        let r = chart["chart"]["now"]["stars"].as_f64().unwrap()
+            / g["stellar_mass_now_msun"].as_f64().unwrap();
+        assert!((0.7..1.3).contains(&r), "{r}");
 
         // Order independence: a narrow field around it finds it unchanged.
         let (l, b) = (g["l_deg"].as_f64().unwrap(), g["b_deg"].as_f64().unwrap());
@@ -1178,11 +1324,16 @@ mod tests {
         let mut classical = 0;
         for g in &sats {
             let rc = g["from_centre_kpc"].as_f64().unwrap();
-            assert!(rc <= r200 * 1.000001, "{g}");
-            // Quenched: no star formation once the delay after infall is past.
+            // On orbits now (GH2): a satellite can swing out past r200 to
+            // its farthest point (the splashback radius, about 1.5 r200).
+            assert!(rc <= r200 * 1.5, "{g}");
+            // Quenched: no star formation once ram pressure has taken its gas.
             let infall = g["infall_gyr"].as_f64().unwrap();
-            if infall + 3.0 < now {
-                assert_eq!(g["sfr_msun_yr"].as_f64(), Some(0.0), "{g}");
+            if let Some(q) = g["orbit"]["quenched_gyr"].as_f64() {
+                assert!(q >= infall, "{g}");
+                if q < now {
+                    assert_eq!(g["sfr_msun_yr"].as_f64(), Some(0.0), "{g}");
+                }
             }
             // Light time inside our halo is under a Myr.
             assert!(g["lookback_myr"].as_f64().unwrap() < 1.0, "{g}");

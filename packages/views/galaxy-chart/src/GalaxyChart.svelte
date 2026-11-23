@@ -7,9 +7,17 @@
 -->
 <script lang="ts">
   import { untrack } from "svelte";
-  import { announcePlace, cellHalo, GROUP_WORDS, LAYER_WORDS, MORPHOLOGY_WORDS, NAMED_HALOES, armPath, cosmicAxis, dex, editWords, toggleRemoval, discFrame, epochTicks, greenAt, logCurve, ringAt, ringShades, sci, timesSun, type GalaxyChart, type GalaxyEdit, type Group, type Json, type RingLayer, type SystemScene, type ViewContext } from "../../../ui-contract/src/index.ts";
+  import GalaxyScars from "./GalaxyScars.svelte";
+  import GalaxyEdgeOn from "./GalaxyEdgeOn.svelte";
+  import { Galaxy3D } from "../../galaxy-3d/src/index.ts";
+  import { GALAXY_CONTROLS } from "./controls.ts";
+  import { markStrengthAt } from "../../../renderer/src/index.ts";
+  import { announcePlace, cellHalo, GROUP_WORDS, LAYER_WORDS, MORPHOLOGY_WORDS, NAMED_HALOES, armPath, cosmicAxis, DEFAULT_VIEW, dex, viewOptions, editWords, toggleRemoval, discFrame, epochTicks, greenAt, logCurve, ringAt, ringShades, sci, timesSun, type GalaxyChart, type GalaxyEdit, type GalaxyMark, type Group, type Json, type RingLayer, type SystemScene, type ViewContext } from "../../../ui-contract/src/index.ts";
 
   let { ctx, params }: { ctx: ViewContext; scene: SystemScene; params: Record<string, Json> } = $props();
+  // The one set of view controls (V9t): Chart is the face-on diagram below; 3D and True turn the disc (Galaxy3D).
+  const shownView = $derived(viewOptions(GALAXY_CONTROLS, ctx.workspace.view ?? DEFAULT_VIEW).shown);
+  const turned = $derived(shownView.style === "3d" || shownView.style === "true");
   const first = untrack(() => ({ halo: String(params.halo ?? "milky-way-like"), layer: String(params.layer ?? "metals") }));
   // A named halo, or a catalogued halo's address picked on the cluster map (V9).
   type HaloKey = string;
@@ -146,6 +154,36 @@
     return b ? b.t_gyr : null;
   });
   const gyr = (t: number) => `${t.toFixed(t < 1 ? 2 : 1)} Gyr`;
+  // GH3's assembly read-out: a member's address shortened to its last part, ratios in plain words.
+  const shortAddress = (a: string) => a.split("/").at(-1)!.replace(/^prog:/, "progenitor ");
+  const fewer = (r: number) => (r >= 1 ? `${r.toFixed(1)} times as rich` : `${(1 / r).toFixed(r > 0.1 ? 1 : 0)} times poorer`);
+  // Marks grouped by kind at the chart's time: a grown galaxy carries well over a thousand.
+  function markKinds(marks: readonly GalaxyMark[], t: number) {
+    const by = new Map<string, { kind: string; n: number; live: number; strongest: number; first: number; by: Set<string> }>();
+    for (const m of marks) {
+      const k = by.get(m.kind) ?? { kind: m.kind, n: 0, live: 0, strongest: 0, first: Infinity, by: new Set<string>() };
+      const now = markStrengthAt(m, t);
+      k.n += 1;
+      if (now >= 0.02) (k.live += 1), (k.strongest = Math.max(k.strongest, now));
+      k.first = Math.min(k.first, m.began_gyr);
+      k.by.add(m.caused_by);
+      by.set(m.kind, k);
+    }
+    return [...by.values()].map((k) => ({ ...k, culprits: k.by.size })).sort((a, b) => b.live - a.live || b.n - a.n || a.kind.localeCompare(b.kind));
+  }
+  const MARK_WORDS: Record<string, string> = {
+    warp: "Warped edge",
+    ripples: "Ripples",
+    tilt: "Tilted outer disc",
+    thick_disc: "Thickened disc",
+    driven_arms: "Driven arms",
+    ring: "Collision ring",
+    burst_knots: "Knots of new stars",
+    lopsided: "Lopsided disc",
+    gas_trail: "Gas trail",
+    warm_side: "Warm side of the hot halo",
+    fresh_gas: "Fresh gas",
+  };
   const CRITERIA: { key: keyof NonNullable<GalaxyChart["place"]>["green"]; words: string }[] = [
     { key: "metals_enough", words: "enough metals for rocky worlds" },
     { key: "metals_not_too_many", words: "not so metal-rich that migrating giants dominate" },
@@ -201,6 +239,9 @@
 
     <div class="cols">
       <div class="disc">
+        {#if turned}
+          <div class="frame3d"><Galaxy3D {chart} look={shownView.style === "true" ? "true" : "3d"} band={shownView.band} seen={shownView.seen} hud={shownView.hud} onturned={() => ctx.workspace.turned?.()} /></div>
+        {:else}
         <svg viewBox="0 0 {W} {W}" role="img" aria-label="The galaxy face-on at {gyr(chart.at_gyr)}: {chart.rings.length} rings shaded by {LAYER_WORDS[layer].label.toLowerCase()}, {chart.arms.length} arms, the green band{green?.habitable ? ` from ${green.habitable[0].toFixed(1)} to ${green.habitable[1].toFixed(1)} kpc` : ' absent'}">
           {#each chart.rings as g, i (i)}
             <circle class="ring" cx={f.cx} cy={f.cy} r={((g.inner_kpc + g.outer_kpc) / 2) * f.k} stroke-width={Math.max(1, (g.outer_kpc - g.inner_kpc) * f.k)} style="stroke-opacity: {0.06 + shades[i]! * 0.6}" onclick={() => (picked = i)} role="presentation"><title>Ring {i + 1}: {g.radius_kpc.toFixed(1)} kpc</title></circle>
@@ -210,13 +251,16 @@
             {#each green.habitable as edge, i (i)}<circle class="greenedge" cx={f.cx} cy={f.cy} r={edge * f.k} />{/each}
           {/if}
           {#each chart.arms as a, i (i)}<path class="arm" d={armPath(a, f)} style="stroke-width: {1 + chart.arm_contrast * 4}" />{/each}
+          <GalaxyScars {chart} frame={f} />
           {#if chart.barred}<line class="barline" x1={f.cx - chart.disc_kpc * f.k} y1={f.cy} x2={f.cx + chart.disc_kpc * f.k} y2={f.cy} />{/if}
           <circle class="sun" cx={f.cx + chart.sun_radius_kpc * f.k} cy={f.cy} r="4"><title>At the Sun's distance from the centre, scaled to this disc</title></circle>
           {#if ring}<circle class="pick" cx={f.cx} cy={f.cy} r={ring.radius_kpc * f.k} />{/if}
           <circle class="core" cx={f.cx} cy={f.cy} r="3" />
         </svg>
+        {/if}
+        <GalaxyEdgeOn {chart} width={W} />
         <p class="hint">
-          {chart.rings.length} rings out to {chart.rings.at(-1)!.outer_kpc.toFixed(0)} kpc, narrow near the centre and wider outside. {LAYER_WORDS[layer].legend}. Arms in ink; the green band{green?.habitable ? "" : " (none at this time)"} where simple life could start; the dot at the Sun's distance scaled to this disc. Pick a ring for its ledger.
+          {chart.rings.length} rings out to {chart.rings.at(-1)!.outer_kpc.toFixed(0)} kpc, narrow near the centre and wider outside. {LAYER_WORDS[layer].legend}. Arms in ink; the green band{green?.habitable ? "" : " (none at this time)"} where simple life could start; the dot at the Sun's distance scaled to this disc. {#if chart.assembly?.marks.length}The dashed outline, accent rings and knots are scars from passing and merging galaxies at this time.{" "}{/if}Pick a ring for its ledger.
         </p>
         <label class="time">Time
           <input type="range" min={Math.ceil(chart.t_start_gyr * 10) / 10} max={chart.now_gyr} step="0.1" value={chart.at_gyr} onchange={(e) => (at = Number(e.currentTarget.value))} aria-valuetext={gyr(chart.at_gyr)} data-time />
@@ -281,6 +325,31 @@
       <p class="hint">Model: {chart.model.join("; ")}.</p>
     </section>
 
+    {#if chart.assembly}
+      {@const a = chart.assembly}
+      {@const share = chart.now.stars > 0 ? a.exsitu_msun / chart.now.stars : 0}
+      <section aria-label="Built from other galaxies" class="built" data-assembly>
+        <h4>Built from other galaxies</h4>
+        <p class="hint">What {a.members} smaller galaxies brought by {gyr(chart.now_gyr)}: {a.merged} merged into this one and {a.torn_apart} were torn apart on the way in.</p>
+        <div class="row" data-exsitu><span>Stars not born here</span><span class="v">{sci(a.exsitu_msun)} M☉{share > 0 ? ` · ${(share * 100).toFixed(share < 0.1 ? 1 : 0)}% of all stars` : ""}</span></div>
+        <div class="row" data-halo><span>Stellar halo (stars torn off passing galaxies)</span><span class="v" title="Stripped by tides as each satellite fell in, left as streams, shells or mixed remains (GH4)">{sci(a.stellar_halo_msun)} M☉</span></div>
+        {#if chart.now.z_gas > 0 && a.stellar_halo_z > 0}<div class="row"><span>Halo stars' metals, against the gas now</span><span class="v">{fewer(a.stellar_halo_z / chart.now.z_gas)}</span></div>{/if}
+        <div class="row"><span>Thick disc (stars heated by the collisions)</span><span class="v">{sci(a.thick_disc_msun)} M☉</span></div>
+        {#if a.biggest}<div class="row" data-biggest><span>Gave the most</span><span class="v" title={a.biggest}>{shortAddress(a.biggest)} · {(a.biggest_share * 100).toFixed(0)}% of the stars not born here</span></div>{/if}
+        {#if a.marks.length}
+          {@const kinds = markKinds(a.marks, chart.at_gyr)}
+          <details data-mark-list>
+            <summary>The marks collisions left: {a.marks.length} in all, {kinds.reduce((n, k) => n + k.live, 0)} still showing at {gyr(chart.at_gyr)}</summary>
+            <ul class="marks">
+              {#each kinds as k (k.kind)}
+                <li data-mark={k.kind} class:faded={!k.live}>{MARK_WORDS[k.kind] ?? k.kind.replace(/_/g, " ")}: {k.n} from {k.culprits} galax{k.culprits === 1 ? "y" : "ies"}, the first at {gyr(k.first)}; {k.live ? `${k.live} still showing, the strongest at ${k.strongest.toFixed(2)}` : chart.at_gyr < k.first ? "none made yet" : "all faded by this time"}.</li>
+              {/each}
+            </ul>
+          </details>
+        {/if}
+      </section>
+    {/if}
+
     <section aria-label="Ink history" class="ink" data-ink>
       <h4>Ink history</h4>
       <p class="hint">Rewrite this galaxy's past: each edit acts from its own time on, so what came before is untouched. A preview kept in this browser; nothing is sent to players.</p>
@@ -335,6 +404,13 @@
 </div>
 
 <style>
+  .frame3d {
+    width: 100%;
+    height: min(62vh, 640px);
+  }
+  .built .marks { margin: 4px 0 0; padding-left: 18px; }
+  .built .marks li.faded { color: var(--sse-ink-muted); }
+  .built summary { cursor: pointer; }
   .stamp.authored {
     border-style: dashed;
   }

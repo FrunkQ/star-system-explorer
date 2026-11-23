@@ -40,6 +40,15 @@ try {
     const ink = () => gm.evaluate(() => { const c = document.querySelector("[data-sky]"); const d = c.getContext("2d").getImageData(0, 0, c.width, c.height).data; let n = 0; for (let i = 0; i < d.length; i += 4) if (Math.abs(d[i] - d[0]) > 40) n++; return n; });
     assert.ok((await ink()) > 50, "the star is drawn");
     await shot(gm, "v8-window");
+    // HUD off (one set of controls, Alex 23 Nov): the lights alone, without the ecliptic or names; on brings them back.
+    const withHud = await ink();
+    await gm.getByRole("group", { name: "HUD" }).getByRole("button", { name: "Off", exact: true }).click();
+    await gm.waitForSelector("[data-sky][data-hud=off]");
+    await gm.waitForTimeout(150);
+    const bare = await ink();
+    assert.ok(bare > 50 && bare < withHud, `HUD off draws less (${bare} of ${withHud})`);
+    await gm.getByRole("group", { name: "HUD" }).getByRole("button", { name: "On", exact: true }).click();
+    await gm.waitForSelector("[data-sky][data-hud=on]");
 
     // The telescope at the biggest world it lists: a lit disc.
     await win.locator("[data-sensor=telescope]").click();
@@ -98,7 +107,7 @@ try {
       await sb.locator("[data-sky-canvas]").click({ position: { x: spot[0] * box.width, y: spot[1] * box.height } });
       await gm.waitForSelector("[data-sky-picked]", { timeout: 5000 });
       assert.match(await sb.locator("[data-sky-picked]").innerText(), /^Picked: a star of magnitude/);
-      await sb.getByRole("button", { name: "Near infrared" }).click();
+      await gm.getByRole("group", { name: "Band" }).getByRole("button", { name: "Infrared" }).click();
       await gm.waitForSelector("[data-sky-beyond=on][data-sky-band=Ks]", { timeout: 5000 });
       await gm.waitForFunction(() => /shown in Ks; brightest in Ks:/.test(document.querySelector("[data-sky-words]")?.textContent ?? ""), null, { timeout: 5000 });
       await shot(gm, "y5-sky-infrared");

@@ -53,7 +53,7 @@ pub const DEPOSITS: [&str; 7] = [
     "ice-shadowed",
 ];
 
-const R_GAS: f64 = 8.314462618;
+const R_GAS: f64 = sse_core::sheet::R_GAS;
 
 // ---------------------------------------------------------------- settings
 
@@ -575,7 +575,7 @@ fn angle(a: [f64; 3], b: [f64; 3]) -> f64 {
 /// Boiling point of water at a pressure, K (Clausius-Clapeyron from 373.15 K at 1 atm).
 pub fn water_boils_k(p_bar: f64) -> f64 {
     let l = 40.65e3;
-    1.0 / (1.0 / 373.15 - R_GAS / l * m::ln(p_bar.max(1e-12) / 1.01325))
+    1.0 / (1.0 / 373.15 - R_GAS / l * m::ln(p_bar.max(1e-12) * 1e5 / sse_core::sheet::ATM))
 }
 
 /// Build S7's layers for an atlas. The atlas supplies heights, liquid and
@@ -737,7 +737,7 @@ pub fn layers(
             }
         }
     }
-    let max_relief_m = s.impacts.volcanism.shield_height_m * (9.81 / g);
+    let max_relief_m = s.impacts.volcanism.shield_height_m * (sse_core::sheet::G0 / g);
     let mut ly = Layers {
         address: env.address.to_string(),
         epoch_myr: epoch,
@@ -1019,7 +1019,7 @@ fn reshape(
             let hydrocarbon = ly.climate.liquid.as_deref() == Some("hydrocarbon");
             let cover = if hydrocarbon {
                 3
-            } else if p * 1e5 < 611.657 {
+            } else if p * 1e5 < sse_core::sheet::triple_point_pa::H2O {
                 impossible = Some(format!(
                     "liquid water boils away below 611 Pa; the air here is {:.0} Pa",
                     p * 1e5

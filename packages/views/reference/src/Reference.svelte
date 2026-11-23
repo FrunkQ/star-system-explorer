@@ -7,20 +7,22 @@
 -->
 <script lang="ts">
   import { tick, untrack } from "svelte";
-  import { dimensionless, formatUnit, formatValue, measureWords, readConstantsPage, readRow, readSource, rowNote, showReference, siUnits, sourceName, unitFactor, type ConstantRow, type ConstantsPage, type Json, type RowDetail, type SheetSource, type SystemScene, type UnitRow, type ViewContext } from "../../../ui-contract/src/index.ts";
+  import { findInSheet, readElementsPage, type ElementRow, type RefHit, dimensionless, formatUnit, formatValue, measureWords, readConstantsPage, readRow, readSource, rowNote, showReference, siUnits, sourceName, unitFactor, type ConstantRow, type ConstantsPage, type Json, type RowDetail, type SheetSource, type SystemScene, type UnitRow, type ViewContext } from "../../../ui-contract/src/index.ts";
   import { Stamp } from "../../../chart-grammar/src/index.ts";
   import Elements from "./Elements.svelte";
+  import Names from "./Names.svelte";
 
   let { ctx, params }: { ctx: ViewContext; scene: SystemScene; params: Record<string, Json> } = $props();
   const depth = $derived(ctx.workspace.depth ?? "science");
   const full = $derived(depth !== "curious");
 
-  type PageId = "constants" | "elements" | "units";
+  type PageId = "constants" | "elements" | "units" | "names";
   const PAGES: { group: string; pages: { id: PageId; label: string }[] }[] = [
     { group: "Nature", pages: [{ id: "constants", label: "Constants" }, { id: "elements", label: "Elements" }] },
+    { group: "Names and classes", pages: [{ id: "names", label: "Names" }] },
     { group: "This setting", pages: [{ id: "units", label: "Units" }] },
   ];
-  let page = $state<PageId>(untrack(() => (params.page === "units" || params.page === "elements" ? params.page : "constants")));
+  let page = $state<PageId>(untrack(() => (params.page === "units" || params.page === "elements" || params.page === "names" ? params.page : "constants")));
 
   let sheet = $state.raw<ConstantsPage | null>(null);
   let failed = $state<string | null>(null);
@@ -77,6 +79,35 @@
     opener?.focus();
   }
   const sentence = (s: string) => (s ? s[0]!.toUpperCase() + s.slice(1) : s);
+
+  // Find: one box for an element, a constant or a unit, so looking one up is a word, not three presses. On a desk
+  // with a mouse it takes the typing straight away; on a touch screen it waits to be pressed (no keyboard pops up).
+  let query = $state("");
+  let elements = $state.raw<ElementRow[]>([]);
+  $effect(() => {
+    const s = ctx.session;
+    untrack(() => void readElementsPage(s).then((r) => r.ok && (elements = r.page.elements)));
+  });
+  const hits = $derived(findInSheet(query, { elements, constants: sheet?.rows ?? [], units: sheet?.units ?? [] }));
+  let pick = $state<string | null>(null);
+  let findBox: HTMLInputElement | null = $state(null);
+  $effect(() => {
+    if (findBox && matchMedia("(pointer: fine)").matches) untrack(() => findBox?.focus({ preventScroll: true }));
+  });
+  function go(h: RefHit) {
+    query = "";
+    if (h.table === "elements") {
+      open = null;
+      page = "elements";
+      pick = null;
+      void tick().then(() => (pick = h.id));
+      return;
+    }
+    const row = h.table === "constants" ? sheet?.rows.find((r) => r.id === h.id) : sheet?.units.find((u) => u.id === h.id);
+    if (!row || !findBox) return;
+    page = h.table;
+    void show(h.table === "constants" ? { table: "constants", row: row as ConstantRow } : { table: "units", row: row as UnitRow }, findBox);
+  }
 </script>
 
 <!-- Escape closes the card first, wherever focus is; only with no card open does it reach the shell (which goes up a step). -->
@@ -97,7 +128,31 @@
   <header>
     <div class="title">
       <h1>Reference</h1>
-      <p class="lede">{page === "units" ? "How this setting counts and shows things. Nothing here changes the physics." : "What nature gives the simulation. Real unless marked."}</p>
+      <p class="lede">{page === "units" ? "How this setting counts and shows things. Nothing here changes the physics." : page === "names" ? "What this campaign calls things. Names never change the physics." : "What nature gives the simulation. Real unless marked."}</p>
+    </div>
+    <div class="find" role="search">
+      <input
+        type="search"
+        bind:this={findBox}
+        bind:value={query}
+        placeholder="Find an element, constant or unit"
+        aria-label="Find in Look up"
+        data-ref-find
+        autocomplete="off"
+        onkeydown={(e) => {
+          if (e.key === "Enter" && hits[0]) (e.preventDefault(), go(hits[0]));
+          if (e.key === "Escape" && query) (e.stopPropagation(), (query = ""));
+        }}
+      />
+      {#if query.trim()}
+        <ul class="hits" aria-label="Found">
+          {#each hits as h (h.table + h.id)}
+            <li><button type="button" data-ref-hit={`${h.table}:${h.id}`} onclick={() => go(h)}>{h.label} <small>{h.hint}</small></button></li>
+          {:else}
+            <li class="none">Nothing in the sheet is called that.</li>
+          {/each}
+        </ul>
+      {/if}
     </div>
     <nav class="pages" aria-label="Reference pages">
       {#each PAGES as g (g.group)}
@@ -110,7 +165,9 @@
   </header>
 
   {#if page === "elements"}
-    <div class="body"><Elements session={ctx.session} {depth} /></div>
+    <div class="body"><Elements session={ctx.session} {depth} {pick} /></div>
+  {:else if page === "names"}
+    <div class="body"><Names session={ctx.session} workspace={ctx.workspace} {depth} offer={typeof params.names_offer === "string" ? params.names_offer : ""} /></div>
   {:else if failed}
     <p class="note" data-reference-error>Could not read the data sheet: {failed}</p>
   {:else if !sheet}
@@ -265,6 +322,55 @@
   .about,
   .muted {
     margin: 2px 0 0;
+    color: var(--sse-ink-muted);
+  }
+  .find {
+    position: relative;
+    margin: 10px 0 4px;
+    max-width: 420px;
+  }
+  .find input {
+    box-sizing: border-box;
+    width: 100%;
+    height: 36px;
+    padding: 0 10px;
+    border: var(--sse-line) solid var(--sse-ink-muted);
+    background: var(--sse-ground);
+    color: var(--sse-ink);
+    font: inherit;
+  }
+  .hits {
+    position: absolute;
+    z-index: 5;
+    left: 0;
+    right: 0;
+    margin: 2px 0 0;
+    padding: 4px 0;
+    list-style: none;
+    background: var(--sse-ground-raised);
+    border: var(--sse-line) solid var(--sse-ink);
+    box-shadow: var(--sse-card-shadow);
+  }
+  .hits button {
+    display: block;
+    width: 100%;
+    padding: 6px 10px;
+    border: none;
+    background: none;
+    color: var(--sse-ink);
+    font: inherit;
+    text-align: left;
+    cursor: pointer;
+  }
+  .hits button:hover,
+  .hits li:first-child button {
+    background: var(--sse-zone);
+  }
+  .hits small {
+    color: var(--sse-ink-muted);
+  }
+  .hits .none {
+    padding: 6px 10px;
     color: var(--sse-ink-muted);
   }
   .pages {

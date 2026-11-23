@@ -215,7 +215,7 @@ fn first_overflow(fits: &Fits, life: &LifeLine, limit: f64) -> Option<f64> {
     Some(hi)
 }
 
-const AU_IN_RSUN: f64 = 215.032;
+const AU_IN_RSUN: f64 = sse_core::sheet::AU / sse_core::sheet::R_SUN;
 /// Metal range of the Hurley fits.
 pub const Z_FITS: (f64, f64) = (1.0e-4, 0.03);
 

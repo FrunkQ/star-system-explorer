@@ -395,6 +395,18 @@
      }
     },
     {
+     "id": "P_rot_sun",
+     "name": "solar sidereal rotation period (Carrington)",
+     "group": "nature",
+     "value": {
+      "v": 2192832.0,
+      "unit": "s",
+      "src": "nssdca-sun",
+      "check": "unverified",
+      "note": "25.38 days; the surface turns faster at the equator and slower near the poles"
+     }
+    },
+    {
      "id": "S_sun",
      "name": "nominal total solar irradiance",
      "group": "convention",
@@ -511,6 +523,61 @@
       "v": 69911000.0,
       "unit": "m",
       "src": "nssdca-jupiter"
+     }
+    },
+    {
+     "id": "omega_earth",
+     "name": "Earth's angular velocity (sidereal rotation)",
+     "group": "nature",
+     "value": {
+      "v": 7.292115e-05,
+      "unit": "rad s-1",
+      "src": "moritz2000"
+     }
+    },
+    {
+     "id": "V_ocean_earth",
+     "name": "volume of Earth's ocean",
+     "group": "nature",
+     "value": {
+      "v": 1.335e+18,
+      "unit": "m3",
+      "src": "eakins2010",
+      "check": "unverified"
+     }
+    },
+    {
+     "id": "depth_ocean_earth",
+     "name": "mean depth of Earth's ocean",
+     "group": "nature",
+     "value": {
+      "v": 3688.0,
+      "unit": "m",
+      "src": "eakins2010",
+      "check": "unverified"
+     }
+    },
+    {
+     "id": "M_ocean_earth",
+     "name": "mass of Earth's ocean",
+     "group": "nature",
+     "value": {
+      "v": 1.4e+21,
+      "unit": "kg",
+      "src": "eakins2010",
+      "check": "unverified",
+      "note": "1.335e18 m3 at about 1030 kg/m3, to two figures"
+     }
+    },
+    {
+     "id": "M_ch",
+     "name": "Chandrasekhar mass",
+     "group": "nature",
+     "value": {
+      "v": 1.44,
+      "unit": "M_sun",
+      "src": "chandrasekhar1931",
+      "check": "textbook"
      }
     },
     {
@@ -1097,6 +1164,17 @@
      "factor_from": "M_jup"
     },
     {
+     "id": "h",
+     "symbol": "h",
+     "name": "hour",
+     "measures": "time",
+     "group": "working",
+     "factor": {
+      "v": 3600.0,
+      "src": "si2019"
+     }
+    },
+    {
      "id": "day",
      "symbol": "d",
      "name": "day",
@@ -1375,6 +1453,28 @@
       "physics": "Hydrogen nuclei are protons left over from the first minutes after the Big Bang, when the universe cooled too fast to fuse most of them. Stars have been burning it ever since, so the Sun's share is slightly less than the primordial one.",
       "plain": "Almost every hydrogen atom was made in the Big Bang, 13.8 billion years ago. It is the oldest thing you will ever touch.",
       "story": "Every drop of water holds atoms that are as old as time itself, left over from the first minutes of the universe."
+     },
+     "condensation": {
+      "host_phase": "H2O ice",
+      "rides_in": "gas",
+      "src": "lodders2003",
+      "check": "unverified",
+      "note": "no 50% condensation temperature: stays in the gas"
+     },
+     "ci_mass_fraction": {
+      "v": 0.0197,
+      "unit": "1",
+      "src": "palme-oneill2014",
+      "check": "unverified",
+      "note": "CI chondrite by mass; from Palme and O'Neill 2014 (pyrolite 0.3.9 CH_PalmeONeill2014.csv, one copy); neither copy of McDonough and Sun 1995 carries it"
+     },
+     "earth_mass_fraction": {
+      "core": {
+       "v": 0.0006,
+       "unit": "1",
+       "src": "mcdonough2003",
+       "check": "unverified"
+      }
      }
     },
     {
@@ -1410,6 +1510,13 @@
       "physics": "About nine tenths of the Sun's helium is primordial (Big Bang nucleosynthesis set a helium mass fraction near 0.247); the rest was fused in stars of earlier generations and returned to the gas.",
       "plain": "Most helium was made in the Big Bang. The rest was made in older stars, which turn hydrogen into helium as they shine.",
       "story": "Most of it is as old as the universe; a little was forged inside stars that lived and died before the Sun was born."
+     },
+     "condensation": {
+      "host_phase": "He ice",
+      "rides_in": "gas",
+      "src": "lodders2003",
+      "check": "unverified",
+      "note": "no 50% condensation temperature: stays in the gas"
      }
     },
     {
@@ -1447,6 +1554,43 @@
       "physics": "Lithium has three sources: Big Bang nucleosynthesis, cosmic-ray spallation and stars (giants and novae). The Big Bang should have made about three times more lithium than the oldest stars show; this cosmological lithium problem is unsolved.",
       "plain": "Some lithium was made in the Big Bang, some by cosmic rays, and most by stars. Oddly, old stars have less lithium than the Big Bang should have made, a puzzle nobody has solved.",
       "story": "The lightest metal carries an unsolved mystery: the oldest stars have less of it than the birth of the universe should have left."
+     },
+     "condensation": {
+      "host_phase": "Forsterite + enstatite",
+      "rides_in": "formation-rock",
+      "src": "lodders2003",
+      "check": "unverified",
+      "tc50_k": {
+       "v": 1142.0,
+       "unit": "K",
+       "src": "lodders2003",
+       "check": "unverified",
+       "at_pa": 10.0,
+       "note": "50% condensed from a gas of solar make-up at 1e-4 bar (Table 8)"
+      }
+     },
+     "ci_mass_fraction": {
+      "v": 1.5e-06,
+      "unit": "1",
+      "src": "mcdonough-sun1995",
+      "check": "unverified",
+      "note": "CI chondrite by mass; two reproductions agree (pyrolite 0.3.9 CH_McDonoughSun1995.csv; georefdatar CI_Pyrolite__McDonough_Sun__1995__full.csv)"
+     },
+     "earth_mass_fraction": {
+      "silicate": {
+       "v": 1.6e-06,
+       "unit": "1",
+       "src": "mcdonough-sun1995",
+       "check": "unverified",
+       "note": "primitive mantle (pyrolite)"
+      },
+      "crust": {
+       "v": 1.6e-05,
+       "unit": "1",
+       "src": "rudnick-gao2003",
+       "check": "unverified",
+       "note": "bulk continental crust"
+      }
      }
     },
     {
@@ -1478,6 +1622,43 @@
       "physics": "Beryllium is made by cosmic-ray spallation: fast protons and alpha particles break carbon, nitrogen and oxygen nuclei in the interstellar gas.",
       "plain": "Beryllium is made when cosmic rays smash into heavier atoms in space and break them apart.",
       "story": "It is made by collisions in the empty space between stars, never inside them: stars destroy it."
+     },
+     "condensation": {
+      "host_phase": "Melilite",
+      "rides_in": "formation-rock",
+      "src": "lodders2003",
+      "check": "unverified",
+      "tc50_k": {
+       "v": 1452.0,
+       "unit": "K",
+       "src": "lodders2003",
+       "check": "unverified",
+       "at_pa": 10.0,
+       "note": "50% condensed from a gas of solar make-up at 1e-4 bar (Table 8)"
+      }
+     },
+     "ci_mass_fraction": {
+      "v": 2.5e-08,
+      "unit": "1",
+      "src": "mcdonough-sun1995",
+      "check": "unverified",
+      "note": "CI chondrite by mass; two reproductions agree (pyrolite 0.3.9 CH_McDonoughSun1995.csv; georefdatar CI_Pyrolite__McDonough_Sun__1995__full.csv)"
+     },
+     "earth_mass_fraction": {
+      "silicate": {
+       "v": 6.8e-08,
+       "unit": "1",
+       "src": "mcdonough-sun1995",
+       "check": "unverified",
+       "note": "primitive mantle (pyrolite)"
+      },
+      "crust": {
+       "v": 1.9e-06,
+       "unit": "1",
+       "src": "rudnick-gao2003",
+       "check": "unverified",
+       "note": "bulk continental crust"
+      }
      }
     },
     {
@@ -1512,6 +1693,43 @@
       "physics": "The Sun's boron: 80% from cosmic-ray spallation and 20% from massive stars and their core-collapse supernovae.",
       "plain": "Most of the boron was made by cosmic rays breaking heavier atoms; the rest came from exploding massive stars.",
       "story": "Its atoms were made by fast particles shattering atoms in the space between the stars, with a share from exploding massive stars."
+     },
+     "condensation": {
+      "host_phase": "Feldspar",
+      "rides_in": "formation-rock",
+      "src": "lodders2003",
+      "check": "unverified",
+      "tc50_k": {
+       "v": 908.0,
+       "unit": "K",
+       "src": "lodders2003",
+       "check": "unverified",
+       "at_pa": 10.0,
+       "note": "50% condensed from a gas of solar make-up at 1e-4 bar (Table 8)"
+      }
+     },
+     "ci_mass_fraction": {
+      "v": 9e-07,
+      "unit": "1",
+      "src": "mcdonough-sun1995",
+      "check": "unverified",
+      "note": "CI chondrite by mass; two reproductions agree (pyrolite 0.3.9 CH_McDonoughSun1995.csv; georefdatar CI_Pyrolite__McDonough_Sun__1995__full.csv)"
+     },
+     "earth_mass_fraction": {
+      "silicate": {
+       "v": 3e-07,
+       "unit": "1",
+       "src": "mcdonough-sun1995",
+       "check": "unverified",
+       "note": "primitive mantle (pyrolite)"
+      },
+      "crust": {
+       "v": 1.1e-05,
+       "unit": "1",
+       "src": "rudnick-gao2003",
+       "check": "unverified",
+       "note": "bulk continental crust"
+      }
      }
     },
     {
@@ -1547,6 +1765,43 @@
       "physics": "Carbon comes from helium burning (the triple-alpha reaction). About half of it was returned by asymptotic-giant-branch stars, the other half by the winds and supernovae of massive stars.",
       "plain": "Carbon is made when stars fuse helium. About half came from dying low-mass stars puffing it out, and half from massive stars.",
       "story": "The carbon in every living thing was cooked from helium inside old stars and breathed out into space as they died."
+     },
+     "condensation": {
+      "host_phase": "CH4·7H2O + CH4 ice",
+      "rides_in": "formation-carbon",
+      "src": "lodders2003",
+      "check": "unverified",
+      "tc50_k": {
+       "v": 40.0,
+       "unit": "K",
+       "src": "lodders2003",
+       "check": "unverified",
+       "at_pa": 10.0,
+       "note": "50% condensed from a gas of solar make-up at 1e-4 bar (Table 8)"
+      },
+      "note": "equilibrium condensation puts carbon in methane ice below 40 K; chondrites carry it as organics, formation's carbon group"
+     },
+     "ci_mass_fraction": {
+      "v": 0.035,
+      "unit": "1",
+      "src": "mcdonough-sun1995",
+      "check": "unverified",
+      "note": "CI chondrite by mass; two reproductions agree (pyrolite 0.3.9 CH_McDonoughSun1995.csv; georefdatar CI_Pyrolite__McDonough_Sun__1995__full.csv)"
+     },
+     "earth_mass_fraction": {
+      "core": {
+       "v": 0.002,
+       "unit": "1",
+       "src": "mcdonough2003",
+       "check": "unverified"
+      },
+      "silicate": {
+       "v": 0.00012,
+       "unit": "1",
+       "src": "mcdonough-sun1995",
+       "check": "unverified",
+       "note": "primitive mantle (pyrolite)"
+      }
      }
     },
     {
@@ -1582,6 +1837,49 @@
       "physics": "The Sun's nitrogen: 50% from asymptotic giant branch stars (the s-process and hot-bottom burning) and 50% from massive stars and their core-collapse supernovae.",
       "plain": "About half of the nitrogen was made by dying low-mass stars; the rest came from exploding massive stars.",
       "story": "Its atoms were made by old, swollen giant stars, the kind the Sun will one day become, puffing their outer layers away, with a share from exploding massive stars."
+     },
+     "condensation": {
+      "host_phase": "NH3·H2O",
+      "rides_in": "formation-water",
+      "src": "lodders2003",
+      "check": "unverified",
+      "tc50_k": {
+       "v": 123.0,
+       "unit": "K",
+       "src": "lodders2003",
+       "check": "unverified",
+       "at_pa": 10.0,
+       "note": "50% condensed from a gas of solar make-up at 1e-4 bar (Table 8)"
+      }
+     },
+     "ci_mass_fraction": {
+      "v": 0.00318,
+      "unit": "1",
+      "src": "mcdonough-sun1995",
+      "check": "unverified",
+      "note": "CI chondrite by mass; reproductions differ by 1000 (pyrolite 3.18 ppm, georefdatar 3180 ppm); 3180 ppm kept: CI chondrites hold about 0.3% nitrogen"
+     },
+     "earth_mass_fraction": {
+      "core": {
+       "v": 7.5e-05,
+       "unit": "1",
+       "src": "mcdonough2003",
+       "check": "unverified"
+      },
+      "silicate": {
+       "v": 2e-06,
+       "unit": "1",
+       "src": "mcdonough-sun1995",
+       "check": "unverified",
+       "note": "primitive mantle (pyrolite)"
+      },
+      "crust": {
+       "v": 5.6e-05,
+       "unit": "1",
+       "src": "rudnick-gao2003",
+       "check": "unverified",
+       "note": "bulk continental crust"
+      }
      }
     },
     {
@@ -1616,6 +1914,27 @@
       "physics": "Oxygen is made by helium and carbon burning in massive stars and is thrown out when they explode as core-collapse supernovae. It is the third most common element in the cosmos.",
       "plain": "Nearly all oxygen was made inside massive stars and blown out when they exploded.",
       "story": "Every breath is the ash of giant stars that exploded long before the Sun formed."
+     },
+     "condensation": {
+      "host_phase": "rock + water ice",
+      "rides_in": "formation-rock",
+      "src": "lodders2003",
+      "check": "unverified",
+      "tc50_k": {
+       "v": 180.0,
+       "unit": "K",
+       "src": "lodders2003",
+       "check": "unverified",
+       "at_pa": 10.0,
+       "note": "50% condensed from a gas of solar make-up at 1e-4 bar (Table 8)"
+      }
+     },
+     "ci_mass_fraction": {
+      "v": 0.459,
+      "unit": "1",
+      "src": "palme-oneill2014",
+      "check": "unverified",
+      "note": "CI chondrite by mass; from Palme and O'Neill 2014 (pyrolite 0.3.9 CH_PalmeONeill2014.csv, one copy); neither copy of McDonough and Sun 1995 carries it"
      }
     },
     {
@@ -1653,6 +1972,43 @@
       "physics": "The Sun's fluorine: 50% from asymptotic giant branch stars (the s-process and hot-bottom burning) and 50% from massive stars and their core-collapse supernovae. Argued: fluorine's sources (giant stars, massive stars' winds, neutrinos in supernovae) are argued.",
       "plain": "About half of the fluorine was made by dying low-mass stars; the rest came from exploding massive stars. Scientists still argue about part of this.",
       "story": "Its atoms were made by old, swollen giant stars, the kind the Sun will one day become, puffing their outer layers away, with a share from exploding massive stars."
+     },
+     "condensation": {
+      "host_phase": "F apatite",
+      "rides_in": "formation-rock",
+      "src": "lodders2003",
+      "check": "unverified",
+      "tc50_k": {
+       "v": 734.0,
+       "unit": "K",
+       "src": "lodders2003",
+       "check": "unverified",
+       "at_pa": 10.0,
+       "note": "50% condensed from a gas of solar make-up at 1e-4 bar (Table 8)"
+      }
+     },
+     "ci_mass_fraction": {
+      "v": 6e-05,
+      "unit": "1",
+      "src": "mcdonough-sun1995",
+      "check": "unverified",
+      "note": "CI chondrite by mass; two reproductions agree (pyrolite 0.3.9 CH_McDonoughSun1995.csv; georefdatar CI_Pyrolite__McDonough_Sun__1995__full.csv)"
+     },
+     "earth_mass_fraction": {
+      "silicate": {
+       "v": 2.5e-05,
+       "unit": "1",
+       "src": "mcdonough-sun1995",
+       "check": "unverified",
+       "note": "primitive mantle (pyrolite)"
+      },
+      "crust": {
+       "v": 0.000553,
+       "unit": "1",
+       "src": "rudnick-gao2003",
+       "check": "unverified",
+       "note": "bulk continental crust"
+      }
      }
     },
     {
@@ -1686,6 +2042,21 @@
       "physics": "The Sun's neon: 100% from massive stars and their core-collapse supernovae.",
       "plain": "Almost all of the neon was made by exploding massive stars.",
       "story": "Its atoms were made by giant stars that burned out in a few million years and blew themselves apart."
+     },
+     "condensation": {
+      "host_phase": "Ne ice",
+      "rides_in": "gas",
+      "src": "lodders2003",
+      "check": "unverified",
+      "tc50_k": {
+       "v": 9.1,
+       "unit": "K",
+       "src": "lodders2003",
+       "check": "unverified",
+       "at_pa": 10.0,
+       "note": "50% condensed from a gas of solar make-up at 1e-4 bar (Table 8)"
+      },
+      "note": "condenses only below any disc's temperature"
      }
     },
     {
@@ -1720,6 +2091,44 @@
       "physics": "The Sun's sodium: 90% from massive stars and their core-collapse supernovae and 10% from asymptotic giant branch stars (the s-process and hot-bottom burning).",
       "plain": "Most of the sodium was made by exploding massive stars; the rest came from dying low-mass stars.",
       "story": "Its atoms were made by giant stars that burned out in a few million years and blew themselves apart, with a share from dying low-mass stars."
+     },
+     "condensation": {
+      "host_phase": "Feldspar",
+      "rides_in": "formation-rock",
+      "src": "lodders2003",
+      "check": "unverified",
+      "tc50_k": {
+       "v": 958.0,
+       "unit": "K",
+       "src": "lodders2003",
+       "check": "unverified",
+       "at_pa": 10.0,
+       "note": "50% condensed from a gas of solar make-up at 1e-4 bar (Table 8)"
+      },
+      "oxide": "na2o"
+     },
+     "ci_mass_fraction": {
+      "v": 0.0051,
+      "unit": "1",
+      "src": "mcdonough-sun1995",
+      "check": "unverified",
+      "note": "CI chondrite by mass; two reproductions agree (pyrolite 0.3.9 CH_McDonoughSun1995.csv; georefdatar CI_Pyrolite__McDonough_Sun__1995__full.csv)"
+     },
+     "earth_mass_fraction": {
+      "silicate": {
+       "v": 0.00267,
+       "unit": "1",
+       "src": "mcdonough-sun1995",
+       "check": "unverified",
+       "note": "primitive mantle (pyrolite)"
+      },
+      "crust": {
+       "v": 0.022998,
+       "unit": "1",
+       "src": "rudnick-gao2003",
+       "check": "unverified",
+       "note": "bulk continental crust"
+      }
      }
     },
     {
@@ -1755,6 +2164,44 @@
       "physics": "The Sun's magnesium: 95% from massive stars and their core-collapse supernovae and 5% from Type Ia supernovae.",
       "plain": "Almost all of the magnesium was made by exploding massive stars; the rest came from exploding white dwarfs.",
       "story": "Its atoms were made by giant stars that burned out in a few million years and blew themselves apart, with a share from exploding white dwarfs."
+     },
+     "condensation": {
+      "host_phase": "Forsterite",
+      "rides_in": "formation-rock",
+      "src": "lodders2003",
+      "check": "unverified",
+      "tc50_k": {
+       "v": 1336.0,
+       "unit": "K",
+       "src": "lodders2003",
+       "check": "unverified",
+       "at_pa": 10.0,
+       "note": "50% condensed from a gas of solar make-up at 1e-4 bar (Table 8)"
+      },
+      "oxide": "mgo"
+     },
+     "ci_mass_fraction": {
+      "v": 0.0965,
+      "unit": "1",
+      "src": "mcdonough-sun1995",
+      "check": "unverified",
+      "note": "CI chondrite by mass; two reproductions agree (pyrolite 0.3.9 CH_McDonoughSun1995.csv; georefdatar CI_Pyrolite__McDonough_Sun__1995__full.csv)"
+     },
+     "earth_mass_fraction": {
+      "silicate": {
+       "v": 0.228,
+       "unit": "1",
+       "src": "mcdonough-sun1995",
+       "check": "unverified",
+       "note": "primitive mantle (pyrolite)"
+      },
+      "crust": {
+       "v": 0.028343,
+       "unit": "1",
+       "src": "rudnick-gao2003",
+       "check": "unverified",
+       "note": "bulk continental crust"
+      }
      }
     },
     {
@@ -1788,6 +2235,44 @@
       "physics": "The Sun's aluminium: 100% from massive stars and their core-collapse supernovae.",
       "plain": "Almost all of the aluminium was made by exploding massive stars.",
       "story": "Its atoms were made by giant stars that burned out in a few million years and blew themselves apart."
+     },
+     "condensation": {
+      "host_phase": "Hibonite",
+      "rides_in": "formation-rock",
+      "src": "lodders2003",
+      "check": "unverified",
+      "tc50_k": {
+       "v": 1653.0,
+       "unit": "K",
+       "src": "lodders2003",
+       "check": "unverified",
+       "at_pa": 10.0,
+       "note": "50% condensed from a gas of solar make-up at 1e-4 bar (Table 8)"
+      },
+      "oxide": "al2o3"
+     },
+     "ci_mass_fraction": {
+      "v": 0.0086,
+      "unit": "1",
+      "src": "mcdonough-sun1995",
+      "check": "unverified",
+      "note": "CI chondrite by mass; two reproductions agree (pyrolite 0.3.9 CH_McDonoughSun1995.csv; georefdatar CI_Pyrolite__McDonough_Sun__1995__full.csv)"
+     },
+     "earth_mass_fraction": {
+      "silicate": {
+       "v": 0.0235,
+       "unit": "1",
+       "src": "mcdonough-sun1995",
+       "check": "unverified",
+       "note": "primitive mantle (pyrolite)"
+      },
+      "crust": {
+       "v": 0.084153,
+       "unit": "1",
+       "src": "rudnick-gao2003",
+       "check": "unverified",
+       "note": "bulk continental crust"
+      }
      }
     },
     {
@@ -1823,6 +2308,50 @@
       "physics": "The Sun's silicon: 80% from massive stars and their core-collapse supernovae and 20% from Type Ia supernovae.",
       "plain": "Most of the silicon was made by exploding massive stars; the rest came from exploding white dwarfs.",
       "story": "Its atoms were made by giant stars that burned out in a few million years and blew themselves apart, with a share from exploding white dwarfs."
+     },
+     "condensation": {
+      "host_phase": "Forsterite + enstatite",
+      "rides_in": "formation-rock",
+      "src": "lodders2003",
+      "check": "unverified",
+      "tc50_k": {
+       "v": 1310.0,
+       "unit": "K",
+       "src": "lodders2003",
+       "check": "unverified",
+       "at_pa": 10.0,
+       "note": "50% condensed from a gas of solar make-up at 1e-4 bar (Table 8)"
+      },
+      "oxide": "sio2"
+     },
+     "ci_mass_fraction": {
+      "v": 0.1065,
+      "unit": "1",
+      "src": "mcdonough-sun1995",
+      "check": "unverified",
+      "note": "CI chondrite by mass; two reproductions agree (pyrolite 0.3.9 CH_McDonoughSun1995.csv; georefdatar CI_Pyrolite__McDonough_Sun__1995__full.csv)"
+     },
+     "earth_mass_fraction": {
+      "core": {
+       "v": 0.06,
+       "unit": "1",
+       "src": "mcdonough2003",
+       "check": "unverified"
+      },
+      "silicate": {
+       "v": 0.21,
+       "unit": "1",
+       "src": "mcdonough-sun1995",
+       "check": "unverified",
+       "note": "primitive mantle (pyrolite)"
+      },
+      "crust": {
+       "v": 0.283267,
+       "unit": "1",
+       "src": "rudnick-gao2003",
+       "check": "unverified",
+       "note": "bulk continental crust"
+      }
      }
     },
     {
@@ -1856,6 +2385,50 @@
       "physics": "The Sun's phosphorus: 100% from massive stars and their core-collapse supernovae.",
       "plain": "Almost all of the phosphorus was made by exploding massive stars.",
       "story": "Its atoms were made by giant stars that burned out in a few million years and blew themselves apart."
+     },
+     "condensation": {
+      "host_phase": "Schreibersite",
+      "rides_in": "formation-metal",
+      "src": "lodders2003",
+      "check": "unverified",
+      "tc50_k": {
+       "v": 1229.0,
+       "unit": "K",
+       "src": "lodders2003",
+       "check": "unverified",
+       "at_pa": 10.0,
+       "note": "50% condensed from a gas of solar make-up at 1e-4 bar (Table 8)"
+      },
+      "oxide": "p2o5"
+     },
+     "ci_mass_fraction": {
+      "v": 0.00108,
+      "unit": "1",
+      "src": "mcdonough-sun1995",
+      "check": "unverified",
+      "note": "CI chondrite by mass; reproductions differ by 1000 (pyrolite 1.08 ppm, georefdatar 1080 ppm); 1080 ppm kept: CI chondrites hold about 0.1% phosphorus"
+     },
+     "earth_mass_fraction": {
+      "core": {
+       "v": 0.002,
+       "unit": "1",
+       "src": "mcdonough2003",
+       "check": "unverified"
+      },
+      "silicate": {
+       "v": 9e-05,
+       "unit": "1",
+       "src": "mcdonough-sun1995",
+       "check": "unverified",
+       "note": "primitive mantle (pyrolite)"
+      },
+      "crust": {
+       "v": 0.000436,
+       "unit": "1",
+       "src": "rudnick-gao2003",
+       "check": "unverified",
+       "note": "bulk continental crust"
+      }
      }
     },
     {
@@ -1891,6 +2464,50 @@
       "physics": "The Sun's sulfur: 75% from massive stars and their core-collapse supernovae and 25% from Type Ia supernovae.",
       "plain": "Most of the sulfur was made by exploding massive stars; the rest came from exploding white dwarfs.",
       "story": "Its atoms were made by giant stars that burned out in a few million years and blew themselves apart, with a share from exploding white dwarfs."
+     },
+     "condensation": {
+      "host_phase": "Troilite",
+      "rides_in": "formation-metal",
+      "src": "lodders2003",
+      "check": "unverified",
+      "tc50_k": {
+       "v": 664.0,
+       "unit": "K",
+       "src": "lodders2003",
+       "check": "unverified",
+       "at_pa": 10.0,
+       "note": "50% condensed from a gas of solar make-up at 1e-4 bar (Table 8)"
+      },
+      "note": "in iron sulfide, which formation counts with the metal"
+     },
+     "ci_mass_fraction": {
+      "v": 0.054,
+      "unit": "1",
+      "src": "mcdonough-sun1995",
+      "check": "unverified",
+      "note": "CI chondrite by mass; two reproductions agree (pyrolite 0.3.9 CH_McDonoughSun1995.csv; georefdatar CI_Pyrolite__McDonough_Sun__1995__full.csv)"
+     },
+     "earth_mass_fraction": {
+      "core": {
+       "v": 0.019,
+       "unit": "1",
+       "src": "mcdonough2003",
+       "check": "unverified"
+      },
+      "silicate": {
+       "v": 0.00025,
+       "unit": "1",
+       "src": "mcdonough-sun1995",
+       "check": "unverified",
+       "note": "primitive mantle (pyrolite)"
+      },
+      "crust": {
+       "v": 0.000404,
+       "unit": "1",
+       "src": "rudnick-gao2003",
+       "check": "unverified",
+       "note": "bulk continental crust"
+      }
      }
     },
     {
@@ -1926,6 +2543,49 @@
       "physics": "The Sun's chlorine: 90% from massive stars and their core-collapse supernovae and 10% from Type Ia supernovae.",
       "plain": "Most of the chlorine was made by exploding massive stars; the rest came from exploding white dwarfs.",
       "story": "Its atoms were made by giant stars that burned out in a few million years and blew themselves apart, with a share from exploding white dwarfs."
+     },
+     "condensation": {
+      "host_phase": "Sodalite",
+      "rides_in": "formation-rock",
+      "src": "lodders2003",
+      "check": "unverified",
+      "tc50_k": {
+       "v": 948.0,
+       "unit": "K",
+       "src": "lodders2003",
+       "check": "unverified",
+       "at_pa": 10.0,
+       "note": "50% condensed from a gas of solar make-up at 1e-4 bar (Table 8)"
+      }
+     },
+     "ci_mass_fraction": {
+      "v": 0.00068,
+      "unit": "1",
+      "src": "mcdonough-sun1995",
+      "check": "unverified",
+      "note": "CI chondrite by mass; two reproductions agree (pyrolite 0.3.9 CH_McDonoughSun1995.csv; georefdatar CI_Pyrolite__McDonough_Sun__1995__full.csv)"
+     },
+     "earth_mass_fraction": {
+      "core": {
+       "v": 0.0002,
+       "unit": "1",
+       "src": "mcdonough2003",
+       "check": "unverified"
+      },
+      "silicate": {
+       "v": 1.7e-05,
+       "unit": "1",
+       "src": "mcdonough-sun1995",
+       "check": "unverified",
+       "note": "primitive mantle (pyrolite)"
+      },
+      "crust": {
+       "v": 0.000244,
+       "unit": "1",
+       "src": "rudnick-gao2003",
+       "check": "unverified",
+       "note": "bulk continental crust"
+      }
      }
     },
     {
@@ -1961,6 +2621,20 @@
       "physics": "The Sun's argon: 70% from massive stars and their core-collapse supernovae and 30% from Type Ia supernovae.",
       "plain": "Most of the argon was made by exploding massive stars; the rest came from exploding white dwarfs.",
       "story": "Its atoms were made by giant stars that burned out in a few million years and blew themselves apart, with a share from exploding white dwarfs."
+     },
+     "condensation": {
+      "host_phase": "Ar·6H2O",
+      "rides_in": "formation-water",
+      "src": "lodders2003",
+      "check": "unverified",
+      "tc50_k": {
+       "v": 47.0,
+       "unit": "K",
+       "src": "lodders2003",
+       "check": "unverified",
+       "at_pa": 10.0,
+       "note": "50% condensed from a gas of solar make-up at 1e-4 bar (Table 8)"
+      }
      }
     },
     {
@@ -1994,6 +2668,44 @@
       "physics": "The Sun's potassium: 100% from massive stars and their core-collapse supernovae.",
       "plain": "Almost all of the potassium was made by exploding massive stars.",
       "story": "Its atoms were made by giant stars that burned out in a few million years and blew themselves apart."
+     },
+     "condensation": {
+      "host_phase": "Feldspar",
+      "rides_in": "formation-rock",
+      "src": "lodders2003",
+      "check": "unverified",
+      "tc50_k": {
+       "v": 1006.0,
+       "unit": "K",
+       "src": "lodders2003",
+       "check": "unverified",
+       "at_pa": 10.0,
+       "note": "50% condensed from a gas of solar make-up at 1e-4 bar (Table 8)"
+      },
+      "oxide": "k2o"
+     },
+     "ci_mass_fraction": {
+      "v": 0.00055,
+      "unit": "1",
+      "src": "mcdonough-sun1995",
+      "check": "unverified",
+      "note": "CI chondrite by mass; two reproductions agree (pyrolite 0.3.9 CH_McDonoughSun1995.csv; georefdatar CI_Pyrolite__McDonough_Sun__1995__full.csv)"
+     },
+     "earth_mass_fraction": {
+      "silicate": {
+       "v": 0.00024,
+       "unit": "1",
+       "src": "mcdonough-sun1995",
+       "check": "unverified",
+       "note": "primitive mantle (pyrolite)"
+      },
+      "crust": {
+       "v": 0.014943,
+       "unit": "1",
+       "src": "rudnick-gao2003",
+       "check": "unverified",
+       "note": "bulk continental crust"
+      }
      }
     },
     {
@@ -2028,6 +2740,44 @@
       "physics": "The Sun's calcium: 70% from massive stars and their core-collapse supernovae and 30% from Type Ia supernovae.",
       "plain": "Most of the calcium was made by exploding massive stars; the rest came from exploding white dwarfs.",
       "story": "Its atoms were made by giant stars that burned out in a few million years and blew themselves apart, with a share from exploding white dwarfs."
+     },
+     "condensation": {
+      "host_phase": "Hibonite + gehlenite",
+      "rides_in": "formation-rock",
+      "src": "lodders2003",
+      "check": "unverified",
+      "tc50_k": {
+       "v": 1517.0,
+       "unit": "K",
+       "src": "lodders2003",
+       "check": "unverified",
+       "at_pa": 10.0,
+       "note": "50% condensed from a gas of solar make-up at 1e-4 bar (Table 8)"
+      },
+      "oxide": "cao"
+     },
+     "ci_mass_fraction": {
+      "v": 0.00925,
+      "unit": "1",
+      "src": "mcdonough-sun1995",
+      "check": "unverified",
+      "note": "CI chondrite by mass; two reproductions agree (pyrolite 0.3.9 CH_McDonoughSun1995.csv; georefdatar CI_Pyrolite__McDonough_Sun__1995__full.csv)"
+     },
+     "earth_mass_fraction": {
+      "silicate": {
+       "v": 0.0253,
+       "unit": "1",
+       "src": "mcdonough-sun1995",
+       "check": "unverified",
+       "note": "primitive mantle (pyrolite)"
+      },
+      "crust": {
+       "v": 0.045741,
+       "unit": "1",
+       "src": "rudnick-gao2003",
+       "check": "unverified",
+       "note": "bulk continental crust"
+      }
      }
     },
     {
@@ -2061,6 +2811,43 @@
       "physics": "The Sun's scandium: 100% from massive stars and their core-collapse supernovae.",
       "plain": "Almost all of the scandium was made by exploding massive stars.",
       "story": "Its atoms were made by giant stars that burned out in a few million years and blew themselves apart."
+     },
+     "condensation": {
+      "host_phase": "Hibonite",
+      "rides_in": "formation-rock",
+      "src": "lodders2003",
+      "check": "unverified",
+      "tc50_k": {
+       "v": 1659.0,
+       "unit": "K",
+       "src": "lodders2003",
+       "check": "unverified",
+       "at_pa": 10.0,
+       "note": "50% condensed from a gas of solar make-up at 1e-4 bar (Table 8)"
+      }
+     },
+     "ci_mass_fraction": {
+      "v": 5.92e-06,
+      "unit": "1",
+      "src": "mcdonough-sun1995",
+      "check": "unverified",
+      "note": "CI chondrite by mass; two reproductions agree (pyrolite 0.3.9 CH_McDonoughSun1995.csv; georefdatar CI_Pyrolite__McDonough_Sun__1995__full.csv)"
+     },
+     "earth_mass_fraction": {
+      "silicate": {
+       "v": 1.62e-05,
+       "unit": "1",
+       "src": "mcdonough-sun1995",
+       "check": "unverified",
+       "note": "primitive mantle (pyrolite)"
+      },
+      "crust": {
+       "v": 2.19e-05,
+       "unit": "1",
+       "src": "rudnick-gao2003",
+       "check": "unverified",
+       "note": "bulk continental crust"
+      }
      }
     },
     {
@@ -2096,6 +2883,44 @@
       "physics": "The Sun's titanium: 80% from massive stars and their core-collapse supernovae and 20% from Type Ia supernovae. Argued: models make too little titanium, so its sources are still argued.",
       "plain": "Most of the titanium was made by exploding massive stars; the rest came from exploding white dwarfs. Scientists still argue about part of this.",
       "story": "Its atoms were made by giant stars that burned out in a few million years and blew themselves apart, with a share from exploding white dwarfs."
+     },
+     "condensation": {
+      "host_phase": "Titanate",
+      "rides_in": "formation-rock",
+      "src": "lodders2003",
+      "check": "unverified",
+      "tc50_k": {
+       "v": 1582.0,
+       "unit": "K",
+       "src": "lodders2003",
+       "check": "unverified",
+       "at_pa": 10.0,
+       "note": "50% condensed from a gas of solar make-up at 1e-4 bar (Table 8)"
+      },
+      "oxide": "tio2"
+     },
+     "ci_mass_fraction": {
+      "v": 0.00044,
+      "unit": "1",
+      "src": "mcdonough-sun1995",
+      "check": "unverified",
+      "note": "CI chondrite by mass; two reproductions agree (pyrolite 0.3.9 CH_McDonoughSun1995.csv; georefdatar CI_Pyrolite__McDonough_Sun__1995__full.csv)"
+     },
+     "earth_mass_fraction": {
+      "silicate": {
+       "v": 0.001205,
+       "unit": "1",
+       "src": "mcdonough-sun1995",
+       "check": "unverified",
+       "note": "primitive mantle (pyrolite)"
+      },
+      "crust": {
+       "v": 0.004195,
+       "unit": "1",
+       "src": "rudnick-gao2003",
+       "check": "unverified",
+       "note": "bulk continental crust"
+      }
      }
     },
     {
@@ -2130,6 +2955,49 @@
       "physics": "The Sun's vanadium: 50% from massive stars and their core-collapse supernovae and 50% from Type Ia supernovae.",
       "plain": "About half of the vanadium was made by exploding massive stars; the rest came from exploding white dwarfs.",
       "story": "Its atoms were made by giant stars that burned out in a few million years and blew themselves apart, with a share from exploding white dwarfs."
+     },
+     "condensation": {
+      "host_phase": "Titanate",
+      "rides_in": "formation-rock",
+      "src": "lodders2003",
+      "check": "unverified",
+      "tc50_k": {
+       "v": 1429.0,
+       "unit": "K",
+       "src": "lodders2003",
+       "check": "unverified",
+       "at_pa": 10.0,
+       "note": "50% condensed from a gas of solar make-up at 1e-4 bar (Table 8)"
+      }
+     },
+     "ci_mass_fraction": {
+      "v": 5.6e-05,
+      "unit": "1",
+      "src": "mcdonough-sun1995",
+      "check": "unverified",
+      "note": "CI chondrite by mass; two reproductions agree (pyrolite 0.3.9 CH_McDonoughSun1995.csv; georefdatar CI_Pyrolite__McDonough_Sun__1995__full.csv)"
+     },
+     "earth_mass_fraction": {
+      "core": {
+       "v": 0.00015,
+       "unit": "1",
+       "src": "mcdonough2003",
+       "check": "unverified"
+      },
+      "silicate": {
+       "v": 8.2e-05,
+       "unit": "1",
+       "src": "mcdonough-sun1995",
+       "check": "unverified",
+       "note": "primitive mantle (pyrolite)"
+      },
+      "crust": {
+       "v": 0.000138,
+       "unit": "1",
+       "src": "rudnick-gao2003",
+       "check": "unverified",
+       "note": "bulk continental crust"
+      }
      }
     },
     {
@@ -2164,6 +3032,50 @@
       "physics": "The Sun's chromium: 50% from massive stars and their core-collapse supernovae and 50% from Type Ia supernovae.",
       "plain": "About half of the chromium was made by exploding massive stars; the rest came from exploding white dwarfs.",
       "story": "Its atoms were made by giant stars that burned out in a few million years and blew themselves apart, with a share from exploding white dwarfs."
+     },
+     "condensation": {
+      "host_phase": "Fe alloy",
+      "rides_in": "formation-metal",
+      "src": "lodders2003",
+      "check": "unverified",
+      "tc50_k": {
+       "v": 1296.0,
+       "unit": "K",
+       "src": "lodders2003",
+       "check": "unverified",
+       "at_pa": 10.0,
+       "note": "50% condensed from a gas of solar make-up at 1e-4 bar (Table 8)"
+      },
+      "oxide": "cr2o3"
+     },
+     "ci_mass_fraction": {
+      "v": 0.00265,
+      "unit": "1",
+      "src": "mcdonough-sun1995",
+      "check": "unverified",
+      "note": "CI chondrite by mass; two reproductions agree (pyrolite 0.3.9 CH_McDonoughSun1995.csv; georefdatar CI_Pyrolite__McDonough_Sun__1995__full.csv)"
+     },
+     "earth_mass_fraction": {
+      "core": {
+       "v": 0.009,
+       "unit": "1",
+       "src": "mcdonough2003",
+       "check": "unverified"
+      },
+      "silicate": {
+       "v": 0.002625,
+       "unit": "1",
+       "src": "mcdonough-sun1995",
+       "check": "unverified",
+       "note": "primitive mantle (pyrolite)"
+      },
+      "crust": {
+       "v": 0.000135,
+       "unit": "1",
+       "src": "rudnick-gao2003",
+       "check": "unverified",
+       "note": "bulk continental crust"
+      }
      }
     },
     {
@@ -2198,6 +3110,50 @@
       "physics": "The Sun's manganese: 50% from massive stars and their core-collapse supernovae and 50% from Type Ia supernovae.",
       "plain": "About half of the manganese was made by exploding massive stars; the rest came from exploding white dwarfs.",
       "story": "Its atoms were made by giant stars that burned out in a few million years and blew themselves apart, with a share from exploding white dwarfs."
+     },
+     "condensation": {
+      "host_phase": "Forsterite + enstatite",
+      "rides_in": "formation-rock",
+      "src": "lodders2003",
+      "check": "unverified",
+      "tc50_k": {
+       "v": 1158.0,
+       "unit": "K",
+       "src": "lodders2003",
+       "check": "unverified",
+       "at_pa": 10.0,
+       "note": "50% condensed from a gas of solar make-up at 1e-4 bar (Table 8)"
+      },
+      "oxide": "mno"
+     },
+     "ci_mass_fraction": {
+      "v": 0.00192,
+      "unit": "1",
+      "src": "mcdonough-sun1995",
+      "check": "unverified",
+      "note": "CI chondrite by mass; two reproductions agree (pyrolite 0.3.9 CH_McDonoughSun1995.csv; georefdatar CI_Pyrolite__McDonough_Sun__1995__full.csv)"
+     },
+     "earth_mass_fraction": {
+      "core": {
+       "v": 0.0003,
+       "unit": "1",
+       "src": "mcdonough2003",
+       "check": "unverified"
+      },
+      "silicate": {
+       "v": 0.001045,
+       "unit": "1",
+       "src": "mcdonough-sun1995",
+       "check": "unverified",
+       "note": "primitive mantle (pyrolite)"
+      },
+      "crust": {
+       "v": 0.000774,
+       "unit": "1",
+       "src": "rudnick-gao2003",
+       "check": "unverified",
+       "note": "bulk continental crust"
+      }
      }
     },
     {
@@ -2232,6 +3188,50 @@
       "physics": "Iron is the end of fusion's energy road. About half of the Sun's iron came from Type Ia supernovae and half from core-collapse supernovae, mostly as nickel-56 that decayed to iron.",
       "plain": "Iron comes from two kinds of exploding star: white dwarfs that detonated and massive stars that collapsed. Each gave about half.",
       "story": "The iron in blood and in planets' cores was made as radioactive nickel in exploding stars, and turned to iron over a few months."
+     },
+     "condensation": {
+      "host_phase": "Fe alloy",
+      "rides_in": "formation-metal",
+      "src": "lodders2003",
+      "check": "unverified",
+      "tc50_k": {
+       "v": 1334.0,
+       "unit": "K",
+       "src": "lodders2003",
+       "check": "unverified",
+       "at_pa": 10.0,
+       "note": "50% condensed from a gas of solar make-up at 1e-4 bar (Table 8)"
+      },
+      "oxide": "feo"
+     },
+     "ci_mass_fraction": {
+      "v": 0.181,
+      "unit": "1",
+      "src": "mcdonough-sun1995",
+      "check": "unverified",
+      "note": "CI chondrite by mass; two reproductions agree (pyrolite 0.3.9 CH_McDonoughSun1995.csv; georefdatar CI_Pyrolite__McDonough_Sun__1995__full.csv)"
+     },
+     "earth_mass_fraction": {
+      "core": {
+       "v": 0.855,
+       "unit": "1",
+       "src": "mcdonough2003",
+       "check": "unverified"
+      },
+      "silicate": {
+       "v": 0.0626,
+       "unit": "1",
+       "src": "mcdonough-sun1995",
+       "check": "unverified",
+       "note": "primitive mantle (pyrolite)"
+      },
+      "crust": {
+       "v": 0.05208,
+       "unit": "1",
+       "src": "rudnick-gao2003",
+       "check": "unverified",
+       "note": "bulk continental crust"
+      }
      }
     },
     {
@@ -2266,6 +3266,50 @@
       "physics": "The Sun's cobalt: 50% from massive stars and their core-collapse supernovae and 50% from Type Ia supernovae.",
       "plain": "About half of the cobalt was made by exploding massive stars; the rest came from exploding white dwarfs.",
       "story": "Its atoms were made by giant stars that burned out in a few million years and blew themselves apart, with a share from exploding white dwarfs."
+     },
+     "condensation": {
+      "host_phase": "Fe alloy",
+      "rides_in": "formation-metal",
+      "src": "lodders2003",
+      "check": "unverified",
+      "tc50_k": {
+       "v": 1352.0,
+       "unit": "K",
+       "src": "lodders2003",
+       "check": "unverified",
+       "at_pa": 10.0,
+       "note": "50% condensed from a gas of solar make-up at 1e-4 bar (Table 8)"
+      }
+     },
+     "ci_mass_fraction": {
+      "v": 0.0005,
+      "unit": "1",
+      "src": "mcdonough-sun1995",
+      "check": "unverified",
+      "note": "CI chondrite by mass; two reproductions agree (pyrolite 0.3.9 CH_McDonoughSun1995.csv; georefdatar CI_Pyrolite__McDonough_Sun__1995__full.csv)"
+     },
+     "earth_mass_fraction": {
+      "core": {
+       "v": 0.0025,
+       "unit": "1",
+       "src": "mcdonough2003",
+       "check": "unverified",
+       "note": "printed 0.25 ppm in the copy read; 0.25 wt% meant (McDonough 1998 gives 2500 ug/g)"
+      },
+      "silicate": {
+       "v": 0.000105,
+       "unit": "1",
+       "src": "mcdonough-sun1995",
+       "check": "unverified",
+       "note": "primitive mantle (pyrolite)"
+      },
+      "crust": {
+       "v": 2.66e-05,
+       "unit": "1",
+       "src": "rudnick-gao2003",
+       "check": "unverified",
+       "note": "bulk continental crust"
+      }
      }
     },
     {
@@ -2300,6 +3344,50 @@
       "physics": "The Sun's nickel: 50% from massive stars and their core-collapse supernovae and 50% from Type Ia supernovae.",
       "plain": "About half of the nickel was made by exploding massive stars; the rest came from exploding white dwarfs.",
       "story": "Its atoms were made by giant stars that burned out in a few million years and blew themselves apart, with a share from exploding white dwarfs."
+     },
+     "condensation": {
+      "host_phase": "Fe alloy",
+      "rides_in": "formation-metal",
+      "src": "lodders2003",
+      "check": "unverified",
+      "tc50_k": {
+       "v": 1353.0,
+       "unit": "K",
+       "src": "lodders2003",
+       "check": "unverified",
+       "at_pa": 10.0,
+       "note": "50% condensed from a gas of solar make-up at 1e-4 bar (Table 8)"
+      },
+      "oxide": "nio"
+     },
+     "ci_mass_fraction": {
+      "v": 0.0105,
+      "unit": "1",
+      "src": "mcdonough-sun1995",
+      "check": "unverified",
+      "note": "CI chondrite by mass; two reproductions agree (pyrolite 0.3.9 CH_McDonoughSun1995.csv; georefdatar CI_Pyrolite__McDonough_Sun__1995__full.csv)"
+     },
+     "earth_mass_fraction": {
+      "core": {
+       "v": 0.052,
+       "unit": "1",
+       "src": "mcdonough2003",
+       "check": "unverified"
+      },
+      "silicate": {
+       "v": 0.00196,
+       "unit": "1",
+       "src": "mcdonough-sun1995",
+       "check": "unverified",
+       "note": "primitive mantle (pyrolite)"
+      },
+      "crust": {
+       "v": 5.9e-05,
+       "unit": "1",
+       "src": "rudnick-gao2003",
+       "check": "unverified",
+       "note": "bulk continental crust"
+      }
      }
     },
     {
@@ -2334,6 +3422,49 @@
       "physics": "The Sun's copper: 50% from massive stars and their core-collapse supernovae and 50% from Type Ia supernovae.",
       "plain": "About half of the copper was made by exploding massive stars; the rest came from exploding white dwarfs.",
       "story": "Its atoms were made by giant stars that burned out in a few million years and blew themselves apart, with a share from exploding white dwarfs."
+     },
+     "condensation": {
+      "host_phase": "Fe alloy",
+      "rides_in": "formation-metal",
+      "src": "lodders2003",
+      "check": "unverified",
+      "tc50_k": {
+       "v": 1037.0,
+       "unit": "K",
+       "src": "lodders2003",
+       "check": "unverified",
+       "at_pa": 10.0,
+       "note": "50% condensed from a gas of solar make-up at 1e-4 bar (Table 8)"
+      }
+     },
+     "ci_mass_fraction": {
+      "v": 0.00012,
+      "unit": "1",
+      "src": "mcdonough-sun1995",
+      "check": "unverified",
+      "note": "CI chondrite by mass; two reproductions agree (pyrolite 0.3.9 CH_McDonoughSun1995.csv; georefdatar CI_Pyrolite__McDonough_Sun__1995__full.csv)"
+     },
+     "earth_mass_fraction": {
+      "core": {
+       "v": 0.000125,
+       "unit": "1",
+       "src": "mcdonough2003",
+       "check": "unverified"
+      },
+      "silicate": {
+       "v": 3e-05,
+       "unit": "1",
+       "src": "mcdonough-sun1995",
+       "check": "unverified",
+       "note": "primitive mantle (pyrolite)"
+      },
+      "crust": {
+       "v": 2.7e-05,
+       "unit": "1",
+       "src": "rudnick-gao2003",
+       "check": "unverified",
+       "note": "bulk continental crust"
+      }
      }
     },
     {
@@ -2368,6 +3499,43 @@
       "physics": "The Sun's zinc: 50% from massive stars and their core-collapse supernovae and 50% from Type Ia supernovae.",
       "plain": "About half of the zinc was made by exploding massive stars; the rest came from exploding white dwarfs.",
       "story": "Its atoms were made by giant stars that burned out in a few million years and blew themselves apart, with a share from exploding white dwarfs."
+     },
+     "condensation": {
+      "host_phase": "Forsterite + enstatite",
+      "rides_in": "formation-rock",
+      "src": "lodders2003",
+      "check": "unverified",
+      "tc50_k": {
+       "v": 726.0,
+       "unit": "K",
+       "src": "lodders2003",
+       "check": "unverified",
+       "at_pa": 10.0,
+       "note": "50% condensed from a gas of solar make-up at 1e-4 bar (Table 8)"
+      }
+     },
+     "ci_mass_fraction": {
+      "v": 0.00031,
+      "unit": "1",
+      "src": "mcdonough-sun1995",
+      "check": "unverified",
+      "note": "CI chondrite by mass; two reproductions agree (pyrolite 0.3.9 CH_McDonoughSun1995.csv; georefdatar CI_Pyrolite__McDonough_Sun__1995__full.csv)"
+     },
+     "earth_mass_fraction": {
+      "silicate": {
+       "v": 5.5e-05,
+       "unit": "1",
+       "src": "mcdonough-sun1995",
+       "check": "unverified",
+       "note": "primitive mantle (pyrolite)"
+      },
+      "crust": {
+       "v": 7.2e-05,
+       "unit": "1",
+       "src": "rudnick-gao2003",
+       "check": "unverified",
+       "note": "bulk continental crust"
+      }
      }
     },
     {
@@ -2402,6 +3570,43 @@
       "physics": "The Sun's gallium: 90% from massive stars and their core-collapse supernovae and 10% from asymptotic giant branch stars (the s-process and hot-bottom burning).",
       "plain": "Most of the gallium was made by exploding massive stars; the rest came from dying low-mass stars.",
       "story": "Its atoms were made by giant stars that burned out in a few million years and blew themselves apart, with a share from dying low-mass stars."
+     },
+     "condensation": {
+      "host_phase": "Fe alloy + feldspar",
+      "rides_in": "formation-metal",
+      "src": "lodders2003",
+      "check": "unverified",
+      "tc50_k": {
+       "v": 968.0,
+       "unit": "K",
+       "src": "lodders2003",
+       "check": "unverified",
+       "at_pa": 10.0,
+       "note": "50% condensed from a gas of solar make-up at 1e-4 bar (Table 8)"
+      }
+     },
+     "ci_mass_fraction": {
+      "v": 9.2e-06,
+      "unit": "1",
+      "src": "mcdonough-sun1995",
+      "check": "unverified",
+      "note": "CI chondrite by mass; two reproductions agree (pyrolite 0.3.9 CH_McDonoughSun1995.csv; georefdatar CI_Pyrolite__McDonough_Sun__1995__full.csv)"
+     },
+     "earth_mass_fraction": {
+      "silicate": {
+       "v": 4e-06,
+       "unit": "1",
+       "src": "mcdonough-sun1995",
+       "check": "unverified",
+       "note": "primitive mantle (pyrolite)"
+      },
+      "crust": {
+       "v": 1.6e-05,
+       "unit": "1",
+       "src": "rudnick-gao2003",
+       "check": "unverified",
+       "note": "bulk continental crust"
+      }
      }
     },
     {
@@ -2436,6 +3641,49 @@
       "physics": "The Sun's germanium: 85% from massive stars and their core-collapse supernovae and 15% from asymptotic giant branch stars (the s-process and hot-bottom burning).",
       "plain": "Most of the germanium was made by exploding massive stars; the rest came from dying low-mass stars.",
       "story": "Its atoms were made by giant stars that burned out in a few million years and blew themselves apart, with a share from dying low-mass stars."
+     },
+     "condensation": {
+      "host_phase": "Fe alloy",
+      "rides_in": "formation-metal",
+      "src": "lodders2003",
+      "check": "unverified",
+      "tc50_k": {
+       "v": 883.0,
+       "unit": "K",
+       "src": "lodders2003",
+       "check": "unverified",
+       "at_pa": 10.0,
+       "note": "50% condensed from a gas of solar make-up at 1e-4 bar (Table 8)"
+      }
+     },
+     "ci_mass_fraction": {
+      "v": 3.1e-05,
+      "unit": "1",
+      "src": "mcdonough-sun1995",
+      "check": "unverified",
+      "note": "CI chondrite by mass; two reproductions agree (pyrolite 0.3.9 CH_McDonoughSun1995.csv; georefdatar CI_Pyrolite__McDonough_Sun__1995__full.csv)"
+     },
+     "earth_mass_fraction": {
+      "core": {
+       "v": 2e-05,
+       "unit": "1",
+       "src": "mcdonough2003",
+       "check": "unverified"
+      },
+      "silicate": {
+       "v": 1.1e-06,
+       "unit": "1",
+       "src": "mcdonough-sun1995",
+       "check": "unverified",
+       "note": "primitive mantle (pyrolite)"
+      },
+      "crust": {
+       "v": 1.3e-06,
+       "unit": "1",
+       "src": "rudnick-gao2003",
+       "check": "unverified",
+       "note": "bulk continental crust"
+      }
      }
     },
     {
@@ -2472,6 +3720,49 @@
       "physics": "The Sun's arsenic: 60% from massive stars and their core-collapse supernovae and 40% from the r-process (here given to neutron-star mergers). Argued: the rapid neutron-capture share is given to merging neutron stars, which have been seen making heavy elements once (GW170817); how much rare kinds of supernova add is argued.",
       "plain": "A little over half of the arsenic was made by exploding massive stars; the rest came from merging neutron stars. Scientists still argue about part of this.",
       "story": "Its atoms were made by giant stars that burned out in a few million years and blew themselves apart, with a share from merging neutron stars."
+     },
+     "condensation": {
+      "host_phase": "Fe alloy",
+      "rides_in": "formation-metal",
+      "src": "lodders2003",
+      "check": "unverified",
+      "tc50_k": {
+       "v": 1065.0,
+       "unit": "K",
+       "src": "lodders2003",
+       "check": "unverified",
+       "at_pa": 10.0,
+       "note": "50% condensed from a gas of solar make-up at 1e-4 bar (Table 8)"
+      }
+     },
+     "ci_mass_fraction": {
+      "v": 1.85e-06,
+      "unit": "1",
+      "src": "mcdonough-sun1995",
+      "check": "unverified",
+      "note": "CI chondrite by mass; two reproductions agree (pyrolite 0.3.9 CH_McDonoughSun1995.csv; georefdatar CI_Pyrolite__McDonough_Sun__1995__full.csv)"
+     },
+     "earth_mass_fraction": {
+      "core": {
+       "v": 5e-06,
+       "unit": "1",
+       "src": "mcdonough2003",
+       "check": "unverified"
+      },
+      "silicate": {
+       "v": 5e-08,
+       "unit": "1",
+       "src": "mcdonough-sun1995",
+       "check": "unverified",
+       "note": "primitive mantle (pyrolite)"
+      },
+      "crust": {
+       "v": 2.5e-06,
+       "unit": "1",
+       "src": "rudnick-gao2003",
+       "check": "unverified",
+       "note": "bulk continental crust"
+      }
      }
     },
     {
@@ -2508,6 +3799,50 @@
       "physics": "The Sun's selenium: 50% from massive stars and their core-collapse supernovae and 50% from the r-process (here given to neutron-star mergers). Argued: the rapid neutron-capture share is given to merging neutron stars, which have been seen making heavy elements once (GW170817); how much rare kinds of supernova add is argued.",
       "plain": "About half of the selenium was made by exploding massive stars; the rest came from merging neutron stars. Scientists still argue about part of this.",
       "story": "Its atoms were made by giant stars that burned out in a few million years and blew themselves apart, with a share from merging neutron stars."
+     },
+     "condensation": {
+      "host_phase": "Troilite",
+      "rides_in": "formation-metal",
+      "src": "lodders2003",
+      "check": "unverified",
+      "tc50_k": {
+       "v": 697.0,
+       "unit": "K",
+       "src": "lodders2003",
+       "check": "unverified",
+       "at_pa": 10.0,
+       "note": "50% condensed from a gas of solar make-up at 1e-4 bar (Table 8)"
+      },
+      "note": "in iron sulfide, which formation counts with the metal"
+     },
+     "ci_mass_fraction": {
+      "v": 2.1e-05,
+      "unit": "1",
+      "src": "mcdonough-sun1995",
+      "check": "unverified",
+      "note": "CI chondrite by mass; two reproductions agree (pyrolite 0.3.9 CH_McDonoughSun1995.csv; georefdatar CI_Pyrolite__McDonough_Sun__1995__full.csv)"
+     },
+     "earth_mass_fraction": {
+      "core": {
+       "v": 8e-06,
+       "unit": "1",
+       "src": "mcdonough2003",
+       "check": "unverified"
+      },
+      "silicate": {
+       "v": 7.5e-08,
+       "unit": "1",
+       "src": "mcdonough-sun1995",
+       "check": "unverified",
+       "note": "primitive mantle (pyrolite)"
+      },
+      "crust": {
+       "v": 1.3e-07,
+       "unit": "1",
+       "src": "rudnick-gao2003",
+       "check": "unverified",
+       "note": "bulk continental crust"
+      }
      }
     },
     {
@@ -2545,6 +3880,49 @@
       "physics": "The Sun's bromine: 60% from the r-process (here given to neutron-star mergers) and 40% from massive stars and their core-collapse supernovae. Argued: the rapid neutron-capture share is given to merging neutron stars, which have been seen making heavy elements once (GW170817); how much rare kinds of supernova add is argued.",
       "plain": "A little over half of the bromine was made by merging neutron stars; the rest came from exploding massive stars. Scientists still argue about part of this.",
       "story": "Its atoms were made by two dead stars, each heavier than the Sun and smaller than a city, spiralling together, with a share from exploding massive stars."
+     },
+     "condensation": {
+      "host_phase": "Cl apatite",
+      "rides_in": "formation-rock",
+      "src": "lodders2003",
+      "check": "unverified",
+      "tc50_k": {
+       "v": 546.0,
+       "unit": "K",
+       "src": "lodders2003",
+       "check": "unverified",
+       "at_pa": 10.0,
+       "note": "50% condensed from a gas of solar make-up at 1e-4 bar (Table 8)"
+      }
+     },
+     "ci_mass_fraction": {
+      "v": 3.57e-06,
+      "unit": "1",
+      "src": "mcdonough-sun1995",
+      "check": "unverified",
+      "note": "CI chondrite by mass; two reproductions agree (pyrolite 0.3.9 CH_McDonoughSun1995.csv; georefdatar CI_Pyrolite__McDonough_Sun__1995__full.csv)"
+     },
+     "earth_mass_fraction": {
+      "core": {
+       "v": 7e-07,
+       "unit": "1",
+       "src": "mcdonough2003",
+       "check": "unverified"
+      },
+      "silicate": {
+       "v": 5e-08,
+       "unit": "1",
+       "src": "mcdonough-sun1995",
+       "check": "unverified",
+       "note": "primitive mantle (pyrolite)"
+      },
+      "crust": {
+       "v": 8.8e-07,
+       "unit": "1",
+       "src": "rudnick-gao2003",
+       "check": "unverified",
+       "note": "bulk continental crust"
+      }
      }
     },
     {
@@ -2582,6 +3960,20 @@
       "physics": "The Sun's krypton: 40% from massive stars and their core-collapse supernovae, 40% from the r-process (here given to neutron-star mergers) and 20% from asymptotic giant branch stars (the s-process and hot-bottom burning). Argued: the rapid neutron-capture share is given to merging neutron stars, which have been seen making heavy elements once (GW170817); how much rare kinds of supernova add is argued.",
       "plain": "About a third of the krypton was made by exploding massive stars; the rest came from merging neutron stars and dying low-mass stars. Scientists still argue about part of this.",
       "story": "Its atoms were made by giant stars that burned out in a few million years and blew themselves apart, with a share from merging neutron stars and dying low-mass stars."
+     },
+     "condensation": {
+      "host_phase": "Kr·6H2O",
+      "rides_in": "formation-water",
+      "src": "lodders2003",
+      "check": "unverified",
+      "tc50_k": {
+       "v": 52.0,
+       "unit": "K",
+       "src": "lodders2003",
+       "check": "unverified",
+       "at_pa": 10.0,
+       "note": "50% condensed from a gas of solar make-up at 1e-4 bar (Table 8)"
+      }
      }
     },
     {
@@ -2619,6 +4011,43 @@
       "physics": "The Sun's rubidium: 50% from the r-process (here given to neutron-star mergers), 30% from asymptotic giant branch stars (the s-process and hot-bottom burning) and 20% from massive stars and their core-collapse supernovae. Argued: the rapid neutron-capture share is given to merging neutron stars, which have been seen making heavy elements once (GW170817); how much rare kinds of supernova add is argued.",
       "plain": "About half of the rubidium was made by merging neutron stars; the rest came from dying low-mass stars and exploding massive stars. Scientists still argue about part of this.",
       "story": "Its atoms were made by two dead stars, each heavier than the Sun and smaller than a city, spiralling together, with a share from dying low-mass stars and exploding massive stars."
+     },
+     "condensation": {
+      "host_phase": "Feldspar",
+      "rides_in": "formation-rock",
+      "src": "lodders2003",
+      "check": "unverified",
+      "tc50_k": {
+       "v": 800.0,
+       "unit": "K",
+       "src": "lodders2003",
+       "check": "unverified",
+       "at_pa": 10.0,
+       "note": "50% condensed from a gas of solar make-up at 1e-4 bar (Table 8)"
+      }
+     },
+     "ci_mass_fraction": {
+      "v": 2.3e-06,
+      "unit": "1",
+      "src": "mcdonough-sun1995",
+      "check": "unverified",
+      "note": "CI chondrite by mass; two reproductions agree (pyrolite 0.3.9 CH_McDonoughSun1995.csv; georefdatar CI_Pyrolite__McDonough_Sun__1995__full.csv)"
+     },
+     "earth_mass_fraction": {
+      "silicate": {
+       "v": 6e-07,
+       "unit": "1",
+       "src": "mcdonough-sun1995",
+       "check": "unverified",
+       "note": "primitive mantle (pyrolite)"
+      },
+      "crust": {
+       "v": 4.9e-05,
+       "unit": "1",
+       "src": "rudnick-gao2003",
+       "check": "unverified",
+       "note": "bulk continental crust"
+      }
      }
     },
     {
@@ -2656,6 +4085,43 @@
       "physics": "The Sun's strontium: 60% from asymptotic giant branch stars (the s-process and hot-bottom burning), 30% from the r-process (here given to neutron-star mergers) and 10% from massive stars and their core-collapse supernovae. Argued: the rapid neutron-capture share is given to merging neutron stars, which have been seen making heavy elements once (GW170817); how much rare kinds of supernova add is argued.",
       "plain": "A little over half of the strontium was made by dying low-mass stars; the rest came from merging neutron stars and exploding massive stars. Scientists still argue about part of this.",
       "story": "Its atoms were made by old, swollen giant stars, the kind the Sun will one day become, puffing their outer layers away, with a share from merging neutron stars and exploding massive stars."
+     },
+     "condensation": {
+      "host_phase": "Titanate",
+      "rides_in": "formation-rock",
+      "src": "lodders2003",
+      "check": "unverified",
+      "tc50_k": {
+       "v": 1464.0,
+       "unit": "K",
+       "src": "lodders2003",
+       "check": "unverified",
+       "at_pa": 10.0,
+       "note": "50% condensed from a gas of solar make-up at 1e-4 bar (Table 8)"
+      }
+     },
+     "ci_mass_fraction": {
+      "v": 7.25e-06,
+      "unit": "1",
+      "src": "mcdonough-sun1995",
+      "check": "unverified",
+      "note": "CI chondrite by mass; two reproductions agree (pyrolite 0.3.9 CH_McDonoughSun1995.csv; georefdatar CI_Pyrolite__McDonough_Sun__1995__full.csv)"
+     },
+     "earth_mass_fraction": {
+      "silicate": {
+       "v": 1.99e-05,
+       "unit": "1",
+       "src": "mcdonough-sun1995",
+       "check": "unverified",
+       "note": "primitive mantle (pyrolite)"
+      },
+      "crust": {
+       "v": 0.00032,
+       "unit": "1",
+       "src": "rudnick-gao2003",
+       "check": "unverified",
+       "note": "bulk continental crust"
+      }
      }
     },
     {
@@ -2693,6 +4159,43 @@
       "physics": "The Sun's yttrium: 65% from asymptotic giant branch stars (the s-process and hot-bottom burning), 30% from the r-process (here given to neutron-star mergers) and 5% from massive stars and their core-collapse supernovae. Argued: the rapid neutron-capture share is given to merging neutron stars, which have been seen making heavy elements once (GW170817); how much rare kinds of supernova add is argued.",
       "plain": "A little over half of the yttrium was made by dying low-mass stars; the rest came from merging neutron stars and exploding massive stars. Scientists still argue about part of this.",
       "story": "Its atoms were made by old, swollen giant stars, the kind the Sun will one day become, puffing their outer layers away, with a share from merging neutron stars and exploding massive stars."
+     },
+     "condensation": {
+      "host_phase": "Hibonite",
+      "rides_in": "formation-rock",
+      "src": "lodders2003",
+      "check": "unverified",
+      "tc50_k": {
+       "v": 1659.0,
+       "unit": "K",
+       "src": "lodders2003",
+       "check": "unverified",
+       "at_pa": 10.0,
+       "note": "50% condensed from a gas of solar make-up at 1e-4 bar (Table 8)"
+      }
+     },
+     "ci_mass_fraction": {
+      "v": 1.57e-06,
+      "unit": "1",
+      "src": "mcdonough-sun1995",
+      "check": "unverified",
+      "note": "CI chondrite by mass; two reproductions agree (pyrolite 0.3.9 CH_McDonoughSun1995.csv; georefdatar CI_Pyrolite__McDonough_Sun__1995__full.csv)"
+     },
+     "earth_mass_fraction": {
+      "silicate": {
+       "v": 4.3e-06,
+       "unit": "1",
+       "src": "mcdonough-sun1995",
+       "check": "unverified",
+       "note": "primitive mantle (pyrolite)"
+      },
+      "crust": {
+       "v": 1.9e-05,
+       "unit": "1",
+       "src": "rudnick-gao2003",
+       "check": "unverified",
+       "note": "bulk continental crust"
+      }
      }
     },
     {
@@ -2731,6 +4234,43 @@
       "physics": "The Sun's zirconium: 60% from asymptotic giant branch stars (the s-process and hot-bottom burning), 35% from the r-process (here given to neutron-star mergers) and 5% from massive stars and their core-collapse supernovae. Argued: the rapid neutron-capture share is given to merging neutron stars, which have been seen making heavy elements once (GW170817); how much rare kinds of supernova add is argued.",
       "plain": "A little over half of the zirconium was made by dying low-mass stars; the rest came from merging neutron stars and exploding massive stars. Scientists still argue about part of this.",
       "story": "Its atoms were made by old, swollen giant stars, the kind the Sun will one day become, puffing their outer layers away, with a share from merging neutron stars and exploding massive stars."
+     },
+     "condensation": {
+      "host_phase": "ZrO2",
+      "rides_in": "formation-rock",
+      "src": "lodders2003",
+      "check": "unverified",
+      "tc50_k": {
+       "v": 1741.0,
+       "unit": "K",
+       "src": "lodders2003",
+       "check": "unverified",
+       "at_pa": 10.0,
+       "note": "50% condensed from a gas of solar make-up at 1e-4 bar (Table 8)"
+      }
+     },
+     "ci_mass_fraction": {
+      "v": 3.82e-06,
+      "unit": "1",
+      "src": "mcdonough-sun1995",
+      "check": "unverified",
+      "note": "CI chondrite by mass; two reproductions agree (pyrolite 0.3.9 CH_McDonoughSun1995.csv; georefdatar CI_Pyrolite__McDonough_Sun__1995__full.csv)"
+     },
+     "earth_mass_fraction": {
+      "silicate": {
+       "v": 1.05e-05,
+       "unit": "1",
+       "src": "mcdonough-sun1995",
+       "check": "unverified",
+       "note": "primitive mantle (pyrolite)"
+      },
+      "crust": {
+       "v": 0.000132,
+       "unit": "1",
+       "src": "rudnick-gao2003",
+       "check": "unverified",
+       "note": "bulk continental crust"
+      }
      }
     },
     {
@@ -2767,6 +4307,43 @@
       "physics": "The Sun's niobium: 60% from asymptotic giant branch stars (the s-process and hot-bottom burning) and 40% from the r-process (here given to neutron-star mergers). Argued: the rapid neutron-capture share is given to merging neutron stars, which have been seen making heavy elements once (GW170817); how much rare kinds of supernova add is argued.",
       "plain": "A little over half of the niobium was made by dying low-mass stars; the rest came from merging neutron stars. Scientists still argue about part of this.",
       "story": "Its atoms were made by old, swollen giant stars, the kind the Sun will one day become, puffing their outer layers away, with a share from merging neutron stars."
+     },
+     "condensation": {
+      "host_phase": "Titanate",
+      "rides_in": "formation-rock",
+      "src": "lodders2003",
+      "check": "unverified",
+      "tc50_k": {
+       "v": 1559.0,
+       "unit": "K",
+       "src": "lodders2003",
+       "check": "unverified",
+       "at_pa": 10.0,
+       "note": "50% condensed from a gas of solar make-up at 1e-4 bar (Table 8)"
+      }
+     },
+     "ci_mass_fraction": {
+      "v": 2.4e-07,
+      "unit": "1",
+      "src": "mcdonough-sun1995",
+      "check": "unverified",
+      "note": "CI chondrite by mass; two reproductions agree (pyrolite 0.3.9 CH_McDonoughSun1995.csv; georefdatar CI_Pyrolite__McDonough_Sun__1995__full.csv)"
+     },
+     "earth_mass_fraction": {
+      "silicate": {
+       "v": 6.58e-07,
+       "unit": "1",
+       "src": "mcdonough-sun1995",
+       "check": "unverified",
+       "note": "primitive mantle (pyrolite)"
+      },
+      "crust": {
+       "v": 8e-06,
+       "unit": "1",
+       "src": "rudnick-gao2003",
+       "check": "unverified",
+       "note": "bulk continental crust"
+      }
      }
     },
     {
@@ -2804,6 +4381,49 @@
       "physics": "The Sun's molybdenum: 50% from asymptotic giant branch stars (the s-process and hot-bottom burning), 30% from the r-process (here given to neutron-star mergers) and 20% from massive stars and their core-collapse supernovae. Argued: the rapid neutron-capture share is given to merging neutron stars, which have been seen making heavy elements once (GW170817); how much rare kinds of supernova add is argued.",
       "plain": "About half of the molybdenum was made by dying low-mass stars; the rest came from merging neutron stars and exploding massive stars. Scientists still argue about part of this.",
       "story": "Its atoms were made by old, swollen giant stars, the kind the Sun will one day become, puffing their outer layers away, with a share from merging neutron stars and exploding massive stars."
+     },
+     "condensation": {
+      "host_phase": "Refractory metal alloy",
+      "rides_in": "formation-metal",
+      "src": "lodders2003",
+      "check": "unverified",
+      "tc50_k": {
+       "v": 1590.0,
+       "unit": "K",
+       "src": "lodders2003",
+       "check": "unverified",
+       "at_pa": 10.0,
+       "note": "50% condensed from a gas of solar make-up at 1e-4 bar (Table 8)"
+      }
+     },
+     "ci_mass_fraction": {
+      "v": 9e-07,
+      "unit": "1",
+      "src": "mcdonough-sun1995",
+      "check": "unverified",
+      "note": "CI chondrite by mass; two reproductions agree (pyrolite 0.3.9 CH_McDonoughSun1995.csv; georefdatar CI_Pyrolite__McDonough_Sun__1995__full.csv)"
+     },
+     "earth_mass_fraction": {
+      "core": {
+       "v": 5e-06,
+       "unit": "1",
+       "src": "mcdonough2003",
+       "check": "unverified"
+      },
+      "silicate": {
+       "v": 5e-08,
+       "unit": "1",
+       "src": "mcdonough-sun1995",
+       "check": "unverified",
+       "note": "primitive mantle (pyrolite)"
+      },
+      "crust": {
+       "v": 8e-07,
+       "unit": "1",
+       "src": "rudnick-gao2003",
+       "check": "unverified",
+       "note": "bulk continental crust"
+      }
      }
     },
     {
@@ -2862,6 +4482,49 @@
       "physics": "The Sun's ruthenium: 60% from the r-process (here given to neutron-star mergers), 30% from asymptotic giant branch stars (the s-process and hot-bottom burning) and 10% from massive stars and their core-collapse supernovae. Argued: the rapid neutron-capture share is given to merging neutron stars, which have been seen making heavy elements once (GW170817); how much rare kinds of supernova add is argued.",
       "plain": "A little over half of the ruthenium was made by merging neutron stars; the rest came from dying low-mass stars and exploding massive stars. Scientists still argue about part of this.",
       "story": "Its atoms were made by two dead stars, each heavier than the Sun and smaller than a city, spiralling together, with a share from dying low-mass stars and exploding massive stars."
+     },
+     "condensation": {
+      "host_phase": "Refractory metal alloy",
+      "rides_in": "formation-metal",
+      "src": "lodders2003",
+      "check": "unverified",
+      "tc50_k": {
+       "v": 1551.0,
+       "unit": "K",
+       "src": "lodders2003",
+       "check": "unverified",
+       "at_pa": 10.0,
+       "note": "50% condensed from a gas of solar make-up at 1e-4 bar (Table 8)"
+      }
+     },
+     "ci_mass_fraction": {
+      "v": 7.1e-07,
+      "unit": "1",
+      "src": "mcdonough-sun1995",
+      "check": "unverified",
+      "note": "CI chondrite by mass; two reproductions agree (pyrolite 0.3.9 CH_McDonoughSun1995.csv; georefdatar CI_Pyrolite__McDonough_Sun__1995__full.csv)"
+     },
+     "earth_mass_fraction": {
+      "core": {
+       "v": 4e-06,
+       "unit": "1",
+       "src": "mcdonough2003",
+       "check": "unverified"
+      },
+      "silicate": {
+       "v": 5e-09,
+       "unit": "1",
+       "src": "mcdonough-sun1995",
+       "check": "unverified",
+       "note": "primitive mantle (pyrolite)"
+      },
+      "crust": {
+       "v": 6e-10,
+       "unit": "1",
+       "src": "rudnick-gao2003",
+       "check": "unverified",
+       "note": "bulk continental crust"
+      }
      }
     },
     {
@@ -2898,6 +4561,42 @@
       "physics": "The Sun's rhodium: 85% from the r-process (here given to neutron-star mergers) and 15% from asymptotic giant branch stars (the s-process and hot-bottom burning). Argued: the rapid neutron-capture share is given to merging neutron stars, which have been seen making heavy elements once (GW170817); how much rare kinds of supernova add is argued.",
       "plain": "Most of the rhodium was made by merging neutron stars; the rest came from dying low-mass stars. Scientists still argue about part of this.",
       "story": "Its atoms were made by two dead stars, each heavier than the Sun and smaller than a city, spiralling together, with a share from dying low-mass stars."
+     },
+     "condensation": {
+      "host_phase": "Refractory metal alloy",
+      "rides_in": "formation-metal",
+      "src": "lodders2003",
+      "check": "unverified",
+      "tc50_k": {
+       "v": 1392.0,
+       "unit": "K",
+       "src": "lodders2003",
+       "check": "unverified",
+       "at_pa": 10.0,
+       "note": "50% condensed from a gas of solar make-up at 1e-4 bar (Table 8)"
+      }
+     },
+     "ci_mass_fraction": {
+      "v": 1.3e-07,
+      "unit": "1",
+      "src": "mcdonough-sun1995",
+      "check": "unverified",
+      "note": "CI chondrite by mass; two reproductions agree (pyrolite 0.3.9 CH_McDonoughSun1995.csv; georefdatar CI_Pyrolite__McDonough_Sun__1995__full.csv)"
+     },
+     "earth_mass_fraction": {
+      "core": {
+       "v": 7.4e-07,
+       "unit": "1",
+       "src": "mcdonough2003",
+       "check": "unverified"
+      },
+      "silicate": {
+       "v": 9e-10,
+       "unit": "1",
+       "src": "mcdonough-sun1995",
+       "check": "unverified",
+       "note": "primitive mantle (pyrolite)"
+      }
      }
     },
     {
@@ -2934,6 +4633,49 @@
       "physics": "The Sun's palladium: 55% from the r-process (here given to neutron-star mergers) and 45% from asymptotic giant branch stars (the s-process and hot-bottom burning). Argued: the rapid neutron-capture share is given to merging neutron stars, which have been seen making heavy elements once (GW170817); how much rare kinds of supernova add is argued.",
       "plain": "A little over half of the palladium was made by merging neutron stars; the rest came from dying low-mass stars. Scientists still argue about part of this.",
       "story": "Its atoms were made by two dead stars, each heavier than the Sun and smaller than a city, spiralling together, with a share from dying low-mass stars."
+     },
+     "condensation": {
+      "host_phase": "Fe alloy",
+      "rides_in": "formation-metal",
+      "src": "lodders2003",
+      "check": "unverified",
+      "tc50_k": {
+       "v": 1324.0,
+       "unit": "K",
+       "src": "lodders2003",
+       "check": "unverified",
+       "at_pa": 10.0,
+       "note": "50% condensed from a gas of solar make-up at 1e-4 bar (Table 8)"
+      }
+     },
+     "ci_mass_fraction": {
+      "v": 5.5e-07,
+      "unit": "1",
+      "src": "mcdonough-sun1995",
+      "check": "unverified",
+      "note": "CI chondrite by mass; two reproductions agree (pyrolite 0.3.9 CH_McDonoughSun1995.csv; georefdatar CI_Pyrolite__McDonough_Sun__1995__full.csv)"
+     },
+     "earth_mass_fraction": {
+      "core": {
+       "v": 3.1e-06,
+       "unit": "1",
+       "src": "mcdonough2003",
+       "check": "unverified"
+      },
+      "silicate": {
+       "v": 3.9e-09,
+       "unit": "1",
+       "src": "mcdonough-sun1995",
+       "check": "unverified",
+       "note": "primitive mantle (pyrolite)"
+      },
+      "crust": {
+       "v": 1.5e-09,
+       "unit": "1",
+       "src": "rudnick-gao2003",
+       "check": "unverified",
+       "note": "bulk continental crust"
+      }
      }
     },
     {
@@ -2970,6 +4712,49 @@
       "physics": "The Sun's silver: 80% from the r-process (here given to neutron-star mergers) and 20% from asymptotic giant branch stars (the s-process and hot-bottom burning). Argued: the rapid neutron-capture share is given to merging neutron stars, which have been seen making heavy elements once (GW170817); how much rare kinds of supernova add is argued.",
       "plain": "Most of the silver was made by merging neutron stars; the rest came from dying low-mass stars. Scientists still argue about part of this.",
       "story": "Its atoms were made by two dead stars, each heavier than the Sun and smaller than a city, spiralling together, with a share from dying low-mass stars."
+     },
+     "condensation": {
+      "host_phase": "Fe alloy",
+      "rides_in": "formation-metal",
+      "src": "lodders2003",
+      "check": "unverified",
+      "tc50_k": {
+       "v": 996.0,
+       "unit": "K",
+       "src": "lodders2003",
+       "check": "unverified",
+       "at_pa": 10.0,
+       "note": "50% condensed from a gas of solar make-up at 1e-4 bar (Table 8)"
+      }
+     },
+     "ci_mass_fraction": {
+      "v": 2e-07,
+      "unit": "1",
+      "src": "mcdonough-sun1995",
+      "check": "unverified",
+      "note": "CI chondrite by mass; two reproductions agree (pyrolite 0.3.9 CH_McDonoughSun1995.csv; georefdatar CI_Pyrolite__McDonough_Sun__1995__full.csv)"
+     },
+     "earth_mass_fraction": {
+      "core": {
+       "v": 1.5e-07,
+       "unit": "1",
+       "src": "mcdonough2003",
+       "check": "unverified"
+      },
+      "silicate": {
+       "v": 8e-09,
+       "unit": "1",
+       "src": "mcdonough-sun1995",
+       "check": "unverified",
+       "note": "primitive mantle (pyrolite)"
+      },
+      "crust": {
+       "v": 5.6e-08,
+       "unit": "1",
+       "src": "rudnick-gao2003",
+       "check": "unverified",
+       "note": "bulk continental crust"
+      }
      }
     },
     {
@@ -3006,6 +4791,49 @@
       "physics": "The Sun's cadmium: 65% from asymptotic giant branch stars (the s-process and hot-bottom burning) and 35% from the r-process (here given to neutron-star mergers). Argued: the rapid neutron-capture share is given to merging neutron stars, which have been seen making heavy elements once (GW170817); how much rare kinds of supernova add is argued.",
       "plain": "A little over half of the cadmium was made by dying low-mass stars; the rest came from merging neutron stars. Scientists still argue about part of this.",
       "story": "Its atoms were made by old, swollen giant stars, the kind the Sun will one day become, puffing their outer layers away, with a share from merging neutron stars."
+     },
+     "condensation": {
+      "host_phase": "Enstatite + troilite",
+      "rides_in": "formation-rock",
+      "src": "lodders2003",
+      "check": "unverified",
+      "tc50_k": {
+       "v": 652.0,
+       "unit": "K",
+       "src": "lodders2003",
+       "check": "unverified",
+       "at_pa": 10.0,
+       "note": "50% condensed from a gas of solar make-up at 1e-4 bar (Table 8)"
+      }
+     },
+     "ci_mass_fraction": {
+      "v": 7.1e-07,
+      "unit": "1",
+      "src": "mcdonough-sun1995",
+      "check": "unverified",
+      "note": "CI chondrite by mass; two reproductions agree (pyrolite 0.3.9 CH_McDonoughSun1995.csv; georefdatar CI_Pyrolite__McDonough_Sun__1995__full.csv)"
+     },
+     "earth_mass_fraction": {
+      "core": {
+       "v": 1.5e-07,
+       "unit": "1",
+       "src": "mcdonough2003",
+       "check": "unverified"
+      },
+      "silicate": {
+       "v": 4e-08,
+       "unit": "1",
+       "src": "mcdonough-sun1995",
+       "check": "unverified",
+       "note": "primitive mantle (pyrolite)"
+      },
+      "crust": {
+       "v": 8e-08,
+       "unit": "1",
+       "src": "rudnick-gao2003",
+       "check": "unverified",
+       "note": "bulk continental crust"
+      }
      }
     },
     {
@@ -3042,6 +4870,44 @@
       "physics": "The Sun's indium: 60% from asymptotic giant branch stars (the s-process and hot-bottom burning) and 40% from the r-process (here given to neutron-star mergers). Argued: the rapid neutron-capture share is given to merging neutron stars, which have been seen making heavy elements once (GW170817); how much rare kinds of supernova add is argued.",
       "plain": "A little over half of the indium was made by dying low-mass stars; the rest came from merging neutron stars. Scientists still argue about part of this.",
       "story": "Its atoms were made by old, swollen giant stars, the kind the Sun will one day become, puffing their outer layers away, with a share from merging neutron stars."
+     },
+     "condensation": {
+      "host_phase": "FeS",
+      "rides_in": "formation-metal",
+      "src": "lodders2003",
+      "check": "unverified",
+      "tc50_k": {
+       "v": 536.0,
+       "unit": "K",
+       "src": "lodders2003",
+       "check": "unverified",
+       "at_pa": 10.0,
+       "note": "50% condensed from a gas of solar make-up at 1e-4 bar (Table 8)"
+      },
+      "note": "in iron sulfide, which formation counts with the metal"
+     },
+     "ci_mass_fraction": {
+      "v": 8e-08,
+      "unit": "1",
+      "src": "mcdonough-sun1995",
+      "check": "unverified",
+      "note": "CI chondrite by mass; two reproductions agree (pyrolite 0.3.9 CH_McDonoughSun1995.csv; georefdatar CI_Pyrolite__McDonough_Sun__1995__full.csv)"
+     },
+     "earth_mass_fraction": {
+      "silicate": {
+       "v": 1.1e-08,
+       "unit": "1",
+       "src": "mcdonough-sun1995",
+       "check": "unverified",
+       "note": "primitive mantle (pyrolite)"
+      },
+      "crust": {
+       "v": 5.2e-08,
+       "unit": "1",
+       "src": "rudnick-gao2003",
+       "check": "unverified",
+       "note": "bulk continental crust"
+      }
      }
     },
     {
@@ -3078,6 +4944,49 @@
       "physics": "The Sun's tin: 70% from asymptotic giant branch stars (the s-process and hot-bottom burning) and 30% from the r-process (here given to neutron-star mergers). Argued: the rapid neutron-capture share is given to merging neutron stars, which have been seen making heavy elements once (GW170817); how much rare kinds of supernova add is argued.",
       "plain": "Most of the tin was made by dying low-mass stars; the rest came from merging neutron stars. Scientists still argue about part of this.",
       "story": "Its atoms were made by old, swollen giant stars, the kind the Sun will one day become, puffing their outer layers away, with a share from merging neutron stars."
+     },
+     "condensation": {
+      "host_phase": "Fe alloy",
+      "rides_in": "formation-metal",
+      "src": "lodders2003",
+      "check": "unverified",
+      "tc50_k": {
+       "v": 704.0,
+       "unit": "K",
+       "src": "lodders2003",
+       "check": "unverified",
+       "at_pa": 10.0,
+       "note": "50% condensed from a gas of solar make-up at 1e-4 bar (Table 8)"
+      }
+     },
+     "ci_mass_fraction": {
+      "v": 1.65e-06,
+      "unit": "1",
+      "src": "mcdonough-sun1995",
+      "check": "unverified",
+      "note": "CI chondrite by mass; two reproductions agree (pyrolite 0.3.9 CH_McDonoughSun1995.csv; georefdatar CI_Pyrolite__McDonough_Sun__1995__full.csv)"
+     },
+     "earth_mass_fraction": {
+      "core": {
+       "v": 5e-07,
+       "unit": "1",
+       "src": "mcdonough2003",
+       "check": "unverified"
+      },
+      "silicate": {
+       "v": 1.3e-07,
+       "unit": "1",
+       "src": "mcdonough-sun1995",
+       "check": "unverified",
+       "note": "primitive mantle (pyrolite)"
+      },
+      "crust": {
+       "v": 1.7e-06,
+       "unit": "1",
+       "src": "rudnick-gao2003",
+       "check": "unverified",
+       "note": "bulk continental crust"
+      }
      }
     },
     {
@@ -3114,6 +5023,49 @@
       "physics": "The Sun's antimony: 75% from the r-process (here given to neutron-star mergers) and 25% from asymptotic giant branch stars (the s-process and hot-bottom burning). Argued: the rapid neutron-capture share is given to merging neutron stars, which have been seen making heavy elements once (GW170817); how much rare kinds of supernova add is argued.",
       "plain": "Most of the antimony was made by merging neutron stars; the rest came from dying low-mass stars. Scientists still argue about part of this.",
       "story": "Its atoms were made by two dead stars, each heavier than the Sun and smaller than a city, spiralling together, with a share from dying low-mass stars."
+     },
+     "condensation": {
+      "host_phase": "Fe alloy",
+      "rides_in": "formation-metal",
+      "src": "lodders2003",
+      "check": "unverified",
+      "tc50_k": {
+       "v": 979.0,
+       "unit": "K",
+       "src": "lodders2003",
+       "check": "unverified",
+       "at_pa": 10.0,
+       "note": "50% condensed from a gas of solar make-up at 1e-4 bar (Table 8)"
+      }
+     },
+     "ci_mass_fraction": {
+      "v": 1.4e-07,
+      "unit": "1",
+      "src": "mcdonough-sun1995",
+      "check": "unverified",
+      "note": "CI chondrite by mass; two reproductions agree (pyrolite 0.3.9 CH_McDonoughSun1995.csv; georefdatar CI_Pyrolite__McDonough_Sun__1995__full.csv)"
+     },
+     "earth_mass_fraction": {
+      "core": {
+       "v": 1.3e-07,
+       "unit": "1",
+       "src": "mcdonough2003",
+       "check": "unverified"
+      },
+      "silicate": {
+       "v": 5.5e-09,
+       "unit": "1",
+       "src": "mcdonough-sun1995",
+       "check": "unverified",
+       "note": "primitive mantle (pyrolite)"
+      },
+      "crust": {
+       "v": 2e-07,
+       "unit": "1",
+       "src": "rudnick-gao2003",
+       "check": "unverified",
+       "note": "bulk continental crust"
+      }
      }
     },
     {
@@ -3150,6 +5102,42 @@
       "physics": "The Sun's tellurium: 80% from the r-process (here given to neutron-star mergers) and 20% from asymptotic giant branch stars (the s-process and hot-bottom burning). Argued: the rapid neutron-capture share is given to merging neutron stars, which have been seen making heavy elements once (GW170817); how much rare kinds of supernova add is argued.",
       "plain": "Most of the tellurium was made by merging neutron stars; the rest came from dying low-mass stars. Scientists still argue about part of this.",
       "story": "Its atoms were made by two dead stars, each heavier than the Sun and smaller than a city, spiralling together, with a share from dying low-mass stars."
+     },
+     "condensation": {
+      "host_phase": "Fe alloy",
+      "rides_in": "formation-metal",
+      "src": "lodders2003",
+      "check": "unverified",
+      "tc50_k": {
+       "v": 709.0,
+       "unit": "K",
+       "src": "lodders2003",
+       "check": "unverified",
+       "at_pa": 10.0,
+       "note": "50% condensed from a gas of solar make-up at 1e-4 bar (Table 8)"
+      }
+     },
+     "ci_mass_fraction": {
+      "v": 2.33e-06,
+      "unit": "1",
+      "src": "mcdonough-sun1995",
+      "check": "unverified",
+      "note": "CI chondrite by mass; two reproductions agree (pyrolite 0.3.9 CH_McDonoughSun1995.csv; georefdatar CI_Pyrolite__McDonough_Sun__1995__full.csv)"
+     },
+     "earth_mass_fraction": {
+      "core": {
+       "v": 8.5e-07,
+       "unit": "1",
+       "src": "mcdonough2003",
+       "check": "unverified"
+      },
+      "silicate": {
+       "v": 1.2e-08,
+       "unit": "1",
+       "src": "mcdonough-sun1995",
+       "check": "unverified",
+       "note": "primitive mantle (pyrolite)"
+      }
      }
     },
     {
@@ -3186,6 +5174,49 @@
       "physics": "The Sun's iodine: 95% from the r-process (here given to neutron-star mergers) and 5% from asymptotic giant branch stars (the s-process and hot-bottom burning). Argued: the rapid neutron-capture share is given to merging neutron stars, which have been seen making heavy elements once (GW170817); how much rare kinds of supernova add is argued.",
       "plain": "Almost all of the iodine was made by merging neutron stars; the rest came from dying low-mass stars. Scientists still argue about part of this.",
       "story": "Its atoms were made by two dead stars, each heavier than the Sun and smaller than a city, spiralling together, with a share from dying low-mass stars."
+     },
+     "condensation": {
+      "host_phase": "Cl apatite",
+      "rides_in": "formation-rock",
+      "src": "lodders2003",
+      "check": "unverified",
+      "tc50_k": {
+       "v": 535.0,
+       "unit": "K",
+       "src": "lodders2003",
+       "check": "unverified",
+       "at_pa": 10.0,
+       "note": "50% condensed from a gas of solar make-up at 1e-4 bar (Table 8)"
+      }
+     },
+     "ci_mass_fraction": {
+      "v": 4.5e-07,
+      "unit": "1",
+      "src": "mcdonough-sun1995",
+      "check": "unverified",
+      "note": "CI chondrite by mass; two reproductions agree (pyrolite 0.3.9 CH_McDonoughSun1995.csv; georefdatar CI_Pyrolite__McDonough_Sun__1995__full.csv)"
+     },
+     "earth_mass_fraction": {
+      "core": {
+       "v": 1.3e-07,
+       "unit": "1",
+       "src": "mcdonough2003",
+       "check": "unverified"
+      },
+      "silicate": {
+       "v": 1e-08,
+       "unit": "1",
+       "src": "mcdonough-sun1995",
+       "check": "unverified",
+       "note": "primitive mantle (pyrolite)"
+      },
+      "crust": {
+       "v": 7.1e-07,
+       "unit": "1",
+       "src": "rudnick-gao2003",
+       "check": "unverified",
+       "note": "bulk continental crust"
+      }
      }
     },
     {
@@ -3222,6 +5253,20 @@
       "physics": "The Sun's xenon: 80% from the r-process (here given to neutron-star mergers) and 20% from asymptotic giant branch stars (the s-process and hot-bottom burning). Argued: the rapid neutron-capture share is given to merging neutron stars, which have been seen making heavy elements once (GW170817); how much rare kinds of supernova add is argued.",
       "plain": "Most of the xenon was made by merging neutron stars; the rest came from dying low-mass stars. Scientists still argue about part of this.",
       "story": "Its atoms were made by two dead stars, each heavier than the Sun and smaller than a city, spiralling together, with a share from dying low-mass stars."
+     },
+     "condensation": {
+      "host_phase": "Xe·6H2O",
+      "rides_in": "formation-water",
+      "src": "lodders2003",
+      "check": "unverified",
+      "tc50_k": {
+       "v": 68.0,
+       "unit": "K",
+       "src": "lodders2003",
+       "check": "unverified",
+       "at_pa": 10.0,
+       "note": "50% condensed from a gas of solar make-up at 1e-4 bar (Table 8)"
+      }
      }
     },
     {
@@ -3258,6 +5303,49 @@
       "physics": "The Sun's caesium: 85% from the r-process (here given to neutron-star mergers) and 15% from asymptotic giant branch stars (the s-process and hot-bottom burning). Argued: the rapid neutron-capture share is given to merging neutron stars, which have been seen making heavy elements once (GW170817); how much rare kinds of supernova add is argued.",
       "plain": "Most of the caesium was made by merging neutron stars; the rest came from dying low-mass stars. Scientists still argue about part of this.",
       "story": "Its atoms were made by two dead stars, each heavier than the Sun and smaller than a city, spiralling together, with a share from dying low-mass stars."
+     },
+     "condensation": {
+      "host_phase": "Feldspar",
+      "rides_in": "formation-rock",
+      "src": "lodders2003",
+      "check": "unverified",
+      "tc50_k": {
+       "v": 799.0,
+       "unit": "K",
+       "src": "lodders2003",
+       "check": "unverified",
+       "at_pa": 10.0,
+       "note": "50% condensed from a gas of solar make-up at 1e-4 bar (Table 8)"
+      }
+     },
+     "ci_mass_fraction": {
+      "v": 1.9e-07,
+      "unit": "1",
+      "src": "mcdonough-sun1995",
+      "check": "unverified",
+      "note": "CI chondrite by mass; two reproductions agree (pyrolite 0.3.9 CH_McDonoughSun1995.csv; georefdatar CI_Pyrolite__McDonough_Sun__1995__full.csv)"
+     },
+     "earth_mass_fraction": {
+      "core": {
+       "v": 6.5e-08,
+       "unit": "1",
+       "src": "mcdonough2003",
+       "check": "unverified"
+      },
+      "silicate": {
+       "v": 2.1e-08,
+       "unit": "1",
+       "src": "mcdonough-sun1995",
+       "check": "unverified",
+       "note": "primitive mantle (pyrolite)"
+      },
+      "crust": {
+       "v": 2e-06,
+       "unit": "1",
+       "src": "rudnick-gao2003",
+       "check": "unverified",
+       "note": "bulk continental crust"
+      }
      }
     },
     {
@@ -3293,6 +5381,43 @@
       "physics": "Barium is about 85% s-process: slow neutron capture in the helium-burning shells of asymptotic-giant-branch stars, over thousands of years.",
       "plain": "Most barium was made slowly, over thousands of years, inside dying low-mass stars.",
       "story": "It was built atom by atom in the deep layers of old giant stars, one neutron at a time."
+     },
+     "condensation": {
+      "host_phase": "Titanate",
+      "rides_in": "formation-rock",
+      "src": "lodders2003",
+      "check": "unverified",
+      "tc50_k": {
+       "v": 1455.0,
+       "unit": "K",
+       "src": "lodders2003",
+       "check": "unverified",
+       "at_pa": 10.0,
+       "note": "50% condensed from a gas of solar make-up at 1e-4 bar (Table 8)"
+      }
+     },
+     "ci_mass_fraction": {
+      "v": 2.41e-06,
+      "unit": "1",
+      "src": "mcdonough-sun1995",
+      "check": "unverified",
+      "note": "CI chondrite by mass; two reproductions agree (pyrolite 0.3.9 CH_McDonoughSun1995.csv; georefdatar CI_Pyrolite__McDonough_Sun__1995__full.csv)"
+     },
+     "earth_mass_fraction": {
+      "silicate": {
+       "v": 6.6e-06,
+       "unit": "1",
+       "src": "mcdonough-sun1995",
+       "check": "unverified",
+       "note": "primitive mantle (pyrolite)"
+      },
+      "crust": {
+       "v": 0.000456,
+       "unit": "1",
+       "src": "rudnick-gao2003",
+       "check": "unverified",
+       "note": "bulk continental crust"
+      }
      }
     },
     {
@@ -3328,6 +5453,43 @@
       "physics": "The Sun's lanthanum: 75% from asymptotic giant branch stars (the s-process and hot-bottom burning) and 25% from the r-process (here given to neutron-star mergers).",
       "plain": "Most of the lanthanum was made by dying low-mass stars; the rest came from merging neutron stars.",
       "story": "Its atoms were made by old, swollen giant stars, the kind the Sun will one day become, puffing their outer layers away, with a share from merging neutron stars."
+     },
+     "condensation": {
+      "host_phase": "Hibonite + titanate",
+      "rides_in": "formation-rock",
+      "src": "lodders2003",
+      "check": "unverified",
+      "tc50_k": {
+       "v": 1578.0,
+       "unit": "K",
+       "src": "lodders2003",
+       "check": "unverified",
+       "at_pa": 10.0,
+       "note": "50% condensed from a gas of solar make-up at 1e-4 bar (Table 8)"
+      }
+     },
+     "ci_mass_fraction": {
+      "v": 2.37e-07,
+      "unit": "1",
+      "src": "mcdonough-sun1995",
+      "check": "unverified",
+      "note": "CI chondrite by mass; two reproductions agree (pyrolite 0.3.9 CH_McDonoughSun1995.csv; georefdatar CI_Pyrolite__McDonough_Sun__1995__full.csv)"
+     },
+     "earth_mass_fraction": {
+      "silicate": {
+       "v": 6.48e-07,
+       "unit": "1",
+       "src": "mcdonough-sun1995",
+       "check": "unverified",
+       "note": "primitive mantle (pyrolite)"
+      },
+      "crust": {
+       "v": 2e-05,
+       "unit": "1",
+       "src": "rudnick-gao2003",
+       "check": "unverified",
+       "note": "bulk continental crust"
+      }
      }
     },
     {
@@ -3363,6 +5525,43 @@
       "physics": "The Sun's cerium: 80% from asymptotic giant branch stars (the s-process and hot-bottom burning) and 20% from the r-process (here given to neutron-star mergers).",
       "plain": "Most of the cerium was made by dying low-mass stars; the rest came from merging neutron stars.",
       "story": "Its atoms were made by old, swollen giant stars, the kind the Sun will one day become, puffing their outer layers away, with a share from merging neutron stars."
+     },
+     "condensation": {
+      "host_phase": "Hibonite + titanate",
+      "rides_in": "formation-rock",
+      "src": "lodders2003",
+      "check": "unverified",
+      "tc50_k": {
+       "v": 1478.0,
+       "unit": "K",
+       "src": "lodders2003",
+       "check": "unverified",
+       "at_pa": 10.0,
+       "note": "50% condensed from a gas of solar make-up at 1e-4 bar (Table 8)"
+      }
+     },
+     "ci_mass_fraction": {
+      "v": 6.13e-07,
+      "unit": "1",
+      "src": "mcdonough-sun1995",
+      "check": "unverified",
+      "note": "CI chondrite by mass; two reproductions agree (pyrolite 0.3.9 CH_McDonoughSun1995.csv; georefdatar CI_Pyrolite__McDonough_Sun__1995__full.csv)"
+     },
+     "earth_mass_fraction": {
+      "silicate": {
+       "v": 1.675e-06,
+       "unit": "1",
+       "src": "mcdonough-sun1995",
+       "check": "unverified",
+       "note": "primitive mantle (pyrolite)"
+      },
+      "crust": {
+       "v": 4.3e-05,
+       "unit": "1",
+       "src": "rudnick-gao2003",
+       "check": "unverified",
+       "note": "bulk continental crust"
+      }
      }
     },
     {
@@ -3399,6 +5598,43 @@
       "physics": "The Sun's praseodymium: 50% from asymptotic giant branch stars (the s-process and hot-bottom burning) and 50% from the r-process (here given to neutron-star mergers). Argued: the rapid neutron-capture share is given to merging neutron stars, which have been seen making heavy elements once (GW170817); how much rare kinds of supernova add is argued.",
       "plain": "About half of the praseodymium was made by dying low-mass stars; the rest came from merging neutron stars. Scientists still argue about part of this.",
       "story": "Its atoms were made by old, swollen giant stars, the kind the Sun will one day become, puffing their outer layers away, with a share from merging neutron stars."
+     },
+     "condensation": {
+      "host_phase": "Hibonite + titanate",
+      "rides_in": "formation-rock",
+      "src": "lodders2003",
+      "check": "unverified",
+      "tc50_k": {
+       "v": 1582.0,
+       "unit": "K",
+       "src": "lodders2003",
+       "check": "unverified",
+       "at_pa": 10.0,
+       "note": "50% condensed from a gas of solar make-up at 1e-4 bar (Table 8)"
+      }
+     },
+     "ci_mass_fraction": {
+      "v": 9.28e-08,
+      "unit": "1",
+      "src": "mcdonough-sun1995",
+      "check": "unverified",
+      "note": "CI chondrite by mass; two reproductions agree (pyrolite 0.3.9 CH_McDonoughSun1995.csv; georefdatar CI_Pyrolite__McDonough_Sun__1995__full.csv)"
+     },
+     "earth_mass_fraction": {
+      "silicate": {
+       "v": 2.54e-07,
+       "unit": "1",
+       "src": "mcdonough-sun1995",
+       "check": "unverified",
+       "note": "primitive mantle (pyrolite)"
+      },
+      "crust": {
+       "v": 4.9e-06,
+       "unit": "1",
+       "src": "rudnick-gao2003",
+       "check": "unverified",
+       "note": "bulk continental crust"
+      }
      }
     },
     {
@@ -3435,6 +5671,43 @@
       "physics": "The Sun's neodymium: 55% from asymptotic giant branch stars (the s-process and hot-bottom burning) and 45% from the r-process (here given to neutron-star mergers). Argued: the rapid neutron-capture share is given to merging neutron stars, which have been seen making heavy elements once (GW170817); how much rare kinds of supernova add is argued.",
       "plain": "A little over half of the neodymium was made by dying low-mass stars; the rest came from merging neutron stars. Scientists still argue about part of this.",
       "story": "Its atoms were made by old, swollen giant stars, the kind the Sun will one day become, puffing their outer layers away, with a share from merging neutron stars."
+     },
+     "condensation": {
+      "host_phase": "Hibonite",
+      "rides_in": "formation-rock",
+      "src": "lodders2003",
+      "check": "unverified",
+      "tc50_k": {
+       "v": 1602.0,
+       "unit": "K",
+       "src": "lodders2003",
+       "check": "unverified",
+       "at_pa": 10.0,
+       "note": "50% condensed from a gas of solar make-up at 1e-4 bar (Table 8)"
+      }
+     },
+     "ci_mass_fraction": {
+      "v": 4.57e-07,
+      "unit": "1",
+      "src": "mcdonough-sun1995",
+      "check": "unverified",
+      "note": "CI chondrite by mass; two reproductions agree (pyrolite 0.3.9 CH_McDonoughSun1995.csv; georefdatar CI_Pyrolite__McDonough_Sun__1995__full.csv)"
+     },
+     "earth_mass_fraction": {
+      "silicate": {
+       "v": 1.25e-06,
+       "unit": "1",
+       "src": "mcdonough-sun1995",
+       "check": "unverified",
+       "note": "primitive mantle (pyrolite)"
+      },
+      "crust": {
+       "v": 2e-05,
+       "unit": "1",
+       "src": "rudnick-gao2003",
+       "check": "unverified",
+       "note": "bulk continental crust"
+      }
      }
     },
     {
@@ -3492,6 +5765,43 @@
       "physics": "The Sun's samarium: 70% from the r-process (here given to neutron-star mergers) and 30% from asymptotic giant branch stars (the s-process and hot-bottom burning). Argued: the rapid neutron-capture share is given to merging neutron stars, which have been seen making heavy elements once (GW170817); how much rare kinds of supernova add is argued.",
       "plain": "Most of the samarium was made by merging neutron stars; the rest came from dying low-mass stars. Scientists still argue about part of this.",
       "story": "Its atoms were made by two dead stars, each heavier than the Sun and smaller than a city, spiralling together, with a share from dying low-mass stars."
+     },
+     "condensation": {
+      "host_phase": "Hibonite + titanate",
+      "rides_in": "formation-rock",
+      "src": "lodders2003",
+      "check": "unverified",
+      "tc50_k": {
+       "v": 1590.0,
+       "unit": "K",
+       "src": "lodders2003",
+       "check": "unverified",
+       "at_pa": 10.0,
+       "note": "50% condensed from a gas of solar make-up at 1e-4 bar (Table 8)"
+      }
+     },
+     "ci_mass_fraction": {
+      "v": 1.48e-07,
+      "unit": "1",
+      "src": "mcdonough-sun1995",
+      "check": "unverified",
+      "note": "CI chondrite by mass; two reproductions agree (pyrolite 0.3.9 CH_McDonoughSun1995.csv; georefdatar CI_Pyrolite__McDonough_Sun__1995__full.csv)"
+     },
+     "earth_mass_fraction": {
+      "silicate": {
+       "v": 4.06e-07,
+       "unit": "1",
+       "src": "mcdonough-sun1995",
+       "check": "unverified",
+       "note": "primitive mantle (pyrolite)"
+      },
+      "crust": {
+       "v": 3.9e-06,
+       "unit": "1",
+       "src": "rudnick-gao2003",
+       "check": "unverified",
+       "note": "bulk continental crust"
+      }
      }
     },
     {
@@ -3528,6 +5838,43 @@
       "physics": "Europium is the classic r-process tracer: about 95% of the Sun's europium is r-process. Its rise in old stars is too early for mergers alone, which is why rare magneto-rotational supernovae are argued to add a share (Kobayashi et al. 2020).",
       "plain": "Europium was made almost entirely by the rapid process, mostly in merging neutron stars. It appears so early in the galaxy that some must also come from rare supernovae, which is still argued.",
       "story": "Astronomers follow europium to trace the galaxy's history of star collisions."
+     },
+     "condensation": {
+      "host_phase": "Hibonite + titanate + feldspar",
+      "rides_in": "formation-rock",
+      "src": "lodders2003",
+      "check": "unverified",
+      "tc50_k": {
+       "v": 1356.0,
+       "unit": "K",
+       "src": "lodders2003",
+       "check": "unverified",
+       "at_pa": 10.0,
+       "note": "50% condensed from a gas of solar make-up at 1e-4 bar (Table 8)"
+      }
+     },
+     "ci_mass_fraction": {
+      "v": 5.63e-08,
+      "unit": "1",
+      "src": "mcdonough-sun1995",
+      "check": "unverified",
+      "note": "CI chondrite by mass; two reproductions agree (pyrolite 0.3.9 CH_McDonoughSun1995.csv; georefdatar CI_Pyrolite__McDonough_Sun__1995__full.csv)"
+     },
+     "earth_mass_fraction": {
+      "silicate": {
+       "v": 1.54e-07,
+       "unit": "1",
+       "src": "mcdonough-sun1995",
+       "check": "unverified",
+       "note": "primitive mantle (pyrolite)"
+      },
+      "crust": {
+       "v": 1.1e-06,
+       "unit": "1",
+       "src": "rudnick-gao2003",
+       "check": "unverified",
+       "note": "bulk continental crust"
+      }
      }
     },
     {
@@ -3565,6 +5912,43 @@
       "physics": "The Sun's gadolinium: 85% from the r-process (here given to neutron-star mergers) and 15% from asymptotic giant branch stars (the s-process and hot-bottom burning). Argued: the rapid neutron-capture share is given to merging neutron stars, which have been seen making heavy elements once (GW170817); how much rare kinds of supernova add is argued.",
       "plain": "Most of the gadolinium was made by merging neutron stars; the rest came from dying low-mass stars. Scientists still argue about part of this.",
       "story": "Its atoms were made by two dead stars, each heavier than the Sun and smaller than a city, spiralling together, with a share from dying low-mass stars."
+     },
+     "condensation": {
+      "host_phase": "Hibonite",
+      "rides_in": "formation-rock",
+      "src": "lodders2003",
+      "check": "unverified",
+      "tc50_k": {
+       "v": 1659.0,
+       "unit": "K",
+       "src": "lodders2003",
+       "check": "unverified",
+       "at_pa": 10.0,
+       "note": "50% condensed from a gas of solar make-up at 1e-4 bar (Table 8)"
+      }
+     },
+     "ci_mass_fraction": {
+      "v": 1.99e-07,
+      "unit": "1",
+      "src": "mcdonough-sun1995",
+      "check": "unverified",
+      "note": "CI chondrite by mass; two reproductions agree (pyrolite 0.3.9 CH_McDonoughSun1995.csv; georefdatar CI_Pyrolite__McDonough_Sun__1995__full.csv)"
+     },
+     "earth_mass_fraction": {
+      "silicate": {
+       "v": 5.44e-07,
+       "unit": "1",
+       "src": "mcdonough-sun1995",
+       "check": "unverified",
+       "note": "primitive mantle (pyrolite)"
+      },
+      "crust": {
+       "v": 3.7e-06,
+       "unit": "1",
+       "src": "rudnick-gao2003",
+       "check": "unverified",
+       "note": "bulk continental crust"
+      }
      }
     },
     {
@@ -3601,6 +5985,43 @@
       "physics": "The Sun's terbium: 93% from the r-process (here given to neutron-star mergers) and 7% from asymptotic giant branch stars (the s-process and hot-bottom burning). Argued: the rapid neutron-capture share is given to merging neutron stars, which have been seen making heavy elements once (GW170817); how much rare kinds of supernova add is argued.",
       "plain": "Most of the terbium was made by merging neutron stars; the rest came from dying low-mass stars. Scientists still argue about part of this.",
       "story": "Its atoms were made by two dead stars, each heavier than the Sun and smaller than a city, spiralling together, with a share from dying low-mass stars."
+     },
+     "condensation": {
+      "host_phase": "Hibonite",
+      "rides_in": "formation-rock",
+      "src": "lodders2003",
+      "check": "unverified",
+      "tc50_k": {
+       "v": 1659.0,
+       "unit": "K",
+       "src": "lodders2003",
+       "check": "unverified",
+       "at_pa": 10.0,
+       "note": "50% condensed from a gas of solar make-up at 1e-4 bar (Table 8)"
+      }
+     },
+     "ci_mass_fraction": {
+      "v": 3.61e-08,
+      "unit": "1",
+      "src": "mcdonough-sun1995",
+      "check": "unverified",
+      "note": "CI chondrite by mass; two reproductions agree (pyrolite 0.3.9 CH_McDonoughSun1995.csv; georefdatar CI_Pyrolite__McDonough_Sun__1995__full.csv)"
+     },
+     "earth_mass_fraction": {
+      "silicate": {
+       "v": 9.9e-08,
+       "unit": "1",
+       "src": "mcdonough-sun1995",
+       "check": "unverified",
+       "note": "primitive mantle (pyrolite)"
+      },
+      "crust": {
+       "v": 6e-07,
+       "unit": "1",
+       "src": "rudnick-gao2003",
+       "check": "unverified",
+       "note": "bulk continental crust"
+      }
      }
     },
     {
@@ -3637,6 +6058,43 @@
       "physics": "The Sun's dysprosium: 88% from the r-process (here given to neutron-star mergers) and 12% from asymptotic giant branch stars (the s-process and hot-bottom burning). Argued: the rapid neutron-capture share is given to merging neutron stars, which have been seen making heavy elements once (GW170817); how much rare kinds of supernova add is argued.",
       "plain": "Most of the dysprosium was made by merging neutron stars; the rest came from dying low-mass stars. Scientists still argue about part of this.",
       "story": "Its atoms were made by two dead stars, each heavier than the Sun and smaller than a city, spiralling together, with a share from dying low-mass stars."
+     },
+     "condensation": {
+      "host_phase": "Hibonite",
+      "rides_in": "formation-rock",
+      "src": "lodders2003",
+      "check": "unverified",
+      "tc50_k": {
+       "v": 1659.0,
+       "unit": "K",
+       "src": "lodders2003",
+       "check": "unverified",
+       "at_pa": 10.0,
+       "note": "50% condensed from a gas of solar make-up at 1e-4 bar (Table 8)"
+      }
+     },
+     "ci_mass_fraction": {
+      "v": 2.46e-07,
+      "unit": "1",
+      "src": "mcdonough-sun1995",
+      "check": "unverified",
+      "note": "CI chondrite by mass; two reproductions agree (pyrolite 0.3.9 CH_McDonoughSun1995.csv; georefdatar CI_Pyrolite__McDonough_Sun__1995__full.csv)"
+     },
+     "earth_mass_fraction": {
+      "silicate": {
+       "v": 6.74e-07,
+       "unit": "1",
+       "src": "mcdonough-sun1995",
+       "check": "unverified",
+       "note": "primitive mantle (pyrolite)"
+      },
+      "crust": {
+       "v": 3.6e-06,
+       "unit": "1",
+       "src": "rudnick-gao2003",
+       "check": "unverified",
+       "note": "bulk continental crust"
+      }
      }
     },
     {
@@ -3673,6 +6131,43 @@
       "physics": "The Sun's holmium: 92% from the r-process (here given to neutron-star mergers) and 8% from asymptotic giant branch stars (the s-process and hot-bottom burning). Argued: the rapid neutron-capture share is given to merging neutron stars, which have been seen making heavy elements once (GW170817); how much rare kinds of supernova add is argued.",
       "plain": "Most of the holmium was made by merging neutron stars; the rest came from dying low-mass stars. Scientists still argue about part of this.",
       "story": "Its atoms were made by two dead stars, each heavier than the Sun and smaller than a city, spiralling together, with a share from dying low-mass stars."
+     },
+     "condensation": {
+      "host_phase": "Hibonite",
+      "rides_in": "formation-rock",
+      "src": "lodders2003",
+      "check": "unverified",
+      "tc50_k": {
+       "v": 1659.0,
+       "unit": "K",
+       "src": "lodders2003",
+       "check": "unverified",
+       "at_pa": 10.0,
+       "note": "50% condensed from a gas of solar make-up at 1e-4 bar (Table 8)"
+      }
+     },
+     "ci_mass_fraction": {
+      "v": 5.46e-08,
+      "unit": "1",
+      "src": "mcdonough-sun1995",
+      "check": "unverified",
+      "note": "CI chondrite by mass; two reproductions agree (pyrolite 0.3.9 CH_McDonoughSun1995.csv; georefdatar CI_Pyrolite__McDonough_Sun__1995__full.csv)"
+     },
+     "earth_mass_fraction": {
+      "silicate": {
+       "v": 1.49e-07,
+       "unit": "1",
+       "src": "mcdonough-sun1995",
+       "check": "unverified",
+       "note": "primitive mantle (pyrolite)"
+      },
+      "crust": {
+       "v": 7.7e-07,
+       "unit": "1",
+       "src": "rudnick-gao2003",
+       "check": "unverified",
+       "note": "bulk continental crust"
+      }
      }
     },
     {
@@ -3709,6 +6204,43 @@
       "physics": "The Sun's erbium: 85% from the r-process (here given to neutron-star mergers) and 15% from asymptotic giant branch stars (the s-process and hot-bottom burning). Argued: the rapid neutron-capture share is given to merging neutron stars, which have been seen making heavy elements once (GW170817); how much rare kinds of supernova add is argued.",
       "plain": "Most of the erbium was made by merging neutron stars; the rest came from dying low-mass stars. Scientists still argue about part of this.",
       "story": "Its atoms were made by two dead stars, each heavier than the Sun and smaller than a city, spiralling together, with a share from dying low-mass stars."
+     },
+     "condensation": {
+      "host_phase": "Hibonite",
+      "rides_in": "formation-rock",
+      "src": "lodders2003",
+      "check": "unverified",
+      "tc50_k": {
+       "v": 1659.0,
+       "unit": "K",
+       "src": "lodders2003",
+       "check": "unverified",
+       "at_pa": 10.0,
+       "note": "50% condensed from a gas of solar make-up at 1e-4 bar (Table 8)"
+      }
+     },
+     "ci_mass_fraction": {
+      "v": 1.6e-07,
+      "unit": "1",
+      "src": "mcdonough-sun1995",
+      "check": "unverified",
+      "note": "CI chondrite by mass; two reproductions agree (pyrolite 0.3.9 CH_McDonoughSun1995.csv; georefdatar CI_Pyrolite__McDonough_Sun__1995__full.csv)"
+     },
+     "earth_mass_fraction": {
+      "silicate": {
+       "v": 4.38e-07,
+       "unit": "1",
+       "src": "mcdonough-sun1995",
+       "check": "unverified",
+       "note": "primitive mantle (pyrolite)"
+      },
+      "crust": {
+       "v": 2.1e-06,
+       "unit": "1",
+       "src": "rudnick-gao2003",
+       "check": "unverified",
+       "note": "bulk continental crust"
+      }
      }
     },
     {
@@ -3745,6 +6277,43 @@
       "physics": "The Sun's thulium: 87% from the r-process (here given to neutron-star mergers) and 13% from asymptotic giant branch stars (the s-process and hot-bottom burning). Argued: the rapid neutron-capture share is given to merging neutron stars, which have been seen making heavy elements once (GW170817); how much rare kinds of supernova add is argued.",
       "plain": "Most of the thulium was made by merging neutron stars; the rest came from dying low-mass stars. Scientists still argue about part of this.",
       "story": "Its atoms were made by two dead stars, each heavier than the Sun and smaller than a city, spiralling together, with a share from dying low-mass stars."
+     },
+     "condensation": {
+      "host_phase": "Hibonite",
+      "rides_in": "formation-rock",
+      "src": "lodders2003",
+      "check": "unverified",
+      "tc50_k": {
+       "v": 1659.0,
+       "unit": "K",
+       "src": "lodders2003",
+       "check": "unverified",
+       "at_pa": 10.0,
+       "note": "50% condensed from a gas of solar make-up at 1e-4 bar (Table 8)"
+      }
+     },
+     "ci_mass_fraction": {
+      "v": 2.47e-08,
+      "unit": "1",
+      "src": "mcdonough-sun1995",
+      "check": "unverified",
+      "note": "CI chondrite by mass; two reproductions agree (pyrolite 0.3.9 CH_McDonoughSun1995.csv; georefdatar CI_Pyrolite__McDonough_Sun__1995__full.csv)"
+     },
+     "earth_mass_fraction": {
+      "silicate": {
+       "v": 6.8e-08,
+       "unit": "1",
+       "src": "mcdonough-sun1995",
+       "check": "unverified",
+       "note": "primitive mantle (pyrolite)"
+      },
+      "crust": {
+       "v": 2.8e-07,
+       "unit": "1",
+       "src": "rudnick-gao2003",
+       "check": "unverified",
+       "note": "bulk continental crust"
+      }
      }
     },
     {
@@ -3781,6 +6350,43 @@
       "physics": "The Sun's ytterbium: 60% from the r-process (here given to neutron-star mergers) and 40% from asymptotic giant branch stars (the s-process and hot-bottom burning). Argued: the rapid neutron-capture share is given to merging neutron stars, which have been seen making heavy elements once (GW170817); how much rare kinds of supernova add is argued.",
       "plain": "A little over half of the ytterbium was made by merging neutron stars; the rest came from dying low-mass stars. Scientists still argue about part of this.",
       "story": "Its atoms were made by two dead stars, each heavier than the Sun and smaller than a city, spiralling together, with a share from dying low-mass stars."
+     },
+     "condensation": {
+      "host_phase": "Hibonite + titanate",
+      "rides_in": "formation-rock",
+      "src": "lodders2003",
+      "check": "unverified",
+      "tc50_k": {
+       "v": 1487.0,
+       "unit": "K",
+       "src": "lodders2003",
+       "check": "unverified",
+       "at_pa": 10.0,
+       "note": "50% condensed from a gas of solar make-up at 1e-4 bar (Table 8)"
+      }
+     },
+     "ci_mass_fraction": {
+      "v": 1.61e-07,
+      "unit": "1",
+      "src": "mcdonough-sun1995",
+      "check": "unverified",
+      "note": "CI chondrite by mass; two reproductions agree (pyrolite 0.3.9 CH_McDonoughSun1995.csv; georefdatar CI_Pyrolite__McDonough_Sun__1995__full.csv)"
+     },
+     "earth_mass_fraction": {
+      "silicate": {
+       "v": 4.41e-07,
+       "unit": "1",
+       "src": "mcdonough-sun1995",
+       "check": "unverified",
+       "note": "primitive mantle (pyrolite)"
+      },
+      "crust": {
+       "v": 1.9e-06,
+       "unit": "1",
+       "src": "rudnick-gao2003",
+       "check": "unverified",
+       "note": "bulk continental crust"
+      }
      }
     },
     {
@@ -3818,6 +6424,43 @@
       "physics": "The Sun's lutetium: 70% from the r-process (here given to neutron-star mergers) and 30% from asymptotic giant branch stars (the s-process and hot-bottom burning). Argued: the rapid neutron-capture share is given to merging neutron stars, which have been seen making heavy elements once (GW170817); how much rare kinds of supernova add is argued.",
       "plain": "Most of the lutetium was made by merging neutron stars; the rest came from dying low-mass stars. Scientists still argue about part of this.",
       "story": "Its atoms were made by two dead stars, each heavier than the Sun and smaller than a city, spiralling together, with a share from dying low-mass stars."
+     },
+     "condensation": {
+      "host_phase": "hibonite",
+      "rides_in": "formation-rock",
+      "src": "lodders2003",
+      "check": "unverified",
+      "tc50_k": {
+       "v": 1659.0,
+       "unit": "K",
+       "src": "lodders2003",
+       "check": "unverified",
+       "at_pa": 10.0,
+       "note": "50% condensed from a gas of solar make-up at 1e-4 bar (Table 8)"
+      }
+     },
+     "ci_mass_fraction": {
+      "v": 2.46e-08,
+      "unit": "1",
+      "src": "mcdonough-sun1995",
+      "check": "unverified",
+      "note": "CI chondrite by mass; two reproductions agree (pyrolite 0.3.9 CH_McDonoughSun1995.csv; georefdatar CI_Pyrolite__McDonough_Sun__1995__full.csv)"
+     },
+     "earth_mass_fraction": {
+      "silicate": {
+       "v": 6.75e-08,
+       "unit": "1",
+       "src": "mcdonough-sun1995",
+       "check": "unverified",
+       "note": "primitive mantle (pyrolite)"
+      },
+      "crust": {
+       "v": 3e-07,
+       "unit": "1",
+       "src": "rudnick-gao2003",
+       "check": "unverified",
+       "note": "bulk continental crust"
+      }
      }
     },
     {
@@ -3854,6 +6497,43 @@
       "physics": "The Sun's hafnium: 55% from asymptotic giant branch stars (the s-process and hot-bottom burning) and 45% from the r-process (here given to neutron-star mergers). Argued: the rapid neutron-capture share is given to merging neutron stars, which have been seen making heavy elements once (GW170817); how much rare kinds of supernova add is argued.",
       "plain": "A little over half of the hafnium was made by dying low-mass stars; the rest came from merging neutron stars. Scientists still argue about part of this.",
       "story": "Its atoms were made by old, swollen giant stars, the kind the Sun will one day become, puffing their outer layers away, with a share from merging neutron stars."
+     },
+     "condensation": {
+      "host_phase": "HfO2",
+      "rides_in": "formation-rock",
+      "src": "lodders2003",
+      "check": "unverified",
+      "tc50_k": {
+       "v": 1684.0,
+       "unit": "K",
+       "src": "lodders2003",
+       "check": "unverified",
+       "at_pa": 10.0,
+       "note": "50% condensed from a gas of solar make-up at 1e-4 bar (Table 8)"
+      }
+     },
+     "ci_mass_fraction": {
+      "v": 1.03e-07,
+      "unit": "1",
+      "src": "mcdonough-sun1995",
+      "check": "unverified",
+      "note": "CI chondrite by mass; two reproductions agree (pyrolite 0.3.9 CH_McDonoughSun1995.csv; georefdatar CI_Pyrolite__McDonough_Sun__1995__full.csv)"
+     },
+     "earth_mass_fraction": {
+      "silicate": {
+       "v": 2.83e-07,
+       "unit": "1",
+       "src": "mcdonough-sun1995",
+       "check": "unverified",
+       "note": "primitive mantle (pyrolite)"
+      },
+      "crust": {
+       "v": 3.7e-06,
+       "unit": "1",
+       "src": "rudnick-gao2003",
+       "check": "unverified",
+       "note": "bulk continental crust"
+      }
      }
     },
     {
@@ -3890,6 +6570,43 @@
       "physics": "The Sun's tantalum: 60% from the r-process (here given to neutron-star mergers) and 40% from asymptotic giant branch stars (the s-process and hot-bottom burning). Argued: the rapid neutron-capture share is given to merging neutron stars, which have been seen making heavy elements once (GW170817); how much rare kinds of supernova add is argued.",
       "plain": "A little over half of the tantalum was made by merging neutron stars; the rest came from dying low-mass stars. Scientists still argue about part of this.",
       "story": "Its atoms were made by two dead stars, each heavier than the Sun and smaller than a city, spiralling together, with a share from dying low-mass stars."
+     },
+     "condensation": {
+      "host_phase": "Hibonite + titanate",
+      "rides_in": "formation-rock",
+      "src": "lodders2003",
+      "check": "unverified",
+      "tc50_k": {
+       "v": 1573.0,
+       "unit": "K",
+       "src": "lodders2003",
+       "check": "unverified",
+       "at_pa": 10.0,
+       "note": "50% condensed from a gas of solar make-up at 1e-4 bar (Table 8)"
+      }
+     },
+     "ci_mass_fraction": {
+      "v": 1.36e-08,
+      "unit": "1",
+      "src": "mcdonough-sun1995",
+      "check": "unverified",
+      "note": "CI chondrite by mass; two reproductions agree (pyrolite 0.3.9 CH_McDonoughSun1995.csv; georefdatar CI_Pyrolite__McDonough_Sun__1995__full.csv)"
+     },
+     "earth_mass_fraction": {
+      "silicate": {
+       "v": 3.7e-08,
+       "unit": "1",
+       "src": "mcdonough-sun1995",
+       "check": "unverified",
+       "note": "primitive mantle (pyrolite)"
+      },
+      "crust": {
+       "v": 7e-07,
+       "unit": "1",
+       "src": "rudnick-gao2003",
+       "check": "unverified",
+       "note": "bulk continental crust"
+      }
      }
     },
     {
@@ -3926,6 +6643,49 @@
       "physics": "The Sun's tungsten: 55% from asymptotic giant branch stars (the s-process and hot-bottom burning) and 45% from the r-process (here given to neutron-star mergers). Argued: the rapid neutron-capture share is given to merging neutron stars, which have been seen making heavy elements once (GW170817); how much rare kinds of supernova add is argued.",
       "plain": "A little over half of the tungsten was made by dying low-mass stars; the rest came from merging neutron stars. Scientists still argue about part of this.",
       "story": "Its atoms were made by old, swollen giant stars, the kind the Sun will one day become, puffing their outer layers away, with a share from merging neutron stars."
+     },
+     "condensation": {
+      "host_phase": "Refractory metal alloy",
+      "rides_in": "formation-metal",
+      "src": "lodders2003",
+      "check": "unverified",
+      "tc50_k": {
+       "v": 1789.0,
+       "unit": "K",
+       "src": "lodders2003",
+       "check": "unverified",
+       "at_pa": 10.0,
+       "note": "50% condensed from a gas of solar make-up at 1e-4 bar (Table 8)"
+      }
+     },
+     "ci_mass_fraction": {
+      "v": 9.3e-08,
+      "unit": "1",
+      "src": "mcdonough-sun1995",
+      "check": "unverified",
+      "note": "CI chondrite by mass; two reproductions agree (pyrolite 0.3.9 CH_McDonoughSun1995.csv; georefdatar CI_Pyrolite__McDonough_Sun__1995__full.csv)"
+     },
+     "earth_mass_fraction": {
+      "core": {
+       "v": 4.7e-07,
+       "unit": "1",
+       "src": "mcdonough2003",
+       "check": "unverified"
+      },
+      "silicate": {
+       "v": 2.9e-08,
+       "unit": "1",
+       "src": "mcdonough-sun1995",
+       "check": "unverified",
+       "note": "primitive mantle (pyrolite)"
+      },
+      "crust": {
+       "v": 1e-06,
+       "unit": "1",
+       "src": "rudnick-gao2003",
+       "check": "unverified",
+       "note": "bulk continental crust"
+      }
      }
     },
     {
@@ -3962,6 +6722,49 @@
       "physics": "The Sun's rhenium: 90% from the r-process (here given to neutron-star mergers) and 10% from asymptotic giant branch stars (the s-process and hot-bottom burning). Argued: the rapid neutron-capture share is given to merging neutron stars, which have been seen making heavy elements once (GW170817); how much rare kinds of supernova add is argued.",
       "plain": "Most of the rhenium was made by merging neutron stars; the rest came from dying low-mass stars. Scientists still argue about part of this.",
       "story": "Its atoms were made by two dead stars, each heavier than the Sun and smaller than a city, spiralling together, with a share from dying low-mass stars."
+     },
+     "condensation": {
+      "host_phase": "Refractory metal alloy",
+      "rides_in": "formation-metal",
+      "src": "lodders2003",
+      "check": "unverified",
+      "tc50_k": {
+       "v": 1821.0,
+       "unit": "K",
+       "src": "lodders2003",
+       "check": "unverified",
+       "at_pa": 10.0,
+       "note": "50% condensed from a gas of solar make-up at 1e-4 bar (Table 8)"
+      }
+     },
+     "ci_mass_fraction": {
+      "v": 4e-08,
+      "unit": "1",
+      "src": "mcdonough-sun1995",
+      "check": "unverified",
+      "note": "CI chondrite by mass; two reproductions agree (pyrolite 0.3.9 CH_McDonoughSun1995.csv; georefdatar CI_Pyrolite__McDonough_Sun__1995__full.csv)"
+     },
+     "earth_mass_fraction": {
+      "core": {
+       "v": 2.3e-07,
+       "unit": "1",
+       "src": "mcdonough2003",
+       "check": "unverified"
+      },
+      "silicate": {
+       "v": 2.8e-10,
+       "unit": "1",
+       "src": "mcdonough-sun1995",
+       "check": "unverified",
+       "note": "primitive mantle (pyrolite)"
+      },
+      "crust": {
+       "v": 1.88e-10,
+       "unit": "1",
+       "src": "rudnick-gao2003",
+       "check": "unverified",
+       "note": "bulk continental crust"
+      }
      }
     },
     {
@@ -3998,6 +6801,49 @@
       "physics": "The Sun's osmium: 90% from the r-process (here given to neutron-star mergers) and 10% from asymptotic giant branch stars (the s-process and hot-bottom burning). Argued: the rapid neutron-capture share is given to merging neutron stars, which have been seen making heavy elements once (GW170817); how much rare kinds of supernova add is argued.",
       "plain": "Most of the osmium was made by merging neutron stars; the rest came from dying low-mass stars. Scientists still argue about part of this.",
       "story": "Its atoms were made by two dead stars, each heavier than the Sun and smaller than a city, spiralling together, with a share from dying low-mass stars."
+     },
+     "condensation": {
+      "host_phase": "Refractory metal alloy",
+      "rides_in": "formation-metal",
+      "src": "lodders2003",
+      "check": "unverified",
+      "tc50_k": {
+       "v": 1812.0,
+       "unit": "K",
+       "src": "lodders2003",
+       "check": "unverified",
+       "at_pa": 10.0,
+       "note": "50% condensed from a gas of solar make-up at 1e-4 bar (Table 8)"
+      }
+     },
+     "ci_mass_fraction": {
+      "v": 4.9e-07,
+      "unit": "1",
+      "src": "mcdonough-sun1995",
+      "check": "unverified",
+      "note": "CI chondrite by mass; two reproductions agree (pyrolite 0.3.9 CH_McDonoughSun1995.csv; georefdatar CI_Pyrolite__McDonough_Sun__1995__full.csv)"
+     },
+     "earth_mass_fraction": {
+      "core": {
+       "v": 2.8e-06,
+       "unit": "1",
+       "src": "mcdonough2003",
+       "check": "unverified"
+      },
+      "silicate": {
+       "v": 3.4e-09,
+       "unit": "1",
+       "src": "mcdonough-sun1995",
+       "check": "unverified",
+       "note": "primitive mantle (pyrolite)"
+      },
+      "crust": {
+       "v": 4.1e-11,
+       "unit": "1",
+       "src": "rudnick-gao2003",
+       "check": "unverified",
+       "note": "bulk continental crust"
+      }
      }
     },
     {
@@ -4034,6 +6880,49 @@
       "physics": "The Sun's iridium: 98% from the r-process (here given to neutron-star mergers) and 2% from asymptotic giant branch stars (the s-process and hot-bottom burning). Argued: the rapid neutron-capture share is given to merging neutron stars, which have been seen making heavy elements once (GW170817); how much rare kinds of supernova add is argued.",
       "plain": "Almost all of the iridium was made by merging neutron stars; the rest came from dying low-mass stars. Scientists still argue about part of this.",
       "story": "Its atoms were made by two dead stars, each heavier than the Sun and smaller than a city, spiralling together, with a share from dying low-mass stars."
+     },
+     "condensation": {
+      "host_phase": "Refractory metal alloy",
+      "rides_in": "formation-metal",
+      "src": "lodders2003",
+      "check": "unverified",
+      "tc50_k": {
+       "v": 1603.0,
+       "unit": "K",
+       "src": "lodders2003",
+       "check": "unverified",
+       "at_pa": 10.0,
+       "note": "50% condensed from a gas of solar make-up at 1e-4 bar (Table 8)"
+      }
+     },
+     "ci_mass_fraction": {
+      "v": 4.55e-07,
+      "unit": "1",
+      "src": "mcdonough-sun1995",
+      "check": "unverified",
+      "note": "CI chondrite by mass; two reproductions agree (pyrolite 0.3.9 CH_McDonoughSun1995.csv; georefdatar CI_Pyrolite__McDonough_Sun__1995__full.csv)"
+     },
+     "earth_mass_fraction": {
+      "core": {
+       "v": 2.6e-06,
+       "unit": "1",
+       "src": "mcdonough2003",
+       "check": "unverified"
+      },
+      "silicate": {
+       "v": 3.2e-09,
+       "unit": "1",
+       "src": "mcdonough-sun1995",
+       "check": "unverified",
+       "note": "primitive mantle (pyrolite)"
+      },
+      "crust": {
+       "v": 3.7e-11,
+       "unit": "1",
+       "src": "rudnick-gao2003",
+       "check": "unverified",
+       "note": "bulk continental crust"
+      }
      }
     },
     {
@@ -4070,6 +6959,49 @@
       "physics": "Platinum is about 95% r-process. A merger making heavy elements has been seen once (GW170817); how much rare supernovae add is argued.",
       "plain": "Platinum was made almost entirely in merging neutron stars, like gold. Whether rare supernovae also make some is still argued.",
       "story": "Like gold, it was born in the crash of two dead stars and scattered across the galaxy."
+     },
+     "condensation": {
+      "host_phase": "Refractory metal alloy",
+      "rides_in": "formation-metal",
+      "src": "lodders2003",
+      "check": "unverified",
+      "tc50_k": {
+       "v": 1408.0,
+       "unit": "K",
+       "src": "lodders2003",
+       "check": "unverified",
+       "at_pa": 10.0,
+       "note": "50% condensed from a gas of solar make-up at 1e-4 bar (Table 8)"
+      }
+     },
+     "ci_mass_fraction": {
+      "v": 1.01e-06,
+      "unit": "1",
+      "src": "mcdonough-sun1995",
+      "check": "unverified",
+      "note": "CI chondrite by mass; two reproductions agree (pyrolite 0.3.9 CH_McDonoughSun1995.csv; georefdatar CI_Pyrolite__McDonough_Sun__1995__full.csv)"
+     },
+     "earth_mass_fraction": {
+      "core": {
+       "v": 5.7e-06,
+       "unit": "1",
+       "src": "mcdonough2003",
+       "check": "unverified"
+      },
+      "silicate": {
+       "v": 7.1e-09,
+       "unit": "1",
+       "src": "mcdonough-sun1995",
+       "check": "unverified",
+       "note": "primitive mantle (pyrolite)"
+      },
+      "crust": {
+       "v": 1.5e-09,
+       "unit": "1",
+       "src": "rudnick-gao2003",
+       "check": "unverified",
+       "note": "bulk continental crust"
+      }
      }
     },
     {
@@ -4106,6 +7038,49 @@
       "physics": "Gold is almost entirely an r-process element: about 94% of the Sun's gold came from rapid neutron capture, here given to neutron-star mergers, and about 6% from the s-process in giant stars. A merger making heavy elements has been seen once directly (GW170817 and its kilonova). Whether mergers make nearly all the gold, or rare supernovae such as collapsars add a share, is still argued.",
       "plain": "Almost all gold was made in about a second, when two dead stars, each heavier than the Sun and smaller than a city, spiralled together and merged. The wreck probably collapsed into a black hole. Scientists still argue whether some gold also comes from rare kinds of supernova.",
       "story": "Every ring was forged in a collision of two dead stars, so dense a teaspoon weighed a billion tonnes. The gold was flung out, drifted for hundreds of millions of years, and was swept into the cloud that made this star."
+     },
+     "condensation": {
+      "host_phase": "Fe alloy",
+      "rides_in": "formation-metal",
+      "src": "lodders2003",
+      "check": "unverified",
+      "tc50_k": {
+       "v": 1060.0,
+       "unit": "K",
+       "src": "lodders2003",
+       "check": "unverified",
+       "at_pa": 10.0,
+       "note": "50% condensed from a gas of solar make-up at 1e-4 bar (Table 8)"
+      }
+     },
+     "ci_mass_fraction": {
+      "v": 1.4e-07,
+      "unit": "1",
+      "src": "mcdonough-sun1995",
+      "check": "unverified",
+      "note": "CI chondrite by mass; two reproductions agree (pyrolite 0.3.9 CH_McDonoughSun1995.csv; georefdatar CI_Pyrolite__McDonough_Sun__1995__full.csv)"
+     },
+     "earth_mass_fraction": {
+      "core": {
+       "v": 5e-07,
+       "unit": "1",
+       "src": "mcdonough2003",
+       "check": "unverified"
+      },
+      "silicate": {
+       "v": 1e-09,
+       "unit": "1",
+       "src": "mcdonough-sun1995",
+       "check": "unverified",
+       "note": "primitive mantle (pyrolite)"
+      },
+      "crust": {
+       "v": 1.3e-09,
+       "unit": "1",
+       "src": "rudnick-gao2003",
+       "check": "unverified",
+       "note": "bulk continental crust"
+      }
      }
     },
     {
@@ -4142,6 +7117,50 @@
       "physics": "The Sun's mercury: 60% from asymptotic giant branch stars (the s-process and hot-bottom burning) and 40% from the r-process (here given to neutron-star mergers). Argued: the rapid neutron-capture share is given to merging neutron stars, which have been seen making heavy elements once (GW170817); how much rare kinds of supernova add is argued.",
       "plain": "A little over half of the mercury was made by dying low-mass stars; the rest came from merging neutron stars. Scientists still argue about part of this.",
       "story": "Its atoms were made by old, swollen giant stars, the kind the Sun will one day become, puffing their outer layers away, with a share from merging neutron stars."
+     },
+     "condensation": {
+      "host_phase": "Troilite",
+      "rides_in": "formation-metal",
+      "src": "lodders2003",
+      "check": "unverified",
+      "tc50_k": {
+       "v": 252.0,
+       "unit": "K",
+       "src": "lodders2003",
+       "check": "unverified",
+       "at_pa": 10.0,
+       "note": "50% condensed from a gas of solar make-up at 1e-4 bar (Table 8)"
+      },
+      "note": "in iron sulfide, which formation counts with the metal"
+     },
+     "ci_mass_fraction": {
+      "v": 3e-07,
+      "unit": "1",
+      "src": "mcdonough-sun1995",
+      "check": "unverified",
+      "note": "CI chondrite by mass; two reproductions agree (pyrolite 0.3.9 CH_McDonoughSun1995.csv; georefdatar CI_Pyrolite__McDonough_Sun__1995__full.csv)"
+     },
+     "earth_mass_fraction": {
+      "core": {
+       "v": 5e-08,
+       "unit": "1",
+       "src": "mcdonough2003",
+       "check": "unverified"
+      },
+      "silicate": {
+       "v": 1e-08,
+       "unit": "1",
+       "src": "mcdonough-sun1995",
+       "check": "unverified",
+       "note": "primitive mantle (pyrolite)"
+      },
+      "crust": {
+       "v": 3e-08,
+       "unit": "1",
+       "src": "rudnick-gao2003",
+       "check": "unverified",
+       "note": "bulk continental crust"
+      }
      }
     },
     {
@@ -4178,6 +7197,44 @@
       "physics": "The Sun's thallium: 75% from asymptotic giant branch stars (the s-process and hot-bottom burning) and 25% from the r-process (here given to neutron-star mergers).",
       "plain": "Most of the thallium was made by dying low-mass stars; the rest came from merging neutron stars.",
       "story": "Its atoms were made by old, swollen giant stars, the kind the Sun will one day become, puffing their outer layers away, with a share from merging neutron stars."
+     },
+     "condensation": {
+      "host_phase": "Troilite",
+      "rides_in": "formation-metal",
+      "src": "lodders2003",
+      "check": "unverified",
+      "tc50_k": {
+       "v": 532.0,
+       "unit": "K",
+       "src": "lodders2003",
+       "check": "unverified",
+       "at_pa": 10.0,
+       "note": "50% condensed from a gas of solar make-up at 1e-4 bar (Table 8)"
+      },
+      "note": "in iron sulfide, which formation counts with the metal"
+     },
+     "ci_mass_fraction": {
+      "v": 1.4e-07,
+      "unit": "1",
+      "src": "mcdonough-sun1995",
+      "check": "unverified",
+      "note": "CI chondrite by mass; two reproductions agree (pyrolite 0.3.9 CH_McDonoughSun1995.csv; georefdatar CI_Pyrolite__McDonough_Sun__1995__full.csv)"
+     },
+     "earth_mass_fraction": {
+      "silicate": {
+       "v": 3.5e-09,
+       "unit": "1",
+       "src": "mcdonough-sun1995",
+       "check": "unverified",
+       "note": "primitive mantle (pyrolite)"
+      },
+      "crust": {
+       "v": 5e-07,
+       "unit": "1",
+       "src": "rudnick-gao2003",
+       "check": "unverified",
+       "note": "bulk continental crust"
+      }
      }
     },
     {
@@ -4214,6 +7271,49 @@
       "physics": "The Sun's lead: 80% from asymptotic giant branch stars (the s-process and hot-bottom burning) and 20% from the r-process (here given to neutron-star mergers).",
       "plain": "Most of the lead was made by dying low-mass stars; the rest came from merging neutron stars.",
       "story": "Its atoms were made by old, swollen giant stars, the kind the Sun will one day become, puffing their outer layers away, with a share from merging neutron stars."
+     },
+     "condensation": {
+      "host_phase": "Fe alloy",
+      "rides_in": "formation-metal",
+      "src": "lodders2003",
+      "check": "unverified",
+      "tc50_k": {
+       "v": 727.0,
+       "unit": "K",
+       "src": "lodders2003",
+       "check": "unverified",
+       "at_pa": 10.0,
+       "note": "50% condensed from a gas of solar make-up at 1e-4 bar (Table 8)"
+      }
+     },
+     "ci_mass_fraction": {
+      "v": 2.47e-06,
+      "unit": "1",
+      "src": "mcdonough-sun1995",
+      "check": "unverified",
+      "note": "CI chondrite by mass; two reproductions agree (pyrolite 0.3.9 CH_McDonoughSun1995.csv; georefdatar CI_Pyrolite__McDonough_Sun__1995__full.csv)"
+     },
+     "earth_mass_fraction": {
+      "core": {
+       "v": 4e-07,
+       "unit": "1",
+       "src": "mcdonough2003",
+       "check": "unverified"
+      },
+      "silicate": {
+       "v": 1.5e-07,
+       "unit": "1",
+       "src": "mcdonough-sun1995",
+       "check": "unverified",
+       "note": "primitive mantle (pyrolite)"
+      },
+      "crust": {
+       "v": 1.1e-05,
+       "unit": "1",
+       "src": "rudnick-gao2003",
+       "check": "unverified",
+       "note": "bulk continental crust"
+      }
      }
     },
     {
@@ -4250,6 +7350,49 @@
       "physics": "The Sun's bismuth: 80% from the r-process (here given to neutron-star mergers) and 20% from asymptotic giant branch stars (the s-process and hot-bottom burning). Argued: the rapid neutron-capture share is given to merging neutron stars, which have been seen making heavy elements once (GW170817); how much rare kinds of supernova add is argued.",
       "plain": "Most of the bismuth was made by merging neutron stars; the rest came from dying low-mass stars. Scientists still argue about part of this.",
       "story": "Its atoms were made by two dead stars, each heavier than the Sun and smaller than a city, spiralling together, with a share from dying low-mass stars."
+     },
+     "condensation": {
+      "host_phase": "Fe alloy",
+      "rides_in": "formation-metal",
+      "src": "lodders2003",
+      "check": "unverified",
+      "tc50_k": {
+       "v": 746.0,
+       "unit": "K",
+       "src": "lodders2003",
+       "check": "unverified",
+       "at_pa": 10.0,
+       "note": "50% condensed from a gas of solar make-up at 1e-4 bar (Table 8)"
+      }
+     },
+     "ci_mass_fraction": {
+      "v": 1.1e-07,
+      "unit": "1",
+      "src": "mcdonough-sun1995",
+      "check": "unverified",
+      "note": "CI chondrite by mass; two reproductions agree (pyrolite 0.3.9 CH_McDonoughSun1995.csv; georefdatar CI_Pyrolite__McDonough_Sun__1995__full.csv)"
+     },
+     "earth_mass_fraction": {
+      "core": {
+       "v": 3e-08,
+       "unit": "1",
+       "src": "mcdonough2003",
+       "check": "unverified"
+      },
+      "silicate": {
+       "v": 2.5e-09,
+       "unit": "1",
+       "src": "mcdonough-sun1995",
+       "check": "unverified",
+       "note": "primitive mantle (pyrolite)"
+      },
+      "crust": {
+       "v": 1.8e-07,
+       "unit": "1",
+       "src": "rudnick-gao2003",
+       "check": "unverified",
+       "note": "bulk continental crust"
+      }
      }
     },
     {
@@ -4422,6 +7565,43 @@
       "physics": "The Sun's thorium: 100% from the r-process (here given to neutron-star mergers). Argued: the rapid neutron-capture share is given to merging neutron stars, which have been seen making heavy elements once (GW170817); how much rare kinds of supernova add is argued.",
       "plain": "Almost all of the thorium was made by merging neutron stars. Scientists still argue about part of this.",
       "story": "Its atoms were made by two dead stars, each heavier than the Sun and smaller than a city, spiralling together."
+     },
+     "condensation": {
+      "host_phase": "Hibonite",
+      "rides_in": "formation-rock",
+      "src": "lodders2003",
+      "check": "unverified",
+      "tc50_k": {
+       "v": 1659.0,
+       "unit": "K",
+       "src": "lodders2003",
+       "check": "unverified",
+       "at_pa": 10.0,
+       "note": "50% condensed from a gas of solar make-up at 1e-4 bar (Table 8)"
+      }
+     },
+     "ci_mass_fraction": {
+      "v": 2.9e-08,
+      "unit": "1",
+      "src": "mcdonough-sun1995",
+      "check": "unverified",
+      "note": "CI chondrite by mass; two reproductions agree (pyrolite 0.3.9 CH_McDonoughSun1995.csv; georefdatar CI_Pyrolite__McDonough_Sun__1995__full.csv)"
+     },
+     "earth_mass_fraction": {
+      "silicate": {
+       "v": 7.95e-08,
+       "unit": "1",
+       "src": "mcdonough-sun1995",
+       "check": "unverified",
+       "note": "primitive mantle (pyrolite)"
+      },
+      "crust": {
+       "v": 5.6e-06,
+       "unit": "1",
+       "src": "rudnick-gao2003",
+       "check": "unverified",
+       "note": "bulk continental crust"
+      }
      }
     },
     {
@@ -4483,6 +7663,43 @@
       "physics": "Uranium is made only by the r-process. It decays (uranium-238 half-life 4.47 billion years), so the uranium in a world is a clock: there was nearly twice as much when the Sun formed.",
       "plain": "Uranium was made in merging neutron stars and has been slowly decaying ever since. Scientists still argue whether rare supernovae also make some.",
       "story": "Its atoms are slowly running down. The uranium in this world has been ticking since before the Sun was born."
+     },
+     "condensation": {
+      "host_phase": "Hibonite",
+      "rides_in": "formation-rock",
+      "src": "lodders2003",
+      "check": "unverified",
+      "tc50_k": {
+       "v": 1610.0,
+       "unit": "K",
+       "src": "lodders2003",
+       "check": "unverified",
+       "at_pa": 10.0,
+       "note": "50% condensed from a gas of solar make-up at 1e-4 bar (Table 8)"
+      }
+     },
+     "ci_mass_fraction": {
+      "v": 7.4e-09,
+      "unit": "1",
+      "src": "mcdonough-sun1995",
+      "check": "unverified",
+      "note": "CI chondrite by mass; two reproductions agree (pyrolite 0.3.9 CH_McDonoughSun1995.csv; georefdatar CI_Pyrolite__McDonough_Sun__1995__full.csv)"
+     },
+     "earth_mass_fraction": {
+      "silicate": {
+       "v": 2.03e-08,
+       "unit": "1",
+       "src": "mcdonough-sun1995",
+       "check": "unverified",
+       "note": "primitive mantle (pyrolite)"
+      },
+      "crust": {
+       "v": 1.3e-06,
+       "unit": "1",
+       "src": "rudnick-gao2003",
+       "check": "unverified",
+       "note": "bulk continental crust"
+      }
      }
     },
     {
@@ -5153,13 +8370,23 @@
      "id": "h1",
      "element": "h",
      "a": 1,
-     "stable": true
+     "stable": true,
+     "mass": {
+      "v": 1.00782503224,
+      "unit": "u",
+      "src": "ame2020"
+     }
     },
     {
      "id": "h2",
      "element": "h",
      "a": 2,
-     "stable": true
+     "stable": true,
+     "mass": {
+      "v": 2.01410177812,
+      "unit": "u",
+      "src": "ame2020"
+     }
     },
     {
      "id": "h3",
@@ -5172,19 +8399,34 @@
       "check": "unverified",
       "note": "year taken as the Julian year"
      },
-     "daughter": "he3"
+     "daughter": "he3",
+     "mass": {
+      "v": 3.01604928132,
+      "unit": "u",
+      "src": "ame2020"
+     }
     },
     {
      "id": "he3",
      "element": "he",
      "a": 3,
-     "stable": true
+     "stable": true,
+     "mass": {
+      "v": 3.01602932197,
+      "unit": "u",
+      "src": "ame2020"
+     }
     },
     {
      "id": "he4",
      "element": "he",
      "a": 4,
-     "stable": true
+     "stable": true,
+     "mass": {
+      "v": 4.00260325413,
+      "unit": "u",
+      "src": "ame2020"
+     }
     },
     {
      "id": "li6",
@@ -5451,6 +8693,15 @@
        "src": "nist-webbook",
        "at_k": 288.0,
        "note": "from the slope of the NIST Antoine fit, 273-303 K row"
+      },
+      "latent_fusion": {
+       "v": 333550.0,
+       "unit": "J kg-1",
+       "src": "crc-handbook",
+       "check": "unverified",
+       "at_k": 273.15,
+       "at_pa": 101325.0,
+       "note": "ice Ih to liquid, 6.009 kJ/mol"
       },
       "density_liquid": {
        "v": 1000.0,
@@ -8686,6 +11937,19 @@
       "plain": "oxygen",
       "story": "oxygen"
      },
+     "phases": {
+      "density_liquid": {
+       "v": 1141.2,
+       "unit": "kg m-3",
+       "src": "schmidt-wagner1985",
+       "check": "unverified",
+       "at_k": 90.188,
+       "also": [
+        "coolprop2014"
+       ],
+       "note": "saturated liquid at its normal boiling point; CoolProp's fit gives 1141.20"
+      }
+     },
      "optical": {
       "refractivity_589nm": {
        "v": 0.000271,
@@ -8828,6 +12092,19 @@
       "plain": "hydrogen",
       "story": "hydrogen"
      },
+     "phases": {
+      "density_liquid": {
+       "v": 70.85,
+       "unit": "kg m-3",
+       "src": "leachman2009",
+       "check": "unverified",
+       "at_k": 20.369,
+       "also": [
+        "coolprop2014"
+       ],
+       "note": "normal hydrogen at its normal boiling point"
+      }
+     },
      "optical": {
       "refractivity_589nm": {
        "v": 0.000132,
@@ -8908,6 +12185,51 @@
         0.0
        ],
        "src": "atom-isotropic"
+      }
+     }
+    },
+    {
+     "id": "d2",
+     "formula": {
+      "h2": 2
+     },
+     "names": {
+      "physics": "deuterium",
+      "plain": "heavy hydrogen",
+      "story": "heavy hydrogen"
+     },
+     "phases": {
+      "density_liquid": {
+       "v": 163.5,
+       "unit": "kg m-3",
+       "src": "coolprop2014",
+       "check": "computed",
+       "at_k": 23.31,
+       "also": [
+        "richardson2014"
+       ],
+       "note": "normal deuterium at its normal boiling point, from CoolProp's saturated-liquid fit to Richardson et al. 2014 (fit good to 0.17%)"
+      }
+     }
+    },
+    {
+     "id": "he3",
+     "formula": {
+      "he3": 1
+     },
+     "names": {
+      "physics": "helium-3",
+      "plain": "helium-3",
+      "story": "helium-3"
+     },
+     "phases": {
+      "density_liquid": {
+       "v": 59.0,
+       "unit": "kg m-3",
+       "src": "fudge-register",
+       "check": "unverified",
+       "at_k": 3.19,
+       "note": "about 59 kg/m3 at its 3.19 K boiling point; from memory, not read: check against a helium-3 equation of state"
       }
      }
     },
@@ -9552,6 +12874,150 @@
      }
     },
     {
+     "id": "sio2",
+     "formula": {
+      "si": 1,
+      "o": 2
+     },
+     "names": {
+      "physics": "silicon dioxide",
+      "plain": "silica",
+      "story": "silica"
+     }
+    },
+    {
+     "id": "tio2",
+     "formula": {
+      "ti": 1,
+      "o": 2
+     },
+     "names": {
+      "physics": "titanium dioxide",
+      "plain": "titanium dioxide",
+      "story": "titanium dioxide"
+     }
+    },
+    {
+     "id": "al2o3",
+     "formula": {
+      "al": 2,
+      "o": 3
+     },
+     "names": {
+      "physics": "aluminium oxide",
+      "plain": "alumina",
+      "story": "alumina"
+     }
+    },
+    {
+     "id": "cr2o3",
+     "formula": {
+      "cr": 2,
+      "o": 3
+     },
+     "names": {
+      "physics": "chromium(III) oxide",
+      "plain": "chromium(III) oxide",
+      "story": "chromium(III) oxide"
+     }
+    },
+    {
+     "id": "feo",
+     "formula": {
+      "fe": 1,
+      "o": 1
+     },
+     "names": {
+      "physics": "iron(II) oxide",
+      "plain": "iron(II) oxide",
+      "story": "iron(II) oxide"
+     }
+    },
+    {
+     "id": "mno",
+     "formula": {
+      "mn": 1,
+      "o": 1
+     },
+     "names": {
+      "physics": "manganese(II) oxide",
+      "plain": "manganese(II) oxide",
+      "story": "manganese(II) oxide"
+     }
+    },
+    {
+     "id": "mgo",
+     "formula": {
+      "mg": 1,
+      "o": 1
+     },
+     "names": {
+      "physics": "magnesium oxide",
+      "plain": "magnesia",
+      "story": "magnesia"
+     }
+    },
+    {
+     "id": "cao",
+     "formula": {
+      "ca": 1,
+      "o": 1
+     },
+     "names": {
+      "physics": "calcium oxide",
+      "plain": "lime",
+      "story": "lime"
+     }
+    },
+    {
+     "id": "na2o",
+     "formula": {
+      "na": 2,
+      "o": 1
+     },
+     "names": {
+      "physics": "sodium oxide",
+      "plain": "sodium oxide",
+      "story": "sodium oxide"
+     }
+    },
+    {
+     "id": "k2o",
+     "formula": {
+      "k": 2,
+      "o": 1
+     },
+     "names": {
+      "physics": "potassium oxide",
+      "plain": "potassium oxide",
+      "story": "potassium oxide"
+     }
+    },
+    {
+     "id": "p2o5",
+     "formula": {
+      "p": 2,
+      "o": 5
+     },
+     "names": {
+      "physics": "phosphorus pentoxide",
+      "plain": "phosphorus pentoxide",
+      "story": "phosphorus pentoxide"
+     }
+    },
+    {
+     "id": "nio",
+     "formula": {
+      "ni": 1,
+      "o": 1
+     },
+     "names": {
+      "physics": "nickel(II) oxide",
+      "plain": "nickel(II) oxide",
+      "story": "nickel(II) oxide"
+     }
+    },
+    {
      "id": "ch2o",
      "formula": {
       "c": 1,
@@ -9626,6 +13092,23 @@
        ],
        "src": "bodhaine1999"
       }
+     },
+     "density": {
+      "v": 1.225,
+      "unit": "kg m-3",
+      "src": "ussa1976",
+      "at_k": 288.15,
+      "at_pa": 101325.0,
+      "note": "sea level in the standard atmosphere"
+     },
+     "thermal": {
+      "heat_capacity": {
+       "v": 1004.0,
+       "unit": "J kg-1 K-1",
+       "src": "wallace-hobbs2006",
+       "check": "unverified",
+       "note": "at constant pressure, near 300 K"
+      }
      }
     },
     {
@@ -9642,7 +13125,74 @@
      "by": "volume",
      "src": "fudge-register",
      "check": "authored",
-     "note": "the weather pack's giant air at 0.0023 kg/mol; the reader's worked-out molar mass replaces it"
+     "note": "the weather pack's giant air at 0.0023 kg/mol; the reader's worked-out molar mass replaces it",
+     "thermal": {
+      "heat_capacity": {
+       "v": 12000.0,
+       "unit": "J kg-1 K-1",
+       "src": "nist-webbook",
+       "check": "unverified",
+       "note": "by mass from hydrogen near 300 K and helium (5193); colder hydrogen holds less"
+      }
+     }
+    },
+    {
+     "id": "fuel-hydrogen",
+     "names": {
+      "physics": "liquid hydrogen",
+      "plain": "hydrogen fuel",
+      "story": "hydrogen"
+     },
+     "recipe": {
+      "h2": 1.0
+     },
+     "by": "mass",
+     "src": "fudge-register",
+     "check": "authored"
+    },
+    {
+     "id": "fuel-hydrogen-oxygen",
+     "names": {
+      "physics": "liquid hydrogen and liquid oxygen",
+      "plain": "hydrogen and oxygen",
+      "story": "hydrolox"
+     },
+     "recipe": {
+      "h2": 0.14285714285714285,
+      "o2": 0.8571428571428571
+     },
+     "by": "mass",
+     "src": "fudge-register",
+     "check": "authored",
+     "note": "oxidiser to fuel 6:1 by mass, near what hydrogen-oxygen engines burn (the stoichiometric ratio is about 7.9)"
+    },
+    {
+     "id": "fuel-deuterium",
+     "names": {
+      "physics": "liquid deuterium",
+      "plain": "deuterium fuel",
+      "story": "deuterium"
+     },
+     "recipe": {
+      "d2": 1.0
+     },
+     "by": "mass",
+     "src": "fudge-register",
+     "check": "authored"
+    },
+    {
+     "id": "fuel-helium-3",
+     "names": {
+      "physics": "liquid helium-3",
+      "plain": "helium-3 fuel",
+      "story": "helium-3"
+     },
+     "recipe": {
+      "he3": 1.0
+     },
+     "by": "mass",
+     "src": "fudge-register",
+     "check": "authored"
     },
     {
      "id": "surface-rock",
@@ -9697,6 +13247,238 @@
       "unit": "K",
       "src": "nist-webbook",
       "note": "at low pressure"
+     }
+    },
+    {
+     "id": "crust-rock",
+     "names": {
+      "physics": "continental crust rock",
+      "plain": "crust rock",
+      "story": "rock"
+     },
+     "recipe": {},
+     "by": "mass",
+     "density": {
+      "v": 2700.0,
+      "unit": "kg m-3",
+      "src": "turcotte2014",
+      "check": "unverified"
+     }
+    },
+    {
+     "id": "mantle-rock",
+     "names": {
+      "physics": "upper mantle rock",
+      "plain": "mantle rock",
+      "story": "deep rock"
+     },
+     "recipe": {},
+     "by": "mass",
+     "density": {
+      "v": 3300.0,
+      "unit": "kg m-3",
+      "src": "turcotte2014",
+      "check": "unverified"
+     }
+    },
+    {
+     "id": "sediment",
+     "names": {
+      "physics": "compacted sediment",
+      "plain": "sediment",
+      "story": "sediment"
+     },
+     "recipe": {},
+     "by": "mass",
+     "density": {
+      "v": 2300.0,
+      "unit": "kg m-3",
+      "src": "turcotte2014",
+      "check": "unverified"
+     }
+    },
+    {
+     "id": "venus-air",
+     "names": {
+      "physics": "carbon dioxide atmosphere (Venus)",
+      "plain": "thick carbon dioxide air",
+      "story": "furnace air"
+     },
+     "recipe": {
+      "co2": 0.965,
+      "n2": 0.035
+     },
+     "by": "volume",
+     "src": "nssdca-venus",
+     "check": "unverified",
+     "thermal": {
+      "heat_capacity": {
+       "v": 1100.0,
+       "unit": "J kg-1 K-1",
+       "src": "nist-webbook",
+       "check": "unverified",
+       "note": "carbon dioxide near 700 K"
+      }
+     }
+    },
+    {
+     "id": "mars-air",
+     "names": {
+      "physics": "thin carbon dioxide atmosphere (Mars)",
+      "plain": "thin carbon dioxide air",
+      "story": "thin air"
+     },
+     "recipe": {
+      "co2": 0.9525,
+      "n2": 0.0259,
+      "ar": 0.0194,
+      "o2": 0.0016,
+      "co": 0.0006
+     },
+     "by": "volume",
+     "src": "nssdca-mars",
+     "check": "unverified",
+     "note": "carbon dioxide taken as 95.25% (the fact sheet's 95.1% plus the traces it leaves out) so the recipe sums to one",
+     "thermal": {
+      "heat_capacity": {
+       "v": 750.0,
+       "unit": "J kg-1 K-1",
+       "src": "nist-webbook",
+       "check": "unverified",
+       "note": "carbon dioxide near 210 K"
+      }
+     }
+    },
+    {
+     "id": "titan-air",
+     "names": {
+      "physics": "nitrogen-methane atmosphere (Titan)",
+      "plain": "nitrogen and methane air",
+      "story": "cold haze air"
+     },
+     "recipe": {
+      "n2": 0.9435,
+      "ch4": 0.0565
+     },
+     "by": "volume",
+     "src": "niemann2005",
+     "check": "unverified",
+     "thermal": {
+      "heat_capacity": {
+       "v": 1040.0,
+       "unit": "J kg-1 K-1",
+       "src": "nist-webbook",
+       "check": "unverified",
+       "note": "nitrogen near 94 K"
+      }
+     }
+    },
+    {
+     "id": "quartz-sand",
+     "names": {
+      "physics": "quartz sand",
+      "plain": "sand",
+      "story": "sand"
+     },
+     "recipe": {},
+     "by": "mass",
+     "density": {
+      "v": 2650.0,
+      "unit": "kg m-3",
+      "src": "crc-handbook",
+      "check": "unverified",
+      "note": "grain density, not bulk"
+     }
+    },
+    {
+     "id": "steel-wire",
+     "names": {
+      "physics": "high-strength steel wire",
+      "plain": "steel cable",
+      "story": "steel"
+     },
+     "recipe": {},
+     "by": "mass",
+     "density": {
+      "v": 7850.0,
+      "unit": "kg m-3",
+      "src": "fudge-register",
+      "check": "unverified",
+      "note": "textbook carbon steel; from memory, not read"
+     },
+     "tensile_strength": {
+      "v": 2000000000.0,
+      "unit": "Pa",
+      "src": "fudge-register",
+      "check": "unverified",
+      "note": "drawn high-carbon wire is about 1.8 to 2.2 GPa; from memory, not read"
+     }
+    },
+    {
+     "id": "aramid",
+     "names": {
+      "physics": "aramid fibre (Kevlar 49 yarn)",
+      "plain": "aramid fibre",
+      "story": "aramid"
+     },
+     "recipe": {},
+     "by": "mass",
+     "density": {
+      "v": 1440.0,
+      "unit": "kg m-3",
+      "src": "dupont-kevlar2017"
+     },
+     "tensile_strength": {
+      "v": 3000000000.0,
+      "unit": "Pa",
+      "src": "dupont-kevlar2017",
+      "note": "yarn, straight test; a resin-impregnated strand reaches 3.6 GPa"
+     }
+    },
+    {
+     "id": "pbo-fibre",
+     "names": {
+      "physics": "PBO fibre (Zylon HM)",
+      "plain": "PBO fibre",
+      "story": "Zylon"
+     },
+     "recipe": {},
+     "by": "mass",
+     "density": {
+      "v": 1560.0,
+      "unit": "kg m-3",
+      "src": "fiberline-zylon",
+      "note": "specific gravity 1.56"
+     },
+     "tensile_strength": {
+      "v": 5800000000.0,
+      "unit": "Pa",
+      "src": "fiberline-zylon",
+      "note": "42.0 g/d times specific gravity 1.56 is 5.8 GPa, as Toyobo quotes"
+     }
+    },
+    {
+     "id": "carbon-nanotube",
+     "names": {
+      "physics": "multiwalled carbon nanotube (best measured shell)",
+      "plain": "carbon nanotube",
+      "story": "nanotube"
+     },
+     "recipe": {},
+     "by": "mass",
+     "density": {
+      "v": 1340.0,
+      "unit": "kg m-3",
+      "src": "fudge-register",
+      "check": "unverified",
+      "note": "1.3 to 1.4 g/cm3 is usually quoted; not read from a paper"
+     },
+     "tensile_strength": {
+      "v": 63000000000.0,
+      "unit": "Pa",
+      "src": "yu2000",
+      "check": "unverified",
+      "note": "the strongest of the measured outer shells; no cable this strong has been made"
      }
     },
     {
@@ -9907,6 +13689,12 @@
      "doi": "10.1103/PhysRevLett.119.161101"
     },
     {
+     "id": "ame2020",
+     "text": "Wang, M., Huang, W. J., Kondev, F. G., Audi, G. and Naimi, S. 2021, Chinese Phys. C 45, 030003: the AME 2020 atomic mass evaluation (II), tables",
+     "status": "unverified",
+     "doi": "10.1088/1674-1137/abddaf"
+    },
+    {
      "id": "atom-isotropic",
      "text": "A spherically symmetric atom has no anisotropic polarisability, so its King correction factor is exactly 1 (Bodhaine et al. 1999 discussion of depolarisation)",
      "status": "textbook",
@@ -9941,6 +13729,12 @@
      "text": "10th CGPM 1954, Resolution 4: standard atmosphere 101 325 Pa",
      "status": "textbook",
      "url": "https://www.bipm.org/en/committees/cg/cgpm/10-1954/resolution-4"
+    },
+    {
+     "id": "chandrasekhar1931",
+     "text": "Chandrasekhar, S. 1931, ApJ 74, 81: the maximum mass of ideal white dwarfs (1.44 solar masses is the usual figure for a carbon-oxygen core, mu_e = 2, with Coulomb corrections)",
+     "status": "textbook",
+     "doi": "10.1086/143324"
     },
     {
      "id": "chaplin-lsbu",
@@ -9979,6 +13773,19 @@
      "url": "https://goldbook.iupac.org/"
     },
     {
+     "id": "coolprop2014",
+     "text": "Bell, I. H., Wronski, J., Quoilin, S. and Lemort, V. 2014, Ind. Eng. Chem. Res. 53, 2498: CoolProp, pure and pseudo-pure fluid property evaluation (MIT licence; its saturated-liquid density fits to the equations of state, dev/fluids/*.json)",
+     "status": "unverified",
+     "doi": "10.1021/ie4033999",
+     "url": "https://github.com/CoolProp/CoolProp"
+    },
+    {
+     "id": "crc-handbook",
+     "text": "Haynes, W. M. (ed.) 2016, CRC Handbook of Chemistry and Physics, 97th edition, CRC Press (quartz 2650 kg/m3)",
+     "status": "unverified",
+     "doi": "10.1201/9781315380476"
+    },
+    {
      "id": "des2025",
      "text": "DES Collaboration (Abbott, T. M. C. et al.) 2025, Phys. Rev. D 112, 083535: Dark Energy Survey year 3, cosmological constraints from cluster abundances, weak lensing and galaxy clustering",
      "status": "verified",
@@ -9989,6 +13796,24 @@
      "text": "DESI Collaboration (Adame, A. G. et al.) 2025, JCAP 02, 021: DESI 2024 VI, cosmological constraints from baryon acoustic oscillations",
      "status": "verified",
      "doi": "10.1088/1475-7516/2025/02/021"
+    },
+    {
+     "id": "dupont-kevlar2017",
+     "text": "DuPont 2017, Kevlar aramid fiber technical guide, Table II-1: typical properties of Kevlar 29 and 49 yarns (Kevlar 49 straight-test yarn 3,000 MPa, resin-impregnated strand 3,600 MPa, density 1.44 g/cm3; typical values, not specifications)",
+     "status": "verified",
+     "url": "https://www.r-g.de/wiki/images/e/ec/Td_en_Kevlar_guide.pdf"
+    },
+    {
+     "id": "eakins2010",
+     "text": "Eakins, B. W. and Sharman, G. F. 2010, Volumes of the World's Oceans from ETOPO1, NOAA National Geophysical Data Center (1.335e9 km3, mean depth 3688 m)",
+     "status": "unverified",
+     "url": "https://www.ngdc.noaa.gov/mgg/global/etopo1_ocean_volumes.html"
+    },
+    {
+     "id": "fiberline-zylon",
+     "text": "Fiber-Line, Zylon PBO datasheet (fibre made by Toyobo): high-modulus grade breaking tenacity 42.0 g/d, specific gravity 1.56; typical values, not a specification. Toyobo's own technical information gives 5.8 GPa",
+     "status": "verified",
+     "url": "https://automotive.polyone.com/sites/default/files/2021-06/fl.us-.datasheet-zylonr-pbo.pdf"
     },
     {
      "id": "fields2020",
@@ -10126,6 +13951,12 @@
      "doi": "10.3847/1538-4357/abae65"
     },
     {
+     "id": "leachman2009",
+     "text": "Leachman, J. W., Jacobsen, R. T., Penoncello, S. G. and Lemmon, E. W. 2009, J. Phys. Chem. Ref. Data 38, 721: fundamental equations of state for parahydrogen, normal hydrogen and orthohydrogen",
+     "status": "unverified",
+     "doi": "10.1063/1.3160306"
+    },
+    {
      "id": "lin2005",
      "text": "Lin, J.-F., Gregoryanz, E., Struzhkin, V. V., Somayazulu, M., Mao, H.-k. and Hemley, R. J. 2005, Geophys. Res. Lett. 32, L11306: melting behavior of H2O at high pressures and temperatures (a break in the melting curve at about 35 GPa and 1040 K; ice VII to X from 60 GPa at 300 K, quoting Goncharov et al. 1999)",
      "status": "verified",
@@ -10180,6 +14011,19 @@
      "doi": "10.1103/PhysRevLett.97.017801"
     },
     {
+     "id": "mcdonough-sun1995",
+     "text": "McDonough, W. F. and Sun, S.-s. 1995, Chemical Geology 120, 223: the composition of the Earth (CI chondrite and pyrolite columns; read from two machine-readable reproductions, handover/packages/MP-affinity-data)",
+     "status": "unverified",
+     "doi": "10.1016/0009-2541(94)00140-4"
+    },
+    {
+     "id": "mcdonough2003",
+     "text": "McDonough, W. F. 2003, Compositional model for the Earth's core, Treatise on Geochemistry vol. 2, 547, Table 4 (read from the GERM reservoir database's copy)",
+     "status": "unverified",
+     "doi": "10.1016/B0-08-043751-6/02015-6",
+     "url": "https://earthref.org/GERMRD/34/"
+    },
+    {
      "id": "mcgaugh2016",
      "text": "McGaugh, S. S., Lelli, F. and Schombert, J. M. 2016, Phys. Rev. Lett. 117, 201101: radial acceleration relation in rotationally supported galaxies",
      "status": "verified",
@@ -10198,10 +14042,22 @@
      "doi": "10.1038/s41586-019-1114-6"
     },
     {
+     "id": "moritz2000",
+     "text": "Moritz, H. 2000, J. Geodesy 74, 128: Geodetic Reference System 1980 (Earth's angular velocity 7 292 115e-11 rad/s)",
+     "status": "verified",
+     "doi": "10.1007/s001900050278"
+    },
+    {
      "id": "nadler2021",
      "text": "Nadler, E. O. et al. 2021, Phys. Rev. Lett. 126, 091101: constraints on dark matter properties from observations of Milky Way satellite galaxies",
      "status": "verified",
      "doi": "10.1103/PhysRevLett.126.091101"
+    },
+    {
+     "id": "niemann2005",
+     "text": "Niemann, H. B. et al. 2005, Nature 438, 779: Titan's atmosphere from the Huygens probe (5.65% methane by volume near the surface)",
+     "status": "unverified",
+     "doi": "10.1038/nature04122"
     },
     {
      "id": "nist-webbook",
@@ -10222,10 +14078,28 @@
      "url": "https://nssdc.gsfc.nasa.gov/planetary/factsheet/jupiterfact.html"
     },
     {
+     "id": "nssdca-mars",
+     "text": "NASA NSSDCA Mars fact sheet (atmosphere 95.1% CO2, 2.59% N2, 1.94% Ar, 0.16% O2, 0.06% CO by volume)",
+     "status": "unverified",
+     "url": "https://nssdc.gsfc.nasa.gov/planetary/factsheet/marsfact.html"
+    },
+    {
      "id": "nssdca-moon",
      "text": "NASA NSSDCA Moon fact sheet (mass 0.07346e24 kg, mean radius 1737.4 km, semi-major axis 0.3844e6 km)",
      "status": "verified",
      "url": "https://nssdc.gsfc.nasa.gov/planetary/factsheet/moonfact.html"
+    },
+    {
+     "id": "nssdca-sun",
+     "text": "NASA NSSDCA Sun fact sheet: sidereal rotation period 25.38 days (the Carrington rotation)",
+     "status": "unverified",
+     "url": "https://nssdc.gsfc.nasa.gov/planetary/factsheet/sunfact.html"
+    },
+    {
+     "id": "nssdca-venus",
+     "text": "NASA NSSDCA Venus fact sheet (atmosphere 96.5% CO2, 3.5% N2 by volume)",
+     "status": "unverified",
+     "url": "https://nssdc.gsfc.nasa.gov/planetary/factsheet/venusfact.html"
     },
     {
      "id": "nubase2020",
@@ -10238,6 +14112,12 @@
      "text": "Öberg, K. I., Murray-Clay, R. and Bergin, E. A. 2011, ApJL 743, L16: the effects of snowlines on C/O in planetary atmospheres (H2O 135 K, CO2 47 K, CO 20 K)",
      "status": "unverified",
      "doi": "10.1088/2041-8205/743/1/L16"
+    },
+    {
+     "id": "palme-oneill2014",
+     "text": "Palme, H. and O'Neill, H. St. C. 2014, Cosmochemical estimates of mantle composition, Treatise on Geochemistry 2nd edition vol. 3, 1: CI chondrite hydrogen and oxygen (read from the pyrolite package's copy)",
+     "status": "unverified",
+     "doi": "10.1016/B978-0-08-095975-7.00201-1"
     },
     {
      "id": "pdg-gas",
@@ -10282,10 +14162,22 @@
      "doi": "10.1016/j.icarus.2010.08.008"
     },
     {
+     "id": "richardson2014",
+     "text": "Richardson, I. A., Leachman, J. W. and Lemmon, E. W. 2014, J. Phys. Chem. Ref. Data 43, 013103: fundamental equation of state for deuterium",
+     "status": "unverified",
+     "doi": "10.1063/1.4864752"
+    },
+    {
      "id": "rocha2013",
      "text": "Rocha, M. et al. 2013, MNRAS 430, 81: cosmological simulations with self-interacting dark matter I, constant-density cores and substructure",
      "status": "verified",
      "doi": "10.1093/mnras/sts514"
+    },
+    {
+     "id": "rudnick-gao2003",
+     "text": "Rudnick, R. L. and Gao, S. 2003, Composition of the continental crust, Treatise on Geochemistry vol. 3, 1, Table 11, bulk crust (read from the pyrolite package's copy, checked against the 2014 edition)",
+     "status": "unverified",
+     "doi": "10.1016/B0-08-043751-6/03016-4"
     },
     {
      "id": "ruedas2017",
@@ -10306,6 +14198,12 @@
      "doi": "10.1063/1.5085163"
     },
     {
+     "id": "schmidt-wagner1985",
+     "text": "Schmidt, R. and Wagner, W. 1985, Fluid Phase Equilibria 19, 175: a new form of the equation of state for pure substances and its application to oxygen",
+     "status": "unverified",
+     "doi": "10.1016/0378-3812(85)87016-3"
+    },
+    {
      "id": "schneider2012",
      "text": "Schneider, A. et al. 2012, MNRAS 424, 684: non-linear evolution of cosmological structures in warm dark matter models (the half-mode mass)",
      "status": "verified",
@@ -10324,6 +14222,12 @@
      "url": "https://pmc.ncbi.nlm.nih.gov/articles/PMC413997"
     },
     {
+     "id": "turcotte2014",
+     "text": "Turcotte, D. L. and Schubert, G. 2014, Geodynamics, 3rd edition, Cambridge University Press (typical crust 2700, mantle 3300 and sediment 2300 kg/m3 of its worked problems)",
+     "status": "unverified",
+     "doi": "10.1017/CBO9780511843877"
+    },
+    {
      "id": "ussa1976",
      "text": "U.S. Standard Atmosphere 1976, NOAA/NASA/USAF (sea-level dry-air composition by volume)",
      "status": "verified",
@@ -10336,10 +14240,22 @@
      "doi": "10.1103/PhysRevLett.126.141104"
     },
     {
+     "id": "wallace-hobbs2006",
+     "text": "Wallace, J. M. and Hobbs, P. V. 2006, Atmospheric Science: An Introductory Survey, 2nd edition, Academic Press (dry air c_p = 1004 J/kg/K)",
+     "status": "unverified",
+     "doi": "10.1016/C2009-0-00034-8"
+    },
+    {
      "id": "wikipedia-ice-phases",
      "text": "Wikipedia, Phases of ice (read 22 Nov 2026): table of phases with formation conditions; used only where it agrees with the LSBU tables",
      "status": "verified",
      "url": "https://en.wikipedia.org/wiki/Phases_of_ice"
+    },
+    {
+     "id": "yu2000",
+     "text": "Yu, M.-F., Lourie, O., Dyer, M. J., Moloni, K., Kelly, T. F. and Ruoff, R. S. 2000, Science 287, 637: strength and breaking mechanism of multiwalled carbon nanotubes under tensile load (outer shells broke at 11 to 63 GPa)",
+     "status": "unverified",
+     "doi": "10.1126/science.287.5453.637"
     }
    ]
   }

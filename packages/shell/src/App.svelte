@@ -5,25 +5,30 @@
 -->
 <script lang="ts">
   import { untrack } from "svelte";
-  import { railOf, scalesOf, type RailScale, DEPTHS, isDepth, type Depth, cellHalo, readViewChoice, type ViewChoice, isPlaceScale, nextTrail, parsePlaceHash, placeHash, placeRank, placeSteps, readRecent, rememberPlace, samePlace, PLACE_EVENT, PLACE_SCALES, PLACE_WORDS, type Place, type PlaceNote, type PlaceScale } from "../../ui-contract/src/index.ts";
+  import { stackProvides, railOf, scalesOf, type RailScale, DEPTHS, isDepth, type Depth, cellHalo, readViewChoice, type ViewChoice, isPlaceScale, nextTrail, parsePlaceHash, placeHash, placeRank, placeSteps, readRecent, rememberPlace, samePlace, PLACE_EVENT, PLACE_SCALES, PLACE_WORDS, type Place, type PlaceNote, type PlaceScale } from "../../ui-contract/src/index.ts";
   import { PLACE_SCREENS } from "./documents/scales.ts";
   import { applyEdits, applySetup, type AtomInfo, type SifterDoc, enterFacts, observeOf, type AuthoredFacts, checkScreen, deriveScene, gmSeat, redoEdit, subjectOf, systemOrder, undoEdit, type CheckedScreen, type DerivationDoc, type ScreenDoc, type SystemScene, type ViewHandle, type ViewModule, type ViewSession } from "../../ui-contract/src/index.ts";
   import { openBrowserSession } from "../../ui-contract/src/host-browser.ts";
   import { createShare, type Share } from "./share.svelte.ts";
   import { clearStored, download, readStored, setAside, writeStored } from "./campaign-store.ts";
+  import YourData from "./YourData.svelte";
+  import { downloadText, opening as markOpening, restoreSetAside, setAsideText, unfinishedOpen, watchProblems, type DiagnosticState } from "./your-data.ts";
   import { checkCampaignSave, makeCampaignSave, saveFileName, savedEvents, type CampaignSave } from "../../ui-contract/src/index.ts";
+  import { CONVERTER_URL, checkPackDoc, creditWords, fetchExplorers, previewStack, reportWords, sniffFile, stackPacks as addPacks, v3SaveText, type ExplorersListing, type PackDoc, type Sniffed, type StackPreview } from "../../ui-contract/src/index.ts";
   import SeatsPanel from "./SeatsPanel.svelte";
   import LensPanel from "./LensPanel.svelte";
   import SoundControl from "../../sound/src/SoundControl.svelte";
   import LightControl from "./LightControl.svelte";
   import MakeSystem from "./MakeSystem.svelte";
+  import AddHere from "./AddHere.svelte";
   import StartSheet, { type StartAction } from "./StartSheet.svelte";
+  import HelpDoor, { markNewsSeen, unseenNews, type HelpPage } from "./HelpDoor.svelte";
   import startDoc from "./documents/start.lines.json";
   import LookAhead from "./LookAhead.svelte";
   import { readSol, solBatches, solSourceText, SOL_TITLE } from "../../ui-contract/src/index.ts";
   import { listedTitle, sceneAt, sceneFromResolved, type LookedAhead, type SystemSpec } from "../../ui-contract/src/index.ts";
   import lightDoc from "./documents/light.recipes.json";
-  import { SYMBOLS, checkLightRecipe, describeLight, litFromSystem, paint, type BandRecipe, type Mark } from "../../ui-contract/src/index.ts";
+  import { SYMBOLS, checkLightRecipe, describeLight, lightForBand, litFromSystem, paint, readLight, recipeBand, type ViewBand, type BandRecipe, type Mark } from "../../ui-contract/src/index.ts";
   import AgentsPanel from "../../agents/src/AgentsPanel.svelte";
   import type { OracHost } from "../../agents/src/OracTab.svelte";
   import type { MinervaHost } from "../../agents/src/MinervaTab.svelte";
@@ -71,6 +76,8 @@
   import plainVocab from "./documents/vocab.plain.json";
   import { REGISTRY } from "./registry.ts";
   import { MORE_SCREENS } from "./screens.more.ts";
+  import { GAME_SCREENS } from "./screens.game.ts";
+  import { RENDER_SCREENS } from "./screens.renderer.ts";
   import { createWorkspace } from "./workspace.svelte.ts";
   import { loadPref, savePref } from "./prefs.ts";
   import { createSymbols } from "./symbols.svelte.ts";
@@ -98,7 +105,7 @@
   let scene = $state<SystemScene>(base);
 
   // Each screen document is checked before anything mounts; the GM switches between them.
-  const SCREENS: Record<string, ScreenDoc> = { system: workspaceDoc as unknown as ScreenDoc, physics: physicsDoc as unknown as ScreenDoc, packs: packsDoc as unknown as ScreenDoc, reference: referenceDoc as unknown as ScreenDoc, screens: screensDoc as unknown as ScreenDoc, data: dataDoc as unknown as ScreenDoc, symbols: symbolsDoc as unknown as ScreenDoc, body: bodyDoc as unknown as ScreenDoc, compare: compareDoc as unknown as ScreenDoc, life: lifeDoc as unknown as ScreenDoc, styles: stylesScreenDoc as unknown as ScreenDoc, route: routeDoc as unknown as ScreenDoc, window: windowDoc as unknown as ScreenDoc, stories: storiesDoc as unknown as ScreenDoc, cutaway: cutawayDoc as unknown as ScreenDoc, ...Object.fromEntries(MORE_SCREENS.map((m) => [m.value, m.doc])), ...PLACE_SCREENS };
+  const SCREENS: Record<string, ScreenDoc> = { system: workspaceDoc as unknown as ScreenDoc, physics: physicsDoc as unknown as ScreenDoc, packs: packsDoc as unknown as ScreenDoc, reference: referenceDoc as unknown as ScreenDoc, screens: screensDoc as unknown as ScreenDoc, data: dataDoc as unknown as ScreenDoc, symbols: symbolsDoc as unknown as ScreenDoc, body: bodyDoc as unknown as ScreenDoc, compare: compareDoc as unknown as ScreenDoc, life: lifeDoc as unknown as ScreenDoc, styles: stylesScreenDoc as unknown as ScreenDoc, route: routeDoc as unknown as ScreenDoc, window: windowDoc as unknown as ScreenDoc, stories: storiesDoc as unknown as ScreenDoc, cutaway: cutawayDoc as unknown as ScreenDoc, ...Object.fromEntries(MORE_SCREENS.map((m) => [m.value, m.doc])), ...Object.fromEntries(GAME_SCREENS.map((m) => [m.value, m.doc])), ...Object.fromEntries(RENDER_SCREENS.map((m) => [m.value, m.doc])), ...PLACE_SCREENS };
   const checks = Object.fromEntries(Object.entries(SCREENS).map(([k, d]) => [k, checkScreen(d, REGISTRY)]));
   const badScreens = Object.values(checks).flatMap((c) => (c.ok ? [] : c.errors));
   const screen = $derived.by((): CheckedScreen | null => {
@@ -108,10 +115,34 @@
   const mountFor = (area: string) => screen?.mounts.find((m) => m.area === area);
   /** What the chart's view draws in each view style, when it is a diagram (rule 12). */
   const viewSpec = $derived(mountFor("chart")?.module.controls);
+  // A view that opens on its own scale (the size comparison at Real) gets it each time it is opened; the viewer's own
+  // scale comes back when they leave.
+  let keptScale: ViewChoice["scale"] | null = null;
+  $effect(() => {
+    const opens = viewSpec?.opens?.scale;
+    untrack(() => {
+      if (opens && ws.view && keptScale === null) {
+        keptScale = ws.view.scale ?? "readable";
+        ws.view = { ...ws.view, scale: opens };
+      } else if (!opens && keptScale !== null && ws.view) {
+        setView({ ...ws.view, scale: keptScale });
+        keptScale = null;
+      }
+    });
+  });
+  // The view controls' height: what sits below them starts there, however many rows they wrap to.
+  let viewbarH = $state(0);
 
   // The instrument rail (top-level design 2.2) at the scale in view: system, world, or the Workshop.
   let railScale = $state<RailScale>("system");
-  const rail = $derived(railOf(SCREENS, railScale));
+  // A rail entry that `needs` something (a game pack's code sheets) shows only while a stacked pack gives it.
+  const stackHas = $derived.by(() => {
+    void ws.revision;
+    const st = session?.stack();
+    const packs = st ? [...st.base, ...(st.campaign ? [st.campaign] : [])] : [];
+    return (need: string) => stackProvides(packs, need);
+  });
+  const rail = $derived(railOf(SCREENS, railScale, stackHas));
   // A screen opened from elsewhere (a why?'s "Open the flow", a key) takes the rail to a scale that lists it.
   $effect(() => {
     const on = scalesOf(SCREENS[ws.screen] ?? {});
@@ -177,6 +208,7 @@
   // Style documents (H8.9): checked for this device's measured tier.
   const styleHost = createStyles(() => [...REGISTRY, ...PLAYER_STACK] as never, () => session?.device()?.tier ?? "standard");
   let failure = $state<string | null>(null);
+  watchProblems();
   let status = $state({ kernel: "", tier: "", hash: "", stack: "", campaign: false });
   async function loadPacks(): Promise<unknown[]> {
     const packs = await Promise.all(stackDoc.packs.map(async (p) => (await fetch(new URL(p, document.baseURI))).json()));
@@ -206,6 +238,14 @@
       session = s;
       status = { kernel: await s.kernelVersion(), tier: s.device()?.tier ?? "unmeasured", hash: await s.stateHash(), stack: s.stack().hash, campaign: false };
       perf.stamp("startup.first_chart", performance.now());
+      // Opened from an Explorers item page: the link is read once, then leaves the address bar.
+      const fromExplorers = new URLSearchParams(location.search).get("explorers");
+      if (fromExplorers) {
+        const u = new URL(location.href);
+        u.searchParams.delete("explorers");
+        history.replaceState(history.state, "", u.pathname + u.search + u.hash);
+        void openFromExplorers(fromExplorers);
+      }
     })
     .catch((e) => (failure = String(e)));
 
@@ -214,20 +254,40 @@
   let keptNote = $state<string | null>(null);
   let savedAt = $state<string | null>(null);
   let saveProblem = $state<string | null>(null);
+  // A kept campaign that failed to open is set aside, never lost, and the recovery note offers it back (V3 gap 27).
+  let recovery = $state(false);
   async function reopenKept(s: ViewSession): Promise<Json | null> {
+    const stuck = unfinishedOpen();
+    if (stuck) {
+      setAside();
+      markOpening(false);
+      recovery = true;
+      keptNote = `Last time, opening the campaign kept in this browser did not finish (started ${new Date(stuck).toLocaleString("en-GB", { dateStyle: "medium", timeStyle: "short" })}). It is set aside, not lost, and a fresh campaign given.`;
+      return null;
+    }
     const { save, problem } = readStored(ROOT);
     if (problem) {
       setAside();
-      keptNote = `The campaign kept in this browser could not be reopened (${problem}); it is set aside and a fresh campaign opened.`;
+      recovery = true;
+      keptNote = `The campaign kept in this browser could not be reopened (${problem}). It is set aside, not lost, and a fresh campaign given.`;
       return null;
     }
     if (!save) return null;
+    markOpening(true);
+    try {
+      return await reopenSave(s, save);
+    } finally {
+      markOpening(false);
+    }
+  }
+  async function reopenSave(s: ViewSession, save: CampaignSave): Promise<Json | null> {
     if (save.stack?.added.length) await s.send({ kind: "stack_packs", packs: save.stack.added });
     if (save.stack?.campaign) await s.send({ kind: "adopt_physics", pack: save.stack.campaign, requests: [] });
     const im = await s.importChronicle(save.export);
     if (!im.ok) {
       setAside();
-      keptNote = `The campaign kept in this browser could not be reopened (${im.message}); it is set aside and a fresh campaign opened.`;
+      recovery = true;
+      keptNote = `The campaign kept in this browser could not be reopened (${im.message}). It is set aside, not lost, and a fresh campaign given.`;
       if (save.stack) await s.send({ kind: "stack_packs", packs: [] }).then(() => s.send({ kind: "adopt_physics", pack: null, requests: [] }));
       return null;
     }
@@ -237,6 +297,7 @@
     ws.now_yr = save.workspace.now_yr;
     ws.campaign_now_yr = save.workspace.campaign_now_yr ?? save.workspace.now_yr;
     ws.campaign_epoch_yr = save.workspace.campaign_epoch_yr ?? base.now_yr;
+    ws.overlay_anchors = save.workspace.overlay_anchors ?? {};
     savedAt = save.saved_at;
     const events = savedEvents(save);
     keptNote = `Reopened the campaign kept ${new Date(save.saved_at).toLocaleString("en-GB", { dateStyle: "medium", timeStyle: "short" })}: ${events} ${events === 1 ? "event" : "events"}.`;
@@ -255,7 +316,7 @@
       root: ROOT,
       state_hash: await s.stateHash(),
       export: ex.export,
-      workspace: JSON.parse(JSON.stringify({ applied: ws.applied, undo: ws.undo, redo: ws.redo, now_yr: ws.now_yr, campaign_now_yr: ws.campaign_now_yr, campaign_epoch_yr: ws.campaign_epoch_yr })) as CampaignSave["workspace"],
+      workspace: JSON.parse(JSON.stringify({ applied: ws.applied, undo: ws.undo, redo: ws.redo, now_yr: ws.now_yr, campaign_now_yr: ws.campaign_now_yr, campaign_epoch_yr: ws.campaign_epoch_yr, overlay_anchors: ws.overlay_anchors ?? {} })) as CampaignSave["workspace"],
       saved_at: new Date().toISOString(),
       ...(st.added.length || st.campaign ? { stack: { added: st.added as unknown as Json[], campaign: (st.campaign ?? null) as unknown as Json } } : {}),
     });
@@ -283,22 +344,98 @@
     const save = await currentSave();
     if (save) download(save, saveFileName(save.title, save.saved_at));
   }
+  async function diagnosticState(): Promise<DiagnosticState> {
+    const save = session ? await currentSave() : null;
+    return {
+      kernel: status.kernel,
+      tier: status.tier,
+      state_hash: status.hash,
+      stack_hash: status.stack,
+      campaign: { title: base.title, events: save ? savedEvents(save) : null, saved_at: savedAt },
+      notes: [failure, keptNote, saveProblem].filter((x): x is string => !!x),
+    };
+  }
   let campaignDialog: HTMLDialogElement | undefined = $state();
+  // Each opening reads Your data afresh (a save may have been set aside since the page loaded).
+  let campaignOpens = $state(0);
+  function openCampaign(pick = false) {
+    campaignOpens++;
+    campaignDialog?.showModal();
+    if (pick) queueMicrotask(() => campaignDialog?.querySelector<HTMLInputElement>("[data-open-file]")?.click());
+  }
   let offered = $state<{ save: CampaignSave | null; problems: string[]; name: string } | null>(null);
   let confirmFresh = $state(false);
+  // The one Open door (V3 gap 28): any file, named by what is inside it, with the one way to open it.
+  let given = $state<{ name: string; sniffed: Sniffed; text: string; bytes: Uint8Array; from?: ExplorersListing } | null>(null);
+  let makeFile = $state<{ text: string; name: string } | null>(null);
+  let packCheck = $state<StackPreview | null>(null);
+  let packNote = $state<string | null>(null);
+  async function offerFile(name: string, bytes: Uint8Array, from?: ExplorersListing) {
+    const text = new TextDecoder().decode(bytes);
+    const sniffed = sniffFile(name, text, bytes);
+    given = { name, sniffed, text, bytes, ...(from ? { from } : {}) };
+    offered = null;
+    packCheck = null;
+    packNote = null;
+    if (sniffed.kind === "v4-campaign") {
+      const problems = checkCampaignSave(sniffed.doc, ROOT);
+      offered = { save: problems.length ? null : (sniffed.doc as CampaignSave), problems, name };
+    }
+    if (sniffed.kind === "pack" && session) {
+      const info = session.stack();
+      const bad = checkPackDoc(sniffed.doc, [...info.base, ...(info.campaign ? [info.campaign] : [])].map((p) => p.id));
+      packCheck = bad ? { ok: false, problems: [bad], changes: [] } : await previewStack(session, scene, [...(info.added as PackDoc[]), sniffed.doc as PackDoc], { report: (sniffed.doc as PackDoc).id });
+    }
+  }
   async function pickFile(e: Event) {
     const input = e.currentTarget as HTMLInputElement;
     const file = input.files?.[0];
     input.value = "";
-    if (!file) return;
-    let doc: unknown = null;
-    try {
-      doc = JSON.parse(await file.text());
-    } catch {
-      doc = null;
+    if (file) await offerFile(file.name, new Uint8Array(await file.arrayBuffer()));
+  }
+  async function openOpened() {
+    const o = given;
+    if (!o) return;
+    const k = o.sniffed.kind;
+    if (k === "v4-campaign") return reopenOffered();
+    if (k === "v4-clip") {
+      campaignDialog?.close();
+      if (desk !== "build") chooseDesk("build");
+      return pasteText(o.text);
     }
-    const problems = checkCampaignSave(doc, ROOT);
-    offered = { save: problems.length ? null : (doc as CampaignSave), problems, name: file.name };
+    if (k === "v3-save") {
+      let text: string;
+      try {
+        text = await v3SaveText(o.bytes);
+      } catch (e) {
+        return void (given = { ...o, sniffed: { kind: "unknown", what: `That zip could not be read: ${(e as Error).message}.` } });
+      }
+      campaignDialog?.close();
+      makeFile = { text, name: o.name };
+      return openMake("import");
+    }
+    if (k === "pack" && session && packCheck?.ok) {
+      const r = await addPacks(session, ws, $state.snapshot([...(session.stack().added as PackDoc[]), o.sniffed.doc as PackDoc]) as PackDoc[]);
+      packNote = r.status === "applied" ? "Added. Every value it touches is worked out again and labelled." : r.status === "refused" ? r.reason : "Not added.";
+    }
+  }
+  // Drop a file anywhere on the chart room: the same door.
+  async function dropFile(e: DragEvent) {
+    const f = e.dataTransfer?.files?.[0];
+    if (!f) return;
+    e.preventDefault();
+    await offerFile(f.name, new Uint8Array(await f.arrayBuffer()));
+    openCampaign();
+  }
+  // ?explorers=<an Explorers /api/v4/<slug> URL>: the item page's Open in SSE4 button. The bytes are checked against
+  // the listing before anything is offered, and the link leaves the address bar once read.
+  let explorersNote = $state<string | null>(null);
+  async function openFromExplorers(raw: string) {
+    const r = await fetchExplorers(raw);
+    if (!r.ok) return void (explorersNote = r.why);
+    const name = r.listing.pack ? `${r.listing.pack.id}-${r.listing.pack.version}.json` : `${r.listing.source.title || "campaign"}.json`;
+    await offerFile(name, r.bytes, r.listing);
+    openCampaign();
   }
   function reopenOffered() {
     if (!offered?.save) return;
@@ -359,10 +496,19 @@
   $effect(() => {
     ws.depth = depth;
   });
-  // A system read back from the universe is looked at, never edited in place, whatever the desk.
+  // The desk decides: a system read back from the universe (grown, adopted, the Solar System) is edited in place too,
+  // each typed value going to the fact the universe holds (SceneFact.kernel), so Build means build everywhere.
   $effect(() => {
     // The Workshop changes the tool, not the universe, so its screens are always armed.
-    ws.mode = viewing ? "view" : railScale === "workshop" ? "edit" : DESK_MODE[desk];
+    ws.mode = railScale === "workshop" ? "edit" : DESK_MODE[desk];
+  });
+  // Secrets (SV2): the desk decides whether the "Known to" eyes show; a share's connected players hold reveals.
+  $effect(() => {
+    ws.desk = desk;
+  });
+  $effect(() => {
+    ws.players_online = share?.state.players ?? 0;
+    ws.shared = !!share?.state.link;
   });
   const lenses = $derived.by(() => {
     void ws.revision;
@@ -429,7 +575,20 @@
   // N1: the sound bed for the frame in view (off until the GM turns it on; never touches the session).
   // Light (O1): which band recipe paints the marks. Presentation only, on this device.
   const LIGHT_RECIPES = (lightDoc.recipes as unknown as BandRecipe[]).filter((r) => !checkLightRecipe(r).length);
-  let lightId = $state(SYMBOLS);
+  let lightId = $state(readLight(loadPref("light.gm"), LIGHT_RECIPES.map((r) => r.id)));
+  // Band (one set of controls, Alex 23 Nov): chosen in the view controls; the Light panel paints within it. A choice
+  // kept before the Band switch takes its band from the light it kept.
+  if (ws.view && !ws.view.band) ws.view = { ...ws.view, band: recipeBand(LIGHT_RECIPES.find((r) => r.id === lightId)) };
+  const band = $derived<ViewBand>(ws.view?.band ?? "visible");
+  const lastLight: Partial<Record<ViewBand, string>> = {};
+  $effect(() => {
+    const b = band;
+    const now = untrack(() => lightId);
+    const from = recipeBand(LIGHT_RECIPES.find((r) => r.id === now));
+    if (from === b) return;
+    lastLight[from] = now;
+    lightId = lightForBand(LIGHT_RECIPES, b, now, lastLight);
+  });
   // U4 part 2: with a look-ahead open, the views show the snapshot the scrubber is on.
   let ahead = $state<LookedAhead | null>(null);
   let aheadAt = $state(0);
@@ -553,7 +712,8 @@
         const read0 = sceneFromResolved(r.result, v.title);
         // The Solar System's sheet marks a few values unverified: those bodies carry the mark on the GM's view.
         const marks = v.system === SOL ? solUnverified : null;
-        const read = marks?.size ? { ...read0, subjects: read0.subjects.map((x) => (marks.has(x.address) ? { ...x, stamps: [...x.stamps, "unverified"] } : x)) } : read0;
+        const ids = v.system === SOL ? solIds : null;
+        const read = marks?.size || ids?.size ? { ...read0, subjects: read0.subjects.map((x) => ({ ...x, ...(marks?.has(x.address) ? { stamps: [...x.stamps, "unverified"] } : {}), ...(ids?.has(x.address) ? { world_fixture: ids.get(x.address) } : {}) })) } : read0;
         const now_yr = v.fresh ? read.now_yr : now;
         if (v.fresh) ((v.fresh = false), shiftCampaign(read.now_yr));
         viewingSpec = r.result.spec ?? null;
@@ -563,7 +723,7 @@
     }
     // A now moved by a kept look-ahead can pass the fixture's ruler: the ruler grows to keep it in view.
     const at = { ...base, now_yr: now, span_yr: [base.span_yr[0], Math.max(base.span_yr[1], now * 1.25)] as [number, number] };
-    // Bodies pasted into the campaign's own system live in the universe, not the fixture: they are read back from it
+    // Bodies pasted or added by hand into the campaign's own system live in the universe, not the fixture: they are read back from it
     // and set in beside the fixture's (a withdrawn one, by Undo or Cut, has left the read-back).
     const added = pastedSubjects(s, at);
     const main = added.then((x) => deriveScene(s, applyEdits(x, applied), derivations));
@@ -586,7 +746,7 @@
       const host = typeof f["orbit.host"] === "string" ? (f["orbit.host"] as string) : x.parent;
       const sma = f["orbit.semi_major_axis"];
       const orbit = x.orbit ?? (typeof sma === "number" && !x.band_au ? { a_au: sma / AU_M, phase_deg: 0 } : undefined);
-      return { ...x, subtitle: `Pasted · ${x.kind}`, stamps: x.stamps.filter((t) => t !== "imported"), ...(host ? { parent: host } : {}), ...(orbit ? { orbit } : {}) };
+      return { ...x, subtitle: `Added by hand · ${x.kind}`, stamps: x.stamps.filter((t) => t !== "imported"), ...(host ? { parent: host } : {}), ...(orbit ? { orbit } : {}) };
     });
     return { ...at, subjects: [...at.subjects, ...placed] };
   }
@@ -712,6 +872,10 @@
   function goBelow(v: string) {
     if (v.startsWith("scale:") && isPlaceScale(v.slice(6))) return toScale(v.slice(6) as PlaceScale);
     if (v.startsWith("sys:")) return goPlace({ scale: "system", system: v.slice(4) });
+    if (v.startsWith("up:")) {
+      const u = steps.find((x) => x.scale === v.slice(3) && !x.current && !x.below);
+      return void (u && goPlace(u.place));
+    }
     if (v.startsWith("child:")) {
       const c = belowNote?.children?.[Number(v.slice(6))];
       return void (c && downScale && goPlace({ scale: downScale, system: viewing?.system ?? "", id: c.id }));
@@ -758,10 +922,18 @@
   // A1: agents, on the GM's own key. The panel reads only what is on the chart.
   let agentsDialog: HTMLDialogElement | undefined = $state();
   let agentsOpen = $state(false);
+  // Describe on a card (V3 gap 23): the subject handed to Minerva, until the Agents panel closes.
+  let describing = $state<string | null>(null);
+  function describe(address: string) {
+    describing = address;
+    agentsOpen = true;
+    agentsDialog?.showModal();
+  }
   let makeDialog: HTMLDialogElement | undefined = $state();
   let makeOpen = $state(false);
   let makeStart = $state<"import" | "generate">("import");
   function openMake(tab: "import" | "generate") {
+    if (!makeDialog?.open && tab === "generate") makeFile = null;
     makeStart = tab;
     makeOpen = true;
     makeDialog?.showModal();
@@ -775,10 +947,15 @@
   // per source, then opened like any system in the campaign. Later opens go straight to it.
   const SOL = `u:${base.universe.id}/sys:sol`;
   let solUnverified = $state<ReadonlySet<string> | null>(null);
+  // Each Sol body's sheet id ("earth", "europa"), by address: the name the kernel's world stacks go by, so a catalogued
+  // world opens in the cutaway when the kernel has its stack (and says it has none otherwise).
+  let solIds = $state<ReadonlyMap<string, string>>(new Map());
   async function solSheet() {
     const sheet = readSol(await (await fetch(new URL(stackDoc.catalogues.sol, document.baseURI))).json());
     if (!sheet) throw new Error("the Solar System sheet could not be read");
-    solUnverified = new Set(solBatches(sheet, SOL).unverified.map((k) => k.split("#")[0]!));
+    const laid = solBatches(sheet, SOL);
+    solUnverified = new Set(laid.unverified.map((k) => k.split("#")[0]!));
+    solIds = new Map(Object.entries(laid.addresses).map(([id, a]) => [a, id]));
     return sheet;
   }
   // Opened from the system list after a reload, the sheet is read for its marks.
@@ -822,14 +999,14 @@
       if ("door" in a) {
         if (a.door === "sol") void openSol();
         else if (a.door === "grow") openMake("generate");
-        else if (a.door === "bring") campaignDialog?.showModal();
+        else if (a.door === "bring") openCampaign();
       } else if ("desk" in a) chooseDesk(a.desk);
       else if ("screen" in a) (toSystem(), go(a.screen));
       else if ("world" in a) (toWorld(someWorld()), (ws.screen = a.world));
       else if ("dialog" in a) {
         if (a.dialog === "ask") ((agentsOpen = true), agentsDialog?.showModal());
         else if (a.dialog === "grow") openMake("generate");
-        else if (a.dialog === "bring") campaignDialog?.showModal();
+        else if (a.dialog === "bring") openCampaign();
         else if (a.dialog === "share" && share) window.open(share.start(), "_blank", "noopener");
       } else if ("control" in a) document.querySelector<HTMLButtonElement>(a.control === "light" ? ".light .toggle" : ".sound .toggle")?.click();
       else if ("link" in a) window.open(a.link, "_blank", "noopener");
@@ -922,6 +1099,12 @@
       sift: async (audience) => {
         const r = await s.sift({ scope, audience, sifters: STORY_STARTERS });
         return r.ok ? r.result : null;
+      },
+      // A kept description is a narrative note in the record, for the audience it was written for (the GM sees every note).
+      keep: async (address, text, audience) => {
+        if (!s.addNote) return "This session cannot write the record.";
+        const r = await s.addNote({ address, text, audience: audience === "everyone" ? "everyone" : [audience], tags: ["description"], narrative: true, at_s: yearsToSeconds(ws.now_yr) });
+        return r.ok ? null : r.message;
       },
     };
   });
@@ -1055,6 +1238,30 @@
     return null;
   }
   let placing = $state(false);
+  // Add here (V3 gap 2): one world or moon by hand, round the selected star or planet (else the primary).
+  let addDialog: HTMLDialogElement | undefined = $state();
+  let addFor = $state<{ address: string; label: string; kind: string; mass_sun: number | null } | null>(null);
+  const addOrbits = $derived(addFor ? scene.subjects.filter((x) => (addFor!.kind === "star" ? x.kind === "planet" : x.parent === addFor!.address) && x.orbit).map((x) => x.orbit!.a_au) : []);
+  function openAdd() {
+    const sel = scene.subjects.find((x) => x.address === ws.selection);
+    const h = sel && (sel.kind === "star" || sel.kind === "planet") ? sel : primaryOf(scene);
+    if (!h) return void (clipNote = "There is no star here to add round.");
+    const m = h.facts.find((f) => f.field === "mass_sun")?.value;
+    addFor = { address: h.address, label: h.label, kind: h.kind, mass_sun: typeof m === "number" ? m : null };
+    addDialog?.showModal();
+  }
+  async function addClip(clip: Clip, words: string): Promise<string | null> {
+    if (!session || !addFor) return "The chart is not ready.";
+    const p = await placement(clip, { address: addFor.address, kind: addFor.kind });
+    if (!p) return "Could not find a free place for it.";
+    const roots = p.placed.filter((x) => x.parent === addFor!.address).map((x) => x.address);
+    const r = await placePasted(session, ws, { edits: p.edits, roots, words });
+    if (r.status !== "applied") return `Could not add it: ${r.status === "refused" ? r.reason : r.status === "error" ? r.message : "sent to the game master"}.`;
+    addDialog?.close();
+    clipNote = `Added ${words}, orbiting ${addFor.label}. Undo takes it back.`;
+    ws.select(roots[0]!);
+    return null;
+  }
   async function placePaste() {
     const p0 = pasted;
     if (!session || !p0 || placing) return;
@@ -1092,7 +1299,7 @@
   }
 
   function view(node: HTMLElement, m: { module: ViewModule; params: Record<string, Json> }) {
-    const h = m.module.mount(node, { session: session!, workspace: ws, params: m.params, mark: (s) => lightMark(symbols.marker().mark(withStarFacts(subjectOf(s), starFacts.get(s.address))), s.address), symbology: symbols, styles: styleHost }, shown);
+    const h = m.module.mount(node, { session: session!, workspace: ws, params: m.params, mark: (s) => lightMark(symbols.marker().mark(withStarFacts(subjectOf(s), starFacts.get(s.address))), s.address), symbology: symbols, styles: styleHost, ...(minervaHost ? { describe } : {}) }, shown);
     handles.push(h);
     return {
       destroy: () => {
@@ -1103,6 +1310,14 @@
   }
 
   let help: HTMLDialogElement | undefined = $state();
+  // The Help door (V3 gap 31): What's new, Getting started, Keyboard. The dot marks news this device has not seen.
+  let helpPage = $state<HelpPage>("new");
+  let newsDot = $state(unseenNews());
+  function openHelp(page: HelpPage) {
+    helpPage = page;
+    help?.showModal();
+    if (page === "new") (markNewsSeen(), (newsDot = false));
+  }
   // V10: the seats panel opens from a quiet link once the session is shared.
   let seatsDialog: HTMLDialogElement | undefined = $state();
   let seatsOpen = $state(false);
@@ -1126,6 +1341,13 @@
       void undo(!e.shiftKey);
       return;
     }
+    if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === "o") {
+      e.preventDefault();
+      given = null;
+      offered = null;
+      openCampaign(true);
+      return;
+    }
     if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === "y") {
       e.preventDefault();
       void undo(false);
@@ -1134,6 +1356,7 @@
     if (e.ctrlKey || e.metaKey || e.altKey) return;
     const keys: Record<string, () => void> = {
       e: () => chooseDesk("build"),
+      a: () => clipArmed && openAdd(),
       r: () => chooseDesk("run"),
       p: () => (ws.screen = ws.screen === "physics" ? "system" : "physics"),
       v: () => chooseDesk("explore"),
@@ -1147,7 +1370,7 @@
         const i = lenses.findIndex((x) => x.id === lens.id);
         chooseLens(lenses[(i + 1) % lenses.length]!.id);
       },
-      "?": () => help?.showModal(),
+      "?": () => openHelp("keys"),
       // Esc clears the selection, then goes up a step.
       Escape: () => (ws.selection ? ws.select(null) : railScale === "world" || railScale === "workshop" ? toSystem() : upAStep()),
     };
@@ -1159,7 +1382,7 @@
   }
 </script>
 
-<svelte:window {onkeydown} {oncopy} {oncut} {onpaste} onpopstate={fromHash} onhashchange={fromHash} onpointerdown={(e) => moreOpen && !(e.target as HTMLElement).closest(".more") && (moreOpen = false)} />
+<svelte:window {onkeydown} {oncopy} {oncut} {onpaste} ondragover={(e) => e.dataTransfer?.types.includes("Files") && e.preventDefault()} ondrop={dropFile} onpopstate={fromHash} onhashchange={fromHash} onpointerdown={(e) => moreOpen && !(e.target as HTMLElement).closest(".more") && (moreOpen = false)} />
 
 {#if startOpen}<StartSheet doc={startDoc as never} built={STARTED} {carryOn} sample={base.title === "Kestrel" ? "Kestrel Reach" : base.title} ready={!!session} onopen={fromStart} />{/if}
 <div class="app" inert={startOpen} data-depth={depth} data-state-hash={status.hash} data-stack-hash={status.stack} data-physics={status.campaign ? "campaign" : "base"}>
@@ -1168,17 +1391,19 @@
     <nav class="place" aria-label="Place" data-scale={railScale}>
       {#each place ? steps : [] as s, i (s.scale)}
         {@const parent = steps[i + 1]?.current ?? false}
-        {#if s.scale === "system" && adoptedSystems.length && !s.below}
-          <label class="onchart"><span class="sr">System on the chart</span>
+        {#if s.current && s.scale === "system" && adoptedSystems.length}
+          <!-- The system's name is its own switcher when the campaign holds more than one: press the name, pick another. -->
+          <label class="title-switch" title="Switch to another system in this campaign">
+            <h1 class="title" data-place={s.scale}>{s.label}</h1>
             <select aria-label="System on the chart" value={viewing?.system ?? ""} onchange={(e) => (showSystem(e.currentTarget.value), toSystem())} data-viewing={viewing?.system ?? ""}>
               <option value="">{base.title}</option>
               {#each adoptedSystems as a (a.system)}<option value={a.system}>{a.title}</option>{/each}
             </select>
           </label>
-          <span class="sep" aria-hidden="true">›</span>
+        {:else if s.current}
+          <h1 class="title" data-place={s.scale}>{s.scale === "world" ? (selName ?? "A world") : s.label}</h1>
         {/if}
         {#if s.current}
-          <h1 class="title" data-place={s.scale}>{s.scale === "world" ? (selName ?? "A world") : s.label}</h1>
           <!-- Down: what is nested below this step, the systems in the campaign, and recent places. -->
           <label class="goto">
             <span class="sr">{railScale === "system" || railScale === "world" ? "Go to a body" : "Go down"}</span>
@@ -1188,6 +1413,12 @@
                 <option value="" disabled>{placeBodies.length} {placeBodies.length === 1 ? "body" : "bodies"}</option>
                 <option value="@system">The whole system</option>
                 {#each placeBodies as b (b.address)}<option value={b.address}>{b.depth ? "\u00a0\u00a0".repeat(b.depth) : ""}{b.label}</option>{/each}
+                {#if adoptedSystems.length}
+                  <optgroup label="Other systems in this campaign">
+                    {#if viewing}<option value="sys:">{base.title}</option>{/if}
+                    {#each adoptedSystems.filter((a) => a.system !== viewing?.system) as a (a.system)}<option value={`sys:${a.system}`}>{a.title}</option>{/each}
+                  </optgroup>
+                {/if}
               {:else}
                 <option value="" disabled>Below ▾</option>
                 {#if downScale}<option value={`scale:${downScale}`}>{PLACE_WORDS[downScale]}</option>{/if}
@@ -1198,6 +1429,10 @@
                   <option value="sys:">{base.title}</option>
                   {#each adoptedSystems as a (a.system)}<option value={`sys:${a.system}`}>{a.title}</option>{/each}
                 </optgroup>
+              {/if}
+              {#if steps.some((x) => !x.current && !x.below)}
+                <!-- Out: every step above, for a phone (where the line shows only the one above) and the keyboard. -->
+                <optgroup label="Further out">{#each steps.filter((x) => !x.current && !x.below) as u (u.scale)}<option value={`up:${u.scale}`}>{u.label}</option>{/each}</optgroup>
               {/if}
               {#if recentElsewhere.length}
                 <optgroup label="Recent">{#each recentElsewhere as r, j (j)}<option value={`recent:${j}`}>{placeWords(r)}</option>{/each}</optgroup>
@@ -1235,7 +1470,7 @@
     <!-- Ask (2.5): the agents, promoted from the status line. Tars needs no key. -->
     <button type="button" class="barbtn ask" onclick={() => ((agentsOpen = true), agentsDialog?.showModal())} title="Ask Tars, Orac or Minerva: what can I do here?">Ask</button>
     <div class="more">
-      <button type="button" class="barbtn" bind:this={moreBtn} aria-expanded={moreOpen} aria-controls="more-menu" onclick={() => (moreOpen = !moreOpen)}>More</button>
+      <button type="button" class="barbtn" bind:this={moreBtn} aria-expanded={moreOpen} aria-controls="more-menu" onclick={() => (moreOpen = !moreOpen)}>More{#if newsDot}<span class="news-dot" aria-hidden="true" title="Something new in Help"></span>{/if}</button>
       {#if moreOpen}
         <div class="menu" id="more-menu" role="group" aria-label="More">
           <button type="button" class="ask-more" onclick={() => ((moreOpen = false), (agentsOpen = true), agentsDialog?.showModal())}>Ask Tars, Orac or Minerva</button>
@@ -1244,13 +1479,15 @@
             <button type="button" data-more-copy disabled={!ws.selection} onclick={() => ((moreOpen = false), void copyBody())}>Copy {selName ?? "a body"} <kbd>Ctrl+C</kbd></button>
             {#if cuttable}<button type="button" data-more-cut onclick={() => ((moreOpen = false), void cutBody())}>Cut {selName} <kbd>Ctrl+X</kbd></button>{/if}
             <button type="button" data-more-paste onclick={pasteFromMenu}>Paste <kbd>Ctrl+V</kbd></button>
+            <button type="button" data-more-add onclick={() => ((moreOpen = false), openAdd())}>Add here… <kbd>A</kbd></button>
           {/if}
           <button type="button" onclick={() => ((moreOpen = false), toWorkshop())}>Workshop</button>
-          <button type="button" onclick={() => ((moreOpen = false), (offered = null), (confirmFresh = false), campaignDialog?.showModal())}>Campaign… <small>save, open, start fresh</small></button>
+          <button type="button" data-more-open onclick={() => ((moreOpen = false), (offered = null), (given = null), (confirmFresh = false), openCampaign(true))}>Open a file… <kbd>Ctrl+O</kbd></button>
+          <button type="button" onclick={() => ((moreOpen = false), (offered = null), (confirmFresh = false), openCampaign())}>Campaign… <small>save, open, your data</small></button>
           <button type="button" onclick={() => ((moreOpen = false), openMake("import"))} title="Import a V3 save or grow a new system, and add it to the campaign">Make a system…</button>
           <button type="button" data-more-start onclick={() => ((moreOpen = false), (startOpen = true))}>Start sheet</button>
           <button type="button" aria-pressed={theme === "night-chart"} onclick={() => ((moreOpen = false), (theme = theme === "chart-room" ? "night-chart" : "chart-room"))}>Night chart <kbd>N</kbd></button>
-          <button type="button" onclick={() => ((moreOpen = false), help?.showModal())}>Keyboard shortcuts <kbd>?</kbd></button>
+          <button type="button" data-more-help onclick={() => ((moreOpen = false), openHelp(newsDot ? "new" : "start"))}>Help and what's new{#if newsDot}<span class="news-dot" aria-hidden="true" title="Something new"></span>{/if} <kbd>?</kbd></button>
           <button type="button" data-more-perf aria-pressed={perfOn} onclick={() => ((moreOpen = false), (perfOn = !perfOn))} title="Time every chunk of the app on this device, for the minimum spec">Performance readout <small>{perfOn ? "on" : "off"}</small></button>
         </div>
       {/if}
@@ -1266,6 +1503,7 @@
     <main class="problem" role="alert">
       <h2>The kernel did not start</h2>
       <p>{failure}</p>
+      <p>Nothing kept in this browser has been changed. <button type="button" class="linkbtn" onclick={() => location.reload()}>Try again</button> · <button type="button" class="linkbtn" data-start-without onclick={() => (setAside(), location.reload())}>Start without the kept campaign</button> (it is set aside, not lost) · <button type="button" class="linkbtn" onclick={async () => downloadText(JSON.stringify({ kind: "sse4-diagnostic", failure, problems: [] }, null, 2), "sse4-diagnostic.json")}>Diagnostic file</button></p>
     </main>
   {:else if !session}
     <main class="problem" aria-busy="true"><p>Opening the chart…</p></main>
@@ -1292,17 +1530,18 @@
         {#if railScale !== "workshop"}<button type="button" class="door" data-go="workshop" onclick={toWorkshop} title="Physics flows, packs, player screens and data, symbols, styles: everything that changes the tool">Workshop ›</button>{/if}
       </nav>
       {#key ws.screen}
-      <main class="stage" data-viewbar={viewSpec ? "" : undefined} data-desk={desk} data-screen={ws.screen} data-page={mountFor("card") ? undefined : ""} data-lens={lens.id} data-branch={ws.branch ? "open" : ahead ? "ahead" : undefined}>
+      <main class="stage" style:--viewbar-h={viewbarH ? `${viewbarH}px` : undefined} data-viewbar={viewSpec ? "" : undefined} data-desk={desk} data-screen={ws.screen} data-page={mountFor("card") ? undefined : ""} data-lens={lens.id} data-branch={ws.branch ? "open" : ahead ? "ahead" : undefined}>
         {#if ws.branch}<div class="branch-stamp" aria-hidden="true">What if · not kept</div>{/if}
-        {#if viewSpec && ws.view}<div class="viewbar"><ViewControls spec={viewSpec} choice={ws.view} onchange={setView} /></div>{/if}
+        {#if viewSpec && ws.view}<div class="viewbar" bind:clientHeight={viewbarH}><ViewControls spec={viewSpec} choice={ws.view} onchange={setView} /></div>{/if}
         <div class="area-chart">{#if chartMount}{#key openings}<div class="fill" use:view={chartMount}></div>{/key}{/if}</div>
         <nav class="tools" aria-label="Tools">
           <ToolButton label="Select" icon="M5 3l14 8-6 2-2 6z" pressed={true} />
           {#if hasTool(ws.lens, "undo") && (desk === "build" || ws.branch)}<ToolButton label="Undo" icon="M9 14L4 9l5-5M4 9h11a5 5 0 0 1 0 10h-3" keyhint="Control+Z" disabled={ws.undo.length === 0 || ws.mode !== "edit" || !!ws.branch} onclick={() => undo(true)} />
           <ToolButton label="Redo" icon="M15 14l5-5-5-5M20 9H9a5 5 0 0 0 0 10h3" keyhint="Control+Shift+Z" disabled={ws.redo.length === 0 || ws.mode !== "edit" || !!ws.branch} onclick={() => undo(false)} />{/if}
           {#if clipArmed}<ToolButton label="Copy" icon="M8 8h11v11H8zM5 16V5h11" keyhint="Control+C" disabled={!ws.selection} onclick={copyBody} />{/if}
+          {#if clipArmed}<ToolButton label="Add here" icon="M12 5v14M5 12h14" keyhint="A" onclick={openAdd} />{/if}
           {#if clipArmed && cuttable}<ToolButton label="Cut" icon="M6 4l12 16M18 4L6 20M4 18a2 2 0 1 0 4 0M16 18a2 2 0 1 0 4 0" keyhint="Control+X" onclick={cutBody} />{/if}
-          <ToolButton label="Keyboard shortcuts" icon="M3 7h18v10H3zM7 11h1M11 11h1M15 11h2M7 14h10" keyhint="?" onclick={() => help?.showModal()} />
+          <ToolButton label="Keyboard shortcuts" icon="M3 7h18v10H3zM7 11h1M11 11h1M15 11h2M7 14h10" keyhint="?" onclick={() => openHelp("keys")} />
         </nav>
         {#if undoNote}<p class="undo-note" role="status">{undoNote}</p>{/if}
         {#if clipNote}<p class="undo-note clip-note" role="status" data-clip-note>{clipNote}</p>{/if}
@@ -1329,12 +1568,13 @@
           {#if whatNote}<span class="note" role="status" title={whatNote}>{whatNote}</span>{/if}
         </span>
         <span class="strip">
-          <LightControl recipes={LIGHT_RECIPES} lights={lit.lights} missing={lit.missing} names={lightNames} bind:value={lightId} key="light.gm" />
+          <LightControl recipes={LIGHT_RECIPES} lights={lit.lights} missing={lit.missing} names={lightNames} {band} bind:value={lightId} key="light.gm" />
           <SoundControl scene={soundScene} deviceTier={status.tier} seed={base.universe.seed} key="sound.gm" />
         </span>
       </div>
     </footer>
-    {#if keptNote}<p class="kept-note" role="status" data-kept-note>{keptNote} <button type="button" class="linkbtn" onclick={() => (keptNote = null)}>OK</button></p>{/if}
+    {#if explorersNote}<p class="kept-note" role="alert" data-explorers-note>{explorersNote} <button type="button" class="linkbtn" onclick={() => (explorersNote = null)}>OK</button></p>{/if}
+    {#if keptNote}<p class="kept-note" role="status" data-kept-note>{keptNote}{#if recovery && setAsideText()}{" "}<button type="button" class="linkbtn" data-recover-try onclick={() => restoreSetAside() && location.reload()}>Try again</button> · <button type="button" class="linkbtn" onclick={() => downloadText(setAsideText() ?? "", "sse4-set-aside-campaign.json")}>Download it</button> ·{/if} <button type="button" class="linkbtn" onclick={() => (keptNote = null)}>{recovery ? "Carry on fresh" : "OK"}</button></p>{/if}
     <div class="status" aria-label="Session">
       <span>Seat: {session.seat.label}</span>
       <span class="kept">
@@ -1416,13 +1656,13 @@
   <form method="dialog"><button type="submit">Close</button></form>
 </dialog>
 
-<dialog bind:this={agentsDialog} class="help seats-dialog" aria-label="Agents" onclose={() => (agentsOpen = !!agentsDialog?.open)}>
-  {#if agentsOpen}<AgentsPanel tars={tarsHost} orac={oracHost} minerva={minervaHost} />{/if}
+<dialog bind:this={agentsDialog} class="help seats-dialog" aria-label="Agents" onclose={() => ((agentsOpen = !!agentsDialog?.open), agentsOpen || (describing = null))}>
+  {#if agentsOpen}<AgentsPanel tars={tarsHost} orac={oracHost} minerva={minervaHost} describe={describing} />{/if}
   <form method="dialog"><button type="submit">Close</button></form>
 </dialog>
 
 <dialog bind:this={makeDialog} class="help make-dialog" aria-label="Make a system" onclose={() => (makeOpen = !!makeDialog?.open)}>
-  {#if makeOpen && session}<MakeSystem {session} start={makeStart} view={ws.view} onview={setView} onadopted={(sys, note, hash) => (adopted(sys, note, hash), sys[0] && (makeDialog?.close(), showSystem(sys[0].system)))} context={{ mark: (s) => symbols.marker().mark(subjectOf(s)), symbology: symbols, styles: styleHost }} />{/if}
+  {#if makeOpen && session}<MakeSystem {session} start={makeStart} file={makeFile} view={ws.view} onview={setView} onadopted={(sys, note, hash) => (adopted(sys, note, hash), sys[0] && (makeDialog?.close(), showSystem(sys[0].system)))} context={{ mark: (s) => symbols.marker().mark(subjectOf(s)), symbology: symbols, styles: styleHost }} />{/if}
   <form method="dialog"><button type="submit">Close</button></form>
 </dialog>
 
@@ -1430,17 +1670,35 @@
   <h2>Campaign</h2>
   <p class="hint">{saveProblem ?? `The campaign is kept in this browser after every change (${savedWords.toLowerCase()}). Save it as a file to keep a copy, move it to another device or hand it on.`}</p>
   <p class="row"><button type="button" onclick={saveFile}>Save campaign</button></p>
-  <h3>Open a campaign</h3>
-  <p class="hint">A file from Save campaign. It replaces the campaign open now; save that first if you want to keep it. Players' screens reload into the opened campaign.</p>
-  <label class="row">Campaign file <input type="file" accept=".json,application/json" onchange={pickFile} /></label>
-  <p class="row hint">A save from Star System Explorer 3? <button type="button" class="linkbtn" data-bring-v3 onclick={() => (campaignDialog?.close(), openMake("import"))}>Bring it in with Make a system ›</button></p>
-  {#if offered}
-    {#if offered.save}
-      <p data-offered={offered.save.saved_at}><b>{offered.save.title}</b>, kept {new Date(offered.save.saved_at).toLocaleString("en-GB", { dateStyle: "medium", timeStyle: "short" })}: {savedEvents(offered.save)} events.</p>
-      <p class="row"><button type="button" onclick={reopenOffered}>Open it</button></p>
-    {:else}
-      <p role="alert" data-offered-problem>{offered.name} cannot be opened here: {offered.problems.join("; ")}.</p>
-    {/if}
+  <h3>Open a file</h3>
+  <p class="hint">Any file: a saved campaign, a clip, a pack, a Star System Explorer 3 save, or a Universe Sandbox or SpaceEngine file. SSE4 looks inside and says what it is. You can also drop a file anywhere on the chart room.</p>
+  <label class="row">File <input type="file" data-open-file onchange={pickFile} /></label>
+  {#if given}
+    <div class="opened" data-opened={given.sniffed.kind}>
+      {#if given.from}<p class="hint" data-from-explorers>From Explorers: <b>{given.from.source.title}</b>{creditWords(given.from.source.creditChain) ? `. ${creditWords(given.from.source.creditChain)}` : ""}. Its bytes match the listing.</p>{/if}
+      <p><b>{given.name}</b>: {given.sniffed.what}</p>
+      {#if given.sniffed.kind === "v4-campaign"}
+        {#if offered?.save}
+          <p data-offered={offered.save.saved_at}><b>{offered.save.title}</b>, kept {new Date(offered.save.saved_at).toLocaleString("en-GB", { dateStyle: "medium", timeStyle: "short" })}: {savedEvents(offered.save)} events. Save the campaign open now first if you want to keep it; players' screens reload into the opened one.</p>
+          <p class="row"><button type="button" onclick={openOpened}>Open it</button></p>
+        {:else if offered}
+          <p role="alert" data-offered-problem>{offered.name} cannot be opened here: {offered.problems.join("; ")}.</p>
+        {/if}
+      {:else if given.sniffed.kind === "v4-clip"}
+        <p class="row"><button type="button" onclick={openOpened}>Paste it on the chart</button></p>
+      {:else if given.sniffed.kind === "v3-save"}
+        <p class="row"><button type="button" data-bring-v3 onclick={openOpened}>Bring it in</button></p>
+      {:else if given.sniffed.kind === "pack"}
+        {#if !packCheck}<p class="hint">Checking it with the kernel…</p>
+        {:else if packCheck.ok}
+          <p data-pack-check>The kernel accepts it. It would change {packCheck.changes.length} {packCheck.changes.length === 1 ? "value" : "values"} on this chart{packCheck.changes.length ? `, such as ${packCheck.changes.slice(0, 3).map((c) => c.label).join(", ")}` : ""}.</p>
+          {#if packCheck.report}<p data-pack-report={packCheck.report.pack}>It brings {reportWords(packCheck.report)}{packCheck.report.sources.length ? `, citing ${packCheck.report.sources.map((x) => x.text).slice(0, 2).join(" and ")}${packCheck.report.sources.length > 2 ? " and more" : ""}` : ""}.</p>{/if}
+          {#if packNote}<p role="status">{packNote}</p>{:else}<p class="row"><button type="button" onclick={openOpened}>Add it to this campaign</button></p>{/if}
+        {:else}<p role="alert" data-pack-problem>It cannot be added: {packCheck.problems.join("; ")}.</p>{/if}
+      {:else if given.sniffed.kind === "other-app"}
+        <p class="row"><a class="linkbtn" href={CONVERTER_URL} target="_blank" rel="noopener">Open the converter</a></p>
+      {/if}
+    </div>
   {/if}
   <h3>Start fresh</h3>
   {#if confirmFresh}
@@ -1449,6 +1707,12 @@
   {:else}
     <p class="row"><button type="button" onclick={() => (confirmFresh = true)}>Start fresh…</button></p>
   {/if}
+  {#key campaignOpens}<YourData onbackup={saveFile} report={diagnosticState} />{/key}
+  <form method="dialog"><button type="submit">Close</button></form>
+</dialog>
+
+<dialog bind:this={addDialog} class="help seats-dialog" aria-labelledby="add-title" data-add onclose={() => !addDialog?.open && (addFor = null)}>
+  {#if addFor && session}<AddHere {session} system={scene.system} host={addFor} orbits={addOrbits} packs={stackPacks()} onadd={addClip} />{/if}
   <form method="dialog"><button type="submit">Close</button></form>
 </dialog>
 
@@ -1470,26 +1734,8 @@
   {#if ws.branch}<p class="hint">A what-if is open: keep it or throw it away, then paste.</p>{/if}
 </dialog>
 
-<dialog bind:this={help} class="help" aria-labelledby="help-title">
-  <h2 id="help-title">Keyboard</h2>
-  <dl>
-    <dt>Tab</dt><dd>Move between the chart's bodies, the card and the ruler</dd>
-    <dt>Arrows</dt><dd>On the chart, the next or previous body; on the ruler, 1 % of the span</dd>
-    <dt>Enter</dt><dd>Select the focused body; on the card, ink the typed value</dd>
-    <dt>Esc</dt><dd>Put a typed value back, or clear the selection</dd>
-    <dt>[ and ]</dt><dd>Previous or next body</dd>
-    <dt>C, T</dt><dd>Go to the chart, go to the time ruler</dd>
-    <dt>Page Up, Page Down, Home, End</dt><dd>On the ruler, larger steps</dd>
-    <dt>Drag a body, or Page Up, Page Down on it</dt><dd>Move its orbit out or in (Build desk)</dd>
-    <dt>Ctrl+C, Ctrl+X, Ctrl+V</dt><dd>Copy the selected body with everything that orbits it; cut a pasted body; paste a copied body (Build desk)</dd>
-    <dt>Ctrl+Z, Ctrl+Shift+Z</dt><dd>Undo, redo (each is a new correction on the chart's history)</dd>
-    <dt>why?</dt><dd>On any value: where it came from, at three depths (Curious, Science, Engine); "Open the flow" puts its physics on the bench</dd>
-    <dt>P</dt><dd>Chart or Physics: the flow editor and change requests</dd>
-    <dt>V, E, R</dt><dd>Desk: Explore (look), Build (change), Run (the table)</dd>
-    <dt>D</dt><dd>Depth: Curious, Science, Engine (how much every card and number says)</dd>
-    <dt>N</dt><dd>Chart room or Night chart</dd>
-    <dt>L</dt><dd>See the desk through the next lens (Basic, Advanced, Building, Running, as players see it)</dd>
-  </dl>
+<dialog bind:this={help} class="help" aria-labelledby="help-title" onclose={() => (newsDot = unseenNews())}>
+  <HelpDoor bind:page={helpPage} onstart={() => (help?.close(), (startOpen = true))} onask={() => (help?.close(), (agentsOpen = true), agentsDialog?.showModal())} onsol={() => (help?.close(), void openSol())} />
   <form method="dialog"><button type="submit">Close</button></form>
 </dialog>
 
@@ -1547,6 +1793,8 @@
     align-items: baseline;
     gap: 8px;
     min-width: 0;
+    /* A long line gives way inside its own space; it never runs under the desk switch. */
+    overflow: hidden;
   }
   .title {
     margin: 0;
@@ -1609,14 +1857,15 @@
   }
   .place .step.below {
     font-style: italic;
-    flex: 0 1 auto;
-    min-width: 2em;
+    flex: 0 20 auto;
+    min-width: 1.5em;
     overflow: hidden;
     text-overflow: ellipsis;
   }
-  /* Above a system the names are short: the name keeps its room, the list beside it stays narrow. */
+  /* Above a system the name is the chart's own ("The cosmic web, 200 Mpc across"): it gives way only after the trail. */
   .place:not([data-scale="system"], [data-scale="world"]) .title {
-    flex: none;
+    flex: 0 1 auto;
+    min-width: 8em;
   }
   .goto select[data-below="web"],
   .goto select[data-below="cluster"],
@@ -1656,8 +1905,7 @@
   .up-arrow {
     display: none;
   }
-  .goto select,
-  .onchart select {
+  .goto select {
     font: inherit;
     font-size: 12px;
     color: var(--sse-ink-muted);
@@ -1887,18 +2135,24 @@
     border: var(--sse-line) solid var(--sse-accent);
     color: var(--sse-ink);
   }
-  .onchart {
+  /* The name, pressed, opens the list of the campaign's systems (the list is the name's own, laid over it unseen). */
+  .title-switch {
+    position: relative;
     display: inline-flex;
-    gap: 6px;
-    align-items: center;
+    min-width: 0;
+    flex: 0 0.1 auto;
+    cursor: pointer;
   }
-  .onchart select {
-    font: inherit;
-    font-size: 12px;
-    max-width: 14em;
-    background: var(--sse-ground);
-    color: var(--sse-ink);
-    border: 1px solid var(--sse-rule);
+  .title-switch .title {
+    text-decoration: underline dotted var(--sse-rule);
+    text-underline-offset: 6px;
+  }
+  .title-switch select {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    opacity: 0;
+    cursor: pointer;
   }
   .whatif b {
     color: var(--sse-accent-ink);
@@ -2027,13 +2281,15 @@
     pointer-events: auto;
     width: fit-content;
   }
+  /* Below the view controls however many rows they wrap to (their measured height). */
   .stage[data-viewbar] .undo-note {
-    top: 84px;
+    top: calc(var(--viewbar-h, 68px) + 16px);
   }
   .stage[data-viewbar][data-screen="body"] .area-chart,
   .stage[data-viewbar][data-screen="cutaway"] .area-chart,
+  .stage[data-viewbar][data-screen="compare"] .area-chart,
   .stage[data-viewbar][data-page] .area-chart {
-    top: 84px;
+    top: calc(var(--viewbar-h, 68px) + 16px);
   }
   .tools {
     position: absolute;
@@ -2157,7 +2413,9 @@
     font-family: var(--sse-font-display);
   }
   .help {
-    max-width: 520px;
+    max-width: 600px;
+    width: calc(100vw - 32px);
+    box-sizing: border-box;
     border: var(--sse-line) solid var(--sse-ink);
     box-shadow: var(--sse-card-shadow);
     background: var(--sse-ground-raised);
@@ -2199,26 +2457,17 @@
   .quiet {
     color: var(--sse-ink-muted);
   }
+  .news-dot {
+    display: inline-block;
+    width: 7px;
+    height: 7px;
+    margin-left: 6px;
+    border-radius: 50%;
+    background: var(--sse-accent);
+    vertical-align: middle;
+  }
   .help::backdrop {
     background: rgba(0, 0, 0, 0.25);
-  }
-  .help h2 {
-    margin: 0 0 12px;
-    font-family: var(--sse-font-display);
-  }
-  .help dl {
-    display: grid;
-    grid-template-columns: auto 1fr;
-    gap: 6px 16px;
-    margin: 0 0 16px;
-    font-size: 14px;
-  }
-  .help dt {
-    font-family: var(--sse-font-mono);
-    font-size: 13px;
-  }
-  .help dd {
-    margin: 0;
   }
   .help button {
     height: 40px;
@@ -2272,8 +2521,6 @@
     .up-sep {
       display: none;
     }
-    .onchart,
-    .onchart + .sep,
     .place .step.below,
     .sep.below {
       display: none;
@@ -2359,6 +2606,11 @@
     .rail .group {
       flex-direction: row;
       gap: 6px;
+    }
+    /* The row scrolls; nothing in it is squeezed (a squeezed group once ran "Life" into "Route to here"). */
+    .rail > *,
+    .rail .group > * {
+      flex: none;
     }
     .rail h2 {
       display: none;

@@ -1,0 +1,754 @@
+{
+ "format": "sse.pack/1",
+ "id": "sse.space-opera",
+ "version": "0.1.0",
+ "kind": [
+  "universe"
+ ],
+ "kernel_range": "^0.1",
+ "licence": "Apache-2.0",
+ "provides": {
+  "other": {
+   "about": {
+    "label": "The Meridian Reach",
+    "text": "An original space opera setting: an old crown, a league of merchant republics and a syndicate in the shadows, joined by starlane drives that are a setting rule, not physics (marked fictional).",
+    "fictional": true,
+    "note": "Written for SSE4 (tags design TG13). Rules and plain descriptions only; no published setting is copied."
+   },
+   "tags": {
+    "about": "Tags this pack names (tags design, TG1): labels only, never an input to physics.",
+    "groups": [
+     {
+      "id": "so.label",
+      "label": "Meridian Reach: worlds",
+      "about": "How the Reach speaks of a world.",
+      "applies_to": [
+       "body"
+      ]
+     },
+     {
+      "id": "so.faction",
+      "label": "Meridian Reach: powers",
+      "about": "Who rules, trades or hides here.",
+      "applies_to": [
+       "construct",
+       "body"
+      ],
+      "exclusive": true
+     },
+     {
+      "id": "so.port",
+      "label": "Meridian Reach: ports",
+      "about": "Where a starship can put in.",
+      "applies_to": [
+       "construct"
+      ]
+     }
+    ],
+    "tags": [
+     {
+      "id": "construct",
+      "label": "construct"
+     },
+     {
+      "id": "ship",
+      "label": "ship"
+     },
+     {
+      "id": "station",
+      "label": "station"
+     },
+     {
+      "id": "site",
+      "label": "site"
+     },
+     {
+      "id": "so.label.throne-world",
+      "label": "throne world",
+      "group": "so.label",
+      "about": "a temperate rocky world fit for a court",
+      "source": "derived",
+      "tier": "obvious"
+     },
+     {
+      "id": "so.label.forge-giant",
+      "label": "forge giant",
+      "group": "so.label",
+      "about": "a giant whose moons feed the Reach's shipyards",
+      "source": "derived",
+      "tier": "obvious"
+     },
+     {
+      "id": "so.label.rimward",
+      "label": "rimward world",
+      "group": "so.label",
+      "about": "a cold rocky world on the edge of a system, beyond easy patrol",
+      "source": "derived",
+      "tier": "scanned"
+     },
+     {
+      "id": "so.label.shadow-moon",
+      "label": "shadow moon",
+      "group": "so.label",
+      "about": "a small moon of a giant, easy to hide behind",
+      "source": "derived",
+      "tier": "scanned"
+     },
+     {
+      "id": "so.faction.crown",
+      "label": "Meridian Crown",
+      "group": "so.faction",
+      "about": "the old throne and its household fleet",
+      "source": "authored",
+      "tier": "obvious"
+     },
+     {
+      "id": "so.faction.league",
+      "label": "League of Free Worlds",
+      "group": "so.faction",
+      "about": "the merchant republics that keep the starlanes open",
+      "source": "authored",
+      "tier": "obvious"
+     },
+     {
+      "id": "so.faction.syndicate",
+      "label": "Ashen Syndicate",
+      "group": "so.faction",
+      "about": "smugglers and fixers who answer to no flag",
+      "source": "authored",
+      "tier": "surveyed"
+     },
+     {
+      "id": "so.port.free",
+      "label": "free port",
+      "group": "so.port",
+      "about": "a port open to any ship that pays its dues",
+      "source": "authored",
+      "tier": "obvious"
+     },
+     {
+      "id": "so.port.hidden",
+      "label": "hidden berth",
+      "group": "so.port",
+      "about": "a port that does not show on the charts",
+      "source": "authored",
+      "tier": "surveyed"
+     },
+     {
+      "id": "so.military",
+      "label": "military",
+      "about": "armed and under a fleet's orders",
+      "source": "authored",
+      "tier": "scanned"
+     },
+     {
+      "id": "so.fictional_drive",
+      "label": "fictional drive",
+      "about": "carries a starlane drive: a setting rule, not physics",
+      "source": "authored",
+      "tier": "obvious"
+     }
+    ]
+   },
+   "templates": {
+    "templates": [
+     {
+      "id": "so_free_port",
+      "kind": "station",
+      "label": "Free port",
+      "facts": {
+       "construct.mass_kg": 20000000000.0,
+       "construct.crew_max": 60000.0,
+       "construct.source": "written for this pack"
+      },
+      "tags": [
+       "construct",
+       "station",
+       "so.port.free"
+      ],
+      "explain": "a ring station where any ship may berth, trade and refuel"
+     },
+     {
+      "id": "so_citadel",
+      "kind": "station",
+      "label": "Crown citadel",
+      "facts": {
+       "construct.mass_kg": 60000000000.0,
+       "construct.crew_max": 40000.0,
+       "construct.source": "written for this pack"
+      },
+      "tags": [
+       "construct",
+       "station",
+       "so.military"
+      ],
+      "explain": "a fortress station with a household fleet's berths and a throne room"
+     },
+     {
+      "id": "so_shipyard",
+      "kind": "station",
+      "label": "Moon-forge yard",
+      "facts": {
+       "construct.mass_kg": 30000000000.0,
+       "construct.crew_max": 20000.0,
+       "construct.source": "written for this pack"
+      },
+      "tags": [
+       "construct",
+       "station",
+       "so.port.free"
+      ],
+      "explain": "a starship yard fed by the mines of a giant's moons"
+     },
+     {
+      "id": "so_smugglers_den",
+      "kind": "station",
+      "label": "Smugglers' den",
+      "facts": {
+       "construct.mass_kg": 500000000.0,
+       "construct.crew_max": 400.0,
+       "construct.source": "written for this pack"
+      },
+      "tags": [
+       "construct",
+       "station",
+       "so.port.hidden"
+      ],
+      "explain": "a hollowed rock with an unlisted berth and no questions asked"
+     },
+     {
+      "id": "so_watch_beacon",
+      "kind": "site",
+      "label": "Watch beacon",
+      "facts": {
+       "construct.crew_max": 30.0,
+       "construct.source": "written for this pack"
+      },
+      "tags": [
+       "construct",
+       "site"
+      ],
+      "explain": "a League listening post and starlane marker on a cold world"
+     },
+     {
+      "id": "so_lancer",
+      "kind": "ship",
+      "label": "Household lancer",
+      "facts": {
+       "construct.mass_kg": 40000000.0,
+       "construct.length_m": 320.0,
+       "construct.crew_max": 300.0,
+       "construct.source": "written for this pack"
+      },
+      "tags": [
+       "construct",
+       "ship",
+       "so.military",
+       "so.fictional_drive"
+      ],
+      "explain": "a Crown warship, fast and proud"
+     },
+     {
+      "id": "so_lane_trader",
+      "kind": "ship",
+      "label": "Lane trader",
+      "facts": {
+       "construct.mass_kg": 15000000.0,
+       "construct.cargo_t": 8000.0,
+       "construct.crew_max": 40.0,
+       "construct.source": "written for this pack"
+      },
+      "tags": [
+       "construct",
+       "ship",
+       "so.fictional_drive"
+      ],
+      "explain": "a League merchantman that runs the starlanes"
+     }
+    ]
+   },
+   "rules": [
+    {
+     "id": "so.label.throne-world.v1",
+     "tag": "so.label.throne-world",
+     "applies_to": [
+      "body"
+     ],
+     "when": {
+      "if": "all",
+      "of": [
+       {
+        "if": "all",
+        "of": [
+         {
+          "if": "all",
+          "of": [
+           {
+            "if": "not",
+            "p": {
+             "if": "has",
+             "field": "star.effective_temperature"
+            }
+           },
+           {
+            "if": "not",
+            "p": {
+             "if": "has",
+             "field": "mass_sun"
+            }
+           }
+          ]
+         },
+         {
+          "if": "any",
+          "of": [
+           {
+            "if": "range",
+            "field": "body.mass",
+            "min": 2.9860839338956896e+23,
+            "max": 5.972167867791379e+25
+           },
+           {
+            "if": "range",
+            "field": "mass_earth",
+            "min": 0.05,
+            "max": 10
+           }
+          ]
+         }
+        ]
+       },
+       {
+        "if": "any",
+        "of": [
+         {
+          "if": "range",
+          "field": "surface_k",
+          "min": 240,
+          "max": 330
+         },
+         {
+          "if": "all",
+          "of": [
+           {
+            "if": "not",
+            "p": {
+             "if": "has",
+             "field": "surface_k"
+            }
+           },
+           {
+            "if": "any",
+            "of": [
+             {
+              "if": "range",
+              "field": "orbit.semi_major_axis",
+              "min": 119678296560.0,
+              "max": 194477231910.0
+             },
+             {
+              "if": "range",
+              "field": "a_au",
+              "min": 0.8,
+              "max": 1.3
+             }
+            ]
+           }
+          ]
+         }
+        ]
+       },
+       {
+        "if": "not",
+        "p": {
+         "if": "any",
+         "of": [
+          {
+           "if": "range",
+           "field": "parent.body.mass",
+           "min": 5.972167867791379e+20
+          },
+          {
+           "if": "range",
+           "field": "parent.mass_earth",
+           "min": 0.0001
+          }
+         ]
+        }
+       }
+      ]
+     }
+    },
+    {
+     "id": "so.label.forge-giant.v1",
+     "tag": "so.label.forge-giant",
+     "applies_to": [
+      "body"
+     ],
+     "when": {
+      "if": "all",
+      "of": [
+       {
+        "if": "all",
+        "of": [
+         {
+          "if": "all",
+          "of": [
+           {
+            "if": "not",
+            "p": {
+             "if": "has",
+             "field": "star.effective_temperature"
+            }
+           },
+           {
+            "if": "not",
+            "p": {
+             "if": "has",
+             "field": "mass_sun"
+            }
+           }
+          ]
+         },
+         {
+          "if": "any",
+          "of": [
+           {
+            "if": "range",
+            "field": "body.mass",
+            "min": 5.972167867791379e+25,
+            "max": 2.3888671471165516e+28
+           },
+           {
+            "if": "range",
+            "field": "mass_earth",
+            "min": 10,
+            "max": 4000
+           }
+          ]
+         }
+        ]
+       },
+       {
+        "if": "not",
+        "p": {
+         "if": "any",
+         "of": [
+          {
+           "if": "range",
+           "field": "parent.body.mass",
+           "min": 5.972167867791379e+20
+          },
+          {
+           "if": "range",
+           "field": "parent.mass_earth",
+           "min": 0.0001
+          }
+         ]
+        }
+       }
+      ]
+     }
+    },
+    {
+     "id": "so.label.rimward.v1",
+     "tag": "so.label.rimward",
+     "applies_to": [
+      "body"
+     ],
+     "when": {
+      "if": "all",
+      "of": [
+       {
+        "if": "all",
+        "of": [
+         {
+          "if": "all",
+          "of": [
+           {
+            "if": "not",
+            "p": {
+             "if": "has",
+             "field": "star.effective_temperature"
+            }
+           },
+           {
+            "if": "not",
+            "p": {
+             "if": "has",
+             "field": "mass_sun"
+            }
+           }
+          ]
+         },
+         {
+          "if": "any",
+          "of": [
+           {
+            "if": "range",
+            "field": "body.mass",
+            "min": 2.9860839338956896e+23,
+            "max": 5.972167867791379e+25
+           },
+           {
+            "if": "range",
+            "field": "mass_earth",
+            "min": 0.05,
+            "max": 10
+           }
+          ]
+         }
+        ]
+       },
+       {
+        "if": "any",
+        "of": [
+         {
+          "if": "range",
+          "field": "surface_k",
+          "max": 120
+         },
+         {
+          "if": "all",
+          "of": [
+           {
+            "if": "not",
+            "p": {
+             "if": "has",
+             "field": "surface_k"
+            }
+           },
+           {
+            "if": "any",
+            "of": [
+             {
+              "if": "range",
+              "field": "orbit.semi_major_axis",
+              "min": 747989353500.0,
+              "max": 8975872242000.0
+             },
+             {
+              "if": "range",
+              "field": "a_au",
+              "min": 5.0,
+              "max": 60.0
+             }
+            ]
+           }
+          ]
+         }
+        ]
+       },
+       {
+        "if": "not",
+        "p": {
+         "if": "any",
+         "of": [
+          {
+           "if": "range",
+           "field": "parent.body.mass",
+           "min": 5.972167867791379e+20
+          },
+          {
+           "if": "range",
+           "field": "parent.mass_earth",
+           "min": 0.0001
+          }
+         ]
+        }
+       }
+      ]
+     }
+    },
+    {
+     "id": "so.label.shadow-moon.v1",
+     "tag": "so.label.shadow-moon",
+     "applies_to": [
+      "body"
+     ],
+     "when": {
+      "if": "all",
+      "of": [
+       {
+        "if": "all",
+        "of": [
+         {
+          "if": "not",
+          "p": {
+           "if": "has",
+           "field": "star.effective_temperature"
+          }
+         },
+         {
+          "if": "not",
+          "p": {
+           "if": "has",
+           "field": "mass_sun"
+          }
+         }
+        ]
+       },
+       {
+        "if": "any",
+        "of": [
+         {
+          "if": "range",
+          "field": "parent.body.mass",
+          "min": 5.972167867791379e+25,
+          "max": 2.3888671471165516e+28
+         },
+         {
+          "if": "range",
+          "field": "parent.mass_earth",
+          "min": 10,
+          "max": 4000
+         }
+        ]
+       },
+       {
+        "if": "any",
+        "of": [
+         {
+          "if": "range",
+          "field": "body.mass",
+          "min": 5.972167867791379e+20,
+          "max": 2.9860839338956896e+23
+         },
+         {
+          "if": "range",
+          "field": "mass_earth",
+          "min": 0.0001,
+          "max": 0.05
+         }
+        ]
+       }
+      ]
+     }
+    }
+   ],
+   "dressing": {
+    "about": "The Meridian Reach: which worlds get a port, a base or a faction's presence, and why.",
+    "rules": [
+     {
+      "id": "so.free-port.v1",
+      "applies_to": [
+       "body"
+      ],
+      "when": {
+       "if": "tag",
+       "tag": "so.label.throne-world"
+      },
+      "place": "so_free_port",
+      "where": "high-orbit",
+      "tags": [
+       "so.faction.league"
+      ],
+      "faction": "so.faction.league",
+      "explain": "the League keeps a free port above every throne world, by old treaty"
+     },
+     {
+      "id": "so.citadel.v1",
+      "applies_to": [
+       "body"
+      ],
+      "when": {
+       "if": "tag",
+       "tag": "so.label.throne-world"
+      },
+      "place": "so_citadel",
+      "where": "low-orbit",
+      "tags": [
+       "so.faction.crown"
+      ],
+      "faction": "so.faction.crown",
+      "explain": "a throne world has a Crown citadel in low orbit"
+     },
+     {
+      "id": "so.forge.v1",
+      "applies_to": [
+       "body"
+      ],
+      "when": {
+       "if": "tag",
+       "tag": "so.label.forge-giant"
+      },
+      "place": "so_shipyard",
+      "where": "high-orbit",
+      "chance": 0.6,
+      "tags": [
+       "so.faction.crown"
+      ],
+      "faction": "so.faction.crown",
+      "explain": "most forge giants hold a Crown moon-forge yard (drawn from the seed)"
+     },
+     {
+      "id": "so.den.v1",
+      "applies_to": [
+       "body"
+      ],
+      "when": {
+       "if": "tag",
+       "tag": "so.label.shadow-moon"
+      },
+      "place": "so_smugglers_den",
+      "where": "surface",
+      "chance": 0.35,
+      "tags": [
+       "so.faction.syndicate"
+      ],
+      "faction": "so.faction.syndicate",
+      "explain": "the Syndicate hides dens on some small moons of giants (drawn from the seed)"
+     },
+     {
+      "id": "so.beacon.v1",
+      "applies_to": [
+       "body"
+      ],
+      "when": {
+       "if": "tag",
+       "tag": "so.label.rimward"
+      },
+      "place": "so_watch_beacon",
+      "where": "surface",
+      "tags": [
+       "so.faction.league"
+      ],
+      "faction": "so.faction.league",
+      "explain": "the League marks every rimward world with a watch beacon"
+     }
+    ]
+   },
+   "lenses": [
+    {
+     "schema": "sse.lens/0",
+     "id": "so.politics",
+     "label": "Meridian Reach: who holds what",
+     "description": "Each place's power and port first: the political map of the Reach.",
+     "cards": [
+      {
+       "subject_kind": "*",
+       "fields": [
+        "name",
+        "dressing.faction",
+        "dressing.where",
+        "construct.crew_max"
+       ],
+       "density": "compact"
+      }
+     ],
+     "layers": [
+      "orbits",
+      "zones",
+      "labels",
+      "moons",
+      "key"
+     ],
+     "tools": [
+      "undo"
+     ],
+     "cost": "light"
+    }
+   ]
+  }
+ }
+}

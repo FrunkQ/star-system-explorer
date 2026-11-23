@@ -4,12 +4,12 @@
       "aerosols": [
         {
           "colour": [
-            0.16,
+            0.16000000000000003,
             0.15,
             0.14
           ],
           "kind": "ash",
-          "optical_depth": 20.00000000759203
+          "optical_depth": 20.00000000758439
         },
         {
           "colour": [
@@ -18,15 +18,15 @@
             0.93
           ],
           "kind": "spray",
-          "optical_depth": 0.022946015772687293
+          "optical_depth": 0.02294601577370373
         }
       ],
       "lat": 15.1,
       "lon": 120.3,
       "out": {
         "acid_rain": false,
-        "ash_fall_mm": 96.95816706610869,
-        "ground_darkening": 0.9999999962127794
+        "ash_fall_mm": 96.97076025353212,
+        "ground_darkening": 0.999999996222306
       }
     },
     {
@@ -38,27 +38,27 @@
             0.93
           ],
           "kind": "spray",
-          "optical_depth": 0.022946015772687293
+          "optical_depth": 0.02294601577370373
         }
       ],
       "lat": 15.1,
       "lon": 125.0,
       "out": {
         "acid_rain": false,
-        "ash_fall_mm": 2.5058653207470028e-8,
-        "ground_darkening": 5.0117305860908345e-9
+        "ash_fall_mm": 2.5035816878724868e-8,
+        "ground_darkening": 5.0071633506121316e-9
       }
     },
     {
       "aerosols": [
         {
           "colour": [
-            0.15999999999999998,
-            0.14999999999999997,
+            0.16,
+            0.15,
             0.14
           ],
           "kind": "ash",
-          "optical_depth": 2.5352021612303957
+          "optical_depth": 2.534994073998384
         },
         {
           "colour": [
@@ -67,15 +67,15 @@
             0.93
           ],
           "kind": "spray",
-          "optical_depth": 0.017421351708479416
+          "optical_depth": 0.01742135170863611
         }
       ],
       "lat": 45.0,
       "lon": 14.0,
       "out": {
         "acid_rain": false,
-        "ash_fall_mm": 12.295748250008586,
-        "ground_darkening": 0.914492368524715
+        "ash_fall_mm": 12.296385781131443,
+        "ground_darkening": 0.9145032705849215
       }
     },
     {
@@ -87,7 +87,7 @@
             0.12
           ],
           "kind": "smog",
-          "optical_depth": 1.2582570791030352
+          "optical_depth": 1.2582570791000616
         }
       ],
       "lat": 34.0,
@@ -116,7 +116,7 @@
             0.93
           ],
           "kind": "spray",
-          "optical_depth": 0.02402445859540852
+          "optical_depth": 0.024024458596794036
         }
       ],
       "lat": 19.4,
@@ -173,7 +173,7 @@
       "lat_deg": 19.4,
       "lon_deg": -155.3,
       "size_km": 10.0,
-      "strength": 0.7777801122217719,
+      "strength": 0.7777280295719269,
       "track": [],
       "why": "A 0.8 km degassing plume from 50 kg/s of gas (Mastin et al. 2009 applied to the gas rate, a stand-in), trailing a sulphate haze downwind."
     },
@@ -186,8 +186,8 @@
       "kind": "plume",
       "lat_deg": 15.1,
       "lon_deg": 120.3,
-      "size_km": 44.99735827849725,
-      "strength": 22.498679139248626,
+      "size_km": 44.99434511112726,
+      "strength": 22.49717255556363,
       "track": [
         [
           100.0,
@@ -206,8 +206,8 @@
       "kind": "plume",
       "lat_deg": 45.0,
       "lon_deg": 10.0,
-      "size_km": 36.75687664172773,
-      "strength": 18.378438320863864,
+      "size_km": 36.75441528342678,
+      "strength": 18.37720764171339,
       "track": [
         [
           100.0,

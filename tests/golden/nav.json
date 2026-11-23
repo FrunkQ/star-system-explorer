@@ -3,26 +3,26 @@
     {
       "candidates": [
         {
-          "days": "258.8671",
+          "days": "258.8710",
           "difficulty": "hard",
-          "dv_m_s": "5608.469",
+          "dv_m_s": "5608.429",
           "id": "hohmann"
         },
         {
-          "days": "199.8468",
+          "days": "199.8498",
           "difficulty": "hard",
-          "dv_m_s": "6136.582",
+          "dv_m_s": "6136.531",
           "id": "lambert-fuel"
         },
         {
-          "days": "180.7802",
+          "days": "180.7829",
           "difficulty": "hard",
-          "dv_m_s": "6367.531",
+          "dv_m_s": "6367.587",
           "id": "lambert-fast"
         }
       ],
       "case": "chemical",
-      "plan": "f9a84d8a0d3104499b9ddd1a4f62c125b1640cc75c8a4d606bf0d6d493be22dd",
+      "plan": "c5993353531a5d0f898a26cc6364dceb06f9a2aed6b14917beecde194550b987",
       "refused": 0,
       "ways_out": []
     },
@@ -47,39 +47,39 @@
           "id": "torch-20"
         },
         {
-          "days": "94.4987",
+          "days": "94.5002",
           "difficulty": "very hard",
-          "dv_m_s": "59295.282",
+          "dv_m_s": "59294.294",
           "id": "lambert-fast"
         },
         {
-          "days": "119.1506",
+          "days": "119.1524",
           "difficulty": "moderate",
-          "dv_m_s": "8702.670",
+          "dv_m_s": "8702.594",
           "id": "lambert-balanced"
         },
         {
-          "days": "199.8468",
+          "days": "199.8498",
           "difficulty": "moderate",
-          "dv_m_s": "6136.582",
+          "dv_m_s": "6136.531",
           "id": "lambert-fuel"
         },
         {
-          "days": "258.8671",
+          "days": "258.8710",
           "difficulty": "moderate",
-          "dv_m_s": "5608.469",
+          "dv_m_s": "5608.429",
           "id": "hohmann"
         }
       ],
       "case": "torch",
-      "plan": "0ee75d881d9a1125d9b579afed632ec6c205727db733677d17cc90fe4189e504",
+      "plan": "36c4ffd62a79cb21326810c60588ca052fc4081852886c8710a0e2cc88077ce8",
       "refused": 0,
       "ways_out": []
     },
     {
       "candidates": [],
       "case": "drift",
-      "plan": "646d757d422d779c8e09bad98661ed760f8e538da35fb40b4743c6675fad5d57",
+      "plan": "fbf94e0ba83d61b6c65e6a0fbdfbdf856386f7030623240eb85d5190b71f4509",
       "refused": 0,
       "ways_out": [
         {
@@ -95,7 +95,7 @@
           "label": "Call for rescue from Earth"
         },
         {
-          "dv_m_s": "29785.142",
+          "dv_m_s": "29784.692",
           "feasible": false,
           "kind": "safe-orbit",
           "label": "Burn into a circular orbit at 1.00 au"
@@ -107,49 +107,49 @@
           "label": "Keep drifting"
         },
         {
-          "dv_m_s": "34804.451",
+          "dv_m_s": "34803.924",
           "feasible": false,
           "kind": "burn-to",
           "label": "Burn for Mars"
         },
         {
-          "dv_m_s": "35910.133",
+          "dv_m_s": "35909.569",
           "feasible": false,
           "kind": "burn-to",
           "label": "Burn for Mercury"
         },
         {
-          "dv_m_s": "34107.056",
+          "dv_m_s": "34106.560",
           "feasible": false,
           "kind": "burn-to",
           "label": "Burn for Venus"
         },
         {
-          "dv_m_s": "29696.770",
+          "dv_m_s": "29696.351",
           "feasible": false,
           "kind": "burn-to",
           "label": "Burn for Earth"
         },
         {
-          "dv_m_s": "55609.051",
+          "dv_m_s": "55608.414",
           "feasible": false,
           "kind": "burn-to",
           "label": "Burn for Jupiter"
         },
         {
-          "dv_m_s": "50567.282",
+          "dv_m_s": "50566.636",
           "feasible": false,
           "kind": "burn-to",
           "label": "Burn for Saturn"
         },
         {
-          "dv_m_s": "40778.659",
+          "dv_m_s": "40778.102",
           "feasible": false,
           "kind": "burn-to",
           "label": "Burn for Uranus"
         },
         {
-          "dv_m_s": "41032.895",
+          "dv_m_s": "41032.348",
           "feasible": false,
           "kind": "burn-to",
           "label": "Burn for Neptune"
@@ -159,7 +159,7 @@
   ],
   "descents": [
     {
-      "duration_s": "1400.50",
+      "duration_s": "1401.80",
       "events": [
         "entry",
         "peak-heating",
@@ -168,11 +168,11 @@
       ],
       "lander": "capsule",
       "method": "chute",
-      "peak_g": "9.4253",
-      "peak_heat_w_cm2": "115.3875",
+      "peak_g": "9.4131",
+      "peak_heat_w_cm2": "115.2708",
       "propellant_kg": "0.000",
       "result": "landed",
-      "touchdown_m_s": "7.5976",
+      "touchdown_m_s": "7.5962",
       "world": "Earth"
     },
     {

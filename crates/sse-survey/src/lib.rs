@@ -22,11 +22,11 @@ use sse_flow::Reference;
 
 pub const G: f64 = sse_core::quantity::consts::G;
 pub const C: f64 = sse_core::quantity::consts::C;
-pub const HOUR: f64 = 3600.0;
+pub const HOUR: f64 = sse_core::sheet::unit::H;
 pub const DAY: f64 = sse_core::sheet::DAY;
 pub const YEAR: f64 = sse_core::quantity::consts::JULIAN_YEAR;
 /// Photon energy at 550 nm, J (for photon counting in the visible).
-pub const PHOTON_550: f64 = 6.626_070_15e-34 * C / 550e-9;
+pub const PHOTON_550: f64 = sse_core::sheet::H * C / 550e-9; // not-sheet: 550 nm is the chosen band centre
 
 const SM03: &str = "Seager, S. and Mallén-Ornelas, G. 2003, A unique solution of planet and star parameters from an extrasolar planet transit light curve, ApJ 585, 1038: depth (Rp/R*)², duration, impact parameter. doi:10.1086/346105";
 const WINN10: &str = "Winn, J. N. 2010, Transits and occultations, in Exoplanets (ed. S. Seager), University of Arizona Press: transit probability R*/a, total duration. https://arxiv.org/abs/1001.2010";

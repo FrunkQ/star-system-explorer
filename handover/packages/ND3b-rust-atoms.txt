@@ -1,0 +1,19 @@
+# ND3b: physics blocks still written in Rust, each with why (equation block design 8A).
+# This list only shrinks: moving a block into a formula file (packs/base-*/formulas/) takes
+# its line out. A test checks the list against the registry. "not yet looked at" means the
+# block has not been read for moving; a reason means it stays for now, and why.
+
+sse.aurora.footprint	gives 0 for a line that never rises above the planet instead of refusing, and needs acos: waits for if-then in the value and acos in the formula language
+sse.aurora.hill_distance	answers infinity when no plasma is loaded instead of refusing: waits for an "unbounded" answer a formula can give
+sse.belts.electron_range	iterates: 60 halvings invert the measured range for the energy
+sse.belts.kp_limit	iterates: the lowest cap over a grid of resonance curves
+sse.heat.active_geology_lifetime	iterates: 80 halvings to find when the heat flow falls below the limit
+sse.heat.al26_planetesimal_heating	refuses when its two energy settings cross: waits for checks on settings
+sse.light.dust_extinction	CCM89's four polynomial pieces need more than the 64 operations an Equation holds; waits for fit tables as data
+sse.magnetic.dynamo_field	its steps ρ^⅓ and q^⅔ are not whole units on their own (only their product is): waits for unit-free working lines
+sse.nebula.ionising_photon_rate	iterates: a 400-term series for the photons above 13.6 eV
+sse.orbit.kepler_position	iterates: Kepler's equation solved by a fixed number of Newton steps
+sse.planet.radius_from_mass	a broken power law over a table of mass ranges
+sse.star.ms_luminosity	a piecewise fit over a table of mass ranges, with the homology factors for changed constants
+sse.star.ms_luminosity_at_age	has a parameter and refuses ages outside the main sequence in its own words
+sse.star.ms_radius	a piecewise fit over mass ranges, with the homology factor for changed constants

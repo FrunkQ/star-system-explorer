@@ -11,6 +11,7 @@
 // No Math.random, no clock, no log or pow.
 import { primaryOf, type SceneSubject, type SystemScene } from "./scene.ts";
 import type { PlayerScene, PlayerSubject } from "./player-scene.ts";
+import { constant } from "./sheet.ts";
 
 export const SOUND_SCENE_SCHEMA = "sse.sound-scene/0" as const;
 export const SOUND_RECIPE_SCHEMA = "sse.sound-recipe/0" as const;
@@ -82,8 +83,8 @@ export function draw(key: string): number {
 
 // ---------------------------------------------------------------- periods to pitch
 
-const SEC_PER_YEAR = 31_557_600;
-const SEC_PER_DAY = 86_400;
+const SEC_PER_YEAR = constant("yr_julian");
+const SEC_PER_DAY = constant("day");
 
 /**
  * Raise a frequency by whole octaves into [lo, 2 lo). Doubling and halving
@@ -196,7 +197,7 @@ export function voicesFromSystem(scene: SystemScene, centre?: string): Voice[] {
       const a = s.orbit!.a_au;
       // A moon's year needs its planet's mass; the scene's own year fact wins when it is there.
       const parent = s.parent && s.parent !== star?.address ? scene.subjects.find((p) => p.address === s.parent) : undefined;
-      const m = parent ? ((num(parent, "mass_earth") ?? 1) / 332_946) : m_sun;
+      const m = parent ? ((num(parent, "mass_earth") ?? 1) / (constant("GM_sun") / constant("GM_earth"))) : m_sun;
       const period_s = year_d !== undefined ? year_d * SEC_PER_DAY : Math.sqrt((a * a * a) / m) * SEC_PER_YEAR;
       return { address: s.address, name: s.label, period_s, mass_earth: num(s, "mass_earth") };
     });
@@ -216,7 +217,7 @@ export function voicesFromPlayers(scene: PlayerScene): Voice[] {
     const p = get(s, "orbit.period_s");
     if (p === undefined) return [];
     const kg = get(s, "mass_kg");
-    return [{ address: s.address, name: name(s), period_s: p, ...(kg !== undefined ? { mass_earth: kg / 5.9722e24 } : {}) }];
+    return [{ address: s.address, name: name(s), period_s: p, ...(kg !== undefined ? { mass_earth: kg / constant("M_earth") } : {}) }];
   });
 }
 

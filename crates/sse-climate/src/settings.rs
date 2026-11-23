@@ -529,8 +529,8 @@ impl ClimateSettings {
             .find_map(|p| p.provides.other.get("climate"))
             .or_else(|| base[0].provides.other.get("climate"))
             .ok_or("base climate pack provides no climate")?;
-        let mut s: ClimateSettings = serde_json::to_value(v)
-            .and_then(serde_json::from_value)
+        let mut s: ClimateSettings = sse_reference::refs::with_sheet(stack, v)
+            .and_then(|j| serde_json::from_value(j).map_err(|e| e.to_string()))
             .map_err(|e| format!("climate settings: {e}"))?;
         if s.bands < 4 || s.seasons == 0 || s.iterations == 0 {
             return Err("climate needs at least 4 bands, 1 season and 1 iteration".into());

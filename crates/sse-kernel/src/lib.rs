@@ -19,6 +19,8 @@ mod frame;
 mod frames;
 mod galaxies;
 mod glow;
+#[cfg(test)]
+mod hooks_tests;
 mod ice_ages;
 #[cfg(test)]
 mod matter_tests;
@@ -29,11 +31,24 @@ mod nav;
 mod orbits;
 pub mod protocol;
 mod sky;
+#[cfg(test)]
+mod sol_tests;
 mod survey;
 mod systems;
 mod tags;
 #[cfg(test)]
 mod tags_tests;
+mod tech;
+#[cfg(test)]
+mod tech_tests;
+mod territory;
+#[cfg(test)]
+mod territory_tests;
+mod trust;
+#[cfg(test)]
+mod trust_tests;
+#[cfg(test)]
+mod universe_pack_tests;
 mod voyage;
 mod weather;
 mod withdraw;
@@ -209,6 +224,37 @@ fn load_observe(ms: &[sse_pack::PackManifest]) -> Result<Observe, Vec<String>> {
             sse_names::Library::default()
         }
     };
+    // OV3: map layers of areas, bottom to top.
+    let mut found = Vec::new();
+    for p in ms {
+        if let Some(v) = p.provides.other.get("overlays") {
+            let j =
+                serde_json::to_value(v).map_err(|e| vec![format!("{}: overlays: {e}", p.id)])?;
+            found.push((p.id.clone(), j));
+        }
+    }
+    let layers = match territory::Layers::from_packs(&found) {
+        Ok(l) => l,
+        Err(e) => {
+            problems.extend(e);
+            territory::Layers::default()
+        }
+    };
+    // FT2: the setting's technology, bottom to top.
+    let mut found = Vec::new();
+    for p in ms {
+        if let Some(v) = p.provides.other.get("tech") {
+            let j = serde_json::to_value(v).map_err(|e| vec![format!("{}: tech: {e}", p.id)])?;
+            found.push((p.id.clone(), j));
+        }
+    }
+    let tech = match tech::Tech::from_packs(&found) {
+        Ok(t) => t,
+        Err(e) => {
+            problems.extend(e);
+            tech::Tech::default()
+        }
+    };
     if !problems.is_empty() {
         return Err(problems);
     }
@@ -254,6 +300,8 @@ fn load_observe(ms: &[sse_pack::PackManifest]) -> Result<Observe, Vec<String>> {
         dressing,
         reference: std::sync::Arc::new(reference),
         names: std::sync::Arc::new(names),
+        layers,
+        tech,
     })
 }
 
@@ -427,6 +475,11 @@ struct Observe {
     reference: std::sync::Arc<sse_reference::Reference>,
     /// Name schemes and the avoid list (`provides.other.names`, NM1).
     names: std::sync::Arc<sse_names::Library>,
+    /// Map layers of areas (`provides.other.overlays[].areas`, OV3).
+    layers: territory::Layers,
+    /// The setting's tech ladder, figures and advances
+    /// (`provides.other.tech`, FT2).
+    tech: tech::Tech,
 }
 
 pub struct Kernel {
@@ -447,6 +500,9 @@ pub struct Kernel {
     land: Vec<(String, sse_climate::Extra)>,
     /// Orbit-level climates by key (W7a): the `weather` op reuses them.
     climates: sse_climate::Cache,
+    /// ND6: each pack's sources, fudges and reproduction report, worked
+    /// out when the stack loaded.
+    reports: Vec<trust::PackReport>,
 }
 
 impl Default for Kernel {
@@ -516,6 +572,72 @@ fn replay_export(evs: &[serde_json::Value], what: &str) -> Result<Chronicle, Res
 }
 
 /// The record's hash: its chronicle head (covers notes, which touch no state).
+/// OV3: the world the reading rules see: where each drawn star system among
+/// the places asked and held is at the date, and the record's kept numbers.
+fn territory_world(
+    u: &Universe,
+    live: &[sse_record::holdings::Holding],
+    asked: &[Address],
+    at: UniverseTime,
+) -> Result<territory::KernelWorld, Response> {
+    let mut systems: Vec<Address> = live
+        .iter()
+        .map(|h| h.place.clone())
+        .chain(asked.iter().cloned())
+        .filter_map(|p| territory::drawn_system(&p))
+        .collect();
+    systems.sort();
+    systems.dedup();
+    let mut positions = BTreeMap::new();
+    if !systems.is_empty() {
+        let state = u.chronicle.state_at(UniverseTime::seconds(i64::MAX));
+        let pins = cosmos::star_pins(&state)?;
+        let start = clock::campaign_span_s(&u.chronicle).map(|(a, _)| a);
+        positions = cosmos::with_stars(&u.seed, &u.root, None, |st, now| {
+            let t_myr = match start {
+                Some(s0) if at.s != i64::MAX => {
+                    now + (at.s - s0) as f64 / sse_core::sheet::YR_JULIAN / 1.0e6
+                }
+                _ => now + clock::elapsed_myr(&u.chronicle),
+            };
+            let mut out = BTreeMap::new();
+            for a in &systems {
+                let s = match pins.iter().find(|p| p.address == *a) {
+                    Some(p) => Some(p.clone()),
+                    None => st.draw_one(a).map_err(|e| err("bad_address", e))?,
+                };
+                if let Some(s) = s {
+                    let x = st.at(&s, t_myr).xyz_pc;
+                    let pc = sse_core::sheet::PC;
+                    out.insert(a.clone(), [x[0] * pc, x[1] * pc, x[2] * pc]);
+                }
+            }
+            Ok(out)
+        })?;
+    }
+    Ok(territory::KernelWorld {
+        positions,
+        record: u.record.state_at(at),
+    })
+}
+
+/// FT2: a tech holder is an actor in the record or the universe root (the
+/// setting).
+fn tech_holder(u: &Universe, holder: &str) -> Result<Address, Response> {
+    let a = in_universe(&u.root, holder)?;
+    if a == u.root {
+        return Ok(a);
+    }
+    let state = u.record.state_at(UniverseTime::seconds(i64::MAX));
+    if a.last().kind() != "actor" || state.get(&a, sse_record::ACTOR_KIND).is_none() {
+        return Err(err(
+            "bad_tech",
+            format!("{a}: technology is held by an actor (add_actor) or by the setting, the universe root"),
+        ));
+    }
+    Ok(a)
+}
+
 fn record_hash(u: &Universe) -> String {
     u.record.head().hex()
 }
@@ -584,6 +706,7 @@ impl Kernel {
             surveys: vec![],
             land: vec![],
             climates: sse_climate::Cache::new(8),
+            reports: vec![],
             jobs: BTreeMap::new(),
             next_job: 1,
             time: None,
@@ -671,8 +794,12 @@ impl Kernel {
     }
 
     pub fn handle(&mut self, req: Request) -> Response {
-        // MP1c: the stack's constants are in force for the whole call.
-        let c = self.observe.reference.handle();
+        // MP1c: the stack's constants are in force for the whole call; DM6:
+        // read at the call's date when any constant has a history.
+        let c = match self.dated(&req) {
+            Some(t) => self.observe.reference.handle_on(t),
+            None => self.observe.reference.handle(),
+        };
         // MP17a: and its sheet, for the Look up block.
         let sheet = sheet_of(&self.observe.reference);
         sse_core::constants::with(c, || {
@@ -681,6 +808,36 @@ impl Kernel {
                 Err(r) => r,
             })
         })
+    }
+
+    /// DM6: the date a call is asked at, Gyr after the origin, when any
+    /// constant on the stack's sheet has a history (otherwise none, so the
+    /// call reads the plain handle and nothing moves by a bit). The date is
+    /// the request's `at_s` on the campaign clock (the far future meaning
+    /// "now"), else the campaign's now; the clock's first setting is the
+    /// cosmology's present (`now_gyr`), as every system's age counts from it.
+    fn dated(&self, req: &Request) -> Option<f64> {
+        let r = &self.observe.reference;
+        if !sse_core::constants::Constants::IDS
+            .iter()
+            .any(|id| r.has_history(id))
+        {
+            return None;
+        }
+        let now_gyr = cosmos::now_gyr().ok()?;
+        let (first, latest) = self
+            .universe
+            .as_ref()
+            .and_then(|u| clock::campaign_span_s(&u.chronicle))
+            .unwrap_or((0, 0));
+        let at = serde_json::to_value(req)
+            .ok()
+            .and_then(|v| v.get("at_s").and_then(serde_json::Value::as_i64));
+        let at = match at {
+            Some(s) if s < i64::MAX => s,
+            _ => latest,
+        };
+        Some(now_gyr + (at - first) as f64 / clock::JULIAN_YEAR_S / 1.0e9)
     }
 
     /// Carry out an applied intent: a built-in becomes its kernel request
@@ -2116,6 +2273,15 @@ impl Kernel {
                                 }
                             }
                         }
+                        // ND6: each pack's reproduction checks, run here on
+                        // the reader's machine; one outside its tolerance
+                        // refuses the stack with the numbers side by side.
+                        let mut reports = vec![];
+                        if problems.is_empty() {
+                            let (r, p) = trust::reports(&ms, &flows, &cx);
+                            reports = r;
+                            problems.extend(p);
+                        }
                         if !problems.is_empty() {
                             let issues: Vec<sse_pack::StackIssue> = problems
                                 .iter()
@@ -2157,6 +2323,7 @@ impl Kernel {
                             adopted,
                         };
                         self.stack = Some((stack, flows));
+                        self.reports = reports;
                         self.observe = observe;
                         self.codes = codes;
                         self.time = sse_time::epoch::TimeSettings::from_packs(&ms).ok();
@@ -2297,7 +2464,7 @@ impl Kernel {
                 };
                 Response::StateHash { hash: hash.hex() }
             }
-            Request::Derive { flow, inputs } => {
+            Request::Derive { flow, inputs, .. } => {
                 let (stack, flows) = self
                     .stack
                     .as_ref()
@@ -2337,7 +2504,9 @@ impl Kernel {
                     work_units: ev.work_units as u32,
                 }
             }
-            Request::Explain { flow, inputs, kind } => {
+            Request::Explain {
+                flow, inputs, kind, ..
+            } => {
                 let (stack, flows) = self
                     .stack
                     .as_ref()
@@ -2932,6 +3101,7 @@ impl Kernel {
                             at_s,
                             run: u.runs.get(&system),
                             ports: &ports,
+                            air: false,
                         }))?
                     }
                     _ => {
@@ -2942,6 +3112,111 @@ impl Kernel {
                     }
                 };
                 Response::RoutePlanned { plan }
+            }
+            Request::ShipAtWorld {
+                fixture,
+                nav,
+                system,
+                at_s,
+                ship,
+                worlds,
+                v_inf_m_s,
+            } => {
+                let go = |source| nav::ship_at_world(source, &ship, &worlds, v_inf_m_s);
+                let report = match (fixture.as_deref(), nav.as_ref(), system) {
+                    (Some(f), None, None) => go(nav::Source::Fixture(f))?,
+                    (None, Some(n), None) => go(nav::Source::Inline(n))?,
+                    (None, None, Some(system)) => {
+                        let a: Address = system
+                            .parse()
+                            .map_err(|e| err("bad_address", format!("{e}")))?;
+                        let u = self
+                            .universe
+                            .as_mut()
+                            .ok_or_else(|| err("no_universe", "open a universe first"))?;
+                        if !u.root.contains(&a) {
+                            return Err(err(
+                                "bad_address",
+                                format!("{a} is not in universe {}", u.root),
+                            ));
+                        }
+                        if !u.runs.contains_key(&system) {
+                            if let Some(req) = adopt::formation_request(&u.chronicle, &a) {
+                                let (_, run, _) = systems::form(req.into())?;
+                                u.runs.insert(system.clone(), run);
+                            }
+                        }
+                        go(nav::Source::System {
+                            ch: &u.chronicle,
+                            system: &a,
+                            at_s,
+                            run: u.runs.get(&system),
+                            ports: &[],
+                            air: true,
+                        })?
+                    }
+                    _ => {
+                        return Err(err(
+                            "bad_request",
+                            "give one of a fixture, a nav system or a universe system",
+                        ))
+                    }
+                };
+                Response::ShipAtWorldRead { report }
+            }
+            Request::JumpMap {
+                fixture,
+                nav,
+                system,
+                at_s,
+                rule,
+                end,
+            } => {
+                let end = end.unwrap_or(false);
+                let go = |source, t: Option<f64>| nav::jump_map(source, &rule, end, t);
+                let report = match (fixture.as_deref(), nav.as_ref(), system) {
+                    (Some(f), None, None) => go(nav::Source::Fixture(f), at_s.map(|t| t as f64))?,
+                    (None, Some(n), None) => go(nav::Source::Inline(n), at_s.map(|t| t as f64))?,
+                    (None, None, Some(system)) => {
+                        let a: Address = system
+                            .parse()
+                            .map_err(|e| err("bad_address", format!("{e}")))?;
+                        let u = self
+                            .universe
+                            .as_mut()
+                            .ok_or_else(|| err("no_universe", "open a universe first"))?;
+                        if !u.root.contains(&a) {
+                            return Err(err(
+                                "bad_address",
+                                format!("{a} is not in universe {}", u.root),
+                            ));
+                        }
+                        if !u.runs.contains_key(&system) {
+                            if let Some(req) = adopt::formation_request(&u.chronicle, &a) {
+                                let (_, run, _) = systems::form(req.into())?;
+                                u.runs.insert(system.clone(), run);
+                            }
+                        }
+                        go(
+                            nav::Source::System {
+                                ch: &u.chronicle,
+                                system: &a,
+                                at_s,
+                                run: u.runs.get(&system),
+                                ports: &[],
+                                air: false,
+                            },
+                            None,
+                        )?
+                    }
+                    _ => {
+                        return Err(err(
+                            "bad_request",
+                            "give one of a fixture, a nav system or a universe system",
+                        ))
+                    }
+                };
+                Response::JumpMapped { report }
             }
             Request::GalaxyChart {
                 cell,
@@ -3642,6 +3917,254 @@ impl Kernel {
                     notes,
                     kept,
                     actors,
+                }
+            }
+            Request::Hold {
+                place,
+                layer,
+                key,
+                status,
+                strength,
+                extent,
+                by,
+                tier,
+                audience,
+                writer,
+                reason,
+                source,
+                withdraw,
+                at_s,
+            } => {
+                self.observe.layers.rules(&layer)?;
+                let u = self.universe()?;
+                let place = in_universe(&u.root, &place)?;
+                let bad = |m: String| err("bad_holding", m);
+                let status = match status.as_str() {
+                    "holds" => sse_record::holdings::Status::Holds,
+                    "claims" => sse_record::holdings::Status::Claims,
+                    "influences" => sse_record::holdings::Status::Influences,
+                    o => return Err(bad(format!("status {o:?}: holds, claims or influences"))),
+                };
+                let extent = match extent {
+                    None => None,
+                    Some(v) => Some(serde_json::from_value(v).map_err(|e| {
+                        bad(format!(
+                            "extent: {{reach: {{value, unit}}}}, {{band: [q, q]}} or {{outline, frame}} ({e})"
+                        ))
+                    })?),
+                };
+                let audience: sse_record::Audience = match audience {
+                    None => sse_record::Audience::gm(),
+                    Some(v) => serde_json::from_value(v).map_err(|e| {
+                        bad(format!("audience: \"everyone\", \"gm\" or a list ({e})"))
+                    })?,
+                };
+                let writer = writer.unwrap_or_else(|| "gm".into());
+                let d = sse_record::holdings::HoldDraft {
+                    place,
+                    layer,
+                    key,
+                    status,
+                    strength,
+                    extent,
+                    by,
+                    tier,
+                    audience,
+                    writer: writer.clone(),
+                    reason,
+                    source,
+                    withdraw: withdraw.unwrap_or(false),
+                };
+                let id = sse_record::holdings::hold(
+                    &mut u.record,
+                    &d,
+                    UniverseTime::seconds(at_s),
+                    &Publisher::new(&writer, "hold", "1"),
+                )
+                .map_err(record_err)?;
+                let h = sse_record::holdings::history(
+                    u.record.events(),
+                    &d.layer,
+                    UniverseTime::seconds(i64::MAX),
+                )
+                .into_iter()
+                .find(|h| h.event == id.hex());
+                Response::Held {
+                    holding_id: id.hex(),
+                    holding: serde_json::to_value(&h).expect("plain"),
+                    record_hash: record_hash(u),
+                }
+            }
+            Request::WhoHolds {
+                place,
+                layer,
+                point,
+                at_s,
+                audience,
+                according_to,
+            } => {
+                let rules = self.observe.layers.rules(&layer)?;
+                let u = self.universe()?;
+                let place = in_universe(&u.root, &place)?;
+                let at = UniverseTime::seconds(at_s.unwrap_or(i64::MAX));
+                let live = sse_record::holdings::holdings_at(u.record.events(), &layer, at);
+                let view = sse_record::holdings::View {
+                    audience: audience.unwrap_or_else(|| "gm".into()),
+                    according_to,
+                };
+                let world = territory_world(u, &live, std::slice::from_ref(&place), at)?;
+                let a = match point {
+                    Some(p) => sse_record::holdings::who_holds_point(
+                        &place, &p.frame, p.xy, &live, &view, &rules, &world,
+                    ),
+                    None => sse_record::holdings::who_holds(&place, &live, &view, &rules, &world),
+                };
+                Response::WhoHeld {
+                    answer: serde_json::to_value(&a).expect("plain"),
+                }
+            }
+            Request::HoldingsIn {
+                bounds,
+                layer,
+                at_s,
+                audience,
+                according_to,
+                history,
+            } => {
+                let rules = self.observe.layers.rules(&layer)?;
+                let u = self.universe()?;
+                let bounds = in_universe(&u.root, &bounds)?;
+                let at = UniverseTime::seconds(at_s.unwrap_or(i64::MAX));
+                let live = sse_record::holdings::holdings_at(u.record.events(), &layer, at);
+                let view = sse_record::holdings::View {
+                    audience: audience.unwrap_or_else(|| "gm".into()),
+                    according_to,
+                };
+                let world = territory_world(u, &live, std::slice::from_ref(&bounds), at)?;
+                let holdings =
+                    sse_record::holdings::holdings_in(&bounds, &live, &view, &rules, &world)
+                        .iter()
+                        .map(|a| serde_json::to_value(a).expect("plain"))
+                        .collect();
+                let changes = if history.unwrap_or(false) {
+                    sse_record::holdings::history(u.record.events(), &layer, at)
+                        .into_iter()
+                        .filter(|h| bounds.contains(&h.place) && h.visible_to(&view.audience))
+                        .map(|h| serde_json::to_value(&h).expect("plain"))
+                        .collect()
+                } else {
+                    vec![]
+                };
+                Response::HoldingsListed {
+                    layer,
+                    holdings,
+                    changes,
+                }
+            }
+            Request::SetTech {
+                holder,
+                level,
+                gain,
+                lose,
+                writer,
+                reason,
+                at_s,
+            } => {
+                let known = |ids: &[String]| -> Result<(), Response> {
+                    match ids
+                        .iter()
+                        .find(|i| !self.observe.tech.advances.contains_key(*i))
+                    {
+                        Some(i) => Err(err(
+                            "bad_tech",
+                            format!("no advance {i:?} on the stack (provides.other.tech.advances)"),
+                        )),
+                        None => Ok(()),
+                    }
+                };
+                let gain = gain.unwrap_or_default();
+                let lose = lose.unwrap_or_default();
+                known(&gain)?;
+                known(&lose)?;
+                if let (Some(l), Some(lad)) = (level, self.observe.tech.ladder.as_ref()) {
+                    if !lad.levels.iter().any(|x| x.n == l) {
+                        return Err(err(
+                            "bad_tech",
+                            format!("level {l} is not on the {} ladder", lad.id),
+                        ));
+                    }
+                }
+                let u = self.universe()?;
+                let holder = tech_holder(u, &holder)?;
+                let writer = writer.unwrap_or_else(|| "gm".into());
+                let d = sse_record::tech::TechDraft {
+                    holder,
+                    level,
+                    gain,
+                    lose,
+                    writer: writer.clone(),
+                    reason,
+                };
+                let id = sse_record::tech::set_tech(
+                    &mut u.record,
+                    &d,
+                    UniverseTime::seconds(at_s),
+                    &Publisher::new(&writer, "tech", "1"),
+                )
+                .map_err(record_err)?;
+                Response::TechSet {
+                    change_id: id.hex(),
+                    record_hash: record_hash(u),
+                }
+            }
+            Request::TechOf { holder, at_s } => {
+                let t = self.observe.tech.clone();
+                let u = self.universe()?;
+                let h = tech_holder(u, &holder)?;
+                let of = sse_record::tech::tech_of(
+                    u.record.events(),
+                    &h,
+                    UniverseTime::seconds(at_s.unwrap_or(i64::MAX)),
+                );
+                let mut j = serde_json::to_value(&of).expect("plain");
+                j["holds"] = serde_json::json!(t
+                    .advances
+                    .values()
+                    .filter(|a| t.holds(&of, a))
+                    .map(|a| a.id.clone())
+                    .collect::<Vec<_>>());
+                Response::TechRead {
+                    holder: h.to_string(),
+                    tech: j,
+                }
+            }
+            Request::TechReading {
+                holder,
+                parts,
+                at_s,
+            } => {
+                let t = self.observe.tech.clone();
+                let parts: Vec<tech::PartNeed> = parts
+                    .into_iter()
+                    .map(serde_json::from_value)
+                    .collect::<Result<_, _>>()
+                    .map_err(|e| {
+                        err(
+                            "bad_tech",
+                            format!("parts are {{part, needs: {{figure: value}}}} ({e})"),
+                        )
+                    })?;
+                let u = self.universe()?;
+                let h = tech_holder(u, &holder)?;
+                let of = sse_record::tech::tech_of(
+                    u.record.events(),
+                    &h,
+                    UniverseTime::seconds(at_s.unwrap_or(i64::MAX)),
+                );
+                let reading = tech::reading(&t, &of, &parts).map_err(|e| err("bad_tech", e))?;
+                Response::TechAvailability {
+                    holder: h.to_string(),
+                    reading,
                 }
             }
             Request::Systems => {
@@ -4746,6 +5269,35 @@ impl Kernel {
                     skipped,
                 }
             }
+            Request::SectorMap { scope, sheet, at_s } => {
+                let scope: Address = scope
+                    .parse()
+                    .map_err(|e| err("bad_address", format!("{e}")))?;
+                let sheet = match &sheet {
+                    Some(id) => self.codes.sheet(id).ok_or_else(|| {
+                        err(
+                            "unknown_sheet",
+                            format!("no code sheet {id:?} in the stack"),
+                        )
+                    })?,
+                    None => self.codes.sheets.first().ok_or_else(|| {
+                        err(
+                            "no_code_sheets",
+                            "the pack stack defines no code sheets (provides.other.code_sheets)",
+                        )
+                    })?,
+                };
+                let u = self
+                    .universe
+                    .as_ref()
+                    .ok_or_else(|| err("no_universe", "open a universe first"))?;
+                let (worlds, skipped) = sector_map_at(&self.codes, sheet, u, &scope, at_s);
+                Response::SectorMapped {
+                    sheet: sheet.id.clone(),
+                    worlds,
+                    skipped,
+                }
+            }
             Request::HaloCell {
                 cell,
                 min_mass_msun,
@@ -4760,6 +5312,11 @@ impl Kernel {
                     limit: limit.unwrap_or(300) as usize,
                 })?;
                 Response::HaloCelled { cell }
+            }
+            Request::MatterBudget { cell } => {
+                let u = self.universe()?;
+                let budget = cosmos::matter_budget(&u.seed, &u.root, cell.unwrap_or([0, 0, 0]))?;
+                Response::MatterBudgeted { budget }
             }
             Request::StarCell { cell, t_myr } => {
                 let u = self.universe()?;
@@ -4895,6 +5452,7 @@ impl Kernel {
                                 at_s,
                                 run: u.runs.get(&system),
                                 ports: &ports,
+                                air: false,
                             },
                             ask,
                         )?
@@ -4988,6 +5546,25 @@ impl Kernel {
                 parent.as_deref(),
                 &facts.unwrap_or_default(),
             )?,
+            Request::PackReports { pack } => {
+                let reports: Vec<&trust::PackReport> = self
+                    .reports
+                    .iter()
+                    .filter(|r| pack.as_deref().is_none_or(|p| p == r.pack))
+                    .collect();
+                if let Some(p) = &pack {
+                    if reports.is_empty() {
+                        return Err(err(
+                            "unknown_pack",
+                            format!("{p} is not in the stack in force"),
+                        ));
+                    }
+                }
+                Response::PackReports {
+                    reports: serde_json::to_value(reports)
+                        .map_err(|e| err("internal", e.to_string()))?,
+                }
+            }
             Request::ReadNames {
                 address,
                 at_s,
@@ -5115,16 +5692,28 @@ fn codes_at(
 /// `export_sector`: one world line per mapped system under `scope`. The
 /// file takes its sector name and abbreviation from the first system that
 /// has them (a scope spanning two sectors writes one file).
-fn export_at(
+/// One mapped system's main world, read through a code sheet.
+struct MappedWorld {
+    system: Address,
+    body: Address,
+    reading: sse_codes::Reading,
+    world: BTreeMap<String, Value>,
+    system_facts: BTreeMap<String, Value>,
+}
+
+/// Every mapped system (`map.hex`) at or under `scope` at `at_s`, each with
+/// its main world (the body carrying `provenance.code`, or tagged
+/// `main_world`) read through `sheet`; systems with no main world come back
+/// as skipped. In address order.
+fn mapped_at(
     codes: &sse_codes::Codes,
     sheet: &sse_codes::CodeSheet,
-    hints: &sse_codes::import::ImportHints,
     u: &Universe,
     scope: &Address,
     at_s: i64,
-) -> (sse_sector_io::SectorFile, Vec<String>) {
+) -> (Vec<MappedWorld>, Vec<String>) {
     let state = u.chronicle.state_at(UniverseTime::seconds(at_s));
-    let mut file = sse_sector_io::SectorFile::default();
+    let mut out = Vec::new();
     let mut skipped = Vec::new();
     for (sys, sf) in state
         .facts
@@ -5167,26 +5756,94 @@ fn export_at(
                 now_s: at_s,
             });
         }
-        let text = |k: &str| match sf.get(k) {
-            Some(Value::Text(t)) => Some(t.clone()),
-            _ => None,
-        };
-        file.name = file.name.take().or_else(|| text("map.sector"));
-        file.abbreviation = file.abbreviation.take().or_else(|| text("map.sector_abbr"));
         let Some(m) = main else {
             skipped.push(sys.to_string());
             continue;
         };
-        let r = codes.read(sheet, &bodies[m], Some(&bodies));
+        let reading = codes.read(sheet, &bodies[m], Some(&bodies));
+        out.push(MappedWorld {
+            system: sys.clone(),
+            body: bodies[m]
+                .address
+                .clone()
+                .expect("every body has its address"),
+            reading,
+            world: bodies[m].facts.clone(),
+            system_facts: sf.clone(),
+        });
+    }
+    (out, skipped)
+}
+
+fn export_at(
+    codes: &sse_codes::Codes,
+    sheet: &sse_codes::CodeSheet,
+    hints: &sse_codes::import::ImportHints,
+    u: &Universe,
+    scope: &Address,
+    at_s: i64,
+) -> (sse_sector_io::SectorFile, Vec<String>) {
+    let (mapped, skipped) = mapped_at(codes, sheet, u, scope, at_s);
+    let mut file = sse_sector_io::SectorFile::default();
+    let text = |f: &BTreeMap<String, Value>, k: &str| match f.get(k) {
+        Some(Value::Text(t)) => Some(t.clone()),
+        _ => None,
+    };
+    for w in &mapped {
+        file.name = file
+            .name
+            .take()
+            .or_else(|| text(&w.system_facts, "map.sector"));
+        file.abbreviation = file
+            .abbreviation
+            .take()
+            .or_else(|| text(&w.system_facts, "map.sector_abbr"));
         file.worlds.push(sse_codes::import::world_line(
             hints,
-            &r,
-            &bodies[m].facts,
-            sf,
+            &w.reading,
+            &w.world,
+            &w.system_facts,
         ));
     }
     file.worlds.sort_by(|a, b| a.hex.cmp(&b.hex));
     (file, skipped)
+}
+
+/// `sector_map`: each mapped system's main world for the hex map, sorted by
+/// hex: `{system, body, hex, name, sector, reading}`.
+fn sector_map_at(
+    codes: &sse_codes::Codes,
+    sheet: &sse_codes::CodeSheet,
+    u: &Universe,
+    scope: &Address,
+    at_s: i64,
+) -> (Vec<serde_json::Value>, Vec<String>) {
+    let (mapped, skipped) = mapped_at(codes, sheet, u, scope, at_s);
+    let text = |f: &BTreeMap<String, Value>, k: &str| match f.get(k) {
+        Some(Value::Text(t)) => t.clone(),
+        _ => String::new(),
+    };
+    let mut rows: Vec<(String, serde_json::Value)> = mapped
+        .iter()
+        .map(|w| {
+            let hex = text(&w.system_facts, "map.hex");
+            let mut name = text(&w.world, "name");
+            if name.is_empty() {
+                name = text(&w.system_facts, "name");
+            }
+            let row = serde_json::json!({
+                "system": w.system.to_string(),
+                "body": w.body.to_string(),
+                "hex": hex,
+                "name": name,
+                "sector": text(&w.system_facts, "map.sector"),
+                "reading": w.reading,
+            });
+            (hex, row)
+        })
+        .collect();
+    rows.sort_by(|a, b| a.0.cmp(&b.0));
+    (rows.into_iter().map(|(_, r)| r).collect(), skipped)
 }
 
 /// MP1c: the laws of the rescaled blocks a value rests on, while the

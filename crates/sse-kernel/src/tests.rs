@@ -2634,7 +2634,36 @@ fn traveller_stock_ships_are_templates_that_sense() {
     let st = send(serde_json::json!({"op": "create", "template": "highport_a",
         "under": "u:trav/sys:0/body:3", "at_s": 0}));
     assert_eq!(st["type"], "created", "{st}");
-    assert_eq!(st["kept"].as_array().unwrap().len(), 1, "crew aboard: {st}");
+    assert_eq!(
+        st["kept"].as_array().unwrap().len(),
+        3,
+        "crew aboard, readiness and discipline: {st}"
+    );
+    // The chart room's Ships and stations screen finds both in the GM scene,
+    // each naming its template, with the template's facts.
+    let g = send(
+        serde_json::json!({"op": "scene", "audience": "gm", "scope": "u:trav/sys:0", "at_s": 0}),
+    );
+    let subjects = g["scene"]["subjects"].as_array().unwrap();
+    for (a, t) in [
+        ("u:trav/sys:0/ship:1", "trader"),
+        ("u:trav/sys:0/body:3/station:1", "highport_a"),
+    ] {
+        let s = subjects
+            .iter()
+            .find(|s| s["address"] == a)
+            .unwrap_or_else(|| panic!("{a} in {g}"));
+        let fact = |f: &str| {
+            s["facts"]
+                .as_array()
+                .unwrap()
+                .iter()
+                .find(|x| x["field"] == f)
+                .map(|x| x["value"].clone())
+        };
+        assert_eq!(fact("template.id"), Some(serde_json::json!(t)), "{s}");
+        assert!(fact("construct.crew_max").is_some(), "{s}");
+    }
     let world = "u:trav/sys:0/body:3";
     for (a, f, v) in [
         (
@@ -2731,6 +2760,25 @@ fn a_sector_imports_as_grown_systems() {
                 .any(|l| l.starts_with(&format!("Kstr\tF\t{hex}\t")) && l.contains(uwp)),
             "{hex} {uwp} in\n{out}"
         );
+    }
+    // The hex map reads the same worlds, by hex, each with its reading.
+    let m = send(serde_json::json!({"op": "sector_map", "scope": "u:kestrel", "at_s": 0}));
+    assert_eq!(m["type"], "sector_mapped", "{m}");
+    let rows = m["worlds"].as_array().unwrap();
+    assert_eq!(rows.len(), 12, "{m}");
+    let hexes: Vec<&str> = rows.iter().map(|r| r["hex"].as_str().unwrap()).collect();
+    let mut sorted = hexes.clone();
+    sorted.sort();
+    assert_eq!(hexes, sorted);
+    for r in rows {
+        assert!(
+            r["body"]
+                .as_str()
+                .unwrap()
+                .starts_with(r["system"].as_str().unwrap()),
+            "{r}"
+        );
+        assert!(r["reading"]["lines"]["uwp"].is_string(), "{r}");
     }
 }
 
@@ -3285,4 +3333,151 @@ fn detect_on_the_magnetic_channel_with_range_bands() {
     assert_eq!(d["channel"], "magnetic", "{d}");
     assert_eq!(d["detectable"], true, "{d}");
     assert_eq!(d["distance_band"], "distant", "{d}");
+}
+
+/// X3e: the chart room's Packs screen adds the Traveller pack on top of the
+/// app's opening stack (no atlas pack), so it must load there and read codes.
+#[test]
+fn the_traveller_pack_stacks_on_the_apps_opening_packs() {
+    let mut k = crate::Kernel::new();
+    let pack = |n: &str| -> serde_json::Value {
+        serde_json::from_str(
+            &std::fs::read_to_string(root().join(format!("packs/{n}/pack.json"))).unwrap(),
+        )
+        .unwrap()
+    };
+    let mut send = |v: serde_json::Value| -> serde_json::Value {
+        serde_json::from_str(&k.handle_json(&v.to_string())).unwrap()
+    };
+    let r = send(serde_json::json!({"op": "load_stack", "packs": [
+        pack("base-physics"), pack("base-time"), pack("base-reference"), pack("traveller")]}));
+    assert_eq!(r["type"], "stack_loaded", "{r}");
+    send(serde_json::json!({"op": "open_universe", "id": "k", "seed": "k"}));
+    let m = send(serde_json::json!({"op": "sector_map", "scope": "u:k", "at_s": 0}));
+    assert_eq!(m["type"], "sector_mapped", "{m}");
+    assert_eq!(m["sheet"], "traveller.world", "{m}");
+}
+
+/// TG9 (record-logic-programs design 8.1): readiness and discipline are kept
+/// values with template defaults; status tags set readiness only through the
+/// pack's visible triggers; the GM can set readiness otherwise with the tag
+/// left in place; and no pack rule reads a number from a tag.
+#[test]
+fn ship_readiness_follows_status_tags_through_visible_triggers() {
+    let mut k = crate::Kernel::new();
+    let pack = |n: &str| -> serde_json::Value {
+        serde_json::from_str(
+            &std::fs::read_to_string(root().join(format!("packs/{n}/pack.json"))).unwrap(),
+        )
+        .unwrap()
+    };
+    let traveller = pack("traveller");
+    let mut send = |v: serde_json::Value| -> serde_json::Value {
+        serde_json::from_str(&k.handle_json(&v.to_string())).unwrap()
+    };
+    let r = send(serde_json::json!({"op": "load_stack", "packs": [
+        pack("base-physics"), pack("base-time"), traveller.clone()]}));
+    assert_eq!(r["type"], "stack_loaded", "{r}");
+    send(serde_json::json!({"op": "open_universe", "id": "tg9", "seed": "t"}));
+    let make = |send: &mut dyn FnMut(serde_json::Value) -> serde_json::Value, t: &str| {
+        let c = send(
+            serde_json::json!({"op": "create", "template": t, "under": "u:tg9/sys:0", "at_s": 0}),
+        );
+        assert_eq!(c["type"], "created", "{c}");
+        c["address"].as_str().unwrap().to_string()
+    };
+    let kept =
+        |send: &mut dyn FnMut(serde_json::Value) -> serde_json::Value, a: &str, kind: &str| {
+            let r = send(serde_json::json!({"op": "record", "address": a}));
+            r["kept"]
+                .as_array()
+                .unwrap()
+                .iter()
+                .find(|x| x["kind"] == kind)
+                .map(|x| x["value"].as_f64().unwrap())
+        };
+    let patrol = make(&mut send, "patrol");
+    let trader = make(&mut send, "trader");
+    assert_eq!(kept(&mut send, &patrol, "ship.readiness"), Some(1.0));
+    assert_eq!(kept(&mut send, &patrol, "ship.discipline"), Some(0.9));
+    assert_eq!(kept(&mut send, &trader, "ship.discipline"), Some(0.6));
+    let tag = |send: &mut dyn FnMut(serde_json::Value) -> serde_json::Value,
+               a: &str,
+               t: &str,
+               at: i64| {
+        let r = send(serde_json::json!({"op": "set_authored", "edit": {
+            "address": a, "field": format!("tag.{t}"), "value": true, "occurred_at_s": at}}));
+        assert_eq!(r["type"], "authored", "{r}");
+    };
+    let step = |send: &mut dyn FnMut(serde_json::Value) -> serde_json::Value, at: i64| {
+        let r = send(serde_json::json!({"op": "rules_step", "at_s": at}));
+        assert_ne!(r["type"], "error", "{r}");
+    };
+    let set = |send: &mut dyn FnMut(serde_json::Value) -> serde_json::Value,
+               a: &str,
+               v: f64,
+               at: i64| {
+        let r = send(
+            serde_json::json!({"op": "set_kept", "address": a, "kind": "ship.readiness", "value": v, "at_s": at}),
+        );
+        assert_ne!(r["type"], "error", "{r}");
+    };
+    // Derelict: readiness 0, once; the GM may then set it otherwise, tag in place.
+    tag(&mut send, &patrol, "status.derelict", 10);
+    step(&mut send, 10);
+    assert_eq!(kept(&mut send, &patrol, "ship.readiness"), Some(0.0));
+    let r = send(serde_json::json!({"op": "record", "address": patrol}));
+    let last = r["kept"]
+        .as_array()
+        .unwrap()
+        .iter()
+        .find(|x| x["kind"] == "ship.readiness")
+        .and_then(|x| x["history"].as_array()?.last().cloned())
+        .unwrap();
+    assert_eq!(
+        last["writer"], "effect.traveller.status.derelict",
+        "the cause shows: {last}"
+    );
+    set(&mut send, &patrol, 0.7, 20);
+    step(&mut send, 30);
+    assert_eq!(
+        kept(&mut send, &patrol, "ship.readiness"),
+        Some(0.7),
+        "quietly made spaceworthy"
+    );
+    // Damaged: held at 0.5 or below while the tag is on.
+    tag(&mut send, &trader, "status.damaged", 40);
+    step(&mut send, 40);
+    assert_eq!(kept(&mut send, &trader, "ship.readiness"), Some(0.5));
+    set(&mut send, &trader, 0.3, 50);
+    step(&mut send, 50);
+    assert_eq!(
+        kept(&mut send, &trader, "ship.readiness"),
+        Some(0.3),
+        "below the cap stays"
+    );
+    // No rule in the pack reads a number from a tag: tag conditions are only `tag` tests.
+    fn numeric_on_tag(p: &serde_json::Value) -> bool {
+        match p {
+            serde_json::Value::Object(m) => {
+                let field_is_tag = ["field", "left", "right", "a", "b"].iter().any(|k| {
+                    m.get(*k)
+                        .and_then(|v| v.as_str())
+                        .is_some_and(|f| f.starts_with("tag."))
+                });
+                field_is_tag || m.values().any(numeric_on_tag)
+            }
+            serde_json::Value::Array(a) => a.iter().any(numeric_on_tag),
+            _ => false,
+        }
+    }
+    let other = &traveller["provides"]["other"];
+    assert!(
+        !numeric_on_tag(&other["triggers"]),
+        "a trigger reads a tag as a number"
+    );
+    assert!(
+        !numeric_on_tag(&other["programs"]),
+        "a program reads a tag as a number"
+    );
 }

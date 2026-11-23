@@ -34,8 +34,8 @@ use std::collections::BTreeMap;
 
 pub const IMPACTS_VERSION: &str = "surface-impacts-v1";
 
-const R_EARTH_KM: f64 = 6371.0;
-const M_EARTH_KG: f64 = 5.972e24;
+const R_EARTH_KM: f64 = sse_core::sheet::R_EARTH_MEAN / 1e3;
+const M_EARTH_KG: f64 = sse_core::sheet::M_EARTH;
 
 pub const CHRONOLOGIES: [&str; 1] = ["neukum-2001"];
 pub const CRATER_SHAPES: [&str; 1] = ["pike-1977"];
@@ -1053,7 +1053,7 @@ fn volcanism(field: &mut CraterField, f: &mut Features, env: &SurfaceEnvelope) {
                 }
                 let end = end.min(field.epoch);
                 let grow = 1.0 - m::exp(-(end - born) / v.shield_growth_myr.max(1e-9));
-                let h = v.shield_height_m * (9.81 / field.g) * grow.max(0.05);
+                let h = v.shield_height_m * (sse_core::sheet::G0 / field.g) * grow.max(0.05);
                 f.shields.push(Shield {
                     id: format!("shield:{}", f.shields.len()),
                     dir: unit_dir(&field.d, kk(2)),

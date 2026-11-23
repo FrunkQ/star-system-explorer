@@ -29,3 +29,12 @@ test("edit, undo, redo: each an event; values follow", async () => {
     await k.close();
   }
 });
+
+test("a value read back from the universe is typed in its own units and sent to its kernel field in SI", async () => {
+  const { factEdit } = await import("../src/edit.ts");
+  const fixture = { field: "mass_earth", label: "Mass", value: 0.82, unit: "M⊕", display: "0.82 M⊕", editable: true, source: "authored" as const };
+  assert.deepEqual(factEdit(fixture, 0.9), { field: "mass_earth", value: 0.9, before: 0.82 }, "the fixture's own field, as typed");
+  const read = { ...fixture, kernel: { field: "body.mass", per_unit: 2 } };
+  assert.deepEqual(factEdit(read, 0.9), { field: "body.mass", value: 1.8, before: 1.64 }, "the universe's field, scaled to SI");
+  assert.deepEqual(factEdit({ ...read, value: "Tarn", display: "Tarn" }, "Mere"), { field: "body.mass", value: "Mere", before: "Tarn" }, "text is not scaled");
+});

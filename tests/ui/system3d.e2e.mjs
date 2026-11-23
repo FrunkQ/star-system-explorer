@@ -65,6 +65,54 @@ try {
       await view.focus();
       await gm.keyboard.press("ArrowLeft");
       await gm.waitForFunction((b) => document.querySelector(`[aria-roledescription='3D chart'] [data-body='${"u:kestrel/sys:1/body:4"}']`)?.getAttribute("data-x") !== b, before);
+      // True (V10a), one press from the chart: the same frame against space with the star in its own colour. The test
+      // drive's worlds have no surface atlas, so they are drawn plain and the note says why; the canvas tier says True
+      // needs a GPU.
+      await gm.getByRole("button", { name: "True", exact: true }).click();
+      await gm.waitForFunction(() => /no surface|needs a GPU/.test(document.querySelector("[aria-roledescription='3D chart'] [data-true-note]")?.textContent ?? ""), null, { timeout: 60000 });
+      assert.equal(await view.getAttribute("data-look"), tier === "gpu" ? "true" : "plain", "True draws on the GPU tier; a device without one keeps the plain look");
+      // The living star (V10c): on the GPU tier the star is the kernel's, turning on its own clock.
+      if (tier === "gpu") {
+        const live = view.locator("[data-star-live]");
+        await live.waitFor({ timeout: 30000 });
+        const turn0 = await live.getAttribute("data-star-turn");
+        await gm.waitForFunction((t) => document.querySelector("[data-star-live]")?.getAttribute("data-star-turn") !== t, turn0, { timeout: 10000 });
+        // Bands through True (rule 12, one set of controls): X-ray draws the corona, Infrared each body's own heat.
+        for (const [b, id] of [["X-ray", "xray"], ["Infrared", "infrared"]]) {
+          await gm.getByRole("group", { name: "Band" }).getByRole("button", { name: b }).click();
+          await gm.waitForFunction((x) => document.querySelector("[aria-roledescription='3D chart'] [data-true-band]")?.getAttribute("data-true-band") === x, id);
+        }
+        await shot(gm, `v10d-gm-true-infrared-${mode}`);
+        await gm.getByRole("group", { name: "Band" }).getByRole("button", { name: "Visible" }).click();
+        await gm.waitForFunction(() => !document.querySelector("[aria-roledescription='3D chart'] [data-true-band]"));
+      }
+      await shot(gm, `v10a-gm-true-${mode}`);
+      // Scale and HUD (Alex, 23 Nov): Real puts distances and sizes in proportion; HUD off in True by default, on
+      // brings the orbit lines and names back.
+      assert.equal(await view.getAttribute("data-hud"), "off");
+      await gm.getByRole("group", { name: "Scale" }).getByRole("button", { name: "Real" }).click();
+      await gm.waitForFunction(() => document.querySelector("[aria-roledescription='3D chart']")?.getAttribute("data-scale") === "real");
+      assert.match(await view.locator(".note").innerText(), /Real scale/);
+      await gm.getByRole("group", { name: "HUD" }).getByRole("button", { name: "On" }).click();
+      await gm.waitForFunction(() => document.querySelector("[aria-roledescription='3D chart']")?.getAttribute("data-hud") === "on");
+      await shot(gm, `v10b-gm-real-hud-${mode}`);
+      await gm.getByRole("group", { name: "Scale" }).getByRole("button", { name: "Readable" }).click();
+      await gm.getByRole("button", { name: "3D", exact: true }).click();
+      await gm.getByRole("group", { name: "View style" }).getByRole("button", { name: "Chart", exact: true }).click();
+      // HUD on the flat chart too (one set of controls, Alex 23 Nov): off leaves the bodies and belts without the
+      // scale rings, orbit lines and names; on brings them back.
+      const flat = gm.locator("svg[aria-label^='System chart of']");
+      await flat.locator("[data-scale-rings]").waitFor();
+      const named = await flat.locator("text.name").count();
+      assert.ok(named > 0);
+      await gm.getByRole("group", { name: "HUD" }).getByRole("button", { name: "Off" }).click();
+      await flat.locator("[data-scale-rings]").waitFor({ state: "detached" });
+      assert.equal(await flat.locator("text.name").count(), 0, "HUD off: no names");
+      assert.ok((await flat.locator("[data-address]").count()) > 0, "the bodies stay");
+      if (mode === "gpu") await shot(gm, `hud-off-chart-${name}`);
+      await gm.getByRole("group", { name: "HUD" }).getByRole("button", { name: "On" }).click();
+      await flat.locator("[data-scale-rings]").waitFor();
+      assert.equal(await flat.locator("text.name").count(), named);
 
       // A players' 3D screen.
       const pl = await browser.newPage({ viewport: { width: 1280, height: 900 } });

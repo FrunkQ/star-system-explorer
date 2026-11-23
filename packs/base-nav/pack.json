@@ -200,6 +200,9 @@
      "giant_prior": "Johnson, J. A. et al. 2010, Giant Planet Occurrence in the Stellar Mass-Metallicity Plane, PASP 122, 905 (f = 0.07 (M/Msun)^1.0 10^(1.2 [Fe/H]), giants within about 2.5 au, so a floor for skimmable giants farther out). doi:10.1086/655775",
      "relativity": "Baez, J. and others 1996, The Relativistic Rocket, Usenet Physics FAQ (constant proper acceleration, turnover, and the mass ratio exp(2 w c / v_e)). https://math.ucr.edu/home/baez/physics/Relativity/SR/Rocket/rocket.html",
      "ships": "stock templates for play: chemical (H2/O2, Isp about 450 s), nuclear thermal (Isp about 900 s), and fictional fusion torches",
+     "aerocapture": "one ballistic grazing pass through an exponential atmosphere: column rho_p sqrt(2 pi r_p H) and ln(v_in/v_out) = column/(2 beta) (Vinh, N. X., Busemann, A. and Culp, R. D. 1980, Hypersonic and Planetary Entry Flight Mechanics, University of Michigan Press); heat load q_peak sqrt(4 pi r_p H)/v follows from Sutton and Graves",
+     "brief_g": "rough reading of the eyeballs-in (+Gx) voluntary tolerance curve: Eiband, A. M. 1959, Human tolerance to rapidly applied accelerations: a summary of the literature, NASA Memo 5-19-59E",
+     "stall": "lift equal to weight at the stall: v = sqrt(2 m g / (rho C_L,max S)) (Anderson, J. D. 2016, Introduction to Flight, 8th ed., McGraw-Hill, section 6.8)",
      "descent": "Sutton, K. and Graves, R. A. 1971, A general stagnation-point convective heating equation for arbitrary gas mixtures, NASA TR R-376. https://ntrs.nasa.gov/citations/19720003329",
      "landers": "stock templates for play, sized after Soyuz, the Mars Science Laboratory, Huygens (its 3 m stabiliser chute) and Apollo's lunar module",
      "sun_magnitude": "Willmer, C. N. A. 2018, The Absolute Magnitude of the Sun in Several Filters, ApJS 236, 47 (V = -26.76). doi:10.3847/1538-4365/aabfdf",
@@ -293,6 +296,18 @@
        "touchdown_m_s": 3.0
       }
      }
+    },
+    "entry": {
+     "hull_m3_per_t": 6.67,
+     "hull_cd": 1.2,
+     "capture_apoapsis_radii": 20.0,
+     "pass_sigma_scale_heights": 0.25,
+     "harm_width": 0.1,
+     "brief_g": [[1.0, 25.0], [10.0, 15.0], [30.0, 10.0], [100.0, 7.0], [300.0, 5.0], [1000.0, 4.0]],
+     "ascent_gravity_share": 0.5,
+     "no_gear_touchdown_m_s": 1.0,
+     "runway_speed_m_s": 110.0,
+     "gamma": 1.4
     },
     "window": {
      "sun_mag_1au": -26.74,

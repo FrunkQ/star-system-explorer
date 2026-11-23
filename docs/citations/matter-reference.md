@@ -42,9 +42,20 @@ sheet is filled, and each sheet row records that check.
 | thauer1977 | Thauer, Jungermann and Decker 1977, Bacteriol. Rev. 41, 100. https://pmc.ncbi.nlm.nih.gov/articles/PMC413997 | free energies and enthalpies of formation | verified (metadata) | PMC record in search results; values carried from base-life |
 | ussa1976 | U.S. Standard Atmosphere 1976. https://ntrs.nasa.gov/citations/19770009539 | dry-air composition | verified (metadata); recipe unverified | NTRS record in search results |
 | lineweaver2010 | Lineweaver, C. H. and Norman, M. 2010: the potato radius, a lower minimum size for dwarf planets. https://arxiv.org/abs/1004.1091 | rock and ice yield strengths | verified (metadata) | arXiv PDF 1004.1091 in search results under that title |
+| dupont-kevlar2017 | DuPont 2017, Kevlar aramid fiber technical guide, Table II-1. https://www.r-g.de/wiki/images/e/ec/Td_en_Kevlar_guide.pdf | aramid density and tensile strength | verified | Kevlar 49 yarn 3,000 MPa (strand 3,600 MPa), 1.44 g/cm3, read 23 Nov 2026 |
+| fiberline-zylon | Fiber-Line, Zylon PBO datasheet (Toyobo fibre). https://automotive.polyone.com/sites/default/files/2021-06/fl.us-.datasheet-zylonr-pbo.pdf | PBO density and tensile strength | verified | HM 42.0 g/d, specific gravity 1.56, read 23 Nov 2026; 5.8 GPa worked out and matches Toyobo |
+| yu2000 | Yu, M.-F. et al. 2000, Science 287, 637. doi:10.1126/science.287.5453.637 | carbon nanotube tensile strength | unverified | 11 to 63 GPa as summarised; abstract not read |
 | nssdca-earth, -moon, -jupiter | NASA NSSDCA planetary fact sheets | mean radii, Moon mass and distance | textbook | standard fact sheets; values match the MP0 canonical column |
 | cgpm1901, cgpm1954 | CGPM resolutions on standard gravity and the standard atmosphere | g0, atm | textbook | exact by definition |
 | fudge-register | docs/fudges.md | authored stand-ins | authored | each authored value says why in the fudge register |
+| moritz2000 | Moritz, H. 2000, J. Geodesy 74, 128: Geodetic Reference System 1980. doi:10.1007/s001900050278 | Earth's angular velocity 7.292115e-5 rad/s | verified (value) | GRS80's defining constant, as every geodesy text gives it; DOI from memory |
+| chandrasekhar1931 | Chandrasekhar, S. 1931, ApJ 74, 81. doi:10.1086/143324 | Chandrasekhar mass 1.44 solar masses | textbook | the usual quoted figure (mu_e = 2 with corrections); DOI from memory |
+| eakins2010 | Eakins, B. W. and Sharman, G. F. 2010, Volumes of the World's Oceans from ETOPO1, NOAA NGDC. https://www.ngdc.noaa.gov/mgg/global/etopo1_ocean_volumes.html | ocean volume 1.335e9 km3, mean depth 3688 m | unverified | URL and figures from memory; they match the values the code typed (MP22 step 4) |
+| turcotte2014 | Turcotte, D. L. and Schubert, G. 2014, Geodynamics, 3rd edition. doi:10.1017/CBO9780511843877 | crust 2700, mantle 3300, sediment 2300 kg/m3 | unverified | the round values of the book's problems, from memory |
+| crc-handbook | Haynes, W. M. (ed.) 2016, CRC Handbook of Chemistry and Physics, 97th edition. doi:10.1201/9781315380476 | quartz grain density 2650 kg/m3 | unverified | textbook figure, from memory |
+| wallace-hobbs2006 | Wallace, J. M. and Hobbs, P. V. 2006, Atmospheric Science, 2nd edition. doi:10.1016/C2009-0-00034-8 | dry air c_p 1004 J/kg/K | unverified | textbook figure; DOI from memory |
+| nssdca-venus, -mars | NASA NSSDCA Venus and Mars fact sheets | atmosphere recipes by volume | unverified | fact sheet figures from memory; Mars CO2 taken as 95.25% so the recipe sums to one |
+| niemann2005 | Niemann, H. B. et al. 2005, Nature 438, 779. doi:10.1038/nature04122 | Titan's near-surface methane 5.65% | unverified | from memory |
 
 ## A3. Where each element was made (origin shares and stories)
 

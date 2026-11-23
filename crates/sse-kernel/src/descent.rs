@@ -11,7 +11,7 @@ use sse_nav::descent::{descend, hazards, level, EntryState, Hazard, Lander, Worl
 use sse_surface::site::{site, SiteLimits};
 
 /// Gas constant, J/(mol K).
-const R_GAS: f64 = 8.314_462_618;
+const R_GAS: f64 = sse_core::sheet::R_GAS;
 /// Highest entry interface searched for, m.
 const TOP_SEARCH_M: f64 = 1.0e6;
 /// Entry height on an airless world, m above the site.

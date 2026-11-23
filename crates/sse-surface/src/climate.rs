@@ -13,7 +13,7 @@ use sse_core::math as m;
 
 const R_EARTH_M: f64 = sse_core::sheet::R_EARTH_MEAN;
 const G: f64 = sse_core::sheet::G;
-const M_EARTH_KG: f64 = 5.9722e24;
+const M_EARTH_KG: f64 = sse_core::sheet::M_EARTH;
 
 /// Climate conditions for a body: the facts it has, the inputs given (spin,
 /// tilt and so on) and, for anything still missing, the climate pack's

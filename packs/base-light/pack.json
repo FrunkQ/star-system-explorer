@@ -482,162 +482,72 @@
           ]
         },
         "gases": {
-          "note": "Refractivity n−1 at 589.3 nm, 273.15 K and 101325 Pa (Loschmidt density). Dry air uses Peck and Reeder's dispersion exactly; other gases follow air's dispersion scaled to their 589 nm value (stand-in). King factor F = a + b λ⁻² + c λ⁻⁴ with λ in µm (Bodhaine et al. 1999 for N₂ and O₂; others constant). Ammonia, sulphur dioxide, carbon monoxide and neon: refractivity from Kaye and Laby at 589 nm (from memory, verify); King factor taken as 1 (stand-in: molecular depolarisation not yet tabulated).",
+          "note": "Refractivity n-1 at 589.3 nm, 273.15 K and 101325 Pa (Loschmidt density), King factor F = a + b lambda^-2 + c lambda^-4 (lambda in um) and molar mass all come from the master data sheet (the gas's substance row, or the dry-air mixture), with their sources there. Dry air uses Peck and Reeder's dispersion exactly; other gases follow air's dispersion scaled to their 589 nm value (stand-in).",
           "list": [
             {
               "id": "air",
               "name": "dry air",
-              "molar_mass_g": 28.9595,
-              "refractivity_589": 0.0002926,
-              "king": [
-                1.0469,
-                0.0,
-                0.0
-              ],
-              "dispersion": "peck-reeder"
+              "dispersion": "peck-reeder",
+              "sheet": "dry-air"
             },
             {
               "id": "n2",
               "name": "nitrogen",
-              "molar_mass_g": 28.0134,
-              "refractivity_589": 0.000298,
-              "king": [
-                1.034,
-                0.000317,
-                0.0
-              ],
               "dispersion": "scaled"
             },
             {
               "id": "o2",
               "name": "oxygen",
-              "molar_mass_g": 31.9988,
-              "refractivity_589": 0.000271,
-              "king": [
-                1.096,
-                0.001385,
-                0.0001448
-              ],
               "dispersion": "scaled"
             },
             {
               "id": "ar",
               "name": "argon",
-              "molar_mass_g": 39.948,
-              "refractivity_589": 0.000281,
-              "king": [
-                1.0,
-                0.0,
-                0.0
-              ],
               "dispersion": "scaled"
             },
             {
               "id": "co2",
               "name": "carbon dioxide",
-              "molar_mass_g": 44.0095,
-              "refractivity_589": 0.000449,
-              "king": [
-                1.15,
-                0.0,
-                0.0
-              ],
               "dispersion": "scaled"
             },
             {
               "id": "h2",
               "name": "hydrogen",
-              "molar_mass_g": 2.01588,
-              "refractivity_589": 0.000132,
-              "king": [
-                1.0,
-                0.0,
-                0.0
-              ],
               "dispersion": "scaled"
             },
             {
               "id": "he",
               "name": "helium",
-              "molar_mass_g": 4.002602,
-              "refractivity_589": 3.5e-05,
-              "king": [
-                1.0,
-                0.0,
-                0.0
-              ],
               "dispersion": "scaled"
             },
             {
               "id": "ch4",
               "name": "methane",
-              "molar_mass_g": 16.0425,
-              "refractivity_589": 0.000444,
-              "king": [
-                1.0,
-                0.0,
-                0.0
-              ],
               "dispersion": "scaled"
             },
             {
               "id": "h2o",
               "name": "water vapour",
-              "molar_mass_g": 18.01528,
-              "refractivity_589": 0.000256,
-              "king": [
-                1.0,
-                0.0,
-                0.0
-              ],
               "dispersion": "scaled"
             },
             {
               "id": "nh3",
               "name": "ammonia",
-              "molar_mass_g": 17.0305,
-              "refractivity_589": 0.000376,
-              "king": [
-                1.0,
-                0.0,
-                0.0
-              ],
               "dispersion": "scaled"
             },
             {
               "id": "so2",
               "name": "sulphur dioxide",
-              "molar_mass_g": 64.066,
-              "refractivity_589": 0.000686,
-              "king": [
-                1.0,
-                0.0,
-                0.0
-              ],
               "dispersion": "scaled"
             },
             {
               "id": "co",
               "name": "carbon monoxide",
-              "molar_mass_g": 28.0101,
-              "refractivity_589": 0.000338,
-              "king": [
-                1.0,
-                0.0,
-                0.0
-              ],
               "dispersion": "scaled"
             },
             {
               "id": "ne",
               "name": "neon",
-              "molar_mass_g": 20.1797,
-              "refractivity_589": 6.7e-05,
-              "king": [
-                1.0,
-                0.0,
-                0.0
-              ],
               "dispersion": "scaled"
             }
           ]

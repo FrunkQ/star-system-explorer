@@ -32,6 +32,7 @@ ORIGINS_CSV = ROOT / "handover/packages/MP2-data/origins.csv"
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 import element_origins  # noqa: E402
 import water_phases  # noqa: E402
+import element_affinity  # noqa: E402
 
 JULIAN_YEAR_S = 31557600.0
 
@@ -49,6 +50,11 @@ def val(v, unit, src, check="verified", **extra):
 SOURCES = {
     "fray2009": ("Fray, N. and Schmitt, B. 2009, Planet. Space Sci. 57, 2053: sublimation of ices of astrophysical interest, a bibliographic review (recommended fits ln P[bar] = A0 + sum A_i / T^i; water by Feistel and Wagner 2007). Coefficients read from Lisse et al. 2021's reproduction of the table (SOM Table 2); which fit covers which range checked against each ice's triple point", "10.1016/j.pss.2009.09.011", None, "verified"),
     "lisse2021": ("Lisse, C. M. et al. 2021, Icarus 356, 114072: on the origin and thermal stability of Arrokoth's and Pluto's ices; Supplementary Online Material Table 2 reproduces Fray and Schmitt 2009's sublimation fits", None, "https://ntrs.nasa.gov/api/citations/20210019502/downloads/Supplementary%20Online%20Material%2020210019502.pdf", "verified"),
+    "ame2020": ("Wang, M., Huang, W. J., Kondev, F. G., Audi, G. and Naimi, S. 2021, Chinese Phys. C 45, 030003: the AME 2020 atomic mass evaluation (II), tables", "10.1088/1674-1137/abddaf", None, "unverified"),
+    "leachman2009": ("Leachman, J. W., Jacobsen, R. T., Penoncello, S. G. and Lemmon, E. W. 2009, J. Phys. Chem. Ref. Data 38, 721: fundamental equations of state for parahydrogen, normal hydrogen and orthohydrogen", "10.1063/1.3160306", None, "unverified"),
+    "schmidt-wagner1985": ("Schmidt, R. and Wagner, W. 1985, Fluid Phase Equilibria 19, 175: a new form of the equation of state for pure substances and its application to oxygen", "10.1016/0378-3812(85)87016-3", None, "unverified"),
+    "richardson2014": ("Richardson, I. A., Leachman, J. W. and Lemmon, E. W. 2014, J. Phys. Chem. Ref. Data 43, 013103: fundamental equation of state for deuterium", "10.1063/1.4864752", None, "unverified"),
+    "coolprop2014": ("Bell, I. H., Wronski, J., Quoilin, S. and Lemort, V. 2014, Ind. Eng. Chem. Res. 53, 2498: CoolProp, pure and pseudo-pure fluid property evaluation (MIT licence; its saturated-liquid density fits to the equations of state, dev/fluids/*.json)", "10.1021/ie4033999", "https://github.com/CoolProp/CoolProp", "unverified"),
     "codata2018": ("Tiesinga, E., Mohr, P. J., Newell, D. B. and Taylor, B. N. 2021, Rev. Mod. Phys. 93, 025010: CODATA recommended values of the fundamental physical constants, 2018", "10.1103/RevModPhys.93.025010", None, "verified"),
     "si2019": ("The International System of Units (SI), 9th edition 2019, BIPM: the seven defining constants are exact (CODATA 2018 Table I)", None, "https://www.bipm.org/en/publications/si-brochure", "verified"),
     "iau2015b3": ("Prša, A. et al. 2016, AJ 152, 41: nominal values for selected solar and planetary quantities, IAU 2015 Resolution B3", "10.3847/0004-6256/152/2/41", None, "verified"),
@@ -68,6 +74,11 @@ SOURCES = {
     "bodhaine1999": ("Bodhaine, B. A., Wood, N. B., Dutton, E. G. and Slusser, J. R. 1999, J. Atmos. Oceanic Technol. 16, 1854: on Rayleigh optical depth calculations (King factors)", "10.1175/1520-0426(1999)016<1854:ORODC>2.0.CO;2", None, "verified"),
     "thauer1977": ("Thauer, R. K., Jungermann, K. and Decker, K. 1977, Bacteriological Reviews 41, 100: energy conservation in chemotrophic anaerobic bacteria (appendix: free energies and enthalpies of formation at 298.15 K)", None, "https://pmc.ncbi.nlm.nih.gov/articles/PMC413997", "verified"),
     "convention": ("Elements in their standard state and the hydrogen ion at unit activity have zero free energy and enthalpy of formation by convention", None, "https://goldbook.iupac.org/", "textbook"),
+    "nssdca-sun": ("NASA NSSDCA Sun fact sheet: sidereal rotation period 25.38 days (the Carrington rotation)", None, "https://nssdc.gsfc.nasa.gov/planetary/factsheet/sunfact.html", "unverified"),
+    "mcdonough-sun1995": ("McDonough, W. F. and Sun, S.-s. 1995, Chemical Geology 120, 223: the composition of the Earth (CI chondrite and pyrolite columns; read from two machine-readable reproductions, handover/packages/MP-affinity-data)", "10.1016/0009-2541(94)00140-4", None, "unverified"),
+    "palme-oneill2014": ("Palme, H. and O'Neill, H. St. C. 2014, Cosmochemical estimates of mantle composition, Treatise on Geochemistry 2nd edition vol. 3, 1: CI chondrite hydrogen and oxygen (read from the pyrolite package's copy)", "10.1016/B978-0-08-095975-7.00201-1", None, "unverified"),
+    "mcdonough2003": ("McDonough, W. F. 2003, Compositional model for the Earth's core, Treatise on Geochemistry vol. 2, 547, Table 4 (read from the GERM reservoir database's copy)", "10.1016/B0-08-043751-6/02015-6", "https://earthref.org/GERMRD/34/", "unverified"),
+    "rudnick-gao2003": ("Rudnick, R. L. and Gao, S. 2003, Composition of the continental crust, Treatise on Geochemistry vol. 3, 1, Table 11, bulk crust (read from the pyrolite package's copy, checked against the 2014 edition)", "10.1016/B0-08-043751-6/03016-4", None, "unverified"),
     "nssdca-earth": ("NASA NSSDCA Earth fact sheet (volumetric mean radius 6371.000 km)", None, "https://nssdc.gsfc.nasa.gov/planetary/factsheet/earthfact.html", "verified"),
     "nssdca-moon": ("NASA NSSDCA Moon fact sheet (mass 0.07346e24 kg, mean radius 1737.4 km, semi-major axis 0.3844e6 km)", None, "https://nssdc.gsfc.nasa.gov/planetary/factsheet/moonfact.html", "verified"),
     "nssdca-jupiter": ("NASA NSSDCA Jupiter fact sheet (volumetric mean radius 69911 km)", None, "https://nssdc.gsfc.nasa.gov/planetary/factsheet/jupiterfact.html", "verified"),
@@ -77,6 +88,18 @@ SOURCES = {
     "lineweaver2010": ("Lineweaver, C. H. and Norman, M. 2010, Proc. 9th Australian Space Science Conference: the potato radius, rock and ice yield strengths (calibrated stand-in; docs/fudges.md)", None, "https://arxiv.org/abs/1004.1091", "unverified"),
     "atom-isotropic": ("A spherically symmetric atom has no anisotropic polarisability, so its King correction factor is exactly 1 (Bodhaine et al. 1999 discussion of depolarisation)", "10.1175/1520-0426(1999)016<1854:ORODC>2.0.CO;2", None, "textbook"),
     "mastin2009": ("Mastin, L. G. et al. 2009, J. Volcanol. Geotherm. Res. 186, 10: eruption column heights, magma at 2500 kg/m3 dense-rock equivalent", "10.1016/j.jvolgeores.2009.01.008", None, "verified"),
+    "moritz2000": ("Moritz, H. 2000, J. Geodesy 74, 128: Geodetic Reference System 1980 (Earth's angular velocity 7 292 115e-11 rad/s)", "10.1007/s001900050278", None, "verified"),
+    "chandrasekhar1931": ("Chandrasekhar, S. 1931, ApJ 74, 81: the maximum mass of ideal white dwarfs (1.44 solar masses is the usual figure for a carbon-oxygen core, mu_e = 2, with Coulomb corrections)", "10.1086/143324", None, "textbook"),
+    "eakins2010": ("Eakins, B. W. and Sharman, G. F. 2010, Volumes of the World's Oceans from ETOPO1, NOAA National Geophysical Data Center (1.335e9 km3, mean depth 3688 m)", None, "https://www.ngdc.noaa.gov/mgg/global/etopo1_ocean_volumes.html", "unverified"),
+    "dupont-kevlar2017": ("DuPont 2017, Kevlar aramid fiber technical guide, Table II-1: typical properties of Kevlar 29 and 49 yarns (Kevlar 49 straight-test yarn 3,000 MPa, resin-impregnated strand 3,600 MPa, density 1.44 g/cm3; typical values, not specifications)", None, "https://www.r-g.de/wiki/images/e/ec/Td_en_Kevlar_guide.pdf", "verified"),
+    "fiberline-zylon": ("Fiber-Line, Zylon PBO datasheet (fibre made by Toyobo): high-modulus grade breaking tenacity 42.0 g/d, specific gravity 1.56; typical values, not a specification. Toyobo's own technical information gives 5.8 GPa", None, "https://automotive.polyone.com/sites/default/files/2021-06/fl.us-.datasheet-zylonr-pbo.pdf", "verified"),
+    "yu2000": ("Yu, M.-F., Lourie, O., Dyer, M. J., Moloni, K., Kelly, T. F. and Ruoff, R. S. 2000, Science 287, 637: strength and breaking mechanism of multiwalled carbon nanotubes under tensile load (outer shells broke at 11 to 63 GPa)", "10.1126/science.287.5453.637", None, "unverified"),
+    "turcotte2014": ("Turcotte, D. L. and Schubert, G. 2014, Geodynamics, 3rd edition, Cambridge University Press (typical crust 2700, mantle 3300 and sediment 2300 kg/m3 of its worked problems)", "10.1017/CBO9780511843877", None, "unverified"),
+    "wallace-hobbs2006": ("Wallace, J. M. and Hobbs, P. V. 2006, Atmospheric Science: An Introductory Survey, 2nd edition, Academic Press (dry air c_p = 1004 J/kg/K)", "10.1016/C2009-0-00034-8", None, "unverified"),
+    "nssdca-venus": ("NASA NSSDCA Venus fact sheet (atmosphere 96.5% CO2, 3.5% N2 by volume)", None, "https://nssdc.gsfc.nasa.gov/planetary/factsheet/venusfact.html", "unverified"),
+    "nssdca-mars": ("NASA NSSDCA Mars fact sheet (atmosphere 95.1% CO2, 2.59% N2, 1.94% Ar, 0.16% O2, 0.06% CO by volume)", None, "https://nssdc.gsfc.nasa.gov/planetary/factsheet/marsfact.html", "unverified"),
+    "niemann2005": ("Niemann, H. B. et al. 2005, Nature 438, 779: Titan's atmosphere from the Huygens probe (5.65% methane by volume near the surface)", "10.1038/nature04122", None, "unverified"),
+    "crc-handbook": ("Haynes, W. M. (ed.) 2016, CRC Handbook of Chemistry and Physics, 97th edition, CRC Press (quartz 2650 kg/m3)", "10.1201/9781315380476", None, "unverified"),
     "ussa1976": ("U.S. Standard Atmosphere 1976, NOAA/NASA/USAF (sea-level dry-air composition by volume)", None, "https://ntrs.nasa.gov/citations/19770009539", "verified"),
     "kobayashi2020": ("Kobayashi, C., Karakas, A. I. and Lugaro, M. 2020, ApJ 900, 179: the origin of elements from carbon to uranium (half of C, N and F from AGB stars; half of the iron-peak elements from Type Ia supernovae; the r-process shortfall)", "10.3847/1538-4357/abae65", None, "verified"),
     "johnson-origins": ("Johnson, J. A., Origin of the Elements in the Solar System: periodic table colour-coded by origin (Ohio State University, CC BY-SA 4.0; the six-source legend)", None, "https://www.astronomy.ohio-state.edu/johnson.3064/nucleo/index.html", "verified"),
@@ -158,6 +181,7 @@ CONSTANTS = [
     ("R_sun", "nominal solar radius", val(6.957e8, "m", "iau2015b3", exact=True)),
     ("L_sun", "nominal solar luminosity", val(3.828e26, "W", "iau2015b3", exact=True)),
     ("T_sun", "nominal solar effective temperature", val(5772.0, "K", "iau2015b3", exact=True)),
+    ("P_rot_sun", "solar sidereal rotation period (Carrington)", val(25.38 * 86400.0, "s", "nssdca-sun", "unverified", note="25.38 days; the surface turns faster at the equator and slower near the poles")),
     ("S_sun", "nominal total solar irradiance", val(1361.0, "W m-2", "iau2015b3", exact=True)),
     ("GM_earth", "nominal Earth mass parameter", val(GM_EARTH, "m3 s-2", "iau2015b3", exact=True)),
     ("M_earth", "Earth mass", val(GM_EARTH / G, "kg", "iau2015b3"), "GM_earth / G"),
@@ -169,6 +193,11 @@ CONSTANTS = [
     ("R_jup_equatorial", "nominal Jupiter equatorial radius", val(7.1492e7, "m", "iau2015b3", exact=True)),
     ("R_jup_polar", "nominal Jupiter polar radius", val(6.6854e7, "m", "iau2015b3", exact=True)),
     ("R_jup_mean", "Jupiter volumetric mean radius", val(6.9911e7, "m", "nssdca-jupiter")),
+    ("omega_earth", "Earth's angular velocity (sidereal rotation)", val(7.292115e-5, "rad s-1", "moritz2000")),
+    ("V_ocean_earth", "volume of Earth's ocean", val(1.335e18, "m3", "eakins2010", "unverified")),
+    ("depth_ocean_earth", "mean depth of Earth's ocean", val(3688.0, "m", "eakins2010", "unverified")),
+    ("M_ocean_earth", "mass of Earth's ocean", val(1.4e21, "kg", "eakins2010", "unverified", note="1.335e18 m3 at about 1030 kg/m3, to two figures")),
+    ("M_ch", "Chandrasekhar mass", val(1.44, "M_sun", "chandrasekhar1931", "textbook")),
     ("M_moon", "Moon mass", val(7.346e22, "kg", "nssdca-moon")),
     ("R_moon", "Moon mean radius", val(1.7374e6, "m", "nssdca-moon")),
     ("a_moon", "Moon semi-major axis", val(3.844e8, "m", "nssdca-moon")),
@@ -302,6 +331,7 @@ UNITS = [
     ("m_sun", "M☉", "solar mass", "mass", "working", "M_sun"),
     ("m_earth", "M⊕", "Earth mass", "mass", "working", "M_earth"),
     ("m_jupiter", "MJ", "Jupiter mass", "mass", "working", "M_jup"),
+    ("h", "h", "hour", "time", "working", ("v", 3600.0, "si2019")),
     ("day", "d", "day", "time", "working", "day"),
     ("yr", "yr", "Julian year", "time", "working", "yr_julian"),
     ("myr", "Myr", "million years", "time", "working", "1e6 yr_julian"),
@@ -379,8 +409,12 @@ ISOTOPES = [
         share_at_sun_birth=val(5.25e-5, "1", "kita2013", note="26Al/27Al by number in the first solids"),
         decay_heat_w_per_kg=val(0.3583, "W kg-1", "ruedas2017")),
     # Fuels.
-    iso("h1", "h", 1), iso("h2", "h", 2), iso("h3", "h", 3, 12.32, daughter="he3"),
-    iso("he3", "he", 3), iso("he4", "he", 4), iso("li6", "li", 6), iso("li7", "li", 7),
+    # Masses of the light isotopes the fuels use: AME2020 atomic masses, in u.
+    iso("h1", "h", 1, mass=val(1.00782503224, "u", "ame2020")),
+    iso("h2", "h", 2, mass=val(2.01410177812, "u", "ame2020")),
+    iso("h3", "h", 3, 12.32, daughter="he3", mass=val(3.01604928132, "u", "ame2020")),
+    iso("he3", "he", 3, mass=val(3.01602932197, "u", "ame2020")),
+    iso("he4", "he", 4, mass=val(4.00260325413, "u", "ame2020")), iso("li6", "li", 6), iso("li7", "li", 7),
     # Stable references and clocks.
     iso("c12", "c", 12), iso("c13", "c", 13), iso("c14", "c", 14, 5700.0, daughter="n14"),
     iso("n14", "n", 14), iso("n15", "n", 15), iso("o16", "o", 16), iso("o18", "o", 18),
@@ -446,6 +480,7 @@ SUBSTANCES = [
                   "triple_point_k": val(273.16, "K", NIST),
                   "triple_point_pa": val(611.657, "Pa", NIST),
                   "latent_vaporisation": val(2.468e6, "J kg-1", NIST, "verified", at_k=288.0, note="from the slope of the NIST Antoine fit, 273-303 K row"),
+                  "latent_fusion": val(3.3355e5, "J kg-1", "crc-handbook", "unverified", at_k=273.15, at_pa=101325.0, note="ice Ih to liquid, 6.009 kJ/mol"),
                   "density_liquid": val(1000.0, "kg m-3", NIST, "verified", at_k=277.0),
                   "density_solid": val(917.0, "kg m-3", "petrenko1999", "verified", at_k=273.15, note="ice Ih"),
                   "vapour_pressure": {"fit": "feistel-wagner-2007", "coeffs": [273.16, 611.657, 20.9969665107897, 3.72437478271362, -13.9205483215524, 29.6988765013566, -40.1972392635944, 29.7880481050215, -9.13050963547721], "valid_k": [50.0, 273.16], "src": FS, "also": ["lisse2021"], "note": "ln(P/Pt) = 1.5 ln(T/Tt) + (1 - Tt/T) sum e_i (T/Tt)^i; coeffs [Tt, Pt Pa, e0..e6]"},
@@ -500,6 +535,10 @@ SUBSTANCES = [
               optical={**gas_optics(2.98e-4, [1.034, 3.17e-4, 0.0], "kaye-laby", "unverified"), "condensed_colour_rgb": val([0.97, 0.97, 0.97], "1", "fudge-register", "authored")},
               chemical={"states": {"gas": gibbs(0.0, 0.0, "convention")}}),
     substance("o2", {"o": 2}, "oxygen",
+              phases={
+                  "density_liquid": val(1141.2, "kg m-3", "schmidt-wagner1985", "unverified", at_k=90.188, also=["coolprop2014"],
+                                        note="saturated liquid at its normal boiling point; CoolProp's fit gives 1141.20"),
+              },
               optical=gas_optics(2.71e-4, [1.096, 1.385e-3, 1.448e-4], "kaye-laby", "unverified"),
               chemical={"states": {"gas": gibbs(0.0, 0.0, "convention"), "dissolved": gibbs(16.32, -11.7, T)}}),
     substance("ar", {"ar": 1}, "argon",
@@ -511,9 +550,21 @@ SUBSTANCES = [
               },
               optical={**gas_optics(2.81e-4, [1.0, 0.0, 0.0], "kaye-laby", "unverified", king_src="atom-isotropic"), "condensed_colour_rgb": val([0.97, 0.97, 0.97], "1", "fudge-register", "authored")}),
     substance("h2", {"h": 2}, "hydrogen",
+              phases={
+                  # Normal hydrogen, saturated liquid at 1 atm; CoolProp's fit to the same equation gives 70.87.
+                  "density_liquid": val(70.85, "kg m-3", "leachman2009", "unverified", at_k=20.369, also=["coolprop2014"],
+                                        note="normal hydrogen at its normal boiling point"),
+              },
               optical=gas_optics(1.32e-4, [1.0, 0.0, 0.0], "kaye-laby", "unverified", *KING_ONE),
               chemical={"states": {"gas": gibbs(0.0, 0.0, "convention"), "dissolved": gibbs(17.72, -4.2, T)}}),
     substance("he", {"he": 1}, "helium", optical=gas_optics(3.5e-5, [1.0, 0.0, 0.0], "kaye-laby", "unverified", king_src="atom-isotropic")),
+    # Fusion fuels (hull tanks, ship ranges). Formulas name the isotope, so the molar mass is the isotope's own.
+    substance("d2", {"h2": 2}, "deuterium", "heavy hydrogen",
+              phases={"density_liquid": val(163.5, "kg m-3", "coolprop2014", "computed", at_k=23.31, also=["richardson2014"],
+                                            note="normal deuterium at its normal boiling point, from CoolProp's saturated-liquid fit to Richardson et al. 2014 (fit good to 0.17%)")}),
+    substance("he3", {"he3": 1}, "helium-3",
+              phases={"density_liquid": val(59.0, "kg m-3", "fudge-register", "unverified", at_k=3.19,
+                                            note="about 59 kg/m3 at its 3.19 K boiling point; from memory, not read: check against a helium-3 equation of state")}),
     substance("ne", {"ne": 1}, "neon", optical=gas_optics(6.71e-5, [1.0, 0.0, 0.0], "pdg-gas", "verified", king_src="atom-isotropic")),
     substance("kr", {"kr": 1}, "krypton"),
     substance("xe", {"xe": 1}, "xenon"),
@@ -543,6 +594,20 @@ SUBSTANCES = [
     substance("acetate-", {"c": 2, "h": 3, "o": 2}, "acetate", charge=-1, chemical={"states": {"dissolved": gibbs(-369.41, -486.01, T)}}),
     substance("glucose", {"c": 6, "h": 12, "o": 6}, "glucose", chemical={"states": {"dissolved": gibbs(-917.22, -1262.19, T)}}),
     substance("ethanol", {"c": 2, "h": 6, "o": 1}, "ethanol", chemical={"states": {"dissolved": gibbs(-181.75, -288.3, T)}}),
+    # The oxides of rock analyses (element inventory: a rock-riding element's
+    # condensation.oxide names one, so a block can bind rock's oxygen).
+    substance("sio2", {"si": 1, "o": 2}, "silicon dioxide", plain="silica"),
+    substance("tio2", {"ti": 1, "o": 2}, "titanium dioxide"),
+    substance("al2o3", {"al": 2, "o": 3}, "aluminium oxide", plain="alumina"),
+    substance("cr2o3", {"cr": 2, "o": 3}, "chromium(III) oxide"),
+    substance("feo", {"fe": 1, "o": 1}, "iron(II) oxide"),
+    substance("mno", {"mn": 1, "o": 1}, "manganese(II) oxide"),
+    substance("mgo", {"mg": 1, "o": 1}, "magnesium oxide", plain="magnesia"),
+    substance("cao", {"ca": 1, "o": 1}, "calcium oxide", plain="lime"),
+    substance("na2o", {"na": 2, "o": 1}, "sodium oxide"),
+    substance("k2o", {"k": 2, "o": 1}, "potassium oxide"),
+    substance("p2o5", {"p": 2, "o": 5}, "phosphorus pentoxide"),
+    substance("nio", {"ni": 1, "o": 1}, "nickel(II) oxide"),
     substance("ch2o", {"c": 1, "h": 2, "o": 1}, "organic carbon (one sixth of glucose)", plain="organic matter",
               chemical={"states": {"dissolved": gibbs(-152.87, -210.37, T)}}),
 ]
@@ -553,10 +618,23 @@ MIXTURES = [
      "recipe": {"n2": 0.78084, "o2": 0.209476, "ar": 0.00934, "co2": 0.000314, "ne": 1.818e-5, "he": 5.24e-6, "ch4": 2e-6, "kr": 1.14e-6, "h2": 5e-7, "xe": 8.7e-8}, "by": "volume", "src": "ussa1976", "check": "unverified",
      "note": "molar mass is worked out from the recipe (the 1976 table gives 28.9644 g/mol); CO2 has risen since 1976",
      "optical": {"refractivity_589nm": val(2.926e-4, "1", "peck-reeder1972", "unverified", at_k=273.15, at_pa=101325.0), "dispersion": "peck-reeder",
-                 "king_factor": {"fit": "a + b lambda^-2 + c lambda^-4, lambda in um", "coeffs": [1.0469, 0.0, 0.0], "src": "bodhaine1999"}}},
+                 "king_factor": {"fit": "a + b lambda^-2 + c lambda^-4, lambda in um", "coeffs": [1.0469, 0.0, 0.0], "src": "bodhaine1999"}},
+     "density": val(1.225, "kg m-3", "ussa1976", at_k=288.15, at_pa=101325.0, note="sea level in the standard atmosphere"),
+     "thermal": {"heat_capacity": val(1004.0, "J kg-1 K-1", "wallace-hobbs2006", "unverified", note="at constant pressure, near 300 K")}},
     {"id": "giant-air", "names": {"physics": "hydrogen-helium envelope", "plain": "giant-planet air", "story": "giant air"},
      "recipe": {"h2": 0.86, "he": 0.14}, "by": "volume", "src": "fudge-register", "check": "authored",
-     "note": "the weather pack's giant air at 0.0023 kg/mol; the reader's worked-out molar mass replaces it"},
+     "note": "the weather pack's giant air at 0.0023 kg/mol; the reader's worked-out molar mass replaces it",
+     "thermal": {"heat_capacity": val(12000.0, "J kg-1 K-1", NIST, "unverified", note="by mass from hydrogen near 300 K and helium (5193); colder hydrogen holds less")}},
+    # Ship fuels by mass, one per base-nav fuel id ("fuel-" + id). Antimatter has no row: no stored density.
+    {"id": "fuel-hydrogen", "names": {"physics": "liquid hydrogen", "plain": "hydrogen fuel", "story": "hydrogen"},
+     "recipe": {"h2": 1.0}, "by": "mass", "src": "fudge-register", "check": "authored"},
+    {"id": "fuel-hydrogen-oxygen", "names": {"physics": "liquid hydrogen and liquid oxygen", "plain": "hydrogen and oxygen", "story": "hydrolox"},
+     "recipe": {"h2": 1.0 / 7.0, "o2": 6.0 / 7.0}, "by": "mass", "src": "fudge-register", "check": "authored",
+     "note": "oxidiser to fuel 6:1 by mass, near what hydrogen-oxygen engines burn (the stoichiometric ratio is about 7.9)"},
+    {"id": "fuel-deuterium", "names": {"physics": "liquid deuterium", "plain": "deuterium fuel", "story": "deuterium"},
+     "recipe": {"d2": 1.0}, "by": "mass", "src": "fudge-register", "check": "authored"},
+    {"id": "fuel-helium-3", "names": {"physics": "liquid helium-3", "plain": "helium-3 fuel", "story": "helium-3"},
+     "recipe": {"he3": 1.0}, "by": "mass", "src": "fudge-register", "check": "authored"},
     {"id": "surface-rock", "names": {"physics": "generic silicate rock", "plain": "rock", "story": "rock"},
      "recipe": {}, "by": "mass", "density": val(3500.0, "kg m-3", "fudge-register", "authored"),
      "yield_strength": val(1.54e8, "Pa", "lineweaver2010", "unverified", note="calibrated so rock rounds at about 300 km")},
@@ -564,6 +642,37 @@ MIXTURES = [
      "recipe": {"h2o": 1.0}, "by": "mass", "density": val(930.0, "kg m-3", "fudge-register", "authored", note="pure ice Ih is 917 kg/m3 (water's density_solid)"),
      "yield_strength": val(5.6e6, "Pa", "lineweaver2010", "unverified", note="calibrated so ice rounds at about 200 km"),
      "melting_point": val(273.15, "K", NIST, note="at low pressure")},
+    {"id": "crust-rock", "names": {"physics": "continental crust rock", "plain": "crust rock", "story": "rock"},
+     "recipe": {}, "by": "mass", "density": val(2700.0, "kg m-3", "turcotte2014", "unverified")},
+    {"id": "mantle-rock", "names": {"physics": "upper mantle rock", "plain": "mantle rock", "story": "deep rock"},
+     "recipe": {}, "by": "mass", "density": val(3300.0, "kg m-3", "turcotte2014", "unverified")},
+    {"id": "sediment", "names": {"physics": "compacted sediment", "plain": "sediment", "story": "sediment"},
+     "recipe": {}, "by": "mass", "density": val(2300.0, "kg m-3", "turcotte2014", "unverified")},
+    {"id": "venus-air", "names": {"physics": "carbon dioxide atmosphere (Venus)", "plain": "thick carbon dioxide air", "story": "furnace air"},
+     "recipe": {"co2": 0.965, "n2": 0.035}, "by": "volume", "src": "nssdca-venus", "check": "unverified",
+     "thermal": {"heat_capacity": val(1100.0, "J kg-1 K-1", NIST, "unverified", note="carbon dioxide near 700 K")}},
+    {"id": "mars-air", "names": {"physics": "thin carbon dioxide atmosphere (Mars)", "plain": "thin carbon dioxide air", "story": "thin air"},
+     "recipe": {"co2": 0.9525, "n2": 0.0259, "ar": 0.0194, "o2": 0.0016, "co": 0.0006}, "by": "volume", "src": "nssdca-mars", "check": "unverified",
+     "note": "carbon dioxide taken as 95.25% (the fact sheet's 95.1% plus the traces it leaves out) so the recipe sums to one",
+     "thermal": {"heat_capacity": val(750.0, "J kg-1 K-1", NIST, "unverified", note="carbon dioxide near 210 K")}},
+    {"id": "titan-air", "names": {"physics": "nitrogen-methane atmosphere (Titan)", "plain": "nitrogen and methane air", "story": "cold haze air"},
+     "recipe": {"n2": 0.9435, "ch4": 0.0565}, "by": "volume", "src": "niemann2005", "check": "unverified",
+     "thermal": {"heat_capacity": val(1040.0, "J kg-1 K-1", NIST, "unverified", note="nitrogen near 94 K")}},
+    {"id": "quartz-sand", "names": {"physics": "quartz sand", "plain": "sand", "story": "sand"},
+     "recipe": {}, "by": "mass", "density": val(2650.0, "kg m-3", "crc-handbook", "unverified", note="grain density, not bulk")},
+    # Materials that carry load: strength for weight is tensile strength over density (FT1, limit 7).
+    {"id": "steel-wire", "names": {"physics": "high-strength steel wire", "plain": "steel cable", "story": "steel"},
+     "recipe": {}, "by": "mass", "density": val(7850.0, "kg m-3", "fudge-register", "unverified", note="textbook carbon steel; from memory, not read"),
+     "tensile_strength": val(2.0e9, "Pa", "fudge-register", "unverified", note="drawn high-carbon wire is about 1.8 to 2.2 GPa; from memory, not read")},
+    {"id": "aramid", "names": {"physics": "aramid fibre (Kevlar 49 yarn)", "plain": "aramid fibre", "story": "aramid"},
+     "recipe": {}, "by": "mass", "density": val(1440.0, "kg m-3", "dupont-kevlar2017"),
+     "tensile_strength": val(3.0e9, "Pa", "dupont-kevlar2017", note="yarn, straight test; a resin-impregnated strand reaches 3.6 GPa")},
+    {"id": "pbo-fibre", "names": {"physics": "PBO fibre (Zylon HM)", "plain": "PBO fibre", "story": "Zylon"},
+     "recipe": {}, "by": "mass", "density": val(1560.0, "kg m-3", "fiberline-zylon", note="specific gravity 1.56"),
+     "tensile_strength": val(5.8e9, "Pa", "fiberline-zylon", note="42.0 g/d times specific gravity 1.56 is 5.8 GPa, as Toyobo quotes")},
+    {"id": "carbon-nanotube", "names": {"physics": "multiwalled carbon nanotube (best measured shell)", "plain": "carbon nanotube", "story": "nanotube"},
+     "recipe": {}, "by": "mass", "density": val(1340.0, "kg m-3", "fudge-register", "unverified", note="1.3 to 1.4 g/cm3 is usually quoted; not read from a paper"),
+     "tensile_strength": val(6.3e10, "Pa", "yu2000", "unverified", note="the strongest of the measured outer shells; no cable this strong has been made")},
     {"id": "magma-dre", "names": {"physics": "magma, dense-rock equivalent", "plain": "magma", "story": "magma"},
      "recipe": {}, "by": "mass", "density": val(2500.0, "kg m-3", "mastin2009")},
 ]
@@ -588,6 +697,7 @@ for gid, name, t_k, t_src, rho, share in [
 
 # ---------------------------------------------------------------- elements
 ORIGINS = element_origins.load(ORIGINS_CSV)
+AFFINITY = element_affinity.load()
 
 
 def elements():
@@ -613,6 +723,7 @@ def elements():
             o = ORIGINS[row["id"]]
             row["origin"] = element_origins.origin_value(row["id"], o)
             row["origin_story"] = element_origins.story(row["id"], row["name"], o)
+            element_affinity.apply(row, AFFINITY, val)
             rows.append(row)
     return rows
 
@@ -681,10 +792,15 @@ def validate(pack):
                 walk(v, f"{where}[{i}]")
 
     walk(ref, "reference")
+    for e in ref["elements"]:
+        ox = e.get("condensation", {}).get("oxide")
+        if ox and ox not in sub_ids:
+            errors.append(f"element {e['id']}: unknown oxide {ox}")
     for s in ref["substances"]:
+        iso_mass = {i["id"] for i in ref["isotopes"] if "mass" in i}
         for el in s["formula"]:
-            if el not in el_ids:
-                errors.append(f"substance {s['id']}: unknown element {el}")
+            if el not in el_ids and el not in iso_mass:
+                errors.append(f"substance {s['id']}: unknown element or isotope {el}")
     for m in ref["mixtures"]:
         for sid in m["recipe"]:
             if sid not in sub_ids:

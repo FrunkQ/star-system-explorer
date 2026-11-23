@@ -41,6 +41,7 @@ unrelated place is still listed, and the table says which quantity it
 matched so a reader can judge. Deterministic: files and hits are sorted.
 """
 import json
+import math
 import os
 import re
 import sys
@@ -54,6 +55,23 @@ HOME = os.path.join("crates", "sse-reference")
 # Where the sheet itself lives: values here are the source, not copies.
 # packs/base-sol is the catalogued Solar System: measured body facts, each
 # cited, checked against the sheet by scripts/build-base-sol.py.
+# Packs built by a script that reads the sheet (and base-sol) for every
+# constant and catalogued body: the audit reads the builder in the pack's
+# place, so a constant typed in the builder still fails, and the built pack's
+# worked-out numbers are not copies. Each builder has a --check in check.sh.
+SHEET_FED = {
+    os.path.join("packs", "base-atlas", "pack.json"): os.path.join("scripts", "build-base-atlas.py"),
+    os.path.join("packs", "traveller", "pack.json"): os.path.join("scripts", "build-traveller-pack.py"),
+    os.path.join("packs", "base-tech", "pack.json"): os.path.join("scripts", "build-base-tech.py"),
+}
+# Sample documents whose numbers are a made-up or foreign record, not values
+# the app computes with: like a fixtures folder, they are not read.
+FIXTURE_FILES = {
+    # A made-up sample scene (every fact's source is "fixture").
+    os.path.join("packages", "shell", "src", "documents", "kestrel.scene.json"),
+    # A sample SSE 3 save, in SSE 3's own format and with its own figures.
+    os.path.join("packages", "shell", "src", "documents", "sample-sol.v3.json"),
+}
 SHEET_HOMES = (HOME, os.path.join("packs", "base-reference"), os.path.join("packs", "base-sol"), os.path.join("crates", "sse-core", "src", "sheet.rs"))
 
 # Quantity catalogue: id, name, canonical value, unit, source, relative
@@ -206,7 +224,11 @@ def _tracked():
 def walk():
     tracked = _tracked()
     for path in _walk_all():
-        if tracked is None or path.replace(os.sep, "/") in tracked:
+        if path in FIXTURE_FILES:
+            continue
+        if path in SHEET_FED:
+            yield SHEET_FED[path]
+        elif tracked is None or path.replace(os.sep, "/") in tracked:
             yield path
 
 
@@ -244,6 +266,8 @@ def match_quantity(v, lit):
 
 def is_comment(line, ext):
     t = line.strip()
+    if ext == ".py":
+        return t.startswith("#")
     return ext in (".rs", ".ts", ".mjs", ".svelte") and (t.startswith("//") or t.startswith("*") or t.startswith("/*"))
 
 
@@ -275,6 +299,12 @@ def json_props(path):
     return out
 
 
+# "// not-sheet: <why>" (or "# not-sheet: <why>") on a line: its numbers are
+# not copies of a sheet value, and the reason is required.
+WAIVER = re.compile(r"(?://|#)\s*not-sheet:\s*(\S.*)$")
+waived = []
+
+
 def scan():
     consts, props, rust_consts = [], [], []
     for path in walk():
@@ -284,12 +314,24 @@ def scan():
         except UnicodeDecodeError:
             continue
         in_test = False
+        json_tests = None  # indent of an open "tests": [ array in a pack (a flow's own test cases)
         for n, line in enumerate(text.split("\n"), 1):
             if ext == ".rs" and re.match(r"\s*#\[cfg\(test\)\]", line):
                 in_test = True
+            if ext == ".json":
+                tm = re.match(r'(\s*)"tests": \[\s*$', line)
+                if json_tests is None and tm:
+                    json_tests = tm.group(1)
+                elif json_tests is not None and re.match(re.escape(json_tests) + r"\],?\s*$", line):
+                    json_tests = None
             if is_comment(line, ext):
                 continue
-            code = line.split("//")[0] if ext in (".rs", ".ts", ".mjs", ".svelte") else line
+            if WAIVER.search(line):
+                # The line says why its number is not a sheet value (a fitted
+                # coefficient that happens to look like one, a model setting).
+                waived.append({"file": path, "line": n, "why": WAIVER.search(line).group(1).strip()})
+                continue
+            code = line.split("//")[0] if ext in (".rs", ".ts", ".mjs", ".svelte") else line.split("#")[0] if ext == ".py" else line
             # Numbers inside strings are prose (paper volumes, page numbers,
             # explanations), not values the code computes with.
             code = STR_RE.sub('""', code)
@@ -301,7 +343,7 @@ def scan():
                 hit = match_quantity(abs(v), lit)
                 if hit:
                     qid, s, rel = hit
-                    test = in_test or "/tests/" in path or path.endswith("_tests.rs") or path.endswith("tests.rs") or "/test/" in path
+                    test = in_test or json_tests is not None or "/tests/" in path or path.endswith("_tests.rs") or path.endswith("tests.rs") or "/test/" in path
                     consts.append({"q": qid, "file": path, "line": n, "literal": lit, "value": abs(v), "scale": s, "test": test})
             if ext == ".rs":
                 cm = CONST_RE.match(line)
@@ -459,6 +501,7 @@ NAME_ROW = [
 # copies. (file fragment, JSON path regex, reason)
 NOT_MATTER = [
     ("packs/", r"/examples/[^/]+/values/(body\.bulk_density|surface\.ice_fraction)$", "a named body's measured fact"),
+    ("packs/base-physics/formulas/", r"/equation/examples/", "a formula's worked example (its constants read the sheet)"),
     ("packs/sse3-classic/", r"body\.bulk_density$", "a named body's fact (V3 import)"),
     ("packs/base-light/", r"/lines/[^/]+/strength$", "an absorption line's shape"),
     ("packs/base-cosmos/", r"density_pc3$", "a star density in a galaxy model"),
@@ -468,10 +511,11 @@ NOT_MATTER = [
     ("packs/base-climate/", r"/(delta_h|latent_scale_w_m2|frost_emissivity|lowest_frost_k|t_ice_k|"
      r"super_rotation_critical|latent_share|ddf_ice_mm)$", "a climate model setting"),
     ("packs/base-surface/", r"/(ice_dry_k|land_ice_k|shadow_ice_max_bar|ice_min_km2|impactor_density|"
-     r"ice_giant_mass_earth|wind_ice_m_s)$", "a surface model setting"),
+     r"ice_giant_mass_earth|wind_ice_m_s|cover/ice_albedo|cover/sea_ice_k)$", "a surface model setting"),
     ("packs/base-weather/", r"/(equator_ice|equatorial_bands_ice|ice_giant_mass_earth|wind_ice_m_s|"
      r"strength_u|strength_m_s)$", "a weather model setting"),
     ("packs/base-weather/", r"/impact/density_kg_m3$", "an assumed impactor, a model setting"),
+    ("packs/base-ships/", r"/scoop/skim_density_kg_m3$", "the air a scoop skims, a designer setting"),
 ]
 
 # Pack key -> property on the sheet (the substance or mixture is the key's
@@ -535,11 +579,23 @@ def _is_test(path):
     return "/tests/" in path or path.endswith("tests.rs") or "/test/" in path
 
 
+def _power_of_ten(v):
+    """An SI prefix (1e3, 1e9, 1e-6...): a change of scale, not a typed value."""
+    if v <= 0:
+        return False
+    e = round(math.log10(v))
+    return abs(v - 10.0 ** e) <= 1e-12 * v
+
+
 def _has_typed_number(expr):
     code = STR_RE.sub('""', expr)
+    # A power of ten beside a sheet value is a change of scale (1e9 years), and
+    # a small whole number beside one is a formula's own (3 H^2 / 8 pi G).
+    scaled = "sheet::" in code
     for m in NUM_RE.finditer(code):
         v = to_float(m.group(0))
-        if v is not None and abs(v) not in (0.0, 1.0, 2.0):
+        formula = scaled and (_power_of_ten(abs(v)) or (abs(v) <= 12.0 and v == int(v))) if v is not None else False
+        if v is not None and abs(v) not in (0.0, 1.0, 2.0) and not formula:
             return True
     return False
 

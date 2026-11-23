@@ -313,17 +313,17 @@ pub fn history_golden() -> serde_json::Value {
 /// Fixture physics for trait derivation (Williams, NASA planetary fact sheets).
 pub fn physics(name: &str) -> crate::biosphere::WorldPhysics {
     let (g, air, day, tilt, locked) = match name {
-        "earth" | "earth-archean" => (9.81, Some(1.225), 24.0, 23.4, false),
+        "earth" | "earth-archean" => (sse_core::sheet::G0, Some(1.225), 24.0, 23.4, false),
         "mars" => (3.71, Some(0.020), 24.6, 25.2, false),
         "europa" => (1.315, None, 85.2, 0.1, true),
         "titan" => (1.352, Some(5.4), 382.7, 0.3, true),
         "venus" => (8.87, Some(65.0), 2802.0, 2.6, false),
-        _ => (9.81, Some(1.225), 24.0, 23.4, false),
+        _ => (sse_core::sheet::G0, Some(1.225), 24.0, 23.4, false),
     };
     crate::biosphere::WorldPhysics {
         surface_gravity_m_s2: g,
         air_density_kg_m3: air,
-        star_teff_k: 5772.0,
+        star_teff_k: sse_core::sheet::T_SUN,
         day_hours: day,
         obliquity_deg: tilt,
         tidally_locked: locked,
@@ -432,7 +432,7 @@ pub fn europa_biosphere() -> crate::biosphere::Biosphere {
 pub fn observables(name: &str) -> crate::signatures::Observables {
     use crate::signatures::Observables;
     let base = Observables {
-        star_teff_k: 5772.0,
+        star_teff_k: sse_core::sheet::T_SUN,
         atmosphere_bar: Some(1.0),
         abiotic_o2: 0.0,
         abiotic_ch4_ppm: 0.01,

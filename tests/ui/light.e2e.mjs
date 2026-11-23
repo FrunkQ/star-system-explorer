@@ -5,7 +5,9 @@
 // chosen, shows a legend chip with its honesty label and a legend saying what
 // its colours mean; stubbed spectra are marked as stubbed. The star's colour
 // under Eye is the one Node computes for the same derived scene. Switching
-// recipe never changes the state hash. Players get the same control.
+// recipe never changes the state hash. The band is chosen once, in the view
+// controls' Band; the panel lists that band's recipes. Players get the same
+// control (every band, as they have no view controls yet).
 import { spawn } from "node:child_process";
 import { mkdirSync, readFileSync } from "node:fs";
 import assert from "node:assert/strict";
@@ -13,7 +15,8 @@ import { createRequire } from "node:module";
 import { Session } from "../../packages/ui-contract/src/session.ts";
 import { gmSeat } from "../../packages/ui-contract/src/seat.ts";
 import { deriveScene } from "../../packages/ui-contract/src/derivation.ts";
-import { describeLight, litFromSystem, paint } from "../../packages/ui-contract/src/light.ts";
+import { describeLight, litFromSystem, paint, recipeBand } from "../../packages/ui-contract/src/light.ts";
+import { VIEW_BAND_WORDS } from "../../packages/ui-contract/src/view-controls.ts";
 import { nodeKernel } from "../../packages/ui-contract/test/node-kernel.ts";
 
 const { chromium, firefox, webkit } = createRequire(import.meta.url)("playwright");
@@ -63,9 +66,43 @@ try {
     const before = await starMark();
     const h0 = await hash();
 
-    await control.getByRole("button", { name: /Light:/ }).click();
+    // Both corner panels open above their own button and close on ×, a press elsewhere and Escape (Alex, 23 Nov).
+    for (const [cls, name, button] of [["light", "Light", /Light:/], ["sound", "Sound", /Sound/]]) {
+      const c = gm.locator(`.ruler-side .${cls}`);
+      const toggle = c.getByRole("button", { name: button });
+      const group = gm.getByRole("group", { name });
+      await toggle.click();
+      const [p, t] = [await group.boundingBox(), await toggle.boundingBox()];
+      assert.ok(p.y + p.height <= t.y, `${name}: the panel sits above its button (${p.y + p.height} > ${t.y})`);
+      await group.locator("[data-panel-close]").click();
+      await group.waitFor({ state: "detached" });
+      await toggle.click();
+      await gm.mouse.click(400, 300);
+      await group.waitFor({ state: "detached" });
+      await toggle.click();
+      await gm.keyboard.press("Escape");
+      await group.waitFor({ state: "detached" });
+      await toggle.click();
+      await toggle.click();
+      await group.waitFor({ state: "detached" });
+    }
+    assert.equal(await hash(), h0, "opening and closing the panels changes nothing");
     const panel = gm.getByRole("group", { name: "Light" });
+    const bandBar = gm.getByRole("group", { name: "Band" });
+    const openLight = async () => (await panel.count()) || (await control.getByRole("button", { name: /Light:/ }).click());
+    // Band (one set of controls, Alex 23 Nov): the view controls choose it; the panel only offers that band's recipes.
+    await openLight();
+    assert.equal(await panel.getByRole("radio", { name: /Radio/ }).count(), 0, "Visible: no radio recipe on offer");
     for (const r of recipes) {
+      const b = recipeBand(r);
+      if ((await gm.locator("[data-view-controls]").getAttribute("data-band")) !== b) {
+        await bandBar.getByRole("button", { name: VIEW_BAND_WORDS[b], exact: true }).click();
+        await gm.waitForFunction((w) => document.querySelector("[data-view-controls]")?.getAttribute("data-band") === w, b);
+        // A new band starts on its first recipe; the panel lists its own band.
+        await openLight();
+        assert.match(await panel.locator("legend").textContent(), new RegExp(`^${VIEW_BAND_WORDS[b]}`));
+      }
+      await openLight();
       await panel.getByRole("radio", { name: new RegExp(`^${r.name.replace(/[()]/g, "\\$&")}`) }).check();
       assert.equal(await control.getAttribute("data-light"), r.id);
       const chip = control.locator("[data-legend-chip]");
@@ -87,6 +124,8 @@ try {
     // Why per body.
     await panel.getByRole("button", { name: "Why is Tarn this colour?" }).click();
     assert.match(await panel.locator(".why").innerText(), /Stubbed/);
+    await bandBar.getByRole("button", { name: "Visible", exact: true }).click();
+    await openLight();
     await panel.getByRole("radio", { name: /Chart colours/ }).check();
     assert.equal(await starMark(), before, "back to the symbology exactly");
     assert.equal(await control.locator("[data-legend-chip]").count(), 0);

@@ -12,7 +12,7 @@ Only the owner thread edits this file. One row per package: update it in the sam
 | K4 flows, validation, scheduler, solve, explain | done | packages/K4.md |
 | K5 packs, stacks, one-publisher, fictional labels | done | packages/K5.md |
 | K6 kernel API, worker, TS client, cancellation, cost classes, tiers | done | packages/K6.md |
-| J1 to J9 campaign record, logic blocks, boxes, engine blocks, programs (new track J, decided 19 Nov) | J1 to J5 and J7 done (kernel track, logs `packages/J1.md` to `J7.md`; the chart room still has to switch to the kernel intent registry, see J5.md); J6 (programs) next, after T3 NAV. Read `design/SSE4-record-logic-programs-design.md`, section 9 first (points of care against built code) | |
+| J1 to J9 campaign record, logic blocks, boxes, engine blocks, programs (new track J, decided 19 Nov) | J1 to J5, J7 and J6 part 1 (programs, `packages/J6.md`) done (kernel track, logs `packages/J1.md` to `J7.md`; the chart room still has to switch to the kernel intent registry, see J5.md); J6 part 2 (NAV travel, pirate and patrol) next. Read `design/SSE4-record-logic-programs-design.md`, section 9 first (points of care against built code) | |
 | K0 V3 / Ovid / Evolution Lab source reading | done, Alex reviewing docs/v3-parity.md, v3-save-fields.md, ovid-agents.md, evolab-reuse.md | packages/K0.md |
 | K7 envelopes, partitioning, resolve, feasibility | done (kernel track) | packages/K7.md |
 | K8 rules, classification, sifters, significance | done (kernel track) | packages/K8.md |
@@ -43,6 +43,17 @@ Only the owner thread edits this file. One row per package: update it in the sam
 | C3 reverse placement in a system | done (kernel track) | packages/C3.md |
 | T1 epoch stepping, ageing star, secular orbits, symplectic windows | done (kernel track); giant phase sketch awaits F7 | packages/T1.md |
 | T2 look-ahead branch, commit, age the Solar System | done (kernel track); with Alex for review | packages/T2.md |
+| ND3b physics blocks into formula files (crate sse-formula, 20 files in `packs/base-physics/formulas/`, shrinking list `packages/ND3b-rust-atoms.txt`) | parts 1 and 2 done: 71 blocks moved, bit for bit; 14 stay in Rust with reasons | packages/ND3b.md |
+| ND6 kernel half: packs carry sources, fudges (declared plus fitted and assumed Model numbers) and reproduction checks run on load; op `pack_reports` | done (kernel half); the Packs screen half is the chart room's | packages/ND6.md |
+| GH2 satellites on orbits: one host table per slice, leapfrog from infall, sinking, tidal stripping, gas stripping, disc shocks, labels, tracks | done | packages/GH2.md |
+| DM6 kernel half: `derive` and `explain` take `at_s`; a stack with a constant's law reads it at that date | done; look-ahead spans keep one date (noted) | packages/DM6-kernel.md |
+| GH3 progenitors feed the host: each tree member's galaxy and orbit decide what arrives (stellar halo, hot gas, merger); responses by ratios; dated marks; G3's ex-situ stand-ins retired in looked-at galaxies | done | packages/GH3.md |
+| GH4 remains as places: stars leave a satellite by its tidal radius; each torn member a stream, shells or mixed remains in the envelope; halo stars in star cells and the sky with where they were born; origins across galaxies | done; next GH5 | packages/GH4.md |
+| OV3 territory holdings: `record.hold` with status and extent; inherit down, roll up (divided below 0.6), reach met midway, outlines; ops `hold`, `who_holds`, `holdings_in` with Why; area layers read from `provides.other.overlays[].areas` | done; next OV10 and OV12 at stage 5 (OV14 moved to 4.1) | packages/OV3.md |
+| FT2 technology on a civilisation (lighter, Alex 23 Nov): `record.tech` level, gains and losses, dated and inherited from parents and the setting; the size rule; the availability reading (can build, short, past known) with fictional by ceiling; ops `set_tech`, `tech_of`, `tech_reading` | done; next ship needs from the ship record when the travel thread asks; FT7 with the Traveller pack | packages/FT2.md |
+| MP22 sse-atoms batch: nine typed copies (Loschmidt, Al-26 mean life, NaCl, ice conductivity, m_H, mu_H, H ionisation, H-alpha) read the sheet; generator writes isotope rows and protosolar X, Y, Z | done; ledger 12 to 3, the last three (AL26_H0, WATER_KF, OMEGA_SUN) wait for the data sheet thread's new rows | packages/MP22-atoms-batch.md |
+| DM2 dark energy w0 and wa in the expansion and in the growth (stepped when w is not −1); void shape checked | done; real-size switch is the galaxy charts' | packages/DM2.md |
+| DM3 matter ledger per cell (op `matter_budget`): dark in catalogued haloes, below the floor, never collapsed; ordinary by reservoir; environments | done; one question for Alex (environment classifier) in the log | packages/DM3.md |
 
 ## Done so far and what is next
 

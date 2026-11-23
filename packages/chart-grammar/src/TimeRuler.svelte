@@ -13,6 +13,7 @@
 <script lang="ts">
   import { fraction, keyStep, labelRows, type RulerEvent } from "./ruler.ts";
   import { motionMs } from "./motion.ts";
+  import { constant } from "../../ui-contract/src/index.ts";
   import { around, between, calendarTicks, defaultCalendar, spanWords, steps, timeWords, zoom, type Calendar, type RulerWindow } from "./calendar.ts";
 
   let {
@@ -145,13 +146,13 @@
   });
 
   // "Show": windows around the time being viewed.
-  const DAY = $derived(cal.day_s / 31_557_600);
+  const DAY = $derived(cal.day_s / constant("yr_julian"));
   const SHOWS = $derived([
     { id: "all", label: "Whole history", span: Infinity },
     { id: "myr", label: "10 million years", span: 1e7 },
     { id: "kyr", label: "1,000 years", span: 1e3 },
-    { id: "decade", label: "10 years", span: (10 * cal.year_days * cal.day_s) / 31_557_600 },
-    { id: "year", label: "A year", span: (cal.year_days * cal.day_s) / 31_557_600 },
+    { id: "decade", label: "10 years", span: (10 * cal.year_days * cal.day_s) / constant("yr_julian") },
+    { id: "year", label: "A year", span: (cal.year_days * cal.day_s) / constant("yr_julian") },
     { id: "month", label: "A month", span: 30 * DAY },
     { id: "week", label: "A week", span: 7 * DAY },
     { id: "day", label: "A day", span: DAY },
@@ -167,6 +168,18 @@
   let stepId = $state("day");
   const stepYr = $derived(STEPS.find((s) => s.id === stepId)?.yr ?? DAY);
   let playing = $state(false);
+  /**
+   * Play, and make the time passing visible: when the window is far wider than the step (a day a second on the whole
+   * of history moves nothing you can see), the ruler first closes in on the smallest "Show" window that holds about
+   * thirty steps, so the readout and the marker move. The GM can zoom out again while it plays.
+   */
+  function play() {
+    if (span > stepYr * 600) {
+      const fit = SHOWS.filter((x) => x.span !== Infinity && x.span >= stepYr * 30).sort((a, b) => a.span - b.span)[0];
+      if (fit && fit.span < span) glide(around(now, fit.span, bounds));
+    }
+    playing = true;
+  }
   $effect(() => {
     if (!playing) return;
     let last: number | null = null;
@@ -217,7 +230,7 @@
       {#if campaignNow !== undefined}
         <span class="grp">
           <button type="button" onclick={() => set(now - stepYr, linked)} aria-label="Back one {STEPS.find((s) => s.id === stepId)?.label}" title="Back one step">‹</button>
-          <button type="button" class:on={playing} onclick={() => (playing = !playing)} aria-label={playing ? "Pause" : "Play"} aria-pressed={playing} title={linked ? "Play: time passes in the campaign" : "Play: look ahead without moving the campaign's now"}>{playing ? "❚❚" : "▶"}</button>
+          <button type="button" class:on={playing} onclick={() => (playing ? (playing = false) : play())} aria-label={playing ? "Pause" : "Play"} aria-pressed={playing} title={linked ? "Play: time passes in the campaign" : "Play: look ahead without moving the campaign's now"}>{playing ? "❚❚" : "▶"}</button>
           <button type="button" onclick={() => set(now + stepYr, linked)} aria-label="Forward one {STEPS.find((s) => s.id === stepId)?.label}" title="Forward one step">›</button>
           <select aria-label="Step" bind:value={stepId}>
             {#each STEPS as s (s.id)}<option value={s.id}>{s.label === "1,000 years" || s.label === "million years" ? `${s.label === "million years" ? "a million years" : "1,000 years"}` : `a ${s.label}`}</option>{/each}

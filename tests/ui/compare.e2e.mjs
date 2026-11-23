@@ -1,7 +1,7 @@
 // V14 in a real browser, against the built shell (scripts/build-shell.sh
 // first). Usage: node tests/ui/compare.e2e.mjs [chromium firefox webkit] [--screens <dir>]
 // The Sizes screen starts with Kestrel Reach's own bodies on one true scale;
-// reference objects come in and go out; log scale says it is not to scale;
+// reference objects come in and go out; Readable (a log scale) says it is not to scale;
 // after adding the sample Sol to the campaign its Earth can be pulled in
 // from the campaign. On the chart, Measure gives the distance between two
 // bodies. On a phone the screen menu reaches Sizes with no sideways scroll.
@@ -70,11 +70,16 @@ try {
     assert.match(await cmp.locator('tr[data-row="ref:jupiter"]').innerText(), /Jupiter\s+gas giant\s+Reference\s+69,911 km\s+1\.00 × Jupiter\s+measured/);
     assert.equal(await cmp.locator('[data-item="ref:neutron-star"]').getAttribute("data-tiny"), "true", "a neutron star is under a pixel beside Jupiter");
     await shot(gm, `compare-${name}`);
-    await cmp.getByRole("button", { name: "Log scale" }).click();
+    // Scale is the one view controls' (Alex, 23 Nov): the comparison opens at Real (true scale); Readable is a log scale.
+    const scaleBar = gm.getByRole("group", { name: "Scale" });
+    assert.equal(await scaleBar.getByRole("button", { name: "Real", exact: true }).getAttribute("aria-pressed"), "true");
+    await scaleBar.getByRole("button", { name: "Readable", exact: true }).click();
+    await gm.waitForSelector('[data-mode="log"]');
     assert.equal(await cmp.getAttribute("data-mode"), "log");
     assert.match(await cmp.locator("svg").getAttribute("aria-label"), /not to scale \(log\)/);
     assert.equal(await cmp.locator("[data-tiny]").count(), 0);
-    await cmp.getByRole("button", { name: "Log scale" }).click();
+    await scaleBar.getByRole("button", { name: "Real", exact: true }).click();
+    await gm.waitForSelector('[data-mode="true"]');
     await cmp.getByRole("button", { name: "Remove Typical neutron star" }).click();
     assert.equal(Number(await cmp.getAttribute("data-compare")), start + 1);
 
@@ -85,7 +90,10 @@ try {
 
     // The lineup survives a trip to another screen.
     await go(gm, "system");
+    // Leaving gives the viewer's own scale back (Readable here); the comparison opens at Real again next time.
+    assert.equal(await gm.locator("[data-view-controls]").getAttribute("data-scale"), "readable");
     await go(gm, "compare");
+    assert.equal(await gm.locator("[data-view-controls]").getAttribute("data-scale"), "real");
     assert.equal(Number(await gm.getByRole("region", { name: "Size comparison" }).getAttribute("data-compare")), start + 1);
 
     // Add the sample Sol, come back to Kestrel Reach, and pull in Sol's Earth from the campaign.

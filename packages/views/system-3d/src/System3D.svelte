@@ -6,12 +6,19 @@
   hands over to its frame; zooming out of a planet's frame hands back. Tiers:
   GPU (three.js WebGPU, WebGL2 when the device has no WebGPU), else Canvas
   2D drawing the same projection. The overlay buttons are the keyboard path.
+  True (V10a): the same frame against black space, each world wrapped in its
+  own surface (given in `surfaces`, read from its tiles) and lit by its star,
+  the star in its own colour; given `star` (V10c), the star itself as the
+  kernel has it, turning on its spin with its spots and flares, on a clock of
+  its own that runs six hours a second. HUD (every style, Alex 23 Nov): orbit lines,
+  belts, names and locator rings; off, names show on hover only and True
+  looks like a photograph. Scale Real: distances and sizes in proportion.
 -->
 <script lang="ts">
   import { onDestroy } from "svelte";
-  import { basis, project, startGpu, tree, type Camera, type Gpu, type Vec3 } from "../../../renderer/src/index.ts";
-  import { SEEN_ELEVATION, type SeenFrom } from "../../../ui-contract/src/index.ts";
-  import { bandLines, hasChildren, layout, shellDots, type Band3D, type Body3D } from "./bodies.ts";
+  import { basis, drawLiveStar, flaresAt, magShape, placeMag, type FieldReadJson, type MagShape, thermalGrey, THERMAL_DECADES, turnAt, project, spotsOf, STAR_SECONDS_PER_SECOND, startGpu, tree, type Camera, type Gpu, type GpuLight, type LiveStar, type TrueTexture, type Vec3 } from "../../../renderer/src/index.ts";
+  import { constant, SEEN_ELEVATION, type SeenFrom } from "../../../ui-contract/src/index.ts";
+  import { bandLines, hasChildren, layout, layoutReal, shellDots, type Band3D, type Body3D } from "./bodies.ts";
 
   let {
     bodies,
@@ -24,12 +31,66 @@
     bands = [],
     seen = "free",
     onturned,
-  }: { bands?: Band3D[]; bodies: Body3D[]; selection: string | null; onselect: (id: string) => void; title: string; tier?: string; labels?: boolean; distanceNote?: string; seen?: SeenFrom; onturned?: () => void } = $props();
+    trueLook = false,
+    surfaces = new Map(),
+    starColour = "",
+    trueNote = "",
+    realScale = false,
+    hud = true,
+    star = null,
+    band = "visible",
+    fields = new Map(),
+  }: {
+    bands?: Band3D[];
+    bodies: Body3D[];
+    selection: string | null;
+    onselect: (id: string) => void;
+    title: string;
+    tier?: string;
+    labels?: boolean;
+    distanceNote?: string;
+    seen?: SeenFrom;
+    onturned?: () => void;
+    /** The True view style (V10a); the GPU tier draws it, the canvas tier keeps the plain look. */
+    trueLook?: boolean;
+    /** True look: each world's surface by body id, as far as it has been read. */
+    surfaces?: ReadonlyMap<string, TrueTexture>;
+    /** True look: the star's colour (its surface temperature's, as a CSS colour). */
+    starColour?: string;
+    /** True look: what is still being read, said under the chart. */
+    trueNote?: string;
+    /** Scale: Real (Alex, 23 Nov 2026): distances in proportion and every body at its true size on that scale. */
+    realScale?: boolean;
+    /** HUD (True only): orbit lines, names and locator rings over the picture; off, it looks like a photograph. */
+    hud?: boolean;
+    /** True look: the star as the kernel has it (live-star.ts), drawn turning, spotted and flaring. */
+    star?: LiveStar | null;
+    /** True look: the band it is seen in (rule 12). Visible, X-ray (the star's corona; worlds dark) and Infrared (each
+     * body's own heat, mapped grey) are drawn; the others draw Visible and say so. */
+    band?: string;
+    /** Mag (V10e): each world's field facts (read_field) by body id; worlds without are drawn dark and fieldless. */
+    fields?: ReadonlyMap<string, FieldReadJson>;
+  } = $props();
+  const trueBand = $derived(band === "xray" || band === "infrared" ? band : "visible");
+  const overlay = $derived(hud);
+  // Mag (V10e): the picture gives way to the fields, in 3D and True alike: each world's lines and the wind's bubble.
+  const mag = $derived(band === "mag");
+  // Traced once per change of facts (a few ms a world), never per frame.
+  const magShapes = $derived.by(() => {
+    const out = new Map<string, MagShape>();
+    if (!mag) return out;
+    for (const [id, r] of fields) {
+      const s = magShape(r);
+      if (s) out.set(id, s);
+    }
+    return out;
+  });
+  const isTrue = $derived(trueLook);
 
   const root = $derived(bodies.find((b) => b.parent === null)?.id ?? bodies[0]?.id ?? "");
   let frame = $state<string | null>(null);
   const centreId = $derived(frame && bodies.some((b) => b.id === frame) ? frame : root);
-  const lay = $derived(layout(bodies, centreId));
+  const lay = $derived(realScale ? layoutReal(bodies, centreId) : layout(bodies, centreId));
   const t = $derived(lay ? tree(lay.nodes) : tree([]));
   const byId = (id: string | null) => bodies.find((b) => b.id === id);
 
@@ -55,7 +116,15 @@
     pitch = SEEN_ELEVATION[s];
     pan = [0, 0];
   });
-  const MIN = 4;
+  // Changing the scale changes what a distance means: start the camera again from its usual place.
+  let lastScale: boolean | null = null;
+  $effect(() => {
+    const r = realScale;
+    if (lastScale !== null && r !== lastScale) ((dist = 26), (pan = [0, 0]));
+    lastScale = r;
+  });
+  // Real scale lets the camera come much closer: the worlds are small.
+  const MIN = $derived(realScale ? 0.3 : 4);
   const MAX = 60;
   let w = $state(0);
   let h = $state(0);
@@ -96,7 +165,15 @@
     const cs = getComputedStyle(host);
     return cs.getPropertyValue(name).trim() || (fallback ? cs.getPropertyValue(fallback).trim() : "") || cs.color;
   };
-  const sizeOf = (b: Body3D, centre: boolean) => (centre ? 0.55 : 0.13 * Math.max(0.6, (b.mark?.size ?? 5) / 5));
+  // Readable: sizes for reading. Real: the body's own radius on the frame's scale, but never under a pixel or two at
+  // the camera's distance, so a world too small to show as a disc still shows as a point of light (fudge register).
+  const sizeOf = (b: Body3D, centre: boolean) => {
+    if (!realScale) return centre ? 0.55 : 0.13 * Math.max(0.6, (b.mark?.size ?? 5) / 5);
+    const n = lay?.nodes.find((x) => x.id === b.id);
+    const far = n ? Math.hypot(n.local[0] - cam.eye[0], n.local[1] - cam.eye[1], n.local[2] - cam.eye[2]) : Math.hypot(...cam.eye);
+    const px = (2 * Math.tan(cam.fovY / 2) * far) / Math.max(1, h);
+    return Math.max((b.parent === null ? 1.5 : 0.75) * px, lay ? lay.dist(b.radius_m ?? 0) : 0);
+  };
 
   // Camera-relative positions, f64 until the last step (frames.ts).
   const SEG = 96;
@@ -144,6 +221,103 @@
   });
   onDestroy(() => gpu?.dispose());
 
+  // The star's light: from the star itself when it is in the frame, else from where it lies as seen from this frame's
+  // centre (opposite the centre's own place on its orbit round the star).
+  function lightFor(): GpuLight {
+    const c = lay!.centre;
+    if (c.parent === null) return { at: relOf(c.id) };
+    const a = (c.phase_deg * Math.PI) / 180;
+    return { from: [-Math.cos(a), -Math.sin(a), 0.15] };
+  }
+
+  // The living star (V10c): its own clock, six hours of the star's time a second, from the star's present. Ten
+  // pictures a second; each shows any flare that peaked since the last. The universe clock is not moved.
+  let starT = $state(0);
+  $effect(() => {
+    const s = star;
+    if (!s || !isTrue || using !== "gpu") return;
+    const t0 = performance.now();
+    starT = s.age_s;
+    let last = 0;
+    let raf = 0;
+    const step = (now: number) => {
+      if (now - last >= 100) {
+        last = now;
+        starT = s.age_s + ((now - t0) / 1000) * STAR_SECONDS_PER_SECOND;
+      }
+      raf = requestAnimationFrame(step);
+    };
+    raf = requestAnimationFrame(step);
+    return () => cancelAnimationFrame(raf);
+  });
+  const starK = $derived(bodies.find((b) => b.parent === null)?.t_k ?? star?.teff ?? constant("T_sun"));
+  const bandNote = $derived(
+    !isTrue
+      ? ""
+      : trueBand === "xray"
+        ? "X-rays, in mapped colour: the star's corona on a log scale, brighter over its spots and flares. Worlds give off almost none, so they are dark."
+        : trueBand === "infrared"
+          ? `Thermal infrared (10 µm), in mapped grey on a log scale ${THERMAL_DECADES} decades deep from the star: each body glows by its own temperature, the same over its whole disc (the Light panel's near-infrared recipes paint the flat chart).`
+          : band !== "visible" && band !== "mag"
+            ? "True draws Visible, Infrared and X-ray for now; this band is drawn as Visible."
+            : "",
+  );
+  const magNote = $derived(
+    !mag
+      ? ""
+      : using === "canvas"
+        ? "Mag lines are drawn on the GPU tier; open a world for its field's cut."
+        : !magShapes.size
+          ? "Mag: no world here has field facts yet. Fields come from the Solar System's own bodies for now; other worlds get theirs once the kernel publishes a field for every world."
+          : `Mag: ${magShapes.size === 1 ? "one world's" : `${magShapes.size} worlds'`} magnetic fields from the kernel's facts (read_field), traced as on each world's own Mag layer. Orange where the field points away from the world, blue where it points in; the faint outlines are the wind's bubble (magnetopause), its nose toward the star.${realScale ? " Real scale: each field at its true size." : " Readable scale: each field is drawn to its world's enlarged size and stopped short of the nearest body drawn; Real shows them at their true size."}`,
+  );
+  const flaringNow = $derived(star && isTrue ? flaresAt(star, spotsOf(star), starT, STAR_SECONDS_PER_SECOND / 10).length : 0);
+  // The face is drawn at about the size the disc shows on the screen, in steps so its texture is not remade each zoom.
+  const FACE_STEPS = [16, 32, 64, 128, 256];
+  const FACE_DISC = 0.92;
+  const XRAY_DISC = 0.6;
+  let faceBuf: { width: number; data: Uint8ClampedArray } | null = null;
+  let faceVersion = 0;
+  function faceFor(b: Body3D, radius: number) {
+    const s = star;
+    if (!s || b.parent !== null) return undefined;
+    const r = relOf(b.id);
+    const d = Math.hypot(r[0], r[1], r[2]);
+    const dpr = typeof devicePixelRatio === "number" ? devicePixelRatio : 1;
+    const px = ((radius / Math.max(1e-6, d)) * (h / 2)) / Math.tan(cam.fovY / 2) * 2 * dpr / FACE_DISC;
+    const width = FACE_STEPS.find((n) => n >= px) ?? 256;
+    if (!faceBuf || faceBuf.width !== width) faceBuf = { width, data: new Uint8ClampedArray(width * width * 4) };
+    const xray = trueBand === "xray";
+    // In X-rays the corona reaches past the disc: the disc takes less of the square.
+    const disc = xray ? XRAY_DISC : FACE_DISC;
+    drawLiveStar(faceBuf, s, starT, xray ? "xray" : "visible", disc, 7, STAR_SECONDS_PER_SECOND / 10);
+    return { key: `star:${b.id}:${xray ? "x" : "v"}`, version: ++faceVersion, width, data: faceBuf.data, disc };
+  }
+
+  // Mag lines in camera-relative points: each world's field drawn to its drawn size, x toward the star. Readable
+  // enlarges the worlds, so a field there is stopped short of the nearest other body drawn (fudge register); Real
+  // draws every field at its true size.
+  function magRings(outInk: string, inInk: string, edge: string): { points: Vec3[]; colour: string }[] {
+    if (!mag || !lay || !magShapes.size) return [];
+    const starNode = lay.nodes.find((n) => n.id === root);
+    const from = lightFor();
+    const out: { points: Vec3[]; colour: string }[] = [];
+    for (const b of shown) {
+      const s = magShapes.get(b.id);
+      const n = lay.nodes.find((x) => x.id === b.id);
+      if (!s || !n) continue;
+      const radius = realScale ? lay.dist(b.radius_m ?? 0) : sizeOf(b, b === lay.centre);
+      if (!(radius > 0)) continue;
+      const sun: [number, number] = starNode && starNode.id !== b.id ? [starNode.local[0] - n.local[0], starNode.local[1] - n.local[1]] : "from" in from && from.from ? [from.from[0], from.from[1]] : [-n.local[0], -n.local[1]];
+      let reach = Infinity;
+      if (!realScale) for (const o of lay.nodes) if (o.id !== b.id) reach = Math.min(reach, 0.45 * Math.hypot(o.local[0] - n.local[0], o.local[1] - n.local[1], o.local[2] - n.local[2]));
+      const placed = placeMag(s, n.local as [number, number, number], radius, sun, reach);
+      for (const r of placed.runs) out.push({ points: r.points.map(rel), colour: r.out ? outInk : inInk });
+      for (const e of placed.bubble) out.push({ points: e.map(rel), colour: edge });
+    }
+    return out;
+  }
+
   let canvas2d: HTMLCanvasElement | undefined = $state();
   $effect(() => {
     if (!lay || w === 0 || h === 0) return;
@@ -153,16 +327,44 @@
     // A shell's haze is faint ink: it surrounds everything and must not crowd the orbits.
     const haze = token("--sse-ink-faint", "--sse-ink-muted");
     const ground = token("--sse-ground", "--sse-ground-raised");
+    const fieldOut = token("--sse-field-out", "--sse-accent");
+    const fieldIn = token("--sse-field-in", "--sse-ink");
     const colour = (b: Body3D) => b.mark?.colour ?? ink;
     if (using === "gpu" && gpu) {
       const { f, u } = basis(cam.eye, cam.look);
+      if (isTrue) {
+        // True: worlds in their own surfaces, a world not read yet plain and faint; only the selected orbit drawn.
+        const tex = (b: Body3D) => surfaces.get(b.id);
+        gpu.draw({
+          items: shown.map((b) => {
+            const t = tex(b);
+            const isStar = b.parent === null;
+            const radius = sizeOf(b, b === lay!.centre);
+            // Infrared draws every body by its own heat, the star included; X-ray draws the star's corona and leaves
+            // the worlds dark (they give off almost none).
+            const face = isStar && !mag && trueBand !== "infrared" ? faceFor(b, radius) : undefined;
+            // Mag: the worlds dark under their fields, the star a dim grey (its own field is not drawn yet).
+            const emit = mag ? (isStar ? 0.35 : magShapes.has(b.id) ? 0.18 : 0.08) : trueBand === "infrared" ? thermalGrey(b.t_k ?? 0, starK) : trueBand === "xray" && !isStar ? 0 : undefined;
+            return { id: b.id, rel: relOf(b.id), radius, colour: isStar ? starColour || colour(b) : faint, ring: b.mark?.ring ?? false, selected: b.id === selection, shines: isStar, ...(t ? { surface: { key: b.id, texture: t } } : {}), ...(face ? { face } : {}), ...(emit !== undefined ? { emit } : {}) };
+          }),
+          rings: [...(hud ? lay.placed.map((b) => ({ points: ringPoints(lay!.ring.get(b.id)!), colour: b.id === selection ? accent : faint })) : []), ...magRings(fieldOut, fieldIn, faint)],
+          forward: f,
+          up: u,
+          fovY: cam.fovY,
+          width: w,
+          height: h,
+          ground,
+          light: lightFor(),
+        });
+        return;
+      }
       gpu.draw({
         items: shown.map((b) => ({ id: b.id, rel: relOf(b.id), radius: sizeOf(b, b === lay!.centre), colour: colour(b), ring: b.mark?.ring ?? false, selected: b.id === selection })),
-        rings: [
+        rings: [...magRings(fieldOut, fieldIn, faint), ...(!hud ? [] : [
           ...bandLocal.map(({ b, pts }) => ({ points: pts.map(rel), colour: b.id === selection ? accent : faint })),
           ...lay.placed.map((b) => ({ points: ringPoints(lay!.ring.get(b.id)!), colour: b.id === selection ? accent : faint })),
-        ],
-        dots: shellLocal.map(({ b, pts }) => ({ points: pts.map(rel), colour: b.id === selection ? accent : haze })),
+        ])],
+        dots: hud ? shellLocal.map(({ b, pts }) => ({ points: pts.map(rel), colour: b.id === selection ? accent : haze })) : [],
         forward: f,
         up: u,
         fovY: cam.fovY,
@@ -177,9 +379,9 @@
       const g = canvas2d.getContext("2d")!;
       g.setTransform(dpr, 0, 0, dpr, 0, 0);
       g.clearRect(0, 0, w, h);
-      // Belts and the Oort cloud first, dotted and faint, under the orbits.
+      // Belts and the Oort cloud first, dotted and faint, under the orbits (all HUD).
       g.setLineDash([2, 4]);
-      for (const { b, pts } of bandLocal) {
+      for (const { b, pts } of hud ? bandLocal : []) {
         g.beginPath();
         let started = false;
         for (const q of pts) {
@@ -193,7 +395,7 @@
         g.stroke();
       }
       g.setLineDash([]);
-      for (const { b, pts } of shellLocal) {
+      for (const { b, pts } of hud ? shellLocal : []) {
         g.fillStyle = b.id === selection ? accent : haze;
         for (const q of pts) {
           const p = project(t, cam, lay.centre.id, q);
@@ -201,7 +403,7 @@
         }
       }
       // Orbits as projected polylines, in the same camera-relative arithmetic.
-      for (const b of lay.placed) {
+      for (const b of hud ? lay.placed : []) {
         const r = lay.ring.get(b.id)!;
         g.beginPath();
         let started = false;
@@ -303,6 +505,10 @@
   onkeydown={key}
   data-tier={using}
   data-frame={centreId}
+  data-look={isTrue && using === "gpu" ? "true" : "plain"}
+  data-scale={realScale ? "real" : "readable"}
+  data-hud={overlay ? "on" : "off"}
+  class:true-look={isTrue && using === "gpu"}
 >
   <canvas bind:this={canvas} class="gpu" class:off={using !== "gpu"} aria-hidden="true"></canvas>
   <canvas bind:this={canvas2d} class="c2d" class:off={using !== "canvas"} aria-hidden="true"></canvas>
@@ -312,6 +518,7 @@
         type="button"
         class="pin"
         class:sel={b.id === selection}
+        class:locate={realScale && overlay}
         style="left: {p.x}px; top: {p.y}px; --r: {Math.max(7, (sizeOf(b, b === lay?.centre) * (b.mark?.ring ? 1.9 : 1) * (h / 2 / Math.tan(cam.fovY / 2))) / p.depth)}px"
         aria-pressed={b.id === selection}
         data-body={b.id}
@@ -319,7 +526,7 @@
         data-y={p.y.toFixed(2)}
         onclick={() => onselect(b.id)}
         ondblclick={() => hasChildren(bodies, b.id) && b.id !== centreId && enter(b.id)}
-      ><span class="dot"></span>{#if labels}<span class="name">{b.name}</span>{/if}</button>
+      ><span class="dot"></span>{#if labels}<span class="name" class:hover={!hud}>{b.name}</span>{/if}</button>
     {/if}
   {/each}
   <div class="bar">
@@ -332,7 +539,11 @@
   </div>
   <p class="note">
     {#if lay?.unplaced.length}<span>Position not known: {lay.unplaced.map((b) => b.name).join(", ")}.</span>{/if}
-    <span>Distances on a log scale, sizes not to scale{distanceNote}. Drawn with {using === "gpu" ? reason : using === "canvas" ? `Canvas 2D (${reason})` : "…"}.</span>
+    <span>{realScale ? "Real scale: distances and sizes in proportion (a world smaller than a pixel shows as a point)" : "Distances on a log scale, sizes not to scale"}{distanceNote}. Drawn with {using === "gpu" ? reason : using === "canvas" ? `Canvas 2D (${reason})` : "…"}.</span>
+    {#if isTrue && (using === "canvas" || trueNote)}<span data-true-note>{using === "canvas" ? "True needs a GPU: this device draws the chart's look." : trueNote}</span>{/if}
+    {#if isTrue && bandNote && using === "gpu"}<span data-true-band={trueBand}>{bandNote}</span>{/if}
+    {#if mag}<span data-true-band="mag" data-mag-worlds={magShapes.size}>{magNote}</span>{/if}
+    {#if isTrue && star && using === "gpu"}<span data-star-live={flaringNow ? "flaring" : "quiet"} data-star-turn={turnAt(star, starT).toFixed(1)}>The star runs on its own clock, six hours a second: it turns on its spin, its spots go round with it{flaringNow ? ", and it is flaring now" : ""}.</span>{/if}
   </p>
 </div>
 
@@ -380,6 +591,10 @@
     height: 14px;
     border-radius: 50%;
   }
+  /* Real scale: a faint ring finds a world too small to see (its name on hover in True). */
+  .pin.locate .dot {
+    box-shadow: 0 0 0 1px var(--sse-ink-faint, var(--sse-ink-muted));
+  }
   .pin.sel .dot {
     outline: 1.5px dashed var(--sse-accent);
     outline-offset: 3px;
@@ -394,11 +609,26 @@
     white-space: nowrap;
     text-shadow: 0 0 3px var(--sse-ground), 0 0 3px var(--sse-ground);
   }
+  /* HUD off: names only on hover or focus. True: text sits on a chip over black space. */
+  .pin .name.hover {
+    visibility: hidden;
+  }
+  .pin:hover .name.hover,
+  .pin:focus-visible .name.hover {
+    visibility: visible;
+  }
+  .true-look .pin .name,
+  .true-look .note span {
+    background: var(--sse-ground);
+    padding: 0 4px;
+    text-shadow: none;
+  }
+  /* Low in the stage: the view controls run along the top. */
   .bar {
     position: absolute;
     left: 50%;
     transform: translateX(-50%);
-    top: 12px;
+    bottom: 64px;
     display: flex;
     gap: 10px;
     align-items: center;

@@ -1,6 +1,9 @@
 <!--
   The Light control (nebulae-and-light design 2.2, O1 UI side): which band
-  recipe paints the marks. "Chart colours" leaves the symbology alone; every
+  recipe paints the marks. The band itself is chosen once, in the view
+  controls' Band (one set of controls, Alex 23 Nov); this panel lists the ways
+  of painting that band (in Visible: the chart's own colours, the eye, a
+  camera, the narrowband palettes). Without a Band beside it, every band. "Chart colours" leaves the symbology alone; every
   other recipe colours each body by its light and always shows a legend chip
   that says what the colours mean and how honest they are. The choice stays
   on this device and never reaches the session, so the state hash cannot
@@ -9,9 +12,9 @@
 -->
 <script lang="ts">
   import { untrack } from "svelte";
-  import { HONESTY_WORDS, SYMBOLS, readLight, type BandRecipe, type LightDescription } from "../../ui-contract/src/index.ts";
+  import { VIEW_BAND_WORDS, HONESTY_WORDS, SYMBOLS, bandChoices, readLight, type ViewBand, type BandRecipe, type LightDescription } from "../../ui-contract/src/index.ts";
 
-  let { recipes, lights, missing, names, value = $bindable(SYMBOLS), key = "light" }: { recipes: readonly BandRecipe[]; lights: readonly LightDescription[]; missing: readonly string[]; names: ReadonlyMap<string, string>; value?: string; key?: string } = $props();
+  let { recipes, lights, missing, names, band, value = $bindable(SYMBOLS), key = "light" }: { recipes: readonly BandRecipe[]; lights: readonly LightDescription[]; missing: readonly string[]; names: ReadonlyMap<string, string>; band?: ViewBand; value?: string; key?: string } = $props();
 
   const store = $derived(`sse4.${key}`);
   untrack(() => {
@@ -31,10 +34,24 @@
   });
 
   const recipe = $derived(recipes.find((r) => r.id === value) ?? null);
+  // With no Band beside it (the players' screen has no view controls yet) the panel offers every band.
+  const here = $derived(band ? bandChoices(recipes, band) : [SYMBOLS, ...recipes.map((r) => r.id)]);
   const stubbed = $derived(lights.filter((l) => l.stubbed));
   let open = $state(false);
   let why = $state<string | null>(null);
   const id = $props.id();
+  // The panel opens above its button, never over it, and closes on ×, Escape or a press anywhere else.
+  let root = $state<HTMLElement | null>(null);
+  let toggle = $state<HTMLButtonElement | null>(null);
+  let bottom = $state(44);
+  function place() {
+    const r = toggle?.getBoundingClientRect();
+    if (r) bottom = Math.max(8, innerHeight - r.top + 8);
+  }
+  function close() {
+    open = false;
+    toggle?.focus();
+  }
   const groups: [string, (r: BandRecipe) => boolean][] = [
     ["Seen as light", (r) => r.mode === "eye" || r.mode === "camera"],
     ["Astro palettes", (r) => r.mode === "composite"],
@@ -42,10 +59,13 @@
   ];
 </script>
 
-<svelte:window onkeydown={(e) => open && e.key === "Escape" && (open = false)} />
+<svelte:window
+  onkeydown={(e) => open && e.key === "Escape" && (e.stopPropagation(), close())}
+  onpointerdown={(e) => open && !root?.contains(e.target as Node) && (open = false)}
+  onresize={() => open && place()} />
 
-<span class="light" data-light={value} data-honesty={recipe?.honesty ?? "symbols"} data-stubbed={recipe ? stubbed.length : 0}>
-  <button type="button" class="toggle" aria-expanded={open} aria-controls="{id}-panel" onclick={() => (open = !open)} title="Which light the marks show">
+<span class="light" bind:this={root} data-light={value} data-honesty={recipe?.honesty ?? "symbols"} data-stubbed={recipe ? stubbed.length : 0}>
+  <button type="button" class="toggle" bind:this={toggle} aria-expanded={open} aria-controls="{id}-panel" onclick={() => (place(), (open = !open))} title="How the marks are painted in this band (choose the band in the view controls)">
     <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><circle cx="12" cy="12" r="4" /><path d="M12 2v3M12 19v3M2 12h3M19 12h3M5 5l2 2M17 17l2 2M5 19l2-2M17 7l2-2" /></svg>
     Light: {recipe?.name ?? "chart colours"}
   </button>
@@ -55,13 +75,14 @@
     </span>
   {/if}
   {#if open}
-    <div class="panel" id="{id}-panel" role="group" aria-label="Light">
+    <div class="panel" id="{id}-panel" role="group" aria-label="Light" style:bottom="{bottom}px">
+      <div class="phead"><span class="k">Light</span><button type="button" class="pclose" aria-label="Close light" data-panel-close onclick={close}>×</button></div>
       <fieldset>
-        <legend>Marks show</legend>
-        <label class="check"><input type="radio" name="{id}-r" value={SYMBOLS} bind:group={value} /> Chart colours (the symbology)</label>
-        {#each groups as [g, f] (g)}
+        <legend>{band ? `${VIEW_BAND_WORDS[band]} marks show` : "Marks show"}</legend>
+        {#if here.includes(SYMBOLS)}<label class="check"><input type="radio" name="{id}-r" value={SYMBOLS} bind:group={value} /> Chart colours (the symbology)</label>{/if}
+        {#each groups.filter(([, f]) => recipes.some((r) => f(r) && here.includes(r.id))) as [g, f] (g)}
           <div class="k">{g}</div>
-          {#each recipes.filter(f) as r (r.id)}
+          {#each recipes.filter((r) => f(r) && here.includes(r.id)) as r (r.id)}
             <label class="check"><input type="radio" name="{id}-r" value={r.id} bind:group={value} /> {r.name} <span class="tag">{HONESTY_WORDS[r.honesty]}</span></label>
           {/each}
         {/each}
@@ -134,6 +155,21 @@
   }
   .stub {
     color: var(--sse-accent, currentColor);
+  }
+  .phead {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+  .pclose {
+    height: auto;
+    padding: 0 4px;
+    border: none;
+    background: none;
+    color: inherit;
+    font-size: 20px;
+    line-height: 1;
+    cursor: pointer;
   }
   .panel {
     position: fixed;

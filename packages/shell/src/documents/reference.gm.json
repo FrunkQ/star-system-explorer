@@ -11,7 +11,7 @@
     {
       "view": "sse.view.reference",
       "area": "chart",
-      "params": { "page": "constants" }
+      "params": { "page": "constants", "names_offer": "packs/base-names.json" }
     },
     {
       "view": "sse.view.time-ruler",
@@ -20,11 +20,25 @@
   ],
   "rail": [
     {
+      "scale": "system",
+      "group": "understand",
+      "label": "Look up",
+      "order": 3,
+      "hint": "Constants, elements, units and names, each with where it comes from"
+    },
+    {
+      "scale": "world",
+      "group": "understand",
+      "label": "Look up",
+      "order": 3,
+      "hint": "Constants, elements, units and names, each with where it comes from"
+    },
+    {
       "scale": "workshop",
       "group": "workshop",
       "label": "Reference",
       "order": 7,
-      "hint": "The data sheet: constants, units and where each number comes from"
+      "hint": "The data sheet: constants, units, names and where each comes from"
     }
   ]
 }

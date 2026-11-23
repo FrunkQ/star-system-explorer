@@ -152,6 +152,12 @@ export interface ViewSession {
   readWorldStack(by: { body?: string; fixture?: string }): Promise<{ ok: true; result: WorldStackRead } | { ok: false; code: string; message: string }>;
   /** A world's six level-0 surface tiles (S1, at the GM's disclosure), through resolved_system. Heavy: about 8 MB and a second or more. */
   surfaceTiles(system: string, body: string): Promise<{ ok: true; tiles: SurfaceTile[]; refused: Json[]; regime?: string } | { ok: false; code: string; message: string }>;
+  /** Tiles of a world at any level (S1, through resolved_system; at most 24 a call), with the kernel's refusals; GM only. The ground round a landing site (SL1). */
+  surfaceTilesAt(system: string, body: string, keys: readonly { face: number; level: number; x: number; y: number }[]): Promise<{ ok: true; tiles: SurfaceTile[]; refused: { face: number; level: number; x: number; y: number; why: string }[] } | { ok: false; code: string; message: string }>;
+  /** A world's landmarks (SL1): its named landscape from a quick survey (`survey_surface`'s register, the same world the globe shows); GM only. */
+  surfaceLandmarks(system: string, body: string, limit?: number): Promise<{ ok: true; landmarks: import("./landing.ts").Landmark[]; total: number } | { ok: false; code: string; message: string }>;
+  /** A descent planned to any site (SL1, kernel `plan_descent` on the quick survey): the site judged, a lander flown down; GM only. */
+  planDescent(ask: { system: string; body: string; lat_deg: number; lon_deg: number; lander: string | Record<string, unknown> }): Promise<{ ok: true; plan: import("./landing.ts").DescentPlan } | { ok: false; code: string; message: string }>;
   /** A world's one climate (W7a), from a quick survey (kernel `survey_surface`, about half a second, cached by the kernel); GM only. */
   surveyClimate(system: string, body: string): Promise<{ ok: true; climate: import("./climate.ts").ClimateSummary } | { ok: false; code: string; message: string }>;
   /** The open universe as a document to keep (U10, kernel `export_chronicle`); GM only. */
@@ -172,6 +178,8 @@ export interface ViewSession {
   listSystems(): Promise<{ ok: true; systems: ListedSystem[] } | { ok: false; code: string; message: string }>;
   /** Candidate courses (V8, kernel `plan_route`, T3): from an inline system any seat may ask about; an adopted `system` is GM only. Writes nothing. */
   planRoute(ask: import("./route.ts").RouteAsk): Promise<{ ok: true; plan: import("./route.ts").RoutePlan } | { ok: false; code: string; message: string }>;
+  /** What a ship can do at each of some worlds (kernel `ship_at_world`): aerocapture, entry, landing, take-off, with dangers, margins and rough chances; nothing rolled. An adopted `system` is GM only. Writes nothing. */
+  shipAtWorld(ask: import("./ship-at-world.ts").ShipAtWorldAsk): Promise<{ ok: true; report: import("./ship-at-world.ts").ShipAtWorldReport } | { ok: false; code: string; message: string }>;
   /** One galaxy grown from the universe's seed (U6, kernel `galaxy_chart`, G1 to G4). Read only; GM only. */
   galaxyChart(ask: import("./galaxy.ts").GalaxyAsk): Promise<{ ok: true; chart: import("./galaxy.ts").GalaxyChart } | { ok: false; code: string; message: string }>;
   /**
@@ -189,6 +197,24 @@ export interface ViewSession {
   starCell(ask: { cell?: [number, number, number]; t_myr?: number }): Promise<{ ok: true; cell: import("./voyage.ts").StarCell } | { ok: false; code: string; message: string }>;
   /** A voyage between stars for one ship (kernel `plan_voyage`, V8 part 3). Read only; GM only for now (players ask through their console later). */
   planVoyage(ask: import("./voyage.ts").VoyageAsk): Promise<{ ok: true; plan: import("./voyage.ts").VoyagePlan | import("./voyage.ts").SystemVoyagePlan } | { ok: false; code: string; message: string }>;
+  /** The stacked packs' templates for ships, stations, sites and the like (kernel `templates`, J7). Read only. */
+  templates?(): Promise<{ ok: true; templates: import("./constructs.ts").ConstructTemplate[] } | { ok: false; code: string; message: string }>;
+  /** Make an object from a template under `under` (kernel `create`): its facts and tags as one universe event, its kept values in the record. GM only. */
+  createFrom?(ask: { template: string; under: string; key?: string; name?: string; at_s?: number | bigint }): Promise<{ ok: true; result: import("./constructs.ts").Created } | { ok: false; code: string; message: string }>;
+  /** Take an object made from a template out of play (kernel `retire`); nothing is deleted. GM only. */
+  retire?(address: string, reason?: string, at_s?: number | bigint): Promise<{ ok: true; event_id: string } | { ok: false; code: string; message: string }>;
+  /** The record at `address` (kernel `record`): its notes, kept values with their history, and actors. GM only: seats get disclosures. */
+  record?(address: string, at_s?: number | bigint): Promise<{ ok: true; record: import("./constructs.ts").RecordRead } | { ok: false; code: string; message: string }>;
+  /** Write a note in the record (kernel `add_note`, J1) about `address`, for `audience` ("everyone", "gm" or audience ids). `narrative` marks a storyteller's text. Notes never change the universe's state. GM only. */
+  addNote?(n: { address: string; text: string; audience: "everyone" | "gm" | string[]; tags?: string[]; narrative?: boolean; supersedes?: string; at_s?: number | bigint }): Promise<{ ok: true; note_id: string } | { ok: false; code: string; message: string }>;
+  /** Game-system codes (X3a, kernel `codes`) for every body at or under `scope`, read by a code sheet (the first in the stack when none is named). Read only; GM only. */
+  codes?(ask: { scope: string; sheet?: string; at_s?: number | bigint }): Promise<{ ok: true; result: import("./sector.ts").CodesRead } | { ok: false; code: string; message: string }>;
+  /** The hex map's worlds (X3c, kernel `sector_map`): each mapped system's main world with its reading, by hex. Read only; GM only. */
+  sectorMap?(ask: { scope: string; sheet?: string; at_s?: number | bigint }): Promise<{ ok: true; result: import("./sector.ts").SectorMap } | { ok: false; code: string; message: string }>;
+  /** Read a sector file (X3c, kernel `import_sector`): a preview without `apply`; with it, every world written as history (and with `grow`, its whole system grown first). GM only. */
+  importSector?(ask: import("./sector.ts").SectorImportAsk): Promise<{ ok: true; result: import("./sector.ts").SectorImported } | { ok: false; code: string; message: string }>;
+  /** Write the mapped systems as a sector file (X3c, kernel `export_sector`). Read only; GM only. */
+  exportSector?(ask: { scope: string; format: import("./sector.ts").SectorFormat; sheet?: string; at_s?: number | bigint }): Promise<{ ok: true; result: import("./sector.ts").SectorExported } | { ok: false; code: string; message: string }>;
   /** A slice of the cosmic web at one epoch (V9, kernel `web_slice`, G1). Read only; GM only. */
   webSlice(ask: import("./galaxy.ts").SliceAsk): Promise<{ ok: true; web: import("./galaxy.ts").WebSlice } | { ok: false; code: string; message: string }>;
   /** A system as the universe now holds it: facts, a SystemSpec for look-ahead, and S0 surfaces. */
@@ -207,6 +233,12 @@ export interface ViewSession {
   readActivity(ask: { stars: Json[]; seed?: string; at_s?: number; window?: { from_s: number; to_s: number; min_energy_j?: number } }): Promise<{ ok: true; stars: Json[] } | { ok: false; code: string; message: string }>;
   /** What stops the wind at each body, and its field (read only): `fixture: "solar-system"` or handed `bodies`. */
   readField(ask: { fixture?: string; bodies?: Json[] }): Promise<{ ok: true; bodies: Json[] } | { ok: false; code: string; message: string }>;
+  /** SV2: who knows a thing, or one fact on it (kernel `known_to`): per audience its landmark, rung and exceptions. GM only. */
+  knownTo(address: string, field?: string): Promise<{ ok: true; value: import("./known.ts").KnownTo } | { ok: false; code: string; message: string }>;
+  /** NM6: every name a thing has, by layer (kernel `read_names`); a player seat sees only the layers its view discloses. */
+  readNames(address: string): Promise<{ ok: true; value: import("./names.ts").NamesRead } | { ok: false; code: string; message: string }>;
+  /** NM6: a sample of names from one scheme on the stack (kernel `name_sample`), the same on every device. Read only. */
+  nameSample(ask: import("./names.ts").SampleAsk): Promise<{ ok: true; value: import("./names.ts").NameSample } | { ok: false; code: string; message: string }>;
   /** MP10: the master data sheet as the stack has it (kernel `read_matter`): the listing, a table's ids, or one row with sources and readers. Read only. */
   readMatter(ask: { table?: string; id?: string }): Promise<{ ok: true; value: Json } | { ok: false; code: string; message: string }>;
   kernelVersion(): Promise<string>;
@@ -283,8 +315,11 @@ export interface StackCandidate {
   campaign?: PackDoc | null;
 }
 
-/** What a trial's probe may do: derive, and see the candidate stack. */
-export type Probe = Pick<ViewSession, "derive" | "stack">;
+/** What a trial's probe may do: derive, see the candidate stack, and read the packs' own reports (ND6). */
+export type Probe = Pick<ViewSession, "derive" | "stack" | "nameSample"> & {
+  /** Sources, fudges and reproduction checks of one pack of the candidate stack (or every pack), worked out when it loaded. */
+  packReports(pack?: string): Promise<{ ok: true; reports: unknown[] } | { ok: false; message: string }>;
+};
 
 export type TrialResult<T> = { ok: true; stack_hash: string; result: T } | { ok: false; report: string; issues: string[] };
 
@@ -399,6 +434,14 @@ export class Session implements ViewSession {
           const r = await call(client, { op: "derive", flow: ref.flow, inputs: ref.inputs });
           return r.type === "derived" ? { ok: true as const, values: r.values as Record<string, Derived> } : { ok: false as const, message: String(r.message ?? JSON.stringify(r)) };
         },
+        async nameSample(ask) {
+          const r = await call(client, { op: "name_sample", ...ask } as never);
+          return r.type === "names" ? { ok: true as const, value: (r as unknown as { value: import("./names.ts").NameSample }).value } : { ok: false as const, code: String(r.code ?? "unexpected"), message: String(r.message ?? JSON.stringify(r)) };
+        },
+        async packReports(pack) {
+          const r = await call(client, { op: "pack_reports", ...(pack ? { pack } : {}) });
+          return r.type === "pack_reports" && Array.isArray(r.reports) ? { ok: true as const, reports: r.reports as unknown[] } : { ok: false as const, message: String(r.message ?? JSON.stringify(r)) };
+        },
       };
       return { ok: true as const, stack_hash: String(st.stack_hash), result: await probe(p) };
     });
@@ -490,6 +533,8 @@ export class Session implements ViewSession {
       return { status: "applied", event_id: String(r.event_id), state_hash: String(r.state_hash), affected: [intent.address], view: (r.view as string | null) ?? null };
     if (r.type === "authored")
       return { status: "applied", event_id: String(r.event_id), state_hash: String(r.state_hash), affected: r.affected as string[] };
+    if ((intent.kind === "set_known" || intent.kind === "undo_known") && (r.type === "known_set" || r.type === "known_undone"))
+      return { status: "applied", event_id: String(r.undo ?? r.event_id ?? ""), state_hash: String(r.state_hash ?? (await this.stateHash())), affected: intent.kind === "set_known" ? [intent.address] : [] };
     if (r.type === "error") return { status: "error", code: String(r.code), message: String(r.message) };
     return { status: "error", code: "unexpected", message: JSON.stringify(r) };
   }
@@ -595,6 +640,28 @@ export class Session implements ViewSession {
     return { ok: true, tiles: x.tiles ?? [], refused: x.refused ?? [], regime: x.surfaces?.find((s2) => s2.address === body)?.regime_label };
   }
 
+  async surfaceTilesAt(system: string, body: string, keys: readonly { face: number; level: number; x: number; y: number }[]): Promise<{ ok: true; tiles: SurfaceTile[]; refused: { face: number; level: number; x: number; y: number; why: string }[] } | { ok: false; code: string; message: string }> {
+    if (this.seat.authority !== "gm") return { ok: false, code: "not_gm", message: "only the game master reads surface tiles" };
+    const r = await this.#call({ op: "resolved_system", system, tiles: keys.map((k) => ({ body, face: k.face, level: k.level, x: k.x, y: k.y })) });
+    if (r.type !== "system_resolved") return { ok: false, code: String(r.code ?? "unexpected"), message: String(r.message ?? JSON.stringify(r)) };
+    const x = r as unknown as { tiles?: SurfaceTile[]; refused?: { face: number; level: number; x: number; y: number; why: string }[] };
+    return { ok: true, tiles: x.tiles ?? [], refused: x.refused ?? [] };
+  }
+
+  async surfaceLandmarks(system: string, body: string, limit = 60): Promise<{ ok: true; landmarks: import("./landing.ts").Landmark[]; total: number } | { ok: false; code: string; message: string }> {
+    if (this.seat.authority !== "gm") return { ok: false, code: "not_gm", message: "only the game master surveys a world" };
+    const r = await this.#call({ op: "survey_surface", system, body, quick: true, limit });
+    if (r.type !== "surface_surveyed") return { ok: false, code: String(r.code ?? "unexpected"), message: String(r.message ?? JSON.stringify(r)) };
+    const reg = (r as unknown as { survey?: { register?: { features?: import("./landing.ts").Landmark[]; features_total?: number } } }).survey?.register;
+    return { ok: true, landmarks: reg?.features ?? [], total: reg?.features_total ?? 0 };
+  }
+
+  async planDescent(ask: { system: string; body: string; lat_deg: number; lon_deg: number; lander: string | Record<string, unknown> }): Promise<{ ok: true; plan: import("./landing.ts").DescentPlan } | { ok: false; code: string; message: string }> {
+    if (this.seat.authority !== "gm") return { ok: false, code: "not_gm", message: "only the game master plans a descent against a world's full record" };
+    const r = await this.#call({ op: "plan_descent", system: ask.system, body: ask.body, quick: true, lander: ask.lander as Json, lat_deg: ask.lat_deg, lon_deg: ask.lon_deg });
+    return r.type === "descent_planned" ? { ok: true, plan: (r as unknown as { descent: import("./landing.ts").DescentPlan }).descent } : { ok: false, code: String(r.code ?? "unexpected"), message: String(r.message ?? JSON.stringify(r)) };
+  }
+
   async surveyClimate(system: string, body: string): Promise<{ ok: true; climate: import("./climate.ts").ClimateSummary } | { ok: false; code: string; message: string }> {
     if (this.seat.authority !== "gm") return { ok: false, code: "not_gm", message: "only the game master surveys a world" };
     // quick: the Orbit level, the same world the globe shows; limit 1: the feature register is not wanted here.
@@ -628,6 +695,12 @@ export class Session implements ViewSession {
     if (ask.system !== undefined && this.seat.authority !== "gm") return { ok: false, code: "not_gm", message: "only the game master plans against a system's full record; players plan from what they know" };
     const r = await this.#call({ op: "plan_route", ...ask });
     return r.type === "route_planned" ? { ok: true, plan: (r as unknown as { plan: import("./route.ts").RoutePlan }).plan } : { ok: false, code: String(r.code ?? "unexpected"), message: String(r.message ?? JSON.stringify(r)) };
+  }
+
+  async shipAtWorld(ask: import("./ship-at-world.ts").ShipAtWorldAsk): Promise<{ ok: true; report: import("./ship-at-world.ts").ShipAtWorldReport } | { ok: false; code: string; message: string }> {
+    if (ask.system !== undefined && this.seat.authority !== "gm") return { ok: false, code: "not_gm", message: "only the game master judges a ship against a system's full record" };
+    const r = await this.#call({ op: "ship_at_world", ...ask });
+    return r.type === "ship_at_world_read" ? { ok: true, report: (r as unknown as { report: import("./ship-at-world.ts").ShipAtWorldReport }).report } : { ok: false, code: String(r.code ?? "unexpected"), message: String(r.message ?? JSON.stringify(r)) };
   }
 
   async sift(ask: import("./story.ts").SiftAsk): Promise<{ ok: true; result: import("./story.ts").SiftResult } | { ok: false; code: string; message: string }> {
@@ -683,6 +756,23 @@ export class Session implements ViewSession {
     return r.type === "field_read" ? { ok: true, bodies: (r as unknown as { bodies: Json[] }).bodies } : { ok: false, code: String(r.code ?? "unexpected"), message: String(r.message ?? JSON.stringify(r)) };
   }
 
+  async knownTo(address: string, field?: string): Promise<{ ok: true; value: import("./known.ts").KnownTo } | { ok: false; code: string; message: string }> {
+    if (this.seat.authority !== "gm") return { ok: false, code: "not_gm", message: "only the game master sees who knows what" };
+    const r = await this.#call({ op: "known_to", address, ...(field ? { field } : {}) } as Json);
+    return r.type === "known_to" ? { ok: true, value: (r as unknown as { value: import("./known.ts").KnownTo }).value } : { ok: false, code: String(r.code ?? "unexpected"), message: String(r.message ?? JSON.stringify(r)) };
+  }
+
+  async readNames(address: string): Promise<{ ok: true; value: import("./names.ts").NamesRead } | { ok: false; code: string; message: string }> {
+    const own = audienceOf(this.seat);
+    const r = await this.#call({ op: "read_names", address, ...(this.seat.authority === "gm" ? {} : { audience: own }) } as Json);
+    return r.type === "names" ? { ok: true, value: (r as unknown as { value: import("./names.ts").NamesRead }).value } : { ok: false, code: String(r.code ?? "unexpected"), message: String(r.message ?? JSON.stringify(r)) };
+  }
+
+  async nameSample(ask: import("./names.ts").SampleAsk): Promise<{ ok: true; value: import("./names.ts").NameSample } | { ok: false; code: string; message: string }> {
+    const r = await this.#call({ op: "name_sample", ...ask } as Json);
+    return r.type === "names" ? { ok: true, value: (r as unknown as { value: import("./names.ts").NameSample }).value } : { ok: false, code: String(r.code ?? "unexpected"), message: String(r.message ?? JSON.stringify(r)) };
+  }
+
   async readMatter(ask: { table?: string; id?: string }): Promise<{ ok: true; value: Json } | { ok: false; code: string; message: string }> {
     const r = await this.#call({ op: "read_matter", ...ask } as Json);
     return r.type === "matter" ? { ok: true, value: (r as unknown as { value: Json }).value } : { ok: false, code: String(r.code ?? "unexpected"), message: String(r.message ?? JSON.stringify(r)) };
@@ -715,6 +805,59 @@ export class Session implements ViewSession {
     if (this.seat.authority !== "gm") return { ok: false, code: "not_gm", message: "voyages between stars are planned on the game master's machine for now" };
     const r = await this.#call({ op: "plan_voyage", ...ask });
     return r.type === "voyage_planned" ? { ok: true, plan: (r as unknown as { voyage: import("./voyage.ts").VoyagePlan }).voyage } : { ok: false, code: String(r.code ?? "unexpected"), message: String(r.message ?? JSON.stringify(r)) };
+  }
+
+  async templates(): Promise<{ ok: true; templates: import("./constructs.ts").ConstructTemplate[] } | { ok: false; code: string; message: string }> {
+    const r = await this.#call({ op: "templates" });
+    return r.type === "templates_listed" ? { ok: true, templates: (r as unknown as { templates: import("./constructs.ts").ConstructTemplate[] }).templates } : { ok: false, code: String(r.code ?? "unexpected"), message: String(r.message ?? JSON.stringify(r)) };
+  }
+
+  async createFrom(ask: { template: string; under: string; key?: string; name?: string; at_s?: number | bigint }): Promise<{ ok: true; result: import("./constructs.ts").Created } | { ok: false; code: string; message: string }> {
+    if (this.seat.authority !== "gm") return { ok: false, code: "not_gm", message: "ships and stations are made on the game master's machine" };
+    const r = await this.#call({ op: "create", template: ask.template, under: ask.under, ...(ask.key ? { key: ask.key } : {}), ...(ask.name ? { name: ask.name } : {}), at_s: ask.at_s ?? 0 });
+    return r.type === "created" ? { ok: true, result: r as unknown as import("./constructs.ts").Created } : { ok: false, code: String(r.code ?? "unexpected"), message: String(r.message ?? JSON.stringify(r)) };
+  }
+
+  async retire(address: string, reason?: string, at_s?: number | bigint): Promise<{ ok: true; event_id: string } | { ok: false; code: string; message: string }> {
+    if (this.seat.authority !== "gm") return { ok: false, code: "not_gm", message: "only the game master takes things out of play" };
+    const r = await this.#call({ op: "retire", address, ...(reason ? { reason } : {}), at_s: at_s ?? 0 });
+    return r.type === "retired" ? { ok: true, event_id: String(r.event_id) } : { ok: false, code: String(r.code ?? "unexpected"), message: String(r.message ?? JSON.stringify(r)) };
+  }
+
+  async addNote(n: { address: string; text: string; audience: "everyone" | "gm" | string[]; tags?: string[]; narrative?: boolean; supersedes?: string; at_s?: number | bigint }): Promise<{ ok: true; note_id: string } | { ok: false; code: string; message: string }> {
+    if (this.seat.authority !== "gm") return { ok: false, code: "not_gm", message: "the game master writes the record; seats ask" };
+    const r = await this.#call({ op: "add_note", address: n.address, text: n.text, audience: n.audience, ...(n.tags?.length ? { tags: n.tags } : {}), ...(n.narrative ? { narrative: true } : {}), ...(n.supersedes ? { supersedes: n.supersedes } : {}), at_s: n.at_s ?? 0 });
+    return r.type === "note_added" ? { ok: true, note_id: String(r.note_id) } : { ok: false, code: String(r.code ?? "unexpected"), message: String(r.message ?? JSON.stringify(r)) };
+  }
+
+  async record(address: string, at_s?: number | bigint): Promise<{ ok: true; record: import("./constructs.ts").RecordRead } | { ok: false; code: string; message: string }> {
+    if (this.seat.authority !== "gm") return { ok: false, code: "not_gm", message: "the record is read on the game master's machine; seats get what is disclosed to them" };
+    const r = await this.#call({ op: "record", address, ...(at_s !== undefined ? { at_s } : {}) });
+    return r.type === "record_read" ? { ok: true, record: r as unknown as import("./constructs.ts").RecordRead } : { ok: false, code: String(r.code ?? "unexpected"), message: String(r.message ?? JSON.stringify(r)) };
+  }
+
+  async codes(ask: { scope: string; sheet?: string; at_s?: number | bigint }): Promise<{ ok: true; result: import("./sector.ts").CodesRead } | { ok: false; code: string; message: string }> {
+    if (this.seat.authority !== "gm") return { ok: false, code: "not_gm", message: "codes are read on the game master's machine" };
+    const r = await this.#call({ op: "codes", scope: ask.scope, ...(ask.sheet ? { sheet: ask.sheet } : {}), at_s: ask.at_s ?? 0 });
+    return r.type === "codes" ? { ok: true, result: r as unknown as import("./sector.ts").CodesRead } : { ok: false, code: String(r.code ?? "unexpected"), message: String(r.message ?? JSON.stringify(r)) };
+  }
+
+  async sectorMap(ask: { scope: string; sheet?: string; at_s?: number | bigint }): Promise<{ ok: true; result: import("./sector.ts").SectorMap } | { ok: false; code: string; message: string }> {
+    if (this.seat.authority !== "gm") return { ok: false, code: "not_gm", message: "the sector map is read on the game master's machine" };
+    const r = await this.#call({ op: "sector_map", scope: ask.scope, ...(ask.sheet ? { sheet: ask.sheet } : {}), at_s: ask.at_s ?? 0 });
+    return r.type === "sector_mapped" ? { ok: true, result: r as unknown as import("./sector.ts").SectorMap } : { ok: false, code: String(r.code ?? "unexpected"), message: String(r.message ?? JSON.stringify(r)) };
+  }
+
+  async importSector(ask: import("./sector.ts").SectorImportAsk): Promise<{ ok: true; result: import("./sector.ts").SectorImported } | { ok: false; code: string; message: string }> {
+    if (this.seat.authority !== "gm") return { ok: false, code: "not_gm", message: "sectors are imported on the game master's machine" };
+    const r = await this.#call({ op: "import_sector", text: ask.text, ...(ask.format ? { format: ask.format } : {}), ...(ask.sheet ? { sheet: ask.sheet } : {}), apply: !!ask.apply, grow: !!ask.grow, at_s: ask.at_s ?? 0 });
+    return r.type === "sector_import" ? { ok: true, result: r as unknown as import("./sector.ts").SectorImported } : { ok: false, code: String(r.code ?? "unexpected"), message: String(r.message ?? JSON.stringify(r)) };
+  }
+
+  async exportSector(ask: { scope: string; format: import("./sector.ts").SectorFormat; sheet?: string; at_s?: number | bigint }): Promise<{ ok: true; result: import("./sector.ts").SectorExported } | { ok: false; code: string; message: string }> {
+    if (this.seat.authority !== "gm") return { ok: false, code: "not_gm", message: "sectors are written on the game master's machine" };
+    const r = await this.#call({ op: "export_sector", scope: ask.scope, format: ask.format, ...(ask.sheet ? { sheet: ask.sheet } : {}), at_s: ask.at_s ?? 0 });
+    return r.type === "sector_export" ? { ok: true, result: r as unknown as import("./sector.ts").SectorExported } : { ok: false, code: String(r.code ?? "unexpected"), message: String(r.message ?? JSON.stringify(r)) };
   }
 
   async webSlice(ask: import("./galaxy.ts").SliceAsk): Promise<{ ok: true; web: import("./galaxy.ts").WebSlice } | { ok: false; code: string; message: string }> {

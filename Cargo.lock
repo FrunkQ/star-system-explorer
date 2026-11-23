@@ -500,6 +500,7 @@ dependencies = [
  "serde_json",
  "sse-core",
  "sse-flow",
+ "sse-formula",
  "sse-pack",
 ]
 
@@ -582,6 +583,7 @@ dependencies = [
  "sse-flow",
  "sse-nebula",
  "sse-pack",
+ "sse-reference",
  "sse-resolve",
 ]
 
@@ -620,6 +622,16 @@ dependencies = [
  "sse-flow",
  "sse-pack",
  "sse-resolve",
+]
+
+[[package]]
+name = "sse-formula"
+version = "0.1.0"
+dependencies = [
+ "serde",
+ "serde_json",
+ "sse-core",
+ "sse-flow",
 ]
 
 [[package]]
@@ -687,6 +699,7 @@ dependencies = [
  "sse-core",
  "sse-observe",
  "sse-pack",
+ "sse-reference",
  "sse-suite",
  "sse-world",
 ]
@@ -701,6 +714,7 @@ dependencies = [
  "sse-core",
  "sse-flow",
  "sse-pack",
+ "sse-reference",
 ]
 
 [[package]]
@@ -711,6 +725,7 @@ dependencies = [
  "serde_json",
  "sse-core",
  "sse-flow",
+ "sse-formula",
  "sse-life",
  "sse-light",
  "sse-place",
@@ -850,6 +865,7 @@ dependencies = [
  "sse-core",
  "sse-flow",
  "sse-pack",
+ "sse-reference",
  "sse-resolve",
 ]
 
@@ -886,6 +902,7 @@ dependencies = [
  "sse-core",
  "sse-formation",
  "sse-pack",
+ "sse-reference",
 ]
 
 [[package]]
@@ -953,6 +970,7 @@ dependencies = [
  "sse-climate",
  "sse-core",
  "sse-pack",
+ "sse-reference",
  "sse-surface",
 ]
 

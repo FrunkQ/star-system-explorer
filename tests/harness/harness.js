@@ -50,8 +50,10 @@ function benchSection(version) {
     rep = benchReport(results, doc, { device: await describe(), kernel: kernelVersion ?? undefined, site: location.host, runs });
     rep.app.harness = version;
     $("benchtable").innerHTML = rep.chunks
-      .map((c) => `<tr><td><strong>${c.name}</strong></td><td class="n">${ms(c.median_ms)}</td></tr>` + c.sources.map((s) => `<tr><td class="muted">&nbsp;&nbsp;${s.source.slice(6)}</td><td class="n">${ms(s.median_ms)}</td></tr>`).join(""))
+      .map((c) => `<tr><td><strong>${c.name}</strong></td><td class="n">${ms(c.median_ms)}</td></tr>` + c.sources.map((s) => `<tr><td class="muted">&nbsp;&nbsp;${s.source.slice(6)}${s.unsteady ? " (unsteady)" : ""}</td><td class="n">${ms(s.median_ms)}</td></tr>`).join(""))
       .join("");
+    const shaky = rep.chunks.flatMap((c) => c.sources.filter((x) => x.unsteady).map((x) => x.source.slice(6)));
+    if (shaky.length) $("benchnote").textContent = `Done, but one run of ${shaky.join(", ")} took over twice its usual time: the device may have paused (screen dimmed or another app). The medians are still fair; for a clean report keep the screen on and run again.`;
     $("benchacts").hidden = false;
     $("benchgo").disabled = false;
     window.__benchReport = rep;

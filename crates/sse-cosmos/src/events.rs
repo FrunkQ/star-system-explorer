@@ -36,8 +36,9 @@ use sse_core::{Address, Seed};
 use std::collections::BTreeMap;
 
 /// Light speed in parsecs per Myr.
-pub const C_PC_MYR: f64 = 306_601.39;
-const KMS_PC_MYR: f64 = 1.022_712;
+pub const C_PC_MYR: f64 =
+    sse_core::sheet::C * 1e6 * sse_core::sheet::YR_JULIAN / sse_core::sheet::PC;
+const KMS_PC_MYR: f64 = 1e3 * 1e6 * sse_core::sheet::YR_JULIAN / sse_core::sheet::PC;
 
 /// Pack settings (`provides.other.cosmology.events`).
 #[derive(Clone, PartialEq, Debug, Serialize, Deserialize)]
@@ -967,6 +968,7 @@ pub fn run_manifest(
             params: cp.envelope.clone(),
             seed,
             address: addr.clone(),
+            remains: Default::default(),
         };
         let ev = Events {
             env: &env,
