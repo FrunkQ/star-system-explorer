@@ -32,7 +32,7 @@ fn bad(e: impl std::fmt::Display) -> Response {
 }
 
 /// A ship given as a template id or in full.
-fn ship(s: &NavSettings, v: &serde_json::Value) -> Result<Ship, Response> {
+pub(crate) fn ship(s: &NavSettings, v: &serde_json::Value) -> Result<Ship, Response> {
     match v {
         serde_json::Value::String(id) => s.ships.get(id).cloned().ok_or_else(|| {
             err(
