@@ -41,7 +41,7 @@
     "system": "u:g0/patch:9:solar/cohort:0/sys:0"
   },
   {
-    "digest": "316585575292677674c6ea183930f8b5a92f1c07c55155b4863f2bbb6ff1fbce",
+    "digest": "3e38163466e04e96534b7b83ffa9e400625146b8376a79a73f149b8f388b6b97",
     "story": [
       {
         "age_myr": 0.0,
@@ -54,7 +54,7 @@
         "kind": "star.born"
       },
       {
-        "age_myr": 1.6908743616787132,
+        "age_myr": 1.690867561064604,
         "from": "formation",
         "kind": "disc.clears"
       },
@@ -82,7 +82,7 @@
     "system": "u:g0/patch:9:solar/cohort:0/sys:1"
   },
   {
-    "digest": "f2d6add50292189acf139398fb564072001437feab957521affa8e0745b43877",
+    "digest": "f25db11251e624bf32a12c53ff09b8f4c7c2dbd1c4573c7fd7e52b2db53b2bf4",
     "story": [
       {
         "age_myr": 0.0,
@@ -95,7 +95,7 @@
         "kind": "star.born"
       },
       {
-        "age_myr": 2.5345250894245317,
+        "age_myr": 2.534515876751329,
         "from": "formation",
         "kind": "disc.clears"
       },
@@ -105,67 +105,67 @@
         "kind": "star.zams"
       },
       {
-        "age_myr": 1555.1795739897866,
+        "age_myr": 1555.165925495235,
         "from": "formation",
         "kind": "geology-quiet"
       },
       {
-        "age_myr": 2138.8269771740356,
+        "age_myr": 2138.8110594586037,
         "from": "formation",
         "kind": "geology-quiet"
       },
       {
-        "age_myr": 2371.522790300579,
+        "age_myr": 2371.5058526507205,
         "from": "formation",
         "kind": "geology-quiet"
       },
       {
-        "age_myr": 2813.696363937615,
+        "age_myr": 2813.689502130762,
         "from": "formation",
         "kind": "geology-quiet"
       },
       {
-        "age_myr": 2863.9781556830426,
+        "age_myr": 2863.9588487244882,
         "from": "formation",
         "kind": "geology-quiet"
       },
       {
-        "age_myr": 3234.8824615772833,
+        "age_myr": 3234.8611927648208,
         "from": "formation",
         "kind": "geology-quiet"
       },
       {
-        "age_myr": 4613.30712816674,
+        "age_myr": 4613.277025306846,
         "from": "formation",
         "kind": "geology-quiet"
       },
       {
-        "age_myr": 5708.293056558194,
+        "age_myr": 5708.2252046849635,
         "from": "formation",
         "kind": "geology-quiet"
       },
       {
-        "age_myr": 6280.458355055969,
+        "age_myr": 6280.420505110748,
         "from": "formation",
         "kind": "geology-quiet"
       },
       {
-        "age_myr": 6659.857543336852,
+        "age_myr": 6659.620800930331,
         "from": "formation",
         "kind": "geology-quiet"
       },
       {
-        "age_myr": 7654.089377343945,
+        "age_myr": 7653.959356633244,
         "from": "formation",
         "kind": "geology-quiet"
       },
       {
-        "age_myr": 8476.745171344517,
+        "age_myr": 8476.564348891177,
         "from": "formation",
         "kind": "geology-quiet"
       },
       {
-        "age_myr": 12556.948078615558,
+        "age_myr": 12556.787093473207,
         "from": "formation",
         "kind": "geology-quiet"
       },
@@ -188,7 +188,7 @@
     "system": "u:g0/patch:9:solar/cohort:1/sys:0"
   },
   {
-    "digest": "9c7087e97f955ead8ac3e020772fb7404b9bc07272cd78068c8358594d589f0d",
+    "digest": "46ed2ab956a3dec93d3a81b6c83286ec96709873d4515cdf6230d2219354cc69",
     "story": [
       {
         "age_myr": 0.0,
@@ -201,7 +201,7 @@
         "kind": "star.born"
       },
       {
-        "age_myr": 0.32447051996203097,
+        "age_myr": 0.3244705342326566,
         "from": "formation",
         "kind": "disc.clears"
       },
@@ -211,22 +211,22 @@
         "kind": "star.zams"
       },
       {
-        "age_myr": 1073.4355906305127,
+        "age_myr": 1073.4206474879568,
         "from": "formation",
         "kind": "geology-quiet"
       },
       {
-        "age_myr": 1256.4945486078718,
+        "age_myr": 1256.479455985484,
         "from": "formation",
         "kind": "geology-quiet"
       },
       {
-        "age_myr": 1460.080278010263,
+        "age_myr": 1460.067202061542,
         "from": "formation",
         "kind": "geology-quiet"
       },
       {
-        "age_myr": 7797.640885257257,
+        "age_myr": 7797.632931926093,
         "from": "ageing",
         "kind": "oceans_lost"
       },
@@ -251,12 +251,12 @@
         "kind": "red_giant"
       },
       {
-        "age_myr": 10455.06456551459,
+        "age_myr": 10455.06407804488,
         "from": "ageing",
         "kind": "oceans_lost"
       },
       {
-        "age_myr": 10480.374390598905,
+        "age_myr": 10480.374299274914,
         "from": "ageing",
         "kind": "oceans_lost"
       },

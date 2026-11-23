@@ -19,7 +19,7 @@ use std::collections::BTreeMap;
 
 /// Physical constants (CODATA 2018 exact or recommended values).
 const G: f64 = sse_core::sheet::G;
-const M_EARTH: f64 = 5.972_2e24;
+const M_EARTH: f64 = sse_core::sheet::M_EARTH;
 const R_EARTH: f64 = sse_core::sheet::R_EARTH_MEAN;
 
 /// What the sheet says about a world's system (pack data, `CodeSheet.system`).
