@@ -31,6 +31,8 @@ pub mod kinds {
     pub const ACTOR: &str = "record.actor";
     /// A holding on a map layer (track OV): see [`crate::holdings`].
     pub const HOLD: &str = "record.hold";
+    /// A civilisation's technology (track FT): see [`crate::tech`].
+    pub const TECH: &str = "record.tech";
 }
 
 /// Fields an actor carries from `add_actor`.
@@ -818,6 +820,7 @@ pub fn actors(ch: &Chronicle, scope: &Address, at: UniverseTime) -> Vec<(Address
 }
 
 pub mod holdings;
+pub mod tech;
 
 #[cfg(test)]
 mod holdings_tests;

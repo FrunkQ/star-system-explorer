@@ -38,6 +38,9 @@ mod systems;
 mod tags;
 #[cfg(test)]
 mod tags_tests;
+mod tech;
+#[cfg(test)]
+mod tech_tests;
 mod territory;
 #[cfg(test)]
 mod territory_tests;
@@ -237,6 +240,21 @@ fn load_observe(ms: &[sse_pack::PackManifest]) -> Result<Observe, Vec<String>> {
             territory::Layers::default()
         }
     };
+    // FT2: the setting's technology, bottom to top.
+    let mut found = Vec::new();
+    for p in ms {
+        if let Some(v) = p.provides.other.get("tech") {
+            let j = serde_json::to_value(v).map_err(|e| vec![format!("{}: tech: {e}", p.id)])?;
+            found.push((p.id.clone(), j));
+        }
+    }
+    let tech = match tech::Tech::from_packs(&found) {
+        Ok(t) => t,
+        Err(e) => {
+            problems.extend(e);
+            tech::Tech::default()
+        }
+    };
     if !problems.is_empty() {
         return Err(problems);
     }
@@ -283,6 +301,7 @@ fn load_observe(ms: &[sse_pack::PackManifest]) -> Result<Observe, Vec<String>> {
         reference: std::sync::Arc::new(reference),
         names: std::sync::Arc::new(names),
         layers,
+        tech,
     })
 }
 
@@ -458,6 +477,9 @@ struct Observe {
     names: std::sync::Arc<sse_names::Library>,
     /// Map layers of areas (`provides.other.overlays[].areas`, OV3).
     layers: territory::Layers,
+    /// The setting's tech ladder, figures and advances
+    /// (`provides.other.tech`, FT2).
+    tech: tech::Tech,
 }
 
 pub struct Kernel {
@@ -597,6 +619,23 @@ fn territory_world(
         positions,
         record: u.record.state_at(at),
     })
+}
+
+/// FT2: a tech holder is an actor in the record or the universe root (the
+/// setting).
+fn tech_holder(u: &Universe, holder: &str) -> Result<Address, Response> {
+    let a = in_universe(&u.root, holder)?;
+    if a == u.root {
+        return Ok(a);
+    }
+    let state = u.record.state_at(UniverseTime::seconds(i64::MAX));
+    if a.last().kind() != "actor" || state.get(&a, sse_record::ACTOR_KIND).is_none() {
+        return Err(err(
+            "bad_tech",
+            format!("{a}: technology is held by an actor (add_actor) or by the setting, the universe root"),
+        ));
+    }
+    Ok(a)
 }
 
 fn record_hash(u: &Universe) -> String {
@@ -3959,6 +3998,112 @@ impl Kernel {
                     layer,
                     holdings,
                     changes,
+                }
+            }
+            Request::SetTech {
+                holder,
+                level,
+                gain,
+                lose,
+                writer,
+                reason,
+                at_s,
+            } => {
+                let known = |ids: &[String]| -> Result<(), Response> {
+                    match ids
+                        .iter()
+                        .find(|i| !self.observe.tech.advances.contains_key(*i))
+                    {
+                        Some(i) => Err(err(
+                            "bad_tech",
+                            format!("no advance {i:?} on the stack (provides.other.tech.advances)"),
+                        )),
+                        None => Ok(()),
+                    }
+                };
+                let gain = gain.unwrap_or_default();
+                let lose = lose.unwrap_or_default();
+                known(&gain)?;
+                known(&lose)?;
+                if let (Some(l), Some(lad)) = (level, self.observe.tech.ladder.as_ref()) {
+                    if !lad.levels.iter().any(|x| x.n == l) {
+                        return Err(err(
+                            "bad_tech",
+                            format!("level {l} is not on the {} ladder", lad.id),
+                        ));
+                    }
+                }
+                let u = self.universe()?;
+                let holder = tech_holder(u, &holder)?;
+                let writer = writer.unwrap_or_else(|| "gm".into());
+                let d = sse_record::tech::TechDraft {
+                    holder,
+                    level,
+                    gain,
+                    lose,
+                    writer: writer.clone(),
+                    reason,
+                };
+                let id = sse_record::tech::set_tech(
+                    &mut u.record,
+                    &d,
+                    UniverseTime::seconds(at_s),
+                    &Publisher::new(&writer, "tech", "1"),
+                )
+                .map_err(record_err)?;
+                Response::TechSet {
+                    change_id: id.hex(),
+                    record_hash: record_hash(u),
+                }
+            }
+            Request::TechOf { holder, at_s } => {
+                let t = self.observe.tech.clone();
+                let u = self.universe()?;
+                let h = tech_holder(u, &holder)?;
+                let of = sse_record::tech::tech_of(
+                    u.record.events(),
+                    &h,
+                    UniverseTime::seconds(at_s.unwrap_or(i64::MAX)),
+                );
+                let mut j = serde_json::to_value(&of).expect("plain");
+                j["holds"] = serde_json::json!(t
+                    .advances
+                    .values()
+                    .filter(|a| t.holds(&of, a))
+                    .map(|a| a.id.clone())
+                    .collect::<Vec<_>>());
+                Response::TechRead {
+                    holder: h.to_string(),
+                    tech: j,
+                }
+            }
+            Request::TechReading {
+                holder,
+                parts,
+                at_s,
+            } => {
+                let t = self.observe.tech.clone();
+                let parts: Vec<tech::PartNeed> = parts
+                    .into_iter()
+                    .map(serde_json::from_value)
+                    .collect::<Result<_, _>>()
+                    .map_err(|e| {
+                        err(
+                            "bad_tech",
+                            format!("parts are {{part, needs: {{figure: value}}}} ({e})"),
+                        )
+                    })?;
+                let u = self.universe()?;
+                let h = tech_holder(u, &holder)?;
+                let of = sse_record::tech::tech_of(
+                    u.record.events(),
+                    &h,
+                    UniverseTime::seconds(at_s.unwrap_or(i64::MAX)),
+                );
+                let reading = tech::reading(&t, &of, &parts).map_err(|e| err("bad_tech", e))?;
+                Response::TechAvailability {
+                    holder: h.to_string(),
+                    reading,
                 }
             }
             Request::Systems => {

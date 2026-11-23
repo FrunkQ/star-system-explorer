@@ -1167,6 +1167,52 @@ pub enum Request {
         #[ts(optional)]
         history: Option<bool>,
     },
+    /// FT2: a civilisation's technology, one dated record event on an actor
+    /// (or on the universe root, for the whole setting): a `level` on the
+    /// setting's ladder, advances gained early (`gain`, "Develop it") or
+    /// never taken up (`lose`). Plain data; nothing grows on its own.
+    SetTech {
+        holder: String,
+        #[serde(default)]
+        #[ts(optional)]
+        level: Option<i64>,
+        #[serde(default)]
+        #[ts(optional)]
+        gain: Option<Vec<String>>,
+        #[serde(default)]
+        #[ts(optional)]
+        lose: Option<Vec<String>>,
+        #[serde(default)]
+        #[ts(optional)]
+        writer: Option<String>,
+        #[serde(default)]
+        #[ts(optional)]
+        reason: Option<String>,
+        at_s: i64,
+    },
+    /// FT2: a civilisation's technology at `at_s` (absent: latest), with
+    /// what it inherits from its parents and the setting: level, gained and
+    /// lost advances (each with who said it, and when), and every advance it
+    /// holds.
+    TechOf {
+        holder: String,
+        #[serde(default)]
+        #[ts(optional)]
+        at_s: Option<i64>,
+    },
+    /// FT2: the availability reading of a design through a civilisation:
+    /// `parts` are `{part, needs: {figure: value}}`. Per need: `can build`,
+    /// `short` (levels short and the prototype's size) or `past known`, with
+    /// `fictional` naming the law where a need passes a ceiling; overall the
+    /// worst, the parts' size factors and the advances it leans on.
+    TechReading {
+        holder: String,
+        #[ts(type = "unknown[]")]
+        parts: Vec<serde_json::Value>,
+        #[serde(default)]
+        #[ts(optional)]
+        at_s: Option<i64>,
+    },
     /// What one audience may be sent of the record at `at_s` (record design
     /// 8A): per subject, the notes it may see (already arrived) and the kept
     /// values its view shows, at that view's precision. No event ids, no
@@ -1837,6 +1883,9 @@ impl Request {
             Request::Hold { .. } => "hold",
             Request::WhoHolds { .. } => "who_holds",
             Request::HoldingsIn { .. } => "holdings_in",
+            Request::SetTech { .. } => "set_tech",
+            Request::TechOf { .. } => "tech_of",
+            Request::TechReading { .. } => "tech_reading",
             Request::Disclosures { .. } => "disclosures",
             Request::RulesStep { .. } => "rules_step",
             Request::RulesPending => "rules_pending",
@@ -2766,6 +2815,23 @@ pub enum Response {
         #[serde(default, skip_serializing_if = "Vec::is_empty")]
         #[ts(optional, type = "unknown[]")]
         changes: Vec<serde_json::Value>,
+    },
+    /// `set_tech`: the event's id.
+    TechSet {
+        change_id: String,
+        record_hash: String,
+    },
+    /// `tech_of`: `{level?: [n, said], gained, lost, holds: [advance ids]}`.
+    TechRead {
+        holder: String,
+        #[ts(type = "unknown")]
+        tech: serde_json::Value,
+    },
+    /// `tech_reading`: the availability reading.
+    TechAvailability {
+        holder: String,
+        #[ts(type = "unknown")]
+        reading: serde_json::Value,
     },
     /// `disclosures`: `items` are `{subject, notes?: [{id, at_s, text, tags?,
     /// by, links?}], kept?: [{field, value?, band?}]}`, where `kept` holds the
