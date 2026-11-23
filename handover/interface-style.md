@@ -33,6 +33,7 @@ Every interface thread holds to this, on GM and player screens alike (player the
     - **A flat chart** (the system's log chart, a slice) is seen from above. Choosing Tilted, Edge-on or Free on it turns it into 3D where the view has 3D.
     - **Free** works the way rule 11 says. Dragging switches to Free by itself, and the hint line says how Free is worked.
     - **The choice is the viewer's,** for any seat. It is kept on their device, and later per panel, and never in the campaign.
+    - **How often decides where.** View style, Seen from and Scale are a press away. HUD and Band, changed far less, fold into one chip after them that always says what they are ("HUD on · Visible ▾") and opens the same two switches beside it. The bar is one row on a desktop and two on a phone. Alex, 23 Nov 2026 ("how often it is used, easy flow and newbie friendly").
     - **One mechanism.** A view declares what it draws (`ViewModule.controls`, `ui-contract/src/view-controls.ts`), and the shell, the players' page and any panel draw the one `ViewControls` component (`chart-grammar`). A view never draws its own 2D/3D or view switch.
 
     Alex, 22 Nov 2026.

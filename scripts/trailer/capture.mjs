@@ -79,7 +79,9 @@ try {
     if (shot.waitFor !== false) await page.waitForSelector(shot.waitFor ?? "[data-state-hash]:not([data-state-hash=''])", { timeout: 60000 });
     const d = director(page, { captions: !flag("no-captions") });
     await d.ready();
-    if (shot.setup) await shot.setup(page, d, nav);
+    // A setup that fails (the interface moved) fails this shot only, not the whole run.
+    let setupFailure = null;
+    if (shot.setup) await shot.setup(page, d, nav).catch((e) => (setupFailure = "setup: " + e.message.split("\n")[0]));
     await page.waitForTimeout(400);
 
     const cdp = await context.newCDPSession(page);
@@ -96,6 +98,7 @@ try {
     d.rolling();
     let failure = null;
     try {
+      if (setupFailure) throw new Error(setupFailure);
       await shot.run(page, d, nav);
       await d.hold(shot.tail ?? 800);
     } catch (e) {

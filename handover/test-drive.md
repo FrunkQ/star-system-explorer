@@ -39,10 +39,11 @@ Presses:
 4. **Find in Look up covers elements, constants and units.** Substances join it with their page (MP10 part 3), and it does not yet search names on the chart (chart room, Find in stage 2).
 5. **Adding a world takes three presses** (pick the star, Add here, one of what forms there), and a fourth on a phone, where Add here is in More. With nothing selected it goes round the primary in two. Moons are not sampled from formation yet: "Something else" adds one, marked impossible (chart room; kernel for moon formation).
 6. **On a phone, the cosmic web takes two presses.** The place line shows only the step above, so the way out is the list beside the name, under "Further out".
+6a. **A world's magnetic field takes two presses:** the Show chip, then Mag. Band is folded with HUD because it is changed far less than View style, Seen from and Scale (chart room, 23 Nov).
 
 Layout:
 7. **The place name is cut to a letter or two on a narrow phone.** The bar holds the desk switch, "See as" and More beside it.
-8. **On a phone, the view controls take two rows above every diagram.**
+8. **On a phone, the view controls take two rows above every diagram** (HUD and Band are folded into one chip).
 9. **The galaxy charts and the cosmic web are flat.** Their 3D, Tilted and Free options show as unavailable, with the reason (galaxy charts).
 10. **Wireframe and in-universe looks are held** (Alex: design only for now). True ships on the system chart (V10a) and the globe.
 

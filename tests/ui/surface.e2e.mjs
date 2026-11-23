@@ -6,7 +6,7 @@
 import { spawn } from "node:child_process";
 import { mkdirSync } from "node:fs";
 import assert from "node:assert/strict";
-import { go, more } from "./nav.mjs";
+import { go, more, view } from "./nav.mjs";
 import { createRequire } from "node:module";
 
 const { chromium, firefox, webkit } = createRequire(import.meta.url)("playwright");
@@ -99,11 +99,11 @@ try {
     await gm.waitForSelector("[data-surface][data-look='true']");
     await gm.waitForTimeout(800);
     await shot(gm, "sl1-ground-true");
-    await gm.getByRole("group", { name: "HUD" }).getByRole("button", { name: "On", exact: true }).click();
+    await view(gm, "HUD", "On");
     await gm.waitForSelector("[data-surface-hud]");
     await gm.waitForTimeout(400);
     await shot(gm, "sl1-ground-true-hud");
-    await gm.getByRole("group", { name: "HUD" }).getByRole("button", { name: "Off", exact: true }).click();
+    await view(gm, "HUD", "Off");
     await gm.locator("[data-hour]").fill("-80");
     await gm.waitForTimeout(500);
     await shot(gm, "sl1-ground-true-morning");

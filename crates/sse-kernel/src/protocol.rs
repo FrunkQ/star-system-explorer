@@ -510,6 +510,11 @@ pub enum Request {
         #[serde(default)]
         #[ts(optional, type = "unknown")]
         radar: Option<serde_json::Value>,
+        /// The setting's range bands (a measure, RK11): each detection's
+        /// distance and range are labelled with them.
+        #[serde(default)]
+        #[ts(optional, type = "unknown[]")]
+        range_bands: Option<Vec<serde_json::Value>>,
     },
     /// Air optics (light track, for the renderer's sky): for each air (gas
     /// fractions by number, surface pressure, temperature, gravity), Rayleigh
@@ -946,7 +951,8 @@ pub enum Request {
     /// S5's descent scene: survey a world as `survey_surface` does (a
     /// `fixture`, or a `body` of an adopted `system` at `at_s`), judge the
     /// landing site at `lat_deg`, `lon_deg` (slope, roughness, liquid) and
-    /// fly `lander` (a base-nav template id or a lander object) down to it
+    /// fly `lander` (a base-nav template id, a lander object, or `{ship}`: a
+    /// ship id or nav ship landed on its own numbers) down to it
     /// from `entry` (`{altitude_m, speed_m_s, flight_path_deg}`; default the
     /// top of the air at orbital speed, or a low orbit on an airless world).
     PlanDescent {
