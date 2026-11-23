@@ -22,6 +22,8 @@ pub(crate) enum Source<'a> {
         at_s: Option<i64>,
         run: Option<&'a SystemRun>,
         ports: &'a [String],
+        /// Read each body's air too (a ship at a world).
+        air: bool,
     },
 }
 
@@ -60,6 +62,7 @@ fn from_system(
     at_s: Option<i64>,
     run: Option<&SystemRun>,
     ports: &[String],
+    with_air: bool,
 ) -> Result<(NavSystem, Option<f64>), Response> {
     let ss = sse_surface::scenario::settings();
     let w = worlds_at(ch, system, at_s, run, &ss)?;
@@ -87,6 +90,8 @@ fn from_system(
         .planets
         .iter()
         .map(|p| {
+            let surface = w.bodies.iter().find(|b| b.address.to_string() == p.address);
+            let air = surface.filter(|_| with_air).and_then(|b| air_of(&ss, b));
             let rad = w
                 .bodies
                 .iter()
@@ -109,6 +114,7 @@ fn from_system(
                 stock: vec![],
                 magnetic_moment_a_m2: None,
                 belts: None,
+                air,
             }
         })
         .collect();
@@ -134,6 +140,83 @@ fn from_system(
         },
         t_read,
     ))
+}
+
+/// A surface body's air as the entry checks read it: S7's guess from its
+/// pressure and temperature (the same gas the descent and the cover use).
+fn air_of(ss: &sse_surface::SurfaceSettings, b: &sse_surface::Body) -> Option<sse_nav::entry::Air> {
+    let env = sse_surface::envelope(ss, b);
+    let giant = env.kind == "cloud-deck";
+    if b.pressure_bar <= 0.0 && !giant {
+        return None;
+    }
+    let a = sse_surface::cover::Air::guess(&ss.cover, &env, b.pressure_bar, b.oceans > 0.0);
+    Some(sse_nav::entry::Air {
+        pressure_pa: a.pressure_bar * 1.0e5,
+        temperature_k: a.t_surface_k,
+        molar_kg: a.molar_kg,
+        scale_height_m: None,
+        gas: a.gas,
+        ground: !giant && !b.deep_envelope,
+    })
+}
+
+/// `ship_at_world`: what a ship can do at each of some worlds (aerocapture,
+/// entry, landing, take-off), with the dangers, margins, what goes wrong and
+/// rough chances. Arrival speed is the caller's, or a Hohmann transfer from
+/// the next body in.
+pub(crate) fn ship_at_world(
+    source: Source,
+    ship_v: &serde_json::Value,
+    worlds: &[String],
+    v_inf_m_s: Option<f64>,
+) -> Result<serde_json::Value, Response> {
+    let s = sse_nav::scenario::settings();
+    let (sys, _) = nav_system(source)?;
+    let ship = ship(&s, ship_v)?;
+    let mut rows = vec![];
+    for w in worlds {
+        let b = sys.body(w).ok_or_else(|| {
+            err(
+                "unknown_body",
+                format!(
+                    "no body {w} in {}; bodies: {}",
+                    sys.name,
+                    sys.bodies
+                        .iter()
+                        .map(|b| b.name.clone())
+                        .collect::<Vec<_>>()
+                        .join(", ")
+                ),
+            )
+        })?;
+        let (v_inf, arrival) = match v_inf_m_s {
+            Some(v) if v >= 0.0 && v.is_finite() => (v, "arriving at the given speed".to_string()),
+            Some(_) => return Err(bad("v_inf_m_s: a speed of 0 or more")),
+            None => sse_nav::entry::hohmann_arrival(&sys, b),
+        };
+        rows.push(sse_nav::entry::at_world(
+            &s.entry,
+            &s.descent,
+            &ship,
+            b,
+            b.air.as_ref(),
+            v_inf,
+            arrival,
+        ));
+    }
+    Ok(serde_json::json!({
+        "system": sys.name,
+        "ship": ship,
+        "worlds": rows,
+        "model": [
+            "air: isothermal and exponential from the ground (or 1 bar on a giant)",
+            "aerocapture: one ballistic grazing pass (Vinh, Busemann and Culp 1980), heating by Sutton and Graves 1971",
+            "entry and landing: the descent scene's own flight (S5) with the ship's numbers",
+            "powered landing and take-off: a low orbit's speed plus a gravity loss (stand-in)",
+            "chances are stand-ins; nothing is rolled: the GM decides",
+        ],
+    }))
 }
 
 /// Read each magnetised body's radiation belts from the field model (MF7,
@@ -227,7 +310,8 @@ pub(crate) fn nav_system(source: Source) -> Result<(NavSystem, Option<f64>), Res
             at_s,
             run,
             ports,
-        } => from_system(ch, system, at_s, run, ports)?,
+            air,
+        } => from_system(ch, system, at_s, run, ports, air)?,
     })
 }
 

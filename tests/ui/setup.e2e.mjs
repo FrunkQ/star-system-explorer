@@ -44,8 +44,18 @@ try {
     await packs.getByRole("button", { name: "Check stack" }).click();
     await packs.locator(".verdict").getByText("Validated").waitFor();
     assert.deepEqual(await packs.locator("[data-pack]").evaluateAll((els) => els.map((e) => e.dataset.pack)), ["kestrel.player-data", "sse.base-reference", "sse.base-time", "sse.base-physics"]);
-    await packs.getByRole("button", { name: "Try the sample pack" }).click();
     const proposal = packs.locator("[aria-label=Proposal]");
+    // ND6: a paper's pack shows its sources, fudges and reproduction checks before anyone accepts it.
+    await packs.locator("#pack-file").setInputFiles("packages/ui-contract/test/fixtures/paper.pack.json");
+    const paperReport = proposal.locator("[data-pack-report='test.paper']");
+    await paperReport.waitFor({ timeout: 20000 });
+    assert.equal(await paperReport.getAttribute("data-reproduced"), "true");
+    assert.equal(await paperReport.locator("[data-pack-source]").count(), 2);
+    assert.equal(await paperReport.locator("[data-pack-fudge]").count(), 2);
+    assert.match(squash(await paperReport.locator("[data-check='A world like ours']").innerText()), /✓ A world like ours.*published 9\.8 m\/s², this pack 9\.8\d* m\/s²; .* off, the pack allows 1 %/);
+    if (screens && name === "chromium") (mkdirSync(screens, { recursive: true }), await page.screenshot({ path: `${screens}/packs-paper-report.png` }));
+    await proposal.getByRole("button", { name: "Cancel" }).click();
+    await packs.getByRole("button", { name: "Try the sample pack" }).click();
     await proposal.getByText("Validated").waitFor();
     const rows = (await proposal.locator("tbody tr").allInnerTexts()).map(squash);
     assert.ok(rows.some((r) => /^Tarn · surface/.test(r) && /fictional/.test(r)), rows.join(" | "));

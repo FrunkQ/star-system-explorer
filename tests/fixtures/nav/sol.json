@@ -1,5 +1,5 @@
 {
- "about": "The Solar System for NAV tests: JPL approximate Keplerian elements at J2000 (Standish; https://ssd.jpl.nasa.gov/planets/approx_pos.html, values written from memory, to verify), masses in Earth masses and mean radii. t0 is J2000 in universe seconds since the year 0 (2000 Julian years). Magnetic dipole moments are read from tests/fixtures/magnetic/measured-fields.json (MF0) by name when the fixture loads.",
+ "about": "The Solar System for NAV tests: JPL approximate Keplerian elements at J2000 (Standish; https://ssd.jpl.nasa.gov/planets/approx_pos.html, values written from memory, to verify), masses in Earth masses and mean radii. t0 is J2000 in universe seconds since the year 0 (2000 Julian years). Magnetic dipole moments are read from tests/fixtures/magnetic/measured-fields.json (MF0) by name when the fixture loads. Air (pressure, temperature and mean molar mass at the ground, or at 1 bar on the giants, and the scale height) from the NASA planetary fact sheets (Williams, D. R., https://nssdc.gsfc.nasa.gov/planetary/factsheet/).",
  "name": "Sol",
  "star_mass_msun": 1.0,
  "star_luminosity_lsun": 1.0,
@@ -30,7 +30,15 @@
    "node_deg": 76.67984255,
    "varpi_deg": 131.60246718,
    "mean_longitude_deg": 181.9790995,
-   "port": false
+   "port": false,
+   "air": {
+    "pressure_pa": 9200000.0,
+    "temperature_k": 737,
+    "molar_kg": 0.04345,
+    "scale_height_m": 15900,
+    "gas": "CO2",
+    "ground": true
+   }
   },
   {
    "address": "u:sol/sys:sun/body:earth",
@@ -43,7 +51,15 @@
    "node_deg": 0.0,
    "varpi_deg": 102.93768193,
    "mean_longitude_deg": 100.46457166,
-   "port": true
+   "port": true,
+   "air": {
+    "pressure_pa": 101400,
+    "temperature_k": 288,
+    "molar_kg": 0.02897,
+    "scale_height_m": 8500,
+    "gas": "N2-O2",
+    "ground": true
+   }
   },
   {
    "address": "u:sol/sys:sun/body:mars",
@@ -56,7 +72,15 @@
    "node_deg": 49.55953891,
    "varpi_deg": -23.94362959,
    "mean_longitude_deg": -4.55343205,
-   "port": true
+   "port": true,
+   "air": {
+    "pressure_pa": 636,
+    "temperature_k": 210,
+    "molar_kg": 0.04334,
+    "scale_height_m": 11100,
+    "gas": "CO2",
+    "ground": true
+   }
   },
   {
    "address": "u:sol/sys:sun/body:jupiter",
@@ -69,7 +93,15 @@
    "node_deg": 100.47390909,
    "varpi_deg": 14.72847983,
    "mean_longitude_deg": 34.39644051,
-   "port": false
+   "port": false,
+   "air": {
+    "pressure_pa": 100000.0,
+    "temperature_k": 165,
+    "molar_kg": 0.00222,
+    "scale_height_m": 27000,
+    "gas": "H2-He",
+    "ground": false
+   }
   },
   {
    "address": "u:sol/sys:sun/body:saturn",
@@ -82,7 +114,15 @@
    "node_deg": 113.66242448,
    "varpi_deg": 92.59887831,
    "mean_longitude_deg": 49.95424423,
-   "port": false
+   "port": false,
+   "air": {
+    "pressure_pa": 100000.0,
+    "temperature_k": 134,
+    "molar_kg": 0.00207,
+    "scale_height_m": 59500,
+    "gas": "H2-He",
+    "ground": false
+   }
   },
   {
    "address": "u:sol/sys:sun/body:uranus",
@@ -95,7 +135,15 @@
    "node_deg": 74.01692503,
    "varpi_deg": 170.9542763,
    "mean_longitude_deg": 313.23810451,
-   "port": false
+   "port": false,
+   "air": {
+    "pressure_pa": 100000.0,
+    "temperature_k": 76,
+    "molar_kg": 0.00264,
+    "scale_height_m": 27700,
+    "gas": "H2-He",
+    "ground": false
+   }
   },
   {
    "address": "u:sol/sys:sun/body:neptune",
@@ -108,7 +156,15 @@
    "node_deg": 131.78422574,
    "varpi_deg": 44.96476227,
    "mean_longitude_deg": -55.12002969,
-   "port": false
+   "port": false,
+   "air": {
+    "pressure_pa": 100000.0,
+    "temperature_k": 72,
+    "molar_kg": 0.00261,
+    "scale_height_m": 19700,
+    "gas": "H2-He",
+    "ground": false
+   }
   }
  ],
  "belts": [

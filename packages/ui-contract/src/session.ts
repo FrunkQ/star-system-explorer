@@ -172,6 +172,8 @@ export interface ViewSession {
   listSystems(): Promise<{ ok: true; systems: ListedSystem[] } | { ok: false; code: string; message: string }>;
   /** Candidate courses (V8, kernel `plan_route`, T3): from an inline system any seat may ask about; an adopted `system` is GM only. Writes nothing. */
   planRoute(ask: import("./route.ts").RouteAsk): Promise<{ ok: true; plan: import("./route.ts").RoutePlan } | { ok: false; code: string; message: string }>;
+  /** What a ship can do at each of some worlds (kernel `ship_at_world`): aerocapture, entry, landing, take-off, with dangers, margins and rough chances; nothing rolled. An adopted `system` is GM only. Writes nothing. */
+  shipAtWorld(ask: import("./ship-at-world.ts").ShipAtWorldAsk): Promise<{ ok: true; report: import("./ship-at-world.ts").ShipAtWorldReport } | { ok: false; code: string; message: string }>;
   /** One galaxy grown from the universe's seed (U6, kernel `galaxy_chart`, G1 to G4). Read only; GM only. */
   galaxyChart(ask: import("./galaxy.ts").GalaxyAsk): Promise<{ ok: true; chart: import("./galaxy.ts").GalaxyChart } | { ok: false; code: string; message: string }>;
   /**
@@ -297,8 +299,11 @@ export interface StackCandidate {
   campaign?: PackDoc | null;
 }
 
-/** What a trial's probe may do: derive, and see the candidate stack. */
-export type Probe = Pick<ViewSession, "derive" | "stack">;
+/** What a trial's probe may do: derive, see the candidate stack, and read the packs' own reports (ND6). */
+export type Probe = Pick<ViewSession, "derive" | "stack"> & {
+  /** Sources, fudges and reproduction checks of one pack of the candidate stack (or every pack), worked out when it loaded. */
+  packReports(pack?: string): Promise<{ ok: true; reports: unknown[] } | { ok: false; message: string }>;
+};
 
 export type TrialResult<T> = { ok: true; stack_hash: string; result: T } | { ok: false; report: string; issues: string[] };
 
@@ -412,6 +417,10 @@ export class Session implements ViewSession {
         async derive(ref) {
           const r = await call(client, { op: "derive", flow: ref.flow, inputs: ref.inputs });
           return r.type === "derived" ? { ok: true as const, values: r.values as Record<string, Derived> } : { ok: false as const, message: String(r.message ?? JSON.stringify(r)) };
+        },
+        async packReports(pack) {
+          const r = await call(client, { op: "pack_reports", ...(pack ? { pack } : {}) });
+          return r.type === "pack_reports" && Array.isArray(r.reports) ? { ok: true as const, reports: r.reports as unknown[] } : { ok: false as const, message: String(r.message ?? JSON.stringify(r)) };
         },
       };
       return { ok: true as const, stack_hash: String(st.stack_hash), result: await probe(p) };
@@ -642,6 +651,12 @@ export class Session implements ViewSession {
     if (ask.system !== undefined && this.seat.authority !== "gm") return { ok: false, code: "not_gm", message: "only the game master plans against a system's full record; players plan from what they know" };
     const r = await this.#call({ op: "plan_route", ...ask });
     return r.type === "route_planned" ? { ok: true, plan: (r as unknown as { plan: import("./route.ts").RoutePlan }).plan } : { ok: false, code: String(r.code ?? "unexpected"), message: String(r.message ?? JSON.stringify(r)) };
+  }
+
+  async shipAtWorld(ask: import("./ship-at-world.ts").ShipAtWorldAsk): Promise<{ ok: true; report: import("./ship-at-world.ts").ShipAtWorldReport } | { ok: false; code: string; message: string }> {
+    if (ask.system !== undefined && this.seat.authority !== "gm") return { ok: false, code: "not_gm", message: "only the game master judges a ship against a system's full record" };
+    const r = await this.#call({ op: "ship_at_world", ...ask });
+    return r.type === "ship_at_world_read" ? { ok: true, report: (r as unknown as { report: import("./ship-at-world.ts").ShipAtWorldReport }).report } : { ok: false, code: String(r.code ?? "unexpected"), message: String(r.message ?? JSON.stringify(r)) };
   }
 
   async sift(ask: import("./story.ts").SiftAsk): Promise<{ ok: true; result: import("./story.ts").SiftResult } | { ok: false; code: string; message: string }> {

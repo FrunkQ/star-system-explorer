@@ -724,6 +724,37 @@ pub enum Request {
         #[ts(optional, type = "unknown")]
         rescue: Option<serde_json::Value>,
     },
+    /// A ship at each of some worlds (aerobraking and landing on the
+    /// physics): aerocapture, entry and landing, runway landing, powered
+    /// landing and take-off, each with its figures, dangers (figure against
+    /// limit, level, rough chance, what happens if it goes wrong, effects on
+    /// kept ship state), what would make it safe, and why. Nothing is
+    /// refused and nothing rolled: the GM judges. The system is a NAV
+    /// `fixture` (`sol`), an inline `nav` system (bodies may carry `air`), or
+    /// an adopted `system` read at `at_s`; `ship` is a template id or a ship
+    /// object (optional `shield`, `aero`, `landing`, `crew`, `structure_g`);
+    /// `worlds` are body names or addresses; `v_inf_m_s` is the speed
+    /// arriving from far away (default: a Hohmann transfer from the next body in).
+    ShipAtWorld {
+        #[serde(default)]
+        #[ts(optional)]
+        fixture: Option<String>,
+        #[serde(default)]
+        #[ts(optional, type = "unknown")]
+        nav: Option<serde_json::Value>,
+        #[serde(default)]
+        #[ts(optional)]
+        system: Option<String>,
+        #[serde(default)]
+        #[ts(optional, type = "number")]
+        at_s: Option<i64>,
+        #[ts(type = "unknown")]
+        ship: serde_json::Value,
+        worlds: Vec<String>,
+        #[serde(default)]
+        #[ts(optional)]
+        v_inf_m_s: Option<f64>,
+    },
     /// The story finder (U8) and the agents' sift: run sifters over every
     /// address at or under `scope` (default the universe) at `at_s` (default
     /// now). `sifters` holds names of the stack's sifters
@@ -1694,6 +1725,7 @@ impl Request {
             Request::ResolvedSystem { .. } => "resolved_system",
             Request::SurveySurface { .. } => "survey_surface",
             Request::PlanRoute { .. } => "plan_route",
+            Request::ShipAtWorld { .. } => "ship_at_world",
             Request::GalaxyChart { .. } => "galaxy_chart",
             Request::WebSlice { .. } => "web_slice",
             Request::WindowView { .. } => "window_view",
@@ -1913,6 +1945,11 @@ pub fn ops() -> Vec<OpInfo> {
             "resolved_system",
             Cost::Medium,
             "a formation re-run for formation-adopted systems (cached), plus about 0.1 s per 256-sample tile; at most 24 tiles",
+        ),
+        o(
+            "ship_at_world",
+            Cost::Light,
+            "per world closed-form passes and burns, plus one descent at 0.1 s steps where there is ground and air (tens of ms native)",
         ),
         o(
             "plan_route",
@@ -2525,6 +2562,15 @@ pub enum Response {
     RoutePlanned {
         #[ts(type = "unknown")]
         plan: serde_json::Value,
+    },
+    /// `ship_at_world`: `{system, ship, worlds (body, name, gravity_m_s2,
+    /// orbit_m_s, escape_m_s, v_inf_m_s, arrival, air?, checks (id, words,
+    /// verdict safe|risky|dangerous|not-here, figures, dangers (id, subject,
+    /// role, figure, limit, unit, ratio, level, chance {p, basis}, if_wrong,
+    /// effects, why), would_pass, why)), model}`.
+    ShipAtWorldRead {
+        #[ts(type = "unknown")]
+        report: serde_json::Value,
     },
     /// `surface_frames`: `{body, label, source, at_s?, frames (version, detail,
     /// epoch_myr, grid {n, cells}, dirs (x y z per cell), frames (t_myr,
