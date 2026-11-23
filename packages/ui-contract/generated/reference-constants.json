@@ -175,6 +175,11 @@
    "unit": "K",
    "src": "iau2015b3"
   },
+  "P_rot_sun": {
+   "v": 2192832.0,
+   "unit": "s",
+   "src": "nssdca-sun"
+  },
   "S_sun": {
    "v": 1361.0,
    "unit": "W m-2",
