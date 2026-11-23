@@ -7,10 +7,10 @@ use std::path::PathBuf;
 fn root() -> PathBuf {
     PathBuf::from(env!("CARGO_MANIFEST_DIR")).join("../..")
 }
-fn pack(p: &str) -> serde_json::Value {
+pub(super) fn pack(p: &str) -> serde_json::Value {
     serde_json::from_str(&std::fs::read_to_string(root().join(p)).unwrap()).unwrap()
 }
-fn send(k: &mut crate::Kernel, v: serde_json::Value) -> serde_json::Value {
+pub(super) fn send(k: &mut crate::Kernel, v: serde_json::Value) -> serde_json::Value {
     serde_json::from_str(&k.handle_json(&v.to_string())).unwrap()
 }
 fn load(k: &mut crate::Kernel, packs: Vec<serde_json::Value>) -> serde_json::Value {
@@ -28,8 +28,13 @@ const UNIVERSE: [&str; 2] = ["packs/near-future/pack.json", "packs/space-opera/p
 /// Sun at `star:0`, planets at `body:N`, a moon under its planet, SI facts
 /// (`body.mass` kg, `orbit.semi_major_axis` m).
 fn sol(universe: &str) -> (crate::Kernel, String) {
+    sol_with(vec![pack(universe)])
+}
+
+/// Sol under the stack `packs`.
+pub(super) fn sol_with(packs: Vec<serde_json::Value>) -> (crate::Kernel, String) {
     let mut k = crate::Kernel::new();
-    let r = load(&mut k, vec![pack(universe)]);
+    let r = load(&mut k, packs);
     assert_eq!(r["type"], "stack_loaded", "{r}");
     send(
         &mut k,
@@ -73,8 +78,13 @@ fn sol(universe: &str) -> (crate::Kernel, String) {
 /// The Kestrel Reach, authored from the chart room's scene fixture (its own
 /// fact names: `mass_earth`, `a_au`, `surface_k`).
 fn kestrel(universe: &str) -> crate::Kernel {
+    kestrel_with(vec![pack(universe)])
+}
+
+/// The Kestrel Reach under the stack `packs`.
+pub(super) fn kestrel_with(packs: Vec<serde_json::Value>) -> crate::Kernel {
     let mut k = crate::Kernel::new();
-    let r = load(&mut k, vec![pack(universe)]);
+    let r = load(&mut k, packs);
     assert_eq!(r["type"], "stack_loaded", "{r}");
     send(
         &mut k,

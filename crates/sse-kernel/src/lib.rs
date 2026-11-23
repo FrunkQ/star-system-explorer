@@ -19,6 +19,8 @@ mod frame;
 mod frames;
 mod galaxies;
 mod glow;
+#[cfg(test)]
+mod hooks_tests;
 mod ice_ages;
 #[cfg(test)]
 mod matter_tests;

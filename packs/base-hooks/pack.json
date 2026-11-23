@@ -1,0 +1,349 @@
+{
+ "format": "sse.pack/1",
+ "id": "sse.base-hooks",
+ "version": "0.1.0",
+ "kind": [
+  "presentation"
+ ],
+ "kernel_range": "^0.1",
+ "licence": "Apache-2.0",
+ "provides": {
+  "other": {
+   "about": {
+    "label": "Access",
+    "text": "Where a ship can refuel, shed speed or take what a world offers, read off its facts (V3's frontier tags, done as rules)."
+   },
+   "tags": {
+    "about": "Tags this pack names (tags design, TG1): labels only, never an input to physics.",
+    "groups": [
+     {
+      "id": "access",
+      "label": "Access",
+      "about": "What a ship can do at a world: derived from its facts, never set by hand.",
+      "applies_to": [
+       "body"
+      ]
+     }
+    ],
+    "tags": [
+     {
+      "id": "access.gas-skimming",
+      "label": "gas skimming",
+      "group": "access",
+      "about": "a giant: a ship with scoops can skim hydrogen from its air for fuel",
+      "source": "derived",
+      "tier": "scanned"
+     },
+     {
+      "id": "access.aerobraking",
+      "label": "aerobraking",
+      "group": "access",
+      "about": "enough air (at least 100 Pa at the surface, as at Mars, or a giant's envelope) to shed speed in a pass through it",
+      "source": "derived",
+      "tier": "scanned"
+     },
+     {
+      "id": "access.gravity-assist",
+      "label": "gravity assist",
+      "group": "access",
+      "about": "planet-sized (at least 0.05 Earth masses, as Mercury): a flyby bends a ship's path usefully, as Venus, Earth, Mars and Mercury flybys did for Galileo, Cassini, Rosetta and MESSENGER",
+      "source": "derived",
+      "tier": "scanned"
+     },
+     {
+      "id": "access.ice-mining",
+      "label": "ice mining",
+      "group": "access",
+      "about": "a solid world at or below 150 K, where water stays frozen at the surface to be mined",
+      "source": "derived",
+      "tier": "scanned"
+     },
+     {
+      "id": "access.water",
+      "label": "water",
+      "group": "access",
+      "about": "open water at the surface, to crack for fuel and drink",
+      "source": "derived",
+      "tier": "scanned"
+     }
+    ]
+   },
+   "rules": [
+    {
+     "id": "access.gas-skimming.v1",
+     "tag": "access.gas-skimming",
+     "applies_to": [
+      "body"
+     ],
+     "when": {
+      "if": "all",
+      "of": [
+       {
+        "if": "all",
+        "of": [
+         {
+          "if": "not",
+          "p": {
+           "if": "has",
+           "field": "star.effective_temperature"
+          }
+         },
+         {
+          "if": "not",
+          "p": {
+           "if": "has",
+           "field": "mass_sun"
+          }
+         }
+        ]
+       },
+       {
+        "if": "any",
+        "of": [
+         {
+          "if": "range",
+          "field": "body.mass",
+          "min": 5.972167867791379e+25,
+          "max": 2.3888671471165516e+28
+         },
+         {
+          "if": "range",
+          "field": "mass_earth",
+          "min": 10.0,
+          "max": 4000.0
+         }
+        ]
+       }
+      ]
+     }
+    },
+    {
+     "id": "access.aerobraking.v1",
+     "tag": "access.aerobraking",
+     "applies_to": [
+      "body"
+     ],
+     "when": {
+      "if": "any",
+      "of": [
+       {
+        "if": "all",
+        "of": [
+         {
+          "if": "all",
+          "of": [
+           {
+            "if": "not",
+            "p": {
+             "if": "has",
+             "field": "star.effective_temperature"
+            }
+           },
+           {
+            "if": "not",
+            "p": {
+             "if": "has",
+             "field": "mass_sun"
+            }
+           }
+          ]
+         },
+         {
+          "if": "any",
+          "of": [
+           {
+            "if": "range",
+            "field": "body.mass",
+            "min": 5.972167867791379e+25,
+            "max": 2.3888671471165516e+28
+           },
+           {
+            "if": "range",
+            "field": "mass_earth",
+            "min": 10.0,
+            "max": 4000.0
+           }
+          ]
+         }
+        ]
+       },
+       {
+        "if": "range",
+        "field": "atmosphere.surface_pressure",
+        "min": 100.0
+       }
+      ]
+     }
+    },
+    {
+     "id": "access.gravity-assist.v1",
+     "tag": "access.gravity-assist",
+     "applies_to": [
+      "body"
+     ],
+     "when": {
+      "if": "all",
+      "of": [
+       {
+        "if": "all",
+        "of": [
+         {
+          "if": "not",
+          "p": {
+           "if": "has",
+           "field": "star.effective_temperature"
+          }
+         },
+         {
+          "if": "not",
+          "p": {
+           "if": "has",
+           "field": "mass_sun"
+          }
+         }
+        ]
+       },
+       {
+        "if": "any",
+        "of": [
+         {
+          "if": "range",
+          "field": "body.mass",
+          "min": 2.9860839338956896e+23
+         },
+         {
+          "if": "range",
+          "field": "mass_earth",
+          "min": 0.05
+         }
+        ]
+       }
+      ]
+     }
+    },
+    {
+     "id": "access.ice-mining.v1",
+     "tag": "access.ice-mining",
+     "applies_to": [
+      "body"
+     ],
+     "when": {
+      "if": "all",
+      "of": [
+       {
+        "if": "all",
+        "of": [
+         {
+          "if": "all",
+          "of": [
+           {
+            "if": "not",
+            "p": {
+             "if": "has",
+             "field": "star.effective_temperature"
+            }
+           },
+           {
+            "if": "not",
+            "p": {
+             "if": "has",
+             "field": "mass_sun"
+            }
+           }
+          ]
+         },
+         {
+          "if": "any",
+          "of": [
+           {
+            "if": "range",
+            "field": "body.mass",
+            "max": 5.972167867791379e+25
+           },
+           {
+            "if": "range",
+            "field": "mass_earth",
+            "max": 10.0
+           }
+          ]
+         }
+        ]
+       },
+       {
+        "if": "any",
+        "of": [
+         {
+          "if": "range",
+          "field": "planet.surface_temperature",
+          "max": 150.0
+         },
+         {
+          "if": "range",
+          "field": "surface_k",
+          "max": 150.0
+         }
+        ]
+       }
+      ]
+     }
+    },
+    {
+     "id": "access.water.v1",
+     "tag": "access.water",
+     "applies_to": [
+      "body"
+     ],
+     "when": {
+      "if": "all",
+      "of": [
+       {
+        "if": "all",
+        "of": [
+         {
+          "if": "all",
+          "of": [
+           {
+            "if": "not",
+            "p": {
+             "if": "has",
+             "field": "star.effective_temperature"
+            }
+           },
+           {
+            "if": "not",
+            "p": {
+             "if": "has",
+             "field": "mass_sun"
+            }
+           }
+          ]
+         },
+         {
+          "if": "any",
+          "of": [
+           {
+            "if": "range",
+            "field": "body.mass",
+            "max": 5.972167867791379e+25
+           },
+           {
+            "if": "range",
+            "field": "mass_earth",
+            "max": 10.0
+           }
+          ]
+         }
+        ]
+       },
+       {
+        "if": "is",
+        "field": "surface.liquid",
+        "value": "water"
+       }
+      ]
+     }
+    }
+   ]
+  }
+ }
+}
