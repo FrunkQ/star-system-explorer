@@ -17,7 +17,7 @@
 <script lang="ts">
   import { onDestroy } from "svelte";
   import { basis, drawLiveStar, flaresAt, thermalGrey, THERMAL_DECADES, turnAt, project, spotsOf, STAR_SECONDS_PER_SECOND, startGpu, tree, type Camera, type Gpu, type GpuLight, type LiveStar, type TrueTexture, type Vec3 } from "../../../renderer/src/index.ts";
-  import { SEEN_ELEVATION, type SeenFrom } from "../../../ui-contract/src/index.ts";
+  import { constant, SEEN_ELEVATION, type SeenFrom } from "../../../ui-contract/src/index.ts";
   import { bandLines, hasChildren, layout, layoutReal, shellDots, type Band3D, type Body3D } from "./bodies.ts";
 
   let {
@@ -235,7 +235,7 @@
     raf = requestAnimationFrame(step);
     return () => cancelAnimationFrame(raf);
   });
-  const starK = $derived(bodies.find((b) => b.parent === null)?.t_k ?? star?.teff ?? 5772);
+  const starK = $derived(bodies.find((b) => b.parent === null)?.t_k ?? star?.teff ?? constant("T_sun"));
   const bandNote = $derived(
     !isTrue
       ? ""
