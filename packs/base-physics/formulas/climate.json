@@ -1,0 +1,271 @@
+{
+ "format": "sse.formulas/1",
+ "family": "sse.climate",
+ "about": "Physics blocks whose maths is a formula (ND3b): each keeps its id, ports and results, and its maths is the Equation below, with a name that says what happens.",
+ "atoms": [
+  {
+   "id": "sse.climate.insolation",
+   "version": "1.0.0",
+   "cost": "trivial",
+   "inputs": [
+    {
+     "port": "luminosity",
+     "letter": "L"
+    },
+    {
+     "port": "distance",
+     "letter": "d"
+    }
+   ],
+   "outputs": [
+    {
+     "port": "flux",
+     "letter": "S"
+    }
+   ],
+   "positive": [
+    {
+     "port": "distance",
+     "says": "distance"
+    },
+    {
+     "port": "luminosity",
+     "says": "luminosity"
+    }
+   ],
+   "references": [
+    "Catling, D. C. and Kasting, J. F. 2017, Atmospheric Evolution on Inhabited and Lifeless Worlds, Cambridge University Press, chapters 2 and 4. doi:10.1017/9781139020558"
+   ],
+   "shown": "S = L / (4π d²)",
+   "equation": {
+    "name": "Starlight reaching the world",
+    "formula": "S = L / (4 * pi * d * d)",
+    "inputs": {
+     "L": {
+      "kind": "star.luminosity",
+      "unit": "W",
+      "name": "light the star gives off"
+     },
+     "d": {
+      "kind": "orbit.semi_major_axis",
+      "unit": "m",
+      "name": "distance from the star"
+     }
+    },
+    "outputs": {
+     "S": {
+      "kind": "planet.insolation",
+      "unit": "W m-2",
+      "name": "starlight arriving on each square metre"
+     }
+    },
+    "source": {
+     "text": "Catling, D. C. and Kasting, J. F. 2017, Atmospheric Evolution on Inhabited and Lifeless Worlds, Cambridge University Press",
+     "doi": "10.1017/9781139020558",
+     "where": "chapter 2, the inverse-square law"
+    },
+    "explain": {
+     "curious": "Starlight spreads out as it travels: twice as far away, a quarter of the light.",
+     "science": "Inverse-square law for an isotropic source. At the semi-major axis this is close to the orbit-averaged flux for low eccentricity (the exact average is larger by 1/√(1 - e²))."
+    },
+    "examples": [
+     {
+      "L": 3.828e+26,
+      "d": 149600000000.0,
+      "S": 1361.127717933597
+     }
+    ]
+   }
+  },
+  {
+   "id": "sse.climate.equilibrium_temperature",
+   "version": "1.0.0",
+   "cost": "trivial",
+   "inputs": [
+    {
+     "port": "flux",
+     "letter": "S"
+    },
+    {
+     "port": "albedo",
+     "letter": "A"
+    }
+   ],
+   "outputs": [
+    {
+     "port": "teq",
+     "letter": "T"
+    }
+   ],
+   "constants": {
+    "sigma": "constants/sigma_SB"
+   },
+   "params": [
+    {
+     "param": "redistribution",
+     "letter": "f",
+     "default": 0.25,
+     "range": [
+      0.25,
+      0.6666666666666666
+     ],
+     "description": "1/4 when heat spreads round the whole world, 1/2 for the day side only, 2/3 with no spreading at the substellar point"
+    }
+   ],
+   "positive": [
+    {
+     "port": "flux",
+     "says": "flux"
+    }
+   ],
+   "checks": [
+    {
+     "port": "albedo",
+     "max": 1,
+     "says": "albedo above 1"
+    }
+   ],
+   "references": [
+    "Catling, D. C. and Kasting, J. F. 2017, Atmospheric Evolution on Inhabited and Lifeless Worlds, Cambridge University Press, chapters 2 and 4. doi:10.1017/9781139020558",
+    "Seager, S. 2010, Exoplanet Atmospheres, Princeton University Press, section 3.1 (heat redistribution factor)"
+   ],
+   "shown": "T_eq = (f S (1 - A) / σ)^¼",
+   "equation": {
+    "name": "How warm a bare world would be",
+    "formula": "T = (f * S * (1 - A) / sigma) ^ (1/4)",
+    "inputs": {
+     "S": {
+      "kind": "planet.insolation",
+      "unit": "W m-2",
+      "name": "starlight arriving on each square metre"
+     },
+     "A": {
+      "kind": "planet.bond_albedo",
+      "unit": "1",
+      "name": "share of light reflected (Bond albedo)",
+      "valid": [
+       0.0,
+       1.0
+      ]
+     },
+     "sigma": {
+      "kind": "constant.sigma_SB",
+      "unit": "W m-2 K-4",
+      "name": "Stefan-Boltzmann constant"
+     },
+     "f": {
+      "kind": "model.heat_redistribution",
+      "unit": "1",
+      "name": "how much of the sphere shares the heat"
+     }
+    },
+    "outputs": {
+     "T": {
+      "kind": "planet.equilibrium_temperature",
+      "unit": "K",
+      "name": "bare-ball temperature"
+     }
+    },
+    "source": {
+     "text": "Catling, D. C. and Kasting, J. F. 2017, Atmospheric Evolution on Inhabited and Lifeless Worlds, Cambridge University Press",
+     "doi": "10.1017/9781139020558",
+     "where": "chapter 2, planetary energy balance"
+    },
+    "explain": {
+     "curious": "How warm a world would be if it were a bare ball that only absorbs and glows. Earth's comes out at a frozen −18 °C; the air makes up the rest.",
+     "science": "Balance of absorbed starlight against black-body emission. The redistribution factor sets how much of the sphere shares the absorbed heat."
+    },
+    "examples": [
+     {
+      "S": 1361.0,
+      "A": 0.3,
+      "f": 0.25,
+      "T": 254.5781401165717
+     }
+    ]
+   }
+  },
+  {
+   "id": "sse.climate.grey_surface_temperature",
+   "version": "1.0.0",
+   "cost": "trivial",
+   "inputs": [
+    {
+     "port": "teq",
+     "letter": "Teq"
+    },
+    {
+     "port": "optical_depth",
+     "letter": "tau"
+    }
+   ],
+   "outputs": [
+    {
+     "port": "surface",
+     "letter": "T"
+    }
+   ],
+   "positive": [
+    {
+     "port": "teq",
+     "says": "equilibrium temperature"
+    }
+   ],
+   "checks": [
+    {
+     "port": "optical_depth",
+     "min": 0,
+     "says": "optical depth is negative"
+    }
+   ],
+   "references": [
+    "Catling, D. C. and Kasting, J. F. 2017, Atmospheric Evolution on Inhabited and Lifeless Worlds, Cambridge University Press, chapters 2 and 4. doi:10.1017/9781139020558",
+    "Pierrehumbert, R. T. 2010, Principles of Planetary Climate, Cambridge University Press, sections 2.7 and 8.7. doi:10.1017/CBO9780511780783"
+   ],
+   "shown": "T_s = T_eq (1 + ¾ τ)^¼",
+   "equation": {
+    "name": "How warm the ground is under a heat-trapping sky",
+    "formula": "T = Teq * (1 + 3/4 * tau) ^ (1/4)",
+    "inputs": {
+     "Teq": {
+      "kind": "planet.equilibrium_temperature",
+      "unit": "K",
+      "name": "bare-ball temperature"
+     },
+     "tau": {
+      "kind": "atmosphere.infrared_optical_depth",
+      "unit": "1",
+      "name": "how opaque the air is to heat (infrared optical depth)",
+      "valid": [
+       0.0,
+       100.0
+      ]
+     }
+    },
+    "outputs": {
+     "T": {
+      "kind": "planet.surface_temperature",
+      "unit": "K",
+      "name": "ground temperature"
+     }
+    },
+    "source": {
+     "text": "Pierrehumbert, R. T. 2010, Principles of Planetary Climate, Cambridge University Press",
+     "doi": "10.1017/CBO9780511780783",
+     "where": "section 8.7, the grey atmosphere"
+    },
+    "explain": {
+     "curious": "Air that lets sunlight in but holds heat back keeps the ground warmer than the bare-ball figure. The thicker that blanket, the warmer.",
+     "science": "Grey radiative-equilibrium atmosphere in the Eddington approximation, with all sunlight absorbed at the ground and one infrared optical depth τ. Earth needs τ ≈ 0.87 (0.83 with T_eq = 255 K); Venus about 140 (737 K over T_eq ≈ 230 K). It ignores convection, which in reality caps the lapse rate, so it overstates hot thick atmospheres."
+    },
+    "examples": [
+     {
+      "Teq": 255.0,
+      "tau": 0.83,
+      "T": 287.7970624703762
+     }
+    ]
+   }
+  }
+ ]
+}

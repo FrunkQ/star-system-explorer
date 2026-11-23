@@ -1,0 +1,14 @@
+//! ND3b: the blocks that moved from Rust into formula files, as their Rust
+//! was before the move. Test-only: `moved_blocks_keep_their_faces_and_bits`
+//! checks each formula block against its old self, face and bits.
+#![allow(dead_code, unused_imports, clippy::all)]
+
+pub mod climate;
+pub mod tides;
+
+pub fn atoms() -> Vec<Box<dyn sse_flow::Atom>> {
+    let mut all = vec![];
+    all.extend(climate::atoms());
+    all.extend(tides::atoms());
+    all
+}

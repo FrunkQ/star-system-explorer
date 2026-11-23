@@ -166,7 +166,7 @@ impl T {
 fn every_block_is_logic_and_explained() {
     let r = crate::registry();
     let ids: Vec<&str> = r.decls().map(|d| d.id.as_str()).collect();
-    assert_eq!(ids.len(), 57, "{ids:?}");
+    assert_eq!(ids.len(), 58, "{ids:?}");
     // The Look up block (MP17a) is an engine block: the Reference screen is
     // its editor. So are the Equation and the Model number (ND3), which
     // carry their own sources.
@@ -540,6 +540,7 @@ fn truth_tables() {
     use sse_core::math as m;
     for (id, x, want) in [
         ("math.sqrt", 2.0, m::sqrt(2.0)),
+        ("math.cbrt", -27.5, m::cbrt(-27.5)),
         ("math.exp", 0.7, m::exp(0.7)),
         ("math.expm1", 1e-9, m::expm1(1e-9)),
         ("math.ln", 3.0, m::ln(3.0)),

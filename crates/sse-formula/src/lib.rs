@@ -21,7 +21,7 @@
 //! ```
 //!
 //! The language (design section 3): the block's inputs and nothing else as
-//! names; `+ - * / ^`, brackets, unary minus; `exp expm1 ln log10 sqrt abs
+//! names; `+ - * / ^`, brackets, unary minus; `exp expm1 ln log10 sqrt cbrt abs
 //! min max clamp sin cos tan atan2`; `if <condition> then a else b` with
 //! comparisons joined by `and`, `or`, `not`; several lines `name = ...`, a
 //! later line using an earlier one; `pi`. Bare numbers are whole numbers
@@ -62,9 +62,9 @@ pub const ID: &str = "sse.math.equation";
 pub const MAX_OPS: usize = 64;
 /// Largest whole number a formula may hold as a bare number.
 pub const MAX_WHOLE: u32 = 32;
-const FUNCS: [&str; 13] = [
-    "exp", "expm1", "ln", "log10", "sqrt", "abs", "min", "max", "clamp", "sin", "cos", "tan",
-    "atan2",
+const FUNCS: [&str; 14] = [
+    "exp", "expm1", "ln", "log10", "sqrt", "cbrt", "abs", "min", "max", "clamp", "sin", "cos",
+    "tan", "atan2",
 ];
 const WORDS: [&str; 7] = ["if", "then", "else", "and", "or", "not", "pi"];
 
@@ -383,6 +383,7 @@ impl P<'_> {
                         Func::Ln,
                         Func::Log10,
                         Func::Sqrt,
+                        Func::Cbrt,
                         Func::Abs,
                         Func::Min,
                         Func::Max,
@@ -620,6 +621,12 @@ impl Dims<'_> {
                     let d = self.num(args[0])?;
                     Dv::D(d.root(2).ok_or_else(|| {
                         format!("the square root of [{d}] is not a whole dimension")
+                    })?)
+                }
+                Func::Cbrt => {
+                    let d = self.num(args[0])?;
+                    Dv::D(d.root(3).ok_or_else(|| {
+                        format!("the cube root of [{d}] is not a whole dimension")
                     })?)
                 }
                 Func::Abs => self.infer(args[0], want)?,
@@ -1217,6 +1224,7 @@ pub enum Func {
     Abs,
     Power,
     Sqrt,
+    Cbrt,
     Exp,
     Expm1,
     Ln,
@@ -1228,7 +1236,7 @@ pub enum Func {
 }
 
 impl Func {
-    pub const ALL: [Func; 18] = [
+    pub const ALL: [Func; 19] = [
         Func::Add,
         Func::Subtract,
         Func::Multiply,
@@ -1239,6 +1247,7 @@ impl Func {
         Func::Abs,
         Func::Power,
         Func::Sqrt,
+        Func::Cbrt,
         Func::Exp,
         Func::Expm1,
         Func::Ln,
@@ -1261,6 +1270,7 @@ impl Func {
             Func::Abs => "logic.abs",
             Func::Power => "math.power",
             Func::Sqrt => "math.sqrt",
+            Func::Cbrt => "math.cbrt",
             Func::Exp => "math.exp",
             Func::Expm1 => "math.expm1",
             Func::Ln => "math.ln",
@@ -1293,6 +1303,7 @@ pub fn number(op: Func, x: &[f64]) -> Result<f64, String> {
         Power => m::pow(x[0], x[1]),
         Sqrt if x[0] < 0.0 => return Err(format!("the square root of {} (below zero)", x[0])),
         Sqrt => m::sqrt(x[0]),
+        Cbrt => m::cbrt(x[0]),
         Exp => m::exp(x[0]),
         Expm1 => m::expm1(x[0]),
         Ln | Log10 if x[0] <= 0.0 => {

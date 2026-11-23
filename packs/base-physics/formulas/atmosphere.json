@@ -1,0 +1,328 @@
+{
+ "format": "sse.formulas/1",
+ "family": "sse.atmosphere",
+ "about": "Physics blocks whose maths is a formula (ND3b): each keeps its id, ports and results, and its maths is the Equation below, with a name that says what happens.",
+ "atoms": [
+  {
+   "id": "sse.atmosphere.scale_height",
+   "version": "1.0.0",
+   "cost": "trivial",
+   "inputs": [
+    {
+     "port": "temperature",
+     "letter": "T"
+    },
+    {
+     "port": "mean_molecular_weight",
+     "letter": "mu"
+    },
+    {
+     "port": "g",
+     "letter": "g"
+    }
+   ],
+   "outputs": [
+    {
+     "port": "scale_height",
+     "letter": "H"
+    }
+   ],
+   "constants": {
+    "k": "constants/k_B",
+    "m_u": "sheet/m_u"
+   },
+   "positive": [
+    {
+     "port": "temperature",
+     "says": "temperature"
+    },
+    {
+     "port": "mean_molecular_weight",
+     "says": "mean molecular weight"
+    },
+    {
+     "port": "g",
+     "says": "gravity"
+    }
+   ],
+   "references": [
+    "Catling, D. C. and Kasting, J. F. 2017, Atmospheric Evolution on Inhabited and Lifeless Worlds, Cambridge University Press, chapters 2 and 4. doi:10.1017/9781139020558"
+   ],
+   "shown": "H = k T / (μ m_u g)",
+   "equation": {
+    "name": "How quickly the air thins with height",
+    "formula": "H = k * T / (mu * m_u * g)",
+    "inputs": {
+     "T": {
+      "kind": "atmosphere.temperature",
+      "unit": "K",
+      "name": "air temperature"
+     },
+     "mu": {
+      "kind": "atmosphere.mean_molecular_weight",
+      "unit": "1",
+      "name": "mean molecular weight (atomic mass units)",
+      "valid": [
+       1.0,
+       100.0
+      ]
+     },
+     "g": {
+      "kind": "body.surface_gravity",
+      "unit": "m s-2",
+      "name": "surface gravity"
+     },
+     "k": {
+      "kind": "constant.k_B",
+      "unit": "J K-1",
+      "name": "Boltzmann constant"
+     },
+     "m_u": {
+      "kind": "constant.m_u",
+      "unit": "kg",
+      "name": "atomic mass constant"
+     }
+    },
+    "outputs": {
+     "H": {
+      "kind": "atmosphere.scale_height",
+      "unit": "m",
+      "name": "height over which the pressure falls to a third"
+     }
+    },
+    "source": {
+     "text": "Catling, D. C. and Kasting, J. F. 2017, Atmospheric Evolution on Inhabited and Lifeless Worlds, Cambridge University Press",
+     "doi": "10.1017/9781139020558",
+     "where": "chapter 2, the barometric law"
+    },
+    "explain": {
+     "curious": "How quickly the air thins as you climb. Every scale height up, the pressure drops to about a third.",
+     "science": "Isothermal hydrostatic atmosphere of an ideal gas. Mean molecular weight in atomic mass units (Earth air 28.97)."
+    },
+    "examples": [
+     {
+      "T": 288.0,
+      "mu": 28.97,
+      "g": 9.81,
+      "H": 8425.7616665405
+     }
+    ]
+   }
+  },
+  {
+   "id": "sse.atmosphere.surface_pressure",
+   "version": "1.0.0",
+   "cost": "trivial",
+   "inputs": [
+    {
+     "port": "atmosphere_mass",
+     "letter": "M"
+    },
+    {
+     "port": "g",
+     "letter": "g"
+    },
+    {
+     "port": "radius",
+     "letter": "R"
+    }
+   ],
+   "outputs": [
+    {
+     "port": "pressure",
+     "letter": "P"
+    }
+   ],
+   "positive": [
+    {
+     "port": "radius",
+     "says": "radius"
+    },
+    {
+     "port": "atmosphere_mass",
+     "says": "atmosphere mass"
+    },
+    {
+     "port": "g",
+     "says": "gravity"
+    }
+   ],
+   "references": [
+    "Catling, D. C. and Kasting, J. F. 2017, Atmospheric Evolution on Inhabited and Lifeless Worlds, Cambridge University Press, chapters 2 and 4. doi:10.1017/9781139020558"
+   ],
+   "shown": "P = M_atm g / (4π R²)",
+   "equation": {
+    "name": "Weight of the air pressing on the ground",
+    "formula": "P = M * g / (4 * pi * R * R)",
+    "inputs": {
+     "M": {
+      "kind": "atmosphere.mass",
+      "unit": "kg",
+      "name": "mass of the whole atmosphere"
+     },
+     "g": {
+      "kind": "body.surface_gravity",
+      "unit": "m s-2",
+      "name": "surface gravity"
+     },
+     "R": {
+      "kind": "body.radius",
+      "unit": "m",
+      "name": "radius of the world"
+     }
+    },
+    "outputs": {
+     "P": {
+      "kind": "atmosphere.surface_pressure",
+      "unit": "Pa",
+      "name": "air pressure at the ground"
+     }
+    },
+    "source": {
+     "text": "Catling, D. C. and Kasting, J. F. 2017, Atmospheric Evolution on Inhabited and Lifeless Worlds, Cambridge University Press",
+     "doi": "10.1017/9781139020558",
+     "where": "chapter 2, hydrostatic balance"
+    },
+    "explain": {
+     "curious": "Air pressure is the weight of all the air above you, spread over the ground.",
+     "science": "Hydrostatic surface pressure of a thin atmosphere (thickness much less than the radius), with gravity taken as constant with height."
+    },
+    "examples": [
+     {
+      "M": 5.15e+18,
+      "g": 9.81,
+      "R": 6371000.0,
+      "P": 99049.24334533028
+     }
+    ]
+   }
+  },
+  {
+   "id": "sse.atmosphere.jeans_parameter",
+   "version": "1.0.0",
+   "cost": "trivial",
+   "inputs": [
+    {
+     "port": "mass",
+     "letter": "M"
+    },
+    {
+     "port": "exobase_radius",
+     "letter": "r"
+    },
+    {
+     "port": "exobase_temperature",
+     "letter": "T"
+    },
+    {
+     "port": "particle_mass",
+     "letter": "mp"
+    }
+   ],
+   "outputs": [
+    {
+     "port": "lambda",
+     "letter": "lambda"
+    }
+   ],
+   "constants": {
+    "G": "constants/G",
+    "k": "constants/k_B",
+    "m_u": "sheet/m_u"
+   },
+   "positive": [
+    {
+     "port": "mass",
+     "says": "mass"
+    },
+    {
+     "port": "exobase_radius",
+     "says": "exobase radius"
+    },
+    {
+     "port": "exobase_temperature",
+     "says": "exobase temperature"
+    },
+    {
+     "port": "particle_mass",
+     "says": "particle mass"
+    }
+   ],
+   "references": [
+    "Catling, D. C. and Kasting, J. F. 2017, Atmospheric Evolution on Inhabited and Lifeless Worlds, Cambridge University Press, chapters 2 and 4. doi:10.1017/9781139020558",
+    "Chamberlain, J. W. and Hunten, D. M. 1987, Theory of Planetary Atmospheres, 2nd edn, Academic Press"
+   ],
+   "shown": "λ = G M m / (k T r)",
+   "equation": {
+    "name": "How tightly a world holds its gas",
+    "formula": "lambda = G * M * (mp * m_u) / (k * T * r)",
+    "inputs": {
+     "M": {
+      "kind": "body.mass",
+      "unit": "kg",
+      "name": "mass of the world"
+     },
+     "r": {
+      "kind": "atmosphere.exobase_radius",
+      "unit": "m",
+      "name": "distance from the centre to the top of the air"
+     },
+     "T": {
+      "kind": "atmosphere.exobase_temperature",
+      "unit": "K",
+      "name": "temperature at the top of the air"
+     },
+     "mp": {
+      "kind": "atmosphere.particle_mass_amu",
+      "unit": "1",
+      "name": "mass of the gas particle (atomic mass units)",
+      "valid": [
+       1.0,
+       100.0
+      ]
+     },
+     "G": {
+      "kind": "constant.G",
+      "unit": "m3 kg-1 s-2",
+      "name": "gravitational constant"
+     },
+     "k": {
+      "kind": "constant.k_B",
+      "unit": "J K-1",
+      "name": "Boltzmann constant"
+     },
+     "m_u": {
+      "kind": "constant.m_u",
+      "unit": "kg",
+      "name": "atomic mass constant"
+     }
+    },
+    "outputs": {
+     "lambda": {
+      "kind": "atmosphere.jeans_parameter",
+      "unit": "1",
+      "name": "how tightly the gas is held"
+     }
+    },
+    "source": {
+     "text": "Chamberlain, J. W. and Hunten, D. M. 1987, Theory of Planetary Atmospheres, 2nd edn, Academic Press",
+     "where": "chapter 7, Jeans escape",
+     "url": "https://ui.adsabs.harvard.edu/abs/1987tpaa.book.....C"
+    },
+    "explain": {
+     "curious": "Compares how tightly a world holds a gas molecule with how fast heat makes it move. Below about 1.5 the gas pours away; above about 30 it stays for billions of years.",
+     "science": "Escape parameter at the exobase: gravitational energy over thermal energy for a particle of the given mass (atomic mass units). The Jeans escape flux is n v₀ (1 + λ) e^(-λ) / (2√π), with v₀ the most probable speed."
+    },
+    "examples": [
+     {
+      "M": 5.97e+24,
+      "r": 6870000.0,
+      "T": 1000.0,
+      "mp": 1.0,
+      "lambda": 6.975721485496398
+     }
+    ]
+   }
+  }
+ ]
+}

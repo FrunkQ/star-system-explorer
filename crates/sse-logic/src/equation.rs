@@ -65,6 +65,7 @@ pub fn op_of(f: Func) -> Op {
         Func::Abs => Op::Abs,
         Func::Power => Op::Power,
         Func::Sqrt => Op::Sqrt,
+        Func::Cbrt => Op::Cbrt,
         Func::Exp => Op::Exp,
         Func::Expm1 => Op::Expm1,
         Func::Ln => Op::Ln,

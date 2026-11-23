@@ -23,6 +23,18 @@ pub const FILES: &[(&str, &str)] = &[
         "star",
         include_str!("../../../packs/base-physics/formulas/star.json"),
     ),
+    (
+        "climate",
+        include_str!("../../../packs/base-physics/formulas/climate.json"),
+    ),
+    (
+        "atmosphere",
+        include_str!("../../../packs/base-physics/formulas/atmosphere.json"),
+    ),
+    (
+        "tides",
+        include_str!("../../../packs/base-physics/formulas/tides.json"),
+    ),
 ];
 
 /// Read every formula file once: parsed, unit-checked and its worked

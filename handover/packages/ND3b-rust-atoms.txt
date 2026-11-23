@@ -14,9 +14,6 @@ sse.air.dry_air_refractivity	not yet looked at
 sse.air.rayleigh_cross_section	not yet looked at
 sse.air.scale_height	not yet looked at
 sse.air.scattering_coefficient	not yet looked at
-sse.atmosphere.jeans_parameter	not yet looked at
-sse.atmosphere.scale_height	not yet looked at
-sse.atmosphere.surface_pressure	not yet looked at
 sse.aurora.footprint	not yet looked at
 sse.aurora.hill_distance	not yet looked at
 sse.belts.electron_range	not yet looked at
@@ -24,9 +21,6 @@ sse.belts.kp_limit	not yet looked at
 sse.belts.radiation_yield	not yet looked at
 sse.chem.reaction_gibbs	not yet looked at
 sse.chem.standard_gibbs_at_temperature	not yet looked at
-sse.climate.equilibrium_temperature	not yet looked at
-sse.climate.grey_surface_temperature	not yet looked at
-sse.climate.insolation	not yet looked at
 sse.convection.cell_lifetime	not yet looked at
 sse.convection.granule_size	not yet looked at
 sse.convection.speed	not yet looked at
@@ -66,19 +60,12 @@ sse.nebula.remnant_radius	not yet looked at
 sse.nebula.shell_radius	not yet looked at
 sse.nebula.stromgren_radius	not yet looked at
 sse.ocean.brine_freezing_point	not yet looked at
-sse.orbit.apsides	refuses an eccentricity outside 0 to 1 in its own words, which a formula cannot say yet
-sse.orbit.hill_radius	needs a cube root in the formula language (x^(1/3) is not the same bits as cbrt)
 sse.orbit.kepler_position	iterates: Kepler's equation solved by a fixed number of Newton steps
-sse.orbit.roche_limit	has a parameter (k): waits for parameters as letters
-sse.orbit.semi_major_axis_from_period	needs a cube root in the formula language (x^(1/3) is not the same bits as cbrt)
 sse.planet.radius_from_mass	a broken power law over a table of mass ranges
 sse.shield.air_dose	not yet looked at
 sse.shield.cutoff	not yet looked at
 sse.shield.ground_share	not yet looked at
 sse.shield.space_share	not yet looked at
-sse.star.ms_lifetime	has a parameter (the Sun's lifetime) and reads the Sun's mass and luminosity: waits for parameters as letters
 sse.star.ms_luminosity	a piecewise fit over a table of mass ranges, with the homology factors for changed constants
 sse.star.ms_luminosity_at_age	has a parameter and refuses ages outside the main sequence in its own words
 sse.star.ms_radius	a piecewise fit over mass ranges, with the homology factor for changed constants
-sse.tides.eccentricity_heating	not yet looked at
-sse.tides.locking_time	not yet looked at

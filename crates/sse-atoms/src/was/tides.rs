@@ -1,4 +1,5 @@
-//! Tides (P1 first wave).
+//! `tides` blocks as they were in Rust before ND3b moved them into formula
+//! files; kept for the test that the formulas give the same faces and bits.
 
 use crate::common::*;
 use sse_core::math as m;

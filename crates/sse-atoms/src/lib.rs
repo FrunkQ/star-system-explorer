@@ -9,7 +9,6 @@ pub mod air;
 pub mod aurora;
 pub mod belts;
 pub mod chem;
-pub mod climate;
 pub mod common;
 pub mod convection;
 pub mod extinction;
@@ -25,7 +24,8 @@ pub mod planet;
 pub mod reach;
 pub mod shield;
 pub mod star;
-pub mod tides;
+#[cfg(test)]
+mod was;
 
 use sse_core::{Dimension, QuantityKind};
 use sse_flow::AtomRegistry;
@@ -39,8 +39,6 @@ pub fn atoms() -> Vec<Box<dyn sse_flow::Atom>> {
         .chain(formulas::atoms())
         .chain(orbit::atoms())
         .chain(planet::atoms())
-        .chain(climate::atoms())
-        .chain(tides::atoms())
         .chain(layers::atoms())
         .chain(heat::atoms())
         .chain(magnetic::atoms())

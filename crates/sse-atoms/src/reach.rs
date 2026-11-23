@@ -82,6 +82,7 @@ pub const DECLARED: &[(&str, Reach)] = &[
     ("sse.math.equation", Reach::Follows(&[])),
     ("math.power", Reach::Follows(&[])),
     ("math.sqrt", Reach::Follows(&[])),
+    ("math.cbrt", Reach::Follows(&[])),
     ("math.exp", Reach::Follows(&[])),
     ("math.expm1", Reach::Follows(&[])),
     ("math.ln", Reach::Follows(&[])),
