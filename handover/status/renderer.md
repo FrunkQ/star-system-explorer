@@ -7,7 +7,8 @@ Only the owner thread edits this file. One row per package: update it in the sam
 | Package | State | Log |
 |---|---|---|
 | R1 pass library, render recipes, degrade order, governor, quality badge (the Body globe runs on recipes: GPU, canvas, words) | done (renderer track) | packages/R1.md |
-| V3 gap item 14 part 1: ship hulls and drive plumes from the ship record's physics (tanks, shield, thrust, jet power, words, Chart paths, lathe outline) | done; part 2 (GPU hull and True plume, mounting on the ship card) next | packages/SHIP14.md |
+| V3 gap item 14 part 1: ship hulls and drive plumes from the ship record's physics (tanks, shield, thrust, jet power, words, Chart paths, lathe outline) | done | packages/SHIP14.md |
+| V3 gap item 14 stage 2: ships designed from their parts (base-ships pack rules and styles, side and top views with call-outs, remix, hand overrides, ShipPlans view) | done; stage 3 (3D model and textures from the same recipe) next | packages/SHIP14.md |
 
 ## Done so far and what is next
 
