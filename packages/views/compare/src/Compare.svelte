@@ -10,9 +10,10 @@
   not offered, and the panel says how many.
 -->
 <script lang="ts">
-  import { checkReferences, formatKmLength, itemFromReference, itemFromSubject, layoutLineup, listedTitle, sceneFromResolved, scaleBar, sizeWords, starColour, subjectOf, type CompareItem, type Json, type ReferenceDoc, type SceneSubject, type SystemScene, type ViewContext } from "../../../ui-contract/src/index.ts";
+  import { checkReferences, formatKmLength, itemFromReference, itemFromSubject, layoutLineup, listedTitle, sceneFromResolved, scaleBar, sizeWords, starColour, subjectOf, viewOptions, DEFAULT_VIEW, type CompareItem, type Json, type ReferenceDoc, type SceneSubject, type SystemScene, type ViewContext } from "../../../ui-contract/src/index.ts";
   import { HatchDefs, markPattern } from "../../../chart-grammar/src/index.ts";
   import { lineups } from "./lineup.svelte.ts";
+  import { COMPARE_CONTROLS } from "./controls.ts";
 
   let { ctx, scene, params }: { ctx: ViewContext; scene: SystemScene; params: Record<string, Json> } = $props();
 
@@ -39,8 +40,8 @@
   let note = $state("");
   let sorted = $state(false);
   const order = $derived(sorted ? [...items].sort((a, b) => a.radius_km - b.radius_km) : items);
-  let modeOverride = $state<"true" | "log" | null>(null);
-  const mode = $derived(modeOverride ?? (params.scale === "log" ? "log" : "true"));
+  // Scale is the view controls' (one set of controls, Alex 23 Nov): Real is one true scale, Readable a log scale.
+  const mode = $derived(viewOptions(COMPARE_CONTROLS, ws.view ?? DEFAULT_VIEW).shown.scale === "real" ? "true" : "log");
 
   // Reference objects: a document the shell serves (a pack may ship more).
   let refs = $state<ReferenceDoc | null>(null);
@@ -144,7 +145,6 @@
       <button type="button" onclick={surprise}>Surprise me</button>
       <span class="sep"></span>
       <button type="button" aria-pressed={sorted} onclick={() => (sorted = !sorted)}>By size</button>
-      <button type="button" aria-pressed={mode === "log"} onclick={() => (modeOverride = mode === "log" ? "true" : "log")} title="Radius on a log scale so tiny and huge both show">Log scale</button>
       <button type="button" onclick={() => ((lineups[key] = starting.map((i) => ({ ...i }))), (note = `Back to ${scene.title}'s own worlds.`))}>Start again</button>
       <button type="button" onclick={() => ((lineups[key] = []), (note = "Cleared."))} disabled={!items.length}>Clear</button>
     </div>
@@ -239,7 +239,7 @@
     {/if}
   </div>
   {#if note}<p class="note" role="status">{note}</p>{/if}
-  {#if mode === "true" && lineup.placed.some((p) => p.tiny)}<p class="note" data-hint="tiny">Some bodies are under a pixel beside the largest: try Log scale, or remove the largest.</p>{/if}
+  {#if mode === "true" && lineup.placed.some((p) => p.tiny)}<p class="note" data-hint="tiny">Some bodies are under a pixel beside the largest: try Scale: Readable (a log scale), or remove the largest.</p>{/if}
 
   {#if items.length}
     <table aria-label="Sizes in the lineup">
