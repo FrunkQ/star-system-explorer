@@ -2726,6 +2726,14 @@
   "limit": 0
  },
  {
+  "op": "matter_budget",
+  "cell": [
+   0,
+   0,
+   0
+  ]
+ },
+ {
   "op": "weather",
   "want": "climate",
   "world": "Earth"

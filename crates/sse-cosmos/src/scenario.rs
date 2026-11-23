@@ -62,6 +62,9 @@ pub struct CosmologyPack {
     pub epochs: EpochParams,
     #[serde(default)]
     pub haloes: crate::haloes::HaloParams,
+    /// DM3: the matter ledger.
+    #[serde(default)]
+    pub ledger: crate::ledger::LedgerParams,
     #[serde(default)]
     pub galaxy: crate::galaxy::GalaxyParams,
     #[serde(default)]
