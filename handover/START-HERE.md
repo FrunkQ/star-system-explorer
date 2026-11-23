@@ -56,6 +56,7 @@ The site is the GM shell (chart room) at `/`, the players page at `/players.html
 1. Read `/CLAUDE.md`, then this file, then the log of the last package. Any view or renderer package also follows `rendering-rules.md` (no precision jiggle: local orbits, nested frames, camera-relative numbers).
 2. `cargo test --workspace` must pass before you change anything.
 3. Open your track's file in `status/` and take the first package marked "next"; write its log in `packages/` as you go (evidence packet format: build plan section 2).
+   Screenshots are not committed (they had grown to 73 MB of the repo). Write them to `handover/packages/<PKG>-screens/` as before, which git now ignores, and copy that folder to the project files at `sse4/handover-screens/<PKG>-screens/`, where every earlier package's screenshots now live. Links in package logs such as `U16-screens/` mean that folder.
 4. At the end of a package: `scripts/check.sh`, update your track's file in `status/`, re-sync `design/`, commit as FrunkQ, push.
 
 ## Environment
