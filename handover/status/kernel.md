@@ -1,0 +1,76 @@
+# Status: Kernel
+
+Owner thread: "Build kernel resolve and rules". Covers: K, J, C, T1, T2, G, L, E, the kernel side of Y, TG, GH, DM2 to DM5, ND3, ND3b, ND6.
+
+Only the owner thread edits this file. One row per package: update it in the same pull request as the package. Logs are in `handover/packages/`. Index and standing rules: `handover/START-HERE.md`. Stage order: `handover/design/SSE4-coming-together.md`.
+
+| Package | State | Log |
+|---|---|---|
+| K1 workspace, encoding, hashes, maths, harness | done | packages/K1.md |
+| K2 addresses, quantities, units, keyed draws | done | packages/K2.md |
+| K3 chronicle, stores, checkpoints, branches, manifest | done | packages/K3.md |
+| K4 flows, validation, scheduler, solve, explain | done | packages/K4.md |
+| K5 packs, stacks, one-publisher, fictional labels | done | packages/K5.md |
+| K6 kernel API, worker, TS client, cancellation, cost classes, tiers | done | packages/K6.md |
+| J1 to J9 campaign record, logic blocks, boxes, engine blocks, programs (new track J, decided 19 Nov) | J1 to J5 and J7 done (kernel track, logs `packages/J1.md` to `J7.md`; the chart room still has to switch to the kernel intent registry, see J5.md); J6 (programs) next, after T3 NAV. Read `design/SSE4-record-logic-programs-design.md`, section 9 first (points of care against built code) | |
+| K0 V3 / Ovid / Evolution Lab source reading | done, Alex reviewing docs/v3-parity.md, v3-save-fields.md, ovid-agents.md, evolab-reuse.md | packages/K0.md |
+| K7 envelopes, partitioning, resolve, feasibility | done (kernel track) | packages/K7.md |
+| K8 rules, classification, sifters, significance | done (kernel track) | packages/K8.md |
+| K9 disclosure tiers, data views, scene building | done (kernel track) | packages/K9.md |
+| K10 suite socket and coordinator | done (kernel track) | packages/K10.md |
+| G0 default Milky-Way-like patch envelope | done (kernel track) | packages/G0.md |
+| G1 cosmology, cosmic web, epochs | done (kernel track) | packages/G1.md |
+| G2 haloes per cell, growth, spin, mergers | done (kernel track) | packages/G2.md |
+| G3 galaxy reservoirs, rings, element groups, what died here | done (kernel track) | packages/G3.md |
+| G4 patch envelopes from a galaxy, green regions, outcome-first | done (kernel track) | packages/G4.md |
+| G5 stars drawn per co-rotating cell: IMF, ages, metals, multiplicity, orbits through time, pins, formation input | done (kernel track) | packages/G5.md |
+| G6 galaxy events: history edits (ink a merger, starburst, quiet nucleus), supernovae, kilonovae, bursts, encounters and arm crossings drawn per cell, cross-patch exposure with travel time, before/after, "ink a merger" manifest | done (kernel track) | packages/G6.md |
+| G nuclei: black-hole seeds, Eddington-limited quasar episodes, light and class, unified-model views, hole mergers, tidal disruptions, the nucleus as a body | done (kernel track) | packages/G-nuclei.md |
+| K9 additions: grant op, tag-driven grants (V10 seats gaps) | done (kernel track) | packages/K9-grants.md |
+| Kernel API additions: stack adopt, manifest, scene, scan_toggle, grant, look_ahead | done (kernel track) | packages/K6-additions.md |
+| Numbers: exact float parse, JSON numbers decode by value (cross-track) | done (kernel track); other tracks merge and re-baseline | packages/numbers.md |
+| C1 axis registry, class records, schemes, SSE 3 classic | done (kernel track) | packages/C1.md |
+| C2 base physical atlas, habitability, gas mixes | done (kernel track); thresholds and hycean open for Alex's review | packages/C2.md |
+| L0 life suite sockets: interfaces, habitat graphs, empty suite | done (kernel track) | packages/L0.md |
+| L1a life box B: energy and nutrient caps per habitat, closures with reasons | done (kernel track) | packages/L1a.md |
+| L1b life boxes C, D, E: origin, capability graph, catastrophes, dated history with causes | done (kernel track) | packages/L1b.md |
+| L1c life boxes F, G: guilds with production shares, four lenses, traits from physics, vocabulary | done (kernel track) | packages/L1c.md |
+| L1d life boxes I, J: signatures by tier with confidence, false positive and negative, data views, sifters, hooks, life view | done (kernel track) | packages/L1d.md |
+| L2 life box H: life's fluxes and the planet's answer (air box), oxygenation by balance | done (kernel track) | packages/L2.md |
+| J1 the campaign record: notes, kept values, actors and relations; GM-only, with per-audience disclosures | done (kernel track) | packages/J1.md |
+| J2 typed values, logic blocks, conditions shared with K8, dice on the table secret, engine blocks (classify, place) | done (kernel track) | packages/J2.md |
+| J3 boxes: documents, nesting, inlining, explain, tests, replace | done (kernel track) | packages/J3.md |
+| C3 reverse placement in a system | done (kernel track) | packages/C3.md |
+| T1 epoch stepping, ageing star, secular orbits, symplectic windows | done (kernel track); giant phase sketch awaits F7 | packages/T1.md |
+| T2 look-ahead branch, commit, age the Solar System | done (kernel track); with Alex for review | packages/T2.md |
+
+## Done so far and what is next
+
+K7 to K10, G0 to G6, C1 to C3, L0, L1a to L1d, L2 (with E3 competing O2 sinks, `packages/E3.md`), E0 chemistries as data and reaction energetics (`packages/E0.md`), J1 to J5, J7, T1, T2 (also through the API), the U3 gaps, the V10 grant gaps and the UI asks (`adopt`, look-ahead write-back, `resolved_system`; K6-additions.md; `orbits_at`, campaign clock and calendars, `packages/orbits-clock-calendar.md`) galactic nuclei (`packages/G-nuclei.md`) the `sift` op for the agents (`packages/sift-op.md`) and J6 part 1 (programs, `packages/J6.md`) done; next J6 part 2 (NAV travel, pirate and patrol), then G7; one campaign clock with the two look-ahead accept choices and `set_system_age` with a reconstructed origin (`packages/T2-clock.md`), leftover clouds in `resolved_system` (`packages/clouds-read.md`), `classify_preview` for drafted game tables (`packages/classify-preview.md`); the E1 gradient catalogue as an opt-in life model (`packages/E1.md`); star cells and stored promotions through the kernel, night sky Y7a (`packages/Y7a.md`); tag declarations with a load-time check, campaign tags and exclusive groups, TG1 (`packages/TG1.md`); the physics wall, TG2 (`packages/TG2.md`); authored tags overrule rule tags, TG3 (`packages/TG3.md`); seeded chance on rules, TG4 (`packages/TG4.md`); tags level with facts in data views, TG5 (`packages/TG5.md`); dressing rules (universe packs place templates on worlds that fit), TG12 (`packages/TG12.md`); metabolisms grown from open gradients as an opt-in history, E2 (`packages/E2.md`); the master data sheet's reader, load checks and `read_matter`, MP1 (`packages/MP1.md`); constants as data with one handle and the reach report, MP1c part 1 (`packages/MP1c-part1.md`); soil as state made by life with a derived weathering factor and soil carbon in the ledger, opt-in, E4 (`packages/E4.md`); functional traits under selection with strain, extinction and rescue, E5 cut to what E6 needs (`packages/E5.md`); stars that follow a changed constant by homology, stamped ESTIMATED, MP1c part 2 (`packages/MP1c-part2.md`); a region's cover and biome from its climate, with fire, E6 part 1 (`packages/E6.md`); the air's available Gibbs energy feeding box I, E8 (`packages/E8.md`); the fill-star count tree by brightness class, night sky Y1 (`packages/Y1.md`); many phases per substance with load checks and `phase_at`, MP17 (`packages/MP17.md`); paste support for the Build desk, one-event batches with withdraw and restore (`packages/paste-ops.md`); the Look up block `sse.reference.lookup`, the one door onto the sheet, with "used by" from the wiring, MP17a (`packages/MP17a.md`); the sky from here, star by star through dust down to a limit, with giants made realistic, night sky Y2 (`packages/Y2.md`); other galaxies in the sky from the web around us, lit by the fill's own stars, night sky Y4 part 1 (`packages/Y4.md`); massive stars capped by the Humphreys–Davidson limit and a 6.5 sky in about half the time (`packages/Y2-fix.md`); each system's frame in the galaxy on `resolved_system` and `window_view`, Sol's measured (`packages/frame.md`); our galaxy's satellites as its surviving subhaloes (Y4 part 2, `packages/Y4.md`); next Earth's two radii named apart (owning threads) and the lint (CI, needs Alex's yes), turning E2 and E4 on in the kernel's coupled runs (the gradient model wiring), E6 part 2 (zonal and regional runs from the shared climate, the biome tile hand-off, the red-dwarf ring, wiring E4 and E5 into the history), then E7, interleaved with night sky Y4 part 3, Y7, Y8, Y9
+
+## Integration points
+
+The kernel now registers the real atom library and loads the base-physics pack (see P1 log, integration notes). The kernel track has merged that in.
+
+Kernel track integration points (K7 to K10):
+- New crates only: `sse-resolve`, `sse-sift`, `sse-observe`, `sse-suite` (path dependencies; root `Cargo.toml` untouched). No K1 to K6 interface changed.
+- Shared files touched: `crates/sse-wasm` (adds `engines_run()`), `scripts/build-harness.sh`, `tests/harness/{harness.js,index.html,run-node.mjs,run-browsers.mjs}` (the harness now also checks the four engine golden scenarios in Node and every browser).
+- Numbers (log `packages/numbers.md`, every track): serde_json `float_roundtrip` is on, and a JSON number that is integral and below 2^63 in size decodes as an integer, so `281` and `281.0` hash the same (limit 2^63, set in C1). Write fixture numbers as JavaScript writes them.
+- Kernel API additions (log `packages/K6-additions.md`): `stack.adopt` events when a stack is loaded into an open universe, plus `manifest`, `scene` (with an optional draft `observe` preview), `scan_toggle` and `atoms` ops, flow tests run at load_stack, and the `provides.other.observe` pack key.
+- Not yet in the kernel message API (H9.1): `resolve`, `query_feasible`, `sift`, `subscribe`. Wire them when the first consumer needs them (U2 for resolve and scenes, U5/V1 for data views, U8 for sift); each engine already has a pure function and a cost class (`ops()`) ready.
+- G0 (`sse-cosmos`, pack `packs/base-cosmos`): the default patch envelope F0 starts from (`SystemBirth`, fixture `tests/fixtures/cosmos/solar-patch.json`). It added three things to K7: broken power laws, given weights, and `CountSpec::Fill`. G0's log has a determinism note on JSON floats that applies to every track.
+- C1 (log `packages/C1.md`): pack `packs/sse3-classic` (SSE 3's 72 classes, exact SSE 3 scoring), pack key `provides.other.schemes`, `classify.relabel` events via `sse_sift::relabel::record`, golden `tests/golden/classify.json`.
+- C2 (log `packages/C2.md`): pack `packs/base-atlas` (physical, surface, air, habitability schemes; generated by `scripts/build-base-atlas.py`), gates now count in region fit, `Atlas::overlaps`, fixture `tests/fixtures/classify/exoplanets.json`.
+- L0 (log `packages/L0.md`): crate `sse-life` (fixed life interfaces, habitat graphs from world stacks, `NoLifeModel`), pack `packs/base-life` (habitat rules), fixture worlds Earth, Mars, Europa, Titan, Venus, golden `tests/golden/life.json`.
+- L1a (log `packages/L1a.md`): `sse-life::budget` (box B: energy caps from light and chemical supply, phosphorus caps, closures with reasons, biomass, feeding levels), `provides.other.life_budget` in `packs/base-life`, golden `tests/golden/life-budget.json`, harness engine `life-budget`.
+- L1b (log `packages/L1b.md`): `sse-life::history` (origin hazard with a dial, capability graph against opportunity, catastrophes with refuges and recovery, `record` to the chronicle), `provides.other.life_history`, Earth and Europa timelines in `scenario.rs`, golden `tests/golden/life-history.json`, harness engine `life-history`.
+- L1c (log `packages/L1c.md`): `sse-life::biosphere` (`resolve`: guilds, relations in four lenses, diversity, world traits from `WorldPhysics`), golden `tests/golden/life-biosphere.json`, harness engine `life-biosphere`.
+- L1d (log `packages/L1d.md`): `sse-life::signatures` (`Observables`, `signatures`, `facts`, `disclosure`) and `sse-life::sift` (`epochs`, `hooks`, `view`), golden `tests/golden/life-signatures.json`, harness engine `life-signatures`.
+- L2 (log `packages/L2.md`): `sse-life::history::{Boundary, StepFluxes, history_with}` and `sse-life::feedback` (`AirBox`, `CoupledManifest`, `coupled`), pack key `provides.other.life_feedback`, golden `tests/golden/life-feedback.json`, harness engine `life-feedback`.
+- J1 (log `packages/J1.md`): crate `sse-record` (notes, kept kinds `provides.other.record.kept`, actors), the kernel's separate GM-only record chronicle with its own hash, scene notes in `sse-observe`, ops `add_note`, `set_kept`, `add_actor`, `record`, `disclosures`. **UI track:** never broadcast the record; send each seat its `disclosures`.
+- J2 (log `packages/J2.md`): typed wires in `sse-flow` (`Shape`, `Val`, `NodeDoc.config`, `Atom::eval_typed`, `Env` and `World`; all optional, no hash changed), crate `sse-logic` (logic set, `to_blocks` for K8 predicates, `chance.roll` and `chance.draw` on the table secret with `commitment`, `engine.classify`, `engine.place`). `atoms` lists logic blocks with `class` and port `shape`. **UI track:** draw `class: logic` and `engine` blocks apart from physics; an engine block opens its own editor.
+- J3 (log `packages/J3.md`): boxes in `sse-flow::boxes` (`BoxDoc`, `NodeDoc.box`, `Flow::compile_with`, `box_decl`, `run_box_tests`), `provides.boxes` and box `replaces` in `sse-pack`, the kernel inlining at `load_stack`. Inner node ids are `<box node>/<inner>`. **UI track:** show a box collapsed using `Flow::boxes`; ask for a `boxes` op when the editor needs box faces.
+- G5 (log `packages/G5.md`): `sse-cosmos::stars` (`Stars`: cells, draws, orbits, state, pins, `birth`), golden `tests/golden/stars.json`, harness engine `stars`.
+- C3 (log `packages/C3.md`): crate `sse-place` (reverse placement through the base-physics flows, four outcomes, picker preview, chronicle commit), pack `packs/base-place`, fixture `tests/fixtures/place/systems.json`, golden `tests/golden/place.json`. The base atlas gained `needs`.
+- T1 and T2 (logs `packages/T1.md`, `T2.md`): crate `sse-time` (integrator written fresh from Yoshida 1990, not from REBOUND; Laplace-Lagrange; the ageing star on F0's life line with a giant-branch core clock; look-ahead branches, commit, replay), pack `packs/base-time`, fixture `tests/fixtures/time/solar-system.json`, golden `tests/golden/time.json`. One-line K3 fix in `Chronicle::branch_append` (branch cut from an empty chronicle). **Physics track:** F7's giant tables replace the core clock in `sse-time/src/star.rs` (`star_with`, `core_at`).
+- Pack content keys these engines read: `provides.other.rules`, `.axes`, `.classes`, `.sifters` (K8). Data views and disclosure maps are plain serde types (K9); a pack key for them is for U5 to choose.
