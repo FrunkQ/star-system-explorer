@@ -733,4 +733,6 @@ mod ftl_tests;
 #[cfg(test)]
 mod links_tests;
 #[cfg(test)]
+mod mission_tests;
+#[cfg(test)]
 mod tests;
