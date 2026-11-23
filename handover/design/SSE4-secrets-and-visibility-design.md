@@ -1,6 +1,6 @@
 # SSE4 secrets and visibility: one "Known to" control (track SV)
 
-Status: **proposed 23 Nov 2026, not yet accepted.** Ten questions for Alex in section 12.
+Status: **accepted in direction by Alex, 23 Nov 2026** ("just the small dot by the name was not intuitive but apart from that... this is a work of GENIUS!"), with one change he asked for: the mark is **a small eye**, not a dot, and it stays a symbol, not words ("WORDS too much... maybe just a small eye"). The ten questions in section 12 are taken as yes with that change unless he says otherwise.
 Mockup: `/mnt/project-files/sse4/SV-screens/known-to-mockup.html` (artifact "SSE4 Known to control", https://claude.ai/artifact/DiBSjywKnQGqcSRzWAHCeC). Screenshots beside it in `SV-screens/`.
 
 Asked for by Alex, 23 Nov: "Secrets we generally kept with a small visibility icon next to a piece of information in the previous version. We probably need to improve that, make it a bit more intuitive and feature it in far more places. Subtle yet not overwhelming." It came up over secret links between stars (space highways), and it replaces the plain eye proposed for V3 gap 21.
@@ -11,73 +11,73 @@ This note adds no second system. Everything underneath is already designed and m
 
 1. **One question.** Every thing and every fact can be asked "who knows this?", and the answer is always shown and changed the same way. The control is called **Known to**.
 2. **Pencil and ink.** On the GM's chart, what the table knows is drawn in ink and what only the GM knows is drawn in pencil (thin, dotted, quieter). Revealing something inks it in. This is the chart room's own language: an edit is already "inked onto the map".
-3. **One small mark.** A knowledge dot: hollow for GM only, half for partly known, solid for known to the table. It sits in the same place on everything and it is also the button.
-4. **One press to reveal.** Press the dot and the table knows. Everything rarer (one crew only, heard of but no details, a cover story, a date) is in the popup that opens from the dot.
+3. **One small mark.** A small eye: closed for GM only, half open for partly known, open for known to the table. It sits in the same place on everything and it is also the button. (First drawn as a dot; Alex found the dot by the name unclear and chose the eye, 23 Nov.)
+4. **One press to reveal.** Press the eye and the table knows. Everything rarer (one crew only, heard of but no details, a cover story, a date) is in the popup that opens from the eye.
 5. **Nothing leaks by absence.** A player's screen never shows a gap, a count or a blank line where a secret is. This is the territory design's "bare paper" rule, made general.
 
-Why this is better than V3's eye: an eye icon on every line is a wall of icons, it only says yes or no, it cannot say "to whom", and it is not visible on the map at all. Pencil and ink is seen at a glance over a whole chart without adding a single icon, and the dot only appears where a decision has been made.
+Why this is better than V3's eye, while keeping the eye people already know: V3 put an eye on every line, it only said yes or no, it could not say "to whom", and it was not visible on the map at all. Here pencil and ink is seen at a glance over a whole chart without adding a single icon, the eye has three states and opens onto "to whom", and it only appears where a decision has been made: one by the name, and one on a line with an exception.
 
 ## 2. What already exists, and what each part becomes
 
 | Exists | Where | In this design |
 |---|---|---|
 | Disclosure tiers, data views, an override per address inherited by children | handoff 6.7, `sse-observe` `effective_view`, `grant` | The rungs a thing can stand on for an audience. Unchanged. |
-| The Scanned button (flip a body between the campaign's "before" and "after" views) | handoff 6.7, `scan_toggle` | Pressing the dot **is** this action, on anything. The separate button goes. |
+| The Scanned button (flip a body between the campaign's "before" and "after" views) | handoff 6.7, `scan_toggle` | Pressing the eye **is** this action, on anything. The separate button goes. |
 | `observe.grant` events naming an audience | chronicle | Every reveal and every hide is one of these, dated, so "when did they learn it" stays history. |
-| Audiences and seats ("everyone", a crew, an empire by tag) | handoff 8.7 | The rows of the Known to popup. With one audience there are no rows, only the dot. |
-| Notes with an audience list; kept values with a tier; `misc` fields secret unless stated | record 2.1, 2.3 | The same dot on a note, a stock, an owner, a holding. |
-| Need-to-know on the wire: a hidden thing is not on the player's device | record 8A | The guarantee behind every dot. Unchanged, and tested on the wire. |
+| Audiences and seats ("everyone", a crew, an empire by tag) | handoff 8.7 | The rows of the Known to popup. With one audience there are no rows, only the eye. |
+| Notes with an audience list; kept values with a tier; `misc` fields secret unless stated | record 2.1, 2.3 | The same eye on a note, a stock, an owner, a holding. |
+| Need-to-know on the wire: a hidden thing is not on the player's device | record 8A | The guarantee behind every eye. Unchanged, and tested on the wire. |
 | "See as: the table" lens; "not known to the table", "long range", "rumour" under names on the Run desk | handoff 8.6, U14 | Kept. Pencil and ink carries the same information without the words; the words move to hover and to the selected body. |
-| "According to: as it is, as a power draws it, as the players know it" | territory design 8 | Unchanged. Holdings use the same dot. "As a power draws it" is the model for cover stories (section 6). |
+| "According to: as it is, as a power draws it, as the players know it" | territory design 8 | Unchanged. Holdings use the same eye. "As a power draws it" is the model for cover stories (section 6). |
 | Honesty marks (authored, impossible, fictional) | handoff 8.6 | A different question (is this real physics?) with a different mark (a stamp). The two never share a symbol. |
 | Remote survey and sensor rules that move a body up the ladder | handoff section 11, record 5 | Unchanged. They write the same grants a press does. |
 
 ## 3. The rungs
 
-For one audience, a thing stands on one rung of a short ladder. The ladder is the pack's own (handoff 6.7), so a body under the Traveller pack might have Hidden, Rumour, Long range, Scanned, Surveyed. Every ladder has the same three landmarks, and those are what the dot shows:
+For one audience, a thing stands on one rung of a short ladder. The ladder is the pack's own (handoff 6.7), so a body under the Traveller pack might have Hidden, Rumour, Long range, Scanned, Surveyed. Every ladder has the same three landmarks, and those are what the eye shows:
 
-| Dot | Name | Meaning | On the player's screen |
+| Eye | Name | Meaning | On the player's screen |
 |---|---|---|---|
-| hollow | **GM only** | not known to exist | nothing at all, and nothing where it would be |
-| half | **Heard of** | known to exist, with a name and a place, details held back | the name, a position, and the lines the rung allows |
-| solid | **Known** | everything the audience's data view shows at its top rung | as today |
+| closed | **GM only** | not known to exist | nothing at all, and nothing where it would be |
+| half open | **Heard of** | known to exist, with a name and a place, details held back | the name, a position, and the lines the rung allows |
+| open | **Known** | everything the audience's data view shows at its top rung | as today |
 
-Things without physics to survey (a link, a note, a holding, a map layer) have just these three. A thing with a survey ladder shows its rung name beside the dot in the popup ("Long range") and the dot is half until the top rung.
+Things without physics to survey (a link, a note, a holding, a map layer) have just these three. A thing with a survey ladder shows its rung name beside the eye in the popup ("Long range") and the eye is half open until the top rung.
 
-A **fact** on a thing (one card line) follows its thing's rung by default: the pack already says population needs Surveyed and colour needs only Long range. A line gets a dot of its own only when the GM makes an exception: show this one fact early, or keep this one fact back. So a card normally carries one dot, at its title, and a few more only where the GM has chosen something.
+A **fact** on a thing (one card line) follows its thing's rung by default: the pack already says population needs Surveyed and colour needs only Long range. A line gets an eye of its own only when the GM makes an exception: show this one fact early, or keep this one fact back. So a card normally carries one eye, at its title, and a few more only where the GM has chosen something.
 
 ## 4. The mark, and where it sits
 
-- **On a card:** one dot at the left of the title. Lines the table cannot see are in pencil: quieter ink and a dotted rule under the value. Hover or focus a line and its dot appears in the left margin; press it to make an exception. Lines with an exception keep their dot showing.
+- **On a card:** one small eye at the left of the title. Lines the table cannot see are in pencil: quieter ink and a dotted rule under the value. Hover or focus a line and its eye appears in the left margin; press it to make an exception. Lines with an exception keep their eye showing.
 - **On a chart or map:** a thing the table does not know is drawn in pencil: a thin dotted outline, a dotted line for a link or a border, the name in quieter italic. Heard of is a thin solid outline with no fill. Known is ordinary ink. No icons are added to the chart.
-- **In a list or table:** a narrow dot column on the left, sortable, so "show me what they don't know" is one press on the column head.
-- **On the Layers row:** a dot beside each layer. A whole layer (patrol districts, a smugglers' web of links) can be GM only.
+- **In a list or table:** a narrow eye column on the left, sortable, so "show me what they don't know" is one press on the column head.
+- **On the Layers row:** an eye beside each layer. A whole layer (patrol districts, a smugglers' web of links) can be GM only.
 - **On the time ruler:** an event the table has not learnt is a pencil tick.
-- **On a note:** the dot replaces the note's "audience" field.
+- **On a note:** the eye replaces the note's "audience" field.
 
 When the marks show:
 
 - **Explore desk:** never. Someone using SSE4 as an astronomy tool never meets secrecy.
-- **Build desk:** the dots and pencil show, so secrets are set while building.
+- **Build desk:** the eyes and pencil show, so secrets are set while building.
 - **Run desk:** the same, plus the table ledger (section 7).
 - **Players' screens:** never. A player sees ink only. What they do get is a moment of motion when something is revealed (section 8).
-- Until a campaign has been shared or something has been hidden, Build shows no dots either. The control appears when it becomes relevant, as seats and requests already do.
+- Until a campaign has been shared or something has been hidden, Build shows no eyes either. The control appears when it becomes relevant, as seats and requests already do.
 
-One accent colour still holds. Pencil is the existing muted ink with a dotted stroke, and the dot is drawn in ordinary ink. Nothing here uses colour to carry meaning, so it works in the Night chart and for colour-blind users.
+One accent colour still holds. Pencil is the existing muted ink with a dotted stroke, and the eye is drawn in ordinary ink, its three states told apart by shape. Nothing here uses colour to carry meaning, so it works in the Night chart and for colour-blind users.
 
 ## 5. The control
 
-**Press the dot:** reveal to the table. The thing inks itself in (a 180 ms draw, an instant change under reduced motion), and a small slip opens from the dot: "Shown to the table. Undo". Press a solid dot and it goes back to GM only, with the same slip.
+**Press the eye:** reveal to the table. The thing inks itself in (a 180 ms draw, an instant change under reduced motion), and a small slip opens from the eye: "Shown to the table. Undo". Press an open eye and it goes back to GM only, with the same slip.
 
 While players are connected, a reveal waits two seconds before it is sent, so Undo within that time truly means they never saw it. After that, hiding still works (the thing leaves their screens), and the slip says plainly that the table has seen it.
 
-**Hold the dot, right-click it, or press the small caret beside it:** the **Known to** popup opens from the dot. On a phone it is a sheet from the foot of the screen.
+**Hold the eye, right-click it, or press the small caret beside it:** the **Known to** popup opens from the eye. On a phone it is a sheet from the foot of the screen.
 
 ```
 Known to                                    Tarn Deep (base)
-The table        ○ GM only  ◐ Heard of  ● Known
-  Kestrel crew   ○          ◐           ●        (rows appear only with more than one audience)
-  The Vesh       ○          ◐           ●
+The table        closed: GM only   half: Heard of   open: Known
+  Kestrel crew   ·          ·           ·        (rows appear only with more than one audience)
+  The Vesh       ·          ·           ·
 Exceptions       Garrison strength: kept back
 Told instead     Purpose: "ice mining station"       (section 6)
 From             now ▾        (as of an earlier date; from a later date)
@@ -100,11 +100,11 @@ Bulk reveal on a chart: drag a box or lasso, or pick rows in a list, then one "R
 
 ## 6. Partial knowledge, rumour and cover stories
 
-- **Heard of** is the half dot: the base is on the map with a name, and the card says only what that rung allows. It is the fixture's "rumour" view made a standard landmark.
+- **Heard of** is the half-open eye: the base is on the map with a name, and the card says only what that rung allows. It is the fixture's "rumour" view made a standard landmark.
 - **A cover story** is a fact the audience is shown in place of the true one: the base's purpose reads "ice mining station" to the table while the GM's card says "listening post". In the popup it is "Told instead". On the GM's card the true value stays in ink with the told value in pencil beneath it ("the table is told: ice mining station"). On the player's screen the told value looks like any other fact, with no mark.
 - Underneath, a cover is an authored value addressed to an audience, the same shape as a claim in the territory design ("as the Crown draws it") and as names held per audience. A data view override gains one more precision beside exact, rounded and band: **told**. The true value is never sent.
 - Revealing the truth supersedes the cover with a dated event, so the campaign remembers "they believed it was a mining station until day 212", and Minerva can use it.
-- Programs sense through their owner's audience (record 6), so the same control decides what a patrol or a pirate knows. "The pirates do not know this lane" is one dot. A program fooled by a cover story costs nothing extra.
+- Programs sense through their owner's audience (record 6), so the same control decides what a patrol or a pirate knows. "The pirates do not know this lane" is one eye. A program fooled by a cover story costs nothing extra.
 
 ## 7. What the table knows, at a glance
 
@@ -124,7 +124,7 @@ Three views of the same knowledge, each one press away on the Run desk:
 ## 9. Defaults
 
 - **Generated things** (stars, worlds, belts) follow the campaign's data views, as now.
-- **A new thing the GM makes** starts as known as the place it is in: a base on a world the table has surveyed is known, a base on a world they have not found is GM only. Its dot shows at once, so the choice is visible and one press changes it.
+- **A new thing the GM makes** starts as known as the place it is in: a base on a world the table has surveyed is known, a base on a world they have not found is GM only. Its eye shows at once, so the choice is visible and one press changes it.
 - **GM notes and `misc` fields** always start GM only.
 - **Packs are public** (record 8A): a pack's "secret" base is only secret from players who have not read the pack. A pack marks such things to start GM only, and that is honest at an RPG table. Scenario secrets that must hold are made on the GM's machine.
 - **Exports:** "Export for players" and the players' page carry only what the table knows. A campaign shared to Explorers is a GM's file and carries everything, with its secrets still marked.
@@ -132,7 +132,7 @@ Three views of the same knowledge, each one press away on the Run desk:
 ## 10. What this does not do (4.0)
 
 - Knowledge does not spread by itself. No gossip, no news travelling along links, no spies. Those arrive with 4.1's living civilisations, and they will write the same grants.
-- No per-player secrets within a crew unless the GM makes more seats. One table, one dot, is the default.
+- No per-player secrets within a crew unless the GM makes more seats. One table, one eye, is the default.
 - No strict enforcement beyond what is ruled: ordinary seats hold the seed, so generated worlds are hidden on trust; authored secrets and the whole record are never sent (record 8A).
 
 ## 11. Work packages and who takes them
@@ -140,7 +140,7 @@ Three views of the same knowledge, each one press away on the Run desk:
 | Id | What | Thread | Check |
 |---|---|---|---|
 | SV1 | One kernel answer, `known_to(address, field?)`: for each audience the rung, the landmark (GM only, Heard of, Known), exceptions and any cover. One intent, `set_known`, with a scope (this, with children, a list) that writes `observe.grant` events. Per-thing exceptions for one field. Counts and lists built from the audience's knowledge. | Build kernel resolve and rules | a hidden thing and a kept-back field are absent from every byte sent to a seat; a scoped reveal is one undo; counts never include hidden things |
-| SV2 | The dot, pencil styles and the Known to popup as one shared component with tokens; on the card title, card lines, notes and lists; the two-second hold while players are connected. Closes V3 gap 21. | Make the SSE4 test drive work end to end (chart room) | desktop, phone and Night chart screenshots; reveal and undo by keyboard alone; reduced motion |
+| SV2 | The eye (three states), pencil styles and the Known to popup as one shared component with tokens; on the card title, card lines, notes and lists; the two-second hold while players are connected. Closes V3 gap 21. | Make the SSE4 test drive work end to end (chart room) | desktop, phone and Night chart screenshots; reveal and undo by keyboard alone; reduced motion |
 | SV3 | Pencil and ink on charts: the system chart, galaxy and sector charts, links (HW3), territory layers (OV6 and OV9 use this control and add none of their own), the Layers row, time ruler ticks. A shared draw style in the renderer's view kit. | Build photoreal renderer (shared view kit), Build galaxy charts and travel screens (links, voyages, sector charts) | the same secret reads the same on every chart; HUD off still hides nothing from the GM that matters |
 | SV4 | Run desk: the table ledger, peek, box and lasso reveal, Hand over. | chart room | "what does the table know of Kestrel" answered without opening a card |
 | SV5 | Cover stories: precision `told` in data views, "Told instead" in the popup, the GM's two-line display, supersede on reveal. | kernel, then chart room | the true value never reaches a seat; the cover and its end are both dated events |
@@ -153,11 +153,11 @@ Order: SV1 and SV2 first (they give links, bases and notes a working secret), th
 
 Each has my recommendation. Answer in the usual way ("yes to 1, 2 and 4").
 
-1. **Pencil and ink as the way secrets look on the GM's chart, with one dot as the mark and the button, in place of an eye icon?** Recommend yes.
+1. **Pencil and ink as the way secrets look on the GM's chart, with one mark that is also the button?** Yes; Alex chose a small eye for the mark, 23 Nov.
 2. **The name "Known to", with the three landmarks GM only, Heard of, Known?** Recommend yes. "The table" stays the word for all players.
-3. **One press on the dot reveals to the table; everything finer is in the popup?** Recommend yes. It is the Scanned button made general, and the Scanned button itself goes.
+3. **One press on the eye reveals to the table; everything finer is in the popup?** Recommend yes. It is the Scanned button made general, and the Scanned button itself goes.
 4. **Hold a reveal for two seconds while players are connected, so Undo truly unsends it?** Recommend yes. A mis-press on a phone is the one mistake here that cannot be taken back.
-5. **A fact follows its thing unless the GM makes an exception, so a card normally shows one dot?** Recommend yes. The alternative, a dot on every line, is V3's eye again.
+5. **A fact follows its thing unless the GM makes an exception, so a card normally shows one eye?** Recommend yes. The alternative, an eye on every line, is V3 again.
 6. **A new GM-made thing starts as known as its place; notes always start GM only?** Recommend yes. The other choice is "everything new starts GM only", safer but more pressing.
 7. **Cover stories ("Told instead") in 4.0, as package SV5?** Recommend yes. It is set by hand, it reuses the claim shape, and no other tool gives a GM a map that lies on purpose with the truth kept beside it.
 8. **Hand over (give one audience what another knows of a place) in 4.0?** Recommend yes. One action covers bought charts, captured databases and treasure maps.
