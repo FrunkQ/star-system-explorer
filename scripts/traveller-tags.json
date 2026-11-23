@@ -5,6 +5,15 @@
    "id": "traveller",
    "label": "Traveller codes",
    "about": "Tags the Traveller code sheet derives from UWP and world facts (trade codes, bases, zones, gear)."
+  },
+  {
+   "id": "status",
+   "label": "Status",
+   "about": "A construct's condition, set by the GM. A status tag carries no number: pack triggers set readiness from it, visibly.",
+   "applies_to": [
+    "construct"
+   ],
+   "exclusive": false
   }
  ],
  "tags": [
@@ -352,6 +361,22 @@
   {
    "id": "traveller.need.low_ground",
    "label": "What to wear outside: low ground"
+  },
+  {
+   "id": "status.derelict",
+   "label": "Derelict",
+   "about": "abandoned or dead in space; its readiness drops to 0 when tagged",
+   "group": "status",
+   "source": "authored",
+   "tier": "scanned"
+  },
+  {
+   "id": "status.damaged",
+   "label": "Damaged",
+   "about": "damaged; its readiness is held at 0.5 or below while tagged",
+   "group": "status",
+   "source": "authored",
+   "tier": "scanned"
   }
  ]
 }

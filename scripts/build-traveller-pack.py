@@ -739,10 +739,50 @@ TEMPLATES = [
     construct("solar_array", "site", "Hardened solar array", "a power farm built to ride out stellar flares",
               modules=["surge breakers", "repair drones"], tags=("power",)),
 ]
+# TG9 (record-logic-programs design 8.1): a ship's or station's discipline
+# and readiness are kept values from 0 to 1, never numbers riding on tags.
+# The template gives the default (a navy hull is disciplined, a tramp less
+# so: game defaults written for this pack, not physics); the GM, a program
+# in scope, or one of the status triggers below may write them.
+DISCIPLINE = {"courier": 0.8, "trader": 0.6, "far_trader": 0.5, "patrol": 0.9, "shuttle": 0.6, "heavy_lifter": 0.7,
+              "highport_a": 0.7, "highport_b": 0.6, "naval_base": 0.9, "naval_depot": 0.95, "scout_base": 0.8,
+              "way_station": 0.6, "research_station": 0.6, "corsair_base": 0.4}
+for t in TEMPLATES:
+    if t["id"] in DISCIPLINE:
+        t["kept"]["ship.readiness"] = 1.0
+        t["kept"]["ship.discipline"] = DISCIPLINE[t["id"]]
+# Status tags act only through these visible triggers. Derelict sets
+# readiness to 0 once, when the tag appears: the GM can then set it to
+# anything with the tag left in place. Damaged holds readiness at 0.5 or
+# below for as long as the tag is there. Removing a tag restores nothing.
+STATUS_RULES = [
+    {"id": "traveller.status.derelict",
+     "when": {"on_condition": {"condition": {"if": "tag", "tag": "status.derelict"}}},
+     "scope": {"tag": "construct"},
+     "effects": [{"effect": "set_kept", "kind": "ship.readiness", "value": 0.0,
+                  "reason": "tagged derelict"}],
+     "explain": "a construct tagged derelict drops to readiness 0 (the GM may set it otherwise afterwards)"},
+    {"id": "traveller.status.damaged",
+     "when": {"on_condition": {"condition": {"if": "all", "of": [
+         {"if": "tag", "tag": "status.damaged"},
+         {"if": "range", "field": "ship.readiness", "min": 0.5000001}]}}},
+     "scope": {"tag": "construct"},
+     "effects": [{"effect": "set_kept", "kind": "ship.readiness", "value": 0.5,
+                  "reason": "tagged damaged: readiness at most 0.5"}],
+     "explain": "a construct tagged damaged runs at readiness 0.5 at most until the tag is taken off"},
+]
+TRIGGERS["rules"].extend(STATUS_RULES)
+KEPT_WRITERS = ["gm", *[f"template.{t['id']}" for t in TEMPLATES]]
 RECORD = {"kept": [
     {"id": "construct.crew", "shape": "number", "range": [0.0, 1.0e7], "default": 0, "tier": "scanned",
-     "writers": ["gm", *[f"template.{t['id']}" for t in TEMPLATES]],
+     "writers": KEPT_WRITERS,
      "describes": "people aboard or living there now"},
+    {"id": "ship.readiness", "shape": "number", "range": [0.0, 1.0], "default": 1, "tier": "scanned",
+     "writers": [*KEPT_WRITERS, *[f"effect.{r['id']}" for r in STATUS_RULES]],
+     "describes": "how ready it is to go or to fight now, from 0 (dead in space) to 1 (fully ready)"},
+    {"id": "ship.discipline", "shape": "number", "range": [0.0, 1.0], "default": 0.5, "tier": "scanned",
+     "writers": KEPT_WRITERS,
+     "describes": "how well its crew keeps to orders and drill, from 0 to 1; programs read it (a patrol reacts faster when it is high)"},
 ]}
 
 pack = {
