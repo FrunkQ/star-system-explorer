@@ -550,6 +550,7 @@ pub(crate) fn spec_from_facts(facts: &Facts, system: &Address) -> Option<SystemS
 /// above 10 Earth masses with a density under 2500 kg/m^3.
 fn bodies_from_facts(
     facts: &Facts,
+    catalogued: &Facts,
     spec: &SystemSpec,
     s: &sse_surface::SurfaceSettings,
 ) -> Vec<sse_surface::Body> {
@@ -615,8 +616,48 @@ fn bodies_from_facts(
             None if r.get("body.oceans") == Some(&Value::Bool(true)) => 1.0,
             None => 0.0,
         };
+        // A catalogued world brings what was measured: its own Bond albedo,
+        // its mean surface temperature and its air. Only what is missing is
+        // estimated (equilibrium with the star, the pack's greenhouse).
+        let albedo = r
+            .get("body.albedo")
+            .and_then(as_f64)
+            .filter(|x| (0.0..1.0).contains(x))
+            .unwrap_or(s.albedo_default);
         let greenhouse = if oceans > 0.0 { s.greenhouse_k } else { 0.0 };
-        let t_eq = teff * m::sqrt(r_star / (2.0 * a_star)) * m::pow(1.0 - s.albedo_default, 0.25);
+        let t_eq = teff * m::sqrt(r_star / (2.0 * a_star)) * m::pow(1.0 - albedo, 0.25);
+        // A measured mean temperature belongs to the world it was measured
+        // on. Typed by the GM, it stands as typed. Catalogued, it holds the
+        // air's warming as a ratio to equilibrium (the grey factor
+        // (1 + 3/4 tau)^(1/4)), so a world moved or re-whitened since keeps
+        // its air but answers to its new sunlight.
+        let measured = r
+            .get("planet.surface_temperature")
+            .and_then(as_f64)
+            .filter(|t| *t > 0.0);
+        let t_surface_k = match measured {
+            None => t_eq + greenhouse,
+            Some(t) => {
+                let cat = catalogued.get(a);
+                let same = cat
+                    .and_then(|c| c.get("planet.surface_temperature"))
+                    .and_then(as_f64)
+                    == Some(t);
+                match (
+                    same,
+                    cat.and_then(|c| equilibrium_of(c, catalogued, s, teff, r_star)),
+                ) {
+                    (true, Some(t_eq_then)) if t_eq_then > 0.0 => t * t_eq / t_eq_then,
+                    _ => t,
+                }
+            }
+        };
+        let pressure_pa = r
+            .get("atmosphere.surface_pressure")
+            .or_else(|| r.get("body.surface_pressure"))
+            .and_then(as_f64)
+            .unwrap_or(0.0)
+            .max(0.0);
         out.push(sse_surface::Body {
             address: a.clone(),
             label: r
@@ -630,19 +671,13 @@ fn bodies_from_facts(
             water_fraction: 0.0,
             oceans,
             deep_envelope: mass_earth > 10.0 && density < 2500.0,
-            pressure_bar: r
-                .get("body.surface_pressure")
-                .and_then(as_f64)
-                .map(|p| p / 1e5)
-                .unwrap_or(0.0),
+            pressure_bar: pressure_pa / 1e5,
             c_o: 0.55,
             k40_rel: 1.0,
             r_process_rel: 1.0,
             age_gyr: spec.age_myr / 1000.0,
             magma_end_myr: 0.0,
-            climate: sse_surface::Climate::Fixed {
-                t_surface_k: t_eq + greenhouse,
-            },
+            climate: sse_surface::Climate::Fixed { t_surface_k },
             tidal_w_m2: None,
             orbit: Some(sse_surface::Orbit {
                 a_au: a_own / AU,
@@ -676,6 +711,58 @@ fn bodies_from_facts(
                 }),
             core_light_fraction: None,
         });
+    }
+    out
+}
+
+/// Equilibrium temperature of a fact row (its own orbit, or its host's for a
+/// moon; its own Bond albedo, else the pack default), for comparing a world
+/// now with the world as catalogued.
+fn equilibrium_of(
+    r: &BTreeMap<String, Value>,
+    facts: &Facts,
+    s: &sse_surface::SurfaceSettings,
+    teff: f64,
+    r_star: f64,
+) -> Option<f64> {
+    let host: Option<Address> = r
+        .get("orbit.host")
+        .and_then(as_text)
+        .and_then(|h| h.parse().ok());
+    let own = r.get("orbit.semi_major_axis").and_then(as_f64);
+    let a = match host.as_ref().and_then(|h| facts.get(h)) {
+        Some(h) if !h.contains_key("star.effective_temperature") => {
+            h.get("orbit.semi_major_axis").and_then(as_f64)
+        }
+        _ => own,
+    }?;
+    let albedo = r
+        .get("body.albedo")
+        .and_then(as_f64)
+        .filter(|x| (0.0..1.0).contains(x))
+        .unwrap_or(s.albedo_default);
+    (a > 0.0).then(|| teff * m::sqrt(r_star / (2.0 * a)) * m::pow(1.0 - albedo, 0.25))
+}
+
+/// The facts as their catalogued events left them: only events with
+/// catalogued evidence, in fold order, the last value of each field kept.
+fn catalogued_facts(ch: &Chronicle, system: &Address) -> Facts {
+    let mut sel: Vec<&Event> = ch
+        .events()
+        .iter()
+        .filter(|e| e.body.evidence == Evidence::Catalogued)
+        .collect();
+    sel.sort_by_key(|e| e.order_key());
+    let mut out: Facts = BTreeMap::new();
+    for e in sel {
+        for (a, fields) in &e.body.payload.set {
+            if system.contains(a) {
+                let row = out.entry(a.clone()).or_default();
+                for (k, v) in fields {
+                    row.insert(k.clone(), v.clone());
+                }
+            }
+        }
     }
     out
 }
@@ -797,7 +884,7 @@ pub(crate) fn worlds_at(
             let spec = spec_from_facts(&facts, system);
             let bodies = spec
                 .as_ref()
-                .map(|sp| bodies_from_facts(&facts, sp, s))
+                .map(|sp| bodies_from_facts(&facts, &catalogued_facts(ch, system), sp, s))
                 .unwrap_or_default();
             let source = if adopted_v3(ch, system) {
                 "v3"
