@@ -4,9 +4,9 @@
   derived values are read-only and open the kernel's explanation.
 -->
 <script lang="ts">
-  import { CURIOUS_FACTS, HONESTY_MARKS, namesOnStack, asPlayers, curiousDisplay, curiousSentence, headline, cardFacts, cardFor, commitEdit, factEdit, gmStamps, hasTool, primaryOf, type Json, type PlayerContext, type SceneFact, type SystemScene, type ViewContext, type Vocab } from "../../../ui-contract/src/index.ts";
+  import { CURIOUS_FACTS, HONESTY_MARKS, namesOnStack, asPlayers, curiousDisplay, curiousSentence, headline, cardFacts, cardFor, commitEdit, factEdit, gmStamps, hasTool, primaryOf, eyesShow, secrecyRelevant, type KnownChange, type KnownTo as KnownRead, type Json, type PlayerContext, type SceneFact, type SystemScene, type ViewContext, type Vocab } from "../../../ui-contract/src/index.ts";
   import PlayerCard from "../../player-stack/src/PlayerCard.svelte";
-  import { Card, CardField, Stamp, opensFrom } from "../../../chart-grammar/src/index.ts";
+  import { Card, CardField, KnownTo, Stamp, opensFrom } from "../../../chart-grammar/src/index.ts";
   import { parseFact } from "./parse.ts";
   import Explain from "./Explain.svelte";
   import NameCard from "./NameCard.svelte";
@@ -32,6 +32,28 @@
     return namesOnStack([...st.base, ...(st.campaign ? [st.campaign] : [])]).schemes.length > 0;
   });
   let namesOpen = $state(false);
+  // Known to (SV2): who knows this body, read from the kernel on the GM's Build and Run desks. The eye shows once
+  // secrecy matters here (something held back, or the campaign shared); a press reveals or hides through set_known.
+  let known = $state.raw<KnownRead | null>(null);
+  $effect(() => {
+    const a = subject?.address;
+    void ws.revision;
+    known = null;
+    if (!a || ctx.session.seat.authority !== "gm" || (ws.desk !== "build" && ws.desk !== "run")) return;
+    let live = true;
+    void ctx.session.knownTo(a).then((r) => {
+      if (live && r.ok) known = r.value;
+    });
+    return () => (live = false);
+  });
+  const eye = $derived(!!known && eyesShow(ws.desk, secrecyRelevant(known, !!ws.shared)));
+  const inside = $derived(!!subject && scene.subjects.some((x) => x.parent === subject.address));
+  async function setKnown(c: KnownChange): Promise<string | null> {
+    if (!subject) return "nothing selected";
+    const r = await ctx.session.send({ kind: "set_known", address: subject.address, ...c, at_yr: ws.now_yr });
+    if (r.status === "applied") return (ws.revision++, null);
+    return r.status === "refused" ? r.reason : r.status === "pending" ? "sent to the GM" : r.message;
+  }
   const listed = $derived(curious && !allFacts ? headline(shown) : shown);
   const sentence = $derived(subject && depth === "curious" ? curiousSentence(subject, scene.subjects.find((x) => x.address === subject.parent)?.label) : null);
   const published = $derived(subject && depth === "engine" ? shown.filter((f) => f.publisher) : []);
@@ -90,12 +112,16 @@
   }
 </script>
 
+{#snippet knownLead()}
+  {#if known && subject}<KnownTo read={known} label={subject.label} hold={(ws.players_online ?? 0) > 0} children={inside} onset={setKnown} />{/if}
+{/snippet}
+
 <div class="wrap">
   <!-- A new subject's card opens from its body on the chart (dynamic minimalism); edits to the same subject do not. -->
   {#key subject?.address}
   <div use:opensFrom={() => (subject ? document.querySelector(`[data-address="${CSS.escape(subject.address)}"]`) : null)}>
   {#if subject}
-    <Card title={subject.label} subtitle={subject.subtitle}>
+    <Card title={subject.label} subtitle={subject.subtitle} lead={eye && known ? knownLead : undefined}>
       {#if stamps.length}
         <div class="stamps">{#each stamps as k (k)}<Stamp kind={k} />{/each}</div>
       {/if}
