@@ -150,7 +150,17 @@ test("the kernel's Earth: surface_frames read whole, every layer drawable, event
     const pole = cellOf(tl, 0, 0, -1);
     const equator = cellOf(tl, 1, 0, 0);
     assert.ok((valueAt(tl, "temp_k", pole, now) ?? 0) < (valueAt(tl, "temp_k", equator, now) ?? 0) - 30);
-    assert.ok((valueAt(tl, "ice_m", pole, now) ?? 0) > 100, "Antarctic-like ice today");
+    // Ice sheets at high latitude: the plates decide whether land sits on the pole itself, so look over both caps
+    // (above 60 degrees) rather than at the one cell under the pole.
+    let capIce = 0;
+    for (let lat = 60; lat <= 90; lat += 3)
+      for (let lon = 0; lon < 360; lon += 6)
+        for (const sgn of [-1, 1]) {
+          const la = (sgn * lat * Math.PI) / 180, lo = (lon * Math.PI) / 180;
+          const c = cellOf(tl, Math.cos(la) * Math.cos(lo), Math.cos(la) * Math.sin(lo), Math.sin(la));
+          capIce = Math.max(capIce, valueAt(tl, "ice_m", c, now) ?? 0);
+        }
+    assert.ok(capIce > 100, `Antarctic-like ice today (thickest cap ice ${capIce} m)`);
     const again = await s.surfaceFrames({ fixture: "Earth", frames_max: 12 });
     assert.ok(again.ok);
     assert.deepEqual(readFrames(again.frames as unknown as RawFrames).frames[3]!.fields.plate, tl.frames[3]!.fields.plate, "the same world each time");
