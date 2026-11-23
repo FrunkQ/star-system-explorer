@@ -224,6 +224,8 @@ New fixtures: Pluto, Charon, Triton, Enceladus, Miranda, Mimas, Ceres, Iapetus a
 | 4.1 Alien life with culture and technology (after 4.0) | a new evolutionary biology; appearance; Evolution Lab windows (L3), open evolution (L4), the technosphere (L5); grown political histories (OV14); automated tech trees | watch a species evolve, take up tools and build its own civilisation, its tech level and borders growing by themselves on the time ruler |
 | 4.1 Economy (after 4.0) | EC0 design, then its own packages | goods priced by where they are scarce and what it costs to carry them; trade ships; players buying, selling and hauling; autopilots that move resources for a reason, with the conflict that follows |
 
+**Version 4.1, headline (Alex, 23 Nov): "bringing dynamic life to the simulation."** The two 4.1 rows above are its parts: alien life that grows its own culture and technology (with grown histories and automated tech trees), and the economy driving the autopilots. 4.0 sets and records these by hand; 4.1 brings the systems that run them and add the story.
+
 M6 and M7 are independent of each other and of M5 after M2, so they can run in parallel.
 
 The milestones above group packages by subject. The order of joining them up into the app is the six stages of `SSE4-coming-together.md`: test drive; one system told in full; one language underneath; the galaxy has a past; run a game; show it.
