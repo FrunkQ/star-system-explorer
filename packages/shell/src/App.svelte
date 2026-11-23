@@ -132,6 +132,8 @@
   });
   // The view controls' height: what sits below them starts there, however many rows they wrap to.
   let viewbarH = $state(0);
+  // The kicker gives way whole when the bar is too full to say anything with it ("IN…" helped nobody).
+  let kickerW = $state(999);
 
   // The instrument rail (top-level design 2.2) at the scale in view: system, world, or the Workshop.
   let railScale = $state<RailScale>("system");
@@ -298,6 +300,7 @@
     ws.campaign_now_yr = save.workspace.campaign_now_yr ?? save.workspace.now_yr;
     ws.campaign_epoch_yr = save.workspace.campaign_epoch_yr ?? base.now_yr;
     ws.overlay_anchors = save.workspace.overlay_anchors ?? {};
+    ws.party = save.workspace.party ?? null;
     savedAt = save.saved_at;
     const events = savedEvents(save);
     keptNote = `Reopened the campaign kept ${new Date(save.saved_at).toLocaleString("en-GB", { dateStyle: "medium", timeStyle: "short" })}: ${events} ${events === 1 ? "event" : "events"}.`;
@@ -316,7 +319,7 @@
       root: ROOT,
       state_hash: await s.stateHash(),
       export: ex.export,
-      workspace: JSON.parse(JSON.stringify({ applied: ws.applied, undo: ws.undo, redo: ws.redo, now_yr: ws.now_yr, campaign_now_yr: ws.campaign_now_yr, campaign_epoch_yr: ws.campaign_epoch_yr, overlay_anchors: ws.overlay_anchors ?? {} })) as CampaignSave["workspace"],
+      workspace: JSON.parse(JSON.stringify({ applied: ws.applied, undo: ws.undo, redo: ws.redo, now_yr: ws.now_yr, campaign_now_yr: ws.campaign_now_yr, campaign_epoch_yr: ws.campaign_epoch_yr, overlay_anchors: ws.overlay_anchors ?? {}, party: ws.party ?? null })) as CampaignSave["workspace"],
       saved_at: new Date().toISOString(),
       ...(st.added.length || st.campaign ? { stack: { added: st.added as unknown as Json[], campaign: (st.campaign ?? null) as unknown as Json } } : {}),
     });
@@ -1448,7 +1451,7 @@
       {/each}
     </nav>
     <!-- The system's subtitle belongs to the system; above it the line itself says where. -->
-    {#if railScale === "system" || railScale === "world" || railScale === "workshop"}<div class="kicker">{scene.subtitle} · {formatYears(ws.now_yr)}</div>{/if}
+    {#if railScale === "system" || railScale === "world" || railScale === "workshop"}<div class="kicker" class:gone={kickerW < 140} bind:clientWidth={kickerW} title="{scene.subtitle} · {formatYears(ws.now_yr)}">{scene.subtitle} · {formatYears(ws.now_yr)}</div>{/if}
     <div class="spacer"></div>
     <!-- What (2.3): the desk. Explore looks, Build changes, Run is the table. -->
     <Segmented label="Desk" value={desk} options={DESKS} onchange={chooseDesk} slide />
@@ -1918,6 +1921,7 @@
   .barbtn {
     height: 32px;
     padding: 0 14px;
+    white-space: nowrap;
     border: var(--sse-line) solid var(--sse-ink);
     background: transparent;
     color: var(--sse-ink);
@@ -2081,6 +2085,9 @@
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
+  }
+  .kicker.gone {
+    visibility: hidden;
   }
   .spacer {
     flex: 1;

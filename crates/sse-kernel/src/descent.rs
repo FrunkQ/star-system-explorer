@@ -44,6 +44,10 @@ pub(crate) fn plan_descent(a: Ask, cache: &mut Cache) -> Result<serde_json::Valu
                 ),
             )
         })?,
+        // The party's own ship (`{ship: <id or nav ship>}`): landed on its own numbers.
+        serde_json::Value::Object(o) if o.contains_key("ship") => {
+            sse_nav::entry::ship_as_lander(&nav.entry, &crate::nav::ship(&nav, &o["ship"])?)
+        }
         other => serde_json::from_value(other.clone()).map_err(|e| bad(format!("lander: {e}")))?,
     };
     if !(-90.0..=90.0).contains(&a.lat_deg) || !a.lon_deg.is_finite() {

@@ -1,0 +1,186 @@
+{
+  "construct": "voyager-2",
+  "name": "Voyager 2",
+  "about": "RS3 test log. Big burns and flybys only (Alex, 23 Nov 2026); trims left out (fudge: big-burns-only). Times are whole universe seconds as in tests/fixtures/nav/sol.json (J2000 = 63115200000), on TT/TDB: UTC dates have TT-UTC added. Flyby times and closest distances (from the planet's centre) are Horizons' osculating periapsis passages (COMMAND -32, centre 500@599 etc., queried 23 Nov 2026). The last piece is a hyperbola about the Sun (a < 0, e > 1). The 60 days on the pad before launch are authored.",
+  "pieces": [
+    {
+      "from_s": 62404223432,
+      "to_s": 62409407432,
+      "state": {
+        "kind": "landed",
+        "body": "u:sol/sys:sun/body:earth",
+        "lat_deg": 28.5833,
+        "lon_deg": -80.5833
+      },
+      "mark": "recorded",
+      "src": "nssdca-voyager-2",
+      "writer": "pack"
+    },
+    {
+      "from_s": 62409407432,
+      "to_s": 62409411032,
+      "state": {
+        "kind": "orbit",
+        "around": "u:sol/sys:sun/body:earth",
+        "elements": {
+          "a_m": 6556000.0,
+          "e": 0.0,
+          "i_deg": 28.6,
+          "node_deg": 0.0,
+          "peri_deg": 0.0,
+          "m0_deg": 0.0,
+          "epoch_s": 62409407432
+        }
+      },
+      "mark": "estimated",
+      "src": "authored",
+      "writer": "pack"
+    },
+    {
+      "from_s": 62409411032,
+      "to_s": 62468879285,
+      "state": {
+        "kind": "course",
+        "course": {
+          "kind": "lambert",
+          "to": "u:sol/sys:sun/body:jupiter",
+          "arrive_s": 62468879285
+        }
+      },
+      "mark": "recorded",
+      "src": "jpl-horizons",
+      "writer": "pack"
+    },
+    {
+      "from_s": 62468879285,
+      "to_s": 62536116297,
+      "state": {
+        "kind": "course",
+        "course": {
+          "kind": "lambert",
+          "to": "u:sol/sys:sun/body:saturn",
+          "arrive_s": 62536116297
+        }
+      },
+      "mark": "recorded",
+      "src": "jpl-horizons",
+      "writer": "pack"
+    },
+    {
+      "from_s": 62536116297,
+      "to_s": 62675445587,
+      "state": {
+        "kind": "course",
+        "course": {
+          "kind": "lambert",
+          "to": "u:sol/sys:sun/body:uranus",
+          "arrive_s": 62675445587
+        }
+      },
+      "mark": "recorded",
+      "src": "jpl-horizons",
+      "writer": "pack"
+    },
+    {
+      "from_s": 62675445587,
+      "to_s": 62788492597,
+      "state": {
+        "kind": "course",
+        "course": {
+          "kind": "lambert",
+          "to": "u:sol/sys:sun/body:neptune",
+          "arrive_s": 62788492597
+        }
+      },
+      "mark": "recorded",
+      "src": "jpl-horizons",
+      "writer": "pack"
+    },
+    {
+      "from_s": 62788492597,
+      "state": {
+        "kind": "orbit",
+        "around": "u:sol/sys:sun",
+        "elements": {
+          "a_m": -601327973767.1986,
+          "e": 6.284206181042654,
+          "i_deg": 78.81679939983958,
+          "node_deg": 101.6327895441973,
+          "peri_deg": 130.0648468201176,
+          "m0_deg": 298.1427072673571,
+          "epoch_s": 62799624000
+        }
+      },
+      "mark": "recorded",
+      "src": "jpl-horizons",
+      "writer": "pack"
+    }
+  ],
+  "events": [
+    {
+      "at_s": 62409407432,
+      "kind": "launch",
+      "mark": "recorded",
+      "src": "nssdca-voyager-2",
+      "writer": "pack"
+    },
+    {
+      "at_s": 62409411032,
+      "kind": "burn",
+      "dv_m_s": 7190.0,
+      "engine": "centaur-rl10-and-te-m-364-4",
+      "mark": "estimated",
+      "src": "jpl-horizons",
+      "writer": "pack",
+      "why": "impulsive equivalent from a 185 km parking orbit to Horizons' Earth-relative speed of 10.15 km/s a day after launch; propellant left for RS2 parts"
+    },
+    {
+      "at_s": 62409411032,
+      "kind": "split",
+      "into": [
+        "voyager-2-centaur",
+        "voyager-2-propulsion-module"
+      ],
+      "keeps_identity": true,
+      "mark": "estimated",
+      "src": "nssdca-voyager-2",
+      "writer": "pack"
+    },
+    {
+      "at_s": 62468879285,
+      "kind": "flyby",
+      "body": "u:sol/sys:sun/body:jupiter",
+      "periapsis_m": 722902790.0,
+      "mark": "recorded",
+      "src": "jpl-horizons",
+      "writer": "pack"
+    },
+    {
+      "at_s": 62536116297,
+      "kind": "flyby",
+      "body": "u:sol/sys:sun/body:saturn",
+      "periapsis_m": 160688830.0,
+      "mark": "recorded",
+      "src": "jpl-horizons",
+      "writer": "pack"
+    },
+    {
+      "at_s": 62675445587,
+      "kind": "flyby",
+      "body": "u:sol/sys:sun/body:uranus",
+      "periapsis_m": 107157280.0,
+      "mark": "recorded",
+      "src": "jpl-horizons",
+      "writer": "pack"
+    },
+    {
+      "at_s": 62788492597,
+      "kind": "flyby",
+      "body": "u:sol/sys:sun/body:neptune",
+      "periapsis_m": 29241270.0,
+      "mark": "recorded",
+      "src": "jpl-horizons",
+      "writer": "pack"
+    }
+  ]
+}

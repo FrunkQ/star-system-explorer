@@ -67,6 +67,9 @@ export interface WhatIf {
 
 export interface Workspace {
   selection: string | null;
+  /** The party's ship (party.ts): Voyages starts where it is, Land lands it. Kept with the campaign. */
+  party?: import("./party.ts").PartyShip | null;
+  setParty?(p: import("./party.ts").PartyShip | null): void;
   /** Where the GM put each pack overlay (overlay.ts), by overlay id; kept with the campaign. */
   overlay_anchors?: Record<string, import("./overlay.ts").OverlayAnchor>;
   /** Place an overlay (null takes it off the map). */
