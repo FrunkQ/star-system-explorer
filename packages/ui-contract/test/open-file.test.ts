@@ -12,7 +12,7 @@ test("each kind of file is named by what is inside, whatever it is called", () =
   assert.equal(sniffFile("clip.json", JSON.stringify({ sseClip: 1 })).kind, "v3-clip");
   assert.equal(sniffFile("p.json", JSON.stringify({ format: "sse.pack/1", id: "warm", version: "1.0.0" })).kind, "pack");
   assert.equal(sniffFile("d.json", JSON.stringify({ kind: "sse4-diagnostic" })).kind, "diagnostic");
-  const sol = readFileSync(new URL("../../shell/public/samples/synthetic-sol.json", import.meta.url), "utf8");
+  const sol = readFileSync(new URL("../../../tests/fixtures/v3/synthetic-sol.json", import.meta.url), "utf8");
   assert.equal(sniffFile("starmap.json", sol).kind, "v3-save");
   assert.equal(sniffFile("world.ubox", null).kind, "other-app");
   assert.equal(sniffFile("sol.sc", null).kind, "other-app");
