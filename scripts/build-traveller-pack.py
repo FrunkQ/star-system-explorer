@@ -488,6 +488,26 @@ NOTICE = (
 )
 NOTICE_SOURCE = "https://www.mongoosepublishing.com/pages/traveller-licensing (Fair Use Policy, 2025)"
 
+# The game's task difficulties beside SSE4's own words (Alex, 23 Nov): GM-only,
+# nothing rolled. From the Cepheus Engine System Reference Document (Samardan
+# Press, Open Game Licence): 2D6 plus modifiers against 8+, with difficulty as a
+# modifier, and the skills that fly, navigate and keep a ship running. A typical
+# trained operator is skill 1 with no characteristic modifier (a game default
+# written for this pack). SSE4's words map by target: its "routine" (nothing to
+# worry about) is the game's Easy.
+DIFFICULTY = {
+    "system": "Traveller task",
+    "dice": {"count": 2, "sides": 6},
+    "base_target": 8,
+    "typical_dm": 1,
+    "steps": [{"name": n, "dm": d} for n, d in [
+        ("Simple", 6), ("Easy", 4), ("Routine", 2), ("Average", 0),
+        ("Difficult", -2), ("Very Difficult", -4), ("Formidable", -6)]],
+    "words": {"routine": "Easy", "easy": "Routine", "moderate": "Average", "hard": "Difficult", "very hard": "Very Difficult"},
+    "skills": {"pilot": "Piloting", "navigator": "Navigation", "engineer": "Engineering"},
+    "source": "Cepheus Engine System Reference Document (Samardan Press, Open Game Licence): task difficulty and skills. https://www.orffenspace.com/cepheus-srd/",
+}
+
 # Gas mixes (7A part 5), ported from V3's starter-sf atmospheres.json
 # ("Traveller-0" to "Traveller-F" and the exotic presets), as composition
 # only: the pressure comes from the code's own class. Where a V3 preset would
@@ -959,6 +979,7 @@ pack = {
     "provides": {"units": UNITS, "other": {
         "about": ABOUT,
         "notice": {"text": NOTICE, "source": NOTICE_SOURCE},
+        "difficulty": DIFFICULTY,
         "schemes": SCHEMES,
         "axes": [[k, v] for k, v in sorted(AXES.items())],
         "classes": CLASSES,

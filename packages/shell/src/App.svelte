@@ -132,6 +132,8 @@
   });
   // The view controls' height: what sits below them starts there, however many rows they wrap to.
   let viewbarH = $state(0);
+  // The kicker gives way whole when the bar is too full to say anything with it ("IN…" helped nobody).
+  let kickerW = $state(999);
 
   // The instrument rail (top-level design 2.2) at the scale in view: system, world, or the Workshop.
   let railScale = $state<RailScale>("system");
@@ -1449,7 +1451,7 @@
       {/each}
     </nav>
     <!-- The system's subtitle belongs to the system; above it the line itself says where. -->
-    {#if railScale === "system" || railScale === "world" || railScale === "workshop"}<div class="kicker">{scene.subtitle} · {formatYears(ws.now_yr)}</div>{/if}
+    {#if railScale === "system" || railScale === "world" || railScale === "workshop"}<div class="kicker" class:gone={kickerW < 140} bind:clientWidth={kickerW} title="{scene.subtitle} · {formatYears(ws.now_yr)}">{scene.subtitle} · {formatYears(ws.now_yr)}</div>{/if}
     <div class="spacer"></div>
     <!-- What (2.3): the desk. Explore looks, Build changes, Run is the table. -->
     <Segmented label="Desk" value={desk} options={DESKS} onchange={chooseDesk} slide />
@@ -1919,6 +1921,7 @@
   .barbtn {
     height: 32px;
     padding: 0 14px;
+    white-space: nowrap;
     border: var(--sse-line) solid var(--sse-ink);
     background: transparent;
     color: var(--sse-ink);
@@ -2082,6 +2085,9 @@
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
+  }
+  .kicker.gone {
+    visibility: hidden;
   }
   .spacer {
     flex: 1;

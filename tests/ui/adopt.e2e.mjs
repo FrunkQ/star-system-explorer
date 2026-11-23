@@ -57,7 +57,8 @@ try {
     // Wait for the worlds to render (the star alone satisfies the first wait), then count them.
     await gm.waitForFunction((n) => document.querySelectorAll('.area-chart .body[aria-label^="World"]').length === n, worlds, { timeout: 15000 }).catch(() => {});
     assert.equal(await gm.locator('.area-chart .body[aria-label^="World"]').count(), worlds, "the same worlds, read back from the universe");
-    assert.match(await gm.locator("header .kicker").innerText(), /In the campaign/i);
+    // The kicker gives way whole on a narrow bar (its words stay in its title and text), so read its text, not what is painted.
+    assert.match(await gm.locator("header .kicker").textContent(), /In the campaign/i);
     assert.match(await gm.locator(".ruler-side [role=status]").innerText(), /Added Seed "first light" to the campaign/);
     await shot(gm, "v13-adopted-grown");
 

@@ -54,6 +54,13 @@ export interface SceneSubject {
    * when absent.
    */
   shape?: "disc" | "sphere";
+  /**
+   * A ring round a world (a belt whose host is a planet, not the star): its edges from the planet's centre in metres,
+   * its normal optical depth and its particles' albedo when the universe holds them (null when it does not).
+   */
+  ring?: { inner_m: number; outer_m: number; tau: number | null; albedo: number | null };
+  /** A world's axial tilt to its orbit, radians, when the universe holds it (its rings lie in its equator). */
+  tilt_rad?: number;
   facts: SceneFact[];
   /** Evidence and honesty stamps (resolved, authored, impossible, fictional, ...). */
   stamps: string[];
