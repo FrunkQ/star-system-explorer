@@ -56,6 +56,12 @@ try {
     await gm.waitForFunction(() => /after the Big Bang/.test(document.querySelector(".foam [data-lede]")?.textContent ?? ""), null, { timeout: 60000 });
     const early = Number(await foam.locator("[data-contrast]").innerText());
     assert.ok(early < today, `the foam sharpens with time (${early} then, ${today} now)`);
+    // Scale (Alex, 23 Nov): Real draws the young web at its physical size then, shrunk by the scale factor.
+    await gm.getByRole("group", { name: "Scale" }).getByRole("button", { name: "Real" }).click();
+    await foam.locator("[data-scale-bar=real]").waitFor();
+    await shot(gm, "v9-foam-real-early");
+    await gm.getByRole("group", { name: "Scale" }).getByRole("button", { name: "Readable" }).click();
+    await foam.locator("[data-scale-bar=readable]").waitFor();
     // Play to today.
     await foam.locator("[data-play]").click();
     await gm.waitForFunction(() => /^Today/.test(document.querySelector(".foam [data-lede]")?.textContent?.trim() ?? "") && document.querySelector(".foam [data-play]")?.textContent === "Play", null, { timeout: 120000 });

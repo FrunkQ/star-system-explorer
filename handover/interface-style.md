@@ -25,6 +25,8 @@ Every interface thread holds to this, on GM and player screens alike (player the
 12. **One set of view controls on every diagram.** Every diagram display has the same two switches, in the same place (the top of the stage, beside the tools), with the same words in the same order:
     - **View style:** Chart, 3D, True, Wireframe.
     - **Seen from:** Above, Tilted, Edge-on, Free.
+    - **Scale:** Readable, Real (Alex, 23 Nov 2026: Readable exaggerates sizes and spacing so things can be seen; Real is as it truly is).
+    - **HUD:** Off, On (Alex, 23 Nov 2026: orbit lines, names and outlines; off looks like a photograph, on like a heads-up overview; every style, every scale).
 
     This covers the system chart, the body globe, the cutaway, Mag, the galaxy chart, the galaxies nearby, the cosmic web, the formation replay and the sky.
     - **An option a view or device cannot do stays where it is,** quiet, with the reason as its title (for example "True is coming: the photoreal views are held for now"). The control never rearranges itself from one screen to the next.

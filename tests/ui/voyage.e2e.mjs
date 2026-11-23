@@ -64,6 +64,14 @@ try {
     await ins.locator(`[data-place='${target}']`).dispatchEvent("click");
     await gm.waitForFunction((t) => (document.querySelector(".insys")?.getAttribute("data-voyage") ?? "").endsWith(`>${t}`) || !!document.querySelector(".insys [data-refusal]"), target, { timeout: 90000 });
     await shot(gm, "v8-voyage-system-far");
+    // Scale (Alex, 23 Nov): Real lays the orbits out in AU, Readable by the log of their size.
+    assert.equal(await ins.locator("[data-axis-scale]").getAttribute("data-axis-scale"), "readable");
+    await gm.getByRole("group", { name: "Scale" }).getByRole("button", { name: "Real" }).click();
+    await ins.locator("[data-axis-scale=real]").waitFor();
+    assert.match(await ins.locator("[data-axis-scale]").textContent(), /AU across/);
+    await shot(gm, "v8-voyage-system-real");
+    await gm.getByRole("group", { name: "Scale" }).getByRole("button", { name: "Readable" }).click();
+    await ins.locator("[data-axis-scale=readable]").waitFor();
 
     await gm.locator("[data-scale-pick=stars]").click();
     const voy = gm.locator(".voy");

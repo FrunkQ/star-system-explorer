@@ -113,6 +113,8 @@ export interface Course {
   difficulty: { score: number; label: string; reasons: string[] };
   why: string[];
   track: [number, number, number][];
+  /** Speed over escape at the destination before the arrival burn, m/s (0 for a torch flight). */
+  arrive_v_inf_m_s?: number;
 }
 
 export interface WayOut { kind: string; label: string; body?: string; dv_m_s: number; at_s: number; days: number; feasible: boolean; why: string[] }

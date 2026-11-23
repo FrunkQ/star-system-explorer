@@ -388,6 +388,9 @@ pub struct Leg {
     /// In-system legs: days waited for the departure window.
     #[serde(skip_serializing_if = "Option::is_none")]
     pub wait_days: Option<f64>,
+    /// In-system legs: speed over escape at the destination before the arrival burn, m/s.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub arrive_v_inf_m_s: Option<f64>,
     /// The sentence the screens show.
     pub words: String,
 }
@@ -642,6 +645,7 @@ impl Leg {
             propellant_left_t: 0.0,
             course: None,
             wait_days: None,
+            arrive_v_inf_m_s: None,
             words: String::new(),
         }
     }

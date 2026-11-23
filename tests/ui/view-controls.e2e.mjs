@@ -41,9 +41,10 @@ try {
   assert.deepEqual(await seen.locator("button").allInnerTexts(), ["Above", "Tilted", "Edge-on", "Free"]);
   assert.equal(await vc.getAttribute("data-style"), "chart");
   assert.equal(await vc.getAttribute("data-seen"), "above", "the flat chart is seen from above");
-  assert.ok(await style.getByRole("button", { name: "True" }).isDisabled());
-  assert.match(await style.getByRole("button", { name: "True" }).getAttribute("title"), /coming/);
+  // True is drawn on the system chart (V10a); Wireframe is still to come.
+  assert.ok(!(await style.getByRole("button", { name: "True" }).isDisabled()));
   assert.ok(await style.getByRole("button", { name: "Wireframe" }).isDisabled());
+  assert.match(await style.getByRole("button", { name: "Wireframe" }).getAttribute("title"), /coming/);
   await shot(gm, "rule12-system-chart");
 
   // Tilted turns the flat chart into 3D; dragging switches to Free and the hint appears.

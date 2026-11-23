@@ -63,6 +63,27 @@ try {
     const before = await starMark();
     const h0 = await hash();
 
+    // Both corner panels open above their own button and close on ×, a press elsewhere and Escape (Alex, 23 Nov).
+    for (const [cls, name, button] of [["light", "Light", /Light:/], ["sound", "Sound", /Sound/]]) {
+      const c = gm.locator(`.ruler-side .${cls}`);
+      const toggle = c.getByRole("button", { name: button });
+      const group = gm.getByRole("group", { name });
+      await toggle.click();
+      const [p, t] = [await group.boundingBox(), await toggle.boundingBox()];
+      assert.ok(p.y + p.height <= t.y, `${name}: the panel sits above its button (${p.y + p.height} > ${t.y})`);
+      await group.locator("[data-panel-close]").click();
+      await group.waitFor({ state: "detached" });
+      await toggle.click();
+      await gm.mouse.click(400, 300);
+      await group.waitFor({ state: "detached" });
+      await toggle.click();
+      await gm.keyboard.press("Escape");
+      await group.waitFor({ state: "detached" });
+      await toggle.click();
+      await toggle.click();
+      await group.waitFor({ state: "detached" });
+    }
+    assert.equal(await hash(), h0, "opening and closing the panels changes nothing");
     await control.getByRole("button", { name: /Light:/ }).click();
     const panel = gm.getByRole("group", { name: "Light" });
     for (const r of recipes) {

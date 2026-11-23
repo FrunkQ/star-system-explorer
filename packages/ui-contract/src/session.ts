@@ -197,6 +197,8 @@ export interface ViewSession {
   createFrom?(ask: { template: string; under: string; key?: string; name?: string; at_s?: number | bigint }): Promise<{ ok: true; result: import("./constructs.ts").Created } | { ok: false; code: string; message: string }>;
   /** Take an object made from a template out of play (kernel `retire`); nothing is deleted. GM only. */
   retire?(address: string, reason?: string, at_s?: number | bigint): Promise<{ ok: true; event_id: string } | { ok: false; code: string; message: string }>;
+  /** The record at `address` (kernel `record`): its notes, kept values with their history, and actors. GM only: seats get disclosures. */
+  record?(address: string, at_s?: number | bigint): Promise<{ ok: true; record: import("./constructs.ts").RecordRead } | { ok: false; code: string; message: string }>;
   /** Game-system codes (X3a, kernel `codes`) for every body at or under `scope`, read by a code sheet (the first in the stack when none is named). Read only; GM only. */
   codes?(ask: { scope: string; sheet?: string; at_s?: number | bigint }): Promise<{ ok: true; result: import("./sector.ts").CodesRead } | { ok: false; code: string; message: string }>;
   /** The hex map's worlds (X3c, kernel `sector_map`): each mapped system's main world with its reading, by hex. Read only; GM only. */
@@ -780,6 +782,12 @@ export class Session implements ViewSession {
     if (this.seat.authority !== "gm") return { ok: false, code: "not_gm", message: "only the game master takes things out of play" };
     const r = await this.#call({ op: "retire", address, ...(reason ? { reason } : {}), at_s: at_s ?? 0 });
     return r.type === "retired" ? { ok: true, event_id: String(r.event_id) } : { ok: false, code: String(r.code ?? "unexpected"), message: String(r.message ?? JSON.stringify(r)) };
+  }
+
+  async record(address: string, at_s?: number | bigint): Promise<{ ok: true; record: import("./constructs.ts").RecordRead } | { ok: false; code: string; message: string }> {
+    if (this.seat.authority !== "gm") return { ok: false, code: "not_gm", message: "the record is read on the game master's machine; seats get what is disclosed to them" };
+    const r = await this.#call({ op: "record", address, ...(at_s !== undefined ? { at_s } : {}) });
+    return r.type === "record_read" ? { ok: true, record: r as unknown as import("./constructs.ts").RecordRead } : { ok: false, code: String(r.code ?? "unexpected"), message: String(r.message ?? JSON.stringify(r)) };
   }
 
   async codes(ask: { scope: string; sheet?: string; at_s?: number | bigint }): Promise<{ ok: true; result: import("./sector.ts").CodesRead } | { ok: false; code: string; message: string }> {

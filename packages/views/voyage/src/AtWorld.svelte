@@ -12,12 +12,14 @@
   import { readPropellants, type Propellants, type ShipRecord } from "../../../renderer/src/index.ts";
   import { ShipAtWorldView } from "../../ship/src/index.ts";
 
-  let { ctx, ask }: { ctx: ViewContext; ask: ShipAtWorldAsk | null } = $props();
+  // `arriving`: how the voyage gets there, in words, when the ask carries the leg's own speed.
+  let { ctx, ask, arriving }: { ctx: ViewContext; ask: ShipAtWorldAsk | null; arriving?: string } = $props();
   let world = $state<ShipAtWorld | null>(null);
   let ship = $state<ShipRecord | null>(null);
   let fuels = $state<Propellants>({});
   let failed = $state<string | null>(null);
 
+  const cap = (t: string) => `${t[0]!.toUpperCase()}${t.slice(1)}`;
   let gen = 0;
   $effect(() => {
     const a = ask;
@@ -44,7 +46,7 @@
   <section class="at" data-at-world={world.body}>
     <h4>At {world.name}</h4>
     {#if ship && ask}<ShipAtWorldView {ctx} {ask} {ship} {world} {fuels} />{/if}
-    <p class="muted">{world.v_inf_m_s < 1 ? "Arrives with its drive braked to the world's own speed" : `${world.arrival[0]!.toUpperCase()}${world.arrival.slice(1)}, ${(world.v_inf_m_s / 1000).toFixed(1)} km/s over escape speed`}. Nothing here is refused or rolled: the dangers are for you to weigh.</p>
+    <p class="muted">{world.v_inf_m_s < 1 ? "Arrives with its drive braked to the world's own speed" : `${cap(arriving ?? world.arrival)}, ${(world.v_inf_m_s / 1000).toFixed(1)} km/s over escape speed`}. Nothing here is refused or rolled: the dangers are for you to weigh.</p>
     <ul class="acts">
       {#each acts as c (c.id)}
         {@const ds = worstDangers(c)}

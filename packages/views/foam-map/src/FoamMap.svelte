@@ -8,7 +8,7 @@
 -->
 <script lang="ts">
   import { untrack } from "svelte";
-  import { announcePlace, foamCells, parseWebId, sci, webId, type Json, type SystemScene, type ViewContext, type WebSlice } from "../../../ui-contract/src/index.ts";
+  import { announcePlace, foamCells, parseWebId, sci, viewOptions, webId, DEFAULT_VIEW, FOAM_CONTROLS, type Json, type SystemScene, type ViewContext, type WebSlice } from "../../../ui-contract/src/index.ts";
 
   let { ctx, params }: { ctx: ViewContext; scene: SystemScene; params: Record<string, Json> } = $props();
   const first = untrack(() => ({ extent: String(params.extent_mpc ?? "200"), n: Number(params.samples ?? 96) }));
@@ -25,6 +25,9 @@
   let failed = $state<string | null>(null);
   let playing = $state(false);
   let gen = 0;
+  // Scale (Alex, 23 Nov): Readable draws the slice comoving, the same size at every time; Real draws it at its
+  // physical size then, shrunk by the scale factor, so the young web sits small in the middle and grows as it plays.
+  const real = $derived(viewOptions(FOAM_CONTROLS, ctx.workspace.view ?? DEFAULT_VIEW).shown.scale === "real");
   // Slices already grown, by extent and time step (deterministic, so safe to keep).
   const kept = new Map<string, WebSlice>();
 
@@ -115,6 +118,7 @@
     const w = web;
     const mode = show;
     if (!cv || !w) return;
+    const shrink = real ? w.slice.scale_factor : 1;
     const g = cv.getContext("2d");
     if (!g) return;
     const S = cv.width;
@@ -140,6 +144,11 @@
     }
     oc.putImageData(img, 0, 0);
     g.imageSmoothingEnabled = true;
+    g.fillStyle = `rgb(${ground[0]},${ground[1]},${ground[2]})`;
+    g.fillRect(0, 0, S, S);
+    g.save();
+    g.translate((S * (1 - shrink)) / 2, (S * (1 - shrink)) / 2);
+    g.scale(shrink, shrink);
     g.drawImage(off, 0, 0, S, S);
     // Matter where it has moved to.
     const half = s.extent / 2;
@@ -151,6 +160,7 @@
       if (px < 0 || py < 0 || px > S || py > S) continue;
       g.fillRect(px - r / 2, py - r / 2, r, r);
     }
+    g.restore();
   });
 
   const tWords = (t: number) => (t < 1 ? `${Math.round(t * 1000)} million years` : `${t.toFixed(1)} Gyr`);
@@ -194,7 +204,7 @@
   <div class="split">
     <div class="map">
       <canvas bind:this={canvas} width="640" height="640" data-foam aria-label="Slice of the cosmic web"></canvas>
-      <div class="scale" style:width="{bar.frac * 100}%"><span>{bar.mpc} Mpc · {sci(bar.ly)} million ly</span></div>
+      <div class="scale" style:width="{bar.frac * 100}%"><span data-scale-bar={real ? "real" : "readable"}>{bar.mpc} Mpc{real ? " across then" : " comoving"} · {sci(bar.ly)} million ly</span></div>
       <div class="time">
         <button type="button" class="play" data-play onclick={play}>{playing ? "Pause" : "Play"}</button>
         <input type="range" min="0" max={STEPS.length - 1} step="1" bind:value={step} data-time aria-label="Time since the Big Bang" />
@@ -214,7 +224,7 @@
         {/if}
       </dl>
       <h4>Reading the map</h4>
-      <p>Dots are matter where gravity has moved it since the start; the shade is {show === "density" ? "the density (darker is denser, log)" : "the environment: blank voids, light sheets, darker filaments and knots in red"}. Distances are comoving: the slice is drawn at today's size, so the foam grows in contrast, not in size.</p>
+      <p>Dots are matter where gravity has moved it since the start; the shade is {show === "density" ? "the density (darker is denser, log)" : "the environment: blank voids, light sheets, darker filaments and knots in red"}. {real ? "Scale is Real: the slice is drawn at its size then (today's size times the scale factor), so the young web is small and the whole foam swells as it plays." : "Scale is Readable: distances are comoving, the slice drawn at today's size, so the foam grows in contrast, not in size."}</p>
       {#if web}
         <h4>The model's limits</h4>
         <ul>

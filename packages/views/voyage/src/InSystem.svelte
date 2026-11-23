@@ -9,7 +9,7 @@
 -->
 <script lang="ts">
   import { untrack } from "svelte";
-  import { IN_SYSTEM_SHIPS, MINIMISE_WORDS, YEAR_S, navFromScene, orbitAxis, voyageSpan, type Json, type Minimise, type ShipAtWorldAsk, type SystemScene, type SystemVoyagePlan, type ViewContext } from "../../../ui-contract/src/index.ts";
+  import { IN_SYSTEM_SHIPS, MINIMISE_WORDS, YEAR_S, navFromScene, orbitAxis, viewOptions, DEFAULT_VIEW, VOYAGE_CONTROLS, voyageSpan, type Json, type Minimise, type ShipAtWorldAsk, type SystemScene, type SystemVoyagePlan, type ViewContext } from "../../../ui-contract/src/index.ts";
   import AtWorld from "./AtWorld.svelte";
 
   let { ctx, scene, params }: { ctx: ViewContext; scene: SystemScene; params: Record<string, Json> } = $props();
@@ -67,7 +67,9 @@
   const W = 640;
   const H = 220;
   const AXIS_Y = 160;
-  const x = $derived(orbitAxis(W, places));
+  const real = $derived(viewOptions(VOYAGE_CONTROLS, ctx.workspace.view ?? DEFAULT_VIEW).shown.scale === "real");
+  const x = $derived(orbitAxis(W, places, 28, real));
+  const farAu = $derived(Math.max(1, ...places.map((p) => p.a_au)));
   const at = (a: string) => places.find((p) => p.address === a);
   const arcs = $derived(
     (v?.legs ?? []).flatMap((l, i) => {
@@ -85,11 +87,17 @@
   const atAsk = $derived.by((): ShipAtWorldAsk | null => {
     const dest = v?.to;
     if (!dest || dest.startsWith("belt:")) return null;
-    // A torch course brakes on its drive and arrives with no speed to shed; a transfer arrives on its own orbit.
-    const torch = v?.legs.at(-1)?.course === "torch";
-    const speed = torch ? { v_inf_m_s: 0 } : {};
+    // The last leg's own speed over escape at the world (a torch course arrives braked, 0); a leg without one
+    // (a belt hop) leaves the kernel's default, a Hohmann transfer from the next body in.
+    const last = v?.legs.at(-1);
+    const speed = last?.arrive_v_inf_m_s !== undefined ? { v_inf_m_s: last.arrive_v_inf_m_s } : last?.course === "torch" ? { v_inf_m_s: 0 } : {};
     if (!scene.fixture && ctx.session.seat.authority === "gm") return { system: scene.system, ship, worlds: [dest], ...speed };
     return fromScene.nav ? { nav: fromScene.nav, ship, worlds: [dest], ...speed } : null;
+  });
+  const arriving = $derived.by(() => {
+    const l = v?.legs.at(-1);
+    if (l?.arrive_v_inf_m_s === undefined) return undefined;
+    return l.course === "lambert" ? "arriving on this voyage's transfer arc" : l.course === "hohmann" ? "arriving on this voyage's Hohmann transfer" : "arriving on this voyage's last leg";
   });
   const waited = $derived(v ? v.legs.reduce((t, l) => t + (l.wait_days ?? 0), 0) : 0);
 
@@ -136,6 +144,7 @@
 
   <svg class="axis" viewBox="0 0 {W} {H}" role="img" aria-label="The system's orbits by size, with the voyage's legs arcing between them">
     <line class="base" x1="16" y1={AXIS_Y} x2={W - 16} y2={AXIS_Y} />
+    <text class="scale-note" x={W - 16} y="14" text-anchor="end" data-axis-scale={real ? "real" : "readable"}>{real ? `to scale: ${farAu < 10 ? farAu.toFixed(1) : Math.round(farAu)} AU across` : "by the log of each orbit's size"}</text>
     {#each places.filter((p) => p.belt) as p (p.address)}
       <rect class="belt" x={x(p.a_au) - 10} y={AXIS_Y - 6} width="20" height="12" rx="6" />
     {/each}
@@ -174,12 +183,16 @@
       </ol>
       <button type="button" class="go" data-next onclick={nextStop}>{mode === "explore" ? "Next stop: go there" : "Arrive there"}</button>
       {#if visited.length > 1}<button type="button" class="quiet-btn" data-restart onclick={restart}>Back to the start</button>{/if}
-      <AtWorld {ctx} ask={atAsk} />
+      <AtWorld {ctx} ask={atAsk} arriving={arriving} />
     {/if}
   </div>
 </div>
 
 <style>
+  .scale-note {
+    font-size: 11px;
+    fill: var(--sse-ink-muted);
+  }
   .insys {
     color: var(--sse-ink);
     font-size: 13px;

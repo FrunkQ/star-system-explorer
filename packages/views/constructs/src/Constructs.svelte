@@ -3,12 +3,13 @@
   each with its card at the depth in force, and "Add here" from the stacked
   packs' templates. Editing a fact is one set_value; taking one out of play is
   the kernel's retire (nothing is deleted). Every template, kind and word comes
-  from the packs.
+  from the packs. The card's Log (V3 gap 16) is read from the history and the
+  record, so it says only what happened.
 -->
 <script lang="ts">
   import { untrack } from "svelte";
-  import { BOOKKEEPING, byKind, constructsIn, factOf, kindOf, placeHash, templateOf, type ConstructTemplate, type Json, type PlayerSubject, type SystemScene, type ViewContext } from "../../../ui-contract/src/index.ts";
-  import { opensFrom } from "../../../chart-grammar/src/index.ts";
+  import { BOOKKEEPING, byKind, constructsIn, factOf, kindOf, placeHash, secondsToYears, shipLog, templateOf, type ConstructTemplate, type Json, type ShipLogEntry, type PlayerSubject, type SystemScene, type ViewContext } from "../../../ui-contract/src/index.ts";
+  import { dateWords, defaultCalendar, fromPackCalendar, opensFrom } from "../../../chart-grammar/src/index.ts";
   import { fieldWords, valueWords } from "./words.ts";
 
   let { ctx, scene }: { ctx: ViewContext; scene: SystemScene; params: Record<string, Json> } = $props();
@@ -87,6 +88,22 @@
     picked = r.result.address;
     ws.revision++;
   }
+
+  // ---- The log (V3 gap 16) ----
+  let logOpen = $state(false);
+  let logBtn = $state<HTMLElement | null>(null);
+  let log = $state<ShipLogEntry[]>([]);
+  const calendar = $derived(ws.pack_calendar ? fromPackCalendar(ws.pack_calendar) : defaultCalendar(ws.campaign_epoch_yr ?? ws.campaign_now_yr ?? ws.now_yr));
+  async function loadLog(address: string) {
+    const [h, r] = await Promise.all([session.history(address), session.record?.(address)]);
+    if (picked !== address) return;
+    log = shipLog(h, r?.ok ? r.record : null, (s) => secondsToYears(s), (k) => fieldWords(k).label).reverse();
+  }
+  $effect(() => {
+    void ws.revision;
+    const a = picked;
+    if (a && logOpen) untrack(() => void loadLog(a));
+  });
 
   // ---- Edit and retire ----
   let edits = $state<Record<string, string>>({});
@@ -197,8 +214,26 @@
           {#if depth === "curious" && current.facts.length > shownFacts.length}<p class="small muted">More at Science depth.</p>{/if}
           <nav class="links">
             {#if bodyAt(current.address)}<a href={placeHash({ scale: "world", system: scene.system, world: bodyAt(current.address)! })}>Open the world it is at</a>{/if}
+            {#if gm}<button type="button" class="quiet-btn" bind:this={logBtn} aria-expanded={logOpen} onclick={() => (logOpen = !logOpen)} data-log-toggle>Log</button>{/if}
             {#if gm && current.facts.some((f) => f.field === "template.id")}<button type="button" class="quiet-btn" onclick={() => (retiring = !retiring)} data-retire>Take out of play…</button>{/if}
           </nav>
+          {#if logOpen}
+            <section class="log" aria-label="Log" use:opensFrom={() => logBtn}>
+              <h4>Log, newest first</h4>
+              <ol data-log>
+                {#each log as e, i (i)}
+                  <li data-log-what={e.what}>
+                    <span class="mono muted small">{dateWords(e.at_yr, calendar)}</span>
+                    <span>{e.text}{#if e.why}<span class="muted"> · {e.why}</span>{/if}</span>
+                    {#if depth !== "curious"}<span class="muted small">by {e.who}{#if depth === "engine"} · <span class="mono">{e.key}</span>{/if}</span>{/if}
+                  </li>
+                {:else}
+                  <li class="muted">Nothing yet.</li>
+                {/each}
+              </ol>
+              <p class="small muted">Read from the campaign's history and record: edit the ship, its kept values or its notes and the log follows.</p>
+            </section>
+          {/if}
           {#if retiring}
             <div class="row" use:opensFrom={() => document.querySelector("[data-retire]")}>
               <input type="text" bind:value={reason} placeholder="Why (lost with all hands, scrapped…)" aria-label="Why" />
@@ -239,6 +274,10 @@
   .links { display: flex; gap: 12px; align-items: center; flex-wrap: wrap; }
   .links a { color: var(--sse-accent); }
   .mark { color: var(--sse-accent); font-size: 11px; }
+  .log { margin-top: 10px; }
+  .log ol { list-style: none; margin: 6px 0; padding: 0; display: flex; flex-direction: column; gap: 4px; max-height: 40vh; overflow: auto; }
+  .log li { display: grid; grid-template-columns: max-content 1fr; gap: 0 10px; }
+  .log li > :nth-child(3) { grid-column: 2; }
   .mono { font-family: var(--sse-font-mono, monospace); }
   .lede { font-size: 14px; max-width: 46em; }
   .small { font-size: 12px; margin: 0; }
