@@ -10,6 +10,3 @@
 # to the Look up block or the reader and delete their lines in the same change.
 # scripts/audit-matter.py --ledger fails on a copy not listed here, on a line
 # here that no longer matches a copy, and on a ledger that grew.
-crates/sse-atoms/src/heat.rs	isotope:al26	pub const AL26_H0: f64 = 0.00865 * 5.25e-5 * 0.3583;
-crates/sse-atoms/src/layers.rs	new:water_kf	pub const WATER_KF: f64 = 1.86;
-crates/sse-atoms/src/light.rs	new:omega_sun	pub const OMEGA_SUN: f64 = 2.0 * m::PI / (25.38 * DAY);

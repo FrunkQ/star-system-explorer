@@ -330,7 +330,7 @@ Every construct design runs a short list of **balance checks**, each a small cit
 
 | Check | Relation | What it catches |
 |---|---|---|
-| **Energy pays for the exhaust** | exhaust speed is at most √(2 × energy per kg of what is thrown and burned); the relativistic form near c | a "chemical" fuel with a torch's exhaust speed. Hydrogen and oxygen at 13.3 MJ/kg give at most 5.2 km/s (*computed*), which replaces the cited "near 5 km/s" ceiling with a computed one |
+| **Energy pays for the exhaust** | exhaust speed is at most √(2 × energy per kg of what is thrown and burned); the relativistic form near c | a "chemical" fuel with a torch's exhaust speed. Hydrogen and oxygen at 13.4 MJ/kg (the sheet's value for water vapour, section 14.2) give at most 5.2 km/s (*computed*); the best flown engine reaches 88% of it, which replaces the cited "near 5 km/s" ceiling with a computed one |
 | **Jet power** | jet power = ½ × thrust × exhaust speed, and it is at most what the plant delivers | thrust and exhaust speed typed independently that need more power than the ship makes |
 | **Energy in, energy out** | plant output = jet power + waste heat + stored + other loads | waste heat set to nothing while the plant's efficiency says otherwise |
 | **Momentum** | thrust = mass thrown per second × exhaust speed, or P/c for light alone | thrust with nothing thrown and no stated partner (section 15.3) |
@@ -423,3 +423,10 @@ The defaults of section 5.2 (engines a seventh, materials a fifth, stores a thir
 | FT4 (renderer thread) | the cool habitat radiator as its own drawn part; the reference construct for the Technology page |
 | FT6 (chart room thread) | the figure scale with marks and the live reference construct; the failed check named on "Leans on"; the four fields shown on a fictional chip |
 | FT8 (Traveller thread) | the four fields filled for each fictional advance in the example packs |
+
+### 14.2 Citation check of section 15 (data sheet thread, 23 Nov night)
+
+| Figure in 15 | Worked from | Finding |
+|---|---|---|
+| hydrogen-oxygen at 13.3 MJ/kg gives at most 5.2 km/s | the master sheet: water's heat of formation (liquid, −285.83 kJ/mol, Thauer 1977) less its latent heat of vaporisation (2.468 MJ/kg, NIST) over its molar mass from the atomic weights: 13.4 MJ/kg of water vapour; √(2 × 13.4 MJ/kg) = 5.18 km/s | holds (5.2). The base-tech pack now carries it as a computed ceiling on exhaust speed for hydrogen-oxygen, built from the sheet, and its hydrogen-oxygen energy mark is the vapour (lower heating) value. The best flown engine (RL10B-2, 4.57 km/s) reaches 88% of it |
+| 100 kW at 300 K needs about 120 m² of two-sided panel at emissivity 0.9 | Stefan-Boltzmann with the sheet's σ: 1e5 / (2 × 0.9 × 5.670e-8 × 300⁴) = 121 m² | holds, for a panel seeing cold sky only; sunlight or a warm planet below adds load |
