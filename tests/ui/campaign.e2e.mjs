@@ -9,6 +9,7 @@
 import { spawn } from "node:child_process";
 import { mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
+import { createHash } from "node:crypto";
 import { join } from "node:path";
 import assert from "node:assert/strict";
 import { go, more } from "./nav.mjs";
@@ -100,17 +101,29 @@ try {
     assert.equal(await gm.locator("[aria-label='System on the chart']").count(), 0, "no grown system after starting fresh");
     assert.equal(await gm.locator("[data-kept-note]").count(), 0);
 
-    // A file that is not a save is refused.
+    // The one Open door (V3 gap 28) names any file by what is inside it.
     await more(gm, "Campaign…");
     const od = gm.getByRole("dialog", { name: "Campaign" });
-    const junk = join(tmpdir(), `u10-junk-${port}.json`);
-    writeFileSync(junk, JSON.stringify({ hello: "world" }));
-    await od.getByLabel("Campaign file").setInputFiles(junk);
-    await od.locator("[data-offered-problem]").waitFor();
-    assert.match(await od.locator("[data-offered-problem]").innerText(), /cannot be opened here: not a campaign save/);
+    const give = (name, body) => od.getByLabel("File", { exact: true }).setInputFiles({ name, mimeType: "application/octet-stream", buffer: Buffer.from(body) });
+    await give("hello.json", JSON.stringify({ hello: "world" }));
+    await od.locator("[data-opened='unknown']").getByText(/not one SSE4 recognises/).waitFor();
+    const other = JSON.parse(readFileSync(path, "utf8"));
+    await give("from-elsewhere.json", JSON.stringify({ ...other, root: "u:elsewhere", export: { ...other.export, root: "u:elsewhere" } }));
+    assert.match(await od.locator("[data-offered-problem]").innerText(), /cannot be opened here: it belongs to u:elsewhere/);
+    await give("world.ubox", "PK");
+    await od.locator("[data-opened='other-app']").getByRole("link", { name: "Open the converter" }).waitFor();
+    await give("p.json", JSON.stringify({ format: "sse.pack/1", id: "base-physics", version: "9.9.9" }));
+    await od.locator("[data-opened='pack'] [data-pack-problem]").waitFor();
+    await give("starmap.json", readFileSync("packages/shell/public/samples/synthetic-sol.json"));
+    await od.locator("[data-opened='v3-save']").getByText(/Star System Explorer 3 save/).waitFor();
+    await od.getByRole("button", { name: "Bring it in" }).click();
+    const make = gm.getByRole("dialog", { name: "Make a system" });
+    await make.getByText(/1 system, 3 bodies/).waitFor({ timeout: 20000 });
+    await make.getByRole("button", { name: "Close" }).click();
 
     // Open the downloaded file: the campaign is back.
-    await od.getByLabel("Campaign file").setInputFiles(path);
+    await more(gm, "Campaign…");
+    await give("kestrel-save.json", readFileSync(path));
     await od.locator("[data-offered]").waitFor();
     assert.match(await od.locator("[data-offered]").innerText(), /Kestrel, kept .*: \d+ events/);
     await shot(gm, "u10-open-campaign");
@@ -165,6 +178,35 @@ try {
     assert.equal(await gm.evaluate(() => localStorage.getItem("sse4.agents.key.test")), null, "keys forgotten");
     assert.equal(await gm.evaluate(() => localStorage.getItem("sse4.campaign.set-aside")), null, "set-aside forgotten");
     assert.equal(await gm.locator("[data-kept-note]").count(), 0);
+
+    // Opened from an Explorers item page (?explorers=<listing URL>): the bytes are checked against the listing first.
+    const packBytes = readFileSync("packages/shell/src/documents/sample.warm-worlds.pack.json");
+    const pack = JSON.parse(packBytes.toString());
+    const sum = createHash("sha256").update(packBytes).digest("hex");
+    const listing = { sha256: sum, source: { site: "explorers", title: "Warm worlds", url: "https://explorers.starsystemx.com/i/warm", creditChain: ["Ann", "Bo"] }, pack: { id: pack.id, version: pack.version } };
+    await context.route("https://explorers.starsystemx.com/api/v4/**", (r) => {
+      const u = r.request().url();
+      if (u.includes("/api/v4/nothing")) return r.fulfill({ status: 404, body: "" });
+      if (u.endsWith("/file")) return r.fulfill({ status: 200, body: packBytes, headers: { "x-sse-sha256": sum, "access-control-allow-origin": "*", "access-control-expose-headers": "x-sse-sha256" } });
+      const l = u.includes("tampered") ? { ...listing, sha256: "0".repeat(64) } : listing;
+      return r.fulfill({ status: 200, contentType: "application/json", body: JSON.stringify(l), headers: { "access-control-allow-origin": "*" } });
+    });
+    const openWith = async (slug) => {
+      await gm.goto(`${base}?explorers=${encodeURIComponent(`https://explorers.starsystemx.com/api/v4/${slug}`)}#chart`);
+      await ready();
+    };
+    await openWith("nothing");
+    await gm.locator("[data-explorers-note]").getByText(/no V4 shelf/).waitFor({ timeout: 20000 });
+    assert.ok(!gm.url().includes("explorers="), "the link leaves the address bar");
+    await openWith("tampered");
+    await gm.locator("[data-explorers-note]").getByText(/sha256 differs/).waitFor({ timeout: 20000 });
+    await openWith("warm-1");
+    const ed = gm.getByRole("dialog", { name: "Campaign" });
+    await ed.locator("[data-from-explorers]").getByText(/Warm worlds.*Made by Ann, then Bo/).waitFor({ timeout: 20000 });
+    await ed.locator("[data-pack-check]").waitFor({ timeout: 20000 });
+    await shot(gm, "u28-from-explorers");
+    await ed.getByRole("button", { name: "Add it to this campaign" }).click();
+    await ed.getByText(/^Added\./).waitFor({ timeout: 20000 });
 
     assert.deepEqual(errors, []);
     await browser.close();
