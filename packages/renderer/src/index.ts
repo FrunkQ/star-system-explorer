@@ -72,3 +72,14 @@ export async function startShip(...a: Parameters<typeof import("./gpu-ship.ts").
   const { mountShip } = await import("./gpu-ship.ts");
   return mountShip(...a);
 }
+
+export { curveDrop, decoration, descentTrack, floorFromRefusal, groundColours, groundMesh, heightAt as groundHeightAt, horizonDistance, levelFor, localToDir, patchKeys, patchPoint, playbackKeys, readPatch, siteFrame, tileSpot } from "./surface-patch.ts";
+export type { GroundPoint, Patch, TileKey as SurfaceTileKey } from "./surface-patch.ts";
+export { airMass, rayleighPhase, skyIrradiance, skyRadiance, sunDirection, sunTransmittance } from "./surface-sky.ts";
+export type { SurfaceFrame, SurfaceGpu, SurfaceMesh } from "./gpu-surface.ts";
+
+/** Draw the ground round a site on the GPU (WebGPU, else WebGL2), or null when this device has neither. three.js loads only here. */
+export async function startSurface(canvas: HTMLCanvasElement) {
+  const { createSurfaceGpu } = await import("./gpu-surface.ts");
+  return createSurfaceGpu(canvas);
+}
