@@ -1,5 +1,6 @@
 import { mount, unmount } from "svelte";
 import type { ViewModule } from "../../../ui-contract/src/index.ts";
+import { SECTOR_CONTROLS } from "./controls.ts";
 import Sector from "./Sector.svelte";
 import WorldSheet from "./WorldSheet.svelte";
 
@@ -13,6 +14,7 @@ export const sectorView: ViewModule = {
   id: "sse.view.sector",
   version: "0.1.0",
   tiers: ["text", "canvas"],
+  controls: SECTOR_CONTROLS,
   inputs: [{ event_kinds: ["authored.set", "adopt.v3", "adopt.formation", "time.aged"] }],
   params: [
     { name: "hex_size", type: "number", default: 22, range: [8, 80], meaning: "Hex size on screen (drawing units).", promoted: true },
