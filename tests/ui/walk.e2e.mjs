@@ -28,6 +28,7 @@ const BUDGET = {
   "ask why": 1,
   "change a world": 2, // the Build desk, then the value (typed)
   "see what followed": 1,
+  "add a world": { desktop: 3, phone: 4 }, // pick the star, Add here (in More on a phone), then one of what forms there
   "open the globe": 1,
   "its magnetic field": 1,
   "cut it open": 1,
@@ -110,6 +111,23 @@ async function walk(browser, vp) {
     await page.locator(".area-card").getByText(/./).first().waitFor();
   });
   assert.ok((await surfaceK())?.length, "Mars's surface is shown");
+
+  // Add a world by hand: what this orbit would make, from formation runs round the Sun (V3 gap 2). One Undo.
+  await step("add a world", async () => {
+    await tap(page.locator(".area-chart [role=button][aria-label^='Sun']").first());
+    if (phone) {
+      await tap(page.getByRole("button", { name: "More", exact: true }));
+      await tap(page.locator("[data-more-add]"));
+    } else await tap(page.getByRole("button", { name: "Add here" }));
+    const add = page.locator("dialog[data-add]");
+    await add.locator("[data-forms-here] li, [data-forms-nothing]").first().waitFor({ timeout: 30000 });
+    await tap(add.locator("[data-forms-here] li button").first());
+    await page.locator("[data-clip-note]").getByText(/^Added New world, orbiting Sun/).waitFor({ timeout: 20000 });
+    await page.locator(".area-chart [role=button][aria-label^='New world']").first().waitFor({ timeout: 20000 });
+  });
+  await page.evaluate(() => document.activeElement instanceof HTMLElement && document.activeElement.blur());
+  await page.keyboard.press("Control+z");
+  await page.waitForFunction(() => !document.querySelector(".area-chart [role=button][aria-label^='New world']"), null, { timeout: 15000 });
   assert.notEqual(await page.locator("[data-state-hash]").first().getAttribute("data-state-hash"), hash0, "the edit is in the universe");
 
   // The world itself: back to Earth, then its globe, its field and a cut through it.

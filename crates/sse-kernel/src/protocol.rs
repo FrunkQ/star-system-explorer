@@ -1267,6 +1267,17 @@ pub enum Request {
         sheet: Option<String>,
         at_s: i64,
     },
+    /// The hex map's worlds (handoff 7A part 4): each mapped system
+    /// (`map.hex`) at or under `scope`, its main world read through the code
+    /// sheet (`sheet`, or the first in the stack) at `at_s`. Read only; GM
+    /// machine.
+    SectorMap {
+        scope: String,
+        #[serde(default)]
+        #[ts(optional)]
+        sheet: Option<String>,
+        at_s: i64,
+    },
     /// G2 for V9's cluster map: one halo cell (8 Mpc a side at pack
     /// defaults) of the open universe, its haloes biggest first down to
     /// `min_mass_msun` (default 1e10, the catalogue floor), at most `limit` (default 300), with
@@ -1590,6 +1601,17 @@ pub enum Request {
         address: String,
         at_s: i64,
     },
+    /// ND6 (new-physics demo 2.5): each pack's sources, fudge list
+    /// (declared, plus every fitted or assumed Model number its flows and
+    /// boxes hold) and reproduction report (published numbers beside the
+    /// pack's, worked out when the stack loaded), for the stack in force or
+    /// one pack of it. Read in a trial, it shows them before the pack is
+    /// added. Read-only.
+    PackReports {
+        #[serde(default)]
+        #[ts(optional)]
+        pack: Option<String>,
+    },
 }
 
 /// `adopt`'s formation request: the `run_formation` fields.
@@ -1733,6 +1755,7 @@ impl Request {
             Request::Codes { .. } => "codes",
             Request::ImportSector { .. } => "import_sector",
             Request::ExportSector { .. } => "export_sector",
+            Request::SectorMap { .. } => "sector_map",
             Request::HaloCell { .. } => "halo_cell",
             Request::StarCell { .. } => "star_cell",
             Request::SkyFromHere { .. } => "sky_from_here",
@@ -1751,6 +1774,7 @@ impl Request {
             Request::SetNaming { .. } => "set_naming",
             Request::Rename { .. } => "rename",
             Request::FixNames { .. } => "fix_names",
+            Request::PackReports { .. } => "pack_reports",
         }
     }
 }
@@ -2035,6 +2059,11 @@ pub fn ops() -> Vec<OpInfo> {
             "GM machine only; one code reading per mapped system",
         ),
         o(
+            "sector_map",
+            Cost::Light,
+            "GM machine only; one code reading per mapped system",
+        ),
+        o(
             "halo_cell",
             Cost::Medium,
             "one cell's haloes drawn from the mass function, each placed on the web and given a growth history and mergers (about 0.1 to 1 s native)",
@@ -2115,6 +2144,11 @@ pub fn ops() -> Vec<OpInfo> {
             "fix_names",
             Cost::Light,
             "GM machine only; draws the names under one address, one event",
+        ),
+        o(
+            "pack_reports",
+            Cost::Trivial,
+            "reads reports worked out when the stack loaded; read only",
         ),
     ]
 }
@@ -2843,6 +2877,14 @@ pub enum Response {
         written: u32,
         skipped: Vec<String>,
     },
+    /// `sector_map`: `{system, body, hex, name, sector, reading}` per mapped
+    /// system, by hex, and the systems skipped (no main world).
+    SectorMapped {
+        sheet: String,
+        #[ts(type = "unknown[]")]
+        worlds: Vec<serde_json::Value>,
+        skipped: Vec<String>,
+    },
     Error {
         code: String,
         message: String,
@@ -2919,6 +2961,14 @@ pub enum Response {
     /// avoid_hits}`, each name with its form, faces and parts.
     /// `read_names`: `{address, kind, names: [{layer, text, source, scheme,
     /// named, original}]}`.
+    /// `pack_reports`: `[{pack, version, licence, sources, fudges: [{id, what,
+    /// stands_in_for, replace_with?, flows, source?, from, number?}],
+    /// reproduction: [{name, source, where?, flow, pass, rows: [{kind, unit?,
+    /// published, got, tolerance, off, pass, error?}]}], reproduced}]`.
+    PackReports {
+        #[ts(type = "unknown")]
+        reports: serde_json::Value,
+    },
     Names {
         #[ts(type = "unknown")]
         value: serde_json::Value,

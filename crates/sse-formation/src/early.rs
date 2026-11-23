@@ -14,7 +14,7 @@ use serde::{Deserialize, Serialize};
 use sse_core::math as m;
 use sse_core::Address;
 
-pub const M_EARTH_KG: f64 = 5.972_2e24;
+pub const M_EARTH_KG: f64 = sse_core::sheet::M_EARTH;
 pub const R_EARTH_M: f64 = sse_core::sheet::R_EARTH_MEAN;
 const MSUN_IN_EARTH: f64 = 332_946.0;
 const G: f64 = sse_core::sheet::G;

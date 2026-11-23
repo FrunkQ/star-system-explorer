@@ -46,7 +46,7 @@ test("distances follow the map: even columns sit half a hex lower", () => {
 });
 
 test("glyph rules draw the starport, giants, bases and zones", () => {
-  const w: MapWorld = { hex: "0101", name: "Kessa", fields: { starport: "A", size: 8, hydrographics: 7, gas_giants: 2, bases: ["N", "S"], zone: "A" } };
+  const w: MapWorld = { hex: "0101", name: "Kessa", fields: { starport: "A", size: 8, hydrographics: 7, gas_giants: 2, bases: ["N", "S"], zone: ["A"] } };
   const ms = marksFor(w, cfg.glyphs);
   const by = Object.fromEntries(ms.map((m) => [m.at === "ring" ? "ring" : m.at, m]));
   assert.equal(by.top.text, "A");
@@ -87,9 +87,9 @@ test("sifters: mains, choke points and the pack's own filters", async () => {
   const cfg = pack.provides.other.views["sse.view.hex-map"];
   const by = (id: string) => cfg.sifters.find((s: { id: string }) => s.id === id);
   const map = [
-    w("0101", { gas_giants: 2, hydrographics: 0, starport: "C", zone: "none", atmosphere: 6, law: 3 }),
-    w("0102", { gas_giants: 0, hydrographics: 0, starport: "A", zone: "none", atmosphere: 11, law: 2 }),
-    w("0103", { gas_giants: 0, hydrographics: 5, starport: "X", zone: "R", atmosphere: 12, law: 15 }),
+    w("0101", { gas_giants: 2, hydrographics: 0, starport: "C", zone: [], zone_first: "none", atmosphere: 6, law: 3 }),
+    w("0102", { gas_giants: 0, hydrographics: 0, starport: "A", zone: [], zone_first: "none", atmosphere: 11, law: 2 }),
+    w("0103", { gas_giants: 0, hydrographics: 5, starport: "X", zone: ["R"], zone_first: "R", atmosphere: 12, law: 15 }),
   ];
   assert.deepEqual(sift(by("refuel"), map), ["0101", "0103"]);
   assert.deepEqual(sift(by("refined"), map), ["0102"]);

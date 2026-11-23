@@ -40,7 +40,7 @@ use sse_core::math as m;
 use sse_core::{Address, Draws, Seed, Stream};
 use std::collections::BTreeMap;
 
-const M_SUN_KG: f64 = 1.988_47e30;
+const M_SUN_KG: f64 = sse_core::sheet::M_SUN;
 const C_M_S: f64 = sse_core::sheet::C;
 const G_SI: f64 = sse_core::sheet::G;
 const SIGMA_SB: f64 = sse_core::sheet::SIGMA_SB;

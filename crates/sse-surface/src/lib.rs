@@ -44,9 +44,9 @@ pub use sketch::{sketch, Sketch, SurveyState};
 
 pub const SURFACE_VERSION: &str = "surface-envelope-v1";
 
-const M_EARTH_KG: f64 = 5.9722e24;
+const M_EARTH_KG: f64 = sse_core::sheet::M_EARTH;
 const R_EARTH_M: f64 = sse_core::sheet::R_EARTH_MEAN;
-const M_SUN_KG: f64 = 1.98892e30;
+const M_SUN_KG: f64 = sse_core::sheet::M_SUN;
 const AU_M: f64 = sse_core::sheet::AU;
 const G: f64 = sse_core::sheet::G;
 const GYR_S: f64 = 3.15576e16;

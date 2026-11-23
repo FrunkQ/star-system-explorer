@@ -118,27 +118,6 @@ pub fn atoms() -> Vec<Box<dyn Atom>> {
         }
         .build(),
         Def {
-            id: "sse.star.effective_temperature",
-            version: "1.0.0",
-            inputs: vec![
-                port("luminosity", "star.luminosity", D::POWER, None),
-                port("radius", "star.radius", D::LENGTH, None),
-            ],
-            outputs: vec![port("teff", "star.effective_temperature", D::TEMPERATURE, None)],
-            params: vec![],
-            cost: CostClass::Trivial,
-            references: &["Stefan-Boltzmann law; definition of effective temperature, e.g. Carroll, B. W. and Ostlie, D. A. 2017, An Introduction to Modern Astrophysics, 2nd edn, Cambridge University Press, eq. 3.17. doi:10.1017/9781108380980"],
-            curious: "How hot a star's surface is follows from how much light leaves how much surface.",
-            science: "Effective temperature is the temperature of a black body with the star's radius and luminosity. It defines the surface temperature rather than measuring it.",
-            formula: "T_eff = (L / (4π R² σ))^¼",
-            f: |i, _| {
-                let l = positive(i[0], "luminosity")?;
-                let r = positive(i[1], "radius")?;
-                Ok(vec![m::pow(l / (4.0 * m::PI * r * r * sse_core::constants::sigma_sb()), 0.25)])
-            },
-        }
-        .build(),
-        Def {
             id: "sse.star.ms_lifetime",
             version: "1.0.0",
             inputs: vec![

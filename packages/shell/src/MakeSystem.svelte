@@ -15,7 +15,7 @@
   import FormationReplay from "../../views/system-chart/src/FormationReplay.svelte";
   import { createWorkspace } from "./workspace.svelte.ts";
 
-  let { session, context, onadopted, start = "import", view, onview }: { view?: import("../../ui-contract/src/index.ts").ViewChoice; onview?: (c: import("../../ui-contract/src/index.ts").ViewChoice) => void; session: ViewSession; context: Omit<ViewContext, "workspace" | "params" | "session">; onadopted?: (systems: { system: string; title: string }[], note: string, state_hash: string) => void; start?: "import" | "generate" } = $props();
+  let { session, context, onadopted, start = "import", view, onview, file = null }: { file?: { text: string; name: string } | null; view?: import("../../ui-contract/src/index.ts").ViewChoice; onview?: (c: import("../../ui-contract/src/index.ts").ViewChoice) => void; session: ViewSession; context: Omit<ViewContext, "workspace" | "params" | "session">; onadopted?: (systems: { system: string; title: string }[], note: string, state_hash: string) => void; start?: "import" | "generate" } = $props();
 
   let tab = $state<"import" | "generate">(untrack(() => start));
   let busy = $state(false);
@@ -36,6 +36,11 @@
     fileName = name;
     pick = importedSystems(r.result)[0]?.address ?? "";
   }
+  // A V3 save handed over by the one Open door is read straight away.
+  $effect(() => {
+    const f = file;
+    if (f) untrack(() => void read(f.text, f.name));
+  });
   async function onFile(e: Event) {
     const f = (e.currentTarget as HTMLInputElement).files?.[0];
     if (!f) return;

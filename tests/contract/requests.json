@@ -3231,6 +3231,28 @@
   "at_s": 30
  },
  {
+  "op": "sector_map",
+  "scope": "u:toy",
+  "at_s": 30
+ },
+ {
+  "op": "sector_map",
+  "scope": "u:toy",
+  "sheet": "nope",
+  "at_s": 30
+ },
+ {
+  "op": "pack_reports"
+ },
+ {
+  "op": "pack_reports",
+  "pack": "sse.base-toy"
+ },
+ {
+  "op": "pack_reports",
+  "pack": "nope.none"
+ },
+ {
   "op": "ship_at_world",
   "fixture": "sol",
   "ship": {"name": "Capsule", "accel_g": 0.5, "exhaust_km_s": 3.1, "wet_t": 10.0, "dry_t": 9.0, "crew": 4,

@@ -96,7 +96,7 @@ arrives_at_s?: bigint, } | { "op": "set_kept", address: string, kind: string, va
  * pinned to the coded main world, giant and belt counts searched),
  * adopt it, and write the coded facts on the grown main world.
  */
-grow: boolean, at_s: bigint, } | { "op": "export_sector", scope: string, format: string, sheet?: string, at_s: bigint, } | { "op": "halo_cell", cell?: [bigint, bigint, bigint], min_mass_msun?: number, limit?: number, } | { "op": "star_cell", cell?: [bigint, bigint, bigint], t_myr?: number, } | { "op": "sky_from_here", observer?: string, position_pc?: [number, number, number], t_myr?: number, limit_mag?: number, band?: string, bands?: Array<string>, cone?: SkyCone, 
+grow: boolean, at_s: bigint, } | { "op": "export_sector", scope: string, format: string, sheet?: string, at_s: bigint, } | { "op": "sector_map", scope: string, sheet?: string, at_s: bigint, } | { "op": "halo_cell", cell?: [bigint, bigint, bigint], min_mass_msun?: number, limit?: number, } | { "op": "star_cell", cell?: [bigint, bigint, bigint], t_myr?: number, } | { "op": "sky_from_here", observer?: string, position_pc?: [number, number, number], t_myr?: number, limit_mag?: number, band?: string, bands?: Array<string>, cone?: SkyCone, 
 /**
  * Most stars listed, brightest first (default 20,000, the phone
  * tier of ruling 12; desktops ask 200,000). A cut list says
@@ -125,4 +125,4 @@ parent?: string,
 /**
  * Facts as words, for forms that read them (`colour`: `red`).
  */
-facts?: { [key in string]: string }, } | { "op": "read_names", address: string, at_s?: bigint, audience?: string, } | { "op": "set_naming", address: string, layer: string, scheme?: string, kind?: string, at_s: bigint, rename_fixed?: boolean, } | { "op": "rename", address: string, layer?: string, text?: string, at_s: bigint, } | { "op": "fix_names", address: string, at_s: bigint, };
+facts?: { [key in string]: string }, } | { "op": "read_names", address: string, at_s?: bigint, audience?: string, } | { "op": "set_naming", address: string, layer: string, scheme?: string, kind?: string, at_s: bigint, rename_fixed?: boolean, } | { "op": "rename", address: string, layer?: string, text?: string, at_s: bigint, } | { "op": "fix_names", address: string, at_s: bigint, } | { "op": "pack_reports", pack?: string, };

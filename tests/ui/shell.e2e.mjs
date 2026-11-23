@@ -238,7 +238,17 @@ try {
     assert.equal(await page.getAttribute("html", "data-theme"), "night-chart");
     await page.keyboard.press("?");
     assert.ok(await page.locator("dialog[open]").isVisible());
+    assert.equal(await page.locator("dialog[open] [data-help-page]").getAttribute("data-help-page"), "keys", "? opens Help on the keyboard page");
     await page.keyboard.press("Escape");
+    // The Help door (V3 gap 31): More shows a dot until What's new has been opened on this device.
+    await page.getByRole("button", { name: /^More/ }).click();
+    assert.ok(await page.locator("[data-more-help] .news-dot").isVisible(), "More's Help shows unseen news");
+    await page.locator("[data-more-help]").click();
+    await page.locator("dialog[open] [data-help-page='new'] [data-news]").first().waitFor();
+    await page.getByRole("dialog").getByRole("button", { name: "Getting started" }).click();
+    await page.locator("dialog[open] [data-help-sol]").waitFor();
+    await page.keyboard.press("Escape");
+    await page.waitForFunction(() => !document.querySelector("dialog[open]") && !document.querySelector(".news-dot"), null, { timeout: 5000 });
     await page.close();
 
     // Screens and phone layout, both modes.

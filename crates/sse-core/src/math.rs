@@ -41,7 +41,10 @@ pub fn fmod(x: f64, y: f64) -> f64 {
 /// Square root: IEEE correctly rounded on every target.
 #[inline]
 pub fn sqrt(x: f64) -> f64 {
-    libm::sqrt(x)
+    // The hardware square root: IEEE 754 requires it correctly rounded, so it
+    // is bit for bit libm's on every target, and in wasm it is one instruction
+    // (f64.sqrt) where libm's is a software loop.
+    x.sqrt()
 }
 
 pub const PI: f64 = core::f64::consts::PI;

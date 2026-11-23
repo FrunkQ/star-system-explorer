@@ -587,6 +587,14 @@ The owner wants the physics in chain blocks (except big blocks) with a UI elemen
 | sse.convection.* (star surface cells) | Granule = 10 pressure scale heights, life = half a crossing time, supergranule = 25 granules with flows a fifth of the granule speed, convective speed ∝ T^(5/3) g^(−1/3) from flux with fixed photospheric opacity, all fitted on the Sun; one mean molecular weight 1.3 | Sun matched by construction; Betelgeuse a handful of large cells as simulated; cool white dwarf cells 0.4 km against about 1 km and speeds far too low (Tremblay et al. 2013) | 3D-model grid (Trampedach 2013, Magic 2013 Stagger grid) as tabulated results | stand-in |
 | sse_cosmos::patch glows | Expected nebulae as steady-state counts (rate × visible life); one mean ambient density (1 H per cm³) for every patch; planetary nebula shell at mid-range speed; ionising stars (≥ 15 M☉) stand in for H II regions, which group many such stars; main-sequence life 10 Gyr × M^−2.5 | counts within a factor of two or three near the Sun | local gas density from the patch, cluster grouping of ionising stars | stand-in |
 
+## Master data sheet (`packs/base-reference`)
+
+Sheet rows whose `src` is `fudge-register`: a stand-in value kept until a source is read.
+
+| Where | Instead of the physics | Why | Real physics to replace it | Status |
+|---|---|---|---|---|
+| `substances[he3].phases.density_liquid` (MP23) | 59 kg m-3 at the 3.19 K boiling point, recalled, not read | Liquid helium-3 has no equation of state in CoolProp, and the sources read so far stop below 2.5 K (Kollar and Vollhardt, arXiv cond-mat/9906222) or give no density (Wikipedia's liquid helium table) | The saturated-liquid density of helium-3 from a read source (Wheatley 1975, Rev. Mod. Phys. 47, 415, or a helium-3 equation of state such as Huang et al.) | stand-in; ship tanks only |
+
 ## Interface and player views
 
 | Where | Instead of the physics | Why | Real physics to replace it | Status |

@@ -122,6 +122,10 @@ test("PF2: every engine scenario has one bench chunk, and the bench's sums and c
   slow.chunks[0].sources[0].median_ms = 10.4;
   slow.chunks[0].median_ms = 10.4;
   assert.deepEqual(bench.compareBench(before, slow).slower, [], "4 % is within");
+  const paused = bench.benchReport([{ name: "nav", chunk: "voyages", runs_ms: [690, 692, 3900] }], PERF_CHUNKS, { today: "2026-11-23" });
+  assert.equal(paused.chunks[0].sources[0].unsteady, true, "a run over twice the median is marked");
+  assert.equal(paused.chunks[0].sources[0].median_ms, 692);
+  assert.equal(before.chunks[0].sources[0].unsteady, undefined, "steady runs are not");
 });
 
 test("a chunk's 95th percentile is its worst op's, so one slow kind of call is never averaged away", () => {

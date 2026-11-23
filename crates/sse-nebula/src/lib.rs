@@ -25,7 +25,7 @@ use sse_light::{LightDescription, LineEmission, Reference};
 
 pub const YEAR_S: f64 = sse_core::quantity::consts::JULIAN_YEAR;
 pub const PC_M: f64 = 648_000.0 / m::PI * sse_core::quantity::consts::AU;
-pub const MSUN_KG: f64 = 1.988_41e30;
+pub const MSUN_KG: f64 = sse_core::sheet::M_SUN;
 /// Hα/Hβ in case B at 10⁴ K (Osterbrock and Ferland 2006, table 4.2).
 pub const HA_OVER_HB: f64 = 2.86;
 

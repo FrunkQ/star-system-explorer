@@ -76,6 +76,10 @@ export type { Depth } from "./depth.ts";
 export type { Terms } from "./words.ts";
 export { fetchSector, sectorPath } from "./sector-fetch.ts";
 export type { SectorText } from "./sector-fetch.ts";
+export { SECTOR_FORMATS, mapFields, stackProvides } from "./sector.ts";
+export { BOOKKEEPING, byKind, constructsIn, factOf, kindOf, kindWords, templateOf } from "./constructs.ts";
+export type { ConstructTemplate, Created } from "./constructs.ts";
+export type { CodeReading, CodesRead, MappedWorldRow, SectorMap, SectorFormat, SectorImportAsk, ImportedWorldRow, SectorImported, SectorExported } from "./sector.ts";
 export { STOCK_SHIPS, navFromScene, safestFirst, shortlist, DIFFICULTY_STEPS, difficultyPips, daysWords, dvWords, doseWords, delayWords, fromNowWords, fuelLeft, routeFrame, trackPath, trackPoint, orbitEllipse, trackIndexAt } from "./route.ts";
 export type { NavShip, NavBody, NavSystem, Prefer, RouteAsk, RoutePlan, Course, RouteBurn, RouteHazard, WayOut, NavFromScene, RouteFrame } from "./route.ts";
 export { verdictWords, chanceWords, worstDangers } from "./ship-at-world.ts";
@@ -103,3 +107,9 @@ export * from "./perf.ts";
 // The master data sheet's constants (MP22): one door to a constant's value for every package.
 export { constant, constantOf, constantIds, SHEET_PACK } from "./sheet.ts";
 export type { SheetConstant } from "./sheet.ts";
+// One Open door (V3 gap 28): what a file is, by looking inside it; Explorers V4 listings, checked by sha256.
+export { sniffFile, sha256Hex, explorersUrl, fetchExplorers, creditWords, CONVERTER_URL } from "./open-file.ts";
+export type { FileKind, Sniffed, ExplorersListing, ExplorersFetched } from "./open-file.ts";
+// Add here (V3 gap 2): what this orbit would make, from formation runs, or anything, marked impossible.
+export { formsHere, anythingClip, clipAt, freeOrbit } from "./add-here.ts";
+export type { FormsHere } from "./add-here.ts";
