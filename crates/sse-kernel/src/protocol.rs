@@ -564,6 +564,16 @@ pub enum Request {
         #[serde(default)]
         #[ts(optional)]
         fixture: Option<String>,
+        /// An adopted system: every planet read from its facts, each with a
+        /// `glance` (what holds off the wind, bubble size, shielded or not,
+        /// the ground's dose as a share of open space, belt extent, and
+        /// whether the field is measured, computed, none or unresolved).
+        #[serde(default)]
+        #[ts(optional)]
+        system: Option<String>,
+        #[serde(default)]
+        #[ts(optional)]
+        at_s: Option<i64>,
     },
     /// Magnitudes in photometric bands (night sky Y2, light side): for each
     /// of `stars` (a photosphere: `temperature_k` with `radius_m` or
