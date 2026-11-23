@@ -28,7 +28,7 @@ export interface VoyageAsk {
   from: string;
   to?: string;
   home?: string;
-  ship: string | Record<string, unknown>;
+  ship: string | import("./route.ts").NavShip | Record<string, unknown>;
   minimise?: Minimise;
   visited?: string[];
   known_fuel?: Record<string, string[]>;

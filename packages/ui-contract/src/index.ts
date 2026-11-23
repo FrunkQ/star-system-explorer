@@ -41,6 +41,7 @@ export * from "./matter.ts";
 export * from "./place.ts";
 export * from "./view-controls.ts";
 export * from "./overlay.ts";
+export * from "./landing.ts";
 export * from "./map-controls.ts";
 export * from "./place-event.ts";
 export type { ReferenceIn, ShownReference } from "./reference.ts";
@@ -83,8 +84,8 @@ export { BOOKKEEPING, byKind, constructsIn, factOf, kindOf, kindWords, templateO
 export { shipLog, writerWords } from "./constructs.ts";
 export type { ConstructTemplate, Created, KeptChange, ShipLogEntry, RecordRead } from "./constructs.ts";
 export type { CodeReading, CodesRead, MappedWorldRow, SectorMap, SectorFormat, SectorImportAsk, ImportedWorldRow, SectorImported, SectorExported } from "./sector.ts";
-export { STOCK_SHIPS, packShips, navFromScene, safestFirst, shortlist, DIFFICULTY_STEPS, difficultyPips, daysWords, dvWords, doseWords, delayWords, fromNowWords, fuelLeft, routeFrame, trackPath, trackPoint, orbitEllipse, trackIndexAt } from "./route.ts";
-export type { NavShip, NavBody, NavSystem, Prefer, RouteAsk, RoutePlan, Course, RouteBurn, RouteHazard, WayOut, NavFromScene, RouteFrame } from "./route.ts";
+export { STOCK_SHIPS, packShips, shipChoices, shipToSend, packDriveWords, navFromScene, safestFirst, shortlist, DIFFICULTY_STEPS, difficultyPips, daysWords, dvWords, doseWords, delayWords, fromNowWords, fuelLeft, routeFrame, trackPath, trackPoint, orbitEllipse, trackIndexAt } from "./route.ts";
+export type { NavShip, ShipChoice, NavBody, NavSystem, Prefer, RouteAsk, RoutePlan, Course, RouteBurn, RouteHazard, WayOut, NavFromScene, RouteFrame } from "./route.ts";
 export { verdictWords, chanceWords, worstDangers } from "./ship-at-world.ts";
 export { aerobrakeOption } from "./ship-at-world.ts";
 export type { ShipAtWorldAsk, ShipAtWorldReport, ShipAtWorld, WorldCheck, Danger as ShipDanger, Chance as ShipChance, ShipEffect, Verdict as ShipVerdict, WorldAir } from "./ship-at-world.ts";
@@ -126,3 +127,5 @@ export { embedAsked, embedOrigin, embedOrigins, framingOrigin, embedMode, embedA
 export type { EmbedMode, EmbedOut } from "./embed.ts";
 export { BRAND_LOGO_MAX, BRAND_NAME_MAX, DEFAULT_JOIN, LIVE_OVERRIDES, checkBrand, joinLine, joinWordsOf, withLive } from "./brand.ts";
 export type { JoinWords, SeatBrand } from "./brand.ts";
+export { LANDMARKS, LANDMARK_WORDS, LANDMARK_MEANS, HOLD_MS, tableOf, fieldLandmark, hasException, lineChange, pressedLandmark, knownOverall, knownChangedWords, eyesShow, secrecyRelevant, holdReveal } from "./known.ts";
+export type { Landmark as KnownLandmark, KnownTo, KnownAudience, KnownException, KnownScope, KnownChange, Held } from "./known.ts";

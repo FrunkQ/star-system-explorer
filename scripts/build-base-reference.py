@@ -32,6 +32,7 @@ ORIGINS_CSV = ROOT / "handover/packages/MP2-data/origins.csv"
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 import element_origins  # noqa: E402
 import water_phases  # noqa: E402
+import element_affinity  # noqa: E402
 
 JULIAN_YEAR_S = 31557600.0
 
@@ -73,6 +74,11 @@ SOURCES = {
     "bodhaine1999": ("Bodhaine, B. A., Wood, N. B., Dutton, E. G. and Slusser, J. R. 1999, J. Atmos. Oceanic Technol. 16, 1854: on Rayleigh optical depth calculations (King factors)", "10.1175/1520-0426(1999)016<1854:ORODC>2.0.CO;2", None, "verified"),
     "thauer1977": ("Thauer, R. K., Jungermann, K. and Decker, K. 1977, Bacteriological Reviews 41, 100: energy conservation in chemotrophic anaerobic bacteria (appendix: free energies and enthalpies of formation at 298.15 K)", None, "https://pmc.ncbi.nlm.nih.gov/articles/PMC413997", "verified"),
     "convention": ("Elements in their standard state and the hydrogen ion at unit activity have zero free energy and enthalpy of formation by convention", None, "https://goldbook.iupac.org/", "textbook"),
+    "nssdca-sun": ("NASA NSSDCA Sun fact sheet: sidereal rotation period 25.38 days (the Carrington rotation)", None, "https://nssdc.gsfc.nasa.gov/planetary/factsheet/sunfact.html", "unverified"),
+    "mcdonough-sun1995": ("McDonough, W. F. and Sun, S.-s. 1995, Chemical Geology 120, 223: the composition of the Earth (CI chondrite and pyrolite columns; read from two machine-readable reproductions, handover/packages/MP-affinity-data)", "10.1016/0009-2541(94)00140-4", None, "unverified"),
+    "palme-oneill2014": ("Palme, H. and O'Neill, H. St. C. 2014, Cosmochemical estimates of mantle composition, Treatise on Geochemistry 2nd edition vol. 3, 1: CI chondrite hydrogen and oxygen (read from the pyrolite package's copy)", "10.1016/B978-0-08-095975-7.00201-1", None, "unverified"),
+    "mcdonough2003": ("McDonough, W. F. 2003, Compositional model for the Earth's core, Treatise on Geochemistry vol. 2, 547, Table 4 (read from the GERM reservoir database's copy)", "10.1016/B0-08-043751-6/02015-6", "https://earthref.org/GERMRD/34/", "unverified"),
+    "rudnick-gao2003": ("Rudnick, R. L. and Gao, S. 2003, Composition of the continental crust, Treatise on Geochemistry vol. 3, 1, Table 11, bulk crust (read from the pyrolite package's copy, checked against the 2014 edition)", "10.1016/B0-08-043751-6/03016-4", None, "unverified"),
     "nssdca-earth": ("NASA NSSDCA Earth fact sheet (volumetric mean radius 6371.000 km)", None, "https://nssdc.gsfc.nasa.gov/planetary/factsheet/earthfact.html", "verified"),
     "nssdca-moon": ("NASA NSSDCA Moon fact sheet (mass 0.07346e24 kg, mean radius 1737.4 km, semi-major axis 0.3844e6 km)", None, "https://nssdc.gsfc.nasa.gov/planetary/factsheet/moonfact.html", "verified"),
     "nssdca-jupiter": ("NASA NSSDCA Jupiter fact sheet (volumetric mean radius 69911 km)", None, "https://nssdc.gsfc.nasa.gov/planetary/factsheet/jupiterfact.html", "verified"),
@@ -85,6 +91,9 @@ SOURCES = {
     "moritz2000": ("Moritz, H. 2000, J. Geodesy 74, 128: Geodetic Reference System 1980 (Earth's angular velocity 7 292 115e-11 rad/s)", "10.1007/s001900050278", None, "verified"),
     "chandrasekhar1931": ("Chandrasekhar, S. 1931, ApJ 74, 81: the maximum mass of ideal white dwarfs (1.44 solar masses is the usual figure for a carbon-oxygen core, mu_e = 2, with Coulomb corrections)", "10.1086/143324", None, "textbook"),
     "eakins2010": ("Eakins, B. W. and Sharman, G. F. 2010, Volumes of the World's Oceans from ETOPO1, NOAA National Geophysical Data Center (1.335e9 km3, mean depth 3688 m)", None, "https://www.ngdc.noaa.gov/mgg/global/etopo1_ocean_volumes.html", "unverified"),
+    "dupont-kevlar2017": ("DuPont 2017, Kevlar aramid fiber technical guide, Table II-1: typical properties of Kevlar 29 and 49 yarns (Kevlar 49 straight-test yarn 3,000 MPa, resin-impregnated strand 3,600 MPa, density 1.44 g/cm3; typical values, not specifications)", None, "https://www.r-g.de/wiki/images/e/ec/Td_en_Kevlar_guide.pdf", "verified"),
+    "fiberline-zylon": ("Fiber-Line, Zylon PBO datasheet (fibre made by Toyobo): high-modulus grade breaking tenacity 42.0 g/d, specific gravity 1.56; typical values, not a specification. Toyobo's own technical information gives 5.8 GPa", None, "https://automotive.polyone.com/sites/default/files/2021-06/fl.us-.datasheet-zylonr-pbo.pdf", "verified"),
+    "yu2000": ("Yu, M.-F., Lourie, O., Dyer, M. J., Moloni, K., Kelly, T. F. and Ruoff, R. S. 2000, Science 287, 637: strength and breaking mechanism of multiwalled carbon nanotubes under tensile load (outer shells broke at 11 to 63 GPa)", "10.1126/science.287.5453.637", None, "unverified"),
     "turcotte2014": ("Turcotte, D. L. and Schubert, G. 2014, Geodynamics, 3rd edition, Cambridge University Press (typical crust 2700, mantle 3300 and sediment 2300 kg/m3 of its worked problems)", "10.1017/CBO9780511843877", None, "unverified"),
     "wallace-hobbs2006": ("Wallace, J. M. and Hobbs, P. V. 2006, Atmospheric Science: An Introductory Survey, 2nd edition, Academic Press (dry air c_p = 1004 J/kg/K)", "10.1016/C2009-0-00034-8", None, "unverified"),
     "nssdca-venus": ("NASA NSSDCA Venus fact sheet (atmosphere 96.5% CO2, 3.5% N2 by volume)", None, "https://nssdc.gsfc.nasa.gov/planetary/factsheet/venusfact.html", "unverified"),
@@ -172,6 +181,7 @@ CONSTANTS = [
     ("R_sun", "nominal solar radius", val(6.957e8, "m", "iau2015b3", exact=True)),
     ("L_sun", "nominal solar luminosity", val(3.828e26, "W", "iau2015b3", exact=True)),
     ("T_sun", "nominal solar effective temperature", val(5772.0, "K", "iau2015b3", exact=True)),
+    ("P_rot_sun", "solar sidereal rotation period (Carrington)", val(25.38 * 86400.0, "s", "nssdca-sun", "unverified", note="25.38 days; the surface turns faster at the equator and slower near the poles")),
     ("S_sun", "nominal total solar irradiance", val(1361.0, "W m-2", "iau2015b3", exact=True)),
     ("GM_earth", "nominal Earth mass parameter", val(GM_EARTH, "m3 s-2", "iau2015b3", exact=True)),
     ("M_earth", "Earth mass", val(GM_EARTH / G, "kg", "iau2015b3"), "GM_earth / G"),
@@ -470,6 +480,7 @@ SUBSTANCES = [
                   "triple_point_k": val(273.16, "K", NIST),
                   "triple_point_pa": val(611.657, "Pa", NIST),
                   "latent_vaporisation": val(2.468e6, "J kg-1", NIST, "verified", at_k=288.0, note="from the slope of the NIST Antoine fit, 273-303 K row"),
+                  "latent_fusion": val(3.3355e5, "J kg-1", "crc-handbook", "unverified", at_k=273.15, at_pa=101325.0, note="ice Ih to liquid, 6.009 kJ/mol"),
                   "density_liquid": val(1000.0, "kg m-3", NIST, "verified", at_k=277.0),
                   "density_solid": val(917.0, "kg m-3", "petrenko1999", "verified", at_k=273.15, note="ice Ih"),
                   "vapour_pressure": {"fit": "feistel-wagner-2007", "coeffs": [273.16, 611.657, 20.9969665107897, 3.72437478271362, -13.9205483215524, 29.6988765013566, -40.1972392635944, 29.7880481050215, -9.13050963547721], "valid_k": [50.0, 273.16], "src": FS, "also": ["lisse2021"], "note": "ln(P/Pt) = 1.5 ln(T/Tt) + (1 - Tt/T) sum e_i (T/Tt)^i; coeffs [Tt, Pt Pa, e0..e6]"},
@@ -583,6 +594,20 @@ SUBSTANCES = [
     substance("acetate-", {"c": 2, "h": 3, "o": 2}, "acetate", charge=-1, chemical={"states": {"dissolved": gibbs(-369.41, -486.01, T)}}),
     substance("glucose", {"c": 6, "h": 12, "o": 6}, "glucose", chemical={"states": {"dissolved": gibbs(-917.22, -1262.19, T)}}),
     substance("ethanol", {"c": 2, "h": 6, "o": 1}, "ethanol", chemical={"states": {"dissolved": gibbs(-181.75, -288.3, T)}}),
+    # The oxides of rock analyses (element inventory: a rock-riding element's
+    # condensation.oxide names one, so a block can bind rock's oxygen).
+    substance("sio2", {"si": 1, "o": 2}, "silicon dioxide", plain="silica"),
+    substance("tio2", {"ti": 1, "o": 2}, "titanium dioxide"),
+    substance("al2o3", {"al": 2, "o": 3}, "aluminium oxide", plain="alumina"),
+    substance("cr2o3", {"cr": 2, "o": 3}, "chromium(III) oxide"),
+    substance("feo", {"fe": 1, "o": 1}, "iron(II) oxide"),
+    substance("mno", {"mn": 1, "o": 1}, "manganese(II) oxide"),
+    substance("mgo", {"mg": 1, "o": 1}, "magnesium oxide", plain="magnesia"),
+    substance("cao", {"ca": 1, "o": 1}, "calcium oxide", plain="lime"),
+    substance("na2o", {"na": 2, "o": 1}, "sodium oxide"),
+    substance("k2o", {"k": 2, "o": 1}, "potassium oxide"),
+    substance("p2o5", {"p": 2, "o": 5}, "phosphorus pentoxide"),
+    substance("nio", {"ni": 1, "o": 1}, "nickel(II) oxide"),
     substance("ch2o", {"c": 1, "h": 2, "o": 1}, "organic carbon (one sixth of glucose)", plain="organic matter",
               chemical={"states": {"dissolved": gibbs(-152.87, -210.37, T)}}),
 ]
@@ -635,6 +660,19 @@ MIXTURES = [
      "thermal": {"heat_capacity": val(1040.0, "J kg-1 K-1", NIST, "unverified", note="nitrogen near 94 K")}},
     {"id": "quartz-sand", "names": {"physics": "quartz sand", "plain": "sand", "story": "sand"},
      "recipe": {}, "by": "mass", "density": val(2650.0, "kg m-3", "crc-handbook", "unverified", note="grain density, not bulk")},
+    # Materials that carry load: strength for weight is tensile strength over density (FT1, limit 7).
+    {"id": "steel-wire", "names": {"physics": "high-strength steel wire", "plain": "steel cable", "story": "steel"},
+     "recipe": {}, "by": "mass", "density": val(7850.0, "kg m-3", "fudge-register", "unverified", note="textbook carbon steel; from memory, not read"),
+     "tensile_strength": val(2.0e9, "Pa", "fudge-register", "unverified", note="drawn high-carbon wire is about 1.8 to 2.2 GPa; from memory, not read")},
+    {"id": "aramid", "names": {"physics": "aramid fibre (Kevlar 49 yarn)", "plain": "aramid fibre", "story": "aramid"},
+     "recipe": {}, "by": "mass", "density": val(1440.0, "kg m-3", "dupont-kevlar2017"),
+     "tensile_strength": val(3.0e9, "Pa", "dupont-kevlar2017", note="yarn, straight test; a resin-impregnated strand reaches 3.6 GPa")},
+    {"id": "pbo-fibre", "names": {"physics": "PBO fibre (Zylon HM)", "plain": "PBO fibre", "story": "Zylon"},
+     "recipe": {}, "by": "mass", "density": val(1560.0, "kg m-3", "fiberline-zylon", note="specific gravity 1.56"),
+     "tensile_strength": val(5.8e9, "Pa", "fiberline-zylon", note="42.0 g/d times specific gravity 1.56 is 5.8 GPa, as Toyobo quotes")},
+    {"id": "carbon-nanotube", "names": {"physics": "multiwalled carbon nanotube (best measured shell)", "plain": "carbon nanotube", "story": "nanotube"},
+     "recipe": {}, "by": "mass", "density": val(1340.0, "kg m-3", "fudge-register", "unverified", note="1.3 to 1.4 g/cm3 is usually quoted; not read from a paper"),
+     "tensile_strength": val(6.3e10, "Pa", "yu2000", "unverified", note="the strongest of the measured outer shells; no cable this strong has been made")},
     {"id": "magma-dre", "names": {"physics": "magma, dense-rock equivalent", "plain": "magma", "story": "magma"},
      "recipe": {}, "by": "mass", "density": val(2500.0, "kg m-3", "mastin2009")},
 ]
@@ -659,6 +697,7 @@ for gid, name, t_k, t_src, rho, share in [
 
 # ---------------------------------------------------------------- elements
 ORIGINS = element_origins.load(ORIGINS_CSV)
+AFFINITY = element_affinity.load()
 
 
 def elements():
@@ -684,6 +723,7 @@ def elements():
             o = ORIGINS[row["id"]]
             row["origin"] = element_origins.origin_value(row["id"], o)
             row["origin_story"] = element_origins.story(row["id"], row["name"], o)
+            element_affinity.apply(row, AFFINITY, val)
             rows.append(row)
     return rows
 
@@ -752,6 +792,10 @@ def validate(pack):
                 walk(v, f"{where}[{i}]")
 
     walk(ref, "reference")
+    for e in ref["elements"]:
+        ox = e.get("condensation", {}).get("oxide")
+        if ox and ox not in sub_ids:
+            errors.append(f"element {e['id']}: unknown oxide {ox}")
     for s in ref["substances"]:
         iso_mass = {i["id"] for i in ref["isotopes"] if "mass" in i}
         for el in s["formula"]:

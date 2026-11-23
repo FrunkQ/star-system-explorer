@@ -9,7 +9,7 @@
 -->
 <script lang="ts">
   import { untrack } from "svelte";
-  import { STOCK_SHIPS, aerobrakeOption, chanceWords, constant, verdictWords, worstDangers, type WorldCheck, daysWords, delayWords, difficultyPips, doseWords, dvWords, fromNowWords, fuelLeft, navFromScene, orbitEllipse, routeFrame, safestFirst, shortlist, trackIndexAt, trackPath, trackPoint, type Course, type Json, type Prefer, type RoutePlan, type SystemScene, type ViewContext, YEAR_S } from "../../../ui-contract/src/index.ts";
+  import { STOCK_SHIPS, shipChoices, shipToSend, aerobrakeOption, chanceWords, constant, verdictWords, worstDangers, type WorldCheck, daysWords, delayWords, difficultyPips, doseWords, dvWords, fromNowWords, fuelLeft, navFromScene, orbitEllipse, routeFrame, safestFirst, shortlist, trackIndexAt, trackPath, trackPoint, type Course, type Json, type Prefer, type RoutePlan, type SystemScene, type ViewContext, YEAR_S } from "../../../ui-contract/src/index.ts";
 
   const YEAR_S_NUM = Number(YEAR_S);
   let { ctx, scene, params }: { ctx: ViewContext; scene: SystemScene; params: Record<string, Json> } = $props();
@@ -26,7 +26,18 @@
 
   const from_scene = $derived(navFromScene(scene));
   const bodies = $derived(from_scene.bodies);
-  let ship = $state(STOCK_SHIPS.some((s) => s.id === first.ship) ? first.ship : "fusion-torch");
+  let ship = $state(first.ship);
+  // Ships the stacked packs list (the Traveller pack's standard ships) beside the stock ones; a pack ship goes whole.
+  const choices = $derived.by(() => {
+    void ctx.workspace.revision;
+    const st = ctx.session.stack();
+    return shipChoices(STOCK_SHIPS, [...st.base, ...(st.campaign ? [st.campaign] : [])] as unknown as Parameters<typeof shipChoices>[1]);
+  });
+  $effect(() => {
+    if (!choices.some((c) => c.id === ship)) ship = "fusion-torch";
+  });
+  const shipName = $derived(choices.find((c) => c.id === ship) ?? choices.find((c) => c.id === "fusion-torch") ?? choices[0]);
+  const sending = $derived(shipName ? shipToSend(shipName) : ship);
   let want = $state<Want>((WANTS.some((w) => w.id === first.prefer) ? first.prefer : "balanced") as Want);
   let windowDays = $state(WINDOWS.includes(first.window) ? first.window : 120);
   let fromAddr = $state<string>("");
@@ -67,7 +78,7 @@
     // Leave from the campaign's "now" when the shell keeps one (players follow it), else the chart's.
     const campaignNow = (ctx.workspace as { campaign_now_yr?: number }).campaign_now_yr;
     const depart = typeof campaignNow === "number" && Number.isFinite(campaignNow) ? { depart_s: campaignNow * YEAR_S_NUM } : {};
-    const ask = { ship, from: fromAddr, to: toAddr, prefer: (want === "safest" ? "balanced" : want) as Prefer, window_days: windowDays, ...depart };
+    const ask = { ship: sending, from: fromAddr, to: toAddr, prefer: (want === "safest" ? "balanced" : want) as Prefer, window_days: windowDays, ...depart };
     if (!nav || !ask.from || !ask.to || ask.from === ask.to) return;
     const g = ++gen;
     busy = true;
@@ -90,7 +101,6 @@
     const c = (ctx.workspace as { campaign_now_yr?: number }).campaign_now_yr;
     return typeof c === "number" && Number.isFinite(c) ? c * YEAR_S_NUM : (from_scene.nav?.t0_s ?? 0);
   });
-  const shipName = $derived(STOCK_SHIPS.find((s) => s.id === ship));
 
   // The risky option beside the safe one (Alex, 23 Nov: danger is drama, never forbidden): where the destination has
   // air, braking in it instead of the arrival burn, judged by the kernel's ship_at_world at this course's own speed.
@@ -105,7 +115,7 @@
     const g = ++agen;
     // An adopted system on the GM's seat answers from its own record (its air); a chart's inline system carries none.
     const where = !scene.fixture && ctx.session.seat.authority === "gm" ? { system: scene.system } : { nav };
-    ctx.session.shipAtWorld({ ...where, ship, worlds: [toAddr], v_inf_m_s: c.arrive_v_inf_m_s! }).then((r) => {
+    ctx.session.shipAtWorld({ ...where, ship: sending, worlds: [toAddr], v_inf_m_s: c.arrive_v_inf_m_s! }).then((r) => {
       if (g !== agen || !r.ok) return;
       const o = aerobrakeOption(c.burns, r.report.worlds[0]);
       if (o) aero = { course: c.id, ...o };
@@ -139,7 +149,7 @@
     <p class="hint">The ship's computer plots courses from the real orbits. The crew chooses; the computer flies.</p>
     <label>Ship
       <select bind:value={ship} data-ship>
-        {#each STOCK_SHIPS as s (s.id)}<option value={s.id}>{s.name}</option>{/each}
+        {#each choices as s (s.id)}<option value={s.id} data-pack={s.pack ?? null}>{s.name}{s.pack ? " (pack)" : ""}</option>{/each}
       </select>
     </label>
     {#if shipName}<p class="hint">{shipName.drive}</p>{/if}

@@ -332,7 +332,7 @@
         <h4>Built from other galaxies</h4>
         <p class="hint">What {a.members} smaller galaxies brought by {gyr(chart.now_gyr)}: {a.merged} merged into this one and {a.torn_apart} were torn apart on the way in.</p>
         <div class="row" data-exsitu><span>Stars not born here</span><span class="v">{sci(a.exsitu_msun)} M☉{share > 0 ? ` · ${(share * 100).toFixed(share < 0.1 ? 1 : 0)}% of all stars` : ""}</span></div>
-        <div class="row" data-halo-provisional><span>Stellar halo (stars torn off passing galaxies)</span><span class="v" title="Provisional: galaxies that merge whole give their stars to the bulge for now, so the halo reads low (fudge F47, until debris is laid along each orbit)">{sci(a.stellar_halo_msun)} M☉ · provisional, reads low</span></div>
+        <div class="row" data-halo><span>Stellar halo (stars torn off passing galaxies)</span><span class="v" title="Stripped by tides as each satellite fell in, left as streams, shells or mixed remains (GH4)">{sci(a.stellar_halo_msun)} M☉</span></div>
         {#if chart.now.z_gas > 0 && a.stellar_halo_z > 0}<div class="row"><span>Halo stars' metals, against the gas now</span><span class="v">{fewer(a.stellar_halo_z / chart.now.z_gas)}</span></div>{/if}
         <div class="row"><span>Thick disc (stars heated by the collisions)</span><span class="v">{sci(a.thick_disc_msun)} M☉</span></div>
         {#if a.biggest}<div class="row" data-biggest><span>Gave the most</span><span class="v" title={a.biggest}>{shortAddress(a.biggest)} · {(a.biggest_share * 100).toFixed(0)}% of the stars not born here</span></div>{/if}

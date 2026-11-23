@@ -755,6 +755,31 @@ pub enum Request {
         #[ts(optional)]
         v_inf_m_s: Option<f64>,
     },
+    /// Where an FTL leg may begin (or end, `end: true`) in a system at `at_s`
+    /// under a pack's FTL `rule` (example packs 4A: clear of bodies by a
+    /// multiple of their size, gravity below or above a level, Lagrange
+    /// points, the star's poles, gates, anywhere): spheres to be clear of,
+    /// points, gates asked for, gravity levels and the rule in words, for the
+    /// chart's HUD layer and the voyage finder. Same sources as `ship_at_world`.
+    JumpMap {
+        #[serde(default)]
+        #[ts(optional)]
+        fixture: Option<String>,
+        #[serde(default)]
+        #[ts(optional, type = "unknown")]
+        nav: Option<serde_json::Value>,
+        #[serde(default)]
+        #[ts(optional)]
+        system: Option<String>,
+        #[serde(default)]
+        #[ts(optional, type = "number")]
+        at_s: Option<i64>,
+        #[ts(type = "unknown")]
+        rule: serde_json::Value,
+        #[serde(default)]
+        #[ts(optional)]
+        end: Option<bool>,
+    },
     /// The story finder (U8) and the agents' sift: run sifters over every
     /// address at or under `scope` (default the universe) at `at_s` (default
     /// now). `sifters` holds names of the stack's sifters
@@ -1081,6 +1106,134 @@ pub enum Request {
     /// actors under it. Never send this to a seat; seats get `disclosures`.
     Record {
         address: String,
+        #[serde(default)]
+        #[ts(optional)]
+        at_s: Option<i64>,
+    },
+    /// OV3: a holding on a map layer, one dated record event. `status` is
+    /// `holds` (one holder per place per layer), `claims` (by `by`) or
+    /// `influences` (with `strength` 0 to 1). `extent` is `{reach: {value,
+    /// unit}}`, `{band: [q, q]}` or `{outline: [[x, y]...], frame}`.
+    /// `withdraw` ends the holding in that slot. The layer is a pack's area
+    /// layer or a GM's own `misc.*` one.
+    Hold {
+        place: String,
+        layer: String,
+        key: String,
+        status: String,
+        #[serde(default)]
+        #[ts(optional)]
+        strength: Option<f64>,
+        #[serde(default)]
+        #[ts(optional, type = "unknown")]
+        extent: Option<serde_json::Value>,
+        #[serde(default)]
+        #[ts(optional)]
+        by: Option<String>,
+        #[serde(default)]
+        #[ts(optional)]
+        tier: Option<String>,
+        #[serde(default)]
+        #[ts(optional, type = "unknown")]
+        audience: Option<serde_json::Value>,
+        #[serde(default)]
+        #[ts(optional)]
+        writer: Option<String>,
+        #[serde(default)]
+        #[ts(optional)]
+        reason: Option<String>,
+        #[serde(default)]
+        #[ts(optional)]
+        source: Option<String>,
+        #[serde(default)]
+        #[ts(optional)]
+        withdraw: Option<bool>,
+        at_s: i64,
+    },
+    /// OV3: who holds a place (or a point drawn on a place: `point` is
+    /// `{frame, xy}`, in `body-latlon` or `galaxy-plane-pc`) on a layer at
+    /// `at_s` (absent: latest), seen by `audience` (absent: the GM), drawn
+    /// as `according_to` (an actor whose claims read as held). The answer
+    /// has `via` (held, inherited, rolled-up, rule), `divided` below a 0.6
+    /// share, the claims and influences there (`also`) and `why`.
+    WhoHolds {
+        place: String,
+        layer: String,
+        #[serde(default)]
+        #[ts(optional)]
+        point: Option<HoldPoint>,
+        #[serde(default)]
+        #[ts(optional)]
+        at_s: Option<i64>,
+        #[serde(default)]
+        #[ts(optional)]
+        audience: Option<String>,
+        #[serde(default)]
+        #[ts(optional)]
+        according_to: Option<String>,
+    },
+    /// OV3: the answers for `bounds` and every place held, claimed or
+    /// influenced inside it on a layer, as `who_holds` gives them; with
+    /// `history`, also every holding there that started by `at_s`, with
+    /// `until_s` on those that ended (the ruler's border changes).
+    HoldingsIn {
+        bounds: String,
+        layer: String,
+        #[serde(default)]
+        #[ts(optional)]
+        at_s: Option<i64>,
+        #[serde(default)]
+        #[ts(optional)]
+        audience: Option<String>,
+        #[serde(default)]
+        #[ts(optional)]
+        according_to: Option<String>,
+        #[serde(default)]
+        #[ts(optional)]
+        history: Option<bool>,
+    },
+    /// FT2: a civilisation's technology, one dated record event on an actor
+    /// (or on the universe root, for the whole setting): a `level` on the
+    /// setting's ladder, advances gained early (`gain`, "Develop it") or
+    /// never taken up (`lose`). Plain data; nothing grows on its own.
+    SetTech {
+        holder: String,
+        #[serde(default)]
+        #[ts(optional)]
+        level: Option<i64>,
+        #[serde(default)]
+        #[ts(optional)]
+        gain: Option<Vec<String>>,
+        #[serde(default)]
+        #[ts(optional)]
+        lose: Option<Vec<String>>,
+        #[serde(default)]
+        #[ts(optional)]
+        writer: Option<String>,
+        #[serde(default)]
+        #[ts(optional)]
+        reason: Option<String>,
+        at_s: i64,
+    },
+    /// FT2: a civilisation's technology at `at_s` (absent: latest), with
+    /// what it inherits from its parents and the setting: level, gained and
+    /// lost advances (each with who said it, and when), and every advance it
+    /// holds.
+    TechOf {
+        holder: String,
+        #[serde(default)]
+        #[ts(optional)]
+        at_s: Option<i64>,
+    },
+    /// FT2: the availability reading of a design through a civilisation:
+    /// `parts` are `{part, needs: {figure: value}}`. Per need: `can build`,
+    /// `short` (levels short and the prototype's size) or `past known`, with
+    /// `fictional` naming the law where a need passes a ceiling; overall the
+    /// worst, the parts' size factors and the advances it leans on.
+    TechReading {
+        holder: String,
+        #[ts(type = "unknown[]")]
+        parts: Vec<serde_json::Value>,
         #[serde(default)]
         #[ts(optional)]
         at_s: Option<i64>,
@@ -1736,6 +1889,7 @@ impl Request {
             Request::SurveySurface { .. } => "survey_surface",
             Request::PlanRoute { .. } => "plan_route",
             Request::ShipAtWorld { .. } => "ship_at_world",
+            Request::JumpMap { .. } => "jump_map",
             Request::GalaxyChart { .. } => "galaxy_chart",
             Request::WebSlice { .. } => "web_slice",
             Request::WindowView { .. } => "window_view",
@@ -1752,6 +1906,12 @@ impl Request {
             Request::SetKept { .. } => "set_kept",
             Request::AddActor { .. } => "add_actor",
             Request::Record { .. } => "record",
+            Request::Hold { .. } => "hold",
+            Request::WhoHolds { .. } => "who_holds",
+            Request::HoldingsIn { .. } => "holdings_in",
+            Request::SetTech { .. } => "set_tech",
+            Request::TechOf { .. } => "tech_of",
+            Request::TechReading { .. } => "tech_reading",
             Request::Disclosures { .. } => "disclosures",
             Request::RulesStep { .. } => "rules_step",
             Request::RulesPending => "rules_pending",
@@ -1961,6 +2121,11 @@ pub fn ops() -> Vec<OpInfo> {
             "ship_at_world",
             Cost::Light,
             "per world closed-form passes and burns, plus one descent at 0.1 s steps where there is ground and air (tens of ms native)",
+        ),
+        o(
+            "jump_map",
+            Cost::Light,
+            "closed form per body: a shell, five points or a gravity level each",
         ),
         o(
             "plan_route",
@@ -2588,6 +2753,14 @@ pub enum Response {
         #[ts(type = "unknown")]
         report: serde_json::Value,
     },
+    /// `jump_map`: `report {system, rule (the FTL rule as read), map {t_s, keepouts
+    /// (body, name, centre_m, radius_m), points (body, name, what, at_m,
+    /// within_m), gates, gravity ([m_s2, above]), anywhere, words}}`; positions
+    /// are metres from the star in NAV's frame.
+    JumpMapped {
+        #[ts(type = "unknown")]
+        report: serde_json::Value,
+    },
     /// `surface_frames`: `{body, label, source, at_s?, frames (version, detail,
     /// epoch_myr, grid {n, cells}, dirs (x y z per cell), frames (t_myr,
     /// sea_level_m, plate, continental, elevation_m, vent, arc, ridge, ice_m, temp_k,
@@ -2659,6 +2832,45 @@ pub enum Response {
         kept: Vec<serde_json::Value>,
         #[ts(type = "unknown[]")]
         actors: Vec<serde_json::Value>,
+    },
+    /// `hold`: the holding as stored.
+    Held {
+        holding_id: String,
+        #[ts(type = "unknown")]
+        holding: serde_json::Value,
+        record_hash: String,
+    },
+    /// `who_holds`: the answer, or null for bare paper.
+    WhoHeld {
+        #[ts(type = "unknown")]
+        answer: serde_json::Value,
+    },
+    /// `holdings_in`: `holdings` are answers as `who_holds` gives them;
+    /// `changes` (with `history`) every holding there by date.
+    HoldingsListed {
+        layer: String,
+        #[ts(type = "unknown[]")]
+        holdings: Vec<serde_json::Value>,
+        #[serde(default, skip_serializing_if = "Vec::is_empty")]
+        #[ts(optional, type = "unknown[]")]
+        changes: Vec<serde_json::Value>,
+    },
+    /// `set_tech`: the event's id.
+    TechSet {
+        change_id: String,
+        record_hash: String,
+    },
+    /// `tech_of`: `{level?: [n, said], gained, lost, holds: [advance ids]}`.
+    TechRead {
+        holder: String,
+        #[ts(type = "unknown")]
+        tech: serde_json::Value,
+    },
+    /// `tech_reading`: the availability reading.
+    TechAvailability {
+        holder: String,
+        #[ts(type = "unknown")]
+        reading: serde_json::Value,
     },
     /// `disclosures`: `items` are `{subject, notes?: [{id, at_s, text, tags?,
     /// by, links?}], kept?: [{field, value?, band?}]}`, where `kept` holds the
@@ -3107,3 +3319,11 @@ pub struct StackAdopted {
 }
 
 pub const PROTOCOL: &str = "sse.kernel/1";
+
+/// A point drawn on a place, in that place's frame (OV3).
+#[derive(Clone, Debug, PartialEq, Serialize, Deserialize, TS)]
+#[ts(export)]
+pub struct HoldPoint {
+    pub frame: String,
+    pub xy: [f64; 2],
+}

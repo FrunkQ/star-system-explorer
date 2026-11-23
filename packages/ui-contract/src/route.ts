@@ -63,6 +63,43 @@ export function packShips(packs: readonly { id: string; provides?: { other?: Rec
   return out;
 }
 
+/** One row of a ship picker: a stock ship (sent by id) or a pack's ship (sent whole, `ship`). */
+export interface ShipChoice {
+  id: string;
+  name: string;
+  drive: string;
+  /** The pack that lists it; missing for a stock ship. */
+  pack?: string;
+  ship?: NavShip;
+}
+
+/** A pack ship's drive in words, from its own figures. */
+export function packDriveWords(ship: NavShip): string {
+  const j = (ship as NavShip & { jump?: { rating_pc?: number } }).jump;
+  const g = `${ship.accel_g} g${ship.sustained ? " sustained" : ""}`;
+  return j && typeof j.rating_pc === "number" ? `Jump-${j.rating_pc}, a pack rule (fictional); ${g} in a system` : g;
+}
+
+/**
+ * The picker's rows: the stock ships, then every ship the stacked packs list (`packShips`), a pack ship keeping
+ * its own id. A pack ship with a stock ship's id replaces it.
+ */
+export function shipChoices(stock: readonly { id: string; name: string; drive: string }[], packs: readonly { id: string; provides?: { other?: Record<string, unknown> } }[]): ShipChoice[] {
+  const out: ShipChoice[] = stock.map((s) => ({ ...s }));
+  for (const p of packShips(packs)) {
+    const row: ShipChoice = { id: p.id, name: p.ship.name, drive: packDriveWords(p.ship), pack: p.pack, ship: p.ship };
+    const i = out.findIndex((x) => x.id === p.id);
+    if (i >= 0) out[i] = row;
+    else out.push(row);
+  }
+  return out;
+}
+
+/** What to send the kernel for a picked row: the ship itself for a pack ship, else its template id. */
+export function shipToSend(choice: ShipChoice): string | NavShip {
+  return choice.ship ?? choice.id;
+}
+
 export interface NavBody {
   address: string;
   name: string;

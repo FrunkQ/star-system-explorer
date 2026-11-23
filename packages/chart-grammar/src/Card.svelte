@@ -7,12 +7,13 @@
     children,
     footer,
     stamps,
-  }: { title: string; subtitle?: string; children: Snippet; footer?: Snippet; stamps?: Snippet } = $props();
+    lead,
+  }: { title: string; subtitle?: string; children: Snippet; footer?: Snippet; stamps?: Snippet; lead?: Snippet } = $props();
 </script>
 
 <section class="card" aria-label={title}>
   <header>
-    <h2>{title}</h2>
+    <h2>{#if lead}<span class="lead">{@render lead()}</span>{/if}{title}</h2>
     {#if subtitle}<span class="sub">{subtitle}</span>{/if}
   </header>
   {#if stamps}<div class="stamps">{@render stamps()}</div>{/if}
@@ -43,6 +44,13 @@
     font-size: 28px;
     font-weight: 600;
     line-height: 1.1;
+  }
+  /* The "Known to" eye sits at the left of the title (secrets design 4). */
+  .lead {
+    display: inline-flex;
+    vertical-align: middle;
+    margin: 0 4px 0 -6px;
+    font-size: 14px;
   }
   .sub {
     font-size: 12px;

@@ -1,0 +1,1387 @@
+{
+ "format": "sse.pack/1",
+ "id": "sse.base-tech",
+ "version": "0.1.0",
+ "kind": [
+  "base-physics"
+ ],
+ "kernel_range": "^0.1",
+ "licence": "Apache-2.0",
+ "provides": {
+  "other": {
+   "tech": {
+    "about": "Future tech base pack (FT1): technology is how far each limit on building things has been pushed. An advance moves a figure; the same sizing block still runs; past a figure's ceiling is fictional by arithmetic. Built by scripts/build-base-tech.py from the master data sheet.",
+    "limits": [
+     {
+      "id": "heat",
+      "n": 1,
+      "plain": "Heat has to leave",
+      "science": "Second law; radiated power goes as area times temperature to the fourth",
+      "shapes": "radiators, heat shields, glow in infrared",
+      "past_ceiling": "heat sinks that send it nowhere",
+      "figures": [
+       "radiator_k",
+       "waste_per_jet",
+       "waste_heat_k",
+       "heat_sent_nowhere"
+      ]
+     },
+     {
+      "id": "thrust",
+      "n": 2,
+      "plain": "Thrust needs something to throw",
+      "science": "Conservation of momentum; the rocket equation",
+      "shapes": "tanks, mass ratio, staging, lifting off a world",
+      "past_ceiling": "reactionless and gravity drives",
+      "figures": [
+       "exhaust_km_s",
+       "unthrown_n_per_w"
+      ]
+     },
+     {
+      "id": "energy",
+      "n": 3,
+      "plain": "Energy has weight",
+      "science": "Mass-energy; energy per kilogram of fuel, power per kilogram of plant",
+      "shapes": "fuel tanks, reactor size, range",
+      "past_ceiling": "anything richer than annihilation",
+      "figures": [
+       "fuel_j_per_kg",
+       "plant_w_per_kg"
+      ]
+     },
+     {
+      "id": "acceleration",
+      "n": 4,
+      "plain": "Crews break under hard acceleration",
+      "science": "The crew's physiology; inertia cannot be screened (equivalence principle)",
+      "shapes": "trip times, engine size, launch track length",
+      "past_ceiling": "inertial compensators",
+      "figures": [
+       "crew_g",
+       "inertia_screened"
+      ]
+     },
+     {
+      "id": "weight",
+      "n": 5,
+      "plain": "Crews need weight",
+      "science": "Spin gravity: radius is g over spin rate squared; comfort caps the spin rate",
+      "shapes": "spin rings and tumbling pairs",
+      "past_ceiling": "gravity plates",
+      "figures": [
+       "spin_rpm",
+       "weight_without_spin_g"
+      ]
+     },
+     {
+      "id": "light-speed",
+      "n": 6,
+      "plain": "Nothing outruns light",
+      "science": "Special relativity",
+      "shapes": "travel between stars, message delay, a crew's age against home",
+      "past_ceiling": "every FTL drive and radio: a per-setting rule (voyages design), not a figure",
+      "figures": []
+     },
+     {
+      "id": "materials",
+      "n": 7,
+      "plain": "Materials only bear so much",
+      "science": "Strength for weight (pascals over density); bond energy sets a ceiling",
+      "shapes": "tank and structure mass, domes, towers, spin radius, tethers, megastructures",
+      "past_ceiling": "ringworld floors, rigid shells round a star",
+      "figures": [
+       "strength_for_weight"
+      ]
+     },
+     {
+      "id": "radiation",
+      "n": 8,
+      "plain": "Radiation gets through",
+      "science": "Stopping of charged particles and gammas by mass in the way",
+      "shapes": "mass round the quarters, storm shelters, close passes",
+      "past_ceiling": "force screens",
+      "figures": [
+       "shield_g_cm2",
+       "career_dose_sv"
+      ]
+     },
+     {
+      "id": "supplies",
+      "n": 9,
+      "plain": "Crews need air, food and time",
+      "science": "Mass balance of a closed habitat; ageing",
+      "shapes": "habitat and stores size, greenhouses, who is awake",
+      "past_ceiling": "stasis with no upkeep",
+      "figures": [
+       "supplies_kg_per_day",
+       "water_recycled"
+      ]
+     },
+     {
+      "id": "seen",
+      "n": 10,
+      "plain": "Anything warm can be seen",
+      "science": "Every body radiates at its temperature",
+      "shapes": "detection range by band, hiding",
+      "past_ceiling": "cloaks, which must say where the light goes",
+      "figures": [
+       "light_hidden"
+      ]
+     }
+    ],
+    "figures": [
+     {
+      "id": "radiator_k",
+      "limit": "heat",
+      "plain": "radiator temperature",
+      "unit": "K",
+      "better": "higher",
+      "reads": "base-ships ship_design.drive_heat[].radiator_k",
+      "marks": [
+       {
+        "mark": "built",
+        "v": 276.0,
+        "what": "International Space Station radiators: ammonia supplied at 2.8 C",
+        "src": "nasa-iss-atcs",
+        "note": "the coolant's supply temperature, not the panel's"
+       },
+       {
+        "mark": "allowed",
+        "v": 1500.0,
+        "what": "a fusion drive's structure radiating its side-reaction heat",
+        "src": "santarius-logan-1998",
+        "check": "unverified"
+       }
+      ]
+     },
+     {
+      "id": "waste_per_jet",
+      "limit": "heat",
+      "plain": "waste heat per watt of jet",
+      "unit": "1",
+      "better": "lower",
+      "reads": "base-ships ship_design.drive_heat[].waste_per_jet",
+      "marks": [
+       {
+        "mark": "built",
+        "v": 0.0,
+        "what": "a chemical rocket: the heat leaves with the exhaust",
+        "src": "sheet"
+       },
+       {
+        "mark": "allowed",
+        "v": 0.1,
+        "what": "a D-He3 fusion drive: neutrons and bremsstrahlung heat the engine",
+        "src": "santarius-logan-1998",
+        "check": "unverified"
+       }
+      ]
+     },
+     {
+      "id": "waste_heat_k",
+      "limit": "heat",
+      "plain": "temperature of a waste heat source",
+      "unit": "K",
+      "better": "higher",
+      "reads": "FT2 (heat grades: a radiator runs no hotter than its source unless a heat pump is paid for)",
+      "marks": [
+       {
+        "mark": "built",
+        "v": 350.0,
+        "what": "electronics",
+        "src": "ft-design-15",
+        "check": "authored"
+       },
+       {
+        "mark": "built",
+        "v": 300.0,
+        "what": "a crew's quarters",
+        "src": "ft-design-15",
+        "check": "authored"
+       },
+       {
+        "mark": "allowed",
+        "v": 1500.0,
+        "what": "a D-He3 fusion drive's structure",
+        "src": "santarius-logan-1998",
+        "check": "unverified"
+       }
+      ]
+     },
+     {
+      "id": "heat_sent_nowhere",
+      "limit": "heat",
+      "plain": "share of waste heat that leaves without being radiated or carried",
+      "unit": "1",
+      "better": "higher",
+      "reads": "FT2",
+      "marks": [
+       {
+        "mark": "ceiling",
+        "v": 0.0,
+        "what": "a heat sink that sends heat nowhere",
+        "src": "law",
+        "law": "second law of thermodynamics"
+       }
+      ]
+     },
+     {
+      "id": "exhaust_km_s",
+      "limit": "thrust",
+      "plain": "exhaust speed",
+      "unit": "km s-1",
+      "better": "higher",
+      "reads": "ship exhaust_km_s (sse-nav Ship)",
+      "marks": [
+       {
+        "mark": "built",
+        "v": 4.565,
+        "what": "RL10B-2 hydrogen-oxygen engine, 465.5 s",
+        "src": "l3harris-rl10"
+       },
+       {
+        "mark": "built",
+        "v": 8.581,
+        "what": "Pewee 1 nuclear thermal reactor, about 875 s (ground test, never flown)",
+        "src": "nasem2021"
+       },
+       {
+        "mark": "allowed",
+        "v": 347.499,
+        "what": "D-He3 spherical torus fusion ship, 35,435 s",
+        "src": "williams2005"
+       },
+       {
+        "mark": "allowed",
+        "v": 755.112,
+        "what": "D-He3 magnetised target fusion ship, 77,000 s",
+        "src": "adams2003"
+       },
+       {
+        "mark": "ceiling",
+        "v": 5.18,
+        "what": "hydrogen and oxygen: every joule of the fuel in the jet",
+        "src": "sheet",
+        "for": "hydrogen-oxygen",
+        "computed_from": {
+         "balance": "energy-pays-exhaust",
+         "figures": {
+          "fuel_j_per_kg": 13400000.0
+         }
+        },
+        "law": "conservation of energy",
+        "note": "computed from sqrt(2 x fuel_j_per_kg), with the fuel's lower heating value; replaces the 'near 5 km/s' once held from memory"
+       },
+       {
+        "mark": "ceiling",
+        "v": 299792.458,
+        "what": "the speed of light",
+        "src": "law",
+        "law": "special relativity",
+        "sheet": "constants/c"
+       }
+      ]
+     },
+     {
+      "id": "unthrown_n_per_w",
+      "limit": "thrust",
+      "plain": "thrust per watt with nothing thrown",
+      "unit": "N W-1",
+      "better": "higher",
+      "reads": "FT2",
+      "marks": [
+       {
+        "mark": "built",
+        "v": 3.3356409519815204e-09,
+        "what": "light pressure: a photon rocket or a lamp, 3.3 N per GW",
+        "src": "lubin2016",
+        "sheet": "constants/c"
+       },
+       {
+        "mark": "ceiling",
+        "v": 3.3356409519815204e-09,
+        "what": "a reactionless drive above 1/c gives out more energy than it takes in",
+        "src": "law",
+        "law": "conservation of momentum and energy",
+        "sheet": "constants/c"
+       }
+      ]
+     },
+     {
+      "id": "fuel_j_per_kg",
+      "limit": "energy",
+      "plain": "energy per kilogram of fuel",
+      "unit": "J kg-1",
+      "better": "higher",
+      "reads": "FT2 (the fuel's energy beside base-nav fuels)",
+      "marks": [
+       {
+        "mark": "built",
+        "v": 13400000.0,
+        "what": "hydrogen burned with oxygen, per kilogram of water vapour made",
+        "src": "sheet",
+        "note": "the lower heating value: water's heat of formation less its latent heat of vaporisation; 15.9 MJ/kg if the water condenses",
+        "sheet": "substances/h2o"
+       },
+       {
+        "mark": "built",
+        "v": 82100000000000.0,
+        "what": "U-235 fission, 200 MeV a fission",
+        "src": "openstax-up3"
+       },
+       {
+        "mark": "allowed",
+        "v": 357000000000000.0,
+        "what": "D-He3 fusion, 3.7 MeV per nucleon",
+        "src": "ball2019"
+       },
+       {
+        "mark": "ceiling",
+        "v": 8.987551787368176e+16,
+        "what": "matter with antimatter, all of the mass",
+        "src": "law",
+        "law": "mass-energy equivalence",
+        "sheet": "constants/c"
+       }
+      ]
+     },
+     {
+      "id": "plant_w_per_kg",
+      "limit": "energy",
+      "plain": "power per kilogram of power plant and drive",
+      "unit": "W kg-1",
+      "better": "higher",
+      "reads": "FT2",
+      "marks": [
+       {
+        "mark": "built",
+        "v": 1.16,
+        "what": "SNAP-10A, the only reactor the US flew: 500 W for under 950 lb",
+        "src": "doe-snap"
+       },
+       {
+        "mark": "allowed",
+        "v": 33,
+        "what": "SP-100 space reactor design, 100 kWe for about 3,000 kg",
+        "src": "sp100"
+       },
+       {
+        "mark": "allowed",
+        "v": 8620.0,
+        "what": "D-He3 spherical torus fusion ship, drive and plant together",
+        "src": "williams2005"
+       }
+      ]
+     },
+     {
+      "id": "crew_g",
+      "limit": "acceleration",
+      "plain": "sustained acceleration a crew can take",
+      "unit": "g",
+      "better": "higher",
+      "reads": "ship g_limit (sse-nav Ship); the species' tolerance",
+      "marks": [
+       {
+        "mark": "built",
+        "v": 0.5,
+        "what": "seated, long duration, head-to-foot axis",
+        "src": "pattarini2020",
+        "note": "chest-to-back tolerance is higher; NASA-STD-3001 V2 6064 tables not read"
+       }
+      ]
+     },
+     {
+      "id": "inertia_screened",
+      "limit": "acceleration",
+      "plain": "share of the ship's acceleration the crew does not feel",
+      "unit": "1",
+      "better": "higher",
+      "reads": "FT2",
+      "marks": [
+       {
+        "mark": "ceiling",
+        "v": 0.0,
+        "what": "inertial compensators",
+        "src": "law",
+        "law": "equivalence principle: inertia cannot be screened"
+       }
+      ]
+     },
+     {
+      "id": "spin_rpm",
+      "limit": "weight",
+      "plain": "highest comfortable spin",
+      "unit": "rpm",
+      "better": "higher",
+      "reads": "FT2 (the spin ring part)",
+      "marks": [
+       {
+        "mark": "allowed",
+        "v": 4.0,
+        "what": "anyone, after a short adaptation",
+        "src": "globus-hall2017"
+       },
+       {
+        "mark": "allowed",
+        "v": 6.0,
+        "what": "trained residents",
+        "src": "globus-hall2017"
+       }
+      ]
+     },
+     {
+      "id": "weight_without_spin_g",
+      "limit": "weight",
+      "plain": "weight felt without spin or thrust",
+      "unit": "g",
+      "better": "higher",
+      "reads": "FT2",
+      "marks": [
+       {
+        "mark": "ceiling",
+        "v": 0.0,
+        "what": "gravity plates",
+        "src": "law",
+        "law": "equivalence principle; no negative mass is known"
+       }
+      ]
+     },
+     {
+      "id": "strength_for_weight",
+      "limit": "materials",
+      "plain": "strength for weight",
+      "unit": "J kg-1",
+      "better": "higher",
+      "reads": "Look up: tensile_strength over density of a sheet material",
+      "marks": [
+       {
+        "mark": "built",
+        "v": 255000.0,
+        "what": "high-strength steel wire",
+        "src": "sheet",
+        "sheet": "mixtures/steel-wire"
+       },
+       {
+        "mark": "built",
+        "v": 2083000.0,
+        "what": "aramid fibre",
+        "src": "sheet",
+        "sheet": "mixtures/aramid"
+       },
+       {
+        "mark": "built",
+        "v": 3718000.0,
+        "what": "PBO fibre",
+        "src": "sheet",
+        "sheet": "mixtures/pbo-fibre"
+       },
+       {
+        "mark": "allowed",
+        "v": 47015000.0,
+        "what": "carbon nanotube, the best measured shell; not made at length",
+        "src": "sheet",
+        "sheet": "mixtures/carbon-nanotube"
+       },
+       {
+        "mark": "ceiling",
+        "v": 77000000.0,
+        "what": "an ideal nanotube shell, about 100 GPa over 1,300 kg/m3: the carbon bond itself",
+        "src": "peng2008",
+        "check": "unverified",
+        "law": "chemical bond energy"
+       }
+      ]
+     },
+     {
+      "id": "shield_g_cm2",
+      "limit": "radiation",
+      "plain": "shielding round the crew",
+      "unit": "g cm-2",
+      "better": "lower",
+      "reads": "ship shield_g_cm2 (sse-nav Ship)",
+      "marks": [
+       {
+        "mark": "built",
+        "v": 45.0,
+        "what": "International Space Station, US Lab median 40 to 50",
+        "src": "koontz2016"
+       },
+       {
+        "mark": "allowed",
+        "v": 20.0,
+        "what": "a long mission's storm shelter, NASA's guidance",
+        "src": "ochmo-tb-020"
+       }
+      ]
+     },
+     {
+      "id": "career_dose_sv",
+      "limit": "radiation",
+      "plain": "career radiation dose allowed",
+      "unit": "Sv",
+      "better": "higher",
+      "reads": "FT2 (the shielding part's target)",
+      "marks": [
+       {
+        "mark": "built",
+        "v": 0.6,
+        "what": "NASA's career limit",
+        "src": "nasa-std-3001-v1"
+       }
+      ]
+     },
+     {
+      "id": "supplies_kg_per_day",
+      "limit": "supplies",
+      "plain": "oxygen, drinking water and food per person a day, before recycling",
+      "unit": "kg",
+      "better": "lower",
+      "reads": "FT2 (the stores part)",
+      "marks": [
+       {
+        "mark": "built",
+        "v": 6.07,
+        "what": "oxygen 0.89, drinking water 2.79, food 2.39",
+        "src": "lynch2023"
+       }
+      ]
+     },
+     {
+      "id": "water_recycled",
+      "limit": "supplies",
+      "plain": "share of water recovered",
+      "unit": "1",
+      "better": "higher",
+      "reads": "FT2 (the stores part)",
+      "marks": [
+       {
+        "mark": "built",
+        "v": 0.98,
+        "what": "International Space Station with its brine processor",
+        "src": "nasa-water2023"
+       },
+       {
+        "mark": "ceiling",
+        "v": 1.0,
+        "what": "all of it",
+        "src": "law",
+        "law": "conservation of mass"
+       }
+      ]
+     },
+     {
+      "id": "light_hidden",
+      "limit": "seen",
+      "plain": "share of a construct's light that goes nowhere",
+      "unit": "1",
+      "better": "higher",
+      "reads": "FT2",
+      "marks": [
+       {
+        "mark": "ceiling",
+        "v": 0.0,
+        "what": "a cloak that does not say where the light goes",
+        "src": "law",
+        "law": "conservation of energy; second law of thermodynamics"
+       }
+      ]
+     }
+    ],
+    "ladder": {
+     "id": "neutral",
+     "name": "Neutral ladder",
+     "about": "Real history on the lower rungs, so 'Sol today' is level 4. A setting defines its own ladder; this one is the default.",
+     "improve_per_level_beyond": 1.5,
+     "size_per_level_short": 10.0,
+     "shrink_per_level_beyond": 0.5,
+     "shrink_levels": 2,
+     "improve_note": "past an advance's home level its figure gets half as much better again per level (times 1.5 where higher is better, divided by 1.5 where lower is), until it meets the next cited allowed or ceiling mark, then stops",
+     "levels": [
+      {
+       "n": 0,
+       "id": "muscle",
+       "name": "Muscle and wind",
+       "about": "before engines"
+      },
+      {
+       "n": 1,
+       "id": "steam",
+       "name": "Steam and steel",
+       "about": "about 1800 to 1900: engines, steel wire"
+      },
+      {
+       "n": 2,
+       "id": "combustion",
+       "name": "Combustion and electricity",
+       "about": "about 1900 to 1957: aircraft, early rockets"
+      },
+      {
+       "n": 3,
+       "id": "rocket",
+       "name": "Rocket age",
+       "about": "1957 to about 2000: orbit, the Moon, fission reactors, aramid"
+      },
+      {
+       "n": 4,
+       "id": "orbital",
+       "name": "Orbital",
+       "about": "today: a crewed station, recycled water, reusable rockets"
+      },
+      {
+       "n": 5,
+       "id": "torch",
+       "name": "Torch",
+       "about": "not yet built: fusion drives, spin habitats, closed life support"
+      },
+      {
+       "n": 6,
+       "id": "deep",
+       "name": "Deep",
+       "about": "not yet built: nanotube cable at length, antimatter in bulk"
+      }
+     ]
+    },
+    "families": [
+     {
+      "id": "engine",
+      "name": "Engines and power plants",
+      "about": "output for their mass: drives, reactors, generators, radiators",
+      "maturity": {
+       "rule": "worse_by",
+       "factor": 7.0
+      },
+      "src": "fudge-register",
+      "examples_src": "ft-design-5.2"
+     },
+     {
+      "id": "near-ceiling",
+      "name": "Figures held down by a nearby ceiling",
+      "about": "exhaust speed for a given fuel, conversion efficiency, how much a habitat recycles",
+      "maturity": {
+       "rule": "toward",
+       "share": 0.6666666666666666
+      },
+      "src": "fudge-register",
+      "examples_src": "ft-design-5.2"
+     },
+     {
+      "id": "material",
+      "name": "Materials in bulk",
+      "about": "strength for weight of something bought by the kilometre",
+      "maturity": {
+       "rule": "worse_by",
+       "factor": 5.0
+      },
+      "src": "fudge-register",
+      "examples_src": "ft-design-5.2"
+     },
+     {
+      "id": "store",
+      "name": "Stores of energy",
+      "about": "batteries, fuel handling",
+      "maturity": {
+       "rule": "worse_by",
+       "factor": 3.0
+      },
+      "src": "fudge-register",
+      "examples_src": "ft-design-5.2"
+     },
+     {
+      "id": "plain-mass",
+      "name": "Plain mass",
+      "about": "shielding by matter, ballast, reaction mass, structure that only has to be there",
+      "maturity": {
+       "rule": "same"
+      },
+      "src": "fudge-register",
+      "examples_src": "ft-design-5.2"
+     },
+     {
+      "id": "least-size",
+      "name": "Devices with a least size set by physics",
+      "about": "a critical mass, a plasma big enough to hold its heat: never smaller at any maturity",
+      "maturity": {
+       "rule": "floor"
+      },
+      "src": "fudge-register",
+      "examples_src": "ft-design-5.2"
+     },
+     {
+      "id": "fictional",
+      "name": "Fictional devices and anything unknown",
+      "about": "nothing to go on: Alex's rule of thumb",
+      "maturity": {
+       "rule": "size",
+       "size_per_level_short": 10.0,
+       "shrink_per_level_beyond": 0.5,
+       "shrink_levels": 2
+      },
+      "src": "fudge-register",
+      "examples_src": "ft-design-5.2"
+     }
+    ],
+    "balances": [
+     {
+      "id": "energy-pays-exhaust",
+      "name": "Energy pays for the exhaust",
+      "relation": "exhaust_km_s * 1000 <= sqrt(2 * fuel_j_per_kg)",
+      "near_c": "gamma - 1 <= fuel_j_per_kg / c^2 for the exhaust's speed (the relativistic form)",
+      "figures": [
+       "exhaust_km_s",
+       "fuel_j_per_kg"
+      ],
+      "law": "conservation of energy",
+      "catches": "a chemical fuel with a torch's exhaust speed",
+      "src": "ft-design-15"
+     },
+     {
+      "id": "jet-power",
+      "name": "Jet power",
+      "relation": "jet_w = 0.5 * thrust_n * exhaust_km_s * 1000; jet_w <= plant_w",
+      "figures": [
+       "exhaust_km_s",
+       "plant_w_per_kg"
+      ],
+      "law": "kinetic energy of the exhaust",
+      "catches": "thrust and exhaust speed set apart that need more power than the ship makes",
+      "src": "ft-design-15"
+     },
+     {
+      "id": "energy-in-out",
+      "name": "Energy in, energy out",
+      "relation": "plant_w = jet_w + waste_w + stored_w + loads_w",
+      "figures": [
+       "plant_w_per_kg",
+       "waste_per_jet"
+      ],
+      "law": "conservation of energy",
+      "catches": "waste heat set to nothing while the plant's efficiency says otherwise",
+      "src": "ft-design-15"
+     },
+     {
+      "id": "momentum",
+      "name": "Momentum",
+      "relation": "thrust_n = mdot_kg_s * exhaust_km_s * 1000, or thrust_n <= plant_w * unthrown_n_per_w for light alone",
+      "figures": [
+       "exhaust_km_s",
+       "unthrown_n_per_w"
+      ],
+      "law": "conservation of momentum",
+      "catches": "thrust with nothing thrown and no stated partner",
+      "src": "ft-design-15"
+     },
+     {
+      "id": "heat-downhill",
+      "name": "Heat flows downhill",
+      "relation": "radiator_k <= waste_heat_k, unless a heat pump is paid for: pump_w >= q_w * (t_hot_k - t_cold_k) / t_cold_k, and pump_w is shed too",
+      "figures": [
+       "radiator_k",
+       "waste_heat_k"
+      ],
+      "law": "second law of thermodynamics (Carnot)",
+      "catches": "a hot radiator cooling a cool room for free",
+      "src": "ft-design-15"
+     }
+    ],
+    "fictional_where": [
+     {
+      "id": "light",
+      "question": "what it gives off, by band",
+      "example": "a blue flash on entry"
+     },
+     {
+      "id": "heat",
+      "question": "where the heat ends up",
+      "example": "stored in the sink, dumped in port; holds 40 hours"
+     },
+     {
+      "id": "momentum",
+      "question": "what it pushes on",
+      "example": "the nearest large mass"
+     },
+     {
+      "id": "energy",
+      "question": "where the energy comes from, or goes",
+      "example": "the ship's plant, with the surplus from nowhere"
+     }
+    ],
+    "advances": [
+     {
+      "id": "steel-wire",
+      "name": "Steel cable",
+      "level": 1,
+      "sets": {
+       "strength_for_weight": 255000.0
+      },
+      "family": "material",
+      "part": "structure",
+      "mark": "built"
+     },
+     {
+      "id": "chemical-rocket",
+      "name": "Hydrogen-oxygen rocket",
+      "level": 3,
+      "sets": {
+       "exhaust_km_s": 4.565,
+       "waste_per_jet": 0.0
+      },
+      "family": "near-ceiling",
+      "fixed": [
+       "waste_per_jet"
+      ],
+      "part": "drive",
+      "mark": "built"
+     },
+     {
+      "id": "fission-reactor",
+      "name": "Fission reactor",
+      "level": 3,
+      "sets": {
+       "plant_w_per_kg": 1.16
+      },
+      "family": "engine",
+      "part": "reactor",
+      "mark": "built"
+     },
+     {
+      "id": "aramid",
+      "name": "Aramid fibre",
+      "level": 3,
+      "sets": {
+       "strength_for_weight": 2083000.0
+      },
+      "family": "material",
+      "part": "structure",
+      "mark": "built"
+     },
+     {
+      "id": "pumped-radiator",
+      "name": "Pumped ammonia radiators",
+      "level": 3,
+      "sets": {
+       "radiator_k": 276.0
+      },
+      "family": "engine",
+      "part": "radiator",
+      "mark": "built"
+     },
+     {
+      "id": "nuclear-thermal",
+      "name": "Nuclear thermal rocket",
+      "level": 4,
+      "sets": {
+       "exhaust_km_s": 8.581,
+       "waste_per_jet": 0.0
+      },
+      "family": "near-ceiling",
+      "fixed": [
+       "waste_per_jet"
+      ],
+      "part": "drive",
+      "note": "ground-tested 1959 to 1972, never flown: built at level 3 on the bench, home here as a flying part",
+      "mark": "built"
+     },
+     {
+      "id": "pbo-fibre",
+      "name": "PBO fibre",
+      "level": 4,
+      "sets": {
+       "strength_for_weight": 3718000.0
+      },
+      "family": "material",
+      "part": "structure",
+      "mark": "built"
+     },
+     {
+      "id": "water-recovery",
+      "name": "Water recovery with brine processing",
+      "level": 4,
+      "sets": {
+       "water_recycled": 0.98
+      },
+      "family": "near-ceiling",
+      "part": "stores",
+      "mark": "built"
+     },
+     {
+      "id": "light-sail",
+      "name": "Light sail or photon rocket",
+      "level": 4,
+      "sets": {
+       "unthrown_n_per_w": 3.3356409519815204e-09
+      },
+      "family": "plain-mass",
+      "fixed": [
+       "unthrown_n_per_w"
+      ],
+      "part": "drive",
+      "mark": "built"
+     },
+     {
+      "id": "fusion-torch",
+      "name": "Fusion torch (D-He3)",
+      "level": 5,
+      "sets": {
+       "exhaust_km_s": 347.499,
+       "plant_w_per_kg": 8620.0,
+       "fuel_j_per_kg": 357000000000000.0,
+       "waste_per_jet": 0.1,
+       "waste_heat_k": 1500.0,
+       "radiator_k": 1500.0
+      },
+      "family": "engine",
+      "fixed": [
+       "fuel_j_per_kg"
+      ],
+      "part": "drive",
+      "mark": "not yet built"
+     },
+     {
+      "id": "spin-habitat",
+      "name": "Comfortable spin habitat",
+      "level": 5,
+      "sets": {
+       "spin_rpm": 4.0
+      },
+      "family": "plain-mass",
+      "fixed": [
+       "spin_rpm"
+      ],
+      "part": "spin ring",
+      "note": "comfort is the crew's physiology, not the ring's maturity",
+      "mark": "not yet built"
+     },
+     {
+      "id": "nanotube-cable",
+      "name": "Woven carbon cable",
+      "level": 6,
+      "sets": {
+       "strength_for_weight": 47015000.0
+      },
+      "family": "material",
+      "part": "structure",
+      "mark": "not yet built"
+     }
+    ],
+    "real_craft": [
+     {
+      "id": "iss-radiators",
+      "name": "International Space Station heat rejection",
+      "flew": "1998 to now",
+      "quantities": {
+       "q_w": {
+        "v": 70000.0,
+        "unit": "W",
+        "note": "35 kW per loop, two loops"
+       },
+       "radiator_k": {
+        "v": 275.95,
+        "unit": "K",
+        "note": "ammonia supply temperature, not the panel's"
+       },
+       "planform_m2": {
+        "v": 475.0,
+        "unit": "m2",
+        "note": "six radiator units of 23.3 by 3.4 m; worked out here, not stated; whether both faces radiate is not stated"
+       }
+      },
+      "tests": [
+       "heat-downhill",
+       "radiator sizing"
+      ],
+      "src": [
+       "nasa-iss-atcs"
+      ]
+     },
+     {
+      "id": "saturn-v-s-ic",
+      "name": "Saturn V first stage (Apollo 11)",
+      "flew": "1969",
+      "quantities": {
+       "dry_kg": {
+        "v": 130422.0,
+        "unit": "kg"
+       },
+       "propellant_kg": {
+        "v": 2145798.0,
+        "unit": "kg",
+        "note": "oxidiser and fuel"
+       },
+       "thrust_n": {
+        "v": 33851000.0,
+        "unit": "N",
+        "note": "five F-1, sea level, rated"
+       },
+       "exhaust_km_s": {
+        "v": 2.602,
+        "unit": "km/s",
+        "note": "F-1 at sea level; vacuum value not found"
+       }
+      },
+      "tests": [
+       "momentum",
+       "jet-power",
+       "tank sizing"
+      ],
+      "src": [
+       "nasa-sp4029",
+       "rocketdyne-f1"
+      ]
+     },
+     {
+      "id": "saturn-v-s-ii",
+      "name": "Saturn V second stage (Apollo 11)",
+      "flew": "1969",
+      "quantities": {
+       "dry_kg": {
+        "v": 36158.0,
+        "unit": "kg"
+       },
+       "propellant_kg": {
+        "v": 443235.0,
+        "unit": "kg"
+       },
+       "thrust_n": {
+        "v": 5115000.0,
+        "unit": "N",
+        "note": "five J-2"
+       },
+       "exhaust_km_s": {
+        "v": 4.168,
+        "unit": "km/s",
+        "note": "J-2, vacuum implied"
+       }
+      },
+      "tests": [
+       "energy-pays-exhaust",
+       "momentum",
+       "tank sizing"
+      ],
+      "src": [
+       "nasa-sp4029",
+       "coffman-j2"
+      ]
+     },
+     {
+      "id": "saturn-v-s-ivb",
+      "name": "Saturn V third stage (Apollo 11)",
+      "flew": "1969",
+      "quantities": {
+       "dry_kg": {
+        "v": 11273.0,
+        "unit": "kg"
+       },
+       "propellant_kg": {
+        "v": 107095.0,
+        "unit": "kg"
+       },
+       "thrust_n": {
+        "v": 901000.0,
+        "unit": "N",
+        "note": "first burn, one J-2"
+       },
+       "exhaust_km_s": {
+        "v": 4.168,
+        "unit": "km/s",
+        "note": "J-2, vacuum implied"
+       }
+      },
+      "tests": [
+       "energy-pays-exhaust",
+       "tank sizing"
+      ],
+      "src": [
+       "nasa-sp4029",
+       "coffman-j2"
+      ]
+     },
+     {
+      "id": "saturn-v-stack",
+      "name": "Saturn V with Apollo",
+      "flew": "1969",
+      "quantities": {
+       "ignition_kg": {
+        "v": 2941221.0,
+        "unit": "kg",
+        "note": "Apollo 11 at S-IC ignition"
+       },
+       "orbit_kg": {
+        "v": 135669.0,
+        "unit": "kg",
+        "note": "Apollo 11 at orbit insertion"
+       },
+       "tli_payload_kg": {
+        "v": 42864.0,
+        "unit": "kg",
+        "note": "Apollo 10 spacecraft at translunar injection"
+       }
+      },
+      "tests": [
+       "rocket equation over the three stages"
+      ],
+      "src": [
+       "msfc-as506",
+       "msfc-as505"
+      ]
+     },
+     {
+      "id": "falcon-9",
+      "name": "Falcon 9",
+      "flew": "2010 to now",
+      "quantities": {
+       "liftoff_kg": {
+        "v": 549054.0,
+        "unit": "kg"
+       },
+       "leo_payload_kg": {
+        "v": 22800.0,
+        "unit": "kg",
+        "note": "expendable, not stated on the page"
+       },
+       "upper_thrust_n": {
+        "v": 981000.0,
+        "unit": "N"
+       }
+      },
+      "tests": [
+       "payload share against the Saturn V"
+      ],
+      "src": [
+       "spacex-f9"
+      ],
+      "note": "stage masses and Merlin specific impulse are not published by the maker"
+     },
+     {
+      "id": "mmrtg",
+      "name": "Multi-mission radioisotope generator (Curiosity, Perseverance)",
+      "flew": "2011 to now",
+      "quantities": {
+       "plant_w": {
+        "v": 110.0,
+        "unit": "W",
+        "note": "electric, at launch"
+       },
+       "mass_kg": {
+        "v": 45.0,
+        "unit": "kg"
+       }
+      },
+      "tests": [
+       "energy-in-out",
+       "plant sizing"
+      ],
+      "src": [
+       "nasa-mmrtg"
+      ]
+     },
+     {
+      "id": "mhw-rtg",
+      "name": "Voyager's radioisotope generators (one of three)",
+      "flew": "1976 to now",
+      "quantities": {
+       "plant_w": {
+        "v": 158.0,
+        "unit": "W",
+        "note": "electric, start of mission"
+       },
+       "mass_kg": {
+        "v": 37.7,
+        "unit": "kg"
+       }
+      },
+      "tests": [
+       "plant sizing"
+      ],
+      "src": [
+       "schmidt2009"
+      ]
+     },
+     {
+      "id": "gphs-rtg",
+      "name": "GPHS radioisotope generator (Galileo, Cassini, New Horizons)",
+      "flew": "1989 to now",
+      "quantities": {
+       "plant_w": {
+        "v": 292.0,
+        "unit": "W",
+        "note": "electric, start of mission; New Horizons' own unit made about 213 to 250 W"
+       },
+       "mass_kg": {
+        "v": 55.9,
+        "unit": "kg"
+       }
+      },
+      "tests": [
+       "plant sizing"
+      ],
+      "src": [
+       "schmidt2009"
+      ]
+     },
+     {
+      "id": "juno-arrays",
+      "name": "Juno's solar arrays",
+      "flew": "2011 to now",
+      "quantities": {
+       "area_m2": {
+        "v": 60.0,
+        "unit": "m2",
+        "note": "more than"
+       },
+       "power_1au_w": {
+        "v": 14000.0,
+        "unit": "W"
+       },
+       "power_jupiter_w": {
+        "v": 400.0,
+        "unit": "W"
+       }
+      },
+      "tests": [
+       "light falls with the square of distance (about 520 W expected at 5.2 au before the cold and dim penalty)"
+      ],
+      "src": [
+       "jpl-juno2011"
+      ]
+     },
+     {
+      "id": "shuttle-entry",
+      "name": "Space Shuttle orbiter entry",
+      "flew": "1981 to 2011",
+      "quantities": {
+       "entry_m_s": {
+        "v": 7600.0,
+        "unit": "m/s",
+        "note": "in excess of 17,000 mph"
+       },
+       "rcc_surface_k": {
+        "v": 1922.0,
+        "unit": "K",
+        "note": "nose cap and wing leading edges, up to 3,000 F"
+       },
+       "tile_max_k": {
+        "v": 1644.3,
+        "unit": "K"
+       }
+      },
+      "tests": [
+       "entry heating",
+       "heat shield sizing"
+      ],
+      "src": [
+       "nasa-orbiter-tps"
+      ]
+     },
+     {
+      "id": "apollo-heat-shield",
+      "name": "Apollo command module heat shield",
+      "flew": "1966 to 1975",
+      "quantities": {
+       "entry_m_s": {
+        "v": 11074.0,
+        "unit": "m/s",
+        "note": "design lunar return, inertial"
+       },
+       "peak_heating_w_m2": {
+        "v": 4827000.0,
+        "unit": "W/m2",
+        "note": "Apollo 4"
+       },
+       "heat_load_j_m2": {
+        "v": 426120000.0,
+        "unit": "J/m2",
+        "note": "Apollo 4, total"
+       },
+       "ablator_kg_m3": {
+        "v": 497.0,
+        "unit": "kg/m3",
+        "note": "Avco 5026-39G"
+       }
+      },
+      "tests": [
+       "entry heating",
+       "ablator sizing"
+      ],
+      "src": [
+       "pavlosky1974"
+      ]
+     },
+     {
+      "id": "iss",
+      "name": "International Space Station",
+      "flew": "1998 to now",
+      "quantities": {
+       "pressurised_m3": {
+        "v": 1005.0,
+        "unit": "m3",
+        "note": "35,491 cubic feet"
+       },
+       "habitable_m3": {
+        "v": 388.0,
+        "unit": "m3",
+        "note": "visiting craft not counted"
+       },
+       "mass_kg": {
+        "v": 419725.0,
+        "unit": "kg"
+       },
+       "array_power_w": {
+        "v": 90000.0,
+        "unit": "W",
+        "note": "75 to 90 kW from eight arrays"
+       }
+      },
+      "tests": [
+       "habitat sizing",
+       "energy-in-out against the 70 kW rejected"
+      ],
+      "src": [
+       "nasa-iss-facts",
+       "nasa-iss-atcs"
+      ]
+     }
+    ],
+    "sources": {
+     "l3harris-rl10": "L3Harris 2024, RL10 engine specification sheet: RL10B-2 specific impulse 465.5 s, thrust 24,750 lbf. https://l3harris.com/sites/default/files/2024-07/l3harris-ar-rl10-spec-sheet.pdf",
+     "nasem2021": "National Academies of Sciences, Engineering, and Medicine 2021, Space Nuclear Propulsion for Human Mars Exploration, chapter 2, Table 2.1: Rover/NERVA reactor tests, Pewee 1 about 875 s (vacuum, ideal expansion, from measured propellant temperature). https://www.nationalacademies.org/read/25977/chapter/4",
+     "williams2005": "Williams, C. H., Dudzinski, L. A., Borowski, S. K. and Juhasz, A. J. 2005, Realizing '2001: A Space Odyssey': piloted spherical torus nuclear fusion propulsion, NASA/TM-2005-213559 (AIAA 2001-3805): D-He3, specific impulse 35,435 s (Jupiter mission), jet power 4,830 MW, specific power 8.62 kW/kg",
+     "adams2003": "Adams, R. B. et al. 2003, Conceptual design of in-space vehicles for human exploration of the outer planets, AIAA 2003-4527 (NTRS 20030065984): D-He3 magnetised target fusion, specific impulse 77,000 s",
+     "ball2019": "Ball, J. 2019, Maximizing specific energy by breeding deuterium, arXiv:1908.00834, Table 1: D-He3 3.7 MeV per nucleon",
+     "openstax-up3": "Ling, S. J., Sanny, J. and Moebs, W. 2016, University Physics volume 3, OpenStax, section 10.5: fission of 1.00 kg of U-235 releases 8.21e13 J. https://openstax.org/books/university-physics-volume-3/pages/10-5-fission",
+     "pattarini2020": "Pattarini, J. M. et al. 2020, Artemis sustained translational acceleration limits: human tolerance evidence from Apollo to ISS, NASA/TM-20205008196: seated, long duration, 4.91 m/s2 from 120 s on (head-to-foot axis)",
+     "nasa-std-3001-v2": "NASA-STD-3001 Volume 2, requirement V2 6064, sustained translational acceleration limits, Tables 6.5-1 to 6.5-6 (tables not read)",
+     "globus-hall2017": "Globus, A. and Hall, T. 2017, Space settlement population rotation tolerance, NSS Space Settlement Journal: up to 4 rpm (56 m radius at 1 g) acceptable, up to 6 rpm for residents. https://nss.org/wp-content/uploads/NSS-JOURNAL-Space-Settlement-Population-Rotation-Tolerance.pdf",
+     "nasa-iss-atcs": "NASA and Boeing, International Space Station Active Thermal Control System overview: 70 kW rejected (35 kW per loop), ammonia supply 2.8 C. https://www.nasa.gov/wp-content/uploads/2021/02/473486main_iss_atcs_overview.pdf",
+     "santarius-logan-1998": "Santarius, J. F. and Logan, B. G. 1998, Generic magnetic fusion rocket model, Journal of Propulsion and Power 14, 519 (abstract read; full text not read)",
+     "lubin2016": "Lubin, P. 2016, A roadmap to interstellar flight, NASA NIAC phase I final report (NTRS 20190001185): a photon thrust of 3.3 nN per watt emitted",
+     "nasa-std-3001-v1": "NASA-STD-3001 Volume 1 revision C 2023, requirement V1 4030: career effective dose below 600 mSv. https://standards.nasa.gov/",
+     "ochmo-tb-020": "NASA OCHMO-TB-020 revision E 2022, radiation protection technical brief: at least 20 g/cm2 of shielding for missions longer than six months (solar particle events)",
+     "koontz2016": "Koontz, S. 2016, The International Space Station ionizing radiation environment, NASA JSC (NTRS 20160011221): median shielding 40 to 50 g/cm2 in the US Lab",
+     "lynch2023": "Lynch, C. et al. 2023, Logistics rates and assumptions for future human spaceflight missions beyond LEO, AIAA ASCEND 2023 (NTRS 20230013896): oxygen 0.89, drinking water 2.79, food as shipped 2.39 kg per crew member a day",
+     "nasa-water2023": "NASA 2023 (20 June), NASA achieves water recovery milestone on International Space Station: 98% total water recovery with the brine processor. https://www.nasa.gov/missions/station/iss-research/nasa-achieves-water-recovery-milestone-on-international-space-station",
+     "peng2008": "Peng, B. et al. 2008, Nature Nanotechnology 3, 626: single carbon nanotube shells near 100 GPa (as summarised; not read)",
+     "doe-snap": "US DOE Energy Technology Engineering Center, System for Nuclear Auxiliary Power (SNAP) overview: SNAP-10A (1965) made at least 500 W (over 600 at first) and weighed under 950 lb with instruments and shielding. https://www.energy.gov/etec/system-nuclear-auxiliary-power-snap-overview",
+     "sp100": "Manvi, R. and Fujita, T. 1986, SP-100 program users handbook, JPL D-2185 issue 2: 100 kWe at end of life for about 3,000 kg (design; never flown). https://www.osti.gov/servlets/purl/10184673",
+     "ft-design-5.2": "SSE4 future tech design, section 5.2 (accepted by Alex 23 Nov 2026): first working generation against the mature one, by family of part; figures checked in its section 14.1 (V-2 about 22 against Merlin 1D over 150; Jumo 004 1.2 against EJ200 about 9; carbon fibre 0.5 to 1 GPa early, 3.5 in 1971, 7.0 now; nanotube tubes 100 GPa against fibre 4.2; lithium-ion 80 Wh/kg in 1991, about three times now)",
+     "ft-design-15": "SSE4 future tech design, section 15 (keeping the books, accepted by Alex 23 Nov 2026): balance checks, heat grades (electronics near 350 K, quarters near 300 K), the four fields of a fictional advance",
+     "fudge-register": "docs/fudges.md, Future tech: the part-family maturity defaults are rules of thumb from a small sample (design 15.7); their examples stay cited in ft-design-5.2",
+     "nasa-sp4029": "Orloff, R. W. 2000, Apollo by the Numbers, NASA SP-4029: Apollo 11 (AS-506) ground ignition weights in lb (actual, from the flight evaluation reports) and launch vehicle key facts (F-1 1,522,000 lbf sea level; J-2 230,000 lbf). https://www.nasa.gov/wp-content/uploads/static/history/SP-4029/Apollo_18-19_Ground_Ignition_Weights.htm",
+     "msfc-as506": "MSFC 1969, Saturn V launch vehicle flight evaluation report AS-506 Apollo 11: 2,941,221 kg at S-IC ignition, 135,669 kg at orbit insertion (text extraction partial). https://ibiblio.org/apollo/Documents/lvfea-AS506-Apollo11.pdf",
+     "msfc-as505": "MSFC 1969, Technical information summary Apollo-10 (AS-505): spacecraft at translunar injection 94,500 lb (noisy scan). https://www.nasa.gov/wp-content/uploads/static/history/afj/ap10fj/pdf/19700015780_as-505-a10-saturn-v-technical-info-summary.pdf",
+     "rocketdyne-f1": "Rocketdyne 1967, R-3896-1 Technical manual, engine data, F-1 rocket engine, figure 1-5: sea-level specific impulse 265.3 s, thrust 1,522,000 lbf, mixture ratio 2.27, dry weight 18,619 lb",
+     "coffman-j2": "Coffman, P. 2010, Remembering the Giants, chapter 2 (NASA, NTRS 20100027318): J-2 specific impulse 425 s (vacuum implied), up to 230,000 lbf",
+     "spacex-f9": "SpaceX, Falcon 9 vehicle page (read Nov 2026): 549,054 kg, 22,800 kg to low Earth orbit (expendable, not stated), second stage 981 kN. https://www.spacex.com/vehicles/falcon-9",
+     "nasa-mmrtg": "NASA Facts NF-2020-05-619-HQ, Multi-Mission Radioisotope Thermoelectric Generator: about 110 W electric at launch, about 45 kg, 4.8 kg of plutonium dioxide",
+     "schmidt2009": "Schmidt, G. R., Sutliff, T. J. and Dudzinski, L. A. 2009, Radioisotope power: a key technology for deep space exploration, IAC-09 (NTRS 20120016365): MHW-RTG 37.7 kg and 158 W at start of mission; GPHS-RTG 55.9 kg and up to 300 W (sidebar 292 W)",
+     "jpl-juno2011": "NASA and JPL 2011, Juno launch press kit: three arrays of more than 60 m2 in all, 18,698 cells, about 14 kW at Earth's distance and about 400 W at Jupiter's, launch mass 3,625 kg. https://www.jpl.nasa.gov/news/press_kits/JunoLaunch.pdf",
+     "nasa-orbiter-tps": "NASA Facts FS-2008-02-042-KSC, Orbiter thermal protection system: reinforced carbon-carbon above 3000 F, tiles for 1,200 to 2,500 F, entry in excess of 17,000 mph",
+     "pavlosky1974": "Pavlosky, J. E. and St. Leger, L. G. 1974, Apollo experience report: thermal protection subsystem, NASA TN D-7564: Avco 5026-39G at 31 lb/ft3; design lunar return 36,333 ft/s; Apollo 4 peak 425 Btu/ft2 s and total 37,522 Btu/ft2; surfaces approaching 5000 F",
+     "nasa-iss-facts": "NASA, Space station facts and figures (read Nov 2026): 1,005 m3 pressurised, 388 m3 habitable, 419,725 kg, 75 to 90 kW from 8 arrays. https://www.nasa.gov/international-space-station/space-station-facts-and-figures/",
+     "sheet": "the master data sheet (pack base-reference): the value is worked out from its rows",
+     "law": "a law of physics, named on the mark"
+    }
+   }
+  }
+ }
+}

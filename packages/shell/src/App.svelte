@@ -77,6 +77,7 @@
   import { REGISTRY } from "./registry.ts";
   import { MORE_SCREENS } from "./screens.more.ts";
   import { GAME_SCREENS } from "./screens.game.ts";
+  import { RENDER_SCREENS } from "./screens.renderer.ts";
   import { createWorkspace } from "./workspace.svelte.ts";
   import { loadPref, savePref } from "./prefs.ts";
   import { createSymbols } from "./symbols.svelte.ts";
@@ -104,7 +105,7 @@
   let scene = $state<SystemScene>(base);
 
   // Each screen document is checked before anything mounts; the GM switches between them.
-  const SCREENS: Record<string, ScreenDoc> = { system: workspaceDoc as unknown as ScreenDoc, physics: physicsDoc as unknown as ScreenDoc, packs: packsDoc as unknown as ScreenDoc, reference: referenceDoc as unknown as ScreenDoc, screens: screensDoc as unknown as ScreenDoc, data: dataDoc as unknown as ScreenDoc, symbols: symbolsDoc as unknown as ScreenDoc, body: bodyDoc as unknown as ScreenDoc, compare: compareDoc as unknown as ScreenDoc, life: lifeDoc as unknown as ScreenDoc, styles: stylesScreenDoc as unknown as ScreenDoc, route: routeDoc as unknown as ScreenDoc, window: windowDoc as unknown as ScreenDoc, stories: storiesDoc as unknown as ScreenDoc, cutaway: cutawayDoc as unknown as ScreenDoc, ...Object.fromEntries(MORE_SCREENS.map((m) => [m.value, m.doc])), ...Object.fromEntries(GAME_SCREENS.map((m) => [m.value, m.doc])), ...PLACE_SCREENS };
+  const SCREENS: Record<string, ScreenDoc> = { system: workspaceDoc as unknown as ScreenDoc, physics: physicsDoc as unknown as ScreenDoc, packs: packsDoc as unknown as ScreenDoc, reference: referenceDoc as unknown as ScreenDoc, screens: screensDoc as unknown as ScreenDoc, data: dataDoc as unknown as ScreenDoc, symbols: symbolsDoc as unknown as ScreenDoc, body: bodyDoc as unknown as ScreenDoc, compare: compareDoc as unknown as ScreenDoc, life: lifeDoc as unknown as ScreenDoc, styles: stylesScreenDoc as unknown as ScreenDoc, route: routeDoc as unknown as ScreenDoc, window: windowDoc as unknown as ScreenDoc, stories: storiesDoc as unknown as ScreenDoc, cutaway: cutawayDoc as unknown as ScreenDoc, ...Object.fromEntries(MORE_SCREENS.map((m) => [m.value, m.doc])), ...Object.fromEntries(GAME_SCREENS.map((m) => [m.value, m.doc])), ...Object.fromEntries(RENDER_SCREENS.map((m) => [m.value, m.doc])), ...PLACE_SCREENS };
   const checks = Object.fromEntries(Object.entries(SCREENS).map(([k, d]) => [k, checkScreen(d, REGISTRY)]));
   const badScreens = Object.values(checks).flatMap((c) => (c.ok ? [] : c.errors));
   const screen = $derived.by((): CheckedScreen | null => {
@@ -500,6 +501,14 @@
   $effect(() => {
     // The Workshop changes the tool, not the universe, so its screens are always armed.
     ws.mode = railScale === "workshop" ? "edit" : DESK_MODE[desk];
+  });
+  // Secrets (SV2): the desk decides whether the "Known to" eyes show; a share's connected players hold reveals.
+  $effect(() => {
+    ws.desk = desk;
+  });
+  $effect(() => {
+    ws.players_online = share?.state.players ?? 0;
+    ws.shared = !!share?.state.link;
   });
   const lenses = $derived.by(() => {
     void ws.revision;
