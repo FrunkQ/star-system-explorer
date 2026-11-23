@@ -72,6 +72,7 @@ fn env<'a>(s: &Setup, g: &'a Galaxy, d: &'a Disc) -> GalaxyEnvelope<'a> {
         params: s.cp.envelope.clone(),
         seed: Seed::from_text("g6"),
         address: s.halo.address.parse().unwrap(),
+        remains: Default::default(),
     }
 }
 

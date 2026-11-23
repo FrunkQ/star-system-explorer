@@ -317,6 +317,7 @@ pub fn envelope_golden() -> serde_json::Value {
         params: cp.envelope.clone(),
         seed: Seed::from_text("g4"),
         address: addr,
+        remains: Default::default(),
     };
     let r0 = e.sun_radius_kpc();
     let places: Vec<serde_json::Value> = [
@@ -391,6 +392,7 @@ pub fn stars_golden() -> serde_json::Value {
         params: cp.envelope.clone(),
         seed: Seed::from_text("g4"),
         address: addr,
+        remains: Default::default(),
     };
     let st = crate::stars::Stars {
         env: &e,

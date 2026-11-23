@@ -15,6 +15,7 @@ macro_rules! setup {
             params: EnvelopeParams::default(),
             seed: Seed::from_text("g4"),
             address: Address::universe("g4").unwrap(),
+            remains: Default::default(),
         };
         let $now = g.now.t_gyr;
         let $sun = $env.sun_radius_kpc();

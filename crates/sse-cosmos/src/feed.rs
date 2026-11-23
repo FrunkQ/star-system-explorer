@@ -377,6 +377,12 @@ pub struct Assembled {
     pub torn_apart: u32,
     pub members: u32,
     pub marks: Vec<Mark>,
+    /// GH4: what each member lost, as places (`remains`).
+    #[serde(default, skip_serializing_if = "Vec::is_empty")]
+    pub components: Vec<crate::remains::Component>,
+    /// The settings the components' shapes are read with (not sent).
+    #[serde(skip)]
+    pub shapes_with: Option<(OrbitParams, crate::remains::RemainsParams)>,
 }
 
 /// The host's running state the feed acts on (galaxy.rs steps it).
@@ -660,4 +666,21 @@ pub fn evolve_fed(
         arrivals: arr,
         galaxy,
     })
+}
+
+/// GH4: give a fed galaxy its components, so its envelope holds the remains
+/// of what it tore apart.
+pub fn with_remains(
+    fed: &mut Fed,
+    gp: &GalaxyParams,
+    op: &OrbitParams,
+    rings: &crate::rings::RingParams,
+    rp: &crate::remains::RemainsParams,
+    seed: sse_core::Seed,
+) {
+    let comps = crate::remains::components(&fed.members, &fed.arrivals, gp, rings, rp, seed);
+    if let Some(a) = fed.galaxy.assembled.as_mut() {
+        a.components = comps;
+        a.shapes_with = Some((op.clone(), rp.clone()));
+    }
 }

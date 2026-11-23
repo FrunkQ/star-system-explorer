@@ -43,18 +43,27 @@ type Node = (u32, [i64; 3]);
 /// A node's split of one class's count among its children.
 type Split = Vec<(Node, u64)>;
 
+/// Which stars a tree counts: the disc's, or (GH4) the remains of the
+/// galaxies this one tore apart, with their own counts and keys.
+#[derive(Clone, Copy, PartialEq, Eq, Debug)]
+pub enum Layer {
+    Disc,
+    Remains,
+}
+
 /// A walk through the tree in one frame, remembering expected numbers and
 /// class shares so a batch of cells shares the work.
 pub struct TreeWalk<'s, 'a> {
     pub stars: &'s Stars<'a>,
     pub frame: i64,
+    pub layer: Layer,
     expect: RefCell<BTreeMap<Node, f64>>,
-    shares: RefCell<BTreeMap<[i64; 2], ClassMix>>,
+    shares: RefCell<BTreeMap<[i64; 3], ClassMix>>,
     /// Splits already made, by node and class (a split is keyed, so this
     /// only saves the work).
     splits: RefCell<BTreeMap<(Node, usize), Split>>,
     /// Each IMF point's class at each age bin (`class_mix`).
-    class_grid: std::cell::OnceCell<Vec<(f64, f64, Vec<usize>)>>,
+    class_grid: std::cell::OnceCell<std::rc::Rc<crate::remains::ClassGrid>>,
 }
 
 /// A root block's mix of classes: each class's share of its systems, and
@@ -125,9 +134,19 @@ fn binomial(d: &Draws, i: u64, n: u64, p: f64) -> u64 {
 
 impl<'s, 'a> TreeWalk<'s, 'a> {
     pub fn new(stars: &'s Stars<'a>, frame: i64) -> Self {
+        Self::of(stars, frame, Layer::Disc)
+    }
+
+    /// GH4: the walk over the remains' stars.
+    pub fn remains(stars: &'s Stars<'a>, frame: i64) -> Self {
+        Self::of(stars, frame, Layer::Remains)
+    }
+
+    pub fn of(stars: &'s Stars<'a>, frame: i64, layer: Layer) -> Self {
         TreeWalk {
             stars,
             frame,
+            layer,
             expect: RefCell::new(BTreeMap::new()),
             shares: RefCell::new(BTreeMap::new()),
             splits: RefCell::new(BTreeMap::new()),
@@ -182,8 +201,16 @@ impl<'s, 'a> TreeWalk<'s, 'a> {
         let st = self.stars;
         let c = st.params.cell_pc;
         let span = self.span(n.0);
-        let v = if span == 1 {
+        let v = if span == 1 && self.layer == Layer::Disc {
             st.expected(n.1, self.frame)
+        } else if span == 1 {
+            let t0 = self.frame as f64 * st.params.frame_myr;
+            let g = [
+                (n.1[0] as f64 + 0.5) * c,
+                (n.1[1] as f64 + 0.5) * c,
+                (n.1[2] as f64 + 0.5) * c,
+            ];
+            st.remains_density_at(g, t0) * c * c * c
         } else {
             let size = span as f64 * c;
             let t0 = self.frame as f64 * st.params.frame_myr;
@@ -205,12 +232,29 @@ impl<'s, 'a> TreeWalk<'s, 'a> {
             ];
             let mean: f64 = GL
                 .iter()
-                .map(|(x, w)| 0.5 * w * st.density_at([g[0], g[1], g[2] + 0.5 * size * x], t0))
+                .map(|(x, w)| 0.5 * w * self.density_at([g[0], g[1], g[2] + 0.5 * size * x], t0))
                 .sum();
             mean * size * size * size
         };
         self.expect.borrow_mut().insert(n, v);
         v
+    }
+
+    fn density_at(&self, g: [f64; 3], t0: f64) -> f64 {
+        match self.layer {
+            Layer::Disc => self.stars.density_at(g, t0),
+            Layer::Remains => self.stars.remains_density_at(g, t0),
+        }
+    }
+
+    /// The birth history a block or cell draws from: the disc ring's at its
+    /// radius, or the remains' mix at its centre (grid pc).
+    fn births_at(&self, g: [f64; 3], t_now: f64) -> (Vec<(f64, f64)>, f64) {
+        let st = self.stars;
+        match self.layer {
+            Layer::Disc => st.birth_cdf_at(m::hypot(g[0], g[1]) / 1000.0, t_now),
+            Layer::Remains => st.remains_cdf_at(g, self.frame as f64 * st.params.frame_myr),
+        }
     }
 
     /// A root block's expected systems: the sum of its children's, so the
@@ -230,9 +274,12 @@ impl<'s, 'a> TreeWalk<'s, 'a> {
 
     /// The class shares with each class's corner of mass and age.
     pub fn class_mix(&self, root: [i64; 3]) -> ClassMix {
-        // The mix depends on the block's radius only, so blocks stacked in
-        // height share one.
-        let column = [root[0], root[1]];
+        // The disc's mix depends on the block's radius only, so blocks
+        // stacked in height share one; the remains' on its centre.
+        let column = match self.layer {
+            Layer::Disc => [root[0], root[1], 0],
+            Layer::Remains => root,
+        };
         if let Some(v) = self.shares.borrow().get(&column) {
             return v.clone();
         }
@@ -242,13 +289,13 @@ impl<'s, 'a> TreeWalk<'s, 'a> {
         let span = self.span(0) as f64;
         let cx = (root[0] as f64 + 0.5) * span * c;
         let cy = (root[1] as f64 + 0.5) * span * c;
-        let rc = m::hypot(cx, cy) / 1000.0;
+        let cz = (root[2] as f64 + 0.5) * span * c;
         let t_now = self.frame as f64 * p.frame_myr / 1000.0;
-        let (cdf, acc) = st.birth_cdf_at(rc, t_now);
+        let (cdf, acc) = self.births_at([cx, cy, cz], t_now);
         // Ages on a log grid, so the short lives of bright stars are
         // resolved, each bin weighted by the births in it.
         let born_by = |t: f64| born_by(&cdf, acc, t);
-        let oldest = (t_now - st.env.disc.t_start_gyr).max(1e-3);
+        let oldest = (t_now - cdf.first().map_or(st.env.disc.t_start_gyr, |c| c.0)).max(1e-3);
         let na = 48;
         let edges: Vec<f64> = (0..=na)
             .map(|k| {
@@ -275,7 +322,7 @@ impl<'s, 'a> TreeWalk<'s, 'a> {
             .collect();
         // The class of each IMF point at each bin's age is the same for every
         // block (only the births differ), so it is worked out once a walk.
-        let grid = self.class_grid.get_or_init(|| {
+        let make = || {
             let mut g = vec![];
             for (lo, hi, nm) in [(0.0, 0.99, 256), (0.99, 0.999, 128), (0.999, 1.0, 128)] {
                 let du = (hi - lo) / nm as f64;
@@ -289,7 +336,13 @@ impl<'s, 'a> TreeWalk<'s, 'a> {
                     g.push((u, du, cs));
                 }
             }
-            g
+            std::rc::Rc::new(g)
+        };
+        // The remains' ages are the same in every walk of a frame, so their
+        // grid is kept with the galaxy's remains between walks.
+        let grid = self.class_grid.get_or_init(|| match self.layer {
+            Layer::Disc => make(),
+            Layer::Remains => st.env.remains.class_grid(oldest, t_now, make),
         });
         let classes = p.class_edges_lsun.len() + 1;
         let mut w = vec![0.0; classes];
@@ -297,7 +350,7 @@ impl<'s, 'a> TreeWalk<'s, 'a> {
         let mut ceiling = vec![0.0f64; classes];
         // Three grids in the IMF's unit: the bulk, the brightest per cent and
         // the brightest per mille.
-        for (u, du, cs) in grid {
+        for (u, du, cs) in grid.iter() {
             for ((_, share, margin), c) in bins.iter().zip(cs) {
                 if *share <= 0.0 {
                     continue;
@@ -341,10 +394,10 @@ impl<'s, 'a> TreeWalk<'s, 'a> {
         Ok(Draws::new(
             self.stars.seed,
             self.node_address(n)?,
-            Stream::new(&format!(
-                "cosmos.stars.tree.v{}",
-                self.stars.params.key_version
-            ))
+            Stream::new(&match self.layer {
+                Layer::Disc => format!("cosmos.stars.tree.v{}", self.stars.params.key_version),
+                Layer::Remains => "cosmos.remains.tree.v1".to_string(),
+            })
             .map_err(|e| e.to_string())?,
         ))
     }
@@ -480,6 +533,9 @@ impl<'s, 'a> TreeWalk<'s, 'a> {
     /// The systems of one class in one cell (all of them, in slot order,
     /// when `class` is `None`).
     pub fn draw(&self, cell: [i64; 3], class: Option<usize>) -> Result<Vec<StarSystem>, String> {
+        if self.layer == Layer::Remains {
+            return self.draw_remains(cell, class);
+        }
         let st = self.stars;
         let p = &st.params;
         let frame = self.frame;
@@ -540,6 +596,109 @@ impl<'s, 'a> TreeWalk<'s, 'a> {
                 });
                 let slot = j * classes as u64 + c as u64;
                 out.push(st.complete(&d, &i, &addr, cell, frame, slot, mass, birth)?);
+            }
+        }
+        out.sort_by_key(|s| s.slot);
+        Ok(out)
+    }
+}
+
+impl TreeWalk<'_, '_> {
+    /// GH4: the remains' stars of one class in one cell (all of them when
+    /// `class` is `None`). Each star first draws which component it belongs
+    /// to, by their densities at the cell's centre, then its birth from that
+    /// galaxy's own births and its mass, on condition of its class.
+    fn draw_remains(
+        &self,
+        cell: [i64; 3],
+        class: Option<usize>,
+    ) -> Result<Vec<StarSystem>, String> {
+        let st = self.stars;
+        let p = &st.params;
+        let frame = self.frame;
+        let addr = st.cell_address(cell)?;
+        let t0 = frame as f64 * p.frame_myr;
+        let t_now = t0 / 1000.0;
+        let c_pc = p.cell_pc;
+        let centre = [
+            (cell[0] as f64 + 0.5) * c_pc,
+            (cell[1] as f64 + 0.5) * c_pc,
+            (cell[2] as f64 + 0.5) * c_pc,
+        ];
+        let weights = st.remains_weights_at(centre, t0);
+        let total: f64 = weights.iter().map(|w| w.1).sum();
+        if total <= 0.0 {
+            return Ok(vec![]);
+        }
+        let classes = p.class_edges_lsun.len() + 1;
+        let mix = self.class_mix(self.node_of(cell, 0).1);
+        type Cdf = (usize, Vec<(f64, f64)>, f64);
+        let cdfs: Vec<Cdf> = weights
+            .iter()
+            .map(|(i, _)| {
+                let (cdf, acc) = st.component_cdf(*i, t_now);
+                (*i, cdf, acc)
+            })
+            .collect();
+        let mut out = vec![];
+        for c in 0..classes {
+            if class.is_some_and(|k| k != c) {
+                continue;
+            }
+            let n = self.cell_count(cell, c)?;
+            if n == 0 {
+                continue;
+            }
+            let d = Draws::new(
+                st.seed,
+                addr.clone(),
+                Stream::new(&format!("cosmos.remains.c{c}.v1")).map_err(|e| e.to_string())?,
+            );
+            let fu = if mix.u_floor[c] < 1.0 {
+                mix.u_floor[c]
+            } else {
+                0.0
+            };
+            for j in 0..n {
+                let i = |f: u64| {
+                    (frame as u64)
+                        .wrapping_mul(1 << 44)
+                        .wrapping_add((j << 28).wrapping_add(f))
+                };
+                let mut best: Option<(usize, f64, f64, f64)> = None;
+                let mut found = None;
+                for a in 0..p.class_attempts {
+                    let ia = |f: u64| i((1 + a) * 64 + f);
+                    // Which galaxy it came from.
+                    let mut u = d.unit(ia(2)) * total;
+                    let mut k = weights.len() - 1;
+                    for (q, w) in weights.iter().enumerate() {
+                        if u < w.1 {
+                            k = q;
+                            break;
+                        }
+                        u -= w.1;
+                    }
+                    let (comp, cdf, acc) = &cdfs[k];
+                    let fb = born_by(cdf, *acc, t_now - mix.age_ceiling_gyr[c]);
+                    let birth = birth_from(cdf, *acc, fb + (1.0 - fb) * d.unit(ia(3)), t_now);
+                    let mass = imf_quantile(p, fu + (1.0 - fu) * d.unit(ia(4)));
+                    let l = p.state(mass, t_now - birth).luminosity_lsun;
+                    if p.class_of(l) == c {
+                        found = Some((*comp, mass, birth));
+                        break;
+                    }
+                    let miss = p.class_miss(l, c);
+                    if best.is_none_or(|b| miss < b.3) {
+                        best = Some((*comp, mass, birth, miss));
+                    }
+                }
+                let (comp, mass, birth) = found.unwrap_or_else(|| {
+                    let b = best.expect("at least one attempt");
+                    (b.0, b.1, b.2)
+                });
+                let slot = j * classes as u64 + c as u64;
+                out.push(st.complete_remains(&d, &i, &addr, cell, frame, slot, comp, mass, birth)?);
             }
         }
         out.sort_by_key(|s| s.slot);
