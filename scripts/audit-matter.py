@@ -459,6 +459,7 @@ NAME_ROW = [
 # copies. (file fragment, JSON path regex, reason)
 NOT_MATTER = [
     ("packs/", r"/examples/[^/]+/values/(body\.bulk_density|surface\.ice_fraction)$", "a named body's measured fact"),
+    ("packs/base-physics/formulas/", r"/equation/examples/", "a formula's worked example (its constants read the sheet)"),
     ("packs/sse3-classic/", r"body\.bulk_density$", "a named body's fact (V3 import)"),
     ("packs/base-light/", r"/lines/[^/]+/strength$", "an absorption line's shape"),
     ("packs/base-cosmos/", r"density_pc3$", "a star density in a galaxy model"),
@@ -472,6 +473,7 @@ NOT_MATTER = [
     ("packs/base-weather/", r"/(equator_ice|equatorial_bands_ice|ice_giant_mass_earth|wind_ice_m_s|"
      r"strength_u|strength_m_s)$", "a weather model setting"),
     ("packs/base-weather/", r"/impact/density_kg_m3$", "an assumed impactor, a model setting"),
+    ("packs/base-ships/", r"/scoop/skim_density_kg_m3$", "the air a scoop skims, a designer setting"),
 ]
 
 # Pack key -> property on the sheet (the substance or mixture is the key's

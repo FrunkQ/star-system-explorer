@@ -147,7 +147,57 @@ try {
       await shot(gm, "elements-iron-night-desk");
       await gm.keyboard.press("Escape");
     }
+    // Names (NM6), under "Names and classes": no pack carries names yet, so the base names pack is shown from a trial.
+    await gm.locator('[data-page="names"]').click();
+    const names = gm.locator('[data-names="offered"]');
+    await names.waitFor({ timeout: 20000 });
+    assert.match(await names.locator("[data-names-defaults]").innerText(), /Designation\s+Catalogue/);
+    await names.locator('[data-scheme="vesh"]').click();
+    const drawn = names.locator('[data-sample="vesh"] [aria-label="Sample names"]');
+    await drawn.locator("li").nth(11).waitFor({ timeout: 20000 });
+    const first = await drawn.getAttribute("data-digest");
+    assert.match(await drawn.locator("li").first().innerText(), /say [A-Z]/);
+    await names.locator("[data-hints]").waitFor();
+    await names.locator("[data-names-more]").click();
+    await gm.waitForFunction((d) => document.querySelector('[data-sample="vesh"] [aria-label="Sample names"]')?.getAttribute("data-digest") !== d, first);
+    await names.locator('[data-scheme="english"]').click();
+    await names.locator('[data-sample="english"] li .means').first().waitFor({ timeout: 20000 });
+    if (vp === "phone") {
+      const over = await gm.evaluate(() => document.documentElement.scrollWidth - window.innerWidth);
+      assert.ok(over <= 0, `names overflow by ${over} px`);
+    }
+    await shot(gm, `names-${vp}`);
+    assert.equal(await gm.locator("[data-names-add]").count(), 0, "adding a pack waits for the Build desk");
     assert.equal(await gm.locator("[data-state-hash]").first().getAttribute("data-state-hash"), hash0, "reading the sheet writes nothing");
+    if (vp === "desk") {
+      await gm.getByRole("button", { name: "Build", exact: true }).click();
+      await names.locator("[data-names-add]").click();
+      await gm.locator('[data-names="stack"]').waitFor({ timeout: 20000 });
+      await gm.waitForFunction((h) => document.querySelector("[data-state-hash]")?.getAttribute("data-state-hash") !== h, hash0);
+      await gm.locator('[data-names="stack"] [data-sample] li').nth(11).waitFor({ timeout: 20000 });
+      // The name card: every name a body has, by layer, with where it came from.
+      await go(gm, "system");
+      await gm.locator("[role=button][aria-label^='Tarn']").click();
+      await gm.locator("[data-names-open]").click();
+      const card = gm.locator("[data-name-card='u:kestrel/sys:1/body:3']");
+      await card.locator('[data-layer="designation"][data-source="drawn"]').waitFor({ timeout: 20000 });
+      assert.match(await card.locator('[data-layer="common"]').innerText(), /^Tarn\s+typed/);
+      await shot(gm, "name-card-desk");
+      // On the Build desk: type a designation, put it back, and name everything beneath the star in Vesh.
+      const desig = () => card.locator('[data-layer="designation"] .name').innerText();
+      const drawnDesig = await desig();
+      await card.locator('[data-name-type="designation"]').click();
+      await card.locator('[data-name-input="designation"]').fill("Kestrel Survey 3");
+      await card.locator('[data-name-input="designation"]').press("Enter");
+      await card.locator('[data-layer="designation"][data-source="typed"]').waitFor({ timeout: 20000 });
+      assert.equal(await desig(), "Kestrel Survey 3");
+      await card.locator('[data-name-restore="designation"]').click();
+      await card.locator('[data-layer="designation"][data-source="drawn"]').waitFor({ timeout: 20000 });
+      assert.equal(await desig(), drawnDesig, "putting it back shows the drawn name again");
+      await card.locator('[data-name-here="designation"]').selectOption("vesh");
+      await card.locator("[data-name-note]").getByText(/take designation names from Vesh/).waitFor({ timeout: 20000 });
+      await gm.waitForFunction(() => /drawn from Vesh/.test(document.querySelector('[data-name-card] [data-layer="designation"]')?.textContent ?? ""), null, { timeout: 20000 });
+    }
     assert.deepEqual(errors, []);
     await browser.close();
   }

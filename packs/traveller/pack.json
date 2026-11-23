@@ -7783,7 +7783,7 @@
        "label": "Red zone candidates",
        "all": [
         {
-         "field": "zone",
+         "field": "zone_first",
          "is": "none"
         }
        ],
@@ -7875,7 +7875,7 @@
        {
         "when": {
          "field": "zone",
-         "is": "A"
+         "has": "A"
         },
         "at": "ring",
         "mark": "zone",
@@ -7884,7 +7884,7 @@
        {
         "when": {
          "field": "zone",
-         "is": "R"
+         "has": "R"
         },
         "at": "ring",
         "mark": "zone",

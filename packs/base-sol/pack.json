@@ -122,6 +122,12 @@
         "v": 0.142,
         "unit": "1",
         "src": "nssdca-mercury"
+       },
+       "planet.surface_temperature": {
+        "v": 440.0,
+        "unit": "K",
+        "src": "nssdca-mercury",
+        "note": "average temperature"
        }
       }
      },
@@ -174,6 +180,23 @@
         "v": 0.689,
         "unit": "1",
         "src": "nssdca-venus"
+       },
+       "planet.surface_temperature": {
+        "v": 737.0,
+        "unit": "K",
+        "src": "nssdca-venus",
+        "note": "average temperature"
+       },
+       "atmosphere.surface_pressure": {
+        "v": 9200000.0,
+        "unit": "Pa",
+        "src": "nssdca-venus"
+       },
+       "atmosphere.main": {
+        "v": "co2",
+        "unit": "substance",
+        "src": "nssdca-venus",
+        "note": "96.5% CO2, 3.5% N2 near the surface, by volume"
        }
       }
      },
@@ -226,6 +249,29 @@
         "v": 0.434,
         "unit": "1",
         "src": "nssdca-earth"
+       },
+       "body.surface_water_oceans": {
+        "v": 1.0,
+        "unit": "earth_oceans",
+        "src": "charette-smith2010",
+        "note": "1 by definition of the unit (1.335e18 m3 of ocean)"
+       },
+       "planet.surface_temperature": {
+        "v": 288.0,
+        "unit": "K",
+        "src": "nssdca-earth",
+        "note": "average temperature"
+       },
+       "atmosphere.surface_pressure": {
+        "v": 101400.0,
+        "unit": "Pa",
+        "src": "nssdca-earth"
+       },
+       "atmosphere.main": {
+        "v": "n2",
+        "unit": "substance",
+        "src": "nssdca-earth",
+        "note": "78.08% N2, 20.95% O2, dry air by volume"
        }
       }
      },
@@ -331,6 +377,24 @@
         "v": 0.17,
         "unit": "1",
         "src": "nssdca-mars"
+       },
+       "planet.surface_temperature": {
+        "v": 214.0,
+        "unit": "K",
+        "src": "nssdca-mars",
+        "note": "average; NSSDCA prints ~214 K"
+       },
+       "atmosphere.surface_pressure": {
+        "v": 636.0,
+        "unit": "Pa",
+        "src": "nssdca-mars",
+        "note": "at mean radius; varies 4.0 to 8.7 mb with the season"
+       },
+       "atmosphere.main": {
+        "v": "co2",
+        "unit": "substance",
+        "src": "nssdca-mars",
+        "note": "95.1% CO2, 2.59% N2, 1.94% Ar by volume"
        }
       }
      },
@@ -595,6 +659,18 @@
         "v": 0.52,
         "unit": "1",
         "src": "nssdca-pluto"
+       },
+       "atmosphere.surface_pressure": {
+        "v": 1.3,
+        "unit": "Pa",
+        "src": "nssdca-pluto",
+        "note": "NSSDCA prints ~13 microbar"
+       },
+       "atmosphere.main": {
+        "v": "n2",
+        "unit": "substance",
+        "src": "nssdca-pluto",
+        "note": "99% N2, 0.5% CH4 by volume"
        }
       }
      },
@@ -687,6 +763,12 @@
      }
     ],
     "sources": [
+     {
+      "id": "charette-smith2010",
+      "text": "Charette, M. A. and Smith, W. H. F. 2010, Oceanography 23(2), 112: The volume of Earth's ocean (1.335e9 km3, the size of one Earth ocean as the kernel counts it; Earth holds 1 by definition)",
+      "status": "unverified",
+      "doi": "10.5670/oceanog.2010.51"
+     },
      {
       "id": "ciarniello2017",
       "text": "Ciarniello, M. et al. 2017, A&A 598, A130: spectrophotometric properties of dwarf planet Ceres from the VIR spectrometer on board the Dawn mission (geometric albedo 0.094 ± 0.007 at 0.55 µm)",

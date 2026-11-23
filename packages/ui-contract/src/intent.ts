@@ -47,11 +47,22 @@ export type Intent =
   /** Take a subject and everything under it out of the universe from `at_yr` on (Cut, or Undo of a paste). Its facts are kept. */
   | { kind: "withdraw"; address: string; at_yr: number }
   /** Bring a withdrawn subject back from `at_yr` on, with every fact it had (Redo of a paste, Undo of a cut). */
-  | { kind: "restore"; address: string; at_yr: number };
+  | { kind: "restore"; address: string; at_yr: number }
+  /**
+   * Type a name for one layer of a thing (NM2 rename): a typed name always wins and never follows its parent. `text`
+   * null takes the typed name away, so the drawn one shows again. Only the GM applies it.
+   */
+  | { kind: "rename"; address: string; layer: string; text: string | null; at_yr: number }
+  /**
+   * Choose the scheme that names one layer here and everything beneath (NM2 set_naming; `of_kind` for one kind of
+   * thing only). `scheme` null takes the setting away, so the one above applies again. Names not yet kept change at
+   * once; `rename_fixed` draws kept ones afresh too, dated `at_yr`. Only the GM applies it.
+   */
+  | { kind: "set_naming"; address: string; layer: string; scheme: string | null; of_kind?: string; rename_fixed?: boolean; at_yr: number };
 
 export type IntentKind = Intent["kind"];
 
-export const INTENT_KINDS: readonly IntentKind[] = ["set_value", "adopt_physics", "stack_packs", "scan_toggle", "grant", "set_values", "withdraw", "restore"];
+export const INTENT_KINDS: readonly IntentKind[] = ["set_value", "adopt_physics", "stack_packs", "scan_toggle", "grant", "set_values", "withdraw", "restore", "rename", "set_naming"];
 
 /** Machine-readable description of an intent a view may send (H8.1 `intents`). */
 export interface IntentSchema {
@@ -135,6 +146,14 @@ export function checkIntent(i: Intent): string | null {
     if (!Number.isFinite(i.at_yr)) return "time must be finite";
     return null;
   }
+  if (i.kind === "rename" || i.kind === "set_naming") {
+    if (!i.address.startsWith("u:")) return "address must start with u:";
+    if (!/^[a-z0-9_]+$/.test(i.layer)) return "a layer is lower-case letters, digits and _";
+    if (i.kind === "rename" && i.text !== null && (typeof i.text !== "string" || !i.text.trim())) return "a name needs some text, or null to take it away";
+    if (i.kind === "set_naming" && i.scheme !== null && (typeof i.scheme !== "string" || !i.scheme)) return "a scheme id, or null to take the setting away";
+    if (!Number.isFinite(i.at_yr)) return "time must be finite";
+    return null;
+  }
   if (i.kind !== "set_value") return `unknown intent kind ${(i as { kind: string }).kind}`;
   if (!i.address.startsWith("u:")) return "address must start with u:";
   if (!/^[a-z][a-z0-9_.-]*$/.test(i.field)) return "field must be a lower-case name";
@@ -162,6 +181,9 @@ export function intentToRequest(i: Intent, stack: { opening: readonly unknown[];
       ...(i.source ? { source: i.source } : {}),
     };
   if (i.kind === "withdraw" || i.kind === "restore") return { op: i.kind, address: i.address, at_s: yearsToSeconds(i.at_yr) };
+  if (i.kind === "rename") return { op: "rename" as const, address: i.address, layer: i.layer, ...(i.text !== null ? { text: i.text.trim() } : {}), at_s: yearsToSeconds(i.at_yr) };
+  if (i.kind === "set_naming")
+    return { op: "set_naming" as const, address: i.address, layer: i.layer, ...(i.scheme !== null ? { scheme: i.scheme } : {}), ...(i.of_kind ? { kind: i.of_kind } : {}), ...(i.rename_fixed ? { rename_fixed: true } : {}), at_s: yearsToSeconds(i.at_yr) };
   return {
     op: "set_authored" as const,
     edit: {

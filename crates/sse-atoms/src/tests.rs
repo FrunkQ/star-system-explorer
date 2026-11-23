@@ -875,3 +875,167 @@ fn bremsstrahlung_behind_shields() {
     assert!(d10 > d40 && d40 > 0.0 && d10 / d40 < 10.0, "{d10} {d40}");
     assert_eq!(bremsstrahlung_dose(0.0, &j, &b), 0.0);
 }
+
+// ND3b: blocks whose maths moved into formulas.
+
+fn formula_atom(id: &str) -> Box<dyn sse_flow::Atom> {
+    crate::formulas::atoms()
+        .into_iter()
+        .find(|a| a.decl().id == id)
+        .unwrap_or_else(|| panic!("{id} is not a formula block"))
+}
+
+/// The six blocks' Rust maths as it was before the move, kept here so the
+/// formulas are checked against it bit for bit.
+fn old(id: &str, i: &[f64]) -> Result<Vec<f64>, sse_flow::AtomError> {
+    use crate::common::positive;
+    use sse_core::math as m;
+    let g = sse_core::constants::g();
+    Ok(match id {
+        "sse.planet.bulk_density" => {
+            let r = positive(i[1], "radius")?;
+            vec![3.0 * positive(i[0], "mass")? / (4.0 * m::PI * r * r * r)]
+        }
+        "sse.planet.surface_gravity" => {
+            let r = positive(i[1], "radius")?;
+            vec![g * positive(i[0], "mass")? / (r * r)]
+        }
+        "sse.planet.escape_velocity" => {
+            let r = positive(i[1], "radius")?;
+            vec![m::sqrt(2.0 * g * positive(i[0], "mass")? / r)]
+        }
+        "sse.orbit.total_mass" => vec![positive(i[0], "host mass")? + positive(i[1], "body mass")?],
+        "sse.orbit.period" => {
+            let a = positive(i[0], "semi-major axis")?;
+            let mt = positive(i[1], "total mass")?;
+            vec![m::TAU * m::sqrt(a * a * a / (g * mt))]
+        }
+        "sse.star.effective_temperature" => {
+            let l = positive(i[0], "luminosity")?;
+            let r = positive(i[1], "radius")?;
+            vec![m::pow(
+                l / (4.0 * m::PI * r * r * sse_core::constants::sigma_sb()),
+                0.25,
+            )]
+        }
+        _ => unreachable!(),
+    })
+}
+
+#[test]
+fn formula_blocks_give_the_old_bits_and_refusals() {
+    let ids = [
+        "sse.planet.bulk_density",
+        "sse.planet.surface_gravity",
+        "sse.planet.escape_velocity",
+        "sse.orbit.total_mass",
+        "sse.orbit.period",
+        "sse.star.effective_temperature",
+    ];
+    // Values over many decades, and the refusals at zero and below.
+    let mut xs = vec![0.0, -1.0, -0.0];
+    for e in -30..=40 {
+        for k in [1.0, 1.7, 3.3, 7.9] {
+            xs.push(k * sse_core::math::pow(10.0, f64::from(e)));
+        }
+    }
+    let mut n = 0;
+    for id in ids {
+        let a = formula_atom(id);
+        for (j, x) in xs.iter().enumerate() {
+            let y = xs[(j * 7 + 3) % xs.len()];
+            let i = [*x, y];
+            let new = a.eval(&i, &[]);
+            match (old(id, &i), new) {
+                (Ok(o), Ok(f)) => {
+                    assert_eq!(o.len(), f.len());
+                    for (p, q) in o.iter().zip(&f) {
+                        assert_eq!(p.to_bits(), q.to_bits(), "{id} at {i:?}: {p} vs {q}");
+                    }
+                    n += 1;
+                }
+                (Err(o), Err(f)) if o.0.contains("must be positive") => {
+                    assert_eq!(o.0, f.0, "{id} at {i:?}");
+                }
+                // The old maths gave an infinity or NaN where a formula
+                // refuses a number too large to hold.
+                (Ok(o), Err(f)) => assert!(
+                    o.iter().any(|v| !v.is_finite()) && f.0.contains("too large"),
+                    "{id} at {i:?}: {o:?} vs {f:?}"
+                ),
+                (o, f) => panic!("{id} at {i:?}: {o:?} vs {f:?}"),
+            }
+        }
+    }
+    assert!(n > 1000, "{n}");
+}
+
+#[test]
+fn formula_blocks_follow_a_changed_constant() {
+    let a = formula_atom("sse.planet.surface_gravity");
+    let before = a.eval(&[6.0e24, 6.4e6], &[]).unwrap()[0];
+    let mut c = sse_core::constants::Constants::REAL;
+    c.g *= 2.0;
+    let after = sse_core::constants::with(c, || a.eval(&[6.0e24, 6.4e6], &[]).unwrap()[0]);
+    assert_eq!(after, 2.0 * before);
+}
+
+#[test]
+fn the_rust_blocks_list_matches_the_registry() {
+    let moved: Vec<String> = crate::formulas::loaded()
+        .iter()
+        .map(|a| sse_flow::Atom::decl(a).id.clone())
+        .collect();
+    let mut rust: Vec<String> = crate::atoms()
+        .iter()
+        .map(|a| a.decl().id.clone())
+        .filter(|i| !moved.contains(i))
+        .collect();
+    rust.sort();
+    let text = include_str!("../../../handover/packages/ND3b-rust-atoms.txt");
+    let mut listed: Vec<String> = text
+        .lines()
+        .filter(|l| !l.starts_with('#') && !l.trim().is_empty())
+        .map(|l| {
+            let (id, why) = l.split_once('\t').expect("id, a tab, then why");
+            assert!(!why.trim().is_empty(), "{id} says why it stays");
+            id.to_string()
+        })
+        .collect();
+    listed.sort();
+    assert_eq!(
+        rust, listed,
+        "a block moved into a formula takes its line out of ND3b-rust-atoms.txt; a new Rust block adds one with why"
+    );
+}
+
+#[test]
+fn formula_blocks_have_worded_names_and_keep_their_faces() {
+    for a in crate::formulas::loaded() {
+        let d = sse_flow::Atom::decl(a);
+        assert!(
+            a.name().split_whitespace().count() >= 3,
+            "{}: {}",
+            d.id,
+            a.name()
+        );
+        assert!(
+            !d.references.is_empty() && !d.explain.curious.is_empty(),
+            "{}",
+            d.id
+        );
+        assert!(!d.explain.formula.is_empty(), "{}", d.id);
+    }
+}
+
+#[test]
+fn a_worked_example_reads_constants_from_the_sheet() {
+    let text = include_str!("../../../packs/base-physics/formulas/planet.json");
+    let file: serde_json::Value = serde_json::from_str(text).unwrap();
+    let mut entry = file["atoms"][1].clone();
+    assert_eq!(entry["id"], "sse.planet.surface_gravity");
+    sse_formula::FormulaAtom::from_json(&entry).unwrap();
+    entry["equation"]["examples"][0]["G"] = serde_json::json!(6.6743e-11);
+    let e = sse_formula::FormulaAtom::from_json(&entry).unwrap_err();
+    assert!(e.contains("reads constants/G from the sheet"), "{e}");
+}

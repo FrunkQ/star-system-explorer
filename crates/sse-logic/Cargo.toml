@@ -9,6 +9,7 @@ authors.workspace = true
 [dependencies]
 sse-core.workspace = true
 sse-flow.workspace = true
+sse-formula = { path = "../sse-formula" }
 sse-sift = { path = "../sse-sift" }
 sse-place = { path = "../sse-place" }
 sse-life = { path = "../sse-life" }

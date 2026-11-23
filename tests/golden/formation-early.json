@@ -1,7 +1,7 @@
 [
   {
     "address": "u:f0/sys:1/body:3",
-    "co2_bar": 215.8715094068301,
+    "co2_bar": 215.86918650749132,
     "core_mass_fraction": 0.3392827710105658,
     "desiccated": false,
     "early_insolation": 0.6977165691451518,
@@ -12,7 +12,7 @@
         "kind": "body.mass",
         "read_by": "base-physics flows, surface (S), life (L)",
         "unit": "kg",
-        "value": 5.9722e+24
+        "value": 5.972167867791379e+24
       },
       {
         "kind": "body.radius",
@@ -60,13 +60,13 @@
         "kind": "early.surface_water",
         "read_by": "climate, surface (S) oceans, life (L)",
         "unit": "kg",
-        "value": 4.18054e+21
+        "value": 4.180517507453965e+21
       },
       {
         "kind": "early.co2_partial_pressure",
         "read_by": "climate, surface (S) carbonate cycle",
         "unit": "pa",
-        "value": 21587150.94068301
+        "value": 21586918.650749132
       },
       {
         "kind": "early.desiccated",
@@ -85,12 +85,12 @@
     "mass_earth": 1.0,
     "radius": 0.9992499933968251,
     "solid_radius": 0.9992499933968251,
-    "surface_water_oceans": 2.9861,
+    "surface_water_oceans": 2.986083933895689,
     "water_fraction": 0.001
   },
   {
     "address": "u:f0/sys:1/body:2",
-    "co2_bar": 178.87777082370502,
+    "co2_bar": 178.87584599788286,
     "core_mass_fraction": 0.33928277101056586,
     "desiccated": true,
     "early_insolation": 1.3347577217739053,
@@ -101,7 +101,7 @@
         "kind": "body.mass",
         "read_by": "base-physics flows, surface (S), life (L)",
         "unit": "kg",
-        "value": 4.867343e+24
+        "value": 4.867316812249974e+24
       },
       {
         "kind": "body.radius",
@@ -155,7 +155,7 @@
         "kind": "early.co2_partial_pressure",
         "read_by": "climate, surface (S) carbonate cycle",
         "unit": "pa",
-        "value": 17887777.0823705
+        "value": 17887584.599788286
       },
       {
         "kind": "early.desiccated",
@@ -179,7 +179,7 @@
   },
   {
     "address": "u:f0/sys:1/body:4",
-    "co2_bar": 27.687115887276736,
+    "co2_bar": 27.686817958275526,
     "core_mass_fraction": 0.3392827710105658,
     "desiccated": false,
     "early_insolation": 0.3004063458612987,
@@ -190,7 +190,7 @@
         "kind": "body.mass",
         "read_by": "base-physics flows, surface (S), life (L)",
         "unit": "kg",
-        "value": 6.390254e+23
+        "value": 6.390219618536776e+23
       },
       {
         "kind": "body.radius",
@@ -238,13 +238,13 @@
         "kind": "early.surface_water",
         "read_by": "climate, surface (S) oceans, life (L)",
         "unit": "kg",
-        "value": 4.4731778e+20
+        "value": 4.473153732975743e+20
       },
       {
         "kind": "early.co2_partial_pressure",
         "read_by": "climate, surface (S) carbonate cycle",
         "unit": "pa",
-        "value": 2768711.5887276735
+        "value": 2768681.7958275527
       },
       {
         "kind": "early.desiccated",
@@ -263,12 +263,12 @@
     "mass_earth": 0.107,
     "radius": 0.5461921390090946,
     "solid_radius": 0.5461921390090946,
-    "surface_water_oceans": 0.3195127,
+    "surface_water_oceans": 0.3195109809268388,
     "water_fraction": 0.001
   },
   {
     "address": "u:f0/sys:1/body:1",
-    "co2_bar": 950.4277747481506,
+    "co2_bar": 950.4175476086098,
     "core_mass_fraction": 0.3396226415094339,
     "desiccated": true,
     "early_insolation": 279.08662765806065,
@@ -279,7 +279,7 @@
         "kind": "body.mass",
         "read_by": "base-physics flows, surface (S), life (L)",
         "unit": "kg",
-        "value": 3.0756830000000004e+25
+        "value": 3.0756664519125604e+25
       },
       {
         "kind": "body.radius",
@@ -333,7 +333,7 @@
         "kind": "early.co2_partial_pressure",
         "read_by": "climate, surface (S) carbonate cycle",
         "unit": "pa",
-        "value": 95042777.47481506
+        "value": 95041754.76086098
       },
       {
         "kind": "early.desiccated",
@@ -357,24 +357,24 @@
   },
   {
     "address": "u:f0/sys:1/body:5",
-    "co2_bar": 950.4277747481506,
+    "co2_bar": 950.4175476086098,
     "core_mass_fraction": 0.3396226415094339,
     "desiccated": false,
     "early_insolation": 2.790866276580607,
     "envelope": "kept",
-    "envelope_fraction": 0.028604835451202203,
+    "envelope_fraction": 0.028604829840818625,
     "facts": [
       {
         "kind": "body.mass",
         "read_by": "base-physics flows, surface (S), life (L)",
         "unit": "kg",
-        "value": 3.0756830000000004e+25
+        "value": 3.0756664519125604e+25
       },
       {
         "kind": "body.radius",
         "read_by": "base-physics flows, surface (S)",
         "unit": "m",
-        "value": 16873652.96447934
+        "value": 16873652.14937023
       },
       {
         "kind": "orbit.semi_major_axis",
@@ -404,7 +404,7 @@
         "kind": "atmosphere.h2_envelope_fraction",
         "read_by": "climate, surface (S)",
         "unit": "one",
-        "value": 0.028604835451202203
+        "value": 0.028604829840818625
       },
       {
         "kind": "early.magma_ocean_end",
@@ -422,7 +422,7 @@
         "kind": "early.co2_partial_pressure",
         "read_by": "climate, surface (S) carbonate cycle",
         "unit": "pa",
-        "value": 95042777.47481506
+        "value": 95041754.76086098
       },
       {
         "kind": "early.desiccated",
@@ -439,14 +439,14 @@
     ],
     "magma_ocean_end_myr": 54.0,
     "mass_earth": 5.15,
-    "radius": 2.6485093336178527,
+    "radius": 2.648509205677324,
     "solid_radius": 1.5428966510276565,
     "surface_water_oceans": 0.0,
     "water_fraction": 0.0
   },
   {
     "address": "u:f0/sys:1/body:6",
-    "co2_bar": 72.88294622748062,
+    "co2_bar": 72.88216196582391,
     "core_mass_fraction": 0.16981132075471697,
     "desiccated": false,
     "early_insolation": 0.48452539523968874,
@@ -457,7 +457,7 @@
         "kind": "body.mass",
         "read_by": "base-physics flows, surface (S), life (L)",
         "unit": "kg",
-        "value": 1.19444e+25
+        "value": 1.1944335735582758e+25
       },
       {
         "kind": "body.radius",
@@ -505,13 +505,13 @@
         "kind": "early.surface_water",
         "read_by": "climate, surface (S) oceans, life (L)",
         "unit": "kg",
-        "value": 4.18054e+24
+        "value": 4.1805175074539655e+24
       },
       {
         "kind": "early.co2_partial_pressure",
         "read_by": "climate, surface (S) carbonate cycle",
         "unit": "pa",
-        "value": 7288294.622748061
+        "value": 7288216.196582391
       },
       {
         "kind": "early.desiccated",
@@ -530,7 +530,7 @@
     "mass_earth": 2.0,
     "radius": 1.5593106061686304,
     "solid_radius": 1.5593106061686304,
-    "surface_water_oceans": 2986.1,
+    "surface_water_oceans": 2986.08393389569,
     "water_fraction": 0.5
   }
 ]

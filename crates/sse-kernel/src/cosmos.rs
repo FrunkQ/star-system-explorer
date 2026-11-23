@@ -22,6 +22,11 @@ pub const HALOES: [(&str, f64); 3] = [
     ("group", 1.0e13),
 ];
 
+/// The cosmology's present, Gyr after the origin (DM6's dated calls).
+pub(crate) fn now_gyr() -> Result<f64, Response> {
+    Ok(settings()?.params.now_gyr)
+}
+
 fn settings() -> Result<CosmologyPack, Response> {
     CosmologyPack::from_packs(&[base_cosmology_pack()]).map_err(|e| err("bad_pack", e))
 }
@@ -1178,11 +1183,16 @@ mod tests {
         let mut classical = 0;
         for g in &sats {
             let rc = g["from_centre_kpc"].as_f64().unwrap();
-            assert!(rc <= r200 * 1.000001, "{g}");
-            // Quenched: no star formation once the delay after infall is past.
+            // On orbits now (GH2): a satellite can swing out past r200 to
+            // its farthest point (the splashback radius, about 1.5 r200).
+            assert!(rc <= r200 * 1.5, "{g}");
+            // Quenched: no star formation once ram pressure has taken its gas.
             let infall = g["infall_gyr"].as_f64().unwrap();
-            if infall + 3.0 < now {
-                assert_eq!(g["sfr_msun_yr"].as_f64(), Some(0.0), "{g}");
+            if let Some(q) = g["orbit"]["quenched_gyr"].as_f64() {
+                assert!(q >= infall, "{g}");
+                if q < now {
+                    assert_eq!(g["sfr_msun_yr"].as_f64(), Some(0.0), "{g}");
+                }
             }
             // Light time inside our halo is under a Myr.
             assert!(g["lookback_myr"].as_f64().unwrap() < 1.0, "{g}");

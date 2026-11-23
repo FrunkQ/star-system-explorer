@@ -8,7 +8,18 @@ import type { SkyCone } from "./SkyCone";
 import type { SurfaceTile } from "./SurfaceTile";
 import type { TileRequest } from "./TileRequest";
 
-export type Request = { "op": "hello" } | { "op": "load_stack", packs: unknown[], } | { "op": "open_universe", id: string, seed: string, } | { "op": "set_authored", edit: AuthoredEdit, } | { "op": "set_authored_batch", edits: Array<BatchEdit>, occurred_at_s: bigint, evidence?: string, source?: string, } | { "op": "withdraw", address: string, at_s: bigint, } | { "op": "restore", address: string, at_s: bigint, } | { "op": "history", address: string, } | { "op": "state_hash", scope?: string, at_s: bigint, } | { "op": "derive", flow: string, inputs: { [key in string]: InputSpec }, } | { "op": "explain", flow: string, inputs: { [key in string]: InputSpec }, kind: string, } | { "op": "draw", address: string, stream: string, counter: number, } | { "op": "branch", label: string, } | { "op": "branch_set", branch: string, edit: AuthoredEdit, } | { "op": "branch_state_hash", branch: string, at_s: bigint, } | { "op": "commit", branch: string, at_s: bigint, } | { "op": "discard", branch: string, } | { "op": "start_job", job: JobSpec, } | { "op": "step_job", job: number, budget: number, } | { "op": "cancel_job", job: number, } | { "op": "manifest" } | { "op": "scene", audience: string, scope: string, data_view?: string, at_s: bigint, 
+export type Request = { "op": "hello" } | { "op": "load_stack", packs: unknown[], } | { "op": "open_universe", id: string, seed: string, } | { "op": "set_authored", edit: AuthoredEdit, } | { "op": "set_authored_batch", edits: Array<BatchEdit>, occurred_at_s: bigint, evidence?: string, source?: string, } | { "op": "withdraw", address: string, at_s: bigint, } | { "op": "restore", address: string, at_s: bigint, } | { "op": "history", address: string, } | { "op": "state_hash", scope?: string, at_s: bigint, } | { "op": "derive", flow: string, inputs: { [key in string]: InputSpec }, 
+/**
+ * DM6: the campaign date the blocks are asked at (seconds on the
+ * campaign clock). A constant with a history on the sheet is read
+ * at that date; with none, the date changes nothing. Left out, the
+ * campaign's now.
+ */
+at_s?: bigint, } | { "op": "explain", flow: string, inputs: { [key in string]: InputSpec }, kind: string, 
+/**
+ * DM6: as `derive`.
+ */
+at_s?: bigint, } | { "op": "draw", address: string, stream: string, counter: number, } | { "op": "branch", label: string, } | { "op": "branch_set", branch: string, edit: AuthoredEdit, } | { "op": "branch_state_hash", branch: string, at_s: bigint, } | { "op": "commit", branch: string, at_s: bigint, } | { "op": "discard", branch: string, } | { "op": "start_job", job: JobSpec, } | { "op": "step_job", job: number, budget: number, } | { "op": "cancel_job", job: number, } | { "op": "manifest" } | { "op": "scene", audience: string, scope: string, data_view?: string, at_s: bigint, 
 /**
  * A draft `provides.other.observe` setup to build with instead of
  * the stack's (a preview before Apply). Nothing is recorded.
@@ -57,7 +68,7 @@ block?: unknown, } | { "op": "read_light", fixture?: string, bodies?: unknown[],
  * the ground's dose as a share of open space, belt extent, and
  * whether the field is measured, computed, none or unresolved).
  */
-system?: string, at_s?: bigint, } | { "op": "read_photometry", stars: unknown[], bands?: Array<string>, } | { "op": "survey_planets", survey: unknown, } | { "op": "read_nebulae", at_s: number, seed?: string, deaths?: unknown[], planetary?: unknown[], remnants?: unknown[], glows?: unknown[], } | { "op": "adopt", import_v3?: string, formation?: FormationRequest, occurred_at_s?: number, } | { "op": "resolved_system", system: string, at_s?: number, tiles?: Array<TileRequest>, } | { "op": "classify_preview", packs: unknown[], scheme: string, scope?: string, at_s?: number, } | { "op": "plan_route", fixture?: string, nav?: unknown, system?: string, at_s?: number, ports?: Array<string>, ship: unknown, from: unknown, to?: unknown, depart_s?: number, window_days?: number, prefer?: string, rescue?: unknown, } | { "op": "sift", scope?: string, at_s?: number, sifters?: unknown[], audience?: string, } | { "op": "window_view", fixture?: string, nav?: unknown, at_s?: number, from?: string, at_au?: [number, number, number], sensor?: string, 
+system?: string, at_s?: bigint, } | { "op": "read_photometry", stars: unknown[], bands?: Array<string>, } | { "op": "survey_planets", survey: unknown, } | { "op": "read_nebulae", at_s: number, seed?: string, deaths?: unknown[], planetary?: unknown[], remnants?: unknown[], glows?: unknown[], } | { "op": "adopt", import_v3?: string, formation?: FormationRequest, occurred_at_s?: number, } | { "op": "resolved_system", system: string, at_s?: number, tiles?: Array<TileRequest>, } | { "op": "classify_preview", packs: unknown[], scheme: string, scope?: string, at_s?: number, } | { "op": "plan_route", fixture?: string, nav?: unknown, system?: string, at_s?: number, ports?: Array<string>, ship: unknown, from: unknown, to?: unknown, depart_s?: number, window_days?: number, prefer?: string, rescue?: unknown, } | { "op": "ship_at_world", fixture?: string, nav?: unknown, system?: string, at_s?: number, ship: unknown, worlds: Array<string>, v_inf_m_s?: number, } | { "op": "sift", scope?: string, at_s?: number, sifters?: unknown[], audience?: string, } | { "op": "window_view", fixture?: string, nav?: unknown, at_s?: number, from?: string, at_au?: [number, number, number], sensor?: string, 
 /**
  * The system an inline `nav` is, so the view's `frame` can be
  * keyed (needs an open universe); the Sol fixture's is measured.
@@ -96,7 +107,7 @@ arrives_at_s?: bigint, } | { "op": "set_kept", address: string, kind: string, va
  * pinned to the coded main world, giant and belt counts searched),
  * adopt it, and write the coded facts on the grown main world.
  */
-grow: boolean, at_s: bigint, } | { "op": "export_sector", scope: string, format: string, sheet?: string, at_s: bigint, } | { "op": "halo_cell", cell?: [bigint, bigint, bigint], min_mass_msun?: number, limit?: number, } | { "op": "star_cell", cell?: [bigint, bigint, bigint], t_myr?: number, } | { "op": "sky_from_here", observer?: string, position_pc?: [number, number, number], t_myr?: number, limit_mag?: number, band?: string, bands?: Array<string>, cone?: SkyCone, 
+grow: boolean, at_s: bigint, } | { "op": "export_sector", scope: string, format: string, sheet?: string, at_s: bigint, } | { "op": "sector_map", scope: string, sheet?: string, at_s: bigint, } | { "op": "halo_cell", cell?: [bigint, bigint, bigint], min_mass_msun?: number, limit?: number, } | { "op": "star_cell", cell?: [bigint, bigint, bigint], t_myr?: number, } | { "op": "sky_from_here", observer?: string, position_pc?: [number, number, number], t_myr?: number, limit_mag?: number, band?: string, bands?: Array<string>, cone?: SkyCone, 
 /**
  * Most stars listed, brightest first (default 20,000, the phone
  * tier of ruling 12; desktops ask 200,000). A cut list says
@@ -125,4 +136,4 @@ parent?: string,
 /**
  * Facts as words, for forms that read them (`colour`: `red`).
  */
-facts?: { [key in string]: string }, } | { "op": "read_names", address: string, at_s?: bigint, audience?: string, } | { "op": "set_naming", address: string, layer: string, scheme?: string, kind?: string, at_s: bigint, rename_fixed?: boolean, } | { "op": "rename", address: string, layer?: string, text?: string, at_s: bigint, } | { "op": "fix_names", address: string, at_s: bigint, };
+facts?: { [key in string]: string }, } | { "op": "read_names", address: string, at_s?: bigint, audience?: string, } | { "op": "set_naming", address: string, layer: string, scheme?: string, kind?: string, at_s: bigint, rename_fixed?: boolean, } | { "op": "rename", address: string, layer?: string, text?: string, at_s: bigint, } | { "op": "fix_names", address: string, at_s: bigint, } | { "op": "pack_reports", pack?: string, };

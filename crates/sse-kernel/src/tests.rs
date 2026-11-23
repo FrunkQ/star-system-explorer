@@ -2635,6 +2635,31 @@ fn traveller_stock_ships_are_templates_that_sense() {
         "under": "u:trav/sys:0/body:3", "at_s": 0}));
     assert_eq!(st["type"], "created", "{st}");
     assert_eq!(st["kept"].as_array().unwrap().len(), 1, "crew aboard: {st}");
+    // The chart room's Ships and stations screen finds both in the GM scene,
+    // each naming its template, with the template's facts.
+    let g = send(
+        serde_json::json!({"op": "scene", "audience": "gm", "scope": "u:trav/sys:0", "at_s": 0}),
+    );
+    let subjects = g["scene"]["subjects"].as_array().unwrap();
+    for (a, t) in [
+        ("u:trav/sys:0/ship:1", "trader"),
+        ("u:trav/sys:0/body:3/station:1", "highport_a"),
+    ] {
+        let s = subjects
+            .iter()
+            .find(|s| s["address"] == a)
+            .unwrap_or_else(|| panic!("{a} in {g}"));
+        let fact = |f: &str| {
+            s["facts"]
+                .as_array()
+                .unwrap()
+                .iter()
+                .find(|x| x["field"] == f)
+                .map(|x| x["value"].clone())
+        };
+        assert_eq!(fact("template.id"), Some(serde_json::json!(t)), "{s}");
+        assert!(fact("construct.crew_max").is_some(), "{s}");
+    }
     let world = "u:trav/sys:0/body:3";
     for (a, f, v) in [
         (
@@ -2731,6 +2756,25 @@ fn a_sector_imports_as_grown_systems() {
                 .any(|l| l.starts_with(&format!("Kstr\tF\t{hex}\t")) && l.contains(uwp)),
             "{hex} {uwp} in\n{out}"
         );
+    }
+    // The hex map reads the same worlds, by hex, each with its reading.
+    let m = send(serde_json::json!({"op": "sector_map", "scope": "u:kestrel", "at_s": 0}));
+    assert_eq!(m["type"], "sector_mapped", "{m}");
+    let rows = m["worlds"].as_array().unwrap();
+    assert_eq!(rows.len(), 12, "{m}");
+    let hexes: Vec<&str> = rows.iter().map(|r| r["hex"].as_str().unwrap()).collect();
+    let mut sorted = hexes.clone();
+    sorted.sort();
+    assert_eq!(hexes, sorted);
+    for r in rows {
+        assert!(
+            r["body"]
+                .as_str()
+                .unwrap()
+                .starts_with(r["system"].as_str().unwrap()),
+            "{r}"
+        );
+        assert!(r["reading"]["lines"]["uwp"].is_string(), "{r}");
     }
 }
 
@@ -3253,4 +3297,27 @@ fn read_field_for_a_whole_system() {
         serde_json::json!({"op": "read_field", "system": "u:elsewhere/sys:1"}),
     );
     assert_eq!(r["code"], "bad_address", "{r}");
+}
+
+/// X3e: the chart room's Packs screen adds the Traveller pack on top of the
+/// app's opening stack (no atlas pack), so it must load there and read codes.
+#[test]
+fn the_traveller_pack_stacks_on_the_apps_opening_packs() {
+    let mut k = crate::Kernel::new();
+    let pack = |n: &str| -> serde_json::Value {
+        serde_json::from_str(
+            &std::fs::read_to_string(root().join(format!("packs/{n}/pack.json"))).unwrap(),
+        )
+        .unwrap()
+    };
+    let mut send = |v: serde_json::Value| -> serde_json::Value {
+        serde_json::from_str(&k.handle_json(&v.to_string())).unwrap()
+    };
+    let r = send(serde_json::json!({"op": "load_stack", "packs": [
+        pack("base-physics"), pack("base-time"), pack("base-reference"), pack("traveller")]}));
+    assert_eq!(r["type"], "stack_loaded", "{r}");
+    send(serde_json::json!({"op": "open_universe", "id": "k", "seed": "k"}));
+    let m = send(serde_json::json!({"op": "sector_map", "scope": "u:k", "at_s": 0}));
+    assert_eq!(m["type"], "sector_mapped", "{m}");
+    assert_eq!(m["sheet"], "traveller.world", "{m}");
 }

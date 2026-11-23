@@ -2,7 +2,7 @@
   "fixtures": [
     {
       "body": "Earth",
-      "envelope": "33bb70b0e486e02479305d824aa9b516242cb4be7c08e421578adfe8b6b8c703",
+      "envelope": "ec47ca397ef70c65609dec803ed39397d4f6a92ee52337e79595b1dd3d37cd1c",
       "events": [
         {
           "t_gyr": 0.1,
@@ -11,11 +11,11 @@
       ],
       "kind": "solid",
       "regime": "mobile-lid",
-      "sketch": "db3144718cab843e023c214dca778af1512742798cc3429feeabc4f5adb951b0"
+      "sketch": "27f70b33e1139c7450ac23ac2cf2431ac5d199df446d7e7ad141344fd0ad2925"
     },
     {
       "body": "Venus",
-      "envelope": "8eeb9cbe27cfa95eb0f68adeceed83fb18828456abad2148e758a0d830b3b7d6",
+      "envelope": "24407cc2c2ff4000708b31004137d7ba48324f276259ea5a7ac9f3d28829a854",
       "events": [
         {
           "t_gyr": 0.1,
@@ -24,27 +24,27 @@
       ],
       "kind": "solid",
       "regime": "episodic-lid",
-      "sketch": "eee9579f2616247f8a987581162439b7b1d16929796f316a37603a119572a3d7"
+      "sketch": "d3baa4d8b5c086b00bd756a6e1d95619b15510d4099b4bc49c4eff39098e6dae"
     },
     {
       "body": "Mars",
-      "envelope": "8dbb805a499f0126820ad40083d896446cd743f351e87f2ccb49750ae4a02529",
+      "envelope": "bf0c499250254a1adb2fb7e84c384ad88c08c009b774438d06b939abc0a3526a",
       "events": [],
       "kind": "solid",
       "regime": "stagnant-lid",
-      "sketch": "8177735ca8a770bd8df7c6cd490ba70efcfc345a23c2d54b0a9f193d995e5098"
+      "sketch": "f298ccf4d48deb373cf0cdeedbeb53aaa49edb981ddbd2462bded29b41b63d94"
     },
     {
       "body": "Mercury",
-      "envelope": "784890b59ead1a4a6ea944eccc90478d63a9db18a891f5c8bed0a4429663d430",
+      "envelope": "c6c7f3387b3b6d0200784a43e358d7ac11ae6d86d4a9957d5faaefff0061a714",
       "events": [],
       "kind": "solid",
       "regime": "stagnant-lid",
-      "sketch": "57df8426dfbe08281d91835fecab33ee4b865174f5494b3533ecdcbc31f317bd"
+      "sketch": "56d9998a0237474bdd0c3a5758ff446a201b9d098740ae67678e255b3a1d6c23"
     },
     {
       "body": "Moon",
-      "envelope": "1aecdf41d3c5068d907cd485e71044f1f3af4dcc5ef519bc9632140eff037d95",
+      "envelope": "7ea7cb0ed0dc208a500632ba7355f4d2d596f3bec2436c7015db55e47949d9c8",
       "events": [],
       "kind": "solid",
       "regime": "stagnant-lid",
@@ -52,7 +52,7 @@
     },
     {
       "body": "Io",
-      "envelope": "67baa0499910207c75919927a74cd8b4a28810621887f7256812fcb213d96846",
+      "envelope": "68b563aea0a0c1cfad0b16d9bd4585e22166210a22350ce94dd1525444b8b5f9",
       "events": [],
       "kind": "solid",
       "regime": "heat-pipe",
@@ -60,7 +60,7 @@
     },
     {
       "body": "Europa",
-      "envelope": "6bee4c29ccfcdbfa7f059cc98dfcb30e415251e7c015246f22ef4c9f4e40553e",
+      "envelope": "6e9f1785e22278fb506dbaa8a627f4a9cab8d8f064b864358ec1d941fb50827e",
       "events": [],
       "kind": "ice-shell",
       "regime": "ice-shell",
@@ -68,7 +68,7 @@
     },
     {
       "body": "Ganymede",
-      "envelope": "4e3a0db9ddcc51e3449c90961ec84c7b02fe486b8f38daa0c9d941329b8b30c2",
+      "envelope": "dcc38562946a252d7f9f8156a84f324dafd8aee886994b20d704383625cf405f",
       "events": [
         {
           "t_gyr": 1.5,
@@ -85,10 +85,10 @@
     },
     {
       "body": "Callisto",
-      "envelope": "867c1042d4a7c04a8a673d5d3ea17cfeb33cdfdaa1c8742a78cdd82a20ef9586",
+      "envelope": "b363d452c5a5b9f0225a1a9ef394798e58f1cd8882be6cd97ccf67bbd640ab09",
       "events": [
         {
-          "t_gyr": 0.18081898987293243,
+          "t_gyr": 0.1808091551065445,
           "to": "cold-ice-lid"
         }
       ],
@@ -98,7 +98,7 @@
     },
     {
       "body": "Enceladus",
-      "envelope": "d885e1a96c1bae2523b40ede565c41b6d55c250d05c028081fb55c036e2ca29d",
+      "envelope": "5a3c5fedb41312e1de9ebb93fba14e539764652d55e0c550f58cdfc7c3dbac3f",
       "events": [],
       "kind": "solid",
       "regime": "cold-ice-lid",
@@ -106,7 +106,7 @@
     },
     {
       "body": "Miranda",
-      "envelope": "a729cb973ad84f0c7a7738a83675a1bf3f05fc047f789b3cf65ea00f2f8f393d",
+      "envelope": "5be10fd16c40ed8ff65d5f74d292fe5935d4274994a85682146dc5eeebe0641c",
       "events": [],
       "kind": "solid",
       "regime": "cold-ice-lid",
@@ -114,7 +114,7 @@
     },
     {
       "body": "Triton",
-      "envelope": "38bc5826b1ed5b7c9ade9668af200532a5addf22c63fecb22c5a27a94e1414e3",
+      "envelope": "1ca4d00210449d96ff347fba1b2d9eefd16564f65c9190b91f89e6655d7735a8",
       "events": [],
       "kind": "ice-shell",
       "regime": "ice-shell",
@@ -122,7 +122,7 @@
     },
     {
       "body": "Titan",
-      "envelope": "d91edc5d735ad73f5623e3de429e0a96fdef7cb0d878da8542061036bab876ae",
+      "envelope": "7d2f2bba2d390d60e3bd82ebf87ad55b1ead8424263d92600f846ce736f565b5",
       "events": [],
       "kind": "solid",
       "regime": "hydrocarbon",
@@ -130,7 +130,7 @@
     },
     {
       "body": "Vesta",
-      "envelope": "ab448aa0a8fa87934106ccc931c2ddb8a5e00150a7a8a44e752435e51e4dfdb7",
+      "envelope": "e21491e010b115496de9dfea51cfd837deb9706d91ee07021c73e8236b9fa9c8",
       "events": [],
       "kind": "small-body",
       "regime": "small-body",
@@ -138,7 +138,7 @@
     },
     {
       "body": "Jupiter",
-      "envelope": "af2cd52e5b09997bdfe0c9ed219999570b5118c06a48911341ca7eef43692485",
+      "envelope": "c11a9e7bae5de0c767b777771c4e73212dc5ceada45654b2901fc3d5dd14a0f6",
       "events": [],
       "kind": "cloud-deck",
       "regime": "cloud-deck",
@@ -146,7 +146,7 @@
     },
     {
       "body": "55 Cancri e",
-      "envelope": "4d77b0f2d3dfd790d6ebce139641e4c7ddf2bc84c7b10e787ec5644ae229d810",
+      "envelope": "b8e483198ca3c99ef42531f77a821011068494838f4969a54c2a7f78b7e1161d",
       "events": [],
       "kind": "lava",
       "regime": "lava",
@@ -154,15 +154,15 @@
     },
     {
       "body": "Deep ocean world",
-      "envelope": "92727e9077d00acbda11e25d42ef82f68bee69c88d7daaa11b9c3fcb2e9cceb1",
+      "envelope": "c5ddb4ef47ed19ed5dc740d548376f4eb628478479176d7cbb21fc439a3a0810",
       "events": [],
       "kind": "ocean",
       "regime": "ocean-world",
-      "sketch": "11de8d02d2cc0e6d807f702e9fcbbfd3f46353584b9d7a831a6935b2b77354b1"
+      "sketch": "4d3b131a68a9b70c0bcaf5a8f432c0c4dba063cd70482763524cb14fcc5d5248"
     },
     {
       "body": "Wet super-Earth",
-      "envelope": "14c939656635a657a3a1d5b1ecadd6ee2c4063f04307a3debfc44254180a1072",
+      "envelope": "dfea4c11f1dbcd4533f22dffac404e4b27c2681c8c804ef8a37bc19713f27b49",
       "events": [],
       "kind": "solid",
       "regime": "super-earth-uncertain",
@@ -170,11 +170,11 @@
     },
     {
       "body": "Carbon world",
-      "envelope": "252552633f8d7fa0561faa7cbebcb23eba3346aa05581c32d452eb515a4307d3",
+      "envelope": "a714083778b547756591b50290b569e3df05664862ab8f29624a05fb2769e82c",
       "events": [],
       "kind": "solid",
       "regime": "carbon-rich",
-      "sketch": "0ae7bf64152c95e3e3c30591f5a0b1710feef41db3cb315f907aeb69e2c8fc47"
+      "sketch": "242fe2754d780730551d09128da87cc8c397aa5efa0e0695e6bff07a29bb4a28"
     }
   ],
   "generated": [
@@ -184,7 +184,7 @@
       "system": "u:g0/patch:9:solar/cohort:0/sys:0"
     },
     {
-      "digest": "6fb4e9acf0a7deb224289aea69cc3f2e3978abf2da09ec4020a1c7c866f73032",
+      "digest": "f7bd5165bd041562650a377c981e0d58ac729448a84d290f250e46bf4156a8fa",
       "regimes": [
         "stagnant-lid",
         "cold-ice-lid",
@@ -202,7 +202,7 @@
       "system": "u:g0/patch:9:solar/cohort:0/sys:1"
     },
     {
-      "digest": "d6d28f37f7faf68fb7eb7e8816a12ab39622a74e11b061706887d4dc398917f5",
+      "digest": "f53285fa591cce8d5368ae344b5bf745824f97c7f8d3427b47984f7c5b644f37",
       "regimes": [
         "stagnant-lid",
         "stagnant-lid",

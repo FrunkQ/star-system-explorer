@@ -46,41 +46,6 @@ pub fn atoms() -> Vec<Box<dyn Atom>> {
     );
     vec![
         Def {
-            id: "sse.orbit.total_mass",
-            version: "1.0.0",
-            inputs: vec![
-                port("host_mass", "orbit.host_mass", D::MASS, None),
-                port("body_mass", "body.mass", D::MASS, None),
-            ],
-            outputs: vec![port("total_mass", "orbit.total_mass", D::MASS, None)],
-            params: vec![],
-            cost: CostClass::Trivial,
-            references: &[MD],
-            curious: "In a pair, both bodies pull on each other, so the orbit depends on their combined mass.",
-            science: "The two-body problem reduces to one body moving under the total mass G(M + m).",
-            formula: "M_total = M + m",
-            f: |i, _| Ok(vec![positive(i[0], "host mass")? + positive(i[1], "body mass")?]),
-        }
-        .build(),
-        Def {
-            id: "sse.orbit.period",
-            version: "1.0.0",
-            inputs: vec![a(None), port("total_mass", "orbit.total_mass", D::MASS, None)],
-            outputs: vec![port("period", "orbit.period", D::TIME, None)],
-            params: vec![],
-            cost: CostClass::Trivial,
-            references: &[MD],
-            curious: "The farther out a world orbits, the longer its year, and not just in proportion: four times farther means eight times longer.",
-            science: "Kepler's third law for two point masses, using the sum of both masses. Exact for an isolated pair; other bodies perturb it slightly.",
-            formula: "P = 2π √(a³ / (G (M + m)))",
-            f: |i, _| {
-                let a = positive(i[0], "semi-major axis")?;
-                let mt = positive(i[1], "total mass")?;
-                Ok(vec![m::TAU * m::sqrt(a * a * a / (sse_core::constants::g() * mt))])
-            },
-        }
-        .build(),
-        Def {
             id: "sse.orbit.semi_major_axis_from_period",
             version: "1.0.0",
             inputs: vec![

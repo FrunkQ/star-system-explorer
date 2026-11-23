@@ -13,6 +13,7 @@ pub mod events;
 pub mod galaxy;
 pub mod glow_mix;
 pub mod haloes;
+pub mod infall;
 pub mod model;
 pub mod nucleus;
 pub mod origin;

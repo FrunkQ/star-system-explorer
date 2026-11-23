@@ -17,7 +17,7 @@ densities belong on the sheet, not typed into the hull code.
   - d2 163.5 at 23.31 K, new substance "deuterium" (Richardson 2014 EOS through
     CoolProp; marked computed);
   - he3 59.0 at 3.19 K, new substance "helium-3", **unverified, recalled
-    and not read**; on the fudge register until a source is read.
+    and not read**; on the fudge register (docs/fudges.md, "Master data sheet") until a source is read. Sources tried 23 Nov: Kollar and Vollhardt (arXiv cond-mat/9906222) stops at 2.5 K; Wikipedia's liquid helium table has no density; CoolProp has no helium-3.
 - Mixtures by mass for base-nav's fuel ids: `fuel-hydrogen`,
   `fuel-hydrogen-oxygen` (O/F 6:1 by mass, so 1/7 and 6/7; authored, a typical
   engine ratio, not a law), `fuel-deuterium`, `fuel-helium-3`.

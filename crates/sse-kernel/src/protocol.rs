@@ -193,11 +193,22 @@ pub enum Request {
     Derive {
         flow: String,
         inputs: BTreeMap<String, InputSpec>,
+        /// DM6: the campaign date the blocks are asked at (seconds on the
+        /// campaign clock). A constant with a history on the sheet is read
+        /// at that date; with none, the date changes nothing. Left out, the
+        /// campaign's now.
+        #[serde(default, skip_serializing_if = "Option::is_none")]
+        #[ts(optional)]
+        at_s: Option<i64>,
     },
     Explain {
         flow: String,
         inputs: BTreeMap<String, InputSpec>,
         kind: String,
+        /// DM6: as `derive`.
+        #[serde(default, skip_serializing_if = "Option::is_none")]
+        #[ts(optional)]
+        at_s: Option<i64>,
     },
     Draw {
         address: String,
@@ -712,6 +723,37 @@ pub enum Request {
         #[serde(default)]
         #[ts(optional, type = "unknown")]
         rescue: Option<serde_json::Value>,
+    },
+    /// A ship at each of some worlds (aerobraking and landing on the
+    /// physics): aerocapture, entry and landing, runway landing, powered
+    /// landing and take-off, each with its figures, dangers (figure against
+    /// limit, level, rough chance, what happens if it goes wrong, effects on
+    /// kept ship state), what would make it safe, and why. Nothing is
+    /// refused and nothing rolled: the GM judges. The system is a NAV
+    /// `fixture` (`sol`), an inline `nav` system (bodies may carry `air`), or
+    /// an adopted `system` read at `at_s`; `ship` is a template id or a ship
+    /// object (optional `shield`, `aero`, `landing`, `crew`, `structure_g`);
+    /// `worlds` are body names or addresses; `v_inf_m_s` is the speed
+    /// arriving from far away (default: a Hohmann transfer from the next body in).
+    ShipAtWorld {
+        #[serde(default)]
+        #[ts(optional)]
+        fixture: Option<String>,
+        #[serde(default)]
+        #[ts(optional, type = "unknown")]
+        nav: Option<serde_json::Value>,
+        #[serde(default)]
+        #[ts(optional)]
+        system: Option<String>,
+        #[serde(default)]
+        #[ts(optional, type = "number")]
+        at_s: Option<i64>,
+        #[ts(type = "unknown")]
+        ship: serde_json::Value,
+        worlds: Vec<String>,
+        #[serde(default)]
+        #[ts(optional)]
+        v_inf_m_s: Option<f64>,
     },
     /// The story finder (U8) and the agents' sift: run sifters over every
     /// address at or under `scope` (default the universe) at `at_s` (default
@@ -1236,6 +1278,17 @@ pub enum Request {
         sheet: Option<String>,
         at_s: i64,
     },
+    /// The hex map's worlds (handoff 7A part 4): each mapped system
+    /// (`map.hex`) at or under `scope`, its main world read through the code
+    /// sheet (`sheet`, or the first in the stack) at `at_s`. Read only; GM
+    /// machine.
+    SectorMap {
+        scope: String,
+        #[serde(default)]
+        #[ts(optional)]
+        sheet: Option<String>,
+        at_s: i64,
+    },
     /// G2 for V9's cluster map: one halo cell (8 Mpc a side at pack
     /// defaults) of the open universe, its haloes biggest first down to
     /// `min_mass_msun` (default 1e10, the catalogue floor), at most `limit` (default 300), with
@@ -1559,6 +1612,17 @@ pub enum Request {
         address: String,
         at_s: i64,
     },
+    /// ND6 (new-physics demo 2.5): each pack's sources, fudge list
+    /// (declared, plus every fitted or assumed Model number its flows and
+    /// boxes hold) and reproduction report (published numbers beside the
+    /// pack's, worked out when the stack loaded), for the stack in force or
+    /// one pack of it. Read in a trial, it shows them before the pack is
+    /// added. Read-only.
+    PackReports {
+        #[serde(default)]
+        #[ts(optional)]
+        pack: Option<String>,
+    },
 }
 
 /// `adopt`'s formation request: the `run_formation` fields.
@@ -1661,6 +1725,7 @@ impl Request {
             Request::ResolvedSystem { .. } => "resolved_system",
             Request::SurveySurface { .. } => "survey_surface",
             Request::PlanRoute { .. } => "plan_route",
+            Request::ShipAtWorld { .. } => "ship_at_world",
             Request::GalaxyChart { .. } => "galaxy_chart",
             Request::WebSlice { .. } => "web_slice",
             Request::WindowView { .. } => "window_view",
@@ -1701,6 +1766,7 @@ impl Request {
             Request::Codes { .. } => "codes",
             Request::ImportSector { .. } => "import_sector",
             Request::ExportSector { .. } => "export_sector",
+            Request::SectorMap { .. } => "sector_map",
             Request::HaloCell { .. } => "halo_cell",
             Request::StarCell { .. } => "star_cell",
             Request::SkyFromHere { .. } => "sky_from_here",
@@ -1719,6 +1785,7 @@ impl Request {
             Request::SetNaming { .. } => "set_naming",
             Request::Rename { .. } => "rename",
             Request::FixNames { .. } => "fix_names",
+            Request::PackReports { .. } => "pack_reports",
         }
     }
 }
@@ -1880,6 +1947,11 @@ pub fn ops() -> Vec<OpInfo> {
             "a formation re-run for formation-adopted systems (cached), plus about 0.1 s per 256-sample tile; at most 24 tiles",
         ),
         o(
+            "ship_at_world",
+            Cost::Light,
+            "per world closed-form passes and burns, plus one descent at 0.1 s steps where there is ground and air (tens of ms native)",
+        ),
+        o(
             "plan_route",
             Cost::Medium,
             "about a thousand Lambert solves on the departure and flight-time grid plus torch flights; drift asks plan once per body and port (about 0.1 to 1 s native)",
@@ -1998,6 +2070,11 @@ pub fn ops() -> Vec<OpInfo> {
             "GM machine only; one code reading per mapped system",
         ),
         o(
+            "sector_map",
+            Cost::Light,
+            "GM machine only; one code reading per mapped system",
+        ),
+        o(
             "halo_cell",
             Cost::Medium,
             "one cell's haloes drawn from the mass function, each placed on the web and given a growth history and mergers (about 0.1 to 1 s native)",
@@ -2078,6 +2155,11 @@ pub fn ops() -> Vec<OpInfo> {
             "fix_names",
             Cost::Light,
             "GM machine only; draws the names under one address, one event",
+        ),
+        o(
+            "pack_reports",
+            Cost::Trivial,
+            "reads reports worked out when the stack loaded; read only",
         ),
     ]
 }
@@ -2481,6 +2563,15 @@ pub enum Response {
         #[ts(type = "unknown")]
         plan: serde_json::Value,
     },
+    /// `ship_at_world`: `{system, ship, worlds (body, name, gravity_m_s2,
+    /// orbit_m_s, escape_m_s, v_inf_m_s, arrival, air?, checks (id, words,
+    /// verdict safe|risky|dangerous|not-here, figures, dangers (id, subject,
+    /// role, figure, limit, unit, ratio, level, chance {p, basis}, if_wrong,
+    /// effects, why), would_pass, why)), model}`.
+    ShipAtWorldRead {
+        #[ts(type = "unknown")]
+        report: serde_json::Value,
+    },
     /// `surface_frames`: `{body, label, source, at_s?, frames (version, detail,
     /// epoch_myr, grid {n, cells}, dirs (x y z per cell), frames (t_myr,
     /// sea_level_m, plate, continental, elevation_m, vent, arc, ridge, ice_m, temp_k,
@@ -2797,6 +2888,14 @@ pub enum Response {
         written: u32,
         skipped: Vec<String>,
     },
+    /// `sector_map`: `{system, body, hex, name, sector, reading}` per mapped
+    /// system, by hex, and the systems skipped (no main world).
+    SectorMapped {
+        sheet: String,
+        #[ts(type = "unknown[]")]
+        worlds: Vec<serde_json::Value>,
+        skipped: Vec<String>,
+    },
     Error {
         code: String,
         message: String,
@@ -2873,6 +2972,14 @@ pub enum Response {
     /// avoid_hits}`, each name with its form, faces and parts.
     /// `read_names`: `{address, kind, names: [{layer, text, source, scheme,
     /// named, original}]}`.
+    /// `pack_reports`: `[{pack, version, licence, sources, fudges: [{id, what,
+    /// stands_in_for, replace_with?, flows, source?, from, number?}],
+    /// reproduction: [{name, source, where?, flow, pass, rows: [{kind, unit?,
+    /// published, got, tolerance, off, pass, error?}]}], reproduced}]`.
+    PackReports {
+        #[ts(type = "unknown")]
+        reports: serde_json::Value,
+    },
     Names {
         #[ts(type = "unknown")]
         value: serde_json::Value,

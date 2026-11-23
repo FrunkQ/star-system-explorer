@@ -35,7 +35,7 @@ use sse_core::math as m;
 
 const G: f64 = sse_core::sheet::G;
 const AU_M: f64 = sse_core::sheet::AU;
-const M_SUN_KG: f64 = 1.988_47e30;
+const M_SUN_KG: f64 = sse_core::sheet::M_SUN;
 const YEAR_S: f64 = sse_core::sheet::YR_JULIAN;
 const EARTH_OMEGA: f64 = 7.292_115e-5;
 

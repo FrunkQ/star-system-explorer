@@ -33,7 +33,7 @@ use sse_resolve::{
 use std::collections::BTreeMap;
 
 pub const GYR_S: f64 = 3.15576e16;
-pub const MSUN_KG: f64 = 1.988_41e30;
+pub const MSUN_KG: f64 = sse_core::sheet::M_SUN;
 /// One minor unit of the birth-mass budget: a thousandth of a solar mass.
 pub const MASS_QUANTUM_KG: f64 = MSUN_KG * 1e-3;
 /// km/s to pc/Myr.

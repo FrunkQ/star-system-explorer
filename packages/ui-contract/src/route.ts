@@ -20,6 +20,19 @@ export interface NavShip {
   reserve?: number;
   g_limit?: number;
   shield_g_cm2?: number;
+  fuels?: string[];
+  /** Heat shield, shape in air and landing gear (sse-nav `entry`; the renderer's ship designer writes them). */
+  shield?: { nose_radius_m: number; max_heat_flux_w_m2: number; max_heat_load_j_m2?: number; kind?: "ablative" | "reusable" | string; mass_t?: number };
+  aero?: { ref_area_m2: number; cd: number; lift_area_m2?: number; cl_max?: number; l_over_d?: number };
+  landing?: { legs: boolean; max_touchdown_m_s: number; chute?: { area_m2: number; cd: number; max_mach: number; max_q_pa: number; fill_s?: number } };
+  /** People aboard (0: an uncrewed probe; missing: crewed). */
+  crew?: number;
+  /** Cargo aboard, tonnes, inside dry_t. */
+  cargo_t?: number;
+  /** Each fuel's share of the propellant mass. */
+  fuel_shares?: Record<string, number>;
+  /** Most deceleration the hull bears, g. */
+  structure_g?: number;
 }
 
 /** The base-nav pack's stock ships (T3), by template id. Names for the picker; the kernel holds the numbers. */
@@ -42,6 +55,8 @@ export interface NavBody {
   varpi_deg?: number;
   mean_longitude_deg?: number;
   port?: boolean;
+  /** The body's air (a ship at a world): at the ground, or at 1 bar on a giant. */
+  air?: import("./ship-at-world.ts").WorldAir;
 }
 
 export interface NavSystem {

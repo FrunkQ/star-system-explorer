@@ -14,7 +14,7 @@
       "name": "Working out a system",
       "meaning": "Resolving a system and its worlds from the packs and the chronicle: what every card, chart, edit and search reads. A click must not wait on it.",
       "budget_ms": 100,
-      "sources": ["derive", "explain", "draw", "scene", "atoms", "manifest", "resolved_system", "systems", "read_world_stack", "classify_preview", "history", "state_hash", "branch_state_hash", "set_authored", "set_authored_batch", "withdraw", "restore", "branch", "branch_set", "commit", "discard", "adopt", "read_reach", "dressing", "adopt_dressing", "hold_dressing", "campaign_tags", "sift"],
+      "sources": ["derive", "explain", "draw", "scene", "atoms", "manifest", "pack_reports", "resolved_system", "systems", "read_world_stack", "classify_preview", "history", "state_hash", "branch_state_hash", "set_authored", "set_authored_batch", "withdraw", "restore", "branch", "branch_set", "commit", "discard", "adopt", "read_reach", "dressing", "adopt_dressing", "hold_dressing", "campaign_tags", "sift"],
       "bench": ["resolve", "sift", "observe", "suite", "classify", "place"]
     },
     {
@@ -67,7 +67,7 @@
       "name": "Galaxy and cosmic web",
       "meaning": "The galaxy chart, star and halo cells, the cosmic web, the Window and sector import and export.",
       "budget_ms": 1000,
-      "sources": ["galaxy_chart", "web_slice", "halo_cell", "star_cell", "window_view", "import_sector", "export_sector", "promote_star"],
+      "sources": ["galaxy_chart", "web_slice", "halo_cell", "star_cell", "window_view", "import_sector", "export_sector", "sector_map", "promote_star"],
       "bench": ["cosmos", "cosmology", "haloes", "galaxy", "galaxy-events", "envelope", "stars", "nucleus"]
     },
     {
@@ -75,7 +75,7 @@
       "name": "Orbits, routes and voyages",
       "meaning": "Where everything is at a time, the calendar, routes between stars and voyages in a system.",
       "budget_ms": 300,
-      "sources": ["orbits_at", "calendar", "campaign_now", "set_campaign_now", "plan_route", "plan_voyage"],
+      "sources": ["orbits_at", "calendar", "campaign_now", "set_campaign_now", "plan_route", "plan_voyage", "ship_at_world"],
       "bench": ["time", "time-generated", "nav"]
     },
     {

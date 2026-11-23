@@ -28,13 +28,14 @@ const BUDGET = {
   "ask why": 1,
   "change a world": 2, // the Build desk, then the value (typed)
   "see what followed": 1,
+  "add a world": { desktop: 3, phone: 4 }, // pick the star, Add here (in More on a phone), then one of what forms there
   "open the globe": 1,
   "its magnetic field": 1,
   "cut it open": 1,
   "run time": 1,
   "out to the cosmic web": { desktop: 1, phone: 2 }, // a phone's line shows one step up: the list beside the name, then the web
   "straight back down": 1,
-  "look up an element": 3, // Look up, Elements, the element
+  "look up an element": { desktop: 1, phone: 2 }, // Look up, then type its name and Enter (a phone presses the box first)
 };
 
 async function walk(browser, vp) {
@@ -110,6 +111,23 @@ async function walk(browser, vp) {
     await page.locator(".area-card").getByText(/./).first().waitFor();
   });
   assert.ok((await surfaceK())?.length, "Mars's surface is shown");
+
+  // Add a world by hand: what this orbit would make, from formation runs round the Sun (V3 gap 2). One Undo.
+  await step("add a world", async () => {
+    await tap(page.locator(".area-chart [role=button][aria-label^='Sun']").first());
+    if (phone) {
+      await tap(page.getByRole("button", { name: "More", exact: true }));
+      await tap(page.locator("[data-more-add]"));
+    } else await tap(page.getByRole("button", { name: "Add here" }));
+    const add = page.locator("dialog[data-add]");
+    await add.locator("[data-forms-here] li, [data-forms-nothing]").first().waitFor({ timeout: 30000 });
+    await tap(add.locator("[data-forms-here] li button").first());
+    await page.locator("[data-clip-note]").getByText(/^Added New world, orbiting Sun/).waitFor({ timeout: 20000 });
+    await page.locator(".area-chart [role=button][aria-label^='New world']").first().waitFor({ timeout: 20000 });
+  });
+  await page.evaluate(() => document.activeElement instanceof HTMLElement && document.activeElement.blur());
+  await page.keyboard.press("Control+z");
+  await page.waitForFunction(() => !document.querySelector(".area-chart [role=button][aria-label^='New world']"), null, { timeout: 15000 });
   assert.notEqual(await page.locator("[data-state-hash]").first().getAttribute("data-state-hash"), hash0, "the edit is in the universe");
 
   // The world itself: back to Earth, then its globe, its field and a cut through it.
@@ -160,10 +178,13 @@ async function walk(browser, vp) {
 
   await step("look up an element", async () => {
     await tap(rail("reference"));
-    await tap(page.locator('[data-page="elements"]'));
-    await page.locator('[data-elements="ready"]').waitFor({ timeout: 20000 });
-    await page.locator('.table [data-el="fe"]').click({ force: phone });
-    await page.locator('[data-element-card="fe"]').waitFor();
+    const find = page.locator("[data-ref-find]");
+    if (phone) await tap(find);
+    else await page.waitForFunction(() => document.activeElement?.hasAttribute("data-ref-find"), null, { timeout: 20000 });
+    await page.keyboard.type("iron");
+    await page.locator('[data-ref-hit="elements:fe"]').waitFor({ timeout: 20000 });
+    await page.keyboard.press("Enter");
+    await page.locator('[data-element-card="fe"]').waitFor({ timeout: 20000 });
   });
 
   // Nothing runs off the side of a phone, anywhere on the walk's last screen.

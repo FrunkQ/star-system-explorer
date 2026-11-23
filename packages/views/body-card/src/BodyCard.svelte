@@ -4,11 +4,12 @@
   derived values are read-only and open the kernel's explanation.
 -->
 <script lang="ts">
-  import { CURIOUS_FACTS, HONESTY_MARKS, asPlayers, curiousDisplay, curiousSentence, headline, cardFacts, cardFor, commitEdit, factEdit, gmStamps, hasTool, primaryOf, type Json, type PlayerContext, type SceneFact, type SystemScene, type ViewContext, type Vocab } from "../../../ui-contract/src/index.ts";
+  import { CURIOUS_FACTS, HONESTY_MARKS, namesOnStack, asPlayers, curiousDisplay, curiousSentence, headline, cardFacts, cardFor, commitEdit, factEdit, gmStamps, hasTool, primaryOf, type Json, type PlayerContext, type SceneFact, type SystemScene, type ViewContext, type Vocab } from "../../../ui-contract/src/index.ts";
   import PlayerCard from "../../player-stack/src/PlayerCard.svelte";
   import { Card, CardField, Stamp, opensFrom } from "../../../chart-grammar/src/index.ts";
   import { parseFact } from "./parse.ts";
   import Explain from "./Explain.svelte";
+  import NameCard from "./NameCard.svelte";
 
   let { ctx, scene, params }: { ctx: ViewContext; scene: SystemScene; params: Record<string, Json> } = $props();
 
@@ -24,6 +25,13 @@
   const depth = $derived(ws.depth ?? "science");
   const curious = $derived(depth === "curious" && ws.mode !== "edit");
   let allFacts = $state(false);
+  // Names (NM6): when a pack on the stack carries name schemes, "Names" opens every name the body has, by layer.
+  const namesInPlay = $derived.by(() => {
+    void ws.revision;
+    const st = ctx.session.stack();
+    return namesOnStack([...st.base, ...(st.campaign ? [st.campaign] : [])]).schemes.length > 0;
+  });
+  let namesOpen = $state(false);
   const listed = $derived(curious && !allFacts ? headline(shown) : shown);
   const sentence = $derived(subject && depth === "curious" ? curiousSentence(subject, scene.subjects.find((x) => x.address === subject.parent)?.label) : null);
   const published = $derived(subject && depth === "engine" ? shown.filter((f) => f.publisher) : []);
@@ -95,6 +103,10 @@
         <p class="as" data-through={L?.id}>{L?.label}{through.subjects.some((x) => x.address === theirs) ? "" : ": not known to them"}</p>
         {#if pctx && through.subjects.some((x) => x.address === theirs)}<div class="theirs"><PlayerCard ctx={pctx} scene={through} /></div>{/if}
       {:else}
+      {#if namesInPlay}
+        <button type="button" class="names-open" aria-expanded={namesOpen} data-names-open onclick={() => (namesOpen = !namesOpen)}>{namesOpen ? "Hide names" : "Names ›"}</button>
+        {#if namesOpen}<NameCard session={ctx.session} workspace={ws} address={subject.address} label={subject.label} {depth} onclose={() => (namesOpen = false)} />{/if}
+      {/if}
       {#if sentence}<p class="sentence" data-depth="curious">{sentence}</p>{/if}
       {#if depth === "engine"}<p class="address" data-depth="engine" title="This body's address in the universe">{subject.address}</p>{/if}
       <div class="grid" class:line={rule.density === "line"} style="--cols: {cols}">
@@ -142,6 +154,19 @@
 </div>
 
 <style>
+  .names-open {
+    display: block;
+    height: auto;
+    margin: 6px 18px 0;
+    padding: 0;
+    border: none;
+    background: none;
+    color: var(--sse-accent-ink);
+    font: inherit;
+    font-size: 13px;
+    text-decoration: underline;
+    cursor: pointer;
+  }
   .stamps {
     display: flex;
     flex-wrap: wrap;
