@@ -18,6 +18,7 @@
   import LightControl from "./LightControl.svelte";
   import MakeSystem from "./MakeSystem.svelte";
   import StartSheet, { type StartAction } from "./StartSheet.svelte";
+  import HelpDoor, { markNewsSeen, unseenNews, type HelpPage } from "./HelpDoor.svelte";
   import startDoc from "./documents/start.lines.json";
   import LookAhead from "./LookAhead.svelte";
   import { readSol, solBatches, solSourceText, SOL_TITLE } from "../../ui-contract/src/index.ts";
@@ -1122,6 +1123,14 @@
   }
 
   let help: HTMLDialogElement | undefined = $state();
+  // The Help door (V3 gap 31): What's new, Getting started, Keyboard. The dot marks news this device has not seen.
+  let helpPage = $state<HelpPage>("new");
+  let newsDot = $state(unseenNews());
+  function openHelp(page: HelpPage) {
+    helpPage = page;
+    help?.showModal();
+    if (page === "new") (markNewsSeen(), (newsDot = false));
+  }
   // V10: the seats panel opens from a quiet link once the session is shared.
   let seatsDialog: HTMLDialogElement | undefined = $state();
   let seatsOpen = $state(false);
@@ -1166,7 +1175,7 @@
         const i = lenses.findIndex((x) => x.id === lens.id);
         chooseLens(lenses[(i + 1) % lenses.length]!.id);
       },
-      "?": () => help?.showModal(),
+      "?": () => openHelp("keys"),
       // Esc clears the selection, then goes up a step.
       Escape: () => (ws.selection ? ws.select(null) : railScale === "world" || railScale === "workshop" ? toSystem() : upAStep()),
     };
@@ -1266,7 +1275,7 @@
     <!-- Ask (2.5): the agents, promoted from the status line. Tars needs no key. -->
     <button type="button" class="barbtn ask" onclick={() => ((agentsOpen = true), agentsDialog?.showModal())} title="Ask Tars, Orac or Minerva: what can I do here?">Ask</button>
     <div class="more">
-      <button type="button" class="barbtn" bind:this={moreBtn} aria-expanded={moreOpen} aria-controls="more-menu" onclick={() => (moreOpen = !moreOpen)}>More</button>
+      <button type="button" class="barbtn" bind:this={moreBtn} aria-expanded={moreOpen} aria-controls="more-menu" onclick={() => (moreOpen = !moreOpen)}>More{#if newsDot}<span class="news-dot" aria-hidden="true" title="Something new in Help"></span>{/if}</button>
       {#if moreOpen}
         <div class="menu" id="more-menu" role="group" aria-label="More">
           <button type="button" class="ask-more" onclick={() => ((moreOpen = false), (agentsOpen = true), agentsDialog?.showModal())}>Ask Tars, Orac or Minerva</button>
@@ -1281,7 +1290,7 @@
           <button type="button" onclick={() => ((moreOpen = false), openMake("import"))} title="Import a V3 save or grow a new system, and add it to the campaign">Make a system…</button>
           <button type="button" data-more-start onclick={() => ((moreOpen = false), (startOpen = true))}>Start sheet</button>
           <button type="button" aria-pressed={theme === "night-chart"} onclick={() => ((moreOpen = false), (theme = theme === "chart-room" ? "night-chart" : "chart-room"))}>Night chart <kbd>N</kbd></button>
-          <button type="button" onclick={() => ((moreOpen = false), help?.showModal())}>Keyboard shortcuts <kbd>?</kbd></button>
+          <button type="button" data-more-help onclick={() => ((moreOpen = false), openHelp(newsDot ? "new" : "start"))}>Help and what's new{#if newsDot}<span class="news-dot" aria-hidden="true" title="Something new"></span>{/if} <kbd>?</kbd></button>
           <button type="button" data-more-perf aria-pressed={perfOn} onclick={() => ((moreOpen = false), (perfOn = !perfOn))} title="Time every chunk of the app on this device, for the minimum spec">Performance readout <small>{perfOn ? "on" : "off"}</small></button>
         </div>
       {/if}
@@ -1333,7 +1342,7 @@
           <ToolButton label="Redo" icon="M15 14l5-5-5-5M20 9H9a5 5 0 0 0 0 10h3" keyhint="Control+Shift+Z" disabled={ws.redo.length === 0 || ws.mode !== "edit" || !!ws.branch} onclick={() => undo(false)} />{/if}
           {#if clipArmed}<ToolButton label="Copy" icon="M8 8h11v11H8zM5 16V5h11" keyhint="Control+C" disabled={!ws.selection} onclick={copyBody} />{/if}
           {#if clipArmed && cuttable}<ToolButton label="Cut" icon="M6 4l12 16M18 4L6 20M4 18a2 2 0 1 0 4 0M16 18a2 2 0 1 0 4 0" keyhint="Control+X" onclick={cutBody} />{/if}
-          <ToolButton label="Keyboard shortcuts" icon="M3 7h18v10H3zM7 11h1M11 11h1M15 11h2M7 14h10" keyhint="?" onclick={() => help?.showModal()} />
+          <ToolButton label="Keyboard shortcuts" icon="M3 7h18v10H3zM7 11h1M11 11h1M15 11h2M7 14h10" keyhint="?" onclick={() => openHelp("keys")} />
         </nav>
         {#if undoNote}<p class="undo-note" role="status">{undoNote}</p>{/if}
         {#if clipNote}<p class="undo-note clip-note" role="status" data-clip-note>{clipNote}</p>{/if}
@@ -1501,26 +1510,8 @@
   {#if ws.branch}<p class="hint">A what-if is open: keep it or throw it away, then paste.</p>{/if}
 </dialog>
 
-<dialog bind:this={help} class="help" aria-labelledby="help-title">
-  <h2 id="help-title">Keyboard</h2>
-  <dl>
-    <dt>Tab</dt><dd>Move between the chart's bodies, the card and the ruler</dd>
-    <dt>Arrows</dt><dd>On the chart, the next or previous body; on the ruler, 1 % of the span</dd>
-    <dt>Enter</dt><dd>Select the focused body; on the card, ink the typed value</dd>
-    <dt>Esc</dt><dd>Put a typed value back, or clear the selection</dd>
-    <dt>[ and ]</dt><dd>Previous or next body</dd>
-    <dt>C, T</dt><dd>Go to the chart, go to the time ruler</dd>
-    <dt>Page Up, Page Down, Home, End</dt><dd>On the ruler, larger steps</dd>
-    <dt>Drag a body, or Page Up, Page Down on it</dt><dd>Move its orbit out or in (Build desk)</dd>
-    <dt>Ctrl+C, Ctrl+X, Ctrl+V</dt><dd>Copy the selected body with everything that orbits it; cut a pasted body; paste a copied body (Build desk)</dd>
-    <dt>Ctrl+Z, Ctrl+Shift+Z</dt><dd>Undo, redo (each is a new correction on the chart's history)</dd>
-    <dt>why?</dt><dd>On any value: where it came from, at three depths (Curious, Science, Engine); "Open the flow" puts its physics on the bench</dd>
-    <dt>P</dt><dd>Chart or Physics: the flow editor and change requests</dd>
-    <dt>V, E, R</dt><dd>Desk: Explore (look), Build (change), Run (the table)</dd>
-    <dt>D</dt><dd>Depth: Curious, Science, Engine (how much every card and number says)</dd>
-    <dt>N</dt><dd>Chart room or Night chart</dd>
-    <dt>L</dt><dd>See the desk through the next lens (Basic, Advanced, Building, Running, as players see it)</dd>
-  </dl>
+<dialog bind:this={help} class="help" aria-labelledby="help-title" onclose={() => (newsDot = unseenNews())}>
+  <HelpDoor bind:page={helpPage} onstart={() => (help?.close(), (startOpen = true))} onask={() => (help?.close(), (agentsOpen = true), agentsDialog?.showModal())} onsol={() => (help?.close(), void openSol())} />
   <form method="dialog"><button type="submit">Close</button></form>
 </dialog>
 
@@ -2196,7 +2187,9 @@
     font-family: var(--sse-font-display);
   }
   .help {
-    max-width: 520px;
+    max-width: 600px;
+    width: calc(100vw - 32px);
+    box-sizing: border-box;
     border: var(--sse-line) solid var(--sse-ink);
     box-shadow: var(--sse-card-shadow);
     background: var(--sse-ground-raised);
@@ -2238,26 +2231,17 @@
   .quiet {
     color: var(--sse-ink-muted);
   }
+  .news-dot {
+    display: inline-block;
+    width: 7px;
+    height: 7px;
+    margin-left: 6px;
+    border-radius: 50%;
+    background: var(--sse-accent);
+    vertical-align: middle;
+  }
   .help::backdrop {
     background: rgba(0, 0, 0, 0.25);
-  }
-  .help h2 {
-    margin: 0 0 12px;
-    font-family: var(--sse-font-display);
-  }
-  .help dl {
-    display: grid;
-    grid-template-columns: auto 1fr;
-    gap: 6px 16px;
-    margin: 0 0 16px;
-    font-size: 14px;
-  }
-  .help dt {
-    font-family: var(--sse-font-mono);
-    font-size: 13px;
-  }
-  .help dd {
-    margin: 0;
   }
   .help button {
     height: 40px;
