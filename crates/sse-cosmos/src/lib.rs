@@ -139,6 +139,8 @@ pub(crate) mod golden {
     }
 }
 #[cfg(test)]
+mod dm2_tests;
+#[cfg(test)]
 mod g1_tests;
 #[cfg(test)]
 mod g2_tests;
