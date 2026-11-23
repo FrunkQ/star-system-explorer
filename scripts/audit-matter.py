@@ -473,6 +473,7 @@ NOT_MATTER = [
     ("packs/base-weather/", r"/(equator_ice|equatorial_bands_ice|ice_giant_mass_earth|wind_ice_m_s|"
      r"strength_u|strength_m_s)$", "a weather model setting"),
     ("packs/base-weather/", r"/impact/density_kg_m3$", "an assumed impactor, a model setting"),
+    ("packs/base-ships/", r"/scoop/skim_density_kg_m3$", "the air a scoop skims, a designer setting"),
 ]
 
 # Pack key -> property on the sheet (the substance or mixture is the key's

@@ -4,10 +4,11 @@
 // changes a size. A design is kept as a recipe (ship, style, seed, hand overrides), never as a mesh, and is drawn
 // from that recipe on any machine: a side view and a top view with call-outs here, a 3D model in the next stage.
 import { constant } from "../../ui-contract/src/index.ts";
+import type { Abilities, Fitted } from "./ship-abilities.ts";
 import type { SkinSpec } from "./ship-mesh.ts";
 import { driveFacts, plumeShape, tanksOf, type DriveFacts, type Propellants, type ShipRecord, type TankNeed } from "./ship.ts";
 
-export type SystemKind = "sensors" | "crew" | "cargo" | "tanks" | "radiators" | "drive" | "spine" | "plume";
+export type SystemKind = "sensors" | "crew" | "cargo" | "tanks" | "radiators" | "drive" | "spine" | "plume" | "shield" | "wings" | "legs" | "chute" | "scoop";
 
 /** A ship as the designer reads it: the NAV record plus the fields the travel thread is adding. */
 export interface DesignShip extends ShipRecord {
@@ -15,6 +16,8 @@ export interface DesignShip extends ShipRecord {
   cargo_t?: number;
   /** Waste heat the drive leaves in the ship, per watt of jet. Overrides the pack's rule for the ship's fuel. */
   waste_per_jet?: number;
+  /** How it refuels (base-nav): "scoop" draws an intake. */
+  refuel?: string[];
 }
 
 /** base-ships `ship_design`. */
@@ -114,6 +117,8 @@ export interface ShipLayout {
   needs: Needs;
   /** What this arrangement could not do well, in words. */
   notes: string[];
+  /** The parts its abilities fitted (ship-abilities.ts), if any. */
+  fit?: Fitted;
 }
 
 /** Recipe: everything needed to rebuild the same design anywhere. */
@@ -121,6 +126,8 @@ export interface DesignRecipe {
   style: string;
   seed: number;
   overrides?: DesignOverrides;
+  /** Where it must aerobrake and land; the parts these need are sized by the kernel's judgement, not stored. */
+  abilities?: Abilities;
 }
 
 /** A small deterministic generator (mulberry32) for remix choices. */
@@ -141,7 +148,7 @@ const pick = <T>(r: () => number, xs: readonly T[]) => xs[Math.min(xs.length - 1
 const radiusFor = (v: number, fineness: number) => Math.cbrt(Math.max(v, 1e-6) / (2 * Math.PI * fineness));
 
 /** Lay a ship out in a style. The same ship, style and seed always give the same layout. */
-export function designShip(s: DesignShip, store: Propellants, rules: DesignRules, styleId: string, style: ShipStyle, seed: number, over: DesignOverrides = {}): ShipLayout {
+export function designShip(s: DesignShip, store: Propellants, rules: DesignRules, styleId: string, style: ShipStyle, seed: number, over: DesignOverrides = {}, fit?: Fitted): ShipLayout {
   const n = needsOf(s, store, rules, over);
   const r = rng(seed);
   const cluster = pick(r, style.tank_cluster);
@@ -229,8 +236,62 @@ export function designShip(s: DesignShip, store: Propellants, rules: DesignRules
     for (const side of [1, -1])
       pieces.push({ system: "radiators", shape: "panel", x0: a, x1: b, r0: 0, r1: 0, y: side * root, z: 0, span: side * span, sweep, ...(side > 0 ? { label: `radiators at ${Math.round(n.radiator_k)} K` } : {}) });
   }
+  const grown = fit ? fitParts(pieces, fit, length, big, skin ? R : big) : length;
   const across = Math.max(2 * big, ...pieces.filter((p) => p.shape === "panel").map((p) => 2 * (Math.abs(p.y) + Math.abs(p.span ?? 0))));
-  return { name: s.name, style: styleId, seed, pieces, length_m: length, across_m: across, needs: n, notes };
+  if (fit?.notes) notes.push(...fit.notes);
+  return { name: s.name, style: styleId, seed, pieces, length_m: grown, across_m: across, needs: n, notes, ...(fit ? { fit } : {}) };
+}
+
+/** Draw what the ship's abilities fitted (ship-abilities.ts): a shield cap ahead of the nose, wings low on the hull,
+ * legs round the stern (or wheels under the belly), a parachute canister behind the shield, an intake under the
+ * bow. Sizes come from `fit`; only the placing is the designer's. Returns the new length. */
+function fitParts(pieces: Piece[], fit: Fitted, length: number, big: number, bodyR: number): number {
+  let end = length;
+  const nose = pieces.filter((p) => p.shape === "body" && p.system !== "spine").reduce((a, p) => (p.x1 > a.x1 ? p : a));
+  if (fit.shield) {
+    // A blunt sphere-cone: the base meets the nose, the cap stands a third of the base radius proud. A pointed nose
+    // is cut short and blunted to carry it: a spike cannot lead a ship into the air.
+    const b = fit.shield.base_r;
+    if (nose.r1 < 0.2 * nose.r0) {
+      nose.x1 = nose.x0 + 0.4 * (nose.x1 - nose.x0);
+      nose.r1 = Math.min(nose.r0, 0.8 * b);
+      end = nose.x1;
+    }
+    const depth = 0.35 * b;
+    pieces.push({ system: "shield", shape: "body", x0: end, x1: end + depth, r0: b, r1: 0.4 * b, y: 0, z: 0, label: `${fit.shield.name} heat shield` });
+    end += depth;
+  }
+  if (fit.chute) {
+    const r = 0.18 * nose.r1 + 0.12 * nose.r0;
+    pieces.push({ system: "chute", shape: "body", x0: nose.x1 - 3 * r, x1: nose.x1 - r, r0: r, r1: r, y: 0, z: Math.max(nose.r0, nose.r1) + r, label: `parachute, ${Math.round(fit.chute.diameter_m)} m across` });
+  }
+  if (fit.scoop) {
+    const r = fit.scoop.radius_m;
+    const x1 = nose.x0;
+    pieces.push({ system: "scoop", shape: "body", x0: Math.max(0, x1 - 4 * r), x1, r0: 0.4 * r, r1: r, y: 0, z: -(bodyR + r), label: "fuel scoop" });
+  }
+  if (fit.lift?.form === "wings") {
+    // Two wings low on the hull, roots near the middle, tips swept back no further than the stern.
+    const chord = Math.min(fit.lift.chord_m, 0.6 * length);
+    const span = fit.lift.area_m2 / 2 / chord;
+    const x0 = Math.max(0.1 * length, 0.45 * length - chord / 2);
+    const sweep = Math.min(span * Math.tan((fit.lift.sweep_deg * Math.PI) / 180), x0);
+    for (const side of [1, -1])
+      pieces.push({ system: "wings", shape: "panel", x0, x1: x0 + chord, r0: 0, r1: 0, y: side * bodyR, z: -0.3 * bodyR, span: side * span, sweep, ...(side > 0 ? { label: `wings, ${Math.round(fit.lift.area_m2)} m²` } : {}) });
+  }
+  if (fit.legs?.gear === "legs") {
+    // Four legs splayed round the stern, reaching past the drive's bell so the ship stands on them.
+    const ring = 0.85 * big;
+    const r = 0.05 * big;
+    for (let k = 0; k < 4; k++) {
+      const a = Math.PI / 4 + (k * Math.PI) / 2;
+      pieces.push({ system: "legs", shape: "body", x0: -0.3 * big, x1: 1.2 * big, r0: r, r1: r, y: ring * Math.cos(a), z: ring * Math.sin(a), ...(k === 0 ? { label: "landing legs" } : {}) });
+    }
+  } else if (fit.legs?.gear === "wheels") {
+    const r = 0.12 * bodyR;
+    for (const x of [0.2 * length, 0.55 * length, 0.85 * length]) pieces.push({ system: "legs", shape: "body", x0: x - r, x1: x + r, r0: r, r1: r, y: 0, z: -(bodyR + r), ...(x > 0.8 * length ? { label: "landing gear" } : {}) });
+  }
+  return end;
 }
 
 /** A handful of remixes: the same ship and style, different choices inside the style's ranges. */
@@ -293,8 +354,8 @@ export function shipViews(l: ShipLayout, size: [number, number], fit: "all" | "h
       } else {
         // Edge on: a panel is a thin line in the side view.
         const t = Math.max(0.6 / scale, 0.02 * big);
-        d = `M${f(X(p.x0))} ${f(Y(t))} L${f(X(p.x1))} ${f(Y(t))} L${f(X(p.x1))} ${f(Y(-t))} L${f(X(p.x0))} ${f(Y(-t))} Z`;
-        at = [X((p.x0 + p.x1) / 2), Y(0)];
+        d = `M${f(X(p.x0))} ${f(Y(p.z + t))} L${f(X(p.x1))} ${f(Y(p.z + t))} L${f(X(p.x1))} ${f(Y(p.z - t))} L${f(X(p.x0))} ${f(Y(p.z - t))} Z`;
+        at = [X((p.x0 + p.x1) / 2), Y(p.z)];
       }
       paths.push({ system: p.system, d });
       // An anchor off the frame (radiators running off a "hull" picture) is pulled to the frame's edge.
@@ -314,7 +375,14 @@ export function shipViews(l: ShipLayout, size: [number, number], fit: "all" | "h
     const up = list.filter((_, i) => i % 2 === 0);
     const down = list.filter((_, i) => i % 2 === 1);
     // Each label sits over its anchor, pushed along just enough to clear its neighbour, then pulled back inside.
-    const place = (row: typeof list, above: boolean): Callout[] => {
+    const place = (all: typeof list, above: boolean): Callout[] => {
+      // A row too long for the frame splits into two staggered lines.
+      const width = all.reduce((a, [, x]) => a + x.text.length * 5.6 + 10, 0);
+      if (width > W * 0.95 && all.length > 1)
+        return [0, 1].flatMap((k) => line(all.filter((_, i) => i % 2 === k), above, k * 13));
+      return line(all, above, 0);
+    };
+    const line = (row: typeof list, above: boolean, drop: number): Callout[] => {
       const widths = row.map(([, a]) => a.text.length * 5.6 + 10);
       const xs = row.map(([, a]) => a.at[0]);
       for (let i = 0; i < xs.length; i++) xs[i] = Math.max(xs[i]!, widths[i]! / 2, i ? xs[i - 1]! + (widths[i - 1]! + widths[i]!) / 2 : 0);
@@ -323,12 +391,12 @@ export function shipViews(l: ShipLayout, size: [number, number], fit: "all" | "h
         system: (sys.startsWith("tanks:") ? "tanks" : sys) as SystemKind,
         text: a.text,
         anchor: a.at,
-        label: [xs[i]!, above ? H * 0.1 : H * 0.92],
+        label: [xs[i]!, above ? H * 0.1 + drop : H * 0.92 - drop],
         above,
       }));
     };
     // Draw order: plume, spine and radiators behind the bodies.
-    const rank = (s: SystemKind) => (s === "plume" ? 0 : s === "spine" ? 1 : s === "radiators" ? 2 : 3);
+    const rank = (s: SystemKind) => (s === "plume" ? 0 : s === "spine" ? 1 : s === "radiators" || s === "wings" ? 2 : 3);
     paths.sort((p, q) => rank(p.system) - rank(q.system));
     return { paths, callouts: [...place(up, true), ...place(down, false)] };
   };
@@ -357,6 +425,12 @@ export function narrateDesign(l: ShipLayout, style: ShipStyle): string {
     const area = n.radiator_m2 >= 1e6 ? `${words(n.radiator_m2 / 1e6)} km²` : `${words(n.radiator_m2)} m²`;
     out.push(`Its drive leaves ${powerWords(n.waste_w)} of waste heat, so its radiators span ${area} at ${Math.round(n.radiator_k)} K.`);
   } else out.push("Its drive carries its own heat away in the exhaust, so it needs no big radiators.");
+  const f = l.fit;
+  if (f?.shield) out.push(`A ${f.shield.name} heat shield ${words(2 * f.shield.base_r)} m across leads it into the air.`);
+  if (f?.lift) out.push(f.lift.form === "wings" ? `Wings of ${words(f.lift.area_m2)} m², ${lengthWords(f.lift.span_m)} tip to tip, land it on a runway at ${(f.runway ?? []).join(" and ")}.` : `Its hull is shaped to lift, so it lands on a runway at ${(f.runway ?? []).join(" and ")} without wings.`);
+  if (f?.legs?.gear === "legs") out.push("It stands on four landing legs.");
+  if (f?.chute) out.push(`A parachute ${words(f.chute.diameter_m)} m across slows it before touchdown.`);
+  if (f?.scoop) out.push(`A fuel scoop of ${words(f.scoop.area_m2)} m² fills its tanks skimming a giant's upper air.`);
   if (n.by_hand.length) out.push(`Set by hand: ${n.by_hand.map((k) => k.replace("_m3", "").replace("_m2", "")).join(", ")}.`);
   return [...out, ...n.notes, ...l.notes].join(" ");
 }
