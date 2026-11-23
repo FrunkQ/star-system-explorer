@@ -19,7 +19,7 @@
 <script lang="ts">
   import { onDestroy, untrack } from "svelte";
   import { constant, DEFAULT_VIEW, DESCENT_VERDICT_WORDS, LANDER_WORDS, landmarkOrder, sampleAt, sampleColour, STOCK_LANDERS, suggestLander, thermalColour, viewOptions, type DescentPlan, type Json, type StockLander, type SystemScene, type ViewContext } from "../../../ui-contract/src/index.ts";
-  import { airFactsOf, airFromOptics, airRequest, decoration, descentTrack, floorFromRefusal, playbackKeys, groundHeightAt, groundMesh, horizonDistance, levelFor, patchKeys, patchPoint, readPatch, startSurface, sunDirection, type Air, type Patch, type SurfaceGpu } from "../../../renderer/src/index.ts";
+  import { airFactsOf, airFromOptics, surfacePressureOf, airRequest, decoration, descentTrack, floorFromRefusal, playbackKeys, groundHeightAt, groundMesh, horizonDistance, levelFor, patchKeys, patchPoint, readPatch, startSurface, sunDirection, type Air, type Patch, type SurfaceGpu } from "../../../renderer/src/index.ts";
   import { SURFACE_CONTROLS } from "./controls.ts";
 
   let { ctx, scene, params }: { ctx: ViewContext; scene: SystemScene; params: Record<string, Json> } = $props();
@@ -90,7 +90,7 @@
       }
       world = {
         radius_m: radius,
-        pressure_bar: Number(f["body.surface_pressure"] ?? 0) / 1e5,
+        pressure_bar: surfacePressureOf(f) / 1e5,
         t_k: surf?.t_surface_now_k ?? 0,
         air,
         star_k: star_k || constant("T_sun"),

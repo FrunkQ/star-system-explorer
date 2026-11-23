@@ -88,6 +88,12 @@ export interface Workspace {
   /** The top pack's calendar, when a pack gives one (kernel `calendar`); the ruler counts dates in it. */
   pack_calendar?: PackCalendar | null;
   mode: "edit" | "view";
+  /** The GM's desk (Explore, Build, Run): the "Known to" eyes show on Build and Run only (SV2). */
+  desk?: "explore" | "build" | "run";
+  /** Players' screens connected now (the share's count): while any are, a reveal is held two seconds (SV2). */
+  players_online?: number;
+  /** True once the campaign has been shared with players: secrecy has become relevant (SV2). */
+  shared?: boolean;
   /** Values applied by intents in this session, keyed "address#field", shown until scenes come from the kernel. */
   applied: Record<string, { value: Json; display: string; event_id: string }>;
   /** Bumped whenever an intent is applied, so views can refresh history. */

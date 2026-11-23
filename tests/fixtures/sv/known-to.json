@@ -1,0 +1,54 @@
+{
+  "schema": "sse.fixture.known-to/0",
+  "about": "Shared between the kernel (SV1) and the chart room (SV2): what known_to answers and what set_known sends, on the test drive's Kestrel Reach. Tarn is known to the table, its population kept back; a base the GM made on Tarn is GM only. Times are campaign seconds.",
+  "audiences": [{ "id": "everyone", "label": "The table" }],
+  "answers": [
+    {
+      "ask": { "op": "known_to", "address": "u:kestrel/sys:1/body:3" },
+      "value": {
+        "address": "u:kestrel/sys:1/body:3",
+        "at_s": 0,
+        "audiences": [
+          { "audience": "everyone", "label": "The table", "rung": "scanned", "rung_label": "Scanned", "landmark": "known", "top": true, "exceptions": [{ "field": "population", "landmark": "gm_only" }], "cover": [] }
+        ]
+      }
+    },
+    {
+      "ask": { "op": "known_to", "address": "u:kestrel/sys:1/body:3", "field": "population" },
+      "value": {
+        "address": "u:kestrel/sys:1/body:3",
+        "field": "population",
+        "at_s": 0,
+        "audiences": [
+          { "audience": "everyone", "label": "The table", "rung": "scanned", "rung_label": "Scanned", "landmark": "gm_only", "top": true, "exceptions": [{ "field": "population", "landmark": "gm_only" }], "cover": [] }
+        ]
+      }
+    },
+    {
+      "ask": { "op": "known_to", "address": "u:kestrel/sys:1/body:3/body:0" },
+      "about": "Stands for the GM-made base on Tarn: GM only, so it is on no seat's device.",
+      "value": {
+        "address": "u:kestrel/sys:1/body:3/body:0",
+        "at_s": 0,
+        "audiences": [{ "audience": "everyone", "label": "The table", "rung": "hidden", "rung_label": "Hidden", "landmark": "gm_only", "top": false, "exceptions": [], "cover": [] }]
+      }
+    }
+  ],
+  "changes": [
+    {
+      "about": "One press on the base's eye: reveal it to the table.",
+      "intent": { "kind": "set_known", "address": "u:kestrel/sys:1/body:3/body:0", "audience": "everyone", "landmark": "known", "scope": "this", "at_yr": 0 },
+      "request": { "op": "set_known", "address": "u:kestrel/sys:1/body:3/body:0", "audience": "everyone", "landmark": "known", "scope": "this", "at_s": 0 }
+    },
+    {
+      "about": "Let the table see Tarn's population again: drop the exception, so the fact follows Tarn.",
+      "intent": { "kind": "set_known", "address": "u:kestrel/sys:1/body:3", "audience": "everyone", "landmark": null, "field": "population", "scope": "this", "at_yr": 0 },
+      "request": { "op": "set_known", "address": "u:kestrel/sys:1/body:3", "audience": "everyone", "landmark": null, "field": "population", "scope": "this", "at_s": 0 }
+    },
+    {
+      "about": "Hide Tarn and what is inside it from the table.",
+      "intent": { "kind": "set_known", "address": "u:kestrel/sys:1/body:3", "audience": "everyone", "landmark": "gm_only", "scope": "children", "at_yr": 0 },
+      "request": { "op": "set_known", "address": "u:kestrel/sys:1/body:3", "audience": "everyone", "landmark": "gm_only", "scope": "children", "at_s": 0 }
+    }
+  ]
+}
