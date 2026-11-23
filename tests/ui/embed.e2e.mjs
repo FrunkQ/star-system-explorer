@@ -43,9 +43,20 @@ try {
   const wall = await panel.locator("[data-seat-embed='wall']").getAttribute("href");
   assert.match(wall, /seat=wall&embed=1$/);
   await panel.getByLabel("Name", { exact: true }).fill("Crew");
+  // V3 gap 25: a brand on the seat's screens.
+  await panel.getByLabel("Brand on its screens").fill("Vesh Navy");
   await panel.getByRole("button", { name: "Add seat" }).click();
   await panel.locator("[data-seat-link='crew']").waitFor();
   const crew = `${await panel.locator("[data-seat-link='crew']").getAttribute("href")}&embed=1`;
+
+  // The crew's own page (not framed) wears the brand.
+  const crewPage = await context.newPage();
+  crewPage.on("pageerror", (e) => errors.push(`crew: ${e.message}`));
+  await crewPage.goto(crew);
+  assert.equal(await crewPage.locator(".page").getAttribute("data-embed"), "page");
+  await crewPage.locator("[data-brand]").waitFor({ timeout: 30000 });
+  assert.equal((await crewPage.locator("[data-brand]").innerText()).trim(), "Vesh Navy");
+  await crewPage.close();
 
   // The tabletop: a page on another site that frames the link and logs what it hears.
   const host = await context.newPage({ viewport: { width: 1280, height: 900 } });
@@ -88,7 +99,7 @@ try {
   assert.ok(!(await host.evaluate(() => window.heard.some((m) => m.data?.source === "sse4"))), "a refused view says nothing to the tabletop");
 
   assert.deepEqual(errors, []);
-  console.log(`PASS chromium: tabletop link embedded at ${tabletop}, ready heard from ${ready.origin}, focus both ways; unlisted seat refused`);
+  console.log(`PASS chromium: tabletop link embedded at ${tabletop}, ready heard from ${ready.origin}, focus both ways; unlisted seat refused; brand shown`);
   await browser.close();
 } finally {
   server.kill();

@@ -34,6 +34,7 @@
   import PerfReadout from "./PerfReadout.svelte";
   import { perf } from "../../ui-contract/src/index.ts";
   import { EmbedBridge, embedAsked, embedMode, framingOrigin } from "../../ui-contract/src/index.ts";
+  import { DEFAULT_JOIN, joinLine, joinWordsOf, type JoinWords, type SeatBrand } from "../../ui-contract/src/index.ts";
 
   // A theme names its vocabulary layer (H8.4); the screen's is the fallback.
   const VOCABS: Record<string, Vocab> = { plain: vocabDoc as unknown as Vocab, guide: guideVocabDoc as unknown as Vocab };
@@ -97,6 +98,10 @@
   const framing = framingOrigin(window, document.referrer);
   let embedList = $state<string[] | undefined>(undefined);
   let seatKnown = $state(!joined);
+  // Branding and join words (V3 gap 25): the seat's brand, and the stacked packs' words while joining.
+  let brand = $state<SeatBrand | null>(null);
+  let words = $state<JoinWords>(DEFAULT_JOIN);
+  const say = (t: string) => joinLine(t, { seat: seatLabel, ...(brand ? { brand: brand.name } : {}) });
   const embed = $derived(seatKnown ? embedMode(asksEmbed, framing, embedList) : asksEmbed && framing !== "unframed" ? ({ mode: "waiting" } as const) : ({ mode: "page" } as const));
   const bare = $derived(embed.mode !== "page");
   let link = $state<ReplicaStatus>({ state: "joining" });
@@ -139,6 +144,7 @@
         seatLabel = seat.label;
         mayAsk = seat.may_send.includes("set_value");
         embedList = seat.embed_origins;
+        brand = seat.brand ?? null;
         seatKnown = true;
         const bad = checkPlayerScene(sc);
         sceneErrors = bad ? [bad] : [];
@@ -172,6 +178,8 @@
           mayAsk = seat.may_send.includes("set_value");
           seatScreen = seat.screens?.[0] ?? null;
           embedList = seat.embed_origins;
+          brand = seat.brand ?? null;
+          words = joinWordsOf(m.packs);
           seatKnown = true;
           return openBrowserSession({ base: document.baseURI, seat, universe: m.universe, packs: m.packs });
         },
@@ -302,6 +310,7 @@
 <div class="page" class:bare style={rootFx} data-embed={embed.mode}>
   {#if !bare}
   <header class="bar">
+    {#if brand}<span class="brand" data-brand>{#if brand.logo}<img src={brand.logo} alt="" />{/if}{brand.name}</span>{/if}
     <h1>{star ? subjectName(star) : "System"}</h1>
     <span class="kicker">{screenDoc?.label ?? "…"}{screenDoc?.data_view ? ` · seen through ${screenDoc.data_view}` : ""} · audience {scene?.audience ?? "…"}</span>
     <span class="spacer"></span>
@@ -326,9 +335,9 @@
     <label class="pick" title="Time this device, for the minimum spec; nothing is sent"><input type="checkbox" bind:checked={perfOn} data-perf-switch /> Performance</label>
     {#if joined && link.state !== "live"}
       <div class="banner" role="status" aria-label="Game master" data-link={link.state}>
-        {#if link.state === "joining"}Joining the game master…
+        {#if link.state === "joining"}{say(words.joining)}
         {:else if link.state === "resync"}Catching up with the game master ({link.reason})…
-        {:else if link.state === "offline"}<strong>The game master is away.</strong> This is the last state they shared, read only. It updates when they are back.
+        {:else if link.state === "offline"}{say(words.away)}
         {:else if link.state === "reload"}<strong>{link.reason}</strong> <button type="button" onclick={() => location.reload()}>Reload</button>{/if}
       </div>
     {/if}
@@ -339,7 +348,7 @@
   {:else if (checked && !checked.ok) || sceneErrors.length}
     <main class="problem" role="alert"><h2>This screen cannot be shown</h2><ul>{#each [...(checked && !checked.ok ? checked.errors : []), ...sceneErrors] as e (e)}<li>{e}</li>{/each}</ul></main>
   {:else if !scene || !checked?.ok}
-    <main class="problem" aria-busy="true"><p>Waiting for the scene…</p></main>
+    <main class="problem" aria-busy="true"><p data-join-words>{say(words.waiting)}</p></main>
   {:else}
     {#key vocabId}
       <main class="grid"><ScreenRuntime screen={checked.screen} {scene} {vocab} {mark} bind:selection /></main>
@@ -380,6 +389,20 @@
     min-height: 100dvh;
     display: grid;
     grid-template-rows: auto 1fr auto auto;
+  }
+  .brand {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    font-family: var(--sse-font-display);
+    font-weight: 600;
+    color: var(--sse-ink);
+  }
+  .brand img {
+    height: 24px;
+    width: auto;
+    max-width: 64px;
+    object-fit: contain;
   }
   .page.bare {
     grid-template-rows: 1fr;

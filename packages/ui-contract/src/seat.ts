@@ -1,5 +1,6 @@
 // Seats (H8.7) and the approval rule. The GM is the seat whose audience is
 // all knowledge and whose intents apply at once (H8.8).
+import type { SeatBrand } from "./brand.ts";
 import { INTENT_KINDS, type Intent, type IntentKind } from "./intent.ts";
 
 export interface AutoApprove {
@@ -25,6 +26,8 @@ export interface Seat {
   lens?: string;
   /** Tabletops this seat's view may be shown inside (V3 gap 26, `?embed=1`): exact origins, no wildcards. */
   embed_origins?: string[];
+  /** A faction's name and logo shown on this seat's screens (V3 gap 25). Presentation only. */
+  brand?: SeatBrand;
 }
 
 export type Decision = { action: "apply" } | { action: "ask_gm" } | { action: "refuse"; reason: string };
