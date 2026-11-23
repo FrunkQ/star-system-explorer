@@ -7,7 +7,6 @@
 // `number:luminosity_lsun`, aura from `tag:activity:`). Presentation only.
 
 import { constant } from "./sheet.ts";
-import { YEAR_S as YEAR_S_BIG } from "./intent.ts";
 import type { MarkSubject } from "./symbology.ts";
 import type { Json } from "./json.ts";
 import type { ViewSession } from "./session.ts";
@@ -42,7 +41,7 @@ export function withStarFacts(s: MarkSubject, f: StarFacts | undefined): MarkSub
   return f ? { ...s, tags: [...s.tags, ...f.tags], numbers: { ...s.numbers, ...f.numbers } } : s;
 }
 
-const YEAR_S = Number(YEAR_S_BIG);
+const YEAR_S = constant("yr_julian");
 
 /**
  * The facts for a system's stars, by address: one resolved_system and one

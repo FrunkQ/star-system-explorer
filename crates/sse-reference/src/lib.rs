@@ -280,14 +280,20 @@ impl Reference {
         )
     }
 
-    /// Molar mass worked out from the formula, kg/mol (atomic weights are g/mol).
+    /// Molar mass worked out from the formula, kg/mol (atomic weights are g/mol;
+    /// an isotope named in the formula counts at its own mass).
     /// `None` when an element in the formula has no standard atomic weight
     /// (the elements with no stable isotope).
     pub fn molar_mass_kg_mol(&self, id: &str) -> Option<f64> {
         let f = self.formula(id)?;
         let mut sum = 0.0;
         for (e, n) in f {
-            let w = num(self.row("elements", &e)?.get("atomic_weight"))?;
+            // An element's standard atomic weight, or an isotope's own mass
+            // (u) when the formula names one: deuterium is {"h2": 2}.
+            let w = match self.row("elements", &e) {
+                Some(row) => num(row.get("atomic_weight"))?,
+                None => num(self.row("isotopes", &e)?.get("mass"))?,
+            };
             sum += n * w;
         }
         Some(sum / 1000.0)
@@ -710,8 +716,13 @@ impl Reference {
             match row.get("formula").and_then(J::as_object) {
                 None => p.push(format!("substance {id} has no formula (element counts)")),
                 Some(f) => {
-                    for e in f.keys().filter(|e| !elements.contains_key(*e)) {
-                        p.push(format!("substance {id}: formula names element {e}, which is not in the elements table"));
+                    let isotopes = self.tables.get("isotopes").unwrap_or(&empty);
+                    let known = |e: &String| {
+                        elements.contains_key(e)
+                            || isotopes.get(e).is_some_and(|i| i.get("mass").is_some())
+                    };
+                    for e in f.keys().filter(|e| !known(e)) {
+                        p.push(format!("substance {id}: formula names element {e}, which is not in the elements table (nor an isotope with a mass)"));
                     }
                 }
             }
