@@ -48,6 +48,7 @@ Only the owner thread edits this file. One row per package: update it in the sam
 | GH2 satellites on orbits: one host table per slice, leapfrog from infall, sinking, tidal stripping, gas stripping, disc shocks, labels, tracks | done | packages/GH2.md |
 | DM6 kernel half: `derive` and `explain` take `at_s`; a stack with a constant's law reads it at that date | done; look-ahead spans keep one date (noted) | packages/DM6-kernel.md |
 | GH3 progenitors feed the host: each tree member's galaxy and orbit decide what arrives (stellar halo, hot gas, merger); responses by ratios; dated marks; G3's ex-situ stand-ins retired in looked-at galaxies | done; next GH4 | packages/GH3.md |
+| DM2 dark energy w0 and wa in the expansion and in the growth (stepped when w is not −1); void shape checked | done; real-size switch is the galaxy charts' | packages/DM2.md |
 
 ## Done so far and what is next
 
