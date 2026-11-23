@@ -8,6 +8,16 @@ import type { SceneFact, SystemScene } from "./scene.ts";
 import type { IntentResult, ViewSession } from "./session.ts";
 import type { Intent } from "./intent.ts";
 
+/**
+ * Where a typed value goes: a fact read back from the universe is held at its kernel field in SI (SceneFact.kernel),
+ * so the value sent is scaled there; the fixture's own facts take the value as typed, at their own field.
+ */
+export function factEdit(f: SceneFact, value: Json): { field: string; value: Json; before: Json } {
+  const k = f.kernel;
+  const si = (v: Json) => (k && typeof v === "number" ? v * k.per_unit : v);
+  return { field: k?.field ?? f.field, value: si(value), before: si(f.value) };
+}
+
 export async function commitEdit(
   session: ViewSession,
   ws: Workspace,

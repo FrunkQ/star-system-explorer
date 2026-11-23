@@ -359,10 +359,11 @@
   $effect(() => {
     ws.depth = depth;
   });
-  // A system read back from the universe is looked at, never edited in place, whatever the desk.
+  // The desk decides: a system read back from the universe (grown, adopted, the Solar System) is edited in place too,
+  // each typed value going to the fact the universe holds (SceneFact.kernel), so Build means build everywhere.
   $effect(() => {
     // The Workshop changes the tool, not the universe, so its screens are always armed.
-    ws.mode = viewing ? "view" : railScale === "workshop" ? "edit" : DESK_MODE[desk];
+    ws.mode = railScale === "workshop" ? "edit" : DESK_MODE[desk];
   });
   const lenses = $derived.by(() => {
     void ws.revision;
@@ -553,7 +554,8 @@
         const read0 = sceneFromResolved(r.result, v.title);
         // The Solar System's sheet marks a few values unverified: those bodies carry the mark on the GM's view.
         const marks = v.system === SOL ? solUnverified : null;
-        const read = marks?.size ? { ...read0, subjects: read0.subjects.map((x) => (marks.has(x.address) ? { ...x, stamps: [...x.stamps, "unverified"] } : x)) } : read0;
+        const ids = v.system === SOL ? solIds : null;
+        const read = marks?.size || ids?.size ? { ...read0, subjects: read0.subjects.map((x) => ({ ...x, ...(marks?.has(x.address) ? { stamps: [...x.stamps, "unverified"] } : {}), ...(ids?.has(x.address) ? { world_fixture: ids.get(x.address) } : {}) })) } : read0;
         const now_yr = v.fresh ? read.now_yr : now;
         if (v.fresh) ((v.fresh = false), shiftCampaign(read.now_yr));
         viewingSpec = r.result.spec ?? null;
@@ -712,6 +714,10 @@
   function goBelow(v: string) {
     if (v.startsWith("scale:") && isPlaceScale(v.slice(6))) return toScale(v.slice(6) as PlaceScale);
     if (v.startsWith("sys:")) return goPlace({ scale: "system", system: v.slice(4) });
+    if (v.startsWith("up:")) {
+      const u = steps.find((x) => x.scale === v.slice(3) && !x.current && !x.below);
+      return void (u && goPlace(u.place));
+    }
     if (v.startsWith("child:")) {
       const c = belowNote?.children?.[Number(v.slice(6))];
       return void (c && downScale && goPlace({ scale: downScale, system: viewing?.system ?? "", id: c.id }));
@@ -775,10 +781,15 @@
   // per source, then opened like any system in the campaign. Later opens go straight to it.
   const SOL = `u:${base.universe.id}/sys:sol`;
   let solUnverified = $state<ReadonlySet<string> | null>(null);
+  // Each Sol body's sheet id ("earth", "europa"), by address: the name the kernel's world stacks go by, so a catalogued
+  // world opens in the cutaway when the kernel has its stack (and says it has none otherwise).
+  let solIds = $state<ReadonlyMap<string, string>>(new Map());
   async function solSheet() {
     const sheet = readSol(await (await fetch(new URL(stackDoc.catalogues.sol, document.baseURI))).json());
     if (!sheet) throw new Error("the Solar System sheet could not be read");
-    solUnverified = new Set(solBatches(sheet, SOL).unverified.map((k) => k.split("#")[0]!));
+    const laid = solBatches(sheet, SOL);
+    solUnverified = new Set(laid.unverified.map((k) => k.split("#")[0]!));
+    solIds = new Map(Object.entries(laid.addresses).map(([id, a]) => [a, id]));
     return sheet;
   }
   // Opened from the system list after a reload, the sheet is read for its marks.
@@ -1168,17 +1179,19 @@
     <nav class="place" aria-label="Place" data-scale={railScale}>
       {#each place ? steps : [] as s, i (s.scale)}
         {@const parent = steps[i + 1]?.current ?? false}
-        {#if s.scale === "system" && adoptedSystems.length && !s.below}
-          <label class="onchart"><span class="sr">System on the chart</span>
+        {#if s.current && s.scale === "system" && adoptedSystems.length}
+          <!-- The system's name is its own switcher when the campaign holds more than one: press the name, pick another. -->
+          <label class="title-switch" title="Switch to another system in this campaign">
+            <h1 class="title" data-place={s.scale}>{s.label}</h1>
             <select aria-label="System on the chart" value={viewing?.system ?? ""} onchange={(e) => (showSystem(e.currentTarget.value), toSystem())} data-viewing={viewing?.system ?? ""}>
               <option value="">{base.title}</option>
               {#each adoptedSystems as a (a.system)}<option value={a.system}>{a.title}</option>{/each}
             </select>
           </label>
-          <span class="sep" aria-hidden="true">›</span>
+        {:else if s.current}
+          <h1 class="title" data-place={s.scale}>{s.scale === "world" ? (selName ?? "A world") : s.label}</h1>
         {/if}
         {#if s.current}
-          <h1 class="title" data-place={s.scale}>{s.scale === "world" ? (selName ?? "A world") : s.label}</h1>
           <!-- Down: what is nested below this step, the systems in the campaign, and recent places. -->
           <label class="goto">
             <span class="sr">{railScale === "system" || railScale === "world" ? "Go to a body" : "Go down"}</span>
@@ -1188,6 +1201,12 @@
                 <option value="" disabled>{placeBodies.length} {placeBodies.length === 1 ? "body" : "bodies"}</option>
                 <option value="@system">The whole system</option>
                 {#each placeBodies as b (b.address)}<option value={b.address}>{b.depth ? "\u00a0\u00a0".repeat(b.depth) : ""}{b.label}</option>{/each}
+                {#if adoptedSystems.length}
+                  <optgroup label="Other systems in this campaign">
+                    {#if viewing}<option value="sys:">{base.title}</option>{/if}
+                    {#each adoptedSystems.filter((a) => a.system !== viewing?.system) as a (a.system)}<option value={`sys:${a.system}`}>{a.title}</option>{/each}
+                  </optgroup>
+                {/if}
               {:else}
                 <option value="" disabled>Below ▾</option>
                 {#if downScale}<option value={`scale:${downScale}`}>{PLACE_WORDS[downScale]}</option>{/if}
@@ -1198,6 +1217,10 @@
                   <option value="sys:">{base.title}</option>
                   {#each adoptedSystems as a (a.system)}<option value={`sys:${a.system}`}>{a.title}</option>{/each}
                 </optgroup>
+              {/if}
+              {#if steps.some((x) => !x.current && !x.below)}
+                <!-- Out: every step above, for a phone (where the line shows only the one above) and the keyboard. -->
+                <optgroup label="Further out">{#each steps.filter((x) => !x.current && !x.below) as u (u.scale)}<option value={`up:${u.scale}`}>{u.label}</option>{/each}</optgroup>
               {/if}
               {#if recentElsewhere.length}
                 <optgroup label="Recent">{#each recentElsewhere as r, j (j)}<option value={`recent:${j}`}>{placeWords(r)}</option>{/each}</optgroup>
@@ -1547,6 +1570,8 @@
     align-items: baseline;
     gap: 8px;
     min-width: 0;
+    /* A long line gives way inside its own space; it never runs under the desk switch. */
+    overflow: hidden;
   }
   .title {
     margin: 0;
@@ -1609,14 +1634,15 @@
   }
   .place .step.below {
     font-style: italic;
-    flex: 0 1 auto;
-    min-width: 2em;
+    flex: 0 20 auto;
+    min-width: 1.5em;
     overflow: hidden;
     text-overflow: ellipsis;
   }
-  /* Above a system the names are short: the name keeps its room, the list beside it stays narrow. */
+  /* Above a system the name is the chart's own ("The cosmic web, 200 Mpc across"): it gives way only after the trail. */
   .place:not([data-scale="system"], [data-scale="world"]) .title {
-    flex: none;
+    flex: 0 1 auto;
+    min-width: 8em;
   }
   .goto select[data-below="web"],
   .goto select[data-below="cluster"],
@@ -1656,8 +1682,7 @@
   .up-arrow {
     display: none;
   }
-  .goto select,
-  .onchart select {
+  .goto select {
     font: inherit;
     font-size: 12px;
     color: var(--sse-ink-muted);
@@ -1887,18 +1912,24 @@
     border: var(--sse-line) solid var(--sse-accent);
     color: var(--sse-ink);
   }
-  .onchart {
+  /* The name, pressed, opens the list of the campaign's systems (the list is the name's own, laid over it unseen). */
+  .title-switch {
+    position: relative;
     display: inline-flex;
-    gap: 6px;
-    align-items: center;
+    min-width: 0;
+    flex: 0 0.1 auto;
+    cursor: pointer;
   }
-  .onchart select {
-    font: inherit;
-    font-size: 12px;
-    max-width: 14em;
-    background: var(--sse-ground);
-    color: var(--sse-ink);
-    border: 1px solid var(--sse-rule);
+  .title-switch .title {
+    text-decoration: underline dotted var(--sse-rule);
+    text-underline-offset: 6px;
+  }
+  .title-switch select {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    opacity: 0;
+    cursor: pointer;
   }
   .whatif b {
     color: var(--sse-accent-ink);
@@ -2272,8 +2303,6 @@
     .up-sep {
       display: none;
     }
-    .onchart,
-    .onchart + .sep,
     .place .step.below,
     .sep.below {
       display: none;
@@ -2359,6 +2388,11 @@
     .rail .group {
       flex-direction: row;
       gap: 6px;
+    }
+    /* The row scrolls; nothing in it is squeezed (a squeezed group once ran "Life" into "Route to here"). */
+    .rail > *,
+    .rail .group > * {
+      flex: none;
     }
     .rail h2 {
       display: none;

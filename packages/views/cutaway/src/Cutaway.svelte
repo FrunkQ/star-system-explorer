@@ -17,7 +17,16 @@
 
   const ws = $derived(ctx.workspace);
   const subject = $derived(scene.subjects.find((s) => s.address === ws.selection));
-  const withStacks = $derived(scene.subjects.filter((s) => s.world_fixture));
+  // The worlds the kernel has a stack for, offered when the one picked has none (a name alone is not a stack: ask).
+  let withStacks = $state<typeof scene.subjects>([]);
+  $effect(() => {
+    const named = scene.subjects.filter((s) => s.world_fixture);
+    let live = true;
+    Promise.all(named.map(async (s) => ((await ctx.session.readWorldStack({ fixture: s.world_fixture! })).ok ? s : null))).then((ok) => {
+      if (live) withStacks = ok.filter((s) => s !== null);
+    });
+    return () => (live = false);
+  });
   // The kernel's read for the selected body: by address first, then by the fixture the campaign names.
   let read = $state<WorldStackRead | null>(null);
   let loading = $state(false);
