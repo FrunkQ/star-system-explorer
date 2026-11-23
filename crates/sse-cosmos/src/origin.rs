@@ -97,7 +97,7 @@ pub struct Origin {
     pub references: Vec<String>,
 }
 
-const KMS_KPC_GYR: f64 = 1.022_712;
+pub(crate) const KMS_KPC_GYR: f64 = 1.022_712;
 
 fn wrap_deg(d: f64) -> f64 {
     let x = d - 360.0 * m::floor(d / 360.0);
