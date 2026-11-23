@@ -65,6 +65,14 @@ try {
       await view.focus();
       await gm.keyboard.press("ArrowLeft");
       await gm.waitForFunction((b) => document.querySelector(`[aria-roledescription='3D chart'] [data-body='${"u:kestrel/sys:1/body:4"}']`)?.getAttribute("data-x") !== b, before);
+      // True (V10a), one press from the chart: the same frame against space with the star in its own colour. The test
+      // drive's worlds have no surface atlas, so they are drawn plain and the note says why; the canvas tier says True
+      // needs a GPU.
+      await gm.getByRole("button", { name: "True", exact: true }).click();
+      await gm.waitForFunction(() => /no surface|needs a GPU/.test(document.querySelector("[aria-roledescription='3D chart'] [data-true-note]")?.textContent ?? ""), null, { timeout: 60000 });
+      assert.equal(await view.getAttribute("data-look"), mode === "canvas" ? "plain" : "true");
+      await shot(gm, `v10a-gm-true-${mode}`);
+      await gm.getByRole("button", { name: "3D", exact: true }).click();
 
       // A players' 3D screen.
       const pl = await browser.newPage({ viewport: { width: 1280, height: 900 } });

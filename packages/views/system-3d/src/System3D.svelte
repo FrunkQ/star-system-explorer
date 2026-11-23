@@ -6,10 +6,14 @@
   hands over to its frame; zooming out of a planet's frame hands back. Tiers:
   GPU (three.js WebGPU, WebGL2 when the device has no WebGPU), else Canvas
   2D drawing the same projection. The overlay buttons are the keyboard path.
+  True (V10a): the same frame against black space, each world wrapped in its
+  own surface (given in `surfaces`, read from its tiles) and lit by its star,
+  the star in its own colour; names and the selected orbit only, names on
+  hover (view styles ruling, 22 Nov).
 -->
 <script lang="ts">
   import { onDestroy } from "svelte";
-  import { basis, project, startGpu, tree, type Camera, type Gpu, type Vec3 } from "../../../renderer/src/index.ts";
+  import { basis, project, startGpu, tree, type Camera, type Gpu, type GpuLight, type TrueTexture, type Vec3 } from "../../../renderer/src/index.ts";
   import { SEEN_ELEVATION, type SeenFrom } from "../../../ui-contract/src/index.ts";
   import { bandLines, hasChildren, layout, shellDots, type Band3D, type Body3D } from "./bodies.ts";
 
@@ -24,7 +28,31 @@
     bands = [],
     seen = "free",
     onturned,
-  }: { bands?: Band3D[]; bodies: Body3D[]; selection: string | null; onselect: (id: string) => void; title: string; tier?: string; labels?: boolean; distanceNote?: string; seen?: SeenFrom; onturned?: () => void } = $props();
+    trueLook = false,
+    surfaces = new Map(),
+    starColour = "",
+    trueNote = "",
+  }: {
+    bands?: Band3D[];
+    bodies: Body3D[];
+    selection: string | null;
+    onselect: (id: string) => void;
+    title: string;
+    tier?: string;
+    labels?: boolean;
+    distanceNote?: string;
+    seen?: SeenFrom;
+    onturned?: () => void;
+    /** The True view style (V10a); the GPU tier draws it, the canvas tier keeps the plain look. */
+    trueLook?: boolean;
+    /** True look: each world's surface by body id, as far as it has been read. */
+    surfaces?: ReadonlyMap<string, TrueTexture>;
+    /** True look: the star's colour (its surface temperature's, as a CSS colour). */
+    starColour?: string;
+    /** True look: what is still being read, said under the chart. */
+    trueNote?: string;
+  } = $props();
+  const isTrue = $derived(trueLook);
 
   const root = $derived(bodies.find((b) => b.parent === null)?.id ?? bodies[0]?.id ?? "");
   let frame = $state<string | null>(null);
@@ -144,6 +172,15 @@
   });
   onDestroy(() => gpu?.dispose());
 
+  // The star's light: from the star itself when it is in the frame, else from where it lies as seen from this frame's
+  // centre (opposite the centre's own place on its orbit round the star).
+  function lightFor(): GpuLight {
+    const c = lay!.centre;
+    if (c.parent === null) return { at: relOf(c.id) };
+    const a = (c.phase_deg * Math.PI) / 180;
+    return { from: [-Math.cos(a), -Math.sin(a), 0.15] };
+  }
+
   let canvas2d: HTMLCanvasElement | undefined = $state();
   $effect(() => {
     if (!lay || w === 0 || h === 0) return;
@@ -156,6 +193,26 @@
     const colour = (b: Body3D) => b.mark?.colour ?? ink;
     if (using === "gpu" && gpu) {
       const { f, u } = basis(cam.eye, cam.look);
+      if (isTrue) {
+        // True: worlds in their own surfaces, a world not read yet plain and faint; only the selected orbit drawn.
+        const tex = (b: Body3D) => surfaces.get(b.id);
+        gpu.draw({
+          items: shown.map((b) => {
+            const t = tex(b);
+            const star = b.parent === null;
+            return { id: b.id, rel: relOf(b.id), radius: sizeOf(b, b === lay!.centre), colour: star ? starColour || colour(b) : faint, ring: b.mark?.ring ?? false, selected: b.id === selection, shines: star, ...(t ? { surface: { key: b.id, texture: t } } : {}) };
+          }),
+          rings: lay.placed.filter((b) => b.id === selection).map((b) => ({ points: ringPoints(lay!.ring.get(b.id)!), colour: accent })),
+          forward: f,
+          up: u,
+          fovY: cam.fovY,
+          width: w,
+          height: h,
+          ground,
+          light: lightFor(),
+        });
+        return;
+      }
       gpu.draw({
         items: shown.map((b) => ({ id: b.id, rel: relOf(b.id), radius: sizeOf(b, b === lay!.centre), colour: colour(b), ring: b.mark?.ring ?? false, selected: b.id === selection })),
         rings: [
@@ -303,6 +360,8 @@
   onkeydown={key}
   data-tier={using}
   data-frame={centreId}
+  data-look={isTrue && using === "gpu" ? "true" : "plain"}
+  class:true-look={isTrue && using === "gpu"}
 >
   <canvas bind:this={canvas} class="gpu" class:off={using !== "gpu"} aria-hidden="true"></canvas>
   <canvas bind:this={canvas2d} class="c2d" class:off={using !== "canvas"} aria-hidden="true"></canvas>
@@ -319,7 +378,7 @@
         data-y={p.y.toFixed(2)}
         onclick={() => onselect(b.id)}
         ondblclick={() => hasChildren(bodies, b.id) && b.id !== centreId && enter(b.id)}
-      ><span class="dot"></span>{#if labels}<span class="name">{b.name}</span>{/if}</button>
+      ><span class="dot"></span>{#if labels}<span class="name" class:hover={isTrue && b.id !== selection}>{b.name}</span>{/if}</button>
     {/if}
   {/each}
   <div class="bar">
@@ -333,6 +392,7 @@
   <p class="note">
     {#if lay?.unplaced.length}<span>Position not known: {lay.unplaced.map((b) => b.name).join(", ")}.</span>{/if}
     <span>Distances on a log scale, sizes not to scale{distanceNote}. Drawn with {using === "gpu" ? reason : using === "canvas" ? `Canvas 2D (${reason})` : "…"}.</span>
+    {#if isTrue && (using === "canvas" || trueNote)}<span data-true-note>{using === "canvas" ? "True needs a GPU: this device draws the chart's look." : trueNote}</span>{/if}
   </p>
 </div>
 
@@ -393,6 +453,20 @@
     left: calc(50% + var(--r) + 6px);
     white-space: nowrap;
     text-shadow: 0 0 3px var(--sse-ground), 0 0 3px var(--sse-ground);
+  }
+  /* True: names only on hover or focus (the selected world keeps its name); text sits on a chip over black space. */
+  .true-look .pin .name.hover {
+    visibility: hidden;
+  }
+  .true-look .pin:hover .name.hover,
+  .true-look .pin:focus-visible .name.hover {
+    visibility: visible;
+  }
+  .true-look .pin .name,
+  .true-look .note span {
+    background: var(--sse-ground);
+    padding: 0 4px;
+    text-shadow: none;
   }
   .bar {
     position: absolute;

@@ -12,6 +12,7 @@ Only the owner thread edits this file. One row per package: update it in the sam
 | V3 gap item 14 stage 3: the 3D model from the same layout (volumes and radiator area checked), panel textures and looks per style, glowing hot radiators, Chart/3D through the shared ViewControls in ShipPlans | done | packages/SHIP14.md |
 | V3 gap item 14 stage 4: abilities shape the ship from the kernel's ship_at_world (heat shield, wings or lifting body, legs or wheels, parachute, scoop), drawn in plans and model, verdicts in ShipPlans | done; stage 5 (styles per nation or culture) next | packages/SHIP14.md |
 | V3 gap item 14 stage 4b: the designed ship on the Voyages At world card, "Fit it for" the world, and "Watch the pass" (shield at radiative balance, bow shock per Billig) | done | packages/SHIP14.md |
+| V10a: True on the system chart, one press away: worlds in their own surfaces (level-0 tiles), lit by their star, star in its own colour, names on hover | done; True galaxy (V9) next | packages/V10a.md |
 | GH9: galaxies' collision marks drawn from GH3's dated marks (warp, ripples, tilt, rings with emptied middles, lopsided and driven arms, knots, thick disc), face-on layer and edge-on strip in the galaxy chart | done; True drawing of the same formulas next | packages/GH9.md |
 
 ## Done so far and what is next

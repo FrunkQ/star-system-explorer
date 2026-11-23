@@ -5,10 +5,17 @@
   places them. A planet with moons opens its own frame: the planet at the
   centre and its moons about it (handover/rendering-rules.md), in kilometres.
 -->
+<script lang="ts" module>
+  import type { TrueTexture as Kept } from "../../../renderer/src/index.ts";
+  /** Surfaces read for True, by system and world, kept for the page (a string: why the world has none to show). */
+  const trueSurfaces = new Map<string, Kept | string>();
+</script>
+
 <script lang="ts">
   import { KM_PER_AU, isShell, asPlayers, distanceWords, lightWords, separation, hasLayer, hasTool, childrenOf, commitEdit, factEdit, frameFor, legendFor, primaryOf, sig, subjectOf, viewOptions, DEFAULT_VIEW, type Json, type SceneSubject, type SystemScene, type ViewContext } from "../../../ui-contract/src/index.ts";
   import { SYSTEM_CHART_CONTROLS } from "./controls.ts";
   import { System3D, bandsFromScene, fromSystemScene } from "../../system-3d/src/index.ts";
+  import { starCss, trueSurface, type TrueTexture } from "../../../renderer/src/index.ts";
   import { ChartGround, HatchDefs, Hatch, Ink, Legend, Mark, Stamp, markExtent, distanceAt, scaleRings, easing, fitScale, motionMs, polar, radius } from "../../../chart-grammar/src/index.ts";
 
   let { ctx, scene, params }: { ctx: ViewContext; scene: SystemScene; params: Record<string, Json> } = $props();
@@ -197,7 +204,56 @@
   // The standard view controls (rule 12) choose it: Chart is this flat log chart, 3D turns. A view without a shell's
   // choice (a screen document elsewhere) stays on Chart.
   const shownView = $derived(viewOptions(SYSTEM_CHART_CONTROLS, ctx.workspace.view ?? DEFAULT_VIEW).shown);
-  const dims = $derived(shownView.style === "3d" ? "3d" : "2d");
+  const dims = $derived(shownView.style === "3d" || shownView.style === "true" ? "3d" : "2d");
+  // True (V10a): each world's surface is read from its level-0 tiles (the Body globe's own, about 3 s a world in the
+  // kernel), one at a time, the selected world first, and kept for this page. Only on the GM's seat, which reads tiles.
+  const looksTrue = $derived(shownView.style === "true");
+  let surfaces = $state<Map<string, TrueTexture>>(new Map());
+  let reading = $state<{ done: number; of: number; none: number; why: string } | null>(null);
+  let trueGen = 0;
+  $effect(() => {
+    const sys = scene.system;
+    const sel = ctx.workspace.selection;
+    const g = ++trueGen;
+    if (!looksTrue || ctx.session.seat.authority !== "gm") return void (reading = null);
+    const worlds = scene.subjects.filter((s) => s.orbit && s.kind !== "star" && s.kind !== "belt");
+    const order = [...worlds.filter((s) => s.address === sel), ...worlds.filter((s) => s.address !== sel)];
+    void (async () => {
+      let none = 0;
+      let noneWhy = "";
+      let done = 0;
+      for (const s of order) {
+        const key = `${sys}|${s.address}`;
+        if (!trueSurfaces.has(key)) {
+          reading = { done, of: order.length, none, why: noneWhy };
+          const r = await ctx.session.surfaceTiles(sys, s.address);
+          const why = r.ok ? String((r.refused[0] as { why?: string } | undefined)?.why ?? "no surface tiles") : r.message;
+          trueSurfaces.set(key, (r.ok && trueSurface(r.tiles)) || why);
+        }
+        if (g !== trueGen) return;
+        const t = trueSurfaces.get(key);
+        if (t && typeof t !== "string") surfaces = new Map(surfaces).set(s.address, t);
+        else (none++, (noneWhy = String(t)));
+        done++;
+      }
+      reading = { done, of: order.length, none, why: noneWhy };
+    })();
+  });
+  const starColour = $derived.by(() => {
+    const t = Number(star?.facts.find((f) => f.field === "teff_k")?.value);
+    return Number.isFinite(t) && t > 0 ? starCss(t) : "";
+  });
+  const trueNote = $derived(
+    ctx.session.seat.authority !== "gm"
+      ? "Worlds are drawn plain: their surfaces are read on the GM's seat."
+      : !reading
+        ? ""
+        : reading.done < reading.of
+          ? `Reading surfaces: ${reading.done} of ${reading.of} worlds (a few seconds each).`
+          : reading.none
+            ? `${reading.none} of ${reading.of} worlds are drawn plain, with no surface to show (the kernel: ${reading.why}).`
+            : "",
+  );
   const bodies3d = $derived(dims === "3d" ? fromSystemScene(scene, ctx.mark) : []);
   const bands3d = $derived(dims === "3d" && on("zones") ? bandsFromScene(scene) : []);
   // Measure (V14): pick two bodies; the chart draws the line and says how far apart they are now.
@@ -226,7 +282,7 @@
 
 <div class="chart" bind:clientWidth={w} bind:clientHeight={h}>
   {#if dims === "3d"}
-    <System3D bodies={bodies3d} bands={bands3d} selection={ctx.workspace.selection} onselect={(id) => ctx.workspace.select(id)} title={scene.title} seen={shownView.seen} onturned={() => ctx.workspace.turned?.()} />
+    <System3D bodies={bodies3d} bands={bands3d} selection={ctx.workspace.selection} onselect={(id) => ctx.workspace.select(id)} title={scene.title} seen={shownView.seen} onturned={() => ctx.workspace.turned?.()} trueLook={looksTrue} {surfaces} {starColour} {trueNote} />
   {:else}
   <ChartGround>
     {#if w > 0 && h > 0}
