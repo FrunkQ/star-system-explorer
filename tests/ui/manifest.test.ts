@@ -5,7 +5,7 @@ import { test } from "node:test";
 import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 import { fileURLToPath } from "node:url";
-import { ABOARD, aboard, ageNow, entryFrom, entryId, lifeSupport, lifeSupportFrom, massKg, startingValues, storeOf, type AboardEntry } from "../../packages/ui-contract/src/manifest.ts";
+import { ABOARD, aboard, ageNow, crewAboard, entryFrom, entryId, lifeSupport, lifeSupportFrom, massKg, startingValues, storeOf, type AboardEntry } from "../../packages/ui-contract/src/manifest.ts";
 import type { Json } from "../../packages/ui-contract/src/json.ts";
 import type { RecordRead } from "../../packages/ui-contract/src/constructs.ts";
 
@@ -102,4 +102,11 @@ test("new entries get unique ids and only the values given", () => {
   assert.equal(entryId("!!!", []), "entry");
   assert.deepEqual(startingValues("person", SHIP, { role: " pilot ", being: "", age_yr: 30 }), [[ABOARD.on, SHIP], [ABOARD.role, "pilot"], [ABOARD.age, 30]]);
   assert.deepEqual(startingValues("cargo", SHIP, { what: "grain", amount: 40, unit: "t" }), [[ABOARD.on, SHIP], [ABOARD.what, "grain"], [ABOARD.amount, 40], [ABOARD.unit, "t"]]);
+});
+
+test("people aboard: the roster's count when there is one, else the template's starting figure", () => {
+  const ship = { address: SHIP, facts: [{ field: "construct.crew", value: 1 }, { field: "traveller.crew", value: 4 }] };
+  assert.equal(crewAboard(ship, null), 1);
+  assert.equal(crewAboard(ship, []), 1);
+  assert.equal(crewAboard(ship, [person("A", {}), person("B", { [ABOARD.state]: "cold_sleep" }), person("C", { [ABOARD.state]: "dead" })]), 2);
 });

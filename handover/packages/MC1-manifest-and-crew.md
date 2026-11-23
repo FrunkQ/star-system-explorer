@@ -27,9 +27,9 @@ Track: ship manifest and crew (MC). Date 23 Nov 2026. Asked by Alex, 23 Nov: "do
 
 ## Rough edges and next
 
-- **Players.** Entries are record actors, not in any player scene, so they are GM only. The Known to eye (SV1 kernel, SV2 chart room, PR 313) should reach actor addresses so a crew can see its own ship's manifest; the eye then sits on each entry and on the card title.
+- **Players.** Entries are record actors, not in any player scene, so they are GM only for now. SV1 (kernel thread, landing after its queued PRs) covers actors: once `set_known` puts an actor at heard of or known for a crew, it reaches that crew's scene, and the `aboard.*` values show because their tier is `scanned`. Next here: the eye on each entry and the card title (SV2's component), once SV1 is on main.
 - **The ship's log** reads the construct's own record; moves of people and cargo are on their own addresses, so "Ada came aboard" is not in the log yet. Next: `shipLog` takes the aboard entries' `aboard.on` changes that name the ship.
-- **Template crew figures.** Traveller's `construct.crew` kept value (people aboard now) is a number set by the template; once a roster exists it should be read from the roster. To agree with the Traveller pack thread.
+- **People aboard, one number** (agreed with the Traveller pack thread, 23 Nov): `crewAboard(subject, roster)` in `ui-contract/manifest.ts` is the count every screen reads: the roster's people aboard (not dead or missing) when the ship has a roster, else the template's starting figure `construct.crew`. The templates' `traveller.crew` and `traveller.berths` are the ship's design figures (complement and berths), not people aboard. The ship's log and the "At world" card should read `crewAboard` too.
 - **Damage to parts** waits for parts on ship records (ship designer). Readiness and the damaged status are shown.
 - **Crew limits from the kind of being** (future tech limits 4, 5 and 9: acceleration, weight, air and food) join with FT2 on civilisations.
 - 4.1 (aliens) brings rates per kind of being; 4.2 (RPG) brings character sheets from pack data, which will hang off the same `person` actors.

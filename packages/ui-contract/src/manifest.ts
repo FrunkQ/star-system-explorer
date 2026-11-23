@@ -253,3 +253,16 @@ export function startingValues(kind: string, on: string, f: { role?: string; bei
   }
   return out;
 }
+
+/**
+ * How many people are aboard a construct, the one number every screen reads (the card, the ship's log, the "At
+ * world" card): the roster's count of people aboard and not dead or missing when the ship has a roster, else the
+ * template's starting figure `construct.crew`. The templates' complement and berths (e.g. `traveller.crew`,
+ * `traveller.berths`) are design figures, not people aboard, and are never read here.
+ */
+export function crewAboard(subject: { address: string; facts: readonly { field: string; value?: unknown }[] }, roster: readonly AboardEntry[] | null): number | undefined {
+  const here = roster ? aboard(roster, subject.address).people : [];
+  if (here.length) return here.filter((p) => p.state !== "dead" && p.state !== "missing").length;
+  const v = subject.facts.find((f) => f.field === "construct.crew")?.value;
+  return typeof v === "number" ? v : undefined;
+}

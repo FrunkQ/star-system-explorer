@@ -7,7 +7,7 @@
 -->
 <script lang="ts">
   import { untrack } from "svelte";
-  import { ABOARD, CARGO, PERSON, STATES, STATE_WORDS, aboard, ageNow, daysWords, entryFrom, entryId, lifeSupport, lifeSupportFrom, startingValues, secondsToYears, type AboardEntry, type AboardState, type Json, type PlayerSubject, type ViewContext } from "../../../ui-contract/src/index.ts";
+  import { ABOARD, CARGO, PERSON, STATES, STATE_WORDS, aboard, ageNow, crewAboard, daysWords, entryFrom, entryId, lifeSupport, lifeSupportFrom, startingValues, secondsToYears, type AboardEntry, type AboardState, type Json, type PlayerSubject, type ViewContext } from "../../../ui-contract/src/index.ts";
   import { fieldWords, valueWords } from "../../constructs/src/words.ts";
 
   let { ctx, construct, places, part }: { ctx: ViewContext; construct: PlayerSubject; places: { address: string; label: string }[]; part: "manifest" | "crew" } = $props();
@@ -127,7 +127,7 @@
   const crewMax = $derived(fact(/(^|\.)crew_max$/));
   const berths = $derived(fact(/(^|\.)berths$/));
   const capacity = $derived(construct.facts.filter((x) => /(^|\.)(cargo|hold|tank|fuel)[a-z_]*$/.test(x.field) && typeof x.value === "number"));
-  const counted = $derived(here.people.filter((p) => p.state !== "dead" && p.state !== "missing").length);
+  const counted = $derived(crewAboard(construct, entries) ?? 0);
   const amountWords = (e: AboardEntry) => (e.amount === undefined ? "amount not set" : `${valueWords(e.amount)}${e.unit ? ` ${e.unit}` : ""}`);
   const ageWords = (e: AboardEntry) => {
     const a = ageNow(e, now_s);
