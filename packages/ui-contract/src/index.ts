@@ -83,9 +83,10 @@ export { BOOKKEEPING, byKind, constructsIn, factOf, kindOf, kindWords, templateO
 export { shipLog, writerWords } from "./constructs.ts";
 export type { ConstructTemplate, Created, KeptChange, ShipLogEntry, RecordRead } from "./constructs.ts";
 export type { CodeReading, CodesRead, MappedWorldRow, SectorMap, SectorFormat, SectorImportAsk, ImportedWorldRow, SectorImported, SectorExported } from "./sector.ts";
-export { STOCK_SHIPS, navFromScene, safestFirst, shortlist, DIFFICULTY_STEPS, difficultyPips, daysWords, dvWords, doseWords, delayWords, fromNowWords, fuelLeft, routeFrame, trackPath, trackPoint, orbitEllipse, trackIndexAt } from "./route.ts";
+export { STOCK_SHIPS, packShips, navFromScene, safestFirst, shortlist, DIFFICULTY_STEPS, difficultyPips, daysWords, dvWords, doseWords, delayWords, fromNowWords, fuelLeft, routeFrame, trackPath, trackPoint, orbitEllipse, trackIndexAt } from "./route.ts";
 export type { NavShip, NavBody, NavSystem, Prefer, RouteAsk, RoutePlan, Course, RouteBurn, RouteHazard, WayOut, NavFromScene, RouteFrame } from "./route.ts";
 export { verdictWords, chanceWords, worstDangers } from "./ship-at-world.ts";
+export { aerobrakeOption } from "./ship-at-world.ts";
 export type { ShipAtWorldAsk, ShipAtWorldReport, ShipAtWorld, WorldCheck, Danger as ShipDanger, Chance as ShipChance, ShipEffect, Verdict as ShipVerdict, WorldAir } from "./ship-at-world.ts";
 export { VOYAGE_SHIPS, IN_SYSTEM_SHIPS, MINIMISE_WORDS, systemShort, voyageSpan, speedWords, agesWords, voyageFrame, orbitAxis } from "./voyage.ts";
 export type { Minimise, VoyageAsk, VoyageLeg, Voyage, VoyageSystem, VoyagePlan, StarCell, StarCellSystem, MapFrame, SystemPlace, SystemVoyagePlan } from "./voyage.ts";
@@ -123,5 +124,5 @@ export { namesOnStack, sampleKinds, layerWords, sortWords, meaningWords, saysMor
 export type { SampleAsk, SampledName, NameSample, NamePart, SchemeInfo, NamesOnStack, ShownName, NamesRead } from "./names.ts";
 export { embedAsked, embedOrigin, embedOrigins, framingOrigin, embedMode, embedAsk, EmbedBridge } from "./embed.ts";
 export type { EmbedMode, EmbedOut } from "./embed.ts";
-export { BRAND_LOGO_MAX, BRAND_NAME_MAX, DEFAULT_JOIN, checkBrand, joinLine, joinWordsOf } from "./brand.ts";
+export { BRAND_LOGO_MAX, BRAND_NAME_MAX, DEFAULT_JOIN, LIVE_OVERRIDES, checkBrand, joinLine, joinWordsOf, withLive } from "./brand.ts";
 export type { JoinWords, SeatBrand } from "./brand.ts";

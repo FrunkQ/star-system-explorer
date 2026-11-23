@@ -12,7 +12,7 @@ Only the owner thread edits this file. One row per package: update it in the sam
 | K4 flows, validation, scheduler, solve, explain | done | packages/K4.md |
 | K5 packs, stacks, one-publisher, fictional labels | done | packages/K5.md |
 | K6 kernel API, worker, TS client, cancellation, cost classes, tiers | done | packages/K6.md |
-| J1 to J9 campaign record, logic blocks, boxes, engine blocks, programs (new track J, decided 19 Nov) | J1 to J5 and J7 done (kernel track, logs `packages/J1.md` to `J7.md`; the chart room still has to switch to the kernel intent registry, see J5.md); J6 (programs) next, after T3 NAV. Read `design/SSE4-record-logic-programs-design.md`, section 9 first (points of care against built code) | |
+| J1 to J9 campaign record, logic blocks, boxes, engine blocks, programs (new track J, decided 19 Nov) | J1 to J5, J7 and J6 part 1 (programs, `packages/J6.md`) done (kernel track, logs `packages/J1.md` to `J7.md`; the chart room still has to switch to the kernel intent registry, see J5.md); J6 part 2 (NAV travel, pirate and patrol) next. Read `design/SSE4-record-logic-programs-design.md`, section 9 first (points of care against built code) | |
 | K0 V3 / Ovid / Evolution Lab source reading | done, Alex reviewing docs/v3-parity.md, v3-save-fields.md, ovid-agents.md, evolab-reuse.md | packages/K0.md |
 | K7 envelopes, partitioning, resolve, feasibility | done (kernel track) | packages/K7.md |
 | K8 rules, classification, sifters, significance | done (kernel track) | packages/K8.md |

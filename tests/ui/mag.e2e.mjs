@@ -98,6 +98,22 @@ try {
       assert.equal(night.length, 2);
       await shot(gm, "mag-jupiter-night-desk");
     }
+    if (vp === "desk") {
+      // Mag at system scale (V10e): the same Band on the system chart in 3D draws every world's field round it, from
+      // the same facts; the note says how many worlds have one. Real draws them at their true size.
+      await go(gm, "system");
+      await gm.getByRole("button", { name: "3D", exact: true }).click();
+      await magBand(gm);
+      const note = gm.locator("[aria-roledescription='3D chart'] [data-true-band='mag']");
+      await note.waitFor({ timeout: 20000 });
+      await gm.waitForFunction(() => Number(document.querySelector("[data-mag-worlds]")?.getAttribute("data-mag-worlds")) >= 5, null, { timeout: 20000 });
+      assert.match(await note.innerText(), /worlds' magnetic fields from the kernel's facts/);
+      await shot(gm, "v10e-system-mag-3d-night-desk");
+      await gm.getByRole("button", { name: "True", exact: true }).click();
+      await gm.getByRole("group", { name: "Scale" }).getByRole("button", { name: "Real" }).click();
+      await gm.waitForFunction(() => /true size/.test(document.querySelector("[data-true-band='mag']")?.textContent ?? ""), null, { timeout: 20000 });
+      await shot(gm, "v10e-system-mag-true-real-night-desk");
+    }
     assert.equal(await gm.locator("[data-state-hash]").first().getAttribute("data-state-hash"), hash0, "reading the field writes nothing");
     assert.deepEqual(errors, []);
     await browser.close();

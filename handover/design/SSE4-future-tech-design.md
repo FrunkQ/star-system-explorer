@@ -56,7 +56,7 @@ Ten to start. The list is pack data (`base-tech`), so a setting can add one, as 
 Notes on the list:
 
 - **The crew limits belong to the cargo, not the ship.** A drone has no limit 4, 5 or 9, so it comes out small and fast with no fiction at all. An alien species with a different tolerance changes ships with no tech entry. This is why limit 4 reads the species.
-- **Limit 6 is the only true on-off.** That is honest: there is no partial FTL. It stays the voyages design's abstract rule per setting.
+- **Limit 6 has no single number to push, so its advance is a rule.** The rule still has a rating (Jump-2 against Jump-4, a warp factor), so it too comes in degrees. Section 5.1 gives its form.
 - **Left out on purpose:** build time and cost (the economy pack, 4.1), minds and computing, medicine, weapons and armour (no dogfighting). A pack may add a limit for any of them later through the same shape.
 
 Most of these figures already exist. `base-ships` `drive_heat` carries waste per jet and radiator temperature per fuel; the ship record carries exhaust speed, acceleration and shielding; `NavShip` carries shield heating limits and `structure_g`; strength for weight is a substance property that belongs on the master data sheet and is read through "Look up". FT1 mostly names what is there and gives each figure its marks.
@@ -71,6 +71,31 @@ Most of these figures already exist. `base-ships` `drive_heat` carries waste per
 6. **Past the home level**, parts may shrink by a second editable factor (question 4).
 
 Because the generator already draws every part from its size, a prototype looks like one: the same ship with one grotesquely swollen system.
+
+### 5.1 Advances are partial, and civilisations differ (Alex, 23 Nov 16:39)
+
+"Different civilisations can (in theory) have different solutions to the same problem ... radiators 10 times as efficient as we have now, 1,000, 100,000x."
+
+**Every advance is a factor on a number, never "solved".** "Solved" is only what a very large factor looks like. Heat, worked from the same radiator block (figures computed here from the Stefan-Boltzmann law for a panel radiating from both faces at emissivity 0.9, and to be re-run in the citation check):
+
+| Heat shed per m² of panel | Panel temperature | Mark | The mockup's 43 GW needs |
+|---|---|---|---|
+| today, about 0.8 kW (a room-temperature panel) | 300 K | built | 52 km² |
+| 10 times | about 530 K | built | 5.2 km² |
+| 1,000 times | about 1,700 K | not yet built | 52,000 m² |
+| about 23,000 times | 3,695 K, where tungsten melts: the ceiling for a solid panel | ceiling | 2,300 m² |
+| 100,000 times | about 5,300 K, hotter than any solid | fictional, unless the advance is a different kind of radiator (droplets, dust) with its own marks | 520 m² |
+
+So a setting picks a point on a scale, the card shows the factor ("sheds heat 1,000 times better than today's panels"), and the ship's radiators shrink to match and vanish only when the area rounds to nothing. Fuel is the same: its data (energy per kg, exhaust speed) is the factor. So is cable: strength for weight is the factor.
+
+**Two civilisations may answer the same limit differently.** Advances belong to a civilisation (section 7), and several advances may address one limit. One navy runs hot solid panels, its neighbour sprays droplet sheets, a third has a fictional heat sink. Each is its own row on the Technology page with its own figures, marks, part size and look, and a construct uses its builder's. Their ships differ for a reason before any style is applied.
+
+**The light-speed advance is an FTL rule, held by a civilisation like any other advance.** Its form is the one accepted in the example packs design (section 4A): a family (jump by rating, hop with a tether, speed by formula, rate per distance, gates, fixed points), a rating on the ship, and six fields: where a leg may start and end, what the crew does, how long it takes, what it costs, what can go wrong, and how messages travel. Consequences:
+
+- **Several FTL rules can coexist in one setting.** One power jumps by rating, its neighbour uses gates it found and cannot build ("found, not built"), a third has none and flies for real. The voyage finder already prices each leg by one means, so a ship is simply offered the legs its own rule allows.
+- **It sits on the ladder.** An FTL rule has a home level, so a power one level short can have a jump drive ten times the size.
+- **Messages are part of the rule**, so two neighbours can differ in how fast news travels as well as ships.
+- **A setting-wide rule is the common case and stays easy**: put the rule on the setting and every civilisation inherits it.
 
 ## 6. Every construct, one rule set
 
@@ -225,7 +250,7 @@ Every source read where it could be (publisher record, the paper, or the author'
 
 | Figure | Check | Result |
 |---|---|---|
-| strength for weight: steel 0.25, aramid 2.5, nanotube 45 MJ/kg | 2 GPa / 7,850; 3.6 GPa / 1,440; 63 GPa / 1,340 (Yu et al. 2000, Science 287, 637, measured multiwall tubes, from memory) | holds; nanotube 47; textbook (steel, aramid) |
+| strength for weight: steel 0.25, aramid 2.5, nanotube 45 MJ/kg | 2 GPa / 7,850; 3.6 GPa / 1,440; 63 GPa / 1,340 | holds. Now on the master sheet as mixtures steel-wire, aramid, pbo-fibre, carbon-nanotube (tensile_strength and density). Aramid read from DuPont 2017 Table II-1: Kevlar 49 yarn 3.0 GPa (2.1 MJ/kg), resin strand 3.6 GPa (2.5); the sheet holds the yarn. PBO (Zylon HM) 5.8 GPa / 1,560 = 3.7 MJ/kg, read from the Fiber-Line datasheet. Nanotube 47 from Yu et al. 2000 (Science 287, 637, doi:10.1126/science.287.5453.637), citation confirmed, abstract not read. Steel still textbook from memory, marked so on the sheet |
 | bond ceiling 50 to 100 MJ/kg | ideal nanotube about 100 GPa / 1,300 | about 77; holds |
 | chemical 13 MJ/kg | hydrogen-oxygen, 120 MJ/kg of hydrogen at 1 in 9 by mass | 13.3; holds |
 | fission 8×10¹³ J/kg | 200 MeV per 235 u | 8.2×10¹³; holds |

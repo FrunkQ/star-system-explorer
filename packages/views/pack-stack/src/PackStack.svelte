@@ -116,6 +116,7 @@
             v{s.version} · {ROLE[role]} · {s.flows.length} flows{s.quantity_kinds ? `, ${s.quantity_kinds} quantity kinds` : ""}{s.other.length ? `, ${s.other.join(", ")}` : ""}
           </div>
           {#each s.replaces as r (r)}<div class="rep">replaces {r}</div>{/each}
+          {#if s.notice}<details class="notice" data-pack-notice={p.id}><summary>Notice</summary><p>{s.notice.text}</p>{#if s.notice.source}<p class="muted">{s.notice.source}</p>{/if}</details>{/if}
           {#if role === "added" && editable}
             <button type="button" class="link" onclick={() => propose(`Remove ${p.id}`, info.added.filter((x) => x.id !== p.id))}>Remove…</button>
           {/if}
@@ -311,6 +312,14 @@
     font-size: 16px;
     font-weight: 600;
     overflow-wrap: anywhere;
+  }
+  .notice {
+    margin-top: 4px;
+    font-size: 0.85em;
+  }
+  .notice summary {
+    cursor: pointer;
+    color: var(--sse-ink-muted);
   }
   .rep {
     font-family: var(--sse-font-mono);

@@ -6,11 +6,13 @@
   centre and its moons about it (handover/rendering-rules.md), in kilometres.
 -->
 <script lang="ts" module>
-  import type { LiveStar, TrueTexture as Kept } from "../../../renderer/src/index.ts";
+  import type { FieldReadJson, LiveStar, TrueTexture as Kept } from "../../../renderer/src/index.ts";
   /** Surfaces read for True, by system and world, kept for the page (a string: why the world has none to show). */
   const trueSurfaces = new Map<string, Kept | string>();
   /** Stars read for True's living star, by system and star (a string: why there is none). */
   const liveStars = new Map<string, LiveStar | string>();
+  /** read_field's Solar System fixture, read once for the page (Mag, V10e). */
+  let solFields: Promise<FieldReadJson[]> | null = null;
 </script>
 
 <script lang="ts">
@@ -264,6 +266,28 @@
       live = false;
     };
   });
+  // Mag (V10e): each world's field facts. Until the kernel publishes a field for every world (MF2), read_field's
+  // Solar System fixture is the source, matched by name inside the campaign's Solar System, as on the Body screen.
+  let fields = $state.raw<Map<string, FieldReadJson>>(new Map());
+  $effect(() => {
+    const sys = scene.system;
+    const subjects = scene.subjects;
+    if (dims !== "3d" || shownView.band !== "mag" || !/\/sys:sol$/.test(sys)) return void (fields = new Map());
+    let live = true;
+    solFields ??= ctx.session.readField({ fixture: "solar-system" }).then((r) => (r.ok ? (r.bodies as unknown as FieldReadJson[]) : []));
+    void solFields.then((read) => {
+      if (!live) return;
+      const m = new Map<string, FieldReadJson>();
+      for (const s of subjects) {
+        const b = read.find((x) => x.name === s.label);
+        if (b) m.set(s.address, b);
+      }
+      fields = m;
+    });
+    return () => {
+      live = false;
+    };
+  });
   const starColour = $derived.by(() => {
     const t = Number(star?.facts.find((f) => f.field === "teff_k")?.value);
     return Number.isFinite(t) && t > 0 ? starCss(t) : "";
@@ -308,7 +332,7 @@
 
 <div class="chart" bind:clientWidth={w} bind:clientHeight={h}>
   {#if dims === "3d"}
-    <System3D bodies={bodies3d} bands={bands3d} selection={ctx.workspace.selection} onselect={(id) => ctx.workspace.select(id)} title={scene.title} seen={shownView.seen} onturned={() => ctx.workspace.turned?.()} trueLook={looksTrue} {surfaces} {starColour} {trueNote} star={liveStar} band={shownView.band} realScale={shownView.scale === "real"} hud={shownView.hud} />
+    <System3D bodies={bodies3d} bands={bands3d} selection={ctx.workspace.selection} onselect={(id) => ctx.workspace.select(id)} title={scene.title} seen={shownView.seen} onturned={() => ctx.workspace.turned?.()} trueLook={looksTrue} {surfaces} {starColour} {trueNote} star={liveStar} band={shownView.band} {fields} realScale={shownView.scale === "real"} hud={shownView.hud} />
   {:else}
   <ChartGround>
     {#if w > 0 && h > 0}
