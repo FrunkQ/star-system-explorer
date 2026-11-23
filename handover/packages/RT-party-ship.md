@@ -26,3 +26,9 @@ Landing run-through for next week (gap list: `/mnt/project-files/sse4/plans/land
 - `cargo test -p sse-kernel plan_descent` (new `plan_descent_lands_the_partys_own_ship`).
 - `tests/ui/party.test.ts` (3), `tests/ui/party.e2e.mjs` in chromium (added to `ui:e2e`); `voyage.e2e.mjs` still passes.
 Screens: /mnt/project-files/sse4/handover-screens/RT-party-ship-screens/ (not in the repo).
+
+## Part 2: a game's own task beside the dangers (X3h, Traveller thread's ask; Alex approved, GM screens only)
+- At world card (under a voyage): each danger shows `gameDifficulty(ladder, {p_wrong, role})`, e.g. "Piloting, Formidable 14+".
+- Route console: beside the difficulty word, `gameDifficulty(ladder, {word})`.
+- Only on the GM's seat, only when a stacked pack gives a ladder; nothing rolled. `party.e2e.mjs` checks every danger carries one with the Traveller pack on.
+- Seen in passing, next: the GM-seat At world card names the world by its address ("Fit it for u:…/body:3"); ship_at_world should carry the body's name.
