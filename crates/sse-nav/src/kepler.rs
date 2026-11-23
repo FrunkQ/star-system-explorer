@@ -76,7 +76,7 @@ pub fn eccentric_anomaly(mean: f64, e: f64) -> f64 {
 }
 
 /// Rotate a perifocal vector into the ecliptic frame.
-fn to_ecliptic(p: V3, node: f64, argp: f64, inc: f64) -> V3 {
+pub(crate) fn to_ecliptic(p: V3, node: f64, argp: f64, inc: f64) -> V3 {
     let (co, so) = (m::cos(node), m::sin(node));
     let (cw, sw) = (m::cos(argp), m::sin(argp));
     let (ci, si) = (m::cos(inc), m::sin(inc));

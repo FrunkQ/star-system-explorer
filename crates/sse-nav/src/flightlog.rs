@@ -15,9 +15,10 @@
 //! landers, probes and station modules: a split names the new constructs,
 //! each with its own log from that moment. Times are whole universe seconds.
 
-use crate::kepler::{lambert, propagate, state, Elements, V3};
+use crate::kepler::{lambert, propagate, state, to_ecliptic, Elements, V3};
 use crate::NavSystem;
 use serde::{Deserialize, Serialize};
+use sse_core::math as m;
 
 /// Who stands behind a piece or event.
 #[derive(Clone, Copy, PartialEq, Eq, Debug, Serialize, Deserialize)]
@@ -33,7 +34,10 @@ pub enum Mark {
     Estimated,
 }
 
-/// Orbital elements in the parent's frame, at `epoch_s`.
+/// Orbital elements in the parent's frame (ecliptic J2000), at `epoch_s`.
+/// Either the argument of periapsis and mean anomaly (`peri_deg`, `m0_deg`,
+/// as Horizons gives them) or NAV's longitudes (`varpi_deg`,
+/// `mean_longitude_deg`). A hyperbola has `e` above 1 and `a_m` below 0.
 #[derive(Clone, Copy, PartialEq, Debug, Serialize, Deserialize)]
 pub struct OrbitElements {
     pub a_m: f64,
@@ -42,25 +46,75 @@ pub struct OrbitElements {
     pub i_deg: f64,
     #[serde(default)]
     pub node_deg: f64,
+    /// Argument of periapsis.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub peri_deg: Option<f64>,
+    /// Mean anomaly at `epoch_s` (hyperbolic on a hyperbola).
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub m0_deg: Option<f64>,
     /// Longitude of periapsis.
-    #[serde(default)]
-    pub varpi_deg: f64,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub varpi_deg: Option<f64>,
     /// Mean longitude at `epoch_s`.
-    #[serde(default)]
-    pub mean_longitude_deg: f64,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub mean_longitude_deg: Option<f64>,
     pub epoch_s: i64,
 }
 
 impl OrbitElements {
-    fn kepler(&self) -> Elements {
-        Elements {
-            a_m: self.a_m,
-            e: self.e,
-            i_deg: self.i_deg,
-            node_deg: self.node_deg,
-            varpi_deg: self.varpi_deg,
-            mean_longitude_deg: self.mean_longitude_deg,
+    /// Argument of periapsis and mean anomaly at the epoch, degrees.
+    fn angles(&self) -> (f64, f64) {
+        let argp = self
+            .peri_deg
+            .unwrap_or_else(|| self.varpi_deg.unwrap_or(self.node_deg) - self.node_deg);
+        let varpi = self.node_deg + argp;
+        let m0 = self
+            .m0_deg
+            .unwrap_or_else(|| self.mean_longitude_deg.unwrap_or(varpi) - varpi);
+        (argp, m0)
+    }
+
+    /// Position and velocity `dt_s` after the epoch, around a body of GM `mu`.
+    pub fn state(&self, mu: f64, dt_s: f64) -> (V3, V3) {
+        let (argp, m0) = self.angles();
+        if self.e < 1.0 {
+            let varpi = self.node_deg + argp;
+            let el = Elements {
+                a_m: self.a_m,
+                e: self.e,
+                i_deg: self.i_deg,
+                node_deg: self.node_deg,
+                varpi_deg: varpi,
+                mean_longitude_deg: varpi + m0,
+            };
+            return state(&el, mu, dt_s);
         }
+        // A hyperbola: e sinh H − H = M, with M growing at n = √(μ / |a|³).
+        let (a, e) = (self.a_m.abs(), self.e);
+        let n = m::sqrt(mu / (a * a * a));
+        let mean = m0.to_radians() + n * dt_s;
+        let sgn = if mean < 0.0 { -1.0 } else { 1.0 };
+        let mut h = sgn * m::ln(2.0 * mean.abs() / e + 1.8);
+        for _ in 0..60 {
+            let f = e * m::sinh(h) - h - mean;
+            let fp = e * m::cosh(h) - 1.0;
+            let step = f / fp;
+            h -= step;
+            if step.abs() < 1e-13 {
+                break;
+            }
+        }
+        let (ch, sh) = (m::cosh(h), m::sinh(h));
+        let b = m::sqrt(e * e - 1.0);
+        let denom = e * ch - 1.0;
+        let p = [a * (e - ch), a * b * sh, 0.0];
+        let v = [-n * a * sh / denom, n * a * b * ch / denom, 0.0];
+        let (node, w, inc) = (
+            self.node_deg.to_radians(),
+            argp.to_radians(),
+            self.i_deg.to_radians(),
+        );
+        (to_ecliptic(p, node, w, inc), to_ecliptic(v, node, w, inc))
     }
 }
 
@@ -127,6 +181,9 @@ pub struct Piece {
     pub mark: Mark,
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub src: Option<String>,
+    /// The reason behind an estimate.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub why: Option<String>,
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub writer: Option<String>,
 }
@@ -193,6 +250,9 @@ pub struct LogEvent {
     pub mark: Mark,
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub src: Option<String>,
+    /// The reason behind an estimate.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub why: Option<String>,
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub writer: Option<String>,
 }
@@ -203,6 +263,9 @@ pub struct FlightLog {
     pub construct: String,
     #[serde(default)]
     pub name: String,
+    /// What the log is and where its figures come from.
+    #[serde(default, skip_serializing_if = "String::is_empty")]
+    pub about: String,
     pub pieces: Vec<Piece>,
     #[serde(default)]
     pub events: Vec<LogEvent>,
@@ -234,7 +297,14 @@ pub trait Ephemeris {
 
 impl Ephemeris for NavSystem {
     fn body(&self, name: &str, t_s: f64) -> Option<(V3, V3, f64)> {
-        if name == "star" || name.eq_ignore_ascii_case(&self.name) {
+        // The star: by word, by name, or by the system's own address (the one every body's address starts with).
+        let sys_addr = !name.is_empty()
+            && self.bodies.iter().any(|b| {
+                b.address
+                    .strip_prefix(name)
+                    .is_some_and(|rest| rest.starts_with("/body:") && !rest[6..].contains('/'))
+            });
+        if name == "star" || name.eq_ignore_ascii_case(&self.name) || sys_addr {
             return Some(([0.0; 3], [0.0; 3], self.mu()));
         }
         let b = NavSystem::body(self, name)?;
@@ -301,7 +371,7 @@ impl FlightLog {
         match &p.state {
             State::Orbit { around, elements } => match eph.body(around, t) {
                 Some((rb, vb, mu)) => {
-                    let (r, v) = state(&elements.kepler(), mu, (t_s - elements.epoch_s) as f64);
+                    let (r, v) = elements.state(mu, (t_s - elements.epoch_s) as f64);
                     At {
                         kind: "orbit".into(),
                         r_m: Some(add(rb, r)),

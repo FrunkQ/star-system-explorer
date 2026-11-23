@@ -113,3 +113,44 @@ fn events_splits_and_sse3_stops_keep_their_fields() {
     assert_eq!(stop["fuel_kg"], 800.0);
     assert_eq!(stop["kind"], "stop");
 }
+
+#[test]
+fn a_hyperbola_leaves_the_sun_with_the_energy_its_elements_give() {
+    use crate::flightlog::OrbitElements;
+    use crate::kepler::dot;
+    let mu = sol().mu();
+    // Voyager 2 after Neptune (Horizons, as the spaceflight thread wrote it).
+    let el: OrbitElements = serde_json::from_value(serde_json::json!({
+        "a_m": -601327973767.1986, "e": 6.284206181042654, "i_deg": 78.81679939983958,
+        "node_deg": 101.6327895441973, "peri_deg": 130.0648468201176, "m0_deg": 0.0, "epoch_s": 0
+    }))
+    .unwrap();
+    // At periapsis: |a| (e − 1) from the Sun.
+    let (r0, _) = el.state(mu, 0.0);
+    let q = 601327973767.1986 * (6.284206181042654 - 1.0);
+    assert!((norm(r0) - q).abs() < 1.0, "{} against {q}", norm(r0));
+    // Thirty years on: still the same orbital energy, μ / 2|a|, and far out.
+    let (r, v) = el.state(mu, 30.0 * 365.25 * DAY);
+    let energy = dot(v, v) / 2.0 - mu / norm(r);
+    let want = mu / (2.0 * 601327973767.1986);
+    assert!(
+        (energy - want).abs() < 1e-6 * want,
+        "{energy} against {want}"
+    );
+    assert!(norm(r) / AU > 50.0, "{} au", norm(r) / AU);
+}
+
+#[test]
+fn the_star_answers_to_the_systems_own_address() {
+    use crate::flightlog::Ephemeris;
+    let sys = sol();
+    assert_eq!(
+        Ephemeris::body(&sys, "u:sol/sys:sun", 0.0).map(|b| b.0),
+        Some([0.0; 3])
+    );
+    assert!(Ephemeris::body(&sys, "u:sol/sys:sun/body:earth", 0.0).is_some());
+    assert!(
+        Ephemeris::body(&sys, "u:sol/sys:sun/body:earth/body:moon", 0.0).is_none(),
+        "Sol's NAV fixture has no Moon yet"
+    );
+}
