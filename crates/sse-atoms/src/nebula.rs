@@ -15,20 +15,26 @@ const RL79: &str = "Rybicki, G. B. and Lightman, A. P. 1979, Radiative Processes
 
 /// Case B recombination coefficient at 10⁴ K, m³/s.
 pub const ALPHA_B: f64 = 2.59e-19;
-/// Hα energy, J (656.3 nm).
-pub const H_ALPHA_J: f64 = 6.626_070_15e-34 * 299_792_458.0 / 656.28e-9;
+/// Hα energy, J: the n = 3 to 2 step of hydrogen, E_ion (1/4 − 1/9), 656.47 nm in vacuum.
+pub const H_ALPHA_J: f64 = E_ION_H * BALMER_3_2;
+/// The Rydberg factor of the n = 3 to 2 step, 1/2² − 1/3².
+const BALMER_3_2: f64 = 1.0 / 4.0 - 1.0 / 9.0;
 /// Hα photons per case B recombination at 10⁴ K: α_eff(Hβ)/α_B × Hα/Hβ in energy
 /// over the photon-energy ratio = 0.45 (Osterbrock and Ferland 2006, tables 4.1, 4.2).
 pub const H_ALPHA_PER_RECOMBINATION: f64 = 0.450;
-/// Hydrogen mass, kg, and the mass per hydrogen nucleus with helium (μ_H = 1.4).
-pub const M_H: f64 = 1.673_5e-27;
-pub const MU_H: f64 = 1.4;
+/// Hydrogen's atomic mass, kg, and the mass per hydrogen nucleus with helium and
+/// metals, μ_H = 1/X of the sheet's protosolar mixture (1.42).
+pub const M_H: f64 = sse_core::sheet::atomic_weight::H * sse_core::sheet::M_U;
+pub const MU_H: f64 = 1.0 / sse_core::sheet::protosolar::X;
 /// Sedov-Taylor constant for γ = 5/3.
 pub const XI_SEDOV: f64 = 1.1517;
 const PC: f64 = sse_core::sheet::PC;
 const YR: f64 = JULIAN_YEAR;
-/// Ionisation energy of hydrogen, J (13.598 eV).
-pub const E_ION_H: f64 = 13.598 * 1.602_176_634e-19;
+/// Ionisation energy of hydrogen, J (13.598 eV): the Rydberg energy R∞ h c
+/// with the reduced-mass factor m_p / (m_p + m_e), from the sheet.
+pub const E_ION_H: f64 =
+    sse_core::sheet::R_INF * sse_core::sheet::H * sse_core::sheet::C * sse_core::sheet::M_P
+        / (sse_core::sheet::M_P + sse_core::sheet::M_E);
 
 /// Photons per second above `e_min` from a black body of radius `r` at `t`:
 /// 4πR² · (2π/c²)(kT/h)³ ∫ x²/(eˣ-1) dx from x₀, by the series
