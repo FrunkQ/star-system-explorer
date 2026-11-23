@@ -65,6 +65,16 @@ try {
     assert.match(await cut.locator("figcaption").innerText(), /to scale/);
     await scaleBar.getByRole("button", { name: "Readable", exact: true }).click();
     await gm.waitForSelector('[data-cutaway][data-scale="log"]');
+    // HUD off: the slice and its marks without names or depth ticks; on brings them back.
+    const named = await cut.locator("svg text").count();
+    assert.ok(named > 0);
+    await gm.getByRole("group", { name: "HUD" }).getByRole("button", { name: "Off", exact: true }).click();
+    await gm.waitForSelector('[data-cutaway][data-hud="off"]');
+    assert.equal(await cut.locator("svg text").count(), 0, "HUD off: no names or ticks");
+    assert.equal(await cut.locator("[data-shell]").count(), 6, "the shells stay");
+    await gm.getByRole("group", { name: "HUD" }).getByRole("button", { name: "On", exact: true }).click();
+    await gm.waitForSelector('[data-cutaway][data-hud="on"]');
+    assert.equal(await cut.locator("svg text").count(), named);
 
     // A body with no stack says so.
     await go(gm, "system");

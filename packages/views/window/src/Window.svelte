@@ -9,9 +9,12 @@
   import { untrack } from "svelte";
   import SkyBeyond from "./SkyBeyond.svelte";
   import { drawSky, readSky, systemView, SKY_POINTS_MAX, type Sky } from "../../../renderer/src/index.ts";
-  import { SENSORS, YEAR_S, angleWords, camera, discPx, lightWords, magWords, navFromScene, pointPx, project, towards, unprojectCamera, type Json, type Seen, type SystemScene, type ViewContext, type WindowView } from "../../../ui-contract/src/index.ts";
+  import { WINDOW_CONTROLS } from "./controls.ts";
+  import { DEFAULT_VIEW, viewOptions, SENSORS, YEAR_S, angleWords, camera, discPx, lightWords, magWords, navFromScene, pointPx, project, towards, unprojectCamera, type Json, type Seen, type SystemScene, type ViewContext, type WindowView } from "../../../ui-contract/src/index.ts";
 
   let { ctx, scene, params }: { ctx: ViewContext; scene: SystemScene; params: Record<string, Json> } = $props();
+  // HUD (one set of controls, Alex 23 Nov): off draws the lights alone, without the ecliptic or names.
+  const hud = $derived(viewOptions(WINDOW_CONTROLS, ctx.workspace.view ?? DEFAULT_VIEW).shown.hud);
   const first = untrack(() => ({ sensor: String(params.sensor ?? "eye"), missed: params.show_missed === true }));
   const YEAR = Number(YEAR_S);
 
@@ -164,7 +167,8 @@
       g.fillStyle = ground;
       g.fillRect(0, 0, SIZE, SIZE);
     }
-    // The ecliptic, faint, where it crosses the picture.
+    // The ecliptic, faint, where it crosses the picture (HUD on).
+    if (hud) {
     g.strokeStyle = muted;
     g.globalAlpha = 0.5;
     g.setLineDash([4, 6]);
@@ -181,6 +185,7 @@
     g.stroke();
     g.setLineDash([]);
     g.globalAlpha = 1;
+    }
     const star = v.seen.find((s) => s.kind === "star")!;
     // Labels that would land on one another are left to the table.
     const labels: { x: number; y: number; w: number }[] = [];
@@ -228,7 +233,7 @@
     }
     // Brightest labelled first; one that would land on another is left to the table.
     g.fillStyle = muted;
-    for (const n of named.sort((a, b) => a.mag - b.mag)) {
+    for (const n of hud ? named.sort((a, b) => a.mag - b.mag) : []) {
       const w = g.measureText(n.text).width;
       if (labels.some((l) => n.x < l.x + l.w + 4 && l.x < n.x + w + 4 && Math.abs(l.y - n.y) < 14)) continue;
       labels.push({ x: n.x, y: n.y, w });
@@ -275,7 +280,7 @@
 
   <div class="split">
     <div class="pane">
-      <canvas bind:this={canvas} width={SIZE} height={SIZE} data-sky aria-label="The view from the window"></canvas>
+      <canvas bind:this={canvas} width={SIZE} height={SIZE} data-sky data-hud={hud ? "on" : "off"} aria-label="The view from the window"></canvas>
       <div class="nudge" role="group" aria-label="Turn and zoom">
         <button type="button" onclick={() => (dLon += 1)} aria-label="Turn left">←</button>
         <button type="button" onclick={() => (dLat += 1)} aria-label="Turn up">↑</button>
