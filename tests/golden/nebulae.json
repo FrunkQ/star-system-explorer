@@ -48,7 +48,7 @@
     "shells": [
       {
         "label": "blast wave",
-        "mass_kg": 1.2663068171996963e+33,
+        "mass_kg": 1.2663068165531865e+33,
         "radius_m": 5.0399295106631834e+17,
         "speed_m_s": 287326.64871438243,
         "thickness_m": 4.0319436085305464e+16
@@ -111,10 +111,10 @@
     "shells": [
       {
         "label": "blast wave",
-        "mass_kg": 3.985839876900399e+30,
-        "radius_m": 1.0699462701098395e+17,
-        "speed_m_s": 8476137.840883333,
-        "thickness_m": 8559570160878716.0
+        "mass_kg": 3.985839813129248e+30,
+        "radius_m": 1.0699463048979728e+17,
+        "speed_m_s": 8476138.116475688,
+        "thickness_m": 8559570439183783.0
       }
     ],
     "stand_ins": [
@@ -138,7 +138,7 @@
     },
     "decoration_seed": "8f2a3e55cd56931f",
     "elongation": 1.0,
-    "fades_s": 1.0000076196275659e+17,
+    "fades_s": 1.0000076196274008e+17,
     "kind": "planetary-nebula",
     "light": {
       "address": "u:t/sys:0/star:0/nebula:0",
@@ -203,7 +203,7 @@
     "shells": [
       {
         "label": "bright shell",
-        "mass_kg": 1.7895689999999997e+29,
+        "mass_kg": 1.7895688836282456e+29,
         "radius_m": 2399653261577415.0,
         "speed_m_s": 19010.105819021526,
         "thickness_m": 479930652315483.0
